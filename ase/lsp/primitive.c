@@ -1,5 +1,5 @@
 /*
- * $Id: primitive.c,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: primitive.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
 #include "lisp.h"
@@ -8,8 +8,8 @@
 
 xp_lisp_obj_t* xp_lisp_prim_abort (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
-	lsp->error = RBL_ERR_ABORT;
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
+	lsp->error = XP_LISP_ERR_ABORT;
 	return XP_NULL;
 }
 
@@ -17,10 +17,10 @@ xp_lisp_obj_t* xp_lisp_prim_eval (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* tmp;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
-	tmp = xp_lisp_eval (lsp, RBL_CAR(args));
+	tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (tmp == XP_NULL) return XP_NULL;
 
 	tmp = xp_lisp_eval (lsp, tmp);
@@ -33,12 +33,12 @@ xp_lisp_obj_t* xp_lisp_prim_prog1 (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* res = XP_NULL, * tmp;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, RBL_PRIM_MAX_ARG_COUNT);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LISP_PRIM_MAX_ARG_COUNT);
 
 	//while (args != lsp->mem->nil) {
-	while (RBL_TYPE(args) == RBL_OBJ_CONS) {
+	while (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS) {
 
-		tmp = xp_lisp_eval (lsp, RBL_CAR(args));
+		tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 		if (tmp == XP_NULL) return XP_NULL;
 
 		if (res == XP_NULL) {
@@ -48,7 +48,7 @@ xp_lisp_obj_t* xp_lisp_prim_prog1 (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 			*/
 			res = tmp;
 		}
-		args = RBL_CDR(args);
+		args = XP_LISP_CDR(args);
 	}
 
 	return res;
@@ -58,17 +58,17 @@ xp_lisp_obj_t* xp_lisp_prim_progn (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* res, * tmp;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, RBL_PRIM_MAX_ARG_COUNT);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LISP_PRIM_MAX_ARG_COUNT);
 
 	res = lsp->mem->nil;
 	//while (args != lsp->mem->nil) {
-	while (RBL_TYPE(args) == RBL_OBJ_CONS) {
+	while (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS) {
 
-		tmp = xp_lisp_eval (lsp, RBL_CAR(args));
+		tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 		if (tmp == XP_NULL) return XP_NULL;
 
 		res = tmp;
-		args = RBL_CDR(args);
+		args = XP_LISP_CDR(args);
 	}
 
 	return res;
@@ -76,7 +76,7 @@ xp_lisp_obj_t* xp_lisp_prim_progn (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 
 xp_lisp_obj_t* xp_lisp_prim_gc (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
 	xp_lisp_garbage_collect (lsp->mem);
 	return lsp->mem->nil;
 }
@@ -93,33 +93,33 @@ xp_lisp_obj_t* xp_lisp_prim_cond (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 
 	xp_lisp_obj_t* tmp, * ret;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 0, RBL_PRIM_MAX_ARG_COUNT);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, XP_LISP_PRIM_MAX_ARG_COUNT);
 
-	while (RBL_TYPE(args) == RBL_OBJ_CONS) {
-		if (RBL_TYPE(RBL_CAR(args)) != RBL_OBJ_CONS) {
-			lsp->error = RBL_ERR_BAD_ARG;
+	while (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS) {
+		if (XP_LISP_TYPE(XP_LISP_CAR(args)) != XP_LISP_OBJ_CONS) {
+			lsp->error = XP_LISP_ERR_BAD_ARG;
 			return XP_NULL;
 		}
 
-		tmp = xp_lisp_eval (lsp, RBL_CAR(RBL_CAR(args)));
+		tmp = xp_lisp_eval (lsp, XP_LISP_CAR(XP_LISP_CAR(args)));
 		if (tmp == XP_NULL) return XP_NULL;
 
 		if (tmp != lsp->mem->nil) {
-			tmp = RBL_CDR(RBL_CAR(args));
+			tmp = XP_LISP_CDR(XP_LISP_CAR(args));
 			ret = lsp->mem->nil;
-			while (RBL_TYPE(tmp) == RBL_OBJ_CONS) {
-				ret = xp_lisp_eval (lsp, RBL_CAR(tmp));
+			while (XP_LISP_TYPE(tmp) == XP_LISP_OBJ_CONS) {
+				ret = xp_lisp_eval (lsp, XP_LISP_CAR(tmp));
 				if (ret == XP_NULL) return XP_NULL;
-				tmp = RBL_CDR(tmp);
+				tmp = XP_LISP_CDR(tmp);
 			}
 			if (tmp != lsp->mem->nil) {
-				lsp->error = RBL_ERR_BAD_ARG;
+				lsp->error = XP_LISP_ERR_BAD_ARG;
 				return XP_NULL;
 			}
 			return ret;
 		}
 
-		args = RBL_CDR(args);
+		args = XP_LISP_CDR(args);
 	}
 
 	return lsp->mem->nil;
@@ -129,29 +129,29 @@ xp_lisp_obj_t* xp_lisp_prim_if (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* tmp;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 2, RBL_PRIM_MAX_ARG_COUNT);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, XP_LISP_PRIM_MAX_ARG_COUNT);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 	
-	tmp = xp_lisp_eval (lsp, RBL_CAR(args));
+	tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (tmp == XP_NULL) return XP_NULL;
 
 	if (tmp != lsp->mem->nil) {
-		tmp = xp_lisp_eval (lsp, RBL_CAR(RBL_CDR(args)));
+		tmp = xp_lisp_eval (lsp, XP_LISP_CAR(XP_LISP_CDR(args)));
 		if (tmp == XP_NULL) return XP_NULL;
 		return tmp;
 	}	
 	else {
 		xp_lisp_obj_t* res = lsp->mem->nil;
 
-		tmp = RBL_CDR(RBL_CDR(args));
+		tmp = XP_LISP_CDR(XP_LISP_CDR(args));
 
-		while (RBL_TYPE(tmp) == RBL_OBJ_CONS) {
-			res = xp_lisp_eval (lsp, RBL_CAR(tmp));
+		while (XP_LISP_TYPE(tmp) == XP_LISP_OBJ_CONS) {
+			res = xp_lisp_eval (lsp, XP_LISP_CAR(tmp));
 			if (res == XP_NULL) return XP_NULL;
-			tmp = RBL_CDR(tmp);
+			tmp = XP_LISP_CDR(tmp);
 		}
 		if (tmp != lsp->mem->nil) {
-			lsp->error = RBL_ERR_BAD_ARG;
+			lsp->error = XP_LISP_ERR_BAD_ARG;
 			return XP_NULL;
 		}
 
@@ -168,21 +168,21 @@ xp_lisp_obj_t* xp_lisp_prim_while (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 
 	xp_lisp_obj_t* tmp;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, RBL_PRIM_MAX_ARG_COUNT);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LISP_PRIM_MAX_ARG_COUNT);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	for (;;) {
-		tmp = xp_lisp_eval (lsp, RBL_CAR(args));
+		tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 		if (tmp == XP_NULL) return XP_NULL;
 		if (tmp == lsp->mem->nil) break;
 
-		tmp = RBL_CDR(args);
-		while (RBL_TYPE(tmp) == RBL_OBJ_CONS) {
-			if (xp_lisp_eval (lsp, RBL_CAR(tmp)) == XP_NULL) return XP_NULL;
-			tmp = RBL_CDR(tmp);
+		tmp = XP_LISP_CDR(args);
+		while (XP_LISP_TYPE(tmp) == XP_LISP_OBJ_CONS) {
+			if (xp_lisp_eval (lsp, XP_LISP_CAR(tmp)) == XP_NULL) return XP_NULL;
+			tmp = XP_LISP_CDR(tmp);
 		}
 		if (tmp != lsp->mem->nil) {
-			lsp->error = RBL_ERR_BAD_ARG;
+			lsp->error = XP_LISP_ERR_BAD_ARG;
 			return XP_NULL;
 		}
 	}
@@ -194,56 +194,56 @@ xp_lisp_obj_t* xp_lisp_prim_car (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* tmp;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
-	tmp = xp_lisp_eval (lsp, RBL_CAR(args));
+	tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (tmp == XP_NULL) return XP_NULL;
 	if (tmp == lsp->mem->nil) return lsp->mem->nil;
 
-	if (RBL_TYPE(tmp) != RBL_OBJ_CONS) {
-		lsp->error = RBL_ERR_BAD_ARG;
+	if (XP_LISP_TYPE(tmp) != XP_LISP_OBJ_CONS) {
+		lsp->error = XP_LISP_ERR_BAD_ARG;
 		return XP_NULL;
 	}
 
-	return RBL_CAR(tmp);
+	return XP_LISP_CAR(tmp);
 }
 
 xp_lisp_obj_t* xp_lisp_prim_cdr (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* tmp;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
-	tmp = xp_lisp_eval (lsp, RBL_CAR(args));
+	tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (tmp == XP_NULL) return XP_NULL;
 	if (tmp == lsp->mem->nil) return lsp->mem->nil;
 
-	if (RBL_TYPE(tmp) != RBL_OBJ_CONS) {
-		lsp->error = RBL_ERR_BAD_ARG;
+	if (XP_LISP_TYPE(tmp) != XP_LISP_OBJ_CONS) {
+		lsp->error = XP_LISP_ERR_BAD_ARG;
 		return XP_NULL;
 	}
 
-	return RBL_CDR(tmp);
+	return XP_LISP_CDR(tmp);
 }
 
 xp_lisp_obj_t* xp_lisp_prim_cons (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* car, * cdr, * cons;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
-	car = xp_lisp_eval (lsp, RBL_CAR(args));
+	car = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (car == XP_NULL) return XP_NULL;
 
-	cdr = xp_lisp_eval (lsp, RBL_CAR(RBL_CDR(args)));
+	cdr = xp_lisp_eval (lsp, XP_LISP_CAR(XP_LISP_CDR(args)));
 	if (cdr == XP_NULL) return XP_NULL;
 
 	cons = xp_lisp_make_cons (lsp->mem, car, cdr);
 	if (cons == XP_NULL) {
-		lsp->error = RBL_ERR_MEM;
+		lsp->error = XP_LISP_ERR_MEM;
 		return XP_NULL;
 	}
 
@@ -254,22 +254,22 @@ xp_lisp_obj_t* xp_lisp_prim_set (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* p1, * p2;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
-	p1 = xp_lisp_eval (lsp, RBL_CAR(args));
+	p1 = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (p1 == XP_NULL) return XP_NULL;
 
-	if (RBL_TYPE(p1) != RBL_OBJ_SYMBOL) {
-		lsp->error = RBL_ERR_BAD_ARG;
+	if (XP_LISP_TYPE(p1) != XP_LISP_OBJ_SYMBOL) {
+		lsp->error = XP_LISP_ERR_BAD_ARG;
 		return XP_NULL;
 	}
 
-	p2 = xp_lisp_eval (lsp, RBL_CAR(RBL_CDR(args)));
+	p2 = xp_lisp_eval (lsp, XP_LISP_CAR(XP_LISP_CDR(args)));
 	if (p2 == XP_NULL) return XP_NULL;
 
 	if (xp_lisp_set (lsp->mem, p1, p2) == XP_NULL) {
-		lsp->error = RBL_ERR_MEM;
+		lsp->error = XP_LISP_ERR_MEM;
 		return XP_NULL;
 	}
 
@@ -281,28 +281,28 @@ xp_lisp_obj_t* xp_lisp_prim_setq (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* p = args, * p1, * p2 = lsp->mem->nil;
 
 	while (p != lsp->mem->nil) {
-		xp_lisp_assert (RBL_TYPE(p) == RBL_OBJ_CONS);
+		xp_lisp_assert (XP_LISP_TYPE(p) == XP_LISP_OBJ_CONS);
 
-		p1 = RBL_CAR(p);
-		if (RBL_TYPE(p1) != RBL_OBJ_SYMBOL) {
-			lsp->error = RBL_ERR_BAD_ARG;
+		p1 = XP_LISP_CAR(p);
+		if (XP_LISP_TYPE(p1) != XP_LISP_OBJ_SYMBOL) {
+			lsp->error = XP_LISP_ERR_BAD_ARG;
 			return XP_NULL;
 		}
 
-		if (RBL_TYPE(RBL_CDR(p)) != RBL_OBJ_CONS) {
-			lsp->error = RBL_ERR_TOO_FEW_ARGS;
+		if (XP_LISP_TYPE(XP_LISP_CDR(p)) != XP_LISP_OBJ_CONS) {
+			lsp->error = XP_LISP_ERR_TOO_FEW_ARGS;
 			return XP_NULL;
 		}
 
-		p2 = xp_lisp_eval (lsp, RBL_CAR(RBL_CDR(p)));
+		p2 = xp_lisp_eval (lsp, XP_LISP_CAR(XP_LISP_CDR(p)));
 		if (p2 == XP_NULL) return XP_NULL;
 
 		if (xp_lisp_set (lsp->mem, p1, p2) == XP_NULL) {
-			lsp->error = RBL_ERR_MEM;
+			lsp->error = XP_LISP_ERR_MEM;
 			return XP_NULL;
 		}
 
-		p = RBL_CDR(RBL_CDR(p));
+		p = XP_LISP_CDR(XP_LISP_CDR(p));
 	}
 
 	return p2;
@@ -310,9 +310,9 @@ xp_lisp_obj_t* xp_lisp_prim_setq (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 
 xp_lisp_obj_t* xp_lisp_prim_quote (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
-	return RBL_CAR(args);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	return XP_LISP_CAR(args);
 }
 
 xp_lisp_obj_t* xp_lisp_prim_defun (xp_lisp_t* lsp, xp_lisp_obj_t* args)
@@ -324,20 +324,20 @@ xp_lisp_obj_t* xp_lisp_prim_defun (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 
 	xp_lisp_obj_t* name, * fun;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 3, RBL_PRIM_MAX_ARG_COUNT);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 3, XP_LISP_PRIM_MAX_ARG_COUNT);
 
-	name = RBL_CAR(args);
-	if (RBL_TYPE(name) != RBL_OBJ_SYMBOL) {
-		lsp->error = RBL_ERR_BAD_ARG;
+	name = XP_LISP_CAR(args);
+	if (XP_LISP_TYPE(name) != XP_LISP_OBJ_SYMBOL) {
+		lsp->error = XP_LISP_ERR_BAD_ARG;
 		return XP_NULL;
 	}
 
 	fun = xp_lisp_make_func (lsp->mem, 
-		RBL_CAR(RBL_CDR(args)), RBL_CDR(RBL_CDR(args)));
+		XP_LISP_CAR(XP_LISP_CDR(args)), XP_LISP_CDR(XP_LISP_CDR(args)));
 	if (fun == XP_NULL) return XP_NULL;
 
-	if (xp_lisp_set (lsp->mem, RBL_CAR(args), fun) == XP_NULL) {
-		lsp->error = RBL_ERR_MEM;
+	if (xp_lisp_set (lsp->mem, XP_LISP_CAR(args), fun) == XP_NULL) {
+		lsp->error = XP_LISP_ERR_MEM;
 		return XP_NULL;
 	}
 	return fun;
@@ -352,20 +352,20 @@ xp_lisp_obj_t* xp_lisp_prim_demac (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 
 	xp_lisp_obj_t* name, * mac;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 3, RBL_PRIM_MAX_ARG_COUNT);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 3, XP_LISP_PRIM_MAX_ARG_COUNT);
 
-	name = RBL_CAR(args);
-	if (RBL_TYPE(name) != RBL_OBJ_SYMBOL) {
-		lsp->error = RBL_ERR_BAD_ARG;
+	name = XP_LISP_CAR(args);
+	if (XP_LISP_TYPE(name) != XP_LISP_OBJ_SYMBOL) {
+		lsp->error = XP_LISP_ERR_BAD_ARG;
 		return XP_NULL;
 	}
 
 	mac = xp_lisp_make_macro (lsp->mem, 
-		RBL_CAR(RBL_CDR(args)), RBL_CDR(RBL_CDR(args)));
+		XP_LISP_CAR(XP_LISP_CDR(args)), XP_LISP_CDR(XP_LISP_CDR(args)));
 	if (mac == XP_NULL) return XP_NULL;
 
-	if (xp_lisp_set (lsp->mem, RBL_CAR(args), mac) == XP_NULL) {
-		lsp->error = RBL_ERR_MEM;
+	if (xp_lisp_set (lsp->mem, XP_LISP_CAR(args), mac) == XP_NULL) {
+		lsp->error = XP_LISP_ERR_MEM;
 		return XP_NULL;
 	}
 	return mac;
@@ -379,12 +379,12 @@ static xp_lisp_obj_t* xp_lisp_prim_let_impl (
 	xp_lisp_obj_t* body;
 	xp_lisp_obj_t* value;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, RBL_PRIM_MAX_ARG_COUNT);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LISP_PRIM_MAX_ARG_COUNT);
 
 	// create a new frame
 	frame = xp_lisp_frame_new ();
 	if (frame == XP_NULL) {
-		lsp->error = RBL_ERR_MEM;
+		lsp->error = XP_LISP_ERR_MEM;
 		return XP_NULL;
 	}
 	//frame->link = lsp->mem->frame;
@@ -398,17 +398,17 @@ static xp_lisp_obj_t* xp_lisp_prim_let_impl (
 		lsp->mem->brooding_frame = frame;
 	}
 
-	assoc = RBL_CAR(args);
+	assoc = XP_LISP_CAR(args);
 
 	//while (assoc != lsp->mem->nil) {
-	while (RBL_TYPE(assoc) == RBL_OBJ_CONS) {
-		xp_lisp_obj_t* ass = RBL_CAR(assoc);
-		if (RBL_TYPE(ass) == RBL_OBJ_CONS) {
-			xp_lisp_obj_t* n = RBL_CAR(ass);
-			xp_lisp_obj_t* v = RBL_CDR(ass);
+	while (XP_LISP_TYPE(assoc) == XP_LISP_OBJ_CONS) {
+		xp_lisp_obj_t* ass = XP_LISP_CAR(assoc);
+		if (XP_LISP_TYPE(ass) == XP_LISP_OBJ_CONS) {
+			xp_lisp_obj_t* n = XP_LISP_CAR(ass);
+			xp_lisp_obj_t* v = XP_LISP_CDR(ass);
 
-			if (RBL_TYPE(n) != RBL_OBJ_SYMBOL) {
-				lsp->error = RBL_ERR_BAD_ARG; // must be a symbol
+			if (XP_LISP_TYPE(n) != XP_LISP_OBJ_SYMBOL) {
+				lsp->error = XP_LISP_ERR_BAD_ARG; // must be a symbol
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				xp_lisp_frame_free (frame);
@@ -416,14 +416,14 @@ static xp_lisp_obj_t* xp_lisp_prim_let_impl (
 			}
 
 			if (v != lsp->mem->nil) {
-				if (RBL_CDR(v) != lsp->mem->nil) {
-					lsp->error = RBL_ERR_TOO_MANY_ARGS; // must be a symbol
+				if (XP_LISP_CDR(v) != lsp->mem->nil) {
+					lsp->error = XP_LISP_ERR_TOO_MANY_ARGS; // must be a symbol
 					if (sequential) lsp->mem->frame = frame->link;
 					else lsp->mem->brooding_frame = frame->link;
 					xp_lisp_frame_free (frame);
 					return XP_NULL;
 				}
-				if ((v = xp_lisp_eval(lsp, RBL_CAR(v))) == XP_NULL) {
+				if ((v = xp_lisp_eval(lsp, XP_LISP_CAR(v))) == XP_NULL) {
 					if (sequential) lsp->mem->frame = frame->link;
 					else lsp->mem->brooding_frame = frame->link;
 					xp_lisp_frame_free (frame);
@@ -432,30 +432,30 @@ static xp_lisp_obj_t* xp_lisp_prim_let_impl (
 			}
 
 			if (xp_lisp_frame_lookup (frame, n) != XP_NULL) {
-				lsp->error = RBL_ERR_DUP_FORMAL;
+				lsp->error = XP_LISP_ERR_DUP_FORMAL;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				xp_lisp_frame_free (frame);
 				return XP_NULL;
 			}
 			if (xp_lisp_frame_insert (frame, n, v) == XP_NULL) {
-				lsp->error = RBL_ERR_MEM;
+				lsp->error = XP_LISP_ERR_MEM;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				xp_lisp_frame_free (frame);
 				return XP_NULL;
 			}
 		}
-		else if (RBL_TYPE(ass) == RBL_OBJ_SYMBOL) {
+		else if (XP_LISP_TYPE(ass) == XP_LISP_OBJ_SYMBOL) {
 			if (xp_lisp_frame_lookup (frame, ass) != XP_NULL) {
-				lsp->error = RBL_ERR_DUP_FORMAL;
+				lsp->error = XP_LISP_ERR_DUP_FORMAL;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				xp_lisp_frame_free (frame);
 				return XP_NULL;
 			}
 			if (xp_lisp_frame_insert (frame, ass, lsp->mem->nil) == XP_NULL) {
-				lsp->error = RBL_ERR_MEM;
+				lsp->error = XP_LISP_ERR_MEM;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				xp_lisp_frame_free (frame);
@@ -463,18 +463,18 @@ static xp_lisp_obj_t* xp_lisp_prim_let_impl (
 			}
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_ARG;		
+			lsp->error = XP_LISP_ERR_BAD_ARG;		
 			if (sequential) lsp->mem->frame = frame->link;
 			else lsp->mem->brooding_frame = frame->link;
 			xp_lisp_frame_free (frame);
 			return XP_NULL;
 		}
 
-		assoc = RBL_CDR(assoc);
+		assoc = XP_LISP_CDR(assoc);
 	}
 
 	if (assoc != lsp->mem->nil) {
-		lsp->error = RBL_ERR_BAD_ARG;	
+		lsp->error = XP_LISP_ERR_BAD_ARG;	
 		if (sequential) lsp->mem->frame = frame->link;
 		else lsp->mem->brooding_frame = frame->link;
 		xp_lisp_frame_free (frame);
@@ -490,15 +490,15 @@ static xp_lisp_obj_t* xp_lisp_prim_let_impl (
 
 	// evaluate forms in the body
 	value = lsp->mem->nil;
-	body = RBL_CDR(args);
+	body = XP_LISP_CDR(args);
 	while (body != lsp->mem->nil) {
-		value = xp_lisp_eval (lsp, RBL_CAR(body));
+		value = xp_lisp_eval (lsp, XP_LISP_CAR(body));
 		if (value == XP_NULL) {
 			lsp->mem->frame = frame->link;
 			xp_lisp_frame_free (frame);
 			return XP_NULL;
 		}
-		body = RBL_CDR(body);
+		body = XP_LISP_CDR(body);
 	}
 
 	// pop the frame
@@ -524,27 +524,27 @@ xp_lisp_obj_t* xp_lisp_prim_plus (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* body, * tmp;
 	xp_lisp_int value = 0;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 1, RBL_PRIM_MAX_ARG_COUNT);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LISP_PRIM_MAX_ARG_COUNT);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	body = args;
 	//while (body != lsp->mem->nil) {
-	while (RBL_TYPE(body) == RBL_OBJ_CONS) {
-		tmp = xp_lisp_eval (lsp, RBL_CAR(body));
+	while (XP_LISP_TYPE(body) == XP_LISP_OBJ_CONS) {
+		tmp = xp_lisp_eval (lsp, XP_LISP_CAR(body));
 		if (tmp == XP_NULL) return XP_NULL;
 
-		if (RBL_TYPE(tmp) != RBL_OBJ_INT) {
-			lsp->error = RBL_ERR_BAD_VALUE;	
+		if (XP_LISP_TYPE(tmp) != XP_LISP_OBJ_INT) {
+			lsp->error = XP_LISP_ERR_BAD_VALUE;	
 			return XP_NULL;
 		}
 
-		value = value + RBL_IVALUE(tmp);
-		body = RBL_CDR(body);
+		value = value + XP_LISP_IVALUE(tmp);
+		body = XP_LISP_CDR(body);
 	}
 
 	tmp = xp_lisp_make_int (lsp->mem, value);
 	if (tmp == XP_NULL) {
-		lsp->error = RBL_ERR_MEM;
+		lsp->error = XP_LISP_ERR_MEM;
 		return XP_NULL;
 	}
 
@@ -556,62 +556,62 @@ xp_lisp_obj_t* xp_lisp_prim_gt (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* p1, * p2;
 	int res;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
-	p1 = xp_lisp_eval (lsp, RBL_CAR(args));
+	p1 = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (p1 == XP_NULL) return XP_NULL;
 	// TODO: lock p1....
 
-	p2 = xp_lisp_eval (lsp, RBL_CAR(RBL_CDR(args)));
+	p2 = xp_lisp_eval (lsp, XP_LISP_CAR(XP_LISP_CDR(args)));
 	if (p2 == XP_NULL) return XP_NULL;
 
-	if (RBL_TYPE(p1) == RBL_OBJ_INT) {
-		if (RBL_TYPE(p2) == RBL_OBJ_INT) {
-			res = RBL_IVALUE(p1) > RBL_IVALUE(p2);
+	if (XP_LISP_TYPE(p1) == XP_LISP_OBJ_INT) {
+		if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_INT) {
+			res = XP_LISP_IVALUE(p1) > XP_LISP_IVALUE(p2);
 		}
-		else if (RBL_TYPE(p2) == RBL_OBJ_FLOAT) {
-			res = RBL_IVALUE(p1) > RBL_FVALUE(p2);
+		else if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_FLOAT) {
+			res = XP_LISP_IVALUE(p1) > XP_LISP_FVALUE(p2);
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_VALUE;
+			lsp->error = XP_LISP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
-	else if (RBL_TYPE(p1) == RBL_OBJ_FLOAT) {
-		if (RBL_TYPE(p2) == RBL_OBJ_INT) {
-			res = RBL_FVALUE(p1) > RBL_IVALUE(p2);
+	else if (XP_LISP_TYPE(p1) == XP_LISP_OBJ_FLOAT) {
+		if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_INT) {
+			res = XP_LISP_FVALUE(p1) > XP_LISP_IVALUE(p2);
 		}
-		else if (RBL_TYPE(p2) == RBL_OBJ_FLOAT) {
-			res = RBL_FVALUE(p1) > RBL_FVALUE(p2);
+		else if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_FLOAT) {
+			res = XP_LISP_FVALUE(p1) > XP_LISP_FVALUE(p2);
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_VALUE;
+			lsp->error = XP_LISP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
-	else if (RBL_TYPE(p1) == RBL_OBJ_SYMBOL) {
-		if (RBL_TYPE(p2) == RBL_OBJ_SYMBOL) {
+	else if (XP_LISP_TYPE(p1) == XP_LISP_OBJ_SYMBOL) {
+		if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_SYMBOL) {
 			res = xp_lisp_comp_symbol2 (
-				p1, RBL_SYMVALUE(p2), RBL_SYMLEN(p2)) > 0;
+				p1, XP_LISP_SYMVALUE(p2), XP_LISP_SYMLEN(p2)) > 0;
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_VALUE;
+			lsp->error = XP_LISP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
-	else if (RBL_TYPE(p1) == RBL_OBJ_STRING) {
-		if (RBL_TYPE(p2) == RBL_OBJ_STRING) {
+	else if (XP_LISP_TYPE(p1) == XP_LISP_OBJ_STRING) {
+		if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_STRING) {
 			res = xp_lisp_comp_string2 (
-				p1, RBL_STRVALUE(p2), RBL_STRLEN(p2)) > 0;
+				p1, XP_LISP_STRVALUE(p2), XP_LISP_STRLEN(p2)) > 0;
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_VALUE;
+			lsp->error = XP_LISP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
 	else {
-		lsp->error = RBL_ERR_BAD_VALUE;
+		lsp->error = XP_LISP_ERR_BAD_VALUE;
 		return XP_NULL;
 	}
 
@@ -623,62 +623,62 @@ xp_lisp_obj_t* xp_lisp_prim_lt (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* p1, * p2;
 	int res;
 
-	RBL_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_lisp_assert (RBL_TYPE(args) == RBL_OBJ_CONS);
+	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
+	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
-	p1 = xp_lisp_eval (lsp, RBL_CAR(args));
+	p1 = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (p1 == XP_NULL) return XP_NULL;
 	// TODO: lock p1....
 
-	p2 = xp_lisp_eval (lsp, RBL_CAR(RBL_CDR(args)));
+	p2 = xp_lisp_eval (lsp, XP_LISP_CAR(XP_LISP_CDR(args)));
 	if (p2 == XP_NULL) return XP_NULL;
 
-	if (RBL_TYPE(p1) == RBL_OBJ_INT) {
-		if (RBL_TYPE(p2) == RBL_OBJ_INT) {
-			res = RBL_IVALUE(p1) < RBL_IVALUE(p2);
+	if (XP_LISP_TYPE(p1) == XP_LISP_OBJ_INT) {
+		if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_INT) {
+			res = XP_LISP_IVALUE(p1) < XP_LISP_IVALUE(p2);
 		}
-		else if (RBL_TYPE(p2) == RBL_OBJ_FLOAT) {
-			res = RBL_IVALUE(p1) < RBL_FVALUE(p2);
+		else if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_FLOAT) {
+			res = XP_LISP_IVALUE(p1) < XP_LISP_FVALUE(p2);
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_VALUE;
+			lsp->error = XP_LISP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
-	else if (RBL_TYPE(p1) == RBL_OBJ_FLOAT) {
-		if (RBL_TYPE(p2) == RBL_OBJ_INT) {
-			res = RBL_FVALUE(p1) < RBL_IVALUE(p2);
+	else if (XP_LISP_TYPE(p1) == XP_LISP_OBJ_FLOAT) {
+		if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_INT) {
+			res = XP_LISP_FVALUE(p1) < XP_LISP_IVALUE(p2);
 		}
-		else if (RBL_TYPE(p2) == RBL_OBJ_FLOAT) {
-			res = RBL_FVALUE(p1) < RBL_FVALUE(p2);
+		else if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_FLOAT) {
+			res = XP_LISP_FVALUE(p1) < XP_LISP_FVALUE(p2);
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_VALUE;
+			lsp->error = XP_LISP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
-	else if (RBL_TYPE(p1) == RBL_OBJ_SYMBOL) {
-		if (RBL_TYPE(p2) == RBL_OBJ_SYMBOL) {
+	else if (XP_LISP_TYPE(p1) == XP_LISP_OBJ_SYMBOL) {
+		if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_SYMBOL) {
 			res = xp_lisp_comp_symbol2 (
-				p1, RBL_SYMVALUE(p2), RBL_SYMLEN(p2)) < 0;
+				p1, XP_LISP_SYMVALUE(p2), XP_LISP_SYMLEN(p2)) < 0;
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_VALUE;
+			lsp->error = XP_LISP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
-	else if (RBL_TYPE(p1) == RBL_OBJ_STRING) {
-		if (RBL_TYPE(p2) == RBL_OBJ_STRING) {
+	else if (XP_LISP_TYPE(p1) == XP_LISP_OBJ_STRING) {
+		if (XP_LISP_TYPE(p2) == XP_LISP_OBJ_STRING) {
 			res = xp_lisp_comp_string2 (
-				p1, RBL_STRVALUE(p2), RBL_STRLEN(p2)) < 0;
+				p1, XP_LISP_STRVALUE(p2), XP_LISP_STRLEN(p2)) < 0;
 		}
 		else {
-			lsp->error = RBL_ERR_BAD_VALUE;
+			lsp->error = XP_LISP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
 	else {
-		lsp->error = RBL_ERR_BAD_VALUE;
+		lsp->error = XP_LISP_ERR_BAD_VALUE;
 		return XP_NULL;
 	}
 

@@ -1,38 +1,40 @@
 /*
- * $Id: lisp.h,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: lisp.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
-#ifndef _RBL_LISP_H_
-#define _RBL_LISP_H_
+#ifndef _XP_LISP_LISP_H_
+#define _XP_LISP_LISP_H_
 
 #include <xp/lisp/types.h>
 #include <xp/lisp/token.h>
 #include <xp/lisp/object.h>
 #include <xp/lisp/memory.h>
 
+#include <xp/c/stdio.h> // TODO: may have to remove dependency on stdio?
+
 // NOTICE: the function of xp_lisp_creader_t must return -1 on error 
 //         and 0 on success. the first argument must be set to 
-//         RBL_END_CHAR at the end of input.
+//         XP_LISP_END_CHAR at the end of input.
 typedef int (*xp_lisp_creader_t) (xp_lisp_cint*, void*); 
 
-#define RBL_ERR(lsp)          ((lsp)->error)
-#define RBL_ERR_NONE          0
-#define RBL_ERR_ABORT         1
-#define RBL_ERR_END           2
-#define RBL_ERR_MEM           3
-#define RBL_ERR_READ          4
-#define RBL_ERR_SYNTAX        5
-#define RBL_ERR_BAD_ARG       6
-#define RBL_ERR_WRONG_ARG     7
-#define RBL_ERR_TOO_FEW_ARGS  8
-#define RBL_ERR_TOO_MANY_ARGS 9
-#define RBL_ERR_UNDEF_FUNC    10 
-#define RBL_ERR_BAD_FUNC      11  
-#define RBL_ERR_DUP_FORMAL    12
-#define RBL_ERR_BAD_SYMBOL    13
-#define RBL_ERR_UNDEF_SYMBOL  14
-#define RBL_ERR_EMPTY_BODY    15
-#define RBL_ERR_BAD_VALUE     16
+#define XP_LISP_ERR(lsp)          ((lsp)->error)
+#define XP_LISP_ERR_NONE          0
+#define XP_LISP_ERR_ABORT         1
+#define XP_LISP_ERR_END           2
+#define XP_LISP_ERR_MEM           3
+#define XP_LISP_ERR_READ          4
+#define XP_LISP_ERR_SYNTAX        5
+#define XP_LISP_ERR_BAD_ARG       6
+#define XP_LISP_ERR_WRONG_ARG     7
+#define XP_LISP_ERR_TOO_FEW_ARGS  8
+#define XP_LISP_ERR_TOO_MANY_ARGS 9
+#define XP_LISP_ERR_UNDEF_FUNC    10 
+#define XP_LISP_ERR_BAD_FUNC      11  
+#define XP_LISP_ERR_DUP_FORMAL    12
+#define XP_LISP_ERR_BAD_SYMBOL    13
+#define XP_LISP_ERR_UNDEF_SYMBOL  14
+#define XP_LISP_ERR_EMPTY_BODY    15
+#define XP_LISP_ERR_BAD_VALUE     16
 
 struct xp_lisp_t 
 {
@@ -41,10 +43,10 @@ struct xp_lisp_t
 	int opt_undef_symbol;
 
 	/* for read */
-	xp_lisp_cint       curc;
-	xp_lisp_creader_t  creader;
-	void*          creader_extra;
-	int            creader_just_set;
+	xp_lisp_cint curc;
+	xp_lisp_creader_t creader;
+	void* creader_extra;
+	int creader_just_set;
 	xp_lisp_token_t*   token;
 
 	/* for eval */
@@ -52,10 +54,10 @@ struct xp_lisp_t
 	xp_size_t eval_depth;
 
 	/* for print */
-	FILE*          outstream;
+	XP_FILE* outstream;
 
 	/* memory manager */
-	xp_lisp_mem_t*     mem;
+	xp_lisp_mem_t* mem;
 };
 
 typedef struct xp_lisp_t xp_lisp_t;

@@ -1,13 +1,13 @@
 /*
- * $Id: memory.h,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: memory.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
-#ifndef _RBL_MEM_H_
-#define _RBL_MEM_H_
+#ifndef _XP_LISP_MEM_H_
+#define _XP_LISP_MEM_H_
 
-#include "obj.h"
-#include "env.h"
-#include "array.h"
+#include <xp/lisp/object.h>
+#include <xp/lisp/env.h>
+#include <xp/lisp/array.h>
 
 struct xp_lisp_mem_t
 {
@@ -17,8 +17,8 @@ struct xp_lisp_mem_t
 	xp_size_t     ubound;     // upper bounds of the maximum number of objects
 	xp_size_t     ubound_inc; // increment of the upper bounds
 	xp_size_t     count;      // the number of objects currently allocated
-	xp_lisp_obj_t* used[RBL_TYPE_COUNT];
-	xp_lisp_obj_t* free[RBL_TYPE_COUNT];
+	xp_lisp_obj_t* used[XP_LISP_TYPE_COUNT];
+	xp_lisp_obj_t* free[XP_LISP_TYPE_COUNT];
 	xp_lisp_obj_t* locked;
 
 	/*

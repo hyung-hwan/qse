@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: token.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
 #include "token.h"
@@ -25,7 +25,7 @@ xp_lisp_token_t* xp_lisp_token_new (xp_size_t capacity)
 
 	token->size      = 0;
 	token->capacity  = capacity;
-	token->buffer[0] = RBL_CHAR('\0');
+	token->buffer[0] = XP_LISP_CHAR('\0');
 
 	return token;
 }
@@ -48,7 +48,7 @@ int xp_lisp_token_addc (xp_lisp_token_t* token, xp_lisp_cint c)
 	}
 
 	token->buffer[token->size++] = c;
-	token->buffer[token->size]   = RBL_CHAR('\0');
+	token->buffer[token->size]   = XP_LISP_CHAR('\0');
 	return 0;
 }
 
@@ -58,7 +58,7 @@ void xp_lisp_token_clear (xp_lisp_token_t* token)
 	token->fvalue    = .0;
 
 	token->size      = 0;
-	token->buffer[0] = RBL_CHAR('\0');
+	token->buffer[0] = XP_LISP_CHAR('\0');
 }
 
 xp_lisp_char* xp_lisp_token_transfer (xp_lisp_token_t* token, xp_size_t capacity)
@@ -72,7 +72,7 @@ xp_lisp_char* xp_lisp_token_transfer (xp_lisp_token_t* token, xp_size_t capacity
 	token->buffer    = new_buffer;
 	token->size      = 0;
 	token->capacity  = capacity;
-	token->buffer[0] = RBL_CHAR('\0');
+	token->buffer[0] = XP_LISP_CHAR('\0');
 
 	return old_buffer;
 }
@@ -88,5 +88,5 @@ int xp_lisp_token_compare (xp_lisp_token_t* token, const xp_lisp_char* str)
 		index++; p++; str++;
 	}
 
-	return (*str == RBL_CHAR('\0'))? 0: -1;
+	return (*str == XP_LISP_CHAR('\0'))? 0: -1;
 }

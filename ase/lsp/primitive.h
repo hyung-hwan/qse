@@ -1,12 +1,12 @@
 /*
- * $Id: primitive.h,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: primitive.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
-#ifndef _RBL_PRIM_H_
-#define _RBL_PRIM_H_
+#ifndef _XP_LISP_PRIM_H_
+#define _XP_LISP_PRIM_H_
 
-#include "types.h"
-#include "lsp.h"
+#include <xp/lisp/types.h>
+#include <xp/lisp/lisp.h>
 
 typedef xp_lisp_obj_t* (*xp_lisp_pimpl_t) (xp_lisp_t*, xp_lisp_obj_t*);
 
@@ -42,23 +42,23 @@ xp_lisp_obj_t* xp_lisp_prim_lt    (xp_lisp_t*, xp_lisp_obj_t* args);
 }
 #endif
 
-#define RBL_PRIM_CHECK_ARG_COUNT(lsp,args,min,max) \
+#define XP_LISP_PRIM_CHECK_ARG_COUNT(lsp,args,min,max) \
 { \
 	xp_size_t count; \
 	if (xp_lisp_probe_args(lsp->mem, args, &count) == -1) { \
-		lsp->error = RBL_ERR_BAD_ARG; \
+		lsp->error = XP_LISP_ERR_BAD_ARG; \
 		return XP_NULL; \
 	} \
 	if (count < min) { \
-		lsp->error = RBL_ERR_TOO_FEW_ARGS; \
+		lsp->error = XP_LISP_ERR_TOO_FEW_ARGS; \
 		return XP_NULL; \
 	} \
 	if (count > max) { \
-		lsp->error = RBL_ERR_TOO_MANY_ARGS; \
+		lsp->error = XP_LISP_ERR_TOO_MANY_ARGS; \
 		return XP_NULL; \
 	} \
 }
 
-#define RBL_PRIM_MAX_ARG_COUNT ((xp_size_t)~(xp_size_t)0)
+#define XP_LISP_PRIM_MAX_ARG_COUNT ((xp_size_t)~(xp_size_t)0)
 
 #endif

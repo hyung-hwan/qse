@@ -1,10 +1,10 @@
 /*
- * $Id: eval.c,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: eval.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
-#include "lsp.h"
-#include "env.h"
-#include "prim.h"
+#include <xp/lisp/lisp.h>
+#include <xp/lisp/env.h>
+#include <xp/lisp/primitive.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,24 +20,24 @@ static xp_lisp_obj_t* apply     (xp_lisp_t* lsp, xp_lisp_obj_t* func, xp_lisp_ob
 
 xp_lisp_obj_t* xp_lisp_eval (xp_lisp_t* lsp, xp_lisp_obj_t* obj)
 {
-	lsp->error = RBL_ERR_NONE;
+	lsp->error = XP_LISP_ERR_NONE;
 
-	if (RBL_TYPE(obj) == RBL_OBJ_CONS) 
+	if (XP_LISP_TYPE(obj) == XP_LISP_OBJ_CONS) 
 		return eval_cons (lsp, obj);
-	else if (RBL_TYPE(obj) == RBL_OBJ_SYMBOL) {
+	else if (XP_LISP_TYPE(obj) == XP_LISP_OBJ_SYMBOL) {
 		xp_lisp_assoc_t* assoc; 
 
 		/*
 		if (obj == lsp->mem->lambda || obj == lsp->mem->macro) {
 			printf ("lambda or macro can't be used as a normal symbol\n");
-			lsp->error = RBL_ERR_BAD_SYMBOL;
+			lsp->error = XP_LISP_ERR_BAD_SYMBOL;
 			return XP_NULL;
 		}
 		*/
 
 		if ((assoc = xp_lisp_lookup (lsp->mem, obj)) == XP_NULL) {
 			if (lsp->opt_undef_symbol) {
-				lsp->error = RBL_ERR_UNDEF_SYMBOL;
+				lsp->error = XP_LISP_ERR_UNDEF_SYMBOL;
 				return XP_NULL;
 			}
 			return lsp->mem->nil;
@@ -57,20 +57,20 @@ static xp_lisp_obj_t* make_func (xp_lisp_t* lsp, xp_lisp_obj_t* cdr, int is_macr
 	printf ("about to create a function or a macro ....\n");
 
 	if (cdr == lsp->mem->nil) {
-		lsp->error = RBL_ERR_TOO_FEW_ARGS;
+		lsp->error = XP_LISP_ERR_TOO_FEW_ARGS;
 		return XP_NULL;
 	}
 
-	if (RBL_TYPE(cdr) != RBL_OBJ_CONS) {
-		lsp->error = RBL_ERR_BAD_ARG;
+	if (XP_LISP_TYPE(cdr) != XP_LISP_OBJ_CONS) {
+		lsp->error = XP_LISP_ERR_BAD_ARG;
 		return XP_NULL;
 	}
 
-	formal = RBL_CAR(cdr);
-	body = RBL_CDR(cdr);
+	formal = XP_LISP_CAR(cdr);
+	body = XP_LISP_CDR(cdr);
 
 	if (body == lsp->mem->nil) {
-		lsp->error = RBL_ERR_EMPTY_BODY;
+		lsp->error = XP_LISP_ERR_EMPTY_BODY;
 		return XP_NULL;
 	}
 
@@ -78,7 +78,7 @@ static xp_lisp_obj_t* make_func (xp_lisp_t* lsp, xp_lisp_obj_t* cdr, int is_macr
 		xp_lisp_make_macro (lsp->mem, formal, body):
 		xp_lisp_make_func (lsp->mem, formal, body);
 	if (func == XP_NULL) {
-		lsp->error = RBL_ERR_MEM;
+		lsp->error = XP_LISP_ERR_MEM;
 		return XP_NULL;
 	}
 
@@ -89,10 +89,10 @@ static xp_lisp_obj_t* eval_cons (xp_lisp_t* lsp, xp_lisp_obj_t* cons)
 {
 	xp_lisp_obj_t* car, * cdr;
    
-	xp_lisp_assert (RBL_TYPE(cons) == RBL_OBJ_CONS);
+	xp_lisp_assert (XP_LISP_TYPE(cons) == XP_LISP_OBJ_CONS);
 
-	car = RBL_CAR(cons);
-	cdr = RBL_CDR(cons);
+	car = XP_LISP_CAR(cons);
+	cdr = XP_LISP_CDR(cons);
 
 	if (car == lsp->mem->lambda) {
 		return make_func (lsp, cdr, 0);
@@ -100,24 +100,24 @@ static xp_lisp_obj_t* eval_cons (xp_lisp_t* lsp, xp_lisp_obj_t* cons)
 	else if (car == lsp->mem->macro) {
 		return make_func (lsp, cdr, 1);
 	}
-	else if (RBL_TYPE(car) == RBL_OBJ_SYMBOL) {
+	else if (XP_LISP_TYPE(car) == XP_LISP_OBJ_SYMBOL) {
 		xp_lisp_assoc_t* assoc;
 
 		if ((assoc = xp_lisp_lookup (lsp->mem, car)) != XP_NULL) {
 			xp_lisp_obj_t* func = assoc->value;
-			if (RBL_TYPE(func) == RBL_OBJ_FUNC ||
-			    RBL_TYPE(func) == RBL_OBJ_MACRO) {
+			if (XP_LISP_TYPE(func) == XP_LISP_OBJ_FUNC ||
+			    XP_LISP_TYPE(func) == XP_LISP_OBJ_MACRO) {
 				return apply (lsp, func, cdr);
 			}
-			else if (RBL_TYPE(func) == RBL_OBJ_PRIM) {
+			else if (XP_LISP_TYPE(func) == XP_LISP_OBJ_PRIM) {
 				// primitive function
-				return RBL_PIMPL(func) (lsp, cdr);
+				return XP_LISP_PIMPL(func) (lsp, cdr);
 			}
 			else {
 				printf ("undefined function: ");
 				xp_lisp_print (lsp, car);
 				printf ("\n");
-				lsp->error = RBL_ERR_UNDEF_FUNC;
+				lsp->error = XP_LISP_ERR_UNDEF_FUNC;
 				return XP_NULL;
 			}
 		}
@@ -126,31 +126,31 @@ static xp_lisp_obj_t* eval_cons (xp_lisp_t* lsp, xp_lisp_obj_t* cons)
 			printf ("undefined function: ");
 			xp_lisp_print (lsp, car);
 			printf ("\n");
-			lsp->error = RBL_ERR_UNDEF_FUNC;
+			lsp->error = XP_LISP_ERR_UNDEF_FUNC;
 			return XP_NULL;
 		}
 	}
-	else if (RBL_TYPE(car) == RBL_OBJ_FUNC || 
-	         RBL_TYPE(car) == RBL_OBJ_MACRO) {
+	else if (XP_LISP_TYPE(car) == XP_LISP_OBJ_FUNC || 
+	         XP_LISP_TYPE(car) == XP_LISP_OBJ_MACRO) {
 		return apply (lsp, car, cdr);
 	}
-	else if (RBL_TYPE(car) == RBL_OBJ_CONS) {
-		if (RBL_CAR(car) == lsp->mem->lambda) {
-			xp_lisp_obj_t* func = make_func (lsp, RBL_CDR(car), 0);
+	else if (XP_LISP_TYPE(car) == XP_LISP_OBJ_CONS) {
+		if (XP_LISP_CAR(car) == lsp->mem->lambda) {
+			xp_lisp_obj_t* func = make_func (lsp, XP_LISP_CDR(car), 0);
 			if (func == XP_NULL) return XP_NULL;
 			return apply (lsp, func, cdr);
 		}
-		else if (RBL_CAR(car) == lsp->mem->macro) {
-			xp_lisp_obj_t* func = make_func (lsp, RBL_CDR(car), 1);
+		else if (XP_LISP_CAR(car) == lsp->mem->macro) {
+			xp_lisp_obj_t* func = make_func (lsp, XP_LISP_CDR(car), 1);
 			if (func == XP_NULL) return XP_NULL;
 			return apply (lsp, func, cdr);
 		}
 	}
 
-	rb_printf (RBL_TEXT("bad function: "));
+	xp_printf (XP_LISP_TEXT("bad function: "));
 	xp_lisp_print (lsp, car);
-	rb_printf (RBL_TEXT("\n"));
-	lsp->error = RBL_ERR_BAD_FUNC;
+	xp_printf (XP_LISP_TEXT("\n"));
+	lsp->error = XP_LISP_ERR_BAD_FUNC;
 	return XP_NULL;
 }
 
@@ -163,26 +163,26 @@ static xp_lisp_obj_t* apply (xp_lisp_t* lsp, xp_lisp_obj_t* func, xp_lisp_obj_t*
 	xp_lisp_mem_t* mem;
 
 	xp_lisp_assert (
-		RBL_TYPE(func) == RBL_OBJ_FUNC ||
-		RBL_TYPE(func) == RBL_OBJ_MACRO);
+		XP_LISP_TYPE(func) == XP_LISP_OBJ_FUNC ||
+		XP_LISP_TYPE(func) == XP_LISP_OBJ_MACRO);
 
-	xp_lisp_assert (RBL_TYPE(RBL_CDR(func)) == RBL_OBJ_CONS);
+	xp_lisp_assert (XP_LISP_TYPE(XP_LISP_CDR(func)) == XP_LISP_OBJ_CONS);
 
 	mem = lsp->mem;
 
-	if (RBL_TYPE(func) == RBL_OBJ_MACRO) {
-		formal = RBL_MFORMAL (func);
-		body   = RBL_MBODY   (func);
+	if (XP_LISP_TYPE(func) == XP_LISP_OBJ_MACRO) {
+		formal = XP_LISP_MFORMAL (func);
+		body   = XP_LISP_MBODY   (func);
 	}
 	else {
-		formal = RBL_FFORMAL (func);
-		body   = RBL_FBODY   (func);
+		formal = XP_LISP_FFORMAL (func);
+		body   = XP_LISP_FBODY   (func);
 	}
 
 	// make a new frame.
 	frame = xp_lisp_frame_new ();
 	if (frame == XP_NULL) {
-		lsp->error = RBL_ERR_MEM;
+		lsp->error = XP_LISP_ERR_MEM;
 		return XP_NULL;
 	}
 
@@ -194,14 +194,14 @@ static xp_lisp_obj_t* apply (xp_lisp_t* lsp, xp_lisp_obj_t* func, xp_lisp_obj_t*
 	// evaluate arguments and push them into the frame.
 	while (formal != mem->nil) {
 		if (actual == mem->nil) {
-			lsp->error = RBL_ERR_TOO_FEW_ARGS;
+			lsp->error = XP_LISP_ERR_TOO_FEW_ARGS;
 			mem->brooding_frame = frame->link;
 			xp_lisp_frame_free (frame);
 			return XP_NULL;
 		}
 
-		value = RBL_CAR(actual);
-		if (RBL_TYPE(func) != RBL_OBJ_MACRO) {
+		value = XP_LISP_CAR(actual);
+		if (XP_LISP_TYPE(func) != XP_LISP_OBJ_MACRO) {
 			// macro doesn't evaluate actual arguments.
 			value = xp_lisp_eval (lsp, value);
 			if (value == XP_NULL) {
@@ -211,31 +211,31 @@ static xp_lisp_obj_t* apply (xp_lisp_t* lsp, xp_lisp_obj_t* func, xp_lisp_obj_t*
 			}
 		}
 
-		if (xp_lisp_frame_lookup (frame, RBL_CAR(formal)) != XP_NULL) {
-			lsp->error = RBL_ERR_DUP_FORMAL;
+		if (xp_lisp_frame_lookup (frame, XP_LISP_CAR(formal)) != XP_NULL) {
+			lsp->error = XP_LISP_ERR_DUP_FORMAL;
 			mem->brooding_frame = frame->link;
 			xp_lisp_frame_free (frame);
 			return XP_NULL;
 		}
-		if (xp_lisp_frame_insert (frame, RBL_CAR(formal), value) == XP_NULL) {
-			lsp->error = RBL_ERR_MEM;
+		if (xp_lisp_frame_insert (frame, XP_LISP_CAR(formal), value) == XP_NULL) {
+			lsp->error = XP_LISP_ERR_MEM;
 			mem->brooding_frame = frame->link;
 			xp_lisp_frame_free (frame);
 			return XP_NULL;
 		}
 
-		actual = RBL_CDR(actual);
-		formal = RBL_CDR(formal);
+		actual = XP_LISP_CDR(actual);
+		formal = XP_LISP_CDR(formal);
 	}
 
-	if (RBL_TYPE(actual) == RBL_OBJ_CONS) {
-		lsp->error = RBL_ERR_TOO_MANY_ARGS;
+	if (XP_LISP_TYPE(actual) == XP_LISP_OBJ_CONS) {
+		lsp->error = XP_LISP_ERR_TOO_MANY_ARGS;
 		mem->brooding_frame = frame->link;
 		xp_lisp_frame_free (frame);
 		return XP_NULL;
 	}
 	else if (actual != mem->nil) {
-		lsp->error = RBL_ERR_BAD_ARG;
+		lsp->error = XP_LISP_ERR_BAD_ARG;
 		mem->brooding_frame = frame->link;
 		xp_lisp_frame_free (frame);
 		return XP_NULL;
@@ -249,13 +249,13 @@ static xp_lisp_obj_t* apply (xp_lisp_t* lsp, xp_lisp_obj_t* func, xp_lisp_obj_t*
 	// do the evaluation of the body
 	value = mem->nil;
 	while (body != mem->nil) {
-		value = xp_lisp_eval(lsp, RBL_CAR(body));
+		value = xp_lisp_eval(lsp, XP_LISP_CAR(body));
 		if (value == XP_NULL) {
 			mem->frame = frame->link;
 			xp_lisp_frame_free (frame);
 			return XP_NULL;
 		}
-		body = RBL_CDR(body);
+		body = XP_LISP_CDR(body);
 	}
 
 	// pop the frame.
@@ -264,8 +264,8 @@ static xp_lisp_obj_t* apply (xp_lisp_t* lsp, xp_lisp_obj_t* func, xp_lisp_obj_t*
 	// destroy the frame.
 	xp_lisp_frame_free (frame);
 
-	//if (RBL_CAR(func) == mem->macro) {
-	if (RBL_TYPE(func) == RBL_OBJ_MACRO) {
+	//if (XP_LISP_CAR(func) == mem->macro) {
+	if (XP_LISP_TYPE(func) == XP_LISP_OBJ_MACRO) {
 		value = xp_lisp_eval(lsp, value);
 		if (value == XP_NULL) return XP_NULL;
 	}

@@ -1,16 +1,16 @@
 /*
- * $Id: array.c,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: array.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
-#include "array.h"
-#include <stdlib.h>
-#include <assert.h>
+#include <xp/lisp/array.h>
+#include <xp/c/stdlib.h>
+#include <xp/c/assert.h>
 
 xp_lisp_array_t* xp_lisp_array_new (xp_size_t capacity)
 {
 	xp_lisp_array_t* array;
 
-	assert (capacity > 0);
+	xp_assert (capacity > 0);
 	array = (xp_lisp_array_t*)malloc (sizeof(xp_lisp_array_t));
 	if (array == XP_NULL) return XP_NULL;
 
@@ -30,7 +30,7 @@ void xp_lisp_array_free (xp_lisp_array_t* array)
 {
 	while (array->size > 0) 
 		free (array->buffer[--array->size]);
-	assert (array->size == 0);
+	xp_assert (array->size == 0);
 
 	free (array->buffer);
 	free (array);
@@ -74,7 +74,7 @@ int xp_lisp_array_insert (xp_lisp_array_t* array, xp_size_t index, void* value)
 
 void xp_lisp_array_delete (xp_lisp_array_t* array, xp_size_t index)
 {
-	assert (index < array->size);
+	xp_assert (index < array->size);
 
 }
 
@@ -82,7 +82,7 @@ void xp_lisp_array_clear (xp_lisp_array_t* array)
 {
 	while (array->size > 0) 
 		free (array->buffer[--array->size]);
-	assert (array->size == 0);
+	xp_assert (array->size == 0);
 	array->buffer[0] = XP_NULL;
 }
 
