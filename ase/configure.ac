@@ -1,6 +1,6 @@
 AC_PREREQ(2.59)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.8 $])
+AC_REVISION([$Revision: 1.9 $])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -28,6 +28,9 @@ AC_C_BIGENDIAN(
 AC_FUNC_MEMCMP
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memset])
+
+# Checks for system files
+AC_CHECK_FILE([/NextDeveloper],[AC_DEFINE(_POSIX_SOURCE)])
 
 AC_CONFIG_FILES([Makefile build/Makefile xp/Makefile xp/c/Makefile])
 AC_OUTPUT
