@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.17 2005-03-30 10:49:01 bacon Exp $
+ * $Id: macros.h,v 1.18 2005-04-02 13:14:33 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -37,6 +37,15 @@
 #define XP_LOOP_BREAK(id)    goto __loop_ ## id ## _end__;
 #define XP_LOOP_BEGIN(id)    __loop_ ## id ## _begin__: {
 #define XP_LOOP_END(id)      XP_LOOP_CONTINUE(id) } __loop_ ## id ## _end__:;
+
+#define XP_REPEAT(n,blk) \
+	do { \
+		xp_size_t n2 = (n); \
+		while ((--n2 & (8 - 1)) > 0) blk; \
+		n2 >>= 3; \
+		while (--n2 > 0) { blk; blk; blk; blk; blk; blk; blk; blk; } \
+	} while (0);
+
 
 #define XP_QUOTE(val)   __XP_QUOTE(val)
 #define __XP_QUOTE(val) #val
