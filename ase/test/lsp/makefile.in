@@ -1,0 +1,16 @@
+SRCS = lisp.c
+OUTS = $(SRCS:.c=.x)
+
+CC = @CC@
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/xp/c
+LIBS = @LIBS@ -lxpc
+
+all: $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o
+
+.SUFFIXES: .c .x
+.c.x:
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
