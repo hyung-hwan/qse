@@ -1,5 +1,6 @@
 AC_PREREQ(2.59)
-AC_INIT(xpkit, deb-0.1.0)
+AC_INIT([xpkit], [deb-0.1.0])
+AC_REVISION([$Revision: 1.5 $])
 
 # Checks for programs.
 AC_PROG_CXX
