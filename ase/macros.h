@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.6 2005-01-21 04:22:24 bacon Exp $
+ * $Id: macros.h,v 1.7 2005-01-21 06:02:02 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -15,7 +15,7 @@
 
 #if defined(_WIN32)
     #define xp_main _tmain
-#else
+#elif defined(XP_CHAR_IS_MCHAR)
     #define xp_main main
 #endif
 
