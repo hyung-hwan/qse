@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.15 $])
+AC_REVISION([$Revision: 1.16 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -24,6 +24,10 @@ AC_C_BIGENDIAN(
 	[AC_DEFINE([XP_ENDIAN_BIG],[],[Big Endian])],
 	[AC_DEFINE([XP_ENDIAN_LITTLE],[],[Little Endian])],
 	[AC_DEFINE([XP_ENDIAN_UNKNOWN],[],[Unknown Endian])])
+
+# Checks for data types
+AC_CHECK_TYPE(long long, [AC_DEFINE([XP_HAVE_LONG_LONG],[],[long long])])
+AC_CHECK_TYPE(long double, [AC_DEFINE([XP_HAVE_LONG_DOUBLE],[],[long double])])
 
 # Checks for library functions.
 #AC_FUNC_MEMCMP

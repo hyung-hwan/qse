@@ -7,6 +7,12 @@
 /* Unknown Endian */
 #undef XP_ENDIAN_UNKNOWN
 
+/* long long */
+#undef XP_HAVE_LONG_LONG
+
+/* long double */
+#undef XP_HAVE_LONG_DOUBLE
+
 /* fcntl.h */
 #undef XP_HAVE_FCNTL_H
 
