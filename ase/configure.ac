@@ -1,10 +1,11 @@
 AC_PREREQ(2.59)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.7 $])
+AC_REVISION([$Revision: 1.8 $])
 
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_RANLIB
 
 # Checks for libraries.
 
@@ -18,7 +19,10 @@ AC_CHECK_HEADER([limits.h], [AC_DEFINE(XP_HAVE_LIMITS_H)])
 AC_CHECK_HEADER([wchar.h], [AC_DEFINE(XP_HAVE_WCHAR_H)])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
+AC_C_BIGENDIAN(
+	[AC_DEFINE(XP_ENDIAN_BIG)],
+	[AC_DEFINE(XP_ENDIAN_LITTLE)],
+	[AC_DEFINE(XP_ENDIAN_UNKNOWN)])
 
 # Checks for library functions.
 AC_FUNC_MEMCMP
