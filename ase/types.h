@@ -1,11 +1,11 @@
 /*
- * $Id: types.h,v 1.2 2004-12-18 09:58:49 bacon Exp $
+ * $Id: types.h,v 1.3 2004-12-18 10:01:18 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
 #define _XP_TYPES_H_
 
-#include <rb/itypes.h>
+#include <xp/itypes.h>
 
 typedef xp_int8_t   xp_mchar_t;
 typedef xp_int32_t  xp_mcint_t;
