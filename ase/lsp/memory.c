@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.7 2005-02-05 06:28:13 bacon Exp $
+ * $Id: memory.c,v 1.8 2005-02-07 15:10:41 bacon Exp $
  */
 
 #include <xp/lisp/memory.h> 
@@ -55,9 +55,9 @@ xp_lisp_mem_t* xp_lisp_mem_new (xp_size_t ubound, xp_size_t ubound_inc)
 	// initialize common object pointers
 	mem->nil     = xp_lisp_make_nil    (mem);
 	mem->t       = xp_lisp_make_true   (mem);
-	mem->quote   = xp_lisp_make_symbol (mem,XP_TEXT("quote"),  5);
-	mem->lambda  = xp_lisp_make_symbol (mem,XP_TEXT("lambda"), 6);
-	mem->macro   = xp_lisp_make_symbol (mem,XP_TEXT("macro"),  5);
+	mem->quote   = xp_lisp_make_symbol (mem, XP_TEXT("quote"),  5);
+	mem->lambda  = xp_lisp_make_symbol (mem, XP_TEXT("lambda"), 6);
+	mem->macro   = xp_lisp_make_symbol (mem, XP_TEXT("macro"),  5);
 
 	if (mem->nil    == XP_NULL ||
 	    mem->t      == XP_NULL ||
@@ -92,7 +92,7 @@ void xp_lisp_mem_free (xp_lisp_mem_t* mem)
 }
 
 static int xp_lisp_add_prim (
-	xp_lisp_mem_t* mem, const xp_lisp_char* name, xp_size_t len, xp_lisp_pimpl_t prim)
+	xp_lisp_mem_t* mem, const xp_char_t* name, xp_size_t len, xp_lisp_pimpl_t prim)
 {
 	xp_lisp_obj_t* n, * p;
 	
@@ -407,7 +407,8 @@ xp_lisp_obj_t* xp_lisp_make_float (xp_lisp_mem_t* mem, xp_lisp_float value)
 	return obj;
 }
 
-xp_lisp_obj_t* xp_lisp_make_symbol (xp_lisp_mem_t* mem, const xp_lisp_char* str, xp_size_t len)
+xp_lisp_obj_t* xp_lisp_make_symbol (
+	xp_lisp_mem_t* mem, const xp_char_t* str, xp_size_t len)
 {
 	xp_lisp_obj_t* obj;
 
@@ -421,7 +422,7 @@ xp_lisp_obj_t* xp_lisp_make_symbol (xp_lisp_mem_t* mem, const xp_lisp_char* str,
 
 	// no such symbol found. create a new one 
 	obj = xp_lisp_allocate (mem, XP_LISP_OBJ_SYMBOL,
-		sizeof(xp_lisp_obj_symbol_t) + (len + 1) * sizeof(xp_lisp_char));
+		sizeof(xp_lisp_obj_symbol_t) + (len + 1) * sizeof(xp_char_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	// fill in the symbol buffer
@@ -430,13 +431,13 @@ xp_lisp_obj_t* xp_lisp_make_symbol (xp_lisp_mem_t* mem, const xp_lisp_char* str,
 	return obj;
 }
 
-xp_lisp_obj_t* xp_lisp_make_string (xp_lisp_mem_t* mem, const xp_lisp_char* str, xp_size_t len)
+xp_lisp_obj_t* xp_lisp_make_string (xp_lisp_mem_t* mem, const xp_char_t* str, xp_size_t len)
 {
 	xp_lisp_obj_t* obj;
 
 	// allocate memory for the string
 	obj = xp_lisp_allocate (mem, XP_LISP_OBJ_STRING,
-		sizeof(xp_lisp_obj_string_t) + (len + 1) * sizeof(xp_lisp_char));
+		sizeof(xp_lisp_obj_string_t) + (len + 1) * sizeof(xp_char_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	// fill in the string buffer
@@ -559,9 +560,9 @@ int xp_lisp_probe_args (xp_lisp_mem_t* mem, xp_lisp_obj_t* obj, xp_size_t* len)
 	return 0;
 }
 
-int xp_lisp_comp_symbol (xp_lisp_obj_t* obj, const xp_lisp_char* str)
+int xp_lisp_comp_symbol (xp_lisp_obj_t* obj, const xp_char_t* str)
 {
-	xp_lisp_char* p;
+	xp_char_t* p;
 	xp_size_t index, length;
 
 	xp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_SYMBOL);
@@ -579,9 +580,9 @@ int xp_lisp_comp_symbol (xp_lisp_obj_t* obj, const xp_lisp_char* str)
 	return (*str == XP_CHAR('\0'))? 0: -1;
 }
 
-int xp_lisp_comp_symbol2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t len)
+int xp_lisp_comp_symbol2 (xp_lisp_obj_t* obj, const xp_char_t* str, xp_size_t len)
 {
-	xp_lisp_char* p;
+	xp_char_t* p;
 	xp_size_t index, length;
 
 	xp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_SYMBOL);
@@ -600,9 +601,9 @@ int xp_lisp_comp_symbol2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t
 	       (length > len)?  1: 0;
 }
 
-int xp_lisp_comp_string (xp_lisp_obj_t* obj, const xp_lisp_char* str)
+int xp_lisp_comp_string (xp_lisp_obj_t* obj, const xp_char_t* str)
 {
-	xp_lisp_char* p;
+	xp_char_t* p;
 	xp_size_t index, length;
 
 	xp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_STRING);
@@ -620,9 +621,9 @@ int xp_lisp_comp_string (xp_lisp_obj_t* obj, const xp_lisp_char* str)
 	return (*str == XP_CHAR('\0'))? 0: -1;
 }
 
-int xp_lisp_comp_string2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t len)
+int xp_lisp_comp_string2 (xp_lisp_obj_t* obj, const xp_char_t* str, xp_size_t len)
 {
-	xp_lisp_char* p;
+	xp_char_t* p;
 	xp_size_t index, length;
 
 	xp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_STRING);
@@ -641,14 +642,14 @@ int xp_lisp_comp_string2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t
 	       (length > len)?  1: 0;
 }
 
-void xp_lisp_copy_string (xp_lisp_char* dst, const xp_lisp_char* str)
+void xp_lisp_copy_string (xp_char_t* dst, const xp_char_t* str)
 {
 	// the buffer pointed by dst should be big enough to hold str
 	while (*str != XP_CHAR('\0')) *dst++ = *str++;
 	*dst = XP_CHAR('\0');
 }
 
-void xp_lisp_copy_string2 (xp_lisp_char* dst, const xp_lisp_char* str, xp_size_t len)
+void xp_lisp_copy_string2 (xp_char_t* dst, const xp_char_t* str, xp_size_t len)
 {
 	// the buffer pointed by dst should be big enough to hold str
 	while (len > 0) {

@@ -1,5 +1,5 @@
 /*
- * $Id: lisp.c,v 1.6 2005-02-05 05:43:55 bacon Exp $
+ * $Id: lisp.c,v 1.7 2005-02-07 15:10:41 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -55,7 +55,7 @@ void xp_lisp_free (xp_lisp_t* lsp)
 	free (lsp);
 }
 
-int xp_lisp_error (xp_lisp_t* lsp, xp_lisp_char* buf, xp_size_t size)
+int xp_lisp_error (xp_lisp_t* lsp, xp_char_t* buf, xp_size_t size)
 {
 	if (buf != XP_NULL || size == 0) return lsp->error;
 

@@ -33,6 +33,8 @@ int to_int (const xp_char_t* str)
 	return r;
 }
 
+#include <locale.h>
+
 int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_lisp_t* lisp;
@@ -41,6 +43,9 @@ int xp_main (int argc, xp_char_t* argv[])
 #ifdef LINUX
 	mtrace ();
 #endif
+
+setlocale (LC_ALL, "");
+
 	if (argc != 3) {
 		xp_fprintf (xp_stderr, XP_TEXT("usage: %s mem_ubound mem_ubound_inc\n"), argv[0]);
 		return -1;
