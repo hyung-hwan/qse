@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.6 2005-01-06 15:13:26 bacon Exp $
+ * $Id: types.h,v 1.7 2005-01-08 12:25:59 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -11,12 +11,6 @@
 #endif
 
 typedef xp_uint8_t  xp_byte_t;
-
-typedef xp_int8_t   xp_mchar_t;
-typedef xp_int32_t  xp_mcint_t;
-
-typedef xp_int16_t  xp_wchar_t;
-typedef xp_int32_t  xp_wcint_t;
 
 /*
 #define XP_CHAR_IS_MCHAR
