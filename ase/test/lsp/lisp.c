@@ -6,9 +6,9 @@
 #include <mcheck.h>
 #endif
 
-static int get_char (xp_lisp_cint* ch, void* arg)
+static int get_char (xp_cint_t* ch, void* arg)
 {
-	xp_lisp_cint c;
+	xp_cint_t c;
    
 	c = xp_fgetc(xp_stdin);
 	if (c == XP_EOF) {
