@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.7 2005-01-21 06:02:02 bacon Exp $
+ * $Id: macros.h,v 1.8 2005-02-05 06:05:19 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -38,12 +38,12 @@
 #define XP_WCHAR(ch)    ((xp_wchar_t)L##ch)
 #define XP_WTEXT(txt)   ((const xp_wchar_t*)L##txt)
 
-#ifdef XP_CHAR_IS_MCHAR
-#define XP_CHAR(ch)   XP_MCHAR(ch)
-#define XP_TEXT(txt)  XP_MTEXT(txt)
+#if defined(XP_CHAR_IS_MCHAR)
+	#define XP_CHAR(ch)   XP_MCHAR(ch)
+	#define XP_TEXT(txt)  XP_MTEXT(txt)
 #else
-#define XP_CHAR(ch)   XP_WCHAR(ch)
-#define XP_TEXT(txt)  XP_WTEXT(txt)
+	#define XP_CHAR(ch)   XP_WCHAR(ch)
+	#define XP_TEXT(txt)  XP_WTEXT(txt)
 #endif
 
 #endif
