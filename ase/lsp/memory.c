@@ -1,11 +1,12 @@
 /*
- * $Id: memory.c,v 1.6 2005-02-05 05:43:55 bacon Exp $
+ * $Id: memory.c,v 1.7 2005-02-05 06:28:13 bacon Exp $
  */
 
 #include <xp/lisp/memory.h> 
 #include <xp/lisp/primitive.h>
 #include <xp/c/memory.h>
 #include <xp/c/assert.h>
+#include <xp/c/dprint.h>
 
 xp_lisp_mem_t* xp_lisp_mem_new (xp_size_t ubound, xp_size_t ubound_inc)
 {
@@ -173,7 +174,7 @@ xp_lisp_obj_t* xp_lisp_allocate (xp_lisp_mem_t* mem, int type, xp_size_t size)
 	XP_LISP_LINK(obj) = mem->used[type];
 	mem->used[type] = obj;
 	mem->count++;
-	XP_DEBUG1 (XP_TEXT("mem->count: %u\n"), mem->count);
+	xp_dprint1 (XP_TEXT("mem->count: %u\n"), mem->count);
 
 	return obj;
 }
@@ -192,7 +193,7 @@ void xp_lisp_dispose (xp_lisp_mem_t* mem, xp_lisp_obj_t* prev, xp_lisp_obj_t* ob
 	else XP_LISP_LINK(prev) = XP_LISP_LINK(obj);
 
 	mem->count--;
-	XP_DEBUG1 (XP_TEXT("mem->count: %u\n"), mem->count);
+	xp_dprint1 (XP_TEXT("mem->count: %u\n"), mem->count);
 
 	xp_free (obj);	
 }
@@ -280,7 +281,7 @@ static void xp_lisp_mark (xp_lisp_mem_t* mem)
 	xp_lisp_array_t* array;
 	xp_size_t       i;
 
-	XP_DEBUG0 (XP_TEXT("marking environment frames\n"));
+	xp_dprint0 (XP_TEXT("marking environment frames\n"));
 	// mark objects in the environment frames
 	frame = mem->frame;
 	while (frame != XP_NULL) {
@@ -294,7 +295,7 @@ static void xp_lisp_mark (xp_lisp_mem_t* mem)
 		frame = frame->link;
 	}
 
-	XP_DEBUG0 (XP_TEXT("marking interim frames\n"));
+	xp_dprint0 (XP_TEXT("marking interim frames\n"));
 
 	// mark objects in the interim frames
 	frame = mem->brooding_frame;
@@ -311,17 +312,17 @@ static void xp_lisp_mark (xp_lisp_mem_t* mem)
 	}
 
 	/*
-	XP_DEBUG0 (XP_TEXT("marking the locked object\n"));
+	xp_dprint0 (XP_TEXT("marking the locked object\n"));
 	if (mem->locked != XP_NULL) xp_lisp_mark_obj (mem->locked);
 	*/
 
-	XP_DEBUG0 (XP_TEXT("marking termporary objects\n"));
+	xp_dprint0 (XP_TEXT("marking termporary objects\n"));
 	array = mem->temp_array;
 	for (i = 0; i < array->size; i++) {
 		xp_lisp_mark_obj (array->buffer[i]);
 	}
 
-	XP_DEBUG0 (XP_TEXT("marking builtin objects\n"));
+	xp_dprint0 (XP_TEXT("marking builtin objects\n"));
 	// mark common objects
 	if (mem->t      != XP_NULL) xp_lisp_mark_obj (mem->t);
 	if (mem->nil    != XP_NULL) xp_lisp_mark_obj (mem->nil);
@@ -342,7 +343,7 @@ static void xp_lisp_sweep (xp_lisp_mem_t* mem)
 		obj = mem->used[i];
 		//obj = mem->used[--i];
 
-		XP_DEBUG1 (XP_TEXT("sweeping objects of type: %u\n"), i);
+		xp_dprint1 (XP_TEXT("sweeping objects of type: %u\n"), i);
 
 		while (obj != XP_NULL) {
 			next = XP_LISP_LINK(obj);
