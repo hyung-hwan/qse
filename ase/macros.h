@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.18 2005-04-02 13:14:33 bacon Exp $
+ * $Id: macros.h,v 1.19 2005-04-02 14:28:18 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -40,12 +40,13 @@
 
 #define XP_REPEAT(n,blk) \
 	do { \
-		xp_size_t n2 = (n); \
-		while ((--n2 & (8 - 1)) > 0) blk; \
-		n2 >>= 3; \
-		while (--n2 > 0) { blk; blk; blk; blk; blk; blk; blk; blk; } \
+		xp_size_t __xp_repeat_x1 = (n) & 15, __xp_repeat_x2 = (n) >> 4; \
+		while (__xp_repeat_x1-- > 0) { blk; } \
+		while (__xp_repeat_x2-- > 0) { \
+			blk; blk; blk; blk; blk; blk; blk; blk; \
+			blk; blk; blk; blk; blk; blk; blk; blk; \
+		} \
 	} while (0);
-
 
 #define XP_QUOTE(val)   __XP_QUOTE(val)
 #define __XP_QUOTE(val) #val
