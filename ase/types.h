@@ -1,73 +1,123 @@
 /*
- * $Id: types.h,v 1.13 2005-02-13 16:15:31 bacon Exp $
+ * $Id: types.h,v 1.14 2005-02-14 03:13:32 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
 #define _XP_TYPES_H_
 
-#ifndef _WIN32
 #include <xp/config.h>
-#endif
-#include <xp/xp_types.h>
 
-#if defined(XP_HAVE_LONG_LONG)
-typedef long long xp_long_t;
-typedef unsigned long long xp_ulong_t;
-#elif defined(XP_HAVE___INT64)
-typedef __int64 xp_long_t;
-typedef unsigned __int64 xp_ulong_t;
-#else
-typedef long xp_long_t;
-typedef unsigned long xp_ulong_t;
-#endif
-
-#if SIZEOF_VOID_P == SIZEOF_LONG_LONG
-typedef long long xp_int_t;
-typedef unsigned long long xp_uint_t;
-#elif SIZEOF_VOID_P == SIZEOF_LONG
-typedef long xp_int_t;
-typedef unsigned long xp_uint_t;
-#else
-typedef int xp_int_t;
-typedef unsigned int xp_uint_t;
-#endif
-
-#if SIZEOF_CHAR == 8
-typedef char xp_int8_t;
-typedef unsigned char xp_uint8_t;
-#endif
-
-#if SIZEOF_SHORT == 16
-typedef short xp_int16_t;
-typedef unsigned short xp_uint16_t;
-#endif
-
-#if SIZEOF_INT == 32
-typedef int xp_int32_t;
-typedef unsigned int xp_uint32_t;
-#elif SIZEOF_LONG == 32
-typedef long xp_int32_t;
-typedef unsigned long xp_uint32_t;
-#endif
-
-#if SIZEOF_INT = 64
-typedef int xp_int64_t;
-typedef unsigned int xp_uint64_t;
-#elif SIZEOF_LONG == 64
-typedef long xp_int64_t;
-typedef unsigned long xp_uint64_t;
-#elif SIZEOF_LONG_LONG == 64
-typedef long long xp_int64_t;
-typedef unsigned long long xp_uint64_t;
-#endif
-
-typedef xp_uint8_t  xp_byte_t;
-
+/* boolean types */
 typedef int xp_bool_t;
 #define xp_true  (0 == 0)
 #define xp_false (0 != 0)
 
-#ifdef XP_HAVE_WCHAR_T
+/* integer that can hold a pointer */
+#if SIZEOF_VOID_P == SIZEOF_LONG_LONG
+	typedef long long xp_int_t;
+	typedef unsigned long long xp_uint_t;
+#elif SIZEOF_VOID_P == SIZEOF_LONG
+	typedef long xp_int_t;
+	typedef unsigned long xp_uint_t;
+#else
+	typedef int xp_int_t;
+	typedef unsigned int xp_uint_t;
+#endif
+
+/* the largest integer supported by the system */
+#if SIZEOF_LONG_LONG != 0
+	typedef long long xp_long_t;
+	typedef unsigned long long xp_ulong_t;
+#elif SIZEOF___INT64 != 0
+	typedef __int64 xp_long_t;
+	typedef unsigned __int64 xp_ulong_t;
+#else
+	typedef long xp_long_t;
+	typedef unsigned long xp_ulong_t;
+#endif
+
+/* integers of specific size */
+#if SIZEOF_CHAR == 1
+	typedef char xp_int8_t;
+	typedef unsigned char xp_uint8_t;
+#elif SIZEOF___INT8 == 1
+	typedef __int8 xp_int8_t;
+	typedef unsigned __int8 xp_uint8_t;
+#endif
+
+#if SIZEOF_SHORT == 2
+	typedef short xp_int16_t;
+	typedef unsigned short xp_uint16_t;
+#elif SIZEOF___INT16 == 2
+	typedef __int16 xp_int16_t;
+	typedef unsigned __int16 xp_uint16_t;
+#endif
+
+#if SIZEOF_INT == 4
+	typedef int xp_int32_t;
+	typedef unsigned int xp_uint32_t;
+#elif SIZEOF_LONG == 4
+	typedef long xp_int32_t;
+	typedef unsigned long xp_uint32_t;
+#elif SIZEOF___INT32 == 4
+	typedef __int32 xp_int32_t;
+	typedef unsigned __int32 xp_uint32_t;
+#endif
+
+#if SIZEOF_INT == 8
+	typedef int xp_int64_t;
+	typedef unsigned int xp_uint64_t;
+#elif SIZEOF_LONG == 8
+	typedef long xp_int64_t;
+	typedef unsigned long xp_uint64_t;
+#elif SIZEOF_LONG_LONG == 8
+	typedef long long xp_int64_t;
+	typedef unsigned long long xp_uint64_t;
+#elif SIZEOF___INT64 == 8
+	typedef __int64 xp_int64_t;
+	typedef unsigned __int64 xp_uint64_t;
+#endif
+
+#if SIZEOF_INT == 16
+	typedef int xp_int128_t;
+	typedef unsigned int xp_uint128_t;
+#elif SIZEOF_LONG == 16
+	typedef long xp_int128_t;
+	typedef unsigned long xp_uint128_t;
+#elif SIZEOF_LONG_LONG == 16
+	typedef long long xp_int128_t;
+	typedef unsigned long long xp_uint128_t;
+#elif SIZEOF___INT128 == 16
+	typedef __int128 xp_int128_t;
+	typedef unsigned __int128 xp_uint128_t;
+#endif
+
+/* miscellaneous integral types */
+typedef xp_uint8_t xp_byte_t;
+typedef xp_uint_t  xp_size_t;
+typedef xp_int_t   xp_ssize_t;
+
+/* floating-point number */
+#if SIZEOF_LONG_DOUBLE > SIZEOF_DOUBLE
+	typedef long double xp_real_t;
+#else
+	typedef double xp_real_t;
+#endif
+
+/* character types */
+typedef char xp_mchar_t;
+typedef int  xp_mcint_t;
+
+#if SIZEOF_LONG == 4
+	/*typedef unsigned short xp_wchar_t;*/
+	typedef long           xp_wchar_t;
+	typedef long           xp_wcint_t;
+#else
+	/*typedef unsigned short xp_wchar_t;*/
+	typedef int            xp_wchar_t;
+	typedef int            xp_wcint_t;
+#endif
+
 // TODO: make it configurable from outside
 /*
 #define XP_CHAR_IS_MCHAR
@@ -78,11 +128,5 @@ typedef xp_mcint_t  xp_cint_t;
 #define XP_CHAR_IS_WCHAR
 typedef xp_wchar_t  xp_char_t;
 typedef xp_wcint_t  xp_cint_t;
-
-#else
-#define XP_CHAR_IS_MCHAR
-typedef xp_mchar_t  xp_char_t;
-typedef xp_mcint_t  xp_cint_t;
-#endif
 
 #endif

@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.19 $])
+AC_REVISION([$Revision: 1.20 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -28,10 +28,6 @@ AC_C_BIGENDIAN(
 # Checks for data types
 AC_CHECK_TYPE(long long, [AC_DEFINE([XP_HAVE_LONG_LONG],[],[long long])])
 AC_CHECK_TYPE(long double, [AC_DEFINE([XP_HAVE_LONG_DOUBLE],[],[long double])])
-AC_CHECK_TYPE(__int8, [AC_DEFINE([XP_HAVE_INT8],[],[__int8])])
-AC_CHECK_TYPE(__int16, [AC_DEFINE([XP_HAVE_INT16],[],[__int16])])
-AC_CHECK_TYPE(__int32, [AC_DEFINE([XP_HAVE_INT32],[],[__int32])])
-AC_CHECK_TYPE(__int64, [AC_DEFINE([XP_HAVE_INT64],[],[__int64])])
 
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
@@ -42,10 +38,11 @@ AC_CHECK_SIZEOF(__int8)
 AC_CHECK_SIZEOF(__int16)
 AC_CHECK_SIZEOF(__int32)
 AC_CHECK_SIZEOF(__int64)
+AC_CHECK_SIZEOF(__int128)
+AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
-AC_CHECK_SIZEOF(void *)
 
 # Checks for library functions.
 #AC_FUNC_MEMCMP
@@ -56,7 +53,7 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_FILE([/NextDeveloper],[AC_DEFINE([_POSIX_SOURCE],[],[_POSIX_SOURCE])])
 
 AC_CONFIG_FILES([
-	Makefile build/Makefile xp/Makefile xp/bin/ctype/Makefile
+	Makefile xp/Makefile xp/bin/ctype/Makefile
 	xp/c/Makefile xp/lisp/Makefile 
 	xp/test/c/Makefile xp/test/lisp/Makefile])
 AC_OUTPUT
