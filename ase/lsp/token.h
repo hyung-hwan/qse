@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.4 2005-02-07 15:10:41 bacon Exp $
+ * $Id: token.h,v 1.5 2005-02-14 14:37:50 bacon Exp $
  */
 
 #ifndef _XP_LISP_TOKEN_H_
@@ -11,8 +11,8 @@ struct xp_lisp_token_t
 {
 	int        type;
 
-	xp_lisp_int    ivalue;
-	xp_lisp_float  fvalue;
+	xp_lisp_int_t    ivalue;
+	xp_lisp_real_t  fvalue;
 
 	xp_size_t     capacity;
 	xp_size_t     size;

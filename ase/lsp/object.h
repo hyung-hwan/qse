@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.3 2005-02-07 15:10:41 bacon Exp $
+ * $Id: object.h,v 1.4 2005-02-14 14:37:50 bacon Exp $
  */
 
 #ifndef _XP_LISP_OBJECT_H_
@@ -49,13 +49,13 @@ struct xp_lisp_obj_true_t
 struct xp_lisp_obj_int_t
 {
 	XP_LISP_OBJ_HEADER;
-	xp_lisp_int value;
+	xp_lisp_int_t value;
 };
 
 struct xp_lisp_obj_float_t
 {
 	XP_LISP_OBJ_HEADER;
-	xp_lisp_float value;
+	xp_lisp_real_t value;
 };
 
 struct xp_lisp_obj_symbol_t

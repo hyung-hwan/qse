@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.8 2005-02-07 15:10:41 bacon Exp $
+ * $Id: memory.c,v 1.9 2005-02-14 14:37:50 bacon Exp $
  */
 
 #include <xp/lisp/memory.h> 
@@ -383,7 +383,7 @@ xp_lisp_obj_t* xp_lisp_make_true (xp_lisp_mem_t* mem)
 	return mem->t;
 }
 
-xp_lisp_obj_t* xp_lisp_make_int (xp_lisp_mem_t* mem, xp_lisp_int value)
+xp_lisp_obj_t* xp_lisp_make_int (xp_lisp_mem_t* mem, xp_lisp_int_t value)
 {
 	xp_lisp_obj_t* obj;
 
@@ -395,7 +395,7 @@ xp_lisp_obj_t* xp_lisp_make_int (xp_lisp_mem_t* mem, xp_lisp_int value)
 	return obj;
 }
 
-xp_lisp_obj_t* xp_lisp_make_float (xp_lisp_mem_t* mem, xp_lisp_float value)
+xp_lisp_obj_t* xp_lisp_make_float (xp_lisp_mem_t* mem, xp_lisp_real_t value)
 {
 	xp_lisp_obj_t* obj;
 

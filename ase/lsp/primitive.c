@@ -1,5 +1,5 @@
 /*
- * $Id: primitive.c,v 1.4 2005-02-05 05:30:25 bacon Exp $
+ * $Id: primitive.c,v 1.5 2005-02-14 14:37:50 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -523,7 +523,7 @@ xp_lisp_obj_t* xp_lisp_prim_letx (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 xp_lisp_obj_t* xp_lisp_prim_plus (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	xp_lisp_obj_t* body, * tmp;
-	xp_lisp_int value = 0;
+	xp_lisp_int_t value = 0;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LISP_PRIM_MAX_ARG_COUNT);
 	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);

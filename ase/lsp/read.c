@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.6 2005-02-05 05:43:55 bacon Exp $
+ * $Id: read.c,v 1.7 2005-02-14 14:37:50 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -326,17 +326,20 @@ static int read_token (xp_lisp_t* lsp)
 
 static int read_number (xp_lisp_t* lsp, int negative)
 {
+	xp_lisp_int_t ivalue = 0;
+
 	do {
-		TOKEN_IVALUE(lsp) = 
-			TOKEN_IVALUE(lsp) * 10 + lsp->curc - XP_CHAR('0');
+		ivalue = ivalue * 10 + (lsp->curc - XP_CHAR('0'));
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
 	} while (IS_DIGIT(lsp->curc));
 
-	if (negative) TOKEN_IVALUE(lsp) *= -1; 
+	if (negative) ivalue *= -1;
+
+	TOKEN_IVALUE(lsp) = ivalue;
 	TOKEN_TYPE(lsp) = TOKEN_INT;
 
-	// TODO: read floating point numbers
+/* TODO: read floating point numbers */
 
 	return 0;
 }
@@ -354,7 +357,7 @@ static int read_ident (xp_lisp_t* lsp)
 static int read_string (xp_lisp_t* lsp)
 {
 	int escaped = 0;
-	xp_lisp_cint code = 0;
+	xp_cint_t code = 0;
 
 	do {
 		if (lsp->curc == XP_EOF) {
