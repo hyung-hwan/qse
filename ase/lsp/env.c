@@ -1,5 +1,5 @@
 /*
- * $Id: env.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: env.c,v 1.3 2005-02-05 05:18:20 bacon Exp $
  */
 
 #include <xp/lisp/env.h>
@@ -56,7 +56,7 @@ xp_lisp_assoc_t* xp_lisp_frame_lookup (xp_lisp_frame_t* frame, xp_lisp_obj_t* na
 {
 	xp_lisp_assoc_t* assoc;
 
-	xp_lisp_assert (XP_LISP_TYPE(name) == XP_LISP_OBJ_SYMBOL);
+	xp_assert (XP_LISP_TYPE(name) == XP_LISP_OBJ_SYMBOL);
 
 	assoc = frame->assoc;
 	while (assoc != XP_NULL) {
@@ -71,7 +71,7 @@ xp_lisp_assoc_t* xp_lisp_frame_insert (
 {
 	xp_lisp_assoc_t* assoc;
 
-	xp_lisp_assert (XP_LISP_TYPE(name) == XP_LISP_OBJ_SYMBOL);
+	xp_assert (XP_LISP_TYPE(name) == XP_LISP_OBJ_SYMBOL);
 
 	assoc = xp_lisp_assoc_new (name, value);
 	if (assoc == XP_NULL) return XP_NULL;

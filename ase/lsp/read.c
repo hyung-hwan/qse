@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.3 2005-02-04 16:23:34 bacon Exp $
+ * $Id: read.c,v 1.4 2005-02-05 05:18:20 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -79,7 +79,7 @@ static int read_string (xp_lisp_t* lsp);
 
 void xp_lisp_set_creader (xp_lisp_t* lsp, xp_lisp_creader_t func, void* extra)
 {
-	xp_lisp_assert (lsp != XP_NULL);
+	xp_assert (lsp != XP_NULL);
 
 	lsp->creader          = func;
 	lsp->creader_extra    = extra;
@@ -88,7 +88,7 @@ void xp_lisp_set_creader (xp_lisp_t* lsp, xp_lisp_creader_t func, void* extra)
 
 xp_lisp_obj_t* xp_lisp_read (xp_lisp_t* lsp)
 {
-	xp_lisp_assert (lsp != XP_NULL && lsp->creader != XP_NULL);
+	xp_assert (lsp != XP_NULL && lsp->creader != XP_NULL);
 
 	if (lsp->creader_just_set) {
 		// NEXT_CHAR (lsp);
@@ -141,7 +141,7 @@ static xp_lisp_obj_t* read_obj (xp_lisp_t* lsp)
 		xp_lisp_lock (obj);
 		return obj;
 	case TOKEN_IDENT:
-		xp_lisp_assert (lsp->mem->nil != XP_NULL && lsp->mem->t != XP_NULL); 
+		xp_assert (lsp->mem->nil != XP_NULL && lsp->mem->t != XP_NULL); 
 		if (TOKEN_COMPARE(lsp,XP_TEXT("nil")) == 0) obj = lsp->mem->nil;
 		else if (TOKEN_COMPARE(lsp,XP_TEXT("t")) == 0) obj = lsp->mem->t;
 		else {
@@ -255,7 +255,7 @@ static xp_lisp_obj_t* read_quote (xp_lisp_t* lsp)
 
 static int read_token (xp_lisp_t* lsp)
 {
-	xp_lisp_assert (lsp->creader != XP_NULL);
+	xp_assert (lsp->creader != XP_NULL);
 
 	TOKEN_CLEAR (lsp);
 

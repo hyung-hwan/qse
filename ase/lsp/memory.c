@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.3 2005-02-04 16:23:34 bacon Exp $
+ * $Id: memory.c,v 1.4 2005-02-05 05:18:20 bacon Exp $
  */
 
 #include <xp/lisp/memory.h> 
@@ -74,7 +74,7 @@ xp_lisp_mem_t* xp_lisp_mem_new (xp_size_t ubound, xp_size_t ubound_inc)
 
 void xp_lisp_mem_free (xp_lisp_mem_t* mem)
 {
-	xp_lisp_assert (mem != XP_NULL);
+	xp_assert (mem != XP_NULL);
 
 	// dispose of the allocated objects
 	xp_lisp_dispose_all (mem);
@@ -179,9 +179,9 @@ xp_lisp_obj_t* xp_lisp_allocate (xp_lisp_mem_t* mem, int type, xp_size_t size)
 
 void xp_lisp_dispose (xp_lisp_mem_t* mem, xp_lisp_obj_t* prev, xp_lisp_obj_t* obj)
 {
-	xp_lisp_assert (mem != XP_NULL);
-	xp_lisp_assert (obj != XP_NULL);
-	xp_lisp_assert (mem->count > 0);
+	xp_assert (mem != XP_NULL);
+	xp_assert (obj != XP_NULL);
+	xp_assert (mem->count > 0);
 
 	// TODO: push the object to the free list for more 
 	//       efficient memory management
@@ -214,7 +214,7 @@ void xp_lisp_dispose_all (xp_lisp_mem_t* mem)
 
 static void xp_lisp_mark_obj (xp_lisp_obj_t* obj)
 {
-	xp_lisp_assert (obj != XP_NULL);
+	xp_assert (obj != XP_NULL);
 
 	// TODO:....
 	// can it be recursive?
@@ -241,20 +241,20 @@ static void xp_lisp_mark_obj (xp_lisp_obj_t* obj)
  */
 void xp_lisp_lock (xp_lisp_obj_t* obj)
 {
-	xp_lisp_assert (obj != XP_NULL);
+	xp_assert (obj != XP_NULL);
 	XP_LISP_LOCK(obj) = 1;
 	//XP_LISP_MARK(obj) = 1;
 }
 
 void xp_lisp_unlock (xp_lisp_obj_t* obj)
 {
-	xp_lisp_assert (obj != XP_NULL);
+	xp_assert (obj != XP_NULL);
 	XP_LISP_LOCK(obj) = 0;
 }
 
 void xp_lisp_unlock_all (xp_lisp_obj_t* obj)
 {
-	xp_lisp_assert (obj != XP_NULL);
+	xp_assert (obj != XP_NULL);
 
 	XP_LISP_LOCK(obj) = 0;
 
@@ -499,7 +499,7 @@ xp_lisp_assoc_t* xp_lisp_lookup (xp_lisp_mem_t* mem, xp_lisp_obj_t* name)
 	xp_lisp_frame_t* frame;
 	xp_lisp_assoc_t* assoc;
 
-	xp_lisp_assert (XP_LISP_TYPE(name) == XP_LISP_OBJ_SYMBOL);
+	xp_assert (XP_LISP_TYPE(name) == XP_LISP_OBJ_SYMBOL);
 
 	frame = mem->frame;
 
@@ -530,7 +530,7 @@ xp_size_t xp_lisp_cons_len (xp_lisp_mem_t* mem, xp_lisp_obj_t* obj)
 {
 	xp_size_t count;
 
-	xp_lisp_assert (obj == mem->nil || XP_LISP_TYPE(obj) == XP_LISP_OBJ_CONS);
+	xp_assert (obj == mem->nil || XP_LISP_TYPE(obj) == XP_LISP_OBJ_CONS);
 
 	count = 0;
 	//while (obj != mem->nil) {
@@ -562,7 +562,7 @@ int xp_lisp_comp_symbol (xp_lisp_obj_t* obj, const xp_lisp_char* str)
 	xp_lisp_char* p;
 	xp_size_t index, length;
 
-	xp_lisp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_SYMBOL);
+	xp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_SYMBOL);
 	
 	index = 0;
 	length = XP_LISP_SYMLEN(obj);
@@ -582,7 +582,7 @@ int xp_lisp_comp_symbol2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t
 	xp_lisp_char* p;
 	xp_size_t index, length;
 
-	xp_lisp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_SYMBOL);
+	xp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_SYMBOL);
 	
 	index = 0;
 	length = XP_LISP_SYMLEN(obj);
@@ -603,7 +603,7 @@ int xp_lisp_comp_string (xp_lisp_obj_t* obj, const xp_lisp_char* str)
 	xp_lisp_char* p;
 	xp_size_t index, length;
 
-	xp_lisp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_STRING);
+	xp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_STRING);
 	
 	index = 0;
 	length = XP_LISP_STRLEN(obj);
@@ -623,7 +623,7 @@ int xp_lisp_comp_string2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t
 	xp_lisp_char* p;
 	xp_size_t index, length;
 
-	xp_lisp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_STRING);
+	xp_assert (XP_LISP_TYPE(obj) == XP_LISP_OBJ_STRING);
 	
 	index = 0;
 	length = XP_LISP_STRLEN(obj);
