@@ -1,9 +1,10 @@
 /*
- * $Id: read.c,v 1.4 2005-02-05 05:18:20 bacon Exp $
+ * $Id: read.c,v 1.5 2005-02-05 05:30:25 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
 #include <xp/lisp/token.h>
+#include <xp/c/assert.h>
 
 #define IS_SPACE(x) xp_isspace(x)
 #define IS_DIGIT(x) xp_isdigit(x)

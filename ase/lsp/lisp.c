@@ -1,9 +1,10 @@
 /*
- * $Id: lisp.c,v 1.4 2005-02-05 05:18:20 bacon Exp $
+ * $Id: lisp.c,v 1.5 2005-02-05 05:30:25 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
 #include <xp/c/stdlib.h>
+#include <xp/c/assert.h>
 
 xp_lisp_t* xp_lisp_new (xp_size_t mem_ubound, xp_size_t mem_ubound_inc)
 {
