@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.3 2005-02-04 16:23:34 bacon Exp $
+ * $Id: token.c,v 1.4 2005-02-05 05:18:20 bacon Exp $
  */
 
 #include "token.h"
@@ -9,7 +9,7 @@ xp_lisp_token_t* xp_lisp_token_new (xp_size_t capacity)
 {
 	xp_lisp_token_t* token;
 
-	xp_lisp_assert (capacity > 0);
+	xp_assert (capacity > 0);
 
 	token = (xp_lisp_token_t*)malloc (sizeof(xp_lisp_token_t));
 	if (token == XP_NULL) return XP_NULL;

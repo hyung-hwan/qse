@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.3 2005-02-04 16:23:34 bacon Exp $
+ * $Id: eval.c,v 1.4 2005-02-05 05:18:20 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -89,7 +89,7 @@ static xp_lisp_obj_t* eval_cons (xp_lisp_t* lsp, xp_lisp_obj_t* cons)
 {
 	xp_lisp_obj_t* car, * cdr;
    
-	xp_lisp_assert (XP_LISP_TYPE(cons) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(cons) == XP_LISP_OBJ_CONS);
 
 	car = XP_LISP_CAR(cons);
 	cdr = XP_LISP_CDR(cons);
@@ -162,11 +162,11 @@ static xp_lisp_obj_t* apply (xp_lisp_t* lsp, xp_lisp_obj_t* func, xp_lisp_obj_t*
 	xp_lisp_obj_t* value;
 	xp_lisp_mem_t* mem;
 
-	xp_lisp_assert (
+	xp_assert (
 		XP_LISP_TYPE(func) == XP_LISP_OBJ_FUNC ||
 		XP_LISP_TYPE(func) == XP_LISP_OBJ_MACRO);
 
-	xp_lisp_assert (XP_LISP_TYPE(XP_LISP_CDR(func)) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(XP_LISP_CDR(func)) == XP_LISP_OBJ_CONS);
 
 	mem = lsp->mem;
 

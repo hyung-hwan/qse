@@ -1,10 +1,10 @@
 /*
- * $Id: primitive.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: primitive.c,v 1.3 2005-02-05 05:18:20 bacon Exp $
  */
 
-#include "lisp.h"
-#include "memory.h"
-#include "primitive.h"
+#include <xp/lisp/lisp.h>
+#include <xp/lisp/memory.h>
+#include <xp/lisp/primitive.h>
 
 xp_lisp_obj_t* xp_lisp_prim_abort (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
@@ -18,7 +18,7 @@ xp_lisp_obj_t* xp_lisp_prim_eval (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* tmp;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (tmp == XP_NULL) return XP_NULL;
@@ -130,7 +130,7 @@ xp_lisp_obj_t* xp_lisp_prim_if (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* tmp;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, XP_LISP_PRIM_MAX_ARG_COUNT);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 	
 	tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (tmp == XP_NULL) return XP_NULL;
@@ -169,7 +169,7 @@ xp_lisp_obj_t* xp_lisp_prim_while (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* tmp;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LISP_PRIM_MAX_ARG_COUNT);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	for (;;) {
 		tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
@@ -195,7 +195,7 @@ xp_lisp_obj_t* xp_lisp_prim_car (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* tmp;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (tmp == XP_NULL) return XP_NULL;
@@ -214,7 +214,7 @@ xp_lisp_obj_t* xp_lisp_prim_cdr (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* tmp;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	tmp = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (tmp == XP_NULL) return XP_NULL;
@@ -233,7 +233,7 @@ xp_lisp_obj_t* xp_lisp_prim_cons (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* car, * cdr, * cons;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	car = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (car == XP_NULL) return XP_NULL;
@@ -255,7 +255,7 @@ xp_lisp_obj_t* xp_lisp_prim_set (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* p1, * p2;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	p1 = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (p1 == XP_NULL) return XP_NULL;
@@ -281,7 +281,7 @@ xp_lisp_obj_t* xp_lisp_prim_setq (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_obj_t* p = args, * p1, * p2 = lsp->mem->nil;
 
 	while (p != lsp->mem->nil) {
-		xp_lisp_assert (XP_LISP_TYPE(p) == XP_LISP_OBJ_CONS);
+		xp_assert (XP_LISP_TYPE(p) == XP_LISP_OBJ_CONS);
 
 		p1 = XP_LISP_CAR(p);
 		if (XP_LISP_TYPE(p1) != XP_LISP_OBJ_SYMBOL) {
@@ -311,7 +311,7 @@ xp_lisp_obj_t* xp_lisp_prim_setq (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 xp_lisp_obj_t* xp_lisp_prim_quote (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 {
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 	return XP_LISP_CAR(args);
 }
 
@@ -525,7 +525,7 @@ xp_lisp_obj_t* xp_lisp_prim_plus (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	xp_lisp_int value = 0;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LISP_PRIM_MAX_ARG_COUNT);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	body = args;
 	//while (body != lsp->mem->nil) {
@@ -557,7 +557,7 @@ xp_lisp_obj_t* xp_lisp_prim_gt (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	int res;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	p1 = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (p1 == XP_NULL) return XP_NULL;
@@ -624,7 +624,7 @@ xp_lisp_obj_t* xp_lisp_prim_lt (xp_lisp_t* lsp, xp_lisp_obj_t* args)
 	int res;
 
 	XP_LISP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_lisp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
+	xp_assert (XP_LISP_TYPE(args) == XP_LISP_OBJ_CONS);
 
 	p1 = xp_lisp_eval (lsp, XP_LISP_CAR(args));
 	if (p1 == XP_NULL) return XP_NULL;
