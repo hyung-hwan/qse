@@ -1,0 +1,37 @@
+SUBDIRS=c
+
+all:
+	@for i in $(SUBDIRS); \
+	do \
+		if [ ! -d $$i ]; \
+		then \
+			echo Error: $$i not a directory; \
+			exit 1; \
+		fi; \
+		cd $$i; \
+		if make $@; \
+		then \
+			echo > /dev/null; \
+		else \
+			exit 1; \
+			fi; \
+		cd ..; \
+	done
+
+clean:
+	@for i in $(SUBDIRS); \
+	do \
+		if [ ! -d $$i ]; \
+		then \
+			echo Error: $$i not a directory; \
+			exit 1; \
+		fi; \
+		cd $$i; \
+		if make $@; \
+		then \
+			echo > /dev/null; \
+		else \
+			exit 1; \
+			fi; \
+		cd ..; \
+	done
