@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.5 2005-01-21 04:17:50 bacon Exp $
+ * $Id: macros.h,v 1.6 2005-01-21 04:22:24 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -27,14 +27,16 @@
 #define XP_QUOTE(val)   __XP_QUOTE(val)
 #define __XP_QUOTE(val) #val
 
-#define XP_MCHAR(ch)    (ch)
-#define XP_MTEXT(txt)   (txt)
+#define XP_MCHAR(ch)    ((xp_mchar_t)ch)
+#define XP_MTEXT(txt)   ((const xp_mchar_t*)txt)
 
 /* TODO: if the compiler doesn't have the built-in wchar_t support
  *       XP_WCHAR & XP_WTEXT must be defined differently.
+#define XP_WCHAR(ch) ((xp_wchar_t)ch)
+#define XP_WTEXT(txt) don't know yet... may have to call a function?
  */
-#define XP_WCHAR(ch)    (L##ch)
-#define XP_WTEXT(txt)   (L##txt)
+#define XP_WCHAR(ch)    ((xp_wchar_t)L##ch)
+#define XP_WTEXT(txt)   ((const xp_wchar_t*)L##txt)
 
 #ifdef XP_CHAR_IS_MCHAR
 #define XP_CHAR(ch)   XP_MCHAR(ch)
