@@ -42,7 +42,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	mtrace ();
 #endif
 	if (argc != 3) {
-		xp_fprintf (xp_stderr, XP_TEXT("usage: %s mem_ubound mem_ubound_inc\n"), argv[0]);
+		xp_fprintf (xp_stderr, XP_TEXT("usage: %ls mem_ubound mem_ubound_inc\n"), argv[0]);
 		return -1;
 	}
 
