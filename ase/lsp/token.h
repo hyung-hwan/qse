@@ -1,11 +1,11 @@
 /*
- * $Id: token.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: token.h,v 1.3 2005-02-04 16:03:25 bacon Exp $
  */
 
 #ifndef _XP_LISP_TOKEN_H_
 #define _XP_LISP_TOKEN_H_
 
-#include "types.h"
+#include <xp/lisp/types.h>
 
 struct xp_lisp_token_t 
 {

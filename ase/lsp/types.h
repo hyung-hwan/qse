@@ -1,23 +1,23 @@
 /*
- * $Id: types.h,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: types.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
-#ifndef _RBL_TYPES_H_
-#define _RBL_TYPES_H_
+#ifndef _XP_LISP_TYPES_H_
+#define _XP_LISP_TYPES_H_
 
-#include <rb/types.h>
-#include <rb/macros.h>
+#include <xp/types.h>
+#include <xp/macros.h>
 
-typedef rb_char xp_lisp_char;
-typedef rb_cint xp_lisp_cint;
+typedef xp_char_t xp_lisp_char;
+typedef xp_cint_t xp_lisp_cint;
 typedef int     xp_lisp_int;
 typedef float   xp_lisp_float;
 
-#define RBL_CHAR(x)  RB_CHAR(x)
-#define RBL_TEXT(x)  RB_TEXT(x)
-#define RBL_CHAR_END RB_EOF
+#define XP_LISP_CHAR(x)  XP_CHAR(x)
+#define XP_LISP_TEXT(x)  XP_TEXT(x)
+#define XP_LISP_CHAR_END XP_EOF
 
-#define xp_lisp_ensure(x) RB_ENSURE(x)
-#define xp_lisp_assert(x) RB_ASSERT(x)
+#define xp_lisp_ensure(x) XP_ENSURE(x)
+#define xp_lisp_assert(x) XP_ASSERT(x)
 
 #endif
