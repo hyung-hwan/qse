@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.6 2005-02-05 05:43:55 bacon Exp $
+ * $Id: token.c,v 1.7 2005-02-07 15:10:41 bacon Exp $
  */
 
 #include <xp/lisp/token.h>
@@ -15,7 +15,7 @@ xp_lisp_token_t* xp_lisp_token_new (xp_size_t capacity)
 	token = (xp_lisp_token_t*)xp_malloc (sizeof(xp_lisp_token_t));
 	if (token == XP_NULL) return XP_NULL;
 
-	token->buffer = (xp_lisp_char*)xp_malloc ((capacity + 1) * sizeof(xp_lisp_char));
+	token->buffer = (xp_char_t*)xp_malloc ((capacity + 1) * sizeof(xp_char_t));
 	if (token->buffer == XP_NULL) {
 		xp_free (token);
 		return XP_NULL;
@@ -37,12 +37,12 @@ void xp_lisp_token_free (xp_lisp_token_t* token)
 	xp_free (token);
 }
 
-int xp_lisp_token_addc (xp_lisp_token_t* token, xp_lisp_cint c)
+int xp_lisp_token_addc (xp_lisp_token_t* token, xp_cint_t c)
 {
 	if (token->size >= token->capacity) {
 		// double the capacity.
-		xp_lisp_char* new_buffer = (xp_lisp_char*)realloc (
-			token->buffer, (token->capacity * 2 + 1) * sizeof(xp_lisp_char));
+		xp_char_t* new_buffer = (xp_char_t*)realloc (
+			token->buffer, (token->capacity * 2 + 1) * sizeof(xp_char_t));
 		if (new_buffer == XP_NULL) return -1;
 		token->buffer   = new_buffer;
 		token->capacity = token->capacity * 2;	
@@ -62,11 +62,11 @@ void xp_lisp_token_clear (xp_lisp_token_t* token)
 	token->buffer[0] = XP_CHAR('\0');
 }
 
-xp_lisp_char* xp_lisp_token_transfer (xp_lisp_token_t* token, xp_size_t capacity)
+xp_char_t* xp_lisp_token_transfer (xp_lisp_token_t* token, xp_size_t capacity)
 {
-	xp_lisp_char* old_buffer, * new_buffer;
+	xp_char_t* old_buffer, * new_buffer;
    
-	new_buffer = (xp_lisp_char*)xp_malloc((capacity + 1) * sizeof(xp_lisp_char));
+	new_buffer = (xp_char_t*)xp_malloc((capacity + 1) * sizeof(xp_char_t));
 	if (new_buffer == XP_NULL) return XP_NULL;
 
 	old_buffer = token->buffer;
@@ -78,9 +78,9 @@ xp_lisp_char* xp_lisp_token_transfer (xp_lisp_token_t* token, xp_size_t capacity
 	return old_buffer;
 }
 
-int xp_lisp_token_compare (xp_lisp_token_t* token, const xp_lisp_char* str)
+int xp_lisp_token_compare (xp_lisp_token_t* token, const xp_char_t* str)
 {
-	xp_lisp_char* p = token->buffer;
+	xp_char_t* p = token->buffer;
 	xp_size_t index = 0;
 
 	while (index < token->size) {

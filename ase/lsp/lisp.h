@@ -1,5 +1,5 @@
 /*
- * $Id: lisp.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: lisp.h,v 1.3 2005-02-07 15:10:41 bacon Exp $
  */
 
 #ifndef _XP_LISP_LISP_H_
@@ -15,7 +15,7 @@
 // NOTICE: the function of xp_lisp_creader_t must return -1 on error 
 //         and 0 on success. the first argument must be set to 
 //         XP_LISP_END_CHAR at the end of input.
-typedef int (*xp_lisp_creader_t) (xp_lisp_cint*, void*); 
+typedef int (*xp_lisp_creader_t) (xp_cint_t*, void*); 
 
 #define XP_LISP_ERR(lsp)          ((lsp)->error)
 #define XP_LISP_ERR_NONE          0
@@ -43,7 +43,7 @@ struct xp_lisp_t
 	int opt_undef_symbol;
 
 	/* for read */
-	xp_lisp_cint curc;
+	xp_cint_t curc;
 	xp_lisp_creader_t creader;
 	void* creader_extra;
 	int creader_just_set;
@@ -69,7 +69,7 @@ extern "C" {
 /* lsp.c */
 xp_lisp_t* xp_lisp_new   (xp_size_t mem_ubound, xp_size_t mem_ubound_inc);
 void   xp_lisp_free  (xp_lisp_t* lsp);
-int    xp_lisp_error (xp_lisp_t* lsp, xp_lisp_char* buf, xp_size_t size);
+int    xp_lisp_error (xp_lisp_t* lsp, xp_char_t* buf, xp_size_t size);
 
 /* read.c */
 // TODO: move xp_lisp_set_creader to lsp.c

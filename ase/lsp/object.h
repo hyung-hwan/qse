@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: object.h,v 1.3 2005-02-07 15:10:41 bacon Exp $
  */
 
 #ifndef _XP_LISP_OBJECT_H_
@@ -63,7 +63,7 @@ struct xp_lisp_obj_symbol_t
 	XP_LISP_OBJ_HEADER;
 #ifdef __BORLANDC__
 #else
-	xp_lisp_char buffer[0];
+	xp_char_t buffer[0];
 #endif
 };
 
@@ -72,7 +72,7 @@ struct xp_lisp_obj_string_t
 	XP_LISP_OBJ_HEADER;
 #ifdef __BORLANDC__
 #else
-	xp_lisp_char buffer[0];
+	xp_char_t buffer[0];
 #endif
 };
 
@@ -127,18 +127,18 @@ typedef struct xp_lisp_obj_prim_t    xp_lisp_obj_prim_t;
 #define XP_LISP_FVALUE(x)   (((xp_lisp_obj_float_t*)x)->value)
 
 #ifdef __BORLANDC__
-#define XP_LISP_SYMVALUE(x) ((xp_lisp_char*)(((xp_lisp_obj_symbol_t*)x) + 1))
+#define XP_LISP_SYMVALUE(x) ((xp_char_t*)(((xp_lisp_obj_symbol_t*)x) + 1))
 #else
 #define XP_LISP_SYMVALUE(x) (((xp_lisp_obj_symbol_t*)x)->buffer)
 #endif
-#define XP_LISP_SYMLEN(x)   ((((xp_lisp_obj_symbol_t*)x)->size - sizeof(xp_lisp_obj_t)) / sizeof(xp_lisp_char) - 1)
+#define XP_LISP_SYMLEN(x)   ((((xp_lisp_obj_symbol_t*)x)->size - sizeof(xp_lisp_obj_t)) / sizeof(xp_char_t) - 1)
 
 #ifdef __BORLANDC__
-#define XP_LISP_STRVALUE(x) ((xp_lisp_char*)(((xp_lisp_obj_string_t*)x) + 1))
+#define XP_LISP_STRVALUE(x) ((xp_char_t*)(((xp_lisp_obj_string_t*)x) + 1))
 #else
 #define XP_LISP_STRVALUE(x) (((xp_lisp_obj_string_t*)x)->buffer)
 #endif
-#define XP_LISP_STRLEN(x)   ((((xp_lisp_obj_string_t*)x)->size - sizeof(xp_lisp_obj_t)) / sizeof(xp_lisp_char) - 1)
+#define XP_LISP_STRLEN(x)   ((((xp_lisp_obj_string_t*)x)->size - sizeof(xp_lisp_obj_t)) / sizeof(xp_char_t) - 1)
 
 #define XP_LISP_CAR(x)      (((xp_lisp_obj_cons_t*)x)->car)
 #define XP_LISP_CDR(x)      (((xp_lisp_obj_cons_t*)x)->cdr)

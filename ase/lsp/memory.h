@@ -1,5 +1,5 @@
 /*
- * $Id: memory.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: memory.h,v 1.3 2005-02-07 15:10:41 bacon Exp $
  */
 
 #ifndef _XP_LISP_MEM_H_
@@ -70,8 +70,8 @@ xp_lisp_obj_t* xp_lisp_make_nil    (xp_lisp_mem_t* mem);
 xp_lisp_obj_t* xp_lisp_make_true   (xp_lisp_mem_t* mem);
 xp_lisp_obj_t* xp_lisp_make_int    (xp_lisp_mem_t* mem, xp_lisp_int value);
 xp_lisp_obj_t* xp_lisp_make_float  (xp_lisp_mem_t* mem, xp_lisp_float value);
-xp_lisp_obj_t* xp_lisp_make_symbol (xp_lisp_mem_t* mem, const xp_lisp_char* str, xp_size_t len);
-xp_lisp_obj_t* xp_lisp_make_string (xp_lisp_mem_t* mem, const xp_lisp_char* str, xp_size_t len);
+xp_lisp_obj_t* xp_lisp_make_symbol (xp_lisp_mem_t* mem, const xp_char_t* str, xp_size_t len);
+xp_lisp_obj_t* xp_lisp_make_string (xp_lisp_mem_t* mem, const xp_char_t* str, xp_size_t len);
 xp_lisp_obj_t* xp_lisp_make_cons   (xp_lisp_mem_t* mem, xp_lisp_obj_t* car, xp_lisp_obj_t* cdr);
 xp_lisp_obj_t* xp_lisp_make_func   (xp_lisp_mem_t* mem, xp_lisp_obj_t* formal, xp_lisp_obj_t* body);
 xp_lisp_obj_t* xp_lisp_make_macro  (xp_lisp_mem_t* mem, xp_lisp_obj_t* formal, xp_lisp_obj_t* body);
@@ -86,12 +86,12 @@ xp_size_t xp_lisp_cons_len   (xp_lisp_mem_t* mem, xp_lisp_obj_t* obj);
 int    xp_lisp_probe_args (xp_lisp_mem_t* mem, xp_lisp_obj_t* obj, xp_size_t* len);
 
 // symbol and string operations
-int  xp_lisp_comp_symbol  (xp_lisp_obj_t* obj, const xp_lisp_char* str);
-int  xp_lisp_comp_symbol2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t len);
-int  xp_lisp_comp_string  (xp_lisp_obj_t* obj, const xp_lisp_char* str);
-int  xp_lisp_comp_string2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t len);
-void xp_lisp_copy_string  (xp_lisp_char* dst,  const xp_lisp_char* str);
-void xp_lisp_copy_string2 (xp_lisp_char* dst,  const xp_lisp_char* str, xp_size_t len);
+int  xp_lisp_comp_symbol  (xp_lisp_obj_t* obj, const xp_char_t* str);
+int  xp_lisp_comp_symbol2 (xp_lisp_obj_t* obj, const xp_char_t* str, xp_size_t len);
+int  xp_lisp_comp_string  (xp_lisp_obj_t* obj, const xp_char_t* str);
+int  xp_lisp_comp_string2 (xp_lisp_obj_t* obj, const xp_char_t* str, xp_size_t len);
+void xp_lisp_copy_string  (xp_char_t* dst,  const xp_char_t* str);
+void xp_lisp_copy_string2 (xp_char_t* dst,  const xp_char_t* str, xp_size_t len);
 
 #ifdef __cplusplus
 }
