@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.16 2005-03-30 10:48:17 bacon Exp $
+ * $Id: macros.h,v 1.17 2005-03-30 10:49:01 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -31,7 +31,7 @@
 #define XP_TYPE_MIN(type) \
 	((XP_TYPE_IS_SIGNED(type)? (type)((type)1 << (xp_sizeof(type) * 8 - 1)): (type)0))
 
-#define XP_NUM_IS_POW2(x) (((x) & ((x) - 1)) == 0)
+#define XP_NUM_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
 
 #define XP_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__;
 #define XP_LOOP_BREAK(id)    goto __loop_ ## id ## _end__;
