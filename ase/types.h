@@ -1,11 +1,15 @@
 /*
- * $Id: types.h,v 1.16 2005-03-21 08:24:07 bacon Exp $
+ * $Id: types.h,v 1.17 2005-03-29 10:09:27 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
 #define _XP_TYPES_H_
 
-#include <xp/config.h>
+#ifdef _WIN32
+	#include <xp/config_win32.h>
+#else
+	#include <xp/config.h>
+#endif
 
 /* boolean types */
 #ifdef __cplusplus
