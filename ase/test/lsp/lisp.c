@@ -10,9 +10,9 @@ static int get_char (xp_lisp_cint* ch, void* arg)
 {
 	xp_lisp_cint c;
    
-	c = fgetc(stdin);
+	c = xp_fgetc(stdin);
 	if (c == XP_EOF) {
-		if (ferror(stdin)) return -1;
+		if (xp_ferror(stdin)) return -1;
 		c = XP_EOF;
 	}
 
