@@ -14,22 +14,22 @@
 #undef XP_HAVE_LONG_DOUBLE
 
 /* sizeof (char) */
-#define SIZEOF_CHAR 1
+#define SIZEOF_CHAR 0
 
 /* sizeof (short) */
-#define SIZEOF_SHORT 1
+#define SIZEOF_SHORT 0
 
 /* sizeof (int) */
-#define SIZEOF_INT  1
+#define SIZEOF_INT  0
 
 /* sizeof (long) */
-#define SIZEOF_LONG 1
+#define SIZEOF_LONG 0
 
 /* sizeof (long long) */
-#define SIZEOF_LONG_LONG  1
+#define SIZEOF_LONG_LONG  0
 
 /* sizeof (void*) */
-#define SIZEOF_VOID_P  1
+#define SIZEOF_VOID_P  0
 
 /* fcntl.h */
 #undef XP_HAVE_FCNTL_H

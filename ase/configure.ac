@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.17 $])
+AC_REVISION([$Revision: 1.18 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -28,12 +28,17 @@ AC_C_BIGENDIAN(
 # Checks for data types
 AC_CHECK_TYPE(long long, [AC_DEFINE([XP_HAVE_LONG_LONG],[],[long long])])
 AC_CHECK_TYPE(long double, [AC_DEFINE([XP_HAVE_LONG_DOUBLE],[],[long double])])
+AC_CHECK_TYPE(__int64, [AC_DEFINE([XP_HAVE_INT64],[],[__int64])])
 
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(__int64)
+AC_CHECK_SIZEOF(float)
+AC_CHECK_SIZEOF(double)
+AC_CHECK_SIZEOF(long double)
 AC_CHECK_SIZEOF(void *)
 
 # Checks for library functions.
