@@ -1,5 +1,6 @@
 #include <xp/lisp/lisp.h>
 #include <xp/c/stdio.h>
+#include <xp/c/ctype.h>
 
 #ifdef LINUX
 #include <mcheck.h>

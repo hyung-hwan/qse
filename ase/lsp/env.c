@@ -1,9 +1,10 @@
 /*
- * $Id: env.c,v 1.3 2005-02-05 05:18:20 bacon Exp $
+ * $Id: env.c,v 1.4 2005-02-05 05:43:55 bacon Exp $
  */
 
 #include <xp/lisp/env.h>
-#include <xp/c/stdlib.h>
+#include <xp/c/memory.h>
+#include <xp/c/assert.h>
 
 xp_lisp_assoc_t* xp_lisp_assoc_new (xp_lisp_obj_t* name, xp_lisp_obj_t* value)
 {
