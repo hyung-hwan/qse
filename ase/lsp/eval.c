@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: eval.c,v 1.3 2005-02-04 16:23:34 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -147,9 +147,9 @@ static xp_lisp_obj_t* eval_cons (xp_lisp_t* lsp, xp_lisp_obj_t* cons)
 		}
 	}
 
-	xp_printf (XP_LISP_TEXT("bad function: "));
+	xp_printf (XP_TEXT("bad function: "));
 	xp_lisp_print (lsp, car);
-	xp_printf (XP_LISP_TEXT("\n"));
+	xp_printf (XP_TEXT("\n"));
 	lsp->error = XP_LISP_ERR_BAD_FUNC;
 	return XP_NULL;
 }
