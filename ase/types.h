@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.15 2005-02-14 03:48:31 bacon Exp $
+ * $Id: types.h,v 1.16 2005-03-21 08:24:07 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -8,9 +8,15 @@
 #include <xp/config.h>
 
 /* boolean types */
-typedef int xp_bool_t;
-#define xp_true  (0 == 0)
-#define xp_false (0 != 0)
+#ifdef __cplusplus
+	typedef bool xp_bool_t;
+	#define xp_true  true
+	#define xp_false false
+#else
+	typedef int xp_bool_t;
+	#define xp_true  (0 == 0)
+	#define xp_false (0 != 0)
+#endif
 
 /* integer that can hold a pointer */
 #if SIZEOF_VOID_P == SIZEOF_LONG_LONG
