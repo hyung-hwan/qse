@@ -1,6 +1,6 @@
-AC_PREREQ(2.59)
+AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.12 $])
+AC_REVISION([$Revision: 1.13 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -35,5 +35,5 @@ AC_CHECK_FILE([/NextDeveloper],[AC_DEFINE([_POSIX_SOURCE],[],[_POSIX_SOURCE])])
 
 AC_CONFIG_FILES([
 	Makefile build/Makefile xp/Makefile 
-	xp/c/Makefile xp/test/c/Makefile])
+	xp/c/Makefile xp/lisp/Makefile xp/test/c/Makefile])
 AC_OUTPUT
