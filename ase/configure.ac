@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.24 $])
+AC_REVISION([$Revision: 1.25 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -12,6 +12,7 @@ AC_PROG_RANLIB
 AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_LIB(nsl, gethostbyname)
 AC_CHECK_LIB(socket, connect)
+AC_CHECK_LIB(rt, nanosleep)
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -46,6 +47,10 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
+
+#AC_CHECK_FUNC(nanosleep,[AC_DEFINE([XP_HAVE_NANOSLEEP])],
+#	[AC_CHECK_LIB(rt,nanosleep, LIBS="${LIBS} -lrt", 	 
+#		[AC_CHECK_LIB(posix4,nanosleep, LIBS="${LIBS} -lposix4")])]) 	 
 
 # Checks for library functions.
 #AC_FUNC_MEMCMP
