@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.14 2005-02-14 03:13:32 bacon Exp $
+ * $Id: types.h,v 1.15 2005-02-14 03:48:31 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -112,11 +112,16 @@ typedef int  xp_mcint_t;
 	/*typedef unsigned short xp_wchar_t;*/
 	typedef long           xp_wchar_t;
 	typedef long           xp_wcint_t;
+	/*#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT*/
+	#define XP_SIZEOF_WCHAR_T SIZEOF_LONG
 #else
 	/*typedef unsigned short xp_wchar_t;*/
 	typedef int            xp_wchar_t;
 	typedef int            xp_wcint_t;
+	/*#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT*/
+	#define XP_SIZEOF_WCHAR_T SIZEOF_INT
 #endif
+
 
 // TODO: make it configurable from outside
 /*
