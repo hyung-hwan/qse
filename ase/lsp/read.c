@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: read.c,v 1.3 2005-02-04 16:23:34 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -11,12 +11,12 @@
 #define IS_ALNUM(x) xp_isalnum(x)
 
 #define IS_IDENT(c) \
-	((c) == XP_LISP_CHAR('+') || (c) == XP_LISP_CHAR('-') || \
-	 (c) == XP_LISP_CHAR('*') || (c) == XP_LISP_CHAR('/') || \
-	 (c) == XP_LISP_CHAR('%') || (c) == XP_LISP_CHAR('&') || \
-	 (c) == XP_LISP_CHAR('<') || (c) == XP_LISP_CHAR('>') || \
-	 (c) == XP_LISP_CHAR('=') || (c) == XP_LISP_CHAR('_') || \
-	 (c) == XP_LISP_CHAR('?'))
+	((c) == XP_CHAR('+') || (c) == XP_CHAR('-') || \
+	 (c) == XP_CHAR('*') || (c) == XP_CHAR('/') || \
+	 (c) == XP_CHAR('%') || (c) == XP_CHAR('&') || \
+	 (c) == XP_CHAR('<') || (c) == XP_CHAR('>') || \
+	 (c) == XP_CHAR('=') || (c) == XP_CHAR('_') || \
+	 (c) == XP_CHAR('?'))
 
 #define TOKEN_CLEAR(lsp)   xp_lisp_token_clear (lsp->token)
 #define TOKEN_TYPE(lsp)    lsp->token->type
@@ -142,8 +142,8 @@ static xp_lisp_obj_t* read_obj (xp_lisp_t* lsp)
 		return obj;
 	case TOKEN_IDENT:
 		xp_lisp_assert (lsp->mem->nil != XP_NULL && lsp->mem->t != XP_NULL); 
-		if (TOKEN_COMPARE(lsp, XP_LISP_TEXT("nil")) == 0) obj = lsp->mem->nil;
-		else if (TOKEN_COMPARE(lsp, XP_LISP_TEXT("t")) == 0) obj = lsp->mem->t;
+		if (TOKEN_COMPARE(lsp,XP_TEXT("nil")) == 0) obj = lsp->mem->nil;
+		else if (TOKEN_COMPARE(lsp,XP_TEXT("t")) == 0) obj = lsp->mem->t;
 		else {
 			obj = xp_lisp_make_symbol (
 				lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
@@ -264,43 +264,43 @@ static int read_token (xp_lisp_t* lsp)
 		while (IS_SPACE(lsp->curc)) NEXT_CHAR (lsp);
 
 		// skip the comments here
-		if (lsp->curc == XP_LISP_CHAR(';')) {
+		if (lsp->curc == XP_CHAR(';')) {
 			do {
 				NEXT_CHAR (lsp);
-			} while (lsp->curc != XP_LISP_CHAR('\n') && lsp->curc != XP_LISP_CHAR_END);
+			} while (lsp->curc != XP_CHAR('\n') && lsp->curc != XP_EOF);
 		}
 		else break;
 	}
 
-	if (lsp->curc == XP_LISP_CHAR_END) {
+	if (lsp->curc == XP_EOF) {
 		TOKEN_TYPE(lsp) = TOKEN_END;
 		return 0;
 	}
-	else if (lsp->curc == XP_LISP_CHAR('(')) {
+	else if (lsp->curc == XP_CHAR('(')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_LPAREN;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == XP_LISP_CHAR(')')) {
+	else if (lsp->curc == XP_CHAR(')')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_RPAREN;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == XP_LISP_CHAR('\'')) {
+	else if (lsp->curc == XP_CHAR('\'')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_QUOTE;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == XP_LISP_CHAR('.')) {
+	else if (lsp->curc == XP_CHAR('.')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_DOT;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == XP_LISP_CHAR('-')) {
+	else if (lsp->curc == XP_CHAR('-')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
 		return (IS_DIGIT(lsp->curc))? 
@@ -312,7 +312,7 @@ static int read_token (xp_lisp_t* lsp)
 	else if (IS_ALPHA(lsp->curc) || IS_IDENT(lsp->curc)) {
 		return read_ident (lsp);
 	}
-	else if (lsp->curc == XP_LISP_CHAR('\"')) {
+	else if (lsp->curc == XP_CHAR('\"')) {
 		NEXT_CHAR (lsp);
 		return read_string (lsp);
 	}
@@ -326,7 +326,7 @@ static int read_number (xp_lisp_t* lsp, int negative)
 {
 	do {
 		TOKEN_IVALUE(lsp) = 
-			TOKEN_IVALUE(lsp) * 10 + lsp->curc - XP_LISP_CHAR('0');
+			TOKEN_IVALUE(lsp) * 10 + lsp->curc - XP_CHAR('0');
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
 	} while (IS_DIGIT(lsp->curc));
@@ -355,7 +355,7 @@ static int read_string (xp_lisp_t* lsp)
 	xp_lisp_cint code = 0;
 
 	do {
-		if (lsp->curc == XP_LISP_CHAR_END) {
+		if (lsp->curc == XP_EOF) {
 			TOKEN_TYPE(lsp) = TOKEN_UNTERM_STRING;
 			return 0;
 		}
@@ -369,34 +369,34 @@ static int read_string (xp_lisp_t* lsp)
 		}
 		else if (escaped == 1) {
 			/* backslash + character */
-			if (lsp->curc == XP_LISP_CHAR('a')) 
-				lsp->curc = XP_LISP_CHAR('\a');
-			else if (lsp->curc == XP_LISP_CHAR('b')) 
-				lsp->curc = XP_LISP_CHAR('\b');
-			else if (lsp->curc == XP_LISP_CHAR('f')) 
-				lsp->curc = XP_LISP_CHAR('\f');
-			else if (lsp->curc == XP_LISP_CHAR('n')) 
-				lsp->curc = XP_LISP_CHAR('\n');
-			else if (lsp->curc == XP_LISP_CHAR('r')) 
-				lsp->curc = XP_LISP_CHAR('\r');
-			else if (lsp->curc == XP_LISP_CHAR('t')) 
-				lsp->curc = XP_LISP_CHAR('\t');
-			else if (lsp->curc == XP_LISP_CHAR('v')) 
-				lsp->curc = XP_LISP_CHAR('\v');
-			else if (lsp->curc == XP_LISP_CHAR('0')) {
+			if (lsp->curc == XP_CHAR('a')) 
+				lsp->curc = XP_CHAR('\a');
+			else if (lsp->curc == XP_CHAR('b')) 
+				lsp->curc = XP_CHAR('\b');
+			else if (lsp->curc == XP_CHAR('f')) 
+				lsp->curc = XP_CHAR('\f');
+			else if (lsp->curc == XP_CHAR('n')) 
+				lsp->curc = XP_CHAR('\n');
+			else if (lsp->curc == XP_CHAR('r')) 
+				lsp->curc = XP_CHAR('\r');
+			else if (lsp->curc == XP_CHAR('t')) 
+				lsp->curc = XP_CHAR('\t');
+			else if (lsp->curc == XP_CHAR('v')) 
+				lsp->curc = XP_CHAR('\v');
+			else if (lsp->curc == XP_CHAR('0')) {
 				escaped = 2;
 				code = 0;
 				NEXT_CHAR (lsp);
 				continue;
 			}
-			else if (lsp->curc == XP_LISP_CHAR('x')) {
+			else if (lsp->curc == XP_CHAR('x')) {
 				escaped = 3;
 				code = 0;
 				NEXT_CHAR (lsp);
 				continue;
 			}
 		}
-		else if (lsp->curc == XP_LISP_CHAR('\\')) {
+		else if (lsp->curc == XP_CHAR('\\')) {
 			escaped = 1;
 			NEXT_CHAR (lsp);
 			continue;
@@ -404,7 +404,7 @@ static int read_string (xp_lisp_t* lsp)
 
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
-	} while (lsp->curc != XP_LISP_CHAR('\"'));
+	} while (lsp->curc != XP_CHAR('\"'));
 
 	TOKEN_TYPE(lsp) = TOKEN_STRING;
 	NEXT_CHAR (lsp);

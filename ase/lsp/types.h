@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: types.h,v 1.3 2005-02-04 16:23:34 bacon Exp $
  */
 
 #ifndef _XP_LISP_TYPES_H_
@@ -10,14 +10,7 @@
 
 typedef xp_char_t xp_lisp_char;
 typedef xp_cint_t xp_lisp_cint;
-typedef int     xp_lisp_int;
-typedef float   xp_lisp_float;
-
-#define XP_LISP_CHAR(x)  XP_CHAR(x)
-#define XP_LISP_TEXT(x)  XP_TEXT(x)
-#define XP_LISP_CHAR_END XP_EOF
-
-#define xp_lisp_ensure(x) XP_ENSURE(x)
-#define xp_lisp_assert(x) XP_ASSERT(x)
+typedef xp_long_t xp_lisp_int;
+typedef xp_real_t xp_lisp_float;
 
 #endif

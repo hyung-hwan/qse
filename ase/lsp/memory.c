@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: memory.c,v 1.3 2005-02-04 16:23:34 bacon Exp $
  */
 
 #include <xp/lisp/memory.h> 
@@ -53,9 +53,9 @@ xp_lisp_mem_t* xp_lisp_mem_new (xp_size_t ubound, xp_size_t ubound_inc)
 	// initialize common object pointers
 	mem->nil     = xp_lisp_make_nil    (mem);
 	mem->t       = xp_lisp_make_true   (mem);
-	mem->quote   = xp_lisp_make_symbol (mem, XP_LISP_TEXT("quote"),  5);
-	mem->lambda  = xp_lisp_make_symbol (mem, XP_LISP_TEXT("lambda"), 6);
-	mem->macro   = xp_lisp_make_symbol (mem, XP_LISP_TEXT("macro"),  5);
+	mem->quote   = xp_lisp_make_symbol (mem,XP_TEXT("quote"),  5);
+	mem->lambda  = xp_lisp_make_symbol (mem,XP_TEXT("lambda"), 6);
+	mem->macro   = xp_lisp_make_symbol (mem,XP_TEXT("macro"),  5);
 
 	if (mem->nil    == XP_NULL ||
 	    mem->t      == XP_NULL ||
@@ -574,7 +574,7 @@ int xp_lisp_comp_symbol (xp_lisp_obj_t* obj, const xp_lisp_char* str)
 		index++; p++; str++;
 	}
 
-	return (*str == XP_LISP_CHAR('\0'))? 0: -1;
+	return (*str == XP_CHAR('\0'))? 0: -1;
 }
 
 int xp_lisp_comp_symbol2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t len)
@@ -615,7 +615,7 @@ int xp_lisp_comp_string (xp_lisp_obj_t* obj, const xp_lisp_char* str)
 		index++; p++; str++;
 	}
 
-	return (*str == XP_LISP_CHAR('\0'))? 0: -1;
+	return (*str == XP_CHAR('\0'))? 0: -1;
 }
 
 int xp_lisp_comp_string2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t len)
@@ -642,8 +642,8 @@ int xp_lisp_comp_string2 (xp_lisp_obj_t* obj, const xp_lisp_char* str, xp_size_t
 void xp_lisp_copy_string (xp_lisp_char* dst, const xp_lisp_char* str)
 {
 	// the buffer pointed by dst should be big enough to hold str
-	while (*str != XP_LISP_CHAR('\0')) *dst++ = *str++;
-	*dst = XP_LISP_CHAR('\0');
+	while (*str != XP_CHAR('\0')) *dst++ = *str++;
+	*dst = XP_CHAR('\0');
 }
 
 void xp_lisp_copy_string2 (xp_lisp_char* dst, const xp_lisp_char* str, xp_size_t len)
@@ -653,6 +653,6 @@ void xp_lisp_copy_string2 (xp_lisp_char* dst, const xp_lisp_char* str, xp_size_t
 		*dst++ = *str++;
 		len--;
 	}
-	*dst = XP_LISP_CHAR('\0');
+	*dst = XP_CHAR('\0');
 }
 
