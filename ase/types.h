@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.9 2005-01-19 11:58:26 bacon Exp $
+ * $Id: types.h,v 1.10 2005-01-19 12:12:42 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -11,6 +11,10 @@
 #include <xp/itypes.h>
 
 typedef xp_uint8_t  xp_byte_t;
+
+typedef xp_bool_t   int;
+#define xp_true  (0 == 0)
+#define xp_false (0 != 0)
 
 #ifdef XP_HAVE_WCHAR_T
 // TODO: make it configurable from outside
