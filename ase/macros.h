@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.13 2005-03-29 11:37:50 bacon Exp $
+ * $Id: macros.h,v 1.14 2005-03-30 07:26:38 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -23,6 +23,12 @@
 #elif defined(XP_CHAR_IS_MCHAR)
     #define xp_main main
 #endif
+
+#define XP_TYPE_IS_SIGNED(type) (!(((type)0) < ((type)-1)))
+#define XP_TYPE_MAX(type) \
+	((type)(XP_TYPE_IS_SIGNED(type)? ~((type)1 << (xp_sizeof(type) * 8 - 1)): (~(type)0)))
+#define XP_TYPE_MIN(type) \
+	((type)(XP_TYPE_IS_SIGNED(type)? ((type)1 << (xp_sizeof(type) * 8 - 1)): ((type)0)))
 
 #define XP_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__;
 #define XP_LOOP_BREAK(id)    goto __loop_ ## id ## _end__;
