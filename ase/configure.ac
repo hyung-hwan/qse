@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.23 $])
+AC_REVISION([$Revision: 1.24 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -9,6 +9,9 @@ AC_PROG_CC
 AC_PROG_RANLIB
 
 # Checks for libraries.
+AC_CHECK_LIB(pthread, pthread_create)
+AC_CHECK_LIB(nsl, gethostbyname)
+AC_CHECK_LIB(socket, connect)
 
 # Checks for header files.
 AC_HEADER_STDC
