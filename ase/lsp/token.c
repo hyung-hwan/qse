@@ -1,9 +1,10 @@
 /*
- * $Id: token.c,v 1.4 2005-02-05 05:18:20 bacon Exp $
+ * $Id: token.c,v 1.5 2005-02-05 05:30:25 bacon Exp $
  */
 
-#include "token.h"
-#include <stdlib.h>
+#include <xp/lisp/token.h>
+#include <xp/c/stdlib.h>
+#include <xp/c/assert.h>
 
 xp_lisp_token_t* xp_lisp_token_new (xp_size_t capacity)
 {
@@ -11,12 +12,12 @@ xp_lisp_token_t* xp_lisp_token_new (xp_size_t capacity)
 
 	xp_assert (capacity > 0);
 
-	token = (xp_lisp_token_t*)malloc (sizeof(xp_lisp_token_t));
+	token = (xp_lisp_token_t*)xp_malloc (sizeof(xp_lisp_token_t));
 	if (token == XP_NULL) return XP_NULL;
 
-	token->buffer = (xp_lisp_char*)malloc ((capacity + 1) * sizeof(xp_lisp_char));
+	token->buffer = (xp_lisp_char*)xp_malloc ((capacity + 1) * sizeof(xp_lisp_char));
 	if (token->buffer == XP_NULL) {
-		free (token);
+		xp_free (token);
 		return XP_NULL;
 	}
 
@@ -32,8 +33,8 @@ xp_lisp_token_t* xp_lisp_token_new (xp_size_t capacity)
 
 void xp_lisp_token_free (xp_lisp_token_t* token)
 {
-	free (token->buffer);
-	free (token);
+	xp_free (token->buffer);
+	xp_free (token);
 }
 
 int xp_lisp_token_addc (xp_lisp_token_t* token, xp_lisp_cint c)
@@ -65,7 +66,7 @@ xp_lisp_char* xp_lisp_token_transfer (xp_lisp_token_t* token, xp_size_t capacity
 {
 	xp_lisp_char* old_buffer, * new_buffer;
    
-	new_buffer = (xp_lisp_char*)malloc((capacity + 1) * sizeof(xp_lisp_char));
+	new_buffer = (xp_lisp_char*)xp_malloc((capacity + 1) * sizeof(xp_lisp_char));
 	if (new_buffer == XP_NULL) return XP_NULL;
 
 	old_buffer = token->buffer;
