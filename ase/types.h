@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.10 2005-01-19 12:12:42 bacon Exp $
+ * $Id: types.h,v 1.11 2005-01-19 12:13:48 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -12,7 +12,7 @@
 
 typedef xp_uint8_t  xp_byte_t;
 
-typedef xp_bool_t   int;
+typedef int xp_bool_t;
 #define xp_true  (0 == 0)
 #define xp_false (0 != 0)
 
