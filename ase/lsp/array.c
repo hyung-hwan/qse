@@ -1,9 +1,9 @@
 /*
- * $Id: array.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: array.c,v 1.3 2005-02-05 05:43:55 bacon Exp $
  */
 
 #include <xp/lisp/array.h>
-#include <xp/c/stdlib.h>
+#include <xp/c/memory.h>
 #include <xp/c/assert.h>
 
 xp_lisp_array_t* xp_lisp_array_new (xp_size_t capacity)

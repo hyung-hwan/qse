@@ -1,10 +1,11 @@
 /*
- * $Id: eval.c,v 1.4 2005-02-05 05:18:20 bacon Exp $
+ * $Id: eval.c,v 1.5 2005-02-05 05:43:55 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
 #include <xp/lisp/env.h>
 #include <xp/lisp/primitive.h>
+#include <xp/c/assert.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +55,7 @@ static xp_lisp_obj_t* make_func (xp_lisp_t* lsp, xp_lisp_obj_t* cdr, int is_macr
 	// TODO: lambda expression syntax check.
 	xp_lisp_obj_t* func, * formal, * body;
 
-	printf ("about to create a function or a macro ....\n");
+printf ("about to create a function or a macro ....\n");
 
 	if (cdr == lsp->mem->nil) {
 		lsp->error = XP_LISP_ERR_TOO_FEW_ARGS;

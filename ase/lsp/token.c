@@ -1,9 +1,9 @@
 /*
- * $Id: token.c,v 1.5 2005-02-05 05:30:25 bacon Exp $
+ * $Id: token.c,v 1.6 2005-02-05 05:43:55 bacon Exp $
  */
 
 #include <xp/lisp/token.h>
-#include <xp/c/stdlib.h>
+#include <xp/c/memory.h>
 #include <xp/c/assert.h>
 
 xp_lisp_token_t* xp_lisp_token_new (xp_size_t capacity)
