@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.3 2005-02-04 16:23:34 bacon Exp $
+ * $Id: print.c,v 1.4 2005-02-14 14:37:50 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -67,7 +67,15 @@ void xp_lisp_print (xp_lisp_t* lsp, xp_lisp_obj_t* obj)
 		xp_fprintf (lsp->outstream,XP_TEXT("t"));
 		break;
 	case XP_LISP_OBJ_INT:
-		xp_fprintf (lsp->outstream,XP_TEXT("%d"), XP_LISP_IVALUE(obj));
+		if (xp_sizeof(xp_lisp_int_t) == xp_sizeof(int)) {
+			xp_fprintf (lsp->outstream,XP_TEXT("%d"), XP_LISP_IVALUE(obj));
+		}
+		else if (xp_sizeof(xp_lisp_int_t) == xp_sizeof(long)) {
+			xp_fprintf (lsp->outstream,XP_TEXT("%ld"), XP_LISP_IVALUE(obj));
+		}
+		else if (xp_sizeof(xp_lisp_int_t) == xp_sizeof(long long)) {
+			xp_fprintf (lsp->outstream,XP_TEXT("%lld"), XP_LISP_IVALUE(obj));
+		}
 		break;
 	case XP_LISP_OBJ_FLOAT:
 		xp_fprintf (lsp->outstream,XP_TEXT("%f"), XP_LISP_FVALUE(obj));

@@ -1,5 +1,5 @@
 /*
- * $Id: memory.h,v 1.3 2005-02-07 15:10:41 bacon Exp $
+ * $Id: memory.h,v 1.4 2005-02-14 14:37:50 bacon Exp $
  */
 
 #ifndef _XP_LISP_MEM_H_
@@ -68,8 +68,8 @@ void       xp_lisp_unlock_all (xp_lisp_obj_t* obj);
 // object creation of standard types
 xp_lisp_obj_t* xp_lisp_make_nil    (xp_lisp_mem_t* mem);
 xp_lisp_obj_t* xp_lisp_make_true   (xp_lisp_mem_t* mem);
-xp_lisp_obj_t* xp_lisp_make_int    (xp_lisp_mem_t* mem, xp_lisp_int value);
-xp_lisp_obj_t* xp_lisp_make_float  (xp_lisp_mem_t* mem, xp_lisp_float value);
+xp_lisp_obj_t* xp_lisp_make_int    (xp_lisp_mem_t* mem, xp_lisp_int_t value);
+xp_lisp_obj_t* xp_lisp_make_float  (xp_lisp_mem_t* mem, xp_lisp_real_t value);
 xp_lisp_obj_t* xp_lisp_make_symbol (xp_lisp_mem_t* mem, const xp_char_t* str, xp_size_t len);
 xp_lisp_obj_t* xp_lisp_make_string (xp_lisp_mem_t* mem, const xp_char_t* str, xp_size_t len);
 xp_lisp_obj_t* xp_lisp_make_cons   (xp_lisp_mem_t* mem, xp_lisp_obj_t* car, xp_lisp_obj_t* cdr);
