@@ -10,9 +10,9 @@ static int get_char (xp_lisp_cint* ch, void* arg)
 {
 	xp_lisp_cint c;
    
-	c = xp_fgetc(stdin);
+	c = xp_fgetc(xp_stdin);
 	if (c == XP_EOF) {
-		if (xp_ferror(stdin)) return -1;
+		if (xp_ferror(xp_stdin)) return -1;
 		c = XP_EOF;
 	}
 
@@ -42,7 +42,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	mtrace ();
 #endif
 	if (argc != 3) {
-		xp_fprintf (xp_stderr, XP_TEXT("usage: %ls mem_ubound mem_ubound_inc\n"), argv[0]);
+		xp_fprintf (xp_stderr, XP_TEXT("usage: %s mem_ubound mem_ubound_inc\n"), argv[0]);
 		return -1;
 	}
 

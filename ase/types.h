@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.11 2005-01-19 12:13:48 bacon Exp $
+ * $Id: types.h,v 1.12 2005-02-06 03:27:54 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -8,7 +8,7 @@
 #ifndef _WIN32
 #include <xp/config.h>
 #endif
-#include <xp/itypes.h>
+#include <xp/xp_types.h>
 
 typedef xp_uint8_t  xp_byte_t;
 
