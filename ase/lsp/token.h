@@ -1,9 +1,9 @@
 /*
- * $Id: token.h,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: token.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
-#ifndef _RBL_TOKEN_H_
-#define _RBL_TOKEN_H_
+#ifndef _XP_LISP_TOKEN_H_
+#define _XP_LISP_TOKEN_H_
 
 #include "types.h"
 

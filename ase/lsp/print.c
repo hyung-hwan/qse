@@ -1,113 +1,113 @@
 /*
- * $Id: print.c,v 1.1 2005-02-04 15:39:11 bacon Exp $
+ * $Id: print.c,v 1.2 2005-02-04 16:00:37 bacon Exp $
  */
 
-#include "lsp.h"
+#include <xp/lisp/lisp.h>
 
 void xp_lisp_print_debug (xp_lisp_obj_t* obj)
 {
-	switch (RBL_TYPE(obj)) {
-	case RBL_OBJ_NIL:
-		rb_printf ( RBL_TEXT("nil"));
+	switch (XP_LISP_TYPE(obj)) {
+	case XP_LISP_OBJ_NIL:
+		xp_printf ( XP_LISP_TEXT("nil"));
 		break;
-	case RBL_OBJ_TRUE:
-		rb_printf ( RBL_TEXT("t"));
+	case XP_LISP_OBJ_TRUE:
+		xp_printf ( XP_LISP_TEXT("t"));
 		break;
-	case RBL_OBJ_INT:
-		rb_printf ( RBL_TEXT("%d"), RBL_IVALUE(obj));
+	case XP_LISP_OBJ_INT:
+		xp_printf ( XP_LISP_TEXT("%d"), XP_LISP_IVALUE(obj));
 		break;
-	case RBL_OBJ_FLOAT:
-		rb_printf ( RBL_TEXT("%f"), RBL_FVALUE(obj));
+	case XP_LISP_OBJ_FLOAT:
+		xp_printf ( XP_LISP_TEXT("%f"), XP_LISP_FVALUE(obj));
 		break;
-	case RBL_OBJ_SYMBOL:
-		rb_printf ( RBL_TEXT("%s"), RBL_SYMVALUE(obj));
+	case XP_LISP_OBJ_SYMBOL:
+		xp_printf ( XP_LISP_TEXT("%s"), XP_LISP_SYMVALUE(obj));
 		break;
-	case RBL_OBJ_STRING:
-		rb_printf ( RBL_TEXT("%s"), RBL_STRVALUE(obj));
+	case XP_LISP_OBJ_STRING:
+		xp_printf ( XP_LISP_TEXT("%s"), XP_LISP_STRVALUE(obj));
 		break;
-	case RBL_OBJ_CONS:
+	case XP_LISP_OBJ_CONS:
 		{
 			xp_lisp_obj_t* p = obj;
-			rb_printf ( RBL_TEXT("("));
+			xp_printf ( XP_LISP_TEXT("("));
 			do {
-				xp_lisp_print_debug (RBL_CAR(p));
-				p = RBL_CDR(p);
-				if (RBL_TYPE(p) != RBL_OBJ_NIL) {
-					rb_printf ( RBL_TEXT(" "));
-					if (RBL_TYPE(p) != RBL_OBJ_CONS) {
-						rb_printf ( RBL_TEXT(". "));
+				xp_lisp_print_debug (XP_LISP_CAR(p));
+				p = XP_LISP_CDR(p);
+				if (XP_LISP_TYPE(p) != XP_LISP_OBJ_NIL) {
+					xp_printf ( XP_LISP_TEXT(" "));
+					if (XP_LISP_TYPE(p) != XP_LISP_OBJ_CONS) {
+						xp_printf ( XP_LISP_TEXT(". "));
 						xp_lisp_print_debug (p);
 					}
 				}
-			} while (RBL_TYPE(p) != RBL_OBJ_NIL && RBL_TYPE(p) == RBL_OBJ_CONS);
-			rb_printf ( RBL_TEXT(")"));
+			} while (XP_LISP_TYPE(p) != XP_LISP_OBJ_NIL && XP_LISP_TYPE(p) == XP_LISP_OBJ_CONS);
+			xp_printf ( XP_LISP_TEXT(")"));
 		}
 		break;
-	case RBL_OBJ_FUNC:
-		rb_printf ( RBL_TEXT("func"));
+	case XP_LISP_OBJ_FUNC:
+		xp_printf ( XP_LISP_TEXT("func"));
 		break;
-	case RBL_OBJ_MACRO:
-		rb_printf (RBL_TEXT("macro"));
+	case XP_LISP_OBJ_MACRO:
+		xp_printf (XP_LISP_TEXT("macro"));
 		break;
-	case RBL_OBJ_PRIM:
-		rb_printf (RBL_TEXT("prim"));
+	case XP_LISP_OBJ_PRIM:
+		xp_printf (XP_LISP_TEXT("prim"));
 		break;
 	default:
-		rb_printf (RBL_TEXT("unknown object type: %d"), RBL_TYPE(obj)); 
+		xp_printf (XP_LISP_TEXT("unknown object type: %d"), XP_LISP_TYPE(obj)); 
 	}
 }
 
 void xp_lisp_print (xp_lisp_t* lsp, xp_lisp_obj_t* obj)
 {
-	switch (RBL_TYPE(obj)) {
-	case RBL_OBJ_NIL:
-		rb_fprintf (lsp->outstream, RBL_TEXT("nil"));
+	switch (XP_LISP_TYPE(obj)) {
+	case XP_LISP_OBJ_NIL:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("nil"));
 		break;
-	case RBL_OBJ_TRUE:
-		rb_fprintf (lsp->outstream, RBL_TEXT("t"));
+	case XP_LISP_OBJ_TRUE:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("t"));
 		break;
-	case RBL_OBJ_INT:
-		rb_fprintf (lsp->outstream, RBL_TEXT("%d"), RBL_IVALUE(obj));
+	case XP_LISP_OBJ_INT:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("%d"), XP_LISP_IVALUE(obj));
 		break;
-	case RBL_OBJ_FLOAT:
-		rb_fprintf (lsp->outstream, RBL_TEXT("%f"), RBL_FVALUE(obj));
+	case XP_LISP_OBJ_FLOAT:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("%f"), XP_LISP_FVALUE(obj));
 		break;
-	case RBL_OBJ_SYMBOL:
-		rb_fprintf (lsp->outstream, RBL_TEXT("%s"), RBL_SYMVALUE(obj));
+	case XP_LISP_OBJ_SYMBOL:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("%s"), XP_LISP_SYMVALUE(obj));
 		break;
-	case RBL_OBJ_STRING:
-		rb_fprintf (lsp->outstream, RBL_TEXT("\"%s\""), RBL_STRVALUE(obj));
+	case XP_LISP_OBJ_STRING:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("\"%s\""), XP_LISP_STRVALUE(obj));
 		break;
-	case RBL_OBJ_CONS:
+	case XP_LISP_OBJ_CONS:
 		{
 			xp_lisp_obj_t* p = obj;
-			rb_fprintf (lsp->outstream, RBL_TEXT("("));
+			xp_fprintf (lsp->outstream, XP_LISP_TEXT("("));
 			do {
-				xp_lisp_print (lsp, RBL_CAR(p));
-				p = RBL_CDR(p);
+				xp_lisp_print (lsp, XP_LISP_CAR(p));
+				p = XP_LISP_CDR(p);
 				if (p != lsp->mem->nil) {
-					rb_fprintf (lsp->outstream, RBL_TEXT(" "));
-					if (RBL_TYPE(p) != RBL_OBJ_CONS) {
-						rb_fprintf (lsp->outstream, RBL_TEXT(". "));
+					xp_fprintf (lsp->outstream, XP_LISP_TEXT(" "));
+					if (XP_LISP_TYPE(p) != XP_LISP_OBJ_CONS) {
+						xp_fprintf (lsp->outstream, XP_LISP_TEXT(". "));
 						xp_lisp_print (lsp, p);
 					}
 				}
-			} while (p != lsp->mem->nil && RBL_TYPE(p) == RBL_OBJ_CONS);
-			rb_fprintf (lsp->outstream, RBL_TEXT(")"));
+			} while (p != lsp->mem->nil && XP_LISP_TYPE(p) == XP_LISP_OBJ_CONS);
+			xp_fprintf (lsp->outstream, XP_LISP_TEXT(")"));
 		}
 		break;
-	case RBL_OBJ_FUNC:
-		rb_fprintf (lsp->outstream, RBL_TEXT("func"));
+	case XP_LISP_OBJ_FUNC:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("func"));
 		break;
-	case RBL_OBJ_MACRO:
-		rb_fprintf (lsp->outstream, RBL_TEXT("macro"));
+	case XP_LISP_OBJ_MACRO:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("macro"));
 		break;
-	case RBL_OBJ_PRIM:
-		rb_fprintf (lsp->outstream, RBL_TEXT("prim"));
+	case XP_LISP_OBJ_PRIM:
+		xp_fprintf (lsp->outstream, XP_LISP_TEXT("prim"));
 		break;
 	default:
-		rb_fprintf (lsp->outstream, 
-			RBL_TEXT("unknown object type: %d"), RBL_TYPE(obj)); 
+		xp_fprintf (lsp->outstream, 
+			XP_LISP_TEXT("unknown object type: %d"), XP_LISP_TYPE(obj)); 
 	}
 }
 

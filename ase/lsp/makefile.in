@@ -1,4 +1,4 @@
-SRCS = env.c token.c mem.c lsp.c prim.c read.c eval.c print.c array.c
+SRCS = env.c token.c memory.c lisp.c primitive.c read.c eval.c print.c array.c
 OBJS = $(SRCS:.c=.o)
 OUT = libxplisp.a
 
