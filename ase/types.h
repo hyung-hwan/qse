@@ -1,11 +1,11 @@
 /*
- * $Id: types.h,v 1.19 2005-03-29 14:14:15 bacon Exp $
+ * $Id: types.h,v 1.20 2005-04-05 15:38:45 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
 #define _XP_TYPES_H_
 
-#ifdef _WIN32
+#if defined(_DOS) || defined(_WIN32)
 	#include <xp/config_win32.h>
 #else
 	#include <xp/config.h>
@@ -118,7 +118,7 @@ typedef xp_int_t   xp_ssize_t;
 typedef char xp_mchar_t;
 typedef int  xp_mcint_t;
 
-#ifdef _WIN32
+#if defined(_DOS) || defined(_WIN32)
 	typedef unsigned short xp_wchar_t;
 	typedef int            xp_wcint_t;
 #elif SIZEOF_LONG == 4
@@ -146,9 +146,5 @@ typedef xp_mcint_t  xp_cint_t;
 #define XP_CHAR_IS_WCHAR
 typedef xp_wchar_t  xp_char_t;
 typedef xp_wcint_t  xp_cint_t;
-
-#if defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
-	#define _UNICODE
-#endif
 
 #endif
