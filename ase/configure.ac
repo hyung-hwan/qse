@@ -1,6 +1,6 @@
 AC_PREREQ(2.59)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.10 $])
+AC_REVISION([$Revision: 1.11 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -11,7 +11,7 @@ AC_PROG_RANLIB
 # Checks for libraries.
 
 # Checks for header files.
-#AC_HEADER_STDC
+AC_HEADER_STDC
 AC_CHECK_HEADER([unistd.h], [AC_DEFINE([XP_HAVE_UNISTD_H],[],[unistd.h])])
 AC_CHECK_HEADER([fcntl.h], [AC_DEFINE([XP_HAVE_FCNTL_H],[],[fcntl.h])])
 AC_CHECK_HEADER([stdarg.h], [AC_DEFINE([XP_HAVE_STDARG_H],[],[stdarg.h])])
@@ -26,9 +26,9 @@ AC_C_BIGENDIAN(
 	[AC_DEFINE([XP_ENDIAN_UNKNOWN],[],[Unknown Endian])])
 
 # Checks for library functions.
-AC_FUNC_MEMCMP
-AC_FUNC_REALLOC
-AC_CHECK_FUNCS([memset])
+#AC_FUNC_MEMCMP
+#AC_FUNC_REALLOC
+#AC_CHECK_FUNCS([memset])
 
 # Checks for system files
 AC_CHECK_FILE([/NextDeveloper],[AC_DEFINE([_POSIX_SOURCE],[],[_POSIX_SOURCE])])
