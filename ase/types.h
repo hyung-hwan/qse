@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.20 2005-04-05 15:38:45 bacon Exp $
+ * $Id: types.h,v 1.21 2005-04-10 06:41:37 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -146,5 +146,10 @@ typedef xp_mcint_t  xp_cint_t;
 #define XP_CHAR_IS_WCHAR
 typedef xp_wchar_t  xp_char_t;
 typedef xp_wcint_t  xp_cint_t;
+
+
+#ifdef XP_CHAR_IS_WCHAR
+	#define UNICODE
+#endif
 
 #endif
