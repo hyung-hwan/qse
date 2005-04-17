@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.21 2005-04-10 06:41:37 bacon Exp $
+ * $Id: types.h,v 1.22 2005-04-17 15:28:49 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -135,18 +135,18 @@ typedef int  xp_mcint_t;
 	#define XP_SIZEOF_WCHAR_T SIZEOF_INT
 #endif
 
-
-// TODO: make it configurable from outside
-/*
-#define XP_CHAR_IS_MCHAR
-typedef xp_mchar_t  xp_char_t;
-typedef xp_mcint_t  xp_cint_t;
-*/
-
-#define XP_CHAR_IS_WCHAR
-typedef xp_wchar_t  xp_char_t;
-typedef xp_wcint_t  xp_cint_t;
-
+#if defined(XP_CHAR_IS_MCHAR)
+	//#define XP_CHAR_IS_MCHAR
+	typedef xp_mchar_t  xp_char_t;
+	typedef xp_mcint_t  xp_cint_t;
+#elif defined(XP_CHAR_IS_WCHAR)
+	typedef xp_wchar_t  xp_char_t;
+	typedef xp_wcint_t  xp_cint_t;
+#else
+	#define XP_CHAR_IS_WCHAR
+	typedef xp_wchar_t  xp_char_t;
+	typedef xp_wcint_t  xp_cint_t;
+#endif
 
 #ifdef XP_CHAR_IS_WCHAR
 	#define UNICODE
