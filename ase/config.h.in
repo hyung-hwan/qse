@@ -73,6 +73,9 @@
 /* wchar.h */
 #undef XP_HAVE_WCHAR_H
 
-/* _POSIX_SOURCE */
-#undef _POSIX_SOURCE
+/* char is wchar */
+#undef XP_CHAR_IS_WCHAR
+
+/* char is mchar */
+#undef XP_CHAR_IS_MCHAR
 
