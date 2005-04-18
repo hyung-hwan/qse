@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.29 $])
+AC_REVISION([$Revision: 1.30 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -57,8 +57,16 @@ AC_CHECK_SIZEOF(long double)
 #AC_FUNC_REALLOC
 #AC_CHECK_FUNCS([memset])
 
-# Checks for system files
-AC_CHECK_FILE([/NextDeveloper],[AC_DEFINE([_POSIX_SOURCE],[],[_POSIX_SOURCE])])
+AC_ARG_ENABLE(char, 
+	[--enable-char choose a default charater type (wchar/mchar)],
+	char_is=$enableval,char_is=wchar)
+
+if test "$char_is" == "wchar"
+then
+	AC_DEFINE([XP_CHAR_IS_WCHAR],[],[char is wchar])
+else
+	AC_DEFINE([XP_CHAR_IS_MCHAR],[],[char is mchar])
+fi
 
 AC_CONFIG_FILES([
 	Makefile utils/Makefile xp/Makefile 
