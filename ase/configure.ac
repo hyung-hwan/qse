@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.30 $])
+AC_REVISION([$Revision: 1.31 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -61,7 +61,7 @@ AC_ARG_ENABLE(char,
 	[--enable-char choose a default charater type (wchar/mchar)],
 	char_is=$enableval,char_is=wchar)
 
-if test "$char_is" == "wchar"
+if test "$char_is" = "wchar"
 then
 	AC_DEFINE([XP_CHAR_IS_WCHAR],[],[char is wchar])
 else
