@@ -1,4 +1,4 @@
-SUBDIRS=c lisp
+SUBDIRS=c net lisp
 
 all:
 	@for i in $(SUBDIRS); \
