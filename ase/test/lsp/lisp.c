@@ -3,7 +3,7 @@
 #include <xp/c/ctype.h>
 #include <xp/c/stdcli.h>
 
-#ifdef LINUX
+#ifdef __linux
 #include <mcheck.h>
 #endif
 
@@ -96,7 +96,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_cli_t* cli;
 	int mem, inc;
 
-#ifdef LINUX
+#ifdef __linux
 	mtrace ();
 #endif
 
@@ -158,7 +158,7 @@ setlocale (LC_ALL, "");
 
 	xp_lisp_free (lisp);
 
-#ifdef LINUX
+#ifdef __linux
 	muntrace ();
 #endif
 	return 0;
