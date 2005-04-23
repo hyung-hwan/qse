@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.34 $])
+AC_REVISION([$Revision: 1.35 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -22,6 +22,7 @@ AC_CHECK_HEADER([stdarg.h], [AC_DEFINE([XP_HAVE_STDARG_H],[],[stdarg.h])])
 AC_CHECK_HEADER([stddef.h], [AC_DEFINE([XP_HAVE_STDDEF_H],[],[stddef.h])])
 AC_CHECK_HEADER([limits.h], [AC_DEFINE([XP_HAVE_LIMITS_H],[],[limits.h])])
 AC_CHECK_HEADER([wchar.h], [AC_DEFINE([XP_HAVE_WCHAR_H],[],[wchar.h])])
+AC_CHECK_HEADER([poll.h], [AC_DEFINE([XP_HAVE_POLL_H],[],[poll.h])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN(
@@ -71,7 +72,7 @@ fi
 AC_CONFIG_FILES([
 	Makefile utils/Makefile xp/Makefile xpp/Makefile
 	xp/c/Makefile xp/net/Makefile xp/mp/Makefile xp/lisp/Makefile 
-	xp/test/c/Makefile xp/test/lisp/Makefile
+	xp/test/c/Makefile xp/test/net/Makefile xp/test/lisp/Makefile
 	xpp/bas/Makefile xpp/sys/Makefile xpp/net/Makefile
 	xpp/test/bas/Makefile xpp/test/sys/Makefile xpp/test/net/Makefile])
 AC_OUTPUT
