@@ -73,6 +73,9 @@
 /* wchar.h */
 #undef XP_HAVE_WCHAR_H
 
+/* poll.h */
+#undef XP_HAVE_POLL_H
+
 /* char is wchar */
 #undef XP_CHAR_IS_WCHAR
 
