@@ -1,5 +1,5 @@
 /*
- * $Id: lisp.h,v 1.3 2005-02-07 15:10:41 bacon Exp $
+ * $Id: lisp.h,v 1.4 2005-04-24 07:48:16 bacon Exp $
  */
 
 #ifndef _XP_LISP_LISP_H_
@@ -10,7 +10,7 @@
 #include <xp/lisp/object.h>
 #include <xp/lisp/memory.h>
 
-#include <xp/c/stdio.h> // TODO: may have to remove dependency on stdio?
+#include <xp/bas/stdio.h> // TODO: may have to remove dependency on stdio?
 
 // NOTICE: the function of xp_lisp_creader_t must return -1 on error 
 //         and 0 on success. the first argument must be set to 
