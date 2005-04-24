@@ -1,12 +1,12 @@
 /*
- * $Id: memory.c,v 1.9 2005-02-14 14:37:50 bacon Exp $
+ * $Id: memory.c,v 1.10 2005-04-24 07:48:16 bacon Exp $
  */
 
 #include <xp/lisp/memory.h> 
 #include <xp/lisp/primitive.h>
-#include <xp/c/memory.h>
-#include <xp/c/assert.h>
-#include <xp/c/dprint.h>
+#include <xp/bas/memory.h>
+#include <xp/bas/assert.h>
+#include <xp/bas/dprint.h>
 
 xp_lisp_mem_t* xp_lisp_mem_new (xp_size_t ubound, xp_size_t ubound_inc)
 {

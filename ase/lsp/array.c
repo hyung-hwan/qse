@@ -1,10 +1,10 @@
 /*
- * $Id: array.c,v 1.3 2005-02-05 05:43:55 bacon Exp $
+ * $Id: array.c,v 1.4 2005-04-24 07:48:16 bacon Exp $
  */
 
 #include <xp/lisp/array.h>
-#include <xp/c/memory.h>
-#include <xp/c/assert.h>
+#include <xp/bas/memory.h>
+#include <xp/bas/assert.h>
 
 xp_lisp_array_t* xp_lisp_array_new (xp_size_t capacity)
 {
