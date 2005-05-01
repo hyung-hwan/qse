@@ -1,7 +1,7 @@
 #include <xp/lisp/lisp.h>
-#include <xp/c/stdio.h>
-#include <xp/c/ctype.h>
-#include <xp/c/stdcli.h>
+#include <xp/bas/stdio.h>
+#include <xp/bas/ctype.h>
+#include <xp/bas/stdcli.h>
 
 #ifdef __linux
 #include <mcheck.h>
@@ -114,7 +114,7 @@ setlocale (LC_ALL, "");
 	}
 
 	lisp = xp_lisp_new (mem, inc);
-	if (lisp == NULL) {
+	if (lisp == XP_NULL) {
 		xp_fprintf (xp_stderr, 
 			XP_TEXT("error: cannot create a lisp instance\n"));
 		return -1;
@@ -122,13 +122,13 @@ setlocale (LC_ALL, "");
 
 	xp_printf (XP_TEXT("LISP 0.0001\n"));
 
-	xp_lisp_set_creader (lisp, get_char, NULL);
+	xp_lisp_set_creader (lisp, get_char, XP_NULL);
 
 	for (;;) {
 		xp_printf (XP_TEXT("%s> "), argv[0]);
 
 		obj = xp_lisp_read (lisp);
-		if (obj == NULL) {
+		if (obj == XP_NULL) {
 			if (lisp->error != XP_LISP_ERR_END && 
 			    lisp->error != XP_LISP_ERR_ABORT) {
 				xp_fprintf (xp_stderr, 
@@ -139,7 +139,7 @@ setlocale (LC_ALL, "");
 			continue;
 		}
 
-		if ((obj = xp_lisp_eval (lisp, obj)) != NULL) {
+		if ((obj = xp_lisp_eval (lisp, obj)) != XP_NULL) {
 			xp_lisp_print (lisp, obj);
 			xp_printf (XP_TEXT("\n"));
 		}
