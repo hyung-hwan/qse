@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.22 2005-04-18 11:28:07 bacon Exp $
+ * $Id: macros.h,v 1.23 2005-05-02 11:14:59 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -52,9 +52,8 @@
 		} \
 	} while (0);
 
-#define XP_QUOTE(val)   __XP_QUOTE(val)
-#define __XP_QUOTE(val) #val
 
+#define XP_MQUOTE(val)  #val
 #define XP_MCHAR(ch)    ((xp_mchar_t)ch)
 #define XP_MTEXT(txt)   ((const xp_mchar_t*)txt)
 
@@ -63,15 +62,18 @@
 #define XP_WCHAR(ch) ((xp_wchar_t)ch)
 #define XP_WTEXT(txt) don't know yet... may have to call a function?
  */
+#define XP_WQUOTE(val)  ((const xp_char_t*)L###val)
 #define XP_WCHAR(ch)    ((xp_wchar_t)L##ch)
 #define XP_WTEXT(txt)   ((const xp_wchar_t*)L##txt)
 
 #if defined(XP_CHAR_IS_MCHAR)
 	#define XP_CHAR(ch)   XP_MCHAR(ch)
 	#define XP_TEXT(txt)  XP_MTEXT(txt)
+	#define XP_QUOTE(val) XP_MQUOTE(val)
 #else
 	#define XP_CHAR(ch)   XP_WCHAR(ch)
 	#define XP_TEXT(txt)  XP_WTEXT(txt)
+	#define XP_QUOTE(val) XP_WQUOTE(val)
 #endif
 
 #endif
