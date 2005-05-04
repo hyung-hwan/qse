@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.23 2005-04-18 03:43:17 bacon Exp $
+ * $Id: types.h,v 1.24 2005-05-04 04:33:42 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -13,7 +13,7 @@
 	#include <xp/config.h>
 #endif
 
-/* boolean types */
+/* boolean type */
 #ifdef __cplusplus
 	typedef bool xp_bool_t;
 	#define xp_true  true
@@ -23,6 +23,12 @@
 	#define xp_true  (0 == 0)
 	#define xp_false (0 != 0)
 #endif
+
+/* tri-state type */
+typedef int xp_tri_t;
+#define xp_alive   1
+#define xp_zombie  0
+#define xp_dead   -1
 
 /* integer that can hold a pointer */
 #if SIZEOF_VOID_P == SIZEOF_LONG_LONG
