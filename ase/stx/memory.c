@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.2 2005-05-06 16:07:58 bacon Exp $
+ * $Id: memory.c,v 1.3 2005-05-06 17:17:59 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
@@ -71,7 +71,7 @@ xp_stx_word_t xp_stx_alloc_object (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
 	/* find the free object slot */
 	if (mem->free == XP_NULL) {
 		xp_stx_garbage_collect (mem);
-		if (mem->free == XP_NULL) return mem->capacity;
+		if (mem->free == XP_NULL) return mem->capacity;;
 	}
 
 	object = (xp_stx_object_t*)xp_malloc (nbytes);
