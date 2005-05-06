@@ -1,5 +1,5 @@
 /*
- * $Id: memory.h,v 1.1 2005-05-06 15:54:47 bacon Exp $
+ * $Id: memory.h,v 1.2 2005-05-06 16:07:58 bacon Exp $
  */
 
 #ifndef _XP_STX_MEMORY_H_
@@ -11,7 +11,7 @@
 typedef struct xp_stx_memory_t xp_stx_memory_t;
 typedef struct xp_stx_object_t xp_stx_object_t;
 
-typedef xp_byte   xp_stx_byte_t;
+typedef xp_byte_t xp_stx_byte_t;
 typedef xp_size_t xp_stx_word_t;
 typedef xp_size_t xp_stx_size_t;
 typedef xp_size_t xp_stx_index_t;
@@ -40,6 +40,8 @@ struct xp_stx_memory_t
 	//xp_stx_word_t smalltalk;
 	//xp_stx_word_t classes[];
 	xp_stx_word_t symbol_table;
+
+	xp_bool_t __malloced;
 };
 
 #ifdef __cplusplus

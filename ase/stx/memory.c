@@ -1,16 +1,17 @@
 /*
- * $Id: memory.c,v 1.1 2005-05-06 15:54:47 bacon Exp $
+ * $Id: memory.c,v 1.2 2005-05-06 16:07:58 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
 #include <xp/bas/memory.h>
+#include <xp/bas/assert.h>
 
 xp_stx_memory_t* xp_stx_memory_open (
 	xp_stx_memory_t* mem, xp_stx_word_t capacity)
 {
-	xp_assert (capacity > 0);
 	xp_stx_object_t** slots;
 
+	xp_assert (capacity > 0);
 	if (mem == XP_NULL) {
 		mem = (xp_stx_memory_t*)xp_malloc(xp_sizeof(xp_stx_memory_t));
 		if (mem == XP_NULL) return XP_NULL;
