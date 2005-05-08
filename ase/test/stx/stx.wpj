@@ -6,7 +6,7 @@ VpeMain
 WRect
 1500
 440
-7680
+3770
 9200
 2
 MProject
@@ -30,7 +30,7 @@ VComponent
 WRect
 0
 0
-5700
+3260
 4280
 0
 0
@@ -39,5 +39,5 @@ WFileName
 7
 stx.tgt
 0
-3
+4
 7
