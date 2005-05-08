@@ -3,7 +3,7 @@ OUTS = $(SRCS:.c=.x)
 
 CC = @CC@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/xp/bas -L@abs_top_builddir@/xp/lisp
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/xp/bas -L@abs_top_builddir@/xp/stx
 LIBS = @LIBS@ -lxpstx -lxpbas
 
 all: $(OUTS)
