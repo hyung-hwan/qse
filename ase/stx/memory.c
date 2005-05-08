@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.3 2005-05-06 17:17:59 bacon Exp $
+ * $Id: memory.c,v 1.4 2005-05-08 07:39:51 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
@@ -63,7 +63,7 @@ void xp_stx_garbage_collect (xp_stx_memory_t* mem)
 	/* TODO: implement this function */
 }
 
-xp_stx_word_t xp_stx_alloc_object (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
+xp_stx_word_t xp_stx_alloc_objmem (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
 {
 	xp_stx_object_t** slot;
 	xp_stx_object_t* object;
@@ -88,7 +88,7 @@ xp_stx_word_t xp_stx_alloc_object (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
 	return (xp_stx_word_t)(slot - mem->slots);
 }
 
-void xp_stx_dealloc_object (xp_stx_memory_t* mem, xp_stx_word_t object_index)
+void xp_stx_dealloc_objmem (xp_stx_memory_t* mem, xp_stx_word_t object_index)
 {
 	/* 
 	 * THIS IS PRIMITIVE LOW-LEVEL DEALLOC. THIS WILL NOT 

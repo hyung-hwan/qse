@@ -13,16 +13,16 @@ int xp_main ()
 
 	for (i = 0; i < 20; i++) {
 		xp_printf (XP_TEXT("%d, %d\n"), 
-			i, xp_stx_alloc_object(&mem, 100));
+			i, xp_stx_alloc_objmem(&mem, 100));
 	}
 
 	for (i = 0; i < 5; i++) {
-		xp_stx_dealloc_object (&mem, i);
+		xp_stx_dealloc_objmem (&mem, i);
 	}
 
 	for (i = 0; i < 20; i++) {
 		xp_printf (XP_TEXT("%d, %d\n"), 
-			i, xp_stx_alloc_object(&mem, 100));
+			i, xp_stx_alloc_objmem(&mem, 100));
 	}
 
 	xp_printf (XP_TEXT("End of program\n"));
