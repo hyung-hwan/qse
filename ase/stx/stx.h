@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.4 2005-05-08 11:16:07 bacon Exp $
+ * $Id: stx.h,v 1.5 2005-05-08 15:22:45 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -84,12 +84,6 @@ struct xp_stx_t
 	((xp_stx_byte_object_t*)((mem)->slots[idx]))
 #define XP_STX_STRING_OBJECT(mem,idx) \
 	((xp_stx_string_object_t*)((mem)->slots[idx]))
-*/
-
-#define XP_STX_OBJECT(mem,idx) ((mem)->slots[idx])
-#define XP_STX_OBJECT_ACCESS(mem,idx) (XP_STX_OBJECT(mem,(idx))->access)
-#define XP_STX_OBJECT_CLASS(mem,idx) (XP_STX_OBJECT(mem,(idx))->class)
-/*
 #define XP_STX_OBJECT_DATA(mem,idx) \
 	(((XP_STX_OBJECT_ACCESS(mem,idx) & 0x03) == 0x00)? \
 		(XP_STX_OBJECT(mem,idx)).data): \
@@ -98,22 +92,16 @@ struct xp_stx_t
 		(XP_STX_STRING_OBJECT(mem,idx)).data))
 */
 
-#define XP_STX_OBJECT_AT(mem,idx,n) \
-	(((xp_stx_word_t*)(XP_STX_OBJECT(mem,idx) + 1))[n])
-#define XP_STX_OBJECT_BYTEAT(mem,idx,n) \
-	(((xp_stx_byte_t*)(XP_STX_OBJECT(mem,idx) + 1))[n])
-#define XP_STX_OBJECT_CHARAT(mem,idx,n) \
-	(((xp_stx_char_t*)(XP_STX_OBJECT(mem,idx) + 1))[n])
+#define XP_STX_OBJECT(stx,idx) (((stx)->memory).slots[idx])
+#define XP_STX_ACCESS(stx,idx) (XP_STX_OBJECT(stx,(idx))->access)
+#define XP_STX_CLASS(stx,idx) (XP_STX_OBJECT(stx,(idx))->class)
 
-/*
-#define XP_STX_OBJECT_DATA(mem,idx) \
-	(((XP_STX_OBJECT_ACCESS(mem,idx) & 0x03) == 0x00)? \
-		(((xp_stx_word_t*)XP_STX_OBJECT(mem,idx)) + 1): \
-	 (((XP_STX_OBJECT_ACCESS(mem,idx) & 0x03) == 0x01)? \
-		(((xp_stx_byte_t*)XP_STX_OBJECT(mem,idx)) + 1): \
-		(((xp_stx_char_t*)XP_STX_OBJECT(mem,idx)) + 1)))
-
-*/
+#define XP_STX_AT(stx,idx,n) \
+	(((xp_stx_word_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
+#define XP_STX_BYTEAT(stx,idx,n) \
+	(((xp_stx_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
+#define XP_STX_CHARAT(stx,idx,n) \
+	(((xp_stx_char_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 
 #ifdef __cplusplus
 extern "C" {
