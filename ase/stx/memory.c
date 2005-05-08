@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.6 2005-05-08 10:58:26 bacon Exp $
+ * $Id: memory.c,v 1.7 2005-05-08 11:16:07 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
@@ -58,13 +58,6 @@ void xp_stx_memory_close (xp_stx_memory_t* mem)
 	mem->free = XP_NULL;
 	if (mem->__malloced) xp_free (mem);
 }
-
-/*
-// resize the object table - mem
-xp_stx_memory_t* xp_stx_memory_resize (xp_stx_memory_t* mem, xp_stx_word_t capacity)
-{
-}
-*/
 
 void xp_stx_memory_gc (xp_stx_memory_t* mem)
 {
