@@ -7,13 +7,15 @@ int xp_main ()
 	xp_stx_word_t i;
 
 	if (xp_stx_open (&stx, 10) == XP_NULL) {
-		xp_printf (XP_TEXT("cannot open memory\n"));
+		xp_printf (XP_TEXT("cannot open stx\n"));
 		return -1;
 	}
 
-	stx.nil = xp_stx_memory_alloc(&stx.memory, 0);
-	stx.true = xp_stx_memory_alloc(&stx.memory, 0);
-	stx.false = xp_stx_memory_alloc(&stx.memory, 0);
+	if (xp_stx_bootstrap(&stx) == -1) {
+		xp_stx_close (&stx);
+		xp_printf (XP_TEXT("cannot bootstrap\n"));
+		return -1;
+	}	
 
 	xp_printf (XP_TEXT("stx.nil %d\n"), stx.nil);
 	xp_printf (XP_TEXT("stx.true %d\n"), stx.true);
