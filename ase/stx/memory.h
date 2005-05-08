@@ -1,5 +1,5 @@
 /*
- * $Id: memory.h,v 1.4 2005-05-08 07:39:51 bacon Exp $
+ * $Id: memory.h,v 1.5 2005-05-08 10:31:24 bacon Exp $
  */
 
 #ifndef _XP_STX_MEMORY_H_
@@ -15,9 +15,9 @@ xp_stx_memory_t* xp_stx_memory_open (
 	xp_stx_memory_t* mem, xp_stx_word_t capacity);
 void xp_stx_memory_close (xp_stx_memory_t* mem);
 
-void xp_stx_gaxpage_collect (xp_stx_memory_t* mem);
-xp_stx_word_t xp_stx_alloc_objmem (xp_stx_memory_t* mem, xp_stx_word_t size);
-void xp_stx_dealloc_objmem (xp_stx_memory_t* mem, xp_stx_word_t object_index);
+void xp_stx_memory_gc (xp_stx_memory_t* mem);
+xp_stx_word_t xp_stx_memory_alloc (xp_stx_memory_t* mem, xp_stx_word_t size);
+void xp_stx_memory_dealloc (xp_stx_memory_t* mem, xp_stx_word_t object_index);
 
 #ifdef __cplusplus
 }

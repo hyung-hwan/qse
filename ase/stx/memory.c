@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.4 2005-05-08 07:39:51 bacon Exp $
+ * $Id: memory.c,v 1.5 2005-05-08 10:31:24 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
@@ -40,7 +40,7 @@ xp_stx_memory_t* xp_stx_memory_open (
 	return mem;
 }
 
-void xp_stx_memory_free (xp_stx_memory_t* mem)
+void xp_stx_memory_close (xp_stx_memory_t* mem)
 {
 	/* TODO: free all linked objects...	 */
 
@@ -58,25 +58,25 @@ xp_stx_memory_t* xp_stx_memory_resize (xp_stx_memory_t* mem, xp_stx_word_t capac
 }
 */
 
-void xp_stx_garbage_collect (xp_stx_memory_t* mem)
+void xp_stx_memory_gc (xp_stx_memory_t* mem)
 {
 	/* TODO: implement this function */
 }
 
-xp_stx_word_t xp_stx_alloc_objmem (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
+xp_stx_word_t xp_stx_memory_alloc (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
 {
 	xp_stx_object_t** slot;
 	xp_stx_object_t* object;
 
 	/* find the free object slot */
 	if (mem->free == XP_NULL) {
-		xp_stx_garbage_collect (mem);
+		xp_stx_memory_gc (mem);
 		if (mem->free == XP_NULL) return mem->capacity;;
 	}
 
 	object = (xp_stx_object_t*)xp_malloc (nbytes);
 	if (object == XP_NULL) {
-		xp_stx_garbage_collect (mem);
+		xp_stx_memory_gc (mem);
 		object = (xp_stx_object_t*)xp_malloc (nbytes);
 		if (object == XP_NULL) return mem->capacity;
 	}
@@ -88,7 +88,7 @@ xp_stx_word_t xp_stx_alloc_objmem (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
 	return (xp_stx_word_t)(slot - mem->slots);
 }
 
-void xp_stx_dealloc_objmem (xp_stx_memory_t* mem, xp_stx_word_t object_index)
+void xp_stx_memory_dealloc (xp_stx_memory_t* mem, xp_stx_word_t object_index)
 {
 	/* 
 	 * THIS IS PRIMITIVE LOW-LEVEL DEALLOC. THIS WILL NOT 

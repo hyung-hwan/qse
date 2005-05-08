@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.1 2005-05-08 07:39:51 bacon Exp $
+ * $Id: stx.c,v 1.2 2005-05-08 10:31:24 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -20,6 +20,10 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 		return XP_NULL;
 	}
 
+	stx->nil = XP_STX_NIL;
+	stx->true = XP_STX_TRUE;
+	stx->false = XP_STX_FALSE;
+
 	return stx;
 }
 
@@ -28,4 +32,5 @@ void xp_stx_close (xp_stx_t* stx)
 	xp_stx_memory_close (&stx->memory);
 	if (stx->__malloced) xp_free (stx);
 }
+
 
