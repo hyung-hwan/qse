@@ -15,6 +15,10 @@ int xp_main ()
 	stx.true = xp_stx_memory_alloc(&stx.memory, 0);
 	stx.false = xp_stx_memory_alloc(&stx.memory, 0);
 
+	xp_printf (XP_TEXT("stx.nil %d\n"), stx.nil);
+	xp_printf (XP_TEXT("stx.true %d\n"), stx.true);
+	xp_printf (XP_TEXT("stx.false %d\n"), stx.false);
+	
 	for (i = 0; i < 20; i++) {
 		xp_printf (XP_TEXT("%d, %d\n"), 
 			i, xp_stx_memory_alloc(&stx.memory, 100));

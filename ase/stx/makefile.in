@@ -1,0 +1,20 @@
+SRCS = stx.c memory.c object.c
+OBJS = $(SRCS:.c=.o)
+OUT = libxpstx.a
+
+CC = @CC@
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+
+all: $(OBJS)
+	ar cr $(OUT) $(OBJS)
+	ranlib $(OUT)
+
+clean:
+	rm -rf $(OBJS) $(OUT) *.o
+
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) $(CFLAGS) -c $<
