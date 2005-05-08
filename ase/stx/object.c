@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.4 2005-05-08 11:16:07 bacon Exp $
+ * $Id: object.c,v 1.5 2005-05-08 13:45:51 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -56,4 +56,13 @@ xp_stx_word_t xp_stx_alloc_string_object (
 	while (n--) XP_STX_OBJECT_CHARAT(&stx->memory,idx,n) = str[n];
 
 	return idx;
+}
+
+xp_stx_word_t xp_stx_instantiate_symbol (
+	xp_stx_t* stx, xp_stx_char_t* str, xp_stx_word_t len)
+{
+	xp_stx_word_t x;
+
+	x = xp_stx_alloc_string_object (stx, str, len,);
+	if (x 
 }
