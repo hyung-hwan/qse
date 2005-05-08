@@ -1,12 +1,12 @@
 /*
- * $Id: object.c,v 1.3 2005-05-08 10:31:24 bacon Exp $
+ * $Id: object.c,v 1.4 2005-05-08 11:16:07 bacon Exp $
  */
 
 #include <xp/stx/object.h>
 #include <xp/stx/memory.h>
 
 /* n: number of instance variables */
-xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_size_t n)
+xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n)
 {
 	xp_stx_word_t idx;
 
@@ -25,7 +25,7 @@ xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_size_t n)
 }
 
 /* n: number of bytes */
-xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_size_t n)
+xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_stx_word_t n)
 {
 	xp_stx_word_t idx;
 

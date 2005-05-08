@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.3 2005-05-08 10:44:58 bacon Exp $
+ * $Id: stx.c,v 1.4 2005-05-08 11:16:07 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -36,6 +36,8 @@ void xp_stx_close (xp_stx_t* stx)
 
 int xp_stx_bootstrap (xp_stx_t* stx)
 {
+	xp_stx_word_t symbols;
+
 	stx->nil = xp_stx_memory_alloc (&stx->memory, 0);
 	stx->true = xp_stx_memory_alloc (&stx->memory, 0);
 	stx->false = xp_stx_memory_alloc (&stx->memory, 0);
@@ -44,6 +46,10 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_assert (stx->true == XP_STX_TRUE);
 	xp_assert (stx->false == XP_STX_FALSE);
 
+	symbol_table = xp_stx_memory_alloc (&stx->memory, 1);
+	XP_STX_OBJECT_AT(&stx->memory, symbol_table, 0) = hash_table;
+
+	XP_STX_OBJECT_CLASS(&stx->memory, sbs) = symbol_class;	
 	return 0;
 }
 

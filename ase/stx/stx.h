@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.3 2005-05-08 10:44:58 bacon Exp $
+ * $Id: stx.h,v 1.4 2005-05-08 11:16:07 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -35,7 +35,7 @@ struct xp_stx_object_t
 	 */
 	xp_stx_word_t access; 
 	xp_stx_word_t class;
-	/*xp_stx_word_t didxa[1];*/
+	/*xp_stx_word_t data[1];*/
 };
 
 /*
@@ -43,14 +43,14 @@ struct xp_stx_byte_object_t
 {
 	xp_stx_word_t access; 
 	xp_stx_word_t class;
-	xp_stx_byte_t didxa[1];
+	xp_stx_byte_t data[1];
 };
 
 struct xp_stx_string_object_t
 {
 	xp_stx_word_t access; 
 	xp_stx_word_t class;
-	xp_stx_char_t didxa[1];
+	xp_stx_char_t data[1];
 };
 */
 
@@ -92,10 +92,10 @@ struct xp_stx_t
 /*
 #define XP_STX_OBJECT_DATA(mem,idx) \
 	(((XP_STX_OBJECT_ACCESS(mem,idx) & 0x03) == 0x00)? \
-		(XP_STX_OBJECT(mem,idx)).didxa): \
+		(XP_STX_OBJECT(mem,idx)).data): \
 	 (((XP_STX_OBJECT_ACCESS(mem,idx) & 0x03) == 0x01)? \
-		(XP_STX_BYTE_OBJECT(mem,idx)).didxa): \
-		(XP_STX_STRING_OBJECT(mem,idx)).didxa))
+		(XP_STX_BYTE_OBJECT(mem,idx)).data): \
+		(XP_STX_STRING_OBJECT(mem,idx)).data))
 */
 
 #define XP_STX_OBJECT_AT(mem,idx,n) \
