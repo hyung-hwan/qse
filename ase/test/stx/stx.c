@@ -26,7 +26,7 @@ int xp_main ()
 			i, xp_stx_memory_alloc(&stx.memory, 100));
 	}
 
-	for (i = 0; i < 5; i++) {
+	for (i = 5; i < 10; i++) {
 		xp_stx_memory_dealloc (&stx.memory, i);
 	}
 
