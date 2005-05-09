@@ -1,11 +1,10 @@
 /*
- * $Id: hash.c,v 1.1 2005-05-08 15:54:44 bacon Exp $
+ * $Id: hash.c,v 1.2 2005-05-09 15:55:04 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
 
-int xp_stx_new_link (
-	xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t value)
+int xp_stx_new_link (xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t value)
 {
 	xp_stx_word_t x;
 
@@ -19,16 +18,28 @@ int xp_stx_new_link (
 }
 
 void xp_stx_hash_insert (
-	xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t value)
+	xp_stx_t* stx, xp_stx_word_t hash, 
+	xp_stx_word_t key, xp_stx_word_t value)
 {
-	xp_stx_word_t table;
+	xp_stx_word_t oaha, link;
 
-	table = XP_STX_AT(stx,stx->globals,0);
-	hash = __hash(key);	
+	/* the first instance variable is an open addressing hash array */
+	oaha = XP_STX_AT(stx,stx->globals,0);
 
-	link = XP_STX_AT(stx,table,hash);
+	hash = hash % oaha_size;
+	link = XP_STX_AT(stx,oaha,hash);
+
+	if (link == stx->nil || link == key) {
+		XP_STX_AT(oaha, hash + 1
+	}
 
 	for (;;) {
+		if (link == stx->nil) {
+			new = xp_stx_new_link (stx, key, value);
+			
+		}
+
+		/*
 		if (XP_STX_AT(stx,link,0) == key) {
 			XP_STX_AT(stx,link,1) = value;
 			break;
@@ -42,5 +53,6 @@ void xp_stx_hash_insert (
 		}
 
 		link = next;
+		*/
 	}
 }
