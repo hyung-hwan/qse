@@ -1,0 +1,18 @@
+SRCS = stx.c memory.c object.c hash.c
+OBJS = stx.obj memory.obj object.obj hash.obj
+OUT = xpstx.lib
+
+CC = lcc
+CFLAGS = -I../.. 
+LDFLAGS =
+LIBS = 
+
+all: $(OBJS)
+	lcclib $(OUT) $(OBJS) 
+
+clean:
+	del $(OBJS) $(OUT) *.obj
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) $(CFLAGS) -c $<
