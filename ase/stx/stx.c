@@ -1,10 +1,11 @@
 /*
- * $Id: stx.c,v 1.7 2005-05-10 08:21:10 bacon Exp $
+ * $Id: stx.c,v 1.8 2005-05-10 12:00:43 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
 #include <xp/stx/memory.h>
 #include <xp/stx/object.h>
+#include <xp/stx/hash.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 
@@ -26,8 +27,9 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 	stx->true = XP_STX_TRUE;
 	stx->false = XP_STX_FALSE;
 
-	stx->link_class = XP_STX_NIL;
 	stx->symbol_table = XP_STX_NIL;
+	stx->class_metaclass = XP_STX_NIL;
+	stx->class_link = XP_STX_NIL;
 
 	return stx;
 }
@@ -41,6 +43,7 @@ void xp_stx_close (xp_stx_t* stx)
 int xp_stx_bootstrap (xp_stx_t* stx)
 {
 	xp_stx_word_t symtab;
+	xp_stx_word_t symbol_nil, symbol_true, symbol_false;
 	xp_stx_word_t symbol_Symbol, symbol_SymbolMeta;
 	xp_stx_word_t symbol_Metaclass, symbol_MetaclassMeta;
 	xp_stx_word_t class_Symbol, class_SymbolMeta;
@@ -68,13 +71,11 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	symbol_MetaclassMeta = 
 		xp_stx_alloc_string_object(stx, XP_STX_TEXT("MetaclassMeta"));
 
-	// TODO: class size: maybe other than 5?
-	class_Metaclass = xp_stx_alloc_object(stx, 5);
-	class_MetaclassMeta = xp_stx_alloc_object(stx, 5);
-	class_Symbol = xp_stx_alloc_object(stx, 5);
-	class_SymbolMeta = xp_stx_alloc_object(stx, 5);
+	class_Metaclass = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
+	class_MetaclassMeta = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
+	class_Symbol = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
+	class_SymbolMeta = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
 
-	XP_STX_CLASS(stx,symbol_Symbol) = class_Symbol;
 	XP_STX_CLASS(stx,symbol_SymbolMeta) = class_Symbol;
 	XP_STX_CLASS(stx,symbol_Metaclass) = class_Symbol;
 	XP_STX_CLASS(stx,symbol_MetaclassMeta) = class_Symbol;
@@ -83,7 +84,44 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	XP_STX_CLASS(stx,class_SymbolMeta) = class_Metaclass;
 	XP_STX_CLASS(stx,class_Metaclass) = class_MetaclassMeta;
 	XP_STX_CLASS(stx,class_MetaclassMeta) = class_Metaclass;
+
 	
+	xp_stx_hash_insert (stx, symtab,
+		xp_stx_hash_string_object(stx, symbol_Symbol),
+		symbol_Symbol, class_Symbol);
+	xp_stx_hash_insert (stx, symtab,
+		xp_stx_hash_string_object(stx, symbol_SymbolMeta),
+		symbol_SymbolMeta, class_SymbolMeta);
+	xp_stx_hash_insert (stx, symtab,
+		xp_stx_hash_string_object(stx, symbol_Metaclass),
+		symbol_Metaclass, class_Metaclass);
+	xp_stx_hash_insert (stx, symtab,
+		xp_stx_hash_string_object(stx, symbol_MetaclassMeta),
+		symbol_MetaclassMeta, class_MetaclassMeta);
+
+	/* more initialization for nil, true, false */
+	symbol_nil = xp_stx_new_string_object (
+		stx, XP_STX_TEXT("nil"), class_Symbol);
+	symbol_true = xp_stx_new_string_object (
+		stx, XP_STX_TEXT("true"), class_Symbol);
+	symbol_false = xp_stx_new_string_object (
+		stx, XP_STX_TEXT("false"), class_Symbol);
+
+	xp_stx_hash_insert (stx, symtab,
+		xp_stx_hash_string_object(stx, symbol_nil),
+		symbol_nil, stx->nil);
+	xp_stx_hash_insert (stx, symtab,
+		xp_stx_hash_string_object(stx, symbol_true),
+		symbol_true, stx->true);
+	xp_stx_hash_insert (stx, symtab,
+		xp_stx_hash_string_object(stx, symbol_false),
+		symbol_false, stx->false);
+
+	/* ready to use new_class */
+	stx->symbol_table = symtab;
+	stx->class_metaclass = class_Metaclass;
+
+
 	/*
 	class_Symbol = xp_stx_instantiate_class (XP_STX_TEXT("Symbol"));
 	XP_STX_CLASS(stx,symbol_Symbol) = class_Symbol;
