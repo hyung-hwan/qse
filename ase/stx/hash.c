@@ -1,10 +1,11 @@
 /*
- * $Id: hash.c,v 1.2 2005-05-09 15:55:04 bacon Exp $
+ * $Id: hash.c,v 1.3 2005-05-10 06:02:19 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
 
-int xp_stx_new_link (xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t value)
+xp_stx_word_t xp_stx_new_link (
+	xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t value)
 {
 	xp_stx_word_t x;
 
@@ -17,42 +18,58 @@ int xp_stx_new_link (xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t value)
 	return x;
 }
 
-void xp_stx_hash_insert (
-	xp_stx_t* stx, xp_stx_word_t hash, 
-	xp_stx_word_t key, xp_stx_word_t value)
+/* returns the entire link */
+xp_stx_word_t xp_stx_hash_lookup (
+	xp_stx_t* stx, xp_stx_word_t table,
+	xp_stx_word_t hash, xp_stx_word_t key)
 {
-	xp_stx_word_t oaha, link;
+	xp_stx_word_t harr, link, next;
 
-	/* the first instance variable is an open addressing hash array */
-	oaha = XP_STX_AT(stx,stx->globals,0);
+	xp_assert (XP_STX_TYPE(stx,table) == XP_STX_INDEXED);
 
-	hash = hash % oaha_size;
-	link = XP_STX_AT(stx,oaha,hash);
+	harr = XP_STX_AT(stx,table,0);
+	hash = link % XP_STX_SIZE(stx,table);
+	link = XP_STX_AT(stx,harr,hash);
 
-	if (link == stx->nil || link == key) {
-		XP_STX_AT(oaha, hash + 1
+	while (link != stx->nil) {
+		if (XP_STX_AT(stx,link,0) == key) return link;
+		link = XP_STX_AT(stx,link,2);
 	}
 
-	for (;;) {
-		if (link == stx->nil) {
-			new = xp_stx_new_link (stx, key, value);
-			
-		}
+	return stx->nil; /* not found */
+}
 
-		/*
-		if (XP_STX_AT(stx,link,0) == key) {
-			XP_STX_AT(stx,link,1) = value;
-			break;
-		}
+void xp_stx_hash_insert (
+	xp_stx_t* stx, xp_stx_word_t table,
+	xp_stx_word_t hash, xp_stx_word_t key, xp_stx_word_t value)
+{
+	xp_stx_word_t harr, link, next;
 
-		next = XP_STX_AT(stx,link,2);
-		if (next == stx->nil) {
-			new = xp_stx_new_link (stx, key, value);
-			XP_STX_AT(stx,link,2) = new;
-			break;	
-		}
+	xp_assert (XP_STX_TYPE(stx,table) == XP_STX_INDEXED);
 
-		link = next;
-		*/
+	harr = XP_STX_AT(stx,table,0);
+	hash = link % XP_STX_SIZE(stx,table);
+	link = XP_STX_AT(stx,harr,hash);
+
+	if (link == stx->nil) {
+		new = xp_stx_new_link (stx, key, value);
+		XP_STX_AT(stx,harr,hash) = new;
+	}
+	else {
+		for (;;) {
+			if (XP_STX_AT(stx,link,0) == key) {
+				XP_STX_AT(stx,link,1) = value;
+				break;		
+			}
+
+			next = XP_STX_AT(stx,link,2);
+			if (next == stx->nil) {
+				new = xp_stx_new_link (stx, key, value);
+				XP_STX_AT(stx,link,2) = new;
+				break;
+			}
+
+			link = next;
+		}
 	}
 }
