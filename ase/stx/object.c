@@ -1,9 +1,10 @@
 /*
- * $Id: object.c,v 1.9 2005-05-10 15:12:31 bacon Exp $
+ * $Id: object.c,v 1.10 2005-05-10 15:15:57 bacon Exp $
  */
 
 #include <xp/stx/object.h>
 #include <xp/stx/memory.h>
+#include <xp/stx/hash.h>
 #include <xp/bas/assert.h>
 #include <xp/bas/stdarg.h>
 
@@ -80,7 +81,7 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
 	while ((p = xp_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
 		n += xp_stx_strlen(p);
 	}
-	xp_va_end (ap, stx);
+	xp_va_end (ap);
 
 	idx = xp_stx_memory_alloc (&stx->memory, 
 		(n + 1) * xp_sizeof(xp_stx_char_t) + xp_sizeof(xp_stx_object_t));
@@ -97,7 +98,7 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
 		while (*p != XP_STX_CHAR('\0')) 
 			XP_STX_CHARAT(stx,idx,n) = *p++;
 	}
-	xp_va_end (ap, stx);
+	xp_va_end (ap);
 
 	return idx;
 }

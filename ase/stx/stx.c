@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.8 2005-05-10 12:00:43 bacon Exp $
+ * $Id: stx.c,v 1.9 2005-05-10 15:15:57 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -28,6 +28,7 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 	stx->false = XP_STX_FALSE;
 
 	stx->symbol_table = XP_STX_NIL;
+	stx->class_symbol = XP_STX_NIL;
 	stx->class_metaclass = XP_STX_NIL;
 	stx->class_link = XP_STX_NIL;
 
@@ -119,6 +120,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 
 	/* ready to use new_class */
 	stx->symbol_table = symtab;
+	stx->class_symbol = class_Symbol;
 	stx->class_metaclass = class_Metaclass;
 
 

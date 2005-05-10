@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.7 2005-05-10 15:12:31 bacon Exp $
+ * $Id: object.h,v 1.8 2005-05-10 15:15:57 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
@@ -8,7 +8,7 @@
 #include <xp/stx/stx.h>
 
 #define XP_STX_IS_SMALLINT(x)   (((x) & 0x01) == 0x01)
-#define XP_STX_TO_SMALLINT(x)   ((x) << 1) | 0x01)
+#define XP_STX_TO_SMALLINT(x)   (((x) << 1) | 0x01)
 #define XP_STX_FROM_SMALLINT(x) ((x) >> 1)
 
 /* definitions for common objects */
