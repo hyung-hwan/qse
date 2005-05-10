@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.5 2005-05-08 15:22:45 bacon Exp $
+ * $Id: stx.c,v 1.6 2005-05-10 06:08:57 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -25,6 +25,9 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 	stx->nil = XP_STX_NIL;
 	stx->true = XP_STX_TRUE;
 	stx->false = XP_STX_FALSE;
+
+	stx->link_class = XP_STX_NIL;
+	stx->symbol_table = XP_STX_NIL;
 
 	return stx;
 }

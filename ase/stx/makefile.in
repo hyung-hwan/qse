@@ -1,4 +1,4 @@
-SRCS = stx.c memory.c object.c
+SRCS = stx.c memory.c object.c hash.c
 OBJS = $(SRCS:.c=.o)
 OUT = libxpstx.a
 
