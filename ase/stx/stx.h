@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.8 2005-05-10 12:00:43 bacon Exp $
+ * $Id: stx.h,v 1.9 2005-05-10 15:12:31 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -111,16 +111,6 @@ struct xp_stx_t
 	(((xp_stx_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 #define XP_STX_CHARAT(stx,idx,n) \
 	(((xp_stx_char_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
-
-#define XP_STX_CLASS_DIMENSION   8
-#define XP_STX_CLASS_NAME        0
-#define XP_STX_CLASS_SIZE        1
-#define XP_STX_CLASS_METHODS     2
-#define XP_STX_CLASS_SUPERCLASS  3
-#define XP_STX_CLASS_VARIABLES   4
-#define XP_STX_CLASS_CLASSVARS   5
-#define XP_STX_CLASS_POOLDICT    6
-#define XP_STX_CLASS_CATEGORY    7
 
 #ifdef __cplusplus
 extern "C" {

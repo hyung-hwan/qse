@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.5 2005-05-10 08:21:10 bacon Exp $
+ * $Id: hash.c,v 1.6 2005-05-10 15:15:57 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -12,7 +12,7 @@ xp_stx_word_t xp_stx_new_link (
 	xp_stx_word_t x;
 
 	x = xp_stx_alloc_object (stx, 3);	
-	XP_STX_CLASS(stx,x) = stx->link_class;
+	XP_STX_CLASS(stx,x) = stx->class_link;
 	XP_STX_AT(stx,x,0) = key;
 	XP_STX_AT(stx,x,1) = value;
 	/* XP_STX_AT(stx,x,2) = stx->nil; */
