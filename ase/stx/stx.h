@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.5 2005-05-08 15:22:45 bacon Exp $
+ * $Id: stx.h,v 1.6 2005-05-10 06:02:19 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -30,8 +30,8 @@ typedef struct xp_stx_t xp_stx_t;
 
 struct xp_stx_object_t
 {
-	/* access - mode: 2; size: rest;
-	 * mode - word indexed: 00 byte indexed: 01 char indexed: 10
+	/* access - type: 2; size: rest;
+	 * type - word indexed: 00 byte indexed: 01 char indexed: 10
 	 */
 	xp_stx_word_t access; 
 	xp_stx_word_t class;
@@ -69,6 +69,7 @@ struct xp_stx_t
 	xp_stx_word_t nil;
 	xp_stx_word_t true;
 	xp_stx_word_t false;
+	xp_stx_word_t symbol_table;
 
 	xp_bool_t __malloced;
 };
@@ -85,16 +86,22 @@ struct xp_stx_t
 #define XP_STX_STRING_OBJECT(mem,idx) \
 	((xp_stx_string_object_t*)((mem)->slots[idx]))
 #define XP_STX_OBJECT_DATA(mem,idx) \
-	(((XP_STX_OBJECT_ACCESS(mem,idx) & 0x03) == 0x00)? \
+	((XP_STX_OBJECT_TYPE(mem,idx) == XP_STX_INDEXED)? \
 		(XP_STX_OBJECT(mem,idx)).data): \
-	 (((XP_STX_OBJECT_ACCESS(mem,idx) & 0x03) == 0x01)? \
+	 ((XP_STX_OBJECT_TYPE(mem,idx) == XP_STX_BYTE_INDEXED)? \
 		(XP_STX_BYTE_OBJECT(mem,idx)).data): \
 		(XP_STX_STRING_OBJECT(mem,idx)).data))
 */
 
 #define XP_STX_OBJECT(stx,idx) (((stx)->memory).slots[idx])
-#define XP_STX_ACCESS(stx,idx) (XP_STX_OBJECT(stx,(idx))->access)
 #define XP_STX_CLASS(stx,idx) (XP_STX_OBJECT(stx,(idx))->class)
+#define XP_STX_ACCESS(stx,idx) (XP_STX_OBJECT(stx,(idx))->access)
+
+#define XP_STX_TYPE(stx,idx) (XP_STX_ACCESS(stx,idx) & 0x03)
+#define XP_STX_SIZE(stx,idx) (XP_STX_ACCESS(stx,idx) >> 0x02)
+#define XP_STX_INDEXED       (0x00)
+#define XP_STX_BYTE_INDEXED  (0x01)
+#define XP_STX_CHAR_INDEXED  (0x02)
 
 #define XP_STX_AT(stx,idx,n) \
 	(((xp_stx_word_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
