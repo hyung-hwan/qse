@@ -1,0 +1,21 @@
+SRCS = stx.c
+OBJS = stx.obj
+OUT = stx.exe
+
+CC = lcc
+CFLAGS = -I../../..
+#LDFLAGS = -L../../../xp/bas -L../../../xp/stx
+#LIBS = -lxpstx -lxpbas
+LIBS = ..\..\..\xp\bas\xpbas.lib ..\..\..\xp\stx\xpstx.lib
+
+all: $(OBJS)
+	lcclnk -o $(OUT) $(OBJS) $(LIBS)
+
+clean:
+	del $(OBJS) *.obj $(OUT)
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) $(CFLAGS) -c $< 
+
+#$(LIBS) -o $@ 
