@@ -6,7 +6,7 @@ int xp_main ()
 	xp_stx_t stx;
 	xp_stx_word_t i;
 
-	if (xp_stx_open (&stx, 10) == XP_NULL) {
+	if (xp_stx_open (&stx, 10000) == XP_NULL) {
 		xp_printf (XP_TEXT("cannot open stx\n"));
 		return -1;
 	}
@@ -21,6 +21,7 @@ int xp_main ()
 	xp_printf (XP_TEXT("stx.true %d\n"), stx.true);
 	xp_printf (XP_TEXT("stx.false %d\n"), stx.false);
 	
+/*
 	for (i = 0; i < 20; i++) {
 		xp_printf (XP_TEXT("%d, %d\n"), 
 			i, xp_stx_memory_alloc(&stx.memory, 100));
@@ -34,7 +35,7 @@ int xp_main ()
 		xp_printf (XP_TEXT("%d, %d\n"), 
 			i, xp_stx_memory_alloc(&stx.memory, 100));
 	}
-
+*/
 	xp_stx_close (&stx);
 	xp_printf (XP_TEXT("End of program\n"));
 	return 0;

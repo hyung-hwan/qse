@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.4 2005-05-10 06:08:57 bacon Exp $
+ * $Id: hash.c,v 1.5 2005-05-10 08:21:10 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -25,13 +25,12 @@ xp_stx_word_t xp_stx_hash_lookup (
 	xp_stx_t* stx, xp_stx_word_t table,
 	xp_stx_word_t hash, xp_stx_word_t key)
 {
-	xp_stx_word_t harr, link;
+	xp_stx_word_t link;
 
 	xp_assert (XP_STX_TYPE(stx,table) == XP_STX_INDEXED);
 
-	harr = XP_STX_AT(stx,table,0);
 	hash = hash % XP_STX_SIZE(stx,table);
-	link = XP_STX_AT(stx,harr,hash);
+	link = XP_STX_AT(stx,table,hash);
 
 	while (link != stx->nil) {
 		if (XP_STX_AT(stx,link,0) == key) return link;
@@ -45,16 +44,15 @@ void xp_stx_hash_insert (
 	xp_stx_t* stx, xp_stx_word_t table,
 	xp_stx_word_t hash, xp_stx_word_t key, xp_stx_word_t value)
 {
-	xp_stx_word_t harr, link, next;
+	xp_stx_word_t link, next;
 
 	xp_assert (XP_STX_TYPE(stx,table) == XP_STX_INDEXED);
 
-	harr = XP_STX_AT(stx,table,0);
 	hash = hash % XP_STX_SIZE(stx,table);
-	link = XP_STX_AT(stx,harr,hash);
+	link = XP_STX_AT(stx,table,hash);
 
 	if (link == stx->nil) {
-		XP_STX_AT(stx,harr,hash) = xp_stx_new_link (stx, key, value);
+		XP_STX_AT(stx,table,hash) = xp_stx_new_link (stx, key, value);
 	}
 	else {
 		for (;;) {
