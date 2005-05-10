@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.8 2005-05-10 15:15:57 bacon Exp $
+ * $Id: object.h,v 1.9 2005-05-10 16:20:53 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
@@ -34,9 +34,12 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...);
 
 xp_stx_word_t xp_stx_hash_string_object (xp_stx_t* stx, xp_stx_word_t idx);
 
-xp_stx_word_t xp_stx_new_string_object (
-	xp_stx_t* stx, const xp_stx_char_t* name, xp_stx_word_t class);
-
+xp_stx_word_t xp_stx_new_symbol (
+	xp_stx_t* stx, const xp_stx_char_t* name);
+xp_stx_word_t xp_stx_new_symbol_postfix (
+	xp_stx_t* stx, const xp_stx_char_t* name, const xp_stx_char_t* postfix);
+xp_stx_word_t xp_stx_new_class (
+	xp_stx_t* stx, const xp_stx_char_t* name);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.9 2005-05-10 15:15:57 bacon Exp $
+ * $Id: stx.c,v 1.10 2005-05-10 16:20:53 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -49,6 +49,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_word_t symbol_Metaclass, symbol_MetaclassMeta;
 	xp_stx_word_t class_Symbol, class_SymbolMeta;
 	xp_stx_word_t class_Metaclass, class_MetaclassMeta;
+	xp_stx_word_t class_UndefinedObject;
 
 	/* allocate three keyword objects */
 	stx->nil = xp_stx_alloc_object (stx, 0);
@@ -100,13 +101,18 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 		xp_stx_hash_string_object(stx, symbol_MetaclassMeta),
 		symbol_MetaclassMeta, class_MetaclassMeta);
 
+	/* ready to use new_symbol & new_class */
+	stx->symbol_table = symtab;
+	stx->class_symbol = class_Symbol;
+	stx->class_metaclass = class_Metaclass;
+
 	/* more initialization for nil, true, false */
-	symbol_nil = xp_stx_new_string_object (
-		stx, XP_STX_TEXT("nil"), class_Symbol);
-	symbol_true = xp_stx_new_string_object (
-		stx, XP_STX_TEXT("true"), class_Symbol);
-	symbol_false = xp_stx_new_string_object (
-		stx, XP_STX_TEXT("false"), class_Symbol);
+	symbol_nil = xp_stx_new_symbol (
+		stx, XP_STX_TEXT("nil"));
+	symbol_true = xp_stx_new_symbol (
+		stx, XP_STX_TEXT("true"));
+	symbol_false = xp_stx_new_symbol (
+		stx, XP_STX_TEXT("false"));
 
 	xp_stx_hash_insert (stx, symtab,
 		xp_stx_hash_string_object(stx, symbol_nil),
@@ -118,11 +124,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 		xp_stx_hash_string_object(stx, symbol_false),
 		symbol_false, stx->false);
 
-	/* ready to use new_class */
-	stx->symbol_table = symtab;
-	stx->class_symbol = class_Symbol;
-	stx->class_metaclass = class_Metaclass;
-
+	class_UndefinedObject = xp_stx_new_class (stx, XP_STX_TEXT("UndefinedObject"));
 
 	/*
 	class_Symbol = xp_stx_instantiate_class (XP_STX_TEXT("Symbol"));

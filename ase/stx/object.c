@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.10 2005-05-10 15:15:57 bacon Exp $
+ * $Id: object.c,v 1.11 2005-05-10 16:20:53 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -8,7 +8,7 @@
 #include <xp/bas/assert.h>
 #include <xp/bas/stdarg.h>
 
-xp_stx_word_t xp_stx_strlen (const xp_stx_char_t* str)
+static xp_stx_word_t __strlen (const xp_stx_char_t* str)
 {
 	const xp_stx_char_t* p = str;
 	while (*p != XP_STX_CHAR('\0')) p++;
@@ -57,7 +57,7 @@ xp_stx_word_t xp_stx_alloc_string_object (
 {
 	xp_stx_word_t idx, n;
 
-	n = xp_stx_strlen(str);
+	n = __strlen(str);
 	idx = xp_stx_memory_alloc (&stx->memory, 
 		(n + 1) * xp_sizeof(xp_stx_char_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
@@ -79,7 +79,7 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
 
 	xp_va_start (ap, stx);
 	while ((p = xp_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
-		n += xp_stx_strlen(p);
+		n += __strlen(p);
 	}
 	xp_va_end (ap);
 
@@ -116,16 +116,25 @@ xp_stx_word_t xp_stx_hash_string_object (xp_stx_t* stx, xp_stx_word_t idx)
 	return h;
 }
 
-xp_stx_word_t xp_stx_new_string_object (
-	xp_stx_t* stx, const xp_stx_char_t* name, xp_stx_word_t class)
+xp_stx_word_t xp_stx_new_symbol (
+	xp_stx_t* stx, const xp_stx_char_t* name)
 {
 	xp_stx_word_t x;
 	x = xp_stx_alloc_string_object (stx, name);
-	XP_STX_CLASS(stx,x) = class;
+	XP_STX_CLASS(stx,x) = stx->class_symbol;
 	return x;
 }
 
-xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, xp_stx_char_t* name)
+xp_stx_word_t xp_stx_new_symbol_postfix (
+	xp_stx_t* stx, const xp_stx_char_t* name, const xp_char_t* postfix)
+{
+	xp_stx_word_t x;
+	x = xp_stx_allocn_string_object (stx, name, postfix, XP_NULL);
+	XP_STX_CLASS(stx,x) = stx->class_symbol;
+	return x;
+}
+
+xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 {
 	xp_stx_word_t meta, class;
 	xp_stx_word_t meta_name, class_name;
@@ -138,9 +147,10 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, xp_stx_char_t* name)
 	class = xp_stx_alloc_object (stx, XP_STX_CLASS_DIMENSION);
 	XP_STX_CLASS(stx,class) = meta;
 
-	meta_name = xp_stx_new_string_object (stx, name, stx->class_symbol);
+	meta_name = xp_stx_new_symbol (stx, name);
 	XP_STX_AT(stx,meta,XP_STX_CLASS_NAME) = meta_name;
-	class_name = xp_stx_new_string_object (stx, name, stx->class_symbol);
+	class_name = xp_stx_new_symbol_postfix (
+		stx, name, XP_STX_TEXT("Meta"));
 	XP_STX_AT(stx,class,XP_STX_CLASS_NAME) = class_name;
 
 	xp_stx_hash_insert (stx, stx->symbol_table, 
