@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.7 2005-05-10 08:21:10 bacon Exp $
+ * $Id: object.c,v 1.8 2005-05-10 12:00:43 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -76,16 +76,42 @@ xp_stx_word_t xp_stx_hash_string_object (xp_stx_t* stx, xp_stx_word_t idx)
 	return h;
 }
 
-/*
-xp_stx_word_t xp_stx_new_symbol (xp_stx_t* stx, xp_stx_char_t* name)
+xp_stx_word_t xp_stx_new_string_object (
+	xp_stx_t* stx, const xp_stx_char_t* name, xp_stx_word_t class)
 {
 	xp_stx_word_t x;
-
 	x = xp_stx_alloc_string_object (stx, name);
-	XP_STX_CLASS(&stx,x) = stx->class_string;
+	XP_STX_CLASS(stx,x) = class;
 	return x;
 }
-*/
+
+xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, xp_stx_char_t* name)
+{
+	xp_stx_word_t meta, class;
+	xp_stx_word_t meta_name, class_name;
+
+	meta = xp_stx_alloc_object (stx, XP_STX_CLASS_DIMENSION);
+	XP_STX_CLASS(stx,meta) = stx->class_metaclass;
+	XP_STX_AT(stx,meta,XP_STX_CLASS_SIZE) = 
+		XP_STX_TO_SMALLINT(XP_STX_CLASS_DIMENSION);
+	
+	class = xp_stx_alloc_object (stx, XP_STX_CLASS_DIMENSION);
+	XP_STX_CLASS(stx,class) = meta;
+
+	meta_name = xp_stx_new_string_object (stx, name, stx->class_symbol);
+	XP_STX_AT(stx,meta,XP_STX_CLASS_NAME) = meta_name;
+	class_name = xp_stx_new_string_object (stx, name, stx->class_symbol);
+	XP_STX_AT(stx,class,XP_STX_CLASS_NAME) = class_name;
+
+	xp_stx_hash_insert (stx, stx->symbol_table, 
+		xp_stx_hash_string_object(stx, meta_name),
+		meta_name, meta);
+	xp_stx_hash_insert (stx, stx->symbol_table, 
+		xp_stx_hash_string_object(stx, class_name),
+		meta_name, class);
+
+	return class;
+}
 
 /*
 struct class_info_t
@@ -106,19 +132,6 @@ class_info_t class_info[] =
 
 /*
 
-xp_stx_word_t xp_stx_instantiate_class (xp_stx_t* stx, xp_stx_char_t* name)
-{
-	xp_stx_word_t x;
-
-	x = xp_str_alloc_object (str, classSize);
-	XP_STX_CLASS(stx,x) = globalValue("Metaclass");
-	XP_STX_AT(stx,x,sizeInClass) = XP_STX_TO_SMALLINT(classSize);
-	
-	y = xp_str_alloc_object (str, classSize):
-	XP_STX_CLASS(stx,y) = x;
-		
-	return x;
-}
 
 xp_stx_word_t xp_stx_instantiate_string (xp_stx_t* stx, xp_stx_char_t* str)
 {

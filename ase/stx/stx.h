@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.7 2005-05-10 06:08:57 bacon Exp $
+ * $Id: stx.h,v 1.8 2005-05-10 12:00:43 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -69,9 +69,10 @@ struct xp_stx_t
 	xp_stx_word_t nil;
 	xp_stx_word_t true;
 	xp_stx_word_t false;
-	xp_stx_word_t link_class;
-	xp_stx_word_t symbol_table;
 
+	xp_stx_word_t symbol_table;
+	xp_stx_word_t class_metaclass;
+	xp_stx_word_t class_link;
 	xp_bool_t __malloced;
 };
 
@@ -110,6 +111,16 @@ struct xp_stx_t
 	(((xp_stx_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 #define XP_STX_CHARAT(stx,idx,n) \
 	(((xp_stx_char_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
+
+#define XP_STX_CLASS_DIMENSION   8
+#define XP_STX_CLASS_NAME        0
+#define XP_STX_CLASS_SIZE        1
+#define XP_STX_CLASS_METHODS     2
+#define XP_STX_CLASS_SUPERCLASS  3
+#define XP_STX_CLASS_VARIABLES   4
+#define XP_STX_CLASS_CLASSVARS   5
+#define XP_STX_CLASS_POOLDICT    6
+#define XP_STX_CLASS_CATEGORY    7
 
 #ifdef __cplusplus
 extern "C" {
