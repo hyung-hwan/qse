@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.7 2005-05-12 15:25:06 bacon Exp $
+ * $Id: hash.c,v 1.8 2005-05-12 15:51:20 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -85,7 +85,6 @@ void xp_stx_hash_traverse (
 		link = XP_STX_AT(stx,table,size);
 
 		while (link != stx->nil) {
-			xp_stx_word_t key = XP_STX_AT(stx,link,1);
 			func (stx,link);
 			link = XP_STX_AT(stx,link,0);
 		}
