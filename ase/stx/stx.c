@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.11 2005-05-12 15:25:06 bacon Exp $
+ * $Id: stx.c,v 1.12 2005-05-12 15:33:38 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -54,6 +54,8 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_word_t symbol_Metaclass, symbol_MetaclassMeta;
 	xp_stx_word_t class_Symbol, class_SymbolMeta;
 	xp_stx_word_t class_Metaclass, class_MetaclassMeta;
+	xp_stx_word_t class_Object, class_Class;
+	xp_stx_word_t tmp;
 
 	/* allocate three keyword objects */
 	stx->nil = xp_stx_alloc_object (stx, 0);
@@ -144,11 +146,11 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	XP_STX_CLASS(stx,stx->false) = 
 		xp_stx_new_class (stx, XP_STX_TEXT("False"));
 
-/*
-	class_Object = xp_stx_instantiate_class (XP_STX_TEXT("Object"));
-	class_Class = xp_stx_instantiate_class (XP_STX_TEXT("Class"));
-	XP_STX_AT(stx,classOf(class_Object),superClass,class_Class);
-*/
+	/* weave the class-metaclass chain */
+	class_Object = xp_stx_new_class (stx, XP_STX_TEXT("Object"));
+	class_Class = xp_stx_new_class (stx, XP_STX_TEXT("Class"));
+	tmp = XP_STX_CLASS(stx,class_Object);
+	XP_STX_AT(stx,tmp,XP_STX_CLASS_SUPERCLASS) = class_Class;
 
 	return 0;
 }
