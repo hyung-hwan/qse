@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.11 2005-05-10 16:20:53 bacon Exp $
+ * $Id: object.c,v 1.12 2005-05-12 15:25:06 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -96,7 +96,7 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
 	n = 0;
 	while ((p = xp_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
 		while (*p != XP_STX_CHAR('\0')) 
-			XP_STX_CHARAT(stx,idx,n) = *p++;
+			XP_STX_CHARAT(stx,idx,n++) = *p++;
 	}
 	xp_va_end (ap);
 
@@ -125,11 +125,12 @@ xp_stx_word_t xp_stx_new_symbol (
 	return x;
 }
 
-xp_stx_word_t xp_stx_new_symbol_postfix (
-	xp_stx_t* stx, const xp_stx_char_t* name, const xp_char_t* postfix)
+xp_stx_word_t xp_stx_new_symbol_pp (
+	xp_stx_t* stx, const xp_stx_char_t* name, 
+	const xp_stx_char_t* prefix, const xp_stx_char_t* postfix)
 {
 	xp_stx_word_t x;
-	x = xp_stx_allocn_string_object (stx, name, postfix, XP_NULL);
+	x = xp_stx_allocn_string_object (stx, prefix, name, postfix, XP_NULL);
 	XP_STX_CLASS(stx,x) = stx->class_symbol;
 	return x;
 }
@@ -147,10 +148,10 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 	class = xp_stx_alloc_object (stx, XP_STX_CLASS_DIMENSION);
 	XP_STX_CLASS(stx,class) = meta;
 
-	meta_name = xp_stx_new_symbol (stx, name);
+	meta_name = xp_stx_new_symbol_pp (
+		stx, name, XP_STX_TEXT(""), XP_STX_TEXT(" class"));
 	XP_STX_AT(stx,meta,XP_STX_CLASS_NAME) = meta_name;
-	class_name = xp_stx_new_symbol_postfix (
-		stx, name, XP_STX_TEXT("Meta"));
+	class_name = xp_stx_new_symbol (stx, name);
 	XP_STX_AT(stx,class,XP_STX_CLASS_NAME) = class_name;
 
 	xp_stx_hash_insert (stx, stx->symbol_table, 
@@ -158,7 +159,7 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 		meta_name, meta);
 	xp_stx_hash_insert (stx, stx->symbol_table, 
 		xp_stx_hash_string_object(stx, class_name),
-		meta_name, class);
+		class_name, class);
 
 	return class;
 }
