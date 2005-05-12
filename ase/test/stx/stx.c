@@ -1,5 +1,12 @@
-#include <xp/stx/memory.h>
+#include <xp/stx/stx.h>
 #include <xp/bas/stdio.h>
+
+#include <xp/stx/hash.h>
+void print_symbol_names (xp_stx_t* stx, xp_stx_word_t idx)
+{
+	xp_stx_word_t key = XP_STX_AT(stx,idx,1);
+	xp_printf (XP_TEXT("%s\n"), &XP_STX_CHARAT(stx,key,0));
+}
 
 int xp_main ()
 {
@@ -21,6 +28,8 @@ int xp_main ()
 	xp_printf (XP_TEXT("stx.true %d\n"), stx.true);
 	xp_printf (XP_TEXT("stx.false %d\n"), stx.false);
 	
+	xp_stx_hash_traverse (&stx, stx.symbol_table, print_symbol_names);
+
 /*
 	for (i = 0; i < 20; i++) {
 		xp_printf (XP_TEXT("%d, %d\n"), 

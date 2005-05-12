@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.10 2005-05-10 16:20:53 bacon Exp $
+ * $Id: stx.c,v 1.11 2005-05-12 15:25:06 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -30,7 +30,7 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 	stx->symbol_table = XP_STX_NIL;
 	stx->class_symbol = XP_STX_NIL;
 	stx->class_metaclass = XP_STX_NIL;
-	stx->class_link = XP_STX_NIL;
+	stx->class_symbol_link = XP_STX_NIL;
 
 	return stx;
 }
@@ -41,15 +41,19 @@ void xp_stx_close (xp_stx_t* stx)
 	if (stx->__malloced) xp_free (stx);
 }
 
+static void __reset_symbol_link_class (xp_stx_t* stx, xp_stx_word_t idx)
+{
+	XP_STX_CLASS(stx,idx) = stx->class_symbol_link;
+}
+
 int xp_stx_bootstrap (xp_stx_t* stx)
 {
-	xp_stx_word_t symtab;
+	xp_stx_word_t symtab, symbol_Smalltalk;
 	xp_stx_word_t symbol_nil, symbol_true, symbol_false;
 	xp_stx_word_t symbol_Symbol, symbol_SymbolMeta;
 	xp_stx_word_t symbol_Metaclass, symbol_MetaclassMeta;
 	xp_stx_word_t class_Symbol, class_SymbolMeta;
 	xp_stx_word_t class_Metaclass, class_MetaclassMeta;
-	xp_stx_word_t class_UndefinedObject;
 
 	/* allocate three keyword objects */
 	stx->nil = xp_stx_alloc_object (stx, 0);
@@ -67,11 +71,11 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	symbol_Symbol = 
 		xp_stx_alloc_string_object(stx, XP_STX_TEXT("Symbol"));
 	symbol_SymbolMeta = 
-		xp_stx_alloc_string_object(stx,XP_STX_TEXT("SymbolMeta"));
+		xp_stx_alloc_string_object(stx,XP_STX_TEXT("Symbol class"));
 	symbol_Metaclass = 
 		xp_stx_alloc_string_object(stx, XP_STX_TEXT("Metaclass"));
 	symbol_MetaclassMeta = 
-		xp_stx_alloc_string_object(stx, XP_STX_TEXT("MetaclassMeta"));
+		xp_stx_alloc_string_object(stx, XP_STX_TEXT("Metaclass class"));
 
 	class_Metaclass = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
 	class_MetaclassMeta = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
@@ -87,7 +91,6 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	XP_STX_CLASS(stx,class_Metaclass) = class_MetaclassMeta;
 	XP_STX_CLASS(stx,class_MetaclassMeta) = class_Metaclass;
 
-	
 	xp_stx_hash_insert (stx, symtab,
 		xp_stx_hash_string_object(stx, symbol_Symbol),
 		symbol_Symbol, class_Symbol);
@@ -101,18 +104,28 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 		xp_stx_hash_string_object(stx, symbol_MetaclassMeta),
 		symbol_MetaclassMeta, class_MetaclassMeta);
 
-	/* ready to use new_symbol & new_class */
+	/* now ready to use new_symbol & new_class */
 	stx->symbol_table = symtab;
 	stx->class_symbol = class_Symbol;
 	stx->class_metaclass = class_Metaclass;
 
+	/* more initialization for symbol table */
+	stx->class_symbol_link = 
+		xp_stx_new_class (stx, XP_STX_TEXT("SymbolLink"));
+
+	xp_stx_hash_traverse (stx, symtab, __reset_symbol_link_class);
+	XP_STX_CLASS(stx,symtab) = 
+		xp_stx_new_class (stx, XP_STX_TEXT("Array"));
+	symbol_Smalltalk = 
+		xp_stx_new_symbol (stx, XP_STX_TEXT("Smalltalk"));
+	xp_stx_hash_insert (stx, symtab,
+		xp_stx_hash_string_object(stx, symbol_Smalltalk),
+		symbol_Smalltalk, symtab);	
+
 	/* more initialization for nil, true, false */
-	symbol_nil = xp_stx_new_symbol (
-		stx, XP_STX_TEXT("nil"));
-	symbol_true = xp_stx_new_symbol (
-		stx, XP_STX_TEXT("true"));
-	symbol_false = xp_stx_new_symbol (
-		stx, XP_STX_TEXT("false"));
+	symbol_nil = xp_stx_new_symbol (stx, XP_STX_TEXT("nil"));
+	symbol_true = xp_stx_new_symbol (stx, XP_STX_TEXT("true"));
+	symbol_false = xp_stx_new_symbol (stx, XP_STX_TEXT("false"));
 
 	xp_stx_hash_insert (stx, symtab,
 		xp_stx_hash_string_object(stx, symbol_nil),
@@ -124,45 +137,14 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 		xp_stx_hash_string_object(stx, symbol_false),
 		symbol_false, stx->false);
 
-	class_UndefinedObject = xp_stx_new_class (stx, XP_STX_TEXT("UndefinedObject"));
+	XP_STX_CLASS(stx,stx->nil) =
+		xp_stx_new_class (stx, XP_STX_TEXT("UndefinedObject"));
+	XP_STX_CLASS(stx,stx->true) =
+		xp_stx_new_class (stx, XP_STX_TEXT("True"));
+	XP_STX_CLASS(stx,stx->false) = 
+		xp_stx_new_class (stx, XP_STX_TEXT("False"));
 
-	/*
-	class_Symbol = xp_stx_instantiate_class (XP_STX_TEXT("Symbol"));
-	XP_STX_CLASS(stx,symbol_Symbol) = class_Symbol;
-	XP_STX_CLASS(stx,symbol_Symbol_class) = class_Symbol;
-
-	class_Metaclass = xp_stx_instantiate_class (XP_STX_TEXT("Metaclass"));
-
-	XP_STX_CLASS(stx,class_Symbol) = class_Metaclass;
-	XP_STX_CLASS(stx,class_Metaclass) = class_Metaclass;
-
-	class_UndefinedObject = xp_stx_instantiate_class (XP_STX_TEXT("UndefinedObject"));
-	class_True = xp_stx_instantiate_class (XP_STX_TEXT("True"));
-	class_False = xp_stx_instantiate_class (XP_STX_TEXT("False"));
-	symbol_nil = xp_stx_instantiate_symbol (XP_STX_TEXT("nil"));
-	symbol_true = xp_stx_instantiate_symbol (XP_STX_TEXT("true"));
-	symbol_false = xp_stx_instantiate_symbol (XP_STX_TEXT("false"));
-
-	XP_STX_CLASS(stx,stx->nil) = class_UndefinedObject;
-	XP_STX_CLASS(stx,stx->true) = class_True;
-	XP_STX_CLASS(stx,stx->false) = class_False;
-
-	insert_into_symbol_table (stx, symbol_table, symbol_nil, stx->nil);
-	insert_into_symbol_table (stx, symbol_table, symbol_true, stx->true);
-	insert_into_symbol_table (stx, symbol_table, symbol_false, stx->false);
-
-	class_Link = xp_stx_instantiate_class (XP_STX_TEXT("Link"));
-	
-//	TODO here
-
-	class_Array =  xp_stx_instantiate_class (XP_STX_TEXT("Array"));
-	class_SymbolTable = xp_stx_instantiate_class (XP_STX_TEXT("SymbolTable"));		
-
-	XP_STX_CLASS(stx,hash_table) = class_Array;
-	XP_STX_CLASS(stx,symbol_table) = class_SymbolTable;
-
-	insert_into_symbol_table (stx, symbol_table, symbol_table, symbol_table);
-
+/*
 	class_Object = xp_stx_instantiate_class (XP_STX_TEXT("Object"));
 	class_Class = xp_stx_instantiate_class (XP_STX_TEXT("Class"));
 	XP_STX_AT(stx,classOf(class_Object),superClass,class_Class);
