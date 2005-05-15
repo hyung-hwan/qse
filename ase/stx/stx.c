@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.12 2005-05-12 15:33:38 bacon Exp $
+ * $Id: stx.c,v 1.13 2005-05-15 18:37:00 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -31,7 +31,10 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 	stx->class_symbol = XP_STX_NIL;
 	stx->class_metaclass = XP_STX_NIL;
 	stx->class_symbol_link = XP_STX_NIL;
+	stx->class_method = XP_STX_NIL;
+	stx->class_context = XP_STX_NIL;
 
+	stx->__wantabort = xp_false;
 	return stx;
 }
 
@@ -151,6 +154,9 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	class_Class = xp_stx_new_class (stx, XP_STX_TEXT("Class"));
 	tmp = XP_STX_CLASS(stx,class_Object);
 	XP_STX_AT(stx,tmp,XP_STX_CLASS_SUPERCLASS) = class_Class;
+
+	stx->class_method = xp_stx_new_class (stx, XP_STX_TEXT("Method"));
+	stx->class_context = xp_stx_new_class (stx, XP_STX_TEXT("Context"));
 
 	return 0;
 }

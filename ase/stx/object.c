@@ -1,19 +1,13 @@
 /*
- * $Id: object.c,v 1.12 2005-05-12 15:25:06 bacon Exp $
+ * $Id: object.c,v 1.13 2005-05-15 18:37:00 bacon Exp $
  */
 
 #include <xp/stx/object.h>
 #include <xp/stx/memory.h>
 #include <xp/stx/hash.h>
+#include <xp/stx/misc.h>
 #include <xp/bas/assert.h>
 #include <xp/bas/stdarg.h>
-
-static xp_stx_word_t __strlen (const xp_stx_char_t* str)
-{
-	const xp_stx_char_t* p = str;
-	while (*p != XP_STX_CHAR('\0')) p++;
-	return p - str;
-}
 
 /* n: number of instance variables */
 xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n)
@@ -57,7 +51,7 @@ xp_stx_word_t xp_stx_alloc_string_object (
 {
 	xp_stx_word_t idx, n;
 
-	n = __strlen(str);
+	n = xp_stx_strlen(str);
 	idx = xp_stx_memory_alloc (&stx->memory, 
 		(n + 1) * xp_sizeof(xp_stx_char_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
@@ -79,7 +73,7 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
 
 	xp_va_start (ap, stx);
 	while ((p = xp_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
-		n += __strlen(p);
+		n += xp_stx_strlen(p);
 	}
 	xp_va_end (ap);
 
@@ -105,34 +99,9 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
 
 xp_stx_word_t xp_stx_hash_string_object (xp_stx_t* stx, xp_stx_word_t idx)
 {
-	xp_stx_word_t nb, h = 0;
-	xp_byte_t* p, * end;
-
 	xp_assert (XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED);
-	nb = XP_STX_SIZE(stx,idx) * xp_sizeof(xp_stx_char_t);
-	p = (xp_byte_t*)&XP_STX_AT(stx,idx,0); end = p + nb;
-
-	while (p < end) h = h * 31 + *p++;
-	return h;
-}
-
-xp_stx_word_t xp_stx_new_symbol (
-	xp_stx_t* stx, const xp_stx_char_t* name)
-{
-	xp_stx_word_t x;
-	x = xp_stx_alloc_string_object (stx, name);
-	XP_STX_CLASS(stx,x) = stx->class_symbol;
-	return x;
-}
-
-xp_stx_word_t xp_stx_new_symbol_pp (
-	xp_stx_t* stx, const xp_stx_char_t* name, 
-	const xp_stx_char_t* prefix, const xp_stx_char_t* postfix)
-{
-	xp_stx_word_t x;
-	x = xp_stx_allocn_string_object (stx, prefix, name, postfix, XP_NULL);
-	XP_STX_CLASS(stx,x) = stx->class_symbol;
-	return x;
+	return xp_stx_strxhash (
+		&XP_STX_CHARAT(stx,idx,0), XP_STX_SIZE(stx,idx));
 }
 
 xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
@@ -164,3 +133,17 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 	return class;
 }
 
+int xp_stx_lookup_global (
+	xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t* value)
+{
+	xp_stx_word_t link;
+
+	// TODO: maybe xp_stx_hash_object is required instead of
+	//       xp_stx_hash_string_object.
+	link = xp_stx_hash_lookup (stx, stx->symbol_table,
+		xp_stx_hash_string_object(stx,key), key);
+	if (link == stx->nil) return -1;
+
+	*value = XP_STX_AT(stx,link,2);
+	return 0;
+}

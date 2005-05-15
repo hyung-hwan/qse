@@ -1,17 +1,25 @@
 #include <xp/stx/stx.h>
 #include <xp/bas/stdio.h>
 
+#include <xp/stx/object.h>
+#include <xp/stx/context.h>
 #include <xp/stx/hash.h>
+
 void print_symbol_names (xp_stx_t* stx, xp_stx_word_t idx)
 {
 	xp_stx_word_t key = XP_STX_AT(stx,idx,1);
-	xp_printf (XP_TEXT("%s\n"), &XP_STX_CHARAT(stx,key,0));
+	xp_printf (XP_TEXT("%u -> %s\n"), key, &XP_STX_CHARAT(stx,key,0));
 }
 
-int xp_main ()
+int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_stx_t stx;
 	xp_stx_word_t i;
+
+	if (argc != 2) { // TODO: argument processing
+		xp_printf (XP_TEXT("Usage: %s [-f imageFile] MainClass"), argv[0]);
+		return -1;
+	}
 
 	if (xp_stx_open (&stx, 10000) == XP_NULL) {
 		xp_printf (XP_TEXT("cannot open stx\n"));
@@ -30,21 +38,32 @@ int xp_main ()
 	
 	xp_stx_hash_traverse (&stx, stx.symbol_table, print_symbol_names);
 
-/*
-	for (i = 0; i < 20; i++) {
-		xp_printf (XP_TEXT("%d, %d\n"), 
-			i, xp_stx_memory_alloc(&stx.memory, 100));
+	{
+		xp_stx_word_t class_name, method_name;
+		xp_stx_word_t main_class;
+		xp_stx_word_t method, context;
+
+		class_name = xp_stx_new_symbol (&stx,argv[1]);
+		method_name = xp_stx_new_symbol (&stx,XP_STX_TEXT("main"));
+
+		if (xp_stx_lookup_global (&stx,class_name, &main_class) == -1) {
+			xp_printf (XP_TEXT("non-existent class: %s\n"), argv[1]);
+			return -1;
+		}
+
+		method = xp_stx_alloc_byte_object (&stx,100);
+		XP_STX_CLASS(&stx,method) = stx.class_method;
+
+		XP_STX_BYTEAT(&stx,method,0) = PUSH_OBJECT;
+		XP_STX_BYTEAT(&stx,method,1) = main_class;
+		XP_STX_BYTEAT(&stx,method,2) = SEND_UNARY_MESSAGE;
+		XP_STX_BYTEAT(&stx,method,3) = method_name;
+		XP_STX_BYTEAT(&stx,method,4) = HALT;
+
+		context = xp_stx_new_context (&stx, method, stx.nil, stx.nil);
+		xp_stx_run_context (&stx, context);
 	}
 
-	for (i = 5; i < 10; i++) {
-		xp_stx_memory_dealloc (&stx.memory, i);
-	}
-
-	for (i = 0; i < 20; i++) {
-		xp_printf (XP_TEXT("%d, %d\n"), 
-			i, xp_stx_memory_alloc(&stx.memory, 100));
-	}
-*/
 	xp_stx_close (&stx);
 	xp_printf (XP_TEXT("End of program\n"));
 	return 0;

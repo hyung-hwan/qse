@@ -1,5 +1,5 @@
-SRCS = stx.c memory.c object.c hash.c
-OBJS = stx.obj memory.obj object.obj hash.obj
+SRCS = stx.c memory.c object.c hash.c misc.c context.c
+OBJS = stx.obj memory.obj object.obj hash.obj misc.obj context.obj
 OUT = xpstx.lib
 
 CC = lcc
