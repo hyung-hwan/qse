@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.1 2005-05-13 16:45:55 bacon Exp $
+ * $Id: interp.c,v 1.2 2005-05-15 18:37:00 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -36,18 +36,48 @@ static byte_code_func_t byte_code_funcs[] =
 	do_special
 };
 
-int xp_stx_new_context (xp_stx_t* stx, 
+xp_stx_word_t xp_stx_new_method (xp_stx_t* stx)
+{
+	xp_stx_word_t method;
+	method = xp_stx_alloc_object(XP_STX_METHOD_DIMENSION);
+
+	return method;
+}
+
+xp_stx_word_t xp_stx_new_context (xp_stx_t* stx, 
 	xp_stx_word_t method, xp_stx_word_t args, xp_stx_word_t temp)
 {
 	xp_stx_word_t context;
 
 	context = xp_stx_alloc_object(XP_STX_CONTEXT_DIMENSION);
-	XP_STX_CLASS(stx,context) = stx->context_class;
+	XP_STX_CLASS(stx,context) = stx->class_context;
 	XP_STX_AT(stx,context,XP_STX_CONTEXT_METHOD) = method;
 	XP_STX_AT(stx,context,XP_STX_CONTEXT_ARGUMENTS) = args;
 	XP_STX_AT(stx,context,XP_STX_CONTEXT_TEMPORARIES) = temp;
 
 	return context;
+}
+
+xp_stx_word_t xp_stx_new_process (xp_stx_t* stx, xp_stx_word_t method)
+{
+	xp_stx_word_t process, stx;
+
+	process = xp_stx_alloc_object(XP_STX_PROCESS_DIMENSION);
+	stack = xp_new_array(stx,50);
+	
+	XP_STX_CLASS(stx,process) = stx->class_process;
+	XP_STX_AT(stx,process,XP_STX_PROCESS_STACK) = stack;
+	XP_STX_AT(stx,process,XP_STX_PROCESS_STACKTOP) = XP_STX_FROM_SMALLINT(6);
+	XP_STX_AT(stx,process,XP_STX_PROCESS_LINK) = XP_STX_FROM_SMALLINT(1);
+
+	XP_STX_AT(stx,stack,0) = stx->nil; /* argument */
+	XP_STX_AT(stx,stack,1) = XP_STX_FROM_SMALLINT(0); /* previous link */
+	XP_STX_AT(stx,stack,2) = stx->nil; /* context */
+	XP_STX_AT(stx,stack,3) = XP_STX_FROM_SMALLINT(1); /* return point */
+	XP_STX_AT(stx,stack,4) = method;
+	XP_STX_AT(stx,stack,5) = XP_STX_FROM_SMALLINT(1); /* byte offset */
+
+	return process;	
 }
 
 int xp_stx_execute (xp_stx_t* stx, xp_stx_word_t process)
