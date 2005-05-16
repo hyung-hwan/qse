@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.9 2005-05-15 18:37:00 bacon Exp $
+ * $Id: hash.c,v 1.10 2005-05-16 14:14:34 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -48,7 +48,7 @@ xp_stx_word_t xp_stx_hash_lookup (
 
 xp_stx_word_t xp_stx_hash_lookup_symbol (
 	xp_stx_t* stx, xp_stx_word_t table, 
-	xp_stx_word_t hash, xp_stx_char_t* key_str)
+	xp_stx_word_t hash, const xp_stx_char_t* key_str)
 {
 	xp_stx_word_t link, key;
 

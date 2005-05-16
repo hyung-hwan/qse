@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.1 2005-05-15 18:37:00 bacon Exp $
+ * $Id: misc.c,v 1.2 2005-05-16 14:14:34 bacon Exp $
  */
 
 #include <xp/stx/misc.h>
@@ -35,7 +35,7 @@ xp_stx_word_t xp_stx_strhash (const xp_stx_char_t* str)
 {
 	xp_stx_word_t h = 0;
 	xp_stx_byte_t* bp, * be;
-	xp_stx_char_t* p = str;
+	const xp_stx_char_t* p = str;
 
 	while (*p != XP_STX_CHAR('\0')) {
 		bp = (xp_stx_byte_t*)p;
@@ -51,7 +51,7 @@ xp_stx_word_t xp_stx_strxhash (const xp_stx_char_t* str, xp_stx_word_t len)
 {
 	xp_stx_word_t h = 0;
 	xp_stx_byte_t* bp, * be;
-	xp_stx_char_t* p = str, * end = str + len;
+	const xp_stx_char_t* p = str, * end = str + len;
 
 	while (p < end) {
 		bp = (xp_stx_byte_t*)p;
