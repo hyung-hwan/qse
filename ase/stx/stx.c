@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.13 2005-05-15 18:37:00 bacon Exp $
+ * $Id: stx.c,v 1.14 2005-05-16 16:41:47 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -128,6 +128,9 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 		symbol_Smalltalk, symtab);	
 
 	/* more initialization for nil, true, false */
+	/*
+// nil, true, false must be treated specially by the compiler....
+// so it doesn't have to be registered into the system dictionary....
 	symbol_nil = xp_stx_new_symbol (stx, XP_STX_TEXT("nil"));
 	symbol_true = xp_stx_new_symbol (stx, XP_STX_TEXT("true"));
 	symbol_false = xp_stx_new_symbol (stx, XP_STX_TEXT("false"));
@@ -141,6 +144,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_hash_insert (stx, symtab,
 		xp_stx_hash_string_object(stx, symbol_false),
 		symbol_false, stx->false);
+	*/
 
 	XP_STX_CLASS(stx,stx->nil) =
 		xp_stx_new_class (stx, XP_STX_TEXT("UndefinedObject"));
