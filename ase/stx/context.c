@@ -1,5 +1,5 @@
 /*
- * $Id: context.c,v 1.1 2005-05-15 18:37:00 bacon Exp $
+ * $Id: context.c,v 1.2 2005-05-16 14:14:34 bacon Exp $
  */
 
 #include <xp/stx/context.h>
@@ -55,7 +55,7 @@ xp_printf (XP_TEXT("code: %x\n"), byte);
 			operand = __fetch_byte (stx, context);	
 			break;
 		case SEND_UNARY_MESSAGE:
-			operand = _fetch_byte (stx, context);
+			operand = __fetch_byte (stx, context);
 			break;
 		case HALT:
 			goto exit_run_context;		
