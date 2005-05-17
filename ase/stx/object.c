@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.13 2005-05-15 18:37:00 bacon Exp $
+ * $Id: object.c,v 1.14 2005-05-17 16:18:56 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -123,10 +123,10 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 	class_name = xp_stx_new_symbol (stx, name);
 	XP_STX_AT(stx,class,XP_STX_CLASS_NAME) = class_name;
 
-	xp_stx_hash_insert (stx, stx->symbol_table, 
+	xp_stx_hash_insert (stx, stx->smalltalk, 
 		xp_stx_hash_string_object(stx, meta_name),
 		meta_name, meta);
-	xp_stx_hash_insert (stx, stx->symbol_table, 
+	xp_stx_hash_insert (stx, stx->smalltalk, 
 		xp_stx_hash_string_object(stx, class_name),
 		class_name, class);
 

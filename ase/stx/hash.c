@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.10 2005-05-16 14:14:34 bacon Exp $
+ * $Id: hash.c,v 1.11 2005-05-17 16:18:56 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -7,21 +7,21 @@
 #include <xp/stx/misc.h>
 #include <xp/bas/assert.h>
 
-#define _SYMBOL_LINK_DIMENSION  3
-#define _SYMBOL_LINK_LINK       0
-#define _SYMBOL_LINK_KEY        1
-#define _SYMBOL_LINK_VALUE      2
+#define PLINK_DIMENSION  3
+#define PLINK_LINK       0
+#define PLINK_KEY        1
+#define PLINK_VALUE      2
 
-xp_stx_word_t xp_stx_new_symbol_link (
+xp_stx_word_t xp_stx_new_plink (
 	xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t value)
 {
 	xp_stx_word_t x;
 
-	x = xp_stx_alloc_object (stx, _SYMBOL_LINK_DIMENSION);	
-	XP_STX_CLASS(stx,x) = stx->class_symbol_link;
-	/* XP_STX_AT(stx,x,_SYMBOL_LINK_LINK) = stx->nil; */
-	XP_STX_AT(stx,x,_SYMBOL_LINK_KEY) = key;
-	XP_STX_AT(stx,x,_SYMBOL_LINK_VALUE) = value;
+	x = xp_stx_alloc_object (stx, PLINK_DIMENSION);	
+	XP_STX_CLASS(stx,x) = stx->class_symbol_plink;
+	/* XP_STX_AT(stx,x,PLINK_LINK) = stx->nil; */
+	XP_STX_AT(stx,x,PLINK_KEY) = key;
+	XP_STX_AT(stx,x,PLINK_VALUE) = value;
 	
 	return x;
 }
@@ -39,8 +39,8 @@ xp_stx_word_t xp_stx_hash_lookup (
 	link = XP_STX_AT(stx,table,hash);
 
 	while (link != stx->nil) {
-		if (XP_STX_AT(stx,link,_SYMBOL_LINK_KEY) == key) return link;
-		link = XP_STX_AT(stx,link,_SYMBOL_LINK_LINK);
+		if (XP_STX_AT(stx,link,PLINK_KEY) == key) return link;
+		link = XP_STX_AT(stx,link,PLINK_LINK);
 	}
 
 	return stx->nil; /* not found */
@@ -58,7 +58,7 @@ xp_stx_word_t xp_stx_hash_lookup_symbol (
 	link = XP_STX_AT(stx,table,hash);
 
 	while (link != stx->nil) {
-		key = XP_STX_AT(stx,link,_SYMBOL_LINK_KEY);
+		key = XP_STX_AT(stx,link,PLINK_KEY);
 
 		if (XP_STX_CLASS(stx,key) == stx->class_symbol &&
 		    xp_stx_strxcmp (
@@ -66,7 +66,7 @@ xp_stx_word_t xp_stx_hash_lookup_symbol (
 		    	XP_STX_SIZE(stx,key), key_str) == 0) {
 			return link;
 		}
-		link = XP_STX_AT(stx,link,_SYMBOL_LINK_LINK);
+		link = XP_STX_AT(stx,link,PLINK_LINK);
 	}
 
 	return stx->nil; /* not found */
@@ -85,19 +85,19 @@ void xp_stx_hash_insert (
 
 	if (link == stx->nil) {
 		XP_STX_AT(stx,table,hash) = 
-			xp_stx_new_symbol_link (stx, key, value);
+			xp_stx_new_plink (stx, key, value);
 	}
 	else {
 		for (;;) {
 			if (XP_STX_AT(stx,link,1) == key) {
-				XP_STX_AT(stx,link,_SYMBOL_LINK_VALUE) = value;
+				XP_STX_AT(stx,link,PLINK_VALUE) = value;
 				break;		
 			}
 
-			next = XP_STX_AT(stx,link,_SYMBOL_LINK_LINK);
+			next = XP_STX_AT(stx,link,PLINK_LINK);
 			if (next == stx->nil) {
-				XP_STX_AT(stx,link,_SYMBOL_LINK_LINK) = 
-					xp_stx_new_symbol_link (stx, key, value);
+				XP_STX_AT(stx,link,PLINK_LINK) = 
+					xp_stx_new_plink (stx, key, value);
 				break;
 			}
 
@@ -118,12 +118,13 @@ void xp_stx_hash_traverse (
 
 		while (link != stx->nil) {
 			func (stx,link);
-			link = XP_STX_AT(stx,link,_SYMBOL_LINK_LINK);
+			link = XP_STX_AT(stx,link,PLINK_LINK);
 		}
 	}
 }
 
 
+/*
 xp_stx_word_t xp_stx_new_symbol (
 	xp_stx_t* stx, const xp_stx_char_t* name)
 {
@@ -136,7 +137,7 @@ xp_stx_word_t xp_stx_new_symbol (
 		XP_STX_CLASS(stx,x) = stx->class_symbol;
 		xp_stx_hash_insert (stx, stx->symbol_table, hash, x, stx->nil);
 	}
-	else x = XP_STX_AT(stx,x,_SYMBOL_LINK_KEY);
+	else x = XP_STX_AT(stx,x,PLINK_KEY);
 
 	return x;
 }
@@ -155,8 +156,8 @@ xp_stx_word_t xp_stx_new_symbol_pp (
 		XP_STX_CLASS(stx,x) = stx->class_symbol;
 		xp_stx_hash_insert (stx, stx->symbol_table, hash, x, stx->nil);
 	}
-	else x = XP_STX_AT(stx,x,_SYMBOL_LINK_KEY);
+	else x = XP_STX_AT(stx,x,PLINK_KEY);
 
 	return x;
 }
-
+*/
