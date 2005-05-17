@@ -1,11 +1,12 @@
 /*
- * $Id: stx.c,v 1.14 2005-05-16 16:41:47 bacon Exp $
+ * $Id: stx.c,v 1.15 2005-05-17 16:18:56 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
 #include <xp/stx/memory.h>
 #include <xp/stx/object.h>
 #include <xp/stx/hash.h>
+#include <xp/stx/symbol.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 
@@ -28,9 +29,12 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 	stx->false = XP_STX_FALSE;
 
 	stx->symbol_table = XP_STX_NIL;
+	stx->smalltalk = XP_STX_NIL;
+
+	stx->class_symbol_link = XP_STX_NIL;
 	stx->class_symbol = XP_STX_NIL;
 	stx->class_metaclass = XP_STX_NIL;
-	stx->class_symbol_link = XP_STX_NIL;
+
 	stx->class_method = XP_STX_NIL;
 	stx->class_context = XP_STX_NIL;
 
@@ -70,9 +74,84 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_assert (stx->false == XP_STX_FALSE);
 
 	/* build a symbol table */   // TODO: symbol table size
-	symtab = xp_stx_alloc_object (stx, 1000); 
+	stx->symbol_table = xp_stx_alloc_object (stx, 1000); 
+
+	/* build a system dictionary */
+	stx->smalltalk = xp_stx_alloc_object (stx, 2000);
+
+	/* create classes to make xp_stx_new_symbol work */
+	stx->class_symbol_link = 
+		xp_stx_alloc_object(stx,XP_STX_CLASS_DIMENSION);
+	stx->class_symbol = 
+		xp_stx_alloc_object(stx,XP_STX_CLASS_DIMENSION);
+
+	symbol_SymbolLink = 
+		xp_stx_new_symbol (XP_STX_TEXT("SymbolLink"));
+	symbol_SymbolLinkMeta
+		xp_stx_new_symbol (XP_STX_TEXT("SymbolLink class"));
+	symbol_Symbol = 
+		xp_stx_new_symbol (XP_STX_TEXT("Symbol"));
+	symbol_SymbolMeta = 
+		xp_stx_new_symbol (XP_STX_TEXT("Symbol class"));
+
+	XP_STX_AT(stx,stx->class_symbol_link,XP_STX_CLASS_NAME) = symbol_SymbolLinkMeta;
+	XP_STX_AT(stx,stx->class_symbol,XP_STX_CLASS_NAME) = symbol_SymbolLink;
+
+	xp_stx_hash_insert (stx, stx->smalltalk,
+		xp_stx_hash_string_object(stx, symbol_SymbolLink),
+		symbol_SymbolLink, stx->class_symbol);
+	xp_stx_hash_insert (stx, stx->smalltalk,
+		xp_stx_hash_string_object(stx, symbol_Symbol),
+		symbol_Symbol, stx->class_symbol);
+
+	/* class_metaclass to make xp_stx_new_class to work */
+	stx->class_metaclass = 
+		xp_stx_alloc_object(stx,XP_STX_CLASS_DIMENSION);
+	
+	symbol_Meaclass =
+		xp_stx_new_symbol (XP_STX_TEXT("Metaclass"));
+	symbol_MeaclassMeta =
+		xp_stx_new_symbol (XP_STX_TEXT("Metaclass class"));
+
+	XP_STX_AT(stx->class_metaclass,XP_STX_CLASS_NAME) = symbol_Metaclass;
+
+	xp_stx_hash_insert (stx, stx->smalltalk,
+		xp_stx_hash_string_object(stx, symbol_Metaclass),
+		symbol_Metaclass, stx->class_metaclass);
+
+
+	/* .............. */
+	symbol->Metaclass = xp_stx_new_symbol (XP_STX_TEXT("Metaclass"));
+	class_Metaclass =
+		xp_stx_alloc_object(stx,XP_STX_CLASS_DIMENSION);
+
+	
+	xp_stx_hash_insert (stx, stx->smalltalk,
+		xp_stx_hash_string_object(stx, symbol_Metaclass),
+		symbol_Metaclass, class_Metaclass);
+
+	stx->class_metaclass = class_Metaclass;
+
+
+	class_Metaclass = xp_stx_new_class (stx, XP_STX_TEXT("Metaclass"));
+	class_Symbol = xp_stx_new_class (stx, XP_STX_TEXT("Symbol"));
+
+	symbol_Symbol = 
+		xp_stx_new_symbol (XP_STX_TEXT("Symbol"));
+	symbol_SymbolMeta = 
+		xp_stx_new_symbol (XP_STX_TEXT("Symbol class"));
+	symbol_Metaclass = 
+		xp_stx_new_symbol (XP_STX_TEXT("Metaclass"));
+	symbol_MetaclassMeta = 
+		xp_stx_new_symbol (XP_STX_TEXT("Metaclass class"));
 
 	/* tweak the initial object structure */
+	/*
+	class_Metaclass = xp_stx_alloc_object(stx, XP_STX_CLASS_DIMENSION);
+	class_MetaclassMeta = xp_stx_alloc_object(stx, XP_STX_CLASS_DIMENSION);
+	class_Symbol = xp_stx_alloc_object(stx, XP_STX_CLASS_DIMENSION);
+	class_SymbolMeta = xp_stx_alloc_object(stx, XP_STX_CLASS_DIMENSION);
+
 	symbol_Symbol = 
 		xp_stx_alloc_string_object(stx, XP_STX_TEXT("Symbol"));
 	symbol_SymbolMeta = 
@@ -82,11 +161,6 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	symbol_MetaclassMeta = 
 		xp_stx_alloc_string_object(stx, XP_STX_TEXT("Metaclass class"));
 
-	class_Metaclass = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
-	class_MetaclassMeta = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
-	class_Symbol = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
-	class_SymbolMeta = xp_stx_alloc_object(stx, XP_STX_CLASS_SIZE);
-
 	XP_STX_CLASS(stx,symbol_SymbolMeta) = class_Symbol;
 	XP_STX_CLASS(stx,symbol_Metaclass) = class_Symbol;
 	XP_STX_CLASS(stx,symbol_MetaclassMeta) = class_Symbol;
@@ -95,7 +169,9 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	XP_STX_CLASS(stx,class_SymbolMeta) = class_Metaclass;
 	XP_STX_CLASS(stx,class_Metaclass) = class_MetaclassMeta;
 	XP_STX_CLASS(stx,class_MetaclassMeta) = class_Metaclass;
+	*/
 
+	/*
 	xp_stx_hash_insert (stx, symtab,
 		xp_stx_hash_string_object(stx, symbol_Symbol),
 		symbol_Symbol, class_Symbol);
@@ -108,13 +184,17 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_hash_insert (stx, symtab,
 		xp_stx_hash_string_object(stx, symbol_MetaclassMeta),
 		symbol_MetaclassMeta, class_MetaclassMeta);
+	*/
 
 	/* now ready to use new_symbol & new_class */
+	/*
 	stx->symbol_table = symtab;
 	stx->class_symbol = class_Symbol;
 	stx->class_metaclass = class_Metaclass;
+	*/
 
 	/* more initialization for symbol table */
+	/*
 	stx->class_symbol_link = 
 		xp_stx_new_class (stx, XP_STX_TEXT("SymbolLink"));
 
@@ -126,6 +206,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_hash_insert (stx, symtab,
 		xp_stx_hash_string_object(stx, symbol_Smalltalk),
 		symbol_Smalltalk, symtab);	
+	*/
 
 	/* more initialization for nil, true, false */
 	/*
