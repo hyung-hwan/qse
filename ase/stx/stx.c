@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.17 2005-05-18 04:12:15 bacon Exp $
+ * $Id: stx.c,v 1.18 2005-05-18 16:05:34 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -53,7 +53,7 @@ void xp_stx_close (xp_stx_t* stx)
 
 int xp_stx_bootstrap (xp_stx_t* stx)
 {
-	xp_stx_word_t symbol_Smalltalk, symbol_nil, symbol_true, symbol_false;
+	xp_stx_word_t symbol_Smalltalk;
 	xp_stx_word_t class_Object, class_Class;
 	xp_stx_word_t tmp;
 
@@ -71,9 +71,9 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 		symbol_Smalltalk, stx->smalltalk);	
 
 	/* more initialization for nil, true, false */
-	symbol_nil = xp_stx_new_symbol (stx, XP_STX_TEXT("nil"));
-	symbol_true = xp_stx_new_symbol (stx, XP_STX_TEXT("true"));
-	symbol_false = xp_stx_new_symbol (stx, XP_STX_TEXT("false"));
+	xp_stx_new_symbol (stx, XP_STX_TEXT("nil"));
+	xp_stx_new_symbol (stx, XP_STX_TEXT("true"));
+	xp_stx_new_symbol (stx, XP_STX_TEXT("false"));
 
 	XP_STX_CLASS(stx,stx->nil) =
 		xp_stx_new_class (stx, XP_STX_TEXT("UndefinedObject"));
