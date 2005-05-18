@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.18 2005-05-18 16:05:34 bacon Exp $
+ * $Id: stx.c,v 1.19 2005-05-18 16:34:51 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -57,11 +57,14 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_word_t class_Object, class_Class;
 	xp_stx_word_t tmp;
 
+xp_printf (XP_TEXT("bootstreap\n"));
 	__create_bootstrapping_objects (stx);
+xp_printf (XP_TEXT("bootstreap over\n"));
 
 	/* more initialization */
 	XP_STX_CLASS(stx,stx->symbol_table) = 
 		xp_stx_new_class (stx, XP_STX_TEXT("SymbolTable"));
+xp_printf (XP_TEXT("bootstreap 1111\n"));
 	XP_STX_CLASS(stx,stx->smalltalk) = 
 		xp_stx_new_class (stx, XP_STX_TEXT("SystemDictionary"));
 
@@ -70,15 +73,18 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 		xp_stx_hash_string_object(stx,symbol_Smalltalk),
 		symbol_Smalltalk, stx->smalltalk);	
 
-	/* more initialization for nil, true, false */
+	/* create #nil, #true, #false */
 	xp_stx_new_symbol (stx, XP_STX_TEXT("nil"));
 	xp_stx_new_symbol (stx, XP_STX_TEXT("true"));
 	xp_stx_new_symbol (stx, XP_STX_TEXT("false"));
 
+	/* nil setClass: UndefinedObject */
 	XP_STX_CLASS(stx,stx->nil) =
 		xp_stx_new_class (stx, XP_STX_TEXT("UndefinedObject"));
+	/* true setClass: True */
 	XP_STX_CLASS(stx,stx->true) =
 		xp_stx_new_class (stx, XP_STX_TEXT("True"));
+	/* fales setClass: False */
 	XP_STX_CLASS(stx,stx->false) = 
 		xp_stx_new_class (stx, XP_STX_TEXT("False"));
 
@@ -137,6 +143,7 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
 	class_PairlinkMeta = /* Pairlink class */
 		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+
 
 	/* (Symlink class) setClass: Metaclass */
 	XP_STX_CLASS(stx,class_SymlinkMeta) = stx->class_metaclass;
