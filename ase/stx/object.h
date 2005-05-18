@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.11 2005-05-15 18:37:00 bacon Exp $
+ * $Id: object.h,v 1.12 2005-05-18 04:01:51 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
@@ -12,9 +12,9 @@
 #define XP_STX_FROM_SMALLINT(x) ((x) >> 1)
 
 /* definitions for common objects */
-#define XP_STX_CLASS_DIMENSION   8
+#define XP_STX_CLASS_SIZE        8
 #define XP_STX_CLASS_NAME        0
-#define XP_STX_CLASS_SIZE        1
+#define XP_STX_CLASS_SPEC        1
 #define XP_STX_CLASS_METHODS     2
 #define XP_STX_CLASS_SUPERCLASS  3
 #define XP_STX_CLASS_VARIABLES   4

@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.13 2005-05-17 16:18:56 bacon Exp $
+ * $Id: stx.h,v 1.14 2005-05-18 04:01:51 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -73,9 +73,10 @@ struct xp_stx_t
 	xp_stx_word_t symbol_table;
 	xp_stx_word_t smalltalk;
 
-	xp_stx_word_t class_symbol_link;
+	xp_stx_word_t class_symlink;
 	xp_stx_word_t class_symbol;
 	xp_stx_word_t class_metaclass;
+	xp_stx_word_t class_pairlink;
 
 	xp_stx_word_t class_method;
 	xp_stx_word_t class_context;
