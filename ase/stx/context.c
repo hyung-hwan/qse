@@ -1,11 +1,11 @@
 /*
- * $Id: context.c,v 1.2 2005-05-16 14:14:34 bacon Exp $
+ * $Id: context.c,v 1.3 2005-05-18 04:01:51 bacon Exp $
  */
 
 #include <xp/stx/context.h>
 #include <xp/stx/object.h>
 
-#define XP_STX_CONTEXT_DIMENSION   4
+#define XP_STX_CONTEXT_SIZE        4
 #define XP_STX_CONTEXT_IP          0
 #define XP_STX_CONTEXT_METHOD      1
 #define XP_STX_CONTEXT_ARGUMENTS   2
@@ -16,7 +16,7 @@ xp_stx_word_t xp_stx_new_context (xp_stx_t* stx,
 {
 	xp_stx_word_t context;
 
-	context = xp_stx_alloc_object(stx,XP_STX_CONTEXT_DIMENSION);
+	context = xp_stx_alloc_object(stx,XP_STX_CONTEXT_SIZE);
 	XP_STX_CLASS(stx,context) = stx->class_context;
 	XP_STX_AT(stx,context,XP_STX_CONTEXT_IP) = XP_STX_TO_SMALLINT(0);
 	XP_STX_AT(stx,context,XP_STX_CONTEXT_METHOD) = method;

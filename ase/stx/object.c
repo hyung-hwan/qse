@@ -1,9 +1,10 @@
 /*
- * $Id: object.c,v 1.14 2005-05-17 16:18:56 bacon Exp $
+ * $Id: object.c,v 1.15 2005-05-18 04:01:51 bacon Exp $
  */
 
 #include <xp/stx/object.h>
 #include <xp/stx/memory.h>
+#include <xp/stx/symbol.h>
 #include <xp/stx/hash.h>
 #include <xp/stx/misc.h>
 #include <xp/bas/assert.h>
@@ -107,25 +108,29 @@ xp_stx_word_t xp_stx_hash_string_object (xp_stx_t* stx, xp_stx_word_t idx)
 xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 {
 	xp_stx_word_t meta, class;
-	xp_stx_word_t meta_name, class_name;
+	xp_stx_word_t /*meta_name,*/ class_name;
 
-	meta = xp_stx_alloc_object (stx, XP_STX_CLASS_DIMENSION);
+	meta = xp_stx_alloc_object (stx, XP_STX_CLASS_SIZE);
 	XP_STX_CLASS(stx,meta) = stx->class_metaclass;
 	XP_STX_AT(stx,meta,XP_STX_CLASS_SIZE) = 
-		XP_STX_TO_SMALLINT(XP_STX_CLASS_DIMENSION);
+		XP_STX_TO_SMALLINT(XP_STX_CLASS_SIZE);
 	
-	class = xp_stx_alloc_object (stx, XP_STX_CLASS_DIMENSION);
+	class = xp_stx_alloc_object (stx, XP_STX_CLASS_SIZE);
 	XP_STX_CLASS(stx,class) = meta;
 
+	/*
 	meta_name = xp_stx_new_symbol_pp (
 		stx, name, XP_STX_TEXT(""), XP_STX_TEXT(" class"));
 	XP_STX_AT(stx,meta,XP_STX_CLASS_NAME) = meta_name;
+	*/
 	class_name = xp_stx_new_symbol (stx, name);
 	XP_STX_AT(stx,class,XP_STX_CLASS_NAME) = class_name;
 
+	/*
 	xp_stx_hash_insert (stx, stx->smalltalk, 
 		xp_stx_hash_string_object(stx, meta_name),
 		meta_name, meta);
+	*/
 	xp_stx_hash_insert (stx, stx->smalltalk, 
 		xp_stx_hash_string_object(stx, class_name),
 		class_name, class);
@@ -140,10 +145,10 @@ int xp_stx_lookup_global (
 
 	// TODO: maybe xp_stx_hash_object is required instead of
 	//       xp_stx_hash_string_object.
-	link = xp_stx_hash_lookup (stx, stx->symbol_table,
+	link = xp_stx_hash_lookup (stx, stx->smalltalk,
 		xp_stx_hash_string_object(stx,key), key);
 	if (link == stx->nil) return -1;
 
-	*value = XP_STX_AT(stx,link,2);
+	*value = XP_STX_AT(stx,link,XP_STX_PAIRLINK_VALUE);
 	return 0;
 }

@@ -1,15 +1,15 @@
 /*
- * $Id: interp.c,v 1.2 2005-05-15 18:37:00 bacon Exp $
+ * $Id: interp.c,v 1.3 2005-05-18 04:01:51 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
 
-#define XP_STX_PROCESS_DIMENSION 3
+#define XP_STX_PROCESS_SIZE 3
 #define XP_STX_PROCESS_STACK     0
 #define XP_STX_PROCESS_STACK_TOP 1
 #define XP_STX_PROCESS_LINK      2
 
-#define XP_STX_CONTEXT_DIMENSION   6
+#define XP_STX_CONTEXT_SIZE   6
 #define XP_STX_PROCESS_LINK        0
 #define XP_STX_PROCESS_METHOD      1
 #define XP_STX_PROCESS_ARGUMENTS   2
@@ -39,7 +39,7 @@ static byte_code_func_t byte_code_funcs[] =
 xp_stx_word_t xp_stx_new_method (xp_stx_t* stx)
 {
 	xp_stx_word_t method;
-	method = xp_stx_alloc_object(XP_STX_METHOD_DIMENSION);
+	method = xp_stx_alloc_object(XP_STX_METHOD_SIZE);
 
 	return method;
 }
@@ -49,7 +49,7 @@ xp_stx_word_t xp_stx_new_context (xp_stx_t* stx,
 {
 	xp_stx_word_t context;
 
-	context = xp_stx_alloc_object(XP_STX_CONTEXT_DIMENSION);
+	context = xp_stx_alloc_object(XP_STX_CONTEXT_SIZE);
 	XP_STX_CLASS(stx,context) = stx->class_context;
 	XP_STX_AT(stx,context,XP_STX_CONTEXT_METHOD) = method;
 	XP_STX_AT(stx,context,XP_STX_CONTEXT_ARGUMENTS) = args;
@@ -62,7 +62,7 @@ xp_stx_word_t xp_stx_new_process (xp_stx_t* stx, xp_stx_word_t method)
 {
 	xp_stx_word_t process, stx;
 
-	process = xp_stx_alloc_object(XP_STX_PROCESS_DIMENSION);
+	process = xp_stx_alloc_object(XP_STX_PROCESS_SIZE);
 	stack = xp_new_array(stx,50);
 	
 	XP_STX_CLASS(stx,process) = stx->class_process;

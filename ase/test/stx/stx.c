@@ -2,10 +2,20 @@
 #include <xp/bas/stdio.h>
 
 #include <xp/stx/object.h>
+#include <xp/stx/symbol.h>
 #include <xp/stx/context.h>
 #include <xp/stx/hash.h>
 
-void print_symbol_names (xp_stx_t* stx, xp_stx_word_t idx)
+void print_symbol_names (xp_stx_t* stx, xp_stx_word_t sym)
+{
+	/*
+	xp_stx_word_t key = XP_STX_AT(stx,idx,1);
+	xp_printf (XP_TEXT("%u -> %s\n"), key, &XP_STX_CHARAT(stx,key,0));
+	*/
+	xp_printf (XP_TEXT("%u -> %s\n"), sym, &XP_STX_CHARAT(stx,sym,0));
+}
+
+void print_symbol_names_2 (xp_stx_t* stx, xp_stx_word_t idx)
 {
 	xp_stx_word_t key = XP_STX_AT(stx,idx,1);
 	xp_printf (XP_TEXT("%u -> %s\n"), key, &XP_STX_CHARAT(stx,key,0));
@@ -35,8 +45,13 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_printf (XP_TEXT("stx.nil %d\n"), stx.nil);
 	xp_printf (XP_TEXT("stx.true %d\n"), stx.true);
 	xp_printf (XP_TEXT("stx.false %d\n"), stx.false);
+	xp_printf (XP_TEXT("-------------\n"));
 	
-	xp_stx_hash_traverse (&stx, stx.symbol_table, print_symbol_names);
+	xp_stx_traverse_symbol_table (&stx, print_symbol_names);
+	xp_printf (XP_TEXT("-------------\n"));
+
+	xp_stx_hash_traverse (&stx, stx.smalltalk, print_symbol_names_2);
+	xp_printf (XP_TEXT("-------------\n"));
 
 	{
 		xp_stx_word_t class_name, method_name;
@@ -46,7 +61,7 @@ int xp_main (int argc, xp_char_t* argv[])
 		class_name = xp_stx_new_symbol (&stx,argv[1]);
 		method_name = xp_stx_new_symbol (&stx,XP_STX_TEXT("main"));
 
-		if (xp_stx_lookup_global (&stx,class_name, &main_class) == -1) {
+		if (xp_stx_lookup_global (&stx,class_name,&main_class) == -1) {
 			xp_printf (XP_TEXT("non-existent class: %s\n"), argv[1]);
 			return -1;
 		}
