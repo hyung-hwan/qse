@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.16 2005-05-18 04:01:51 bacon Exp $
+ * $Id: stx.c,v 1.17 2005-05-18 04:12:15 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -10,7 +10,7 @@
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 
-static void __create_initial_objects (xp_stx_t* stx);
+static void __create_bootstrapping_objects (xp_stx_t* stx);
 
 xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 {
@@ -57,23 +57,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_word_t class_Object, class_Class;
 	xp_stx_word_t tmp;
 
-	/* allocate three keyword objects */
-	stx->nil = xp_stx_alloc_object (stx, 0);
-	stx->true = xp_stx_alloc_object (stx, 0);
-	stx->false = xp_stx_alloc_object (stx, 0);
-
-	xp_assert (stx->nil == XP_STX_NIL);
-	xp_assert (stx->true == XP_STX_TRUE);
-	xp_assert (stx->false == XP_STX_FALSE);
-
-	/* build a symbol table */   // TODO: symbol table size
-	stx->symbol_table = xp_stx_alloc_object (stx, 1000); 
-
-	/* build a system dictionary */
-	stx->smalltalk = xp_stx_alloc_object (stx, 2000);
-
-	/* initial system objects */
-	__create_initial_objects (stx);
+	__create_bootstrapping_objects (stx);
 
 	/* more initialization */
 	XP_STX_CLASS(stx,stx->symbol_table) = 
@@ -104,13 +88,14 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	tmp = XP_STX_CLASS(stx,class_Object);
 	XP_STX_AT(stx,tmp,XP_STX_CLASS_SUPERCLASS) = class_Class;
 
+	/* useful classes */
 	stx->class_method = xp_stx_new_class (stx, XP_STX_TEXT("Method"));
 	stx->class_context = xp_stx_new_class (stx, XP_STX_TEXT("Context"));
 
 	return 0;
 }
 
-static void __create_initial_objects (xp_stx_t* stx)
+static void __create_bootstrapping_objects (xp_stx_t* stx)
 {
 	xp_stx_word_t class_SymlinkMeta;
 	xp_stx_word_t class_SymbolMeta; 
@@ -120,6 +105,20 @@ static void __create_initial_objects (xp_stx_t* stx)
 	xp_stx_word_t symbol_Symbol; 
 	xp_stx_word_t symbol_Metaclass;
 	xp_stx_word_t symbol_Pairlink;
+
+	/* allocate three keyword objects */
+	stx->nil = xp_stx_alloc_object (stx, 0);
+	stx->true = xp_stx_alloc_object (stx, 0);
+	stx->false = xp_stx_alloc_object (stx, 0);
+
+	xp_assert (stx->nil == XP_STX_NIL);
+	xp_assert (stx->true == XP_STX_TRUE);
+	xp_assert (stx->false == XP_STX_FALSE);
+
+	/* symbol table & system dictionary */
+	// TODO: symbol table and dictionary size
+	stx->symbol_table = xp_stx_alloc_object (stx, 1000); 
+	stx->smalltalk = xp_stx_alloc_object (stx, 2000);
 
 	stx->class_symlink = /* Symlink */
 		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
