@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.7 2005-05-08 11:16:07 bacon Exp $
+ * $Id: memory.c,v 1.8 2005-05-18 16:34:51 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
@@ -31,19 +31,11 @@ xp_stx_memory_t* xp_stx_memory_open (
 	mem->slots = slots;
 
 	/* weave the free slot list */
-	/*
-	mem->free = &slots[capacity - 1];
-	while (capacity > 1) {
-		capacity--;
-		mem->slots[capacity] = (xp_stx_object_t*)&mem->slots[capacity - 1];
-	}
-	mem->slots[--capacity] = XP_NULL;
-	*/
 	mem->free = &slots[0];
 	for (n = 0; n < capacity - 1; n++) {
 		mem->slots[n] = (xp_stx_object_t*)&mem->slots[n + 1];
 	}
-	mem->slots[n + 1] = XP_NULL;
+	mem->slots[n] = XP_NULL;
 
 	return mem;
 }
@@ -86,6 +78,7 @@ xp_stx_word_t xp_stx_memory_alloc (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
 	mem->free = (xp_stx_object_t**)*slot;
 	*slot = object;
 
+xp_printf (XP_TEXT("returning %d\n"), slot - mem->slots);
 	return (xp_stx_word_t)(slot - mem->slots);
 }
 

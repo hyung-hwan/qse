@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.15 2005-05-18 04:01:51 bacon Exp $
+ * $Id: object.c,v 1.16 2005-05-18 16:34:51 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -25,7 +25,7 @@ xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n)
 	xp_assert (stx->nil == XP_STX_NIL);
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_INDEXED;
-	while (n--) XP_STX_AT(stx,idx,n) = stx->nil;
+	while (n-- > 0) XP_STX_AT(stx,idx,n) = stx->nil;
 
 	return idx;
 }
@@ -42,7 +42,7 @@ xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_stx_word_t n)
 	xp_assert (stx->nil == XP_STX_NIL);
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_BYTE_INDEXED;
-	while (n--) XP_STX_BYTEAT(stx,idx,n) = 0;
+	while (n-- > 0) XP_STX_BYTEAT(stx,idx,n) = 0;
 
 	return idx;
 }
@@ -61,7 +61,7 @@ xp_stx_word_t xp_stx_alloc_string_object (
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_CHAR_INDEXED;
 	XP_STX_CHARAT(stx,idx,n) = XP_STX_CHAR('\0');
-	while (n--) XP_STX_CHARAT(stx,idx,n) = str[n];
+	while (n-- > 0) XP_STX_CHARAT(stx,idx,n) = str[n];
 
 	return idx;
 }
