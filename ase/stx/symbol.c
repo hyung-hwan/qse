@@ -1,11 +1,10 @@
 /*
- * $Id: symbol.c,v 1.2 2005-05-18 04:01:51 bacon Exp $
+ * $Id: symbol.c,v 1.3 2005-05-19 16:41:10 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
 #include <xp/stx/object.h>
 #include <xp/stx/misc.h>
-#include <xp/bas/assert.h>
 
 #define SYMLINK_SIZE   2
 #define SYMLINK_LINK   0
@@ -39,7 +38,7 @@ xp_stx_word_t xp_stx_new_symbol (xp_stx_t* stx, const xp_stx_char_t* name)
 	else {
 		do {
 			x = XP_STX_AT(stx,link,SYMLINK_SYMBOL);
-			xp_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
+			xp_stx_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
 			if (xp_stx_strxcmp (
 				&XP_STX_CHARAT(stx,x,0),
@@ -80,7 +79,7 @@ xp_stx_word_t xp_stx_new_symbol_pp (
 	else {
 		do {
 			x = XP_STX_AT(stx,link,SYMLINK_SYMBOL);
-			xp_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
+			xp_stx_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
 			if (xp_stx_strxcmp (
 				&XP_STX_CHARAT(stx,x,0),

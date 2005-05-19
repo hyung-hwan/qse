@@ -3,13 +3,14 @@ OBJS = stx.obj
 OUT = stx.exe
 
 CC = lcc
-CFLAGS = -I../../.. -g2
+CFLAGS = -I../../.. -A -ansic -libcdll
 #LDFLAGS = -L../../../xp/bas -L../../../xp/stx
 #LIBS = -lxpstx -lxpbas
+LDFLAGS = -subsystem console -dynamic
 LIBS = ..\..\..\xp\bas\xpbas.lib ..\..\..\xp\stx\xpstx.lib
 
 all: $(OBJS)
-	lcclnk -o $(OUT) $(OBJS) $(LIBS)
+	lcclnk $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)
 
 clean:
 	del $(OBJS) *.obj $(OUT)

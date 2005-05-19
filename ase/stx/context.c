@@ -1,5 +1,5 @@
 /*
- * $Id: context.c,v 1.3 2005-05-18 04:01:51 bacon Exp $
+ * $Id: context.c,v 1.4 2005-05-19 16:41:10 bacon Exp $
  */
 
 #include <xp/stx/context.h>
@@ -48,7 +48,11 @@ int xp_stx_run_context (xp_stx_t* stx, xp_stx_word_t context)
 		/* check_process_switch (); // hopefully */
 		byte = __fetch_byte (stx, context);
 
+#ifdef _DOS
+printf (XP_TEXT("code: %x\n"), byte);
+#else
 xp_printf (XP_TEXT("code: %x\n"), byte);
+#endif
 
 		switch (byte) {
 		case PUSH_OBJECT:

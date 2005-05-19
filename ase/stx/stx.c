@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.20 2005-05-19 15:04:21 bacon Exp $
+ * $Id: stx.c,v 1.21 2005-05-19 16:41:10 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -7,22 +7,21 @@
 #include <xp/stx/object.h>
 #include <xp/stx/hash.h>
 #include <xp/stx/symbol.h>
-#include <xp/bas/memory.h>
-#include <xp/bas/assert.h>
+#include <xp/stx/misc.h>
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
 
 xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 {
 	if (stx == XP_NULL) {
-		stx = (xp_stx_t*) xp_malloc (xp_sizeof(stx));
+		stx = (xp_stx_t*)xp_stx_malloc (xp_sizeof(stx));
 		if (stx == XP_NULL) return XP_NULL;
 		stx->__malloced = xp_true;
 	}
 	else stx->__malloced = xp_false;
 
 	if (xp_stx_memory_open (&stx->memory, capacity) == XP_NULL) {
-		if (stx->__malloced) xp_free (stx);
+		if (stx->__malloced) xp_stx_free (stx);
 		return XP_NULL;
 	}
 
@@ -48,7 +47,7 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 void xp_stx_close (xp_stx_t* stx)
 {
 	xp_stx_memory_close (&stx->memory);
-	if (stx->__malloced) xp_free (stx);
+	if (stx->__malloced) xp_stx_free (stx);
 }
 
 int xp_stx_bootstrap (xp_stx_t* stx)
@@ -114,12 +113,12 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	stx->true = xp_stx_alloc_object (stx, 0);
 	stx->false = xp_stx_alloc_object (stx, 0);
 
-	xp_assert (stx->nil == XP_STX_NIL);
-	xp_assert (stx->true == XP_STX_TRUE);
-	xp_assert (stx->false == XP_STX_FALSE);
+	xp_stx_assert (stx->nil == XP_STX_NIL);
+	xp_stx_assert (stx->true == XP_STX_TRUE);
+	xp_stx_assert (stx->false == XP_STX_FALSE);
 
 	/* symbol table & system dictionary */
-	// TODO: symbol table and dictionary size
+	/* TODO: symbol table and dictionary size */
 	stx->symbol_table = xp_stx_alloc_object (stx, 1000); 
 	stx->smalltalk = xp_stx_alloc_object (stx, 2000);
 
