@@ -3,7 +3,7 @@ OBJS = stx.obj
 OUT = stx.exe
 
 CC = lcc
-CFLAGS = -I../../..
+CFLAGS = -I../../.. -g2
 #LDFLAGS = -L../../../xp/bas -L../../../xp/stx
 #LIBS = -lxpstx -lxpbas
 LIBS = ..\..\..\xp\bas\xpbas.lib ..\..\..\xp\stx\xpstx.lib

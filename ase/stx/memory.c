@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.8 2005-05-18 16:34:51 bacon Exp $
+ * $Id: memory.c,v 1.9 2005-05-19 15:04:21 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
@@ -78,7 +78,6 @@ xp_stx_word_t xp_stx_memory_alloc (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
 	mem->free = (xp_stx_object_t**)*slot;
 	*slot = object;
 
-xp_printf (XP_TEXT("returning %d\n"), slot - mem->slots);
 	return (xp_stx_word_t)(slot - mem->slots);
 }
 

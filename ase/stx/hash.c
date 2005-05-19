@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.12 2005-05-18 04:01:51 bacon Exp $
+ * $Id: hash.c,v 1.13 2005-05-19 15:04:21 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -41,32 +41,6 @@ xp_stx_word_t xp_stx_hash_lookup (
 	return stx->nil; /* not found */
 }
 
-xp_stx_word_t xp_stx_hash_lookup_symbol (
-	xp_stx_t* stx, xp_stx_word_t table, 
-	xp_stx_word_t hash, const xp_stx_char_t* key_str)
-{
-	xp_stx_word_t link, key;
-
-	xp_assert (XP_STX_TYPE(stx,table) == XP_STX_INDEXED);
-
-	hash = hash % XP_STX_SIZE(stx,table);
-	link = XP_STX_AT(stx,table,hash);
-
-	while (link != stx->nil) {
-		key = XP_STX_AT(stx,link,XP_STX_PAIRLINK_KEY);
-
-		if (XP_STX_CLASS(stx,key) == stx->class_symbol &&
-		    xp_stx_strxcmp (
-		    	&XP_STX_CHARAT(stx,key,0), 
-		    	XP_STX_SIZE(stx,key), key_str) == 0) {
-			return link;
-		}
-		link = XP_STX_AT(stx,link,XP_STX_PAIRLINK_LINK);
-	}
-
-	return stx->nil; /* not found */
-}
-
 void xp_stx_hash_insert (
 	xp_stx_t* stx, xp_stx_word_t table,
 	xp_stx_word_t hash, xp_stx_word_t key, xp_stx_word_t value)
@@ -79,7 +53,7 @@ void xp_stx_hash_insert (
 	link = XP_STX_AT(stx,table,hash);
 
 	if (link == stx->nil) {
-		XP_STX_AT(stx,table,hash) = 
+		XP_STX_AT(stx,table,hash) =
 			xp_stx_new_pairlink (stx, key, value);
 	}
 	else {

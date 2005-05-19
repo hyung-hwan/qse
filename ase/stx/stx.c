@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.19 2005-05-18 16:34:51 bacon Exp $
+ * $Id: stx.c,v 1.20 2005-05-19 15:04:21 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -57,14 +57,11 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_word_t class_Object, class_Class;
 	xp_stx_word_t tmp;
 
-xp_printf (XP_TEXT("bootstreap\n"));
 	__create_bootstrapping_objects (stx);
-xp_printf (XP_TEXT("bootstreap over\n"));
 
 	/* more initialization */
 	XP_STX_CLASS(stx,stx->symbol_table) = 
 		xp_stx_new_class (stx, XP_STX_TEXT("SymbolTable"));
-xp_printf (XP_TEXT("bootstreap 1111\n"));
 	XP_STX_CLASS(stx,stx->smalltalk) = 
 		xp_stx_new_class (stx, XP_STX_TEXT("SystemDictionary"));
 
@@ -144,7 +141,6 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	class_PairlinkMeta = /* Pairlink class */
 		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
 
-
 	/* (Symlink class) setClass: Metaclass */
 	XP_STX_CLASS(stx,class_SymlinkMeta) = stx->class_metaclass;
 	/* (Symbol class) setClass: Metaclass */
@@ -161,33 +157,6 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	/* Metaclass setClass: (Metaclass class) */
 	XP_STX_CLASS(stx,stx->class_metaclass) = class_MetaclassMeta;
 	/* Pairlink setClass: (Pairlink class) */
-	XP_STX_CLASS(stx,stx->class_pairlink) = class_PairlinkMeta;
-
-	stx->class_symlink = /* Symlink */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
-	stx->class_symbol =  /* Symbol */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
-	stx->class_metaclass =  /* Metaclass */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
-	stx->class_pairlink =  /* Pairlink */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
-
-	/* (Symlink class) setClass: Metaclass */
-	XP_STX_CLASS(stx,class_SymlinkMeta) = stx->class_metaclass;
-	/* (Symbol class) setClass: Metaclass */
-	XP_STX_CLASS(stx,class_SymbolMeta) = stx->class_metaclass;
-	/* (Metaclass class) setClass: Metaclass */
-	XP_STX_CLASS(stx,class_MetaclassMeta) = stx->class_metaclass;
-	/* (Pairlink class) setClass: Metaclass */
-	XP_STX_CLASS(stx,class_PairlinkMeta) = stx->class_metaclass;
-
-	/* Symlink setClass: (Symlink class) */
-	XP_STX_CLASS(stx,stx->class_symlink) = class_SymlinkMeta;
-	/* Symbol setClass: (Symbol class) */
-	XP_STX_CLASS(stx,stx->class_symbol) = class_SymbolMeta;
-	/* Metaclass setClass: (Metaclass class) */
-	XP_STX_CLASS(stx,stx->class_metaclass) = class_MetaclassMeta;
-	/* Pairlink setClass: (Metaclass class) */
 	XP_STX_CLASS(stx,stx->class_pairlink) = class_PairlinkMeta;
 
 	/* (Symlink class) setSpec: CLASS_SIZE */
