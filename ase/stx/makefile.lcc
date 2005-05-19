@@ -3,7 +3,7 @@ OBJS = stx.obj memory.obj object.obj symbol.obj hash.obj misc.obj context.obj
 OUT = xpstx.lib
 
 CC = lcc
-CFLAGS = -I../.. 
+CFLAGS = -I../..  -g2
 LDFLAGS =
 LIBS = 
 
