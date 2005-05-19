@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.16 2005-05-18 16:34:51 bacon Exp $
+ * $Id: object.c,v 1.17 2005-05-19 16:41:10 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -7,8 +7,6 @@
 #include <xp/stx/symbol.h>
 #include <xp/stx/hash.h>
 #include <xp/stx/misc.h>
-#include <xp/bas/assert.h>
-#include <xp/bas/stdarg.h>
 
 /* n: number of instance variables */
 xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n)
@@ -22,7 +20,7 @@ xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n)
 		n * xp_sizeof(xp_stx_word_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
-	xp_assert (stx->nil == XP_STX_NIL);
+	xp_stx_assert (stx->nil == XP_STX_NIL);
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_INDEXED;
 	while (n-- > 0) XP_STX_AT(stx,idx,n) = stx->nil;
@@ -39,7 +37,7 @@ xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_stx_word_t n)
 		&stx->memory, n + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
-	xp_assert (stx->nil == XP_STX_NIL);
+	xp_stx_assert (stx->nil == XP_STX_NIL);
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_BYTE_INDEXED;
 	while (n-- > 0) XP_STX_BYTEAT(stx,idx,n) = 0;
@@ -57,7 +55,7 @@ xp_stx_word_t xp_stx_alloc_string_object (
 		(n + 1) * xp_sizeof(xp_stx_char_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
-	xp_assert (stx->nil == XP_STX_NIL);
+	xp_stx_assert (stx->nil == XP_STX_NIL);
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_CHAR_INDEXED;
 	XP_STX_CHARAT(stx,idx,n) = XP_STX_CHAR('\0');
@@ -70,37 +68,37 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
 {
 	xp_stx_word_t idx, n = 0;
 	const xp_stx_char_t* p;
-	xp_va_list ap;
+	xp_stx_va_list ap;
 
-	xp_va_start (ap, stx);
-	while ((p = xp_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
+	xp_stx_va_start (ap, stx);
+	while ((p = xp_stx_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
 		n += xp_stx_strlen(p);
 	}
-	xp_va_end (ap);
+	xp_stx_va_end (ap);
 
 	idx = xp_stx_memory_alloc (&stx->memory, 
 		(n + 1) * xp_sizeof(xp_stx_char_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
-	xp_assert (stx->nil == XP_STX_NIL);
+	xp_stx_assert (stx->nil == XP_STX_NIL);
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_CHAR_INDEXED;
 	XP_STX_CHARAT(stx,idx,n) = XP_STX_CHAR('\0');
 
-	xp_va_start (ap, stx);
+	xp_stx_va_start (ap, stx);
 	n = 0;
-	while ((p = xp_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
+	while ((p = xp_stx_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
 		while (*p != XP_STX_CHAR('\0')) 
 			XP_STX_CHARAT(stx,idx,n++) = *p++;
 	}
-	xp_va_end (ap);
+	xp_stx_va_end (ap);
 
 	return idx;
 }
 
 xp_stx_word_t xp_stx_hash_string_object (xp_stx_t* stx, xp_stx_word_t idx)
 {
-	xp_assert (XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED);
+	xp_stx_assert (XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED);
 	return xp_stx_strxhash (
 		&XP_STX_CHARAT(stx,idx,0), XP_STX_SIZE(stx,idx));
 }
@@ -143,8 +141,8 @@ int xp_stx_lookup_global (
 {
 	xp_stx_word_t link;
 
-	// TODO: maybe xp_stx_hash_object is required instead of
-	//       xp_stx_hash_string_object.
+	/* TODO: maybe xp_stx_hash_object is required instead of
+	         xp_stx_hash_string_object. */
 	link = xp_stx_hash_lookup (stx, stx->smalltalk,
 		xp_stx_hash_string_object(stx,key), key);
 	if (link == stx->nil) return -1;

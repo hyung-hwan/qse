@@ -1,5 +1,11 @@
 #include <xp/stx/stx.h>
-#include <xp/bas/stdio.h>
+
+#ifdef _DOS
+	#include <stdio.h>
+	#define xp_printf printf
+#else
+	#include <xp/bas/stdio.h>
+#endif
 
 #include <xp/stx/object.h>
 #include <xp/stx/symbol.h>
@@ -26,7 +32,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_stx_t stx;
 	xp_stx_word_t i;
 
-	if (argc != 2) { // TODO: argument processing
+	if (argc != 2) { /* TODO: argument processing */
 		xp_printf (XP_TEXT("Usage: %s [-f imageFile] MainClass\n"), argv[0]);
 		return -1;
 	}
