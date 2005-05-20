@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.15 2005-05-19 16:41:10 bacon Exp $
+ * $Id: stx.h,v 1.16 2005-05-20 04:01:12 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -15,8 +15,10 @@ typedef xp_size_t xp_stx_size_t;
 typedef xp_size_t xp_stx_index_t;
 
 typedef struct xp_stx_object_t xp_stx_object_t;
+/*
 typedef struct xp_stx_byte_object_t xp_stx_byte_object_t;
 typedef struct xp_stx_string_object_t xp_stx_string_object_t;
+*/
 typedef struct xp_stx_memory_t xp_stx_memory_t;
 typedef struct xp_stx_t xp_stx_t;
 
@@ -107,6 +109,7 @@ struct xp_stx_t
 #define XP_STX_OBJECT(stx,idx) (((stx)->memory).slots[idx])
 #define XP_STX_CLASS(stx,idx) (XP_STX_OBJECT(stx,(idx))->class)
 #define XP_STX_ACCESS(stx,idx) (XP_STX_OBJECT(stx,(idx))->access)
+#define XP_STX_DATA(stx,idx) ((void*)(XP_STX_OBJECT(stx,idx) + 1))
 
 #define XP_STX_TYPE(stx,idx) (XP_STX_ACCESS(stx,idx) & 0x03)
 #define XP_STX_SIZE(stx,idx) (XP_STX_ACCESS(stx,idx) >> 0x02)
