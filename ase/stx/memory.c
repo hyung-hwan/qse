@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.10 2005-05-19 16:41:10 bacon Exp $
+ * $Id: memory.c,v 1.11 2005-05-20 04:01:12 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
@@ -70,7 +70,11 @@ xp_stx_word_t xp_stx_memory_alloc (xp_stx_memory_t* mem, xp_stx_word_t nbytes)
 	if (object == XP_NULL) {
 		xp_stx_memory_gc (mem);
 		object = (xp_stx_object_t*)xp_stx_malloc (nbytes);
-		if (object == XP_NULL) return mem->capacity;
+		/*if (object == XP_NULL) return mem->capacity;*/
+if (object == XP_NULL) {
+xp_stx_assert (XP_TEXT("MEMORY ALLOCATION ERROR\n") == XP_NULL);
+exit (1);
+}
 	}
 
 	slot = mem->free;

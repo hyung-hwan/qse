@@ -14,17 +14,13 @@
 
 void print_symbol_names (xp_stx_t* stx, xp_stx_word_t sym)
 {
-	/*
-	xp_stx_word_t key = XP_STX_AT(stx,idx,1);
-	xp_printf (XP_TEXT("%u -> %s\n"), key, &XP_STX_CHARAT(stx,key,0));
-	*/
-	xp_printf (XP_TEXT("%u -> %s\n"), sym, &XP_STX_CHARAT(stx,sym,0));
+	xp_printf (XP_TEXT("%lu [%s]\n"), (unsigned long)sym, &XP_STX_CHARAT(stx,sym,0));
 }
 
 void print_symbol_names_2 (xp_stx_t* stx, xp_stx_word_t idx)
 {
 	xp_stx_word_t key = XP_STX_AT(stx,idx,1);
-	xp_printf (XP_TEXT("%u -> %s\n"), key, &XP_STX_CHARAT(stx,key,0));
+	xp_printf (XP_TEXT("%lu [%s]\n"), (unsigned long)key, &XP_STX_CHARAT(stx,key,0));
 }
 
 int xp_main (int argc, xp_char_t* argv[])
@@ -48,9 +44,9 @@ int xp_main (int argc, xp_char_t* argv[])
 		return -1;
 	}	
 
-	xp_printf (XP_TEXT("stx.nil %d\n"), stx.nil);
-	xp_printf (XP_TEXT("stx.true %d\n"), stx.true);
-	xp_printf (XP_TEXT("stx.false %d\n"), stx.false);
+	xp_printf (XP_TEXT("stx.nil %lu\n"), (unsigned long)stx.nil);
+	xp_printf (XP_TEXT("stx.true %lu\n"), (unsigned long)stx.true);
+	xp_printf (XP_TEXT("stx.false %lu\n"), (unsigned long)stx.false);
 	xp_printf (XP_TEXT("-------------\n"));
 	
 	xp_stx_traverse_symbol_table (&stx, print_symbol_names);
@@ -86,7 +82,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	}
 
 	xp_stx_close (&stx);
-	xp_printf (XP_TEXT("End of program\n"));
+	xp_printf (XP_TEXT("== End of program ==\n"));
 	return 0;
 }
 
