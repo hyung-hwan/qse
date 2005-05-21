@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.17 2005-05-19 16:41:10 bacon Exp $
+ * $Id: object.c,v 1.18 2005-05-21 07:27:32 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -110,7 +110,7 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 
 	meta = xp_stx_alloc_object (stx, XP_STX_CLASS_SIZE);
 	XP_STX_CLASS(stx,meta) = stx->class_metaclass;
-	XP_STX_AT(stx,meta,XP_STX_CLASS_SIZE) = 
+	XP_STX_AT(stx,meta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT(XP_STX_CLASS_SIZE);
 	
 	class = xp_stx_alloc_object (stx, XP_STX_CLASS_SIZE);
