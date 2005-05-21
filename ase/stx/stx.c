@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.22 2005-05-21 07:27:32 bacon Exp $
+ * $Id: stx.c,v 1.23 2005-05-21 15:55:49 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -67,7 +67,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	symbol_Smalltalk = 
 		xp_stx_new_symbol (stx, XP_STX_TEXT("Smalltalk"));
 	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_string_object(stx,symbol_Smalltalk),
+		xp_stx_hash_char_object(stx,symbol_Smalltalk),
 		symbol_Smalltalk, stx->smalltalk);	
 
 	/* create #nil, #true, #false */
@@ -192,16 +192,16 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 
 	/* register class names into the system dictionary */
 	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_string_object(stx, symbol_Symlink),
+		xp_stx_hash_char_object(stx, symbol_Symlink),
 		symbol_Symlink, stx->class_symlink);
 	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_string_object(stx, symbol_Symbol),
+		xp_stx_hash_char_object(stx, symbol_Symbol),
 		symbol_Symbol, stx->class_symbol);
 	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_string_object(stx, symbol_Metaclass),
+		xp_stx_hash_char_object(stx, symbol_Metaclass),
 		symbol_Metaclass, stx->class_metaclass);
 	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_string_object(stx, symbol_Pairlink),
+		xp_stx_hash_char_object(stx, symbol_Pairlink),
 		symbol_Pairlink, stx->class_pairlink);
 }
 

@@ -1,23 +1,19 @@
 /*
- * $Id: symbol.c,v 1.3 2005-05-19 16:41:10 bacon Exp $
+ * $Id: symbol.c,v 1.4 2005-05-21 15:55:49 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
 #include <xp/stx/object.h>
 #include <xp/stx/misc.h>
 
-#define SYMLINK_SIZE   2
-#define SYMLINK_LINK   0
-#define SYMLINK_SYMBOL 1
-
 xp_stx_word_t xp_stx_new_symlink (xp_stx_t* stx, xp_stx_word_t sym)
 {
 	xp_stx_word_t x;
 
-	x = xp_stx_alloc_object (stx, SYMLINK_SIZE);
+	x = xp_stx_alloc_object (stx, XP_STX_SYMLINK_SIZE);
 	XP_STX_CLASS(stx,x) = stx->class_symlink;
-	/*XP_STX_AT(stx,x,SYMLINK_LINK) = stx->nil;*/
-	XP_STX_AT(stx,x,SYMLINK_SYMBOL) = sym;
+	XP_STX_AT(stx,x,XP_STX_SYMLINK_LINK) = stx->nil;
+	XP_STX_AT(stx,x,XP_STX_SYMLINK_SYMBOL) = sym;
 
 	return x;
 }
@@ -31,24 +27,24 @@ xp_stx_word_t xp_stx_new_symbol (xp_stx_t* stx, const xp_stx_char_t* name)
 	link = XP_STX_AT(stx,table,hash);
 
 	if (link == stx->nil) {
-		x = xp_stx_alloc_string_object (stx, name);
+		x = xp_stx_alloc_char_object (stx, name);
 		XP_STX_CLASS(stx,x) = stx->class_symbol;
 		XP_STX_AT(stx,table,hash) = xp_stx_new_symlink(stx,x);
 	}
 	else {
 		do {
-			x = XP_STX_AT(stx,link,SYMLINK_SYMBOL);
+			x = XP_STX_AT(stx,link,XP_STX_SYMLINK_SYMBOL);
 			xp_stx_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
 			if (xp_stx_strxcmp (
 				&XP_STX_CHARAT(stx,x,0),
 				XP_STX_SIZE(stx,x), name) == 0) return x;
 
-			next = XP_STX_AT(stx,link,SYMLINK_LINK);
+			next = XP_STX_AT(stx,link,XP_STX_SYMLINK_LINK);
 			if (next == stx->nil) {
-				x = xp_stx_alloc_string_object (stx, name);
+				x = xp_stx_alloc_char_object (stx, name);
 				XP_STX_CLASS(stx,x) = stx->class_symbol;
-				XP_STX_AT(stx,link,SYMLINK_LINK) = 
+				XP_STX_AT(stx,link,XP_STX_SYMLINK_LINK) = 
 					xp_stx_new_symlink(stx,x);
 				break;
 			}
@@ -72,24 +68,24 @@ xp_stx_word_t xp_stx_new_symbol_pp (
 	link = XP_STX_AT(stx,table,hash);
 
 	if (link == stx->nil) {
-		x = xp_stx_allocn_string_object (stx, prefix, name, postfix);
+		x = xp_stx_allocn_char_object (stx, prefix, name, postfix);
 		XP_STX_CLASS(stx,x) = stx->class_symbol;
 		XP_STX_AT(stx,table,hash) = xp_stx_new_symlink(stx,x);
 	}
 	else {
 		do {
-			x = XP_STX_AT(stx,link,SYMLINK_SYMBOL);
+			x = XP_STX_AT(stx,link,XP_STX_SYMLINK_SYMBOL);
 			xp_stx_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
 			if (xp_stx_strxcmp (
 				&XP_STX_CHARAT(stx,x,0),
 				XP_STX_SIZE(stx,x), name) == 0) return x;
 
-			next = XP_STX_AT(stx,link,SYMLINK_LINK);
+			next = XP_STX_AT(stx,link,XP_STX_SYMLINK_LINK);
 			if (next == stx->nil) {
-				x = xp_stx_allocn_string_object (stx, prefix, name, postfix);
+				x = xp_stx_allocn_char_object (stx, prefix, name, postfix);
 				XP_STX_CLASS(stx,x) = stx->class_symbol;
-				XP_STX_AT(stx,link,SYMLINK_LINK) = 
+				XP_STX_AT(stx,link,XP_STX_SYMLINK_LINK) = 
 					xp_stx_new_symlink(stx,x);
 				break;
 			}
@@ -116,8 +112,8 @@ void xp_stx_traverse_symbol_table (
 		link = XP_STX_AT(stx,table,size);
 
 		while (link != stx->nil) {
-			func (stx,XP_STX_AT(stx,link,SYMLINK_SYMBOL));
-			link = XP_STX_AT(stx,link,SYMLINK_LINK);
+			func (stx,XP_STX_AT(stx,link,XP_STX_SYMLINK_SYMBOL));
+			link = XP_STX_AT(stx,link,XP_STX_SYMLINK_LINK);
 		}
 	}
 }

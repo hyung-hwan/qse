@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.16 2005-05-20 04:01:12 bacon Exp $
+ * $Id: stx.h,v 1.17 2005-05-21 15:55:49 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -14,10 +14,11 @@ typedef xp_size_t xp_stx_word_t;
 typedef xp_size_t xp_stx_size_t;
 typedef xp_size_t xp_stx_index_t;
 
+typedef struct xp_stx_objhdr_t xp_stx_objhdr_t;
 typedef struct xp_stx_object_t xp_stx_object_t;
 /*
 typedef struct xp_stx_byte_object_t xp_stx_byte_object_t;
-typedef struct xp_stx_string_object_t xp_stx_string_object_t;
+typedef struct xp_stx_char_object_t xp_stx_char_object_t;
 */
 typedef struct xp_stx_memory_t xp_stx_memory_t;
 typedef struct xp_stx_t xp_stx_t;
@@ -30,28 +31,31 @@ typedef struct xp_stx_t xp_stx_t;
 #define XP_STX_OBJECT_HEADER_SIZE \
 	(xp_sizeof(xp_stx_object_t) - xp_sizeof(xp_stx_word_t))
 
-struct xp_stx_object_t
+struct xp_stx_objhdr_t
 {
 	/* access - type: 2; size: rest;
 	 * type - word indexed: 00 byte indexed: 01 char indexed: 10
 	 */
 	xp_stx_word_t access; 
 	xp_stx_word_t class;
+};
+
+struct xp_stx_object_t
+{
+	xp_stx_objhdr_t header;
 	/*xp_stx_word_t data[1];*/
 };
 
 /*
 struct xp_stx_byte_object_t
 {
-	xp_stx_word_t access; 
-	xp_stx_word_t class;
+	xp_stx_objhdr_t header;
 	xp_stx_byte_t data[1];
 };
 
-struct xp_stx_string_object_t
+struct xp_stx_char_object_t
 {
-	xp_stx_word_t access; 
-	xp_stx_word_t class;
+	xp_stx_objhdr_t header;
 	xp_stx_char_t data[1];
 };
 */
@@ -96,8 +100,8 @@ struct xp_stx_t
 	((xp_stx_object_t*)((mem)->slots[idx]))
 #define XP_STX_BYTE_OBJECT(mem,idx) \
 	((xp_stx_byte_object_t*)((mem)->slots[idx]))
-#define XP_STX_STRING_OBJECT(mem,idx) \
-	((xp_stx_string_object_t*)((mem)->slots[idx]))
+#define XP_STX_CHAR_OBJECT(mem,idx) \
+	((xp_stx_char_object_t*)((mem)->slots[idx]))
 #define XP_STX_OBJECT_DATA(mem,idx) \
 	((XP_STX_OBJECT_TYPE(mem,idx) == XP_STX_INDEXED)? \
 		(XP_STX_OBJECT(mem,idx)).data): \
@@ -107,9 +111,9 @@ struct xp_stx_t
 */
 
 #define XP_STX_OBJECT(stx,idx) (((stx)->memory).slots[idx])
-#define XP_STX_CLASS(stx,idx) (XP_STX_OBJECT(stx,(idx))->class)
-#define XP_STX_ACCESS(stx,idx) (XP_STX_OBJECT(stx,(idx))->access)
-#define XP_STX_DATA(stx,idx) ((void*)(XP_STX_OBJECT(stx,idx) + 1))
+#define XP_STX_CLASS(stx,idx)  (XP_STX_OBJECT(stx,(idx))->header.class)
+#define XP_STX_ACCESS(stx,idx) (XP_STX_OBJECT(stx,(idx))->header.access)
+#define XP_STX_DATA(stx,idx)   ((void*)(XP_STX_OBJECT(stx,idx) + 1))
 
 #define XP_STX_TYPE(stx,idx) (XP_STX_ACCESS(stx,idx) & 0x03)
 #define XP_STX_SIZE(stx,idx) (XP_STX_ACCESS(stx,idx) >> 0x02)

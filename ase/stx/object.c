@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.18 2005-05-21 07:27:32 bacon Exp $
+ * $Id: object.c,v 1.19 2005-05-21 15:55:49 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -45,7 +45,7 @@ xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_stx_word_t n)
 	return idx;
 }
 
-xp_stx_word_t xp_stx_alloc_string_object (
+xp_stx_word_t xp_stx_alloc_char_object (
 	xp_stx_t* stx, const xp_stx_char_t* str)
 {
 	xp_stx_word_t idx, n;
@@ -64,7 +64,7 @@ xp_stx_word_t xp_stx_alloc_string_object (
 	return idx;
 }
 
-xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
+xp_stx_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 {
 	xp_stx_word_t idx, n = 0;
 	const xp_stx_char_t* p;
@@ -96,7 +96,7 @@ xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...)
 	return idx;
 }
 
-xp_stx_word_t xp_stx_hash_string_object (xp_stx_t* stx, xp_stx_word_t idx)
+xp_stx_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_stx_word_t idx)
 {
 	xp_stx_assert (XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED);
 	return xp_stx_strxhash (
@@ -126,11 +126,11 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 
 	/*
 	xp_stx_hash_insert (stx, stx->smalltalk, 
-		xp_stx_hash_string_object(stx, meta_name),
+		xp_stx_hash_char_object(stx, meta_name),
 		meta_name, meta);
 	*/
 	xp_stx_hash_insert (stx, stx->smalltalk, 
-		xp_stx_hash_string_object(stx, class_name),
+		xp_stx_hash_char_object(stx, class_name),
 		class_name, class);
 
 	return class;
@@ -142,9 +142,9 @@ int xp_stx_lookup_global (
 	xp_stx_word_t link;
 
 	/* TODO: maybe xp_stx_hash_object is required instead of
-	         xp_stx_hash_string_object. */
+	         xp_stx_hash_char_object. */
 	link = xp_stx_hash_lookup (stx, stx->smalltalk,
-		xp_stx_hash_string_object(stx,key), key);
+		xp_stx_hash_char_object(stx,key), key);
 	if (link == stx->nil) return -1;
 
 	*value = XP_STX_AT(stx,link,XP_STX_PAIRLINK_VALUE);
