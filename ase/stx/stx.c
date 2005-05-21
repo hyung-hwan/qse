@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.21 2005-05-19 16:41:10 bacon Exp $
+ * $Id: stx.c,v 1.22 2005-05-21 07:27:32 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -64,7 +64,8 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	XP_STX_CLASS(stx,stx->smalltalk) = 
 		xp_stx_new_class (stx, XP_STX_TEXT("SystemDictionary"));
 
-	symbol_Smalltalk = xp_stx_new_symbol (stx, XP_STX_TEXT("Smalltalk"));
+	symbol_Smalltalk = 
+		xp_stx_new_symbol (stx, XP_STX_TEXT("Smalltalk"));
 	xp_stx_hash_insert (stx, stx->smalltalk,
 		xp_stx_hash_string_object(stx,symbol_Smalltalk),
 		symbol_Smalltalk, stx->smalltalk);	

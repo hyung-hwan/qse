@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.2 2005-05-19 16:41:10 bacon Exp $
+ * $Id: misc.h,v 1.3 2005-05-21 07:27:32 bacon Exp $
  */
 
 #ifndef _XP_STX_MISC_H_
@@ -11,6 +11,7 @@
 	#include <stdlib.h>
 	#include <assert.h>
 	#include <stdarg.h>
+	#include <stdio.h>
 
 	#define xp_stx_assert   assert
 	#define xp_stx_malloc   malloc
