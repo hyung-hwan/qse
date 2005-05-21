@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.12 2005-05-18 04:01:51 bacon Exp $
+ * $Id: object.h,v 1.13 2005-05-21 15:55:49 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
@@ -28,11 +28,11 @@ extern "C" {
 
 xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n);
 xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_stx_word_t n);
-xp_stx_word_t xp_stx_alloc_string_object (
+xp_stx_word_t xp_stx_alloc_char_object (
 	xp_stx_t* stx, const xp_stx_char_t* str);
-xp_stx_word_t xp_stx_allocn_string_object (xp_stx_t* stx, ...);
+xp_stx_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...);
 
-xp_stx_word_t xp_stx_hash_string_object (xp_stx_t* stx, xp_stx_word_t idx);
+xp_stx_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_stx_word_t idx);
 xp_stx_word_t xp_stx_new_class (
 	xp_stx_t* stx, const xp_stx_char_t* name);
 

@@ -1,11 +1,15 @@
 /*
- * $Id: symbol.h,v 1.2 2005-05-18 04:01:51 bacon Exp $
+ * $Id: symbol.h,v 1.3 2005-05-21 15:55:49 bacon Exp $
  */
 
 #ifndef _XP_STX_SYMBOL_H_
 #define _XP_STX_SYMBOL_H_
 
 #include <xp/stx/stx.h>
+
+#define XP_STX_SYMLINK_SIZE   2
+#define XP_STX_SYMLINK_LINK   0
+#define XP_STX_SYMLINK_SYMBOL 1
 
 #ifdef __cplusplus
 extern "C" {
