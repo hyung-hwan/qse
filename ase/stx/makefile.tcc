@@ -3,11 +3,11 @@ SRCS = \
 OBJS = $(SRCS:.c=.obj)
 OUT = xpstx.lib
 
-CC = c:\tc\tcc
+CC = \tc\tcc
 CFLAGS = -I..\.. -D_DOS -ml -w
 
 all: $(OBJS)
-	c:\tc\tlib $(OUT) @&&!
+	\tc\tlib $(OUT) @&&!
 +-$(**: = &^
 +-)
 !
