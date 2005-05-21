@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.14 2005-05-19 16:41:10 bacon Exp $
+ * $Id: hash.c,v 1.15 2005-05-21 16:11:06 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -13,7 +13,7 @@ xp_stx_word_t xp_stx_new_pairlink (
 
 	x = xp_stx_alloc_object (stx, XP_STX_PAIRLINK_SIZE);	
 	XP_STX_CLASS(stx,x) = stx->class_pairlink;
-	/* XP_STX_AT(stx,x,XP_STX_PAIRLINK_LINK) = stx->nil; */
+	 XP_STX_AT(stx,x,XP_STX_PAIRLINK_LINK) = stx->nil;
 	XP_STX_AT(stx,x,XP_STX_PAIRLINK_KEY) = key;
 	XP_STX_AT(stx,x,XP_STX_PAIRLINK_VALUE) = value;
 	
