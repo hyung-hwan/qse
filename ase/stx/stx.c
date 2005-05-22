@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.24 2005-05-22 04:34:22 bacon Exp $
+ * $Id: stx.c,v 1.25 2005-05-22 09:16:18 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -204,4 +204,5 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 		xp_stx_hash_char_object(stx, symbol_Pairlink),
 		symbol_Pairlink, stx->class_pairlink);
 }
+
 
