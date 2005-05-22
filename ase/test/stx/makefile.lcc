@@ -6,7 +6,7 @@ CC = lcc
 CFLAGS = -I../../.. -A -ansic -libcdll 
 #LDFLAGS = -L../../../xp/bas -L../../../xp/stx
 #LIBS = -lxpstx -lxpbas
-LDFLAGS = -subsystem console -dynamic
+LDFLAGS = -subsystem console -dynamic -s
 LIBS = ..\..\..\xp\bas\xpbas.lib ..\..\..\xp\stx\xpstx.lib
 
 all: $(OBJS)
