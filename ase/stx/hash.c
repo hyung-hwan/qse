@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.16 2005-05-22 04:34:22 bacon Exp $
+ * $Id: hash.c,v 1.17 2005-05-22 15:03:20 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -10,12 +10,20 @@ xp_stx_word_t xp_stx_new_pairlink (
 	xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t value)
 {
 	xp_stx_word_t x;
+	xp_stx_pairlink_t* obj;
 
 	x = xp_stx_alloc_word_object (stx, XP_STX_PAIRLINK_SIZE);	
+	obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx, x);
+	/*
 	XP_STX_CLASS(stx,x) = stx->class_pairlink;
 	XP_STX_AT(stx,x,XP_STX_PAIRLINK_LINK) = stx->nil;
 	XP_STX_AT(stx,x,XP_STX_PAIRLINK_KEY) = key;
 	XP_STX_AT(stx,x,XP_STX_PAIRLINK_VALUE) = value;
+	*/
+	obj->header.class = stx->class_pairlink;
+	obj->link = stx->nil;
+	obj->key = key;
+	obj->value = value;
 	
 	return x;
 }
@@ -26,6 +34,7 @@ xp_stx_word_t xp_stx_hash_lookup (
 	xp_stx_word_t hash, xp_stx_word_t key)
 {
 	xp_stx_word_t link;
+	xp_stx_pairlink_t* obj;
 
 	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_WORD_INDEXED);
 
@@ -33,8 +42,37 @@ xp_stx_word_t xp_stx_hash_lookup (
 	link = XP_STX_AT(stx,table,hash);
 
 	while (link != stx->nil) {
+		/*
 		if (XP_STX_AT(stx,link,XP_STX_PAIRLINK_KEY) == key) return link;
 		link = XP_STX_AT(stx,link,XP_STX_PAIRLINK_LINK);
+		*/
+
+		obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx,link);
+		if (obj->key == key) return link;
+		link = obj->link;
+	}
+
+	return stx->nil; /* not found */
+}
+
+xp_stx_word_t xp_stx_hash_lookup_symbol (
+	xp_stx_t* stx, xp_stx_word_t table, const xp_stx_char_t* name)
+{
+	xp_stx_word_t link, hash;
+	xp_stx_pairlink_t* obj;
+	xp_stx_char_object_t* tmp;
+
+	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_WORD_INDEXED);
+
+	hash = xp_stx_strhash(name) % XP_STX_SIZE(stx,table);
+	link = XP_STX_AT(stx,table,hash);
+
+	while (link != stx->nil) {
+		obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx,link);
+		tmp = XP_STX_CHAR_OBJECT(stx,obj->key);
+		if (tmp->header.class == stx->class_symbol &&
+		    xp_stx_strcmp (tmp->data, name) == 0) return link;
+		link = obj->link;
 	}
 
 	return stx->nil; /* not found */

@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.2 2005-05-22 04:11:54 bacon Exp $
+ * $Id: parser.c,v 1.3 2005-05-22 15:03:20 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -22,6 +22,7 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 {
 	if (parser->__malloced) xp_stx_free (parser);
 }
+/*
 
 static void __emit_code (
 	xp_stx_t* stx, xp_stx_word_t method, int value)
@@ -37,9 +38,30 @@ static void __emit_instruction (
 	}
 	else __emit_code (high * 16 + low);
 }
+*/
 
 int xp_stx_parser_parse_method (xp_stx_parser_t* parser, const xp_char_t* text)
 {
 	return 0;
 }
 
+
+int xp_stx_filein_raw (xp_stx_t* stx, xp_stx_getc_t getc)
+{
+	xp_cint_t c;
+
+/*
+	getc()
+	gettoken ();
+	if (token->type == XP_STX_TOKEN_IDENT) {
+		ident: 
+	}
+*/
+
+	return 0;
+}
+
+int xp_stx_get_token ()
+{
+/*	getc	*/
+}

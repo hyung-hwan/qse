@@ -1,5 +1,5 @@
 /*
- * $Id: scanner.h,v 1.2 2005-05-22 13:41:14 bacon Exp $
+ * $Id: scanner.h,v 1.3 2005-05-22 15:03:20 bacon Exp $
  */
 
 #ifndef _XP_STX_SCANNER_H_
@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 xp_stx_scanner_t* xp_stx_scanner_open (xp_stx_scanner_t* scanner);
-void xp_stx_scanner_close (xp_stx_scanner_t* scanner):
+void xp_stx_scanner_close (xp_stx_scanner_t* scanner);
 
 #ifdef __cplusplus
 }
