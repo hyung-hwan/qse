@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.15 2005-05-21 16:11:06 bacon Exp $
+ * $Id: hash.c,v 1.16 2005-05-22 04:34:22 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -11,9 +11,9 @@ xp_stx_word_t xp_stx_new_pairlink (
 {
 	xp_stx_word_t x;
 
-	x = xp_stx_alloc_object (stx, XP_STX_PAIRLINK_SIZE);	
+	x = xp_stx_alloc_word_object (stx, XP_STX_PAIRLINK_SIZE);	
 	XP_STX_CLASS(stx,x) = stx->class_pairlink;
-	 XP_STX_AT(stx,x,XP_STX_PAIRLINK_LINK) = stx->nil;
+	XP_STX_AT(stx,x,XP_STX_PAIRLINK_LINK) = stx->nil;
 	XP_STX_AT(stx,x,XP_STX_PAIRLINK_KEY) = key;
 	XP_STX_AT(stx,x,XP_STX_PAIRLINK_VALUE) = value;
 	
@@ -27,7 +27,7 @@ xp_stx_word_t xp_stx_hash_lookup (
 {
 	xp_stx_word_t link;
 
-	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_INDEXED);
+	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_WORD_INDEXED);
 
 	hash = hash % XP_STX_SIZE(stx,table);
 	link = XP_STX_AT(stx,table,hash);
@@ -46,7 +46,7 @@ void xp_stx_hash_insert (
 {
 	xp_stx_word_t link, next;
 
-	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_INDEXED);
+	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_WORD_INDEXED);
 
 	hash = hash % XP_STX_SIZE(stx,table);
 	link = XP_STX_AT(stx,table,hash);

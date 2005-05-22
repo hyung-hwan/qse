@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.19 2005-05-21 15:55:49 bacon Exp $
+ * $Id: object.c,v 1.20 2005-05-22 04:34:22 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -9,9 +9,10 @@
 #include <xp/stx/misc.h>
 
 /* n: number of instance variables */
-xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n)
+xp_stx_word_t xp_stx_alloc_word_object (xp_stx_t* stx, xp_stx_word_t n)
 {
 	xp_stx_word_t idx;
+	xp_stx_word_object_t* obj;
 
 	/* bytes to allocidxed = 
 	 *     number of instance variables * word_size 
@@ -21,9 +22,16 @@ xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n)
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
 	xp_stx_assert (stx->nil == XP_STX_NIL);
+
+	/*
 	XP_STX_CLASS(stx,idx) = stx->nil;
-	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_INDEXED;
+	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_WORD_INDEXED;
 	while (n-- > 0) XP_STX_AT(stx,idx,n) = stx->nil;
+	*/
+	obj = XP_STX_WORD_OBJECT(stx,idx);
+	obj->header.class = stx->nil;
+	obj->header.access = (n << 2) | XP_STX_WORD_INDEXED;
+	while (n-- > 0) obj->data[n] = stx->nil;
 
 	return idx;
 }
@@ -32,15 +40,23 @@ xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n)
 xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_stx_word_t n)
 {
 	xp_stx_word_t idx;
+	xp_stx_byte_object_t* obj;
 
 	idx = xp_stx_memory_alloc (
 		&stx->memory, n + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
 	xp_stx_assert (stx->nil == XP_STX_NIL);
+
+	/*
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_BYTE_INDEXED;
 	while (n-- > 0) XP_STX_BYTEAT(stx,idx,n) = 0;
+	*/
+	obj = XP_STX_BYTE_OBJECT(stx,idx);
+	obj->header.class = stx->nil;
+	obj->header.access = (n << 2) | XP_STX_BYTE_INDEXED;
+	while (n-- > 0) obj->data[n] = 0;
 
 	return idx;
 }
@@ -49,6 +65,7 @@ xp_stx_word_t xp_stx_alloc_char_object (
 	xp_stx_t* stx, const xp_stx_char_t* str)
 {
 	xp_stx_word_t idx, n;
+	xp_stx_char_object_t* obj;
 
 	n = xp_stx_strlen(str);
 	idx = xp_stx_memory_alloc (&stx->memory, 
@@ -56,10 +73,18 @@ xp_stx_word_t xp_stx_alloc_char_object (
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
 	xp_stx_assert (stx->nil == XP_STX_NIL);
+
+	/*
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_CHAR_INDEXED;
 	XP_STX_CHARAT(stx,idx,n) = XP_STX_CHAR('\0');
 	while (n-- > 0) XP_STX_CHARAT(stx,idx,n) = str[n];
+	*/
+	obj = XP_STX_CHAR_OBJECT(stx,idx);
+	obj->header.class = stx->nil;
+	obj->header.access = (n << 2) | XP_STX_CHAR_INDEXED;
+	obj->data[n] = XP_STX_CHAR('\0');
+	while (n-- > 0) obj->data[n] = str[n];
 
 	return idx;
 }
@@ -69,6 +94,7 @@ xp_stx_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 	xp_stx_word_t idx, n = 0;
 	const xp_stx_char_t* p;
 	xp_stx_va_list ap;
+	xp_stx_char_object_t* obj;
 
 	xp_stx_va_start (ap, stx);
 	while ((p = xp_stx_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
@@ -81,15 +107,24 @@ xp_stx_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
 	xp_stx_assert (stx->nil == XP_STX_NIL);
+
+	/*
 	XP_STX_CLASS(stx,idx) = stx->nil;
 	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_CHAR_INDEXED;
 	XP_STX_CHARAT(stx,idx,n) = XP_STX_CHAR('\0');
+	*/
+	obj = XP_STX_CHAR_OBJECT(stx,idx);
+	obj->header.class = stx->nil;
+	obj->header.access = (n << 2) | XP_STX_CHAR_INDEXED;
+	obj->data[n] = XP_STX_CHAR('\0');
 
 	xp_stx_va_start (ap, stx);
 	n = 0;
 	while ((p = xp_stx_va_arg(ap, const xp_stx_char_t*)) != XP_NULL) {
-		while (*p != XP_STX_CHAR('\0')) 
-			XP_STX_CHARAT(stx,idx,n++) = *p++;
+		while (*p != XP_STX_CHAR('\0')) {
+			/*XP_STX_CHARAT(stx,idx,n++) = *p++;*/
+			obj->data[n++] = *p++;
+		}
 	}
 	xp_stx_va_end (ap);
 
@@ -108,12 +143,12 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 	xp_stx_word_t meta, class;
 	xp_stx_word_t /*meta_name,*/ class_name;
 
-	meta = xp_stx_alloc_object (stx, XP_STX_CLASS_SIZE);
+	meta = xp_stx_alloc_word_object (stx, XP_STX_CLASS_SIZE);
 	XP_STX_CLASS(stx,meta) = stx->class_metaclass;
 	XP_STX_AT(stx,meta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT(XP_STX_CLASS_SIZE);
 	
-	class = xp_stx_alloc_object (stx, XP_STX_CLASS_SIZE);
+	class = xp_stx_alloc_word_object (stx, XP_STX_CLASS_SIZE);
 	XP_STX_CLASS(stx,class) = meta;
 
 	/*

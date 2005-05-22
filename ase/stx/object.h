@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.14 2005-05-22 04:11:54 bacon Exp $
+ * $Id: object.h,v 1.15 2005-05-22 04:34:22 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
@@ -41,7 +41,7 @@ typedef struct xp_stx_class_t xp_stx_class_t;
 extern "C" {
 #endif
 
-xp_stx_word_t xp_stx_alloc_object (xp_stx_t* stx, xp_stx_word_t n);
+xp_stx_word_t xp_stx_alloc_word_object (xp_stx_t* stx, xp_stx_word_t n);
 xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_stx_word_t n);
 xp_stx_word_t xp_stx_alloc_char_object (
 	xp_stx_t* stx, const xp_stx_char_t* str);
