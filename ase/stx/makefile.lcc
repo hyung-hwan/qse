@@ -1,7 +1,7 @@
 SRCS = stx.c memory.c object.c symbol.c class.c \
-	hash.c misc.c context.c token.c parser.c
+	hash.c misc.c context.c token.c parser.c bootstrap.c
 OBJS = stx.obj memory.obj object.obj symbol.obj class.obj \
-	hash.obj misc.obj context.obj token.obj parser.obj
+	hash.obj misc.obj context.obj token.obj parser.obj bootstrap.obj
 OUT = xpstx.lib
 
 CC = lcc
