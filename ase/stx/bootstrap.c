@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrap.c,v 1.1 2005-05-22 15:38:31 bacon Exp $
+ * $Id: bootstrap.c,v 1.2 2005-05-22 16:26:58 bacon Exp $
  */
 
 #include <xp/stx/bootstrap.h>
@@ -10,6 +10,99 @@
 #include <xp/stx/misc.h>
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
+
+struct class_info_t 
+{
+	const xp_stx_char_t* name;
+	const xp_stx_char_t* superclass;
+	const xp_stx_char_t* instance_variables;
+	const xp_stx_char_t* class_variables;
+	const xp_stx_char_t* pool_dictionaries;
+};
+
+typedef struct class_info_t class_info_t;
+
+#define T XP_STX_TEXT
+
+static class_info_t class_info[] =
+{
+	{
+		T("Object"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL 
+	},
+	{
+		T("UndefinedObject"),
+		T("Object"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{ 
+		T("Behavior"),
+		T("Object"),
+		T("name instanceSize methods superclass intsanceVariables classVariables poolDictionaries category"),
+		XP_NULL,
+		XP_NULL
+	},
+	{ 
+		T("Class"),
+		T("Behavior"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{ 
+		T("Metaclass"),
+		T("Behavior"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("Block"),
+		T("Object"),
+		T("context argCount argLoc bytePointer"),
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("Boolean"),
+		T("Object"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("True"),
+		T("Boolean"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("False"),
+		T("Boolean"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL 
+	},
+	{
+		T("Context"),
+		T("Object"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	}
+};
 
 int xp_stx_bootstrap (xp_stx_t* stx)
 {
@@ -167,3 +260,13 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 }
 
 
+static void __create_classes (xp_stx_t* stx)
+{
+	class_info_t* p = class_info;
+
+	while (p->name != XP_NULL) {
+		if (xp_stx_lookup_class(stx, p->name) == stx->nil) {
+			xp_stx_new_class (stx, p->name);
+		}
+	}
+}
