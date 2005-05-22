@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.3 2005-05-22 15:38:31 bacon Exp $
+ * $Id: class.c,v 1.4 2005-05-22 16:26:58 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -43,13 +43,15 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 
 xp_stx_word_t xp_stx_lookup_class (xp_stx_t* stx, const xp_stx_char_t* name)
 {
-	xp_stx_word_t link, value;
+	xp_stx_word_t link, meta, value;
 
 	link = xp_stx_hash_lookup_symbol (stx, stx->smalltalk, name);
 	if (link == stx->nil) return stx->nil;
 
 	value = XP_STX_AT(stx,link,XP_STX_PAIRLINK_VALUE);
-	if (XP_STX_CLASS(stx,value) != stx->class_metaclass) return stx->nil;
+
+	meta = XP_STX_CLASS(stx,value);
+	if (XP_STX_CLASS(stx,meta) != stx->class_metaclass) return stx->nil;
 
 	return value;
 }

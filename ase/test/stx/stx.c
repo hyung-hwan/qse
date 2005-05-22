@@ -8,6 +8,7 @@
 	#include <xp/bas/locale.h>
 #endif
 
+#include <xp/stx/bootstrap.h>
 #include <xp/stx/object.h>
 #include <xp/stx/symbol.h>
 #include <xp/stx/context.h>
