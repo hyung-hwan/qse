@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.13 2005-05-21 15:55:49 bacon Exp $
+ * $Id: object.h,v 1.14 2005-05-22 04:11:54 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
@@ -21,6 +21,21 @@
 #define XP_STX_CLASS_CLASSVARS   5
 #define XP_STX_CLASS_POOLDICT    6
 #define XP_STX_CLASS_CATEGORY    7
+
+struct xp_stx_class_t
+{
+	xp_stx_objhdr_t header;
+	xp_stx_word_t name;
+	xp_stx_word_t spec;
+	xp_stx_word_t methods;
+	xp_stx_word_t superclass;
+	xp_stx_word_t variables;
+	xp_stx_word_t classvars;
+	xp_stx_word_t pooldict;
+	xp_stx_word_t category;
+};
+
+typedef struct xp_stx_class_t xp_stx_class_t;
 
 #ifdef __cplusplus
 extern "C" {

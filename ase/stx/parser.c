@@ -1,8 +1,27 @@
 /*
- * $Id: parser.c,v 1.1 2005-05-12 15:49:07 bacon Exp $
+ * $Id: parser.c,v 1.2 2005-05-22 04:11:54 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
+#include <xp/stx/misc.h>
+
+xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser)
+{
+	if (parser == XP_NULL) {
+		parser = (xp_stx_parser_t*)
+			xp_stx_malloc (xp_sizeof(xp_stx_parser_t));		
+		if (parser == XP_NULL) return XP_NULL;
+		parser->__malloced = xp_true;
+	}
+	else parser->__malloced = xp_false;
+
+	return parser;
+}
+
+void xp_stx_parser_close (xp_stx_parser_t* parser)
+{
+	if (parser->__malloced) xp_stx_free (parser);
+}
 
 static void __emit_code (
 	xp_stx_t* stx, xp_stx_word_t method, int value)
@@ -19,8 +38,7 @@ static void __emit_instruction (
 	else __emit_code (high * 16 + low);
 }
 
-int xp_stx_parse (
-	xp_stx_t* stx, xp_stx_word_t method, const xp_char_t* text)
+int xp_stx_parser_parse_method (xp_stx_parser_t* parser, const xp_char_t* text)
 {
 	return 0;
 }
