@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.18 2005-05-22 04:34:22 bacon Exp $
+ * $Id: stx.h,v 1.19 2005-05-22 13:41:14 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -10,9 +10,8 @@
 
 typedef xp_byte_t xp_stx_byte_t;
 typedef xp_char_t xp_stx_char_t;
+typedef xp_cint_t xp_stx_cint_t;
 typedef xp_size_t xp_stx_word_t;
-typedef xp_size_t xp_stx_size_t;
-typedef xp_size_t xp_stx_index_t;
 
 typedef struct xp_stx_objhdr_t xp_stx_objhdr_t;
 typedef struct xp_stx_object_t xp_stx_object_t;

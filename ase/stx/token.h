@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.1 2005-05-22 10:32:37 bacon Exp $
+ * $Id: token.h,v 1.2 2005-05-22 13:41:14 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
@@ -16,9 +16,9 @@ struct xp_stx_token_t
 	xp_stx_real_t  fvalue;
 	*/
 
-	xp_size_t   capacity;
-	xp_size_t   size;
-	xp_char_t*  buffer;
+	xp_stx_word_t   capacity;
+	xp_stx_word_t   size;
+	xp_stx_char_t*  buffer;
 
 	xp_bool_t __malloced;
 };
@@ -33,10 +33,10 @@ xp_stx_token_t* xp_stx_token_open (
 	xp_stx_token_t* token, xp_stx_word_t capacity);
 void xp_stx_token_close (xp_stx_token_t* token);
 
-int          xp_stx_token_addc     (xp_stx_token_t* token, xp_cint_t c);
-void         xp_stx_token_clear    (xp_stx_token_t* token);
-xp_char_t*    xp_stx_token_transfer (xp_stx_token_t* token, xp_size_t capacity);
-int          xp_stx_token_compare  (xp_stx_token_t* token, const xp_char_t* str);
+int xp_stx_token_addc (xp_stx_token_t* token, xp_stx_cint_t c);
+void xp_stx_token_clear (xp_stx_token_t* token);
+xp_stx_char_t* xp_stx_token_yield (xp_stx_token_t* token, xp_stx_word_t capacity);
+int xp_stx_token_compare  (xp_stx_token_t* token, const xp_stx_char_t* str);
 
 #ifdef __cplusplus
 }
