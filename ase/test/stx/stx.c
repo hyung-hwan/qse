@@ -11,6 +11,7 @@
 #include <xp/stx/object.h>
 #include <xp/stx/symbol.h>
 #include <xp/stx/context.h>
+#include <xp/stx/class.h>
 #include <xp/stx/hash.h>
 
 void print_symbol_names (xp_stx_t* stx, xp_stx_word_t sym)
@@ -61,6 +62,18 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_printf (XP_TEXT("-------------\n"));
 
 	xp_stx_hash_traverse (&stx, stx.smalltalk, print_symbol_names_2);
+	xp_printf (XP_TEXT("-------------\n"));
+
+	{
+		xp_size_t n;
+		xp_stx_class_t* obj;
+		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("UndefinedObject"));
+		obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,n);
+		xp_printf (XP_TEXT("name of class UndefinedObject: %lu, %s\n"), 
+			(unsigned long)obj->name,
+			XP_STX_DATA(&stx, obj->name));
+	}
+	
 	xp_printf (XP_TEXT("-------------\n"));
 
 	{
