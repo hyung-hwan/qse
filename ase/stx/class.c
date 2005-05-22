@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.2 2005-05-22 15:24:57 bacon Exp $
+ * $Id: class.c,v 1.3 2005-05-22 15:38:31 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -49,7 +49,7 @@ xp_stx_word_t xp_stx_lookup_class (xp_stx_t* stx, const xp_stx_char_t* name)
 	if (link == stx->nil) return stx->nil;
 
 	value = XP_STX_AT(stx,link,XP_STX_PAIRLINK_VALUE);
-	if (XP_STX_CLASS(stx,value) != stx->class_metaclass) stx->nil;
+	if (XP_STX_CLASS(stx,value) != stx->class_metaclass) return stx->nil;
 
 	return value;
 }
