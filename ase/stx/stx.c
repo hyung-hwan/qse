@@ -1,12 +1,13 @@
 /*
- * $Id: stx.c,v 1.25 2005-05-22 09:16:18 bacon Exp $
+ * $Id: stx.c,v 1.26 2005-05-22 15:03:20 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
 #include <xp/stx/memory.h>
+#include <xp/stx/symbol.h>
+#include <xp/stx/class.h>
 #include <xp/stx/object.h>
 #include <xp/stx/hash.h>
-#include <xp/stx/symbol.h>
 #include <xp/stx/misc.h>
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
