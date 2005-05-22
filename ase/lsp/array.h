@@ -1,5 +1,5 @@
 /*
- * $Id: array.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: array.h,v 1.3 2005-05-22 13:41:14 bacon Exp $
  */
 
 #ifndef _XP_LISP_ARRAY_H_
@@ -25,7 +25,7 @@ int xp_lisp_array_add_item (xp_lisp_array_t* array, void* item);
 int xp_lisp_array_insert (xp_lisp_array_t* array, xp_size_t index, void* value);
 void xp_lisp_array_delete (xp_lisp_array_t* array, xp_size_t index);
 void xp_lisp_array_clear (xp_lisp_array_t* array);
-void** xp_lisp_array_transfer (xp_lisp_array_t* array, xp_size_t capacity);
+void** xp_lisp_array_yield (xp_lisp_array_t* array, xp_size_t capacity);
 
 #ifdef __cplusplus
 }

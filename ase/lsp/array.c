@@ -1,5 +1,5 @@
 /*
- * $Id: array.c,v 1.4 2005-04-24 07:48:16 bacon Exp $
+ * $Id: array.c,v 1.5 2005-05-22 13:41:14 bacon Exp $
  */
 
 #include <xp/lisp/array.h>
@@ -86,7 +86,7 @@ void xp_lisp_array_clear (xp_lisp_array_t* array)
 	array->buffer[0] = XP_NULL;
 }
 
-void** xp_lisp_array_transfer (xp_lisp_array_t* array, xp_size_t capacity)
+void** xp_lisp_array_yield (xp_lisp_array_t* array, xp_size_t capacity)
 {
 	void** old_buffer, ** new_buffer;
    
