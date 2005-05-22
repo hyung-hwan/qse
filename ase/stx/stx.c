@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.23 2005-05-21 15:55:49 bacon Exp $
+ * $Id: stx.c,v 1.24 2005-05-22 04:34:22 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -110,9 +110,9 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	xp_stx_word_t symbol_Pairlink;
 
 	/* allocate three keyword objects */
-	stx->nil = xp_stx_alloc_object (stx, 0);
-	stx->true = xp_stx_alloc_object (stx, 0);
-	stx->false = xp_stx_alloc_object (stx, 0);
+	stx->nil = xp_stx_alloc_word_object (stx, 0);
+	stx->true = xp_stx_alloc_word_object (stx, 0);
+	stx->false = xp_stx_alloc_word_object (stx, 0);
 
 	xp_stx_assert (stx->nil == XP_STX_NIL);
 	xp_stx_assert (stx->true == XP_STX_TRUE);
@@ -120,26 +120,26 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 
 	/* symbol table & system dictionary */
 	/* TODO: symbol table and dictionary size */
-	stx->symbol_table = xp_stx_alloc_object (stx, 1000); 
-	stx->smalltalk = xp_stx_alloc_object (stx, 2000);
+	stx->symbol_table = xp_stx_alloc_word_object (stx, 1000); 
+	stx->smalltalk = xp_stx_alloc_word_object (stx, 2000);
 
 	stx->class_symlink = /* Symlink */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
 	stx->class_symbol =  /* Symbol */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
 	stx->class_metaclass =  /* Metaclass */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
 	stx->class_pairlink =  /* Pairlink */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
 
 	class_SymlinkMeta = /* Symlink class */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
 	class_SymbolMeta = /* Symbol class */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
 	class_MetaclassMeta = /* Metaclass class */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
 	class_PairlinkMeta = /* Pairlink class */
-		xp_stx_alloc_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
 
 	/* (Symlink class) setClass: Metaclass */
 	XP_STX_CLASS(stx,class_SymlinkMeta) = stx->class_metaclass;

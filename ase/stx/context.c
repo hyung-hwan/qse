@@ -1,5 +1,5 @@
 /*
- * $Id: context.c,v 1.5 2005-05-21 16:11:06 bacon Exp $
+ * $Id: context.c,v 1.6 2005-05-22 04:34:22 bacon Exp $
  */
 
 #include <xp/stx/context.h>
@@ -12,7 +12,7 @@ xp_stx_word_t xp_stx_new_context (xp_stx_t* stx,
 	xp_stx_word_t context;
 	xp_stx_context_t* obj;
 
-	context = xp_stx_alloc_object(stx,XP_STX_CONTEXT_SIZE);
+	context = xp_stx_alloc_word_object(stx,XP_STX_CONTEXT_SIZE);
 	/*
 	XP_STX_CLASS(stx,context) = stx->class_context;
 	XP_STX_AT(stx,context,XP_STX_CONTEXT_IP) = XP_STX_TO_SMALLINT(0);

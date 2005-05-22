@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.4 2005-05-21 15:55:49 bacon Exp $
+ * $Id: symbol.c,v 1.5 2005-05-22 04:34:22 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
@@ -10,7 +10,7 @@ xp_stx_word_t xp_stx_new_symlink (xp_stx_t* stx, xp_stx_word_t sym)
 {
 	xp_stx_word_t x;
 
-	x = xp_stx_alloc_object (stx, XP_STX_SYMLINK_SIZE);
+	x = xp_stx_alloc_word_object (stx, XP_STX_SYMLINK_SIZE);
 	XP_STX_CLASS(stx,x) = stx->class_symlink;
 	XP_STX_AT(stx,x,XP_STX_SYMLINK_LINK) = stx->nil;
 	XP_STX_AT(stx,x,XP_STX_SYMLINK_SYMBOL) = sym;
