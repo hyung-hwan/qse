@@ -2,12 +2,13 @@ SRCS = stx.c
 OBJS = stx.obj
 OUT = stx.exe
 
-CC = \tc\tcc
+TC = \dos\tc
+CC = $(TC)\tcc
 CFLAGS = -I..\..\.. -ml -D_DOS -w
-LIBS = \tc\lib\cl.lib \tc\lib\c0l.obj ..\..\..\xp\stx\xpstx.lib
+LIBS = $(TC)\lib\cl.lib $(TC)\lib\c0l.obj ..\..\..\xp\stx\xpstx.lib
 
 all: $(OBJS)
-	\tc\tlink $(OBJS),$(OUT),,$(LIBS)
+	$(TC)\tlink $(OBJS),$(OUT),,$(LIBS)
 
 clean:
 	del $(OBJS) *.obj $(OUT)
