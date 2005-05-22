@@ -66,7 +66,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_printf (XP_TEXT("-------------\n"));
 
 	{
-		xp_size_t n;
+		xp_stx_word_t n;
 		xp_stx_class_t* obj;
 		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("UndefinedObject"));
 		obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,n);
@@ -74,7 +74,23 @@ int xp_main (int argc, xp_char_t* argv[])
 			(unsigned long)obj->name,
 			XP_STX_DATA(&stx, obj->name));
 	}
-	
+	xp_printf (XP_TEXT("-------------\n"));
+
+	{
+		xp_stx_word_t n;
+		xp_stx_class_t* obj;
+
+		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("SymbolTable"));
+		xp_printf (XP_TEXT("Class hierarchy for the class SymbolTable\n"));
+
+		while (n != stx.nil) {
+			obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,n);
+			xp_printf (XP_TEXT("%lu, %s\n"), 
+				(unsigned long)obj->name,
+				XP_STX_DATA(&stx, obj->name));
+			n = obj->superclass;
+		}
+	}
 	xp_printf (XP_TEXT("-------------\n"));
 
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrap.c,v 1.2 2005-05-22 16:26:58 bacon Exp $
+ * $Id: bootstrap.c,v 1.3 2005-05-22 17:02:58 bacon Exp $
  */
 
 #include <xp/stx/bootstrap.h>
@@ -10,6 +10,7 @@
 #include <xp/stx/misc.h>
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
+static void __create_builtin_classes (xp_stx_t* stx);
 
 struct class_info_t 
 {
@@ -96,6 +97,48 @@ static class_info_t class_info[] =
 		XP_NULL
 	},
 	{
+		T("Method"),
+		T("Object"),
+		T("text message bytecodes literals stackSize temporarySize class"),
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("Magnitude"),
+		T("Object"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("Collection"),
+		T("Magnitude"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("IndexedCollection"),
+		T("Collection"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("SymbolTable"),
+		T("IndexedCollection"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		T("SystemDictionary"),
+		T("IndexedCollection"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
@@ -111,18 +154,25 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_word_t tmp;
 
 	__create_bootstrapping_objects (stx);
+	__create_builtin_classes (stx);
 
 	/* more initialization */
 	XP_STX_CLASS(stx,stx->symbol_table) = 
-		xp_stx_new_class (stx, XP_STX_TEXT("SymbolTable"));
+		xp_stx_lookup_class (stx, XP_STX_TEXT("SymbolTable"));
 	XP_STX_CLASS(stx,stx->smalltalk) = 
-		xp_stx_new_class (stx, XP_STX_TEXT("SystemDictionary"));
+		xp_stx_lookup_class (stx, XP_STX_TEXT("SystemDictionary"));
 
 	symbol_Smalltalk = 
 		xp_stx_new_symbol (stx, XP_STX_TEXT("Smalltalk"));
 	xp_stx_hash_insert (stx, stx->smalltalk,
 		xp_stx_hash_char_object(stx,symbol_Smalltalk),
 		symbol_Smalltalk, stx->smalltalk);	
+
+	/* adjust the class-metaclass cycle */
+	class_Object = xp_stx_lookup_class (stx, XP_STX_TEXT("Object"));
+	class_Class = xp_stx_lookup_class (stx, XP_STX_TEXT("Class"));
+	tmp = XP_STX_CLASS(stx,class_Object);
+	XP_STX_AT(stx,tmp,XP_STX_CLASS_SUPERCLASS) = class_Class;
 
 	/* create #nil, #true, #false */
 	xp_stx_new_symbol (stx, XP_STX_TEXT("nil"));
@@ -131,23 +181,13 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 
 	/* nil setClass: UndefinedObject */
 	XP_STX_CLASS(stx,stx->nil) =
-		xp_stx_new_class (stx, XP_STX_TEXT("UndefinedObject"));
+		xp_stx_lookup_class (stx, XP_STX_TEXT("UndefinedObject"));
 	/* true setClass: True */
 	XP_STX_CLASS(stx,stx->true) =
-		xp_stx_new_class (stx, XP_STX_TEXT("True"));
+		xp_stx_lookup_class (stx, XP_STX_TEXT("True"));
 	/* fales setClass: False */
 	XP_STX_CLASS(stx,stx->false) = 
-		xp_stx_new_class (stx, XP_STX_TEXT("False"));
-
-	/* weave the class-metaclass chain */
-	class_Object = xp_stx_new_class (stx, XP_STX_TEXT("Object"));
-	class_Class = xp_stx_new_class (stx, XP_STX_TEXT("Class"));
-	tmp = XP_STX_CLASS(stx,class_Object);
-	XP_STX_AT(stx,tmp,XP_STX_CLASS_SUPERCLASS) = class_Class;
-
-	/* useful classes */
-	stx->class_method = xp_stx_new_class (stx, XP_STX_TEXT("Method"));
-	stx->class_context = xp_stx_new_class (stx, XP_STX_TEXT("Context"));
+		xp_stx_lookup_class (stx, XP_STX_TEXT("False"));
 
 	return 0;
 }
@@ -260,13 +300,24 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 }
 
 
-static void __create_classes (xp_stx_t* stx)
+static void __create_builtin_classes (xp_stx_t* stx)
 {
 	class_info_t* p = class_info;
+	xp_stx_word_t class;
+	xp_stx_class_t* class_obj;
 
 	while (p->name != XP_NULL) {
-		if (xp_stx_lookup_class(stx, p->name) == stx->nil) {
-			xp_stx_new_class (stx, p->name);
+		class = xp_stx_lookup_class(stx, p->name);
+		if (class == stx->nil) {
+			class = xp_stx_new_class (stx, p->name);
 		}
+
+		xp_stx_assert (class != stx->nil);
+		class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class);
+
+		class_obj->superclass = (p->superclass == XP_NULL)?
+			stx->nil: xp_stx_lookup_class(stx,p->superclass);
+
+		p++;
 	}
 }
