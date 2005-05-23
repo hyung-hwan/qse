@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.3 2005-05-23 15:51:03 bacon Exp $
+ * $Id: bootstrp.c,v 1.4 2005-05-23 16:07:39 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -326,9 +326,9 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 static void __create_builtin_classes (xp_stx_t* stx)
 {
 	class_info_t* p;
-	xp_stx_word_t class, array;
-	xp_stx_class_t* class_obj;
-	xp_stx_word_t n;
+	xp_stx_word_t class, superclass, array;
+	xp_stx_class_t* class_obj, * superclass_obj;
+	xp_stx_word_t n, spec = 0;
 
 	xp_stx_assert (stx->class_array != stx->nil);
 
@@ -344,12 +344,24 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		class_obj->superclass = (p->superclass == XP_NULL)?
 			stx->nil: xp_stx_lookup_class(stx,p->superclass);
 
-/*TODO:handle variables of super class first.... */
+		if (p->superclass != XP_NULL) {
+			superclass = xp_stx_lookup_class(stx,p->superclass);
+			xp_stx_assert (superclass != stx->nil);
+			while (superclass != stx->nil) {
+				superclass_obj = (xp_stx_class_t*)
+					XP_STX_WORD_OBJECT(stx,superclass);
+				spec += XP_STX_FROM_SMALLINT(superclass_obj->spec);
+				superclass = superclass_obj->superclass;
+			}
+		}
+
 		if (p->instance_variables != XP_NULL) {
 			n = __count_names (p->instance_variables);
 			array = xp_stx_new_array (stx, n);
 			__set_names (stx, XP_STX_DATA(stx,array), p->instance_variables);
 			class_obj->variables = array; 
+xp_printf (L"%s, spec = %d\n", p->name, spec + n);
+			class_obj->spec = XP_STX_TO_SMALLINT(spec + n);
 		}
 
 		if (p->class_variables != XP_NULL) {
