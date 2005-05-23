@@ -1,8 +1,8 @@
 /*
- * $Id: bootstrap.c,v 1.3 2005-05-22 17:02:58 bacon Exp $
+ * $Id: bootstrp.c,v 1.1 2005-05-23 12:06:53 bacon Exp $
  */
 
-#include <xp/stx/bootstrap.h>
+#include <xp/stx/bootstrp.h>
 #include <xp/stx/symbol.h>
 #include <xp/stx/class.h>
 #include <xp/stx/object.h>

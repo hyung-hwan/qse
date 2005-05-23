@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.2 2005-05-22 13:41:14 bacon Exp $
+ * $Id: token.c,v 1.3 2005-05-23 12:06:53 bacon Exp $
  */
 
 #include <xp/stx/token.h>
@@ -46,7 +46,7 @@ void xp_stx_token_close (xp_stx_token_t* token)
 int xp_stx_token_addc (xp_stx_token_t* token, xp_stx_cint_t c)
 {
 	if (token->size >= token->capacity) {
-		// double the capacity.
+		/* double the capacity. */
 		xp_stx_char_t* space = (xp_stx_char_t*)xp_stx_realloc (
 			token->buffer, (token->capacity * 2 + 1) * xp_sizeof(xp_stx_char_t));
 		if (space == XP_NULL) return -1;
