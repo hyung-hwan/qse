@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.1 2005-05-23 12:06:53 bacon Exp $
+ * $Id: bootstrp.c,v 1.2 2005-05-23 14:43:03 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -11,6 +11,7 @@
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
 static void __create_builtin_classes (xp_stx_t* stx);
+static xp_stx_word_t __count_names (const xp_stx_char_t* str);
 
 struct class_info_t 
 {
@@ -23,117 +24,122 @@ struct class_info_t
 
 typedef struct class_info_t class_info_t;
 
-#define T XP_STX_TEXT
-
 static class_info_t class_info[] =
 {
 	{
-		T("Object"),
+		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL 
 	},
 	{
-		T("UndefinedObject"),
-		T("Object"),
+		XP_STX_TEXT("UndefinedObject"),
+		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
 	},
 	{ 
-		T("Behavior"),
-		T("Object"),
-		T("name instanceSize methods superclass intsanceVariables classVariables poolDictionaries category"),
+		XP_STX_TEXT("Behavior"),
+		XP_STX_TEXT("Object"),
+		XP_STX_TEXT("name instanceSize methods superclass intsanceVariables classVariables poolDictionaries category"),
 		XP_NULL,
 		XP_NULL
 	},
 	{ 
-		T("Class"),
-		T("Behavior"),
+		XP_STX_TEXT("Class"),
+		XP_STX_TEXT("Behavior"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
 	},
 	{ 
-		T("Metaclass"),
-		T("Behavior"),
+		XP_STX_TEXT("Metaclass"),
+		XP_STX_TEXT("Behavior"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
 	},
 	{
-		T("Block"),
-		T("Object"),
-		T("context argCount argLoc bytePointer"),
+		XP_STX_TEXT("Block"),
+		XP_STX_TEXT("Object"),
+		XP_STX_TEXT("context argCount argLoc bytePointer"),
 		XP_NULL,
 		XP_NULL
 	},
 	{
-		T("Boolean"),
-		T("Object"),
-		XP_NULL,
-		XP_NULL,
-		XP_NULL
-	},
-	{
-		T("True"),
-		T("Boolean"),
+		XP_STX_TEXT("Boolean"),
+		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
 	},
 	{
-		T("False"),
-		T("Boolean"),
+		XP_STX_TEXT("True"),
+		XP_STX_TEXT("Boolean"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		XP_STX_TEXT("False"),
+		XP_STX_TEXT("Boolean"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL 
 	},
 	{
-		T("Context"),
-		T("Object"),
+		XP_STX_TEXT("Context"),
+		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
 	},
 	{
-		T("Method"),
-		T("Object"),
-		T("text message bytecodes literals stackSize temporarySize class"),
+		XP_STX_TEXT("Method"),
+		XP_STX_TEXT("Object"),
+		XP_STX_TEXT("text message bytecodes literals stackSize temporarySize class"),
 		XP_NULL,
 		XP_NULL
 	},
 	{
-		T("Magnitude"),
-		T("Object"),
-		XP_NULL,
-		XP_NULL,
-		XP_NULL
-	},
-	{
-		T("Collection"),
-		T("Magnitude"),
+		XP_STX_TEXT("Magnitude"),
+		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
 	},
 	{
-		T("IndexedCollection"),
-		T("Collection"),
+		XP_STX_TEXT("Collection"),
+		XP_STX_TEXT("Magnitude"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
 	},
 	{
-		T("SymbolTable"),
-		T("IndexedCollection"),
+		XP_STX_TEXT("IndexedCollection"),
+		XP_STX_TEXT("Collection"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
 	},
 	{
-		T("SystemDictionary"),
-		T("IndexedCollection"),
+		XP_STX_TEXT("Array"),
+		XP_STX_TEXT("IndexedCollection"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		XP_STX_TEXT("SymbolTable"),
+		XP_STX_TEXT("IndexedCollection"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL
+	},
+	{
+		XP_STX_TEXT("SystemDictionary"),
+		XP_STX_TEXT("IndexedCollection"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL
@@ -147,6 +153,11 @@ static class_info_t class_info[] =
 	}
 };
 
+int xp_stx_new_array (xp_stx_t* stx, xp_stx_word_t size)
+{
+	return 0;	
+}
+
 int xp_stx_bootstrap (xp_stx_t* stx)
 {
 	xp_stx_word_t symbol_Smalltalk;
@@ -154,6 +165,11 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	xp_stx_word_t tmp;
 
 	__create_bootstrapping_objects (stx);
+
+	/* array class is precreated for easier instansition 
+	 * of builtin classes */
+	stx->class_array = xp_stx_new_class (stx, XP_STX_TEXT("Array"));
+
 	__create_builtin_classes (stx);
 
 	/* more initialization */
@@ -299,14 +315,17 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 		symbol_Pairlink, stx->class_pairlink);
 }
 
-
 static void __create_builtin_classes (xp_stx_t* stx)
 {
-	class_info_t* p = class_info;
-	xp_stx_word_t class;
+	class_info_t* p;
+	xp_stx_word_t class, array;
 	xp_stx_class_t* class_obj;
+	xp_stx_word_object_t* array_obj;
+	xp_stx_word_t n;
 
-	while (p->name != XP_NULL) {
+	xp_stx_assert (stx->class_array != stx->nil);
+
+	for (p = class_info; p->name != XP_NULL; p++) {
 		class = xp_stx_lookup_class(stx, p->name);
 		if (class == stx->nil) {
 			class = xp_stx_new_class (stx, p->name);
@@ -318,6 +337,58 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		class_obj->superclass = (p->superclass == XP_NULL)?
 			stx->nil: xp_stx_lookup_class(stx,p->superclass);
 
-		p++;
+/*TODO:handle variables of super class first.... */
+		if (p->instance_variables != XP_NULL) {
+			n = __count_names (p->instance_variables);
+			array = xp_stx_new_array (stx, n);
+			array_obj = XP_STX_DATA(stx,array);
+			__set_names (array_obj, p->instance_variables);
+			class_obj->variables = array; 
+		}
+
+		if (p->class_variables != XP_NULL) {
+			n = __count_names (p->instance_variables);
+			array = xp_stx_new_array (stx, n);
+
+			class_obj->classvars = array;
+		}
 	}
+}
+
+static xp_stx_word_t __count_names (const xp_stx_char_t* str)
+{
+	xp_stx_word_t n = 0;
+	const xp_stx_char_t* p = str;
+
+	do {
+		while (*p == XP_STX_CHAR(' ') ||
+		       *p == XP_STX_CHAR('\t')) p++;
+		if (*p == XP_STX_CHAR('\0')) break;
+
+		n++;
+		while (*p != XP_STX_CHAR(' ') && 
+		       *p != XP_STX_CHAR('\t') && 
+		       *p != XP_STX_CHAR('\0')) p++;
+	} while (1);
+
+	return n;
+}
+
+static void __set_names (const xp_stx_char_t* str)
+{
+	xp_stx_word_t n = 0;
+	const xp_stx_char_t* p = str;
+
+	do {
+		while (*p == XP_STX_CHAR(' ') ||
+		       *p == XP_STX_CHAR('\t')) p++;
+		if (*p == XP_STX_CHAR('\0')) break;
+
+		n++;
+		while (*p != XP_STX_CHAR(' ') && 
+		       *p != XP_STX_CHAR('\t') && 
+		       *p != XP_STX_CHAR('\0')) p++;
+	} while (1);
+
+	return n;
 }

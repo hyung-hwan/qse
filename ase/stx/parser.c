@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.3 2005-05-22 15:03:20 bacon Exp $
+ * $Id: parser.c,v 1.4 2005-05-23 14:43:03 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -48,9 +48,9 @@ int xp_stx_parser_parse_method (xp_stx_parser_t* parser, const xp_char_t* text)
 
 int xp_stx_filein_raw (xp_stx_t* stx, xp_stx_getc_t getc)
 {
+/*
 	xp_cint_t c;
 
-/*
 	getc()
 	gettoken ();
 	if (token->type == XP_STX_TOKEN_IDENT) {
