@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.2 2005-05-23 14:43:03 bacon Exp $
+ * $Id: bootstrp.c,v 1.3 2005-05-23 15:51:03 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -12,6 +12,8 @@
 static void __create_bootstrapping_objects (xp_stx_t* stx);
 static void __create_builtin_classes (xp_stx_t* stx);
 static xp_stx_word_t __count_names (const xp_stx_char_t* str);
+static void __set_names (
+	xp_stx_t* stx, xp_stx_word_t* array, const xp_stx_char_t* str);
 
 struct class_info_t 
 {
@@ -153,9 +155,15 @@ static class_info_t class_info[] =
 	}
 };
 
-int xp_stx_new_array (xp_stx_t* stx, xp_stx_word_t size)
+xp_stx_word_t xp_stx_new_array (xp_stx_t* stx, xp_stx_word_t size)
 {
-	return 0;	
+	xp_stx_word_t x;
+
+	xp_stx_assert (stx->class_array != stx->nil);
+	x = xp_stx_alloc_word_object (stx, size);
+	XP_STX_CLASS(stx,x) = stx->class_array;
+
+	return x;	
 }
 
 int xp_stx_bootstrap (xp_stx_t* stx)
@@ -320,7 +328,6 @@ static void __create_builtin_classes (xp_stx_t* stx)
 	class_info_t* p;
 	xp_stx_word_t class, array;
 	xp_stx_class_t* class_obj;
-	xp_stx_word_object_t* array_obj;
 	xp_stx_word_t n;
 
 	xp_stx_assert (stx->class_array != stx->nil);
@@ -341,15 +348,14 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		if (p->instance_variables != XP_NULL) {
 			n = __count_names (p->instance_variables);
 			array = xp_stx_new_array (stx, n);
-			array_obj = XP_STX_DATA(stx,array);
-			__set_names (array_obj, p->instance_variables);
+			__set_names (stx, XP_STX_DATA(stx,array), p->instance_variables);
 			class_obj->variables = array; 
 		}
 
 		if (p->class_variables != XP_NULL) {
-			n = __count_names (p->instance_variables);
+			n = __count_names (p->class_variables);
 			array = xp_stx_new_array (stx, n);
-
+			__set_names (stx, XP_STX_DATA(stx,array), p->class_variables);
 			class_obj->classvars = array;
 		}
 	}
@@ -374,21 +380,23 @@ static xp_stx_word_t __count_names (const xp_stx_char_t* str)
 	return n;
 }
 
-static void __set_names (const xp_stx_char_t* str)
+static void __set_names (
+	xp_stx_t* stx, xp_stx_word_t* array, const xp_stx_char_t* str)
 {
 	xp_stx_word_t n = 0;
 	const xp_stx_char_t* p = str;
+	const xp_stx_char_t* name;
 
 	do {
 		while (*p == XP_STX_CHAR(' ') ||
 		       *p == XP_STX_CHAR('\t')) p++;
 		if (*p == XP_STX_CHAR('\0')) break;
 
-		n++;
+		name = p;
 		while (*p != XP_STX_CHAR(' ') && 
 		       *p != XP_STX_CHAR('\t') && 
 		       *p != XP_STX_CHAR('\0')) p++;
-	} while (1);
 
-	return n;
+		array[n++] = xp_stx_new_symbolx (stx, name, p - name);
+	} while (1);
 }

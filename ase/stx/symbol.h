@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.h,v 1.4 2005-05-23 14:43:03 bacon Exp $
+ * $Id: symbol.h,v 1.5 2005-05-23 15:51:03 bacon Exp $
  */
 
 #ifndef _XP_STX_SYMBOL_H_
@@ -25,7 +25,12 @@ extern "C" {
 #endif
 
 xp_stx_word_t xp_stx_new_symbol_link (xp_stx_t* stx, xp_stx_word_t sym);
-xp_stx_word_t xp_stx_new_symbol (xp_stx_t* stx, const xp_stx_char_t* name);
+
+xp_stx_word_t xp_stx_new_symbol (
+	xp_stx_t* stx, const xp_stx_char_t* name);
+xp_stx_word_t xp_stx_new_symbolx (
+	xp_stx_t* stx, const xp_stx_char_t* name, xp_stx_word_t len);
+
 xp_stx_word_t xp_stx_new_symbol_pp (
 	xp_stx_t* stx, const xp_stx_char_t* name,
 	const xp_stx_char_t* prefix, const xp_stx_char_t* postfix);

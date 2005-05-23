@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.22 2005-05-23 14:43:03 bacon Exp $
+ * $Id: object.c,v 1.23 2005-05-23 15:51:03 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -64,10 +64,15 @@ xp_stx_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_stx_word_t n)
 xp_stx_word_t xp_stx_alloc_char_object (
 	xp_stx_t* stx, const xp_stx_char_t* str)
 {
-	xp_stx_word_t idx, n;
+	return xp_stx_alloc_char_objectx (stx, str, xp_stx_strlen(str));
+}
+
+xp_stx_word_t xp_stx_alloc_char_objectx (
+	xp_stx_t* stx, const xp_stx_char_t* str, xp_stx_word_t n)
+{
+	xp_stx_word_t idx;
 	xp_stx_char_object_t* obj;
 
-	n = xp_stx_strlen(str);
 	idx = xp_stx_memory_alloc (&stx->memory, 
 		(n + 1) * xp_sizeof(xp_stx_char_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */

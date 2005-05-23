@@ -8,7 +8,7 @@
 	#include <xp/bas/locale.h>
 #endif
 
-#include <xp/stx/bootstrap.h>
+#include <xp/stx/bootstrp.h>
 #include <xp/stx/object.h>
 #include <xp/stx/symbol.h>
 #include <xp/stx/context.h>
@@ -80,8 +80,8 @@ int xp_main (int argc, xp_char_t* argv[])
 		xp_stx_word_t n;
 		xp_stx_class_t* obj;
 
-		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("SymbolTable"));
-		xp_printf (XP_TEXT("Class hierarchy for the class SymbolTable\n"));
+		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("Array"));
+		xp_printf (XP_TEXT("Class hierarchy for the class Array\n"));
 
 		while (n != stx.nil) {
 			obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,n);
@@ -93,21 +93,25 @@ int xp_main (int argc, xp_char_t* argv[])
 	}
 	xp_printf (XP_TEXT("-------------\n"));
 
+#if 0
 	{
-		xp_stx_word_t class_name, method_name;
+		xp_stx_word_t method_name;
 		xp_stx_word_t main_class;
 		xp_stx_word_t method, context;
 
-		class_name = xp_stx_new_symbol (&stx,argv[1]);
 		method_name = xp_stx_new_symbol (&stx,XP_STX_TEXT("main"));
 
-		if (xp_stx_lookup_global (&stx,class_name,&main_class) == -1) {
+		main_class = xp_stx_lookup_class (&stx,argv[1]);
+		if (main_class == stx.nil) {
 			xp_printf (XP_TEXT("non-existent class: %s\n"), argv[1]);
 			return -1;
 		}
 
+		/*
 		method = xp_stx_alloc_byte_object (&stx,100);
 		XP_STX_CLASS(&stx,method) = stx.class_method;
+		*/
+		method = xp_stx_instantiate (&stx, XP_STX_TEXT("Method"));
 
 		XP_STX_BYTEAT(&stx,method,0) = PUSH_OBJECT;
 		XP_STX_BYTEAT(&stx,method,1) = main_class;
@@ -115,9 +119,13 @@ int xp_main (int argc, xp_char_t* argv[])
 		XP_STX_BYTEAT(&stx,method,3) = method_name;
 		XP_STX_BYTEAT(&stx,method,4) = HALT;
 
+		/*
 		context = xp_stx_new_context (&stx, method, stx.nil, stx.nil);
+		*/
+		context = xp_stx_instantiate (&stx, XP_STX_TEXT("Context"));
 		xp_stx_run_context (&stx, context);
 	}
+#endif
 
 	xp_stx_close (&stx);
 	xp_printf (XP_TEXT("== End of program ==\n"));
