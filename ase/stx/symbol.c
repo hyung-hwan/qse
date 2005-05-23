@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.5 2005-05-22 04:34:22 bacon Exp $
+ * $Id: symbol.c,v 1.6 2005-05-23 14:43:03 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
@@ -52,7 +52,44 @@ xp_stx_word_t xp_stx_new_symbol (xp_stx_t* stx, const xp_stx_char_t* name)
 			link = next;
 		} while (1);
 	}
-	
+		
+	return x;
+}
+
+xp_stx_word_t xp_stx_new_symbol_with_len (
+{
+	xp_stx_word_t x, hash, table, link, next;
+
+	table = stx->symbol_table;
+	hash = xp_stx_strhash(name) % XP_STX_SIZE(stx,table);
+	link = XP_STX_AT(stx,table,hash);
+
+	if (link == stx->nil) {
+		x = xp_stx_alloc_char_object (stx, name);
+		XP_STX_CLASS(stx,x) = stx->class_symbol;
+		XP_STX_AT(stx,table,hash) = xp_stx_new_symlink(stx,x);
+	}
+	else {
+		do {
+			x = XP_STX_AT(stx,link,XP_STX_SYMLINK_SYMBOL);
+			xp_stx_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
+
+			if (xp_stx_strxcmp (
+				&XP_STX_CHARAT(stx,x,0),
+				XP_STX_SIZE(stx,x), name) == 0) return x;
+
+			next = XP_STX_AT(stx,link,XP_STX_SYMLINK_LINK);
+			if (next == stx->nil) {
+				x = xp_stx_alloc_char_object (stx, name);
+				XP_STX_CLASS(stx,x) = stx->class_symbol;
+				XP_STX_AT(stx,link,XP_STX_SYMLINK_LINK) = 
+					xp_stx_new_symlink(stx,x);
+				break;
+			}
+
+			link = next;
+		} while (1);
+	}
 		
 	return x;
 }

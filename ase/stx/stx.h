@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.20 2005-05-22 15:03:20 bacon Exp $
+ * $Id: stx.h,v 1.21 2005-05-23 14:43:03 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -80,9 +80,8 @@ struct xp_stx_t
 	xp_stx_word_t class_symbol;
 	xp_stx_word_t class_metaclass;
 	xp_stx_word_t class_pairlink;
-
-	xp_stx_word_t class_method;
-	xp_stx_word_t class_context;
+	
+	xp_stx_word_t class_array;
 
 	xp_bool_t __malloced;
 	xp_bool_t __wantabort; /* TODO: make it a function pointer */

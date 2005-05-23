@@ -1,9 +1,10 @@
 /*
- * $Id: context.c,v 1.6 2005-05-22 04:34:22 bacon Exp $
+ * $Id: context.c,v 1.7 2005-05-23 14:43:03 bacon Exp $
  */
 
 #include <xp/stx/context.h>
 #include <xp/stx/object.h>
+#include <xp/stx/class.h>
 #include <xp/stx/misc.h>
 
 xp_stx_word_t xp_stx_new_context (xp_stx_t* stx, 
@@ -22,7 +23,7 @@ xp_stx_word_t xp_stx_new_context (xp_stx_t* stx,
 	*/
 
 	obj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
-	obj->header.class = stx->class_context;
+	obj->header.class = xp_stx_lookup_class(stx,XP_STX_TEXT("Context"));
 	obj->ip = XP_STX_TO_SMALLINT(0);
 	obj->method = method;
 	obj->arguments = args;

@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.21 2005-05-22 15:03:20 bacon Exp $
+ * $Id: object.c,v 1.22 2005-05-23 14:43:03 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -135,20 +135,6 @@ xp_stx_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_stx_word_t idx)
 {
 	xp_stx_assert (XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED);
 	return xp_stx_strxhash (
-		&XP_STX_CHARAT(stx,idx,0), XP_STX_SIZE(stx,idx));
+		XP_STX_DATA(stx,idx), XP_STX_SIZE(stx,idx));
 }
 
-int xp_stx_lookup_global (
-	xp_stx_t* stx, xp_stx_word_t key, xp_stx_word_t* value)
-{
-	xp_stx_word_t link;
-
-	/* TODO: maybe xp_stx_hash_object is required instead of
-	         xp_stx_hash_char_object. */
-	link = xp_stx_hash_lookup (stx, stx->smalltalk,
-		xp_stx_hash_char_object(stx,key), key);
-	if (link == stx->nil) return -1;
-
-	*value = XP_STX_AT(stx,link,XP_STX_PAIRLINK_VALUE);
-	return 0;
-}
