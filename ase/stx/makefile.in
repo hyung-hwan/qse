@@ -1,4 +1,5 @@
-SRCS = stx.c memory.c object.c symbol.c hash.c misc.c context.c
+SRCS = stx.c memory.c object.c symbol.c class.c \
+	hash.c misc.c context.c token.c parser.c bootstrp.c
 OBJS = $(SRCS:.c=.o)
 OUT = libxpstx.a
 
