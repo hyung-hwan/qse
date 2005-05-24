@@ -1,5 +1,5 @@
 /*
- * $Id: class.h,v 1.2 2005-05-24 03:28:31 bacon Exp $
+ * $Id: class.h,v 1.3 2005-05-24 03:29:43 bacon Exp $
  */
 
 #ifndef _XP_STX_CLASS_H_
@@ -8,7 +8,7 @@
 #include <xp/stx/stx.h>
 
 /* definitions for common objects */
-#define XP_STX_CLASS_SIZE        8
+#define XP_STX_CLASS_SIZE        7
 #define XP_STX_CLASS_NAME        0
 #define XP_STX_CLASS_SPEC        1
 #define XP_STX_CLASS_METHODS     2
@@ -16,7 +16,6 @@
 #define XP_STX_CLASS_VARIABLES   4
 #define XP_STX_CLASS_CLASSVARS   5
 #define XP_STX_CLASS_POOLDICT    6
-#define XP_STX_CLASS_CATEGORY    7
 
 #define XP_STX_METACLASS_SIZE        6
 #define XP_STX_METACLASS_NAME        0
@@ -36,7 +35,6 @@ struct xp_stx_class_t
 	xp_stx_word_t variables;
 	xp_stx_word_t classvars;
 	xp_stx_word_t pooldict;
-	xp_stx_word_t category;
 };
 
 struct xp_stx_metaclass_t

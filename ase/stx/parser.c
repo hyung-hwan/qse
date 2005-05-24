@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.4 2005-05-23 14:43:03 bacon Exp $
+ * $Id: parser.c,v 1.5 2005-05-24 03:28:31 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -64,4 +64,5 @@ int xp_stx_filein_raw (xp_stx_t* stx, xp_stx_getc_t getc)
 int xp_stx_get_token ()
 {
 /*	getc	*/
+	return 0;
 }

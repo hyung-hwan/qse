@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.5 2005-05-24 03:28:31 bacon Exp $
+ * $Id: class.c,v 1.6 2005-05-24 03:29:43 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -31,7 +31,7 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 	return class;
 }
 
-xp_stx_word_t xp_stx_new_metaclass (xp_stx_t* stx, xp_stx_word class)
+xp_stx_word_t xp_stx_new_metaclass (xp_stx_t* stx, xp_stx_word_t class)
 {
 	meta = xp_stx_alloc_word_object (stx, XP_STX_METACLASS_SIZE);
 	meta_obj = meta;
