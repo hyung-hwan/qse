@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.5 2005-05-24 03:28:31 bacon Exp $
+ * $Id: bootstrp.c,v 1.6 2005-05-24 03:29:43 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -47,7 +47,7 @@ static class_info_t class_info[] =
 	{ 
 		XP_STX_TEXT("Behavior"),
 		XP_STX_TEXT("Object"),
-		XP_STX_TEXT("name instanceSize methods superclass intsanceVariables classVariables poolDictionaries category"),
+		XP_STX_TEXT("name instanceSize methods superclass intsanceVariables classVariables poolDictionaries"),
 		XP_NULL,
 		XP_NULL,
 		0
