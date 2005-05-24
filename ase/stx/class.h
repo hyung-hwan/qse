@@ -1,5 +1,5 @@
 /*
- * $Id: class.h,v 1.1 2005-05-22 15:03:20 bacon Exp $
+ * $Id: class.h,v 1.2 2005-05-24 03:28:31 bacon Exp $
  */
 
 #ifndef _XP_STX_CLASS_H_
@@ -18,11 +18,19 @@
 #define XP_STX_CLASS_POOLDICT    6
 #define XP_STX_CLASS_CATEGORY    7
 
+#define XP_STX_METACLASS_SIZE        6
+#define XP_STX_METACLASS_NAME        0
+#define XP_STX_METACLASS_SPEC        1
+#define XP_STX_METACLASS_METHODS     2
+#define XP_STX_METACLASS_SUPERCLASS  3
+#define XP_STX_METACLASS_VARIABLES   4
+#define XP_STX_METACLASS_CLASS       5
+
 struct xp_stx_class_t
 {
 	xp_stx_objhdr_t header;
 	xp_stx_word_t name;
-	xp_stx_word_t spec;
+	xp_stx_word_t spec; /* indexable: 1, nfields: the rest */
 	xp_stx_word_t methods;
 	xp_stx_word_t superclass;
 	xp_stx_word_t variables;
@@ -31,7 +39,19 @@ struct xp_stx_class_t
 	xp_stx_word_t category;
 };
 
+struct xp_stx_metaclass_t
+{
+	xp_stx_objhdr_t header;
+	xp_stx_word_t name;
+	xp_stx_word_t spec;
+	xp_stx_word_t methods;
+	xp_stx_word_t superclass;
+	xp_stx_word_t variables;
+	xp_stx_word_t instance_class;
+};
+
 typedef struct xp_stx_class_t xp_stx_class_t;
+typedef struct xp_stx_metaclass_t xp_stx_metaclass_t;
 
 #ifdef __cplusplus
 extern "C" {
