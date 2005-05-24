@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.4 2005-05-23 16:07:39 bacon Exp $
+ * $Id: bootstrp.c,v 1.5 2005-05-24 03:28:31 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -22,6 +22,7 @@ struct class_info_t
 	const xp_stx_char_t* instance_variables;
 	const xp_stx_char_t* class_variables;
 	const xp_stx_char_t* pool_dictionaries;
+	const int is_indexable;
 };
 
 typedef struct class_info_t class_info_t;
@@ -32,126 +33,144 @@ static class_info_t class_info[] =
 		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL 
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("UndefinedObject"),
 		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{ 
 		XP_STX_TEXT("Behavior"),
 		XP_STX_TEXT("Object"),
 		XP_STX_TEXT("name instanceSize methods superclass intsanceVariables classVariables poolDictionaries category"),
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{ 
 		XP_STX_TEXT("Class"),
 		XP_STX_TEXT("Behavior"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{ 
 		XP_STX_TEXT("Metaclass"),
 		XP_STX_TEXT("Behavior"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("Block"),
 		XP_STX_TEXT("Object"),
 		XP_STX_TEXT("context argCount argLoc bytePointer"),
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("Boolean"),
 		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("True"),
 		XP_STX_TEXT("Boolean"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("False"),
 		XP_STX_TEXT("Boolean"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL 
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("Context"),
 		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("Method"),
 		XP_STX_TEXT("Object"),
 		XP_STX_TEXT("text message bytecodes literals stackSize temporarySize class"),
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("Magnitude"),
 		XP_STX_TEXT("Object"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("Collection"),
 		XP_STX_TEXT("Magnitude"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	},
 	{
 		XP_STX_TEXT("IndexedCollection"),
 		XP_STX_TEXT("Collection"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		1
 	},
 	{
 		XP_STX_TEXT("Array"),
 		XP_STX_TEXT("IndexedCollection"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		1
 	},
 	{
 		XP_STX_TEXT("SymbolTable"),
 		XP_STX_TEXT("IndexedCollection"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		1
 	},
 	{
 		XP_STX_TEXT("SystemDictionary"),
 		XP_STX_TEXT("IndexedCollection"),
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		1
 	},
 	{
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		XP_NULL
+		XP_NULL,
+		0
 	}
 };
 
@@ -279,16 +298,16 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 
 	/* (Symlink class) setSpec: CLASS_SIZE */
 	XP_STX_AT(stx,class_SymlinkMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT(XP_STX_CLASS_SIZE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 	/* (Symbol class) setSpec: CLASS_SIZE */
 	XP_STX_AT(stx,class_SymbolMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT(XP_STX_CLASS_SIZE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 	/* (Metaclass class) setSpec: CLASS_SIZE */
 	XP_STX_AT(stx,class_MetaclassMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT(XP_STX_CLASS_SIZE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 	/* (Pairlink class) setSpec: CLASS_SIZE */
 	XP_STX_AT(stx,class_PairlinkMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT(XP_STX_CLASS_SIZE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 
 	/* #Symlink */
 	symbol_Symlink = xp_stx_new_symbol (stx, XP_STX_TEXT("Symlink"));
@@ -328,7 +347,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 	class_info_t* p;
 	xp_stx_word_t class, superclass, array;
 	xp_stx_class_t* class_obj, * superclass_obj;
-	xp_stx_word_t n, spec = 0;
+	xp_stx_word_t n, spec;
 
 	xp_stx_assert (stx->class_array != stx->nil);
 
@@ -343,6 +362,10 @@ static void __create_builtin_classes (xp_stx_t* stx)
 
 		class_obj->superclass = (p->superclass == XP_NULL)?
 			stx->nil: xp_stx_lookup_class(stx,p->superclass);
+	}
+		
+	for (p = class_info; p->name != XP_NULL; p++) {
+		spec = 0;
 
 		if (p->superclass != XP_NULL) {
 			superclass = xp_stx_lookup_class(stx,p->superclass);
@@ -350,7 +373,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 			while (superclass != stx->nil) {
 				superclass_obj = (xp_stx_class_t*)
 					XP_STX_WORD_OBJECT(stx,superclass);
-				spec += XP_STX_FROM_SMALLINT(superclass_obj->spec);
+				spec += XP_STX_FROM_SMALLINT(superclass_obj->spec >> 1);
 				superclass = superclass_obj->superclass;
 			}
 		}
@@ -360,9 +383,9 @@ static void __create_builtin_classes (xp_stx_t* stx)
 			array = xp_stx_new_array (stx, n);
 			__set_names (stx, XP_STX_DATA(stx,array), p->instance_variables);
 			class_obj->variables = array; 
-xp_printf (L"%s, spec = %d\n", p->name, spec + n);
-			class_obj->spec = XP_STX_TO_SMALLINT(spec + n);
 		}
+
+		class_obj->spec = XP_STX_TO_SMALLINT(((spec + n) << 1) | p->is_indexable);
 
 		if (p->class_variables != XP_NULL) {
 			n = __count_names (p->class_variables);
