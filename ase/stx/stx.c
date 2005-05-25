@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.28 2005-05-23 14:43:03 bacon Exp $
+ * $Id: stx.c,v 1.29 2005-05-25 16:44:05 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -32,6 +32,8 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity)
 	stx->class_metaclass = XP_STX_NIL;
 	stx->class_pairlink = XP_STX_NIL;
 
+	stx->class_object = XP_STX_NIL;
+	stx->class_class = XP_STX_NIL;
 	stx->class_array = XP_STX_NIL;
 
 	stx->__wantabort = xp_false;
