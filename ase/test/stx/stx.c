@@ -22,8 +22,10 @@ void print_symbol_names (xp_stx_t* stx, xp_stx_word_t sym)
 
 void print_symbol_names_2 (xp_stx_t* stx, xp_stx_word_t idx)
 {
-	xp_stx_word_t key = XP_STX_AT(stx,idx,1);
-	xp_printf (XP_TEXT("%lu [%s]\n"), (unsigned long)key, &XP_STX_CHARAT(stx,key,0));
+	xp_stx_word_t key = XP_STX_AT(stx,idx,XP_STX_PAIRLINK_KEY);
+	xp_stx_word_t value = XP_STX_AT(stx,idx,XP_STX_PAIRLINK_VALUE);
+	xp_printf (XP_TEXT("%lu [%s] %lu\n"), 
+		(unsigned long)key, &XP_STX_CHARAT(stx,key,0), (unsigned long)value);
 }
 
 int xp_main (int argc, xp_char_t* argv[])
@@ -89,6 +91,35 @@ int xp_main (int argc, xp_char_t* argv[])
 				(unsigned long)obj->name,
 				XP_STX_DATA(&stx, obj->name));
 			n = obj->superclass;
+		}
+	}
+	xp_printf (XP_TEXT("-------------\n"));
+
+	{
+		xp_stx_word_t n, x;
+		xp_stx_metaclass_t* obj;
+		xp_stx_class_t* xobj;
+
+		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("Array"));
+		n = XP_STX_CLASS(&stx,n);
+		xp_printf (XP_TEXT("Class hierarchy for the class Array class\n"));
+
+		while (n != stx.nil) {
+			if (n == stx.class_class) break;
+			obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(&stx,n);
+			x = obj->instance_class;
+			xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,x);
+			xp_printf (XP_TEXT("%lu, %s class\n"), 
+				(unsigned long)xobj->name,
+				XP_STX_DATA(&stx, xobj->name));
+			n = obj->superclass;
+		}
+		while (n != stx.nil) {
+			xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,n);
+			xp_printf (XP_TEXT("%lu, %s\n"), 
+				(unsigned long)xobj->name,
+				XP_STX_DATA(&stx, xobj->name));
+			n = xobj->superclass;
 		}
 	}
 	xp_printf (XP_TEXT("-------------\n"));

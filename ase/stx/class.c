@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.6 2005-05-24 03:29:43 bacon Exp $
+ * $Id: class.c,v 1.7 2005-05-25 16:44:05 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -15,12 +15,14 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 
 	meta = xp_stx_alloc_word_object (stx, XP_STX_METACLASS_SIZE);
 	XP_STX_CLASS(stx,meta) = stx->class_metaclass;
+	/* the spec of the metaclass must be the spec of its
+	 * instance. so the XP_STX_CLASS_SIZE is set */
 	XP_STX_AT(stx,meta,XP_STX_METACLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_METACLASS_SIZE << 1) | 0x00);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 	
+	/* the spec of the class is set later in __create_builtin_classes */
 	class = xp_stx_alloc_word_object (stx, XP_STX_CLASS_SIZE);
 	XP_STX_CLASS(stx,class) = meta;
-
 	class_name = xp_stx_new_symbol (stx, name);
 	XP_STX_AT(stx,class,XP_STX_CLASS_NAME) = class_name;
 
@@ -29,30 +31,6 @@ xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name)
 		class_name, class);
 
 	return class;
-}
-
-xp_stx_word_t xp_stx_new_metaclass (xp_stx_t* stx, xp_stx_word_t class)
-{
-	meta = xp_stx_alloc_word_object (stx, XP_STX_METACLASS_SIZE);
-	meta_obj = meta;
-
-	if (class == stx->class_class) {
-		/*
-		 * "Object class superclass" returns "Class"
-		 * whereas "Class subclasses" just returns an empty array
-		 * because "Object class" is not registered as a subclass of 
-		 * "Class".
-		 */
-		meta_obj->superclass = stx->class_class;
-	}
-	else {
-		meta_obj->superclass = (class, SUPERCLASS)->class;
-	}
-
-	meta_obj->name = class_obj->name;
-	meta_obj->instance_class = class;
-
-	return meta;
 }
 
 xp_stx_word_t xp_stx_lookup_class (xp_stx_t* stx, const xp_stx_char_t* name)
