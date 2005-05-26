@@ -76,6 +76,42 @@ void print_metaclass_hierachy (xp_stx_t* stx, const xp_char_t* name)
 	}
 }
 
+void print_class_name (xp_stx_t* stx, xp_stx_word_t class, int tabs)
+{
+	xp_stx_class_t* xobj;
+	xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,class);
+
+	while (tabs-- > 0) xp_printf (XP_TEXT("  "));
+
+	xp_printf (XP_TEXT("%s [%lu]\n"), 
+		XP_STX_DATA(stx, xobj->name),
+		(unsigned long)xobj->name);
+}
+
+void print_subclass_names (xp_stx_t* stx, xp_stx_word_t class, int tabs)
+{
+	xp_stx_class_t* obj;
+
+	obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,class);
+	print_class_name (stx, class, tabs);
+
+	if (obj->subclasses != stx->nil) {
+		xp_stx_word_t count = XP_STX_SIZE(stx, obj->subclasses);
+		while (count-- > 0) {
+			print_subclass_names (stx, 
+				XP_STX_AT(stx,obj->subclasses,count), tabs + 1);
+		}
+	}
+}
+
+void print_subclasses (xp_stx_t* stx, const xp_char_t* name)
+{
+	xp_stx_word_t class;
+	class = xp_stx_lookup_class (stx, name);	
+	print_subclass_names (stx, class, 0);
+}
+
+
 int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_stx_t stx;
@@ -130,6 +166,9 @@ int xp_main (int argc, xp_char_t* argv[])
 	print_class_hierachy (&stx, XP_STX_TEXT("Class"));
 	xp_printf (XP_TEXT("-------------\n"));
 	print_metaclass_hierachy (&stx, XP_STX_TEXT("Class"));
+	xp_printf (XP_TEXT("-------------\n"));
+
+	print_subclasses (&stx, XP_STX_TEXT("Object"));
 	xp_printf (XP_TEXT("-------------\n"));
 
 #if 0

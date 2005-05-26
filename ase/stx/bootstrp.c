@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.7 2005-05-25 16:44:05 bacon Exp $
+ * $Id: bootstrp.c,v 1.8 2005-05-26 15:39:32 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -11,8 +11,13 @@
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
 static void __create_builtin_classes (xp_stx_t* stx);
+
 static xp_stx_word_t __count_names (const xp_stx_char_t* str);
 static void __set_names (
+	xp_stx_t* stx, xp_stx_word_t* array, const xp_stx_char_t* str);
+
+static xp_stx_word_t __count_subclasses (const xp_stx_char_t* str);
+static void __set_subclasses (
 	xp_stx_t* stx, xp_stx_word_t* array, const xp_stx_char_t* str);
 
 struct class_info_t 
@@ -416,6 +421,18 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		}
 		*/
 	}
+
+	/* fill subclasses */
+	for (p = class_info; p->name != XP_NULL; p++) {
+		n = __count_subclasses (p->name);
+		array = xp_stx_new_array (stx, n);
+		__set_subclasses (stx, XP_STX_DATA(stx,array), p->name);
+
+		class = xp_stx_lookup_class(stx, p->name);
+		xp_stx_assert (class != stx->nil);
+		class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class);
+		class_obj->subclasses = array;
+	}
 }
 
 static xp_stx_word_t __count_names (const xp_stx_char_t* str)
@@ -456,4 +473,32 @@ static void __set_names (
 
 		array[n++] = xp_stx_new_symbolx (stx, name, p - name);
 	} while (1);
+}
+
+static xp_stx_word_t __count_subclasses (const xp_stx_char_t* str)
+{
+	class_info_t* p;
+	xp_stx_word_t n = 0;
+
+	for (p = class_info; p->name != XP_NULL; p++) {
+		if (p->superclass == XP_NULL) continue;
+		if (xp_stx_strcmp (str, p->superclass) == 0) n++;
+	}
+
+	return n;
+}
+
+static void __set_subclasses (
+	xp_stx_t* stx, xp_stx_word_t* array, const xp_stx_char_t* str)
+{
+	class_info_t* p;
+	xp_stx_word_t n = 0, class;
+
+	for (p = class_info; p->name != XP_NULL; p++) {
+		if (p->superclass == XP_NULL) continue;
+		if (xp_stx_strcmp (str, p->superclass) != 0) continue;
+		class = xp_stx_lookup_class (stx, p->name);
+		xp_stx_assert (class != stx->nil);
+		array[n++] = class;
+	}
 }
