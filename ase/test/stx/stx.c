@@ -28,6 +28,54 @@ void print_symbol_names_2 (xp_stx_t* stx, xp_stx_word_t idx)
 		(unsigned long)key, &XP_STX_CHARAT(stx,key,0), (unsigned long)value);
 }
 
+void print_class_hierachy (xp_stx_t* stx, const xp_char_t* name)
+{
+	xp_stx_word_t n;
+	xp_stx_class_t* obj;
+
+	n = xp_stx_lookup_class (stx, name);
+	xp_printf (XP_TEXT("Class hierarchy for the class '%s'\n"), name);
+
+	while (n != stx->nil) {
+		obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,n);
+		xp_printf (XP_TEXT("%lu, %s\n"), 
+			(unsigned long)obj->name,
+			XP_STX_DATA(stx, obj->name));
+		n = obj->superclass;
+	}
+}
+
+void print_metaclass_hierachy (xp_stx_t* stx, const xp_char_t* name)
+{
+	xp_stx_word_t n, x;
+	xp_stx_metaclass_t* obj;
+	xp_stx_class_t* xobj;
+
+	n = xp_stx_lookup_class (stx, name);
+	n = XP_STX_CLASS(stx,n);
+	xp_printf (XP_TEXT("Class hierarchy for the metaclass '%s class'\n"), name);
+
+	while (n != stx->nil) {
+		/*if (n == stx->class_class) break; */
+		if (XP_STX_CLASS(stx,n) != stx->class_metaclass) break;
+
+		obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(stx,n);
+		x = obj->instance_class;
+		xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,x);
+		xp_printf (XP_TEXT("%lu, %s class\n"), 
+			(unsigned long)xobj->name,
+			XP_STX_DATA(stx, xobj->name));
+		n = obj->superclass;
+	}
+	while (n != stx->nil) {
+		xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,n);
+		xp_printf (XP_TEXT("%lu, %s\n"), 
+			(unsigned long)xobj->name,
+			XP_STX_DATA(stx, xobj->name));
+		n = xobj->superclass;
+	}
+}
+
 int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_stx_t stx;
@@ -67,61 +115,21 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_stx_hash_traverse (&stx, stx.smalltalk, print_symbol_names_2);
 	xp_printf (XP_TEXT("-------------\n"));
 
-	{
-		xp_stx_word_t n;
-		xp_stx_class_t* obj;
-		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("UndefinedObject"));
-		obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,n);
-		xp_printf (XP_TEXT("name of class UndefinedObject: %lu, %s\n"), 
-			(unsigned long)obj->name,
-			XP_STX_DATA(&stx, obj->name));
-	}
+	print_class_hierachy (&stx, XP_STX_TEXT("Array"));
 	xp_printf (XP_TEXT("-------------\n"));
-
-	{
-		xp_stx_word_t n;
-		xp_stx_class_t* obj;
-
-		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("Array"));
-		xp_printf (XP_TEXT("Class hierarchy for the class Array\n"));
-
-		while (n != stx.nil) {
-			obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,n);
-			xp_printf (XP_TEXT("%lu, %s\n"), 
-				(unsigned long)obj->name,
-				XP_STX_DATA(&stx, obj->name));
-			n = obj->superclass;
-		}
-	}
+	print_metaclass_hierachy (&stx, XP_STX_TEXT("Array"));
 	xp_printf (XP_TEXT("-------------\n"));
-
-	{
-		xp_stx_word_t n, x;
-		xp_stx_metaclass_t* obj;
-		xp_stx_class_t* xobj;
-
-		n = xp_stx_lookup_class (&stx, XP_STX_TEXT("Array"));
-		n = XP_STX_CLASS(&stx,n);
-		xp_printf (XP_TEXT("Class hierarchy for the class Array class\n"));
-
-		while (n != stx.nil) {
-			if (n == stx.class_class) break;
-			obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(&stx,n);
-			x = obj->instance_class;
-			xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,x);
-			xp_printf (XP_TEXT("%lu, %s class\n"), 
-				(unsigned long)xobj->name,
-				XP_STX_DATA(&stx, xobj->name));
-			n = obj->superclass;
-		}
-		while (n != stx.nil) {
-			xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(&stx,n);
-			xp_printf (XP_TEXT("%lu, %s\n"), 
-				(unsigned long)xobj->name,
-				XP_STX_DATA(&stx, xobj->name));
-			n = xobj->superclass;
-		}
-	}
+	print_class_hierachy (&stx, XP_STX_TEXT("False"));
+	xp_printf (XP_TEXT("-------------\n"));
+	print_metaclass_hierachy (&stx, XP_STX_TEXT("False"));
+	xp_printf (XP_TEXT("-------------\n"));
+	print_class_hierachy (&stx, XP_STX_TEXT("Metaclass"));
+	xp_printf (XP_TEXT("-------------\n"));
+	print_metaclass_hierachy (&stx, XP_STX_TEXT("Metaclass"));
+	xp_printf (XP_TEXT("-------------\n"));
+	print_class_hierachy (&stx, XP_STX_TEXT("Class"));
+	xp_printf (XP_TEXT("-------------\n"));
+	print_metaclass_hierachy (&stx, XP_STX_TEXT("Class"));
 	xp_printf (XP_TEXT("-------------\n"));
 
 #if 0
