@@ -1,8 +1,8 @@
 /*
- * $Id: lisp.c,v 1.8 2005-04-24 07:48:16 bacon Exp $
+ * $Id: lisp.c,v 1.9 2005-05-28 13:34:26 bacon Exp $
  */
 
-#include <xp/lisp/lisp.h>
+#include <xp/lsp/lisp.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 

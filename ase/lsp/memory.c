@@ -1,9 +1,9 @@
 /*
- * $Id: memory.c,v 1.10 2005-04-24 07:48:16 bacon Exp $
+ * $Id: memory.c,v 1.11 2005-05-28 13:34:26 bacon Exp $
  */
 
-#include <xp/lisp/memory.h> 
-#include <xp/lisp/primitive.h>
+#include <xp/lsp/memory.h> 
+#include <xp/lsp/primitive.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 #include <xp/bas/dprint.h>

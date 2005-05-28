@@ -1,8 +1,8 @@
 /*
- * $Id: env.c,v 1.5 2005-04-24 07:48:16 bacon Exp $
+ * $Id: env.c,v 1.6 2005-05-28 13:34:26 bacon Exp $
  */
 
-#include <xp/lisp/env.h>
+#include <xp/lsp/env.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 

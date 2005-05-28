@@ -1,23 +1,15 @@
 /*
- * $Id: eval.c,v 1.6 2005-04-24 07:48:16 bacon Exp $
+ * $Id: eval.c,v 1.7 2005-05-28 13:34:26 bacon Exp $
  */
 
-#include <xp/lisp/lisp.h>
-#include <xp/lisp/env.h>
-#include <xp/lisp/primitive.h>
+#include <xp/lsp/lisp.h>
+#include <xp/lsp/env.h>
+#include <xp/lsp/primitive.h>
 #include <xp/bas/assert.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 static xp_lisp_obj_t* make_func (xp_lisp_t* lsp, xp_lisp_obj_t* cdr, int is_macro);
 static xp_lisp_obj_t* eval_cons (xp_lisp_t* lsp, xp_lisp_obj_t* cons);
 static xp_lisp_obj_t* apply     (xp_lisp_t* lsp, xp_lisp_obj_t* func, xp_lisp_obj_t* actual);
-
-#ifdef __cplusplus
-}
-#endif
 
 xp_lisp_obj_t* xp_lisp_eval (xp_lisp_t* lsp, xp_lisp_obj_t* obj)
 {

@@ -1,0 +1,18 @@
+SRCS = env.c token.c memory.c lisp.c primitive.c read.c eval.c print.c array.c
+OBJS = env.obj token.obj memory.obj lisp.obj primitive.obj read.obj eval.obj print.obj array.obj
+OUT = xpstx.lib
+
+CC = lcc
+CFLAGS = -I../..  -A -ansic -libcdll 
+LDFLAGS =
+LIBS = 
+
+all: $(OBJS)
+	lcclib $(OUT) $(OBJS) 
+
+clean:
+	del $(OBJS) $(OUT) *.obj
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) $(CFLAGS) -c $<

@@ -1,13 +1,13 @@
 /*
- * $Id: memory.h,v 1.4 2005-02-14 14:37:50 bacon Exp $
+ * $Id: memory.h,v 1.5 2005-05-28 13:34:26 bacon Exp $
  */
 
-#ifndef _XP_LISP_MEM_H_
-#define _XP_LISP_MEM_H_
+#ifndef _XP_LSP_MEM_H_
+#define _XP_LSP_MEM_H_
 
-#include <xp/lisp/object.h>
-#include <xp/lisp/env.h>
-#include <xp/lisp/array.h>
+#include <xp/lsp/object.h>
+#include <xp/lsp/env.h>
+#include <xp/lsp/array.h>
 
 struct xp_lisp_mem_t
 {
