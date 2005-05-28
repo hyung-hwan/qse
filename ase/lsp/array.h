@@ -1,13 +1,14 @@
 /*
- * $Id: array.h,v 1.3 2005-05-22 13:41:14 bacon Exp $
+ * $Id: array.h,v 1.4 2005-05-28 13:34:26 bacon Exp $
  */
 
-#ifndef _XP_LISP_ARRAY_H_
-#define _XP_LISP_ARRAY_H_
+#ifndef _XP_LSP_ARRAY_H_
+#define _XP_LSP_ARRAY_H_
 
 #include <xp/types.h>
 
-struct xp_lisp_array_t {
+struct xp_lisp_array_t 
+{
 	void** buffer;
 	xp_size_t size;
 	xp_size_t capacity;

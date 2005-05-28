@@ -1,8 +1,8 @@
 /*
- * $Id: array.c,v 1.5 2005-05-22 13:41:14 bacon Exp $
+ * $Id: array.c,v 1.6 2005-05-28 13:34:26 bacon Exp $
  */
 
-#include <xp/lisp/array.h>
+#include <xp/lsp/array.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 

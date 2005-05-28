@@ -1,8 +1,8 @@
 /*
- * $Id: token.c,v 1.9 2005-05-22 13:41:14 bacon Exp $
+ * $Id: token.c,v 1.10 2005-05-28 13:34:26 bacon Exp $
  */
 
-#include <xp/lisp/token.h>
+#include <xp/lsp/token.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 

@@ -1,14 +1,14 @@
 /*
- * $Id: lisp.h,v 1.4 2005-04-24 07:48:16 bacon Exp $
+ * $Id: lisp.h,v 1.5 2005-05-28 13:34:26 bacon Exp $
  */
 
-#ifndef _XP_LISP_LISP_H_
-#define _XP_LISP_LISP_H_
+#ifndef _XP_LSP_LISP_H_
+#define _XP_LSP_LISP_H_
 
-#include <xp/lisp/types.h>
-#include <xp/lisp/token.h>
-#include <xp/lisp/object.h>
-#include <xp/lisp/memory.h>
+#include <xp/lsp/types.h>
+#include <xp/lsp/token.h>
+#include <xp/lsp/object.h>
+#include <xp/lsp/memory.h>
 
 #include <xp/bas/stdio.h> // TODO: may have to remove dependency on stdio?
 

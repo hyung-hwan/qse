@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.24 2005-05-10 16:08:10 bacon Exp $
+ * $Id: macros.h,v 1.25 2005-05-28 13:34:26 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -13,7 +13,7 @@
 	#define XP_NULL ((void*)0)
 #endif
 
-#define XP_EOF  ((xp_cint_t)-1)
+#define XP_CHAR_EOF  ((xp_cint_t)-1)
 
 #define xp_sizeof(n)   (sizeof(n))
 #define xp_countof(n)  (sizeof(n) / sizeof(n[0]))

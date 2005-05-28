@@ -1,8 +1,8 @@
 /*
- * $Id: print.c,v 1.4 2005-02-14 14:37:50 bacon Exp $
+ * $Id: print.c,v 1.5 2005-05-28 13:34:26 bacon Exp $
  */
 
-#include <xp/lisp/lisp.h>
+#include <xp/lsp/lisp.h>
 
 void xp_lisp_print_debug (xp_lisp_obj_t* obj)
 {

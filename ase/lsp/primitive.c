@@ -1,10 +1,10 @@
 /*
- * $Id: primitive.c,v 1.6 2005-04-24 07:48:16 bacon Exp $
+ * $Id: primitive.c,v 1.7 2005-05-28 13:34:26 bacon Exp $
  */
 
-#include <xp/lisp/lisp.h>
-#include <xp/lisp/memory.h>
-#include <xp/lisp/primitive.h>
+#include <xp/lsp/lisp.h>
+#include <xp/lsp/memory.h>
+#include <xp/lsp/primitive.h>
 #include <xp/bas/assert.h>
 
 xp_lisp_obj_t* xp_lisp_prim_abort (xp_lisp_t* lsp, xp_lisp_obj_t* args)

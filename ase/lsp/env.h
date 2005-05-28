@@ -1,11 +1,11 @@
 /*
- * $Id: env.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: env.h,v 1.3 2005-05-28 13:34:26 bacon Exp $
  */
 
-#ifndef _XP_LISP_ENV_H_
-#define _XP_LISP_ENV_H_
+#ifndef _XP_LSP_ENV_H_
+#define _XP_LSP_ENV_H_
 
-#include <xp/lisp/object.h>
+#include <xp/lsp/object.h>
 
 struct xp_lisp_assoc_t
 {

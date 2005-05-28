@@ -1,12 +1,12 @@
 /*
- * $Id: primitive.h,v 1.2 2005-02-04 16:00:37 bacon Exp $
+ * $Id: primitive.h,v 1.3 2005-05-28 13:34:26 bacon Exp $
  */
 
-#ifndef _XP_LISP_PRIM_H_
-#define _XP_LISP_PRIM_H_
+#ifndef _XP_LSP_PRIM_H_
+#define _XP_LSP_PRIM_H_
 
-#include <xp/lisp/types.h>
-#include <xp/lisp/lisp.h>
+#include <xp/lsp/types.h>
+#include <xp/lsp/lisp.h>
 
 typedef xp_lisp_obj_t* (*xp_lisp_pimpl_t) (xp_lisp_t*, xp_lisp_obj_t*);
 

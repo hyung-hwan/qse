@@ -1,11 +1,11 @@
 /*
- * $Id: object.h,v 1.4 2005-02-14 14:37:50 bacon Exp $
+ * $Id: object.h,v 1.5 2005-05-28 13:34:26 bacon Exp $
  */
 
 #ifndef _XP_LISP_OBJECT_H_
 #define _XP_LISP_OBJECT_H_
 
-#include <xp/lisp/types.h>
+#include <xp/lsp/types.h>
 
 // object types
 enum 
