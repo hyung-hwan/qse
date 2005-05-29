@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.22 2005-05-25 16:44:05 bacon Exp $
+ * $Id: stx.h,v 1.23 2005-05-29 16:51:16 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -113,7 +113,7 @@ typedef xp_stx_cint_t (*xp_stx_getc_t) (void*);
 #define XP_STX_CHAR_OBJECT(stx,idx) \
 	((xp_stx_char_object_t*)XP_STX_OBJECT(stx,idx))
 
-#define XP_STX_AT(stx,idx,n) \
+#define XP_STX_WORDAT(stx,idx,n) \
 	(((xp_stx_word_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 #define XP_STX_BYTEAT(stx,idx,n) \
 	(((xp_stx_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])

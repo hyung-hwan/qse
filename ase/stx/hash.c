@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.17 2005-05-22 15:03:20 bacon Exp $
+ * $Id: hash.c,v 1.18 2005-05-29 16:51:16 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -16,9 +16,9 @@ xp_stx_word_t xp_stx_new_pairlink (
 	obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx, x);
 	/*
 	XP_STX_CLASS(stx,x) = stx->class_pairlink;
-	XP_STX_AT(stx,x,XP_STX_PAIRLINK_LINK) = stx->nil;
-	XP_STX_AT(stx,x,XP_STX_PAIRLINK_KEY) = key;
-	XP_STX_AT(stx,x,XP_STX_PAIRLINK_VALUE) = value;
+	XP_STX_WORDAT(stx,x,XP_STX_PAIRLINK_LINK) = stx->nil;
+	XP_STX_WORDAT(stx,x,XP_STX_PAIRLINK_KEY) = key;
+	XP_STX_WORDAT(stx,x,XP_STX_PAIRLINK_VALUE) = value;
 	*/
 	obj->header.class = stx->class_pairlink;
 	obj->link = stx->nil;
@@ -39,12 +39,12 @@ xp_stx_word_t xp_stx_hash_lookup (
 	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_WORD_INDEXED);
 
 	hash = hash % XP_STX_SIZE(stx,table);
-	link = XP_STX_AT(stx,table,hash);
+	link = XP_STX_WORDAT(stx,table,hash);
 
 	while (link != stx->nil) {
 		/*
-		if (XP_STX_AT(stx,link,XP_STX_PAIRLINK_KEY) == key) return link;
-		link = XP_STX_AT(stx,link,XP_STX_PAIRLINK_LINK);
+		if (XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_KEY) == key) return link;
+		link = XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_LINK);
 		*/
 
 		obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx,link);
@@ -65,7 +65,7 @@ xp_stx_word_t xp_stx_hash_lookup_symbol (
 	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_WORD_INDEXED);
 
 	hash = xp_stx_strhash(name) % XP_STX_SIZE(stx,table);
-	link = XP_STX_AT(stx,table,hash);
+	link = XP_STX_WORDAT(stx,table,hash);
 
 	while (link != stx->nil) {
 		obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx,link);
@@ -87,22 +87,22 @@ void xp_stx_hash_insert (
 	xp_stx_assert (XP_STX_TYPE(stx,table) == XP_STX_WORD_INDEXED);
 
 	hash = hash % XP_STX_SIZE(stx,table);
-	link = XP_STX_AT(stx,table,hash);
+	link = XP_STX_WORDAT(stx,table,hash);
 
 	if (link == stx->nil) {
-		XP_STX_AT(stx,table,hash) =
+		XP_STX_WORDAT(stx,table,hash) =
 			xp_stx_new_pairlink (stx, key, value);
 	}
 	else {
 		for (;;) {
-			if (XP_STX_AT(stx,link,1) == key) {
-				XP_STX_AT(stx,link,XP_STX_PAIRLINK_VALUE) = value;
+			if (XP_STX_WORDAT(stx,link,1) == key) {
+				XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_VALUE) = value;
 				break;		
 			}
 
-			next = XP_STX_AT(stx,link,XP_STX_PAIRLINK_LINK);
+			next = XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_LINK);
 			if (next == stx->nil) {
-				XP_STX_AT(stx,link,XP_STX_PAIRLINK_LINK) = 
+				XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_LINK) = 
 					xp_stx_new_pairlink (stx, key, value);
 				break;
 			}
@@ -120,11 +120,11 @@ void xp_stx_hash_traverse (
 	xp_stx_word_t size = XP_STX_SIZE(stx,table);
 	
 	while (size-- > 0) {
-		link = XP_STX_AT(stx,table,size);
+		link = XP_STX_WORDAT(stx,table,size);
 
 		while (link != stx->nil) {
 			func (stx,link);
-			link = XP_STX_AT(stx,link,XP_STX_PAIRLINK_LINK);
+			link = XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_LINK);
 		}
 	}
 }

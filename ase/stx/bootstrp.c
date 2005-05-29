@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.8 2005-05-26 15:39:32 bacon Exp $
+ * $Id: bootstrp.c,v 1.9 2005-05-29 16:51:16 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -18,6 +18,8 @@ static void __set_names (
 
 static xp_stx_word_t __count_subclasses (const xp_stx_char_t* str);
 static void __set_subclasses (
+	xp_stx_t* stx, xp_stx_word_t* array, const xp_stx_char_t* str);
+static void __set_metaclass_subclasses (
 	xp_stx_t* stx, xp_stx_word_t* array, const xp_stx_char_t* str);
 
 struct class_info_t 
@@ -207,11 +209,19 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 
 	/* (Object class) setSuperclass: Class */
 	object_meta = XP_STX_CLASS(stx,stx->class_object);
-	XP_STX_AT(stx,object_meta,XP_STX_METACLASS_SUPERCLASS) = stx->class_class;
+	XP_STX_WORDAT(stx,object_meta,XP_STX_METACLASS_SUPERCLASS) = stx->class_class;
 	/* instance class for Object is set here as it is not 
 	 * set in __create_builtin_classes */
-	XP_STX_AT(stx,object_meta,XP_STX_METACLASS_INSTANCE_CLASS) = stx->class_object;
+	XP_STX_WORDAT(stx,object_meta,XP_STX_METACLASS_INSTANCE_CLASS) = stx->class_object;
 
+	/* for some fun here */
+	{
+		xp_stx_word_t array;
+		array = xp_stx_new_array (stx, 1);
+		XP_STX_WORDAT(stx,array,0) = object_meta;
+		XP_STX_WORDAT(stx,stx->class_class,XP_STX_CLASS_SUBCLASSES) = array;
+	}
+			
 	/* more initialization */
 	XP_STX_CLASS(stx,stx->symbol_table) = 
 		xp_stx_lookup_class (stx, XP_STX_TEXT("SymbolTable"));
@@ -308,16 +318,16 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	XP_STX_CLASS(stx,stx->class_pairlink) = class_PairlinkMeta;
 
 	/* (Symlink class) setSpec: XP_STX_CLASS_SIZE */
-	XP_STX_AT(stx,class_SymlinkMeta,XP_STX_CLASS_SPEC) = 
+	XP_STX_WORDAT(stx,class_SymlinkMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 	/* (Symbol class) setSpec: CLASS_SIZE */
-	XP_STX_AT(stx,class_SymbolMeta,XP_STX_CLASS_SPEC) = 
+	XP_STX_WORDAT(stx,class_SymbolMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 	/* (Metaclass class) setSpec: CLASS_SIZE */
-	XP_STX_AT(stx,class_MetaclassMeta,XP_STX_CLASS_SPEC) = 
+	XP_STX_WORDAT(stx,class_MetaclassMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 	/* (Pairlink class) setSpec: CLASS_SIZE */
-	XP_STX_AT(stx,class_PairlinkMeta,XP_STX_CLASS_SPEC) = 
+	XP_STX_WORDAT(stx,class_PairlinkMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
 
 	/* specs for class_metaclass, class_pairlink, 
@@ -334,13 +344,13 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	symbol_Pairlink = xp_stx_new_symbol (stx, XP_STX_TEXT("Pairlink"));
 
 	/* Symlink setName: #Symlink */
-	XP_STX_AT(stx,stx->class_symlink,XP_STX_CLASS_NAME) = symbol_Symlink;
+	XP_STX_WORDAT(stx,stx->class_symlink,XP_STX_CLASS_NAME) = symbol_Symlink;
 	/* Symbol setName: #Symbol */
-	XP_STX_AT(stx,stx->class_symbol,XP_STX_CLASS_NAME) = symbol_Symbol;
+	XP_STX_WORDAT(stx,stx->class_symbol,XP_STX_CLASS_NAME) = symbol_Symbol;
 	/* Metaclass setName: #Metaclass */
-	XP_STX_AT(stx,stx->class_metaclass,XP_STX_CLASS_NAME) = symbol_Metaclass;
+	XP_STX_WORDAT(stx,stx->class_metaclass,XP_STX_CLASS_NAME) = symbol_Metaclass;
 	/* Pairlink setName: #Pairlink */
-	XP_STX_AT(stx,stx->class_pairlink,XP_STX_CLASS_NAME) = symbol_Pairlink;
+	XP_STX_WORDAT(stx,stx->class_pairlink,XP_STX_CLASS_NAME) = symbol_Pairlink;
 
 	/* register class names into the system dictionary */
 	xp_stx_hash_insert (stx, stx->smalltalk,
@@ -362,6 +372,8 @@ static void __create_builtin_classes (xp_stx_t* stx)
 	class_info_t* p;
 	xp_stx_word_t class, superclass, array;
 	xp_stx_class_t* class_obj, * superclass_obj;
+	xp_stx_word_t metaclass;
+	xp_stx_metaclass_t* metaclass_obj;
 	xp_stx_word_t n, spec;
 
 	xp_stx_assert (stx->class_array != stx->nil);
@@ -433,6 +445,19 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class);
 		class_obj->subclasses = array;
 	}
+
+	/* fill subclasses for metaclasses */
+	for (p = class_info; p->name != XP_NULL; p++) {
+		n = __count_subclasses (p->name);
+		array = xp_stx_new_array (stx, n);
+		__set_metaclass_subclasses (stx, XP_STX_DATA(stx,array), p->name);
+
+		class = xp_stx_lookup_class(stx, p->name);
+		xp_stx_assert (class != stx->nil);
+		metaclass = XP_STX_CLASS(stx,class);
+		metaclass_obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(stx, metaclass);
+		metaclass_obj->subclasses = array;
+	}
 }
 
 static xp_stx_word_t __count_names (const xp_stx_char_t* str)
@@ -500,5 +525,20 @@ static void __set_subclasses (
 		class = xp_stx_lookup_class (stx, p->name);
 		xp_stx_assert (class != stx->nil);
 		array[n++] = class;
+	}
+}
+
+static void __set_metaclass_subclasses (
+	xp_stx_t* stx, xp_stx_word_t* array, const xp_stx_char_t* str)
+{
+	class_info_t* p;
+	xp_stx_word_t n = 0, class;
+
+	for (p = class_info; p->name != XP_NULL; p++) {
+		if (p->superclass == XP_NULL) continue;
+		if (xp_stx_strcmp (str, p->superclass) != 0) continue;
+		class = xp_stx_lookup_class (stx, p->name);
+		xp_stx_assert (class != stx->nil);
+		array[n++] = XP_STX_CLASS(stx,class);
 	}
 }

@@ -22,13 +22,13 @@ void print_symbol_names (xp_stx_t* stx, xp_stx_word_t sym)
 
 void print_symbol_names_2 (xp_stx_t* stx, xp_stx_word_t idx)
 {
-	xp_stx_word_t key = XP_STX_AT(stx,idx,XP_STX_PAIRLINK_KEY);
-	xp_stx_word_t value = XP_STX_AT(stx,idx,XP_STX_PAIRLINK_VALUE);
+	xp_stx_word_t key = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_KEY);
+	xp_stx_word_t value = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_VALUE);
 	xp_printf (XP_TEXT("%lu [%s] %lu\n"), 
 		(unsigned long)key, &XP_STX_CHARAT(stx,key,0), (unsigned long)value);
 }
 
-void print_class_hierachy (xp_stx_t* stx, const xp_char_t* name)
+void print_superclasses (xp_stx_t* stx, const xp_char_t* name)
 {
 	xp_stx_word_t n;
 	xp_stx_class_t* obj;
@@ -45,7 +45,7 @@ void print_class_hierachy (xp_stx_t* stx, const xp_char_t* name)
 	}
 }
 
-void print_metaclass_hierachy (xp_stx_t* stx, const xp_char_t* name)
+void print_metaclass_superclasses (xp_stx_t* stx, const xp_char_t* name)
 {
 	xp_stx_word_t n, x;
 	xp_stx_metaclass_t* obj;
@@ -85,7 +85,22 @@ void print_class_name (xp_stx_t* stx, xp_stx_word_t class, int tabs)
 
 	xp_printf (XP_TEXT("%s [%lu]\n"), 
 		XP_STX_DATA(stx, xobj->name),
-		(unsigned long)xobj->name);
+		(unsigned long)class);
+}
+
+void print_metaclass_name (xp_stx_t* stx, xp_stx_word_t class, int tabs)
+{
+	xp_stx_metaclass_t* obj;
+	xp_stx_class_t* xobj;
+
+	obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(stx,class);
+	xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,obj->instance_class);
+
+	while (tabs-- > 0) xp_printf (XP_TEXT("  "));
+
+	xp_printf (XP_TEXT("%s class [%lu]\n"), 
+		XP_STX_DATA(stx, xobj->name),
+		(unsigned long)class);
 }
 
 void print_subclass_names (xp_stx_t* stx, xp_stx_word_t class, int tabs)
@@ -93,13 +108,18 @@ void print_subclass_names (xp_stx_t* stx, xp_stx_word_t class, int tabs)
 	xp_stx_class_t* obj;
 
 	obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,class);
-	print_class_name (stx, class, tabs);
+	if (obj->header.class == stx->class_metaclass) {
+		print_metaclass_name (stx, class, tabs);
+	}
+	else {
+		print_class_name (stx, class, tabs);
+	}
 
 	if (obj->subclasses != stx->nil) {
 		xp_stx_word_t count = XP_STX_SIZE(stx, obj->subclasses);
 		while (count-- > 0) {
 			print_subclass_names (stx, 
-				XP_STX_AT(stx,obj->subclasses,count), tabs + 1);
+				XP_STX_WORDAT(stx,obj->subclasses,count), tabs + 1);
 		}
 	}
 }
@@ -108,9 +128,11 @@ void print_subclasses (xp_stx_t* stx, const xp_char_t* name)
 {
 	xp_stx_word_t class;
 	class = xp_stx_lookup_class (stx, name);	
+	xp_printf (XP_TEXT("== NORMAL == \n"));
 	print_subclass_names (stx, class, 0);
+	xp_printf (XP_TEXT("== META == \n"));
+	print_subclass_names (stx, XP_STX_CLASS(stx,class), 0);
 }
-
 
 int xp_main (int argc, xp_char_t* argv[])
 {
@@ -151,21 +173,21 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_stx_hash_traverse (&stx, stx.smalltalk, print_symbol_names_2);
 	xp_printf (XP_TEXT("-------------\n"));
 
-	print_class_hierachy (&stx, XP_STX_TEXT("Array"));
+	print_superclasses (&stx, XP_STX_TEXT("Array"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_hierachy (&stx, XP_STX_TEXT("Array"));
+	print_metaclass_superclasses (&stx, XP_STX_TEXT("Array"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_class_hierachy (&stx, XP_STX_TEXT("False"));
+	print_superclasses (&stx, XP_STX_TEXT("False"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_hierachy (&stx, XP_STX_TEXT("False"));
+	print_metaclass_superclasses (&stx, XP_STX_TEXT("False"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_class_hierachy (&stx, XP_STX_TEXT("Metaclass"));
+	print_superclasses (&stx, XP_STX_TEXT("Metaclass"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_hierachy (&stx, XP_STX_TEXT("Metaclass"));
+	print_metaclass_superclasses (&stx, XP_STX_TEXT("Metaclass"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_class_hierachy (&stx, XP_STX_TEXT("Class"));
+	print_superclasses (&stx, XP_STX_TEXT("Class"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_hierachy (&stx, XP_STX_TEXT("Class"));
+	print_metaclass_superclasses (&stx, XP_STX_TEXT("Class"));
 	xp_printf (XP_TEXT("-------------\n"));
 
 	print_subclasses (&stx, XP_STX_TEXT("Object"));
