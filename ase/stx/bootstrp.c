@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.9 2005-05-29 16:51:16 bacon Exp $
+ * $Id: bootstrp.c,v 1.10 2005-05-30 07:27:29 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -11,6 +11,7 @@
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
 static void __create_builtin_classes (xp_stx_t* stx);
+static void __filein_kernel (xp_stx_t* stx);
 
 static xp_stx_word_t __count_names (const xp_stx_char_t* str);
 static void __set_names (
@@ -38,6 +39,7 @@ static class_info_t class_info[] =
 {
 	{
 		XP_STX_TEXT("Object"),
+		XP_NULL,
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
@@ -249,6 +251,8 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	XP_STX_CLASS(stx,stx->false) = 
 		xp_stx_lookup_class (stx, XP_STX_TEXT("False"));
 
+
+	__filein_kernel (stx);
 	return 0;
 }
 
@@ -540,5 +544,14 @@ static void __set_metaclass_subclasses (
 		class = xp_stx_lookup_class (stx, p->name);
 		xp_stx_assert (class != stx->nil);
 		array[n++] = XP_STX_CLASS(stx,class);
+	}
+}
+
+static void __filein_kernel (xp_stx_t* stx)
+{
+	class_info_t* p;
+
+	for (p = class_info; p->name != XP_NULL; p++) {
+		/* TODO: */
 	}
 }
