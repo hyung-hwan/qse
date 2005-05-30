@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.5 2005-05-30 15:24:12 bacon Exp $
+ * $Id: parser.h,v 1.6 2005-05-30 15:55:06 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -7,12 +7,10 @@
 
 #include <xp/stx/stx.h>
 #include <xp/stx/lexer.h>
-#include <xp/stx/token.h>
 
 struct xp_stx_parser_t
 {
 	xp_stx_lexer_t lexer;
-	xp_stx_token_t* token;
 	int error_code;
 	xp_bool_t __malloced;
 };
