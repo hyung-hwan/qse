@@ -1,5 +1,5 @@
 /*
- * $Id: lisp.c,v 1.9 2005-05-28 13:34:26 bacon Exp $
+ * $Id: lisp.c,v 1.10 2005-05-30 07:15:35 bacon Exp $
  */
 
 #include <xp/lsp/lisp.h>
@@ -23,7 +23,7 @@ xp_lisp_t* xp_lisp_new (xp_size_t mem_ubound, xp_size_t mem_ubound_inc)
 	//lsp->opt_undef_symbol = 1;
 	lsp->opt_undef_symbol   = 0;
 
-	lsp->curc               = XP_EOF;
+	lsp->curc               = XP_CHAR_EOF;
 	lsp->creader            = XP_NULL;
 	lsp->creader_extra      = XP_NULL;
 	lsp->creader_just_set   = 0;

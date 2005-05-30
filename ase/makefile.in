@@ -1,4 +1,4 @@
-SUBDIRS=bas net utl awk lsp
+SUBDIRS=bas net utl stx sce lsp
 
 all:
 	@for i in $(SUBDIRS); \

@@ -12,9 +12,9 @@ static int get_char (xp_cint_t* ch, void* arg)
 	xp_cint_t c;
    
 	c = xp_fgetc(xp_stdin);
-	if (c == XP_EOF) {
+	if (c == XP_CHAR_EOF) {
 		if (xp_ferror(xp_stdin)) return -1;
-		c = XP_EOF;
+		c = XP_CHAR_EOF;
 	}
 
 	*ch = c;
