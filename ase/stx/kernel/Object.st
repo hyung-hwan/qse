@@ -1,4 +1,4 @@
-!Objects methods!
+!Object methods!
 
 = aValue
 	^ self == aValue
