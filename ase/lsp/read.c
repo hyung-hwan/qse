@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.8 2005-04-24 07:48:16 bacon Exp $
+ * $Id: read.c,v 1.9 2005-05-30 07:15:35 bacon Exp $
  */
 
 #include <xp/lisp/lisp.h>
@@ -269,12 +269,12 @@ static int read_token (xp_lisp_t* lsp)
 		if (lsp->curc == XP_CHAR(';')) {
 			do {
 				NEXT_CHAR (lsp);
-			} while (lsp->curc != XP_CHAR('\n') && lsp->curc != XP_EOF);
+			} while (lsp->curc != XP_CHAR('\n') && lsp->curc != XP_CHAR_EOF);
 		}
 		else break;
 	}
 
-	if (lsp->curc == XP_EOF) {
+	if (lsp->curc == XP_CHAR_EOF) {
 		TOKEN_TYPE(lsp) = TOKEN_END;
 		return 0;
 	}
@@ -360,7 +360,7 @@ static int read_string (xp_lisp_t* lsp)
 	xp_cint_t code = 0;
 
 	do {
-		if (lsp->curc == XP_EOF) {
+		if (lsp->curc == XP_CHAR_EOF) {
 			TOKEN_TYPE(lsp) = TOKEN_UNTERM_STRING;
 			return 0;
 		}
