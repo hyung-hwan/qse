@@ -1,11 +1,11 @@
 /*
- * $Id: token.c,v 1.3 2005-05-23 12:06:53 bacon Exp $
+ * $Id: token.c,v 1.4 2005-05-30 15:01:01 bacon Exp $
  */
 
 #include <xp/stx/token.h>
 #include <xp/stx/misc.h>
 
-xp_stx_token_t* xp_stx_token_new (
+xp_stx_token_t* xp_stx_token_open (
 	xp_stx_token_t* token, xp_stx_word_t capacity)
 {
 	xp_stx_assert (capacity > 0);
