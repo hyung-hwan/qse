@@ -1,5 +1,5 @@
 /*
- * $Id: lexer.h,v 1.1 2005-05-30 15:24:12 bacon Exp $
+ * $Id: lexer.h,v 1.2 2005-06-02 16:14:58 bacon Exp $
  */
 
 #ifndef _XP_STX_LEXER_H_
@@ -11,6 +11,7 @@
 struct xp_stx_lexer_t
 {
 	xp_stx_token_t token;
+	const xp_stx_char_t* text;
 	xp_bool_t __malloced;
 };
 
@@ -20,8 +21,12 @@ typedef struct xp_stx_lexer_t xp_stx_lexer_t;
 extern "C" {
 #endif
 
-xp_stx_lexer_t* xp_stx_lexer_open (xp_stx_lexer_t* lexer);
+xp_stx_lexer_t* xp_stx_lexer_open (
+	xp_stx_lexer_t* lexer, const xp_stx_char_t* text);
 void xp_stx_lexer_close (xp_stx_lexer_t* lexer);
+
+void xp_stx_lexer_reset (
+	xp_stx_lexer_t* lexer, const xp_stx_char_t* text);
 xp_stx_token_t* xp_stx_lexer_consume (xp_stx_lexer_t* lexer);
 
 #ifdef __cplusplus

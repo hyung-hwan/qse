@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.6 2005-05-30 15:55:06 bacon Exp $
+ * $Id: parser.h,v 1.7 2005-06-02 16:14:58 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -23,6 +23,9 @@ extern "C" {
 
 xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser);
 void xp_stx_parser_close (xp_stx_parser_t* parser);
+
+int xp_stx_parse_method (xp_stx_parser_t* parser, 
+	xp_stx_word_t method_class, xp_stx_char_t* method_text);
 
 #ifdef __cplusplus
 }

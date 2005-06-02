@@ -6,7 +6,8 @@
 #include <xp/stx/parser.h>
 #include <xp/stx/misc.h>
 
-xp_stx_lexer_t* xp_stx_lexer_open (xp_stx_lexer_t* lexer)
+xp_stx_lexer_t* xp_stx_lexer_open (
+	xp_stx_lexer_t* lexer, const xp_stx_char_t* text)
 {
 	if (lexer == XP_NULL) {
 		lexer = (xp_stx_lexer_t*)
@@ -21,6 +22,7 @@ xp_stx_lexer_t* xp_stx_lexer_open (xp_stx_lexer_t* lexer)
 		return XP_NULL;
 	}
 
+	lexer->text = text;
 	return lexer;
 };
 
@@ -28,6 +30,13 @@ void xp_stx_lexer_close (xp_stx_lexer_t* lexer)
 {
 	xp_stx_token_close (&lexer->token);
 	if (lexer->__malloced) xp_stx_free (lexer);
+}
+
+void xp_stx_lexer_reset (
+	xp_stx_lexer_t* lexer, const xp_stx_char_t* text)
+{
+	xp_stx_token_clear (&lexer->token);
+	lexer->text = text;	
 }
 
 xp_stx_token_t* xp_stx_lexer_consume (xp_stx_lexer_t* lexer)
