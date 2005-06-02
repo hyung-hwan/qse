@@ -1,11 +1,23 @@
 /*
- * $Id: token.h,v 1.2 2005-05-22 13:41:14 bacon Exp $
+ * $Id: token.h,v 1.3 2005-06-02 16:14:58 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
 #define _XP_STX_TOKEN_H_
 
 #include <xp/stx/stx.h>
+
+enum
+{
+	XP_STX_TOKEN_END    = 0,
+	XP_STX_TOKEN_STRING = 1,
+	XP_STX_TOKEN_IDENT  = 2,
+	XP_STX_TOKEN_SELF   = 3,
+	XP_STX_TOKEN_SUPER  = 4,
+	XP_STX_TOKEN_NIL    = 5,
+	XP_STX_TOKEN_TRUE   = 6,
+	XP_STX_TOKEN_FALSE  = 7
+};
 
 struct xp_stx_token_t 
 {
