@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.23 2005-05-29 16:51:16 bacon Exp $
+ * $Id: stx.h,v 1.24 2005-06-05 05:26:24 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -21,8 +21,9 @@ typedef struct xp_stx_char_object_t xp_stx_char_object_t;
 typedef struct xp_stx_memory_t xp_stx_memory_t;
 typedef struct xp_stx_t xp_stx_t;
 
-#define XP_STX_CHAR(x) XP_CHAR(x)
-#define XP_STX_TEXT(x) XP_TEXT(x)
+#define XP_STX_CHAR(x)  XP_CHAR(x)
+#define XP_STX_TEXT(x)  XP_TEXT(x)
+#define XP_STX_CHAR_EOF XP_CHAR_EOF
 
 /* common object structure */
 struct xp_stx_objhdr_t
