@@ -12,23 +12,27 @@
 
 struct ss_t
 {
-	xp_stx_char_t* text;
+	const xp_stx_char_t* text;
 	xp_size_t size;
 	xp_size_t index;
 };
 
 typedef struct ss_t ss_t;
 
-int ss_reset (xp_stx_parser_t* parser)
+int ss_input (void* owner, int cmd, void* arg)
 {
-	return 0;
-}
+	ss_t* ss = (ss_t*)owner;
 
-int ss_consume (xp_stx_parser_t* parser, xp_stx_cint_t* c)
-{
-	ss_t* ss = (ss_t*)parser->input;
-	if (ss->index < ss->size) *c = ss->text[ss->index++];
-	else *c = XP_STX_CHAR_EOF;
+	if (cmd == XP_STX_PARSER_INPUT_OPEN) {
+		return 0;
+	}
+	else if (cmd == XP_STX_PARSER_INPUT_CLOSE) {
+		return 0;
+	}
+	else if (cmd == XP_STX_PARSER_INPUT_CONSUME) {
+		if (ss->index < ss->size) *c = ss->text[ss->index++];
+		else *c = XP_STX_CHAR_EOF;
+	}
 	return 0;
 }
 
@@ -49,8 +53,18 @@ int xp_main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
-	parser.input_reset = ss_reset;
-	parser.input_consume = ss_consume;
+	parser.input_func = ss_func;
+
+	{
+		/*
+		ss_t ss = {
+			XP_STX_TEXT("isNil\n^true"),
+			11,	
+			0
+		};
+		*/
+		xp_stx_parser_parse_method (&parser, 0, &ss);
+	}
 
 	xp_stx_parser_close (&parser);
 	xp_printf (XP_TEXT("== End of program ==\n"));
