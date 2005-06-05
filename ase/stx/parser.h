@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.9 2005-06-05 05:26:24 bacon Exp $
+ * $Id: parser.h,v 1.10 2005-06-05 16:44:05 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -12,8 +12,11 @@ enum
 {
 	XP_STX_PARSER_ERROR_NONE = 0,
 	XP_STX_PARSER_ERROR_INPUT,
+	XP_STX_PARSER_ERROR_MEMORY,
 	XP_STX_PARSER_ERROR_INVALID,
-	XP_STX_PARSER_ERROR_CHAR
+	XP_STX_PARSER_ERROR_CHAR,
+	XP_STX_PARSER_ERROR_CHARLIT,
+	XP_STX_PARSER_ERROR_STRLIT
 };
 
 typedef struct xp_stx_parser_t xp_stx_parser_t;
@@ -41,8 +44,8 @@ extern "C" {
 xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser);
 void xp_stx_parser_close (xp_stx_parser_t* parser);
 
-int xp_stx_parse_method (xp_stx_parser_t* parser, 
-	xp_stx_word_t method_class, xp_stx_char_t* method_text);
+int xp_stx_parser_parse_method (
+	xp_stx_parser_t* parser, xp_stx_word_t method_class, void* input);
 
 #ifdef __cplusplus
 }
