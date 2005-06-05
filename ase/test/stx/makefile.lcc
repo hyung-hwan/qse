@@ -1,7 +1,3 @@
-SRCS = stx.c
-OBJS = stx.obj
-OUT = stx.exe
-
 CC = lcc
 CFLAGS = -I../../.. -A -ansic -libcdll 
 #LDFLAGS = -L../../../xp/bas -L../../../xp/stx
@@ -9,8 +5,14 @@ CFLAGS = -I../../.. -A -ansic -libcdll
 LDFLAGS = -subsystem console -dynamic -s
 LIBS = ..\..\..\xp\bas\xpbas.lib ..\..\..\xp\stx\xpstx.lib
 
-all: $(OBJS)
-	lcclnk $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)
+all: stx parser
+
+stx: stx.obj
+	lcclnk $(LDFLAGS) -o stx.exe stx.obj $(LIBS)
+
+parser: parser.obj
+	lcclnk $(LDFLAGS) -o parser.exe parser.obj $(LIBS)
+
 
 clean:
 	del $(OBJS) *.obj $(OUT)

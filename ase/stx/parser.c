@@ -1,10 +1,17 @@
 /*
- * $Id: parser.c,v 1.11 2005-06-04 16:27:30 bacon Exp $
+ * $Id: parser.c,v 1.12 2005-06-05 05:26:24 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
 #include <xp/stx/token.h>
 #include <xp/stx/misc.h>
+
+static int __get_token (xp_stx_parser_t* parser);
+static int __skip_spaces (xp_stx_parser_t* parser);
+static int __skip_comment (xp_stx_parser_t* parser);
+static int __get_char (xp_stx_parser_t* parser);
+static int __unget_char (xp_stx_parser_t* parser, xp_cint_t c);
+static int __reset_input (xp_stx_parser_t* parser, void* input);
 
 xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser)
 {
@@ -21,11 +28,13 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser)
 		return XP_NULL;
 	}
 
-	parser->error_code = 0;
-	parser->text = XP_NULL;
-	parser->curc = XP_CHAR_EOF;
-	parser->curp = XP_NULL;
+	parser->error_code = XP_STX_PARSER_ERROR_NONE;
+	parser->curc = XP_STX_CHAR_EOF;
+	parser->ungotc_count = 0;
 
+	parser->input = XP_NULL;
+	parser->input_reset = XP_NULL;
+	parser->input_consume = XP_NULL;
 	return parser;
 }
 
@@ -35,19 +44,101 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 	if (parser->__malloced) xp_stx_free (parser);
 }
 
-int xp_stx_parser_parse_method (xp_stx_parser_t* parser, 
-	xp_stx_word_t method_class, xp_stx_char_t* method_text)
-{
-	xp_stx_assert (method_text != XP_NULL);
+#define RESET_INPUT(parser,in) \
+	do { if (__reset_input(parser,in) == -1) return -1; } while (0)
+#define GET_CHAR(parser) \
+	do { if (__get_char(parser) == -1) return -1; } while (0)
+#define UNGET_CHAR(parser,c) \
+	do { if (__unget_char(parser,c) == -1) return -1; } while (0)
 
-	parser->error_code = 0;
-	parser->text = method_text;
-	parser->curp = method_text;
-	NEXT_CHAR (parser);
+int xp_stx_parser_parse_method (
+	xp_stx_parser_t* parser, xp_stx_word_t method_class, void* input)
+{
+	if (parser->input == XP_NULL ||
+	    parser->input_reset == XP_NULL ||
+	    parser->input_consume == XP_NULL) {
+		parser->error_code = XP_STX_PARSER_ERROR_INVALID;
+		return -1;
+	}
+
+	RESET_INPUT (parser, input);
+	GET_CHAR (parser);
 
 	return 0;
 }
 
+static int __get_token (xp_stx_parser_t* parser)
+{
+	xp_cint_t c;
+
+	do {
+		if (__skip_spaces(parser) == -1) return -1;
+		if (parser->curc == XP_STX_CHAR('"')) {
+			GET_CHAR (parser);
+			if (__skip_comment(parser) == -1) return -1;
+		}
+		else break;
+	} while (1);
+
+	c = parser->curc;
+
+	if (xp_stx_isalpha(c)) {
+	}
+	else if (xp_stx_isdigit(c)) {
+	}
+	else if (c == XP_STX_CHAR('\'')) {
+	}
+	else {
+		parser->error_code = XP_STX_PARSER_ERROR_CHAR;
+		return -1;
+	}
+
+	return 0;
+}
+
+static int __skip_spaces (xp_stx_parser_t* parser)
+{
+	while (xp_stx_isspace(parser->curc)) GET_CHAR (parser);
+	return 0;
+}
+
+static int __skip_comment (xp_stx_parser_t* parser)
+{
+	while (parser->curc != XP_STX_CHAR('"')) GET_CHAR (parser);
+	GET_CHAR (parser);
+	return 0;
+}
+
+static int __get_char (xp_stx_parser_t* parser)
+{
+	xp_cint_t c;
+	if (parser->input_consume (parser, &c) == -1) {
+		parser->error_code = XP_STX_PARSER_ERROR_INPUT;
+		return -1;
+	}
+	parser->curc = c;
+	return 0;
+}
+
+static int __unget_char (xp_stx_parser_t* parser, xp_cint_t c)
+{
+	if (parser->ungotc_count >= xp_countof(parser->ungotc)) return -1;
+	parser->ungotc[parser->ungotc_count++] = c;
+	return 0;
+}
+
+static int __reset_input (xp_stx_parser_t* parser, void* input)
+{
+	parser->input = input;
+	if (parser->input_reset(parser) == -1) return -1;
+
+	parser->error_code = XP_STX_PARSER_ERROR_NONE;
+	parser->curc = XP_STX_CHAR_EOF;
+	parser->ungotc_count = 0;
+	return 0;
+}
+
+/*
 static int __get_token (xp_stx_parser_t* parser)
 {
 	xp_cint_t c = parser->curc;
@@ -81,3 +172,4 @@ static int __skip_spaces (xp_stx_parser_t* parser)
 {
 	while (xp_stx_isspace(parser->curc)) __get_char
 }
+*/
