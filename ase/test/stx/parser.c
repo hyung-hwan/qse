@@ -10,6 +10,10 @@
 
 #include <xp/stx/parser.h>
 
+#ifdef __linux
+#include <mcheck.h>
+#endif
+
 struct ss_t
 {
 	const xp_stx_char_t* text;
@@ -28,7 +32,7 @@ int ss_func (int cmd, void* owner, void* arg)
 		return 0;
 	}
 	else if (cmd == XP_STX_PARSER_INPUT_CLOSE) {
-		//ss_t* ss = (ss_t*)owner;
+		/*ss_t* ss = (ss_t*)owner; */
 		return 0;
 	}
 	else if (cmd == XP_STX_PARSER_INPUT_CONSUME) {
@@ -77,7 +81,6 @@ int stdio_func (int cmd, void* owner, void* arg)
 			*c = XP_STX_CHAR_EOF;
 		}
 		else *c = t;
-xp_printf (XP_TEXT("[%c]\n"), *c);
 		return 0;
 	}
 	else if (cmd == XP_STX_PARSER_INPUT_REWIND) {
@@ -91,12 +94,19 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_stx_parser_t parser;
 	xp_stx_word_t i;
 
+#ifdef __linux
+	mtrace ();
+#endif
+
+/*
 #ifndef _DOS
 	if (xp_setlocale () == -1) {
 		printf ("cannot set locale\n");
 		return -1;
 	}
 #endif
+*/
+
 
 	if (xp_stx_parser_open(&parser) == XP_NULL) {
 		xp_printf (XP_TEXT("cannot open parser\n"));
@@ -122,6 +132,16 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	xp_stx_parser_close (&parser);
 	xp_printf (XP_TEXT("== End of program ==\n"));
+
+#ifdef __linux
+	muntrace ();
+#endif
+	
+	{
+		char buf[1000];
+		snprintf (buf, sizeof(buf), "ls -l /proc/%u/fd", getpid());
+		system (buf);
+	}
 	return 0;
 }
 
