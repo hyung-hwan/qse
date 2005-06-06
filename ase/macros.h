@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.25 2005-05-28 13:34:26 bacon Exp $
+ * $Id: macros.h,v 1.26 2005-06-06 16:32:29 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -18,7 +18,6 @@
 #define xp_sizeof(n)   (sizeof(n))
 #define xp_countof(n)  (sizeof(n) / sizeof(n[0]))
 #define xp_offsetof(type,member) ((xp_size_t)&((type*)0)->member)
-
 
 #if defined(_WIN32) && defined(XP_CHAR_IS_WCHAR) && !defined(__LCC__)
     #define xp_main wmain
