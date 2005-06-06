@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.10 2005-06-05 16:44:05 bacon Exp $
+ * $Id: parser.h,v 1.11 2005-06-06 03:47:34 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -19,6 +19,15 @@ enum
 	XP_STX_PARSER_ERROR_STRLIT
 };
 
+/* input_func cmd */
+enum
+{
+	XP_STX_PARSER_INPUT_OPEN,
+	XP_STX_PARSER_INPUT_CLOSE,
+	XP_STX_PARSER_INPUT_CONSUME,
+	XP_STX_PARSER_INPUT_REWIND
+};
+
 typedef struct xp_stx_parser_t xp_stx_parser_t;
 
 struct xp_stx_parser_t
@@ -30,9 +39,8 @@ struct xp_stx_parser_t
 	xp_stx_cint_t ungotc[5];
 	xp_size_t ungotc_count;
 
-	void* input;
-	int (*input_reset) (xp_stx_parser_t*);
-	int (*input_consume) (xp_stx_parser_t*, xp_stx_cint_t*);
+	void* input_owner;
+	int (*input_func) (int cmd, void* owner, void* arg);
 
 	xp_bool_t __malloced;
 };
