@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.14 2005-06-06 03:47:34 bacon Exp $
+ * $Id: parser.c,v 1.15 2005-06-06 03:54:32 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -9,6 +9,7 @@
 static int __parse_method (
 	xp_stx_parser_t* parser, 
 	xp_stx_word_t method_class, void* input);
+static int __parse_message_pattern (xp_stx_parser_t* parser);
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
@@ -58,7 +59,6 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 #define GET_TOKEN(parser) \
 	do { if (__get_token(parser) == -1) return -1; } while (0)
 	
-
 int xp_stx_parser_parse_method (
 	xp_stx_parser_t* parser, xp_stx_word_t method_class, void* input)
 {
@@ -81,8 +81,13 @@ static int __parse_method (
 {
 	GET_CHAR (parser);
 	GET_TOKEN (parser);
-xp_printf (XP_TEXT("%d, [%s]\n"), parser->token.type, parser->token.buffer);
 
+	if (__parse_message_pattern (parser) == -1) return -1;
+	return 0;
+}
+
+static int __parse_messge_pattern (xp_stx_parser_t* parser)
+{
 	return 0;
 }
 
