@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.4 2005-06-05 16:44:05 bacon Exp $
+ * $Id: token.h,v 1.5 2005-06-06 16:01:49 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
@@ -13,7 +13,8 @@ enum
 	XP_STX_TOKEN_CHARLIT,
 	XP_STX_TOKEN_STRLIT,
 	XP_STX_TOKEN_IDENT,
-	XP_STX_TOKEN_KEYWORD
+	XP_STX_TOKEN_KEYWORD,
+	XP_STX_TOKEN_RETURN
 };
 
 struct xp_stx_token_t 

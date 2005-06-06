@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.16 2005-06-06 15:46:48 bacon Exp $
+ * $Id: parser.c,v 1.17 2005-06-06 16:01:49 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -58,6 +58,13 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 	do { if (__unget_char(parser,c) == -1) return -1; } while (0)
 #define GET_TOKEN(parser) \
 	do { if (__get_token(parser) == -1) return -1; } while (0)
+#define ADD_TOKEN_CHAR(parser,c) \
+	do {  \
+		if (xp_stx_token_addc (&(parser)->token, c) == -1) { \
+			(parser)->error_code = XP_STX_PARSER_ERROR_MEMORY; \
+			return -1; \
+		} \
+	} while (0)
 	
 int xp_stx_parser_parse_method (
 	xp_stx_parser_t* parser, xp_stx_word_t method_class, void* input)
@@ -88,6 +95,11 @@ static int __parse_method (
 
 static int __parse_message_pattern (xp_stx_parser_t* parser)
 {
+	while (parser->token.type != XP_STX_TOKEN_END) {
+		xp_printf (XP_TEXT("token: [%s] %d\n"), 
+			parser->token.buffer, parser->token.type);
+		GET_TOKEN (parser);
+	}
 	return 0;
 }
 
@@ -107,7 +119,11 @@ static int __get_token (xp_stx_parser_t* parser)
 	c = parser->curc;
 	xp_stx_token_clear (&parser->token);
 
-	if (xp_stx_isalpha(c)) {
+xp_printf (XP_TEXT("xxxxxxxxxx[%d][%d]xxx\n"), c, XP_STX_CHAR_EOF);
+	if (c == XP_STX_CHAR_EOF) {
+		parser->token.type = XP_STX_TOKEN_END;
+	}
+	else if (xp_stx_isalpha(c)) {
 		if (__get_ident(parser) == -1) return -1;
 	}
 	else if (xp_stx_isdigit(c)) {
@@ -117,6 +133,11 @@ static int __get_token (xp_stx_parser_t* parser)
 	}
 	else if (c == XP_STX_CHAR('\'')) {
 		if (__get_strlit(parser) == -1) return -1;
+	}
+	else if (c == XP_STX_CHAR('^')) {
+		parser->token.type = XP_STX_TOKEN_RETURN;
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
 	}
 	else {
 		parser->error_code = XP_STX_PARSER_ERROR_CHAR;
@@ -137,10 +158,7 @@ static int __get_ident (xp_stx_parser_t* parser)
 	parser->token.type = XP_STX_TOKEN_IDENT;
 
 	do {
-		if (xp_stx_token_addc (&parser->token, c) == -1) {
-			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
-			return -1;
-		}
+		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 		c = parser->curc;
 	} while (xp_stx_isalnum(c));
@@ -167,11 +185,7 @@ static int __get_charlit (xp_stx_parser_t* parser)
 	}	
 
 	parser->token.type = XP_STX_TOKEN_CHARLIT;
-	if (xp_stx_token_addc (&parser->token, c) == -1) {
-		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
-		return -1;
-	}
-
+	ADD_TOKEN_CHAR(parser, c);
 	GET_CHAR (parser);
 	return 0;
 }
@@ -191,10 +205,7 @@ static int __get_strlit (xp_stx_parser_t* parser)
 
 	do {
 		do {
-			if (xp_stx_token_addc (&parser->token, c) == -1) {
-				parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
-				return -1;
-			}
+			ADD_TOKEN_CHAR (parser, c);
 			GET_CHAR (parser);
 			c = parser->curc;
 
