@@ -1,15 +1,16 @@
-SRCS = stx.c
-OBJS = stx.obj
-OUT = stx.exe
-
 CC = bcc32
 CFLAGS = -I..\..\..
 LDFLAGS = -L..\..\..\xp\bas -L..\..\..\xp\stx
 LIBS = import32.lib cw32mt.lib xpbas.lib xpstx.lib
 STARTUP = c0x32w.obj
 
-all: $(OBJS)
-	ilink32 $(LDFLAGS) $(STARTUP) $(OBJS),$(OUT),,$(LIBS),,
+all: stx parser
+
+stx: stx.obj
+	ilink32 $(LDFLAGS) $(STARTUP) stx.obj,stx.exe,,$(LIBS),,
+
+parser: parser.obj
+	ilink32 $(LDFLAGS) $(STARTUP) parser.obj,parser.exe,,$(LIBS),,
 
 clean:
 	del $(OBJS) *.obj $(OUT)

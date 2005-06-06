@@ -75,17 +75,12 @@ int stdio_func (int cmd, void* owner, void* arg)
 	else if (cmd == XP_STX_PARSER_INPUT_CONSUME) {
 		stdio_t* p = (stdio_t*)owner;
 		xp_cint_t* c = (xp_cint_t*)arg;
-		if (xp_feof(p->stdio)) {
+		xp_cint_t t = xp_fgetc (p->stdio);	
+		if (t == XP_CHAR_EOF) {
+			if (xp_ferror (p->stdio)) return -1;
 			*c = XP_STX_CHAR_EOF;
 		}
-		else {
-			xp_cint_t t = xp_fgetc (p->stdio);	
-			if (t == XP_CHAR_EOF) {
-				if (xp_ferror (p->stdio)) return -1;
-				*c = XP_STX_CHAR_EOF;
-			}
-			else *c = t;
-		}	
+		else *c = t;
 		return 0;
 	}
 	else if (cmd == XP_STX_PARSER_INPUT_REWIND) {
