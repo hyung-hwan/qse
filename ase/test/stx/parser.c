@@ -137,11 +137,13 @@ int xp_main (int argc, xp_char_t* argv[])
 	muntrace ();
 #endif
 	
+#ifdef __linux
 	{
 		char buf[1000];
 		snprintf (buf, sizeof(buf), "ls -l /proc/%u/fd", getpid());
 		system (buf);
 	}
+#endif
 	return 0;
 }
 

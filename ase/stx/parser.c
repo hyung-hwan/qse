@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.15 2005-06-06 03:54:32 bacon Exp $
+ * $Id: parser.c,v 1.16 2005-06-06 15:46:48 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -86,7 +86,7 @@ static int __parse_method (
 	return 0;
 }
 
-static int __parse_messge_pattern (xp_stx_parser_t* parser)
+static int __parse_message_pattern (xp_stx_parser_t* parser)
 {
 	return 0;
 }
