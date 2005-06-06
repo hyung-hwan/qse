@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.17 2005-06-06 16:01:49 bacon Exp $
+ * $Id: parser.c,v 1.18 2005-06-06 16:14:21 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -119,7 +119,6 @@ static int __get_token (xp_stx_parser_t* parser)
 	c = parser->curc;
 	xp_stx_token_clear (&parser->token);
 
-xp_printf (XP_TEXT("xxxxxxxxxx[%d][%d]xxx\n"), c, XP_STX_CHAR_EOF);
 	if (c == XP_STX_CHAR_EOF) {
 		parser->token.type = XP_STX_TOKEN_END;
 	}
