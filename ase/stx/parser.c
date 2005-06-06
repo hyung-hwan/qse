@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.18 2005-06-06 16:14:21 bacon Exp $
+ * $Id: parser.c,v 1.19 2005-06-06 16:47:10 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -128,9 +128,11 @@ static int __get_token (xp_stx_parser_t* parser)
 	else if (xp_stx_isdigit(c)) {
 	}
 	else if (c == XP_STX_CHAR('$')) {
+		GET_CHAR (parser);
 		if (__get_charlit(parser) == -1) return -1;
 	}
 	else if (c == XP_STX_CHAR('\'')) {
+		GET_CHAR (parser);
 		if (__get_strlit(parser) == -1) return -1;
 	}
 	else if (c == XP_STX_CHAR('^')) {
@@ -177,7 +179,7 @@ static int __get_charlit (xp_stx_parser_t* parser)
 	 * character ::= "Any character in the implementation-defined character set"
 	 */
 
-	xp_cint_t c = parser->curc;
+	xp_cint_t c = parser->curc; /* even a new-line or white space would be taken */
 	if (c == XP_STX_CHAR_EOF) {
 		parser->error_code = XP_STX_PARSER_ERROR_CHARLIT;
 		return -1;
