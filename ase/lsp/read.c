@@ -1,9 +1,9 @@
 /*
- * $Id: read.c,v 1.9 2005-05-30 07:15:35 bacon Exp $
+ * $Id: read.c,v 1.10 2005-06-06 16:04:18 bacon Exp $
  */
 
-#include <xp/lisp/lisp.h>
-#include <xp/lisp/token.h>
+#include <xp/lsp/lisp.h>
+#include <xp/lsp/token.h>
 #include <xp/bas/assert.h>
 #include <xp/bas/ctype.h>
 
