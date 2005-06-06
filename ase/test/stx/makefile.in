@@ -1,16 +1,19 @@
-SRCS = stx.c
-OUTS = $(SRCS:.c=.x)
-
 CC = @CC@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@
 LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/xp/bas -L@abs_top_builddir@/xp/stx
 LIBS = @LIBS@ -lxpstx -lxpbas
 
-all: $(OUTS)
+all: stx parser
+
+stx: stx.o
+	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
+
+parser: parser.o
+	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
 
 clean:
 	rm -rf $(OUTS) *.o
 
-.SUFFIXES: .c .x
-.c.x:
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) $(CFLAGS) -c $<
