@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.19 2005-06-06 16:47:10 bacon Exp $
+ * $Id: parser.c,v 1.20 2005-06-07 16:09:57 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -13,6 +13,7 @@ static int __parse_message_pattern (xp_stx_parser_t* parser);
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
+static int __get_numlit (xp_stx_parser_t* parser, xp_bool_t negated);
 static int __get_charlit (xp_stx_parser_t* parser);
 static int __get_strlit (xp_stx_parser_t* parser);
 static int __skip_spaces (xp_stx_parser_t* parser);
@@ -95,11 +96,25 @@ static int __parse_method (
 
 static int __parse_message_pattern (xp_stx_parser_t* parser)
 {
+
+	if (parser->token.type == XP_STX_TOKEN_IDENT) { /* unary message */
+	}
+	else if (parser->token.type == XP_STX_TOKEN_BINARY) { /* binary message */
+	}
+	else if (parser->token.type == XP_STX_TOKEN_IDENT_COLON) { /* keyword message */
+		xp_stx_char_t* selector;
+	}
+	else {
+		parser->error_code = XP_STX_PARSER_ERROR_MESSAGE_SELECTOR;
+		return -1;
+	}
+/*
 	while (parser->token.type != XP_STX_TOKEN_END) {
 		xp_printf (XP_TEXT("token: [%s] %d\n"), 
 			parser->token.buffer, parser->token.type);
 		GET_TOKEN (parser);
 	}
+*/
 	return 0;
 }
 
@@ -126,6 +141,17 @@ static int __get_token (xp_stx_parser_t* parser)
 		if (__get_ident(parser) == -1) return -1;
 	}
 	else if (xp_stx_isdigit(c)) {
+		if (__get_numlit(parser, xp_false) == -1) return -1;
+	}
+	else if (c == XP_STX_CHAR('-')) {
+		parser->token.type = XP_STX_TOKEN_MINUS;
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
+		
+		c = parser->curc;
+		if (xp_stx_isdigit(c)) {
+			if (__get_numlit(parser,xp_true) == -1) return -1;	
+		}
 	}
 	else if (c == XP_STX_CHAR('$')) {
 		GET_CHAR (parser);
@@ -135,8 +161,40 @@ static int __get_token (xp_stx_parser_t* parser)
 		GET_CHAR (parser);
 		if (__get_strlit(parser) == -1) return -1;
 	}
+	else if (c == XP_STX_CHAR(':')) {
+		parser->token.type = XP_STX_TOKEN_COLON;
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
+
+		c = parser->curc;
+		if (c == XP_STX_CHAR('=')) {
+			parser->token.type = XP_STX_TOKEN_ASSIGN;
+			ADD_TOKEN_CHAR(parser, c);
+			GET_CHAR (parser);
+		}
+	}
 	else if (c == XP_STX_CHAR('^')) {
 		parser->token.type = XP_STX_TOKEN_RETURN;
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
+	}
+	else if (c == XP_STX_CHAR('|')) {
+		parser->token.type = XP_STX_TOKEN_BAR;
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
+	}
+	else if (c == XP_STX_CHAR('[')) {
+		parser->token.type = XP_STX_TOKEN_LBRACKET;
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
+	}
+	else if (c == XP_STX_CHAR(']')) {
+		parser->token.type = XP_STX_TOKEN_RBRACKET;
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
+	}
+	else if (c == XP_STX_CHAR('.')) {
+		parser->token.type = XP_STX_TOKEN_PERIOD;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
@@ -169,6 +227,39 @@ static int __get_ident (xp_stx_parser_t* parser)
 		GET_CHAR (parser);
 	}
 
+	return 0;
+}
+
+static int __get_numlit (xp_stx_parser_t* parser, xp_bool_t negated)
+{
+	/* 
+	 * <number literal> ::= ['-'] <number>
+	 * <number> ::= integer | float | scaledDecimal
+	 * integer ::= decimalInteger  | radixInteger
+	 * decimalInteger ::= digits
+	 * digits ::= digit+
+	 * radixInteger ::= radixSpecifier  'r' radixDigits
+	 * radixSpecifier := digits
+	 * radixDigits ::= (digit | uppercaseAlphabetic)+
+	 * float ::=  mantissa [exponentLetter exponent]
+	 * mantissa ::= digits'.' digits
+	 * exponent ::= ['-']decimalInteger
+	 * exponentLetter ::= 'e' | 'd' | 'q'
+	 * scaledDecimal ::= scaledMantissa 's' [fractionalDigits]
+	 * scaledMantissa ::= decimalInteger | mantissa
+	 * fractionalDigits ::= decimalInteger
+	 */
+
+	xp_cint_t c = parser->curc;
+	parser->token.type = XP_STX_TOKEN_NUMLIT;
+
+	do {
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
+		c = parser->curc;
+	} while (xp_stx_isalnum(c));
+
+	/* TODO; more */
 	return 0;
 }
 
