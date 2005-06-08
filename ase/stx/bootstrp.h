@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.h,v 1.3 2005-06-08 16:00:51 bacon Exp $
+ * $Id: bootstrp.h,v 1.4 2005-06-08 16:14:52 bacon Exp $
  */
 
 #ifndef _XP_STX_BOOTSTRP_H_
@@ -10,7 +10,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 xp_word_t xp_stx_new_array (xp_stx_t* stx, xp_word_t size);
 int xp_stx_bootstrap (xp_stx_t* stx);

@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.9 2005-06-08 16:00:51 bacon Exp $
+ * $Id: symbol.c,v 1.10 2005-06-08 16:11:18 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
@@ -36,7 +36,7 @@ xp_word_t xp_stx_new_symbol (xp_stx_t* stx, const xp_char_t* name)
 			x = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_SYMBOL);
 			xp_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
-			if (xp_stx_strxcmp (
+			if (xp_strxcmp (
 				&XP_STX_CHARAT(stx,x,0),
 				XP_STX_SIZE(stx,x), name) == 0) return x;
 
@@ -75,7 +75,7 @@ xp_word_t xp_stx_new_symbolx (
 			x = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_SYMBOL);
 			xp_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
-			if (xp_stx_strxcmp (
+			if (xp_strxcmp (
 				&XP_STX_CHARAT(stx,x,0),
 				XP_STX_SIZE(stx,x), name) == 0) return x;
 
@@ -115,7 +115,7 @@ xp_word_t xp_stx_new_symbol_pp (
 			x = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_SYMBOL);
 			xp_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
-			if (xp_stx_strxcmp (
+			if (xp_strxcmp (
 				&XP_STX_CHARAT(stx,x,0),
 				XP_STX_SIZE(stx,x), name) == 0) return x;
 

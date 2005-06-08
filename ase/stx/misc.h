@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.6 2005-06-08 16:05:41 bacon Exp $
+ * $Id: misc.h,v 1.7 2005-06-08 16:11:18 bacon Exp $
  */
 
 #ifndef _XP_STX_MISC_H_
@@ -31,18 +31,12 @@
 	#include <xp/bas/assert.h>
 	#include <xp/bas/stdarg.h>
 	#include <xp/bas/ctype.h>
+	#include <xp/bas/string.h>
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-xp_word_t xp_stx_strlen (const xp_char_t* str);
-
-int xp_stx_strcmp (
-	const xp_char_t* s1, const xp_char_t* s2);
-int xp_stx_strxcmp (
-	const xp_char_t* s1, xp_word_t len, const xp_char_t* s2);
 
 xp_word_t xp_stx_strhash (const xp_char_t* str);
 xp_word_t xp_stx_strxhash (const xp_char_t* str, xp_word_t len);

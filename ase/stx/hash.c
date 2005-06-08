@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.19 2005-06-08 16:00:51 bacon Exp $
+ * $Id: hash.c,v 1.20 2005-06-08 16:11:18 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -71,7 +71,7 @@ xp_word_t xp_stx_hash_lookup_symbol (
 		obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx,link);
 		tmp = XP_CHAR_OBJECT(stx,obj->key);
 		if (tmp->header.class == stx->class_symbol &&
-		    xp_stx_strcmp (tmp->data, name) == 0) return link;
+		    xp_strcmp (tmp->data, name) == 0) return link;
 		link = obj->link;
 	}
 
