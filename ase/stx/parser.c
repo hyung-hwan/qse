@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.23 2005-06-08 15:49:35 bacon Exp $
+ * $Id: parser.c,v 1.24 2005-06-08 16:00:51 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -8,7 +8,7 @@
 
 static int __parse_method (
 	xp_stx_parser_t* parser, 
-	xp_stx_word_t method_class, void* input);
+	xp_word_t method_class, void* input);
 static int __parse_message_pattern (xp_stx_parser_t* parser);
 static int __parse_temporaries (xp_stx_parser_t* parser);
 static int __parse_statements (xp_stx_parser_t* parser);
@@ -30,21 +30,21 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 {
 	if (parser == XP_NULL) {
 		parser = (xp_stx_parser_t*)
-			xp_stx_malloc (xp_sizeof(xp_stx_parser_t));		
+			xp_malloc (xp_sizeof(xp_stx_parser_t));		
 		if (parser == XP_NULL) return XP_NULL;
 		parser->__malloced = xp_true;
 	}
 	else parser->__malloced = xp_false;
 
 	if (xp_stx_token_open (&parser->token, 256) == XP_NULL) {
-		if (parser->__malloced) xp_stx_free (parser);
+		if (parser->__malloced) xp_free (parser);
 		return XP_NULL;
 	}
 
 	parser->stx = stx;
 
 	parser->error_code = XP_STX_PARSER_ERROR_NONE;
-	parser->curc = XP_STX_CHAR_EOF;
+	parser->curc = XP_CHAR_EOF;
 	parser->ungotc_count = 0;
 
 	parser->input_owner = XP_NULL;
@@ -55,7 +55,7 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 void xp_stx_parser_close (xp_stx_parser_t* parser)
 {
 	xp_stx_token_close (&parser->token);
-	if (parser->__malloced) xp_stx_free (parser);
+	if (parser->__malloced) xp_free (parser);
 }
 
 #define GET_CHAR(parser) \
@@ -73,7 +73,7 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 	} while (0)
 	
 int xp_stx_parser_parse_method (
-	xp_stx_parser_t* parser, xp_stx_word_t method_class, void* input)
+	xp_stx_parser_t* parser, xp_word_t method_class, void* input)
 {
 	int n;
 
@@ -90,7 +90,7 @@ int xp_stx_parser_parse_method (
 }
 
 static int __parse_method (
-	xp_stx_parser_t* parser, xp_stx_word_t method_class, void* input)
+	xp_stx_parser_t* parser, xp_word_t method_class, void* input)
 {
 	/*
 	 * <method definition> ::= 
@@ -124,7 +124,7 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 	}
 	else if (parser->token.type == XP_STX_TOKEN_KEYWORD) { 
 		/* keyword pattern */
-		xp_stx_char_t* selector;
+		xp_char_t* selector;
 	}
 	else {
 		parser->error_code = XP_STX_PARSER_ERROR_MESSAGE_SELECTOR;
@@ -160,14 +160,14 @@ static inline xp_bool_t __is_binary_char (xp_cint_t c)
 	 */
 
 	return
-		c == XP_STX_CHAR('!') || c == XP_STX_CHAR('%') ||
-		c == XP_STX_CHAR('&') || c == XP_STX_CHAR('*') ||
-		c == XP_STX_CHAR('+') || c == XP_STX_CHAR(',') ||
-		c == XP_STX_CHAR('/') || c == XP_STX_CHAR('<') ||
-		c == XP_STX_CHAR('=') || c == XP_STX_CHAR('>') ||
-		c == XP_STX_CHAR('?') || c == XP_STX_CHAR('@') ||
-		c == XP_STX_CHAR('\\') || c == XP_STX_CHAR('|') ||
-		c == XP_STX_CHAR('~') || c == XP_STX_CHAR('-');
+		c == XP_CHAR('!') || c == XP_CHAR('%') ||
+		c == XP_CHAR('&') || c == XP_CHAR('*') ||
+		c == XP_CHAR('+') || c == XP_CHAR(',') ||
+		c == XP_CHAR('/') || c == XP_CHAR('<') ||
+		c == XP_CHAR('=') || c == XP_CHAR('>') ||
+		c == XP_CHAR('?') || c == XP_CHAR('@') ||
+		c == XP_CHAR('\\') || c == XP_CHAR('|') ||
+		c == XP_CHAR('~') || c == XP_CHAR('-');
 }
 
 static int __get_token (xp_stx_parser_t* parser)
@@ -176,7 +176,7 @@ static int __get_token (xp_stx_parser_t* parser)
 
 	do {
 		if (__skip_spaces(parser) == -1) return -1;
-		if (parser->curc == XP_STX_CHAR('"')) {
+		if (parser->curc == XP_CHAR('"')) {
 			GET_CHAR (parser);
 			if (__skip_comment(parser) == -1) return -1;
 		}
@@ -186,56 +186,56 @@ static int __get_token (xp_stx_parser_t* parser)
 	c = parser->curc;
 	xp_stx_token_clear (&parser->token);
 
-	if (c == XP_STX_CHAR_EOF) {
+	if (c == XP_CHAR_EOF) {
 		parser->token.type = XP_STX_TOKEN_END;
 	}
-	else if (xp_stx_isalpha(c)) {
+	else if (xp_isalpha(c)) {
 		if (__get_ident(parser) == -1) return -1;
 	}
-	else if (xp_stx_isdigit(c)) {
+	else if (xp_isdigit(c)) {
 		if (__get_numlit(parser, xp_false) == -1) return -1;
 	}
-	else if (c == XP_STX_CHAR('$')) {
+	else if (c == XP_CHAR('$')) {
 		GET_CHAR (parser);
 		if (__get_charlit(parser) == -1) return -1;
 	}
-	else if (c == XP_STX_CHAR('\'')) {
+	else if (c == XP_CHAR('\'')) {
 		GET_CHAR (parser);
 		if (__get_strlit(parser) == -1) return -1;
 	}
-	else if (c == XP_STX_CHAR(':')) {
+	else if (c == XP_CHAR(':')) {
 		parser->token.type = XP_STX_TOKEN_COLON;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 
 		c = parser->curc;
-		if (c == XP_STX_CHAR('=')) {
+		if (c == XP_CHAR('=')) {
 			parser->token.type = XP_STX_TOKEN_ASSIGN;
 			ADD_TOKEN_CHAR(parser, c);
 			GET_CHAR (parser);
 		}
 	}
-	else if (c == XP_STX_CHAR('^')) {
+	else if (c == XP_CHAR('^')) {
 		parser->token.type = XP_STX_TOKEN_RETURN;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_STX_CHAR('|')) {
+	else if (c == XP_CHAR('|')) {
 		parser->token.type = XP_STX_TOKEN_BAR;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_STX_CHAR('[')) {
+	else if (c == XP_CHAR('[')) {
 		parser->token.type = XP_STX_TOKEN_LBRACKET;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_STX_CHAR(']')) {
+	else if (c == XP_CHAR(']')) {
 		parser->token.type = XP_STX_TOKEN_RBRACKET;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_STX_CHAR('.')) {
+	else if (c == XP_CHAR('.')) {
 		parser->token.type = XP_STX_TOKEN_PERIOD;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
@@ -265,9 +265,9 @@ static int __get_ident (xp_stx_parser_t* parser)
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 		c = parser->curc;
-	} while (xp_stx_isalnum(c));
+	} while (xp_isalnum(c));
 
-	if (c == XP_STX_CHAR(':')) {
+	if (c == XP_CHAR(':')) {
 		parser->token.type = XP_STX_TOKEN_KEYWORD;
 		GET_CHAR (parser);
 	}
@@ -302,7 +302,7 @@ static int __get_numlit (xp_stx_parser_t* parser, xp_bool_t negated)
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 		c = parser->curc;
-	} while (xp_stx_isalnum(c));
+	} while (xp_isalnum(c));
 
 	/* TODO; more */
 	return 0;
@@ -316,7 +316,7 @@ static int __get_charlit (xp_stx_parser_t* parser)
 	 */
 
 	xp_cint_t c = parser->curc; /* even a new-line or white space would be taken */
-	if (c == XP_STX_CHAR_EOF) {
+	if (c == XP_CHAR_EOF) {
 		parser->error_code = XP_STX_PARSER_ERROR_CHARLIT;
 		return -1;
 	}	
@@ -346,15 +346,15 @@ static int __get_strlit (xp_stx_parser_t* parser)
 			GET_CHAR (parser);
 			c = parser->curc;
 
-			if (c == XP_STX_CHAR_EOF) {
+			if (c == XP_CHAR_EOF) {
 				parser->error_code = XP_STX_PARSER_ERROR_STRLIT;
 				return -1;
 			}
-		} while (c != XP_STX_CHAR('\''));
+		} while (c != XP_CHAR('\''));
 
 		GET_CHAR (parser);
 		c = parser->curc;
-	} while (c == XP_STX_CHAR('\''));
+	} while (c == XP_CHAR('\''));
 
 	return 0;
 }
@@ -369,9 +369,9 @@ static int __get_binary (xp_stx_parser_t* parser)
 
 	ADD_TOKEN_CHAR (parser, c);
 
-	if (c == XP_STX_CHAR('<')) {
+	if (c == XP_CHAR('<')) {
 /*
-		const xp_stx_char_t* p = XP_TEXT("primitive:");
+		const xp_char_t* p = XP_TEXT("primitive:");
 
 		do {
 		GET_CHAR (parser);
@@ -380,10 +380,10 @@ static int __get_binary (xp_stx_parser_t* parser)
 		} while (*c)
 */
 	}
-	else if (c == XP_STX_CHAR('-')) {
+	else if (c == XP_CHAR('-')) {
 		GET_CHAR (parser);
 		c = parser->curc;
-		if (xp_stx_isdigit(c)) return __get_numlit(parser,xp_true);
+		if (xp_isdigit(c)) return __get_numlit(parser,xp_true);
 	}
 	else {
 		GET_CHAR (parser);
@@ -401,13 +401,13 @@ static int __get_binary (xp_stx_parser_t* parser)
 
 static int __skip_spaces (xp_stx_parser_t* parser)
 {
-	while (xp_stx_isspace(parser->curc)) GET_CHAR (parser);
+	while (xp_isspace(parser->curc)) GET_CHAR (parser);
 	return 0;
 }
 
 static int __skip_comment (xp_stx_parser_t* parser)
 {
-	while (parser->curc != XP_STX_CHAR('"')) GET_CHAR (parser);
+	while (parser->curc != XP_CHAR('"')) GET_CHAR (parser);
 	GET_CHAR (parser);
 	return 0;
 }
@@ -448,7 +448,7 @@ static int __open_input (xp_stx_parser_t* parser, void* input)
 	}
 
 	parser->error_code = XP_STX_PARSER_ERROR_NONE;
-	parser->curc = XP_STX_CHAR_EOF;
+	parser->curc = XP_CHAR_EOF;
 	parser->ungotc_count = 0;
 	return 0;
 }

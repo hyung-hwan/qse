@@ -15,22 +15,22 @@
 #include <xp/stx/class.h>
 #include <xp/stx/hash.h>
 
-void print_symbol_names (xp_stx_t* stx, xp_stx_word_t sym)
+void print_symbol_names (xp_stx_t* stx, xp_word_t sym)
 {
 	xp_printf (XP_TEXT("%lu [%s]\n"), (unsigned long)sym, &XP_STX_CHARAT(stx,sym,0));
 }
 
-void print_symbol_names_2 (xp_stx_t* stx, xp_stx_word_t idx)
+void print_symbol_names_2 (xp_stx_t* stx, xp_word_t idx)
 {
-	xp_stx_word_t key = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_KEY);
-	xp_stx_word_t value = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_VALUE);
+	xp_word_t key = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_KEY);
+	xp_word_t value = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_VALUE);
 	xp_printf (XP_TEXT("%lu [%s] %lu\n"), 
 		(unsigned long)key, &XP_STX_CHARAT(stx,key,0), (unsigned long)value);
 }
 
 void print_superclasses (xp_stx_t* stx, const xp_char_t* name)
 {
-	xp_stx_word_t n;
+	xp_word_t n;
 	xp_stx_class_t* obj;
 
 	n = xp_stx_lookup_class (stx, name);
@@ -47,7 +47,7 @@ void print_superclasses (xp_stx_t* stx, const xp_char_t* name)
 
 void print_metaclass_superclasses (xp_stx_t* stx, const xp_char_t* name)
 {
-	xp_stx_word_t n, x;
+	xp_word_t n, x;
 	xp_stx_metaclass_t* obj;
 	xp_stx_class_t* xobj;
 
@@ -76,7 +76,7 @@ void print_metaclass_superclasses (xp_stx_t* stx, const xp_char_t* name)
 	}
 }
 
-void print_class_name (xp_stx_t* stx, xp_stx_word_t class, int tabs)
+void print_class_name (xp_stx_t* stx, xp_word_t class, int tabs)
 {
 	xp_stx_class_t* xobj;
 	xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,class);
@@ -88,7 +88,7 @@ void print_class_name (xp_stx_t* stx, xp_stx_word_t class, int tabs)
 		(unsigned long)class);
 }
 
-void print_metaclass_name (xp_stx_t* stx, xp_stx_word_t class, int tabs)
+void print_metaclass_name (xp_stx_t* stx, xp_word_t class, int tabs)
 {
 	xp_stx_metaclass_t* obj;
 	xp_stx_class_t* xobj;
@@ -103,7 +103,7 @@ void print_metaclass_name (xp_stx_t* stx, xp_stx_word_t class, int tabs)
 		(unsigned long)class);
 }
 
-void print_subclass_names (xp_stx_t* stx, xp_stx_word_t class, int tabs)
+void print_subclass_names (xp_stx_t* stx, xp_word_t class, int tabs)
 {
 	xp_stx_class_t* obj;
 
@@ -116,7 +116,7 @@ void print_subclass_names (xp_stx_t* stx, xp_stx_word_t class, int tabs)
 	}
 
 	if (obj->subclasses != stx->nil) {
-		xp_stx_word_t count = XP_STX_SIZE(stx, obj->subclasses);
+		xp_word_t count = XP_STX_SIZE(stx, obj->subclasses);
 		while (count-- > 0) {
 			print_subclass_names (stx, 
 				XP_STX_WORDAT(stx,obj->subclasses,count), tabs + 1);
@@ -126,7 +126,7 @@ void print_subclass_names (xp_stx_t* stx, xp_stx_word_t class, int tabs)
 
 void print_subclasses (xp_stx_t* stx, const xp_char_t* name)
 {
-	xp_stx_word_t class;
+	xp_word_t class;
 	class = xp_stx_lookup_class (stx, name);	
 	xp_printf (XP_TEXT("== NORMAL == \n"));
 	print_subclass_names (stx, class, 0);
@@ -137,7 +137,7 @@ void print_subclasses (xp_stx_t* stx, const xp_char_t* name)
 int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_stx_t stx;
-	xp_stx_word_t i;
+	xp_word_t i;
 
 #ifndef _DOS
 	if (xp_setlocale () == -1) {
@@ -173,33 +173,33 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_stx_hash_traverse (&stx, stx.smalltalk, print_symbol_names_2);
 	xp_printf (XP_TEXT("-------------\n"));
 
-	print_superclasses (&stx, XP_STX_TEXT("Array"));
+	print_superclasses (&stx, XP_TEXT("Array"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_superclasses (&stx, XP_STX_TEXT("Array"));
+	print_metaclass_superclasses (&stx, XP_TEXT("Array"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_superclasses (&stx, XP_STX_TEXT("False"));
+	print_superclasses (&stx, XP_TEXT("False"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_superclasses (&stx, XP_STX_TEXT("False"));
+	print_metaclass_superclasses (&stx, XP_TEXT("False"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_superclasses (&stx, XP_STX_TEXT("Metaclass"));
+	print_superclasses (&stx, XP_TEXT("Metaclass"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_superclasses (&stx, XP_STX_TEXT("Metaclass"));
+	print_metaclass_superclasses (&stx, XP_TEXT("Metaclass"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_superclasses (&stx, XP_STX_TEXT("Class"));
+	print_superclasses (&stx, XP_TEXT("Class"));
 	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_superclasses (&stx, XP_STX_TEXT("Class"));
+	print_metaclass_superclasses (&stx, XP_TEXT("Class"));
 	xp_printf (XP_TEXT("-------------\n"));
 
-	print_subclasses (&stx, XP_STX_TEXT("Object"));
+	print_subclasses (&stx, XP_TEXT("Object"));
 	xp_printf (XP_TEXT("-------------\n"));
 
 #if 0
 	{
-		xp_stx_word_t method_name;
-		xp_stx_word_t main_class;
-		xp_stx_word_t method, context;
+		xp_word_t method_name;
+		xp_word_t main_class;
+		xp_word_t method, context;
 
-		method_name = xp_stx_new_symbol (&stx,XP_STX_TEXT("main"));
+		method_name = xp_stx_new_symbol (&stx,XP_TEXT("main"));
 
 		main_class = xp_stx_lookup_class (&stx,argv[1]);
 		if (main_class == stx.nil) {
@@ -211,7 +211,7 @@ int xp_main (int argc, xp_char_t* argv[])
 		method = xp_stx_alloc_byte_object (&stx,100);
 		XP_STX_CLASS(&stx,method) = stx.class_method;
 		*/
-		method = xp_stx_instantiate (&stx, XP_STX_TEXT("Method"));
+		method = xp_stx_instantiate (&stx, XP_TEXT("Method"));
 
 		XP_STX_BYTEAT(&stx,method,0) = PUSH_OBJECT;
 		XP_STX_BYTEAT(&stx,method,1) = main_class;
@@ -222,7 +222,7 @@ int xp_main (int argc, xp_char_t* argv[])
 		/*
 		context = xp_stx_new_context (&stx, method, stx.nil, stx.nil);
 		*/
-		context = xp_stx_instantiate (&stx, XP_STX_TEXT("Context"));
+		context = xp_stx_instantiate (&stx, XP_TEXT("Context"));
 		xp_stx_run_context (&stx, context);
 	}
 #endif

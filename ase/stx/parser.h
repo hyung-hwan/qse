@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.13 2005-06-08 03:19:31 bacon Exp $
+ * $Id: parser.h,v 1.14 2005-06-08 16:00:51 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -44,8 +44,8 @@ struct xp_stx_parser_t
 	int error_code;
 	xp_stx_token_t token;
 
-	xp_stx_cint_t curc;
-	xp_stx_cint_t ungotc[5];
+	xp_cint_t curc;
+	xp_cint_t ungotc[5];
 	xp_size_t ungotc_count;
 
 	void* input_owner;
@@ -62,7 +62,7 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx);
 void xp_stx_parser_close (xp_stx_parser_t* parser);
 
 int xp_stx_parser_parse_method (
-	xp_stx_parser_t* parser, xp_stx_word_t method_class, void* input);
+	xp_stx_parser_t* parser, xp_word_t method_class, void* input);
 
 #ifdef __cplusplus
 }

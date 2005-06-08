@@ -16,7 +16,7 @@
 
 struct ss_t
 {
-	const xp_stx_char_t* text;
+	const xp_char_t* text;
 	xp_size_t index;
 };
 
@@ -27,7 +27,7 @@ int ss_func (int cmd, void* owner, void* arg)
 
 	if (cmd == XP_STX_PARSER_INPUT_OPEN) {
 		ss_t* ss = *(ss_t**)owner;
-		ss->text = (const xp_stx_char_t*)arg;
+		ss->text = (const xp_char_t*)arg;
 		ss->index = 0;
 		return 0;
 	}
@@ -38,8 +38,8 @@ int ss_func (int cmd, void* owner, void* arg)
 	else if (cmd == XP_STX_PARSER_INPUT_CONSUME) {
 		ss_t* ss = (ss_t*)owner;
 		xp_cint_t* c = (xp_cint_t*)arg;
-		if (ss->text[ss->index] == XP_STX_CHAR('\0')) {
-			*c = XP_STX_CHAR_EOF;
+		if (ss->text[ss->index] == XP_CHAR('\0')) {
+			*c = XP_CHAR_EOF;
 		}
 		else *c = ss->text[ss->index++];
 		return 0;
@@ -78,7 +78,7 @@ int stdio_func (int cmd, void* owner, void* arg)
 		xp_cint_t t = xp_fgetc (p->stdio);	
 		if (t == XP_CHAR_EOF) {
 			if (xp_ferror (p->stdio)) return -1;
-			*c = XP_STX_CHAR_EOF;
+			*c = XP_CHAR_EOF;
 		}
 		else *c = t;
 		return 0;
@@ -92,7 +92,7 @@ int stdio_func (int cmd, void* owner, void* arg)
 int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_stx_parser_t parser;
-	xp_stx_word_t i;
+	xp_word_t i;
 
 #ifdef __linux
 	mtrace ();

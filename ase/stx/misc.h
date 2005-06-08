@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.5 2005-06-08 16:00:51 bacon Exp $
+ * $Id: misc.h,v 1.6 2005-06-08 16:05:41 bacon Exp $
  */
 
 #ifndef _XP_STX_MISC_H_
@@ -31,21 +31,6 @@
 	#include <xp/bas/assert.h>
 	#include <xp/bas/stdarg.h>
 	#include <xp/bas/ctype.h>
-
-	/*
-	#define xp_assert   xp_assert
-	#define xp_malloc   xp_malloc
-	#define xp_realloc  xp_realloc
-	#define xp_free     xp_free
-	#define xp_va_list  xp_va_list
-	#define xp_va_start xp_va_start
-	#define xp_va_end   xp_va_end  
-	#define xp_va_arg   xp_va_arg
-	#define xp_isspace  xp_isspace
-	#define xp_isdigit  xp_isdigit
-	#define xp_isalpha  xp_isalpha
-	#define xp_isalnum  xp_isalnum
-	*/
 #endif
 
 #ifdef __cplusplus
