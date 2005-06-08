@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.25 2005-06-08 15:49:35 bacon Exp $
+ * $Id: stx.h,v 1.26 2005-06-08 16:00:51 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -8,11 +8,6 @@
 #include <xp/types.h>
 #include <xp/macros.h>
 
-typedef xp_byte_t xp_byte_t;
-typedef xp_char_t xp_char_t;
-typedef xp_cint_t xp_stx_cint_t;
-typedef xp_word_t xp_word_t;
-
 typedef struct xp_stx_objhdr_t xp_stx_objhdr_t;
 typedef struct xp_stx_object_t xp_stx_object_t;
 typedef struct xp_stx_word_object_t xp_stx_word_object_t;
@@ -20,10 +15,6 @@ typedef struct xp_stx_byte_object_t xp_stx_byte_object_t;
 typedef struct xp_stx_char_object_t xp_stx_char_object_t;
 typedef struct xp_stx_memory_t xp_stx_memory_t;
 typedef struct xp_stx_t xp_stx_t;
-
-#define XP_STX_CHAR(x)  XP_CHAR(x)
-#define XP_STX_TEXT(x)  XP_TEXT(x)
-#define XP_STX_CHAR_EOF XP_CHAR_EOF
 
 /* common object structure */
 struct xp_stx_objhdr_t
@@ -90,8 +81,6 @@ struct xp_stx_t
 	xp_bool_t __wantabort; /* TODO: make it a function pointer */
 };
 
-typedef xp_stx_cint_t (*xp_stx_getc_t) (void*);
-
 #define XP_STX_NIL   0
 #define XP_STX_TRUE  1
 #define XP_STX_FALSE 2
@@ -105,13 +94,13 @@ typedef xp_stx_cint_t (*xp_stx_getc_t) (void*);
 #define XP_STX_SIZE(stx,idx) (XP_STX_ACCESS(stx,idx) >> 0x02)
 #define XP_STX_WORD_INDEXED  (0x00)
 #define XP_STX_BYTE_INDEXED  (0x01)
-#define XP_STX_CHAR_INDEXED  (0x02)
+#define XP_CHAR_INDEXED  (0x02)
 
 #define XP_STX_WORD_OBJECT(stx,idx) \
 	((xp_stx_word_object_t*)XP_STX_OBJECT(stx,idx))
 #define XP_STX_BYTE_OBJECT(stx,idx) \
 	((xp_stx_byte_object_t*)XP_STX_OBJECT(stx,idx))
-#define XP_STX_CHAR_OBJECT(stx,idx) \
+#define XP_CHAR_OBJECT(stx,idx) \
 	((xp_stx_char_object_t*)XP_STX_OBJECT(stx,idx))
 
 #define XP_STX_WORDAT(stx,idx,n) \
