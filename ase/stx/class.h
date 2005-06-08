@@ -1,5 +1,5 @@
 /*
- * $Id: class.h,v 1.5 2005-05-26 15:39:32 bacon Exp $
+ * $Id: class.h,v 1.6 2005-06-08 16:00:51 bacon Exp $
  */
 
 #ifndef _XP_STX_CLASS_H_
@@ -28,24 +28,24 @@
 struct xp_stx_class_t
 {
 	xp_stx_objhdr_t header;
-	xp_stx_word_t spec; /* indexable: 1, nfields: the rest */
-	xp_stx_word_t methods;
-	xp_stx_word_t superclass;
-	xp_stx_word_t subclasses;
-	xp_stx_word_t name;
-	xp_stx_word_t variables;
-	xp_stx_word_t class_variables;
-	xp_stx_word_t pool_dictonaries;
+	xp_word_t spec; /* indexable: 1, nfields: the rest */
+	xp_word_t methods;
+	xp_word_t superclass;
+	xp_word_t subclasses;
+	xp_word_t name;
+	xp_word_t variables;
+	xp_word_t class_variables;
+	xp_word_t pool_dictonaries;
 };
 
 struct xp_stx_metaclass_t
 {
 	xp_stx_objhdr_t header;
-	xp_stx_word_t spec;
-	xp_stx_word_t methods;
-	xp_stx_word_t superclass;
-	xp_stx_word_t subclasses;
-	xp_stx_word_t instance_class;
+	xp_word_t spec;
+	xp_word_t methods;
+	xp_word_t superclass;
+	xp_word_t subclasses;
+	xp_word_t instance_class;
 };
 
 typedef struct xp_stx_class_t xp_stx_class_t;
@@ -55,8 +55,8 @@ typedef struct xp_stx_metaclass_t xp_stx_metaclass_t;
 extern "C" {
 #endif
 
-xp_stx_word_t xp_stx_new_class (xp_stx_t* stx, const xp_stx_char_t* name);
-xp_stx_word_t xp_stx_lookup_class (xp_stx_t* stx, const xp_stx_char_t* name);
+xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name);
+xp_word_t xp_stx_lookup_class (xp_stx_t* stx, const xp_char_t* name);
 
 #ifdef __cplusplus
 }
