@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.12 2005-06-08 03:16:34 bacon Exp $
+ * $Id: parser.h,v 1.13 2005-06-08 03:19:31 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -39,6 +39,8 @@ typedef struct xp_stx_parser_t xp_stx_parser_t;
 
 struct xp_stx_parser_t
 {
+	xp_stx_t* stx;
+
 	int error_code;
 	xp_stx_token_t token;
 
@@ -56,7 +58,7 @@ struct xp_stx_parser_t
 extern "C" {
 #endif
 
-xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser);
+xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx);
 void xp_stx_parser_close (xp_stx_parser_t* parser);
 
 int xp_stx_parser_parse_method (

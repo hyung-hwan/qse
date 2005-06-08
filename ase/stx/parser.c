@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.21 2005-06-08 03:16:34 bacon Exp $
+ * $Id: parser.c,v 1.22 2005-06-08 03:19:31 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -25,7 +25,7 @@ static int __unget_char (xp_stx_parser_t* parser, xp_cint_t c);
 static int __open_input (xp_stx_parser_t* parser, void* input);
 static int __close_input (xp_stx_parser_t* parser);
 
-xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser)
+xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 {
 	if (parser == XP_NULL) {
 		parser = (xp_stx_parser_t*)
@@ -39,6 +39,8 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser)
 		if (parser->__malloced) xp_stx_free (parser);
 		return XP_NULL;
 	}
+
+	parser->stx = stx;
 
 	parser->error_code = XP_STX_PARSER_ERROR_NONE;
 	parser->curc = XP_STX_CHAR_EOF;
