@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.6 2005-06-07 16:09:57 bacon Exp $
+ * $Id: token.h,v 1.7 2005-06-08 03:16:34 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
@@ -14,6 +14,7 @@ enum
 	XP_STX_TOKEN_STRLIT,
 	XP_STX_TOKEN_NUMLIT,
 	XP_STX_TOKEN_IDENT,
+	XP_STX_TOKEN_BINARY,
 	XP_STX_TOKEN_KEYWORD,
 	XP_STX_TOKEN_MINUS,
 	XP_STX_TOKEN_ASSIGN,

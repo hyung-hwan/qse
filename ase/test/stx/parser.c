@@ -108,7 +108,7 @@ int xp_main (int argc, xp_char_t* argv[])
 */
 
 
-	if (xp_stx_parser_open(&parser) == XP_NULL) {
+	if (xp_stx_parser_open(&parser, XP_NULL) == XP_NULL) {
 		xp_printf (XP_TEXT("cannot open parser\n"));
 		return -1;
 	}
