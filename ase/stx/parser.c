@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.20 2005-06-07 16:09:57 bacon Exp $
+ * $Id: parser.c,v 1.21 2005-06-08 03:16:34 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -10,6 +10,8 @@ static int __parse_method (
 	xp_stx_parser_t* parser, 
 	xp_stx_word_t method_class, void* input);
 static int __parse_message_pattern (xp_stx_parser_t* parser);
+static int __parse_temporaries (xp_stx_parser_t* parser);
+static int __parse_statements (xp_stx_parser_t* parser);
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
@@ -87,21 +89,38 @@ int xp_stx_parser_parse_method (
 static int __parse_method (
 	xp_stx_parser_t* parser, xp_stx_word_t method_class, void* input)
 {
+	/*
+	 * <method definition> ::= 
+	 * 	<message pattern> [<temporaries> ] [<statements>]
+	 */
+
 	GET_CHAR (parser);
 	GET_TOKEN (parser);
 
 	if (__parse_message_pattern (parser) == -1) return -1;
+	if (__parse_temporaries (parser) == -1) return -1;
+	if (__parse_statements (parser) == -1) return -1;
 	return 0;
 }
 
 static int __parse_message_pattern (xp_stx_parser_t* parser)
 {
+	/* 
+	 * <message pattern> ::= 
+	 * 	<unary pattern> | <binary pattern> | <keyword pattern>
+	 * <unary pattern> ::= unarySelector
+	 * <binary pattern> ::= binarySelector <method argument>
+	 * <keyword pattern> ::= (keyword  <method argument>)+
+	 */
 
-	if (parser->token.type == XP_STX_TOKEN_IDENT) { /* unary message */
+	if (parser->token.type == XP_STX_TOKEN_IDENT) { 
+		/* unary pattern */
 	}
-	else if (parser->token.type == XP_STX_TOKEN_BINARY) { /* binary message */
+	else if (parser->token.type == XP_STX_TOKEN_BINARY) { 
+		/* binary pattern */
 	}
-	else if (parser->token.type == XP_STX_TOKEN_IDENT_COLON) { /* keyword message */
+	else if (parser->token.type == XP_STX_TOKEN_KEYWORD) { 
+		/* keyword pattern */
 		xp_stx_char_t* selector;
 	}
 	else {
@@ -116,6 +135,16 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 	}
 */
 	return 0;
+}
+
+static int __parse_temporaries (xp_stx_parser_t* parser)
+{
+	return -1;
+}
+
+static int __parse_statements (xp_stx_parser_t* parser)
+{
+	return -1;
 }
 
 static int __get_token (xp_stx_parser_t* parser)
