@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.26 2005-06-08 16:00:51 bacon Exp $
+ * $Id: stx.h,v 1.27 2005-06-08 16:14:52 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -116,8 +116,6 @@ extern "C" {
 
 xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_word_t capacity);
 void xp_stx_close (xp_stx_t* stx);
-
-int xp_stx_bootstrap (xp_stx_t* stx);
 
 #ifdef __cplusplus
 }

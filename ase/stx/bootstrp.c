@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.11 2005-06-08 16:00:51 bacon Exp $
+ * $Id: bootstrp.c,v 1.12 2005-06-08 16:11:18 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -511,7 +511,7 @@ static xp_word_t __count_subclasses (const xp_char_t* str)
 
 	for (p = class_info; p->name != XP_NULL; p++) {
 		if (p->superclass == XP_NULL) continue;
-		if (xp_stx_strcmp (str, p->superclass) == 0) n++;
+		if (xp_strcmp (str, p->superclass) == 0) n++;
 	}
 
 	return n;
@@ -525,7 +525,7 @@ static void __set_subclasses (
 
 	for (p = class_info; p->name != XP_NULL; p++) {
 		if (p->superclass == XP_NULL) continue;
-		if (xp_stx_strcmp (str, p->superclass) != 0) continue;
+		if (xp_strcmp (str, p->superclass) != 0) continue;
 		class = xp_stx_lookup_class (stx, p->name);
 		xp_assert (class != stx->nil);
 		array[n++] = class;
@@ -540,7 +540,7 @@ static void __set_metaclass_subclasses (
 
 	for (p = class_info; p->name != XP_NULL; p++) {
 		if (p->superclass == XP_NULL) continue;
-		if (xp_stx_strcmp (str, p->superclass) != 0) continue;
+		if (xp_strcmp (str, p->superclass) != 0) continue;
 		class = xp_stx_lookup_class (stx, p->name);
 		xp_assert (class != stx->nil);
 		array[n++] = XP_STX_CLASS(stx,class);
