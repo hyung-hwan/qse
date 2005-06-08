@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.24 2005-06-05 05:26:24 bacon Exp $
+ * $Id: stx.h,v 1.25 2005-06-08 15:49:35 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -8,10 +8,10 @@
 #include <xp/types.h>
 #include <xp/macros.h>
 
-typedef xp_byte_t xp_stx_byte_t;
-typedef xp_char_t xp_stx_char_t;
+typedef xp_byte_t xp_byte_t;
+typedef xp_char_t xp_char_t;
 typedef xp_cint_t xp_stx_cint_t;
-typedef xp_size_t xp_stx_word_t;
+typedef xp_word_t xp_word_t;
 
 typedef struct xp_stx_objhdr_t xp_stx_objhdr_t;
 typedef struct xp_stx_object_t xp_stx_object_t;
@@ -31,8 +31,8 @@ struct xp_stx_objhdr_t
 	/* access - type: 2; size: rest;
 	 * type - word indexed: 00 byte indexed: 01 char indexed: 10
 	 */
-	xp_stx_word_t access; 
-	xp_stx_word_t class;
+	xp_word_t access; 
+	xp_word_t class;
 };
 
 struct xp_stx_object_t
@@ -43,24 +43,24 @@ struct xp_stx_object_t
 struct xp_stx_word_object_t
 {
 	xp_stx_objhdr_t header;
-	xp_stx_word_t data[1];
+	xp_word_t data[1];
 };
 
 struct xp_stx_byte_object_t
 {
 	xp_stx_objhdr_t header;
-	xp_stx_byte_t data[1];
+	xp_byte_t data[1];
 };
 
 struct xp_stx_char_object_t
 {
 	xp_stx_objhdr_t header;
-	xp_stx_char_t data[1];
+	xp_char_t data[1];
 };
 
 struct xp_stx_memory_t
 {
-	xp_stx_word_t capacity;
+	xp_word_t capacity;
 	xp_stx_object_t** slots;
 	xp_stx_object_t** free;
 	xp_bool_t __malloced;
@@ -70,21 +70,21 @@ struct xp_stx_t
 {
 	xp_stx_memory_t memory;
 
-	xp_stx_word_t nil;
-	xp_stx_word_t true;
-	xp_stx_word_t false;
+	xp_word_t nil;
+	xp_word_t true;
+	xp_word_t false;
 
-	xp_stx_word_t symbol_table;
-	xp_stx_word_t smalltalk;
+	xp_word_t symbol_table;
+	xp_word_t smalltalk;
 
-	xp_stx_word_t class_symlink;
-	xp_stx_word_t class_symbol;
-	xp_stx_word_t class_metaclass;
-	xp_stx_word_t class_pairlink;
+	xp_word_t class_symlink;
+	xp_word_t class_symbol;
+	xp_word_t class_metaclass;
+	xp_word_t class_pairlink;
 
-	xp_stx_word_t class_object;
-	xp_stx_word_t class_class;
-	xp_stx_word_t class_array;
+	xp_word_t class_object;
+	xp_word_t class_class;
+	xp_word_t class_array;
 
 	xp_bool_t __malloced;
 	xp_bool_t __wantabort; /* TODO: make it a function pointer */
@@ -115,17 +115,17 @@ typedef xp_stx_cint_t (*xp_stx_getc_t) (void*);
 	((xp_stx_char_object_t*)XP_STX_OBJECT(stx,idx))
 
 #define XP_STX_WORDAT(stx,idx,n) \
-	(((xp_stx_word_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
+	(((xp_word_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 #define XP_STX_BYTEAT(stx,idx,n) \
-	(((xp_stx_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
+	(((xp_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 #define XP_STX_CHARAT(stx,idx,n) \
-	(((xp_stx_char_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
+	(((xp_char_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_stx_word_t capacity);
+xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_word_t capacity);
 void xp_stx_close (xp_stx_t* stx);
 
 int xp_stx_bootstrap (xp_stx_t* stx);
