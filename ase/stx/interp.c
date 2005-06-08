@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.3 2005-05-18 04:01:51 bacon Exp $
+ * $Id: interp.c,v 1.4 2005-06-08 16:00:51 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -36,18 +36,18 @@ static byte_code_func_t byte_code_funcs[] =
 	do_special
 };
 
-xp_stx_word_t xp_stx_new_method (xp_stx_t* stx)
+xp_word_t xp_stx_new_method (xp_stx_t* stx)
 {
-	xp_stx_word_t method;
+	xp_word_t method;
 	method = xp_stx_alloc_object(XP_STX_METHOD_SIZE);
 
 	return method;
 }
 
-xp_stx_word_t xp_stx_new_context (xp_stx_t* stx, 
-	xp_stx_word_t method, xp_stx_word_t args, xp_stx_word_t temp)
+xp_word_t xp_stx_new_context (xp_stx_t* stx, 
+	xp_word_t method, xp_word_t args, xp_word_t temp)
 {
-	xp_stx_word_t context;
+	xp_word_t context;
 
 	context = xp_stx_alloc_object(XP_STX_CONTEXT_SIZE);
 	XP_STX_CLASS(stx,context) = stx->class_context;
@@ -58,9 +58,9 @@ xp_stx_word_t xp_stx_new_context (xp_stx_t* stx,
 	return context;
 }
 
-xp_stx_word_t xp_stx_new_process (xp_stx_t* stx, xp_stx_word_t method)
+xp_word_t xp_stx_new_process (xp_stx_t* stx, xp_word_t method)
 {
-	xp_stx_word_t process, stx;
+	xp_word_t process, stx;
 
 	process = xp_stx_alloc_object(XP_STX_PROCESS_SIZE);
 	stack = xp_new_array(stx,50);
@@ -80,7 +80,7 @@ xp_stx_word_t xp_stx_new_process (xp_stx_t* stx, xp_stx_word_t method)
 	return process;	
 }
 
-int xp_stx_execute (xp_stx_t* stx, xp_stx_word_t process)
+int xp_stx_execute (xp_stx_t* stx, xp_word_t process)
 {
 	int low, high;
 	byte_code_func_t bcfunc;

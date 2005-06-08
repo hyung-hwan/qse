@@ -1,5 +1,5 @@
 /* 
- * $Id: context.h,v 1.2 2005-05-21 16:11:06 bacon Exp $
+ * $Id: context.h,v 1.3 2005-06-08 16:00:51 bacon Exp $
  */
 
 #ifndef _XP_STX_CONTEXT_H_
@@ -20,10 +20,10 @@
 struct xp_stx_context_t
 {
 	xp_stx_objhdr_t header;
-	xp_stx_word_t ip;
-	xp_stx_word_t method;
-	xp_stx_word_t arguments;
-	xp_stx_word_t temporaries;
+	xp_word_t ip;
+	xp_word_t method;
+	xp_word_t arguments;
+	xp_word_t temporaries;
 };
 
 typedef struct xp_stx_context_t xp_stx_context_t;
@@ -32,9 +32,9 @@ typedef struct xp_stx_context_t xp_stx_context_t;
 extern "C" {
 #endif
 
-xp_stx_word_t xp_stx_new_context (xp_stx_t* stx, 
-	xp_stx_word_t method, xp_stx_word_t args, xp_stx_word_t temp);
-int xp_stx_run_context (xp_stx_t* stx, xp_stx_word_t context);
+xp_word_t xp_stx_new_context (xp_stx_t* stx, 
+	xp_word_t method, xp_word_t args, xp_word_t temp);
+int xp_stx_run_context (xp_stx_t* stx, xp_word_t context);
 
 #ifdef __cplusplus
 }

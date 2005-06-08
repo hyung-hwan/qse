@@ -1,5 +1,5 @@
 /*
- * $Id: context.c,v 1.7 2005-05-23 14:43:03 bacon Exp $
+ * $Id: context.c,v 1.8 2005-06-08 16:00:51 bacon Exp $
  */
 
 #include <xp/stx/context.h>
@@ -7,10 +7,10 @@
 #include <xp/stx/class.h>
 #include <xp/stx/misc.h>
 
-xp_stx_word_t xp_stx_new_context (xp_stx_t* stx, 
-	xp_stx_word_t method, xp_stx_word_t args, xp_stx_word_t temp)
+xp_word_t xp_stx_new_context (xp_stx_t* stx, 
+	xp_word_t method, xp_word_t args, xp_word_t temp)
 {
-	xp_stx_word_t context;
+	xp_word_t context;
 	xp_stx_context_t* obj;
 
 	context = xp_stx_alloc_word_object(stx,XP_STX_CONTEXT_SIZE);
@@ -23,7 +23,7 @@ xp_stx_word_t xp_stx_new_context (xp_stx_t* stx,
 	*/
 
 	obj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
-	obj->header.class = xp_stx_lookup_class(stx,XP_STX_TEXT("Context"));
+	obj->header.class = xp_stx_lookup_class(stx,XP_TEXT("Context"));
 	obj->ip = XP_STX_TO_SMALLINT(0);
 	obj->method = method;
 	obj->arguments = args;
@@ -32,25 +32,25 @@ xp_stx_word_t xp_stx_new_context (xp_stx_t* stx,
 	return context;
 }
 
-static xp_stx_byte_t __fetch_byte (
+static xp_byte_t __fetch_byte (
 	xp_stx_t* stx, xp_stx_context_t* context_obj)
 {
-	xp_stx_word_t ip, method;
+	xp_word_t ip, method;
 
-	xp_stx_assert (XP_STX_IS_SMALLINT(context_obj->ip));
+	xp_assert (XP_STX_IS_SMALLINT(context_obj->ip));
 	ip = XP_STX_FROM_SMALLINT(context_obj->ip);
 	method = context_obj->method;
 
 	/* increment instruction pointer */
 	context_obj->ip = XP_STX_TO_SMALLINT(ip + 1);
 
-	xp_stx_assert (XP_STX_TYPE(stx,method) == XP_STX_BYTE_INDEXED);
+	xp_assert (XP_STX_TYPE(stx,method) == XP_STX_BYTE_INDEXED);
 	return XP_STX_BYTEAT(stx,method,ip);
 }
 
-int xp_stx_run_context (xp_stx_t* stx, xp_stx_word_t context)
+int xp_stx_run_context (xp_stx_t* stx, xp_word_t context)
 {
-	xp_stx_byte_t byte, operand;
+	xp_byte_t byte, operand;
 	xp_stx_context_t* context_obj;
 
 	context_obj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
