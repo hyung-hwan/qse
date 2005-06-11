@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.24 2005-06-08 16:00:51 bacon Exp $
+ * $Id: parser.c,v 1.25 2005-06-11 18:01:25 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -12,6 +12,7 @@ static int __parse_method (
 static int __parse_message_pattern (xp_stx_parser_t* parser);
 static int __parse_temporaries (xp_stx_parser_t* parser);
 static int __parse_statements (xp_stx_parser_t* parser);
+static int __parse_expression (xp_stx_parser_t* parser);
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
@@ -118,34 +119,77 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) { 
 		/* unary pattern */
+xp_printf (XP_TEXT("unary pattern - %s\n"), parser->token.buffer);
+		GET_TOKEN (parser);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_BINARY) { 
 		/* binary pattern */
+xp_printf (XP_TEXT("binary pattern - %s\n"), parser->token.buffer);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_KEYWORD) { 
 		/* keyword pattern */
-		xp_char_t* selector;
+xp_printf (XP_TEXT("keyword pattern - %s\n"), parser->token.buffer);
 	}
 	else {
 		parser->error_code = XP_STX_PARSER_ERROR_MESSAGE_SELECTOR;
 		return -1;
 	}
-/*
-	while (parser->token.type != XP_STX_TOKEN_END) {
-		xp_printf (XP_TEXT("token: [%s] %d\n"), 
-			parser->token.buffer, parser->token.type);
-		GET_TOKEN (parser);
-	}
-*/
+
 	return 0;
+}
+
+static inline xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
+{
+	return 
+		token->type == XP_STX_TOKEN_BINARY &&
+		token->size == 1 &&
+		token->buffer[0] == XP_CHAR('|');
 }
 
 static int __parse_temporaries (xp_stx_parser_t* parser)
 {
-	return -1;
+	if (!__is_vbar_token(&parser->token)) return 0;
+
+	GET_TOKEN (parser);
+	while (parser->token.type == XP_STX_TOKEN_IDENT) {
+xp_printf (XP_TEXT("temporary: %s\n"), parser->token.buffer);
+		GET_TOKEN (parser);
+	}
+	if (!__is_vbar_token(&parser->token)) {
+		parser->error_code = XP_STX_PARSER_ERROR_TEMPORARIES_NOT_CLOSED;
+		return -1;
+	}
+
+	GET_TOKEN (parser);
+	return 0;
 }
 
 static int __parse_statements (xp_stx_parser_t* parser)
+{
+	/*
+	 * <statements> ::=
+	 * 	(<return statement> ['.'] ) |
+	 * 	(<expression> ['.' [<statements>]])
+	 * <return statement> ::= returnOperator  <expression>
+	 * returnOperator ::= '^'
+	 */
+
+	if (parser->token.type == XP_STX_TOKEN_RETURN) {
+		if (__parse_expresssion (parser) == -1) return -1;
+		/* TODO */
+	}
+	else {
+		if (__parse_expresssion (parser) == -1) return -1;
+		if (parser->token.type == XP_STX_TOKEN_PERIOD) {
+			GET_TOKEN(parser);
+			if (__parse_statements (parser) == -1) return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int __parse_expression (xp_stx_parser_t* parser)
 {
 	return -1;
 }
@@ -217,11 +261,6 @@ static int __get_token (xp_stx_parser_t* parser)
 	}
 	else if (c == XP_CHAR('^')) {
 		parser->token.type = XP_STX_TOKEN_RETURN;
-		ADD_TOKEN_CHAR(parser, c);
-		GET_CHAR (parser);
-	}
-	else if (c == XP_CHAR('|')) {
-		parser->token.type = XP_STX_TOKEN_BAR;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
@@ -366,21 +405,9 @@ static int __get_binary (xp_stx_parser_t* parser)
 	 */
 
 	xp_cint_t c = parser->curc;
-
 	ADD_TOKEN_CHAR (parser, c);
 
-	if (c == XP_CHAR('<')) {
-/*
-		const xp_char_t* p = XP_TEXT("primitive:");
-
-		do {
-		GET_CHAR (parser);
-		c = parser->curc;
-		if (c == 'p') return __get_primitive (parser);
-		} while (*c)
-*/
-	}
-	else if (c == XP_CHAR('-')) {
+	if (c == XP_CHAR('-')) {
 		GET_CHAR (parser);
 		c = parser->curc;
 		if (xp_isdigit(c)) return __get_numlit(parser,xp_true);
@@ -390,10 +417,21 @@ static int __get_binary (xp_stx_parser_t* parser)
 		c = parser->curc;
 	}
 
+	/* up to 2 characters only */
 	if (__is_binary_char(c)) {
 		ADD_TOKEN_CHAR (parser, c);
 		GET_CHAR (parser);
+		c = parser->curc;
 	}
+
+	/* or up to any occurrences */
+	/*
+	while (__is_binary_char(c)) {
+		ADD_TOKEN_CHAR (parser, c);
+		GET_CHAR (parser);
+		c = parser->curc;
+	}
+	*/
 
 	parser->token.type = XP_STX_TOKEN_BINARY;
 	return 0;

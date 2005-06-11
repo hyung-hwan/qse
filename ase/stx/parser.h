@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.14 2005-06-08 16:00:51 bacon Exp $
+ * $Id: parser.h,v 1.15 2005-06-11 18:01:25 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -23,7 +23,8 @@ enum
 	XP_STX_PARSER_ERROR_STRLIT,
 
 	/* syntatic error */
-	XP_STX_PARSER_ERROR_MESSAGE_SELECTOR
+	XP_STX_PARSER_ERROR_MESSAGE_SELECTOR,
+	XP_STX_PARSER_ERROR_TEMPORARIES_NOT_CLOSED
 };
 
 enum
