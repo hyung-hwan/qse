@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.19 2005-06-12 16:22:03 bacon Exp $
+ * $Id: parser.h,v 1.20 2005-06-12 16:46:45 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -25,9 +25,10 @@ enum
 
 	/* syntatic error */
 	XP_STX_PARSER_ERROR_MESSAGE_SELECTOR,
-	XP_STX_PARSER_ERROR_TEMPORARIES_NOT_CLOSED,
 	XP_STX_PARSER_ERROR_ARGUMENT_NAME,
 	XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS,
+	XP_STX_PARSER_ERROR_TEMPORARIES_NOT_CLOSED,
+	XP_STX_PARSER_ERROR_TOO_MANY_TEMPORARIES,
 	XP_STX_PARSER_ERROR_EXPRESSION_START,
 	XP_STX_PARSER_ERROR_NO_PERIOD
 };
@@ -48,9 +49,12 @@ struct xp_stx_parser_t
 	xp_stx_t* stx;
 	int error_code;
 
+	xp_word_t method_class;
 	xp_stx_name_t method_name;
 	xp_char_t* argument[32];
 	xp_size_t argument_count;
+	xp_char_t* temporary[32];
+	xp_size_t temporary_count;
 
 	xp_stx_token_t token;
 	xp_cint_t curc;
