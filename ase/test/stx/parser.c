@@ -126,7 +126,8 @@ int xp_main (int argc, xp_char_t* argv[])
 		parser.input_func = stdio_func;
 		if (xp_stx_parser_parse_method (&parser, 0, 
 			(void*)XP_TEXT("test.st")) == -1) {
-			xp_printf (XP_TEXT("parser error <%d>\n"), parser.error_code);
+			xp_printf (XP_TEXT("parser error <%s>\n"), 
+			xp_stx_parser_error_string (&parser));
 		}
 	}
 
