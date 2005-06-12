@@ -1,9 +1,8 @@
 /*
- * $Id: parser.c,v 1.29 2005-06-12 16:07:23 bacon Exp $
+ * $Id: parser.c,v 1.30 2005-06-12 16:22:03 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
-#include <xp/stx/token.h>
 #include <xp/stx/misc.h>
 
 static int __parse_method (
@@ -43,7 +42,13 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 	}
 	else parser->__malloced = xp_false;
 
+	if (xp_stx_name_open (&parser->method_name, 0) == XP_NULL) {
+		if (parser->__malloced) xp_free (parser);
+		return XP_NULL;
+	}
+
 	if (xp_stx_token_open (&parser->token, 0) == XP_NULL) {
+		xp_stx_name_close (&parser->method_name);
 		if (parser->__malloced) xp_free (parser);
 		return XP_NULL;
 	}
@@ -67,6 +72,7 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 		xp_free (parser->argument[--parser->argument_count]);
 	}
 
+	xp_stx_name_close (&parser->method_name);
 	xp_stx_token_close (&parser->token);
 	if (parser->__malloced) xp_free (parser);
 }
@@ -184,7 +190,7 @@ static int __parse_unary_pattern (xp_stx_parser_t* parser)
 {
 	/* TODO: check if the method name exists */
 	if (xp_stx_name_adds(
-		&parser->method_name, parser->token.buffer) == -1) {
+		&parser->method_name, parser->token.name.buffer) == -1) {
 		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
@@ -197,7 +203,7 @@ static int __parse_binary_pattern (xp_stx_parser_t* parser)
 {
 	/* TODO: check if the method name exists */
 	if (xp_stx_name_adds(
-		&parser->method_name, parser->token.buffer) == -1) {
+		&parser->method_name, parser->token.name.buffer) == -1) {
 		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
@@ -230,7 +236,7 @@ static int __parse_keyword_pattern (xp_stx_parser_t* parser)
 {
 	do {
 		if (xp_stx_name_adds(
-			&parser->method_name, parser->token.buffer) == -1) {
+			&parser->method_name, parser->token.name.buffer) == -1) {
 			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
@@ -261,6 +267,7 @@ static int __parse_keyword_pattern (xp_stx_parser_t* parser)
 
 	/* TODO: check if the method name exists */
 	/* if it exists, collapse arguments */
+xp_printf (XP_TEXT("METHOD NAME ==> [%s]\n"), parser->method_name.buffer);
 
 	return 0;
 }
@@ -269,8 +276,8 @@ static inline xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
 {
 	return 
 		token->type == XP_STX_TOKEN_BINARY &&
-		token->size == 1 &&
-		token->buffer[0] == XP_CHAR('|');
+		token->name.size == 1 &&
+		token->name.buffer[0] == XP_CHAR('|');
 }
 
 static int __parse_temporaries (xp_stx_parser_t* parser)
@@ -279,7 +286,7 @@ static int __parse_temporaries (xp_stx_parser_t* parser)
 
 	GET_TOKEN (parser);
 	while (parser->token.type == XP_STX_TOKEN_IDENT) {
-xp_printf (XP_TEXT("temporary: %s\n"), parser->token.buffer);
+xp_printf (XP_TEXT("temporary: %s\n"), parser->token.name.buffer);
 		GET_TOKEN (parser);
 	}
 	if (!__is_vbar_token(&parser->token)) {
@@ -344,14 +351,14 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	 */
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) {
-xp_printf (XP_TEXT("identifier......[%s]\n"), parser->token.buffer);
+xp_printf (XP_TEXT("identifier......[%s]\n"), parser->token.name.buffer);
 		GET_TOKEN (parser);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_CHARLIT ||
 	         parser->token.type == XP_STX_TOKEN_STRLIT ||
 	         parser->token.type == XP_STX_TOKEN_NUMLIT) {
 		/* more literals - array symbol #xxx #(1 2 3) */
-xp_printf (XP_TEXT("literal......[%s]\n"), parser->token.buffer);
+xp_printf (XP_TEXT("literal......[%s]\n"), parser->token.name.buffer);
 		GET_TOKEN (parser);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_LBRACKET) {
@@ -469,7 +476,7 @@ static int __get_token (xp_stx_parser_t* parser)
 		return -1;
 	}
 
-xp_printf (XP_TEXT("TOKEN: [%s]\n"), parser->token.buffer);
+xp_printf (XP_TEXT("TOKEN: [%s]\n"), parser->token.name.buffer);
 	return 0;
 }
 
@@ -490,6 +497,7 @@ static int __get_ident (xp_stx_parser_t* parser)
 	} while (xp_isalnum(c));
 
 	if (c == XP_CHAR(':')) {
+		ADD_TOKEN_CHAR(parser, c);
 		parser->token.type = XP_STX_TOKEN_KEYWORD;
 		GET_CHAR (parser);
 	}
