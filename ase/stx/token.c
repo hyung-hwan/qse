@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.7 2005-06-12 15:46:02 bacon Exp $
+ * $Id: token.c,v 1.8 2005-06-12 16:07:23 bacon Exp $
  */
 
 #include <xp/stx/token.h>
@@ -84,6 +84,15 @@ int xp_stx_token_addc (xp_stx_token_t* token, xp_cint_t c)
 
 	token->buffer[token->size++] = c;
 	token->buffer[token->size]   = XP_CHAR('\0');
+	return 0;
+}
+
+int xp_stx_token_adds (xp_stx_token_t* token, const xp_char_t* s)
+{
+	while (*s != XP_CHAR('\0')) {
+		if (xp_stx_token_addc(token, *s) == -1) return -1;
+	}
+
 	return 0;
 }
 
