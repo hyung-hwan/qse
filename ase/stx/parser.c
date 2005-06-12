@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.30 2005-06-12 16:22:03 bacon Exp $
+ * $Id: parser.c,v 1.31 2005-06-12 16:46:45 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -57,6 +57,7 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 	parser->error_code = XP_STX_PARSER_ERROR_NONE;
 
 	parser->argument_count = 0;
+	parser->temporary_count = 0;
 
 	parser->curc = XP_CHAR_EOF;
 	parser->ungotc_count = 0;
@@ -70,6 +71,9 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 {
 	while (parser->argument_count > 0) {
 		xp_free (parser->argument[--parser->argument_count]);
+	}
+	while (parser->temporary_count > 0) {
+		xp_free (parser->temporary[--parser->temporary_count]);
 	}
 
 	xp_stx_name_close (&parser->method_name);
@@ -106,9 +110,10 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 		XP_TEXT("incomplete string literal"),
 
 		XP_TEXT("message selector"),
-		XP_TEXT("temporary list not closed"),
 		XP_TEXT("invalid argument name"),
 		XP_TEXT("too many arguments"),
+		XP_TEXT("temporary list not closed"),
+		XP_TEXT("too many temporaries"),
 		XP_TEXT("invalid expression start"),
 		XP_TEXT("no period at end of statement")
 	};
@@ -129,7 +134,8 @@ int xp_stx_parser_parse_method (
 		return -1;
 	}
 
-	if (__open_input(parser,input) == -1) return -1;
+	parser->method_class = method_class;
+	if (__open_input(parser, input) == -1) return -1;
 	n = __parse_method (parser, method_class, input);
 	if (__close_input(parser) == -1) return -1;
 
@@ -147,6 +153,15 @@ static int __parse_method (
 	GET_CHAR (parser);
 	GET_TOKEN (parser);
 
+	xp_stx_name_clear (&parser->method_name);
+
+	while (parser->argument_count > 0) {
+		xp_free (parser->argument[--parser->argument_count]);
+	}
+	while (parser->temporary_count > 0) {
+		xp_free (parser->temporary[--parser->temporary_count]);
+	}
+
 	if (__parse_message_pattern (parser) == -1) return -1;
 	if (__parse_temporaries (parser) == -1) return -1;
 	if (__parse_statements (parser) == -1) return -1;
@@ -163,11 +178,6 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 	 * <keyword pattern> ::= (keyword  <method argument>)+
 	 */
 	int n;
-
-	xp_stx_name_clear (&parser->method_name);
-	while (parser->argument_count > 0) {
-		xp_free (parser->argument[--parser->argument_count]);
-	}
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) { 
 		n = __parse_unary_pattern (parser);
@@ -189,6 +199,7 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 static int __parse_unary_pattern (xp_stx_parser_t* parser)
 {
 	/* TODO: check if the method name exists */
+
 	if (xp_stx_name_adds(
 		&parser->method_name, parser->token.name.buffer) == -1) {
 		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
@@ -202,6 +213,7 @@ static int __parse_unary_pattern (xp_stx_parser_t* parser)
 static int __parse_binary_pattern (xp_stx_parser_t* parser)
 {
 	/* TODO: check if the method name exists */
+
 	if (xp_stx_name_adds(
 		&parser->method_name, parser->token.name.buffer) == -1) {
 		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
@@ -219,7 +231,7 @@ static int __parse_binary_pattern (xp_stx_parser_t* parser)
 		return -1;
 	}
 
-	/* TODO: decide whether to use symbol */
+	/* TODO: check for duplicate entries...in instvars */
 	parser->argument[parser->argument_count] = 
 		xp_stx_token_yield (&parser->token, 0);
 	if (parser->argument[parser->argument_count] == XP_NULL) {
@@ -252,14 +264,13 @@ static int __parse_keyword_pattern (xp_stx_parser_t* parser)
 			return -1;
 		}
 
-		/* TODO: decide whether to use symbol */
 		parser->argument[parser->argument_count] = 
 			xp_stx_token_yield (&parser->token, 0);
 		if (parser->argument[parser->argument_count] == XP_NULL) {
 			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
-		/* TODO: check for duplicate entries... */
+		/* TODO: check for duplicate entries...in instvars/arguments */
 		parser->argument_count++;
 
 		GET_TOKEN (parser);
@@ -282,11 +293,30 @@ static inline xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
 
 static int __parse_temporaries (xp_stx_parser_t* parser)
 {
+	/* 
+	 * <temporaries> ::= '|' <temporary variable list> '|'
+	 * <temporary variable list> ::= identifier*
+	 */
+
 	if (!__is_vbar_token(&parser->token)) return 0;
 
 	GET_TOKEN (parser);
 	while (parser->token.type == XP_STX_TOKEN_IDENT) {
-xp_printf (XP_TEXT("temporary: %s\n"), parser->token.name.buffer);
+		if (parser->temporary_count >= xp_countof(parser->temporary)) {
+			parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_TEMPORARIES;
+			return -1;
+		}
+
+		parser->temporary[parser->temporary_count] = 
+			xp_stx_token_yield (&parser->token, 0);
+		if (parser->temporary[parser->temporary_count] == XP_NULL) {
+			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+			return -1;
+		}
+
+		/* TODO: check for duplicate entries...in instvars/arguments/temporaries */
+		parser->temporary_count++;
+
 		GET_TOKEN (parser);
 	}
 	if (!__is_vbar_token(&parser->token)) {
@@ -351,14 +381,12 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	 */
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) {
-xp_printf (XP_TEXT("identifier......[%s]\n"), parser->token.name.buffer);
 		GET_TOKEN (parser);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_CHARLIT ||
 	         parser->token.type == XP_STX_TOKEN_STRLIT ||
 	         parser->token.type == XP_STX_TOKEN_NUMLIT) {
 		/* more literals - array symbol #xxx #(1 2 3) */
-xp_printf (XP_TEXT("literal......[%s]\n"), parser->token.name.buffer);
 		GET_TOKEN (parser);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_LBRACKET) {
@@ -476,7 +504,6 @@ static int __get_token (xp_stx_parser_t* parser)
 		return -1;
 	}
 
-xp_printf (XP_TEXT("TOKEN: [%s]\n"), parser->token.name.buffer);
 	return 0;
 }
 
