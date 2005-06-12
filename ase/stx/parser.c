@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.26 2005-06-12 12:33:31 bacon Exp $
+ * $Id: parser.c,v 1.27 2005-06-12 14:40:35 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -44,8 +44,10 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 	}
 
 	parser->stx = stx;
-
 	parser->error_code = XP_STX_PARSER_ERROR_NONE;
+
+	parser->argument_count = 0;
+
 	parser->curc = XP_CHAR_EOF;
 	parser->ungotc_count = 0;
 
@@ -91,6 +93,7 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 		XP_TEXT("message selector"),
 		XP_TEXT("temporary list not closed"),
 		XP_TEXT("invalid argument name"),
+		XP_TEXT("too many arguments"),
 		XP_TEXT("invalid expression start"),
 		XP_TEXT("no period at end of statement")
 	};
@@ -145,30 +148,30 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 	 * <keyword pattern> ::= (keyword  <method argument>)+
 	 */
 
+	parser->argument_count = 0;
+
 	if (parser->token.type == XP_STX_TOKEN_IDENT) { 
 		/* unary pattern */
-xp_printf (XP_TEXT("unary pattern - %s\n"), parser->token.buffer);
 		GET_TOKEN (parser);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_BINARY) { 
 		/* binary pattern */
-xp_printf (XP_TEXT("binary pattern - %s\n"), parser->token.buffer);
 		GET_TOKEN (parser);
 		if (parser->token.type != XP_STX_TOKEN_IDENT) {
-			parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT;
+			parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT_NAME;
 			return -1;
 		}
 
+		/* TODO: decide whether to use symbol */
+		//parser->arguments[parser->argument_count++] = 
 		GET_TOKEN (parser);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_KEYWORD) { 
 		/* keyword pattern */
-xp_printf (XP_TEXT("keyword pattern - %s\n"), parser->token.buffer);
-
 		do {
 			GET_TOKEN (parser);
 			if (parser->token.type != XP_STX_TOKEN_IDENT) {
-				parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT;
+				parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT_NAME;
 				return -1;
 			}
 			GET_TOKEN (parser);

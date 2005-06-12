@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.5 2005-06-08 16:00:51 bacon Exp $
+ * $Id: token.c,v 1.6 2005-06-12 14:40:35 bacon Exp $
  */
 
 #include <xp/stx/token.h>
@@ -18,11 +18,16 @@ xp_stx_token_t* xp_stx_token_open (
 	}
 	else token->__malloced = xp_false;
 	
-	token->buffer = (xp_char_t*)
-		xp_malloc ((capacity + 1) * xp_sizeof(xp_char_t));
-	if (token->buffer == XP_NULL) {
-		if (token->__malloced) xp_free (token);
-		return XP_NULL;
+	if (capacity < xp_countof(token->static_buffer)) {
+		token->buffer = token->static_buffer;
+	}
+	else {
+		token->buffer = (xp_char_t*)
+			xp_malloc ((capacity + 1) * xp_sizeof(xp_char_t));
+		if (token->buffer == XP_NULL) {
+			if (token->__malloced) xp_free (token);
+			return XP_NULL;
+		}
 	}
 
 	/*
@@ -39,7 +44,10 @@ xp_stx_token_t* xp_stx_token_open (
 
 void xp_stx_token_close (xp_stx_token_t* token)
 {
-	xp_free (token->buffer);
+	if (token->capacity < xp_countof(token->static_buffer)) {
+		xp_assert (token->buffer != token->static_buffer);
+		xp_free (token->buffer);
+	}
 	if (token->__malloced) xp_free (token);
 }
 
@@ -47,11 +55,30 @@ int xp_stx_token_addc (xp_stx_token_t* token, xp_cint_t c)
 {
 	if (token->size >= token->capacity) {
 		/* double the capacity. */
-		xp_char_t* space = (xp_char_t*)xp_realloc (
-			token->buffer, (token->capacity * 2 + 1) * xp_sizeof(xp_char_t));
-		if (space == XP_NULL) return -1;
-		token->buffer   = space;
-		token->capacity = token->capacity * 2;	
+		xp_size_t new_capacity = token->capacity * 2;
+
+		if (new_capacity >= xp_countof(token->static_buffer)) {
+			xp_char_t* space;
+
+			if (token->capacity < xp_countof(token->static_buffer)) {
+				space = (xp_char_t*)xp_malloc (
+					(new_capacity + 1) * xp_sizeof(xp_char_t));
+				if (space == XP_NULL) return -1;
+
+				/* don't need to copy up to the terminating null */
+				xp_memcpy (space, token->buffer, 
+					token->capacity * xp_sizeof(xp_char_t));
+			}
+			else {
+				space = (xp_char_t*)xp_realloc (token->buffer, 
+					(new_capacity + 1) * xp_sizeof(xp_char_t));
+				if (space == XP_NULL) return -1;
+			}
+
+			token->buffer   = space;
+		}
+
+		token->capacity = new_capacity;
 	}
 
 	token->buffer[token->size++] = c;
@@ -74,11 +101,24 @@ xp_char_t* xp_stx_token_yield (xp_stx_token_t* token, xp_word_t capacity)
 {
 	xp_char_t* old_buffer, * new_buffer;
    
-	new_buffer = (xp_char_t*)
-		xp_malloc((capacity + 1) * xp_sizeof(xp_char_t));
-	if (new_buffer == XP_NULL) return XP_NULL;
+	if (token->capacity < xp_countof(token->static_buffer)) {
+		old_buffer = (xp_char_t*)
+			xp_malloc((token->capacity + 1) * xp_sizeof(xp_char_t));
+		if (old_buffer == XP_NULL) return XP_NULL;
+		xp_memcpy (old_buffer, token->buffer, 
+			(token->capacity + 1) * xp_sizeof(xp_char_t));
+	}
+	else old_buffer = token->buffer;
 
-	old_buffer = token->buffer;
+	if (capacity < xp_countof(token->static_buffer)) {
+		new_buffer = token->static_buffer;
+	}
+	else {
+		new_buffer = (xp_char_t*)
+			xp_malloc((capacity + 1) * xp_sizeof(xp_char_t));
+		if (new_buffer == XP_NULL) return XP_NULL;
+	}
+
 	token->buffer    = new_buffer;
 	token->size      = 0;
 	token->capacity  = capacity;
