@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.31 2005-06-12 16:46:45 bacon Exp $
+ * $Id: parser.c,v 1.32 2005-06-12 16:51:57 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -115,6 +115,7 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 		XP_TEXT("temporary list not closed"),
 		XP_TEXT("too many temporaries"),
 		XP_TEXT("invalid expression start"),
+
 		XP_TEXT("no period at end of statement")
 	};
 
