@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.11 2005-06-12 12:33:31 bacon Exp $
+ * $Id: token.h,v 1.12 2005-06-12 14:40:35 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
@@ -39,6 +39,7 @@ struct xp_stx_token_t
 	xp_word_t   capacity;
 	xp_word_t   size;
 	xp_char_t*  buffer;
+	xp_char_t   static_buffer[16];
 
 	xp_bool_t __malloced;
 };
