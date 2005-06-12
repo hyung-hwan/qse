@@ -1,11 +1,12 @@
 /*
- * $Id: token.h,v 1.14 2005-06-12 16:07:23 bacon Exp $
+ * $Id: token.h,v 1.15 2005-06-12 16:22:03 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
 #define _XP_STX_TOKEN_H_
 
 #include <xp/stx/stx.h>
+#include <xp/stx/name.h>
 
 enum
 {
@@ -35,12 +36,7 @@ struct xp_stx_token_t
 	xp_stx_int_t   ivalue;
 	xp_stx_real_t  fvalue;
 	*/
-
-	xp_word_t   capacity;
-	xp_word_t   size;
-	xp_char_t*  buffer;
-	xp_char_t   static_buffer[128];
-
+	xp_stx_name_t name;
 	xp_bool_t __malloced;
 };
 
@@ -58,7 +54,7 @@ int xp_stx_token_addc (xp_stx_token_t* token, xp_cint_t c);
 int xp_stx_token_adds (xp_stx_token_t* token, const xp_char_t* s);
 void xp_stx_token_clear (xp_stx_token_t* token);
 xp_char_t* xp_stx_token_yield (xp_stx_token_t* token, xp_word_t capacity);
-int xp_stx_token_compare  (xp_stx_token_t* token, const xp_char_t* str);
+int xp_stx_token_compare_name (xp_stx_token_t* token, const xp_char_t* str);
 
 #ifdef __cplusplus
 }

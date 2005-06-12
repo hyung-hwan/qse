@@ -1,11 +1,12 @@
 /*
- * $Id: parser.h,v 1.18 2005-06-12 15:46:02 bacon Exp $
+ * $Id: parser.h,v 1.19 2005-06-12 16:22:03 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
 #define _XP_STX_PARSER_H_
 
 #include <xp/stx/stx.h>
+#include <xp/stx/name.h>
 #include <xp/stx/token.h>
 
 enum
@@ -47,6 +48,7 @@ struct xp_stx_parser_t
 	xp_stx_t* stx;
 	int error_code;
 
+	xp_stx_name_t method_name;
 	xp_char_t* argument[32];
 	xp_size_t argument_count;
 

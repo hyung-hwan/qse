@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.8 2005-06-12 16:07:23 bacon Exp $
+ * $Id: token.c,v 1.9 2005-06-12 16:22:03 bacon Exp $
  */
 
 #include <xp/stx/token.h>
@@ -8,9 +8,6 @@
 xp_stx_token_t* xp_stx_token_open (
 	xp_stx_token_t* token, xp_word_t capacity)
 {
-	if (capacity == 0) 
-		capacity = xp_countof(token->static_buffer) - 1;
-
 	if (token == XP_NULL) {
 		token = (xp_stx_token_t*)
 			xp_malloc (xp_sizeof(xp_stx_token_t));
@@ -19,137 +16,62 @@ xp_stx_token_t* xp_stx_token_open (
 	}
 	else token->__malloced = xp_false;
 	
-	if (capacity < xp_countof(token->static_buffer)) {
-		token->buffer = token->static_buffer;
-	}
-	else {
-		token->buffer = (xp_char_t*)
-			xp_malloc ((capacity + 1) * xp_sizeof(xp_char_t));
-		if (token->buffer == XP_NULL) {
-			if (token->__malloced) xp_free (token);
-			return XP_NULL;
-		}
+	if (xp_stx_name_open(&token->name, capacity) == XP_NULL) {
+		if (token->__malloced) xp_free (token);
+		return XP_NULL;
 	}
 
 	/*
 	token->ivalue    = 0;
 	token->fvalue    = .0;
 	*/
-
-	token->size      = 0;
-	token->capacity  = capacity;
-	token->buffer[0] = XP_CHAR('\0');
-
+	token->type      = XP_STX_TOKEN_END;
 	return token;
 }
 
 void xp_stx_token_close (xp_stx_token_t* token)
 {
-	if (token->capacity >= xp_countof(token->static_buffer)) {
-		xp_assert (token->buffer != token->static_buffer);
-		xp_free (token->buffer);
-	}
+	xp_stx_name_close (&token->name);
 	if (token->__malloced) xp_free (token);
 }
 
 int xp_stx_token_addc (xp_stx_token_t* token, xp_cint_t c)
 {
-	if (token->size >= token->capacity) {
-		/* double the capacity. */
-		xp_size_t new_capacity = token->capacity * 2;
-
-		if (new_capacity >= xp_countof(token->static_buffer)) {
-			xp_char_t* space;
-
-			if (token->capacity < xp_countof(token->static_buffer)) {
-				space = (xp_char_t*)xp_malloc (
-					(new_capacity + 1) * xp_sizeof(xp_char_t));
-				if (space == XP_NULL) return -1;
-
-				/* don't need to copy up to the terminating null */
-				xp_memcpy (space, token->buffer, 
-					token->capacity * xp_sizeof(xp_char_t));
-			}
-			else {
-				space = (xp_char_t*)xp_realloc (token->buffer, 
-					(new_capacity + 1) * xp_sizeof(xp_char_t));
-				if (space == XP_NULL) return -1;
-			}
-
-			token->buffer   = space;
-		}
-
-		token->capacity = new_capacity;
-	}
-
-	token->buffer[token->size++] = c;
-	token->buffer[token->size]   = XP_CHAR('\0');
-	return 0;
+	return xp_stx_name_addc (&token->name, c);
 }
 
 int xp_stx_token_adds (xp_stx_token_t* token, const xp_char_t* s)
 {
-	while (*s != XP_CHAR('\0')) {
-		if (xp_stx_token_addc(token, *s) == -1) return -1;
-	}
-
-	return 0;
+	return xp_stx_name_adds (&token->name, s);
 }
 
 void xp_stx_token_clear (xp_stx_token_t* token)
 {
 	/*
-	token->ivalue    = 0;
-	token->fvalue    = .0;
+	token->ivalue = 0;
+	token->fvalue = .0;
 	*/
 
-	token->size      = 0;
-	token->buffer[0] = XP_CHAR('\0');
+	token->type = XP_STX_TOKEN_END;
+	xp_stx_name_clear (&token->name);
 }
 
 xp_char_t* xp_stx_token_yield (xp_stx_token_t* token, xp_word_t capacity)
 {
-	xp_char_t* old_buffer, * new_buffer;
+	xp_char_t* p;
 
-	if (capacity == 0) 
-		capacity = xp_countof(token->static_buffer) - 1;
-   
-	if (token->capacity < xp_countof(token->static_buffer)) {
-		old_buffer = (xp_char_t*)
-			xp_malloc((token->capacity + 1) * xp_sizeof(xp_char_t));
-		if (old_buffer == XP_NULL) return XP_NULL;
-		xp_memcpy (old_buffer, token->buffer, 
-			(token->capacity + 1) * xp_sizeof(xp_char_t));
-	}
-	else old_buffer = token->buffer;
+	p = xp_stx_name_yield (&token->name, capacity);
+	if (p == XP_NULL) return XP_NULL;
 
-	if (capacity < xp_countof(token->static_buffer)) {
-		new_buffer = token->static_buffer;
-	}
-	else {
-		new_buffer = (xp_char_t*)
-			xp_malloc((capacity + 1) * xp_sizeof(xp_char_t));
-		if (new_buffer == XP_NULL) return XP_NULL;
-	}
-
-	token->buffer    = new_buffer;
-	token->size      = 0;
-	token->capacity  = capacity;
-	token->buffer[0] = XP_CHAR('\0');
-
-	return old_buffer;
+	/*
+	token->ivalue = 0;
+	token->fvalue = .0;
+	*/
+	token->type = XP_STX_TOKEN_END;
+	return p;
 }
 
-int xp_stx_token_compare (xp_stx_token_t* token, const xp_char_t* str)
+int xp_stx_token_compare_name (xp_stx_token_t* token, const xp_char_t* str)
 {
-	xp_char_t* p = token->buffer;
-	xp_word_t index = 0;
-
-	while (index < token->size) {
-		if (*p > *str) return 1;
-		if (*p < *str) return -1;
-		index++; p++; str++;
-	}
-
-	return (*str == XP_CHAR('\0'))? 0: -1;
+	return xp_stx_name_compare (&token->name, str);
 }
