@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.17 2005-06-12 14:40:35 bacon Exp $
+ * $Id: parser.h,v 1.18 2005-06-12 15:46:02 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -47,7 +47,7 @@ struct xp_stx_parser_t
 	xp_stx_t* stx;
 	int error_code;
 
-	xp_word_t argument[32];
+	xp_char_t* argument[32];
 	xp_size_t argument_count;
 
 	xp_stx_token_t token;

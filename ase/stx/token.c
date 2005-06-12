@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.6 2005-06-12 14:40:35 bacon Exp $
+ * $Id: token.c,v 1.7 2005-06-12 15:46:02 bacon Exp $
  */
 
 #include <xp/stx/token.h>
@@ -8,7 +8,8 @@
 xp_stx_token_t* xp_stx_token_open (
 	xp_stx_token_t* token, xp_word_t capacity)
 {
-	xp_assert (capacity > 0);
+	if (capacity == 0) 
+		capacity = xp_countof(token->static_buffer) - 1;
 
 	if (token == XP_NULL) {
 		token = (xp_stx_token_t*)
@@ -44,7 +45,7 @@ xp_stx_token_t* xp_stx_token_open (
 
 void xp_stx_token_close (xp_stx_token_t* token)
 {
-	if (token->capacity < xp_countof(token->static_buffer)) {
+	if (token->capacity >= xp_countof(token->static_buffer)) {
 		xp_assert (token->buffer != token->static_buffer);
 		xp_free (token->buffer);
 	}
@@ -100,6 +101,9 @@ void xp_stx_token_clear (xp_stx_token_t* token)
 xp_char_t* xp_stx_token_yield (xp_stx_token_t* token, xp_word_t capacity)
 {
 	xp_char_t* old_buffer, * new_buffer;
+
+	if (capacity == 0) 
+		capacity = xp_countof(token->static_buffer) - 1;
    
 	if (token->capacity < xp_countof(token->static_buffer)) {
 		old_buffer = (xp_char_t*)

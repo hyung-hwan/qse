@@ -6,13 +6,13 @@ LIBS = @LIBS@ -lxpstx -lxpbas
 all: stx parser
 
 stx: stx.o
-	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
+	$(CC) $(LDFLAGS) -o $@.x $< $(LIBS)
 
 parser: parser.o
-	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
+	$(CC) $(LDFLAGS) -o $@.x $< $(LIBS)
 
 clean:
-	rm -rf $(OUTS) *.o
+	rm -rf *.x *.o
 
 .SUFFIXES: .c .o
 .c.o:

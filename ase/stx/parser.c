@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.27 2005-06-12 14:40:35 bacon Exp $
+ * $Id: parser.c,v 1.28 2005-06-12 15:46:02 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -9,7 +9,12 @@
 static int __parse_method (
 	xp_stx_parser_t* parser, 
 	xp_word_t method_class, void* input);
+
 static int __parse_message_pattern (xp_stx_parser_t* parser);
+static int __parse_unary_pattern (xp_stx_parser_t* parser);
+static int __parse_binary_pattern (xp_stx_parser_t* parser);
+static int __parse_keyword_pattern (xp_stx_parser_t* parser);
+
 static int __parse_temporaries (xp_stx_parser_t* parser);
 static int __parse_statements (xp_stx_parser_t* parser);
 static int __parse_statements_2 (xp_stx_parser_t* parser);
@@ -38,7 +43,7 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 	}
 	else parser->__malloced = xp_false;
 
-	if (xp_stx_token_open (&parser->token, 256) == XP_NULL) {
+	if (xp_stx_token_open (&parser->token, 0) == XP_NULL) {
 		if (parser->__malloced) xp_free (parser);
 		return XP_NULL;
 	}
@@ -58,6 +63,10 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 
 void xp_stx_parser_close (xp_stx_parser_t* parser)
 {
+	while (parser->argument_count > 0) {
+		xp_free (parser->argument[--parser->argument_count]);
+	}
+
 	xp_stx_token_close (&parser->token);
 	if (parser->__malloced) xp_free (parser);
 }
@@ -147,40 +156,93 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 	 * <binary pattern> ::= binarySelector <method argument>
 	 * <keyword pattern> ::= (keyword  <method argument>)+
 	 */
+	int n;
 
-	parser->argument_count = 0;
+	while (parser->argument_count > 0) {
+		xp_free (parser->argument[--parser->argument_count]);
+	}
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) { 
-		/* unary pattern */
-		GET_TOKEN (parser);
+		n = __parse_unary_pattern (parser);
 	}
 	else if (parser->token.type == XP_STX_TOKEN_BINARY) { 
-		/* binary pattern */
+		n = __parse_binary_pattern (parser);
+	}
+	else if (parser->token.type == XP_STX_TOKEN_KEYWORD) { 
+		n = __parse_keyword_pattern (parser);
+	}
+	else {
+		parser->error_code = XP_STX_PARSER_ERROR_MESSAGE_SELECTOR;
+		n = -1;
+	}
+
+	return n;
+}
+
+static int __parse_unary_pattern (xp_stx_parser_t* parser)
+{
+	/* TODO: check if the method name exists */
+	GET_TOKEN (parser);
+	return 0;
+}
+
+static int __parse_binary_pattern (xp_stx_parser_t* parser)
+{
+	/* TODO: check if the method name exists */
+
+	GET_TOKEN (parser);
+	if (parser->token.type != XP_STX_TOKEN_IDENT) {
+		parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT_NAME;
+		return -1;
+	}
+
+	if (parser->argument_count >= xp_countof(parser->argument)) {
+		parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
+		return -1;
+	}
+
+	/* TODO: decide whether to use symbol */
+	parser->argument[parser->argument_count] = 
+		xp_stx_token_yield (&parser->token, 0);
+	if (parser->argument[parser->argument_count] == XP_NULL) {
+		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+		return -1;
+	}
+	parser->argument_count++;
+
+	GET_TOKEN (parser);
+	return 0;
+}
+
+static int __parse_keyword_pattern (xp_stx_parser_t* parser)
+{
+	do {
 		GET_TOKEN (parser);
 		if (parser->token.type != XP_STX_TOKEN_IDENT) {
 			parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT_NAME;
 			return -1;
 		}
 
+		if (parser->argument_count >= xp_countof(parser->argument)) {
+			parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
+			return -1;
+		}
+
 		/* TODO: decide whether to use symbol */
-		//parser->arguments[parser->argument_count++] = 
+		parser->argument[parser->argument_count] = 
+			xp_stx_token_yield (&parser->token, 0);
+		if (parser->argument[parser->argument_count] == XP_NULL) {
+			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+			return -1;
+		}
+		/* TODO: check for duplicate entries... */
+		parser->argument_count++;
+
 		GET_TOKEN (parser);
-	}
-	else if (parser->token.type == XP_STX_TOKEN_KEYWORD) { 
-		/* keyword pattern */
-		do {
-			GET_TOKEN (parser);
-			if (parser->token.type != XP_STX_TOKEN_IDENT) {
-				parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT_NAME;
-				return -1;
-			}
-			GET_TOKEN (parser);
-		} while (parser->token.type == XP_STX_TOKEN_KEYWORD);
-	}
-	else {
-		parser->error_code = XP_STX_PARSER_ERROR_MESSAGE_SELECTOR;
-		return -1;
-	}
+	} while (parser->token.type == XP_STX_TOKEN_KEYWORD);
+
+	/* TODO: check if the method name exists */
+	/* if it exists, collapse arguments */
 
 	return 0;
 }
