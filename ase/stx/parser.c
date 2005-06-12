@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.28 2005-06-12 15:46:02 bacon Exp $
+ * $Id: parser.c,v 1.29 2005-06-12 16:07:23 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -158,6 +158,7 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 	 */
 	int n;
 
+	xp_stx_name_clear (&parser->method_name);
 	while (parser->argument_count > 0) {
 		xp_free (parser->argument[--parser->argument_count]);
 	}
@@ -182,6 +183,12 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 static int __parse_unary_pattern (xp_stx_parser_t* parser)
 {
 	/* TODO: check if the method name exists */
+	if (xp_stx_name_adds(
+		&parser->method_name, parser->token.buffer) == -1) {
+		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+		return -1;
+	}
+
 	GET_TOKEN (parser);
 	return 0;
 }
@@ -189,6 +196,11 @@ static int __parse_unary_pattern (xp_stx_parser_t* parser)
 static int __parse_binary_pattern (xp_stx_parser_t* parser)
 {
 	/* TODO: check if the method name exists */
+	if (xp_stx_name_adds(
+		&parser->method_name, parser->token.buffer) == -1) {
+		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+		return -1;
+	}
 
 	GET_TOKEN (parser);
 	if (parser->token.type != XP_STX_TOKEN_IDENT) {
@@ -217,6 +229,12 @@ static int __parse_binary_pattern (xp_stx_parser_t* parser)
 static int __parse_keyword_pattern (xp_stx_parser_t* parser)
 {
 	do {
+		if (xp_stx_name_adds(
+			&parser->method_name, parser->token.buffer) == -1) {
+			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+			return -1;
+		}
+
 		GET_TOKEN (parser);
 		if (parser->token.type != XP_STX_TOKEN_IDENT) {
 			parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT_NAME;

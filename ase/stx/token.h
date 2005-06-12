@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.13 2005-06-12 15:46:02 bacon Exp $
+ * $Id: token.h,v 1.14 2005-06-12 16:07:23 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
@@ -55,6 +55,7 @@ xp_stx_token_t* xp_stx_token_open (
 void xp_stx_token_close (xp_stx_token_t* token);
 
 int xp_stx_token_addc (xp_stx_token_t* token, xp_cint_t c);
+int xp_stx_token_adds (xp_stx_token_t* token, const xp_char_t* s);
 void xp_stx_token_clear (xp_stx_token_t* token);
 xp_char_t* xp_stx_token_yield (xp_stx_token_t* token, xp_word_t capacity);
 int xp_stx_token_compare  (xp_stx_token_t* token, const xp_char_t* str);
