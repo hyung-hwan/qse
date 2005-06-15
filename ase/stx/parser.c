@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.32 2005-06-12 16:51:57 bacon Exp $
+ * $Id: parser.c,v 1.33 2005-06-15 16:07:14 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -18,6 +18,9 @@ static int __parse_temporaries (xp_stx_parser_t* parser);
 static int __parse_statements (xp_stx_parser_t* parser);
 static int __parse_statements_2 (xp_stx_parser_t* parser);
 static int __parse_expression (xp_stx_parser_t* parser);
+
+static int __parser_assignment (xp_stx_parser_t* parser);
+static int __parser_message_continuation (xp_stx_parser_t* parser);
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
@@ -339,18 +342,23 @@ static int __parse_statements (xp_stx_parser_t* parser)
 	 * returnOperator ::= '^'
 	 */
 
-	if (__parse_statements_2 (parser) == -1) return -1;
-	if (parser->token.type != XP_STX_TOKEN_END) {
-		parser->error_code = XP_STX_PARSER_ERROR_NO_PERIOD;
-		return -1;
+	while (parser->token.type != XP_STX_TOKEN_END) {
+		if (__parse_statements_2 (parser) == -1) return -1;
+
+		if (parser->token.type == XP_STX_TOKEN_PERIOD) {
+			GET_TOKEN (parser);
+		}
+		else if (parser->token.type != XP_STX_TOKEN_END) {
+			parser->error_code = XP_STX_PARSER_ERROR_NO_PERIOD;
+			return -1;
+		}
 	}
+
 	return 0;
 }
 
 static int __parse_statements_2 (xp_stx_parser_t* parser)
 {
-	if (parser->token.type == XP_STX_TOKEN_END) return 0;
-
 	if (parser->token.type == XP_STX_TOKEN_RETURN) {
 		GET_TOKEN (parser);
 		if (__parse_expression (parser) == -1) return -1;
@@ -358,11 +366,6 @@ static int __parse_statements_2 (xp_stx_parser_t* parser)
 	}
 	else {
 		if (__parse_expression (parser) == -1) return -1;
-	}
-
-	if (parser->token.type == XP_STX_TOKEN_PERIOD) {
-		GET_TOKEN (parser);
-		if (__parse_statements_2 (parser) == -1) return -1;
 	}
 
 	return 0;
@@ -383,12 +386,20 @@ static int __parse_expression (xp_stx_parser_t* parser)
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) {
 		GET_TOKEN (parser);
+		if (parser->token.type == XP_STX_TOKEN_ASSIGN) {
+			GET_TOKEN (parser);
+			if (__parse_assignment(parser) == -1) return -1;
+		}
+		else {
+			if (__parse_message_continuation(parser) == -1) return -1;
+		}
 	}
 	else if (parser->token.type == XP_STX_TOKEN_CHARLIT ||
 	         parser->token.type == XP_STX_TOKEN_STRLIT ||
 	         parser->token.type == XP_STX_TOKEN_NUMLIT) {
 		/* more literals - array symbol #xxx #(1 2 3) */
 		GET_TOKEN (parser);
+		if (__parse_message_continuation(parser) == -1) return -1;
 	}
 	else if (parser->token.type == XP_STX_TOKEN_LBRACKET) {
 	}
@@ -400,6 +411,16 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	}
 
 	return 0;
+}
+
+static int __parser_assignment (xp_stx_parser_t* parser)
+{
+	return -1;
+}
+
+static int __parser_message_continuation (xp_stx_parser_t* parser)
+{
+	return -1;
 }
 
 static inline xp_bool_t __is_binary_char (xp_cint_t c)
