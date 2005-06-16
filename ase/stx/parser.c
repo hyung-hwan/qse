@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.33 2005-06-15 16:07:14 bacon Exp $
+ * $Id: parser.c,v 1.34 2005-06-16 16:42:02 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -385,6 +385,8 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	 */
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) {
+		if (__identify_ident (parser) == -1) return -1;
+
 		GET_TOKEN (parser);
 		if (parser->token.type == XP_STX_TOKEN_ASSIGN) {
 			GET_TOKEN (parser);
@@ -410,6 +412,37 @@ static int __parse_expression (xp_stx_parser_t* parser)
 		return -1;
 	}
 
+	return 0;
+}
+
+staitc int __identify_ident (xp_stx_parser_t* parser, const xp_char_t* ident)
+{
+	xp_size_t i;
+
+	if (xp_strcmp (ident, XP_TEXT("self") == 0) {
+	}
+
+	if (xp_strcmp (ident, XP_TEXT("super") == 0) {
+	}
+
+	for (i = 0; i < parser->temporary_count; i++) {
+		if (xp_strcmp (parser->temporaries[i], ident) == 0) {
+		}
+	}
+
+	for (i = 0; i < parser->argument_count; i++) {
+		if (xp_strcmp (parser->arguments[i], ident) == 0) {
+		}
+	}
+
+	/* TODO; find it in intance variables names */
+
+	/* TODO; find it in class variables names */
+
+	/* TODO; find it in global variables */
+
+	/* TODO: dynamic global */
+	
 	return 0;
 }
 
