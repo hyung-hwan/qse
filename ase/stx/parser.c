@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.34 2005-06-16 16:42:02 bacon Exp $
+ * $Id: parser.c,v 1.35 2005-06-17 04:39:17 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -385,7 +385,7 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	 */
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) {
-		if (__identify_ident (parser) == -1) return -1;
+		if (__identify_ident(parser) == -1) return -1;
 
 		GET_TOKEN (parser);
 		if (parser->token.type == XP_STX_TOKEN_ASSIGN) {
@@ -414,6 +414,46 @@ static int __parse_expression (xp_stx_parser_t* parser)
 
 	return 0;
 }
+/*
+   &unsupportedByte,      //--- 00
+   &bytePushInstance,     //--- 01
+   &bytePushArgument,     //--- 02
+   &bytePushTemporary,    //--- 03
+   &bytePushLiteral,      //--- 04
+   &bytePushConstant,     //--- 05
+   &byteAssignInstance,   //--- 06
+   &byteAssignTemporary,  //--- 07
+   &byteMarkArguments,    //--- 08
+   &byteSendMessage,      //--- 09
+   &byteSendUnary,        //--- 10
+   &byteSendBinary,       //--- 11
+   &unsupportedByte,      //--- 12
+   &byteDoPrimitive,      //--- 13
+   &unsupportedByte,      //--- 14
+   &byteDoSpecial         //--- 15
+
+
+* Directly access by byte codes
+> the receiver and arguments of the invoking message 
+> the values of the receiver's instance variables 
+> the values of any temporary variables required by the method 
+> seven special constants (true, false, nil, -1, 0, 1, and 2) 
+> 32 special message selectors 
+
+* contained in literal frame.
+> shared variables (global, class, and pool) 
+> most literal constants (numbers, characters, strings, arrays, and symbols) 
+> most message selectors (those that are not special) 
+
+PushInstance
+PushArgument -> normal arguments plus self/super(0)
+PushTemporary
+PushConstant -> nil, true, false, etc....
+PushLiteral -> global variables, literal constants... -> access literal frame
+
+AssignInstance
+AssignTemporary
+*/
 
 staitc int __identify_ident (xp_stx_parser_t* parser, const xp_char_t* ident)
 {
