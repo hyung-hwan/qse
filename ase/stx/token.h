@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.15 2005-06-12 16:22:03 bacon Exp $
+ * $Id: token.h,v 1.16 2005-06-19 16:16:33 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
@@ -25,7 +25,8 @@ enum
 	XP_STX_TOKEN_RBRACKET,
 	XP_STX_TOKEN_LPAREN,
 	XP_STX_TOKEN_RPAREN,
-	XP_STX_TOKEN_PERIOD
+	XP_STX_TOKEN_PERIOD,
+	XP_STX_TOKEN_SEMICOLON
 };
 
 struct xp_stx_token_t 

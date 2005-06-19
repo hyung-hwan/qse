@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.35 2005-06-17 04:39:17 bacon Exp $
+ * $Id: parser.c,v 1.36 2005-06-19 16:16:33 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -19,8 +19,15 @@ static int __parse_statements (xp_stx_parser_t* parser);
 static int __parse_statements_2 (xp_stx_parser_t* parser);
 static int __parse_expression (xp_stx_parser_t* parser);
 
-static int __parser_assignment (xp_stx_parser_t* parser);
-static int __parser_message_continuation (xp_stx_parser_t* parser);
+static int __parse_assignment (
+	xp_stx_parser_t* parser, const xp_char_t* target);
+static int __parse_message_continuation (xp_stx_parser_t* parser);
+static int __parse_keyword_continuation (xp_stx_parser_t* parser);
+static int __parse_binary_continuation (xp_stx_parser_t* parser);
+static int __parse_unary_continuation (xp_stx_parser_t* parser);
+
+static int __emit_code (
+	xp_stx_parser_t* parser, const xp_char_t* high, int low); 
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
@@ -56,6 +63,15 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 		return XP_NULL;
 	}
 
+	if (xp_array_open (
+		&parser->byte_code, 256, 
+		xp_sizeof(xp_byte_t), XP_NULL) == XP_NULL) {
+		xp_stx_name_close (&parser->method_name);
+		xp_stx_token_close (&parser->token);
+		if (parser->__malloced) xp_free (parser);
+		return XP_NULL;
+	}
+
 	parser->stx = stx;
 	parser->error_code = XP_STX_PARSER_ERROR_NONE;
 
@@ -79,10 +95,15 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 		xp_free (parser->temporary[--parser->temporary_count]);
 	}
 
+	xp_array_close (&parser->byte_code);
 	xp_stx_name_close (&parser->method_name);
 	xp_stx_token_close (&parser->token);
+
 	if (parser->__malloced) xp_free (parser);
 }
+
+#define EMIT_CODE(parser,high,low) \
+	do { if (__emit_code(parser,high,low) == -1) return -1; } while (0)
 
 #define GET_CHAR(parser) \
 	do { if (__get_char(parser) == -1) return -1; } while (0)
@@ -117,6 +138,7 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 		XP_TEXT("too many arguments"),
 		XP_TEXT("temporary list not closed"),
 		XP_TEXT("too many temporaries"),
+		XP_TEXT("cannot redefine pseudo variable"),
 		XP_TEXT("invalid expression start"),
 
 		XP_TEXT("no period at end of statement")
@@ -126,6 +148,16 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 	    parser->error_code < xp_countof(msg)) return msg[parser->error_code];
 
 	return XP_TEXT("unknown error");
+}
+
+static inline xp_bool_t __is_pseudo_variable (const xp_stx_token_t* token)
+{
+	return token->type == XP_STX_TOKEN_IDENT &&
+		(xp_strcmp(token->name.buffer, XP_TEXT("self")) == 0 ||
+		 xp_strcmp(token->name.buffer, XP_TEXT("super")) == 0 ||
+		 xp_strcmp(token->name.buffer, XP_TEXT("nil")) == 0 ||
+		 xp_strcmp(token->name.buffer, XP_TEXT("true")) == 0 ||
+		 xp_strcmp(token->name.buffer, XP_TEXT("false")) == 0);
 }
 
 int xp_stx_parser_parse_method (
@@ -263,6 +295,11 @@ static int __parse_keyword_pattern (xp_stx_parser_t* parser)
 			return -1;
 		}
 
+		if (__is_pseudo_variable(&parser->token)) {
+			parser->error_code = XP_STX_PARSER_ERROR_PSEUDO_VARIABLE;
+			return -1;
+		}
+
 		if (parser->argument_count >= xp_countof(parser->argument)) {
 			parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
 			return -1;
@@ -308,6 +345,11 @@ static int __parse_temporaries (xp_stx_parser_t* parser)
 	while (parser->token.type == XP_STX_TOKEN_IDENT) {
 		if (parser->temporary_count >= xp_countof(parser->temporary)) {
 			parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_TEMPORARIES;
+			return -1;
+		}
+
+		if (__is_pseudo_variable(&parser->token)) {
+			parser->error_code = XP_STX_PARSER_ERROR_PSEUDO_VARIABLE;
 			return -1;
 		}
 
@@ -385,24 +427,46 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	 */
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) {
-		if (__identify_ident(parser) == -1) return -1;
+		xp_char_t* ident = xp_stx_token_yield (
+			&parser->token, parser->token.name.capacity);
+		if (ident == XP_NULL) {
+			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+			return -1;
+		}
 
 		GET_TOKEN (parser);
 		if (parser->token.type == XP_STX_TOKEN_ASSIGN) {
 			GET_TOKEN (parser);
-			if (__parse_assignment(parser) == -1) return -1;
+			if (__parse_assignment(parser, ident) == -1) {
+				xp_free (ident);
+				return -1;
+			}
 		}
 		else {
-			if (__parse_message_continuation(parser) == -1) return -1;
+			if (__parse_message_continuation(parser) == -1) {
+				return -1;
+				xp_free (ident);
+			}
 		}
+
+		xp_free (ident);
 	}
-	else if (parser->token.type == XP_STX_TOKEN_CHARLIT ||
-	         parser->token.type == XP_STX_TOKEN_STRLIT ||
-	         parser->token.type == XP_STX_TOKEN_NUMLIT) {
-		/* more literals - array symbol #xxx #(1 2 3) */
+	else if (parser->token.type == XP_STX_TOKEN_CHARLIT) {
+		EMIT_CODE (parser, XP_TEXT("PushLiteral(CHAR)"), 0xFFFF);
 		GET_TOKEN (parser);
 		if (__parse_message_continuation(parser) == -1) return -1;
 	}
+	else if (parser->token.type == XP_STX_TOKEN_STRLIT) {
+		EMIT_CODE (parser, XP_TEXT("PushLiteral(STR)"), 0xFFFF);
+		GET_TOKEN (parser);
+		if (__parse_message_continuation(parser) == -1) return -1;
+	}
+	else if (parser->token.type == XP_STX_TOKEN_NUMLIT) {
+		EMIT_CODE (parser, XP_TEXT("PushLiteral(NUM)"), 0xFFFF);
+		GET_TOKEN (parser);
+		if (__parse_message_continuation(parser) == -1) return -1;
+	}
+	/* TODO: more literals - array symbol #xxx #(1 2 3) */
 	else if (parser->token.type == XP_STX_TOKEN_LBRACKET) {
 	}
 	else if (parser->token.type == XP_STX_TOKEN_LPAREN) {
@@ -455,23 +519,23 @@ AssignInstance
 AssignTemporary
 */
 
-staitc int __identify_ident (xp_stx_parser_t* parser, const xp_char_t* ident)
+static int __identify_ident (xp_stx_parser_t* parser, const xp_char_t* ident)
 {
 	xp_size_t i;
 
-	if (xp_strcmp (ident, XP_TEXT("self") == 0) {
+	if (xp_strcmp(ident, XP_TEXT("self")) == 0) {
 	}
 
-	if (xp_strcmp (ident, XP_TEXT("super") == 0) {
+	if (xp_strcmp(ident, XP_TEXT("super")) == 0) {
 	}
 
 	for (i = 0; i < parser->temporary_count; i++) {
-		if (xp_strcmp (parser->temporaries[i], ident) == 0) {
+		if (xp_strcmp (parser->temporary[i], ident) == 0) {
 		}
 	}
 
 	for (i = 0; i < parser->argument_count; i++) {
-		if (xp_strcmp (parser->arguments[i], ident) == 0) {
+		if (xp_strcmp (parser->argument[i], ident) == 0) {
 		}
 	}
 
@@ -486,15 +550,75 @@ staitc int __identify_ident (xp_stx_parser_t* parser, const xp_char_t* ident)
 	return 0;
 }
 
-static int __parser_assignment (xp_stx_parser_t* parser)
+static int __parse_assignment (
+	xp_stx_parser_t* parser, const xp_char_t* target)
 {
+	/*
+	 * <assignment> ::= <assignment target> assignmentOperator <expression>
+	 */
+
+	xp_size_t i;
+
+	for (i = 0; i < parser->temporary_count; i++) {
+		if (xp_strcmp (target, parser->temporary[i]) == 0) {
+			if (__parse_expression(parser) == -1) return -1;
+			EMIT_CODE (parser, XP_TEXT("AssignTemporary"), i);
+			return 0;
+		}
+	}
+
+	/* TODO: check it in instance variable */
+
+	/* TODO: check it in class variables */
+
+	/* TODO: global, but i don't like this idea */
+
 	return -1;
 }
 
-static int __parser_message_continuation (xp_stx_parser_t* parser)
+static int __parse_message_continuation (xp_stx_parser_t* parser)
 {
+	if (__parse_keyword_continuation (parser) == -1) return -1;
+
+	while (parser->token.type == XP_STX_TOKEN_SEMICOLON) {
+		EMIT_CODE (parser, XP_TEXT("DoSpecial(DUP_RECEIVER)"), 0);
+		GET_TOKEN (parser);
+
+		if (__parse_keyword_continuation (parser) == -1) return -1;
+		EMIT_CODE (parser, XP_TEXT("DoSpecial(POP_TOP)"), 0);
+	}
+
+	return 0;
+}
+
+static int __parse_keyword_continuation (xp_stx_parser_t* parser)
+{
+	if (__parser_binary_continuation (parser) == -1) return -1;
 	return -1;
 }
+
+static int __parse_binary_continuation (xp_stx_parser_t* parser)
+{
+	if (__parser_unary_continuation (parser) == -1) return -1;
+	return -1;
+}
+
+static int __parse_unary_continuation (xp_stx_parser_t* parser)
+{
+	while (parser->token.type == XP_STX_TOKEN_IDENT) {
+
+	}
+
+	return 0;
+}
+
+static int __emit_code (
+	xp_stx_parser_t* parser, const xp_char_t* high, int low)
+{
+	xp_printf (XP_TEXT("CODE: %s %d\n"), high, low);
+	return 0;
+}
+
 
 static inline xp_bool_t __is_binary_char (xp_cint_t c)
 {
@@ -591,6 +715,11 @@ static int __get_token (xp_stx_parser_t* parser)
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
+	else if (c == XP_CHAR(';')) {
+		parser->token.type = XP_STX_TOKEN_SEMICOLON;
+		ADD_TOKEN_CHAR(parser, c);
+		GET_CHAR (parser);
+	}
 	else if (__is_binary_char(c)) {
 		if (__get_binary(parser) == -1) return -1;
 	}
@@ -599,6 +728,7 @@ static int __get_token (xp_stx_parser_t* parser)
 		return -1;
 	}
 
+//xp_printf (XP_TEXT("TOKEN: %s\n"), parser->token.name.buffer);
 	return 0;
 }
 

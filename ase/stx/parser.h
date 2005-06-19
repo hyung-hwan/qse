@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.21 2005-06-17 04:39:17 bacon Exp $
+ * $Id: parser.h,v 1.22 2005-06-19 16:16:33 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -8,6 +8,7 @@
 #include <xp/stx/stx.h>
 #include <xp/stx/name.h>
 #include <xp/stx/token.h>
+#include <xp/bas/array.h>
 
 enum
 {
@@ -29,6 +30,7 @@ enum
 	XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS,
 	XP_STX_PARSER_ERROR_TEMPORARIES_NOT_CLOSED,
 	XP_STX_PARSER_ERROR_TOO_MANY_TEMPORARIES,
+	XP_STX_PARSER_ERROR_PSEUDO_VARIABLE,
 	XP_STX_PARSER_ERROR_EXPRESSION_START,
 	XP_STX_PARSER_ERROR_NO_PERIOD
 };
@@ -56,6 +58,8 @@ struct xp_stx_parser_t
 	xp_size_t argument_count;
 	xp_char_t* temporary[32];
 	xp_size_t temporary_count;
+
+	xp_array_t byte_code;
 
 	xp_stx_token_t token;
 	xp_cint_t curc;
