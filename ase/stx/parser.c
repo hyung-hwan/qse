@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.36 2005-06-19 16:16:33 bacon Exp $
+ * $Id: parser.c,v 1.37 2005-06-22 15:02:41 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -27,7 +27,7 @@ static int __parse_binary_continuation (xp_stx_parser_t* parser);
 static int __parse_unary_continuation (xp_stx_parser_t* parser);
 
 static int __emit_code (
-	xp_stx_parser_t* parser, const xp_char_t* high, int low); 
+	xp_stx_parser_t* parser, const xp_char_t* high, const xp_char_t* low); 
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
@@ -421,9 +421,6 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	 * <basic expression> ::= <primary> [<messages> <cascaded messages>]
 	 * <assignment target> := identifier
 	 * assignmentOperator ::=  ':='
-	 * <primary> ::=
-	 * 	identifier | <literal> | 
-	 * 	<block constructor> | ( '('<expression>')' )
 	 */
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) {
@@ -444,25 +441,43 @@ static int __parse_expression (xp_stx_parser_t* parser)
 		}
 		else {
 			if (__parse_message_continuation(parser) == -1) {
-				return -1;
 				xp_free (ident);
+				return -1;
 			}
 		}
 
 		xp_free (ident);
 	}
+	else {
+		parser->error_code = XP_STX_PARSER_ERROR_EXPRESSION_START;
+		return -1;
+	}
+
+	return 0;
+}
+
+static int __parse_primary (xp_stx_parser_t* parser)
+{
+	/*
+	 * <primary> ::=
+	 * 	identifier | <literal> | 
+	 * 	<block constructor> | ( '('<expression>')' )
+	 */
+
+	if (parser->token.type == XP_STX_TOKEN_IDENT) {
+	}
 	else if (parser->token.type == XP_STX_TOKEN_CHARLIT) {
-		EMIT_CODE (parser, XP_TEXT("PushLiteral(CHAR)"), 0xFFFF);
+		EMIT_CODE (parser, XP_TEXT("PushLiteral(CHAR)"), parser->token.name.buffer);
 		GET_TOKEN (parser);
 		if (__parse_message_continuation(parser) == -1) return -1;
 	}
 	else if (parser->token.type == XP_STX_TOKEN_STRLIT) {
-		EMIT_CODE (parser, XP_TEXT("PushLiteral(STR)"), 0xFFFF);
+		EMIT_CODE (parser, XP_TEXT("PushLiteral(STR)"), parser->token.name.buffer);
 		GET_TOKEN (parser);
 		if (__parse_message_continuation(parser) == -1) return -1;
 	}
 	else if (parser->token.type == XP_STX_TOKEN_NUMLIT) {
-		EMIT_CODE (parser, XP_TEXT("PushLiteral(NUM)"), 0xFFFF);
+		EMIT_CODE (parser, XP_TEXT("PushLiteral(NUM)"), parser->token.name.buffer);
 		GET_TOKEN (parser);
 		if (__parse_message_continuation(parser) == -1) return -1;
 	}
@@ -472,12 +487,12 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	else if (parser->token.type == XP_STX_TOKEN_LPAREN) {
 	}
 	else {
+/* TODO: maybe invalid primary */
 		parser->error_code = XP_STX_PARSER_ERROR_EXPRESSION_START;
 		return -1;
 	}
-
-	return 0;
 }
+
 /*
    &unsupportedByte,      //--- 00
    &bytePushInstance,     //--- 01
@@ -519,37 +534,6 @@ AssignInstance
 AssignTemporary
 */
 
-static int __identify_ident (xp_stx_parser_t* parser, const xp_char_t* ident)
-{
-	xp_size_t i;
-
-	if (xp_strcmp(ident, XP_TEXT("self")) == 0) {
-	}
-
-	if (xp_strcmp(ident, XP_TEXT("super")) == 0) {
-	}
-
-	for (i = 0; i < parser->temporary_count; i++) {
-		if (xp_strcmp (parser->temporary[i], ident) == 0) {
-		}
-	}
-
-	for (i = 0; i < parser->argument_count; i++) {
-		if (xp_strcmp (parser->argument[i], ident) == 0) {
-		}
-	}
-
-	/* TODO; find it in intance variables names */
-
-	/* TODO; find it in class variables names */
-
-	/* TODO; find it in global variables */
-
-	/* TODO: dynamic global */
-	
-	return 0;
-}
-
 static int __parse_assignment (
 	xp_stx_parser_t* parser, const xp_char_t* target)
 {
@@ -561,8 +545,11 @@ static int __parse_assignment (
 
 	for (i = 0; i < parser->temporary_count; i++) {
 		if (xp_strcmp (target, parser->temporary[i]) == 0) {
+xp_char_t buf[100];
 			if (__parse_expression(parser) == -1) return -1;
-			EMIT_CODE (parser, XP_TEXT("AssignTemporary"), i);
+
+xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
+			EMIT_CODE (parser, XP_TEXT("AssignTemporary"), buf);
 			return 0;
 		}
 	}
@@ -578,14 +565,30 @@ static int __parse_assignment (
 
 static int __parse_message_continuation (xp_stx_parser_t* parser)
 {
-	if (__parse_keyword_continuation (parser) == -1) return -1;
+
+	/*
+	 * <basic expression> ::=
+	 * 	<primary> [<messages> <cascaded messages>]
+	 * <messages> ::=
+	 * 	(<unary message>+ <binary message>* [<keyword message>] ) |
+	 * 	(<binary message>+ [<keyword message>] ) |
+	 * 	<keyword message>
+	 * <unary message> ::= unarySelector
+	 * <binary message> ::= binarySelector <binary argument>
+	 * <binary argument> ::= <primary> <unary message>*
+	 * <keyword message> ::= (keyword <keyword argument> )+
+	 * <keyword argument> ::= <primary> <unary message>* <binary message>*
+	 * <cascaded messages> ::= (';' <messages>)*
+	 */
+	
+	if (__parse_keyword_continuation(parser) == -1) return -1;
 
 	while (parser->token.type == XP_STX_TOKEN_SEMICOLON) {
-		EMIT_CODE (parser, XP_TEXT("DoSpecial(DUP_RECEIVER)"), 0);
+		EMIT_CODE (parser, XP_TEXT("DoSpecial(DUP_RECEIVER)"), XP_TEXT(""));
 		GET_TOKEN (parser);
 
 		if (__parse_keyword_continuation (parser) == -1) return -1;
-		EMIT_CODE (parser, XP_TEXT("DoSpecial(POP_TOP)"), 0);
+		EMIT_CODE (parser, XP_TEXT("DoSpecial(POP_TOP)"), XP_TEXT(""));
 	}
 
 	return 0;
@@ -593,29 +596,43 @@ static int __parse_message_continuation (xp_stx_parser_t* parser)
 
 static int __parse_keyword_continuation (xp_stx_parser_t* parser)
 {
-	if (__parser_binary_continuation (parser) == -1) return -1;
-	return -1;
+	if (__parse_binary_continuation (parser) == -1) return -1;
+	return 0;
 }
 
 static int __parse_binary_continuation (xp_stx_parser_t* parser)
 {
-	if (__parser_unary_continuation (parser) == -1) return -1;
-	return -1;
+	/*
+	 * <binary message> ::= binarySelector <binary argument>
+	 * <binary argument> ::= <primary> <unary message>*
+	 */
+
+	if (__parse_unary_continuation (parser) == -1) return -1;
+
+	while (parser->token.type == XP_STX_TOKEN_BINARY) {
+		EMIT_CODE (parser, XP_TEXT("SendBinary"), parser->token.name.buffer);		
+		GET_TOKEN (parser);
+	}
+
+	return 0;
 }
 
 static int __parse_unary_continuation (xp_stx_parser_t* parser)
 {
-	while (parser->token.type == XP_STX_TOKEN_IDENT) {
+	/* <unary message> ::= unarySelector */
 
+	while (parser->token.type == XP_STX_TOKEN_IDENT) {
+		EMIT_CODE (parser, XP_TEXT("SendUnary"), parser->token.name.buffer);		
+		GET_TOKEN (parser);
 	}
 
 	return 0;
 }
 
 static int __emit_code (
-	xp_stx_parser_t* parser, const xp_char_t* high, int low)
+	xp_stx_parser_t* parser, const xp_char_t* high, const xp_char_t* low)
 {
-	xp_printf (XP_TEXT("CODE: %s %d\n"), high, low);
+	xp_printf (XP_TEXT("CODE: %s %s\n"), high, low);
 	return 0;
 }
 
