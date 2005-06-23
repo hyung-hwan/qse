@@ -57,7 +57,6 @@ struct stdio_t
 
 typedef struct stdio_t stdio_t;
 
-
 int stdio_func (int cmd, void* owner, void* arg)
 {
 
