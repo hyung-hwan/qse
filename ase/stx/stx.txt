@@ -1,0 +1,41 @@
+/*
+   &unsupportedByte,      //--- 00
+   &bytePushInstance,     //--- 01
+   &bytePushArgument,     //--- 02
+   &bytePushTemporary,    //--- 03
+   &bytePushLiteral,      //--- 04
+   &bytePushConstant,     //--- 05
+   &byteAssignInstance,   //--- 06
+   &byteAssignTemporary,  //--- 07
+   &byteMarkArguments,    //--- 08
+   &byteSendMessage,      //--- 09
+   &byteSendUnary,        //--- 10
+   &byteSendBinary,       //--- 11
+   &unsupportedByte,      //--- 12
+   &byteDoPrimitive,      //--- 13
+   &unsupportedByte,      //--- 14
+   &byteDoSpecial         //--- 15
+
+
+* Directly access by byte codes
+> the receiver and arguments of the invoking message 
+> the values of the receiver's instance variables 
+> the values of any temporary variables required by the method 
+> seven special constants (true, false, nil, -1, 0, 1, and 2) 
+> 32 special message selectors 
+
+* contained in literal frame.
+> shared variables (global, class, and pool) 
+> most literal constants (numbers, characters, strings, arrays, and symbols) 
+> most message selectors (those that are not special) 
+
+PushInstance
+PushArgument -> normal arguments plus self/super(0)
+PushTemporary
+PushConstant -> nil, true, false, etc....
+PushLiteral -> global variables, literal constants... -> access literal frame
+
+AssignInstance
+AssignTemporary
+*/
+
