@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.38 2005-06-23 04:55:44 bacon Exp $
+ * $Id: parser.c,v 1.39 2005-06-23 04:59:00 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -572,7 +572,7 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 	return 0;
 }
 
-static int __parse_block (xp_stx_parser_t* parser)
+static int __parse_block_constructor (xp_stx_parser_t* parser)
 {
 	/*
 	 * <block constructor> ::= '[' <block body> ']'
