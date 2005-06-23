@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.39 2005-06-23 04:59:00 bacon Exp $
+ * $Id: parser.c,v 1.40 2005-06-23 07:20:44 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -148,7 +148,10 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 		XP_TEXT("invalid primary/expression-start"),
 
 		XP_TEXT("no period at end of statement"),
-		XP_TEXT("no closing parenthesis")
+		XP_TEXT("no closing parenthesis"),
+		XP_TEXT("block argument name missing"),
+		XP_TEXT("block argument list not closed"),
+		XP_TEXT("block not closed")
 	};
 
 	if (parser->error_code >= 0 && 
@@ -165,6 +168,42 @@ static inline xp_bool_t __is_pseudo_variable (const xp_stx_token_t* token)
 		 xp_strcmp(token->name.buffer, XP_TEXT("nil")) == 0 ||
 		 xp_strcmp(token->name.buffer, XP_TEXT("true")) == 0 ||
 		 xp_strcmp(token->name.buffer, XP_TEXT("false")) == 0);
+}
+
+static inline xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
+{
+	return 
+		token->type == XP_STX_TOKEN_BINARY &&
+		token->name.size == 1 &&
+		token->name.buffer[0] == XP_CHAR('|');
+}
+
+static inline xp_bool_t __is_binary_char (xp_cint_t c)
+{
+	/*
+	 * binaryCharacter ::=
+	 * 	'!' | '%' | '&' | '*' | '+' | ',' | 
+	 * 	'/' | '<' | '=' | '>' | '?' | '@' | 
+	 * 	'\' | '~' | '|' | '-'
+	 */
+
+	return
+		c == XP_CHAR('!') || c == XP_CHAR('%') ||
+		c == XP_CHAR('&') || c == XP_CHAR('*') ||
+		c == XP_CHAR('+') || c == XP_CHAR(',') ||
+		c == XP_CHAR('/') || c == XP_CHAR('<') ||
+		c == XP_CHAR('=') || c == XP_CHAR('>') ||
+		c == XP_CHAR('?') || c == XP_CHAR('@') ||
+		c == XP_CHAR('\\') || c == XP_CHAR('|') ||
+		c == XP_CHAR('~') || c == XP_CHAR('-');
+}
+
+static inline xp_bool_t __is_closing_char (xp_cint_t c)
+{
+	return 
+		c == XP_CHAR('.') || c == XP_CHAR(']') ||
+		c == XP_CHAR(')') || c == XP_CHAR(';') ||
+		c == XP_CHAR('\"') || c == XP_CHAR('\'');
 }
 
 int xp_stx_parser_parse_method (
@@ -205,9 +244,9 @@ static int __parse_method (
 		xp_free (parser->temporary[--parser->temporary_count]);
 	}
 
-	if (__parse_message_pattern (parser) == -1) return -1;
-	if (__parse_temporaries (parser) == -1) return -1;
-	if (__parse_statements (parser) == -1) return -1;
+	if (__parse_message_pattern(parser) == -1) return -1;
+	if (__parse_temporaries(parser) == -1) return -1;
+	if (__parse_statements(parser) == -1) return -1;
 	return 0;
 }
 
@@ -329,14 +368,6 @@ static int __parse_keyword_pattern (xp_stx_parser_t* parser)
 xp_printf (XP_TEXT("METHOD NAME ==> [%s]\n"), parser->method_name.buffer);
 
 	return 0;
-}
-
-static inline xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
-{
-	return 
-		token->type == XP_STX_TOKEN_BINARY &&
-		token->name.size == 1 &&
-		token->name.buffer[0] == XP_CHAR('|');
 }
 
 static int __parse_temporaries (xp_stx_parser_t* parser)
@@ -581,12 +612,43 @@ static int __parse_block_constructor (xp_stx_parser_t* parser)
 	 * <block argument> ::= ':'  identifier
 	 */
 
+	if (parser->token.type == XP_STX_TOKEN_COLON) {
+		do {
+			if (parser->token.type != XP_STX_TOKEN_IDENT) {
+				parser->error_code = XP_STX_PARSER_ERROR_BLOCK_ARGUMENT_NAME;
+				return -1;
+			}
+
+			/* TODO : store block arguments */
+			GET_TOKEN (parser);
+		} while (parser->token.type == XP_STX_TOKEN_COLON);
+			
+		if (!__is_vbar_token(&parser->token)) {
+			parser->error_code = XP_STX_PARSER_ERROR_BLOCK_ARGUMENT_LIST;
+			return -1;
+		}
+
+		GET_TOKEN (parser);
+	}
+
+	/* TODO: create a block closure */
+	if (__parse_temporaries(parser, xp_true) == -1) return -1;
+	if (__parse_statements(parser, xp_true) == -1) return -1;
+
+	if (parser->token.type != XP_STX_TOKEN_RBRACKET) {
+		parser->error_code = XP_STX_PARSER_ERROR_BLOCK_NOT_CLOSED;
+		return -1;
+	}
+
+	GET_TOKEN (parser);
+
+	/* TODO: do special treatment for block closures */
+
 	return 0;
 }
 
 static int __parse_message_continuation (xp_stx_parser_t* parser)
 {
-
 	/*
 	 * <messages> ::=
 	 * 	(<unary message>+ <binary message>* [<keyword message>] ) |
@@ -702,34 +764,6 @@ static int __emit_code (
 	return 0;
 }
 
-
-static inline xp_bool_t __is_binary_char (xp_cint_t c)
-{
-	/*
-	 * binaryCharacter ::=
-	 * 	'!' | '%' | '&' | '*' | '+' | ',' | 
-	 * 	'/' | '<' | '=' | '>' | '?' | '@' | 
-	 * 	'\' | '~' | '|' | '-'
-	 */
-
-	return
-		c == XP_CHAR('!') || c == XP_CHAR('%') ||
-		c == XP_CHAR('&') || c == XP_CHAR('*') ||
-		c == XP_CHAR('+') || c == XP_CHAR(',') ||
-		c == XP_CHAR('/') || c == XP_CHAR('<') ||
-		c == XP_CHAR('=') || c == XP_CHAR('>') ||
-		c == XP_CHAR('?') || c == XP_CHAR('@') ||
-		c == XP_CHAR('\\') || c == XP_CHAR('|') ||
-		c == XP_CHAR('~') || c == XP_CHAR('-');
-}
-
-static inline xp_bool_t __is_closing_char (xp_cint_t c)
-{
-	return 
-		c == XP_CHAR('.') || c == XP_CHAR(']') ||
-		c == XP_CHAR(')') || c == XP_CHAR(';') ||
-		c == XP_CHAR('\"') || c == XP_CHAR('\'');
-}
 
 static int __get_token (xp_stx_parser_t* parser)
 {
