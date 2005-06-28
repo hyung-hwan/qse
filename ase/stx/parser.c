@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.40 2005-06-23 07:20:44 bacon Exp $
+ * $Id: parser.c,v 1.41 2005-06-28 04:13:08 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -632,8 +632,8 @@ static int __parse_block_constructor (xp_stx_parser_t* parser)
 	}
 
 	/* TODO: create a block closure */
-	if (__parse_temporaries(parser, xp_true) == -1) return -1;
-	if (__parse_statements(parser, xp_true) == -1) return -1;
+	if (__parse_temporaries(parser/*, xp_true*/) == -1) return -1;
+	if (__parse_statements(parser/*, xp_true*/) == -1) return -1;
 
 	if (parser->token.type != XP_STX_TOKEN_RBRACKET) {
 		parser->error_code = XP_STX_PARSER_ERROR_BLOCK_NOT_CLOSED;
