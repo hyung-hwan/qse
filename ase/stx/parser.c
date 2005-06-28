@@ -1,9 +1,15 @@
 /*
- * $Id: parser.c,v 1.41 2005-06-28 04:13:08 bacon Exp $
+ * $Id: parser.c,v 1.42 2005-06-28 15:23:58 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
 #include <xp/stx/misc.h>
+
+#if defined(__BORLANDC__) || defined(_MSC_VER)
+	#define INLINE 
+#else
+	#define INLINE inline
+#endif
 
 static int __parse_method (
 	xp_stx_parser_t* parser, 
@@ -160,7 +166,7 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 	return XP_TEXT("unknown error");
 }
 
-static inline xp_bool_t __is_pseudo_variable (const xp_stx_token_t* token)
+static INLINE xp_bool_t __is_pseudo_variable (const xp_stx_token_t* token)
 {
 	return token->type == XP_STX_TOKEN_IDENT &&
 		(xp_strcmp(token->name.buffer, XP_TEXT("self")) == 0 ||
@@ -170,7 +176,7 @@ static inline xp_bool_t __is_pseudo_variable (const xp_stx_token_t* token)
 		 xp_strcmp(token->name.buffer, XP_TEXT("false")) == 0);
 }
 
-static inline xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
+static INLINE xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
 {
 	return 
 		token->type == XP_STX_TOKEN_BINARY &&
@@ -178,7 +184,7 @@ static inline xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
 		token->name.buffer[0] == XP_CHAR('|');
 }
 
-static inline xp_bool_t __is_binary_char (xp_cint_t c)
+static INLINE xp_bool_t __is_binary_char (xp_cint_t c)
 {
 	/*
 	 * binaryCharacter ::=
@@ -198,7 +204,7 @@ static inline xp_bool_t __is_binary_char (xp_cint_t c)
 		c == XP_CHAR('~') || c == XP_CHAR('-');
 }
 
-static inline xp_bool_t __is_closing_char (xp_cint_t c)
+static INLINE xp_bool_t __is_closing_char (xp_cint_t c)
 {
 	return 
 		c == XP_CHAR('.') || c == XP_CHAR(']') ||

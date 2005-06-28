@@ -1,0 +1,22 @@
+SRCS = \
+	stx.c memory.c object.c symbol.c class.c \
+	hash.c misc.c context.c token.c parser.c bootstrp.c
+OBJS = $(SRCS:.c=.obj)
+OUT = xpstx.lib
+
+CC = cl
+CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0400 -I../..
+
+all: $(OBJS)
+	link -lib @<<
+/nologo /out:$(OUT) $(OBJS)
+<<
+
+
+clean:
+	del $(OBJS) $(OUT) *.obj
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) $(CFLAGS) /c $<
+
