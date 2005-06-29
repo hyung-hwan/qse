@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.24 2005-06-23 07:20:44 bacon Exp $
+ * $Id: parser.h,v 1.25 2005-06-29 12:02:39 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -38,7 +38,9 @@ enum
 	XP_STX_PARSER_ERROR_NO_RPAREN,
 	XP_STX_PARSER_ERROR_BLOCK_ARGUMENT_NAME,
 	XP_STX_PARSER_ERROR_BLOCK_ARGUMENT_LIST,
-	XP_STX_PARSER_ERROR_BLOCK_NOT_CLOSED
+	XP_STX_PARSER_ERROR_BLOCK_NOT_CLOSED,
+
+	XP_STX_PARSER_ERROR_UNDECLARED_NAME
 };
 
 enum
@@ -85,6 +87,7 @@ extern "C" {
 xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx);
 void xp_stx_parser_close (xp_stx_parser_t* parser);
 
+const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser);
 int xp_stx_parser_parse_method (
 	xp_stx_parser_t* parser, xp_word_t method_class, void* input);
 
