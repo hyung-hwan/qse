@@ -11,10 +11,4 @@ perform: method with: x with: y with: z with: a with: b with: c
 
 	(jjj xxx: 10 xy) zzz: (10 fuck: 20 you: 40) yyy:  kkk.
 
-"
-	$a. 
-	$b.
-	^true.
-	a := b.
-	' this is bad
-"
+	[ 10 plus:  20]
