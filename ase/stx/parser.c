@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.44 2005-06-29 12:02:39 bacon Exp $
+ * $Id: parser.c,v 1.45 2005-06-29 16:01:32 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -546,45 +546,25 @@ static int __parse_assignment (
 	 * <assignment> ::= <assignment target> assignmentOperator <expression>
 	 */
 
-	xp_size_t i;
-	xp_stx_class_t* class_obj;
+	xp_word_t i;
 
 	for (i = 0; i < parser->temporary_count; i++) {
 		if (xp_strcmp (target, parser->temporary[i]) == 0) {
 xp_char_t buf[100];
 			if (__parse_expression(parser) == -1) return -1;
-
 xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
 			EMIT_CODE (parser, XP_TEXT("ASSIGN_TEMPORARY"), buf);
 			return 0;
 		}
 	}
 
-	class_obj = (xp_stx_class_t*)
-		XP_STX_WORD_OBJECT(parser->stx, parser->method_class);
-	xp_assert (class_obj != XP_NULL);
-	if (class_obj->header.class == parser->stx->class_metaclass) {
-		/* metaclass */
-		/* TODO: can metaclasses have instance variables? */
-	}
-	else {
-		xp_size_t size;
-		xp_stx_word_object_t* array;
-
-		size = XP_STX_SIZE(parser->stx, class_obj->variables);
-		array = XP_STX_WORD_OBJECT(parser->stx, class_obj->variables);
-
-		for (i = 0; i < size; i++) {
-			const xp_char_t* iname = 
-				&XP_STX_CHARAT(parser->stx, array->data[i], 0);
-			if (xp_strcmp(target, iname) == 0) {
+	if (xp_stx_get_instance_variable_index (
+		parser->stx, parser->method_class, target, &i) == 0) {
 xp_char_t buf[100];
-				if (__parse_expression(parser) == -1) return -1;
+		if (__parse_expression(parser) == -1) return -1;
 xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
-				EMIT_CODE (parser, XP_TEXT("ASSIGN_INSTANCE"), buf);
-				return 0;
-			}
-		}
+		EMIT_CODE (parser, XP_TEXT("ASSIGN_INSTANCE"), buf);
+		return 0;
 	}
 
 	/* TODO: check it in class variables */
