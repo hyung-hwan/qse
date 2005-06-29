@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.12 2005-06-08 16:11:18 bacon Exp $
+ * $Id: bootstrp.c,v 1.13 2005-06-29 16:01:32 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -421,6 +421,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 			__set_names (stx, XP_STX_DATA(stx,array), p->instance_variables);
 			class_obj->variables = array; 
 		}
+		else n = 0;
 
 		class_obj->spec = XP_STX_TO_SMALLINT(((spec + n) << 1) | p->is_indexable);
 

@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.9 2005-06-08 16:00:51 bacon Exp $
+ * $Id: class.c,v 1.10 2005-06-29 16:01:32 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -48,3 +48,46 @@ xp_word_t xp_stx_lookup_class (xp_stx_t* stx, const xp_char_t* name)
 	return value;
 }
 
+int xp_stx_get_instance_variable_index (
+	xp_stx_t* stx, xp_word_t class_index, 
+	const xp_char_t* name, xp_word_t* index)
+{
+	xp_word_t i, size, index_super = 0;
+	xp_stx_class_t* class_obj;
+	xp_stx_word_object_t* array;
+	const xp_char_t* iname;
+
+	class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class_index);
+	xp_assert (class_obj != XP_NULL);
+
+	if (class_obj->superclass != stx->nil) {
+		if (xp_stx_get_instance_variable_index (
+			stx, class_obj->superclass, name, &index_super) == 0) {
+			*index = index_super;
+			return 0;
+		}
+	}
+
+	if (class_obj->header.class == stx->class_metaclass) {
+		/* metaclass */
+		/* TODO: can a metaclas have instance variables? */	
+
+		*index = index_super;
+	}
+	else {
+		size = XP_STX_SIZE(stx, class_obj->variables);
+		array = XP_STX_WORD_OBJECT(stx, class_obj->variables);
+
+		for (i = 0; i < size; i++) {
+			iname = &XP_STX_CHARAT(stx, array->data[i], 0);
+			if (xp_strcmp(iname, name) == 0) {
+				*index = i + index_super;
+				return 0;
+			}
+		}
+
+		*index = size + index_super;
+	}
+
+	return -1;
+}

@@ -94,7 +94,6 @@ int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_stx_t stx;
 	xp_stx_parser_t parser;
-	xp_word_t i;
 
 #ifdef __linux
 	mtrace ();
