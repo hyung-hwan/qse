@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.42 2005-06-28 15:23:58 bacon Exp $
+ * $Id: parser.c,v 1.43 2005-06-29 10:56:42 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -22,6 +22,7 @@ static int __parse_keyword_pattern (xp_stx_parser_t* parser);
 
 static int __parse_temporaries (xp_stx_parser_t* parser);
 static int __parse_statements (xp_stx_parser_t* parser);
+static int __parse_block_statements (xp_stx_parser_t* parser);
 static int __parse_statement (xp_stx_parser_t* parser);
 static int __parse_expression (xp_stx_parser_t* parser);
 
@@ -253,6 +254,7 @@ static int __parse_method (
 	if (__parse_message_pattern(parser) == -1) return -1;
 	if (__parse_temporaries(parser) == -1) return -1;
 	if (__parse_statements(parser) == -1) return -1;
+
 	return 0;
 }
 
@@ -445,6 +447,19 @@ static int __parse_statements (xp_stx_parser_t* parser)
 	return 0;
 }
 
+static int __parse_block_statements (xp_stx_parser_t* parser)
+{
+	while (parser->token.type != XP_STX_TOKEN_RBRACKET && 
+	       parser->token.type != XP_STX_TOKEN_END) {
+
+		if (__parse_statement(parser) == -1) return -1;
+		if (parser->token.type != XP_STX_TOKEN_PERIOD) break;
+		GET_TOKEN (parser);
+	}
+
+	return 0;
+}
+
 static int __parse_statement (xp_stx_parser_t* parser)
 {
 	/* 
@@ -582,14 +597,14 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 		}
 		else if (parser->token.type == XP_STX_TOKEN_LBRACKET) {
 			GET_TOKEN (parser);
-			if (__parse_block_constructor (parser) == -1) return -1;
+			if (__parse_block_constructor(parser) == -1) return -1;
 		}
 		else if (parser->token.type == XP_STX_TOKEN_APAREN) {
 			/* TODO: array literal */
 		}
 		else if (parser->token.type == XP_STX_TOKEN_LPAREN) {
 			GET_TOKEN (parser);
-			if (__parse_expression (parser) == -1) return -1;
+			if (__parse_expression(parser) == -1) return -1;
 			if (parser->token.type != XP_STX_TOKEN_RPAREN) {
 				parser->error_code = XP_STX_PARSER_ERROR_NO_RPAREN;
 				return -1;
@@ -620,6 +635,8 @@ static int __parse_block_constructor (xp_stx_parser_t* parser)
 
 	if (parser->token.type == XP_STX_TOKEN_COLON) {
 		do {
+			GET_TOKEN (parser);
+
 			if (parser->token.type != XP_STX_TOKEN_IDENT) {
 				parser->error_code = XP_STX_PARSER_ERROR_BLOCK_ARGUMENT_NAME;
 				return -1;
@@ -638,8 +655,8 @@ static int __parse_block_constructor (xp_stx_parser_t* parser)
 	}
 
 	/* TODO: create a block closure */
-	if (__parse_temporaries(parser/*, xp_true*/) == -1) return -1;
-	if (__parse_statements(parser/*, xp_true*/) == -1) return -1;
+	if (__parse_temporaries(parser) == -1) return -1;
+	if (__parse_block_statements(parser) == -1) return -1;
 
 	if (parser->token.type != XP_STX_TOKEN_RBRACKET) {
 		parser->error_code = XP_STX_PARSER_ERROR_BLOCK_NOT_CLOSED;
