@@ -9,6 +9,8 @@
 #endif
 
 #include <xp/stx/parser.h>
+#include <xp/stx/bootstrp.h>
+#include <xp/stx/class.h>
 
 #ifdef __linux
 #include <mcheck.h>
@@ -90,6 +92,7 @@ int stdio_func (int cmd, void* owner, void* arg)
 
 int xp_main (int argc, xp_char_t* argv[])
 {
+	xp_stx_t stx;
 	xp_stx_parser_t parser;
 	xp_word_t i;
 
@@ -106,11 +109,28 @@ int xp_main (int argc, xp_char_t* argv[])
 #endif
 */
 
+	if (argc != 2) {
+		xp_printf (XP_TEXT("usage: %s class_name\n"), argv[0]);
+		return -1;
+	}
 
-	if (xp_stx_parser_open(&parser, XP_NULL) == XP_NULL) {
+	if (xp_stx_open (&stx, 10000) == XP_NULL) {
+		xp_printf (XP_TEXT("cannot open stx\n"));
+		return -1;
+	}
+
+	if (xp_stx_bootstrap(&stx) == -1) {
+		xp_stx_close (&stx);
+		xp_printf (XP_TEXT("cannot bootstrap\n"));
+		return -1;
+	}
+
+
+	if (xp_stx_parser_open(&parser, &stx) == XP_NULL) {
 		xp_printf (XP_TEXT("cannot open parser\n"));
 		return -1;
 	}
+
 
 	{
 	/*
@@ -121,16 +141,26 @@ int xp_main (int argc, xp_char_t* argv[])
 			XP_TEXT("isNil\n^true"));
 	*/
 		stdio_t stdio;
+		xp_word_t n = xp_stx_lookup_class (&stx, argv[1]);
+
 		parser.input_owner = (void*)&stdio;
 		parser.input_func = stdio_func;
-		if (xp_stx_parser_parse_method (&parser, 0, 
+
+		if (n == stx.nil) {
+			xp_printf (XP_TEXT("Cannot find class - %s\n"), argv[1]);
+			goto exit_program;
+		}
+
+		if (xp_stx_parser_parse_method (&parser, n, 
 			(void*)XP_TEXT("test.st")) == -1) {
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
 			xp_stx_parser_error_string (&parser));
 		}
 	}
 
+exit_program:
 	xp_stx_parser_close (&parser);
+	xp_stx_close (&stx);
 	xp_printf (XP_TEXT("== End of program ==\n"));
 
 #ifdef __linux
