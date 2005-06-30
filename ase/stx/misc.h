@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.8 2005-06-30 12:07:02 bacon Exp $
+ * $Id: misc.h,v 1.9 2005-06-30 15:11:00 bacon Exp $
  */
 
 #ifndef _XP_STX_MISC_H_
@@ -42,8 +42,7 @@ xp_word_t xp_stx_strhash (const xp_char_t* str);
 xp_word_t xp_stx_strxhash (const xp_char_t* str, xp_word_t len);
 
 xp_char_t* xp_stx_strword (
-	const xp_char_t* str, const xp_char_t* word, 
-	xp_word_t* word_index, xp_word_t* word_count);
+	const xp_char_t* str, const xp_char_t* word, xp_word_t* word_index);
 
 #ifdef __cplusplus
 }
