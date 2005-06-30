@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.11 2005-06-30 12:07:02 bacon Exp $
+ * $Id: class.c,v 1.12 2005-06-30 15:11:00 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -72,7 +72,6 @@ int xp_stx_get_instance_variable_index (
 	if (class_obj->header.class == stx->class_metaclass) {
 		/* metaclass */
 		/* TODO: can a metaclas have instance variables? */	
-
 		*index = index_super;
 	}
 	else {
@@ -88,17 +87,18 @@ int xp_stx_get_instance_variable_index (
 			}
 		}
 		*index = size + index_super;
-
 		*/
-		if (class_obj->variables != stx->nil) {
+
+		if (class_obj->variables == stx->nil) *index = 0;
+		else {
 			string = XP_STX_CHAR_OBJECT(stx, class_obj->variables);
 			if (xp_stx_strword (string->data, name, index) != XP_NULL) {
 				*index += index_super;
 				return 0;
 			}
-			*index = size + index_super;
 		}
-		else *index = index_super;
+
+		*index += index_super;
 	}
 
 	return -1;

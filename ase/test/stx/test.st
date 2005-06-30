@@ -8,7 +8,7 @@ perform: method with: x with: y with: z with: a with: b with: c
 	a := #xxx niceMethod.
 "
 	b := -30 xxx nil this.
-	name := 10.
+	instanceClass := 10.
 
 	(jjj xxx: 10 xy) zzz: (10 fuck: 20 you: 40) yyy:  kkk.
 	[ spec plus:  20]
