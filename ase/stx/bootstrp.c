@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.13 2005-06-29 16:01:32 bacon Exp $
+ * $Id: bootstrp.c,v 1.14 2005-06-30 12:07:02 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -174,6 +174,38 @@ static class_info_t class_info[] =
 		1
 	},
 	{
+		XP_TEXT("String"),
+		XP_TEXT("IndexedCollection"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		1
+	},
+	{
+		XP_TEXT("Symbol"),
+		XP_TEXT("String"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		1
+	},
+	{
+		XP_TEXT("Link"),
+		XP_TEXT("Object"),
+		XP_TEXT("link"),
+		XP_NULL,
+		XP_NULL,
+		0
+	},
+	{
+		XP_TEXT("Symlink"),
+		XP_TEXT("Link"),
+		XP_TEXT("symbol"),
+		XP_NULL,
+		XP_NULL,
+		0
+	},
+	{
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
@@ -194,6 +226,17 @@ xp_word_t xp_stx_new_array (xp_stx_t* stx, xp_word_t size)
 	return x;	
 }
 
+xp_word_t xp_stx_new_string (xp_stx_t* stx, const xp_char_t* str)
+{
+	xp_word_t x;
+
+	xp_assert (stx->class_string != stx->nil);
+	x = xp_stx_alloc_char_object (stx, str);
+	XP_STX_CLASS(stx,x) = stx->class_string;
+
+	return x;	
+}
+
 int xp_stx_bootstrap (xp_stx_t* stx)
 {
 	xp_word_t symbol_Smalltalk;
@@ -206,6 +249,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	stx->class_object = xp_stx_new_class (stx, XP_TEXT("Object"));
 	stx->class_class = xp_stx_new_class (stx, XP_TEXT("Class"));
 	stx->class_array = xp_stx_new_class (stx, XP_TEXT("Array"));
+	stx->class_string = xp_stx_new_class (stx, XP_TEXT("String"));
 
 	__create_builtin_classes (stx);
 
@@ -250,7 +294,6 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	/* fales setClass: False */
 	XP_STX_CLASS(stx,stx->false) = 
 		xp_stx_lookup_class (stx, XP_TEXT("False"));
-
 
 	__filein_kernel (stx);
 	return 0;
@@ -415,15 +458,28 @@ static void __create_builtin_classes (xp_stx_t* stx)
 
 		}
 
+/*
 		if (p->instance_variables != XP_NULL) {
 			n = __count_names (p->instance_variables);
 			array = xp_stx_new_array (stx, n);
-			__set_names (stx, XP_STX_DATA(stx,array), p->instance_variables);
+			__set_names (stx, 
+				XP_STX_DATA(stx,array), p->instance_variables);
 			class_obj->variables = array; 
 		}
 		else n = 0;
+*/
+		if (p->instance_variables != XP_NULL) {
+			n = __count_names (p->instance_variables);
+			class_obj->variables = 
+				xp_stx_new_string (stx, p->instance_variables);
+		}
+		else {
+			n = 0;
+			class_obj->variables = stx->nil;
+		}
 
-		class_obj->spec = XP_STX_TO_SMALLINT(((spec + n) << 1) | p->is_indexable);
+		class_obj->spec = 
+			XP_STX_TO_SMALLINT(((spec + n) << 1) | p->is_indexable);
 
 		if (p->class_variables != XP_NULL) {
 			n = __count_names (p->class_variables);

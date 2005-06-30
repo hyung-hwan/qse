@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.27 2005-06-08 16:14:52 bacon Exp $
+ * $Id: stx.h,v 1.28 2005-06-30 12:07:02 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -76,6 +76,7 @@ struct xp_stx_t
 	xp_word_t class_object;
 	xp_word_t class_class;
 	xp_word_t class_array;
+	xp_word_t class_string;
 
 	xp_bool_t __malloced;
 	xp_bool_t __wantabort; /* TODO: make it a function pointer */
@@ -94,13 +95,13 @@ struct xp_stx_t
 #define XP_STX_SIZE(stx,idx) (XP_STX_ACCESS(stx,idx) >> 0x02)
 #define XP_STX_WORD_INDEXED  (0x00)
 #define XP_STX_BYTE_INDEXED  (0x01)
-#define XP_CHAR_INDEXED  (0x02)
+#define XP_STX_CHAR_INDEXED  (0x02)
 
 #define XP_STX_WORD_OBJECT(stx,idx) \
 	((xp_stx_word_object_t*)XP_STX_OBJECT(stx,idx))
 #define XP_STX_BYTE_OBJECT(stx,idx) \
 	((xp_stx_byte_object_t*)XP_STX_OBJECT(stx,idx))
-#define XP_CHAR_OBJECT(stx,idx) \
+#define XP_STX_CHAR_OBJECT(stx,idx) \
 	((xp_stx_char_object_t*)XP_STX_OBJECT(stx,idx))
 
 #define XP_STX_WORDAT(stx,idx,n) \

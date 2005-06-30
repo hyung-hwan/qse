@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.25 2005-06-08 16:11:18 bacon Exp $
+ * $Id: object.c,v 1.26 2005-06-30 12:07:02 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -81,13 +81,13 @@ xp_word_t xp_stx_alloc_char_objectx (
 
 	/*
 	XP_STX_CLASS(stx,idx) = stx->nil;
-	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_CHAR_INDEXED;
+	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_CHAR_INDEXED;
 	XP_STX_CHARAT(stx,idx,n) = XP_CHAR('\0');
 	while (n-- > 0) XP_STX_CHARAT(stx,idx,n) = str[n];
 	*/
-	obj = XP_CHAR_OBJECT(stx,idx);
+	obj = XP_STX_CHAR_OBJECT(stx,idx);
 	obj->header.class = stx->nil;
-	obj->header.access = (n << 2) | XP_CHAR_INDEXED;
+	obj->header.access = (n << 2) | XP_STX_CHAR_INDEXED;
 	obj->data[n] = XP_CHAR('\0');
 	while (n-- > 0) obj->data[n] = str[n];
 
@@ -115,12 +115,12 @@ xp_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 
 	/*
 	XP_STX_CLASS(stx,idx) = stx->nil;
-	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_CHAR_INDEXED;
+	XP_STX_ACCESS(stx,idx) = (n << 2) | XP_STX_CHAR_INDEXED;
 	XP_STX_CHARAT(stx,idx,n) = XP_CHAR('\0');
 	*/
-	obj = XP_CHAR_OBJECT(stx,idx);
+	obj = XP_STX_CHAR_OBJECT(stx,idx);
 	obj->header.class = stx->nil;
-	obj->header.access = (n << 2) | XP_CHAR_INDEXED;
+	obj->header.access = (n << 2) | XP_STX_CHAR_INDEXED;
 	obj->data[n] = XP_CHAR('\0');
 
 	xp_va_start (ap, stx);
@@ -138,7 +138,7 @@ xp_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 
 xp_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_word_t idx)
 {
-	xp_assert (XP_STX_TYPE(stx,idx) == XP_CHAR_INDEXED);
+	xp_assert (XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED);
 	return xp_stx_strxhash (
 		XP_STX_DATA(stx,idx), XP_STX_SIZE(stx,idx));
 }
