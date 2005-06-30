@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.10 2005-06-29 16:01:32 bacon Exp $
+ * $Id: class.c,v 1.11 2005-06-30 12:07:02 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -54,7 +54,8 @@ int xp_stx_get_instance_variable_index (
 {
 	xp_word_t i, size, index_super = 0;
 	xp_stx_class_t* class_obj;
-	xp_stx_word_object_t* array;
+	/*xp_stx_word_object_t* array;*/
+	xp_stx_char_object_t* string;
 	const xp_char_t* iname;
 
 	class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class_index);
@@ -75,6 +76,7 @@ int xp_stx_get_instance_variable_index (
 		*index = index_super;
 	}
 	else {
+		/*
 		size = XP_STX_SIZE(stx, class_obj->variables);
 		array = XP_STX_WORD_OBJECT(stx, class_obj->variables);
 
@@ -85,8 +87,18 @@ int xp_stx_get_instance_variable_index (
 				return 0;
 			}
 		}
-
 		*index = size + index_super;
+
+		*/
+		if (class_obj->variables != stx->nil) {
+			string = XP_STX_CHAR_OBJECT(stx, class_obj->variables);
+			if (xp_stx_strword (string->data, name, index) != XP_NULL) {
+				*index += index_super;
+				return 0;
+			}
+			*index = size + index_super;
+		}
+		else *index = index_super;
 	}
 
 	return -1;

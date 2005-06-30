@@ -137,7 +137,7 @@ void print_subclasses (xp_stx_t* stx, const xp_char_t* name)
 int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_stx_t stx;
-	xp_word_t i;
+	//xp_word_t i;
 
 #ifndef _DOS
 	if (xp_setlocale () == -1) {
