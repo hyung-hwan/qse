@@ -1,6 +1,6 @@
 SRCS = \
 	stx.c memory.c object.c symbol.c class.c \
-	hash.c misc.c context.c token.c parser.c bootstrp.c
+	hash.c misc.c context.c name.c token.c parser.c bootstrp.c
 OBJS = $(SRCS:.c=.obj)
 OUT = xpstx.lib
 
