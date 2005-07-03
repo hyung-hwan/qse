@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.14 2005-06-30 12:07:02 bacon Exp $
+ * $Id: bootstrp.c,v 1.15 2005-07-03 16:37:01 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -11,6 +11,8 @@
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
 static void __create_builtin_classes (xp_stx_t* stx);
+static xp_word_t __make_classvar_dict (
+	xp_stx_t* stx, xp_word_t class, const xp_char_t* names);
 static void __filein_kernel (xp_stx_t* stx);
 
 static xp_word_t __count_names (const xp_char_t* str);
@@ -121,7 +123,8 @@ static class_info_t class_info[] =
 		XP_TEXT("Method"),
 		XP_TEXT("Object"),
 		XP_TEXT("text message bytecodes literals stackSize temporarySize class"),
-		XP_NULL,
+		//XP_NULL,
+		XP_TEXT("Win32Errors"), // TODO: REMOVE THIS
 		XP_NULL,
 		0
 	},
@@ -166,8 +169,24 @@ static class_info_t class_info[] =
 		1
 	},
 	{
-		XP_TEXT("SystemDictionary"),
+		XP_TEXT("Dictionary"),
 		XP_TEXT("IndexedCollection"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		1
+	},
+	{
+		XP_TEXT("SystemDictionary"),
+		XP_TEXT("Dictionary"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		1
+	},
+	{
+		XP_TEXT("PoolDictionary"),
+		XP_TEXT("Dictionary"),
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
@@ -277,7 +296,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	symbol_Smalltalk = 
 		xp_stx_new_symbol (stx, XP_TEXT("Smalltalk"));
 	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_char_object(stx,symbol_Smalltalk),
+		xp_stx_hash_char_object(stx, symbol_Smalltalk),
 		symbol_Smalltalk, stx->smalltalk);	
 
 	/* create #nil, #true, #false */
@@ -458,39 +477,42 @@ static void __create_builtin_classes (xp_stx_t* stx)
 
 		}
 
-/*
-		if (p->instance_variables != XP_NULL) {
-			n = __count_names (p->instance_variables);
-			array = xp_stx_new_array (stx, n);
-			__set_names (stx, 
-				XP_STX_DATA(stx,array), p->instance_variables);
-			class_obj->variables = array; 
-		}
-		else n = 0;
-*/
 		if (p->instance_variables != XP_NULL) {
 			n = __count_names (p->instance_variables);
 			class_obj->variables = 
 				xp_stx_new_string (stx, p->instance_variables);
 		}
-		else {
-			n = 0;
-			class_obj->variables = stx->nil;
-		}
+		else n = 0;
 
 		class_obj->spec = 
 			XP_STX_TO_SMALLINT(((spec + n) << 1) | p->is_indexable);
+	}
 
+	for (p = class_info; p->name != XP_NULL; p++) {
+		class = xp_stx_lookup_class(stx, p->name);
+		xp_assert (class != stx->nil);
+
+		class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class);
+
+		/*
 		if (p->class_variables != XP_NULL) {
 			n = __count_names (p->class_variables);
 			array = xp_stx_new_array (stx, n);
 			__set_names (stx, XP_STX_DATA(stx,array), p->class_variables);
 			class_obj->class_variables = array;
 		}
+		*/
+
+		if (p->class_variables != XP_NULL) {
+			class_obj->class_variables = 
+				__make_classvar_dict(stx, class, p->class_variables);
+		}
 
 		/*
 		TODO:
 		if (p->pool_dictionaries != XP_NULL) {
+			class_obj->pool_dictionaries =
+				__make_pool_dictionary(stx, class, p->pool_dictionaries);
 		}
 		*/
 	}
@@ -604,6 +626,36 @@ static void __set_metaclass_subclasses (
 	}
 }
 
+static xp_word_t __make_classvar_dict (
+	xp_stx_t* stx, xp_word_t class, const xp_char_t* names)
+{
+	xp_size_t n;
+	xp_word_t dict, symbol;
+	const xp_char_t* p = names;
+	const xp_char_t* name;
+
+	n = __count_names (names);
+	dict = xp_stx_alloc_word_object (stx, n);
+
+	do {
+		while (*p == XP_CHAR(' ') ||
+		       *p == XP_CHAR('\t')) p++;
+		if (*p == XP_CHAR('\0')) break;
+
+		name = p;
+		while (*p != XP_CHAR(' ') && 
+		       *p != XP_CHAR('\t') && 
+		       *p != XP_CHAR('\0')) p++;
+
+		symbol = xp_stx_new_symbolx (stx, name, p - name);
+		
+		xp_stx_hash_insert (stx, dict,
+			xp_stx_hash_char_object(stx, symbol), symbol, stx->nil);
+	} while (1);
+
+	return dict;
+}
+
 static void __filein_kernel (xp_stx_t* stx)
 {
 	class_info_t* p;
@@ -612,3 +664,4 @@ static void __filein_kernel (xp_stx_t* stx)
 		/* TODO: */
 	}
 }
+
