@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.9 2005-06-30 15:11:00 bacon Exp $
+ * $Id: misc.h,v 1.10 2005-07-03 16:37:01 bacon Exp $
  */
 
 #ifndef _XP_STX_MISC_H_
@@ -32,6 +32,12 @@
 	#include <xp/bas/stdarg.h>
 	#include <xp/bas/ctype.h>
 	#include <xp/bas/string.h>
+#endif
+
+#if defined(__BORLANDC__) || defined(_MSC_VER)
+	#define INLINE 
+#else
+	#define INLINE inline
 #endif
 
 #ifdef __cplusplus

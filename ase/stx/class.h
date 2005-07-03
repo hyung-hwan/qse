@@ -1,5 +1,5 @@
 /*
- * $Id: class.h,v 1.7 2005-06-29 16:01:32 bacon Exp $
+ * $Id: class.h,v 1.8 2005-07-03 16:37:01 bacon Exp $
  */
 
 #ifndef _XP_STX_CLASS_H_
@@ -62,6 +62,8 @@ int xp_stx_get_instance_variable_index (
 	xp_stx_t* stx, xp_word_t class_index, 
 	const xp_char_t* name, xp_word_t* index);
 
+xp_word_t xp_stx_lookup_class_variable (
+	xp_stx_t* stx, xp_word_t class_index, const xp_char_t* name);
 
 #ifdef __cplusplus
 }

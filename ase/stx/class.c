@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.12 2005-06-30 15:11:00 bacon Exp $
+ * $Id: class.c,v 1.13 2005-07-03 16:37:01 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -52,11 +52,9 @@ int xp_stx_get_instance_variable_index (
 	xp_stx_t* stx, xp_word_t class_index, 
 	const xp_char_t* name, xp_word_t* index)
 {
-	xp_word_t i, size, index_super = 0;
+	xp_word_t index_super = 0;
 	xp_stx_class_t* class_obj;
-	/*xp_stx_word_object_t* array;*/
 	xp_stx_char_object_t* string;
-	const xp_char_t* iname;
 
 	class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class_index);
 	xp_assert (class_obj != XP_NULL);
@@ -75,24 +73,10 @@ int xp_stx_get_instance_variable_index (
 		*index = index_super;
 	}
 	else {
-		/*
-		size = XP_STX_SIZE(stx, class_obj->variables);
-		array = XP_STX_WORD_OBJECT(stx, class_obj->variables);
-
-		for (i = 0; i < size; i++) {
-			iname = &XP_STX_CHARAT(stx, array->data[i], 0);
-			if (xp_strcmp(iname, name) == 0) {
-				*index = i + index_super;
-				return 0;
-			}
-		}
-		*index = size + index_super;
-		*/
-
 		if (class_obj->variables == stx->nil) *index = 0;
 		else {
 			string = XP_STX_CHAR_OBJECT(stx, class_obj->variables);
-			if (xp_stx_strword (string->data, name, index) != XP_NULL) {
+			if (xp_stx_strword(string->data, name, index) != XP_NULL) {
 				*index += index_super;
 				return 0;
 			}
@@ -102,4 +86,29 @@ int xp_stx_get_instance_variable_index (
 	}
 
 	return -1;
+}
+
+xp_word_t xp_stx_lookup_class_variable (
+	xp_stx_t* stx, xp_word_t class_index, const xp_char_t* name)
+{
+	xp_stx_class_t* class_obj;
+
+	class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class_index);
+	xp_assert (class_obj != XP_NULL);
+
+	if (class_obj->superclass != stx->nil) {
+		xp_word_t tmp;
+		tmp = xp_stx_lookup_class_variable (
+			stx, class_obj->superclass, name);
+		if (tmp != stx->nil) return tmp;
+	}
+
+	/* TODO: can a metaclas have class variables? */	
+	if (class_obj->header.class != stx->class_metaclass &&
+	    class_obj->variables != stx->nil) {
+		if (xp_stx_hash_lookup_symbol(stx, 
+			class_obj->class_variables, name) != stx->nil) return class_index;
+	}
+
+	return stx->nil;
 }

@@ -1,16 +1,10 @@
 /*
- * $Id: parser.c,v 1.45 2005-06-29 16:01:32 bacon Exp $
+ * $Id: parser.c,v 1.46 2005-07-03 16:37:01 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
 #include <xp/stx/misc.h>
 #include <xp/stx/class.h>
-
-#if defined(__BORLANDC__) || defined(_MSC_VER)
-	#define INLINE 
-#else
-	#define INLINE inline
-#endif
 
 static int __parse_method (
 	xp_stx_parser_t* parser, 
@@ -567,7 +561,12 @@ xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
 		return 0;
 	}
 
-	/* TODO: check it in class variables */
+	if (xp_stx_lookup_class_variable (
+		parser->stx, parser->method_class, target, &i) != parser->stx->nil) {
+		if (__parse_expression(parser) == -1) return -1;
+		EMIT_CODE (parser, XP_TEXT("ASSIGN_CLASSVAR #"), target);
+		return 0;
+	}
 
 	/* TODO: global, but i don't like this idea */
 
