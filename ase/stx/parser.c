@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.46 2005-07-03 16:37:01 bacon Exp $
+ * $Id: parser.c,v 1.47 2005-07-04 04:31:32 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -562,7 +562,7 @@ xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
 	}
 
 	if (xp_stx_lookup_class_variable (
-		parser->stx, parser->method_class, target, &i) != parser->stx->nil) {
+		parser->stx, parser->method_class, target) != parser->stx->nil) {
 		if (__parse_expression(parser) == -1) return -1;
 		EMIT_CODE (parser, XP_TEXT("ASSIGN_CLASSVAR #"), target);
 		return 0;
