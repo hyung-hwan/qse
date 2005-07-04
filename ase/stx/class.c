@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.15 2005-07-04 16:23:13 bacon Exp $
+ * $Id: class.c,v 1.16 2005-07-04 16:37:03 bacon Exp $
  */
 
 #include <xp/stx/class.h>

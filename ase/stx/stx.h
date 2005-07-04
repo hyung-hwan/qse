@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.29 2005-07-04 16:23:13 bacon Exp $
+ * $Id: stx.h,v 1.30 2005-07-04 16:37:03 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
