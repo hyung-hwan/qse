@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.28 2005-07-04 16:23:13 bacon Exp $
+ * $Id: object.c,v 1.29 2005-07-04 16:37:03 bacon Exp $
  */
 
 #include <xp/stx/object.h>

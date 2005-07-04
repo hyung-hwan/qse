@@ -1,5 +1,5 @@
 /*
- * $Id: class.h,v 1.9 2005-07-04 16:23:13 bacon Exp $
+ * $Id: class.h,v 1.10 2005-07-04 16:37:03 bacon Exp $
  */
 
 #ifndef _XP_STX_CLASS_H_
