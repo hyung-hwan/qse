@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.15 2005-07-03 16:37:01 bacon Exp $
+ * $Id: bootstrp.c,v 1.16 2005-07-04 11:32:41 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -122,7 +122,7 @@ static class_info_t class_info[] =
 	{
 		XP_TEXT("Method"),
 		XP_TEXT("Object"),
-		XP_TEXT("text message bytecodes literals stackSize temporarySize class"),
+		XP_TEXT("text message bytecodes literals stackSize temporarySize"),
 		//XP_NULL,
 		XP_TEXT("Win32Errors"), // TODO: REMOVE THIS
 		XP_NULL,
@@ -636,6 +636,8 @@ static xp_word_t __make_classvar_dict (
 
 	n = __count_names (names);
 	dict = xp_stx_alloc_word_object (stx, n);
+	XP_STX_CLASS(stx,dict) =  /* TODO */
+		xp_stx_lookup_class (stx, XP_TEXT("Dictionary"));
 
 	do {
 		while (*p == XP_CHAR(' ') ||
