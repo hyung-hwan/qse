@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.13 2005-07-03 16:37:01 bacon Exp $
+ * $Id: class.c,v 1.14 2005-07-04 08:37:25 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -105,7 +105,7 @@ xp_word_t xp_stx_lookup_class_variable (
 
 	/* TODO: can a metaclas have class variables? */	
 	if (class_obj->header.class != stx->class_metaclass &&
-	    class_obj->variables != stx->nil) {
+	    class_obj->class_variables != stx->nil) {
 		if (xp_stx_hash_lookup_symbol(stx, 
 			class_obj->class_variables, name) != stx->nil) return class_index;
 	}
