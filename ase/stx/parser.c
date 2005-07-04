@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.47 2005-07-04 04:31:32 bacon Exp $
+ * $Id: parser.c,v 1.48 2005-07-04 10:02:00 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -16,6 +16,7 @@ static int __parse_binary_pattern (xp_stx_parser_t* parser);
 static int __parse_keyword_pattern (xp_stx_parser_t* parser);
 
 static int __parse_temporaries (xp_stx_parser_t* parser);
+static int __parse_primitive (xp_stx_parser_t* parser);
 static int __parse_statements (xp_stx_parser_t* parser);
 static int __parse_block_statements (xp_stx_parser_t* parser);
 static int __parse_statement (xp_stx_parser_t* parser);
@@ -144,6 +145,11 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 		XP_TEXT("message selector"),
 		XP_TEXT("invalid argument name"),
 		XP_TEXT("too many arguments"),
+
+		XP_TEXT("invalid primitive type"),
+		XP_TEXT("primitive number expected"),
+		XP_TEXT("primitive not closed"),
+
 		XP_TEXT("temporary list not closed"),
 		XP_TEXT("too many temporaries"),
 		XP_TEXT("cannot redefine pseudo variable"),
@@ -180,6 +186,22 @@ static INLINE xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
 		token->type == XP_STX_TOKEN_BINARY &&
 		token->name.size == 1 &&
 		token->name.buffer[0] == XP_CHAR('|');
+}
+
+static INLINE xp_bool_t __is_primitive_opener (const xp_stx_token_t* token)
+{
+	return 
+		token->type == XP_STX_TOKEN_BINARY &&
+		token->name.size == 1 &&
+		token->name.buffer[0] == XP_CHAR('<');
+}
+
+static INLINE xp_bool_t __is_primitive_closer (const xp_stx_token_t* token)
+{
+	return 
+		token->type == XP_STX_TOKEN_BINARY &&
+		token->name.size == 1 &&
+		token->name.buffer[0] == XP_CHAR('>');
 }
 
 static INLINE xp_bool_t __is_binary_char (xp_cint_t c)
@@ -233,7 +255,7 @@ static int __parse_method (
 {
 	/*
 	 * <method definition> ::= 
-	 * 	<message pattern> [<temporaries> ] [<statements>]
+	 * 	<message pattern> [<temporaries>] [<primitive>] [<statements>]
 	 */
 
 	GET_CHAR (parser);
@@ -250,6 +272,7 @@ static int __parse_method (
 
 	if (__parse_message_pattern(parser) == -1) return -1;
 	if (__parse_temporaries(parser) == -1) return -1;
+	if (__parse_primitive(parser) == -1) return -1;
 	if (__parse_statements(parser) == -1) return -1;
 
 	return 0;
@@ -417,6 +440,38 @@ static int __parse_temporaries (xp_stx_parser_t* parser)
 	return 0;
 }
 
+static int __parse_primitive (xp_stx_parser_t* parser)
+{
+	/* 
+	 * <primitive> ::= '<' 'primitive:' number '>'
+	 */
+
+	if (!__is_primitive_opener(&parser->token)) return 0;
+	GET_TOKEN (parser);
+
+	if (parser->token.type != XP_STX_TOKEN_KEYWORD ||
+	    xp_strcmp (parser->token.name.buffer, XP_TEXT("primitive:")) != 0) {
+		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_KEYWORD;
+		return -1;
+	}
+
+	GET_TOKEN (parser); /* TODO: only integer */
+	if (parser->token.type != XP_STX_TOKEN_NUMLIT) {
+		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NUMBER;
+		return -1;
+	}
+EMIT_CODE (parser, XP_TEXT("DO_PRIMITIVE"), parser->token.name.buffer);
+
+	GET_TOKEN (parser);
+	if (!__is_primitive_closer(&parser->token)) {
+		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NOT_CLOSED;
+		return -1;
+	}
+
+	GET_TOKEN (parser);
+	return 0;
+}
+
 static int __parse_statements (xp_stx_parser_t* parser)
 {
 	/*
@@ -519,7 +574,8 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_basic_expression (xp_stx_parser_t* parser, const xp_char_t* ident)
+static int __parse_basic_expression (
+	xp_stx_parser_t* parser, const xp_char_t* ident)
 {
 	/*
 	 * <basic expression> ::= <primary> [<messages> <cascaded messages>]
@@ -568,7 +624,9 @@ xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
 		return 0;
 	}
 
-	/* TODO: global, but i don't like this idea */
+	/* TODO: IMPLEMENT POOL DICTIONARIES */
+
+	/* TODO: IMPLEMENT GLOBLAS, but i don't like this idea */
 
 	parser->error_code = XP_STX_PARSER_ERROR_UNDECLARED_NAME;
 	return -1;
@@ -795,7 +853,6 @@ static int __emit_code (
 	xp_printf (XP_TEXT("CODE: %s %s\n"), high, low);
 	return 0;
 }
-
 
 static int __get_token (xp_stx_parser_t* parser)
 {
