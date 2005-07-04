@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.49 2005-07-04 11:32:41 bacon Exp $
+ * $Id: parser.c,v 1.50 2005-07-04 11:47:25 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -86,6 +86,7 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 
 	parser->argument_count = 0;
 	parser->temporary_count = 0;
+	parser->literal_count = 0;
 
 	parser->curc = XP_CHAR_EOF;
 	parser->ungotc_count = 0;
@@ -270,6 +271,7 @@ static int __parse_method (
 	while (parser->temporary_count > 0) {
 		xp_free (parser->temporary[--parser->temporary_count]);
 	}
+	parser->literal_count = 0;
 
 	if (__parse_message_pattern(parser) == -1) return -1;
 	if (__parse_temporaries(parser) == -1) return -1;
