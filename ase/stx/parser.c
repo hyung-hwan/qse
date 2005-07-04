@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.48 2005-07-04 10:02:00 bacon Exp $
+ * $Id: parser.c,v 1.49 2005-07-04 11:32:41 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -9,6 +9,7 @@
 static int __parse_method (
 	xp_stx_parser_t* parser, 
 	xp_word_t method_class, void* input);
+static int __finish_method (xp_stx_parser_t* parser);
 
 static int __parse_message_pattern (xp_stx_parser_t* parser);
 static int __parse_unary_pattern (xp_stx_parser_t* parser);
@@ -274,6 +275,46 @@ static int __parse_method (
 	if (__parse_temporaries(parser) == -1) return -1;
 	if (__parse_primitive(parser) == -1) return -1;
 	if (__parse_statements(parser) == -1) return -1;
+	if (__finish_method (parser) == -1) return -1;
+
+	return 0;
+}
+
+
+static int __finish_method (xp_stx_parser_t* parser)
+{
+	xp_stx_class_t* class_obj;
+	xp_word_t bytecodes;
+
+	class_obj = (xp_stx_class_t*)
+		XP_STX_WORD_OBJECT(parser->stx, parser->method_class);
+
+	if (class_obj->methods == parser->stx->nil) {
+		/* TODO: reconfigure method dictionary size */
+		class_obj->methods = xp_stx_alloc_word_object (parser->stx, 64);
+		XP_STX_CLASS(parser->stx, class_obj->methods) = 
+			xp_stx_lookup_class (parser->stx, XP_TEXT("Dictionary"));
+	}
+	xp_assert (class_obj->methods != parser->stx->nil);
+
+/*
+	bytecodes = xp_stx_alloc_byte_object (parser->stx, 
+		parser->bytecodes, parser->bytecode_size); 
+*/
+
+	/* TODO: text saving must be optional */
+/*
+	method_obj->text = 
+		xp_stx_new_string (parser->stx, parser->text);
+
+	method_obj->message = 
+		xp_stx_new_symbol (parser->stx, parser->method_name);
+	method_obj->bytecodes = bytecodes;	
+	//method_obj->literals = 
+	method_obj->stack_size = XP_STX_TO_SMALLINT(100);
+	method_obj->temporary_size = 
+		XP_STX_TO_SMALLINT(parser->temporary_count);
+*/
 
 	return 0;
 }

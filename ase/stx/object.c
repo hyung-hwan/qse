@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.26 2005-06-30 12:07:02 bacon Exp $
+ * $Id: object.c,v 1.27 2005-07-04 11:32:41 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -37,7 +37,8 @@ xp_word_t xp_stx_alloc_word_object (xp_stx_t* stx, xp_word_t n)
 }
 
 /* n: number of bytes */
-xp_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_word_t n)
+xp_word_t xp_stx_alloc_byte_object (
+	xp_stx_t* stx, const xp_byte_t* data, xp_word_t n)
 {
 	xp_word_t idx;
 	xp_stx_byte_object_t* obj;
@@ -56,7 +57,13 @@ xp_word_t xp_stx_alloc_byte_object (xp_stx_t* stx, xp_word_t n)
 	obj = XP_STX_BYTE_OBJECT(stx,idx);
 	obj->header.class = stx->nil;
 	obj->header.access = (n << 2) | XP_STX_BYTE_INDEXED;
-	while (n-- > 0) obj->data[n] = 0;
+
+	if (data == XP_NULL) {
+		while (n-- > 0) obj->data[n] = 0;
+	}
+	else  {
+		while (n-- > 0) obj->data[n] = data[n];
+	}
 
 	return idx;
 }
