@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.28 2005-06-30 12:07:02 bacon Exp $
+ * $Id: stx.h,v 1.29 2005-07-04 16:23:13 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -93,9 +93,17 @@ struct xp_stx_t
 
 #define XP_STX_TYPE(stx,idx) (XP_STX_ACCESS(stx,idx) & 0x03)
 #define XP_STX_SIZE(stx,idx) (XP_STX_ACCESS(stx,idx) >> 0x02)
+
 #define XP_STX_WORD_INDEXED  (0x00)
 #define XP_STX_BYTE_INDEXED  (0x01)
 #define XP_STX_CHAR_INDEXED  (0x02)
+
+#define XP_STX_IS_WORD_INDEXED(stx,idx) \
+	(XP_STX_TYPE(stx,idx) == XP_STX_WORD_INDEXED)
+#define XP_STX_IS_BYTE_INDEXED(stx,idx) \
+	(XP_STX_TYPE(stx,idx) == XP_STX_BYTE_INDEXED)
+#define XP_STX_IS_CHAR_INDEXED(stx,idx) \
+	(XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED)
 
 #define XP_STX_WORD_OBJECT(stx,idx) \
 	((xp_stx_word_object_t*)XP_STX_OBJECT(stx,idx))
