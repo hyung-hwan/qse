@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.16 2005-07-04 11:32:41 bacon Exp $
+ * $Id: bootstrp.c,v 1.17 2005-07-04 16:23:13 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -32,7 +32,7 @@ struct class_info_t
 	const xp_char_t* instance_variables;
 	const xp_char_t* class_variables;
 	const xp_char_t* pool_dictionaries;
-	const int is_indexable;
+	const int indexable;
 };
 
 typedef struct class_info_t class_info_t;
@@ -45,7 +45,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("UndefinedObject"),
@@ -53,7 +53,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{ 
 		XP_TEXT("Behavior"),
@@ -61,7 +61,7 @@ static class_info_t class_info[] =
 		XP_TEXT("spec methods superclass"),
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{ 
 		XP_TEXT("Class"),
@@ -69,7 +69,7 @@ static class_info_t class_info[] =
 		XP_TEXT("name variables classVariables poolDictionaries"),
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{ 
 		XP_TEXT("Metaclass"),
@@ -77,7 +77,7 @@ static class_info_t class_info[] =
 		XP_TEXT("instanceClass"),
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("Block"),
@@ -85,7 +85,7 @@ static class_info_t class_info[] =
 		XP_TEXT("context argCount argLoc bytePointer"),
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("Boolean"),
@@ -93,7 +93,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("True"),
@@ -101,7 +101,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("False"),
@@ -109,7 +109,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("Context"),
@@ -117,7 +117,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("Method"),
@@ -126,7 +126,7 @@ static class_info_t class_info[] =
 		//XP_NULL,
 		XP_TEXT("Win32Errors"), // TODO: REMOVE THIS
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("Magnitude"),
@@ -134,7 +134,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("Collection"),
@@ -142,7 +142,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("IndexedCollection"),
@@ -150,7 +150,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		1
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("Array"),
@@ -158,7 +158,15 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		1
+		XP_STX_SPEC_WORD_INDEXABLE
+	},
+	{
+		XP_TEXT("ByteArray"),
+		XP_TEXT("IndexedCollection"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		XP_STX_SPEC_BYTE_INDEXABLE
 	},
 	{
 		XP_TEXT("SymbolTable"),
@@ -166,7 +174,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		1
+		XP_STX_SPEC_WORD_INDEXABLE	
 	},
 	{
 		XP_TEXT("Dictionary"),
@@ -174,7 +182,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		1
+		XP_STX_SPEC_WORD_INDEXABLE	
 	},
 	{
 		XP_TEXT("SystemDictionary"),
@@ -182,7 +190,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		1
+		XP_STX_SPEC_WORD_INDEXABLE	
 	},
 	{
 		XP_TEXT("PoolDictionary"),
@@ -190,7 +198,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		1
+		XP_STX_SPEC_WORD_INDEXABLE	
 	},
 	{
 		XP_TEXT("String"),
@@ -198,7 +206,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		1
+		XP_STX_SPEC_CHAR_INDEXABLE
 	},
 	{
 		XP_TEXT("Symbol"),
@@ -206,7 +214,7 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		1
+		XP_STX_SPEC_CHAR_INDEXABLE
 	},
 	{
 		XP_TEXT("Link"),
@@ -214,7 +222,7 @@ static class_info_t class_info[] =
 		XP_TEXT("link"),
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
 		XP_TEXT("Symlink"),
@@ -222,15 +230,16 @@ static class_info_t class_info[] =
 		XP_TEXT("symbol"),
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	},
+
 	{
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
-		0
+		XP_STX_SPEC_NOT_INDEXABLE
 	}
 };
 
@@ -385,16 +394,16 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 
 	/* (Symlink class) setSpec: XP_STX_CLASS_SIZE */
 	XP_STX_WORDAT(stx,class_SymlinkMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Symbol class) setSpec: CLASS_SIZE */
 	XP_STX_WORDAT(stx,class_SymbolMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Metaclass class) setSpec: CLASS_SIZE */
 	XP_STX_WORDAT(stx,class_MetaclassMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Pairlink class) setSpec: CLASS_SIZE */
 	XP_STX_WORDAT(stx,class_PairlinkMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 1) | 0x00);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
 
 	/* specs for class_metaclass, class_pairlink, 
 	 * class_symbol, class_symlink are set later in 
@@ -440,7 +449,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 	xp_stx_class_t* class_obj, * superclass_obj;
 	xp_word_t metaclass;
 	xp_stx_metaclass_t* metaclass_obj;
-	xp_word_t n, spec;
+	xp_word_t n, nfields;
 
 	xp_assert (stx->class_array != stx->nil);
 
@@ -455,7 +464,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		class_obj->superclass = (p->superclass == XP_NULL)?
 			stx->nil: xp_stx_lookup_class(stx,p->superclass);
 
-		spec = 0;
+		nfields = 0;
 		if (p->superclass != XP_NULL) {
 			xp_word_t meta;
 			xp_stx_metaclass_t* meta_obj;
@@ -471,21 +480,24 @@ static void __create_builtin_classes (xp_stx_t* stx)
 			while (superclass != stx->nil) {
 				superclass_obj = (xp_stx_class_t*)
 					XP_STX_WORD_OBJECT(stx,superclass);
-				spec += XP_STX_FROM_SMALLINT(superclass_obj->spec >> 1);
+				nfields += XP_STX_FROM_SMALLINT(superclass_obj->spec) >> 2;
 				superclass = superclass_obj->superclass;
 			}
 
 		}
 
 		if (p->instance_variables != XP_NULL) {
-			n = __count_names (p->instance_variables);
+			nfields += __count_names (p->instance_variables);
 			class_obj->variables = 
 				xp_stx_new_string (stx, p->instance_variables);
 		}
-		else n = 0;
 
+		xp_assert (nfields <= 0 || (nfields > 0 && 
+			(p->indexable == XP_STX_SPEC_NOT_INDEXABLE || 
+			 p->indexable == XP_STX_SPEC_WORD_INDEXABLE)));
+	
 		class_obj->spec = 
-			XP_STX_TO_SMALLINT(((spec + n) << 1) | p->is_indexable);
+			XP_STX_TO_SMALLINT((nfields << 2) | p->indexable);
 	}
 
 	for (p = class_info; p->name != XP_NULL; p++) {
