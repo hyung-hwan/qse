@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.33 2005-07-05 09:52:00 bacon Exp $
+ * $Id: object.c,v 1.34 2005-07-05 10:22:35 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -26,14 +26,19 @@ xp_word_t xp_stx_alloc_word_object (
 	n = nfields + variable_nfields;
 	idx = xp_stx_memory_alloc (&stx->memory,
 		n * xp_sizeof(xp_word_t) + xp_sizeof(xp_stx_object_t));
-	if (idx >= stx->memory.capacity) return idx; /* failed */
+	if (idx >= stx->memory.capacity) return idx; /* failed TODO: return a difference value OINDEX_INVALID */
 
+	idx = XP_STX_TO_OINDEX(idx);
 	obj = XP_STX_WORD_OBJECT(stx,idx);
 	obj->header.class = stx->nil;
 	obj->header.access = (n << 2) | XP_STX_WORD_INDEXED;
 
 	if (variable_data == XP_NULL) {
-		while (n > nfields) obj->data[--n] = stx->nil;
+		while (n > nfields) {
+			n--;
+			xp_printf (XP_TEXT("%d\n"), n);
+			obj->data[n] = stx->nil;
+		}
 	}
 	else {
 		while (n > nfields) {
@@ -66,6 +71,7 @@ xp_word_t xp_stx_alloc_byte_object (
 		&stx->memory, n + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
+	idx = XP_STX_TO_OINDEX(idx);
 	obj = XP_STX_BYTE_OBJECT(stx,idx);
 	obj->header.class = stx->nil;
 	obj->header.access = (n << 2) | XP_STX_BYTE_INDEXED;
@@ -101,6 +107,7 @@ xp_word_t xp_stx_alloc_char_objectx (
 		(n + 1) * xp_sizeof(xp_char_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
+	idx = XP_STX_TO_OINDEX(idx);
 	obj = XP_STX_CHAR_OBJECT(stx,idx);
 	obj->header.class = stx->nil;
 	obj->header.access = (n << 2) | XP_STX_CHAR_INDEXED;
@@ -123,6 +130,8 @@ xp_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 	xp_va_list ap;
 	xp_stx_char_object_t* obj;
 
+	xp_assert (stx->nil == XP_STX_NIL);
+
 	xp_va_start (ap, stx);
 	while ((p = xp_va_arg(ap, const xp_char_t*)) != XP_NULL) {
 		n += xp_strlen(p);
@@ -133,8 +142,7 @@ xp_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 		(n + 1) * xp_sizeof(xp_char_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed */
 
-	xp_assert (stx->nil == XP_STX_NIL);
-
+	idx = XP_STX_TO_OINDEX(idx);
 	obj = XP_STX_CHAR_OBJECT(stx,idx);
 	obj->header.class = stx->nil;
 	obj->header.access = (n << 2) | XP_STX_CHAR_INDEXED;
@@ -155,7 +163,7 @@ xp_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 
 xp_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_word_t idx)
 {
-	xp_assert (XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED);
+	xp_assert (!XP_STX_IS_SMALLINT(idx) && XP_STX_IS_CHAR_OBJECT(stx, idx));
 	return xp_stx_strxhash (
 		XP_STX_DATA(stx,idx), XP_STX_SIZE(stx,idx));
 }

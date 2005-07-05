@@ -1,15 +1,11 @@
 /*
- * $Id: object.h,v 1.23 2005-07-05 09:52:00 bacon Exp $
+ * $Id: object.h,v 1.24 2005-07-05 10:22:35 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
 #define _XP_STX_OBJECT_H_
 
 #include <xp/stx/stx.h>
-
-#define XP_STX_IS_SMALLINT(x)   (((x) & 0x01) == 0x01)
-#define XP_STX_TO_SMALLINT(x)   (((x) << 1) | 0x01)
-#define XP_STX_FROM_SMALLINT(x) ((x) >> 1)
 
 #ifdef __cplusplus
 extern "C" {

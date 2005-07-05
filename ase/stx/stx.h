@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.33 2005-07-05 09:52:00 bacon Exp $
+ * $Id: stx.h,v 1.34 2005-07-05 10:22:35 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -85,11 +85,19 @@ struct xp_stx_t
 	xp_bool_t __wantabort; /* TODO: make it a function pointer */
 };
 
-#define XP_STX_NIL   0
-#define XP_STX_TRUE  1
-#define XP_STX_FALSE 2
+#define XP_STX_IS_SMALLINT(x)   (((x) & 0x01) == 0x01)
+#define XP_STX_TO_SMALLINT(x)   (((x) << 1) | 0x01)
+#define XP_STX_FROM_SMALLINT(x) ((x) >> 1)
 
-#define XP_STX_OBJECT(stx,idx) (((stx)->memory).slots[idx])
+#define XP_STX_IS_OINDEX(x)     (((x) & 0x01) == 0x00)
+#define XP_STX_TO_OINDEX(x)     (((x) << 1) | 0x00)
+#define XP_STX_FROM_OINDEX(x)   ((x) >> 1)
+
+#define XP_STX_NIL   XP_STX_TO_OINDEX(0)
+#define XP_STX_TRUE  XP_STX_TO_OINDEX(1)
+#define XP_STX_FALSE XP_STX_TO_OINDEX(2)
+
+#define XP_STX_OBJECT(stx,idx) (((stx)->memory).slots[XP_STX_FROM_OINDEX(idx)])
 #define XP_STX_CLASS(stx,idx)  (XP_STX_OBJECT(stx,(idx))->header.class)
 #define XP_STX_ACCESS(stx,idx) (XP_STX_OBJECT(stx,(idx))->header.access)
 #define XP_STX_DATA(stx,idx)   ((void*)(XP_STX_OBJECT(stx,idx) + 1))
