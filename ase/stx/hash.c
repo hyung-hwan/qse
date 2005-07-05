@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.22 2005-07-05 06:26:33 bacon Exp $
+ * $Id: hash.c,v 1.23 2005-07-05 09:02:13 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -12,7 +12,8 @@ xp_word_t xp_stx_new_pairlink (
 	xp_word_t x;
 	xp_stx_pairlink_t* obj;
 
-	x = xp_stx_alloc_word_object (stx, XP_NULL, XP_STX_PAIRLINK_SIZE);	
+	x = xp_stx_alloc_word_object (
+		stx, XP_NULL, XP_STX_PAIRLINK_SIZE, XP_NULL, 0);
 	obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx, x);
 	obj->header.class = stx->class_pairlink;
 	obj->link = stx->nil;

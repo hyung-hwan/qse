@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.28 2005-07-04 11:47:25 bacon Exp $
+ * $Id: parser.h,v 1.29 2005-07-05 09:02:13 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -74,7 +74,7 @@ struct xp_stx_parser_t
 	xp_word_t literals[256]; /* TODO: make it a dynamic array */
 	xp_word_t literal_count;
 
-	xp_array_t byte_code;
+	xp_array_t bytecode;
 
 	xp_stx_token_t token;
 	xp_cint_t curc;

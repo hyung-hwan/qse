@@ -1,10 +1,12 @@
 /*
- * $Id: parser.c,v 1.51 2005-07-05 06:26:33 bacon Exp $
+ * $Id: parser.c,v 1.52 2005-07-05 09:02:13 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
 #include <xp/stx/object.h>
 #include <xp/stx/class.h>
+#include <xp/stx/method.h>
+#include <xp/stx/symbol.h>
 #include <xp/stx/misc.h>
 
 static int __parse_method (
@@ -74,7 +76,7 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 	}
 
 	if (xp_array_open (
-		&parser->byte_code, 256, 
+		&parser->bytecode, 256, 
 		xp_sizeof(xp_byte_t), XP_NULL) == XP_NULL) {
 		xp_stx_name_close (&parser->method_name);
 		xp_stx_token_close (&parser->token);
@@ -106,7 +108,7 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 		xp_free (parser->temporary[--parser->temporary_count]);
 	}
 
-	xp_array_close (&parser->byte_code);
+	xp_array_close (&parser->bytecode);
 	xp_stx_name_close (&parser->method_name);
 	xp_stx_token_close (&parser->token);
 
@@ -265,6 +267,7 @@ static int __parse_method (
 	GET_TOKEN (parser);
 
 	xp_stx_name_clear (&parser->method_name);
+	xp_array_clear (&parser->bytecode);
 
 	while (parser->argument_count > 0) {
 		xp_free (parser->argument[--parser->argument_count]);
@@ -287,7 +290,10 @@ static int __finish_method (xp_stx_parser_t* parser)
 {
 	xp_stx_t* stx = parser->stx;
 	xp_stx_class_t* class_obj;
-	xp_word_t bytecodes;
+	xp_stx_method_t* method_obj;
+	xp_word_t method, selector;
+
+	xp_assert (parser->bytecode.size != 0);
 
 	class_obj = (xp_stx_class_t*)
 		XP_STX_WORD_OBJECT(stx, parser->method_class);
@@ -295,30 +301,31 @@ static int __finish_method (xp_stx_parser_t* parser)
 	if (class_obj->methods == stx->nil) {
 		/* TODO: reconfigure method dictionary size */
 		class_obj->methods = xp_stx_instantiate (
-			stx, stx->class_dictionary, XP_NULL, 64);
+			stx, stx->class_dictionary, XP_NULL, XP_NULL, 64);
 	}
 	xp_assert (class_obj->methods != stx->nil);
 
-/*
-	bytecodes = xp_stx_instantiate (
-		stx, stx->class_bytearray, 
-		parser->bytecodes, parser->bytecode_size);
-*/
+	selector = xp_stx_new_symbolx (
+		stx, parser->method_name.buffer, parser->method_name.size);
+
+	method = xp_stx_instantiate(stx, stx->class_method, 
+		XP_NULL, parser->literals, parser->literal_count);
+	method_obj = (xp_stx_method_t*)XP_STX_WORD_OBJECT(stx, method);
 
 	/* TODO: text saving must be optional */
-/*
-	method_obj->text = 
-		xp_stx_new_string (stx, parser->text);
-
-	method_obj->message = 
-		xp_stx_new_symbol (stx, parser->method_name);
-	method_obj->bytecodes = bytecodes;	
-	//method_obj->literals = 
+	/*method_obj->text = xp_stx_instantiate (
+		stx, stx->class_string, XP_NULL, 
+		parser->text, xp_strlen(parser->text));
+	*/
+	method_obj->selector = selector;
+	method_obj->bytecodes = xp_stx_instantiate (
+		stx, stx->class_bytearray, XP_NULL, 
+		parser->bytecode.buffer, parser->bytecode.size);
+	/*
 	method_obj->stack_size = XP_STX_TO_SMALLINT(100);
 	method_obj->temporary_size = 
 		XP_STX_TO_SMALLINT(parser->temporary_count);
-*/
-
+	*/
 	return 0;
 }
 
