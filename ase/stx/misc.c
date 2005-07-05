@@ -1,8 +1,19 @@
 /*
- * $Id: misc.c,v 1.6 2005-06-30 15:11:00 bacon Exp $
+ * $Id: misc.c,v 1.7 2005-07-05 11:15:51 bacon Exp $
  */
 
 #include <xp/stx/misc.h>
+
+xp_word_t xp_stx_hash (const void* data, xp_word_t len)
+{
+	xp_word_t h = 0;
+	xp_byte_t* bp, * be;
+
+	bp = (xp_byte_t*)data; be = bp + len;
+	while (bp < be) h = h * 31 + *bp++;
+
+	return h;
+}
 
 xp_word_t xp_stx_strhash (const xp_char_t* str)
 {

@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.19 2005-07-05 09:02:13 bacon Exp $
+ * $Id: class.c,v 1.20 2005-07-05 11:15:51 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -29,7 +29,7 @@ xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name)
 	XP_STX_WORDAT(stx,class,XP_STX_CLASS_NAME) = class_name;
 
 	xp_stx_hash_insert (stx, stx->smalltalk, 
-		xp_stx_hash_char_object(stx, class_name),
+		xp_stx_hash_object(stx, class_name),
 		class_name, class);
 
 	return class;

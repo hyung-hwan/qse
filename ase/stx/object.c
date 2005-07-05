@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.34 2005-07-05 10:22:35 bacon Exp $
+ * $Id: object.c,v 1.35 2005-07-05 11:15:51 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -34,11 +34,7 @@ xp_word_t xp_stx_alloc_word_object (
 	obj->header.access = (n << 2) | XP_STX_WORD_INDEXED;
 
 	if (variable_data == XP_NULL) {
-		while (n > nfields) {
-			n--;
-			xp_printf (XP_TEXT("%d\n"), n);
-			obj->data[n] = stx->nil;
-		}
+		while (n > nfields) obj->data[--n] = stx->nil;
 	}
 	else {
 		while (n > nfields) {
@@ -161,31 +157,28 @@ xp_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...)
 	return idx;
 }
 
-xp_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_word_t idx)
-{
-	xp_assert (!XP_STX_IS_SMALLINT(idx) && XP_STX_IS_CHAR_OBJECT(stx, idx));
-	return xp_stx_strxhash (
-		XP_STX_DATA(stx,idx), XP_STX_SIZE(stx,idx));
-}
-
 xp_word_t xp_stx_hash_object (xp_stx_t* stx, xp_word_t object)
 {
 	xp_word_t hv;
 
-	/* TODO: implement this function */
-
 	if (XP_STX_IS_SMALLINT(object)) {
-		hv = 0;
-	}
-	else if (XP_STX_IS_BYTE_OBJECT(stx,object)) {
-		hv = 0;
+		xp_word_t tmp = XP_STX_FROM_SMALLINT(object);
+		hv = xp_stx_hash(&tmp, xp_sizeof(tmp));
 	}
 	else if (XP_STX_IS_CHAR_OBJECT(stx,object)) {
-		hv = xp_stx_strxhash (
+		/*hv = xp_stx_strxhash (
+			XP_STX_DATA(stx,object), XP_STX_SIZE(stx,object));*/
+		hv = xp_stx_hash (XP_STX_DATA(stx,object),
+			XP_STX_SIZE(stx,object) * xp_sizeof(xp_char_t));
+	}
+	else if (XP_STX_IS_BYTE_OBJECT(stx,object)) {
+		hv = xp_stx_hash (
 			XP_STX_DATA(stx,object), XP_STX_SIZE(stx,object));
 	}
-	else if (XP_STX_IS_WORD_OBJECT(stx,object)) {
-		hv = 0;
+	else {
+		xp_assert (XP_STX_IS_WORD_OBJECT(stx,object));
+		hv = xp_stx_hash (XP_STX_DATA(stx,object),
+			XP_STX_SIZE(stx,object) * xp_sizeof(xp_word_t));
 	}
 
 	return hv;
@@ -205,6 +198,7 @@ xp_word_t xp_stx_instantiate (
 	   created in a different way */
 	/* TODO: maybe delete the following line */
 	xp_assert (class_obj->header.class != stx->class_metaclass);
+	xp_assert (XP_STX_IS_SMALLINT(class_obj->spec));
 
 	spec = XP_STX_FROM_SMALLINT(class_obj->spec);
 	nfields = (spec >> XP_STX_SPEC_INDEXABLE_BITS);

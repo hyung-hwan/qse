@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.10 2005-07-03 16:37:01 bacon Exp $
+ * $Id: misc.h,v 1.11 2005-07-05 11:15:51 bacon Exp $
  */
 
 #ifndef _XP_STX_MISC_H_
@@ -44,6 +44,7 @@
 extern "C" {
 #endif
 
+xp_word_t xp_stx_hash (const void* data, xp_word_t len);
 xp_word_t xp_stx_strhash (const xp_char_t* str);
 xp_word_t xp_stx_strxhash (const xp_char_t* str, xp_word_t len);
 
