@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.18 2005-07-04 16:37:03 bacon Exp $
+ * $Id: bootstrp.c,v 1.19 2005-07-05 04:29:31 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -277,7 +277,9 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	stx->class_object = xp_stx_new_class (stx, XP_TEXT("Object"));
 	stx->class_class = xp_stx_new_class (stx, XP_TEXT("Class"));
 	stx->class_array = xp_stx_new_class (stx, XP_TEXT("Array"));
+	stx->class_bytearray = xp_stx_new_class (stx, XP_TEXT("ByteArray"));
 	stx->class_string = xp_stx_new_class (stx, XP_TEXT("String"));
+	stx->class_dictionary = xp_stx_new_class (stx, XP_TEXT("Dictionary"));
 
 	__create_builtin_classes (stx);
 
@@ -394,16 +396,16 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 
 	/* (Symlink class) setSpec: XP_STX_CLASS_SIZE */
 	XP_STX_WORDAT(stx,class_SymlinkMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Symbol class) setSpec: CLASS_SIZE */
 	XP_STX_WORDAT(stx,class_SymbolMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Metaclass class) setSpec: CLASS_SIZE */
 	XP_STX_WORDAT(stx,class_MetaclassMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Pairlink class) setSpec: CLASS_SIZE */
 	XP_STX_WORDAT(stx,class_PairlinkMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 
 	/* specs for class_metaclass, class_pairlink, 
 	 * class_symbol, class_symlink are set later in 
@@ -480,7 +482,9 @@ static void __create_builtin_classes (xp_stx_t* stx)
 			while (superclass != stx->nil) {
 				superclass_obj = (xp_stx_class_t*)
 					XP_STX_WORD_OBJECT(stx,superclass);
-				nfields += XP_STX_FROM_SMALLINT(superclass_obj->spec) >> 2;
+				nfields += 
+					XP_STX_FROM_SMALLINT(superclass_obj->spec) >>
+					XP_STX_SPEC_INDEXABLE_BITS;
 				superclass = superclass_obj->superclass;
 			}
 
@@ -496,8 +500,8 @@ static void __create_builtin_classes (xp_stx_t* stx)
 			(p->indexable == XP_STX_SPEC_NOT_INDEXABLE || 
 			 p->indexable == XP_STX_SPEC_WORD_INDEXABLE)));
 	
-		class_obj->spec = 
-			XP_STX_TO_SMALLINT((nfields << 2) | p->indexable);
+		class_obj->spec = XP_STX_TO_SMALLINT(
+			(nfields << XP_STX_SPEC_INDEXABLE_BITS) | p->indexable);
 	}
 
 	for (p = class_info; p->name != XP_NULL; p++) {
@@ -641,15 +645,12 @@ static void __set_metaclass_subclasses (
 static xp_word_t __make_classvar_dict (
 	xp_stx_t* stx, xp_word_t class, const xp_char_t* names)
 {
-	xp_size_t n;
 	xp_word_t dict, symbol;
 	const xp_char_t* p = names;
 	const xp_char_t* name;
 
-	n = __count_names (names);
-	dict = xp_stx_alloc_word_object (stx, n);
-	XP_STX_CLASS(stx,dict) =  /* TODO */
-		xp_stx_lookup_class (stx, XP_TEXT("Dictionary"));
+	dict = xp_stx_instantiate (
+		stx, stx->class_dictionary, __count_names(names));
 
 	do {
 		while (*p == XP_CHAR(' ') ||

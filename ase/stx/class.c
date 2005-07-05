@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.16 2005-07-04 16:37:03 bacon Exp $
+ * $Id: class.c,v 1.17 2005-07-05 04:29:31 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -18,7 +18,7 @@ xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name)
 	/* the spec of the metaclass must be the spec of its
 	 * instance. so the XP_STX_CLASS_SIZE is set */
 	XP_STX_WORDAT(stx,meta,XP_STX_METACLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << 2) | XP_STX_SPEC_NOT_INDEXABLE);
+		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	
 	/* the spec of the class is set later in __create_builtin_classes */
 	class = xp_stx_alloc_word_object (stx, XP_STX_CLASS_SIZE);

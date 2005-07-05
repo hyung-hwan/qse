@@ -1,5 +1,5 @@
 /*
- * $Id: class.h,v 1.10 2005-07-04 16:37:03 bacon Exp $
+ * $Id: class.h,v 1.11 2005-07-05 04:29:31 bacon Exp $
  */
 
 #ifndef _XP_STX_CLASS_H_
@@ -25,6 +25,8 @@
 #define XP_STX_METACLASS_SUBCLASSES     3
 #define XP_STX_METACLASS_INSTANCE_CLASS 4
 
+#define XP_STX_SPEC_INDEXABLE_BITS 2
+#define XP_STX_SPEC_INDEXABLE_MASK 3
 #define XP_STX_SPEC_NOT_INDEXABLE  0
 #define XP_STX_SPEC_WORD_INDEXABLE 1
 #define XP_STX_SPEC_BYTE_INDEXABLE 2
