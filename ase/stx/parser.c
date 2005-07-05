@@ -1,10 +1,11 @@
 /*
- * $Id: parser.c,v 1.50 2005-07-04 11:47:25 bacon Exp $
+ * $Id: parser.c,v 1.51 2005-07-05 06:26:33 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
-#include <xp/stx/misc.h>
+#include <xp/stx/object.h>
 #include <xp/stx/class.h>
+#include <xp/stx/misc.h>
 
 static int __parse_method (
 	xp_stx_parser_t* parser, 
@@ -282,35 +283,35 @@ static int __parse_method (
 	return 0;
 }
 
-
 static int __finish_method (xp_stx_parser_t* parser)
 {
+	xp_stx_t* stx = parser->stx;
 	xp_stx_class_t* class_obj;
 	xp_word_t bytecodes;
 
 	class_obj = (xp_stx_class_t*)
-		XP_STX_WORD_OBJECT(parser->stx, parser->method_class);
+		XP_STX_WORD_OBJECT(stx, parser->method_class);
 
-	if (class_obj->methods == parser->stx->nil) {
+	if (class_obj->methods == stx->nil) {
 		/* TODO: reconfigure method dictionary size */
-		class_obj->methods = xp_stx_alloc_word_object (parser->stx, 64);
-		XP_STX_CLASS(parser->stx, class_obj->methods) = 
-			xp_stx_lookup_class (parser->stx, XP_TEXT("Dictionary"));
+		class_obj->methods = xp_stx_instantiate (
+			stx, stx->class_dictionary, XP_NULL, 64);
 	}
-	xp_assert (class_obj->methods != parser->stx->nil);
+	xp_assert (class_obj->methods != stx->nil);
 
 /*
-	bytecodes = xp_stx_alloc_byte_object (parser->stx, 
-		parser->bytecodes, parser->bytecode_size); 
+	bytecodes = xp_stx_instantiate (
+		stx, stx->class_bytearray, 
+		parser->bytecodes, parser->bytecode_size);
 */
 
 	/* TODO: text saving must be optional */
 /*
 	method_obj->text = 
-		xp_stx_new_string (parser->stx, parser->text);
+		xp_stx_new_string (stx, parser->text);
 
 	method_obj->message = 
-		xp_stx_new_symbol (parser->stx, parser->method_name);
+		xp_stx_new_symbol (stx, parser->method_name);
 	method_obj->bytecodes = bytecodes;	
 	//method_obj->literals = 
 	method_obj->stack_size = XP_STX_TO_SMALLINT(100);
@@ -640,6 +641,7 @@ static int __parse_assignment (
 	 */
 
 	xp_word_t i;
+	xp_stx_t* stx = parser->stx;
 
 	for (i = 0; i < parser->temporary_count; i++) {
 		if (xp_strcmp (target, parser->temporary[i]) == 0) {
@@ -652,7 +654,7 @@ xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
 	}
 
 	if (xp_stx_get_instance_variable_index (
-		parser->stx, parser->method_class, target, &i) == 0) {
+		stx, parser->method_class, target, &i) == 0) {
 xp_char_t buf[100];
 		if (__parse_expression(parser) == -1) return -1;
 xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
@@ -661,7 +663,7 @@ xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
 	}
 
 	if (xp_stx_lookup_class_variable (
-		parser->stx, parser->method_class, target) != parser->stx->nil) {
+		stx, parser->method_class, target) != stx->nil) {
 		if (__parse_expression(parser) == -1) return -1;
 		EMIT_CODE (parser, XP_TEXT("ASSIGN_CLASSVAR #"), target);
 		return 0;
