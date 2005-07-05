@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.53 2005-07-05 09:52:00 bacon Exp $
+ * $Id: parser.c,v 1.54 2005-07-05 11:15:51 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -38,9 +38,6 @@ static int __parse_message_continuation (xp_stx_parser_t* parser);
 static int __parse_keyword_message (xp_stx_parser_t* parser);
 static int __parse_binary_message (xp_stx_parser_t* parser);
 static int __parse_unary_message (xp_stx_parser_t* parser);
-
-static int __emit_code (
-	xp_stx_parser_t* parser, const xp_char_t* high, const xp_char_t* low); 
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
@@ -237,6 +234,20 @@ static INLINE xp_bool_t __is_closing_char (xp_cint_t c)
 		c == XP_CHAR(')') || c == XP_CHAR(';') ||
 		c == XP_CHAR('\"') || c == XP_CHAR('\'');
 }
+
+static INLINE int __emit_code (
+	xp_stx_parser_t* parser, const xp_char_t* high, const xp_char_t* low)
+{
+	xp_printf (XP_TEXT("CODE: %s %s\n"), high, low);
+	return 0;
+}
+
+/*
+static INLINE int __emit_code (xp_stx_parser_t* parser, xp_byte_t code)
+{
+	return (xp_array_add_datum(&parser->bytecode, &code) == XP_NULL)? -1: 0;
+}
+*/
 
 int xp_stx_parser_parse_method (
 	xp_stx_parser_t* parser, xp_word_t method_class, void* input)
@@ -518,6 +529,15 @@ static int __parse_primitive (xp_stx_parser_t* parser)
 		return -1;
 	}
 EMIT_CODE (parser, XP_TEXT("DO_PRIMITIVE"), parser->token.name.buffer);
+
+/*
+	EMIT_CODE (parser, DO_PRIMITIVE);
+	EMIT_CODE (parser, parser->token.ivalue);
+
+	EMIT_CODE (parser, DO_PRIMITIVE_EXTENDED);
+	EMIT_CODE (parser, parser->token.ivalue);
+	EMIT_CODE (parser, parser->token.ivalue);
+*/
 
 	GET_TOKEN (parser);
 	if (!__is_primitive_closer(&parser->token)) {
@@ -902,13 +922,6 @@ static int __parse_unary_message (xp_stx_parser_t* parser)
 		GET_TOKEN (parser);
 	}
 
-	return 0;
-}
-
-static int __emit_code (
-	xp_stx_parser_t* parser, const xp_char_t* high, const xp_char_t* low)
-{
-	xp_printf (XP_TEXT("CODE: %s %s\n"), high, low);
 	return 0;
 }
 
