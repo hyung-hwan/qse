@@ -1,5 +1,5 @@
 /*
- * $Id: object.h,v 1.22 2005-07-05 09:02:13 bacon Exp $
+ * $Id: object.h,v 1.23 2005-07-05 09:52:00 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
@@ -29,6 +29,7 @@ xp_word_t xp_stx_alloc_char_objectx (
 xp_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...);
 
 xp_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_word_t idx);
+xp_word_t xp_stx_hash_object (xp_stx_t* stx, xp_word_t object);
 
 xp_word_t xp_stx_instantiate (
 	xp_stx_t* stx, xp_word_t class_index, const void* data,
