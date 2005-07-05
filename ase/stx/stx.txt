@@ -79,3 +79,8 @@ AssignInstance
 AssignTemporary
 */
 
+#define PUSH_VARIABLE   0x01
+#define PUSH_ARGUMENT   0x02
+#define PUSH_TEMPORARY  0x03
+#define PUSH_LITERAL    0x04
+
