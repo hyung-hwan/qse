@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.23 2005-07-05 09:02:13 bacon Exp $
+ * $Id: hash.c,v 1.24 2005-07-05 15:01:57 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -90,6 +90,7 @@ void xp_stx_hash_insert (
 	}
 	else {
 		for (;;) {
+			/* TODO: contents comparison */
 			if (XP_STX_WORDAT(stx,link,1) == key) {
 				XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_VALUE) = value;
 				break;		
