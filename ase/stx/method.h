@@ -1,5 +1,5 @@
 /*
- * $Id: method.h,v 1.1 2005-07-04 11:32:41 bacon Exp $
+ * $Id: method.h,v 1.2 2005-07-05 09:02:13 bacon Exp $
  */
 
 #ifndef _XP_STX_METHOD_H_
@@ -7,19 +7,25 @@
 
 #include <xp/stx/stx.h>
 
-#define XP_STX_METHOD_SIZE           6
+#define XP_STX_METHOD_SIZE           3
 #define XP_STX_METHOD_TEXT           0
-#define XP_STX_METHOD_MESSAGE        1
+#define XP_STX_METHOD_SELECTOR       1
 #define XP_STX_METHOD_BYTECODES      2
-#define XP_STX_METHOD_LITERALS       3
-#define XP_STX_METHOD_STACK_SIZE     4
-#define XP_STX_METHOD_TEMPORARY_SIZE 5
+
+struct xp_stx_method_t
+{
+	xp_stx_objhdr_t header;
+	xp_word_t text;
+	xp_word_t selector; /* is this necessary? */
+	xp_word_t bytecodes;
+	xp_word_t literals[1];
+};
+
+typedef struct xp_stx_method_t xp_stx_method_t;
 
 #ifdef __cplusplus
 extern "C"  {
 #endif
-
-int xp_stx_new_method (xp_stx_t* stx, xp_word_t size);
 
 #ifdef __cplusplus
 }

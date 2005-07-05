@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.18 2005-07-05 06:26:33 bacon Exp $
+ * $Id: class.c,v 1.19 2005-07-05 09:02:13 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -13,7 +13,8 @@ xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name)
 	xp_word_t meta, class;
 	xp_word_t class_name;
 
-	meta = xp_stx_alloc_word_object (stx, XP_NULL, XP_STX_METACLASS_SIZE);
+	meta = xp_stx_alloc_word_object (
+		stx, XP_NULL, XP_STX_METACLASS_SIZE, XP_NULL, 0);
 	XP_STX_CLASS(stx,meta) = stx->class_metaclass;
 	/* the spec of the metaclass must be the spec of its
 	 * instance. so the XP_STX_CLASS_SIZE is set */
@@ -21,7 +22,8 @@ xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name)
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	
 	/* the spec of the class is set later in __create_builtin_classes */
-	class = xp_stx_alloc_word_object (stx, XP_NULL, XP_STX_CLASS_SIZE);
+	class = xp_stx_alloc_word_object (
+		stx, XP_NULL, XP_STX_CLASS_SIZE, XP_NULL, 0);
 	XP_STX_CLASS(stx,class) = meta;
 	class_name = xp_stx_new_symbol (stx, name);
 	XP_STX_WORDAT(stx,class,XP_STX_CLASS_NAME) = class_name;
