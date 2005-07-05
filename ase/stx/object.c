@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.30 2005-07-05 04:29:31 bacon Exp $
+ * $Id: object.c,v 1.31 2005-07-05 06:26:33 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -10,7 +10,8 @@
 #include <xp/stx/misc.h>
 
 /* n: number of instance variables */
-xp_word_t xp_stx_alloc_word_object (xp_stx_t* stx, xp_word_t n)
+xp_word_t xp_stx_alloc_word_object (
+	xp_stx_t* stx, const xp_word_t* data, xp_word_t n)
 {
 	xp_word_t idx;
 	xp_stx_word_object_t* obj;
@@ -32,7 +33,12 @@ xp_word_t xp_stx_alloc_word_object (xp_stx_t* stx, xp_word_t n)
 	obj = XP_STX_WORD_OBJECT(stx,idx);
 	obj->header.class = stx->nil;
 	obj->header.access = (n << 2) | XP_STX_WORD_INDEXED;
-	while (n-- > 0) obj->data[n] = stx->nil;
+	if (data == XP_NULL) {
+		while (n-- > 0) obj->data[n] = stx->nil;
+	}
+	else {
+		while (n-- > 0) obj->data[n] = data[n];
+	}
 
 	return idx;
 }
@@ -62,7 +68,7 @@ xp_word_t xp_stx_alloc_byte_object (
 	if (data == XP_NULL) {
 		while (n-- > 0) obj->data[n] = 0;
 	}
-	else  {
+	else {
 		while (n-- > 0) obj->data[n] = data[n];
 	}
 
@@ -160,7 +166,7 @@ xp_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_word_t idx)
 }
 
 xp_word_t xp_stx_instantiate (
-	xp_stx_t* stx, xp_word_t class_index, xp_word_t size)
+	xp_stx_t* stx, xp_word_t class_index, const void* data, xp_word_t size)
 {
 	xp_stx_class_t* class_obj;
 	xp_word_t spec, nfields, new;
@@ -181,20 +187,22 @@ xp_word_t xp_stx_instantiate (
 	if (indexable == XP_STX_SPEC_BYTE_INDEXABLE) {
 		xp_assert (nfields == 0);
 		new = xp_stx_alloc_byte_object (
-			stx, XP_NULL, nfields + size);
+			stx, data, nfields + size);
 	}
 	else if (indexable == XP_STX_SPEC_CHAR_INDEXABLE) {
 		xp_assert (nfields == 0);
 		new = xp_stx_alloc_char_objectx (
-			stx, XP_NULL, nfields + size);
+			stx, data, nfields + size);
 	}
 	else if (indexable == XP_STX_SPEC_WORD_INDEXABLE) {
-		new = xp_stx_alloc_word_object (stx, nfields + size);
+		new = xp_stx_alloc_word_object (
+			stx, data, nfields + size);
 	}
 	else {
 		xp_assert (indexable == XP_STX_SPEC_NOT_INDEXABLE);
 		xp_assert (size == 0);
-		new = xp_stx_alloc_word_object (stx, nfields + size);
+		new = xp_stx_alloc_word_object (
+			stx, data, nfields + size);
 	}
 
 	XP_STX_CLASS(stx, new) = class_index;

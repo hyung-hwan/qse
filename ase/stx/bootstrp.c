@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.19 2005-07-05 04:29:31 bacon Exp $
+ * $Id: bootstrp.c,v 1.20 2005-07-05 06:26:33 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -248,7 +248,7 @@ xp_word_t xp_stx_new_array (xp_stx_t* stx, xp_word_t size)
 	xp_word_t x;
 
 	xp_assert (stx->class_array != stx->nil);
-	x = xp_stx_alloc_word_object (stx, size);
+	x = xp_stx_alloc_word_object (stx, XP_NULL, size);
 	XP_STX_CLASS(stx,x) = stx->class_array;
 
 	return x;	
@@ -341,9 +341,9 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	xp_word_t symbol_Pairlink;
 
 	/* allocate three keyword objects */
-	stx->nil = xp_stx_alloc_word_object (stx, 0);
-	stx->true = xp_stx_alloc_word_object (stx, 0);
-	stx->false = xp_stx_alloc_word_object (stx, 0);
+	stx->nil = xp_stx_alloc_word_object (stx, XP_NULL, 0);
+	stx->true = xp_stx_alloc_word_object (stx, XP_NULL, 0);
+	stx->false = xp_stx_alloc_word_object (stx, XP_NULL, 0);
 
 	xp_assert (stx->nil == XP_STX_NIL);
 	xp_assert (stx->true == XP_STX_TRUE);
@@ -351,30 +351,30 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 
 	/* symbol table & system dictionary */
 	/* TODO: symbol table and dictionary size */
-	stx->symbol_table = xp_stx_alloc_word_object (stx, 1000); 
-	stx->smalltalk = xp_stx_alloc_word_object (stx, 2000);
+	stx->symbol_table = xp_stx_alloc_word_object (stx, XP_NULL, 1000); 
+	stx->smalltalk = xp_stx_alloc_word_object (stx, XP_NULL, 2000);
 
 	stx->class_symlink = /* Symlink */
-		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx, XP_NULL, XP_STX_CLASS_SIZE);
 	stx->class_symbol =  /* Symbol */
-		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx, XP_NULL, XP_STX_CLASS_SIZE);
 	stx->class_metaclass =  /* Metaclass */
-		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx, XP_NULL, XP_STX_CLASS_SIZE);
 	stx->class_pairlink =  /* Pairlink */
-		xp_stx_alloc_word_object(stx,XP_STX_CLASS_SIZE);
+		xp_stx_alloc_word_object(stx, XP_NULL, XP_STX_CLASS_SIZE);
 
 	/* Metaclass is a class so it has the same structure 
 	 * as a normal class. "Metaclass class" is an instance of
 	 * Metaclass. */
 
 	class_SymlinkMeta = /* Symlink class */
-		xp_stx_alloc_word_object(stx,XP_STX_METACLASS_SIZE);
+		xp_stx_alloc_word_object(stx, XP_NULL, XP_STX_METACLASS_SIZE);
 	class_SymbolMeta = /* Symbol class */
-		xp_stx_alloc_word_object(stx,XP_STX_METACLASS_SIZE);
+		xp_stx_alloc_word_object(stx, XP_NULL, XP_STX_METACLASS_SIZE);
 	class_MetaclassMeta = /* Metaclass class */
-		xp_stx_alloc_word_object(stx,XP_STX_METACLASS_SIZE);
+		xp_stx_alloc_word_object(stx, XP_NULL, XP_STX_METACLASS_SIZE);
 	class_PairlinkMeta = /* Pairlink class */
-		xp_stx_alloc_word_object(stx,XP_STX_METACLASS_SIZE);
+		xp_stx_alloc_word_object(stx, XP_NULL, XP_STX_METACLASS_SIZE);
 
 	/* (Symlink class) setClass: Metaclass */
 	XP_STX_CLASS(stx,class_SymlinkMeta) = stx->class_metaclass;
@@ -510,15 +510,6 @@ static void __create_builtin_classes (xp_stx_t* stx)
 
 		class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class);
 
-		/*
-		if (p->class_variables != XP_NULL) {
-			n = __count_names (p->class_variables);
-			array = xp_stx_new_array (stx, n);
-			__set_names (stx, XP_STX_DATA(stx,array), p->class_variables);
-			class_obj->class_variables = array;
-		}
-		*/
-
 		if (p->class_variables != XP_NULL) {
 			class_obj->class_variables = 
 				__make_classvar_dict(stx, class, p->class_variables);
@@ -650,7 +641,7 @@ static xp_word_t __make_classvar_dict (
 	const xp_char_t* name;
 
 	dict = xp_stx_instantiate (
-		stx, stx->class_dictionary, __count_names(names));
+		stx, stx->class_dictionary, XP_NULL, __count_names(names));
 
 	do {
 		while (*p == XP_CHAR(' ') ||
