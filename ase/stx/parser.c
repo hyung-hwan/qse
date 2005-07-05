@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.52 2005-07-05 09:02:13 bacon Exp $
+ * $Id: parser.c,v 1.53 2005-07-05 09:52:00 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -7,6 +7,7 @@
 #include <xp/stx/class.h>
 #include <xp/stx/method.h>
 #include <xp/stx/symbol.h>
+#include <xp/stx/hash.h>
 #include <xp/stx/misc.h>
 
 static int __parse_method (
@@ -326,6 +327,11 @@ static int __finish_method (xp_stx_parser_t* parser)
 	method_obj->temporary_size = 
 		XP_STX_TO_SMALLINT(parser->temporary_count);
 	*/
+
+	xp_stx_hash_insert (
+		stx, class_obj->methods, 
+		xp_stx_hash_object(stx, selector),
+		selector, method);
 	return 0;
 }
 

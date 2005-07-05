@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.32 2005-07-05 09:02:13 bacon Exp $
+ * $Id: object.c,v 1.33 2005-07-05 09:52:00 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -158,6 +158,29 @@ xp_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_word_t idx)
 	xp_assert (XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED);
 	return xp_stx_strxhash (
 		XP_STX_DATA(stx,idx), XP_STX_SIZE(stx,idx));
+}
+
+xp_word_t xp_stx_hash_object (xp_stx_t* stx, xp_word_t object)
+{
+	xp_word_t hv;
+
+	/* TODO: implement this function */
+
+	if (XP_STX_IS_SMALLINT(object)) {
+		hv = 0;
+	}
+	else if (XP_STX_IS_BYTE_OBJECT(stx,object)) {
+		hv = 0;
+	}
+	else if (XP_STX_IS_CHAR_OBJECT(stx,object)) {
+		hv = xp_stx_strxhash (
+			XP_STX_DATA(stx,object), XP_STX_SIZE(stx,object));
+	}
+	else if (XP_STX_IS_WORD_OBJECT(stx,object)) {
+		hv = 0;
+	}
+
+	return hv;
 }
 
 xp_word_t xp_stx_instantiate (
