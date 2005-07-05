@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.29 2005-07-04 16:37:03 bacon Exp $
+ * $Id: object.c,v 1.30 2005-07-05 04:29:31 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -159,7 +159,6 @@ xp_word_t xp_stx_hash_char_object (xp_stx_t* stx, xp_word_t idx)
 		XP_STX_DATA(stx,idx), XP_STX_SIZE(stx,idx));
 }
 
-
 xp_word_t xp_stx_instantiate (
 	xp_stx_t* stx, xp_word_t class_index, xp_word_t size)
 {
@@ -176,8 +175,8 @@ xp_word_t xp_stx_instantiate (
 	xp_assert (class_obj->header.class != stx->class_metaclass);
 
 	spec = XP_STX_FROM_SMALLINT(class_obj->spec);
-	nfields = (spec >> 2);
-	indexable = spec & 0x3;
+	nfields = (spec >> XP_STX_SPEC_INDEXABLE_BITS);
+	indexable = spec & XP_STX_SPEC_INDEXABLE_MASK;
 
 	if (indexable == XP_STX_SPEC_BYTE_INDEXABLE) {
 		xp_assert (nfields == 0);
@@ -193,7 +192,7 @@ xp_word_t xp_stx_instantiate (
 		new = xp_stx_alloc_word_object (stx, nfields + size);
 	}
 	else {
-		xp_assert (indexable == XP_STX_SPEC_WORD_INDEXABLE);
+		xp_assert (indexable == XP_STX_SPEC_NOT_INDEXABLE);
 		xp_assert (size == 0);
 		new = xp_stx_alloc_word_object (stx, nfields + size);
 	}
@@ -201,4 +200,3 @@ xp_word_t xp_stx_instantiate (
 	XP_STX_CLASS(stx, new) = class_index;
 	return new;
 }
-
