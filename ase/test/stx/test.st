@@ -3,7 +3,7 @@ perform: method with: x with: y with: z with: a with: b with: c
 
 	| a b c d e f g |
 
-	< primitive: 21 >
+	< primitive: 16 >
 "
 	a := 'this is ''good'.
 	a := #xxx niceMethod.
