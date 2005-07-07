@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.57 2005-07-07 16:32:37 bacon Exp $
+ * $Id: parser.c,v 1.58 2005-07-07 16:52:48 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -703,7 +703,16 @@ static int __parse_assignment (
 xp_char_t buf[100];
 			if (__parse_expression(parser) == -1) return -1;
 xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
-			EMIT_CODE_TEST (parser, XP_TEXT("ASSIGN_TEMPORARY"), buf);
+			if (i <= 0x0F)  {
+				EMIT_CODE_TEST (parser, XP_TEXT("STORE_TEMPORARY"), buf);
+				EMIT_CODE (parser, (STORE_TEMPORARY << 4) | i);
+			}
+			else {
+				EMIT_CODE_TEST (parser, XP_TEXT("STORE_TEMPORARY_EXTENDED"), buf);
+				EMIT_CODE (parser, (STORE_TEMPORARY_EXTENDED << 4) | (i & 0x0F));
+				EMIT_CODE (parser, i >> 4);
+			}
+
 			return 0;
 		}
 	}
