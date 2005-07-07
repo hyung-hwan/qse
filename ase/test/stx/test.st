@@ -1,5 +1,5 @@
 "isNil" "test if self is nil"
-perform: method with: x with: y with: z with: a with: b with: c
+perform: method with: x with: y with: z with: a1 with: b2 with: c2
 
 	| a b c d e f g |
 
