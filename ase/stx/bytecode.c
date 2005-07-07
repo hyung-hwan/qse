@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.1 2005-07-07 07:45:05 bacon Exp $
+ * $Id: bytecode.c,v 1.2 2005-07-07 16:32:37 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -33,6 +33,26 @@ static void __decode1 (xp_stx_t* stx, xp_word_t idx, void* data)
 	__decode2 (stx, data, method_obj);
 }
 
+static const xp_char_t* opcode_names[] =
+{
+	XP_TEXT("PUSH_VARIABLE"),
+	XP_TEXT("PUSH_TEMPORARY"),
+	XP_TEXT("PUSH_LITERAL"),
+	XP_TEXT("DO_SPECIAL"),
+	XP_TEXT("DO_PRIMITIVE"),
+	XP_TEXT("UNKNOWN"),
+	XP_TEXT("UNKNOWN"),
+	XP_TEXT("UNKNOWN"),
+	XP_TEXT("UNKNOWN"),
+	XP_TEXT("UNKNOWN"),
+	XP_TEXT("PUSH_VARIABLE_EXTENDED"),
+	XP_TEXT("PUSH_TEMPORARY_EXTENDED"),
+	XP_TEXT("UNKNOWN"),
+	XP_TEXT("UNKNOWN"),
+	XP_TEXT("UNKNOWN"),
+	XP_TEXT("DO_PRIMITIVE_EXTENDED")
+};
+
 static int __decode2 (xp_stx_t* stx, 
 	xp_stx_class_t* class_obj, xp_stx_method_t* method_obj)
 {
@@ -59,18 +79,8 @@ static int __decode2 (xp_stx_t* stx,
 			operand |= (code << 4);
 		}
 
-		xp_printf (XP_TEXT("opcode = %d, operand = %d\n"), opcode, operand);
-
-		switch (opcode) {
-		case DO_PRIMITIVE:
-			xp_printf (XP_TEXT("DO_PRIMITIVE %d\n"), operand);
-			break;
-		case DO_PRIMITIVE_EXTENDED:
-			xp_printf (XP_TEXT("DO_PIRMITIVE_EXTENDED %d\n"), operand);
-			break;
-		default:
-			xp_printf (XP_TEXT("Unknown\n"));
-		}
+		xp_printf (XP_TEXT("%s(0x%x), operand = %d\n"), 
+			opcode_names[opcode], opcode, operand);
 	}
 
 
