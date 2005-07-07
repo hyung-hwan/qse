@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.56 2005-07-07 07:45:05 bacon Exp $
+ * $Id: parser.c,v 1.57 2005-07-07 16:32:37 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -86,8 +86,8 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 	parser->stx = stx;
 	parser->error_code = XP_STX_PARSER_ERROR_NONE;
 
-	parser->argument_count = 0;
 	parser->temporary_count = 0;
+	parser->argument_count = 0;
 	parser->literal_count = 0;
 
 	parser->curc = XP_CHAR_EOF;
@@ -100,12 +100,10 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 
 void xp_stx_parser_close (xp_stx_parser_t* parser)
 {
-	while (parser->argument_count > 0) {
-		xp_free (parser->argument[--parser->argument_count]);
-	}
 	while (parser->temporary_count > 0) {
-		xp_free (parser->temporary[--parser->temporary_count]);
+		xp_free (parser->temporaries[--parser->temporary_count]);
 	}
+	parser->argument_count = 0;
 
 	xp_array_close (&parser->bytecode);
 	xp_stx_name_close (&parser->method_name);
@@ -290,12 +288,10 @@ static int __parse_method (
 	xp_stx_name_clear (&parser->method_name);
 	xp_array_clear (&parser->bytecode);
 
-	while (parser->argument_count > 0) {
-		xp_free (parser->argument[--parser->argument_count]);
-	}
 	while (parser->temporary_count > 0) {
-		xp_free (parser->temporary[--parser->temporary_count]);
+		xp_free (parser->temporaries[--parser->temporary_count]);
 	}
+	parser->argument_count = 0;
 	parser->literal_count = 0;
 
 	if (__parse_message_pattern(parser) == -1) return -1;
@@ -381,6 +377,7 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 		n = -1;
 	}
 
+	parser->temporary_count = parser->argument_count;
 	return n;
 }
 
@@ -414,15 +411,15 @@ static int __parse_binary_pattern (xp_stx_parser_t* parser)
 		return -1;
 	}
 
-	if (parser->argument_count >= xp_countof(parser->argument)) {
+	if (parser->argument_count >= xp_countof(parser->temporaries)) {
 		parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
 		return -1;
 	}
 
 	/* TODO: check for duplicate entries...in instvars */
-	parser->argument[parser->argument_count] = 
+	parser->temporaries[parser->argument_count] = 
 		xp_stx_token_yield (&parser->token, 0);
-	if (parser->argument[parser->argument_count] == XP_NULL) {
+	if (parser->temporaries[parser->argument_count] == XP_NULL) {
 		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
@@ -452,18 +449,19 @@ static int __parse_keyword_pattern (xp_stx_parser_t* parser)
 			return -1;
 		}
 
-		if (parser->argument_count >= xp_countof(parser->argument)) {
+		if (parser->argument_count >= xp_countof(parser->temporaries)) {
 			parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
 			return -1;
 		}
 
-		parser->argument[parser->argument_count] = 
+		parser->temporaries[parser->argument_count] = 
 			xp_stx_token_yield (&parser->token, 0);
-		if (parser->argument[parser->argument_count] == XP_NULL) {
+		if (parser->temporaries[parser->argument_count] == XP_NULL) {
 			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
-		/* TODO: check for duplicate entries...in instvars/arguments */
+
+/* TODO: check for duplicate entries...in instvars/arguments */
 		parser->argument_count++;
 
 		GET_TOKEN (parser);
@@ -487,7 +485,7 @@ static int __parse_temporaries (xp_stx_parser_t* parser)
 
 	GET_TOKEN (parser);
 	while (parser->token.type == XP_STX_TOKEN_IDENT) {
-		if (parser->temporary_count >= xp_countof(parser->temporary)) {
+		if (parser->temporary_count >= xp_countof(parser->temporaries)) {
 			parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_TEMPORARIES;
 			return -1;
 		}
@@ -497,14 +495,14 @@ static int __parse_temporaries (xp_stx_parser_t* parser)
 			return -1;
 		}
 
-		parser->temporary[parser->temporary_count] = 
+		parser->temporaries[parser->temporary_count] = 
 			xp_stx_token_yield (&parser->token, 0);
-		if (parser->temporary[parser->temporary_count] == XP_NULL) {
+		if (parser->temporaries[parser->temporary_count] == XP_NULL) {
 			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
 
-		/* TODO: check for duplicate entries...in instvars/arguments/temporaries */
+/* TODO: check for duplicate entries...in instvars/arguments/temporaries */
 		parser->temporary_count++;
 
 		GET_TOKEN (parser);
@@ -554,9 +552,11 @@ static int __parse_primitive (xp_stx_parser_t* parser)
 	}
 
 	if (prim_no <= 0x0F)  {
+		EMIT_CODE_TEST (parser, XP_TEXT("DO_PRIMITIVE"), parser->token.name.buffer);
 		EMIT_CODE (parser, (DO_PRIMITIVE << 4) | prim_no);
 	}
 	else {
+		EMIT_CODE_TEST (parser, XP_TEXT("DO_PRIMITIVE_EXTENDED"), parser->token.name.buffer);
 		EMIT_CODE (parser, (DO_PRIMITIVE_EXTENDED << 4) | (prim_no & 0x0F));
 		EMIT_CODE (parser, prim_no >> 4);
 	}
@@ -698,8 +698,8 @@ static int __parse_assignment (
 	xp_word_t i;
 	xp_stx_t* stx = parser->stx;
 
-	for (i = 0; i < parser->temporary_count; i++) {
-		if (xp_strcmp (target, parser->temporary[i]) == 0) {
+	for (i = parser->argument_count; i < parser->temporary_count; i++) {
+		if (xp_strcmp (target, parser->temporaries[i]) == 0) {
 xp_char_t buf[100];
 			if (__parse_expression(parser) == -1) return -1;
 xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
