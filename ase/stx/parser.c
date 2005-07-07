@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.55 2005-07-05 11:38:01 bacon Exp $
+ * $Id: parser.c,v 1.56 2005-07-07 07:45:05 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -117,11 +117,8 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 #define EMIT_CODE_TEST(parser,high,low) \
 	do { if (__emit_code_test(parser,high,low) == -1) return -1; } while (0)
 
-#define EMIT_CODE(parser,high,low) \
-	do { if (__emit_code(parser,high,low) == -1) { \
-		parser->error_code = XP_STX_PARSER_ERROR_MEMORY; \
-		return -1; \
-	} while(0)
+#define EMIT_CODE(parser,code) \
+	do { if (__emit_code(parser,code) == -1) return -1; } while(0)
 
 #define GET_CHAR(parser) \
 	do { if (__get_char(parser) == -1) return -1; } while (0)
@@ -158,6 +155,7 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 
 		XP_TEXT("invalid primitive type"),
 		XP_TEXT("primitive number expected"),
+		XP_TEXT("primitive number out of range"),
 		XP_TEXT("primitive not closed"),
 
 		XP_TEXT("temporary list not closed"),
@@ -251,8 +249,14 @@ static INLINE int __emit_code_test (
 
 static INLINE int __emit_code (xp_stx_parser_t* parser, xp_byte_t code)
 {
-	return (xp_array_add_datum(&parser->bytecode, &code) == XP_NULL)? -1: 0;
+	if (xp_array_add_datum(&parser->bytecode, &code) == XP_NULL) {
+		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+		return -1;
+	}
+
+	return 0;
 }
+
 
 int xp_stx_parser_parse_method (
 	xp_stx_parser_t* parser, xp_word_t method_class, void* input)
@@ -313,7 +317,7 @@ static int __finish_method (xp_stx_parser_t* parser)
 	xp_assert (parser->bytecode.size != 0);
 
 	class_obj = (xp_stx_class_t*)
-		XP_STX_WORD_OBJECT(stx, parser->method_class);
+		XP_STX_OBJECT(stx, parser->method_class);
 
 	if (class_obj->methods == stx->nil) {
 		/* TODO: reconfigure method dictionary size */
@@ -327,7 +331,7 @@ static int __finish_method (xp_stx_parser_t* parser)
 
 	method = xp_stx_instantiate(stx, stx->class_method, 
 		XP_NULL, parser->literals, parser->literal_count);
-	method_obj = (xp_stx_method_t*)XP_STX_WORD_OBJECT(stx, method);
+	method_obj = (xp_stx_method_t*)XP_STX_OBJECT(stx, method);
 
 	/* TODO: text saving must be optional */
 	/*method_obj->text = xp_stx_instantiate (
@@ -520,6 +524,8 @@ static int __parse_primitive (xp_stx_parser_t* parser)
 	 * <primitive> ::= '<' 'primitive:' number '>'
 	 */
 
+	int prim_no;
+
 	if (!__is_primitive_opener(&parser->token)) return 0;
 	GET_TOKEN (parser);
 
@@ -534,16 +540,26 @@ static int __parse_primitive (xp_stx_parser_t* parser)
 		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NUMBER;
 		return -1;
 	}
-EMIT_CODE_TEST (parser, XP_TEXT("DO_PRIMITIVE"), parser->token.name.buffer);
 
-/*
-	EMIT_CODE_TEST (parser, DO_PRIMITIVE);
-	EMIT_CODE_TEST (parser, parser->token.ivalue);
+/*TODO: more checks the validity of the primitive number */
+	if (!xp_stristype(parser->token.name.buffer, xp_isdigit)) {
+		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NUMBER;
+		return -1;
+	}
 
-	EMIT_CODE_TEST (parser, DO_PRIMITIVE_EXTENDED);
-	EMIT_CODE_TEST (parser, parser->token.ivalue);
-	EMIT_CODE_TEST (parser, parser->token.ivalue);
-*/
+	XP_STRTOI (prim_no, parser->token.name.buffer, XP_NULL, 10);
+	if (prim_no < 0 || prim_no > 0x0FFF) {
+		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NUMBER_RANGE;
+		return -1;
+	}
+
+	if (prim_no <= 0x0F)  {
+		EMIT_CODE (parser, (DO_PRIMITIVE << 4) | prim_no);
+	}
+	else {
+		EMIT_CODE (parser, (DO_PRIMITIVE_EXTENDED << 4) | (prim_no & 0x0F));
+		EMIT_CODE (parser, prim_no >> 4);
+	}
 
 	GET_TOKEN (parser);
 	if (!__is_primitive_closer(&parser->token)) {

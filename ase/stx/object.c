@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.35 2005-07-05 11:15:51 bacon Exp $
+ * $Id: object.c,v 1.36 2005-07-07 07:45:05 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -192,7 +192,7 @@ xp_word_t xp_stx_instantiate (
 	xp_word_t spec, nfields, new;
 	int indexable;
 
-	class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class_index);
+	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class_index);
 
 	/* don't instantiate a metaclass whose instance must be 
 	   created in a different way */

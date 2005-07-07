@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.22 2005-07-05 11:15:51 bacon Exp $
+ * $Id: bootstrp.c,v 1.23 2005-07-07 07:45:05 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -472,7 +472,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		}
 
 		xp_assert (class != stx->nil);
-		class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class);
+		class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class);
 		class_obj->superclass = (p->superclass == XP_NULL)?
 			stx->nil: xp_stx_lookup_class(stx,p->superclass);
 
@@ -485,13 +485,13 @@ static void __create_builtin_classes (xp_stx_t* stx)
 			xp_assert (superclass != stx->nil);
 
 			meta = class_obj->header.class;
-			meta_obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(stx,meta);
+			meta_obj = (xp_stx_metaclass_t*)XP_STX_OBJECT(stx,meta);
 			meta_obj->superclass = XP_STX_CLASS(stx,superclass);
 			meta_obj->instance_class = class;
 
 			while (superclass != stx->nil) {
 				superclass_obj = (xp_stx_class_t*)
-					XP_STX_WORD_OBJECT(stx,superclass);
+					XP_STX_OBJECT(stx,superclass);
 				nfields += 
 					XP_STX_FROM_SMALLINT(superclass_obj->spec) >>
 					XP_STX_SPEC_INDEXABLE_BITS;
@@ -518,7 +518,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		class = xp_stx_lookup_class(stx, p->name);
 		xp_assert (class != stx->nil);
 
-		class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class);
+		class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class);
 
 		if (p->class_variables != XP_NULL) {
 			class_obj->class_variables = 
@@ -542,7 +542,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 
 		class = xp_stx_lookup_class(stx, p->name);
 		xp_assert (class != stx->nil);
-		class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class);
+		class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class);
 		class_obj->subclasses = array;
 	}
 
@@ -555,7 +555,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 		class = xp_stx_lookup_class(stx, p->name);
 		xp_assert (class != stx->nil);
 		metaclass = XP_STX_CLASS(stx,class);
-		metaclass_obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(stx, metaclass);
+		metaclass_obj = (xp_stx_metaclass_t*)XP_STX_OBJECT(stx, metaclass);
 		metaclass_obj->subclasses = array;
 	}
 }

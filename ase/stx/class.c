@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.20 2005-07-05 11:15:51 bacon Exp $
+ * $Id: class.c,v 1.21 2005-07-07 07:45:05 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -58,7 +58,7 @@ int xp_stx_get_instance_variable_index (
 	xp_stx_class_t* class_obj;
 	xp_stx_char_object_t* string;
 
-	class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class_index);
+	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class_index);
 	xp_assert (class_obj != XP_NULL);
 
 	if (class_obj->superclass != stx->nil) {
@@ -95,7 +95,7 @@ xp_word_t xp_stx_lookup_class_variable (
 {
 	xp_stx_class_t* class_obj;
 
-	class_obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx, class_index);
+	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class_index);
 	xp_assert (class_obj != XP_NULL);
 
 	if (class_obj->superclass != stx->nil) {

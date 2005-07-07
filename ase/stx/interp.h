@@ -1,9 +1,11 @@
 /*
- * $Id: interp.h,v 1.1 2005-05-13 16:45:55 bacon Exp $
+ * $Id: interp.h,v 1.2 2005-07-07 07:45:05 bacon Exp $
  */
 
 #ifndef _XP_STX_INTERP_H_
 #define _XP_STX_INTERP_H_
+
+#include <xp/stx/stx.h>
 
 #ifdef __cplusplus
 extern "C" {
