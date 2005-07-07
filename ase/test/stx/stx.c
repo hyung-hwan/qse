@@ -15,12 +15,12 @@
 #include <xp/stx/class.h>
 #include <xp/stx/hash.h>
 
-void print_symbol_names (xp_stx_t* stx, xp_word_t sym)
+void print_symbol_names (xp_stx_t* stx, xp_word_t sym, void* unused)
 {
 	xp_printf (XP_TEXT("%lu [%s]\n"), (unsigned long)sym, &XP_STX_CHARAT(stx,sym,0));
 }
 
-void print_symbol_names_2 (xp_stx_t* stx, xp_word_t idx)
+void print_symbol_names_2 (xp_stx_t* stx, xp_word_t idx, void* unused)
 {
 	xp_word_t key = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_KEY);
 	xp_word_t value = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_VALUE);
@@ -167,10 +167,10 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_printf (XP_TEXT("stx.false %lu\n"), (unsigned long)stx.false);
 	xp_printf (XP_TEXT("-------------\n"));
 	
-	xp_stx_traverse_symbol_table (&stx, print_symbol_names);
+	xp_stx_traverse_symbol_table (&stx, print_symbol_names, XP_NULL);
 	xp_printf (XP_TEXT("-------------\n"));
 
-	xp_stx_hash_traverse (&stx, stx.smalltalk, print_symbol_names_2);
+	xp_stx_hash_traverse (&stx, stx.smalltalk, print_symbol_names_2, XP_NULL);
 	xp_printf (XP_TEXT("-------------\n"));
 
 	print_superclasses (&stx, XP_TEXT("Array"));

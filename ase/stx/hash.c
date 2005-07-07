@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.24 2005-07-05 15:01:57 bacon Exp $
+ * $Id: hash.c,v 1.25 2005-07-07 07:45:05 bacon Exp $
  */
 
 #include <xp/stx/hash.h>
@@ -14,7 +14,7 @@ xp_word_t xp_stx_new_pairlink (
 
 	x = xp_stx_alloc_word_object (
 		stx, XP_NULL, XP_STX_PAIRLINK_SIZE, XP_NULL, 0);
-	obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx, x);
+	obj = (xp_stx_pairlink_t*)XP_STX_OBJECT(stx, x);
 	obj->header.class = stx->class_pairlink;
 	obj->link = stx->nil;
 	obj->key = key;
@@ -42,7 +42,7 @@ xp_word_t xp_stx_hash_lookup (
 		link = XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_LINK);
 		*/
 
-		obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx,link);
+		obj = (xp_stx_pairlink_t*)XP_STX_OBJECT(stx,link);
 		if (obj->key == key) return link;
 		link = obj->link;
 	}
@@ -63,7 +63,7 @@ xp_word_t xp_stx_hash_lookup_symbol (
 	link = XP_STX_WORDAT(stx,table,hash);
 
 	while (link != stx->nil) {
-		obj = (xp_stx_pairlink_t*)XP_STX_WORD_OBJECT(stx,link);
+		obj = (xp_stx_pairlink_t*)XP_STX_OBJECT(stx,link);
 		tmp = XP_STX_CHAR_OBJECT(stx,obj->key);
 		if (tmp->header.class == stx->class_symbol &&
 		    xp_strcmp (tmp->data, name) == 0) return link;
@@ -110,7 +110,7 @@ void xp_stx_hash_insert (
 
 void xp_stx_hash_traverse (
 	xp_stx_t* stx, xp_word_t table, 
-	void (*func) (xp_stx_t*,xp_word_t))
+	void (*func) (xp_stx_t*,xp_word_t,void*), void* data)
 {
 	xp_word_t link;
 	xp_word_t size = XP_STX_SIZE(stx,table);
@@ -119,7 +119,7 @@ void xp_stx_hash_traverse (
 		link = XP_STX_WORDAT(stx,table,size);
 
 		while (link != stx->nil) {
-			func (stx,link);
+			func (stx, link, data);
 			link = XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_LINK);
 		}
 	}

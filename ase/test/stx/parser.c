@@ -11,6 +11,7 @@
 #include <xp/stx/parser.h>
 #include <xp/stx/bootstrp.h>
 #include <xp/stx/class.h>
+#include <xp/stx/bytecode.h>
 
 #ifdef __linux
 #include <mcheck.h>
@@ -153,7 +154,13 @@ int xp_main (int argc, xp_char_t* argv[])
 		if (xp_stx_parser_parse_method (&parser, n, 
 			(void*)XP_TEXT("test.st")) == -1) {
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
-			xp_stx_parser_error_string (&parser));
+				xp_stx_parser_error_string (&parser));
+		}
+
+		xp_printf (XP_TEXT("== Decoded Methods ==\n"));
+		if (xp_stx_decode(&stx, n) == -1) {
+			xp_printf (XP_TEXT("parser error <%s>\n"), 
+				xp_stx_parser_error_string (&parser));
 		}
 	}
 

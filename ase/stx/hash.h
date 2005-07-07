@@ -1,5 +1,5 @@
 /*
- * $Id: hash.h,v 1.9 2005-06-08 16:00:51 bacon Exp $
+ * $Id: hash.h,v 1.10 2005-07-07 07:45:05 bacon Exp $
  */
 
 #ifndef _XP_STX_HASH_H_
@@ -39,7 +39,7 @@ void xp_stx_hash_insert (
 	xp_word_t hash, xp_word_t key, xp_word_t value);
 void xp_stx_hash_traverse (
 	xp_stx_t* stx, xp_word_t table, 
-	void (*func) (xp_stx_t*,xp_word_t));
+	void (*func) (xp_stx_t*,xp_word_t,void*), void* data);
 
 #ifdef __cplusplus
 }

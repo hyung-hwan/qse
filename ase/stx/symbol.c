@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.13 2005-07-05 09:02:13 bacon Exp $
+ * $Id: symbol.c,v 1.14 2005-07-07 07:45:05 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
@@ -138,7 +138,7 @@ xp_word_t xp_stx_new_symbol_pp (
 }
 
 void xp_stx_traverse_symbol_table (
-	xp_stx_t* stx, void (*func) (xp_stx_t*,xp_word_t))
+	xp_stx_t* stx, void (*func) (xp_stx_t*,xp_word_t,void*), void* data)
 {
 	xp_word_t link;
 	xp_word_t size;
@@ -151,7 +151,7 @@ void xp_stx_traverse_symbol_table (
 		link = XP_STX_WORDAT(stx,table,size);
 
 		while (link != stx->nil) {
-			func (stx,XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_SYMBOL));
+			func (stx, XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_SYMBOL), data);
 			link = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_LINK);
 		}
 	}

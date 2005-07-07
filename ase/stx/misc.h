@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.11 2005-07-05 11:15:51 bacon Exp $
+ * $Id: misc.h,v 1.12 2005-07-07 07:45:05 bacon Exp $
  */
 
 #ifndef _XP_STX_MISC_H_
@@ -13,6 +13,7 @@
 	#include <stdarg.h>
 	#include <stdio.h>
 	#include <ctype.h>
+	#include <stdlib.h>
 
 	#define xp_assert   assert
 	#define xp_malloc   malloc
@@ -32,6 +33,7 @@
 	#include <xp/bas/stdarg.h>
 	#include <xp/bas/ctype.h>
 	#include <xp/bas/string.h>
+	#include <xp/bas/stdlib.h>
 #endif
 
 #if defined(__BORLANDC__) || defined(_MSC_VER)
