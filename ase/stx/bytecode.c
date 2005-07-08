@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.3 2005-07-07 16:52:48 bacon Exp $
+ * $Id: bytecode.c,v 1.4 2005-07-08 11:32:50 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -41,15 +41,15 @@ static const xp_char_t* opcode_names[] =
 	XP_TEXT("PUSH_LITERAL_VARIABLE"),
 	XP_TEXT("STORE_VARIABLE"),
 	XP_TEXT("STORE_TEMPORARY"),
+	XP_TEXT("SEND"),
+	XP_TEXT("JUMP"),
 	XP_TEXT("DO_SPECIAL"),
 	XP_TEXT("DO_PRIMITIVE"),
-	XP_TEXT("UNKNOWN"),
-	XP_TEXT("UNKNOWN"),
 	XP_TEXT("PUSH_VARIABLE_EXTENDED"),
 	XP_TEXT("PUSH_TEMPORARY_EXTENDED"),
+	XP_TEXT("STORE_VARIABLE_EXTENDED"),
 	XP_TEXT("STORE_TEMPORARY_EXTENDED"),
-	XP_TEXT("UNKNOWN"),
-	XP_TEXT("UNKNOWN"),
+	XP_TEXT("DO_SPECIAL_EXTENDED"),
 	XP_TEXT("DO_PRIMITIVE_EXTENDED")
 };
 
