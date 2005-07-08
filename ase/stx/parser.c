@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.58 2005-07-07 16:52:48 bacon Exp $
+ * $Id: parser.c,v 1.59 2005-07-08 11:32:50 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -34,6 +34,9 @@ static int __parse_basic_expression (
 	xp_stx_parser_t* parser, const xp_char_t* ident);
 static int __parse_primary (
 	xp_stx_parser_t* parser, const xp_char_t* ident);
+static int __parse_primary_ident (
+	xp_stx_parser_t* parser, const xp_char_t* ident);
+
 static int __parse_block_constructor (xp_stx_parser_t* parser);
 static int __parse_message_continuation (xp_stx_parser_t* parser);
 static int __parse_keyword_message (xp_stx_parser_t* parser);
@@ -255,6 +258,42 @@ static INLINE int __emit_code (xp_stx_parser_t* parser, xp_byte_t code)
 	return 0;
 }
 
+static INLINE int __emit_push_receiver_variable (xp_stx_parser_t* parser, int pos)
+{
+	if (pos > 0xFF)
+
+	if (pos > 0x0F) EMIT_CODE (parser, PUSH_RECEIVER_VARIABLE | (pos & 0x0F));
+	else EMIT_CODE (parser, PUSH_RECEIVER_VARIABLE_BIG, pos);
+	return 0;
+}
+
+/*
+push_receiver_variable,
+push_temporary_location,
+push_literal_constant,
+push_literal_variable,
+store_receiver_variable,
+store_temporary_location,
+push_receiver,
+push_true,
+push_false,
+push_nil,
+push_minus_one,
+push_zero,
+push_one,
+push_two,
+return_receiver,
+return_true,
+return_false,
+return_nil,
+return_from_message,
+return_from_block,
+XP_NULL,
+push_receiver_variable,
+push_temporary_location,
+push_literal_constant,
+push_literal_variable,
+*/
 
 int xp_stx_parser_parse_method (
 	xp_stx_parser_t* parser, xp_word_t method_class, void* input)
@@ -622,7 +661,17 @@ static int __parse_statement (xp_stx_parser_t* parser)
 	if (parser->token.type == XP_STX_TOKEN_RETURN) {
 		GET_TOKEN (parser);
 		if (__parse_expression(parser) == -1) return -1;
-		EMIT_CODE_TEST (parser, XP_TEXT("RETURN"), XP_TEXT("stack top"));
+
+		/* TODO */
+		if (RETURN_FROM_MESSAGE <= 0x0F)  {
+			EMIT_CODE_TEST (parser, XP_TEXT("DO_SPECIAL"), XP_TEXT("RETURN_FROM_MESSAGE"));
+			EMIT_CODE (parser, (DO_SPECIAL << 4) | RETURN_FROM_MESSAGE);
+		}
+		else {
+			EMIT_CODE_TEST (parser, XP_TEXT("DO_SPECIAL_EXTENDED"), XP_TEXT("RETURN_FROM_MESSAGE"));
+			EMIT_CODE (parser, (DO_SPECIAL_EXTENDED << 4) | (RETURN_FROM_MESSAGE & 0x0F));
+			EMIT_CODE (parser, RETURN_FROM_MESSAGE >> 4);
+		}
 	}
 	else {
 		if (__parse_expression(parser) == -1) return -1;
@@ -722,13 +771,26 @@ xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
 xp_char_t buf[100];
 		if (__parse_expression(parser) == -1) return -1;
 xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), i);
-		EMIT_CODE_TEST (parser, XP_TEXT("ASSIGN_INSTANCE"), buf);
+
+		/* TODO */
+		if (i <= 0x0F)  {
+			EMIT_CODE_TEST (parser, XP_TEXT("STORE_VARIABLE"), buf);
+			EMIT_CODE (parser, (STORE_VARIABLE << 4) | i);
+		}
+		else {
+			EMIT_CODE_TEST (parser, XP_TEXT("STORE_VARIABLE_EXTENDED"), buf);
+			EMIT_CODE (parser, (STORE_VARIABLE_EXTENDED << 4) | (i & 0x0F));
+			EMIT_CODE (parser, i >> 4);
+		}
+
 		return 0;
 	}
 
 	if (xp_stx_lookup_class_variable (
 		stx, parser->method_class, target) != stx->nil) {
 		if (__parse_expression(parser) == -1) return -1;
+
+		/* TODO */
 		EMIT_CODE_TEST (parser, XP_TEXT("ASSIGN_CLASSVAR #"), target);
 		return 0;
 	}
@@ -751,8 +813,7 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 
 	if (ident == XP_NULL) {
 		if (parser->token.type == XP_STX_TOKEN_IDENT) {
-			/* TODO - check what this identifier is and generate proper code*/
-			EMIT_CODE_TEST (parser, XP_TEXT("PUSH_IDENT"), parser->token.name.buffer);
+			if (__parse_primary_ident (parser, parser->token.buffer) == -1) return -1;
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_CHARLIT) {
@@ -793,11 +854,43 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 		}
 	}
 	else {
-		/* TODO - check what this identifier is and generate proper code*/
-		EMIT_CODE_TEST (parser, XP_TEXT("PUSH_IDENT"), ident);
+		if (__parse_primary_ident (parser, parser->token.buffer) == -1) return -1;
 	}
 
 	return 0;
+}
+
+static int __parse_primary_ident (xp_stx_parser_t* parser, const xp_char_t* ident)
+{
+	xp_word_t i;
+
+	/* Refer to __parse_assignment for identifier lookup */
+
+	for (i = 0; i < parser->temporary_count; i++) {
+		if (xp_strcmp (target, parser->temporaries[i]) == 0) {
+			EMIT_CODE_1 (parser, PUSH_TEMPORARY_VARIABLE, i);
+			return 0;
+		}
+	}
+
+	if (xp_stx_get_instance_variable_index (
+		stx, parser->method_class, target, &i) == 0) {
+		EMIT_CODE_1 (parser, PUSH_RECEIVER_VARIABLE, i);
+		return 0;
+	}	
+
+	if (xp_stx_lookup_class_variable (
+		stx, parser->method_class, target) != stx->nil) {
+		//PUSH_CLASS_VARIABLE
+		return 0;
+	}
+
+	/* TODO: IMPLEMENT POOL DICTIONARIES */
+
+	/* TODO: IMPLEMENT GLOBLAS, but i don't like this idea */
+
+	parser->error_code = XP_STX_PARSER_ERROR_UNDECLARED_NAME;
+	return -1;
 }
 
 static int __parse_block_constructor (xp_stx_parser_t* parser)
@@ -1294,3 +1387,4 @@ static int __close_input (xp_stx_parser_t* parser)
 
 	return 0;
 }
+

@@ -79,8 +79,93 @@ AssignInstance
 AssignTemporary
 */
 
-#define PUSH_VARIABLE   0x01
-#define PUSH_ARGUMENT   0x02
-#define PUSH_TEMPORARY  0x03
-#define PUSH_LITERAL    0x04
+0x              push instance variable x
+1x              store instance variable x
+2x              push local x
+3x              store local x
+40..43 xx       jump forward by xxx
+44..47 xx       jump backward by xxx
+48..4F xx       (reserved)
+50..53 xx       jump forward if true by xxx
+54..57 xx       jump backward if true by xxx
+58..5B xx       jump forward if false by xxx
+5C..5F xx       jump backward if false by xxx
+60 xx           fetch inst var xx of stack top
+61 xx           store stack top inst var xx of stack level 2
+62..6F          (reserved)
+7x yyyy         send self yyyy, x args
+8x yyyy         send yyyy, x args
+9x yyyy         send super yyyy, x args
+Ax yy           send self yy, x args
+
+B0 xx           push object xx
+B1 xxxx         push object xxxx
+B2 xx           get instvar xx of next outer receiver
+B3 xx           store instvar xx of next outer receiver 
+B4 xx           get next outer local x
+B5 xx           store next outer local
+B6 xx yy        get (y th) outer local
+B7 xx yy        store (y th) outer local
+B8              nonlocal block return, next outer context
+B9 xx           make full block
+BA xx           make hybrid block
+BB xx yy        get instvar xx of yyth outer receiver
+BC xx yy        store instvar xx of yyth outer receiver 
+BD xx           nonlocal block return, distance xx
+BE              push next outer receiver
+BF xx           push xxth outer receiver
+
+Cx              send special selector:
+                        0: <=
+                        1: >=
+                        2: <
+                        3: >
+                        4: ==
+                        5: ~~
+                        6: not
+                        7: +
+                        8: -
+                        9: basicAt:
+                        A: basicAt:put:
+                        B: isNil
+                        C: notNil
+                        D: (reserved)
+                        E: (reserved)
+                        F: (reserved)
+
+Dx yy           send yy to stack top, xx args
+
+E0              pop stack
+E1              duplicate stacktop
+E2              duplicate level 2
+E3              return stack top
+E4              return true
+E5              return false
+E6              return nil
+E7              return self
+E8              push false
+E9              push true
+EA              push nil
+EB              push self
+EC xx           push negative integer
+ED xx           push positive integer
+EE xxxx         push negative integer
+EF xxxx         push positive integer
+
+F0 xx           push instvar xx
+F1 xx           store instvar xx
+F2 xx           push local xx
+F3 xx           store local xx
+F4 xx           push global xx
+F5 xx           store global xx
+F6 xx           push Character xx
+F7              add 1
+F8              subtract 1
+F9              push thisContext
+FA              (reserved)
+FB              
+FC              
+FD              
+FE xx           primitive xx
+FF              extended op
 
