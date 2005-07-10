@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.61 2005-07-10 09:21:46 bacon Exp $
+ * $Id: parser.c,v 1.62 2005-07-10 16:50:50 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -285,14 +285,14 @@ static INLINE xp_bool_t __is_closing_char (xp_cint_t c)
 #define EMIT_RETURN_FROM_MESSAGE(parser) EMIT_CODE(parser, RETURN_FROM_MESSAGE)
 #define EMIT_RETURN_FROM_BLOCK(parser) EMIT_CODE(parser, RETURN_FROM_BLOCK)
 
-#define EMIT_SEND_TO_SELF(parser,selector,nargs) \
+#define EMIT_SEND_TO_SELF(parser,nargs,selector) \
 	do { \
-		if (__emit_send_to_self(parser,selector,nargs) == -1) return -1; \
+		if (__emit_send_to_self(parser,nargs,selector) == -1) return -1; \
 	} while (0)
 
-#define EMIT_SEND_TO_SUPER(parser,selector,nargs) \
+#define EMIT_SEND_TO_SUPER(parser,nargs,selector) \
 	do { \
-		if (__emit_send_to_super(parser,selector,nargs) == -1) return -1; \
+		if (__emit_send_to_super(parser,nargs,selector) == -1) return -1; \
 	} while (0)
 
 #define EMIT_DO_PRIMITIVE(parser,no) \
@@ -318,7 +318,7 @@ static INLINE int __emit_code (xp_stx_parser_t* parser, xp_byte_t code)
 static INLINE int __emit_stack_positional (
 	xp_stx_parser_t* parser, int opcode, int pos)
 {
-	xp_assert (pos < 0xFF);
+	xp_assert (pos >= 0x0 && pos <= 0xFF);
 
 	if (pos <= 0x0F) {
 		EMIT_CODE (parser, (opcode & 0xF0) | (pos & 0x0F));
@@ -332,15 +332,37 @@ static INLINE int __emit_stack_positional (
 }
 
 static INLINE int __emit_send_to_self (
-	xp_stx_parser_t* parser, int selector, int nargs)
+	xp_stx_parser_t* parser, int nargs, int selector)
 {
+	xp_assert (nargs >= 0x00 && nargs <= 0xFF);
 	xp_assert (selector >= 0x00 && selector <= 0xFF);
-	xp_assert (nargs >= 0x00 nargs <= 0xFF);
+
+	if (nargs <= 0x08 && selector <= 0x1F) {
+		EMIT_CODE (parser, SEND_TO_SELF);
+		EMIT_CODE (parser, (nargs << 5) | selector);
+	}
+	else {
+		EMIT_CODE (parser, SEND_TO_SELF_EXTENDED);
+		EMIT_CODE (parser, nargs);
+		EMIT_CODE (parser, selector);
+	}
 }
 
 static INLINE int __emit_send_to_super (
 	xp_stx_parser_t* parser, int selector, int nargs)
 {
+	xp_assert (nargs >= 0x00 && nargs <= 0xFF);
+	xp_assert (selector >= 0x00 && selector <= 0xFF);
+
+	if (nargs <= 0x08 && selector <= 0x1F) {
+		EMIT_CODE (parser, SEND_TO_SUPER);
+		EMIT_CODE (parser, (nargs << 5) | selector);
+	}
+	else {
+		EMIT_CODE (parser, SEND_TO_SUPER_EXTENDED);
+		EMIT_CODE (parser, nargs);
+		EMIT_CODE (parser, selector);
+	}
 }
 
 static INLINE int __emit_do_primitive (xp_stx_parser_t* parser, int no)
@@ -994,15 +1016,17 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 	 */
 
 	xp_stx_name_t name;
+	int nargs = 0;
 
 	if (__parse_binary_message (parser) == -1) return -1;
+	if (parser->token.type != XP_STX_TOKEN_KEYWORD) return 0;
 
 	if (xp_stx_name_open(&name, 0) == XP_NULL) {
 		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
 	
-	while (parser->token.type == XP_STX_TOKEN_KEYWORD) {
+	do {
 		if (xp_stx_name_adds(&name, parser->token.name.buffer) == -1) {
 			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 			xp_stx_name_close (&name);
@@ -1019,9 +1043,14 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 			xp_stx_name_close (&name);
 			return -1;
 		}
-	}
 
-	EMIT_CODE_TEST (parser, XP_TEXT("SendKeyword"), name.buffer);
+		nargs++;
+	} while (parser->token.type == XP_STX_TOKEN_KEYWORD);
+
+	/* TODO: SEND_TO_SUPER */
+	/*EMIT_SEND_TO_SELF (parser, nargs, index of name.buffer);*/
+	EMIT_SEND_TO_SELF (parser, nargs, 0);
+
 	xp_stx_name_close (&name);
 
 	return 0;
@@ -1054,7 +1083,10 @@ static int __parse_binary_message (xp_stx_parser_t* parser)
 			return -1;
 		}
 
-		EMIT_CODE_TEST (parser, XP_TEXT("SendBinary"), op);
+		/* TODO: SEND_TO_SUPER */
+		/*EMIT_SEND_TO_SELF (parser, 2, index of op);*/
+		EMIT_SEND_TO_SELF (parser, 2, 0);
+
 		xp_free (op);
 	}
 
@@ -1066,7 +1098,9 @@ static int __parse_unary_message (xp_stx_parser_t* parser)
 	/* <unary message> ::= unarySelector */
 
 	while (parser->token.type == XP_STX_TOKEN_IDENT) {
-		EMIT_CODE_TEST (parser, XP_TEXT("SendUnary"), parser->token.name.buffer);		
+		/* TODO: SEND_TO_SUPER */
+		/*EMIT_SEND_TO_SELF (parser, 0, index of parser->token.name.buffer);*/
+		EMIT_SEND_TO_SELF (parser, 0, 0);
 		GET_TOKEN (parser);
 	}
 
