@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.5 2005-07-10 09:21:46 bacon Exp $
+ * $Id: bytecode.c,v 1.6 2005-07-10 16:50:50 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -38,7 +38,7 @@ static int __decode2 (xp_stx_t* stx,
 {
 	xp_stx_byte_object_t* bytecodes;
 	xp_word_t bytecode_size, pc = 0;
-	int code, next;
+	int code, next, next2;
 
 	static const xp_char_t* stack_opcode_names[] = {
 		XP_TEXT("push_receiver_variable"),	
@@ -47,6 +47,11 @@ static int __decode2 (xp_stx_t* stx,
 		XP_TEXT("push_literal_variable"),	
 		XP_TEXT("store_receiver_variable"),	
 		XP_TEXT("store_temporary_location")
+	};
+
+	static const xp_char_t* send_opcode_names[] = {
+		XP_TEXT("send_to_self"),
+		XP_TEXT("send_to_super")
 	};
 
 	bytecodes = XP_STX_BYTE_OBJECT(stx, method_obj->bytecodes);
@@ -66,8 +71,19 @@ static int __decode2 (xp_stx_t* stx,
 			xp_printf (XP_TEXT("%s %d\n"), 
 				stack_opcode_names[code & 0x0F], next);
 		}
-		else if (code >= 0x70 && code <=  0x73 ) {
+		else if (code >= 0x70 && code <=  0x71 ) {
 			/* send */
+			next = bytecodes->data[pc++];
+			xp_printf (XP_TEXT("%s %d %d\n"),
+				send_opcode_names[code - 0x70], next >> 5, next >> 0x1F);
+		}
+		else if (code >= 0x72 && code <=  0x73 ) {
+			/* send extended */
+			next = bytecodes->data[pc++];
+			next2 = bytecodes->data[pc++];
+			xp_printf (XP_TEXT("%s %d %d\n"),
+				send_opcode_names[code - 0x72],  next, next2);
+				
 		}
 		else if (code >= 0x78 && code <= 0x7D) {
 			// return

@@ -9,7 +9,8 @@ perform: method with: x with: y with: z with: a1 with: b2 with: c2
 	a := #xxx niceMethod.
 "
 	b := -30 xxx nil this.
-	"instanceClass := 10."
+	b := 30 + 20.
+	b := 30 xxx: 10 xy zzzz: 30 ccc:10.
 
 	selector := 20.
 "
