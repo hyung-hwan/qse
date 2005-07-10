@@ -79,6 +79,8 @@ AssignInstance
 AssignTemporary
 */
 
+Pocket Smalltalk
+
 0x              push instance variable x
 1x              store instance variable x
 2x              push local x
@@ -168,4 +170,54 @@ FC
 FD              
 FE xx           primitive xx
 FF              extended op
+
+-- stack bytecodes --
+0   0000 XXXX                   push_receiver_variable
+1   0001 XXXX                   push_temporary_location
+2   0010 XXXX                   push_literal_constant
+3   0011 XXXX                   push_literal_variable
+4   0100 XXXX                   store_receiver_variable
+5   0101 XXXX                   store_temporary_location
+6   0110 0000 XXXXXXXX          push_receiver_variable_extended
+    0110 0001 XXXXXXXX          push_temporary_location_extended
+    0110 0010 XXXXXXXX          push_literal_constant_extended
+    0110 0011 XXXXXXXX          push_literal_variable_extended
+    0110 0100 XXXXXXXX          store_receiver_variable_extended
+    0110 0101 XXXXXXXX          store_temporary_location_extended
+    0110 0110 XXXXXXXX          unused
+    0110 0111 XXXXXXXX          unused
+    0110 1000                   pop_stack_top
+    0110 1001                   duplicate_stack_top
+    0110 1010                   push_active_context
+    0110 1011 XXXXXXXX          unused
+    0110 1100 XXXXXXXX          unused
+    0110 1101 XXXXXXXX          unused
+    0110 1110 XXXXXXXX          unused
+    0110 1111 XXXXXXXX          unused
+
+-- send bytecodes --
+7   0111 0000 JJJKKKKK          send_selector_to_self
+    0111 0001 JJJKKKKK          send_selector_to_super
+    0111 0010 JJJJJJJJ KKKKKKKK send_selector_to_self_extended
+    0111 0011 JJJJJJJJ KKKKKKKK send_selector_to_super_extended
+
+    0111 0100 XXXXXXXX
+    0111 0101 XXXXXXXX
+    0111 0110 XXXXXXXX
+    0111 0111 XXXXXXXX
+
+-- return bytecodes --
+    0111 1000                   return receiver
+    0111 1001                   return_true
+    0111 1010                   return_false
+    0111 1011                   return_nil
+
+    0111 1100                   return_from_message 
+    0111 1101                   return_from_block
+    0111 1110
+    0111 1111
+
+-- jump bytecodes --
+8   1000 0XXX                   jump_forward
+    1000 1XXX XXXXXXXX          jump_forward
 

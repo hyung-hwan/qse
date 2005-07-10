@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.59 2005-07-08 11:32:50 bacon Exp $
+ * $Id: parser.c,v 1.60 2005-07-10 03:16:40 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -258,12 +258,42 @@ static INLINE int __emit_code (xp_stx_parser_t* parser, xp_byte_t code)
 	return 0;
 }
 
+static INLINE int __emit_stack_code_positional (
+	xp_stx_parser_t* parser, int opcode, int pos)
+{
+	static int mapping[] = {
+		PUSH_RECEIVER_VARIABLE_EXTENDED,
+		PUSH_TEMPORARY_LOCATION_EXTENDED,
+		PUSH_LITERAL_CONSTANT_EXTENDED,
+		PUSH_LITERAL_VARIABLE_EXTENDED,
+		STORE_RECEIVER_VARIABLE,
+		STORE_TEMPORARY_VARIABLE
+	};
+}
+
 static INLINE int __emit_push_receiver_variable (xp_stx_parser_t* parser, int pos)
 {
-	if (pos > 0xFF)
+	if (pos > 0x0F) {
+		EMIT_CODE (parser, PUSH_RECEIVER_VARIABLE | (pos & 0x0F));
+	}
+	else {
+		EMIT_CODE (parser, PUSH_RECEIVER_VARIABLE_EXTENDED);
+		EMIT_CODE (parser, pos & 0xFF)
+	}
 
-	if (pos > 0x0F) EMIT_CODE (parser, PUSH_RECEIVER_VARIABLE | (pos & 0x0F));
-	else EMIT_CODE (parser, PUSH_RECEIVER_VARIABLE_BIG, pos);
+	return 0;
+}
+
+static INLINE int __emit_push_temporary_location (xp_stx_parser_t* parser, int pos)
+{
+	if (pos > 0x0F) {
+		EMIT_CODE (parser, PUSH_TEMPORARY_LOCATION | (pos & 0x0F));
+	}
+	else {
+		EMIT_CODE (parser, PUSH_RECEIVER_VARIABLE_EXTENDED);
+		EMIT_CODE (parser, pos & 0xFF)
+	}
+
 	return 0;
 }
 
