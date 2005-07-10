@@ -36,141 +36,6 @@ SEE ALSO
 	xpkit(7)
 
 
--------------------
-
-/*
-   &unsupportedByte,      //--- 00
-   &bytePushInstance,     //--- 01
-   &bytePushArgument,     //--- 02
-   &bytePushTemporary,    //--- 03
-   &bytePushLiteral,      //--- 04
-   &bytePushConstant,     //--- 05
-   &byteAssignInstance,   //--- 06
-   &byteAssignTemporary,  //--- 07
-   &byteMarkArguments,    //--- 08
-   &byteSendMessage,      //--- 09
-   &byteSendUnary,        //--- 10
-   &byteSendBinary,       //--- 11
-   &unsupportedByte,      //--- 12
-   &byteDoPrimitive,      //--- 13
-   &unsupportedByte,      //--- 14
-   &byteDoSpecial         //--- 15
-
-
-* Directly access by byte codes
-> the receiver and arguments of the invoking message 
-> the values of the receiver's instance variables 
-> the values of any temporary variables required by the method 
-> seven special constants (true, false, nil, -1, 0, 1, and 2) 
-> 32 special message selectors 
-
-* contained in literal frame.
-> shared variables (global, class, and pool) 
-> most literal constants (numbers, characters, strings, arrays, and symbols) 
-> most message selectors (those that are not special) 
-
-PushInstance
-PushArgument -> normal arguments plus self/super(0)
-PushTemporary
-PushConstant -> nil, true, false, etc....
-PushLiteral -> global variables, literal constants... -> access literal frame
-
-AssignInstance
-AssignTemporary
-*/
-
-Pocket Smalltalk
-
-0x              push instance variable x
-1x              store instance variable x
-2x              push local x
-3x              store local x
-40..43 xx       jump forward by xxx
-44..47 xx       jump backward by xxx
-48..4F xx       (reserved)
-50..53 xx       jump forward if true by xxx
-54..57 xx       jump backward if true by xxx
-58..5B xx       jump forward if false by xxx
-5C..5F xx       jump backward if false by xxx
-60 xx           fetch inst var xx of stack top
-61 xx           store stack top inst var xx of stack level 2
-62..6F          (reserved)
-7x yyyy         send self yyyy, x args
-8x yyyy         send yyyy, x args
-9x yyyy         send super yyyy, x args
-Ax yy           send self yy, x args
-
-B0 xx           push object xx
-B1 xxxx         push object xxxx
-B2 xx           get instvar xx of next outer receiver
-B3 xx           store instvar xx of next outer receiver 
-B4 xx           get next outer local x
-B5 xx           store next outer local
-B6 xx yy        get (y th) outer local
-B7 xx yy        store (y th) outer local
-B8              nonlocal block return, next outer context
-B9 xx           make full block
-BA xx           make hybrid block
-BB xx yy        get instvar xx of yyth outer receiver
-BC xx yy        store instvar xx of yyth outer receiver 
-BD xx           nonlocal block return, distance xx
-BE              push next outer receiver
-BF xx           push xxth outer receiver
-
-Cx              send special selector:
-                        0: <=
-                        1: >=
-                        2: <
-                        3: >
-                        4: ==
-                        5: ~~
-                        6: not
-                        7: +
-                        8: -
-                        9: basicAt:
-                        A: basicAt:put:
-                        B: isNil
-                        C: notNil
-                        D: (reserved)
-                        E: (reserved)
-                        F: (reserved)
-
-Dx yy           send yy to stack top, xx args
-
-E0              pop stack
-E1              duplicate stacktop
-E2              duplicate level 2
-E3              return stack top
-E4              return true
-E5              return false
-E6              return nil
-E7              return self
-E8              push false
-E9              push true
-EA              push nil
-EB              push self
-EC xx           push negative integer
-ED xx           push positive integer
-EE xxxx         push negative integer
-EF xxxx         push positive integer
-
-F0 xx           push instvar xx
-F1 xx           store instvar xx
-F2 xx           push local xx
-F3 xx           store local xx
-F4 xx           push global xx
-F5 xx           store global xx
-F6 xx           push Character xx
-F7              add 1
-F8              subtract 1
-F9              push thisContext
-FA              (reserved)
-FB              
-FC              
-FD              
-FE xx           primitive xx
-FF              extended op
-
 -- stack bytecodes --
 0   0000 XXXX                   push_receiver_variable
 1   0001 XXXX                   push_temporary_location
@@ -184,22 +49,22 @@ FF              extended op
     0110 0011 XXXXXXXX          push_literal_variable_extended
     0110 0100 XXXXXXXX          store_receiver_variable_extended
     0110 0101 XXXXXXXX          store_temporary_location_extended
-    0110 0110 XXXXXXXX          unused
-    0110 0111 XXXXXXXX          unused
+    0110 0110                   unused
+    0110 0111                   unused
     0110 1000                   pop_stack_top
     0110 1001                   duplicate_stack_top
     0110 1010                   push_active_context
-    0110 1011 XXXXXXXX          unused
-    0110 1100 XXXXXXXX          unused
-    0110 1101 XXXXXXXX          unused
-    0110 1110 XXXXXXXX          unused
-    0110 1111 XXXXXXXX          unused
+    0110 1011                   unused
+    0110 1100                   unused
+    0110 1101                   unused
+    0110 1110                   unused
+    0110 1111                   unused
 
 -- send bytecodes --
-7   0111 0000 JJJKKKKK          send_selector_to_self
-    0111 0001 JJJKKKKK          send_selector_to_super
-    0111 0010 JJJJJJJJ KKKKKKKK send_selector_to_self_extended
-    0111 0011 JJJJJJJJ KKKKKKKK send_selector_to_super_extended
+7   0111 0000 JJJKKKKK          send_to_self
+    0111 0001 JJJKKKKK          send_to_super
+    0111 0010 JJJJJJJJ KKKKKKKK send_to_self_extended
+    0111 0011 JJJJJJJJ KKKKKKKK send_to_super_extended
 
     0111 0100 XXXXXXXX
     0111 0101 XXXXXXXX
@@ -221,3 +86,5 @@ FF              extended op
 8   1000 0XXX                   jump_forward
     1000 1XXX XXXXXXXX          jump_forward
 
+-- primitive --
+F   1111 XXXX XXXXXXXX          do_primitive

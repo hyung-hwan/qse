@@ -10,9 +10,9 @@ perform: method with: x with: y with: z with: a1 with: b2 with: c2
 "
 	b := -30 xxx nil this.
 	"instanceClass := 10."
-	selector := 20.
-	"Win32Errors := 10."
 
+	selector := 20.
+"
 	(jjj xxx: 10 xy) zzz: (10 fuck: 20 you: 40) yyy:  kkk.
 	[ spec plus:  20].
-	^10.
+	^10."
