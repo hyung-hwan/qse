@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.h,v 1.6 2005-07-10 03:16:40 bacon Exp $
+ * $Id: bytecode.h,v 1.7 2005-07-10 09:21:46 bacon Exp $
  */
 
 #ifndef _XP_STX_BYTECODE_H_
@@ -24,10 +24,10 @@
 #define DUPLICATE_POP_STACK_TOP           0x69
 #define PUSH_ACTIVE_CONTEXT               0x6A
 
-#define SEND_SELECTOR_TO_SELF             0x70
-#define SEND_SELECTOR_TO_SUPER            0x71
-#define SEND_SELECTOR_TO_SELF_EXTENDED    0x72
-#define SEND_SELECTOR_TO_SUPER_EXTENDED   0x73
+#define SEND_TO_SELF                      0x70
+#define SEND_TO_SUPER                     0x71
+#define SEND_TO_SELF_EXTENDED             0x72
+#define SEND_TO_SUPER_EXTENDED            0x73
 
 #define RETURN_RECEIVER                   0x78
 #define RETURN_TRUE                       0x79
@@ -36,29 +36,7 @@
 #define RETURN_FROM_MESSAGE               0x7C
 #define RETURN_FROM_BLOCK                 0x7D
 
-#define PUSH_VARIABLE            0x0
-#define PUSH_TEMPORARY           0x1
-#define PUSH_LITERAL_CONSTANT    0x2
-#define PUSH_LITERAL_VARIABLE    0x3
-#define STORE_VARIABLE           0x4
-#define STORE_TEMPORARY          0x5
-#define SEND                     0x6
-#define JUMP                     0x7
-#define DO_SPECIAL               0x8
-#define DO_PRIMITIVE             0x9
-#define PUSH_VARIABLE_EXTENDED   0xA
-#define PUSH_TEMPORARY_EXTENDED  0xB
-#define STORE_TEMPORARY_EXTENDED 0xC
-#define STORE_VARIABLE_EXTENDED  0xD
-#define DO_SPECIAL_EXTENDED      0xE
-#define DO_PRIMITIVE_EXTENDED    0xF
-
-#define RETURN_RECEIVER      1
-#define RETURN_NIL           2
-#define RETURN_TRUE          3
-#define RETURN_FALSE         4
-#define RETURN_FROM_MESSAGE  5
-#define RETURN_FROM_BLOCK    6
+#define DO_PRIMITIVE                      0xF0
 
 #ifdef __cplusplus
 extern "C" {
