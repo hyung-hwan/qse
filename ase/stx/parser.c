@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.62 2005-07-10 16:50:50 bacon Exp $
+ * $Id: parser.c,v 1.63 2005-07-11 13:41:59 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -164,7 +164,8 @@ const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
 		XP_TEXT("block argument list not closed"),
 		XP_TEXT("block not closed"),
 
-		XP_TEXT("undeclared name")
+		XP_TEXT("undeclared name"),
+		XP_TEXT("too many literals")
 	};
 
 	if (parser->error_code >= 0 && 
@@ -346,6 +347,8 @@ static INLINE int __emit_send_to_self (
 		EMIT_CODE (parser, nargs);
 		EMIT_CODE (parser, selector);
 	}
+
+	return 0;
 }
 
 static INLINE int __emit_send_to_super (
@@ -363,6 +366,8 @@ static INLINE int __emit_send_to_super (
 		EMIT_CODE (parser, nargs);
 		EMIT_CODE (parser, selector);
 	}
+
+	return 0;
 }
 
 static INLINE int __emit_do_primitive (xp_stx_parser_t* parser, int no)
@@ -373,6 +378,16 @@ static INLINE int __emit_do_primitive (xp_stx_parser_t* parser, int no)
 	EMIT_CODE (parser, no & 0xFF);
 
 	return 0;
+}
+
+static INLINE int __add_literal (xp_stx_parser_t* parser, xp_word_t literal)
+{
+	if (parser->literal_count >= xp_countof(parser->literals)) {
+		parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_LITERALS;
+		return -1;
+	}
+	parser->literals[parser->literal_count++] = literal;
+	return parser->literal_count - 1;
 }
 
 int xp_stx_parser_parse_method (
@@ -850,17 +865,32 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 	 * 	<block constructor> | ( '('<expression>')' )
 	 */
 
+	xp_stx_t* stx = parser->stx;
+
 	if (ident == XP_NULL) {
+		int pos;
+		xp_word_t literal;
+
 		if (parser->token.type == XP_STX_TOKEN_IDENT) {
 			if (__parse_primary_ident(parser, parser->token.name.buffer) == -1) return -1;
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_CHARLIT) {
-			EMIT_CODE_TEST (parser, XP_TEXT("PushLiteral(CHAR)"), parser->token.name.buffer);
+			literal = xp_stx_instantiate (
+				stx, stx->class_character, 
+				parser->token.name.buffer, XP_NULL, 0);
+			pos = __add_literal(parser, literal);
+			if (pos == -1) return -1;
+			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_STRLIT) {
-			EMIT_CODE_TEST (parser, XP_TEXT("PushLiteral(STR)"), parser->token.name.buffer);
+			literal = xp_stx_instantiate (
+				stx, stx->class_string, XP_NULL,
+				parser->token.name.buffer, parser->token.name.size);
+			pos = __add_literal(parser, literal);
+			if (pos == -1) return -1;
+			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_NUMLIT) {
