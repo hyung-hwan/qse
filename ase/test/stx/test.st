@@ -10,7 +10,8 @@ perform: method with: x with: y with: z with: a1 with: b2 with: c2
 "
 	b := -30 xxx nil this.
 	b := 30 + 20.
-	b := 30 xxx: 10 xy zzzz: 30 ccc:10.
+	b := 'zzzzzz' xxx: 'cccccc' xy zzzz: 30 ccc:10.
+	$3 asString.
 
 	selector := 20.
 "

@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.6 2005-07-10 16:50:50 bacon Exp $
+ * $Id: bytecode.c,v 1.7 2005-07-11 13:41:59 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -17,19 +17,64 @@ int xp_stx_decode (xp_stx_t* stx, xp_word_t class)
 	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class);
 	if (class_obj->methods == stx->nil) return 0;
 
+
 /* TODO */
 	xp_stx_hash_traverse (stx, class_obj->methods, __decode1, class_obj);
 	return 0;
 }
 
+static void __dump_object (xp_stx_t* stx, xp_word_t obj)
+{
+	if (XP_STX_IS_SMALLINT(obj)) {
+		xp_printf (XP_TEXT("%d"), XP_STX_FROM_SMALLINT(obj));
+	}	
+	else if (XP_STX_CLASS(stx,obj) == stx->class_character) {
+		xp_printf (XP_TEXT("$%c"), XP_STX_WORDAT(stx,obj,0));
+	}
+	else if (XP_STX_CLASS(stx,obj) == stx->class_string) {
+		xp_printf (XP_TEXT("'%s'"), XP_STX_DATA(stx,obj));
+	}
+	else if (XP_STX_CLASS(stx,obj) == stx->class_symbol) {
+		xp_printf (XP_TEXT("#%s"), XP_STX_DATA(stx,obj));
+	}
+	else if (XP_STX_IS_CHAR_OBJECT(stx, obj)) {
+		xp_printf (XP_TEXT("unknow char object [%s]"), XP_STX_DATA(stx,obj));
+	}
+	else if (XP_STX_IS_BYTE_OBJECT(stx, obj)) {
+		xp_printf (XP_TEXT("unknown byte object"), XP_STX_DATA(stx,obj));
+	}
+	else if (XP_STX_IS_WORD_OBJECT(stx, obj)) {
+		xp_printf (XP_TEXT("unknown word object"), XP_STX_DATA(stx,obj));
+	}
+	else {
+		xp_printf (XP_TEXT("invalid object type"));
+	}
+}
+
 static void __decode1 (xp_stx_t* stx, xp_word_t idx, void* data)
 {
 	xp_stx_method_t* method_obj;
+	xp_stx_class_t* class_obj;
 	xp_word_t key = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_KEY);
 	xp_word_t value = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_VALUE);
+	xp_word_t* literals;
+	xp_word_t literal_count, i;
+
+	class_obj = (xp_stx_class_t*)data;
 
 	xp_printf (XP_TEXT("Method: %s\n"), XP_STX_DATA(stx, key));
 	method_obj = (xp_stx_method_t*)XP_STX_OBJECT(stx, value);
+
+	literals = method_obj->literals;
+	literal_count = XP_STX_SIZE(stx, value) - 
+		(XP_STX_FROM_SMALLINT(class_obj->spec) >> XP_STX_SPEC_INDEXABLE_BITS);
+
+	xp_printf (XP_TEXT("literal count %d\n"), literal_count);
+	for (i = 0; i < literal_count; i++) {
+		xp_printf (XP_TEXT("%d. ["), i);
+		__dump_object (stx, literals[i]);
+		xp_printf (XP_TEXT("]\n"));
+	}
 	__decode2 (stx, data, method_obj);
 }
 
@@ -53,6 +98,7 @@ static int __decode2 (xp_stx_t* stx,
 		XP_TEXT("send_to_self"),
 		XP_TEXT("send_to_super")
 	};
+
 
 	bytecodes = XP_STX_BYTE_OBJECT(stx, method_obj->bytecodes);
 	bytecode_size = XP_STX_SIZE(stx, method_obj->bytecodes);
