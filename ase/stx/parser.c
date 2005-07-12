@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.63 2005-07-11 13:41:59 bacon Exp $
+ * $Id: parser.c,v 1.64 2005-07-12 16:16:42 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -380,14 +380,65 @@ static INLINE int __emit_do_primitive (xp_stx_parser_t* parser, int no)
 	return 0;
 }
 
-static INLINE int __add_literal (xp_stx_parser_t* parser, xp_word_t literal)
+static int __add_literal (xp_stx_parser_t* parser, xp_word_t literal)
 {
+	xp_word_t i;
+
+	for (i = 0; i < parser->literal_count; i++) {
+		/* 
+		 * it would remove redundancy of symbols and small integers. 
+		 * more complex redundacy check may be done somewhere else 
+		 * like in __add_string_literal.
+		 */
+		if (parser->literals[i] == literal) return i;
+	}
+
 	if (parser->literal_count >= xp_countof(parser->literals)) {
 		parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_LITERALS;
 		return -1;
 	}
+
 	parser->literals[parser->literal_count++] = literal;
 	return parser->literal_count - 1;
+}
+
+static int __add_character_literal (xp_stx_parser_t* parser, xp_char_t ch)
+{
+	xp_word_t i, c, literal;
+	xp_stx_t* stx = parser->stx;
+
+	for (i = 0; i < parser->literal_count; i++) {
+		c = XP_STX_IS_SMALLINT(parser->literals[i])? 
+			stx->class_smallinteger: XP_STX_CLASS (stx, parser->literals[i]);
+		if (c != stx->class_character) continue;
+
+		if (ch == XP_STX_CHARAT(stx,parser->literals[i],0)) return i;
+	}
+
+	literal = xp_stx_instantiate (
+		stx, stx->class_character, &ch, XP_NULL, 0);
+	return __add_literal (parser, literal);
+}
+
+static int __add_string_literal (
+	xp_stx_parser_t* parser, const xp_char_t* str, xp_word_t size)
+{
+	xp_word_t i, c, literal;
+	xp_stx_t* stx = parser->stx;
+
+	for (i = 0; i < parser->literal_count; i++) {
+		c = XP_STX_IS_SMALLINT(parser->literals[i])? 
+			stx->class_smallinteger: XP_STX_CLASS (stx, parser->literals[i]);
+		if (c != stx->class_string) continue;
+
+		if (xp_strxncmp (str, size, 
+			XP_STX_DATA(stx,parser->literals[i]), 
+			XP_STX_SIZE(stx,parser->literals[i])) == 0) return i;
+	}
+
+	literal = xp_stx_instantiate (
+		stx, stx->class_string, XP_NULL, str, size);
+	return __add_literal (parser, literal);
 }
 
 int xp_stx_parser_parse_method (
@@ -876,25 +927,27 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_CHARLIT) {
-			literal = xp_stx_instantiate (
-				stx, stx->class_character, 
-				parser->token.name.buffer, XP_NULL, 0);
-			pos = __add_literal(parser, literal);
+			pos = __add_character_literal(
+				parser, parser->token.name.buffer[0]);
 			if (pos == -1) return -1;
 			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_STRLIT) {
-			literal = xp_stx_instantiate (
-				stx, stx->class_string, XP_NULL,
+			pos = __add_string_literal (parser,
 				parser->token.name.buffer, parser->token.name.size);
-			pos = __add_literal(parser, literal);
 			if (pos == -1) return -1;
 			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_NUMLIT) {
-			EMIT_CODE_TEST (parser, XP_TEXT("PushLiteral(NUM)"), parser->token.name.buffer);
+			/* TODO: other types of numbers, negative numbers, etc */
+			xp_word_t tmp;
+			XP_STRTOI (tmp, parser->token.name.buffer, XP_NULL, 10);
+			literal = XP_STX_TO_SMALLINT(tmp);
+			pos = __add_literal(parser, literal);
+			if (pos == -1) return -1;
+			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_SYMLIT) {

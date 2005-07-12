@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.24 2005-07-11 13:41:59 bacon Exp $
+ * $Id: bootstrp.c,v 1.25 2005-07-12 16:16:42 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -142,6 +142,38 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_NULL,
 		XP_STX_SPEC_NOT_INDEXABLE
+	},
+	{
+		XP_TEXT("Number"),
+		XP_TEXT("Magnitude"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		XP_STX_SPEC_NOT_INDEXABLE
+	},
+	{
+		XP_TEXT("Integer"),
+		XP_TEXT("Number"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		XP_STX_SPEC_NOT_INDEXABLE
+	},
+	{
+		XP_TEXT("SmallInteger"),
+		XP_TEXT("Integer"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		XP_STX_SPEC_NOT_INDEXABLE
+	},
+	{
+		XP_TEXT("LargeInteger"),
+		XP_TEXT("Integer"),
+		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		XP_STX_SPEC_BYTE_INDEXABLE
 	},
 	{
 		XP_TEXT("Collection"),
@@ -289,6 +321,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	stx->class_character = xp_stx_new_class (stx, XP_TEXT("Character"));
 	stx->class_dictionary = xp_stx_new_class (stx, XP_TEXT("Dictionary"));
 	stx->class_method = xp_stx_new_class (stx, XP_TEXT("Method"));
+	stx->class_smallinteger = xp_stx_new_class (stx, XP_TEXT("SmallInteger"));
 
 	__create_builtin_classes (stx);
 
