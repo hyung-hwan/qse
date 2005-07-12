@@ -8,10 +8,14 @@ perform: method with: x with: y with: z with: a1 with: b2 with: c2
 	a := 'this is ''good'.
 	a := #xxx niceMethod.
 "
-	b := -30 xxx nil this.
+	b := 12345 xxx nil this.
 	b := 30 + 20.
-	b := 'zzzzzz' xxx: 'cccccc' xy zzzz: 30 ccc:10.
+	b := 'zzzzzz' xxx: 'cccccc' xy zzzz: 30 ccc:10 ccc: 'cccccc'.
 	$3 asString.
+	$4 asString.
+	$4 asString.
+	$5 asString.
+	$5 asString.
 
 	selector := 20.
 "

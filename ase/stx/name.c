@@ -1,5 +1,5 @@
 /*
- * $Id: name.c,v 1.1 2005-06-12 16:22:03 bacon Exp $
+ * $Id: name.c,v 1.2 2005-07-12 16:16:42 bacon Exp $
  */
 
 #include <xp/stx/name.h>
@@ -30,11 +30,6 @@ xp_stx_name_t* xp_stx_name_open (
 			return XP_NULL;
 		}
 	}
-
-	/*
-	name->ivalue    = 0;
-	name->fvalue    = .0;
-	*/
 
 	name->size      = 0;
 	name->capacity  = capacity;
