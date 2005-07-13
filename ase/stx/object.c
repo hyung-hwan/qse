@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.36 2005-07-07 07:45:05 bacon Exp $
+ * $Id: object.c,v 1.37 2005-07-13 14:42:27 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -185,14 +185,15 @@ xp_word_t xp_stx_hash_object (xp_stx_t* stx, xp_word_t object)
 }
 
 xp_word_t xp_stx_instantiate (
-	xp_stx_t* stx, xp_word_t class_index, const void* data, 
+	xp_stx_t* stx, xp_word_t class, const void* data, 
 	const void* variable_data, xp_word_t variable_nfields)
 {
 	xp_stx_class_t* class_obj;
 	xp_word_t spec, nfields, new;
 	int indexable;
 
-	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class_index);
+	xp_assert (class != stx->class_smallinteger);
+	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class);
 
 	/* don't instantiate a metaclass whose instance must be 
 	   created in a different way */
@@ -225,6 +226,23 @@ xp_word_t xp_stx_instantiate (
 			stx, data, nfields, XP_NULL, 0);
 	}
 
-	XP_STX_CLASS(stx, new) = class_index;
+	XP_STX_CLASS(stx, new) = class;
 	return new;
+}
+
+xp_word_t xp_stx_class (xp_stx_t* stx, xp_word_t obj)
+{
+	return XP_STX_IS_SMALLINT(obj)? 
+		stx->class_smallinteger: XP_STX_CLASS(stx,obj);
+}
+
+xp_word_t xp_stx_classof (xp_stx_t* stx, xp_word_t obj)
+{
+	return XP_STX_IS_SMALLINT(obj)? 
+		stx->class_smallinteger: XP_STX_CLASS(stx,obj);
+}
+
+xp_word_t xp_stx_sizeof (xp_stx_t* stx, xp_word_t obj)
+{
+	return XP_STX_IS_SMALLINT(obj)? 1: XP_STX_SIZE(stx,obj);
 }
