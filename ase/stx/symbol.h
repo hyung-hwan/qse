@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.h,v 1.7 2005-07-07 07:45:05 bacon Exp $
+ * $Id: symbol.h,v 1.8 2005-07-17 15:55:01 bacon Exp $
  */
 
 #ifndef _XP_STX_SYMBOL_H_
@@ -30,10 +30,6 @@ xp_word_t xp_stx_new_symbol (
 	xp_stx_t* stx, const xp_char_t* name);
 xp_word_t xp_stx_new_symbolx (
 	xp_stx_t* stx, const xp_char_t* name, xp_word_t len);
-
-xp_word_t xp_stx_new_symbol_pp (
-	xp_stx_t* stx, const xp_char_t* name,
-	const xp_char_t* prefix, const xp_char_t* postfix);
 void xp_stx_traverse_symbol_table (
         xp_stx_t* stx, void (*func) (xp_stx_t*,xp_word_t,void*), void* data);
 
