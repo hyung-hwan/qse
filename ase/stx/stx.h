@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.36 2005-07-12 16:16:42 bacon Exp $
+ * $Id: stx.h,v 1.37 2005-07-18 11:53:01 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -72,6 +72,7 @@ struct xp_stx_t
 	xp_word_t class_symbol;
 	xp_word_t class_metaclass;
 	xp_word_t class_pairlink;
+	xp_word_t class_association;
 
 	xp_word_t class_object;
 	xp_word_t class_class;
