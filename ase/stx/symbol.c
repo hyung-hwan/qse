@@ -1,12 +1,12 @@
 /*
- * $Id: symbol.c,v 1.15 2005-07-17 15:55:01 bacon Exp $
+ * $Id: symbol.c,v 1.16 2005-07-18 11:53:01 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
 #include <xp/stx/object.h>
 #include <xp/stx/misc.h>
 
-xp_word_t xp_stx_new_symlink (xp_stx_t* stx, xp_word_t sym)
+xp_word_t xp_stx_new_symlink (xp_stx_t* stx, xp_word_t symbol)
 {
 	xp_word_t x;
 
@@ -14,7 +14,7 @@ xp_word_t xp_stx_new_symlink (xp_stx_t* stx, xp_word_t sym)
 		stx, XP_NULL, XP_STX_SYMLINK_SIZE, XP_NULL, 0);
 	XP_STX_CLASS(stx,x) = stx->class_symlink;
 	XP_STX_WORDAT(stx,x,XP_STX_SYMLINK_LINK) = stx->nil;
-	XP_STX_WORDAT(stx,x,XP_STX_SYMLINK_SYMBOL) = sym;
+	XP_STX_WORDAT(stx,x,XP_STX_SYMLINK_SYMBOL) = symbol;
 
 	return x;
 }
@@ -43,8 +43,8 @@ xp_word_t xp_stx_new_symbolx (
 			x = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_SYMBOL);
 			xp_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
-			if (xp_strxcmp (
-				&XP_STX_CHARAT(stx,x,0),
+			if (xp_strxcmp ( 
+				XP_STX_DATA(stx,x),
 				XP_STX_SIZE(stx,x), name) == 0) return x;
 
 			next = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_LINK);

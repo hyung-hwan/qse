@@ -1,34 +1,33 @@
 /*
- * $Id: hash.h,v 1.11 2005-07-18 11:53:01 bacon Exp $
+ * $Id: dict.h,v 1.1 2005-07-18 11:53:01 bacon Exp $
  */
 
-#ifndef _XP_STX_HASH_H_
-#define _XP_STX_HASH_H_
+#ifndef _XP_STX_DICT_H_
+#define _XP_STX_DICT_H_
 
 #include <xp/stx/stx.h>
 
-#define XP_STX_PAIRLINK_SIZE     3
-#define XP_STX_PAIRLINK_LINK     0
-#define XP_STX_PAIRLINK_KEY      1
-#define XP_STX_PAIRLINK_VALUE    2
+#define XP_STX_ASSOCIATION_SIZE  2
+#define XP_STX_ASSOCIATION_KEY   0
+#define XP_STX_ASSOCIATION_VALUE 1
 
-struct xp_stx_pairlink_t
+struct xp_stx_association_t
 {
 	xp_stx_objhdr_t header;
-	xp_word_t link;
 	xp_word_t key;
 	xp_word_t value;
 };
 
-typedef struct xp_stx_pairlink_t xp_stx_pairlink_t;
+typedef struct xp_stx_association_t xp_stx_association_t;
 
 #ifdef __cplusplus
 extern "C"
 #endif
 
-/* hash table manipulation */
-xp_word_t xp_stx_new_pairlink (
+xp_word_t xp_stx_new_association (
 	xp_stx_t* stx, xp_word_t key, xp_word_t value);
+
+#if 0
 xp_word_t xp_stx_hash_lookup (
 	xp_stx_t* stx, xp_word_t table,
 	xp_word_t hash, xp_word_t key);
@@ -40,6 +39,7 @@ void xp_stx_hash_insert (
 void xp_stx_hash_traverse (
 	xp_stx_t* stx, xp_word_t table, 
 	void (*func) (xp_stx_t*,xp_word_t,void*), void* data);
+#endif
 
 #ifdef __cplusplus
 }

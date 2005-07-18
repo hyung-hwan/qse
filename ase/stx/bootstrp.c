@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.25 2005-07-12 16:16:42 bacon Exp $
+ * $Id: bootstrp.c,v 1.26 2005-07-18 11:53:01 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -131,6 +131,14 @@ static class_info_t class_info[] =
 		XP_TEXT("Magnitude"),
 		XP_TEXT("Object"),
 		XP_NULL,
+		XP_NULL,
+		XP_NULL,
+		XP_STX_SPEC_NOT_INDEXABLE
+	},
+	{
+		XP_TEXT("Association"),
+		XP_TEXT("Magnitude"),
+		XP_TEXT("key value"),
 		XP_NULL,
 		XP_NULL,
 		XP_STX_SPEC_NOT_INDEXABLE
@@ -271,7 +279,14 @@ static class_info_t class_info[] =
 		XP_NULL,
 		XP_STX_SPEC_NOT_INDEXABLE
 	},
-
+	{
+		XP_TEXT("Pairlink"),
+		XP_TEXT("Link"),
+		XP_TEXT("key value"),
+		XP_NULL,
+		XP_NULL,
+		XP_STX_SPEC_NOT_INDEXABLE
+	},
 	{
 		XP_NULL,
 		XP_NULL,
