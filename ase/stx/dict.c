@@ -1,5 +1,5 @@
 /*
- * $Id: dict.c,v 1.2 2005-07-19 12:08:04 bacon Exp $
+ * $Id: dict.c,v 1.3 2005-07-19 15:00:09 bacon Exp $
  */
 
 #include <xp/stx/dict.h>
@@ -10,7 +10,13 @@ xp_word_t __new_association (
 	xp_stx_t* stx, xp_word_t key, xp_word_t value)
 {
 	xp_word_t x;
+#ifdef __GNUC__
 	xp_word_t data[2] = { key, value };
+#else
+	xp_word_t data[2];
+	data[0] = key;
+	data[1] = value;
+#endif
 
 	x = xp_stx_alloc_word_object (
 		stx, data, XP_STX_ASSOCIATION_SIZE, XP_NULL, 0);
@@ -85,8 +91,8 @@ static void __dict_grow (xp_stx_t* stx, xp_word_t dict)
 	}
 	
 xp_printf (XP_TEXT("dictionary grown. swapped the index\n"));
-	XP_SWAP (((xp_uint_t)XP_STX_OBJECT(stx,dict)), 
-	         ((xp_uint_t)XP_STX_OBJECT(stx,new)));
+	XP_SWAP ((xp_uint_t)XP_STX_OBJECT(stx,dict), 
+	         (xp_uint_t)XP_STX_OBJECT(stx,new));
 }
 
 xp_word_t xp_stx_dict_lookup (
