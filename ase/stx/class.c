@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.22 2005-07-19 12:08:04 bacon Exp $
+ * $Id: class.c,v 1.23 2005-07-19 15:52:19 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -28,13 +28,7 @@ xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name)
 	class_name = xp_stx_new_symbol (stx, name);
 	XP_STX_WORD_AT(stx,class,XP_STX_CLASS_NAME) = class_name;
 
-/*
-	xp_stx_hash_insert (stx, stx->smalltalk, 
-		xp_stx_hash_object(stx, class_name),
-		class_name, class);
-*/
 	xp_stx_dict_put (stx, stx->smalltalk, class_name, class);
-
 	return class;
 }
 
@@ -43,7 +37,9 @@ xp_word_t xp_stx_lookup_class (xp_stx_t* stx, const xp_char_t* name)
 	xp_word_t assoc, meta, value;
 
 	assoc = xp_stx_dict_lookup (stx, stx->smalltalk, name);
-	if (assoc == stx->nil) return stx->nil;
+	if (assoc == stx->nil) {
+		return stx->nil;
+	}
 
 	value = XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_VALUE);
 	meta = XP_STX_CLASS(stx,value);

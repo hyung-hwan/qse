@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.17 2005-07-19 12:08:04 bacon Exp $
+ * $Id: symbol.c,v 1.18 2005-07-19 15:52:19 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
@@ -41,7 +41,7 @@ xp_word_t xp_stx_new_symbolx (
 	else {
 		do {
 			x = XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_SYMBOL);
-			xp_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
+			xp_assert (xp_stx_classof(stx,x) == stx->class_symbol);
 
 			if (xp_strxcmp ( 
 				XP_STX_DATA(stx,x),

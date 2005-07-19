@@ -1,5 +1,5 @@
 /*
- * $Id: object.c,v 1.38 2005-07-19 12:08:04 bacon Exp $
+ * $Id: object.c,v 1.39 2005-07-19 15:52:19 bacon Exp $
  */
 
 #include <xp/stx/object.h>
@@ -24,7 +24,6 @@ xp_word_t xp_stx_alloc_word_object (
 	 *      number of variable instance variables) * word_size 
 	 */
 	n = nfields + variable_nfields;
-xp_printf (XP_TEXT(">> %d\n"), n);
 	idx = xp_stx_memory_alloc (&stx->memory,
 		n * xp_sizeof(xp_word_t) + xp_sizeof(xp_stx_object_t));
 	if (idx >= stx->memory.capacity) return idx; /* failed TODO: return a difference value OINDEX_INVALID */
@@ -182,16 +181,6 @@ xp_word_t xp_stx_hash_object (xp_stx_t* stx, xp_word_t object)
 	}
 
 	return hv;
-}
-
-xp_bool_t xp_stx_shallow_compare_object (
-	xp_stx_t* stx, xp_word_t a, xp_word_t b)
-{
-	if (XP_STX_TYPE(stx,a) != XP_STX_TYPE(stx,b)) return xp_false;
-	if (XP_STX_SIZE(stx,a) != XP_STX_SIZE(stx,b)) return xp_false;
-	if (XP_STX_CLASS(stx,a) != XP_STX_CLASS(stx,b)) return xp_false;
-	return xp_memcmp (XP_STX_DATA(stx,a), 
-		XP_STX_DATA(stx,b), XP_STX_SIZE(stx,a)) == 0;
 }
 
 xp_word_t xp_stx_instantiate (
