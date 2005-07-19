@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.27 2005-07-19 12:08:04 bacon Exp $
+ * $Id: bootstrp.c,v 1.28 2005-07-19 15:52:19 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -401,10 +401,8 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	/* TODO: symbol table and dictionary size */
 	stx->symbol_table = xp_stx_alloc_word_object (
 		stx, XP_NULL, 0, XP_NULL, 1000); 
-xp_printf (XP_TEXT("xxxxxxxxxxxxxxxxxx\n"));
 	stx->smalltalk = xp_stx_alloc_word_object (
-		stx, XP_NULL, 1, XP_NULL, 1024);
-xp_printf (XP_TEXT("yyyyyyyyyyyyyyyyyyy\n"));
+		stx, XP_NULL, 1, XP_NULL, 512);
 	/* set tally */
 	XP_STX_WORD_AT(stx,stx->smalltalk,0) = XP_STX_TO_SMALLINT(0);
 
@@ -713,11 +711,6 @@ static xp_word_t __make_classvar_dict (
 		       *p != XP_CHAR('\0')) p++;
 
 		symbol = xp_stx_new_symbolx (stx, name, p - name);
-		
-/*
-		xp_stx_hash_insert (stx, dict,
-			xp_stx_hash_object(stx, symbol), symbol, stx->nil);
-*/
 		xp_stx_dict_put (stx, dict, symbol, stx->nil);
 	} while (1);
 
