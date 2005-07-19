@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.28 2005-07-19 15:52:19 bacon Exp $
+ * $Id: bootstrp.c,v 1.29 2005-07-19 16:09:34 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -402,7 +402,7 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	stx->symbol_table = xp_stx_alloc_word_object (
 		stx, XP_NULL, 0, XP_NULL, 1000); 
 	stx->smalltalk = xp_stx_alloc_word_object (
-		stx, XP_NULL, 1, XP_NULL, 512);
+		stx, XP_NULL, 1, XP_NULL, 256);
 	/* set tally */
 	XP_STX_WORD_AT(stx,stx->smalltalk,0) = XP_STX_TO_SMALLINT(0);
 

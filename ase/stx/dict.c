@@ -1,5 +1,5 @@
 /*
- * $Id: dict.c,v 1.4 2005-07-19 15:52:19 bacon Exp $
+ * $Id: dict.c,v 1.5 2005-07-19 16:09:34 bacon Exp $
  */
 
 #include <xp/stx/dict.h>
@@ -92,6 +92,8 @@ static void __dict_grow (xp_stx_t* stx, xp_word_t dict)
 			XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_VALUE));
 	}
 	
+	/* TODO: explore if dict can be immediately destroyed.
+	 */
 	XP_SWAP ((xp_uint_t)XP_STX_OBJECT(stx,dict), 
 	         (xp_uint_t)XP_STX_OBJECT(stx,new));
 }
