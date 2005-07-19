@@ -1,5 +1,5 @@
 SRCS = \
-	stx.c memory.c object.c symbol.c hash.c misc.c context.c
+	stx.c memory.c object.c symbol.c dict.c misc.c context.c
 OBJS = $(SRCS:.c=.obj)
 OUT = xpstx.lib
 

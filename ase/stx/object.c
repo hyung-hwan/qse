@@ -1,12 +1,11 @@
 /*
- * $Id: object.c,v 1.39 2005-07-19 15:52:19 bacon Exp $
+ * $Id: object.c,v 1.40 2005-07-19 16:09:34 bacon Exp $
  */
 
 #include <xp/stx/object.h>
 #include <xp/stx/memory.h>
 #include <xp/stx/symbol.h>
 #include <xp/stx/class.h>
-#include <xp/stx/hash.h>
 #include <xp/stx/misc.h>
 
 /* n: number of instance variables */
