@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.16 2005-07-18 11:53:01 bacon Exp $
+ * $Id: symbol.c,v 1.17 2005-07-19 12:08:04 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
@@ -13,8 +13,8 @@ xp_word_t xp_stx_new_symlink (xp_stx_t* stx, xp_word_t symbol)
 	x = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_SYMLINK_SIZE, XP_NULL, 0);
 	XP_STX_CLASS(stx,x) = stx->class_symlink;
-	XP_STX_WORDAT(stx,x,XP_STX_SYMLINK_LINK) = stx->nil;
-	XP_STX_WORDAT(stx,x,XP_STX_SYMLINK_SYMBOL) = symbol;
+	XP_STX_WORD_AT(stx,x,XP_STX_SYMLINK_LINK) = stx->nil;
+	XP_STX_WORD_AT(stx,x,XP_STX_SYMLINK_SYMBOL) = symbol;
 
 	return x;
 }
@@ -31,27 +31,27 @@ xp_word_t xp_stx_new_symbolx (
 
 	table = stx->symbol_table;
 	hash = xp_stx_strxhash(name,len) % XP_STX_SIZE(stx,table);
-	link = XP_STX_WORDAT(stx,table,hash);
+	link = XP_STX_WORD_AT(stx,table,hash);
 
 	if (link == stx->nil) {
 		x = xp_stx_alloc_char_objectx (stx, name, len);
 		XP_STX_CLASS(stx,x) = stx->class_symbol;
-		XP_STX_WORDAT(stx,table,hash) = xp_stx_new_symlink(stx,x);
+		XP_STX_WORD_AT(stx,table,hash) = xp_stx_new_symlink(stx,x);
 	}
 	else {
 		do {
-			x = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_SYMBOL);
+			x = XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_SYMBOL);
 			xp_assert (XP_STX_CLASS(stx,x) == stx->class_symbol);
 
 			if (xp_strxcmp ( 
 				XP_STX_DATA(stx,x),
 				XP_STX_SIZE(stx,x), name) == 0) return x;
 
-			next = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_LINK);
+			next = XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_LINK);
 			if (next == stx->nil) {
 				x = xp_stx_alloc_char_objectx (stx, name, len);
 				XP_STX_CLASS(stx,x) = stx->class_symbol;
-				XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_LINK) = 
+				XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_LINK) = 
 					xp_stx_new_symlink(stx,x);
 				break;
 			}
@@ -74,11 +74,11 @@ void xp_stx_traverse_symbol_table (
 	size = XP_STX_SIZE(stx,table);
 	
 	while (size-- > 0) {
-		link = XP_STX_WORDAT(stx,table,size);
+		link = XP_STX_WORD_AT(stx,table,size);
 
 		while (link != stx->nil) {
-			func (stx, XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_SYMBOL), data);
-			link = XP_STX_WORDAT(stx,link,XP_STX_SYMLINK_LINK);
+			func (stx, XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_SYMBOL), data);
+			link = XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_LINK);
 		}
 	}
 }

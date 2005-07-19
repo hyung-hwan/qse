@@ -1,11 +1,11 @@
 /*
- * $Id: class.c,v 1.21 2005-07-07 07:45:05 bacon Exp $
+ * $Id: class.c,v 1.22 2005-07-19 12:08:04 bacon Exp $
  */
 
 #include <xp/stx/class.h>
 #include <xp/stx/symbol.h>
 #include <xp/stx/object.h>
-#include <xp/stx/hash.h>
+#include <xp/stx/dict.h>
 #include <xp/stx/misc.h>
 
 xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name)
@@ -18,7 +18,7 @@ xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name)
 	XP_STX_CLASS(stx,meta) = stx->class_metaclass;
 	/* the spec of the metaclass must be the spec of its
 	 * instance. so the XP_STX_CLASS_SIZE is set */
-	XP_STX_WORDAT(stx,meta,XP_STX_METACLASS_SPEC) = 
+	XP_STX_WORD_AT(stx,meta,XP_STX_METACLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	
 	/* the spec of the class is set later in __create_builtin_classes */
@@ -26,24 +26,26 @@ xp_word_t xp_stx_new_class (xp_stx_t* stx, const xp_char_t* name)
 		stx, XP_NULL, XP_STX_CLASS_SIZE, XP_NULL, 0);
 	XP_STX_CLASS(stx,class) = meta;
 	class_name = xp_stx_new_symbol (stx, name);
-	XP_STX_WORDAT(stx,class,XP_STX_CLASS_NAME) = class_name;
+	XP_STX_WORD_AT(stx,class,XP_STX_CLASS_NAME) = class_name;
 
+/*
 	xp_stx_hash_insert (stx, stx->smalltalk, 
 		xp_stx_hash_object(stx, class_name),
 		class_name, class);
+*/
+	xp_stx_dict_put (stx, stx->smalltalk, class_name, class);
 
 	return class;
 }
 
 xp_word_t xp_stx_lookup_class (xp_stx_t* stx, const xp_char_t* name)
 {
-	xp_word_t link, meta, value;
+	xp_word_t assoc, meta, value;
 
-	link = xp_stx_hash_lookup_symbol (stx, stx->smalltalk, name);
-	if (link == stx->nil) return stx->nil;
+	assoc = xp_stx_dict_lookup (stx, stx->smalltalk, name);
+	if (assoc == stx->nil) return stx->nil;
 
-	value = XP_STX_WORDAT(stx,link,XP_STX_PAIRLINK_VALUE);
-
+	value = XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_VALUE);
 	meta = XP_STX_CLASS(stx,value);
 	if (XP_STX_CLASS(stx,meta) != stx->class_metaclass) return stx->nil;
 
@@ -108,8 +110,8 @@ xp_word_t xp_stx_lookup_class_variable (
 	/* TODO: can a metaclas have class variables? */	
 	if (class_obj->header.class != stx->class_metaclass &&
 	    class_obj->class_variables != stx->nil) {
-		if (xp_stx_hash_lookup_symbol(stx, 
-			class_obj->class_variables, name) != stx->nil) return class_index;
+		if (xp_stx_dict_lookup(stx,
+			class_obj->class_variables,name) != stx->nil) return class_index;
 	}
 
 	return stx->nil;

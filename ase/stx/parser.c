@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.64 2005-07-12 16:16:42 bacon Exp $
+ * $Id: parser.c,v 1.65 2005-07-19 12:08:04 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -8,7 +8,7 @@
 #include <xp/stx/method.h>
 #include <xp/stx/symbol.h>
 #include <xp/stx/bytecode.h>
-#include <xp/stx/hash.h>
+#include <xp/stx/dict.h>
 #include <xp/stx/misc.h>
 
 static int __parse_method (
@@ -412,7 +412,7 @@ static int __add_character_literal (xp_stx_parser_t* parser, xp_char_t ch)
 			stx->class_smallinteger: XP_STX_CLASS (stx, parser->literals[i]);
 		if (c != stx->class_character) continue;
 
-		if (ch == XP_STX_CHARAT(stx,parser->literals[i],0)) return i;
+		if (ch == XP_STX_CHAR_AT(stx,parser->literals[i],0)) return i;
 	}
 
 	literal = xp_stx_instantiate (
@@ -503,7 +503,8 @@ static int __finish_method (xp_stx_parser_t* parser)
 	if (class_obj->methods == stx->nil) {
 		/* TODO: reconfigure method dictionary size */
 		class_obj->methods = xp_stx_instantiate (
-			stx, stx->class_dictionary, XP_NULL, XP_NULL, 64);
+			stx, stx->class_system_dictionary, 
+			XP_NULL, XP_NULL, 64);
 	}
 	xp_assert (class_obj->methods != stx->nil);
 
@@ -529,11 +530,7 @@ static int __finish_method (xp_stx_parser_t* parser)
 		XP_STX_TO_SMALLINT(parser->temporary_count);
 	*/
 
-	/* TODO: dictionaryAtPut (), remove hash.h above */
-	xp_stx_hash_insert (
-		stx, class_obj->methods, 
-		xp_stx_hash_object(stx, selector),
-		selector, method);
+	xp_stx_dict_put (stx, class_obj->methods, selector, method);
 	return 0;
 }
 

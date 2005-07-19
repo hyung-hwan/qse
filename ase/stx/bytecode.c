@@ -1,10 +1,10 @@
 /*
- * $Id: bytecode.c,v 1.7 2005-07-11 13:41:59 bacon Exp $
+ * $Id: bytecode.c,v 1.8 2005-07-19 12:08:04 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
 #include <xp/stx/method.h>
-#include <xp/stx/hash.h>
+#include <xp/stx/dict.h>
 
 static void __decode1 (xp_stx_t* stx, xp_word_t idx, void* data);
 static int __decode2 (xp_stx_t* stx, 
@@ -19,7 +19,7 @@ int xp_stx_decode (xp_stx_t* stx, xp_word_t class)
 
 
 /* TODO */
-	xp_stx_hash_traverse (stx, class_obj->methods, __decode1, class_obj);
+	xp_stx_dict_traverse (stx, class_obj->methods, __decode1, class_obj);
 	return 0;
 }
 
@@ -29,7 +29,7 @@ static void __dump_object (xp_stx_t* stx, xp_word_t obj)
 		xp_printf (XP_TEXT("%d"), XP_STX_FROM_SMALLINT(obj));
 	}	
 	else if (XP_STX_CLASS(stx,obj) == stx->class_character) {
-		xp_printf (XP_TEXT("$%c"), XP_STX_WORDAT(stx,obj,0));
+		xp_printf (XP_TEXT("$%c"), XP_STX_WORD_AT(stx,obj,0));
 	}
 	else if (XP_STX_CLASS(stx,obj) == stx->class_string) {
 		xp_printf (XP_TEXT("'%s'"), XP_STX_DATA(stx,obj));
@@ -55,8 +55,8 @@ static void __decode1 (xp_stx_t* stx, xp_word_t idx, void* data)
 {
 	xp_stx_method_t* method_obj;
 	xp_stx_class_t* class_obj;
-	xp_word_t key = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_KEY);
-	xp_word_t value = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_VALUE);
+	xp_word_t key = XP_STX_WORD_AT(stx,idx,XP_STX_ASSOCIATION_KEY);
+	xp_word_t value = XP_STX_WORD_AT(stx,idx,XP_STX_ASSOCIATION_VALUE);
 	xp_word_t* literals;
 	xp_word_t literal_count, i;
 

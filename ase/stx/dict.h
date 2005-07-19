@@ -1,5 +1,5 @@
 /*
- * $Id: dict.h,v 1.1 2005-07-18 11:53:01 bacon Exp $
+ * $Id: dict.h,v 1.2 2005-07-19 12:08:04 bacon Exp $
  */
 
 #ifndef _XP_STX_DICT_H_
@@ -24,22 +24,16 @@ typedef struct xp_stx_association_t xp_stx_association_t;
 extern "C"
 #endif
 
-xp_word_t xp_stx_new_association (
-	xp_stx_t* stx, xp_word_t key, xp_word_t value);
+xp_word_t xp_stx_dict_lookup (
+        xp_stx_t* stx, xp_word_t dict, const xp_char_t* key);
+xp_word_t xp_stx_dict_get (
+        xp_stx_t* stx, xp_word_t dict, xp_word_t key);
+xp_word_t xp_stx_dict_put (
+        xp_stx_t* stx, xp_word_t dict, xp_word_t key, xp_word_t value);
+void xp_stx_dict_traverse (
+        xp_stx_t* stx, xp_word_t dict,
+        void (*func) (xp_stx_t*,xp_word_t,void*), void* data);
 
-#if 0
-xp_word_t xp_stx_hash_lookup (
-	xp_stx_t* stx, xp_word_t table,
-	xp_word_t hash, xp_word_t key);
-xp_word_t xp_stx_hash_lookup_symbol (
-	xp_stx_t* stx, xp_word_t table, const xp_char_t* name);
-void xp_stx_hash_insert (
-	xp_stx_t* stx, xp_word_t table,
-	xp_word_t hash, xp_word_t key, xp_word_t value);
-void xp_stx_hash_traverse (
-	xp_stx_t* stx, xp_word_t table, 
-	void (*func) (xp_stx_t*,xp_word_t,void*), void* data);
-#endif
 
 #ifdef __cplusplus
 }

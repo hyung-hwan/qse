@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.37 2005-07-18 11:53:01 bacon Exp $
+ * $Id: stx.h,v 1.38 2005-07-19 12:08:04 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -71,7 +71,6 @@ struct xp_stx_t
 	xp_word_t class_symlink;
 	xp_word_t class_symbol;
 	xp_word_t class_metaclass;
-	xp_word_t class_pairlink;
 	xp_word_t class_association;
 
 	xp_word_t class_object;
@@ -80,7 +79,7 @@ struct xp_stx_t
 	xp_word_t class_bytearray;
 	xp_word_t class_string;
 	xp_word_t class_character;
-	xp_word_t class_dictionary;
+	xp_word_t class_system_dictionary;
 	xp_word_t class_method;
 	xp_word_t class_smallinteger;
 
@@ -126,11 +125,11 @@ struct xp_stx_t
 #define XP_STX_CHAR_OBJECT(stx,idx) \
 	((xp_stx_char_object_t*)XP_STX_OBJECT(stx,idx))
 
-#define XP_STX_WORDAT(stx,idx,n) \
+#define XP_STX_WORD_AT(stx,idx,n) \
 	(((xp_word_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
-#define XP_STX_BYTEAT(stx,idx,n) \
+#define XP_STX_BYTE_AT(stx,idx,n) \
 	(((xp_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
-#define XP_STX_CHARAT(stx,idx,n) \
+#define XP_STX_CHAR_AT(stx,idx,n) \
 	(((xp_char_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 
 #ifdef __cplusplus
