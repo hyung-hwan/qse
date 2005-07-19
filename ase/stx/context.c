@@ -1,5 +1,5 @@
 /*
- * $Id: context.c,v 1.10 2005-07-05 09:02:13 bacon Exp $
+ * $Id: context.c,v 1.11 2005-07-19 12:08:04 bacon Exp $
  */
 
 #include <xp/stx/context.h>
@@ -38,7 +38,7 @@ static xp_byte_t __fetch_byte (
 	context_obj->ip = XP_STX_TO_SMALLINT(ip + 1);
 
 	xp_assert (XP_STX_TYPE(stx,method) == XP_STX_BYTE_INDEXED);
-	return XP_STX_BYTEAT(stx,method,ip);
+	return XP_STX_BYTE_AT(stx,method,ip);
 }
 
 int xp_stx_run_context (xp_stx_t* stx, xp_word_t context)

@@ -1,12 +1,12 @@
 /*
- * $Id: bootstrp.c,v 1.26 2005-07-18 11:53:01 bacon Exp $
+ * $Id: bootstrp.c,v 1.27 2005-07-19 12:08:04 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
 #include <xp/stx/symbol.h>
 #include <xp/stx/class.h>
 #include <xp/stx/object.h>
-#include <xp/stx/hash.h>
+#include <xp/stx/dict.h>
 #include <xp/stx/misc.h>
 
 static void __create_bootstrapping_objects (xp_stx_t* stx);
@@ -226,7 +226,7 @@ static class_info_t class_info[] =
 	{
 		XP_TEXT("Dictionary"),
 		XP_TEXT("IndexedCollection"),
-		XP_NULL,
+		XP_TEXT("tally"),
 		XP_NULL,
 		XP_NULL,
 		XP_STX_SPEC_WORD_INDEXABLE	
@@ -280,14 +280,6 @@ static class_info_t class_info[] =
 		XP_STX_SPEC_NOT_INDEXABLE
 	},
 	{
-		XP_TEXT("Pairlink"),
-		XP_TEXT("Link"),
-		XP_TEXT("key value"),
-		XP_NULL,
-		XP_NULL,
-		XP_STX_SPEC_NOT_INDEXABLE
-	},
-	{
 		XP_NULL,
 		XP_NULL,
 		XP_NULL,
@@ -334,38 +326,37 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	stx->class_bytearray = xp_stx_new_class (stx, XP_TEXT("ByteArray"));
 	stx->class_string = xp_stx_new_class (stx, XP_TEXT("String"));
 	stx->class_character = xp_stx_new_class (stx, XP_TEXT("Character"));
-	stx->class_dictionary = xp_stx_new_class (stx, XP_TEXT("Dictionary"));
-	stx->class_method = xp_stx_new_class (stx, XP_TEXT("Method"));
-	stx->class_smallinteger = xp_stx_new_class (stx, XP_TEXT("SmallInteger"));
+	stx->class_system_dictionary = 
+		xp_stx_new_class (stx, XP_TEXT("SystemDictionary"));
+	stx->class_method = 
+		xp_stx_new_class (stx, XP_TEXT("Method"));
+	stx->class_smallinteger = 
+		xp_stx_new_class (stx, XP_TEXT("SmallInteger"));
 
 	__create_builtin_classes (stx);
 
 	/* (Object class) setSuperclass: Class */
 	object_meta = XP_STX_CLASS(stx,stx->class_object);
-	XP_STX_WORDAT(stx,object_meta,XP_STX_METACLASS_SUPERCLASS) = stx->class_class;
+	XP_STX_WORD_AT(stx,object_meta,XP_STX_METACLASS_SUPERCLASS) = stx->class_class;
 	/* instance class for Object is set here as it is not 
 	 * set in __create_builtin_classes */
-	XP_STX_WORDAT(stx,object_meta,XP_STX_METACLASS_INSTANCE_CLASS) = stx->class_object;
+	XP_STX_WORD_AT(stx,object_meta,XP_STX_METACLASS_INSTANCE_CLASS) = stx->class_object;
 
 	/* for some fun here */
 	{
 		xp_word_t array;
 		array = __new_array (stx, 1);
-		XP_STX_WORDAT(stx,array,0) = object_meta;
-		XP_STX_WORDAT(stx,stx->class_class,XP_STX_CLASS_SUBCLASSES) = array;
+		XP_STX_WORD_AT(stx,array,0) = object_meta;
+		XP_STX_WORD_AT(stx,stx->class_class,XP_STX_CLASS_SUBCLASSES) = array;
 	}
 			
 	/* more initialization */
 	XP_STX_CLASS(stx,stx->symbol_table) = 
-		xp_stx_lookup_class (stx, XP_TEXT("SymbolTable"));
-	XP_STX_CLASS(stx,stx->smalltalk) = 
-		xp_stx_lookup_class (stx, XP_TEXT("SystemDictionary"));
+		xp_stx_lookup_class(stx, XP_TEXT("SymbolTable"));
+	XP_STX_CLASS(stx,stx->smalltalk) = stx->class_system_dictionary;
 
-	symbol_Smalltalk = 
-		xp_stx_new_symbol (stx, XP_TEXT("Smalltalk"));
-	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_object(stx, symbol_Smalltalk),
-		symbol_Smalltalk, stx->smalltalk);	
+	symbol_Smalltalk = xp_stx_new_symbol (stx, XP_TEXT("Smalltalk"));
+	xp_stx_dict_put (stx, stx->smalltalk, symbol_Smalltalk, stx->smalltalk);
 
 	/* create #nil, #true, #false */
 	xp_stx_new_symbol (stx, XP_TEXT("nil"));
@@ -374,7 +365,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 
 	/* nil setClass: UndefinedObject */
 	XP_STX_CLASS(stx,stx->nil) =
-		xp_stx_lookup_class (stx, XP_TEXT("UndefinedObject"));
+		xp_stx_lookup_class(stx, XP_TEXT("UndefinedObject"));
 	/* true setClass: True */
 	XP_STX_CLASS(stx,stx->true) =
 		xp_stx_lookup_class (stx, XP_TEXT("True"));
@@ -391,11 +382,11 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	xp_word_t class_SymlinkMeta;
 	xp_word_t class_SymbolMeta; 
 	xp_word_t class_MetaclassMeta;
-	xp_word_t class_PairlinkMeta;
+	xp_word_t class_AssociationMeta;
 	xp_word_t symbol_Symlink;
 	xp_word_t symbol_Symbol; 
 	xp_word_t symbol_Metaclass;
-	xp_word_t symbol_Pairlink;
+	xp_word_t symbol_Association;
 
 	/* allocate three keyword objects */
 	stx->nil = xp_stx_alloc_word_object (stx, XP_NULL, 0, XP_NULL, 0);
@@ -410,8 +401,12 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	/* TODO: symbol table and dictionary size */
 	stx->symbol_table = xp_stx_alloc_word_object (
 		stx, XP_NULL, 0, XP_NULL, 1000); 
+xp_printf (XP_TEXT("xxxxxxxxxxxxxxxxxx\n"));
 	stx->smalltalk = xp_stx_alloc_word_object (
-		stx, XP_NULL, 0, XP_NULL, 2000);
+		stx, XP_NULL, 1, XP_NULL, 1024);
+xp_printf (XP_TEXT("yyyyyyyyyyyyyyyyyyy\n"));
+	/* set tally */
+	XP_STX_WORD_AT(stx,stx->smalltalk,0) = XP_STX_TO_SMALLINT(0);
 
 	/* Symlink */
 	stx->class_symlink = xp_stx_alloc_word_object(
@@ -422,8 +417,8 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	/* Metaclass */
 	stx->class_metaclass = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_CLASS_SIZE, XP_NULL, 0);
-	/* Pairlink */
-	stx->class_pairlink = xp_stx_alloc_word_object(
+	/* Association */
+	stx->class_association = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_CLASS_SIZE, XP_NULL, 0);
 
 	/* Metaclass is a class so it has the same structure 
@@ -439,8 +434,8 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	/* Metaclass class */
 	class_MetaclassMeta = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_METACLASS_SIZE, XP_NULL, 0);
-	/* Pairlink class */
-	class_PairlinkMeta = xp_stx_alloc_word_object(
+	/* Association class */
+	class_AssociationMeta = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_METACLASS_SIZE, XP_NULL, 0);
 
 	/* (Symlink class) setClass: Metaclass */
@@ -449,8 +444,8 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	XP_STX_CLASS(stx,class_SymbolMeta) = stx->class_metaclass;
 	/* (Metaclass class) setClass: Metaclass */
 	XP_STX_CLASS(stx,class_MetaclassMeta) = stx->class_metaclass;
-	/* (Pairlink class) setClass: Metaclass */
-	XP_STX_CLASS(stx,class_PairlinkMeta) = stx->class_metaclass;
+	/* (Association class) setClass: Metaclass */
+	XP_STX_CLASS(stx,class_AssociationMeta) = stx->class_metaclass;
 
 	/* Symlink setClass: (Symlink class) */
 	XP_STX_CLASS(stx,stx->class_symlink) = class_SymlinkMeta;
@@ -458,23 +453,23 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	XP_STX_CLASS(stx,stx->class_symbol) = class_SymbolMeta;
 	/* Metaclass setClass: (Metaclass class) */
 	XP_STX_CLASS(stx,stx->class_metaclass) = class_MetaclassMeta;
-	/* Pairlink setClass: (Pairlink class) */
-	XP_STX_CLASS(stx,stx->class_pairlink) = class_PairlinkMeta;
+	/* Association setClass: (Association class) */
+	XP_STX_CLASS(stx,stx->class_association) = class_AssociationMeta;
 
 	/* (Symlink class) setSpec: XP_STX_CLASS_SIZE */
-	XP_STX_WORDAT(stx,class_SymlinkMeta,XP_STX_CLASS_SPEC) = 
+	XP_STX_WORD_AT(stx,class_SymlinkMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Symbol class) setSpec: CLASS_SIZE */
-	XP_STX_WORDAT(stx,class_SymbolMeta,XP_STX_CLASS_SPEC) = 
+	XP_STX_WORD_AT(stx,class_SymbolMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Metaclass class) setSpec: CLASS_SIZE */
-	XP_STX_WORDAT(stx,class_MetaclassMeta,XP_STX_CLASS_SPEC) = 
+	XP_STX_WORD_AT(stx,class_MetaclassMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
-	/* (Pairlink class) setSpec: CLASS_SIZE */
-	XP_STX_WORDAT(stx,class_PairlinkMeta,XP_STX_CLASS_SPEC) = 
+	/* (Association class) setSpec: CLASS_SIZE */
+	XP_STX_WORD_AT(stx,class_AssociationMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 
-	/* specs for class_metaclass, class_pairlink, 
+	/* specs for class_metaclass, class_association, 
 	 * class_symbol, class_symlink are set later in 
 	 * __create_builtin_classes */
 
@@ -484,31 +479,27 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	symbol_Symbol = xp_stx_new_symbol (stx, XP_TEXT("Symbol"));
 	/* #Metaclass */
 	symbol_Metaclass = xp_stx_new_symbol (stx, XP_TEXT("Metaclass"));
-	/* #Pairlink */
-	symbol_Pairlink = xp_stx_new_symbol (stx, XP_TEXT("Pairlink"));
+	/* #Association */
+	symbol_Association = xp_stx_new_symbol (stx, XP_TEXT("Association"));
 
 	/* Symlink setName: #Symlink */
-	XP_STX_WORDAT(stx,stx->class_symlink,XP_STX_CLASS_NAME) = symbol_Symlink;
+	XP_STX_WORD_AT(stx,stx->class_symlink,XP_STX_CLASS_NAME) = symbol_Symlink;
 	/* Symbol setName: #Symbol */
-	XP_STX_WORDAT(stx,stx->class_symbol,XP_STX_CLASS_NAME) = symbol_Symbol;
+	XP_STX_WORD_AT(stx,stx->class_symbol,XP_STX_CLASS_NAME) = symbol_Symbol;
 	/* Metaclass setName: #Metaclass */
-	XP_STX_WORDAT(stx,stx->class_metaclass,XP_STX_CLASS_NAME) = symbol_Metaclass;
-	/* Pairlink setName: #Pairlink */
-	XP_STX_WORDAT(stx,stx->class_pairlink,XP_STX_CLASS_NAME) = symbol_Pairlink;
+	XP_STX_WORD_AT(stx,stx->class_metaclass,XP_STX_CLASS_NAME) = symbol_Metaclass;
+	/* Association setName: #Association */
+	XP_STX_WORD_AT(stx,stx->class_association,XP_STX_CLASS_NAME) = symbol_Association;
 
 	/* register class names into the system dictionary */
-	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_object(stx, symbol_Symlink),
-		symbol_Symlink, stx->class_symlink);
-	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_object(stx, symbol_Symbol),
-		symbol_Symbol, stx->class_symbol);
-	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_object(stx, symbol_Metaclass),
-		symbol_Metaclass, stx->class_metaclass);
-	xp_stx_hash_insert (stx, stx->smalltalk,
-		xp_stx_hash_object(stx, symbol_Pairlink),
-		symbol_Pairlink, stx->class_pairlink);
+	xp_stx_dict_put (stx,
+		stx->smalltalk, symbol_Symlink, stx->class_symlink);
+	xp_stx_dict_put (stx,
+		stx->smalltalk, symbol_Symbol, stx->class_symbol);
+	xp_stx_dict_put (stx,
+		stx->smalltalk, symbol_Metaclass, stx->class_metaclass);
+	xp_stx_dict_put (stx,
+		stx->smalltalk, symbol_Association, stx->class_association);
 }
 
 static void __create_builtin_classes (xp_stx_t* stx)
@@ -708,7 +699,7 @@ static xp_word_t __make_classvar_dict (
 	const xp_char_t* name;
 
 	dict = xp_stx_instantiate (
-		stx, stx->class_dictionary,
+		stx, stx->class_system_dictionary,
 		XP_NULL, XP_NULL, __count_names(names));
 
 	do {
@@ -723,8 +714,11 @@ static xp_word_t __make_classvar_dict (
 
 		symbol = xp_stx_new_symbolx (stx, name, p - name);
 		
+/*
 		xp_stx_hash_insert (stx, dict,
 			xp_stx_hash_object(stx, symbol), symbol, stx->nil);
+*/
+		xp_stx_dict_put (stx, dict, symbol, stx->nil);
 	} while (1);
 
 	return dict;

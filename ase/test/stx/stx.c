@@ -13,19 +13,19 @@
 #include <xp/stx/symbol.h>
 #include <xp/stx/context.h>
 #include <xp/stx/class.h>
-#include <xp/stx/hash.h>
+#include <xp/stx/dict.h>
 
 void print_symbol_names (xp_stx_t* stx, xp_word_t sym, void* unused)
 {
-	xp_printf (XP_TEXT("%lu [%s]\n"), (unsigned long)sym, &XP_STX_CHARAT(stx,sym,0));
+	xp_printf (XP_TEXT("%lu [%s]\n"), (unsigned long)sym, XP_STX_DATA(stx,sym));
 }
 
 void print_symbol_names_2 (xp_stx_t* stx, xp_word_t idx, void* unused)
 {
-	xp_word_t key = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_KEY);
-	xp_word_t value = XP_STX_WORDAT(stx,idx,XP_STX_PAIRLINK_VALUE);
+	xp_word_t key = XP_STX_WORD_AT(stx,idx,XP_STX_ASSOCIATION_KEY);
+	xp_word_t value = XP_STX_WORD_AT(stx,idx,XP_STX_ASSOCIATION_VALUE);
 	xp_printf (XP_TEXT("%lu [%s] %lu\n"), 
-		(unsigned long)key, &XP_STX_CHARAT(stx,key,0), (unsigned long)value);
+		(unsigned long)key, XP_STX_DATA(stx,key), (unsigned long)value);
 }
 
 void print_superclasses (xp_stx_t* stx, const xp_char_t* name)
@@ -119,7 +119,7 @@ void print_subclass_names (xp_stx_t* stx, xp_word_t class, int tabs)
 		xp_word_t count = XP_STX_SIZE(stx, obj->subclasses);
 		while (count-- > 0) {
 			print_subclass_names (stx, 
-				XP_STX_WORDAT(stx,obj->subclasses,count), tabs + 1);
+				XP_STX_WORD_AT(stx,obj->subclasses,count), tabs + 1);
 		}
 	}
 }
@@ -170,7 +170,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_stx_traverse_symbol_table (&stx, print_symbol_names, XP_NULL);
 	xp_printf (XP_TEXT("-------------\n"));
 
-	xp_stx_hash_traverse (&stx, stx.smalltalk, print_symbol_names_2, XP_NULL);
+	xp_stx_dict_traverse (&stx, stx.smalltalk, print_symbol_names_2, XP_NULL);
 	xp_printf (XP_TEXT("-------------\n"));
 
 	print_superclasses (&stx, XP_TEXT("Array"));

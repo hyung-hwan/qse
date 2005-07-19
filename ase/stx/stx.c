@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.33 2005-07-12 16:16:42 bacon Exp $
+ * $Id: stx.c,v 1.34 2005-07-19 12:08:04 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -30,14 +30,14 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_word_t capacity)
 	stx->class_symlink = XP_STX_NIL;
 	stx->class_symbol = XP_STX_NIL;
 	stx->class_metaclass = XP_STX_NIL;
-	stx->class_pairlink = XP_STX_NIL;
+	stx->class_association = XP_STX_NIL;
 
 	stx->class_object = XP_STX_NIL;
 	stx->class_class = XP_STX_NIL;
 	stx->class_bytearray = XP_STX_NIL;
 	stx->class_array = XP_STX_NIL;
 	stx->class_string = XP_STX_NIL;
-	stx->class_dictionary = XP_STX_NIL;
+	stx->class_system_dictionary = XP_STX_NIL;
 	stx->class_method = XP_STX_NIL;
 	stx->class_smallinteger = XP_STX_NIL;
 
