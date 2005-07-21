@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.27 2005-07-19 12:08:04 bacon Exp $
+ * $Id: macros.h,v 1.28 2005-07-21 15:31:25 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -34,6 +34,7 @@
 
 #define XP_NUM_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
 #define XP_SWAP(x,y) ((x) ^= (y) ^= (x) ^= (y))
+#define XP_ABS(x) ((x) < 0? -(x): (x))
 
 #define XP_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__;
 #define XP_LOOP_BREAK(id)    goto __loop_ ## id ## _end__;
