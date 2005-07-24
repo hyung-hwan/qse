@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.38 2005-07-19 12:08:04 bacon Exp $
+ * $Id: stx.h,v 1.39 2005-07-24 16:50:53 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -60,6 +60,13 @@ struct xp_stx_memory_t
 struct xp_stx_t
 {
 	xp_stx_memory_t memory;
+	
+	struct 
+	{
+		xp_word_t* data;
+		xp_word_t size;
+		xp_word_t capacity;
+	} symtab;
 
 	xp_word_t nil;
 	xp_word_t true;
