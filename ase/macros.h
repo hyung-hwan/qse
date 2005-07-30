@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.29 2005-07-27 11:09:46 bacon Exp $
+ * $Id: macros.h,v 1.30 2005-07-30 05:11:39 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -33,7 +33,12 @@
 	((XP_TYPE_IS_SIGNED(type)? (type)((type)1 << (xp_sizeof(type) * 8 - 1)): (type)0))
 
 #define XP_NUM_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
-#define XP_SWAP(x,y) ((x) ^= (y) ^= (x) ^= (y))
+#define XP_SWAP(x,y,original_type,casting_type) \
+	do { \
+		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
+		y = (original_type)((casting_type)(y) ^ (casting_type)(x)); \
+		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
+	} while (0)
 #define XP_ABS(x) ((x) < 0? -(x): (x))
 
 #define XP_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__;
