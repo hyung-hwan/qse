@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.28 2005-06-08 15:49:35 bacon Exp $
+ * $Id: types.h,v 1.29 2005-08-02 11:09:04 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -16,15 +16,17 @@
 #endif
 
 /* boolean type */
+/*
 #ifdef __cplusplus
 	typedef bool xp_bool_t;
 	#define xp_true  true
 	#define xp_false false
 #else
+*/
 	typedef int xp_bool_t;
 	#define xp_true  (0 == 0)
 	#define xp_false (0 != 0)
-#endif
+/*#endif*/
 
 /* tri-state type */
 typedef int xp_tri_t;
