@@ -1,5 +1,5 @@
 /*
- * $Id: dict.c,v 1.6 2005-07-30 05:11:39 bacon Exp $
+ * $Id: dict.c,v 1.7 2005-08-03 15:49:17 bacon Exp $
  */
 
 #include <xp/stx/dict.h>
@@ -17,7 +17,6 @@ xp_word_t __new_association (
 	data[0] = key;
 	data[1] = value;
 #endif
-
 	x = xp_stx_alloc_word_object (
 		stx, data, XP_STX_ASSOCIATION_SIZE, XP_NULL, 0);
 	XP_STX_CLASS(stx,x) = stx->class_association;
