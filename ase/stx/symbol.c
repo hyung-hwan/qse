@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.18 2005-07-19 15:52:19 bacon Exp $
+ * $Id: symbol.c,v 1.19 2005-08-03 16:00:01 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
@@ -80,5 +80,31 @@ void xp_stx_traverse_symbol_table (
 			func (stx, XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_SYMBOL), data);
 			link = XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_LINK);
 		}
+	}
+}
+
+xp_word_t xp_stx_new_symbolx (
+	xp_stx_t* stx, const xp_char_t* name, xp_word_t len)
+{
+	xp_word_t capa, hash, index;
+
+	capa = stx->symtab.capacity;
+	size = stx->symtab.size;
+
+	if (capa <= size + 1) {
+		__grow_symtab (stx);
+	}
+
+	hash = xp_stx_strxhash(name,len);
+	index = hash % stx->symtab.capacity;
+
+	while (1) {
+		symbol = stx->symtab.datum[index];
+		if (symbol != stx->nil) break;
+
+		if (xp_strxncmp(name, len, 
+			XP_STX_DATA(stx,symbol), XP_STX_SIZE(stx,symbol)) == 0) break;
+
+		index = index % stx->symtabl.capacity + 1;
 	}
 }
