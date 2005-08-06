@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.19 2005-08-03 16:00:01 bacon Exp $
+ * $Id: symbol.c,v 1.20 2005-08-06 04:10:11 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
@@ -83,6 +83,7 @@ void xp_stx_traverse_symbol_table (
 	}
 }
 
+#if 0
 xp_word_t xp_stx_new_symbolx (
 	xp_stx_t* stx, const xp_char_t* name, xp_word_t len)
 {
@@ -108,3 +109,4 @@ xp_word_t xp_stx_new_symbolx (
 		index = index % stx->symtabl.capacity + 1;
 	}
 }
+#endif
