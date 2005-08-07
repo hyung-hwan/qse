@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.45 $])
+AC_REVISION([$Revision: 1.46 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -62,12 +62,19 @@ AC_CHECK_SIZEOF(long double)
 AC_ARG_ENABLE(char, 
 	[--enable-char choose a default charater type (wchar/mchar)],
 	char_is=$enableval,char_is=wchar)
-
 if test "$char_is" = "wchar"
 then
 	AC_DEFINE([XP_CHAR_IS_WCHAR],[],[char is wchar])
 else
 	AC_DEFINE([XP_CHAR_IS_MCHAR],[],[char is mchar])
+fi
+
+AC_ARG_ENABLE(reentrant,
+	[--enable-reentrant defined _REENTRANT],
+	reentrant_is=$enableval,reentrant_is=yes)
+if test "$reentrant_is" = "yes"
+then
+	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
 
 AC_CONFIG_FILES([
