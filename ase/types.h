@@ -1,13 +1,11 @@
 /*
- * $Id: types.h,v 1.29 2005-08-02 11:09:04 bacon Exp $
+ * $Id: types.h,v 1.30 2005-08-07 11:17:23 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
 #define _XP_TYPES_H_
 
-#if defined(_DOS)
-	#include <xp/conf_dos.h>
-#elif defined(_WIN32)
+#if defined(_WIN32)
 	#include <xp/conf_win.h>
 #elif defined(__VMS)
 	#include <xp/conf_vms.h>
@@ -131,10 +129,7 @@ typedef xp_uint_t  xp_word_t;
 typedef char xp_mchar_t;
 typedef int  xp_mcint_t;
 
-#ifdef _DOS
-	/* no wchar support */	
-	#define XP_CHAR_IS_MCHAR
-#elif defined(_WIN32)
+#if defined(_WIN32)
 	typedef unsigned short xp_wchar_t;
 	/*typedef int            xp_wcint_t;*/
 	typedef unsigned short xp_wcint_t;
