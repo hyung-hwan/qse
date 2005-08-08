@@ -850,7 +850,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
---enable-char choose a default charater type (wchar/mchar)
+--enable-wchar user wchar_t a default charater type
 --enable-reentrant defined _REENTRANT
 
 Some influential environment variables:
@@ -10815,11 +10815,11 @@ _ACEOF
 # Check whether --enable-char or --disable-char was given.
 if test "${enable_char+set}" = set; then
   enableval="$enable_char"
-  char_is=$enableval
+  wchar_is=$enableval
 else
-  char_is=wchar
+  wchar_is=yes
 fi;
-if test "$char_is" = "wchar"
+if test "$wchar_is" = "yes"
 then
 
 cat >>confdefs.h <<\_ACEOF
