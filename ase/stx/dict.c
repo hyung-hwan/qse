@@ -1,5 +1,5 @@
 /*
- * $Id: dict.c,v 1.7 2005-08-03 15:49:17 bacon Exp $
+ * $Id: dict.c,v 1.8 2005-08-11 09:57:54 bacon Exp $
  */
 
 #include <xp/stx/dict.h>
@@ -65,7 +65,7 @@ static xp_word_t __dict_find_slot (
 	return index;
 }
 
-static void __dict_grow (xp_stx_t* stx, xp_word_t dict)
+static void __grow_dict (xp_stx_t* stx, xp_word_t dict)
 {
 	xp_word_t new, size, index, assoc;
 	
@@ -151,7 +151,7 @@ xp_word_t xp_stx_dict_put (
 	capa = XP_STX_SIZE(stx,dict) - 1;
 	tally = XP_STX_FROM_SMALLINT(XP_STX_WORD_AT(stx,dict,0));
 	if (capa <= tally + 1) {
-		__dict_grow (stx, dict);
+		__grow_dict (stx, dict);
 		/* refresh tally */
 		tally = XP_STX_FROM_SMALLINT(XP_STX_WORD_AT(stx,dict,0));
 	}

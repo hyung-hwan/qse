@@ -167,6 +167,9 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_printf (XP_TEXT("stx.false %lu\n"), (unsigned long)stx.false);
 	xp_printf (XP_TEXT("-------------\n"));
 	
+	
+	xp_printf (XP_TEXT(">> SYMBOL_TABLE (%u/%u symbols/slots) <<\n"), 
+		(unsigned int)stx.symtab.size, (unsigned int)stx.symtab.capacity);
 	xp_stx_traverse_symbol_table (&stx, print_symbol_names, XP_NULL);
 	xp_printf (XP_TEXT("-------------\n"));
 
