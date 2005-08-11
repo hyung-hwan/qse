@@ -1,5 +1,5 @@
 /*
- * $Id: dict.c,v 1.8 2005-08-11 09:57:54 bacon Exp $
+ * $Id: dict.c,v 1.9 2005-08-11 10:11:26 bacon Exp $
  */
 
 #include <xp/stx/dict.h>
@@ -50,7 +50,7 @@ static xp_word_t __dict_find_slot (
 		symbol = XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_KEY);
 		xp_assert (xp_stx_classof(stx,symbol) == stx->class_symbol);
 
-		/* 
+		/* NOTE:
 		 * shallow comparison is enough for identity check 
 		 * because only a symbol can be a key of a system dictionary
 		 */
@@ -69,7 +69,7 @@ static void __grow_dict (xp_stx_t* stx, xp_word_t dict)
 {
 	xp_word_t new, size, index, assoc;
 	
-	/*
+	/* WARNING:
 	 * if this assertion fails, adjust the initial size of the 
 	 * system dictionary. i don't want this function to be called
 	 * during the bootstrapping.
@@ -91,8 +91,8 @@ static void __grow_dict (xp_stx_t* stx, xp_word_t dict)
 			XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_VALUE));
 	}
 	
-	/* TODO: explore if dict can be immediately destroyed.
-	 */
+	/* TODO: explore if dict can be immediately destroyed. */
+
 	xp_assert (xp_sizeof(xp_stx_object_t*) == xp_sizeof(xp_uint_t));
 	XP_SWAP (XP_STX_OBJECT(stx,dict),
 	         XP_STX_OBJECT(stx,new),
