@@ -1,22 +1,43 @@
 /*
- * $Id: symbol.c,v 1.20 2005-08-06 04:10:11 bacon Exp $
+ * $Id: symbol.c,v 1.21 2005-08-11 09:57:54 bacon Exp $
  */
 
 #include <xp/stx/symbol.h>
 #include <xp/stx/object.h>
 #include <xp/stx/misc.h>
 
-xp_word_t xp_stx_new_symlink (xp_stx_t* stx, xp_word_t symbol)
+static void __grow_symtab (xp_stx_t* stx)
 {
-	xp_word_t x;
+	xp_word_t capa, ncapa, i, j;
+	xp_word_t* nspace;
 
-	x = xp_stx_alloc_word_object(
-		stx, XP_NULL, XP_STX_SYMLINK_SIZE, XP_NULL, 0);
-	XP_STX_CLASS(stx,x) = stx->class_symlink;
-	XP_STX_WORD_AT(stx,x,XP_STX_SYMLINK_LINK) = stx->nil;
-	XP_STX_WORD_AT(stx,x,XP_STX_SYMLINK_SYMBOL) = symbol;
+	capa = stx->symtab.capacity;
+	ncapa = capa << 1;
 
-	return x;
+	nspace = (xp_word_t*)xp_malloc(xp_sizeof(xp_word_t) * ncapa);
+	if (nspace == XP_NULL) {
+		/* TODO: handle memory error */
+	}
+
+	for (i = 0; i < capa; i++) {
+		xp_word_t x = stx->symtab.datum[i];
+		if (x == stx->nil) continue;
+
+		j = xp_stx_strxhash (
+			XP_STX_DATA(stx,x), XP_STX_SIZE(stx,x)) % ncapa;
+
+		while (1) {
+			if (nspace[j] == stx->nil) {
+				nspace[j] = x;
+				break;
+			}
+			j = (j % ncapa) + 1;
+		}
+	}
+
+	stx->symtab.capacity = ncapa;	
+	xp_free (stx->symtab.datum);
+	stx->symtab.datum = nspace;
 }
 
 xp_word_t xp_stx_new_symbol (xp_stx_t* stx, const xp_char_t* name)
@@ -27,86 +48,47 @@ xp_word_t xp_stx_new_symbol (xp_stx_t* stx, const xp_char_t* name)
 xp_word_t xp_stx_new_symbolx (
 	xp_stx_t* stx, const xp_char_t* name, xp_word_t len)
 {
-	xp_word_t x, hash, table, link, next;
-
-	table = stx->symbol_table;
-	hash = xp_stx_strxhash(name,len) % XP_STX_SIZE(stx,table);
-	link = XP_STX_WORD_AT(stx,table,hash);
-
-	if (link == stx->nil) {
-		x = xp_stx_alloc_char_objectx (stx, name, len);
-		XP_STX_CLASS(stx,x) = stx->class_symbol;
-		XP_STX_WORD_AT(stx,table,hash) = xp_stx_new_symlink(stx,x);
-	}
-	else {
-		do {
-			x = XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_SYMBOL);
-			xp_assert (xp_stx_classof(stx,x) == stx->class_symbol);
-
-			if (xp_strxcmp ( 
-				XP_STX_DATA(stx,x),
-				XP_STX_SIZE(stx,x), name) == 0) return x;
-
-			next = XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_LINK);
-			if (next == stx->nil) {
-				x = xp_stx_alloc_char_objectx (stx, name, len);
-				XP_STX_CLASS(stx,x) = stx->class_symbol;
-				XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_LINK) = 
-					xp_stx_new_symlink(stx,x);
-				break;
-			}
-
-			link = next;
-		} while (1);
-	}
-		
-	return x;
-}
-
-void xp_stx_traverse_symbol_table (
-	xp_stx_t* stx, void (*func) (xp_stx_t*,xp_word_t,void*), void* data)
-{
-	xp_word_t link;
-	xp_word_t size;
-	xp_word_t table;
-
-	table = stx->symbol_table;
-	size = XP_STX_SIZE(stx,table);
-	
-	while (size-- > 0) {
-		link = XP_STX_WORD_AT(stx,table,size);
-
-		while (link != stx->nil) {
-			func (stx, XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_SYMBOL), data);
-			link = XP_STX_WORD_AT(stx,link,XP_STX_SYMLINK_LINK);
-		}
-	}
-}
-
-#if 0
-xp_word_t xp_stx_new_symbolx (
-	xp_stx_t* stx, const xp_char_t* name, xp_word_t len)
-{
-	xp_word_t capa, hash, index;
+	xp_word_t capa, hash, index, size, x;
 
 	capa = stx->symtab.capacity;
 	size = stx->symtab.size;
 
 	if (capa <= size + 1) {
 		__grow_symtab (stx);
+		capa = stx->symtab.capacity;
 	}
 
 	hash = xp_stx_strxhash(name,len);
 	index = hash % stx->symtab.capacity;
 
 	while (1) {
-		symbol = stx->symtab.datum[index];
-		if (symbol != stx->nil) break;
+		x = stx->symtab.datum[index];
+		if (x == stx->nil) {
+			/* insert a new item into an empty slot */
+			x = xp_stx_alloc_char_objectx (stx, name, len);
+			XP_STX_CLASS(stx,x) = stx->class_symbol;
+			stx->symtab.datum[index] = x;
+			stx->symtab.size++;
+			break;
+		}
 
 		if (xp_strxncmp(name, len, 
-			XP_STX_DATA(stx,symbol), XP_STX_SIZE(stx,symbol)) == 0) break;
+			XP_STX_DATA(stx,x), XP_STX_SIZE(stx,x)) == 0) break;
 
-		index = index % stx->symtabl.capacity + 1;
+		index = (index % stx->symtab.capacity) + 1;
+	}
+
+	return x;
+}
+
+void xp_stx_traverse_symbol_table (
+	xp_stx_t* stx, void (*func) (xp_stx_t*,xp_word_t,void*), void* data)
+{
+	xp_word_t index, x;
+
+	for (index = 0; index < stx->symtab.capacity; index++) {
+		x = stx->symtab.datum[index];
+		if (x != stx->nil) func (stx, x, data);
 	}
 }
-#endif
+

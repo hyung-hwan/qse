@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.29 2005-07-19 16:09:34 bacon Exp $
+ * $Id: bootstrp.c,v 1.30 2005-08-11 09:57:54 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -216,14 +216,6 @@ static class_info_t class_info[] =
 		XP_STX_SPEC_BYTE_INDEXABLE
 	},
 	{
-		XP_TEXT("SymbolTable"),
-		XP_TEXT("IndexedCollection"),
-		XP_NULL,
-		XP_NULL,
-		XP_NULL,
-		XP_STX_SPEC_WORD_INDEXABLE	
-	},
-	{
 		XP_TEXT("Dictionary"),
 		XP_TEXT("IndexedCollection"),
 		XP_TEXT("tally"),
@@ -267,14 +259,6 @@ static class_info_t class_info[] =
 		XP_TEXT("Link"),
 		XP_TEXT("Object"),
 		XP_TEXT("link"),
-		XP_NULL,
-		XP_NULL,
-		XP_STX_SPEC_NOT_INDEXABLE
-	},
-	{
-		XP_TEXT("Symlink"),
-		XP_TEXT("Link"),
-		XP_TEXT("symbol"),
 		XP_NULL,
 		XP_NULL,
 		XP_STX_SPEC_NOT_INDEXABLE
@@ -351,8 +335,6 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	}
 			
 	/* more initialization */
-	XP_STX_CLASS(stx,stx->symbol_table) = 
-		xp_stx_lookup_class(stx, XP_TEXT("SymbolTable"));
 	XP_STX_CLASS(stx,stx->smalltalk) = stx->class_system_dictionary;
 
 	symbol_Smalltalk = xp_stx_new_symbol (stx, XP_TEXT("Smalltalk"));
@@ -379,11 +361,9 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 
 static void __create_bootstrapping_objects (xp_stx_t* stx)
 {
-	xp_word_t class_SymlinkMeta;
 	xp_word_t class_SymbolMeta; 
 	xp_word_t class_MetaclassMeta;
 	xp_word_t class_AssociationMeta;
-	xp_word_t symbol_Symlink;
 	xp_word_t symbol_Symbol; 
 	xp_word_t symbol_Metaclass;
 	xp_word_t symbol_Association;
@@ -397,18 +377,13 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	xp_assert (stx->true == XP_STX_TRUE);
 	xp_assert (stx->false == XP_STX_FALSE);
 
-	/* symbol table & system dictionary */
-	/* TODO: symbol table and dictionary size */
-	stx->symbol_table = xp_stx_alloc_word_object (
-		stx, XP_NULL, 0, XP_NULL, 1000); 
+	/* system dictionary */
+	/* TODO: dictionary size */
 	stx->smalltalk = xp_stx_alloc_word_object (
 		stx, XP_NULL, 1, XP_NULL, 256);
 	/* set tally */
 	XP_STX_WORD_AT(stx,stx->smalltalk,0) = XP_STX_TO_SMALLINT(0);
 
-	/* Symlink */
-	stx->class_symlink = xp_stx_alloc_word_object(
-		stx, XP_NULL, XP_STX_CLASS_SIZE, XP_NULL, 0);
 	/* Symbol */
 	stx->class_symbol = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_CLASS_SIZE, XP_NULL, 0);
@@ -423,9 +398,6 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	 * as a normal class. "Metaclass class" is an instance of
 	 * Metaclass. */
 
-	/* Symlink class */
-	class_SymlinkMeta = xp_stx_alloc_word_object(
-		stx, XP_NULL, XP_STX_METACLASS_SIZE, XP_NULL, 0);
 	/* Symbol class */
 	class_SymbolMeta = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_METACLASS_SIZE, XP_NULL, 0);
@@ -436,8 +408,6 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	class_AssociationMeta = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_METACLASS_SIZE, XP_NULL, 0);
 
-	/* (Symlink class) setClass: Metaclass */
-	XP_STX_CLASS(stx,class_SymlinkMeta) = stx->class_metaclass;
 	/* (Symbol class) setClass: Metaclass */
 	XP_STX_CLASS(stx,class_SymbolMeta) = stx->class_metaclass;
 	/* (Metaclass class) setClass: Metaclass */
@@ -445,8 +415,6 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	/* (Association class) setClass: Metaclass */
 	XP_STX_CLASS(stx,class_AssociationMeta) = stx->class_metaclass;
 
-	/* Symlink setClass: (Symlink class) */
-	XP_STX_CLASS(stx,stx->class_symlink) = class_SymlinkMeta;
 	/* Symbol setClass: (Symbol class) */
 	XP_STX_CLASS(stx,stx->class_symbol) = class_SymbolMeta;
 	/* Metaclass setClass: (Metaclass class) */
@@ -454,9 +422,6 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	/* Association setClass: (Association class) */
 	XP_STX_CLASS(stx,stx->class_association) = class_AssociationMeta;
 
-	/* (Symlink class) setSpec: XP_STX_CLASS_SIZE */
-	XP_STX_WORD_AT(stx,class_SymlinkMeta,XP_STX_CLASS_SPEC) = 
-		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 	/* (Symbol class) setSpec: CLASS_SIZE */
 	XP_STX_WORD_AT(stx,class_SymbolMeta,XP_STX_CLASS_SPEC) = 
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
@@ -468,11 +433,8 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 		XP_STX_TO_SMALLINT((XP_STX_CLASS_SIZE << XP_STX_SPEC_INDEXABLE_BITS) | XP_STX_SPEC_NOT_INDEXABLE);
 
 	/* specs for class_metaclass, class_association, 
-	 * class_symbol, class_symlink are set later in 
-	 * __create_builtin_classes */
+	 * class_symbol are set later in __create_builtin_classes */
 
-	/* #Symlink */
-	symbol_Symlink = xp_stx_new_symbol (stx, XP_TEXT("Symlink"));
 	/* #Symbol */
 	symbol_Symbol = xp_stx_new_symbol (stx, XP_TEXT("Symbol"));
 	/* #Metaclass */
@@ -480,8 +442,6 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	/* #Association */
 	symbol_Association = xp_stx_new_symbol (stx, XP_TEXT("Association"));
 
-	/* Symlink setName: #Symlink */
-	XP_STX_WORD_AT(stx,stx->class_symlink,XP_STX_CLASS_NAME) = symbol_Symlink;
 	/* Symbol setName: #Symbol */
 	XP_STX_WORD_AT(stx,stx->class_symbol,XP_STX_CLASS_NAME) = symbol_Symbol;
 	/* Metaclass setName: #Metaclass */
@@ -490,8 +450,6 @@ static void __create_bootstrapping_objects (xp_stx_t* stx)
 	XP_STX_WORD_AT(stx,stx->class_association,XP_STX_CLASS_NAME) = symbol_Association;
 
 	/* register class names into the system dictionary */
-	xp_stx_dict_put (stx,
-		stx->smalltalk, symbol_Symlink, stx->class_symlink);
 	xp_stx_dict_put (stx,
 		stx->smalltalk, symbol_Symbol, stx->class_symbol);
 	xp_stx_dict_put (stx,
