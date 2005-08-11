@@ -850,8 +850,9 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
---enable-wchar user wchar_t a default charater type
---enable-reentrant defined _REENTRANT
+  --enable-wchar          use wchar_t a default charater type when enabled
+                          (default. yes)
+  --enable-reentrant      define _REENTRANT (default. yes)
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -10815,11 +10816,11 @@ _ACEOF
 # Check whether --enable-wchar or --disable-wchar was given.
 if test "${enable_wchar+set}" = set; then
   enableval="$enable_wchar"
-  wchar_is=$enableval
+  enable_wchar_is=$enableval
 else
-  wchar_is=yes
+  enable_wchar_is=yes
 fi;
-if test "$wchar_is" = "yes"
+if test "$enable_wchar_is" = "yes"
 then
 
 cat >>confdefs.h <<\_ACEOF
@@ -10837,11 +10838,11 @@ fi
 # Check whether --enable-reentrant or --disable-reentrant was given.
 if test "${enable_reentrant+set}" = set; then
   enableval="$enable_reentrant"
-  reentrant_is=$enableval
+  enable_reentrant_is=$enableval
 else
-  reentrant_is=yes
+  enable_reentrant_is=yes
 fi;
-if test "$reentrant_is" = "yes"
+if test "$enable_reentrant_is" = "yes"
 then
 	CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"
 fi

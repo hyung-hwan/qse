@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.48 $])
+AC_REVISION([$Revision: 1.49 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -59,20 +59,20 @@ AC_CHECK_SIZEOF(long double)
 #AC_FUNC_REALLOC
 #AC_CHECK_FUNCS([memset])
 
-AC_ARG_ENABLE(wchar, 
-	[--enable-wchar user wchar_t a default charater type],
-	wchar_is=$enableval,wchar_is=yes)
-if test "$wchar_is" = "yes"
+AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
+	[use wchar_t a default charater type when enabled (default. yes)])],
+	enable_wchar_is=$enableval,enable_wchar_is=yes)
+if test "$enable_wchar_is" = "yes"
 then
 	AC_DEFINE([XP_CHAR_IS_WCHAR],[],[char is wchar])
 else
 	AC_DEFINE([XP_CHAR_IS_MCHAR],[],[char is mchar])
 fi
 
-AC_ARG_ENABLE(reentrant,
-	[--enable-reentrant defined _REENTRANT],
-	reentrant_is=$enableval,reentrant_is=yes)
-if test "$reentrant_is" = "yes"
+AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
+	[define _REENTRANT (default. yes)])],
+	enable_reentrant_is=$enableval,enable_reentrant_is=yes)
+if test "$enable_reentrant_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
