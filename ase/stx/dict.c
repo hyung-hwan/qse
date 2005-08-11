@@ -1,10 +1,15 @@
 /*
- * $Id: dict.c,v 1.9 2005-08-11 10:11:26 bacon Exp $
+ * $Id: dict.c,v 1.10 2005-08-11 10:18:35 bacon Exp $
  */
 
 #include <xp/stx/dict.h>
 #include <xp/stx/object.h>
 #include <xp/stx/misc.h>
+
+/* NOTE:
+ * The code here implements SystemDictionary whose key is always a symbol.
+ * Dictionary, on the contrary, can accept any object as a key.
+ */
 
 xp_word_t __new_association (
 	xp_stx_t* stx, xp_word_t key, xp_word_t value)
@@ -52,7 +57,7 @@ static xp_word_t __dict_find_slot (
 
 		/* NOTE:
 		 * shallow comparison is enough for identity check 
-		 * because only a symbol can be a key of a system dictionary
+		 * because a symbol can just be a key of a system dictionary
 		 */
 		if (xp_strxncmp(
 			XP_STX_DATA(stx,key), XP_STX_SIZE(stx,key),
