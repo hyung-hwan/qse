@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.66 2005-08-11 11:18:30 bacon Exp $
+ * $Id: parser.c,v 1.67 2005-08-11 16:16:04 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -769,6 +769,7 @@ static int __parse_statements (xp_stx_parser_t* parser)
 		}
 	}
 
+	EMIT_RETURN_FROM_MESSAGE (parser);
 	return 0;
 }
 
@@ -973,7 +974,8 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 		}
 	}
 	else {
-		if (__parse_primary_ident(parser, parser->token.name.buffer) == -1) return -1;
+		/*if (__parse_primary_ident(parser, parser->token.name.buffer) == -1) return -1;*/
+		if (__parse_primary_ident(parser, ident) == -1) return -1;
 	}
 
 	return 0;
@@ -990,13 +992,19 @@ static int __parse_primary_ident (xp_stx_parser_t* parser, const xp_char_t* iden
 	}
 	else if (xp_strcmp(token->name.buffer, XP_TEXT("super")) == 0) {
 	}
-	else if (xp_strcmp(token->name.buffer, XP_TEXT("nil")) == 0) {
-	}
-	else if (xp_strcmp(token->name.buffer, XP_TEXT("true")) == 0) {
-	}
-	else if (xp_strcmp(token->name.buffer, XP_TEXT("false")) == 0) {
-	}
 */
+	if (xp_strcmp(ident, XP_TEXT("nil")) == 0) {
+		EMIT_CODE (parser, PUSH_NIL);
+		return 0;
+	}
+	else if (xp_strcmp(ident, XP_TEXT("true")) == 0) {
+		EMIT_CODE (parser, PUSH_TRUE);
+		return 0;
+	}
+	else if (xp_strcmp(ident, XP_TEXT("false")) == 0) {
+		EMIT_CODE (parser, PUSH_FALSE);
+		return 0;
+	}
 
 	/* Refer to __parse_assignment for identifier lookup */
 
@@ -1128,12 +1136,12 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 		}
 
 		GET_TOKEN (parser);
-		if (__parse_primary (parser, XP_NULL) == -1) {
+		if (__parse_primary(parser, XP_NULL) == -1) {
 			xp_stx_name_close (&name);
 			return -1;
 		}
 
-		if (__parse_binary_message (parser) == -1) {
+		if (__parse_binary_message(parser) == -1) {
 			xp_stx_name_close (&name);
 			return -1;
 		}
@@ -1167,12 +1175,12 @@ static int __parse_binary_message (xp_stx_parser_t* parser)
 		}
 
 		GET_TOKEN (parser);
-		if (__parse_primary (parser, XP_NULL) == -1) {
+		if (__parse_primary(parser, XP_NULL) == -1) {
 			xp_free (op);
 			return -1;
 		}
 
-		if (__parse_unary_message (parser) == -1) {
+		if (__parse_unary_message(parser) == -1) {
 			xp_free (op);
 			return -1;
 		}

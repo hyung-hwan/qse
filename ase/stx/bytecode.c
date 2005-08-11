@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.8 2005-07-19 12:08:04 bacon Exp $
+ * $Id: bytecode.c,v 1.9 2005-08-11 16:16:04 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -85,7 +85,8 @@ static int __decode2 (xp_stx_t* stx,
 	xp_word_t bytecode_size, pc = 0;
 	int code, next, next2;
 
-	static const xp_char_t* stack_opcode_names[] = {
+	static const xp_char_t* stack_opcode_names[] = 
+	{
 		XP_TEXT("push_receiver_variable"),	
 		XP_TEXT("push_temporary_location"),	
 		XP_TEXT("push_literal_constant"),	
@@ -94,11 +95,31 @@ static int __decode2 (xp_stx_t* stx,
 		XP_TEXT("store_temporary_location")
 	};
 
-	static const xp_char_t* send_opcode_names[] = {
+	static const xp_char_t* send_opcode_names[] = 
+	{
 		XP_TEXT("send_to_self"),
 		XP_TEXT("send_to_super")
 	};
 
+	static const xp_char_t* stack_special_opcode_names[] =
+	{
+		XP_TEXT("store_pop_stack_top"),
+		XP_TEXT("duplicate_pop_stack_top"),
+		XP_TEXT("push_active_context"),
+		XP_TEXT("push_nil"),
+		XP_TEXT("push_true"),
+		XP_TEXT("push_false")
+	};
+
+	static const xp_char_t* return_opcode_names[] = 
+	{
+		XP_TEXT("return_receiver"),
+		XP_TEXT("return_true"),
+		XP_TEXT("return_false"),
+		XP_TEXT("return_nil"),
+		XP_TEXT("return_from_message"),
+		XP_TEXT("return_from_block")
+	};
 
 	bytecodes = XP_STX_BYTE_OBJECT(stx, method_obj->bytecodes);
 	bytecode_size = XP_STX_SIZE(stx, method_obj->bytecodes);
@@ -117,6 +138,12 @@ static int __decode2 (xp_stx_t* stx,
 			xp_printf (XP_TEXT("%s %d\n"), 
 				stack_opcode_names[code & 0x0F], next);
 		}
+		else if (code >= 0x67 && code <= 0x6C) {
+			/* stack special */
+			xp_printf (XP_TEXT("%s\n"),
+				stack_special_opcode_names[code - 0x67]);
+		}
+
 		else if (code >= 0x70 && code <=  0x71 ) {
 			/* send */
 			next = bytecodes->data[pc++];
@@ -132,7 +159,8 @@ static int __decode2 (xp_stx_t* stx,
 				
 		}
 		else if (code >= 0x78 && code <= 0x7D) {
-			// return
+			xp_printf (XP_TEXT("%s\n"),
+				return_opcode_names[code - 0x78]);
 		}
 		else if (code >= 0x80 && code <= 0x8F) {
 			// jump
