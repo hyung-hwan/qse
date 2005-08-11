@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.h,v 1.7 2005-07-10 09:21:46 bacon Exp $
+ * $Id: bytecode.h,v 1.8 2005-08-11 16:16:04 bacon Exp $
  */
 
 #ifndef _XP_STX_BYTECODE_H_
@@ -20,9 +20,13 @@
 #define PUSH_LITERAL_VARIABLE_EXTENDED    0x63
 #define STORE_RECEIVER_VARIABLE_EXTENDED  0x64
 #define STORE_TEMPORARY_LOCATION_EXTENDED 0x65
-#define STORE_POP_STACK_TOP               0x68
-#define DUPLICATE_POP_STACK_TOP           0x69
-#define PUSH_ACTIVE_CONTEXT               0x6A
+
+#define STORE_POP_STACK_TOP               0x67
+#define DUPLICATE_POP_STACK_TOP           0x68
+#define PUSH_ACTIVE_CONTEXT               0x69
+#define PUSH_NIL                          0x6A
+#define PUSH_TRUE                         0x6B
+#define PUSH_FALSE                        0x6C
 
 #define SEND_TO_SELF                      0x70
 #define SEND_TO_SUPER                     0x71
