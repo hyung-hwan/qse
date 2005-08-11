@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.65 2005-07-19 12:08:04 bacon Exp $
+ * $Id: parser.c,v 1.66 2005-08-11 11:18:30 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -983,6 +983,20 @@ static int __parse_primary_ident (xp_stx_parser_t* parser, const xp_char_t* iden
 {
 	xp_word_t i;
 	xp_stx_t* stx = parser->stx;
+
+/*
+	if (xp_strcmp(token->name.buffer, XP_TEXT("self")) == 0) {
+		EMIT_PUSH_LITERAL (parser, i);
+	}
+	else if (xp_strcmp(token->name.buffer, XP_TEXT("super")) == 0) {
+	}
+	else if (xp_strcmp(token->name.buffer, XP_TEXT("nil")) == 0) {
+	}
+	else if (xp_strcmp(token->name.buffer, XP_TEXT("true")) == 0) {
+	}
+	else if (xp_strcmp(token->name.buffer, XP_TEXT("false")) == 0) {
+	}
+*/
 
 	/* Refer to __parse_assignment for identifier lookup */
 
