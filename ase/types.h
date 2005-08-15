@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.30 2005-08-07 11:17:23 bacon Exp $
+ * $Id: types.h,v 1.31 2005-08-15 04:14:54 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -85,29 +85,45 @@ typedef int xp_tri_t;
 #endif
 
 #if SIZEOF_INT == 8
+	#define XP_HAVE_INT64_T
+	#define XP_HAVE_UINT64_T
 	typedef int xp_int64_t;
 	typedef unsigned int xp_uint64_t;
 #elif SIZEOF_LONG == 8
+	#define XP_HAVE_INT64_T
+	#define XP_HAVE_UINT64_T
 	typedef long xp_int64_t;
 	typedef unsigned long xp_uint64_t;
 #elif SIZEOF_LONG_LONG == 8
+	#define XP_HAVE_INT64_T
+	#define XP_HAVE_UINT64_T
 	typedef long long xp_int64_t;
 	typedef unsigned long long xp_uint64_t;
 #elif SIZEOF___INT64 == 8
+	#define XP_HAVE_INT64_T
+	#define XP_HAVE_UINT64_T
 	typedef __int64 xp_int64_t;
 	typedef unsigned __int64 xp_uint64_t;
 #endif
 
 #if SIZEOF_INT == 16
+	#define XP_HAVE_INT128_T
+	#define XP_HAVE_UINT128_T
 	typedef int xp_int128_t;
 	typedef unsigned int xp_uint128_t;
 #elif SIZEOF_LONG == 16
+	#define XP_HAVE_INT128_T
+	#define XP_HAVE_UINT128_T
 	typedef long xp_int128_t;
 	typedef unsigned long xp_uint128_t;
 #elif SIZEOF_LONG_LONG == 16
+	#define XP_HAVE_INT128_T
+	#define XP_HAVE_UINT128_T
 	typedef long long xp_int128_t;
 	typedef unsigned long long xp_uint128_t;
 #elif SIZEOF___INT128 == 16
+	#define XP_HAVE_INT128_T
+	#define XP_HAVE_UINT128_T
 	typedef __int128 xp_int128_t;
 	typedef unsigned __int128 xp_uint128_t;
 #endif
