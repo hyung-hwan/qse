@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.40 2005-08-11 09:57:54 bacon Exp $
+ * $Id: stx.h,v 1.41 2005-08-15 16:03:57 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -87,6 +87,7 @@ struct xp_stx_t
 	xp_word_t class_bytearray;
 	xp_word_t class_string;
 	xp_word_t class_character;
+	xp_word_t class_context;
 	xp_word_t class_system_dictionary;
 	xp_word_t class_method;
 	xp_word_t class_smallinteger;

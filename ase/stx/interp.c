@@ -1,107 +1,96 @@
 /*
- * $Id: interp.c,v 1.4 2005-06-08 16:00:51 bacon Exp $
+ * $Id: interp.c,v 1.5 2005-08-15 16:03:57 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
+#include <xp/stx/method.h>
+#include <xp/stx/object.h>
+#include <xp/stx/array.h>
 
-#define XP_STX_PROCESS_SIZE 3
-#define XP_STX_PROCESS_STACK     0
-#define XP_STX_PROCESS_STACK_TOP 1
-#define XP_STX_PROCESS_LINK      2
+#define XP_STX_CONTEXT_SIZE      4
+#define XP_STX_CONTEXT_STACK     0
+#define XP_STX_CONTEXT_STACK_TOP 1
+#define XP_STX_CONTEXT_METHOD    2
+#define XP_STX_CONTEXT_IP        3
 
-#define XP_STX_CONTEXT_SIZE   6
-#define XP_STX_PROCESS_LINK        0
-#define XP_STX_PROCESS_METHOD      1
-#define XP_STX_PROCESS_ARGUMENTS   2
-#define XP_STX_PROCESS_TEMPORARIES 3
-
-typedef int (*byte_code_func_t) (xp_stx_t* 
-
-static byte_code_func_t byte_code_funcs[] =
+struct xp_stx_context_t
 {
-	XP_NULL,
-	push_instance,
-	push_argyment,
-	push_temporary,
-	push_literal,
-	push_constant,
-	store_instance,
-	store_temporary,
-	send_message,
-	send_unary,
-	send_binary,
-	XP_NULL,
-	do_primitive,
-	XP_NULL,
-	do_special
+	xp_stx_objhdr_t header;
+	xp_word_t stack;
+	xp_word_t stack_top;
+	xp_word_t method;
+	xp_word_t ip;
 };
 
-xp_word_t xp_stx_new_method (xp_stx_t* stx)
-{
-	xp_word_t method;
-	method = xp_stx_alloc_object(XP_STX_METHOD_SIZE);
+typedef struct xp_stx_context_t xp_stx_context_t;
 
-	return method;
-}
-
-xp_word_t xp_stx_new_context (xp_stx_t* stx, 
-	xp_word_t method, xp_word_t args, xp_word_t temp)
+xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t method)
 {
 	xp_word_t context;
+	xp_stx_context_t* ctxobj;
 
-	context = xp_stx_alloc_object(XP_STX_CONTEXT_SIZE);
+	context = xp_stx_alloc_word_object(
+		stx, XP_NULL, XP_STX_CONTEXT_SIZE, XP_NULL, 0);
 	XP_STX_CLASS(stx,context) = stx->class_context;
-	XP_STX_AT(stx,context,XP_STX_CONTEXT_METHOD) = method;
-	XP_STX_AT(stx,context,XP_STX_CONTEXT_ARGUMENTS) = args;
-	XP_STX_AT(stx,context,XP_STX_CONTEXT_TEMPORARIES) = temp;
+
+	ctxobj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
+	ctxobj->stack = xp_stx_new_array (stx, 256); /* TODO: initial stack size */
+	ctxobj->stack_top = XP_STX_TO_SMALLINT(0);
+	ctxobj->method = method;
+	ctxobj->ip = XP_STX_TO_SMALLINT(0);
 
 	return context;
 }
 
-xp_word_t xp_stx_new_process (xp_stx_t* stx, xp_word_t method)
+int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 {
-	xp_word_t process, stx;
+	xp_stx_context_t* ctxobj;
+	xp_stx_method_t* mthobj;
+	xp_stx_byte_object_t* bytecodes;
+	xp_word_t bytecode_size;
+	xp_word_t* literals;
+	xp_word_t pc = 0;
+	int code, next, next2;
 
-	process = xp_stx_alloc_object(XP_STX_PROCESS_SIZE);
-	stack = xp_new_array(stx,50);
-	
-	XP_STX_CLASS(stx,process) = stx->class_process;
-	XP_STX_AT(stx,process,XP_STX_PROCESS_STACK) = stack;
-	XP_STX_AT(stx,process,XP_STX_PROCESS_STACKTOP) = XP_STX_FROM_SMALLINT(6);
-	XP_STX_AT(stx,process,XP_STX_PROCESS_LINK) = XP_STX_FROM_SMALLINT(1);
+	ctxobj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
+	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx, ctxobj->method);
 
-	XP_STX_AT(stx,stack,0) = stx->nil; /* argument */
-	XP_STX_AT(stx,stack,1) = XP_STX_FROM_SMALLINT(0); /* previous link */
-	XP_STX_AT(stx,stack,2) = stx->nil; /* context */
-	XP_STX_AT(stx,stack,3) = XP_STX_FROM_SMALLINT(1); /* return point */
-	XP_STX_AT(stx,stack,4) = method;
-	XP_STX_AT(stx,stack,5) = XP_STX_FROM_SMALLINT(1); /* byte offset */
+	literals = mthobj->literals;
+	bytecodes = XP_STX_BYTE_OBJECT(stx, mthobj->bytecodes);
+	bytecode_size = XP_STX_SIZE(stx, mthobj->bytecodes);
 
-	return process;	
-}
+	while (pc < bytecode_size) {
+		code = bytecodes->data[pc++];
 
-int xp_stx_execute (xp_stx_t* stx, xp_word_t process)
-{
-	int low, high;
-	byte_code_func_t bcfunc;
+		if (code >= 0x00 && code <= 0x3F) {
+			/* stack - push */
+			int what = code >> 4;
+			int index = code & 0x0F;
 
-	stack = XP_STX_AT(stx,process,XP_PROCESS_STACK);
-	stack_top = XP_STX_AT(stx,process,XP_PROCESS_STACK_TOP);
-	link = XP_STX_AT(stx,process,XP_PROCESS_LINK);
-
-	for (;;) {
-		low = (high = nextByte(&es)) & 0x0F;
-		high >>= 4;
-		if(high == 0) {
-			high = low;
-			low = nextByte(&es);
+			switch (what) {
+			case 0: /* receiver variable */
+				break;
+			case 1: /* temporary variable */
+				break;
+			case 2: /* literal constant */
+				break;
+			case 3: /* literal variable */
+				break;
+			}
 		}
+		else if (code >= 0x40 && code <= 0x5F) {
+			/* stack - store */
+			int what = code >> 4;
+			int index = code & 0x0F;
 
-		bcfunc = byte_code_funcs[high];
-		if (bcfunc != XP_NULL) {
-			bcfunc (stx, low);
+			switch (what) {
+			case 4: /* receiver variable */
+				break; 
+			case 5: /* temporary location */
+				break;
+			}
 		}
-	}	
+	}
 
 	return 0;	
 }
