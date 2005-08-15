@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.30 2005-08-11 09:57:54 bacon Exp $
+ * $Id: bootstrp.c,v 1.31 2005-08-15 16:03:57 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -273,17 +273,6 @@ static class_info_t class_info[] =
 	}
 };
 
-xp_word_t INLINE __new_array (xp_stx_t* stx, xp_word_t size)
-{
-	xp_word_t x;
-
-	xp_assert (stx->class_array != stx->nil);
-	x = xp_stx_alloc_word_object (stx, XP_NULL, 0, XP_NULL, size);
-	XP_STX_CLASS(stx,x) = stx->class_array;
-
-	return x;	
-}
-
 xp_word_t INLINE __new_string (xp_stx_t* stx, const xp_char_t* str)
 {
 	xp_word_t x;
@@ -310,6 +299,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	stx->class_bytearray = xp_stx_new_class (stx, XP_TEXT("ByteArray"));
 	stx->class_string = xp_stx_new_class (stx, XP_TEXT("String"));
 	stx->class_character = xp_stx_new_class (stx, XP_TEXT("Character"));
+	stx->class_context = xp_stx_new_class (stx, XP_TEXT("Context"));
 	stx->class_system_dictionary = 
 		xp_stx_new_class (stx, XP_TEXT("SystemDictionary"));
 	stx->class_method = 
@@ -329,7 +319,7 @@ int xp_stx_bootstrap (xp_stx_t* stx)
 	/* for some fun here */
 	{
 		xp_word_t array;
-		array = __new_array (stx, 1);
+		array = xp_stx_new_array (stx, 1);
 		XP_STX_WORD_AT(stx,array,0) = object_meta;
 		XP_STX_WORD_AT(stx,stx->class_class,XP_STX_CLASS_SUBCLASSES) = array;
 	}
@@ -541,7 +531,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 	/* fill subclasses */
 	for (p = class_info; p->name != XP_NULL; p++) {
 		n = __count_subclasses (p->name);
-		array = __new_array (stx, n);
+		array = xp_stx_new_array (stx, n);
 		__set_subclasses (stx, XP_STX_DATA(stx,array), p->name);
 
 		class = xp_stx_lookup_class(stx, p->name);
@@ -553,7 +543,7 @@ static void __create_builtin_classes (xp_stx_t* stx)
 	/* fill subclasses for metaclasses */
 	for (p = class_info; p->name != XP_NULL; p++) {
 		n = __count_subclasses (p->name);
-		array = __new_array (stx, n);
+		array = xp_stx_new_array (stx, n);
 		__set_metaclass_subclasses (stx, XP_STX_DATA(stx,array), p->name);
 
 		class = xp_stx_lookup_class(stx, p->name);
