@@ -1,17 +1,19 @@
 /*
- * $Id: interp.c,v 1.5 2005-08-15 16:03:57 bacon Exp $
+ * $Id: interp.c,v 1.6 2005-08-16 15:49:04 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
 #include <xp/stx/method.h>
 #include <xp/stx/object.h>
 #include <xp/stx/array.h>
+#include <xp/bas/assert.h>
 
-#define XP_STX_CONTEXT_SIZE      4
+#define XP_STX_CONTEXT_SIZE      5
 #define XP_STX_CONTEXT_STACK     0
 #define XP_STX_CONTEXT_STACK_TOP 1
 #define XP_STX_CONTEXT_METHOD    2
-#define XP_STX_CONTEXT_IP        3
+#define XP_STX_CONTEXT_RECEIVER  3
+#define XP_STX_CONTEXT_IP        4
 
 struct xp_stx_context_t
 {
@@ -19,12 +21,13 @@ struct xp_stx_context_t
 	xp_word_t stack;
 	xp_word_t stack_top;
 	xp_word_t method;
+	xp_word_t receiver;
 	xp_word_t ip;
 };
 
 typedef struct xp_stx_context_t xp_stx_context_t;
 
-xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t method)
+xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t method, xp_word_t receiver)
 {
 	xp_word_t context;
 	xp_stx_context_t* ctxobj;
@@ -37,10 +40,16 @@ xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t method)
 	ctxobj->stack = xp_stx_new_array (stx, 256); /* TODO: initial stack size */
 	ctxobj->stack_top = XP_STX_TO_SMALLINT(0);
 	ctxobj->method = method;
+	ctxobj->receiver = receiver;
 	ctxobj->ip = XP_STX_TO_SMALLINT(0);
 
 	return context;
 }
+
+static int __push_receiver_variable (
+	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj);
+static int __push_temporary_variable (
+	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj);
 
 int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 {
@@ -69,8 +78,10 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 
 			switch (what) {
 			case 0: /* receiver variable */
+				__push_receiver_variable (stx, index, ctxobj);
 				break;
 			case 1: /* temporary variable */
+				__push_temporary_variable (stx, index, ctxobj);
 				break;
 			case 2: /* literal constant */
 				break;
@@ -93,4 +104,36 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 	}
 
 	return 0;	
+}
+
+static int __push_receiver_variable (
+	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj)
+{
+	xp_word_t* stack;
+	xp_word_t stack_top;
+
+	xp_assert (XP_STX_IS_WORD_OBJECT(stx, ctxobj->receiver));
+
+	stack_top = XP_STX_FROM_SMALLINT(ctxobj->stack_top);
+	stack = XP_STX_DATA(stx, ctxobj->stack);
+	stack[stack_top++] = XP_STX_WORD_AT(stx, ctxobj->receiver, index);
+	ctxobj->stack_top = XP_STX_TO_SMALLINT(stack_top);
+
+	return 0;
+}
+
+static int __push_temporary_variable (
+	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj)
+{
+	xp_word_t* stack;
+	xp_word_t stack_top;
+
+	xp_assert (XP_STX_IS_WORD_OBJECT(stx, ctxobj->receiver));
+
+	stack_top = XP_STX_FROM_SMALLINT(ctxobj->stack_top);
+	stack = XP_STX_DATA(stx, ctxobj->stack);
+	stack[stack_top++] = XP_STX_WORD_AT(stx, ctxobj->receiver, index);
+	ctxobj->stack_top = XP_STX_TO_SMALLINT(stack_top);
+
+	return 0;
 }
