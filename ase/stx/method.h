@@ -1,5 +1,5 @@
 /*
- * $Id: method.h,v 1.2 2005-07-05 09:02:13 bacon Exp $
+ * $Id: method.h,v 1.3 2005-08-16 15:49:04 bacon Exp $
  */
 
 #ifndef _XP_STX_METHOD_H_
@@ -18,6 +18,7 @@ struct xp_stx_method_t
 	xp_word_t text;
 	xp_word_t selector; /* is this necessary? */
 	xp_word_t bytecodes;
+	xp_word_t temporaries; /* number of temporaries required */
 	xp_word_t literals[1];
 };
 
