@@ -1,11 +1,11 @@
 /*
- * $Id: memory.h,v 1.6 2005-06-08 16:00:51 bacon Exp $
+ * $Id: memory.h,v 1.7 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_MEMORY_H_
 #define _XP_STX_MEMORY_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 #ifdef __cplusplus
 extern "C" {

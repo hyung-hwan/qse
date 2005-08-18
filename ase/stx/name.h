@@ -1,11 +1,11 @@
 /*
- * $Id: name.h,v 1.1 2005-06-12 16:22:03 bacon Exp $
+ * $Id: name.h,v 1.2 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_NAME_H_
 #define _XP_STX_NAME_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 struct xp_stx_name_t 
 {

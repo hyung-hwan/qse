@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.41 2005-08-15 16:03:57 bacon Exp $
+ * $Id: stx.h,v 1.42 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -13,7 +13,6 @@ typedef struct xp_stx_object_t xp_stx_object_t;
 typedef struct xp_stx_word_object_t xp_stx_word_object_t;
 typedef struct xp_stx_byte_object_t xp_stx_byte_object_t;
 typedef struct xp_stx_char_object_t xp_stx_char_object_t;
-typedef struct xp_stx_memory_t xp_stx_memory_t;
 typedef struct xp_stx_t xp_stx_t;
 
 /* common object structure */
@@ -47,53 +46,6 @@ struct xp_stx_char_object_t
 {
 	xp_stx_objhdr_t header;
 	xp_char_t data[1];
-};
-
-struct xp_stx_memory_t
-{
-	xp_word_t capacity;
-	xp_stx_object_t** slots;
-	xp_stx_object_t** free;
-	xp_bool_t __malloced;
-};
-
-struct xp_stx_symtab_t
-{
-	xp_word_t* datum;
-	xp_word_t  size;
-	xp_word_t  capacity;
-};
-
-typedef struct xp_stx_symtab_t xp_stx_symtab_t;
-
-struct xp_stx_t
-{
-	xp_stx_memory_t memory;
-	xp_stx_symtab_t symtab;
-
-	xp_word_t nil;
-	xp_word_t true;
-	xp_word_t false;
-
-	xp_word_t smalltalk;
-
-	xp_word_t class_symbol;
-	xp_word_t class_metaclass;
-	xp_word_t class_association;
-
-	xp_word_t class_object;
-	xp_word_t class_class;
-	xp_word_t class_array;
-	xp_word_t class_bytearray;
-	xp_word_t class_string;
-	xp_word_t class_character;
-	xp_word_t class_context;
-	xp_word_t class_system_dictionary;
-	xp_word_t class_method;
-	xp_word_t class_smallinteger;
-
-	xp_bool_t __malloced;
-	xp_bool_t __wantabort; /* TODO: make it a function pointer */
 };
 
 #define XP_STX_IS_SMALLINT(x)   (((x) & 0x01) == 0x01)

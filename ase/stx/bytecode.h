@@ -1,11 +1,11 @@
 /*
- * $Id: bytecode.h,v 1.8 2005-08-11 16:16:04 bacon Exp $
+ * $Id: bytecode.h,v 1.9 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_BYTECODE_H_
 #define _XP_STX_BYTECODE_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 #define PUSH_RECEIVER_VARIABLE            0x00
 #define PUSH_TEMPORARY_LOCATION           0x10
