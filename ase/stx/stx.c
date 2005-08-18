@@ -1,8 +1,8 @@
 /*
- * $Id: stx.c,v 1.38 2005-08-18 15:16:39 bacon Exp $
+ * $Id: stx.c,v 1.39 2005-08-18 15:28:18 bacon Exp $
  */
 
-#include <xp/stx/stxi.h>
+#include <xp/stx/stx.h>
 #include <xp/stx/memory.h>
 #include <xp/stx/misc.h>
 

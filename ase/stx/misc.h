@@ -1,11 +1,11 @@
 /*
- * $Id: misc.h,v 1.14 2005-08-18 15:16:39 bacon Exp $
+ * $Id: misc.h,v 1.15 2005-08-18 15:28:18 bacon Exp $
  */
 
 #ifndef _XP_STX_MISC_H_
 #define _XP_STX_MISC_H_
 
-#include <xp/stx/stxi.h>
+#include <xp/stx/stx.h>
 
 /* TODO: remove this header later */
 #include <xp/bas/stdio.h>

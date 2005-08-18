@@ -1,11 +1,11 @@
 /*
- * $Id: parser.h,v 1.33 2005-08-18 15:16:39 bacon Exp $
+ * $Id: parser.h,v 1.34 2005-08-18 15:28:18 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
 #define _XP_STX_PARSER_H_
 
-#include <xp/stx/stxi.h>
+#include <xp/stx/stx.h>
 #include <xp/stx/name.h>
 #include <xp/stx/token.h>
 #include <xp/bas/array.h>

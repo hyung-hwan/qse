@@ -1,11 +1,11 @@
 /*
- * $Id: class.h,v 1.12 2005-08-18 15:16:39 bacon Exp $
+ * $Id: class.h,v 1.13 2005-08-18 15:28:18 bacon Exp $
  */
 
 #ifndef _XP_STX_CLASS_H_
 #define _XP_STX_CLASS_H_
 
-#include <xp/stx/stxi.h>
+#include <xp/stx/stx.h>
 
 /* definitions for common objects */
 #define XP_STX_CLASS_SIZE              8
