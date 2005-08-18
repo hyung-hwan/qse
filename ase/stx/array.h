@@ -1,11 +1,11 @@
 /*
- * $Id: array.h,v 1.1 2005-08-15 16:03:57 bacon Exp $
+ * $Id: array.h,v 1.2 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_ARRAY_H_
 #define _XP_STX_ARRAY_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 #ifdef __cplusplus
 extern "C" {

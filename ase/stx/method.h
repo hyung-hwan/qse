@@ -1,11 +1,11 @@
 /*
- * $Id: method.h,v 1.3 2005-08-16 15:49:04 bacon Exp $
+ * $Id: method.h,v 1.4 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_METHOD_H_
 #define _XP_STX_METHOD_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 #define XP_STX_METHOD_SIZE           3
 #define XP_STX_METHOD_TEXT           0

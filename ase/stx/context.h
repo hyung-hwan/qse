@@ -1,11 +1,11 @@
 /* 
- * $Id: context.h,v 1.3 2005-06-08 16:00:51 bacon Exp $
+ * $Id: context.h,v 1.4 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_CONTEXT_H_
 #define _XP_STX_CONTEXT_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 #define PUSH_OBJECT 0xA0
 #define SEND_UNARY_MESSAGE 0xB0

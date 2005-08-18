@@ -1,11 +1,11 @@
 /*
- * $Id: object.h,v 1.28 2005-07-19 15:52:19 bacon Exp $
+ * $Id: object.h,v 1.29 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_OBJECT_H_
 #define _XP_STX_OBJECT_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 #ifdef __cplusplus
 extern "C" {

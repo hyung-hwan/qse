@@ -1,11 +1,11 @@
 /*
- * $Id: dict.h,v 1.2 2005-07-19 12:08:04 bacon Exp $
+ * $Id: dict.h,v 1.3 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_DICT_H_
 #define _XP_STX_DICT_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 #define XP_STX_ASSOCIATION_SIZE  2
 #define XP_STX_ASSOCIATION_KEY   0

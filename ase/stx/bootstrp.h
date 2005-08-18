@@ -1,11 +1,11 @@
 /*
- * $Id: bootstrp.h,v 1.6 2005-07-11 13:41:59 bacon Exp $
+ * $Id: bootstrp.h,v 1.7 2005-08-18 15:16:39 bacon Exp $
  */
 
 #ifndef _XP_STX_BOOTSTRP_H_
 #define _XP_STX_BOOTSTRP_H_
 
-#include <xp/stx/stx.h>
+#include <xp/stx/stxi.h>
 
 #ifdef __cplusplus
 extern "C" {
