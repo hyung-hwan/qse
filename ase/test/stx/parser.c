@@ -143,6 +143,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	*/
 		stdio_t stdio;
 		xp_word_t n = xp_stx_lookup_class (&stx, argv[1]);
+		xp_word_t m;
 
 		parser.input_owner = (void*)&stdio;
 		parser.input_func = stdio_func;
@@ -164,9 +165,14 @@ int xp_main (int argc, xp_char_t* argv[])
 				xp_stx_parser_error_string (&parser));
 		}
 
-		xp_stx_interp (&stx,
-			xp_stx_new_context (&stx, n, 
-				xp_stx_lookup_method(&stx, n, XP_TEXT("main"))));
+		xp_printf (XP_TEXT("== Running the main method ==\n"));
+		m = xp_stx_lookup_method (&stx, n, XP_TEXT("main"));
+		if (m == stx.nil) {	
+			xp_printf (XP_TEXT("cannot lookup method main\n"));
+		}
+		else {
+			xp_stx_interp (&stx, xp_stx_new_context (&stx, n, m));
+		}
 	}
 
 exit_program:
