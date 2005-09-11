@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.11 2005-09-11 15:15:35 bacon Exp $
+ * $Id: bytecode.c,v 1.12 2005-09-11 17:01:56 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -158,8 +158,8 @@ static int __decode2 (xp_stx_t* stx,
 		else if (code >= 0x70 && code <=  0x71 ) {
 			/* send */
 			next = bytecodes->data[pc++];
-			xp_printf (XP_TEXT("%s %d %d\n"),
-				send_opcode_names[code - 0x70], next >> 5, next >> 0x1F);
+			xp_printf (XP_TEXT("%s nargs(%d) selector(%d)\n"),
+				send_opcode_names[code - 0x70], next >> 5, next & 0x1F);
 		}
 		else if (code >= 0x72 && code <=  0x73 ) {
 			/* send extended */

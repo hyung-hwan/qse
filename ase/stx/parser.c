@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.69 2005-09-11 15:15:35 bacon Exp $
+ * $Id: parser.c,v 1.70 2005-09-11 17:01:56 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -439,6 +439,13 @@ static int __add_string_literal (
 	literal = xp_stx_instantiate (
 		stx, stx->class_string, XP_NULL, str, size);
 	return __add_literal (parser, literal);
+}
+
+static int __add_symbol_literal (
+	xp_stx_parser_t* parser, const xp_char_t* str, xp_word_t size)
+{
+	xp_stx_t* stx = parser->stx;
+	return __add_literal (parser, xp_stx_new_symbolx(stx, str, size));
 }
 
 int xp_stx_parser_parse_method (
@@ -947,7 +954,10 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_SYMLIT) {
-			EMIT_CODE_TEST (parser, XP_TEXT("PushLiteral(SYM)"), parser->token.name.buffer);
+			pos = __add_symbol_literal (parser,
+				parser->token.name.buffer, parser->token.name.size);
+			if (pos == -1) return -1;
+			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_LBRACKET) {
@@ -1198,10 +1208,17 @@ static int __parse_unary_message (xp_stx_parser_t* parser)
 {
 	/* <unary message> ::= unarySelector */
 
+	xp_word_t pos;
+
 	while (parser->token.type == XP_STX_TOKEN_IDENT) {
 		/* TODO: SEND_TO_SUPER */
 		/*EMIT_SEND_TO_SELF (parser, 0, index of parser->token.name.buffer);*/
-		EMIT_SEND_TO_SELF (parser, 0, 0);
+		/*EMIT_SEND_TO_SELF (parser, 0, 0);*/
+
+		pos = __add_symbol_literal (parser,
+			parser->token.name.buffer, parser->token.name.size);
+		if (pos == -1) return -1;
+		EMIT_SEND_TO_SELF (parser, 0, pos);
 		GET_TOKEN (parser);
 	}
 
