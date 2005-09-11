@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.10 2005-09-11 13:17:35 bacon Exp $
+ * $Id: bytecode.c,v 1.11 2005-09-11 15:15:35 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -61,16 +61,26 @@ static void __decode1 (xp_stx_t* stx, xp_word_t idx, void* data)
 	xp_word_t* literals;
 	xp_word_t literal_count, i;
 
+	xp_word_t method_class;
+	xp_stx_class_t* method_class_obj;
+
 	class_obj = (xp_stx_class_t*)data;
 
-	xp_printf (XP_TEXT("Method: %s\n"), XP_STX_DATA(stx, key));
+	xp_printf (XP_TEXT("* Method: %s\n"), XP_STX_DATA(stx, key));
 	method_obj = (xp_stx_method_t*)XP_STX_OBJECT(stx, value);
 
 	literals = method_obj->literals;
+	/*
 	literal_count = XP_STX_SIZE(stx, value) - 
 		(XP_STX_FROM_SMALLINT(class_obj->spec) >> XP_STX_SPEC_INDEXABLE_BITS);
+	*/
+	method_class = XP_STX_CLASS(stx,value);
+	method_class_obj = XP_STX_OBJECT(stx, method_class);
+	literal_count = XP_STX_SIZE(stx,value) - 
+		(XP_STX_FROM_SMALLINT(method_class_obj->spec) >> XP_STX_SPEC_INDEXABLE_BITS);
 
-	xp_printf (XP_TEXT("literal count %d\n"), literal_count);
+	xp_printf (XP_TEXT("* Literal Count: %d, Temporary Count: %d\n"),
+		literal_count, XP_STX_FROM_SMALLINT(method_obj->tmpcount));
 	for (i = 0; i < literal_count; i++) {
 		xp_printf (XP_TEXT("%d. ["), i);
 		__dump_object (stx, literals[i]);

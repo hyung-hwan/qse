@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.68 2005-08-15 16:03:57 bacon Exp $
+ * $Id: parser.c,v 1.69 2005-09-11 15:15:35 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -374,7 +374,7 @@ static INLINE int __emit_do_primitive (xp_stx_parser_t* parser, int no)
 {
 	xp_assert (no >= 0x0 && no <= 0xFFF);
 
-	EMIT_CODE (parser, DO_PRIMITIVE & ((no >> 8) & 0x0F));
+	EMIT_CODE (parser, DO_PRIMITIVE | ((no >> 8) & 0x0F));
 	EMIT_CODE (parser, no & 0xFF);
 
 	return 0;
@@ -524,11 +524,10 @@ static int __finish_method (xp_stx_parser_t* parser)
 	method_obj->bytecodes = xp_stx_instantiate (
 		stx, stx->class_bytearray, XP_NULL, 
 		parser->bytecode.buffer, parser->bytecode.size);
-	/*
-	method_obj->stack_size = XP_STX_TO_SMALLINT(100);
-	method_obj->temporary_size = 
+
+	/* TODO: better way to store argument count & temporary count */
+	method_obj->tmpcount = 
 		XP_STX_TO_SMALLINT(parser->temporary_count);
-	*/
 
 	xp_stx_dict_put (stx, class_obj->methods, selector, method);
 	return 0;

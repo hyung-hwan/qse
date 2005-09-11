@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.23 2005-07-19 15:52:19 bacon Exp $
+ * $Id: class.c,v 1.24 2005-09-11 15:15:35 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -108,6 +108,31 @@ xp_word_t xp_stx_lookup_class_variable (
 	    class_obj->class_variables != stx->nil) {
 		if (xp_stx_dict_lookup(stx,
 			class_obj->class_variables,name) != stx->nil) return class_index;
+	}
+
+	return stx->nil;
+}
+
+xp_word_t xp_stx_lookup_method (
+	xp_stx_t* stx, xp_word_t class_index, const xp_char_t* name)
+{
+	xp_stx_class_t* class_obj;
+
+	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class_index);
+	xp_assert (class_obj != XP_NULL);
+
+	/* TODO: can a metaclas have class variables? */	
+	if (class_obj->header.class != stx->class_metaclass &&
+	    class_obj->class_variables != stx->nil) {
+		if (xp_stx_dict_lookup(stx,
+			class_obj->methods,name) != stx->nil) return class_index;
+	}
+
+	if (class_obj->superclass != stx->nil) {
+		xp_word_t tmp;
+		tmp = xp_stx_lookup_method (
+			stx, class_obj->superclass, name);
+		if (tmp != stx->nil) return tmp;
 	}
 
 	return stx->nil;

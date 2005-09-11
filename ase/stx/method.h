@@ -1,5 +1,5 @@
 /*
- * $Id: method.h,v 1.6 2005-08-18 15:39:40 bacon Exp $
+ * $Id: method.h,v 1.7 2005-09-11 15:15:35 bacon Exp $
  */
 
 #ifndef _XP_STX_METHOD_H_
@@ -7,10 +7,11 @@
 
 #include <xp/stx/stx.h>
 
-#define XP_STX_METHOD_SIZE           3
+#define XP_STX_METHOD_SIZE           4
 #define XP_STX_METHOD_TEXT           0
 #define XP_STX_METHOD_SELECTOR       1
 #define XP_STX_METHOD_BYTECODES      2
+#define XP_STX_METHOD_TMPCOUNT       3
 
 
 /* dolphin smalltalk's flags representation
@@ -29,8 +30,8 @@ struct xp_stx_method_t
 	xp_stx_objhdr_t header;
 	xp_word_t text;
 	xp_word_t selector; /* is this necessary? */
-	xp_word_t flags;
 	xp_word_t bytecodes;
+	xp_word_t tmpcount;
 	xp_word_t literals[1];
 };
 

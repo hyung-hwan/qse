@@ -12,6 +12,7 @@
 #include <xp/stx/bootstrp.h>
 #include <xp/stx/class.h>
 #include <xp/stx/bytecode.h>
+#include <xp/stx/interp.h>
 
 #ifdef __linux
 #include <mcheck.h>
@@ -162,6 +163,10 @@ int xp_main (int argc, xp_char_t* argv[])
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
 				xp_stx_parser_error_string (&parser));
 		}
+
+		xp_stx_interp (&stx,
+			xp_stx_new_context (&stx, n, 
+				xp_stx_lookup_method(&stx, n, XP_TEXT("main"))));
 	}
 
 exit_program:
