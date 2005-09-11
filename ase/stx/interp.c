@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.9 2005-09-11 15:43:14 bacon Exp $
+ * $Id: interp.c,v 1.10 2005-09-11 17:01:56 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -71,7 +71,7 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 	xp_stx_context_t* ctxobj;
 	xp_stx_method_t* mthobj;
 	vmcontext_t vmc;
-	int code, next;
+	int code, next, next2;
 
 	ctxobj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
 	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx,ctxobj->method);
@@ -128,6 +128,40 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 				vmc.stack[index] = vmc.stack[--vmc.stack_top];
 				break;
 			}
+		}
+
+		/* more here .... */
+
+		else if (code == 0x70) {
+			/* send to self */
+			int nargs, selector;
+			next = vmc.bytecodes[vmc.pc++];
+
+			nargs = next >> 5;
+
+			selector = vmc.literals[next & 0x1F];
+			receiver = vmc.stack[--vmc.stack_top];
+
+			xp_stx_lookup_method (stx, class of receiver, 
+		}
+		else if (code == 0x71) {
+			/* send to super */
+			int nargs, selector;
+			next = vmc.bytecodes[vmc.pc++];
+
+			nargs = next >> 5;
+			selector = next & 0x1F;
+			
+		}
+		else if (code == 0x72) {
+			/* send to self extended */
+			next = vmc.bytecodes[vmc.pc++];
+			next2 = vmc.bytecodes[vmc.pc++];
+		}
+		else if (code == 0x73) {
+			/* send to super extended */
+			next = vmc.bytecodes[vmc.pc++];
+			next2 = vmc.bytecodes[vmc.pc++];
 		}
 
 		/* more code .... */
