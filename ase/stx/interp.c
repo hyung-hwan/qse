@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.8 2005-09-11 15:15:35 bacon Exp $
+ * $Id: interp.c,v 1.9 2005-09-11 15:43:14 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -45,13 +45,12 @@ struct vmcontext_t
 
 typedef struct vmcontext_t vmcontext_t;
 
+static int __dispatch_primitive (xp_stx_t* stx, int no, vmcontext_t* vmc);
 
 xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t receiver, xp_word_t method)
 {
 	xp_word_t context;
 	xp_stx_context_t* ctxobj;
-
-xp_printf (XP_TEXT("%d, %d\n"), receiver, method);
 
 	context = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_CONTEXT_SIZE, XP_NULL, 0);
@@ -93,6 +92,10 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 	while (vmc.pc < vmc.bytecode_size) {
 		code = vmc.bytecodes[vmc.pc++];
 
+#ifdef DEBUG
+		xp_printf (XP_TEXT("code = 0x%x, %x\n"), code);
+#endif
+
 		if (code >= 0x00 && code <= 0x3F) {
 			/* stack - push */
 			int what = code >> 4;
@@ -132,14 +135,14 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 		else if (code >= 0xF0 && code <= 0xFF)  {
 			/* primitive */
 			next = vmc.bytecodes[vmc.pc++];
-			__dispatch_primitive (next);
+			__dispatch_primitive (stx, ((code & 0x0F) << 8) | next, &vmc);
 		}
 	}
 
 	return 0;	
 }
 
-static int __dispatch_primitive (xp_stx_t* stx, int no, xp_stx_context_t* ctxobj)
+static int __dispatch_primitive (xp_stx_t* stx, int no, vmcontext_t* vmc)
 {
 	switch (no) {
 	case 0:
