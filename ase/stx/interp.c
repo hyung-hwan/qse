@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.6 2005-08-16 15:49:04 bacon Exp $
+ * $Id: interp.c,v 1.7 2005-09-11 13:17:35 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -11,23 +11,42 @@
 #define XP_STX_CONTEXT_SIZE      5
 #define XP_STX_CONTEXT_STACK     0
 #define XP_STX_CONTEXT_STACK_TOP 1
-#define XP_STX_CONTEXT_METHOD    2
-#define XP_STX_CONTEXT_RECEIVER  3
-#define XP_STX_CONTEXT_IP        4
+#define XP_STX_CONTEXT_RECEIVER  2
+#define XP_STX_CONTEXT_PC        3
+#define XP_STX_CONTEXT_METHOD    4
 
 struct xp_stx_context_t
 {
 	xp_stx_objhdr_t header;
 	xp_word_t stack;
 	xp_word_t stack_top;
-	xp_word_t method;
 	xp_word_t receiver;
-	xp_word_t ip;
+	xp_word_t pc;
+	xp_word_t method;
 };
 
 typedef struct xp_stx_context_t xp_stx_context_t;
 
-xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t method, xp_word_t receiver)
+/* data structure for internal vm operation */
+struct vmcontext_t
+{
+	/* from context */
+	xp_word_t* stack;
+	xp_word_t  stack_size;
+	xp_word_t  stack_top;
+	xp_word_t  receiver;
+	xp_word_t  pc;
+
+	/* from method */
+	xp_byte_t* bytecodes;
+	xp_word_t  bytecode_size;
+	xp_word_t* literals;
+};
+
+typedef struct vmcontext_t vmcontext_t;
+
+
+xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t receiver, xp_word_t method)
 {
 	xp_word_t context;
 	xp_stx_context_t* ctxobj;
@@ -39,37 +58,41 @@ xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t method, xp_word_t receive
 	ctxobj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
 	ctxobj->stack = xp_stx_new_array (stx, 256); /* TODO: initial stack size */
 	ctxobj->stack_top = XP_STX_TO_SMALLINT(0);
-	ctxobj->method = method;
 	ctxobj->receiver = receiver;
-	ctxobj->ip = XP_STX_TO_SMALLINT(0);
+	ctxobj->pc = XP_STX_TO_SMALLINT(0);
+	ctxobj->method = method;
 
 	return context;
 }
 
+/*
 static int __push_receiver_variable (
 	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj);
 static int __push_temporary_variable (
 	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj);
+*/
 
 int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 {
 	xp_stx_context_t* ctxobj;
 	xp_stx_method_t* mthobj;
-	xp_stx_byte_object_t* bytecodes;
-	xp_word_t bytecode_size;
-	xp_word_t* literals;
-	xp_word_t pc = 0;
-	int code, next, next2;
+	vmcontext_t vmc;
+	int code, next;
 
 	ctxobj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
-	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx, ctxobj->method);
+	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx,ctxobj->method);
 
-	literals = mthobj->literals;
-	bytecodes = XP_STX_BYTE_OBJECT(stx, mthobj->bytecodes);
-	bytecode_size = XP_STX_SIZE(stx, mthobj->bytecodes);
+	vmc.stack = XP_STX_DATA(stx,ctxobj->stack);
+	vmc.stack_size = XP_STX_SIZE(stx,ctxobj->stack);
+	vmc.receiver = ctxobj->receiver;
+	vmc.pc = ctxobj->pc;
 
-	while (pc < bytecode_size) {
-		code = bytecodes->data[pc++];
+	vmc.literals = mthobj->literals;
+	vmc.bytecodes = XP_STX_DATA(stx, mthobj->bytecodes);
+	vmc.bytecode_size = XP_STX_SIZE(stx, mthobj->bytecodes);
+
+	while (vmc.pc < vmc.bytecode_size) {
+		code = vmc.bytecodes[vmc.pc++];
 
 		if (code >= 0x00 && code <= 0x3F) {
 			/* stack - push */
@@ -78,10 +101,10 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 
 			switch (what) {
 			case 0: /* receiver variable */
-				__push_receiver_variable (stx, index, ctxobj);
+				vmc.stack[vmc.stack_top++] = XP_STX_WORD_AT(stx, vmc.receiver, index);
 				break;
 			case 1: /* temporary variable */
-				__push_temporary_variable (stx, index, ctxobj);
+				//vmc.stack[vmc.stack_top++] = XP_STX_WORD_AT(stx, vmc.temporary, index);
 				break;
 			case 2: /* literal constant */
 				break;
@@ -101,11 +124,20 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 				break;
 			}
 		}
+
+		/* more code .... */
+
+		else if (code >= 0xF0 && code <= 0xFF)  {
+			/* primitive */
+			next = vmc.bytecodes[vmc.pc++];
+			__dispatch_primitive (next);
+		}
 	}
 
 	return 0;	
 }
 
+/*
 static int __push_receiver_variable (
 	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj)
 {
@@ -136,4 +168,15 @@ static int __push_temporary_variable (
 	ctxobj->stack_top = XP_STX_TO_SMALLINT(stack_top);
 
 	return 0;
+}
+*/
+
+static int __dispatch_primitive (xp_stx_t* stx, int no, xp_stx_context_t* ctxobj)
+{
+	switch (no) {
+	case 0:
+			
+		break;
+	}
+	
 }
