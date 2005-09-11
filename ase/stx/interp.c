@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.7 2005-09-11 13:17:35 bacon Exp $
+ * $Id: interp.c,v 1.8 2005-09-11 15:15:35 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -51,12 +51,14 @@ xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t receiver, xp_word_t metho
 	xp_word_t context;
 	xp_stx_context_t* ctxobj;
 
+xp_printf (XP_TEXT("%d, %d\n"), receiver, method);
+
 	context = xp_stx_alloc_word_object(
 		stx, XP_NULL, XP_STX_CONTEXT_SIZE, XP_NULL, 0);
 	XP_STX_CLASS(stx,context) = stx->class_context;
 
 	ctxobj = (xp_stx_context_t*)XP_STX_OBJECT(stx,context);
-	ctxobj->stack = xp_stx_new_array (stx, 256); /* TODO: initial stack size */
+	ctxobj->stack = xp_stx_new_array (stx, 512); /* TODO: initial stack size */
 	ctxobj->stack_top = XP_STX_TO_SMALLINT(0);
 	ctxobj->receiver = receiver;
 	ctxobj->pc = XP_STX_TO_SMALLINT(0);
@@ -64,13 +66,6 @@ xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t receiver, xp_word_t metho
 
 	return context;
 }
-
-/*
-static int __push_receiver_variable (
-	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj);
-static int __push_temporary_variable (
-	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj);
-*/
 
 int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 {
@@ -84,8 +79,12 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 
 	vmc.stack = XP_STX_DATA(stx,ctxobj->stack);
 	vmc.stack_size = XP_STX_SIZE(stx,ctxobj->stack);
+	/* the beginning of the stack is reserved for temporaries */
+	vmc.stack_top =
+		XP_STX_FROM_SMALLINT(ctxobj->stack_top) + 
+		XP_STX_FROM_SMALLINT(mthobj->tmpcount);
 	vmc.receiver = ctxobj->receiver;
-	vmc.pc = ctxobj->pc;
+	vmc.pc = XP_STX_FROM_SMALLINT(ctxobj->pc);
 
 	vmc.literals = mthobj->literals;
 	vmc.bytecodes = XP_STX_DATA(stx, mthobj->bytecodes);
@@ -104,9 +103,10 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 				vmc.stack[vmc.stack_top++] = XP_STX_WORD_AT(stx, vmc.receiver, index);
 				break;
 			case 1: /* temporary variable */
-				//vmc.stack[vmc.stack_top++] = XP_STX_WORD_AT(stx, vmc.temporary, index);
+				vmc.stack[vmc.stack_top++] = vmc.stack[index];
 				break;
 			case 2: /* literal constant */
+				vmc.stack[vmc.stack_top++] = vmc.literals[index];
 				break;
 			case 3: /* literal variable */
 				break;
@@ -119,8 +119,10 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 
 			switch (what) {
 			case 4: /* receiver variable */
+				XP_STX_WORD_AT(stx,vmc.receiver,index) = vmc.stack[--vmc.stack_top];
 				break; 
 			case 5: /* temporary location */
+				vmc.stack[index] = vmc.stack[--vmc.stack_top];
 				break;
 			}
 		}
@@ -137,45 +139,11 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 	return 0;	
 }
 
-/*
-static int __push_receiver_variable (
-	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj)
-{
-	xp_word_t* stack;
-	xp_word_t stack_top;
-
-	xp_assert (XP_STX_IS_WORD_OBJECT(stx, ctxobj->receiver));
-
-	stack_top = XP_STX_FROM_SMALLINT(ctxobj->stack_top);
-	stack = XP_STX_DATA(stx, ctxobj->stack);
-	stack[stack_top++] = XP_STX_WORD_AT(stx, ctxobj->receiver, index);
-	ctxobj->stack_top = XP_STX_TO_SMALLINT(stack_top);
-
-	return 0;
-}
-
-static int __push_temporary_variable (
-	xp_stx_t* stx, int index, xp_stx_context_t* ctxobj)
-{
-	xp_word_t* stack;
-	xp_word_t stack_top;
-
-	xp_assert (XP_STX_IS_WORD_OBJECT(stx, ctxobj->receiver));
-
-	stack_top = XP_STX_FROM_SMALLINT(ctxobj->stack_top);
-	stack = XP_STX_DATA(stx, ctxobj->stack);
-	stack[stack_top++] = XP_STX_WORD_AT(stx, ctxobj->receiver, index);
-	ctxobj->stack_top = XP_STX_TO_SMALLINT(stack_top);
-
-	return 0;
-}
-*/
-
 static int __dispatch_primitive (xp_stx_t* stx, int no, xp_stx_context_t* ctxobj)
 {
 	switch (no) {
 	case 0:
-			
+		xp_printf (XP_TEXT("Hello, STX Smalltalk\n"));
 		break;
 	}
 	

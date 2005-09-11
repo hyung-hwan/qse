@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.31 2005-08-15 16:03:57 bacon Exp $
+ * $Id: bootstrp.c,v 1.32 2005-09-11 15:15:35 bacon Exp $
  */
 
 #include <xp/stx/bootstrp.h>
@@ -114,7 +114,7 @@ static class_info_t class_info[] =
 	{
 		XP_TEXT("Context"),
 		XP_TEXT("Object"),
-		XP_NULL,
+		XP_TEXT("stack stackTop receiver pc method"),
 		XP_NULL,
 		XP_NULL,
 		XP_STX_SPEC_NOT_INDEXABLE
@@ -122,7 +122,7 @@ static class_info_t class_info[] =
 	{
 		XP_TEXT("Method"),
 		XP_TEXT("Object"),
-		XP_TEXT("text selector bytecodes"),
+		XP_TEXT("text selector bytecodes tmpcount"),
 		XP_NULL,
 		XP_NULL,
 		XP_STX_SPEC_WORD_INDEXABLE
