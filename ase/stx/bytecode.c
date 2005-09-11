@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.9 2005-08-11 16:16:04 bacon Exp $
+ * $Id: bytecode.c,v 1.10 2005-09-11 13:17:35 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -23,6 +23,7 @@ int xp_stx_decode (xp_stx_t* stx, xp_word_t class)
 	return 0;
 }
 
+#include <xp/bas/stdio.h>
 static void __dump_object (xp_stx_t* stx, xp_word_t obj)
 {
 	if (XP_STX_IS_SMALLINT(obj)) {
