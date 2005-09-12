@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.10 2005-09-11 17:01:56 bacon Exp $
+ * $Id: interp.c,v 1.11 2005-09-12 11:33:11 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -139,10 +139,12 @@ int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
 
 			nargs = next >> 5;
 
+			/*
 			selector = vmc.literals[next & 0x1F];
 			receiver = vmc.stack[--vmc.stack_top];
 
-			xp_stx_lookup_method (stx, class of receiver, 
+			xp_stx_lookup_method (stx, class of receiver, );
+			*/
 		}
 		else if (code == 0x71) {
 			/* send to super */
