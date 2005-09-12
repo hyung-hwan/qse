@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.11 2005-09-12 11:33:11 bacon Exp $
+ * $Id: interp.c,v 1.12 2005-09-12 15:55:13 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -64,6 +64,20 @@ xp_word_t xp_stx_new_context (xp_stx_t* stx, xp_word_t receiver, xp_word_t metho
 	ctxobj->method = method;
 
 	return context;
+}
+
+static int __activate_method (
+	xp_stx_t* stx, vmcontext_t* vmc, xp_word_t argcount)
+{
+	/* TODO check stack overflow... 
+	if (vmc->stack_top >= vmc->stack_size) PANIC
+	*/
+
+	//tmpcount = ...
+	vmc->stack_top += argcount;
+	while (tmpcount-- > 0) {
+		vmc->stack[vmc->stack_top++] = stx->nil;
+	}
 }
 
 int xp_stx_interp (xp_stx_t* stx, xp_word_t context)
