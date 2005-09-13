@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.70 2005-09-11 17:01:56 bacon Exp $
+ * $Id: parser.c,v 1.71 2005-09-13 07:07:24 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -1127,6 +1127,7 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 	 */
 
 	xp_stx_name_t name;
+	xp_word_t pos;
 	int nargs = 0;
 
 	if (__parse_binary_message (parser) == -1) return -1;
@@ -1156,11 +1157,20 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 		}
 
 		nargs++;
+		/* TODO: check if it has too many arguments.. */
 	} while (parser->token.type == XP_STX_TOKEN_KEYWORD);
 
 	/* TODO: SEND_TO_SUPER */
-	/*EMIT_SEND_TO_SELF (parser, nargs, index of name.buffer);*/
-	EMIT_SEND_TO_SELF (parser, nargs, 0);
+	pos = __add_symbol_literal (parser, name.buffer, name.size);
+	if (pos == -1) {
+		xp_stx_name_close (&name);
+		return -1;
+	}
+	/*EMIT_SEND_TO_SELF (parser, 0, pos);*/
+	if (__emit_send_to_self(parser,0,pos) == -1)  {
+		xp_stx_name_close (&name);
+		return -1;
+	}
 
 	xp_stx_name_close (&name);
 
@@ -1173,6 +1183,7 @@ static int __parse_binary_message (xp_stx_parser_t* parser)
 	 * <binary message> ::= binarySelector <binary argument>
 	 * <binary argument> ::= <primary> <unary message>*
 	 */
+	xp_word_t pos;
 
 	if (__parse_unary_message (parser) == -1) return -1;
 
@@ -1195,8 +1206,16 @@ static int __parse_binary_message (xp_stx_parser_t* parser)
 		}
 
 		/* TODO: SEND_TO_SUPER */
-		/*EMIT_SEND_TO_SELF (parser, 2, index of op);*/
-		EMIT_SEND_TO_SELF (parser, 2, 0);
+		pos = __add_symbol_literal (parser, op, xp_strlen(op));
+		if (pos == -1) {
+			xp_free (op);
+			return -1;
+		}
+		/*EMIT_SEND_TO_SELF (parser, 2, pos);*/
+		if (__emit_send_to_self(parser,2,pos) == -1)  {
+			xp_free (op);
+			return -1;
+		}
 
 		xp_free (op);
 	}
