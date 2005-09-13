@@ -160,13 +160,13 @@ int xp_main (int argc, xp_char_t* argv[])
 		}
 
 		if (xp_stx_parser_parse_method (&parser, stx.class_symbol,
-			(void*)XP_TEXT("test2.st")) == -1) {
+			(void*)XP_TEXT("test1.st")) == -1) {
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
 				xp_stx_parser_error_string (&parser));
 		}
 
 		if (xp_stx_parser_parse_method (&parser, stx.class_symbol,
-			(void*)XP_TEXT("test3.st")) == -1) {
+			(void*)XP_TEXT("test2.st")) == -1) {
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
 				xp_stx_parser_error_string (&parser));
 		}
