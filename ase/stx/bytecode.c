@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.12 2005-09-11 17:01:56 bacon Exp $
+ * $Id: bytecode.c,v 1.13 2005-09-13 11:15:41 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -79,8 +79,10 @@ static void __decode1 (xp_stx_t* stx, xp_word_t idx, void* data)
 	literal_count = XP_STX_SIZE(stx,value) - 
 		(XP_STX_FROM_SMALLINT(method_class_obj->spec) >> XP_STX_SPEC_INDEXABLE_BITS);
 
-	xp_printf (XP_TEXT("* Literal Count: %d, Temporary Count: %d\n"),
-		literal_count, XP_STX_FROM_SMALLINT(method_obj->tmpcount));
+	xp_printf (XP_TEXT("* Literal Count: %d, Temporary Count: %d, Argument Count: %d\n"),
+		literal_count, 
+		XP_STX_FROM_SMALLINT(method_obj->tmpcount), 
+		XP_STX_FROM_SMALLINT(method_obj->argcount));
 	for (i = 0; i < literal_count; i++) {
 		xp_printf (XP_TEXT("%d. ["), i);
 		__dump_object (stx, literals[i]);

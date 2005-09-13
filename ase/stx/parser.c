@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.71 2005-09-13 07:07:24 bacon Exp $
+ * $Id: parser.c,v 1.72 2005-09-13 11:15:41 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -534,7 +534,8 @@ static int __finish_method (xp_stx_parser_t* parser)
 
 	/* TODO: better way to store argument count & temporary count */
 	method_obj->tmpcount = 
-		XP_STX_TO_SMALLINT(parser->temporary_count);
+		XP_STX_TO_SMALLINT(parser->temporary_count - parser->argument_count);
+	method_obj->argcount = XP_STX_TO_SMALLINT(parser->argument_count);
 
 	xp_stx_dict_put (stx, class_obj->methods, selector, method);
 	return 0;
@@ -1166,8 +1167,8 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 		xp_stx_name_close (&name);
 		return -1;
 	}
-	/*EMIT_SEND_TO_SELF (parser, 0, pos);*/
-	if (__emit_send_to_self(parser,0,pos) == -1)  {
+	/*EMIT_SEND_TO_SELF (parser, nargs, pos);*/
+	if (__emit_send_to_self(parser,nargs,pos) == -1)  {
 		xp_stx_name_close (&name);
 		return -1;
 	}
