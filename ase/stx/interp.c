@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.13 2005-09-13 11:15:41 bacon Exp $
+ * $Id: interp.c,v 1.14 2005-09-13 12:10:23 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -180,10 +180,11 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 			case 0: /* receiver variable */
 				proc->stack[proc->stack_top++] = XP_STX_WORD_AT(stx, proc->receiver, index);
 				break;
-			case 1: /* temporary variable */
-				proc->stack[proc->stack_top++] = proc->stack[index];
-				break;
 #endif
+			case 1: /* temporary variable */
+				proc->stack[proc->stack_top++] = 
+					proc->stack[proc->stack_base + 1 + index];
+				break;
 			case 2: /* literal constant */
 				proc->stack[proc->stack_top++] = proc->literals[index];
 				break;
@@ -196,16 +197,16 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 			int what = code >> 4;
 			int index = code & 0x0F;
 
-#if 0
 			switch (what) {
+#if 0
 			case 4: /* receiver variable */
 				XP_STX_WORD_AT(stx,proc->receiver,index) = proc->stack[--proc->stack_top];
 				break; 
+#endif
 			case 5: /* temporary location */
-				proc->stack[index] = proc->stack[--proc->stack_top];
+				proc->stack[proc->stack_base + 1 + index] = proc->stack[--proc->stack_top];
 				break;
 			}
-#endif
 		}
 
 		/* more here .... */
@@ -213,8 +214,8 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 		else if (code == 0x70) {
 			next = proc->bytecodes[proc->pc++];
 //xp_printf (XP_TEXT("%d, %d\n"), next >> 5, next & 0x1F);
-			__send_to_self (stx, 
-				proc, next >> 5, proc->literals[next & 0x1F]);
+			if (__send_to_self (stx, proc, 
+				next >> 5, proc->literals[next & 0x1F]) == -1) break;
 //xp_printf (XP_TEXT("done %d, %d\n"), next >> 5, next & 0x1F);
 		}	
 		else if (code == 0x71) {
@@ -227,8 +228,8 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 			/* send to self extended */
 			next = proc->bytecodes[proc->pc++];
 			next2 = proc->bytecodes[proc->pc++];
-			__send_to_self (stx, 
-				proc, next >> 5, proc->literals[next2]);
+			if (__send_to_self (stx, proc,
+				next >> 5, proc->literals[next2]) == -1) break;
 		}
 		else if (code == 0x73) {
 			/* send to super extended */
@@ -313,6 +314,11 @@ static int __dispatch_primitive (xp_stx_t* stx, process_t* proc, xp_word_t no)
 	case 2:
 		xp_printf (XP_TEXT("<<  FUNKY STX SMALLTALK  >> %d\n"), 
 			XP_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]));
+		break;
+	case 3:
+		xp_printf (XP_TEXT("<<  HIGH STX SMALLTALK  >> %d, %d\n"), 
+			XP_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]),
+			XP_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 2]));
 		break;
 	}
 	
