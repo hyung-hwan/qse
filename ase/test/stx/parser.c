@@ -159,6 +159,18 @@ int xp_main (int argc, xp_char_t* argv[])
 				xp_stx_parser_error_string (&parser));
 		}
 
+		if (xp_stx_parser_parse_method (&parser, stx.class_symbol,
+			(void*)XP_TEXT("test2.st")) == -1) {
+			xp_printf (XP_TEXT("parser error <%s>\n"), 
+				xp_stx_parser_error_string (&parser));
+		}
+
+		if (xp_stx_parser_parse_method (&parser, stx.class_symbol,
+			(void*)XP_TEXT("test3.st")) == -1) {
+			xp_printf (XP_TEXT("parser error <%s>\n"), 
+				xp_stx_parser_error_string (&parser));
+		}
+
 		xp_printf (XP_TEXT("== Decoded Methods ==\n"));
 		if (xp_stx_decode(&stx, n) == -1) {
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
@@ -171,7 +183,7 @@ int xp_main (int argc, xp_char_t* argv[])
 			xp_printf (XP_TEXT("cannot lookup method main\n"));
 		}
 		else {
-			xp_stx_interp (&stx, xp_stx_new_context (&stx, n, m));
+			xp_stx_interp (&stx, n, m);
 		}
 	}
 
