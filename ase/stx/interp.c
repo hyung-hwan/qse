@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.14 2005-09-13 12:10:23 bacon Exp $
+ * $Id: interp.c,v 1.15 2005-09-13 15:56:23 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -55,26 +55,179 @@ struct process_t
 
 typedef struct process_t process_t;
 
+static int __run_process (xp_stx_t* stx, process_t* proc);
+static int __push_to_stack (xp_stx_t* stx, 
+	process_t* proc, xp_word_t what, xp_word_t index);
+static int __store_from_stack (xp_stx_t* stx, 
+	process_t* proc, xp_word_t what, xp_word_t index);
+static int __send_to_self (xp_stx_t* stx, 
+	process_t* proc, xp_word_t nargs, xp_word_t selector);
+static int __return_from_message (xp_stx_t* stx, process_t* proc);
 static int __dispatch_primitive (xp_stx_t* stx, process_t* proc, xp_word_t no);
 
-static int __init_process (process_t* proc, xp_word_t stack_size)
+int xp_stx_interp (xp_stx_t* stx, xp_word_t receiver, xp_word_t method)
 {
-	/* don't use the object model for process */
-	proc->stack = (xp_word_t*)xp_malloc (stack_size * xp_sizeof(xp_word_t));
-	if (proc->stack == XP_NULL) return -1;
+	process_t proc;
+	xp_stx_method_t* mthobj;
+	xp_word_t i;
+	int n;
+
+	// TODO: size of process stack.
+	proc.stack = (xp_word_t*)xp_malloc (10000 * xp_sizeof(xp_word_t));
+	if (proc.stack == XP_NULL) {
+xp_printf (XP_TEXT("out of memory in xp_stx_interp\n"));
+		return -1;
+	}
 	
-	proc->stack_size = stack_size;
-	proc->stack_base = 0;
-	proc->stack_top = 0;
+	proc.stack_size = 10000;
+	proc.stack_base = 0;
+	proc.stack_top = 0;
+	
+	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx,method);
+	xp_assert (mthobj != XP_NULL);
+
+	proc.literals = mthobj->literals;
+	proc.bytecodes = XP_STX_DATA(stx, mthobj->bytecodes);
+	proc.bytecode_size = XP_STX_SIZE(stx, mthobj->bytecodes);
+	/* TODO: disable the method with arguments for start-up */
+	proc.argcount = XP_STX_FROM_SMALLINT(mthobj->argcount); 
+	proc.tmpcount = XP_STX_FROM_SMALLINT(mthobj->tmpcount);
+
+	proc.method = method;
+	proc.pc = 0;
+
+	proc.stack_base = proc.stack_top;
+
+	/* push the receiver */
+	proc.stack[proc.stack_top++] = receiver;
+
+	/* push arguments */
+	for (i = 0; i < proc.argcount; i++) {
+		proc.stack[proc.stack_top++] = stx->nil;
+	}
+
+	/* secure space for temporaries */
+	for (i = 0; i < proc.tmpcount; i++) 
+		proc.stack[proc.stack_top++] = stx->nil;
+
+	/* push dummy pc */
+	proc.stack[proc.stack_top++] = 0;
+	/* push dummy method */
+	proc.stack[proc.stack_top++] = stx->nil;
+	/* push dummy previous stack base */
+	proc.stack[proc.stack_top++] = 0;
+
+	n = __run_process (stx, &proc);
+
+	xp_free (proc.stack);
+	return n;
+}
+
+static int __run_process (xp_stx_t* stx, process_t* proc)
+{
+	int code, next, next2;
+
+	while (proc->pc < proc->bytecode_size) {
+		code = proc->bytecodes[proc->pc++];
+
+#ifdef DEBUG
+		xp_printf (XP_TEXT("code = 0x%x\n"), code);
+#endif
+
+		if (code >= 0x00 && code <= 0x3F) {
+			/* stack - push */
+			__push_to_stack (stx, proc, code >> 4, code & 0x0F);
+		}
+		else if (code >= 0x40 && code <= 0x5F) {
+			/* stack - store */
+			int what = code >> 4;
+			int index = code & 0x0F;
+			__store_from_stack (stx, proc, code >> 4, code & 0x0F);
+
+		}
+
+		/* more here .... */
+
+		else if (code == 0x70) {
+			next = proc->bytecodes[proc->pc++];
+//xp_printf (XP_TEXT("%d, %d\n"), next >> 5, next & 0x1F);
+			if (__send_to_self (stx, proc, 
+				next >> 5, proc->literals[next & 0x1F]) == -1) break;
+//xp_printf (XP_TEXT("done %d, %d\n"), next >> 5, next & 0x1F);
+		}	
+		else if (code == 0x71) {
+			/* send to super */
+			next = proc->bytecodes[proc->pc++];
+			//__send_to_super (stx, 
+			//	proc, next >> 5, proc->literals[next & 0x1F]);
+		}
+		else if (code == 0x72) {
+			/* send to self extended */
+			next = proc->bytecodes[proc->pc++];
+			next2 = proc->bytecodes[proc->pc++];
+			if (__send_to_self (stx, proc,
+				next >> 5, proc->literals[next2]) == -1) break;
+		}
+		else if (code == 0x73) {
+			/* send to super extended */
+			next = proc->bytecodes[proc->pc++];
+			next2 = proc->bytecodes[proc->pc++];
+			//__send_to_super (stx, 
+			//	proc, next >> 5, proc->literals[next2]);
+		}
+
+		/* more code .... */
+		else if (code == 0x7C) {
+			/* return from message */
+			if (__return_from_message (stx, proc) == -1) break;
+		}
+
+		else if (code >= 0xF0 && code <= 0xFF)  {
+			/* primitive */
+			next = proc->bytecodes[proc->pc++];
+			__dispatch_primitive (stx, proc, ((code & 0x0F) << 8) | next);
+		}
+	}
 
 	return 0;
 }
 
-static void __deinit_process (process_t* proc)
+static int __push_to_stack (xp_stx_t* stx, 
+	process_t* proc, xp_word_t what, xp_word_t index)
 {
-	/* TODO: */
+	switch (what) {
+	case 0: /* receiver variable */
+		proc->stack[proc->stack_top++] = 
+			XP_STX_WORD_AT(stx, proc->stack[proc->stack_base], index);
+		break;
+	case 1: /* temporary variable */
+		proc->stack[proc->stack_top++] = 
+			proc->stack[proc->stack_base + 1 + index];
+		break;
+	case 2: /* literal constant */
+		proc->stack[proc->stack_top++] = proc->literals[index];
+		break;
+	case 3: /* literal variable */
+		break;
+	}
+
+	return 0;
 }
 
+static int __store_from_stack (xp_stx_t* stx, 
+	process_t* proc, xp_word_t what, xp_word_t index)
+{
+	switch (what) {
+	case 4: /* receiver variable */
+		XP_STX_WORD_AT(stx,proc->stack[proc->stack_base],index) = proc->stack[--proc->stack_top];
+		break; 
+	case 5: /* temporary location */
+		proc->stack[proc->stack_base + 1 + index] = proc->stack[--proc->stack_top];
+		break;
+	}
+
+	return 0;
+}
 
 static int __send_to_self (xp_stx_t* stx, 
 	process_t* proc, xp_word_t nargs, xp_word_t selector)
@@ -126,7 +279,7 @@ xp_printf (XP_TEXT("cannot find the method....\n"));
 	return 0;
 }
 
-static int __return_from_message (xp_stx_t* stx, process_t* proc, int code)
+static int __return_from_message (xp_stx_t* stx, process_t* proc)
 {
 	xp_word_t method, pc, stack_base;
 	xp_stx_method_t* mthobj;
@@ -159,148 +312,6 @@ static int __return_from_message (xp_stx_t* stx, process_t* proc, int code)
 	return 0;
 }
 
-static int __run_process (xp_stx_t* stx, process_t* proc)
-{
-	int code, next, next2;
-
-	while (proc->pc < proc->bytecode_size) {
-		code = proc->bytecodes[proc->pc++];
-
-#ifdef DEBUG
-		xp_printf (XP_TEXT("code = 0x%x\n"), code);
-#endif
-
-		if (code >= 0x00 && code <= 0x3F) {
-			/* stack - push */
-			int what = code >> 4;
-			int index = code & 0x0F;
-
-			switch (what) {
-#if 0
-			case 0: /* receiver variable */
-				proc->stack[proc->stack_top++] = XP_STX_WORD_AT(stx, proc->receiver, index);
-				break;
-#endif
-			case 1: /* temporary variable */
-				proc->stack[proc->stack_top++] = 
-					proc->stack[proc->stack_base + 1 + index];
-				break;
-			case 2: /* literal constant */
-				proc->stack[proc->stack_top++] = proc->literals[index];
-				break;
-			case 3: /* literal variable */
-				break;
-			}
-		}
-		else if (code >= 0x40 && code <= 0x5F) {
-			/* stack - store */
-			int what = code >> 4;
-			int index = code & 0x0F;
-
-			switch (what) {
-#if 0
-			case 4: /* receiver variable */
-				XP_STX_WORD_AT(stx,proc->receiver,index) = proc->stack[--proc->stack_top];
-				break; 
-#endif
-			case 5: /* temporary location */
-				proc->stack[proc->stack_base + 1 + index] = proc->stack[--proc->stack_top];
-				break;
-			}
-		}
-
-		/* more here .... */
-
-		else if (code == 0x70) {
-			next = proc->bytecodes[proc->pc++];
-//xp_printf (XP_TEXT("%d, %d\n"), next >> 5, next & 0x1F);
-			if (__send_to_self (stx, proc, 
-				next >> 5, proc->literals[next & 0x1F]) == -1) break;
-//xp_printf (XP_TEXT("done %d, %d\n"), next >> 5, next & 0x1F);
-		}	
-		else if (code == 0x71) {
-			/* send to super */
-			next = proc->bytecodes[proc->pc++];
-			//__send_to_super (stx, 
-			//	proc, next >> 5, proc->literals[next & 0x1F]);
-		}
-		else if (code == 0x72) {
-			/* send to self extended */
-			next = proc->bytecodes[proc->pc++];
-			next2 = proc->bytecodes[proc->pc++];
-			if (__send_to_self (stx, proc,
-				next >> 5, proc->literals[next2]) == -1) break;
-		}
-		else if (code == 0x73) {
-			/* send to super extended */
-			next = proc->bytecodes[proc->pc++];
-			next2 = proc->bytecodes[proc->pc++];
-			//__send_to_super (stx, 
-			//	proc, next >> 5, proc->literals[next2]);
-		}
-
-		/* more code .... */
-		else if (code == 0x7C) {
-			/* return from message */
-			if (__return_from_message (stx, proc, code) == -1) break;
-		}
-
-		else if (code >= 0xF0 && code <= 0xFF)  {
-			/* primitive */
-			next = proc->bytecodes[proc->pc++];
-			__dispatch_primitive (stx, proc, ((code & 0x0F) << 8) | next);
-		}
-	}
-
-	return 0;
-}
-
-int xp_stx_interp (xp_stx_t* stx, xp_word_t receiver, xp_word_t method)
-{
-	process_t proc;
-	xp_stx_method_t* mthobj;
-	xp_word_t i;
-
-	// TODO: size of process stack.
-	if (__init_process(&proc, 10000) == -1) return -1;
-	
-	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx,method);
-	xp_assert (mthobj != XP_NULL);
-
-	proc.literals = mthobj->literals;
-	proc.bytecodes = XP_STX_DATA(stx, mthobj->bytecodes);
-	proc.bytecode_size = XP_STX_SIZE(stx, mthobj->bytecodes);
-	/* TODO: disable the method with arguments for start-up */
-	proc.argcount = XP_STX_FROM_SMALLINT(mthobj->argcount); 
-	proc.tmpcount = XP_STX_FROM_SMALLINT(mthobj->tmpcount);
-
-	proc.method = method;
-	proc.pc = 0;
-
-	proc.stack_base = proc.stack_top;
-
-	/* push the receiver */
-	proc.stack[proc.stack_top++] = receiver;
-
-	/* push arguments */
-	for (i = 0; i < proc.argcount; i++) {
-		proc.stack[proc.stack_top++] = stx->nil;
-	}
-
-	/* secure space for temporaries */
-	for (i = 0; i < proc.tmpcount; i++) 
-		proc.stack[proc.stack_top++] = stx->nil;
-
-	/* push dummy pc */
-	proc.stack[proc.stack_top++] = 0;
-	/* push dummy method */
-	proc.stack[proc.stack_top++] = stx->nil;
-	/* push dummy previous stack base */
-	proc.stack[proc.stack_top++] = 0;
-
-	return __run_process (stx, &proc);
-}
-
 
 static int __dispatch_primitive (xp_stx_t* stx, process_t* proc, xp_word_t no)
 {
@@ -322,4 +333,5 @@ static int __dispatch_primitive (xp_stx_t* stx, process_t* proc, xp_word_t no)
 		break;
 	}
 	
+	return 0;
 }
