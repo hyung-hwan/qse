@@ -1,11 +1,13 @@
 main
+	| a |
 	<primitive: 0>
 
 	"a := 10.
 	#abc xxx.
 	#abc xxx: 1.
-	b := 3.
 	^nil	"
 
-	#abc print: 123 and: 2345.
+	a := #abc print: 123 and: 2345.
+	#abc print: a and: a.
+	1234567.
 	^nil
