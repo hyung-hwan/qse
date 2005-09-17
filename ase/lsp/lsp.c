@@ -1,21 +1,21 @@
 /*
- * $Id: lsp.c,v 1.1 2005-09-17 17:42:21 bacon Exp $
+ * $Id: lsp.c,v 1.2 2005-09-17 17:50:45 bacon Exp $
  */
 
 #include <xp/lsp/lisp.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 
-xp_lisp_t* xp_lisp_open (xp_lisp_t* lsp, xp_size_t mem_ubound, xp_size_t mem_ubound_inc)
+xp_lisp_t*xp_lsp_open xp_lsp_t* lsp, xp_size_t mem_ubound, xp_size_t mem_ubound_inc)
 {
 	if (lsp == XP_NULL) {
-		lsp = (xp_lisp_t*)xp_malloc(sizeof(xp_lisp_t));
+		lsp = xp_lsp_t*)xp_malloc(sizeofxp_lsp_t));
 		if (lsp == XP_NULL) return lsp;
 		lsp->__malloced = xp_true;
 	}
 	else lsp->__malloced = xp_false;
 
-	lsp->token = xp_lisp_token_new (256);
+	lsp->token =xp_lsp_token_new (256);
 	if (lsp->token == XP_NULL) {
 		xp_free (lsp);
 		return XP_NULL;
@@ -31,16 +31,16 @@ xp_lisp_t* xp_lisp_open (xp_lisp_t* lsp, xp_size_t mem_ubound, xp_size_t mem_ubo
 	lsp->creader_just_set   = 0;
 	lsp->outstream          = xp_stdout;
 
-	lsp->mem = xp_lisp_mem_new (mem_ubound, mem_ubound_inc);
+	lsp->mem =xp_lsp_mem_new (mem_ubound, mem_ubound_inc);
 	if (lsp->mem == XP_NULL) {
-		xp_lisp_token_free (lsp->token);
+	xp_lsp_token_free (lsp->token);
 		free (lsp);
 		return XP_NULL;
 	}
 
-	if (xp_lisp_add_prims (lsp->mem) == -1) {
-		xp_lisp_mem_free (lsp->mem);
-		xp_lisp_token_free (lsp->token);
+	if xp_lsp_add_prims (lsp->mem) == -1) {
+	xp_lsp_mem_free (lsp->mem);
+	xp_lsp_token_free (lsp->token);
 		free (lsp);
 		return XP_NULL;
 	}
@@ -48,16 +48,16 @@ xp_lisp_t* xp_lisp_open (xp_lisp_t* lsp, xp_size_t mem_ubound, xp_size_t mem_ubo
 	return lsp;
 }
 
-void xp_lisp_free (xp_lisp_t* lsp)
+voidxp_lsp_free xp_lsp_t* lsp)
 {
 	xp_assert (lsp != XP_NULL);
 
-	xp_lisp_mem_free (lsp->mem);
-	xp_lisp_token_free (lsp->token);
+xp_lsp_mem_free (lsp->mem);
+xp_lsp_token_free (lsp->token);
 	if (lsp->__malloced) xp_free (lsp);
 }
 
-int xp_lisp_error (xp_lisp_t* lsp, xp_char_t* buf, xp_size_t size)
+intxp_lsp_error xp_lsp_t* lsp, xp_char_t* buf, xp_size_t size)
 {
 	if (buf != XP_NULL || size == 0) return lsp->error;
 
@@ -66,7 +66,7 @@ int xp_lisp_error (xp_lisp_t* lsp, xp_char_t* buf, xp_size_t size)
 	switch (lsp->error) {
 
 	default:
-		xp_lisp_copy_string (buf, size, "unknown error");	
+	xp_lsp_copy_string (buf, size, "unknown error");	
 	}
 	*/
 
