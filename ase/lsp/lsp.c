@@ -1,17 +1,19 @@
 /*
- * $Id: lisp.c,v 1.10 2005-05-30 07:15:35 bacon Exp $
+ * $Id: lsp.c,v 1.1 2005-09-17 17:42:21 bacon Exp $
  */
 
 #include <xp/lsp/lisp.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 
-xp_lisp_t* xp_lisp_new (xp_size_t mem_ubound, xp_size_t mem_ubound_inc)
+xp_lisp_t* xp_lisp_open (xp_lisp_t* lsp, xp_size_t mem_ubound, xp_size_t mem_ubound_inc)
 {
-	xp_lisp_t* lsp;
-
-	lsp = (xp_lisp_t*)xp_malloc(sizeof(xp_lisp_t));
-	if (lsp == XP_NULL) return lsp;
+	if (lsp == XP_NULL) {
+		lsp = (xp_lisp_t*)xp_malloc(sizeof(xp_lisp_t));
+		if (lsp == XP_NULL) return lsp;
+		lsp->__malloced = xp_true;
+	}
+	else lsp->__malloced = xp_false;
 
 	lsp->token = xp_lisp_token_new (256);
 	if (lsp->token == XP_NULL) {
@@ -52,7 +54,7 @@ void xp_lisp_free (xp_lisp_t* lsp)
 
 	xp_lisp_mem_free (lsp->mem);
 	xp_lisp_token_free (lsp->token);
-	free (lsp);
+	if (lsp->__malloced) xp_free (lsp);
 }
 
 int xp_lisp_error (xp_lisp_t* lsp, xp_char_t* buf, xp_size_t size)

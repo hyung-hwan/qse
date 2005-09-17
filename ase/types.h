@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.31 2005-08-15 04:14:54 bacon Exp $
+ * $Id: types.h,v 1.32 2005-09-17 17:42:21 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -12,6 +12,47 @@
 #else
 	#include <xp/config.h>
 #endif
+
+/*
+ * HEADER: types.h
+ *   The toolkit predefines some of commonly used data types.
+ *
+ * GROUP: State Types
+ *
+ * TYPE: xp_bool_t
+ *   Boolean type
+ *
+ * TYPE: xp_tri_t
+ *   Tri-State type
+ *
+ * GROUP: Integral Types
+ *
+ * TYPE: xp_byte_t
+ *
+ * TYPE: xp_int_t
+ *
+ * TYPE: xp_uint_t
+ * 
+ * TYPE: xp_long_t
+ *
+ * TYPE: xp_ulong_t
+ * 
+ * TYPE: xp_int8_t
+ *
+ * TYPE: xp_uint8_t
+ *
+ * TYPE: xp_int16_t
+ *
+ * TYPE: xp_uint16_t
+ *
+ * TYPE: xp_int32_t
+ * 
+ * TYPE: xp_uint32_t
+ *
+ * TYPE: xp_int64_t
+ *
+ * TYPE: xp_uint64_t
+ */
 
 /* boolean type */
 /*

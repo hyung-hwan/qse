@@ -1,5 +1,5 @@
 /*
- * $Id: lisp.h,v 1.5 2005-05-28 13:34:26 bacon Exp $
+ * $Id: lsp.h,v 1.1 2005-09-17 17:42:21 bacon Exp $
  */
 
 #ifndef _XP_LSP_LISP_H_
@@ -58,6 +58,7 @@ struct xp_lisp_t
 
 	/* memory manager */
 	xp_lisp_mem_t* mem;
+	xp_bool_t __malloced;
 };
 
 typedef struct xp_lisp_t xp_lisp_t;
@@ -67,9 +68,11 @@ extern "C" {
 #endif
 
 /* lsp.c */
-xp_lisp_t* xp_lisp_new   (xp_size_t mem_ubound, xp_size_t mem_ubound_inc);
-void   xp_lisp_free  (xp_lisp_t* lsp);
-int    xp_lisp_error (xp_lisp_t* lsp, xp_char_t* buf, xp_size_t size);
+xp_lisp_t* xp_lisp_open (xp_lisp_t* lisp, 
+	xp_size_t mem_ubound, xp_size_t mem_ubound_inc);
+void xp_lisp_close  (xp_lisp_t* lsp);
+
+int xp_lisp_error (xp_lisp_t* lsp, xp_char_t* buf, xp_size_t size);
 
 /* read.c */
 // TODO: move xp_lisp_set_creader to lsp.c
