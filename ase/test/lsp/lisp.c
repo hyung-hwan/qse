@@ -171,7 +171,7 @@ int xp_main (int argc, xp_char_t* argv[])
 
 		if ((obj = xp_lsp_eval (lsp, obj)) != XP_NULL) {
 			xp_lsp_print (lsp, obj);
-			xp_printf (XP_TEXT("\n"));
+			xp_sio_puts (xp_sio_out, XP_TEXT("\n"));
 		}
 		else {
 			if (lsp->errnum == XP_LSP_ERR_ABORT) break;
