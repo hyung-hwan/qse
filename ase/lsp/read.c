@@ -1,8 +1,8 @@
 /*
- * $Id: read.c,v 1.10 2005-06-06 16:04:18 bacon Exp $
+ * $Id: read.c,v 1.11 2005-09-18 10:18:35 bacon Exp $
  */
 
-#include <xp/lsp/lisp.h>
+#include <xp/lsp/lsp.h>
 #include <xp/lsp/token.h>
 #include <xp/bas/assert.h>
 #include <xp/bas/ctype.h>
@@ -20,22 +20,21 @@
 	 (c) == XP_CHAR('=') || (c) == XP_CHAR('_') || \
 	 (c) == XP_CHAR('?'))
 
-#define TOKEN_CLEAR(lsp)   xp_lisp_token_clear (lsp->token)
-#define TOKEN_TYPE(lsp)    lsp->token->type
-#define TOKEN_IVALUE(lsp)  lsp->token->ivalue
-#define TOKEN_FVALUE(lsp)  lsp->token->fvalue
-#define TOKEN_SVALUE(lsp)  lsp->token->buffer
-#define TOKEN_SLENGTH(lsp) lsp->token->size
+#define TOKEN_CLEAR(lsp)   xp_lsp_token_clear (&(lsp)->token)
+#define TOKEN_TYPE(lsp)    (lsp)->token.type
+#define TOKEN_IVALUE(lsp)  (lsp)->token.ivalue
+#define TOKEN_FVALUE(lsp)  (lsp)->token.fvalue
+#define TOKEN_SVALUE(lsp)  (lsp)->token.name.buffer
+#define TOKEN_SLENGTH(lsp) (lsp)->token.name.size
 #define TOKEN_ADD_CHAR(lsp,ch) \
 	do { \
-		if (xp_lisp_token_addc (lsp->token, ch) == -1) { \
-			lsp->error = XP_LISP_ERR_MEM; \
+		if (xp_lsp_token_addc (&(lsp)->token, ch) == -1) { \
+			lsp->errnum = XP_LSP_ERR_MEM; \
 			return -1; \
 		} \
 	} while (0)
-#define TOKEN_COMPARE(lsp,str) xp_lisp_token_compare (lsp->token, str)
+#define TOKEN_COMPARE(lsp,str) xp_lsp_token_compare_name (&(lsp)->token, str)
 		
-
 #define TOKEN_END            0
 #define TOKEN_INT            1
 #define TOKEN_FLOAT          2
@@ -52,14 +51,14 @@
 extern "C" {
 #endif
 
-static xp_lisp_obj_t* read_obj   (xp_lisp_t* lsp);
-static xp_lisp_obj_t* read_list  (xp_lisp_t* lsp);
-static xp_lisp_obj_t* read_quote (xp_lisp_t* lsp);
+static xp_lsp_obj_t* read_obj   (xp_lsp_t* lsp);
+static xp_lsp_obj_t* read_list  (xp_lsp_t* lsp);
+static xp_lsp_obj_t* read_quote (xp_lsp_t* lsp);
 
-static int read_token  (xp_lisp_t* lsp);
-static int read_number (xp_lisp_t* lsp, int negative);
-static int read_ident  (xp_lisp_t* lsp);
-static int read_string (xp_lisp_t* lsp);
+static int read_token  (xp_lsp_t* lsp);
+static int read_number (xp_lsp_t* lsp, int negative);
+static int read_ident  (xp_lsp_t* lsp);
+static int read_string (xp_lsp_t* lsp);
 
 #ifdef __cplusplus
 }
@@ -67,58 +66,51 @@ static int read_string (xp_lisp_t* lsp);
 
 #define NEXT_CHAR(lsp) \
 	do { \
-		if (lsp->creader (&lsp->curc, lsp->creader_extra) == -1) { \
-			lsp->error = XP_LISP_ERR_READ; \
+		if (lsp->input_func == XP_NULL) { \
+			lsp->errnum = XP_LSP_ERR_INPUT_NOT_ATTACHED; \
 			return -1; \
 		} \
-	} while (0) 
+		else if (lsp->input_func(XP_LSP_IO_CHAR, lsp, XP_NULL) == -1) { \
+			lsp->errnum = XP_LSP_ERR_INPUT; \
+			return -1; \
+		} \
+	} while (0)
 
 #define NEXT_TOKEN(lsp) \
 	do { \
 		if (read_token(lsp) == -1) return XP_NULL; \
 	} while (0)
 
-
-void xp_lisp_set_creader (xp_lisp_t* lsp, xp_lisp_creader_t func, void* extra)
+xp_lsp_obj_t* xp_lsp_read (xp_lsp_t* lsp)
 {
-	xp_assert (lsp != XP_NULL);
-
-	lsp->creader          = func;
-	lsp->creader_extra    = extra;
-	lsp->creader_just_set = 1;
-}
-
-xp_lisp_obj_t* xp_lisp_read (xp_lisp_t* lsp)
-{
-	xp_assert (lsp != XP_NULL && lsp->creader != XP_NULL);
-
-	if (lsp->creader_just_set) {
-		// NEXT_CHAR (lsp);
-		if (lsp->creader (&lsp->curc, lsp->creader_extra) == -1) {
-			lsp->error = XP_LISP_ERR_READ;
-			return XP_NULL;
-		}
-		lsp->creader_just_set = 0;
+	/*NEXT_CHAR (lsp);*/
+	if (lsp->input_func == XP_NULL) {
+		lsp->errnum = XP_LSP_ERR_INPUT_NOT_ATTACHED;
+		return XP_NULL;
+	}
+	else if (lsp->input_func(XP_LSP_IO_CHAR, lsp, XP_NULL) == -1) {
+		lsp->errnum = XP_LSP_ERR_INPUT;
+		return XP_NULL;
 	}
 
-	lsp->error = XP_LISP_ERR_NONE;
+	lsp->errnum = XP_LSP_ERR_NONE;
 	NEXT_TOKEN (lsp);
 
 	if (lsp->mem->locked != XP_NULL) {
-		xp_lisp_unlock_all (lsp->mem->locked);
+		xp_lsp_unlock_all (lsp->mem->locked);
 		lsp->mem->locked = XP_NULL;
 	}
 	lsp->mem->locked = read_obj (lsp);
 	return lsp->mem->locked;
 }
 
-static xp_lisp_obj_t* read_obj (xp_lisp_t* lsp)
+static xp_lsp_obj_t* read_obj (xp_lsp_t* lsp)
 {
-	xp_lisp_obj_t* obj;
+	xp_lsp_obj_t* obj;
 
 	switch (TOKEN_TYPE(lsp)) {
 	case TOKEN_END:
-		lsp->error = XP_LISP_ERR_END;
+		lsp->errnum = XP_LSP_ERR_END;
 		return XP_NULL;
 	case TOKEN_LPAREN:
 		NEXT_TOKEN (lsp);
@@ -127,61 +119,61 @@ static xp_lisp_obj_t* read_obj (xp_lisp_t* lsp)
 		NEXT_TOKEN (lsp);
 		return read_quote (lsp);
 	case TOKEN_INT:
-		obj = xp_lisp_make_int (lsp->mem, TOKEN_IVALUE(lsp));
-		if (obj == XP_NULL) lsp->error = XP_LISP_ERR_MEM;
-		xp_lisp_lock (obj);
+		obj = xp_lsp_make_int (lsp->mem, TOKEN_IVALUE(lsp));
+		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
+		xp_lsp_lock (obj);
 		return obj;
 	case TOKEN_FLOAT:
-		obj = xp_lisp_make_float (lsp->mem, TOKEN_FVALUE(lsp));
-		if (obj == XP_NULL) lsp->error = XP_LISP_ERR_MEM;
-		xp_lisp_lock (obj);
+		obj = xp_lsp_make_float (lsp->mem, TOKEN_FVALUE(lsp));
+		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
+		xp_lsp_lock (obj);
 		return obj;
 	case TOKEN_STRING:
-		obj = xp_lisp_make_string (
+		obj = xp_lsp_make_string (
 			lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
-		if (obj == XP_NULL) lsp->error = XP_LISP_ERR_MEM;
-		xp_lisp_lock (obj);
+		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
+		xp_lsp_lock (obj);
 		return obj;
 	case TOKEN_IDENT:
 		xp_assert (lsp->mem->nil != XP_NULL && lsp->mem->t != XP_NULL); 
 		if (TOKEN_COMPARE(lsp,XP_TEXT("nil")) == 0) obj = lsp->mem->nil;
 		else if (TOKEN_COMPARE(lsp,XP_TEXT("t")) == 0) obj = lsp->mem->t;
 		else {
-			obj = xp_lisp_make_symbol (
+			obj = xp_lsp_make_symbol (
 				lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
-			if (obj == XP_NULL) lsp->error = XP_LISP_ERR_MEM;
-			xp_lisp_lock (obj);
+			if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
+			xp_lsp_lock (obj);
 		}
 		return obj;
 	}
 
-	lsp->error = XP_LISP_ERR_SYNTAX;
+	lsp->errnum = XP_LSP_ERR_SYNTAX;
 	return XP_NULL;
 }
 
-static xp_lisp_obj_t* read_list (xp_lisp_t* lsp)
+static xp_lsp_obj_t* read_list (xp_lsp_t* lsp)
 {
-	xp_lisp_obj_t* obj;
-	xp_lisp_obj_cons_t* p, * first = XP_NULL, * prev = XP_NULL;
+	xp_lsp_obj_t* obj;
+	xp_lsp_obj_cons_t* p, * first = XP_NULL, * prev = XP_NULL;
 
 	while (TOKEN_TYPE(lsp) != TOKEN_RPAREN) {
 		if (TOKEN_TYPE(lsp) == TOKEN_END) {
-			lsp->error = XP_LISP_ERR_SYNTAX; // unexpected end of input
+			lsp->errnum = XP_LSP_ERR_SYNTAX; // unexpected end of input
 			return XP_NULL;
 		}
 
 		if (TOKEN_TYPE(lsp) == TOKEN_DOT) {
 			if (prev == XP_NULL) {
-				lsp->error = XP_LISP_ERR_SYNTAX; // unexpected .
+				lsp->errnum = XP_LSP_ERR_SYNTAX; // unexpected .
 				return XP_NULL;
 			}
 
 			NEXT_TOKEN (lsp);
 			obj = read_obj (lsp);
 			if (obj == XP_NULL) {
-				if (lsp->error == XP_LISP_ERR_END) {
+				if (lsp->errnum == XP_LSP_ERR_END) {
 					//unexpected end of input
-					lsp->error = XP_LISP_ERR_SYNTAX; 
+					lsp->errnum = XP_LSP_ERR_SYNTAX; 
 				}
 				return XP_NULL;
 			}
@@ -189,7 +181,7 @@ static xp_lisp_obj_t* read_list (xp_lisp_t* lsp)
 
 			NEXT_TOKEN (lsp);
 			if (TOKEN_TYPE(lsp) != TOKEN_RPAREN) {
-				lsp->error = XP_LISP_ERR_SYNTAX; // ) expected
+				lsp->errnum = XP_LSP_ERR_SYNTAX; // ) expected
 				return XP_NULL;
 			}
 
@@ -198,23 +190,23 @@ static xp_lisp_obj_t* read_list (xp_lisp_t* lsp)
 
 		obj = read_obj (lsp);
 		if (obj == XP_NULL) {
-			if (lsp->error == XP_LISP_ERR_END) { 
+			if (lsp->errnum == XP_LSP_ERR_END) { 
 				// unexpected end of input
-				lsp->error = XP_LISP_ERR_SYNTAX;
+				lsp->errnum = XP_LSP_ERR_SYNTAX;
 			}
 			return XP_NULL;
 		}
 
-		p = (xp_lisp_obj_cons_t*)xp_lisp_make_cons (
+		p = (xp_lsp_obj_cons_t*)xp_lsp_make_cons (
 			lsp->mem, lsp->mem->nil, lsp->mem->nil);
 		if (p == XP_NULL) {
-			lsp->error = XP_LISP_ERR_MEM;
+			lsp->errnum = XP_LSP_ERR_MEM;
 			return XP_NULL;
 		}
-		xp_lisp_lock ((xp_lisp_obj_t*)p);
+		xp_lsp_lock ((xp_lsp_obj_t*)p);
 
 		if (first == XP_NULL) first = p;
-		if (prev != XP_NULL) prev->cdr = (xp_lisp_obj_t*)p;
+		if (prev != XP_NULL) prev->cdr = (xp_lsp_obj_t*)p;
 
 		p->car = obj;
 		prev = p;
@@ -222,42 +214,42 @@ static xp_lisp_obj_t* read_list (xp_lisp_t* lsp)
 		NEXT_TOKEN (lsp);
 	}	
 
-	return (first == XP_NULL)? lsp->mem->nil: (xp_lisp_obj_t*)first;
+	return (first == XP_NULL)? lsp->mem->nil: (xp_lsp_obj_t*)first;
 }
 
-static xp_lisp_obj_t* read_quote (xp_lisp_t* lsp)
+static xp_lsp_obj_t* read_quote (xp_lsp_t* lsp)
 {
-	xp_lisp_obj_t* cons, * tmp;
+	xp_lsp_obj_t* cons, * tmp;
 
 	tmp = read_obj (lsp);
 	if (tmp == XP_NULL) {
-		if (lsp->error == XP_LISP_ERR_END) {
+		if (lsp->errnum == XP_LSP_ERR_END) {
 			// unexpected end of input
-			lsp->error = XP_LISP_ERR_SYNTAX;
+			lsp->errnum = XP_LSP_ERR_SYNTAX;
 		}
 		return XP_NULL;
 	}
 
-	cons = xp_lisp_make_cons (lsp->mem, tmp, lsp->mem->nil);
+	cons = xp_lsp_make_cons (lsp->mem, tmp, lsp->mem->nil);
 	if (cons == XP_NULL) {
-		lsp->error = XP_LISP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEM;
 		return XP_NULL;
 	}
-	xp_lisp_lock (cons);
+	xp_lsp_lock (cons);
 
-	cons = xp_lisp_make_cons (lsp->mem, lsp->mem->quote, cons);
+	cons = xp_lsp_make_cons (lsp->mem, lsp->mem->quote, cons);
 	if (cons == XP_NULL) {
-		lsp->error = XP_LISP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEM;
 		return XP_NULL;
 	}
-	xp_lisp_lock (cons);
+	xp_lsp_lock (cons);
 
 	return cons;
 }
 
-static int read_token (xp_lisp_t* lsp)
+static int read_token (xp_lsp_t* lsp)
 {
-	xp_assert (lsp->creader != XP_NULL);
+	xp_assert (lsp->input_func != XP_NULL);
 
 	TOKEN_CLEAR (lsp);
 
@@ -324,9 +316,9 @@ static int read_token (xp_lisp_t* lsp)
 	return 0;
 }
 
-static int read_number (xp_lisp_t* lsp, int negative)
+static int read_number (xp_lsp_t* lsp, int negative)
 {
-	xp_lisp_int_t ivalue = 0;
+	xp_lsp_int_t ivalue = 0;
 
 	do {
 		ivalue = ivalue * 10 + (lsp->curc - XP_CHAR('0'));
@@ -344,7 +336,7 @@ static int read_number (xp_lisp_t* lsp, int negative)
 	return 0;
 }
 
-static int read_ident (xp_lisp_t* lsp)
+static int read_ident (xp_lsp_t* lsp)
 {
 	do {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
@@ -354,7 +346,7 @@ static int read_ident (xp_lisp_t* lsp)
 	return 0;
 }
 
-static int read_string (xp_lisp_t* lsp)
+static int read_string (xp_lsp_t* lsp)
 {
 	int escaped = 0;
 	xp_cint_t code = 0;

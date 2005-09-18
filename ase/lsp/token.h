@@ -1,11 +1,11 @@
 /*
- * $Id: token.h,v 1.8 2005-09-18 08:10:50 bacon Exp $
+ * $Id: token.h,v 1.9 2005-09-18 10:18:35 bacon Exp $
  */
 
 #ifndef _XP_LSP_TOKEN_H_
 #define _XP_LSP_TOKEN_H_
 
-#include <xp/lsp/lsp.h>
+#include <xp/lsp/types.h>
 #include <xp/lsp/name.h>
 
 enum 
