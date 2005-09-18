@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.10 2005-09-18 13:06:43 bacon Exp $
+ * $Id: lsp.h,v 1.11 2005-09-18 14:05:16 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -119,38 +119,79 @@ int xp_lsp_error (xp_lsp_t* lsp, xp_char_t* buf, xp_size_t size);
 
 /*
  * FUNCTION: xp_lsp_attach_input
+ *   Attaches an input handler function
+ *
+ * PARAMETERS:
+ *   lsp - the lisp processor
+ *   input - input handler function
+ *   arg - user data to be passed to the input handler
+ * 
+ * RETURNS:
+ *   0 on success, -1 on failure
  */
 int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input, void* arg);
 
 /*
  * FUNCTION: xp_lsp_detach_input
+ *   Detaches an input handler function
+ * 
+ * RETURNS:
+ *   0 on success, -1 on failure
  */
 int xp_lsp_detach_input (xp_lsp_t* lsp);
 
 /*
  * FUNCTION: xp_lsp_attach_output
+ *   Attaches an output handler function
+ *
+ * PARAMETERS:
+ *   lsp - the lisp processor
+ *   output - output handler function
+ *   arg - user data to be passed to the output handler
+ * 
+ * RETURNS:
+ *   0 on success, -1 on failure
  */
 int xp_lsp_attach_output (xp_lsp_t* lsp, xp_lsp_io_t output, void* arg);
 
 /*
  * FUNCTION: xp_lsp_detach_output
+ *   Detaches an output handler function
+ * 
+ * RETURNS:
+ *   0 on success, -1 on failure
  */
 int xp_lsp_detach_output (xp_lsp_t* lsp);
 
 /*
  * FUNCTION: xp_lsp_read
+ *   Reads a lisp expression
  */
 xp_lsp_obj_t* xp_lsp_read (xp_lsp_t* lsp);
 
 /*
  * FUNCTION: xp_lsp_eval
+ *   Evaluates a lisp object
  */
 xp_lsp_obj_t* xp_lsp_eval (xp_lsp_t* lsp, xp_lsp_obj_t* obj);
 
 /*
  * FUNCTION: xp_lsp_print
+ *   Prints a lisp object
  */
 int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj);
+
+/*
+ * FUNCTION: xp_lsp_add_prim
+ *   Adds a user-defined primitive
+ */
+int xp_lsp_add_prim (xp_lsp_t* lsp, const xp_char_t* name, xp_lsp_prim_t prim);
+
+/*
+ * FUNCTION: xp_lsp_remove_prim
+ *   Removes a user-defined primitive
+ */
+int xp_lsp_add_prim (xp_lsp_t* lsp, const xp_char_t* name);
 
 #ifdef __cplusplus
 }
