@@ -1,12 +1,12 @@
 /*
- * $Id: lsp.h,v 1.5 2005-09-18 10:18:35 bacon Exp $
+ * $Id: lsp.h,v 1.6 2005-09-18 10:23:19 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
 #define _XP_LSP_LSP_H_
 
 /* 
- * HEADER: xp_lsp_t
+ * HEADER: Lisp
  *   A lisp-like embeddable language processor is provied for application
  *   development that requires scripting.
  *
@@ -51,10 +51,6 @@ enum
 	XP_LSP_IO_STR
 };
 
-/*
- * STRUCT: xp_lsp_t
- *   Defines the lisp object
- */
 struct xp_lsp_t 
 {
 	/* error number */
@@ -78,6 +74,10 @@ struct xp_lsp_t
 	xp_bool_t __malloced;
 };
 
+/*
+ * TYPEDEF: xp_lsp_t
+ *   Defines the lisp object
+ */
 typedef struct xp_lsp_t xp_lsp_t;
 
 #ifdef __cplusplus
