@@ -1,19 +1,20 @@
 /*
- * $Id: name.c,v 1.1 2005-09-18 08:10:50 bacon Exp $
+ * $Id: name.c,v 1.2 2005-09-18 11:34:35 bacon Exp $
  */
 
-#include <xp/stx/name.h>
-#include <xp/stx/misc.h>
+#include <xp/lsp/name.h>
+#include <xp/bas/memory.h>
+#include <xp/bas/assert.h>
 
-xp_stx_name_t* xp_stx_name_open (
-	xp_stx_name_t* name, xp_word_t capacity)
+xp_lsp_name_t* xp_lsp_name_open (
+	xp_lsp_name_t* name, xp_word_t capacity)
 {
 	if (capacity == 0) 
 		capacity = xp_countof(name->static_buffer) - 1;
 
 	if (name == XP_NULL) {
-		name = (xp_stx_name_t*)
-			xp_malloc (xp_sizeof(xp_stx_name_t));
+		name = (xp_lsp_name_t*)
+			xp_malloc (xp_sizeof(xp_lsp_name_t));
 		if (name == XP_NULL) return XP_NULL;
 		name->__malloced = xp_true;
 	}
@@ -38,7 +39,7 @@ xp_stx_name_t* xp_stx_name_open (
 	return name;
 }
 
-void xp_stx_name_close (xp_stx_name_t* name)
+void xp_lsp_name_close (xp_lsp_name_t* name)
 {
 	if (name->capacity >= xp_countof(name->static_buffer)) {
 		xp_assert (name->buffer != name->static_buffer);
@@ -47,7 +48,7 @@ void xp_stx_name_close (xp_stx_name_t* name)
 	if (name->__malloced) xp_free (name);
 }
 
-int xp_stx_name_addc (xp_stx_name_t* name, xp_cint_t c)
+int xp_lsp_name_addc (xp_lsp_name_t* name, xp_cint_t c)
 {
 	if (name->size >= name->capacity) {
 		/* double the capacity. */
@@ -82,23 +83,23 @@ int xp_stx_name_addc (xp_stx_name_t* name, xp_cint_t c)
 	return 0;
 }
 
-int xp_stx_name_adds (xp_stx_name_t* name, const xp_char_t* s)
+int xp_lsp_name_adds (xp_lsp_name_t* name, const xp_char_t* s)
 {
 	while (*s != XP_CHAR('\0')) {
-		if (xp_stx_name_addc(name, *s) == -1) return -1;
+		if (xp_lsp_name_addc(name, *s) == -1) return -1;
 		s++;
 	}
 
 	return 0;
 }
 
-void xp_stx_name_clear (xp_stx_name_t* name)
+void xp_lsp_name_clear (xp_lsp_name_t* name)
 {
 	name->size      = 0;
 	name->buffer[0] = XP_CHAR('\0');
 }
 
-xp_char_t* xp_stx_name_yield (xp_stx_name_t* name, xp_word_t capacity)
+xp_char_t* xp_lsp_name_yield (xp_lsp_name_t* name, xp_word_t capacity)
 {
 	xp_char_t* old_buffer, * new_buffer;
 
@@ -131,7 +132,7 @@ xp_char_t* xp_stx_name_yield (xp_stx_name_t* name, xp_word_t capacity)
 	return old_buffer;
 }
 
-int xp_stx_name_compare (xp_stx_name_t* name, const xp_char_t* str)
+int xp_lsp_name_compare (xp_lsp_name_t* name, const xp_char_t* str)
 {
 	xp_char_t* p = name->buffer;
 	xp_word_t index = 0;

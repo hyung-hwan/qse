@@ -1,5 +1,5 @@
 /*
- * $Id: memory.h,v 1.6 2005-09-18 08:10:50 bacon Exp $
+ * $Id: mem.h,v 1.1 2005-09-18 11:34:35 bacon Exp $
  */
 
 #ifndef _XP_LSP_MEM_H_

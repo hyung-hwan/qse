@@ -1,9 +1,9 @@
 /*
- * $Id: prim.c,v 1.1 2005-09-18 10:18:35 bacon Exp $
+ * $Id: prim.c,v 1.2 2005-09-18 11:34:35 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
-#include <xp/lsp/memory.h>
+#include <xp/lsp/mem.h>
 #include <xp/lsp/prim.h>
 #include <xp/bas/assert.h>
 

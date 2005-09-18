@@ -1,17 +1,17 @@
 /*
- * $Id: array.c,v 1.6 2005-05-28 13:34:26 bacon Exp $
+ * $Id: array.c,v 1.7 2005-09-18 11:34:35 bacon Exp $
  */
 
 #include <xp/lsp/array.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 
-xp_lisp_array_t* xp_lisp_array_new (xp_size_t capacity)
+xp_lsp_array_t* xp_lsp_array_new (xp_size_t capacity)
 {
-	xp_lisp_array_t* array;
+	xp_lsp_array_t* array;
 
 	xp_assert (capacity > 0);
-	array = (xp_lisp_array_t*)malloc (sizeof(xp_lisp_array_t));
+	array = (xp_lsp_array_t*)malloc (sizeof(xp_lsp_array_t));
 	if (array == XP_NULL) return XP_NULL;
 
 	array->buffer = (void**)malloc (capacity + 1);
@@ -26,7 +26,7 @@ xp_lisp_array_t* xp_lisp_array_new (xp_size_t capacity)
 	return array;
 }
 
-void xp_lisp_array_free (xp_lisp_array_t* array)
+void xp_lsp_array_free (xp_lsp_array_t* array)
 {
 	while (array->size > 0) 
 		free (array->buffer[--array->size]);
@@ -36,7 +36,7 @@ void xp_lisp_array_free (xp_lisp_array_t* array)
 	free (array);
 }
 
-int xp_lisp_array_add_item (xp_lisp_array_t* array, void* item)
+int xp_lsp_array_add_item (xp_lsp_array_t* array, void* item)
 {
 	if (array->size >= array->capacity) {
 		void* new_buffer = (void**)realloc (
@@ -51,7 +51,7 @@ int xp_lisp_array_add_item (xp_lisp_array_t* array, void* item)
 	return 0;
 }
 
-int xp_lisp_array_insert (xp_lisp_array_t* array, xp_size_t index, void* value)
+int xp_lsp_array_insert (xp_lsp_array_t* array, xp_size_t index, void* value)
 {
 	xp_size_t i;
 
@@ -72,13 +72,13 @@ int xp_lisp_array_insert (xp_lisp_array_t* array, xp_size_t index, void* value)
 	return 0;
 }
 
-void xp_lisp_array_delete (xp_lisp_array_t* array, xp_size_t index)
+void xp_lsp_array_delete (xp_lsp_array_t* array, xp_size_t index)
 {
 	xp_assert (index < array->size);
 
 }
 
-void xp_lisp_array_clear (xp_lisp_array_t* array)
+void xp_lsp_array_clear (xp_lsp_array_t* array)
 {
 	while (array->size > 0) 
 		free (array->buffer[--array->size]);
@@ -86,7 +86,7 @@ void xp_lisp_array_clear (xp_lisp_array_t* array)
 	array->buffer[0] = XP_NULL;
 }
 
-void** xp_lisp_array_yield (xp_lisp_array_t* array, xp_size_t capacity)
+void** xp_lsp_array_yield (xp_lsp_array_t* array, xp_size_t capacity)
 {
 	void** old_buffer, ** new_buffer;
    
