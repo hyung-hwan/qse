@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.2 2005-09-17 17:50:45 bacon Exp $
+ * $Id: lsp.h,v 1.3 2005-09-18 03:57:26 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -58,7 +58,7 @@ struct xp_lsp_t
 	xp_lsp_creader_t creader;
 	void* creader_extra;
 	int creader_just_set;
-	xp_lsp_token_t*   token;
+	xp_lsp_token_t* token;
 
 	/* for eval */
 	xp_size_t max_eval_depth;  // TODO:....
