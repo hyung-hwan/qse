@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.6 2005-09-18 10:23:19 bacon Exp $
+ * $Id: lsp.h,v 1.7 2005-09-18 11:34:35 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -8,14 +8,14 @@
 /* 
  * HEADER: Lisp
  *   A lisp-like embeddable language processor is provied for application
- *   development that requires scripting.
+ *   development that requires simple scripting.
  *
  */
 
 #include <xp/lsp/types.h>
 #include <xp/lsp/token.h>
 #include <xp/lsp/object.h>
-#include <xp/lsp/memory.h>
+#include <xp/lsp/mem.h>
 
 #define XP_LSP_ERR(lsp)  ((lsp)->errnum)
 enum 
@@ -76,7 +76,7 @@ struct xp_lsp_t
 
 /*
  * TYPEDEF: xp_lsp_t
- *   Defines the lisp object
+ *   Defines a lisp processor
  */
 typedef struct xp_lsp_t xp_lsp_t;
 
@@ -86,14 +86,19 @@ extern "C" {
 
 /*
  * FUNCTION: xp_lsp_open
- *   Instantiate the lisp object
+ *   Instantiates a lisp processor
+ *
+ * PARAMETERS:
+ *   lsp - pointer to lisp processor space or XP_NULL
+ *   mem_ubound - memory upper bound
+ *   mem_ubound_inc - memory increment 
  */
 xp_lsp_t* xp_lsp_open (xp_lsp_t* lisp, 
 	xp_size_t mem_ubound, xp_size_t mem_ubound_inc);
 
 /*
  * FUNCTION: xp_lsp_close
- *   Destroys the lisp object
+ *   Destroys a lisp processor
  *
  * PARAMETERS:
  *   lsp - the pointer to the lisp object

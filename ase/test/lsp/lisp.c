@@ -1,7 +1,8 @@
-#include <xp/lisp/lisp.h>
+#include <xp/lsp/lsp.h>
 #include <xp/bas/stdio.h>
 #include <xp/bas/ctype.h>
 #include <xp/bas/stdcli.h>
+#include <xp/bas/locale.h>
 
 #ifdef __linux
 #include <mcheck.h>
@@ -91,8 +92,8 @@ xp_cli_t* parse_cli (int argc, xp_char_t* argv[])
 
 int xp_main (int argc, xp_char_t* argv[])
 {
-	xp_lisp_t* lisp;
-	xp_lisp_obj_t* obj;
+	xp_lsp_t* lsp;
+	xp_lsp_obj_t* obj;
 	xp_cli_t* cli;
 	int mem, inc;
 
@@ -100,7 +101,11 @@ int xp_main (int argc, xp_char_t* argv[])
 	mtrace ();
 #endif
 
-setlocale (LC_ALL, "");
+	if (xp_setlocale () == -1) {
+		xp_fprintf (xp_stderr,
+			XP_TEXT("error: cannot set locale\n"));
+		return -1;
+	}
 
 	if ((cli = parse_cli (argc, argv)) == XP_NULL) return -1;
 	mem = to_int(xp_getclioptval(cli, XP_TEXT("memory")));
@@ -113,50 +118,50 @@ setlocale (LC_ALL, "");
 		return -1;
 	}
 
-	lisp = xp_lisp_new (mem, inc);
-	if (lisp == XP_NULL) {
+	lsp = xp_lsp_open (XP_NULL, mem, inc);
+	if (lsp == XP_NULL) {
 		xp_fprintf (xp_stderr, 
-			XP_TEXT("error: cannot create a lisp instance\n"));
+			XP_TEXT("error: cannot create a lsp instance\n"));
 		return -1;
 	}
 
-	xp_printf (XP_TEXT("LISP 0.0001\n"));
+	xp_printf (XP_TEXT("LSP 0.0001\n"));
 
-	xp_lisp_set_creader (lisp, get_char, XP_NULL);
+	xp_lsp_attach_input (lsp, get_char);
 
 	for (;;) {
 		xp_printf (XP_TEXT("%s> "), argv[0]);
 
-		obj = xp_lisp_read (lisp);
+		obj = xp_lsp_read (lsp);
 		if (obj == XP_NULL) {
-			if (lisp->error != XP_LISP_ERR_END && 
-			    lisp->error != XP_LISP_ERR_ABORT) {
+			if (lsp->errnum != XP_LSP_ERR_END && 
+			    lsp->errnum != XP_LSP_ERR_ABORT) {
 				xp_fprintf (xp_stderr, 
-					XP_TEXT("error while reading: %d\n"), lisp->error);
+					XP_TEXT("error while reading: %d\n"), lsp->errnum);
 			}
 
-			if (lisp->error < XP_LISP_ERR_SYNTAX) break;
+			if (lsp->errnum < XP_LSP_ERR_SYNTAX) break;
 			continue;
 		}
 
-		if ((obj = xp_lisp_eval (lisp, obj)) != XP_NULL) {
-			xp_lisp_print (lisp, obj);
+		if ((obj = xp_lsp_eval (lsp, obj)) != XP_NULL) {
+			xp_lsp_print (lsp, obj);
 			xp_printf (XP_TEXT("\n"));
 		}
 		else {
-			if (lisp->error == XP_LISP_ERR_ABORT) break;
+			if (lsp->errnum == XP_LSP_ERR_ABORT) break;
 			xp_fprintf (xp_stderr, 
-				XP_TEXT("error while reading: %d\n"), lisp->error);
+				XP_TEXT("error while reading: %d\n"), lsp->errnum);
 		}
 
 		/*
 		printf ("-----------\n");
-		xp_lisp_print (lisp, obj);
+		xp_lsp_print (lsp, obj);
 		printf ("\n-----------\n");
 		*/
 	}
 
-	xp_lisp_free (lisp);
+	xp_lsp_close (lsp);
 
 #ifdef __linux
 	muntrace ();
