@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.11 2005-09-18 10:18:35 bacon Exp $
+ * $Id: read.c,v 1.12 2005-09-18 12:20:43 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -28,7 +28,7 @@
 #define TOKEN_SLENGTH(lsp) (lsp)->token.name.size
 #define TOKEN_ADD_CHAR(lsp,ch) \
 	do { \
-		if (xp_lsp_token_addc (&(lsp)->token, ch) == -1) { \
+		if (xp_lsp_token_addc(&(lsp)->token, ch) == -1) { \
 			lsp->errnum = XP_LSP_ERR_MEM; \
 			return -1; \
 		} \
@@ -47,30 +47,13 @@
 #define TOKEN_INVALID        50
 #define TOKEN_UNTERM_STRING  51
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-static xp_lsp_obj_t* read_obj   (xp_lsp_t* lsp);
-static xp_lsp_obj_t* read_list  (xp_lsp_t* lsp);
-static xp_lsp_obj_t* read_quote (xp_lsp_t* lsp);
-
-static int read_token  (xp_lsp_t* lsp);
-static int read_number (xp_lsp_t* lsp, int negative);
-static int read_ident  (xp_lsp_t* lsp);
-static int read_string (xp_lsp_t* lsp);
-
-#ifdef __cplusplus
-}
-#endif
-
 #define NEXT_CHAR(lsp) \
 	do { \
 		if (lsp->input_func == XP_NULL) { \
 			lsp->errnum = XP_LSP_ERR_INPUT_NOT_ATTACHED; \
 			return -1; \
 		} \
-		else if (lsp->input_func(XP_LSP_IO_CHAR, lsp, XP_NULL) == -1) { \
+		else if (lsp->input_func(lsp, XP_LSP_IO_CHAR, XP_NULL) == -1) { \
 			lsp->errnum = XP_LSP_ERR_INPUT; \
 			return -1; \
 		} \
@@ -81,6 +64,15 @@ static int read_string (xp_lsp_t* lsp);
 		if (read_token(lsp) == -1) return XP_NULL; \
 	} while (0)
 
+static xp_lsp_obj_t* read_obj   (xp_lsp_t* lsp);
+static xp_lsp_obj_t* read_list  (xp_lsp_t* lsp);
+static xp_lsp_obj_t* read_quote (xp_lsp_t* lsp);
+
+static int read_token  (xp_lsp_t* lsp);
+static int read_number (xp_lsp_t* lsp, int negative);
+static int read_ident  (xp_lsp_t* lsp);
+static int read_string (xp_lsp_t* lsp);
+
 xp_lsp_obj_t* xp_lsp_read (xp_lsp_t* lsp)
 {
 	/*NEXT_CHAR (lsp);*/
@@ -88,7 +80,7 @@ xp_lsp_obj_t* xp_lsp_read (xp_lsp_t* lsp)
 		lsp->errnum = XP_LSP_ERR_INPUT_NOT_ATTACHED;
 		return XP_NULL;
 	}
-	else if (lsp->input_func(XP_LSP_IO_CHAR, lsp, XP_NULL) == -1) {
+	else if (lsp->input_func(lsp, XP_LSP_IO_CHAR, XP_NULL) == -1) {
 		lsp->errnum = XP_LSP_ERR_INPUT;
 		return XP_NULL;
 	}
