@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.8 2005-09-18 13:06:43 bacon Exp $
+ * $Id: print.c,v 1.9 2005-09-18 13:23:32 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -61,7 +61,15 @@ void xp_lsp_print_debug (xp_lsp_obj_t* obj)
 
 #define OUTPUT_STR(lsp,str) \
 	do { \
-		if (lsp->output_func(XP_LSP_IO_DATA, lsp->output_arg, (void*)str, xp_strlen(str)) == -1) { \
+		if (lsp->output_func(XP_LSP_IO_DATA, lsp->output_arg, (xp_char_t*)str, xp_strlen(str)) == -1) { \
+			lsp->errnum = XP_LSP_ERR_OUTPUT; \
+			return -1; \
+		} \
+	} while (0)
+
+#define OUTPUT_STRX(lsp,str,len) \
+	do { \
+		if (lsp->output_func(XP_LSP_IO_DATA, lsp->output_arg, (xp_char_t*)str, len) == -1) { \
 			lsp->errnum = XP_LSP_ERR_OUTPUT; \
 			return -1; \
 		} \
@@ -71,7 +79,7 @@ int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj)
 {
 	xp_char_t buf[256];
 
-	if (lsp->output_func != XP_NULL) {
+	if (lsp->output_func == XP_NULL) {
 		lsp->errnum = XP_LSP_ERR_OUTPUT_NOT_ATTACHED;
 		return -1;
 	}
