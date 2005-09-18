@@ -1,9 +1,9 @@
 /*
- * $Id: object.h,v 1.6 2005-09-18 08:10:50 bacon Exp $
+ * $Id: obj.h,v 1.1 2005-09-18 11:54:23 bacon Exp $
  */
 
-#ifndef _XP_LSP_OBJECT_H_
-#define _XP_LSP_OBJECT_H_
+#ifndef _XP_LSP_OBJ_H_
+#define _XP_LSP_OBJ_H_
 
 #include <xp/lsp/types.h>
 

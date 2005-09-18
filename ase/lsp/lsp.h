@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.7 2005-09-18 11:34:35 bacon Exp $
+ * $Id: lsp.h,v 1.8 2005-09-18 11:54:23 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -14,7 +14,7 @@
 
 #include <xp/lsp/types.h>
 #include <xp/lsp/token.h>
-#include <xp/lsp/object.h>
+#include <xp/lsp/obj.h>
 #include <xp/lsp/mem.h>
 
 #define XP_LSP_ERR(lsp)  ((lsp)->errnum)

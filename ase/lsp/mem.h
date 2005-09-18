@@ -1,11 +1,11 @@
 /*
- * $Id: mem.h,v 1.1 2005-09-18 11:34:35 bacon Exp $
+ * $Id: mem.h,v 1.2 2005-09-18 11:54:23 bacon Exp $
  */
 
 #ifndef _XP_LSP_MEM_H_
 #define _XP_LSP_MEM_H_
 
-#include <xp/lsp/object.h>
+#include <xp/lsp/obj.h>
 #include <xp/lsp/env.h>
 #include <xp/lsp/array.h>
 
