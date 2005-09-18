@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.3 2005-09-18 03:57:26 bacon Exp $
+ * $Id: lsp.h,v 1.4 2005-09-18 08:10:50 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -21,27 +21,30 @@
 
 // NOTICE: the function of xp_lsp_creader_t must return -1 on error 
 //         and 0 on success. the first argument must be set to 
-//         XP_LISP_END_CHAR at the end of input.
+//         XP_LSP_END_CHAR at the end of input.
 typedef int (*xp_lsp_creader_t) (xp_cint_t*, void*); 
 
-#define XP_LISP_ERR(lsp)          ((lsp)->error)
-#define XP_LISP_ERR_NONE          0
-#define XP_LISP_ERR_ABORT         1
-#define XP_LISP_ERR_END           2
-#define XP_LISP_ERR_MEM           3
-#define XP_LISP_ERR_READ          4
-#define XP_LISP_ERR_SYNTAX        5
-#define XP_LISP_ERR_BAD_ARG       6
-#define XP_LISP_ERR_WRONG_ARG     7
-#define XP_LISP_ERR_TOO_FEW_ARGS  8
-#define XP_LISP_ERR_TOO_MANY_ARGS 9
-#define XP_LISP_ERR_UNDEF_FUNC    10 
-#define XP_LISP_ERR_BAD_FUNC      11  
-#define XP_LISP_ERR_DUP_FORMAL    12
-#define XP_LISP_ERR_BAD_SYMBOL    13
-#define XP_LISP_ERR_UNDEF_SYMBOL  14
-#define XP_LISP_ERR_EMPTY_BODY    15
-#define XP_LISP_ERR_BAD_VALUE     16
+#define XP_LSP_ERR(lsp)          ((lsp)->error)
+enum 
+{
+	XP_LSP_ERR_NONE = 0,
+	XP_LSP_ERR_ABORT,
+	XP_LSP_ERR_END,
+	XP_LSP_ERR_MEM,
+	XP_LSP_ERR_READ,
+	XP_LSP_ERR_SYNTAX,
+	XP_LSP_ERR_BAD_ARG,
+	XP_LSP_ERR_WRONG_ARG,
+	XP_LSP_ERR_TOO_FEW_ARGS,
+	XP_LSP_ERR_TOO_MANY_ARGS,
+	XP_LSP_ERR_UNDEF_FUNC,
+	XP_LSP_ERR_BAD_FUNC,
+	XP_LSP_ERR_DUP_FORMAL,
+	XP_LSP_ERR_BAD_SYMBOL,
+	XP_LSP_ERR_UNDEF_SYMBOL,
+	XP_LSP_ERR_EMPTY_BODY,
+	XP_LSP_ERR_BAD_VALUE
+};
 
 /*
  * STRUCT: xp_lsp_t
