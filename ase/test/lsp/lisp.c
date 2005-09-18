@@ -8,7 +8,7 @@
 #include <mcheck.h>
 #endif
 
-static int get_char (int cmd, void* owner, void* arg)
+static int get_char (xp_lsp_t* lsp, int cmd, void* arg)
 {
 	xp_cint_t c;
 
@@ -32,7 +32,7 @@ static int get_char (int cmd, void* owner, void* arg)
 	return 0;
 }
 
-static int put_char (int cmd, void* owner, void* arg)
+static int put_char (xp_lsp_t* lsp, int cmd, void* arg)
 {
 
 	switch (cmd) {

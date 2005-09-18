@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.8 2005-09-18 11:54:23 bacon Exp $
+ * $Id: lsp.h,v 1.9 2005-09-18 12:20:43 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -42,7 +42,13 @@ enum
 	XP_LSP_ERR_BAD_VALUE
 };
 
-typedef int (*xp_lsp_io_t) (int cmd, void* owner, void* arg);
+/*
+ * TYPEDEF: xp_lsp_t
+ *   Defines a lisp processor
+ */
+typedef struct xp_lsp_t xp_lsp_t;
+
+typedef int (*xp_lsp_io_t) (xp_lsp_t* lsp, int cmd, void* arg);
 enum 
 {
 	XP_LSP_IO_OPEN,
@@ -73,12 +79,6 @@ struct xp_lsp_t
 	xp_lsp_mem_t* mem;
 	xp_bool_t __malloced;
 };
-
-/*
- * TYPEDEF: xp_lsp_t
- *   Defines a lisp processor
- */
-typedef struct xp_lsp_t xp_lsp_t;
 
 #ifdef __cplusplus
 extern "C" {

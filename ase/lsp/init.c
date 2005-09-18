@@ -1,5 +1,5 @@
 /*
- * $Id: init.c,v 1.1 2005-09-18 10:18:35 bacon Exp $
+ * $Id: init.c,v 1.2 2005-09-18 12:20:43 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -76,7 +76,7 @@ int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input)
 
 	xp_assert (lsp->input_func == XP_NULL);
 
-	if (input(XP_LSP_IO_OPEN, lsp, XP_NULL) == -1) {
+	if (input(lsp, XP_LSP_IO_OPEN, XP_NULL) == -1) {
 		/* TODO: set error number */
 		return -1;
 	}
@@ -87,7 +87,7 @@ int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input)
 int xp_lsp_detach_input (xp_lsp_t* lsp)
 {
 	if (lsp->input_func != XP_NULL) {
-		if (lsp->input_func(XP_LSP_IO_CLOSE, lsp, XP_NULL) == -1) {
+		if (lsp->input_func(lsp, XP_LSP_IO_CLOSE, XP_NULL) == -1) {
 			/* TODO: set error number */
 			return -1;
 		}
@@ -103,7 +103,7 @@ int xp_lsp_attach_output (xp_lsp_t* lsp, xp_lsp_io_t output)
 
 	xp_assert (lsp->output_func == XP_NULL);
 
-	if (output(XP_LSP_IO_OPEN, lsp, XP_NULL) == -1) {
+	if (output(lsp, XP_LSP_IO_OPEN, XP_NULL) == -1) {
 		/* TODO: set error number */
 		return -1;
 	}
@@ -114,7 +114,7 @@ int xp_lsp_attach_output (xp_lsp_t* lsp, xp_lsp_io_t output)
 int xp_lsp_detach_output (xp_lsp_t* lsp)
 {
 	if (lsp->output_func != XP_NULL) {
-		if (lsp->output_func(XP_LSP_IO_CLOSE, lsp, XP_NULL) == -1) {
+		if (lsp->output_func(lsp, XP_LSP_IO_CLOSE, XP_NULL) == -1) {
 			/* TODO: set error number */
 			return -1;
 		}
