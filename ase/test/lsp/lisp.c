@@ -8,19 +8,50 @@
 #include <mcheck.h>
 #endif
 
-static int get_char (xp_cint_t* ch, void* arg)
+static int get_char (int cmd, void* owner, void* arg)
 {
 	xp_cint_t c;
-   
-	c = xp_fgetc(xp_stdin);
-	if (c == XP_CHAR_EOF) {
-		if (xp_ferror(xp_stdin)) return -1;
-		c = XP_CHAR_EOF;
+
+	switch (cmd) {
+	case XP_LSP_IO_OPEN:
+	case XP_LSP_IO_CLOSE:
+		return 0;
+
+	case XP_LSP_IO_CHAR:
+		c = xp_fgetc (xp_stdin);
+		if (c == XP_CHAR_EOF) {
+			if (xp_ferror(xp_stdin)) return -1;
+		}
+		
+		break;
+
+	case XP_LSP_IO_STR:
+		return -1;
 	}
 
-	*ch = c;
 	return 0;
 }
+
+static int put_char (int cmd, void* owner, void* arg)
+{
+
+	switch (cmd) {
+	case XP_LSP_IO_OPEN:
+	case XP_LSP_IO_CLOSE:
+		return 0;
+
+	case XP_LSP_IO_CHAR:
+		xp_fputc (*(xp_char_t*)arg, xp_stdout);
+		break;
+
+	case XP_LSP_IO_STR:
+		xp_fputs ((xp_char_t*)arg, xp_stdout);
+		break;
+	}
+
+	return 0;
+}
+
 
 int to_int (const xp_char_t* str)
 {
@@ -64,6 +95,7 @@ int handle_cli_error (
 
 	return -1;
 }
+
 xp_cli_t* parse_cli (int argc, xp_char_t* argv[])
 {
 	static const xp_char_t* optsta[] =
@@ -128,6 +160,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_printf (XP_TEXT("LSP 0.0001\n"));
 
 	xp_lsp_attach_input (lsp, get_char);
+	xp_lsp_attach_output (lsp, put_char);
 
 	for (;;) {
 		xp_printf (XP_TEXT("%s> "), argv[0]);
@@ -151,14 +184,8 @@ int xp_main (int argc, xp_char_t* argv[])
 		else {
 			if (lsp->errnum == XP_LSP_ERR_ABORT) break;
 			xp_fprintf (xp_stderr, 
-				XP_TEXT("error while reading: %d\n"), lsp->errnum);
+				XP_TEXT("error while evaluating: %d\n"), lsp->errnum);
 		}
-
-		/*
-		printf ("-----------\n");
-		xp_lsp_print (lsp, obj);
-		printf ("\n-----------\n");
-		*/
 	}
 
 	xp_lsp_close (lsp);
