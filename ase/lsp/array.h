@@ -1,5 +1,5 @@
 /*
- * $Id: array.h,v 1.4 2005-05-28 13:34:26 bacon Exp $
+ * $Id: array.h,v 1.5 2005-09-18 08:10:50 bacon Exp $
  */
 
 #ifndef _XP_LSP_ARRAY_H_
@@ -7,26 +7,26 @@
 
 #include <xp/types.h>
 
-struct xp_lisp_array_t 
+struct xp_lsp_array_t 
 {
 	void** buffer;
 	xp_size_t size;
 	xp_size_t capacity;
 };
 
-typedef struct xp_lisp_array_t xp_lisp_array_t;
+typedef struct xp_lsp_array_t xp_lsp_array_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_lisp_array_t* xp_lisp_array_new (xp_size_t capacity);
-void xp_lisp_array_free (xp_lisp_array_t* array);
-int xp_lisp_array_add_item (xp_lisp_array_t* array, void* item);
-int xp_lisp_array_insert (xp_lisp_array_t* array, xp_size_t index, void* value);
-void xp_lisp_array_delete (xp_lisp_array_t* array, xp_size_t index);
-void xp_lisp_array_clear (xp_lisp_array_t* array);
-void** xp_lisp_array_yield (xp_lisp_array_t* array, xp_size_t capacity);
+xp_lsp_array_t* xp_lsp_array_new (xp_size_t capacity);
+void xp_lsp_array_free (xp_lsp_array_t* array);
+int xp_lsp_array_add_item (xp_lsp_array_t* array, void* item);
+int xp_lsp_array_insert (xp_lsp_array_t* array, xp_size_t index, void* value);
+void xp_lsp_array_delete (xp_lsp_array_t* array, xp_size_t index);
+void xp_lsp_array_clear (xp_lsp_array_t* array);
+void** xp_lsp_array_yield (xp_lsp_array_t* array, xp_size_t capacity);
 
 #ifdef __cplusplus
 }
