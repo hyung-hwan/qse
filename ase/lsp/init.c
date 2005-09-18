@@ -1,5 +1,5 @@
 /*
- * $Id: init.c,v 1.2 2005-09-18 12:20:43 bacon Exp $
+ * $Id: init.c,v 1.3 2005-09-18 13:06:43 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -28,6 +28,8 @@ xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp,
 	lsp->curc = XP_CHAR_EOF;
 	lsp->input_func = XP_NULL;
 	lsp->output_func = XP_NULL;
+	lsp->input_arg = XP_NULL;
+	lsp->output_arg = XP_NULL;
 
 	lsp->mem = xp_lsp_mem_new (mem_ubound, mem_ubound_inc);
 	if (lsp->mem == XP_NULL) {
@@ -70,55 +72,59 @@ int xp_lsp_error (xp_lsp_t* lsp, xp_char_t* buf, xp_size_t size)
 	return lsp->errnum;
 }
 
-int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input)
+int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input, void* arg)
 {
 	if (xp_lsp_detach_input(lsp) == -1) return -1;
 
 	xp_assert (lsp->input_func == XP_NULL);
 
-	if (input(lsp, XP_LSP_IO_OPEN, XP_NULL) == -1) {
+	if (input(XP_LSP_IO_OPEN, arg, XP_NULL, 0) == -1) {
 		/* TODO: set error number */
 		return -1;
 	}
 	lsp->input_func = input;
+	lsp->input_arg = arg;
 	return 0;
 }
 
 int xp_lsp_detach_input (xp_lsp_t* lsp)
 {
 	if (lsp->input_func != XP_NULL) {
-		if (lsp->input_func(lsp, XP_LSP_IO_CLOSE, XP_NULL) == -1) {
+		if (lsp->input_func(XP_LSP_IO_CLOSE, lsp->input_arg, XP_NULL, 0) == -1) {
 			/* TODO: set error number */
 			return -1;
 		}
 		lsp->input_func = XP_NULL;
+		lsp->input_arg = XP_NULL;
 	}
 
 	return 0;
 }
 
-int xp_lsp_attach_output (xp_lsp_t* lsp, xp_lsp_io_t output)
+int xp_lsp_attach_output (xp_lsp_t* lsp, xp_lsp_io_t output, void* arg)
 {
 	if (xp_lsp_detach_output(lsp) == -1) return -1;
 
 	xp_assert (lsp->output_func == XP_NULL);
 
-	if (output(lsp, XP_LSP_IO_OPEN, XP_NULL) == -1) {
+	if (output(XP_LSP_IO_OPEN, arg, XP_NULL, 0) == -1) {
 		/* TODO: set error number */
 		return -1;
 	}
 	lsp->output_func = output;
+	lsp->output_arg = arg;
 	return 0;
 }
 
 int xp_lsp_detach_output (xp_lsp_t* lsp)
 {
 	if (lsp->output_func != XP_NULL) {
-		if (lsp->output_func(lsp, XP_LSP_IO_CLOSE, XP_NULL) == -1) {
+		if (lsp->output_func(XP_LSP_IO_CLOSE, lsp->output_arg, XP_NULL, 0) == -1) {
 			/* TODO: set error number */
 			return -1;
 		}
 		lsp->output_func = XP_NULL;
+		lsp->output_arg = XP_NULL;
 	}
 
 	return 0;

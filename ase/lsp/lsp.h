@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.9 2005-09-18 12:20:43 bacon Exp $
+ * $Id: lsp.h,v 1.10 2005-09-18 13:06:43 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -48,13 +48,18 @@ enum
  */
 typedef struct xp_lsp_t xp_lsp_t;
 
-typedef int (*xp_lsp_io_t) (xp_lsp_t* lsp, int cmd, void* arg);
+/*
+ * TYPEDEF: xp_lsp_io_t
+ *   Defines an IO handler
+ */
+typedef xp_ssize_t (*xp_lsp_io_t) (
+	int cmd, void* arg, xp_char_t* data, xp_size_t count);
+
 enum 
 {
 	XP_LSP_IO_OPEN,
 	XP_LSP_IO_CLOSE,
-	XP_LSP_IO_CHAR,
-	XP_LSP_IO_STR
+	XP_LSP_IO_DATA
 };
 
 struct xp_lsp_t 
@@ -74,6 +79,8 @@ struct xp_lsp_t
 	/* io functions */
 	xp_lsp_io_t input_func;
 	xp_lsp_io_t output_func;
+	void* input_arg;
+	void* output_arg;
 
 	/* memory manager */
 	xp_lsp_mem_t* mem;
@@ -113,7 +120,7 @@ int xp_lsp_error (xp_lsp_t* lsp, xp_char_t* buf, xp_size_t size);
 /*
  * FUNCTION: xp_lsp_attach_input
  */
-int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input);
+int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input, void* arg);
 
 /*
  * FUNCTION: xp_lsp_detach_input
@@ -123,7 +130,7 @@ int xp_lsp_detach_input (xp_lsp_t* lsp);
 /*
  * FUNCTION: xp_lsp_attach_output
  */
-int xp_lsp_attach_output (xp_lsp_t* lsp, xp_lsp_io_t output);
+int xp_lsp_attach_output (xp_lsp_t* lsp, xp_lsp_io_t output, void* arg);
 
 /*
  * FUNCTION: xp_lsp_detach_output
