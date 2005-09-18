@@ -3,36 +3,33 @@
 #include <xp/bas/ctype.h>
 #include <xp/bas/stdcli.h>
 #include <xp/bas/locale.h>
+#include <xp/bas/sio.h>
 
 #ifdef __linux
 #include <mcheck.h>
 #endif
 
-static int get_char (xp_lsp_t* lsp, int cmd, void* arg)
+static xp_ssize_t get_input (int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
-	xp_cint_t c;
+	xp_ssize_t n;
 
 	switch (cmd) {
 	case XP_LSP_IO_OPEN:
 	case XP_LSP_IO_CLOSE:
 		return 0;
 
-	case XP_LSP_IO_CHAR:
-		c = xp_fgetc (xp_stdin);
-		if (c == XP_CHAR_EOF) {
-			if (xp_ferror(xp_stdin)) return -1;
-		}
-		
-		break;
-
-	case XP_LSP_IO_STR:
-		return -1;
+	case XP_LSP_IO_DATA:
+		if (size < 0) return -1;
+		n = xp_sio_getc (xp_sio_in, data);
+		if (n == 0) return 0;
+		if (n != 1) return -1;
+		return n;
 	}
 
-	return 0;
+	return -1;
 }
 
-static int put_char (xp_lsp_t* lsp, int cmd, void* arg)
+static xp_ssize_t put_output (int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
 
 	switch (cmd) {
@@ -40,16 +37,11 @@ static int put_char (xp_lsp_t* lsp, int cmd, void* arg)
 	case XP_LSP_IO_CLOSE:
 		return 0;
 
-	case XP_LSP_IO_CHAR:
-		xp_fputc (*(xp_char_t*)arg, xp_stdout);
-		break;
-
-	case XP_LSP_IO_STR:
-		xp_fputs ((xp_char_t*)arg, xp_stdout);
-		break;
+	case XP_LSP_IO_DATA:
+		return xp_sio_putsx (xp_sio_out, data, size);
 	}
 
-	return 0;
+	return -1;
 }
 
 
@@ -159,8 +151,8 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	xp_printf (XP_TEXT("LSP 0.0001\n"));
 
-	xp_lsp_attach_input (lsp, get_char);
-	xp_lsp_attach_output (lsp, put_char);
+	xp_lsp_attach_input (lsp, get_input, XP_NULL);
+	xp_lsp_attach_output (lsp, put_output, XP_NULL);
 
 	for (;;) {
 		xp_printf (XP_TEXT("%s> "), argv[0]);

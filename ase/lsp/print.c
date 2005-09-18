@@ -1,9 +1,10 @@
 /*
- * $Id: print.c,v 1.7 2005-09-18 12:20:43 bacon Exp $
+ * $Id: print.c,v 1.8 2005-09-18 13:06:43 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
 #include <xp/bas/stdio.h>
+#include <xp/bas/string.h>
 
 void xp_lsp_print_debug (xp_lsp_obj_t* obj)
 {
@@ -60,7 +61,7 @@ void xp_lsp_print_debug (xp_lsp_obj_t* obj)
 
 #define OUTPUT_STR(lsp,str) \
 	do { \
-		if (lsp->output_func(lsp, XP_LSP_IO_STR, (void*)str) == -1) { \
+		if (lsp->output_func(XP_LSP_IO_DATA, lsp->output_arg, (void*)str, xp_strlen(str)) == -1) { \
 			lsp->errnum = XP_LSP_ERR_OUTPUT; \
 			return -1; \
 		} \

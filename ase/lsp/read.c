@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.12 2005-09-18 12:20:43 bacon Exp $
+ * $Id: read.c,v 1.13 2005-09-18 13:06:43 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -48,26 +48,16 @@
 #define TOKEN_UNTERM_STRING  51
 
 #define NEXT_CHAR(lsp) \
-	do { \
-		if (lsp->input_func == XP_NULL) { \
-			lsp->errnum = XP_LSP_ERR_INPUT_NOT_ATTACHED; \
-			return -1; \
-		} \
-		else if (lsp->input_func(lsp, XP_LSP_IO_CHAR, XP_NULL) == -1) { \
-			lsp->errnum = XP_LSP_ERR_INPUT; \
-			return -1; \
-		} \
-	} while (0)
+	do { if (read_char(lsp) == -1) return -1;} while (0)
 
 #define NEXT_TOKEN(lsp) \
-	do { \
-		if (read_token(lsp) == -1) return XP_NULL; \
-	} while (0)
+	do { if (read_token(lsp) == -1) return XP_NULL; } while (0)
 
 static xp_lsp_obj_t* read_obj   (xp_lsp_t* lsp);
 static xp_lsp_obj_t* read_list  (xp_lsp_t* lsp);
 static xp_lsp_obj_t* read_quote (xp_lsp_t* lsp);
 
+static int read_char   (xp_lsp_t* lsp);
 static int read_token  (xp_lsp_t* lsp);
 static int read_number (xp_lsp_t* lsp, int negative);
 static int read_ident  (xp_lsp_t* lsp);
@@ -75,15 +65,7 @@ static int read_string (xp_lsp_t* lsp);
 
 xp_lsp_obj_t* xp_lsp_read (xp_lsp_t* lsp)
 {
-	/*NEXT_CHAR (lsp);*/
-	if (lsp->input_func == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_INPUT_NOT_ATTACHED;
-		return XP_NULL;
-	}
-	else if (lsp->input_func(lsp, XP_LSP_IO_CHAR, XP_NULL) == -1) {
-		lsp->errnum = XP_LSP_ERR_INPUT;
-		return XP_NULL;
-	}
+	if (read_char(lsp) == -1) return XP_NULL;
 
 	lsp->errnum = XP_LSP_ERR_NONE;
 	NEXT_TOKEN (lsp);
@@ -237,6 +219,25 @@ static xp_lsp_obj_t* read_quote (xp_lsp_t* lsp)
 	xp_lsp_lock (cons);
 
 	return cons;
+}
+
+static int read_char (xp_lsp_t* lsp)
+{
+	xp_ssize_t n;
+
+	if (lsp->input_func == XP_NULL) {
+		lsp->errnum = XP_LSP_ERR_INPUT_NOT_ATTACHED;
+		return -1;
+	}
+
+	n = lsp->input_func(XP_LSP_IO_DATA, lsp->input_arg, &lsp->curc, 1);
+	if (n == -1) {
+		lsp->errnum = XP_LSP_ERR_INPUT;
+		return -1;
+	}
+
+	if (n == 0) lsp->curc = XP_CHAR_EOF;
+	return 0;
 }
 
 static int read_token (xp_lsp_t* lsp)
