@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.33 2005-09-19 14:24:38 bacon Exp $
+ * $Id: types.h,v 1.34 2005-09-19 14:52:40 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -15,13 +15,14 @@
 
 /*
  * HEADER: types.h
- *   The toolkit predefines various basic data types used constantly
- *   throughout the entire toolkit. The programmers are strongly
+ *   Various basic data types are predefined for convenience sake and used
+ *   constantly thoughout the entire toolkit. The developers are strongly
  *   encouraged to use these data types rather than built-in data types
- *   supported  by compilers wherever possible.
+ *   supported by compilers. 
  *
+ * NOTE: Availabilty 
  *   Some of the data types may or may not be available depending on
- *   the capability of the compiler and the system.
+ *   the capability of the compiler.
  *
  * GROUP: State Types
  *
