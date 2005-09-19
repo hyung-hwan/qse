@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.13 2005-09-19 04:01:45 bacon Exp $
+ * $Id: lsp.h,v 1.14 2005-09-19 14:57:09 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -7,7 +7,7 @@
 
 /* 
  * HEADER: Lisp
- *   A lisp-like embeddable language processor is provied for application
+ *   A lisp-like embeddable language processor is provided for application
  *   development that requires simple scripting.
  *
  */
