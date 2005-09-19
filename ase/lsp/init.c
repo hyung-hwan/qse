@@ -1,5 +1,5 @@
 /*
- * $Id: init.c,v 1.4 2005-09-19 03:05:37 bacon Exp $
+ * $Id: init.c,v 1.5 2005-09-19 12:04:00 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -54,22 +54,6 @@ void xp_lsp_close (xp_lsp_t* lsp)
 	xp_lsp_mem_free (lsp->mem);
 	xp_lsp_token_close (&lsp->token);
 	if (lsp->__malloced) xp_free (lsp);
-}
-
-int xp_lsp_error (xp_lsp_t* lsp, xp_char_t* buf, xp_size_t size)
-{
-	if (buf != XP_NULL || size == 0) return lsp->errnum;
-
-	// TODO:...
-	/*
-	switch (lsp->errnum) {
-
-	default:
-	xp_lsp_copy_string (buf, size, "unknown error");	
-	}
-	*/
-
-	return lsp->errnum;
 }
 
 int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input, void* arg)

@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.2 2005-09-19 03:05:37 bacon Exp $
+ * $Id: mem.c,v 1.3 2005-09-19 12:04:00 bacon Exp $
  */
 
 #include <xp/lsp/mem.h> 
@@ -175,7 +175,10 @@ xp_lsp_obj_t* xp_lsp_allocate (xp_lsp_mem_t* mem, int type, xp_size_t size)
 	XP_LSP_LINK(obj) = mem->used[type];
 	mem->used[type] = obj;
 	mem->count++;
+
+#if 0
 	xp_dprint1 (XP_TEXT("mem->count: %u\n"), mem->count);
+#endif
 
 	return obj;
 }
