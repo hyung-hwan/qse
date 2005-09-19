@@ -1,5 +1,5 @@
 /*
- * $Id: init.c,v 1.3 2005-09-18 13:06:43 bacon Exp $
+ * $Id: init.c,v 1.4 2005-09-19 03:05:37 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -38,7 +38,7 @@ xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp,
 		return XP_NULL;
 	}
 
-	if (xp_lsp_add_prims (lsp->mem) == -1) {
+	if (xp_lsp_add_builtin_prims (lsp->mem) == -1) {
 		xp_lsp_mem_free (lsp->mem);
 		xp_lsp_token_close (&lsp->token);
 		if (lsp->__malloced) xp_free (lsp);

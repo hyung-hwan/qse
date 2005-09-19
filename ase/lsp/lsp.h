@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.11 2005-09-18 14:05:16 bacon Exp $
+ * $Id: lsp.h,v 1.12 2005-09-19 03:05:37 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -44,13 +44,13 @@ enum
 
 /*
  * TYPEDEF: xp_lsp_t
- *   Defines a lisp processor
+ *   Defines a lisp processor type
  */
 typedef struct xp_lsp_t xp_lsp_t;
 
 /*
  * TYPEDEF: xp_lsp_io_t
- *   Defines an IO handler
+ *   Defines an IO handler type
  */
 typedef xp_ssize_t (*xp_lsp_io_t) (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
@@ -61,6 +61,13 @@ enum
 	XP_LSP_IO_CLOSE,
 	XP_LSP_IO_DATA
 };
+
+/*
+ * TYPEDEF: xp_lsp_prim_t
+ *   Defines a primitive type
+ */
+typedef xp_lsp_obj_t* (*xp_lsp_prim_t) (xp_lsp_t* lsp, xp_lsp_obj_t* obj);
+
 
 struct xp_lsp_t 
 {
@@ -186,12 +193,13 @@ int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj);
  *   Adds a user-defined primitive
  */
 int xp_lsp_add_prim (xp_lsp_t* lsp, const xp_char_t* name, xp_lsp_prim_t prim);
+int xp_lsp_add_primx (xp_lsp_t* lsp, const xp_char_t* name, xp_size_t len, xp_lsp_prim_t prim);
 
 /*
  * FUNCTION: xp_lsp_remove_prim
  *   Removes a user-defined primitive
  */
-int xp_lsp_add_prim (xp_lsp_t* lsp, const xp_char_t* name);
+int xp_lsp_remove_prim (xp_lsp_t* lsp, const xp_char_t* name);
 
 #ifdef __cplusplus
 }

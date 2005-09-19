@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.1 2005-09-18 11:34:35 bacon Exp $
+ * $Id: mem.c,v 1.2 2005-09-19 03:05:37 bacon Exp $
  */
 
 #include <xp/lsp/mem.h> 
@@ -92,7 +92,7 @@ void xp_lsp_mem_free (xp_lsp_mem_t* mem)
 	xp_free (mem);
 }
 
-static int xp_lsp_add_prim (
+static int __add_prim (
 	xp_lsp_mem_t* mem, const xp_char_t* name, xp_size_t len, xp_lsp_pimpl_t prim)
 {
 	xp_lsp_obj_t* n, * p;
@@ -113,11 +113,11 @@ static int xp_lsp_add_prim (
 }
 
 
-int xp_lsp_add_prims (xp_lsp_mem_t* mem)
+int xp_lsp_add_builtin_prims (xp_lsp_mem_t* mem)
 {
 
 #define ADD_PRIM(mem,name,len,prim) \
-	if (xp_lsp_add_prim(mem,name,len,prim) == -1) return -1;
+	if (__add_prim(mem,name,len,prim) == -1) return -1;
 
 	ADD_PRIM (mem, XP_TEXT("abort"), 5, xp_lsp_prim_abort);
 	ADD_PRIM (mem, XP_TEXT("eval"),  4, xp_lsp_prim_eval);

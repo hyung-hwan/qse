@@ -155,7 +155,9 @@ int xp_main (int argc, xp_char_t* argv[])
 	xp_lsp_attach_output (lsp, put_output, XP_NULL);
 
 	for (;;) {
-		xp_printf (XP_TEXT("%s> "), argv[0]);
+		xp_sio_puts (xp_sio_out, argv[0]);
+		xp_sio_puts (xp_sio_out, XP_TEXT("> "));
+		xp_sio_flush (xp_sio_out);
 
 		obj = xp_lsp_read (lsp);
 		if (obj == XP_NULL) {
