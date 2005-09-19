@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.32 2005-09-17 17:42:21 bacon Exp $
+ * $Id: types.h,v 1.33 2005-09-19 14:24:38 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -15,7 +15,13 @@
 
 /*
  * HEADER: types.h
- *   The toolkit predefines some of commonly used data types.
+ *   The toolkit predefines various basic data types used constantly
+ *   throughout the entire toolkit. The programmers are strongly
+ *   encouraged to use these data types rather than built-in data types
+ *   supported  by compilers wherever possible.
+ *
+ *   Some of the data types may or may not be available depending on
+ *   the capability of the compiler and the system.
  *
  * GROUP: State Types
  *
@@ -28,15 +34,28 @@
  * GROUP: Integral Types
  *
  * TYPE: xp_byte_t
+ * 
+ * TYPE: xp_word_t
  *
  * TYPE: xp_int_t
+ *   Signed integer whose size equals the size of a pointer
  *
  * TYPE: xp_uint_t
+ *   Unsigned integer whose size equals the size of a pointer
  * 
  * TYPE: xp_long_t
+ *   The largest signed integer available
  *
  * TYPE: xp_ulong_t
+ *   The largest unsigned integer available
  * 
+ * TYPE: xp_size_t
+ *   Unsigned integer which can represent the size of the largest 
+ *   in-memory data
+ *
+ * TYPE: xp_ssize_t
+ *   Signed version of xp_size_t
+ *
  * TYPE: xp_int8_t
  *
  * TYPE: xp_uint8_t
