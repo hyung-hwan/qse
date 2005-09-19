@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.9 2005-09-18 13:23:32 bacon Exp $
+ * $Id: print.c,v 1.10 2005-09-19 16:13:18 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -75,7 +75,7 @@ void xp_lsp_print_debug (xp_lsp_obj_t* obj)
 		} \
 	} while (0)
 
-int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj)
+static int __print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj, xp_bool_t prt_cons_par)
 {
 	xp_char_t buf[256];
 
@@ -117,7 +117,7 @@ int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj)
 	case XP_LSP_OBJ_CONS:
 		{
 			const xp_lsp_obj_t* p = obj;
-			OUTPUT_STR (lsp, XP_TEXT("("));
+			if (prt_cons_par) OUTPUT_STR (lsp, XP_TEXT("("));
 			do {
 				xp_lsp_print (lsp, XP_LSP_CAR(p));
 				p = XP_LSP_CDR(p);
@@ -129,11 +129,16 @@ int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj)
 					}
 				}
 			} while (p != lsp->mem->nil && XP_LSP_TYPE(p) == XP_LSP_OBJ_CONS);
-			OUTPUT_STR (lsp, XP_TEXT(")"));
+			if (prt_cons_par) OUTPUT_STR (lsp, XP_TEXT(")"));
 		}
 		break;
 	case XP_LSP_OBJ_FUNC:
-		OUTPUT_STR (lsp, XP_TEXT("func"));
+		/*OUTPUT_STR (lsp, XP_TEXT("func"));*/
+		OUTPUT_STR (lsp, XP_TEXT("(lambda "));
+		if (__print (lsp, XP_LSP_FFORMAL(obj), xp_true) == -1) return -1;
+		OUTPUT_STR (lsp, XP_TEXT(" "));
+		if (__print (lsp, XP_LSP_FBODY(obj), xp_false) == -1) return -1;
+		OUTPUT_STR (lsp, XP_TEXT(")"));
 		break;
 	case XP_LSP_OBJ_MACRO:
 		OUTPUT_STR (lsp, XP_TEXT("macro"));
@@ -150,3 +155,7 @@ int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj)
 	return 0;
 }
 
+int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj)
+{
+	return __print (lsp, obj, xp_true);
+}

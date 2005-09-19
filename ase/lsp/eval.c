@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.8 2005-09-18 10:18:35 bacon Exp $
+ * $Id: eval.c,v 1.9 2005-09-19 16:13:18 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -44,8 +44,7 @@ xp_lsp_obj_t* xp_lsp_eval (xp_lsp_t* lsp, xp_lsp_obj_t* obj)
 
 static xp_lsp_obj_t* make_func (xp_lsp_t* lsp, xp_lsp_obj_t* cdr, int is_macro)
 {
-	// TODO: lambda expression syntax check.
-	xp_lsp_obj_t* func, * formal, * body;
+	xp_lsp_obj_t* func, * formal, * body, * p;
 
 xp_printf (XP_TEXT("about to create a function or a macro ....\n"));
 
@@ -64,6 +63,14 @@ xp_printf (XP_TEXT("about to create a function or a macro ....\n"));
 
 	if (body == lsp->mem->nil) {
 		lsp->errnum = XP_LSP_ERR_EMPTY_BODY;
+		return XP_NULL;
+	}
+
+	// TODO: more lambda expression syntax checks required???.
+	for (p = body; XP_LSP_TYPE(p) == XP_LSP_OBJ_CONS; p = XP_LSP_CDR(p));
+	if (p != lsp->mem->nil) {
+		/* (lambda (x) (+ x 10) . 4) */
+		lsp->errnum = XP_LSP_ERR_BAD_ARG;
 		return XP_NULL;
 	}
 
