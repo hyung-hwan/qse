@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.12 2005-09-19 03:05:37 bacon Exp $
+ * $Id: lsp.h,v 1.13 2005-09-19 04:01:45 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -193,7 +193,6 @@ int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj);
  *   Adds a user-defined primitive
  */
 int xp_lsp_add_prim (xp_lsp_t* lsp, const xp_char_t* name, xp_lsp_prim_t prim);
-int xp_lsp_add_primx (xp_lsp_t* lsp, const xp_char_t* name, xp_size_t len, xp_lsp_prim_t prim);
 
 /*
  * FUNCTION: xp_lsp_remove_prim
