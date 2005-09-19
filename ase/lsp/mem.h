@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.2 2005-09-18 11:54:23 bacon Exp $
+ * $Id: mem.h,v 1.3 2005-09-19 03:05:37 bacon Exp $
  */
 
 #ifndef _XP_LSP_MEM_H_
@@ -54,7 +54,7 @@ extern "C" {
 xp_lsp_mem_t* xp_lsp_mem_new   (xp_size_t ubound, xp_size_t ubound_inc);
 void       xp_lsp_mem_free  (xp_lsp_mem_t* mem);
 
-int xp_lsp_add_prims (xp_lsp_mem_t* mem);
+int xp_lsp_add_builtin_prims (xp_lsp_mem_t* mem);
 
 xp_lsp_obj_t* xp_lsp_allocate (xp_lsp_mem_t* mem, int type, xp_size_t size);
 void       xp_lsp_dispose  (xp_lsp_mem_t* mem, xp_lsp_obj_t* prev, xp_lsp_obj_t* obj);
