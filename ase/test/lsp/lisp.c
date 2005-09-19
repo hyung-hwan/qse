@@ -176,9 +176,14 @@ int xp_main (int argc, xp_char_t* argv[])
 			xp_sio_puts (xp_sio_out, XP_TEXT("\n"));
 		}
 		else {
-			if (lsp->errnum == XP_LSP_ERR_ABORT) break;
+			int errnum;
+			xp_char_t errstr[256];
+
+			errnum = xp_lsp_error (lsp, errstr, xp_countof(errstr));
+			if (errnum == XP_LSP_ERR_ABORT) break;
 			xp_fprintf (xp_stderr, 
-				XP_TEXT("error while evaluating: %d\n"), lsp->errnum);
+				XP_TEXT("error: [%d] %s\n"), 
+				errnum, errstr);
 		}
 	}
 

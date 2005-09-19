@@ -11,6 +11,6 @@
 ;;;;;;;
 (setq init-rand (macro (seed) (lambda () (setq seed (+ seed 1)))))
 (setq init-rand (lambda (seed) (lambda () (setq seed (+ seed 1)))))
-(setq rand (init-rand 1))
+(set 'rand (init-rand 1))
 (rand)
 
