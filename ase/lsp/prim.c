@@ -1,11 +1,50 @@
 /*
- * $Id: prim.c,v 1.5 2005-09-20 09:17:06 bacon Exp $
+ * $Id: prim.c,v 1.6 2005-09-20 11:19:15 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
 #include <xp/lsp/mem.h>
 #include <xp/lsp/prim.h>
+
+#include <xp/bas/string.h>
 #include <xp/bas/assert.h>
+
+static int __add_prim (xp_lsp_mem_t* mem, 
+	const xp_char_t* name, xp_size_t len, xp_lsp_prim_t prim);
+
+int xp_lsp_add_prim (
+	xp_lsp_t* lsp, const xp_char_t* name, xp_lsp_prim_t prim)
+{
+	return __add_prim (lsp->mem, name, xp_strlen(name), prim);
+}
+
+int xp_lsp_remove_prim (xp_lsp_t* lsp, const xp_char_t* name)
+{
+	// TODO:
+	return -1;
+}
+
+static int __add_prim (xp_lsp_mem_t* mem, 
+	const xp_char_t* name, xp_size_t len, xp_lsp_prim_t prim)
+{
+	xp_lsp_obj_t* n, * p;
+	
+	n = xp_lsp_make_symbolx (mem, name, len);
+	if (n == XP_NULL) return -1;
+
+	xp_lsp_lock (n);
+
+	p = xp_lsp_make_prim (mem, prim);
+	if (p == XP_NULL) return -1;
+
+	xp_lsp_unlock (n);
+
+	if (xp_lsp_set_func(mem, n, p) == XP_NULL) return -1;
+
+	return 0;
+}
+
+
 
 xp_lsp_obj_t* xp_lsp_prim_abort (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 {
@@ -378,20 +417,20 @@ xp_lsp_obj_t* xp_lsp_prim_gt (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_INT) {
 			res = XP_LSP_IVALUE(p1) > XP_LSP_IVALUE(p2);
 		}
-		else if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_FLOAT) {
-			res = XP_LSP_IVALUE(p1) > XP_LSP_FVALUE(p2);
+		else if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_REAL) {
+			res = XP_LSP_IVALUE(p1) > XP_LSP_RVALUE(p2);
 		}
 		else {
 			lsp->errnum = XP_LSP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
-	else if (XP_LSP_TYPE(p1) == XP_LSP_OBJ_FLOAT) {
+	else if (XP_LSP_TYPE(p1) == XP_LSP_OBJ_REAL) {
 		if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_INT) {
-			res = XP_LSP_FVALUE(p1) > XP_LSP_IVALUE(p2);
+			res = XP_LSP_RVALUE(p1) > XP_LSP_IVALUE(p2);
 		}
-		else if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_FLOAT) {
-			res = XP_LSP_FVALUE(p1) > XP_LSP_FVALUE(p2);
+		else if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_REAL) {
+			res = XP_LSP_RVALUE(p1) > XP_LSP_RVALUE(p2);
 		}
 		else {
 			lsp->errnum = XP_LSP_ERR_BAD_VALUE;
@@ -445,20 +484,20 @@ xp_lsp_obj_t* xp_lsp_prim_lt (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_INT) {
 			res = XP_LSP_IVALUE(p1) < XP_LSP_IVALUE(p2);
 		}
-		else if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_FLOAT) {
-			res = XP_LSP_IVALUE(p1) < XP_LSP_FVALUE(p2);
+		else if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_REAL) {
+			res = XP_LSP_IVALUE(p1) < XP_LSP_RVALUE(p2);
 		}
 		else {
 			lsp->errnum = XP_LSP_ERR_BAD_VALUE;
 			return XP_NULL;
 		}
 	}
-	else if (XP_LSP_TYPE(p1) == XP_LSP_OBJ_FLOAT) {
+	else if (XP_LSP_TYPE(p1) == XP_LSP_OBJ_REAL) {
 		if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_INT) {
-			res = XP_LSP_FVALUE(p1) < XP_LSP_IVALUE(p2);
+			res = XP_LSP_RVALUE(p1) < XP_LSP_IVALUE(p2);
 		}
-		else if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_FLOAT) {
-			res = XP_LSP_FVALUE(p1) < XP_LSP_FVALUE(p2);
+		else if (XP_LSP_TYPE(p2) == XP_LSP_OBJ_REAL) {
+			res = XP_LSP_RVALUE(p1) < XP_LSP_RVALUE(p2);
 		}
 		else {
 			lsp->errnum = XP_LSP_ERR_BAD_VALUE;

@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.14 2005-09-20 08:05:32 bacon Exp $
+ * $Id: read.c,v 1.15 2005-09-20 11:19:15 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -23,7 +23,7 @@
 #define TOKEN_CLEAR(lsp)   xp_lsp_token_clear (&(lsp)->token)
 #define TOKEN_TYPE(lsp)    (lsp)->token.type
 #define TOKEN_IVALUE(lsp)  (lsp)->token.ivalue
-#define TOKEN_FVALUE(lsp)  (lsp)->token.fvalue
+#define TOKEN_RVALUE(lsp)  (lsp)->token.rvalue
 #define TOKEN_SVALUE(lsp)  (lsp)->token.name.buffer
 #define TOKEN_SLENGTH(lsp) (lsp)->token.name.size
 #define TOKEN_ADD_CHAR(lsp,ch) \
@@ -37,7 +37,7 @@
 		
 #define TOKEN_END            0
 #define TOKEN_INT            1
-#define TOKEN_FLOAT          2
+#define TOKEN_REAL           2
 #define TOKEN_STRING         3
 #define TOKEN_LPAREN         4
 #define TOKEN_RPAREN         5
@@ -98,13 +98,13 @@ static xp_lsp_obj_t* read_obj (xp_lsp_t* lsp)
 		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
 		xp_lsp_lock (obj);
 		return obj;
-	case TOKEN_FLOAT:
-		obj = xp_lsp_make_float (lsp->mem, TOKEN_FVALUE(lsp));
+	case TOKEN_REAL:
+		obj = xp_lsp_make_real (lsp->mem, TOKEN_RVALUE(lsp));
 		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
 		xp_lsp_lock (obj);
 		return obj;
 	case TOKEN_STRING:
-		obj = xp_lsp_make_string (
+		obj = xp_lsp_make_stringx (
 			lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
 		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
 		xp_lsp_lock (obj);
@@ -114,7 +114,7 @@ static xp_lsp_obj_t* read_obj (xp_lsp_t* lsp)
 		if (TOKEN_COMPARE(lsp,XP_TEXT("nil")) == 0) obj = lsp->mem->nil;
 		else if (TOKEN_COMPARE(lsp,XP_TEXT("t")) == 0) obj = lsp->mem->t;
 		else {
-			obj = xp_lsp_make_symbol (
+			obj = xp_lsp_make_symbolx (
 				lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
 			if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
 			xp_lsp_lock (obj);
@@ -321,6 +321,7 @@ static int read_token (xp_lsp_t* lsp)
 static int read_number (xp_lsp_t* lsp, int negative)
 {
 	xp_lsp_int_t ivalue = 0;
+	xp_lsp_real_t rvalue = 0.;
 
 	do {
 		ivalue = ivalue * 10 + (lsp->curc - XP_CHAR('0'));
@@ -328,12 +329,28 @@ static int read_number (xp_lsp_t* lsp, int negative)
 		NEXT_CHAR (lsp);
 	} while (IS_DIGIT(lsp->curc));
 
-	if (negative) ivalue *= -1;
+/* TODO: extend parsing floating point number  */
+	if (lsp->curc == XP_CHAR('.')) {
+		xp_lsp_real_t fraction = 0.1;
 
-	TOKEN_IVALUE(lsp) = ivalue;
-	TOKEN_TYPE(lsp) = TOKEN_INT;
+		NEXT_CHAR (lsp);
+		rvalue = (xp_lsp_real_t)ivalue;
 
-/* TODO: read floating point numbers */
+		while (IS_DIGIT(lsp->curc)) {
+			rvalue += (xp_lsp_real_t)(lsp->curc - XP_CHAR('0')) * fraction;
+			fraction *= 0.1;
+			NEXT_CHAR (lsp);
+		}
+
+		TOKEN_RVALUE(lsp) = rvalue;
+		TOKEN_TYPE(lsp) = TOKEN_REAL;
+		if (negative) rvalue *= -1;
+	}
+	else {
+		TOKEN_IVALUE(lsp) = ivalue;
+		TOKEN_TYPE(lsp) = TOKEN_INT;
+		if (negative) ivalue *= -1;
+	}
 
 	return 0;
 }

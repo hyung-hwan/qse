@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.11 2005-09-20 08:05:32 bacon Exp $
+ * $Id: print.c,v 1.12 2005-09-20 11:19:15 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -18,8 +18,8 @@ void xp_lsp_print_debug (xp_lsp_obj_t* obj)
 	case XP_LSP_OBJ_INT:
 		xp_printf (XP_TEXT("%d"), XP_LSP_IVALUE(obj));
 		break;
-	case XP_LSP_OBJ_FLOAT:
-		xp_printf (XP_TEXT("%f"), XP_LSP_FVALUE(obj));
+	case XP_LSP_OBJ_REAL:
+		xp_printf (XP_TEXT("%f"), XP_LSP_RVALUE(obj));
 		break;
 	case XP_LSP_OBJ_SYMBOL:
 		xp_printf (XP_TEXT("%s"), XP_LSP_SYMVALUE(obj));
@@ -104,8 +104,16 @@ static int __print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj, xp_bool_t prt_cons_p
 
 		OUTPUT_STR (lsp, buf);
 		break;
-	case XP_LSP_OBJ_FLOAT:
-		xp_sprintf (buf, xp_countof(buf), XP_TEXT("%f"), XP_LSP_FVALUE(obj));
+	case XP_LSP_OBJ_REAL:
+		if (xp_sizeof(xp_lsp_real_t) == xp_sizeof(double)) {
+			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%f"), 
+				(double)XP_LSP_RVALUE(obj));
+		}
+		else if (xp_sizeof(xp_lsp_real_t) == xp_sizeof(long double)) {
+			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%Lf"), 
+				(long double)XP_LSP_RVALUE(obj));
+		}
+
 		OUTPUT_STR (lsp, buf);
 		break;
 	case XP_LSP_OBJ_SYMBOL:

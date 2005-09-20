@@ -1,10 +1,13 @@
 /*
- * $Id: init.c,v 1.7 2005-09-20 09:17:06 bacon Exp $
+ * $Id: init.c,v 1.8 2005-09-20 11:19:15 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
+#include <xp/lsp/prim.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
+
+static int __add_builtin_prims (xp_lsp_t* lsp);
 
 xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp, 
 	xp_size_t mem_ubound, xp_size_t mem_ubound_inc)
@@ -38,7 +41,7 @@ xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp,
 		return XP_NULL;
 	}
 
-	if (xp_lsp_add_builtin_prims (lsp->mem) == -1) {
+	if (__add_builtin_prims(lsp) == -1) {
 		xp_lsp_mem_free (lsp->mem);
 		xp_lsp_token_close (&lsp->token);
 		if (lsp->__malloced) xp_free (lsp);
@@ -116,6 +119,42 @@ int xp_lsp_detach_output (xp_lsp_t* lsp)
 		lsp->output_func = XP_NULL;
 		lsp->output_arg = XP_NULL;
 	}
+
+	return 0;
+}
+
+static int __add_builtin_prims (xp_lsp_t* lsp)
+{
+
+#define ADD_PRIM(mem,name,prim) \
+	if (xp_lsp_add_prim(mem,name,prim) == -1) return -1;
+
+	ADD_PRIM (lsp, XP_TEXT("abort"), xp_lsp_prim_abort);
+	ADD_PRIM (lsp, XP_TEXT("eval"),  xp_lsp_prim_eval);
+	ADD_PRIM (lsp, XP_TEXT("prog1"), xp_lsp_prim_prog1);
+	ADD_PRIM (lsp, XP_TEXT("progn"), xp_lsp_prim_progn);
+	ADD_PRIM (lsp, XP_TEXT("gc"),    xp_lsp_prim_gc);
+
+	ADD_PRIM (lsp, XP_TEXT("cond"),  xp_lsp_prim_cond);
+	ADD_PRIM (lsp, XP_TEXT("if"),    xp_lsp_prim_if);
+	ADD_PRIM (lsp, XP_TEXT("while"), xp_lsp_prim_while);
+
+	ADD_PRIM (lsp, XP_TEXT("car"),   xp_lsp_prim_car);
+	ADD_PRIM (lsp, XP_TEXT("cdr"),   xp_lsp_prim_cdr);
+	ADD_PRIM (lsp, XP_TEXT("cons"),  xp_lsp_prim_cons);
+	ADD_PRIM (lsp, XP_TEXT("set"),   xp_lsp_prim_set);
+	ADD_PRIM (lsp, XP_TEXT("setq"),  xp_lsp_prim_setq);
+	ADD_PRIM (lsp, XP_TEXT("quote"), xp_lsp_prim_quote);
+	ADD_PRIM (lsp, XP_TEXT("defun"), xp_lsp_prim_defun);
+	ADD_PRIM (lsp, XP_TEXT("demac"), xp_lsp_prim_demac);
+	ADD_PRIM (lsp, XP_TEXT("let"),   xp_lsp_prim_let);
+	ADD_PRIM (lsp, XP_TEXT("let*"),  xp_lsp_prim_letx);
+
+	ADD_PRIM (lsp, XP_TEXT(">"),     xp_lsp_prim_gt);
+	ADD_PRIM (lsp, XP_TEXT("<"),     xp_lsp_prim_lt);
+
+	ADD_PRIM (lsp, XP_TEXT("+"),     xp_lsp_prim_plus);
+	ADD_PRIM (lsp, XP_TEXT("-"),     xp_lsp_prim_minus);
 
 	return 0;
 }

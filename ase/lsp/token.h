@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.9 2005-09-18 10:18:35 bacon Exp $
+ * $Id: token.h,v 1.10 2005-09-20 11:19:15 bacon Exp $
  */
 
 #ifndef _XP_LSP_TOKEN_H_
@@ -18,7 +18,7 @@ struct xp_lsp_token_t
 	int type;
 
 	xp_lsp_int_t ivalue;
-	xp_lsp_real_t fvalue;
+	xp_lsp_real_t rvalue;
 
 	xp_lsp_name_t name;
 	xp_bool_t __malloced;
