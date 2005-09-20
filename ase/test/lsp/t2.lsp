@@ -1,4 +1,5 @@
-(setq x (lambda (x) (+ x 20 30 40)))
+;(setq x (lambda (x) (+ x 20 30 40)))
+(defun x(x) (+ x 20 30 40))
 (x 100)
 (x 100)
 (x 100)

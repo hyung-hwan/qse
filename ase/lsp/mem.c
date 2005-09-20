@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.6 2005-09-20 11:19:15 bacon Exp $
+ * $Id: mem.c,v 1.7 2005-09-20 12:06:51 bacon Exp $
  */
 
 #include <xp/lsp/mem.h> 
@@ -536,7 +536,7 @@ xp_lsp_obj_t* xp_lsp_make_prim (xp_lsp_mem_t* mem, void* impl)
 	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_PRIM, xp_sizeof(xp_lsp_obj_prim_t));
 	if (obj == XP_NULL) return XP_NULL;
 
-	XP_LSP_PIMPL(obj) = impl;
+	XP_LSP_PRIM(obj) = impl;
 
 	return obj;
 }

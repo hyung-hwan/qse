@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.11 2005-09-20 09:17:06 bacon Exp $
+ * $Id: eval.c,v 1.12 2005-09-20 12:06:51 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -31,7 +31,8 @@ xp_lsp_obj_t* xp_lsp_eval (xp_lsp_t* lsp, xp_lsp_obj_t* obj)
 		}
 		*/
 
-		if ((assoc = xp_lsp_lookup(lsp->mem, obj)) == XP_NULL) {
+		assoc = xp_lsp_lookup(lsp->mem, obj);
+		if (assoc == XP_NULL || assoc->value == XP_NULL) {
 			if (lsp->opt_undef_symbol) {
 				lsp->errnum = XP_LSP_ERR_UNDEF_SYMBOL;
 				return XP_NULL;
@@ -121,8 +122,8 @@ static xp_lsp_obj_t* eval_cons (xp_lsp_t* lsp, xp_lsp_obj_t* cons)
 				return apply (lsp, func, cdr);
 			}
 			else if (XP_LSP_TYPE(func) == XP_LSP_OBJ_PRIM) {
-				// primitive function
-				return XP_LSP_PIMPL(func) (lsp, cdr);
+				/* primitive function */
+				return XP_LSP_PRIM(func) (lsp, cdr);
 			}
 			else {
 //TODO: emit the name for debugging
