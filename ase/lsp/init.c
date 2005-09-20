@@ -1,5 +1,5 @@
 /*
- * $Id: init.c,v 1.6 2005-09-20 08:05:32 bacon Exp $
+ * $Id: init.c,v 1.7 2005-09-20 09:17:06 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -22,8 +22,8 @@ xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp,
 	}
 
 	lsp->errnum = XP_LSP_ERR_NONE;
-	//lsp->opt_undef_symbol = 1;
-	lsp->opt_undef_symbol = 0;
+	lsp->opt_undef_symbol = 1;
+	//lsp->opt_undef_symbol = 0;
 
 	lsp->curc = XP_CHAR_EOF;
 	lsp->input_func = XP_NULL;

@@ -1,5 +1,5 @@
 /*
- * $Id: prim_let.c,v 1.1 2005-09-19 12:04:00 bacon Exp $
+ * $Id: prim_let.c,v 1.2 2005-09-20 09:17:06 bacon Exp $
  */
 
 #include <xp/lsp/prim.h>
@@ -71,7 +71,7 @@ static xp_lsp_obj_t* __prim_let (
 				xp_lsp_frame_free (frame);
 				return XP_NULL;
 			}
-			if (xp_lsp_frame_insert (frame, n, v) == XP_NULL) {
+			if (xp_lsp_frame_insert_value(frame, n, v) == XP_NULL) {
 				lsp->errnum = XP_LSP_ERR_MEM;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
@@ -80,14 +80,14 @@ static xp_lsp_obj_t* __prim_let (
 			}
 		}
 		else if (XP_LSP_TYPE(ass) == XP_LSP_OBJ_SYMBOL) {
-			if (xp_lsp_frame_lookup (frame, ass) != XP_NULL) {
+			if (xp_lsp_frame_lookup(frame, ass) != XP_NULL) {
 				lsp->errnum = XP_LSP_ERR_DUP_FORMAL;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				xp_lsp_frame_free (frame);
 				return XP_NULL;
 			}
-			if (xp_lsp_frame_insert (frame, ass, lsp->mem->nil) == XP_NULL) {
+			if (xp_lsp_frame_insert_value(frame, ass, lsp->mem->nil) == XP_NULL) {
 				lsp->errnum = XP_LSP_ERR_MEM;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;

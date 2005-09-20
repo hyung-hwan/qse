@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.4 2005-09-20 08:05:32 bacon Exp $
+ * $Id: mem.h,v 1.5 2005-09-20 09:17:06 bacon Exp $
  */
 
 #ifndef _XP_LSP_MEM_H_
@@ -79,11 +79,14 @@ xp_lsp_obj_t* xp_lsp_make_prim   (xp_lsp_mem_t* mem, void* impl);
 
 // frame lookup 
 xp_lsp_assoc_t* xp_lsp_lookup (xp_lsp_mem_t* mem, xp_lsp_obj_t* name);
-xp_lsp_assoc_t* xp_lsp_set    (xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* value);
+xp_lsp_assoc_t* xp_lsp_set_value (
+	xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* value);
+xp_lsp_assoc_t* xp_lsp_set_func (
+	xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* func);
 
 // cons operations
-xp_size_t xp_lsp_cons_len   (xp_lsp_mem_t* mem, xp_lsp_obj_t* obj);
-int    xp_lsp_probe_args (xp_lsp_mem_t* mem, xp_lsp_obj_t* obj, xp_size_t* len);
+xp_size_t xp_lsp_cons_len (xp_lsp_mem_t* mem, xp_lsp_obj_t* obj);
+int xp_lsp_probe_args (xp_lsp_mem_t* mem, xp_lsp_obj_t* obj, xp_size_t* len);
 
 // symbol and string operations
 int  xp_lsp_comp_symbol  (xp_lsp_obj_t* obj, const xp_char_t* str);

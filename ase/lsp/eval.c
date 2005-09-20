@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.10 2005-09-20 08:05:32 bacon Exp $
+ * $Id: eval.c,v 1.11 2005-09-20 09:17:06 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -31,7 +31,7 @@ xp_lsp_obj_t* xp_lsp_eval (xp_lsp_t* lsp, xp_lsp_obj_t* obj)
 		}
 		*/
 
-		if ((assoc = xp_lsp_lookup (lsp->mem, obj)) == XP_NULL) {
+		if ((assoc = xp_lsp_lookup(lsp->mem, obj)) == XP_NULL) {
 			if (lsp->opt_undef_symbol) {
 				lsp->errnum = XP_LSP_ERR_UNDEF_SYMBOL;
 				return XP_NULL;
@@ -107,8 +107,15 @@ static xp_lsp_obj_t* eval_cons (xp_lsp_t* lsp, xp_lsp_obj_t* cons)
 	else if (XP_LSP_TYPE(car) == XP_LSP_OBJ_SYMBOL) {
 		xp_lsp_assoc_t* assoc;
 
-		if ((assoc = xp_lsp_lookup (lsp->mem, car)) != XP_NULL) {
-			xp_lsp_obj_t* func = assoc->value;
+		if ((assoc = xp_lsp_lookup(lsp->mem, car)) != XP_NULL) {
+			//xp_lsp_obj_t* func = assoc->value;
+			xp_lsp_obj_t* func = assoc->func;
+			if (func == XP_NULL) {
+				/* the symbol's function definition is void */
+				lsp->errnum = XP_LSP_ERR_UNDEF_FUNC;
+				return XP_NULL;
+			}
+
 			if (XP_LSP_TYPE(func) == XP_LSP_OBJ_FUNC ||
 			    XP_LSP_TYPE(func) == XP_LSP_OBJ_MACRO) {
 				return apply (lsp, func, cdr);
@@ -152,7 +159,8 @@ static xp_lsp_obj_t* eval_cons (xp_lsp_t* lsp, xp_lsp_obj_t* cons)
 	return XP_NULL;
 }
 
-static xp_lsp_obj_t* apply (xp_lsp_t* lsp, xp_lsp_obj_t* func, xp_lsp_obj_t* actual)
+static xp_lsp_obj_t* apply (
+	xp_lsp_t* lsp, xp_lsp_obj_t* func, xp_lsp_obj_t* actual)
 {
 	xp_lsp_frame_t* frame;
 	xp_lsp_obj_t* formal;
@@ -209,14 +217,18 @@ static xp_lsp_obj_t* apply (xp_lsp_t* lsp, xp_lsp_obj_t* func, xp_lsp_obj_t* act
 			}
 		}
 
-		if (xp_lsp_frame_lookup(frame, XP_LSP_CAR(formal)) != XP_NULL) {
+		if (xp_lsp_frame_lookup (
+			frame, XP_LSP_CAR(formal)) != XP_NULL) {
+
 			lsp->errnum = XP_LSP_ERR_DUP_FORMAL;
 			mem->brooding_frame = frame->link;
 			xp_lsp_frame_free (frame);
 			return XP_NULL;
 		}
 
-		if (xp_lsp_frame_insert(frame, XP_LSP_CAR(formal), value) == XP_NULL) {
+		if (xp_lsp_frame_insert_value (
+			frame, XP_LSP_CAR(formal), value) == XP_NULL) {
+
 			lsp->errnum = XP_LSP_ERR_MEM;
 			mem->brooding_frame = frame->link;
 			xp_lsp_frame_free (frame);
