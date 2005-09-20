@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.3 2005-09-19 12:04:00 bacon Exp $
+ * $Id: mem.c,v 1.4 2005-09-20 08:05:32 bacon Exp $
  */
 
 #include <xp/lsp/mem.h> 
@@ -15,7 +15,7 @@ xp_lsp_mem_t* xp_lsp_mem_new (xp_size_t ubound, xp_size_t ubound_inc)
 	xp_size_t i;
 
 	// allocate memory
-	mem = (xp_lsp_mem_t*)xp_malloc (sizeof(xp_lsp_mem_t));	
+	mem = (xp_lsp_mem_t*)xp_malloc (xp_sizeof(xp_lsp_mem_t));	
 	if (mem == XP_NULL) return XP_NULL;
 
 	// create a new root environment frame
@@ -92,8 +92,8 @@ void xp_lsp_mem_free (xp_lsp_mem_t* mem)
 	xp_free (mem);
 }
 
-static int __add_prim (
-	xp_lsp_mem_t* mem, const xp_char_t* name, xp_size_t len, xp_lsp_pimpl_t prim)
+static int __add_prim (xp_lsp_mem_t* mem, 
+	const xp_char_t* name, xp_size_t len, xp_lsp_pimpl_t prim)
 {
 	xp_lsp_obj_t* n, * p;
 	
@@ -140,15 +140,17 @@ int xp_lsp_add_builtin_prims (xp_lsp_mem_t* mem)
 	ADD_PRIM (mem, XP_TEXT("let"),   3, xp_lsp_prim_let);
 	ADD_PRIM (mem, XP_TEXT("let*"),  4, xp_lsp_prim_letx);
 
-	ADD_PRIM (mem, XP_TEXT("+"),     1, xp_lsp_prim_plus);
 	ADD_PRIM (mem, XP_TEXT(">"),     1, xp_lsp_prim_gt);
 	ADD_PRIM (mem, XP_TEXT("<"),     1, xp_lsp_prim_lt);
+
+	ADD_PRIM (mem, XP_TEXT("+"),     1, xp_lsp_prim_plus);
+	ADD_PRIM (mem, XP_TEXT("-"),     1, xp_lsp_prim_minus);
 
 	return 0;
 }
 
 
-xp_lsp_obj_t* xp_lsp_allocate (xp_lsp_mem_t* mem, int type, xp_size_t size)
+xp_lsp_obj_t* xp_lsp_alloc (xp_lsp_mem_t* mem, int type, xp_size_t size)
 {
 	xp_lsp_obj_t* obj;
 	
@@ -376,14 +378,14 @@ void xp_lsp_garbage_collect (xp_lsp_mem_t* mem)
 xp_lsp_obj_t* xp_lsp_make_nil (xp_lsp_mem_t* mem)
 {
 	if (mem->nil != XP_NULL) return mem->nil;
-	mem->nil = xp_lsp_allocate (mem, XP_LSP_OBJ_NIL, sizeof(xp_lsp_obj_nil_t));
+	mem->nil = xp_lsp_alloc (mem, XP_LSP_OBJ_NIL, xp_sizeof(xp_lsp_obj_nil_t));
 	return mem->nil;
 }
 
 xp_lsp_obj_t* xp_lsp_make_true (xp_lsp_mem_t* mem)
 {
 	if (mem->t != XP_NULL) return mem->t;
-	mem->t = xp_lsp_allocate (mem, XP_LSP_OBJ_TRUE, sizeof(xp_lsp_obj_true_t));
+	mem->t = xp_lsp_alloc (mem, XP_LSP_OBJ_TRUE, xp_sizeof(xp_lsp_obj_true_t));
 	return mem->t;
 }
 
@@ -391,7 +393,7 @@ xp_lsp_obj_t* xp_lsp_make_int (xp_lsp_mem_t* mem, xp_lsp_int_t value)
 {
 	xp_lsp_obj_t* obj;
 
-	obj = xp_lsp_allocate (mem, XP_LSP_OBJ_INT, sizeof(xp_lsp_obj_int_t));
+	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_INT, xp_sizeof(xp_lsp_obj_int_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	XP_LSP_IVALUE(obj) = value;
@@ -403,7 +405,7 @@ xp_lsp_obj_t* xp_lsp_make_float (xp_lsp_mem_t* mem, xp_lsp_real_t value)
 {
 	xp_lsp_obj_t* obj;
 
-	obj = xp_lsp_allocate (mem, XP_LSP_OBJ_FLOAT, sizeof(xp_lsp_obj_float_t));
+	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_FLOAT, xp_sizeof(xp_lsp_obj_float_t));
 	if (obj == XP_NULL) return XP_NULL;
 	
 	XP_LSP_FVALUE(obj) = value;
@@ -425,8 +427,8 @@ xp_lsp_obj_t* xp_lsp_make_symbol (
 	}
 
 	// no such symbol found. create a new one 
-	obj = xp_lsp_allocate (mem, XP_LSP_OBJ_SYMBOL,
-		sizeof(xp_lsp_obj_symbol_t) + (len + 1) * sizeof(xp_char_t));
+	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_SYMBOL,
+		xp_sizeof(xp_lsp_obj_symbol_t) + (len + 1) * xp_sizeof(xp_char_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	// fill in the symbol buffer
@@ -440,8 +442,8 @@ xp_lsp_obj_t* xp_lsp_make_string (xp_lsp_mem_t* mem, const xp_char_t* str, xp_si
 	xp_lsp_obj_t* obj;
 
 	// allocate memory for the string
-	obj = xp_lsp_allocate (mem, XP_LSP_OBJ_STRING,
-		sizeof(xp_lsp_obj_string_t) + (len + 1) * sizeof(xp_char_t));
+	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_STRING,
+		xp_sizeof(xp_lsp_obj_string_t) + (len + 1) * xp_sizeof(xp_char_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	// fill in the string buffer
@@ -454,7 +456,7 @@ xp_lsp_obj_t* xp_lsp_make_cons (xp_lsp_mem_t* mem, xp_lsp_obj_t* car, xp_lsp_obj
 {
 	xp_lsp_obj_t* obj;
 
-	obj = xp_lsp_allocate (mem, XP_LSP_OBJ_CONS, sizeof(xp_lsp_obj_cons_t));
+	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_CONS, xp_sizeof(xp_lsp_obj_cons_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	XP_LSP_CAR(obj) = car;
@@ -467,7 +469,7 @@ xp_lsp_obj_t* xp_lsp_make_func (xp_lsp_mem_t* mem, xp_lsp_obj_t* formal, xp_lsp_
 {
 	xp_lsp_obj_t* obj;
 
-	obj = xp_lsp_allocate (mem, XP_LSP_OBJ_FUNC, sizeof(xp_lsp_obj_func_t));
+	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_FUNC, xp_sizeof(xp_lsp_obj_func_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	XP_LSP_FFORMAL(obj) = formal;
@@ -480,7 +482,7 @@ xp_lsp_obj_t* xp_lsp_make_macro (xp_lsp_mem_t* mem, xp_lsp_obj_t* formal, xp_lsp
 {
 	xp_lsp_obj_t* obj;
 
-	obj = xp_lsp_allocate (mem, XP_LSP_OBJ_MACRO, sizeof(xp_lsp_obj_macro_t));
+	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_MACRO, xp_sizeof(xp_lsp_obj_macro_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	XP_LSP_MFORMAL(obj) = formal;
@@ -493,7 +495,7 @@ xp_lsp_obj_t* xp_lsp_make_prim (xp_lsp_mem_t* mem, void* impl)
 {
 	xp_lsp_obj_t* obj;
 
-	obj = xp_lsp_allocate (mem, XP_LSP_OBJ_PRIM, sizeof(xp_lsp_obj_prim_t));
+	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_PRIM, xp_sizeof(xp_lsp_obj_prim_t));
 	if (obj == XP_NULL) return XP_NULL;
 
 	XP_LSP_PIMPL(obj) = impl;
@@ -519,7 +521,8 @@ xp_lsp_assoc_t* xp_lsp_lookup (xp_lsp_mem_t* mem, xp_lsp_obj_t* name)
 	return XP_NULL;
 }
 
-xp_lsp_assoc_t* xp_lsp_set (xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* value)
+xp_lsp_assoc_t* xp_lsp_set (
+	xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* value)
 {
 	xp_lsp_assoc_t* assoc;
 

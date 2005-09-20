@@ -1,5 +1,5 @@
 /*
- * $Id: init.c,v 1.5 2005-09-19 12:04:00 bacon Exp $
+ * $Id: init.c,v 1.6 2005-09-20 08:05:32 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -45,6 +45,9 @@ xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp,
 		return XP_NULL;
 	}
 
+	lsp->max_eval_depth = 0; // TODO: put restriction here....
+	lsp->cur_eval_depth = 0;
+
 	return lsp;
 }
 
@@ -66,8 +69,10 @@ int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input, void* arg)
 		/* TODO: set error number */
 		return -1;
 	}
+
 	lsp->input_func = input;
 	lsp->input_arg = arg;
+	lsp->curc = XP_CHAR_EOF;
 	return 0;
 }
 
@@ -80,6 +85,7 @@ int xp_lsp_detach_input (xp_lsp_t* lsp)
 		}
 		lsp->input_func = XP_NULL;
 		lsp->input_arg = XP_NULL;
+		lsp->curc = XP_CHAR_EOF;
 	}
 
 	return 0;

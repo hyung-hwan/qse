@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.14 2005-09-19 14:57:09 bacon Exp $
+ * $Id: lsp.h,v 1.15 2005-09-20 08:05:32 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -68,7 +68,6 @@ enum
  */
 typedef xp_lsp_obj_t* (*xp_lsp_prim_t) (xp_lsp_t* lsp, xp_lsp_obj_t* obj);
 
-
 struct xp_lsp_t 
 {
 	/* error number */
@@ -79,15 +78,15 @@ struct xp_lsp_t
 	xp_cint_t curc;
 	xp_lsp_token_t token;
 
-	/* for eval */
-	xp_size_t max_eval_depth;  // TODO:....
-	xp_size_t eval_depth;
-
 	/* io functions */
 	xp_lsp_io_t input_func;
 	xp_lsp_io_t output_func;
 	void* input_arg;
 	void* output_arg;
+
+	/* security options */
+	xp_size_t max_eval_depth;
+	xp_size_t cur_eval_depth;
 
 	/* memory manager */
 	xp_lsp_mem_t* mem;
