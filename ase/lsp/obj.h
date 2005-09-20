@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.2 2005-09-20 11:19:15 bacon Exp $
+ * $Id: obj.h,v 1.3 2005-09-20 12:06:51 bacon Exp $
  */
 
 #ifndef _XP_LSP_OBJ_H_
@@ -29,7 +29,7 @@ enum
 	xp_uint32_t mark:  4; \
 	xp_uint32_t lock:  4; \
 	xp_size_t    size;     \
-	struct    xp_lsp_obj_t* link
+	struct xp_lsp_obj_t* link
 
 struct xp_lsp_obj_t
 {
@@ -100,7 +100,7 @@ struct xp_lsp_obj_macro_t
 struct xp_lsp_obj_prim_t
 {
 	XP_LSP_OBJ_HEADER;
-	void* impl; // xp_lsp_prim_t
+	void* impl;  /* xp_lsp_prim_t */
 };
 
 typedef struct xp_lsp_obj_t         xp_lsp_obj_t;
@@ -146,6 +146,6 @@ typedef struct xp_lsp_obj_prim_t    xp_lsp_obj_prim_t;
 #define XP_LSP_FBODY(x)    (((xp_lsp_obj_func_t*)x)->body)
 #define XP_LSP_MFORMAL(x)  (((xp_lsp_obj_macro_t*)x)->formal)
 #define XP_LSP_MBODY(x)    (((xp_lsp_obj_macro_t*)x)->body)
-#define XP_LSP_PIMPL(x)    ((xp_lsp_prim_t)(((xp_lsp_obj_prim_t*)x)->impl))
+#define XP_LSP_PRIM(x)     ((xp_lsp_prim_t)(((xp_lsp_obj_prim_t*)x)->impl))
 
 #endif

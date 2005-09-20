@@ -1,5 +1,5 @@
 /*
- * $Id: prim.h,v 1.3 2005-09-20 11:19:15 bacon Exp $
+ * $Id: prim.h,v 1.4 2005-09-20 12:06:51 bacon Exp $
  */
 
 #ifndef _XP_LSP_PRIM_H_
@@ -32,11 +32,21 @@ xp_lsp_obj_t* xp_lsp_prim_demac (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 xp_lsp_obj_t* xp_lsp_prim_let   (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 xp_lsp_obj_t* xp_lsp_prim_letx  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 
+/*---------------------
+       prim_compar.c 
+  ---------------------*/
+xp_lsp_obj_t* xp_lsp_prim_eq    (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 xp_lsp_obj_t* xp_lsp_prim_gt    (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 xp_lsp_obj_t* xp_lsp_prim_lt    (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 
-xp_lsp_obj_t* xp_lsp_prim_plus  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_minus  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+/*---------------------
+       prim_math.c 
+  ---------------------*/
+xp_lsp_obj_t* xp_lsp_prim_plus     (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_minus    (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_multiply (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_divide   (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_modulus  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 
 #ifdef __cplusplus
 }
