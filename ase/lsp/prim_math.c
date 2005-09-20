@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.1 2005-09-20 08:05:32 bacon Exp $
+ * $Id: prim_math.c,v 1.2 2005-09-20 09:17:06 bacon Exp $
  */
 
 #include <xp/lsp/prim.h>
@@ -27,6 +27,8 @@ xp_lsp_obj_t* xp_lsp_prim_plus (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		value = value + XP_LSP_IVALUE(tmp);
 		body = XP_LSP_CDR(body);
 	}
+
+	xp_assert (body == lsp->mem->nil);
 
 	tmp = xp_lsp_make_int (lsp->mem, value);
 	if (tmp == XP_NULL) {
@@ -56,9 +58,14 @@ xp_lsp_obj_t* xp_lsp_prim_minus (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 			return XP_NULL;
 		}
 
-		value = value - XP_LSP_IVALUE(tmp);
+		if (body == args) 
+			value = XP_LSP_IVALUE(tmp);
+		else value = value - XP_LSP_IVALUE(tmp);
+
 		body = XP_LSP_CDR(body);
 	}
+
+	xp_assert (body == lsp->mem->nil);
 
 	tmp = xp_lsp_make_int (lsp->mem, value);
 	if (tmp == XP_NULL) {

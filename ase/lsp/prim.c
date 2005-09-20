@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.4 2005-09-20 08:05:32 bacon Exp $
+ * $Id: prim.c,v 1.5 2005-09-20 09:17:06 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -243,7 +243,7 @@ xp_lsp_obj_t* xp_lsp_prim_set (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 	p2 = xp_lsp_eval (lsp, XP_LSP_CAR(XP_LSP_CDR(args)));
 	if (p2 == XP_NULL) return XP_NULL;
 
-	if (xp_lsp_set (lsp->mem, p1, p2) == XP_NULL) {
+	if (xp_lsp_set_value (lsp->mem, p1, p2) == XP_NULL) {
 		lsp->errnum = XP_LSP_ERR_MEM;
 		return XP_NULL;
 	}
@@ -277,7 +277,7 @@ xp_lsp_obj_t* xp_lsp_prim_setq (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		p2 = xp_lsp_eval (lsp, XP_LSP_CAR(XP_LSP_CDR(p)));
 		if (p2 == XP_NULL) return XP_NULL;
 
-		if (xp_lsp_set (lsp->mem, p1, p2) == XP_NULL) {
+		if (xp_lsp_set_value (lsp->mem, p1, p2) == XP_NULL) {
 			lsp->errnum = XP_LSP_ERR_MEM;
 			return XP_NULL;
 		}
@@ -324,7 +324,7 @@ xp_lsp_obj_t* xp_lsp_prim_defun (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		XP_LSP_CAR(XP_LSP_CDR(args)), XP_LSP_CDR(XP_LSP_CDR(args)));
 	if (fun == XP_NULL) return XP_NULL;
 
-	if (xp_lsp_set (lsp->mem, XP_LSP_CAR(args), fun) == XP_NULL) {
+	if (xp_lsp_set_func (lsp->mem, XP_LSP_CAR(args), fun) == XP_NULL) {
 		lsp->errnum = XP_LSP_ERR_MEM;
 		return XP_NULL;
 	}
@@ -352,7 +352,7 @@ xp_lsp_obj_t* xp_lsp_prim_demac (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		XP_LSP_CAR(XP_LSP_CDR(args)), XP_LSP_CDR(XP_LSP_CDR(args)));
 	if (mac == XP_NULL) return XP_NULL;
 
-	if (xp_lsp_set (lsp->mem, XP_LSP_CAR(args), mac) == XP_NULL) {
+	if (xp_lsp_set_func (lsp->mem, XP_LSP_CAR(args), mac) == XP_NULL) {
 		lsp->errnum = XP_LSP_ERR_MEM;
 		return XP_NULL;
 	}

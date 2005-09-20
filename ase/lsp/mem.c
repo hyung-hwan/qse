@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.4 2005-09-20 08:05:32 bacon Exp $
+ * $Id: mem.c,v 1.5 2005-09-20 09:17:06 bacon Exp $
  */
 
 #include <xp/lsp/mem.h> 
@@ -107,7 +107,7 @@ static int __add_prim (xp_lsp_mem_t* mem,
 
 	xp_lsp_unlock (n);
 
-	if (xp_lsp_set (mem, n, p) == XP_NULL) return -1;
+	if (xp_lsp_set_func(mem, n, p) == XP_NULL) return -1;
 
 	return 0;
 }
@@ -521,17 +521,33 @@ xp_lsp_assoc_t* xp_lsp_lookup (xp_lsp_mem_t* mem, xp_lsp_obj_t* name)
 	return XP_NULL;
 }
 
-xp_lsp_assoc_t* xp_lsp_set (
+xp_lsp_assoc_t* xp_lsp_set_value (
 	xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* value)
 {
 	xp_lsp_assoc_t* assoc;
 
 	assoc = xp_lsp_lookup (mem, name);
 	if (assoc == XP_NULL)  {
-		assoc = xp_lsp_frame_insert (mem->root_frame, name, value);
+		assoc = xp_lsp_frame_insert_value (
+			mem->root_frame, name, value);
 		if (assoc == XP_NULL) return XP_NULL;
 	}
 	else assoc->value = value;
+
+	return assoc;
+}
+
+xp_lsp_assoc_t* xp_lsp_set_func (
+	xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* func)
+{
+	xp_lsp_assoc_t* assoc;
+
+	assoc = xp_lsp_lookup (mem, name);
+	if (assoc == XP_NULL)  {
+		assoc = xp_lsp_frame_insert_func (mem->root_frame, name, func);
+		if (assoc == XP_NULL) return XP_NULL;
+	}
+	else assoc->func = func;
 
 	return assoc;
 }
