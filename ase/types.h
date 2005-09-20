@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.34 2005-09-19 14:52:40 bacon Exp $
+ * $Id: types.h,v 1.35 2005-09-20 04:07:40 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -14,7 +14,7 @@
 #endif
 
 /*
- * HEADER: types.h
+ * NOTE: Data Types
  *   Various basic data types are predefined for convenience sake and used
  *   constantly thoughout the entire toolkit. The developers are strongly
  *   encouraged to use these data types rather than built-in data types
