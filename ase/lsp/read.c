@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.13 2005-09-18 13:06:43 bacon Exp $
+ * $Id: read.c,v 1.14 2005-09-20 08:05:32 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -65,7 +65,8 @@ static int read_string (xp_lsp_t* lsp);
 
 xp_lsp_obj_t* xp_lsp_read (xp_lsp_t* lsp)
 {
-	if (read_char(lsp) == -1) return XP_NULL;
+	if (lsp->curc == XP_CHAR_EOF && 
+	    read_char(lsp) == -1) return XP_NULL;
 
 	lsp->errnum = XP_LSP_ERR_NONE;
 	NEXT_TOKEN (lsp);
@@ -290,8 +291,16 @@ static int read_token (xp_lsp_t* lsp)
 	else if (lsp->curc == XP_CHAR('-')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
-		return (IS_DIGIT(lsp->curc))? 
-			read_number (lsp, 1): read_ident (lsp);
+		if (IS_DIGIT(lsp->curc)) {
+			return read_number (lsp, 1);
+		}
+		else if (IS_IDENT(lsp->curc)) {
+			return read_ident (lsp);
+		}
+		else {
+			TOKEN_TYPE(lsp) = TOKEN_IDENT;
+			return 0;
+		}
 	}
 	else if (IS_DIGIT(lsp->curc)) {
 		return read_number (lsp, 0);

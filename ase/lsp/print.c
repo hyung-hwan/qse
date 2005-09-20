@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.10 2005-09-19 16:13:18 bacon Exp $
+ * $Id: print.c,v 1.11 2005-09-20 08:05:32 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -141,7 +141,12 @@ static int __print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj, xp_bool_t prt_cons_p
 		OUTPUT_STR (lsp, XP_TEXT(")"));
 		break;
 	case XP_LSP_OBJ_MACRO:
-		OUTPUT_STR (lsp, XP_TEXT("macro"));
+		/*OUTPUT_STR (lsp, XP_TEXT("macro"));*/
+		OUTPUT_STR (lsp, XP_TEXT("(macro "));
+		if (__print (lsp, XP_LSP_FFORMAL(obj), xp_true) == -1) return -1;
+		OUTPUT_STR (lsp, XP_TEXT(" "));
+		if (__print (lsp, XP_LSP_FBODY(obj), xp_false) == -1) return -1;
+		OUTPUT_STR (lsp, XP_TEXT(")"));
 		break;
 	case XP_LSP_OBJ_PRIM:
 		OUTPUT_STR (lsp, XP_TEXT("prim"));

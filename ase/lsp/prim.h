@@ -1,5 +1,5 @@
 /*
- * $Id: prim.h,v 1.1 2005-09-18 10:18:35 bacon Exp $
+ * $Id: prim.h,v 1.2 2005-09-20 08:05:32 bacon Exp $
  */
 
 #ifndef _XP_LSP_PRIM_H_
@@ -14,29 +14,31 @@ typedef xp_lsp_obj_t* (*xp_lsp_pimpl_t) (xp_lsp_t*, xp_lsp_obj_t*);
 extern "C" {
 #endif
 
-xp_lsp_obj_t* xp_lsp_prim_abort (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_eval  (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_prog1 (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_progn (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_gc    (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_cond  (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_if    (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_while (xp_lsp_t*, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_abort (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_eval  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_prog1 (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_progn (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_gc    (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_cond  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_if    (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_while (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 
-xp_lsp_obj_t* xp_lsp_prim_car   (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_cdr   (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_cons  (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_set   (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_setq  (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_quote (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_defun (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_demac (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_let   (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_letx  (xp_lsp_t*, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_car   (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_cdr   (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_cons  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_set   (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_setq  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_quote (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_defun (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_demac (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_let   (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_letx  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 
-xp_lsp_obj_t* xp_lsp_prim_plus  (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_gt    (xp_lsp_t*, xp_lsp_obj_t* args);
-xp_lsp_obj_t* xp_lsp_prim_lt    (xp_lsp_t*, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_gt    (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_lt    (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+
+xp_lsp_obj_t* xp_lsp_prim_plus  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
+xp_lsp_obj_t* xp_lsp_prim_minus  (xp_lsp_t* lsp, xp_lsp_obj_t* args);
 
 #ifdef __cplusplus
 }

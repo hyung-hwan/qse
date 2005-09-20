@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.9 2005-09-19 16:13:18 bacon Exp $
+ * $Id: eval.c,v 1.10 2005-09-20 08:05:32 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -7,9 +7,12 @@
 #include <xp/lsp/prim.h>
 #include <xp/bas/assert.h>
 
-static xp_lsp_obj_t* make_func (xp_lsp_t* lsp, xp_lsp_obj_t* cdr, int is_macro);
-static xp_lsp_obj_t* eval_cons (xp_lsp_t* lsp, xp_lsp_obj_t* cons);
-static xp_lsp_obj_t* apply     (xp_lsp_t* lsp, xp_lsp_obj_t* func, xp_lsp_obj_t* actual);
+static xp_lsp_obj_t* make_func (
+	xp_lsp_t* lsp, xp_lsp_obj_t* cdr, int is_macro);
+static xp_lsp_obj_t* eval_cons (
+	xp_lsp_t* lsp, xp_lsp_obj_t* cons);
+static xp_lsp_obj_t* apply (
+	xp_lsp_t* lsp, xp_lsp_obj_t* func, xp_lsp_obj_t* actual);
 
 xp_lsp_obj_t* xp_lsp_eval (xp_lsp_t* lsp, xp_lsp_obj_t* obj)
 {
@@ -46,8 +49,6 @@ static xp_lsp_obj_t* make_func (xp_lsp_t* lsp, xp_lsp_obj_t* cdr, int is_macro)
 {
 	xp_lsp_obj_t* func, * formal, * body, * p;
 
-xp_printf (XP_TEXT("about to create a function or a macro ....\n"));
-
 	if (cdr == lsp->mem->nil) {
 		lsp->errnum = XP_LSP_ERR_TOO_FEW_ARGS;
 		return XP_NULL;
@@ -66,10 +67,13 @@ xp_printf (XP_TEXT("about to create a function or a macro ....\n"));
 		return XP_NULL;
 	}
 
-	// TODO: more lambda expression syntax checks required???.
+// TODO: more lambda expression syntax checks required???.
+
+	/* check if the lambda express has non-nil value 
+	 * at the terminating cdr */
 	for (p = body; XP_LSP_TYPE(p) == XP_LSP_OBJ_CONS; p = XP_LSP_CDR(p));
 	if (p != lsp->mem->nil) {
-		/* (lambda (x) (+ x 10) . 4) */
+		/* like in (lambda (x) (+ x 10) . 4) */
 		lsp->errnum = XP_LSP_ERR_BAD_ARG;
 		return XP_NULL;
 	}
@@ -114,18 +118,14 @@ static xp_lsp_obj_t* eval_cons (xp_lsp_t* lsp, xp_lsp_obj_t* cons)
 				return XP_LSP_PIMPL(func) (lsp, cdr);
 			}
 			else {
-				printf ("undefined function: ");
-				xp_lsp_print (lsp, car);
-				printf ("\n");
+//TODO: emit the name for debugging
 				lsp->errnum = XP_LSP_ERR_UNDEF_FUNC;
 				return XP_NULL;
 			}
 		}
 		else {
 			//TODO: better error handling.
-			printf ("undefined function: ");
-			xp_lsp_print (lsp, car);
-			printf ("\n");
+//TODO: emit the name for debugging
 			lsp->errnum = XP_LSP_ERR_UNDEF_FUNC;
 			return XP_NULL;
 		}
@@ -147,9 +147,7 @@ static xp_lsp_obj_t* eval_cons (xp_lsp_t* lsp, xp_lsp_obj_t* cons)
 		}
 	}
 
-	xp_printf (XP_TEXT("bad function: "));
-	xp_lsp_print (lsp, car);
-	xp_printf (XP_TEXT("\n"));
+//TODO: emit the name for debugging
 	lsp->errnum = XP_LSP_ERR_BAD_FUNC;
 	return XP_NULL;
 }
@@ -211,13 +209,14 @@ static xp_lsp_obj_t* apply (xp_lsp_t* lsp, xp_lsp_obj_t* func, xp_lsp_obj_t* act
 			}
 		}
 
-		if (xp_lsp_frame_lookup (frame, XP_LSP_CAR(formal)) != XP_NULL) {
+		if (xp_lsp_frame_lookup(frame, XP_LSP_CAR(formal)) != XP_NULL) {
 			lsp->errnum = XP_LSP_ERR_DUP_FORMAL;
 			mem->brooding_frame = frame->link;
 			xp_lsp_frame_free (frame);
 			return XP_NULL;
 		}
-		if (xp_lsp_frame_insert (frame, XP_LSP_CAR(formal), value) == XP_NULL) {
+
+		if (xp_lsp_frame_insert(frame, XP_LSP_CAR(formal), value) == XP_NULL) {
 			lsp->errnum = XP_LSP_ERR_MEM;
 			mem->brooding_frame = frame->link;
 			xp_lsp_frame_free (frame);
