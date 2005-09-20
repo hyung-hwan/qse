@@ -1,5 +1,5 @@
 /*
- * $Id: prim.h,v 1.2 2005-09-20 08:05:32 bacon Exp $
+ * $Id: prim.h,v 1.3 2005-09-20 11:19:15 bacon Exp $
  */
 
 #ifndef _XP_LSP_PRIM_H_
@@ -7,8 +7,6 @@
 
 #include <xp/lsp/types.h>
 #include <xp/lsp/lsp.h>
-
-typedef xp_lsp_obj_t* (*xp_lsp_pimpl_t) (xp_lsp_t*, xp_lsp_obj_t*);
 
 #ifdef __cplusplus
 extern "C" {

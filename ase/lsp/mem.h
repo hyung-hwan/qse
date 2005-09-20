@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.5 2005-09-20 09:17:06 bacon Exp $
+ * $Id: mem.h,v 1.6 2005-09-20 11:19:15 bacon Exp $
  */
 
 #ifndef _XP_LSP_MEM_H_
@@ -69,13 +69,24 @@ void       xp_lsp_unlock_all (xp_lsp_obj_t* obj);
 xp_lsp_obj_t* xp_lsp_make_nil    (xp_lsp_mem_t* mem);
 xp_lsp_obj_t* xp_lsp_make_true   (xp_lsp_mem_t* mem);
 xp_lsp_obj_t* xp_lsp_make_int    (xp_lsp_mem_t* mem, xp_lsp_int_t value);
-xp_lsp_obj_t* xp_lsp_make_float  (xp_lsp_mem_t* mem, xp_lsp_real_t value);
-xp_lsp_obj_t* xp_lsp_make_symbol (xp_lsp_mem_t* mem, const xp_char_t* str, xp_size_t len);
-xp_lsp_obj_t* xp_lsp_make_string (xp_lsp_mem_t* mem, const xp_char_t* str, xp_size_t len);
-xp_lsp_obj_t* xp_lsp_make_cons   (xp_lsp_mem_t* mem, xp_lsp_obj_t* car, xp_lsp_obj_t* cdr);
-xp_lsp_obj_t* xp_lsp_make_func   (xp_lsp_mem_t* mem, xp_lsp_obj_t* formal, xp_lsp_obj_t* body);
-xp_lsp_obj_t* xp_lsp_make_macro  (xp_lsp_mem_t* mem, xp_lsp_obj_t* formal, xp_lsp_obj_t* body);
-xp_lsp_obj_t* xp_lsp_make_prim   (xp_lsp_mem_t* mem, void* impl);
+xp_lsp_obj_t* xp_lsp_make_real  (xp_lsp_mem_t* mem, xp_lsp_real_t value);
+
+xp_lsp_obj_t* xp_lsp_make_symbol (
+	xp_lsp_mem_t* mem, const xp_char_t* str);
+xp_lsp_obj_t* xp_lsp_make_symbolx (
+	xp_lsp_mem_t* mem, const xp_char_t* str, xp_size_t len);
+xp_lsp_obj_t* xp_lsp_make_string (
+	xp_lsp_mem_t* mem, const xp_char_t* str);
+xp_lsp_obj_t* xp_lsp_make_stringx (
+	xp_lsp_mem_t* mem, const xp_char_t* str, xp_size_t len);
+xp_lsp_obj_t* xp_lsp_make_cons (
+	xp_lsp_mem_t* mem, xp_lsp_obj_t* car, xp_lsp_obj_t* cdr);
+xp_lsp_obj_t* xp_lsp_make_func (
+	xp_lsp_mem_t* mem, xp_lsp_obj_t* formal, xp_lsp_obj_t* body);
+xp_lsp_obj_t* xp_lsp_make_macro (
+	xp_lsp_mem_t* mem, xp_lsp_obj_t* formal, xp_lsp_obj_t* body);
+
+xp_lsp_obj_t* xp_lsp_make_prim (xp_lsp_mem_t* mem, void* impl);
 
 // frame lookup 
 xp_lsp_assoc_t* xp_lsp_lookup (xp_lsp_mem_t* mem, xp_lsp_obj_t* name);

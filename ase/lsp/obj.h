@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.1 2005-09-18 11:54:23 bacon Exp $
+ * $Id: obj.h,v 1.2 2005-09-20 11:19:15 bacon Exp $
  */
 
 #ifndef _XP_LSP_OBJ_H_
@@ -13,7 +13,7 @@ enum
 	XP_LSP_OBJ_NIL = 0,
 	XP_LSP_OBJ_TRUE,
 	XP_LSP_OBJ_INT,
-	XP_LSP_OBJ_FLOAT,
+	XP_LSP_OBJ_REAL,
 	XP_LSP_OBJ_SYMBOL,
 	XP_LSP_OBJ_STRING,
 	XP_LSP_OBJ_CONS,
@@ -52,7 +52,7 @@ struct xp_lsp_obj_int_t
 	xp_lsp_int_t value;
 };
 
-struct xp_lsp_obj_float_t
+struct xp_lsp_obj_real_t
 {
 	XP_LSP_OBJ_HEADER;
 	xp_lsp_real_t value;
@@ -107,7 +107,7 @@ typedef struct xp_lsp_obj_t         xp_lsp_obj_t;
 typedef struct xp_lsp_obj_nil_t     xp_lsp_obj_nil_t;
 typedef struct xp_lsp_obj_true_t    xp_lsp_obj_true_t;
 typedef struct xp_lsp_obj_int_t     xp_lsp_obj_int_t;
-typedef struct xp_lsp_obj_float_t   xp_lsp_obj_float_t;
+typedef struct xp_lsp_obj_real_t   xp_lsp_obj_real_t;
 typedef struct xp_lsp_obj_symbol_t  xp_lsp_obj_symbol_t;
 typedef struct xp_lsp_obj_string_t  xp_lsp_obj_string_t;
 typedef struct xp_lsp_obj_cons_t    xp_lsp_obj_cons_t;
@@ -124,7 +124,7 @@ typedef struct xp_lsp_obj_prim_t    xp_lsp_obj_prim_t;
 
 // value access
 #define XP_LSP_IVALUE(x)   (((xp_lsp_obj_int_t*)x)->value)
-#define XP_LSP_FVALUE(x)   (((xp_lsp_obj_float_t*)x)->value)
+#define XP_LSP_RVALUE(x)   (((xp_lsp_obj_real_t*)x)->value)
 
 #ifdef __BORLANDC__
 #define XP_LSP_SYMVALUE(x) ((xp_char_t*)(((xp_lsp_obj_symbol_t*)x) + 1))
@@ -146,6 +146,6 @@ typedef struct xp_lsp_obj_prim_t    xp_lsp_obj_prim_t;
 #define XP_LSP_FBODY(x)    (((xp_lsp_obj_func_t*)x)->body)
 #define XP_LSP_MFORMAL(x)  (((xp_lsp_obj_macro_t*)x)->formal)
 #define XP_LSP_MBODY(x)    (((xp_lsp_obj_macro_t*)x)->body)
-#define XP_LSP_PIMPL(x)    ((xp_lsp_pimpl_t)(((xp_lsp_obj_prim_t*)x)->impl))
+#define XP_LSP_PIMPL(x)    ((xp_lsp_prim_t)(((xp_lsp_obj_prim_t*)x)->impl))
 
 #endif
