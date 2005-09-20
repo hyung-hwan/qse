@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.15 2005-09-20 08:05:32 bacon Exp $
+ * $Id: lsp.h,v 1.16 2005-09-20 14:38:39 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -106,7 +106,7 @@ extern "C" {
  *   mem_ubound - memory upper bound
  *   mem_ubound_inc - memory increment 
  */
-xp_lsp_t* xp_lsp_open (xp_lsp_t* lisp, 
+xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp, 
 	xp_size_t mem_ubound, xp_size_t mem_ubound_inc);
 
 /*
@@ -116,7 +116,7 @@ xp_lsp_t* xp_lsp_open (xp_lsp_t* lisp,
  * PARAMETERS:
  *   lsp - the pointer to the lisp object
  */
-void xp_lsp_close  (xp_lsp_t* lsp);
+void xp_lsp_close (xp_lsp_t* lsp);
 
 /*
  * FUNCTION: xp_lsp_error
