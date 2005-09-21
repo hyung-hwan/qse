@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.1 2005-09-19 12:04:00 bacon Exp $
+ * $Id: error.c,v 1.2 2005-09-21 12:04:05 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -26,7 +26,8 @@ static const xp_char_t* __errstr[] =
 	XP_TEXT("bad symbol"),
 	XP_TEXT("undefined symbol"),
 	XP_TEXT("empty body"),
-	XP_TEXT("bad value")
+	XP_TEXT("bad value"),
+	XP_TEXT("divide by zero")
 };
 
 int xp_lsp_error (xp_lsp_t* lsp, xp_char_t* buf, xp_size_t size)

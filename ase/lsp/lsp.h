@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.16 2005-09-20 14:38:39 bacon Exp $
+ * $Id: lsp.h,v 1.17 2005-09-21 12:04:05 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -39,7 +39,8 @@ enum
 	XP_LSP_ERR_BAD_SYMBOL,
 	XP_LSP_ERR_UNDEF_SYMBOL,
 	XP_LSP_ERR_EMPTY_BODY,
-	XP_LSP_ERR_BAD_VALUE
+	XP_LSP_ERR_BAD_VALUE,
+	XP_LSP_ERR_DIVIDE_BY_ZERO
 };
 
 /*

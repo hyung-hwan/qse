@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.4 2005-09-20 12:06:51 bacon Exp $
+ * $Id: prim_math.c,v 1.5 2005-09-21 12:04:05 bacon Exp $
  */
 
 #include <xp/lsp/prim.h>
@@ -225,8 +225,13 @@ xp_lsp_obj_t* xp_lsp_prim_divide (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 				ivalue = XP_LSP_IVALUE(tmp);
 			}
 			else {
-				if (!realnum) 
+				if (!realnum) {
+					if (XP_LSP_IVALUE(tmp) == 0) {
+						lsp->errnum = XP_LSP_ERR_DIVIDE_BY_ZERO;
+						return XP_NULL;
+					}
 					ivalue = ivalue / XP_LSP_IVALUE(tmp);
+				}
 				else
 					rvalue = rvalue / XP_LSP_IVALUE(tmp);
 			}
@@ -286,6 +291,10 @@ xp_lsp_obj_t* xp_lsp_prim_modulus (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 				ivalue = XP_LSP_IVALUE(tmp);
 			}
 			else {
+				if (XP_LSP_IVALUE(tmp) == 0) {
+					lsp->errnum = XP_LSP_ERR_DIVIDE_BY_ZERO;
+					return XP_NULL;
+				}
 				ivalue = ivalue % XP_LSP_IVALUE(tmp);
 			}
 		}
@@ -294,7 +303,12 @@ xp_lsp_obj_t* xp_lsp_prim_modulus (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 				ivalue = (xp_lsp_int_t)XP_LSP_RVALUE(tmp);
 			}
 			else {
-				ivalue = ivalue % (xp_lsp_int_t)XP_LSP_RVALUE(tmp);
+				xp_lsp_int_t tmpi = (xp_lsp_int_t)XP_LSP_RVALUE(tmp);
+				if (tmpi == 0) {
+					lsp->errnum = XP_LSP_ERR_DIVIDE_BY_ZERO;
+					return XP_NULL;
+				}
+				ivalue = ivalue % tmpi;
 			}
 		}
 		else {
