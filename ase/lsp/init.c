@@ -1,5 +1,5 @@
 /*
- * $Id: init.c,v 1.9 2005-09-20 12:06:51 bacon Exp $
+ * $Id: init.c,v 1.10 2005-09-21 11:52:36 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -151,8 +151,11 @@ static int __add_builtin_prims (xp_lsp_t* lsp)
 	ADD_PRIM (lsp, XP_TEXT("let*"),  xp_lsp_prim_letx);
 
 	ADD_PRIM (lsp, XP_TEXT("="),     xp_lsp_prim_eq);
+	ADD_PRIM (lsp, XP_TEXT("/="),    xp_lsp_prim_ne);
 	ADD_PRIM (lsp, XP_TEXT(">"),     xp_lsp_prim_gt);
 	ADD_PRIM (lsp, XP_TEXT("<"),     xp_lsp_prim_lt);
+	ADD_PRIM (lsp, XP_TEXT(">="),    xp_lsp_prim_ge);
+	ADD_PRIM (lsp, XP_TEXT("<="),    xp_lsp_prim_le);
 
 	ADD_PRIM (lsp, XP_TEXT("+"),     xp_lsp_prim_plus);
 	ADD_PRIM (lsp, XP_TEXT("-"),     xp_lsp_prim_minus);
