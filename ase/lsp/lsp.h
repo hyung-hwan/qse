@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.17 2005-09-21 12:04:05 bacon Exp $
+ * $Id: lsp.h,v 1.18 2005-09-23 13:27:54 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -23,7 +23,7 @@ enum
 	XP_LSP_ERR_NONE = 0,
 	XP_LSP_ERR_ABORT,
 	XP_LSP_ERR_END,
-	XP_LSP_ERR_MEM,
+	XP_LSP_ERR_MEMORY,
 	XP_LSP_ERR_INPUT_NOT_ATTACHED,
 	XP_LSP_ERR_INPUT,
 	XP_LSP_ERR_OUTPUT_NOT_ATTACHED,
