@@ -1,5 +1,5 @@
 /*
- * $Id: prim_let.c,v 1.2 2005-09-20 09:17:06 bacon Exp $
+ * $Id: prim_let.c,v 1.3 2005-09-24 08:16:02 bacon Exp $
  */
 
 #include <xp/lsp/prim.h>
@@ -17,7 +17,7 @@ static xp_lsp_obj_t* __prim_let (
 	// create a new frame
 	frame = xp_lsp_frame_new ();
 	if (frame == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 	//frame->link = lsp->mem->frame;
@@ -72,7 +72,7 @@ static xp_lsp_obj_t* __prim_let (
 				return XP_NULL;
 			}
 			if (xp_lsp_frame_insert_value(frame, n, v) == XP_NULL) {
-				lsp->errnum = XP_LSP_ERR_MEM;
+				lsp->errnum = XP_LSP_ERR_MEMORY;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				xp_lsp_frame_free (frame);
@@ -88,7 +88,7 @@ static xp_lsp_obj_t* __prim_let (
 				return XP_NULL;
 			}
 			if (xp_lsp_frame_insert_value(frame, ass, lsp->mem->nil) == XP_NULL) {
-				lsp->errnum = XP_LSP_ERR_MEM;
+				lsp->errnum = XP_LSP_ERR_MEMORY;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				xp_lsp_frame_free (frame);

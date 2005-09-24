@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.15 2005-09-20 11:19:15 bacon Exp $
+ * $Id: read.c,v 1.16 2005-09-24 08:16:02 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -29,7 +29,7 @@
 #define TOKEN_ADD_CHAR(lsp,ch) \
 	do { \
 		if (xp_lsp_token_addc(&(lsp)->token, ch) == -1) { \
-			lsp->errnum = XP_LSP_ERR_MEM; \
+			lsp->errnum = XP_LSP_ERR_MEMORY; \
 			return -1; \
 		} \
 	} while (0)
@@ -95,18 +95,18 @@ static xp_lsp_obj_t* read_obj (xp_lsp_t* lsp)
 		return read_quote (lsp);
 	case TOKEN_INT:
 		obj = xp_lsp_make_int (lsp->mem, TOKEN_IVALUE(lsp));
-		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
+		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEMORY;
 		xp_lsp_lock (obj);
 		return obj;
 	case TOKEN_REAL:
 		obj = xp_lsp_make_real (lsp->mem, TOKEN_RVALUE(lsp));
-		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
+		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEMORY;
 		xp_lsp_lock (obj);
 		return obj;
 	case TOKEN_STRING:
 		obj = xp_lsp_make_stringx (
 			lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
-		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
+		if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEMORY;
 		xp_lsp_lock (obj);
 		return obj;
 	case TOKEN_IDENT:
@@ -116,7 +116,7 @@ static xp_lsp_obj_t* read_obj (xp_lsp_t* lsp)
 		else {
 			obj = xp_lsp_make_symbolx (
 				lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
-			if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEM;
+			if (obj == XP_NULL) lsp->errnum = XP_LSP_ERR_MEMORY;
 			xp_lsp_lock (obj);
 		}
 		return obj;
@@ -175,7 +175,7 @@ static xp_lsp_obj_t* read_list (xp_lsp_t* lsp)
 		p = (xp_lsp_obj_cons_t*)xp_lsp_make_cons (
 			lsp->mem, lsp->mem->nil, lsp->mem->nil);
 		if (p == XP_NULL) {
-			lsp->errnum = XP_LSP_ERR_MEM;
+			lsp->errnum = XP_LSP_ERR_MEMORY;
 			return XP_NULL;
 		}
 		xp_lsp_lock ((xp_lsp_obj_t*)p);
@@ -207,14 +207,14 @@ static xp_lsp_obj_t* read_quote (xp_lsp_t* lsp)
 
 	cons = xp_lsp_make_cons (lsp->mem, tmp, lsp->mem->nil);
 	if (cons == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 	xp_lsp_lock (cons);
 
 	cons = xp_lsp_make_cons (lsp->mem, lsp->mem->quote, cons);
 	if (cons == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 	xp_lsp_lock (cons);

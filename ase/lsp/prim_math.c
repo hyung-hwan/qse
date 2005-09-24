@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.5 2005-09-21 12:04:05 bacon Exp $
+ * $Id: prim_math.c,v 1.6 2005-09-24 08:16:02 bacon Exp $
  */
 
 #include <xp/lsp/prim.h>
@@ -65,7 +65,7 @@ xp_lsp_obj_t* xp_lsp_prim_plus (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		xp_lsp_make_real (lsp->mem, rvalue):
 		xp_lsp_make_int (lsp->mem, ivalue);
 	if (tmp == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 
@@ -130,7 +130,7 @@ xp_lsp_obj_t* xp_lsp_prim_minus (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		xp_lsp_make_real (lsp->mem, rvalue):
 		xp_lsp_make_int (lsp->mem, ivalue);
 	if (tmp == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 
@@ -195,7 +195,7 @@ xp_lsp_obj_t* xp_lsp_prim_multiply (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		xp_lsp_make_real (lsp->mem, rvalue):
 		xp_lsp_make_int (lsp->mem, ivalue);
 	if (tmp == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 
@@ -265,7 +265,7 @@ xp_lsp_obj_t* xp_lsp_prim_divide (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 		xp_lsp_make_real (lsp->mem, rvalue):
 		xp_lsp_make_int (lsp->mem, ivalue);
 	if (tmp == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 
@@ -324,7 +324,7 @@ xp_lsp_obj_t* xp_lsp_prim_modulus (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 
 	tmp = xp_lsp_make_int (lsp->mem, ivalue);
 	if (tmp == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 
