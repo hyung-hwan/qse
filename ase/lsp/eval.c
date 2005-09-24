@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.12 2005-09-20 12:06:51 bacon Exp $
+ * $Id: eval.c,v 1.13 2005-09-24 08:16:02 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -83,7 +83,7 @@ static xp_lsp_obj_t* make_func (xp_lsp_t* lsp, xp_lsp_obj_t* cdr, int is_macro)
 		xp_lsp_make_macro (lsp->mem, formal, body):
 		xp_lsp_make_func (lsp->mem, formal, body);
 	if (func == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 
@@ -189,7 +189,7 @@ static xp_lsp_obj_t* apply (
 	// make a new frame.
 	frame = xp_lsp_frame_new ();
 	if (frame == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEM;
+		lsp->errnum = XP_LSP_ERR_MEMORY;
 		return XP_NULL;
 	}
 
@@ -230,7 +230,7 @@ static xp_lsp_obj_t* apply (
 		if (xp_lsp_frame_insert_value (
 			frame, XP_LSP_CAR(formal), value) == XP_NULL) {
 
-			lsp->errnum = XP_LSP_ERR_MEM;
+			lsp->errnum = XP_LSP_ERR_MEMORY;
 			mem->brooding_frame = frame->link;
 			xp_lsp_frame_free (frame);
 			return XP_NULL;
