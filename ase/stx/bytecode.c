@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.13 2005-09-13 11:15:41 bacon Exp $
+ * $Id: bytecode.c,v 1.14 2005-09-30 12:19:00 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -121,7 +121,8 @@ static int __decode2 (xp_stx_t* stx,
 		XP_TEXT("push_active_context"),
 		XP_TEXT("push_nil"),
 		XP_TEXT("push_true"),
-		XP_TEXT("push_false")
+		XP_TEXT("push_false"),
+		XP_TEXT("push_receiver")
 	};
 
 	static const xp_char_t* return_opcode_names[] = 
@@ -151,7 +152,7 @@ static int __decode2 (xp_stx_t* stx,
 			xp_printf (XP_TEXT("%s %d\n"), 
 				stack_opcode_names[code & 0x0F], next);
 		}
-		else if (code >= 0x67 && code <= 0x6C) {
+		else if (code >= 0x67 && code <= 0x6D) {
 			/* stack special */
 			xp_printf (XP_TEXT("%s\n"),
 				stack_special_opcode_names[code - 0x67]);

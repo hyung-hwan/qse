@@ -171,8 +171,14 @@ int xp_main (int argc, xp_char_t* argv[])
 				xp_stx_parser_error_string (&parser));
 		}
 
-		xp_printf (XP_TEXT("== Decoded Methods ==\n"));
+		xp_printf (XP_TEXT("\n== Decoded Methods ==\n"));
 		if (xp_stx_decode(&stx, n) == -1) {
+			xp_printf (XP_TEXT("parser error <%s>\n"), 
+				xp_stx_parser_error_string (&parser));
+		}
+
+		xp_printf (XP_TEXT("\n== Decoded Methods for Symbol ==\n"));
+		if (xp_stx_decode(&stx, stx.class_symbol) == -1) {
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
 				xp_stx_parser_error_string (&parser));
 		}
@@ -196,6 +202,7 @@ exit_program:
 	muntrace ();
 #endif
 	
+/*
 #ifdef __linux
 	{
 		char buf[1000];
@@ -203,6 +210,7 @@ exit_program:
 		system (buf);
 	}
 #endif
+*/
 	return 0;
 }
 

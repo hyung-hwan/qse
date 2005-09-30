@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.15 2005-09-13 15:56:23 bacon Exp $
+ * $Id: interp.c,v 1.16 2005-09-30 12:19:00 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -42,6 +42,7 @@ struct process_t
 	xp_word_t  stack_base;
 	xp_word_t  stack_top;
 
+	xp_word_t  receiver;
 	xp_word_t  method;
 	xp_word_t  pc;
 
@@ -93,6 +94,7 @@ xp_printf (XP_TEXT("out of memory in xp_stx_interp\n"));
 	proc.argcount = XP_STX_FROM_SMALLINT(mthobj->argcount); 
 	proc.tmpcount = XP_STX_FROM_SMALLINT(mthobj->tmpcount);
 
+	proc.receiver = receiver;
 	proc.method = method;
 	proc.pc = 0;
 
@@ -143,10 +145,25 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 			int what = code >> 4;
 			int index = code & 0x0F;
 			__store_from_stack (stx, proc, code >> 4, code & 0x0F);
-
 		}
 
-		/* more here .... */
+		/* TODO: more here .... */
+
+		else if (code == 0x6A) {
+			proc->stack[proc->stack_top++] =  stx->nil;
+		}
+		else if (code == 0x6B) {
+			proc->stack[proc->stack_top++] =  stx->true;
+		}
+		else if (code == 0x6C) {
+			proc->stack[proc->stack_top++] =  stx->false;
+		}
+		else if (code == 0x6D) {
+			/* push receiver */
+			proc->stack[proc->stack_top++] =  proc->receiver;
+		}
+
+		/* TODO: more here .... */
 
 		else if (code == 0x70) {
 			next = proc->bytecodes[proc->pc++];
@@ -267,6 +284,7 @@ xp_printf (XP_TEXT("cannot find the method....\n"));
 	proc->stack_base = proc->stack_top - 3 - tmpcount - argcount - 1;
 	xp_assert (proc->stack_base > 0);
 
+	proc->receiver = receiver;
 	proc->method = method;
 	proc->pc = 0;
 
@@ -293,13 +311,17 @@ static int __return_from_message (xp_stx_t* stx, process_t* proc)
 	method = proc->stack[proc->stack_base + 1 + proc->tmpcount + proc->argcount + 1];
 	pc = proc->stack[proc->stack_base + 1 + proc->tmpcount + proc->argcount];
 
-
 	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx,method);
 	xp_assert (mthobj != XP_NULL);
 	
+	/* return value is located on top of the previous stack */
+	proc->stack[proc->stack_base - 1] = proc->stack[proc->stack_top - 1];
+
+	/* restore the stack pointers */
 	proc->stack_top = proc->stack_base;
 	proc->stack_base = stack_base;
 
+	proc->receiver = proc->stack[stack_base];
 	proc->method = method;
 	proc->pc = pc;
 

@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.h,v 1.10 2005-08-18 15:28:18 bacon Exp $
+ * $Id: bytecode.h,v 1.11 2005-09-30 12:19:00 bacon Exp $
  */
 
 #ifndef _XP_STX_BYTECODE_H_
@@ -27,6 +27,7 @@
 #define PUSH_NIL                          0x6A
 #define PUSH_TRUE                         0x6B
 #define PUSH_FALSE                        0x6C
+#define PUSH_RECEIVER                     0x6D
 
 #define SEND_TO_SELF                      0x70
 #define SEND_TO_SUPER                     0x71

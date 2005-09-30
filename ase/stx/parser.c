@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.72 2005-09-13 11:15:41 bacon Exp $
+ * $Id: parser.c,v 1.73 2005-09-30 12:19:00 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -33,15 +33,19 @@ static int __parse_assignment (
 static int __parse_basic_expression (
 	xp_stx_parser_t* parser, const xp_char_t* ident);
 static int __parse_primary (
-	xp_stx_parser_t* parser, const xp_char_t* ident);
+	xp_stx_parser_t* parser, const xp_char_t* ident, xp_bool_t* is_super);
 static int __parse_primary_ident (
-	xp_stx_parser_t* parser, const xp_char_t* ident);
+	xp_stx_parser_t* parser, const xp_char_t* ident, xp_bool_t* is_super);
 
 static int __parse_block_constructor (xp_stx_parser_t* parser);
-static int __parse_message_continuation (xp_stx_parser_t* parser);
-static int __parse_keyword_message (xp_stx_parser_t* parser);
-static int __parse_binary_message (xp_stx_parser_t* parser);
-static int __parse_unary_message (xp_stx_parser_t* parser);
+static int __parse_message_continuation (
+	xp_stx_parser_t* parser, xp_bool_t is_super);
+static int __parse_keyword_message (
+	xp_stx_parser_t* parser, xp_bool_t is_super);
+static int __parse_binary_message (
+	xp_stx_parser_t* parser, xp_bool_t is_super);
+static int __parse_unary_message (
+	xp_stx_parser_t* parser, xp_bool_t is_super);
 
 static int __get_token (xp_stx_parser_t* parser);
 static int __get_ident (xp_stx_parser_t* parser);
@@ -860,11 +864,12 @@ static int __parse_basic_expression (
 	/*
 	 * <basic expression> ::= <primary> [<messages> <cascaded messages>]
 	 */
+	xp_bool_t is_super;
 
-	if (__parse_primary(parser, ident) == -1) return -1;
+	if (__parse_primary(parser, ident, &is_super) == -1) return -1;
 	if (parser->token.type != XP_STX_TOKEN_END &&
 	    parser->token.type != XP_STX_TOKEN_PERIOD) {
-		if (__parse_message_continuation(parser) == -1) return -1;
+		if (__parse_message_continuation(parser, is_super) == -1) return -1;
 	}
 	return 0;
 }
@@ -912,7 +917,8 @@ static int __parse_assignment (
 	return -1;
 }
 
-static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
+static int __parse_primary (
+	xp_stx_parser_t* parser, const xp_char_t* ident, xp_bool_t* is_super)
 {
 	/*
 	 * <primary> ::=
@@ -927,7 +933,8 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 		xp_word_t literal;
 
 		if (parser->token.type == XP_STX_TOKEN_IDENT) {
-			if (__parse_primary_ident(parser, parser->token.name.buffer) == -1) return -1;
+			if (__parse_primary_ident(parser, 
+				parser->token.name.buffer, is_super) == -1) return -1;
 			GET_TOKEN (parser);
 		}
 		else if (parser->token.type == XP_STX_TOKEN_CHARLIT) {
@@ -984,26 +991,30 @@ static int __parse_primary (xp_stx_parser_t* parser, const xp_char_t* ident)
 	}
 	else {
 		/*if (__parse_primary_ident(parser, parser->token.name.buffer) == -1) return -1;*/
-		if (__parse_primary_ident(parser, ident) == -1) return -1;
+		if (__parse_primary_ident(parser, ident, is_super) == -1) return -1;
 	}
 
 	return 0;
 }
 
-static int __parse_primary_ident (xp_stx_parser_t* parser, const xp_char_t* ident)
+static int __parse_primary_ident (
+	xp_stx_parser_t* parser, const xp_char_t* ident, xp_bool_t* is_super)
 {
 	xp_word_t i;
 	xp_stx_t* stx = parser->stx;
 
-/*
-	if (xp_strcmp(token->name.buffer, XP_TEXT("self")) == 0) {
-		EMIT_CODE (parser, PUSH_SELF);
+	*is_super = xp_false;
+
+	if (xp_strcmp(ident, XP_TEXT("self")) == 0) {
+		EMIT_CODE (parser, PUSH_RECEIVER);
+		return 0;
 	}
-	else if (xp_strcmp(token->name.buffer, XP_TEXT("super")) == 0) {
-		EMIT_CODE (parser, PUSH_SUPER);
+	else if (xp_strcmp(ident, XP_TEXT("super")) == 0) {
+		*is_super = xp_true;
+		EMIT_CODE (parser, PUSH_RECEIVER);
+		return 0;
 	}
-*/
-	if (xp_strcmp(ident, XP_TEXT("nil")) == 0) {
+	else if (xp_strcmp(ident, XP_TEXT("nil")) == 0) {
 		EMIT_CODE (parser, PUSH_NIL);
 		return 0;
 	}
@@ -1097,7 +1108,8 @@ static int __parse_block_constructor (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_message_continuation (xp_stx_parser_t* parser)
+static int __parse_message_continuation (
+	xp_stx_parser_t* parser, xp_bool_t is_super)
 {
 	/*
 	 * <messages> ::=
@@ -1106,21 +1118,22 @@ static int __parse_message_continuation (xp_stx_parser_t* parser)
 	 * 	<keyword message>
 	 * <cascaded messages> ::= (';' <messages>)*
 	 */
+	xp_bool_t dummy;
 	
-	if (__parse_keyword_message(parser) == -1) return -1;
+	if (__parse_keyword_message(parser, is_super) == -1) return -1;
 
 	while (parser->token.type == XP_STX_TOKEN_SEMICOLON) {
 		EMIT_CODE_TEST (parser, XP_TEXT("DoSpecial(DUP_RECEIVER(CASCADE))"), XP_TEXT(""));
 		GET_TOKEN (parser);
 
-		if (__parse_keyword_message (parser) == -1) return -1;
+		if (__parse_keyword_message (parser, &dummy) == -1) return -1;
 		EMIT_CODE_TEST (parser, XP_TEXT("DoSpecial(POP_TOP)"), XP_TEXT(""));
 	}
 
 	return 0;
 }
 
-static int __parse_keyword_message (xp_stx_parser_t* parser)
+static int __parse_keyword_message (xp_stx_parser_t* parser, xp_bool_t is_super)
 {
 	/*
 	 * <keyword message> ::= (keyword <keyword argument> )+
@@ -1129,9 +1142,10 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 
 	xp_stx_name_t name;
 	xp_word_t pos;
-	int nargs = 0;
+	xp_bool_t is_super2;
+	int nargs = 0, n;
 
-	if (__parse_binary_message (parser) == -1) return -1;
+	if (__parse_binary_message (parser, is_super) == -1) return -1;
 	if (parser->token.type != XP_STX_TOKEN_KEYWORD) return 0;
 
 	if (xp_stx_name_open(&name, 0) == XP_NULL) {
@@ -1147,12 +1161,12 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 		}
 
 		GET_TOKEN (parser);
-		if (__parse_primary(parser, XP_NULL) == -1) {
+		if (__parse_primary(parser, XP_NULL, &is_super2) == -1) {
 			xp_stx_name_close (&name);
 			return -1;
 		}
 
-		if (__parse_binary_message(parser) == -1) {
+		if (__parse_binary_message(parser, is_super2) == -1) {
 			xp_stx_name_close (&name);
 			return -1;
 		}
@@ -1161,32 +1175,35 @@ static int __parse_keyword_message (xp_stx_parser_t* parser)
 		/* TODO: check if it has too many arguments.. */
 	} while (parser->token.type == XP_STX_TOKEN_KEYWORD);
 
-	/* TODO: SEND_TO_SUPER */
 	pos = __add_symbol_literal (parser, name.buffer, name.size);
 	if (pos == -1) {
 		xp_stx_name_close (&name);
 		return -1;
 	}
-	/*EMIT_SEND_TO_SELF (parser, nargs, pos);*/
-	if (__emit_send_to_self(parser,nargs,pos) == -1)  {
+
+	n = (is_super)?
+		__emit_send_to_super(parser,nargs,pos):
+		__emit_send_to_self(parser,nargs,pos);
+	if (n == -1) {
 		xp_stx_name_close (&name);
 		return -1;
 	}
 
 	xp_stx_name_close (&name);
-
 	return 0;
 }
 
-static int __parse_binary_message (xp_stx_parser_t* parser)
+static int __parse_binary_message (xp_stx_parser_t* parser, xp_bool_t is_super)
 {
 	/*
 	 * <binary message> ::= binarySelector <binary argument>
 	 * <binary argument> ::= <primary> <unary message>*
 	 */
 	xp_word_t pos;
+	xp_bool_t is_super2;
+	int n;
 
-	if (__parse_unary_message (parser) == -1) return -1;
+	if (__parse_unary_message (parser, is_super) == -1) return -1;
 
 	while (parser->token.type == XP_STX_TOKEN_BINARY) {
 		xp_char_t* op = xp_stx_token_yield (&parser->token, 0);
@@ -1196,24 +1213,26 @@ static int __parse_binary_message (xp_stx_parser_t* parser)
 		}
 
 		GET_TOKEN (parser);
-		if (__parse_primary(parser, XP_NULL) == -1) {
+		if (__parse_primary(parser, XP_NULL, &is_super2) == -1) {
 			xp_free (op);
 			return -1;
 		}
 
-		if (__parse_unary_message(parser) == -1) {
+		if (__parse_unary_message(parser, is_super2) == -1) {
 			xp_free (op);
 			return -1;
 		}
 
-		/* TODO: SEND_TO_SUPER */
 		pos = __add_symbol_literal (parser, op, xp_strlen(op));
 		if (pos == -1) {
 			xp_free (op);
 			return -1;
 		}
-		/*EMIT_SEND_TO_SELF (parser, 2, pos);*/
-		if (__emit_send_to_self(parser,2,pos) == -1)  {
+
+		n = (is_super)?
+			__emit_send_to_super(parser,2,pos):
+			__emit_send_to_self(parser,2,pos);
+		if (n == -1) {
 			xp_free (op);
 			return -1;
 		}
@@ -1224,21 +1243,23 @@ static int __parse_binary_message (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_unary_message (xp_stx_parser_t* parser)
+static int __parse_unary_message (xp_stx_parser_t* parser, xp_bool_t is_super)
 {
 	/* <unary message> ::= unarySelector */
 
 	xp_word_t pos;
+	int n;
 
 	while (parser->token.type == XP_STX_TOKEN_IDENT) {
-		/* TODO: SEND_TO_SUPER */
-		/*EMIT_SEND_TO_SELF (parser, 0, index of parser->token.name.buffer);*/
-		/*EMIT_SEND_TO_SELF (parser, 0, 0);*/
-
 		pos = __add_symbol_literal (parser,
 			parser->token.name.buffer, parser->token.name.size);
 		if (pos == -1) return -1;
-		EMIT_SEND_TO_SELF (parser, 0, pos);
+
+		n = (is_super)?
+			__emit_send_to_super(parser,0,pos):
+			__emit_send_to_self(parser,0,pos);
+		if (n == -1) return -1;
+
 		GET_TOKEN (parser);
 	}
 
