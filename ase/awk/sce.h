@@ -1,5 +1,5 @@
 /*
- * $Id: sce.h,v 1.1 2005-09-30 09:40:15 bacon Exp $
+ * $Id: sce.h,v 1.2 2005-09-30 09:46:10 bacon Exp $
  */
 
 #ifndef _XP_SCE_SCE_H_
@@ -71,6 +71,13 @@ struct xp_sce_real_obj_t
 	xp_real_t data[1];
 };
 
+struct xp_sce_proc_obj_t
+{
+	xp_sce_objhdr_t hdr;
+	xp_real_
+	xp_byte_t code[1];
+};
+
 struct xp_sce_mem_t
 {
 	xp_word_t capacity;
@@ -93,11 +100,9 @@ struct xp_sce_t
 #define XP_SCE_TO_OINDEX(x)     (((x) << 1) | 0x00)
 #define XP_SCE_FROM_OINDEX(x)   ((x) >> 1)
 
-#define XP_SCE_NIL   XP_SCE_TO_OINDEX(0)
-#define XP_SCE_TRUE  XP_SCE_TO_OINDEX(1)
-#define XP_SCE_FALSE XP_SCE_TO_OINDEX(2)
+#define XP_SCE_NIL XP_SCE_TO_OINDEX(0)
 
-#define XP_SCE_OBJ(sce,idx) (((sce)->mem).slots[XP_SCE_FROM_OINDEX(idx)])
+#define XP_SCE_OBJ(sce,idx)    (((sce)->mem).slots[XP_SCE_FROM_OINDEX(idx)])
 #define XP_SCE_ACCESS(sce,idx) (XP_SCE_OBJ(sce,(idx))->hdr.access)
 #define XP_SCE_DATA(sce,idx)   ((void*)(XP_SCE_OBJ(sce,idx) + 1))
 
