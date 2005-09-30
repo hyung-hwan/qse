@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.73 2005-09-30 12:19:00 bacon Exp $
+ * $Id: parser.c,v 1.74 2005-09-30 16:49:39 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -931,6 +931,8 @@ static int __parse_primary (
 	if (ident == XP_NULL) {
 		int pos;
 		xp_word_t literal;
+
+		*is_super = xp_false;
 
 		if (parser->token.type == XP_STX_TOKEN_IDENT) {
 			if (__parse_primary_ident(parser, 
