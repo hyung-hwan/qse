@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.43 2005-08-18 15:28:18 bacon Exp $
+ * $Id: stx.h,v 1.44 2005-09-30 12:19:00 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -134,12 +134,20 @@ struct xp_stx_t
 #define XP_STX_CHAR_OBJECT(stx,idx) \
 	((xp_stx_char_object_t*)XP_STX_OBJECT(stx,idx))
 
+/*
 #define XP_STX_WORD_AT(stx,idx,n) \
 	(((xp_word_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 #define XP_STX_BYTE_AT(stx,idx,n) \
 	(((xp_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
 #define XP_STX_CHAR_AT(stx,idx,n) \
 	(((xp_char_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
+*/
+#define XP_STX_WORD_AT(stx,idx,n) \
+	(XP_STX_WORD_OBJECT(stx,idx)->data[n])
+#define XP_STX_BYTE_AT(stx,idx,n) \
+	(XP_STX_BYTE_OBJECT(stx,idx)->data[n])
+#define XP_STX_CHAR_AT(stx,idx,n) \
+	(XP_STX_CHAR_OBJECT(stx,idx)->data[n])
 
 #ifdef __cplusplus
 extern "C" {
