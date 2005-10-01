@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.75 2005-10-01 05:33:06 bacon Exp $
+ * $Id: parser.c,v 1.76 2005-10-01 16:48:44 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -1120,15 +1120,13 @@ static int __parse_message_continuation (
 	 * 	<keyword message>
 	 * <cascaded messages> ::= (';' <messages>)*
 	 */
-	xp_bool_t dummy;
-	
 	if (__parse_keyword_message(parser, is_super) == -1) return -1;
 
 	while (parser->token.type == XP_STX_TOKEN_SEMICOLON) {
 		EMIT_CODE_TEST (parser, XP_TEXT("DoSpecial(DUP_RECEIVER(CASCADE))"), XP_TEXT(""));
 		GET_TOKEN (parser);
 
-		if (__parse_keyword_message (parser, &dummy) == -1) return -1;
+		if (__parse_keyword_message(parser, xp_false) == -1) return -1;
 		EMIT_CODE_TEST (parser, XP_TEXT("DoSpecial(POP_TOP)"), XP_TEXT(""));
 	}
 
