@@ -1,7 +1,9 @@
-SRCS = stx.c memory.c object.c symbol.c class.c dict.c misc.c array.c \
-	context.c name.c token.c parser.c bootstrp.c bytecode.c interp.c
-OBJS = stx.obj memory.obj object.obj symbol.obj class.obj dict.obj misc.obj array.obj \
-	context.obj name.obj token.obj parser.obj bootstrp.obj bytecode.obj interp.obj
+SRCS = stx.c memory.c object.c symbol.c class.c array.c \
+	dict.c misc.c name.c token.c parser.c bootstrp.c \
+	bytecode.c interp.c
+OBJS = stx.obj memory.obj object.obj symbol.obj class.obj array.obj \
+	dict.obj misc.obj name.obj token.obj parser.obj bootstrp.obj \
+	bytecode.obj interp.obj
 OUT = xpstx.lib
 
 CC = lcc
