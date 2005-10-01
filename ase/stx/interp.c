@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.16 2005-09-30 12:19:00 bacon Exp $
+ * $Id: interp.c,v 1.17 2005-10-01 05:33:06 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -153,14 +153,14 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 			proc->stack[proc->stack_top++] =  stx->nil;
 		}
 		else if (code == 0x6B) {
-			proc->stack[proc->stack_top++] =  stx->true;
+			proc->stack[proc->stack_top++] = stx->true;
 		}
 		else if (code == 0x6C) {
-			proc->stack[proc->stack_top++] =  stx->false;
+			proc->stack[proc->stack_top++] = stx->false;
 		}
 		else if (code == 0x6D) {
 			/* push receiver */
-			proc->stack[proc->stack_top++] =  proc->receiver;
+			proc->stack[proc->stack_top++] = proc->receiver;
 		}
 
 		/* TODO: more here .... */
@@ -175,8 +175,8 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 		else if (code == 0x71) {
 			/* send to super */
 			next = proc->bytecodes[proc->pc++];
-			//__send_to_super (stx, 
-			//	proc, next >> 5, proc->literals[next & 0x1F]);
+			//if (__send_to_super (stx, proc, 
+			//	next >> 5, proc->literals[next & 0x1F]) == -1) break;
 		}
 		else if (code == 0x72) {
 			/* send to self extended */
@@ -194,6 +194,12 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 		}
 
 		/* more code .... */
+		else if (code == 0x78) {
+			/* return receiver */
+			proc->stack[proc->stack_top++] = proc->receiver;
+			if (__return_from_message (stx, proc) == -1) break;
+		}
+
 		else if (code == 0x7C) {
 			/* return from message */
 			if (__return_from_message (stx, proc) == -1) break;
@@ -203,6 +209,11 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 			/* primitive */
 			next = proc->bytecodes[proc->pc++];
 			__dispatch_primitive (stx, proc, ((code & 0x0F) << 8) | next);
+		}
+
+		else {
+xp_printf (XP_TEXT("INVALID OPCODE...........\n"));
+break;
 		}
 	}
 

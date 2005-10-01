@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.74 2005-09-30 16:49:39 bacon Exp $
+ * $Id: parser.c,v 1.75 2005-10-01 05:33:06 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -780,7 +780,7 @@ static int __parse_statements (xp_stx_parser_t* parser)
 		}
 	}
 
-	EMIT_RETURN_FROM_MESSAGE (parser);
+	EMIT_CODE (parser, RETURN_RECEIVER);
 	return 0;
 }
 
