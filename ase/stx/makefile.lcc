@@ -7,7 +7,7 @@ OBJS = stx.obj memory.obj object.obj symbol.obj class.obj array.obj \
 OUT = xpstx.lib
 
 CC = lcc
-CFLAGS = -I../..  -A -ansic -libcdll 
+CFLAGS = -I../..  -A -ansic #-libcdll 
 LDFLAGS =
 LIBS = 
 
