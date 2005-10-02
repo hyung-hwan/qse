@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.c,v 1.15 2005-10-02 10:44:49 bacon Exp $
+ * $Id: bytecode.c,v 1.16 2005-10-02 15:45:09 bacon Exp $
  */
 #include <xp/stx/bytecode.h>
 #include <xp/stx/class.h>
@@ -16,7 +16,6 @@ int xp_stx_decode (xp_stx_t* stx, xp_word_t class)
 
 	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class);
 	if (class_obj->methods == stx->nil) return 0;
-
 
 /* TODO */
 	xp_stx_dict_traverse (stx, class_obj->methods, __decode1, class_obj);
@@ -116,7 +115,7 @@ static int __decode2 (xp_stx_t* stx,
 
 	static const xp_char_t* stack_special_opcode_names[] =
 	{
-		XP_TEXT("store_pop_stack_top"),
+		XP_TEXT("pop_stack_top"),
 		XP_TEXT("duplicate_pop_stack_top"),
 		XP_TEXT("push_active_context"),
 		XP_TEXT("push_nil"),

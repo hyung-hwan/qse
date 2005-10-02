@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.77 2005-10-02 10:44:49 bacon Exp $
+ * $Id: parser.c,v 1.78 2005-10-02 15:45:09 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -826,6 +826,7 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	 * <assignment target> ::= identifier
 	 * assignmentOperator ::=  ':='
 	 */
+	xp_stx_t* stx = parser->stx;
 
 	if (parser->token.type == XP_STX_TOKEN_IDENT) {
 		xp_char_t* ident = xp_stx_token_yield (&parser->token, 0);
