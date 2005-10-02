@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.76 2005-10-01 16:48:44 bacon Exp $
+ * $Id: parser.c,v 1.77 2005-10-02 10:44:49 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -356,7 +356,7 @@ static INLINE int __emit_send_to_self (
 }
 
 static INLINE int __emit_send_to_super (
-	xp_stx_parser_t* parser, int selector, int nargs)
+	xp_stx_parser_t* parser, int nargs, int selector)
 {
 	xp_assert (nargs >= 0x00 && nargs <= 0xFF);
 	xp_assert (selector >= 0x00 && selector <= 0xFF);

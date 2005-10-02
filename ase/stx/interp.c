@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.17 2005-10-01 05:33:06 bacon Exp $
+ * $Id: interp.c,v 1.18 2005-10-02 10:44:49 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -61,8 +61,8 @@ static int __push_to_stack (xp_stx_t* stx,
 	process_t* proc, xp_word_t what, xp_word_t index);
 static int __store_from_stack (xp_stx_t* stx, 
 	process_t* proc, xp_word_t what, xp_word_t index);
-static int __send_to_self (xp_stx_t* stx, 
-	process_t* proc, xp_word_t nargs, xp_word_t selector);
+static int __send_message (xp_stx_t* stx, process_t* proc, 
+	xp_word_t nargs, xp_word_t selector, xp_bool_t to_super);
 static int __return_from_message (xp_stx_t* stx, process_t* proc);
 static int __dispatch_primitive (xp_stx_t* stx, process_t* proc, xp_word_t no);
 
@@ -166,31 +166,30 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 		/* TODO: more here .... */
 
 		else if (code == 0x70) {
+			/* send message to self */
 			next = proc->bytecodes[proc->pc++];
-//xp_printf (XP_TEXT("%d, %d\n"), next >> 5, next & 0x1F);
-			if (__send_to_self (stx, proc, 
-				next >> 5, proc->literals[next & 0x1F]) == -1) break;
-//xp_printf (XP_TEXT("done %d, %d\n"), next >> 5, next & 0x1F);
+			if (__send_message (stx, proc, next >> 5, 
+				proc->literals[next & 0x1F], xp_false) == -1) break;
 		}	
 		else if (code == 0x71) {
-			/* send to super */
+			/* send message to super */
 			next = proc->bytecodes[proc->pc++];
-			//if (__send_to_super (stx, proc, 
-			//	next >> 5, proc->literals[next & 0x1F]) == -1) break;
+			if (__send_message (stx, proc, next >> 5, 
+				proc->literals[next & 0x1F], xp_true) == -1) break;
 		}
 		else if (code == 0x72) {
-			/* send to self extended */
+			/* send message to self extended */
 			next = proc->bytecodes[proc->pc++];
 			next2 = proc->bytecodes[proc->pc++];
-			if (__send_to_self (stx, proc,
-				next >> 5, proc->literals[next2]) == -1) break;
+			if (__send_message (stx, proc, next >> 5, 
+				proc->literals[next2], xp_false) == -1) break;
 		}
 		else if (code == 0x73) {
-			/* send to super extended */
+			/* send message to super extended */
 			next = proc->bytecodes[proc->pc++];
 			next2 = proc->bytecodes[proc->pc++];
-			//__send_to_super (stx, 
-			//	proc, next >> 5, proc->literals[next2]);
+			if (__send_message (stx, proc, next >> 5, 
+				proc->literals[next2], xp_true) == -1) break;
 		}
 
 		/* more code .... */
@@ -257,8 +256,8 @@ static int __store_from_stack (xp_stx_t* stx,
 	return 0;
 }
 
-static int __send_to_self (xp_stx_t* stx, 
-	process_t* proc, xp_word_t nargs, xp_word_t selector)
+static int __send_message (xp_stx_t* stx, process_t* proc, 
+	xp_word_t nargs, xp_word_t selector, xp_bool_t to_super)
 {
 	xp_word_t receiver, method; 
 	xp_word_t i, tmpcount, argcount;

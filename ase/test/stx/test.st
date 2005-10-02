@@ -9,6 +9,6 @@ main
 
 	a := #abc print: 123 and: 2345.
 	#abc print: a and: a.
-	"super print: a and: a."
+	super print: a and: a.
 	1234567.
 	^nil.
