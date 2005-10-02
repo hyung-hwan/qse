@@ -1,5 +1,5 @@
 /*
- * $Id: class.c,v 1.25 2005-09-11 15:43:14 bacon Exp $
+ * $Id: class.c,v 1.26 2005-10-02 10:44:49 bacon Exp $
  */
 
 #include <xp/stx/class.h>
@@ -121,11 +121,12 @@ xp_word_t xp_stx_lookup_method (
 	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class_index);
 	xp_assert (class_obj != XP_NULL);
 
-	/* TODO: can a metaclas have class variables? */	
+	/* TODO: can a metaclass have class variables? */	
+#if 0
 	if (class_obj->header.class != stx->class_metaclass &&
 	    class_obj->methods != stx->nil) {
 		xp_word_t assoc;
-		assoc = xp_stx_dict_lookup(stx, class_obj->methods,name);
+		assoc = xp_stx_dict_lookup(stx, class_obj->methods, name);
 		if (assoc != stx->nil) {
 			xp_assert (XP_STX_CLASS(stx,assoc) == stx->class_association);
 			return XP_STX_WORD_AT(stx, assoc, XP_STX_ASSOCIATION_VALUE);
@@ -138,6 +139,26 @@ xp_word_t xp_stx_lookup_method (
 			stx, class_obj->superclass, name);
 		if (tmp != stx->nil) return tmp;
 	}
+#endif
+
+	while (class_index != stx->nil) {
+		class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class_index);
+		xp_assert (class_obj != XP_NULL);
+
+		/* TODO: check if this condition is ok */
+		if (class_obj->header.class != stx->class_metaclass &&
+		    class_obj->methods != stx->nil) {
+			xp_word_t assoc;
+			assoc = xp_stx_dict_lookup(stx, class_obj->methods, name);
+			if (assoc != stx->nil) {
+				xp_assert (XP_STX_CLASS(stx,assoc) == stx->class_association);
+				return XP_STX_WORD_AT(stx, assoc, XP_STX_ASSOCIATION_VALUE);
+			}
+		}
+
+		class_index = class_obj->superclass;
+	}
 
 	return stx->nil;
 }
+
