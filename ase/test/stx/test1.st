@@ -4,5 +4,6 @@ print: a1 and: a2
 	t1 := #abcdefg.
 	"a1 := 2341 arguments are not assignable"
 	t1 prim2: a2.
-	self prim2: 2189.
+	super prim2: 999999.
+	self prim2: 999999.
 	^67891.

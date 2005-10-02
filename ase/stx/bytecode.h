@@ -1,5 +1,5 @@
 /*
- * $Id: bytecode.h,v 1.11 2005-09-30 12:19:00 bacon Exp $
+ * $Id: bytecode.h,v 1.12 2005-10-02 15:45:09 bacon Exp $
  */
 
 #ifndef _XP_STX_BYTECODE_H_
@@ -21,7 +21,7 @@
 #define STORE_RECEIVER_VARIABLE_EXTENDED  0x64
 #define STORE_TEMPORARY_LOCATION_EXTENDED 0x65
 
-#define STORE_POP_STACK_TOP               0x67
+#define POP_STACK_TOP                     0x67
 #define DUPLICATE_POP_STACK_TOP           0x68
 #define PUSH_ACTIVE_CONTEXT               0x69
 #define PUSH_NIL                          0x6A

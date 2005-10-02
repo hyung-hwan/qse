@@ -153,7 +153,8 @@ int xp_main (int argc, xp_char_t* argv[])
 			goto exit_program;
 		}
 
-		if (xp_stx_parser_parse_method (&parser, n, 
+		/* compile the method to n's class */
+		if (xp_stx_parser_parse_method (&parser, XP_STX_CLASS(&stx,n), 
 			(void*)XP_TEXT("test.st")) == -1) {
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
 				xp_stx_parser_error_string (&parser));
@@ -171,8 +172,14 @@ int xp_main (int argc, xp_char_t* argv[])
 				xp_stx_parser_error_string (&parser));
 		}
 
+		if (xp_stx_parser_parse_method (&parser, stx.class_string,
+			(void*)XP_TEXT("test3.st")) == -1) {
+			xp_printf (XP_TEXT("parser error <%s>\n"), 
+				xp_stx_parser_error_string (&parser));
+		}
+
 		xp_printf (XP_TEXT("\n== Decoded Methods ==\n"));
-		if (xp_stx_decode(&stx, n) == -1) {
+		if (xp_stx_decode(&stx, XP_STX_CLASS(&stx,n)) == -1) {
 			xp_printf (XP_TEXT("parser error <%s>\n"), 
 				xp_stx_parser_error_string (&parser));
 		}
@@ -183,8 +190,15 @@ int xp_main (int argc, xp_char_t* argv[])
 				xp_stx_parser_error_string (&parser));
 		}
 
+		xp_printf (XP_TEXT("\n== Decoded Methods for String ==\n"));
+		if (xp_stx_decode(&stx, stx.class_string) == -1) {
+			xp_printf (XP_TEXT("parser error <%s>\n"), 
+				xp_stx_parser_error_string (&parser));
+		}
+
 		xp_printf (XP_TEXT("== Running the main method ==\n"));
-		m = xp_stx_lookup_method (&stx, n, XP_TEXT("main"));
+		m = xp_stx_lookup_method (
+			&stx, XP_STX_CLASS(&stx,n), XP_TEXT("main"), xp_false);
 		if (m == stx.nil) {	
 			xp_printf (XP_TEXT("cannot lookup method main\n"));
 		}

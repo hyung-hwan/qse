@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.18 2005-10-02 10:44:49 bacon Exp $
+ * $Id: interp.c,v 1.19 2005-10-02 15:45:09 bacon Exp $
  */
 
 #include <xp/stx/interp.h>
@@ -149,6 +149,13 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 
 		/* TODO: more here .... */
 
+		else if (code == 0x67) {
+			/*  pop stack top */
+			proc->stack_top--;
+		}
+
+		/* TODO: more here .... */
+
 		else if (code == 0x6A) {
 			proc->stack[proc->stack_top++] =  stx->nil;
 		}
@@ -266,8 +273,9 @@ static int __send_message (xp_stx_t* stx, process_t* proc,
 	xp_assert (XP_STX_CLASS(stx,selector) == stx->class_symbol);
 
 	receiver = proc->stack[proc->stack_top - nargs - 1];
-	method = xp_stx_lookup_method (stx, 
-		XP_STX_CLASS(stx,receiver), XP_STX_DATA(stx,selector));
+	method = xp_stx_lookup_method (
+		stx, XP_STX_CLASS(stx,receiver), 
+		XP_STX_DATA(stx,selector), to_super);
 	if (method == stx->nil) {
 xp_printf (XP_TEXT("cannot find the method....\n"));
 		return -1;	
@@ -362,6 +370,9 @@ static int __dispatch_primitive (xp_stx_t* stx, process_t* proc, xp_word_t no)
 		xp_printf (XP_TEXT("<<  HIGH STX SMALLTALK  >> %d, %d\n"), 
 			XP_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]),
 			XP_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 2]));
+		break;
+	case 20:
+		xp_printf (XP_TEXT("<< PRIMITIVE 20 >>\n"));
 		break;
 	}
 	
