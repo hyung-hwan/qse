@@ -1,10 +1,9 @@
 /*
- * $Id: sce.c,v 1.1 2005-09-30 09:40:15 bacon Exp $
+ * $Id: sce.c,v 1.2 2005-10-03 04:13:12 bacon Exp $
  */
 
 #include <xp/sce/sce.h>
 #include <xp/sce/mem.h>
-#include <xp/sce/misc.h>
 
 xp_sce_t* xp_sce_open (xp_sce_t* sce, xp_word_t capacity)
 {

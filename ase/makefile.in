@@ -1,4 +1,4 @@
-SUBDIRS=bas net utl stx sce lsp
+SUBDIRS=bas net utl stx lsp
 
 all:
 	@for i in $(SUBDIRS); \
