@@ -1,5 +1,5 @@
 /*
- * $Id: sce.h,v 1.2 2005-09-30 09:46:10 bacon Exp $
+ * $Id: sce.h,v 1.3 2005-10-03 04:13:12 bacon Exp $
  */
 
 #ifndef _XP_SCE_SCE_H_
@@ -69,13 +69,6 @@ struct xp_sce_real_obj_t
 {
 	xp_sce_objhdr_t hdr;
 	xp_real_t data[1];
-};
-
-struct xp_sce_proc_obj_t
-{
-	xp_sce_objhdr_t hdr;
-	xp_real_
-	xp_byte_t code[1];
 };
 
 struct xp_sce_mem_t
