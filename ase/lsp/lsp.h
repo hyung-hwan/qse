@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.18 2005-09-23 13:27:54 bacon Exp $
+ * $Id: lsp.h,v 1.19 2005-10-19 15:44:29 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -44,13 +44,13 @@ enum
 };
 
 /*
- * TYPEDEF: xp_lsp_t
+ * TYPE: xp_lsp_t
  *   Defines a lisp processor type
  */
 typedef struct xp_lsp_t xp_lsp_t;
 
 /*
- * TYPEDEF: xp_lsp_io_t
+ * TYPE: xp_lsp_io_t
  *   Defines an IO handler type
  */
 typedef xp_ssize_t (*xp_lsp_io_t) (
