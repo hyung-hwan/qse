@@ -1,7 +1,7 @@
 SRCS = stx.c memory.c object.c symbol.c class.c dict.c misc.c array.c \
 	name.c token.c parser.c bootstrp.c bytecode.c interp.c
 OBJS = $(SRCS:.c=.obj)
-OUT = xpstx.lib
+OUT = xpawk.lib
 
 CC = bcc32
 CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../..
