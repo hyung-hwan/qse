@@ -3,7 +3,7 @@ SRCS = \
 	dict.c misc.c name.c token.c parser.c bootstrp.c \
 	bytecode.c interp.c 
 OBJS = $(SRCS:.c=.obj)
-OUT = xpstx.lib
+OUT = xpawk.lib
 
 CC = cl
 CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
