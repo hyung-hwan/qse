@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.1 2005-11-05 17:54:00 bacon Exp $
+ * $Id: awk.h,v 1.2 2005-11-06 12:01:29 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -7,6 +7,11 @@
 
 #include <xp/types.h>
 #include <xp/macros.h>
+
+enum
+{
+	XP_AWK_ENOERR
+};
 
 /*
  * TYPE: xp_awk_t
@@ -35,6 +40,7 @@ struct xp_awk_t
 	void* output_arg;
 
 	/* housekeeping */
+	int errnum;
 	xp_bool_t __malloced;
 };
 
