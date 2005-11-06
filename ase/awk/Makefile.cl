@@ -1,7 +1,4 @@
-SRCS = \
-	stx.c memory.c object.c symbol.c class.c array.c \
-	dict.c misc.c name.c token.c parser.c bootstrp.c \
-	bytecode.c interp.c 
+SRCS = awk.c lex.c parse.c 
 OBJS = $(SRCS:.c=.obj)
 OUT = xpawk.lib
 
