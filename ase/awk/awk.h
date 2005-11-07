@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.2 2005-11-06 12:01:29 bacon Exp $
+ * $Id: awk.h,v 1.3 2005-11-07 16:02:44 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -10,7 +10,9 @@
 
 enum
 {
-	XP_AWK_ENOERR
+	XP_AWK_ENOERR,
+	XP_AWK_ESRCOP,
+	XP_AWK_ESRCCL
 };
 
 /*
@@ -34,10 +36,22 @@ enum
 struct xp_awk_t
 {
 	/* io functions */
+	xp_awk_io_t source_func;
 	xp_awk_io_t input_func;
 	xp_awk_io_t output_func;
+
+	void* source_arg;
 	void* input_arg;
 	void* output_arg;
+
+	/* source buffer management */
+	struct {
+		xp_cint_t curc;
+		xp_cint_t ungotc[5];
+		xp_size_t ungotc_count;
+		xp_str_t  token;
+		int       ttype;
+	} lex;
 
 	/* housekeeping */
 	int errnum;
@@ -50,6 +64,9 @@ extern "C" {
 
 xp_awk_t* xp_awk_open (xp_awk_t* awk);
 int xp_awk_close (xp_awk_t* awk);
+
+int xp_awk_attach_source (xp_awk_t* awk, xp_awk_io_t source, void* source_arg);
+int xp_awk_detach_source (xp_awk_t* awk);
 
 #ifdef __cplusplus
 }
