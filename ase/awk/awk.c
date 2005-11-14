@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.2 2005-11-07 16:02:44 bacon Exp $
+ * $Id: awk.c,v 1.3 2005-11-14 15:23:53 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -15,7 +15,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	}
 	else awk->__malloced = xp_false;
 
-	if (xp_str_open(&awk->lex.token, 128) == XP_NULL) {
+	if (xp_str_open(&awk->token.name, 128) == XP_NULL) {
 		if (awk->__malloced) xp_free (awk);
 		return XP_NULL;
 	}
@@ -30,8 +30,8 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	awk->input_arg = XP_NULL;
 	awk->output_arg = XP_NULL;
 
-	awk->lex.ungotc_count = 0;
 	awk->lex.curc = XP_CHAR_EOF;
+	awk->lex.ungotc_count = 0;
 
 	return awk;
 }
@@ -39,6 +39,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 int xp_awk_close (xp_awk_t* awk)
 {
 	if (xp_awk_detach_source(awk) == -1) return -1;
+	xp_str_close (&awk->token.name);
 	if (awk->__malloced) xp_free (awk);
 	return 0;
 }
@@ -56,7 +57,8 @@ int xp_awk_attach_source (xp_awk_t* awk, xp_awk_io_t source, void* arg)
 
 	awk->source_func = source;
 	awk->source_arg = arg;
-	awk->curc = XP_CHAR_EOF;
+	awk->lex.curc = XP_CHAR_EOF;
+	awk->lex.ungotc_count = 0;
 	return 0;
 }
 
@@ -70,7 +72,8 @@ int xp_awk_detach_source (xp_awk_t* awk)
 
 		awk->source_func = XP_NULL;
 		awk->source_arg = XP_NULL;
-		awk->curc = XP_CHAR_EOF;
+		awk->lex.curc = XP_CHAR_EOF;
+		awk->lex.ungotc_count = 0;
 	}
 
 	return 0;
