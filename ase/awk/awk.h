@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.3 2005-11-07 16:02:44 bacon Exp $
+ * $Id: awk.h,v 1.4 2005-11-14 15:23:53 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -7,12 +7,17 @@
 
 #include <xp/types.h>
 #include <xp/macros.h>
+#include <xp/bas/string.h>
 
 enum
 {
 	XP_AWK_ENOERR,
+	XP_AWK_ENOMEM, /* out of memory */
 	XP_AWK_ESRCOP,
-	XP_AWK_ESRCCL
+	XP_AWK_ESRCCL,
+	XP_AWK_ESRCDT, /* error in reading source */
+	XP_AWK_ELXCHR, /* lexer came accross an wrong character */
+	XP_AWK_ELXUNG  /* lexer failed to unget a character */
 };
 
 /*
@@ -49,9 +54,13 @@ struct xp_awk_t
 		xp_cint_t curc;
 		xp_cint_t ungotc[5];
 		xp_size_t ungotc_count;
-		xp_str_t  token;
-		int       ttype;
 	} lex;
+
+	/* token */
+	struct {
+		int       type;
+		xp_str_t  name;
+	} token;
 
 	/* housekeeping */
 	int errnum;
