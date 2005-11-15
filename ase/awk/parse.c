@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.3 2005-11-14 15:23:53 bacon Exp $
+ * $Id: parse.c,v 1.4 2005-11-15 15:32:39 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -9,6 +9,7 @@
 enum
 {
 	TOKEN_EOF,
+
 	TOKEN_ASSIGN,
 	TOKEN_EQ,
 	TOKEN_NE,
@@ -20,9 +21,17 @@ enum
 	TOKEN_MINUS_MINUS,
 	TOKEN_MINUS_ASSIGN,
 
+	TOKEN_LPAREN,
+	TOKEN_RPAREN,
+	TOKEN_LBRACE,
+	TOKEN_RBRACE,
+	TOKEN_LBRAKET,
+	TOKEN_RBRAKET,
+
 	TOKEN_IDENT,
 	TOEKN_BEGIN,
 	TOKEN_END,
+	TOKEN_FUNCTION
 };
 
 static int __parse (xp_awk_t* awk);
@@ -31,6 +40,20 @@ static int __get_char (xp_awk_t* awk);
 static int __unget_char (xp_awk_t* awk, xp_cint_t c);
 static int __skip_spaces (xp_awk_t* awk);
 static int __skip_comment (xp_awk_t* awk);
+static int __classfy_ident (const xp_char_t* ident);
+
+struct __kwent { 
+	const xp_char_t* name, 
+	int type; 
+};
+
+static struct __kwent __kwtab[] = 
+{
+	{ XP_TEXT("BEGIN"),    TOKEN_BEGIN },
+	{ XP_TEXT("END"),      TOKEN_END },
+	{ XP_TEXT("function"), TOKEN_FUNCTION },
+	{ XP_NULL,             0 },
+};
 
 #define GET_CHAR(awk) \
 	do { if (__get_char(awk) == -1) return -1; } while(0)
@@ -85,10 +108,22 @@ static int __get_token (xp_awk_t* awk)
 		SET_TOKEN_TYPE (awk, TOKEN_EOF);
 	}	
 	else if (xp_isdigit(c)) {
+		/* number */
 	}
 	else if (xp_isalpha(c) || c == XP_CHAR('_')) {
+		/* identifier */
+		do {
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR_TO (awk, c);
+		} while (xp_isalpha(c) || c == XP_CHAR('_') || xp_isdigit(c));
+
+		SET_TOKEN_TYPE (awk, __classfy_ident(XP_STR_BUF(&awk->token.name)));
 	}
 	else if (c == XP_CHAR('\"')) {
+		/* string */
+	}
+	else if (c == XP_CHAR('/')) {
+		/* regular expression */
 	}
 	else if (c == XP_CHAR('=')) {
 		GET_CHAR_TO (awk, c);
@@ -154,14 +189,29 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_STR (awk, XP_TEXT("-"));
 		}
 	}
-	else if (__is_ident_char(c)) {
-		SET_TOKEN_TYPE (awk, TOKEN_IDENT);
-/*
-		do {
-			ADD_TOKEN_CHAR (awk, c);
-			GET_CHAR_TO (awk, c);
-		} while (__is_ident_char(c));
-*/
+	else if (c == XP_CHAR('(') {
+		SET_TOKEN_TYPE (awk, TOKEN_LPAREN);
+		ADD_TOKEN_STR (awk, c);
+	}
+	else if (c == XP_CHAR(')') {
+		SET_TOKEN_TYPE (awk, TOKEN_RPAREN);
+		ADD_TOKEN_STR (awk, c);
+	}
+	else if (c == XP_CHAR('{') {
+		SET_TOKEN_TYPE (awk, TOKEN_LBRACE);
+		ADD_TOKEN_STR (awk, c);
+	}
+	else if (c == XP_CHAR('}') {
+		SET_TOKEN_TYPE (awk, TOKEN_RBRACE);
+		ADD_TOKEN_CHAR (awk, c);
+	}
+	else if (c == XP_CHAR('[') {
+		SET_TOKEN_TYPE (awk, TOKEN_LBRAKET);
+		ADD_TOKEN_STR (awk, c);
+	}
+	else if (c == XP_CHAR(']') {
+		SET_TOKEN_TYPE (awk, TOKEN_RBRAKET);
+		ADD_TOKEN_CHAR (awk, c);
 	}
 	else {
 		awk->errnum = XP_AWK_ELXCHR;
@@ -237,3 +287,13 @@ static int __skip_comment (xp_awk_t* awk)
 	return 0;
 }
 
+static int __classfy_ident (const xp_char_t* ident)
+{
+	struct __kwent* p = __kwtab;
+
+	while (p->name != XP_NULL) {
+		if (xp_strcmp(p->name, ident) == 0) return p->type;
+	}
+
+	return TOKEN_IDENT;
+}
