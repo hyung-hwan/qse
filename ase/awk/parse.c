@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.4 2005-11-15 15:32:39 bacon Exp $
+ * $Id: parse.c,v 1.5 2005-11-15 15:59:23 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -28,6 +28,9 @@ enum
 	TOKEN_LBRAKET,
 	TOKEN_RBRAKET,
 
+	TOKEN_STRING,
+	TOKEN_REGEX,
+
 	TOKEN_IDENT,
 	TOEKN_BEGIN,
 	TOKEN_END,
@@ -35,6 +38,7 @@ enum
 };
 
 static int __parse (xp_awk_t* awk);
+static int __parse_function_header (xp_awk_t* awk);
 static int __get_token (xp_awk_t* awk);
 static int __get_char (xp_awk_t* awk);
 static int __unget_char (xp_awk_t* awk, xp_cint_t c);
@@ -76,19 +80,64 @@ static struct __kwent __kwtab[] =
 		(awk)->errnum = XP_AWK_ENOMEM; return -1; \
 } while (0)
 
+#define GET_TOKEN(awk) do { if (__get_token(awk) == -1) return -1; }
+
 int xp_awk_parse (xp_awk_t* awk)
 {
 	GET_CHAR (awk);
+	GET_TOKEN (awk);
 	return __parse (awk);
 }
 
 static int __parse (xp_awk_t* awk)
 {
-	if (awk->token.type == TOKEN_EOF) return 0;
+/*
+function abc ()
+{
+}
+BEGIN {
+END {
+{
+!/ /
+*/
+	while (1) {
+		if (awk->token.type == TOKEN_EOF) break;
 
+		if (awk->token.type == TOKEN_FUNCTION) {
+			if (__parse_function_header (awk) == -1) return -1;
+
+			/* parse functio body */
+		}
+
+	if (awk->token.type == TOKEN_BEGIN) {
+	}
+	else if (awk->token.type == TOKEN_END) {
+	}
+	else if (awk->token.type == TOKEN_NOT) {
+	}
+	else if (awk->token.type == TOKEN_REGEX) {
+	}
+
+	if (awk->token.type != TOKEN_LBRACE) {
+		awk->errnum = XP_AWK_ELBRAC;
+		return -1;
+	}
+	}
+
+	return 0;
 	
-	return -1;
-	
+}
+
+static int __parse_function_header (xp_awk_t* awk)
+{
+	GET_TOKEN (awk);	
+	if (awk->token.type != TOKEN_IDENT) {
+		awk->errnum = XP_AWK_EIDENT;
+		return -1;
+	}
+
+	GET_TOKEN (awk);				
+	return 0;
 }
 
 static int __get_token (xp_awk_t* awk)
