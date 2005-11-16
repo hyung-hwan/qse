@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.5 2005-11-15 15:59:23 bacon Exp $
+ * $Id: parse.c,v 1.6 2005-11-16 16:09:53 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -34,10 +34,17 @@ enum
 	TOKEN_IDENT,
 	TOEKN_BEGIN,
 	TOKEN_END,
-	TOKEN_FUNCTION
+	TOKEN_FUNCTION,
+	TOKEN_IF,
+	TOKEN_DO,
+	TOKEN_WHILE,
+	TOKEN_FOR,
+	TOKEN_CONTINUE,
+	TOKEN_BREAK
 };
 
 static int __parse (xp_awk_t* awk);
+static int __parse_body (xp_awk_t* awk);
 static int __parse_function_header (xp_awk_t* awk);
 static int __get_token (xp_awk_t* awk);
 static int __get_char (xp_awk_t* awk);
@@ -56,6 +63,12 @@ static struct __kwent __kwtab[] =
 	{ XP_TEXT("BEGIN"),    TOKEN_BEGIN },
 	{ XP_TEXT("END"),      TOKEN_END },
 	{ XP_TEXT("function"), TOKEN_FUNCTION },
+	{ XP_TEXT("if"),       TOKEN_IF },
+	{ XP_TEXT("do"),       TOKEN_DO },
+	{ XP_TEXT("while"),    TOKEN_WHILE },
+	{ XP_TEXT("for"),      TOKEN_FOR },
+	{ XP_TEXT("continue"), TOKEN_CONTINUE },
+	{ XP_TEXT("break"),    TOKEN_BREAK },
 	{ XP_NULL,             0 },
 };
 
@@ -103,29 +116,50 @@ END {
 	while (1) {
 		if (awk->token.type == TOKEN_EOF) break;
 
+		if (awk->token.type = TOKEN_BEGIN) {
+			GET_TOKEN (awk);
+			if (__parse_body(awk) == -1) return -1;
+		}
+
+#if 0
 		if (awk->token.type == TOKEN_FUNCTION) {
 			if (__parse_function_header (awk) == -1) return -1;
 
 			/* parse functio body */
 		}
 
-	if (awk->token.type == TOKEN_BEGIN) {
-	}
-	else if (awk->token.type == TOKEN_END) {
-	}
-	else if (awk->token.type == TOKEN_NOT) {
-	}
-	else if (awk->token.type == TOKEN_REGEX) {
-	}
+		if (awk->token.type == TOKEN_BEGIN) {
+		}
+		else if (awk->token.type == TOKEN_END) {
+		}
+		else if (awk->token.type == TOKEN_NOT) {
+		}
+		else if (awk->token.type == TOKEN_REGEX) {
+		}
 
-	if (awk->token.type != TOKEN_LBRACE) {
-		awk->errnum = XP_AWK_ELBRAC;
-		return -1;
-	}
+		if (awk->token.type != TOKEN_LBRACE) {
+			awk->errnum = XP_AWK_ELBRAC;
+			return -1;
+		}
+#endif
 	}
 
 	return 0;
 	
+}
+
+static int __parse_body (xp_awk_t* awk)
+{
+	if (awk->token.type != TOKEN_LBRACE) {
+		awk->errnum = XP_AWK_ELBRAC;
+		return -1;
+	}
+
+	GET_TOKEN (awk);
+	if (awk->token.type == TOKEN_CONTINUE) {
+	}
+
+	return 0;
 }
 
 static int __parse_function_header (xp_awk_t* awk)
