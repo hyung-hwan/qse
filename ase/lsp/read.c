@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.16 2005-09-24 08:16:02 bacon Exp $
+ * $Id: read.c,v 1.17 2005-11-18 17:58:47 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -26,13 +26,14 @@
 #define TOKEN_RVALUE(lsp)  (lsp)->token.rvalue
 #define TOKEN_SVALUE(lsp)  (lsp)->token.name.buffer
 #define TOKEN_SLENGTH(lsp) (lsp)->token.name.size
-#define TOKEN_ADD_CHAR(lsp,ch) \
-	do { \
-		if (xp_lsp_token_addc(&(lsp)->token, ch) == -1) { \
-			lsp->errnum = XP_LSP_ERR_MEMORY; \
-			return -1; \
-		} \
-	} while (0)
+
+#define TOKEN_ADD_CHAR(lsp,ch) do { \
+	if (xp_lsp_token_addc(&(lsp)->token, ch) == -1) { \
+		lsp->errnum = XP_LSP_ERR_MEMORY; \
+		return -1; \
+	} \
+} while (0)
+
 #define TOKEN_COMPARE(lsp,str) xp_lsp_token_compare_name (&(lsp)->token, str)
 		
 #define TOKEN_END            0
