@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.6 2005-11-16 16:09:53 bacon Exp $
+ * $Id: parse.c,v 1.7 2005-11-21 15:46:47 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -44,8 +44,7 @@ enum
 };
 
 static int __parse (xp_awk_t* awk);
-static int __parse_body (xp_awk_t* awk);
-static int __parse_function_header (xp_awk_t* awk);
+static int __parse_program (xp_awk_t* awk);
 static int __get_token (xp_awk_t* awk);
 static int __get_char (xp_awk_t* awk);
 static int __unget_char (xp_awk_t* awk, xp_cint_t c);
@@ -99,79 +98,53 @@ int xp_awk_parse (xp_awk_t* awk)
 {
 	GET_CHAR (awk);
 	GET_TOKEN (awk);
-	return __parse (awk);
+	return __parse_program (awk);
 }
 
-static int __parse (xp_awk_t* awk)
+static int __parse_program (xp_awk_t* awk)
 {
-/*
-function abc ()
-{
-}
-BEGIN {
-END {
-{
-!/ /
-*/
+	/*
+	pattern { action }
+	function name (parameter-list) { statement }
+	*/
+
 	while (1) {
-		if (awk->token.type == TOKEN_EOF) break;
-
-		if (awk->token.type = TOKEN_BEGIN) {
-			GET_TOKEN (awk);
-			if (__parse_body(awk) == -1) return -1;
-		}
-
-#if 0
 		if (awk->token.type == TOKEN_FUNCTION) {
-			if (__parse_function_header (awk) == -1) return -1;
-
-			/* parse functio body */
+			if (__parse_function_declaration(awk) == -1) return -1;
 		}
-
-		if (awk->token.type == TOKEN_BEGIN) {
+		else {
+			if (__parse_pattern_action(awk) == -1) return -1;
 		}
-		else if (awk->token.type == TOKEN_END) {
-		}
-		else if (awk->token.type == TOKEN_NOT) {
-		}
-		else if (awk->token.type == TOKEN_REGEX) {
-		}
-
-		if (awk->token.type != TOKEN_LBRACE) {
-			awk->errnum = XP_AWK_ELBRAC;
-			return -1;
-		}
-#endif
-	}
-
-	return 0;
-	
-}
-
-static int __parse_body (xp_awk_t* awk)
-{
-	if (awk->token.type != TOKEN_LBRACE) {
-		awk->errnum = XP_AWK_ELBRAC;
-		return -1;
-	}
-
-	GET_TOKEN (awk);
-	if (awk->token.type == TOKEN_CONTINUE) {
 	}
 
 	return 0;
 }
 
-static int __parse_function_header (xp_awk_t* awk)
+static int __parse_function_declaration (xp_awk_t* awk)
 {
-	GET_TOKEN (awk);	
-	if (awk->token.type != TOKEN_IDENT) {
-		awk->errnum = XP_AWK_EIDENT;
-		return -1;
+	return -1;
+}
+
+static int __parse_pattern_action (xp_awk_t* awk)
+{
+	/* 
+	BEGIN
+	END
+	expressions 
+	/regular expression/
+	pattern && pattern
+	pattern || pattern
+	!pattern
+	(pattern)
+	pattern, pattern
+	*/
+
+	if (awk->token.type == TOKEN_BEGIN) {
+	}
+	else if (awk->token.type == TOKEN_END) {
 	}
 
-	GET_TOKEN (awk);				
-	return 0;
+	return -1;
 }
 
 static int __get_token (xp_awk_t* awk)
