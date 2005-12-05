@@ -1,5 +1,5 @@
 /*
- * $Id: name.h,v 1.3 2005-08-18 15:28:18 bacon Exp $
+ * $Id: name.h,v 1.4 2005-12-05 15:11:29 bacon Exp $
  */
 
 #ifndef _XP_STX_NAME_H_
@@ -13,7 +13,7 @@ struct xp_stx_name_t
 	xp_word_t   size;
 	xp_char_t*  buffer;
 	xp_char_t   static_buffer[128];
-	xp_bool_t __malloced;
+	xp_bool_t __dynamic;
 };
 
 typedef struct xp_stx_name_t xp_stx_name_t;

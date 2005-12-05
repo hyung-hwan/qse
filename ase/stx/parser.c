@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.78 2005-10-02 15:45:09 bacon Exp $
+ * $Id: parser.c,v 1.79 2005-12-05 15:11:29 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -66,18 +66,18 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 		parser = (xp_stx_parser_t*)
 			xp_malloc (xp_sizeof(xp_stx_parser_t));		
 		if (parser == XP_NULL) return XP_NULL;
-		parser->__malloced = xp_true;
+		parser->__dynamic = xp_true;
 	}
-	else parser->__malloced = xp_false;
+	else parser->__dynamic = xp_false;
 
 	if (xp_stx_name_open (&parser->method_name, 0) == XP_NULL) {
-		if (parser->__malloced) xp_free (parser);
+		if (parser->__dynamic) xp_free (parser);
 		return XP_NULL;
 	}
 
 	if (xp_stx_token_open (&parser->token, 0) == XP_NULL) {
 		xp_stx_name_close (&parser->method_name);
-		if (parser->__malloced) xp_free (parser);
+		if (parser->__dynamic) xp_free (parser);
 		return XP_NULL;
 	}
 
@@ -86,7 +86,7 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 		xp_sizeof(xp_byte_t), XP_NULL) == XP_NULL) {
 		xp_stx_name_close (&parser->method_name);
 		xp_stx_token_close (&parser->token);
-		if (parser->__malloced) xp_free (parser);
+		if (parser->__dynamic) xp_free (parser);
 		return XP_NULL;
 	}
 
@@ -116,7 +116,7 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 	xp_stx_name_close (&parser->method_name);
 	xp_stx_token_close (&parser->token);
 
-	if (parser->__malloced) xp_free (parser);
+	if (parser->__dynamic) xp_free (parser);
 }
 
 #define GET_CHAR(parser) \

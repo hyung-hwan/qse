@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.12 2005-06-08 16:00:51 bacon Exp $
+ * $Id: memory.c,v 1.13 2005-12-05 15:11:29 bacon Exp $
  */
 
 #include <xp/stx/memory.h>
@@ -15,14 +15,14 @@ xp_stx_memory_t* xp_stx_memory_open (
 	if (mem == XP_NULL) {
 		mem = (xp_stx_memory_t*)xp_malloc(xp_sizeof(xp_stx_memory_t));
 		if (mem == XP_NULL) return XP_NULL;
-		mem->__malloced = xp_true;
+		mem->__dynamic = xp_true;
 	}
-	else mem->__malloced = xp_false;
+	else mem->__dynamic = xp_false;
 
 	slots = (xp_stx_object_t**)xp_malloc (
 		capacity * xp_sizeof(xp_stx_object_t*));
 	if (slots == XP_NULL) {
-		if (mem->__malloced) xp_free (mem);
+		if (mem->__dynamic) xp_free (mem);
 		mem = XP_NULL;
 	}
 
@@ -47,7 +47,7 @@ void xp_stx_memory_close (xp_stx_memory_t* mem)
 	mem->capacity = 0;
 	mem->slots = XP_NULL;
 	mem->free = XP_NULL;
-	if (mem->__malloced) xp_free (mem);
+	if (mem->__dynamic) xp_free (mem);
 }
 
 void xp_stx_memory_gc (xp_stx_memory_t* mem)

@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.34 2005-08-18 15:28:18 bacon Exp $
+ * $Id: parser.h,v 1.35 2005-12-05 15:11:29 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -86,7 +86,7 @@ struct xp_stx_parser_t
 	void* input_owner;
 	int (*input_func) (int cmd, void* owner, void* arg);
 
-	xp_bool_t __malloced;
+	xp_bool_t __dynamic;
 };
 
 #ifdef __cplusplus

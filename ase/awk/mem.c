@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.1 2005-09-30 09:40:15 bacon Exp $
+ * $Id: mem.c,v 1.2 2005-12-05 15:11:29 bacon Exp $
  */
 
 #include <xp/sce/mem.h>
@@ -15,14 +15,14 @@ xp_sce_mem_t* xp_sce_mem_open (
 	if (mem == XP_NULL) {
 		mem = (xp_sce_mem_t*)xp_malloc(xp_sizeof(xp_sce_mem_t));
 		if (mem == XP_NULL) return XP_NULL;
-		mem->__malloced = xp_true;
+		mem->__dynamic = xp_true;
 	}
-	else mem->__malloced = xp_false;
+	else mem->__dynamic = xp_false;
 
 	slots = (xp_sce_obj_t**)xp_malloc (
 		capacity * xp_sizeof(xp_sce_obj_t*));
 	if (slots == XP_NULL) {
-		if (mem->__malloced) xp_free (mem);
+		if (mem->__dynamic) xp_free (mem);
 		mem = XP_NULL;
 	}
 
@@ -47,7 +47,7 @@ void xp_sce_mem_close (xp_sce_mem_t* mem)
 	mem->capacity = 0;
 	mem->slots = XP_NULL;
 	mem->free = XP_NULL;
-	if (mem->__malloced) xp_free (mem);
+	if (mem->__dynamic) xp_free (mem);
 }
 
 void xp_sce_mem_gc (xp_sce_mem_t* mem)

@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.9 2005-06-12 16:22:03 bacon Exp $
+ * $Id: token.c,v 1.10 2005-12-05 15:11:29 bacon Exp $
  */
 
 #include <xp/stx/token.h>
@@ -12,12 +12,12 @@ xp_stx_token_t* xp_stx_token_open (
 		token = (xp_stx_token_t*)
 			xp_malloc (xp_sizeof(xp_stx_token_t));
 		if (token == XP_NULL) return XP_NULL;
-		token->__malloced = xp_true;
+		token->__dynamic = xp_true;
 	}
-	else token->__malloced = xp_false;
+	else token->__dynamic = xp_false;
 	
 	if (xp_stx_name_open(&token->name, capacity) == XP_NULL) {
-		if (token->__malloced) xp_free (token);
+		if (token->__dynamic) xp_free (token);
 		return XP_NULL;
 	}
 
@@ -32,7 +32,7 @@ xp_stx_token_t* xp_stx_token_open (
 void xp_stx_token_close (xp_stx_token_t* token)
 {
 	xp_stx_name_close (&token->name);
-	if (token->__malloced) xp_free (token);
+	if (token->__dynamic) xp_free (token);
 }
 
 int xp_stx_token_addc (xp_stx_token_t* token, xp_cint_t c)

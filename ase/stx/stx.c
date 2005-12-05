@@ -1,5 +1,5 @@
 /*
- * $Id: stx.c,v 1.39 2005-08-18 15:28:18 bacon Exp $
+ * $Id: stx.c,v 1.40 2005-12-05 15:11:29 bacon Exp $
  */
 
 #include <xp/stx/stx.h>
@@ -13,12 +13,12 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_word_t capacity)
 	if (stx == XP_NULL) {
 		stx = (xp_stx_t*)xp_malloc (xp_sizeof(stx));
 		if (stx == XP_NULL) return XP_NULL;
-		stx->__malloced = xp_true;
+		stx->__dynamic = xp_true;
 	}
-	else stx->__malloced = xp_false;
+	else stx->__dynamic = xp_false;
 
 	if (xp_stx_memory_open (&stx->memory, capacity) == XP_NULL) {
-		if (stx->__malloced) xp_free (stx);
+		if (stx->__dynamic) xp_free (stx);
 		return XP_NULL;
 	}
 
@@ -28,7 +28,7 @@ xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_word_t capacity)
 		xp_sizeof(xp_word_t) * stx->symtab.capacity);
 	if (stx->symtab.datum == XP_NULL) {
 		xp_stx_memory_close (&stx->memory);
-		if (stx->__malloced) xp_free (stx);
+		if (stx->__dynamic) xp_free (stx);
 		return XP_NULL;
 	}
 
@@ -65,6 +65,6 @@ void xp_stx_close (xp_stx_t* stx)
 {
 	xp_free (stx->symtab.datum);
 	xp_stx_memory_close (&stx->memory);
-	if (stx->__malloced) xp_free (stx);
+	if (stx->__dynamic) xp_free (stx);
 }
 
