@@ -1,5 +1,5 @@
 /*
- * $Id: init.c,v 1.10 2005-09-21 11:52:36 bacon Exp $
+ * $Id: init.c,v 1.11 2005-12-05 15:11:29 bacon Exp $
  */
 
 #include <xp/lsp/lsp.h>
@@ -15,12 +15,12 @@ xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp,
 	if (lsp == XP_NULL) {
 		lsp = (xp_lsp_t*)xp_malloc(xp_sizeof(xp_lsp_t));
 		if (lsp == XP_NULL) return lsp;
-		lsp->__malloced = xp_true;
+		lsp->__dynamic = xp_true;
 	}
-	else lsp->__malloced = xp_false;
+	else lsp->__dynamic = xp_false;
 
 	if (xp_lsp_token_open(&lsp->token, 0) == XP_NULL) {
-		if (lsp->__malloced) xp_free (lsp);
+		if (lsp->__dynamic) xp_free (lsp);
 		return XP_NULL;
 	}
 
@@ -37,14 +37,14 @@ xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp,
 	lsp->mem = xp_lsp_mem_new (mem_ubound, mem_ubound_inc);
 	if (lsp->mem == XP_NULL) {
 		xp_lsp_token_close (&lsp->token);
-		if (lsp->__malloced) xp_free (lsp);
+		if (lsp->__dynamic) xp_free (lsp);
 		return XP_NULL;
 	}
 
 	if (__add_builtin_prims(lsp) == -1) {
 		xp_lsp_mem_free (lsp->mem);
 		xp_lsp_token_close (&lsp->token);
-		if (lsp->__malloced) xp_free (lsp);
+		if (lsp->__dynamic) xp_free (lsp);
 		return XP_NULL;
 	}
 
@@ -59,7 +59,7 @@ void xp_lsp_close (xp_lsp_t* lsp)
 	xp_assert (lsp != XP_NULL);
 	xp_lsp_mem_free (lsp->mem);
 	xp_lsp_token_close (&lsp->token);
-	if (lsp->__malloced) xp_free (lsp);
+	if (lsp->__dynamic) xp_free (lsp);
 }
 
 int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input, void* arg)

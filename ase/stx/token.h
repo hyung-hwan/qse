@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.17 2005-06-23 04:55:44 bacon Exp $
+ * $Id: token.h,v 1.18 2005-12-05 15:11:29 bacon Exp $
  */
 
 #ifndef _XP_STX_TOKEN_H_
@@ -40,7 +40,7 @@ struct xp_stx_token_t
 	xp_stx_real_t  fvalue;
 	*/
 	xp_stx_name_t name;
-	xp_bool_t __malloced;
+	xp_bool_t __dynamic;
 };
 
 typedef struct xp_stx_token_t xp_stx_token_t;

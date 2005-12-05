@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.44 2005-09-30 12:19:00 bacon Exp $
+ * $Id: stx.h,v 1.45 2005-12-05 15:11:29 bacon Exp $
  */
 
 #ifndef _XP_STX_STX_H_
@@ -56,7 +56,7 @@ struct xp_stx_memory_t
 	xp_word_t capacity;
 	xp_stx_object_t** slots;
 	xp_stx_object_t** free;
-	xp_bool_t __malloced;
+	xp_bool_t __dynamic;
 };
 
 struct xp_stx_symtab_t
@@ -92,7 +92,7 @@ struct xp_stx_t
 	xp_word_t class_method;
 	xp_word_t class_smallinteger;
 
-	xp_bool_t __malloced;
+	xp_bool_t __dynamic;
 	xp_bool_t __wantabort; /* TODO: make it a function pointer */
 };
 

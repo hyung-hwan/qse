@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.19 2005-10-19 15:44:29 bacon Exp $
+ * $Id: lsp.h,v 1.20 2005-12-05 15:11:29 bacon Exp $
  */
 
 #ifndef _XP_LSP_LSP_H_
@@ -91,7 +91,7 @@ struct xp_lsp_t
 
 	/* memory manager */
 	xp_lsp_mem_t* mem;
-	xp_bool_t __malloced;
+	xp_bool_t __dynamic;
 };
 
 #ifdef __cplusplus

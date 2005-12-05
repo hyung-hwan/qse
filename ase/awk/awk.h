@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.4 2005-11-14 15:23:53 bacon Exp $
+ * $Id: awk.h,v 1.5 2005-12-05 15:11:29 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -64,7 +64,7 @@ struct xp_awk_t
 
 	/* housekeeping */
 	int errnum;
-	xp_bool_t __malloced;
+	xp_bool_t __dynamic;
 };
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.3 2005-11-14 15:23:53 bacon Exp $
+ * $Id: awk.c,v 1.4 2005-12-05 15:11:29 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -11,12 +11,12 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	if (awk == XP_NULL) {
 		awk = (xp_awk_t*) xp_malloc (xp_sizeof(awk));
 		if (awk == XP_NULL) return XP_NULL;
-		awk->__malloced = xp_true;
+		awk->__dynamic = xp_true;
 	}
-	else awk->__malloced = xp_false;
+	else awk->__dynamic = xp_false;
 
 	if (xp_str_open(&awk->token.name, 128) == XP_NULL) {
-		if (awk->__malloced) xp_free (awk);
+		if (awk->__dynamic) xp_free (awk);
 		return XP_NULL;
 	}
 
@@ -40,7 +40,7 @@ int xp_awk_close (xp_awk_t* awk)
 {
 	if (xp_awk_detach_source(awk) == -1) return -1;
 	xp_str_close (&awk->token.name);
-	if (awk->__malloced) xp_free (awk);
+	if (awk->__dynamic) xp_free (awk);
 	return 0;
 }
 

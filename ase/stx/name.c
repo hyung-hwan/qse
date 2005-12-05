@@ -1,5 +1,5 @@
 /*
- * $Id: name.c,v 1.2 2005-07-12 16:16:42 bacon Exp $
+ * $Id: name.c,v 1.3 2005-12-05 15:11:29 bacon Exp $
  */
 
 #include <xp/stx/name.h>
@@ -15,9 +15,9 @@ xp_stx_name_t* xp_stx_name_open (
 		name = (xp_stx_name_t*)
 			xp_malloc (xp_sizeof(xp_stx_name_t));
 		if (name == XP_NULL) return XP_NULL;
-		name->__malloced = xp_true;
+		name->__dynamic = xp_true;
 	}
-	else name->__malloced = xp_false;
+	else name->__dynamic = xp_false;
 	
 	if (capacity < xp_countof(name->static_buffer)) {
 		name->buffer = name->static_buffer;
@@ -26,7 +26,7 @@ xp_stx_name_t* xp_stx_name_open (
 		name->buffer = (xp_char_t*)
 			xp_malloc ((capacity + 1) * xp_sizeof(xp_char_t));
 		if (name->buffer == XP_NULL) {
-			if (name->__malloced) xp_free (name);
+			if (name->__dynamic) xp_free (name);
 			return XP_NULL;
 		}
 	}
@@ -44,7 +44,7 @@ void xp_stx_name_close (xp_stx_name_t* name)
 		xp_assert (name->buffer != name->static_buffer);
 		xp_free (name->buffer);
 	}
-	if (name->__malloced) xp_free (name);
+	if (name->__dynamic) xp_free (name);
 }
 
 int xp_stx_name_addc (xp_stx_name_t* name, xp_cint_t c)
