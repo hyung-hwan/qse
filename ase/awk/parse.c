@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.7 2005-11-21 15:46:47 bacon Exp $
+ * $Id: parse.c,v 1.8 2005-12-11 13:56:13 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -82,7 +82,7 @@ static struct __kwent __kwtab[] =
 #define SET_TOKEN_TYPE(awk,code) ((awk)->token.type = code)
 
 #define ADD_TOKEN_CHAR(awk,c) do { \
-	if (xp_str_catc(&(awk)->token.name,(c)) == -1) { \
+	if (xp_str_ccat(&(awk)->token.name,(c)) == -1) { \
 		(awk)->errnum = XP_AWK_ENOMEM; return -1; \
 	} \
 } while (0)
