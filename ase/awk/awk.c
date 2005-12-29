@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.4 2005-12-05 15:11:29 bacon Exp $
+ * $Id: awk.c,v 1.5 2005-12-29 12:04:51 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -22,13 +22,13 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 
 	awk->errnum = XP_AWK_ENOERR;
 
-	awk->source_func = XP_NULL;
-	awk->input_func = XP_NULL;
-	awk->output_func = XP_NULL;
+	awk->src_func = XP_NULL;
+	awk->inp_func = XP_NULL;
+	awk->outp_func = XP_NULL;
 
-	awk->source_arg = XP_NULL;
-	awk->input_arg = XP_NULL;
-	awk->output_arg = XP_NULL;
+	awk->src_arg = XP_NULL;
+	awk->inp_arg = XP_NULL;
+	awk->outp_arg = XP_NULL;
 
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
@@ -38,40 +38,40 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 
 int xp_awk_close (xp_awk_t* awk)
 {
-	if (xp_awk_detach_source(awk) == -1) return -1;
+	if (xp_awk_detsrc(awk) == -1) return -1;
 	xp_str_close (&awk->token.name);
 	if (awk->__dynamic) xp_free (awk);
 	return 0;
 }
 
-int xp_awk_attach_source (xp_awk_t* awk, xp_awk_io_t source, void* arg)
+int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
 {
-	if (xp_awk_detach_source(awk) == -1) return -1;
+	if (xp_awk_detsrc(awk) == -1) return -1;
 
-	xp_assert (awk->source_func == XP_NULL);
+	xp_assert (awk->src_func == XP_NULL);
 
 	if (source(XP_AWK_IO_OPEN, arg, XP_NULL, 0) == -1) {
 		awk->errnum = XP_AWK_ESRCOP;
 		return -1;
 	}
 
-	awk->source_func = source;
-	awk->source_arg = arg;
+	awk->src_func = src;
+	awk->src_arg = arg;
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
 	return 0;
 }
 
-int xp_awk_detach_source (xp_awk_t* awk)
+int xp_awk_detsrc (xp_awk_t* awk)
 {
-	if (awk->source_func != XP_NULL) {
-		if (awk->source_func(XP_AWK_IO_CLOSE, awk->source_arg, XP_NULL, 0) == -1) {
+	if (awk->src_func != XP_NULL) {
+		if (awk->src_func(XP_AWK_IO_CLOSE, awk->src_arg, XP_NULL, 0) == -1) {
 			awk->errnum = XP_AWK_ESRCCL;
 			return -1;
 		}
 
-		awk->source_func = XP_NULL;
-		awk->source_arg = XP_NULL;
+		awk->src_func = XP_NULL;
+		awk->src_arg = XP_NULL;
 		awk->lex.curc = XP_CHAR_EOF;
 		awk->lex.ungotc_count = 0;
 	}
