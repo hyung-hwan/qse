@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.5 2005-12-05 15:11:29 bacon Exp $
+ * $Id: awk.h,v 1.6 2005-12-29 12:04:51 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -7,7 +7,7 @@
 
 #include <xp/types.h>
 #include <xp/macros.h>
-#include <xp/bas/string.h>
+#include <xp/bas/str.h>
 
 enum
 {
@@ -41,13 +41,13 @@ enum
 struct xp_awk_t
 {
 	/* io functions */
-	xp_awk_io_t source_func;
-	xp_awk_io_t input_func;
-	xp_awk_io_t output_func;
+	xp_awk_io_t src_func;
+	xp_awk_io_t inp_func;
+	xp_awk_io_t outp_func;
 
-	void* source_arg;
-	void* input_arg;
-	void* output_arg;
+	void* src_arg;
+	void* inp_arg;
+	void* outp_arg;
 
 	/* source buffer management */
 	struct {
@@ -71,11 +71,31 @@ struct xp_awk_t
 extern "C" {
 #endif
 
+/*
+ * FUNCTION: xp_awk_open
+ */
 xp_awk_t* xp_awk_open (xp_awk_t* awk);
+
+/*
+ * FUNCTION: xp_awk_close
+ */
 int xp_awk_close (xp_awk_t* awk);
 
-int xp_awk_attach_source (xp_awk_t* awk, xp_awk_io_t source, void* source_arg);
-int xp_awk_detach_source (xp_awk_t* awk);
+/*
+ * FUNCTION: xp_awk_attsrc
+ */
+int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg);
+
+/*
+ * FUNCTION: xp_awk_detsrc
+ */
+int xp_awk_detsrc (xp_awk_t* awk);
+
+int xp_awk_attinp (xp_awk_t* awk, xp_awk_io_t inp, void* arg);
+int xp_awk_detinp (xp_awk_t* awk);
+
+int xp_awk_attoutp (xp_awk_t* awk, xp_awk_io_t outp, void* arg);
+int xp_awk_detoutp (xp_awk_t* awk);
 
 #ifdef __cplusplus
 }
