@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.6 2005-12-29 12:04:51 bacon Exp $
+ * $Id: awk.h,v 1.7 2006-01-09 12:51:47 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -8,6 +8,7 @@
 #include <xp/types.h>
 #include <xp/macros.h>
 #include <xp/bas/str.h>
+#include <xp/awk/tree.h>
 
 enum
 {
@@ -16,8 +17,11 @@ enum
 	XP_AWK_ESRCOP,
 	XP_AWK_ESRCCL,
 	XP_AWK_ESRCDT, /* error in reading source */
+
 	XP_AWK_ELXCHR, /* lexer came accross an wrong character */
-	XP_AWK_ELXUNG  /* lexer failed to unget a character */
+	XP_AWK_ELXUNG, /* lexer failed to unget a character */
+
+	XP_AWK_ELBRACE /* left brace expected */
 };
 
 /*
@@ -40,6 +44,9 @@ enum
 
 struct xp_awk_t
 {
+	/* parse tree */
+	xp_awk_node_t* tree;
+
 	/* io functions */
 	xp_awk_io_t src_func;
 	xp_awk_io_t inp_func;

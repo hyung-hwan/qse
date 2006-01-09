@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.5 2005-12-29 12:04:51 bacon Exp $
+ * $Id: awk.c,v 1.6 2006-01-09 12:51:46 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -20,6 +20,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
+	awk->tree = XP_NULL;
 	awk->errnum = XP_AWK_ENOERR;
 
 	awk->src_func = XP_NULL;
@@ -38,6 +39,10 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 
 int xp_awk_close (xp_awk_t* awk)
 {
+	/* TODO: collapse the tree */
+
+	if (awk->tree != XP_NULL) __collapse_tree (awk->tree);
+
 	if (xp_awk_detsrc(awk) == -1) return -1;
 	xp_str_close (&awk->token.name);
 	if (awk->__dynamic) xp_free (awk);
