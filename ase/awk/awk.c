@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.6 2006-01-09 12:51:46 bacon Exp $
+ * $Id: awk.c,v 1.7 2006-01-09 16:03:55 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -37,11 +37,17 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	return awk;
 }
 
-int xp_awk_close (xp_awk_t* awk)
+static void __collapse_tree (xp_awk_t* awk)
 {
 	/* TODO: collapse the tree */
+	/* TODO */
+	awk->tree = XP_NULL;
+}
 
-	if (awk->tree != XP_NULL) __collapse_tree (awk->tree);
+int xp_awk_close (xp_awk_t* awk)
+{
+
+	if (awk->tree != XP_NULL) __collapse_tree (awk);
 
 	if (xp_awk_detsrc(awk) == -1) return -1;
 	xp_str_close (&awk->token.name);
@@ -55,7 +61,7 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
 
 	xp_assert (awk->src_func == XP_NULL);
 
-	if (source(XP_AWK_IO_OPEN, arg, XP_NULL, 0) == -1) {
+	if (src(XP_AWK_IO_OPEN, arg, XP_NULL, 0) == -1) {
 		awk->errnum = XP_AWK_ESRCOP;
 		return -1;
 	}

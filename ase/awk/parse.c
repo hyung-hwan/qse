@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.10 2006-01-09 12:51:47 bacon Exp $
+ * $Id: parse.c,v 1.11 2006-01-09 16:03:55 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -31,6 +31,8 @@ enum
 	TOKEN_LBRACKET,
 	TOKEN_RBRACKET,
 
+	TOKEN_SEMICOLON,
+
 	TOKEN_STRING,
 	TOKEN_REGEX,
 
@@ -51,9 +53,9 @@ enum
 	TOKEN_NEXTFILE
 };
 
-static int __parse (xp_awk_t* awk);
-
 static xp_awk_node_t* __parse_program (xp_awk_t* awk);
+static xp_awk_node_t* __parse_funcdcl (xp_awk_t* awk);
+static xp_awk_node_t* __parse_patnact (xp_awk_t* awk);
 static xp_awk_node_t* __parse_block (xp_awk_t* awk);
 static xp_awk_node_t* __parse_if (xp_awk_t* awk);
 static xp_awk_node_t* __parse_while (xp_awk_t* awk);
@@ -125,6 +127,44 @@ static struct __kwent __kwtab[] =
 
 #define PANIC(awk,code) do { (awk)->errnum = (code);  return XP_NULL; } while (0);
 
+void __print_tabs (int depth)
+{
+	int i;
+	for (i = 0; i < depth; i++) xp_printf (XP_TEXT("\t"));
+}
+
+void __print_parse_tree (xp_awk_node_t* tree, int depth)
+{
+	xp_awk_node_t* p;
+
+	p = tree;
+	while (p != XP_NULL) {
+		if (p->type == XP_AWK_NODE_BLOCK) {
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("{\n"));
+
+			__print_parse_tree (((xp_awk_node_block_t*)p)->body, depth + 1);	
+
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("}\n"));
+		}
+		else if (p->type == XP_AWK_NODE_BREAK) {
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("break;\n"));
+		}
+		else if (p->type == XP_AWK_NODE_CONTINUE) {
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("continue;\n"));
+		}
+		p = p->sbls;
+	}
+}
+
+void print_parse_tree (xp_awk_node_t* tree)
+{
+	__print_parse_tree (tree, 0);
+}
+
 int xp_awk_parse (xp_awk_t* awk)
 {
 	xp_awk_node_t* node;
@@ -133,8 +173,12 @@ int xp_awk_parse (xp_awk_t* awk)
 	GET_TOKEN (awk);
 
 	node = __parse_program(awk);
-	if (node == XP_NULL) return -1;
+	if (node == XP_NULL) {
+xp_printf (XP_TEXT("error - %d\n"), awk->errnum);
+		return -1;
+	}
 
+xp_printf (XP_TEXT("end - %d\n"), awk->errnum);
 	awk->tree = node;
 	return 0;
 }
@@ -145,30 +189,32 @@ static xp_awk_node_t* __parse_program (xp_awk_t* awk)
 	pattern { action }
 	function name (parameter-list) { statement }
 	*/
-
 	xp_awk_node_t* node;
 
-	/*
 	while (1) {
-		if (awk->token.type == TOKEN_FUNCTION) {
-			if (__parse_function_declaration(awk) == -1) return -1;
+xp_printf (XP_TEXT(">>>>> starting ... for testing ...\n"));
+		if (MATCH(awk,TOKEN_FUNCTION)) {
+			node = __parse_funcdcl(awk);
 		}
 		else {
-			if (__parse_pattern_action(awk) == -1) return -1;
+			node = __parse_patnact(awk);
 		}
+
+		if (node == XP_NULL) return XP_NULL;
+xp_printf (XP_TEXT(">>>>> breaking ... for testing ...\n"));
+break;
 	}
-	*/
 
 	return node;
 }
 
 
-static xp_awk_node_t* __parse_function_declaration (xp_awk_t* awk)
+static xp_awk_node_t* __parse_funcdcl (xp_awk_t* awk)
 {
 	return XP_NULL;
 }
 
-static xp_awk_node_t* __parse_pattern_action (xp_awk_t* awk)
+static xp_awk_node_t* __parse_patnact (xp_awk_t* awk)
 {
 	/* 
 	BEGIN
@@ -208,19 +254,30 @@ static xp_awk_node_t* __parse_pattern_action (xp_awk_t* awk)
 /* TODO: what is the best name for the parsing routine for the outermost block? */
 static xp_awk_node_t* __parse_block (xp_awk_t* awk) 
 {
-	xp_awk_node_block_t* node;
+	xp_awk_node_block_t* blk;
+	xp_awk_node_t* x, * y;
+	int saved_token;
 
-	node = (xp_awk_node_block_t*) xp_malloc (xp_sizeof(xp_awk_node_block_t));
-	if (node == XP_NULL) {
+xp_printf (XP_TEXT("__parse_block....\n"));
+	blk = (xp_awk_node_block_t*) xp_malloc (xp_sizeof(xp_awk_node_block_t));
+	if (blk == XP_NULL) {
 		/* TODO: do some clean-up */
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	node->type = XP_AWK_NODE_BLOCK;
-	node->sbls = XP_NULL;
-	node->body = XP_NULL;
+	blk->type = XP_AWK_NODE_BLOCK;
+	blk->sbls = XP_NULL;
+	blk->body = XP_NULL;
+
+	x = XP_NULL;
 
 	while (1) {
+		saved_token = awk->token.type;
+
+		if (MATCH(awk,TOKEN_EOF)) {
+			PANIC (awk, XP_AWK_EENDSRC);
+		}
+
 		if (MATCH(awk,TOKEN_RBRACE)) {
 			/* TODO: should finalize a block */
 			CONSUME (awk);
@@ -230,55 +287,70 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk)
 		if (MATCH(awk,TOKEN_LBRACE)) {
 			/* nested block */
 			CONSUME (awk);
-			if (__parse_block(awk) == XP_NULL) return XP_NULL;
+			y = __parse_block(awk);
 		}
 		else if (MATCH(awk,TOKEN_IF)) {
 			CONSUME (awk);
-			if (__parse_if(awk) == XP_NULL) return XP_NULL;
+			y = __parse_if(awk);
 		}
 		else if (MATCH(awk,TOKEN_WHILE)) {
 			CONSUME (awk);
-			if (__parse_while(awk) == XP_NULL) return XP_NULL;
+			y = __parse_while(awk);
 		}
 		else if (MATCH(awk,TOKEN_FOR)) {
 			CONSUME (awk);
-			if (__parse_for(awk) == XP_NULL) return XP_NULL;
+			y = __parse_for(awk);
 		}
 		else if (MATCH(awk,TOKEN_DO)) {
 			CONSUME (awk);
-			if (__parse_do(awk) == XP_NULL) return XP_NULL;
+			y = __parse_do(awk);
 		}
 		else if (MATCH(awk,TOKEN_BREAK)) {
 			CONSUME (awk);
-			node->body = __parse_break(awk);
+			y = __parse_break(awk);
 		}
 		else if (MATCH(awk,TOKEN_CONTINUE)) {
 			CONSUME (awk);
-			node->body = __parse_continue(awk);
+			y = __parse_continue(awk);
 		}
 		else if (MATCH(awk,TOKEN_RETURN)) {
 			CONSUME (awk);
 			/* TOOD: */
 		}
-		else if (MATCH(awk, TOKEN_EXIT)) {
+		else if (MATCH(awk,TOKEN_EXIT)) {
 			CONSUME (awk);
 			/* TOOD: */
 		}
-		else if (MATCH(awk, TOKEN_DELETE)) {
+		else if (MATCH(awk,TOKEN_DELETE)) {
 			CONSUME (awk);
 			/* TOOD: */
 		}
-		else if (MATCH(awk, TOKEN_NEXT)) {
+		else if (MATCH(awk,TOKEN_NEXT)) {
 			CONSUME (awk);
 			/* TOOD: */
 		}
-		else if (MATCH(awk, TOKEN_NEXTFILE)) {
+		else if (MATCH(awk,TOKEN_NEXTFILE)) {
 			CONSUME (awk);
 			/* TOOD: */
+		}
+
+		if (y == XP_NULL) return XP_NULL;
+		if (blk->body == XP_NULL) {
+			blk->body = y;
+			x = y;
+		}
+		else {
+			x->sbls = y;
+			x = y;
+		}
+
+		if (saved_token != TOKEN_LBRACE) {
+			if (!MATCH(awk,TOKEN_SEMICOLON)) PANIC (awk, XP_AWK_ESEMICOLON);
+			CONSUME (awk);
 		}
 	}
 
-	return 0;
+	return (xp_awk_node_t*)blk;
 }
 
 static xp_awk_node_t* __parse_if (xp_awk_t* awk)
@@ -308,6 +380,7 @@ static xp_awk_node_t* __parse_break (xp_awk_t* awk)
 	node = (xp_awk_node_t*) xp_malloc (xp_sizeof(xp_awk_node_t));
 	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	node->type = XP_AWK_NODE_BREAK;
+	node->sbls = XP_NULL;
 	
 	/* TODO: do i have to consume a semicolon here???? */
 	return node;
@@ -320,6 +393,7 @@ static xp_awk_node_t* __parse_continue (xp_awk_t* awk)
 	node = (xp_awk_node_t*) xp_malloc (xp_sizeof(xp_awk_node_t));
 	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	node->type = XP_AWK_NODE_CONTINUE;
+	node->sbls = XP_NULL;
 	
 	/* TODO: do i have to consume a semicolon here???? */
 	return node;
@@ -426,26 +500,37 @@ static int __get_token (xp_awk_t* awk)
 	else if (c == XP_CHAR('(')) {
 		SET_TOKEN_TYPE (awk, TOKEN_LPAREN);
 		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
 	}
 	else if (c == XP_CHAR(')')) {
 		SET_TOKEN_TYPE (awk, TOKEN_RPAREN);
 		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
 	}
 	else if (c == XP_CHAR('{')) {
 		SET_TOKEN_TYPE (awk, TOKEN_LBRACE);
 		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
 	}
 	else if (c == XP_CHAR('}')) {
 		SET_TOKEN_TYPE (awk, TOKEN_RBRACE);
 		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
 	}
 	else if (c == XP_CHAR('[')) {
 		SET_TOKEN_TYPE (awk, TOKEN_LBRACKET);
 		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
 	}
 	else if (c == XP_CHAR(']')) {
 		SET_TOKEN_TYPE (awk, TOKEN_RBRACKET);
 		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	else if (c == XP_CHAR(';')) {
+		SET_TOKEN_TYPE (awk, TOKEN_SEMICOLON);
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
 	}
 	else {
 		awk->errnum = XP_AWK_ELXCHR;
@@ -457,17 +542,20 @@ static int __get_token (xp_awk_t* awk)
 
 static int __get_char (xp_awk_t* awk)
 {
+	xp_ssize_t n;
+
 	if (awk->lex.ungotc_count > 0) {
 		awk->lex.curc = awk->lex.ungotc[--awk->lex.ungotc_count];
 		return 0;
 	}
 
-	if (awk->src_func(XP_AWK_IO_DATA, 
-		awk->src_arg, &awk->lex.curc, 1) == -1) {
+	n = awk->src_func(XP_AWK_IO_DATA, awk->src_arg, &awk->lex.curc, 1);
+	if (n == -1) {
 		awk->errnum = XP_AWK_ESRCDT;
 		return -1;
 	}
-
+	if (n == 0) awk->lex.curc = XP_CHAR_EOF;
+	
 	return 0;
 }
 
@@ -527,6 +615,7 @@ static int __classfy_ident (const xp_char_t* ident)
 
 	while (p->name != XP_NULL) {
 		if (xp_strcmp(p->name, ident) == 0) return p->type;
+		p++;
 	}
 
 	return TOKEN_IDENT;

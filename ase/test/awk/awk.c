@@ -38,7 +38,7 @@ int xp_main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
-	if (xp_awk_attach_source(&awk, process_source, XP_NULL) == -1) {
+	if (xp_awk_attsrc(&awk, process_source, XP_NULL) == -1) {
 		xp_awk_close (&awk);
 		xp_fprintf (xp_stderr, XP_TEXT("error: cannot attach source\n"));
 		return -1;
@@ -49,6 +49,9 @@ int xp_main (int argc, xp_char_t* argv[])
 		xp_fprintf (xp_stderr, XP_TEXT("error: cannot parse program\n"));
 		return -1;
 	}
+
+xp_printf (XP_TEXT("-----------------------------------------------\n"));
+print_parse_tree (awk.tree);
 
 	xp_awk_close (&awk);
 	return 0;
