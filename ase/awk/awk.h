@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.7 2006-01-09 12:51:47 bacon Exp $
+ * $Id: awk.h,v 1.8 2006-01-09 16:03:55 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -21,7 +21,9 @@ enum
 	XP_AWK_ELXCHR, /* lexer came accross an wrong character */
 	XP_AWK_ELXUNG, /* lexer failed to unget a character */
 
-	XP_AWK_ELBRACE /* left brace expected */
+	XP_AWK_EENDSRC, /* unexpected end of source */
+	XP_AWK_ELBRACE, /* left brace expected */
+	XP_AWK_ESEMICOLON /* semicolon expected */
 };
 
 /*
@@ -103,6 +105,8 @@ int xp_awk_detinp (xp_awk_t* awk);
 
 int xp_awk_attoutp (xp_awk_t* awk, xp_awk_io_t outp, void* arg);
 int xp_awk_detoutp (xp_awk_t* awk);
+
+int xp_awk_parse (xp_awk_t* awk);
 
 #ifdef __cplusplus
 }
