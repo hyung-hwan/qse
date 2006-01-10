@@ -1,49 +1,9 @@
 /*
- * $Id: tree.h,v 1.2 2006-01-09 12:51:47 bacon Exp $
+ * $Id: tree.h,v 1.3 2006-01-10 13:57:54 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
 #define _XP_AWK_TREE_H_
-
-/*
-enum TokenType
-{
-	IF, END, ID, NUM, READ, WRITE, UNTIL, ....
-}
-
-
-enum NodeKind { statement, expression };
-enum StatKind { if, repeat, assign, read, write };
-enum ExpKind  { op, const, id };
-enum ExpType  {  void, integer, boolean };
-
-struct treenode
-{
-	treenode* child[3]; // 
-	treenode* sibling; // <---- next statement...
-
-	int lineno;
-	NodeKind node_kind;	
-	union {
-		statkind s;
-		expkind e;
-	} kind;
-	union {
-		TokenType Op;
-		int val;
-		char* name;
-	} attr;
-
-
-	exptype type; <- for type checking...
-};
-
-struct node_t
-{
-	int type;
-
-};
-*/
 
 enum
 {
@@ -54,11 +14,15 @@ enum
 
 typedef struct xp_awk_node_t xp_awk_node_t;
 typedef struct xp_awk_node_block_t xp_awk_node_block_t;
+typedef struct xp_awk_node_expr_t xp_awk_node_expr_t;
+typedef struct xp_awk_node_term_t xp_awk_node_term_t;
 typedef struct xp_awk_node_if_t xp_awk_node_if_t;
+typedef struct xp_awk_node_while_t xp_awk_node_while_t;
+typedef struct xp_awk_node_do_t xp_awk_node_do_t;
 
 #define XP_AWK_NODE_HDR \
 	int type; \
-	xp_awk_node_t* sbls
+	xp_awk_node_t* next
 
 struct xp_awk_node_t
 {
@@ -78,12 +42,39 @@ struct xp_awk_node_block_t
 	xp_awk_node_t* body;
 };
 
+struct xp_awk_node_expr_t
+{
+	XP_AWK_NODE_HDR;
+	xp_awk_node_t* left;
+	xp_awk_node_t* right;
+};
+
+struct xp_awk_node_term_t
+{
+	XP_AWK_NODE_HDR;
+	xp_awk_node_t* value;
+};
+
 struct xp_awk_node_if_t
 {
 	XP_AWK_NODE_HDR;
-	xp_awk_node_t* cond;
-	xp_awk_node_t* if_part;
+	xp_awk_node_t* test;
+	xp_awk_node_t* then_part;
 	xp_awk_node_t* else_part;
+};
+
+struct xp_awk_node_while_t
+{
+	XP_AWK_NODE_HDR;
+	xp_awk_node_t* test;
+	xp_awk_node_t* body;
+};
+
+struct xp_awk_node_do_t
+{
+	XP_AWK_NODE_HDR;
+	xp_awk_node_t* body;
+	xp_awk_node_t* test;
 };
 
 #endif
