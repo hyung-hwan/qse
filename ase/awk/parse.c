@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.12 2006-01-10 13:57:54 bacon Exp $
+ * $Id: parse.c,v 1.13 2006-01-11 11:52:17 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -8,6 +8,7 @@
 #include <xp/bas/memory.h>
 #include <xp/bas/ctype.h>
 #include <xp/bas/string.h>
+#include <xp/bas/assert.h>
 
 enum
 {
@@ -62,10 +63,12 @@ static xp_awk_node_t* __parse_patnact (xp_awk_t* awk);
 static xp_awk_node_t* __parse_block (xp_awk_t* awk);
 static xp_awk_node_t* __parse_stat (xp_awk_t* awk);
 static xp_awk_node_t* __parse_expr (xp_awk_t* awk);
-static xp_awk_node_t* __parse_additive (xp_awk_t* awk)
-static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk)
-static xp_awk_node_t* __parse_unary (xp_awk_t* awk)
-static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
+static xp_awk_node_t* __parse_assignment (xp_awk_t* awk, const xp_char_t* ident);
+static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk, const xp_char_t* ident);
+static xp_awk_node_t* __parse_additive (xp_awk_t* awk);
+static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk);
+static xp_awk_node_t* __parse_unary (xp_awk_t* awk);
+static xp_awk_node_t* __parse_primary (xp_awk_t* awk);
 static xp_awk_node_t* __parse_if (xp_awk_t* awk);
 static xp_awk_node_t* __parse_while (xp_awk_t* awk);
 static xp_awk_node_t* __parse_for (xp_awk_t* awk);
@@ -312,13 +315,6 @@ xp_printf (XP_TEXT("__parse_block....\n"));
 		else prev->next = node;
 		prev = node;
 
-		if (saved_token != TOKEN_LBRACE) {
-			if (!MATCH(awk,TOKEN_SEMICOLON)) {
-/* TODO: do some clean-up */
-				PANIC (awk, XP_AWK_ESEMICOLON);
-			}
-			CONSUME (awk);
-		}
 	}
 
 	return (xp_awk_node_t*)blk;
@@ -381,17 +377,74 @@ static xp_awk_node_t* __parse_stat (xp_awk_t* awk)
 		node = __parse_expr(awk);
 	}
 
+	/* check if a statement ends with a semicolon */
+	if (!MATCH(awk,TOKEN_SEMICOLON)) {
+/* TODO: do some clean-up */
+		PANIC (awk, XP_AWK_ESEMICOLON);
+	}
+
+	/* eat up the semicolon and read in the next token */
+	CONSUME (awk);
+
 	return node;
 }
 
 static xp_awk_node_t* __parse_expr (xp_awk_t* awk)
 {
-	return parse_additive (xp_awk_t* awk);
+	/*
+	 * <expression> ::= <assignment> | <basic expression>
+	 * <assignment> ::= <assignment target> assignmentOperator <basic expression>
+	 * assignmentOperator ::= '='
+	 * <basic expression> ::= 
+	 */
+	 
+	if (MATCH(awk,TOKEN_IDENT)) {
+// TODO: use a different approach later...
+		xp_char_t* ident = xp_strdup (XP_STR_BUF(&awk->token.name));
+		if (ident == XP_NULL) {
+// TODO: memory clean up
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		CONSUME (awk);
+		if (MATCH(awk,TOKEN_ASSIGN)) {
+			CONSUME (awk);
+			if (__parse_assignment(awk, ident)  == XP_NULL) {
+// TODO: memory clean up
+				return XP_NULL;
+			}	
+		}
+		else {
+			return __parse_basic_expr (awk, ident);
+		}
+	}
+
+	return __parse_basic_expr (awk, XP_NULL);
+}
+
+static xp_awk_node_t* __parse_assignment (xp_awk_t* awk, const xp_char_t* ident)
+{
+	xp_assert (ident != XP_NULL);
+	return XP_NULL;	
+}
+
+static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk, const xp_char_t* ident)
+{
+	/* <basic expression> ::= <additive> 
+	 * <additive> ::= <multiplicative> [additiveOp <multiplicative>]*
+	 * <multiplicative> ::= <unary> [multiplicativeOp <unary>]*
+	 * <unary> ::= [unaryOp]* <term>
+	 * <term> ::= <function call> | variable | literals
+	 * <function call> ::= <identifier> <lparen> <basic expression list>* <rparen>
+	 * <basic expression list> ::= <basic expression> [comma <basic expression>]*
+	 */
+	
+	return __parse_additive (awk);
 }
 
 static xp_awk_node_t* __parse_additive (xp_awk_t* awk)
 {
-	xp_node_t* top, * left, * right;
+	xp_awk_node_t* top, * left, * right;
 
 	left = __parse_multiplicative (awk);
 	if (left == XP_NULL) return XP_NULL;
@@ -413,7 +466,7 @@ static xp_awk_node_t* __parse_additive (xp_awk_t* awk)
 
 static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk)
 {
-	xp_node_t* top, * left, * right;
+	xp_awk_node_t* top, * left, * right;
 
 	left = __parse_unary (awk);
 	if (left == XP_NULL) return XP_NULL;
@@ -440,6 +493,7 @@ static xp_awk_node_t* __parse_unary (xp_awk_t* awk)
 
 static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 {
+#if 0
 	if (MATCH(awk,TOKEN_IDENT))  {
 		xp_awk_node_term_t* node;
 		node = (xp_awk_node_term_t*)xp_malloc(xp_sizeof(xp_awk_node_term_t));
@@ -478,6 +532,7 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 		node->value = tmp;
 	}
 
+#endif
 	/* valid expression introducer is expected */
 	PANIC (awk, XP_AWK_EEXPR);
 }
