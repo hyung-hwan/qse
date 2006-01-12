@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.4 2006-01-11 14:03:17 bacon Exp $
+ * $Id: tree.h,v 1.5 2006-01-12 14:20:17 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -13,14 +13,15 @@ enum
 	XP_AWK_NODE_ASSIGN,
 	XP_AWK_NODE_BINARY,
 	XP_AWK_NODE_UNARY,
-	XP_AWK_NODE_STR
+	XP_AWK_NODE_STR,
+	XP_AWK_NODE_NUM,
+	XP_AWK_NODE_VAR,
 };
 
 typedef struct xp_awk_node_t xp_awk_node_t;
 typedef struct xp_awk_node_block_t xp_awk_node_block_t;
 typedef struct xp_awk_node_assign_t xp_awk_node_assign_t;
 typedef struct xp_awk_node_expr_t xp_awk_node_expr_t;
-typedef struct xp_awk_node_str_t xp_awk_node_str_t;
 typedef struct xp_awk_node_term_t xp_awk_node_term_t;
 typedef struct xp_awk_node_if_t xp_awk_node_if_t;
 typedef struct xp_awk_node_while_t xp_awk_node_while_t;
@@ -63,16 +64,10 @@ struct xp_awk_node_expr_t
 	xp_awk_node_t* right;
 };
 
-struct xp_awk_node_str_t
-{
-	XP_AWK_NODE_HDR;
-	xp_char_t* value;
-};
-
 struct xp_awk_node_term_t
 {
 	XP_AWK_NODE_HDR;
-	xp_awk_node_t* value;
+	xp_char_t* value;
 };
 
 struct xp_awk_node_if_t
