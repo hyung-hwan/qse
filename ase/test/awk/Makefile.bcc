@@ -1,0 +1,18 @@
+CC = bcc32
+CFLAGS = -I..\..\..
+LDFLAGS = -L..\..\..\xp\bas -L..\..\..\xp\awk
+LIBS = import32.lib cw32mt.lib xpbas.lib xpawk.lib
+STARTUP = c0x32w.obj
+
+all: awk 
+
+awk: awk.obj
+	ilink32 $(LDFLAGS) $(STARTUP) awk.obj,awk.exe,,$(LIBS),,
+
+clean:
+	del $(OBJS) *.obj $(OUT)
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) $(CFLAGS) -c $< 
+
