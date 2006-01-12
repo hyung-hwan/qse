@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.14 2006-01-11 14:03:17 bacon Exp $
+ * $Id: parse.c,v 1.15 2006-01-12 12:30:29 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -417,6 +417,7 @@ static xp_awk_node_t* __parse_expr (xp_awk_t* awk)
 	 */
 	xp_awk_node_t* x;
 	 
+xp_printf (XP_TEXT("parse_expr.......................\n"));
 	if (MATCH(awk,TOKEN_IDENT)) {
 // TODO: use a different approach later...
 		xp_char_t* ident = xp_strdup (XP_STR_BUF(&awk->token.name));
@@ -425,19 +426,17 @@ static xp_awk_node_t* __parse_expr (xp_awk_t* awk)
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
+xp_printf (XP_TEXT("parse_expr 1111111111111111111111111111.......................\n"));
 		CONSUME (awk);
 		if (MATCH(awk,TOKEN_ASSIGN)) {
 			CONSUME (awk);
+xp_printf (XP_TEXT("parse_expr 22222222222222222222222222222222.......................\n"));
 			x = __parse_assignment(awk, ident);
 		}
 		else x = __parse_basic_expr (awk, ident);
 
-		if (x == XP_NULL) {
-			xp_free (ident);
-			return XP_NULL;
-		}	
-
-		return x;
+		xp_free (ident);
+		return x; // TODO: anything to clearn when x is XP_NULL????
 	}
 
 	return __parse_basic_expr (awk, XP_NULL);
@@ -447,25 +446,33 @@ static xp_awk_node_t* __parse_assignment (xp_awk_t* awk, xp_char_t* ident)
 {
 	xp_awk_node_assign_t* node;
 	xp_awk_node_t* value;
+	xp_char_t* idtdup;
 
 	xp_assert (ident != XP_NULL);
 
+xp_printf (XP_TEXT("__parse_assignment starting for %s\n"), ident);
 	node = (xp_awk_node_assign_t*)xp_malloc (xp_sizeof(xp_awk_node_assign_t));
-	if (node == XP_NULL) {
-		xp_free (ident);
-		PANIC (awk, XP_AWK_ENOMEM);
-	}
+xp_printf (XP_TEXT("__parse_assignment xxxxxxxxxxxxxxxxxxxxxxx %s\n"), ident);
+	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
-xp_printf (XP_TEXT("__parse_ssignment for %s\n"), ident);
+xp_printf (XP_TEXT("__parse_assignment duplicating string... %s\n"), ident);
+	idtdup = xp_strdup (ident);
+	if (idtdup == XP_NULL) {
+		xp_free (node);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}	
+
+xp_printf (XP_TEXT("__parse_assignment for %s\n"), ident);
 	value = __parse_basic_expr (awk, XP_NULL);
 	if (value == XP_NULL) {
-		xp_free (ident);
+		xp_free (idtdup);
 		xp_free (node);
+		return XP_NULL;
 	}
 
 	node->type = XP_AWK_NODE_ASSIGN;
 	node->next = XP_NULL;
-	node->left = ident;	
+	node->left = idtdup;	
 	node->right = value;
 
 	return (xp_awk_node_t*)node;
@@ -550,6 +557,7 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 		node = (xp_awk_node_str_t*)xp_malloc(xp_sizeof(xp_awk_node_str_t));
 		if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
+xp_printf (XP_TEXT("found a string token...\n"));
 		node->type = XP_AWK_NODE_STR;
 		node->next = XP_NULL;
 		node->value = xp_strdup(XP_STR_BUF(&awk->token.name));
