@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.10 2006-01-11 14:03:17 bacon Exp $
+ * $Id: awk.h,v 1.11 2006-01-13 14:16:56 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -24,6 +24,7 @@ enum
 	XP_AWK_EENDSRC, /* unexpected end of source */
 	XP_AWK_ELBRACE, /* left brace expected */
 	XP_AWK_ERPAREN, /* right parenthesis expected */
+	XP_AWK_ECOMMA,  /* comma expected */
 	XP_AWK_ESEMICOLON, /* semicolon expected */
 	XP_AWK_EEXPR    /* expression expected */
 };
