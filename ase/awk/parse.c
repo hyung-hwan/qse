@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.16 2006-01-12 14:20:17 bacon Exp $
+ * $Id: parse.c,v 1.17 2006-01-13 11:25:52 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -616,6 +616,7 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_STRING))  {
 		xp_awk_node_term_t* node;
+
 		node = (xp_awk_node_term_t*)xp_malloc(xp_sizeof(xp_awk_node_term_t));
 		if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
@@ -639,7 +640,15 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 		CONSUME (awk); // error handling... replace it by get_token...
 		if (MATCH(awk,TOKEN_LPAREN)) {
 			/* function call */
-// TODO:
+			CONSUME (awk);
+			if (MATCH(awk,TOKEN_RPAREN)) {
+				/* function call of 0 arguments */
+			}
+			else {
+				tmp = __parse_expr (awk);
+				if (tmp == XP_NULL) {
+				}
+			}
 		}	
 		else {
 			xp_awk_node_term_t* node;
@@ -654,34 +663,21 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 			return (xp_awk_node_t*)node;
 		}
 	}
-/*
 	else if (MATCH(awk,TOKEN_LPAREN)) {
-		xp_awk_node_t* tmp;
-		xp_awk_node_term_t* node; -> use different type
+		xp_awk_node_t* node;
 
 		CONSUME (awk);
-		tmp = __parse_expr (awk);
-		if (tmp == XP_NULL) return XP_NULL;
+		node = __parse_expr (awk);
+		if (node == XP_NULL) return XP_NULL;
 
 		if (!MATCH(awk,TOKEN_RPAREN)) {
 // TODO: free tmp...
-			PANIC (awk, XP_AWK_RPAREN);
+			PANIC (awk, XP_AWK_ERPAREN);
 		}
 		CONSUME (awk);
 
-		node = (xp_awk_node_term_t*)xp_malloc(xp_sizeof(xp_awk_node_term_t));
-		if (node == XP_NULL) {
-// TODO: free tmp...
-			PANIC (awk, XP_AWK_ENOMEM);
-		}
-
-		node->type = XP_AWK_NODE_EXPR;
-		node->next = XP_NULL;
-		node->value = tmp;
-
 		return node;
 	}
-*/
 
 	/* valid expression introducer is expected */
 	PANIC (awk, XP_AWK_EEXPR);
