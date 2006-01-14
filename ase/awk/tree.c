@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.1 2006-01-14 14:09:52 bacon Exp $
+ * $Id: tree.c,v 1.2 2006-01-14 16:09:57 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -104,6 +104,23 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 			xp_printf (XP_TEXT("}\n"));
 			break;
 
+		case XP_AWK_NODE_IF: 
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("if ("));	
+			__print_expr_node (((xp_awk_node_if_t*)p)->test);
+			xp_printf (XP_TEXT(") "));
+
+			if (((xp_awk_node_if_t*)p)->then_part == XP_NULL) 
+				xp_printf  (XP_TEXT(";\n"));
+			else __print_statements (((xp_awk_node_if_t*)p)->then_part, 0);
+
+			if (((xp_awk_node_if_t*)p)->else_part != XP_NULL) {
+				__print_tabs (depth);
+				xp_printf (XP_TEXT("else "));	
+				__print_statements (((xp_awk_node_if_t*)p)->else_part, 0);
+			}
+			break;
+
 		case XP_AWK_NODE_BREAK:
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("break;\n"));
@@ -170,6 +187,15 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 		switch (p->type) {
 		case XP_AWK_NODE_BLOCK:
 			xp_awk_clrpt (((xp_awk_node_block_t*)p)->body);
+			xp_free (p);
+			break;
+
+		case XP_AWK_NODE_IF:
+			xp_awk_clrpt (((xp_awk_node_if_t*)p)->test);
+			if (((xp_awk_node_if_t*)p)->then_part != XP_NULL)
+				xp_awk_clrpt (((xp_awk_node_if_t*)p)->then_part);
+			if (((xp_awk_node_if_t*)p)->else_part != XP_NULL)
+				xp_awk_clrpt (((xp_awk_node_if_t*)p)->else_part);
 			xp_free (p);
 			break;
 
