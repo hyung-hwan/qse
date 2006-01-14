@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.7 2006-01-13 14:16:56 bacon Exp $
+ * $Id: tree.h,v 1.8 2006-01-14 14:08:58 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -10,6 +10,8 @@ enum
 	XP_AWK_NODE_BLOCK,
 	XP_AWK_NODE_BREAK,
 	XP_AWK_NODE_CONTINUE,
+	XP_AWK_NODE_RETURN,
+	XP_AWK_NODE_EXIT,
 	XP_AWK_NODE_ASSIGN,
 	XP_AWK_NODE_BINARY,
 	XP_AWK_NODE_UNARY,
@@ -93,5 +95,16 @@ struct xp_awk_node_do_t
 	xp_awk_node_t* body;
 	xp_awk_node_t* test;
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void xp_awk_prnpt (xp_awk_node_t* tree);
+void xp_awk_clrpt (xp_awk_node_t* tree);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

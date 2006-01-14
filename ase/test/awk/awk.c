@@ -50,8 +50,8 @@ int xp_main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
-xp_printf (XP_TEXT("-----------------------------------------------\n"));
-print_parse_tree (awk.tree);
+	xp_printf (XP_TEXT("-----------------------------------------------\n"));
+	xp_awk_prnpt (awk.tree);
 
 	xp_awk_close (&awk);
 	return 0;
