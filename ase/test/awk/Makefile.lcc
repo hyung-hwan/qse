@@ -1,0 +1,20 @@
+CC = lcc
+CFLAGS = -I../../.. -A -ansic -libcdll 
+#LDFLAGS = -L../../../xp/bas -L../../../xp/awk
+#LIBS = -lxpawk -lxpbas
+#LDFLAGS = -subsystem console -dynamic -s
+LDFLAGS = -subsystem console -s
+LIBS = ..\..\..\xp\awk\xpawk.lib ..\..\..\xp\bas\xpbas.lib 
+
+all: awk 
+
+awk: awk.obj
+	lcclnk $(LDFLAGS) -o awk.exe awk.obj $(LIBS)
+
+clean:
+	del $(OBJS) *.obj $(OUT)
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) $(CFLAGS) -c $< 
+

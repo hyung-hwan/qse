@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.2 2006-01-14 16:09:57 bacon Exp $
+ * $Id: tree.c,v 1.3 2006-01-15 06:51:35 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -108,16 +108,17 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("if ("));	
 			__print_expr_node (((xp_awk_node_if_t*)p)->test);
-			xp_printf (XP_TEXT(") "));
+			xp_printf (XP_TEXT(")\n"));
 
+// TODO: identation of depth + 1 if then_part or else_part is not a block
 			if (((xp_awk_node_if_t*)p)->then_part == XP_NULL) 
-				xp_printf  (XP_TEXT(";\n"));
-			else __print_statements (((xp_awk_node_if_t*)p)->then_part, 0);
+				xp_printf (XP_TEXT(";\n"));
+			else __print_statements (((xp_awk_node_if_t*)p)->then_part, depth);
 
 			if (((xp_awk_node_if_t*)p)->else_part != XP_NULL) {
 				__print_tabs (depth);
-				xp_printf (XP_TEXT("else "));	
-				__print_statements (((xp_awk_node_if_t*)p)->else_part, 0);
+				xp_printf (XP_TEXT("else\n"));	
+				__print_statements (((xp_awk_node_if_t*)p)->else_part, depth);
 			}
 			break;
 
