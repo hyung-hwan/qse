@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.20 2006-01-14 16:09:57 bacon Exp $
+ * $Id: parse.c,v 1.21 2006-01-15 06:11:22 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -56,7 +56,9 @@ enum
 	TOKEN_EXIT,
 	TOKEN_DELETE,
 	TOKEN_NEXT,
-	TOKEN_NEXTFILE
+	TOKEN_NEXTFILE,
+
+	__TOKEN_COUNT__
 };
 
 enum {
@@ -310,23 +312,30 @@ static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk)
 {
 	xp_awk_node_t* node;
 
+	/* 
+	 * keywords that don't require any terminating semicolon 
+	 */
 	if (MATCH(awk,TOKEN_IF)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_if(awk);
+		return __parse_if(awk);
 	}
 	else if (MATCH(awk,TOKEN_WHILE)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_while(awk);
+		return __parse_while(awk);
 	}
 	else if (MATCH(awk,TOKEN_FOR)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_for(awk);
+		return __parse_for(awk);
 	}
 	else if (MATCH(awk,TOKEN_DO)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_do(awk);
+		return __parse_do(awk);
 	}
-	else if (MATCH(awk,TOKEN_BREAK)) {
+
+	/* 
+	 * keywords that require a terminating semicolon 
+	 */
+	if (MATCH(awk,TOKEN_BREAK)) {
 		if (__get_token(awk) == -1) return XP_NULL;
 		node = __parse_break(awk);
 	}
@@ -346,21 +355,19 @@ static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk)
 TODO:
 	else if (MATCH(awk,TOKEN_DELETE)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = XP_NULL;
+		node = __parse_delete(awk);
 	}
 	else if (MATCH(awk,TOKEN_NEXT)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = XP_NULL;
+		node = __parse_next(awk);
 	}
 	else if (MATCH(awk,TOKEN_NEXTFILE)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = XP_NULL;
+		node = __parse_nextfile(awk);
 	}
 */
 	else {
-xp_printf (XP_TEXT("%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"));
 		node = __parse_expression(awk);
-xp_printf (XP_TEXT("$$$$$$$$$$$$$$$$$$$$$$$$$\n"));
 	}
 
 	if (node == XP_NULL) return XP_NULL;
@@ -371,13 +378,11 @@ xp_printf (XP_TEXT("$$$$$$$$$$$$$$$$$$$$$$$$$\n"));
 		PANIC (awk, XP_AWK_ESEMICOLON);
 	}
 
-xp_printf (XP_TEXT("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"));
 	/* eat up the semicolon and read in the next token */
 	if (__get_token(awk) == -1) {
 		if (node != XP_NULL) xp_awk_clrpt (node);
 		return XP_NULL;
 	}
-xp_printf (XP_TEXT("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"));
 
 	return node;
 }
@@ -750,7 +755,6 @@ static xp_awk_node_t* __parse_if (xp_awk_t* awk)
 	test = __parse_expression (awk);
 	if (test == XP_NULL) return XP_NULL;
 
-xp_printf (XP_TEXT("11111111111111111111111111111111\n"));
 	if (!MATCH(awk,TOKEN_RPAREN)) {
 		xp_awk_clrpt (test);
 		PANIC (awk, XP_AWK_ERPAREN);
@@ -761,14 +765,11 @@ xp_printf (XP_TEXT("11111111111111111111111111111111\n"));
 		return XP_NULL;
 	}
 
-xp_printf (XP_TEXT("jjjjjjjjjjjjjjjjjjjjjjjj\n"));
 	then_part = __parse_statement (awk);
 	if (then_part == XP_NULL) {
 		xp_awk_clrpt (test);
 		return XP_NULL;
 	}
-
-xp_printf (XP_TEXT("aaaaaaaaaaaaaaaaaaaaaaaaa\n"));
 
 	if (MATCH(awk,TOKEN_ELSE)) {
 		if (__get_token(awk) == -1) {
@@ -800,7 +801,6 @@ xp_printf (XP_TEXT("aaaaaaaaaaaaaaaaaaaaaaaaa\n"));
 	node->then_part = then_part;
 	node->else_part = else_part;
 
-xp_printf (XP_TEXT("####################################################\n"));
 	return (xp_awk_node_t*)node;
 }
 
