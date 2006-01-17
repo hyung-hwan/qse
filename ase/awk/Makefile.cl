@@ -3,7 +3,7 @@ OBJS = $(SRCS:.c=.obj)
 OUT = xpawk.lib
 
 CC = cl
-CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
+CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
 
 all: $(OBJS)
 	link -lib @<<
