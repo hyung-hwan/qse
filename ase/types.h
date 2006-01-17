@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.38 2006-01-08 14:26:20 bacon Exp $
+ * $Id: types.h,v 1.39 2006-01-17 15:49:22 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -208,43 +208,52 @@ typedef int  xp_mcint_t;
 
 #if defined(_WIN32)
 	typedef unsigned short xp_wchar_t;
-	/*typedef int            xp_wcint_t;*/
+	/*typedef int xp_wcint_t;*/
 	typedef unsigned short xp_wcint_t;
+	#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT
 #elif defined(vms) || defined(__vms)
-	/*typedef unsigned short xp_wchar_t;*/
-	typedef long           xp_wchar_t;
-	typedef long           xp_wcint_t;
-	/*#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT*/
+	typedef long xp_wchar_t;
+	typedef long xp_wcint_t;
 	#define XP_SIZEOF_WCHAR_T SIZEOF_LONG
 #elif SIZEOF_LONG == 4
 	/*typedef unsigned short xp_wchar_t;*/
-	typedef long           xp_wchar_t;
-	typedef long           xp_wcint_t;
+	typedef long xp_wchar_t;
+	typedef long xp_wcint_t;
 	/*#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT*/
 	#define XP_SIZEOF_WCHAR_T SIZEOF_LONG
 #else
 	/*typedef unsigned short xp_wchar_t;*/
-	typedef int            xp_wchar_t;
-	typedef int            xp_wcint_t;
+	typedef int xp_wchar_t;
+	typedef int xp_wcint_t;
 	/*#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT*/
 	#define XP_SIZEOF_WCHAR_T SIZEOF_INT
 #endif
 
-#if defined(XP_CHAR_IS_MCHAR)
-	/*#define XP_CHAR_IS_MCHAR*/
-	typedef xp_mchar_t  xp_char_t;
-	typedef xp_mcint_t  xp_cint_t;
-#elif defined(XP_CHAR_IS_WCHAR)
-	typedef xp_wchar_t  xp_char_t;
-	typedef xp_wcint_t  xp_cint_t;
-#else
+#if defined(_WIN32) && (defined(UNICODE)||defined(_UNICODE))
 	#define XP_CHAR_IS_WCHAR
-	typedef xp_wchar_t  xp_char_t;
-	typedef xp_wcint_t  xp_cint_t;
+	typedef xp_wchar_t xp_char_t;
+	typedef xp_wcint_t xp_cint_t;
+#else
+	#if defined(XP_CHAR_IS_MCHAR)
+	typedef xp_mchar_t xp_char_t;
+	typedef xp_mcint_t xp_cint_t;
+	#elif defined(XP_CHAR_IS_WCHAR)
+	typedef xp_wchar_t xp_char_t;
+	typedef xp_wcint_t xp_cint_t;
+	#else
+	#define XP_CHAR_IS_WCHAR
+	typedef xp_wchar_t xp_char_t;
+	typedef xp_wcint_t xp_cint_t;
+	#endif
 #endif
 
-#ifdef XP_CHAR_IS_WCHAR
+#if defined(XP_CHAR_IS_WCHAR) && defined(_WIN32) 
+	#ifndef UNICODE
 	#define UNICODE
+	#endif
+	#ifndef _UNICODE
+	#define _UNICODE
+	#endif
 #endif
 
 #endif
