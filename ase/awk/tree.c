@@ -1,11 +1,14 @@
 /*
- * $Id: tree.c,v 1.3 2006-01-15 06:51:35 bacon Exp $
+ * $Id: tree.c,v 1.4 2006-01-18 15:16:01 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
+
+#ifndef __STAND_ALONE
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 #include <xp/bas/stdio.h>
+#endif
 
 static xp_char_t __binop_char[] =
 {

@@ -1,13 +1,15 @@
 /*
- * $Id: parse.c,v 1.21 2006-01-15 06:11:22 bacon Exp $
+ * $Id: parse.c,v 1.22 2006-01-18 15:16:01 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
-#include <xp/awk/tree.h>
+
+#ifndef __STAND_ALONE
 #include <xp/bas/memory.h>
 #include <xp/bas/ctype.h>
 #include <xp/bas/string.h>
 #include <xp/bas/assert.h>
+#endif
 
 enum
 {
@@ -155,9 +157,6 @@ static struct __kwent __kwtab[] =
 	do { if (__get_token(awk) == -1) return XP_NULL; } while(0)
 
 #define PANIC(awk,code) do { (awk)->errnum = (code);  return XP_NULL; } while (0);
-
-// TODO remove stdio.h
-#include <xp/bas/stdio.h>
 
 int xp_awk_parse (xp_awk_t* awk)
 {
