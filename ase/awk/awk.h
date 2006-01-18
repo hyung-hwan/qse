@@ -1,13 +1,18 @@
 /* 
- * $Id: awk.h,v 1.12 2006-01-14 16:09:57 bacon Exp $
+ * $Id: awk.h,v 1.13 2006-01-18 15:16:01 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
 #define _XP_AWK_AWK_H_
 
+#ifdef __STAND_ALONE
+#include <xp/awk/sa.h>
+#else
 #include <xp/types.h>
 #include <xp/macros.h>
 #include <xp/bas/str.h>
+#endif
+
 #include <xp/awk/tree.h>
 
 enum

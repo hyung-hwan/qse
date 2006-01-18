@@ -1,10 +1,13 @@
 /*
- * $Id: awk.c,v 1.7 2006-01-09 16:03:55 bacon Exp $
+ * $Id: awk.c,v 1.8 2006-01-18 15:16:01 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
+
+#ifndef __STAND_ALONE
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
+#endif
 
 xp_awk_t* xp_awk_open (xp_awk_t* awk)
 {
