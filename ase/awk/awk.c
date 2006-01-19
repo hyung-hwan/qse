@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.8 2006-01-18 15:16:01 bacon Exp $
+ * $Id: awk.c,v 1.9 2006-01-19 16:28:21 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -23,16 +23,17 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
+	awk->opt = 0;
 	awk->tree = XP_NULL;
 	awk->errnum = XP_AWK_ENOERR;
 
 	awk->src_func = XP_NULL;
-	awk->inp_func = XP_NULL;
-	awk->outp_func = XP_NULL;
+	awk->in_func = XP_NULL;
+	awk->out_func = XP_NULL;
 
 	awk->src_arg = XP_NULL;
-	awk->inp_arg = XP_NULL;
-	awk->outp_arg = XP_NULL;
+	awk->in_arg = XP_NULL;
+	awk->out_arg = XP_NULL;
 
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;

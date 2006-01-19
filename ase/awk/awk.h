@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.14 2006-01-19 10:56:34 bacon Exp $
+ * $Id: awk.h,v 1.15 2006-01-19 16:28:21 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -30,11 +30,13 @@ enum
 	XP_AWK_ELBRACE, /* left brace expected */
 	XP_AWK_ELPAREN, /* left parenthesis expected */
 	XP_AWK_ERPAREN, /* right parenthesis expected */
+	XP_AWK_ERBRACK, /* right bracket expected */
 	XP_AWK_ECOMMA,  /* comma expected */
 	XP_AWK_ESEMICOLON, /* semicolon expected */
 	XP_AWK_EEXPR,   /* expression expected */
 
-	XP_AWK_EWHILE   /* keyword 'while' is expected */
+	XP_AWK_EWHILE,  /* keyword 'while' is expected */
+	XP_AWK_EASSIGN  /* assignment statement expected */
 };
 
 /*
@@ -48,6 +50,7 @@ typedef struct xp_awk_t xp_awk_t;
 typedef xp_ssize_t (*xp_awk_io_t) (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 
+/* io function commands */
 enum 
 {
 	XP_AWK_IO_OPEN,
@@ -55,19 +58,28 @@ enum
 	XP_AWK_IO_DATA
 };
 
+/* options */
+enum
+{
+	XP_AWK_ASSIGN_ONLY /* a non-assignment expression cannot be used as a statement */
+};
+
 struct xp_awk_t
 {
+	/* options */
+	int opt;
+
 	/* parse tree */
 	xp_awk_node_t* tree;
 
 	/* io functions */
 	xp_awk_io_t src_func;
-	xp_awk_io_t inp_func;
-	xp_awk_io_t outp_func;
+	xp_awk_io_t in_func;
+	xp_awk_io_t out_func;
 
 	void* src_arg;
-	void* inp_arg;
-	void* outp_arg;
+	void* in_arg;
+	void* out_arg;
 
 	/* source buffer management */
 	struct {
@@ -111,11 +123,11 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg);
  */
 int xp_awk_detsrc (xp_awk_t* awk);
 
-int xp_awk_attinp (xp_awk_t* awk, xp_awk_io_t inp, void* arg);
-int xp_awk_detinp (xp_awk_t* awk);
+int xp_awk_attin (xp_awk_t* awk, xp_awk_io_t in, void* arg);
+int xp_awk_detin (xp_awk_t* awk);
 
-int xp_awk_attoutp (xp_awk_t* awk, xp_awk_io_t outp, void* arg);
-int xp_awk_detoutp (xp_awk_t* awk);
+int xp_awk_attout (xp_awk_t* awk, xp_awk_io_t out, void* arg);
+int xp_awk_detout (xp_awk_t* awk);
 
 int xp_awk_parse (xp_awk_t* awk);
 
