@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.6 2006-01-19 10:56:35 bacon Exp $
+ * $Id: tree.c,v 1.7 2006-01-19 13:28:29 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -162,6 +162,29 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 			xp_printf (XP_TEXT(");\n"));	
 			break;
 
+		case XP_AWK_NODE_FOR:
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("for ("));
+			if (((xp_awk_node_for_t*)p)->init != XP_NULL) {
+				__print_expr_node (((xp_awk_node_for_t*)p)->init);
+			}
+			xp_printf (XP_TEXT("; "));
+			if (((xp_awk_node_for_t*)p)->test != XP_NULL) {
+				__print_expr_node (((xp_awk_node_for_t*)p)->test);
+			}
+			xp_printf (XP_TEXT("; "));
+			if (((xp_awk_node_for_t*)p)->incr != XP_NULL) {
+				__print_expr_node (((xp_awk_node_for_t*)p)->incr);
+			}
+			xp_printf (XP_TEXT(")\n"));
+
+			if (((xp_awk_node_for_t*)p)->body->type == XP_AWK_NODE_BLOCK) {
+				__print_statements (((xp_awk_node_for_t*)p)->body, depth);
+			}
+			else {
+				__print_statements (((xp_awk_node_for_t*)p)->body, depth + 1);
+			}
+
 		case XP_AWK_NODE_BREAK:
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("break;\n"));
@@ -237,8 +260,8 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 
 		case XP_AWK_NODE_IF:
 			xp_awk_clrpt (((xp_awk_node_if_t*)p)->test);
-			if (((xp_awk_node_if_t*)p)->then_part != XP_NULL)
-				xp_awk_clrpt (((xp_awk_node_if_t*)p)->then_part);
+			xp_awk_clrpt (((xp_awk_node_if_t*)p)->then_part);
+
 			if (((xp_awk_node_if_t*)p)->else_part != XP_NULL)
 				xp_awk_clrpt (((xp_awk_node_if_t*)p)->else_part);
 			xp_free (p);
@@ -247,8 +270,18 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 		case XP_AWK_NODE_WHILE:
 		case XP_AWK_NODE_DOWHILE:
 			xp_awk_clrpt (((xp_awk_node_while_t*)p)->test);
-			if (((xp_awk_node_while_t*)p)->body != XP_NULL)
-				xp_awk_clrpt (((xp_awk_node_while_t*)p)->body);
+			xp_awk_clrpt (((xp_awk_node_while_t*)p)->body);
+			xp_free (p);
+			break;
+
+		case XP_AWK_NODE_FOR:
+			if (((xp_awk_node_for_t*)p)->init != XP_NULL)
+				xp_awk_clrpt (((xp_awk_node_for_t*)p)->init);
+			if (((xp_awk_node_for_t*)p)->test != XP_NULL)
+				xp_awk_clrpt (((xp_awk_node_for_t*)p)->test);
+			if (((xp_awk_node_for_t*)p)->incr != XP_NULL)
+				xp_awk_clrpt (((xp_awk_node_for_t*)p)->incr);
+			xp_awk_clrpt (((xp_awk_node_for_t*)p)->body);
 			xp_free (p);
 			break;
 

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.11 2006-01-19 10:56:35 bacon Exp $
+ * $Id: tree.h,v 1.12 2006-01-19 13:28:29 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -22,7 +22,8 @@ enum
 	XP_AWK_NODE_CALL,
 	XP_AWK_NODE_IF,
 	XP_AWK_NODE_WHILE,
-	XP_AWK_NODE_DOWHILE
+	XP_AWK_NODE_DOWHILE,
+	XP_AWK_NODE_FOR
 };
 
 typedef struct xp_awk_node_t xp_awk_node_t;
@@ -33,6 +34,7 @@ typedef struct xp_awk_node_term_t xp_awk_node_term_t;
 typedef struct xp_awk_node_call_t xp_awk_node_call_t;
 typedef struct xp_awk_node_if_t xp_awk_node_if_t;
 typedef struct xp_awk_node_while_t xp_awk_node_while_t;
+typedef struct xp_awk_node_for_t xp_awk_node_for_t;
 
 #define XP_AWK_NODE_HDR \
 	int type; \
@@ -89,6 +91,15 @@ struct xp_awk_node_while_t
 {
 	XP_AWK_NODE_HDR;
 	xp_awk_node_t* test;
+	xp_awk_node_t* body;
+};
+
+struct xp_awk_node_for_t
+{
+	XP_AWK_NODE_HDR;
+	xp_awk_node_t* init; 
+	xp_awk_node_t* test;
+	xp_awk_node_t* incr;
 	xp_awk_node_t* body;
 };
 

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.24 2006-01-19 10:56:35 bacon Exp $
+ * $Id: parse.c,v 1.25 2006-01-19 13:28:29 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -865,7 +865,98 @@ static xp_awk_node_t* __parse_while (xp_awk_t* awk)
 
 static xp_awk_node_t* __parse_for (xp_awk_t* awk)
 {
-	return XP_NULL;
+	xp_awk_node_t* init, * test, * incr, * body;
+	xp_awk_node_for_t* node;
+
+	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, XP_AWK_ELPAREN);
+	if (__get_token(awk) == -1) return XP_NULL;
+		
+	if (MATCH(awk,TOKEN_SEMICOLON)) init = XP_NULL;
+	else {
+		init = __parse_expression (awk);
+		if (init == XP_NULL) return XP_NULL;
+
+		if (!MATCH(awk,TOKEN_SEMICOLON)) {
+			xp_awk_clrpt (init);
+			PANIC (awk, XP_AWK_ESEMICOLON);
+		}
+	}
+
+	if (__get_token(awk) == -1) {
+		xp_awk_clrpt (init);
+		return XP_NULL;
+	}
+
+	if (MATCH(awk,TOKEN_SEMICOLON)) test = XP_NULL;
+	else {
+		test = __parse_expression (awk);
+		if (test == XP_NULL) {
+			xp_awk_clrpt (init);
+			return XP_NULL;
+		}
+
+		if (!MATCH(awk,TOKEN_SEMICOLON)) {
+			xp_awk_clrpt (init);
+			xp_awk_clrpt (test);
+			PANIC (awk, XP_AWK_ESEMICOLON);
+		}
+	}
+
+	if (__get_token(awk) == -1) {
+		xp_awk_clrpt (init);
+		xp_awk_clrpt (test);
+		return XP_NULL;
+	}
+	
+	if (MATCH(awk,TOKEN_RPAREN)) incr = XP_NULL;
+	else {
+		incr = __parse_expression (awk);
+		if (incr == XP_NULL) {
+			xp_awk_clrpt (init);
+			xp_awk_clrpt (test);
+			return XP_NULL;
+		}
+
+		if (!MATCH(awk,TOKEN_RPAREN)) {
+			xp_awk_clrpt (init);
+			xp_awk_clrpt (test);
+			xp_awk_clrpt (incr);
+			PANIC (awk, XP_AWK_ERPAREN);
+		}
+	}
+
+	if (__get_token(awk) == -1) {
+		xp_awk_clrpt (init);
+		xp_awk_clrpt (test);
+		xp_awk_clrpt (incr);
+		return XP_NULL;
+	}
+
+	body = __parse_statement (awk);
+	if (body == XP_NULL) {
+		xp_awk_clrpt (init);
+		xp_awk_clrpt (test);
+		xp_awk_clrpt (incr);
+		return XP_NULL;
+	}
+
+	node = (xp_awk_node_for_t*) xp_malloc (xp_sizeof(xp_awk_node_for_t));
+	if (node == XP_NULL) {
+		xp_awk_clrpt (init);
+		xp_awk_clrpt (test);
+		xp_awk_clrpt (incr);
+		xp_awk_clrpt (body);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+	node->type = XP_AWK_NODE_FOR;
+	node->next = XP_NULL;
+	node->init = init;
+	node->test = test;
+	node->incr = incr;
+	node->body = body;
+
+	return (xp_awk_node_t*)node;
 }
 
 static xp_awk_node_t* __parse_dowhile (xp_awk_t* awk)
