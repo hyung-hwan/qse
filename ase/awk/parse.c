@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.23 2006-01-18 16:12:58 bacon Exp $
+ * $Id: parse.c,v 1.24 2006-01-19 10:56:35 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -88,7 +88,7 @@ static xp_awk_node_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_node_t* __parse_if (xp_awk_t* awk);
 static xp_awk_node_t* __parse_while (xp_awk_t* awk);
 static xp_awk_node_t* __parse_for (xp_awk_t* awk);
-static xp_awk_node_t* __parse_do (xp_awk_t* awk);
+static xp_awk_node_t* __parse_dowhile (xp_awk_t* awk);
 static xp_awk_node_t* __parse_break (xp_awk_t* awk);
 static xp_awk_node_t* __parse_continue (xp_awk_t* awk);
 static xp_awk_node_t* __parse_return (xp_awk_t* awk);
@@ -341,15 +341,15 @@ static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk)
 		if (__get_token(awk) == -1) return XP_NULL;
 		return __parse_for (awk);
 	}
-	else if (MATCH(awk,TOKEN_DO)) {
-		if (__get_token(awk) == -1) return XP_NULL;
-		return __parse_do (awk);
-	}
 
 	/* 
 	 * keywords that require a terminating semicolon 
 	 */
-	if (MATCH(awk,TOKEN_BREAK)) {
+	if (MATCH(awk,TOKEN_DO)) {
+		if (__get_token(awk) == -1) return XP_NULL;
+		node = __parse_dowhile (awk);
+	}
+	else if (MATCH(awk,TOKEN_BREAK)) {
 		if (__get_token(awk) == -1) return XP_NULL;
 		node = __parse_break(awk);
 	}
@@ -868,9 +868,65 @@ static xp_awk_node_t* __parse_for (xp_awk_t* awk)
 	return XP_NULL;
 }
 
-static xp_awk_node_t* __parse_do (xp_awk_t* awk)
+static xp_awk_node_t* __parse_dowhile (xp_awk_t* awk)
 {
-	return XP_NULL;
+	xp_awk_node_t* test, * body;
+	xp_awk_node_while_t* node;
+
+	body = __parse_statement (awk);
+	if (body == XP_NULL) return XP_NULL;
+
+	if (!MATCH(awk,TOKEN_WHILE)) {
+		xp_awk_clrpt (body);
+		PANIC (awk, XP_AWK_EWHILE);
+	}
+
+	if (__get_token(awk) == -1) {
+		xp_awk_clrpt (body);
+		return XP_NULL;
+	}
+
+	if (!MATCH(awk,TOKEN_LPAREN)) {
+		xp_awk_clrpt (body);
+		PANIC (awk, XP_AWK_ELPAREN);
+	}
+
+	if (__get_token(awk) == -1) {
+		xp_awk_clrpt (body);
+		return XP_NULL;
+	}
+
+	test = __parse_expression (awk);
+	if (test == XP_NULL) {
+		xp_awk_clrpt (body);
+		return XP_NULL;
+	}
+
+	if (!MATCH(awk,TOKEN_RPAREN)) {
+		xp_awk_clrpt (body);
+		xp_awk_clrpt (test);
+		PANIC (awk, XP_AWK_ERPAREN);
+	}
+
+	if (__get_token(awk) == -1) {
+		xp_awk_clrpt (body);
+		xp_awk_clrpt (test);
+		return XP_NULL;
+	}
+	
+	node = (xp_awk_node_while_t*) xp_malloc (xp_sizeof(xp_awk_node_while_t));
+	if (node == XP_NULL) {
+		xp_awk_clrpt (body);
+		xp_awk_clrpt (test);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+	node->type = XP_AWK_NODE_DOWHILE;
+	node->next = XP_NULL;
+	node->test = test;
+	node->body = body;
+
+	return (xp_awk_node_t*)node;
 }
 
 static xp_awk_node_t* __parse_break (xp_awk_t* awk)
