@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.5 2006-01-18 16:12:58 bacon Exp $
+ * $Id: tree.c,v 1.6 2006-01-19 10:56:35 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -118,14 +118,19 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 			__print_expr_node (((xp_awk_node_if_t*)p)->test);
 			xp_printf (XP_TEXT(")\n"));
 
-// TODO: identation of depth + 1 if then_part or else_part is not a block
 			xp_assert (((xp_awk_node_if_t*)p)->then_part != XP_NULL);
-			__print_statements (((xp_awk_node_if_t*)p)->then_part, depth);
+			if (((xp_awk_node_if_t*)p)->then_part->type == XP_AWK_NODE_BLOCK)
+				__print_statements (((xp_awk_node_if_t*)p)->then_part, depth);
+			else
+				__print_statements (((xp_awk_node_if_t*)p)->then_part, depth + 1);
 
 			if (((xp_awk_node_if_t*)p)->else_part != XP_NULL) {
 				__print_tabs (depth);
 				xp_printf (XP_TEXT("else\n"));	
-				__print_statements (((xp_awk_node_if_t*)p)->else_part, depth);
+				if (((xp_awk_node_if_t*)p)->else_part->type == XP_AWK_NODE_BLOCK)
+					__print_statements (((xp_awk_node_if_t*)p)->else_part, depth);
+				else
+					__print_statements (((xp_awk_node_if_t*)p)->else_part, depth + 1);
 			}
 			break;
 		case XP_AWK_NODE_WHILE: 
@@ -133,10 +138,28 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 			xp_printf (XP_TEXT("while ("));	
 			__print_expr_node (((xp_awk_node_while_t*)p)->test);
 			xp_printf (XP_TEXT(")\n"));
+			if (((xp_awk_node_while_t*)p)->body->type == XP_AWK_NODE_BLOCK) {
+				__print_statements (((xp_awk_node_while_t*)p)->body, depth);
+			}
+			else {
+				__print_statements (((xp_awk_node_while_t*)p)->body, depth + 1);
+			}
+			break;
 
-			if (((xp_awk_node_while_t*)p)->body == XP_NULL) 
-				xp_printf (XP_TEXT(";\n"));
-			else __print_statements (((xp_awk_node_while_t*)p)->body, depth);
+		case XP_AWK_NODE_DOWHILE: 
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("do\n"));	
+			if (((xp_awk_node_while_t*)p)->body->type == XP_AWK_NODE_BLOCK) {
+				__print_statements (((xp_awk_node_while_t*)p)->body, depth);
+			}
+			else {
+				__print_statements (((xp_awk_node_while_t*)p)->body, depth + 1);
+			}
+
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("while ("));	
+			__print_expr_node (((xp_awk_node_while_t*)p)->test);
+			xp_printf (XP_TEXT(");\n"));	
 			break;
 
 		case XP_AWK_NODE_BREAK:
@@ -222,6 +245,7 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 			break;
 
 		case XP_AWK_NODE_WHILE:
+		case XP_AWK_NODE_DOWHILE:
 			xp_awk_clrpt (((xp_awk_node_while_t*)p)->test);
 			if (((xp_awk_node_while_t*)p)->body != XP_NULL)
 				xp_awk_clrpt (((xp_awk_node_while_t*)p)->body);
