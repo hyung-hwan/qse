@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.25 2006-01-19 13:28:29 bacon Exp $
+ * $Id: parse.c,v 1.26 2006-01-19 16:28:21 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -33,8 +33,8 @@ enum
 	TOKEN_RPAREN,
 	TOKEN_LBRACE,
 	TOKEN_RBRACE,
-	TOKEN_LBRACKET,
-	TOKEN_RBRACKET,
+	TOKEN_LBRACK,
+	TOKEN_RBRACK,
 
 	TOKEN_COMMA,
 	TOKEN_SEMICOLON,
@@ -84,6 +84,7 @@ static xp_awk_node_t* __parse_additive (xp_awk_t* awk, xp_char_t* ident);
 static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk, xp_char_t* ident);
 static xp_awk_node_t* __parse_unary (xp_awk_t* awk, xp_char_t* ident);
 static xp_awk_node_t* __parse_primary (xp_awk_t* awk, xp_char_t* ident);
+static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_node_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_node_t* __parse_if (xp_awk_t* awk);
 static xp_awk_node_t* __parse_while (xp_awk_t* awk);
@@ -422,6 +423,17 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 			xp_free (ident);
 			return XP_NULL;
 		}
+
+/*
+		if (MATCH(awk,TOKEN_LBRACK)) {
+// TODO: hashidx.... 
+			xp_awk_node_t* node;
+			node = __parse_hashidx (awk, name);
+			if (node == XP_NULL) xp_free (name);
+			return (xp_awk_node_t*)node;
+		}
+*/
+
 		if (MATCH(awk,TOKEN_ASSIGN)) {
 			if (__get_token(awk) == -1) {
 				xp_free (ident);
@@ -429,14 +441,24 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 			}
 			x = __parse_assignment (awk, ident);
 		}
-		else x = __parse_basic_expr (awk, ident);
+		else {
+			if (awk->opt & XP_AWK_ASSIGN_ONLY) {
+				xp_free (ident);
+				PANIC (awk, XP_AWK_EASSIGN);
+			}
+
+			x = __parse_basic_expr (awk, ident);
+		}
 
 		xp_free (ident);
 	}
 	else {
 		/* the expression starts with a non-identifier */
 
-// TODO: maybe this should be an error ->>> just an expression without assignment */
+		if (awk->opt & XP_AWK_ASSIGN_ONLY) {
+			PANIC (awk, XP_AWK_EASSIGN);
+		}
+
 		x = __parse_basic_expr (awk, XP_NULL);
 	}
 
@@ -603,7 +625,13 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk, xp_char_t* ident)
 			}
 		}
 
-		if (MATCH(awk,TOKEN_LPAREN)) {
+		if (MATCH(awk,TOKEN_LBRACK)) {
+			xp_awk_node_t* node;
+			node = __parse_hashidx (awk, name);
+			if (node == XP_NULL) xp_free (name);
+			return (xp_awk_node_t*)node;
+		}
+		else if (MATCH(awk,TOKEN_LPAREN)) {
 			/* function call */
 			xp_awk_node_t* node;
 			node = __parse_funcall (awk, name);
@@ -697,6 +725,46 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk, xp_char_t* ident)
 
 	/* valid expression introducer is expected */
 	PANIC (awk, XP_AWK_EEXPR);
+}
+
+static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
+{
+	xp_awk_node_t* idx;
+	xp_awk_node_idx_t* node;
+
+	if (__get_token(awk) == -1) return XP_NULL;
+
+xp_printf (XP_TEXT("----------------\n"));
+	idx = __parse_expression (awk);
+	if (idx == XP_NULL) return XP_NULL;
+xp_printf (XP_TEXT("+++++++++++++++++++\n"));
+
+	if (!MATCH(awk,TOKEN_RBRACK)) {
+		xp_awk_clrpt (idx);
+		PANIC (awk, XP_AWK_ERBRACK);
+	}
+
+xp_printf (XP_TEXT("$$$$$$$$$$$$$$$$$$$$$$\n"));
+	if (__get_token(awk) == -1) {
+		xp_awk_clrpt (idx);
+		return XP_NULL;
+	}
+
+xp_printf (XP_TEXT("#######################\n"));
+	node = (xp_awk_node_idx_t*) xp_malloc (xp_sizeof(xp_awk_node_idx_t));
+	if (node == XP_NULL) {
+		xp_awk_clrpt (idx);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+xp_printf (XP_TEXT("~~~~~~~~~~~~~~~~~~~~~~~~~`\n"));
+	node->type = XP_AWK_NODE_IDX;
+	node->next = XP_NULL;
+	node->name = name;
+	node->idx = idx;
+
+xp_printf (XP_TEXT("%%%%%%%%%%%%%%%%%%%%%%%%%[%s]\n"), XP_STR_BUF(&awk->token.name));
+	return (xp_awk_node_t*)node;
 }
 
 static xp_awk_node_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
@@ -1232,12 +1300,12 @@ static int __get_token (xp_awk_t* awk)
 		GET_CHAR_TO (awk, c);
 	}
 	else if (c == XP_CHAR('[')) {
-		SET_TOKEN_TYPE (awk, TOKEN_LBRACKET);
+		SET_TOKEN_TYPE (awk, TOKEN_LBRACK);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
 	else if (c == XP_CHAR(']')) {
-		SET_TOKEN_TYPE (awk, TOKEN_RBRACKET);
+		SET_TOKEN_TYPE (awk, TOKEN_RBRACK);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
