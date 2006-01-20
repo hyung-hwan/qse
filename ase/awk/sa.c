@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.5 2006-01-20 16:37:04 bacon Exp $
+ * $Id: sa.c,v 1.6 2006-01-20 16:52:25 bacon Exp $
  */
 
 #include <xp/awk/sa.h>
@@ -103,6 +103,12 @@ void xp_str_close (xp_str_t* str)
 	if (str->__dynamic) xp_free (str);
 }
 
+void xp_str_forfeit (xp_str_t* str)
+{
+	xp_free (str->buf);
+	if (str->__dynamic) xp_free (str);
+}
+
 xp_size_t xp_str_cat (xp_str_t* str, const xp_char_t* s)
 {
 	/* TODO: improve it */
@@ -168,9 +174,10 @@ void xp_str_clear (xp_str_t* str)
 static xp_char_t* __adjust_format (const xp_char_t* format)
 {
 	const xp_char_t* fp = format;
-	int modifier;
+	xp_char_t* tmp;
 	xp_str_t str;
 	xp_char_t ch;
+	int modifier;
 
 	if (xp_str_open (&str, 256) == XP_NULL) return XP_NULL;
 
@@ -280,7 +287,9 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		else ADDC (str, ch);
 	}
 
-	return xp_str_cield (&str);
+	tmp = XP_STR_BUF(&str);
+	xp_str_forfeit (&str);
+	return tmp;
 }
 
 #endif
