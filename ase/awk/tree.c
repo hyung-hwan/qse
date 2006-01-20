@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.8 2006-01-19 16:28:21 bacon Exp $
+ * $Id: tree.c,v 1.9 2006-01-20 07:29:54 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -34,7 +34,8 @@ static int __print_expr_node (xp_awk_node_t* node)
 {
 	switch (node->type) {
 	case XP_AWK_NODE_ASSIGN:
-		xp_printf (XP_TEXT("%s = "), ((xp_awk_node_assign_t*)node)->left);
+		if (__print_expr_node (((xp_awk_node_assign_t*)node)->left) == -1) return -1;
+		xp_printf (XP_TEXT(" = "));
 		if (__print_expr_node (((xp_awk_node_assign_t*)node)->right) == -1) return -1;
 		xp_assert ((((xp_awk_node_assign_t*)node)->right)->next == XP_NULL);
 		break;
@@ -44,7 +45,9 @@ static int __print_expr_node (xp_awk_node_t* node)
 		if (__print_expr_node (((xp_awk_node_expr_t*)node)->left) == -1) return -1;
 		xp_assert ((((xp_awk_node_expr_t*)node)->left)->next == XP_NULL);
 		xp_printf (XP_TEXT(" %c "), __binop_char[((xp_awk_node_expr_t*)node)->opcode]);
+		if (((xp_awk_node_expr_t*)node)->right->type == XP_AWK_NODE_ASSIGN) xp_printf (XP_TEXT("("));
 		if (__print_expr_node (((xp_awk_node_expr_t*)node)->right) == -1) return -1;
+		if (((xp_awk_node_expr_t*)node)->right->type == XP_AWK_NODE_ASSIGN) xp_printf (XP_TEXT(")"));
 		xp_assert ((((xp_awk_node_expr_t*)node)->right)->next == XP_NULL);
 		xp_printf (XP_TEXT(")"));
 		break;
@@ -227,6 +230,16 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 			}
 			break;
 
+		case XP_AWK_NODE_NEXT:
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("next;\n"));
+			break;
+
+		case XP_AWK_NODE_NEXTFILE:
+			__print_tabs (depth);
+			xp_printf (XP_TEXT("nextfile;\n"));
+			break;
+
 		default:
 			__print_tabs (depth);
 			if (__print_expr_node(p) == 0) {
@@ -293,6 +306,8 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 
 		case XP_AWK_NODE_BREAK:
 		case XP_AWK_NODE_CONTINUE:
+		case XP_AWK_NODE_NEXT:
+		case XP_AWK_NODE_NEXTFILE:
 			xp_free (p);
 			break;
 		
@@ -303,7 +318,7 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 			break;
 
 		case XP_AWK_NODE_ASSIGN:
-			xp_free (((xp_awk_node_assign_t*)p)->left);
+			xp_awk_clrpt (((xp_awk_node_assign_t*)p)->left);
 			xp_awk_clrpt (((xp_awk_node_assign_t*)p)->right);
 			xp_free (p);
 			break;
