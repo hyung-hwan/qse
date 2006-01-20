@@ -1,5 +1,5 @@
 CC = lcc
-CFLAGS = -I../../.. -A -ansic -libcdll 
+CFLAGS = -I../../.. -A -ansic -libcdll -D__STAND_ALONE
 #LDFLAGS = -L../../../xp/bas -L../../../xp/awk
 #LIBS = -lxpawk -lxpbas
 #LDFLAGS = -subsystem console -dynamic -s
