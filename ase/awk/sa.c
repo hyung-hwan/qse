@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.4 2006-01-20 16:31:58 bacon Exp $
+ * $Id: sa.c,v 1.5 2006-01-20 16:37:04 bacon Exp $
  */
 
 #include <xp/awk/sa.h>
@@ -32,7 +32,18 @@ int xp_printf (const xp_char_t* fmt, ...)
 
 int xp_vprintf (const xp_char_t* fmt, xp_va_list ap)
 {
-	return xp_vfprintf (xp_stdout, fmt, ap);
+	int n;
+	xp_char_t* nf = __adjust_format (fmt);
+	if (nf == XP_NULL) return -1;
+
+#ifdef XP_CHAR_IS_MCHAR
+	n = vprintf (stream, nf, ap);
+#else
+	n =  vwprintf (stream, nf, ap);
+#endif
+
+	xp_free (nf);
+	return n;
 }
 
 int xp_sprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...)
