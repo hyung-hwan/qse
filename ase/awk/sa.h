@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.1 2006-01-20 07:32:38 bacon Exp $
+ * $Id: sa.h,v 1.2 2006-01-20 15:58:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -25,13 +25,9 @@
 #define xp_isalnum iswalnum
 #define xp_isspace iswspace
 
+#define xp_strcpy wcscpy
 #define xp_strcmp wcscmp
 #define xp_strlen wcslen
-#ifdef _WIN32
-#define xp_strdup _wcsdup
-#else
-#define xp_strdup wcsdup
-#endif
 
 #define xp_main  main
 
@@ -52,7 +48,7 @@ typedef wint_t  xp_cint_t;
 typedef size_t  xp_size_t;
 typedef int	xp_bool_t;
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(vms) || defined(__vms)
 typedef long	xp_ssize_t;
 #else
 typedef ssize_t xp_ssize_t;
@@ -76,6 +72,8 @@ struct xp_str_t
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+xp_char_t* xp_strdup (const xp_char_t* str);
 
 xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa);
 void xp_str_close (xp_str_t* str);

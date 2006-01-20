@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.27 2006-01-20 07:29:54 bacon Exp $
+ * $Id: parse.c,v 1.28 2006-01-20 15:58:42 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -1466,18 +1466,19 @@ static int __get_token (xp_awk_t* awk)
 static int __get_char (xp_awk_t* awk)
 {
 	xp_ssize_t n;
+	xp_char_t c;
 
 	if (awk->lex.ungotc_count > 0) {
 		awk->lex.curc = awk->lex.ungotc[--awk->lex.ungotc_count];
 		return 0;
 	}
 
-	n = awk->src_func(XP_AWK_IO_DATA, awk->src_arg, &awk->lex.curc, 1);
+	n = awk->src_func(XP_AWK_IO_DATA, awk->src_arg, &c, 1);
 	if (n == -1) {
 		awk->errnum = XP_AWK_ESRCDT;
 		return -1;
 	}
-	if (n == 0) awk->lex.curc = XP_CHAR_EOF;
+	awk->lex.curc = (n == 0)? XP_CHAR_EOF: c;
 	
 	return 0;
 }
