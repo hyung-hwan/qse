@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.15 2006-01-19 16:28:21 bacon Exp $
+ * $Id: awk.h,v 1.16 2006-01-20 07:29:53 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -36,7 +36,8 @@ enum
 	XP_AWK_EEXPR,   /* expression expected */
 
 	XP_AWK_EWHILE,  /* keyword 'while' is expected */
-	XP_AWK_EASSIGN  /* assignment statement expected */
+	XP_AWK_EASSIGN, /* assignment statement expected */
+	XP_AWK_EIDENT   /* identifier expected */
 };
 
 /*
