@@ -1,10 +1,21 @@
 /*
- * $Id: sa.c,v 1.1 2006-01-20 07:32:38 bacon Exp $
+ * $Id: sa.c,v 1.2 2006-01-20 15:58:42 bacon Exp $
  */
 
 #include <xp/awk/sa.h>
 
 #ifdef __STAND_ALONE
+
+xp_char_t* xp_strdup (const xp_char_t* str)
+{
+	xp_char_t* tmp;
+
+	tmp = (xp_char_t*)xp_malloc ((xp_strlen(str) + 1) * xp_sizeof(xp_char_t));
+	if (tmp == XP_NULL) return XP_NULL;
+
+	xp_strcpy (tmp, str);
+	return tmp;
+}
 
 xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa)
 {
