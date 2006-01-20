@@ -3,7 +3,7 @@ OBJS = awk.obj parse.obj tree.obj
 OUT = xpawk.lib
 
 CC = lcc
-CFLAGS = -I../..  -A -ansic -libcdll 
+CFLAGS = -I../..  -A -ansic -libcdll  -D__STAND_ALONE
 LDFLAGS =
 LIBS = 
 
