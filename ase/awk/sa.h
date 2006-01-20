@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.3 2006-01-20 16:08:07 bacon Exp $
+ * $Id: sa.h,v 1.4 2006-01-20 16:28:57 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -18,7 +18,6 @@
 #define xp_realloc realloc
 #define xp_free free
 #define xp_assert assert
-#define xp_printf wprintf
 
 #define xp_isdigit iswdigit
 #define xp_isalpha iswalpha
@@ -74,6 +73,14 @@ extern "C" {
 #endif
 
 xp_char_t* xp_strdup (const xp_char_t* str);
+
+int xp_printf (const xp_char_t* fmt, ...);
+int xp_fprintf (XP_FILE* file, const xp_char_t* fmt, ...);
+int xp_vprintf (const xp_char_t* fmt, xp_va_list ap);
+int xp_vfprintf (XP_FILE *stream, const xp_char_t* fmt, xp_va_list ap);
+int xp_sprint* buf, xp_size_t size, const xp_char_t* fmt, ...);
+int xp_vsprintf (
+	xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_list ap);
 
 xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa);
 void xp_str_close (xp_str_t* str);
