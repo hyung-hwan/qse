@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.3 2006-01-20 16:28:57 bacon Exp $
+ * $Id: sa.c,v 1.4 2006-01-20 16:31:58 bacon Exp $
  */
 
 #include <xp/awk/sa.h>
@@ -30,35 +30,9 @@ int xp_printf (const xp_char_t* fmt, ...)
 	return n;
 }
 
-int xp_fprintf (XP_FILE* file, const xp_char_t* fmt, ...)
-{
-	int n;
-	xp_va_list ap;
-
-	xp_va_start (ap, fmt);
-	n = xp_vfprintf (file, fmt, ap);
-	xp_va_end (ap);
-	return n;
-}
-
 int xp_vprintf (const xp_char_t* fmt, xp_va_list ap)
 {
 	return xp_vfprintf (xp_stdout, fmt, ap);
-}
-
-int xp_vfprintf (XP_FILE *stream, const xp_char_t* fmt, xp_va_list ap)
-{
-	int n;
-	xp_char_t* nf = __adjust_format (fmt);
-	if (nf == XP_NULL) return -1;
-
-#ifdef XP_CHAR_IS_MCHAR
-	n = vfprintf (stream, nf, ap);
-#else
-	n =  vfwprintf (stream, nf, ap);
-#endif
-	xp_free (nf);
-	return n;
 }
 
 int xp_sprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...)
