@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.2 2006-01-20 15:58:42 bacon Exp $
+ * $Id: sa.h,v 1.3 2006-01-20 16:08:07 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -43,10 +43,10 @@
 #define xp_true (0 == 0)
 #define xp_false (0 != 0)
 
+typedef int	xp_bool_t;
 typedef wchar_t xp_char_t;
 typedef wint_t  xp_cint_t;
 typedef size_t  xp_size_t;
-typedef int	xp_bool_t;
 
 #if defined(_WIN32) || defined(vms) || defined(__vms)
 typedef long	xp_ssize_t;
