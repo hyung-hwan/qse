@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.4 2006-01-20 16:28:57 bacon Exp $
+ * $Id: sa.h,v 1.5 2006-01-20 16:31:58 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -12,6 +12,7 @@
 #include <wctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <assert.h>
 
 #define xp_malloc malloc
@@ -27,6 +28,11 @@
 #define xp_strcpy wcscpy
 #define xp_strcmp wcscmp
 #define xp_strlen wcslen
+
+#define xp_va_start(pvar,param) va_start(pvar,param)
+#define xp_va_list va_list
+#define xp_va_end(pvar)      va_end(pvar)
+#define xp_va_arg(pvar,type) va_arg(pvar,type)
 
 #define xp_main  main
 
@@ -75,10 +81,8 @@ extern "C" {
 xp_char_t* xp_strdup (const xp_char_t* str);
 
 int xp_printf (const xp_char_t* fmt, ...);
-int xp_fprintf (XP_FILE* file, const xp_char_t* fmt, ...);
 int xp_vprintf (const xp_char_t* fmt, xp_va_list ap);
-int xp_vfprintf (XP_FILE *stream, const xp_char_t* fmt, xp_va_list ap);
-int xp_sprint* buf, xp_size_t size, const xp_char_t* fmt, ...);
+int xp_sprint (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...);
 int xp_vsprintf (
 	xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_list ap);
 
