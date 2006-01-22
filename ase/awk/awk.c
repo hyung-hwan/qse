@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.9 2006-01-19 16:28:21 bacon Exp $
+ * $Id: awk.c,v 1.10 2006-01-22 15:11:17 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -24,7 +24,6 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	}
 
 	awk->opt = 0;
-	awk->tree = XP_NULL;
 	awk->errnum = XP_AWK_ENOERR;
 
 	awk->src_func = XP_NULL;
@@ -35,23 +34,25 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	awk->in_arg = XP_NULL;
 	awk->out_arg = XP_NULL;
 
+	awk->tree.begin = XP_NULL;
+	awk->tree.end = XP_NULL;
+	//awk->tree.funcs = XP_NULL;
+
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
 
 	return awk;
 }
 
-static void __collapse_tree (xp_awk_t* awk)
-{
-	/* TODO: collapse the tree */
-	/* TODO */
-	awk->tree = XP_NULL;
-}
-
 int xp_awk_close (xp_awk_t* awk)
 {
 
-	if (awk->tree != XP_NULL) __collapse_tree (awk);
+	if (awk->tree.begin != XP_NULL) xp_awk_clrpt (awk->tree.begin);
+	if (awk->tree.end != XP_NULL) xp_awk_clrpt (awk->tree.end);
+/*
+// TODO: destroy function list
+	if (awk->tree.funcs != XP_NULL) 
+*/
 
 	if (xp_awk_detsrc(awk) == -1) return -1;
 	xp_str_close (&awk->token.name);
