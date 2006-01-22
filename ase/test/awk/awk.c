@@ -77,7 +77,14 @@ int xp_main (int argc, xp_char_t* argv[])
 	}
 
 	xp_printf (XP_TEXT("-----------------------------------------------\n"));
-	xp_awk_prnpt (awk.tree);
+	if (awk.tree.begin != XP_NULL) {
+		xp_printf (XP_TEXT("BEGIN "));
+		xp_awk_prnpt (awk.tree.begin);
+	}
+	if (awk.tree.end != XP_NULL) {
+		xp_printf (XP_TEXT("END "));
+		xp_awk_prnpt (awk.tree.end);
+	}
 
 	xp_awk_close (&awk);
 	return 0;

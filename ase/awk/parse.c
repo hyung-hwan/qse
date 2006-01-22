@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.28 2006-01-20 15:58:42 bacon Exp $
+ * $Id: parse.c,v 1.29 2006-01-22 15:11:17 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -71,9 +71,11 @@ enum {
 	BINOP_MOD
 };
 
-static xp_awk_node_t* __parse_program (xp_awk_t* awk);
-static xp_awk_node_t* __parse_funcdcl (xp_awk_t* awk);
-static xp_awk_node_t* __parse_patnact (xp_awk_t* awk);
+static xp_awk_node_t* __parse_progunit (xp_awk_t* awk);
+static xp_awk_node_t* __parse_function (xp_awk_t* awk);
+static xp_awk_node_t* __parse_begin (xp_awk_t* awk);
+static xp_awk_node_t* __parse_end (xp_awk_t* awk);
+static xp_awk_node_t* __parse_action (xp_awk_t* awk);
 static xp_awk_node_t* __parse_block (xp_awk_t* awk);
 static xp_awk_node_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk);
@@ -163,23 +165,25 @@ static struct __kwent __kwtab[] =
 
 int xp_awk_parse (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
 
 	GET_CHAR (awk);
 	GET_TOKEN (awk);
 
-	node = __parse_program(awk);
-	if (node == XP_NULL) {
+	while (1) {
+		if (MATCH(awk,TOKEN_EOF)) break;
+
+		if (__parse_progunit(awk) == XP_NULL) {
+			// TODO: cleanup the parse tree created so far....
 xp_printf (XP_TEXT("error - %d\n"), awk->errnum);
-		return -1;
+			return -1;
+		}
 	}
 
-xp_printf (XP_TEXT("end - %d\n"), awk->errnum);
-	awk->tree = node;
+xp_printf (XP_TEXT("sucessful end - %d\n"), awk->errnum);
 	return 0;
 }
 
-static xp_awk_node_t* __parse_program (xp_awk_t* awk)
+static xp_awk_node_t* __parse_progunit (xp_awk_t* awk)
 {
 	/*
 	pattern { action }
@@ -187,32 +191,71 @@ static xp_awk_node_t* __parse_program (xp_awk_t* awk)
 	*/
 	xp_awk_node_t* node;
 
-	while (1) {
-		if (MATCH(awk,TOKEN_FUNCTION)) {
-			node = __parse_funcdcl(awk);
+	if (MATCH(awk,TOKEN_FUNCTION)) {
+		node = __parse_function(awk);
+		if (node == XP_NULL) {
+			// TODO: cleanup
+			return XP_NULL;
 		}
-		else {
-			node = __parse_patnact(awk);
+	}
+	else if (MATCH(awk,TOKEN_BEGIN)) {
+		node = __parse_begin (awk);
+		if (node == XP_NULL) {
+			// TODO: cleanup
+			return XP_NULL;
+		}
+	}
+	else if (MATCH(awk, TOKEN_END)) {
+		node = __parse_end (awk);
+		if (node == XP_NULL) {
+			// TODO: cleanup
+			return XP_NULL;
+		}
+	}
+	/* TODO: process patterns and expressions */
+	/* 
+	expressions 
+	/regular expression/
+	pattern && pattern
+	pattern || pattern
+	!pattern
+	(pattern)
+	pattern, pattern
+	*/
+	else {
+		/* pattern-less actions */
+		node = __parse_action (awk);
+		if (node == XP_NULL) {
+			// TODO: cleanup
+			return XP_NULL;
 		}
 
-		if (node == XP_NULL) return XP_NULL;
-xp_printf (XP_TEXT(">>>>> breaking ... for testing ...\n"));
-break;
+		// TODO: weave the action block into awk->tree.actions...
 	}
 
 	return node;
 }
 
-static xp_awk_node_t* __parse_funcdcl (xp_awk_t* awk)
+static xp_bool_t __function_defined (xp_awk_t* awk, const xp_char_t* name)
+{
+// TODO:  complete this...
+	return xp_false;
+}
+
+static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 {
 	xp_char_t* name;
+	xp_awk_func_t* func;
 	xp_awk_node_t* body;
 
-/* TODO: *******************************/
-
-	/* skip the keyword 'function' */
 	if (__get_token(awk) == -1) return XP_NULL;  
+
+	/* function name */
 	if (!MATCH(awk,TOKEN_IDENT)) PANIC (awk, XP_AWK_EIDENT);
+
+	if (__function_defined(awk,XP_STR_BUF(&awk->token.name))) {
+		PANIC (awk, XP_AWK_EDUPFUNC);
+	}	
 
 	name = xp_strdup (XP_STR_BUF(&awk->token.name));
 	if (name == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
@@ -233,6 +276,7 @@ static xp_awk_node_t* __parse_funcdcl (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
+	/* parameter name list */
 	if (MATCH(awk,TOKEN_RPAREN)) {
 		/* no function parameter */
 		if (__get_token(awk) == -1) {
@@ -266,62 +310,79 @@ static xp_awk_node_t* __parse_funcdcl (xp_awk_t* awk)
 		}
 
 		if (__get_token(awk) == -1) {
+// TODO: cleanup parameter name list
 			xp_free (name);
 			return XP_NULL;
 		}
 	}
 
 	if (!MATCH(awk,TOKEN_LBRACE)) {
-// TODO: cleanup
+// TODO: cleanup parameter name list
+		xp_free (name);
 		PANIC (awk, XP_AWK_ELBRACE);
 	}
 	if (__get_token(awk) == -1) {
-// TODO: cleanup
+// TODO: cleanup parameter name list
+		xp_free (name);
 		return XP_NULL; 
 	}
 
+	/* function body */
 	body = __parse_block (awk);
 	if (body == XP_NULL) {
-// TODO: cleanup;
+// TODO: cleanup parameter name list
+		xp_free (name);
 		return XP_NULL;
 	}
 
-// TODO: return something else...
+	func = (xp_awk_func_t*) xp_malloc (xp_sizeof(xp_awk_func_t));
+	if (func == XP_NULL) {
+		xp_free (name);
+		xp_awk_clrpt (body);
+		return XP_NULL;
+	}
+
+	func->name = name;
+	func->nargs = 0;
+	func->body = body;
+
+/* TODO: weave the function body into awk->tree.funcs */
 	return body;
 }
 
-static xp_awk_node_t* __parse_patnact (xp_awk_t* awk)
+static xp_awk_node_t* __parse_begin (xp_awk_t* awk)
 {
-	/* 
-	BEGIN
-	END
-	expressions 
-	/regular expression/
-	pattern && pattern
-	pattern || pattern
-	!pattern
-	(pattern)
-	pattern, pattern
-	*/
-
 	xp_awk_node_t* node;
 
-	if (MATCH(awk,TOKEN_BEGIN)) {
-		if (__get_token(awk) == -1) return XP_NULL; 
-	}
-	else if (MATCH(awk,TOKEN_END)) {
-		if (__get_token(awk) == -1) return XP_NULL; 
-	}
-	/* patterns ...
-	 * etc */
-
-	if (!MATCH(awk,TOKEN_LBRACE)) PANIC (awk, XP_AWK_ELBRACE);
+	if (awk->tree.begin != XP_NULL) PANIC (awk, XP_AWK_EDUPBEGIN);
 	if (__get_token(awk) == -1) return XP_NULL; 
 
-	node = __parse_block(awk);
+	node = __parse_action (awk);
 	if (node == XP_NULL) return XP_NULL;
 
+	awk->tree.begin = node;
 	return node;
+}
+
+static xp_awk_node_t* __parse_end (xp_awk_t* awk)
+{
+	xp_awk_node_t* node;
+
+	if (awk->tree.end != XP_NULL) PANIC (awk, XP_AWK_EDUPEND);
+	if (__get_token(awk) == -1) return XP_NULL; 
+
+	node = __parse_action (awk);
+	if (node == XP_NULL) return XP_NULL;
+
+	awk->tree.end = node;
+	return node;
+}
+
+static xp_awk_node_t* __parse_action (xp_awk_t* awk)
+{
+	if (!MATCH(awk,TOKEN_LBRACE)) PANIC (awk, XP_AWK_ELBRACE);
+	if (__get_token(awk) == -1) return XP_NULL; 
+	return __parse_block(awk);
 }
 
 /* TODO: what is the best name for the parsing routine for the outermost block? */

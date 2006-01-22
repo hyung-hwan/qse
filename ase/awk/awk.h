@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.16 2006-01-20 07:29:53 bacon Exp $
+ * $Id: awk.h,v 1.17 2006-01-22 15:11:17 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -37,7 +37,10 @@ enum
 
 	XP_AWK_EWHILE,  /* keyword 'while' is expected */
 	XP_AWK_EASSIGN, /* assignment statement expected */
-	XP_AWK_EIDENT   /* identifier expected */
+	XP_AWK_EIDENT,  /* identifier expected */
+	XP_AWK_EDUPBEGIN, /* duplicate BEGIN */
+	XP_AWK_EDUPEND, /* duplicate END */
+	XP_AWK_EDUPFUNC /* duplicate function name */
 };
 
 /*
@@ -70,9 +73,6 @@ struct xp_awk_t
 	/* options */
 	int opt;
 
-	/* parse tree */
-	xp_awk_node_t* tree;
-
 	/* io functions */
 	xp_awk_io_t src_func;
 	xp_awk_io_t in_func;
@@ -82,15 +82,25 @@ struct xp_awk_t
 	void* in_arg;
 	void* out_arg;
 
+	/* parse tree */
+	struct 
+	{
+		//xp_awk_hash_t* funcs;
+		xp_awk_node_t* begin;
+		xp_awk_node_t* end;
+	} tree;
+
 	/* source buffer management */
-	struct {
+	struct 
+	{
 		xp_cint_t curc;
 		xp_cint_t ungotc[5];
 		xp_size_t ungotc_count;
 	} lex;
 
 	/* token */
-	struct {
+	struct 
+	{
 		int       type;
 		xp_str_t  name;
 	} token;
