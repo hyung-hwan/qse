@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.17 2006-01-22 15:11:17 bacon Exp $
+ * $Id: awk.h,v 1.18 2006-01-24 16:14:28 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -88,6 +88,7 @@ struct xp_awk_t
 		//xp_awk_hash_t* funcs;
 		xp_awk_node_t* begin;
 		xp_awk_node_t* end;
+		xp_awk_node_t* unnamed;
 	} tree;
 
 	/* source buffer management */
@@ -123,6 +124,11 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk);
  * FUNCTION: xp_awk_close
  */
 int xp_awk_close (xp_awk_t* awk);
+
+/*
+ * FUNCTION: xp_awk_clear
+ */
+void xp_awk_clear (xp_awk_t* awk);
 
 /*
  * FUNCTION: xp_awk_attsrc

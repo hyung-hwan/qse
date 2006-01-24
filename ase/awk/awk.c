@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.10 2006-01-22 15:11:17 bacon Exp $
+ * $Id: awk.c,v 1.11 2006-01-24 16:14:28 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -36,6 +36,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 
 	awk->tree.begin = XP_NULL;
 	awk->tree.end = XP_NULL;
+	awk->tree.unnamed = XP_NULL;
 	//awk->tree.funcs = XP_NULL;
 
 	awk->lex.curc = XP_CHAR_EOF;
@@ -46,18 +47,36 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 
 int xp_awk_close (xp_awk_t* awk)
 {
-
-	if (awk->tree.begin != XP_NULL) xp_awk_clrpt (awk->tree.begin);
-	if (awk->tree.end != XP_NULL) xp_awk_clrpt (awk->tree.end);
-/*
-// TODO: destroy function list
-	if (awk->tree.funcs != XP_NULL) 
-*/
-
+	xp_awk_clear (awk);
 	if (xp_awk_detsrc(awk) == -1) return -1;
 	xp_str_close (&awk->token.name);
 	if (awk->__dynamic) xp_free (awk);
 	return 0;
+}
+
+void xp_awk_clear (xp_awk_t* awk)
+{
+	
+	if (awk->tree.begin != XP_NULL) {
+		xp_assert (awk->tree.begin->next == XP_NULL);
+		xp_awk_clrpt (awk->tree.begin);
+		awk->tree.begin = XP_NULL;
+	}
+
+	if (awk->tree.end != XP_NULL) {
+		xp_assert (awk->tree.end->next == XP_NULL);
+		xp_awk_clrpt (awk->tree.end);
+		awk->tree.end = XP_NULL;
+	}
+
+	while (awk->tree.unnamed != XP_NULL) {
+		xp_awk_node_t* next = awk->tree.unnamed->next;
+		xp_awk_clrpt (awk->tree.unnamed);
+		awk->tree.unnamed = next;
+	}
+
+	/* TODO: destroy pattern-actions pairs */
+	/* TODO: destroy function list */
 }
 
 int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
@@ -94,3 +113,4 @@ int xp_awk_detsrc (xp_awk_t* awk)
 
 	return 0;
 }
+

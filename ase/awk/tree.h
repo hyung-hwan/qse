@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.15 2006-01-22 15:11:17 bacon Exp $
+ * $Id: tree.h,v 1.16 2006-01-24 16:14:28 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -21,7 +21,9 @@ enum
 	XP_AWK_NODE_STR,
 	XP_AWK_NODE_NUM,
 	XP_AWK_NODE_VAR,
-	XP_AWK_NODE_IDX,
+	XP_AWK_NODE_VARIDX,
+	XP_AWK_NODE_ARG,
+	XP_AWK_NODE_ARGIDX,
 	XP_AWK_NODE_CALL,
 	XP_AWK_NODE_IF,
 	XP_AWK_NODE_WHILE,
@@ -34,6 +36,7 @@ typedef struct xp_awk_node_block_t xp_awk_node_block_t;
 typedef struct xp_awk_node_assign_t xp_awk_node_assign_t;
 typedef struct xp_awk_node_expr_t xp_awk_node_expr_t;
 typedef struct xp_awk_node_term_t xp_awk_node_term_t;
+typedef struct xp_awk_node_var_t xp_awk_node_var_t;
 typedef struct xp_awk_node_idx_t xp_awk_node_idx_t;
 typedef struct xp_awk_node_call_t xp_awk_node_call_t;
 typedef struct xp_awk_node_if_t xp_awk_node_if_t;
@@ -84,10 +87,24 @@ struct xp_awk_node_term_t
 	xp_char_t* value;
 };
 
+struct xp_awk_node_var_t
+{
+	XP_AWK_NODE_HDR;
+	union
+	{
+		xp_char_t* name;
+		xp_size_t idxa;
+	} id;
+};
+
 struct xp_awk_node_idx_t
 {
 	XP_AWK_NODE_HDR;
-	xp_char_t* name;
+	union
+	{
+		xp_char_t* name;
+		xp_size_t idxa;
+	} id;
 	xp_awk_node_t* idx;
 };
 
