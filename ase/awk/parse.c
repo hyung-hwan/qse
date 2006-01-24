@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.29 2006-01-22 15:11:17 bacon Exp $
+ * $Id: parse.c,v 1.30 2006-01-24 16:14:28 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -106,6 +106,8 @@ static int __skip_spaces (xp_awk_t* awk);
 static int __skip_comment (xp_awk_t* awk);
 static int __classfy_ident (const xp_char_t* ident);
 
+static int __find_func_arg (xp_awk_t* awk, const xp_char_t* name);
+
 struct __kwent 
 { 
 	const xp_char_t* name; 
@@ -165,6 +167,8 @@ static struct __kwent __kwtab[] =
 
 int xp_awk_parse (xp_awk_t* awk)
 {
+	/* if you want to parse anew, call xp_awk_clear first.
+	 * otherwise, the result is appened to the accumulated result */
 
 	GET_CHAR (awk);
 	GET_TOKEN (awk);
@@ -245,7 +249,7 @@ static xp_bool_t __function_defined (xp_awk_t* awk, const xp_char_t* name)
 static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 {
 	xp_char_t* name;
-	xp_awk_func_t* func;
+	//xp_awk_func_t* func;
 	xp_awk_node_t* body;
 
 	if (__get_token(awk) == -1) return XP_NULL;  
@@ -335,6 +339,7 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
+/*
 	func = (xp_awk_func_t*) xp_malloc (xp_sizeof(xp_awk_func_t));
 	if (func == XP_NULL) {
 		xp_free (name);
@@ -345,6 +350,7 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	func->name = name;
 	func->nargs = 0;
 	func->body = body;
+*/
 
 /* TODO: weave the function body into awk->tree.funcs */
 	return body;
@@ -564,7 +570,7 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 	if (!MATCH(awk,TOKEN_ASSIGN)) return x;
 
 	xp_assert (x->next == XP_NULL);
-	if (x->type != XP_AWK_NODE_VAR && x->type != XP_AWK_NODE_IDX) {
+	if (x->type != XP_AWK_NODE_VAR && x->type != XP_AWK_NODE_VARIDX) {
 		xp_awk_clrpt (x);
 		PANIC (awk, XP_AWK_EASSIGN);
 	}
@@ -819,17 +825,26 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk, xp_char_t* ident)
 		}	
 		else {
 			/* normal variable */
-			xp_awk_node_term_t* node;
+			xp_awk_node_var_t* node;
+			xp_size_t idxa;
 	
-			node = (xp_awk_node_term_t*)xp_malloc(xp_sizeof(xp_awk_node_term_t));
+			node = (xp_awk_node_var_t*)xp_malloc(xp_sizeof(xp_awk_node_var_t));
 			if (node == XP_NULL) {
 				xp_free (name);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 
-			node->type = XP_AWK_NODE_VAR;
-			node->next = XP_NULL;
-			node->value = name;
+			idxa = __find_func_arg (awk, name);
+			if (idxa == (xp_size_t)-1) {
+				node->type = XP_AWK_NODE_VAR;
+				node->next = XP_NULL;
+				node->id.name = name;
+			}
+			else {
+				node->type = XP_AWK_NODE_ARG;
+				node->next = XP_NULL;
+				node->id.idxa = idxa;
+			}
 
 			return (xp_awk_node_t*)node;
 		}
@@ -932,9 +947,9 @@ static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	node->type = XP_AWK_NODE_IDX;
+	node->type = XP_AWK_NODE_VARIDX;
 	node->next = XP_NULL;
-	node->name = name;
+	node->id.name = name;
 	node->idx = idx;
 
 	return (xp_awk_node_t*)node;
@@ -1606,4 +1621,14 @@ static int __classfy_ident (const xp_char_t* ident)
 	}
 
 	return TOKEN_IDENT;
+}
+
+static xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name)
+{
+	if (awk->curfunc != XP_NULL) {
+		
+// TODO: finish this....
+	}
+
+	return (xp_size_t)-1;
 }
