@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.31 2006-01-25 04:27:01 bacon Exp $
+ * $Id: parse.c,v 1.32 2006-01-25 04:41:56 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -1163,6 +1163,8 @@ static xp_awk_node_t* __parse_for (xp_awk_t* awk)
 {
 	xp_awk_node_t* init, * test, * incr, * body;
 	xp_awk_node_for_t* node;
+
+	// TODO: parse for (x in list) ...
 
 	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, XP_AWK_ELPAREN);
 	if (__get_token(awk) == -1) return XP_NULL;
