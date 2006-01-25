@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.6 2006-01-20 17:00:36 bacon Exp $
+ * $Id: sa.h,v 1.7 2006-01-25 04:27:01 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -61,6 +61,12 @@ typedef long	xp_ssize_t;
 typedef ssize_t xp_ssize_t;
 #endif
 
+#if defined(_WIN32)
+typedef __int64 xp_long_t;
+#else
+typedef long long xp_long_t;
+#endif
+
 #define XP_STR_LEN(x)  ((x)->size)
 #define XP_STR_SIZE(x) ((x)->size + 1)
 #define XP_STR_CAPA(x) ((x)->capa)
@@ -84,7 +90,7 @@ xp_char_t* xp_strdup (const xp_char_t* str);
 
 int xp_printf (const xp_char_t* fmt, ...);
 int xp_vprintf (const xp_char_t* fmt, xp_va_list ap);
-int xp_sprint (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...);
+int xp_sprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...);
 int xp_vsprintf (
 	xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_list ap);
 
