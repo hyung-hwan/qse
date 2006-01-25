@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.16 2006-01-24 16:14:28 bacon Exp $
+ * $Id: tree.h,v 1.17 2006-01-25 14:50:57 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -24,6 +24,7 @@ enum
 	XP_AWK_NODE_VARIDX,
 	XP_AWK_NODE_ARG,
 	XP_AWK_NODE_ARGIDX,
+	XP_AWK_NODE_POS,
 	XP_AWK_NODE_CALL,
 	XP_AWK_NODE_IF,
 	XP_AWK_NODE_WHILE,
@@ -38,6 +39,7 @@ typedef struct xp_awk_node_expr_t xp_awk_node_expr_t;
 typedef struct xp_awk_node_term_t xp_awk_node_term_t;
 typedef struct xp_awk_node_var_t xp_awk_node_var_t;
 typedef struct xp_awk_node_idx_t xp_awk_node_idx_t;
+typedef struct xp_awk_node_pos_t xp_awk_node_pos_t;
 typedef struct xp_awk_node_call_t xp_awk_node_call_t;
 typedef struct xp_awk_node_if_t xp_awk_node_if_t;
 typedef struct xp_awk_node_while_t xp_awk_node_while_t;
@@ -106,6 +108,13 @@ struct xp_awk_node_idx_t
 		xp_size_t idxa;
 	} id;
 	xp_awk_node_t* idx;
+};
+
+/* positional variable - $1, $(a + 1), $$xx, etc */
+struct xp_awk_node_pos_t
+{
+	XP_AWK_NODE_HDR;
+	xp_awk_node_t* pos;
 };
 
 struct xp_awk_node_call_t
