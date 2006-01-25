@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.33 2006-01-25 14:50:57 bacon Exp $
+ * $Id: parse.c,v 1.34 2006-01-25 16:11:43 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -60,6 +60,9 @@ enum
 	TOKEN_DELETE,
 	TOKEN_NEXT,
 	TOKEN_NEXTFILE,
+
+	TOKEN_LOCAL,
+	TOKEN_GLOBAL,
 
 	__TOKEN_COUNT__
 };
@@ -132,6 +135,11 @@ static struct __kwent __kwtab[] =
 	{ XP_TEXT("delete"),   TOKEN_DELETE },
 	{ XP_TEXT("next"),     TOKEN_NEXT },
 	{ XP_TEXT("nextfile"), TOKEN_NEXTFILE },
+
+// TODO: don't return TOKEN_LOCAL & TOKEN_GLOBAL when explicit variable declaration is disabled.
+	{ XP_TEXT("local"),    TOKEN_LOCAL },
+	{ XP_TEXT("global"),   TOKEN_GLOBAL },
+
 	{ XP_NULL,             0 },
 };
 
@@ -398,36 +406,68 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk)
 {
 	xp_awk_node_t* head, * curr, * node;
 	xp_awk_node_block_t* block;
+	xp_size_t lvc = 0;
 
+	/* local variable declaration */
+	//TODO: if (awk->opt & XP_AWK_VARDECL) {
+	while (1) {
+		if (MATCH(awk,TOKEN_EOF)) {
+			// cleanup the variable name list...
+			PANIC (awk, XP_AWK_EENDSRC);
+		}
+
+		if (MATCH(awk,TOKEN_RBRACE)) {
+			if (__get_token(awk) == -1) {
+				// TODO: cleanup the variable name list...
+				return XP_NULL; 
+			}
+			goto skip_block_body;
+		}
+
+		if (!MATCH(awk,TOKEN_LOCAL)) break;
+
+		if (__get_token(awk) == -1) {
+			// TODO: cleanup the variable name list...
+			return XP_NULL;
+		}
+// TODO: collect variables...
+// TODO: check duplicates with locals and globals, and maybe with the function names also depending on the awk options....
+	}
+	// TODO: }
+
+	/* block body */
 	head = XP_NULL; curr = XP_NULL;
 
 	while (1) {
 		if (MATCH(awk,TOKEN_EOF)) {
+			// TODO: cleanup the variable name list...
 			if (head != XP_NULL) xp_awk_clrpt (head);
 			PANIC (awk, XP_AWK_EENDSRC);
 		}
 
 		if (MATCH(awk,TOKEN_RBRACE)) {
 			if (__get_token(awk) == -1) {
+				// TODO: cleanup the variable name list...
 				if (head != XP_NULL) xp_awk_clrpt (head);
 				return XP_NULL; 
 			}
 			break;
 		}
 
-/* if you want to remove top-level null statement... get it here... */
+/* TODO: if you want to remove top-level null statement... get it here... */
 /*
 		if (MATCH(awk,TOKEN_SEMICOLON)) {
 			if (__get_token(awk) == -1) {
+				// TODO: cleanup the variable name list...
 				if (head != XP_NULL) xp_awk_clrpt (head);
 				return XP_NULL;
 			}
 			continue;
 		}
 */
-
 		node = __parse_statement (awk);
 		if (node == XP_NULL) {
+			// TODO: cleanup the variable name list...
 			if (head != XP_NULL) xp_awk_clrpt (head);
 			return XP_NULL;
 		}
@@ -437,15 +477,22 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk)
 		curr = node;
 	}
 
+skip_block_body:
+
 	block = (xp_awk_node_block_t*) xp_malloc (xp_sizeof(xp_awk_node_block_t));
 	if (block == XP_NULL) {
+		// TODO: cleanup the variable name list...
 		xp_awk_clrpt (head);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
+// TODO: remove empty block such as { } { ;;;; }, or { local a, b, c; ;;; }. etc
 	block->type = XP_AWK_NODE_BLOCK;
 	block->next = XP_NULL;
+	block->lvc  = lvc;
 	block->body = head;
+
+	// TODO: cleanup the variable name list...
 
 	return (xp_awk_node_t*)block;
 }
@@ -850,7 +897,7 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 		return (xp_awk_node_t*)node;
 	}
 	else if (MATCH(awk,TOKEN_DOLLAR)) {
-		xp_awk_node_pos_t* node;
+		xp_awk_node_sgv_t* node;
 		xp_awk_node_t* prim;
 
 		if (__get_token(awk)) return XP_NULL;
@@ -858,7 +905,7 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 		prim = __parse_primary (awk);
 		if (prim == XP_NULL) return XP_NULL;
 
-		node = (xp_awk_node_pos_t*) xp_malloc (xp_sizeof(xp_awk_node_pos_t));
+		node = (xp_awk_node_sgv_t*) xp_malloc (xp_sizeof(xp_awk_node_sgv_t));
 		if (node == XP_NULL) {
 			xp_awk_clrpt (prim);
 			PANIC (awk, XP_AWK_ENOMEM);
@@ -866,7 +913,7 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 
 		node->type = XP_AWK_NODE_POS;
 		node->next = XP_NULL;
-		node->pos = prim;
+		node->value = prim;
 
 		return (xp_awk_node_t*)node;
 	}
@@ -1281,10 +1328,10 @@ static xp_awk_node_t* __parse_continue (xp_awk_t* awk)
 
 static xp_awk_node_t* __parse_return (xp_awk_t* awk)
 {
-	xp_awk_node_block_t* node;
+	xp_awk_node_sgv_t* node;
 	xp_awk_node_t* val;
 
-	node = (xp_awk_node_block_t*) xp_malloc (xp_sizeof(xp_awk_node_block_t));
+	node = (xp_awk_node_sgv_t*) xp_malloc (xp_sizeof(xp_awk_node_sgv_t));
 	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	node->type = XP_AWK_NODE_RETURN;
 	node->next = XP_NULL;
@@ -1295,16 +1342,16 @@ static xp_awk_node_t* __parse_return (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	node->body = val;
+	node->value = val;
 	return (xp_awk_node_t*)node;
 }
 
 static xp_awk_node_t* __parse_exit (xp_awk_t* awk)
 {
-	xp_awk_node_block_t* node;
+	xp_awk_node_sgv_t* node;
 	xp_awk_node_t* val;
 
-	node = (xp_awk_node_block_t*) xp_malloc (xp_sizeof(xp_awk_node_block_t));
+	node = (xp_awk_node_sgv_t*) xp_malloc (xp_sizeof(xp_awk_node_sgv_t));
 	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	node->type = XP_AWK_NODE_EXIT;
 	node->next = XP_NULL;
@@ -1315,7 +1362,7 @@ static xp_awk_node_t* __parse_exit (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	node->body = val;
+	node->value = val;
 	return (xp_awk_node_t*)node;
 }
 
