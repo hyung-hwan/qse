@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.30 2006-01-24 16:14:28 bacon Exp $
+ * $Id: parse.c,v 1.31 2006-01-25 04:27:01 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -106,7 +106,8 @@ static int __skip_spaces (xp_awk_t* awk);
 static int __skip_comment (xp_awk_t* awk);
 static int __classfy_ident (const xp_char_t* ident);
 
-static int __find_func_arg (xp_awk_t* awk, const xp_char_t* name);
+static xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name);
+static xp_long_t __str_to_long (const xp_char_t* name);
 
 struct __kwent 
 { 
@@ -237,6 +238,7 @@ static xp_awk_node_t* __parse_progunit (xp_awk_t* awk)
 		// TODO: weave the action block into awk->tree.actions...
 	}
 
+xp_awk_prnpt(node);
 	return node;
 }
 
@@ -722,6 +724,8 @@ static xp_awk_node_t* __parse_additive (xp_awk_t* awk, xp_char_t* ident)
 			return XP_NULL;
 		}
 
+		// TODO: constant folding -> in other parts of the program also...
+
 		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
 		if (node == XP_NULL) {
 			xp_awk_clrpt (right);
@@ -766,6 +770,42 @@ static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk, xp_char_t* ident)
 			xp_awk_clrpt (left);	
 			return XP_NULL;
 		}
+
+		/* TODO: enhance constant folding. do it in a better way */
+		/* TODO: differentiate different types of numbers ... */
+		if (left->type == XP_AWK_NODE_NUM && 
+		    right->type == XP_AWK_NODE_NUM) {
+			xp_long_t l, r;
+			xp_awk_node_term_t* tmp;
+			xp_char_t buf[256];
+
+			l = __str_to_long (((xp_awk_node_term_t*)left)->value); 
+			r = __str_to_long (((xp_awk_node_term_t*)right)->value); 
+
+			xp_awk_clrpt (left);
+			xp_awk_clrpt (right);
+			
+			if (opcode == BINOP_MUL) l *= r;
+			else if (opcode == BINOP_DIV) l /= r;
+			else if (opcode == BINOP_MOD) l %= r;
+			
+			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%lld"), (long long)l);
+
+			tmp = (xp_awk_node_term_t*) xp_malloc (xp_sizeof(xp_awk_node_term_t));
+			if (tmp == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+
+			tmp->type = XP_AWK_NODE_NUM;
+			tmp->next = XP_NULL;
+			tmp->value = xp_strdup (buf);
+
+			if (tmp->value == XP_NULL) {
+				xp_free (tmp);
+				PANIC (awk, XP_AWK_ENOMEM);
+			}
+
+			left = (xp_awk_node_t*) tmp;
+			continue;
+		} 
 
 		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
 		if (node == XP_NULL) {
@@ -1625,10 +1665,24 @@ static int __classfy_ident (const xp_char_t* ident)
 
 static xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name)
 {
+/*
 	if (awk->curfunc != XP_NULL) {
 		
 // TODO: finish this....
 	}
+*/
 
 	return (xp_size_t)-1;
+}
+
+static xp_long_t __str_to_long (const xp_char_t* name)
+{
+	xp_long_t n = 0;
+
+	while (xp_isdigit(*name)) {
+		n = n * 10 + (*name - XP_CHAR('0'));
+		name++;
+	}
+
+	return n;
 }
