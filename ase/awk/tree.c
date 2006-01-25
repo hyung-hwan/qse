@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.11 2006-01-25 14:50:57 bacon Exp $
+ * $Id: tree.c,v 1.12 2006-01-25 16:11:43 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -77,7 +77,7 @@ static int __print_expr_node (xp_awk_node_t* node)
 
 	case XP_AWK_NODE_POS:
 		xp_printf (XP_TEXT("$"));
-		__print_expr_node (((xp_awk_node_pos_t*)node)->pos);
+		__print_expr_node (((xp_awk_node_sgv_t*)node)->value);
 		break;
 
 	case XP_AWK_NODE_CALL:
@@ -212,12 +212,12 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 		case XP_AWK_NODE_RETURN:
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("return "));
-			xp_assert (((xp_awk_node_block_t*)p)->body->next == XP_NULL);
-			if (__print_expr_node(((xp_awk_node_block_t*)p)->body) == 0) {
+			xp_assert (((xp_awk_node_sgv_t*)p)->value->next == XP_NULL);
+			if (__print_expr_node(((xp_awk_node_sgv_t*)p)->value) == 0) {
 				xp_printf (XP_TEXT(";\n"));
 			}
 			else {
-				xp_awk_node_block_t* x = (xp_awk_node_block_t*)p;
+				xp_awk_node_sgv_t* x = (xp_awk_node_sgv_t*)p;
 				xp_printf (XP_TEXT("***INTERNAL ERROR: unknown node type - %d\n"), x->type);
 			}
 			break;
@@ -225,12 +225,12 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 		case XP_AWK_NODE_EXIT:
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("exit "));
-			xp_assert (((xp_awk_node_block_t*)p)->body->next == XP_NULL);
-			if (__print_expr_node(((xp_awk_node_block_t*)p)->body) == 0) {
+			xp_assert (((xp_awk_node_sgv_t*)p)->value->next == XP_NULL);
+			if (__print_expr_node(((xp_awk_node_sgv_t*)p)->value) == 0) {
 				xp_printf (XP_TEXT(";\n"));
 			}
 			else {
-				xp_awk_node_block_t* x = (xp_awk_node_block_t*)p;
+				xp_awk_node_sgv_t* x = (xp_awk_node_sgv_t*)p;
 				xp_printf (XP_TEXT("***INTERNAL ERROR: unknown node type - %d\n"), x->type);
 			}
 			break;
@@ -318,7 +318,7 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 		
 		case XP_AWK_NODE_RETURN:
 		case XP_AWK_NODE_EXIT:
-			xp_awk_clrpt (((xp_awk_node_block_t*)p)->body);
+			xp_awk_clrpt (((xp_awk_node_sgv_t*)p)->value);
 			xp_free (p);
 			break;
 
@@ -360,7 +360,7 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 			break;
 
 		case XP_AWK_NODE_POS:
-			xp_awk_clrpt (((xp_awk_node_pos_t*)p)->pos);
+			xp_awk_clrpt (((xp_awk_node_sgv_t*)p)->value);
 			xp_free (p);
 			break;
 

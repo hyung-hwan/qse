@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.18 2006-01-24 16:14:28 bacon Exp $
+ * $Id: awk.h,v 1.19 2006-01-25 16:11:43 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -90,6 +90,14 @@ struct xp_awk_t
 		xp_awk_node_t* end;
 		xp_awk_node_t* unnamed;
 	} tree;
+
+	/* temporary information that the parser needs */
+	struct
+	{
+		// TODO: locals, globals???
+		xp_char_t* vars; /* global and local variable names... */
+		xp_char_t* args; /* function arguments */
+	} parse;
 
 	/* source buffer management */
 	struct 
