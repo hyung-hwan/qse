@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.10 2006-01-24 16:14:28 bacon Exp $
+ * $Id: tree.c,v 1.11 2006-01-25 14:50:57 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -73,6 +73,11 @@ static int __print_expr_node (xp_awk_node_t* node)
 		xp_printf (XP_TEXT("%s["), ((xp_awk_node_idx_t*)node)->id.name);
 		__print_expr_node (((xp_awk_node_idx_t*)node)->idx);
 		xp_printf (XP_TEXT("]"));
+		break;
+
+	case XP_AWK_NODE_POS:
+		xp_printf (XP_TEXT("$"));
+		__print_expr_node (((xp_awk_node_pos_t*)node)->pos);
 		break;
 
 	case XP_AWK_NODE_CALL:
@@ -351,6 +356,11 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 		case XP_AWK_NODE_VARIDX:
 			xp_awk_clrpt (((xp_awk_node_idx_t*)p)->idx);
 			xp_free (((xp_awk_node_idx_t*)p)->id.name);
+			xp_free (p);
+			break;
+
+		case XP_AWK_NODE_POS:
+			xp_awk_clrpt (((xp_awk_node_pos_t*)p)->pos);
 			xp_free (p);
 			break;
 

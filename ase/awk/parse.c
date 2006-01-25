@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.32 2006-01-25 04:41:56 bacon Exp $
+ * $Id: parse.c,v 1.33 2006-01-25 14:50:57 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -36,6 +36,7 @@ enum
 	TOKEN_LBRACK,
 	TOKEN_RBRACK,
 
+	TOKEN_DOLLAR,
 	TOKEN_COMMA,
 	TOKEN_SEMICOLON,
 
@@ -80,12 +81,11 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk);
 static xp_awk_node_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk);
 static xp_awk_node_t* __parse_expression (xp_awk_t* awk);
-static xp_awk_node_t* __parse_assignment (xp_awk_t* awk, xp_char_t* ident);
-static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk, xp_char_t* ident);
-static xp_awk_node_t* __parse_additive (xp_awk_t* awk, xp_char_t* ident);
-static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk, xp_char_t* ident);
-static xp_awk_node_t* __parse_unary (xp_awk_t* awk, xp_char_t* ident);
-static xp_awk_node_t* __parse_primary (xp_awk_t* awk, xp_char_t* ident);
+static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk);
+static xp_awk_node_t* __parse_additive (xp_awk_t* awk);
+static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk);
+static xp_awk_node_t* __parse_unary (xp_awk_t* awk);
+static xp_awk_node_t* __parse_primary (xp_awk_t* awk);
 static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_node_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_node_t* __parse_if (xp_awk_t* awk);
@@ -567,12 +567,15 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 	xp_awk_node_t* x, * y;
 	xp_awk_node_assign_t* node;
 
-	x = __parse_basic_expr (awk, XP_NULL);
+	x = __parse_basic_expr (awk);
 	if (x == XP_NULL) return XP_NULL;
 	if (!MATCH(awk,TOKEN_ASSIGN)) return x;
 
 	xp_assert (x->next == XP_NULL);
-	if (x->type != XP_AWK_NODE_VAR && x->type != XP_AWK_NODE_VARIDX) {
+	if (x->type != XP_AWK_NODE_VAR && 
+	    x->type != XP_AWK_NODE_VARIDX &&
+	    x->type != XP_AWK_NODE_POS) {
+// TODO: XP_AWK_NODE_ARG, XP_AWK_NODE_ARGIDX
 		xp_awk_clrpt (x);
 		PANIC (awk, XP_AWK_EASSIGN);
 	}
@@ -582,7 +585,7 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	y = __parse_basic_expr (awk, XP_NULL);
+	y = __parse_basic_expr (awk);
 	if (y == XP_NULL) {
 		xp_awk_clrpt (x);
 		return XP_NULL;
@@ -601,90 +604,9 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 	node->right = y;
 
 	return (xp_awk_node_t*)node;
-
-	 
-#if 0
-	xp_awk_node_t* x;
-
-	if (MATCH(awk,TOKEN_IDENT)) {
-		/* the expression starts with an identifier */
-
-		xp_char_t* ident = xp_strdup (XP_STR_BUF(&awk->token.name));
-		if (ident == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-
-		if (__get_token(awk) == -1) {
-			xp_free (ident);
-			return XP_NULL;
-		}
-
-
-		if (MATCH(awk,TOKEN_ASSIGN)) {
-			if (__get_token(awk) == -1) {
-				xp_free (ident);
-				return XP_NULL;
-			}
-			x = __parse_assignment (awk, ident);
-		}
-		else {
-			if (awk->opt & XP_AWK_ASSIGN_ONLY) {
-				xp_free (ident);
-				PANIC (awk, XP_AWK_EASSIGN);
-			}
-
-			x = __parse_basic_expr (awk, ident);
-		}
-
-		xp_free (ident);
-	}
-	else {
-		/* the expression starts with a non-identifier */
-
-		if (awk->opt & XP_AWK_ASSIGN_ONLY) {
-			PANIC (awk, XP_AWK_EASSIGN);
-		}
-
-		x = __parse_basic_expr (awk, XP_NULL);
-	}
-
-	return x;
-#endif
 }
 
-#if 0
-static xp_awk_node_t* __parse_assignment (xp_awk_t* awk, xp_char_t* ident)
-{
-	xp_awk_node_assign_t* node;
-	xp_awk_node_t* value;
-	xp_char_t* idtdup;
-
-	xp_assert (ident != XP_NULL);
-
-	node = (xp_awk_node_assign_t*)xp_malloc (xp_sizeof(xp_awk_node_assign_t));
-	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-
-	idtdup = xp_strdup (ident);
-	if (idtdup == XP_NULL) {
-		xp_free (node);
-		PANIC (awk, XP_AWK_ENOMEM);
-	}	
-
-	value = __parse_basic_expr (awk, XP_NULL);
-	if (value == XP_NULL) {
-		xp_free (idtdup);
-		xp_free (node);
-		return XP_NULL;
-	}
-
-	node->type = XP_AWK_NODE_ASSIGN;
-	node->next = XP_NULL;
-	node->left = idtdup;	
-	node->right = value;
-
-	return (xp_awk_node_t*)node;
-}
-#endif
-
-static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk, xp_char_t* ident)
+static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk)
 {
 	/* <basic expression> ::= <additive> 
 	 * <additive> ::= <multiplicative> [additiveOp <multiplicative>]*
@@ -695,17 +617,17 @@ static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk, xp_char_t* ident)
 	 * <basic expression list> ::= <basic expression> [comma <basic expression>]*
 	 */
 	
-	return __parse_additive (awk, ident);
+	return __parse_additive (awk);
 }
 
 
-static xp_awk_node_t* __parse_additive (xp_awk_t* awk, xp_char_t* ident)
+static xp_awk_node_t* __parse_additive (xp_awk_t* awk)
 {
 	xp_awk_node_expr_t* node;
 	xp_awk_node_t* left, * right;
 	int opcode;
 
-	left = __parse_multiplicative (awk, ident);
+	left = __parse_multiplicative (awk);
 	if (left == XP_NULL) return XP_NULL;
 	
 	while (1) {
@@ -718,7 +640,7 @@ static xp_awk_node_t* __parse_additive (xp_awk_t* awk, xp_char_t* ident)
 			return XP_NULL; 
 		}
 
-		right = __parse_multiplicative (awk, XP_NULL);
+		right = __parse_multiplicative (awk);
 		if (right == XP_NULL) {
 			xp_awk_clrpt (left);
 			return XP_NULL;
@@ -745,13 +667,13 @@ static xp_awk_node_t* __parse_additive (xp_awk_t* awk, xp_char_t* ident)
 	return left;
 }
 
-static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk, xp_char_t* ident)
+static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk)
 {
 	xp_awk_node_expr_t* node;
 	xp_awk_node_t* left, * right;
 	int opcode;
 
-	left = __parse_unary (awk, ident);
+	left = __parse_unary (awk);
 	if (left == XP_NULL) return XP_NULL;
 	
 	while (1) {
@@ -765,7 +687,7 @@ static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk, xp_char_t* ident)
 			return XP_NULL; 
 		}
 
-		right = __parse_unary (awk, XP_NULL);
+		right = __parse_unary (awk);
 		if (right == XP_NULL) {
 			xp_awk_clrpt (left);	
 			return XP_NULL;
@@ -826,28 +748,22 @@ static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk, xp_char_t* ident)
 	return left;
 }
 
-static xp_awk_node_t* __parse_unary (xp_awk_t* awk, xp_char_t* ident)
+static xp_awk_node_t* __parse_unary (xp_awk_t* awk)
 {
-	return __parse_primary (awk, ident);
+	return __parse_primary (awk);
 }
 
-static xp_awk_node_t* __parse_primary (xp_awk_t* awk, xp_char_t* ident)
+static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 {
-	if (ident != XP_NULL || MATCH(awk,TOKEN_IDENT))  {
+	if (MATCH(awk,TOKEN_IDENT))  {
 		xp_char_t* name;
 
-		if (ident != XP_NULL) {
-			name = (xp_char_t*)xp_strdup(ident);
-			if (name == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-		}
-		else {
-			name = (xp_char_t*)xp_strdup(XP_STR_BUF(&awk->token.name));
-			if (name == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+		name = (xp_char_t*)xp_strdup(XP_STR_BUF(&awk->token.name));
+		if (name == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
-			if (__get_token(awk) == -1) {
-				xp_free (name);	
-				return XP_NULL;			
-			}
+		if (__get_token(awk) == -1) {
+			xp_free (name);	
+			return XP_NULL;			
 		}
 
 		if (MATCH(awk,TOKEN_LBRACK)) {
@@ -930,6 +846,27 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk, xp_char_t* ident)
 			xp_free (node);
 			return XP_NULL;			
 		}
+
+		return (xp_awk_node_t*)node;
+	}
+	else if (MATCH(awk,TOKEN_DOLLAR)) {
+		xp_awk_node_pos_t* node;
+		xp_awk_node_t* prim;
+
+		if (__get_token(awk)) return XP_NULL;
+		
+		prim = __parse_primary (awk);
+		if (prim == XP_NULL) return XP_NULL;
+
+		node = (xp_awk_node_pos_t*) xp_malloc (xp_sizeof(xp_awk_node_pos_t));
+		if (node == XP_NULL) {
+			xp_awk_clrpt (prim);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		node->type = XP_AWK_NODE_POS;
+		node->next = XP_NULL;
+		node->pos = prim;
 
 		return (xp_awk_node_t*)node;
 	}
@@ -1560,6 +1497,11 @@ static int __get_token (xp_awk_t* awk)
 	}
 	else if (c == XP_CHAR(']')) {
 		SET_TOKEN_TYPE (awk, TOKEN_RBRACK);
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	else if (c == XP_CHAR('$')) {
+		SET_TOKEN_TYPE (awk, TOKEN_DOLLAR);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
