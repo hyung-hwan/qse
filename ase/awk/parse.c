@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.34 2006-01-25 16:11:43 bacon Exp $
+ * $Id: parse.c,v 1.35 2006-01-26 08:06:15 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -837,15 +837,29 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 
-			idxa = __find_func_arg (awk, name);
+// TODO:
+			idxa = __find_variable (awk, name);
 			if (idxa == (xp_size_t)-1) {
-				node->type = XP_AWK_NODE_VAR;
-				node->next = XP_NULL;
-				node->id.name = name;
+				idxa = __find_func_arg (awk, name);
+				if (idxa == (xp_size_t)-1) {
+					node->type = XP_AWK_NODE_VAR;
+					node->next = XP_NULL;
+					node->id.name = name;
+				}
+				else {
+					node->type = XP_AWK_NODE_ARG;
+					node->next = XP_NULL;
+// TODO: do i need to store the name here???
+					node->id.name = name;
+					node->id.idxa = idxa;
+				}
 			}
 			else {
-				node->type = XP_AWK_NODE_ARG;
+// TODO: differentiate VAR with NAMED_VAR...
+				node->type = XP_AWK_NODE_VAR;
 				node->next = XP_NULL;
+// TODO: do i need to store the name here???
+				node->id.name = name;
 				node->id.idxa = idxa;
 			}
 
