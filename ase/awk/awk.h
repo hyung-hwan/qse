@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.19 2006-01-25 16:11:43 bacon Exp $
+ * $Id: awk.h,v 1.20 2006-01-26 15:35:20 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -155,6 +155,7 @@ int xp_awk_attout (xp_awk_t* awk, xp_awk_io_t out, void* arg);
 int xp_awk_detout (xp_awk_t* awk);
 
 int xp_awk_parse (xp_awk_t* awk);
+int xp_awk_run (xp_awk_t* awk);
 
 #ifdef __cplusplus
 }

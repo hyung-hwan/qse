@@ -1,4 +1,4 @@
-SRCS = awk.c parse.c tree.c sa.c
+SRCS = awk.c tree.c parse.c run.c sa.c
 OBJS = $(SRCS:.c=.obj)
 OUT = xpawk.lib
 
