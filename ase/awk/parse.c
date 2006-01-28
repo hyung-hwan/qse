@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.35 2006-01-26 08:06:15 bacon Exp $
+ * $Id: parse.c,v 1.36 2006-01-28 06:38:01 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -109,6 +109,7 @@ static int __skip_spaces (xp_awk_t* awk);
 static int __skip_comment (xp_awk_t* awk);
 static int __classfy_ident (const xp_char_t* ident);
 
+static xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name);
 static xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name);
 static xp_long_t __str_to_long (const xp_char_t* name);
 
@@ -1350,10 +1351,17 @@ static xp_awk_node_t* __parse_return (xp_awk_t* awk)
 	node->type = XP_AWK_NODE_RETURN;
 	node->next = XP_NULL;
 
-	val = __parse_expression (awk);
-	if (val == XP_NULL) {
-		xp_free (node);
-		return XP_NULL;
+	if (MATCH(awk,TOKEN_SEMICOLON)) {
+		/* no return value */
+		val = XP_NULL;
+	}
+	else {
+
+		val = __parse_expression (awk);
+		if (val == XP_NULL) {
+			xp_free (node);
+			return XP_NULL;
+		}
 	}
 
 	node->value = val;
@@ -1370,10 +1378,16 @@ static xp_awk_node_t* __parse_exit (xp_awk_t* awk)
 	node->type = XP_AWK_NODE_EXIT;
 	node->next = XP_NULL;
 
-	val = __parse_expression (awk);
-	if (val == XP_NULL) {
-		xp_free (node);
-		return XP_NULL;
+	if (MATCH(awk,TOKEN_SEMICOLON)) {
+		/* no exit code */
+		val = XP_NULL;
+	}
+	else {
+		val = __parse_expression (awk);
+		if (val == XP_NULL) {
+			xp_free (node);
+			return XP_NULL;
+		}
 	}
 
 	node->value = val;
@@ -1666,6 +1680,11 @@ static int __classfy_ident (const xp_char_t* ident)
 	}
 
 	return TOKEN_IDENT;
+}
+
+static xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name)
+{
+	return (xp_size_t)-1;
 }
 
 static xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name)
