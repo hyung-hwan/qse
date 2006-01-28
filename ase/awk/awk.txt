@@ -1,3 +1,35 @@
+Programs
+
+	pattern { action }
+	function name (parameter-list) { statement }
+
+Patterns
+	BEGIN
+	END
+	expresion
+	/regular expression/
+	pattern && pattern
+	pattern || pattern
+	!pattern
+	(pattern)
+	pattern, pattern   -> range pattern
+
+Actions
+	break
+	continue
+	delete array-element
+	do statement while (expression)
+	exit [expression]
+	expression
+	if (expression) statement [else statement]
+	input-output statement
+	for (expression; expression; expression) statement
+	for (variable in array) statement
+	next
+	return [expression]
+	while (expression) statement
+	{ statements }
+
 Variables
 
 global variables (enabled when awk->opt & XP_AWK_OPT_VARDCL)
