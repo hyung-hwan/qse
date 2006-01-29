@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.36 2006-01-28 06:38:01 bacon Exp $
+ * $Id: parse.c,v 1.37 2006-01-29 18:28:14 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -75,6 +75,13 @@ enum {
 	BINOP_MOD
 };
 
+#if defined(__BORLANDC__) || defined(_MSC_VER)
+	#define INLINE 
+#else
+	#define INLINE inline
+#endif
+
+
 static xp_awk_node_t* __parse_progunit (xp_awk_t* awk);
 static xp_awk_node_t* __parse_function (xp_awk_t* awk);
 static xp_awk_node_t* __parse_begin (xp_awk_t* awk);
@@ -109,9 +116,13 @@ static int __skip_spaces (xp_awk_t* awk);
 static int __skip_comment (xp_awk_t* awk);
 static int __classfy_ident (const xp_char_t* ident);
 
-static xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name);
-static xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name);
 static xp_long_t __str_to_long (const xp_char_t* name);
+
+static INLINE xp_size_t __add_func_name (xp_awk_t* awk, const xp_char_t* name);
+static INLINE xp_size_t __find_func_name (xp_awk_t* awk, const xp_char_t* name);
+static INLINE xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name);
+static INLINE xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name);
+
 
 struct __kwent 
 { 
@@ -188,9 +199,13 @@ int xp_awk_parse (xp_awk_t* awk)
 
 		if (__parse_progunit(awk) == XP_NULL) {
 			// TODO: cleanup the parse tree created so far....
+			//       function tables also etc...
 xp_printf (XP_TEXT("error - %d\n"), awk->errnum);
 			return -1;
 		}
+
+xp_awk_prnpt(node);
+
 	}
 
 xp_printf (XP_TEXT("sucessful end - %d\n"), awk->errnum);
@@ -207,24 +222,15 @@ static xp_awk_node_t* __parse_progunit (xp_awk_t* awk)
 
 	if (MATCH(awk,TOKEN_FUNCTION)) {
 		node = __parse_function(awk);
-		if (node == XP_NULL) {
-			// TODO: cleanup
-			return XP_NULL;
-		}
+		if (node == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk,TOKEN_BEGIN)) {
 		node = __parse_begin (awk);
-		if (node == XP_NULL) {
-			// TODO: cleanup
-			return XP_NULL;
-		}
+		if (node == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk, TOKEN_END)) {
 		node = __parse_end (awk);
-		if (node == XP_NULL) {
-			// TODO: cleanup
-			return XP_NULL;
-		}
+		if (node == XP_NULL) return XP_NULL;
 	}
 	/* TODO: process patterns and expressions */
 	/* 
@@ -239,55 +245,67 @@ static xp_awk_node_t* __parse_progunit (xp_awk_t* awk)
 	else {
 		/* pattern-less actions */
 		node = __parse_action (awk);
-		if (node == XP_NULL) {
-			// TODO: cleanup
-			return XP_NULL;
-		}
+		if (node == XP_NULL) return XP_NULL;
 
 		// TODO: weave the action block into awk->tree.actions...
 	}
 
-xp_awk_prnpt(node);
 	return node;
-}
-
-static xp_bool_t __function_defined (xp_awk_t* awk, const xp_char_t* name)
-{
-// TODO:  complete this...
-	return xp_false;
 }
 
 static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 {
 	xp_char_t* name;
-	//xp_awk_func_t* func;
+	xp_char_t* name_dup;
 	xp_awk_node_t* body;
+	xp_size_t fnpos; 
+	xp_size_t nargs = 0;
 
 	if (__get_token(awk) == -1) return XP_NULL;  
 
 	/* function name */
 	if (!MATCH(awk,TOKEN_IDENT)) PANIC (awk, XP_AWK_EIDENT);
 
-	if (__function_defined(awk,XP_STR_BUF(&awk->token.name))) {
-		PANIC (awk, XP_AWK_EDUPFUNC);
+	name = XP_STR_BUF(&awk->token.name);
+	if (__find_func_name(awk,name) != (xp_size_t)-1) {
+// TODO: do i have to tell DUPFUNC from DUPNAME???
+		//PANIC (awk, XP_AWK_EDUPFUNC);
+		PANIC (awk, XP_AWK_EDUPNAME);
 	}	
 
-	name = xp_strdup (XP_STR_BUF(&awk->token.name));
-	if (name == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+// TODO: make this feature optional..
+// find in the global variable list...
+	if (__find_variable(awk,name) != (xp_size_t)-1) {
+		PANIC (awk, XP_AWK_EDUPNAME);
+	}
+
+	fnpos = __add_func_name (awk, name);
+	if (fnpos == -1) PANIC (awk, XP_AWK_ENOMEM);
+
+	// TODO: move this strdup down the function....
+	//       maybe just before func_t is allocated...
+	name_dup = xp_strdup (name);
+	if (name_dup == XP_NULL) {
+		__remove_func_name (awk, fnpos);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
 
 	/* skip the function name */
 	if (__get_token(awk) == -1) {
-		xp_free (name);
+		__remove_func_name (awk, fnpos);
+		xp_free (name_dup);
 		return XP_NULL;  
 	}
 
 	if (!MATCH(awk,TOKEN_LPAREN)) {
-		xp_free (name);
+		__remove_func_name (awk, fnpos);
+		xp_free (name_dup);
 		PANIC (awk, XP_AWK_ELPAREN);
 	}	
 
 	if (__get_token(awk) == -1) {
-		xp_free (name);
+		__remove_func_name (awk, fnpos);
+		xp_free (name_dup);
 		return XP_NULL;
 	}
 
@@ -295,75 +313,97 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	if (MATCH(awk,TOKEN_RPAREN)) {
 		/* no function parameter */
 		if (__get_token(awk) == -1) {
-			xp_free (name);
+			__remove_func_name (awk, fnpos);
+			xp_free (name_dup);
 			return XP_NULL;
 		}
 	}
 	else {
 		while (1) {
 			if (!MATCH(awk,TOKEN_IDENT)) {
-				xp_free (name);
+				__remove_func_name (awk, fnpos);
+				xp_free (name_dup);
 				PANIC (awk, XP_AWK_EIDENT);
 			}
 
+			nargs++;
+			// TODO: push args to param list...
+
 			if (__get_token(awk) == -1) {
-				xp_free (name);
+				__remove_func_name (awk, fnpos);
+				xp_free (name_dup);
 				return XP_NULL;
 			}	
 
 			if (MATCH(awk,TOKEN_RPAREN)) break;
 
 			if (!MATCH(awk,TOKEN_COMMA)) {
-				xp_free (name);
+				__remove_func_name (awk, fnpos);
+				xp_free (name_dup);
 				PANIC (awk, XP_AWK_ECOMMA);
 			}
 
 			if (__get_token(awk) == -1) {
-				xp_free (name);
+				__remove_func_name (awk, fnpos);
+				xp_free (name_dup);
 				return XP_NULL;
 			}
 		}
 
 		if (__get_token(awk) == -1) {
+			__remove_func_name (awk, fnpos);
 // TODO: cleanup parameter name list
-			xp_free (name);
+			xp_free (name_dup);
 			return XP_NULL;
 		}
 	}
 
+	/* check if the function body starts with a left brace */
 	if (!MATCH(awk,TOKEN_LBRACE)) {
+		__remove_func_name (awk, fnpos);
 // TODO: cleanup parameter name list
-		xp_free (name);
+		xp_free (name_dup);
 		PANIC (awk, XP_AWK_ELBRACE);
 	}
 	if (__get_token(awk) == -1) {
+		__remove_func_name (awk, fnpos);
 // TODO: cleanup parameter name list
-		xp_free (name);
+		xp_free (name_dup);
 		return XP_NULL; 
 	}
 
-	/* function body */
+	/* actual function body */
 	body = __parse_block (awk);
 	if (body == XP_NULL) {
+		__remove_func_name (awk, fnpos);
 // TODO: cleanup parameter name list
-		xp_free (name);
+		xp_free (name_dup);
 		return XP_NULL;
 	}
 
 /*
 	func = (xp_awk_func_t*) xp_malloc (xp_sizeof(xp_awk_func_t));
 	if (func == XP_NULL) {
-		xp_free (name);
+		__remove_func_name (awk, fnpos);
+		xp_free (name_dup);
 		xp_awk_clrpt (body);
 		return XP_NULL;
 	}
 
-	func->name = name;
-	func->nargs = 0;
-	func->body = body;
+	func->name  = name_dup;
+	func->nargs = nargs;
+	func->body  = body;
+
+	xp_assert (xp_awk_hash_get(&awk->tree.func, name_dup) == XP_NULL);
+	if (xp_awk_hash_put(&awk->tree.func, name_dup, func) == XP_NULL) {
+		__remove_func_name (awk, fnpos);
+		xp_free (name_dup);
+		xp_awk_clrpt (body);
+		xp_free (func);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
 */
 
-/* TODO: weave the function body into awk->tree.funcs */
 	return body;
 }
 
@@ -422,6 +462,7 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk)
 				// TODO: cleanup the variable name list...
 				return XP_NULL; 
 			}
+			head = XP_NULL;
 			goto skip_block_body;
 		}
 
@@ -493,7 +534,7 @@ skip_block_body:
 	block->lvc  = lvc;
 	block->body = head;
 
-	// TODO: cleanup the variable name list...
+// TODO: cleanup the variable name list...
 
 	return (xp_awk_node_t*)block;
 }
@@ -1682,23 +1723,6 @@ static int __classfy_ident (const xp_char_t* ident)
 	return TOKEN_IDENT;
 }
 
-static xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name)
-{
-	return (xp_size_t)-1;
-}
-
-static xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name)
-{
-/*
-	if (awk->curfunc != XP_NULL) {
-		
-// TODO: finish this....
-	}
-*/
-
-	return (xp_size_t)-1;
-}
-
 static xp_long_t __str_to_long (const xp_char_t* name)
 {
 	xp_long_t n = 0;
@@ -1710,3 +1734,38 @@ static xp_long_t __str_to_long (const xp_char_t* name)
 
 	return n;
 }
+
+static INLINE xp_size_t __add_func_name (xp_awk_t* awk, const xp_char_t* name)
+{
+	xp_assert (__find_func_name(awk,name) == (xp_size_t)-1);
+
+	return xp_awk_tab_adddatum(&awk->parse.func, name);
+}
+
+static INLINE int __remove_func_name (xp_awk_t* awk, xp_size_t index)
+{
+	return xp_awk_tab_remrange (&awk->parse.func, index, 1);
+}
+
+static INLINE xp_size_t __find_func_name (xp_awk_t* awk, const xp_char_t* name)
+{
+	return xp_awk_tab_find(&awk->parse.func, name, 0);
+}
+
+static INLINE xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name)
+{
+/*
+	if (awk->curfunc != XP_NULL) {
+		
+// TODO: finish this....
+	}
+*/
+
+	return (xp_size_t)-1;
+}
+
+static xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name)
+{
+	return (xp_size_t)-1;
+}
+

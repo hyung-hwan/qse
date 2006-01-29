@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.7 2006-01-25 04:27:01 bacon Exp $
+ * $Id: sa.h,v 1.8 2006-01-29 18:28:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -30,6 +30,9 @@
 #define xp_strcpy wcscpy
 #define xp_strcmp wcscmp
 #define xp_strlen wcslen
+
+#define xp_memcpy memcpy
+#define xp_memcmp memcmp
 
 #define xp_va_start(pvar,param) va_start(pvar,param)
 #define xp_va_list va_list
