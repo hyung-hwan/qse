@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.20 2006-01-26 15:35:20 bacon Exp $
+ * $Id: awk.h,v 1.21 2006-01-29 18:28:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -14,6 +14,7 @@
 #endif
 
 #include <xp/awk/tree.h>
+#include <xp/awk/tab.h>
 
 enum
 {
@@ -39,8 +40,9 @@ enum
 	XP_AWK_EASSIGN, /* assignment statement expected */
 	XP_AWK_EIDENT,  /* identifier expected */
 	XP_AWK_EDUPBEGIN, /* duplicate BEGIN */
-	XP_AWK_EDUPEND, /* duplicate END */
-	XP_AWK_EDUPFUNC /* duplicate function name */
+	XP_AWK_EDUPEND,   /* duplicate END */
+	XP_AWK_EDUPFUNC,  /* duplicate function name */
+	XP_AWK_EDUPNAME   /* duplicate name - function, variable, etc */
 };
 
 /*
@@ -94,6 +96,7 @@ struct xp_awk_t
 	/* temporary information that the parser needs */
 	struct
 	{
+		xp_awk_tab_t func;
 		// TODO: locals, globals???
 		xp_char_t* vars; /* global and local variable names... */
 		xp_char_t* args; /* function arguments */

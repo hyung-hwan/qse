@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.11 2006-01-24 16:14:28 bacon Exp $
+ * $Id: awk.c,v 1.12 2006-01-29 18:28:14 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -23,6 +23,12 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
+	if (xp_awk_tab_open(&awk->parse.func) == XP_NULL) {
+		xp_str_close (&awk->token.name);
+		if (awk->__dynamic) xp_free (awk);
+		return XP_NULL;
+	}
+
 	awk->opt = 0;
 	awk->errnum = XP_AWK_ENOERR;
 
@@ -39,6 +45,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	awk->tree.unnamed = XP_NULL;
 	//awk->tree.funcs = XP_NULL;
 
+
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
 
@@ -49,14 +56,21 @@ int xp_awk_close (xp_awk_t* awk)
 {
 	xp_awk_clear (awk);
 	if (xp_awk_detsrc(awk) == -1) return -1;
+
+	xp_awk_tab_close(&awk->parse.func);
 	xp_str_close (&awk->token.name);
+
 	if (awk->__dynamic) xp_free (awk);
 	return 0;
 }
 
+// TODO: write a function to clear awk->parse data structure.
+//       this would be need either as a separate function or as a part of xp_awk_clear...
+//       do i have to pass an option to xp_awk_clear to do this???
+
 void xp_awk_clear (xp_awk_t* awk)
 {
-	
+	/* clear parse trees */
 	if (awk->tree.begin != XP_NULL) {
 		xp_assert (awk->tree.begin->next == XP_NULL);
 		xp_awk_clrpt (awk->tree.begin);
