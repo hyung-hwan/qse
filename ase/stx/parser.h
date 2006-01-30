@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.35 2005-12-05 15:11:29 bacon Exp $
+ * $Id: parser.h,v 1.36 2006-01-30 16:44:03 bacon Exp $
  */
 
 #ifndef _XP_STX_PARSER_H_
@@ -8,7 +8,7 @@
 #include <xp/stx/stx.h>
 #include <xp/stx/name.h>
 #include <xp/stx/token.h>
-#include <xp/bas/array.h>
+#include <xp/bas/arr.h>
 
 enum
 {
@@ -76,7 +76,7 @@ struct xp_stx_parser_t
 	xp_word_t literals[256]; /* TODO: make it a dynamic array */
 	xp_word_t literal_count;
 
-	xp_array_t bytecode;
+	xp_arr_t bytecode;
 
 	xp_stx_token_t token;
 	xp_cint_t curc;
