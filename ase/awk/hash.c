@@ -1,5 +1,5 @@
 /*
- * $Id: hash.c,v 1.2 2006-01-30 13:25:26 bacon Exp $
+ * $Id: hash.c,v 1.3 2006-01-30 14:34:47 bacon Exp $
  */
 
 #include <xp/awk/hash.h>
@@ -9,7 +9,16 @@
 
 static xp_size_t __hash (const xp_char_t* key);
 
-xp_awk_hash_t* xp_awk_hash_open (xp_awk_hash_t* hash, xp_size_t capa)
+#define FREE_PAIR(hash,pair) \
+	do { \
+		xp_free ((pair)->key); \
+		if ((hash)->free_value != XP_NULL) \
+			(hash)->free_value ((pair)->value); \
+		xp_free (pair); \
+	} while (0)
+
+xp_awk_hash_t* xp_awk_hash_open (
+	xp_awk_hash_t* hash, xp_size_t capa, void (*free_value) (void*))
 {
 	if (hash == XP_NULL) {
 		hash = (xp_awk_hash_t*)	xp_malloc (xp_sizeof(xp_awk_hash_t));
@@ -26,6 +35,7 @@ xp_awk_hash_t* xp_awk_hash_open (xp_awk_hash_t* hash, xp_size_t capa)
 
 	hash->capa = capa;
 	hash->size = 0;
+	hash->free_value = free_value;
 	while (capa > 0) hash->buck[--capa] = XP_NULL;
 
 	return hash;
@@ -48,16 +58,20 @@ void xp_awk_hash_clear (xp_awk_hash_t* hash)
 
 		while (pair != XP_NULL) {
 			next = pair->next;
-			xp_free (pair);
+
+			FREE_PAIR (hash, pair);
 			hash->size--;
+
 			pair = next;
 		}
 
 		hash->buck[i] = XP_NULL;
 	}
+
+	xp_assert (hash->size == 0);
 }
 
-xp_awk_pair_t* xp_awk_hash_get (xp_awk_hash_t* hash, const xp_char_t* key)
+xp_awk_pair_t* xp_awk_hash_get (xp_awk_hash_t* hash, xp_char_t* key)
 {
 	xp_awk_pair_t* pair;
 	xp_size_t hc;
@@ -73,7 +87,7 @@ xp_awk_pair_t* xp_awk_hash_get (xp_awk_hash_t* hash, const xp_char_t* key)
 	return XP_NULL;
 }
 
-xp_awk_pair_t* xp_awk_hash_put (xp_awk_hash_t* hash, const xp_char_t* key, void* value)
+xp_awk_pair_t* xp_awk_hash_put (xp_awk_hash_t* hash, xp_char_t* key, void* value)
 {
 	xp_awk_pair_t* pair;
 	xp_size_t hc;
@@ -83,7 +97,16 @@ xp_awk_pair_t* xp_awk_hash_put (xp_awk_hash_t* hash, const xp_char_t* key, void*
 
 	while (pair != XP_NULL) {
 		if (xp_strcmp(pair->key,key) == 0) {
+
+			if (pair->key != key) {
+				xp_free (pair->key);
+				pair->key = key;
+			}
+			if (hash->free_value != XP_NULL) {
+				hash->free_value (pair->value);
+			}
 			pair->value = value;
+
 			return pair;
 		}
 		pair = pair->next;
@@ -101,7 +124,7 @@ xp_awk_pair_t* xp_awk_hash_put (xp_awk_hash_t* hash, const xp_char_t* key, void*
 	return pair;
 }
 
-xp_awk_pair_t* xp_awk_hash_set (xp_awk_hash_t* hash, const xp_char_t* key, void* value)
+xp_awk_pair_t* xp_awk_hash_set (xp_awk_hash_t* hash, xp_char_t* key, void* value)
 {
 	xp_awk_pair_t* pair;
 	xp_size_t hc;
@@ -111,7 +134,16 @@ xp_awk_pair_t* xp_awk_hash_set (xp_awk_hash_t* hash, const xp_char_t* key, void*
 
 	while (pair != XP_NULL) {
 		if (xp_strcmp(pair->key,key) == 0) {
+			if (pair->key != key) {
+				xp_free (pair->key);
+				pair->key = key;
+			}
+
+			if (hash->free_value != XP_NULL) {
+				hash->free_value (pair->value);
+			}
 			pair->value = value;
+
 			return pair;
 		}
 		pair = pair->next;
@@ -120,7 +152,7 @@ xp_awk_pair_t* xp_awk_hash_set (xp_awk_hash_t* hash, const xp_char_t* key, void*
 	return XP_NULL;
 }
 
-int xp_awk_hash_remove (xp_awk_hash_t* hash, const xp_char_t* key)
+int xp_awk_hash_remove (xp_awk_hash_t* hash, xp_char_t* key)
 {
 	xp_awk_pair_t* pair, * prev;
 	xp_size_t hc;
@@ -135,8 +167,9 @@ int xp_awk_hash_remove (xp_awk_hash_t* hash, const xp_char_t* key)
 				hash->buck[hc] = pair->next;
 			else prev->next = pair->next;
 
-			xp_free (pair);
+			FREE_PAIR (hash, pair);
 			hash->size--;
+
 			return 0;
 		}
 
@@ -145,6 +178,24 @@ int xp_awk_hash_remove (xp_awk_hash_t* hash, const xp_char_t* key)
 	}
 
 	return -1;
+}
+
+int xp_awk_hash_walk (xp_awk_hash_t* hash, int (*walker) (xp_awk_pair_t*))
+{
+	xp_size_t i;
+	xp_awk_pair_t* pair, * next;
+
+	for (i = 0; i < hash->capa; i++) {
+		pair = hash->buck[i];
+
+		while (pair != XP_NULL) {
+			next = pair->next;
+			if (walker(pair) == -1) return -1;
+			pair = next;
+		}
+	}
+
+	return 0;
 }
 
 static xp_size_t __hash (const xp_char_t* key)

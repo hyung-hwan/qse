@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.12 2006-01-29 18:28:14 bacon Exp $
+ * $Id: awk.c,v 1.13 2006-01-30 14:34:47 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -8,6 +8,8 @@
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 #endif
+
+static void __free_func (void* func);
 
 xp_awk_t* xp_awk_open (xp_awk_t* awk)
 {
@@ -23,8 +25,15 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	if (xp_awk_tab_open(&awk->parse.func) == XP_NULL) {
+	if (xp_awk_hash_open(&awk->tree.funcs, 256, __free_func) == XP_NULL) {
 		xp_str_close (&awk->token.name);
+		if (awk->__dynamic) xp_free (awk);
+		return XP_NULL;
+	}
+
+	if (xp_awk_tab_open(&awk->parse.funcs) == XP_NULL) {
+		xp_str_close (&awk->token.name);
+		xp_awk_hash_close (&awk->tree.funcs);
 		if (awk->__dynamic) xp_free (awk);
 		return XP_NULL;
 	}
@@ -57,7 +66,8 @@ int xp_awk_close (xp_awk_t* awk)
 	xp_awk_clear (awk);
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
-	xp_awk_tab_close(&awk->parse.func);
+	xp_awk_hash_close (&awk->tree.funcs);
+	xp_awk_tab_close (&awk->parse.funcs);
 	xp_str_close (&awk->token.name);
 
 	if (awk->__dynamic) xp_free (awk);
@@ -71,6 +81,8 @@ int xp_awk_close (xp_awk_t* awk)
 void xp_awk_clear (xp_awk_t* awk)
 {
 	/* clear parse trees */
+	xp_awk_hash_clear (&awk->tree.funcs);
+
 	if (awk->tree.begin != XP_NULL) {
 		xp_assert (awk->tree.begin->next == XP_NULL);
 		xp_awk_clrpt (awk->tree.begin);
@@ -128,3 +140,13 @@ int xp_awk_detsrc (xp_awk_t* awk)
 	return 0;
 }
 
+static void __free_func (void* func)
+{
+	xp_awk_func_t* f = (xp_awk_func_t*) func;
+
+	/* f->name doesn't have to be freed */
+	/*xp_free (f->name);*/
+
+	xp_awk_clrpt (f->body);
+	xp_free (f);
+}

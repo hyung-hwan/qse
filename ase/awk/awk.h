@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.21 2006-01-29 18:28:14 bacon Exp $
+ * $Id: awk.h,v 1.22 2006-01-30 14:34:47 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -15,6 +15,7 @@
 
 #include <xp/awk/tree.h>
 #include <xp/awk/tab.h>
+#include <xp/awk/hash.h>
 
 enum
 {
@@ -87,7 +88,7 @@ struct xp_awk_t
 	/* parse tree */
 	struct 
 	{
-		//xp_awk_hash_t* funcs;
+		xp_awk_hash_t funcs;
 		xp_awk_node_t* begin;
 		xp_awk_node_t* end;
 		xp_awk_node_t* unnamed;
@@ -96,7 +97,7 @@ struct xp_awk_t
 	/* temporary information that the parser needs */
 	struct
 	{
-		xp_awk_tab_t func;
+		xp_awk_tab_t funcs;
 		// TODO: locals, globals???
 		xp_char_t* vars; /* global and local variable names... */
 		xp_char_t* args; /* function arguments */
