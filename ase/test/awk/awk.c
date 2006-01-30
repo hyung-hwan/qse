@@ -48,9 +48,17 @@ static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t
 }
 #endif
 
+#ifdef __linux
+#include <mcheck.h>
+#endif
+
 int xp_main (int argc, xp_char_t* argv[])
 {
 	xp_awk_t awk;
+
+#ifdef __linux
+	mtrace ();
+#endif
 
 #if 0
 	if (argc != 2) {
@@ -77,5 +85,9 @@ int xp_main (int argc, xp_char_t* argv[])
 	}
 
 	xp_awk_close (&awk);
+
+#ifdef __linux
+	muntrace ();
+#endif
 	return 0;
 }
