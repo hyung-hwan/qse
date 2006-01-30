@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.38 2006-01-30 13:25:26 bacon Exp $
+ * $Id: parse.c,v 1.39 2006-01-30 14:34:47 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -188,6 +188,34 @@ static struct __kwent __kwtab[] =
 
 #define PANIC(awk,code) do { (awk)->errnum = (code);  return XP_NULL; } while (0);
 
+static int __dump_func (xp_awk_pair_t* pair)
+{
+	xp_awk_func_t* func = (xp_awk_func_t*)pair->value;
+
+	xp_assert (xp_strcmp(pair->key, func->name) == 0);
+	xp_printf (XP_TEXT("function %s (nargs=>%u)\n"), func->name, func->nargs);
+	xp_awk_prnpt (func->body);
+	xp_printf (XP_TEXT("\n"));
+
+	return 0;
+}
+
+static void __dump (xp_awk_t* awk)
+{
+	xp_awk_hash_walk (&awk->tree.funcs, __dump_func);
+
+	if (awk->tree.begin != NULL) {
+		xp_printf (XP_TEXT("BEGIN "));
+		xp_awk_prnpt (awk->tree.begin);
+		xp_printf (XP_TEXT("\n"));
+	}
+
+	if (awk->tree.end != NULL) {
+		xp_printf (XP_TEXT("END "));
+		xp_awk_prnpt (awk->tree.end);
+	}
+}
+
 int xp_awk_parse (xp_awk_t* awk)
 {
 	/* if you want to parse anew, call xp_awk_clear first.
@@ -197,23 +225,20 @@ int xp_awk_parse (xp_awk_t* awk)
 	GET_TOKEN (awk);
 
 	while (1) {
-		xp_awk_node_t* unit;
-
 		if (MATCH(awk,TOKEN_EOF)) break;
 
-		unit = __parse_progunit(awk);
-		if (unit == XP_NULL) {
+		if (__parse_progunit(awk) == XP_NULL) {
 			// TODO: cleanup the parse tree created so far....
 			//       function tables also etc...
 xp_printf (XP_TEXT("error - %d\n"), awk->errnum);
 			return -1;
 		}
-
-xp_awk_prnpt(unit);
-
 	}
 
+xp_printf (XP_TEXT("-----------------------------\n"));
 xp_printf (XP_TEXT("sucessful end - %d\n"), awk->errnum);
+__dump (awk);
+
 	return 0;
 }
 
@@ -263,6 +288,7 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	xp_char_t* name;
 	xp_char_t* name_dup;
 	xp_awk_node_t* body;
+	xp_awk_func_t* func;
 	xp_size_t fnpos; 
 	xp_size_t nargs = 0;
 
@@ -386,10 +412,10 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-/*
 	func = (xp_awk_func_t*) xp_malloc (xp_sizeof(xp_awk_func_t));
 	if (func == XP_NULL) {
 		__remove_func_name (awk, fnpos);
+// TODO: cleanup parameter name list
 		xp_free (name_dup);
 		xp_awk_clrpt (body);
 		return XP_NULL;
@@ -399,15 +425,14 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	func->nargs = nargs;
 	func->body  = body;
 
-	xp_assert (xp_awk_hash_get(&awk->tree.func, name_dup) == XP_NULL);
-	if (xp_awk_hash_put(&awk->tree.func, name_dup, func) == XP_NULL) {
+	xp_assert (xp_awk_hash_get(&awk->tree.funcs, name_dup) == XP_NULL);
+	if (xp_awk_hash_put(&awk->tree.funcs, name_dup, func) == XP_NULL) {
 		__remove_func_name (awk, fnpos);
 		xp_free (name_dup);
 		xp_awk_clrpt (body);
 		xp_free (func);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
-*/
 
 	return body;
 }
@@ -1744,17 +1769,17 @@ static INLINE xp_size_t __add_func_name (xp_awk_t* awk, const xp_char_t* name)
 {
 	xp_assert (__find_func_name(awk,name) == (xp_size_t)-1);
 
-	return xp_awk_tab_adddatum(&awk->parse.func, name);
+	return xp_awk_tab_adddatum(&awk->parse.funcs, name);
 }
 
 static INLINE int __remove_func_name (xp_awk_t* awk, xp_size_t index)
 {
-	return xp_awk_tab_remrange (&awk->parse.func, index, 1);
+	return xp_awk_tab_remrange (&awk->parse.funcs, index, 1);
 }
 
 static INLINE xp_size_t __find_func_name (xp_awk_t* awk, const xp_char_t* name)
 {
-	return xp_awk_tab_find(&awk->parse.func, name, 0);
+	return xp_awk_tab_find(&awk->parse.funcs, name, 0);
 }
 
 static INLINE xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name)

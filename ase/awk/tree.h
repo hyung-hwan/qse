@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.18 2006-01-25 16:11:43 bacon Exp $
+ * $Id: tree.h,v 1.19 2006-01-30 14:34:47 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -32,6 +32,8 @@ enum
 	XP_AWK_NODE_FOR
 };
 
+typedef struct xp_awk_func_t xp_awk_func_t;
+
 typedef struct xp_awk_node_t xp_awk_node_t;
 typedef struct xp_awk_node_sgv_t xp_awk_node_sgv_t;
 typedef struct xp_awk_node_block_t xp_awk_node_block_t;
@@ -45,7 +47,6 @@ typedef struct xp_awk_node_call_t xp_awk_node_call_t;
 typedef struct xp_awk_node_if_t xp_awk_node_if_t;
 typedef struct xp_awk_node_while_t xp_awk_node_while_t;
 typedef struct xp_awk_node_for_t xp_awk_node_for_t;
-
 
 struct xp_awk_func_t
 {
