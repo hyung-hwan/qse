@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.39 2006-01-30 14:34:47 bacon Exp $
+ * $Id: parse.c,v 1.40 2006-01-30 14:45:12 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -188,6 +188,11 @@ static struct __kwent __kwtab[] =
 
 #define PANIC(awk,code) do { (awk)->errnum = (code);  return XP_NULL; } while (0);
 
+
+// TODO: remove stdio.h
+#ifndef __STAND_ALONE
+#include <xp/bas/stdio.h>
+#endif
 static int __dump_func (xp_awk_pair_t* pair)
 {
 	xp_awk_func_t* func = (xp_awk_func_t*)pair->value;

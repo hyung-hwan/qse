@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.13 2006-01-30 14:34:47 bacon Exp $
+ * $Id: awk.c,v 1.14 2006-01-30 14:45:12 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -52,8 +52,6 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	awk->tree.begin = XP_NULL;
 	awk->tree.end = XP_NULL;
 	awk->tree.unnamed = XP_NULL;
-	//awk->tree.funcs = XP_NULL;
-
 
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
