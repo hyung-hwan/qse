@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.54 $])
+AC_REVISION([$Revision: 1.55 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -28,12 +28,18 @@ AC_CHECK_HEADER([sys/epoll.h], [AC_DEFINE([XP_HAVE_SYS_EPOLL_H],[],[sys/epoll.h]
 AC_CHECK_HEADER([sys/sysinfo.h],
 	[AC_DEFINE([XP_HAVE_SYS_SYSINFO_H],[],[sys/sysinfo.h])])
 
+# Checks for structure members
 AC_CHECK_HEADER([sys/sysinfo.h], [
 	AC_CHECK_MEMBER(struct sysinfo.mem_unit,
 		[AC_DEFINE([XP_HAVE_SYS_SYSINFO_MEM_UNIT],[],[sys/sysinfo.mem_unit])],
 		[],
 		[#include <sys/sysinfo.h>])
 ])
+
+AC_CHECK_MEMBER(struct sockaddr_in6.scope_id,
+	[AC_DEFINE([XP_HAVE_IN6_SCOPE_ID],[],[in6.scope_id])],
+	[],
+	[#include <netinet/in.h>])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN(
