@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.37 2006-01-29 18:28:14 bacon Exp $
+ * $Id: parse.c,v 1.38 2006-01-30 13:25:26 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -120,6 +120,8 @@ static xp_long_t __str_to_long (const xp_char_t* name);
 
 static INLINE xp_size_t __add_func_name (xp_awk_t* awk, const xp_char_t* name);
 static INLINE xp_size_t __find_func_name (xp_awk_t* awk, const xp_char_t* name);
+static INLINE int __remove_func_name (xp_awk_t* awk, xp_size_t index);
+
 static INLINE xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name);
 static INLINE xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name);
 
@@ -195,16 +197,19 @@ int xp_awk_parse (xp_awk_t* awk)
 	GET_TOKEN (awk);
 
 	while (1) {
+		xp_awk_node_t* unit;
+
 		if (MATCH(awk,TOKEN_EOF)) break;
 
-		if (__parse_progunit(awk) == XP_NULL) {
+		unit = __parse_progunit(awk);
+		if (unit == XP_NULL) {
 			// TODO: cleanup the parse tree created so far....
 			//       function tables also etc...
 xp_printf (XP_TEXT("error - %d\n"), awk->errnum);
 			return -1;
 		}
 
-xp_awk_prnpt(node);
+xp_awk_prnpt(unit);
 
 	}
 
