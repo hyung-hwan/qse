@@ -1,5 +1,5 @@
 /*
- * $Id: parser.c,v 1.79 2005-12-05 15:11:29 bacon Exp $
+ * $Id: parser.c,v 1.80 2006-01-30 16:44:03 bacon Exp $
  */
 
 #include <xp/stx/parser.h>
@@ -81,7 +81,7 @@ xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
 		return XP_NULL;
 	}
 
-	if (xp_array_open (
+	if (xp_arr_open (
 		&parser->bytecode, 256, 
 		xp_sizeof(xp_byte_t), XP_NULL) == XP_NULL) {
 		xp_stx_name_close (&parser->method_name);
@@ -112,7 +112,7 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 	}
 	parser->argument_count = 0;
 
-	xp_array_close (&parser->bytecode);
+	xp_arr_close (&parser->bytecode);
 	xp_stx_name_close (&parser->method_name);
 	xp_stx_token_close (&parser->token);
 
@@ -312,7 +312,7 @@ static INLINE int __emit_code_test (
 
 static INLINE int __emit_code (xp_stx_parser_t* parser, xp_byte_t code)
 {
-	if (xp_array_add_datum(&parser->bytecode, &code) == XP_NULL) {
+	if (xp_arr_adddatum(&parser->bytecode, &code) == XP_NULL) {
 		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
@@ -482,7 +482,7 @@ static int __parse_method (
 	GET_TOKEN (parser);
 
 	xp_stx_name_clear (&parser->method_name);
-	xp_array_clear (&parser->bytecode);
+	xp_arr_clear (&parser->bytecode);
 
 	while (parser->temporary_count > 0) {
 		xp_free (parser->temporaries[--parser->temporary_count]);
@@ -534,7 +534,7 @@ static int __finish_method (xp_stx_parser_t* parser)
 	method_obj->selector = selector;
 	method_obj->bytecodes = xp_stx_instantiate (
 		stx, stx->class_bytearray, XP_NULL, 
-		parser->bytecode.buffer, parser->bytecode.size);
+		parser->bytecode.buf, parser->bytecode.size);
 
 	/* TODO: better way to store argument count & temporary count */
 	method_obj->tmpcount = 

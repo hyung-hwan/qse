@@ -85,6 +85,9 @@
 /* sys/sysinfo.mem_unit */
 #undef XP_HAVE_SYS_SYSINFO_MEM_UNIT
 
+/* in6.scope_id */
+#undef XP_HAVE_IN6_SCOPE_ID
+
 /* char is wchar */
 #undef XP_CHAR_IS_WCHAR
 
