@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.53 $])
+AC_REVISION([$Revision: 1.54 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -24,6 +24,16 @@ AC_CHECK_HEADER([limits.h], [AC_DEFINE([XP_HAVE_LIMITS_H],[],[limits.h])])
 AC_CHECK_HEADER([wchar.h], [AC_DEFINE([XP_HAVE_WCHAR_H],[],[wchar.h])])
 AC_CHECK_HEADER([poll.h], [AC_DEFINE([XP_HAVE_POLL_H],[],[poll.h])])
 AC_CHECK_HEADER([sys/epoll.h], [AC_DEFINE([XP_HAVE_SYS_EPOLL_H],[],[sys/epoll.h])])
+
+AC_CHECK_HEADER([sys/sysinfo.h],
+	[AC_DEFINE([XP_HAVE_SYS_SYSINFO_H],[],[sys/sysinfo.h])])
+
+AC_CHECK_HEADER([sys/sysinfo.h], [
+	AC_CHECK_MEMBER(struct sysinfo.mem_unit,
+		[AC_DEFINE([XP_HAVE_SYS_SYSINFO_MEM_UNIT],[],[sys/sysinfo.mem_unit])],
+		[],
+		[#include <sys/sysinfo.h>])
+])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN(
