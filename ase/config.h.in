@@ -88,8 +88,8 @@
 /* in6.scope_id */
 #undef XP_HAVE_IN6_SCOPE_ID
 
-/* getaddrinfo */
-#undef XP_HAVE_GETADDRINFO
+/* sockaddr_storage.ss_family */
+#undef XP_HAVE_SS_FAMILY
 
 /* char is wchar */
 #undef XP_CHAR_IS_WCHAR
