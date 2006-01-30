@@ -1,8 +1,14 @@
 /*
- * $Id: hash.c,v 1.3 2006-01-30 14:34:47 bacon Exp $
+ * $Id: hash.c,v 1.4 2006-01-30 14:45:12 bacon Exp $
  */
 
 #include <xp/awk/hash.h>
+
+#ifndef __STAND_ALONE
+#include <xp/bas/memory.h>
+#include <xp/bas/string.h>
+#include <xp/bas/assert.h>
+#endif
 
 // TODO: improve the entire hash routines.
 //       support automatic bucket resizing and rehashing, etc.
