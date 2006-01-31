@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.22 2006-01-30 14:34:47 bacon Exp $
+ * $Id: awk.h,v 1.23 2006-01-31 16:57:45 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -21,6 +21,7 @@ enum
 {
 	XP_AWK_ENOERR,
 	XP_AWK_ENOMEM, /* out of memory */
+
 	XP_AWK_ESRCOP,
 	XP_AWK_ESRCCL,
 	XP_AWK_ESRCDT, /* error in reading source */
@@ -43,6 +44,7 @@ enum
 	XP_AWK_EDUPBEGIN, /* duplicate BEGIN */
 	XP_AWK_EDUPEND,   /* duplicate END */
 	XP_AWK_EDUPFUNC,  /* duplicate function name */
+	XP_AWK_EDUPPARAM, /* duplicate parameter name */
 	XP_AWK_EDUPNAME   /* duplicate name - function, variable, etc */
 };
 
@@ -65,16 +67,21 @@ enum
 	XP_AWK_IO_DATA
 };
 
-/* options */
+/* parse options */
 enum
 {
-	XP_AWK_ASSIGN_ONLY /* a non-assignment expression cannot be used as a statement */
+	XP_AWK_EXPLICIT = (1 << 0), /* variable requires explicit declaration */
+	XP_AWK_UNIQUE   = (1 << 1)  /* a function name should not coincide to be a variable name */
 };
 
 struct xp_awk_t
 {
 	/* options */
-	int opt;
+	struct
+	{
+		int parse;
+		int run;	
+	} opt;
 
 	/* io functions */
 	xp_awk_io_t src_func;
@@ -97,10 +104,9 @@ struct xp_awk_t
 	/* temporary information that the parser needs */
 	struct
 	{
-		xp_awk_tab_t funcs;
 		// TODO: locals, globals???
-		xp_char_t* vars; /* global and local variable names... */
-		xp_char_t* args; /* function arguments */
+		//xp_awk_tab_t vars; /* global and local variable names... */
+		xp_awk_tab_t params;
 	} parse;
 
 	/* source buffer management */
@@ -136,6 +142,10 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk);
  * FUNCTION: xp_awk_close
  */
 int xp_awk_close (xp_awk_t* awk);
+
+
+int xp_awk_geterrnum (xp_awk_t* awk);
+const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk);
 
 /*
  * FUNCTION: xp_awk_clear

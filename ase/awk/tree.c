@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.13 2006-01-28 06:38:01 bacon Exp $
+ * $Id: tree.c,v 1.14 2006-01-31 16:57:45 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -63,6 +63,18 @@ static int __print_expr_node (xp_awk_node_t* node)
 
 	case XP_AWK_NODE_NUM:
 		xp_printf (XP_TEXT("%s"), ((xp_awk_node_term_t*)node)->value);
+		break;
+
+	case XP_AWK_NODE_ARG:
+		xp_printf (XP_TEXT("__arg%u"), 
+			(unsigned int)((xp_awk_node_var_t*)node)->id.idxa);
+		break;
+
+	case XP_AWK_NODE_ARGIDX:
+		xp_printf (XP_TEXT("__arg%u["), 
+			(unsigned int)((xp_awk_node_idx_t*)node)->id.idxa);
+		__print_expr_node (((xp_awk_node_idx_t*)node)->idx);
+		xp_printf (XP_TEXT("]"));
 		break;
 
 	case XP_AWK_NODE_VAR:
@@ -360,14 +372,29 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 			xp_free (p);
 			break;
 
+		case XP_AWK_NODE_ARG:
+			if (((xp_awk_node_var_t*)p)->id.name != XP_NULL)
+				xp_free (((xp_awk_node_var_t*)p)->id.name);
+			xp_free (p);
+			break;
+
+		case XP_AWK_NODE_ARGIDX:
+			xp_awk_clrpt (((xp_awk_node_idx_t*)p)->idx);
+			if (((xp_awk_node_var_t*)p)->id.name != XP_NULL)
+				xp_free (((xp_awk_node_var_t*)p)->id.name);
+			xp_free (p);
+			break;
+
 		case XP_AWK_NODE_VAR:
-			xp_free (((xp_awk_node_var_t*)p)->id.name);
+			if (((xp_awk_node_var_t*)p)->id.name != XP_NULL)
+				xp_free (((xp_awk_node_var_t*)p)->id.name);
 			xp_free (p);
 			break;
 
 		case XP_AWK_NODE_VARIDX:
 			xp_awk_clrpt (((xp_awk_node_idx_t*)p)->idx);
-			xp_free (((xp_awk_node_idx_t*)p)->id.name);
+			if (((xp_awk_node_var_t*)p)->id.name != XP_NULL)
+				xp_free (((xp_awk_node_var_t*)p)->id.name);
 			xp_free (p);
 			break;
 

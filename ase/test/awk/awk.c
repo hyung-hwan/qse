@@ -79,8 +79,10 @@ int xp_main (int argc, xp_char_t* argv[])
 	}
 
 	if (xp_awk_parse(&awk) == -1) {
+		xp_printf (
+			XP_TEXT("error: cannot parse program - [%d] %s\n"), 
+			xp_awk_geterrnum(&awk), xp_awk_geterrstr(&awk));
 		xp_awk_close (&awk);
-		xp_printf (XP_TEXT("error: cannot parse program\n"));
 		return -1;
 	}
 
