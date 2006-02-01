@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.15 2006-01-31 16:57:45 bacon Exp $
+ * $Id: awk.c,v 1.16 2006-02-01 02:56:12 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -194,4 +194,3 @@ static void __free_func (void* func)
 	xp_awk_clrpt (f->body);
 	xp_free (f);
 }
-

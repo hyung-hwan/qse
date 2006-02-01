@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.14 2006-01-31 16:57:45 bacon Exp $
+ * $Id: tree.c,v 1.15 2006-02-01 02:56:12 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -380,8 +380,8 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 
 		case XP_AWK_NODE_ARGIDX:
 			xp_awk_clrpt (((xp_awk_node_idx_t*)p)->idx);
-			if (((xp_awk_node_var_t*)p)->id.name != XP_NULL)
-				xp_free (((xp_awk_node_var_t*)p)->id.name);
+			if (((xp_awk_node_idx_t*)p)->id.name != XP_NULL)
+				xp_free (((xp_awk_node_idx_t*)p)->id.name);
 			xp_free (p);
 			break;
 
@@ -393,8 +393,8 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 
 		case XP_AWK_NODE_VARIDX:
 			xp_awk_clrpt (((xp_awk_node_idx_t*)p)->idx);
-			if (((xp_awk_node_var_t*)p)->id.name != XP_NULL)
-				xp_free (((xp_awk_node_var_t*)p)->id.name);
+			if (((xp_awk_node_idx_t*)p)->id.name != XP_NULL)
+				xp_free (((xp_awk_node_idx_t*)p)->id.name);
 			xp_free (p);
 			break;
 

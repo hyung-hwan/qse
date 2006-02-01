@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.19 2006-01-30 14:34:47 bacon Exp $
+ * $Id: tree.h,v 1.20 2006-02-01 02:56:12 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -102,7 +102,7 @@ struct xp_awk_node_term_t
 struct xp_awk_node_var_t
 {
 	XP_AWK_NODE_HDR;
-	union
+	struct // uniion
 	{
 		xp_char_t* name;
 		xp_size_t idxa;
@@ -112,7 +112,7 @@ struct xp_awk_node_var_t
 struct xp_awk_node_idx_t
 {
 	XP_AWK_NODE_HDR;
-	union
+	struct // union
 	{
 		xp_char_t* name;
 		xp_size_t idxa;
