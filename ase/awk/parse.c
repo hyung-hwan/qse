@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.41 2006-01-31 16:57:45 bacon Exp $
+ * $Id: parse.c,v 1.42 2006-02-01 02:56:12 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -921,7 +921,7 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 			}
 
 			/* search the parameter name list */
-			idxa = xp_awk_tab_find (&awk->parse.params, name_dup, 0);
+			idxa = xp_awk_tab_find(&awk->parse.params, name_dup, 0);
 			if (idxa != (xp_size_t)-1) {
 				node->type = XP_AWK_NODE_ARG;
 				node->next = XP_NULL;
