@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.42 2006-02-01 02:56:12 bacon Exp $
+ * $Id: parse.c,v 1.43 2006-02-04 19:31:51 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -87,7 +87,8 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk);
 static xp_awk_node_t* __parse_begin (xp_awk_t* awk);
 static xp_awk_node_t* __parse_end (xp_awk_t* awk);
 static xp_awk_node_t* __parse_action (xp_awk_t* awk);
-static xp_awk_node_t* __parse_block (xp_awk_t* awk);
+static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
+static xp_awk_t*      __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 static xp_awk_node_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk);
 static xp_awk_node_t* __parse_expression (xp_awk_t* awk);
@@ -114,43 +115,42 @@ static int __get_char (xp_awk_t* awk);
 static int __unget_char (xp_awk_t* awk, xp_cint_t c);
 static int __skip_spaces (xp_awk_t* awk);
 static int __skip_comment (xp_awk_t* awk);
-static int __classfy_ident (const xp_char_t* ident);
+static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident);
 
 static xp_long_t __str_to_long (const xp_char_t* name);
 
 static INLINE xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name);
 static INLINE xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name);
 
-
 struct __kwent 
 { 
 	const xp_char_t* name; 
 	int type; 
+	int valid; /* the entry is valid when this option is set */
 };
 
 static struct __kwent __kwtab[] = 
 {
-	{ XP_TEXT("BEGIN"),    TOKEN_BEGIN },
-	{ XP_TEXT("END"),      TOKEN_END },
-	{ XP_TEXT("function"), TOKEN_FUNCTION },
-	{ XP_TEXT("if"),       TOKEN_IF },
-	{ XP_TEXT("else"),     TOKEN_ELSE },
-	{ XP_TEXT("while"),    TOKEN_WHILE },
-	{ XP_TEXT("for"),      TOKEN_FOR },
-	{ XP_TEXT("do"),       TOKEN_DO },
-	{ XP_TEXT("break"),    TOKEN_BREAK },
-	{ XP_TEXT("continue"), TOKEN_CONTINUE },
-	{ XP_TEXT("return"),   TOKEN_RETURN },
-	{ XP_TEXT("exit"),     TOKEN_EXIT },
-	{ XP_TEXT("delete"),   TOKEN_DELETE },
-	{ XP_TEXT("next"),     TOKEN_NEXT },
-	{ XP_TEXT("nextfile"), TOKEN_NEXTFILE },
+	{ XP_TEXT("BEGIN"),    TOKEN_BEGIN,    0 },
+	{ XP_TEXT("END"),      TOKEN_END,      0 },
+	{ XP_TEXT("function"), TOKEN_FUNCTION, 0 },
+	{ XP_TEXT("if"),       TOKEN_IF,       0 },
+	{ XP_TEXT("else"),     TOKEN_ELSE,     0 },
+	{ XP_TEXT("while"),    TOKEN_WHILE,    0 },
+	{ XP_TEXT("for"),      TOKEN_FOR,      0 },
+	{ XP_TEXT("do"),       TOKEN_DO,       0 },
+	{ XP_TEXT("break"),    TOKEN_BREAK,    0 },
+	{ XP_TEXT("continue"), TOKEN_CONTINUE, 0 },
+	{ XP_TEXT("return"),   TOKEN_RETURN,   0 },
+	{ XP_TEXT("exit"),     TOKEN_EXIT,     0 },
+	{ XP_TEXT("delete"),   TOKEN_DELETE,   0 },
+	{ XP_TEXT("next"),     TOKEN_NEXT,     0 },
+	{ XP_TEXT("nextfile"), TOKEN_NEXTFILE, 0 },
 
-// TODO: don't return TOKEN_LOCAL & TOKEN_GLOBAL when explicit variable declaration is disabled.
-	{ XP_TEXT("local"),    TOKEN_LOCAL },
-	{ XP_TEXT("global"),   TOKEN_GLOBAL },
+	{ XP_TEXT("local"),    TOKEN_LOCAL,    XP_AWK_EXPLICIT },
+	{ XP_TEXT("global"),   TOKEN_GLOBAL,   XP_AWK_EXPLICIT },
 
-	{ XP_NULL,             0 },
+	{ XP_NULL,             0,              0 }
 };
 
 #define GET_CHAR(awk) \
@@ -184,7 +184,6 @@ static struct __kwent __kwtab[] =
 
 #define PANIC(awk,code) do { (awk)->errnum = (code);  return XP_NULL; } while (0);
 
-
 // TODO: remove stdio.h
 #ifndef __STAND_ALONE
 #include <xp/bas/stdio.h>
@@ -215,6 +214,8 @@ static void __dump (xp_awk_t* awk)
 		xp_printf (XP_TEXT("END "));
 		xp_awk_prnpt (awk->tree.end);
 	}
+
+// TODO: dump unmaed top-level blocks...
 }
 
 int xp_awk_parse (xp_awk_t* awk)
@@ -307,8 +308,8 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	}
 
 	if (awk->opt.parse & XP_AWK_UNIQUE) {
-		/* check if it coincides to be a variable name */
-		if (__find_variable(awk,name) != (xp_size_t)-1) {
+		/* check if it coincides to be a global variable name */
+		if (xp_awk_tab_find(&awk->parse.globals, name, 0) != (xp_size_t)-1) {
 			PANIC (awk, XP_AWK_EDUPNAME);
 		}
 	}
@@ -349,24 +350,41 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	}
 	else {
 		while (1) {
+			xp_char_t* param;
+
 			if (!MATCH(awk,TOKEN_IDENT)) {
 				xp_free (name_dup);
 				xp_awk_tab_clear (&awk->parse.params);
 				PANIC (awk, XP_AWK_EIDENT);
 			}
 
-// TODO: check duplicates againt variables if shading is not supported
-// global x; function f (x) { print x; } -> x in print x is a parameter
+			param = XP_STR_BUF(&awk->token.name);
 
-			if (xp_awk_tab_find (&awk->parse.params, 
-				XP_STR_BUF(&awk->token.name), 0) != (xp_size_t)-1) {
+			if (awk->opt.parse & XP_AWK_UNIQUE) {
+				/* check if a parameter conflicts with a function */
+				if (xp_strcmp(name_dup, param) == 0 ||
+				    xp_awk_hash_get(&awk->tree.funcs, param) != XP_NULL) {
+					xp_free (name_dup);
+					xp_awk_tab_clear (&awk->parse.params);
+					PANIC (awk, XP_AWK_EDUPNAME);
+				}
+
+				/* NOTE: the following is not a conflict
+				 *  global x; 
+				 *  function f (x) { print x; } 
+				 *  x in print x is a parameter
+				 */
+			}
+
+			/* check if a parameter conflicts with other parameters */
+			if (xp_awk_tab_find(&awk->parse.params, param, 0) != (xp_size_t)-1) {
 				xp_free (name_dup);
 				xp_awk_tab_clear (&awk->parse.params);
 				PANIC (awk, XP_AWK_EDUPPARAM);
 			}
 
-			if (xp_awk_tab_adddatum (&awk->parse.params, 
-				XP_STR_BUF(&awk->token.name)) == (xp_size_t)-1) {
+			/* push the parameter to the parameter list */
+			if (xp_awk_tab_adddatum(&awk->parse.params, param) == (xp_size_t)-1) {
 				xp_free (name_dup);
 				xp_awk_tab_clear (&awk->parse.params);
 				PANIC (awk, XP_AWK_ENOMEM);
@@ -413,7 +431,7 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	}
 
 	/* actual function body */
-	body = __parse_block (awk);
+	body = __parse_block (awk, xp_true);
 	if (body == XP_NULL) {
 		xp_free (name_dup);
 		xp_awk_tab_clear (&awk->parse.params);
@@ -479,104 +497,162 @@ static xp_awk_node_t* __parse_action (xp_awk_t* awk)
 {
 	if (!MATCH(awk,TOKEN_LBRACE)) PANIC (awk, XP_AWK_ELBRACE);
 	if (__get_token(awk) == -1) return XP_NULL; 
-	return __parse_block(awk);
+	return __parse_block(awk, xp_true);
 }
 
-/* TODO: what is the best name for the parsing routine for the outermost block? */
-static xp_awk_node_t* __parse_block (xp_awk_t* awk) 
+static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top) 
 {
 	xp_awk_node_t* head, * curr, * node;
 	xp_awk_node_block_t* block;
-	xp_size_t lvc = 0;
+	xp_size_t nlocals, tmp;
 
-	/* local variable declaration */
-	//TODO: if (awk->opt & XP_AWK_VARDECL) {
-	while (1) {
-		if (MATCH(awk,TOKEN_EOF)) {
-			// cleanup the variable name list...
-			PANIC (awk, XP_AWK_EENDSRC);
-		}
+	nlocals = xp_awk_tab_getsize(&awk->parse.locals);
 
-		if (MATCH(awk,TOKEN_RBRACE)) {
+	/* local variable declarations */
+	if (awk->opt.parse & XP_AWK_EXPLICIT) {
+		while (1) {
+			if (!MATCH(awk,TOKEN_LOCAL)) break;
+
 			if (__get_token(awk) == -1) {
-				// TODO: cleanup the variable name list...
-				return XP_NULL; 
+				xp_awk_tab_remrange (
+					&awk->parse.locals, nlocals - 1, 
+					xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
+				return XP_NULL;
 			}
-			head = XP_NULL;
-			goto skip_block_body;
-		}
 
-		if (!MATCH(awk,TOKEN_LOCAL)) break;
-
-		if (__get_token(awk) == -1) {
-			// TODO: cleanup the variable name list...
-			return XP_NULL;
+			if (__collect_locals(awk, nlocals) == XP_NULL) {
+				xp_awk_tab_remrange (
+					&awk->parse.locals, nlocals - 1, 
+					xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
+				return XP_NULL;
+			}
 		}
-// TODO: collect variables...
-// TODO: check duplicates with locals and globals, and maybe with the function names also depending on the awk options....
 	}
-	// TODO: }
 
 	/* block body */
 	head = XP_NULL; curr = XP_NULL;
 
 	while (1) {
 		if (MATCH(awk,TOKEN_EOF)) {
-			// TODO: cleanup the variable name list...
+			xp_awk_tab_remrange (
+				&awk->parse.locals, nlocals - 1, 
+				xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 			if (head != XP_NULL) xp_awk_clrpt (head);
 			PANIC (awk, XP_AWK_EENDSRC);
 		}
 
 		if (MATCH(awk,TOKEN_RBRACE)) {
 			if (__get_token(awk) == -1) {
-				// TODO: cleanup the variable name list...
+				xp_awk_tab_remrange (
+					&awk->parse.locals, nlocals - 1, 
+					xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 				if (head != XP_NULL) xp_awk_clrpt (head);
 				return XP_NULL; 
 			}
 			break;
 		}
 
-/* TODO: if you want to remove top-level null statement... get it here... */
-/*
-		if (MATCH(awk,TOKEN_SEMICOLON)) {
-			if (__get_token(awk) == -1) {
-				// TODO: cleanup the variable name list...
-				if (head != XP_NULL) xp_awk_clrpt (head);
-				return XP_NULL;
-			}
-			continue;
-		}
-*/
 		node = __parse_statement (awk);
 		if (node == XP_NULL) {
-			// TODO: cleanup the variable name list...
+			xp_awk_tab_remrange (
+				&awk->parse.locals, nlocals - 1, 
+				xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 			if (head != XP_NULL) xp_awk_clrpt (head);
 			return XP_NULL;
 		}
-		
+
+		/* remove unnecessary statements */
+		if (node->type == XP_AWK_NODE_NULL ||
+		    (node->type == XP_AWK_NODE_BLOCK && 
+		     ((xp_awk_node_block_t*)node)->body == XP_NULL)) continue;
+			
 		if (curr == XP_NULL) head = node;
 		else curr->next = node;	
 		curr = node;
 	}
 
-skip_block_body:
-
 	block = (xp_awk_node_block_t*) xp_malloc (xp_sizeof(xp_awk_node_block_t));
 	if (block == XP_NULL) {
-		// TODO: cleanup the variable name list...
+		xp_awk_tab_remrange (
+			&awk->parse.locals, nlocals - 1, 
+			xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 		xp_awk_clrpt (head);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-// TODO: remove empty block such as { } { ;;;; }, or { local a, b, c; ;;; }. etc
+	tmp = xp_awk_tab_getsize(&awk->parse.locals);
+	xp_awk_tab_remrange (
+		&awk->parse.locals, nlocals - 1, tmp - nlocals);
+
+	/* adjust number of locals for a block without any statements */
+	if (head == NULL) tmp = 0;
+
 	block->type = XP_AWK_NODE_BLOCK;
 	block->next = XP_NULL;
-	block->lvc  = lvc;
 	block->body = head;
 
-// TODO: cleanup the variable name list...
+	if (is_top) {
+		block->nlocals = awk->parse.nlocals_max - nlocals;
+		awk->parse.nlocals_max = nlocals;
+	}
+	else {
+		block->nlocals = 0;
+		if (tmp > awk->parse.nlocals_max) awk->parse.nlocals_max = tmp;
+	}
 
 	return (xp_awk_node_t*)block;
+}
+
+static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
+{
+	xp_char_t* local;
+
+	while (1) {
+		if (!MATCH(awk,TOKEN_IDENT)) {
+			PANIC (awk, XP_AWK_EIDENT);
+		}
+
+		local = XP_STR_BUF(&awk->token.name);
+
+		/* NOTE: it is not checked againt globals names */
+
+		if (awk->opt.parse & XP_AWK_UNIQUE) {
+			/* check if it conflict with a function name */
+			if (xp_awk_hash_get(&awk->tree.funcs, local) != XP_NULL) {
+				PANIC (awk, XP_AWK_EDUPNAME);
+			}
+		}
+
+		/* check if it conflicts with a paremeter name */
+		if (xp_awk_tab_find(&awk->parse.params, local, 0) != (xp_size_t)-1) {
+			PANIC (awk, XP_AWK_EDUPNAME);
+		}
+
+		/* check if it conflicts with other local variable names */
+		if (xp_awk_tab_find(&awk->parse.locals, local, 
+			((awk->opt.parse & XP_AWK_SHADING)? nlocals: 0)) != (xp_size_t)-1)  {
+			PANIC (awk, XP_AWK_EDUPVAR);	
+		}
+
+		if (xp_awk_tab_adddatum(&awk->parse.locals, local) == (xp_size_t)-1) {
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		if (__get_token(awk) == -1) return XP_NULL;
+
+		if (MATCH(awk,TOKEN_SEMICOLON)) break;
+
+		if (!MATCH(awk,TOKEN_COMMA)) {
+			PANIC (awk, XP_AWK_ECOMMA);
+		}
+
+		if (__get_token(awk) == -1) return XP_NULL;
+	}
+
+	/* skip a semicolon */
+	if (__get_token(awk) == -1) return XP_NULL;
+
+	return awk;
 }
 
 static xp_awk_node_t* __parse_statement (xp_awk_t* awk)
@@ -598,7 +674,7 @@ static xp_awk_node_t* __parse_statement (xp_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_LBRACE)) {
 		if (__get_token(awk) == -1) return XP_NULL; 
-		node = __parse_block (awk);
+		node = __parse_block (awk, xp_false);
 	}
 	else node = __parse_statement_nb (awk);
 
@@ -1561,7 +1637,7 @@ static int __get_token (xp_awk_t* awk)
 			GET_CHAR_TO (awk, c);
 		} while (xp_isalpha(c) || c == XP_CHAR('_') || xp_isdigit(c));
 
-		SET_TOKEN_TYPE (awk, __classfy_ident(XP_STR_BUF(&awk->token.name)));
+		SET_TOKEN_TYPE (awk, __classify_ident(awk, XP_STR_BUF(&awk->token.name)));
 	}
 	else if (c == XP_CHAR('\"')) {
 		/* string */
@@ -1780,13 +1856,13 @@ static int __skip_comment (xp_awk_t* awk)
 	return 0;
 }
 
-static int __classfy_ident (const xp_char_t* ident)
+static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident)
 {
 	struct __kwent* p = __kwtab;
 
-	while (p->name != XP_NULL) {
+	for (p = __kwtab; p->name != XP_NULL; p++) {
+		if (p->valid != 0 && (awk->opt.parse & p->valid) == 0) continue;
 		if (xp_strcmp(p->name, ident) == 0) return p->type;
-		p++;
 	}
 
 	return TOKEN_IDENT;
@@ -1806,18 +1882,13 @@ static xp_long_t __str_to_long (const xp_char_t* name)
 
 static INLINE xp_size_t __find_func_arg (xp_awk_t* awk, const xp_char_t* name)
 {
-/*
-	if (awk->curfunc != XP_NULL) {
-		
-// TODO: finish this....
-	}
-*/
-
+// TODO:
 	return (xp_size_t)-1;
 }
 
 static xp_size_t __find_variable (xp_awk_t* awk, const xp_char_t* name)
 {
+// TODO:
 	return (xp_size_t)-1;
 }
 
