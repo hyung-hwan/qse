@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.43 2006-02-04 19:31:51 bacon Exp $
+ * $Id: parse.c,v 1.44 2006-02-04 19:37:40 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -591,6 +591,7 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	block->next = XP_NULL;
 	block->body = head;
 
+	/* migrate all local variables to a top-level block */
 	if (is_top) {
 		block->nlocals = awk->parse.nlocals_max - nlocals;
 		awk->parse.nlocals_max = nlocals;
