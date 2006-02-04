@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.20 2006-02-01 02:56:12 bacon Exp $
+ * $Id: tree.h,v 1.21 2006-02-04 19:31:51 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -74,7 +74,7 @@ struct xp_awk_node_sgv_t
 struct xp_awk_node_block_t
 {
 	XP_AWK_NODE_HDR;
-	xp_size_t lvc; /* local variable count */
+	xp_size_t nlocals;
 	xp_awk_node_t* body;
 };
 

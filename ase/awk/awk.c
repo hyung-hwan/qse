@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.16 2006-02-01 02:56:12 bacon Exp $
+ * $Id: awk.c,v 1.17 2006-02-04 19:31:51 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -31,9 +31,26 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
+	if (xp_awk_tab_open(&awk->parse.globals) == XP_NULL) {
+		xp_str_close (&awk->token.name);
+		xp_awk_hash_close (&awk->tree.funcs);
+		if (awk->__dynamic) xp_free (awk);
+		return XP_NULL;
+	}
+
+	if (xp_awk_tab_open(&awk->parse.locals) == XP_NULL) {
+		xp_str_close (&awk->token.name);
+		xp_awk_hash_close (&awk->tree.funcs);
+		xp_awk_tab_close (&awk->parse.globals);
+		if (awk->__dynamic) xp_free (awk);
+		return XP_NULL;
+	}
+
 	if (xp_awk_tab_open(&awk->parse.params) == XP_NULL) {
 		xp_str_close (&awk->token.name);
 		xp_awk_hash_close (&awk->tree.funcs);
+		xp_awk_tab_close (&awk->parse.globals);
+		xp_awk_tab_close (&awk->parse.locals);
 		if (awk->__dynamic) xp_free (awk);
 		return XP_NULL;
 	}
@@ -49,6 +66,8 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	awk->src_arg = XP_NULL;
 	awk->in_arg = XP_NULL;
 	awk->out_arg = XP_NULL;
+
+	awk->parse.nlocals_max = 0;
 
 	awk->tree.begin = XP_NULL;
 	awk->tree.end = XP_NULL;
@@ -66,6 +85,8 @@ int xp_awk_close (xp_awk_t* awk)
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
 	xp_awk_hash_close (&awk->tree.funcs);
+	xp_awk_tab_close (&awk->parse.globals);
+	xp_awk_tab_close (&awk->parse.locals);
 	xp_awk_tab_close (&awk->parse.params);
 	xp_str_close (&awk->token.name);
 
@@ -108,6 +129,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_TEXT("duplicate END"),
 		XP_TEXT("duplicate function name"),
 		XP_TEXT("duplicate parameter name"),
+		XP_TEXT("duplicate variable name"),
 		XP_TEXT("duplicate name"),
 	};
 
@@ -124,6 +146,11 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 
 void xp_awk_clear (xp_awk_t* awk)
 {
+	xp_awk_tab_clear (&awk->parse.globals);
+	xp_awk_tab_clear (&awk->parse.locals);
+	xp_awk_tab_clear (&awk->parse.params);
+	awk->parse.nlocals_max = 0;
+	
 	/* clear parse trees */
 	xp_awk_hash_clear (&awk->tree.funcs);
 
