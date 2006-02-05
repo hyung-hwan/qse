@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.2 2006-01-30 14:45:12 bacon Exp $
+ * $Id: tab.c,v 1.3 2006-02-05 13:45:59 bacon Exp $
  */
 
 #include <xp/awk/tab.h>
@@ -161,3 +161,14 @@ xp_size_t xp_awk_tab_find (
 	return (xp_size_t)-1;
 }
 
+xp_size_t xp_awk_tab_rfind (
+	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index)
+{
+	xp_size_t i;
+
+	for (i = index + 1; i-- > 0; ) {
+		if (xp_strcmp(tab->buf[i], value) == 0) return i;
+	}
+
+	return (xp_size_t)-1;
+}
