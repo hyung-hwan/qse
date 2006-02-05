@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.44 2006-02-04 19:37:40 bacon Exp $
+ * $Id: parse.c,v 1.45 2006-02-05 06:10:43 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -504,9 +504,10 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 {
 	xp_awk_node_t* head, * curr, * node;
 	xp_awk_node_block_t* block;
-	xp_size_t nlocals, tmp;
+	xp_size_t nlocals, nlocals_max, tmp;
 
 	nlocals = xp_awk_tab_getsize(&awk->parse.locals);
+	nlocals_max = awk->parse.nlocals_max;
 
 	/* local variable declarations */
 	if (awk->opt.parse & XP_AWK_EXPLICIT) {
@@ -581,6 +582,8 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	}
 
 	tmp = xp_awk_tab_getsize(&awk->parse.locals);
+	if (tmp > awk->parse.nlocals_max) awk->parse.nlocals_max = tmp;
+
 	xp_awk_tab_remrange (
 		&awk->parse.locals, nlocals - 1, tmp - nlocals);
 
@@ -591,14 +594,14 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	block->next = XP_NULL;
 	block->body = head;
 
-	/* migrate all local variables to a top-level block */
+	/* migrate all block-local variables to a top-level block */
 	if (is_top) {
 		block->nlocals = awk->parse.nlocals_max - nlocals;
-		awk->parse.nlocals_max = nlocals;
+		awk->parse.nlocals_max = nlocals_max;
 	}
 	else {
+		/*block->nlocals = tmp - nlocals;*/
 		block->nlocals = 0;
-		if (tmp > awk->parse.nlocals_max) awk->parse.nlocals_max = tmp;
 	}
 
 	return (xp_awk_node_t*)block;
