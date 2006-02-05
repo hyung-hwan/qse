@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.45 2006-02-05 06:10:43 bacon Exp $
+ * $Id: parse.c,v 1.46 2006-02-05 13:45:59 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -191,9 +191,16 @@ static struct __kwent __kwtab[] =
 static int __dump_func (xp_awk_pair_t* pair)
 {
 	xp_awk_func_t* func = (xp_awk_func_t*)pair->value;
+	xp_size_t i;
 
 	xp_assert (xp_strcmp(pair->key, func->name) == 0);
-	xp_printf (XP_TEXT("function %s (nargs=>%u)\n"), func->name, func->nargs);
+	xp_printf (XP_TEXT("function %s ("), func->name);
+	for (i = 0; i < func->nargs; ) {
+		xp_printf (XP_TEXT("__arg%lu"), (unsigned long)i++);
+		if (i >= func->nargs) break;
+		xp_printf (XP_TEXT(", "));
+	}
+	xp_printf (XP_TEXT(")\n"));
 	xp_awk_prnpt (func->body);
 	xp_printf (XP_TEXT("\n"));
 
@@ -1012,34 +1019,33 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 				return (xp_awk_node_t*)node;
 			}
 
-			/* search the variable name list */
-// TODO:
-			idxa = __find_variable (awk, name_dup);
-			if (idxa == (xp_size_t)-1) {
-				idxa = __find_func_arg (awk, name_dup);
-				if (idxa == (xp_size_t)-1) {
-					node->type = XP_AWK_NODE_VAR;
-					node->next = XP_NULL;
-					node->id.name = name_dup;
-				}
-				else {
-					node->type = XP_AWK_NODE_ARG;
-					node->next = XP_NULL;
-// TODO: do i need to store the name here???
-					node->id.name = name_dup;
-					node->id.idxa = idxa;
-				}
-			}
-			else {
-// TODO: differentiate VAR with NAMED_VAR...
+			/* search the local variable list */
+			idxa = xp_awk_tab_rfind(&awk->parse.locals, name_dup, 0);
+			if (idxa != (xp_size_t)-1) {
 				node->type = XP_AWK_NODE_VAR;
 				node->next = XP_NULL;
-// TODO: do i need to store the name here???
+				//node->id.name = XP_NULL;
 				node->id.name = name_dup;
 				node->id.idxa = idxa;
+
+				return (xp_awk_node_t*)node;
 			}
 
-			return (xp_awk_node_t*)node;
+			/* TODO: search the global variable list... */
+			/* search the global variable list */
+
+			if (awk->opt.parse & XP_AWK_IMPLICIT) {
+				node->type = XP_AWK_NODE_VAR;
+				node->next = XP_NULL;
+				node->id.name = name_dup;
+				node->id.idxa = (xp_size_t)-1;
+				return (xp_awk_node_t*)node;
+			}
+
+			/* undefined variable */
+			xp_free (name_dup);
+			xp_free (node);
+			PANIC (awk, XP_AWK_EUNDEF);
 		}
 	}
 	else if (MATCH(awk,TOKEN_INTEGER)) {

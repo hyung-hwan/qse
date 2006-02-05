@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.24 2006-02-04 19:31:51 bacon Exp $
+ * $Id: awk.h,v 1.25 2006-02-05 13:45:59 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -46,7 +46,8 @@ enum
 	XP_AWK_EDUPFUNC,  /* duplicate function name */
 	XP_AWK_EDUPPARAM, /* duplicate parameter name */
 	XP_AWK_EDUPVAR,   /* duplicate variable name */
-	XP_AWK_EDUPNAME   /* duplicate name - function, variable, etc */
+	XP_AWK_EDUPNAME,  /* duplicate name - function, variable, etc */
+	XP_AWK_EUNDEF     /* undefined identifier */
 };
 
 /*
@@ -71,9 +72,10 @@ enum
 /* parse options */
 enum
 {
-	XP_AWK_EXPLICIT = (1 << 0), /* variable requires explicit declaration */
-	XP_AWK_UNIQUE   = (1 << 1), /* a function name should not coincide to be a variable name */
-	XP_AWK_SHADING  = (1 << 2)  /* allow variable shading */
+	XP_AWK_IMPLICIT = (1 << 0), /* allow undeclared variables */
+	XP_AWK_EXPLICIT = (1 << 1), /* variable requires explicit declaration */
+	XP_AWK_UNIQUE   = (1 << 2), /* a function name should not coincide to be a variable name */
+	XP_AWK_SHADING  = (1 << 3)  /* allow variable shading */
 };
 
 struct xp_awk_t

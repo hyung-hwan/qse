@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.17 2006-02-05 06:10:43 bacon Exp $
+ * $Id: tree.c,v 1.18 2006-02-05 13:45:59 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -66,23 +66,37 @@ static int __print_expr_node (xp_awk_node_t* node)
 		break;
 
 	case XP_AWK_NODE_ARG:
-		xp_printf (XP_TEXT("__arg%u"), 
-			(unsigned int)((xp_awk_node_var_t*)node)->id.idxa);
+		xp_assert (((xp_awk_node_var_t*)node)->id.idxa != (xp_size_t)-1);
+		xp_printf (XP_TEXT("__arg%lu"), 
+			(unsigned long)((xp_awk_node_var_t*)node)->id.idxa);
 		break;
 
 	case XP_AWK_NODE_ARGIDX:
-		xp_printf (XP_TEXT("__arg%u["), 
-			(unsigned int)((xp_awk_node_idx_t*)node)->id.idxa);
+		xp_assert (((xp_awk_node_var_t*)node)->id.idxa != (xp_size_t)-1);
+		xp_printf (XP_TEXT("__arg%lu["), 
+			(unsigned long)((xp_awk_node_idx_t*)node)->id.idxa);
 		__print_expr_node (((xp_awk_node_idx_t*)node)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
 	case XP_AWK_NODE_VAR:
-		xp_printf (XP_TEXT("%s"), ((xp_awk_node_var_t*)node)->id.name);
+		if (((xp_awk_node_var_t*)node)->id.idxa != (xp_size_t)-1) {
+			xp_printf (XP_TEXT("__local%lu"), 
+				(unsigned long)((xp_awk_node_var_t*)node)->id.idxa);
+		}
+		else {
+			xp_printf (XP_TEXT("%s"), ((xp_awk_node_var_t*)node)->id.name);
+		}
 		break;
 
 	case XP_AWK_NODE_VARIDX:
-		xp_printf (XP_TEXT("%s["), ((xp_awk_node_idx_t*)node)->id.name);
+		if (((xp_awk_node_idx_t*)node)->id.idxa != (xp_size_t)-1) {
+			xp_printf (XP_TEXT("__local%lu["), 
+				(unsigned long)((xp_awk_node_idx_t*)node)->id.idxa);
+		}
+		else {
+			xp_printf (XP_TEXT("%s["), ((xp_awk_node_idx_t*)node)->id.name);
+		}
 		__print_expr_node (((xp_awk_node_idx_t*)node)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
@@ -140,9 +154,9 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 				xp_printf (XP_TEXT("local "));
 
 				for (i = 0; i < ((xp_awk_node_block_t*)p)->nlocals - 1; i++) {
-					xp_printf (XP_TEXT("__local%u, "), (unsigned int)i);
+					xp_printf (XP_TEXT("__local%lu, "), (unsigned long)i);
 				}
-				xp_printf (XP_TEXT("__local%u;\n"), (unsigned int)i);
+				xp_printf (XP_TEXT("__local%lu;\n"), (unsigned long)i);
 			}
 
 			__print_statements (((xp_awk_node_block_t*)p)->body, depth + 1);	
