@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.49 2006-02-05 16:08:23 bacon Exp $
+ * $Id: parse.c,v 1.50 2006-02-05 16:12:50 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -621,6 +621,10 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	block->type = XP_AWK_NODE_BLOCK;
 	block->next = XP_NULL;
 	block->body = head;
+
+/* TODO: not only local variables but also etsted blocks, 
+unless it is part of other constructs such as if, can be promoted 
+and merged to top-level block */
 
 	/* migrate all block-local variables to a top-level block */
 	if (is_top) {
