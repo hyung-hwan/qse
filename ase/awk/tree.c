@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.18 2006-02-05 13:45:59 bacon Exp $
+ * $Id: tree.c,v 1.19 2006-02-05 16:00:33 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -79,7 +79,41 @@ static int __print_expr_node (xp_awk_node_t* node)
 		xp_printf (XP_TEXT("]"));
 		break;
 
-	case XP_AWK_NODE_VAR:
+	case XP_AWK_NODE_NAMED:
+		xp_assert (((xp_awk_node_var_t*)node)->id.idxa == (xp_size_t)-1);
+		xp_printf (XP_TEXT("%s"), ((xp_awk_node_var_t*)node)->id.name);
+		break;
+
+	case XP_AWK_NODE_NAMEDIDX:
+		xp_assert (((xp_awk_node_idx_t*)node)->id.idxa == (xp_size_t)-1);
+		xp_printf (XP_TEXT("%s["), ((xp_awk_node_idx_t*)node)->id.name);
+		__print_expr_node (((xp_awk_node_idx_t*)node)->idx);
+		xp_printf (XP_TEXT("]"));
+		break;
+
+	case XP_AWK_NODE_GLOBAL:
+		if (((xp_awk_node_var_t*)node)->id.idxa != (xp_size_t)-1) {
+			xp_printf (XP_TEXT("__global%lu"), 
+				(unsigned long)((xp_awk_node_var_t*)node)->id.idxa);
+		}
+		else {
+			xp_printf (XP_TEXT("%s"), ((xp_awk_node_var_t*)node)->id.name);
+		}
+		break;
+
+	case XP_AWK_NODE_GLOBALIDX:
+		if (((xp_awk_node_idx_t*)node)->id.idxa != (xp_size_t)-1) {
+			xp_printf (XP_TEXT("__global%lu["), 
+				(unsigned long)((xp_awk_node_idx_t*)node)->id.idxa);
+		}
+		else {
+			xp_printf (XP_TEXT("%s["), ((xp_awk_node_idx_t*)node)->id.name);
+		}
+		__print_expr_node (((xp_awk_node_idx_t*)node)->idx);
+		xp_printf (XP_TEXT("]"));
+		break;
+
+	case XP_AWK_NODE_LOCAL:
 		if (((xp_awk_node_var_t*)node)->id.idxa != (xp_size_t)-1) {
 			xp_printf (XP_TEXT("__local%lu"), 
 				(unsigned long)((xp_awk_node_var_t*)node)->id.idxa);
@@ -89,7 +123,7 @@ static int __print_expr_node (xp_awk_node_t* node)
 		}
 		break;
 
-	case XP_AWK_NODE_VARIDX:
+	case XP_AWK_NODE_LOCALIDX:
 		if (((xp_awk_node_idx_t*)node)->id.idxa != (xp_size_t)-1) {
 			xp_printf (XP_TEXT("__local%lu["), 
 				(unsigned long)((xp_awk_node_idx_t*)node)->id.idxa);
@@ -398,26 +432,21 @@ void xp_awk_clrpt (xp_awk_node_t* tree)
 			xp_free (p);
 			break;
 
+		case XP_AWK_NODE_NAMED:
+			xp_assert (((xp_awk_node_idx_t*)p)->id.name != XP_NULL);
+		case XP_AWK_NODE_GLOBAL:
+		case XP_AWK_NODE_LOCAL:
 		case XP_AWK_NODE_ARG:
 			if (((xp_awk_node_var_t*)p)->id.name != XP_NULL)
 				xp_free (((xp_awk_node_var_t*)p)->id.name);
 			xp_free (p);
 			break;
 
+		case XP_AWK_NODE_NAMEDIDX:
+			xp_assert (((xp_awk_node_idx_t*)p)->id.name != XP_NULL);
+		case XP_AWK_NODE_GLOBALIDX:
+		case XP_AWK_NODE_LOCALIDX:
 		case XP_AWK_NODE_ARGIDX:
-			xp_awk_clrpt (((xp_awk_node_idx_t*)p)->idx);
-			if (((xp_awk_node_idx_t*)p)->id.name != XP_NULL)
-				xp_free (((xp_awk_node_idx_t*)p)->id.name);
-			xp_free (p);
-			break;
-
-		case XP_AWK_NODE_VAR:
-			if (((xp_awk_node_var_t*)p)->id.name != XP_NULL)
-				xp_free (((xp_awk_node_var_t*)p)->id.name);
-			xp_free (p);
-			break;
-
-		case XP_AWK_NODE_VARIDX:
 			xp_awk_clrpt (((xp_awk_node_idx_t*)p)->idx);
 			if (((xp_awk_node_idx_t*)p)->id.name != XP_NULL)
 				xp_free (((xp_awk_node_idx_t*)p)->id.name);

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.25 2006-02-05 13:45:59 bacon Exp $
+ * $Id: awk.h,v 1.26 2006-02-05 16:00:33 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -99,6 +99,7 @@ struct xp_awk_t
 	/* parse tree */
 	struct 
 	{
+		xp_size_t nglobals;
 		xp_awk_hash_t funcs;
 		xp_awk_node_t* begin;
 		xp_awk_node_t* end;
