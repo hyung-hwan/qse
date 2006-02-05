@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.18 2006-02-05 13:45:59 bacon Exp $
+ * $Id: awk.c,v 1.19 2006-02-05 16:00:33 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -69,6 +69,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 
 	awk->parse.nlocals_max = 0;
 
+	awk->tree.nglobals = 0;
 	awk->tree.begin = XP_NULL;
 	awk->tree.end = XP_NULL;
 	awk->tree.unnamed = XP_NULL;
@@ -153,6 +154,7 @@ void xp_awk_clear (xp_awk_t* awk)
 	awk->parse.nlocals_max = 0;
 	
 	/* clear parse trees */
+	awk->tree.nglobals = 0;
 	xp_awk_hash_clear (&awk->tree.funcs);
 
 	if (awk->tree.begin != XP_NULL) {

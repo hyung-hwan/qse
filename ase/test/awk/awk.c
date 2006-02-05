@@ -78,7 +78,7 @@ int xp_main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
-awk.opt.parse = XP_AWK_EXPLICIT | XP_AWK_UNIQUE;
+awk.opt.parse = XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_SHADING | XP_AWK_IMPLICIT;
 	if (xp_awk_parse(&awk) == -1) {
 		xp_printf (
 			XP_TEXT("error: cannot parse program - [%d] %s\n"), 

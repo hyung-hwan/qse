@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.47 2006-02-05 14:21:18 bacon Exp $
+ * $Id: parse.c,v 1.48 2006-02-05 16:00:33 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -82,12 +82,13 @@ enum {
 #endif
 
 
-static xp_awk_node_t* __parse_progunit (xp_awk_t* awk);
+static xp_awk_t*      __parse_progunit (xp_awk_t* awk);
 static xp_awk_node_t* __parse_function (xp_awk_t* awk);
 static xp_awk_node_t* __parse_begin (xp_awk_t* awk);
 static xp_awk_node_t* __parse_end (xp_awk_t* awk);
 static xp_awk_node_t* __parse_action (xp_awk_t* awk);
 static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
+static xp_awk_t*      __collect_globals (xp_awk_t* awk);
 static xp_awk_t*      __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 static xp_awk_node_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk);
@@ -206,6 +207,16 @@ static int __dump_func (xp_awk_pair_t* pair)
 
 static void __dump (xp_awk_t* awk)
 {
+	if (awk->tree.nglobals > 0) {
+		xp_size_t i;
+
+		xp_printf (XP_TEXT("global "));
+		for (i = 0; i < awk->tree.nglobals - 1; i++) {
+			xp_printf (XP_TEXT("__global%lu, "), (unsigned long)i);
+		}
+		xp_printf (XP_TEXT("__global%lu;\n"), (unsigned long)i);
+	}
+
 	xp_awk_hash_walk (&awk->tree.funcs, __dump_func);
 
 	if (awk->tree.begin != NULL) {
@@ -240,6 +251,7 @@ int xp_awk_parse (xp_awk_t* awk)
 		}
 	}
 
+	awk->tree.nglobals = xp_awk_tab_getsize (&awk->parse.globals);
 xp_printf (XP_TEXT("-----------------------------\n"));
 xp_printf (XP_TEXT("sucessful end - %d\n"), awk->errnum);
 __dump (awk);
@@ -247,25 +259,34 @@ __dump (awk);
 	return 0;
 }
 
-static xp_awk_node_t* __parse_progunit (xp_awk_t* awk)
+static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 {
 	/*
 	pattern { action }
 	function name (parameter-list) { statement }
 	*/
-	xp_awk_node_t* node;
 
-	if (MATCH(awk,TOKEN_FUNCTION)) {
-		node = __parse_function(awk);
-		if (node == XP_NULL) return XP_NULL;
+	if ((awk->opt.parse & XP_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) {
+		xp_size_t nglobals;
+
+		if (__get_token(awk) == -1) return XP_NULL;
+
+		nglobals = xp_awk_tab_getsize(&awk->parse.globals);
+		if (__collect_globals(awk) == XP_NULL) {
+			xp_awk_tab_remrange (
+				&awk->parse.globals, nglobals, 
+				xp_awk_tab_getsize(&awk->parse.globals) - nglobals);
+			return XP_NULL;
+		}
+	}
+	else if (MATCH(awk,TOKEN_FUNCTION)) {
+		if (__parse_function(awk) == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk,TOKEN_BEGIN)) {
-		node = __parse_begin (awk);
-		if (node == XP_NULL) return XP_NULL;
+		if (__parse_begin(awk) == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk, TOKEN_END)) {
-		node = __parse_end (awk);
-		if (node == XP_NULL) return XP_NULL;
+		if (__parse_end(awk) == XP_NULL) return XP_NULL;
 	}
 	/* TODO: process patterns and expressions */
 	/* 
@@ -279,13 +300,15 @@ static xp_awk_node_t* __parse_progunit (xp_awk_t* awk)
 	*/
 	else {
 		/* pattern-less actions */
+		xp_awk_node_t* node;
+
 		node = __parse_action (awk);
 		if (node == XP_NULL) return XP_NULL;
 
 		// TODO: weave the action block into awk->tree.actions...
 	}
 
-	return node;
+	return awk;
 }
 
 static xp_awk_node_t* __parse_function (xp_awk_t* awk)
@@ -611,6 +634,50 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	return (xp_awk_node_t*)block;
 }
 
+static xp_awk_t* __collect_globals (xp_awk_t* awk)
+{
+	xp_char_t* global;
+
+	while (1) {
+		if (!MATCH(awk,TOKEN_IDENT)) {
+			PANIC (awk, XP_AWK_EIDENT);
+		}
+
+		global = XP_STR_BUF(&awk->token.name);
+
+		if (awk->opt.parse & XP_AWK_UNIQUE) {
+			/* check if it conflict with a function name */
+			if (xp_awk_hash_get(&awk->tree.funcs, global) != XP_NULL) {
+				PANIC (awk, XP_AWK_EDUPNAME);
+			}
+		}
+
+		/* check if it conflicts with other global variable names */
+		if (xp_awk_tab_find(&awk->parse.globals, global, 0) != (xp_size_t)-1) { 
+			PANIC (awk, XP_AWK_EDUPVAR);	
+		}
+
+		if (xp_awk_tab_adddatum(&awk->parse.globals, global) == (xp_size_t)-1) {
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		if (__get_token(awk) == -1) return XP_NULL;
+
+		if (MATCH(awk,TOKEN_SEMICOLON)) break;
+
+		if (!MATCH(awk,TOKEN_COMMA)) {
+			PANIC (awk, XP_AWK_ECOMMA);
+		}
+
+		if (__get_token(awk) == -1) return XP_NULL;
+	}
+
+	/* skip a semicolon */
+	if (__get_token(awk) == -1) return XP_NULL;
+
+	return awk;
+}
+
 static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 {
 	xp_char_t* local;
@@ -787,8 +854,12 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 	xp_assert (x->next == XP_NULL);
 	if (x->type != XP_AWK_NODE_ARG &&
 	    x->type != XP_AWK_NODE_ARGIDX &&
-	    x->type != XP_AWK_NODE_VAR && 
-	    x->type != XP_AWK_NODE_VARIDX &&
+	    x->type != XP_AWK_NODE_NAMED && 
+	    x->type != XP_AWK_NODE_NAMEDIDX &&
+	    x->type != XP_AWK_NODE_GLOBAL && 
+	    x->type != XP_AWK_NODE_GLOBALIDX &&
+	    x->type != XP_AWK_NODE_LOCAL && 
+	    x->type != XP_AWK_NODE_LOCALIDX &&
 	    x->type != XP_AWK_NODE_POS) {
 		xp_awk_clrpt (x);
 		PANIC (awk, XP_AWK_EASSIGN);
@@ -1019,7 +1090,7 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 			/* search the local variable list */
 			idxa = xp_awk_tab_rrfind(&awk->parse.locals, name_dup, 0);
 			if (idxa != (xp_size_t)-1) {
-				node->type = XP_AWK_NODE_VAR;
+				node->type = XP_AWK_NODE_LOCAL;
 				node->next = XP_NULL;
 				//node->id.name = XP_NULL;
 				node->id.name = name_dup;
@@ -1028,14 +1099,24 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 				return (xp_awk_node_t*)node;
 			}
 
-			/* TODO: search the global variable list... */
 			/* search the global variable list */
+			idxa = xp_awk_tab_rrfind(&awk->parse.globals, name_dup, 0);
+			if (idxa != (xp_size_t)-1) {
+				node->type = XP_AWK_NODE_GLOBAL;
+				node->next = XP_NULL;
+				//node->id.name = XP_NULL;
+				node->id.name = name_dup;
+				node->id.idxa = idxa;
+
+				return (xp_awk_node_t*)node;
+			}
 
 			if (awk->opt.parse & XP_AWK_IMPLICIT) {
-				node->type = XP_AWK_NODE_VAR;
+				node->type = XP_AWK_NODE_NAMED;
 				node->next = XP_NULL;
 				node->id.name = name_dup;
 				node->id.idxa = (xp_size_t)-1;
+
 				return (xp_awk_node_t*)node;
 			}
 
@@ -1181,7 +1262,7 @@ static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 	/* search the local variable list */
 	idxa = xp_awk_tab_rrfind(&awk->parse.locals, name, 0);
 	if (idxa != (xp_size_t)-1) {
-		node->type = XP_AWK_NODE_VARIDX;
+		node->type = XP_AWK_NODE_LOCALIDX;
 		node->next = XP_NULL;
 		//node->id.name = XP_NULL;
 		node->id.name = name;
@@ -1191,14 +1272,25 @@ static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		return (xp_awk_node_t*)node;
 	}
 
-	/* TODO: search the global variable list... */
 	/* search the global variable list */
+	idxa = xp_awk_tab_rrfind(&awk->parse.globals, name, 0);
+	if (idxa != (xp_size_t)-1) {
+		node->type = XP_AWK_NODE_GLOBALIDX;
+		node->next = XP_NULL;
+		//node->id.name = XP_NULL;
+		node->id.name = name;
+		node->id.idxa = idxa;
+
+		return (xp_awk_node_t*)node;
+	}
 
 	if (awk->opt.parse & XP_AWK_IMPLICIT) {
-		node->type = XP_AWK_NODE_VAR;
+		node->type = XP_AWK_NODE_NAMEDIDX;
 		node->next = XP_NULL;
 		node->id.name = name;
 		node->id.idxa = (xp_size_t)-1;
+		node->idx = idx;
+
 		return (xp_awk_node_t*)node;
 	}
 
