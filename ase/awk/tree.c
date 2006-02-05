@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.16 2006-02-04 19:31:51 bacon Exp $
+ * $Id: tree.c,v 1.17 2006-02-05 06:10:43 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -121,6 +121,7 @@ static int __print_expr_node_list (xp_awk_node_t* tree)
 static void __print_statements (xp_awk_node_t* tree, int depth)
 {
 	xp_awk_node_t* p = tree;
+	xp_size_t i;
 
 	while (p != XP_NULL) {
 
@@ -133,11 +134,17 @@ static void __print_statements (xp_awk_node_t* tree, int depth)
 		case XP_AWK_NODE_BLOCK:
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("{\n"));
+
 			if (((xp_awk_node_block_t*)p)->nlocals > 0) {
 				__print_tabs (depth + 1);
-				xp_printf (XP_TEXT("NLOCALS=>%u;\n"), 
-					(unsigned int)((xp_awk_node_block_t*)p)->nlocals);
+				xp_printf (XP_TEXT("local "));
+
+				for (i = 0; i < ((xp_awk_node_block_t*)p)->nlocals - 1; i++) {
+					xp_printf (XP_TEXT("__local%u, "), (unsigned int)i);
+				}
+				xp_printf (XP_TEXT("__local%u;\n"), (unsigned int)i);
 			}
+
 			__print_statements (((xp_awk_node_block_t*)p)->body, depth + 1);	
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("}\n"));
