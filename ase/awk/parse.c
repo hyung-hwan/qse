@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.48 2006-02-05 16:00:33 bacon Exp $
+ * $Id: parse.c,v 1.49 2006-02-05 16:08:23 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -83,13 +83,14 @@ enum {
 
 
 static xp_awk_t*      __parse_progunit (xp_awk_t* awk);
+static xp_awk_t*      __collect_globals (xp_awk_t* awk);
+static xp_awk_t*      __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
+
 static xp_awk_node_t* __parse_function (xp_awk_t* awk);
 static xp_awk_node_t* __parse_begin (xp_awk_t* awk);
 static xp_awk_node_t* __parse_end (xp_awk_t* awk);
 static xp_awk_node_t* __parse_action (xp_awk_t* awk);
 static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
-static xp_awk_t*      __collect_globals (xp_awk_t* awk);
-static xp_awk_t*      __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 static xp_awk_node_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk);
 static xp_awk_node_t* __parse_expression (xp_awk_t* awk);
@@ -214,7 +215,7 @@ static void __dump (xp_awk_t* awk)
 		for (i = 0; i < awk->tree.nglobals - 1; i++) {
 			xp_printf (XP_TEXT("__global%lu, "), (unsigned long)i);
 		}
-		xp_printf (XP_TEXT("__global%lu;\n"), (unsigned long)i);
+		xp_printf (XP_TEXT("__global%lu;\n\n"), (unsigned long)i);
 	}
 
 	xp_awk_hash_walk (&awk->tree.funcs, __dump_func);
