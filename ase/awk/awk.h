@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.26 2006-02-05 16:00:33 bacon Exp $
+ * $Id: awk.h,v 1.27 2006-02-07 15:28:05 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -54,6 +54,7 @@ enum
  * TYPE: xp_awk_t
  */
 typedef struct xp_awk_t xp_awk_t;
+typedef struct xp_awk_chain_t xp_awk_chain_t;
 
 /*
  * TYPE: xp_awk_io_t
@@ -103,7 +104,8 @@ struct xp_awk_t
 		xp_awk_hash_t funcs;
 		xp_awk_node_t* begin;
 		xp_awk_node_t* end;
-		xp_awk_node_t* unnamed;
+		xp_awk_chain_t* chain;
+		xp_awk_chain_t* chain_tail;
 	} tree;
 
 	/* temporary information that the parser needs */
@@ -133,6 +135,13 @@ struct xp_awk_t
 	/* housekeeping */
 	int errnum;
 	xp_bool_t __dynamic;
+};
+
+struct xp_awk_chain_t
+{
+	xp_awk_node_t* pattern;
+	xp_awk_node_t* action;
+	xp_awk_chain_t* next;	
 };
 
 #ifdef __cplusplus

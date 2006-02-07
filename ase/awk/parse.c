@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.50 2006-02-05 16:12:50 bacon Exp $
+ * $Id: parse.c,v 1.51 2006-02-07 15:28:05 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -89,6 +89,8 @@ static xp_awk_t*      __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 static xp_awk_node_t* __parse_function (xp_awk_t* awk);
 static xp_awk_node_t* __parse_begin (xp_awk_t* awk);
 static xp_awk_node_t* __parse_end (xp_awk_t* awk);
+static xp_awk_node_t* __parse_patternless (xp_awk_t* awk);
+
 static xp_awk_node_t* __parse_action (xp_awk_t* awk);
 static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
 static xp_awk_node_t* __parse_statement (xp_awk_t* awk);
@@ -208,6 +210,8 @@ static int __dump_func (xp_awk_pair_t* pair)
 
 static void __dump (xp_awk_t* awk)
 {
+	xp_awk_chain_t* chain;
+
 	if (awk->tree.nglobals > 0) {
 		xp_size_t i;
 
@@ -220,18 +224,24 @@ static void __dump (xp_awk_t* awk)
 
 	xp_awk_hash_walk (&awk->tree.funcs, __dump_func);
 
-	if (awk->tree.begin != NULL) {
+	if (awk->tree.begin != XP_NULL) {
 		xp_printf (XP_TEXT("BEGIN "));
 		xp_awk_prnpt (awk->tree.begin);
 		xp_printf (XP_TEXT("\n"));
 	}
 
-	if (awk->tree.end != NULL) {
+	chain = awk->tree.chain;
+	while (chain != XP_NULL) {
+		if (chain->pattern != XP_NULL) xp_awk_prnpt (chain->pattern);
+		if (chain->action != XP_NULL) xp_awk_prnpt (chain->action);	
+		xp_printf (XP_TEXT("\n"));
+		chain = chain->next;	
+	}
+
+	if (awk->tree.end != XP_NULL) {
 		xp_printf (XP_TEXT("END "));
 		xp_awk_prnpt (awk->tree.end);
 	}
-
-// TODO: dump unmaed top-level blocks...
 }
 
 int xp_awk_parse (xp_awk_t* awk)
@@ -252,9 +262,8 @@ int xp_awk_parse (xp_awk_t* awk)
 		}
 	}
 
-	awk->tree.nglobals = xp_awk_tab_getsize (&awk->parse.globals);
+	awk->tree.nglobals = xp_awk_tab_getsize(&awk->parse.globals);
 xp_printf (XP_TEXT("-----------------------------\n"));
-xp_printf (XP_TEXT("sucessful end - %d\n"), awk->errnum);
 __dump (awk);
 
 	return 0;
@@ -300,13 +309,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	pattern, pattern
 	*/
 	else {
-		/* pattern-less actions */
-		xp_awk_node_t* node;
-
-		node = __parse_action (awk);
-		if (node == XP_NULL) return XP_NULL;
-
-		// TODO: weave the action block into awk->tree.actions...
+		if (__parse_patternless(awk) == XP_NULL) return XP_NULL;
 	}
 
 	return awk;
@@ -518,6 +521,36 @@ static xp_awk_node_t* __parse_end (xp_awk_t* awk)
 	if (node == XP_NULL) return XP_NULL;
 
 	awk->tree.end = node;
+	return node;
+}
+
+static xp_awk_node_t* __parse_patternless (xp_awk_t* awk)
+{
+	xp_awk_node_t* node;
+	xp_awk_chain_t* chain;
+
+	node = __parse_action (awk);
+	if (node == XP_NULL) return XP_NULL;
+
+	chain = (xp_awk_chain_t*) xp_malloc (xp_sizeof(xp_awk_chain_t));
+	if (chain == XP_NULL) {
+		xp_awk_clrpt (node);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+	chain->pattern = XP_NULL;
+	chain->action = node;
+	chain->next = XP_NULL;
+
+	if (awk->tree.chain == XP_NULL) {
+		awk->tree.chain = chain;
+		awk->tree.chain_tail = chain;
+	}
+	else {
+		awk->tree.chain_tail->next = chain;
+		awk->tree.chain_tail = chain;
+	}
+
 	return node;
 }
 

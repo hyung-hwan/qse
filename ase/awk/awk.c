@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.19 2006-02-05 16:00:33 bacon Exp $
+ * $Id: awk.c,v 1.20 2006-02-07 15:28:05 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -72,7 +72,8 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	awk->tree.nglobals = 0;
 	awk->tree.begin = XP_NULL;
 	awk->tree.end = XP_NULL;
-	awk->tree.unnamed = XP_NULL;
+	awk->tree.chain = XP_NULL;
+	awk->tree.chain_tail = XP_NULL;
 
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
@@ -169,13 +170,19 @@ void xp_awk_clear (xp_awk_t* awk)
 		awk->tree.end = XP_NULL;
 	}
 
-	while (awk->tree.unnamed != XP_NULL) {
-		xp_awk_node_t* next = awk->tree.unnamed->next;
-		xp_awk_clrpt (awk->tree.unnamed);
-		awk->tree.unnamed = next;
-	}
+	while (awk->tree.chain != XP_NULL) {
+		xp_awk_chain_t* next = awk->tree.chain->next;
 
-	/* TODO: destroy pattern-actions pairs */
+		if (awk->tree.chain->pattern != XP_NULL)
+			xp_awk_clrpt (awk->tree.chain->pattern);
+		if (awk->tree.chain->action != XP_NULL)
+			xp_awk_clrpt (awk->tree.chain->action);
+		xp_free (awk->tree.chain);
+
+		awk->tree.chain = next;
+	}
+	awk->tree.chain_tail = XP_NULL;
+
 	/* TODO: destroy function list */
 }
 
