@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.27 2006-02-07 15:28:05 bacon Exp $
+ * $Id: awk.h,v 1.28 2006-02-08 16:14:31 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -76,7 +76,8 @@ enum
 	XP_AWK_IMPLICIT = (1 << 0), /* allow undeclared variables */
 	XP_AWK_EXPLICIT = (1 << 1), /* variable requires explicit declaration */
 	XP_AWK_UNIQUE   = (1 << 2), /* a function name should not coincide to be a variable name */
-	XP_AWK_SHADING  = (1 << 3)  /* allow variable shading */
+	XP_AWK_SHADING  = (1 << 3), /* allow variable shading */
+	XP_AWK_SHIFT    = (1 << 4)  /* support shift operators */
 };
 
 struct xp_awk_t
