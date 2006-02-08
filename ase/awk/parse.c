@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.51 2006-02-07 15:28:05 bacon Exp $
+ * $Id: parse.c,v 1.52 2006-02-08 16:14:31 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -18,6 +18,10 @@ enum
 	TOKEN_ASSIGN,
 	TOKEN_EQ,
 	TOKEN_NE,
+	TOKEN_LE,
+	TOKEN_LT,
+	TOKEN_GE,
+	TOKEN_GT,
 	TOKEN_NOT,
 	TOKEN_PLUS,
 	TOKEN_PLUS_PLUS,
@@ -28,6 +32,8 @@ enum
 	TOKEN_MUL,
 	TOKEN_DIV,
 	TOKEN_MOD,
+	TOKEN_RSHIFT,
+	TOKEN_LSHIFT,
 
 	TOKEN_LPAREN,
 	TOKEN_RPAREN,
@@ -72,7 +78,15 @@ enum {
 	BINOP_MINUS,
 	BINOP_MUL,
 	BINOP_DIV,
-	BINOP_MOD
+	BINOP_MOD,
+	BINOP_RSHIFT,
+	BINOP_LSHIFT,
+	BINOP_EQ,
+	BINOP_NE,
+	BINOP_GT,
+	BINOP_GE,
+	BINOP_LT,
+	BINOP_LE
 };
 
 #if defined(__BORLANDC__) || defined(_MSC_VER)
@@ -97,6 +111,9 @@ static xp_awk_node_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk);
 static xp_awk_node_t* __parse_expression (xp_awk_t* awk);
 static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk);
+static xp_awk_node_t* __parse_equality (xp_awk_t* awk);
+static xp_awk_node_t* __parse_relational (xp_awk_t* awk);
+static xp_awk_node_t* __parse_shift (xp_awk_t* awk);
 static xp_awk_node_t* __parse_additive (xp_awk_t* awk);
 static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk);
 static xp_awk_node_t* __parse_unary (xp_awk_t* awk);
@@ -940,9 +957,148 @@ static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk)
 	 * <basic expression list> ::= <basic expression> [comma <basic expression>]*
 	 */
 	
-	return __parse_additive (awk);
+	return __parse_equality (awk);
 }
 
+static xp_awk_node_t* __parse_equality (xp_awk_t* awk)
+{
+	xp_awk_node_expr_t* node;
+	xp_awk_node_t* left, * right;
+	int opcode;
+
+	left = __parse_relational (awk);
+	if (left == XP_NULL) return XP_NULL;
+	
+	while (1) {
+		if (MATCH(awk,TOKEN_EQ)) opcode = BINOP_EQ;
+		else if (MATCH(awk,TOKEN_NE)) opcode = BINOP_NE;
+		else break;
+
+		if (__get_token(awk) == -1) {
+			xp_awk_clrpt (left);
+			return XP_NULL; 
+		}
+
+		right = __parse_relational (awk);
+		if (right == XP_NULL) {
+			xp_awk_clrpt (left);
+			return XP_NULL;
+		}
+
+		// TODO: constant folding -> in other parts of the program also...
+
+		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
+		if (node == XP_NULL) {
+			xp_awk_clrpt (right);
+			xp_awk_clrpt (left);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		node->type = XP_AWK_NODE_BINARY;
+		node->next = XP_NULL;
+		node->opcode = opcode; 
+		node->left = left;
+		node->right = right;
+
+		left = (xp_awk_node_t*)node;
+	}
+
+	return left;
+}
+
+static xp_awk_node_t* __parse_relational (xp_awk_t* awk)
+{
+	xp_awk_node_expr_t* node;
+	xp_awk_node_t* left, * right;
+	int opcode;
+
+	left = __parse_shift (awk);
+	if (left == XP_NULL) return XP_NULL;
+	
+	while (1) {
+		if (MATCH(awk,TOKEN_GT)) opcode = BINOP_GT;
+		else if (MATCH(awk,TOKEN_GE)) opcode = BINOP_GE;
+		else if (MATCH(awk,TOKEN_LT)) opcode = BINOP_LT;
+		else if (MATCH(awk,TOKEN_LE)) opcode = BINOP_LE;
+		else break;
+
+		if (__get_token(awk) == -1) {
+			xp_awk_clrpt (left);
+			return XP_NULL; 
+		}
+
+		right = __parse_shift (awk);
+		if (right == XP_NULL) {
+			xp_awk_clrpt (left);
+			return XP_NULL;
+		}
+
+		// TODO: constant folding -> in other parts of the program also...
+
+		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
+		if (node == XP_NULL) {
+			xp_awk_clrpt (right);
+			xp_awk_clrpt (left);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		node->type = XP_AWK_NODE_BINARY;
+		node->next = XP_NULL;
+		node->opcode = opcode; 
+		node->left = left;
+		node->right = right;
+
+		left = (xp_awk_node_t*)node;
+	}
+
+	return left;
+}
+
+static xp_awk_node_t* __parse_shift (xp_awk_t* awk)
+{
+	xp_awk_node_expr_t* node;
+	xp_awk_node_t* left, * right;
+	int opcode;
+
+	left = __parse_additive (awk);
+	if (left == XP_NULL) return XP_NULL;
+	
+	while (1) {
+		if (MATCH(awk,TOKEN_RSHIFT)) opcode = BINOP_RSHIFT;
+		else if (MATCH(awk,TOKEN_LSHIFT)) opcode = BINOP_LSHIFT;
+		else break;
+
+		if (__get_token(awk) == -1) {
+			xp_awk_clrpt (left);
+			return XP_NULL; 
+		}
+
+		right = __parse_additive (awk);
+		if (right == XP_NULL) {
+			xp_awk_clrpt (left);
+			return XP_NULL;
+		}
+
+		// TODO: constant folding -> in other parts of the program also...
+
+		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
+		if (node == XP_NULL) {
+			xp_awk_clrpt (right);
+			xp_awk_clrpt (left);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		node->type = XP_AWK_NODE_BINARY;
+		node->next = XP_NULL;
+		node->opcode = opcode; 
+		node->left = left;
+		node->right = right;
+
+		left = (xp_awk_node_t*)node;
+	}
+
+	return left;
+}
 
 static xp_awk_node_t* __parse_additive (xp_awk_t* awk)
 {
@@ -1833,6 +1989,40 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_STR (awk, XP_TEXT("!"));
 		}
 	}
+	else if (c == XP_CHAR('>')) {
+		GET_CHAR_TO (awk, c);
+		if ((awk->opt.parse & XP_AWK_SHIFT) && c == XP_CHAR('>')) {
+			SET_TOKEN_TYPE (awk, TOKEN_RSHIFT);
+			ADD_TOKEN_STR (awk, XP_TEXT(">>"));
+			GET_CHAR_TO (awk, c);
+		}
+		else if (c == XP_CHAR('=')) {
+			SET_TOKEN_TYPE (awk, TOKEN_GE);
+			ADD_TOKEN_STR (awk, XP_TEXT(">="));
+			GET_CHAR_TO (awk, c);
+		}
+		else {
+			SET_TOKEN_TYPE (awk, TOKEN_GT);
+			ADD_TOKEN_STR (awk, XP_TEXT(">"));
+		}
+	}
+	else if (c == XP_CHAR('<')) {
+		GET_CHAR_TO (awk, c);
+		if ((awk->opt.parse & XP_AWK_SHIFT) && c == XP_CHAR('<')) {
+			SET_TOKEN_TYPE (awk, TOKEN_LSHIFT);
+			ADD_TOKEN_STR (awk, XP_TEXT("<<"));
+			GET_CHAR_TO (awk, c);
+		}
+		else if (c == XP_CHAR('=')) {
+			SET_TOKEN_TYPE (awk, TOKEN_LE);
+			ADD_TOKEN_STR (awk, XP_TEXT("<="));
+			GET_CHAR_TO (awk, c);
+		}
+		else {
+			SET_TOKEN_TYPE (awk, TOKEN_LT);
+			ADD_TOKEN_STR (awk, XP_TEXT("<"));
+		}
+	}
 	else if (c == XP_CHAR('+')) {
 		GET_CHAR_TO (awk, c);
 		if (c == XP_CHAR('+')) {
@@ -1866,6 +2056,7 @@ static int __get_token (xp_awk_t* awk)
 			GET_CHAR_TO (awk, c);
 		}
 		else if (xp_isdigit(c)) {
+// TODO...
 		//	read_number (XP_CHAR('-'));
 		}
 		else {

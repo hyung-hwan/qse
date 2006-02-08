@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.19 2006-02-05 16:00:33 bacon Exp $
+ * $Id: tree.c,v 1.20 2006-02-08 16:14:31 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -10,13 +10,21 @@
 #include <xp/bas/stdio.h>
 #endif
 
-static xp_char_t __binop_char[] =
+static const xp_char_t* __binop_str[] =
 {
-	XP_CHAR('+'),
-	XP_CHAR('-'),
-	XP_CHAR('*'),
-	XP_CHAR('/'),
-	XP_CHAR('%')
+	XP_TEXT("+"),
+	XP_TEXT("-"),
+	XP_TEXT("*"),
+	XP_TEXT("/"),
+	XP_TEXT("%"),
+	XP_TEXT("<<"),
+	XP_TEXT(">>"),
+	XP_TEXT("=="),
+	XP_TEXT("!="),
+	XP_TEXT(">"),
+	XP_TEXT(">="),
+	XP_TEXT("<"),
+	XP_TEXT("<=")
 };
 
 static void __print_tabs (int depth);
@@ -44,7 +52,7 @@ static int __print_expr_node (xp_awk_node_t* node)
 		xp_printf (XP_TEXT("("));
 		if (__print_expr_node (((xp_awk_node_expr_t*)node)->left) == -1) return -1;
 		xp_assert ((((xp_awk_node_expr_t*)node)->left)->next == XP_NULL);
-		xp_printf (XP_TEXT(" %c "), __binop_char[((xp_awk_node_expr_t*)node)->opcode]);
+		xp_printf (XP_TEXT(" %s "), __binop_str[((xp_awk_node_expr_t*)node)->opcode]);
 		if (((xp_awk_node_expr_t*)node)->right->type == XP_AWK_NODE_ASSIGN) xp_printf (XP_TEXT("("));
 		if (__print_expr_node (((xp_awk_node_expr_t*)node)->right) == -1) return -1;
 		if (((xp_awk_node_expr_t*)node)->right->type == XP_AWK_NODE_ASSIGN) xp_printf (XP_TEXT(")"));
