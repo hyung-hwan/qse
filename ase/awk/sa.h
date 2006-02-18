@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.9 2006-01-30 13:25:26 bacon Exp $
+ * $Id: sa.h,v 1.10 2006-02-18 16:14:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -67,6 +67,8 @@ typedef ssize_t xp_ssize_t;
 
 #if defined(_WIN32)
 typedef __int64 xp_long_t;
+#elif defined(vax) || defined(__vax)
+typedef long xp_long_t;
 #else
 typedef long long xp_long_t;
 #endif

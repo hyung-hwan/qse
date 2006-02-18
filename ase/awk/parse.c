@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.52 2006-02-08 16:14:31 bacon Exp $
+ * $Id: parse.c,v 1.53 2006-02-18 16:14:14 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -1190,7 +1190,11 @@ static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk)
 			else if (opcode == BINOP_DIV) l /= r;
 			else if (opcode == BINOP_MOD) l %= r;
 			
+#if defined(vax) || defined(__vax)
+                        xp_sprintf (buf, xp_countof(buf), XP_TEXT("%ld"), (long)l);
+#else
 			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%lld"), (long long)l);
+#endif
 
 			tmp = (xp_awk_node_term_t*) xp_malloc (xp_sizeof(xp_awk_node_term_t));
 			if (tmp == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
