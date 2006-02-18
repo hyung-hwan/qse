@@ -1,33 +1,25 @@
-$ write sys$output "cc/define=__STAND_ALONE awk.c"
-$ cc/define=__STAND_ALONE awk.c
-$
-$ write sys$output "cc/define=__STAND_ALONE parse.c"
-$ cc/define=__STAND_ALONE parse.c
-$
-$ write sys$output "cc/define=__STAND_ALONE tree.c"
-$ cc/define=__STAND_ALONE tree.c
-$
-$ write sys$output "cc/define=__STAND_ALONE sa.c"
-$ cc/define=__STAND_ALONE sa.c
-$
-$ write sys$output "lib/create xpawk awk,parse,tree,sa"
-$ lib/create xpawk awk,parse,tree,sa
+$ xxx:
 
-
-$ objs := awk,hash,tab,tree,parse,sa
 $
-$ loop:
-$   file =
-$   if file .ne. ""
-$   then
-$      gosub compile
-$      goto loop
-$   endif
-$
+$ names := awk,hash,tab,tree,parse,sa
+$ gosub compile
+$ gosub archive
 $ exit
-$ 
+$
 $ compile:
-$   write sys$output "awk.c"
+$   num = 0
+$ compile_loop:
+$   name = f$element(num,",",names)
+$   if name .eqs. "," then return
+$   gosub compile_file
+$   num = num + 1
+$   goto compile_loop
+$
+$ compile_file:
+$   write sys$output "Compiling ''name'.c..."
+$   cc/define=__STAND_ALONE 'name'
 $   return
-
-
+$
+$ archive:
+$   write sys$output "Creating library..."
+$   lib/create xpawk 'names'
