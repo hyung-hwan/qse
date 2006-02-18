@@ -1,5 +1,5 @@
-$ xxx:
-
+$
+$! build script for OpenVMS
 $
 $ names := awk,hash,tab,tree,parse,sa
 $ gosub compile
