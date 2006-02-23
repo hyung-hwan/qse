@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.28 2006-02-08 16:14:31 bacon Exp $
+ * $Id: awk.h,v 1.29 2006-02-23 15:37:34 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -117,6 +117,12 @@ struct xp_awk_t
 		xp_awk_tab_t params;
 		xp_size_t nlocals_max;
 	} parse;
+
+	/* run-time data structure */
+	struct
+	{
+		xp_awk_hash_t named;
+	} run;
 
 	/* source buffer management */
 	struct 
