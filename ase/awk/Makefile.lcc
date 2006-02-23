@@ -1,5 +1,5 @@
-SRCS = awk.c tree.c parse.c run.c sa.c
-OBJS = awk.obj tree.obj parse.obj run.obj sa.obj
+SRCS = awk.c tree.c tab.c hash.c parse.c run.c sa.c 
+OBJS = awk.obj tree.obj tab.obj hash.obj parse.obj run.obj sa.obj 
 OUT = xpawk.lib
 
 CC = lcc
