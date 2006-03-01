@@ -1,0 +1,37 @@
+
+=== SYNOPSIS ===
+{{{
+#include <xp/awk/awk.h>
+
+xp_awk_t* xp_awk_open (xp_awk_t* awk);
+int xp_awk_close (xp_awk_t* awk);
+
+int xp_awk_geterrnum (xp_awk_t* awk);
+const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk);
+
+void xp_awk_clear (xp_awk_t* awk);
+
+int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg);
+int xp_awk_detsrc (xp_awk_t* awk);
+
+int xp_awk_attin (xp_awk_t* awk, xp_awk_io_t in, void* arg);
+int xp_awk_detin (xp_awk_t* awk);
+
+int xp_awk_attout (xp_awk_t* awk, xp_awk_io_t out, void* arg);
+int xp_awk_detout (xp_awk_t* awk);
+
+int xp_awk_parse (xp_awk_t* awk);
+int xp_awk_run (xp_awk_t* awk);
+}}}
+
+=== DESCRIPTION ===
+
+=== EXAMPLE ===
+{{{
+#include <xp/awk/awk.h>
+
+int xp_main ()
+{
+	return 0;
+}
+}}}
