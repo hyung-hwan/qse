@@ -1,0 +1,16 @@
+=== Introduction ===
+  Expider is a toolkit for developers written in the hope that it will ease 
+  a lot of tedious programming tasks. It provides a wide range of functions 
+  and classes to cover for general purpose programming.
+
+=== License ===
+  The toolkit is distributed under the PIOWAVE license.
+
+=== Author ===
+  Chung, Hyung-Hwan, the sole author of Expider, is ...
+
+=== Logo ===
+  Expider eXpider 
+  Expide  eXpide
+  Exprius Expon 
+  Expada Expica Expata Experion Expanx
