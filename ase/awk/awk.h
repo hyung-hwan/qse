@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.29 2006-02-23 15:37:34 bacon Exp $
+ * $Id: awk.h,v 1.30 2006-03-02 15:10:59 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -15,7 +15,7 @@
 
 #include <xp/awk/tree.h>
 #include <xp/awk/tab.h>
-#include <xp/awk/hash.h>
+#include <xp/awk/map.h>
 
 enum
 {
@@ -102,7 +102,7 @@ struct xp_awk_t
 	struct 
 	{
 		xp_size_t nglobals;
-		xp_awk_hash_t funcs;
+		xp_awk_map_t funcs;
 		xp_awk_node_t* begin;
 		xp_awk_node_t* end;
 		xp_awk_chain_t* chain;
@@ -121,7 +121,7 @@ struct xp_awk_t
 	/* run-time data structure */
 	struct
 	{
-		xp_awk_hash_t named;
+		xp_awk_map_t named;
 	} run;
 
 	/* source buffer management */
