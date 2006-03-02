@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.1 2006-03-02 15:10:59 bacon Exp $
+ * $Id: map.c,v 1.2 2006-03-02 15:36:30 bacon Exp $
  */
 
 #include <xp/awk/map.h>
@@ -27,13 +27,14 @@ xp_awk_map_t* xp_awk_map_open (
 	xp_awk_map_t* map, xp_size_t capa, void (*free_value) (void*))
 {
 	if (map == XP_NULL) {
-		map = (xp_awk_map_t*)	xp_malloc (xp_sizeof(xp_awk_map_t));
+		map = (xp_awk_map_t*) xp_malloc (xp_sizeof(xp_awk_map_t));
 		if (map == XP_NULL) return XP_NULL;
 		map->__dynamic = xp_true;
 	}
 	else map->__dynamic = xp_false;
 
-	map->buck = (xp_awk_pair_t**) xp_malloc (xp_sizeof(xp_awk_pair_t*) * capa);
+	map->buck = (xp_awk_pair_t**) 
+		xp_malloc (xp_sizeof(xp_awk_pair_t*) * capa);
 	if (map->buck == XP_NULL) {
 		if (map->__dynamic) xp_free (map);
 		return XP_NULL;	
