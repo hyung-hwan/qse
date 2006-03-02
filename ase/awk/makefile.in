@@ -1,4 +1,4 @@
-SRCS = awk.c tree.c tab.c hash.c parse.c run.c sa.c
+SRCS = awk.c tree.c tab.c map.c parse.c run.c sa.c
 OBJS = $(SRCS:.c=.o)
 OUT = libxpawk.a
 

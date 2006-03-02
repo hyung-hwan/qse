@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.53 2006-02-18 16:14:14 bacon Exp $
+ * $Id: parse.c,v 1.54 2006-03-02 15:10:59 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -239,7 +239,7 @@ static void __dump (xp_awk_t* awk)
 		xp_printf (XP_TEXT("__global%lu;\n\n"), (unsigned long)i);
 	}
 
-	xp_awk_hash_walk (&awk->tree.funcs, __dump_func);
+	xp_awk_map_walk (&awk->tree.funcs, __dump_func);
 
 	if (awk->tree.begin != XP_NULL) {
 		xp_printf (XP_TEXT("BEGIN "));
@@ -350,7 +350,7 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	}
 
 	name = XP_STR_BUF(&awk->token.name);
-	if (xp_awk_hash_get(&awk->tree.funcs, name) != XP_NULL) {
+	if (xp_awk_map_get(&awk->tree.funcs, name) != XP_NULL) {
 		/* the function is defined previously */
 		PANIC (awk, XP_AWK_EDUPFUNC);
 	}
@@ -411,7 +411,7 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 			if (awk->opt.parse & XP_AWK_UNIQUE) {
 				/* check if a parameter conflicts with a function */
 				if (xp_strcmp(name_dup, param) == 0 ||
-				    xp_awk_hash_get(&awk->tree.funcs, param) != XP_NULL) {
+				    xp_awk_map_get(&awk->tree.funcs, param) != XP_NULL) {
 					xp_free (name_dup);
 					xp_awk_tab_clear (&awk->parse.params);
 					PANIC (awk, XP_AWK_EDUPNAME);
@@ -502,8 +502,8 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	func->nargs = nargs;
 	func->body  = body;
 
-	xp_assert (xp_awk_hash_get(&awk->tree.funcs, name_dup) == XP_NULL);
-	if (xp_awk_hash_put(&awk->tree.funcs, name_dup, func) == XP_NULL) {
+	xp_assert (xp_awk_map_get(&awk->tree.funcs, name_dup) == XP_NULL);
+	if (xp_awk_map_put(&awk->tree.funcs, name_dup, func) == XP_NULL) {
 		xp_free (name_dup);
 		xp_awk_clrpt (body);
 		xp_free (func);
@@ -702,7 +702,7 @@ static xp_awk_t* __collect_globals (xp_awk_t* awk)
 
 		if (awk->opt.parse & XP_AWK_UNIQUE) {
 			/* check if it conflict with a function name */
-			if (xp_awk_hash_get(&awk->tree.funcs, global) != XP_NULL) {
+			if (xp_awk_map_get(&awk->tree.funcs, global) != XP_NULL) {
 				PANIC (awk, XP_AWK_EDUPNAME);
 			}
 		}
@@ -748,7 +748,7 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 
 		if (awk->opt.parse & XP_AWK_UNIQUE) {
 			/* check if it conflict with a function name */
-			if (xp_awk_hash_get(&awk->tree.funcs, local) != XP_NULL) {
+			if (xp_awk_map_get(&awk->tree.funcs, local) != XP_NULL) {
 				PANIC (awk, XP_AWK_EDUPNAME);
 			}
 		}

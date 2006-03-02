@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.2 2006-02-23 15:37:34 bacon Exp $
+ * $Id: run.c,v 1.3 2006-03-02 15:10:59 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -29,6 +29,7 @@ static int __run_block (xp_awk_t* awk, xp_awk_node_t* node)
 {
 	xp_assert (node->type == XP_AWK_NODE_BLOCK);
 
+/*
 	xp_awk_node_t* p = node;
 
 	while (p != XP_NULL) {
@@ -36,12 +37,14 @@ static int __run_block (xp_awk_t* awk, xp_awk_node_t* node)
 		if (__run_statement (awk, p) == -1) return -1;
 		p = p->next;
 	}
+*/
 	
 	return 0;
 }
 
 static int __run_statement (xp_awk_t* awk, xp_awk_node_t* node)
 {
+#if 0
 	switch (node->type) {
 	case XP_AWK_NODE_NULL:
 		/* do nothing */
@@ -94,7 +97,7 @@ static int __run_assignment (xp_awk_t* awk, xp_awk_node_assign_t* node)
 		xp_awk_node_t* right = __eval_expr (awk, node->right);
 		if (right == NULL) return -1;
 
-		if (xp_awk_hash_insert(awk->run.named, right) == -1) {
+		if (xp_awk_map_insert(awk->run.named, right) == -1) {
 			awk->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -119,6 +122,7 @@ static int __run_assignment (xp_awk_t* awk, xp_awk_node_assign_t* node)
 		awk->errnum = XP_AWK_EINTERNAL;
 		return -1;
 	}
+#endif
 
 	return 0;
 }
