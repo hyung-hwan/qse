@@ -1,8 +1,9 @@
 /*
- * $Id: run.c,v 1.3 2006-03-02 15:10:59 bacon Exp $
+ * $Id: run.c,v 1.4 2006-03-02 15:36:30 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
+
 #ifndef __STAND_ALONE
 #include <xp/bas/assert.h>
 #endif
