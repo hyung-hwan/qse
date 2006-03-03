@@ -1,9 +1,13 @@
 /*
- * $Id: map.h,v 1.1 2006-03-02 15:10:59 bacon Exp $
+ * $Id: map.h,v 1.2 2006-03-03 11:51:48 bacon Exp $
  */
 
 #ifndef _XP_AWK_MAP_H_
 #define _XP_AWK_MAP_H_
+
+#ifndef _XP_AWK_AWK_H_
+#error Never include this file directly. Include <xp/awk/awk.h> instead
+#endif
 
 #ifdef __STAND_ALONE
 #include <xp/awk/sa.h>

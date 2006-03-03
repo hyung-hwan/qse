@@ -1,8 +1,8 @@
 /*
- * $Id: map.c,v 1.2 2006-03-02 15:36:30 bacon Exp $
+ * $Id: map.c,v 1.3 2006-03-03 11:51:48 bacon Exp $
  */
 
-#include <xp/awk/map.h>
+#include <xp/awk/awk.h>
 
 #ifndef __STAND_ALONE
 #include <xp/bas/memory.h>
