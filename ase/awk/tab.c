@@ -1,8 +1,8 @@
 /*
- * $Id: tab.c,v 1.4 2006-02-05 14:21:18 bacon Exp $
+ * $Id: tab.c,v 1.5 2006-03-03 11:51:48 bacon Exp $
  */
 
-#include <xp/awk/tab.h>
+#include <xp/awk/awk.h>
 
 #ifndef __STAND_ALONE
 #include <xp/bas/memory.h>

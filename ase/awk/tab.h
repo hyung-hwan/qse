@@ -1,9 +1,13 @@
 /*
- * $Id: tab.h,v 1.3 2006-02-05 14:21:18 bacon Exp $
+ * $Id: tab.h,v 1.4 2006-03-03 11:51:48 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
 #define _XP_AWK_TAB_H_
+
+#ifndef _XP_AWK_AWK_H_
+#error Never include this file directly. Include <xp/awk/awk.h> instead
+#endif
 
 #ifdef __STAND_ALONE
 #include <xp/awk/sa.h>

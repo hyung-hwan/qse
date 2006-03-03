@@ -1,9 +1,13 @@
 /*
- * $Id: sa.h,v 1.11 2006-03-03 11:45:45 bacon Exp $
+ * $Id: sa.h,v 1.12 2006-03-03 11:51:48 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
 #define _XP_AWK_SA_H_
+
+#ifndef _XP_AWK_AWK_H_
+#error Never include this file directly. Include <xp/awk/awk.h> instead
+#endif
 
 #ifdef __STAND_ALONE 
 
