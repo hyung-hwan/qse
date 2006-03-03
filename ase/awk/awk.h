@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.30 2006-03-02 15:10:59 bacon Exp $
+ * $Id: awk.h,v 1.31 2006-03-03 11:45:45 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -16,6 +16,7 @@
 #include <xp/awk/tree.h>
 #include <xp/awk/tab.h>
 #include <xp/awk/map.h>
+#include <xp/awk/val.h>
 
 enum
 {
@@ -39,7 +40,7 @@ enum
 	XP_AWK_EEXPR,   /* expression expected */
 
 	XP_AWK_EWHILE,  /* keyword 'while' is expected */
-	XP_AWK_EASSIGN, /* assignment statement expected */
+	XP_AWK_EASSIGNMENT, /* assignment statement expected */
 	XP_AWK_EIDENT,  /* identifier expected */
 	XP_AWK_EDUPBEGIN, /* duplicate BEGIN */
 	XP_AWK_EDUPEND,   /* duplicate END */
@@ -103,8 +104,8 @@ struct xp_awk_t
 	{
 		xp_size_t nglobals;
 		xp_awk_map_t funcs;
-		xp_awk_node_t* begin;
-		xp_awk_node_t* end;
+		xp_awk_nde_t* begin;
+		xp_awk_nde_t* end;
 		xp_awk_chain_t* chain;
 		xp_awk_chain_t* chain_tail;
 	} tree;
@@ -146,8 +147,8 @@ struct xp_awk_t
 
 struct xp_awk_chain_t
 {
-	xp_awk_node_t* pattern;
-	xp_awk_node_t* action;
+	xp_awk_nde_t* pattern;
+	xp_awk_nde_t* action;
 	xp_awk_chain_t* next;	
 };
 

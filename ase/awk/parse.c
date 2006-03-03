@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.54 2006-03-02 15:10:59 bacon Exp $
+ * $Id: parse.c,v 1.55 2006-03-03 11:45:45 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -100,36 +100,36 @@ static xp_awk_t*      __parse_progunit (xp_awk_t* awk);
 static xp_awk_t*      __collect_globals (xp_awk_t* awk);
 static xp_awk_t*      __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 
-static xp_awk_node_t* __parse_function (xp_awk_t* awk);
-static xp_awk_node_t* __parse_begin (xp_awk_t* awk);
-static xp_awk_node_t* __parse_end (xp_awk_t* awk);
-static xp_awk_node_t* __parse_patternless (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_function (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_begin (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_end (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_patternless (xp_awk_t* awk);
 
-static xp_awk_node_t* __parse_action (xp_awk_t* awk);
-static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
-static xp_awk_node_t* __parse_statement (xp_awk_t* awk);
-static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk);
-static xp_awk_node_t* __parse_expression (xp_awk_t* awk);
-static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk);
-static xp_awk_node_t* __parse_equality (xp_awk_t* awk);
-static xp_awk_node_t* __parse_relational (xp_awk_t* awk);
-static xp_awk_node_t* __parse_shift (xp_awk_t* awk);
-static xp_awk_node_t* __parse_additive (xp_awk_t* awk);
-static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk);
-static xp_awk_node_t* __parse_unary (xp_awk_t* awk);
-static xp_awk_node_t* __parse_primary (xp_awk_t* awk);
-static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
-static xp_awk_node_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
-static xp_awk_node_t* __parse_if (xp_awk_t* awk);
-static xp_awk_node_t* __parse_while (xp_awk_t* awk);
-static xp_awk_node_t* __parse_for (xp_awk_t* awk);
-static xp_awk_node_t* __parse_dowhile (xp_awk_t* awk);
-static xp_awk_node_t* __parse_break (xp_awk_t* awk);
-static xp_awk_node_t* __parse_continue (xp_awk_t* awk);
-static xp_awk_node_t* __parse_return (xp_awk_t* awk);
-static xp_awk_node_t* __parse_exit (xp_awk_t* awk);
-static xp_awk_node_t* __parse_next (xp_awk_t* awk);
-static xp_awk_node_t* __parse_nextfile (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_action (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
+static xp_awk_nde_t* __parse_statement (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_expression (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_equality (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_relational (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_shift (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_additive (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_unary (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_primary (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
+static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
+static xp_awk_nde_t* __parse_if (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_while (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_for (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_dowhile (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_break (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_continue (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_return (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_exit (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_next (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk);
 
 static int __get_token (xp_awk_t* awk);
 static int __get_char (xp_awk_t* awk);
@@ -332,11 +332,11 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	return awk;
 }
 
-static xp_awk_node_t* __parse_function (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 {
 	xp_char_t* name;
 	xp_char_t* name_dup;
-	xp_awk_node_t* body;
+	xp_awk_nde_t* body;
 	xp_awk_func_t* func;
 	xp_size_t nargs;
 
@@ -513,50 +513,50 @@ static xp_awk_node_t* __parse_function (xp_awk_t* awk)
 	return body;
 }
 
-static xp_awk_node_t* __parse_begin (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_begin (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 
 	if (awk->tree.begin != XP_NULL) PANIC (awk, XP_AWK_EDUPBEGIN);
 	if (__get_token(awk) == -1) return XP_NULL; 
 
-	node = __parse_action (awk);
-	if (node == XP_NULL) return XP_NULL;
+	nde = __parse_action (awk);
+	if (nde == XP_NULL) return XP_NULL;
 
-	awk->tree.begin = node;
-	return node;
+	awk->tree.begin = nde;
+	return nde;
 }
 
-static xp_awk_node_t* __parse_end (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_end (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 
 	if (awk->tree.end != XP_NULL) PANIC (awk, XP_AWK_EDUPEND);
 	if (__get_token(awk) == -1) return XP_NULL; 
 
-	node = __parse_action (awk);
-	if (node == XP_NULL) return XP_NULL;
+	nde = __parse_action (awk);
+	if (nde == XP_NULL) return XP_NULL;
 
-	awk->tree.end = node;
-	return node;
+	awk->tree.end = nde;
+	return nde;
 }
 
-static xp_awk_node_t* __parse_patternless (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_patternless (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 	xp_awk_chain_t* chain;
 
-	node = __parse_action (awk);
-	if (node == XP_NULL) return XP_NULL;
+	nde = __parse_action (awk);
+	if (nde == XP_NULL) return XP_NULL;
 
 	chain = (xp_awk_chain_t*) xp_malloc (xp_sizeof(xp_awk_chain_t));
 	if (chain == XP_NULL) {
-		xp_awk_clrpt (node);
+		xp_awk_clrpt (nde);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
 	chain->pattern = XP_NULL;
-	chain->action = node;
+	chain->action = nde;
 	chain->next = XP_NULL;
 
 	if (awk->tree.chain == XP_NULL) {
@@ -568,20 +568,20 @@ static xp_awk_node_t* __parse_patternless (xp_awk_t* awk)
 		awk->tree.chain_tail = chain;
 	}
 
-	return node;
+	return nde;
 }
 
-static xp_awk_node_t* __parse_action (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_action (xp_awk_t* awk)
 {
 	if (!MATCH(awk,TOKEN_LBRACE)) PANIC (awk, XP_AWK_ELBRACE);
 	if (__get_token(awk) == -1) return XP_NULL; 
 	return __parse_block(awk, xp_true);
 }
 
-static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top) 
+static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top) 
 {
-	xp_awk_node_t* head, * curr, * node;
-	xp_awk_node_block_t* block;
+	xp_awk_nde_t* head, * curr, * nde;
+	xp_awk_nde_block_t* block;
 	xp_size_t nlocals, nlocals_max, tmp;
 
 	nlocals = xp_awk_tab_getsize(&awk->parse.locals);
@@ -631,8 +631,8 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 			break;
 		}
 
-		node = __parse_statement (awk);
-		if (node == XP_NULL) {
+		nde = __parse_statement (awk);
+		if (nde == XP_NULL) {
 			xp_awk_tab_remrange (
 				&awk->parse.locals, nlocals, 
 				xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
@@ -641,16 +641,16 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 		}
 
 		/* remove unnecessary statements */
-		if (node->type == XP_AWK_NODE_NULL ||
-		    (node->type == XP_AWK_NODE_BLOCK && 
-		     ((xp_awk_node_block_t*)node)->body == XP_NULL)) continue;
+		if (nde->type == XP_AWK_NDE_NULL ||
+		    (nde->type == XP_AWK_NDE_BLOCK && 
+		     ((xp_awk_nde_block_t*)nde)->body == XP_NULL)) continue;
 			
-		if (curr == XP_NULL) head = node;
-		else curr->next = node;	
-		curr = node;
+		if (curr == XP_NULL) head = nde;
+		else curr->next = nde;	
+		curr = nde;
 	}
 
-	block = (xp_awk_node_block_t*) xp_malloc (xp_sizeof(xp_awk_node_block_t));
+	block = (xp_awk_nde_block_t*) xp_malloc (xp_sizeof(xp_awk_nde_block_t));
 	if (block == XP_NULL) {
 		xp_awk_tab_remrange (
 			&awk->parse.locals, nlocals, 
@@ -668,7 +668,7 @@ static xp_awk_node_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	/* adjust number of locals for a block without any statements */
 	if (head == NULL) tmp = 0;
 
-	block->type = XP_AWK_NODE_BLOCK;
+	block->type = XP_AWK_NDE_BLOCK;
 	block->next = XP_NULL;
 	block->body = head;
 
@@ -686,7 +686,7 @@ and merged to top-level block */
 		block->nlocals = 0;
 	}
 
-	return (xp_awk_node_t*)block;
+	return (xp_awk_nde_t*)block;
 }
 
 static xp_awk_t* __collect_globals (xp_awk_t* awk)
@@ -785,35 +785,35 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 	return awk;
 }
 
-static xp_awk_node_t* __parse_statement (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_statement (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 
 	if (MATCH(awk,TOKEN_SEMICOLON)) {
 		/* null statement */	
-		node = (xp_awk_node_t*) xp_malloc (xp_sizeof(xp_awk_node_t));
-		if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+		nde = (xp_awk_nde_t*) xp_malloc (xp_sizeof(xp_awk_nde_t));
+		if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
-		node->type = XP_AWK_NODE_NULL;
-		node->next = XP_NULL;
+		nde->type = XP_AWK_NDE_NULL;
+		nde->next = XP_NULL;
 
 		if (__get_token(awk) == -1) {
-			xp_free (node);
+			xp_free (nde);
 			return XP_NULL;
 		}
 	}
 	else if (MATCH(awk,TOKEN_LBRACE)) {
 		if (__get_token(awk) == -1) return XP_NULL; 
-		node = __parse_block (awk, xp_false);
+		nde = __parse_block (awk, xp_false);
 	}
-	else node = __parse_statement_nb (awk);
+	else nde = __parse_statement_nb (awk);
 
-	return node;
+	return nde;
 }
 
-static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 
 	/* 
 	 * keywords that don't require any terminating semicolon 
@@ -836,61 +836,61 @@ static xp_awk_node_t* __parse_statement_nb (xp_awk_t* awk)
 	 */
 	if (MATCH(awk,TOKEN_DO)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_dowhile (awk);
+		nde = __parse_dowhile (awk);
 	}
 	else if (MATCH(awk,TOKEN_BREAK)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_break(awk);
+		nde = __parse_break(awk);
 	}
 	else if (MATCH(awk,TOKEN_CONTINUE)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_continue(awk);
+		nde = __parse_continue(awk);
 	}
 	else if (MATCH(awk,TOKEN_RETURN)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_return(awk);
+		nde = __parse_return(awk);
 	}
 	else if (MATCH(awk,TOKEN_EXIT)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_exit(awk);
+		nde = __parse_exit(awk);
 	}
 
 /* TODO:
 	else if (MATCH(awk,TOKEN_DELETE)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_delete(awk);
+		nde = __parse_delete(awk);
 	}
 */
 	else if (MATCH(awk,TOKEN_NEXT)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_next(awk);
+		nde = __parse_next(awk);
 	}
 	else if (MATCH(awk,TOKEN_NEXTFILE)) {
 		if (__get_token(awk) == -1) return XP_NULL;
-		node = __parse_nextfile(awk);
+		nde = __parse_nextfile(awk);
 	}
 	else {
-		node = __parse_expression(awk);
+		nde = __parse_expression(awk);
 	}
 
-	if (node == XP_NULL) return XP_NULL;
+	if (nde == XP_NULL) return XP_NULL;
 
 	/* check if a statement ends with a semicolon */
 	if (!MATCH(awk,TOKEN_SEMICOLON)) {
-		if (node != XP_NULL) xp_awk_clrpt (node);
+		if (nde != XP_NULL) xp_awk_clrpt (nde);
 		PANIC (awk, XP_AWK_ESEMICOLON);
 	}
 
 	/* eat up the semicolon and read in the next token */
 	if (__get_token(awk) == -1) {
-		if (node != XP_NULL) xp_awk_clrpt (node);
+		if (nde != XP_NULL) xp_awk_clrpt (nde);
 		return XP_NULL;
 	}
 
-	return node;
+	return nde;
 }
 
-static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 {
 	/*
 	 * <expression> ::= <assignment> | <basic expression>
@@ -899,25 +899,25 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 	 * <basic expression> ::= 
 	 */
 
-	xp_awk_node_t* x, * y;
-	xp_awk_node_assign_t* node;
+	xp_awk_nde_t* x, * y;
+	xp_awk_nde_ass_t* nde;
 
 	x = __parse_basic_expr (awk);
 	if (x == XP_NULL) return XP_NULL;
 	if (!MATCH(awk,TOKEN_ASSIGN)) return x;
 
 	xp_assert (x->next == XP_NULL);
-	if (x->type != XP_AWK_NODE_ARG &&
-	    x->type != XP_AWK_NODE_ARGIDX &&
-	    x->type != XP_AWK_NODE_NAMED && 
-	    x->type != XP_AWK_NODE_NAMEDIDX &&
-	    x->type != XP_AWK_NODE_GLOBAL && 
-	    x->type != XP_AWK_NODE_GLOBALIDX &&
-	    x->type != XP_AWK_NODE_LOCAL && 
-	    x->type != XP_AWK_NODE_LOCALIDX &&
-	    x->type != XP_AWK_NODE_POS) {
+	if (x->type != XP_AWK_NDE_ARG &&
+	    x->type != XP_AWK_NDE_ARGIDX &&
+	    x->type != XP_AWK_NDE_NAMED && 
+	    x->type != XP_AWK_NDE_NAMEDIDX &&
+	    x->type != XP_AWK_NDE_GLOBAL && 
+	    x->type != XP_AWK_NDE_GLOBALIDX &&
+	    x->type != XP_AWK_NDE_LOCAL && 
+	    x->type != XP_AWK_NDE_LOCALIDX &&
+	    x->type != XP_AWK_NDE_POS) {
 		xp_awk_clrpt (x);
-		PANIC (awk, XP_AWK_EASSIGN);
+		PANIC (awk, XP_AWK_EASSIGNMENT);
 	}
 
 	if (__get_token(awk) == -1) {
@@ -931,22 +931,22 @@ static xp_awk_node_t* __parse_expression (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	node = (xp_awk_node_assign_t*)xp_malloc (xp_sizeof(xp_awk_node_assign_t));
-	if (node == XP_NULL) {
+	nde = (xp_awk_nde_ass_t*)xp_malloc (xp_sizeof(xp_awk_nde_ass_t));
+	if (nde == XP_NULL) {
 		xp_awk_clrpt (x);
 		xp_awk_clrpt (y);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	node->type = XP_AWK_NODE_ASSIGN;
-	node->next = XP_NULL;
-	node->left = x;
-	node->right = y;
+	nde->type = XP_AWK_NDE_ASS;
+	nde->next = XP_NULL;
+	nde->left = x;
+	nde->right = y;
 
-	return (xp_awk_node_t*)node;
+	return (xp_awk_nde_t*)nde;
 }
 
-static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
 {
 	/* <basic expression> ::= <additive> 
 	 * <additive> ::= <multiplicative> [additiveOp <multiplicative>]*
@@ -960,10 +960,10 @@ static xp_awk_node_t* __parse_basic_expr (xp_awk_t* awk)
 	return __parse_equality (awk);
 }
 
-static xp_awk_node_t* __parse_equality (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_equality (xp_awk_t* awk)
 {
-	xp_awk_node_expr_t* node;
-	xp_awk_node_t* left, * right;
+	xp_awk_nde_expr_t* nde;
+	xp_awk_nde_t* left, * right;
 	int opcode;
 
 	left = __parse_relational (awk);
@@ -987,29 +987,29 @@ static xp_awk_node_t* __parse_equality (xp_awk_t* awk)
 
 		// TODO: constant folding -> in other parts of the program also...
 
-		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
-		if (node == XP_NULL) {
+		nde = (xp_awk_nde_expr_t*)xp_malloc(xp_sizeof(xp_awk_nde_expr_t));
+		if (nde == XP_NULL) {
 			xp_awk_clrpt (right);
 			xp_awk_clrpt (left);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
-		node->type = XP_AWK_NODE_BINARY;
-		node->next = XP_NULL;
-		node->opcode = opcode; 
-		node->left = left;
-		node->right = right;
+		nde->type = XP_AWK_NDE_BINARY;
+		nde->next = XP_NULL;
+		nde->opcode = opcode; 
+		nde->left = left;
+		nde->right = right;
 
-		left = (xp_awk_node_t*)node;
+		left = (xp_awk_nde_t*)nde;
 	}
 
 	return left;
 }
 
-static xp_awk_node_t* __parse_relational (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_relational (xp_awk_t* awk)
 {
-	xp_awk_node_expr_t* node;
-	xp_awk_node_t* left, * right;
+	xp_awk_nde_expr_t* nde;
+	xp_awk_nde_t* left, * right;
 	int opcode;
 
 	left = __parse_shift (awk);
@@ -1035,29 +1035,29 @@ static xp_awk_node_t* __parse_relational (xp_awk_t* awk)
 
 		// TODO: constant folding -> in other parts of the program also...
 
-		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
-		if (node == XP_NULL) {
+		nde = (xp_awk_nde_expr_t*)xp_malloc(xp_sizeof(xp_awk_nde_expr_t));
+		if (nde == XP_NULL) {
 			xp_awk_clrpt (right);
 			xp_awk_clrpt (left);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
-		node->type = XP_AWK_NODE_BINARY;
-		node->next = XP_NULL;
-		node->opcode = opcode; 
-		node->left = left;
-		node->right = right;
+		nde->type = XP_AWK_NDE_BINARY;
+		nde->next = XP_NULL;
+		nde->opcode = opcode; 
+		nde->left = left;
+		nde->right = right;
 
-		left = (xp_awk_node_t*)node;
+		left = (xp_awk_nde_t*)nde;
 	}
 
 	return left;
 }
 
-static xp_awk_node_t* __parse_shift (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_shift (xp_awk_t* awk)
 {
-	xp_awk_node_expr_t* node;
-	xp_awk_node_t* left, * right;
+	xp_awk_nde_expr_t* nde;
+	xp_awk_nde_t* left, * right;
 	int opcode;
 
 	left = __parse_additive (awk);
@@ -1081,29 +1081,29 @@ static xp_awk_node_t* __parse_shift (xp_awk_t* awk)
 
 		// TODO: constant folding -> in other parts of the program also...
 
-		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
-		if (node == XP_NULL) {
+		nde = (xp_awk_nde_expr_t*)xp_malloc(xp_sizeof(xp_awk_nde_expr_t));
+		if (nde == XP_NULL) {
 			xp_awk_clrpt (right);
 			xp_awk_clrpt (left);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
-		node->type = XP_AWK_NODE_BINARY;
-		node->next = XP_NULL;
-		node->opcode = opcode; 
-		node->left = left;
-		node->right = right;
+		nde->type = XP_AWK_NDE_BINARY;
+		nde->next = XP_NULL;
+		nde->opcode = opcode; 
+		nde->left = left;
+		nde->right = right;
 
-		left = (xp_awk_node_t*)node;
+		left = (xp_awk_nde_t*)nde;
 	}
 
 	return left;
 }
 
-static xp_awk_node_t* __parse_additive (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_additive (xp_awk_t* awk)
 {
-	xp_awk_node_expr_t* node;
-	xp_awk_node_t* left, * right;
+	xp_awk_nde_expr_t* nde;
+	xp_awk_nde_t* left, * right;
 	int opcode;
 
 	left = __parse_multiplicative (awk);
@@ -1127,29 +1127,29 @@ static xp_awk_node_t* __parse_additive (xp_awk_t* awk)
 
 		// TODO: constant folding -> in other parts of the program also...
 
-		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
-		if (node == XP_NULL) {
+		nde = (xp_awk_nde_expr_t*)xp_malloc(xp_sizeof(xp_awk_nde_expr_t));
+		if (nde == XP_NULL) {
 			xp_awk_clrpt (right);
 			xp_awk_clrpt (left);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
-		node->type = XP_AWK_NODE_BINARY;
-		node->next = XP_NULL;
-		node->opcode = opcode; 
-		node->left = left;
-		node->right = right;
+		nde->type = XP_AWK_NDE_BINARY;
+		nde->next = XP_NULL;
+		nde->opcode = opcode; 
+		nde->left = left;
+		nde->right = right;
 
-		left = (xp_awk_node_t*)node;
+		left = (xp_awk_nde_t*)nde;
 	}
 
 	return left;
 }
 
-static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk)
 {
-	xp_awk_node_expr_t* node;
-	xp_awk_node_t* left, * right;
+	xp_awk_nde_expr_t* nde;
+	xp_awk_nde_t* left, * right;
 	int opcode;
 
 	left = __parse_unary (awk);
@@ -1174,14 +1174,14 @@ static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk)
 
 		/* TODO: enhance constant folding. do it in a better way */
 		/* TODO: differentiate different types of numbers ... */
-		if (left->type == XP_AWK_NODE_NUM && 
-		    right->type == XP_AWK_NODE_NUM) {
+		if (left->type == XP_AWK_NDE_NUM && 
+		    right->type == XP_AWK_NDE_NUM) {
 			xp_long_t l, r;
-			xp_awk_node_term_t* tmp;
+			xp_awk_nde_term_t* tmp;
 			xp_char_t buf[256];
 
-			l = __str_to_long (((xp_awk_node_term_t*)left)->value); 
-			r = __str_to_long (((xp_awk_node_term_t*)right)->value); 
+			l = __str_to_long (((xp_awk_nde_term_t*)left)->value); 
+			r = __str_to_long (((xp_awk_nde_term_t*)right)->value); 
 
 			xp_awk_clrpt (left);
 			xp_awk_clrpt (right);
@@ -1196,10 +1196,10 @@ static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk)
 			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%lld"), (long long)l);
 #endif
 
-			tmp = (xp_awk_node_term_t*) xp_malloc (xp_sizeof(xp_awk_node_term_t));
+			tmp = (xp_awk_nde_term_t*) xp_malloc (xp_sizeof(xp_awk_nde_term_t));
 			if (tmp == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
-			tmp->type = XP_AWK_NODE_NUM;
+			tmp->type = XP_AWK_NDE_NUM;
 			tmp->next = XP_NULL;
 			tmp->value = xp_strdup (buf);
 
@@ -1208,35 +1208,35 @@ static xp_awk_node_t* __parse_multiplicative (xp_awk_t* awk)
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 
-			left = (xp_awk_node_t*) tmp;
+			left = (xp_awk_nde_t*) tmp;
 			continue;
 		} 
 
-		node = (xp_awk_node_expr_t*)xp_malloc(xp_sizeof(xp_awk_node_expr_t));
-		if (node == XP_NULL) {
+		nde = (xp_awk_nde_expr_t*)xp_malloc(xp_sizeof(xp_awk_nde_expr_t));
+		if (nde == XP_NULL) {
 			xp_awk_clrpt (right);	
 			xp_awk_clrpt (left);	
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
-		node->type = XP_AWK_NODE_BINARY;
-		node->next = XP_NULL;
-		node->opcode = opcode;
-		node->left = left;
-		node->right = right;
+		nde->type = XP_AWK_NDE_BINARY;
+		nde->next = XP_NULL;
+		nde->opcode = opcode;
+		nde->left = left;
+		nde->right = right;
 
-		left = (xp_awk_node_t*)node;
+		left = (xp_awk_nde_t*)nde;
 	}
 
 	return left;
 }
 
-static xp_awk_node_t* __parse_unary (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_unary (xp_awk_t* awk)
 {
 	return __parse_primary (awk);
 }
 
-static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 {
 	if (MATCH(awk,TOKEN_IDENT))  {
 		xp_char_t* name_dup;
@@ -1250,25 +1250,25 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 		}
 
 		if (MATCH(awk,TOKEN_LBRACK)) {
-			xp_awk_node_t* node;
-			node = __parse_hashidx (awk, name_dup);
-			if (node == XP_NULL) xp_free (name_dup);
-			return (xp_awk_node_t*)node;
+			xp_awk_nde_t* nde;
+			nde = __parse_hashidx (awk, name_dup);
+			if (nde == XP_NULL) xp_free (name_dup);
+			return (xp_awk_nde_t*)nde;
 		}
 		else if (MATCH(awk,TOKEN_LPAREN)) {
 			/* function call */
-			xp_awk_node_t* node;
-			node = __parse_funcall (awk, name_dup);
-			if (node == XP_NULL) xp_free (name_dup);
-			return (xp_awk_node_t*)node;
+			xp_awk_nde_t* nde;
+			nde = __parse_funcall (awk, name_dup);
+			if (nde == XP_NULL) xp_free (name_dup);
+			return (xp_awk_nde_t*)nde;
 		}	
 		else {
 			/* normal variable */
-			xp_awk_node_var_t* node;
+			xp_awk_nde_var_t* nde;
 			xp_size_t idxa;
 	
-			node = (xp_awk_node_var_t*)xp_malloc(xp_sizeof(xp_awk_node_var_t));
-			if (node == XP_NULL) {
+			nde = (xp_awk_nde_var_t*)xp_malloc(xp_sizeof(xp_awk_nde_var_t));
+			if (nde == XP_NULL) {
 				xp_free (name_dup);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
@@ -1276,151 +1276,151 @@ static xp_awk_node_t* __parse_primary (xp_awk_t* awk)
 			/* search the parameter name list */
 			idxa = xp_awk_tab_find(&awk->parse.params, name_dup, 0);
 			if (idxa != (xp_size_t)-1) {
-				node->type = XP_AWK_NODE_ARG;
-				node->next = XP_NULL;
-				//node->id.name = XP_NULL;
-				node->id.name = name_dup;
-				node->id.idxa = idxa;
+				nde->type = XP_AWK_NDE_ARG;
+				nde->next = XP_NULL;
+				//nde->id.name = XP_NULL;
+				nde->id.name = name_dup;
+				nde->id.idxa = idxa;
 
-				return (xp_awk_node_t*)node;
+				return (xp_awk_nde_t*)nde;
 			}
 
 			/* search the local variable list */
 			idxa = xp_awk_tab_rrfind(&awk->parse.locals, name_dup, 0);
 			if (idxa != (xp_size_t)-1) {
-				node->type = XP_AWK_NODE_LOCAL;
-				node->next = XP_NULL;
-				//node->id.name = XP_NULL;
-				node->id.name = name_dup;
-				node->id.idxa = idxa;
+				nde->type = XP_AWK_NDE_LOCAL;
+				nde->next = XP_NULL;
+				//nde->id.name = XP_NULL;
+				nde->id.name = name_dup;
+				nde->id.idxa = idxa;
 
-				return (xp_awk_node_t*)node;
+				return (xp_awk_nde_t*)nde;
 			}
 
 			/* search the global variable list */
 			idxa = xp_awk_tab_rrfind(&awk->parse.globals, name_dup, 0);
 			if (idxa != (xp_size_t)-1) {
-				node->type = XP_AWK_NODE_GLOBAL;
-				node->next = XP_NULL;
-				//node->id.name = XP_NULL;
-				node->id.name = name_dup;
-				node->id.idxa = idxa;
+				nde->type = XP_AWK_NDE_GLOBAL;
+				nde->next = XP_NULL;
+				//nde->id.name = XP_NULL;
+				nde->id.name = name_dup;
+				nde->id.idxa = idxa;
 
-				return (xp_awk_node_t*)node;
+				return (xp_awk_nde_t*)nde;
 			}
 
 			if (awk->opt.parse & XP_AWK_IMPLICIT) {
-				node->type = XP_AWK_NODE_NAMED;
-				node->next = XP_NULL;
-				node->id.name = name_dup;
-				node->id.idxa = (xp_size_t)-1;
+				nde->type = XP_AWK_NDE_NAMED;
+				nde->next = XP_NULL;
+				nde->id.name = name_dup;
+				nde->id.idxa = (xp_size_t)-1;
 
-				return (xp_awk_node_t*)node;
+				return (xp_awk_nde_t*)nde;
 			}
 
 			/* undefined variable */
 			xp_free (name_dup);
-			xp_free (node);
+			xp_free (nde);
 			PANIC (awk, XP_AWK_EUNDEF);
 		}
 	}
 	else if (MATCH(awk,TOKEN_INTEGER)) {
-		xp_awk_node_term_t* node;
+		xp_awk_nde_term_t* nde;
 
-		node = (xp_awk_node_term_t*)xp_malloc(xp_sizeof(xp_awk_node_term_t));
-		if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+		nde = (xp_awk_nde_term_t*)xp_malloc(xp_sizeof(xp_awk_nde_term_t));
+		if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
-		node->type = XP_AWK_NODE_NUM;
-		node->next = XP_NULL;
-		node->value = xp_strdup(XP_STR_BUF(&awk->token.name));
-		if (node->value == XP_NULL) {
-			xp_free (node);
+		nde->type = XP_AWK_NDE_NUM;
+		nde->next = XP_NULL;
+		nde->value = xp_strdup(XP_STR_BUF(&awk->token.name));
+		if (nde->value == XP_NULL) {
+			xp_free (nde);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
 		if (__get_token(awk) == -1) {
-			xp_free (node->value);
-			xp_free (node);
+			xp_free (nde->value);
+			xp_free (nde);
 			return XP_NULL;			
 		}
 
-		return (xp_awk_node_t*)node;
+		return (xp_awk_nde_t*)nde;
 	}
 	else if (MATCH(awk,TOKEN_STRING))  {
-		xp_awk_node_term_t* node;
+		xp_awk_nde_term_t* nde;
 
-		node = (xp_awk_node_term_t*)xp_malloc(xp_sizeof(xp_awk_node_term_t));
-		if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+		nde = (xp_awk_nde_term_t*)xp_malloc(xp_sizeof(xp_awk_nde_term_t));
+		if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
-		node->type = XP_AWK_NODE_STR;
-		node->next = XP_NULL;
-		node->value = xp_strdup(XP_STR_BUF(&awk->token.name));
-		if (node->value == XP_NULL) {
-			xp_free (node);
+		nde->type = XP_AWK_NDE_STR;
+		nde->next = XP_NULL;
+		nde->value = xp_strdup(XP_STR_BUF(&awk->token.name));
+		if (nde->value == XP_NULL) {
+			xp_free (nde);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
 		if (__get_token(awk) == -1) {
-			xp_free (node->value);
-			xp_free (node);
+			xp_free (nde->value);
+			xp_free (nde);
 			return XP_NULL;			
 		}
 
-		return (xp_awk_node_t*)node;
+		return (xp_awk_nde_t*)nde;
 	}
 	else if (MATCH(awk,TOKEN_DOLLAR)) {
-		xp_awk_node_sgv_t* node;
-		xp_awk_node_t* prim;
+		xp_awk_nde_sgv_t* nde;
+		xp_awk_nde_t* prim;
 
 		if (__get_token(awk)) return XP_NULL;
 		
 		prim = __parse_primary (awk);
 		if (prim == XP_NULL) return XP_NULL;
 
-		node = (xp_awk_node_sgv_t*) xp_malloc (xp_sizeof(xp_awk_node_sgv_t));
-		if (node == XP_NULL) {
+		nde = (xp_awk_nde_sgv_t*) xp_malloc (xp_sizeof(xp_awk_nde_sgv_t));
+		if (nde == XP_NULL) {
 			xp_awk_clrpt (prim);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
-		node->type = XP_AWK_NODE_POS;
-		node->next = XP_NULL;
-		node->value = prim;
+		nde->type = XP_AWK_NDE_POS;
+		nde->next = XP_NULL;
+		nde->value = prim;
 
-		return (xp_awk_node_t*)node;
+		return (xp_awk_nde_t*)nde;
 	}
 	else if (MATCH(awk,TOKEN_LPAREN)) {
-		xp_awk_node_t* node;
+		xp_awk_nde_t* nde;
 
 		/* eat up the left parenthesis */
 		if (__get_token(awk) == -1) return XP_NULL;
 
 		/* parse the sub-expression inside the parentheses */
-		node = __parse_expression (awk);
-		if (node == XP_NULL) return XP_NULL;
+		nde = __parse_expression (awk);
+		if (nde == XP_NULL) return XP_NULL;
 
 		/* check for the closing parenthesis */
 		if (!MATCH(awk,TOKEN_RPAREN)) {
-			xp_awk_clrpt (node);
+			xp_awk_clrpt (nde);
 			PANIC (awk, XP_AWK_ERPAREN);
 		}
 
 		if (__get_token(awk) == -1) {
-			xp_awk_clrpt (node);
+			xp_awk_clrpt (nde);
 			return XP_NULL;
 		}
 
-		return node;
+		return nde;
 	}
 
 	/* valid expression introducer is expected */
 	PANIC (awk, XP_AWK_EEXPR);
 }
 
-static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
+static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 {
-	xp_awk_node_t* idx;
-	xp_awk_node_idx_t* node;
+	xp_awk_nde_t* idx;
+	xp_awk_nde_idx_t* nde;
 	xp_size_t idxa;
 
 	if (__get_token(awk) == -1) return XP_NULL;
@@ -1438,8 +1438,8 @@ static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		return XP_NULL;
 	}
 
-	node = (xp_awk_node_idx_t*) xp_malloc (xp_sizeof(xp_awk_node_idx_t));
-	if (node == XP_NULL) {
+	nde = (xp_awk_nde_idx_t*) xp_malloc (xp_sizeof(xp_awk_nde_idx_t));
+	if (nde == XP_NULL) {
 		xp_awk_clrpt (idx);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
@@ -1447,61 +1447,61 @@ static xp_awk_node_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 	/* search the parameter name list */
 	idxa = xp_awk_tab_find(&awk->parse.params, name, 0);
 	if (idxa != (xp_size_t)-1) {
-		node->type = XP_AWK_NODE_ARGIDX;
-		node->next = XP_NULL;
-		//node->id.name = XP_NULL;
-		node->id.name = name;
-		node->id.idxa = idxa;
-		node->idx = idx;
+		nde->type = XP_AWK_NDE_ARGIDX;
+		nde->next = XP_NULL;
+		//nde->id.name = XP_NULL;
+		nde->id.name = name;
+		nde->id.idxa = idxa;
+		nde->idx = idx;
 
-		return (xp_awk_node_t*)node;
+		return (xp_awk_nde_t*)nde;
 	}
 
 	/* search the local variable list */
 	idxa = xp_awk_tab_rrfind(&awk->parse.locals, name, 0);
 	if (idxa != (xp_size_t)-1) {
-		node->type = XP_AWK_NODE_LOCALIDX;
-		node->next = XP_NULL;
-		//node->id.name = XP_NULL;
-		node->id.name = name;
-		node->id.idxa = idxa;
-		node->idx = idx;
+		nde->type = XP_AWK_NDE_LOCALIDX;
+		nde->next = XP_NULL;
+		//nde->id.name = XP_NULL;
+		nde->id.name = name;
+		nde->id.idxa = idxa;
+		nde->idx = idx;
 
-		return (xp_awk_node_t*)node;
+		return (xp_awk_nde_t*)nde;
 	}
 
 	/* search the global variable list */
 	idxa = xp_awk_tab_rrfind(&awk->parse.globals, name, 0);
 	if (idxa != (xp_size_t)-1) {
-		node->type = XP_AWK_NODE_GLOBALIDX;
-		node->next = XP_NULL;
-		//node->id.name = XP_NULL;
-		node->id.name = name;
-		node->id.idxa = idxa;
+		nde->type = XP_AWK_NDE_GLOBALIDX;
+		nde->next = XP_NULL;
+		//nde->id.name = XP_NULL;
+		nde->id.name = name;
+		nde->id.idxa = idxa;
 
-		return (xp_awk_node_t*)node;
+		return (xp_awk_nde_t*)nde;
 	}
 
 	if (awk->opt.parse & XP_AWK_IMPLICIT) {
-		node->type = XP_AWK_NODE_NAMEDIDX;
-		node->next = XP_NULL;
-		node->id.name = name;
-		node->id.idxa = (xp_size_t)-1;
-		node->idx = idx;
+		nde->type = XP_AWK_NDE_NAMEDIDX;
+		nde->next = XP_NULL;
+		nde->id.name = name;
+		nde->id.idxa = (xp_size_t)-1;
+		nde->idx = idx;
 
-		return (xp_awk_node_t*)node;
+		return (xp_awk_nde_t*)nde;
 	}
 
 	/* undefined variable */
 	xp_awk_clrpt (idx);
-	xp_free (node);
+	xp_free (nde);
 	PANIC (awk, XP_AWK_EUNDEF);
 }
 
-static xp_awk_node_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
+static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
 {
-	xp_awk_node_t* head, * curr, * node;
-	xp_awk_node_call_t* call;
+	xp_awk_nde_t* head, * curr, * nde;
+	xp_awk_nde_call_t* call;
 
 	if (__get_token(awk) == -1) return XP_NULL;
 	
@@ -1513,15 +1513,15 @@ static xp_awk_node_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
 	}
 	else {
 		while (1) {
-			node = __parse_expression (awk);
-			if (node == XP_NULL) {
+			nde = __parse_expression (awk);
+			if (nde == XP_NULL) {
 				if (head != XP_NULL) xp_awk_clrpt (head);
 				return XP_NULL;
 			}
 	
-			if (head == XP_NULL) head = node;
-			else curr->next = node;
-			curr = node;
+			if (head == XP_NULL) head = nde;
+			else curr->next = nde;
+			curr = nde;
 
 			if (MATCH(awk,TOKEN_RPAREN)) {
 				if (__get_token(awk) == -1) {
@@ -1544,26 +1544,26 @@ static xp_awk_node_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
 
 	}
 
-	call = (xp_awk_node_call_t*)xp_malloc (xp_sizeof(xp_awk_node_call_t));
+	call = (xp_awk_nde_call_t*)xp_malloc (xp_sizeof(xp_awk_nde_call_t));
 	if (call == XP_NULL) {
 		if (head != XP_NULL) xp_awk_clrpt (head);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	call->type = XP_AWK_NODE_CALL;
+	call->type = XP_AWK_NDE_CALL;
 	call->next = XP_NULL;
 	call->name = name;
 	call->args = head;
 
-	return (xp_awk_node_t*)call;
+	return (xp_awk_nde_t*)call;
 }
 
-static xp_awk_node_t* __parse_if (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_if (xp_awk_t* awk)
 {
-	xp_awk_node_t* test;
-	xp_awk_node_t* then_part;
-	xp_awk_node_t* else_part;
-	xp_awk_node_if_t* node;
+	xp_awk_nde_t* test;
+	xp_awk_nde_t* then_part;
+	xp_awk_nde_t* else_part;
+	xp_awk_nde_if_t* nde;
 
 	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, XP_AWK_ELPAREN);
 	if (__get_token(awk) == -1) return XP_NULL;
@@ -1603,27 +1603,27 @@ static xp_awk_node_t* __parse_if (xp_awk_t* awk)
 	}
 	else else_part = XP_NULL;
 
-	node = (xp_awk_node_if_t*) xp_malloc (xp_sizeof(xp_awk_node_if_t));
-	if (node == XP_NULL) {
+	nde = (xp_awk_nde_if_t*) xp_malloc (xp_sizeof(xp_awk_nde_if_t));
+	if (nde == XP_NULL) {
 		xp_awk_clrpt (else_part);
 		xp_awk_clrpt (then_part);
 		xp_awk_clrpt (test);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	node->type = XP_AWK_NODE_IF;
-	node->next = XP_NULL;
-	node->test = test;
-	node->then_part = then_part;
-	node->else_part = else_part;
+	nde->type = XP_AWK_NDE_IF;
+	nde->next = XP_NULL;
+	nde->test = test;
+	nde->then_part = then_part;
+	nde->else_part = else_part;
 
-	return (xp_awk_node_t*)node;
+	return (xp_awk_nde_t*)nde;
 }
 
-static xp_awk_node_t* __parse_while (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_while (xp_awk_t* awk)
 {
-	xp_awk_node_t* test, * body;
-	xp_awk_node_while_t* node;
+	xp_awk_nde_t* test, * body;
+	xp_awk_nde_while_t* nde;
 
 	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, XP_AWK_ELPAREN);
 	if (__get_token(awk) == -1) return XP_NULL;
@@ -1647,25 +1647,25 @@ static xp_awk_node_t* __parse_while (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	node = (xp_awk_node_while_t*) xp_malloc (xp_sizeof(xp_awk_node_while_t));
-	if (node == XP_NULL) {
+	nde = (xp_awk_nde_while_t*) xp_malloc (xp_sizeof(xp_awk_nde_while_t));
+	if (nde == XP_NULL) {
 		xp_awk_clrpt (body);
 		xp_awk_clrpt (test);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	node->type = XP_AWK_NODE_WHILE;
-	node->next = XP_NULL;
-	node->test = test;
-	node->body = body;
+	nde->type = XP_AWK_NDE_WHILE;
+	nde->next = XP_NULL;
+	nde->test = test;
+	nde->body = body;
 
-	return (xp_awk_node_t*)node;
+	return (xp_awk_nde_t*)nde;
 }
 
-static xp_awk_node_t* __parse_for (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 {
-	xp_awk_node_t* init, * test, * incr, * body;
-	xp_awk_node_for_t* node;
+	xp_awk_nde_t* init, * test, * incr, * body;
+	xp_awk_nde_for_t* nde;
 
 	// TODO: parse for (x in list) ...
 
@@ -1741,8 +1741,8 @@ static xp_awk_node_t* __parse_for (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	node = (xp_awk_node_for_t*) xp_malloc (xp_sizeof(xp_awk_node_for_t));
-	if (node == XP_NULL) {
+	nde = (xp_awk_nde_for_t*) xp_malloc (xp_sizeof(xp_awk_nde_for_t));
+	if (nde == XP_NULL) {
 		xp_awk_clrpt (init);
 		xp_awk_clrpt (test);
 		xp_awk_clrpt (incr);
@@ -1750,20 +1750,20 @@ static xp_awk_node_t* __parse_for (xp_awk_t* awk)
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	node->type = XP_AWK_NODE_FOR;
-	node->next = XP_NULL;
-	node->init = init;
-	node->test = test;
-	node->incr = incr;
-	node->body = body;
+	nde->type = XP_AWK_NDE_FOR;
+	nde->next = XP_NULL;
+	nde->init = init;
+	nde->test = test;
+	nde->incr = incr;
+	nde->body = body;
 
-	return (xp_awk_node_t*)node;
+	return (xp_awk_nde_t*)nde;
 }
 
-static xp_awk_node_t* __parse_dowhile (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_dowhile (xp_awk_t* awk)
 {
-	xp_awk_node_t* test, * body;
-	xp_awk_node_while_t* node;
+	xp_awk_nde_t* test, * body;
+	xp_awk_nde_while_t* nde;
 
 	body = __parse_statement (awk);
 	if (body == XP_NULL) return XP_NULL;
@@ -1806,54 +1806,54 @@ static xp_awk_node_t* __parse_dowhile (xp_awk_t* awk)
 		return XP_NULL;
 	}
 	
-	node = (xp_awk_node_while_t*) xp_malloc (xp_sizeof(xp_awk_node_while_t));
-	if (node == XP_NULL) {
+	nde = (xp_awk_nde_while_t*) xp_malloc (xp_sizeof(xp_awk_nde_while_t));
+	if (nde == XP_NULL) {
 		xp_awk_clrpt (body);
 		xp_awk_clrpt (test);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	node->type = XP_AWK_NODE_DOWHILE;
-	node->next = XP_NULL;
-	node->test = test;
-	node->body = body;
+	nde->type = XP_AWK_NDE_DOWHILE;
+	nde->next = XP_NULL;
+	nde->test = test;
+	nde->body = body;
 
-	return (xp_awk_node_t*)node;
+	return (xp_awk_nde_t*)nde;
 }
 
-static xp_awk_node_t* __parse_break (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_break (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 
-	node = (xp_awk_node_t*) xp_malloc (xp_sizeof(xp_awk_node_t));
-	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-	node->type = XP_AWK_NODE_BREAK;
-	node->next = XP_NULL;
+	nde = (xp_awk_nde_t*) xp_malloc (xp_sizeof(xp_awk_nde_t));
+	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+	nde->type = XP_AWK_NDE_BREAK;
+	nde->next = XP_NULL;
 	
-	return node;
+	return nde;
 }
 
-static xp_awk_node_t* __parse_continue (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_continue (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 
-	node = (xp_awk_node_t*) xp_malloc (xp_sizeof(xp_awk_node_t));
-	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-	node->type = XP_AWK_NODE_CONTINUE;
-	node->next = XP_NULL;
+	nde = (xp_awk_nde_t*) xp_malloc (xp_sizeof(xp_awk_nde_t));
+	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+	nde->type = XP_AWK_NDE_CONTINUE;
+	nde->next = XP_NULL;
 	
-	return node;
+	return nde;
 }
 
-static xp_awk_node_t* __parse_return (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_return (xp_awk_t* awk)
 {
-	xp_awk_node_sgv_t* node;
-	xp_awk_node_t* val;
+	xp_awk_nde_sgv_t* nde;
+	xp_awk_nde_t* val;
 
-	node = (xp_awk_node_sgv_t*) xp_malloc (xp_sizeof(xp_awk_node_sgv_t));
-	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-	node->type = XP_AWK_NODE_RETURN;
-	node->next = XP_NULL;
+	nde = (xp_awk_nde_sgv_t*) xp_malloc (xp_sizeof(xp_awk_nde_sgv_t));
+	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+	nde->type = XP_AWK_NDE_RETURN;
+	nde->next = XP_NULL;
 
 	if (MATCH(awk,TOKEN_SEMICOLON)) {
 		/* no return value */
@@ -1863,24 +1863,24 @@ static xp_awk_node_t* __parse_return (xp_awk_t* awk)
 
 		val = __parse_expression (awk);
 		if (val == XP_NULL) {
-			xp_free (node);
+			xp_free (nde);
 			return XP_NULL;
 		}
 	}
 
-	node->value = val;
-	return (xp_awk_node_t*)node;
+	nde->value = val;
+	return (xp_awk_nde_t*)nde;
 }
 
-static xp_awk_node_t* __parse_exit (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_exit (xp_awk_t* awk)
 {
-	xp_awk_node_sgv_t* node;
-	xp_awk_node_t* val;
+	xp_awk_nde_sgv_t* nde;
+	xp_awk_nde_t* val;
 
-	node = (xp_awk_node_sgv_t*) xp_malloc (xp_sizeof(xp_awk_node_sgv_t));
-	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-	node->type = XP_AWK_NODE_EXIT;
-	node->next = XP_NULL;
+	nde = (xp_awk_nde_sgv_t*) xp_malloc (xp_sizeof(xp_awk_nde_sgv_t));
+	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+	nde->type = XP_AWK_NDE_EXIT;
+	nde->next = XP_NULL;
 
 	if (MATCH(awk,TOKEN_SEMICOLON)) {
 		/* no exit code */
@@ -1889,37 +1889,37 @@ static xp_awk_node_t* __parse_exit (xp_awk_t* awk)
 	else {
 		val = __parse_expression (awk);
 		if (val == XP_NULL) {
-			xp_free (node);
+			xp_free (nde);
 			return XP_NULL;
 		}
 	}
 
-	node->value = val;
-	return (xp_awk_node_t*)node;
+	nde->value = val;
+	return (xp_awk_nde_t*)nde;
 }
 
-static xp_awk_node_t* __parse_next (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_next (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 
-	node = (xp_awk_node_t*) xp_malloc (xp_sizeof(xp_awk_node_t));
-	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-	node->type = XP_AWK_NODE_NEXT;
-	node->next = XP_NULL;
+	nde = (xp_awk_nde_t*) xp_malloc (xp_sizeof(xp_awk_nde_t));
+	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+	nde->type = XP_AWK_NDE_NEXT;
+	nde->next = XP_NULL;
 	
-	return node;
+	return nde;
 }
 
-static xp_awk_node_t* __parse_nextfile (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk)
 {
-	xp_awk_node_t* node;
+	xp_awk_nde_t* nde;
 
-	node = (xp_awk_node_t*) xp_malloc (xp_sizeof(xp_awk_node_t));
-	if (node == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-	node->type = XP_AWK_NODE_NEXTFILE;
-	node->next = XP_NULL;
+	nde = (xp_awk_nde_t*) xp_malloc (xp_sizeof(xp_awk_nde_t));
+	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+	nde->type = XP_AWK_NDE_NEXTFILE;
+	nde->next = XP_NULL;
 	
-	return node;
+	return nde;
 }
 
 static int __get_token (xp_awk_t* awk)
