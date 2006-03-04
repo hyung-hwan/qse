@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.31 2006-03-03 11:45:45 bacon Exp $
+ * $Id: awk.h,v 1.32 2006-03-04 10:06:49 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -13,43 +13,11 @@
 #include <xp/bas/str.h>
 #endif
 
+#include <xp/awk/err.h>
 #include <xp/awk/tree.h>
 #include <xp/awk/tab.h>
 #include <xp/awk/map.h>
 #include <xp/awk/val.h>
-
-enum
-{
-	XP_AWK_ENOERR,
-	XP_AWK_ENOMEM, /* out of memory */
-
-	XP_AWK_ESRCOP,
-	XP_AWK_ESRCCL,
-	XP_AWK_ESRCDT, /* error in reading source */
-
-	XP_AWK_ELXCHR, /* lexer came accross an wrong character */
-	XP_AWK_ELXUNG, /* lexer failed to unget a character */
-
-	XP_AWK_EENDSRC, /* unexpected end of source */
-	XP_AWK_ELBRACE, /* left brace expected */
-	XP_AWK_ELPAREN, /* left parenthesis expected */
-	XP_AWK_ERPAREN, /* right parenthesis expected */
-	XP_AWK_ERBRACK, /* right bracket expected */
-	XP_AWK_ECOMMA,  /* comma expected */
-	XP_AWK_ESEMICOLON, /* semicolon expected */
-	XP_AWK_EEXPR,   /* expression expected */
-
-	XP_AWK_EWHILE,  /* keyword 'while' is expected */
-	XP_AWK_EASSIGNMENT, /* assignment statement expected */
-	XP_AWK_EIDENT,  /* identifier expected */
-	XP_AWK_EDUPBEGIN, /* duplicate BEGIN */
-	XP_AWK_EDUPEND,   /* duplicate END */
-	XP_AWK_EDUPFUNC,  /* duplicate function name */
-	XP_AWK_EDUPPARAM, /* duplicate parameter name */
-	XP_AWK_EDUPVAR,   /* duplicate variable name */
-	XP_AWK_EDUPNAME,  /* duplicate name - function, variable, etc */
-	XP_AWK_EUNDEF     /* undefined identifier */
-};
 
 /*
  * TYPE: xp_awk_t
