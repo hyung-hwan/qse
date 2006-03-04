@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.1 2006-03-03 11:45:45 bacon Exp $
+ * $Id: val.h,v 1.2 2006-03-04 15:54:37 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -8,6 +8,13 @@
 #ifndef _XP_AWK_AWK_H_
 #error Never include this file directly. Include <xp/awk/awk.h> instead
 #endif
+
+enum
+{
+	XP_AWK_VAL_INT,
+	XP_AWK_VAL_REAL,
+	XP_AWK_VAL_STR
+};
 
 typedef struct xp_awk_val_t      xp_awk_val_t;
 typedef struct xp_awk_val_int_t  xp_awk_val_int_t;
@@ -22,23 +29,37 @@ struct xp_awk_val_t
 	XP_AWK_VAL_HDR;	
 };
 
+/* XP_AWK_VAL_INT */
 struct xp_awk_val_int_t
 {
 	XP_AWK_VAL_HDR;
 	xp_long_t val;
 };
 
+/* XP_AWK_VAL_REAL */
 struct xp_awk_val_real_t
 {
 	XP_AWK_VAL_HDR;
 	xp_real_t val;
 };
 
+/* XP_AWK_VAL_STR */
 struct xp_awk_val_str_t
 {
 	XP_AWK_VAL_HDR;
 	xp_char_t* buf;
 	xp_size_t  len;
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void xp_awk_freeval (xp_awk_val_t* val);
+void xp_awk_printval (xp_awk_val_t* val);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

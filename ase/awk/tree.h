@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.24 2006-03-03 11:51:48 bacon Exp $
+ * $Id: tree.h,v 1.25 2006-03-04 15:54:37 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -13,15 +13,10 @@ enum
 {
 	XP_AWK_NDE_NULL,
 	XP_AWK_NDE_BLOCK,
-	XP_AWK_NDE_BREAK,
-	XP_AWK_NDE_CONTINUE,
-	XP_AWK_NDE_RETURN,
-	XP_AWK_NDE_EXIT,
-	XP_AWK_NDE_NEXT,
-	XP_AWK_NDE_NEXTFILE,
+
 	XP_AWK_NDE_ASS,
-	XP_AWK_NDE_BINARY,
-	XP_AWK_NDE_UNARY,
+	XP_AWK_NDE_EXP_BIN,
+	XP_AWK_NDE_EXP_UNR,
 	XP_AWK_NDE_STR,
 	XP_AWK_NDE_NUM,
 	XP_AWK_NDE_NAMED,
@@ -34,27 +29,41 @@ enum
 	XP_AWK_NDE_ARGIDX,
 	XP_AWK_NDE_POS,
 	XP_AWK_NDE_CALL,
+
 	XP_AWK_NDE_IF,
 	XP_AWK_NDE_WHILE,
 	XP_AWK_NDE_DOWHILE,
-	XP_AWK_NDE_FOR
+	XP_AWK_NDE_FOR,
+	XP_AWK_NDE_BREAK,
+	XP_AWK_NDE_CONTINUE,
+	XP_AWK_NDE_RETURN,
+	XP_AWK_NDE_EXIT,
+
+	XP_AWK_NDE_NEXT,
+	XP_AWK_NDE_NEXTFILE
 };
 
 typedef struct xp_awk_func_t xp_awk_func_t;
 
-typedef struct xp_awk_nde_t       xp_awk_nde_t;
-typedef struct xp_awk_nde_sgv_t   xp_awk_nde_sgv_t;
-typedef struct xp_awk_nde_block_t xp_awk_nde_block_t;
-typedef struct xp_awk_nde_ass_t   xp_awk_nde_ass_t;
-typedef struct xp_awk_nde_expr_t  xp_awk_nde_expr_t;
-typedef struct xp_awk_nde_term_t  xp_awk_nde_term_t;
-typedef struct xp_awk_nde_var_t   xp_awk_nde_var_t;
-typedef struct xp_awk_nde_idx_t   xp_awk_nde_idx_t;
-typedef struct xp_awk_nde_pos_t   xp_awk_nde_pos_t;
-typedef struct xp_awk_nde_call_t  xp_awk_nde_call_t;
-typedef struct xp_awk_nde_if_t    xp_awk_nde_if_t;
-typedef struct xp_awk_nde_while_t xp_awk_nde_while_t;
-typedef struct xp_awk_nde_for_t   xp_awk_nde_for_t;
+typedef struct xp_awk_nde_t           xp_awk_nde_t;
+
+typedef struct xp_awk_nde_pos_t       xp_awk_nde_pos_t;
+typedef struct xp_awk_nde_block_t     xp_awk_nde_block_t;
+typedef struct xp_awk_nde_ass_t       xp_awk_nde_ass_t;
+typedef struct xp_awk_nde_exp_t       xp_awk_nde_exp_t;
+typedef struct xp_awk_nde_trm_t       xp_awk_nde_trm_t;
+typedef struct xp_awk_nde_var_t       xp_awk_nde_var_t;
+typedef struct xp_awk_nde_idx_t       xp_awk_nde_idx_t;
+typedef struct xp_awk_nde_pos_t       xp_awk_nde_pos_t;
+typedef struct xp_awk_nde_call_t      xp_awk_nde_call_t;
+
+typedef struct xp_awk_nde_if_t        xp_awk_nde_if_t;
+typedef struct xp_awk_nde_while_t     xp_awk_nde_while_t;
+typedef struct xp_awk_nde_for_t       xp_awk_nde_for_t;
+typedef struct xp_awk_nde_break_t     xp_awk_nde_break_t;
+typedef struct xp_awk_nde_continue_t  xp_awk_nde_continue_t;
+typedef struct xp_awk_nde_return_t    xp_awk_nde_return_t;
+typedef struct xp_awk_nde_exit_t      xp_awk_nde_exit_t;
 
 struct xp_awk_func_t
 {
@@ -72,8 +81,8 @@ struct xp_awk_nde_t
 	XP_AWK_NDE_HDR;
 };
 
-/* XP_AWK_NDE_RETURN, XP_AWK_NDE_EXIT, XP_AWK_NDE_POS */
-struct xp_awk_nde_sgv_t
+/* XP_AWK_NDE_POS - positional - $1, $2, $x, etc */
+struct xp_awk_nde_pos_t  
 {
 	XP_AWK_NDE_HDR;
 	xp_awk_nde_t* value;	
@@ -86,6 +95,7 @@ struct xp_awk_nde_block_t
 	xp_awk_nde_t* body;
 };
 
+/* XP_AWK_NDE_ASS - assignment */
 struct xp_awk_nde_ass_t
 {
 	XP_AWK_NDE_HDR;
@@ -93,15 +103,17 @@ struct xp_awk_nde_ass_t
 	xp_awk_nde_t* right;
 };
 
-struct xp_awk_nde_expr_t
+/* XP_AWK_NDE_EXP_BIN, XP_AWK_NDE_EXP_UNR */
+struct xp_awk_nde_exp_t
 {
 	XP_AWK_NDE_HDR;
 	int opcode;
 	xp_awk_nde_t* left;
-	xp_awk_nde_t* right;
+	xp_awk_nde_t* right; /* optional for XP_AWK_NDE_UNR */
 };
 
-struct xp_awk_nde_term_t
+/* XP_AWK_NDE_STR, XP_AWK_NDE_NUM */
+struct xp_awk_nde_trm_t
 {
 	XP_AWK_NDE_HDR;
 	xp_char_t* value;
@@ -128,36 +140,65 @@ struct xp_awk_nde_idx_t
 	xp_awk_nde_t* idx;
 };
 
-
+/* XP_AWK_NDE_CALL */
 struct xp_awk_nde_call_t
 {
-	XP_AWK_NDE_HDR; /* XP_AWK_NDE_CALL */
+	XP_AWK_NDE_HDR;
 	xp_char_t* name;
 	xp_awk_nde_t* args;
 };
 
+/* XP_AWK_NDE_IF */
 struct xp_awk_nde_if_t
 {
-	XP_AWK_NDE_HDR; /* XP_AWK_NDE_IF */
+	XP_AWK_NDE_HDR;
 	xp_awk_nde_t* test;
 	xp_awk_nde_t* then_part;
 	xp_awk_nde_t* else_part; /* optional */
 };
 
+/* XP_AWK_NDE_WHILE, XP_AWK_NDE_DOWHILE */
 struct xp_awk_nde_while_t
 {
-	XP_AWK_NDE_HDR; /* XP_AWK_NDE_WHILE, XP_AWK_NDE_DOWHILE */
+	XP_AWK_NDE_HDR; 
 	xp_awk_nde_t* test;
 	xp_awk_nde_t* body;
 };
 
+/* XP_AWK_NDE_FOR */
 struct xp_awk_nde_for_t
 {
-	XP_AWK_NDE_HDR; /* XP_AWK_NDE_FOR */
+	XP_AWK_NDE_HDR;
 	xp_awk_nde_t* init; /* optional */
 	xp_awk_nde_t* test; /* optional */
 	xp_awk_nde_t* incr; /* optional */
 	xp_awk_nde_t* body;
+};
+
+/* XP_AWK_NDE_BREAK */
+struct xp_awk_nde_break_t
+{
+	XP_AWK_NDE_HDR;
+};
+
+/* XP_AWK_NDE_CONTINUE */
+struct xp_awk_nde_continue_t
+{
+	XP_AWK_NDE_HDR;
+};
+
+/* XP_AWK_NDE_RETURN */
+struct xp_awk_nde_return_t
+{
+	XP_AWK_NDE_HDR;
+	xp_awk_nde_t* value; /* optional (no return code if XP_NULL) */	
+};
+
+/* XP_AWK_NDE_EXIT */
+struct xp_awk_nde_exit_t
+{
+	XP_AWK_NDE_HDR;
+	xp_awk_nde_t* value; /* optional (no exit code if XP_NULL) */
 };
 
 #ifdef __cplusplus
