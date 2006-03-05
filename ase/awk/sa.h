@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.12 2006-03-03 11:51:48 bacon Exp $
+ * $Id: sa.h,v 1.13 2006-03-05 17:07:33 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -100,6 +100,12 @@ extern "C" {
 #endif
 
 xp_char_t* xp_strdup (const xp_char_t* str);
+xp_char_t* xp_strxdup (const xp_char_t* str, xp_size_t len);
+
+xp_size_t xp_strxncpy (
+	xp_char_t* buf, xp_size_t bsz, const xp_char_t* str, xp_size_t len);
+
+xp_long_t xp_strtolong (xp_char_t* str);
 
 int xp_printf (const xp_char_t* fmt, ...);
 int xp_vprintf (const xp_char_t* fmt, xp_va_list ap);

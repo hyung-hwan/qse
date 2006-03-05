@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.25 2006-03-04 15:54:37 bacon Exp $
+ * $Id: tree.h,v 1.26 2006-03-05 17:07:33 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -12,13 +12,16 @@
 enum
 {
 	XP_AWK_NDE_NULL,
-	XP_AWK_NDE_BLOCK,
 
+	XP_AWK_NDE_BLK,
 	XP_AWK_NDE_ASS,
+
 	XP_AWK_NDE_EXP_BIN,
 	XP_AWK_NDE_EXP_UNR,
+
+	XP_AWK_NDE_INT,
+	/*TODO: XP_AWK_NDE_REAL,*/
 	XP_AWK_NDE_STR,
-	XP_AWK_NDE_NUM,
 	XP_AWK_NDE_NAMED,
 	XP_AWK_NDE_NAMEDIDX,
 	XP_AWK_NDE_GLOBAL,
@@ -47,11 +50,12 @@ typedef struct xp_awk_func_t xp_awk_func_t;
 
 typedef struct xp_awk_nde_t           xp_awk_nde_t;
 
-typedef struct xp_awk_nde_pos_t       xp_awk_nde_pos_t;
-typedef struct xp_awk_nde_block_t     xp_awk_nde_block_t;
+typedef struct xp_awk_nde_blk_t       xp_awk_nde_blk_t;
 typedef struct xp_awk_nde_ass_t       xp_awk_nde_ass_t;
 typedef struct xp_awk_nde_exp_t       xp_awk_nde_exp_t;
-typedef struct xp_awk_nde_trm_t       xp_awk_nde_trm_t;
+typedef struct xp_awk_nde_pos_t       xp_awk_nde_pos_t;
+typedef struct xp_awk_nde_int_t       xp_awk_nde_int_t;
+typedef struct xp_awk_nde_str_t       xp_awk_nde_str_t;
 typedef struct xp_awk_nde_var_t       xp_awk_nde_var_t;
 typedef struct xp_awk_nde_idx_t       xp_awk_nde_idx_t;
 typedef struct xp_awk_nde_pos_t       xp_awk_nde_pos_t;
@@ -81,14 +85,8 @@ struct xp_awk_nde_t
 	XP_AWK_NDE_HDR;
 };
 
-/* XP_AWK_NDE_POS - positional - $1, $2, $x, etc */
-struct xp_awk_nde_pos_t  
-{
-	XP_AWK_NDE_HDR;
-	xp_awk_nde_t* value;	
-};
-
-struct xp_awk_nde_block_t
+/* XP_AWK_NDE_BLK - block statement including top-level blocks */
+struct xp_awk_nde_blk_t
 {
 	XP_AWK_NDE_HDR;
 	xp_size_t nlocals;
@@ -112,11 +110,26 @@ struct xp_awk_nde_exp_t
 	xp_awk_nde_t* right; /* optional for XP_AWK_NDE_UNR */
 };
 
-/* XP_AWK_NDE_STR, XP_AWK_NDE_NUM */
-struct xp_awk_nde_trm_t
+/* XP_AWK_NDE_POS - positional - $1, $2, $x, etc */
+struct xp_awk_nde_pos_t  
 {
 	XP_AWK_NDE_HDR;
-	xp_char_t* value;
+	xp_awk_nde_t* val;	
+};
+
+/* XP_AWK_NDE_INT */
+struct xp_awk_nde_int_t
+{
+	XP_AWK_NDE_HDR;
+	xp_long_t val;
+};
+
+/* XP_AWK_NDE_STR */
+struct xp_awk_nde_str_t
+{
+	XP_AWK_NDE_HDR;
+	xp_char_t* buf;
+	xp_size_t  len;
 };
 
 struct xp_awk_nde_var_t
@@ -191,14 +204,14 @@ struct xp_awk_nde_continue_t
 struct xp_awk_nde_return_t
 {
 	XP_AWK_NDE_HDR;
-	xp_awk_nde_t* value; /* optional (no return code if XP_NULL) */	
+	xp_awk_nde_t* val; /* optional (no return code if XP_NULL) */	
 };
 
 /* XP_AWK_NDE_EXIT */
 struct xp_awk_nde_exit_t
 {
 	XP_AWK_NDE_HDR;
-	xp_awk_nde_t* value; /* optional (no exit code if XP_NULL) */
+	xp_awk_nde_t* val; /* optional (no exit code if XP_NULL) */
 };
 
 #ifdef __cplusplus
