@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.6 2006-03-04 15:54:37 bacon Exp $
+ * $Id: run.c,v 1.7 2006-03-05 17:07:33 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -8,34 +8,45 @@
 #include <xp/bas/assert.h>
 #endif
 
-static int __run_block (xp_awk_t* awk, xp_awk_nde_t* nde);
+static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde);
 
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde);
 
+int __printval (xp_awk_pair_t* pair)
+{
+	xp_printf (XP_TEXT("%s = "), (const xp_char_t*)pair->key);
+	xp_awk_printval ((xp_awk_val_t*)pair->val);
+	xp_printf (XP_TEXT("\n"));
+	return 0;
+}
+
 int xp_awk_run (xp_awk_t* awk)
 {
 	if (awk->tree.begin != XP_NULL) 
 	{
-		if (__run_block(awk, awk->tree.begin) == -1) return -1;
+		xp_assert (awk->tree.begin->type == XP_AWK_NDE_BLK);
+		if (__run_block(awk, (xp_awk_nde_blk_t*)awk->tree.begin) == -1) return -1;
 	}
 
 	if (awk->tree.end != XP_NULL) 
 	{
-		if (__run_block(awk, awk->tree.end) == -1) return -1;
+		xp_assert (awk->tree.end->type == XP_AWK_NDE_BLK);
+		if (__run_block(awk, (xp_awk_nde_blk_t*)awk->tree.end) == -1) return -1;
 	}
 
+xp_awk_map_walk (&awk->run.named, __printval);
 	return 0;
 }
 
-static int __run_block (xp_awk_t* awk, xp_awk_nde_t* nde)
+static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 {
 	xp_awk_nde_t* p;
 
-	xp_assert (nde->type == XP_AWK_NDE_BLOCK);
+	xp_assert (nde->type == XP_AWK_NDE_BLK);
 
-	p = nde;
+	p = nde->body;
 
 	while (p != XP_NULL) 
 	{
@@ -54,8 +65,8 @@ static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde)
 		/* do nothing */
 		break;
 
-	case XP_AWK_NDE_BLOCK:
-		if (__run_block(awk, nde) == -1) return -1;
+	case XP_AWK_NDE_BLK:
+		if (__run_block(awk, (xp_awk_nde_blk_t*)nde) == -1) return -1;
 		break;
 
 	case XP_AWK_NDE_IF:
@@ -96,7 +107,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
 	xp_awk_val_t* val;
 
-	switch (nde->type) {
+	switch (nde->type) 
+	{
 	case XP_AWK_NDE_ASS:
 		val = __eval_assignment(awk,(xp_awk_nde_ass_t*)nde);
 		break;
@@ -106,12 +118,20 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 	case XP_AWK_NDE_EXP_UNR:
 
 	case XP_AWK_NDE_STR:
+		val = xp_awk_makestrval(
+			((xp_awk_nde_str_t*)nde)->buf,
+			((xp_awk_nde_str_t*)nde)->len);
 		break;
 
-	case XP_AWK_NDE_NUM:
-		// TODO: int, real...
-		val = xp_awk_makeintval();
+	case XP_AWK_NDE_INT:
+		val = xp_awk_makeintval(((xp_awk_nde_int_t*)nde)->val);
 		break;
+
+	/* TODO:
+	case XP_AWK_NDE_REAL:
+		val = xp_awk_makerealval(((xp_awk_nde_real_t*)nde)->val);
+		break;
+	*/
 
 	case XP_AWK_NDE_ARG:
 
@@ -145,55 +165,61 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 {
 	xp_awk_val_t* v;
+	xp_awk_nde_var_t* tgt;
 
-	if (nde->type == XP_AWK_NDE_NAMED) 
+	tgt = (xp_awk_nde_var_t*)nde->left;
+
+	if (tgt->type == XP_AWK_NDE_NAMED) 
 	{
-		xp_awk_nde_var_t* tgt;
 		xp_awk_val_t* old, * new;
+		xp_char_t* name;
 
-		tgt = (xp_awk_nde_var_t*)nde->left;
-		new = __eval_expression (awk, nde->right);
+		new = __eval_expression(awk, nde->right);
 
 		xp_assert (tgt != XP_NULL);
 		if (new == XP_NULL) return XP_NULL;
 
-		old = (xp_awk_val_t*) xp_awk_map_get (&awk->run.named, tgt->id.name);
+		name = tgt->id.name;
+		old = (xp_awk_val_t*)xp_awk_map_getval(&awk->run.named, name);
+		if (old == XP_NULL) {
+			name = xp_strdup (tgt->id.name);
+			if (name == XP_NULL) {
+				xp_awk_freeval(new);
+				awk->errnum = XP_AWK_ENOMEM;
+				return XP_NULL;
+			}
+		}
 
-		if (xp_awk_map_put (
-			&awk->run.named, tgt->id.name, new) == XP_NULL) 
+		if (xp_awk_map_put(&awk->run.named, name, new) == XP_NULL) 
 		{
+			xp_free (name);
 			xp_awk_freeval (new);
 			awk->errnum = XP_AWK_ENOMEM;
 			return XP_NULL;
 		}
-		else if (old != XP_NULL) 
-		{
-			/* free the old value that has been assigned to the variable */
-			xp_awk_freeval (old);
-		}
 
 		v = new;
 	}
-	else if (nde->type == XP_AWK_NDE_GLOBAL) 
+	else if (tgt->type == XP_AWK_NDE_GLOBAL) 
 	{
 	}
-	else if (nde->type == XP_AWK_NDE_LOCAL) 
+	else if (tgt->type == XP_AWK_NDE_LOCAL) 
 	{
 	}
-	else if (nde->type == XP_AWK_NDE_ARG) 
+	else if (tgt->type == XP_AWK_NDE_ARG) 
 	{
 	}
 
-	else if (nde->type == XP_AWK_NDE_NAMEDIDX) 
+	else if (tgt->type == XP_AWK_NDE_NAMEDIDX) 
 	{
 	}
-	else if (nde->type == XP_AWK_NDE_GLOBALIDX) 
+	else if (tgt->type == XP_AWK_NDE_GLOBALIDX) 
 	{
 	}
-	else if (nde->type == XP_AWK_NDE_LOCALIDX) 
+	else if (tgt->type == XP_AWK_NDE_LOCALIDX) 
 	{
 	}
-	else if (nde->type == XP_AWK_NDE_ARGIDX) 
+	else if (tgt->type == XP_AWK_NDE_ARGIDX) 
 	{
 	}
 	else

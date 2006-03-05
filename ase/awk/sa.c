@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.8 2006-03-03 11:51:48 bacon Exp $
+ * $Id: sa.c,v 1.9 2006-03-05 17:07:33 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -18,6 +18,44 @@ xp_char_t* xp_strdup (const xp_char_t* str)
 	xp_strcpy (tmp, str);
 	return tmp;
 }
+
+xp_char_t* xp_strxdup (const xp_char_t* str, xp_size_t len)
+{
+	xp_char_t* tmp;
+
+	tmp = (xp_char_t*)xp_malloc ((len + 1) * xp_sizeof(xp_char_t));
+	if (tmp == XP_NULL) return XP_NULL;
+
+	xp_strxncpy (tmp, len + 1, str, len);
+	return tmp;
+}
+
+xp_size_t xp_strxncpy (
+	xp_char_t* buf, xp_size_t bsz, const xp_char_t* str, xp_size_t len)
+{
+	xp_size_t n;
+
+	if (bsz <= 0) return 0;
+	if ((n = bsz - 1) > len) n = len;
+	xp_memcpy (buf, str, n * xp_sizeof(xp_char_t));
+	buf[n] = XP_CHAR('\0');
+
+	return n;
+}
+
+xp_long_t xp_strtolong (xp_char_t* str)
+{
+	xp_long_t n = 0;
+
+	while (xp_isdigit(*str)) 
+	{
+		n = n * 10 + (*str - XP_CHAR('0'));
+		str++;
+	}
+
+	return n;
+}
+
 
 int xp_printf (const xp_char_t* fmt, ...)
 {
