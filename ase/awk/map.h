@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.3 2006-03-05 17:07:32 bacon Exp $
+ * $Id: map.h,v 1.4 2006-03-06 04:04:47 bacon Exp $
  */
 
 #ifndef _XP_AWK_MAP_H_
@@ -45,13 +45,16 @@ void xp_awk_map_close (xp_awk_map_t* map);
 
 void xp_awk_map_clear (xp_awk_map_t* map);
 
-xp_awk_pair_t* xp_awk_map_get (xp_awk_map_t* map, const xp_char_t* key);
-void* xp_awk_map_getval (xp_awk_map_t* map, const xp_char_t* key);
-
+xp_awk_pair_t* xp_awk_map_get (xp_awk_map_t* map, xp_char_t* key);
 xp_awk_pair_t* xp_awk_map_put (xp_awk_map_t* map, xp_char_t* key, void* val);
 xp_awk_pair_t* xp_awk_map_set (xp_awk_map_t* map, xp_char_t* key, void* val);
 
-int xp_awk_map_remove (xp_awk_map_t* map, const xp_char_t* key);
+xp_awk_pair_t* xp_awk_map_getpair (
+	xp_awk_map_t* map, xp_char_t* key, void** value);
+xp_awk_pair_t* xp_awk_map_setpair (
+	xp_awk_map_t* map, xp_awk_pair_t* pair, void* value);
+
+int xp_awk_map_remove (xp_awk_map_t* map, xp_char_t* key);
 int xp_awk_map_walk (xp_awk_map_t* map, int (*walker) (xp_awk_pair_t*));
 
 #ifdef __cplusplus
