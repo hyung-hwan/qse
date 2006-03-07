@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.6 2006-03-07 15:55:14 bacon Exp $
+ * $Id: map.c,v 1.7 2006-03-07 16:09:18 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -162,7 +162,7 @@ xp_awk_pair_t* xp_awk_map_set (xp_awk_map_t* map, xp_char_t* key, void* val)
 }
 
 xp_awk_pair_t* xp_awk_map_getpair (
-	xp_awk_map_t* map, xp_char_t* key, const void** val)
+	xp_awk_map_t* map, xp_char_t* key, void** val)
 {
 	xp_awk_pair_t* pair;
 
