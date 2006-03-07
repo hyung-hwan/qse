@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.5 2006-03-03 11:51:48 bacon Exp $
+ * $Id: tab.c,v 1.6 2006-03-07 15:55:14 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -12,7 +12,8 @@
 
 xp_awk_tab_t* xp_awk_tab_open (xp_awk_tab_t* tab)
 {
-	if (tab == XP_NULL) {
+	if (tab == XP_NULL) 
+	{
 		tab = (xp_awk_tab_t*) xp_malloc (xp_sizeof(xp_awk_tab_t));
 		if (tab == XP_NULL) return XP_NULL;
 		tab->__dynamic = xp_true;
@@ -29,7 +30,8 @@ xp_awk_tab_t* xp_awk_tab_open (xp_awk_tab_t* tab)
 void xp_awk_tab_close (xp_awk_tab_t* tab)
 {
 	xp_awk_tab_clear (tab);
-	if (tab->buf != XP_NULL) {
+	if (tab->buf != XP_NULL) 
+	{
 		xp_free (tab->buf);
 		tab->buf = XP_NULL;
 		tab->capa = 0;
@@ -52,17 +54,20 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 {
 	xp_char_t** tmp;
 
-	if (tab->size > capa) {
-		xp_awk_tab_remrange (tab, capa, tab->size - capa);
+	if (tab->size > capa) 
+	{
+		xp_awk_tab_remove (tab, capa, tab->size - capa);
 		xp_assert (tab->size <= capa);
 	}
 
-	if (capa > 0) {
+	if (capa > 0) 
+	{
 		tmp = (xp_char_t**)xp_realloc (
 			tab->buf, xp_sizeof(xp_char_t*) * capa);
 		if (tmp == XP_NULL) return XP_NULL;
 	}
-	else {
+	else 
+	{
 		if (tab->buf != XP_NULL) xp_free (tab->buf);
 		tmp = XP_NULL;
 	}
@@ -79,7 +84,8 @@ void xp_awk_tab_clear (xp_awk_tab_t* tab)
 
 	xp_assert (tab != XP_NULL);
 
-	for (i = 0; i < tab->size; i++) {
+	for (i = 0; i < tab->size; i++) 
+	{
 		xp_free (tab->buf[i]);
 		tab->buf[i] = XP_NULL;
 	}
@@ -88,7 +94,7 @@ void xp_awk_tab_clear (xp_awk_tab_t* tab)
 }
 
 
-xp_size_t xp_awk_tab_insdatum (
+xp_size_t xp_awk_tab_insert (
 	xp_awk_tab_t* tab, xp_size_t index, const xp_char_t* value)
 {
 	xp_size_t i;
@@ -97,15 +103,18 @@ xp_size_t xp_awk_tab_insdatum (
 	value_dup = xp_strdup(value);
 	if (value_dup == XP_NULL) return (xp_size_t)-1;
 
-	if (index >= tab->capa) {
+	if (index >= tab->capa) 
+	{
 		xp_size_t capa;
 
 		if (tab->capa <= 0) capa = (index + 1);
-		else {
+		else 
+		{
 			do { capa = tab->capa * 2; } while (index >= capa);
 		}
 
-		if (xp_awk_tab_setcapa(tab,capa) == XP_NULL) {
+		if (xp_awk_tab_setcapa(tab,capa) == XP_NULL) 
+		{
 			xp_free (value_dup);
 			return (xp_size_t)-1;
 		}
@@ -120,7 +129,7 @@ xp_size_t xp_awk_tab_insdatum (
 	return index;
 }
 
-xp_size_t xp_awk_tab_remrange (
+xp_size_t xp_awk_tab_remove (
 	xp_awk_tab_t* tab, xp_size_t index, xp_size_t count)
 {
 	xp_size_t i, j, k;
@@ -132,20 +141,29 @@ xp_size_t xp_awk_tab_remrange (
 	j = index + count;
 	k = index + count;
 
-	while (i < k) {
+	while (i < k) 
+	{
 		xp_free (tab->buf[i]);	
+
 		if (j >= tab->size) 
-		tab->buf[i] = (j >= tab->size)? XP_NULL: tab->buf[j];
-		i++; j++;		
+		{
+			tab->buf[i] = XP_NULL;
+			i++;
+		}
+		else
+		{
+			tab->buf[i] = tab->buf[j];
+			i++; j++;		
+		}
 	}
 
 	tab->size -= count;
 	return count;
 }
 
-xp_size_t xp_awk_tab_adddatum (xp_awk_tab_t* tab, const xp_char_t* value)
+xp_size_t xp_awk_tab_add (xp_awk_tab_t* tab, const xp_char_t* value)
 {
-	return xp_awk_tab_insdatum (tab, tab->size, value);
+	return xp_awk_tab_insert (tab, tab->size, value);
 }
 
 

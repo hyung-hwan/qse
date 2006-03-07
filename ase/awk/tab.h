@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.4 2006-03-03 11:51:48 bacon Exp $
+ * $Id: tab.h,v 1.5 2006-03-07 15:55:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
@@ -42,12 +42,13 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa);
 
 void xp_awk_tab_clear (xp_awk_tab_t* tab);
 
-xp_size_t xp_awk_tab_insdatum (
+xp_size_t xp_awk_tab_insert (
 	xp_awk_tab_t* tab, xp_size_t index, const xp_char_t* value);
-xp_size_t xp_awk_tab_remrange (
+xp_size_t xp_awk_tab_remove (
 	xp_awk_tab_t* tab, xp_size_t index, xp_size_t count);
 
-xp_size_t xp_awk_tab_adddatum (xp_awk_tab_t* tab, const xp_char_t* value);
+xp_size_t xp_awk_tab_add (xp_awk_tab_t* tab, const xp_char_t* value);
+
 xp_size_t xp_awk_tab_find (
 	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index);
 xp_size_t xp_awk_tab_rfind (

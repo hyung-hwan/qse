@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.32 2006-03-04 10:06:49 bacon Exp $
+ * $Id: awk.h,v 1.33 2006-03-07 15:55:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -18,6 +18,7 @@
 #include <xp/awk/tab.h>
 #include <xp/awk/map.h>
 #include <xp/awk/val.h>
+#include <xp/awk/run.h>
 
 /*
  * TYPE: xp_awk_t
@@ -91,6 +92,10 @@ struct xp_awk_t
 	struct
 	{
 		xp_awk_map_t named;
+
+		void* stack;
+		xp_size_t stack_top;
+		xp_size_t stack_limit;
 	} run;
 
 	/* source buffer management */
