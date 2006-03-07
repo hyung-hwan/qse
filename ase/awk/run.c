@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.8 2006-03-06 04:04:47 bacon Exp $
+ * $Id: run.c,v 1.9 2006-03-07 15:55:14 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -14,6 +14,7 @@ static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde);
 
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde);
+static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
 
 int __printval (xp_awk_pair_t* pair)
 {
@@ -28,13 +29,15 @@ int xp_awk_run (xp_awk_t* awk)
 	if (awk->tree.begin != XP_NULL) 
 	{
 		xp_assert (awk->tree.begin->type == XP_AWK_NDE_BLK);
-		if (__run_block(awk, (xp_awk_nde_blk_t*)awk->tree.begin) == -1) return -1;
+		if (__run_block (awk, 
+			(xp_awk_nde_blk_t*)awk->tree.begin) == -1) return -1;
 	}
 
 	if (awk->tree.end != XP_NULL) 
 	{
 		xp_assert (awk->tree.end->type == XP_AWK_NDE_BLK);
-		if (__run_block(awk, (xp_awk_nde_blk_t*)awk->tree.end) == -1) return -1;
+		if (__run_block (awk, 
+			(xp_awk_nde_blk_t*)awk->tree.end) == -1) return -1;
 	}
 
 xp_awk_map_walk (&awk->run.named, __printval);
@@ -124,6 +127,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_EXP_BIN:
+		val = __eval_binary(awk,(xp_awk_nde_exp_t*)nde);
+		break;
 
 	case XP_AWK_NDE_EXP_UNR:
 
@@ -148,6 +153,15 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 	case XP_AWK_NDE_ARGIDX:
 
 	case XP_AWK_NDE_NAMED:
+		{
+			xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+			xp_awk_pair_t* pair;
+		       
+			pair = xp_awk_map_get(&awk->run.named,tgt->id.name);
+			if (pair == XP_NULL) val = xp_awk_val_nil;
+			else val = xp_awk_cloneval (pair->val);
+		}
+		break;
 
 	case XP_AWK_NDE_NAMEDIDX:
 
@@ -190,21 +204,6 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 
 		xp_assert (tgt != XP_NULL);
 		if (new == XP_NULL) return XP_NULL;
-
-		/*
-		name = tgt->id.name;
-		old = (xp_awk_val_t*)xp_awk_map_getval(&awk->run.named, name);
-		if (old == XP_NULL) 
-		{
-			name = xp_strdup (tgt->id.name);
-			if (name == XP_NULL) 
-			{
-				xp_awk_freeval(new);
-				awk->errnum = XP_AWK_ENOMEM;
-				return XP_NULL;
-			}
-		}
-		*/
 
 		pair = xp_awk_map_get(&awk->run.named, tgt->id.name);
 		if (pair == XP_NULL) 
@@ -259,4 +258,35 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 	}
 
 	return v;
+}
+
+static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
+{
+	xp_awk_val_t* left, * right;
+
+	xp_assert (nde->type == XP_AWK_NDE_EXP_BIN);
+
+	left = __eval_expression (awk, nde->left);
+	if (left == XP_NULL) return XP_NULL;
+
+	right = __eval_expression (awk, nde->right);
+	if (right == XP_NULL) 
+	{
+		xp_awk_freeval(left);
+		return XP_NULL;
+	}
+
+// TODO: a lot of things to do....
+	if (nde->opcode == XP_AWK_BINOP_PLUS) 
+	{
+		if (left->type == XP_AWK_VAL_INT &&
+		    right->type == XP_AWK_VAL_INT)
+		{
+			((xp_awk_val_int_t*)left)->val += 
+				  ((xp_awk_val_int_t*)right)->val;
+		}
+	}
+	
+	xp_awk_freeval(right);
+	return left;
 }

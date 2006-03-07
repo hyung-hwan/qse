@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.58 2006-03-05 17:07:32 bacon Exp $
+ * $Id: parse.c,v 1.59 2006-03-07 15:55:14 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -71,22 +71,6 @@ enum
 	TOKEN_GLOBAL,
 
 	__TOKEN_COUNT__
-};
-
-enum {
-	BINOP_PLUS,
-	BINOP_MINUS,
-	BINOP_MUL,
-	BINOP_DIV,
-	BINOP_MOD,
-	BINOP_RSHIFT,
-	BINOP_LSHIFT,
-	BINOP_EQ,
-	BINOP_NE,
-	BINOP_GT,
-	BINOP_GE,
-	BINOP_LT,
-	BINOP_LE
 };
 
 #if defined(__BORLANDC__) || defined(_MSC_VER)
@@ -311,7 +295,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		nglobals = xp_awk_tab_getsize(&awk->parse.globals);
 		if (__collect_globals(awk) == XP_NULL) 
 		{
-			xp_awk_tab_remrange (
+			xp_awk_tab_remove (
 				&awk->parse.globals, nglobals, 
 				xp_awk_tab_getsize(&awk->parse.globals) - nglobals);
 			return XP_NULL;
@@ -462,7 +446,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			}
 
 			/* push the parameter to the parameter list */
-			if (xp_awk_tab_adddatum(&awk->parse.params, param) == (xp_size_t)-1) 
+			if (xp_awk_tab_add(&awk->parse.params, param) == (xp_size_t)-1) 
 			{
 				xp_free (name_dup);
 				xp_awk_tab_clear (&awk->parse.params);
@@ -639,7 +623,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 
 			if (__get_token(awk) == -1) 
 			{
-				xp_awk_tab_remrange (
+				xp_awk_tab_remove (
 					&awk->parse.locals, nlocals, 
 					xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 				return XP_NULL;
@@ -647,7 +631,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 
 			if (__collect_locals(awk, nlocals) == XP_NULL)
 			{
-				xp_awk_tab_remrange (
+				xp_awk_tab_remove (
 					&awk->parse.locals, nlocals, 
 					xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 				return XP_NULL;
@@ -662,7 +646,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	{
 		if (MATCH(awk,TOKEN_EOF)) 
 		{
-			xp_awk_tab_remrange (
+			xp_awk_tab_remove (
 				&awk->parse.locals, nlocals, 
 				xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 			if (head != XP_NULL) xp_awk_clrpt (head);
@@ -673,7 +657,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 		{
 			if (__get_token(awk) == -1) 
 			{
-				xp_awk_tab_remrange (
+				xp_awk_tab_remove (
 					&awk->parse.locals, nlocals, 
 					xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 				if (head != XP_NULL) xp_awk_clrpt (head);
@@ -685,7 +669,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 		nde = __parse_statement (awk);
 		if (nde == XP_NULL) 
 		{
-			xp_awk_tab_remrange (
+			xp_awk_tab_remove (
 				&awk->parse.locals, nlocals, 
 				xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 			if (head != XP_NULL) xp_awk_clrpt (head);
@@ -705,7 +689,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	block = (xp_awk_nde_blk_t*)xp_malloc(xp_sizeof(xp_awk_nde_blk_t));
 	if (block == XP_NULL) 
 	{
-		xp_awk_tab_remrange (
+		xp_awk_tab_remove (
 			&awk->parse.locals, nlocals, 
 			xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
 		xp_awk_clrpt (head);
@@ -715,7 +699,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	tmp = xp_awk_tab_getsize(&awk->parse.locals);
 	if (tmp > awk->parse.nlocals_max) awk->parse.nlocals_max = tmp;
 
-	xp_awk_tab_remrange (
+	xp_awk_tab_remove (
 		&awk->parse.locals, nlocals, tmp - nlocals);
 
 	/* adjust number of locals for a block without any statements */
@@ -772,7 +756,7 @@ static xp_awk_t* __collect_globals (xp_awk_t* awk)
 			PANIC (awk, XP_AWK_EDUPVAR);	
 		}
 
-		if (xp_awk_tab_adddatum(&awk->parse.globals, global) == (xp_size_t)-1) 
+		if (xp_awk_tab_add(&awk->parse.globals, global) == (xp_size_t)-1) 
 		{
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
@@ -831,7 +815,7 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 			PANIC (awk, XP_AWK_EDUPVAR);	
 		}
 
-		if (xp_awk_tab_adddatum(&awk->parse.locals, local) == (xp_size_t)-1) 
+		if (xp_awk_tab_add(&awk->parse.locals, local) == (xp_size_t)-1) 
 		{
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
@@ -1061,8 +1045,8 @@ static xp_awk_nde_t* __parse_equality (xp_awk_t* awk)
 	
 	while (1) 
 	{
-		if (MATCH(awk,TOKEN_EQ)) opcode = BINOP_EQ;
-		else if (MATCH(awk,TOKEN_NE)) opcode = BINOP_NE;
+		if (MATCH(awk,TOKEN_EQ)) opcode = XP_AWK_BINOP_EQ;
+		else if (MATCH(awk,TOKEN_NE)) opcode = XP_AWK_BINOP_NE;
 		else break;
 
 		if (__get_token(awk) == -1) 
@@ -1111,10 +1095,10 @@ static xp_awk_nde_t* __parse_relational (xp_awk_t* awk)
 	
 	while (1) 
 	{
-		if (MATCH(awk,TOKEN_GT)) opcode = BINOP_GT;
-		else if (MATCH(awk,TOKEN_GE)) opcode = BINOP_GE;
-		else if (MATCH(awk,TOKEN_LT)) opcode = BINOP_LT;
-		else if (MATCH(awk,TOKEN_LE)) opcode = BINOP_LE;
+		if (MATCH(awk,TOKEN_GT)) opcode = XP_AWK_BINOP_GT;
+		else if (MATCH(awk,TOKEN_GE)) opcode = XP_AWK_BINOP_GE;
+		else if (MATCH(awk,TOKEN_LT)) opcode = XP_AWK_BINOP_LT;
+		else if (MATCH(awk,TOKEN_LE)) opcode = XP_AWK_BINOP_LE;
 		else break;
 
 		if (__get_token(awk) == -1) 
@@ -1163,8 +1147,8 @@ static xp_awk_nde_t* __parse_shift (xp_awk_t* awk)
 	
 	while (1) 
 	{
-		if (MATCH(awk,TOKEN_RSHIFT)) opcode = BINOP_RSHIFT;
-		else if (MATCH(awk,TOKEN_LSHIFT)) opcode = BINOP_LSHIFT;
+		if (MATCH(awk,TOKEN_RSHIFT)) opcode = XP_AWK_BINOP_RSHIFT;
+		else if (MATCH(awk,TOKEN_LSHIFT)) opcode = XP_AWK_BINOP_LSHIFT;
 		else break;
 
 		if (__get_token(awk) == -1) 
@@ -1213,8 +1197,8 @@ static xp_awk_nde_t* __parse_additive (xp_awk_t* awk)
 	
 	while (1) 
 	{
-		if (MATCH(awk,TOKEN_PLUS)) opcode = BINOP_PLUS;
-		else if (MATCH(awk,TOKEN_MINUS)) opcode = BINOP_MINUS;
+		if (MATCH(awk,TOKEN_PLUS)) opcode = XP_AWK_BINOP_PLUS;
+		else if (MATCH(awk,TOKEN_MINUS)) opcode = XP_AWK_BINOP_MINUS;
 		else break;
 
 		if (__get_token(awk) == -1) 
@@ -1263,9 +1247,9 @@ static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk)
 	
 	while (1) 
 	{
-		if (MATCH(awk,TOKEN_MUL)) opcode = BINOP_MUL;
-		else if (MATCH(awk,TOKEN_DIV)) opcode = BINOP_DIV;
-		else if (MATCH(awk,TOKEN_MOD)) opcode = BINOP_MOD;
+		if (MATCH(awk,TOKEN_MUL)) opcode = XP_AWK_BINOP_MUL;
+		else if (MATCH(awk,TOKEN_DIV)) opcode = XP_AWK_BINOP_DIV;
+		else if (MATCH(awk,TOKEN_MOD)) opcode = XP_AWK_BINOP_MOD;
 		else break;
 
 		if (__get_token(awk) == -1) 
@@ -1293,9 +1277,9 @@ static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk)
 
 			xp_awk_clrpt (right);
 			
-			if (opcode == BINOP_MUL) l *= r;
-			else if (opcode == BINOP_DIV) l /= r;
-			else if (opcode == BINOP_MOD) l %= r;
+			if (opcode == XP_AWK_BINOP_MUL) l *= r;
+			else if (opcode == XP_AWK_BINOP_DIV) l /= r;
+			else if (opcode == XP_AWK_BINOP_MOD) l %= r;
 			
 			((xp_awk_nde_int_t*)left)->val = l;
 			continue;
