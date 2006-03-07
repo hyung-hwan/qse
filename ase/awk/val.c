@@ -1,8 +1,13 @@
 /*
- * $Id: val.c,v 1.3 2006-03-07 15:55:14 bacon Exp $
+ * $Id: val.c,v 1.4 2006-03-07 16:09:18 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
+
+#ifndef __STAND_ALONE
+#include <xp/bas/string.h>
+#include <xp/bas/memory.h>
+#endif
 
 static xp_awk_val_nil_t __awk_nil = { XP_AWK_VAL_NIL };
 xp_awk_val_t* xp_awk_val_nil = (xp_awk_val_t*)&__awk_nil;
@@ -11,7 +16,7 @@ xp_awk_val_t* xp_awk_makeintval (xp_long_t v)
 {
 	xp_awk_val_int_t* val;
 
-	val = (xp_awk_val_int_t*) xp_malloc (xp_sizeof(xp_awk_val_int_t));
+	val = (xp_awk_val_int_t*)xp_malloc(xp_sizeof(xp_awk_val_int_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_INT;
@@ -24,7 +29,7 @@ xp_awk_val_t* xp_awk_makerealval (xp_real_t v)
 {
 	xp_awk_val_real_t* val;
 
-	val = (xp_awk_val_real_t*) xp_malloc (xp_sizeof(xp_awk_val_real_t));
+	val = (xp_awk_val_real_t*)xp_malloc(xp_sizeof(xp_awk_val_real_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_REAL;
@@ -37,7 +42,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_str_t* val;
 
-	val = (xp_awk_val_str_t*) xp_malloc (xp_sizeof(xp_awk_val_str_t));
+	val = (xp_awk_val_str_t*)xp_malloc(xp_sizeof(xp_awk_val_str_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_STR;

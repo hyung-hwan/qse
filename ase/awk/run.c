@@ -1,11 +1,13 @@
 /*
- * $Id: run.c,v 1.9 2006-03-07 15:55:14 bacon Exp $
+ * $Id: run.c,v 1.10 2006-03-07 16:09:18 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
 
 #ifndef __STAND_ALONE
 #include <xp/bas/assert.h>
+#include <xp/bas/string.h>
+#include <xp/bas/memory.h>
 #endif
 
 static int __activate_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
