@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.26 2006-03-05 17:07:33 bacon Exp $
+ * $Id: tree.h,v 1.27 2006-03-07 16:02:18 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -58,7 +58,6 @@ typedef struct xp_awk_nde_int_t       xp_awk_nde_int_t;
 typedef struct xp_awk_nde_str_t       xp_awk_nde_str_t;
 typedef struct xp_awk_nde_var_t       xp_awk_nde_var_t;
 typedef struct xp_awk_nde_idx_t       xp_awk_nde_idx_t;
-typedef struct xp_awk_nde_pos_t       xp_awk_nde_pos_t;
 typedef struct xp_awk_nde_call_t      xp_awk_nde_call_t;
 
 typedef struct xp_awk_nde_if_t        xp_awk_nde_if_t;
