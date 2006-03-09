@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.39 2006-01-17 15:49:22 bacon Exp $
+ * $Id: types.h,v 1.40 2006-03-09 04:25:29 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -207,26 +207,21 @@ typedef char xp_mchar_t;
 typedef int  xp_mcint_t;
 
 #if defined(_WIN32)
-	typedef unsigned short xp_wchar_t;
+	#include <stddef.h>
+	typedef wchar_t xp_wchar_t;
+	typedef wint_t xp_wcint_t;
+	/*typedef unsigned short xp_wchar_t;*/
 	/*typedef int xp_wcint_t;*/
-	typedef unsigned short xp_wcint_t;
-	#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT
+	/*typedef unsigned short xp_wcint_t;*/
 #elif defined(vms) || defined(__vms)
 	typedef long xp_wchar_t;
 	typedef long xp_wcint_t;
-	#define XP_SIZEOF_WCHAR_T SIZEOF_LONG
 #elif SIZEOF_LONG == 4
-	/*typedef unsigned short xp_wchar_t;*/
 	typedef long xp_wchar_t;
 	typedef long xp_wcint_t;
-	/*#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT*/
-	#define XP_SIZEOF_WCHAR_T SIZEOF_LONG
 #else
-	/*typedef unsigned short xp_wchar_t;*/
 	typedef int xp_wchar_t;
 	typedef int xp_wcint_t;
-	/*#define XP_SIZEOF_WCHAR_T SIZEOF_SHORT*/
-	#define XP_SIZEOF_WCHAR_T SIZEOF_INT
 #endif
 
 #if defined(_WIN32) && (defined(UNICODE)||defined(_UNICODE))
