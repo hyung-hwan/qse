@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.4 2006-03-07 16:09:18 bacon Exp $
+ * $Id: val.c,v 1.5 2006-03-14 16:40:00 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -98,8 +98,16 @@ void xp_awk_printval (xp_awk_val_t* val)
 	       	break;
 
 	case XP_AWK_VAL_INT:
+#if defined(vax) || defined(__vax)
+		xp_printf (XP_TEXT("%ld"), 
+			(long)((xp_awk_val_int_t*)val)->val);
+#elif defined(_WIN32)
+		xp_printf (XP_TEXT("%I64d"), 
+			(__int64)((xp_awk_nde_int_t*)val)->val);
+#else
 		xp_printf (XP_TEXT("%lld"), 
 			(long long)((xp_awk_val_int_t*)val)->val);
+#endif
 		break;
 
 	case XP_AWK_VAL_REAL:

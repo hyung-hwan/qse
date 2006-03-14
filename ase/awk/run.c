@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.10 2006-03-07 16:09:18 bacon Exp $
+ * $Id: run.c,v 1.11 2006-03-14 16:40:00 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -42,6 +42,7 @@ int xp_awk_run (xp_awk_t* awk)
 			(xp_awk_nde_blk_t*)awk->tree.end) == -1) return -1;
 	}
 
+xp_printf (XP_TEXT("---------------------------\n"));
 xp_awk_map_walk (&awk->run.named, __printval);
 	return 0;
 }
@@ -65,7 +66,7 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 
 	while (p != XP_NULL) 
 	{
-		if (__run_statement(awk, p) == -1) return -1;
+		if (__run_statement(awk,p) == -1) return -1;
 		p = p->next;
 	}
 	
@@ -81,7 +82,7 @@ static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_BLK:
-		if (__run_block(awk, (xp_awk_nde_blk_t*)nde) == -1) return -1;
+		if (__run_block(awk,(xp_awk_nde_blk_t*)nde) == -1) return -1;
 		break;
 
 	case XP_AWK_NDE_IF:
@@ -274,7 +275,7 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 	right = __eval_expression (awk, nde->right);
 	if (right == XP_NULL) 
 	{
-		xp_awk_freeval(left);
+		xp_awk_freeval (left);
 		return XP_NULL;
 	}
 
