@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.28 2006-03-07 15:55:14 bacon Exp $ 
+ * $Id: awk.c,v 1.29 2006-03-14 16:40:00 bacon Exp $ 
  */
 
 #include <xp/awk/awk.h>
@@ -56,7 +56,8 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 	}
 
 // TODO: initial map size...
-	if (xp_awk_map_open(&awk->run.named, 256, xp_awk_freeval) == XP_NULL) {
+	if (xp_awk_map_open(&awk->run.named, 
+		256, (void(*)(void*))xp_awk_freeval) == XP_NULL) {
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.funcs);
 		xp_awk_tab_close (&awk->parse.globals);
@@ -101,7 +102,6 @@ int xp_awk_close (xp_awk_t* awk)
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
 	xp_awk_map_close (&awk->run.named);
-
 	xp_awk_map_close (&awk->tree.funcs);
 	xp_awk_tab_close (&awk->parse.globals);
 	xp_awk_tab_close (&awk->parse.locals);

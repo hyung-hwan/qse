@@ -4,7 +4,7 @@ CFLAGS = -I../../.. -A -ansic -libcdll -D__STAND_ALONE
 #LIBS = -lxpawk -lxpbas
 #LDFLAGS = -subsystem console -dynamic -s
 LDFLAGS = -subsystem console -s
-LIBS = ..\..\..\xp\awk\xpawk.lib 
+LIBS = ../../../xp/awk/xpawk.lib 
 
 all: awk 
 
