@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.11 2006-03-14 16:40:00 bacon Exp $
+ * $Id: run.c,v 1.12 2006-03-15 15:34:59 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -13,6 +13,7 @@
 static int __activate_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde);
+static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde);
 
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde);
@@ -86,7 +87,9 @@ static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_IF:
+		if (__run_if_statement(awk,(xp_awk_nde_if_t*)nde) == -1) return -1;	
 		break;
+
 	case XP_AWK_NDE_WHILE:
 		break;
 	case XP_AWK_NDE_DOWHILE:
@@ -117,6 +120,25 @@ static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde)
 	}
 
 	return 0;
+}
+
+static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde)
+{
+	xp_awk_val_t* test;
+	int n;
+
+	test = __eval_expression (awk, nde->test);
+	if (xp_awk_isvaltrue(test))
+	{
+		n = __run_statement (awk, nde->then_part);
+	}
+	else if (nde->else_part != XP_NULL)
+	{
+		n = __run_statement (awk, nde->else_part);
+	}
+
+//TODO: how should i destroy test?
+	return n;
 }
 
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)

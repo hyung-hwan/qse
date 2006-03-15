@@ -12,7 +12,7 @@ static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t
 		return 0;
 
 	case XP_AWK_IO_DATA:
-		if (size < 0) return -1;
+		if (size <= 0) return -1;
 		c = fgetwc (stdin);
 		if (c == XP_CHAR_EOF) return 0;
 		*data = c;
