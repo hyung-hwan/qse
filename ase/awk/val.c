@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.6 2006-03-15 15:34:59 bacon Exp $
+ * $Id: val.c,v 1.7 2006-03-22 16:05:50 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -9,12 +9,33 @@
 #include <xp/bas/memory.h>
 #endif
 
-static xp_awk_val_nil_t __awk_nil = { XP_AWK_VAL_NIL };
+static xp_awk_val_nil_t __awk_nil = { XP_AWK_VAL_NIL, 0 };
 xp_awk_val_t* xp_awk_val_nil = (xp_awk_val_t*)&__awk_nil;
+
+static xp_awk_val_int_t __awk_int[] =
+{
+	{ XP_AWK_VAL_INT, 0, -1 },
+	{ XP_AWK_VAL_INT, 0,  0 },
+	{ XP_AWK_VAL_INT, 0,  1 },
+	{ XP_AWK_VAL_INT, 0,  2 },
+	{ XP_AWK_VAL_INT, 0,  3 },
+	{ XP_AWK_VAL_INT, 0,  4 },
+	{ XP_AWK_VAL_INT, 0,  5 },
+	{ XP_AWK_VAL_INT, 0,  6 },
+	{ XP_AWK_VAL_INT, 0,  7 },
+	{ XP_AWK_VAL_INT, 0,  8 },
+	{ XP_AWK_VAL_INT, 0,  9 },
+};
 
 xp_awk_val_t* xp_awk_makeintval (xp_long_t v)
 {
 	xp_awk_val_int_t* val;
+
+	if (v >= __awk_int[0].val && 
+	    v <= __awk_int[xp_countof(__awk_int)-1].val)
+	{
+		return (xp_awk_val_t*)&__awk_int[v-__awk_int[0].val];
+	}
 
 	val = (xp_awk_val_int_t*)xp_malloc(xp_sizeof(xp_awk_val_int_t));
 	if (val == XP_NULL) return XP_NULL;
@@ -58,6 +79,10 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 
 void xp_awk_freeval (xp_awk_val_t* val)
 {
+	if (val == xp_awk_val_nil) return;
+	if (val >= (xp_awk_val_t*)&__awk_int[0] &&
+	    val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]) return;
+
 	switch (val->type)
 	{
 	case XP_AWK_VAL_STR:
@@ -105,6 +130,8 @@ xp_bool_t xp_awk_isvaltrue (xp_awk_val_t* val)
 		return (((xp_awk_val_str_t*)val)->len == 0)? xp_false: xp_true;
 	}
 
+	/* this should never happen */
+	return xp_false;
 }
 
 void xp_awk_printval (xp_awk_val_t* val)

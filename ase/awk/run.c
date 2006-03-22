@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.12 2006-03-15 15:34:59 bacon Exp $
+ * $Id: run.c,v 1.13 2006-03-22 16:05:49 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -18,6 +18,9 @@ static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde);
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde);
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
+
+static void __refup (xp_awk_val_t* val);
+static void __refdown (xp_awk_val_t* val);
 
 int __printval (xp_awk_pair_t* pair)
 {
@@ -137,7 +140,7 @@ static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde)
 		n = __run_statement (awk, nde->else_part);
 	}
 
-//TODO: how should i destroy test?
+	xp_awk_freeval (test); // TODO: is this correct?
 	return n;
 }
 
@@ -156,6 +159,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_EXP_UNR:
+		// TODO: .......................
+		break;
 
 	case XP_AWK_NDE_STR:
 		val = xp_awk_makestrval(
@@ -251,6 +256,7 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 			return XP_NULL;
 		}
 
+		__refup (new);
 		v = new;
 	}
 	else if (tgt->type == XP_AWK_NDE_GLOBAL) 
@@ -287,7 +293,7 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 {
-	xp_awk_val_t* left, * right;
+	xp_awk_val_t* left, * right, * res;
 
 	xp_assert (nde->type == XP_AWK_NDE_EXP_BIN);
 
@@ -301,17 +307,47 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 		return XP_NULL;
 	}
 
+	res = XP_NULL;
+
 // TODO: a lot of things to do....
 	if (nde->opcode == XP_AWK_BINOP_PLUS) 
 	{
 		if (left->type == XP_AWK_VAL_INT &&
 		    right->type == XP_AWK_VAL_INT)
 		{
-			((xp_awk_val_int_t*)left)->val += 
-				  ((xp_awk_val_int_t*)right)->val;
+			xp_long_t r = 
+				((xp_awk_val_int_t*)left)->val + 
+				((xp_awk_val_int_t*)right)->val;
+			res = xp_awk_makeintval (r);
+		}
+	}
+	else if (nde->opcode == XP_AWK_BINOP_MINUS)
+	{
+		if (left->type == XP_AWK_VAL_INT &&
+		    right->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = 
+				((xp_awk_val_int_t*)left)->val - 
+				((xp_awk_val_int_t*)right)->val;
+			res = xp_awk_makeintval (r);
 		}
 	}
 	
+	xp_awk_freeval(left);
 	xp_awk_freeval(right);
-	return left;
+
+	return res;
+}
+
+static void __refup (xp_awk_val_t* val)
+{
+	val->ref++;
+}
+
+static void __refdown (xp_awk_val_t* val)
+{
+	xp_assert (val->ref > 0);
+
+	val->ref--;
+	if (val->ref <= 0) xp_awk_freeval(val);
 }
