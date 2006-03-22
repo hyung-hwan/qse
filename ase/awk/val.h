@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.5 2006-03-15 15:34:59 bacon Exp $
+ * $Id: val.h,v 1.6 2006-03-22 16:05:50 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -24,7 +24,8 @@ typedef struct xp_awk_val_real_t xp_awk_val_real_t;
 typedef struct xp_awk_val_str_t  xp_awk_val_str_t;
 
 #define XP_AWK_VAL_HDR \
-	int type
+	int type: 2; \
+	int ref: 30
 
 struct xp_awk_val_t
 {
