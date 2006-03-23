@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.25 2006-03-15 15:34:59 bacon Exp $
+ * $Id: tree.c,v 1.26 2006-03-23 15:36:20 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -308,6 +308,7 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				__print_statements (((xp_awk_nde_for_t*)p)->body, depth + 1);
 			}
+			break;
 
 		case XP_AWK_NDE_BREAK:
 			__print_tabs (depth);

@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.8 2006-03-23 13:26:04 bacon Exp $
+ * $Id: val.c,v 1.9 2006-03-23 15:36:20 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -79,7 +79,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 
 void xp_awk_freeval (xp_awk_val_t* val)
 {
-	if (val == xp_awk_val_nil) return;
+	if (val == XP_NULL || val == xp_awk_val_nil) return;
 	if (val >= (xp_awk_val_t*)&__awk_int[0] &&
 	    val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]) return;
 
@@ -94,13 +94,30 @@ void xp_awk_freeval (xp_awk_val_t* val)
 
 void xp_awk_refupval (xp_awk_val_t* val)
 {
-	if (val == XP_NULL) return;
+	if (val == XP_NULL || val == xp_awk_val_nil) return;
+	if (val >= (xp_awk_val_t*)&__awk_int[0] &&
+	    val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]) return;
+
+/*
+xp_printf (XP_TEXT("ref up "));
+xp_awk_printval (val);
+xp_printf (XP_TEXT("\n"));
+*/
+
 	val->ref++;
 }
 
 void xp_awk_refdownval (xp_awk_val_t* val)
 {
-	if (val == XP_NULL) return;
+	if (val == XP_NULL || val == xp_awk_val_nil) return;
+	if (val >= (xp_awk_val_t*)&__awk_int[0] &&
+	    val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]) return;
+
+/*
+xp_printf (XP_TEXT("ref down "));
+xp_awk_printval (val);
+xp_printf (XP_TEXT("\n"));
+*/
 
 	xp_assert (val->ref > 0);
 	val->ref--;
