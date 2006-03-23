@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.13 2006-03-22 16:05:49 bacon Exp $
+ * $Id: run.c,v 1.14 2006-03-23 13:26:04 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -14,13 +14,11 @@ static int __activate_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde);
 static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde);
+static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde);
 
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde);
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
-
-static void __refup (xp_awk_val_t* val);
-static void __refdown (xp_awk_val_t* val);
 
 int __printval (xp_awk_pair_t* pair)
 {
@@ -94,6 +92,7 @@ static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_WHILE:
+		if (__run_while_statement(awk,(xp_awk_nde_while_t*)nde) == -1) return -1;
 		break;
 	case XP_AWK_NDE_DOWHILE:
 		break;
@@ -131,6 +130,9 @@ static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde)
 	int n;
 
 	test = __eval_expression (awk, nde->test);
+	if (test == XP_NULL) return -1;
+
+	xp_awk_refupval (test);
 	if (xp_awk_isvaltrue(test))
 	{
 		n = __run_statement (awk, nde->then_part);
@@ -140,7 +142,71 @@ static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde)
 		n = __run_statement (awk, nde->else_part);
 	}
 
-	xp_awk_freeval (test); // TODO: is this correct?
+	xp_awk_refdownval (test); // TODO: is this correct?
+	return n;
+}
+
+static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
+{
+	xp_awk_val_t* test;
+	int n = 0;
+
+	if (nde->type == XP_AWK_NDE_WHILE)
+	{
+		while (1)
+		{
+			test = __eval_expression (awk, nde->test);
+			if (test == XP_NULL) return -1;
+
+			xp_awk_refupval (test);
+
+			if (xp_awk_isvaltrue(test))
+			{
+				n = __run_statement (awk, nde->body);
+				if (n == -1) 
+				{
+					xp_awk_refdownval (test);
+					return -1;
+				}
+			}
+			else
+			{
+				xp_awk_refdownval (test);
+				break;
+			}
+
+			xp_awk_refdownval (test);
+		}
+	}
+	else if (nde->type == XP_AWK_NDE_DOWHILE)
+	{
+		do
+		{
+			test = __eval_expression (awk, nde->test);
+			if (test == XP_NULL) return -1;
+
+			xp_awk_refupval (test);
+
+			if (xp_awk_isvaltrue(test))
+			{
+				n = __run_statement (awk, nde->body);
+				if (n == -1)
+				{
+					xp_awk_refdownval (test);
+					return -1;
+				}
+			}
+			else
+			{
+				xp_awk_refdownval (test);
+				break;
+			}
+
+			xp_awk_refdownval (test);
+		}
+		while (1);
+	}
+
 	return n;
 }
 
@@ -188,8 +254,11 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			xp_awk_pair_t* pair;
 		       
 			pair = xp_awk_map_get(&awk->run.named,tgt->id.name);
+			/*
 			if (pair == XP_NULL) val = xp_awk_val_nil;
 			else val = xp_awk_cloneval (pair->val);
+			*/
+			val = (pair == XP_NULL)? xp_awk_val_nil: pair->val;
 		}
 		break;
 
@@ -225,7 +294,6 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 
 	if (tgt->type == XP_AWK_NDE_NAMED) 
 	{
-		/* xp_awk_val_t* old, * new; */
 		xp_awk_pair_t* pair;
 		xp_awk_val_t* new;
 		xp_char_t* name;
@@ -246,7 +314,10 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 				return XP_NULL;
 			}
 		}
-		else name = pair->key;
+		else 
+		{
+			name = pair->key;
+		}
 
 		if (xp_awk_map_put(&awk->run.named, name, new) == XP_NULL) 
 		{
@@ -256,7 +327,7 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 			return XP_NULL;
 		}
 
-		__refup (new);
+		xp_awk_refupval (new);
 		v = new;
 	}
 	else if (tgt->type == XP_AWK_NDE_GLOBAL) 
@@ -339,15 +410,3 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 	return res;
 }
 
-static void __refup (xp_awk_val_t* val)
-{
-	val->ref++;
-}
-
-static void __refdown (xp_awk_val_t* val)
-{
-	xp_assert (val->ref > 0);
-
-	val->ref--;
-	if (val->ref <= 0) xp_awk_freeval(val);
-}
