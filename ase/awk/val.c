@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.7 2006-03-22 16:05:50 bacon Exp $
+ * $Id: val.c,v 1.8 2006-03-23 13:26:04 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -90,6 +90,21 @@ void xp_awk_freeval (xp_awk_val_t* val)
 	default:
 		xp_free (val);
 	}
+}
+
+void xp_awk_refupval (xp_awk_val_t* val)
+{
+	if (val == XP_NULL) return;
+	val->ref++;
+}
+
+void xp_awk_refdownval (xp_awk_val_t* val)
+{
+	if (val == XP_NULL) return;
+
+	xp_assert (val->ref > 0);
+	val->ref--;
+	if (val->ref <= 0) xp_awk_freeval(val);
 }
 
 xp_awk_val_t* xp_awk_cloneval (xp_awk_val_t* val)
