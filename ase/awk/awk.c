@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.30 2006-03-23 13:26:04 bacon Exp $ 
+ * $Id: awk.c,v 1.31 2006-03-24 06:33:36 bacon Exp $ 
  */
 
 #include <xp/awk/awk.h>
@@ -87,6 +87,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 
 	awk->run.stack = XP_NULL;
 	awk->run.stack_top = 0;
+	awk->run.stack_base = 0;
 	awk->run.stack_limit = 0;
 
 	awk->lex.curc = XP_CHAR_EOF;
