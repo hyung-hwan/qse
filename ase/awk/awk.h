@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.33 2006-03-07 15:55:14 bacon Exp $
+ * $Id: awk.h,v 1.34 2006-03-24 06:33:36 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -95,6 +95,7 @@ struct xp_awk_t
 
 		void* stack;
 		xp_size_t stack_top;
+		xp_size_t stack_base;
 		xp_size_t stack_limit;
 	} run;
 

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.15 2006-03-23 15:36:20 bacon Exp $
+ * $Id: run.c,v 1.16 2006-03-24 06:33:36 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -9,6 +9,8 @@
 #include <xp/bas/string.h>
 #include <xp/bas/memory.h>
 #endif
+
+#define STACK_INCREMENT 512
 
 static int __activate_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
@@ -24,6 +26,7 @@ static int __run_exit_statement (xp_awk_t* awk, xp_awk_nde_exit_t* nde);
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde);
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
+static xp_awk_val_t* __eval_funccall (xp_awk_t* awk, xp_awk_nde_call_t* nde);
 
 int __printval (xp_awk_pair_t* pair)
 {
@@ -374,6 +377,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 	case XP_AWK_NDE_POS:
 
 	case XP_AWK_NDE_CALL:
+		val = __eval_funccall(awk, (xp_awk_nde_call_t*)nde);
+		if (val == XP_NULL) return XP_NULL;
 		break;
 
 	default:
@@ -513,3 +518,62 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 	return res;
 }
 
+static xp_awk_val_t* __eval_funccall (xp_awk_t* awk, xp_awk_nde_call_t* nde)
+{
+	xp_awk_func_t* func;
+	xp_awk_pair_t* pair;
+
+	pair = xp_awk_map_get (&awk->tree.funcs, nde->name);
+	if (pair == XP_NULL) return XP_NULL; /* no such function */
+
+	/* 
+	 * ---------------------
+	 *  argn                     <- stack top
+	 * ---------------------
+	 *  ....
+	 * ---------------------
+	 *  arg1
+	 * ---------------------
+	 *  arg0 
+	 * ---------------------
+	 *  return value
+	 * ---------------------
+	 *  previous stack top
+	 * ---------------------
+	 *  previous stack base      <- stack base
+	 * ---------------------
+	 */
+
+	if (__push(awk->stack_bottom) == -1) return XP_NULL;
+	if (__push(awk->stack_top) == -1) return XP_NULL;
+	__push (nde->args); // refup also... 
+
+	func = (xp_awk_func_t*)pair->val;
+	/* set up the function stack frame */
+	//nde->args...
+	//func->nargs...
+	if (__run_statement(awk,func->body) == -1) return XP_NULL;
+
+	/* refdown nde->args... */
+
+	/* get the return value and return it */ 
+	return XP_NULL;
+}
+
+int __push (void* val)
+{
+	if (stack_top >= stack_limit)
+	{
+		void* tmp;
+		xp_size_t n;
+	       
+		n = stack_limit + STACK_INCREMENT;
+		tmp = xp_realloc (stack, n * xp_sizeof(void*));
+		if (tmp == XP_NULL) return -1;
+
+		stack = tmp;
+		statck_limit = n;
+	}
+
+	stack[stack_top++] = val;
+}
