@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.16 2006-03-24 06:33:36 bacon Exp $
+ * $Id: run.c,v 1.17 2006-03-25 17:04:36 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -27,6 +27,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde);
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
 static xp_awk_val_t* __eval_funccall (xp_awk_t* awk, xp_awk_nde_call_t* nde);
+
+static int __push (xp_awk_t* awk, void* val);
 
 int __printval (xp_awk_pair_t* pair)
 {
@@ -304,6 +306,17 @@ static int __run_continue_statement (xp_awk_t* awk, xp_awk_nde_continue_t* nde)
 
 static int __run_return_statement (xp_awk_t* awk, xp_awk_nde_return_t* nde)
 {
+	xp_awk_val_t* val;
+
+	if (nde->val != XP_NULL)
+	{
+xp_printf (XP_TEXT("returning....\n"));
+		val = __eval_expression(awk, nde->val);
+		if (val == XP_NULL) return -1;
+		awk->run.stack[awk->run.stack_base+2] = val;
+xp_printf (XP_TEXT("set return value....\n"));
+	}
+// TODO: make the function exit....
 	return 0;
 }
 
@@ -347,6 +360,12 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 	*/
 
 	case XP_AWK_NDE_ARG:
+		{
+			xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+
+			val = awk->run.stack[awk->run.stack_base+4+tgt->id.idxa];
+		}
+		break;
 
 	case XP_AWK_NDE_ARGIDX:
 
@@ -391,21 +410,19 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 {
-	xp_awk_val_t* v;
+	xp_awk_val_t* val;
 	xp_awk_nde_var_t* tgt;
 
+	xp_assert (nde->left != XP_NULL && nde->right != XP_NULL);
+
 	tgt = (xp_awk_nde_var_t*)nde->left;
+	val = __eval_expression(awk, nde->right);
+	if (val == XP_NULL) return XP_NULL;
 
 	if (tgt->type == XP_AWK_NDE_NAMED) 
 	{
 		xp_awk_pair_t* pair;
-		xp_awk_val_t* new;
 		xp_char_t* name;
-
-		new = __eval_expression(awk, nde->right);
-
-		xp_assert (tgt != XP_NULL);
-		if (new == XP_NULL) return XP_NULL;
 
 		pair = xp_awk_map_get(&awk->run.named, tgt->id.name);
 		if (pair == XP_NULL) 
@@ -413,7 +430,7 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 			name = xp_strdup (tgt->id.name);
 			if (name == XP_NULL) 
 			{
-				xp_awk_freeval(new);
+				xp_awk_freeval(val);
 				awk->errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
@@ -423,16 +440,15 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 			name = pair->key;
 		}
 
-		if (xp_awk_map_put(&awk->run.named, name, new) == XP_NULL) 
+		if (xp_awk_map_put(&awk->run.named, name, val) == XP_NULL) 
 		{
 			xp_free (name);
-			xp_awk_freeval (new);
+			xp_awk_freeval (val);
 			awk->errnum = XP_AWK_ENOMEM;
 			return XP_NULL;
 		}
 
-		xp_awk_refupval (new);
-		v = new;
+		xp_awk_refupval (val);
 	}
 	else if (tgt->type == XP_AWK_NDE_GLOBAL) 
 	{
@@ -442,8 +458,9 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 	}
 	else if (tgt->type == XP_AWK_NDE_ARG) 
 	{
+		awk->run.stack[awk->run.stack_base+4+tgt->id.idxa] = val;
+		xp_awk_refupval (val);
 	}
-
 	else if (tgt->type == XP_AWK_NDE_NAMEDIDX) 
 	{
 	}
@@ -463,7 +480,7 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 		return XP_NULL;
 	}
 
-	return v;
+	return val;
 }
 
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
@@ -522,6 +539,10 @@ static xp_awk_val_t* __eval_funccall (xp_awk_t* awk, xp_awk_nde_call_t* nde)
 {
 	xp_awk_func_t* func;
 	xp_awk_pair_t* pair;
+	xp_awk_nde_t* p;
+	xp_size_t nargs, i;
+	xp_awk_val_t* v;
+	xp_size_t saved_stack_top;
 
 	pair = xp_awk_map_get (&awk->tree.funcs, nde->name);
 	if (pair == XP_NULL) return XP_NULL; /* no such function */
@@ -536,6 +557,8 @@ static xp_awk_val_t* __eval_funccall (xp_awk_t* awk, xp_awk_nde_call_t* nde)
 	 * ---------------------
 	 *  arg0 
 	 * ---------------------
+	 *  nargs 
+	 * ---------------------
 	 *  return value
 	 * ---------------------
 	 *  previous stack top
@@ -544,36 +567,101 @@ static xp_awk_val_t* __eval_funccall (xp_awk_t* awk, xp_awk_nde_call_t* nde)
 	 * ---------------------
 	 */
 
-	if (__push(awk->stack_bottom) == -1) return XP_NULL;
-	if (__push(awk->stack_top) == -1) return XP_NULL;
-	__push (nde->args); // refup also... 
+	xp_assert (xp_sizeof(void*) >= xp_sizeof(awk->run.stack_top));
+	xp_assert (xp_sizeof(void*) >= xp_sizeof(awk->run.stack_base));
+
+	saved_stack_top = awk->run.stack_top;
+
+xp_printf (XP_TEXT("setting up function stack frame stack_top = %ld stack_base = %ld\n"), awk->run.stack_top, awk->run.stack_base);
+	if (__push(awk,(void*)awk->run.stack_base) == -1) return XP_NULL;
+	if (__push(awk,(void*)saved_stack_top) == -1) 
+	{
+		/* TODO: run.stack recovery */
+		return XP_NULL;
+	}
+
+	/* secure space for return value. */
+	if (__push(awk,xp_awk_val_nil) == -1)
+	{
+		/* TODO: run.stack recovery */
+		return XP_NULL;
+	}
+
+	/* secure space for nargs */
+	if (__push(awk,xp_awk_val_nil) == -1)
+	{
+		/* TODO: run.stack recovery */
+		return XP_NULL;
+	}
+
+	nargs = 0;
+	p = nde->args;
+	while (p != XP_NULL)
+	{
+		v = __eval_expression(awk,p);
+		if (v == XP_NULL)
+		{
+			/* TODO: run.stack recovery */
+			return XP_NULL;
+		}
+
+		if (__push(awk,v) == -1) 
+		{
+			/* TODO: run.stack recovery */
+			return XP_NULL;
+		}
+
+		xp_awk_refupval (v);
+		nargs++;
+		p = p->next;
+	}
+
+	awk->run.stack_base = saved_stack_top;
+	awk->run.stack[awk->run.stack_base+3] = (void*)nargs;
 
 	func = (xp_awk_func_t*)pair->val;
-	/* set up the function stack frame */
-	//nde->args...
-	//func->nargs...
-	if (__run_statement(awk,func->body) == -1) return XP_NULL;
+	xp_assert (func != XP_NULL);
 
-	/* refdown nde->args... */
+	// TODO: do i need to check if the number of arguments matches the actual arguments...???? this might be the compiler job...
+	
+xp_printf (XP_TEXT("running function body\n"));
 
-	/* get the return value and return it */ 
-	return XP_NULL;
+	xp_assert (func->body->type == XP_AWK_NDE_BLK);
+	if (__run_block(awk,(xp_awk_nde_blk_t*)func->body) == -1) return XP_NULL;
+xp_printf (XP_TEXT("block run complete\n"));
+
+	/* refdown args in the run.stack */
+	nargs = (xp_size_t)awk->run.stack[awk->run.stack_base+3];
+xp_printf (XP_TEXT("block run complete nargs = %d\n"), nargs);
+	for (i = 0; i < nargs; i++)
+	{
+		xp_awk_refdownval (awk->run.stack[awk->run.stack_base+4+i]);
+	}
+xp_printf (XP_TEXT("got return value\n"));
+	v = awk->run.stack[awk->run.stack_base+2];
+
+	awk->run.stack_top =  (xp_size_t)awk->run.stack[awk->run.stack_base+1];
+	awk->run.stack_base = (xp_size_t)awk->run.stack[awk->run.stack_base+0];
+
+xp_printf (XP_TEXT("returning from function stack_top=%ld, stack_base=%ld\n"), awk->run.stack_top, awk->run.stack_base);
+	return v;
 }
 
-int __push (void* val)
+static int __push (xp_awk_t* awk, void* val)
 {
-	if (stack_top >= stack_limit)
+	if (awk->run.stack_top >= awk->run.stack_limit)
 	{
 		void* tmp;
 		xp_size_t n;
 	       
-		n = stack_limit + STACK_INCREMENT;
-		tmp = xp_realloc (stack, n * xp_sizeof(void*));
+		n = awk->run.stack_limit + STACK_INCREMENT;
+		tmp = (void**)xp_realloc (awk->run.stack, n * xp_sizeof(void*));
 		if (tmp == XP_NULL) return -1;
 
-		stack = tmp;
-		statck_limit = n;
+		awk->run.stack = tmp;
+		awk->run.stack_limit = n;
 	}
 
-	stack[stack_top++] = val;
+	awk->run.stack[awk->run.stack_top++] = val;
+	return 0;
 }
