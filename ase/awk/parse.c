@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.59 2006-03-07 15:55:14 bacon Exp $
+ * $Id: parse.c,v 1.60 2006-03-25 17:04:36 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -134,6 +134,7 @@ static struct __kwent __kwtab[] =
 	{ XP_TEXT("BEGIN"),    TOKEN_BEGIN,    0 },
 	{ XP_TEXT("END"),      TOKEN_END,      0 },
 	{ XP_TEXT("function"), TOKEN_FUNCTION, 0 },
+	{ XP_TEXT("func"),     TOKEN_FUNCTION, 0 },
 	{ XP_TEXT("if"),       TOKEN_IF,       0 },
 	{ XP_TEXT("else"),     TOKEN_ELSE,     0 },
 	{ XP_TEXT("while"),    TOKEN_WHILE,    0 },
