@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.9 2006-03-23 15:36:20 bacon Exp $
+ * $Id: val.c,v 1.10 2006-03-26 16:36:30 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -41,6 +41,7 @@ xp_awk_val_t* xp_awk_makeintval (xp_long_t v)
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_INT;
+	val->ref = 0;
 	val->val = v;
 
 	return (xp_awk_val_t*)val;
@@ -54,6 +55,7 @@ xp_awk_val_t* xp_awk_makerealval (xp_real_t v)
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_REAL;
+	val->ref = 0;
 	val->val = v;
 
 	return (xp_awk_val_t*)val;
@@ -67,6 +69,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_STR;
+	val->ref = 0;
 	val->len = len;
 	val->buf = xp_strxdup (str, len);
 	if (val->buf == XP_NULL) {
@@ -77,11 +80,16 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 	return (xp_awk_val_t*)val;
 }
 
+xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val)
+{
+	return val == XP_NULL || val == xp_awk_val_nil ||
+	       (val >= (xp_awk_val_t*)&__awk_int[0] &&
+	        val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]);
+}
+
 void xp_awk_freeval (xp_awk_val_t* val)
 {
-	if (val == XP_NULL || val == xp_awk_val_nil) return;
-	if (val >= (xp_awk_val_t*)&__awk_int[0] &&
-	    val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]) return;
+	if (xp_awk_isbuiltinval(val)) return;
 
 	switch (val->type)
 	{
@@ -94,34 +102,44 @@ void xp_awk_freeval (xp_awk_val_t* val)
 
 void xp_awk_refupval (xp_awk_val_t* val)
 {
-	if (val == XP_NULL || val == xp_awk_val_nil) return;
-	if (val >= (xp_awk_val_t*)&__awk_int[0] &&
-	    val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]) return;
-
+	if (xp_awk_isbuiltinval(val)) return;
 /*
 xp_printf (XP_TEXT("ref up "));
 xp_awk_printval (val);
 xp_printf (XP_TEXT("\n"));
 */
-
 	val->ref++;
 }
 
 void xp_awk_refdownval (xp_awk_val_t* val)
 {
-	if (val == XP_NULL || val == xp_awk_val_nil) return;
-	if (val >= (xp_awk_val_t*)&__awk_int[0] &&
-	    val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]) return;
+	if (xp_awk_isbuiltinval(val)) return;
 
 /*
-xp_printf (XP_TEXT("ref down "));
+xp_printf (XP_TEXT("ref down [count=>%d]\n"), val->ref);
 xp_awk_printval (val);
 xp_printf (XP_TEXT("\n"));
 */
 
 	xp_assert (val->ref > 0);
 	val->ref--;
-	if (val->ref <= 0) xp_awk_freeval(val);
+	if (val->ref <= 0) 
+	{
+/*
+xp_printf (XP_TEXT("**FREEING "));
+xp_awk_printval (val);
+xp_printf (XP_TEXT("\n"));
+*/
+		xp_awk_freeval(val);
+	}
+}
+
+void xp_awk_refdownval_nofree (xp_awk_val_t* val)
+{
+	if (xp_awk_isbuiltinval(val)) return;
+
+	xp_assert (val->ref > 0);
+	val->ref--;
 }
 
 xp_awk_val_t* xp_awk_cloneval (xp_awk_val_t* val)
