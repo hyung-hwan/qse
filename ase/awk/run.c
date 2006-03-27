@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.21 2006-03-27 11:43:17 bacon Exp $
+ * $Id: run.c,v 1.22 2006-03-27 14:14:00 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -481,7 +481,9 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 
 	default:
-		/* somthing wrong */
+		/* somthing wrong. internal error */
+		/* TODO: set the error code instead of assertion below */
+		xp_assert (XP_TEXT("should never happen") == XP_NULL);
 		return XP_NULL;
 	}
 

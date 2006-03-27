@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.7 2006-03-07 16:09:18 bacon Exp $
+ * $Id: map.c,v 1.8 2006-03-27 14:14:00 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -20,12 +20,13 @@ static xp_size_t __hash (const xp_char_t* key);
 	{ \
 		xp_free ((xp_char_t*)(pair)->key); \
 		if ((map)->freeval != XP_NULL) \
-			(map)->freeval ((pair)->val); \
+			(map)->freeval ((map)->awk, (pair)->val); \
 		xp_free (pair); \
 	} while (0)
 
 xp_awk_map_t* xp_awk_map_open (
-	xp_awk_map_t* map, xp_size_t capa, void (*freeval) (void*))
+	xp_awk_map_t* map, xp_awk_t* awk, 
+	xp_size_t capa, void(*freeval)(xp_awk_t*,void*))
 {
 	if (map == XP_NULL) 
 	{
@@ -43,6 +44,7 @@ xp_awk_map_t* xp_awk_map_open (
 		return XP_NULL;	
 	}
 
+	map->awk = awk;
 	map->capa = capa;
 	map->size = 0;
 	map->freeval = freeval;
@@ -70,10 +72,8 @@ void xp_awk_map_clear (xp_awk_map_t* map)
 		while (pair != XP_NULL) 
 		{
 			next = pair->next;
-
 			FREE_PAIR (map, pair);
 			map->size--;
-
 			pair = next;
 		}
 
@@ -180,7 +180,7 @@ xp_awk_pair_t* xp_awk_map_setpair (
 	{
 		if (map->freeval != XP_NULL) 
 		{
-			map->freeval (pair->val);
+			map->freeval (map->awk, pair->val);
 		}
 		pair->val = val;
 	}
