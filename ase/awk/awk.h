@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.36 2006-03-26 16:36:30 bacon Exp $
+ * $Id: awk.h,v 1.37 2006-03-27 11:43:17 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -13,18 +13,18 @@
 #include <xp/bas/str.h>
 #endif
 
+/*
+ * TYPE: xp_awk_t
+ */
+typedef struct xp_awk_t xp_awk_t;
+typedef struct xp_awk_chain_t xp_awk_chain_t;
+
 #include <xp/awk/err.h>
 #include <xp/awk/tree.h>
 #include <xp/awk/tab.h>
 #include <xp/awk/map.h>
 #include <xp/awk/val.h>
 #include <xp/awk/run.h>
-
-/*
- * TYPE: xp_awk_t
- */
-typedef struct xp_awk_t xp_awk_t;
-typedef struct xp_awk_chain_t xp_awk_chain_t;
 
 /*
  * TYPE: xp_awk_io_t
@@ -98,6 +98,9 @@ struct xp_awk_t
 		xp_size_t stack_base;
 		xp_size_t stack_limit;
 		int exit_level;
+
+		xp_awk_val_int_t* icache[100]; // TODO: ... 
+		xp_size_t icache_count;
 	} run;
 
 	/* source buffer management */

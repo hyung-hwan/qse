@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.13 2006-03-05 17:07:33 bacon Exp $
+ * $Id: sa.h,v 1.14 2006-03-27 11:43:17 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -28,8 +28,8 @@
 #define xp_isalpha iswalpha
 #define xp_isalnum iswalnum
 #define xp_isspace iswspace
-#define xp_toupper toupper
-#define xp_tolower tolower
+#define xp_toupper towupper
+#define xp_tolower towlower
 
 #define xp_strcpy wcscpy
 #define xp_strcmp wcscmp

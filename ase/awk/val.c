@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.10 2006-03-26 16:36:30 bacon Exp $
+ * $Id: val.c,v 1.11 2006-03-27 11:43:17 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -7,6 +7,7 @@
 #ifndef __STAND_ALONE
 #include <xp/bas/string.h>
 #include <xp/bas/memory.h>
+#include <xp/bas/assert.h>
 #endif
 
 static xp_awk_val_nil_t __awk_nil = { XP_AWK_VAL_NIL, 0 };
@@ -27,7 +28,7 @@ static xp_awk_val_int_t __awk_int[] =
 	{ XP_AWK_VAL_INT, 0,  9 },
 };
 
-xp_awk_val_t* xp_awk_makeintval (xp_long_t v)
+xp_awk_val_t* xp_awk_makeintval (xp_awk_t* awk, xp_long_t v)
 {
 	xp_awk_val_int_t* val;
 
@@ -37,8 +38,15 @@ xp_awk_val_t* xp_awk_makeintval (xp_long_t v)
 		return (xp_awk_val_t*)&__awk_int[v-__awk_int[0].val];
 	}
 
-	val = (xp_awk_val_int_t*)xp_malloc(xp_sizeof(xp_awk_val_int_t));
-	if (val == XP_NULL) return XP_NULL;
+	if (awk->run.icache_count > 0)
+	{
+		val = awk->run.icache[--awk->run.icache_count];
+	}
+	else
+	{
+		val = (xp_awk_val_int_t*)xp_malloc(xp_sizeof(xp_awk_val_int_t));
+		if (val == XP_NULL) return XP_NULL;
+	}
 
 	val->type = XP_AWK_VAL_INT;
 	val->ref = 0;
@@ -87,17 +95,39 @@ xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val)
 	        val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]);
 }
 
-void xp_awk_freeval (xp_awk_val_t* val)
+void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
 	switch (val->type)
 	{
+	case XP_AWK_VAL_NIL:
+		xp_free (val);
+		break;
+
+	case XP_AWK_VAL_INT:
+		if (awk->run.icache_count < xp_countof(awk->run.icache))
+		{
+			awk->run.icache[awk->run.icache_count++] = 
+				(xp_awk_val_int_t*)val;	
+		}
+		else
+		{
+			xp_free (val);
+		}
+		break;
+
+	case XP_AWK_VAL_REAL:
+		xp_free (val);
+		break;
+
 	case XP_AWK_VAL_STR:
 		xp_free (((xp_awk_val_str_t*)val)->buf);
-	default:
 		xp_free (val);
+		break;
 	}
+
+	/* should never reach here */
 }
 
 void xp_awk_refupval (xp_awk_val_t* val)
@@ -111,7 +141,7 @@ xp_printf (XP_TEXT("\n"));
 	val->ref++;
 }
 
-void xp_awk_refdownval (xp_awk_val_t* val)
+void xp_awk_refdownval (xp_awk_t* awk, xp_awk_val_t* val)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
@@ -130,11 +160,11 @@ xp_printf (XP_TEXT("**FREEING "));
 xp_awk_printval (val);
 xp_printf (XP_TEXT("\n"));
 */
-		xp_awk_freeval(val);
+		xp_awk_freeval(awk, val);
 	}
 }
 
-void xp_awk_refdownval_nofree (xp_awk_val_t* val)
+void xp_awk_refdownval_nofree (xp_awk_t* awk, xp_awk_val_t* val)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
@@ -142,7 +172,7 @@ void xp_awk_refdownval_nofree (xp_awk_val_t* val)
 	val->ref--;
 }
 
-xp_awk_val_t* xp_awk_cloneval (xp_awk_val_t* val)
+xp_awk_val_t* xp_awk_cloneval (xp_awk_t* awk, xp_awk_val_t* val)
 {
 	if (val == XP_NULL) return xp_awk_val_nil;
 
@@ -151,7 +181,7 @@ xp_awk_val_t* xp_awk_cloneval (xp_awk_val_t* val)
 	case XP_AWK_VAL_NIL:
 		return xp_awk_val_nil;
 	case XP_AWK_VAL_INT:
-		return xp_awk_makeintval (((xp_awk_val_int_t*)val)->val);
+		return xp_awk_makeintval (awk, ((xp_awk_val_int_t*)val)->val);
 	case XP_AWK_VAL_REAL:
 		return xp_awk_makerealval (((xp_awk_val_real_t*)val)->val);
 	case XP_AWK_VAL_STR:
