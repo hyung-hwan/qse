@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.9 2006-03-27 11:43:17 bacon Exp $
+ * $Id: val.h,v 1.10 2006-03-27 15:44:38 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -14,7 +14,8 @@ enum
 	XP_AWK_VAL_NIL  = 0,
 	XP_AWK_VAL_INT  = 1,
 	XP_AWK_VAL_REAL = 2,
-	XP_AWK_VAL_STR  = 3
+	XP_AWK_VAL_STR  = 3,
+	XP_AWK_VAL_MAP  = 4
 };
 
 typedef struct xp_awk_val_t      xp_awk_val_t;
@@ -22,10 +23,11 @@ typedef struct xp_awk_val_nil_t  xp_awk_val_nil_t;
 typedef struct xp_awk_val_int_t  xp_awk_val_int_t;
 typedef struct xp_awk_val_real_t xp_awk_val_real_t;
 typedef struct xp_awk_val_str_t  xp_awk_val_str_t;
+typedef struct xp_awk_val_map_t  xp_awk_val_map_t;
 
 #define XP_AWK_VAL_HDR \
-	int type: 2; \
-	int ref: 30
+	int type: 3; \
+	int ref: 29
 
 struct xp_awk_val_t
 {
@@ -60,6 +62,13 @@ struct xp_awk_val_str_t
 	xp_size_t  len;
 };
 
+/* XP_AWK_VAL_MAP */
+struct xp_awk_val_map_t
+{
+	XP_AWK_VAL_HDR;
+	xp_awk_vap_t vap;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,6 +77,7 @@ extern xp_awk_val_t* xp_awk_val_nil;
 
 xp_awk_val_t* xp_awk_makeintval (xp_awk_t* awk, xp_long_t v);
 xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len);
+//xp_awk_val_t* xp_awk_makemapval ();
 
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val);
 void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val);
