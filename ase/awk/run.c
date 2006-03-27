@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.19 2006-03-26 16:36:30 bacon Exp $
+ * $Id: run.c,v 1.20 2006-03-27 10:19:33 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -19,8 +19,10 @@
 #define STACK_RETVAL(awk) STACK_AT(awk,2)
 
 #define EXIT_NONE      0
-#define EXIT_FUNCTION  1
-#define EXIT_GLOBAL    2
+#define EXIT_BREAK     1
+#define EXIT_CONTINUE  2
+#define EXIT_FUNCTION  3
+#define EXIT_GLOBAL    4
 
 static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde);
@@ -272,6 +274,17 @@ static int __run_for_statement (xp_awk_t* awk, xp_awk_nde_for_t* nde)
 
 	while (1)
 	{
+		if (awk->run.exit_level == EXIT_BREAK)
+		{	
+			awk->run.exit_level = EXIT_NONE;
+			break;
+		}
+		else if (awk->run.exit_level == EXIT_CONTINUE)
+		{
+			awk->run.exit_level = EXIT_NONE;
+		}
+		else if (awk->run.exit_level != EXIT_NONE) break;
+
 		if (nde->test != XP_NULL)
 		{
 			xp_awk_val_t* test;
@@ -315,35 +328,29 @@ static int __run_for_statement (xp_awk_t* awk, xp_awk_nde_for_t* nde)
 
 static int __run_break_statement (xp_awk_t* awk, xp_awk_nde_break_t* nde)
 {
-	/* TODO: set runtime error number. 
-	 * first of all this should not happen aas the compiler detects this. */
-	/*
-	if (awk->loop_depth <= 0) return -1; 
-	awk->run.exec_break = 1;
-	*/
+	awk->run.exit_level = EXIT_BREAK;
 	return 0;
 }
 
 static int __run_continue_statement (xp_awk_t* awk, xp_awk_nde_continue_t* nde)
 {
-	/* TODO: set runtime error number. 
-	 * first of all this should not happen aas the compiler detects this. */
-	/*
-	if (awk->loop_depth <= 0) return -1; 
-	awk->run.exec_continue = 1;
-	*/
+	awk->run.exit_level = EXIT_CONTINUE;
 	return 0;
 }
 
 static int __run_return_statement (xp_awk_t* awk, xp_awk_nde_return_t* nde)
 {
-	xp_awk_val_t* val;
 
 	if (nde->val != XP_NULL)
 	{
+		xp_awk_val_t* val;
 //xp_printf (XP_TEXT("returning....\n"));
 		val = __eval_expression(awk, nde->val);
-		if (val == XP_NULL) return -1;
+		if (val == XP_NULL) 
+		{
+			// TODO: error handling
+			return -1;
+		}
 
 		STACK_RETVAL(awk) = val;
 		xp_awk_refupval (val); /* see run_funccall for the trick */
@@ -357,6 +364,22 @@ static int __run_return_statement (xp_awk_t* awk, xp_awk_nde_return_t* nde)
 
 static int __run_exit_statement (xp_awk_t* awk, xp_awk_nde_exit_t* nde)
 {
+	if (nde->val != XP_NULL)
+	{
+		xp_awk_val_t* val;
+
+		val = __eval_expression(awk, nde->val);
+		if (val == XP_NULL) 
+		{
+			// TODO: error handling
+			return -1;
+		}
+
+		awk->run.stack[2] = val; /* global return value */
+		xp_awk_refupval (val);
+	}
+
+	awk->run.exit_level = EXIT_GLOBAL;
 	return 0;
 }
 
