@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.60 2006-03-25 17:04:36 bacon Exp $
+ * $Id: parse.c,v 1.61 2006-03-27 11:43:17 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -8,6 +8,7 @@
 #include <xp/bas/memory.h>
 #include <xp/bas/ctype.h>
 #include <xp/bas/string.h>
+#include <xp/bas/stdlib.h>
 #include <xp/bas/assert.h>
 #endif
 
