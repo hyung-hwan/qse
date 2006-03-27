@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.22 2006-03-27 14:14:00 bacon Exp $
+ * $Id: run.c,v 1.23 2006-03-27 14:15:53 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -605,24 +605,7 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 			xp_long_t r = 
 				((xp_awk_val_int_t*)left)->val + 
 				((xp_awk_val_int_t*)right)->val;
-
-			// TODO: consider the code segement commented out below for optimization....
-			/*
-			if (!xp_awk_isbuiltinval(left) && left->ref <= 1)
-			{
-				((xp_awk_val_int_t*)left)->val = r;
-				res = left;
-			}
-			else if (!xp_awk_isbuiltinval(right) && right->ref <= 1)
-			{
-				((xp_awk_val_int_t*)right)->val = r;
-				res = right;
-			}
-			else
-			{
-			*/
-				res = xp_awk_makeintval (awk, r);
-			//}
+			res = xp_awk_makeintval (awk, r);
 		}
 	}
 	else if (nde->opcode == XP_AWK_BINOP_MINUS)
@@ -633,43 +616,12 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 			xp_long_t r = 
 				((xp_awk_val_int_t*)left)->val - 
 				((xp_awk_val_int_t*)right)->val;
-
-			/*
-			if (!xp_awk_isbuiltinval(left) && left->ref <= 1)
-			{
-				((xp_awk_val_int_t*)left)->val = r;
-				res = left;
-			}
-			else if (!xp_awk_isbuiltinval(right) && right->ref <= 1)
-			{
-				((xp_awk_val_int_t*)right)->val = r;
-				res = right;
-			}
-			else
-			{
-			*/
-				res = xp_awk_makeintval (awk, r);
-			//}
+			res = xp_awk_makeintval (awk, r);
 		}
 	}
 
-	/*
-	if (res == left)
-	{
-		xp_awk_refdownval_nofree (left);
-		xp_awk_refdownval (right);
-	}
-	else if (res == right)
-	{
-		xp_awk_refdownval (left);
-		xp_awk_refdownval_nofree (right);
-	}
-	else
-	{
-	*/
-		xp_awk_refdownval (awk, left);
-		xp_awk_refdownval (awk, right);
-	//}
+	xp_awk_refdownval (awk, left);
+	xp_awk_refdownval (awk, right);
 
 	return res;
 }

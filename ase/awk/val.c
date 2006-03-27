@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.11 2006-03-27 11:43:17 bacon Exp $
+ * $Id: val.c,v 1.12 2006-03-27 14:14:00 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -146,7 +146,8 @@ void xp_awk_refdownval (xp_awk_t* awk, xp_awk_val_t* val)
 	if (xp_awk_isbuiltinval(val)) return;
 
 /*
-xp_printf (XP_TEXT("ref down [count=>%d]\n"), val->ref);
+xp_printf (XP_TEXT("%p, %p, %p\n"), xp_awk_val_nil, &__awk_nil, val);
+xp_printf (XP_TEXT("ref down [count=>%d]\n"), (int)val->ref);
 xp_awk_printval (val);
 xp_printf (XP_TEXT("\n"));
 */
