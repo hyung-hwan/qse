@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.23 2006-03-27 14:15:53 bacon Exp $
+ * $Id: run.c,v 1.24 2006-03-27 14:59:57 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -392,6 +392,7 @@ static int __run_exit_statement (xp_awk_t* awk, xp_awk_nde_exit_t* nde)
 			return -1;
 		}
 
+// TODO: check out the line below..
 		awk->run.stack[2] = val; /* global return value */
 		xp_awk_refupval (val);
 	}
@@ -434,15 +435,6 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 	*/
 
-	case XP_AWK_NDE_ARG:
-		{
-			xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-			val = STACK_ARG(awk,tgt->id.idxa);
-		}
-		break;
-
-	case XP_AWK_NDE_ARGIDX:
-
 	case XP_AWK_NDE_NAMED:
 		{
 			xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
@@ -453,14 +445,13 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		}
 		break;
 
-	case XP_AWK_NDE_NAMEDIDX:
-		break;
-
 	case XP_AWK_NDE_GLOBAL:
+		{
+			xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+			val = STACK_GLOBAL(awk,tgt->id.idxa);
+		}
 		break;
 
-	case XP_AWK_NDE_GLOBALIDX:
-		break;
 
 	case XP_AWK_NDE_LOCAL:
 		{
@@ -469,7 +460,20 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		}
 		break;
 
+	case XP_AWK_NDE_ARG:
+		{
+			xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+			val = STACK_ARG(awk,tgt->id.idxa);
+		}
+		break;
+
+	case XP_AWK_NDE_NAMEDIDX:
+		break;
+	case XP_AWK_NDE_GLOBALIDX:
+		break;
 	case XP_AWK_NDE_LOCALIDX:
+		break;
+	case XP_AWK_NDE_ARGIDX:
 		break;
 
 	case XP_AWK_NDE_POS:
@@ -615,6 +619,39 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 		{
 			xp_long_t r = 
 				((xp_awk_val_int_t*)left)->val - 
+				((xp_awk_val_int_t*)right)->val;
+			res = xp_awk_makeintval (awk, r);
+		}
+	}
+	else if (nde->opcode == XP_AWK_BINOP_MUL)
+	{
+		if (left->type == XP_AWK_VAL_INT &&
+		    right->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = 
+				((xp_awk_val_int_t*)left)->val * 
+				((xp_awk_val_int_t*)right)->val;
+			res = xp_awk_makeintval (awk, r);
+		}
+	}
+	else if (nde->opcode == XP_AWK_BINOP_DIV)
+	{
+		if (left->type == XP_AWK_VAL_INT &&
+		    right->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = 
+				((xp_awk_val_int_t*)left)->val / 
+				((xp_awk_val_int_t*)right)->val;
+			res = xp_awk_makeintval (awk, r);
+		}
+	}
+	else if (nde->opcode == XP_AWK_BINOP_MOD)
+	{
+		if (left->type == XP_AWK_VAL_INT &&
+		    right->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = 
+				((xp_awk_val_int_t*)left)->val %
 				((xp_awk_val_int_t*)right)->val;
 			res = xp_awk_makeintval (awk, r);
 		}
