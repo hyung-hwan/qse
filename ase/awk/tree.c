@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.26 2006-03-23 15:36:20 bacon Exp $
+ * $Id: tree.c,v 1.27 2006-03-28 16:33:09 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -75,6 +75,10 @@ static int __print_expression (xp_awk_nde_t* nde)
 #else
 		xp_printf (XP_TEXT("%lld"), (long long)((xp_awk_nde_int_t*)nde)->val);
 #endif
+		break;
+
+	case XP_AWK_NDE_REAL:
+		xp_printf (XP_TEXT("%lf"), (long double)((xp_awk_nde_real_t*)nde)->val);
 		break;
 
 	case XP_AWK_NDE_STR:
@@ -487,6 +491,10 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 			break;
 
 		case XP_AWK_NDE_INT:
+			xp_free (p);
+			break;
+
+		case XP_AWK_NDE_REAL:
 			xp_free (p);
 			break;
 

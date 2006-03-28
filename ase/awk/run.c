@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.25 2006-03-28 11:32:58 bacon Exp $
+ * $Id: run.c,v 1.26 2006-03-28 16:33:09 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -12,11 +12,13 @@
 
 #define STACK_INCREMENT 512
 
-#define STACK_AT(awk,n) ((awk)->run.stack[(awk)->run.stack_base+n])
+#define STACK_AT(awk,n) ((awk)->run.stack[(awk)->run.stack_base+(n)])
 #define STACK_NARGS(awk) ((xp_size_t)STACK_AT(awk,3))
 #define STACK_ARG(awk,n) STACK_AT(awk,3+1+(n))
 #define STACK_LOCAL(awk,n) STACK_AT(awk,3+STACK_NARGS(awk)+1+(n))
 #define STACK_RETVAL(awk) STACK_AT(awk,2)
+
+#define STACK_GLOBAL(awk,n) ((awk)->run.stack[n])
 
 #define EXIT_NONE      0
 #define EXIT_BREAK     1
@@ -57,7 +59,9 @@ int xp_awk_run (xp_awk_t* awk)
 	// TODO: clear run stack/exit_level
 	awk->run.exit_level = EXIT_NONE;
 
-	
+	xp_assert (awk->run.stack_base == 0 && awk->run.stack_top == 0);
+
+	/* secure space for global variables */
 	nglobals = awk->tree.nglobals;
 	while (nglobals > 0)
 	{
@@ -443,11 +447,9 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		val = xp_awk_makeintval(awk,((xp_awk_nde_int_t*)nde)->val);
 		break;
 
-	/* TODO:
 	case XP_AWK_NDE_REAL:
-		val = xp_awk_makerealval(((xp_awk_nde_real_t*)nde)->val);
+		val = xp_awk_makerealval(awk,((xp_awk_nde_real_t*)nde)->val);
 		break;
-	*/
 
 	case XP_AWK_NDE_NAMED:
 		{
@@ -461,8 +463,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 	case XP_AWK_NDE_GLOBAL:
 		{
-			//xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-			//val = STACK_GLOBAL(awk,tgt->id.idxa);
+			xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+			val = STACK_GLOBAL(awk,tgt->id.idxa);
 		}
 		break;
 
@@ -552,11 +554,9 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde)
 	}
 	else if (tgt->type == XP_AWK_NDE_GLOBAL) 
 	{
-		/*
-		xp_awk_refdownval(STACK_GLOBAL(awk,tgt->id.idxa));
+		xp_awk_refdownval (awk, STACK_GLOBAL(awk,tgt->id.idxa));
 		STACK_GLOBAL(awk,tgt->id.idxa) = val;
 		xp_awk_refupval (val);
-		*/
 	}
 	else if (tgt->type == XP_AWK_NDE_LOCAL) 
 	{
