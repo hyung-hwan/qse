@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.24 2006-03-27 14:59:57 bacon Exp $
+ * $Id: run.c,v 1.25 2006-03-28 11:32:58 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -52,8 +52,22 @@ int __printval (xp_awk_pair_t* pair)
 
 int xp_awk_run (xp_awk_t* awk)
 {
+	xp_size_t nglobals;
+
 	// TODO: clear run stack/exit_level
 	awk->run.exit_level = EXIT_NONE;
+
+	
+	nglobals = awk->tree.nglobals;
+	while (nglobals > 0)
+	{
+		--nglobals;
+		if (__raw_push(awk,xp_awk_val_nil) == -1)
+		{
+			// TODO: error handling
+			return -1;
+		}
+	}	
 
 	if (awk->tree.begin != XP_NULL) 
 	{
@@ -447,8 +461,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 	case XP_AWK_NDE_GLOBAL:
 		{
-			xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-			val = STACK_GLOBAL(awk,tgt->id.idxa);
+			//xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+			//val = STACK_GLOBAL(awk,tgt->id.idxa);
 		}
 		break;
 
