@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.37 2006-03-27 11:43:17 bacon Exp $
+ * $Id: awk.h,v 1.38 2006-03-28 16:33:09 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -100,7 +100,9 @@ struct xp_awk_t
 		int exit_level;
 
 		xp_awk_val_int_t* icache[100]; // TODO: ... 
+		xp_awk_val_real_t* rcache[100]; // TODO: ... 
 		xp_size_t icache_count;
+		xp_size_t rcache_count;
 	} run;
 
 	/* source buffer management */

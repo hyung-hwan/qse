@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.12 2006-03-27 14:14:00 bacon Exp $
+ * $Id: val.c,v 1.13 2006-03-28 16:33:09 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -44,7 +44,8 @@ xp_awk_val_t* xp_awk_makeintval (xp_awk_t* awk, xp_long_t v)
 	}
 	else
 	{
-		val = (xp_awk_val_int_t*)xp_malloc(xp_sizeof(xp_awk_val_int_t));
+		val = (xp_awk_val_int_t*)
+			xp_malloc(xp_sizeof(xp_awk_val_int_t));
 		if (val == XP_NULL) return XP_NULL;
 	}
 
@@ -55,12 +56,20 @@ xp_awk_val_t* xp_awk_makeintval (xp_awk_t* awk, xp_long_t v)
 	return (xp_awk_val_t*)val;
 }
 
-xp_awk_val_t* xp_awk_makerealval (xp_real_t v)
+xp_awk_val_t* xp_awk_makerealval (xp_awk_t* awk, xp_real_t v)
 {
 	xp_awk_val_real_t* val;
 
-	val = (xp_awk_val_real_t*)xp_malloc(xp_sizeof(xp_awk_val_real_t));
-	if (val == XP_NULL) return XP_NULL;
+	if (awk->run.rcache_count > 0)
+	{
+		val = awk->run.rcache[--awk->run.rcache_count];
+	}
+	else
+	{
+		val = (xp_awk_val_real_t*)
+			xp_malloc (xp_sizeof(xp_awk_val_real_t));
+		if (val == XP_NULL) return XP_NULL;
+	}
 
 	val->type = XP_AWK_VAL_REAL;
 	val->ref = 0;
@@ -118,7 +127,15 @@ void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val)
 		break;
 
 	case XP_AWK_VAL_REAL:
-		xp_free (val);
+		if (awk->run.rcache_count < xp_countof(awk->run.rcache))
+		{
+			awk->run.rcache[awk->run.rcache_count++] = 
+				(xp_awk_val_real_t*)val;	
+		}
+		else
+		{
+			xp_free (val);
+		}
 		break;
 
 	case XP_AWK_VAL_STR:
@@ -184,7 +201,7 @@ xp_awk_val_t* xp_awk_cloneval (xp_awk_t* awk, xp_awk_val_t* val)
 	case XP_AWK_VAL_INT:
 		return xp_awk_makeintval (awk, ((xp_awk_val_int_t*)val)->val);
 	case XP_AWK_VAL_REAL:
-		return xp_awk_makerealval (((xp_awk_val_real_t*)val)->val);
+		return xp_awk_makerealval (awk, ((xp_awk_val_real_t*)val)->val);
 	case XP_AWK_VAL_STR:
 		return xp_awk_makestrval (
 			((xp_awk_val_str_t*)val)->buf,
