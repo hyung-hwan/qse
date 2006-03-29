@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.61 2006-03-27 11:43:17 bacon Exp $
+ * $Id: parse.c,v 1.62 2006-03-29 16:37:31 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -35,6 +35,10 @@ enum
 	TOKEN_MOD,
 	TOKEN_RSHIFT,
 	TOKEN_LSHIFT,
+	TOKEN_LOR,
+	TOKEN_LAND,
+	TOKEN_BOR,
+	TOKEN_BAND,
 
 	TOKEN_LPAREN,
 	TOKEN_RPAREN,
@@ -81,9 +85,9 @@ enum
 #endif
 
 
-static xp_awk_t*      __parse_progunit (xp_awk_t* awk);
-static xp_awk_t*      __collect_globals (xp_awk_t* awk);
-static xp_awk_t*      __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
+static xp_awk_t* __parse_progunit (xp_awk_t* awk);
+static xp_awk_t* __collect_globals (xp_awk_t* awk);
+static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 
 static xp_awk_nde_t* __parse_function (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_begin (xp_awk_t* awk);
@@ -96,6 +100,11 @@ static xp_awk_nde_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_expression (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_conditional (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_equality (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_relational (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_shift (xp_awk_t* awk);
@@ -920,7 +929,6 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 		if (__get_token(awk) == -1) return XP_NULL;
 		nde = __parse_exit(awk);
 	}
-
 /* TODO:
 	else if (MATCH(awk,TOKEN_DELETE)) 
 	{
@@ -1033,7 +1041,165 @@ static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
 	 * <basic expression list> ::= <basic expression> [comma <basic expression>]*
 	 */
 	
-	return __parse_equality (awk);
+	return __parse_conditional (awk);
+}
+
+static xp_awk_nde_t* __parse_conditional (xp_awk_t* awk)
+{
+	return __parse_logical_or (awk);
+}
+
+static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk)
+{
+	xp_awk_nde_exp_t* nde;
+	xp_awk_nde_t* left, * right;
+	int opcode;
+
+	left = __parse_logical_and (awk);
+	if (left == XP_NULL) return XP_NULL;
+	
+	while (1) 
+	{
+		if (MATCH(awk,TOKEN_LOR)) opcode = XP_AWK_BINOP_LOR;
+		else break;
+
+		if (__get_token(awk) == -1) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL; 
+		}
+
+		right = __parse_logical_and (awk);
+		if (right == XP_NULL) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL;
+		}
+
+		// TODO: constant folding -> in other parts of the program also...
+
+		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
+		if (nde == XP_NULL) 
+		{
+			xp_awk_clrpt (right);
+			xp_awk_clrpt (left);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		nde->type = XP_AWK_NDE_EXP_BIN;
+		nde->next = XP_NULL;
+		nde->opcode = opcode; 
+		nde->left = left;
+		nde->right = right;
+
+		left = (xp_awk_nde_t*)nde;
+	}
+
+	return left;
+}
+
+static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk)
+{
+	xp_awk_nde_exp_t* nde;
+	xp_awk_nde_t* left, * right;
+	int opcode;
+
+	left = __parse_bitwise_or (awk);
+	if (left == XP_NULL) return XP_NULL;
+	
+	while (1) 
+	{
+		if (MATCH(awk,TOKEN_LAND)) opcode = XP_AWK_BINOP_LAND;
+		else break;
+
+		if (__get_token(awk) == -1) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL; 
+		}
+
+		right = __parse_bitwise_or (awk);
+		if (right == XP_NULL) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL;
+		}
+
+		// TODO: constant folding -> in other parts of the program also...
+
+		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
+		if (nde == XP_NULL) 
+		{
+			xp_awk_clrpt (right);
+			xp_awk_clrpt (left);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		nde->type = XP_AWK_NDE_EXP_BIN;
+		nde->next = XP_NULL;
+		nde->opcode = opcode; 
+		nde->left = left;
+		nde->right = right;
+
+		left = (xp_awk_nde_t*)nde;
+	}
+
+	return left;
+}
+
+static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
+{
+	xp_awk_nde_exp_t* nde;
+	xp_awk_nde_t* left, * right;
+	int opcode;
+
+	left = __parse_bitwise_xor (awk); 
+	if (left == XP_NULL) return XP_NULL;
+	
+	while (1) 
+	{
+		if (MATCH(awk,TOKEN_BOR)) opcode = XP_AWK_BINOP_BOR;
+		else break;
+
+		if (__get_token(awk) == -1) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL; 
+		}
+
+		right = __parse_bitwise_xor (awk);
+		if (right == XP_NULL) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL;
+		}
+
+		// TODO: constant folding -> in other parts of the program also...
+
+		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
+		if (nde == XP_NULL) 
+		{
+			xp_awk_clrpt (right);
+			xp_awk_clrpt (left);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		nde->type = XP_AWK_NDE_EXP_BIN;
+		nde->next = XP_NULL;
+		nde->opcode = opcode; 
+		nde->left = left;
+		nde->right = right;
+
+		left = (xp_awk_nde_t*)nde;
+	}
+
+	return left;
+}
+
+static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
+{
+	// TODO:
+	return XP_NULL;
 }
 
 static xp_awk_nde_t* __parse_equality (xp_awk_t* awk)
@@ -2206,6 +2372,36 @@ static int __get_token (xp_awk_t* awk)
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LT);
 			ADD_TOKEN_STR (awk, XP_TEXT("<"));
+		}
+	}
+	else if (c == XP_CHAR('|'))
+	{
+		GET_CHAR_TO (awk, c);
+		if (c == XP_CHAR('|'))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_LOR);
+			ADD_TOKEN_STR (awk, XP_TEXT("||"));
+			GET_CHAR_TO (awk, c);
+		}
+		else
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_BOR);
+			ADD_TOKEN_STR (awk, XP_TEXT("|"));
+		}
+	}
+	else if (c == XP_CHAR('&'))
+	{
+		GET_CHAR_TO (awk, c);
+		if (c == XP_CHAR('&&'))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_LAND);
+			ADD_TOKEN_STR (awk, XP_TEXT("&&"));
+			GET_CHAR_TO (awk, c);
+		}
+		else
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_BAND);
+			ADD_TOKEN_STR (awk, XP_TEXT("&"));
 		}
 	}
 	else if (c == XP_CHAR('+')) 

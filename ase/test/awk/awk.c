@@ -4,7 +4,7 @@
 
 static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
-	wchar_t c;
+	xp_char_t c;
 
 	switch (cmd) {
 	case XP_AWK_IO_OPEN:
@@ -13,7 +13,11 @@ static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t
 
 	case XP_AWK_IO_DATA:
 		if (size <= 0) return -1;
+#ifdef XP_CHAR_IS_MCHAR
+		c = fgetc (stdin);
+#else
 		c = fgetwc (stdin);
+#endif
 		if (c == XP_CHAR_EOF) return 0;
 		*data = c;
 		return 1;
@@ -52,7 +56,11 @@ static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t
 #include <mcheck.h>
 #endif
 
+#ifdef _WIN32
 int xp_main (int argc, xp_char_t* argv[])
+#else
+int xp_main (int argc, char* argv[])
+#endif
 {
 	xp_awk_t awk;
 
