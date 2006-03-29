@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.1 2006-03-07 16:02:58 bacon Exp $
+ * $Id: run.h,v 1.2 2006-03-29 16:37:31 bacon Exp $
  */
 
 #ifndef _XP_AWK_RUN_H_
@@ -21,6 +21,10 @@ struct xp_awk_frm_t
 
 enum 
 {
+	XP_AWK_BINOP_LOR,
+	XP_AWK_BINOP_LAND,
+	XP_AWK_BINOP_BOR,
+	XP_AWK_BINOP_BAND,
 	XP_AWK_BINOP_PLUS,
 	XP_AWK_BINOP_MINUS,
 	XP_AWK_BINOP_MUL,
