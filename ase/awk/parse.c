@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.64 2006-03-30 16:31:50 bacon Exp $
+ * $Id: parse.c,v 1.65 2006-03-30 16:38:51 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -1156,52 +1156,14 @@ static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_equality (xp_awk_t* awk)
 {
-	xp_awk_nde_exp_t* nde;
-	xp_awk_nde_t* left, * right;
-	int opcode;
-
-	left = __parse_relational (awk);
-	if (left == XP_NULL) return XP_NULL;
-	
-	while (1) 
+	__binmap_t map[] = 
 	{
-		if (MATCH(awk,TOKEN_EQ)) opcode = XP_AWK_BINOP_EQ;
-		else if (MATCH(awk,TOKEN_NE)) opcode = XP_AWK_BINOP_NE;
-		else break;
+		{ TOKEN_EQ, XP_AWK_BINOP_EQ },
+		{ TOKEN_NE, XP_AWK_BINOP_NE },
+		{ TOKEN_EOF, 0 }
+	};
 
-		if (__get_token(awk) == -1) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL; 
-		}
-
-		right = __parse_relational (awk);
-		if (right == XP_NULL) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL;
-		}
-
-		// TODO: constant folding -> in other parts of the program also...
-
-		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
-		if (nde == XP_NULL) 
-		{
-			xp_awk_clrpt (right);
-			xp_awk_clrpt (left);
-			PANIC (awk, XP_AWK_ENOMEM);
-		}
-
-		nde->type = XP_AWK_NDE_EXP_BIN;
-		nde->next = XP_NULL;
-		nde->opcode = opcode; 
-		nde->left = left;
-		nde->right = right;
-
-		left = (xp_awk_nde_t*)nde;
-	}
-
-	return left;
+	return __parse_binary_expr (awk, map, __parse_relational);
 }
 
 static xp_awk_nde_t* __parse_relational (xp_awk_t* awk)
