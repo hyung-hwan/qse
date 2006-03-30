@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.63 2006-03-30 16:24:10 bacon Exp $
+ * $Id: parse.c,v 1.64 2006-03-30 16:31:50 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -1118,7 +1118,7 @@ static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_expr (awk, __parse_logical_and, map);
+	return __parse_binary_expr (awk, map, __parse_logical_and);
 }
 
 static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk)
@@ -1129,7 +1129,7 @@ static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_expr (awk, __parse_bitwise_or, map);
+	return __parse_binary_expr (awk, map, __parse_bitwise_or);
 }
 
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
@@ -1140,7 +1140,7 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_expr (awk, __parse_bitwise_xor, map);
+	return __parse_binary_expr (awk, map, __parse_bitwise_xor);
 }
 
 static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
@@ -1151,7 +1151,7 @@ static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_expr (awk, __parse_equality, map);
+	return __parse_binary_expr (awk, map, __parse_equality);
 }
 
 static xp_awk_nde_t* __parse_equality (xp_awk_t* awk)
