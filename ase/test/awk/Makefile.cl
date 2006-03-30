@@ -1,6 +1,6 @@
 CC = cl
 #CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\..
-CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\.. -D__STAND_ALONE
+CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\.. -D__STAND_ALONE -DXP_CHAR_IS_WCHAR
 LDFLAGS = /libpath:..\..\bas /libpath:..\..\awk
 #LIBS = xpbas.lib xpawk.lib
 LIBS = xpawk.lib

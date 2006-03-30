@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.26 2006-03-28 16:33:09 bacon Exp $
+ * $Id: run.c,v 1.27 2006-03-30 16:31:50 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -670,6 +670,18 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 			res = xp_awk_makeintval (awk, r);
 		}
 	}
+	else if (nde->opcode == XP_AWK_BINOP_BXOR)
+	{
+		if (left->type == XP_AWK_VAL_INT &&
+		    right->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = 
+				((xp_awk_val_int_t*)left)->val ^
+				((xp_awk_val_int_t*)right)->val;
+			res = xp_awk_makeintval (awk, r);
+		}
+	}
+
 
 	xp_awk_refdownval (awk, left);
 	xp_awk_refdownval (awk, right);
