@@ -1,8 +1,8 @@
 /*
- * $Id: parse.c,v 1.66 2006-03-31 12:04:14 bacon Exp $
+ * $Id: parse.c,v 1.67 2006-03-31 16:35:37 bacon Exp $
  */
 
-#include <xp/awk/awk.h>
+#include <xp/awk/awk_i.h>
 
 #ifndef __STAND_ALONE
 #include <xp/bas/memory.h>
@@ -137,6 +137,7 @@ static xp_awk_nde_t* __parse_break (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_continue (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_return (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_exit (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_delete (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_next (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk);
 
@@ -944,13 +945,11 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 		if (__get_token(awk) == -1) return XP_NULL;
 		nde = __parse_exit(awk);
 	}
-/* TODO:
 	else if (MATCH(awk,TOKEN_DELETE)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
 		nde = __parse_delete(awk);
 	}
-*/
 	else if (MATCH(awk,TOKEN_NEXT)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
@@ -1088,8 +1087,40 @@ static xp_awk_nde_t* __parse_binary_expr (
 			return XP_NULL;
 		}
 
-		// TODO: constant folding -> in other parts of the program also...
+		/* TODO: enhance constant folding. do it in a better way */
+		/* TODO: differentiate different types of numbers ... */
+		if (left->type == XP_AWK_NDE_INT && 
+		    right->type == XP_AWK_NDE_INT) 
+		{
+			xp_long_t l, r;
 
+			l = ((xp_awk_nde_int_t*)left)->val; 
+			r = ((xp_awk_nde_int_t*)right)->val; 
+
+			/* TODO: more operators */
+			if (opcode == XP_AWK_BINOP_PLUS) l += r;
+			else if (opcode == XP_AWK_BINOP_MINUS) l -= r;
+			else if (opcode == XP_AWK_BINOP_MUL) l *= r;
+			else if (opcode == XP_AWK_BINOP_DIV) l /= r;
+			else if (opcode == XP_AWK_BINOP_MOD) l %= r;
+			else goto skip_constant_folding;
+
+			xp_awk_clrpt (right);
+			((xp_awk_nde_int_t*)left)->val = l;
+			continue;
+		} 
+		/* TODO:
+		else if (left->type == XP_AWK_NDE_REAL && 
+		         right->type == XP_AWK_NDE_REAL) 
+		{
+		}
+		else if (left->type == XP_AWK_NDE_STR &&
+		         right->type == XP_AWK_NDE_STR)
+		{
+			// TODO: string concatenation operator.... 
+		} */
+
+	skip_constant_folding:
 		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
 		if (nde == XP_NULL) 
 		{
@@ -2079,6 +2110,12 @@ static xp_awk_nde_t* __parse_exit (xp_awk_t* awk)
 
 	nde->val = val;
 	return (xp_awk_nde_t*)nde;
+}
+
+static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
+{
+// TODO: implement this...
+	return XP_NULL;
 }
 
 static xp_awk_nde_t* __parse_next (xp_awk_t* awk)

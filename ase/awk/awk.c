@@ -1,8 +1,8 @@
 /* 
- * $Id: awk.c,v 1.36 2006-03-29 16:37:31 bacon Exp $ 
+ * $Id: awk.c,v 1.37 2006-03-31 16:35:37 bacon Exp $ 
  */
 
-#include <xp/awk/awk.h>
+#include <xp/awk/awk_i.h>
 
 #ifndef __STAND_ALONE
 #include <xp/bas/memory.h>
@@ -12,30 +12,28 @@
 static void __free_func (xp_awk_t* awk, void* func);
 static void __free_namedval (xp_awk_t* awk, void* val);
 
-xp_awk_t* xp_awk_open (xp_awk_t* awk)
+xp_awk_t* xp_awk_open (void)
 {	
-	if (awk == XP_NULL) {
-		awk = (xp_awk_t*) xp_malloc (xp_sizeof(awk));
-		if (awk == XP_NULL) return XP_NULL;
-		awk->__dynamic = xp_true;
-	}	
-	else awk->__dynamic = xp_false;	
+	xp_awk_t* awk;
+
+	awk = (xp_awk_t*) xp_malloc (xp_sizeof(awk));
+	if (awk == XP_NULL) return XP_NULL;
 
 	if (xp_str_open(&awk->token.name, 128) == XP_NULL) {
-		if (awk->__dynamic) xp_free (awk);
+		xp_free (awk);
 		return XP_NULL;	
 	}
 
 	if (xp_awk_map_open (&awk->tree.funcs, awk, 256, __free_func) == XP_NULL) {
 		xp_str_close (&awk->token.name);
-		if (awk->__dynamic) xp_free (awk);
+		xp_free (awk);
 		return XP_NULL;	
 	}
 
 	if (xp_awk_tab_open(&awk->parse.globals) == XP_NULL) {
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.funcs);
-		if (awk->__dynamic) xp_free (awk);
+		xp_free (awk);
 		return XP_NULL;	
 	}
 
@@ -43,7 +41,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.funcs);
 		xp_awk_tab_close (&awk->parse.globals);
-		if (awk->__dynamic) xp_free (awk);
+		xp_free (awk);
 		return XP_NULL;	
 	}
 
@@ -52,7 +50,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 		xp_awk_map_close (&awk->tree.funcs);
 		xp_awk_tab_close (&awk->parse.globals);
 		xp_awk_tab_close (&awk->parse.locals);
-		if (awk->__dynamic) xp_free (awk);
+		xp_free (awk);
 		return XP_NULL;	
 	}
 
@@ -63,7 +61,7 @@ xp_awk_t* xp_awk_open (xp_awk_t* awk)
 		xp_awk_tab_close (&awk->parse.globals);
 		xp_awk_tab_close (&awk->parse.locals);
 		xp_awk_tab_close (&awk->parse.params);
-		if (awk->__dynamic) xp_free (awk);
+		xp_free (awk);
 		return XP_NULL;	
 	}
 
@@ -112,7 +110,7 @@ int xp_awk_close (xp_awk_t* awk)
 	xp_awk_tab_close (&awk->parse.params);
 	xp_str_close (&awk->token.name);
 
-	if (awk->__dynamic) xp_free (awk);
+	xp_free (awk);
 	return 0;
 }
 
@@ -155,6 +153,11 @@ void xp_awk_clear (xp_awk_t* awk)
 	awk->tree.chain_tail = XP_NULL;	
 
 	/* TODO: destroy function list */
+}
+
+void xp_awk_setparseopt (xp_awk_t* awk, int opt)
+{
+	awk->opt.parse = opt;
 }
 
 int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)

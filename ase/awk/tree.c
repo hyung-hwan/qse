@@ -1,8 +1,8 @@
 /*
- * $Id: tree.c,v 1.29 2006-03-31 12:04:14 bacon Exp $
+ * $Id: tree.c,v 1.30 2006-03-31 16:35:37 bacon Exp $
  */
 
-#include <xp/awk/awk.h>
+#include <xp/awk/awk_i.h>
 
 #ifndef __STAND_ALONE
 #include <xp/bas/memory.h>

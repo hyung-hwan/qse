@@ -1,8 +1,8 @@
 /*
- * $Id: sa.c,v 1.12 2006-03-31 12:04:14 bacon Exp $
+ * $Id: sa.c,v 1.13 2006-03-31 16:35:37 bacon Exp $
  */
 
-#include <xp/awk/awk.h>
+#include <xp/awk/awk_i.h>
 
 #ifdef __STAND_ALONE
 
