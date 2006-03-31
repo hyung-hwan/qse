@@ -1,4 +1,5 @@
 LIBRARY	"xpawk.dll"
+
 EXPORTS
 	xp_awk_open PRIVATE
 	xp_awk_close PRIVATE
