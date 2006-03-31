@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.37 2006-03-31 16:35:37 bacon Exp $ 
+ * $Id: awk.c,v 1.38 2006-03-31 17:16:23 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -16,7 +16,7 @@ xp_awk_t* xp_awk_open (void)
 {	
 	xp_awk_t* awk;
 
-	awk = (xp_awk_t*) xp_malloc (xp_sizeof(awk));
+	awk = (xp_awk_t*) xp_malloc (xp_sizeof(xp_awk_t));
 	if (awk == XP_NULL) return XP_NULL;
 
 	if (xp_str_open(&awk->token.name, 128) == XP_NULL) {
