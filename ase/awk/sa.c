@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.11 2006-03-29 16:37:31 bacon Exp $
+ * $Id: sa.c,v 1.12 2006-03-31 12:04:14 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -66,7 +66,6 @@ int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2)
 	return 0;
 }
 
-
 xp_long_t xp_strtolong (xp_char_t* str)
 {
 	xp_long_t n = 0;
@@ -78,6 +77,12 @@ xp_long_t xp_strtolong (xp_char_t* str)
 	}
 
 	return n;
+}
+
+xp_real_t xp_strtoreal (xp_char_t* str)
+{
+	/* TODO: */
+	return (xp_real_t)0.0;
 }
 
 
