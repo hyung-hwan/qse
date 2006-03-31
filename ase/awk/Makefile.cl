@@ -1,16 +1,22 @@
 SRCS = awk.c err.c tree.c tab.c map.c parse.c run.c sa.c val.c
 OBJS = $(SRCS:.c=.obj)
-OUT = xpawk.lib
+OUT = xpawk
 
 CC = cl
 #CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
 CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I../.. -D__STAND_ALONE -DXP_CHAR_IS_WCHAR
 
-all: $(OBJS)
-	link -lib @<<
-/nologo /out:$(OUT) $(OBJS)
+all: lib 
+
+lib: $(OBJS)
+	link /lib @<<
+/nologo /out:$(OUT).lib $(OBJS)
 <<
 
+dll: $(OBJS)
+	link /dll /def:$(OUT).def /subsystem:console /version:0.1 /release @<<
+/nologo /out:$(OUT).dll $(OBJS)
+<<
 
 clean:
 	del $(OBJS) $(OUT) *.obj
