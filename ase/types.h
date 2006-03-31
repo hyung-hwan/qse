@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.40 2006-03-09 04:25:29 bacon Exp $
+ * $Id: types.h,v 1.41 2006-03-31 17:48:17 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -207,12 +207,14 @@ typedef char xp_mchar_t;
 typedef int  xp_mcint_t;
 
 #if defined(_WIN32)
+	/*
 	#include <stddef.h>
 	typedef wchar_t xp_wchar_t;
 	typedef wint_t xp_wcint_t;
-	/*typedef unsigned short xp_wchar_t;*/
+	*/
+	typedef unsigned short xp_wchar_t;
 	/*typedef int xp_wcint_t;*/
-	/*typedef unsigned short xp_wcint_t;*/
+	typedef unsigned short xp_wcint_t;
 #elif defined(vms) || defined(__vms)
 	typedef long xp_wchar_t;
 	typedef long xp_wcint_t;

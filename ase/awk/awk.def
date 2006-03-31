@@ -1,0 +1,16 @@
+LIBRARY	"xpawk.dll"
+EXPORTS
+	xp_awk_open PRIVATE
+	xp_awk_close PRIVATE
+
+	xp_awk_geterrnum PRIVATE
+	xp_awk_geterrstr PRIVATE
+
+	xp_awk_clear PRIVATE
+	xp_awk_setparseopt PRIVATE
+
+	xp_awk_attsrc PRIVATE
+	xp_awk_detsrc PRIVATE
+
+	xp_awk_parse PRIVATE
+	xp_awk_run PRIVATE

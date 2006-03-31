@@ -14,7 +14,7 @@ lib: $(OBJS)
 <<
 
 dll: $(OBJS)
-	link /dll /def:$(OUT).def /subsystem:console /version:0.1 /release /noentry @<<
+	link /dll /def:awk.def /subsystem:console /version:0.1 /release @<<
 /nologo /out:$(OUT).dll $(OBJS)
 <<
 
