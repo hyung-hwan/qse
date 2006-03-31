@@ -1,12 +1,16 @@
 /*
- * $Id: awk.c,v 1.14 2006-03-31 16:35:37 bacon Exp $
+ * $Id: awk.c,v 1.15 2006-03-31 18:09:26 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
-#include <xp/bas/stdio.h>
 #include <wchar.h>
+#include <stdio.h>
 
-#ifdef __STAND_ALONE
+#ifdef XP_CHAR_IS_MCHAR
+#define xp_printf printf
+#else
+#define xp_printf wprintf
+#endif
 
 static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
@@ -31,32 +35,6 @@ static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t
 
 	return -1;
 }
-
-#else
-
-#include <xp/bas/stdio.h>
-#include <xp/bas/sio.h>
-
-static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t size)
-{
-	xp_ssize_t n;
-
-	switch (cmd) {
-	case XP_AWK_IO_OPEN:
-	case XP_AWK_IO_CLOSE:
-		return 0;
-
-	case XP_AWK_IO_DATA:
-		if (size < 0) return -1;
-		n = xp_sio_getc (xp_sio_in, data);
-		if (n == 0) return 0;
-		if (n != 1) return -1;
-		return n;
-	}
-
-	return -1;
-}
-#endif
 
 #ifdef __linux
 #include <mcheck.h>
