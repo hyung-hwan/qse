@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.16 2006-03-31 12:04:14 bacon Exp $
+ * $Id: sa.h,v 1.17 2006-03-31 16:35:37 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -59,59 +59,6 @@
 #define xp_va_end(pvar)      va_end(pvar)
 #define xp_va_arg(pvar,type) va_arg(pvar,type)
 
-#define xp_main  main
-
-#define XP_NULL NULL
-
-#define xp_sizeof(n)   (sizeof(n))
-#define xp_countof(n)  (sizeof(n) / sizeof(n[0]))
-
-#define xp_true (0 == 0)
-#define xp_false (0 != 0)
-
-typedef unsigned char xp_byte_t;
-typedef int xp_bool_t;
-typedef size_t xp_size_t;
-
-#ifdef XP_CHAR_IS_MCHAR
-	typedef char xp_char_t;
-	typedef int xp_cint_t;
-#else
-	typedef wchar_t xp_char_t;
-	typedef wint_t xp_cint_t;
-#endif
-
-#if defined(_WIN32) || defined(vms) || defined(__vms)
-	typedef long xp_ssize_t;
-#else
-	typedef ssize_t xp_ssize_t;
-#endif
-
-#if defined(_WIN32)
-	typedef __int64 xp_long_t;
-	typedef long double xp_real_t;
-#elif defined(vax) || defined(__vax)
-	typedef long xp_long_t;
-	typedef long double xp_real_t;
-#else
-	typedef long long xp_long_t;
-	typedef long double xp_real_t;
-#endif
-
-#ifdef XP_CHAR_IS_MCHAR
-	#define XP_CHAR(c) c
-	#define XP_TEXT(c) c
-	#define XP_CHAR_EOF EOF
-#else
-	#define XP_CHAR(c) L##c
-	#define XP_TEXT(c) L##c
-	#ifdef WEOF
-	#define XP_CHAR_EOF WEOF
-	#else
-	#define XP_CHAR_EOF ((xp_char_t)-1)
-	#endif
-#endif
-
 #define XP_STR_LEN(x)  ((x)->size)
 #define XP_STR_SIZE(x) ((x)->size + 1)
 #define XP_STR_CAPA(x) ((x)->capa)
@@ -131,29 +78,64 @@ struct xp_str_t
 extern "C" {
 #endif
 
+#define xp_strlen xp_awk_strlen
 xp_size_t xp_strlen (const xp_char_t* str);
+
+#define xp_strdup xp_awk_strdup
 xp_char_t* xp_strdup (const xp_char_t* str);
+
+#define xp_strxdup xp_awk_strxdup
 xp_char_t* xp_strxdup (const xp_char_t* str, xp_size_t len);
 
+#define xp_strcpy xp_awk_strcpy
 xp_size_t xp_strcpy (xp_char_t* buf, const xp_char_t* str);
+
+#define xp_strxncpy xp_awk_strxncpy
 xp_size_t xp_strxncpy (
 	xp_char_t* buf, xp_size_t bsz, const xp_char_t* str, xp_size_t len);
 
+#define xp_strcmp xp_awk_strcmp
 int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2);
+
+#define xp_strtolong xp_awk_strtolong
 xp_long_t xp_strtolong (xp_char_t* str);
+
+#define xp_strtoreal xp_awk_strtoreal
 xp_real_t xp_strtoreal (xp_char_t* str);
 
+#define xp_printf xp_awk_printf
 int xp_printf (const xp_char_t* fmt, ...);
+
+#define xp_vprintf xp_awk_vprintf
 int xp_vprintf (const xp_char_t* fmt, xp_va_list ap);
-int xp_sprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...);
+
+#define xp_sprintf xp_awk_sprintf
+int xp_sprintf (
+	xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...);
+
+#define xp_vsprintf xp_awk_vsprintf
 int xp_vsprintf (
 	xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_list ap);
 
+#define xp_str_open xp_awk_str_open
 xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa);
+
+#define xp_str_close xp_awk_str_close
 void xp_str_close (xp_str_t* str);
+
+#define xp_str_forfeit xp_awk_str_forfeit
+void xp_str_forfeit (xp_str_t* str);
+
+#define xp_str_cat xp_awk_str_cat
 xp_size_t xp_str_cat (xp_str_t* str, const xp_char_t* s);
+
+#define xp_str_ncat xp_awk_str_ncat
 xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len);
+
+#define xp_str_ccat xp_awk_str_ccat
 xp_size_t xp_str_ccat (xp_str_t* str, xp_char_t c);
+
+#define xp_str_clear xp_awk_str_clear
 void xp_str_clear (xp_str_t* str);
 
 #ifdef __cplusplus

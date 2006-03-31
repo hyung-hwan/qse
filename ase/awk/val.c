@@ -1,8 +1,8 @@
 /*
- * $Id: val.c,v 1.13 2006-03-28 16:33:09 bacon Exp $
+ * $Id: val.c,v 1.14 2006-03-31 16:35:37 bacon Exp $
  */
 
-#include <xp/awk/awk.h>
+#include <xp/awk/awk_i.h>
 
 #ifndef __STAND_ALONE
 #include <xp/bas/string.h>

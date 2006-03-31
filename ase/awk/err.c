@@ -1,8 +1,8 @@
 /*
- * $Id: err.c,v 1.1 2006-03-04 10:08:13 bacon Exp $
+ * $Id: err.c,v 1.2 2006-03-31 16:35:37 bacon Exp $
  */
 
-#include <xp/awk/awk.h>
+#include <xp/awk/awk_i.h>
 
 int xp_awk_geterrnum (xp_awk_t* awk)
 {
