@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.65 2006-03-30 16:38:51 bacon Exp $
+ * $Id: parse.c,v 1.66 2006-03-31 12:04:14 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -25,10 +25,10 @@ enum
 	TOKEN_GT,
 	TOKEN_NOT,
 	TOKEN_PLUS,
-	TOKEN_PLUS_PLUS,
+	TOKEN_PLUSPLUS,
 	TOKEN_PLUS_ASSIGN,
 	TOKEN_MINUS,
-	TOKEN_MINUS_MINUS,
+	TOKEN_MINUSMINUS,
 	TOKEN_MINUS_ASSIGN,
 	TOKEN_MUL,
 	TOKEN_DIV,
@@ -40,6 +40,7 @@ enum
 	TOKEN_BOR,
 	TOKEN_BXOR,
 	TOKEN_BAND,
+	TOKEN_BNOT,
 
 	TOKEN_LPAREN,
 	TOKEN_RPAREN,
@@ -52,7 +53,8 @@ enum
 	TOKEN_COMMA,
 	TOKEN_SEMICOLON,
 
-	TOKEN_INTEGER,
+	TOKEN_INT,
+	TOKEN_REAL,
 	TOKEN_STRING,
 	TOKEN_REGEX,
 
@@ -117,6 +119,7 @@ static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_bitwise_and (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_equality (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_relational (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_shift (xp_awk_t* awk);
@@ -998,6 +1001,8 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 	if (x == XP_NULL) return XP_NULL;
 	if (!MATCH(awk,TOKEN_ASSIGN)) return x;
 
+//TODO: PLUS_ASSIGN, MINUS_ASSIGN, ....
+//
 	xp_assert (x->next == XP_NULL);
 	if (x->type != XP_AWK_NDE_ARG &&
 	    x->type != XP_AWK_NDE_ARGIDX &&
@@ -1151,6 +1156,17 @@ static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
+	return __parse_binary_expr (awk, map, __parse_bitwise_and);
+}
+
+static xp_awk_nde_t* __parse_bitwise_and (xp_awk_t* awk)
+{
+	__binmap_t map[] = 
+	{
+		{ TOKEN_BAND, XP_AWK_BINOP_BAND },
+		{ TOKEN_EOF, 0 }
+	};
+
 	return __parse_binary_expr (awk, map, __parse_equality);
 }
 
@@ -1168,158 +1184,54 @@ static xp_awk_nde_t* __parse_equality (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_relational (xp_awk_t* awk)
 {
-	xp_awk_nde_exp_t* nde;
-	xp_awk_nde_t* left, * right;
-	int opcode;
-
-	left = __parse_shift (awk);
-	if (left == XP_NULL) return XP_NULL;
-	
-	while (1) 
+	__binmap_t map[] = 
 	{
-		if (MATCH(awk,TOKEN_GT)) opcode = XP_AWK_BINOP_GT;
-		else if (MATCH(awk,TOKEN_GE)) opcode = XP_AWK_BINOP_GE;
-		else if (MATCH(awk,TOKEN_LT)) opcode = XP_AWK_BINOP_LT;
-		else if (MATCH(awk,TOKEN_LE)) opcode = XP_AWK_BINOP_LE;
-		else break;
+		{ TOKEN_GT, XP_AWK_BINOP_GT },
+		{ TOKEN_GE, XP_AWK_BINOP_GE },
+		{ TOKEN_LT, XP_AWK_BINOP_LT },
+		{ TOKEN_LE, XP_AWK_BINOP_LE },
+		{ TOKEN_EOF, 0 }
+	};
 
-		if (__get_token(awk) == -1) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL; 
-		}
-
-		right = __parse_shift (awk);
-		if (right == XP_NULL) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL;
-		}
-
-		// TODO: constant folding -> in other parts of the program also...
-
-		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
-		if (nde == XP_NULL) 
-		{
-			xp_awk_clrpt (right);
-			xp_awk_clrpt (left);
-			PANIC (awk, XP_AWK_ENOMEM);
-		}
-
-		nde->type = XP_AWK_NDE_EXP_BIN;
-		nde->next = XP_NULL;
-		nde->opcode = opcode; 
-		nde->left = left;
-		nde->right = right;
-
-		left = (xp_awk_nde_t*)nde;
-	}
-
-	return left;
+	return __parse_binary_expr (awk, map, __parse_shift);
 }
 
 static xp_awk_nde_t* __parse_shift (xp_awk_t* awk)
 {
-	xp_awk_nde_exp_t* nde;
-	xp_awk_nde_t* left, * right;
-	int opcode;
-
-	left = __parse_additive (awk);
-	if (left == XP_NULL) return XP_NULL;
-	
-	while (1) 
+	__binmap_t map[] = 
 	{
-		if (MATCH(awk,TOKEN_RSHIFT)) opcode = XP_AWK_BINOP_RSHIFT;
-		else if (MATCH(awk,TOKEN_LSHIFT)) opcode = XP_AWK_BINOP_LSHIFT;
-		else break;
+		{ TOKEN_LSHIFT, XP_AWK_BINOP_LSHIFT },
+		{ TOKEN_RSHIFT, XP_AWK_BINOP_RSHIFT },
+		{ TOKEN_EOF, 0 }
+	};
 
-		if (__get_token(awk) == -1) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL; 
-		}
-
-		right = __parse_additive (awk);
-		if (right == XP_NULL) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL;
-		}
-
-		// TODO: constant folding -> in other parts of the program also...
-
-		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
-		if (nde == XP_NULL) 
-		{
-			xp_awk_clrpt (right);
-			xp_awk_clrpt (left);
-			PANIC (awk, XP_AWK_ENOMEM);
-		}
-
-		nde->type = XP_AWK_NDE_EXP_BIN;
-		nde->next = XP_NULL;
-		nde->opcode = opcode; 
-		nde->left = left;
-		nde->right = right;
-
-		left = (xp_awk_nde_t*)nde;
-	}
-
-	return left;
+	return __parse_binary_expr (awk, map, __parse_additive);
 }
 
 static xp_awk_nde_t* __parse_additive (xp_awk_t* awk)
 {
-	xp_awk_nde_exp_t* nde;
-	xp_awk_nde_t* left, * right;
-	int opcode;
-
-	left = __parse_multiplicative (awk);
-	if (left == XP_NULL) return XP_NULL;
-	
-	while (1) 
+	__binmap_t map[] = 
 	{
-		if (MATCH(awk,TOKEN_PLUS)) opcode = XP_AWK_BINOP_PLUS;
-		else if (MATCH(awk,TOKEN_MINUS)) opcode = XP_AWK_BINOP_MINUS;
-		else break;
+		{ TOKEN_PLUS, XP_AWK_BINOP_PLUS },
+		{ TOKEN_MINUS, XP_AWK_BINOP_MINUS },
+		{ TOKEN_EOF, 0 }
+	};
 
-		if (__get_token(awk) == -1) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL; 
-		}
-
-		right = __parse_multiplicative (awk);
-		if (right == XP_NULL) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL;
-		}
-
-		// TODO: constant folding -> in other parts of the program also...
-
-		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
-		if (nde == XP_NULL) 
-		{
-			xp_awk_clrpt (right);
-			xp_awk_clrpt (left);
-			PANIC (awk, XP_AWK_ENOMEM);
-		}
-
-		nde->type = XP_AWK_NDE_EXP_BIN;
-		nde->next = XP_NULL;
-		nde->opcode = opcode; 
-		nde->left = left;
-		nde->right = right;
-
-		left = (xp_awk_nde_t*)nde;
-	}
-
-	return left;
+	return __parse_binary_expr (awk, map, __parse_multiplicative);
 }
 
 static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk)
 {
+	__binmap_t map[] = 
+	{
+		{ TOKEN_MUL, XP_AWK_BINOP_MUL },
+		{ TOKEN_DIV, XP_AWK_BINOP_DIV },
+		{ TOKEN_MOD, XP_AWK_BINOP_MOD },
+		{ TOKEN_EOF, 0 }
+	};
+
+	return __parse_binary_expr (awk, map, __parse_unary);
+#if 0
 	xp_awk_nde_exp_t* nde;
 	xp_awk_nde_t* left, * right;
 	int opcode;
@@ -1396,10 +1308,20 @@ static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk)
 	}
 
 	return left;
+#endif
 }
 
 static xp_awk_nde_t* __parse_unary (xp_awk_t* awk)
 {
+	// TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS
+	//TODO:
+	/*
+	while (MATCH(awk,TOKEN_PLUS) || MATCH(awk,TOKEN_MINUS) ||
+	       MATCH(awk,TOKEN_NOT)  || MATCH(awk,TOKEN_BNOT))
+	{
+	}
+	*/
+
 	return __parse_primary (awk);
 }
 
@@ -1500,7 +1422,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			PANIC (awk, XP_AWK_EUNDEF);
 		}
 	}
-	else if (MATCH(awk,TOKEN_INTEGER)) 
+	else if (MATCH(awk,TOKEN_INT)) 
 	{
 		xp_awk_nde_int_t* nde;
 
@@ -1523,11 +1445,29 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		return (xp_awk_nde_t*)nde;
 	}
-	/* TODO: floating point number */
-	/*
 	else if (MATCH(awk,TOKEN_REAL)) {
+		xp_awk_nde_real_t* nde;
+
+		nde = (xp_awk_nde_real_t*) 
+			xp_malloc (xp_sizeof(xp_awk_nde_real_t));
+		if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+
+		nde->type = XP_AWK_NDE_REAL;
+		nde->next = XP_NULL;
+		nde->val = xp_strtoreal (XP_STR_BUF(&awk->token.name));
+
+		xp_assert (
+			XP_STR_LEN(&awk->token.name) ==
+			xp_strlen(XP_STR_BUF(&awk->token.name)));
+
+		if (__get_token(awk) == -1) 
+		{
+			xp_free (nde);
+			return XP_NULL;			
+		}
+
+		return (xp_awk_nde_t*)nde;
 	}
-	*/
 	else if (MATCH(awk,TOKEN_STRING))  {
 		xp_awk_nde_str_t* nde;
 
@@ -2190,7 +2130,7 @@ static int __get_token (xp_awk_t* awk)
 			GET_CHAR_TO (awk, c);
 		} while (xp_isdigit(c));
 
-		SET_TOKEN_TYPE (awk, TOKEN_INTEGER);
+		SET_TOKEN_TYPE (awk, TOKEN_INT);
 // TODO: enhance nubmer handling
 	}
 	else if (xp_isalpha(c) || c == XP_CHAR('_')) 
@@ -2324,12 +2264,18 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_STR (awk, XP_TEXT("&"));
 		}
 	}
+	else if (c == XP_CHAR('~'))
+	{
+		SET_TOKEN_TYPE (awk, TOKEN_BNOT);
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
 	else if (c == XP_CHAR('+')) 
 	{
 		GET_CHAR_TO (awk, c);
 		if (c == XP_CHAR('+')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_PLUS_PLUS);
+			SET_TOKEN_TYPE (awk, TOKEN_PLUSPLUS);
 			ADD_TOKEN_STR (awk, XP_TEXT("++"));
 			GET_CHAR_TO (awk, c);
 		}
@@ -2354,7 +2300,7 @@ static int __get_token (xp_awk_t* awk)
 		GET_CHAR_TO (awk, c);
 		if (c == XP_CHAR('-')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_MINUS_MINUS);
+			SET_TOKEN_TYPE (awk, TOKEN_MINUSMINUS);
 			ADD_TOKEN_STR (awk, XP_TEXT("--"));
 			GET_CHAR_TO (awk, c);
 		}

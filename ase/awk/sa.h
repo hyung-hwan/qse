@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.15 2006-03-29 16:37:31 bacon Exp $
+ * $Id: sa.h,v 1.16 2006-03-31 12:04:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -141,6 +141,7 @@ xp_size_t xp_strxncpy (
 
 int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2);
 xp_long_t xp_strtolong (xp_char_t* str);
+xp_real_t xp_strtoreal (xp_char_t* str);
 
 int xp_printf (const xp_char_t* fmt, ...);
 int xp_vprintf (const xp_char_t* fmt, xp_va_list ap);
