@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.2 2006-03-31 16:35:37 bacon Exp $
+ * $Id: err.c,v 1.3 2006-04-02 12:41:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -37,7 +37,8 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_TEXT("duplicate parameter name"),
 		XP_TEXT("duplicate variable name"),
 		XP_TEXT("duplicate name"),
-		XP_TEXT("undefined identifier")	
+		XP_TEXT("undefined identifier"),
+		XP_TEXT("l-value required")
 	};
 
 	if (awk->errnum >= 0 && awk->errnum < xp_countof(__errstr)) {

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.28 2006-03-28 16:33:09 bacon Exp $
+ * $Id: tree.h,v 1.29 2006-04-02 12:41:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -18,6 +18,8 @@ enum
 
 	XP_AWK_NDE_EXP_BIN,
 	XP_AWK_NDE_EXP_UNR,
+	XP_AWK_NDE_EXP_INCPRE,
+	XP_AWK_NDE_EXP_INCPST,
 
 	XP_AWK_NDE_INT,
 	XP_AWK_NDE_REAL,
@@ -101,13 +103,14 @@ struct xp_awk_nde_ass_t
 	xp_awk_nde_t* right;
 };
 
-/* XP_AWK_NDE_EXP_BIN, XP_AWK_NDE_EXP_UNR */
+/* XP_AWK_NDE_EXP_BIN, XP_AWK_NDE_EXP_UNR, 
+ * XP_AWK_NDE_EXP_INCPRE, XP_AWNDE_EXP_INCPST */
 struct xp_awk_nde_exp_t
 {
 	XP_AWK_NDE_HDR;
 	int opcode;
 	xp_awk_nde_t* left;
-	xp_awk_nde_t* right; /* optional for XP_AWK_NDE_UNR */
+	xp_awk_nde_t* right; /* XP_NULL for UNR, INCPRE, INCPST */
 };
 
 /* XP_AWK_NDE_POS - positional - $1, $2, $x, etc */
