@@ -1,12 +1,11 @@
 /*
- * $Id: awk_i.h,v 1.1 2006-03-31 16:35:37 bacon Exp $
+ * $Id: awk_i.h,v 1.2 2006-04-02 12:41:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
 #define _XP_AWK_AWKI_H_
 
 #include <xp/awk/awk.h>
-#include <xp/awk/err.h>
 #include <xp/awk/tree.h>
 #include <xp/awk/tab.h>
 #include <xp/awk/map.h>

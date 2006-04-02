@@ -149,10 +149,6 @@ SOURCE=.\awk_i.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\err.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\map.h
 # End Source File
 # Begin Source File

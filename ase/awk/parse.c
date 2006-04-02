@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.67 2006-03-31 16:35:37 bacon Exp $
+ * $Id: parse.c,v 1.68 2006-04-02 12:41:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -126,6 +126,7 @@ static xp_awk_nde_t* __parse_shift (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_additive (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_unary (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_increment (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_primary (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
@@ -1262,98 +1263,100 @@ static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk)
 	};
 
 	return __parse_binary_expr (awk, map, __parse_unary);
-#if 0
-	xp_awk_nde_exp_t* nde;
-	xp_awk_nde_t* left, * right;
-	int opcode;
-
-	left = __parse_unary (awk);
-	if (left == XP_NULL) return XP_NULL;
-	
-	while (1) 
-	{
-		if (MATCH(awk,TOKEN_MUL)) opcode = XP_AWK_BINOP_MUL;
-		else if (MATCH(awk,TOKEN_DIV)) opcode = XP_AWK_BINOP_DIV;
-		else if (MATCH(awk,TOKEN_MOD)) opcode = XP_AWK_BINOP_MOD;
-		else break;
-
-		if (__get_token(awk) == -1) 
-		{
-			xp_awk_clrpt (left);
-			return XP_NULL; 
-		}
-
-		right = __parse_unary (awk);
-		if (right == XP_NULL) 
-		{
-			xp_awk_clrpt (left);	
-			return XP_NULL;
-		}
-
-		/* TODO: enhance constant folding. do it in a better way */
-		/* TODO: differentiate different types of numbers ... */
-		if (left->type == XP_AWK_NDE_INT && 
-		    right->type == XP_AWK_NDE_INT) 
-		{
-			xp_long_t l, r;
-
-			l = ((xp_awk_nde_int_t*)left)->val; 
-			r = ((xp_awk_nde_int_t*)right)->val; 
-
-			xp_awk_clrpt (right);
-			
-			if (opcode == XP_AWK_BINOP_MUL) l *= r;
-			else if (opcode == XP_AWK_BINOP_DIV) l /= r;
-			else if (opcode == XP_AWK_BINOP_MOD) l %= r;
-			
-			((xp_awk_nde_int_t*)left)->val = l;
-			continue;
-		} 
-		/* TODO:
-		else if (left->type == XP_AWK_NDE_REAL && 
-		         right->type == XP_AWK_NDE_REAL) 
-		{
-		}
-		else if (left->type == XP_AWK_NDE_STR &&
-		         right->type == XP_AWK_NDE_STR)
-		{
-			// TODO: string concatenation operator.... 
-		}
-		*/
-
-		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
-		if (nde == XP_NULL) 
-		{
-			xp_awk_clrpt (right);	
-			xp_awk_clrpt (left);	
-			PANIC (awk, XP_AWK_ENOMEM);
-		}
-
-		nde->type = XP_AWK_NDE_EXP_BIN;
-		nde->next = XP_NULL;
-		nde->opcode = opcode;
-		nde->left = left;
-		nde->right = right;
-
-		left = (xp_awk_nde_t*)nde;
-	}
-
-	return left;
-#endif
 }
 
 static xp_awk_nde_t* __parse_unary (xp_awk_t* awk)
 {
-	// TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS
-	//TODO:
-	/*
-	while (MATCH(awk,TOKEN_PLUS) || MATCH(awk,TOKEN_MINUS) ||
-	       MATCH(awk,TOKEN_NOT)  || MATCH(awk,TOKEN_BNOT))
-	{
-	}
-	*/
+	xp_awk_nde_exp_t* nde; 
+	xp_awk_nde_t* left;
+	int opcode;
 
-	return __parse_primary (awk);
+	opcode = (MATCH(awk,TOKEN_PLUS))?  XP_AWK_UNROP_PLUS:
+	         (MATCH(awk,TOKEN_MINUS))? XP_AWK_UNROP_MINUS:
+	         (MATCH(awk,TOKEN_NOT))?   XP_AWK_UNROP_NOT:
+	         (MATCH(awk,TOKEN_BNOT))?  XP_AWK_UNROP_BNOT: -1;
+
+	if (opcode == -1) return __parse_increment (awk);
+
+	if (__get_token(awk) == -1) return XP_NULL;
+
+	left = __parse_unary (awk);
+	if (left == XP_NULL) return XP_NULL;
+
+	nde = (xp_awk_nde_exp_t*)
+		xp_malloc (xp_sizeof(xp_awk_nde_exp_t));
+	if (nde == XP_NULL)
+	{
+		xp_awk_clrpt (left);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+	nde->type = XP_AWK_NDE_EXP_UNR;
+	nde->next = XP_NULL;
+	nde->opcode = opcode;
+	nde->left = left;
+	nde->right = XP_NULL;
+
+	return (xp_awk_nde_t*)nde;
+}
+
+static xp_awk_nde_t* __parse_increment (xp_awk_t* awk)
+{
+	xp_awk_nde_exp_t* nde;
+	xp_awk_nde_t* left;
+	int type, opcode, opcode1, opcode2;
+
+	opcode1 = MATCH(awk,TOKEN_PLUSPLUS)? XP_AWK_INCOP_PLUS:
+	          MATCH(awk,TOKEN_MINUSMINUS)? XP_AWK_INCOP_MINUS: -1;
+
+	if (opcode1 != -1)
+	{
+		if (__get_token(awk) == -1) return XP_NULL;
+	}
+
+	left = __parse_primary (awk);
+	if (left == XP_NULL) return XP_NULL;
+
+	opcode2 = MATCH(awk,TOKEN_PLUSPLUS)? XP_AWK_INCOP_PLUS:
+	          MATCH(awk,TOKEN_MINUSMINUS)? XP_AWK_INCOP_MINUS: -1;
+
+	if (opcode1 != -1 && opcode2 != -1)
+	{
+		xp_awk_clrpt (left);
+		PANIC (awk, XP_AWK_ELVALUE);
+	}
+	else if (opcode1 == -1 && opcode2 == -1)
+	{
+		return left;
+	}
+	else if (opcode1 != -1) 
+	{
+		type = XP_AWK_NDE_EXP_INCPRE;
+		opcode = opcode1;
+	}
+	else if (opcode2 != -1) 
+	{
+		type = XP_AWK_NDE_EXP_INCPST;
+		opcode = opcode2;
+
+		if (__get_token(awk) == -1) return XP_NULL;
+	}
+
+	nde = (xp_awk_nde_exp_t*)
+		xp_malloc (xp_sizeof(xp_awk_nde_exp_t));
+	if (nde == XP_NULL)
+	{
+		xp_awk_clrpt (left);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+	nde->type = type;
+	nde->next = XP_NULL;
+	nde->opcode = opcode;
+	nde->left = left;
+	nde->right = XP_NULL;
+
+	return (xp_awk_nde_t*)nde;
 }
 
 static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)

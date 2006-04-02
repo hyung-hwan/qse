@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.30 2006-03-31 16:35:37 bacon Exp $
+ * $Id: tree.c,v 1.31 2006-04-02 12:41:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -35,14 +35,20 @@ static const xp_char_t* __binop_str[] =
 	XP_TEXT("%")
 };
 
-static const xp_char_t* __unaop_str[] =
+static const xp_char_t* __unrop_str[] =
 {
 	XP_TEXT("+"),
 	XP_TEXT("-"),
-	XP_TEXT("++"),
-	XP_TEXT("--"),
 	XP_TEXT("!"),
 	XP_TEXT("~")
+};
+
+static const xp_char_t* __incop_str[] =
+{
+	XP_TEXT("++"),
+	XP_TEXT("--"),
+	XP_TEXT("++"),
+	XP_TEXT("--")
 };
 
 static void __print_tabs (int depth);
@@ -68,19 +74,49 @@ static int __print_expression (xp_awk_nde_t* nde)
 
 	case XP_AWK_NDE_EXP_BIN:
 		xp_printf (XP_TEXT("("));
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
+		if (__print_expression(((xp_awk_nde_exp_t*)nde)->left) == -1)
+			return -1;
 		xp_assert ((((xp_awk_nde_exp_t*)nde)->left)->next == XP_NULL);
-		xp_printf (XP_TEXT(" %s "), __binop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS) xp_printf (XP_TEXT("("));
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->right) == -1) return -1;
-		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS) xp_printf (XP_TEXT(")"));
+		xp_printf (XP_TEXT(" %s "), 
+			__binop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS) 
+			xp_printf (XP_TEXT("("));
+		if (__print_expression (((xp_awk_nde_exp_t*)nde)->right) == -1)
+			return -1;
+		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS)
+			xp_printf (XP_TEXT(")"));
 		xp_assert ((((xp_awk_nde_exp_t*)nde)->right)->next == XP_NULL);
 		xp_printf (XP_TEXT(")"));
 		break;
 
 	case XP_AWK_NDE_EXP_UNR:
-// TODO:
-		xp_printf (XP_TEXT("unary basic expression\n"));
+		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
+
+		xp_printf (XP_TEXT("%s("), 
+			__unrop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1)
+			return -1;
+		xp_printf (XP_TEXT(")"));
+		break;
+
+	case XP_AWK_NDE_EXP_INCPRE:
+		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
+
+		xp_printf (XP_TEXT("%s("), 
+			__incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1)
+			return -1;
+		xp_printf (XP_TEXT(")"));
+		break;
+
+	case XP_AWK_NDE_EXP_INCPST:
+		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
+
+		xp_printf (XP_TEXT("("));
+		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1)
+			return -1;
+		xp_printf (XP_TEXT(")%s"), 
+			__incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
 		break;
 
 	case XP_AWK_NDE_INT:
@@ -504,7 +540,10 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 			break;
 
 		case XP_AWK_NDE_EXP_UNR:
-// TODO: clear unary expression...
+		case XP_AWK_NDE_EXP_INCPRE:
+		case XP_AWK_NDE_EXP_INCPST:
+			xp_assert (((xp_awk_nde_exp_t*)p)->right == XP_NULL);
+			xp_awk_clrpt (((xp_awk_nde_exp_t*)p)->left);
 			xp_free (p);
 			break;
 

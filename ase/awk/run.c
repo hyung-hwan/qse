@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.28 2006-03-31 16:35:37 bacon Exp $
+ * $Id: run.c,v 1.29 2006-04-02 12:41:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -39,6 +39,9 @@ static int __run_exit_statement (xp_awk_t* awk, xp_awk_nde_exit_t* nde);
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_ass_t* nde);
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
+static xp_awk_val_t* __eval_unary (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
+static xp_awk_val_t* __eval_incpre (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
+static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_exp_t* nde);
 static xp_awk_val_t* __eval_funccall (xp_awk_t* awk, xp_awk_nde_call_t* nde);
 
 static int __raw_push (xp_awk_t* awk, void* val);
@@ -426,29 +429,39 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 	switch (nde->type) 
 	{
 	case XP_AWK_NDE_ASS:
-		val = __eval_assignment(awk,(xp_awk_nde_ass_t*)nde);
+		val = __eval_assignment (awk, (xp_awk_nde_ass_t*)nde);
 		break;
 
 	case XP_AWK_NDE_EXP_BIN:
-		val = __eval_binary(awk,(xp_awk_nde_exp_t*)nde);
+		val = __eval_binary (awk, (xp_awk_nde_exp_t*)nde);
 		break;
 
 	case XP_AWK_NDE_EXP_UNR:
-		// TODO: .......................
+		val = __eval_unary (awk, (xp_awk_nde_exp_t*)nde);
+		break;
+
+	case XP_AWK_NDE_EXP_INCPRE:
+		val = __eval_incpre (awk, (xp_awk_nde_exp_t*)nde);
+		break;
+
+	case XP_AWK_NDE_EXP_INCPST:
+		val = __eval_incpst (awk, (xp_awk_nde_exp_t*)nde);
 		break;
 
 	case XP_AWK_NDE_STR:
-		val = xp_awk_makestrval(
+		val = xp_awk_makestrval (
 			((xp_awk_nde_str_t*)nde)->buf,
 			((xp_awk_nde_str_t*)nde)->len);
 		break;
 
 	case XP_AWK_NDE_INT:
-		val = xp_awk_makeintval(awk,((xp_awk_nde_int_t*)nde)->val);
+		val = xp_awk_makeintval (
+			awk, ((xp_awk_nde_int_t*)nde)->val);
 		break;
 
 	case XP_AWK_NDE_REAL:
-		val = xp_awk_makerealval(awk,((xp_awk_nde_real_t*)nde)->val);
+		val = xp_awk_makerealval (
+			awk, ((xp_awk_nde_real_t*)nde)->val);
 		break;
 
 	case XP_AWK_NDE_NAMED:
@@ -682,9 +695,210 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 		}
 	}
 
-
 	xp_awk_refdownval (awk, left);
 	xp_awk_refdownval (awk, right);
+
+	return res;
+}
+
+static xp_awk_val_t* __eval_unary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
+{
+	xp_awk_val_t* left, * res;
+
+	xp_assert (nde->type == XP_AWK_NDE_EXP_UNR);
+	xp_assert (nde->right == XP_NULL);
+
+	left = __eval_expression (awk, nde->left);
+	if (left == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (left);
+
+// TODO: a lot of things to do....
+	if (nde->opcode == XP_AWK_UNROP_PLUS) 
+	{
+		if (left->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
+			res = xp_awk_makeintval (awk, r);
+		}
+		else if (left->type == XP_AWK_VAL_REAL)
+		{
+			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
+			res = xp_awk_makerealval (awk, r);
+		}
+		else
+		{
+			// TODO: error handling
+			xp_awk_refdownval (awk, left);
+			return XP_NULL;
+		}
+	}
+	else if (nde->opcode == XP_AWK_UNROP_MINUS)
+	{
+		if (left->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
+			res = xp_awk_makeintval (awk, -r);
+		}
+		else if (left->type == XP_AWK_VAL_REAL)
+		{
+			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
+			res = xp_awk_makerealval (awk, -r);
+		}
+		else
+		{
+			// TODO: error handling
+			xp_awk_refdownval (awk, left);
+			return XP_NULL;
+		}
+	}
+	else if (nde->opcode == XP_AWK_UNROP_NOT)
+	{
+		if (left->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
+			res = xp_awk_makeintval (awk, !r);
+		}
+		else if (left->type == XP_AWK_VAL_REAL)
+		{
+			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
+			res = xp_awk_makerealval (awk, !r);
+		}
+		else
+		{
+			// TODO: error handling
+			xp_awk_refdownval (awk, left);
+			return XP_NULL;
+		}
+	}
+	else if (nde->opcode == XP_AWK_UNROP_BNOT)
+	{
+		if (left->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
+			res = xp_awk_makeintval (awk, ~r);
+		}
+		else
+		{
+			// TODO: error handling
+			xp_awk_refdownval (awk, left);
+			return XP_NULL;
+		}
+	}
+
+	xp_awk_refdownval (awk, left);
+
+	return res;
+}
+
+static xp_awk_val_t* __eval_incpre (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
+{
+	xp_awk_val_t* left, * res;
+
+	xp_assert (nde->type == XP_AWK_NDE_EXP_INCPRE);
+	xp_assert (nde->right == XP_NULL);
+
+	left = __eval_expression (awk, nde->left); // TODO: do it differently
+	if (left == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (left);
+
+	if (nde->opcode == XP_AWK_UNROP_PLUS) 
+	{
+		if (left->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
+			res = xp_awk_makeintval (awk, r + 1);
+		}
+		else if (left->type == XP_AWK_VAL_REAL)
+		{
+			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
+			res = xp_awk_makerealval (awk, r + 1.0);
+		}
+		else
+		{
+			xp_awk_refdownval (awk, left);
+			return XP_NULL;
+		}
+	}
+	else if (nde->opcode == XP_AWK_UNROP_MINUS)
+	{
+		if (left->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
+			res = xp_awk_makeintval (awk, r - 1);
+		}
+		else if (left->type == XP_AWK_VAL_REAL)
+		{
+			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
+			res = xp_awk_makerealval (awk, r - 1.0);
+		}
+		else
+		{
+			xp_awk_refdownval (awk, left);
+			return XP_NULL;
+		}
+	}
+
+	xp_awk_refdownval (awk, left);
+
+	return res;
+}
+
+static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
+{
+	xp_awk_val_t* left, * res;
+
+	xp_assert (nde->type == XP_AWK_NDE_EXP_INCPST);
+	xp_assert (nde->right == XP_NULL);
+
+	left = __eval_expression (awk, nde->left); // TODO: get the actual target...
+	if (left == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (left);
+
+	if (nde->opcode == XP_AWK_UNROP_PLUS) 
+	{
+		if (left->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
+			res = xp_awk_makeintval (awk, r);
+
+			// TODO: increment the actual target...
+		}
+		else if (left->type == XP_AWK_VAL_REAL)
+		{
+			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
+			res = xp_awk_makerealval (awk, r);
+
+			// TODO: increment the actual target...
+		}
+		else
+		{
+			xp_awk_refdownval (awk, left);
+			return XP_NULL;
+		}
+	}
+	else if (nde->opcode == XP_AWK_UNROP_MINUS)
+	{
+		if (left->type == XP_AWK_VAL_INT)
+		{
+			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
+			res = xp_awk_makeintval (awk, r - 1);
+		}
+		else if (left->type == XP_AWK_VAL_REAL)
+		{
+			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
+			res = xp_awk_makerealval (awk, r - 1.0);
+		}
+		else
+		{
+			xp_awk_refdownval (awk, left);
+			return XP_NULL;
+		}
+	}
+
+	xp_awk_refdownval (awk, left);
 
 	return res;
 }
