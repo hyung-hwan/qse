@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.32 2006-04-03 15:27:31 bacon Exp $
+ * $Id: run.c,v 1.33 2006-04-03 15:31:33 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -694,6 +694,9 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_exp_t* nde)
 	}
 
 	xp_awk_refupval (right);
+
+	xp_assert (nde->opcode >= 0 && 
+		nde->opcode < xp_countof(__binop_func));
 
 	res = __binop_func[nde->opcode] (awk, left, right);
 	// TODO: do i need to handle error here or in binop_func???
