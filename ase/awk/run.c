@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.31 2006-04-03 14:55:34 bacon Exp $
+ * $Id: run.c,v 1.32 2006-04-03 15:27:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -974,7 +974,6 @@ static xp_awk_val_t* __eval_binop_minus (
 	return res;
 }
 
-
 static xp_awk_val_t* __eval_binop_mul (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
@@ -984,7 +983,7 @@ static xp_awk_val_t* __eval_binop_mul (
 	    right->type == XP_AWK_VAL_INT)
 	{
 		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val -
+			((xp_awk_val_int_t*)left)->val *
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
 		// TOOD: error handling
@@ -1002,7 +1001,7 @@ static xp_awk_val_t* __eval_binop_div (
 	    right->type == XP_AWK_VAL_INT)
 	{
 		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val *
+			((xp_awk_val_int_t*)left)->val /
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
 		// TOOD: error handling
