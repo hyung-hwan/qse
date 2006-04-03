@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.30 2005-07-30 05:11:39 bacon Exp $
+ * $Id: macros.h,v 1.31 2006-04-03 10:40:26 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -8,7 +8,8 @@
 #include <xp/types.h>
 
 #ifdef __cplusplus
-	#define XP_NULL ((xp_uint_t)0)
+	/*#define XP_NULL ((xp_uint_t)0)*/
+	#define XP_NULL (0)
 #else
 	#define XP_NULL ((void*)0)
 #endif
