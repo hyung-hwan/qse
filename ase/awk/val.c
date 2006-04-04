@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.14 2006-03-31 16:35:37 bacon Exp $
+ * $Id: val.c,v 1.15 2006-04-04 16:50:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -258,7 +258,7 @@ void xp_awk_printval (xp_awk_val_t* val)
 		break;
 
 	case XP_AWK_VAL_REAL:
-		xp_printf (XP_TEXT("%lf"), 
+		xp_printf (XP_TEXT("%Lf"), 
 			(long double)((xp_awk_val_real_t*)val)->val);
 		break;
 
