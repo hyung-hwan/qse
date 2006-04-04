@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.13 2006-03-31 16:35:37 bacon Exp $
+ * $Id: sa.c,v 1.14 2006-04-04 16:03:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -65,26 +65,6 @@ int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2)
 	else if (*s1 < *s2) return -1;
 	return 0;
 }
-
-xp_long_t xp_strtolong (xp_char_t* str)
-{
-	xp_long_t n = 0;
-
-	while (xp_isdigit(*str)) 
-	{
-		n = n * 10 + (*str - XP_CHAR('0'));
-		str++;
-	}
-
-	return n;
-}
-
-xp_real_t xp_strtoreal (xp_char_t* str)
-{
-	/* TODO: */
-	return (xp_real_t)0.0;
-}
-
 
 int xp_printf (const xp_char_t* fmt, ...)
 {

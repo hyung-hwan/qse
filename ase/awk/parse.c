@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.69 2006-04-04 06:26:56 bacon Exp $
+ * $Id: parse.c,v 1.70 2006-04-04 16:03:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1466,7 +1466,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->type = XP_AWK_NDE_INT;
 		nde->next = XP_NULL;
-		nde->val = xp_strtolong (XP_STR_BUF(&awk->token.name));
+		nde->val = xp_awk_strtolong (XP_STR_BUF(&awk->token.name), 0);
 
 		xp_assert (
 			XP_STR_LEN(&awk->token.name) ==
@@ -1489,7 +1489,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->type = XP_AWK_NDE_REAL;
 		nde->next = XP_NULL;
-		nde->val = xp_strtoreal (XP_STR_BUF(&awk->token.name));
+		nde->val = xp_awk_strtoreal (XP_STR_BUF(&awk->token.name));
 
 		xp_assert (
 			XP_STR_LEN(&awk->token.name) ==

@@ -136,6 +136,10 @@ SOURCE=.\tree.c
 SOURCE=.\val.c
 # End Source File
 # End Group
+#
+SOURCE=.\misc.c
+# End Source File
+# End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
