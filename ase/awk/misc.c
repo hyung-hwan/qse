@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.1 2006-04-04 16:03:14 bacon Exp $
+ * $Id: misc.c,v 1.2 2006-04-04 16:22:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -35,21 +35,27 @@ xp_long_t xp_awk_strtolong (const xp_char_t* str, int base)
 		if (*p == XP_CHAR('0')) 
 		{
 			p++;
-			if (*p == XP_CHAR('x'))
+			if (*p == XP_CHAR('x') || *p == XP_CHAR('X'))
 			{
 				p++; base = 16;
 			} 
+			else if (*p == XP_CHAR('b') || *p == XP_CHAR('B'))
+			{
+				p++; base = 2;
+			}
 			else base = 8;
 		}
 		else base = 10;
 	} 
 	else if (base == 16) 
 	{
-		// skip a leading "0x" from hex numbers.
-		if ((*p == XP_CHAR('0')) && (*(p+1) == XP_CHAR('x'))) 
-		{ 
-			p += 2; 
-		}
+		if (*p == XP_CHAR('0') && 
+		    (*(p+1) == XP_CHAR('x') || *(p+1) == XP_CHAR('X'))) p += 2; 
+	}
+	else if (base == 2)
+	{
+		if (*p == XP_CHAR('0') && 
+		    (*(p+1) == XP_CHAR('b') || *(p+1) == XP_CHAR('B'))) p += 2; 
 	}
 
 	while (*p != XP_CHAR('\0'))

@@ -113,6 +113,10 @@ SOURCE=.\map.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\misc.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\parse.c
 # End Source File
 # Begin Source File
@@ -134,10 +138,6 @@ SOURCE=.\tree.c
 # Begin Source File
 
 SOURCE=.\val.c
-# End Source File
-# End Group
-#
-SOURCE=.\misc.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
