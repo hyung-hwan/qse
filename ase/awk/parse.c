@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.70 2006-04-04 16:03:14 bacon Exp $
+ * $Id: parse.c,v 1.71 2006-04-04 16:22:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2460,7 +2460,18 @@ static int __get_number (xp_awk_t* awk)
 				GET_CHAR_TO (awk, c);
 			} while (xp_isxdigit(c));
 
-			// TODO: return hexadecimal number...
+			return 0;
+		}
+		else if (c == XP_CHAR('b') || c == XP_CHAR('B'))
+		{
+			/* binary number */
+			do
+			{
+				ADD_TOKEN_CHAR (awk, c);
+				GET_CHAR_TO (awk, c);
+			} while (c == XP_CHAR('0') || c == XP_CHAR('1'));
+
+			return 0;
 		}
 		else if (c != '.')
 		{
@@ -2469,9 +2480,9 @@ static int __get_number (xp_awk_t* awk)
 			{
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
-			} while (c >= XP_CHAR('0') || c <= XP_CHAR('7'));
+			} while (c >= XP_CHAR('0') && c <= XP_CHAR('7'));
 
-			// TOOD: return octal number
+			return 0;
 		}
 	}
 
