@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.33 2006-04-03 15:31:33 bacon Exp $
+ * $Id: run.c,v 1.34 2006-04-04 06:26:56 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -721,6 +721,10 @@ static xp_awk_val_t* __eval_binop_lor (
 		res = xp_awk_makeintval (awk, r);
 		// TOOD: error handling
 	}
+	else
+	{
+		/* TODO: trigger error */
+	}
 
 	return res;
 }
@@ -738,6 +742,10 @@ static xp_awk_val_t* __eval_binop_land (
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
 		// TOOD: error handling
+	}
+	else
+	{
+		// TODO: trigger error
 	}
 
 	return res;
@@ -955,6 +963,34 @@ static xp_awk_val_t* __eval_binop_plus (
 		res = xp_awk_makeintval (awk, r);
 		// TOOD: error handling
 	}
+	else if (left->type == XP_AWK_VAL_REAL && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		xp_real_t r = 
+			((xp_awk_val_real_t*)left)->val +
+			((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else if (left->type == XP_AWK_VAL_INT && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		xp_real_t r = 
+			((xp_awk_val_int_t*)left)->val +
+			((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+		 right->type == XP_AWK_VAL_INT)
+	{
+		xp_real_t r = 
+			((xp_awk_val_real_t*)left)->val +
+			((xp_awk_val_int_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else
+	{
+		/* TODO: trigger error */
+	}
 
 	return res;
 }
@@ -968,10 +1004,38 @@ static xp_awk_val_t* __eval_binop_minus (
 	    right->type == XP_AWK_VAL_INT)
 	{
 		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val -
+			((xp_awk_val_int_t*)left)->val - 
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
 		// TOOD: error handling
+	}
+	else if (left->type == XP_AWK_VAL_REAL && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		xp_real_t r = 
+			((xp_awk_val_real_t*)left)->val -
+			((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else if (left->type == XP_AWK_VAL_INT && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		xp_real_t r = 
+			((xp_awk_val_int_t*)left)->val -
+			((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+		 right->type == XP_AWK_VAL_INT)
+	{
+		xp_real_t r = 
+			((xp_awk_val_real_t*)left)->val -
+			((xp_awk_val_int_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else
+	{
+		/* TODO: trigger error */
 	}
 
 	return res;

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.68 2006-04-02 12:41:14 bacon Exp $
+ * $Id: parse.c,v 1.69 2006-04-04 06:26:56 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -143,6 +143,7 @@ static xp_awk_nde_t* __parse_next (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk);
 
 static int __get_token (xp_awk_t* awk);
+static int __get_number (xp_awk_t* awk);
 static int __get_char (xp_awk_t* awk);
 static int __unget_char (xp_awk_t* awk, xp_cint_t c);
 static int __skip_spaces (xp_awk_t* awk);
@@ -2164,14 +2165,7 @@ static int __get_token (xp_awk_t* awk)
 	}	
 	else if (xp_isdigit(c)) 
 	{
-		/* number */
-		do {
-			ADD_TOKEN_CHAR (awk, c);
-			GET_CHAR_TO (awk, c);
-		} while (xp_isdigit(c));
-
-		SET_TOKEN_TYPE (awk, TOKEN_INT);
-// TODO: enhance nubmer handling
+		if (__get_number(awk) == -1) return -1;
 	}
 	else if (xp_isalpha(c) || c == XP_CHAR('_')) 
 	{
@@ -2438,6 +2432,88 @@ static int __get_token (xp_awk_t* awk)
 	{
 		awk->errnum = XP_AWK_ELXCHR;
 		return -1;
+	}
+
+	return 0;
+}
+
+static int __get_number (xp_awk_t* awk)
+{
+	xp_cint_t c;
+
+	xp_assert (XP_STR_LEN(&awk->token.name) == 0);
+	SET_TOKEN_TYPE (awk, TOKEN_INT);
+
+	c = awk->lex.curc;
+
+	if (c == XP_CHAR('0'))
+	{
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+
+		if (c == XP_CHAR('x') || c == XP_CHAR('X'))
+		{
+			/* hexadecimal number */
+			do 
+			{
+				ADD_TOKEN_CHAR (awk, c);
+				GET_CHAR_TO (awk, c);
+			} while (xp_isxdigit(c));
+
+			// TODO: return hexadecimal number...
+		}
+		else if (c != '.')
+		{
+			/* octal number */
+			do
+			{
+				ADD_TOKEN_CHAR (awk, c);
+				GET_CHAR_TO (awk, c);
+			} while (c >= XP_CHAR('0') || c <= XP_CHAR('7'));
+
+			// TOOD: return octal number
+		}
+	}
+
+	while (xp_isdigit(c)) 
+	{
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	} 
+
+	if (c == XP_CHAR('.'))
+	{
+		/* floating-point number */
+		SET_TOKEN_TYPE (awk, TOKEN_REAL);
+
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+
+		while (xp_isdigit(c))
+		{
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR_TO (awk, c);
+		}
+	}
+
+	if (c == XP_CHAR('E') || c == XP_CHAR('e'))
+	{
+		SET_TOKEN_TYPE (awk, TOKEN_REAL);
+
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+
+		if (c == XP_CHAR('+') || c == XP_CHAR('-'))
+		{
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR_TO (awk, c);
+		}
+
+		while (xp_isdigit(c))
+		{
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR_TO (awk, c);
+		}
 	}
 
 	return 0;

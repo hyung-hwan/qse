@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.17 2006-03-31 16:35:37 bacon Exp $
+ * $Id: sa.h,v 1.18 2006-04-04 06:26:56 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -37,6 +37,7 @@
 
 #ifdef XP_CHAR_IS_MCHAR
 #define xp_isdigit isdigit
+#define xp_isxdigit isxdigit
 #define xp_isalpha isalpha
 #define xp_isalnum isalnum
 #define xp_isspace isspace
@@ -44,6 +45,7 @@
 #define xp_tolower tolower
 #else
 #define xp_isdigit iswdigit
+#define xp_isxdigit iswxdigit
 #define xp_isalpha iswalpha
 #define xp_isalnum iswalnum
 #define xp_isspace iswspace
