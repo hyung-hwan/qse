@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.34 2006-04-04 06:26:56 bacon Exp $
+ * $Id: run.c,v 1.35 2006-04-05 15:56:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -25,6 +25,9 @@
 #define EXIT_CONTINUE  2
 #define EXIT_FUNCTION  3
 #define EXIT_GLOBAL    4
+
+#define PANIC(awk,code) \
+	do { (awk)->errnum = (code);  return XP_NULL; } while (0)
 
 static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde);
@@ -1067,11 +1070,49 @@ static xp_awk_val_t* __eval_binop_div (
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val /
-			((xp_awk_val_int_t*)right)->val;
+		xp_long_t r;
+
+		if  (((xp_awk_val_int_t*)right)->val == 0)
+		{
+			PANIC (awk, XP_AWK_EDIVBYZERO);
+		}
+
+		r = ((xp_awk_val_int_t*)left)->val /
+		    ((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
 		// TOOD: error handling
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		xp_real_t r;
+
+		r = ((xp_awk_val_real_t*)left)->val /
+		    ((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+		// TOOD: error handling
+	}
+	else if (left->type == XP_AWK_VAL_INT &&
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		xp_real_t r;
+
+		r = ((xp_awk_val_int_t*)left)->val /
+		    ((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+	         right->type == XP_AWK_VAL_INT)
+	{
+		xp_real_t r;
+
+		r = ((xp_awk_val_real_t*)left)->val /
+		    ((xp_awk_val_int_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else
+	{
+		// TODO: invalid operands for div 
 	}
 
 	return res;
@@ -1085,11 +1126,21 @@ static xp_awk_val_t* __eval_binop_mod (
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val %
-			((xp_awk_val_int_t*)right)->val;
+		xp_long_t r;
+
+		if  (((xp_awk_val_int_t*)right)->val == 0)
+		{
+			PANIC (awk, XP_AWK_EDIVBYZERO);
+		}
+
+		r = ((xp_awk_val_int_t*)left)->val %
+		    ((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
 		// TOOD: error handling
+	}
+	else
+	{
+		// TODO: mod is only for integers
 	}
 
 	return res;

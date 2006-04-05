@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.71 2006-04-04 16:22:01 bacon Exp $
+ * $Id: parse.c,v 1.72 2006-04-05 15:56:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -738,7 +738,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	block->next = XP_NULL;
 	block->body = head;
 
-/* TODO: not only local variables but also etsted blocks, 
+/* TODO: not only local variables but also nested blocks, 
 unless it is part of other constructs such as if, can be promoted 
 and merged to top-level block */
 
@@ -840,7 +840,8 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 
 		/* check if it conflicts with other local variable names */
 		if (xp_awk_tab_find(&awk->parse.locals, local, 
-			((awk->opt.parse & XP_AWK_SHADING)? nlocals: 0)) != (xp_size_t)-1)  {
+			((awk->opt.parse & XP_AWK_SHADING)? nlocals: 0)) != (xp_size_t)-1)
+		{
 			PANIC (awk, XP_AWK_EDUPVAR);	
 		}
 
@@ -1103,24 +1104,34 @@ static xp_awk_nde_t* __parse_binary_expr (
 			if (opcode == XP_AWK_BINOP_PLUS) l += r;
 			else if (opcode == XP_AWK_BINOP_MINUS) l -= r;
 			else if (opcode == XP_AWK_BINOP_MUL) l *= r;
-			else if (opcode == XP_AWK_BINOP_DIV) l /= r;
-			else if (opcode == XP_AWK_BINOP_MOD) l %= r;
+			else if (opcode == XP_AWK_BINOP_DIV && r != 0) l /= r;
+			else if (opcode == XP_AWK_BINOP_MOD && r != 0) l %= r;
 			else goto skip_constant_folding;
 
 			xp_awk_clrpt (right);
 			((xp_awk_nde_int_t*)left)->val = l;
 			continue;
 		} 
-		/* TODO:
 		else if (left->type == XP_AWK_NDE_REAL && 
 		         right->type == XP_AWK_NDE_REAL) 
 		{
+			xp_real_t l, r;
+
+			l = ((xp_awk_nde_real_t*)left)->val; 
+			r = ((xp_awk_nde_real_t*)right)->val; 
+
+			/* TODO: more operators */
+			if (opcode == XP_AWK_BINOP_PLUS) l += r;
+			else if (opcode == XP_AWK_BINOP_MINUS) l -= r;
+			else if (opcode == XP_AWK_BINOP_MUL) l *= r;
+			else if (opcode == XP_AWK_BINOP_DIV) l /= r;
+			else goto skip_constant_folding;
+
+			xp_awk_clrpt (right);
+			((xp_awk_nde_real_t*)left)->val = l;
+			continue;
 		}
-		else if (left->type == XP_AWK_NDE_STR &&
-		         right->type == XP_AWK_NDE_STR)
-		{
-			// TODO: string concatenation operator.... 
-		} */
+		// TODO: enhance constant folding more...
 
 	skip_constant_folding:
 		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
@@ -1362,7 +1373,8 @@ static xp_awk_nde_t* __parse_increment (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 {
-	if (MATCH(awk,TOKEN_IDENT))  {
+	if (MATCH(awk,TOKEN_IDENT))  
+	{
 		xp_char_t* name_dup;
 
 		name_dup = (xp_char_t*)xp_strdup(XP_STR_BUF(&awk->token.name));
@@ -1480,7 +1492,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		return (xp_awk_nde_t*)nde;
 	}
-	else if (MATCH(awk,TOKEN_REAL)) {
+	else if (MATCH(awk,TOKEN_REAL)) 
+	{
 		xp_awk_nde_real_t* nde;
 
 		nde = (xp_awk_nde_real_t*) 
@@ -1503,7 +1516,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		return (xp_awk_nde_t*)nde;
 	}
-	else if (MATCH(awk,TOKEN_STRING))  {
+	else if (MATCH(awk,TOKEN_STRING))  
+	{
 		xp_awk_nde_str_t* nde;
 
 		nde = (xp_awk_nde_str_t*)xp_malloc(xp_sizeof(xp_awk_nde_str_t));
@@ -2476,11 +2490,11 @@ static int __get_number (xp_awk_t* awk)
 		else if (c != '.')
 		{
 			/* octal number */
-			do
+			while (c >= XP_CHAR('0') && c <= XP_CHAR('7'))
 			{
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
-			} while (c >= XP_CHAR('0') && c <= XP_CHAR('7'));
+			}
 
 			return 0;
 		}

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.41 2006-04-04 16:03:14 bacon Exp $
+ * $Id: awk.h,v 1.42 2006-04-05 15:56:20 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -63,7 +63,10 @@ enum
 	XP_AWK_EDUPVAR,     /* duplicate variable name */
 	XP_AWK_EDUPNAME,    /* duplicate name - function, variable, etc */
 	XP_AWK_EUNDEF,      /* undefined identifier */
-	XP_AWK_ELVALUE      /* l-value required */
+	XP_AWK_ELVALUE,     /* l-value required */
+
+	/* run time error */
+	XP_AWK_EDIVBYZERO   /* divide by zero */
 };
 
 #ifdef __cplusplus
