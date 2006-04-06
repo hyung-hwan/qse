@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.4 2006-04-05 15:56:20 bacon Exp $
+ * $Id: err.c,v 1.5 2006-04-06 16:25:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -40,7 +40,8 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_TEXT("undefined identifier"),
 		XP_TEXT("l-value required"),
 
-		XP_TEXT("divide by zero")
+		XP_TEXT("divide by zero"),
+		XP_TEXT("invalid operand")
 	};
 
 	if (awk->errnum >= 0 && awk->errnum < xp_countof(__errstr)) {

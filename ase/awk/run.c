@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.35 2006-04-05 15:56:20 bacon Exp $
+ * $Id: run.c,v 1.36 2006-04-06 16:25:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -104,6 +104,7 @@ int __printval (xp_awk_pair_t* pair)
 int xp_awk_run (xp_awk_t* awk)
 {
 	xp_size_t nglobals;
+	int n = 0;
 
 	// TODO: clear run stack/exit_level
 	awk->run.exit_level = EXIT_NONE;
@@ -122,29 +123,39 @@ int xp_awk_run (xp_awk_t* awk)
 		}
 	}	
 
-	if (awk->tree.begin != XP_NULL) 
+	if (n == 0 && awk->tree.begin != XP_NULL) 
 	{
 		xp_assert (awk->tree.begin->type == XP_AWK_NDE_BLK);
 		if (__run_block (awk, 
-			(xp_awk_nde_blk_t*)awk->tree.begin) == -1) return -1;
+			(xp_awk_nde_blk_t*)awk->tree.begin) == -1) n = -1;
 	}
 
-	if (awk->tree.end != XP_NULL) 
+	if (n == 0 && awk->tree.end != XP_NULL) 
 	{
 		xp_assert (awk->tree.end->type == XP_AWK_NDE_BLK);
 		if (__run_block (awk, 
-			(xp_awk_nde_blk_t*)awk->tree.end) == -1) return -1;
+			(xp_awk_nde_blk_t*)awk->tree.end) == -1) n = -1;
 	}
 
-xp_printf (XP_TEXT("---------------------------\n"));
+	nglobals = awk->tree.nglobals;
+	while (nglobals > 0)
+	{
+		--nglobals;
+		xp_awk_refdownval (awk, STACK_GLOBAL(awk,nglobals));
+		__raw_pop (awk);
+	}
+
+xp_printf (XP_TEXT("-BEGIN------------------------\n"));
 xp_awk_map_walk (&awk->run.named, __printval);
-	return 0;
+xp_printf (XP_TEXT("-END--------------------------\n"));
+	return n;
 }
 
 static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 {
 	xp_awk_nde_t* p;
 	xp_size_t nlocals;
+	int n = 0;
 
 	xp_assert (nde->type == XP_AWK_NDE_BLK);
 
@@ -168,7 +179,11 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 //xp_printf (XP_TEXT("executing block statements\n"));
 	while (p != XP_NULL && awk->run.exit_level == EXIT_NONE) 
 	{
-		if (__run_statement(awk,p) == -1) return -1;
+		if (__run_statement(awk,p) == -1) 
+		{
+			n = -1;
+			break;
+		}
 		p = p->next;
 	}
 
@@ -182,7 +197,7 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 		__raw_pop (awk);
 	}
 
-	return 0;
+	return n;
 }
 
 static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde)
@@ -812,17 +827,48 @@ static xp_awk_val_t* __eval_binop_eq (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	xp_awk_val_t* res = XP_NULL;
+	xp_long_t r = 0;
 
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val ==
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+		r = ((xp_awk_val_int_t*)left)->val ==
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_real_t*)left)->val ==
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_INT && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_int_t*)left)->val ==
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+		 right->type == XP_AWK_VAL_INT)
+	{
+		r = ((xp_awk_val_real_t*)left)->val ==
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_STR &&
+	         right->type == XP_AWK_VAL_STR)
+	{
+		r = xp_strxncmp (
+			((xp_awk_val_str_t*)left)->buf,
+			((xp_awk_val_str_t*)left)->len,
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len) == 0;
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	res = xp_awk_makeintval (awk, r);
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -830,17 +876,48 @@ static xp_awk_val_t* __eval_binop_ne (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	xp_awk_val_t* res = XP_NULL;
+	xp_long_t r = 0;
 
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val !=
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+		r = ((xp_awk_val_int_t*)left)->val !=
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_real_t*)left)->val !=
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_INT && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_int_t*)left)->val !=
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+		 right->type == XP_AWK_VAL_INT)
+	{
+		r = ((xp_awk_val_real_t*)left)->val !=
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_STR &&
+	         right->type == XP_AWK_VAL_STR)
+	{
+		r = xp_strxncmp (
+			((xp_awk_val_str_t*)left)->buf,
+			((xp_awk_val_str_t*)left)->len,
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len) != 0;
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	res = xp_awk_makeintval (awk, r);
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -848,17 +925,48 @@ static xp_awk_val_t* __eval_binop_gt (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	xp_awk_val_t* res = XP_NULL;
+	xp_long_t r = 0;
 
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val >
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+		r = ((xp_awk_val_int_t*)left)->val >
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_real_t*)left)->val >
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_INT && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_int_t*)left)->val >
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+		 right->type == XP_AWK_VAL_INT)
+	{
+		r = ((xp_awk_val_real_t*)left)->val >
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_STR &&
+	         right->type == XP_AWK_VAL_STR)
+	{
+		r = xp_strxncmp (
+			((xp_awk_val_str_t*)left)->buf,
+			((xp_awk_val_str_t*)left)->len,
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len) > 0;
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	res = xp_awk_makeintval (awk, r);
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -866,17 +974,48 @@ static xp_awk_val_t* __eval_binop_ge (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	xp_awk_val_t* res = XP_NULL;
+	xp_long_t r = 0;
 
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val >=
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+		r = ((xp_awk_val_int_t*)left)->val >=
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_real_t*)left)->val >=
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_INT && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_int_t*)left)->val >=
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+		 right->type == XP_AWK_VAL_INT)
+	{
+		r = ((xp_awk_val_real_t*)left)->val >=
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_STR &&
+	         right->type == XP_AWK_VAL_STR)
+	{
+		r = xp_strxncmp (
+			((xp_awk_val_str_t*)left)->buf,
+			((xp_awk_val_str_t*)left)->len,
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len) >= 0;
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	res = xp_awk_makeintval (awk, r);
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -884,17 +1023,48 @@ static xp_awk_val_t* __eval_binop_lt (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	xp_awk_val_t* res = XP_NULL;
+	xp_long_t r = 0;
 
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val <
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+		r = ((xp_awk_val_int_t*)left)->val <
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_real_t*)left)->val <
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_INT && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_int_t*)left)->val <
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+		 right->type == XP_AWK_VAL_INT)
+	{
+		r = ((xp_awk_val_real_t*)left)->val <
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_STR &&
+	         right->type == XP_AWK_VAL_STR)
+	{
+		r = xp_strxncmp (
+			((xp_awk_val_str_t*)left)->buf,
+			((xp_awk_val_str_t*)left)->len,
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len) < 0;
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	res = xp_awk_makeintval (awk, r);
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -902,17 +1072,48 @@ static xp_awk_val_t* __eval_binop_le (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	xp_awk_val_t* res = XP_NULL;
+	xp_long_t r = 0;
 
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val <=
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+		r = ((xp_awk_val_int_t*)left)->val <=
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_real_t*)left)->val <=
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_INT && 
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		r = ((xp_awk_val_int_t*)left)->val <=
+		    ((xp_awk_val_real_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+		 right->type == XP_AWK_VAL_INT)
+	{
+		r = ((xp_awk_val_real_t*)left)->val <=
+		    ((xp_awk_val_int_t*)right)->val;
+	}
+	else if (left->type == XP_AWK_VAL_STR &&
+	         right->type == XP_AWK_VAL_STR)
+	{
+		r = xp_strxncmp (
+			((xp_awk_val_str_t*)left)->buf,
+			((xp_awk_val_str_t*)left)->len,
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len) <= 0;
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	res = xp_awk_makeintval (awk, r);
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -928,9 +1129,13 @@ static xp_awk_val_t* __eval_binop_lshift (
 			((xp_awk_val_int_t*)left)->val <<
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -946,9 +1151,13 @@ static xp_awk_val_t* __eval_binop_rshift (
 			((xp_awk_val_int_t*)left)->val >>
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -964,7 +1173,6 @@ static xp_awk_val_t* __eval_binop_plus (
 			((xp_awk_val_int_t*)left)->val + 
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
 	}
 	else if (left->type == XP_AWK_VAL_REAL && 
 	         right->type == XP_AWK_VAL_REAL)
@@ -990,11 +1198,22 @@ static xp_awk_val_t* __eval_binop_plus (
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makerealval (awk, r);
 	}
+	else if (left->type == XP_AWK_VAL_STR &&
+	         right->type == XP_AWK_VAL_STR)
+	{
+		res = xp_awk_makestrval2 (
+			((xp_awk_val_str_t*)left)->buf,
+			((xp_awk_val_str_t*)left)->len,
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len);
+	}
 	else
 	{
-		/* TODO: trigger error */
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
+	// TODO: addition between integer and astring??? 1 + "123"
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -1010,7 +1229,6 @@ static xp_awk_val_t* __eval_binop_minus (
 			((xp_awk_val_int_t*)left)->val - 
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
 	}
 	else if (left->type == XP_AWK_VAL_REAL && 
 	         right->type == XP_AWK_VAL_REAL)
@@ -1038,9 +1256,10 @@ static xp_awk_val_t* __eval_binop_minus (
 	}
 	else
 	{
-		/* TODO: trigger error */
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -1052,13 +1271,42 @@ static xp_awk_val_t* __eval_binop_mul (
 	if (left->type == XP_AWK_VAL_INT &&
 	    right->type == XP_AWK_VAL_INT)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val *
-			((xp_awk_val_int_t*)right)->val;
+		xp_long_t r;
+
+		r = ((xp_awk_val_int_t*)left)->val *
+		    ((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		xp_real_t r;
+		r = ((xp_awk_val_real_t*)left)->val *
+		    ((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else if (left->type == XP_AWK_VAL_INT &&
+	         right->type == XP_AWK_VAL_REAL)
+	{
+		xp_real_t r;
+		r = ((xp_awk_val_int_t*)left)->val *
+		    ((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+	         right->type == XP_AWK_VAL_INT)
+	{
+		xp_real_t r;
+		r = ((xp_awk_val_real_t*)left)->val *
+		    ((xp_awk_val_int_t*)right)->val;
+		res = xp_awk_makerealval (awk, r);
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -1080,23 +1328,19 @@ static xp_awk_val_t* __eval_binop_div (
 		r = ((xp_awk_val_int_t*)left)->val /
 		    ((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
 	}
 	else if (left->type == XP_AWK_VAL_REAL &&
 	         right->type == XP_AWK_VAL_REAL)
 	{
 		xp_real_t r;
-
 		r = ((xp_awk_val_real_t*)left)->val /
 		    ((xp_awk_val_real_t*)right)->val;
 		res = xp_awk_makerealval (awk, r);
-		// TOOD: error handling
 	}
 	else if (left->type == XP_AWK_VAL_INT &&
 	         right->type == XP_AWK_VAL_REAL)
 	{
 		xp_real_t r;
-
 		r = ((xp_awk_val_int_t*)left)->val /
 		    ((xp_awk_val_real_t*)right)->val;
 		res = xp_awk_makerealval (awk, r);
@@ -1105,16 +1349,16 @@ static xp_awk_val_t* __eval_binop_div (
 	         right->type == XP_AWK_VAL_INT)
 	{
 		xp_real_t r;
-
 		r = ((xp_awk_val_real_t*)left)->val /
 		    ((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makerealval (awk, r);
 	}
 	else
 	{
-		// TODO: invalid operands for div 
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -1136,13 +1380,13 @@ static xp_awk_val_t* __eval_binop_mod (
 		r = ((xp_awk_val_int_t*)left)->val %
 		    ((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
 	}
 	else
 	{
-		// TODO: mod is only for integers
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 

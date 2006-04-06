@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.14 2006-04-04 16:03:14 bacon Exp $
+ * $Id: sa.c,v 1.15 2006-04-06 16:25:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -34,7 +34,22 @@ xp_char_t* xp_strxdup (const xp_char_t* str, xp_size_t len)
 	tmp = (xp_char_t*) xp_malloc ((len + 1) * xp_sizeof(xp_char_t));
 	if (tmp == XP_NULL) return XP_NULL;
 
-	xp_strxncpy (tmp, len + 1, str, len);
+	xp_strncpy (tmp, str, len);
+	return tmp;
+}
+
+xp_char_t* xp_strxdup2 (
+	const xp_char_t* str1, xp_size_t len1,
+	const xp_char_t* str2, xp_size_t len2)
+{
+	xp_char_t* tmp;
+
+	tmp = (xp_char_t*) xp_malloc (
+		(len1 + len2 + 1) * xp_sizeof(xp_char_t));
+	if (tmp == XP_NULL) return XP_NULL;
+
+	xp_strncpy (tmp, str1, len1);
+	xp_strncpy (tmp + len1, str2, len2);
 	return tmp;
 }
 
@@ -45,17 +60,12 @@ xp_size_t xp_strcpy (xp_char_t* buf, const xp_char_t* str)
 	return buf - org - 1;
 }
 
-xp_size_t xp_strxncpy (
-	xp_char_t* buf, xp_size_t bsz, const xp_char_t* str, xp_size_t len)
+xp_size_t xp_strncpy (xp_char_t* buf, const xp_char_t* str, xp_size_t len)
 {
-	xp_size_t n;
-
-	if (bsz <= 0) return 0;
-	if ((n = bsz - 1) > len) n = len;
-	xp_memcpy (buf, str, n * xp_sizeof(xp_char_t));
-	buf[n] = XP_CHAR('\0');
-
-	return n;
+	const xp_char_t* end = str + len;
+	while (str < end) *buf++ = *str++;
+	*buf = XP_CHAR('\0');
+	return len;
 }
 
 int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2)
@@ -64,6 +74,21 @@ int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2)
 	if (*s1 > *s2) return 1;
 	else if (*s1 < *s2) return -1;
 	return 0;
+}
+
+int xp_strxncmp (
+	const xp_char_t* s1, xp_size_t len1, 
+	const xp_char_t* s2, xp_size_t len2)
+{
+	const xp_char_t* end1 = s1 + len1;
+	const xp_char_t* end2 = s2 + len2;
+
+	while (s1 < end1 && s2 < end2 && *s1 == *s2) {
+		s1++; s2++;
+	}
+	if (s1 == end1 && s2 == end2) return 0;
+	if (*s1 == *s2) return (s1 < end1)? 1: -1;
+	return (*s1 > *s2)? 1: -1;
 }
 
 int xp_printf (const xp_char_t* fmt, ...)
