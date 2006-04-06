@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.15 2006-04-04 16:50:36 bacon Exp $
+ * $Id: val.c,v 1.16 2006-04-06 16:25:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -89,6 +89,27 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 	val->ref = 0;
 	val->len = len;
 	val->buf = xp_strxdup (str, len);
+	if (val->buf == XP_NULL) {
+		xp_free (val);
+		return XP_NULL;
+	}
+
+	return (xp_awk_val_t*)val;
+}
+
+xp_awk_val_t* xp_awk_makestrval2 (
+	const xp_char_t* str1, xp_size_t len1, 
+	const xp_char_t* str2, xp_size_t len2)
+{
+	xp_awk_val_str_t* val;
+
+	val = (xp_awk_val_str_t*)xp_malloc(xp_sizeof(xp_awk_val_str_t));
+	if (val == XP_NULL) return XP_NULL;
+
+	val->type = XP_AWK_VAL_STR;
+	val->ref = 0;
+	val->len = len1 + len2;
+	val->buf = xp_strxdup2 (str1, len1, str2, len2);
 	if (val->buf == XP_NULL) {
 		xp_free (val);
 		return XP_NULL;

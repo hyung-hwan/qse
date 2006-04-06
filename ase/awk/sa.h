@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.19 2006-04-04 16:03:14 bacon Exp $
+ * $Id: sa.h,v 1.20 2006-04-06 16:25:37 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -89,15 +89,24 @@ xp_char_t* xp_strdup (const xp_char_t* str);
 #define xp_strxdup xp_awk_strxdup
 xp_char_t* xp_strxdup (const xp_char_t* str, xp_size_t len);
 
+#define xp_strxdup2 xp_awk_strxdup2
+xp_char_t* xp_strxdup2 (
+	const xp_char_t* str1, xp_size_t len1,
+	const xp_char_t* str2, xp_size_t len2);
+
 #define xp_strcpy xp_awk_strcpy
 xp_size_t xp_strcpy (xp_char_t* buf, const xp_char_t* str);
 
-#define xp_strxncpy xp_awk_strxncpy
-xp_size_t xp_strxncpy (
-	xp_char_t* buf, xp_size_t bsz, const xp_char_t* str, xp_size_t len);
+#define xp_strncpy xp_awk_strncpy
+xp_size_t xp_strncpy (xp_char_t* buf, const xp_char_t* str, xp_size_t len);
 
 #define xp_strcmp xp_awk_strcmp
 int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2);
+
+#define xp_strxncmp xp_awk_strxncmp
+int xp_strxncmp (
+	const xp_char_t* s1, xp_size_t len1, 
+	const xp_char_t* s2, xp_size_t len2);
 
 #define xp_printf xp_awk_printf
 int xp_printf (const xp_char_t* fmt, ...);
