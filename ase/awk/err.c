@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.6 2006-04-07 04:23:11 bacon Exp $
+ * $Id: err.c,v 1.7 2006-04-07 16:52:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -43,7 +43,9 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_TEXT("l-value required"),
 
 		XP_TEXT("divide by zero"),
-		XP_TEXT("invalid operand")
+		XP_TEXT("invalid operand"),
+
+		XP_TEXT("internal error that should never have happened")
 	};
 
 	if (awk->errnum >= 0 && awk->errnum < xp_countof(__errstr)) {
