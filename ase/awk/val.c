@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.16 2006-04-06 16:25:37 bacon Exp $
+ * $Id: val.c,v 1.17 2006-04-07 04:23:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -232,7 +232,7 @@ xp_awk_val_t* xp_awk_cloneval (xp_awk_t* awk, xp_awk_val_t* val)
 	return XP_NULL;
 }
 
-xp_bool_t xp_awk_isvaltrue (xp_awk_val_t* val)
+xp_bool_t xp_awk_boolval (xp_awk_val_t* val)
 {
 	if (val == XP_NULL) return xp_false;
 
@@ -241,15 +241,14 @@ xp_bool_t xp_awk_isvaltrue (xp_awk_val_t* val)
 	case XP_AWK_VAL_NIL:
 		return xp_false;
 	case XP_AWK_VAL_INT:
-		return (((xp_awk_val_int_t*)val)->val == 0)? xp_false: xp_true;
+		return ((xp_awk_val_int_t*)val)->val != 0;
 	case XP_AWK_VAL_REAL:
-		return (((xp_awk_val_real_t*)val)->val == 0.0)? xp_false: xp_true;
+		return ((xp_awk_val_real_t*)val)->val != 0.0;
 	case XP_AWK_VAL_STR:
-		/* TODO: decide what to do */
-		return (((xp_awk_val_str_t*)val)->len == 0)? xp_false: xp_true;
+		return ((xp_awk_val_str_t*)val)->len > 0;
 	}
 
-	/* this should never happen */
+	xp_assert (!"should never happen");
 	return xp_false;
 }
 

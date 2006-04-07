@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.72 2006-04-05 15:56:20 bacon Exp $
+ * $Id: parse.c,v 1.73 2006-04-07 04:23:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -55,7 +55,7 @@ enum
 
 	TOKEN_INT,
 	TOKEN_REAL,
-	TOKEN_STRING,
+	TOKEN_STR,
 	TOKEN_REGEX,
 
 	TOKEN_IDENT,
@@ -144,6 +144,7 @@ static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk);
 
 static int __get_token (xp_awk_t* awk);
 static int __get_number (xp_awk_t* awk);
+static int __get_string (xp_awk_t* awk);
 static int __get_char (xp_awk_t* awk);
 static int __unget_char (xp_awk_t* awk, xp_cint_t c);
 static int __skip_spaces (xp_awk_t* awk);
@@ -1516,7 +1517,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		return (xp_awk_nde_t*)nde;
 	}
-	else if (MATCH(awk,TOKEN_STRING))  
+	else if (MATCH(awk,TOKEN_STR))  
 	{
 		xp_awk_nde_str_t* nde;
 
@@ -2165,10 +2166,12 @@ static int __get_token (xp_awk_t* awk)
 	xp_cint_t c;
 	int n;
 
-	do {
+	do 
+	{
 		if (__skip_spaces(awk) == -1) return -1;
 		if ((n = __skip_comment(awk)) == -1) return -1;
-	} while (n == 1);
+	} 
+	while (n == 1);
 
 	xp_str_clear (&awk->token.name);
 	c = awk->lex.curc;
@@ -2184,25 +2187,34 @@ static int __get_token (xp_awk_t* awk)
 	else if (xp_isalpha(c) || c == XP_CHAR('_')) 
 	{
 		/* identifier */
-		do {
+		do 
+		{
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR_TO (awk, c);
-		} while (xp_isalpha(c) || c == XP_CHAR('_') || xp_isdigit(c));
+		} 
+		while (xp_isalpha(c) || c == XP_CHAR('_') || xp_isdigit(c));
 
 		SET_TOKEN_TYPE (awk, __classify_ident(awk, XP_STR_BUF(&awk->token.name)));
 	}
 	else if (c == XP_CHAR('\"')) 
 	{
-		/* string */
-		GET_CHAR_TO (awk, c);
-		do {
-			ADD_TOKEN_CHAR (awk, c);
-			GET_CHAR_TO (awk, c);
-		} while (c != XP_CHAR('\"'));
+		SET_TOKEN_TYPE (awk, TOKEN_STR);
 
-		SET_TOKEN_TYPE (awk, TOKEN_STRING);
-		GET_CHAR_TO (awk, c); 
-// TODO: enhance string handling including escaping
+		if (__get_string(awk) == -1) return -1;
+		while (1)
+		{
+			do 
+			{
+				if (__skip_spaces(awk) == -1) return -1;
+				if ((n = __skip_comment(awk)) == -1) return -1;
+			} 
+			while (n == 1);
+
+			c = awk->lex.curc;
+			if (c != XP_CHAR('\"')) break;
+
+			if (__get_string(awk) == -1) return -1;
+		}
 	}
 	else if (c == XP_CHAR('=')) 
 	{
@@ -2333,10 +2345,6 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_STR (awk, XP_TEXT("+="));
 			GET_CHAR_TO (awk, c);
 		}
-		else if (xp_isdigit(c)) 
-		{
-		//	read_number (XP_CHAR('+'));
-		}
 		else 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_PLUS);
@@ -2357,11 +2365,6 @@ static int __get_token (xp_awk_t* awk)
 			SET_TOKEN_TYPE (awk, TOKEN_MINUS_ASSIGN);
 			ADD_TOKEN_STR (awk, XP_TEXT("-="));
 			GET_CHAR_TO (awk, c);
-		}
-		else if (xp_isdigit(c)) 
-		{
-// TODO...
-		//	read_number (XP_CHAR('-'));
 		}
 		else 
 		{
@@ -2472,7 +2475,8 @@ static int __get_number (xp_awk_t* awk)
 			{
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
-			} while (xp_isxdigit(c));
+			} 
+			while (xp_isxdigit(c));
 
 			return 0;
 		}
@@ -2483,7 +2487,8 @@ static int __get_number (xp_awk_t* awk)
 			{
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
-			} while (c == XP_CHAR('0') || c == XP_CHAR('1'));
+			} 
+			while (c == XP_CHAR('0') || c == XP_CHAR('1'));
 
 			return 0;
 		}
@@ -2544,6 +2549,49 @@ static int __get_number (xp_awk_t* awk)
 	return 0;
 }
 
+static int __get_string (xp_awk_t* awk)
+{
+	xp_cint_t c;
+	xp_bool_t escaped = xp_false;
+
+	GET_CHAR_TO (awk, c);
+	while (1)
+	{
+		if (c == XP_CHAR_EOF)
+		{
+			awk->errnum = XP_AWK_EENDSTR;
+			return -1;
+		}
+
+		if (escaped == xp_false && c == XP_CHAR('\"'))
+		{
+			GET_CHAR_TO (awk, c);
+			break;
+		}
+
+		if (escaped == xp_false && c == XP_CHAR('\\'))
+		{
+			GET_CHAR_TO (awk, c);
+			escaped = xp_true;
+			continue;
+		}
+
+		if (escaped == xp_true)
+		{
+			if (c == XP_CHAR('n')) c = XP_CHAR('\n');
+			else if (c == XP_CHAR('r')) c = XP_CHAR('\r');
+			else if (c == XP_CHAR('t')) c = XP_CHAR('\t');
+			/* TODO: more escape characters */
+			escaped = xp_false;
+		}
+
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	
+	return 0;
+}
+
 static int __get_char (xp_awk_t* awk)
 {
 	xp_ssize_t n;
@@ -2589,20 +2637,36 @@ static int __skip_comment (xp_awk_t* awk)
 {
 	xp_cint_t c = awk->lex.curc;
 
-	if (c != XP_CHAR('/')) return 0;
+	if ((awk->opt.parse & XP_AWK_HASHSIGN) && c == XP_CHAR('#'))
+	{
+		do 
+		{ 
+			GET_CHAR_TO (awk, c);
+		} 
+		while (c != '\n' && c != XP_CHAR_EOF);
+
+		GET_CHAR (awk);
+		return 1; /* comment by # */
+	}
+
+	if (c != XP_CHAR('/')) return 0; /* not a comment */
 	GET_CHAR_TO (awk, c);
 
 	if (c == XP_CHAR('/')) 
 	{
-		do { 
+		do 
+		{ 
 			GET_CHAR_TO (awk, c);
-		} while (c != '\n' && c != XP_CHAR_EOF);
+		} 
+		while (c != '\n' && c != XP_CHAR_EOF);
+
 		GET_CHAR (awk);
-		return 1;
+		return 1; /* comment by // */
 	}
 	else if (c == XP_CHAR('*')) 
 	{
-		do {
+		do 
+		{
 			GET_CHAR_TO (awk, c);
 			if (c == XP_CHAR('*')) 
 			{
@@ -2613,11 +2677,13 @@ static int __skip_comment (xp_awk_t* awk)
 					break;
 				}
 			}
-		} while (0);
-		return 1;
+		} 
+		while (1);
+
+		return 1; /* c-style comment */
 	}
 
-	if (__unget_char(awk, c) == -1) return -1;
+	if (__unget_char(awk,c) == -1) return -1; /* error */
 	awk->lex.curc = XP_CHAR('/');
 
 	return 0;

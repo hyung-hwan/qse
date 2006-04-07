@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.13 2006-04-06 16:25:37 bacon Exp $
+ * $Id: val.h,v 1.14 2006-04-07 04:23:11 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -90,7 +90,7 @@ void xp_awk_refdownval (xp_awk_t* awk, xp_awk_val_t* val);
 void xp_awk_refdownval_nofree (xp_awk_t* awk, xp_awk_val_t* val);
 
 xp_awk_val_t* xp_awk_cloneval (xp_awk_t* awk, xp_awk_val_t* val);
-xp_bool_t xp_awk_isvaltrue (xp_awk_val_t* val);
+xp_bool_t xp_awk_boolval (xp_awk_val_t* val);
 void xp_awk_printval (xp_awk_val_t* val);
 
 #ifdef __cplusplus
