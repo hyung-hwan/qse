@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.5 2006-04-06 16:25:37 bacon Exp $
+ * $Id: err.c,v 1.6 2006-04-07 04:23:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -20,7 +20,9 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_TEXT("cannot read source"),
 		XP_TEXT("invalid character"),
 		XP_TEXT("cannot unget character"),
+
 		XP_TEXT("unexpected end of source"),
+		XP_TEXT("unexpected end of a string"),
 		XP_TEXT("left brace expected"),
 		XP_TEXT("left parenthesis expected"),
 		XP_TEXT("right parenthesis expected"),

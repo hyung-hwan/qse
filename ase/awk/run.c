@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.36 2006-04-06 16:25:37 bacon Exp $
+ * $Id: run.c,v 1.37 2006-04-07 04:23:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -271,7 +271,7 @@ static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde)
 	if (test == XP_NULL) return -1;
 
 	xp_awk_refupval (test);
-	if (xp_awk_isvaltrue(test))
+	if (xp_awk_boolval(test))
 	{
 		n = __run_statement (awk, nde->then_part);
 	}
@@ -297,7 +297,7 @@ static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 
 			xp_awk_refupval (test);
 
-			if (xp_awk_isvaltrue(test))
+			if (xp_awk_boolval(test))
 			{
 				// TODO: break.... continue...., global exit, return... run-time abortion...
 				if (__run_statement(awk,nde->body) == -1)
@@ -351,7 +351,7 @@ static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 			if (test == XP_NULL) return -1;
 
 			xp_awk_refupval (test);
-			if (!xp_awk_isvaltrue(test))
+			if (!xp_awk_boolval(test))
 			{
 				xp_awk_refdownval (awk, test);
 				break;
@@ -381,7 +381,7 @@ static int __run_for_statement (xp_awk_t* awk, xp_awk_nde_for_t* nde)
 			if (test == XP_NULL) return -1;
 
 			xp_awk_refupval (test);
-			if (xp_awk_isvaltrue(test))
+			if (xp_awk_boolval(test))
 			{
 				if (__run_statement(awk,nde->body) == -1)
 				{
@@ -576,7 +576,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 	default:
 		/* somthing wrong. internal error */
 		/* TODO: set the error code instead of assertion below */
-		xp_assert (XP_TEXT("should never happen") == XP_NULL);
+		xp_assert (!"should never happen");
 		return XP_NULL;
 	}
 
@@ -730,19 +730,9 @@ static xp_awk_val_t* __eval_binop_lor (
 {
 	xp_awk_val_t* res = XP_NULL;
 
-	if (left->type == XP_AWK_VAL_INT &&
-	    right->type == XP_AWK_VAL_INT)
-	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val ||
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
-	}
-	else
-	{
-		/* TODO: trigger error */
-	}
+	res = xp_awk_makeintval (awk, 
+		xp_awk_boolval(left) || xp_awk_boolval(right));
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
 	return res;
 }
@@ -752,19 +742,9 @@ static xp_awk_val_t* __eval_binop_land (
 {
 	xp_awk_val_t* res = XP_NULL;
 
-	if (left->type == XP_AWK_VAL_INT &&
-	    right->type == XP_AWK_VAL_INT)
-	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val &&
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
-	}
-	else
-	{
-		// TODO: trigger error
-	}
+	res = xp_awk_makeintval (awk, 
+		xp_awk_boolval(left) && xp_awk_boolval(right));
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
 	return res;
 }
@@ -781,9 +761,13 @@ static xp_awk_val_t* __eval_binop_bor (
 			((xp_awk_val_int_t*)left)->val | 
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -799,9 +783,13 @@ static xp_awk_val_t* __eval_binop_bxor (
 			((xp_awk_val_int_t*)left)->val ^ 
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -817,9 +805,13 @@ static xp_awk_val_t* __eval_binop_band (
 			((xp_awk_val_int_t*)left)->val &
 			((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
-		// TOOD: error handling
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
 	}
 
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
 }
 

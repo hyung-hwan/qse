@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.43 2006-04-06 16:25:37 bacon Exp $
+ * $Id: awk.h,v 1.44 2006-04-07 04:23:11 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -28,7 +28,8 @@ enum
 	XP_AWK_EXPLICIT = (1 << 1), /* variable requires explicit declaration */
 	XP_AWK_UNIQUE   = (1 << 2), /* a function name should not coincide to be a variable name */
 	XP_AWK_SHADING  = (1 << 3), /* allow variable shading */
-	XP_AWK_SHIFT    = (1 << 4)  /* support shift operators */
+	XP_AWK_SHIFT    = (1 << 4), /* support shift operators */
+	XP_AWK_HASHSIGN = (1 << 5)  /* support comments by a hash sign */
 };
 
 /* error code */
@@ -45,6 +46,7 @@ enum
 	XP_AWK_ELXUNG,      /* lexer failed to unget a character */
 
 	XP_AWK_EENDSRC,     /* unexpected end of source */
+	XP_AWK_EENDSTR,     /* unexpected end of a string */
 	XP_AWK_ELBRACE,     /* left brace expected */
 	XP_AWK_ELPAREN,     /* left parenthesis expected */
 	XP_AWK_ERPAREN,     /* right parenthesis expected */
