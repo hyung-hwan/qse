@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.39 2006-04-09 15:31:13 bacon Exp $
+ * $Id: run.c,v 1.40 2006-04-09 15:34:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1724,12 +1724,12 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 	/* 
 	 * ---------------------
-	 *  locn                 <- stack top
+	 *  localn               <- stack top
 	 * ---------------------
 	 *  ....
 	 * ---------------------
-	 *  loc0                 local variables are pushed by __run_block
-	 * ---------------------
+	 *  local0               local variables are pushed by __run_block
+	 * =====================
 	 *  argn                     
 	 * ---------------------
 	 *  ....
@@ -1745,6 +1745,20 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 	 *  previous stack top
 	 * ---------------------
 	 *  previous stack base  <- stack base
+	 * =====================
+	 *  0 (nargs)            <- stack top
+	 * ---------------------
+	 *  return value
+	 * ---------------------
+	 *  previous stack top
+	 * ---------------------
+	 *  previous stack base  <- stack base
+	 * =====================
+	 *  globaln
+	 * ---------------------
+	 *  ....
+	 * ---------------------
+	 *  global0
 	 * ---------------------
 	 */
 
