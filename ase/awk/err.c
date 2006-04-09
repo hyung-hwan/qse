@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.7 2006-04-07 16:52:42 bacon Exp $
+ * $Id: err.c,v 1.8 2006-04-09 15:31:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -44,6 +44,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 
 		XP_TEXT("divide by zero"),
 		XP_TEXT("invalid operand"),
+		XP_TEXT("no such function"),
 
 		XP_TEXT("internal error that should never have happened")
 	};

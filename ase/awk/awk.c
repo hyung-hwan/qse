@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.38 2006-03-31 17:16:23 bacon Exp $ 
+ * $Id: awk.c,v 1.39 2006-04-09 15:31:13 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -158,6 +158,11 @@ void xp_awk_clear (xp_awk_t* awk)
 void xp_awk_setparseopt (xp_awk_t* awk, int opt)
 {
 	awk->opt.parse = opt;
+}
+
+void xp_awk_setrunopt (xp_awk_t* awk, int opt)
+{
+	awk->opt.run = opt;
 }
 
 int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
