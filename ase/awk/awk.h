@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.45 2006-04-07 16:52:42 bacon Exp $
+ * $Id: awk.h,v 1.46 2006-04-09 15:31:13 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -30,6 +30,12 @@ enum
 	XP_AWK_SHADING  = (1 << 3), /* allow variable shading */
 	XP_AWK_SHIFT    = (1 << 4), /* support shift operators */
 	XP_AWK_HASHSIGN = (1 << 5)  /* support comments by a hash sign */
+};
+
+/* run options */
+enum
+{
+	XP_AWK_RUNMAIN  = (1 << 0), /* execution starts from main */
 };
 
 /* error code */
@@ -70,6 +76,7 @@ enum
 	/* run time error */
 	XP_AWK_EDIVBYZERO,  /* divide by zero */
 	XP_AWK_EOPERAND,    /* invalid operand */
+	XP_AWK_ENOSUCHFUNC, /* no such function */
 	XP_AWK_EINTERNAL    /* internal error */
 };
 
@@ -85,6 +92,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk);
 
 void xp_awk_clear (xp_awk_t* awk);
 void xp_awk_setparseopt (xp_awk_t* awk, int opt);
+void xp_awk_setrunopt (xp_awk_t* awk, int opt);
 
 int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg);
 int xp_awk_detsrc (xp_awk_t* awk);
