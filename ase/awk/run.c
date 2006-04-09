@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.40 2006-04-09 15:34:38 bacon Exp $
+ * $Id: run.c,v 1.41 2006-04-09 16:26:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -146,49 +146,9 @@ int xp_awk_run (xp_awk_t* awk)
 		}
 	}	
 
-	saved_stack_top = awk->run.stack_top;
-	if (__raw_push(awk,(void*)awk->run.stack_base) == -1) 
-	{
-		/* restore the stack top in a cheesy(?) way */
-		awk->run.stack_top = saved_stack_top;
-		/* pops off global variables in an honest way */	
-		__raw_pop_times (awk, awk->tree.nglobals);
-		PANIC_I (awk, XP_AWK_ENOMEM);
-	}
-	if (__raw_push(awk,(void*)saved_stack_top) == -1) 
-	{
-		awk->run.stack_top = saved_stack_top;
-		__raw_pop_times (awk, awk->tree.nglobals);
-		PANIC_I (awk, XP_AWK_ENOMEM);
-	}
-
-	/* secure space for a return value */
-	if (__raw_push(awk,xp_awk_val_nil) == -1)
-	{
-		awk->run.stack_top = saved_stack_top;
-		__raw_pop_times (awk, awk->tree.nglobals);
-		PANIC_I (awk, XP_AWK_ENOMEM);
-	}
-
-	/* secure space for nargs */
-	if (__raw_push(awk,xp_awk_val_nil) == -1)
-	{
-		awk->run.stack_top = saved_stack_top;
-		__raw_pop_times (awk, awk->tree.nglobals);
-		PANIC_I (awk, XP_AWK_ENOMEM);
-	}
-
-	awk->run.stack_base = saved_stack_top;
-
-	/* set nargs to zero */
-	nargs = 0;
-	STACK_NARGS(awk) = (void*)nargs;
-
-	/* stack set up properly. ready to exeucte statement blocks */
-
 	if (awk->opt.run & XP_AWK_RUNMAIN)
 	{
-		static xp_char_t funcname[] = 
+		static xp_char_t m_a_i_n[] = 
 		{ 
 			XP_CHAR('m'), 
 			XP_CHAR('a'), 
@@ -200,13 +160,52 @@ int xp_awk_run (xp_awk_t* awk)
 		{ 
 			XP_AWK_NDE_CALL, /* type */
 			XP_NULL,         /* next */
-			funcname,        /* name */
+			m_a_i_n,         /* name */
 			XP_NULL          /* args */
 		};
 		if (__eval_call (awk, (xp_awk_nde_t*)&nde) == XP_NULL) n = -1;
 	}
 	else
 	{
+		saved_stack_top = awk->run.stack_top;
+		if (__raw_push(awk,(void*)awk->run.stack_base) == -1) 
+		{
+			/* restore the stack top in a cheesy(?) way */
+			awk->run.stack_top = saved_stack_top;
+			/* pops off global variables in an honest way */	
+			__raw_pop_times (awk, awk->tree.nglobals);
+			PANIC_I (awk, XP_AWK_ENOMEM);
+		}
+		if (__raw_push(awk,(void*)saved_stack_top) == -1) 
+		{
+			awk->run.stack_top = saved_stack_top;
+			__raw_pop_times (awk, awk->tree.nglobals);
+			PANIC_I (awk, XP_AWK_ENOMEM);
+		}
+	
+		/* secure space for a return value */
+		if (__raw_push(awk,xp_awk_val_nil) == -1)
+		{
+			awk->run.stack_top = saved_stack_top;
+			__raw_pop_times (awk, awk->tree.nglobals);
+			PANIC_I (awk, XP_AWK_ENOMEM);
+		}
+	
+		/* secure space for nargs */
+		if (__raw_push(awk,xp_awk_val_nil) == -1)
+		{
+			awk->run.stack_top = saved_stack_top;
+			__raw_pop_times (awk, awk->tree.nglobals);
+			PANIC_I (awk, XP_AWK_ENOMEM);
+		}
+	
+		awk->run.stack_base = saved_stack_top;
+	
+		/* set nargs to zero */
+		nargs = 0;
+		STACK_NARGS(awk) = (void*)nargs;
+	
+		/* stack set up properly. ready to exeucte statement blocks */
 		if (n == 0 && awk->tree.begin != XP_NULL) 
 		{
 			xp_assert (awk->tree.begin->type == XP_AWK_NDE_BLK);
@@ -214,6 +213,8 @@ int xp_awk_run (xp_awk_t* awk)
 				(xp_awk_nde_blk_t*)awk->tree.begin) == -1) n = -1;
 		}
 
+		// TODO: if EXIT_PROGRAM IS SET , do not continue to END BLOCK...
+	
 		// TODO: execute pattern blocks.
 
 		if (n == 0 && awk->tree.end != XP_NULL) 
@@ -222,21 +223,27 @@ int xp_awk_run (xp_awk_t* awk)
 			if (__run_block (awk, 
 				(xp_awk_nde_blk_t*)awk->tree.end) == -1) n = -1;
 		}
+
+		/* restore stack */
+		nargs = (xp_size_t)STACK_NARGS(awk);
+		xp_assert (nargs == 0);
+		for (i = 0; i < nargs; i++)
+		{
+			xp_awk_refdownval (awk, STACK_ARG(awk,i));
+		}
+
+		v = STACK_RETVAL(awk);
+		xp_awk_refdownval_nofree (awk, v);
+
+		awk->run.stack_top = 
+			(xp_size_t)awk->run.stack[awk->run.stack_base+1];
+		awk->run.stack_base = 
+			(xp_size_t)awk->run.stack[awk->run.stack_base+0];
+
+xp_printf (XP_TEXT("Return Value - "));
+xp_awk_printval (v);
+xp_printf (XP_TEXT("\n"));
 	}
-
-	/* restore stack */
-	nargs = (xp_size_t)STACK_NARGS(awk);
-	xp_assert (nargs == 0);
-	for (i = 0; i < nargs; i++)
-	{
-		xp_awk_refdownval (awk, STACK_ARG(awk,i));
-	}
-
-	v = STACK_RETVAL(awk);
-	xp_awk_refdownval_nofree (awk, v);
-
-	awk->run.stack_top =  (xp_size_t)awk->run.stack[awk->run.stack_base+1];
-	awk->run.stack_base = (xp_size_t)awk->run.stack[awk->run.stack_base+0];
 
 	/* pops off the global variables */
 	nglobals = awk->tree.nglobals;
@@ -248,9 +255,6 @@ int xp_awk_run (xp_awk_t* awk)
 	}
 
 xp_printf (XP_TEXT("-[VARIABLES]------------------------\n"));
-xp_printf (XP_TEXT("Return Value - "));
-xp_awk_printval (v);
-xp_printf (XP_TEXT("\n"));
 xp_awk_map_walk (&awk->run.named, __printval);
 xp_printf (XP_TEXT("-[END VARIABLES]--------------------------\n"));
 	return n;
@@ -856,8 +860,13 @@ static xp_awk_val_t* __eval_binop_eq (
 	xp_awk_val_t* res = XP_NULL;
 	xp_long_t r = 0;
 
-	if (left->type == XP_AWK_VAL_INT &&
-	    right->type == XP_AWK_VAL_INT)
+	if (left->type == XP_AWK_VAL_NIL || 
+	    right->type == XP_AWK_VAL_NIL)
+	{
+		r = (left->type == right->type);
+	}
+	else if (left->type == XP_AWK_VAL_INT &&
+	         right->type == XP_AWK_VAL_INT)
 	{
 		r = ((xp_awk_val_int_t*)left)->val ==
 		    ((xp_awk_val_int_t*)right)->val;
@@ -905,8 +914,13 @@ static xp_awk_val_t* __eval_binop_ne (
 	xp_awk_val_t* res = XP_NULL;
 	xp_long_t r = 0;
 
-	if (left->type == XP_AWK_VAL_INT &&
-	    right->type == XP_AWK_VAL_INT)
+	if (left->type == XP_AWK_VAL_NIL || 
+	    right->type == XP_AWK_VAL_NIL)
+	{
+		r = (left->type != right->type);
+	}
+	else if (left->type == XP_AWK_VAL_INT &&
+	         right->type == XP_AWK_VAL_INT)
 	{
 		r = ((xp_awk_val_int_t*)left)->val !=
 		    ((xp_awk_val_int_t*)right)->val;
@@ -1525,8 +1539,8 @@ static xp_awk_val_t* __eval_incpre (xp_awk_t* awk, xp_awk_nde_t* nde)
 	    exp->left->type != XP_AWK_NDE_GLOBALIDX &&
 	    exp->left->type != XP_AWK_NDE_LOCALIDX &&
 	    exp->left->type != XP_AWK_NDE_ARGIDX)*/
-	if (exp->left->type >= XP_AWK_NDE_NAMED &&
-	    exp->left->type <= XP_AWK_NDE_ARGIDX)
+	if (exp->left->type < XP_AWK_NDE_NAMED ||
+	    exp->left->type > XP_AWK_NDE_ARGIDX)
 	{
 		PANIC (awk, XP_AWK_EOPERAND);
 	}
@@ -1611,8 +1625,8 @@ static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_t* nde)
 	    exp->left->type != XP_AWK_NDE_GLOBALIDX &&
 	    exp->left->type != XP_AWK_NDE_LOCALIDX &&
 	    exp->left->type != XP_AWK_NDE_ARGIDX) */
-	if (exp->left->type >= XP_AWK_NDE_NAMED &&
-	    exp->left->type <= XP_AWK_NDE_ARGIDX)
+	if (exp->left->type < XP_AWK_NDE_NAMED ||
+	    exp->left->type > XP_AWK_NDE_ARGIDX)
 	{
 		PANIC (awk, XP_AWK_EOPERAND);
 	}
