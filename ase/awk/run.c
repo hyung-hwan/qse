@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.41 2006-04-09 16:26:36 bacon Exp $
+ * $Id: run.c,v 1.42 2006-04-10 09:22:05 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -18,6 +18,7 @@
 #define STACK_LOCAL(awk,n) STACK_AT(awk,3+(xp_size_t)STACK_NARGS(awk)+1+(n))
 #define STACK_RETVAL(awk) STACK_AT(awk,2)
 #define STACK_GLOBAL(awk,n) ((awk)->run.stack[(n)])
+#define STACK_RETVAL_GLOBAL(awk) ((awk)->run.stack[(awk)->tree.nglobals+2])
 
 #define EXIT_NONE      0
 #define EXIT_BREAK     1
@@ -123,9 +124,6 @@ int xp_awk_run (xp_awk_t* awk)
 	xp_awk_val_t* v;
 	int n = 0;
 
-	// TODO: clear run stack/exit_level
-	awk->run.exit_level = EXIT_NONE;
-
 	xp_assert (awk->run.stack_base == 0 && awk->run.stack_top == 0);
 
 	/* secure space for global variables */
@@ -163,7 +161,17 @@ int xp_awk_run (xp_awk_t* awk)
 			m_a_i_n,         /* name */
 			XP_NULL          /* args */
 		};
-		if (__eval_call (awk, (xp_awk_nde_t*)&nde) == XP_NULL) n = -1;
+
+		awk->run.exit_level = EXIT_NONE;
+
+		v = __eval_call(awk,(xp_awk_nde_t*)&nde);
+		if (v == XP_NULL) n = -1;
+		else
+		{
+			/* destroy the return value if necessary */
+			xp_awk_refupval (v);
+			xp_awk_refdownval (awk, v);
+		}
 	}
 	else
 	{
@@ -172,7 +180,7 @@ int xp_awk_run (xp_awk_t* awk)
 		{
 			/* restore the stack top in a cheesy(?) way */
 			awk->run.stack_top = saved_stack_top;
-			/* pops off global variables in an honest way */	
+			/* pops off global variables in a decent way */	
 			__raw_pop_times (awk, awk->tree.nglobals);
 			PANIC_I (awk, XP_AWK_ENOMEM);
 		}
@@ -209,17 +217,26 @@ int xp_awk_run (xp_awk_t* awk)
 		if (n == 0 && awk->tree.begin != XP_NULL) 
 		{
 			xp_assert (awk->tree.begin->type == XP_AWK_NDE_BLK);
+
+			awk->run.exit_level = EXIT_NONE;
+
 			if (__run_block (awk, 
 				(xp_awk_nde_blk_t*)awk->tree.begin) == -1) n = -1;
 		}
 
-		// TODO: if EXIT_PROGRAM IS SET , do not continue to END BLOCK...
-	
-		// TODO: execute pattern blocks.
+		while (awk->run.exit_level != EXIT_GLOBAL)
+		{
+			awk->run.exit_level = EXIT_NONE;
+			// TODO: execute pattern blocks.
+			break;
+		}
 
 		if (n == 0 && awk->tree.end != XP_NULL) 
 		{
 			xp_assert (awk->tree.end->type == XP_AWK_NDE_BLK);
+
+			awk->run.exit_level = EXIT_NONE;
+
 			if (__run_block (awk, 
 				(xp_awk_nde_blk_t*)awk->tree.end) == -1) n = -1;
 		}
@@ -233,16 +250,18 @@ int xp_awk_run (xp_awk_t* awk)
 		}
 
 		v = STACK_RETVAL(awk);
-		xp_awk_refdownval_nofree (awk, v);
+xp_printf (XP_TEXT("Return Value - "));
+xp_awk_printval (v);
+xp_printf (XP_TEXT("\n"));
+		/* the life of the global return value is over here
+		 * unlike the return value of each function */
+		/*xp_awk_refdownval_nofree (awk, v);*/
+		xp_awk_refdownval (awk, v);
 
 		awk->run.stack_top = 
 			(xp_size_t)awk->run.stack[awk->run.stack_base+1];
 		awk->run.stack_base = 
 			(xp_size_t)awk->run.stack[awk->run.stack_base+0];
-
-xp_printf (XP_TEXT("Return Value - "));
-xp_awk_printval (v);
-xp_printf (XP_TEXT("\n"));
 	}
 
 	/* pops off the global variables */
@@ -254,9 +273,13 @@ xp_printf (XP_TEXT("\n"));
 		__raw_pop (awk);
 	}
 
+	/* just reset the exit level */
+	awk->run.exit_level = EXIT_NONE;
+
 xp_printf (XP_TEXT("-[VARIABLES]------------------------\n"));
 xp_awk_map_walk (&awk->run.named, __printval);
 xp_printf (XP_TEXT("-[END VARIABLES]--------------------------\n"));
+
 	return n;
 }
 
@@ -556,6 +579,7 @@ static int __run_return_statement (xp_awk_t* awk, xp_awk_nde_return_t* nde)
 		val = __eval_expression(awk, nde->val);
 		if (val == XP_NULL) return -1;
 
+		xp_awk_refdownval (awk, STACK_RETVAL(awk));
 		STACK_RETVAL(awk) = val;
 		xp_awk_refupval (val); /* see __eval_call for the trick */
 //xp_printf (XP_TEXT("set return value....\n"));
@@ -572,14 +596,10 @@ static int __run_exit_statement (xp_awk_t* awk, xp_awk_nde_exit_t* nde)
 		xp_awk_val_t* val;
 
 		val = __eval_expression(awk, nde->val);
-		if (val == XP_NULL) 
-		{
-			// TODO: error handling
-			return -1;
-		}
+		if (val == XP_NULL) return -1;
 
-// TODO: check out the line below..
-		awk->run.stack[2] = val; /* global return value */
+		xp_awk_refdownval (awk, STACK_RETVAL_GLOBAL(awk));
+		STACK_RETVAL_GLOBAL(awk) = val; /* global return value */
 		xp_awk_refupval (val);
 	}
 
