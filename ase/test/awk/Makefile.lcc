@@ -1,8 +1,8 @@
 CC = lcc
-CFLAGS = -I../../.. -A -ansic -libcdll -D__STAND_ALONE
+CFLAGS = -I../../.. -A -ansic -libcdll 
 #LDFLAGS = -subsystem console -dynamic -s
-LDFLAGS = -subsystem console -s -L../../../xp/awk
-LIBS = xpawk.lib
+LDFLAGS = -subsystem console -s -L../../../xp/bas -L../../../xp/awk
+LIBS = xpbas.lib xpawk.lib
 
 all: awk 
 
