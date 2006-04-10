@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.3 2006-04-04 16:45:21 bacon Exp $
+ * $Id: misc.c,v 1.4 2006-04-10 14:53:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -113,7 +113,7 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 	xp_real_t fraction, dblExp, * d;
 	const xp_char_t* p;
 	xp_cint_t c;
-	int exp = 0;		// Exponent read from "EX" field.
+	int exp = 0;		/* Exponent read from "EX" field */
 
 	/* 
 	 * Exponent that derives from the fractional part.  Under normal 
@@ -125,14 +125,14 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 	 */
 
 	int fracExp = 0;		
-	int mantSize; // Number of digits in mantissa.
-	int decPt;    // Number of mantissa digits BEFORE decimal point
-	const xp_char_t *pExp;   // Temporarily holds location of exponent in string.
+	int mantSize; /* Number of digits in mantissa. */
+	int decPt;    /* Number of mantissa digits BEFORE decimal point */
+	const xp_char_t *pExp;  /* Temporarily holds location of exponent in string */
 	int sign = 0, expSign = 0;
 
 	p = str;
 
-	// Strip off leading blanks and check for a sign.
+	/* Strip off leading blanks and check for a sign */
 	while (xp_isspace(*p)) p++;
 
 	while (*p != XP_CHAR('\0')) 
@@ -146,8 +146,8 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 		else break;
 	}
 
-	// Count the number of digits in the mantissa (including the decimal
-	// point), and also locate the decimal point.
+	/* Count the number of digits in the mantissa (including the decimal
+	 * point), and also locate the decimal point. */
 	decPt = -1;
 	for (mantSize = 0; ; mantSize++) {
 		c = *p;
@@ -172,7 +172,7 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 	} 
 	else 
 	{
-		mantSize -= 1;	// One of the digits was the point.
+		mantSize -= 1;	/* One of the digits was the point */
 	}
 	if (mantSize > 18) 
 	{
@@ -219,7 +219,7 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
-	// Skim off the exponent.
+	/* Skim off the exponent */
 	p = pExp;
 	if ((*p == XP_CHAR('E')) || (*p == XP_CHAR('e'))) 
 	{
@@ -236,7 +236,7 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 		}
 		if (!xp_isdigit(*p)) 
 		{
-			p = pExp;
+			/* p = pExp; */
 			goto done;
 		}
 		while (xp_isdigit(*p)) 

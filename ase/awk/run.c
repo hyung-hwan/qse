@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.42 2006-04-10 09:22:05 bacon Exp $
+ * $Id: run.c,v 1.43 2006-04-10 14:53:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -287,6 +287,7 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 {
 	xp_awk_nde_t* p;
 	xp_size_t nlocals;
+	xp_size_t saved_stack_top;
 	int n = 0;
 
 	xp_assert (nde->type == XP_AWK_NDE_BLK);
@@ -295,13 +296,16 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 	nlocals = nde->nlocals;
 
 //xp_printf (XP_TEXT("securing space for local variables nlocals = %d\n"), nlocals);
+	saved_stack_top = awk->run.stack_top;
+
 	/* secure space for local variables */
 	while (nlocals > 0)
 	{
 		--nlocals;
 		if (__raw_push(awk,xp_awk_val_nil) == -1)
 		{
-			// TODO: proper error handling...
+			/* restore stack top */
+			awk->run.stack_top = saved_stack_top;
 			return -1;
 		}
 
@@ -419,9 +423,11 @@ static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde)
 static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 {
 	xp_awk_val_t* test;
+	int n = 0;
 
 	if (nde->type == XP_AWK_NDE_WHILE)
 	{
+		// TODO: handle run-time abortion...
 		while (1)
 		{
 			test = __eval_expression (awk, nde->test);
@@ -431,7 +437,6 @@ static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 
 			if (xp_awk_boolval(test))
 			{
-				// TODO: break.... continue...., global exit, return... run-time abortion...
 				if (__run_statement(awk,nde->body) == -1)
 				{
 					xp_awk_refdownval (awk, test);
@@ -460,13 +465,10 @@ static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 	}
 	else if (nde->type == XP_AWK_NDE_DOWHILE)
 	{
+		// TODO: handle run-time abortion...
 		do
 		{
-			if (__run_statement(awk,nde->body) == -1)
-			{
-				// TODO: error handling...
-				return -1;
-			}
+			if (__run_statement(awk,nde->body) == -1) return -1;
 
 			if (awk->run.exit_level == EXIT_BREAK)
 			{	
@@ -483,11 +485,13 @@ static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 			if (test == XP_NULL) return -1;
 
 			xp_awk_refupval (test);
+
 			if (!xp_awk_boolval(test))
 			{
 				xp_awk_refdownval (awk, test);
 				break;
 			}
+
 			xp_awk_refdownval (awk, test);
 		}
 		while (1);
@@ -498,9 +502,15 @@ static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 
 static int __run_for_statement (xp_awk_t* awk, xp_awk_nde_for_t* nde)
 {
+	xp_awk_val_t* val;
+
 	if (nde->init != XP_NULL)
 	{
-		if (__eval_expression(awk,nde->init) == XP_NULL) return -1;
+		val = __eval_expression(awk,nde->init);
+		if (val == XP_NULL) return -1;
+
+		xp_awk_refupval (val);
+		xp_awk_refdownval (awk, val);
 	}
 
 	while (1)
@@ -550,7 +560,11 @@ static int __run_for_statement (xp_awk_t* awk, xp_awk_nde_for_t* nde)
 
 		if (nde->incr != XP_NULL)
 		{
-			if (__eval_expression(awk,nde->incr) == XP_NULL) return -1;
+			val = __eval_expression(awk,nde->incr);
+			if (val == XP_NULL) return -1;
+
+			xp_awk_refupval (val);
+			xp_awk_refdownval (awk, val);
 		}
 	}
 
@@ -581,6 +595,7 @@ static int __run_return_statement (xp_awk_t* awk, xp_awk_nde_return_t* nde)
 
 		xp_awk_refdownval (awk, STACK_RETVAL(awk));
 		STACK_RETVAL(awk) = val;
+
 		xp_awk_refupval (val); /* see __eval_call for the trick */
 //xp_printf (XP_TEXT("set return value....\n"));
 	}
@@ -600,6 +615,7 @@ static int __run_exit_statement (xp_awk_t* awk, xp_awk_nde_exit_t* nde)
 
 		xp_awk_refdownval (awk, STACK_RETVAL_GLOBAL(awk));
 		STACK_RETVAL_GLOBAL(awk) = val; /* global return value */
+
 		xp_awk_refupval (val);
 	}
 
