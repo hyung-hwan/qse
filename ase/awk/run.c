@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.43 2006-04-10 14:53:48 bacon Exp $
+ * $Id: run.c,v 1.44 2006-04-10 15:00:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -385,9 +385,11 @@ static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_NEXT:
+		// TODO:
 		break;
 
 	case XP_AWK_NDE_NEXTFILE:
+		// TODO:
 		break;
 
 	default:
