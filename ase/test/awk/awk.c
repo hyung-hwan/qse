@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.17 2006-04-09 15:31:13 bacon Exp $
+ * $Id: awk.c,v 1.18 2006-04-10 09:22:05 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -10,6 +10,12 @@
 #define xp_printf printf
 #else
 #define xp_printf wprintf
+#endif
+
+#ifdef XP_CHAR_IS_MCHAR
+#define xp_strcmp strcmp
+#else
+#define xp_strcmp wcscmp
 #endif
 
 static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t size)
@@ -40,11 +46,7 @@ static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t
 #include <mcheck.h>
 #endif
 
-#ifdef _WIN32
 int xp_main (int argc, xp_char_t* argv[])
-#else
-int xp_main (int argc, char* argv[])
-#endif
 {
 	xp_awk_t* awk;
 
@@ -59,12 +61,14 @@ int xp_main (int argc, char* argv[])
 	}
 #endif
 
-	if ((awk = xp_awk_open()) == XP_NULL) {
+	if ((awk = xp_awk_open()) == XP_NULL) 
+	{
 		xp_printf (XP_TEXT("Error: cannot open awk\n"));
 		return -1;
 	}
 
-	if (xp_awk_attsrc(awk, process_source, XP_NULL) == -1) {
+	if (xp_awk_attsrc(awk, process_source, XP_NULL) == -1) 
+	{
 		xp_awk_close (awk);
 		xp_printf (XP_TEXT("error: cannot attach source\n"));
 		return -1;
@@ -74,9 +78,16 @@ int xp_main (int argc, char* argv[])
 		XP_AWK_EXPLICIT | XP_AWK_UNIQUE | 
 		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT);
 
-	xp_awk_setrunopt (awk, XP_AWK_RUNMAIN);
+	if (argc == 2) 
+	{
+		if (xp_strcmp(argv[1], XP_TEXT("-m")) == 0)
+		{
+			xp_awk_setrunopt (awk, XP_AWK_RUNMAIN);
+		}
+	}
 
-	if (xp_awk_parse(awk) == -1) {
+	if (xp_awk_parse(awk) == -1) 
+	{
 		xp_printf (
 			XP_TEXT("error: cannot parse program - [%d] %s\n"), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
@@ -84,7 +95,8 @@ int xp_main (int argc, char* argv[])
 		return -1;
 	}
 
-	if (xp_awk_run(awk) == -1) {
+	if (xp_awk_run(awk) == -1) 
+	{
 		xp_printf (
 			XP_TEXT("error: cannot run program - [%d] %s\n"), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
