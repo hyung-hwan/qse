@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.75 2006-04-10 14:53:48 bacon Exp $
+ * $Id: parse.c,v 1.76 2006-04-10 15:52:07 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -52,6 +52,8 @@ enum
 	TOKEN_DOLLAR,
 	TOKEN_COMMA,
 	TOKEN_SEMICOLON,
+	TOKEN_COLON,
+	TOKEN_QUEST,
 
 	TOKEN_INT,
 	TOKEN_REAL,
@@ -110,11 +112,12 @@ static xp_awk_nde_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_expression (xp_awk_t* awk);
 
+static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk);
+
 static xp_awk_nde_t* __parse_binary_expr (
 	xp_awk_t* awk, const __binmap_t* binmap,
 	xp_awk_nde_t*(*next_level_func)(xp_awk_t*));
 
-static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk);
@@ -125,9 +128,11 @@ static xp_awk_nde_t* __parse_relational (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_shift (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_additive (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk);
+
 static xp_awk_nde_t* __parse_unary (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_increment (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_primary (xp_awk_t* awk);
+
 static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_nde_t* __parse_if (xp_awk_t* awk);
@@ -1050,6 +1055,38 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 	return (xp_awk_nde_t*)nde;
 }
 
+static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
+{
+	xp_awk_nde_t* nde, * n1, * n2;
+	
+	nde = __parse_logical_or (awk);
+	if (nde == XP_NULL) return XP_NULL;
+
+	if (MATCH(awk,TOKEN_QUEST))
+	{ 
+		if (__get_token(awk) == -1) return XP_NULL;
+
+		n1 = __parse_basic_expr (awk);
+		if (n1 == XP_NULL) 
+		{
+			//TODO: error handling...
+		}
+
+		if (!MATCH(awk,TOKEN_COLON)) PANIC (awk, XP_AWK_ECOLON);
+		if (__get_token(awk) == -1) return XP_NULL;
+
+		n2 = __parse_basic_expr (awk);
+		if (n2 == XP_NULL)
+		{
+			//TODO: error handling
+		}
+
+		// TODO: compose the new node...
+	}
+
+	return nde;
+}
+
 static xp_awk_nde_t* __parse_binary_expr (
 	xp_awk_t* awk, const __binmap_t* binmap,
 	xp_awk_nde_t*(*next_level_func)(xp_awk_t*))
@@ -1135,7 +1172,8 @@ static xp_awk_nde_t* __parse_binary_expr (
 		// TODO: enhance constant folding more...
 
 	skip_constant_folding:
-		nde = (xp_awk_nde_exp_t*)xp_malloc(xp_sizeof(xp_awk_nde_exp_t));
+		nde = (xp_awk_nde_exp_t*)
+			xp_malloc (xp_sizeof(xp_awk_nde_exp_t));
 		if (nde == XP_NULL) 
 		{
 			xp_awk_clrpt (right);
@@ -1153,11 +1191,6 @@ static xp_awk_nde_t* __parse_binary_expr (
 	}
 
 	return left;
-}
-
-static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
-{
-	return __parse_logical_or (awk);
 }
 
 static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk)
@@ -1542,6 +1575,10 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		}
 
 		return (xp_awk_nde_t*)nde;
+	}
+	else if (MATCH(awk,TOKEN_REGEX))
+	{
+		// TODO: ....
 	}
 	else if (MATCH(awk,TOKEN_DOLLAR)) 
 	{
@@ -2381,6 +2418,7 @@ static int __get_token (xp_awk_t* awk)
 	else if (c == XP_CHAR('/')) 
 	{
 // TODO: handle regular expression here... /^pattern$/
+
 		SET_TOKEN_TYPE (awk, TOKEN_DIV);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
@@ -2442,6 +2480,18 @@ static int __get_token (xp_awk_t* awk)
 	else if (c == XP_CHAR(';')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_SEMICOLON);
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	else if (c == XP_CHAR(':'))
+	{
+		SET_TOKEN_TYPE (awk, TOKEN_COLON);
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	else if (c == XP_CHAR('?'))
+	{
+		SET_TOKEN_TYPE (awk, TOKEN_QUEST);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
