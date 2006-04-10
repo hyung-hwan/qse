@@ -1,10 +1,11 @@
 /*
- * $Id: awk.c,v 1.18 2006-04-10 09:22:05 bacon Exp $
+ * $Id: awk.c,v 1.19 2006-04-10 09:26:17 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
 #include <wchar.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef XP_CHAR_IS_MCHAR
 #define xp_printf printf
