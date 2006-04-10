@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.74 2006-04-07 16:52:42 bacon Exp $
+ * $Id: parse.c,v 1.75 2006-04-10 14:53:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -732,8 +732,8 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	xp_awk_tab_remove (
 		&awk->parse.locals, nlocals, tmp - nlocals);
 
-	/* adjust number of locals for a block without any statements */
-	if (head == NULL) tmp = 0;
+	/* adjust the number of locals for a block without any statements */
+	/* if (head == XP_NULL) tmp = 0; */
 
 	block->type = XP_AWK_NDE_BLK;
 	block->next = XP_NULL;
@@ -2691,7 +2691,7 @@ static int __skip_comment (xp_awk_t* awk)
 
 static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident)
 {
-	struct __kwent* p = __kwtab;
+	struct __kwent* p;
 
 	for (p = __kwtab; p->name != XP_NULL; p++) 
 	{

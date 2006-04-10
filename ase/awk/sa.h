@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.20 2006-04-06 16:25:37 bacon Exp $
+ * $Id: sa.h,v 1.21 2006-04-10 14:53:48 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -24,6 +24,7 @@
 #ifdef XP_CHAR_IS_MCHAR
 #include <ctype.h>
 #else
+#include <ctype.h>
 #include <wchar.h>
 #if !defined(__BEOS__)
 #include <wctype.h>
