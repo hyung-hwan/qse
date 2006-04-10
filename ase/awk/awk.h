@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.46 2006-04-09 15:31:13 bacon Exp $
+ * $Id: awk.h,v 1.47 2006-04-10 15:52:07 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -59,6 +59,7 @@ enum
 	XP_AWK_ERBRACK,     /* right bracket expected */
 	XP_AWK_ECOMMA,      /* comma expected */
 	XP_AWK_ESEMICOLON,  /* semicolon expected */
+	XP_AWK_ECOLON,      /* colon expected */
 	XP_AWK_EEXPRESSION, /* expression expected */
 
 	XP_AWK_EWHILE,      /* keyword 'while' is expected */
