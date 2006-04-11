@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.44 2006-04-10 15:00:19 bacon Exp $
+ * $Id: run.c,v 1.45 2006-04-11 09:16:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -87,6 +87,7 @@ static xp_awk_val_t* __eval_binop_mod (
 static xp_awk_val_t* __eval_unary (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_incpre (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_t* nde);
+static xp_awk_val_t* __eval_cnd (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_int (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_real (xp_awk_t* awk, xp_awk_nde_t* nde);
@@ -636,6 +637,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		__eval_unary,
 		__eval_incpre,
 		__eval_incpst,
+		__eval_cnd,
 		__eval_call,
 		__eval_int,
 		__eval_real,
@@ -1758,6 +1760,24 @@ static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 	xp_awk_refdownval (awk, left);
 	return res;
+}
+
+static xp_awk_val_t* __eval_cnd (xp_awk_t* awk, xp_awk_nde_t* nde)
+{
+	xp_awk_val_t* tv, * v;
+	xp_awk_nde_cnd_t* cnd = (xp_awk_nde_cnd_t*)nde;
+
+	tv = __eval_expression (awk, cnd->test);
+	if (tv == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (tv);
+
+	v = (xp_awk_boolval(tv))?
+		__eval_expression (awk, cnd->left):
+		__eval_expression (awk, cnd->right);
+
+	xp_awk_refdownval (awk, tv);
+	return v;
 }
 
 static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)

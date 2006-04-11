@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.32 2006-04-04 16:50:36 bacon Exp $
+ * $Id: tree.c,v 1.33 2006-04-11 09:16:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -117,6 +117,19 @@ static int __print_expression (xp_awk_nde_t* nde)
 			return -1;
 		xp_printf (XP_TEXT(")%s"), 
 			__incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		break;
+
+	case XP_AWK_NDE_CND:
+		xp_printf (XP_TEXT("("));
+		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->test) == -1)
+			return -1;
+		xp_printf (XP_TEXT(")?"));
+
+		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->left) == -1)
+			return -1;
+		xp_printf (XP_TEXT(":"));
+		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->right) == -1)
+			return -1;
 		break;
 
 	case XP_AWK_NDE_INT:
@@ -544,6 +557,13 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 		case XP_AWK_NDE_EXP_INCPST:
 			xp_assert (((xp_awk_nde_exp_t*)p)->right == XP_NULL);
 			xp_awk_clrpt (((xp_awk_nde_exp_t*)p)->left);
+			xp_free (p);
+			break;
+
+		case XP_AWK_NDE_CND:
+			xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->test);
+			xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->left);
+			xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->right);
 			xp_free (p);
 			break;
 
