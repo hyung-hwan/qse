@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.77 2006-04-11 09:16:20 bacon Exp $
+ * $Id: parse.c,v 1.78 2006-04-11 15:44:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -17,30 +17,38 @@ enum
 	TOKEN_EOF,
 
 	TOKEN_ASSIGN,
+	TOKEN_PLUS_ASSIGN,
+	TOKEN_MINUS_ASSIGN,
+	TOKEN_MUL_ASSIGN,
+	TOKEN_DIV_ASSIGN,
+	TOKEN_MOD_ASSIGN,
+	TOKEN_EXP_ASSIGN,
+
 	TOKEN_EQ,
 	TOKEN_NE,
 	TOKEN_LE,
 	TOKEN_LT,
 	TOKEN_GE,
 	TOKEN_GT,
+	TOKEN_MA,   /* match */
+	TOKEN_NM,   /* not match */
 	TOKEN_NOT,
 	TOKEN_PLUS,
 	TOKEN_PLUSPLUS,
-	TOKEN_PLUS_ASSIGN,
 	TOKEN_MINUS,
 	TOKEN_MINUSMINUS,
-	TOKEN_MINUS_ASSIGN,
 	TOKEN_MUL,
 	TOKEN_DIV,
 	TOKEN_MOD,
-	TOKEN_RSHIFT,
-	TOKEN_LSHIFT,
 	TOKEN_LOR,
 	TOKEN_LAND,
 	TOKEN_BOR,
 	TOKEN_BXOR,
 	TOKEN_BAND,
 	TOKEN_BNOT,
+	TOKEN_RSHIFT,
+	TOKEN_LSHIFT,
+	TOKEN_EXP,
 
 	TOKEN_LPAREN,
 	TOKEN_RPAREN,
@@ -79,6 +87,8 @@ enum
 
 	TOKEN_LOCAL,
 	TOKEN_GLOBAL,
+
+	TOKEN_IN,
 
 	__TOKEN_COUNT__
 };
@@ -167,6 +177,7 @@ static struct __kwent __kwtab[] =
 {
 	{ XP_TEXT("BEGIN"),    TOKEN_BEGIN,    0 },
 	{ XP_TEXT("END"),      TOKEN_END,      0 },
+
 	{ XP_TEXT("function"), TOKEN_FUNCTION, 0 },
 	{ XP_TEXT("func"),     TOKEN_FUNCTION, 0 },
 	{ XP_TEXT("if"),       TOKEN_IF,       0 },
@@ -184,6 +195,8 @@ static struct __kwent __kwtab[] =
 
 	{ XP_TEXT("local"),    TOKEN_LOCAL,    XP_AWK_EXPLICIT },
 	{ XP_TEXT("global"),   TOKEN_GLOBAL,   XP_AWK_EXPLICIT },
+
+	{ XP_TEXT("in"),       TOKEN_IN,       0 },
 
 	{ XP_NULL,             0,              0 }
 };
@@ -1325,6 +1338,7 @@ static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk)
 		{ TOKEN_MUL, XP_AWK_BINOP_MUL },
 		{ TOKEN_DIV, XP_AWK_BINOP_DIV },
 		{ TOKEN_MOD, XP_AWK_BINOP_MOD },
+		{ TOKEN_EXP, XP_AWK_BINOP_EXP },
 		{ TOKEN_EOF, 0 }
 	};
 
@@ -2297,6 +2311,12 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_STR (awk, XP_TEXT("!="));
 			GET_CHAR_TO (awk, c);
 		}
+		else if (c == XP_CHAR('@'))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_NM);
+			ADD_TOKEN_STR (awk, XP_TEXT("!="));
+			GET_CHAR_TO (awk, c);
+		}
 		else 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_NOT);
@@ -2360,12 +2380,6 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_STR (awk, XP_TEXT("|"));
 		}
 	}
-	else if (c == XP_CHAR('^'))
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_BXOR);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR_TO (awk, c);
-	}
 	else if (c == XP_CHAR('&'))
 	{
 		GET_CHAR_TO (awk, c);
@@ -2384,6 +2398,18 @@ static int __get_token (xp_awk_t* awk)
 	else if (c == XP_CHAR('~'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_BNOT);
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	else if (c == XP_CHAR('^'))
+	{
+		SET_TOKEN_TYPE (awk, TOKEN_BXOR);
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	else if (c == XP_CHAR('@'))
+	{
+		SET_TOKEN_TYPE (awk, TOKEN_MA);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
@@ -2431,23 +2457,67 @@ static int __get_token (xp_awk_t* awk)
 	}
 	else if (c == XP_CHAR('*')) 
 	{
-		SET_TOKEN_TYPE (awk, TOKEN_MUL);
-		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
+
+		if (c == XP_CHAR('='))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_MUL_ASSIGN);
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR_TO (awk, c);
+		}
+		else if (c == XP_CHAR('*'))
+		{
+			GET_CHAR_TO (awk, c);
+			if (c == XP_CHAR('='))
+			{
+				SET_TOKEN_TYPE (awk, TOKEN_EXP_ASSIGN);
+				ADD_TOKEN_CHAR (awk, c);
+				GET_CHAR_TO (awk, c);
+			}
+			else 
+			{
+				SET_TOKEN_TYPE (awk, TOKEN_EXP);
+				ADD_TOKEN_CHAR (awk, c);
+			}
+		}
+		else
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_MUL);
+			ADD_TOKEN_CHAR (awk, c);
+		}
 	}
 	else if (c == XP_CHAR('/')) 
 	{
 // TODO: handle regular expression here... /^pattern$/
-
-		SET_TOKEN_TYPE (awk, TOKEN_DIV);
-		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
+
+		if (c == XP_CHAR('='))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_DIV_ASSIGN);
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR_TO (awk, c);
+		}
+		else
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_DIV);
+			ADD_TOKEN_CHAR (awk, c);
+		}
 	}
 	else if (c == XP_CHAR('%')) 
 	{
-		SET_TOKEN_TYPE (awk, TOKEN_MOD);
-		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
+
+		if (c == XP_CHAR('='))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_MOD_ASSIGN);
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR_TO (awk, c);
+		}
+		else
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_MOD);
+			ADD_TOKEN_CHAR (awk, c);
+		}
 	}
 	else if (c == XP_CHAR('(')) 
 	{
