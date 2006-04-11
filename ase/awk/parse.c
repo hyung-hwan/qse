@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.76 2006-04-10 15:52:07 bacon Exp $
+ * $Id: parse.c,v 1.77 2006-04-11 09:16:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1064,12 +1064,15 @@ static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
 
 	if (MATCH(awk,TOKEN_QUEST))
 	{ 
+		xp_awk_nde_cnd_t* tmp;
+
 		if (__get_token(awk) == -1) return XP_NULL;
 
 		n1 = __parse_basic_expr (awk);
 		if (n1 == XP_NULL) 
 		{
-			//TODO: error handling...
+			xp_awk_clrpt (nde);
+			return XP_NULL;
 		}
 
 		if (!MATCH(awk,TOKEN_COLON)) PANIC (awk, XP_AWK_ECOLON);
@@ -1078,10 +1081,27 @@ static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
 		n2 = __parse_basic_expr (awk);
 		if (n2 == XP_NULL)
 		{
-			//TODO: error handling
+			xp_awk_clrpt (nde);
+			xp_awk_clrpt (n1);
+			return XP_NULL;
 		}
 
-		// TODO: compose the new node...
+		tmp = (xp_awk_nde_cnd_t*)xp_malloc(xp_sizeof(xp_awk_nde_cnd_t));
+		if (tmp == XP_NULL)
+		{
+			xp_awk_clrpt (nde);
+			xp_awk_clrpt (n1);
+			xp_awk_clrpt (n2);
+			return XP_NULL;
+		}
+
+		tmp->type = XP_AWK_NDE_CND;
+		tmp->next = XP_NULL;
+		tmp->test = nde;
+		tmp->left = n1;
+		tmp->right = n2;
+
+		nde = (xp_awk_nde_t*)tmp;
 	}
 
 	return nde;
