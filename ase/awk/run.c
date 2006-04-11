@@ -1,8 +1,11 @@
 /*
- * $Id: run.c,v 1.45 2006-04-11 09:16:20 bacon Exp $
+ * $Id: run.c,v 1.46 2006-04-11 15:44:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
+
+// TODO: remove this dependency...
+#include <math.h>
 
 #ifndef __STAND_ALONE
 #include <xp/bas/assert.h>
@@ -82,6 +85,8 @@ static xp_awk_val_t* __eval_binop_mul (
 static xp_awk_val_t* __eval_binop_div (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
 static xp_awk_val_t* __eval_binop_mod (
+	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
+static xp_awk_val_t* __eval_binop_exp (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
 
 static xp_awk_val_t* __eval_unary (xp_awk_t* awk, xp_awk_nde_t* nde);
@@ -228,7 +233,11 @@ int xp_awk_run (xp_awk_t* awk)
 		while (awk->run.exit_level != EXIT_GLOBAL)
 		{
 			awk->run.exit_level = EXIT_NONE;
+
+			//
 			// TODO: execute pattern blocks.
+			//
+
 			break;
 		}
 
@@ -772,7 +781,8 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_t* nde)
 		__eval_binop_minus,
 		__eval_binop_mul,
 		__eval_binop_div,
-		__eval_binop_mod
+		__eval_binop_mod,
+		__eval_binop_exp
 	};
 	xp_awk_nde_exp_t* exp = (xp_awk_nde_exp_t*)nde;
 	xp_awk_val_t* left, * right, * res;
@@ -1461,6 +1471,53 @@ static xp_awk_val_t* __eval_binop_mod (
 		r = ((xp_awk_val_int_t*)left)->val %
 		    ((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makeintval (awk, r);
+	}
+	else
+	{
+		PANIC (awk, XP_AWK_EOPERAND);
+	}
+
+	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+	return res;
+}
+
+static xp_awk_val_t* __eval_binop_exp (
+	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	xp_awk_val_t* res = XP_NULL;
+
+	if (left->type == XP_AWK_VAL_INT &&
+	    right->type == XP_AWK_VAL_INT)
+	{
+		xp_long_t r = 1;
+		xp_long_t cnt = ((xp_awk_val_int_t*)right)->val;
+
+		while (cnt-- > 0) r *= ((xp_awk_val_int_t*)left)->val;
+		res = xp_awk_makeintval (awk, r);
+	}
+	else if (left->type == XP_AWK_VAL_INT &&
+	         right->type == XP_AWK_VAL_REAL)
+	{
+// TODO: write own pow...
+		double x = ((xp_awk_val_int_t*)left)->val;
+		double y = ((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, pow (x, y));
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+	         right->type == XP_AWK_VAL_INT)
+	{
+// TODO: write own pow...
+		double x = ((xp_awk_val_real_t*)left)->val;
+		double y = ((xp_awk_val_int_t*)right)->val;
+		res = xp_awk_makerealval (awk, pow (x, y));
+	}
+	else if (left->type == XP_AWK_VAL_REAL &&
+	         right->type == XP_AWK_VAL_REAL)
+	{
+// TODO: wirte own pow...
+		double x = ((xp_awk_val_real_t*)left)->val;
+		double y = ((xp_awk_val_real_t*)right)->val;
+		res = xp_awk_makerealval (awk, pow (x, y));
 	}
 	else
 	{
