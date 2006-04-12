@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.46 2006-04-11 15:44:30 bacon Exp $
+ * $Id: run.c,v 1.47 2006-04-12 03:54:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -87,6 +87,10 @@ static xp_awk_val_t* __eval_binop_div (
 static xp_awk_val_t* __eval_binop_mod (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
 static xp_awk_val_t* __eval_binop_exp (
+	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
+static xp_awk_val_t* __eval_binop_ma (
+	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
+static xp_awk_val_t* __eval_binop_nm (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
 
 static xp_awk_val_t* __eval_unary (xp_awk_t* awk, xp_awk_nde_t* nde);
@@ -782,7 +786,10 @@ static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_t* nde)
 		__eval_binop_mul,
 		__eval_binop_div,
 		__eval_binop_mod,
-		__eval_binop_exp
+		__eval_binop_exp,
+
+		__eval_binop_ma,
+		__eval_binop_nm
 	};
 	xp_awk_nde_exp_t* exp = (xp_awk_nde_exp_t*)nde;
 	xp_awk_val_t* left, * right, * res;
@@ -1526,6 +1533,22 @@ static xp_awk_val_t* __eval_binop_exp (
 
 	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
+}
+
+static xp_awk_val_t* __eval_binop_ma (
+	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	// TODO: ...
+	PANIC (awk, XP_AWK_EINTERNAL);
+	return XP_NULL;
+}
+
+static xp_awk_val_t* __eval_binop_nm (
+	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	// TODO: ...
+	PANIC (awk, XP_AWK_EINTERNAL);
+	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_unary (xp_awk_t* awk, xp_awk_nde_t* nde)
