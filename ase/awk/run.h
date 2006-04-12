@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.7 2006-04-11 15:44:30 bacon Exp $
+ * $Id: run.h,v 1.8 2006-04-12 03:54:12 bacon Exp $
  */
 
 #ifndef _XP_AWK_RUN_H_
@@ -44,7 +44,10 @@ enum
 	XP_AWK_BINOP_MUL,
 	XP_AWK_BINOP_DIV,
 	XP_AWK_BINOP_MOD,
-	XP_AWK_BINOP_EXP
+	XP_AWK_BINOP_EXP,
+
+	XP_AWK_BINOP_MA,
+	XP_AWK_BINOP_NM
 };
 
 enum

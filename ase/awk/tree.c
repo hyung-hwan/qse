@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.34 2006-04-11 15:44:30 bacon Exp $
+ * $Id: tree.c,v 1.35 2006-04-12 03:54:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -33,7 +33,11 @@ static const xp_char_t* __binop_str[] =
 	XP_TEXT("*"),
 	XP_TEXT("/"),
 	XP_TEXT("%"),
-	XP_TEXT("**")
+	XP_TEXT("**"),
+
+	XP_TEXT("~"),
+	XP_TEXT("!~")
+
 };
 
 static const xp_char_t* __unrop_str[] =

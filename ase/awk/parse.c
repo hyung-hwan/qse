@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.78 2006-04-11 15:44:30 bacon Exp $
+ * $Id: parse.c,v 1.79 2006-04-12 03:54:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -30,7 +30,6 @@ enum
 	TOKEN_LT,
 	TOKEN_GE,
 	TOKEN_GT,
-	TOKEN_MA,   /* match */
 	TOKEN_NM,   /* not match */
 	TOKEN_NOT,
 	TOKEN_PLUS,
@@ -45,7 +44,7 @@ enum
 	TOKEN_BOR,
 	TOKEN_BXOR,
 	TOKEN_BAND,
-	TOKEN_BNOT,
+	TOKEN_TILDE, /* used for unary bitwise-not and regex match */
 	TOKEN_RSHIFT,
 	TOKEN_LSHIFT,
 	TOKEN_EXP,
@@ -130,6 +129,7 @@ static xp_awk_nde_t* __parse_binary_expr (
 
 static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_and (xp_awk_t* awk);
@@ -1242,7 +1242,19 @@ static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk)
 	__binmap_t map[] = 
 	{
 		{ TOKEN_LAND, XP_AWK_BINOP_LAND },
-		{ TOKEN_EOF, 0 }
+		{ TOKEN_EOF,  0 }
+	};
+
+	return __parse_binary_expr (awk, map, __parse_regex_match);
+}
+
+static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk)
+{
+	__binmap_t map[] =
+	{
+		{ TOKEN_TILDE, XP_AWK_BINOP_MA },
+		{ TOKEN_NM,    XP_AWK_BINOP_NM },
+		{ TOKEN_EOF,   0 },
 	};
 
 	return __parse_binary_expr (awk, map, __parse_bitwise_or);
@@ -1264,7 +1276,7 @@ static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
 	__binmap_t map[] = 
 	{
 		{ TOKEN_BXOR, XP_AWK_BINOP_BXOR },
-		{ TOKEN_EOF, 0 }
+		{ TOKEN_EOF,  0 }
 	};
 
 	return __parse_binary_expr (awk, map, __parse_bitwise_and);
@@ -1275,7 +1287,7 @@ static xp_awk_nde_t* __parse_bitwise_and (xp_awk_t* awk)
 	__binmap_t map[] = 
 	{
 		{ TOKEN_BAND, XP_AWK_BINOP_BAND },
-		{ TOKEN_EOF, 0 }
+		{ TOKEN_EOF,  0 }
 	};
 
 	return __parse_binary_expr (awk, map, __parse_equality);
@@ -1354,7 +1366,7 @@ static xp_awk_nde_t* __parse_unary (xp_awk_t* awk)
 	opcode = (MATCH(awk,TOKEN_PLUS))?  XP_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOKEN_MINUS))? XP_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOKEN_NOT))?   XP_AWK_UNROP_NOT:
-	         (MATCH(awk,TOKEN_BNOT))?  XP_AWK_UNROP_BNOT: -1;
+	         (MATCH(awk,TOKEN_TILDE))? XP_AWK_UNROP_BNOT: -1;
 
 	if (opcode == -1) return __parse_increment (awk);
 
@@ -2311,10 +2323,10 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_STR (awk, XP_TEXT("!="));
 			GET_CHAR_TO (awk, c);
 		}
-		else if (c == XP_CHAR('@'))
+		else if (c == XP_CHAR('~'))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_NM);
-			ADD_TOKEN_STR (awk, XP_TEXT("!="));
+			ADD_TOKEN_STR (awk, XP_TEXT("!~"));
 			GET_CHAR_TO (awk, c);
 		}
 		else 
@@ -2397,19 +2409,13 @@ static int __get_token (xp_awk_t* awk)
 	}
 	else if (c == XP_CHAR('~'))
 	{
-		SET_TOKEN_TYPE (awk, TOKEN_BNOT);
+		SET_TOKEN_TYPE (awk, TOKEN_TILDE);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
 	else if (c == XP_CHAR('^'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_BXOR);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR_TO (awk, c);
-	}
-	else if (c == XP_CHAR('@'))
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_MA);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
