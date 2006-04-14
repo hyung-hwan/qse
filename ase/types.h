@@ -1,12 +1,12 @@
 /*
- * $Id: types.h,v 1.43 2006-04-14 14:17:09 bacon Exp $
+ * $Id: types.h,v 1.44 2006-04-14 15:08:37 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
 #define _XP_TYPES_H_
 
 #if defined(_WIN32)
-	#include <xp/conf_win.h>
+	#include <xp/conf_msw.h>
 #elif defined(vms) || defined(__vms)
 	#include <xp/conf_vms.h>
 #else
