@@ -6,7 +6,7 @@ CC = cc
 CFLAGS = -Xc -a ansi -O2 -I../.. -D__STAND_ALONE
 
 all: $(OBJS)
-	
+	ar cr $(OUT) $(OBJS)
 
 clean:
 	rm -rf $(OBJS) $(OUT) *.obj
