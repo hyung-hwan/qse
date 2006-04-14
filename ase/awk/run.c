@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.48 2006-04-14 10:56:42 bacon Exp $
+ * $Id: run.c,v 1.49 2006-04-14 16:26:00 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -30,9 +30,9 @@
 #define EXIT_GLOBAL    4
 
 #define PANIC(awk,code) \
-	do { (awk)->errnum = (code);  return XP_NULL; } while (0)
+	do { (awk)->errnum = (code); return XP_NULL; } while (0)
 #define PANIC_I(awk,code) \
-	do { (awk)->errnum = (code);  return -1; } while (0)
+	do { (awk)->errnum = (code); return -1; } while (0)
 
 static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde);
@@ -680,6 +680,7 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_t* nde)
 	val = __eval_expression(awk, ass->right);
 	if (val == XP_NULL) return XP_NULL;
 
+/*TODO: ass->opcode....*/
 	return __do_assignment (awk, (xp_awk_nde_var_t*)ass->left, val);
 }
 

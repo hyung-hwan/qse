@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.32 2006-04-14 10:56:42 bacon Exp $
+ * $Id: tree.h,v 1.33 2006-04-14 16:26:00 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -27,6 +27,10 @@ enum
 	XP_AWK_NDE_NEXTFILE,
 
 	/* expression */
+
+	/* if you change the following values including their order,
+	 * you should change __eval_func of __eval_expression 
+	 * in run.c accordingly */
 	XP_AWK_NDE_ASS,
 	XP_AWK_NDE_EXP_BIN,
 	XP_AWK_NDE_EXP_UNR,
@@ -100,6 +104,7 @@ struct xp_awk_nde_blk_t
 struct xp_awk_nde_ass_t
 {
 	XP_AWK_NDE_HDR;
+	int opcode;
 	xp_awk_nde_t* left;
 	xp_awk_nde_t* right;
 };

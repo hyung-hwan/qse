@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.8 2006-04-12 03:54:12 bacon Exp $
+ * $Id: run.h,v 1.9 2006-04-14 16:26:00 bacon Exp $
  */
 
 #ifndef _XP_AWK_RUN_H_
@@ -17,6 +17,18 @@ struct xp_awk_frm_t
 	xp_size_t nlocals;
 	xp_awk_val_t* stack;
 	xp_awk_frm_t* prev;
+};
+
+enum
+{
+	/* if you change this, you have to change __assop_str in tree.c */
+	XP_AWK_ASSOP_NONE,
+	XP_AWK_ASSOP_PLUS,
+	XP_AWK_ASSOP_MINUS,
+	XP_AWK_ASSOP_MUL,
+	XP_AWK_ASSOP_DIV,
+	XP_AWK_ASSOP_MOD,
+	XP_AWK_ASSOP_EXP
 };
 
 enum 

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.36 2006-04-14 10:56:42 bacon Exp $
+ * $Id: tree.c,v 1.37 2006-04-14 16:26:00 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -9,6 +9,17 @@
 #include <xp/bas/assert.h>
 #include <xp/bas/stdio.h>
 #endif
+
+static const xp_char_t* __assop_str[] =
+{
+	XP_TEXT("="),
+	XP_TEXT("+="),
+	XP_TEXT("-="),
+	XP_TEXT("*="),
+	XP_TEXT("/="),
+	XP_TEXT("%="),
+	XP_TEXT("**=")
+};
 
 static const xp_char_t* __binop_str[] =
 {
@@ -37,7 +48,6 @@ static const xp_char_t* __binop_str[] =
 
 	XP_TEXT("~"),
 	XP_TEXT("!~")
-
 };
 
 static const xp_char_t* __unrop_str[] =
@@ -72,7 +82,8 @@ static int __print_expression (xp_awk_nde_t* nde)
 	switch (nde->type) {
 	case XP_AWK_NDE_ASS:
 		if (__print_expression (((xp_awk_nde_ass_t*)nde)->left) == -1) return -1;
-		xp_printf (XP_TEXT(" = "));
+		xp_printf (XP_TEXT(" %s "), 
+			__assop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
 		if (__print_expression (((xp_awk_nde_ass_t*)nde)->right) == -1) return -1;
 		xp_assert ((((xp_awk_nde_ass_t*)nde)->right)->next == XP_NULL);
 		break;
