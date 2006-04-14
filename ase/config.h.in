@@ -79,6 +79,9 @@
 /* sys/poll.h */
 #undef XP_HAVE_SYS_EPOLL_H
 
+/* pthread.h */
+#undef XP_HAVE_PTHREAD_H
+
 /* sys/sysinfo.h */
 #undef XP_HAVE_SYS_SYSINFO_H
 
