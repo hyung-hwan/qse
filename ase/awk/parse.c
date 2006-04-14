@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.79 2006-04-12 03:54:12 bacon Exp $
+ * $Id: parse.c,v 1.80 2006-04-14 10:56:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -235,7 +235,7 @@ do { \
 
 #define PANIC(awk,code) do { (awk)->errnum = (code);  return XP_NULL; } while (0);
 
-// TODO: remove stdio.h
+/* TODO: remove stdio.h */
 #ifndef __STAND_ALONE
 #include <xp/bas/stdio.h>
 #endif
@@ -314,8 +314,8 @@ int xp_awk_parse (xp_awk_t* awk)
 
 		if (__parse_progunit(awk) == XP_NULL) 
 		{
-// TODO: cleanup the parse tree created so far....
-//       function tables also etc...
+/* TODO: cleanup the parse tree created so far....
+         function tables also etc... */
 			return -1;
 		}
 	}
@@ -556,7 +556,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-// TODO: consider if the parameters should be saved for some reasons..
+/* TODO: consider if the parameters should be saved for some reasons.. */
 	nargs = xp_awk_tab_getsize(&awk->parse.params);
 	/* parameter names are not required anymore. clear them */
 	xp_awk_tab_clear (&awk->parse.params);
@@ -1022,8 +1022,7 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 	if (x == XP_NULL) return XP_NULL;
 	if (!MATCH(awk,TOKEN_ASSIGN)) return x;
 
-//TODO: PLUS_ASSIGN, MINUS_ASSIGN, ....
-//
+/*TODO: PLUS_ASSIGN, MINUS_ASSIGN, .... */
 	xp_assert (x->next == XP_NULL);
 	if (x->type != XP_AWK_NDE_ARG &&
 	    x->type != XP_AWK_NDE_ARGIDX &&
@@ -1202,7 +1201,7 @@ static xp_awk_nde_t* __parse_binary_expr (
 			((xp_awk_nde_real_t*)left)->val = l;
 			continue;
 		}
-		// TODO: enhance constant folding more...
+		/* TODO: enhance constant folding more... */
 
 	skip_constant_folding:
 		nde = (xp_awk_nde_exp_t*)
@@ -1500,7 +1499,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			{
 				nde->type = XP_AWK_NDE_ARG;
 				nde->next = XP_NULL;
-				//nde->id.name = XP_NULL;
+				/*nde->id.name = XP_NULL;*/
 				nde->id.name = name_dup;
 				nde->id.idxa = idxa;
 
@@ -1513,7 +1512,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			{
 				nde->type = XP_AWK_NDE_LOCAL;
 				nde->next = XP_NULL;
-				//nde->id.name = XP_NULL;
+				/*nde->id.name = XP_NULL;*/
 				nde->id.name = name_dup;
 				nde->id.idxa = idxa;
 
@@ -1526,7 +1525,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			{
 				nde->type = XP_AWK_NDE_GLOBAL;
 				nde->next = XP_NULL;
-				//nde->id.name = XP_NULL;
+				/*nde->id.name = XP_NULL;*/
 				nde->id.name = name_dup;
 				nde->id.idxa = idxa;
 
@@ -1624,7 +1623,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_REGEX))
 	{
-		// TODO: ....
+		/* TODO: .... */
 	}
 	else if (MATCH(awk,TOKEN_DOLLAR)) 
 	{
@@ -1716,7 +1715,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 	{
 		nde->type = XP_AWK_NDE_ARGIDX;
 		nde->next = XP_NULL;
-		//nde->id.name = XP_NULL;
+		/*nde->id.name = XP_NULL; */
 		nde->id.name = name;
 		nde->id.idxa = idxa;
 		nde->idx = idx;
@@ -1730,7 +1729,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 	{
 		nde->type = XP_AWK_NDE_LOCALIDX;
 		nde->next = XP_NULL;
-		//nde->id.name = XP_NULL;
+		/*nde->id.name = XP_NULL; */
 		nde->id.name = name;
 		nde->id.idxa = idxa;
 		nde->idx = idx;
@@ -1744,7 +1743,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 	{
 		nde->type = XP_AWK_NDE_GLOBALIDX;
 		nde->next = XP_NULL;
-		//nde->id.name = XP_NULL;
+		/*nde->id.name = XP_NULL;*/
 		nde->id.name = name;
 		nde->id.idxa = idxa;
 
@@ -1957,7 +1956,7 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 	xp_awk_nde_t* init, * test, * incr, * body;
 	xp_awk_nde_for_t* nde;
 
-	// TODO: parse for (x in list) ...
+	/* TODO: parse for (x in list) ... */
 
 	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, XP_AWK_ELPAREN);
 	if (__get_token(awk) == -1) return XP_NULL;
@@ -2216,7 +2215,7 @@ static xp_awk_nde_t* __parse_exit (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
 {
-// TODO: implement this...
+/* TODO: implement this... */
 	return XP_NULL;
 }
 
@@ -2494,7 +2493,7 @@ static int __get_token (xp_awk_t* awk)
 	}
 	else if (c == XP_CHAR('/')) 
 	{
-// TODO: handle regular expression here... /^pattern$/
+/* TODO: handle regular expression here... /^pattern$/ */
 		GET_CHAR_TO (awk, c);
 
 		if (c == XP_CHAR('='))

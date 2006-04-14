@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.35 2006-04-12 03:54:12 bacon Exp $
+ * $Id: tree.c,v 1.36 2006-04-14 10:56:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -142,7 +142,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 		xp_printf (XP_TEXT("%lld"), (long long)((xp_awk_nde_int_t*)nde)->val);
 #elif defined(__BORLANDC__) || defined(_MSC_VER)
 		xp_printf (XP_TEXT("%I64d"), (__int64)((xp_awk_nde_int_t*)nde)->val);
-#elif defined(vax) || defined(__vax)
+#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
 		xp_printf (XP_TEXT("%ld"), (long)((xp_awk_nde_int_t*)nde)->val);
 #else
 		xp_printf (XP_TEXT("%lld"), (long long)((xp_awk_nde_int_t*)nde)->val);
@@ -154,7 +154,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_STR:
-		// TODO: buf, len
+		/* TODO: buf, len */
 		xp_printf (XP_TEXT("\"%s\""), ((xp_awk_nde_str_t*)nde)->buf);
 		break;
 

@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.9 2006-03-31 16:35:37 bacon Exp $
+ * $Id: map.c,v 1.10 2006-04-14 10:56:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -10,8 +10,8 @@
 #include <xp/bas/assert.h>
 #endif
 
-// TODO: improve the entire map routines.
-//       support automatic bucket resizing and remaping, etc.
+/* TODO: improve the entire map routines.
+         support automatic bucket resizing and remaping, etc. */
 
 static xp_size_t __hash (const xp_char_t* key);
 

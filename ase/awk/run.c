@@ -1,10 +1,10 @@
 /*
- * $Id: run.c,v 1.47 2006-04-12 03:54:12 bacon Exp $
+ * $Id: run.c,v 1.48 2006-04-14 10:56:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
-// TODO: remove this dependency...
+/* TODO: remove this dependency...*/
 #include <math.h>
 
 #ifndef __STAND_ALONE
@@ -238,9 +238,9 @@ int xp_awk_run (xp_awk_t* awk)
 		{
 			awk->run.exit_level = EXIT_NONE;
 
-			//
-			// TODO: execute pattern blocks.
-			//
+			/*
+			 * TODO: execute pattern blocks.
+			 */
 
 			break;
 		}
@@ -309,7 +309,7 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 	p = nde->body;
 	nlocals = nde->nlocals;
 
-//xp_printf (XP_TEXT("securing space for local variables nlocals = %d\n"), nlocals);
+/*xp_printf (XP_TEXT("securing space for local variables nlocals = %d\n"), nlocals);*/
 	saved_stack_top = awk->run.stack_top;
 
 	/* secure space for local variables */
@@ -326,7 +326,7 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 		/* refupval is not required for xp_awk_val_nil */
 	}
 
-//xp_printf (XP_TEXT("executing block statements\n"));
+/*xp_printf (XP_TEXT("executing block statements\n"));*/
 	while (p != XP_NULL && awk->run.exit_level == EXIT_NONE) 
 	{
 		if (__run_statement(awk,p) == -1) 
@@ -337,7 +337,7 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 		p = p->next;
 	}
 
-//xp_printf (XP_TEXT("popping off local variables\n"));
+/*xp_printf (XP_TEXT("popping off local variables\n"));*/
 	/* pop off local variables */
 	nlocals = nde->nlocals;
 	while (nlocals > 0)
@@ -399,11 +399,11 @@ static int __run_statement (xp_awk_t* awk, xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_NEXT:
-		// TODO:
+		/* TODO: */
 		break;
 
 	case XP_AWK_NDE_NEXTFILE:
-		// TODO:
+		/* TODO: */
 		break;
 
 	default:
@@ -432,18 +432,17 @@ static int __run_if_statement (xp_awk_t* awk, xp_awk_nde_if_t* nde)
 		n = __run_statement (awk, nde->else_part);
 	}
 
-	xp_awk_refdownval (awk, test); // TODO: is this correct?
+	xp_awk_refdownval (awk, test); /* TODO: is this correct?*/
 	return n;
 }
 
 static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 {
 	xp_awk_val_t* test;
-	int n = 0;
 
 	if (nde->type == XP_AWK_NDE_WHILE)
 	{
-		// TODO: handle run-time abortion...
+		/* TODO: handle run-time abortion... */
 		while (1)
 		{
 			test = __eval_expression (awk, nde->test);
@@ -481,7 +480,7 @@ static int __run_while_statement (xp_awk_t* awk, xp_awk_nde_while_t* nde)
 	}
 	else if (nde->type == XP_AWK_NDE_DOWHILE)
 	{
-		// TODO: handle run-time abortion...
+		/* TODO: handle run-time abortion... */
 		do
 		{
 			if (__run_statement(awk,nde->body) == -1) return -1;
@@ -605,7 +604,7 @@ static int __run_return_statement (xp_awk_t* awk, xp_awk_nde_return_t* nde)
 	if (nde->val != XP_NULL)
 	{
 		xp_awk_val_t* val;
-//xp_printf (XP_TEXT("returning....\n"));
+/*xp_printf (XP_TEXT("returning....\n"));*/
 		val = __eval_expression(awk, nde->val);
 		if (val == XP_NULL) return -1;
 
@@ -613,7 +612,7 @@ static int __run_return_statement (xp_awk_t* awk, xp_awk_nde_return_t* nde)
 		STACK_RETVAL(awk) = val;
 
 		xp_awk_refupval (val); /* see __eval_call for the trick */
-//xp_printf (XP_TEXT("set return value....\n"));
+/*xp_printf (XP_TEXT("set return value....\n"));*/
 	}
 	
 	awk->run.exit_level = EXIT_FUNCTION;
@@ -738,19 +737,19 @@ static xp_awk_val_t* __do_assignment (
 	}
 	else if (var->type == XP_AWK_NDE_NAMEDIDX) 
 	{
-		// TODO: 
+		/* TODO: */
 	}
 	else if (var->type == XP_AWK_NDE_GLOBALIDX) 
 	{
-		// TODO: 
+		/* TODO: */
 	}
 	else if (var->type == XP_AWK_NDE_LOCALIDX) 
 	{
-		// TODO: 
+		/* TODO: */
 	}
 	else if (var->type == XP_AWK_NDE_ARGIDX) 
 	{
-		// TODO: 
+		/* TODO: */
 	}
 	else
 	{
@@ -1309,7 +1308,7 @@ static xp_awk_val_t* __eval_binop_plus (
 	{
 		PANIC (awk, XP_AWK_EOPERAND);
 	}
-	// TODO: addition between integer and astring??? 1 + "123"
+	/* TODO: addition between integer and astring??? 1 + "123" */
 
 	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
@@ -1505,7 +1504,7 @@ static xp_awk_val_t* __eval_binop_exp (
 	else if (left->type == XP_AWK_VAL_INT &&
 	         right->type == XP_AWK_VAL_REAL)
 	{
-// TODO: write own pow...
+/* TODO: write own pow... */
 		double x = ((xp_awk_val_int_t*)left)->val;
 		double y = ((xp_awk_val_real_t*)right)->val;
 		res = xp_awk_makerealval (awk, pow (x, y));
@@ -1513,7 +1512,7 @@ static xp_awk_val_t* __eval_binop_exp (
 	else if (left->type == XP_AWK_VAL_REAL &&
 	         right->type == XP_AWK_VAL_INT)
 	{
-// TODO: write own pow...
+/* TODO: write own pow... */
 		double x = ((xp_awk_val_real_t*)left)->val;
 		double y = ((xp_awk_val_int_t*)right)->val;
 		res = xp_awk_makerealval (awk, pow (x, y));
@@ -1521,7 +1520,7 @@ static xp_awk_val_t* __eval_binop_exp (
 	else if (left->type == XP_AWK_VAL_REAL &&
 	         right->type == XP_AWK_VAL_REAL)
 	{
-// TODO: wirte own pow...
+/* TODO: wirte own pow... */
 		double x = ((xp_awk_val_real_t*)left)->val;
 		double y = ((xp_awk_val_real_t*)right)->val;
 		res = xp_awk_makerealval (awk, pow (x, y));
@@ -1538,7 +1537,7 @@ static xp_awk_val_t* __eval_binop_exp (
 static xp_awk_val_t* __eval_binop_ma (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	// TODO: ...
+	/* TODO: ... */
 	PANIC (awk, XP_AWK_EINTERNAL);
 	return XP_NULL;
 }
@@ -1546,7 +1545,7 @@ static xp_awk_val_t* __eval_binop_ma (
 static xp_awk_val_t* __eval_binop_nm (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	// TODO: ...
+	/* TODO: ... */
 	PANIC (awk, XP_AWK_EINTERNAL);
 	return XP_NULL;
 }
@@ -1919,7 +1918,7 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 	saved_stack_top = awk->run.stack_top;
 
-//xp_printf (XP_TEXT("setting up function stack frame stack_top = %ld stack_base = %ld\n"), awk->run.stack_top, awk->run.stack_base);
+/*xp_printf (XP_TEXT("setting up function stack frame stack_top = %ld stack_base = %ld\n"), awk->run.stack_top, awk->run.stack_base); */
 	if (__raw_push(awk,(void*)awk->run.stack_base) == -1) 
 	{
 		PANIC (awk, XP_AWK_ENOMEM);
@@ -1956,7 +1955,7 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 		{
 			while (nargs > 0)
 			{
-// TODO: test this portion.
+/* TODO: test this portion. */
 				--nargs;
 				xp_awk_refdownval (awk, STACK_ARG(awk,nargs));
 				__raw_pop (awk);
@@ -1979,7 +1978,7 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 			while (nargs > 0)
 			{
-// TODO: test this portion.
+/* TODO: test this portion. */
 				--nargs;
 				xp_awk_refdownval (awk, STACK_ARG(awk,nargs));
 				__raw_pop (awk);
@@ -2002,23 +2001,23 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 	func = (xp_awk_func_t*)pair->val;
 	xp_assert (func != XP_NULL);
 
-	// TODO: do i need to check if the number of arguments matches the actual arguments...???? this might be the compiler job...
+	/* TODO: do i need to check if the number of arguments matches the actual arguments...???? this might be the compiler job... */
 	
-//xp_printf (XP_TEXT("running function body\n"));
+/*xp_printf (XP_TEXT("running function body\n")); */
 
 	xp_assert (func->body->type == XP_AWK_NDE_BLK);
 	n = __run_block(awk,(xp_awk_nde_blk_t*)func->body);
 
-//xp_printf (XP_TEXT("block run complete\n"));
+/*xp_printf (XP_TEXT("block run complete\n")); */
 
 	/* refdown args in the run.stack */
 	nargs = (xp_size_t)STACK_NARGS(awk);
-//xp_printf (XP_TEXT("block run complete nargs = %d\n"), nargs);
+/*xp_printf (XP_TEXT("block run complete nargs = %d\n"), nargs); */
 	for (i = 0; i < nargs; i++)
 	{
 		xp_awk_refdownval (awk, STACK_ARG(awk,i));
 	}
-//xp_printf (XP_TEXT("got return value\n"));
+/*xp_printf (XP_TEXT("got return value\n")); */
 
 	/* this is the trick mentioned in __run_return_statement.
 	 * adjust the reference count of the return value.
@@ -2036,7 +2035,7 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 		awk->run.exit_level = EXIT_NONE;
 	}
 
-//xp_printf (XP_TEXT("returning from function stack_top=%ld, stack_base=%ld\n"), awk->run.stack_top, awk->run.stack_base);
+/*xp_printf (XP_TEXT("returning from function stack_top=%ld, stack_base=%ld\n"), awk->run.stack_top, awk->run.stack_base); */
 	return (n == -1)? XP_NULL: v;
 }
 
@@ -2097,31 +2096,31 @@ static xp_awk_val_t* __eval_arg (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_namedidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	// TODO:
+	/* TODO: */
 	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_globalidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	// TODO:
+	/* TODO: */
 	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_localidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	// TODO:
+	/* TODO: */
 	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_argidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	// TODO:
+	/* TODO: */
 	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_pos (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	// TODO:
+	/* TODO: */
 	return XP_NULL;
 }
 
