@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.20 2006-04-14 11:13:06 bacon Exp $
+ * $Id: awk.c,v 1.21 2006-04-14 11:14:58 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -47,7 +47,7 @@ static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t
 #include <mcheck.h>
 #endif
 
-#if defined(_SCO_DS)
+#if defined(vms) || defined(__vms) || defined(_SCO_DS) 
 int main (int argc, char* argv[])
 #else
 int xp_main (int argc, xp_char_t* argv[])
@@ -57,13 +57,6 @@ int xp_main (int argc, xp_char_t* argv[])
 
 #ifdef __linux
 	mtrace ();
-#endif
-
-#if 0
-	if (argc != 2) {
-		xp_printf (XP_TEXT("Usage: %s file\n"), argv[0]);
-		return -1;
-	}
 #endif
 
 	if ((awk = xp_awk_open()) == XP_NULL) 
@@ -85,7 +78,7 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	if (argc == 2) 
 	{
-#if defined(_SCO_DS)
+#if defined(vms) || defined(__vms) || defined(_SCO_DS) 
 		if (strcmp(argv[1], "-m") == 0)
 #else
 		if (xp_strcmp(argv[1], XP_TEXT("-m")) == 0)
