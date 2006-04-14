@@ -13,47 +13,22 @@
 /* long double */
 #undef XP_HAVE_LONG_DOUBLE
 
-/* sizeof (char) */
-#define SIZEOF_CHAR 0
-
-/* sizeof (short) */
-#define SIZEOF_SHORT 0
-
-/* sizeof (int) */
-#define SIZEOF_INT  0
-
-/* sizeof (long) */
-#define SIZEOF_LONG 0
-
-/* sizeof (long long) */
-#define SIZEOF_LONG_LONG  0
-
-/* sizeof (__int8) */
-#define SIZEOF___INT8 0
-
-/* sizeof (__int16) */
-#define SIZEOF___INT16 0
-
-/* sizeof (__int32) */
-#define SIZEOF___INT32 0
-
-/* sizeof (__int64) */
-#define SIZEOF___INT64 0
-
-/* sizeof (__int128) */
-#define SIZEOF___INT128 0
-
-/* sizeof (void*) */
-#define SIZEOF_VOID_P  0
-
-/* sizeof (float) */
-#define SIZEOF_FLOAT 0
-
-/* sizeof (double) */
-#define SIZEOF_DOUBLE 0
-
-/* sizeof (long double) */
-#define SIZEOF_LONG_DOUBLE 0
+/* data type size */
+#define XP_SIZEOF_CHAR 0
+#define XP_SIZEOF_SHORT 0
+#define XP_SIZEOF_INT  0
+#define XP_SIZEOF_LONG 0
+#define XP_SIZEOF_LONG_LONG  0
+#define XP_SIZEOF___INT8 0
+#define XP_SIZEOF___INT16 0
+#define XP_SIZEOF___INT32 0
+#define XP_SIZEOF___INT64 0
+#define XP_SIZEOF___INT128 0
+#define XP_SIZEOF_VOID_P  0
+#define XP_SIZEOF_FLOAT 0
+#define XP_SIZEOF_DOUBLE 0
+#define XP_SIZEOF_LONG_DOUBLE 0
+#define XP_SIZEOF_PID_T 0
 
 /* fcntl.h */
 #undef XP_HAVE_FCNTL_H
