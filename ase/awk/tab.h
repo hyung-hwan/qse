@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.5 2006-03-07 15:55:14 bacon Exp $
+ * $Id: tab.h,v 1.6 2006-04-14 10:56:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
@@ -16,8 +16,8 @@
 #include <xp/macros.h>
 #endif
 
-// TODO: you have to turn this into a hash table.
-//	 as of now, this is an arrayed table.
+/* TODO: you have to turn this into a hash table.
+	 as of now, this is an arrayed table. */
 
 typedef struct xp_awk_tab_t xp_awk_tab_t;
 

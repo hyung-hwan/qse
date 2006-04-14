@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.14 2006-04-07 04:23:11 bacon Exp $
+ * $Id: val.h,v 1.15 2006-04-14 10:56:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -66,7 +66,7 @@ struct xp_awk_val_str_t
 struct xp_awk_val_map_t
 {
 	XP_AWK_VAL_HDR;
-	//xp_awk_vap_t vap;
+	/* xp_awk_vap_t vap; */
 };
 
 #ifdef __cplusplus
@@ -81,7 +81,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len);
 xp_awk_val_t* xp_awk_makestrval2 (
 	const xp_char_t* str1, xp_size_t len1, 
 	const xp_char_t* str2, xp_size_t len2);
-//xp_awk_val_t* xp_awk_makemapval ();
+/*xp_awk_val_t* xp_awk_makemapval ();*/
 
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val);
 void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val);

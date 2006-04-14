@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.47 2006-04-10 15:52:07 bacon Exp $
+ * $Id: awk.h,v 1.48 2006-04-14 10:56:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -35,7 +35,7 @@ enum
 /* run options */
 enum
 {
-	XP_AWK_RUNMAIN  = (1 << 0), /* execution starts from main */
+	XP_AWK_RUNMAIN  = (1 << 0)  /* execution starts from main */
 };
 
 /* error code */

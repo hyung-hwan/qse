@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.2 2006-04-02 12:41:14 bacon Exp $
+ * $Id: awk_i.h,v 1.3 2006-04-14 10:56:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -69,8 +69,8 @@ struct xp_awk_t
 		xp_size_t stack_limit;
 		int exit_level;
 
-		xp_awk_val_int_t* icache[100]; // TODO: ... 
-		xp_awk_val_real_t* rcache[100]; // TODO: ... 
+		xp_awk_val_int_t* icache[100]; /* TODO: ...  */
+		xp_awk_val_real_t* rcache[100]; /* TODO: ...  */
 		xp_size_t icache_count;
 		xp_size_t rcache_count;
 	} run;

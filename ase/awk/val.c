@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.17 2006-04-07 04:23:11 bacon Exp $
+ * $Id: val.c,v 1.18 2006-04-14 10:56:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -254,7 +254,7 @@ xp_bool_t xp_awk_boolval (xp_awk_val_t* val)
 
 void xp_awk_printval (xp_awk_val_t* val)
 {
-// TODO: better value printing......................
+/* TODO: better value printing...................... */
 	switch (val->type)
 	{
 	case XP_AWK_VAL_NIL:
@@ -268,7 +268,7 @@ void xp_awk_printval (xp_awk_val_t* val)
 #elif defined(__BORLANDC__) || defined(_MSC_VER)
 		xp_printf (XP_TEXT("%I64d"), 
 			(__int64)((xp_awk_nde_int_t*)val)->val);
-#elif defined(vax) || defined(__vax)
+#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
 		xp_printf (XP_TEXT("%ld"), 
 			(long)((xp_awk_val_int_t*)val)->val);
 #else

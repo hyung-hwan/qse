@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.39 2006-04-09 15:31:13 bacon Exp $ 
+ * $Id: awk.c,v 1.40 2006-04-14 10:56:42 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -54,7 +54,7 @@ xp_awk_t* xp_awk_open (void)
 		return XP_NULL;	
 	}
 
-// TODO: initial map size...
+/* TODO: initial map size... */
 	if (xp_awk_map_open(&awk->run.named,awk,256,__free_namedval) == XP_NULL) {
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.funcs);
@@ -114,9 +114,9 @@ int xp_awk_close (xp_awk_t* awk)
 	return 0;
 }
 
-// TODO: write a function to clear awk->parse data structure.
-//       this would be need either as a separate function or as a part of xp_awk_clear...
-//       do i have to pass an option to xp_awk_clear to do this???
+/* TODO: write a function to clear awk->parse data structure.
+         this would be need either as a separate function or as a part of xp_awk_clear...
+         do i have to pass an option to xp_awk_clear to do this??? */
 
 void xp_awk_clear (xp_awk_t* awk)
 {
