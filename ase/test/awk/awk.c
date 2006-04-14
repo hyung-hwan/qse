@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.21 2006-04-14 11:14:58 bacon Exp $
+ * $Id: awk.c,v 1.22 2006-04-14 16:26:00 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -90,18 +90,30 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	if (xp_awk_parse(awk) == -1) 
 	{
+#if defined(_SCO_DS) && defined(XP_CHAR_IS_WCHAR)
+		xp_printf (
+			XP_TEXT("error: cannot parse program - [%d] %ls\n"), 
+			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
+#else
 		xp_printf (
 			XP_TEXT("error: cannot parse program - [%d] %s\n"), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
+#endif
 		xp_awk_close (awk);
 		return -1;
 	}
 
 	if (xp_awk_run(awk) == -1) 
 	{
+#if defined(_SCO_DS) && defined(XP_CHAR_IS_WCHAR)
+		xp_printf (
+			XP_TEXT("error: cannot run program - [%d] %ls\n"), 
+			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
+#else
 		xp_printf (
 			XP_TEXT("error: cannot run program - [%d] %s\n"), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
+#endif
 		xp_awk_close (awk);
 		return -1;
 	}

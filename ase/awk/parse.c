@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.80 2006-04-14 10:56:42 bacon Exp $
+ * $Id: parse.c,v 1.81 2006-04-14 16:26:00 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -92,12 +92,6 @@ enum
 	__TOKEN_COUNT__
 };
 
-#if defined(__BORLANDC__) || defined(_MSC_VER)
-	#define INLINE 
-#else
-	#define INLINE inline
-#endif
-
 typedef struct __binmap_t __binmap_t;
 
 struct __binmap_t
@@ -165,6 +159,7 @@ static int __unget_char (xp_awk_t* awk, xp_cint_t c);
 static int __skip_spaces (xp_awk_t* awk);
 static int __skip_comment (xp_awk_t* awk);
 static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident);
+static int __assign_to_opcode (xp_awk_t* awk);
 
 struct __kwent 
 { 
@@ -227,13 +222,15 @@ do { \
 } while (0)
 
 #define GET_TOKEN(awk) \
-	do { if (__get_token(awk) == -1) return -1; } while(0)
+	do { if (__get_token(awk) == -1) return -1; } while (0)
 
 #define MATCH(awk,token_type) ((awk)->token.type == (token_type))
-#define CONSUME(awk) \
-	do { if (__get_token(awk) == -1) return XP_NULL; } while(0)
 
-#define PANIC(awk,code) do { (awk)->errnum = (code);  return XP_NULL; } while (0);
+#define CONSUME(awk) \
+	do { if (__get_token(awk) == -1) return XP_NULL; } while (0)
+
+#define PANIC(awk,code) \
+	do { (awk)->errnum = (code); return XP_NULL; } while (0)
 
 /* TODO: remove stdio.h */
 #ifndef __STAND_ALONE
@@ -1017,12 +1014,14 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 
 	xp_awk_nde_t* x, * y;
 	xp_awk_nde_ass_t* nde;
+	int opcode;
 
 	x = __parse_basic_expr (awk);
 	if (x == XP_NULL) return XP_NULL;
-	if (!MATCH(awk,TOKEN_ASSIGN)) return x;
 
-/*TODO: PLUS_ASSIGN, MINUS_ASSIGN, .... */
+	opcode = __assign_to_opcode (awk);
+	if (opcode == -1) return x;
+
 	xp_assert (x->next == XP_NULL);
 	if (x->type != XP_AWK_NDE_ARG &&
 	    x->type != XP_AWK_NDE_ARGIDX &&
@@ -1061,6 +1060,7 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 
 	nde->type = XP_AWK_NDE_ASS;
 	nde->next = XP_NULL;
+	nde->opcode = opcode;
 	nde->left = x;
 	nde->right = y;
 
@@ -2847,3 +2847,15 @@ static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident)
 	return TOKEN_IDENT;
 }
 
+static int __assign_to_opcode (xp_awk_t* awk)
+{
+	if (MATCH(awk,TOKEN_ASSIGN)) return XP_AWK_ASSOP_NONE;
+	if (MATCH(awk,TOKEN_PLUS_ASSIGN)) return XP_AWK_ASSOP_PLUS;
+	if (MATCH(awk,TOKEN_MINUS_ASSIGN)) return XP_AWK_ASSOP_MINUS;
+	if (MATCH(awk,TOKEN_MUL_ASSIGN)) return XP_AWK_ASSOP_MUL;
+	if (MATCH(awk,TOKEN_DIV_ASSIGN)) return XP_AWK_ASSOP_DIV;
+	if (MATCH(awk,TOKEN_MOD_ASSIGN)) return XP_AWK_ASSOP_MOD;
+	if (MATCH(awk,TOKEN_EXP_ASSIGN)) return XP_AWK_ASSOP_EXP;
+
+	return -1;
+}
