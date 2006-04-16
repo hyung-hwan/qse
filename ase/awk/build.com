@@ -17,7 +17,7 @@ $   goto compile_loop
 $
 $ compile_file:
 $   write sys$output "Compiling ''name'.c..."
-$   cc/define=__STAND_ALONE 'name'
+$   cc/define=XP_AWK_STAND_ALONE 'name'
 $   return
 $
 $ archive:

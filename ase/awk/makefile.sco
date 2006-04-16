@@ -3,7 +3,7 @@ OBJS = $(SRCS:.c=.o)
 OUT = libxpawk.a
 
 CC = cc
-CFLAGS = -Xc -a ansi -w3 -O2 -I../.. -D__STAND_ALONE
+CFLAGS = -Xc -a ansi -w3 -O2 -I../.. -DXP_AWK_STAND_ALONE
 
 all: $(OBJS)
 	ar cr $(OUT) $(OBJS)

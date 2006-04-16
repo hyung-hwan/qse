@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.22 2006-04-14 16:26:00 bacon Exp $
+ * $Id: awk.c,v 1.23 2006-04-16 04:31:38 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -7,19 +7,30 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __STAND_ALONE
+#define xp_printf xp_awk_printf
+extern int xp_awk_printf (const xp_char_t* fmt, ...); 
+#else
 #ifdef XP_CHAR_IS_MCHAR
 #define xp_printf printf
 #else
 #define xp_printf wprintf
 #endif
+#endif
 
+#ifdef __STAND_ALONE
+#define xp_strcmp xp_awk_strcmp
+extern int xp_awk_strcmp (const xp_char_t* s1, const xp_char_t* s2);
+#else
 #ifdef XP_CHAR_IS_MCHAR
 #define xp_strcmp strcmp
 #else
 #define xp_strcmp wcscmp
 #endif
+#endif
 
-static xp_ssize_t process_source (int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static xp_ssize_t process_source (
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
 	xp_char_t c;
 

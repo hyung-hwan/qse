@@ -1,10 +1,10 @@
 /*
- * $Id: sa.c,v 1.15 2006-04-06 16:25:37 bacon Exp $
+ * $Id: sa.c,v 1.16 2006-04-16 04:31:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
-#ifdef __STAND_ALONE
+#ifdef XP_AWK_STAND_ALONE
 
 static xp_char_t* __adjust_format (const xp_char_t* format);
 

@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.3 2006-04-14 10:56:42 bacon Exp $
+ * $Id: awk_i.h,v 1.4 2006-04-16 04:31:38 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -12,7 +12,7 @@
 #include <xp/awk/val.h>
 #include <xp/awk/run.h>
 
-#ifdef __STAND_ALONE
+#ifdef XP_AWK_STAND_ALONE
 #include <xp/awk/sa.h>
 #else
 #include <xp/bas/str.h>

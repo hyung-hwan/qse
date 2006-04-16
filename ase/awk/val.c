@@ -1,10 +1,10 @@
 /*
- * $Id: val.c,v 1.18 2006-04-14 10:56:42 bacon Exp $
+ * $Id: val.c,v 1.19 2006-04-16 04:31:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
-#ifndef __STAND_ALONE
+#ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/string.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
@@ -248,7 +248,7 @@ xp_bool_t xp_awk_boolval (xp_awk_val_t* val)
 		return ((xp_awk_val_str_t*)val)->len > 0;
 	}
 
-	xp_assert (!"should never happen");
+	xp_assert (!"should never happen - invalid vlaue type");
 	return xp_false;
 }
 
@@ -287,6 +287,7 @@ void xp_awk_printval (xp_awk_val_t* val)
 		break;
 
 	default:
-		xp_printf (XP_TEXT("**** INTERNAL ERROR - UNKNOWN VALUE TYPE ****\n"));
+		xp_assert (!"should never happen - invalid value type");
+		xp_printf (XP_TEXT("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }

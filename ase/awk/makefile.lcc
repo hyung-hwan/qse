@@ -3,7 +3,7 @@ OBJS = awk.obj err.obj tree.obj tab.obj map.obj parse.obj run.obj sa.obj val.obj
 OUT = xpawk.lib
 
 CC = lcc
-CFLAGS = -I../..  -A -ansic -libcdll  -D__STAND_ALONE
+CFLAGS = -I../..  -A -ansic -libcdll  -DXP_AWK_STAND_ALONE
 LDFLAGS =
 LIBS = 
 
