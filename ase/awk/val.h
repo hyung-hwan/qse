@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.15 2006-04-14 10:56:42 bacon Exp $
+ * $Id: val.h,v 1.16 2006-04-16 16:30:59 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -66,7 +66,7 @@ struct xp_awk_val_str_t
 struct xp_awk_val_map_t
 {
 	XP_AWK_VAL_HDR;
-	/* xp_awk_vap_t vap; */
+	xp_awk_map_t* map; 
 };
 
 #ifdef __cplusplus
