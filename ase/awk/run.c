@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.52 2006-04-16 13:30:19 bacon Exp $
+ * $Id: run.c,v 1.53 2006-04-16 16:30:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -749,6 +749,13 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_t* nde)
 static xp_awk_val_t* __do_assignment (
 	xp_awk_t* awk, xp_awk_nde_var_t* var, xp_awk_val_t* val)
 {
+	if (val->type == XP_AWK_VAL_MAP)
+	{
+/* TODO */
+		/* a map cannot be assigned to a variable */
+		PANIC (awk, XP_AWK_EMAPASS);
+	}
+
 	if (var->type == XP_AWK_NDE_NAMED) 
 	{
 		xp_awk_pair_t* pair;
@@ -804,7 +811,62 @@ static xp_awk_val_t* __do_assignment (
 	}
 	else if (var->type == XP_AWK_NDE_GLOBALIDX) 
 	{
-		/* TODO: */
+		xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+		xp_awk_val_t* v = STACK_GLOBAL(awk,tgt->id.idxa);
+		xp_awk_val_t* idx, *res;
+		xp_char_t* str;
+		xp_awk_map_val_t* mv;
+
+		if (v->type != XP_AWK_VAL_NIL ||
+		    v->type != XP_AWK_VAL_MAP) PANIC (awk, XP_AWK_ENOTINDEXABLE);
+		xp_assert (tgt->idx != XP_NULL);
+		idx = __eval_expression (awk, tgt->idx);
+		if (idx == XP_NULL) return XP_NULL;
+
+		xp_awk_refupval (idx);
+
+		str = __val_to_str (idx);
+		if (str == XP_NULL) 
+		{
+			/* TODO: how to tell memory error from conversion error? */
+			xp_awk_refdownval (awk, idx);
+			/*PANIC (awk, XP_AWK_ENOMEM);*/
+			PANIC (awk, XP_AWK_EINDEX);
+		}
+	
+		if (v->type == XP_AWK_VAL_NIL)
+		{
+			mv = xp_awk_makemap_val (awk);
+			if (mv == XP_NULL) 
+			{
+				xp_free (str);
+				xp_awk_refdownval (awk, idx);
+				PANIC (awk, XP_AWK_ENOMEM);
+			}
+
+			xp_awk_refdownval (awk, v);
+			STACK_GLOBAL(awk,var->id.idxa) = mv;
+			xp_awk_refupval (awk, mv);
+		}
+		else
+		{
+			mv = STACK_GLOBAL(awk,var->id.idxa);
+
+		}
+
+		// TODO: refdown old val....
+		if (xp_awk_map_put(awk, str, val) == XP_NULL)
+		{
+// TODO:............
+			xp_free (str);
+			xp_awk_refdownval (awk, idx);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		xp_free (str);
+		xp_awk_refdownval (awk, idx);
+
+		xp_awk_refupval (val);
 	}
 	else if (var->type == XP_AWK_NDE_LOCALIDX) 
 	{
@@ -2074,24 +2136,37 @@ static xp_awk_val_t* __eval_namedidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_globalidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	xp_awk_nde_idx_t* tgt = (xp_awk_nde_idx_t*)nde;
+	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
 	xp_awk_val_t* v = STACK_GLOBAL(awk,tgt->id.idxa);
-	xp_awk_val_t* idx;
+	xp_awk_val_t* idx, *res;
 	xp_char_t* str;
+	xp_awk_pair_t* pair;
 
 	if (v->type != XP_AWK_VAL_MAP) PANIC (awk, XP_AWK_ENOTINDEXABLE);
 
+	xp_assert (tgt->idx != XP_NULL);
 	idx = __eval_expression (awk, tgt->idx);
+	if (idx == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (idx);
+
 	str = __val_to_str (idx);
 	if (str == XP_NULL) 
 	{
 		/* TODO: how to tell memory error from conversion error? */
+		xp_awk_refdownval (awk, idx);
 		/*PANIC (awk, XP_AWK_ENOMEM);*/
 		PANIC (awk, XP_AWK_EINDEX);
 	}
 
+/* TODO: check this out........ */
+	pair = xp_awk_map_get (((xp_awk_val_map_t*)v)->map, str);
+	res = (pair == XP_NULL)? xp_awk_val_nil: (xp_awk_val_t*)pair->val;
+
 	xp_free (str);
-	return XP_NULL;
+	xp_awk_refdownval (awk, idx);
+
+	return res;
 }
 
 static xp_awk_val_t* __eval_localidx (xp_awk_t* awk, xp_awk_nde_t* nde)

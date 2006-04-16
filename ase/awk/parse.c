@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.82 2006-04-16 04:31:38 bacon Exp $
+ * $Id: parse.c,v 1.83 2006-04-16 16:30:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1531,6 +1531,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 				/*nde->id.name = XP_NULL;*/
 				nde->id.name = name_dup;
 				nde->id.idxa = idxa;
+				nde->idx = XP_NULL;
 
 				return (xp_awk_nde_t*)nde;
 			}
@@ -1544,6 +1545,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 				/*nde->id.name = XP_NULL;*/
 				nde->id.name = name_dup;
 				nde->id.idxa = idxa;
+				nde->idx = XP_NULL;
 
 				return (xp_awk_nde_t*)nde;
 			}
@@ -1557,6 +1559,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 				/*nde->id.name = XP_NULL;*/
 				nde->id.name = name_dup;
 				nde->id.idxa = idxa;
+				nde->idx = XP_NULL;
 
 				return (xp_awk_nde_t*)nde;
 			}
@@ -1567,6 +1570,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 				nde->next = XP_NULL;
 				nde->id.name = name_dup;
 				nde->id.idxa = (xp_size_t)-1;
+				nde->idx = XP_NULL;
 
 				return (xp_awk_nde_t*)nde;
 			}
@@ -1712,7 +1716,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 {
 	xp_awk_nde_t* idx;
-	xp_awk_nde_idx_t* nde;
+	xp_awk_nde_var_t* nde;
 	xp_size_t idxa;
 
 	if (__get_token(awk) == -1) return XP_NULL;
@@ -1732,7 +1736,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		return XP_NULL;
 	}
 
-	nde = (xp_awk_nde_idx_t*)xp_malloc(xp_sizeof(xp_awk_nde_idx_t));
+	nde = (xp_awk_nde_var_t*)xp_malloc(xp_sizeof(xp_awk_nde_var_t));
 	if (nde == XP_NULL) 
 	{
 		xp_awk_clrpt (idx);
@@ -1776,6 +1780,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		/*nde->id.name = XP_NULL;*/
 		nde->id.name = name;
 		nde->id.idxa = idxa;
+		nde->idx = idx;
 
 		return (xp_awk_nde_t*)nde;
 	}

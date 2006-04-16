@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.38 2006-04-16 04:31:38 bacon Exp $
+ * $Id: tree.c,v 1.39 2006-04-16 16:30:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -173,25 +173,29 @@ static int __print_expression (xp_awk_nde_t* nde)
 		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1);
 		xp_printf (XP_TEXT("__arg%lu"), 
 			(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
+		xp_assert (((xp_awk_nde_var_t*)nde)->idx == XP_NULL);
 		break;
 
 	case XP_AWK_NDE_ARGIDX:
 		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1);
 		xp_printf (XP_TEXT("__arg%lu["), 
-			(unsigned long)((xp_awk_nde_idx_t*)nde)->id.idxa);
-		__print_expression (((xp_awk_nde_idx_t*)nde)->idx);
+			(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
+		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
+		__print_expression (((xp_awk_nde_var_t*)nde)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
 	case XP_AWK_NDE_NAMED:
 		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa == (xp_size_t)-1);
 		xp_printf (XP_TEXT("%s"), ((xp_awk_nde_var_t*)nde)->id.name);
+		xp_assert (((xp_awk_nde_var_t*)nde)->idx == XP_NULL);
 		break;
 
 	case XP_AWK_NDE_NAMEDIDX:
-		xp_assert (((xp_awk_nde_idx_t*)nde)->id.idxa == (xp_size_t)-1);
-		xp_printf (XP_TEXT("%s["), ((xp_awk_nde_idx_t*)nde)->id.name);
-		__print_expression (((xp_awk_nde_idx_t*)nde)->idx);
+		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa == (xp_size_t)-1);
+		xp_printf (XP_TEXT("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
+		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
+		__print_expression (((xp_awk_nde_var_t*)nde)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
@@ -205,19 +209,21 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_printf (XP_TEXT("%s"), ((xp_awk_nde_var_t*)nde)->id.name);
 		}
+		xp_assert (((xp_awk_nde_var_t*)nde)->idx == XP_NULL);
 		break;
 
 	case XP_AWK_NDE_GLOBALIDX:
-		if (((xp_awk_nde_idx_t*)nde)->id.idxa != (xp_size_t)-1) 
+		if (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1) 
 		{
 			xp_printf (XP_TEXT("__global%lu["), 
-				(unsigned long)((xp_awk_nde_idx_t*)nde)->id.idxa);
+				(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
 		}
 		else 
 		{
-			xp_printf (XP_TEXT("%s["), ((xp_awk_nde_idx_t*)nde)->id.name);
+			xp_printf (XP_TEXT("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
 		}
-		__print_expression (((xp_awk_nde_idx_t*)nde)->idx);
+		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
+		__print_expression (((xp_awk_nde_var_t*)nde)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
@@ -231,19 +237,21 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_printf (XP_TEXT("%s"), ((xp_awk_nde_var_t*)nde)->id.name);
 		}
+		xp_assert (((xp_awk_nde_var_t*)nde)->idx == XP_NULL);
 		break;
 
 	case XP_AWK_NDE_LOCALIDX:
-		if (((xp_awk_nde_idx_t*)nde)->id.idxa != (xp_size_t)-1) 
+		if (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1) 
 		{
 			xp_printf (XP_TEXT("__local%lu["), 
-				(unsigned long)((xp_awk_nde_idx_t*)nde)->id.idxa);
+				(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
 		}
 		else 
 		{
-			xp_printf (XP_TEXT("%s["), ((xp_awk_nde_idx_t*)nde)->id.name);
+			xp_printf (XP_TEXT("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
 		}
-		__print_expression (((xp_awk_nde_idx_t*)nde)->idx);
+		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
+		__print_expression (((xp_awk_nde_var_t*)nde)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
@@ -597,23 +605,25 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 			break;
 
 		case XP_AWK_NDE_NAMED:
-			xp_assert (((xp_awk_nde_idx_t*)p)->id.name != XP_NULL);
+			xp_assert (((xp_awk_nde_var_t*)p)->id.name != XP_NULL);
 		case XP_AWK_NDE_GLOBAL:
 		case XP_AWK_NDE_LOCAL:
 		case XP_AWK_NDE_ARG:
+			xp_assert (((xp_awk_nde_var_t*)p)->idx == XP_NULL);
 			if (((xp_awk_nde_var_t*)p)->id.name != XP_NULL)
 				xp_free (((xp_awk_nde_var_t*)p)->id.name);
 			xp_free (p);
 			break;
 
 		case XP_AWK_NDE_NAMEDIDX:
-			xp_assert (((xp_awk_nde_idx_t*)p)->id.name != XP_NULL);
+			xp_assert (((xp_awk_nde_var_t*)p)->id.name != XP_NULL);
 		case XP_AWK_NDE_GLOBALIDX:
 		case XP_AWK_NDE_LOCALIDX:
 		case XP_AWK_NDE_ARGIDX:
-			xp_awk_clrpt (((xp_awk_nde_idx_t*)p)->idx);
-			if (((xp_awk_nde_idx_t*)p)->id.name != XP_NULL)
-				xp_free (((xp_awk_nde_idx_t*)p)->id.name);
+			xp_assert (((xp_awk_nde_var_t*)p)->idx != XP_NULL);
+			xp_awk_clrpt (((xp_awk_nde_var_t*)p)->idx);
+			if (((xp_awk_nde_var_t*)p)->id.name != XP_NULL)
+				xp_free (((xp_awk_nde_var_t*)p)->id.name);
 			xp_free (p);
 			break;
 
