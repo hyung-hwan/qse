@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.49 2006-04-16 04:31:38 bacon Exp $
+ * $Id: awk.h,v 1.50 2006-04-16 13:30:18 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -41,44 +41,46 @@ enum
 /* error code */
 enum
 {
-	XP_AWK_ENOERR,      /* no error */
-	XP_AWK_ENOMEM,      /* out of memory */
+	XP_AWK_ENOERR,        /* no error */
+	XP_AWK_ENOMEM,        /* out of memory */
 
 	XP_AWK_ESRCOP,
 	XP_AWK_ESRCCL,
-	XP_AWK_ESRCDT,      /* error in reading source */
+	XP_AWK_ESRCDT,        /* error in reading source */
 
-	XP_AWK_ELXCHR,      /* lexer came accross an wrong character */
-	XP_AWK_ELXUNG,      /* lexer failed to unget a character */
+	XP_AWK_ELXCHR,        /* lexer came accross an wrong character */
+	XP_AWK_ELXUNG,        /* lexer failed to unget a character */
 
-	XP_AWK_EENDSRC,     /* unexpected end of source */
-	XP_AWK_EENDSTR,     /* unexpected end of a string */
-	XP_AWK_ELBRACE,     /* left brace expected */
-	XP_AWK_ELPAREN,     /* left parenthesis expected */
-	XP_AWK_ERPAREN,     /* right parenthesis expected */
-	XP_AWK_ERBRACK,     /* right bracket expected */
-	XP_AWK_ECOMMA,      /* comma expected */
-	XP_AWK_ESEMICOLON,  /* semicolon expected */
-	XP_AWK_ECOLON,      /* colon expected */
-	XP_AWK_EEXPRESSION, /* expression expected */
+	XP_AWK_EENDSRC,       /* unexpected end of source */
+	XP_AWK_EENDSTR,       /* unexpected end of a string */
+	XP_AWK_ELBRACE,       /* left brace expected */
+	XP_AWK_ELPAREN,       /* left parenthesis expected */
+	XP_AWK_ERPAREN,       /* right parenthesis expected */
+	XP_AWK_ERBRACK,       /* right bracket expected */
+	XP_AWK_ECOMMA,        /* comma expected */
+	XP_AWK_ESEMICOLON,    /* semicolon expected */
+	XP_AWK_ECOLON,        /* colon expected */
+	XP_AWK_EEXPRESSION,   /* expression expected */
 
-	XP_AWK_EWHILE,      /* keyword 'while' is expected */
-	XP_AWK_EASSIGNMENT, /* assignment statement expected */
-	XP_AWK_EIDENT,      /* identifier expected */
-	XP_AWK_EDUPBEGIN,   /* duplicate BEGIN */
-	XP_AWK_EDUPEND,     /* duplicate END */
-	XP_AWK_EDUPFUNC,    /* duplicate function name */
-	XP_AWK_EDUPPARAM,   /* duplicate parameter name */
-	XP_AWK_EDUPVAR,     /* duplicate variable name */
-	XP_AWK_EDUPNAME,    /* duplicate name - function, variable, etc */
-	XP_AWK_EUNDEF,      /* undefined identifier */
-	XP_AWK_ELVALUE,     /* l-value required */
+	XP_AWK_EWHILE,        /* keyword 'while' is expected */
+	XP_AWK_EASSIGNMENT,   /* assignment statement expected */
+	XP_AWK_EIDENT,        /* identifier expected */
+	XP_AWK_EDUPBEGIN,     /* duplicate BEGIN */
+	XP_AWK_EDUPEND,       /* duplicate END */
+	XP_AWK_EDUPFUNC,      /* duplicate function name */
+	XP_AWK_EDUPPARAM,     /* duplicate parameter name */
+	XP_AWK_EDUPVAR,       /* duplicate variable name */
+	XP_AWK_EDUPNAME,      /* duplicate name - function, variable, etc */
+	XP_AWK_EUNDEF,        /* undefined identifier */
+	XP_AWK_ELVALUE,       /* l-value required */
 
 	/* run time error */
-	XP_AWK_EDIVBYZERO,  /* divide by zero */
-	XP_AWK_EOPERAND,    /* invalid operand */
-	XP_AWK_ENOSUCHFUNC, /* no such function */
-	XP_AWK_EINTERNAL    /* internal error */
+	XP_AWK_EDIVBYZERO,    /* divide by zero */
+	XP_AWK_EOPERAND,      /* invalid operand */
+	XP_AWK_ENOSUCHFUNC,   /* no such function */
+	XP_AWK_ENOTINDEXABLE, /* not indexable value */
+	XP_AWK_EINDEX,        /* wrong index */
+	XP_AWK_EINTERNAL      /* internal error */
 };
 
 #ifdef __cplusplus

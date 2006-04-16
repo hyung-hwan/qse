@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.51 2006-04-16 06:16:42 bacon Exp $
+ * $Id: run.c,v 1.52 2006-04-16 13:30:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -116,7 +116,7 @@ static void __raw_pop (xp_awk_t* awk);
 static void __raw_pop_times (xp_awk_t* awk, xp_size_t times);
 
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
-static int __str_to_num (xp_awk_val_str_t* str, xp_long_t* l, xp_real_t* r);
+static xp_char_t* __val_to_str (xp_awk_val_t* v);
 
 typedef xp_awk_val_t* (*binop_func_t) (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
@@ -1280,20 +1280,23 @@ static xp_awk_val_t* __eval_binop_le (
 static xp_awk_val_t* __eval_binop_lshift (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	xp_awk_val_t* res = XP_NULL;
+	int n1, n2, n3;
+	xp_long_t l1, l2;
+	xp_real_t r1, r2;
+	xp_awk_val_t* res;
 
-	if (left->type == XP_AWK_VAL_INT &&
-	    right->type == XP_AWK_VAL_INT)
+	n1 = __val_to_num (left, &l1, &r1);
+	n2 = __val_to_num (right, &l2, &r2);
+
+	if (n1 == -1 || n2 == -1) PANIC (awk, XP_AWK_EOPERAND);
+
+	n3 = n1 + (n2 << 1);
+	if (n3 == 0)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val <<
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
+		if  (l2 == 0) PANIC (awk, XP_AWK_EDIVBYZERO);
+		res = xp_awk_makeintval (awk, (xp_long_t)l1 << (xp_long_t)l2);
 	}
-	else
-	{
-		PANIC (awk, XP_AWK_EOPERAND);
-	}
+	else PANIC (awk, XP_AWK_EOPERAND);
 
 	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
@@ -1302,20 +1305,23 @@ static xp_awk_val_t* __eval_binop_lshift (
 static xp_awk_val_t* __eval_binop_rshift (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	xp_awk_val_t* res = XP_NULL;
+	int n1, n2, n3;
+	xp_long_t l1, l2;
+	xp_real_t r1, r2;
+	xp_awk_val_t* res;
 
-	if (left->type == XP_AWK_VAL_INT &&
-	    right->type == XP_AWK_VAL_INT)
+	n1 = __val_to_num (left, &l1, &r1);
+	n2 = __val_to_num (right, &l2, &r2);
+
+	if (n1 == -1 || n2 == -1) PANIC (awk, XP_AWK_EOPERAND);
+
+	n3 = n1 + (n2 << 1);
+	if (n3 == 0)
 	{
-		xp_long_t r = 
-			((xp_awk_val_int_t*)left)->val >>
-			((xp_awk_val_int_t*)right)->val;
-		res = xp_awk_makeintval (awk, r);
+		if  (l2 == 0) PANIC (awk, XP_AWK_EDIVBYZERO);
+		res = xp_awk_makeintval (awk, (xp_long_t)l1 >> (xp_long_t)l2);
 	}
-	else
-	{
-		PANIC (awk, XP_AWK_EOPERAND);
-	}
+	else PANIC (awk, XP_AWK_EOPERAND);
 
 	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
@@ -1341,23 +1347,11 @@ static xp_awk_val_t* __eval_binop_plus (
 	1   1   = 3
 	*/
 	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
-	{
-		res = xp_awk_makeintval (awk, (xp_long_t)l1 + (xp_long_t)l2);
-	}
-	else if (n3 == 1)
-	{
-		res = xp_awk_makerealval (awk, (xp_real_t)r1 + (xp_real_t)l2);
-	}
-	else if (n3 == 2)
-	{
-		res = xp_awk_makerealval (awk, (xp_real_t)l1 + (xp_real_t)r2);
-	}
-	else
-	{
-		xp_assert (n3 == 3);
-		res = xp_awk_makerealval (awk, (xp_real_t)r1 + (xp_real_t)r2);
-	}
+	xp_assert (n3 >= 0 && n3 <= 3);
+	res = (n3 == 0)? xp_awk_makeintval(awk,(xp_long_t)l1+(xp_long_t)l2):
+	      (n3 == 1)? xp_awk_makerealval(awk,(xp_real_t)r1+(xp_real_t)l2):
+	      (n3 == 2)? xp_awk_makerealval(awk,(xp_real_t)l1+(xp_real_t)r2):
+	                 xp_awk_makerealval(awk,(xp_real_t)r1+(xp_real_t)r2);
 
 	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
@@ -1377,23 +1371,11 @@ static xp_awk_val_t* __eval_binop_minus (
 	if (n1 == -1 || n2 == -1) PANIC (awk, XP_AWK_EOPERAND);
 
 	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
-	{
-		res = xp_awk_makeintval (awk, (xp_long_t)l1 - (xp_long_t)l2);
-	}
-	else if (n3 == 1)
-	{
-		res = xp_awk_makerealval (awk, (xp_real_t)r1 - (xp_real_t)l2);
-	}
-	else if (n3 == 2)
-	{
-		res = xp_awk_makerealval (awk, (xp_real_t)l1 - (xp_real_t)r2);
-	}
-	else
-	{
-		xp_assert (n3 == 3);
-		res = xp_awk_makerealval (awk, (xp_real_t)r1 - (xp_real_t)r2);
-	}
+	xp_assert (n3 >= 0 && n3 <= 3);
+	res = (n3 == 0)? xp_awk_makeintval(awk,(xp_long_t)l1-(xp_long_t)l2):
+	      (n3 == 1)? xp_awk_makerealval(awk,(xp_real_t)r1-(xp_real_t)l2):
+	      (n3 == 2)? xp_awk_makerealval(awk,(xp_real_t)l1-(xp_real_t)r2):
+	                 xp_awk_makerealval(awk,(xp_real_t)r1-(xp_real_t)r2);
 
 	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
@@ -1413,23 +1395,11 @@ static xp_awk_val_t* __eval_binop_mul (
 	if (n1 == -1 || n2 == -1) PANIC (awk, XP_AWK_EOPERAND);
 
 	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
-	{
-		res = xp_awk_makeintval (awk, (xp_long_t)l1 * (xp_long_t)l2);
-	}
-	else if (n3 == 1)
-	{
-		res = xp_awk_makerealval (awk, (xp_real_t)r1 * (xp_real_t)l2);
-	}
-	else if (n3 == 2)
-	{
-		res = xp_awk_makerealval (awk, (xp_real_t)l1 * (xp_real_t)r2);
-	}
-	else
-	{
-		xp_assert (n3 == 3);
-		res = xp_awk_makerealval (awk, (xp_real_t)r1 * (xp_real_t)r2);
-	}
+	xp_assert (n3 >= 0 && n3 <= 3);
+	res = (n3 == 0)? xp_awk_makeintval(awk,(xp_long_t)l1*(xp_long_t)l2):
+	      (n3 == 1)? xp_awk_makerealval(awk,(xp_real_t)r1*(xp_real_t)l2):
+	      (n3 == 2)? xp_awk_makerealval(awk,(xp_real_t)l1*(xp_real_t)r2):
+	                 xp_awk_makerealval(awk,(xp_real_t)r1*(xp_real_t)r2);
 
 	if (res == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	return res;
@@ -1661,7 +1631,7 @@ static xp_awk_val_t* __eval_incpre (xp_awk_t* awk, xp_awk_nde_t* nde)
 	    exp->left->type != XP_AWK_NDE_NAMEDIDX &&
 	    exp->left->type != XP_AWK_NDE_GLOBALIDX &&
 	    exp->left->type != XP_AWK_NDE_LOCALIDX &&
-	    exp->left->type != XP_AWK_NDE_ARGIDX)*/
+	    exp->left->type != XP_AWK_NDE_ARGIDX) */
 	if (exp->left->type < XP_AWK_NDE_NAMED ||
 	    exp->left->type > XP_AWK_NDE_ARGIDX)
 	{
@@ -2104,7 +2074,23 @@ static xp_awk_val_t* __eval_namedidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_globalidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	/* TODO: */
+	xp_awk_nde_idx_t* tgt = (xp_awk_nde_idx_t*)nde;
+	xp_awk_val_t* v = STACK_GLOBAL(awk,tgt->id.idxa);
+	xp_awk_val_t* idx;
+	xp_char_t* str;
+
+	if (v->type != XP_AWK_VAL_MAP) PANIC (awk, XP_AWK_ENOTINDEXABLE);
+
+	idx = __eval_expression (awk, tgt->idx);
+	str = __val_to_str (idx);
+	if (str == XP_NULL) 
+	{
+		/* TODO: how to tell memory error from conversion error? */
+		/*PANIC (awk, XP_AWK_ENOMEM);*/
+		PANIC (awk, XP_AWK_EINDEX);
+	}
+
+	xp_free (str);
 	return XP_NULL;
 }
 
@@ -2198,24 +2184,17 @@ static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
 		return 0; /* long */
 	}
 
-	xp_assert (!"should never happen - invalid value type");
 	return -1; /* error */
 }
 
-static int __str_to_num (xp_awk_val_str_t* str, xp_long_t* l, xp_real_t* r)
+static xp_char_t* __val_to_str (xp_awk_val_t* v)
 {
-	const xp_char_t* endptr;
-
-	/* don't care about str->len */
-	*l = xp_awk_strtolong (str->buf, 0, &endptr);
-
-	if (*endptr == XP_CHAR('.') ||
-	    *endptr == XP_CHAR('E') ||
-	    *endptr == XP_CHAR('e'))
+	/*TODO:*/
+	if (v->type == XP_AWK_VAL_STR) 
 	{
-		*r = xp_awk_strtoreal (((xp_awk_val_str_t*)str)->buf);
-		return 1; /* real */
+		return xp_strxdup (
+			((xp_awk_val_str_t*)v)->buf, 
+			((xp_awk_val_str_t*)v)->len);
 	}
-
-	return 0; /* long */
+	return XP_NULL;
 }
