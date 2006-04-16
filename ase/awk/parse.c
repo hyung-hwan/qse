@@ -1,10 +1,10 @@
 /*
- * $Id: parse.c,v 1.81 2006-04-14 16:26:00 bacon Exp $
+ * $Id: parse.c,v 1.82 2006-04-16 04:31:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
-#ifndef __STAND_ALONE
+#ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/memory.h>
 #include <xp/bas/ctype.h>
 #include <xp/bas/string.h>
@@ -58,6 +58,7 @@ enum
 
 	TOKEN_DOLLAR,
 	TOKEN_COMMA,
+	TOKEN_PERIOD,
 	TOKEN_SEMICOLON,
 	TOKEN_COLON,
 	TOKEN_QUEST,
@@ -196,6 +197,34 @@ static struct __kwent __kwtab[] =
 	{ XP_NULL,             0,              0 }
 };
 
+/* TODO:
+static struct __kwent __bvtab[] =
+{
+	{ XP_TEXT("ARGC"),        TOKEN_ARGC,         0 },
+	{ XP_TEXT("ARGIND"),      TOKEN_ARGIND,       0 },
+	{ XP_TEXT("ARGV"),        TOKEN_ARGV,         0 },
+	{ XP_TEXT("CONVFMT"),     TOKEN_CONVFMT,      0 },
+	{ XP_TEXT("FIELDWIDTHS"), TOKEN_FIELDWIDTHS,  0 },
+	{ XP_TEXT("ENVIRON"),     TOKEN_ENVIRON,      0 },
+	{ XP_TEXT("ERRNO"),       TOKEN_ERRNO,        0 },
+	{ XP_TEXT("FILENAME"),    TOKEN_FILENAME,     0 },
+	{ XP_TEXT("FNR"),         TOKEN_FNR,          0 },
+	{ XP_TEXT("FS"),          TOKEN_FS,           0 },
+	{ XP_TEXT("IGNORECASE"),  TOKEN_IGNORECASE,   0 },
+	{ XP_TEXT("NF"),          TOKEN_NF,           0 },
+	{ XP_TEXT("NR"),          TOKEN_NR,           0 },
+	{ XP_TEXT("OFMT"),        TOKEN_OFMT,         0 },
+	{ XP_TEXT("OFS"),         TOKEN_OFS,          0 },
+	{ XP_TEXT("ORS"),         TOKEN_ORS,          0 },
+	{ XP_TEXT("RS"),          TOKEN_RS,           0 },
+	{ XP_TEXT("RT"),          TOKEN_RT,           0 },
+	{ XP_TEXT("RSTART"),      TOKEN_RSTART,       0 },
+	{ XP_TEXT("RLENGTH"),     TOKEN_RLENGTH,      0 },
+	{ XP_TEXT("SUBSEP"),      TOKEN_SUBSEP,       0 },
+	{ XP_NULL,                0,                  0 }
+};
+*/
+
 #define GET_CHAR(awk) \
 	do { if (__get_char(awk) == -1) return -1; } while(0)
 
@@ -233,7 +262,7 @@ do { \
 	do { (awk)->errnum = (code); return XP_NULL; } while (0)
 
 /* TODO: remove stdio.h */
-#ifndef __STAND_ALONE
+#ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/stdio.h>
 #endif
 static int __dump_func (xp_awk_pair_t* pair)
@@ -1557,7 +1586,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->type = XP_AWK_NDE_INT;
 		nde->next = XP_NULL;
-		nde->val = xp_awk_strtolong (XP_STR_BUF(&awk->token.name), 0);
+		nde->val = xp_awk_strtolong (
+			XP_STR_BUF(&awk->token.name), 0, XP_NULL);
 
 		xp_assert (
 			XP_STR_LEN(&awk->token.name) ==
@@ -2569,6 +2599,12 @@ static int __get_token (xp_awk_t* awk)
 	else if (c == XP_CHAR(',')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_COMMA);
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	else if (c == XP_CHAR('.'))
+	{
+		SET_TOKEN_TYPE (awk, TOKEN_PERIOD);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}

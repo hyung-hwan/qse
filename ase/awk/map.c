@@ -1,10 +1,10 @@
 /*
- * $Id: map.c,v 1.10 2006-04-14 10:56:42 bacon Exp $
+ * $Id: map.c,v 1.11 2006-04-16 04:31:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
-#ifndef __STAND_ALONE
+#ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/memory.h>
 #include <xp/bas/string.h>
 #include <xp/bas/assert.h>

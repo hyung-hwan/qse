@@ -1,10 +1,10 @@
 /*
- * $Id: tree.c,v 1.37 2006-04-14 16:26:00 bacon Exp $
+ * $Id: tree.c,v 1.38 2006-04-16 04:31:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
-#ifndef __STAND_ALONE
+#ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 #include <xp/bas/stdio.h>
@@ -630,7 +630,9 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 			break;
 
 		default:
-			xp_assert (XP_TEXT("shoud not happen") == XP_TEXT(" here"));
+			xp_assert (!"should never happen - invalid node type");
+			xp_free (p);
+			break;
 		}
 
 		p = next;

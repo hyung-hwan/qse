@@ -1,15 +1,16 @@
 /*
- * $Id: misc.c,v 1.4 2006-04-10 14:53:48 bacon Exp $
+ * $Id: misc.c,v 1.5 2006-04-16 04:31:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
-#ifndef __STAND_ALONE
+#ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/ctype.h>
 #include <xp/bas/assert.h>
 #endif
 
-xp_long_t xp_awk_strtolong (const xp_char_t* str, int base)
+xp_long_t xp_awk_strtolong (
+	const xp_char_t* str, int base, const xp_char_t** endptr)
 {
 	xp_long_t n = 0;
 	const xp_char_t* p;
@@ -74,6 +75,7 @@ xp_long_t xp_awk_strtolong (const xp_char_t* str, int base)
 		p++;
 	}
 
+	if (endptr != XP_NULL) *endptr = p;
 	return (negative)? -n: n;
 }
 

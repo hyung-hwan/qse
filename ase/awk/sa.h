@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.21 2006-04-10 14:53:48 bacon Exp $
+ * $Id: sa.h,v 1.22 2006-04-16 04:31:38 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -9,7 +9,7 @@
 #error Never include this file directly. Include <xp/awk/awk.h> instead
 #endif
 
-#ifdef __STAND_ALONE 
+#ifdef XP_AWK_STAND_ALONE 
 
 #if !defined(XP_CHAR_IS_MCHAR) && !defined(XP_CHAR_IS_WCHAR)
 #error Neither XP_CHAR_IS_MCHAR nor XP_CHAR_IS_WCHAR is defined.

@@ -1,5 +1,5 @@
 CC = cc
-CFLAGS = -Xc -a ansi -O2 -I../../..
+CFLAGS = -Xc -a ansi -O2 -I../../.. -D__STAND_ALONE
 LDFLAGS = -L../../bas -L../../awk
 LIBS = -lxpawk -lm
 

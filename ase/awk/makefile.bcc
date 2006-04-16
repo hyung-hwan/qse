@@ -3,7 +3,7 @@ OBJS = $(SRCS:.c=.obj)
 OUT = xpawk.lib
 
 CC = bcc32
-CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. -D__STAND_ALONE
+CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. -DXP_AWK_STAND_ALONE
 
 all: $(OBJS)
 	tlib $(OUT) @&&!

@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.6 2006-04-14 10:56:42 bacon Exp $
+ * $Id: tab.h,v 1.7 2006-04-16 04:31:38 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
@@ -9,7 +9,7 @@
 #error Never include this file directly. Include <xp/awk/awk.h> instead
 #endif
 
-#ifdef __STAND_ALONE
+#ifdef XP_AWK_STAND_ALONE
 #include <xp/awk/sa.h>
 #else
 #include <xp/types.h>
