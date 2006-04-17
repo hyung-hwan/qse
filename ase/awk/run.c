@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.53 2006-04-16 16:30:59 bacon Exp $
+ * $Id: run.c,v 1.54 2006-04-17 16:12:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -47,6 +47,8 @@ static int __run_exit_statement (xp_awk_t* awk, xp_awk_nde_exit_t* nde);
 static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __do_assignment (
+	xp_awk_t* awk, xp_awk_nde_var_t* var, xp_awk_val_t* val);
+static xp_awk_val_t* __do_assignment_globalidx (
 	xp_awk_t* awk, xp_awk_nde_var_t* var, xp_awk_val_t* val);
 
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_t* nde);
@@ -749,11 +751,11 @@ static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_t* nde)
 static xp_awk_val_t* __do_assignment (
 	xp_awk_t* awk, xp_awk_nde_var_t* var, xp_awk_val_t* val)
 {
+
 	if (val->type == XP_AWK_VAL_MAP)
 	{
-/* TODO */
 		/* a map cannot be assigned to a variable */
-		PANIC (awk, XP_AWK_EMAPASS);
+		PANIC (awk, XP_AWK_ENOTASSIGNABLE);
 	}
 
 	if (var->type == XP_AWK_NDE_NAMED) 
@@ -811,62 +813,8 @@ static xp_awk_val_t* __do_assignment (
 	}
 	else if (var->type == XP_AWK_NDE_GLOBALIDX) 
 	{
-		xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-		xp_awk_val_t* v = STACK_GLOBAL(awk,tgt->id.idxa);
-		xp_awk_val_t* idx, *res;
-		xp_char_t* str;
-		xp_awk_map_val_t* mv;
-
-		if (v->type != XP_AWK_VAL_NIL ||
-		    v->type != XP_AWK_VAL_MAP) PANIC (awk, XP_AWK_ENOTINDEXABLE);
-		xp_assert (tgt->idx != XP_NULL);
-		idx = __eval_expression (awk, tgt->idx);
-		if (idx == XP_NULL) return XP_NULL;
-
-		xp_awk_refupval (idx);
-
-		str = __val_to_str (idx);
-		if (str == XP_NULL) 
-		{
-			/* TODO: how to tell memory error from conversion error? */
-			xp_awk_refdownval (awk, idx);
-			/*PANIC (awk, XP_AWK_ENOMEM);*/
-			PANIC (awk, XP_AWK_EINDEX);
-		}
-	
-		if (v->type == XP_AWK_VAL_NIL)
-		{
-			mv = xp_awk_makemap_val (awk);
-			if (mv == XP_NULL) 
-			{
-				xp_free (str);
-				xp_awk_refdownval (awk, idx);
-				PANIC (awk, XP_AWK_ENOMEM);
-			}
-
-			xp_awk_refdownval (awk, v);
-			STACK_GLOBAL(awk,var->id.idxa) = mv;
-			xp_awk_refupval (awk, mv);
-		}
-		else
-		{
-			mv = STACK_GLOBAL(awk,var->id.idxa);
-
-		}
-
-		// TODO: refdown old val....
-		if (xp_awk_map_put(awk, str, val) == XP_NULL)
-		{
-// TODO:............
-			xp_free (str);
-			xp_awk_refdownval (awk, idx);
-			PANIC (awk, XP_AWK_ENOMEM);
-		}
-
-		xp_free (str);
-		xp_awk_refdownval (awk, idx);
-
-		xp_awk_refupval (val);
+		if (__do_assignment_globalidx(awk,var,val) == XP_NULL)
+			return XP_NULL;
 	}
 	else if (var->type == XP_AWK_NDE_LOCALIDX) 
 	{
@@ -882,6 +830,84 @@ static xp_awk_val_t* __do_assignment (
 		PANIC (awk, XP_AWK_EINTERNAL);
 	}
 
+	return val;
+}
+
+static xp_awk_val_t* __do_assignment_globalidx (
+	xp_awk_t* awk, xp_awk_nde_var_t* var, xp_awk_val_t* val)
+{
+	xp_awk_val_map_t* map;
+	xp_awk_nde_t* nde;
+	xp_char_t* str;
+	xp_awk_pair_t* pair;
+
+	xp_assert (var->type == XP_AWK_NDE_GLOBALIDX && var->idx != XP_NULL);
+
+	map = (xp_awk_val_map_t*)STACK_GLOBAL(awk,var->id.idxa);
+	if (map->type == XP_AWK_VAL_NIL)
+	{
+		/* the map is not initialized yet */
+		xp_awk_val_t* tmp;
+
+		tmp = xp_awk_makemapval (awk);
+		if (tmp == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+
+		xp_awk_refdownval (awk, (xp_awk_val_t*)map);
+		STACK_GLOBAL(awk,var->id.idxa) = tmp;
+		xp_awk_refupval (tmp);
+
+		map = (xp_awk_val_map_t*) tmp;
+	}
+	else if (map->type != XP_AWK_VAL_MAP)
+	{
+		PANIC (awk, XP_AWK_ENOTINDEXABLE);
+	}
+
+	/* compose a map index */
+	nde = var->idx;
+/* TODO: while (nde != XP_NULL)   */
+	{ 
+		xp_awk_val_t* tmp;
+
+		tmp = __eval_expression (awk, nde);
+		if (tmp == XP_NULL) 
+		{
+			/* TODO: clearing previous idx values... */
+			return XP_NULL;
+		}
+
+		xp_awk_refupval (tmp);
+
+		str = __val_to_str (tmp);
+		if (str == XP_NULL) 
+		{
+			/* TODO: how to tell memory from conversion error? */
+			xp_awk_refdownval (awk, tmp);
+			/*PANIC (awk, XP_AWK_ENOMEM);*/
+			PANIC (awk, XP_AWK_EINDEX);
+		}
+
+		xp_awk_refdownval (awk, tmp);
+		/* TODO: nde = nde->next; */
+	}
+
+xp_printf (XP_TEXT("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map->ref, map->type);
+	pair = xp_awk_map_get (map->map, str);
+	if (xp_awk_map_put(map->map, str, val) == XP_NULL)
+	{
+		xp_free (str);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+	xp_free (str);
+	if (pair != XP_NULL) 
+	{
+		/* decrease the reference count for the old value
+		 * only when the assignment is successful */
+		xp_awk_refdownval (awk, pair->val);
+	}
+
+	xp_awk_refupval (val);
 	return val;
 }
 
