@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.16 2006-04-16 16:30:59 bacon Exp $
+ * $Id: val.h,v 1.17 2006-04-17 16:12:02 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -26,8 +26,13 @@ typedef struct xp_awk_val_str_t  xp_awk_val_str_t;
 typedef struct xp_awk_val_map_t  xp_awk_val_map_t;
 
 #define XP_AWK_VAL_HDR \
-	int type: 3; \
-	int ref: 29
+	unsigned int type: 3; \
+	unsigned int ref: 28
+/*
+#define XP_AWK_VAL_HDR \
+	int type: 4; \
+	int ref: 27
+*/
 
 struct xp_awk_val_t
 {
@@ -81,7 +86,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len);
 xp_awk_val_t* xp_awk_makestrval2 (
 	const xp_char_t* str1, xp_size_t len1, 
 	const xp_char_t* str2, xp_size_t len2);
-/*xp_awk_val_t* xp_awk_makemapval ();*/
+xp_awk_val_t* xp_awk_makemapval (xp_awk_t* awk);
 
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val);
 void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val);

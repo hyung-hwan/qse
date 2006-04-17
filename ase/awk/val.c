@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.19 2006-04-16 04:31:38 bacon Exp $
+ * $Id: val.c,v 1.20 2006-04-17 16:12:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -89,7 +89,8 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 	val->ref = 0;
 	val->len = len;
 	val->buf = xp_strxdup (str, len);
-	if (val->buf == XP_NULL) {
+	if (val->buf == XP_NULL) 
+	{
 		xp_free (val);
 		return XP_NULL;
 	}
@@ -110,7 +111,32 @@ xp_awk_val_t* xp_awk_makestrval2 (
 	val->ref = 0;
 	val->len = len1 + len2;
 	val->buf = xp_strxdup2 (str1, len1, str2, len2);
-	if (val->buf == XP_NULL) {
+	if (val->buf == XP_NULL) 
+	{
+		xp_free (val);
+		return XP_NULL;
+	}
+
+	return (xp_awk_val_t*)val;
+}
+
+static void __free_map_val (xp_awk_t* awk, void* v)
+{
+	xp_awk_refdownval (awk, v);
+}
+
+xp_awk_val_t* xp_awk_makemapval (xp_awk_t* awk)
+{
+	xp_awk_val_map_t* val;
+
+	val = (xp_awk_val_map_t*)xp_malloc(xp_sizeof(xp_awk_val_map_t));
+	if (val == XP_NULL) return XP_NULL;
+
+	val->type = XP_AWK_VAL_MAP;
+	val->ref = 0;
+	val->map = xp_awk_map_open (XP_NULL, awk, 256, __free_map_val);
+	if (val->map == XP_NULL)
+	{
 		xp_free (val);
 		return XP_NULL;
 	}
@@ -133,7 +159,7 @@ void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val)
 	{
 	case XP_AWK_VAL_NIL:
 		xp_free (val);
-		break;
+		return;
 
 	case XP_AWK_VAL_INT:
 		if (awk->run.icache_count < xp_countof(awk->run.icache))
@@ -141,11 +167,8 @@ void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val)
 			awk->run.icache[awk->run.icache_count++] = 
 				(xp_awk_val_int_t*)val;	
 		}
-		else
-		{
-			xp_free (val);
-		}
-		break;
+		else xp_free (val);
+		return;
 
 	case XP_AWK_VAL_REAL:
 		if (awk->run.rcache_count < xp_countof(awk->run.rcache))
@@ -153,19 +176,21 @@ void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val)
 			awk->run.rcache[awk->run.rcache_count++] = 
 				(xp_awk_val_real_t*)val;	
 		}
-		else
-		{
-			xp_free (val);
-		}
-		break;
+		else xp_free (val);
+		return;
 
 	case XP_AWK_VAL_STR:
 		xp_free (((xp_awk_val_str_t*)val)->buf);
 		xp_free (val);
-		break;
+		return;
+
+	case XP_AWK_VAL_MAP:
+		xp_awk_map_close (((xp_awk_val_map_t*)val)->map);
+		xp_free (val);
+		return;
 	}
 
-	/* should never reach here */
+	xp_assert (!"should never happen - invalid value type");
 }
 
 void xp_awk_refupval (xp_awk_val_t* val)
@@ -227,8 +252,12 @@ xp_awk_val_t* xp_awk_cloneval (xp_awk_t* awk, xp_awk_val_t* val)
 		return xp_awk_makestrval (
 			((xp_awk_val_str_t*)val)->buf,
 			((xp_awk_val_str_t*)val)->len);
+	case XP_AWK_VAL_MAP:
+		/* TODO: .... */
+		return XP_NULL;
 	}
 
+	xp_assert (!"should never happen - invalid value type");
 	return XP_NULL;
 }
 
@@ -246,9 +275,11 @@ xp_bool_t xp_awk_boolval (xp_awk_val_t* val)
 		return ((xp_awk_val_real_t*)val)->val != 0.0;
 	case XP_AWK_VAL_STR:
 		return ((xp_awk_val_str_t*)val)->len > 0;
+	case XP_AWK_VAL_MAP:
+		return xp_false; /* TODO: is this correct? */
 	}
 
-	xp_assert (!"should never happen - invalid vlaue type");
+	xp_assert (!"should never happen - invalid value type");
 	return xp_false;
 }
 
@@ -284,6 +315,10 @@ void xp_awk_printval (xp_awk_val_t* val)
 
 	case XP_AWK_VAL_STR:
 		xp_printf (XP_TEXT("%s"), ((xp_awk_val_str_t*)val)->buf);
+		break;
+
+	case XP_AWK_VAL_MAP:
+		xp_printf (XP_TEXT("***MAP***"));
 		break;
 
 	default:
