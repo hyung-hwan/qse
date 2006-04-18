@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.23 2006-04-16 04:31:38 bacon Exp $
+ * $Id: awk.c,v 1.24 2006-04-18 16:27:29 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -58,7 +58,11 @@ static xp_ssize_t process_source (
 #include <mcheck.h>
 #endif
 
-#if defined(vms) || defined(__vms) || defined(_SCO_DS) 
+#if defined(__STAND_ALONE) && defined(_WIN32)
+#define xp_main _tmain
+#endif
+
+#if defined(__STAND_ALONE) && !defined(_WIN32)
 int main (int argc, char* argv[])
 #else
 int xp_main (int argc, xp_char_t* argv[])
@@ -89,7 +93,7 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	if (argc == 2) 
 	{
-#if defined(vms) || defined(__vms) || defined(_SCO_DS) 
+#if defined(__STAND_ALONE) && !defined(_WIN32)
 		if (strcmp(argv[1], "-m") == 0)
 #else
 		if (xp_strcmp(argv[1], XP_TEXT("-m")) == 0)
@@ -101,7 +105,7 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	if (xp_awk_parse(awk) == -1) 
 	{
-#if defined(_SCO_DS) && defined(XP_CHAR_IS_WCHAR)
+#if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
 			XP_TEXT("error: cannot parse program - [%d] %ls\n"), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
@@ -116,7 +120,7 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	if (xp_awk_run(awk) == -1) 
 	{
-#if defined(_SCO_DS) && defined(XP_CHAR_IS_WCHAR)
+#if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
 			XP_TEXT("error: cannot run program - [%d] %ls\n"), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
