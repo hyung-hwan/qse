@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.83 2006-04-16 16:30:59 bacon Exp $
+ * $Id: parse.c,v 1.84 2006-04-18 16:04:54 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1806,10 +1806,12 @@ static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
 {
 	xp_awk_nde_t* head, * curr, * nde;
 	xp_awk_nde_call_t* call;
+	xp_size_t nargs;
 
 	if (__get_token(awk) == -1) return XP_NULL;
 	
 	head = curr = XP_NULL;
+	nargs = 0;
 
 	if (MATCH(awk,TOKEN_RPAREN)) 
 	{
@@ -1830,6 +1832,8 @@ static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
 			if (head == XP_NULL) head = nde;
 			else curr->next = nde;
 			curr = nde;
+
+			nargs++;
 
 			if (MATCH(awk,TOKEN_RPAREN)) 
 			{
@@ -1867,6 +1871,7 @@ static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
 	call->next = XP_NULL;
 	call->name = name;
 	call->args = head;
+	call->nargs = nargs;
 
 	return (xp_awk_nde_t*)call;
 }
