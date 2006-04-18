@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.58 2006-04-18 15:38:05 bacon Exp $
+ * $Id: run.c,v 1.59 2006-04-18 16:04:58 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -334,6 +334,7 @@ static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
 /*xp_printf (XP_TEXT("executing block statements\n"));*/
 	while (p != XP_NULL && awk->run.exit_level == EXIT_NONE) 
 	{
+/*xp_printf (XP_TEXT("running a statement\n"));*/
 		if (__run_statement(awk,p) == -1) 
 		{
 			n = -1;
@@ -524,7 +525,6 @@ static int __run_for_statement (xp_awk_t* awk, xp_awk_nde_for_t* nde)
 {
 	xp_awk_val_t* val;
 
-xp_printf (XP_TEXT("__run_for_state...\n"));
 	if (nde->init != XP_NULL)
 	{
 		val = __eval_expression(awk,nde->init);
@@ -589,7 +589,6 @@ xp_printf (XP_TEXT("__run_for_state...\n"));
 		}
 	}
 
-xp_printf (XP_TEXT("end of __run_for_state...\n"));
 	return 0;
 }
 
@@ -1951,9 +1950,18 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 	xp_awk_nde_call_t* call = (xp_awk_nde_call_t*)nde;
 	int n;
 
-xp_printf (XP_TEXT(".....__eval_call\n"));
+/*xp_printf (XP_TEXT(".....__eval_call\n"));*/
 	pair = xp_awk_map_get (&awk->tree.funcs, call->name);
 	if (pair == XP_NULL) PANIC (awk, XP_AWK_ENOSUCHFUNC);
+
+	func = (xp_awk_func_t*)pair->val;
+	xp_assert (func != XP_NULL);
+
+	if (call->nargs > func->nargs)
+	{
+		/* TODO: is this correct? what if i want to allow arbitarary numbers of arguments? */
+		PANIC (awk, XP_AWK_ETOOMANYARGS);
+	}
 
 	/* 
 	 * ---------------------
@@ -2077,13 +2085,32 @@ xp_printf (XP_TEXT(".....__eval_call\n"));
 		p = p->next;
 	}
 
+	xp_assert (nargs == call->nargs);
+
+	while (nargs < func->nargs)
+	{
+		/* push as many nils as the number of missing actual arguments */
+		if (__raw_push(awk,xp_awk_val_nil) == -1)
+		{
+			while (nargs > 0)
+			{
+/* TODO: test this portion. */
+				--nargs;
+				xp_awk_refdownval (awk, STACK_ARG(awk,nargs));
+				__raw_pop (awk);
+			}	
+
+			__raw_pop (awk);
+			__raw_pop (awk);
+			__raw_pop (awk);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		nargs++;
+	}
+
 	awk->run.stack_base = saved_stack_top;
 	STACK_NARGS(awk) = (void*)nargs;
-
-	func = (xp_awk_func_t*)pair->val;
-	xp_assert (func != XP_NULL);
-
-	/* TODO: do i need to check if the number of arguments matches the actual arguments...???? this might be the compiler job... */
 	
 /*xp_printf (XP_TEXT("running function body\n")); */
 
@@ -2117,7 +2144,7 @@ xp_printf (XP_TEXT(".....__eval_call\n"));
 		awk->run.exit_level = EXIT_NONE;
 	}
 
-xp_printf (XP_TEXT("returning from function stack_top=%ld, stack_base=%ld\n"), awk->run.stack_top, awk->run.stack_base); 
+/*xp_printf (XP_TEXT("returning from function stack_top=%ld, stack_base=%ld\n"), awk->run.stack_top, awk->run.stack_base); */
 	return (n == -1)? XP_NULL: v;
 }
 
