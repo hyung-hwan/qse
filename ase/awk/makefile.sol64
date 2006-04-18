@@ -1,0 +1,18 @@
+SRCS = awk.c err.c tree.c tab.c map.c parse.c run.c sa.c val.c misc.c
+OBJS = $(SRCS:.c=.o)
+OUT = libxpawk.a
+
+CC = gcc
+#CFLAGS = -m64 -O2 -Wall -std=c89 -pedantic -I../.. -DXP_AWK_STAND_ALONE
+CFLAGS = -m64 -O2 -Wall -I../.. -DXP_AWK_STAND_ALONE
+
+all: $(OBJS)
+	ar cr $(OUT) $(OBJS)
+
+clean:
+	rm -rf $(OBJS) $(OUT) *.obj
+
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
