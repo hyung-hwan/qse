@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.57 2006-04-18 14:49:42 bacon Exp $
+ * $Id: run.c,v 1.58 2006-04-18 15:38:05 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -524,6 +524,7 @@ static int __run_for_statement (xp_awk_t* awk, xp_awk_nde_for_t* nde)
 {
 	xp_awk_val_t* val;
 
+xp_printf (XP_TEXT("__run_for_state...\n"));
 	if (nde->init != XP_NULL)
 	{
 		val = __eval_expression(awk,nde->init);
@@ -588,6 +589,7 @@ static int __run_for_statement (xp_awk_t* awk, xp_awk_nde_for_t* nde)
 		}
 	}
 
+xp_printf (XP_TEXT("end of __run_for_state...\n"));
 	return 0;
 }
 
@@ -1949,6 +1951,7 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 	xp_awk_nde_call_t* call = (xp_awk_nde_call_t*)nde;
 	int n;
 
+xp_printf (XP_TEXT(".....__eval_call\n"));
 	pair = xp_awk_map_get (&awk->tree.funcs, call->name);
 	if (pair == XP_NULL) PANIC (awk, XP_AWK_ENOSUCHFUNC);
 
@@ -2114,7 +2117,7 @@ static xp_awk_val_t* __eval_call (xp_awk_t* awk, xp_awk_nde_t* nde)
 		awk->run.exit_level = EXIT_NONE;
 	}
 
-/*xp_printf (XP_TEXT("returning from function stack_top=%ld, stack_base=%ld\n"), awk->run.stack_top, awk->run.stack_base); */
+xp_printf (XP_TEXT("returning from function stack_top=%ld, stack_base=%ld\n"), awk->run.stack_top, awk->run.stack_base); 
 	return (n == -1)? XP_NULL: v;
 }
 
