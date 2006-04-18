@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.56 2006-04-18 11:26:48 bacon Exp $
+ * $Id: run.c,v 1.57 2006-04-18 14:49:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -841,7 +841,7 @@ static xp_awk_val_t* __do_assignment_map (
 	xp_awk_val_map_t* map;
 	xp_awk_nde_t* nde;
 	xp_char_t* str;
-	xp_awk_pair_t* pair;
+	int n;
 
 	xp_assert (
 		(var->type == XP_AWK_NDE_GLOBALIDX ||
@@ -862,6 +862,8 @@ static xp_awk_val_t* __do_assignment_map (
 		tmp = xp_awk_makemapval (awk);
 		if (tmp == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
+		/* decrease the reference count of the previous value - 
+		 * in fact, this is not necessary as map is always xp_awk_val_nil here. */
 		xp_awk_refdownval (awk, (xp_awk_val_t*)map);
 
 		if (var->type == XP_AWK_NDE_GLOBALIDX)
@@ -909,22 +911,19 @@ static xp_awk_val_t* __do_assignment_map (
 /*
 xp_printf (XP_TEXT("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map->ref, map->type);
 */
-	pair = xp_awk_map_get (map->map, str);
-	if (xp_awk_map_put(map->map, str, val) == XP_NULL)
+	n = xp_awk_map_putx(map->map, str, val, XP_NULL);
+	if (n < 0)
 	{
 		xp_free (str);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	if (pair != XP_NULL) 
+	if (n == 0)
 	{
-		/* str is freed only if the key is in the map. 
+		/* the value for the existing key has changed.
+		 * str is freed only if the key is in the map. 
 		 * otherwise, it will be taken by the map */
 		xp_free (str);
-
-		/* decrease the reference count for the old value
-		 * only when the assignment is successful */
-		xp_awk_refdownval (awk, pair->val);
 	}
 
 	xp_awk_refupval (val);
