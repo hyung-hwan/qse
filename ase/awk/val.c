@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.20 2006-04-17 16:12:02 bacon Exp $
+ * $Id: val.c,v 1.21 2006-04-18 10:28:03 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -122,6 +122,11 @@ xp_awk_val_t* xp_awk_makestrval2 (
 
 static void __free_map_val (xp_awk_t* awk, void* v)
 {
+/*
+xp_printf (XP_TEXT("refdown in map free..."));
+xp_awk_printval (v);
+xp_printf (XP_TEXT("\n"));
+*/
 	xp_awk_refdownval (awk, v);
 }
 
@@ -129,7 +134,7 @@ xp_awk_val_t* xp_awk_makemapval (xp_awk_t* awk)
 {
 	xp_awk_val_map_t* val;
 
-	val = (xp_awk_val_map_t*)xp_malloc(xp_sizeof(xp_awk_val_map_t));
+	val = (xp_awk_val_map_t*) xp_malloc (xp_sizeof(xp_awk_val_map_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_MAP;
@@ -155,6 +160,9 @@ void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
+xp_printf (XP_TEXT("freeing ... "));
+xp_awk_printval (val);
+xp_printf (XP_TEXT("\n"));
 	switch (val->type)
 	{
 	case XP_AWK_VAL_NIL:

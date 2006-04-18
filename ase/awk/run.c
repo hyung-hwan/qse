@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.54 2006-04-17 16:12:02 bacon Exp $
+ * $Id: run.c,v 1.55 2006-04-18 10:28:03 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -884,14 +884,16 @@ static xp_awk_val_t* __do_assignment_globalidx (
 			/* TODO: how to tell memory from conversion error? */
 			xp_awk_refdownval (awk, tmp);
 			/*PANIC (awk, XP_AWK_ENOMEM);*/
-			PANIC (awk, XP_AWK_EINDEX);
+			PANIC (awk, XP_AWK_EWRONGINDEX);
 		}
 
 		xp_awk_refdownval (awk, tmp);
 		/* TODO: nde = nde->next; */
 	}
 
+/*
 xp_printf (XP_TEXT("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map->ref, map->type);
+*/
 	pair = xp_awk_map_get (map->map, str);
 	if (xp_awk_map_put(map->map, str, val) == XP_NULL)
 	{
@@ -899,9 +901,12 @@ xp_printf (XP_TEXT("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map-
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	xp_free (str);
 	if (pair != XP_NULL) 
 	{
+		/* str is freed only if the key is in the map. 
+		 * otherwise, it will be taken by the map */
+		xp_free (str);
+
 		/* decrease the reference count for the old value
 		 * only when the assignment is successful */
 		xp_awk_refdownval (awk, pair->val);
@@ -2182,7 +2187,7 @@ static xp_awk_val_t* __eval_globalidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 		/* TODO: how to tell memory error from conversion error? */
 		xp_awk_refdownval (awk, idx);
 		/*PANIC (awk, XP_AWK_ENOMEM);*/
-		PANIC (awk, XP_AWK_EINDEX);
+		PANIC (awk, XP_AWK_EWRONGINDEX);
 	}
 
 /* TODO: check this out........ */

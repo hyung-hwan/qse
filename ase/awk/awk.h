@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.51 2006-04-17 16:12:02 bacon Exp $
+ * $Id: awk.h,v 1.52 2006-04-18 10:28:03 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -80,7 +80,7 @@ enum
 	XP_AWK_ENOSUCHFUNC,    /* no such function */
 	XP_AWK_ENOTASSIGNABLE, /* not indexable value */
 	XP_AWK_ENOTINDEXABLE,  /* not indexable value */
-	XP_AWK_EINDEX,         /* wrong index */
+	XP_AWK_EWRONGINDEX,    /* wrong index */
 	XP_AWK_EINTERNAL       /* internal error */
 };
 
