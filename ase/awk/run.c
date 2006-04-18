@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.55 2006-04-18 10:28:03 bacon Exp $
+ * $Id: run.c,v 1.56 2006-04-18 11:26:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -48,7 +48,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (xp_awk_t* awk, xp_awk_nde_t* nde);
 static xp_awk_val_t* __do_assignment (
 	xp_awk_t* awk, xp_awk_nde_var_t* var, xp_awk_val_t* val);
-static xp_awk_val_t* __do_assignment_globalidx (
+static xp_awk_val_t* __do_assignment_map (
 	xp_awk_t* awk, xp_awk_nde_var_t* var, xp_awk_val_t* val);
 
 static xp_awk_val_t* __eval_binary (xp_awk_t* awk, xp_awk_nde_t* nde);
@@ -810,19 +810,21 @@ static xp_awk_val_t* __do_assignment (
 	else if (var->type == XP_AWK_NDE_NAMEDIDX) 
 	{
 		/* TODO: */
+	        xp_printf (XP_TEXT("XP_AWK_NDE_NAMEIDX not implemented\n"));
+	        PANIC (awk, XP_AWK_EINTERNAL);
 	}
-	else if (var->type == XP_AWK_NDE_GLOBALIDX) 
+	else if (var->type == XP_AWK_NDE_GLOBALIDX ||
+	         var->type == XP_AWK_NDE_LOCALIDX ||
+	         var->type == XP_AWK_NDE_ARGIDX) 
 	{
-		if (__do_assignment_globalidx(awk,var,val) == XP_NULL)
+		if (__do_assignment_map(awk,var,val) == XP_NULL)
 			return XP_NULL;
 	}
-	else if (var->type == XP_AWK_NDE_LOCALIDX) 
+	else if (var->type == XP_AWK_NDE_POS)
 	{
-		/* TODO: */
-	}
-	else if (var->type == XP_AWK_NDE_ARGIDX) 
-	{
-		/* TODO: */
+	        /* TODO: */
+	        xp_printf (XP_TEXT("XP_AWK_NDE_POS not implemented\n"));
+	        PANIC (awk, XP_AWK_EINTERNAL);
 	}
 	else
 	{
@@ -833,7 +835,7 @@ static xp_awk_val_t* __do_assignment (
 	return val;
 }
 
-static xp_awk_val_t* __do_assignment_globalidx (
+static xp_awk_val_t* __do_assignment_map (
 	xp_awk_t* awk, xp_awk_nde_var_t* var, xp_awk_val_t* val)
 {
 	xp_awk_val_map_t* map;
@@ -841,9 +843,17 @@ static xp_awk_val_t* __do_assignment_globalidx (
 	xp_char_t* str;
 	xp_awk_pair_t* pair;
 
-	xp_assert (var->type == XP_AWK_NDE_GLOBALIDX && var->idx != XP_NULL);
+	xp_assert (
+		(var->type == XP_AWK_NDE_GLOBALIDX ||
+		 var->type == XP_AWK_NDE_LOCALIDX ||
+		 var->type == XP_AWK_NDE_ARGIDX) && var->idx != XP_NULL);
 
-	map = (xp_awk_val_map_t*)STACK_GLOBAL(awk,var->id.idxa);
+	map = (var->type == XP_AWK_NDE_GLOBALIDX)? 
+	      	(xp_awk_val_map_t*)STACK_GLOBAL(awk,var->id.idxa):
+	      (var->type == XP_AWK_NDE_LOCALIDX)? 
+	      	(xp_awk_val_map_t*)STACK_LOCAL(awk,var->id.idxa):
+	      	(xp_awk_val_map_t*)STACK_ARG(awk,var->id.idxa);
+
 	if (map->type == XP_AWK_VAL_NIL)
 	{
 		/* the map is not initialized yet */
@@ -853,9 +863,14 @@ static xp_awk_val_t* __do_assignment_globalidx (
 		if (tmp == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
 		xp_awk_refdownval (awk, (xp_awk_val_t*)map);
-		STACK_GLOBAL(awk,var->id.idxa) = tmp;
-		xp_awk_refupval (tmp);
 
+		if (var->type == XP_AWK_NDE_GLOBALIDX)
+			STACK_GLOBAL(awk,var->id.idxa) = tmp;
+		else if (var->type == XP_AWK_NDE_LOCALIDX)
+			STACK_LOCAL(awk,var->id.idxa) = tmp;
+		else STACK_ARG(awk,var->id.idxa) = tmp;
+
+		xp_awk_refupval (tmp);
 		map = (xp_awk_val_map_t*) tmp;
 	}
 	else if (map->type != XP_AWK_VAL_MAP)
@@ -2165,56 +2180,78 @@ static xp_awk_val_t* __eval_namedidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 	return XP_NULL;
 }
 
-static xp_awk_val_t* __eval_globalidx (xp_awk_t* awk, xp_awk_nde_t* nde)
+static xp_awk_val_t* __eval_indexed (
+	xp_awk_t* awk, xp_awk_nde_var_t* nde, xp_awk_val_map_t* map)
 {
-	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-	xp_awk_val_t* v = STACK_GLOBAL(awk,tgt->id.idxa);
 	xp_awk_val_t* idx, *res;
-	xp_char_t* str;
 	xp_awk_pair_t* pair;
+	xp_awk_nde_t* tmp;
+	xp_char_t* str;
 
-	if (v->type != XP_AWK_VAL_MAP) PANIC (awk, XP_AWK_ENOTINDEXABLE);
-
-	xp_assert (tgt->idx != XP_NULL);
-	idx = __eval_expression (awk, tgt->idx);
-	if (idx == XP_NULL) return XP_NULL;
-
-	xp_awk_refupval (idx);
-
-	str = __val_to_str (idx);
-	if (str == XP_NULL) 
+	if (map->type != XP_AWK_VAL_MAP) 
 	{
-		/* TODO: how to tell memory error from conversion error? */
-		xp_awk_refdownval (awk, idx);
-		/*PANIC (awk, XP_AWK_ENOMEM);*/
-		PANIC (awk, XP_AWK_EWRONGINDEX);
+	        PANIC (awk, XP_AWK_ENOTINDEXABLE);
 	}
 
+	xp_assert (nde->idx != XP_NULL);
+
+	tmp = nde->idx;
+	/* TODO:
+	while (tmp != XP_NULL)
+	*/
+	{
+		idx = __eval_expression (awk, tmp);
+		if (idx == XP_NULL) return XP_NULL;
+
+		xp_awk_refupval (idx);
+
+		str = __val_to_str (idx);
+		if (str == XP_NULL) 
+		{
+			/* TODO: how to tell memory error from conversion error? */
+			xp_awk_refdownval (awk, idx);
+			/*PANIC (awk, XP_AWK_ENOMEM);*/
+			PANIC (awk, XP_AWK_EWRONGINDEX);
+		}
+
+		xp_awk_refdownval (awk, idx);
+		/* TODO:
+		tmp = tmp->next;
+		 */
+	}
+
+
 /* TODO: check this out........ */
-	pair = xp_awk_map_get (((xp_awk_val_map_t*)v)->map, str);
+	pair = xp_awk_map_get (((xp_awk_val_map_t*)map)->map, str);
 	res = (pair == XP_NULL)? xp_awk_val_nil: (xp_awk_val_t*)pair->val;
 
 	xp_free (str);
-	xp_awk_refdownval (awk, idx);
 
 	return res;
 }
 
+static xp_awk_val_t* __eval_globalidx (xp_awk_t* awk, xp_awk_nde_t* nde)
+{
+	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+	return __eval_indexed (awk, tgt, STACK_GLOBAL(awk,tgt->id.idxa));
+}
+
 static xp_awk_val_t* __eval_localidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	/* TODO: */
-	return XP_NULL;
+	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+	return __eval_indexed (awk, tgt, STACK_LOCAL(awk,tgt->id.idxa));
 }
 
 static xp_awk_val_t* __eval_argidx (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	/* TODO: */
-	return XP_NULL;
+	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+	return __eval_indexed (awk, tgt, STACK_ARG(awk,tgt->id.idxa));
 }
 
 static xp_awk_val_t* __eval_pos (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
 	/* TODO: */
+	xp_printf (XP_TEXT("eval_pos not competed....\n"));
 	return XP_NULL;
 }
 
