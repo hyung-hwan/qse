@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.24 2006-04-18 16:27:29 bacon Exp $
+ * $Id: awk.c,v 1.25 2006-04-19 02:52:53 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -58,10 +58,6 @@ static xp_ssize_t process_source (
 #include <mcheck.h>
 #endif
 
-#if defined(__STAND_ALONE) && defined(_WIN32)
-#define xp_main _tmain
-#endif
-
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 int main (int argc, char* argv[])
 #else
@@ -83,7 +79,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	if (xp_awk_attsrc(awk, process_source, XP_NULL) == -1) 
 	{
 		xp_awk_close (awk);
-		xp_printf (XP_TEXT("error: cannot attach source\n"));
+		xp_printf (XP_TEXT("Error: cannot attach source\n"));
 		return -1;
 	}
 
