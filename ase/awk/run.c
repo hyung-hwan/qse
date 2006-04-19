@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.60 2006-04-19 03:42:08 bacon Exp $
+ * $Id: run.c,v 1.61 2006-04-19 04:18:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -763,6 +763,7 @@ static xp_awk_val_t* __do_assignment (
 	{
 		int n;
 
+/* TODO: need to check if the old value is a map?? prevent the assignment? */
 		n = xp_awk_map_putx (
 			&awk->run.named, var->id.name, val, XP_NULL);
 		if (n < 0) PANIC (awk, XP_AWK_ENOMEM);
@@ -771,18 +772,21 @@ static xp_awk_val_t* __do_assignment (
 	}
 	else if (var->type == XP_AWK_NDE_GLOBAL) 
 	{
+/* TODO: need to check if the old value is a map?? prevent the assignment? */
 		xp_awk_refdownval (awk, STACK_GLOBAL(awk,var->id.idxa));
 		STACK_GLOBAL(awk,var->id.idxa) = val;
 		xp_awk_refupval (val);
 	}
 	else if (var->type == XP_AWK_NDE_LOCAL) 
 	{
+/* TODO: need to check if the old value is a map?? prevent the assignment? */
 		xp_awk_refdownval (awk, STACK_LOCAL(awk,var->id.idxa));
 		STACK_LOCAL(awk,var->id.idxa) = val;
 		xp_awk_refupval (val);
 	}
 	else if (var->type == XP_AWK_NDE_ARG) 
 	{
+/* TODO: need to check if the old value is a map?? prevent the assignment? */
 		xp_awk_refdownval (awk, STACK_ARG(awk,var->id.idxa));
 		STACK_ARG(awk,var->id.idxa) = val;
 		xp_awk_refupval (val);
@@ -843,7 +847,8 @@ static xp_awk_val_t* __do_assignment_map (
 		if (tmp == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
 		/* decrease the reference count of the previous value - 
-		 * in fact, this is not necessary as map is always xp_awk_val_nil here. */
+		 * in fact, this is not necessary as map is always 
+		 * xp_awk_val_nil here. */
 		xp_awk_refdownval (awk, (xp_awk_val_t*)map);
 
 		if (var->type == XP_AWK_NDE_GLOBALIDX)
