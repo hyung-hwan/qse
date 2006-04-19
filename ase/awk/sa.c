@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.16 2006-04-16 04:31:38 bacon Exp $
+ * $Id: sa.c,v 1.17 2006-04-19 04:18:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -162,7 +162,7 @@ xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa)
 		return XP_NULL;
 	}
 
-	str->size      = 0;
+	str->size = 0;
 	str->capa  = capa;
 	str->buf[0] = XP_CHAR('\0');
 
@@ -252,8 +252,10 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 
 	if (xp_str_open (&str, 256) == XP_NULL) return XP_NULL;
 
-	while (*fp != XP_CHAR('\0')) {
-		while (*fp != XP_CHAR('\0') && *fp != XP_CHAR('%')) {
+	while (*fp != XP_CHAR('\0')) 
+	{
+		while (*fp != XP_CHAR('\0') && *fp != XP_CHAR('%')) 
+		{
 			ADDC (str, *fp++);
 		}
 
@@ -266,12 +268,15 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		ch = *fp++;
 
 		/* flags */
-		for (;;) {
+		for (;;) 
+		{
 			if (ch == XP_CHAR(' ') || ch == XP_CHAR('+') ||
-			    ch == XP_CHAR('-') || ch == XP_CHAR('#')) {
+			    ch == XP_CHAR('-') || ch == XP_CHAR('#')) 
+			{
 				ADDC (str, ch);
 			}
-			else if (ch == XP_CHAR('0')) {
+			else if (ch == XP_CHAR('0')) 
+			{
 				ADDC (str, ch);
 				ch = *fp++; 
 				break;
@@ -283,21 +288,26 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 
 		/* check the width */
 		if (ch == XP_CHAR('*')) ADDC (str, ch);
-		else {
-			while (xp_isdigit(ch)) {
+		else 
+		{
+			while (xp_isdigit(ch)) 
+			{
 				ADDC (str, ch);
 				ch = *fp++;
 			}
 		}
 
 		/* precision */
-		if (ch == XP_CHAR('.')) {
+		if (ch == XP_CHAR('.')) 
+		{
 			ADDC (str, ch);
 			ch = *fp++;
 
 			if (ch == XP_CHAR('*')) ADDC (str, ch);
-			else {
-				while (xp_isdigit(ch)) {
+			else 
+			{
+				while (xp_isdigit(ch)) 
+				{
 					ADDC (str, ch);
 					ch = *fp++;
 				}
@@ -305,9 +315,11 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		}
 
 		/* modifier */
-		for (modifier = 0;;) {
+		for (modifier = 0;;) 
+		{
 			if (ch == XP_CHAR('h')) modifier = MOD_SHORT;
-			else if (ch == XP_CHAR('l')) {
+			else if (ch == XP_CHAR('l')) 
+			{
 				modifier = (modifier == MOD_LONG)? MOD_LONGLONG: MOD_LONG;
 			}
 			else break;
@@ -317,13 +329,15 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 
 		/* type */
 		if (ch == XP_CHAR('%')) ADDC (str, ch);
-		else if (ch == XP_CHAR('c') || ch == XP_CHAR('s')) {
+		else if (ch == XP_CHAR('c') || ch == XP_CHAR('s')) 
+		{
 #if !defined(XP_CHAR_IS_MCHAR) && !defined(_WIN32)
 			ADDC (str, 'l');
 #endif
 			ADDC (str, ch);
 		}
-		else if (ch == XP_CHAR('C') || ch == XP_CHAR('S')) {
+		else if (ch == XP_CHAR('C') || ch == XP_CHAR('S')) 
+		{
 #ifdef _WIN32
 			ADDC (str, ch);
 #else
@@ -335,14 +349,18 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		}
 		else if (ch == XP_CHAR('d') || ch == XP_CHAR('i') || 
 		         ch == XP_CHAR('o') || ch == XP_CHAR('u') || 
-		         ch == XP_CHAR('x') || ch == XP_CHAR('X')) {
-			if (modifier == MOD_SHORT) {
+		         ch == XP_CHAR('x') || ch == XP_CHAR('X')) 
+		{
+			if (modifier == MOD_SHORT) 
+			{
 				ADDC (str, 'h');
 			}
-			else if (modifier == MOD_LONG) {
+			else if (modifier == MOD_LONG) 
+			{
 				ADDC (str, 'l');
 			}
-			else if (modifier == MOD_LONGLONG) {
+			else if (modifier == MOD_LONGLONG) 
+			{
 #if defined(_WIN32) && !defined(__LCC__)
 				ADDC (str, 'I');
 				ADDC (str, '6');
