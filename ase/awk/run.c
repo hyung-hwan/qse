@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.59 2006-04-18 16:04:58 bacon Exp $
+ * $Id: run.c,v 1.60 2006-04-19 03:42:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -761,32 +761,11 @@ static xp_awk_val_t* __do_assignment (
 
 	if (var->type == XP_AWK_NDE_NAMED) 
 	{
-		xp_awk_pair_t* pair;
-		xp_char_t* name;
+		int n;
 
-		pair = xp_awk_map_get (&awk->run.named, var->id.name);
-		if (pair == XP_NULL) 
-		{
-			name = xp_strdup (var->id.name);
-			if (name == XP_NULL) 
-			{
-				xp_awk_freeval (awk, val);
-				awk->errnum = XP_AWK_ENOMEM;
-				return XP_NULL;
-			}
-		}
-		else 
-		{
-			name = pair->key;
-		}
-
-		if (xp_awk_map_put(&awk->run.named, name, val) == XP_NULL) 
-		{
-			xp_free (name);
-			xp_awk_freeval (awk, val);
-			awk->errnum = XP_AWK_ENOMEM;
-			return XP_NULL;
-		}
+		n = xp_awk_map_putx (
+			&awk->run.named, var->id.name, val, XP_NULL);
+		if (n < 0) PANIC (awk, XP_AWK_ENOMEM);
 
 		xp_awk_refupval (val);
 	}
@@ -912,21 +891,14 @@ static xp_awk_val_t* __do_assignment_map (
 /*
 xp_printf (XP_TEXT("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map->ref, map->type);
 */
-	n = xp_awk_map_putx(map->map, str, val, XP_NULL);
+	n = xp_awk_map_putx (map->map, str, val, XP_NULL);
 	if (n < 0)
 	{
 		xp_free (str);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	if (n == 0)
-	{
-		/* the value for the existing key has changed.
-		 * str is freed only if the key is in the map. 
-		 * otherwise, it will be taken by the map */
-		xp_free (str);
-	}
-
+	xp_free (str);
 	xp_awk_refupval (val);
 	return val;
 }

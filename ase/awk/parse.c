@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.84 2006-04-18 16:04:54 bacon Exp $
+ * $Id: parse.c,v 1.85 2006-04-19 03:42:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -412,6 +412,8 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	xp_awk_nde_t* body;
 	xp_awk_func_t* func;
 	xp_size_t nargs;
+	xp_awk_pair_t* pair;
+	int n;
 
 	/* eat up the keyword 'function' and get the next token */
 	if (__get_token(awk) == -1) return XP_NULL;  
@@ -582,8 +584,8 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-/* TODO: consider if the parameters should be saved for some reasons.. */
-	nargs = xp_awk_tab_getsize(&awk->parse.params);
+/* TODO: consider if the parameter names should be saved for some reasons.. */
+	nargs = xp_awk_tab_getsize (&awk->parse.params);
 	/* parameter names are not required anymore. clear them */
 	xp_awk_tab_clear (&awk->parse.params);
 
@@ -595,18 +597,24 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	func->name  = name_dup;
+	func->name = XP_NULL; /* function name set below */
 	func->nargs = nargs;
 	func->body  = body;
 
-	xp_assert (xp_awk_map_get(&awk->tree.funcs, name_dup) == XP_NULL);
-	if (xp_awk_map_put(&awk->tree.funcs, name_dup, func) == XP_NULL) 
+	n = xp_awk_map_putx (&awk->tree.funcs, name_dup, func, &pair);
+	if (n < 0)
 	{
 		xp_free (name_dup);
 		xp_awk_clrpt (body);
 		xp_free (func);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
+
+	/* duplicate functions should have been detected previously */
+	xp_assert (n != 0); 
+
+	func->name = pair->key; /* do some trick to save a string.  */
+	xp_free (name_dup);
 
 	return body;
 }
