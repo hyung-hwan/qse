@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.61 2006-04-19 04:18:43 bacon Exp $
+ * $Id: run.c,v 1.62 2006-04-19 16:09:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -791,13 +791,8 @@ static xp_awk_val_t* __do_assignment (
 		STACK_ARG(awk,var->id.idxa) = val;
 		xp_awk_refupval (val);
 	}
-	else if (var->type == XP_AWK_NDE_NAMEDIDX) 
-	{
-		/* TODO: */
-	        xp_printf (XP_TEXT("XP_AWK_NDE_NAMEIDX not implemented\n"));
-	        PANIC (awk, XP_AWK_EINTERNAL);
-	}
-	else if (var->type == XP_AWK_NDE_GLOBALIDX ||
+	else if (var->type == XP_AWK_NDE_NAMEDIDX ||
+	         var->type == XP_AWK_NDE_GLOBALIDX ||
 	         var->type == XP_AWK_NDE_LOCALIDX ||
 	         var->type == XP_AWK_NDE_ARGIDX) 
 	{
@@ -828,15 +823,25 @@ static xp_awk_val_t* __do_assignment_map (
 	int n;
 
 	xp_assert (
-		(var->type == XP_AWK_NDE_GLOBALIDX ||
+		(var->type == XP_AWK_NDE_NAMEDIDX ||
+		 var->type == XP_AWK_NDE_GLOBALIDX ||
 		 var->type == XP_AWK_NDE_LOCALIDX ||
 		 var->type == XP_AWK_NDE_ARGIDX) && var->idx != XP_NULL);
 
-	map = (var->type == XP_AWK_NDE_GLOBALIDX)? 
-	      	(xp_awk_val_map_t*)STACK_GLOBAL(awk,var->id.idxa):
-	      (var->type == XP_AWK_NDE_LOCALIDX)? 
-	      	(xp_awk_val_map_t*)STACK_LOCAL(awk,var->id.idxa):
-	      	(xp_awk_val_map_t*)STACK_ARG(awk,var->id.idxa);
+	if (var->type == XP_AWK_NDE_NAMEDIDX)
+	{
+		xp_awk_pair_t* pair;
+		pair = xp_awk_map_get (&awk->run.named, var->id.name);
+		map = (pair == XP_NULL)? xp_awk_val_nil: pair->val;
+	}
+	else
+	{
+		map = (var->type == XP_AWK_NDE_GLOBALIDX)? 
+		      	(xp_awk_val_map_t*)STACK_GLOBAL(awk,var->id.idxa):
+		      (var->type == XP_AWK_NDE_LOCALIDX)? 
+		      	(xp_awk_val_map_t*)STACK_LOCAL(awk,var->id.idxa):
+		      	(xp_awk_val_map_t*)STACK_ARG(awk,var->id.idxa);
+	}
 
 	if (map->type == XP_AWK_VAL_NIL)
 	{
@@ -846,16 +851,37 @@ static xp_awk_val_t* __do_assignment_map (
 		tmp = xp_awk_makemapval (awk);
 		if (tmp == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
-		/* decrease the reference count of the previous value - 
-		 * in fact, this is not necessary as map is always 
-		 * xp_awk_val_nil here. */
-		xp_awk_refdownval (awk, (xp_awk_val_t*)map);
-
-		if (var->type == XP_AWK_NDE_GLOBALIDX)
+		if (var->type == XP_AWK_NDE_NAMEDIDX)
+		{
+			/* doesn't have to decrease the reference count 
+			 * of the previous value here as it is done by 
+			 * xp_awk_map_put */
+			if (xp_awk_map_put (
+				&awk->run.named, var->id.name, tmp) == XP_NULL)
+			{
+				xp_awk_refupval (tmp);
+				xp_awk_refdownval (awk, tmp);
+				PANIC (awk, XP_AWK_ENOMEM);		
+			}
+		}
+		else if (var->type == XP_AWK_NDE_GLOBALIDX)
+		{
+			/* decrease the reference count of the previous value.
+			 * in fact, this is not necessary as map is always 
+			 * xp_awk_val_nil here. */
+			xp_awk_refdownval (awk, (xp_awk_val_t*)map);
 			STACK_GLOBAL(awk,var->id.idxa) = tmp;
+		}
 		else if (var->type == XP_AWK_NDE_LOCALIDX)
+		{
+			xp_awk_refdownval (awk, (xp_awk_val_t*)map);
 			STACK_LOCAL(awk,var->id.idxa) = tmp;
-		else STACK_ARG(awk,var->id.idxa) = tmp;
+		}
+		else 
+		{
+			xp_awk_refdownval (awk, (xp_awk_val_t*)map);
+			STACK_ARG(awk,var->id.idxa) = tmp;
+		}
 
 		xp_awk_refupval (tmp);
 		map = (xp_awk_val_map_t*) tmp;
@@ -1574,8 +1600,11 @@ static xp_awk_val_t* __eval_binop_exp (
 	}
 	else if (n3 == 1)
 	{
-		res = xp_awk_makerealval (
-			awk, pow((xp_real_t)r1,(xp_real_t)l2));
+		/*res = xp_awk_makerealval (
+			awk, pow((xp_real_t)r1,(xp_real_t)l2));*/
+		xp_real_t v = 1.0;
+		while (l2-- > 0) v *= r1;
+		res = xp_awk_makerealval (awk, v);
 	}
 	else if (n3 == 2)
 	{
@@ -2180,12 +2209,6 @@ static xp_awk_val_t* __eval_arg (xp_awk_t* awk, xp_awk_nde_t* nde)
 	return STACK_ARG(awk,tgt->id.idxa);
 }
 
-static xp_awk_val_t* __eval_namedidx (xp_awk_t* awk, xp_awk_nde_t* nde)
-{
-	/* TODO: */
-	return XP_NULL;
-}
-
 static xp_awk_val_t* __eval_indexed (
 	xp_awk_t* awk, xp_awk_nde_var_t* nde, xp_awk_val_map_t* map)
 {
@@ -2194,6 +2217,7 @@ static xp_awk_val_t* __eval_indexed (
 	xp_awk_nde_t* tmp;
 	xp_char_t* str;
 
+	/* TODO: should it be an error? should it return nil? */
 	if (map->type != XP_AWK_VAL_MAP) 
 	{
 	        PANIC (awk, XP_AWK_ENOTINDEXABLE);
@@ -2234,6 +2258,16 @@ static xp_awk_val_t* __eval_indexed (
 	xp_free (str);
 
 	return res;
+}
+
+static xp_awk_val_t* __eval_namedidx (xp_awk_t* awk, xp_awk_nde_t* nde)
+{
+	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+	xp_awk_pair_t* pair;
+
+	pair = xp_awk_map_get (&awk->run.named, tgt->id.name);
+	return __eval_indexed (awk, tgt, 
+		(pair == XP_NULL)? xp_awk_val_nil: pair->val);
 }
 
 static xp_awk_val_t* __eval_globalidx (xp_awk_t* awk, xp_awk_nde_t* nde)
