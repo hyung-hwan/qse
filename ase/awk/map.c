@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.12 2006-04-18 14:49:42 bacon Exp $
+ * $Id: map.c,v 1.13 2006-04-19 03:42:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -143,7 +143,8 @@ xp_awk_pair_t* xp_awk_map_put (xp_awk_map_t* map, xp_char_t* key, void* val)
 	return px;
 }
 
-int xp_awk_map_putx (xp_awk_map_t* map, xp_char_t* key, void* val, xp_awk_pair_t** px)
+int xp_awk_map_putx (
+	xp_awk_map_t* map, xp_char_t* key, void* val, xp_awk_pair_t** px)
 {
 	xp_awk_pair_t* pair;
 	xp_size_t hc;
@@ -155,12 +156,6 @@ int xp_awk_map_putx (xp_awk_map_t* map, xp_char_t* key, void* val, xp_awk_pair_t
 	{
 		if (xp_strcmp(pair->key,key) == 0) 
 		{
-			if (pair->key != key) 
-			{
-				xp_free ((xp_char_t*)pair->key);
-				pair->key = key;
-			}
-
 			if (px != XP_NULL)
 				*px = xp_awk_map_setpair (map, pair, val);
 			else
@@ -174,7 +169,13 @@ int xp_awk_map_putx (xp_awk_map_t* map, xp_char_t* key, void* val, xp_awk_pair_t
 	pair = (xp_awk_pair_t*) xp_malloc (xp_sizeof(xp_awk_pair_t));
 	if (pair == XP_NULL) return -1; /* error */
 
-	pair->key = key;
+	/*pair->key = key;*/
+	pair->key = xp_strdup (key); /* duplicate the key if it is new */
+	if (pair->key == XP_NULL)
+	{
+		xp_free (pair);
+		return -1; /* error */
+	}
 	pair->val = val;
 	pair->next = map->buck[hc];
 	map->buck[hc] = pair;
@@ -196,12 +197,6 @@ xp_awk_pair_t* xp_awk_map_set (xp_awk_map_t* map, xp_char_t* key, void* val)
 	{
 		if (xp_strcmp(pair->key,key) == 0) 
 		{
-			if (pair->key != key) 
-			{
-				xp_free ((xp_char_t*)pair->key);
-				pair->key = key;
-			}
-
 			return xp_awk_map_setpair (map, pair, val);
 		}
 		pair = pair->next;
