@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.62 2006-04-19 16:09:51 bacon Exp $
+ * $Id: run.c,v 1.63 2006-04-20 05:44:29 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -118,7 +118,7 @@ static void __raw_pop (xp_awk_t* awk);
 static void __raw_pop_times (xp_awk_t* awk, xp_size_t times);
 
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
-static xp_char_t* __val_to_str (xp_awk_val_t* v);
+static xp_char_t* __val_to_str (xp_awk_val_t* v, int* errnum);
 
 typedef xp_awk_val_t* (*binop_func_t) (
 	xp_awk_t* awk, xp_awk_val_t* left, xp_awk_val_t* right);
@@ -896,6 +896,7 @@ static xp_awk_val_t* __do_assignment_map (
 /* TODO: while (nde != XP_NULL)   */
 	{ 
 		xp_awk_val_t* tmp;
+		int errnum;
 
 		tmp = __eval_expression (awk, nde);
 		if (tmp == XP_NULL) 
@@ -906,13 +907,11 @@ static xp_awk_val_t* __do_assignment_map (
 
 		xp_awk_refupval (tmp);
 
-		str = __val_to_str (tmp);
+		str = __val_to_str (tmp, &errnum);
 		if (str == XP_NULL) 
 		{
-			/* TODO: how to tell memory from conversion error? */
 			xp_awk_refdownval (awk, tmp);
-			/*PANIC (awk, XP_AWK_ENOMEM);*/
-			PANIC (awk, XP_AWK_EWRONGINDEX);
+			PANIC (awk, errnum);
 		}
 
 		xp_awk_refdownval (awk, tmp);
@@ -2230,18 +2229,18 @@ static xp_awk_val_t* __eval_indexed (
 	while (tmp != XP_NULL)
 	*/
 	{
+		int errnum;
+
 		idx = __eval_expression (awk, tmp);
 		if (idx == XP_NULL) return XP_NULL;
 
 		xp_awk_refupval (idx);
 
-		str = __val_to_str (idx);
+		str = __val_to_str (idx, &errnum);
 		if (str == XP_NULL) 
 		{
-			/* TODO: how to tell memory error from conversion error? */
 			xp_awk_refdownval (awk, idx);
-			/*PANIC (awk, XP_AWK_ENOMEM);*/
-			PANIC (awk, XP_AWK_EWRONGINDEX);
+			PANIC (awk, errnum);
 		}
 
 		xp_awk_refdownval (awk, idx);
@@ -2370,14 +2369,52 @@ static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
 	return -1; /* error */
 }
 
-static xp_char_t* __val_to_str (xp_awk_val_t* v)
+static xp_char_t* __val_to_str (xp_awk_val_t* v, int* errnum)
 {
-	/*TODO:*/
+	if (v->type == XP_AWK_VAL_INT)
+	{
+		xp_char_t* tmp;
+		xp_long_t t;
+		xp_size_t len = 0;
+
+		t = ((xp_awk_val_int_t*)v)->val; 
+		if (t < 0) { t = -t; len++; }
+		while (t > 0) { len++; t /= 10; }
+
+		tmp = xp_malloc (len + 1 * xp_sizeof(xp_char_t));
+		if (tmp == XP_NULL)
+		{
+			*errnum = XP_AWK_ENOMEM;
+			return XP_NULL;
+		}
+
+		t = ((xp_awk_val_int_t*)v)->val; 
+		if (t < 0) t = -t;
+
+		tmp[len] = XP_CHAR('\0');
+		while (t > 0) 
+		{
+			tmp[--len] = (xp_char_t)(t % 10) + XP_CHAR('0');
+			t /= 10;
+		}
+
+		if (v < 0) tmp[--len] = XP_CHAR('-');
+		return tmp;
+	}
+
 	if (v->type == XP_AWK_VAL_STR) 
 	{
-		return xp_strxdup (
+		xp_char_t* tmp;
+		tmp = xp_strxdup (
 			((xp_awk_val_str_t*)v)->buf, 
 			((xp_awk_val_str_t*)v)->len);
+
+		if (tmp == XP_NULL) *errnum = XP_AWK_ENOMEM;
+		return tmp;
 	}
+
+	/* TODO: process more value types */
+
+	*errnum = XP_AWK_EWRONGINDEX;
 	return XP_NULL;
 }

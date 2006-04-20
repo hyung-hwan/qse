@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.21 2006-04-18 10:28:03 bacon Exp $
+ * $Id: val.c,v 1.22 2006-04-20 05:44:29 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -291,6 +291,14 @@ xp_bool_t xp_awk_boolval (xp_awk_val_t* val)
 	return xp_false;
 }
 
+static int __print_pair (xp_awk_pair_t* pair)
+{
+	xp_printf (XP_TEXT(" %s=>"), pair->key);	
+	xp_awk_printval (pair->val);
+	xp_printf (XP_TEXT(" "));
+	return 0;
+}
+
 void xp_awk_printval (xp_awk_val_t* val)
 {
 /* TODO: better value printing...................... */
@@ -326,7 +334,9 @@ void xp_awk_printval (xp_awk_val_t* val)
 		break;
 
 	case XP_AWK_VAL_MAP:
-		xp_printf (XP_TEXT("***MAP***"));
+		xp_printf (XP_TEXT("MAP["));
+		xp_awk_map_walk (((xp_awk_val_map_t*)val)->map, __print_pair);
+		xp_printf (XP_TEXT("]"));
 		break;
 
 	default:
