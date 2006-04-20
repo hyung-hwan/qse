@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.22 2006-04-20 05:44:29 bacon Exp $
+ * $Id: val.c,v 1.23 2006-04-20 16:17:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -156,7 +156,7 @@ xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val)
 	        val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]);
 }
 
-void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val)
+void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val, xp_bool_t cache)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
@@ -170,7 +170,8 @@ xp_printf (XP_TEXT("\n"));
 		return;
 
 	case XP_AWK_VAL_INT:
-		if (awk->run.icache_count < xp_countof(awk->run.icache))
+		if (cache == xp_true &&
+		    awk->run.icache_count < xp_countof(awk->run.icache))
 		{
 			awk->run.icache[awk->run.icache_count++] = 
 				(xp_awk_val_int_t*)val;	
@@ -179,7 +180,8 @@ xp_printf (XP_TEXT("\n"));
 		return;
 
 	case XP_AWK_VAL_REAL:
-		if (awk->run.rcache_count < xp_countof(awk->run.rcache))
+		if (cache == xp_true &&
+		    awk->run.rcache_count < xp_countof(awk->run.rcache))
 		{
 			awk->run.rcache[awk->run.rcache_count++] = 
 				(xp_awk_val_real_t*)val;	
@@ -232,7 +234,7 @@ xp_printf (XP_TEXT("**FREEING "));
 xp_awk_printval (val);
 xp_printf (XP_TEXT("\n"));
 */
-		xp_awk_freeval(awk, val);
+		xp_awk_freeval(awk, val, xp_true);
 	}
 }
 

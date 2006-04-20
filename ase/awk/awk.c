@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.41 2006-04-16 04:31:38 bacon Exp $ 
+ * $Id: awk.c,v 1.42 2006-04-20 16:17:01 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -120,7 +120,33 @@ int xp_awk_close (xp_awk_t* awk)
 
 void xp_awk_clear (xp_awk_t* awk)
 {
+	/* clear named variables */
 	xp_awk_map_clear (&awk->run.named);
+
+	/* destroy run stack */
+	if (awk->run.stack != XP_NULL)
+	{
+		xp_free (awk->run.stack);
+		awk->run.stack = XP_NULL;
+		awk->run.stack_top = 0;
+		awk->run.stack_base = 0;
+		awk->run.stack_limit = 0;
+	}
+
+	/* destroy values in free list */
+	while (awk->run.icache_count > 0)
+	{
+		--awk->run.icache_count;
+		xp_awk_freeval (awk, 
+			awk->run.icache[awk->run.icache_count], xp_false);
+	}
+	while (awk->run.rcache_count > 0)
+	{
+		--awk->run.rcache_count;
+		xp_awk_freeval (awk, 
+			awk->run.rcache[awk->run.rcache_count], xp_false);
+	}
+
 
 	xp_awk_tab_clear (&awk->parse.globals);
 	xp_awk_tab_clear (&awk->parse.locals);

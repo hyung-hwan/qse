@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.63 2006-04-20 05:44:29 bacon Exp $
+ * $Id: run.c,v 1.64 2006-04-20 16:17:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1852,7 +1852,7 @@ static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_t* nde)
 			res2 = xp_awk_makeintval (awk, r + 1);
 			if (res2 == XP_NULL)
 			{
-				xp_awk_freeval (awk, res);
+				xp_awk_freeval (awk, res, xp_true);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 		}
@@ -1865,7 +1865,7 @@ static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_t* nde)
 			res2 = xp_awk_makerealval (awk, r + 1.0);
 			if (res2 == XP_NULL)
 			{
-				xp_awk_freeval (awk, res);
+				xp_awk_freeval (awk, res, xp_true);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 		}
@@ -1886,7 +1886,7 @@ static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_t* nde)
 			res2 = xp_awk_makeintval (awk, r - 1);
 			if (res2 == XP_NULL)
 			{
-				xp_awk_freeval (awk, res);
+				xp_awk_freeval (awk, res, xp_true);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 		}
@@ -1899,7 +1899,7 @@ static xp_awk_val_t* __eval_incpst (xp_awk_t* awk, xp_awk_nde_t* nde)
 			res2 = xp_awk_makerealval (awk, r - 1.0);
 			if (res2 == XP_NULL)
 			{
-				xp_awk_freeval (awk, res);
+				xp_awk_freeval (awk, res, xp_true);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 		}
