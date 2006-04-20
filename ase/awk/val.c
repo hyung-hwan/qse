@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.23 2006-04-20 16:17:01 bacon Exp $
+ * $Id: val.c,v 1.24 2006-04-20 16:20:41 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -160,7 +160,7 @@ void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val, xp_bool_t cache)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
-xp_printf (XP_TEXT("freeing ... "));
+xp_printf (XP_TEXT("freeing [cache=%d] ... "), cache);
 xp_awk_printval (val);
 xp_printf (XP_TEXT("\n"));
 	switch (val->type)
