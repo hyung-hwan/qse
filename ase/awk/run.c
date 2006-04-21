@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.64 2006-04-20 16:17:01 bacon Exp $
+ * $Id: run.c,v 1.65 2006-04-21 06:06:32 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -28,6 +28,7 @@
 #define EXIT_CONTINUE  2
 #define EXIT_FUNCTION  3
 #define EXIT_GLOBAL    4
+#define EXIT_ABORT     5
 
 #define PANIC(awk,code) \
 	do { (awk)->errnum = (code); return XP_NULL; } while (0)
@@ -239,7 +240,8 @@ int xp_awk_run (xp_awk_t* awk)
 				(xp_awk_nde_blk_t*)awk->tree.begin) == -1) n = -1;
 		}
 
-		while (awk->run.exit_level != EXIT_GLOBAL)
+		while (awk->run.exit_level != EXIT_GLOBAL &&
+		       awk->run.exit_level != EXIT_ABORT)
 		{
 			awk->run.exit_level = EXIT_NONE;
 

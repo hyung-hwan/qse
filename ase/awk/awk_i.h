@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.4 2006-04-16 04:31:38 bacon Exp $
+ * $Id: awk_i.h,v 1.5 2006-04-21 06:06:32 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -19,6 +19,39 @@
 #endif
 
 typedef struct xp_awk_chain_t xp_awk_chain_t;
+
+/*
+ *
+struct xp_awk_parse_t
+{
+	int opt;
+};
+
+struct xp_awk_run_t
+{
+	int opt;
+};
+
+awk = xp_awk_open ();
+xp_awk_parse (awk, "source");
+thr = create_thread (5);
+
+thr[0]->xp_awk_run (awk, "data1");
+thr[1]->xp_awk_run (awk, "data2");
+thr[2]->xp_awk_run (awk, "data3");
+
+xp_awk_setcallback (void* __command_callback (int cmd, void* arg), void* arg);
+xp_awk_run (awk)
+{
+run_stack = malloc (run_stack_size);
+while ()
+{
+if (command_callback) if (command_callback (XP_AWK_ABORT) == yes) break;
+run with run_stack
+}
+}
+
+*/
 
 struct xp_awk_t
 {
