@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.17 2006-04-19 04:18:43 bacon Exp $
+ * $Id: sa.c,v 1.18 2006-04-21 16:21:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -83,9 +83,7 @@ int xp_strxncmp (
 	const xp_char_t* end1 = s1 + len1;
 	const xp_char_t* end2 = s2 + len2;
 
-	while (s1 < end1 && s2 < end2 && *s1 == *s2) {
-		s1++; s2++;
-	}
+	while (s1 < end1 && s2 < end2 && *s1 == *s2) s1++, s2++;
 	if (s1 == end1 && s2 == end2) return 0;
 	if (*s1 == *s2) return (s1 < end1)? 1: -1;
 	return (*s1 > *s2)? 1: -1;
@@ -148,16 +146,17 @@ int xp_vsprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_lis
 
 xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa)
 {
-	if (str == XP_NULL) {
+	if (str == XP_NULL) 
+	{
 		str = (xp_str_t*)xp_malloc (sizeof(xp_str_t));
 		if (str == XP_NULL) return XP_NULL;
 		str->__dynamic = xp_true;
 	}
 	else str->__dynamic = xp_false;
 
-	str->buf = (xp_char_t*)xp_malloc (
-		xp_sizeof(xp_char_t) * (capa + 1));
-	if (str->buf == XP_NULL) {
+	str->buf = (xp_char_t*) xp_malloc (xp_sizeof(xp_char_t) * (capa + 1));
+	if (str->buf == XP_NULL) 
+	{
 		if (str->__dynamic) xp_free (str);
 		return XP_NULL;
 	}
@@ -199,13 +198,14 @@ xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len)
 	xp_char_t* buf;
 	xp_size_t capa;
 
-	if (len > str->capa - str->size) {
+	if (len > str->capa - str->size) 
+	{
 		capa = str->size + len;
 
 		/* double the capa if necessary for concatenation */
 		if (capa < str->capa * 2) capa = str->capa * 2;
 
-		buf = (xp_char_t*)xp_realloc (
+		buf = (xp_char_t*) xp_realloc (
 			str->buf, xp_sizeof(xp_char_t) * (capa + 1));
 		if (buf == XP_NULL) return (xp_size_t)-1;
 

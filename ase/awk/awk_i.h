@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.5 2006-04-21 06:06:32 bacon Exp $
+ * $Id: awk_i.h,v 1.6 2006-04-21 16:21:27 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -19,6 +19,7 @@
 #endif
 
 typedef struct xp_awk_chain_t xp_awk_chain_t;
+typedef struct xp_awk_run-t xp_awk_run_t;
 
 /*
  *
@@ -33,12 +34,12 @@ struct xp_awk_run_t
 };
 
 awk = xp_awk_open ();
-xp_awk_parse (awk, "source");
+xp_awk_parse (awk, source_input, source_output);
 thr = create_thread (5);
 
-thr[0]->xp_awk_run (awk, "data1");
-thr[1]->xp_awk_run (awk, "data2");
-thr[2]->xp_awk_run (awk, "data3");
+thr[0]->xp_awk_run (awk, input_stream1, output_stream1);
+thr[1]->xp_awk_run (awk, input_stream2, output_stream2);
+thr[2]->xp_awk_run (awk, input_stream3, output_stream3);
 
 xp_awk_setcallback (void* __command_callback (int cmd, void* arg), void* arg);
 xp_awk_run (awk)
@@ -125,7 +126,6 @@ struct xp_awk_t
 
 	/* housekeeping */
 	int errnum;
-	xp_bool_t __dynamic;
 };
 
 struct xp_awk_chain_t
@@ -133,6 +133,26 @@ struct xp_awk_chain_t
 	xp_awk_nde_t* pattern;
 	xp_awk_nde_t* action;
 	xp_awk_chain_t* next;	
+};
+
+struct xp_awk_run_t
+{
+	xp_awk_map_t named;
+
+	void** stack;
+	xp_size_t stack_top;
+	xp_size_t stack_base;
+	xp_size_t stack_limit;
+	int exit_level;
+
+	xp_awk_val_int_t* icache[100]; /* TODO: ...  */
+	xp_awk_val_real_t* rcache[100]; /* TODO: ...  */
+	xp_size_t icache_count;
+	xp_size_t rcache_count;
+
+	/* input_stream */
+	/* output_stream */
+	xp_awk_t* awk;
 };
 
 #endif
