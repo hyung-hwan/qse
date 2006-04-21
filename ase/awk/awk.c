@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.43 2006-04-21 16:21:27 bacon Exp $ 
+ * $Id: awk.c,v 1.44 2006-04-21 17:24:31 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -9,8 +9,7 @@
 #include <xp/bas/assert.h>
 #endif
 
-static void __free_func (xp_awk_t* awk, void* func);
-static void __free_namedval (xp_awk_t* awk, void* val);
+static void __free_func (void* awk, void* func);
 
 xp_awk_t* xp_awk_open (void)
 {	
@@ -59,18 +58,6 @@ xp_awk_t* xp_awk_open (void)
 		return XP_NULL;	
 	}
 
-/* TODO: initial map size... */
-	if (xp_awk_map_open(&awk->run.named,awk,256,__free_namedval) == XP_NULL)
-	{
-		xp_str_close (&awk->token.name);
-		xp_awk_map_close (&awk->tree.funcs);
-		xp_awk_tab_close (&awk->parse.globals);
-		xp_awk_tab_close (&awk->parse.locals);
-		xp_awk_tab_close (&awk->parse.params);
-		xp_free (awk);
-		return XP_NULL;	
-	}
-
 	awk->opt.parse = 0;
 	awk->opt.run = 0;
 	awk->errnum = XP_AWK_ENOERR;
@@ -89,14 +76,6 @@ xp_awk_t* xp_awk_open (void)
 	awk->tree.chain = XP_NULL;
 	awk->tree.chain_tail = XP_NULL;
 
-	awk->run.stack = XP_NULL;
-	awk->run.stack_top = 0;
-	awk->run.stack_base = 0;
-	awk->run.stack_limit = 0;
-	awk->run.exit_level = 0;
-	awk->run.icache_count = 0;
-	awk->run.rcache_count = 0;
-
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
 
@@ -109,7 +88,6 @@ int xp_awk_close (xp_awk_t* awk)
 
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
-	xp_awk_map_close (&awk->run.named);
 	xp_awk_map_close (&awk->tree.funcs);
 	xp_awk_tab_close (&awk->parse.globals);
 	xp_awk_tab_close (&awk->parse.locals);
@@ -126,33 +104,7 @@ int xp_awk_close (xp_awk_t* awk)
 
 void xp_awk_clear (xp_awk_t* awk)
 {
-	/* clear named variables */
-	xp_awk_map_clear (&awk->run.named);
-
-	/* destroy run stack */
-	if (awk->run.stack != XP_NULL)
-	{
-		xp_free (awk->run.stack);
-		awk->run.stack = XP_NULL;
-		awk->run.stack_top = 0;
-		awk->run.stack_base = 0;
-		awk->run.stack_limit = 0;
-	}
-
-	/* destroy values in free list */
-	while (awk->run.icache_count > 0)
-	{
-		--awk->run.icache_count;
-		xp_awk_freeval (awk, 
-			awk->run.icache[awk->run.icache_count], xp_false);
-	}
-	while (awk->run.rcache_count > 0)
-	{
-		--awk->run.rcache_count;
-		xp_awk_freeval (awk, 
-			awk->run.rcache[awk->run.rcache_count], xp_false);
-	}
-
+/* TODO: kill all associated run instances... */
 
 	xp_awk_tab_clear (&awk->parse.globals);
 	xp_awk_tab_clear (&awk->parse.locals);
@@ -230,7 +182,7 @@ int xp_awk_detsrc (xp_awk_t* awk)
 	return 0;
 }
 
-static void __free_func (xp_awk_t* awk, void* func)
+static void __free_func (void* owner, void* func)
 {
 	xp_awk_func_t* f = (xp_awk_func_t*) func;
 
@@ -238,9 +190,4 @@ static void __free_func (xp_awk_t* awk, void* func)
 	/*xp_free (f->name);*/
 	xp_awk_clrpt (f->body);
 	xp_free (f);
-}
-
-static void __free_namedval (xp_awk_t* awk, void* val)
-{
-	xp_awk_refdownval (awk, val);
 }
