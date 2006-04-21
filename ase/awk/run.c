@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.65 2006-04-21 06:06:32 bacon Exp $
+ * $Id: run.c,v 1.66 2006-04-21 16:21:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -302,6 +302,57 @@ xp_awk_map_walk (&awk->run.named, __printval);
 xp_printf (XP_TEXT("-[END VARIABLES]--------------------------\n"));
 
 	return n;
+}
+
+static void __free_namedval (xp_run_t* awk, void* val)
+{
+	xp_awk_refdownval (run, val);
+}
+
+static int __open_run (xp_awk_run_t* run, xp_awk_run_t* awk)
+{
+	run->awk = awk;
+
+	run->stack = XP_NULL;
+	run->stack_top = 0;
+	run->stack_base = 0;
+	run->stack_limit = 0;
+	run->exit_level = 0;
+	run->icache_count = 0;
+	run->rcache_count = 0;
+
+	if (xp_awk_map_open (&run->named, 
+		awk, 256, __free_namedval) == XP_NULL) return -1;
+}
+
+static void __close_run (xp_awk_run_t* run)
+{
+	/* destroy run stack */
+	if (run->stack != XP_NULL)
+	{
+		xp_free (run->stack);
+		run->stack = XP_NULL;
+		run->stack_top = 0;
+		run->stack_base = 0;
+		run->stack_limit = 0;
+	}
+
+	/* destroy named variables */
+	xp_awk_map_close (&run->named);
+
+	/* destroy values in free list */
+	while (run->icache_count > 0)
+	{
+		--run->icache_count;
+		xp_awk_freeval (run, 
+			run->icache[run->icache_count], xp_false);
+	}
+	while (run->rcache_count > 0)
+	{
+		--run->rcache_count;
+		xp_awk_freeval (run, 
+			run->rcache[run->rcache_count], xp_false);
+	}
 }
 
 static int __run_block (xp_awk_t* awk, xp_awk_nde_blk_t* nde)
