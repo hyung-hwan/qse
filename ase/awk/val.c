@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.24 2006-04-20 16:20:41 bacon Exp $
+ * $Id: val.c,v 1.25 2006-04-21 17:24:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -28,7 +28,7 @@ static xp_awk_val_int_t __awk_int[] =
 	{ XP_AWK_VAL_INT, 0,  9 },
 };
 
-xp_awk_val_t* xp_awk_makeintval (xp_awk_t* awk, xp_long_t v)
+xp_awk_val_t* xp_awk_makeintval (xp_awk_run_t* run, xp_long_t v)
 {
 	xp_awk_val_int_t* val;
 
@@ -38,9 +38,9 @@ xp_awk_val_t* xp_awk_makeintval (xp_awk_t* awk, xp_long_t v)
 		return (xp_awk_val_t*)&__awk_int[v-__awk_int[0].val];
 	}
 
-	if (awk->run.icache_count > 0)
+	if (run->icache_count > 0)
 	{
-		val = awk->run.icache[--awk->run.icache_count];
+		val = run->icache[--run->icache_count];
 	}
 	else
 	{
@@ -56,13 +56,13 @@ xp_awk_val_t* xp_awk_makeintval (xp_awk_t* awk, xp_long_t v)
 	return (xp_awk_val_t*)val;
 }
 
-xp_awk_val_t* xp_awk_makerealval (xp_awk_t* awk, xp_real_t v)
+xp_awk_val_t* xp_awk_makerealval (xp_awk_run_t* run, xp_real_t v)
 {
 	xp_awk_val_real_t* val;
 
-	if (awk->run.rcache_count > 0)
+	if (run->rcache_count > 0)
 	{
-		val = awk->run.rcache[--awk->run.rcache_count];
+		val = run->rcache[--run->rcache_count];
 	}
 	else
 	{
@@ -120,17 +120,17 @@ xp_awk_val_t* xp_awk_makestrval2 (
 	return (xp_awk_val_t*)val;
 }
 
-static void __free_map_val (xp_awk_t* awk, void* v)
+static void __free_map_val (void* run, void* v)
 {
 /*
 xp_printf (XP_TEXT("refdown in map free..."));
 xp_awk_printval (v);
 xp_printf (XP_TEXT("\n"));
 */
-	xp_awk_refdownval (awk, v);
+	xp_awk_refdownval (run, v);
 }
 
-xp_awk_val_t* xp_awk_makemapval (xp_awk_t* awk)
+xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run)
 {
 	xp_awk_val_map_t* val;
 
@@ -139,7 +139,7 @@ xp_awk_val_t* xp_awk_makemapval (xp_awk_t* awk)
 
 	val->type = XP_AWK_VAL_MAP;
 	val->ref = 0;
-	val->map = xp_awk_map_open (XP_NULL, awk, 256, __free_map_val);
+	val->map = xp_awk_map_open (XP_NULL, run, 256, __free_map_val);
 	if (val->map == XP_NULL)
 	{
 		xp_free (val);
@@ -156,7 +156,7 @@ xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val)
 	        val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]);
 }
 
-void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val, xp_bool_t cache)
+void xp_awk_freeval (xp_awk_run_t* run, xp_awk_val_t* val, xp_bool_t cache)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
@@ -171,9 +171,9 @@ xp_printf (XP_TEXT("\n"));
 
 	case XP_AWK_VAL_INT:
 		if (cache == xp_true &&
-		    awk->run.icache_count < xp_countof(awk->run.icache))
+		    run->icache_count < xp_countof(run->icache))
 		{
-			awk->run.icache[awk->run.icache_count++] = 
+			run->icache[run->icache_count++] = 
 				(xp_awk_val_int_t*)val;	
 		}
 		else xp_free (val);
@@ -181,9 +181,9 @@ xp_printf (XP_TEXT("\n"));
 
 	case XP_AWK_VAL_REAL:
 		if (cache == xp_true &&
-		    awk->run.rcache_count < xp_countof(awk->run.rcache))
+		    run->rcache_count < xp_countof(run->rcache))
 		{
-			awk->run.rcache[awk->run.rcache_count++] = 
+			run->rcache[run->rcache_count++] = 
 				(xp_awk_val_real_t*)val;	
 		}
 		else xp_free (val);
@@ -214,7 +214,7 @@ xp_printf (XP_TEXT("\n"));
 	val->ref++;
 }
 
-void xp_awk_refdownval (xp_awk_t* awk, xp_awk_val_t* val)
+void xp_awk_refdownval (xp_awk_run_t* run, xp_awk_val_t* val)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
@@ -234,11 +234,11 @@ xp_printf (XP_TEXT("**FREEING "));
 xp_awk_printval (val);
 xp_printf (XP_TEXT("\n"));
 */
-		xp_awk_freeval(awk, val, xp_true);
+		xp_awk_freeval(run, val, xp_true);
 	}
 }
 
-void xp_awk_refdownval_nofree (xp_awk_t* awk, xp_awk_val_t* val)
+void xp_awk_refdownval_nofree (xp_awk_run_t* run, xp_awk_val_t* val)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
@@ -246,7 +246,7 @@ void xp_awk_refdownval_nofree (xp_awk_t* awk, xp_awk_val_t* val)
 	val->ref--;
 }
 
-xp_awk_val_t* xp_awk_cloneval (xp_awk_t* awk, xp_awk_val_t* val)
+xp_awk_val_t* xp_awk_cloneval (xp_awk_run_t* run, xp_awk_val_t* val)
 {
 	if (val == XP_NULL) return xp_awk_val_nil;
 
@@ -255,15 +255,15 @@ xp_awk_val_t* xp_awk_cloneval (xp_awk_t* awk, xp_awk_val_t* val)
 	case XP_AWK_VAL_NIL:
 		return xp_awk_val_nil;
 	case XP_AWK_VAL_INT:
-		return xp_awk_makeintval (awk, ((xp_awk_val_int_t*)val)->val);
+		return xp_awk_makeintval (run, ((xp_awk_val_int_t*)val)->val);
 	case XP_AWK_VAL_REAL:
-		return xp_awk_makerealval (awk, ((xp_awk_val_real_t*)val)->val);
+		return xp_awk_makerealval (run, ((xp_awk_val_real_t*)val)->val);
 	case XP_AWK_VAL_STR:
 		return xp_awk_makestrval (
 			((xp_awk_val_str_t*)val)->buf,
 			((xp_awk_val_str_t*)val)->len);
 	case XP_AWK_VAL_MAP:
-		/* TODO: .... */
+/* TODO: .... */
 		return XP_NULL;
 	}
 

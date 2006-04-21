@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.18 2006-04-20 16:17:01 bacon Exp $
+ * $Id: val.h,v 1.19 2006-04-21 17:24:31 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -80,21 +80,21 @@ extern "C" {
 
 extern xp_awk_val_t* xp_awk_val_nil;
 
-xp_awk_val_t* xp_awk_makeintval (xp_awk_t* awk, xp_long_t v);
-xp_awk_val_t* xp_awk_makerealval (xp_awk_t* awk, xp_real_t v);
+xp_awk_val_t* xp_awk_makeintval (xp_awk_run_t* run, xp_long_t v);
+xp_awk_val_t* xp_awk_makerealval (xp_awk_run_t* run, xp_real_t v);
 xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len);
 xp_awk_val_t* xp_awk_makestrval2 (
 	const xp_char_t* str1, xp_size_t len1, 
 	const xp_char_t* str2, xp_size_t len2);
-xp_awk_val_t* xp_awk_makemapval (xp_awk_t* awk);
+xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run);
 
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val);
-void xp_awk_freeval (xp_awk_t* awk, xp_awk_val_t* val, xp_bool_t cache);
+void xp_awk_freeval (xp_awk_run_t* run, xp_awk_val_t* val, xp_bool_t cache);
 void xp_awk_refupval (xp_awk_val_t* val);
-void xp_awk_refdownval (xp_awk_t* awk, xp_awk_val_t* val);
-void xp_awk_refdownval_nofree (xp_awk_t* awk, xp_awk_val_t* val);
+void xp_awk_refdownval (xp_awk_run_t* run, xp_awk_val_t* val);
+void xp_awk_refdownval_nofree (xp_awk_run_t* run, xp_awk_val_t* val);
 
-xp_awk_val_t* xp_awk_cloneval (xp_awk_t* awk, xp_awk_val_t* val);
+xp_awk_val_t* xp_awk_cloneval (xp_awk_run_t* run, xp_awk_val_t* val);
 xp_bool_t xp_awk_boolval (xp_awk_val_t* val);
 void xp_awk_printval (xp_awk_val_t* val);
 

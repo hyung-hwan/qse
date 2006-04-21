@@ -1,9 +1,13 @@
 /*
- * $Id: awk_i.h,v 1.6 2006-04-21 16:21:27 bacon Exp $
+ * $Id: awk_i.h,v 1.7 2006-04-21 17:24:31 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
 #define _XP_AWK_AWKI_H_
+
+typedef struct xp_awk_chain_t xp_awk_chain_t;
+typedef struct xp_awk_run_t xp_awk_run_t;
+typedef struct xp_awk_tree_t xp_awk_tree_t;
 
 #include <xp/awk/awk.h>
 #include <xp/awk/tree.h>
@@ -17,9 +21,6 @@
 #else
 #include <xp/bas/str.h>
 #endif
-
-typedef struct xp_awk_chain_t xp_awk_chain_t;
-typedef struct xp_awk_run-t xp_awk_run_t;
 
 /*
  *
@@ -54,6 +55,16 @@ run with run_stack
 
 */
 
+struct xp_awk_tree_t
+{
+	xp_size_t nglobals;
+	xp_awk_map_t funcs;
+	xp_awk_nde_t* begin;
+	xp_awk_nde_t* end;
+	xp_awk_chain_t* chain;
+	xp_awk_chain_t* chain_tail;
+};
+
 struct xp_awk_t
 {
 	/* options */
@@ -73,15 +84,7 @@ struct xp_awk_t
 	void* out_arg;
 
 	/* parse tree */
-	struct 
-	{
-		xp_size_t nglobals;
-		xp_awk_map_t funcs;
-		xp_awk_nde_t* begin;
-		xp_awk_nde_t* end;
-		xp_awk_chain_t* chain;
-		xp_awk_chain_t* chain_tail;
-	} tree;
+	xp_awk_tree_t tree;
 
 	/* temporary information that the parser needs */
 	struct
@@ -91,23 +94,6 @@ struct xp_awk_t
 		xp_awk_tab_t params;
 		xp_size_t nlocals_max;
 	} parse;
-
-	/* run-time data structure */
-	struct
-	{
-		xp_awk_map_t named;
-
-		void** stack;
-		xp_size_t stack_top;
-		xp_size_t stack_base;
-		xp_size_t stack_limit;
-		int exit_level;
-
-		xp_awk_val_int_t* icache[100]; /* TODO: ...  */
-		xp_awk_val_real_t* rcache[100]; /* TODO: ...  */
-		xp_size_t icache_count;
-		xp_size_t rcache_count;
-	} run;
 
 	/* source buffer management */
 	struct 
@@ -153,6 +139,9 @@ struct xp_awk_run_t
 	/* input_stream */
 	/* output_stream */
 	xp_awk_t* awk;
+	int opt;
+	xp_awk_tree_t* tree;
+	xp_size_t nglobals;
 };
 
 #endif
