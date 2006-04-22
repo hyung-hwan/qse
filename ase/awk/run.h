@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.9 2006-04-14 16:26:00 bacon Exp $
+ * $Id: run.h,v 1.10 2006-04-22 13:54:52 bacon Exp $
  */
 
 #ifndef _XP_AWK_RUN_H_
@@ -8,16 +8,6 @@
 #ifndef _XP_AWK_AWK_H_
 #error Never include this file directly. Include <xp/awk/awk.h> instead
 #endif
-
-typedef struct xp_awk_frm_t xp_awk_frm_t;
-
-struct xp_awk_frm_t
-{
-	xp_size_t nparams;
-	xp_size_t nlocals;
-	xp_awk_val_t* stack;
-	xp_awk_frm_t* prev;
-};
 
 enum
 {

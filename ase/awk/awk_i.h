@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.7 2006-04-21 17:24:31 bacon Exp $
+ * $Id: awk_i.h,v 1.8 2006-04-22 13:54:52 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -75,13 +75,8 @@ struct xp_awk_t
 	} opt;
 
 	/* io functions */
-	xp_awk_io_t src_func;
-	xp_awk_io_t in_func;
-	xp_awk_io_t out_func;
-
-	void* src_arg;
-	void* in_arg;
-	void* out_arg;
+	xp_awk_io_t srcio;
+	void* srcio_arg;
 
 	/* parse tree */
 	xp_awk_tree_t tree;
@@ -136,12 +131,23 @@ struct xp_awk_run_t
 	xp_size_t icache_count;
 	xp_size_t rcache_count;
 
-	/* input_stream */
-	/* output_stream */
-	xp_awk_t* awk;
+	xp_awk_io_t txtio;
+	void* txtio_arg;
+
+	struct
+	{
+		xp_char_t buf[1024];
+		xp_size_t buf_pos;
+		xp_size_t buf_len;
+		xp_bool_t eof;
+		xp_str_t  line;
+	} input;
+
 	int opt;
+	int errnum;
 	xp_awk_tree_t* tree;
 	xp_size_t nglobals;
+
 };
 
 #endif

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.44 2006-04-21 17:24:31 bacon Exp $ 
+ * $Id: awk.c,v 1.45 2006-04-22 13:54:52 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -24,7 +24,8 @@ xp_awk_t* xp_awk_open (void)
 		return XP_NULL;	
 	}
 
-	if (xp_awk_map_open (&awk->tree.funcs, awk, 256, __free_func) == XP_NULL) 
+	/* TODO: initial map size?? */
+	if (xp_awk_map_open(&awk->tree.funcs,awk,256,__free_func) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_free (awk);
@@ -61,12 +62,8 @@ xp_awk_t* xp_awk_open (void)
 	awk->opt.parse = 0;
 	awk->opt.run = 0;
 	awk->errnum = XP_AWK_ENOERR;
-	awk->src_func = XP_NULL;
-	awk->in_func = XP_NULL;
-	awk->out_func = XP_NULL;
-	awk->src_arg = XP_NULL;
-	awk->in_arg = XP_NULL;
-	awk->out_arg = XP_NULL;
+	awk->srcio = XP_NULL;
+	awk->srcio_arg = XP_NULL;
 
 	awk->parse.nlocals_max = 0;
 
@@ -109,6 +106,7 @@ void xp_awk_clear (xp_awk_t* awk)
 	xp_awk_tab_clear (&awk->parse.globals);
 	xp_awk_tab_clear (&awk->parse.locals);
 	xp_awk_tab_clear (&awk->parse.params);
+
 	awk->parse.nlocals_max = 0; 
 
 	/* clear parse trees */	
@@ -135,8 +133,6 @@ void xp_awk_clear (xp_awk_t* awk)
 		awk->tree.chain = next;
 	}
 	awk->tree.chain_tail = XP_NULL;	
-
-	/* TODO: destroy function list */
 }
 
 void xp_awk_setparseopt (xp_awk_t* awk, int opt)
@@ -153,14 +149,14 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
 {
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
-	xp_assert (awk->src_func == XP_NULL);
-	if (src(XP_AWK_IO_OPEN, arg, XP_NULL, 0) == -1) {
-		awk->errnum = XP_AWK_ESRCOP;
+	xp_assert (awk->srcio == XP_NULL);
+	if (src(XP_AWK_INPUT_OPEN, arg, XP_NULL, 0) == -1) {
+		awk->errnum = XP_AWK_ESRCINOPEN;
 		return -1;
 	}
 
-	awk->src_func = src;
-	awk->src_arg = arg;
+	awk->srcio = src;
+	awk->srcio_arg = arg;
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
 	return 0;
@@ -168,13 +164,18 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
 
 int xp_awk_detsrc (xp_awk_t* awk)
 {
-	if (awk->src_func != XP_NULL) {
-		if (awk->src_func(XP_AWK_IO_CLOSE, awk->src_arg, XP_NULL, 0) == -1) {
-			awk->errnum = XP_AWK_ESRCCL;
+	if (awk->srcio != XP_NULL) {
+		xp_ssize_t n;
+
+		n = awk->srcio (XP_AWK_INPUT_CLOSE, awk->srcio_arg, XP_NULL, 0);
+		if (n == -1)
+		{
+			awk->errnum = XP_AWK_ESRCINCLOSE;
 			return -1;
 		}
-		awk->src_func = XP_NULL;
-		awk->src_arg = XP_NULL;
+
+		awk->srcio = XP_NULL;
+		awk->srcio_arg = XP_NULL;
 		awk->lex.curc = XP_CHAR_EOF;
 		awk->lex.ungotc_count = 0;
 	}

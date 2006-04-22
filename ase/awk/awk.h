@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.53 2006-04-18 16:04:54 bacon Exp $
+ * $Id: awk.h,v 1.54 2006-04-22 13:54:52 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -16,9 +16,15 @@ typedef xp_ssize_t (*xp_awk_io_t) (
 /* io function commands */
 enum 
 {
-	XP_AWK_IO_OPEN,
-	XP_AWK_IO_CLOSE,
-	XP_AWK_IO_DATA
+	XP_AWK_INPUT_OPEN   = 0,
+	XP_AWK_INPUT_CLOSE  = 1,
+	XP_AWK_INPUT_NEXT   = 2,
+	XP_AWK_INPUT_DATA   = 3,
+
+	XP_AWK_OUTPUT_OPEN  = 4,
+	XP_AWK_OUTPUT_CLOSE = 5,
+	XP_AWK_OUTPUT_NEXT  = 6,
+	XP_AWK_OUTPUT_DATA  = 7
 };
 
 /* parse options */
@@ -44,9 +50,13 @@ enum
 	XP_AWK_ENOERR,         /* no error */
 	XP_AWK_ENOMEM,         /* out of memory */
 
-	XP_AWK_ESRCOP,
-	XP_AWK_ESRCCL,
-	XP_AWK_ESRCDT,         /* error in reading source */
+	XP_AWK_ESRCINOPEN,
+	XP_AWK_ESRCINCLOSE,
+	XP_AWK_ESRCINDATA,     /* error in reading source */
+
+	XP_AWK_ETXTINOPEN,
+	XP_AWK_ETXTINCLOSE,
+	XP_AWK_ETXTINDATA,     /* error in reading text */
 
 	XP_AWK_ELXCHR,         /* lexer came accross an wrong character */
 	XP_AWK_ELXUNG,         /* lexer failed to unget a character */
@@ -101,13 +111,10 @@ void xp_awk_setrunopt (xp_awk_t* awk, int opt);
 
 int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg);
 int xp_awk_detsrc (xp_awk_t* awk);
-int xp_awk_attin (xp_awk_t* awk, xp_awk_io_t in, void* arg);
-int xp_awk_detin (xp_awk_t* awk);
-int xp_awk_attout (xp_awk_t* awk, xp_awk_io_t out, void* arg);
-int xp_awk_detout (xp_awk_t* awk);
 
+/* TODO: xp_awk_parse (xp_awk_t* awk, xp_awk_io_t src, void* arg)??? */
 int xp_awk_parse (xp_awk_t* awk);
-int xp_awk_run (xp_awk_t* awk);
+int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg);
 
 /* utility functions exported by awk.h */
 xp_long_t xp_awk_strtolong (
