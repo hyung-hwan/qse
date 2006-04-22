@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.68 2006-04-22 13:54:52 bacon Exp $
+ * $Id: run.c,v 1.69 2006-04-22 16:16:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -50,6 +50,8 @@ static int __run_break_statement (xp_awk_run_t* run, xp_awk_nde_break_t* nde);
 static int __run_continue_statement (xp_awk_run_t* run, xp_awk_nde_continue_t* nde);
 static int __run_return_statement (xp_awk_run_t* run, xp_awk_nde_return_t* nde);
 static int __run_exit_statement (xp_awk_run_t* run, xp_awk_nde_exit_t* nde);
+static int __run_next_statement (xp_awk_run_t* run, xp_awk_nde_next_t* nde);
+static int __run_nextfile_statement (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde);
 
 static xp_awk_val_t* __eval_expression (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -570,11 +572,13 @@ static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		break;
 
 	case XP_AWK_NDE_NEXT:
-		/* TODO: */
+		if (__run_next_statement (
+			run, (xp_awk_nde_next_t*)nde) == -1) return -1;
 		break;
 
 	case XP_AWK_NDE_NEXTFILE:
-		/* TODO: */
+		if (__run_nextfile_statement (
+			run, (xp_awk_nde_nextfile_t*)nde) == -1) return -1;
 		break;
 
 	default:
@@ -807,6 +811,20 @@ static int __run_exit_statement (xp_awk_run_t* run, xp_awk_nde_exit_t* nde)
 
 	run->exit_level = EXIT_GLOBAL;
 	return 0;
+}
+
+static int __run_next_statement (xp_awk_run_t* run, xp_awk_nde_next_t* nde)
+{
+	/* TODO */
+	return -1;
+}
+
+static int __run_nextfile_statement (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
+{
+	xp_ssize_t n;
+	n = run->txtio (XP_AWK_INPUT_NEXT, run->txtio_arg, XP_NULL, 0);
+	if (n == -1) PANIC_I (run, XP_AWK_ETXTINNEXT);
+	return (n == -1)? -1: 0;
 }
 
 static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
@@ -2620,7 +2638,7 @@ static xp_char_t* __val_to_str (xp_awk_val_t* v, int* errnum)
 		return tmp;
 	}
 
-	/* TODO: process more value types */
+/* TODO: process more value types */
 
 	*errnum = XP_AWK_EWRONGINDEX;
 	return XP_NULL;
