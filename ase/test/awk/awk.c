@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.25 2006-04-19 02:52:53 bacon Exp $
+ * $Id: awk.c,v 1.26 2006-04-22 13:54:53 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -35,11 +35,12 @@ static xp_ssize_t process_source (
 	xp_char_t c;
 
 	switch (cmd) {
-	case XP_AWK_IO_OPEN:
-	case XP_AWK_IO_CLOSE:
+	case XP_AWK_INPUT_OPEN:
+	case XP_AWK_INPUT_CLOSE:
+	case XP_AWK_INPUT_NEXT:
 		return 0;
 
-	case XP_AWK_IO_DATA:
+	case XP_AWK_INPUT_DATA:
 		if (size <= 0) return -1;
 #ifdef XP_CHAR_IS_MCHAR
 		c = fgetc (stdin);
@@ -49,9 +50,64 @@ static xp_ssize_t process_source (
 		if (c == XP_CHAR_EOF) return 0;
 		*data = c;
 		return 1;
+
+	case XP_AWK_OUTPUT_OPEN:
+	case XP_AWK_OUTPUT_CLOSE:
+	case XP_AWK_OUTPUT_NEXT:
+	case XP_AWK_OUTPUT_DATA:
+		return 0;
 	}
 
 	return -1;
+}
+
+struct data_io
+{
+	const char* input_file;
+	FILE* input_handle;
+};
+
+static xp_ssize_t process_data (
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+{
+	struct data_io* io = (struct data_io*)arg;
+	xp_char_t c;
+
+	switch (cmd) {
+	case XP_AWK_INPUT_OPEN:
+		io->input_handle = fopen (io->input_file, "r");
+		if (io->input_handle == NULL) return -1;
+		return 0;
+
+	case XP_AWK_INPUT_CLOSE:
+		fclose (io->input_handle);
+		io->input_handle = NULL;
+		return 0;
+
+	case XP_AWK_INPUT_NEXT:
+		/* input switching not supported for the time being... */
+		return -1;
+
+	case XP_AWK_INPUT_DATA:
+		if (size <= 0) return -1;
+#ifdef XP_CHAR_IS_MCHAR
+		c = fgetc (io->input_handle);
+#else
+		c = fgetwc (io->input_handle);
+#endif
+		if (c == XP_CHAR_EOF) return 0;
+		*data = c;
+		return 1;
+
+	case XP_AWK_OUTPUT_OPEN:
+	case XP_AWK_OUTPUT_CLOSE:
+	case XP_AWK_OUTPUT_NEXT:
+	case XP_AWK_OUTPUT_DATA:
+		return -1;
+	}
+
+	return -1;
+
 }
 
 #ifdef __linux
@@ -65,6 +121,7 @@ int xp_main (int argc, xp_char_t* argv[])
 #endif
 {
 	xp_awk_t* awk;
+	struct data_io data_io = { "awk.in", NULL };
 
 #ifdef __linux
 	mtrace ();
@@ -114,7 +171,7 @@ int xp_main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
-	if (xp_awk_run(awk) == -1) 
+	if (xp_awk_run (awk, process_data, (void*)&data_io) == -1) 
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (

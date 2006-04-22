@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.67 2006-04-21 17:24:31 bacon Exp $
+ * $Id: run.c,v 1.68 2006-04-22 13:54:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -31,14 +31,16 @@
 #define EXIT_ABORT     5
 
 #define PANIC(run,code) \
-	do { (run)->awk->errnum = (code); return XP_NULL; } while (0)
+	do { (run)->errnum = (code); return XP_NULL; } while (0)
 #define PANIC_I(run,code) \
-	do { (run)->awk->errnum = (code); return -1; } while (0)
+	do { (run)->errnum = (code); return -1; } while (0)
 
-static int __open_run (xp_awk_run_t* run, xp_awk_t* awk);
+static int __open_run (
+	xp_awk_run_t* run, xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg);
 static void __close_run (xp_awk_run_t* run);
 
 static int __run_main (xp_awk_run_t* run);
+static int __run_pattern_blocks  (xp_awk_run_t* run);
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static int __run_if_statement (xp_awk_run_t* run, xp_awk_nde_if_t* nde);
@@ -126,8 +128,10 @@ static int __raw_push (xp_awk_run_t* run, void* val);
 static void __raw_pop (xp_awk_run_t* run);
 static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 
+static int __read_text_input (xp_awk_run_t* run);
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 static xp_char_t* __val_to_str (xp_awk_val_t* v, int* errnum);
+
 
 typedef xp_awk_val_t* (*binop_func_t) (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
@@ -142,16 +146,33 @@ static int __printval (xp_awk_pair_t* pair)
 	return 0;
 }
 
-int xp_awk_run (xp_awk_t* awk)
+int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg)
 {
-	xp_awk_run_t run;
+	xp_awk_run_t* run;
+	int n;
 
-	if (__open_run (&run, awk) == -1) return -1;
-	if (__run_main (&run) == -1) return -1;
-xp_printf (XP_TEXT("run.icache_count = %d\n"), run.icache_count);
-	__close_run (&run);
+	run = (xp_awk_run_t*) xp_malloc (xp_sizeof(xp_awk_run_t));
+	if (run == XP_NULL)
+	{
+		awk->errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
 
-	return 0;
+	if (__open_run (run, awk, txtio, txtio_arg) == -1) 
+	{
+/* TODO: find a way to set the errnum into awk object in a thread-safe way */
+		awk->errnum = run->errnum;
+		xp_free (run);
+		return -1;
+	}
+
+	n = __run_main (run);
+	if (n == -1) awk->errnum = run->errnum;
+
+	__close_run (run);
+	xp_free (run);
+
+	return n;
 }
 
 static void __free_namedval (xp_awk_run_t* run, void* val)
@@ -159,25 +180,40 @@ static void __free_namedval (xp_awk_run_t* run, void* val)
 	xp_awk_refdownval (run, val);
 }
 
-static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
+static int __open_run (
+	xp_awk_run_t* run, xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg)
 {
 	run->stack = XP_NULL;
 	run->stack_top = 0;
 	run->stack_base = 0;
 	run->stack_limit = 0;
+
 	run->exit_level = 0;
+
 	run->icache_count = 0;
 	run->rcache_count = 0;
 
-	run->awk = awk;
+	run->txtio = txtio;
+	run->txtio_arg = txtio_arg;
+
 	run->opt = awk->opt.run;
+	run->errnum = XP_AWK_ENOERR;
 	run->tree = &awk->tree;
 	run->nglobals = awk->tree.nglobals;
+
+	run->input.buf_pos = 0;
+	run->input.buf_len = 0;
+	if (xp_str_open (&run->input.line, 256) == XP_NULL)
+	{
+		run->errnum = XP_AWK_ENOMEM; 
+		return -1;
+	}
 
 	if (xp_awk_map_open (&run->named, 
 		run, 256, __free_namedval) == XP_NULL) 
 	{
-		awk->errnum = XP_AWK_ENOMEM; 
+		xp_str_close (&run->input.line);
+		run->errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
 
@@ -200,6 +236,9 @@ static void __close_run (xp_awk_run_t* run)
 
 	/* destroy named variables */
 	xp_awk_map_close (&run->named);
+
+	/* destroy input data */
+	xp_str_close (&run->input.line);
 
 	/* destroy values in free list */
 	while (run->icache_count > 0)
@@ -244,6 +283,7 @@ static int __run_main (xp_awk_run_t* run)
 
 	if (run->opt & XP_AWK_RUNMAIN)
 	{
+// TODO: should the main function be user-specifiable?
 		static xp_char_t m_a_i_n[] = 
 		{ 
 			XP_CHAR('m'), 
@@ -282,6 +322,7 @@ static int __run_main (xp_awk_run_t* run)
 			__raw_pop_times (run, run->nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
+
 		if (__raw_push(run,(void*)saved_stack_top) == -1) 
 		{
 			run->stack_top = saved_stack_top;
@@ -322,16 +363,9 @@ static int __run_main (xp_awk_run_t* run)
 				(xp_awk_nde_blk_t*)run->tree->begin) == -1) n = -1;
 		}
 
-		while (run->exit_level != EXIT_GLOBAL &&
-		       run->exit_level != EXIT_ABORT)
+		if (n == 0 && run->txtio != XP_NULL)
 		{
-			run->exit_level = EXIT_NONE;
-
-			/*
-			 * TODO: execute pattern blocks.
-			 */
-
-			break;
+			if (__run_pattern_blocks (run) == -1) n = -1;
 		}
 
 		if (n == 0 && run->tree->end != XP_NULL) 
@@ -385,6 +419,52 @@ xp_printf (XP_TEXT("-[END VARIABLES]--------------------------\n"));
 
 	return n;
 }
+
+static int __run_pattern_blocks  (xp_awk_run_t* run)
+{
+	xp_ssize_t n;
+
+	xp_assert (run->txtio != XP_NULL);
+
+	n = run->txtio (XP_AWK_INPUT_OPEN, run->txtio_arg, XP_NULL, 0);
+	if (n == -1) PANIC_I (run, XP_AWK_ETXTINOPEN);
+
+	run->input.buf_pos = 0;
+	run->input.buf_len = 0;
+	run->input.eof = xp_false;
+
+	while (run->exit_level != EXIT_GLOBAL &&
+	       run->exit_level != EXIT_ABORT)
+	{
+		int x;
+		run->exit_level = EXIT_NONE;
+
+		x = __read_text_input(run);
+		if (x == -1)
+		{
+			/* don't care about the result of input close */
+			run->txtio (XP_AWK_INPUT_CLOSE, 
+				run->txtio_arg, XP_NULL, 0);
+			return -1;
+		}
+
+		if (x == 0) break; /* end of input */
+
+		/*
+		 * TODO: execute pattern blocks.
+		 */
+		/* for each block { run it }
+		 * handle according if next and nextfile has been called 
+		 */
+		xp_printf (XP_TEXT("**** line [%s]\n"), XP_STR_BUF(&run->input.line));
+	}
+
+	n = run->txtio (XP_AWK_INPUT_CLOSE, run->txtio_arg, XP_NULL, 0);
+	if (n == -1) PANIC_I (run, XP_AWK_ETXTINCLOSE);
+
+	return 0;
+}
+
 
 
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
@@ -2411,6 +2491,48 @@ static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times)
 		--times;
 		__raw_pop (run);
 	}
+}
+
+static int __read_text_input (xp_awk_run_t* run)
+{
+	xp_ssize_t n;
+	xp_char_t c;
+
+	xp_str_clear (&run->input.line);
+	if (run->input.eof) return 0;
+
+	while (1)
+	{
+		if (run->input.buf_pos >= run->input.buf_len)
+		{
+			n = run->txtio (XP_AWK_INPUT_DATA, run->txtio_arg,
+				run->input.buf, xp_countof(run->input.buf));
+			if (n == -1) PANIC_I (run, XP_AWK_ETXTINDATA);
+			if (n == 0)
+			{
+				if (XP_STR_LEN(&run->input.line) == 0) return 0;
+				run->input.eof = xp_true;
+				break;
+			}
+
+			run->input.buf_pos = 0;
+			run->input.buf_len = n;
+		}
+
+		c = run->input.buf[run->input.buf_pos++];
+
+		if (xp_str_ccat (&run->input.line, c) == (xp_size_t)-1)
+		{
+			PANIC_I (run, XP_AWK_ENOMEM);
+		}
+
+		/* TODO: use LF instead of this hard coded value */
+		/* any better way to tell line terminating with newlines?
+		 * line with new line characters removed or retained? */
+		if (c == XP_CHAR('\n')) break;
+	}
+
+	return 1;
 }
 
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)

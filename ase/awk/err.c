@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.12 2006-04-18 16:04:54 bacon Exp $
+ * $Id: err.c,v 1.13 2006-04-22 13:54:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -15,9 +15,15 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
  	{
 		XP_TEXT("no error"),
 		XP_TEXT("out of memory"),
-		XP_TEXT("cannot open source"),
-		XP_TEXT("cannot close source"),
-		XP_TEXT("cannot read source"),
+
+		XP_TEXT("cannot open source input"),
+		XP_TEXT("cannot close source input"),
+		XP_TEXT("cannot read source input"),
+
+		XP_TEXT("cannot open text input"),
+		XP_TEXT("cannot close text input"),
+		XP_TEXT("cannot read text input"),
+
 		XP_TEXT("invalid character"),
 		XP_TEXT("cannot unget character"),
 

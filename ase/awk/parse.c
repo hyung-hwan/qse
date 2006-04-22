@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.85 2006-04-19 03:42:08 bacon Exp $
+ * $Id: parse.c,v 1.86 2006-04-22 13:54:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2802,10 +2802,10 @@ static int __get_char (xp_awk_t* awk)
 		return 0;
 	}
 
-	n = awk->src_func(XP_AWK_IO_DATA, awk->src_arg, &c, 1);
+	n = awk->srcio (XP_AWK_INPUT_DATA, awk->srcio_arg, &c, 1);
 	if (n == -1) 
 	{
-		awk->errnum = XP_AWK_ESRCDT;
+		awk->errnum = XP_AWK_ESRCINDATA;
 		return -1;
 	}
 	awk->lex.curc = (n == 0)? XP_CHAR_EOF: c;
