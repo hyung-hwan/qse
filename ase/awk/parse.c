@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.86 2006-04-22 13:54:52 bacon Exp $
+ * $Id: parse.c,v 1.87 2006-04-22 16:16:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2269,26 +2269,27 @@ static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_next (xp_awk_t* awk)
 {
-	xp_awk_nde_t* nde;
+	xp_awk_nde_next_t* nde;
 
-	nde = (xp_awk_nde_t*)xp_malloc(xp_sizeof(xp_awk_nde_t));
+	nde = (xp_awk_nde_next_t*) xp_malloc (xp_sizeof(xp_awk_nde_next_t));
 	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	nde->type = XP_AWK_NDE_NEXT;
 	nde->next = XP_NULL;
 	
-	return nde;
+	return (xp_awk_nde_t*)nde;
 }
 
 static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk)
 {
-	xp_awk_nde_t* nde;
+	xp_awk_nde_nextfile_t* nde;
 
-	nde = (xp_awk_nde_t*)xp_malloc(xp_sizeof(xp_awk_nde_t));
+	nde = (xp_awk_nde_nextfile_t*) 
+		xp_malloc (xp_sizeof(xp_awk_nde_nextfile_t));
 	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	nde->type = XP_AWK_NDE_NEXTFILE;
 	nde->next = XP_NULL;
 	
-	return nde;
+	return (xp_awk_nde_t*)nde;
 }
 
 static int __get_token (xp_awk_t* awk)

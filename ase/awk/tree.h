@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.35 2006-04-18 16:04:59 bacon Exp $
+ * $Id: tree.h,v 1.36 2006-04-22 16:16:40 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -74,6 +74,8 @@ typedef struct xp_awk_nde_break_t     xp_awk_nde_break_t;
 typedef struct xp_awk_nde_continue_t  xp_awk_nde_continue_t;
 typedef struct xp_awk_nde_return_t    xp_awk_nde_return_t;
 typedef struct xp_awk_nde_exit_t      xp_awk_nde_exit_t;
+typedef struct xp_awk_nde_next_t      xp_awk_nde_next_t;
+typedef struct xp_awk_nde_nextfile_t  xp_awk_nde_nextfile_t;
 
 struct xp_awk_func_t
 {
@@ -227,6 +229,18 @@ struct xp_awk_nde_exit_t
 {
 	XP_AWK_NDE_HDR;
 	xp_awk_nde_t* val; /* optional (no exit code if XP_NULL) */
+};
+
+/* XP_AWK_NDE_NEXT */
+struct xp_awk_nde_next_t
+{
+	XP_AWK_NDE_HDR;
+};
+
+/* XP_AWK_NDE_NEXTFILE */
+struct xp_awk_nde_nextfile_t
+{
+	XP_AWK_NDE_HDR;
 };
 
 #ifdef __cplusplus
