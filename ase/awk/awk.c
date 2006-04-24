@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.46 2006-04-24 14:38:46 bacon Exp $ 
+ * $Id: awk.c,v 1.47 2006-04-24 15:34:52 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -95,10 +95,10 @@ int xp_awk_close (xp_awk_t* awk)
 	return 0;
 }
 
+
 /* TODO: write a function to clear awk->parse data structure.
          this would be need either as a separate function or as a part of xp_awk_clear...
          do i have to pass an option to xp_awk_clear to do this??? */
-
 void xp_awk_clear (xp_awk_t* awk)
 {
 /* TODO: kill all associated run instances... */

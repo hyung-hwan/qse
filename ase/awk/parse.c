@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.90 2006-04-24 11:36:12 bacon Exp $
+ * $Id: parse.c,v 1.91 2006-04-24 15:34:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -115,6 +115,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
 static xp_awk_nde_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_expression (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_assignment (xp_awk_t* awk);
 
 static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk);
 
@@ -384,23 +385,39 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	{
 		if (__parse_begin(awk) == XP_NULL) return XP_NULL;
 	}
-	else if (MATCH(awk, TOKEN_END)) 
+	else if (MATCH(awk,TOKEN_END)) 
 	{
 		if (__parse_end(awk) == XP_NULL) return XP_NULL;
 	}
-	/* TODO: process patterns and expressions */
-	/* 
-	expressions 
-	/regular expression/
-	pattern && pattern
-	pattern || pattern
-	!pattern
-	(pattern)
-	pattern, pattern
-	*/
-	else 
+	else if (MATCH(awk,TOKEN_LBRACE))
 	{
 		if (__parse_patternless(awk) == XP_NULL) return XP_NULL;
+	}
+	else
+	{
+		/* TODO: process patterns and expressions */
+		/* 
+		expressions 
+		/regular expression/
+		pattern && pattern
+		pattern || pattern
+		!pattern
+		(pattern)
+		pattern, pattern
+		*/
+
+		if (__parse_expression (awk) == XP_NULL) return XP_NULL;
+		if (MATCH(awk,TOKEN_LBRACE))
+		{
+			if (__parse_patternless(awk) == XP_NULL) return XP_NULL;	
+		}
+		else
+		{
+			/* { print $0; } */
+			/* TODO: XXXX */
+			xp_printf (XP_TEXT("BLOCKLESS NOT IMPLEMENTED....\n"));
+			PANIC (awk, XP_AWK_EINTERNAL);
+		}	
 	}
 
 	return awk;
@@ -656,7 +673,7 @@ static xp_awk_nde_t* __parse_patternless (xp_awk_t* awk)
 	nde = __parse_action (awk);
 	if (nde == XP_NULL) return XP_NULL;
 
-	chain = (xp_awk_chain_t*)xp_malloc(xp_sizeof(xp_awk_chain_t));
+	chain = (xp_awk_chain_t*) xp_malloc (xp_sizeof(xp_awk_chain_t));
 	if (chain == XP_NULL) 
 	{
 		xp_awk_clrpt (nde);
@@ -1043,6 +1060,26 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 {
+	xp_awk_nde_t* nde, * tmp;
+
+	do 
+	{
+		tmp = __parse_assignment(awk);
+		if (tmp == XP_NULL) return XP_NULL;
+
+		nde = tmp; break; /* TODO */
+
+		if (!match(awk, TOKEN_COMMA)) break;
+		if (__get_token(awk) == -1) return XP_NULL;
+	} 
+	while (1);
+
+/* TODO: XP_AWK_NDE_GRP -> should i support i this way??? */
+	return nde;
+}
+
+static xp_awk_nde_t* __parse_assignment (xp_awk_t* awk)
+{
 	/*
 	 * <expression> ::= <assignment> | <basic expression>
 	 * <assignment> ::= <assignment target> assignmentOperator <basic expression>
@@ -1088,7 +1125,7 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	nde = (xp_awk_nde_ass_t*)xp_malloc(xp_sizeof(xp_awk_nde_ass_t));
+	nde = (xp_awk_nde_ass_t*) xp_malloc (xp_sizeof(xp_awk_nde_ass_t));
 	if (nde == XP_NULL) 
 	{
 		xp_awk_clrpt (x);
