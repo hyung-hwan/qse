@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.36 2006-04-22 16:16:40 bacon Exp $
+ * $Id: tree.h,v 1.37 2006-04-24 11:22:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -41,6 +41,7 @@ enum
 	XP_AWK_NDE_INT,
 	XP_AWK_NDE_REAL,
 	XP_AWK_NDE_STR,
+	XP_AWK_NDE_REX,
 	XP_AWK_NDE_NAMED,
 	XP_AWK_NDE_GLOBAL,
 	XP_AWK_NDE_LOCAL,
@@ -64,6 +65,7 @@ typedef struct xp_awk_nde_pos_t       xp_awk_nde_pos_t;
 typedef struct xp_awk_nde_int_t       xp_awk_nde_int_t;
 typedef struct xp_awk_nde_real_t      xp_awk_nde_real_t;
 typedef struct xp_awk_nde_str_t       xp_awk_nde_str_t;
+typedef struct xp_awk_nde_rex_t       xp_awk_nde_rex_t;
 typedef struct xp_awk_nde_var_t       xp_awk_nde_var_t;
 typedef struct xp_awk_nde_call_t      xp_awk_nde_call_t;
 
@@ -154,6 +156,15 @@ struct xp_awk_nde_real_t
 struct xp_awk_nde_str_t
 {
 	XP_AWK_NDE_HDR;
+	xp_char_t* buf;
+	xp_size_t  len;
+};
+
+/* XP_AWK_NDE_REX */
+struct xp_awk_nde_rex_t
+{
+	XP_AWK_NDE_HDR;
+/* TODO: */
 	xp_char_t* buf;
 	xp_size_t  len;
 };

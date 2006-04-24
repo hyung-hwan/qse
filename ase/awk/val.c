@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.25 2006-04-21 17:24:31 bacon Exp $
+ * $Id: val.c,v 1.26 2006-04-24 11:22:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -120,6 +120,27 @@ xp_awk_val_t* xp_awk_makestrval2 (
 	return (xp_awk_val_t*)val;
 }
 
+xp_awk_val_t* xp_awk_makerexval (const xp_char_t* str, xp_size_t len)
+{
+	xp_awk_val_rex_t* val;
+
+/* TDOO: XXXXXXXXXXXXxxx */
+	val = (xp_awk_val_rex_t*)xp_malloc(xp_sizeof(xp_awk_val_rex_t));
+	if (val == XP_NULL) return XP_NULL;
+
+	val->type = XP_AWK_VAL_STR;
+	val->ref = 0;
+	val->len = len;
+	val->buf = xp_strxdup (str, len);
+	if (val->buf == XP_NULL) 
+	{
+		xp_free (val);
+		return XP_NULL;
+	}
+
+	return (xp_awk_val_t*)val;
+}
+
 static void __free_map_val (void* run, void* v)
 {
 /*
@@ -148,6 +169,7 @@ xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run)
 
 	return (xp_awk_val_t*)val;
 }
+
 
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val)
 {
@@ -191,6 +213,12 @@ xp_printf (XP_TEXT("\n"));
 
 	case XP_AWK_VAL_STR:
 		xp_free (((xp_awk_val_str_t*)val)->buf);
+		xp_free (val);
+		return;
+
+	case XP_AWK_VAL_REX:
+/* TODO: XXXX */
+		xp_free (((xp_awk_val_rex_t*)val)->buf);
 		xp_free (val);
 		return;
 
@@ -333,6 +361,10 @@ void xp_awk_printval (xp_awk_val_t* val)
 
 	case XP_AWK_VAL_STR:
 		xp_printf (XP_TEXT("%s"), ((xp_awk_val_str_t*)val)->buf);
+		break;
+
+	case XP_AWK_VAL_REX:
+		xp_printf (XP_TEXT("REX[%s]"), ((xp_awk_val_rex_t*)val)->buf);
 		break;
 
 	case XP_AWK_VAL_MAP:
