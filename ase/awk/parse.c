@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.87 2006-04-22 16:16:40 bacon Exp $
+ * $Id: parse.c,v 1.88 2006-04-24 11:22:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -66,7 +66,7 @@ enum
 	TOKEN_INT,
 	TOKEN_REAL,
 	TOKEN_STR,
-	TOKEN_REGEX,
+	TOKEN_REX,
 
 	TOKEN_IDENT,
 	TOKEN_BEGIN,
@@ -155,6 +155,7 @@ static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk);
 static int __get_token (xp_awk_t* awk);
 static int __get_number (xp_awk_t* awk);
 static int __get_string (xp_awk_t* awk);
+static int __get_regex (xp_awk_t* awk);
 static int __get_char (xp_awk_t* awk);
 static int __unget_char (xp_awk_t* awk, xp_cint_t c);
 static int __skip_spaces (xp_awk_t* awk);
@@ -1663,9 +1664,37 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		return (xp_awk_nde_t*)nde;
 	}
-	else if (MATCH(awk,TOKEN_REGEX))
+	else if (MATCH(awk,TOKEN_DIV))
 	{
-		/* TODO: .... */
+		xp_awk_nde_str_t* nde;
+
+		/* the regular expression is tokenized because of 
+		 * context-sensitivity of the slash symbol */
+		SET_TOKEN_TYPE (awk, TOKEN_REX);
+		if (__get_regex(awk) == -1) return XP_NULL;
+		xp_assert (MATCH(awk,TOKEN_REX));
+
+		nde = (xp_awk_nde_str_t*)xp_malloc(xp_sizeof(xp_awk_nde_rex_t));
+		if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+
+		nde->type = XP_AWK_NDE_REX;
+		nde->next = XP_NULL;
+		nde->len = XP_STR_LEN(&awk->token.name);
+		nde->buf = xp_strxdup(XP_STR_BUF(&awk->token.name), nde->len);
+		if (nde->buf == XP_NULL) 
+		{
+			xp_free (nde);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		if (__get_token(awk) == -1) 
+		{
+			xp_free (nde->buf);
+			xp_free (nde);
+			return XP_NULL;			
+		}
+
+		return (xp_awk_nde_t*)nde;
 	}
 	else if (MATCH(awk,TOKEN_DOLLAR)) 
 	{
@@ -2764,6 +2793,50 @@ static int __get_string (xp_awk_t* awk)
 		}
 
 		if (escaped == xp_false && c == XP_CHAR('\"'))
+		{
+			GET_CHAR_TO (awk, c);
+			break;
+		}
+
+		if (escaped == xp_false && c == XP_CHAR('\\'))
+		{
+			GET_CHAR_TO (awk, c);
+			escaped = xp_true;
+			continue;
+		}
+
+		if (escaped == xp_true)
+		{
+			if (c == XP_CHAR('n')) c = XP_CHAR('\n');
+			else if (c == XP_CHAR('r')) c = XP_CHAR('\r');
+			else if (c == XP_CHAR('t')) c = XP_CHAR('\t');
+			/* TODO: more escape characters */
+			escaped = xp_false;
+		}
+
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+	}
+	
+	return 0;
+}
+
+static int __get_regex (xp_awk_t* awk)
+{
+	/* do proper regular expression parsing */
+	xp_cint_t c;
+	xp_bool_t escaped = xp_false;
+
+	GET_CHAR_TO (awk, c);
+	while (1)
+	{
+		if (c == XP_CHAR_EOF)
+		{
+			awk->errnum = XP_AWK_EENDSTR;
+			return -1;
+		}
+
+		if (escaped == xp_false && c == XP_CHAR('/'))
 		{
 			GET_CHAR_TO (awk, c);
 			break;
