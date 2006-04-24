@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.70 2006-04-24 11:22:42 bacon Exp $
+ * $Id: run.c,v 1.71 2006-04-24 11:26:00 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1809,6 +1809,7 @@ static xp_awk_val_t* __eval_binop_ma (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	/* TODO: ... */
+xp_printf (XP_TEXT("eval_binop_ma not implemented yet...\n"));
 	PANIC (run, XP_AWK_EINTERNAL);
 	return XP_NULL;
 }
@@ -2385,6 +2386,7 @@ static xp_awk_val_t* __eval_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 static xp_awk_val_t* __eval_rex (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 /* TODO */
+xp_printf (XP_TEXT("eval_rex not implemented yet...\n"));
 	PANIC (run, XP_AWK_EINTERNAL);
 	return XP_NULL;
 }

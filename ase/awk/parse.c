@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.88 2006-04-24 11:22:42 bacon Exp $
+ * $Id: parse.c,v 1.89 2006-04-24 11:25:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2832,7 +2832,7 @@ static int __get_regex (xp_awk_t* awk)
 	{
 		if (c == XP_CHAR_EOF)
 		{
-			awk->errnum = XP_AWK_EENDSTR;
+			awk->errnum = XP_AWK_EENDREX;
 			return -1;
 		}
 
