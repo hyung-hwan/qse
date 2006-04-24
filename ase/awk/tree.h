@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.37 2006-04-24 11:22:42 bacon Exp $
+ * $Id: tree.h,v 1.38 2006-04-24 15:34:52 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -31,6 +31,7 @@ enum
 	/* if you change the following values including their order,
 	 * you should change __eval_func of __eval_expression 
 	 * in run.c accordingly */
+	XP_AWK_NDE_GRP, 
 	XP_AWK_NDE_ASS,
 	XP_AWK_NDE_EXP_BIN,
 	XP_AWK_NDE_EXP_UNR,
@@ -58,6 +59,7 @@ typedef struct xp_awk_func_t xp_awk_func_t;
 typedef struct xp_awk_nde_t           xp_awk_nde_t;
 
 typedef struct xp_awk_nde_blk_t       xp_awk_nde_blk_t;
+typedef struct xp_awk_nde_grp_t       xp_awk_nde_grp_t;
 typedef struct xp_awk_nde_ass_t       xp_awk_nde_ass_t;
 typedef struct xp_awk_nde_exp_t       xp_awk_nde_exp_t;
 typedef struct xp_awk_nde_cnd_t       xp_awk_nde_cnd_t;
@@ -101,6 +103,13 @@ struct xp_awk_nde_blk_t
 	XP_AWK_NDE_HDR;
 	xp_size_t nlocals;
 	xp_awk_nde_t* body;
+};
+
+/* XP_AWK_NDE_GRP - expression group */
+struct xp_awk_nde_grp_t
+{
+	XP_AWK_NDE_HDR;
+	xp_awk_nde_t* head;
 };
 
 /* XP_AWK_NDE_ASS - assignment */
