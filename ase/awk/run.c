@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.72 2006-04-24 14:38:46 bacon Exp $
+ * $Id: run.c,v 1.73 2006-04-24 15:34:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -55,6 +55,8 @@ static int __run_nextfile_statement (xp_awk_run_t* run, xp_awk_nde_nextfile_t* n
 
 static xp_awk_val_t* __eval_expression (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
+
+static xp_awk_val_t* __eval_group (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
 static xp_awk_val_t* __eval_assignment (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -467,8 +469,6 @@ static int __run_pattern_blocks  (xp_awk_run_t* run)
 	return 0;
 }
 
-
-
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
 {
 	xp_awk_nde_t* p;
@@ -833,6 +833,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	{
 		/* the order of functions here should match the order
 		 * of node types declared in tree.h */
+		__eval_group,
 		__eval_assignment,
 		__eval_binary,
 		__eval_unary,
@@ -858,6 +859,14 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_assert (nde->type >= XP_AWK_NDE_ASS &&
 		(nde->type - XP_AWK_NDE_ASS) < xp_countof(__eval_func));
 	return __eval_func[nde->type-XP_AWK_NDE_ASS] (run, nde);
+}
+
+static xp_awk_val_t* __eval_group (xp_awk_run_t* run, xp_awk_nde_t* nde)
+{
+	/* NOT INIMPELMETED YET */
+xp_printf (XP_TEXT("eval_group not implemented\n"));
+	PANIC (awk, XP_AWK_EINTERNAL);
+	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_assignment (xp_awk_run_t* run, xp_awk_nde_t* nde)
