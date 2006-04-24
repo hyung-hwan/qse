@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.14 2006-04-21 17:24:31 bacon Exp $
+ * $Id: map.c,v 1.15 2006-04-24 07:46:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -24,9 +24,8 @@ static xp_size_t __hash (const xp_char_t* key);
 		xp_free (pair); \
 	} while (0)
 
-xp_awk_map_t* xp_awk_map_open (
-	xp_awk_map_t* map, xp_awk_t* owner, 
-	xp_size_t capa, void(*freeval)(void*,void*))
+xp_awk_map_t* xp_awk_map_open (xp_awk_map_t* map, 
+	void* owner, xp_size_t capa, void(*freeval)(void*,void*))
 {
 	if (map == XP_NULL) 
 	{

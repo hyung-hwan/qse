@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.9 2006-04-21 17:24:31 bacon Exp $
+ * $Id: map.h,v 1.10 2006-04-24 07:46:35 bacon Exp $
  */
 
 #ifndef _XP_AWK_MAP_H_
@@ -40,9 +40,8 @@ struct xp_awk_map_t
 extern "C" {
 #endif
 
-xp_awk_map_t* xp_awk_map_open (
-	xp_awk_map_t* map, void* owner,
-	xp_size_t capa, void(*freeval)(void*,void*));
+xp_awk_map_t* xp_awk_map_open (xp_awk_map_t* map, 
+	void* owner, xp_size_t capa, void(*freeval)(void*,void*));
 void xp_awk_map_close (xp_awk_map_t* map);
 
 void xp_awk_map_clear (xp_awk_map_t* map);
