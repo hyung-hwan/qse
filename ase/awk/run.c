@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.73 2006-04-24 15:34:52 bacon Exp $
+ * $Id: run.c,v 1.74 2006-04-24 15:36:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -865,7 +865,7 @@ static xp_awk_val_t* __eval_group (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	/* NOT INIMPELMETED YET */
 xp_printf (XP_TEXT("eval_group not implemented\n"));
-	PANIC (awk, XP_AWK_EINTERNAL);
+	PANIC (run, XP_AWK_EINTERNAL);
 	return XP_NULL;
 }
 
