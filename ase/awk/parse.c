@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.89 2006-04-24 11:25:59 bacon Exp $
+ * $Id: parse.c,v 1.90 2006-04-24 11:36:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2571,7 +2571,6 @@ static int __get_token (xp_awk_t* awk)
 	}
 	else if (c == XP_CHAR('/')) 
 	{
-/* TODO: handle regular expression here... /^pattern$/ */
 		GET_CHAR_TO (awk, c);
 
 		if (c == XP_CHAR('='))
@@ -2925,7 +2924,7 @@ static int __skip_comment (xp_awk_t* awk)
 	if (c != XP_CHAR('/')) return 0; /* not a comment */
 	GET_CHAR_TO (awk, c);
 
-	if (c == XP_CHAR('/')) 
+	if ((awk->opt.parse & XP_AWK_DBLSLASHES) && c == XP_CHAR('/')) 
 	{
 		do 
 		{ 
