@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.45 2006-04-22 13:54:52 bacon Exp $ 
+ * $Id: awk.c,v 1.46 2006-04-24 14:38:46 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -113,17 +113,22 @@ void xp_awk_clear (xp_awk_t* awk)
 	awk->tree.nglobals = 0;	
 	xp_awk_map_clear (&awk->tree.funcs);
 
-	if (awk->tree.begin != XP_NULL) {
+	if (awk->tree.begin != XP_NULL) 
+	{
 		xp_assert (awk->tree.begin->next == XP_NULL);
 		xp_awk_clrpt (awk->tree.begin);
 		awk->tree.begin = XP_NULL;
 	}
-	if (awk->tree.end != XP_NULL) {
+
+	if (awk->tree.end != XP_NULL) 
+	{
 		xp_assert (awk->tree.end->next == XP_NULL);
 		xp_awk_clrpt (awk->tree.end);
 		awk->tree.end = XP_NULL;
 	}
-	while (awk->tree.chain != XP_NULL) {
+
+	while (awk->tree.chain != XP_NULL) 
+	{
 		xp_awk_chain_t* next = awk->tree.chain->next;
 		if (awk->tree.chain->pattern != XP_NULL)
 			xp_awk_clrpt (awk->tree.chain->pattern);
@@ -150,7 +155,8 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
 	xp_assert (awk->srcio == XP_NULL);
-	if (src(XP_AWK_INPUT_OPEN, arg, XP_NULL, 0) == -1) {
+	if (src(XP_AWK_INPUT_OPEN, arg, XP_NULL, 0) == -1) 
+	{
 		awk->errnum = XP_AWK_ESRCINOPEN;
 		return -1;
 	}
@@ -164,7 +170,8 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
 
 int xp_awk_detsrc (xp_awk_t* awk)
 {
-	if (awk->srcio != XP_NULL) {
+	if (awk->srcio != XP_NULL) 
+	{
 		xp_ssize_t n;
 
 		n = awk->srcio (XP_AWK_INPUT_CLOSE, awk->srcio_arg, XP_NULL, 0);
@@ -185,10 +192,11 @@ int xp_awk_detsrc (xp_awk_t* awk)
 
 static void __free_func (void* owner, void* func)
 {
-	xp_awk_func_t* f = (xp_awk_func_t*) func;
+	xp_awk_func_t* f = (xp_awk_func_t*)func;
 
 	/* f->name doesn't have to be freed */
 	/*xp_free (f->name);*/
+
 	xp_awk_clrpt (f->body);
 	xp_free (f);
 }
