@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.69 2006-04-22 16:16:40 bacon Exp $
+ * $Id: run.c,v 1.70 2006-04-24 11:22:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -116,6 +116,7 @@ static xp_awk_val_t* __eval_call (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_real (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static xp_awk_val_t* __eval_rex (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_named (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_global (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_local (xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -133,7 +134,6 @@ static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 static int __read_text_input (xp_awk_run_t* run);
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 static xp_char_t* __val_to_str (xp_awk_val_t* v, int* errnum);
-
 
 typedef xp_awk_val_t* (*binop_func_t) (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
@@ -843,6 +843,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		__eval_int,
 		__eval_real,
 		__eval_str,
+		__eval_rex,
 		__eval_named,
 		__eval_global,
 		__eval_local,
@@ -1815,9 +1816,26 @@ static xp_awk_val_t* __eval_binop_ma (
 static xp_awk_val_t* __eval_binop_nm (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	/* TODO: ... */
-	PANIC (run, XP_AWK_EINTERNAL);
-	return XP_NULL;
+	xp_awk_val_t* res;
+
+// TODO:::::
+	if (left->type == XP_AWK_VAL_REX &&
+	    right->type == XP_AWK_VAL_STR)
+	{
+res = xp_awk_val_nil;
+	}
+	else if (left->type == XP_AWK_VAL_STR &&
+	         right->type == XP_AWK_VAL_REX)
+	{
+res = xp_awk_val_nil;
+	}
+	else
+	{
+		PANIC (run, XP_AWK_EOPERAND);
+	}
+
+	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+	return res;
 }
 
 static xp_awk_val_t* __eval_unary (xp_awk_run_t* run, xp_awk_nde_t* nde)
@@ -2362,6 +2380,13 @@ static xp_awk_val_t* __eval_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		((xp_awk_nde_str_t*)nde)->len);
 	if (val == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 	return val;
+}
+
+static xp_awk_val_t* __eval_rex (xp_awk_run_t* run, xp_awk_nde_t* nde)
+{
+/* TODO */
+	PANIC (run, XP_AWK_EINTERNAL);
+	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_named (xp_awk_run_t* run, xp_awk_nde_t* nde)
