@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.26 2006-04-24 11:22:42 bacon Exp $
+ * $Id: val.c,v 1.27 2006-04-24 14:38:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -45,7 +45,7 @@ xp_awk_val_t* xp_awk_makeintval (xp_awk_run_t* run, xp_long_t v)
 	else
 	{
 		val = (xp_awk_val_int_t*)
-			xp_malloc(xp_sizeof(xp_awk_val_int_t));
+			xp_malloc (xp_sizeof(xp_awk_val_int_t));
 		if (val == XP_NULL) return XP_NULL;
 	}
 
@@ -82,7 +82,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_str_t* val;
 
-	val = (xp_awk_val_str_t*)xp_malloc(xp_sizeof(xp_awk_val_str_t));
+	val = (xp_awk_val_str_t*) xp_malloc (xp_sizeof(xp_awk_val_str_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_STR;
@@ -104,7 +104,7 @@ xp_awk_val_t* xp_awk_makestrval2 (
 {
 	xp_awk_val_str_t* val;
 
-	val = (xp_awk_val_str_t*)xp_malloc(xp_sizeof(xp_awk_val_str_t));
+	val = (xp_awk_val_str_t*) xp_malloc (xp_sizeof(xp_awk_val_str_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_STR;
@@ -124,8 +124,8 @@ xp_awk_val_t* xp_awk_makerexval (const xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_rex_t* val;
 
-/* TDOO: XXXXXXXXXXXXxxx */
-	val = (xp_awk_val_rex_t*)xp_malloc(xp_sizeof(xp_awk_val_rex_t));
+/* TDOO: XXXXXXXXXXXXXX */
+	val = (xp_awk_val_rex_t*) xp_malloc (xp_sizeof(xp_awk_val_rex_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_STR;

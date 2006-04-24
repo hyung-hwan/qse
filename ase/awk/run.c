@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.71 2006-04-24 11:26:00 bacon Exp $
+ * $Id: run.c,v 1.72 2006-04-24 14:38:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -177,9 +177,9 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg)
 	return n;
 }
 
-static void __free_namedval (xp_awk_run_t* run, void* val)
+static void __free_namedval (void* run, void* val)
 {
-	xp_awk_refdownval (run, val);
+	xp_awk_refdownval ((xp_awk_run_t*)run, val);
 }
 
 static int __open_run (

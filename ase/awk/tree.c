@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.40 2006-04-24 11:22:42 bacon Exp $
+ * $Id: tree.c,v 1.41 2006-04-24 14:38:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -79,7 +79,8 @@ static void __print_tabs (int depth)
 
 static int __print_expression (xp_awk_nde_t* nde)
 {
-	switch (nde->type) {
+	switch (nde->type) 
+	{
 	case XP_AWK_NDE_ASS:
 		if (__print_expression (((xp_awk_nde_ass_t*)nde)->left) == -1) return -1;
 		xp_printf (XP_TEXT(" %s "), 
@@ -311,11 +312,13 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("{\n"));
 
-			if (((xp_awk_nde_blk_t*)p)->nlocals > 0) {
+			if (((xp_awk_nde_blk_t*)p)->nlocals > 0) 
+			{
 				__print_tabs (depth + 1);
 				xp_printf (XP_TEXT("local "));
 
-				for (i = 0; i < ((xp_awk_nde_blk_t*)p)->nlocals - 1; i++) {
+				for (i = 0; i < ((xp_awk_nde_blk_t*)p)->nlocals - 1; i++) 
+				{
 					xp_printf (XP_TEXT("__local%lu, "), (unsigned long)i);
 				}
 				xp_printf (XP_TEXT("__local%lu;\n"), (unsigned long)i);
@@ -430,7 +433,8 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				xp_printf (XP_TEXT("return "));
 				xp_assert (((xp_awk_nde_return_t*)p)->val->next == XP_NULL);
-				if (__print_expression(((xp_awk_nde_return_t*)p)->val) == 0) {
+				if (__print_expression(((xp_awk_nde_return_t*)p)->val) == 0) 
+				{
 					xp_printf (XP_TEXT(";\n"));
 				}
 				else 
