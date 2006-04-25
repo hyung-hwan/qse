@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.91 2006-04-24 15:34:52 bacon Exp $
+ * $Id: parse.c,v 1.92 2006-04-25 15:20:09 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -47,6 +47,7 @@ enum
 	TOKEN_TILDE, /* used for unary bitwise-not and regex match */
 	TOKEN_RSHIFT,
 	TOKEN_LSHIFT,
+	TOKEN_IN,
 	TOKEN_EXP,
 
 	TOKEN_LPAREN,
@@ -88,8 +89,6 @@ enum
 	TOKEN_LOCAL,
 	TOKEN_GLOBAL,
 
-	TOKEN_IN,
-
 	__TOKEN_COUNT__
 };
 
@@ -125,6 +124,7 @@ static xp_awk_nde_t* __parse_binary_expr (
 
 static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_in (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk);
@@ -1060,6 +1060,8 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 {
+	return __parse_assignment (awk);
+#if 0
 	xp_awk_nde_t* nde, * tmp;
 
 	do 
@@ -1069,13 +1071,19 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 
 		nde = tmp; break; /* TODO */
 
-		if (!match(awk, TOKEN_COMMA)) break;
+		if (!MATCH(awk, TOKEN_COMMA)) break;
 		if (__get_token(awk) == -1) return XP_NULL;
 	} 
 	while (1);
 
+/*
+	if (!match(awk, TOKEN_IN)) 
+	{
+	}
+*/
 /* TODO: XP_AWK_NDE_GRP -> should i support i this way??? */
 	return nde;
+#endif
 }
 
 static xp_awk_nde_t* __parse_assignment (xp_awk_t* awk)
@@ -1316,6 +1324,17 @@ static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk)
 	__binmap_t map[] = 
 	{
 		{ TOKEN_LAND, XP_AWK_BINOP_LAND },
+		{ TOKEN_EOF,  0 }
+	};
+
+	return __parse_binary_expr (awk, map, __parse_in);
+}
+
+static xp_awk_nde_t* __parse_in (xp_awk_t* awk)
+{
+	__binmap_t map[] =
+	{
+		{ TOKEN_IN, XP_AWK_BINOP_IN },
 		{ TOKEN_EOF,  0 }
 	};
 
@@ -2859,7 +2878,9 @@ static int __get_string (xp_awk_t* awk)
 
 static int __get_regex (xp_awk_t* awk)
 {
-	/* do proper regular expression parsing */
+	/* TODO: do proper regular expression parsing */
+	/* TODO: think if the new line should be allowed to 
+	 *       be included in to a regular expression */
 	xp_cint_t c;
 	xp_bool_t escaped = xp_false;
 
