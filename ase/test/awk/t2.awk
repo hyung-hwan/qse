@@ -17,7 +17,8 @@ function sum (i)
 
 BEGIN 
 {
-	//x = sum (10000000);
+	/*x = sum (10000000);
+	*/
 	x = sum (100);
 	s = x;
 	ss = z;

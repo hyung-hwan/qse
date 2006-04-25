@@ -13,7 +13,7 @@ function sum(i,	k, y)
 }
 
 BEGIN {
-    //s = sum(10000000);
+   /*s = sum(10000000);*/
    s = sum (100);
 }
 

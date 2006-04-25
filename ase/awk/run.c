@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.74 2006-04-24 15:36:08 bacon Exp $
+ * $Id: run.c,v 1.75 2006-04-25 15:20:09 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -70,6 +70,8 @@ static xp_awk_val_t* __eval_binary (
 static xp_awk_val_t* __eval_binop_lor (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
 static xp_awk_val_t* __eval_binop_land (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
+static xp_awk_val_t* __eval_binop_in (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
 static xp_awk_val_t* __eval_binop_bor (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
@@ -856,15 +858,15 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		__eval_pos
 	};
 
-	xp_assert (nde->type >= XP_AWK_NDE_ASS &&
-		(nde->type - XP_AWK_NDE_ASS) < xp_countof(__eval_func));
-	return __eval_func[nde->type-XP_AWK_NDE_ASS] (run, nde);
+	xp_assert (nde->type >= XP_AWK_NDE_GRP &&
+		(nde->type - XP_AWK_NDE_GRP) < xp_countof(__eval_func));
+	return __eval_func[nde->type-XP_AWK_NDE_GRP] (run, nde);
 }
 
 static xp_awk_val_t* __eval_group (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	/* NOT INIMPELMETED YET */
-xp_printf (XP_TEXT("eval_group not implemented\n"));
+xp_printf (XP_TEXT("***** eval_group not implemented\n"));
 	PANIC (run, XP_AWK_EINTERNAL);
 	return XP_NULL;
 }
@@ -1132,6 +1134,7 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	{
 		__eval_binop_lor,
 		__eval_binop_land,
+		__eval_binop_in, 
 		__eval_binop_bor,
 		__eval_binop_bxor,
 		__eval_binop_band,
@@ -1208,6 +1211,16 @@ static xp_awk_val_t* __eval_binop_land (
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 
 	return res;
+}
+
+static xp_awk_val_t* __eval_binop_in (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	/* TODO: */
+
+xp_printf (XP_TEXT("***** __eval_binop_in not implemented yet\n"));
+	PANIC (run, XP_AWK_EINTERNAL);
+	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_binop_bor (
