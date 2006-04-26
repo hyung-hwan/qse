@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.92 2006-04-25 15:20:09 bacon Exp $
+ * $Id: parse.c,v 1.93 2006-04-26 15:49:33 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1332,13 +1332,68 @@ static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_in (xp_awk_t* awk)
 {
+	/* 
 	__binmap_t map[] =
 	{
 		{ TOKEN_IN, XP_AWK_BINOP_IN },
-		{ TOKEN_EOF,  0 }
+		{ TOKEN_EOF, 0 }
 	};
 
 	return __parse_binary_expr (awk, map, __parse_regex_match);
+	*/
+
+	xp_awk_nde_exp_t* nde;
+	xp_awk_nde_t* left, * right;
+
+	left = __parse_regex_match (awk);
+	if (left == XP_NULL) return XP_NULL;
+
+	while (1)
+	{
+		if (!MATCH(awk,TOKEN_IN)) break;
+
+		if (__get_token(awk) == -1) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL; 
+		}
+
+		right = __parse_regex_match (awk);
+		if (right == XP_NULL) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL;
+		}
+
+		if (right->type != XP_AWK_NDE_NAMED &&
+		    right->type != XP_AWK_NDE_GLOBAL &&
+		    right->type != XP_AWK_NDE_LOCAL &&
+		    right->type != XP_AWK_NDE_ARG)
+		{
+			xp_awk_clrpt (right);
+			xp_awk_clrpt (left);
+			PANIC (awk, XP_AWK_ENOTVAR);
+		}
+
+		nde = (xp_awk_nde_exp_t*)
+			xp_malloc (xp_sizeof(xp_awk_nde_exp_t));
+		if (nde == XP_NULL) 
+		{
+			xp_awk_clrpt (right);
+			xp_awk_clrpt (left);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		nde->type = XP_AWK_NDE_EXP_BIN;
+		nde->next = XP_NULL;
+		nde->opcode = XP_AWK_BINOP_IN; 
+		nde->left = left;
+		nde->right = right;
+
+		left = (xp_awk_nde_t*)nde;
+	}
+
+	return left;
 }
 
 static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk)
@@ -1778,6 +1833,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 	else if (MATCH(awk,TOKEN_LPAREN)) 
 	{
 		xp_awk_nde_t* nde;
+		xp_awk_nde_t* last;
 
 		/* eat up the left parenthesis */
 		if (__get_token(awk) == -1) return XP_NULL;
@@ -1785,6 +1841,33 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		/* parse the sub-expression inside the parentheses */
 		nde = __parse_expression (awk);
 		if (nde == XP_NULL) return XP_NULL;
+
+/* ---------------- */
+		last = nde;
+		xp_assert (last->next == XP_NULL);
+
+		while (MATCH(awk,TOKEN_COMMA))
+		{
+			xp_awk_nde_t* tmp;
+
+			if (__get_token(awk) == -1) 
+			{
+				xp_awk_clrpt (nde);
+				return XP_NULL;
+			}	
+
+			tmp = __parse_expression (awk);
+			if (tmp == XP_NULL) 
+			{
+				xp_awk_clrpt (nde);
+				return XP_NULL;
+			}
+
+			xp_assert (tmp->next == XP_NULL);
+			last->next = tmp;
+			last = tmp;
+		} 
+/* ----------------- */
 
 		/* check for the closing parenthesis */
 		if (!MATCH(awk,TOKEN_RPAREN)) 
@@ -1798,6 +1881,32 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			xp_awk_clrpt (nde);
 			return XP_NULL;
 		}
+
+/* ----------------- */
+		if (nde->next != XP_NULL)
+		{
+			xp_awk_nde_grp_t* tmp;
+
+			if (!MATCH(awk,TOKEN_IN))
+			{
+				xp_awk_clrpt (nde);
+				PANIC (awk, XP_AWK_EIN);
+			}
+
+			tmp = (xp_awk_nde_grp_t*) xp_malloc (xp_sizeof(xp_awk_nde_grp_t));
+			if (tmp == XP_NULL)
+			{
+				xp_awk_clrpt (nde);
+				PANIC (awk, XP_AWK_ENOMEM);
+			}	
+
+			tmp->type = XP_AWK_NDE_GRP;
+			tmp->next = XP_NULL;
+			tmp->body = nde;		
+
+			nde = tmp;
+		}
+/* ----------------- */
 
 		return nde;
 	}
@@ -2735,6 +2844,7 @@ static int __get_token (xp_awk_t* awk)
 		return -1;
 	}
 
+xp_printf (XP_TEXT("token -> [%s]\n"), XP_STR_BUF(&awk->token.name));
 	return 0;
 }
 

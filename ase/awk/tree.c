@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.41 2006-04-24 14:38:46 bacon Exp $
+ * $Id: tree.c,v 1.42 2006-04-26 15:49:33 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -46,6 +46,7 @@ static const xp_char_t* __binop_str[] =
 	XP_TEXT("%"),
 	XP_TEXT("**"),
 
+	XP_TEXT("in"),
 	XP_TEXT("~"),
 	XP_TEXT("!~")
 };
@@ -81,6 +82,20 @@ static int __print_expression (xp_awk_nde_t* nde)
 {
 	switch (nde->type) 
 	{
+	case XP_AWK_NDE_GRP:
+		{	
+			xp_awk_nde_t* p = ((xp_awk_nde_grp_t*)nde)->body;
+
+			xp_printf (XP_TEXT("("));
+			while (p != XP_NULL) {
+				__print_expression (p);
+				if (p->next != XP_NULL) xp_printf (XP_TEXT(","));
+				p = p->next;
+			}
+			xp_printf (XP_TEXT(")"));
+		}
+		break;
+
 	case XP_AWK_NDE_ASS:
 		if (__print_expression (((xp_awk_nde_ass_t*)nde)->left) == -1) return -1;
 		xp_printf (XP_TEXT(" %s "), 
@@ -567,6 +582,11 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 		case XP_AWK_NDE_EXIT:
 			if (((xp_awk_nde_exit_t*)p)->val != XP_NULL) 
 				xp_awk_clrpt (((xp_awk_nde_exit_t*)p)->val);
+			xp_free (p);
+			break;
+
+		case XP_AWK_NDE_GRP:
+			xp_awk_clrpt (((xp_awk_nde_grp_t*)p)->body);
 			xp_free (p);
 			break;
 

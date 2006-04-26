@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.20 2006-04-24 11:22:42 bacon Exp $
+ * $Id: val.h,v 1.21 2006-04-26 15:53:17 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -81,6 +81,10 @@ struct xp_awk_val_rex_t
 struct xp_awk_val_map_t
 {
 	XP_AWK_VAL_HDR;
+
+	/* TODO: make val_map to array if the indices used are all integers
+	 *       switch to map dynamically once the non-integral index is seen 
+	 */
 	xp_awk_map_t* map; 
 };
 

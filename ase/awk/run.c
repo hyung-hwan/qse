@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.75 2006-04-25 15:20:09 bacon Exp $
+ * $Id: run.c,v 1.76 2006-04-26 15:49:33 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -865,8 +865,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_group (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	/* NOT INIMPELMETED YET */
-xp_printf (XP_TEXT("***** eval_group not implemented\n"));
+	/* in fact, this eval group would only be triggered by the operator in */
+xp_printf (XP_TEXT("***** eval_group NOT IMPLEMENTED\n"));
 	PANIC (run, XP_AWK_EINTERNAL);
 	return XP_NULL;
 }
@@ -1134,7 +1134,6 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	{
 		__eval_binop_lor,
 		__eval_binop_land,
-		__eval_binop_in, 
 		__eval_binop_bor,
 		__eval_binop_bxor,
 		__eval_binop_band,
@@ -1156,6 +1155,7 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		__eval_binop_mod,
 		__eval_binop_exp,
 
+		__eval_binop_in, 
 		__eval_binop_ma,
 		__eval_binop_nm
 	};
@@ -1211,16 +1211,6 @@ static xp_awk_val_t* __eval_binop_land (
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 
 	return res;
-}
-
-static xp_awk_val_t* __eval_binop_in (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
-{
-	/* TODO: */
-
-xp_printf (XP_TEXT("***** __eval_binop_in not implemented yet\n"));
-	PANIC (run, XP_AWK_EINTERNAL);
-	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_binop_bor (
@@ -1825,6 +1815,16 @@ static xp_awk_val_t* __eval_binop_exp (
 
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 	return res;
+}
+
+static xp_awk_val_t* __eval_binop_in (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	/* TODO: */
+
+xp_printf (XP_TEXT("***** __eval_binop_in not implemented yet\n"));
+	PANIC (run, XP_AWK_EINTERNAL);
+	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_binop_ma (
