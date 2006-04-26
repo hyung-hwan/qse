@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.15 2006-04-24 11:25:59 bacon Exp $
+ * $Id: err.c,v 1.16 2006-04-26 15:49:33 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -39,6 +39,8 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_TEXT("comma expected"),
 		XP_TEXT("semicolon expected"),
 		XP_TEXT("colon expected"),
+		XP_TEXT("keyword 'in' expected"),
+		XP_TEXT("not a variable after 'in'"),
 		XP_TEXT("expression expected"),
 
 		XP_TEXT("keyword 'while' expected"),

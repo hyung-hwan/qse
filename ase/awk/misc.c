@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.5 2006-04-16 04:31:38 bacon Exp $
+ * $Id: misc.c,v 1.6 2006-04-26 15:49:33 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -122,11 +122,11 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 	 * circumstatnces, it is the negative of the number of digits in F.
 	 * However, if I is very long, the last digits of I get dropped 
 	 * (otherwise a long I with a large negative exponent could cause an
-	 * unnecessary overflow on I alone).  In this case, fracExp is 
+	 * unnecessary overflow on I alone).  In this case, frac_exp is 
 	 * incremented one for each dropped digit. 
 	 */
 
-	int fracExp = 0;		
+	int frac_exp;
 	int mantSize; /* Number of digits in mantissa. */
 	int decPt;    /* Number of mantissa digits BEFORE decimal point */
 	const xp_char_t *pExp;  /* Temporarily holds location of exponent in string */
@@ -176,20 +176,21 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 	{
 		mantSize -= 1;	/* One of the digits was the point */
 	}
+
 	if (mantSize > 18) 
 	{
-		fracExp = decPt - 18;
+		frac_exp = decPt - 18;
 		mantSize = 18;
 	} 
 	else 
 	{
-		fracExp = decPt - mantSize;
+		frac_exp = decPt - mantSize;
 	}
 
 	if (mantSize == 0) 
 	{
 		fraction = 0.0;
-		p = str;
+		/*p = str;*/
 		goto done;
 	} 
 	else 
@@ -248,8 +249,8 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 		}
 	}
 
-	if (expSign) exp = fracExp - exp;
-	else exp = fracExp + exp;
+	if (expSign) exp = frac_exp - exp;
+	else exp = frac_exp + exp;
 
 	/*
 	 * Generate a floating-point number that represents the exponent.

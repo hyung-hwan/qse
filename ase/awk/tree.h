@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.38 2006-04-24 15:34:52 bacon Exp $
+ * $Id: tree.h,v 1.39 2006-04-26 15:49:33 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -109,7 +109,7 @@ struct xp_awk_nde_blk_t
 struct xp_awk_nde_grp_t
 {
 	XP_AWK_NDE_HDR;
-	xp_awk_nde_t* head;
+	xp_awk_nde_t* body;
 };
 
 /* XP_AWK_NDE_ASS - assignment */
