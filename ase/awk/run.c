@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.77 2006-04-27 15:20:10 bacon Exp $
+ * $Id: run.c,v 1.78 2006-04-27 15:59:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -289,7 +289,7 @@ static int __run_main (xp_awk_run_t* run)
 
 	if (run->opt & XP_AWK_RUNMAIN)
 	{
-// TODO: should the main function be user-specifiable?
+/* TODO: should the main function be user-specifiable? */
 		static xp_char_t m_a_i_n[] = 
 		{ 
 			XP_CHAR('m'), 
@@ -1838,7 +1838,7 @@ static xp_awk_val_t* __eval_binop_in (
 	if (left->type == XP_AWK_NDE_GRP)
 	{
 /* TODO: multidimensional .... */
-		//__eval_expression (run, left);
+		/*__eval_expression (run, left);*/
 	}
 	else 
 	{
@@ -2737,7 +2737,7 @@ static xp_char_t* __val_to_str (xp_awk_val_t* v, int* errnum)
 			t /= 10;
 		}
 
-		if (v < 0) tmp[--len] = XP_CHAR('-');
+		if (((xp_awk_val_int_t*)v)->val < 0) tmp[--len] = XP_CHAR('-');
 		return tmp;
 	}
 
