@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.93 2006-04-26 15:49:33 bacon Exp $
+ * $Id: parse.c,v 1.94 2006-04-27 15:20:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -114,7 +114,6 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
 static xp_awk_nde_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_expression (xp_awk_t* awk);
-static xp_awk_nde_t* __parse_assignment (xp_awk_t* awk);
 
 static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk);
 
@@ -1059,34 +1058,6 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 }
 
 static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
-{
-	return __parse_assignment (awk);
-#if 0
-	xp_awk_nde_t* nde, * tmp;
-
-	do 
-	{
-		tmp = __parse_assignment(awk);
-		if (tmp == XP_NULL) return XP_NULL;
-
-		nde = tmp; break; /* TODO */
-
-		if (!MATCH(awk, TOKEN_COMMA)) break;
-		if (__get_token(awk) == -1) return XP_NULL;
-	} 
-	while (1);
-
-/*
-	if (!match(awk, TOKEN_IN)) 
-	{
-	}
-*/
-/* TODO: XP_AWK_NDE_GRP -> should i support i this way??? */
-	return nde;
-#endif
-}
-
-static xp_awk_nde_t* __parse_assignment (xp_awk_t* awk)
 {
 	/*
 	 * <expression> ::= <assignment> | <basic expression>
