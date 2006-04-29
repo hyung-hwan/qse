@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.95 2006-04-29 12:09:29 bacon Exp $
+ * $Id: parse.c,v 1.96 2006-04-29 12:41:47 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -162,6 +162,7 @@ static int __skip_spaces (xp_awk_t* awk);
 static int __skip_comment (xp_awk_t* awk);
 static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident);
 static int __assign_to_opcode (xp_awk_t* awk);
+static int __is_plain_var (xp_awk_nde_t* nde);
 
 struct __kwent 
 { 
@@ -1336,10 +1337,7 @@ static xp_awk_nde_t* __parse_in (xp_awk_t* awk)
 			return XP_NULL;
 		}
 
-		if (right->type != XP_AWK_NDE_NAMED &&
-		    right->type != XP_AWK_NDE_GLOBAL &&
-		    right->type != XP_AWK_NDE_LOCAL &&
-		    right->type != XP_AWK_NDE_ARG)
+		if (!__is_plain_var(right))
 		{
 			xp_awk_clrpt (right);
 			xp_awk_clrpt (left);
@@ -2178,11 +2176,17 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 	if (MATCH(awk,TOKEN_SEMICOLON)) init = XP_NULL;
 	else 
 	{
+		/* this line is very ugly. it checks the entire next 
+		 * expression or the first element in the expression
+		 * is wrapped by a parenthesis */
+		int no_foreach = MATCH(awk,TOKEN_LPAREN);
+
 		init = __parse_expression (awk);
 		if (init == XP_NULL) return XP_NULL;
 
-		if (init->type == XP_AWK_NDE_EXP_BIN &&
-		    ((xp_awk_nde_exp_t*)init)->opcode == XP_AWK_BINOP_IN)
+		if (!no_foreach && init->type == XP_AWK_NDE_EXP_BIN &&
+		    ((xp_awk_nde_exp_t*)init)->opcode == XP_AWK_BINOP_IN &&
+		    __is_plain_var(((xp_awk_nde_exp_t*)init)->left))
 		{	
 			/* switch to foreach */
 			
@@ -3167,4 +3171,12 @@ static int __assign_to_opcode (xp_awk_t* awk)
 	if (MATCH(awk,TOKEN_EXP_ASSIGN)) return XP_AWK_ASSOP_EXP;
 
 	return -1;
+}
+
+static int __is_plain_var (xp_awk_nde_t* nde)
+{
+	return nde->type == XP_AWK_NDE_GLOBAL ||
+	       nde->type == XP_AWK_NDE_LOCAL ||
+	       nde->type == XP_AWK_NDE_ARG ||
+	       nde->type == XP_AWK_NDE_NAMED;
 }
