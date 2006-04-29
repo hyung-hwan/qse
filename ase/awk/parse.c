@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.94 2006-04-27 15:20:10 bacon Exp $
+ * $Id: parse.c,v 1.95 2006-04-29 12:09:29 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1875,7 +1875,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			tmp->next = XP_NULL;
 			tmp->body = nde;		
 
-			nde = tmp;
+			nde = (xp_awk_nde_t*)tmp;
 		}
 /* ----------------- */
 
@@ -2100,7 +2100,8 @@ static xp_awk_nde_t* __parse_if (xp_awk_t* awk)
 	}
 	else else_part = XP_NULL;
 
-	nde = (xp_awk_nde_if_t*)xp_malloc(xp_sizeof(xp_awk_nde_if_t));
+	nde = (xp_awk_nde_if_t*) 
+		xp_malloc (xp_sizeof(xp_awk_nde_if_t));
 	if (nde == XP_NULL) 
 	{
 		xp_awk_clrpt (else_part);
@@ -2148,7 +2149,8 @@ static xp_awk_nde_t* __parse_while (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	nde = (xp_awk_nde_while_t*)xp_malloc(xp_sizeof(xp_awk_nde_while_t));
+	nde = (xp_awk_nde_while_t*) 
+		xp_malloc (xp_sizeof(xp_awk_nde_while_t));
 	if (nde == XP_NULL) 
 	{
 		xp_awk_clrpt (body);
@@ -2167,9 +2169,8 @@ static xp_awk_nde_t* __parse_while (xp_awk_t* awk)
 static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 {
 	xp_awk_nde_t* init, * test, * incr, * body;
-	xp_awk_nde_for_t* nde;
-
-	/* TODO: parse for (x in list) ... */
+	xp_awk_nde_for_t* nde; 
+	xp_awk_nde_foreach_t* nde2;
 
 	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, XP_AWK_ELPAREN);
 	if (__get_token(awk) == -1) return XP_NULL;
@@ -2179,6 +2180,48 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 	{
 		init = __parse_expression (awk);
 		if (init == XP_NULL) return XP_NULL;
+
+		if (init->type == XP_AWK_NDE_EXP_BIN &&
+		    ((xp_awk_nde_exp_t*)init)->opcode == XP_AWK_BINOP_IN)
+		{	
+			/* switch to foreach */
+			
+			if (!MATCH(awk,TOKEN_RPAREN))
+			{
+				xp_awk_clrpt (init);
+				PANIC (awk, XP_AWK_ERPAREN);
+			}
+
+			if (__get_token(awk) == -1) 
+			{
+				xp_awk_clrpt (init);
+				return XP_NULL;
+
+			}	
+			
+			body = __parse_statement (awk);
+			if (body == XP_NULL) 
+			{
+				xp_awk_clrpt (init);
+				return XP_NULL;
+			}
+
+			nde2 = (xp_awk_nde_foreach_t*) 
+				xp_malloc (xp_sizeof(xp_awk_nde_foreach_t));
+			if (nde2 == XP_NULL)
+			{
+				xp_awk_clrpt (init);
+				xp_awk_clrpt (body);
+				PANIC (awk, XP_AWK_ENOMEM);
+			}
+
+			nde2->type = XP_AWK_NDE_FOREACH;
+			nde2->next = XP_NULL;
+			nde2->test = init;
+			nde2->body = body;
+
+			return (xp_awk_nde_t*)nde2;
+		}
 
 		if (!MATCH(awk,TOKEN_SEMICOLON)) 
 		{
@@ -2255,7 +2298,7 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-	nde = (xp_awk_nde_for_t*)xp_malloc(xp_sizeof(xp_awk_nde_for_t));
+	nde = (xp_awk_nde_for_t*) xp_malloc (xp_sizeof(xp_awk_nde_for_t));
 	if (nde == XP_NULL) 
 	{
 		xp_awk_clrpt (init);

@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.12 2006-04-26 15:49:33 bacon Exp $
+ * $Id: run.h,v 1.13 2006-04-29 12:09:29 bacon Exp $
  */
 
 #ifndef _XP_AWK_RUN_H_
@@ -27,6 +27,8 @@ enum
 	 * __binop_str in tree.c and __binop_func in run.c accordingly. */ 
 	XP_AWK_BINOP_LOR,
 	XP_AWK_BINOP_LAND,
+	XP_AWK_BINOP_IN,
+
 	XP_AWK_BINOP_BOR,
 	XP_AWK_BINOP_BXOR,
 	XP_AWK_BINOP_BAND,
@@ -48,7 +50,6 @@ enum
 	XP_AWK_BINOP_MOD,
 	XP_AWK_BINOP_EXP,
 
-	XP_AWK_BINOP_IN,
 	XP_AWK_BINOP_MA,
 	XP_AWK_BINOP_NM
 };

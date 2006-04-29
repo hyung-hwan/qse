@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.39 2006-04-26 15:49:33 bacon Exp $
+ * $Id: tree.h,v 1.40 2006-04-29 12:09:29 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -19,6 +19,7 @@ enum
 	XP_AWK_NDE_WHILE,
 	XP_AWK_NDE_DOWHILE,
 	XP_AWK_NDE_FOR,
+	XP_AWK_NDE_FOREACH,
 	XP_AWK_NDE_BREAK,
 	XP_AWK_NDE_CONTINUE,
 	XP_AWK_NDE_RETURN,
@@ -74,6 +75,7 @@ typedef struct xp_awk_nde_call_t      xp_awk_nde_call_t;
 typedef struct xp_awk_nde_if_t        xp_awk_nde_if_t;
 typedef struct xp_awk_nde_while_t     xp_awk_nde_while_t;
 typedef struct xp_awk_nde_for_t       xp_awk_nde_for_t;
+typedef struct xp_awk_nde_foreach_t   xp_awk_nde_foreach_t;
 typedef struct xp_awk_nde_break_t     xp_awk_nde_break_t;
 typedef struct xp_awk_nde_continue_t  xp_awk_nde_continue_t;
 typedef struct xp_awk_nde_return_t    xp_awk_nde_return_t;
@@ -222,6 +224,14 @@ struct xp_awk_nde_for_t
 	xp_awk_nde_t* init; /* optional */
 	xp_awk_nde_t* test; /* optional */
 	xp_awk_nde_t* incr; /* optional */
+	xp_awk_nde_t* body;
+};
+
+/* XP_AWK_NDE_FOREACH */
+struct xp_awk_nde_foreach_t
+{
+	XP_AWK_NDE_HDR;
+	xp_awk_nde_t* test;
 	xp_awk_nde_t* body;
 };
 
