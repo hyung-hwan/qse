@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.78 2006-04-27 15:59:01 bacon Exp $
+ * $Id: run.c,v 1.79 2006-04-29 12:09:29 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -46,6 +46,7 @@ static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static int __run_if_statement (xp_awk_run_t* run, xp_awk_nde_if_t* nde);
 static int __run_while_statement (xp_awk_run_t* run, xp_awk_nde_while_t* nde);
 static int __run_for_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde);
+static int __run_foreach_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde);
 static int __run_break_statement (xp_awk_run_t* run, xp_awk_nde_break_t* nde);
 static int __run_continue_statement (xp_awk_run_t* run, xp_awk_nde_continue_t* nde);
 static int __run_return_statement (xp_awk_run_t* run, xp_awk_nde_return_t* nde);
@@ -68,9 +69,9 @@ static xp_awk_val_t* __do_assignment_map (
 static xp_awk_val_t* __eval_binary (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_binop_lor (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
+	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right);
 static xp_awk_val_t* __eval_binop_land (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
+	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right);
 static xp_awk_val_t* __eval_binop_in (
 	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right);
 static xp_awk_val_t* __eval_binop_bor (
@@ -553,6 +554,11 @@ static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			run, (xp_awk_nde_for_t*)nde) == -1) return -1;
 		break;
 
+	case XP_AWK_NDE_FOREACH:
+		if (__run_foreach_statement (
+			run, (xp_awk_nde_for_t*)nde) == -1) return -1;
+		break;
+
 	case XP_AWK_NDE_BREAK:
 		if (__run_break_statement(
 			run, (xp_awk_nde_break_t*)nde) == -1) return -1;
@@ -760,6 +766,12 @@ static int __run_for_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde)
 		}
 	}
 
+	return 0;
+}
+
+static int __run_foreach_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde)
+{
+xp_printf (XP_TEXT("FOREEACH NOT IMPLEMENTED....\n"));
 	return 0;
 }
 
@@ -1135,8 +1147,13 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	static binop_func_t __binop_func[] =
 	{
-		__eval_binop_lor,
-		__eval_binop_land,
+		/* the order of the functions should be inline with
+		 * the operator declaration in run.h */
+
+		XP_NULL, /* __eval_binop_lor */
+		XP_NULL, /* __eval_binop_land */
+		XP_NULL, /* __eval_binop_in */
+
 		__eval_binop_bor,
 		__eval_binop_bxor,
 		__eval_binop_band,
@@ -1158,7 +1175,6 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		__eval_binop_mod,
 		__eval_binop_exp,
 
-		XP_NULL,           /* __eval_binop_in */
 		__eval_binop_ma,
 		__eval_binop_nm
 	};
@@ -1168,7 +1184,15 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	xp_assert (exp->type == XP_AWK_NDE_EXP_BIN);
 
-	if (exp->opcode == XP_AWK_BINOP_IN)
+	if (exp->opcode == XP_AWK_BINOP_LAND)
+	{
+		res = __eval_binop_land (run, exp->left, exp->right);
+	}
+	else if (exp->opcode == XP_AWK_BINOP_LOR)
+	{
+		res = __eval_binop_lor (run, exp->left, exp->right);
+	}
+	else if (exp->opcode == XP_AWK_BINOP_IN)
 	{
 		/* treat the in operator specially */
 		res = __eval_binop_in (run, exp->left, exp->right);
@@ -1203,8 +1227,9 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 }
 
 static xp_awk_val_t* __eval_binop_lor (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right)
 {
+	/*
 	xp_awk_val_t* res = XP_NULL;
 
 	res = xp_awk_makeintval (run, 
@@ -1212,11 +1237,41 @@ static xp_awk_val_t* __eval_binop_lor (
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 
 	return res;
+	*/
+
+	/* short-circuit evaluation required special treatment */
+	xp_awk_val_t* lv, * rv, * res;
+
+	lv = __eval_expression (run, left);
+	if (lv == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (lv);
+	if (xp_awk_boolval(lv)) 
+	{
+		res = xp_awk_makeintval (run, 1);
+	}
+	else
+	{
+		rv = __eval_expression (run, right);
+		if (rv == XP_NULL)
+		{
+			xp_awk_refdownval (run, lv);
+			return XP_NULL;
+		}
+		xp_awk_refupval (rv);
+
+		res = xp_awk_makeintval (run, (xp_awk_boolval(rv)? 1: 0));
+		xp_awk_refdownval (run, rv);
+	}
+
+	xp_awk_refdownval (run, lv);
+	return res;
 }
 
 static xp_awk_val_t* __eval_binop_land (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right)
 {
+	/*
 	xp_awk_val_t* res = XP_NULL;
 
 	res = xp_awk_makeintval (run, 
@@ -1224,6 +1279,124 @@ static xp_awk_val_t* __eval_binop_land (
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 
 	return res;
+	*/
+
+	/* short-circuit evaluation required special treatment */
+	xp_awk_val_t* lv, * rv, * res;
+
+	lv = __eval_expression (run, left);
+	if (lv == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (lv);
+	if (!xp_awk_boolval(lv)) 
+	{
+		res = xp_awk_makeintval (run, 0);
+	}
+	else
+	{
+		rv = __eval_expression (run, right);
+		if (rv == XP_NULL)
+		{
+			xp_awk_refdownval (run, lv);
+			return XP_NULL;
+		}
+		xp_awk_refupval (rv);
+
+		res = xp_awk_makeintval (run, (xp_awk_boolval(rv)? 1: 0));
+		xp_awk_refdownval (run, rv);
+	}
+
+	xp_awk_refdownval (run, lv);
+	return res;
+}
+static xp_awk_val_t* __eval_binop_in (
+	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right)
+{
+	xp_awk_val_t* lv, * rv, * res;
+
+	if (right->type != XP_AWK_NDE_GLOBAL &&
+	    right->type != XP_AWK_NDE_LOCAL &&
+	    right->type != XP_AWK_NDE_ARG &&
+	    right->type != XP_AWK_NDE_NAMED)
+	{
+		/* the compiler should have handled this case */
+		xp_assert (!"should never happen - in needs a plain variable");
+		PANIC (run, XP_AWK_EINTERNAL);
+		return XP_NULL;
+	}
+
+	/* evaluate the left-hand side of the operator */
+	if (left->type == XP_AWK_NDE_GRP)
+	{
+/* TODO: multidimensional .... */
+		/*__eval_expression (run, left);*/
+	}
+	else 
+	{
+		lv = __eval_expression (run, left);
+		if (lv == XP_NULL) return XP_NULL;
+	}
+
+	xp_awk_refupval (lv);
+
+	/* evaluate the right-hand side of the operator */
+	rv = __eval_expression (run, right);
+	if (rv == XP_NULL) 
+	{
+		xp_awk_refdownval (run, lv);
+		return XP_NULL;
+	}
+
+	xp_awk_refupval (rv);
+
+	if (rv->type == XP_AWK_VAL_NIL)
+	{
+		res = xp_awk_makeintval (run, 0);
+		if (res == XP_NULL) 
+		{
+			xp_awk_refdownval (run, lv);
+			xp_awk_refdownval (run, rv);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		xp_awk_refdownval (run, lv);
+		xp_awk_refdownval (run, rv);
+		return res;
+	}
+	else if (rv->type == XP_AWK_VAL_MAP)
+	{
+		xp_char_t* str;
+		xp_long_t r;
+		int errnum;
+
+		str = __val_to_str (lv, &errnum);
+		if (str == XP_NULL) 
+		{
+			xp_awk_refdownval (run, lv);
+			xp_awk_refdownval (run, rv);
+			PANIC (run, errnum);
+		}
+
+		r = xp_awk_map_get(((xp_awk_val_map_t*)rv)->map,str) != XP_NULL;
+
+		res = xp_awk_makeintval (run, r);
+		if (res == XP_NULL) 
+		{
+			xp_free (str);
+			xp_awk_refdownval (run, lv);
+			xp_awk_refdownval (run, rv);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		xp_free (str);
+		xp_awk_refdownval (run, lv);
+		xp_awk_refdownval (run, rv);
+		return res;
+	}
+
+	/* need an array */
+	PANIC (run, XP_AWK_EOPERAND);
+	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_binop_bor (
@@ -1828,69 +2001,6 @@ static xp_awk_val_t* __eval_binop_exp (
 
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 	return res;
-}
-
-static xp_awk_val_t* __eval_binop_in (
-	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right)
-{
-	xp_awk_val_t* lv, * rv, * res;
-
-	if (left->type == XP_AWK_NDE_GRP)
-	{
-/* TODO: multidimensional .... */
-		/*__eval_expression (run, left);*/
-	}
-	else 
-	{
-		lv = __eval_expression (run, left);
-		if (lv == XP_NULL) return XP_NULL;
-	}
-
-	if (right->type != XP_AWK_NDE_GLOBAL &&
-	    right->type != XP_AWK_NDE_LOCAL &&
-	    right->type != XP_AWK_NDE_ARG &&
-	    right->type != XP_AWK_NDE_NAMED)
-	{
-		/* the compiler should have handled this case */
-		xp_assert (!"should never happen - in needs a plain variable");
-		PANIC (run, XP_AWK_EINTERNAL);
-		return XP_NULL;
-	}
-
-	rv = __eval_expression (run, right);
-	if (rv == XP_NULL) return XP_NULL;
-
-	if (rv->type == XP_AWK_VAL_NIL)
-	{
-		res = xp_awk_makeintval (run, 0);
-		if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
-		return res;
-	}
-	else if (rv->type == XP_AWK_VAL_MAP)
-	{
-		xp_char_t* str;
-		xp_long_t r;
-		int errnum;
-
-		str = __val_to_str (lv, &errnum);
-		if (str == XP_NULL) PANIC (run, errnum);
-
-		r = xp_awk_map_get(((xp_awk_val_map_t*)rv)->map,str) != XP_NULL;
-
-		res = xp_awk_makeintval (run, r);
-		if (res == XP_NULL) 
-		{
-			xp_free (str);
-			PANIC (run, XP_AWK_ENOMEM);
-		}
-
-		xp_free (str);
-		return res;
-	}
-
-	/* need an array */
-	PANIC (run, XP_AWK_EOPERAND);
-	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_binop_ma (
@@ -2717,6 +2827,22 @@ static xp_char_t* __val_to_str (xp_awk_val_t* v, int* errnum)
 		xp_size_t len = 0;
 
 		t = ((xp_awk_val_int_t*)v)->val; 
+		if (t == 0)
+		{
+			/* handle zero */
+			tmp = xp_malloc (2 * xp_sizeof(xp_char_t));
+			if (tmp == XP_NULL)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return XP_NULL;
+			}
+
+			tmp[0] = XP_CHAR('0');
+			tmp[1] = XP_CHAR('\0');
+			return tmp;
+		}
+
+		/* non-zero values */
 		if (t < 0) { t = -t; len++; }
 		while (t > 0) { len++; t /= 10; }
 

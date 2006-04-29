@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.42 2006-04-26 15:49:33 bacon Exp $
+ * $Id: tree.c,v 1.43 2006-04-29 12:09:29 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -428,6 +428,11 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			}
 			break;
 
+		case XP_AWK_NDE_FOREACH:
+/* TODO -------------------------------- */
+xp_printf (XP_TEXT("*** FOREACH ***"));
+			break;
+
 		case XP_AWK_NDE_BREAK:
 			__print_tabs (depth);
 			xp_printf (XP_TEXT("break;\n"));
@@ -558,6 +563,12 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 			if (((xp_awk_nde_for_t*)p)->incr != XP_NULL)
 				xp_awk_clrpt (((xp_awk_nde_for_t*)p)->incr);
 			xp_awk_clrpt (((xp_awk_nde_for_t*)p)->body);
+			xp_free (p);
+			break;
+
+		case XP_AWK_NDE_FOREACH:
+			xp_awk_clrpt (((xp_awk_nde_foreach_t*)p)->test);
+			xp_awk_clrpt (((xp_awk_nde_foreach_t*)p)->body);
 			xp_free (p);
 			break;
 
