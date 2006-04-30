@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.18 2006-04-21 16:21:27 bacon Exp $
+ * $Id: sa.c,v 1.19 2006-04-30 18:05:07 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -133,7 +133,9 @@ int xp_vsprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_lis
 	xp_char_t* nf = __adjust_format (fmt);
 	if (nf == XP_NULL) return -1;
 
-#if defined(XP_CHAR_IS_MCHAR)
+#if defined(dos) || defined(__dos)
+	n = vsprintf (buf, nf, ap); /* TODO: write your own vsnprintf */
+#elif defined(XP_CHAR_IS_MCHAR)
 	n = vsnprintf (buf, size, nf, ap);
 #elif defined(_WIN32)
 	n = _vsnwprintf (buf, size, nf, ap);
