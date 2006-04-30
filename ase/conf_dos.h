@@ -1,5 +1,5 @@
 /*
- * $Id: conf_dos.h,v 1.3 2006-04-30 17:35:37 bacon Exp $
+ * $Id: conf_dos.h,v 1.4 2006-04-30 18:05:07 bacon Exp $
  */
 
 #if !defined(__LARGE__) && !defined(__HUGE__)
@@ -26,3 +26,5 @@
 #define XP_SIZEOF_FLOAT 4
 #define XP_SIZEOF_DOUBLE 8
 #define XP_SIZEOF_LONG_DOUBLE 10  /* turbo c 2.01 */
+
+#define XP_CHAR_IS_MCHAR

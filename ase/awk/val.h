@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.21 2006-04-26 15:53:17 bacon Exp $
+ * $Id: val.h,v 1.22 2006-04-30 18:05:07 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -27,14 +27,15 @@ typedef struct xp_awk_val_str_t  xp_awk_val_str_t;
 typedef struct xp_awk_val_rex_t  xp_awk_val_rex_t;
 typedef struct xp_awk_val_map_t  xp_awk_val_map_t;
 
+#if XP_SIZEOF_INT == 2
 #define XP_AWK_VAL_HDR \
 	unsigned int type: 3; \
-	unsigned int ref: 28
-/*
+	unsigned int ref: 13
+#else
 #define XP_AWK_VAL_HDR \
-	int type: 4; \
-	int ref: 27
-*/
+	unsigned int type: 3; \
+	unsigned int ref: 29
+#endif
 
 struct xp_awk_val_t
 {
