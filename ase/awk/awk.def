@@ -9,6 +9,7 @@ EXPORTS
 
 	xp_awk_clear 
 	xp_awk_setparseopt 
+	xp_awk_setrunopt 
 
 	xp_awk_attsrc 
 	xp_awk_detsrc 
@@ -16,5 +17,3 @@ EXPORTS
 	xp_awk_parse 
 	xp_awk_run 
 
-	xp_awk_strtolong
-	xp_awk_strtoreal
