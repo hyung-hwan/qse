@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.16 2006-04-26 15:49:33 bacon Exp $
+ * $Id: err.c,v 1.17 2006-04-30 15:50:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -16,6 +16,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_TEXT("no error"),
 		XP_TEXT("out of memory"),
 
+		XP_TEXT("no source io handler set"),
 		XP_TEXT("cannot open source input"),
 		XP_TEXT("cannot close source input"),
 		XP_TEXT("cannot switch to next source input"),
