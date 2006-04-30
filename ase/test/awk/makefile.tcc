@@ -6,7 +6,7 @@ LIBS = xpawk.lib
 all: awk 
 
 awk: awk.obj
-	tcc $(LDFLAGS) -eawk.exe awk.obj $(LIBS)
+	tcc $(LDFLAGS) -mh -eawk.exe awk.obj $(LIBS)
 
 clean:
 	del $(OBJS) *.obj $(OUT)
