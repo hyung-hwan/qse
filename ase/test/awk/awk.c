@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.27 2006-04-30 18:05:07 bacon Exp $
+ * $Id: awk.c,v 1.28 2006-04-30 18:09:47 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -128,7 +128,6 @@ int xp_main (int argc, xp_char_t* argv[])
 #ifdef __linux
 	mtrace ();
 #endif
-
 	if ((awk = xp_awk_open()) == XP_NULL) 
 	{
 		xp_printf (XP_TEXT("Error: cannot open awk\n"));
