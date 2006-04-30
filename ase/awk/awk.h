@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.58 2006-04-26 15:49:33 bacon Exp $
+ * $Id: awk.h,v 1.59 2006-04-30 15:50:38 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -51,6 +51,7 @@ enum
 	XP_AWK_ENOERR,         /* no error */
 	XP_AWK_ENOMEM,         /* out of memory */
 
+	XP_AWK_ENOSRCIO,       /* no source io handler set */
 	XP_AWK_ESRCINOPEN,
 	XP_AWK_ESRCINCLOSE,
 	XP_AWK_ESRCINNEXT,

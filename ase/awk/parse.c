@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.96 2006-04-29 12:41:47 bacon Exp $
+ * $Id: parse.c,v 1.97 2006-04-30 15:50:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -330,6 +330,13 @@ static void __dump (xp_awk_t* awk)
 
 int xp_awk_parse (xp_awk_t* awk)
 {
+
+	if (awk->srcio == XP_NULL)
+	{
+		awk->errnum = XP_AWK_ENOSRCIO;
+		return -1;
+	}
+
 	/* if you want to parse anew, call xp_awk_clear first.
 	 * otherwise, the result is appened to the accumulated result */
 
