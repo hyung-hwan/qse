@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.79 2006-04-29 12:09:29 bacon Exp $
+ * $Id: run.c,v 1.80 2006-04-30 17:10:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -46,7 +46,7 @@ static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static int __run_if_statement (xp_awk_run_t* run, xp_awk_nde_if_t* nde);
 static int __run_while_statement (xp_awk_run_t* run, xp_awk_nde_while_t* nde);
 static int __run_for_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde);
-static int __run_foreach_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde);
+static int __run_foreach_statement (xp_awk_run_t* run, xp_awk_nde_foreach_t* nde);
 static int __run_break_statement (xp_awk_run_t* run, xp_awk_nde_break_t* nde);
 static int __run_continue_statement (xp_awk_run_t* run, xp_awk_nde_continue_t* nde);
 static int __run_return_statement (xp_awk_run_t* run, xp_awk_nde_return_t* nde);
@@ -145,7 +145,7 @@ typedef xp_awk_val_t* (*binop_func_t) (
 typedef xp_awk_val_t* (*eval_expr_t) (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
 /* TODO: remove this function */
-static int __printval (xp_awk_pair_t* pair)
+static int __printval (xp_awk_pair_t* pair, void* arg)
 {
 	xp_printf (XP_TEXT("%s = "), (const xp_char_t*)pair->key);
 	xp_awk_printval ((xp_awk_val_t*)pair->val);
@@ -421,7 +421,7 @@ xp_printf (XP_TEXT("\n"));
 	run->exit_level = EXIT_NONE;
 
 xp_printf (XP_TEXT("-[VARIABLES]------------------------\n"));
-xp_awk_map_walk (&run->named, __printval);
+xp_awk_map_walk (&run->named, __printval, XP_NULL);
 xp_printf (XP_TEXT("-[END VARIABLES]--------------------------\n"));
 
 	return n;
@@ -556,7 +556,7 @@ static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	case XP_AWK_NDE_FOREACH:
 		if (__run_foreach_statement (
-			run, (xp_awk_nde_for_t*)nde) == -1) return -1;
+			run, (xp_awk_nde_foreach_t*)nde) == -1) return -1;
 		break;
 
 	case XP_AWK_NDE_BREAK:
@@ -769,10 +769,68 @@ static int __run_for_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde)
 	return 0;
 }
 
-static int __run_foreach_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde)
+struct __foreach_walker_t
 {
-xp_printf (XP_TEXT("FOREEACH NOT IMPLEMENTED....\n"));
+	xp_awk_run_t* run;
+	xp_awk_nde_var_t* var;
+	xp_awk_nde_t* body;
+};
+
+static int __walk_foreach (xp_awk_pair_t* pair, void* arg)
+{
+	struct __foreach_walker_t* w = (struct __foreach_walker_t*)arg;
+	xp_awk_val_t* str;
+
+	str = (xp_awk_val_t*)xp_awk_makestrval(pair->key,xp_strlen(pair->key));
+	if (str == XP_NULL) PANIC_I (w->run, XP_AWK_ENOMEM);
+
+	xp_awk_refupval (str);
+	if (__do_assignment (w->run, w->var, str) == XP_NULL)
+	{
+		xp_awk_refdownval (w->run, str);
+		return -1;
+	}
+
+	if (__run_statement (w->run, w->body) == -1)
+	{
+		xp_awk_refdownval (w->run, str);
+		return -1;
+	}
+	
+	xp_awk_refdownval (w->run, str);
 	return 0;
+}
+
+static int __run_foreach_statement (xp_awk_run_t* run, xp_awk_nde_foreach_t* nde)
+{
+	int n;
+	xp_awk_nde_exp_t* test;
+	xp_awk_val_t* rv;
+	xp_awk_map_t* map;
+	struct __foreach_walker_t walker;
+
+	test = (xp_awk_nde_exp_t*)nde->test;
+	xp_assert (test->type == XP_AWK_NDE_EXP_BIN && 
+	           test->opcode == XP_AWK_BINOP_IN);
+
+	rv = __eval_expression (run, test->right);
+	if (rv == XP_NULL) return -1;
+
+	xp_awk_refupval (rv);
+	if (rv->type != XP_AWK_VAL_MAP)
+	{
+		xp_awk_refdownval (run, rv);
+		PANIC_I (run, XP_AWK_ENOTINDEXABLE);
+	}
+	map = ((xp_awk_val_map_t*)rv)->map;
+
+	walker.run = run;
+	walker.var = (xp_awk_nde_var_t*)test->left;
+	walker.body = nde->body;
+	n = xp_awk_map_walk (map, __walk_foreach, &walker);
+
+	xp_awk_refdownval (run, rv);
+	return n;
 }
 
 static int __run_break_statement (xp_awk_run_t* run, xp_awk_nde_break_t* nde)
