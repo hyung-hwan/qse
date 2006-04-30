@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.44 2006-04-14 15:08:37 bacon Exp $
+ * $Id: types.h,v 1.45 2006-04-30 17:35:37 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -9,6 +9,8 @@
 	#include <xp/conf_msw.h>
 #elif defined(vms) || defined(__vms)
 	#include <xp/conf_vms.h>
+#elif defined(dos) || defined(__dos)
+	#include <xp/conf_dos.h>
 #else
 	#include <xp/config.h>
 #endif

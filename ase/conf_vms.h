@@ -1,3 +1,7 @@
+/*
+ * $Id: conf_vms.h,v 1.4 2006-04-30 17:35:37 bacon Exp $
+ */
+
 /* TODO: please complete the itanium portion */
 
 /* both vax and alpha are in the little endian. */

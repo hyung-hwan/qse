@@ -1,3 +1,6 @@
+/*
+ * $Id: conf_msw.h,v 1.2 2006-04-30 17:35:37 bacon Exp $
+ */
 
 /*
 Macro Meaning 
