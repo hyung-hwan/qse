@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.15 2006-04-24 07:46:35 bacon Exp $
+ * $Id: map.c,v 1.16 2006-04-30 17:10:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -261,7 +261,8 @@ int xp_awk_map_remove (xp_awk_map_t* map, xp_char_t* key)
 	return -1;
 }
 
-int xp_awk_map_walk (xp_awk_map_t* map, int (*walker) (xp_awk_pair_t*))
+int xp_awk_map_walk (xp_awk_map_t* map, 
+	int (*walker) (xp_awk_pair_t*,void*), void* arg)
 {
 	xp_size_t i;
 	xp_awk_pair_t* pair, * next;
@@ -273,7 +274,7 @@ int xp_awk_map_walk (xp_awk_map_t* map, int (*walker) (xp_awk_pair_t*))
 		while (pair != XP_NULL) 
 		{
 			next = pair->next;
-			if (walker(pair) == -1) return -1;
+			if (walker(pair,arg) == -1) return -1;
 			pair = next;
 		}
 	}

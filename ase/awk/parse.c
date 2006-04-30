@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.97 2006-04-30 15:50:38 bacon Exp $
+ * $Id: parse.c,v 1.98 2006-04-30 17:12:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -267,7 +267,7 @@ do { \
 #ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/stdio.h>
 #endif
-static int __dump_func (xp_awk_pair_t* pair)
+static int __dump_func (xp_awk_pair_t* pair, void* arg)
 {
 	xp_awk_func_t* func = (xp_awk_func_t*)pair->val;
 	xp_size_t i;
@@ -303,7 +303,7 @@ static void __dump (xp_awk_t* awk)
 		xp_printf (XP_TEXT("__global%lu;\n\n"), (unsigned long)i);
 	}
 
-	xp_awk_map_walk (&awk->tree.funcs, __dump_func);
+	xp_awk_map_walk (&awk->tree.funcs, __dump_func, XP_NULL);
 
 	if (awk->tree.begin != XP_NULL) 
 	{
