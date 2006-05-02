@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.98 2006-04-30 17:12:51 bacon Exp $
+ * $Id: parse.c,v 1.99 2006-05-02 15:06:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1893,14 +1893,42 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 {
-	xp_awk_nde_t* idx;
+	xp_awk_nde_t* idx, * tmp, * last;
 	xp_awk_nde_var_t* nde;
 	xp_size_t idxa;
 
-	if (__get_token(awk) == -1) return XP_NULL;
+	idx = XP_NULL;
+	last = XP_NULL;
 
-	idx = __parse_expression (awk);
-	if (idx == XP_NULL) return XP_NULL;
+	do
+	{
+		if (__get_token(awk) == -1) 
+		{
+			if (idx != XP_NULL) xp_awk_clrpt (idx);
+			return XP_NULL;
+		}
+
+		tmp = __parse_expression (awk);
+		if (tmp == XP_NULL) 
+		{
+			if (idx != XP_NULL) xp_awk_clrpt (idx);
+			return XP_NULL;
+		}
+
+		if (idx == XP_NULL)
+		{
+			xp_assert (last == XP_NULL);
+			idx = tmp; last = tmp;
+		}
+		else
+		{
+			tmp->next = last;
+			last = tmp;
+		}
+	}
+	while (MATCH(awk,TOKEN_COMMA));
+
+	xp_assert (idx != XP_NULL);
 
 	if (!MATCH(awk,TOKEN_RBRACK)) 
 	{
@@ -1914,7 +1942,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		return XP_NULL;
 	}
 
-	nde = (xp_awk_nde_var_t*)xp_malloc(xp_sizeof(xp_awk_nde_var_t));
+	nde = (xp_awk_nde_var_t*) xp_malloc (xp_sizeof(xp_awk_nde_var_t));
 	if (nde == XP_NULL) 
 	{
 		xp_awk_clrpt (idx);
@@ -1922,7 +1950,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 	}
 
 	/* search the parameter name list */
-	idxa = xp_awk_tab_find(&awk->parse.params, name, 0);
+	idxa = xp_awk_tab_find (&awk->parse.params, name, 0);
 	if (idxa != (xp_size_t)-1) 
 	{
 		nde->type = XP_AWK_NDE_ARGIDX;
