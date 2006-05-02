@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.99 2006-05-02 15:06:01 bacon Exp $
+ * $Id: parse.c,v 1.100 2006-05-02 15:43:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1922,7 +1922,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		}
 		else
 		{
-			tmp->next = last;
+			last->next = tmp;
 			last = tmp;
 		}
 	}

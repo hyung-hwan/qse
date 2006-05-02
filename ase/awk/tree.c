@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.45 2006-04-30 17:10:30 bacon Exp $
+ * $Id: tree.c,v 1.46 2006-05-02 15:43:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -203,7 +203,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 		xp_printf (XP_TEXT("__arg%lu["), 
 			(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
 		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
-		__print_expression (((xp_awk_nde_var_t*)nde)->idx);
+		__print_expression_list (((xp_awk_nde_var_t*)nde)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
@@ -217,7 +217,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa == (xp_size_t)-1);
 		xp_printf (XP_TEXT("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
 		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
-		__print_expression (((xp_awk_nde_var_t*)nde)->idx);
+		__print_expression_list (((xp_awk_nde_var_t*)nde)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
@@ -245,7 +245,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_printf (XP_TEXT("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
 		}
 		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
-		__print_expression (((xp_awk_nde_var_t*)nde)->idx);
+		__print_expression_list (((xp_awk_nde_var_t*)nde)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
@@ -273,7 +273,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_printf (XP_TEXT("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
 		}
 		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
-		__print_expression (((xp_awk_nde_var_t*)nde)->idx);
+		__print_expression_list (((xp_awk_nde_var_t*)nde)->idx);
 		xp_printf (XP_TEXT("]"));
 		break;
 
