@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.81 2006-05-02 15:06:01 bacon Exp $
+ * $Id: run.c,v 1.82 2006-05-02 15:43:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1086,7 +1086,7 @@ static xp_awk_val_t* __do_assignment_map (
 {
 	xp_awk_val_map_t* map;
 	xp_awk_nde_t* nde;
-	xp_char_t* str;
+	xp_str_t idxstr;
 	int n;
 
 	xp_assert (
@@ -1161,16 +1161,18 @@ static xp_awk_val_t* __do_assignment_map (
 	}
 
 	/* compose a map index */
-	nde = var->idx;
-/* TODO: while (nde != XP_NULL)   -> multidimensional array index.... */
+	if (xp_str_open (&idxstr, 256) == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
+	for  (nde = var->idx; nde != XP_NULL; nde = nde->next) 
 	{ 
 		xp_awk_val_t* tmp;
+		xp_char_t* str;
 		int errnum;
 
 		tmp = __eval_expression (run, nde);
 		if (tmp == XP_NULL) 
 		{
-			/* TODO: clearing previous idx values... */
+			xp_str_close (&idxstr);
 			return XP_NULL;
 		}
 
@@ -1180,24 +1182,41 @@ static xp_awk_val_t* __do_assignment_map (
 		if (str == XP_NULL) 
 		{
 			xp_awk_refdownval (run, tmp);
+			xp_str_close (&idxstr);
 			PANIC (run, errnum);
 		}
-
 		xp_awk_refdownval (run, tmp);
-		/* TODO: nde = nde->next; */
+
+/* TODO: configurable index seperator */
+		if (XP_STR_LEN(&idxstr) > 0 &&
+		    xp_str_cat (&idxstr, XP_TEXT(",")) == (xp_size_t)-1)
+		{
+			xp_free (str);
+			xp_str_close (&idxstr);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		if (xp_str_cat (&idxstr, str) == (xp_size_t)-1)
+		{
+			xp_free (str);
+			xp_str_close (&idxstr);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		xp_free (str);
 	}
 
 /*
 xp_printf (XP_TEXT("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map->ref, map->type);
 */
-	n = xp_awk_map_putx (map->map, str, val, XP_NULL);
+	n = xp_awk_map_putx (map->map, XP_STR_BUF(&idxstr), val, XP_NULL);
 	if (n < 0)
 	{
-		xp_free (str);
+		xp_str_close (&idxstr);
 		PANIC (run, XP_AWK_ENOMEM);
 	}
 
-	xp_free (str);
+	xp_str_close (&idxstr);
 	xp_awk_refupval (val);
 	return val;
 }
@@ -2681,7 +2700,7 @@ static xp_awk_val_t* __eval_indexed (
 	xp_awk_val_t* idx, *res;
 	xp_awk_pair_t* pair;
 	xp_awk_nde_t* tmp;
-	xp_char_t* str;
+	xp_str_t idxstr;
 
 	/* TODO: should it be an error? should it return nil? */
 	if (map->type != XP_AWK_VAL_MAP) 
@@ -2691,15 +2710,20 @@ static xp_awk_val_t* __eval_indexed (
 
 	xp_assert (nde->idx != XP_NULL);
 
-	tmp = nde->idx;
-	/* TODO: multidimensional array
-	while (tmp != XP_NULL)
-	*/
+	/* compose an array/hash index */
+	if (xp_str_open (&idxstr, 256) == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
+	for (tmp = nde->idx; tmp != XP_NULL; tmp = tmp->next)
 	{
+		xp_char_t* str;
 		int errnum;
 
 		idx = __eval_expression (run, tmp);
-		if (idx == XP_NULL) return XP_NULL;
+		if (idx == XP_NULL) 
+		{
+			xp_str_close (&idxstr);
+			return XP_NULL;
+		}
 
 		xp_awk_refupval (idx);
 
@@ -2707,20 +2731,37 @@ static xp_awk_val_t* __eval_indexed (
 		if (str == XP_NULL) 
 		{
 			xp_awk_refdownval (run, idx);
+			xp_str_close (&idxstr);
 			PANIC (run, errnum);
 		}
 
 		xp_awk_refdownval (run, idx);
-		/* TODO:
-		tmp = tmp->next;
-		 */
+
+/* TODO: configurable index seperator */
+		if (XP_STR_LEN(&idxstr) > 0 &&
+		    xp_str_cat (&idxstr, XP_TEXT(",")) == (xp_size_t)-1)
+		{
+			xp_free (str);
+			xp_str_close (&idxstr);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		if (xp_str_cat (&idxstr, str) == (xp_size_t)-1)
+		{
+			xp_free (str);
+			xp_str_close (&idxstr);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		xp_free (str);
 	}
 
 /* TODO: check this out........ */
-	pair = xp_awk_map_get (((xp_awk_val_map_t*)map)->map, str);
+	pair = xp_awk_map_get (
+		((xp_awk_val_map_t*)map)->map, XP_STR_BUF(&idxstr));
 	res = (pair == XP_NULL)? xp_awk_val_nil: (xp_awk_val_t*)pair->val;
 
-	xp_free (str);
+	xp_str_close (&idxstr);
 
 	return res;
 }
