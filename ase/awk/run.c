@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.80 2006-04-30 17:10:30 bacon Exp $
+ * $Id: run.c,v 1.81 2006-05-02 15:06:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -888,6 +888,7 @@ static int __run_exit_statement (xp_awk_run_t* run, xp_awk_nde_exit_t* nde)
 static int __run_next_statement (xp_awk_run_t* run, xp_awk_nde_next_t* nde)
 {
 	/* TODO */
+xp_printf (XP_TEXT("**** next NOT IMPLEMENTED...\n"));
 	return -1;
 }
 
