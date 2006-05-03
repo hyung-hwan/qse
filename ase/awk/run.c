@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.83 2006-05-03 15:40:19 bacon Exp $
+ * $Id: run.c,v 1.84 2006-05-03 15:54:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1348,7 +1348,8 @@ static xp_awk_val_t* __eval_binop_land (
 static xp_awk_val_t* __eval_binop_in (
 	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right)
 {
-	xp_awk_val_t* lv, * rv, * res;
+	xp_awk_val_t* rv, * res;
+	xp_char_t* str;
 
 	if (right->type != XP_AWK_NDE_GLOBAL &&
 	    right->type != XP_AWK_NDE_LOCAL &&
@@ -1362,24 +1363,16 @@ static xp_awk_val_t* __eval_binop_in (
 	}
 
 	/* evaluate the left-hand side of the operator */
-	if (left->type == XP_AWK_NDE_GRP)
-	{
-/* TODO: multidimensional .... */
-		/*__eval_expression (run, left);*/
-	}
-	else 
-	{
-		lv = __eval_expression (run, left);
-		if (lv == XP_NULL) return XP_NULL;
-	}
-
-	xp_awk_refupval (lv);
+	str = (left->type == XP_AWK_NDE_GRP)?
+		__idxnde_to_str (run, ((xp_awk_nde_grp_t*)left)->body):
+		__idxnde_to_str (run, left);
+	if (str == XP_NULL) return XP_NULL;
 
 	/* evaluate the right-hand side of the operator */
 	rv = __eval_expression (run, right);
 	if (rv == XP_NULL) 
 	{
-		xp_awk_refdownval (run, lv);
+		xp_free (str);
 		return XP_NULL;
 	}
 
@@ -1390,28 +1383,18 @@ static xp_awk_val_t* __eval_binop_in (
 		res = xp_awk_makeintval (run, 0);
 		if (res == XP_NULL) 
 		{
-			xp_awk_refdownval (run, lv);
+			xp_free (str);
 			xp_awk_refdownval (run, rv);
 			PANIC (run, XP_AWK_ENOMEM);
 		}
 
-		xp_awk_refdownval (run, lv);
+		xp_free (str);
 		xp_awk_refdownval (run, rv);
 		return res;
 	}
 	else if (rv->type == XP_AWK_VAL_MAP)
 	{
-		xp_char_t* str;
 		xp_long_t r;
-		int errnum;
-
-		str = __val_to_str (lv, &errnum);
-		if (str == XP_NULL) 
-		{
-			xp_awk_refdownval (run, lv);
-			xp_awk_refdownval (run, rv);
-			PANIC (run, errnum);
-		}
 
 		r = xp_awk_map_get(((xp_awk_val_map_t*)rv)->map,str) != XP_NULL;
 
@@ -1419,13 +1402,11 @@ static xp_awk_val_t* __eval_binop_in (
 		if (res == XP_NULL) 
 		{
 			xp_free (str);
-			xp_awk_refdownval (run, lv);
 			xp_awk_refdownval (run, rv);
 			PANIC (run, XP_AWK_ENOMEM);
 		}
 
 		xp_free (str);
-		xp_awk_refdownval (run, lv);
 		xp_awk_refdownval (run, rv);
 		return res;
 	}
