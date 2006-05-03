@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.17 2006-05-03 16:05:00 bacon Exp $
+ * $Id: map.c,v 1.18 2006-05-03 16:07:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -16,8 +16,7 @@
 static xp_size_t __hash (const xp_char_t* key);
 
 #define FREE_PAIR(map,pair) \
-	do \
-	{ \
+	do { \
 		xp_free ((xp_char_t*)(pair)->key); \
 		if ((map)->freeval != XP_NULL) \
 			(map)->freeval ((map)->owner, (pair)->val); \
