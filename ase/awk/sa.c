@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.19 2006-04-30 18:05:07 bacon Exp $
+ * $Id: sa.c,v 1.20 2006-05-04 15:59:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -223,6 +223,20 @@ xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len)
 xp_size_t xp_str_ccat (xp_str_t* str, xp_char_t c)
 {
 	return xp_str_ncat (str, &c, 1);
+}
+
+xp_size_t xp_str_nccat (xp_str_t* str, xp_char_t c, xp_size_t len)
+{
+	while (len > 0)
+	{
+		if (xp_str_ncat (str, &c, 1) == (xp_size_t)-1) 
+		{
+			return (xp_size_t)-1;
+		}
+
+		len--;
+	}
+	return str->size;
 }
 
 void xp_str_clear (xp_str_t* str)
