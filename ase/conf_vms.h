@@ -1,5 +1,5 @@
 /*
- * $Id: conf_vms.h,v 1.4 2006-04-30 17:35:37 bacon Exp $
+ * $Id: conf_vms.h,v 1.5 2006-05-06 16:05:12 bacon Exp $
  */
 
 /* TODO: please complete the itanium portion */
@@ -11,6 +11,7 @@
 #define XP_SIZEOF_SHORT 2
 #define XP_SIZEOF_INT 4
 #define XP_SIZEOF_LONG 4
+
 #if defined(vax) || defined(__vax)
 	#define XP_SIZEOF_LONG_LONG 0
 #elif defined(alpha) || defined(__alpha)
@@ -24,6 +25,7 @@
 #define XP_SIZEOF___INT8 1
 #define XP_SIZEOF___INT16 2
 #define XP_SIZEOF___INT32 4
+
 #if defined(vax) || defined(__vax)
 	#define XP_SIZEOF___INT64 0
 #elif defined(alpha) || defined(__alpha)
@@ -33,6 +35,7 @@
 #else
 	#define XP_SIZEOF___INT64 0
 #endif
+
 #define XP_SIZEOF___INT96 0
 #define XP_SIZEOF___INT128 0
 
@@ -64,3 +67,5 @@
 #else
 	#define XP_SIZEOF_LONG_DOUBLE 0
 #endif
+
+#define XP_SIZEOF_WCHAR_T 4

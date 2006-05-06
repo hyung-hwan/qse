@@ -29,6 +29,7 @@
 #define XP_SIZEOF_DOUBLE 0
 #define XP_SIZEOF_LONG_DOUBLE 0
 #define XP_SIZEOF_PID_T 0
+#define XP_SIZEOF_WCHAR_T 0
 
 /* fcntl.h */
 #undef XP_HAVE_FCNTL_H
