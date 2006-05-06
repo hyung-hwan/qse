@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.6 2006-04-26 15:49:33 bacon Exp $
+ * $Id: misc.c,v 1.7 2006-05-06 12:52:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -20,27 +20,27 @@ xp_long_t xp_awk_strtolong (
 
 	p = str; while (xp_isspace(*p)) p++;
 
-	while (*p != XP_CHAR('\0')) 
+	while (*p != XP_T('\0')) 
 	{
-		if (*p == XP_CHAR('-')) 
+		if (*p == XP_T('-')) 
 		{
 			negative = ~negative;
 			p++;
 		}
-		else if (*p == XP_CHAR('+')) p++;
+		else if (*p == XP_T('+')) p++;
 		else break;
 	}
 
 	if (base == 0) 
 	{
-		if (*p == XP_CHAR('0')) 
+		if (*p == XP_T('0')) 
 		{
 			p++;
-			if (*p == XP_CHAR('x') || *p == XP_CHAR('X'))
+			if (*p == XP_T('x') || *p == XP_T('X'))
 			{
 				p++; base = 16;
 			} 
-			else if (*p == XP_CHAR('b') || *p == XP_CHAR('B'))
+			else if (*p == XP_T('b') || *p == XP_T('B'))
 			{
 				p++; base = 2;
 			}
@@ -50,23 +50,23 @@ xp_long_t xp_awk_strtolong (
 	} 
 	else if (base == 16) 
 	{
-		if (*p == XP_CHAR('0') && 
-		    (*(p+1) == XP_CHAR('x') || *(p+1) == XP_CHAR('X'))) p += 2; 
+		if (*p == XP_T('0') && 
+		    (*(p+1) == XP_T('x') || *(p+1) == XP_T('X'))) p += 2; 
 	}
 	else if (base == 2)
 	{
-		if (*p == XP_CHAR('0') && 
-		    (*(p+1) == XP_CHAR('b') || *(p+1) == XP_CHAR('B'))) p += 2; 
+		if (*p == XP_T('0') && 
+		    (*(p+1) == XP_T('b') || *(p+1) == XP_T('B'))) p += 2; 
 	}
 
-	while (*p != XP_CHAR('\0'))
+	while (*p != XP_T('\0'))
 	{
-		if (*p >= XP_CHAR('0') && *p <= XP_CHAR('9'))
-			digit = *p - XP_CHAR('0');
-		else if (*p >= XP_CHAR('A') && *p <= XP_CHAR('Z'))
-			digit = *p - XP_CHAR('A') + 10;
-		else if (*p >= XP_CHAR('a') && *p <= XP_CHAR('z'))
-			digit = *p - XP_CHAR('a') + 10;
+		if (*p >= XP_T('0') && *p <= XP_T('9'))
+			digit = *p - XP_T('0');
+		else if (*p >= XP_T('A') && *p <= XP_T('Z'))
+			digit = *p - XP_T('A') + 10;
+		else if (*p >= XP_T('a') && *p <= XP_T('z'))
+			digit = *p - XP_T('a') + 10;
 		else break;
 
 		if (digit >= base) break;
@@ -137,14 +137,14 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 	/* Strip off leading blanks and check for a sign */
 	while (xp_isspace(*p)) p++;
 
-	while (*p != XP_CHAR('\0')) 
+	while (*p != XP_T('\0')) 
 	{
-		if (*p == XP_CHAR('-')) 
+		if (*p == XP_T('-')) 
 		{
 			sign = ~sign;
 			p++;
 		}
-		else if (*p == XP_CHAR('+')) p++;
+		else if (*p == XP_T('+')) p++;
 		else break;
 	}
 
@@ -154,7 +154,7 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 	for (mantSize = 0; ; mantSize++) {
 		c = *p;
 		if (!xp_isdigit(c)) {
-			if ((c != XP_CHAR('.')) || (decPt >= 0)) break;
+			if ((c != XP_T('.')) || (decPt >= 0)) break;
 			decPt = mantSize;
 		}
 		p++;
@@ -201,40 +201,40 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 		{
 			c = *p;
 			p++;
-			if (c == XP_CHAR('.')) 
+			if (c == XP_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac1 = 10 * frac1 + (c - XP_CHAR('0'));
+			frac1 = 10 * frac1 + (c - XP_T('0'));
 		}
 		frac2 = 0;
 		for (; mantSize > 0; mantSize -= 1) {
 			c = *p;
 			p++;
-			if (c == XP_CHAR('.')) 
+			if (c == XP_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac2 = 10*frac2 + (c - XP_CHAR('0'));
+			frac2 = 10*frac2 + (c - XP_T('0'));
 		}
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
 	/* Skim off the exponent */
 	p = pExp;
-	if ((*p == XP_CHAR('E')) || (*p == XP_CHAR('e'))) 
+	if ((*p == XP_T('E')) || (*p == XP_T('e'))) 
 	{
 		p++;
-		if (*p == XP_CHAR('-')) 
+		if (*p == XP_T('-')) 
 		{
 			expSign = 1;
 			p++;
 		} 
 		else 
 		{
-			if (*p == XP_CHAR('+')) p++;
+			if (*p == XP_T('+')) p++;
 			expSign = 0;
 		}
 		if (!xp_isdigit(*p)) 
@@ -244,7 +244,7 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 		}
 		while (xp_isdigit(*p)) 
 		{
-			exp = exp * 10 + (*p - XP_CHAR('0'));
+			exp = exp * 10 + (*p - XP_T('0'));
 			p++;
 		}
 	}
