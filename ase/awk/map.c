@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.18 2006-05-03 16:07:24 bacon Exp $
+ * $Id: map.c,v 1.19 2006-05-06 12:52:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -252,7 +252,7 @@ static xp_size_t __hash (const xp_char_t* key)
 {
 	xp_size_t n = 0, i;
 
-	while (*key != XP_CHAR('\0')) 
+	while (*key != XP_T('\0')) 
 	{
 		xp_byte_t* bp = (xp_byte_t*)key;
 		for (i = 0; i < xp_sizeof(*key); i++) n = n * 31 + *bp++;

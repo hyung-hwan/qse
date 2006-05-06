@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.100 2006-05-02 15:43:10 bacon Exp $
+ * $Id: parse.c,v 1.101 2006-05-06 12:52:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -173,28 +173,28 @@ struct __kwent
 
 static struct __kwent __kwtab[] = 
 {
-	{ XP_TEXT("BEGIN"),    TOKEN_BEGIN,    0 },
-	{ XP_TEXT("END"),      TOKEN_END,      0 },
+	{ XP_T("BEGIN"),    TOKEN_BEGIN,    0 },
+	{ XP_T("END"),      TOKEN_END,      0 },
 
-	{ XP_TEXT("function"), TOKEN_FUNCTION, 0 },
-	{ XP_TEXT("func"),     TOKEN_FUNCTION, 0 },
-	{ XP_TEXT("if"),       TOKEN_IF,       0 },
-	{ XP_TEXT("else"),     TOKEN_ELSE,     0 },
-	{ XP_TEXT("while"),    TOKEN_WHILE,    0 },
-	{ XP_TEXT("for"),      TOKEN_FOR,      0 },
-	{ XP_TEXT("do"),       TOKEN_DO,       0 },
-	{ XP_TEXT("break"),    TOKEN_BREAK,    0 },
-	{ XP_TEXT("continue"), TOKEN_CONTINUE, 0 },
-	{ XP_TEXT("return"),   TOKEN_RETURN,   0 },
-	{ XP_TEXT("exit"),     TOKEN_EXIT,     0 },
-	{ XP_TEXT("delete"),   TOKEN_DELETE,   0 },
-	{ XP_TEXT("next"),     TOKEN_NEXT,     0 },
-	{ XP_TEXT("nextfile"), TOKEN_NEXTFILE, 0 },
+	{ XP_T("function"), TOKEN_FUNCTION, 0 },
+	{ XP_T("func"),     TOKEN_FUNCTION, 0 },
+	{ XP_T("if"),       TOKEN_IF,       0 },
+	{ XP_T("else"),     TOKEN_ELSE,     0 },
+	{ XP_T("while"),    TOKEN_WHILE,    0 },
+	{ XP_T("for"),      TOKEN_FOR,      0 },
+	{ XP_T("do"),       TOKEN_DO,       0 },
+	{ XP_T("break"),    TOKEN_BREAK,    0 },
+	{ XP_T("continue"), TOKEN_CONTINUE, 0 },
+	{ XP_T("return"),   TOKEN_RETURN,   0 },
+	{ XP_T("exit"),     TOKEN_EXIT,     0 },
+	{ XP_T("delete"),   TOKEN_DELETE,   0 },
+	{ XP_T("next"),     TOKEN_NEXT,     0 },
+	{ XP_T("nextfile"), TOKEN_NEXTFILE, 0 },
 
-	{ XP_TEXT("local"),    TOKEN_LOCAL,    XP_AWK_EXPLICIT },
-	{ XP_TEXT("global"),   TOKEN_GLOBAL,   XP_AWK_EXPLICIT },
+	{ XP_T("local"),    TOKEN_LOCAL,    XP_AWK_EXPLICIT },
+	{ XP_T("global"),   TOKEN_GLOBAL,   XP_AWK_EXPLICIT },
 
-	{ XP_TEXT("in"),       TOKEN_IN,       0 },
+	{ XP_T("in"),       TOKEN_IN,       0 },
 
 	{ XP_NULL,             0,              0 }
 };
@@ -202,27 +202,27 @@ static struct __kwent __kwtab[] =
 /* TODO:
 static struct __kwent __bvtab[] =
 {
-	{ XP_TEXT("ARGC"),        TOKEN_ARGC,         0 },
-	{ XP_TEXT("ARGIND"),      TOKEN_ARGIND,       0 },
-	{ XP_TEXT("ARGV"),        TOKEN_ARGV,         0 },
-	{ XP_TEXT("CONVFMT"),     TOKEN_CONVFMT,      0 },
-	{ XP_TEXT("FIELDWIDTHS"), TOKEN_FIELDWIDTHS,  0 },
-	{ XP_TEXT("ENVIRON"),     TOKEN_ENVIRON,      0 },
-	{ XP_TEXT("ERRNO"),       TOKEN_ERRNO,        0 },
-	{ XP_TEXT("FILENAME"),    TOKEN_FILENAME,     0 },
-	{ XP_TEXT("FNR"),         TOKEN_FNR,          0 },
-	{ XP_TEXT("FS"),          TOKEN_FS,           0 },
-	{ XP_TEXT("IGNORECASE"),  TOKEN_IGNORECASE,   0 },
-	{ XP_TEXT("NF"),          TOKEN_NF,           0 },
-	{ XP_TEXT("NR"),          TOKEN_NR,           0 },
-	{ XP_TEXT("OFMT"),        TOKEN_OFMT,         0 },
-	{ XP_TEXT("OFS"),         TOKEN_OFS,          0 },
-	{ XP_TEXT("ORS"),         TOKEN_ORS,          0 },
-	{ XP_TEXT("RS"),          TOKEN_RS,           0 },
-	{ XP_TEXT("RT"),          TOKEN_RT,           0 },
-	{ XP_TEXT("RSTART"),      TOKEN_RSTART,       0 },
-	{ XP_TEXT("RLENGTH"),     TOKEN_RLENGTH,      0 },
-	{ XP_TEXT("SUBSEP"),      TOKEN_SUBSEP,       0 },
+	{ XP_T("ARGC"),        TOKEN_ARGC,         0 },
+	{ XP_T("ARGIND"),      TOKEN_ARGIND,       0 },
+	{ XP_T("ARGV"),        TOKEN_ARGV,         0 },
+	{ XP_T("CONVFMT"),     TOKEN_CONVFMT,      0 },
+	{ XP_T("FIELDWIDTHS"), TOKEN_FIELDWIDTHS,  0 },
+	{ XP_T("ENVIRON"),     TOKEN_ENVIRON,      0 },
+	{ XP_T("ERRNO"),       TOKEN_ERRNO,        0 },
+	{ XP_T("FILENAME"),    TOKEN_FILENAME,     0 },
+	{ XP_T("FNR"),         TOKEN_FNR,          0 },
+	{ XP_T("FS"),          TOKEN_FS,           0 },
+	{ XP_T("IGNORECASE"),  TOKEN_IGNORECASE,   0 },
+	{ XP_T("NF"),          TOKEN_NF,           0 },
+	{ XP_T("NR"),          TOKEN_NR,           0 },
+	{ XP_T("OFMT"),        TOKEN_OFMT,         0 },
+	{ XP_T("OFS"),         TOKEN_OFS,          0 },
+	{ XP_T("ORS"),         TOKEN_ORS,          0 },
+	{ XP_T("RS"),          TOKEN_RS,           0 },
+	{ XP_T("RT"),          TOKEN_RT,           0 },
+	{ XP_T("RSTART"),      TOKEN_RSTART,       0 },
+	{ XP_T("RLENGTH"),     TOKEN_RLENGTH,      0 },
+	{ XP_T("SUBSEP"),      TOKEN_SUBSEP,       0 },
 	{ XP_NULL,                0,                  0 }
 };
 */
@@ -273,16 +273,16 @@ static int __dump_func (xp_awk_pair_t* pair, void* arg)
 	xp_size_t i;
 
 	xp_assert (xp_strcmp(pair->key, func->name) == 0);
-	xp_printf (XP_TEXT("function %s ("), func->name);
+	xp_printf (XP_T("function %s ("), func->name);
 	for (i = 0; i < func->nargs; ) 
 	{
-		xp_printf (XP_TEXT("__arg%lu"), (unsigned long)i++);
+		xp_printf (XP_T("__arg%lu"), (unsigned long)i++);
 		if (i >= func->nargs) break;
-		xp_printf (XP_TEXT(", "));
+		xp_printf (XP_T(", "));
 	}
-	xp_printf (XP_TEXT(")\n"));
+	xp_printf (XP_T(")\n"));
 	xp_awk_prnpt (func->body);
-	xp_printf (XP_TEXT("\n"));
+	xp_printf (XP_T("\n"));
 
 	return 0;
 }
@@ -295,21 +295,21 @@ static void __dump (xp_awk_t* awk)
 	{
 		xp_size_t i;
 
-		xp_printf (XP_TEXT("global "));
+		xp_printf (XP_T("global "));
 		for (i = 0; i < awk->tree.nglobals - 1; i++) 
 		{
-			xp_printf (XP_TEXT("__global%lu, "), (unsigned long)i);
+			xp_printf (XP_T("__global%lu, "), (unsigned long)i);
 		}
-		xp_printf (XP_TEXT("__global%lu;\n\n"), (unsigned long)i);
+		xp_printf (XP_T("__global%lu;\n\n"), (unsigned long)i);
 	}
 
 	xp_awk_map_walk (&awk->tree.funcs, __dump_func, XP_NULL);
 
 	if (awk->tree.begin != XP_NULL) 
 	{
-		xp_printf (XP_TEXT("BEGIN "));
+		xp_printf (XP_T("BEGIN "));
 		xp_awk_prnpt (awk->tree.begin);
-		xp_printf (XP_TEXT("\n"));
+		xp_printf (XP_T("\n"));
 	}
 
 	chain = awk->tree.chain;
@@ -317,13 +317,13 @@ static void __dump (xp_awk_t* awk)
 	{
 		if (chain->pattern != XP_NULL) xp_awk_prnpt (chain->pattern);
 		if (chain->action != XP_NULL) xp_awk_prnpt (chain->action);	
-		xp_printf (XP_TEXT("\n"));
+		xp_printf (XP_T("\n"));
 		chain = chain->next;	
 	}
 
 	if (awk->tree.end != XP_NULL) 
 	{
-		xp_printf (XP_TEXT("END "));
+		xp_printf (XP_T("END "));
 		xp_awk_prnpt (awk->tree.end);
 	}
 }
@@ -356,7 +356,7 @@ int xp_awk_parse (xp_awk_t* awk)
 	}
 
 	awk->tree.nglobals = xp_awk_tab_getsize(&awk->parse.globals);
-xp_printf (XP_TEXT("-----------------------------\n"));
+xp_printf (XP_T("-----------------------------\n"));
 __dump (awk);
 
 	return 0;
@@ -422,7 +422,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		{
 			/* { print $0; } */
 			/* TODO: XXXX */
-			xp_printf (XP_TEXT("BLOCKLESS NOT IMPLEMENTED....\n"));
+			xp_printf (XP_T("BLOCKLESS NOT IMPLEMENTED....\n"));
 			PANIC (awk, XP_AWK_EINTERNAL);
 		}	
 	}
@@ -2562,7 +2562,7 @@ static int __get_token (xp_awk_t* awk)
 	{
 		if (__get_number(awk) == -1) return -1;
 	}
-	else if (xp_isalpha(c) || c == XP_CHAR('_')) 
+	else if (xp_isalpha(c) || c == XP_T('_')) 
 	{
 		/* identifier */
 		do 
@@ -2570,11 +2570,11 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR_TO (awk, c);
 		} 
-		while (xp_isalpha(c) || c == XP_CHAR('_') || xp_isdigit(c));
+		while (xp_isalpha(c) || c == XP_T('_') || xp_isdigit(c));
 
 		SET_TOKEN_TYPE (awk, __classify_ident(awk,XP_STR_BUF(&awk->token.name)));
 	}
-	else if (c == XP_CHAR('\"')) 
+	else if (c == XP_T('\"')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_STR);
 
@@ -2589,187 +2589,187 @@ static int __get_token (xp_awk_t* awk)
 			while (n == 1);
 
 			c = awk->lex.curc;
-			if (c != XP_CHAR('\"')) break;
+			if (c != XP_T('\"')) break;
 
 			if (__get_string(awk) == -1) return -1;
 		}
 	}
-	else if (c == XP_CHAR('=')) 
+	else if (c == XP_T('=')) 
 	{
 		GET_CHAR_TO (awk, c);
-		if (c == XP_CHAR('=')) 
+		if (c == XP_T('=')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_EQ);
-			ADD_TOKEN_STR (awk, XP_TEXT("=="));
+			ADD_TOKEN_STR (awk, XP_T("=="));
 			GET_CHAR_TO (awk, c);
 		}
 		else 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_ASSIGN);
-			ADD_TOKEN_STR (awk, XP_TEXT("="));
+			ADD_TOKEN_STR (awk, XP_T("="));
 		}
 	}
-	else if (c == XP_CHAR('!')) 
+	else if (c == XP_T('!')) 
 	{
 		GET_CHAR_TO (awk, c);
-		if (c == XP_CHAR('=')) 
+		if (c == XP_T('=')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_NE);
-			ADD_TOKEN_STR (awk, XP_TEXT("!="));
+			ADD_TOKEN_STR (awk, XP_T("!="));
 			GET_CHAR_TO (awk, c);
 		}
-		else if (c == XP_CHAR('~'))
+		else if (c == XP_T('~'))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_NM);
-			ADD_TOKEN_STR (awk, XP_TEXT("!~"));
+			ADD_TOKEN_STR (awk, XP_T("!~"));
 			GET_CHAR_TO (awk, c);
 		}
 		else 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_NOT);
-			ADD_TOKEN_STR (awk, XP_TEXT("!"));
+			ADD_TOKEN_STR (awk, XP_T("!"));
 		}
 	}
-	else if (c == XP_CHAR('>')) 
+	else if (c == XP_T('>')) 
 	{
 		GET_CHAR_TO (awk, c);
-		if ((awk->opt.parse & XP_AWK_SHIFT) && c == XP_CHAR('>')) 
+		if ((awk->opt.parse & XP_AWK_SHIFT) && c == XP_T('>')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_RSHIFT);
-			ADD_TOKEN_STR (awk, XP_TEXT(">>"));
+			ADD_TOKEN_STR (awk, XP_T(">>"));
 			GET_CHAR_TO (awk, c);
 		}
-		else if (c == XP_CHAR('=')) 
+		else if (c == XP_T('=')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_GE);
-			ADD_TOKEN_STR (awk, XP_TEXT(">="));
+			ADD_TOKEN_STR (awk, XP_T(">="));
 			GET_CHAR_TO (awk, c);
 		}
 		else 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_GT);
-			ADD_TOKEN_STR (awk, XP_TEXT(">"));
+			ADD_TOKEN_STR (awk, XP_T(">"));
 		}
 	}
-	else if (c == XP_CHAR('<')) 
+	else if (c == XP_T('<')) 
 	{
 		GET_CHAR_TO (awk, c);
-		if ((awk->opt.parse & XP_AWK_SHIFT) && c == XP_CHAR('<')) 
+		if ((awk->opt.parse & XP_AWK_SHIFT) && c == XP_T('<')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LSHIFT);
-			ADD_TOKEN_STR (awk, XP_TEXT("<<"));
+			ADD_TOKEN_STR (awk, XP_T("<<"));
 			GET_CHAR_TO (awk, c);
 		}
-		else if (c == XP_CHAR('=')) 
+		else if (c == XP_T('=')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LE);
-			ADD_TOKEN_STR (awk, XP_TEXT("<="));
+			ADD_TOKEN_STR (awk, XP_T("<="));
 			GET_CHAR_TO (awk, c);
 		}
 		else 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LT);
-			ADD_TOKEN_STR (awk, XP_TEXT("<"));
+			ADD_TOKEN_STR (awk, XP_T("<"));
 		}
 	}
-	else if (c == XP_CHAR('|'))
+	else if (c == XP_T('|'))
 	{
 		GET_CHAR_TO (awk, c);
-		if (c == XP_CHAR('|'))
+		if (c == XP_T('|'))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LOR);
-			ADD_TOKEN_STR (awk, XP_TEXT("||"));
+			ADD_TOKEN_STR (awk, XP_T("||"));
 			GET_CHAR_TO (awk, c);
 		}
 		else
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_BOR);
-			ADD_TOKEN_STR (awk, XP_TEXT("|"));
+			ADD_TOKEN_STR (awk, XP_T("|"));
 		}
 	}
-	else if (c == XP_CHAR('&'))
+	else if (c == XP_T('&'))
 	{
 		GET_CHAR_TO (awk, c);
-		if (c == XP_CHAR('&'))
+		if (c == XP_T('&'))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LAND);
-			ADD_TOKEN_STR (awk, XP_TEXT("&&"));
+			ADD_TOKEN_STR (awk, XP_T("&&"));
 			GET_CHAR_TO (awk, c);
 		}
 		else
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_BAND);
-			ADD_TOKEN_STR (awk, XP_TEXT("&"));
+			ADD_TOKEN_STR (awk, XP_T("&"));
 		}
 	}
-	else if (c == XP_CHAR('~'))
+	else if (c == XP_T('~'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_TILDE);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR('^'))
+	else if (c == XP_T('^'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_BXOR);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR('+')) 
+	else if (c == XP_T('+')) 
 	{
 		GET_CHAR_TO (awk, c);
-		if (c == XP_CHAR('+')) 
+		if (c == XP_T('+')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_PLUSPLUS);
-			ADD_TOKEN_STR (awk, XP_TEXT("++"));
+			ADD_TOKEN_STR (awk, XP_T("++"));
 			GET_CHAR_TO (awk, c);
 		}
-		else if (c == XP_CHAR('=')) 
+		else if (c == XP_T('=')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_PLUS_ASSIGN);
-			ADD_TOKEN_STR (awk, XP_TEXT("+="));
+			ADD_TOKEN_STR (awk, XP_T("+="));
 			GET_CHAR_TO (awk, c);
 		}
 		else 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_PLUS);
-			ADD_TOKEN_STR (awk, XP_TEXT("+"));
+			ADD_TOKEN_STR (awk, XP_T("+"));
 		}
 	}
-	else if (c == XP_CHAR('-')) 
+	else if (c == XP_T('-')) 
 	{
 		GET_CHAR_TO (awk, c);
-		if (c == XP_CHAR('-')) 
+		if (c == XP_T('-')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_MINUSMINUS);
-			ADD_TOKEN_STR (awk, XP_TEXT("--"));
+			ADD_TOKEN_STR (awk, XP_T("--"));
 			GET_CHAR_TO (awk, c);
 		}
-		else if (c == XP_CHAR('=')) 
+		else if (c == XP_T('=')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_MINUS_ASSIGN);
-			ADD_TOKEN_STR (awk, XP_TEXT("-="));
+			ADD_TOKEN_STR (awk, XP_T("-="));
 			GET_CHAR_TO (awk, c);
 		}
 		else 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_MINUS);
-			ADD_TOKEN_STR (awk, XP_TEXT("-"));
+			ADD_TOKEN_STR (awk, XP_T("-"));
 		}
 	}
-	else if (c == XP_CHAR('*')) 
+	else if (c == XP_T('*')) 
 	{
 		GET_CHAR_TO (awk, c);
 
-		if (c == XP_CHAR('='))
+		if (c == XP_T('='))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_MUL_ASSIGN);
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR_TO (awk, c);
 		}
-		else if (c == XP_CHAR('*'))
+		else if (c == XP_T('*'))
 		{
 			GET_CHAR_TO (awk, c);
-			if (c == XP_CHAR('='))
+			if (c == XP_T('='))
 			{
 				SET_TOKEN_TYPE (awk, TOKEN_EXP_ASSIGN);
 				ADD_TOKEN_CHAR (awk, c);
@@ -2787,11 +2787,11 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 		}
 	}
-	else if (c == XP_CHAR('/')) 
+	else if (c == XP_T('/')) 
 	{
 		GET_CHAR_TO (awk, c);
 
-		if (c == XP_CHAR('='))
+		if (c == XP_T('='))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_DIV_ASSIGN);
 			ADD_TOKEN_CHAR (awk, c);
@@ -2803,11 +2803,11 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 		}
 	}
-	else if (c == XP_CHAR('%')) 
+	else if (c == XP_T('%')) 
 	{
 		GET_CHAR_TO (awk, c);
 
-		if (c == XP_CHAR('='))
+		if (c == XP_T('='))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_MOD_ASSIGN);
 			ADD_TOKEN_CHAR (awk, c);
@@ -2819,73 +2819,73 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 		}
 	}
-	else if (c == XP_CHAR('(')) 
+	else if (c == XP_T('(')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_LPAREN);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR(')')) 
+	else if (c == XP_T(')')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_RPAREN);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR('{')) 
+	else if (c == XP_T('{')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_LBRACE);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR('}')) 
+	else if (c == XP_T('}')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_RBRACE);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR('[')) 
+	else if (c == XP_T('[')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_LBRACK);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR(']')) 
+	else if (c == XP_T(']')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_RBRACK);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR('$')) 
+	else if (c == XP_T('$')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_DOLLAR);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR(',')) 
+	else if (c == XP_T(',')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_COMMA);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR('.'))
+	else if (c == XP_T('.'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_PERIOD);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR(';')) 
+	else if (c == XP_T(';')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_SEMICOLON);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR(':'))
+	else if (c == XP_T(':'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_COLON);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_CHAR('?'))
+	else if (c == XP_T('?'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_QUEST);
 		ADD_TOKEN_CHAR (awk, c);
@@ -2897,7 +2897,7 @@ static int __get_token (xp_awk_t* awk)
 		return -1;
 	}
 
-xp_printf (XP_TEXT("token -> [%s]\n"), XP_STR_BUF(&awk->token.name));
+xp_printf (XP_T("token -> [%s]\n"), XP_STR_BUF(&awk->token.name));
 	return 0;
 }
 
@@ -2910,12 +2910,12 @@ static int __get_number (xp_awk_t* awk)
 
 	c = awk->lex.curc;
 
-	if (c == XP_CHAR('0'))
+	if (c == XP_T('0'))
 	{
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 
-		if (c == XP_CHAR('x') || c == XP_CHAR('X'))
+		if (c == XP_T('x') || c == XP_T('X'))
 		{
 			/* hexadecimal number */
 			do 
@@ -2927,7 +2927,7 @@ static int __get_number (xp_awk_t* awk)
 
 			return 0;
 		}
-		else if (c == XP_CHAR('b') || c == XP_CHAR('B'))
+		else if (c == XP_T('b') || c == XP_T('B'))
 		{
 			/* binary number */
 			do
@@ -2935,14 +2935,14 @@ static int __get_number (xp_awk_t* awk)
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
 			} 
-			while (c == XP_CHAR('0') || c == XP_CHAR('1'));
+			while (c == XP_T('0') || c == XP_T('1'));
 
 			return 0;
 		}
 		else if (c != '.')
 		{
 			/* octal number */
-			while (c >= XP_CHAR('0') && c <= XP_CHAR('7'))
+			while (c >= XP_T('0') && c <= XP_T('7'))
 			{
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
@@ -2958,7 +2958,7 @@ static int __get_number (xp_awk_t* awk)
 		GET_CHAR_TO (awk, c);
 	} 
 
-	if (c == XP_CHAR('.'))
+	if (c == XP_T('.'))
 	{
 		/* floating-point number */
 		SET_TOKEN_TYPE (awk, TOKEN_REAL);
@@ -2973,14 +2973,14 @@ static int __get_number (xp_awk_t* awk)
 		}
 	}
 
-	if (c == XP_CHAR('E') || c == XP_CHAR('e'))
+	if (c == XP_T('E') || c == XP_T('e'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_REAL);
 
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 
-		if (c == XP_CHAR('+') || c == XP_CHAR('-'))
+		if (c == XP_T('+') || c == XP_T('-'))
 		{
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR_TO (awk, c);
@@ -3010,13 +3010,13 @@ static int __get_string (xp_awk_t* awk)
 			return -1;
 		}
 
-		if (escaped == xp_false && c == XP_CHAR('\"'))
+		if (escaped == xp_false && c == XP_T('\"'))
 		{
 			GET_CHAR_TO (awk, c);
 			break;
 		}
 
-		if (escaped == xp_false && c == XP_CHAR('\\'))
+		if (escaped == xp_false && c == XP_T('\\'))
 		{
 			GET_CHAR_TO (awk, c);
 			escaped = xp_true;
@@ -3025,9 +3025,9 @@ static int __get_string (xp_awk_t* awk)
 
 		if (escaped == xp_true)
 		{
-			if (c == XP_CHAR('n')) c = XP_CHAR('\n');
-			else if (c == XP_CHAR('r')) c = XP_CHAR('\r');
-			else if (c == XP_CHAR('t')) c = XP_CHAR('\t');
+			if (c == XP_T('n')) c = XP_T('\n');
+			else if (c == XP_T('r')) c = XP_T('\r');
+			else if (c == XP_T('t')) c = XP_T('\t');
 			/* TODO: more escape characters */
 			escaped = xp_false;
 		}
@@ -3056,13 +3056,13 @@ static int __get_regex (xp_awk_t* awk)
 			return -1;
 		}
 
-		if (escaped == xp_false && c == XP_CHAR('/'))
+		if (escaped == xp_false && c == XP_T('/'))
 		{
 			GET_CHAR_TO (awk, c);
 			break;
 		}
 
-		if (escaped == xp_false && c == XP_CHAR('\\'))
+		if (escaped == xp_false && c == XP_T('\\'))
 		{
 			GET_CHAR_TO (awk, c);
 			escaped = xp_true;
@@ -3071,9 +3071,9 @@ static int __get_regex (xp_awk_t* awk)
 
 		if (escaped == xp_true)
 		{
-			if (c == XP_CHAR('n')) c = XP_CHAR('\n');
-			else if (c == XP_CHAR('r')) c = XP_CHAR('\r');
-			else if (c == XP_CHAR('t')) c = XP_CHAR('\t');
+			if (c == XP_T('n')) c = XP_T('\n');
+			else if (c == XP_T('r')) c = XP_T('\r');
+			else if (c == XP_T('t')) c = XP_T('\t');
 			/* TODO: more escape characters */
 			escaped = xp_false;
 		}
@@ -3130,7 +3130,7 @@ static int __skip_comment (xp_awk_t* awk)
 {
 	xp_cint_t c = awk->lex.curc;
 
-	if ((awk->opt.parse & XP_AWK_HASHSIGN) && c == XP_CHAR('#'))
+	if ((awk->opt.parse & XP_AWK_HASHSIGN) && c == XP_T('#'))
 	{
 		do 
 		{ 
@@ -3142,10 +3142,10 @@ static int __skip_comment (xp_awk_t* awk)
 		return 1; /* comment by # */
 	}
 
-	if (c != XP_CHAR('/')) return 0; /* not a comment */
+	if (c != XP_T('/')) return 0; /* not a comment */
 	GET_CHAR_TO (awk, c);
 
-	if ((awk->opt.parse & XP_AWK_DBLSLASHES) && c == XP_CHAR('/')) 
+	if ((awk->opt.parse & XP_AWK_DBLSLASHES) && c == XP_T('/')) 
 	{
 		do 
 		{ 
@@ -3156,15 +3156,15 @@ static int __skip_comment (xp_awk_t* awk)
 		GET_CHAR (awk);
 		return 1; /* comment by // */
 	}
-	else if (c == XP_CHAR('*')) 
+	else if (c == XP_T('*')) 
 	{
 		do 
 		{
 			GET_CHAR_TO (awk, c);
-			if (c == XP_CHAR('*')) 
+			if (c == XP_T('*')) 
 			{
 				GET_CHAR_TO (awk, c);
-				if (c == XP_CHAR('/')) 
+				if (c == XP_T('/')) 
 				{
 					GET_CHAR_TO (awk, c);
 					break;
@@ -3177,7 +3177,7 @@ static int __skip_comment (xp_awk_t* awk)
 	}
 
 	if (__unget_char(awk,c) == -1) return -1; /* error */
-	awk->lex.curc = XP_CHAR('/');
+	awk->lex.curc = XP_T('/');
 
 	return 0;
 }

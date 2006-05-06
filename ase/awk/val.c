@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.28 2006-04-30 17:10:30 bacon Exp $
+ * $Id: val.c,v 1.29 2006-05-06 12:52:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -144,9 +144,9 @@ xp_awk_val_t* xp_awk_makerexval (const xp_char_t* str, xp_size_t len)
 static void __free_map_val (void* run, void* v)
 {
 /*
-xp_printf (XP_TEXT("refdown in map free..."));
+xp_printf (XP_T("refdown in map free..."));
 xp_awk_printval (v);
-xp_printf (XP_TEXT("\n"));
+xp_printf (XP_T("\n"));
 */
 	xp_awk_refdownval (run, v);
 }
@@ -182,9 +182,9 @@ void xp_awk_freeval (xp_awk_run_t* run, xp_awk_val_t* val, xp_bool_t cache)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
-xp_printf (XP_TEXT("freeing [cache=%d] ... "), cache);
+xp_printf (XP_T("freeing [cache=%d] ... "), cache);
 xp_awk_printval (val);
-xp_printf (XP_TEXT("\n"));
+xp_printf (XP_T("\n"));
 	switch (val->type)
 	{
 	case XP_AWK_VAL_NIL:
@@ -235,9 +235,9 @@ void xp_awk_refupval (xp_awk_val_t* val)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 /*
-xp_printf (XP_TEXT("ref up "));
+xp_printf (XP_T("ref up "));
 xp_awk_printval (val);
-xp_printf (XP_TEXT("\n"));
+xp_printf (XP_T("\n"));
 */
 	val->ref++;
 }
@@ -247,10 +247,10 @@ void xp_awk_refdownval (xp_awk_run_t* run, xp_awk_val_t* val)
 	if (xp_awk_isbuiltinval(val)) return;
 
 /*
-xp_printf (XP_TEXT("%p, %p, %p\n"), xp_awk_val_nil, &__awk_nil, val);
-xp_printf (XP_TEXT("ref down [count=>%d]\n"), (int)val->ref);
+xp_printf (XP_T("%p, %p, %p\n"), xp_awk_val_nil, &__awk_nil, val);
+xp_printf (XP_T("ref down [count=>%d]\n"), (int)val->ref);
 xp_awk_printval (val);
-xp_printf (XP_TEXT("\n"));
+xp_printf (XP_T("\n"));
 */
 
 	xp_assert (val->ref > 0);
@@ -258,9 +258,9 @@ xp_printf (XP_TEXT("\n"));
 	if (val->ref <= 0) 
 	{
 /*
-xp_printf (XP_TEXT("**FREEING "));
+xp_printf (XP_T("**FREEING "));
 xp_awk_printval (val);
-xp_printf (XP_TEXT("\n"));
+xp_printf (XP_T("\n"));
 */
 		xp_awk_freeval(run, val, xp_true);
 	}
@@ -323,9 +323,9 @@ xp_bool_t xp_awk_boolval (xp_awk_val_t* val)
 
 static int __print_pair (xp_awk_pair_t* pair, void* arg)
 {
-	xp_printf (XP_TEXT(" %s=>"), pair->key);	
+	xp_printf (XP_T(" %s=>"), pair->key);	
 	xp_awk_printval (pair->val);
-	xp_printf (XP_TEXT(" "));
+	xp_printf (XP_T(" "));
 	return 0;
 }
 
@@ -335,46 +335,46 @@ void xp_awk_printval (xp_awk_val_t* val)
 	switch (val->type)
 	{
 	case XP_AWK_VAL_NIL:
-		xp_printf (XP_TEXT("nil"));
+		xp_printf (XP_T("nil"));
 	       	break;
 
 	case XP_AWK_VAL_INT:
 #if defined(__LCC__)
-		xp_printf (XP_TEXT("%lld"), 
+		xp_printf (XP_T("%lld"), 
 			(long long)((xp_awk_val_int_t*)val)->val);
 #elif defined(__BORLANDC__) || defined(_MSC_VER)
-		xp_printf (XP_TEXT("%I64d"), 
+		xp_printf (XP_T("%I64d"), 
 			(__int64)((xp_awk_nde_int_t*)val)->val);
 #elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-		xp_printf (XP_TEXT("%ld"), 
+		xp_printf (XP_T("%ld"), 
 			(long)((xp_awk_val_int_t*)val)->val);
 #else
-		xp_printf (XP_TEXT("%lld"), 
+		xp_printf (XP_T("%lld"), 
 			(long long)((xp_awk_val_int_t*)val)->val);
 #endif
 		break;
 
 	case XP_AWK_VAL_REAL:
-		xp_printf (XP_TEXT("%Lf"), 
+		xp_printf (XP_T("%Lf"), 
 			(long double)((xp_awk_val_real_t*)val)->val);
 		break;
 
 	case XP_AWK_VAL_STR:
-		xp_printf (XP_TEXT("%s"), ((xp_awk_val_str_t*)val)->buf);
+		xp_printf (XP_T("%s"), ((xp_awk_val_str_t*)val)->buf);
 		break;
 
 	case XP_AWK_VAL_REX:
-		xp_printf (XP_TEXT("REX[%s]"), ((xp_awk_val_rex_t*)val)->buf);
+		xp_printf (XP_T("REX[%s]"), ((xp_awk_val_rex_t*)val)->buf);
 		break;
 
 	case XP_AWK_VAL_MAP:
-		xp_printf (XP_TEXT("MAP["));
+		xp_printf (XP_T("MAP["));
 		xp_awk_map_walk (((xp_awk_val_map_t*)val)->map, __print_pair, XP_NULL);
-		xp_printf (XP_TEXT("]"));
+		xp_printf (XP_T("]"));
 		break;
 
 	default:
 		xp_assert (!"should never happen - invalid value type");
-		xp_printf (XP_TEXT("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
+		xp_printf (XP_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }

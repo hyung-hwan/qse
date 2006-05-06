@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.20 2006-05-04 15:59:43 bacon Exp $
+ * $Id: sa.c,v 1.21 2006-05-06 12:52:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -11,7 +11,7 @@ static xp_char_t* __adjust_format (const xp_char_t* format);
 xp_size_t xp_strlen (const xp_char_t* str)
 {
 	const xp_char_t* p = str;
-	while (*p != XP_CHAR('\0')) p++;
+	while (*p != XP_T('\0')) p++;
 	return p - str;
 }
 
@@ -56,7 +56,7 @@ xp_char_t* xp_strxdup2 (
 xp_size_t xp_strcpy (xp_char_t* buf, const xp_char_t* str)
 {
 	xp_char_t* org = buf;
-	while ((*buf++ = *str++) != XP_CHAR('\0'));
+	while ((*buf++ = *str++) != XP_T('\0'));
 	return buf - org - 1;
 }
 
@@ -64,13 +64,13 @@ xp_size_t xp_strncpy (xp_char_t* buf, const xp_char_t* str, xp_size_t len)
 {
 	const xp_char_t* end = str + len;
 	while (str < end) *buf++ = *str++;
-	*buf = XP_CHAR('\0');
+	*buf = XP_T('\0');
 	return len;
 }
 
 int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2)
 {
-	while (*s1 == *s2 && *s2 != XP_CHAR('\0')) s1++, s2++;
+	while (*s1 == *s2 && *s2 != XP_T('\0')) s1++, s2++;
 	if (*s1 > *s2) return 1;
 	else if (*s1 < *s2) return -1;
 	return 0;
@@ -165,7 +165,7 @@ xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa)
 
 	str->size = 0;
 	str->capa  = capa;
-	str->buf[0] = XP_CHAR('\0');
+	str->buf[0] = XP_T('\0');
 
 	return str;
 }
@@ -191,7 +191,7 @@ static xp_size_t __strncpy (xp_char_t* buf, const xp_char_t* str, xp_size_t len)
 {
 	const xp_char_t* end = str + len;
 	while (str < end) *buf++ = *str++;
-	*buf = XP_CHAR('\0');
+	*buf = XP_T('\0');
 	return len;
 }
 
@@ -216,7 +216,7 @@ xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len)
 	}
 
 	str->size += __strncpy (&str->buf[str->size], s, len);
-	str->buf[str->size] = XP_CHAR('\0');
+	str->buf[str->size] = XP_T('\0');
 	return str->size;
 }
 
@@ -242,7 +242,7 @@ xp_size_t xp_str_nccat (xp_str_t* str, xp_char_t c, xp_size_t len)
 void xp_str_clear (xp_str_t* str)
 {
 	str->size = 0;
-	str->buf[0] = XP_CHAR('\0');
+	str->buf[0] = XP_T('\0');
 }
 
 
@@ -268,15 +268,15 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 
 	if (xp_str_open (&str, 256) == XP_NULL) return XP_NULL;
 
-	while (*fp != XP_CHAR('\0')) 
+	while (*fp != XP_T('\0')) 
 	{
-		while (*fp != XP_CHAR('\0') && *fp != XP_CHAR('%')) 
+		while (*fp != XP_T('\0') && *fp != XP_T('%')) 
 		{
 			ADDC (str, *fp++);
 		}
 
-		if (*fp == XP_CHAR('\0')) break;
-		xp_assert (*fp == XP_CHAR('%'));
+		if (*fp == XP_T('\0')) break;
+		xp_assert (*fp == XP_T('%'));
 
 		ch = *fp++;	
 		ADDC (str, ch); /* add % */
@@ -286,12 +286,12 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		/* flags */
 		for (;;) 
 		{
-			if (ch == XP_CHAR(' ') || ch == XP_CHAR('+') ||
-			    ch == XP_CHAR('-') || ch == XP_CHAR('#')) 
+			if (ch == XP_T(' ') || ch == XP_T('+') ||
+			    ch == XP_T('-') || ch == XP_T('#')) 
 			{
 				ADDC (str, ch);
 			}
-			else if (ch == XP_CHAR('0')) 
+			else if (ch == XP_T('0')) 
 			{
 				ADDC (str, ch);
 				ch = *fp++; 
@@ -303,7 +303,7 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		}
 
 		/* check the width */
-		if (ch == XP_CHAR('*')) ADDC (str, ch);
+		if (ch == XP_T('*')) ADDC (str, ch);
 		else 
 		{
 			while (xp_isdigit(ch)) 
@@ -314,12 +314,12 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		}
 
 		/* precision */
-		if (ch == XP_CHAR('.')) 
+		if (ch == XP_T('.')) 
 		{
 			ADDC (str, ch);
 			ch = *fp++;
 
-			if (ch == XP_CHAR('*')) ADDC (str, ch);
+			if (ch == XP_T('*')) ADDC (str, ch);
 			else 
 			{
 				while (xp_isdigit(ch)) 
@@ -333,8 +333,8 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		/* modifier */
 		for (modifier = 0;;) 
 		{
-			if (ch == XP_CHAR('h')) modifier = MOD_SHORT;
-			else if (ch == XP_CHAR('l')) 
+			if (ch == XP_T('h')) modifier = MOD_SHORT;
+			else if (ch == XP_T('l')) 
 			{
 				modifier = (modifier == MOD_LONG)? MOD_LONGLONG: MOD_LONG;
 			}
@@ -344,15 +344,15 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 
 
 		/* type */
-		if (ch == XP_CHAR('%')) ADDC (str, ch);
-		else if (ch == XP_CHAR('c') || ch == XP_CHAR('s')) 
+		if (ch == XP_T('%')) ADDC (str, ch);
+		else if (ch == XP_T('c') || ch == XP_T('s')) 
 		{
 #if !defined(XP_CHAR_IS_MCHAR) && !defined(_WIN32)
 			ADDC (str, 'l');
 #endif
 			ADDC (str, ch);
 		}
-		else if (ch == XP_CHAR('C') || ch == XP_CHAR('S')) 
+		else if (ch == XP_T('C') || ch == XP_T('S')) 
 		{
 #ifdef _WIN32
 			ADDC (str, ch);
@@ -363,9 +363,9 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 			ADDC (str, xp_tolower(ch));
 #endif
 		}
-		else if (ch == XP_CHAR('d') || ch == XP_CHAR('i') || 
-		         ch == XP_CHAR('o') || ch == XP_CHAR('u') || 
-		         ch == XP_CHAR('x') || ch == XP_CHAR('X')) 
+		else if (ch == XP_T('d') || ch == XP_T('i') || 
+		         ch == XP_T('o') || ch == XP_T('u') || 
+		         ch == XP_T('x') || ch == XP_T('X')) 
 		{
 			if (modifier == MOD_SHORT) 
 			{
@@ -388,7 +388,7 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 			}
 			ADDC (str, ch);
 		}
-		else if (ch == XP_CHAR('\0')) break;
+		else if (ch == XP_T('\0')) break;
 		else ADDC (str, ch);
 	}
 
