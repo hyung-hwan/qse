@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([xpkit], [deb-0.1.0])
-AC_REVISION([$Revision: 1.64 $])
+AC_REVISION([$Revision: 1.65 $])
 AC_CONFIG_HEADER([xp/config.h])
 
 # Checks for programs.
@@ -76,6 +76,7 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
 AC_CHECK_SIZEOF(pid_t)
+AC_CHECK_SIZEOF(wchar_t)
 
 AC_DEFINE_UNQUOTED(XP_SIZEOF_CHAR,${ac_cv_sizeof_char})
 AC_DEFINE_UNQUOTED(XP_SIZEOF_SHORT,${ac_cv_sizeof_short})
@@ -93,6 +94,7 @@ AC_DEFINE_UNQUOTED(XP_SIZEOF_FLOAT,${ac_cv_sizeof_float})
 AC_DEFINE_UNQUOTED(XP_SIZEOF_DOUBLE,${ac_cv_sizeof_double})
 AC_DEFINE_UNQUOTED(XP_SIZEOF_LONG_DOUBLE,${ac_cv_sizeof_long_double})
 AC_DEFINE_UNQUOTED(XP_SIZEOF_PID_T,${ac_cv_sizeof_pid_t})
+AC_DEFINE_UNQUOTED(XP_SIZEOF_WCHAR_T,${ac_cv_sizeof_wchar_t})
 
 #AC_CHECK_FUNC(nanosleep,[AC_DEFINE([XP_HAVE_NANOSLEEP])],
 #	[AC_CHECK_LIB(rt,nanosleep, LIBS="${LIBS} -lrt", 	 

@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h,v 1.2 2006-04-30 17:35:37 bacon Exp $
+ * $Id: conf_msw.h,v 1.3 2006-05-06 16:05:12 bacon Exp $
  */
 
 /*
@@ -47,3 +47,4 @@ _M_X64 x64 platform
 #define XP_SIZEOF_FLOAT 4
 #define XP_SIZEOF_DOUBLE 8
 #define XP_SIZEOF_LONG_DOUBLE 16
+#define XP_SIZEOF_WCHAR_T 2
