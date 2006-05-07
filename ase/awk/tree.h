@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.40 2006-04-29 12:09:29 bacon Exp $
+ * $Id: tree.h,v 1.41 2006-05-07 17:45:08 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -278,6 +278,7 @@ extern "C" {
 #endif
 
 void xp_awk_prnpt (xp_awk_nde_t* tree);
+void xp_awk_prnptnpt (xp_awk_nde_t* tree);
 void xp_awk_clrpt (xp_awk_nde_t* tree);
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.101 2006-05-06 12:52:36 bacon Exp $
+ * $Id: parse.c,v 1.102 2006-05-07 17:45:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -107,7 +107,7 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 static xp_awk_nde_t* __parse_function (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_begin (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_end (xp_awk_t* awk);
-static xp_awk_nde_t* __parse_patternless (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_ptnblock (xp_awk_t* awk, xp_awk_nde_t* ptn);
 
 static xp_awk_nde_t* __parse_action (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
@@ -315,8 +315,17 @@ static void __dump (xp_awk_t* awk)
 	chain = awk->tree.chain;
 	while (chain != XP_NULL) 
 	{
-		if (chain->pattern != XP_NULL) xp_awk_prnpt (chain->pattern);
-		if (chain->action != XP_NULL) xp_awk_prnpt (chain->action);	
+		if (chain->pattern != XP_NULL) 
+		{
+			/*xp_awk_prnpt (chain->pattern);*/
+			xp_awk_prnptnpt (chain->pattern);
+		}
+
+		if (chain->action != XP_NULL) 
+		{
+			xp_awk_prnpt (chain->action);	
+		}
+
 		xp_printf (XP_T("\n"));
 		chain = chain->next;	
 	}
@@ -398,11 +407,11 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_LBRACE))
 	{
-		if (__parse_patternless(awk) == XP_NULL) return XP_NULL;
+		/* pattern less block */
+		if (__parse_ptnblock(awk,XP_NULL) == XP_NULL) return XP_NULL;
 	}
 	else
 	{
-		/* TODO: process patterns and expressions */
 		/* 
 		expressions 
 		/regular expression/
@@ -412,17 +421,43 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		(pattern)
 		pattern, pattern
 		*/
+		xp_awk_nde_t* ptn;
 
-		if (__parse_expression (awk) == XP_NULL) return XP_NULL;
+		ptn = __parse_expression (awk);
+		if (ptn == XP_NULL) return XP_NULL;
+
+		xp_assert (ptn->next == XP_NULL);
+
+		if (MATCH(awk,TOKEN_COMMA))
+		{
+			if (__get_token(awk) == -1) 
+			{
+				xp_awk_clrpt (ptn);
+				return XP_NULL;
+			}	
+
+			ptn->next = __parse_expression (awk);
+			if (ptn->next == XP_NULL) 
+			{
+				xp_awk_clrpt (ptn);
+				return XP_NULL;
+			}
+		}
+
 		if (MATCH(awk,TOKEN_LBRACE))
 		{
-			if (__parse_patternless(awk) == XP_NULL) return XP_NULL;	
+			if (__parse_ptnblock (awk,ptn) == XP_NULL) 
+			{
+				xp_awk_clrpt (ptn);
+				return XP_NULL;	
+			}
 		}
 		else
 		{
-			/* { print $0; } */
-			/* TODO: XXXX */
-			xp_printf (XP_T("BLOCKLESS NOT IMPLEMENTED....\n"));
+			/* pattern without a block */
+			/* TODO: ...  pattern { print $0; }*/
+			xp_awk_clrpt (ptn);
+			xp_printf (XP_T("BLOCKLESS NOT IMPLEMENTED\n"));
 			PANIC (awk, XP_AWK_EINTERNAL);
 		}	
 	}
@@ -672,7 +707,7 @@ static xp_awk_nde_t* __parse_end (xp_awk_t* awk)
 	return nde;
 }
 
-static xp_awk_nde_t* __parse_patternless (xp_awk_t* awk)
+static xp_awk_nde_t* __parse_ptnblock (xp_awk_t* awk, xp_awk_nde_t* ptn)
 {
 	xp_awk_nde_t* nde;
 	xp_awk_chain_t* chain;
@@ -687,7 +722,7 @@ static xp_awk_nde_t* __parse_patternless (xp_awk_t* awk)
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	chain->pattern = XP_NULL;
+	chain->pattern = ptn;
 	chain->action = nde;
 	chain->next = XP_NULL;
 
@@ -2897,7 +2932,7 @@ static int __get_token (xp_awk_t* awk)
 		return -1;
 	}
 
-xp_printf (XP_T("token -> [%s]\n"), XP_STR_BUF(&awk->token.name));
+/*xp_printf (XP_T("token -> [%s]\n"), XP_STR_BUF(&awk->token.name));*/
 	return 0;
 }
 
