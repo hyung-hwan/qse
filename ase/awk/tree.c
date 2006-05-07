@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.47 2006-05-06 12:52:36 bacon Exp $
+ * $Id: tree.c,v 1.48 2006-05-07 17:45:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -99,46 +99,35 @@ static int __print_expression (xp_awk_nde_t* nde)
 
 	case XP_AWK_NDE_ASS:
 		if (__print_expression (((xp_awk_nde_ass_t*)nde)->left) == -1) return -1;
-		xp_printf (XP_T(" %s "), 
-			__assop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		xp_printf (XP_T(" %s "), __assop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
 		if (__print_expression (((xp_awk_nde_ass_t*)nde)->right) == -1) return -1;
 		xp_assert ((((xp_awk_nde_ass_t*)nde)->right)->next == XP_NULL);
 		break;
 
 	case XP_AWK_NDE_EXP_BIN:
 		xp_printf (XP_T("("));
-		if (__print_expression(((xp_awk_nde_exp_t*)nde)->left) == -1)
-			return -1;
+		if (__print_expression(((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
 		xp_assert ((((xp_awk_nde_exp_t*)nde)->left)->next == XP_NULL);
-		xp_printf (XP_T(" %s "), 
-			__binop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS) 
-			xp_printf (XP_T("("));
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->right) == -1)
-			return -1;
-		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS)
-			xp_printf (XP_T(")"));
-		xp_assert ((((xp_awk_nde_exp_t*)nde)->right)->next == XP_NULL);
-		xp_printf (XP_T(")"));
+		xp_printf (XP_T(" %s "), __binop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS) xp_printf (XP_T("("));
+		if (__print_expression (((xp_awk_nde_exp_t*)nde)->right) == -1) return -1;
+		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS) xp_printf (XP_T(")"));
+		xp_assert ((((xp_awk_nde_exp_t*)nde)->right)->next == XP_NULL); xp_printf (XP_T(")"));
 		break;
 
 	case XP_AWK_NDE_EXP_UNR:
 		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
 
-		xp_printf (XP_T("%s("), 
-			__unrop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1)
-			return -1;
+		xp_printf (XP_T("%s("), __unrop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
 		xp_printf (XP_T(")"));
 		break;
 
 	case XP_AWK_NDE_EXP_INCPRE:
 		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
 
-		xp_printf (XP_T("%s("), 
-			__incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1)
-			return -1;
+		xp_printf (XP_T("%s("), __incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
 		xp_printf (XP_T(")"));
 		break;
 
@@ -146,23 +135,18 @@ static int __print_expression (xp_awk_nde_t* nde)
 		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
 
 		xp_printf (XP_T("("));
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1)
-			return -1;
-		xp_printf (XP_T(")%s"), 
-			__incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
+		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
+		xp_printf (XP_T(")%s"), __incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
 		break;
 
 	case XP_AWK_NDE_CND:
 		xp_printf (XP_T("("));
-		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->test) == -1)
-			return -1;
+		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->test) == -1) return -1;
 		xp_printf (XP_T(")?"));
 
-		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->left) == -1)
-			return -1;
+		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->left) == -1) return -1;
 		xp_printf (XP_T(":"));
-		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->right) == -1)
-			return -1;
+		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->right) == -1) return -1;
 		break;
 
 	case XP_AWK_NDE_INT:
@@ -528,6 +512,20 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 void xp_awk_prnpt (xp_awk_nde_t* tree)
 {
 	__print_statements (tree, 0);
+}
+
+void xp_awk_prnptnpt (xp_awk_nde_t* tree)
+{
+	xp_awk_nde_t* nde = tree;
+
+	while (nde != XP_NULL)
+	{
+		__print_expression (tree);
+		if (nde->next == XP_NULL) break;
+
+		xp_printf (XP_T(","));
+		nde = nde->next;
+	}
 }
 
 void xp_awk_clrpt (xp_awk_nde_t* tree)

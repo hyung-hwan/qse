@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.86 2006-05-06 12:52:36 bacon Exp $
+ * $Id: run.c,v 1.87 2006-05-07 17:45:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -603,6 +603,11 @@ static int __run_if_statement (xp_awk_run_t* run, xp_awk_nde_if_t* nde)
 	xp_awk_val_t* test;
 	int n = 0;
 
+	/* the test expression for the if statement cannot have 
+	 * chained expressions. this should not be allowed by the
+	 * parser first of all */
+	xp_assert (nde->test->next == XP_NULL);
+
 	test = __eval_expression (run, nde->test);
 	if (test == XP_NULL) return -1;
 
@@ -626,6 +631,10 @@ static int __run_while_statement (xp_awk_run_t* run, xp_awk_nde_while_t* nde)
 
 	if (nde->type == XP_AWK_NDE_WHILE)
 	{
+		/* no chained expressions are allowed for the test 
+		 * expression of the while statement */
+		xp_assert (nde->test->next == XP_NULL);
+
 		/* TODO: handle run-time abortion... */
 		while (1)
 		{
@@ -664,6 +673,10 @@ static int __run_while_statement (xp_awk_run_t* run, xp_awk_nde_while_t* nde)
 	}
 	else if (nde->type == XP_AWK_NDE_DOWHILE)
 	{
+		/* no chained expressions are allowed for the test 
+		 * expression of the while statement */
+		xp_assert (nde->test->next == XP_NULL);
+
 		/* TODO: handle run-time abortion... */
 		do
 		{
@@ -705,6 +718,7 @@ static int __run_for_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde)
 
 	if (nde->init != XP_NULL)
 	{
+		xp_assert (nde->init->next == XP_NULL);
 		val = __eval_expression(run,nde->init);
 		if (val == XP_NULL) return -1;
 
@@ -717,6 +731,10 @@ static int __run_for_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde)
 		if (nde->test != XP_NULL)
 		{
 			xp_awk_val_t* test;
+
+			/* no chained expressions for the test expression of
+			 * the for statement are allowed */
+			xp_assert (nde->test->next == XP_NULL);
 
 			test = __eval_expression (run, nde->test);
 			if (test == XP_NULL) return -1;
@@ -759,6 +777,7 @@ static int __run_for_statement (xp_awk_run_t* run, xp_awk_nde_for_t* nde)
 
 		if (nde->incr != XP_NULL)
 		{
+			xp_assert (nde->incr->next == XP_NULL);
 			val = __eval_expression(run,nde->incr);
 			if (val == XP_NULL) return -1;
 
@@ -814,6 +833,10 @@ static int __run_foreach_statement (xp_awk_run_t* run, xp_awk_nde_foreach_t* nde
 	xp_assert (test->type == XP_AWK_NDE_EXP_BIN && 
 	           test->opcode == XP_AWK_BINOP_IN);
 
+	/* chained expressions should not be allowed 
+	 * by the parser first of all */
+	xp_assert (test->right->next == XP_NULL); 
+
 	rv = __eval_expression (run, test->right);
 	if (rv == XP_NULL) return -1;
 
@@ -852,6 +875,11 @@ static int __run_return_statement (xp_awk_run_t* run, xp_awk_nde_return_t* nde)
 	if (nde->val != XP_NULL)
 	{
 		xp_awk_val_t* val;
+
+		/* chained expressions should not be allowed 
+		 * by the parser first of all */
+		xp_assert (nde->val->next == XP_NULL); 
+
 /*xp_printf (XP_T("returning....\n"));*/
 		val = __eval_expression(run, nde->val);
 		if (val == XP_NULL) return -1;
@@ -872,6 +900,10 @@ static int __run_exit_statement (xp_awk_run_t* run, xp_awk_nde_exit_t* nde)
 	if (nde->val != XP_NULL)
 	{
 		xp_awk_val_t* val;
+
+		/* chained expressions should not be allowed 
+		 * by the parser first of all */
+		xp_assert (nde->val->next == XP_NULL); 
 
 		val = __eval_expression(run, nde->val);
 		if (val == XP_NULL) return -1;
@@ -951,6 +983,7 @@ static xp_awk_val_t* __eval_assignment (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	xp_assert (ass->left != XP_NULL && ass->right != XP_NULL);
 
+	xp_assert (ass->right->next == XP_NULL);
 	val = __eval_expression(run, ass->right);
 	if (val == XP_NULL) return XP_NULL;
 
@@ -960,6 +993,7 @@ static xp_awk_val_t* __eval_assignment (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	{
 		xp_awk_val_t* val2, * tmp;
 
+		xp_assert (ass->left->next == XP_NULL);
 		val2 = __eval_expression (run, ass->left);
 		if (val2 == XP_NULL)
 		{
@@ -1234,11 +1268,13 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	}
 	else
 	{
+		xp_assert (exp->left->next == XP_NULL);
 		left = __eval_expression (run, exp->left);
 		if (left == XP_NULL) return XP_NULL;
 
 		xp_awk_refupval (left);
 
+		xp_assert (exp->right->next == XP_NULL);
 		right = __eval_expression (run, exp->right);
 		if (right == XP_NULL) 
 		{
@@ -1277,6 +1313,7 @@ static xp_awk_val_t* __eval_binop_lor (
 	/* short-circuit evaluation required special treatment */
 	xp_awk_val_t* lv, * rv, * res;
 
+	xp_assert (left->next == XP_NULL);
 	lv = __eval_expression (run, left);
 	if (lv == XP_NULL) return XP_NULL;
 
@@ -1287,6 +1324,7 @@ static xp_awk_val_t* __eval_binop_lor (
 	}
 	else
 	{
+		xp_assert (right->next == XP_NULL);
 		rv = __eval_expression (run, right);
 		if (rv == XP_NULL)
 		{
@@ -1319,6 +1357,7 @@ static xp_awk_val_t* __eval_binop_land (
 	/* short-circuit evaluation required special treatment */
 	xp_awk_val_t* lv, * rv, * res;
 
+	xp_assert (left->next == XP_NULL);
 	lv = __eval_expression (run, left);
 	if (lv == XP_NULL) return XP_NULL;
 
@@ -1329,6 +1368,7 @@ static xp_awk_val_t* __eval_binop_land (
 	}
 	else
 	{
+		xp_assert (right->next == XP_NULL);
 		rv = __eval_expression (run, right);
 		if (rv == XP_NULL)
 		{
@@ -1368,6 +1408,7 @@ static xp_awk_val_t* __eval_binop_in (
 	if (str == XP_NULL) return XP_NULL;
 
 	/* evaluate the right-hand side of the operator */
+	xp_assert (right->next == XP_NULL);
 	rv = __eval_expression (run, right);
 	if (rv == XP_NULL) 
 	{
@@ -2033,7 +2074,7 @@ static xp_awk_val_t* __eval_binop_nm (
 {
 	xp_awk_val_t* res;
 
-/* TODO: ... */
+/* TODO: implement nm operator... */
 	if (left->type == XP_AWK_VAL_REX &&
 	    right->type == XP_AWK_VAL_STR)
 	{
@@ -2061,6 +2102,7 @@ static xp_awk_val_t* __eval_unary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_assert (exp->type == XP_AWK_NDE_EXP_UNR);
 	xp_assert (exp->left != XP_NULL && exp->right == XP_NULL);
 
+	xp_assert (exp->left->next == XP_NULL);
 	left = __eval_expression (run, exp->left);
 	if (left == XP_NULL) return XP_NULL;
 
@@ -2167,6 +2209,7 @@ static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		PANIC (run, XP_AWK_EOPERAND);
 	}
 
+	xp_assert (exp->left->next == XP_NULL);
 	left = __eval_expression (run, exp->left);
 	if (left == XP_NULL) return XP_NULL;
 
@@ -2252,6 +2295,7 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		PANIC (run, XP_AWK_EOPERAND);
 	}
 
+	xp_assert (exp->left->next == XP_NULL);
 	left = __eval_expression (run, exp->left);
 	if (left == XP_NULL) return XP_NULL;
 
@@ -2347,11 +2391,14 @@ static xp_awk_val_t* __eval_cnd (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_val_t* tv, * v;
 	xp_awk_nde_cnd_t* cnd = (xp_awk_nde_cnd_t*)nde;
 
+	xp_assert (cnd->test->next == XP_NULL);
 	tv = __eval_expression (run, cnd->test);
 	if (tv == XP_NULL) return XP_NULL;
 
 	xp_awk_refupval (tv);
 
+	xp_assert (cnd->left->next == XP_NULL &&
+	           cnd->right->next == XP_NULL);
 	v = (xp_awk_boolval(tv))?
 		__eval_expression (run, cnd->left):
 		__eval_expression (run, cnd->right);
@@ -2936,7 +2983,6 @@ static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	if (nde->next == XP_NULL)
 	{
 		/* single node index */
-
 		idx = __eval_expression (run, nde);
 		if (idx == XP_NULL) return XP_NULL;
 
