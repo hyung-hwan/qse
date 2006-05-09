@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.48 2006-05-07 17:45:08 bacon Exp $
+ * $Id: tree.c,v 1.49 2006-05-09 15:58:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -520,7 +520,7 @@ void xp_awk_prnptnpt (xp_awk_nde_t* tree)
 
 	while (nde != XP_NULL)
 	{
-		__print_expression (tree);
+		__print_expression (nde);
 		if (nde->next == XP_NULL) break;
 
 		xp_printf (XP_T(","));
