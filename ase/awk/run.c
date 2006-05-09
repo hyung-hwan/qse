@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.89 2006-05-09 15:21:26 bacon Exp $
+ * $Id: run.c,v 1.90 2006-05-09 15:58:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -466,7 +466,6 @@ xp_printf (XP_T("**** line [%s]\n"), XP_STR_BUF(&run->input.line));
 		/* for each block { run it }
 		 * TODO: handle according if next and nextfile has been called 
 		 */
-/* TODO */
 		if (__run_pattern_block_chain (run, run->tree->chain) == -1)
 		{
 			/* don't care about the result of input close */
