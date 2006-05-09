@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.87 2006-05-07 17:45:08 bacon Exp $
+ * $Id: run.c,v 1.88 2006-05-09 03:00:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -459,12 +459,15 @@ static int __run_pattern_blocks  (xp_awk_run_t* run)
 		if (x == 0) break; /* end of input */
 
 		/*
+xp_printf (XP_T("**** line [%s]\n"), XP_STR_BUF(&run->input.line));
 		 * TODO: execute pattern blocks.
 		 */
 		/* for each block { run it }
-		 * handle according if next and nextfile has been called 
+		 * TODO: handle according if next and nextfile has been called 
 		 */
-		xp_printf (XP_T("**** line [%s]\n"), XP_STR_BUF(&run->input.line));
+/* TODO */
+		if (__run_block (run, 
+			(xp_awk_nde_blk_t*)run->tree->begin) == -1) n = -1;
 	}
 
 	n = run->txtio (XP_AWK_INPUT_CLOSE, run->txtio_arg, XP_NULL, 0);
