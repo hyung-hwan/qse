@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.88 2006-05-09 03:00:25 bacon Exp $
+ * $Id: run.c,v 1.89 2006-05-09 15:21:26 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -41,6 +41,7 @@ static void __close_run (xp_awk_run_t* run);
 
 static int __run_main (xp_awk_run_t* run);
 static int __run_pattern_blocks  (xp_awk_run_t* run);
+static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain);
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static int __run_if_statement (xp_awk_run_t* run, xp_awk_nde_if_t* nde);
@@ -428,7 +429,7 @@ xp_printf (XP_T("-[END VARIABLES]--------------------------\n"));
 	return n;
 }
 
-static int __run_pattern_blocks  (xp_awk_run_t* run)
+static int __run_pattern_blocks (xp_awk_run_t* run)
 {
 	xp_ssize_t n;
 
@@ -445,6 +446,7 @@ static int __run_pattern_blocks  (xp_awk_run_t* run)
 	       run->exit_level != EXIT_ABORT)
 	{
 		int x;
+
 		run->exit_level = EXIT_NONE;
 
 		x = __read_text_input(run);
@@ -460,18 +462,73 @@ static int __run_pattern_blocks  (xp_awk_run_t* run)
 
 		/*
 xp_printf (XP_T("**** line [%s]\n"), XP_STR_BUF(&run->input.line));
-		 * TODO: execute pattern blocks.
 		 */
 		/* for each block { run it }
 		 * TODO: handle according if next and nextfile has been called 
 		 */
 /* TODO */
-		if (__run_block (run, 
-			(xp_awk_nde_blk_t*)run->tree->begin) == -1) n = -1;
+		if (__run_pattern_block_chain (run, run->tree->chain) == -1)
+		{
+			/* don't care about the result of input close */
+			run->txtio (XP_AWK_INPUT_CLOSE, 
+				run->txtio_arg, XP_NULL, 0);
+			return -1;
+		}
 	}
 
 	n = run->txtio (XP_AWK_INPUT_CLOSE, run->txtio_arg, XP_NULL, 0);
 	if (n == -1) PANIC_I (run, XP_AWK_ETXTINCLOSE);
+
+	return 0;
+}
+
+static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
+{
+	xp_awk_nde_t* ptn;
+
+	while (chain != XP_NULL)
+	{
+		ptn = chain->pattern;
+
+		if (ptn == XP_NULL)
+		{
+			/* just execute the block */
+			if (__run_block (run, (xp_awk_nde_blk_t*)chain->action) == -1) return -1;
+		}
+		else
+		{
+			xp_awk_val_t* v1;
+			
+			v1 = __eval_expression (run, ptn);
+			if (v1 == XP_NULL) return -1;
+
+			xp_awk_refupval (v1);
+
+			if (ptn->next == XP_NULL)
+			{
+				if (xp_awk_boolval(v1))
+				{
+					if (__run_block (run, (xp_awk_nde_blk_t*)chain->action) == -1) 
+					{
+						xp_awk_refdownval (run, v1);
+						return -1;
+					}
+				}
+
+				xp_awk_refdownval (run, v1);
+			}
+			else
+			{
+				xp_assert (ptn->next->next == XP_NULL);
+				/* TODO: implement this */
+				xp_awk_refdownval (run, v1);
+				xp_printf (XP_TEXT("ERROR: pattern, pattern NOT OMPLEMENTED\n"));
+				PANIC_I (run, XP_AWK_EINTERNAL);
+			}
+		}
+
+		chain = chain->next;
+	}
 
 	return 0;
 }
