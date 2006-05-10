@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.47 2006-04-24 15:34:52 bacon Exp $ 
+ * $Id: awk.c,v 1.48 2006-05-10 16:02:38 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -75,6 +75,8 @@ xp_awk_t* xp_awk_open (void)
 
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
+	awk->lex.buf_pos = 0;
+	awk->lex.buf_len = 0;
 
 	return awk;
 }
@@ -165,6 +167,8 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
 	awk->srcio_arg = arg;
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
+	awk->lex.buf_pos = 0;
+	awk->lex.buf_len = 0;
 	return 0;
 }
 
@@ -185,6 +189,8 @@ int xp_awk_detsrc (xp_awk_t* awk)
 		awk->srcio_arg = XP_NULL;
 		awk->lex.curc = XP_CHAR_EOF;
 		awk->lex.ungotc_count = 0;
+		awk->lex.buf_pos = 0;
+		awk->lex.buf_len = 0;
 	}
 
 	return 0;
