@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.9 2006-05-10 16:02:39 bacon Exp $
+ * $Id: awk_i.h,v 1.10 2006-05-11 18:15:34 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -151,7 +151,6 @@ struct xp_awk_run_t
 	int errnum;
 	xp_awk_tree_t* tree;
 	xp_size_t nglobals;
-
 };
 
 #endif
