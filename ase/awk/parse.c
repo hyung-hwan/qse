@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.103 2006-05-10 16:02:39 bacon Exp $
+ * $Id: parse.c,v 1.104 2006-05-11 17:32:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -339,15 +339,14 @@ static void __dump (xp_awk_t* awk)
 
 int xp_awk_parse (xp_awk_t* awk)
 {
-
 	if (awk->srcio == XP_NULL)
 	{
+		/* the source code io handler is not set */
 		awk->errnum = XP_AWK_ENOSRCIO;
 		return -1;
 	}
 
-	/* if you want to parse anew, call xp_awk_clear first.
-	 * otherwise, the result is appened to the accumulated result */
+	xp_awk_clear (awk);
 
 	GET_CHAR (awk);
 	GET_TOKEN (awk);
@@ -358,8 +357,7 @@ int xp_awk_parse (xp_awk_t* awk)
 
 		if (__parse_progunit(awk) == XP_NULL) 
 		{
-/* TODO: cleanup the parse tree created so far....
-         function tables also etc... */
+			xp_awk_clear (awk);
 			return -1;
 		}
 	}
