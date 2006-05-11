@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.48 2006-05-10 16:02:38 bacon Exp $ 
+ * $Id: awk.c,v 1.49 2006-05-11 17:32:37 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -96,7 +96,6 @@ int xp_awk_close (xp_awk_t* awk)
 	xp_free (awk);
 	return 0;
 }
-
 
 /* TODO: write a function to clear awk->parse data structure.
          this would be need either as a separate function or as a part of xp_awk_clear...
