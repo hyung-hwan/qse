@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.29 2006-05-06 16:05:12 bacon Exp $
+ * $Id: awk.c,v 1.30 2006-05-12 09:39:20 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -19,6 +19,15 @@
 	extern int xp_awk_printf (const xp_char_t* fmt, ...); 
 	#define xp_strcmp xp_awk_strcmp
 	extern int xp_awk_strcmp (const xp_char_t* s1, const xp_char_t* s2);
+#endif
+
+#if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
+
+#if defined(__linux) && !defined(NDEBUG)
+#include <mcheck.h>
 #endif
 
 static xp_ssize_t process_source (
@@ -102,22 +111,15 @@ static xp_ssize_t process_data (
 
 }
 
-#ifdef __linux
-#include <mcheck.h>
-#endif
-
 #if defined(__STAND_ALONE) && !defined(_WIN32)
-int main (int argc, char* argv[])
+static int __main (int argc, char* argv[])
 #else
-int xp_main (int argc, xp_char_t* argv[])
+static int __main (int argc, xp_char_t* argv[])
 #endif
 {
 	xp_awk_t* awk;
 	struct data_io data_io = { "awk.in", NULL };
 
-#ifdef __linux
-	mtrace ();
-#endif
 	if ((awk = xp_awk_open()) == XP_NULL) 
 	{
 		xp_printf (XP_T("Error: cannot open awk\n"));
@@ -178,9 +180,28 @@ int xp_main (int argc, xp_char_t* argv[])
 	}
 
 	xp_awk_close (awk);
-
-#ifdef __linux
-	muntrace ();
-#endif
 	return 0;
 }
+
+#if defined(__STAND_ALONE) && !defined(_WIN32)
+int main (int argc, char* argv[])
+#else
+int xp_main (int argc, xp_char_t* argv[])
+#endif
+{
+	int n;
+#if defined(__linux) && !defined(NDEBUG)
+	mtrace ();
+#endif
+
+	n = __main (argc, argv);
+
+#if defined(__linux) && !defined(NDEBUG)
+	muntrace ();
+#endif
+#if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
+	_CrtDumpMemoryLeaks ();
+#endif
+	return n;
+}
+
