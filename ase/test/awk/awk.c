@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.30 2006-05-12 09:39:20 bacon Exp $
+ * $Id: awk.c,v 1.31 2006-05-12 10:56:18 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -108,7 +108,6 @@ static xp_ssize_t process_data (
 	}
 
 	return -1;
-
 }
 
 #if defined(__STAND_ALONE) && !defined(_WIN32)
@@ -193,6 +192,9 @@ int xp_main (int argc, xp_char_t* argv[])
 #if defined(__linux) && !defined(NDEBUG)
 	mtrace ();
 #endif
+/*#if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
+	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
+#endif*/
 
 	n = __main (argc, argv);
 
