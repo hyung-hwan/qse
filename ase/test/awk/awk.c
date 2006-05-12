@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.31 2006-05-12 10:56:18 bacon Exp $
+ * $Id: awk.c,v 1.32 2006-05-12 11:10:26 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -26,7 +26,7 @@
 #include <crtdbg.h>
 #endif
 
-#if defined(__linux) && !defined(NDEBUG)
+#if defined(__linux) && defined(_DEBUG)
 #include <mcheck.h>
 #endif
 
@@ -189,7 +189,7 @@ int xp_main (int argc, xp_char_t* argv[])
 #endif
 {
 	int n;
-#if defined(__linux) && !defined(NDEBUG)
+#if defined(__linux) && defined(_DEBUG)
 	mtrace ();
 #endif
 /*#if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
@@ -198,7 +198,7 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	n = __main (argc, argv);
 
-#if defined(__linux) && !defined(NDEBUG)
+#if defined(__linux) && defined(_DEBUG)
 	muntrace ();
 #endif
 #if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
