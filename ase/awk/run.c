@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.91 2006-05-11 18:15:34 bacon Exp $
+ * $Id: run.c,v 1.92 2006-05-12 07:52:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2373,7 +2373,6 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
 			res = xp_awk_makeintval (run, r);
 			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
-			res = xp_awk_val_nil;
 
 			res2 = xp_awk_makeintval (run, r + 1);
 			if (res2 == XP_NULL)
