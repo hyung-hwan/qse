@@ -17,3 +17,6 @@ EXPORTS
 	xp_awk_parse 
 	xp_awk_run 
 
+	xp_awk_printf
+	xp_awk_strcmp
+

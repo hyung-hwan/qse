@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.104 2006-05-11 17:32:37 bacon Exp $
+ * $Id: parse.c,v 1.105 2006-05-12 09:39:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3121,7 +3121,7 @@ static int __get_regex (xp_awk_t* awk)
 static int __get_char (xp_awk_t* awk)
 {
 	xp_ssize_t n;
-	xp_char_t c;
+	/*xp_char_t c;*/
 
 	if (awk->lex.ungotc_count > 0) 
 	{
