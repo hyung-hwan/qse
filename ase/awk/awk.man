@@ -1,5 +1,5 @@
 
-=== SYNOPSIS ===
+= SYNOPSIS =
 {{{
 #include <xp/awk/awk.h>
 
@@ -24,9 +24,9 @@ int xp_awk_parse (xp_awk_t* awk);
 int xp_awk_run (xp_awk_t* awk);
 }}}
 
-=== DESCRIPTION ===
+= DESCRIPTION =
 
-=== EXAMPLE ===
+= EXAMPLE =
 {{{
 #include <xp/awk/awk.h>
 
