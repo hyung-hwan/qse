@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.32 2006-05-12 11:10:26 bacon Exp $
+ * $Id: awk.c,v 1.33 2006-05-13 15:51:43 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -203,7 +203,10 @@ int xp_main (int argc, xp_char_t* argv[])
 #endif
 #if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
 	_CrtDumpMemoryLeaks ();
+	wprintf (L"Press ENTER to quit\n");
+	getchar ();
 #endif
+
 	return n;
 }
 

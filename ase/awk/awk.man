@@ -1,4 +1,6 @@
-== INTRODUCTION ==
+.title Introduction To XPAWK
+
+== OVERVIEW ==
 
 === What is it? ===
 '''''XPAWK''''' is an embeddable implementation of the AWK programming language. It is composed of a set of C functions to help programmers embed the AWK interpreter to their own applications easily. 
@@ -11,12 +13,12 @@ There exist a number of AWK interpreters available. Most of Unix/Linux operating
 
 == DESCRIPTION ==
 
-=== Engine ===
+=== Interpreter ===
 Multiple instances of interpreters can be created in a single application and each instance of the interpreter created maintains its own state in the data structure pointed at by its handle of the type ''xp_awk_t''.
 
-  1. xp_awk_t - an abstract type to an interpreter object.
-  2. xp_awk_open - creates an interpreter object.
-  3. xp_awk_close - destroys the interprer object created by xp_awk_open.
+ * xp_awk_t - an abstract type to an interpreter object.
+ * xp_awk_open - creates an interpreter object.
+ * xp_awk_close - destroys the interprer object created by xp_awk_open.
 
 {{{
 xp_awk_t* xp_awk_open (void);
@@ -33,10 +35,10 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg);
 === IO Handlers ===
 '''''XPAWK''''' does not provide any built-in IO handling routines. Instead, it requires users to provide them. 4 different IO streams should be provided to take full advantage of the interpreter.
 
-  1. Source code input
-  2. Source code output
-  3. Data input
-  4. Data output
+ * Source code input
+ * Source code output
+ * Data input
+ * Data output
 
 {{{
 enum 
@@ -61,8 +63,9 @@ typedef xp_ssize_t (*xp_awk_io_t) (int cmd, void* arg, xp_char_t* data, xp_size_
 ==== String ====
 
 ==== Conversion ====
-  1. xp_awk_strtolong - convert a numeric string to an integer of the xp_long_t type. 
-  2. xp_awk_strtoreal - convert a numeric string to a decimal number of the xp_real_t type.
+ * xp_awk_strtolong - convert a numeric string to an integer of the xp_long_t type. 
+ * xp_awk_strtoreal - convert a numeric string to a decimal number of the xp_real_t type.
+
 {{{
 xp_long_t xp_awk_strtolong (const xp_char_t* str, int base, const xp_char_t** endptr); 
 xp_real_t xp_awk_strtoreal (const xp_char_t* str); 
@@ -70,10 +73,14 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str);
 
 ==== Regular Expression ====
 The regular expression routines built into the interpreter can replace other regular expression libraries available. By utilizing this, the application can have the identical regular expression functionalities as the embedded AWK interpreter.
+
 {{{
 xp_awk_rex_t* xp_awk_rex_open (xp_awk_rex_t* rex);
 void xp_awk_rex_close (xp_awk_rex_t* rex);
 }}}
+
+=== User-defined Built-in Functions ===
+Custom built-in functions can be added to the interpreter. This requires the deeper look into the internals of the interpreter.
 
 == EXAMPLE ==
 {{{
