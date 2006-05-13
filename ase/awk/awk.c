@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.49 2006-05-11 17:32:37 bacon Exp $ 
+ * $Id: awk.c,v 1.50 2006-05-13 16:33:06 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -18,21 +18,22 @@ xp_awk_t* xp_awk_open (void)
 	awk = (xp_awk_t*) xp_malloc (xp_sizeof(xp_awk_t));
 	if (awk == XP_NULL) return XP_NULL;
 
-	if (xp_str_open(&awk->token.name, 128) == XP_NULL) 
+	if (xp_str_open (&awk->token.name, 128) == XP_NULL) 
 	{
 		xp_free (awk);
 		return XP_NULL;	
 	}
 
 	/* TODO: initial map size?? */
-	if (xp_awk_map_open(&awk->tree.funcs,awk,256,__free_func) == XP_NULL) 
+	if (xp_awk_map_open (
+		&awk->tree.funcs, awk, 256, __free_func) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_free (awk);
 		return XP_NULL;	
 	}
 
-	if (xp_awk_tab_open(&awk->parse.globals) == XP_NULL) 
+	if (xp_awk_tab_open (&awk->parse.globals) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.funcs);
@@ -40,7 +41,7 @@ xp_awk_t* xp_awk_open (void)
 		return XP_NULL;	
 	}
 
-	if (xp_awk_tab_open(&awk->parse.locals) == XP_NULL) 
+	if (xp_awk_tab_open (&awk->parse.locals) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.funcs);
@@ -49,7 +50,7 @@ xp_awk_t* xp_awk_open (void)
 		return XP_NULL;	
 	}
 
-	if (xp_awk_tab_open(&awk->parse.params) == XP_NULL) 
+	if (xp_awk_tab_open (&awk->parse.params) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.funcs);
@@ -73,10 +74,15 @@ xp_awk_t* xp_awk_open (void)
 	awk->tree.chain = XP_NULL;
 	awk->tree.chain_tail = XP_NULL;
 
+	awk->token.line = 1;
+	awk->token.column = 1;
+
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
 	awk->lex.buf_pos = 0;
 	awk->lex.buf_len = 0;
+	awk->lex.line = 1;
+	awk->lex.column = 1;
 
 	return awk;
 }
@@ -168,6 +174,8 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
 	awk->lex.ungotc_count = 0;
 	awk->lex.buf_pos = 0;
 	awk->lex.buf_len = 0;
+	awk->lex.line = 1;
+	awk->lex.column = 1;
 	return 0;
 }
 
@@ -190,6 +198,8 @@ int xp_awk_detsrc (xp_awk_t* awk)
 		awk->lex.ungotc_count = 0;
 		awk->lex.buf_pos = 0;
 		awk->lex.buf_len = 0;
+		awk->lex.line = 1;
+		awk->lex.column = 1;
 	}
 
 	return 0;
@@ -204,4 +214,9 @@ static void __free_func (void* owner, void* func)
 
 	xp_awk_clrpt (f->body);
 	xp_free (f);
+}
+
+xp_size_t xp_awk_getsrcline (xp_awk_t* awk)
+{
+	return awk->token.line;
 }

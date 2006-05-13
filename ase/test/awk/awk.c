@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.33 2006-05-13 15:51:43 bacon Exp $
+ * $Id: awk.c,v 1.34 2006-05-13 16:33:07 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -152,11 +152,13 @@ static int __main (int argc, xp_char_t* argv[])
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
-			XP_T("error: cannot parse program - [%d] %ls\n"), 
+			XP_T("error: cannot parse program - line %u [%d] %ls\n"), 
+			(unsigned int)xp_awk_getsrcline(awk), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
 #else
 		xp_printf (
-			XP_T("error: cannot parse program - [%d] %s\n"), 
+			XP_T("error: cannot parse program - line %u [%d] %s\n"), 
+			(unsigned int)xp_awk_getsrcline(awk), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
 #endif
 		xp_awk_close (awk);
