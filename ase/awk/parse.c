@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.106 2006-05-13 16:33:07 bacon Exp $
+ * $Id: parse.c,v 1.107 2006-06-03 15:56:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -83,6 +83,7 @@ enum
 	TOKEN_RETURN,
 	TOKEN_EXIT,
 	TOKEN_DELETE,
+	TOKEN_GETLINE,
 	TOKEN_NEXT,
 	TOKEN_NEXTFILE,
 
@@ -188,6 +189,7 @@ static struct __kwent __kwtab[] =
 	{ XP_T("return"),   TOKEN_RETURN,   0 },
 	{ XP_T("exit"),     TOKEN_EXIT,     0 },
 	{ XP_T("delete"),   TOKEN_DELETE,   0 },
+	{ XP_T("getline"),  TOKEN_GETLINE,  0 },
 	{ XP_T("next"),     TOKEN_NEXT,     0 },
 	{ XP_T("nextfile"), TOKEN_NEXTFILE, 0 },
 
@@ -1063,6 +1065,11 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
 		nde = __parse_delete(awk);
+	}
+	else if (MATCH(awk,TOKEN_GETLINE))
+	{
+		if (__get_token(awk) == -1) return XP_NULL;
+		nde = __parse_getline(awk);
 	}
 	else if (MATCH(awk,TOKEN_NEXT)) 
 	{
@@ -2547,6 +2554,12 @@ static xp_awk_nde_t* __parse_exit (xp_awk_t* awk)
 }
 
 static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
+{
+/* TODO: implement this... */
+	return XP_NULL;
+}
+
+static xp_awk_nde_t* __parse_getline (xp_awk_t* awk)
 {
 /* TODO: implement this... */
 	return XP_NULL;
