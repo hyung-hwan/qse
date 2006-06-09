@@ -27,6 +27,18 @@ Package=<4>
 
 ###############################################################################
 
+Project: "xpmsw"=.\xp\msw\xpmsw.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "xptestawk"=.\xp\test\awk\xptestawk.dsp - Package Owner=<4>
 
 Package=<5>
