@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.48 2006-05-06 16:16:28 bacon Exp $
+ * $Id: types.h,v 1.49 2006-06-09 06:17:24 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -240,6 +240,10 @@ typedef int  xp_mcint_t;
 	#elif defined(XP_CHAR_IS_WCHAR)
 	typedef xp_wchar_t xp_char_t;
 	typedef xp_wcint_t xp_cint_t;
+	#elif defined(_MBCS)
+	#define XP_CHAR_IS_MCHAR
+	typedef xp_mchar_t xp_char_t;
+	typedef xp_mcint_t xp_cint_t;
 	#else
 	#define XP_CHAR_IS_WCHAR
 	typedef xp_wchar_t xp_char_t;
