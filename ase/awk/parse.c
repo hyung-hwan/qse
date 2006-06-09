@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.108 2006-06-07 14:59:52 bacon Exp $
+ * $Id: parse.c,v 1.109 2006-06-09 05:53:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1428,7 +1428,6 @@ static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 {
-	/*
 	__binmap_t map[] = 
 	{
 		{ TOKEN_BOR, XP_AWK_BINOP_BOR },
@@ -1436,8 +1435,8 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 	};
 
 	return __parse_binary_expr (awk, map, __parse_bitwise_xor);
-	*/
 
+	/*
 	left = __prase_bitwise_xor (awk);
 	if (left == XP_NULL) return XP_NULL;
 
@@ -1462,6 +1461,7 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 	}
 
 	return left;
+	*/
 }
 
 static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
