@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.109 2006-06-09 05:53:43 bacon Exp $
+ * $Id: parse.c,v 1.110 2006-06-11 15:26:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1067,11 +1067,6 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 		if (__get_token(awk) == -1) return XP_NULL;
 		nde = __parse_delete(awk);
 	}
-	else if (MATCH(awk,TOKEN_GETLINE))
-	{
-		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_getline(awk);
-	}
 	else if (MATCH(awk,TOKEN_NEXT)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
@@ -1428,6 +1423,7 @@ static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 {
+/*
 	__binmap_t map[] = 
 	{
 		{ TOKEN_BOR, XP_AWK_BINOP_BOR },
@@ -1435,9 +1431,11 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 	};
 
 	return __parse_binary_expr (awk, map, __parse_bitwise_xor);
+*/
+	xp_awk_nde_exp_t* nde;
+	xp_awk_nde_t* left, * right;
 
-	/*
-	left = __prase_bitwise_xor (awk);
+	left = __parse_bitwise_xor (awk);
 	if (left == XP_NULL) return XP_NULL;
 
 	while (1)
@@ -1452,16 +1450,76 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 
 		if (MATCH(awk,TOKEN_GETLINE))
 		{
-			getline statemetn with pipe....
+			/* piped getline */
+			if (__get_token(awk) == -1)
+			{
+				xp_awk_clrpt (left);
+				return XP_NULL;
+			}
+
+			if (MATCH(awk,TOKEN_IDENT))
+			{
+				/* command | getline var */
+
+				/* TODO */
+
+				if (__get_token(awk) == -1)
+				{
+					xp_awk_clrpt (left);
+					return XP_NULL;
+				}
+			}
+			else
+			{
+				/* TODO */
+
+				/* command | getline */
+				nde = (xp_awk_nde_getline_t*)
+					xp_malloc (xp_sizeof(xp_awk_nde_getline_t));
+				if (nde == XP_NULL)
+				{
+					xp_awk_clrpt (left);
+					PANIC (awk, XP_AWK_ENOMEM);
+				}
+
+				nde->type = XP_AWK_NDE_GETLINE_BIN;
+				nde->next = XP_NULL;
+				nde->cmd = left;
+				nde->var = XP_NULL;
+				nde->file = XP_NULL;
+			}
 		}
 		else
 		{
-			// normal bitwise or expression....
+			right = __parse_bitwise_xor (awk);
+			if (right == XP_NULL)
+			{
+				xp_awk_clrpt (left);
+				return XP_NULL;
+			}
+
+			/* TODO: some constant folding */
+
+			nde = (xp_awk_nde_exp_t*)
+				xp_malloc (xp_sizeof(xp_awk_nde_exp_t));
+			if (nde == XP_NULL)
+			{
+				xp_awk_clrpt (right);
+				xp_awk_clrpt (left);
+				PANIC (awk, XP_AWK_ENOMEM);
+			}
+
+			nde->type = XP_AWK_NDE_EXP_BIN;
+			nde->next = XP_NULL;
+			nde->opcode = XP_AWK_BINOP_BOR;
+			nde->left = left;
+			nde->right = right;
+
+			left = (xp_awk_nde_t*)nde;
 		}
 	}
 
 	return left;
-	*/
 }
 
 static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
@@ -3327,3 +3385,4 @@ static int __is_plain_var (xp_awk_nde_t* nde)
 	       nde->type == XP_AWK_NDE_ARG ||
 	       nde->type == XP_AWK_NDE_NAMED;
 }
+
