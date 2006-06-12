@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.49 2006-05-09 15:58:16 bacon Exp $
+ * $Id: tree.c,v 1.50 2006-06-12 15:11:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -83,7 +83,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 {
 	switch (nde->type) 
 	{
-	case XP_AWK_NDE_GRP:
+		case XP_AWK_NDE_GRP:
 		{	
 			xp_awk_nde_t* p = ((xp_awk_nde_grp_t*)nde)->body;
 
@@ -94,186 +94,275 @@ static int __print_expression (xp_awk_nde_t* nde)
 				p = p->next;
 			}
 			xp_printf (XP_T(")"));
+			break;
 		}
-		break;
 
-	case XP_AWK_NDE_ASS:
-		if (__print_expression (((xp_awk_nde_ass_t*)nde)->left) == -1) return -1;
-		xp_printf (XP_T(" %s "), __assop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		if (__print_expression (((xp_awk_nde_ass_t*)nde)->right) == -1) return -1;
-		xp_assert ((((xp_awk_nde_ass_t*)nde)->right)->next == XP_NULL);
-		break;
-
-	case XP_AWK_NDE_EXP_BIN:
-		xp_printf (XP_T("("));
-		if (__print_expression(((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
-		xp_assert ((((xp_awk_nde_exp_t*)nde)->left)->next == XP_NULL);
-		xp_printf (XP_T(" %s "), __binop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS) xp_printf (XP_T("("));
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->right) == -1) return -1;
-		if (((xp_awk_nde_exp_t*)nde)->right->type == XP_AWK_NDE_ASS) xp_printf (XP_T(")"));
-		xp_assert ((((xp_awk_nde_exp_t*)nde)->right)->next == XP_NULL); xp_printf (XP_T(")"));
-		break;
-
-	case XP_AWK_NDE_EXP_UNR:
-		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
-
-		xp_printf (XP_T("%s("), __unrop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
-		xp_printf (XP_T(")"));
-		break;
-
-	case XP_AWK_NDE_EXP_INCPRE:
-		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
-
-		xp_printf (XP_T("%s("), __incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
-		xp_printf (XP_T(")"));
-		break;
-
-	case XP_AWK_NDE_EXP_INCPST:
-		xp_assert (((xp_awk_nde_exp_t*)nde)->right == XP_NULL);
-
-		xp_printf (XP_T("("));
-		if (__print_expression (((xp_awk_nde_exp_t*)nde)->left) == -1) return -1;
-		xp_printf (XP_T(")%s"), __incop_str[((xp_awk_nde_exp_t*)nde)->opcode]);
-		break;
-
-	case XP_AWK_NDE_CND:
-		xp_printf (XP_T("("));
-		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->test) == -1) return -1;
-		xp_printf (XP_T(")?"));
-
-		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->left) == -1) return -1;
-		xp_printf (XP_T(":"));
-		if (__print_expression(((xp_awk_nde_cnd_t*)nde)->right) == -1) return -1;
-		break;
-
-	case XP_AWK_NDE_INT:
-#if defined(__LCC__)
-		xp_printf (XP_T("%lld"), (long long)((xp_awk_nde_int_t*)nde)->val);
-#elif defined(__BORLANDC__) || defined(_MSC_VER)
-		xp_printf (XP_T("%I64d"), (__int64)((xp_awk_nde_int_t*)nde)->val);
-#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-		xp_printf (XP_T("%ld"), (long)((xp_awk_nde_int_t*)nde)->val);
-#else
-		xp_printf (XP_T("%lld"), (long long)((xp_awk_nde_int_t*)nde)->val);
-#endif
-		break;
-
-	case XP_AWK_NDE_REAL:
-		xp_printf (XP_T("%Lf"), (long double)((xp_awk_nde_real_t*)nde)->val);
-		break;
-
-	case XP_AWK_NDE_STR:
-		/* TODO: buf, len */
-		xp_printf (XP_T("\"%s\""), ((xp_awk_nde_str_t*)nde)->buf);
-		break;
-
-	case XP_AWK_NDE_REX:
-		/* TODO: buf, len */
-		xp_printf (XP_T("/%s/"), ((xp_awk_nde_rex_t*)nde)->buf);
-		break;
-
-	case XP_AWK_NDE_ARG:
-		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1);
-		xp_printf (XP_T("__arg%lu"), 
-			(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
-		xp_assert (((xp_awk_nde_var_t*)nde)->idx == XP_NULL);
-		break;
-
-	case XP_AWK_NDE_ARGIDX:
-		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1);
-		xp_printf (XP_T("__arg%lu["), 
-			(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
-		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
-		__print_expression_list (((xp_awk_nde_var_t*)nde)->idx);
-		xp_printf (XP_T("]"));
-		break;
-
-	case XP_AWK_NDE_NAMED:
-		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa == (xp_size_t)-1);
-		xp_printf (XP_T("%s"), ((xp_awk_nde_var_t*)nde)->id.name);
-		xp_assert (((xp_awk_nde_var_t*)nde)->idx == XP_NULL);
-		break;
-
-	case XP_AWK_NDE_NAMEDIDX:
-		xp_assert (((xp_awk_nde_var_t*)nde)->id.idxa == (xp_size_t)-1);
-		xp_printf (XP_T("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
-		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
-		__print_expression_list (((xp_awk_nde_var_t*)nde)->idx);
-		xp_printf (XP_T("]"));
-		break;
-
-	case XP_AWK_NDE_GLOBAL:
-		if (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1) 
+		case XP_AWK_NDE_ASS:
 		{
-			xp_printf (XP_T("__global%lu"), 
-				(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
-		}
-		else 
-		{
-			xp_printf (XP_T("%s"), ((xp_awk_nde_var_t*)nde)->id.name);
-		}
-		xp_assert (((xp_awk_nde_var_t*)nde)->idx == XP_NULL);
-		break;
+			xp_awk_nde_ass_t* px = (xp_awk_nde_ass_t*)nde;
 
-	case XP_AWK_NDE_GLOBALIDX:
-		if (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1) 
-		{
-			xp_printf (XP_T("__global%lu["), 
-				(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
+			if (__print_expression (px->left) == -1) return -1;
+			xp_printf (XP_T(" %s "), __assop_str[px->opcode]);
+			if (__print_expression (px->right) == -1) return -1;
+			xp_assert (px->right->next == XP_NULL);
+			break;
 		}
-		else 
-		{
-			xp_printf (XP_T("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
-		}
-		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
-		__print_expression_list (((xp_awk_nde_var_t*)nde)->idx);
-		xp_printf (XP_T("]"));
-		break;
 
-	case XP_AWK_NDE_LOCAL:
-		if (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1) 
+		case XP_AWK_NDE_EXP_BIN:
 		{
-			xp_printf (XP_T("__local%lu"), 
-				(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
+			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
+
+			xp_printf (XP_T("("));
+			if (__print_expression(px->left) == -1) return -1;
+			xp_assert (px->left->next == XP_NULL);
+			xp_printf (XP_T(" %s "), __binop_str[px->opcode]);
+			if (px->right->type == XP_AWK_NDE_ASS) xp_printf (XP_T("("));
+			if (__print_expression (px->right) == -1) return -1;
+			if (px->right->type == XP_AWK_NDE_ASS) xp_printf (XP_T(")"));
+			xp_assert (px->right->next == XP_NULL); 
+			xp_printf (XP_T(")"));
+			break;
 		}
-		else 
+
+		case XP_AWK_NDE_EXP_UNR:
 		{
-			xp_printf (XP_T("%s"), ((xp_awk_nde_var_t*)nde)->id.name);
-		}
-		xp_assert (((xp_awk_nde_var_t*)nde)->idx == XP_NULL);
-		break;
+			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
+			xp_assert (px->right == XP_NULL);
 
-	case XP_AWK_NDE_LOCALIDX:
-		if (((xp_awk_nde_var_t*)nde)->id.idxa != (xp_size_t)-1) 
+			xp_printf (XP_T("%s("), __unrop_str[px->opcode]);
+			if (__print_expression (px->left) == -1) return -1;
+			xp_printf (XP_T(")"));
+			break;
+		}
+
+		case XP_AWK_NDE_EXP_INCPRE:
 		{
-			xp_printf (XP_T("__local%lu["), 
-				(unsigned long)((xp_awk_nde_var_t*)nde)->id.idxa);
+			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
+			xp_assert (px->right == XP_NULL);
+
+			xp_printf (XP_T("%s("), __incop_str[px->opcode]);
+			if (__print_expression (px->left) == -1) return -1;
+			xp_printf (XP_T(")"));
+			break;
 		}
-		else 
+
+		case XP_AWK_NDE_EXP_INCPST:
 		{
-			xp_printf (XP_T("%s["), ((xp_awk_nde_var_t*)nde)->id.name);
+			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
+			xp_assert (px->right == XP_NULL);
+
+			xp_printf (XP_T("("));
+			if (__print_expression (px->left) == -1) return -1;
+			xp_printf (XP_T(")%s"), __incop_str[px->opcode]);
+			break;
 		}
-		xp_assert (((xp_awk_nde_var_t*)nde)->idx != XP_NULL);
-		__print_expression_list (((xp_awk_nde_var_t*)nde)->idx);
-		xp_printf (XP_T("]"));
-		break;
 
-	case XP_AWK_NDE_POS:
-		xp_printf (XP_T("$"));
-		__print_expression (((xp_awk_nde_pos_t*)nde)->val);
-		break;
+		case XP_AWK_NDE_CND:
+		{
+			xp_awk_nde_cnd_t* px = (xp_awk_nde_cnd_t*)nde;
 
-	case XP_AWK_NDE_CALL:
-		xp_printf (XP_T("%s ("), ((xp_awk_nde_call_t*)nde)->name);
-		if (__print_expression_list (((xp_awk_nde_call_t*)nde)->args) == -1) return -1;
-		xp_printf (XP_T(")"));
-		break;
+			xp_printf (XP_T("("));
+			if (__print_expression(px->test) == -1) return -1;
+			xp_printf (XP_T(")?"));
 
-	default:
-		return -1;
+			if (__print_expression(px->left) == -1) return -1;
+			xp_printf (XP_T(":"));
+			if (__print_expression(px->right) == -1) return -1;
+			break;
+		}
+
+		case XP_AWK_NDE_INT:
+		{
+		#if defined(__LCC__)
+			xp_printf (XP_T("%lld"), 
+				(long long)((xp_awk_nde_int_t*)nde)->val);
+		#elif defined(__BORLANDC__) || defined(_MSC_VER)
+			xp_printf (XP_T("%I64d"),
+				(__int64)((xp_awk_nde_int_t*)nde)->val);
+		#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
+			xp_printf (XP_T("%ld"),
+				(long)((xp_awk_nde_int_t*)nde)->val);
+		#else
+			xp_printf (XP_T("%lld"),
+				(long long)((xp_awk_nde_int_t*)nde)->val);
+		#endif
+			break;
+		}
+
+		case XP_AWK_NDE_REAL:
+		{
+			xp_printf (XP_T("%Lf"), 
+				(long double)((xp_awk_nde_real_t*)nde)->val);
+			break;
+		}
+
+		case XP_AWK_NDE_STR:
+		{
+			/* TODO: buf, len */
+			xp_printf (XP_T("\"%s\""), ((xp_awk_nde_str_t*)nde)->buf);
+			break;
+		}
+
+		case XP_AWK_NDE_REX:
+		{
+			/* TODO: buf, len */
+			xp_printf (XP_T("/%s/"), ((xp_awk_nde_rex_t*)nde)->buf);
+			break;
+		}
+
+		case XP_AWK_NDE_ARG:
+		{
+			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+			xp_assert (px->id.idxa != (xp_size_t)-1);
+			xp_printf (XP_T("__arg%lu"), (unsigned long)px->id.idxa);
+			xp_assert (px->idx == XP_NULL);
+			break;
+		}
+
+		case XP_AWK_NDE_ARGIDX:
+		{
+			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+			xp_assert (px->id.idxa != (xp_size_t)-1);
+			xp_printf (XP_T("__arg%lu["), (unsigned long)px->id.idxa);
+			xp_assert (px->idx != XP_NULL);
+			__print_expression_list (px->idx);
+			xp_printf (XP_T("]"));
+			break;
+		}
+
+		case XP_AWK_NDE_NAMED:
+		{
+			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+			xp_assert (px->id.idxa == (xp_size_t)-1);
+			xp_printf (XP_T("%s"), px->id.name);
+			xp_assert (px->idx == XP_NULL);
+			break;
+		}
+
+		case XP_AWK_NDE_NAMEDIDX:
+		{
+			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+			xp_assert (px->id.idxa == (xp_size_t)-1);
+			xp_printf (XP_T("%s["), px->id.name);
+			xp_assert (px->idx != XP_NULL);
+			__print_expression_list (px->idx);
+			xp_printf (XP_T("]"));
+			break;
+		}
+
+		case XP_AWK_NDE_GLOBAL:
+		{
+			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+			if (px->id.idxa != (xp_size_t)-1) 
+			{
+				xp_printf (XP_T("__global%lu"), 
+					(unsigned long)px->id.idxa);
+			}
+			else 
+			{
+				xp_printf (XP_T("%s"), px->id.name);
+			}
+			xp_assert (px->idx == XP_NULL);
+			break;
+		}
+
+		case XP_AWK_NDE_GLOBALIDX:
+		{
+			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+			if (px->id.idxa != (xp_size_t)-1) 
+			{
+				xp_printf (XP_T("__global%lu["), 
+					(unsigned long)px->id.idxa);
+			}
+			else 
+			{
+				xp_printf (XP_T("%s["), px->id.name);
+			}
+			xp_assert (px->idx != XP_NULL);
+			__print_expression_list (px->idx);
+			xp_printf (XP_T("]"));
+			break;
+		}
+
+		case XP_AWK_NDE_LOCAL:
+		{
+			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+			if (px->id.idxa != (xp_size_t)-1) 
+			{
+				xp_printf (XP_T("__local%lu"), 
+					(unsigned long)px->id.idxa);
+			}
+			else 
+			{
+				xp_printf (XP_T("%s"), px->id.name);
+			}
+			xp_assert (px->idx == XP_NULL);
+			break;
+		}
+
+		case XP_AWK_NDE_LOCALIDX:
+		{
+			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+			if (px->id.idxa != (xp_size_t)-1) 
+			{
+				xp_printf (XP_T("__local%lu["), 
+					(unsigned long)px->id.idxa);
+			}
+			else 
+			{
+				xp_printf (XP_T("%s["), px->id.name);
+			}
+			xp_assert (px->idx != XP_NULL);
+			__print_expression_list (px->idx);
+			xp_printf (XP_T("]"));
+			break;
+		}
+
+		case XP_AWK_NDE_POS:
+		{
+			xp_printf (XP_T("$"));
+			__print_expression (((xp_awk_nde_pos_t*)nde)->val);
+			break;
+		}
+
+		case XP_AWK_NDE_CALL:
+		{
+			xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)nde;
+			xp_printf (XP_T("%s ("), px->name);
+			if (__print_expression_list (px->args) == -1) return -1;
+			xp_printf (XP_T(")"));
+			break;
+		}
+
+		case XP_AWK_NDE_GETLINE:
+		{
+			  /* TODO */
+			xp_awk_nde_getline_t* px = (xp_awk_nde_getline_t*)nde;
+			if (px->cmd != XP_NULL)
+			{ 
+				__print_expression (px->cmd);
+				xp_printf (XP_TEXT("|"));
+			}
+
+			xp_printf (XP_TEXT("getline"));
+			if (px->var != XP_NULL)
+			{
+				xp_printf (XP_TEXT(" "));
+				__print_expression (px->var);
+			}
+
+			if (px->out != XP_NULL)
+			{
+				xp_printf (XP_TEXT("<"));
+				__print_expression (px->out);
+			}	  
+			break;
+		}
+
+		default:
+		{
+			return -1;
+		}
 	}
 
 	return 0;
@@ -539,164 +628,232 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 
 		switch (p->type) 
 		{
-		case XP_AWK_NDE_NULL:
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_NULL:
+			{
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_BLK:
-			xp_awk_clrpt (((xp_awk_nde_blk_t*)p)->body);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_BLK:
+			{
+				xp_awk_clrpt (((xp_awk_nde_blk_t*)p)->body);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_IF:
-			xp_awk_clrpt (((xp_awk_nde_if_t*)p)->test);
-			xp_awk_clrpt (((xp_awk_nde_if_t*)p)->then_part);
+			case XP_AWK_NDE_IF:
+			{
+				xp_awk_nde_if_t* px = (xp_awk_nde_if_t*)p;
+				xp_awk_clrpt (px->test);
+				xp_awk_clrpt (px->then_part);
 
-			if (((xp_awk_nde_if_t*)p)->else_part != XP_NULL)
-				xp_awk_clrpt (((xp_awk_nde_if_t*)p)->else_part);
-			xp_free (p);
-			break;
+				if (px->else_part != XP_NULL)
+					xp_awk_clrpt (px->else_part);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_WHILE:
-		case XP_AWK_NDE_DOWHILE:
-			xp_awk_clrpt (((xp_awk_nde_while_t*)p)->test);
-			xp_awk_clrpt (((xp_awk_nde_while_t*)p)->body);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_WHILE:
+			case XP_AWK_NDE_DOWHILE:
+			{
+				xp_awk_clrpt (((xp_awk_nde_while_t*)p)->test);
+				xp_awk_clrpt (((xp_awk_nde_while_t*)p)->body);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_FOR:
-			if (((xp_awk_nde_for_t*)p)->init != XP_NULL)
-				xp_awk_clrpt (((xp_awk_nde_for_t*)p)->init);
-			if (((xp_awk_nde_for_t*)p)->test != XP_NULL)
-				xp_awk_clrpt (((xp_awk_nde_for_t*)p)->test);
-			if (((xp_awk_nde_for_t*)p)->incr != XP_NULL)
-				xp_awk_clrpt (((xp_awk_nde_for_t*)p)->incr);
-			xp_awk_clrpt (((xp_awk_nde_for_t*)p)->body);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_FOR:
+			{
+				xp_awk_nde_for_t* px = (xp_awk_nde_for_t*)p;
 
-		case XP_AWK_NDE_FOREACH:
-			xp_awk_clrpt (((xp_awk_nde_foreach_t*)p)->test);
-			xp_awk_clrpt (((xp_awk_nde_foreach_t*)p)->body);
-			xp_free (p);
-			break;
+				if (px->init != XP_NULL)
+					xp_awk_clrpt (px->init);
+				if (px->test != XP_NULL)
+					xp_awk_clrpt (px->test);
+				if (px->incr != XP_NULL)
+					xp_awk_clrpt (px->incr);
+				xp_awk_clrpt (px->body);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_BREAK:
-			xp_free (p);
-			break;
-		case XP_AWK_NDE_CONTINUE:
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_FOREACH:
+			{
+				xp_awk_clrpt (((xp_awk_nde_foreach_t*)p)->test);
+				xp_awk_clrpt (((xp_awk_nde_foreach_t*)p)->body);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_NEXT:
-		case XP_AWK_NDE_NEXTFILE:
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_BREAK:
+			{
+				xp_free (p);
+				break;
+			}
+
+			case XP_AWK_NDE_CONTINUE:
+			{
+				xp_free (p);
+				break;
+			}
+
+			case XP_AWK_NDE_NEXT:
+			case XP_AWK_NDE_NEXTFILE:
+			{
+				xp_free (p);
+				break;
+			}
 		
-		case XP_AWK_NDE_RETURN:
-			if (((xp_awk_nde_return_t*)p)->val != XP_NULL) 
-				xp_awk_clrpt (((xp_awk_nde_return_t*)p)->val);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_RETURN:
+			{
+				xp_awk_nde_return_t* px =
+					(xp_awk_nde_return_t*)p;
+				if (px->val != XP_NULL) xp_awk_clrpt (px->val);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_EXIT:
-			if (((xp_awk_nde_exit_t*)p)->val != XP_NULL) 
-				xp_awk_clrpt (((xp_awk_nde_exit_t*)p)->val);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_EXIT:
+			{
+				if (((xp_awk_nde_exit_t*)p)->val != XP_NULL) 
+					xp_awk_clrpt (((xp_awk_nde_exit_t*)p)->val);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_GRP:
-			xp_awk_clrpt (((xp_awk_nde_grp_t*)p)->body);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_GRP:
+			{
+				xp_awk_clrpt (((xp_awk_nde_grp_t*)p)->body);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_ASS:
-			xp_awk_clrpt (((xp_awk_nde_ass_t*)p)->left);
-			xp_awk_clrpt (((xp_awk_nde_ass_t*)p)->right);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_ASS:
+			{
+				xp_awk_clrpt (((xp_awk_nde_ass_t*)p)->left);
+				xp_awk_clrpt (((xp_awk_nde_ass_t*)p)->right);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_EXP_BIN:
-			xp_assert ((((xp_awk_nde_exp_t*)p)->left)->next == XP_NULL);
-			xp_assert ((((xp_awk_nde_exp_t*)p)->right)->next == XP_NULL);
+			case XP_AWK_NDE_EXP_BIN:
+			{
+				xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)p;
+				xp_assert (px->left->next == XP_NULL);
+				xp_assert (px->right->next == XP_NULL);
 
-			xp_awk_clrpt (((xp_awk_nde_exp_t*)p)->left);
-			xp_awk_clrpt (((xp_awk_nde_exp_t*)p)->right);
-			xp_free (p);
-			break;
+				xp_awk_clrpt (px->left);
+				xp_awk_clrpt (px->right);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_EXP_UNR:
-		case XP_AWK_NDE_EXP_INCPRE:
-		case XP_AWK_NDE_EXP_INCPST:
-			xp_assert (((xp_awk_nde_exp_t*)p)->right == XP_NULL);
-			xp_awk_clrpt (((xp_awk_nde_exp_t*)p)->left);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_EXP_UNR:
+			case XP_AWK_NDE_EXP_INCPRE:
+			case XP_AWK_NDE_EXP_INCPST:
+			{
+				xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)p;
+				xp_assert (px->right == XP_NULL);
+				xp_awk_clrpt (px->left);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_CND:
-			xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->test);
-			xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->left);
-			xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->right);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_CND:
+			{
+				xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->test);
+				xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->left);
+				xp_awk_clrpt (((xp_awk_nde_cnd_t*)p)->right);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_INT:
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_INT:
+			{
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_REAL:
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_REAL:
+			{
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_STR:
-			xp_free (((xp_awk_nde_str_t*)p)->buf);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_STR:
+			{
+				xp_free (((xp_awk_nde_str_t*)p)->buf);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_REX:
-			xp_free (((xp_awk_nde_rex_t*)p)->buf);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_REX:
+			{
+				xp_free (((xp_awk_nde_rex_t*)p)->buf);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_NAMED:
-			xp_assert (((xp_awk_nde_var_t*)p)->id.name != XP_NULL);
-		case XP_AWK_NDE_GLOBAL:
-		case XP_AWK_NDE_LOCAL:
-		case XP_AWK_NDE_ARG:
-			xp_assert (((xp_awk_nde_var_t*)p)->idx == XP_NULL);
-			if (((xp_awk_nde_var_t*)p)->id.name != XP_NULL)
-				xp_free (((xp_awk_nde_var_t*)p)->id.name);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_NAMED:
+			case XP_AWK_NDE_GLOBAL:
+			case XP_AWK_NDE_LOCAL:
+			case XP_AWK_NDE_ARG:
+			{
+				xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)p;
+				xp_assert (px->idx == XP_NULL);
+				if (px->id.name != XP_NULL)
+					xp_free (px->id.name);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_NAMEDIDX:
-			xp_assert (((xp_awk_nde_var_t*)p)->id.name != XP_NULL);
-		case XP_AWK_NDE_GLOBALIDX:
-		case XP_AWK_NDE_LOCALIDX:
-		case XP_AWK_NDE_ARGIDX:
-			xp_assert (((xp_awk_nde_var_t*)p)->idx != XP_NULL);
-			xp_awk_clrpt (((xp_awk_nde_var_t*)p)->idx);
-			if (((xp_awk_nde_var_t*)p)->id.name != XP_NULL)
-				xp_free (((xp_awk_nde_var_t*)p)->id.name);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_NAMEDIDX:
+			case XP_AWK_NDE_GLOBALIDX:
+			case XP_AWK_NDE_LOCALIDX:
+			case XP_AWK_NDE_ARGIDX:
+			{
+				xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)p;
+				xp_assert (px->idx != XP_NULL);
+				xp_awk_clrpt (px->idx);
+				if (px->id.name != XP_NULL)
+					xp_free (px->id.name);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_POS:
-			xp_assert (((xp_awk_nde_pos_t*)p)->val != XP_NULL);
-			xp_awk_clrpt (((xp_awk_nde_pos_t*)p)->val);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_POS:
+			{
+				xp_awk_clrpt (((xp_awk_nde_pos_t*)p)->val);
+				xp_free (p);
+				break;
+			}
 
-		case XP_AWK_NDE_CALL:
-			xp_free (((xp_awk_nde_call_t*)p)->name);
-			xp_awk_clrpt (((xp_awk_nde_call_t*)p)->args);
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_CALL:
+			{
+				xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)p;
+				xp_free (px->name);
+				xp_awk_clrpt (px->args);
+				xp_free (p);
+				break;
+			}
 
-		default:
-			xp_assert (!"should never happen - invalid node type");
-			xp_free (p);
-			break;
+			case XP_AWK_NDE_GETLINE:
+			{
+				xp_awk_nde_getline_t* px = 
+					(xp_awk_nde_getline_t*)p;
+				if (px->var != XP_NULL) xp_awk_clrpt (px->var);
+				if (px->cmd != XP_NULL) xp_awk_clrpt (px->cmd);
+				if (px->out != XP_NULL) xp_awk_clrpt (px->out);
+				xp_free (p);
+				break;
+			}
+
+			default:
+			{
+				xp_assert (!"should never happen - invalid node type");
+				xp_free (p);
+				break;
+			}
 		}
 
 		p = next;

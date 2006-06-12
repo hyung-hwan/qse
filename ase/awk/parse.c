@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.110 2006-06-11 15:26:12 bacon Exp $
+ * $Id: parse.c,v 1.111 2006-06-12 15:11:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1432,7 +1432,6 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 
 	return __parse_binary_expr (awk, map, __parse_bitwise_xor);
 */
-	xp_awk_nde_exp_t* nde;
 	xp_awk_nde_t* left, * right;
 
 	left = __parse_bitwise_xor (awk);
@@ -1450,6 +1449,9 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 
 		if (MATCH(awk,TOKEN_GETLINE))
 		{
+			xp_awk_nde_getline_t* nde;
+			xp_awk_nde_t* var = XP_NULL;
+
 			/* piped getline */
 			if (__get_token(awk) == -1)
 			{
@@ -1457,40 +1459,40 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 				return XP_NULL;
 			}
 
+			/* TODO: is this correct? */
+
 			if (MATCH(awk,TOKEN_IDENT))
 			{
 				/* command | getline var */
 
-				/* TODO */
-
-				if (__get_token(awk) == -1)
+				var = __parse_primary (awk);
+				if (var == XP_NULL) 
 				{
 					xp_awk_clrpt (left);
 					return XP_NULL;
 				}
 			}
-			else
+
+			nde = (xp_awk_nde_getline_t*)
+				xp_malloc (xp_sizeof(xp_awk_nde_getline_t));
+			if (nde == XP_NULL)
 			{
-				/* TODO */
-
-				/* command | getline */
-				nde = (xp_awk_nde_getline_t*)
-					xp_malloc (xp_sizeof(xp_awk_nde_getline_t));
-				if (nde == XP_NULL)
-				{
-					xp_awk_clrpt (left);
-					PANIC (awk, XP_AWK_ENOMEM);
-				}
-
-				nde->type = XP_AWK_NDE_GETLINE_BIN;
-				nde->next = XP_NULL;
-				nde->cmd = left;
-				nde->var = XP_NULL;
-				nde->file = XP_NULL;
+				xp_awk_clrpt (left);
+				PANIC (awk, XP_AWK_ENOMEM);
 			}
+
+			nde->type = XP_AWK_NDE_GETLINE;
+			nde->next = XP_NULL;
+			nde->var = var;
+			nde->cmd = left;
+			nde->out = XP_NULL;
+
+			left = (xp_awk_nde_t*)nde;
 		}
 		else
 		{
+			xp_awk_nde_exp_t* nde;
+
 			right = __parse_bitwise_xor (awk);
 			if (right == XP_NULL)
 			{

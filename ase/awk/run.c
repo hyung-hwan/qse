@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.92 2006-05-12 07:52:14 bacon Exp $
+ * $Id: run.c,v 1.93 2006-06-12 15:11:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -132,6 +132,7 @@ static xp_awk_val_t* __eval_globalidx (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_localidx (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_argidx (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
 static int __raw_push (xp_awk_run_t* run, void* val);
 static void __raw_pop (xp_awk_run_t* run);
@@ -1024,7 +1025,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		__eval_globalidx,
 		__eval_localidx,
 		__eval_argidx,
-		__eval_pos
+		__eval_pos,
+		__eval_getline
 	};
 
 	xp_assert (nde->type >= XP_AWK_NDE_GRP &&
@@ -2802,6 +2804,12 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	/* TODO: */
 	xp_printf (XP_T("eval_pos not competed....\n"));
+	return XP_NULL;
+}
+
+static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
+{
+	xp_printf (XP_T("eval_getline not competed....\n"));
 	return XP_NULL;
 }
 
