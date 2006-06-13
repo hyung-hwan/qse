@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.42 2006-06-12 15:11:02 bacon Exp $
+ * $Id: tree.h,v 1.43 2006-06-13 08:35:53 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -53,7 +53,14 @@ enum
 	XP_AWK_NDE_LOCALIDX,
 	XP_AWK_NDE_ARGIDX,
 	XP_AWK_NDE_POS,
-	XP_AWK_NDE_GETLINE
+	XP_AWK_NDE_GETLINE,
+	XP_AWK_NDE_PRINT
+};
+
+enum
+{
+	XP_AWK_PRINT_PIPE,
+	XP_AWK_PRINT_FILE
 };
 
 typedef struct xp_awk_func_t xp_awk_func_t;
@@ -73,6 +80,7 @@ typedef struct xp_awk_nde_rex_t       xp_awk_nde_rex_t;
 typedef struct xp_awk_nde_var_t       xp_awk_nde_var_t;
 typedef struct xp_awk_nde_call_t      xp_awk_nde_call_t;
 typedef struct xp_awk_nde_getline_t   xp_awk_nde_getline_t;
+typedef struct xp_awk_nde_print_t     xp_awk_nde_print_t;
 
 typedef struct xp_awk_nde_if_t        xp_awk_nde_if_t;
 typedef struct xp_awk_nde_while_t     xp_awk_nde_while_t;
@@ -208,6 +216,15 @@ struct xp_awk_nde_getline_t
 	XP_AWK_NDE_HDR;
 	xp_awk_nde_t* var;
 	xp_awk_nde_t* cmd;
+	xp_awk_nde_t* in;
+};
+
+/* XP_AWK_NDE_PRINT */
+struct xp_awk_nde_print_t
+{
+	XP_AWK_NDE_HDR;
+	xp_awk_nde_t* args;
+	int out_type; /* XP_AWK_PRINT_PIPE, XP_AWK_PRINT_FILE */
 	xp_awk_nde_t* out;
 };
 

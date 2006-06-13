@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.111 2006-06-12 15:11:02 bacon Exp $
+ * $Id: parse.c,v 1.112 2006-06-13 08:35:53 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -86,6 +86,8 @@ enum
 	TOKEN_GETLINE,
 	TOKEN_NEXT,
 	TOKEN_NEXTFILE,
+	TOKEN_PRINT,
+	TOKEN_PRINTF,
 
 	TOKEN_LOCAL,
 	TOKEN_GLOBAL,
@@ -151,6 +153,8 @@ static xp_awk_nde_t* __parse_return (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_exit (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_delete (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_getline (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_print (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_printf (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_next (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk);
 
@@ -193,6 +197,8 @@ static struct __kwent __kwtab[] =
 	{ XP_T("getline"),  TOKEN_GETLINE,  0 },
 	{ XP_T("next"),     TOKEN_NEXT,     0 },
 	{ XP_T("nextfile"), TOKEN_NEXTFILE, 0 },
+	{ XP_T("print"),    TOKEN_PRINT,    0 },
+	{ XP_T("printf"),   TOKEN_PRINTF,   0 },
 
 	{ XP_T("local"),    TOKEN_LOCAL,    XP_AWK_EXPLICIT },
 	{ XP_T("global"),   TOKEN_GLOBAL,   XP_AWK_EXPLICIT },
@@ -1077,6 +1083,16 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 		if (__get_token(awk) == -1) return XP_NULL;
 		nde = __parse_nextfile(awk);
 	}
+	else if (MATCH(awk,TOKEN_PRINT))
+	{
+		if (__get_token(awk) == -1) return XP_NULL;
+		nde = __parse_print(awk);
+	}
+	else if (MATCH(awk,TOKEN_PRINTF))
+	{
+		if (__get_token(awk) == -1) return XP_NULL;
+		nde = __parse_printf(awk);
+	}
 	else 
 	{
 		nde = __parse_expression(awk);
@@ -1485,7 +1501,7 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 			nde->next = XP_NULL;
 			nde->var = var;
 			nde->cmd = left;
-			nde->out = XP_NULL;
+			nde->in = XP_NULL;
 
 			left = (xp_awk_nde_t*)nde;
 		}
@@ -2648,6 +2664,70 @@ static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
 }
 
 static xp_awk_nde_t* __parse_getline (xp_awk_t* awk)
+{
+/* TODO: implement this... */
+	return XP_NULL;
+}
+
+static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
+{
+	xp_awk_nde_print_t* nde;
+	xp_awk_nde_t* args = XP_NULL;
+	xp_awk_nde_t* out = XP_NULL;
+	int out_type = -1;
+
+	/* TODO: expression list............ */
+	if (!MATCH(awk,TOKEN_SEMICOLON) &&
+	    !MATCH(awk,TOKEN_GT) &&
+	    !MATCH(awk,TOKEN_BOR)) 
+	{
+		args = __parse_expression (awk);
+		if (args == XP_NULL) return XP_NULL;
+	}
+
+	if (MATCH(awk,TOKEN_GT))
+	{
+		out_type = XP_AWK_PRINT_FILE;
+	}
+	else if (MATCH(awk,TOKEN_BOR))
+	{
+		out_type = XP_AWK_PRINT_PIPE;
+	}
+
+	if (out_type != -1)
+	{
+		if (__get_token(awk) == -1)
+		{
+			if (args != XP_NULL) xp_awk_clrpt (args);
+			return XP_NULL;
+		}
+
+		out = __parse_expression(awk);
+		if (out == XP_NULL)
+		{
+			if (args != XP_NULL) xp_awk_clrpt (args);
+			return XP_NULL;
+		}
+	}
+
+	nde = (xp_awk_nde_print_t*)xp_malloc(xp_sizeof(xp_awk_nde_print_t));
+	if (nde == XP_NULL) 
+	{
+		if (args != XP_NULL) xp_awk_clrpt (args);
+		if (out != XP_NULL) xp_awk_clrpt (out);
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+	nde->type = XP_AWK_NDE_PRINT;
+	nde->next = XP_NULL;
+	nde->args = args;
+	nde->out_type = out_type;
+	nde->out = out;
+
+	return (xp_awk_nde_t*)nde;
+}
+
+static xp_awk_nde_t* __parse_printf (xp_awk_t* awk)
 {
 /* TODO: implement this... */
 	return XP_NULL;
