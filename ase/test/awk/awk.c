@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.34 2006-05-13 16:33:07 bacon Exp $
+ * $Id: awk.c,v 1.35 2006-06-13 04:26:24 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -35,28 +35,35 @@ static xp_ssize_t process_source (
 {
 	xp_char_t c;
 
-	switch (cmd) {
-	case XP_AWK_INPUT_OPEN:
-	case XP_AWK_INPUT_CLOSE:
-	case XP_AWK_INPUT_NEXT:
-		return 0;
+	switch (cmd) 
+	{
+		case XP_AWK_INPUT_OPEN:
+		case XP_AWK_INPUT_CLOSE:
+		case XP_AWK_INPUT_NEXT:
+		{
+			return 0;
+		}
 
-	case XP_AWK_INPUT_DATA:
-		if (size <= 0) return -1;
-#ifdef XP_CHAR_IS_MCHAR
-		c = fgetc (stdin);
-#else
-		c = fgetwc (stdin);
-#endif
-		if (c == XP_CHAR_EOF) return 0;
-		*data = c;
-		return 1;
+		case XP_AWK_INPUT_DATA:
+		{
+			if (size <= 0) return -1;
+		#ifdef XP_CHAR_IS_MCHAR
+			c = fgetc (stdin);
+		#else
+			c = fgetwc (stdin);
+		#endif
+			if (c == XP_CHAR_EOF) return 0;
+			*data = c;
+			return 1;
+		}
 
-	case XP_AWK_OUTPUT_OPEN:
-	case XP_AWK_OUTPUT_CLOSE:
-	case XP_AWK_OUTPUT_NEXT:
-	case XP_AWK_OUTPUT_DATA:
-		return 0;
+		case XP_AWK_OUTPUT_OPEN:
+		case XP_AWK_OUTPUT_CLOSE:
+		case XP_AWK_OUTPUT_NEXT:
+		case XP_AWK_OUTPUT_DATA:
+		{
+			return 0;
+		}
 	}
 
 	return -1;
@@ -74,37 +81,48 @@ static xp_ssize_t process_data (
 	struct data_io* io = (struct data_io*)arg;
 	xp_char_t c;
 
-	switch (cmd) {
-	case XP_AWK_INPUT_OPEN:
-		io->input_handle = fopen (io->input_file, "r");
-		if (io->input_handle == NULL) return -1;
-		return 0;
+	switch (cmd) 
+	{
+		case XP_AWK_INPUT_OPEN:
+		{
+			io->input_handle = fopen (io->input_file, "r");
+			if (io->input_handle == NULL) return -1;
+			return 0;
+		}
 
-	case XP_AWK_INPUT_CLOSE:
-		fclose (io->input_handle);
-		io->input_handle = NULL;
-		return 0;
+		case XP_AWK_INPUT_CLOSE:
+		{
+			fclose (io->input_handle);
+			io->input_handle = NULL;
+			return 0;
+		}
 
-	case XP_AWK_INPUT_NEXT:
-		/* input switching not supported for the time being... */
-		return -1;
+		case XP_AWK_INPUT_NEXT:
+		{
+			/* input switching not supported for the time being... */
+			return -1;
+		}
 
-	case XP_AWK_INPUT_DATA:
-		if (size <= 0) return -1;
-#ifdef XP_CHAR_IS_MCHAR
-		c = fgetc (io->input_handle);
-#else
-		c = fgetwc (io->input_handle);
-#endif
-		if (c == XP_CHAR_EOF) return 0;
-		*data = c;
-		return 1;
+		case XP_AWK_INPUT_DATA:
+		{
+			if (size <= 0) return -1;
+		#ifdef XP_CHAR_IS_MCHAR
+			c = fgetc (io->input_handle);
+		#else
+			c = fgetwc (io->input_handle);
+		#endif
+			if (c == XP_CHAR_EOF) return 0;
+			*data = c;
+			return 1;
+		}
 
-	case XP_AWK_OUTPUT_OPEN:
-	case XP_AWK_OUTPUT_CLOSE:
-	case XP_AWK_OUTPUT_NEXT:
-	case XP_AWK_OUTPUT_DATA:
-		return -1;
+		case XP_AWK_OUTPUT_OPEN:
+		case XP_AWK_OUTPUT_CLOSE:
+		case XP_AWK_OUTPUT_NEXT:
+		case XP_AWK_OUTPUT_DATA:
+		{
+			return -1;
+		}
 	}
 
 	return -1;

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.50 2006-06-12 15:11:02 bacon Exp $
+ * $Id: tree.c,v 1.51 2006-06-13 04:26:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -341,7 +341,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 			if (px->cmd != XP_NULL)
 			{ 
 				__print_expression (px->cmd);
-				xp_printf (XP_TEXT("|"));
+				xp_printf (XP_TEXT(" | "));
 			}
 
 			xp_printf (XP_TEXT("getline"));
@@ -353,7 +353,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 
 			if (px->out != XP_NULL)
 			{
-				xp_printf (XP_TEXT("<"));
+				xp_printf (XP_TEXT(" < "));
 				__print_expression (px->out);
 			}	  
 			break;
