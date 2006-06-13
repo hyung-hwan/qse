@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.93 2006-06-12 15:11:02 bacon Exp $
+ * $Id: run.c,v 1.94 2006-06-13 08:35:53 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -54,6 +54,7 @@ static int __run_return_statement (xp_awk_run_t* run, xp_awk_nde_return_t* nde);
 static int __run_exit_statement (xp_awk_run_t* run, xp_awk_nde_exit_t* nde);
 static int __run_next_statement (xp_awk_run_t* run, xp_awk_nde_next_t* nde);
 static int __run_nextfile_statement (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde);
+static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde);
 
 static xp_awk_val_t* __eval_expression (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -591,74 +592,106 @@ static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	switch (nde->type) 
 	{
-	case XP_AWK_NDE_NULL:
-		/* do nothing */
-		break;
+		case XP_AWK_NDE_NULL:
+		{
+			/* do nothing */
+			break;
+		}
 
-	case XP_AWK_NDE_BLK:
-		if (__run_block(run,(xp_awk_nde_blk_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_BLK:
+		{
+			if (__run_block (
+				run, (xp_awk_nde_blk_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_IF:
-		if (__run_if_statement (
-			run, (xp_awk_nde_if_t*)nde) == -1) return -1;	
-		break;
+		case XP_AWK_NDE_IF:
+		{
+			if (__run_if_statement (
+				run, (xp_awk_nde_if_t*)nde) == -1) return -1;	
+			break;
+		}
 
-	case XP_AWK_NDE_WHILE:
-	case XP_AWK_NDE_DOWHILE:
-		if (__run_while_statement (
-			run, (xp_awk_nde_while_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_WHILE:
+		case XP_AWK_NDE_DOWHILE:
+		{
+			if (__run_while_statement (
+				run, (xp_awk_nde_while_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_FOR:
-		if (__run_for_statement (
-			run, (xp_awk_nde_for_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_FOR:
+		{
+			if (__run_for_statement (
+				run, (xp_awk_nde_for_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_FOREACH:
-		if (__run_foreach_statement (
-			run, (xp_awk_nde_foreach_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_FOREACH:
+		{
+			if (__run_foreach_statement (
+				run, (xp_awk_nde_foreach_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_BREAK:
-		if (__run_break_statement(
-			run, (xp_awk_nde_break_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_BREAK:
+		{
+			if (__run_break_statement(
+				run, (xp_awk_nde_break_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_CONTINUE:
-		if (__run_continue_statement (
-			run, (xp_awk_nde_continue_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_CONTINUE:
+		{
+			if (__run_continue_statement (
+				run, (xp_awk_nde_continue_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_RETURN:
-		if (__run_return_statement (
-			run, (xp_awk_nde_return_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_RETURN:
+		{
+			if (__run_return_statement (
+				run, (xp_awk_nde_return_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_EXIT:
-		if (__run_exit_statement (
-			run, (xp_awk_nde_exit_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_EXIT:
+		{
+			if (__run_exit_statement (
+				run, (xp_awk_nde_exit_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_NEXT:
-		if (__run_next_statement (
-			run, (xp_awk_nde_next_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_NEXT:
+		{
+			if (__run_next_statement (
+				run, (xp_awk_nde_next_t*)nde) == -1) return -1;
+			break;
+		}
 
-	case XP_AWK_NDE_NEXTFILE:
-		if (__run_nextfile_statement (
-			run, (xp_awk_nde_nextfile_t*)nde) == -1) return -1;
-		break;
+		case XP_AWK_NDE_NEXTFILE:
+		{
+			if (__run_nextfile_statement (
+				run, (xp_awk_nde_nextfile_t*)nde) == -1) return -1;
+			break;
+		}
 
-	default:
+		case XP_AWK_NDE_PRINT:
+		{
+			if (__run_print_statement (
+				run, (xp_awk_nde_print_t*)nde) == -1) return -1;
+			break;
+		}
+
+		default:
 		{
 			xp_awk_val_t* v;
 			v = __eval_expression(run,nde);
 			if (v == XP_NULL) return -1;
 			xp_awk_refupval (v);
 			xp_awk_refdownval (run, v);
+			break;
 		}
-		break;
 	}
 
 	return 0;
@@ -997,6 +1030,12 @@ static int __run_nextfile_statement (xp_awk_run_t* run, xp_awk_nde_nextfile_t* n
 	n = run->txtio (XP_AWK_INPUT_NEXT, run->txtio_arg, XP_NULL, 0);
 	if (n == -1) PANIC_I (run, XP_AWK_ETXTINNEXT);
 	return (n == -1)? -1: 0;
+}
+
+static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
+{
+xp_printf (XP_T("**** print NOT IMPLEMENTED...\n"));
+	return -1;
 }
 
 static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
