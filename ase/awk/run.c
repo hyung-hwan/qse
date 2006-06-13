@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.94 2006-06-13 08:35:53 bacon Exp $
+ * $Id: run.c,v 1.95 2006-06-13 15:11:39 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1490,6 +1490,7 @@ static xp_awk_val_t* __eval_binop_land (
 	xp_awk_refdownval (run, lv);
 	return res;
 }
+
 static xp_awk_val_t* __eval_binop_in (
 	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right)
 {

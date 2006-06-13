@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.112 2006-06-13 08:35:53 bacon Exp $
+ * $Id: parse.c,v 1.113 2006-06-13 15:11:39 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -152,7 +152,6 @@ static xp_awk_nde_t* __parse_continue (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_return (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_exit (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_delete (xp_awk_t* awk);
-static xp_awk_nde_t* __parse_getline (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_print (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_printf (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_next (xp_awk_t* awk);
@@ -1500,8 +1499,8 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 			nde->type = XP_AWK_NDE_GETLINE;
 			nde->next = XP_NULL;
 			nde->var = var;
-			nde->cmd = left;
-			nde->in = XP_NULL;
+			nde->in_type = XP_AWK_GETLINE_PIPE;
+			nde->in = left;
 
 			left = (xp_awk_nde_t*)nde;
 		}
@@ -1968,7 +1967,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde = __parse_expression (awk);
 		if (nde == XP_NULL) return XP_NULL;
 
-/* ---------------- */
+		/* parse subsequent expressions separated by a comma, if any */
 		last = nde;
 		xp_assert (last->next == XP_NULL);
 
@@ -1993,7 +1992,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			last->next = tmp;
 			last = tmp;
 		} 
-/* ----------------- */
+		/* ----------------- */
 
 		/* check for the closing parenthesis */
 		if (!MATCH(awk,TOKEN_RPAREN)) 
@@ -2008,9 +2007,12 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			return XP_NULL;
 		}
 
-/* ----------------- */
+		/* check if it is a chained node */
 		if (nde->next != XP_NULL)
 		{
+			/* if so, it is a expression group */
+			/* (expr1, expr2, expr2) */
+
 			xp_awk_nde_grp_t* tmp;
 
 			if (!MATCH(awk,TOKEN_IN))
@@ -2033,9 +2035,59 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 			nde = (xp_awk_nde_t*)tmp;
 		}
-/* ----------------- */
+		/* ----------------- */
 
 		return nde;
+	}
+	else if (MATCH(awk,TOKEN_GETLINE)) 
+	{
+		xp_awk_nde_getline_t* nde;
+		xp_awk_nde_t* var = XP_NULL;
+		xp_awk_nde_t* in = XP_NULL;
+
+		if (__get_token(awk) == -1) return XP_NULL;
+
+		if (MATCH(awk,TOKEN_IDENT))
+		{
+			/* getline var */
+			
+			var = __parse_primary (awk);
+			if (var == XP_NULL) return XP_NULL;
+		}
+
+		if (MATCH(awk, TOKEN_LT))
+		{
+			/* getline [var] < file */
+			if (__get_token(awk) == -1)
+			{
+				if (var != XP_NULL) xp_awk_clrpt (var);
+				return XP_NULL;
+			}
+
+			in = __parse_expression (awk);
+			if (in == XP_NULL)
+			{
+				if (var != XP_NULL) xp_awk_clrpt (var);
+				return XP_NULL;
+			}
+		}
+
+		nde = (xp_awk_nde_getline_t*)
+			xp_malloc (xp_sizeof(xp_awk_nde_getline_t));
+		if (nde == XP_NULL)
+		{
+			if (var != XP_NULL) xp_awk_clrpt (var);
+			if (in != XP_NULL) xp_awk_clrpt (in);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		nde->type = XP_AWK_NDE_GETLINE;
+		nde->next = XP_NULL;
+		nde->var = var;
+		nde->in_type = XP_AWK_GETLINE_FILE;
+		nde->in = in;
+
+		return (xp_awk_nde_t*)nde;
 	}
 
 	/* valid expression introducer is expected */
@@ -2658,12 +2710,6 @@ static xp_awk_nde_t* __parse_exit (xp_awk_t* awk)
 }
 
 static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
-{
-/* TODO: implement this... */
-	return XP_NULL;
-}
-
-static xp_awk_nde_t* __parse_getline (xp_awk_t* awk)
 {
 /* TODO: implement this... */
 	return XP_NULL;

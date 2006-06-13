@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.52 2006-06-13 08:35:53 bacon Exp $
+ * $Id: tree.c,v 1.53 2006-06-13 15:11:39 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -66,6 +66,12 @@ static const xp_char_t* __incop_str[] =
 	XP_T("--"),
 	XP_T("++"),
 	XP_T("--")
+};
+
+static const xp_char_t* __getline_inop_str[] =
+{
+	XP_T("|"),
+	XP_T("<")
 };
 
 static const xp_char_t* __print_outop_str[] =
@@ -344,10 +350,12 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			  /* TODO */
 			xp_awk_nde_getline_t* px = (xp_awk_nde_getline_t*)nde;
-			if (px->cmd != XP_NULL)
-			{ 
-				__print_expression (px->cmd);
-				xp_printf (XP_T(" | "));
+			if (px->in != XP_NULL &&
+			    px->in_type == XP_AWK_GETLINE_PIPE)
+			{
+				__print_expression (px->in);
+				xp_printf (XP_T(" %s "), 
+					__getline_inop_str[px->in_type]);
 			}
 
 			xp_printf (XP_T("getline"));
@@ -357,9 +365,11 @@ static int __print_expression (xp_awk_nde_t* nde)
 				__print_expression (px->var);
 			}
 
-			if (px->in != XP_NULL)
+			if (px->in != XP_NULL &&
+			    px->in_type == XP_AWK_GETLINE_FILE)
 			{
-				xp_printf (XP_T(" < "));
+				xp_printf (XP_T(" %s "), 
+					__getline_inop_str[px->in_type]);
 				__print_expression (px->in);
 			}	  
 			break;
@@ -913,7 +923,6 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 				xp_awk_nde_getline_t* px = 
 					(xp_awk_nde_getline_t*)p;
 				if (px->var != XP_NULL) xp_awk_clrpt (px->var);
-				if (px->cmd != XP_NULL) xp_awk_clrpt (px->cmd);
 				if (px->in != XP_NULL) xp_awk_clrpt (px->in);
 				xp_free (p);
 				break;
