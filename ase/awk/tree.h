@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.43 2006-06-13 08:35:53 bacon Exp $
+ * $Id: tree.h,v 1.44 2006-06-13 15:11:39 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -55,6 +55,12 @@ enum
 	XP_AWK_NDE_POS,
 	XP_AWK_NDE_GETLINE,
 	XP_AWK_NDE_PRINT
+};
+
+enum
+{
+	XP_AWK_GETLINE_PIPE,
+	XP_AWK_GETLINE_FILE
 };
 
 enum
@@ -215,7 +221,7 @@ struct xp_awk_nde_getline_t
 {
 	XP_AWK_NDE_HDR;
 	xp_awk_nde_t* var;
-	xp_awk_nde_t* cmd;
+	int in_type; /* XP_AWK_GETLINE_PIPE, XP_AWK_GETLINE_FILE */
 	xp_awk_nde_t* in;
 };
 
