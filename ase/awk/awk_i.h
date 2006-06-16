@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.12 2006-05-13 16:33:07 bacon Exp $
+ * $Id: awk_i.h,v 1.13 2006-06-16 07:35:07 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -8,8 +8,7 @@
 typedef struct xp_awk_chain_t xp_awk_chain_t;
 typedef struct xp_awk_run_t xp_awk_run_t;
 typedef struct xp_awk_tree_t xp_awk_tree_t;
-
-
+typedef struct xp_awk_cmd_t xp_awk_cmd_t; 
 
 #include <xp/awk/awk.h>
 #include <xp/awk/tree.h>
@@ -132,6 +131,7 @@ struct xp_awk_chain_t
 	xp_awk_chain_t* next;	
 };
 
+
 struct xp_awk_run_t
 {
 	xp_awk_map_t named;
@@ -159,10 +159,25 @@ struct xp_awk_run_t
 		xp_str_t  line;
 	} input;
 
+	struct
+	{
+		xp_awk_cmd_t* incmd;
+		xp_awk_cmd_t* iocmd;
+		xp_awk_cmd_t* outcmd;
+		/*xp_awk_infile_t* infile;*/
+	} extio;
+
 	int opt;
 	int errnum;
 	xp_awk_tree_t* tree;
 	xp_size_t nglobals;
+};
+
+struct xp_awk_cmd_t 
+{
+	xp_char_t* name;
+	void* handle;
+	xp_awk_cmd_t* next;
 };
 
 #endif

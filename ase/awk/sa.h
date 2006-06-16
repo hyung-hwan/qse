@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.23 2006-05-04 15:59:43 bacon Exp $
+ * $Id: sa.h,v 1.24 2006-06-16 07:35:07 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -34,6 +34,8 @@
 #define xp_malloc malloc
 #define xp_realloc realloc
 #define xp_free free
+#define xp_memset memset
+#define xp_memcpy memcpy
 #define xp_assert assert
 
 #ifdef XP_CHAR_IS_MCHAR
