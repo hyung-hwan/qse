@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.1 2006-06-16 07:35:07 bacon Exp $
+ * $Id: extio.c,v 1.2 2006-06-16 11:24:32 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -29,7 +29,7 @@ int xp_awk_readcmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 		p = (xp_awk_cmd_t*) xp_malloc (xp_sizeof(xp_awk_cmd_t));
 		if (p == XP_NULL)
 		{
-			*errnum = XP_AWK_EPIPE;
+			*errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 
@@ -37,7 +37,7 @@ int xp_awk_readcmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 		if (p->name == XP_NULL)
 		{
 			xp_free (p);
-			*errnum = XP_AWK_EPIPE;
+			*errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 
@@ -49,9 +49,11 @@ int xp_awk_readcmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 	if (p->handle == XP_NULL)
 	{
 		p->handle = (void*) _tpopen (p->name, XP_T("r"));
-		if (p->handle == NULL)
+		if (p->handle == NULL) 
 		{
-			*errnum = XP_AWK_EPIPE;
+			/* this is treated as pipe open error.
+			 * the return value of getline should be -1
+			 */
 			return -1;
 		}
 	}
@@ -61,7 +63,6 @@ int xp_awk_readcmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 	if (_fgetts (buf, xp_countof(buf), p->handle) == XP_NULL) return 0;
 	xp_printf(XP_TEXT("%s"), buf);
 	}
-
 
 	return 1;
 }
