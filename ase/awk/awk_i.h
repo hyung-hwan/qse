@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.13 2006-06-16 07:35:07 bacon Exp $
+ * $Id: awk_i.h,v 1.14 2006-06-16 14:31:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -16,6 +16,7 @@ typedef struct xp_awk_cmd_t xp_awk_cmd_t;
 #include <xp/awk/map.h>
 #include <xp/awk/val.h>
 #include <xp/awk/run.h>
+#include <xp/awk/func.h>
 
 #ifdef XP_AWK_STAND_ALONE
 #include <xp/awk/sa.h>

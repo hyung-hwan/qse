@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.113 2006-06-13 15:11:39 bacon Exp $
+ * $Id: parse.c,v 1.114 2006-06-16 14:31:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -140,6 +140,7 @@ static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_unary (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_increment (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_primary (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk);
 
 static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
 static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
@@ -204,7 +205,7 @@ static struct __kwent __kwtab[] =
 
 	{ XP_T("in"),       TOKEN_IN,       0 },
 
-	{ XP_NULL,             0,              0 }
+	{ XP_NULL,          0,              0 }
 };
 
 /* TODO:
@@ -231,7 +232,7 @@ static struct __kwent __bvtab[] =
 	{ XP_T("RSTART"),      TOKEN_RSTART,       0 },
 	{ XP_T("RLENGTH"),     TOKEN_RLENGTH,      0 },
 	{ XP_T("SUBSEP"),      TOKEN_SUBSEP,       0 },
-	{ XP_NULL,                0,                  0 }
+	{ XP_NULL,             0,                  0 }
 };
 */
 
@@ -1723,104 +1724,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 {
 	if (MATCH(awk,TOKEN_IDENT))  
 	{
-		xp_char_t* name_dup;
-
-		name_dup = (xp_char_t*)xp_strdup(XP_STR_BUF(&awk->token.name));
-		if (name_dup == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-
-		if (__get_token(awk) == -1) 
-		{
-			xp_free (name_dup);	
-			return XP_NULL;			
-		}
-
-		if (MATCH(awk,TOKEN_LBRACK)) 
-		{
-			xp_awk_nde_t* nde;
-			nde = __parse_hashidx (awk, name_dup);
-			if (nde == XP_NULL) xp_free (name_dup);
-			return (xp_awk_nde_t*)nde;
-		}
-		else if (MATCH(awk,TOKEN_LPAREN)) 
-		{
-			/* function call */
-			xp_awk_nde_t* nde;
-			nde = __parse_funcall (awk, name_dup);
-			if (nde == XP_NULL) xp_free (name_dup);
-			return (xp_awk_nde_t*)nde;
-		}	
-		else 
-		{
-			/* normal variable */
-			xp_awk_nde_var_t* nde;
-			xp_size_t idxa;
-	
-			nde = (xp_awk_nde_var_t*) 
-				xp_malloc (xp_sizeof(xp_awk_nde_var_t));
-			if (nde == XP_NULL) 
-			{
-				xp_free (name_dup);
-				PANIC (awk, XP_AWK_ENOMEM);
-			}
-
-			/* search the parameter name list */
-			idxa = xp_awk_tab_find(&awk->parse.params, name_dup, 0);
-			if (idxa != (xp_size_t)-1) 
-			{
-				nde->type = XP_AWK_NDE_ARG;
-				nde->next = XP_NULL;
-				/*nde->id.name = XP_NULL;*/
-				nde->id.name = name_dup;
-				nde->id.idxa = idxa;
-				nde->idx = XP_NULL;
-
-				return (xp_awk_nde_t*)nde;
-			}
-
-			/* search the local variable list */
-			idxa = xp_awk_tab_rrfind(&awk->parse.locals, name_dup, 0);
-			if (idxa != (xp_size_t)-1) 
-			{
-				nde->type = XP_AWK_NDE_LOCAL;
-				nde->next = XP_NULL;
-				/*nde->id.name = XP_NULL;*/
-				nde->id.name = name_dup;
-				nde->id.idxa = idxa;
-				nde->idx = XP_NULL;
-
-				return (xp_awk_nde_t*)nde;
-			}
-
-			/* search the global variable list */
-			idxa = xp_awk_tab_rrfind(&awk->parse.globals, name_dup, 0);
-			if (idxa != (xp_size_t)-1) 
-			{
-				nde->type = XP_AWK_NDE_GLOBAL;
-				nde->next = XP_NULL;
-				/*nde->id.name = XP_NULL;*/
-				nde->id.name = name_dup;
-				nde->id.idxa = idxa;
-				nde->idx = XP_NULL;
-
-				return (xp_awk_nde_t*)nde;
-			}
-
-			if (awk->opt.parse & XP_AWK_IMPLICIT) 
-			{
-				nde->type = XP_AWK_NDE_NAMED;
-				nde->next = XP_NULL;
-				nde->id.name = name_dup;
-				nde->id.idxa = (xp_size_t)-1;
-				nde->idx = XP_NULL;
-
-				return (xp_awk_nde_t*)nde;
-			}
-
-			/* undefined variable */
-			xp_free (name_dup);
-			xp_free (nde);
-			PANIC (awk, XP_AWK_EUNDEF);
-		}
+		return __parse_primary_ident (awk);
 	}
 	else if (MATCH(awk,TOKEN_INT)) 
 	{
@@ -2092,6 +1996,139 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 	/* valid expression introducer is expected */
 	PANIC (awk, XP_AWK_EEXPRESSION);
+}
+
+static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
+{
+	xp_char_t* name_dup;
+	xp_awk_bfn_t* bfn;
+
+	xp_assert (MATCH(awk,TOKEN_IDENT));
+
+	name_dup = (xp_char_t*)xp_strdup(XP_STR_BUF(&awk->token.name));
+	if (name_dup == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+
+	if (__get_token(awk) == -1) 
+	{
+		xp_free (name_dup);	
+		return XP_NULL;			
+	}
+
+	/* what if name_dup is a built-in function name */
+	bfn = xp_awk_getbfn (name_dup);
+	if (bfn != XP_NULL)
+	{
+		xp_awk_nde_t* nde;
+
+		if (!MATCH(awk,TOKEN_LPAREN))
+		{
+			/* built-in function should be in the form 
+		 	 * of the function call */
+			xp_free (name_dup);	
+			PANIC (awk, XP_AWK_ELPAREN);
+		}
+
+		/* bfn->handler... */
+		nde = __parse_funcall (awk, name_dup);
+		if (nde == XP_NULL) xp_free (name_dup);
+		return (xp_awk_nde_t*)nde;
+	}
+
+	/* TODO: user-defined functions */
+	/*
+	if (__is_ufname (name_dup))
+	{
+	}
+	*/
+
+	/* now we know that name_dup is a normal identifier. */
+	if (MATCH(awk,TOKEN_LBRACK)) 
+	{
+		xp_awk_nde_t* nde;
+		nde = __parse_hashidx (awk, name_dup);
+		if (nde == XP_NULL) xp_free (name_dup);
+		return (xp_awk_nde_t*)nde;
+	}
+	else if (MATCH(awk,TOKEN_LPAREN)) 
+	{
+		/* function call */
+		xp_awk_nde_t* nde;
+		nde = __parse_funcall (awk, name_dup);
+		if (nde == XP_NULL) xp_free (name_dup);
+		return (xp_awk_nde_t*)nde;
+	}	
+	else 
+	{
+		/* normal variable */
+		xp_awk_nde_var_t* nde;
+		xp_size_t idxa;
+
+		nde = (xp_awk_nde_var_t*) 
+			xp_malloc (xp_sizeof(xp_awk_nde_var_t));
+		if (nde == XP_NULL) 
+		{
+			xp_free (name_dup);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		/* search the parameter name list */
+		idxa = xp_awk_tab_find(&awk->parse.params, name_dup, 0);
+		if (idxa != (xp_size_t)-1) 
+		{
+			nde->type = XP_AWK_NDE_ARG;
+			nde->next = XP_NULL;
+			/*nde->id.name = XP_NULL;*/
+			nde->id.name = name_dup;
+			nde->id.idxa = idxa;
+			nde->idx = XP_NULL;
+
+			return (xp_awk_nde_t*)nde;
+		}
+
+		/* search the local variable list */
+		idxa = xp_awk_tab_rrfind(&awk->parse.locals, name_dup, 0);
+		if (idxa != (xp_size_t)-1) 
+		{
+			nde->type = XP_AWK_NDE_LOCAL;
+			nde->next = XP_NULL;
+			/*nde->id.name = XP_NULL;*/
+			nde->id.name = name_dup;
+			nde->id.idxa = idxa;
+			nde->idx = XP_NULL;
+
+			return (xp_awk_nde_t*)nde;
+		}
+
+		/* search the global variable list */
+		idxa = xp_awk_tab_rrfind(&awk->parse.globals, name_dup, 0);
+		if (idxa != (xp_size_t)-1) 
+		{
+			nde->type = XP_AWK_NDE_GLOBAL;
+			nde->next = XP_NULL;
+			/*nde->id.name = XP_NULL;*/
+			nde->id.name = name_dup;
+			nde->id.idxa = idxa;
+			nde->idx = XP_NULL;
+
+			return (xp_awk_nde_t*)nde;
+		}
+
+		if (awk->opt.parse & XP_AWK_IMPLICIT) 
+		{
+			nde->type = XP_AWK_NDE_NAMED;
+			nde->next = XP_NULL;
+			nde->id.name = name_dup;
+			nde->id.idxa = (xp_size_t)-1;
+			nde->idx = XP_NULL;
+
+			return (xp_awk_nde_t*)nde;
+		}
+
+		/* undefined variable */
+		xp_free (name_dup);
+		xp_free (nde);
+		PANIC (awk, XP_AWK_EUNDEF);
+	}
 }
 
 static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
@@ -2832,6 +2869,8 @@ static int __get_token (xp_awk_t* awk)
 	}
 	else if (xp_isalpha(c) || c == XP_T('_')) 
 	{
+		int type;
+
 		/* identifier */
 		do 
 		{
@@ -2840,7 +2879,8 @@ static int __get_token (xp_awk_t* awk)
 		} 
 		while (xp_isalpha(c) || c == XP_T('_') || xp_isdigit(c));
 
-		SET_TOKEN_TYPE (awk, __classify_ident(awk,XP_STR_BUF(&awk->token.name)));
+		type = __classify_ident (awk,XP_STR_BUF(&awk->token.name));
+		SET_TOKEN_TYPE (awk, type);
 	}
 	else if (c == XP_T('\"')) 
 	{
@@ -3482,12 +3522,15 @@ static int __skip_comment (xp_awk_t* awk)
 
 static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident)
 {
-	struct __kwent* p;
+	struct __kwent* kwp;
 
-	for (p = __kwtab; p->name != XP_NULL; p++) 
+	for (kwp = __kwtab; kwp->name != XP_NULL; kwp++) 
 	{
-		if (p->valid != 0 && (awk->opt.parse & p->valid) == 0) continue;
-		if (xp_strcmp(p->name, ident) == 0) return p->type;
+		if (kwp->valid != 0 && (awk->opt.parse & kwp->valid) == 0) 
+		{
+			continue;
+		}
+		if (xp_strcmp(kwp->name, ident) == 0) return kwp->type;
 	}
 
 	return TOKEN_IDENT;
