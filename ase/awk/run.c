@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.95 2006-06-13 15:11:39 bacon Exp $
+ * $Id: run.c,v 1.96 2006-06-16 07:35:07 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -194,6 +194,8 @@ static void __free_namedval (void* run, void* val)
 static int __open_run (
 	xp_awk_run_t* run, xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg)
 {
+	xp_memset (run, 0, xp_sizeof(*run));
+
 	run->stack = XP_NULL;
 	run->stack_top = 0;
 	run->stack_base = 0;
@@ -227,6 +229,11 @@ static int __open_run (
 		run->errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
+
+	/* TODO: */
+	run->extio.incmd = XP_NULL;
+	run->extio.iocmd = XP_NULL;
+	run->extio.outcmd = XP_NULL;
 
 	return 0;
 }
@@ -2849,8 +2856,41 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_printf (XP_T("eval_getline not competed....\n"));
-	return XP_NULL;
+	xp_awk_nde_getline_t* p = (xp_awk_nde_getline_t*)nde;
+
+	if (p->in_type == XP_AWK_GETLINE_PIPE)
+	{
+		xp_awk_val_t* in;
+		xp_char_t* str;
+		int errnum, n;
+
+		in = __eval_expression (run, p->in);
+		if (in == XP_NULL) return XP_NULL;
+
+		xp_awk_refupval (in);
+		str = __val_to_str (in, &errnum, XP_NULL);
+		if (str == XP_NULL) 
+		{
+			xp_awk_refdownval (run, in);
+			PANIC (run, errnum);
+		}
+		xp_awk_refdownval (run, in);
+
+		n = xp_awk_readcmd (run, str, &errnum);
+		xp_free (str);
+
+		return xp_awk_makeintval (run, n);
+	}
+	else if (p->in_type == XP_AWK_GETLINE_FILE)
+	{
+		xp_printf (XP_T("eval_getline not properly implemented....\n"));
+		return XP_NULL;
+	}
+	else
+	{
+		xp_assert (!"should never happen - wrong in_type for getline");
+		PANIC (run, XP_AWK_EINTERNAL);
+	}
 }
 
 static int __raw_push (xp_awk_run_t* run, void* val)

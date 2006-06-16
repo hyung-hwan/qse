@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.18 2006-05-06 12:52:36 bacon Exp $
+ * $Id: err.c,v 1.19 2006-06-16 07:35:07 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -63,6 +63,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("value not assignable"),
 		XP_T("value not indexable"),
 		XP_T("wrong index value"),
+		XP_T("pipe operation error"),
 
 		XP_T("internal error that should never have happened")
 	};
