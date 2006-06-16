@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.7 2006-04-16 04:31:38 bacon Exp $
+ * $Id: tab.h,v 1.8 2006-06-16 14:31:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
@@ -7,13 +7,6 @@
 
 #ifndef _XP_AWK_AWK_H_
 #error Never include this file directly. Include <xp/awk/awk.h> instead
-#endif
-
-#ifdef XP_AWK_STAND_ALONE
-#include <xp/awk/sa.h>
-#else
-#include <xp/types.h>
-#include <xp/macros.h>
 #endif
 
 /* TODO: you have to turn this into a hash table.
