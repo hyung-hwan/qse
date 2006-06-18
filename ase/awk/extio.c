@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.2 2006-06-16 11:24:32 bacon Exp $
+ * $Id: extio.c,v 1.3 2006-06-18 13:43:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -48,11 +48,15 @@ int xp_awk_readcmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 
 	if (p->handle == XP_NULL)
 	{
-		p->handle = (void*) _tpopen (p->name, XP_T("r"));
+		xp_awk_io_t pipe_io = run->awk.extio.pipe;
+
+		//p->handle = (void*) _tpopen (p->name, XP_T("r"));
+		p->handle = pipe_io (XP_AWK_INPUT_OPEN, p->name, XP_NULL, 0);
 		if (p->handle == NULL) 
 		{
 			/* this is treated as pipe open error.
 			 * the return value of getline should be -1
+			 * set ERRNO as well....
 			 */
 			return -1;
 		}

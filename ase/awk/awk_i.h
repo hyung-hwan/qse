@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.14 2006-06-16 14:31:42 bacon Exp $
+ * $Id: awk_i.h,v 1.15 2006-06-18 13:43:28 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -111,6 +111,13 @@ struct xp_awk_t
 		xp_size_t line;
 		xp_size_t column;
 	} lex;
+
+	struct
+	{
+		xp_awk_io_t pipe;
+		xp_awk_io_t coproc;
+		xp_awk_io_t file;
+	} extio;
 
 	/* token */
 	struct 

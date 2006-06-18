@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.50 2006-05-13 16:33:06 bacon Exp $ 
+ * $Id: awk.c,v 1.51 2006-06-18 13:43:28 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -83,6 +83,10 @@ xp_awk_t* xp_awk_open (void)
 	awk->lex.buf_len = 0;
 	awk->lex.line = 1;
 	awk->lex.column = 1;
+
+	awk->extio.pipe = XP_NULL;
+	awk->extio.coproc = XP_NULL;
+	awk->extio.file = XP_NULL;
 
 	return awk;
 }

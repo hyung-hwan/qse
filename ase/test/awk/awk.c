@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.35 2006-06-13 04:26:24 bacon Exp $
+ * $Id: awk.c,v 1.36 2006-06-18 13:43:28 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -152,7 +152,7 @@ static int __main (int argc, xp_char_t* argv[])
 
 	xp_awk_setparseopt (awk, 
 		XP_AWK_EXPLICIT | XP_AWK_UNIQUE | 
-		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT);
+		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | XP_AWK_EXTIO);
 
 	if (argc == 2) 
 	{
