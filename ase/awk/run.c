@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.96 2006-06-16 07:35:07 bacon Exp $
+ * $Id: run.c,v 1.97 2006-06-18 10:53:06 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2881,9 +2881,14 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 		return xp_awk_makeintval (run, n);
 	}
+	else if (p->in_type == XP_AWK_GETLINE_COPROC)
+	{
+		xp_printf (XP_T("eval_getline coprocess not properly implemented....\n"));
+		return XP_NULL;
+	}
 	else if (p->in_type == XP_AWK_GETLINE_FILE)
 	{
-		xp_printf (XP_T("eval_getline not properly implemented....\n"));
+		xp_printf (XP_T("eval_getline file not properly implemented....\n"));
 		return XP_NULL;
 	}
 	else
