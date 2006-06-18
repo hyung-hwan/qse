@@ -203,6 +203,14 @@ SOURCE=.\err.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\extio.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\func.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\map.c
 # End Source File
 # Begin Source File
@@ -244,6 +252,10 @@ SOURCE=.\awk.h
 # Begin Source File
 
 SOURCE=.\awk_i.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\func.h
 # End Source File
 # Begin Source File
 

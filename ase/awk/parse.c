@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.114 2006-06-16 14:31:42 bacon Exp $
+ * $Id: parse.c,v 1.115 2006-06-18 10:53:06 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -44,6 +44,7 @@ enum
 	TOKEN_BOR,
 	TOKEN_BXOR,
 	TOKEN_BAND,
+	TOKEN_BORAND,
 	TOKEN_TILDE, /* used for unary bitwise-not and regex match */
 	TOKEN_RSHIFT,
 	TOKEN_LSHIFT,
@@ -1455,7 +1456,13 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 
 	while (1)
 	{
-		if (!MATCH(awk,TOKEN_BOR)) break;
+		int in_type;
+
+		if (MATCH(awk,TOKEN_BOR)) 
+			in_type = XP_AWK_GETLINE_PIPE;
+		else if (MATCH(awk,TOKEN_BORAND)) 
+			in_type = XP_AWK_GETLINE_COPROC;
+		else break;
 		
 		if (__get_token(awk) == -1)
 		{
@@ -1500,7 +1507,7 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 			nde->type = XP_AWK_NDE_GETLINE;
 			nde->next = XP_NULL;
 			nde->var = var;
-			nde->in_type = XP_AWK_GETLINE_PIPE;
+			nde->in_type = in_type;
 			nde->in = left;
 
 			left = (xp_awk_nde_t*)nde;
@@ -1508,6 +1515,12 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 		else
 		{
 			xp_awk_nde_exp_t* nde;
+
+			if (in_type == XP_AWK_GETLINE_COPROC)
+			{
+				xp_awk_clrpt (left);
+				PANIC (awk, XP_AWK_EGETLINE);
+			}
 
 			right = __parse_bitwise_xor (awk);
 			if (right == XP_NULL)
@@ -2762,7 +2775,8 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 	/* TODO: expression list............ */
 	if (!MATCH(awk,TOKEN_SEMICOLON) &&
 	    !MATCH(awk,TOKEN_GT) &&
-	    !MATCH(awk,TOKEN_BOR)) 
+	    !MATCH(awk,TOKEN_BOR) &&
+	    !MATCH(awk,TOKEN_BORAND)) 
 	{
 		args = __parse_expression (awk);
 		if (args == XP_NULL) return XP_NULL;
@@ -2775,6 +2789,10 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 	else if (MATCH(awk,TOKEN_BOR))
 	{
 		out_type = XP_AWK_PRINT_PIPE;
+	}
+	else if (MATCH(awk,TOKEN_BORAND))
+	{
+		out_type = XP_AWK_PRINT_COPROC;
 	}
 
 	if (out_type != -1)
@@ -2987,6 +3005,12 @@ static int __get_token (xp_awk_t* awk)
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LOR);
 			ADD_TOKEN_STR (awk, XP_T("||"));
+			GET_CHAR_TO (awk, c);
+		}
+		else if (c == XP_T('&'))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_BORAND);
+			ADD_TOKEN_STR (awk, XP_T("|&"));
 			GET_CHAR_TO (awk, c);
 		}
 		else
