@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.63 2006-06-18 10:53:06 bacon Exp $
+ * $Id: awk.h,v 1.64 2006-06-18 11:18:49 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -36,7 +36,9 @@ enum
 	XP_AWK_SHADING    = (1 << 3), /* allow variable shading */
 	XP_AWK_SHIFT      = (1 << 4), /* support shift operators */
 	XP_AWK_HASHSIGN   = (1 << 5), /* support comments by a hash sign */
-	XP_AWK_DBLSLASHES = (1 << 6)  /* support comments by double slashes */
+	XP_AWK_DBLSLASHES = (1 << 6), /* support comments by double slashes */
+
+	XP_AWK_EXTIO      = (1 << 7)  /* support getline and print */
 };
 
 /* run options */

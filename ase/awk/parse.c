@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.115 2006-06-18 10:53:06 bacon Exp $
+ * $Id: parse.c,v 1.116 2006-06-18 11:18:49 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -130,6 +130,7 @@ static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_in (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_bitwise_and (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_equality (xp_awk_t* awk);
@@ -195,11 +196,11 @@ static struct __kwent __kwtab[] =
 	{ XP_T("return"),   TOKEN_RETURN,   0 },
 	{ XP_T("exit"),     TOKEN_EXIT,     0 },
 	{ XP_T("delete"),   TOKEN_DELETE,   0 },
-	{ XP_T("getline"),  TOKEN_GETLINE,  0 },
+	{ XP_T("getline"),  TOKEN_GETLINE,  XP_AWK_EXTIO },
 	{ XP_T("next"),     TOKEN_NEXT,     0 },
 	{ XP_T("nextfile"), TOKEN_NEXTFILE, 0 },
-	{ XP_T("print"),    TOKEN_PRINT,    0 },
-	{ XP_T("printf"),   TOKEN_PRINTF,   0 },
+	{ XP_T("print"),    TOKEN_PRINT,    XP_AWK_EXTIO },
+	{ XP_T("printf"),   TOKEN_PRINTF,   XP_AWK_EXTIO },
 
 	{ XP_T("local"),    TOKEN_LOCAL,    XP_AWK_EXPLICIT },
 	{ XP_T("global"),   TOKEN_GLOBAL,   XP_AWK_EXPLICIT },
@@ -1343,7 +1344,7 @@ static xp_awk_nde_t* __parse_binary_expr (
 
 static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_LOR, XP_AWK_BINOP_LOR },
 		{ TOKEN_EOF, 0 }
@@ -1354,7 +1355,7 @@ static xp_awk_nde_t* __parse_logical_or (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_LAND, XP_AWK_BINOP_LAND },
 		{ TOKEN_EOF,  0 }
@@ -1366,7 +1367,7 @@ static xp_awk_nde_t* __parse_logical_and (xp_awk_t* awk)
 static xp_awk_nde_t* __parse_in (xp_awk_t* awk)
 {
 	/* 
-	__binmap_t map[] =
+	static __binmap_t map[] =
 	{
 		{ TOKEN_IN, XP_AWK_BINOP_IN },
 		{ TOKEN_EOF, 0 }
@@ -1428,7 +1429,7 @@ static xp_awk_nde_t* __parse_in (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk)
 {
-	__binmap_t map[] =
+	static __binmap_t map[] =
 	{
 		{ TOKEN_TILDE, XP_AWK_BINOP_MA },
 		{ TOKEN_NM,    XP_AWK_BINOP_NM },
@@ -1440,15 +1441,24 @@ static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 {
-/*
-	__binmap_t map[] = 
+	if (awk->opt.parse & XP_AWK_EXTIO)
 	{
-		{ TOKEN_BOR, XP_AWK_BINOP_BOR },
-		{ TOKEN_EOF, 0 }
-	};
+		return __parse_bitwise_or_with_extio (awk);
+	}
+	else
+	{
+		static __binmap_t map[] = 
+		{
+			{ TOKEN_BOR, XP_AWK_BINOP_BOR },
+			{ TOKEN_EOF, 0 }
+		};
 
-	return __parse_binary_expr (awk, map, __parse_bitwise_xor);
-*/
+		return __parse_binary_expr (awk, map, __parse_bitwise_xor);
+	}
+}
+
+static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
+{
 	xp_awk_nde_t* left, * right;
 
 	left = __parse_bitwise_xor (awk);
@@ -1555,7 +1565,7 @@ static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_BXOR, XP_AWK_BINOP_BXOR },
 		{ TOKEN_EOF,  0 }
@@ -1566,7 +1576,7 @@ static xp_awk_nde_t* __parse_bitwise_xor (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_bitwise_and (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_BAND, XP_AWK_BINOP_BAND },
 		{ TOKEN_EOF,  0 }
@@ -1577,7 +1587,7 @@ static xp_awk_nde_t* __parse_bitwise_and (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_equality (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_EQ, XP_AWK_BINOP_EQ },
 		{ TOKEN_NE, XP_AWK_BINOP_NE },
@@ -1589,7 +1599,7 @@ static xp_awk_nde_t* __parse_equality (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_relational (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_GT, XP_AWK_BINOP_GT },
 		{ TOKEN_GE, XP_AWK_BINOP_GE },
@@ -1603,7 +1613,7 @@ static xp_awk_nde_t* __parse_relational (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_shift (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_LSHIFT, XP_AWK_BINOP_LSHIFT },
 		{ TOKEN_RSHIFT, XP_AWK_BINOP_RSHIFT },
@@ -1615,7 +1625,7 @@ static xp_awk_nde_t* __parse_shift (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_additive (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_PLUS, XP_AWK_BINOP_PLUS },
 		{ TOKEN_MINUS, XP_AWK_BINOP_MINUS },
@@ -1627,7 +1637,7 @@ static xp_awk_nde_t* __parse_additive (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk)
 {
-	__binmap_t map[] = 
+	static __binmap_t map[] = 
 	{
 		{ TOKEN_MUL, XP_AWK_BINOP_MUL },
 		{ TOKEN_DIV, XP_AWK_BINOP_DIV },
@@ -3580,4 +3590,3 @@ static int __is_plain_var (xp_awk_nde_t* nde)
 	       nde->type == XP_AWK_NDE_ARG ||
 	       nde->type == XP_AWK_NDE_NAMED;
 }
-
