@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.53 2006-06-19 09:08:50 bacon Exp $ 
+ * $Id: awk.c,v 1.54 2006-06-19 15:43:27 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -225,7 +225,7 @@ xp_size_t xp_awk_getsrcline (xp_awk_t* awk)
 }
 
 
-/* TODO: redo it */
+/* TODO: imrove this... should it close io when it is overridden with a new handler??? */
 int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg)
 {
 	if (id < 0 || id >= xp_countof(awk->extio)) 
@@ -233,6 +233,7 @@ int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg)
 		awk->errnum = XP_AWK_EINVAL;
 		return -1;
 	}
+
 	awk->extio[id] = handler;
 	return 0;
 }
