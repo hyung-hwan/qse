@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.37 2006-06-19 04:38:51 bacon Exp $
+ * $Id: awk.c,v 1.38 2006-06-19 09:08:50 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -137,7 +137,7 @@ static xp_ssize_t process_data (
 static xp_ssize_t process_extio_pipe (
 	int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
-	xp_awk_cmd_t* epa = (xp_awk_cmd_t*)arg;
+	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
 
 	switch (cmd)
 	{
@@ -180,6 +180,53 @@ static xp_ssize_t process_extio_pipe (
 
 }
 
+static xp_ssize_t process_extio_file (
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+{
+	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
+
+	switch (cmd)
+	{
+		case XP_AWK_INPUT_OPEN:
+		{
+			FILE* handle;
+			handle = _tfopen (epa->name, XP_T("r"));
+			if (handle == NULL) return -1;
+			epa->handle = (void*)handle;
+			return 0;
+		}
+
+		case XP_AWK_INPUT_CLOSE:
+		{
+			fclose ((FILE*)epa->handle);
+			epa->handle = NULL;
+			return 0;
+		}
+
+		case XP_AWK_INPUT_DATA:
+		{
+			if (_fgetts (data, size, epa->handle) == XP_NULL) 
+				return 0;
+			return xp_strlen(data);
+		}
+
+		case XP_AWK_INPUT_NEXT:
+		{
+			return -1;
+		}
+
+		case XP_AWK_OUTPUT_OPEN:
+		case XP_AWK_OUTPUT_CLOSE:
+		case XP_AWK_OUTPUT_DATA:
+		case XP_AWK_OUTPUT_NEXT:
+		{
+			return -1;
+		}
+	}
+
+}
+
+
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 static int __main (int argc, char* argv[])
 #else
@@ -203,10 +250,20 @@ static int __main (int argc, xp_char_t* argv[])
 	}
 
 /* TODO: */
-	if (xp_awk_setextio (awk, process_extio_pipe, XP_NULL) == -1)
+	if (xp_awk_setextio (awk, 
+		XP_AWK_EXTIO_PIPE, process_extio_pipe, XP_NULL) == -1)
 	{
 		xp_awk_close (awk);
-		xp_printf (XP_T("Error: cannot attach source\n"));
+		xp_printf (XP_T("Error: cannot set extio pipe\n"));
+		return -1;
+	}
+
+/* TODO: */
+	if (xp_awk_setextio (awk, 
+		XP_AWK_EXTIO_FILE, process_extio_file, XP_NULL) == -1)
+	{
+		xp_awk_close (awk);
+		xp_printf (XP_T("Error: cannot set extio file\n"));
 		return -1;
 	}
 

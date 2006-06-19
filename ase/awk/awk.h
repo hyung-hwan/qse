@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.65 2006-06-19 04:38:51 bacon Exp $
+ * $Id: awk.h,v 1.66 2006-06-19 09:08:50 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -13,13 +13,13 @@ typedef struct xp_awk_t xp_awk_t;
 typedef xp_ssize_t (*xp_awk_io_t) (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 
-typedef struct xp_awk_cmd_t xp_awk_cmd_t;
+typedef struct xp_awk_extio_t xp_awk_extio_t;
 
-struct xp_awk_cmd_t 
+struct xp_awk_extio_t 
 {
 	xp_char_t* name;
 	void* handle;
-	xp_awk_cmd_t* next;
+	xp_awk_extio_t* next;
 };
 
 /* io function commands */
@@ -61,6 +61,7 @@ enum
 {
 	XP_AWK_ENOERR,         /* no error */
 	XP_AWK_ENOMEM,         /* out of memory */
+	XP_AWK_EINVAL,         /* invalid parameter */
 
 	XP_AWK_ENOSRCIO,       /* no source io handler set */
 	XP_AWK_ESRCINOPEN,
@@ -112,7 +113,20 @@ enum
 	XP_AWK_ENOTINDEXABLE,  /* not indexable value */
 	XP_AWK_EWRONGINDEX,    /* wrong index */
 	XP_AWK_EPIPE,          /* pipe operation error */
+	XP_AWK_EIOIMPL,        /* wrong implementation of user io handler */
 	XP_AWK_EINTERNAL       /* internal error */
+};
+
+/* extio types */
+enum
+{
+	/* extio types available */
+	XP_AWK_EXTIO_PIPE,
+	XP_AWK_EXTIO_COPROC,
+	XP_AWK_EXTIO_FILE,
+
+	/* reserved for internal use only */
+	XP_AWK_EXTIO_NUM
 };
 
 #ifdef __cplusplus
@@ -132,7 +146,7 @@ void xp_awk_setrunopt (xp_awk_t* awk, int opt);
 int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg);
 int xp_awk_detsrc (xp_awk_t* awk);
 
-int xp_awk_setextio (xp_awk_t* awk, xp_awk_io_t io, void* arg);
+int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg);
 
 xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
 /* TODO: xp_awk_parse (xp_awk_t* awk, xp_awk_io_t src, void* arg)??? */

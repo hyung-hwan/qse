@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.16 2006-06-19 04:38:51 bacon Exp $
+ * $Id: awk_i.h,v 1.17 2006-06-19 09:08:50 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -111,12 +111,7 @@ struct xp_awk_t
 		xp_size_t column;
 	} lex;
 
-	struct
-	{
-		xp_awk_io_t pipe;
-		xp_awk_io_t coproc;
-		xp_awk_io_t file;
-	} extio;
+	xp_awk_io_t extio[XP_AWK_EXTIO_NUM];
 
 	/* token */
 	struct 
@@ -168,17 +163,20 @@ struct xp_awk_run_t
 
 	struct
 	{
-		xp_awk_cmd_t* incmd;
-		xp_awk_cmd_t* iocmd;
-		xp_awk_cmd_t* outcmd;
-		/*xp_awk_infile_t* infile;*/
+		xp_awk_extio_t* in_pipe;
+		xp_awk_extio_t* in_file;
+		/*
+		xp_awk_extio_t* out_pipe;
+		xp_awk_extio_t* out_file;
+		xp_awk_extio_t* coproc;
+		*/
 	} extio;
 
 	int opt;
 	int errnum;
 
-	xp_awk_tree_t* tree;
-	/*xp_size_t nglobals;*/
+	/*xp_awk_tree_t* tree;
+	xp_size_t nglobals;*/
 	xp_awk_t* awk;
 };
 
