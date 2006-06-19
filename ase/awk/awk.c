@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.51 2006-06-18 13:43:28 bacon Exp $ 
+ * $Id: awk.c,v 1.52 2006-06-19 04:38:51 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -224,3 +224,12 @@ xp_size_t xp_awk_getsrcline (xp_awk_t* awk)
 {
 	return awk->token.line;
 }
+
+
+/* TODO: redo it */
+int xp_awk_setextio (xp_awk_t* awk, xp_awk_io_t io, void* arg)
+{
+	awk->extio.pipe = io;
+	return 0;
+}
+

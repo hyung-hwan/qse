@@ -1,11 +1,11 @@
 /*
- * $Id: awk.c,v 1.36 2006-06-18 13:43:28 bacon Exp $
+ * $Id: awk.c,v 1.37 2006-06-19 04:38:51 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef XP_CHAR_IS_CHAR
+#ifdef XP_CHAR_IS_WCHAR
 #include <wchar.h>
 #endif
 
@@ -14,11 +14,17 @@
 #include <xp/bas/string.h>
 #endif
 
+#ifdef _WIN32
+#include <tchar.h>
+#endif
+
 #ifdef __STAND_ALONE
 	#define xp_printf xp_awk_printf
 	extern int xp_awk_printf (const xp_char_t* fmt, ...); 
 	#define xp_strcmp xp_awk_strcmp
 	extern int xp_awk_strcmp (const xp_char_t* s1, const xp_char_t* s2);
+	#define xp_strlen xp_awk_strlen
+	extern int xp_awk_strlen (const xp_char_t* s);
 #endif
 
 #if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
@@ -128,6 +134,52 @@ static xp_ssize_t process_data (
 	return -1;
 }
 
+static xp_ssize_t process_extio_pipe (
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+{
+	xp_awk_cmd_t* epa = (xp_awk_cmd_t*)arg;
+
+	switch (cmd)
+	{
+		case XP_AWK_INPUT_OPEN:
+		{
+			FILE* handle;
+			handle = _tpopen (epa->name, XP_T("r"));
+			if (handle == NULL) return -1;
+			epa->handle = (void*)handle;
+			return 0;
+		}
+
+		case XP_AWK_INPUT_CLOSE:
+		{
+			fclose ((FILE*)epa->handle);
+			epa->handle = NULL;
+			return 0;
+		}
+
+		case XP_AWK_INPUT_DATA:
+		{
+			if (_fgetts (data, size, epa->handle) == XP_NULL) 
+				return 0;
+			return xp_strlen(data);
+		}
+
+		case XP_AWK_INPUT_NEXT:
+		{
+			return -1;
+		}
+
+		case XP_AWK_OUTPUT_OPEN:
+		case XP_AWK_OUTPUT_CLOSE:
+		case XP_AWK_OUTPUT_DATA:
+		case XP_AWK_OUTPUT_NEXT:
+		{
+			return -1;
+		}
+	}
+
+}
+
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 static int __main (int argc, char* argv[])
 #else
@@ -144,6 +196,14 @@ static int __main (int argc, xp_char_t* argv[])
 	}
 
 	if (xp_awk_attsrc(awk, process_source, XP_NULL) == -1) 
+	{
+		xp_awk_close (awk);
+		xp_printf (XP_T("Error: cannot attach source\n"));
+		return -1;
+	}
+
+/* TODO: */
+	if (xp_awk_setextio (awk, process_extio_pipe, XP_NULL) == -1)
 	{
 		xp_awk_close (awk);
 		xp_printf (XP_T("Error: cannot attach source\n"));

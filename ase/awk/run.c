@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.97 2006-06-18 10:53:06 bacon Exp $
+ * $Id: run.c,v 1.98 2006-06-19 04:38:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -21,7 +21,8 @@
 #define STACK_LOCAL(run,n) STACK_AT(run,3+(xp_size_t)STACK_NARGS(run)+1+(n))
 #define STACK_RETVAL(run) STACK_AT(run,2)
 #define STACK_GLOBAL(run,n) ((run)->stack[(n)])
-#define STACK_RETVAL_GLOBAL(run) ((run)->stack[(run)->nglobals+2])
+/*#define STACK_RETVAL_GLOBAL(run) ((run)->stack[(run)->nglobals+2])*/
+#define STACK_RETVAL_GLOBAL(run) ((run)->stack[(run)->tree->nglobals+2])
 
 #define EXIT_NONE      0
 #define EXIT_BREAK     1
@@ -212,7 +213,8 @@ static int __open_run (
 	run->opt = awk->opt.run;
 	run->errnum = XP_AWK_ENOERR;
 	run->tree = &awk->tree;
-	run->nglobals = awk->tree.nglobals;
+	/*run->nglobals = awk->tree.nglobals;*/
+	run->awk = awk;
 
 	run->input.buf_pos = 0;
 	run->input.buf_len = 0;
@@ -284,7 +286,9 @@ static int __run_main (xp_awk_run_t* run)
 	/* secure space for global variables */
 	saved_stack_top = run->stack_top;
 
-	nglobals = run->nglobals;
+	/*nglobals = run->nglobals;*/
+	nglobals = run->tree->nglobals;
+
 	while (nglobals > 0)
 	{
 		--nglobals;
@@ -337,14 +341,16 @@ static int __run_main (xp_awk_run_t* run)
 			/* restore the stack top in a cheesy(?) way */
 			run->stack_top = saved_stack_top;
 			/* pops off global variables in a decent way */	
-			__raw_pop_times (run, run->nglobals);
+			/*__raw_pop_times (run, run->nglobals);*/
+			__raw_pop_times (run, run->tree->nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
 
 		if (__raw_push(run,(void*)saved_stack_top) == -1) 
 		{
 			run->stack_top = saved_stack_top;
-			__raw_pop_times (run, run->nglobals);
+			/*__raw_pop_times (run, run->nglobals);*/
+			__raw_pop_times (run, run->tree->nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
 	
@@ -352,7 +358,8 @@ static int __run_main (xp_awk_run_t* run)
 		if (__raw_push(run,xp_awk_val_nil) == -1)
 		{
 			run->stack_top = saved_stack_top;
-			__raw_pop_times (run, run->nglobals);
+			/*__raw_pop_times (run, run->nglobals);*/
+			__raw_pop_times (run, run->tree->nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
 	
@@ -360,7 +367,8 @@ static int __run_main (xp_awk_run_t* run)
 		if (__raw_push(run,xp_awk_val_nil) == -1)
 		{
 			run->stack_top = saved_stack_top;
-			__raw_pop_times (run, run->nglobals);
+			/*__raw_pop_times (run, run->nglobals);*/
+			__raw_pop_times (run, run->tree->nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
 	
@@ -420,7 +428,7 @@ xp_printf (XP_T("\n"));
 	}
 
 	/* pops off the global variables */
-	nglobals = run->nglobals;
+	nglobals = run->tree->nglobals; /*run->nglobals */
 	while (nglobals > 0)
 	{
 		--nglobals;
