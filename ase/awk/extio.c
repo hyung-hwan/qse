@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.3 2006-06-18 13:43:28 bacon Exp $
+ * $Id: extio.c,v 1.4 2006-06-19 04:38:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -48,11 +48,9 @@ int xp_awk_readcmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 
 	if (p->handle == XP_NULL)
 	{
-		xp_awk_io_t pipe_io = run->awk.extio.pipe;
+		xp_awk_io_t pipe_io = run->awk->extio.pipe;
 
-		//p->handle = (void*) _tpopen (p->name, XP_T("r"));
-		p->handle = pipe_io (XP_AWK_INPUT_OPEN, p->name, XP_NULL, 0);
-		if (p->handle == NULL) 
+		if (pipe_io (XP_AWK_INPUT_OPEN, p, XP_NULL, 0) == -1)
 		{
 			/* this is treated as pipe open error.
 			 * the return value of getline should be -1
@@ -60,12 +58,28 @@ int xp_awk_readcmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 			 */
 			return -1;
 		}
+
+		if (p->handle == XP_NULL)
+		{
+			/* TODO: break the chain ... */
+
+
+			/* *errnum = XP_AWK_EEXTIO; external io handler error */
+			*errnum = XP_AWK_EINTERNAL;
+			return -1;
+		}
 	}
 
 	{
-	xp_char_t buf[1024];
-	if (_fgetts (buf, xp_countof(buf), p->handle) == XP_NULL) return 0;
-	xp_printf(XP_TEXT("%s"), buf);
+xp_char_t buf[1024];
+xp_awk_io_t pipe_io = run->awk->extio.pipe;
+
+	if (pipe_io (XP_AWK_INPUT_DATA, p, buf, xp_countof(buf)) == 0)
+	{
+		return 0;
+	}
+
+xp_printf(XP_TEXT("%s"), buf);
 	}
 
 	return 1;
@@ -79,9 +93,16 @@ int xp_awk_closecmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 	{
 		if (xp_strcmp(p->name,cmd) == 0) 
 		{
-			fclose ((FILE*)p->handle);
-			p->handle = XP_NULL;
+			xp_awk_io_t pipe_io = run->awk->extio.pipe;
 
+			if (pipe_io (XP_AWK_INPUT_CLOSE, p, XP_NULL, 0) == -1)
+			{
+				/* TODO: how to handle this... */
+				p->handle = XP_NULL;
+				return -1;
+			}
+
+			p->handle = XP_NULL;
 			//if (opt_remove_closed_cmd)
 			//{
 				if (px != XP_NULL) px->next = p->next;
@@ -90,6 +111,7 @@ int xp_awk_closecmd (xp_awk_run_t* run, const xp_char_t* cmd, int* errnum)
 				xp_free (p->name);
 				xp_free (p);
 			//}
+			return 0;
 		}
 
 		px = p;
