@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.99 2006-06-19 09:08:50 bacon Exp $
+ * $Id: run.c,v 1.100 2006-06-19 15:43:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -120,7 +120,8 @@ static xp_awk_val_t* __eval_unary (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_cnd (xp_awk_run_t* run, xp_awk_nde_t* nde);
-static xp_awk_val_t* __eval_call (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static xp_awk_val_t* __eval_bfn (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static xp_awk_val_t* __eval_ufn (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_real (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -315,15 +316,15 @@ static int __run_main (xp_awk_run_t* run)
 		};
 		static xp_awk_nde_call_t nde = 
 		{ 
-			XP_AWK_NDE_CALL, /* type */
-			XP_NULL,         /* next */
-			m_a_i_n,         /* name */
-			XP_NULL          /* args */
+			XP_AWK_NDE_UFN, /* type */
+			XP_NULL,        /* next */
+			m_a_i_n,        /* name */
+			XP_NULL         /* args */
 		};
 
 		run->exit_level = EXIT_NONE;
 
-		v = __eval_call(run,(xp_awk_nde_t*)&nde);
+		v = __eval_ufn (run, (xp_awk_nde_t*)&nde);
 		if (v == XP_NULL) n = -1;
 		else
 		{
@@ -1000,7 +1001,7 @@ static int __run_return_statement (xp_awk_run_t* run, xp_awk_nde_return_t* nde)
 		xp_awk_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
 
-		xp_awk_refupval (val); /* see __eval_call for the trick */
+		xp_awk_refupval (val); /* see __eval_ufn for the trick */
 /*xp_printf (XP_T("set return value....\n"));*/
 	}
 	
@@ -1065,7 +1066,8 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		__eval_incpre,
 		__eval_incpst,
 		__eval_cnd,
-		__eval_call,
+		__eval_bfn,
+		__eval_ufn,
 		__eval_int,
 		__eval_real,
 		__eval_str,
@@ -2528,7 +2530,13 @@ static xp_awk_val_t* __eval_cnd (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	return v;
 }
 
-static xp_awk_val_t* __eval_call (xp_awk_run_t* run, xp_awk_nde_t* nde)
+static xp_awk_val_t* __eval_bfn (xp_awk_run_t* run, xp_awk_nde_t* nde)
+{
+	xp_printf (XP_T("__eval_bfn not implemented properly....\n"));
+	PANIC (run, XP_AWK_EINTERNAL);
+}
+
+static xp_awk_val_t* __eval_ufn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_func_t* func;
 	xp_awk_pair_t* pair;
@@ -2540,7 +2548,7 @@ static xp_awk_val_t* __eval_call (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	int n;
 
 /*xp_printf (XP_T(".....__eval_call\n"));*/
-	pair = xp_awk_map_get (&run->awk->tree.funcs, call->name);
+	pair = xp_awk_map_get (&run->awk->tree.funcs, call->what.name);
 	if (pair == XP_NULL) PANIC (run, XP_AWK_ENOSUCHFUNC);
 
 	func = (xp_awk_func_t*)pair->val;

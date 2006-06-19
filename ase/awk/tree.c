@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.54 2006-06-18 10:53:06 bacon Exp $
+ * $Id: tree.c,v 1.55 2006-06-19 15:43:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -339,10 +339,19 @@ static int __print_expression (xp_awk_nde_t* nde)
 			break;
 		}
 
-		case XP_AWK_NDE_CALL:
+		case XP_AWK_NDE_BFN:
 		{
 			xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)nde;
-			xp_printf (XP_T("%s ("), px->name);
+			xp_printf (XP_T("%s ("), px->what.bfn->name);
+			if (__print_expression_list (px->args) == -1) return -1;
+			xp_printf (XP_T(")"));
+			break;
+		}
+
+		case XP_AWK_NDE_UFN:
+		{
+			xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)nde;
+			xp_printf (XP_T("%s ("), px->what.name);
 			if (__print_expression_list (px->args) == -1) return -1;
 			xp_printf (XP_T(")"));
 			break;
@@ -912,10 +921,19 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 				break;
 			}
 
-			case XP_AWK_NDE_CALL:
+			case XP_AWK_NDE_BFN:
 			{
 				xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)p;
-				xp_free (px->name);
+				/* xp_free (px->what.bfn); */
+				xp_awk_clrpt (px->args);
+				xp_free (p);
+				break;
+			}
+
+			case XP_AWK_NDE_UFN:
+			{
+				xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)p;
+				xp_free (px->what.name);
 				xp_awk_clrpt (px->args);
 				xp_free (p);
 				break;

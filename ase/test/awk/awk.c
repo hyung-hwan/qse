@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.38 2006-06-19 09:08:50 bacon Exp $
+ * $Id: awk.c,v 1.39 2006-06-19 15:43:27 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -176,8 +176,12 @@ static xp_ssize_t process_extio_pipe (
 		{
 			return -1;
 		}
-	}
 
+		default:
+		{
+			return -1;
+		}
+	}
 }
 
 static xp_ssize_t process_extio_file (
@@ -219,6 +223,11 @@ static xp_ssize_t process_extio_file (
 		case XP_AWK_OUTPUT_CLOSE:
 		case XP_AWK_OUTPUT_DATA:
 		case XP_AWK_OUTPUT_NEXT:
+		{
+			return -1;
+		}
+
+		default:
 		{
 			return -1;
 		}

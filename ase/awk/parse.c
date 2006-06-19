@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.116 2006-06-18 11:18:49 bacon Exp $
+ * $Id: parse.c,v 1.117 2006-06-19 15:43:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -145,7 +145,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk);
 
 static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
-static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name);
+static xp_awk_nde_t* __parse_fncall (
+	xp_awk_t* awk, xp_char_t* name, xp_awk_bfn_t* bfn);
 static xp_awk_nde_t* __parse_if (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_while (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_for (xp_awk_t* awk);
@@ -2043,26 +2044,17 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	{
 		xp_awk_nde_t* nde;
 
+		xp_free (name_dup);	
 		if (!MATCH(awk,TOKEN_LPAREN))
 		{
 			/* built-in function should be in the form 
 		 	 * of the function call */
-			xp_free (name_dup);	
 			PANIC (awk, XP_AWK_ELPAREN);
 		}
 
-		/* bfn->handler... */
-		nde = __parse_funcall (awk, name_dup);
-		if (nde == XP_NULL) xp_free (name_dup);
+		nde = __parse_fncall (awk, XP_NULL, bfn);
 		return (xp_awk_nde_t*)nde;
 	}
-
-	/* TODO: user-defined functions */
-	/*
-	if (__is_ufname (name_dup))
-	{
-	}
-	*/
 
 	/* now we know that name_dup is a normal identifier. */
 	if (MATCH(awk,TOKEN_LBRACK)) 
@@ -2076,7 +2068,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	{
 		/* function call */
 		xp_awk_nde_t* nde;
-		nde = __parse_funcall (awk, name_dup);
+		nde = __parse_fncall (awk, name_dup, XP_NULL);
 		if (nde == XP_NULL) xp_free (name_dup);
 		return (xp_awk_nde_t*)nde;
 	}	
@@ -2271,7 +2263,8 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 	PANIC (awk, XP_AWK_EUNDEF);
 }
 
-static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
+static xp_awk_nde_t* __parse_fncall (
+	xp_awk_t* awk, xp_char_t* name, xp_awk_bfn_t* bfn)
 {
 	xp_awk_nde_t* head, * curr, * nde;
 	xp_awk_nde_call_t* call;
@@ -2336,11 +2329,22 @@ static xp_awk_nde_t* __parse_funcall (xp_awk_t* awk, xp_char_t* name)
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
-	call->type = XP_AWK_NDE_CALL;
-	call->next = XP_NULL;
-	call->name = name;
-	call->args = head;
-	call->nargs = nargs;
+	if (bfn != XP_NULL)
+	{
+		call->type = XP_AWK_NDE_BFN;
+		call->next = XP_NULL;
+		call->what.bfn = bfn; 
+		call->args = head;
+		call->nargs = nargs;
+	}
+	else
+	{
+		call->type = XP_AWK_NDE_UFN;
+		call->next = XP_NULL;
+		call->what.name = name; 
+		call->args = head;
+		call->nargs = nargs;
+	}
 
 	return (xp_awk_nde_t*)call;
 }
