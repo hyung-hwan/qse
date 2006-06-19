@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.20 2006-06-18 10:53:06 bacon Exp $
+ * $Id: err.c,v 1.21 2006-06-19 09:08:50 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -15,6 +15,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
  	{
 		XP_T("no error"),
 		XP_T("out of memory"),
+		XP_T("invalid parameter"),
 
 		XP_T("no source io handler set"),
 		XP_T("cannot open source input"),
@@ -65,6 +66,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("value not indexable"),
 		XP_T("wrong index value"),
 		XP_T("pipe operation error"),
+		XP_T("wrong implementation of user-defined io handler"),
 
 		XP_T("internal error that should never have happened")
 	};

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.52 2006-06-19 04:38:51 bacon Exp $ 
+ * $Id: awk.c,v 1.53 2006-06-19 09:08:50 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -14,6 +14,7 @@ static void __free_func (void* awk, void* func);
 xp_awk_t* xp_awk_open (void)
 {	
 	xp_awk_t* awk;
+	xp_size_t i;
 
 	awk = (xp_awk_t*) xp_malloc (xp_sizeof(xp_awk_t));
 	if (awk == XP_NULL) return XP_NULL;
@@ -84,9 +85,7 @@ xp_awk_t* xp_awk_open (void)
 	awk->lex.line = 1;
 	awk->lex.column = 1;
 
-	awk->extio.pipe = XP_NULL;
-	awk->extio.coproc = XP_NULL;
-	awk->extio.file = XP_NULL;
+	for (i = 0; i < xp_countof(awk->extio); i++) awk->extio[i] = XP_NULL;
 
 	return awk;
 }
@@ -227,9 +226,14 @@ xp_size_t xp_awk_getsrcline (xp_awk_t* awk)
 
 
 /* TODO: redo it */
-int xp_awk_setextio (xp_awk_t* awk, xp_awk_io_t io, void* arg)
+int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg)
 {
-	awk->extio.pipe = io;
+	if (id < 0 || id >= xp_countof(awk->extio)) 
+	{
+		awk->errnum = XP_AWK_EINVAL;
+		return -1;
+	}
+	awk->extio[id] = handler;
 	return 0;
 }
 
