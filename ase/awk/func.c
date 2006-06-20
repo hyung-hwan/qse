@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.1 2006-06-16 14:31:42 bacon Exp $
+ * $Id: func.c,v 1.2 2006-06-20 15:27:50 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -9,17 +9,13 @@
 #include <xp/bas/string.h>
 #endif
 
-enum
-{
-	BFN_SYSTEM,
-	BFN_CLOSE
-};
+static int __bfn_close (void* run);
 
 static xp_awk_bfn_t __bfn[] = 
 {
-	{ XP_T("system"),  BFN_SYSTEM,   0, 1, 1, XP_NULL },
-	{ XP_T("close"),   BFN_CLOSE,    0, 1, 2, XP_NULL },
-	{ XP_NULL,         0,            0, 0, 0, XP_NULL }
+	{ XP_T("system"), 0,            1, 1, XP_NULL },
+	{ XP_T("close"),  XP_AWK_EXTIO, 1, 2, __bfn_close },
+	{ XP_NULL,        0,            0, 0, XP_NULL }
 };
 
 xp_awk_bfn_t* xp_awk_getbfn (const xp_char_t* name)
@@ -33,4 +29,20 @@ xp_awk_bfn_t* xp_awk_getbfn (const xp_char_t* name)
 	}
 
 	return XP_NULL;
+}
+
+static int __bfn_close (void* run)
+{
+	xp_size_t nargs, i;
+       
+	nargs = xp_awk_getnargs (run);
+	for (i = 0; i < nargs; i++)
+	{
+		xp_printf (XP_T("arg %d => "), (int)i);
+		xp_awk_printval (xp_awk_getarg (run, i));
+		xp_printf (XP_T("\n"));
+	}
+
+	xp_awk_setretval (run, xp_awk_makeintval(run,10));
+	return 0;
 }

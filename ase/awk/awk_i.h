@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.18 2006-06-19 15:43:27 bacon Exp $
+ * $Id: awk_i.h,v 1.19 2006-06-20 15:27:50 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -64,7 +64,7 @@ run with run_stack
 struct xp_awk_tree_t
 {
 	xp_size_t nglobals;
-	xp_awk_map_t funcs;
+	xp_awk_map_t afns; /* awk function map */
 	xp_awk_nde_t* begin;
 	xp_awk_nde_t* end;
 	xp_awk_chain_t* chain;

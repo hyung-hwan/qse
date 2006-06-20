@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.54 2006-06-19 15:43:27 bacon Exp $ 
+ * $Id: awk.c,v 1.55 2006-06-20 15:27:50 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -9,7 +9,7 @@
 #include <xp/bas/assert.h>
 #endif
 
-static void __free_func (void* awk, void* func);
+static void __free_afn (void* awk, void* afn);
 
 xp_awk_t* xp_awk_open (void)
 {	
@@ -27,7 +27,7 @@ xp_awk_t* xp_awk_open (void)
 
 	/* TODO: initial map size?? */
 	if (xp_awk_map_open (
-		&awk->tree.funcs, awk, 256, __free_func) == XP_NULL) 
+		&awk->tree.afns, awk, 256, __free_afn) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_free (awk);
@@ -37,7 +37,7 @@ xp_awk_t* xp_awk_open (void)
 	if (xp_awk_tab_open (&awk->parse.globals) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
-		xp_awk_map_close (&awk->tree.funcs);
+		xp_awk_map_close (&awk->tree.afns);
 		xp_free (awk);
 		return XP_NULL;	
 	}
@@ -45,7 +45,7 @@ xp_awk_t* xp_awk_open (void)
 	if (xp_awk_tab_open (&awk->parse.locals) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
-		xp_awk_map_close (&awk->tree.funcs);
+		xp_awk_map_close (&awk->tree.afns);
 		xp_awk_tab_close (&awk->parse.globals);
 		xp_free (awk);
 		return XP_NULL;	
@@ -54,7 +54,7 @@ xp_awk_t* xp_awk_open (void)
 	if (xp_awk_tab_open (&awk->parse.params) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
-		xp_awk_map_close (&awk->tree.funcs);
+		xp_awk_map_close (&awk->tree.afns);
 		xp_awk_tab_close (&awk->parse.globals);
 		xp_awk_tab_close (&awk->parse.locals);
 		xp_free (awk);
@@ -96,7 +96,7 @@ int xp_awk_close (xp_awk_t* awk)
 
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
-	xp_awk_map_close (&awk->tree.funcs);
+	xp_awk_map_close (&awk->tree.afns);
 	xp_awk_tab_close (&awk->parse.globals);
 	xp_awk_tab_close (&awk->parse.locals);
 	xp_awk_tab_close (&awk->parse.params);
@@ -121,7 +121,7 @@ void xp_awk_clear (xp_awk_t* awk)
 
 	/* clear parse trees */	
 	awk->tree.nglobals = 0;	
-	xp_awk_map_clear (&awk->tree.funcs);
+	xp_awk_map_clear (&awk->tree.afns);
 
 	if (awk->tree.begin != XP_NULL) 
 	{
@@ -208,9 +208,9 @@ int xp_awk_detsrc (xp_awk_t* awk)
 	return 0;
 }
 
-static void __free_func (void* owner, void* func)
+static void __free_afn (void* owner, void* afn)
 {
-	xp_awk_func_t* f = (xp_awk_func_t*)func;
+	xp_awk_afn_t* f = (xp_awk_afn_t*)afn;
 
 	/* f->name doesn't have to be freed */
 	/*xp_free (f->name);*/

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.66 2006-06-19 09:08:50 bacon Exp $
+ * $Id: awk.h,v 1.67 2006-06-20 15:27:50 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -14,6 +14,7 @@ typedef xp_ssize_t (*xp_awk_io_t) (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 
 typedef struct xp_awk_extio_t xp_awk_extio_t;
+typedef struct xp_awk_val_t xp_awk_val_t;
 
 struct xp_awk_extio_t 
 {
@@ -152,6 +153,11 @@ xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
 /* TODO: xp_awk_parse (xp_awk_t* awk, xp_awk_io_t src, void* arg)??? */
 int xp_awk_parse (xp_awk_t* awk);
 int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg);
+
+/* functions to access internal stack structure */
+xp_size_t xp_awk_getnargs (void* run);
+xp_awk_val_t* xp_awk_getarg (void* run, xp_size_t idx);
+void xp_awk_setretval (void* run, xp_awk_val_t* val);
 
 /* utility functions exported by awk.h */
 xp_long_t xp_awk_strtolong (

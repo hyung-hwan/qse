@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.117 2006-06-19 15:43:27 bacon Exp $
+ * $Id: parse.c,v 1.118 2006-06-20 15:27:50 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -281,19 +281,19 @@ static struct __kwent __bvtab[] =
 #endif
 static int __dump_func (xp_awk_pair_t* pair, void* arg)
 {
-	xp_awk_func_t* func = (xp_awk_func_t*)pair->val;
+	xp_awk_afn_t* afn = (xp_awk_afn_t*)pair->val;
 	xp_size_t i;
 
-	xp_assert (xp_strcmp(pair->key, func->name) == 0);
-	xp_printf (XP_T("function %s ("), func->name);
-	for (i = 0; i < func->nargs; ) 
+	xp_assert (xp_strcmp(pair->key, afn->name) == 0);
+	xp_printf (XP_T("function %s ("), afn->name);
+	for (i = 0; i < afn->nargs; ) 
 	{
 		xp_printf (XP_T("__arg%lu"), (unsigned long)i++);
-		if (i >= func->nargs) break;
+		if (i >= afn->nargs) break;
 		xp_printf (XP_T(", "));
 	}
 	xp_printf (XP_T(")\n"));
-	xp_awk_prnpt (func->body);
+	xp_awk_prnpt (afn->body);
 	xp_printf (XP_T("\n"));
 
 	return 0;
@@ -315,7 +315,7 @@ static void __dump (xp_awk_t* awk)
 		xp_printf (XP_T("__global%lu;\n\n"), (unsigned long)i);
 	}
 
-	xp_awk_map_walk (&awk->tree.funcs, __dump_func, XP_NULL);
+	xp_awk_map_walk (&awk->tree.afns, __dump_func, XP_NULL);
 
 	if (awk->tree.begin != XP_NULL) 
 	{
@@ -480,7 +480,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	xp_char_t* name;
 	xp_char_t* name_dup;
 	xp_awk_nde_t* body;
-	xp_awk_func_t* func;
+	xp_awk_afn_t* afn;
 	xp_size_t nargs;
 	xp_awk_pair_t* pair;
 	int n;
@@ -496,7 +496,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	}
 
 	name = XP_STR_BUF(&awk->token.name);
-	if (xp_awk_map_get(&awk->tree.funcs, name) != XP_NULL) 
+	if (xp_awk_map_get(&awk->tree.afns, name) != XP_NULL) 
 	{
 		/* the function is defined previously */
 		PANIC (awk, XP_AWK_EDUPFUNC);
@@ -569,7 +569,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			{
 				/* check if a parameter conflicts with a function */
 				if (xp_strcmp(name_dup, param) == 0 ||
-				    xp_awk_map_get(&awk->tree.funcs, param) != XP_NULL) 
+				    xp_awk_map_get(&awk->tree.afns, param) != XP_NULL) 
 				{
 					xp_free (name_dup);
 					xp_awk_tab_clear (&awk->parse.params);
@@ -659,31 +659,31 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	/* parameter names are not required anymore. clear them */
 	xp_awk_tab_clear (&awk->parse.params);
 
-	func = (xp_awk_func_t*) xp_malloc (xp_sizeof(xp_awk_func_t));
-	if (func == XP_NULL) 
+	afn = (xp_awk_afn_t*) xp_malloc (xp_sizeof(xp_awk_afn_t));
+	if (afn == XP_NULL) 
 	{
 		xp_free (name_dup);
 		xp_awk_clrpt (body);
 		return XP_NULL;
 	}
 
-	func->name = XP_NULL; /* function name set below */
-	func->nargs = nargs;
-	func->body  = body;
+	afn->name = XP_NULL; /* function name set below */
+	afn->nargs = nargs;
+	afn->body  = body;
 
-	n = xp_awk_map_putx (&awk->tree.funcs, name_dup, func, &pair);
+	n = xp_awk_map_putx (&awk->tree.afns, name_dup, afn, &pair);
 	if (n < 0)
 	{
 		xp_free (name_dup);
 		xp_awk_clrpt (body);
-		xp_free (func);
+		xp_free (afn);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
 	/* duplicate functions should have been detected previously */
 	xp_assert (n != 0); 
 
-	func->name = pair->key; /* do some trick to save a string.  */
+	afn->name = pair->key; /* do some trick to save a string.  */
 	xp_free (name_dup);
 
 	return body;
@@ -896,7 +896,7 @@ static xp_awk_t* __collect_globals (xp_awk_t* awk)
 		if (awk->opt.parse & XP_AWK_UNIQUE) 
 		{
 			/* check if it conflict with a function name */
-			if (xp_awk_map_get(&awk->tree.funcs, global) != XP_NULL) 
+			if (xp_awk_map_get(&awk->tree.afns, global) != XP_NULL) 
 			{
 				PANIC (awk, XP_AWK_EDUPNAME);
 			}
@@ -949,7 +949,7 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 		if (awk->opt.parse & XP_AWK_UNIQUE) 
 		{
 			/* check if it conflict with a function name */
-			if (xp_awk_map_get(&awk->tree.funcs, local) != XP_NULL) 
+			if (xp_awk_map_get(&awk->tree.afns, local) != XP_NULL) 
 			{
 				PANIC (awk, XP_AWK_EDUPNAME);
 			}

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.46 2006-06-19 15:43:27 bacon Exp $
+ * $Id: tree.h,v 1.47 2006-06-20 15:27:50 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -72,7 +72,7 @@ enum
 	XP_AWK_PRINT_FILE
 };
 
-typedef struct xp_awk_func_t xp_awk_func_t;
+typedef struct xp_awk_afn_t xp_awk_afn_t;
 
 typedef struct xp_awk_nde_t           xp_awk_nde_t;
 
@@ -102,7 +102,7 @@ typedef struct xp_awk_nde_exit_t      xp_awk_nde_exit_t;
 typedef struct xp_awk_nde_next_t      xp_awk_nde_next_t;
 typedef struct xp_awk_nde_nextfile_t  xp_awk_nde_nextfile_t;
 
-struct xp_awk_func_t
+struct xp_awk_afn_t
 {
 	xp_char_t* name;
 	xp_size_t nargs;
