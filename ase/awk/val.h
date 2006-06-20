@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.22 2006-04-30 18:05:07 bacon Exp $
+ * $Id: val.h,v 1.23 2006-06-20 15:27:50 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -19,7 +19,6 @@ enum
 	XP_AWK_VAL_MAP  = 5
 };
 
-typedef struct xp_awk_val_t      xp_awk_val_t;
 typedef struct xp_awk_val_nil_t  xp_awk_val_nil_t;
 typedef struct xp_awk_val_int_t  xp_awk_val_int_t;
 typedef struct xp_awk_val_real_t xp_awk_val_real_t;

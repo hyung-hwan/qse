@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.100 2006-06-19 15:43:27 bacon Exp $
+ * $Id: run.c,v 1.101 2006-06-20 15:27:50 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -15,7 +15,7 @@
 
 #define STACK_INCREMENT 512
 
-#define STACK_AT(run,n) ((run)->stack[run->stack_base+(n)])
+#define STACK_AT(run,n) ((run)->stack[(run)->stack_base+(n)])
 #define STACK_NARGS(run) (STACK_AT(run,3))
 #define STACK_ARG(run,n) STACK_AT(run,3+1+(n))
 #define STACK_LOCAL(run,n) STACK_AT(run,3+(xp_size_t)STACK_NARGS(run)+1+(n))
@@ -120,8 +120,12 @@ static xp_awk_val_t* __eval_unary (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_cnd (xp_awk_run_t* run, xp_awk_nde_t* nde);
+
 static xp_awk_val_t* __eval_bfn (xp_awk_run_t* run, xp_awk_nde_t* nde);
-static xp_awk_val_t* __eval_ufn (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static xp_awk_val_t* __eval_afn (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static xp_awk_val_t* __eval_call (
+	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_awk_afn_t* afn);
+
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_real (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -157,6 +161,25 @@ static int __printval (xp_awk_pair_t* pair, void* arg)
 	xp_awk_printval ((xp_awk_val_t*)pair->val);
 	xp_printf (XP_T("\n"));
 	return 0;
+}
+
+xp_size_t xp_awk_getnargs (void* run)
+{
+	return (xp_size_t) STACK_NARGS ((xp_awk_run_t*)run);
+}
+
+xp_awk_val_t* xp_awk_getarg (void* run, xp_size_t idx)
+{
+	return STACK_ARG ((xp_awk_run_t*)run, idx);
+}
+
+void xp_awk_setretval (void* run, xp_awk_val_t* val)
+{
+	xp_awk_run_t* r = (xp_awk_run_t*)run;
+	xp_awk_refdownval (r, STACK_RETVAL(r));
+	STACK_RETVAL(r) = val;
+	/* should use the same trick as __run_return_statement */
+	xp_awk_refupval (val); 
 }
 
 int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg)
@@ -324,7 +347,7 @@ static int __run_main (xp_awk_run_t* run)
 
 		run->exit_level = EXIT_NONE;
 
-		v = __eval_ufn (run, (xp_awk_nde_t*)&nde);
+		v = __eval_afn (run, (xp_awk_nde_t*)&nde);
 		if (v == XP_NULL) n = -1;
 		else
 		{
@@ -1000,8 +1023,7 @@ static int __run_return_statement (xp_awk_run_t* run, xp_awk_nde_return_t* nde)
 
 		xp_awk_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
-
-		xp_awk_refupval (val); /* see __eval_ufn for the trick */
+		xp_awk_refupval (val); /* see __eval_call for the trick */
 /*xp_printf (XP_T("set return value....\n"));*/
 	}
 	
@@ -1067,7 +1089,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		__eval_incpst,
 		__eval_cnd,
 		__eval_bfn,
-		__eval_ufn,
+		__eval_afn,
 		__eval_int,
 		__eval_real,
 		__eval_str,
@@ -2532,33 +2554,39 @@ static xp_awk_val_t* __eval_cnd (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_bfn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_printf (XP_T("__eval_bfn not implemented properly....\n"));
-	PANIC (run, XP_AWK_EINTERNAL);
+	return __eval_call (run, nde, XP_NULL);
 }
 
-static xp_awk_val_t* __eval_ufn (xp_awk_run_t* run, xp_awk_nde_t* nde)
+static xp_awk_val_t* __eval_afn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_awk_func_t* func;
-	xp_awk_pair_t* pair;
-	xp_awk_nde_t* p;
-	xp_size_t nargs, i;
-	xp_awk_val_t* v;
-	xp_size_t saved_stack_top;
 	xp_awk_nde_call_t* call = (xp_awk_nde_call_t*)nde;
-	int n;
+	xp_awk_afn_t* afn;
+	xp_awk_pair_t* pair;
 
-/*xp_printf (XP_T(".....__eval_call\n"));*/
-	pair = xp_awk_map_get (&run->awk->tree.funcs, call->what.name);
+	pair = xp_awk_map_get (&run->awk->tree.afns, call->what.name);
 	if (pair == XP_NULL) PANIC (run, XP_AWK_ENOSUCHFUNC);
 
-	func = (xp_awk_func_t*)pair->val;
-	xp_assert (func != XP_NULL);
+	afn = (xp_awk_afn_t*)pair->val;
+	xp_assert (afn != XP_NULL);
 
-	if (call->nargs > func->nargs)
+	if (call->nargs > afn->nargs)
 	{
 		/* TODO: is this correct? what if i want to allow arbitarary numbers of arguments? */
 		PANIC (run, XP_AWK_ETOOMANYARGS);
 	}
+
+	return __eval_call (run, nde, afn);
+}
+
+static xp_awk_val_t* __eval_call (
+	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_awk_afn_t* afn)
+{
+	xp_awk_nde_call_t* call = (xp_awk_nde_call_t*)nde;
+	xp_size_t saved_stack_top;
+	xp_size_t nargs, i;
+	xp_awk_nde_t* p;
+	xp_awk_val_t* v;
+	int n;
 
 	/* 
 	 * ---------------------
@@ -2684,26 +2712,31 @@ static xp_awk_val_t* __eval_ufn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	xp_assert (nargs == call->nargs);
 
-	while (nargs < func->nargs)
+	if (afn != XP_NULL)
 	{
-		/* push as many nils as the number of missing actual arguments */
-		if (__raw_push(run,xp_awk_val_nil) == -1)
+		/* normal awk function */
+
+		while (nargs < afn->nargs)
 		{
-			while (nargs > 0)
+			/* push as many nils as the number of missing actual arguments */
+			if (__raw_push(run,xp_awk_val_nil) == -1)
 			{
-/* TODO: test this portion. */
-				--nargs;
-				xp_awk_refdownval (run, STACK_ARG(run,nargs));
+				while (nargs > 0)
+				{
+					/* TODO: test this portion. */
+					--nargs;
+					xp_awk_refdownval (run, STACK_ARG(run,nargs));
+					__raw_pop (run);
+				}	
+
 				__raw_pop (run);
-			}	
+				__raw_pop (run);
+				__raw_pop (run);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 
-			__raw_pop (run);
-			__raw_pop (run);
-			__raw_pop (run);
-			PANIC (run, XP_AWK_ENOMEM);
+			nargs++;
 		}
-
-		nargs++;
 	}
 
 	run->stack_base = saved_stack_top;
@@ -2711,8 +2744,22 @@ static xp_awk_val_t* __eval_ufn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	
 /*xp_printf (XP_T("running function body\n")); */
 
-	xp_assert (func->body->type == XP_AWK_NDE_BLK);
-	n = __run_block(run,(xp_awk_nde_blk_t*)func->body);
+	if (afn != XP_NULL)
+	{
+		/* normal awk function */
+		xp_assert (afn->body->type == XP_AWK_NDE_BLK);
+		n = __run_block(run,(xp_awk_nde_blk_t*)afn->body);
+	}
+	else
+	{
+		n = 0;
+
+		/* built-in function */
+		if (call->what.bfn->handler != XP_NULL)
+		{
+			n = call->what.bfn->handler (run);
+		}
+	}
 
 /*xp_printf (XP_T("block run complete\n")); */
 
@@ -2727,9 +2774,9 @@ static xp_awk_val_t* __eval_ufn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	/* this is the trick mentioned in __run_return_statement.
 	 * adjust the reference count of the return value.
-	 * the value must not be freeed event if the reference count
-	 * is decremented to zero because its reference is increased in 
-	 * __run_return_statement regardless of its reference count. */
+	 * the value must not be freed even if the reference count
+	 * is decremented to zero because its reference has been incremented 
+	 * in __run_return_statement regardless of its reference count. */
 	v = STACK_RETVAL(run);
 	xp_awk_refdownval_nofree (run, v);
 
