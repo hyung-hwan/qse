@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.103 2006-06-21 13:52:15 bacon Exp $
+ * $Id: run.c,v 1.104 2006-06-21 15:37:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -267,6 +267,10 @@ static int __open_run (
 
 static void __close_run (xp_awk_run_t* run)
 {
+	/* close all pending eio's */
+	/* TODO: what if this operation fails? */
+	xp_awk_clearextio (run);
+
 	/* destroy run stack */
 	if (run->stack != XP_NULL)
 	{
@@ -2556,6 +2560,19 @@ static xp_awk_val_t* __eval_cnd (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_bfn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
+	xp_awk_nde_call_t* call = (xp_awk_nde_call_t*)nde;
+
+	/* built-in function */
+	if (call->nargs < call->what.bfn->min_args)
+	{
+		PANIC (run, XP_AWK_ETOOFEWARGS);
+	}
+
+	if (call->nargs > call->what.bfn->max_args)
+	{
+		PANIC (run, XP_AWK_ETOOMANYARGS);
+	}
+
 	return __eval_call (run, nde, XP_NULL);
 }
 
@@ -2716,7 +2733,7 @@ static xp_awk_val_t* __eval_call (
 
 	if (afn != XP_NULL)
 	{
-		/* normal awk function */
+		/* extra step for normal awk functions */
 
 		while (nargs < afn->nargs)
 		{
@@ -2757,6 +2774,9 @@ static xp_awk_val_t* __eval_call (
 		n = 0;
 
 		/* built-in function */
+		xp_assert (call->nargs >= call->what.bfn->min_args &&
+		           call->nargs <= call->what.bfn->max_args);
+
 		if (call->what.bfn->handler != XP_NULL)
 		{
 			n = call->what.bfn->handler (run);

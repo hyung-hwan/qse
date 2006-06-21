@@ -15,6 +15,8 @@ int xp_awk_readextio (
 int xp_awk_closeextio (
 	xp_awk_run_t* run, const xp_char_t* name, int* errnum);
 
+void xp_awk_clearextio (xp_awk_run_t* run);
+
 #ifdef __cplusplus
 }
 #endif

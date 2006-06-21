@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.118 2006-06-20 15:27:50 bacon Exp $
+ * $Id: parse.c,v 1.119 2006-06-21 15:37:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2039,7 +2039,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	}
 
 	/* what if name_dup is a built-in function name */
-	bfn = xp_awk_getbfn (name_dup);
+	bfn = xp_awk_getbfn (awk, name_dup);
 	if (bfn != XP_NULL)
 	{
 		xp_awk_nde_t* nde;
@@ -3564,10 +3564,8 @@ static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident)
 
 	for (kwp = __kwtab; kwp->name != XP_NULL; kwp++) 
 	{
-		if (kwp->valid != 0 && (awk->opt.parse & kwp->valid) == 0) 
-		{
-			continue;
-		}
+		if (kwp->valid != 0 && 
+		    (awk->opt.parse & kwp->valid) == 0) continue;
 		if (xp_strcmp(kwp->name, ident) == 0) return kwp->type;
 	}
 
