@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.67 2006-06-20 15:27:50 bacon Exp $
+ * $Id: awk.h,v 1.68 2006-06-21 11:44:55 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -158,6 +158,7 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg);
 xp_size_t xp_awk_getnargs (void* run);
 xp_awk_val_t* xp_awk_getarg (void* run, xp_size_t idx);
 void xp_awk_setretval (void* run, xp_awk_val_t* val);
+void xp_awk_seterrnum (void* run, int errnum);
 
 /* utility functions exported by awk.h */
 xp_long_t xp_awk_strtolong (

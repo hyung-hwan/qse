@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.19 2006-06-20 15:27:50 bacon Exp $
+ * $Id: awk_i.h,v 1.20 2006-06-21 11:44:55 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -10,18 +10,20 @@ typedef struct xp_awk_run_t xp_awk_run_t;
 typedef struct xp_awk_tree_t xp_awk_tree_t;
 
 #include <xp/awk/awk.h>
-#include <xp/awk/map.h>
-#include <xp/awk/val.h>
-#include <xp/awk/func.h>
-#include <xp/awk/tree.h>
-#include <xp/awk/tab.h>
-#include <xp/awk/run.h>
 
 #ifdef XP_AWK_STAND_ALONE
 #include <xp/awk/sa.h>
 #else
 #include <xp/bas/str.h>
 #endif
+
+#include <xp/awk/map.h>
+#include <xp/awk/val.h>
+#include <xp/awk/func.h>
+#include <xp/awk/tree.h>
+#include <xp/awk/tab.h>
+#include <xp/awk/run.h>
+#include <xp/awk/extio.h>
 
 #if defined(_WIN32) && defined(XP_AWK_STAND_ALONE) && defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
