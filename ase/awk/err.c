@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.21 2006-06-19 09:08:50 bacon Exp $
+ * $Id: err.c,v 1.22 2006-06-21 15:37:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -56,6 +56,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("duplicate name"),
 		XP_T("undefined identifier"),
 		XP_T("l-value required"),
+		XP_T("too few arguments"),
 		XP_T("too many arguments"),
 		XP_T("getline expected"),
 

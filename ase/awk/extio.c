@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.6 2006-06-21 13:52:15 bacon Exp $
+ * $Id: extio.c,v 1.7 2006-06-21 15:37:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -15,7 +15,13 @@ int xp_awk_readextio (
 {
 	xp_awk_extio_t* p = run->extio;
 	xp_awk_io_t handler = run->awk->extio[type];
-	xp_bool_t extio_created = xp_false;
+
+	if (handler == XP_NULL)
+	{
+		/* no io handler provided */
+		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		return -1;
+	}
 
 	while (p != XP_NULL)
 	{
@@ -44,18 +50,11 @@ int xp_awk_readextio (
 		p->type = type;
 		p->handle = XP_NULL;
 		p->next = XP_NULL;
-		extio_created = xp_true;
-	}
 
-	if (p->handle == XP_NULL)
-	{
 		if (handler (XP_AWK_INPUT_OPEN, p, XP_NULL, 0) == -1)
 		{
-			if (extio_created)
-			{
-				xp_free (p->name);
-				xp_free (p);
-			}
+			xp_free (p->name);
+			xp_free (p);
 				
 			/* TODO: set ERRNO */
 			*errnum = XP_AWK_ENOERR;
@@ -64,11 +63,8 @@ int xp_awk_readextio (
 
 		if (p->handle == XP_NULL)
 		{
-			if (extio_created)
-			{
-				xp_free (p->name);
-				xp_free (p);
-			}
+			xp_free (p->name);
+			xp_free (p);
 
 			/* wrong implementation of user io handler.
 			 * the correct io handler should set p->handle to
@@ -76,11 +72,8 @@ int xp_awk_readextio (
 			*errnum = XP_AWK_EIOIMPL;
 			return -1;
 		}
-	}
 
-	/* link it to the extio chain */
-	if (extio_created)
-	{
+		/* chain it */
 		p->next = run->extio;
 		run->extio = p;
 	}
@@ -106,30 +99,29 @@ int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 
 	while (p != XP_NULL)
 	{
-		 /* it handles the first name that matches 
+		 /* it handles the first that matches the given name
 		  * regardless of the extio type */
 		if (xp_strcmp(p->name,name) == 0) 
 		{
 			xp_awk_io_t handler = run->awk->extio[p->type];
 
-	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
-	 *       it should have more generic form than this... */
-			if (handler (XP_AWK_INPUT_CLOSE, p, XP_NULL, 0) == -1)
+			if (handler != NULL)
 			{
-				/* this is not a run-time error.*/
-				*errnum = XP_AWK_ENOERR;
-				return -1;
+	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
+	 *       it should be more generic form than this... */
+				if (handler (XP_AWK_INPUT_CLOSE, p, XP_NULL, 0) == -1)
+				{
+					/* this is not a run-time error.*/
+					*errnum = XP_AWK_ENOERR;
+					return -1;
+				}
 			}
 
-			p->handle = XP_NULL;
-			//if (opt_remove_closed_extio) // TODO:...
-			//{
-				if (px != XP_NULL) px->next = p->next;
-				else run->extio = p->next;
+			if (px != XP_NULL) px->next = p->next;
+			else run->extio = p->next;
 
-				xp_free (p->name);
-				xp_free (p);
-			//}
+			xp_free (p->name);
+			xp_free (p);
 			return 0;
 		}
 
@@ -142,39 +134,32 @@ int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 	return -1;
 }
 
-int xp_awk_clearextio (xp_awk_run_t* run, int* errnum)
+void xp_awk_clearextio (xp_awk_run_t* run)
 {
-	xp_awk_extio_t* p = run->extio;
 	xp_awk_extio_t* next;
 	xp_awk_io_t handler;
+	int n;
 
-	while (p != XP_NULL)
+	while (run->extio != XP_NULL)
 	{
-		handler = run->awk->extio[p->type];
-		next = p->next;
+		handler = run->awk->extio[run->extio->type];
+		next = run->extio->next;
 
-	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
-	 *       it should have more generic form than this... */
-		if (handler (XP_AWK_INPUT_CLOSE, p, XP_NULL, 0) == -1)
+		if (handler != XP_NULL)
 		{
-/* TODO: should it be removed from the chain???? */
-			/* this is not a run-time error.*/
-			*errnum = XP_AWK_ENOERR;
-			return -1;
+	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
+	 *       it should be more generic form than this... */
+			n = handler (XP_AWK_INPUT_CLOSE, run->extio, XP_NULL, 0);
+			if (n == -1)
+			{
+				/* TODO: 
+				 * some warning actions need to be taken */
+			}
 		}
 
-		p->handle = XP_NULL;
-		//if (opt_remove_closed_extio) // TODO:...
-		//{
-			if (px != XP_NULL) px->next = p->next;
-			else run->extio = p->next;
+		xp_free (run->extio->name);
+		xp_free (run->extio);
 
-			xp_free (p->name);
-			xp_free (p);
-		//}
-
-		p = next;
+		run->extio = next;
 	}
-
-	return 0;
 }

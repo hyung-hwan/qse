@@ -7,4 +7,10 @@ BEGIN
 	a = close ("abc");      /* close(4) */
 	//print "hey"
 	b = close ("abc");      /* close(3) */
+
+	getline x < "Makefile.cl";
+	getline y < "awk.c";
+	c = close ("Makefile.cl");
+	d = close ("awk.c");
+
 }
