@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.30 2006-05-13 16:33:07 bacon Exp $
+ * $Id: val.c,v 1.31 2006-06-21 11:44:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -299,7 +299,7 @@ xp_awk_val_t* xp_awk_cloneval (xp_awk_run_t* run, xp_awk_val_t* val)
 	return XP_NULL;
 }
 
-xp_bool_t xp_awk_boolval (xp_awk_val_t* val)
+xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
 {
 	if (val == XP_NULL) return xp_false;
 
@@ -319,6 +319,121 @@ xp_bool_t xp_awk_boolval (xp_awk_val_t* val)
 
 	xp_assert (!"should never happen - invalid value type");
 	return xp_false;
+}
+
+xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
+{
+	if (v->type == XP_AWK_VAL_INT)
+	{
+		xp_char_t* tmp;
+		xp_long_t t;
+		xp_size_t len = 0;
+
+		t = ((xp_awk_val_int_t*)v)->val; 
+		if (t == 0)
+		{
+			/* handle zero */
+			if (buf == XP_NULL)
+			{
+				tmp = xp_malloc (2 * xp_sizeof(xp_char_t));
+				if (tmp == XP_NULL)
+				{
+					*errnum = XP_AWK_ENOMEM;
+					return XP_NULL;
+				}
+
+				tmp[0] = XP_T('0');
+				tmp[1] = XP_T('\0');
+				return tmp;
+			}
+			else
+			{
+				if (xp_str_cat (buf, XP_T("0")) == (xp_size_t)-1)
+				{
+					*errnum = XP_AWK_ENOMEM;
+					return XP_NULL;
+				}
+
+				return XP_STR_BUF(buf);
+			}
+		}
+
+		/* non-zero values */
+		if (t < 0) { t = -t; len++; }
+		while (t > 0) { len++; t /= 10; }
+
+		if (buf == XP_NULL)
+		{
+			tmp = xp_malloc (len + 1 * xp_sizeof(xp_char_t));
+			if (tmp == XP_NULL)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return XP_NULL;
+			}
+
+			tmp[len] = XP_T('\0');
+		}
+		else
+		{
+			/* get the current end of the buffer */
+			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
+
+			/* extend the buffer */
+			if (xp_str_nccat (
+				buf, XP_T(' '), len) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return XP_NULL;
+			}
+		}
+
+		t = ((xp_awk_val_int_t*)v)->val; 
+		if (t < 0) t = -t;
+
+		while (t > 0) 
+		{
+			tmp[--len] = (xp_char_t)(t % 10) + XP_T('0');
+			t /= 10;
+		}
+
+		if (((xp_awk_val_int_t*)v)->val < 0) tmp[--len] = XP_T('-');
+
+		/*return (buf == XP_NULL) tmp: XP_STR_BUF(buf);*/
+		return tmp;
+	}
+
+	if (v->type == XP_AWK_VAL_STR) 
+	{
+		xp_char_t* tmp;
+
+		if (buf == XP_NULL)
+		{
+			tmp = xp_strxdup (
+				((xp_awk_val_str_t*)v)->buf, 
+				((xp_awk_val_str_t*)v)->len);
+
+			if (tmp == XP_NULL) *errnum = XP_AWK_ENOMEM;
+		}
+		else
+		{
+			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
+
+			if (xp_str_ncat (buf, 
+				((xp_awk_val_str_t*)v)->buf, 
+				((xp_awk_val_str_t*)v)->len) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				tmp = XP_NULL;
+			}
+		}
+
+		return tmp;
+	}
+
+/* TODO: process more value types */
+
+	*errnum = XP_AWK_EWRONGINDEX;
+	return XP_NULL;
 }
 
 static int __print_pair (xp_awk_pair_t* pair, void* arg)
