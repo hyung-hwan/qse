@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.102 2006-06-21 11:44:55 bacon Exp $
+ * $Id: run.c,v 1.103 2006-06-21 13:52:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -261,10 +261,7 @@ static int __open_run (
 		return -1;
 	}
 
-	/* TODO: */
-	run->extio.in_pipe = XP_NULL;
-	run->extio.in_file = XP_NULL;
-
+	run->extio = XP_NULL;
 	return 0;
 }
 
@@ -2943,9 +2940,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		}
 		xp_awk_refdownval (run, in);
 
-		n = xp_awk_readextio (
-			run, &run->extio.in_pipe, 
-			run->awk->extio[XP_AWK_EXTIO_PIPE], str, &errnum);
+		n = xp_awk_readextio (run, XP_AWK_EXTIO_PIPE, str, &errnum);
 		xp_free (str);
 
 		if (n < 0 && errnum != XP_AWK_ENOERR) PANIC (run, errnum);
@@ -2974,9 +2969,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		}
 		xp_awk_refdownval (run, in);
 
-		n = xp_awk_readextio (
-			run, &run->extio.in_file,
-			run->awk->extio[XP_AWK_EXTIO_FILE], str, &errnum);
+		n = xp_awk_readextio (run, XP_AWK_EXTIO_FILE, str, &errnum);
 		xp_free (str);
 
 		if (n < 0 && errnum != XP_AWK_ENOERR) PANIC (run, errnum);

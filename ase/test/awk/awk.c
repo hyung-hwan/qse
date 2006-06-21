@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.39 2006-06-19 15:43:27 bacon Exp $
+ * $Id: awk.c,v 1.40 2006-06-21 13:52:15 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -152,6 +152,7 @@ static xp_ssize_t process_extio_pipe (
 
 		case XP_AWK_INPUT_CLOSE:
 		{
+xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -202,6 +203,7 @@ static xp_ssize_t process_extio_file (
 
 		case XP_AWK_INPUT_CLOSE:
 		{
+xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -277,7 +279,7 @@ static int __main (int argc, xp_char_t* argv[])
 	}
 
 	xp_awk_setparseopt (awk, 
-		XP_AWK_EXPLICIT | XP_AWK_UNIQUE | 
+		XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_DBLSLASHES |
 		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | XP_AWK_EXTIO);
 
 	if (argc == 2) 

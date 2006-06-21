@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.68 2006-06-21 11:44:55 bacon Exp $
+ * $Id: awk.h,v 1.69 2006-06-21 13:52:15 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -18,6 +18,7 @@ typedef struct xp_awk_val_t xp_awk_val_t;
 
 struct xp_awk_extio_t 
 {
+	int type;
 	xp_char_t* name;
 	void* handle;
 	xp_awk_extio_t* next;
