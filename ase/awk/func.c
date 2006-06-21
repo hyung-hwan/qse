@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.3 2006-06-21 11:44:55 bacon Exp $
+ * $Id: func.c,v 1.4 2006-06-21 13:52:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -55,7 +55,6 @@ static int __bfn_close (void* run)
 		return -1;
 	}
 
-	/*
 	n = xp_awk_closeextio (run, XP_STR_BUF(&buf), &errnum);
 	if (n == -1 && errnum != XP_AWK_ENOERR)
 	{
@@ -63,9 +62,6 @@ static int __bfn_close (void* run)
 		xp_awk_seterrnum (run, errnum);
 		return -1;
 	}
-	*/
-n = -1;
-xp_printf (XP_T("closing %s\n"), XP_STR_BUF(&buf));
 
 	xp_str_close (&buf);
 

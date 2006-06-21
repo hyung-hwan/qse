@@ -10,13 +10,10 @@
 extern "C"
 #endif
 
-int xp_awk_readextio (xp_awk_run_t* run, 
-	xp_awk_extio_t** extio, xp_awk_io_t handler,
-	const xp_char_t* name, int* errnum);
-
-int xp_awk_closeextio (xp_awk_run_t* run, 
-	xp_awk_extio_t** extio, xp_awk_io_t handler,
-	const xp_char_t* name, int* errnum);
+int xp_awk_readextio (
+	xp_awk_run_t* run, int type, const xp_char_t* name, int* errnum);
+int xp_awk_closeextio (
+	xp_awk_run_t* run, const xp_char_t* name, int* errnum);
 
 #ifdef __cplusplus
 }

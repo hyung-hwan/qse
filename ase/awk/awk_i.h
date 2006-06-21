@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.20 2006-06-21 11:44:55 bacon Exp $
+ * $Id: awk_i.h,v 1.21 2006-06-21 13:52:15 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -163,16 +163,8 @@ struct xp_awk_run_t
 		xp_str_t  line;
 	} input;
 
-	struct
-	{
-		xp_awk_extio_t* in_pipe;
-		xp_awk_extio_t* in_file;
-		/*
-		xp_awk_extio_t* out_pipe;
-		xp_awk_extio_t* out_file;
-		xp_awk_extio_t* coproc;
-		*/
-	} extio;
+	/* extio chain */
+	xp_awk_extio_t* extio;
 
 	int opt;
 	int errnum;

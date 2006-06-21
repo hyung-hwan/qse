@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.5 2006-06-19 09:08:50 bacon Exp $
+ * $Id: extio.c,v 1.6 2006-06-21 13:52:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -10,16 +10,17 @@
 #include <xp/bas/memory.h>
 #endif
 
-int xp_awk_readextio (xp_awk_run_t* run, 
-	xp_awk_extio_t** extio, xp_awk_io_t handler,
-	const xp_char_t* name, int* errnum)
+int xp_awk_readextio (
+	xp_awk_run_t* run, int type, const xp_char_t* name, int* errnum)
 {
-	xp_awk_extio_t* p = *extio;
+	xp_awk_extio_t* p = run->extio;
+	xp_awk_io_t handler = run->awk->extio[type];
 	xp_bool_t extio_created = xp_false;
 
 	while (p != XP_NULL)
 	{
-		if (xp_strcmp(p->name,name) == 0) break;
+		if (p->type == type &&
+		    xp_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -40,6 +41,7 @@ int xp_awk_readextio (xp_awk_run_t* run,
 			return -1;
 		}
 
+		p->type = type;
 		p->handle = XP_NULL;
 		p->next = XP_NULL;
 		extio_created = xp_true;
@@ -79,8 +81,8 @@ int xp_awk_readextio (xp_awk_run_t* run,
 	/* link it to the extio chain */
 	if (extio_created)
 	{
-		p->next = *extio;
-		*extio = p;
+		p->next = run->extio;
+		run->extio = p;
 	}
 
 	{
@@ -98,16 +100,20 @@ xp_printf(XP_TEXT("%s"), buf);
 	return 1;
 }
 
-int xp_awk_closeextio (xp_awk_run_t* run, 
-	xp_awk_extio_t** extio, xp_awk_io_t handler,
-	const xp_char_t* name, int* errnum)
+int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 {
-	xp_awk_extio_t* p = *extio, * px = XP_NULL;
+	xp_awk_extio_t* p = run->extio, * px = XP_NULL;
 
 	while (p != XP_NULL)
 	{
+		 /* it handles the first name that matches 
+		  * regardless of the extio type */
 		if (xp_strcmp(p->name,name) == 0) 
 		{
+			xp_awk_io_t handler = run->awk->extio[p->type];
+
+	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
+	 *       it should have more generic form than this... */
 			if (handler (XP_AWK_INPUT_CLOSE, p, XP_NULL, 0) == -1)
 			{
 				/* this is not a run-time error.*/
@@ -119,7 +125,7 @@ int xp_awk_closeextio (xp_awk_run_t* run,
 			//if (opt_remove_closed_extio) // TODO:...
 			//{
 				if (px != XP_NULL) px->next = p->next;
-				else *extio = p->next;
+				else run->extio = p->next;
 
 				xp_free (p->name);
 				xp_free (p);
@@ -134,4 +140,41 @@ int xp_awk_closeextio (xp_awk_run_t* run,
 	/* this is not a run-time error */
 	*errnum = XP_AWK_ENOERR;
 	return -1;
+}
+
+int xp_awk_clearextio (xp_awk_run_t* run, int* errnum)
+{
+	xp_awk_extio_t* p = run->extio;
+	xp_awk_extio_t* next;
+	xp_awk_io_t handler;
+
+	while (p != XP_NULL)
+	{
+		handler = run->awk->extio[p->type];
+		next = p->next;
+
+	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
+	 *       it should have more generic form than this... */
+		if (handler (XP_AWK_INPUT_CLOSE, p, XP_NULL, 0) == -1)
+		{
+/* TODO: should it be removed from the chain???? */
+			/* this is not a run-time error.*/
+			*errnum = XP_AWK_ENOERR;
+			return -1;
+		}
+
+		p->handle = XP_NULL;
+		//if (opt_remove_closed_extio) // TODO:...
+		//{
+			if (px != XP_NULL) px->next = p->next;
+			else run->extio = p->next;
+
+			xp_free (p->name);
+			xp_free (p);
+		//}
+
+		p = next;
+	}
+
+	return 0;
 }
