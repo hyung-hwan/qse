@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.70 2006-06-21 15:37:51 bacon Exp $
+ * $Id: awk.h,v 1.71 2006-06-22 04:25:44 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -9,12 +9,11 @@
 #include <xp/macros.h>
 
 typedef struct xp_awk_t xp_awk_t;
+typedef struct xp_awk_val_t xp_awk_val_t;
+typedef struct xp_awk_extio_t xp_awk_extio_t;
 
 typedef xp_ssize_t (*xp_awk_io_t) (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count);
-
-typedef struct xp_awk_extio_t xp_awk_extio_t;
-typedef struct xp_awk_val_t xp_awk_val_t;
+	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t count);
 
 struct xp_awk_extio_t 
 {
@@ -27,15 +26,21 @@ struct xp_awk_extio_t
 /* io function commands */
 enum 
 {
-	XP_AWK_INPUT_OPEN   = 0,
-	XP_AWK_INPUT_CLOSE  = 1,
-	XP_AWK_INPUT_NEXT   = 2,
-	XP_AWK_INPUT_DATA   = 3,
+	XP_AWK_IO_OPEN   = 0,
+	XP_AWK_IO_CLOSE  = 1,
+	XP_AWK_IO_READ   = 2,
+	XP_AWK_IO_WRITE  = 3,
+	XP_AWK_IO_NEXT   = 4  
+};
 
-	XP_AWK_OUTPUT_OPEN  = 4,
-	XP_AWK_OUTPUT_CLOSE = 5,
-	XP_AWK_OUTPUT_NEXT  = 6,
-	XP_AWK_OUTPUT_DATA  = 7
+enum
+{
+	XP_AWK_IO_FILE_READ   = 0,
+	XP_AWK_IO_FILE_WRITE  = 1,
+	XP_AWK_IO_FILE_APPEND = 2,
+
+	XP_AWK_IO_PIPE_READ   = 0,
+	XP_AWK_IO_PIPE_WRITE  = 1
 };
 
 /* parse options */

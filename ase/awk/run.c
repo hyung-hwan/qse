@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.104 2006-06-21 15:37:51 bacon Exp $
+ * $Id: run.c,v 1.105 2006-06-22 04:25:44 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -481,7 +481,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 	xp_assert (run->txtio != XP_NULL);
 
-	n = run->txtio (XP_AWK_INPUT_OPEN, run->txtio_arg, XP_NULL, 0);
+	n = run->txtio (XP_AWK_IO_OPEN, 0, run->txtio_arg, XP_NULL, 0);
 	if (n == -1) PANIC_I (run, XP_AWK_ETXTINOPEN);
 
 	run->input.buf_pos = 0;
@@ -499,7 +499,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 		if (x == -1)
 		{
 			/* don't care about the result of input close */
-			run->txtio (XP_AWK_INPUT_CLOSE, 
+			run->txtio (XP_AWK_IO_CLOSE, 0, 
 				run->txtio_arg, XP_NULL, 0);
 			return -1;
 		}
@@ -515,13 +515,13 @@ xp_printf (XP_T("**** line [%s]\n"), XP_STR_BUF(&run->input.line));
 		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
 		{
 			/* don't care about the result of input close */
-			run->txtio (XP_AWK_INPUT_CLOSE, 
+			run->txtio (XP_AWK_IO_CLOSE, 0, 
 				run->txtio_arg, XP_NULL, 0);
 			return -1;
 		}
 	}
 
-	n = run->txtio (XP_AWK_INPUT_CLOSE, run->txtio_arg, XP_NULL, 0);
+	n = run->txtio (XP_AWK_IO_CLOSE, 0, run->txtio_arg, XP_NULL, 0);
 	if (n == -1) PANIC_I (run, XP_AWK_ETXTINCLOSE);
 
 	return 0;
@@ -1070,7 +1070,9 @@ xp_printf (XP_T("**** next NOT IMPLEMENTED...\n"));
 static int __run_nextfile_statement (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 {
 	xp_ssize_t n;
-	n = run->txtio (XP_AWK_INPUT_NEXT, run->txtio_arg, XP_NULL, 0);
+
+	/* TODO: how to pass opt properly for IO_NEXT??? -> READ? WRITE? */
+	n = run->txtio (XP_AWK_IO_NEXT, 0, run->txtio_arg, XP_NULL, 0);
 	if (n == -1) PANIC_I (run, XP_AWK_ETXTINNEXT);
 	return (n == -1)? -1: 0;
 }
@@ -3048,7 +3050,7 @@ static int __read_text_input (xp_awk_run_t* run)
 	{
 		if (run->input.buf_pos >= run->input.buf_len)
 		{
-			n = run->txtio (XP_AWK_INPUT_DATA, run->txtio_arg,
+			n = run->txtio (XP_AWK_IO_READ, 0, run->txtio_arg,
 				run->input.buf, xp_countof(run->input.buf));
 			if (n == -1) PANIC_I (run, XP_AWK_ETXTINDATA);
 			if (n == 0)

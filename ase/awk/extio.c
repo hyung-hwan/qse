@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.7 2006-06-21 15:37:51 bacon Exp $
+ * $Id: extio.c,v 1.8 2006-06-22 04:25:44 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -15,6 +15,7 @@ int xp_awk_readextio (
 {
 	xp_awk_extio_t* p = run->extio;
 	xp_awk_io_t handler = run->awk->extio[type];
+	int ioopt;
 
 	if (handler == XP_NULL)
 	{
@@ -51,7 +52,13 @@ int xp_awk_readextio (
 		p->handle = XP_NULL;
 		p->next = XP_NULL;
 
-		if (handler (XP_AWK_INPUT_OPEN, p, XP_NULL, 0) == -1)
+		if (type == XP_AWK_EXTIO_PIPE) 
+			ioopt = XP_AWK_IO_PIPE_READ;
+		else if (type == XP_AWK_EXTIO_FILE) 
+			ioopt = XP_AWK_IO_FILE_READ;
+		else ioopt = 0; /* TODO: how to handle this??? */
+
+		if (handler (XP_AWK_IO_OPEN, ioopt, p, XP_NULL, 0) == -1)
 		{
 			xp_free (p->name);
 			xp_free (p);
@@ -81,7 +88,7 @@ int xp_awk_readextio (
 	{
 xp_char_t buf[1024];
 
-	if (handler (XP_AWK_INPUT_DATA, p, buf, xp_countof(buf)) == 0)
+	if (handler (XP_AWK_IO_READ, 0, p, buf, xp_countof(buf)) == 0)
 	{
 		/* no more data. end of data stream */
 		return 0;
@@ -107,9 +114,9 @@ int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 
 			if (handler != NULL)
 			{
-	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
+	/* TODO: io command should not be XP_AWK_IO_CLOSE 
 	 *       it should be more generic form than this... */
-				if (handler (XP_AWK_INPUT_CLOSE, p, XP_NULL, 0) == -1)
+				if (handler (XP_AWK_IO_CLOSE, 0, p, XP_NULL, 0) == -1)
 				{
 					/* this is not a run-time error.*/
 					*errnum = XP_AWK_ENOERR;
@@ -149,7 +156,7 @@ void xp_awk_clearextio (xp_awk_run_t* run)
 		{
 	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
 	 *       it should be more generic form than this... */
-			n = handler (XP_AWK_INPUT_CLOSE, run->extio, XP_NULL, 0);
+			n = handler (XP_AWK_IO_CLOSE, 0, run->extio, XP_NULL, 0);
 			if (n == -1)
 			{
 				/* TODO: 
