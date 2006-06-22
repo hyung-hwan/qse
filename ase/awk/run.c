@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.105 2006-06-22 04:25:44 bacon Exp $
+ * $Id: run.c,v 1.106 2006-06-22 14:15:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1079,8 +1079,99 @@ static int __run_nextfile_statement (xp_awk_run_t* run, xp_awk_nde_nextfile_t* n
 
 static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 {
-xp_printf (XP_T("**** print NOT IMPLEMENTED...\n"));
-	return -1;
+	xp_awk_nde_print_t* p = (xp_awk_nde_print_t*)nde;
+	xp_awk_val_t* v;
+
+	if (p->out_type == XP_AWK_PRINT_PIPE)
+	{
+		xp_awk_val_t* out;
+		xp_char_t* dst;
+		int errnum, n;
+
+		out = __eval_expression (run, p->out);
+		if (out == XP_NULL) return -1;
+
+		xp_awk_refupval (out);
+		dst = xp_awk_valtostr (out, &errnum, XP_NULL);
+		if (dst == XP_NULL) 
+		{
+			xp_awk_refdownval (run, out);
+			PANIC_I (run, errnum);
+		}
+		xp_awk_refdownval (run, out);
+
+		if (p->args == XP_NULL)
+		{
+			/* TODO: get $0 ans use it for v */
+			v = xp_awk_makestrval (XP_T("$0\n"), 1);
+			if (v == XP_NULL)
+			{
+				xp_free (dst);
+				PANIC_I (run, XP_AWK_ENOMEM);
+			}
+
+			xp_awk_refupval (v);
+			n = xp_awk_writeextio (
+				run, XP_AWK_EXTIO_PIPE, dst, v, &errnum);
+			if (n < 0 && errnum != XP_AWK_ENOERR) 
+			{
+				xp_free (dst);
+				xp_awk_refdownval (run, v);
+				PANIC_I (run, errnum);
+			}
+
+			xp_awk_refdownval (run, v);
+		}
+		else
+		{
+			xp_awk_nde_t* np = p->args;
+			while (np != XP_NULL)
+			{
+				v = __eval_expression (run, np);
+				if (v == XP_NULL)
+				{
+					xp_free (dst);
+					return -1;
+				}
+				xp_awk_refupval (v);
+
+				n = xp_awk_writeextio (
+					run, XP_AWK_EXTIO_PIPE, dst, v, &errnum);
+				if (n < 0 && errnum != XP_AWK_ENOERR) 
+				{
+					xp_free (dst);
+					xp_awk_refdownval (run, v);
+					PANIC_I (run, errnum);
+				}
+
+				xp_awk_refdownval (run, v);
+				np = np->next;
+			}
+		}
+
+		xp_free (dst);
+		return 0;
+	}
+	else if (p->out_type == XP_AWK_PRINT_COPROC)
+	{
+		xp_printf (XP_T("eval_getline coprocess not properly implemented....\n"));
+		return -1;
+	}
+	else if (p->out_type == XP_AWK_PRINT_FILE)
+	{
+		xp_printf (XP_T("eval_print PRINT_FILE not properly implemented....\n"));
+		return -1;
+	}
+	else if (p->out_type == XP_AWK_PRINT_FILE_APPEND)
+	{
+		xp_printf (XP_T("eval_print PRINT_FILE_APPEND not properly implemented....\n"));
+		return -1;
+	}
+	else
+	{
+		xp_assert (!"should never happen - wrong out_type for getline");
+		PANIC_I (run, XP_AWK_EINTERNAL);
+	}
 }
 
 static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
@@ -2965,6 +3056,9 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		n = xp_awk_readextio (run, XP_AWK_EXTIO_PIPE, str, &errnum);
 		xp_free (str);
 
+		/* TODO: set the value to var if it is not null */
+		/* TODO: set $0 if var is null */
+
 		if (n < 0 && errnum != XP_AWK_ENOERR) PANIC (run, errnum);
 		return xp_awk_makeintval (run, n);
 	}
@@ -2993,6 +3087,9 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 		n = xp_awk_readextio (run, XP_AWK_EXTIO_FILE, str, &errnum);
 		xp_free (str);
+
+		/* TODO: set the value to var if it is not null */
+		/* TODO: set $0 if var is null */
 
 		if (n < 0 && errnum != XP_AWK_ENOERR) PANIC (run, errnum);
 		return xp_awk_makeintval (run, n);
