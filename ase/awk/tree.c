@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.55 2006-06-19 15:43:27 bacon Exp $
+ * $Id: tree.c,v 1.56 2006-06-22 14:15:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -79,7 +79,8 @@ static const xp_char_t* __print_outop_str[] =
 {
 	XP_T("|"),
 	XP_T("|&"),
-	XP_T(">")
+	XP_T(">"),
+	XP_T(">>")
 };
 
 static void __print_tabs (int depth);

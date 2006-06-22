@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.120 2006-06-22 04:25:44 bacon Exp $
+ * $Id: parse.c,v 1.121 2006-06-22 14:15:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2786,9 +2786,12 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 	xp_awk_nde_t* out = XP_NULL;
 	int out_type = -1;
 
-	/* TODO: expression list............ */
+	/* TODO: handle expression list, not just a single expression */
+	/* TODO: handle ambiguiouty print "1111" > "2222". is > redirection? */
+
 	if (!MATCH(awk,TOKEN_SEMICOLON) &&
 	    !MATCH(awk,TOKEN_GT) &&
+	    !MATCH(awk,TOKEN_RSHIFT) &&
 	    !MATCH(awk,TOKEN_BOR) &&
 	    !MATCH(awk,TOKEN_BORAND)) 
 	{
@@ -2799,6 +2802,10 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 	if (MATCH(awk,TOKEN_GT))
 	{
 		out_type = XP_AWK_PRINT_FILE;
+	}
+	else if (MATCH(awk,TOKEN_RSHIFT))
+	{
+		out_type = XP_AWK_PRINT_FILE_APPEND;
 	}
 	else if (MATCH(awk,TOKEN_BOR))
 	{

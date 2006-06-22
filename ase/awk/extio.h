@@ -12,6 +12,11 @@ extern "C"
 
 int xp_awk_readextio (
 	xp_awk_run_t* run, int type, const xp_char_t* name, int* errnum);
+
+int xp_awk_writeextio (
+	xp_awk_run_t* run, int type, 
+	const xp_char_t* name, xp_awk_val_t* v, int* errnum);
+
 int xp_awk_closeextio (
 	xp_awk_run_t* run, const xp_char_t* name, int* errnum);
 
