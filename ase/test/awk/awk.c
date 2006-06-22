@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.40 2006-06-21 13:52:15 bacon Exp $
+ * $Id: awk.c,v 1.41 2006-06-22 04:25:44 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -37,20 +37,20 @@
 #endif
 
 static xp_ssize_t process_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
 {
 	xp_char_t c;
 
 	switch (cmd) 
 	{
-		case XP_AWK_INPUT_OPEN:
-		case XP_AWK_INPUT_CLOSE:
-		case XP_AWK_INPUT_NEXT:
+		case XP_AWK_IO_OPEN:
+		case XP_AWK_IO_CLOSE:
+		case XP_AWK_IO_NEXT:
 		{
 			return 0;
 		}
 
-		case XP_AWK_INPUT_DATA:
+		case XP_AWK_IO_READ:
 		{
 			if (size <= 0) return -1;
 		#ifdef XP_CHAR_IS_MCHAR
@@ -63,17 +63,15 @@ static xp_ssize_t process_source (
 			return 1;
 		}
 
-		case XP_AWK_OUTPUT_OPEN:
-		case XP_AWK_OUTPUT_CLOSE:
-		case XP_AWK_OUTPUT_NEXT:
-		case XP_AWK_OUTPUT_DATA:
+		case XP_AWK_IO_WRITE:
 		{
-			return 0;
+			return -1;
 		}
 	}
 
 	return -1;
 }
+
 
 struct data_io
 {
@@ -82,34 +80,28 @@ struct data_io
 };
 
 static xp_ssize_t process_data (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
 {
 	struct data_io* io = (struct data_io*)arg;
 	xp_char_t c;
 
 	switch (cmd) 
 	{
-		case XP_AWK_INPUT_OPEN:
+		case XP_AWK_IO_OPEN:
 		{
 			io->input_handle = fopen (io->input_file, "r");
 			if (io->input_handle == NULL) return -1;
 			return 0;
 		}
 
-		case XP_AWK_INPUT_CLOSE:
+		case XP_AWK_IO_CLOSE:
 		{
 			fclose (io->input_handle);
 			io->input_handle = NULL;
 			return 0;
 		}
 
-		case XP_AWK_INPUT_NEXT:
-		{
-			/* input switching not supported for the time being... */
-			return -1;
-		}
-
-		case XP_AWK_INPUT_DATA:
+		case XP_AWK_IO_READ:
 		{
 			if (size <= 0) return -1;
 		#ifdef XP_CHAR_IS_MCHAR
@@ -122,10 +114,71 @@ static xp_ssize_t process_data (
 			return 1;
 		}
 
-		case XP_AWK_OUTPUT_OPEN:
-		case XP_AWK_OUTPUT_CLOSE:
-		case XP_AWK_OUTPUT_NEXT:
-		case XP_AWK_OUTPUT_DATA:
+		case XP_AWK_IO_WRITE:
+		{
+			return -1;
+		}
+
+		case XP_AWK_IO_NEXT:
+		{
+			/* input switching not supported for the time being... */
+			return -1;
+		}
+
+	}
+
+	return -1;
+}
+
+static xp_ssize_t process_extio_pipe (
+	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
+{
+	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
+
+	switch (cmd)
+	{
+		case XP_AWK_IO_OPEN:
+		{
+			FILE* handle;
+			const xp_char_t* mode;
+
+			if (opt == XP_AWK_IO_PIPE_READ)
+				mode = XP_T("r");
+			else if (opt == XP_AWK_IO_PIPE_WRITE)
+				mode = XP_T("w");
+			else return -1; /* TODO: any way to set the error number? */
+			handle = _tpopen (epa->name, mode);
+			if (handle == NULL) return -1;
+			epa->handle = (void*)handle;
+			return 0;
+		}
+
+		case XP_AWK_IO_CLOSE:
+		{
+xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
+			fclose ((FILE*)epa->handle);
+			epa->handle = NULL;
+			return 0;
+		}
+
+		case XP_AWK_IO_READ:
+		{
+			if (_fgetts (data, size, (FILE*)epa->handle) == XP_NULL) 
+				return 0;
+			return xp_strlen(data);
+		}
+
+		case XP_AWK_IO_WRITE:
+		{
+			/*
+			if (_fputts (data, size, (FILE*)epa->handle) == XP_NULL) 
+				return 0;
+			return size;
+			*/
+			return -1;
+		}
+
+		case XP_AWK_IO_NEXT:
 		{
 			return -1;
 		}
@@ -134,74 +187,33 @@ static xp_ssize_t process_data (
 	return -1;
 }
 
-static xp_ssize_t process_extio_pipe (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
-{
-	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
-
-	switch (cmd)
-	{
-		case XP_AWK_INPUT_OPEN:
-		{
-			FILE* handle;
-			handle = _tpopen (epa->name, XP_T("r"));
-			if (handle == NULL) return -1;
-			epa->handle = (void*)handle;
-			return 0;
-		}
-
-		case XP_AWK_INPUT_CLOSE:
-		{
-xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
-			fclose ((FILE*)epa->handle);
-			epa->handle = NULL;
-			return 0;
-		}
-
-		case XP_AWK_INPUT_DATA:
-		{
-			if (_fgetts (data, size, epa->handle) == XP_NULL) 
-				return 0;
-			return xp_strlen(data);
-		}
-
-		case XP_AWK_INPUT_NEXT:
-		{
-			return -1;
-		}
-
-		case XP_AWK_OUTPUT_OPEN:
-		case XP_AWK_OUTPUT_CLOSE:
-		case XP_AWK_OUTPUT_DATA:
-		case XP_AWK_OUTPUT_NEXT:
-		{
-			return -1;
-		}
-
-		default:
-		{
-			return -1;
-		}
-	}
-}
-
 static xp_ssize_t process_extio_file (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
 {
 	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
 
 	switch (cmd)
 	{
-		case XP_AWK_INPUT_OPEN:
+		case XP_AWK_IO_OPEN:
 		{
 			FILE* handle;
-			handle = _tfopen (epa->name, XP_T("r"));
+			const xp_char_t* mode;
+
+			if (opt == XP_AWK_IO_FILE_READ)
+				mode = XP_T("r");
+			else if (opt == XP_AWK_IO_FILE_WRITE)
+				mode = XP_T("w");
+			else if (opt == XP_AWK_IO_FILE_APPEND)
+				mode = XP_T("a");
+			else return -1; /* TODO: any way to set the error number? */
+
+			handle = _tfopen (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
 			return 0;
 		}
 
-		case XP_AWK_INPUT_CLOSE:
+		case XP_AWK_IO_CLOSE:
 		{
 xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
@@ -209,32 +221,31 @@ xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
 			return 0;
 		}
 
-		case XP_AWK_INPUT_DATA:
+		case XP_AWK_IO_READ:
 		{
-			if (_fgetts (data, size, epa->handle) == XP_NULL) 
+			if (_fgetts (data, size, (FILE*)epa->handle) == XP_NULL) 
 				return 0;
 			return xp_strlen(data);
 		}
 
-		case XP_AWK_INPUT_NEXT:
+		case XP_AWK_IO_WRITE:
+		{
+			/*
+			if (_fputts (data, size, (FILE*)epa->handle) == XP_NULL) 
+				return 0;
+			return size;
+			*/
+			return -1;
+		}
+
+		case XP_AWK_IO_NEXT:
 		{
 			return -1;
 		}
 
-		case XP_AWK_OUTPUT_OPEN:
-		case XP_AWK_OUTPUT_CLOSE:
-		case XP_AWK_OUTPUT_DATA:
-		case XP_AWK_OUTPUT_NEXT:
-		{
-			return -1;
-		}
-
-		default:
-		{
-			return -1;
-		}
 	}
 
+	return -1;
 }
 
 

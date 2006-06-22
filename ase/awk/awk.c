@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.55 2006-06-20 15:27:50 bacon Exp $ 
+ * $Id: awk.c,v 1.56 2006-06-22 04:25:44 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -160,18 +160,18 @@ void xp_awk_setrunopt (xp_awk_t* awk, int opt)
 	awk->opt.run = opt;
 }
 
-int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg)
+int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t handler, void* arg)
 {
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
 	xp_assert (awk->srcio == XP_NULL);
-	if (src(XP_AWK_INPUT_OPEN, arg, XP_NULL, 0) == -1) 
+	if (handler (XP_AWK_IO_OPEN, 0, arg, XP_NULL, 0) == -1) 
 	{
 		awk->errnum = XP_AWK_ESRCINOPEN;
 		return -1;
 	}
 
-	awk->srcio = src;
+	awk->srcio = handler;
 	awk->srcio_arg = arg;
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
@@ -188,7 +188,8 @@ int xp_awk_detsrc (xp_awk_t* awk)
 	{
 		xp_ssize_t n;
 
-		n = awk->srcio (XP_AWK_INPUT_CLOSE, awk->srcio_arg, XP_NULL, 0);
+		n = awk->srcio (
+			XP_AWK_IO_CLOSE, 0, awk->srcio_arg, XP_NULL, 0);
 		if (n == -1)
 		{
 			awk->errnum = XP_AWK_ESRCINCLOSE;
