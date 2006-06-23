@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.32 2006-05-06 12:52:36 bacon Exp $
+ * $Id: macros.h,v 1.33 2006-06-23 11:48:18 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -110,5 +110,11 @@
 	#define XP_T(txt) XP_WT(txt)
 	#define XP_Q(val) XP_WQ(val)
 #endif
+
+/* compiler-specific macros */
+#ifndef _WIN32
+	#define __declspec(x) 
+#endif
+
 
 #endif
