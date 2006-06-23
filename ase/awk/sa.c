@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.21 2006-05-06 12:52:36 bacon Exp $
+ * $Id: sa.c,v 1.22 2006-06-23 11:48:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -70,10 +70,13 @@ xp_size_t xp_strncpy (xp_char_t* buf, const xp_char_t* str, xp_size_t len)
 
 int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2)
 {
-	while (*s1 == *s2 && *s2 != XP_T('\0')) s1++, s2++;
-	if (*s1 > *s2) return 1;
-	else if (*s1 < *s2) return -1;
-	return 0;
+	while (*s1 == *s2) 
+	{
+		if (*s1 == XP_CHAR('\0')) return 0;
+		s1++, s2++;
+	}
+
+	return (*s1 > *s2)? 1: -1;
 }
 
 int xp_strxncmp (
