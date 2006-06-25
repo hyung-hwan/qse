@@ -1,8 +1,9 @@
 BEGIN 
 { 
-	print | "more";
-	print >> "echo";
-	print >> "echo";
+	print "more";
+	//print | "more";
+	//print > "echo";
+	//print >> "echo";
 
 	getline x < "abc";  /* open("abc", O_RDONLY|O_LARGEFILE)       = 3 */
 	//print 10 >> "abc";  /* open("abc", O_WRONLY|O_APPEND|O_CREAT|O_LARGEFILE, 0666) = 4 */

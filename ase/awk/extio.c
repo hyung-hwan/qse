@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.9 2006-06-22 14:15:01 bacon Exp $
+ * $Id: extio.c,v 1.10 2006-06-25 15:26:57 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -147,6 +147,8 @@ int xp_awk_writeextio (
 			ioopt = XP_AWK_IO_PIPE_READ;
 		else if (type == XP_AWK_EXTIO_FILE) 
 			ioopt = XP_AWK_IO_FILE_READ;
+		else if (type == XP_AWK_EXTIO_CONSOLE)
+			ioopt = XP_AWK_IO_CONSOLE_READ;
 		else ioopt = 0; /* TODO: how to handle this??? */
 
 		if (handler (XP_AWK_IO_OPEN, ioopt, p, XP_NULL, 0) == -1)

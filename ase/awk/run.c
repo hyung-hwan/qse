@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.106 2006-06-22 14:15:01 bacon Exp $
+ * $Id: run.c,v 1.107 2006-06-25 15:26:57 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1162,6 +1162,33 @@ static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		xp_printf (XP_T("eval_print PRINT_FILE not properly implemented....\n"));
 		return -1;
 	}
+	else if (p->out_type == XP_AWK_PRINT_CONSOLE)
+	{
+		xp_awk_nde_t* np;
+		int n, errnum;
+
+		xp_assert (p->out == XP_NULL);
+
+		for (np = p->args; np != XP_NULL; np = np->next)
+		{
+			v = __eval_expression (run, np);
+			if (v == XP_NULL) return -1;
+			xp_awk_refupval (v);
+
+			/* console has the fixed name */
+			n = xp_awk_writeextio (
+				run, XP_AWK_EXTIO_CONSOLE, XP_T("console"), v, &errnum);
+			if (n < 0 && errnum != XP_AWK_ENOERR) 
+			{
+				xp_awk_refdownval (run, v);
+				PANIC_I (run, errnum);
+			}
+
+			xp_awk_refdownval (run, v);
+		}
+
+		return 0;
+	}
 	else if (p->out_type == XP_AWK_PRINT_FILE_APPEND)
 	{
 		xp_printf (XP_T("eval_print PRINT_FILE_APPEND not properly implemented....\n"));
@@ -1169,7 +1196,7 @@ static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 	}
 	else
 	{
-		xp_assert (!"should never happen - wrong out_type for getline");
+		xp_assert (!"should never happen - wrong out_type for print");
 		PANIC_I (run, XP_AWK_EINTERNAL);
 	}
 }

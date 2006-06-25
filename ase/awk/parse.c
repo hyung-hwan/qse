@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.121 2006-06-22 14:15:01 bacon Exp $
+ * $Id: parse.c,v 1.122 2006-06-25 15:26:57 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2784,7 +2784,7 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 	xp_awk_nde_print_t* nde;
 	xp_awk_nde_t* args = XP_NULL;
 	xp_awk_nde_t* out = XP_NULL;
-	int out_type = -1;
+	int out_type;
 
 	/* TODO: handle expression list, not just a single expression */
 	/* TODO: handle ambiguiouty print "1111" > "2222". is > redirection? */
@@ -2799,24 +2799,13 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 		if (args == XP_NULL) return XP_NULL;
 	}
 
-	if (MATCH(awk,TOKEN_GT))
-	{
-		out_type = XP_AWK_PRINT_FILE;
-	}
-	else if (MATCH(awk,TOKEN_RSHIFT))
-	{
-		out_type = XP_AWK_PRINT_FILE_APPEND;
-	}
-	else if (MATCH(awk,TOKEN_BOR))
-	{
-		out_type = XP_AWK_PRINT_PIPE;
-	}
-	else if (MATCH(awk,TOKEN_BORAND))
-	{
-		out_type = XP_AWK_PRINT_COPROC;
-	}
+	out_type = MATCH(awk,TOKEN_GT)?     XP_AWK_PRINT_FILE:
+	           MATCH(awk,TOKEN_RSHIFT)? XP_AWK_PRINT_FILE_APPEND:
+	           MATCH(awk,TOKEN_BOR)?    XP_AWK_PRINT_PIPE:
+	           MATCH(awk,TOKEN_BORAND)? XP_AWK_PRINT_COPROC:
+                                            XP_AWK_PRINT_CONSOLE;
 
-	if (out_type != -1)
+	if (out_type != XP_AWK_PRINT_CONSOLE)
 	{
 		if (__get_token(awk) == -1)
 		{

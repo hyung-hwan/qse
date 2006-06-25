@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.71 2006-06-22 04:25:44 bacon Exp $
+ * $Id: awk.h,v 1.72 2006-06-25 15:26:57 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -35,12 +35,15 @@ enum
 
 enum
 {
-	XP_AWK_IO_FILE_READ   = 0,
-	XP_AWK_IO_FILE_WRITE  = 1,
-	XP_AWK_IO_FILE_APPEND = 2,
+	XP_AWK_IO_PIPE_READ      = 0,
+	XP_AWK_IO_PIPE_WRITE     = 1,
 
-	XP_AWK_IO_PIPE_READ   = 0,
-	XP_AWK_IO_PIPE_WRITE  = 1
+	XP_AWK_IO_FILE_READ      = 0,
+	XP_AWK_IO_FILE_WRITE     = 1,
+	XP_AWK_IO_FILE_APPEND    = 2,
+
+	XP_AWK_IO_CONSOLE_READ   = 0,
+	XP_AWK_IO_CONSOLE_WRITE  = 1
 };
 
 /* parse options */
@@ -132,6 +135,7 @@ enum
 	XP_AWK_EXTIO_PIPE,
 	XP_AWK_EXTIO_COPROC,
 	XP_AWK_EXTIO_FILE,
+	XP_AWK_EXTIO_CONSOLE,
 
 	/* reserved for internal use only */
 	XP_AWK_EXTIO_NUM

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.48 2006-06-22 14:15:02 bacon Exp $
+ * $Id: tree.h,v 1.49 2006-06-25 15:26:57 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -70,7 +70,8 @@ enum
 	XP_AWK_PRINT_PIPE,
 	XP_AWK_PRINT_COPROC,
 	XP_AWK_PRINT_FILE,
-	XP_AWK_PRINT_FILE_APPEND
+	XP_AWK_PRINT_FILE_APPEND,
+	XP_AWK_PRINT_CONSOLE
 };
 
 typedef struct xp_awk_afn_t xp_awk_afn_t;
