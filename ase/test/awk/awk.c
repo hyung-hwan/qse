@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.41 2006-06-22 04:25:44 bacon Exp $
+ * $Id: awk.c,v 1.42 2006-06-25 15:26:57 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -248,6 +248,54 @@ xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
 	return -1;
 }
 
+static xp_ssize_t process_extio_console (
+	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
+{
+	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
+
+	switch (cmd)
+	{
+		case XP_AWK_IO_OPEN:
+		{
+			/* TODO: OpenConsole in GUI APPLICATION */
+			/* opt: XP_AWK_IO_CONSOLE_READ, 
+			 *      XP_AWK_IO_CONSOLE_WRITE */
+
+			if (opt == XP_AWK_IO_CONSOLE_READ)
+				epa->handle = stdin;
+			else if (opt == XP_AWK_IO_CONSOLE_WRITE)
+				epa->handle = stdout;
+			else return -1;
+		}
+
+		case XP_AWK_IO_CLOSE:
+		{
+			/* TODO: CloseConsole in GUI APPLICATION */
+		}
+
+		case XP_AWK_IO_READ:
+		{
+			if (_fgetts (data, size, (FILE*)epa->handle) == XP_NULL) 
+				return 0;
+			return xp_strlen(data);
+		}
+
+		case XP_AWK_IO_WRITE:
+		{
+			if (_fputts (data, /*size,*/ (FILE*)epa->handle) == XP_NULL) 
+				return 0;
+			return size;
+		}
+
+		case XP_AWK_IO_NEXT:
+		{
+			return -1;
+		}
+
+	}
+
+	return -1;
+}
 
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 static int __main (int argc, char* argv[])
@@ -283,6 +331,14 @@ static int __main (int argc, xp_char_t* argv[])
 /* TODO: */
 	if (xp_awk_setextio (awk, 
 		XP_AWK_EXTIO_FILE, process_extio_file, XP_NULL) == -1)
+	{
+		xp_awk_close (awk);
+		xp_printf (XP_T("Error: cannot set extio file\n"));
+		return -1;
+	}
+
+	if (xp_awk_setextio (awk, 
+		XP_AWK_EXTIO_CONSOLE, process_extio_console, XP_NULL) == -1)
 	{
 		xp_awk_close (awk);
 		xp_printf (XP_T("Error: cannot set extio file\n"));
