@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.42 2006-06-25 15:26:57 bacon Exp $
+ * $Id: awk.c,v 1.43 2006-06-26 15:09:28 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -271,6 +271,7 @@ static xp_ssize_t process_extio_console (
 		case XP_AWK_IO_CLOSE:
 		{
 			/* TODO: CloseConsole in GUI APPLICATION */
+			return 0;
 		}
 
 		case XP_AWK_IO_READ:
@@ -282,8 +283,8 @@ static xp_ssize_t process_extio_console (
 
 		case XP_AWK_IO_WRITE:
 		{
-			if (_fputts (data, /*size,*/ (FILE*)epa->handle) == XP_NULL) 
-				return 0;
+			/* TODO: how to return error or 0 */
+			_fputts (data, /*size,*/ (FILE*)epa->handle);
 			return size;
 		}
 

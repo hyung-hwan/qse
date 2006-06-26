@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.49 2006-06-25 15:26:57 bacon Exp $
+ * $Id: tree.h,v 1.50 2006-06-26 15:09:28 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -67,6 +67,8 @@ enum
 
 enum
 {
+	/* the order of these values match __print_extio_map in run.c */
+
 	XP_AWK_PRINT_PIPE,
 	XP_AWK_PRINT_COPROC,
 	XP_AWK_PRINT_FILE,

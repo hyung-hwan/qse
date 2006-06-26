@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.107 2006-06-25 15:26:57 bacon Exp $
+ * $Id: run.c,v 1.108 2006-06-26 15:09:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1080,125 +1080,121 @@ static int __run_nextfile_statement (xp_awk_run_t* run, xp_awk_nde_nextfile_t* n
 static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 {
 	xp_awk_nde_print_t* p = (xp_awk_nde_print_t*)nde;
+	xp_char_t* out = XP_NULL;
+	const xp_char_t* dst;
 	xp_awk_val_t* v;
+	xp_awk_nde_t* np;
+	int extio_type, errnum, n;
 
-	if (p->out_type == XP_AWK_PRINT_PIPE)
+	static int __print_extio_map[] =
 	{
-		xp_awk_val_t* out;
-		xp_char_t* dst;
-		int errnum, n;
+		/* the order should match the order of the 
+		 * XP_AWK_PRINT_XXX values in tree.h */
+		XP_AWK_EXTIO_PIPE,
+		XP_AWK_EXTIO_COPROC,
+		XP_AWK_EXTIO_FILE,
+		XP_AWK_EXTIO_FILE,
+		XP_AWK_EXTIO_CONSOLE
+	};
 
-		out = __eval_expression (run, p->out);
+	xp_assert (
+		(p->out_type == XP_AWK_PRINT_PIPE && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_PRINT_COPROC && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_PRINT_FILE && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_PRINT_FILE_APPEND  && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_PRINT_CONSOLE && p->out == XP_NULL));
+
+	xp_assert (p->out_type >= 0 && p->out_type < xp_countof(__print_extio_map));
+	extio_type = __print_extio_map[p->out_type];
+
+	if (p->out != XP_NULL)
+	{
+		v = __eval_expression (run, p->out);
 		if (out == XP_NULL) return -1;
 
-		xp_awk_refupval (out);
-		dst = xp_awk_valtostr (out, &errnum, XP_NULL);
-		if (dst == XP_NULL) 
+		xp_awk_refupval (v);
+		out = xp_awk_valtostr (v, &errnum, XP_NULL);
+		if (out == XP_NULL) 
 		{
-			xp_awk_refdownval (run, out);
+			xp_awk_refdownval (run, v);
 			PANIC_I (run, errnum);
 		}
-		xp_awk_refdownval (run, out);
+		xp_awk_refdownval (run, v);
+	}
 
-		if (p->args == XP_NULL)
+	dst = (out == XP_NULL)? XP_T(""): out;
+
+	if (p->args == XP_NULL)
+	{
+		/* TODO: get $0 ans use it for v */
+		v = xp_awk_makestrval0 (XP_T("<TODO: PRINT $0 WITH A TRAILING NEWLINE>\n"));
+		if (v == XP_NULL)
 		{
-			/* TODO: get $0 ans use it for v */
-			v = xp_awk_makestrval (XP_T("$0\n"), 1);
-			if (v == XP_NULL)
-			{
-				xp_free (dst);
-				PANIC_I (run, XP_AWK_ENOMEM);
-			}
+			if (out != XP_NULL) xp_free (out);
+			PANIC_I (run, XP_AWK_ENOMEM);
+		}
 
-			xp_awk_refupval (v);
-			n = xp_awk_writeextio (
-				run, XP_AWK_EXTIO_PIPE, dst, v, &errnum);
-			if (n < 0 && errnum != XP_AWK_ENOERR) 
-			{
-				xp_free (dst);
-				xp_awk_refdownval (run, v);
-				PANIC_I (run, errnum);
-			}
-
+		xp_awk_refupval (v);
+		n = xp_awk_writeextio (run, extio_type, dst, v, &errnum);
+		if (n < 0 && errnum != XP_AWK_ENOERR) 
+		{
+			if (out != XP_NULL) xp_free (out);
 			xp_awk_refdownval (run, v);
+			PANIC_I (run, errnum);
 		}
-		else
-		{
-			xp_awk_nde_t* np = p->args;
-			while (np != XP_NULL)
-			{
-				v = __eval_expression (run, np);
-				if (v == XP_NULL)
-				{
-					xp_free (dst);
-					return -1;
-				}
-				xp_awk_refupval (v);
-
-				n = xp_awk_writeextio (
-					run, XP_AWK_EXTIO_PIPE, dst, v, &errnum);
-				if (n < 0 && errnum != XP_AWK_ENOERR) 
-				{
-					xp_free (dst);
-					xp_awk_refdownval (run, v);
-					PANIC_I (run, errnum);
-				}
-
-				xp_awk_refdownval (run, v);
-				np = np->next;
-			}
-		}
-
-		xp_free (dst);
-		return 0;
-	}
-	else if (p->out_type == XP_AWK_PRINT_COPROC)
-	{
-		xp_printf (XP_T("eval_getline coprocess not properly implemented....\n"));
-		return -1;
-	}
-	else if (p->out_type == XP_AWK_PRINT_FILE)
-	{
-		xp_printf (XP_T("eval_print PRINT_FILE not properly implemented....\n"));
-		return -1;
-	}
-	else if (p->out_type == XP_AWK_PRINT_CONSOLE)
-	{
-		xp_awk_nde_t* np;
-		int n, errnum;
-
-		xp_assert (p->out == XP_NULL);
-
-		for (np = p->args; np != XP_NULL; np = np->next)
-		{
-			v = __eval_expression (run, np);
-			if (v == XP_NULL) return -1;
-			xp_awk_refupval (v);
-
-			/* console has the fixed name */
-			n = xp_awk_writeextio (
-				run, XP_AWK_EXTIO_CONSOLE, XP_T("console"), v, &errnum);
-			if (n < 0 && errnum != XP_AWK_ENOERR) 
-			{
-				xp_awk_refdownval (run, v);
-				PANIC_I (run, errnum);
-			}
-
-			xp_awk_refdownval (run, v);
-		}
-
-		return 0;
-	}
-	else if (p->out_type == XP_AWK_PRINT_FILE_APPEND)
-	{
-		xp_printf (XP_T("eval_print PRINT_FILE_APPEND not properly implemented....\n"));
-		return -1;
+		xp_awk_refdownval (run, v);
+		/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
 	}
 	else
 	{
-		xp_assert (!"should never happen - wrong out_type for print");
-		PANIC_I (run, XP_AWK_EINTERNAL);
+		for (np = p->args; np != XP_NULL; np = np->next)
+		{
+			v = __eval_expression (run, np);
+			if (v == XP_NULL) 
+			{
+				if (out != XP_NULL) xp_free (out);
+				return -1;
+			}
+			xp_awk_refupval (v);
+
+			n = xp_awk_writeextio (
+				run, extio_type, dst, v, &errnum);
+			if (n < 0 && errnum != XP_AWK_ENOERR) 
+			{
+				if (out != XP_NULL) xp_free (out);
+				xp_awk_refdownval (run, v);
+				PANIC_I (run, errnum);
+			}
+			xp_awk_refdownval (run, v);
+
+			/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
+		}
+
+		/* TODO: predefine the new line string 
+		 *       for performance improvement*/
+		v = xp_awk_makestrval (XP_T("\n"), 1);
+		if (v == XP_NULL)
+		{
+			if (out != XP_NULL) xp_free (out);
+			PANIC_I (run, XP_AWK_ENOMEM);
+		}
+		xp_awk_refupval (v);
+
+		n = xp_awk_writeextio (
+			run, extio_type, dst, v, &errnum);
+		if (n < 0 && errnum != XP_AWK_ENOERR)
+		{
+			if (out != XP_NULL) xp_free (out);
+			xp_awk_refdownval (run, v);
+			PANIC_I (run, errnum);
+		}
+		xp_awk_refdownval (run, v);
+
+		/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
 	}
+
+	if (out != XP_NULL) xp_free (out);
+	return 0;
 }
 
 static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)

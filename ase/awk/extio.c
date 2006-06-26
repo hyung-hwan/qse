@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.10 2006-06-25 15:26:57 bacon Exp $
+ * $Id: extio.c,v 1.11 2006-06-26 15:09:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -26,8 +26,7 @@ int xp_awk_readextio (
 
 	while (p != XP_NULL)
 	{
-		if (p->type == type &&
-		    xp_strcmp(p->name,name) == 0) break;
+		if (p->type == type && xp_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -106,6 +105,7 @@ int xp_awk_writeextio (
 {
 	xp_awk_extio_t* p = run->extio;
 	xp_awk_io_t handler = run->awk->extio[type];
+	xp_str_t buf;
 	int ioopt;
 
 	if (handler == XP_NULL)
@@ -115,18 +115,34 @@ int xp_awk_writeextio (
 		return -1;
 	}
 
+	/* TODO: optimize the buffer management. each xp_awk_run_t have a buffer for this operation???  */
+	if (xp_str_open (&buf, 256) == XP_NULL)
+	{
+		*errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
+
+	/* convert the value to string representation first */
+	if (xp_awk_valtostr(v, errnum, &buf) == XP_NULL)
+	{
+		xp_str_close (&buf);
+		return -1;
+	}
+
+	/* look for the corresponding extio for name */
 	while (p != XP_NULL)
 	{
-		if (p->type == type &&
-		    xp_strcmp(p->name,name) == 0) break;
+		if (p->type == type && xp_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
 
+	/* if there is not corresponding extio for name, create one */
 	if (p == XP_NULL)
 	{
 		p = (xp_awk_extio_t*) xp_malloc (xp_sizeof(xp_awk_extio_t));
 		if (p == XP_NULL)
 		{
+			xp_str_close (&buf);
 			*errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -135,6 +151,7 @@ int xp_awk_writeextio (
 		if (p->name == XP_NULL)
 		{
 			xp_free (p);
+			xp_str_close (&buf);
 			*errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -144,17 +161,18 @@ int xp_awk_writeextio (
 		p->next = XP_NULL;
 
 		if (type == XP_AWK_EXTIO_PIPE) 
-			ioopt = XP_AWK_IO_PIPE_READ;
+			ioopt = XP_AWK_IO_PIPE_WRITE;
 		else if (type == XP_AWK_EXTIO_FILE) 
-			ioopt = XP_AWK_IO_FILE_READ;
+			ioopt = XP_AWK_IO_FILE_WRITE;
 		else if (type == XP_AWK_EXTIO_CONSOLE)
-			ioopt = XP_AWK_IO_CONSOLE_READ;
+			ioopt = XP_AWK_IO_CONSOLE_WRITE;
 		else ioopt = 0; /* TODO: how to handle this??? */
 
 		if (handler (XP_AWK_IO_OPEN, ioopt, p, XP_NULL, 0) == -1)
 		{
 			xp_free (p->name);
 			xp_free (p);
+			xp_str_close (&buf);
 				
 			/* TODO: set ERRNO */
 			*errnum = XP_AWK_ENOERR;
@@ -165,8 +183,9 @@ int xp_awk_writeextio (
 		{
 			xp_free (p->name);
 			xp_free (p);
+			xp_str_close (&buf);
 
-			/* wrong implementation of user io handler.
+			/* wrong implementation of the user io handler.
 			 * the correct io handler should set p->handle to
 			 * non XP_NULL when it returns 0. */
 			*errnum = XP_AWK_EIOIMPL;
@@ -178,21 +197,14 @@ int xp_awk_writeextio (
 		run->extio = p;
 	}
 
+	if (handler (XP_AWK_IO_WRITE, 0, 
+		p, XP_STR_BUF(&buf), XP_STR_LEN(&buf)) == 0)
 	{
-		xp_awk_printval (v);
-#if 0
-xp_char_t buf[1024] = XP_T("temp...");;
-
-	if (handler (XP_AWK_IO_WRITE, 0, p, buf, xp_countof(buf)) == 0)
-	{
-		/* no more data. end of data stream */
+		xp_str_close (&buf);
 		return 0;
 	}
 
-xp_printf(XP_TEXT("%s"), buf);
-#endif
-	}
-
+	xp_str_close (&buf);
 	return 1;
 }
 
