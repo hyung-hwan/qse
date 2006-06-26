@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.72 2006-06-25 15:26:57 bacon Exp $
+ * $Id: awk.h,v 1.73 2006-06-26 15:09:28 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -122,7 +122,7 @@ enum
 	XP_AWK_ENOSUCHFUNC,    /* no such function */
 	XP_AWK_ENOTASSIGNABLE, /* value not assignable */
 	XP_AWK_ENOTINDEXABLE,  /* not indexable value */
-	XP_AWK_EWRONGINDEX,    /* wrong index */
+	XP_AWK_EVALTYPE,       /* wrong value type */
 	XP_AWK_EPIPE,          /* pipe operation error */
 	XP_AWK_EIOIMPL,        /* wrong implementation of user io handler */
 	XP_AWK_EINTERNAL       /* internal error */

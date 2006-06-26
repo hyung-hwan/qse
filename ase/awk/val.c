@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.31 2006-06-21 11:44:55 bacon Exp $
+ * $Id: val.c,v 1.32 2006-06-26 15:09:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -76,6 +76,11 @@ xp_awk_val_t* xp_awk_makerealval (xp_awk_run_t* run, xp_real_t v)
 	val->val = v;
 
 	return (xp_awk_val_t*)val;
+}
+
+xp_awk_val_t* xp_awk_makestrval0 (const xp_char_t* str)
+{
+	return xp_awk_makestrval (str, xp_strlen(str));
 }
 
 xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
@@ -432,7 +437,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 
 /* TODO: process more value types */
 
-	*errnum = XP_AWK_EWRONGINDEX;
+	*errnum = XP_AWK_EVALTYPE;
 	return XP_NULL;
 }
 
