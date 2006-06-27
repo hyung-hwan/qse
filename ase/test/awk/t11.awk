@@ -9,4 +9,5 @@ BEGIN
 	print "-------------" >> 10;
 
 	delete abc;
+	delete abc["aaaa"] ;
 }

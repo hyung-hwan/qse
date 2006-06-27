@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.124 2006-06-27 14:18:19 bacon Exp $
+ * $Id: parse.c,v 1.125 2006-06-27 14:32:03 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -172,6 +172,7 @@ static int __skip_comment (xp_awk_t* awk);
 static int __classify_ident (xp_awk_t* awk, const xp_char_t* ident);
 static int __assign_to_opcode (xp_awk_t* awk);
 static int __is_plain_var (xp_awk_nde_t* nde);
+static int __is_var (xp_awk_nde_t* nde);
 
 struct __kwent 
 { 
@@ -1144,15 +1145,7 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 	if (opcode == -1) return x;
 
 	xp_assert (x->next == XP_NULL);
-	if (x->type != XP_AWK_NDE_ARG &&
-	    x->type != XP_AWK_NDE_ARGIDX &&
-	    x->type != XP_AWK_NDE_NAMED && 
-	    x->type != XP_AWK_NDE_NAMEDIDX &&
-	    x->type != XP_AWK_NDE_GLOBAL && 
-	    x->type != XP_AWK_NDE_GLOBALIDX &&
-	    x->type != XP_AWK_NDE_LOCAL && 
-	    x->type != XP_AWK_NDE_LOCALIDX &&
-	    x->type != XP_AWK_NDE_POS) 
+	if (!__is_var(x) && x->type != XP_AWK_NDE_POS) 
 	{
 		xp_awk_clrpt (x);
 		PANIC (awk, XP_AWK_EASSIGNMENT);
@@ -2787,14 +2780,13 @@ static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
 	var = __parse_primary_ident (awk);
 	if (var == XP_NULL) return XP_NULL;
 
-	if (!__is_plain_var (var))
+	if (!__is_var (var))
 	{
 		/* a normal identifier is expected */
 		xp_awk_clrpt (var);
 		PANIC (awk, XP_AWK_EIDENT);
 	}
 
-	/* TODO: .... delete var[pattern]... */
 	nde = (xp_awk_nde_delete_t*)xp_malloc(xp_sizeof(xp_awk_nde_delete_t));
 	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
@@ -3671,4 +3663,16 @@ static int __is_plain_var (xp_awk_nde_t* nde)
 	       nde->type == XP_AWK_NDE_LOCAL ||
 	       nde->type == XP_AWK_NDE_ARG ||
 	       nde->type == XP_AWK_NDE_NAMED;
+}
+
+static int __is_var (xp_awk_nde_t* nde)
+{
+	return nde->type == XP_AWK_NDE_GLOBAL ||
+	       nde->type == XP_AWK_NDE_LOCAL ||
+	       nde->type == XP_AWK_NDE_ARG ||
+	       nde->type == XP_AWK_NDE_NAMED ||
+	       nde->type == XP_AWK_NDE_GLOBALIDX ||
+	       nde->type == XP_AWK_NDE_LOCALIDX ||
+	       nde->type == XP_AWK_NDE_ARGIDX ||
+	       nde->type == XP_AWK_NDE_NAMEDIDX;
 }
