@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.21 2006-06-21 13:52:15 bacon Exp $
+ * $Id: awk_i.h,v 1.22 2006-06-27 10:53:04 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -118,6 +118,7 @@ struct xp_awk_t
 	/* token */
 	struct 
 	{
+		int       prev;
 		int       type;
 		xp_str_t  name;
 		xp_size_t line;

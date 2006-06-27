@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.43 2006-06-26 15:09:28 bacon Exp $
+ * $Id: awk.c,v 1.44 2006-06-27 10:53:04 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -230,11 +230,8 @@ xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
 
 		case XP_AWK_IO_WRITE:
 		{
-			/*
-			if (_fputts (data, size, (FILE*)epa->handle) == XP_NULL) 
-				return 0;
-			return size;
-			*/
+			/* TODO: how to return error or 0 */
+			_fputts (data, /*size,*/ (FILE*)epa->handle);
 			return -1;
 		}
 
