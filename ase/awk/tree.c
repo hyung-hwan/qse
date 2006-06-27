@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.57 2006-06-25 15:26:57 bacon Exp $
+ * $Id: tree.c,v 1.58 2006-06-27 14:18:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -651,6 +651,14 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 				break;
 			}
 
+			case XP_AWK_NDE_DELETE:
+			{
+				__print_tabs (depth);
+				xp_printf (XP_T("delete "));
+				xp_awk_prnpt (((xp_awk_nde_delete_t*)p)->var);
+				break;
+			}
+
 			case XP_AWK_NDE_PRINT:
 			{
 				xp_awk_nde_print_t* px = (xp_awk_nde_print_t*)p;
@@ -792,13 +800,6 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 				break;
 			}
 
-			case XP_AWK_NDE_NEXT:
-			case XP_AWK_NDE_NEXTFILE:
-			{
-				xp_free (p);
-				break;
-			}
-		
 			case XP_AWK_NDE_RETURN:
 			{
 				xp_awk_nde_return_t* px =
@@ -812,6 +813,30 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 			{
 				if (((xp_awk_nde_exit_t*)p)->val != XP_NULL) 
 					xp_awk_clrpt (((xp_awk_nde_exit_t*)p)->val);
+				xp_free (p);
+				break;
+			}
+
+			case XP_AWK_NDE_NEXT:
+			case XP_AWK_NDE_NEXTFILE:
+			{
+				xp_free (p);
+				break;
+			}
+
+			case XP_AWK_NDE_DELETE:
+			{
+				xp_awk_clrpt (((xp_awk_nde_delete_t*)p)->var);
+				xp_free (p);
+				break;
+			}
+
+			case XP_AWK_NDE_PRINT:
+			{
+				xp_awk_nde_print_t* px = 
+					(xp_awk_nde_print_t*)p;
+				if (px->args != XP_NULL) xp_awk_clrpt (px->args);
+				if (px->out != XP_NULL) xp_awk_clrpt (px->out);
 				xp_free (p);
 				break;
 			}
@@ -947,16 +972,6 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 					(xp_awk_nde_getline_t*)p;
 				if (px->var != XP_NULL) xp_awk_clrpt (px->var);
 				if (px->in != XP_NULL) xp_awk_clrpt (px->in);
-				xp_free (p);
-				break;
-			}
-
-			case XP_AWK_NDE_PRINT:
-			{
-				xp_awk_nde_print_t* px = 
-					(xp_awk_nde_print_t*)p;
-				if (px->args != XP_NULL) xp_awk_clrpt (px->args);
-				if (px->out != XP_NULL) xp_awk_clrpt (px->out);
 				xp_free (p);
 				break;
 			}

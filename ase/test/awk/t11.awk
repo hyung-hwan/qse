@@ -7,4 +7,6 @@ BEGIN
 	print 3, 4, 5 >> 10;
 	close (10);
 	print "-------------" >> 10;
+
+	delete abc;
 }
