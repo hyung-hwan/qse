@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.50 2006-06-26 15:09:28 bacon Exp $
+ * $Id: tree.h,v 1.51 2006-06-27 14:18:19 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -26,9 +26,10 @@ enum
 	XP_AWK_NDE_EXIT,
 	XP_AWK_NDE_NEXT,
 	XP_AWK_NDE_NEXTFILE,
+	XP_AWK_NDE_DELETE,
+	XP_AWK_NDE_PRINT,
 
 	/* expression */
-
 	/* if you change the following values including their order,
 	 * you should change __eval_func of __eval_expression 
 	 * in run.c accordingly */
@@ -55,7 +56,6 @@ enum
 	XP_AWK_NDE_ARGIDX,
 	XP_AWK_NDE_POS,
 	XP_AWK_NDE_GETLINE,
-	XP_AWK_NDE_PRINT
 };
 
 enum
@@ -93,7 +93,6 @@ typedef struct xp_awk_nde_rex_t       xp_awk_nde_rex_t;
 typedef struct xp_awk_nde_var_t       xp_awk_nde_var_t;
 typedef struct xp_awk_nde_call_t      xp_awk_nde_call_t;
 typedef struct xp_awk_nde_getline_t   xp_awk_nde_getline_t;
-typedef struct xp_awk_nde_print_t     xp_awk_nde_print_t;
 
 typedef struct xp_awk_nde_if_t        xp_awk_nde_if_t;
 typedef struct xp_awk_nde_while_t     xp_awk_nde_while_t;
@@ -105,6 +104,8 @@ typedef struct xp_awk_nde_return_t    xp_awk_nde_return_t;
 typedef struct xp_awk_nde_exit_t      xp_awk_nde_exit_t;
 typedef struct xp_awk_nde_next_t      xp_awk_nde_next_t;
 typedef struct xp_awk_nde_nextfile_t  xp_awk_nde_nextfile_t;
+typedef struct xp_awk_nde_delete_t    xp_awk_nde_delete_t;
+typedef struct xp_awk_nde_print_t     xp_awk_nde_print_t;
 
 struct xp_awk_afn_t
 {
@@ -236,15 +237,6 @@ struct xp_awk_nde_getline_t
 	xp_awk_nde_t* in;
 };
 
-/* XP_AWK_NDE_PRINT */
-struct xp_awk_nde_print_t
-{
-	XP_AWK_NDE_HDR;
-	xp_awk_nde_t* args;
-	int out_type; /* XP_AWK_PRINT_XXX */
-	xp_awk_nde_t* out;
-};
-
 /* XP_AWK_NDE_IF */
 struct xp_awk_nde_if_t
 {
@@ -316,6 +308,22 @@ struct xp_awk_nde_next_t
 struct xp_awk_nde_nextfile_t
 {
 	XP_AWK_NDE_HDR;
+};
+
+/* XP_AWK_NDE_DELETE */
+struct xp_awk_nde_delete_t
+{
+	XP_AWK_NDE_HDR;
+	xp_awk_nde_t* var;
+};
+
+/* XP_AWK_NDE_PRINT */
+struct xp_awk_nde_print_t
+{
+	XP_AWK_NDE_HDR;
+	xp_awk_nde_t* args;
+	int out_type; /* XP_AWK_PRINT_XXX */
+	xp_awk_nde_t* out;
 };
 
 #ifdef __cplusplus

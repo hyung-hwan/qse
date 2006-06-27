@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.123 2006-06-27 10:53:04 bacon Exp $
+ * $Id: parse.c,v 1.124 2006-06-27 14:18:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2779,8 +2779,30 @@ static xp_awk_nde_t* __parse_exit (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
 {
-/* TODO: implement this... */
-	return XP_NULL;
+	xp_awk_nde_delete_t* nde;
+	xp_awk_nde_t* var;
+
+	if (!MATCH(awk,TOKEN_IDENT)) PANIC (awk, XP_AWK_EIDENT);
+
+	var = __parse_primary_ident (awk);
+	if (var == XP_NULL) return XP_NULL;
+
+	if (!__is_plain_var (var))
+	{
+		/* a normal identifier is expected */
+		xp_awk_clrpt (var);
+		PANIC (awk, XP_AWK_EIDENT);
+	}
+
+	/* TODO: .... delete var[pattern]... */
+	nde = (xp_awk_nde_delete_t*)xp_malloc(xp_sizeof(xp_awk_nde_delete_t));
+	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+
+	nde->type = XP_AWK_NDE_DELETE;
+	nde->next = XP_NULL;
+	nde->var = var;
+
+	return (xp_awk_nde_t*)nde;
 }
 
 static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
