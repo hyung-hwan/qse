@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.122 2006-06-25 15:26:57 bacon Exp $
+ * $Id: parse.c,v 1.123 2006-06-27 10:53:04 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -248,7 +248,11 @@ static struct __kwent __bvtab[] =
 		c = (awk)->lex.curc; \
 	} while(0)
 
-#define SET_TOKEN_TYPE(awk,code) ((awk)->token.type = code)
+#define SET_TOKEN_TYPE(awk,code) \
+	do { \
+		(awk)->token.prev = (awk)->token.type; \
+		(awk)->token.type = (code); \
+	} while (0);
 
 #define ADD_TOKEN_CHAR(awk,c) \
 	do { \
@@ -2782,12 +2786,11 @@ static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
 static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 {
 	xp_awk_nde_print_t* nde;
-	xp_awk_nde_t* args = XP_NULL;
+	xp_awk_nde_t* args = XP_NULL; 
+	xp_awk_nde_t* args_tail = XP_NULL;
+	xp_awk_nde_t* tail_prev = XP_NULL;
 	xp_awk_nde_t* out = XP_NULL;
 	int out_type;
-
-	/* TODO: handle expression list, not just a single expression */
-	/* TODO: handle ambiguiouty print "1111" > "2222". is > redirection? */
 
 	if (!MATCH(awk,TOKEN_SEMICOLON) &&
 	    !MATCH(awk,TOKEN_GT) &&
@@ -2797,27 +2800,86 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 	{
 		args = __parse_expression (awk);
 		if (args == XP_NULL) return XP_NULL;
-	}
 
-	out_type = MATCH(awk,TOKEN_GT)?     XP_AWK_PRINT_FILE:
-	           MATCH(awk,TOKEN_RSHIFT)? XP_AWK_PRINT_FILE_APPEND:
-	           MATCH(awk,TOKEN_BOR)?    XP_AWK_PRINT_PIPE:
-	           MATCH(awk,TOKEN_BORAND)? XP_AWK_PRINT_COPROC:
-                                            XP_AWK_PRINT_CONSOLE;
+		args_tail = args;
+		tail_prev = XP_NULL;
 
-	if (out_type != XP_AWK_PRINT_CONSOLE)
-	{
-		if (__get_token(awk) == -1)
+		while (MATCH(awk,TOKEN_COMMA))
 		{
-			if (args != XP_NULL) xp_awk_clrpt (args);
-			return XP_NULL;
+			if (__get_token(awk) == -1)
+			{
+				xp_awk_clrpt (args);
+				return XP_NULL;
+			}
+
+			args_tail->next = __parse_expression (awk);
+			if (args_tail->next == XP_NULL)
+			{
+				xp_awk_clrpt (args);
+				return XP_NULL;
+			}
+
+			tail_prev = args_tail;
+			args_tail = args_tail->next;
 		}
 
-		out = __parse_expression(awk);
-		if (out == XP_NULL)
+		/* print 1 > 2 would print 1 to the file named 2. 
+		 * print (1 > 2) would print (1 > 2) in the console */
+		if (awk->token.prev != TOKEN_RPAREN &&
+		    args_tail->type == XP_AWK_NDE_EXP_BIN)
 		{
-			if (args != XP_NULL) xp_awk_clrpt (args);
-			return XP_NULL;
+			xp_awk_nde_exp_t* ep = (xp_awk_nde_exp_t*)args_tail;
+			if (ep->opcode == XP_AWK_BINOP_GT)
+			{
+				xp_awk_nde_t* tmp = args_tail;
+
+				if (tail_prev != XP_NULL) 
+					tail_prev->next = ep->left;
+				else args = ep->left;
+
+				out = ep->right;
+				out_type = XP_AWK_PRINT_FILE;
+
+				xp_free (tmp);
+			}
+			else if (ep->opcode == XP_AWK_BINOP_RSHIFT)
+			{
+				xp_awk_nde_t* tmp = args_tail;
+
+				if (tail_prev != XP_NULL) 
+					tail_prev->next = ep->left;
+				else args = ep->left;
+
+				out = ep->right;
+				out_type = XP_AWK_PRINT_FILE_APPEND;
+
+				xp_free (tmp);
+			}
+		}
+	}
+
+	if (out == XP_NULL)
+	{
+		out_type = MATCH(awk,TOKEN_GT)?     XP_AWK_PRINT_FILE:
+		           MATCH(awk,TOKEN_RSHIFT)? XP_AWK_PRINT_FILE_APPEND:
+		           MATCH(awk,TOKEN_BOR)?    XP_AWK_PRINT_PIPE:
+		           MATCH(awk,TOKEN_BORAND)? XP_AWK_PRINT_COPROC:
+		                                    XP_AWK_PRINT_CONSOLE;
+
+		if (out_type != XP_AWK_PRINT_CONSOLE)
+		{
+			if (__get_token(awk) == -1)
+			{
+				if (args != XP_NULL) xp_awk_clrpt (args);
+				return XP_NULL;
+			}
+
+			out = __parse_expression(awk);
+			if (out == XP_NULL)
+			{
+				if (args != XP_NULL) xp_awk_clrpt (args);
+				return XP_NULL;
+			}
 		}
 	}
 

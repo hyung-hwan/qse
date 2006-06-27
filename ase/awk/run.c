@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.108 2006-06-26 15:09:28 bacon Exp $
+ * $Id: run.c,v 1.109 2006-06-27 10:53:04 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1110,7 +1110,7 @@ static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 	if (p->out != XP_NULL)
 	{
 		v = __eval_expression (run, p->out);
-		if (out == XP_NULL) return -1;
+		if (v == XP_NULL) return -1;
 
 		xp_awk_refupval (v);
 		out = xp_awk_valtostr (v, &errnum, XP_NULL);
@@ -1127,7 +1127,8 @@ static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 	if (p->args == XP_NULL)
 	{
 		/* TODO: get $0 ans use it for v */
-		v = xp_awk_makestrval0 (XP_T("<TODO: PRINT $0 WITH A TRAILING NEWLINE>\n"));
+		v = xp_awk_makestrval0 (
+			XP_T("<TODO: PRINT $0 WITH A TRAILING NEWLINE>\n"));
 		if (v == XP_NULL)
 		{
 			if (out != XP_NULL) xp_free (out);
@@ -1168,6 +1169,8 @@ static int __run_print_statement (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 			xp_awk_refdownval (run, v);
 
 			/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
+
+			/* TODO: print proper field separator */
 		}
 
 		/* TODO: predefine the new line string 

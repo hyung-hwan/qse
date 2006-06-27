@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.56 2006-06-22 04:25:44 bacon Exp $ 
+ * $Id: awk.c,v 1.57 2006-06-27 10:53:04 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -75,6 +75,8 @@ xp_awk_t* xp_awk_open (void)
 	awk->tree.chain = XP_NULL;
 	awk->tree.chain_tail = XP_NULL;
 
+	awk->token.prev = 0;
+	awk->token.type = 0;
 	awk->token.line = 1;
 	awk->token.column = 1;
 
