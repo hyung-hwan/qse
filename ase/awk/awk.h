@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.73 2006-06-26 15:09:28 bacon Exp $
+ * $Id: awk.h,v 1.74 2006-06-28 14:19:01 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -18,8 +18,19 @@ typedef xp_ssize_t (*xp_awk_io_t) (
 struct xp_awk_extio_t 
 {
 	int type;
+
 	xp_char_t* name;
 	void* handle;
+
+	/* input buffer */
+	struct
+	{
+		xp_char_t buf[2048];
+		xp_size_t pos;
+		xp_size_t len;
+		xp_bool_t eof;
+	} in;
+
 	xp_awk_extio_t* next;
 };
 

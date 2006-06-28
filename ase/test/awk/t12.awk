@@ -7,4 +7,6 @@ BEGIN
 	print "line 4" >> "2";
 	print "line 4" >> "3";
 	print "line 4" >> "4";
+
+	while ((getline x < "abc") > 0) print x;
 }
