@@ -10,4 +10,9 @@ BEGIN
 
 	delete abc;
 	delete abc["aaaa"] ;
+
+	/*
+	print 1 > 2 + 3;
+	print 1 < 2 + 3;
+	*/
 }
