@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.52 2006-06-28 03:44:40 bacon Exp $
+ * $Id: tree.h,v 1.53 2006-06-28 10:40:24 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -60,9 +60,12 @@ enum
 
 enum
 {
-	XP_AWK_GETLINE_PIPE,
-	XP_AWK_GETLINE_COPROC,
-	XP_AWK_GETLINE_FILE
+	/* the order of these values match 
+	 * __in_type_map and __in_opt_map in extio.c */
+
+	XP_AWK_IN_PIPE,
+	XP_AWK_IN_COPROC,
+	XP_AWK_IN_FILE
 };
 
 enum

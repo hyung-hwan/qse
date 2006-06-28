@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.13 2006-06-28 08:56:59 bacon Exp $
+ * $Id: extio.c,v 1.14 2006-06-28 10:40:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -11,12 +11,38 @@
 #endif
 
 int xp_awk_readextio (
-	xp_awk_run_t* run, int type, const xp_char_t* name, int* errnum)
+	xp_awk_run_t* run, int in_type, const xp_char_t* name, int* errnum)
 {
 	xp_awk_extio_t* p = run->extio;
-	xp_awk_io_t handler = run->awk->extio[type];
-	int ioopt;
+	xp_awk_io_t handler;
+	int extio_type, extio_opt;
 
+	static int __in_type_map[] =
+	{
+		/* the order should match the order of the 
+		 * XP_AWK_IN_XXX values in tree.h */
+		XP_AWK_EXTIO_PIPE,
+		XP_AWK_EXTIO_COPROC,
+		XP_AWK_EXTIO_FILE
+	};
+
+	static int __in_opt_map[] =
+	{
+		/* the order should match the order of the 
+		 * XP_AWK_IN_XXX values in tree.h */
+		XP_AWK_IO_PIPE_READ,
+		0,
+		XP_AWK_IO_FILE_READ
+	};
+
+	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_type_map));
+	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_opt_map));
+
+	/* translate the out_type into the relevant extio type and option */
+	extio_type = __in_type_map[in_type];
+	extio_opt = __in_opt_map[in_type];
+
+	handler = run->awk->extio[extio_type];
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
@@ -26,7 +52,8 @@ int xp_awk_readextio (
 
 	while (p != XP_NULL)
 	{
-		if (p->type == type && xp_strcmp(p->name,name) == 0) break;
+		if (p->type == in_type && 
+		    xp_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -47,17 +74,11 @@ int xp_awk_readextio (
 			return -1;
 		}
 
-		p->type = type;
+		p->type = in_type;
 		p->handle = XP_NULL;
 		p->next = XP_NULL;
 
-		if (type == XP_AWK_EXTIO_PIPE) 
-			ioopt = XP_AWK_IO_PIPE_READ;
-		else if (type == XP_AWK_EXTIO_FILE) 
-			ioopt = XP_AWK_IO_FILE_READ;
-		else ioopt = 0; /* TODO: how to handle this??? */
-
-		if (handler (XP_AWK_IO_OPEN, ioopt, p, XP_NULL, 0) == -1)
+		if (handler (XP_AWK_IO_OPEN, extio_opt, p, XP_NULL, 0) == -1)
 		{
 			xp_free (p->name);
 			xp_free (p);

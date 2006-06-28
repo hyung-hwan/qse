@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.58 2006-06-27 14:18:19 bacon Exp $
+ * $Id: tree.c,v 1.59 2006-06-28 10:40:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -364,8 +364,8 @@ static int __print_expression (xp_awk_nde_t* nde)
 			  /* TODO */
 			xp_awk_nde_getline_t* px = (xp_awk_nde_getline_t*)nde;
 			if (px->in != XP_NULL &&
-			    (px->in_type == XP_AWK_GETLINE_PIPE ||
-			     px->in_type == XP_AWK_GETLINE_COPROC))
+			    (px->in_type == XP_AWK_IN_PIPE ||
+			     px->in_type == XP_AWK_IN_COPROC))
 			{
 				__print_expression (px->in);
 				xp_printf (XP_T(" %s "), 
@@ -380,7 +380,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 			}
 
 			if (px->in != XP_NULL &&
-			    px->in_type == XP_AWK_GETLINE_FILE)
+			    px->in_type == XP_AWK_IN_FILE)
 			{
 				xp_printf (XP_T(" %s "), 
 					__getline_inop_str[px->in_type]);

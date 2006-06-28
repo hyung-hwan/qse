@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.126 2006-06-28 03:44:39 bacon Exp $
+ * $Id: parse.c,v 1.127 2006-06-28 10:40:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1467,9 +1467,9 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 		int in_type;
 
 		if (MATCH(awk,TOKEN_BOR)) 
-			in_type = XP_AWK_GETLINE_PIPE;
+			in_type = XP_AWK_IN_PIPE;
 		else if (MATCH(awk,TOKEN_BORAND)) 
-			in_type = XP_AWK_GETLINE_COPROC;
+			in_type = XP_AWK_IN_COPROC;
 		else break;
 		
 		if (__get_token(awk) == -1)
@@ -1524,7 +1524,7 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 		{
 			xp_awk_nde_exp_t* nde;
 
-			if (in_type == XP_AWK_GETLINE_COPROC)
+			if (in_type == XP_AWK_IN_COPROC)
 			{
 				xp_awk_clrpt (left);
 				PANIC (awk, XP_AWK_EGETLINE);
@@ -2009,7 +2009,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->type = XP_AWK_NDE_GETLINE;
 		nde->next = XP_NULL;
 		nde->var = var;
-		nde->in_type = XP_AWK_GETLINE_FILE;
+		nde->in_type = XP_AWK_IN_FILE;
 		nde->in = in;
 
 		return (xp_awk_nde_t*)nde;
