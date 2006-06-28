@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.22 2006-06-23 11:48:19 bacon Exp $
+ * $Id: sa.c,v 1.23 2006-06-28 08:56:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -72,7 +72,7 @@ int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2)
 {
 	while (*s1 == *s2) 
 	{
-		if (*s1 == XP_CHAR('\0')) return 0;
+		if (*s1 == XP_C('\0')) return 0;
 		s1++, s2++;
 	}
 

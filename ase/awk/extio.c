@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.12 2006-06-28 03:44:39 bacon Exp $
+ * $Id: extio.c,v 1.13 2006-06-28 08:56:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -133,6 +133,7 @@ int xp_awk_writeextio (
 	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_type_map));
 	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_opt_map));
 
+	/* translate the out_type into the relevant extio type and option */
 	extio_type = __out_type_map[out_type];
 	extio_opt = __out_opt_map[out_type];
 
@@ -161,7 +162,17 @@ int xp_awk_writeextio (
 	/* look for the corresponding extio for name */
 	while (p != XP_NULL)
 	{
-		/* TODO: should it be extio_type or out_type???? */ 
+		/* the file "1.tmp", in the following code snippets, 
+		 * would be opened by the first print statement, but not by
+		 * the second print statement. this is because
+		 * both XP_AWK_OUT_FILE and XP_AWK_OUT_FILE_APPEND are
+		 * translated to XP_AWK_EXTIO_FILE and it is used to
+		 * keep track of file handles..
+		 *
+		 *    print "1111" >> "1.tmp"
+		 *    print "1111" > "1.tmp"
+		 */
+
 		if (p->type == extio_type && 
 		    xp_strcmp(p->name,name) == 0) break;
 		p = p->next;
@@ -187,11 +198,6 @@ int xp_awk_writeextio (
 			return -1;
 		}
 
-		/* TODO: should it be extio_type or out_type???? */ 
-		/* TODO: should it be extio_type or out_type???? */ 
-		/* TODO: should it be extio_type or out_type???? */ 
-		/* TODO: should it be extio_type or out_type???? */ 
-		/* TODO: should it be extio_type or out_type???? */ 
 		p->type = extio_type;
 		p->handle = XP_NULL;
 		p->next = XP_NULL;
