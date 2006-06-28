@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.32 2006-06-26 15:09:28 bacon Exp $
+ * $Id: val.c,v 1.33 2006-06-28 08:56:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -328,6 +328,22 @@ xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
 
 xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 {
+	if (v->type == XP_AWK_VAL_NIL)
+	{
+		if (buf == XP_NULL) 
+		{
+			xp_char_t* tmp;
+			tmp = xp_strdup (XP_T(""));
+			if (tmp == XP_NULL) *errnum = XP_AWK_ENOMEM;
+			return tmp;
+		}
+		else
+		{
+			xp_str_clear (buf);
+			return XP_STR_BUF(buf);
+		}
+	}
+
 	if (v->type == XP_AWK_VAL_INT)
 	{
 		xp_char_t* tmp;

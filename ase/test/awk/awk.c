@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.44 2006-06-27 10:53:04 bacon Exp $
+ * $Id: awk.c,v 1.45 2006-06-28 08:56:59 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -147,6 +147,7 @@ static xp_ssize_t process_extio_pipe (
 			else if (opt == XP_AWK_IO_PIPE_WRITE)
 				mode = XP_T("w");
 			else return -1; /* TODO: any way to set the error number? */
+xp_printf (XP_TEXT("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
 			handle = _tpopen (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
@@ -155,7 +156,7 @@ static xp_ssize_t process_extio_pipe (
 
 		case XP_AWK_IO_CLOSE:
 		{
-xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
+xp_printf (XP_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -207,6 +208,7 @@ static xp_ssize_t process_extio_file (
 				mode = XP_T("a");
 			else return -1; /* TODO: any way to set the error number? */
 
+xp_printf (XP_TEXT("opending %s of type %d (file)\n"),  epa->name, epa->type);
 			handle = _tfopen (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
@@ -215,7 +217,7 @@ static xp_ssize_t process_extio_file (
 
 		case XP_AWK_IO_CLOSE:
 		{
-xp_printf (XP_TEXT("closing %s of type %d\n"),  epa->name, epa->type);
+xp_printf (XP_TEXT("closing %s of type %d (file)\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -258,6 +260,7 @@ static xp_ssize_t process_extio_console (
 			/* opt: XP_AWK_IO_CONSOLE_READ, 
 			 *      XP_AWK_IO_CONSOLE_WRITE */
 
+xp_printf (XP_TEXT("opending %s of type %d (console)\n"),  epa->name, epa->type);
 			if (opt == XP_AWK_IO_CONSOLE_READ)
 				epa->handle = stdin;
 			else if (opt == XP_AWK_IO_CONSOLE_WRITE)
@@ -267,6 +270,7 @@ static xp_ssize_t process_extio_console (
 
 		case XP_AWK_IO_CLOSE:
 		{
+xp_printf (XP_TEXT("closing %s of type %d (console)\n"),  epa->name, epa->type);
 			/* TODO: CloseConsole in GUI APPLICATION */
 			return 0;
 		}
