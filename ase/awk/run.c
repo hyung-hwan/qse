@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.111 2006-06-28 03:44:39 bacon Exp $
+ * $Id: run.c,v 1.112 2006-06-28 10:40:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3061,71 +3061,35 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_nde_getline_t* p = (xp_awk_nde_getline_t*)nde;
+	xp_awk_val_t* in;
+	xp_char_t* str;
+	int errnum, n;
 
-	if (p->in_type == XP_AWK_GETLINE_PIPE)
+	xp_assert (p->in_type == XP_AWK_IN_PIPE ||
+	           p->in_type == XP_AWK_IN_COPROC ||
+		   p->in_type == XP_AWK_IN_FILE);
+	xp_assert (p->in != XP_NULL);
+
+	in = __eval_expression (run, p->in);
+	if (in == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (in);
+	str = xp_awk_valtostr (in, &errnum, XP_NULL);
+	if (str == XP_NULL) 
 	{
-		xp_awk_val_t* in;
-		xp_char_t* str;
-		int errnum, n;
-
-		in = __eval_expression (run, p->in);
-		if (in == XP_NULL) return XP_NULL;
-
-		xp_awk_refupval (in);
-		str = xp_awk_valtostr (in, &errnum, XP_NULL);
-		if (str == XP_NULL) 
-		{
-			xp_awk_refdownval (run, in);
-			PANIC (run, errnum);
-		}
 		xp_awk_refdownval (run, in);
-
-		n = xp_awk_readextio (run, XP_AWK_EXTIO_PIPE, str, &errnum);
-		xp_free (str);
-
-		/* TODO: set the value to var if it is not null */
-		/* TODO: set $0 if var is null */
-
-		if (n < 0 && errnum != XP_AWK_ENOERR) PANIC (run, errnum);
-		return xp_awk_makeintval (run, n);
+		PANIC (run, errnum);
 	}
-	else if (p->in_type == XP_AWK_GETLINE_COPROC)
-	{
-		xp_printf (XP_T("eval_getline coprocess not properly implemented....\n"));
-		return XP_NULL;
-	}
-	else if (p->in_type == XP_AWK_GETLINE_FILE)
-	{
-		xp_awk_val_t* in;
-		xp_char_t* str;
-		int errnum, n;
+	xp_awk_refdownval (run, in);
 
-		in = __eval_expression (run, p->in);
-		if (in == XP_NULL) return XP_NULL;
+	n = xp_awk_readextio (run, p->in_type, str, &errnum);
+	xp_free (str);
 
-		xp_awk_refupval (in);
-		str = xp_awk_valtostr (in, &errnum, XP_NULL);
-		if (str == XP_NULL) 
-		{
-			xp_awk_refdownval (run, in);
-			PANIC (run, errnum);
-		}
-		xp_awk_refdownval (run, in);
+	/* TODO: set the value to var if it is not null */
+	/* TODO: set $0 if var is null */
 
-		n = xp_awk_readextio (run, XP_AWK_EXTIO_FILE, str, &errnum);
-		xp_free (str);
-
-		/* TODO: set the value to var if it is not null */
-		/* TODO: set $0 if var is null */
-
-		if (n < 0 && errnum != XP_AWK_ENOERR) PANIC (run, errnum);
-		return xp_awk_makeintval (run, n);
-	}
-	else
-	{
-		xp_assert (!"should never happen - wrong in_type for getline");
-		PANIC (run, XP_AWK_EINTERNAL);
-	}
+	if (n < 0 && errnum != XP_AWK_ENOERR) PANIC (run, errnum);
+	return xp_awk_makeintval (run, n);
 }
 
 static int __raw_push (xp_awk_run_t* run, void* val)
