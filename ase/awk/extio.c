@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.14 2006-06-28 10:40:24 bacon Exp $
+ * $Id: extio.c,v 1.15 2006-06-28 14:19:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -11,7 +11,8 @@
 #endif
 
 int xp_awk_readextio (
-	xp_awk_run_t* run, int in_type, const xp_char_t* name, int* errnum)
+	xp_awk_run_t* run, int in_type,
+	const xp_char_t* name, xp_str_t* buf, int* errnum)
 {
 	xp_awk_extio_t* p = run->extio;
 	xp_awk_io_t handler;
@@ -76,6 +77,12 @@ int xp_awk_readextio (
 
 		p->type = in_type;
 		p->handle = XP_NULL;
+
+		p->in.buf[0] = XP_C('\0');
+		p->in.pos = 0;
+		p->in.len = 0;
+		p->in.eof = xp_false;
+
 		p->next = XP_NULL;
 
 		if (handler (XP_AWK_IO_OPEN, extio_opt, p, XP_NULL, 0) == -1)
@@ -105,16 +112,52 @@ int xp_awk_readextio (
 		run->extio = p;
 	}
 
-	{
-xp_char_t buf[1024];
+	/* read a line */
+	xp_str_clear (buf);
 
-	if (handler (XP_AWK_IO_READ, 0, p, buf, xp_countof(buf)) == 0)
+	while (1)
 	{
-		/* no more data. end of data stream */
-		return 0;
-	}
+		xp_char_t c;
 
-xp_printf(XP_TEXT("%s"), buf);
+		if (p->in.pos >= p->in.len)
+		{
+			xp_ssize_t n;
+
+			if (p->in.eof)
+			{
+				if (XP_STR_LEN(buf) == 0) return 0;
+				break;
+			}
+
+			n = handler (XP_AWK_IO_READ, 0, 
+				p, p->in.buf, xp_countof(p->in.buf));
+			if (n == -1) 
+			{
+				/* handler error. getline should return -1 */
+				/* TODO: set ERRNO */
+				*errnum = XP_AWK_ENOERR;
+				return -1;
+			}
+
+			if (n == 0) 
+			{
+				p->in.eof = xp_true;
+				if (XP_STR_LEN(buf) == 0) return 0;
+				break;
+			}
+
+			p->in.len = n;
+			p->in.pos = 0;
+		}
+
+		c = p->in.buf[p->in.pos++];
+		if (c == XP_C('\n')) break; 
+
+		if (xp_str_ccat (buf, c) == (xp_size_t)-1)
+		{
+			*errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
 	}
 
 	return 1;

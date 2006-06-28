@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.112 2006-06-28 10:40:24 bacon Exp $
+ * $Id: run.c,v 1.113 2006-06-28 14:19:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1608,6 +1608,8 @@ static xp_awk_val_t* __eval_binop_lor (
 	}
 
 	xp_awk_refdownval (run, lv);
+
+	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -1652,6 +1654,8 @@ static xp_awk_val_t* __eval_binop_land (
 	}
 
 	xp_awk_refdownval (run, lv);
+
+	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 	return res;
 }
 
@@ -1844,6 +1848,7 @@ static xp_awk_val_t* __eval_binop_eq (
 
 	res = xp_awk_makeintval (run, r);
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
 	return res;
 }
 
@@ -3060,10 +3065,13 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_awk_nde_getline_t* p = (xp_awk_nde_getline_t*)nde;
-	xp_awk_val_t* in;
+	xp_awk_nde_getline_t* p;
+	xp_awk_val_t* in, * res;
 	xp_char_t* str;
+	xp_str_t buf;
 	int errnum, n;
+
+	p = (xp_awk_nde_getline_t*)nde;
 
 	xp_assert (p->in_type == XP_AWK_IN_PIPE ||
 	           p->in_type == XP_AWK_IN_COPROC ||
@@ -3082,14 +3090,56 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	}
 	xp_awk_refdownval (run, in);
 
-	n = xp_awk_readextio (run, p->in_type, str, &errnum);
+	/* TODO: optimization in line buffer management */
+	if (xp_str_open (&buf, 256) == XP_NULL)
+	{
+		xp_free (str);
+		PANIC (run, XP_AWK_ENOMEM);
+	}
+
+	n = xp_awk_readextio (run, p->in_type, str, &buf, &errnum);
 	xp_free (str);
 
-	/* TODO: set the value to var if it is not null */
-	/* TODO: set $0 if var is null */
+	if (n < 0 && errnum != XP_AWK_ENOERR) 
+	{
+		xp_str_close (&buf);
+		PANIC (run, errnum);
+	}
 
-	if (n < 0 && errnum != XP_AWK_ENOERR) PANIC (run, errnum);
-	return xp_awk_makeintval (run, n);
+	if (n > 0)
+	{
+		if (p->var == XP_NULL)
+		{
+		/* TODO: set $0 if var is null */
+			xp_printf (XP_T("set %s to $0\n"), XP_STR_BUF(&buf));
+			xp_str_close (&buf);
+		}
+		else
+		{
+			xp_awk_val_t* v;
+
+			v = xp_awk_makestrval (
+				XP_STR_BUF(&buf), XP_STR_LEN(&buf));
+
+			xp_str_close (&buf);
+
+			if (v == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			xp_awk_refupval (v);
+	
+			if (__do_assignment(run, 
+				(xp_awk_nde_var_t*)p->var, v) == XP_NULL)
+			{
+				xp_awk_refdownval (run, v);
+				return XP_NULL;
+			}
+			xp_awk_refdownval (run, v);
+		}
+	}
+	
+	res =  xp_awk_makeintval (run, n);
+	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
+	return res;
 }
 
 static int __raw_push (xp_awk_run_t* run, void* val)
@@ -3100,7 +3150,7 @@ static int __raw_push (xp_awk_run_t* run, void* val)
 		xp_size_t n;
 	       
 		n = run->stack_limit + STACK_INCREMENT;
-		tmp = (void**)xp_realloc (run->stack, n * xp_sizeof(void*));
+		tmp = (void**) xp_realloc (run->stack, n * xp_sizeof(void*));
 		if (tmp == XP_NULL) return -1;
 
 		run->stack = tmp;
