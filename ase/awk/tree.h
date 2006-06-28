@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.51 2006-06-27 14:18:19 bacon Exp $
+ * $Id: tree.h,v 1.52 2006-06-28 03:44:40 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -67,13 +67,14 @@ enum
 
 enum
 {
-	/* the order of these values match __print_extio_map in run.c */
+	/* the order of these values match 
+	 * __out_type_map and __out_opt_map in extio.c */
 
-	XP_AWK_PRINT_PIPE,
-	XP_AWK_PRINT_COPROC,
-	XP_AWK_PRINT_FILE,
-	XP_AWK_PRINT_FILE_APPEND,
-	XP_AWK_PRINT_CONSOLE
+	XP_AWK_OUT_PIPE,
+	XP_AWK_OUT_COPROC,
+	XP_AWK_OUT_FILE,
+	XP_AWK_OUT_FILE_APPEND,
+	XP_AWK_OUT_CONSOLE
 };
 
 typedef struct xp_awk_afn_t xp_awk_afn_t;
@@ -322,7 +323,7 @@ struct xp_awk_nde_print_t
 {
 	XP_AWK_NDE_HDR;
 	xp_awk_nde_t* args;
-	int out_type; /* XP_AWK_PRINT_XXX */
+	int out_type; /* XP_AWK_OUT_XXX */
 	xp_awk_nde_t* out;
 };
 

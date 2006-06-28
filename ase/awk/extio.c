@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.11 2006-06-26 15:09:28 bacon Exp $
+ * $Id: extio.c,v 1.12 2006-06-28 03:44:39 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -100,14 +100,43 @@ xp_printf(XP_TEXT("%s"), buf);
 }
 
 int xp_awk_writeextio (
-	xp_awk_run_t* run, int type, 
+	xp_awk_run_t* run, int out_type, 
 	const xp_char_t* name, xp_awk_val_t* v, int* errnum)
 {
 	xp_awk_extio_t* p = run->extio;
-	xp_awk_io_t handler = run->awk->extio[type];
+	xp_awk_io_t handler;
 	xp_str_t buf;
-	int ioopt;
+	int extio_type, extio_opt;
 
+	static int __out_type_map[] =
+	{
+		/* the order should match the order of the 
+		 * XP_AWK_OUT_XXX values in tree.h */
+		XP_AWK_EXTIO_PIPE,
+		XP_AWK_EXTIO_COPROC,
+		XP_AWK_EXTIO_FILE,
+		XP_AWK_EXTIO_FILE,
+		XP_AWK_EXTIO_CONSOLE
+	};
+
+	static int __out_opt_map[] =
+	{
+		/* the order should match the order of the 
+		 * XP_AWK_OUT_XXX values in tree.h */
+		XP_AWK_IO_PIPE_WRITE,
+		0,
+		XP_AWK_IO_FILE_WRITE,
+		XP_AWK_IO_FILE_APPEND,
+		XP_AWK_IO_CONSOLE_WRITE
+	};
+
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_type_map));
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_opt_map));
+
+	extio_type = __out_type_map[out_type];
+	extio_opt = __out_opt_map[out_type];
+
+	handler = run->awk->extio[extio_type];
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
@@ -132,7 +161,9 @@ int xp_awk_writeextio (
 	/* look for the corresponding extio for name */
 	while (p != XP_NULL)
 	{
-		if (p->type == type && xp_strcmp(p->name,name) == 0) break;
+		/* TODO: should it be extio_type or out_type???? */ 
+		if (p->type == extio_type && 
+		    xp_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -156,19 +187,16 @@ int xp_awk_writeextio (
 			return -1;
 		}
 
-		p->type = type;
+		/* TODO: should it be extio_type or out_type???? */ 
+		/* TODO: should it be extio_type or out_type???? */ 
+		/* TODO: should it be extio_type or out_type???? */ 
+		/* TODO: should it be extio_type or out_type???? */ 
+		/* TODO: should it be extio_type or out_type???? */ 
+		p->type = extio_type;
 		p->handle = XP_NULL;
 		p->next = XP_NULL;
 
-		if (type == XP_AWK_EXTIO_PIPE) 
-			ioopt = XP_AWK_IO_PIPE_WRITE;
-		else if (type == XP_AWK_EXTIO_FILE) 
-			ioopt = XP_AWK_IO_FILE_WRITE;
-		else if (type == XP_AWK_EXTIO_CONSOLE)
-			ioopt = XP_AWK_IO_CONSOLE_WRITE;
-		else ioopt = 0; /* TODO: how to handle this??? */
-
-		if (handler (XP_AWK_IO_OPEN, ioopt, p, XP_NULL, 0) == -1)
+		if (handler (XP_AWK_IO_OPEN, extio_opt, p, XP_NULL, 0) == -1)
 		{
 			xp_free (p->name);
 			xp_free (p);

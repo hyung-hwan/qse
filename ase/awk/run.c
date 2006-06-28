@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.110 2006-06-27 14:18:19 bacon Exp $
+ * $Id: run.c,v 1.111 2006-06-28 03:44:39 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1099,28 +1099,14 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 	const xp_char_t* dst;
 	xp_awk_val_t* v;
 	xp_awk_nde_t* np;
-	int extio_type, errnum, n;
-
-	static int __print_extio_map[] =
-	{
-		/* the order should match the order of the 
-		 * XP_AWK_PRINT_XXX values in tree.h */
-		XP_AWK_EXTIO_PIPE,
-		XP_AWK_EXTIO_COPROC,
-		XP_AWK_EXTIO_FILE,
-		XP_AWK_EXTIO_FILE,
-		XP_AWK_EXTIO_CONSOLE
-	};
+	int errnum, n;
 
 	xp_assert (
-		(p->out_type == XP_AWK_PRINT_PIPE && p->out != XP_NULL) ||
-		(p->out_type == XP_AWK_PRINT_COPROC && p->out != XP_NULL) ||
-		(p->out_type == XP_AWK_PRINT_FILE && p->out != XP_NULL) ||
-		(p->out_type == XP_AWK_PRINT_FILE_APPEND  && p->out != XP_NULL) ||
-		(p->out_type == XP_AWK_PRINT_CONSOLE && p->out == XP_NULL));
-
-	xp_assert (p->out_type >= 0 && p->out_type < xp_countof(__print_extio_map));
-	extio_type = __print_extio_map[p->out_type];
+		(p->out_type == XP_AWK_OUT_PIPE && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_OUT_COPROC && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_OUT_FILE && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_OUT_FILE_APPEND  && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_OUT_CONSOLE && p->out == XP_NULL));
 
 	if (p->out != XP_NULL)
 	{
@@ -1151,7 +1137,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		}
 
 		xp_awk_refupval (v);
-		n = xp_awk_writeextio (run, extio_type, dst, v, &errnum);
+		n = xp_awk_writeextio (run, p->out_type, dst, v, &errnum);
 		if (n < 0 && errnum != XP_AWK_ENOERR) 
 		{
 			if (out != XP_NULL) xp_free (out);
@@ -1174,7 +1160,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 			xp_awk_refupval (v);
 
 			n = xp_awk_writeextio (
-				run, extio_type, dst, v, &errnum);
+				run, p->out_type, dst, v, &errnum);
 			if (n < 0 && errnum != XP_AWK_ENOERR) 
 			{
 				if (out != XP_NULL) xp_free (out);
@@ -1199,7 +1185,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		xp_awk_refupval (v);
 
 		n = xp_awk_writeextio (
-			run, extio_type, dst, v, &errnum);
+			run, p->out_type, dst, v, &errnum);
 		if (n < 0 && errnum != XP_AWK_ENOERR)
 		{
 			if (out != XP_NULL) xp_free (out);
