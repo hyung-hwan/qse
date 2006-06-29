@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.15 2006-06-28 14:19:01 bacon Exp $
+ * $Id: extio.c,v 1.16 2006-06-29 14:38:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -10,13 +10,21 @@
 #include <xp/bas/memory.h>
 #endif
 
+enum
+{
+	__MASK_READ  = 0x01FF,
+	__MASK_WRITE = 0x02FF,
+	__MASK_RDWR  = 0x04FF,
+	__MASK_CLEAR = 0x00FF
+};
+
 int xp_awk_readextio (
 	xp_awk_run_t* run, int in_type,
 	const xp_char_t* name, xp_str_t* buf, int* errnum)
 {
 	xp_awk_extio_t* p = run->extio;
 	xp_awk_io_t handler;
-	int extio_type, extio_opt;
+	int extio_type, extio_opt, extio_mask;
 
 	static int __in_type_map[] =
 	{
@@ -24,7 +32,8 @@ int xp_awk_readextio (
 		 * XP_AWK_IN_XXX values in tree.h */
 		XP_AWK_EXTIO_PIPE,
 		XP_AWK_EXTIO_COPROC,
-		XP_AWK_EXTIO_FILE
+		XP_AWK_EXTIO_FILE,
+		XP_AWK_EXTIO_CONSOLE
 	};
 
 	static int __in_opt_map[] =
@@ -33,15 +42,26 @@ int xp_awk_readextio (
 		 * XP_AWK_IN_XXX values in tree.h */
 		XP_AWK_IO_PIPE_READ,
 		0,
+		XP_AWK_IO_FILE_READ,
 		XP_AWK_IO_FILE_READ
+	};
+
+	static int __in_mask_map[] =
+	{
+		__MASK_READ,
+		__MASK_RDWR,
+		__MASK_READ,
+		__MASK_READ
 	};
 
 	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_type_map));
 	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_opt_map));
+	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_mask_map));
 
-	/* translate the out_type into the relevant extio type and option */
+	/* translate the in_type into the relevant extio type and option */
 	extio_type = __in_type_map[in_type];
 	extio_opt = __in_opt_map[in_type];
+	extio_mask = __in_mask_map[in_type];
 
 	handler = run->awk->extio[extio_type];
 	if (handler == XP_NULL)
@@ -53,7 +73,7 @@ int xp_awk_readextio (
 
 	while (p != XP_NULL)
 	{
-		if (p->type == in_type && 
+		if (p->type == (extio_type | extio_mask) &&
 		    xp_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
@@ -75,7 +95,7 @@ int xp_awk_readextio (
 			return -1;
 		}
 
-		p->type = in_type;
+		p->type = (extio_type | extio_mask);
 		p->handle = XP_NULL;
 
 		p->in.buf[0] = XP_C('\0');
@@ -170,7 +190,7 @@ int xp_awk_writeextio (
 	xp_awk_extio_t* p = run->extio;
 	xp_awk_io_t handler;
 	xp_str_t buf;
-	int extio_type, extio_opt;
+	int extio_type, extio_opt, extio_mask;
 
 	static int __out_type_map[] =
 	{
@@ -194,12 +214,23 @@ int xp_awk_writeextio (
 		XP_AWK_IO_CONSOLE_WRITE
 	};
 
+	static int __out_mask_map[] =
+	{
+		__MASK_WRITE,
+		__MASK_RDWR,
+		__MASK_WRITE,
+		__MASK_WRITE,
+		__MASK_WRITE
+	};
+
 	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_type_map));
 	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_opt_map));
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and option */
 	extio_type = __out_type_map[out_type];
 	extio_opt = __out_opt_map[out_type];
+	extio_mask = __out_mask_map[out_type];
 
 	handler = run->awk->extio[extio_type];
 	if (handler == XP_NULL)
@@ -237,7 +268,7 @@ int xp_awk_writeextio (
 		 *    print "1111" > "1.tmp"
 		 */
 
-		if (p->type == extio_type && 
+		if (p->type == (extio_type | extio_mask) && 
 		    xp_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
@@ -262,7 +293,7 @@ int xp_awk_writeextio (
 			return -1;
 		}
 
-		p->type = extio_type;
+		p->type = (extio_type | extio_mask);
 		p->handle = XP_NULL;
 		p->next = XP_NULL;
 
@@ -316,8 +347,9 @@ int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 		  * regardless of the extio type */
 		if (xp_strcmp(p->name,name) == 0) 
 		{
-			xp_awk_io_t handler = run->awk->extio[p->type];
-
+			xp_awk_io_t handler;
+		       
+			handler = run->awk->extio[p->type & __MASK_CLEAR];
 			if (handler != NULL)
 			{
 	/* TODO: io command should not be XP_AWK_IO_CLOSE 
@@ -355,7 +387,7 @@ void xp_awk_clearextio (xp_awk_run_t* run)
 
 	while (run->extio != XP_NULL)
 	{
-		handler = run->awk->extio[run->extio->type];
+		handler = run->awk->extio[run->extio->type & __MASK_CLEAR];
 		next = run->extio->next;
 
 		if (handler != XP_NULL)

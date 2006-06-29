@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.59 2006-06-28 10:40:24 bacon Exp $
+ * $Id: tree.c,v 1.60 2006-06-29 14:38:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -72,7 +72,8 @@ static const xp_char_t* __getline_inop_str[] =
 {
 	XP_T("|"),
 	XP_T("|&"),
-	XP_T("<")
+	XP_T("<"),
+	XP_T("")
 };
 
 static const xp_char_t* __print_outop_str[] =

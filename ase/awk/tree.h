@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.54 2006-06-28 14:19:01 bacon Exp $
+ * $Id: tree.h,v 1.55 2006-06-29 14:38:01 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -65,7 +65,8 @@ enum
 
 	XP_AWK_IN_PIPE,
 	XP_AWK_IN_COPROC,
-	XP_AWK_IN_FILE
+	XP_AWK_IN_FILE,
+	XP_AWK_IN_CONSOLE
 };
 
 enum

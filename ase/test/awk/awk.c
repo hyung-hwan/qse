@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.45 2006-06-28 08:56:59 bacon Exp $
+ * $Id: awk.c,v 1.46 2006-06-29 14:38:01 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -36,15 +36,41 @@
 #include <mcheck.h>
 #endif
 
+struct src_io
+{
+	const xp_char_t* input_file;
+	FILE* input_handle;
+};
+
+struct data_io
+{
+	const char* input_file;
+	FILE* input_handle;
+};
+
 static xp_ssize_t process_source (
 	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
 {
+	struct src_io* src_io = (struct src_io*)arg;
 	xp_char_t c;
 
 	switch (cmd) 
 	{
 		case XP_AWK_IO_OPEN:
+		{
+			if (src_io->input_file == XP_NULL) return 0;
+			src_io->input_handle = _tfopen (src_io->input_file, _T("r"));
+			if (src_io->input_handle == NULL) return -1;
+			return 0;
+		}
+
 		case XP_AWK_IO_CLOSE:
+		{
+			if (src_io->input_file == XP_NULL) return 0;
+			fclose ((FILE*)src_io->input_handle);
+			return 0;
+		}
+
 		case XP_AWK_IO_NEXT:
 		{
 			return 0;
@@ -54,9 +80,9 @@ static xp_ssize_t process_source (
 		{
 			if (size <= 0) return -1;
 		#ifdef XP_CHAR_IS_MCHAR
-			c = fgetc (stdin);
+			c = fgetc ((FILE*)src_io->input_handle);
 		#else
-			c = fgetwc (stdin);
+			c = fgetwc ((FILE*)src_io->input_handle);
 		#endif
 			if (c == XP_CHAR_EOF) return 0;
 			*data = c;
@@ -65,6 +91,7 @@ static xp_ssize_t process_source (
 
 		case XP_AWK_IO_WRITE:
 		{
+			xp_printf (XP_T("XP_AWK_IO_WRITE CALLED FOR SOURCE\n"));
 			return -1;
 		}
 	}
@@ -73,11 +100,6 @@ static xp_ssize_t process_source (
 }
 
 
-struct data_io
-{
-	const char* input_file;
-	FILE* input_handle;
-};
 
 static xp_ssize_t process_data (
 	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
@@ -260,25 +282,30 @@ static xp_ssize_t process_extio_console (
 			/* opt: XP_AWK_IO_CONSOLE_READ, 
 			 *      XP_AWK_IO_CONSOLE_WRITE */
 
-xp_printf (XP_TEXT("opending %s of type %d (console)\n"),  epa->name, epa->type);
+xp_printf (XP_TEXT("opening [%s] of type %d (console)\n"),  epa->name, epa->type);
 			if (opt == XP_AWK_IO_CONSOLE_READ)
 				epa->handle = stdin;
 			else if (opt == XP_AWK_IO_CONSOLE_WRITE)
 				epa->handle = stdout;
 			else return -1;
+
+			return 0;
 		}
 
 		case XP_AWK_IO_CLOSE:
 		{
-xp_printf (XP_TEXT("closing %s of type %d (console)\n"),  epa->name, epa->type);
+xp_printf (XP_TEXT("closing [%s] of type %d (console)\n"),  epa->name, epa->type);
 			/* TODO: CloseConsole in GUI APPLICATION */
 			return 0;
 		}
 
 		case XP_AWK_IO_READ:
 		{
-			if (_fgetts (data, size, (FILE*)epa->handle) == XP_NULL) 
+			if (_fgetts (data, size, (FILE*)epa->handle) == XP_NULL)
+			//if (_fgetts (data, size, stdin) == XP_NULL)
+			{
 				return 0;
+			}
 			return xp_strlen(data);
 		}
 
@@ -286,6 +313,7 @@ xp_printf (XP_TEXT("closing %s of type %d (console)\n"),  epa->name, epa->type);
 		{
 			/* TODO: how to return error or 0 */
 			_fputts (data, /*size,*/ (FILE*)epa->handle);
+			//_fputts (data, /*size,*/ stdout);
 			return size;
 		}
 
@@ -307,17 +335,11 @@ static int __main (int argc, xp_char_t* argv[])
 {
 	xp_awk_t* awk;
 	struct data_io data_io = { "awk.in", NULL };
+	struct src_io src_io = { NULL, NULL };
 
 	if ((awk = xp_awk_open()) == XP_NULL) 
 	{
 		xp_printf (XP_T("Error: cannot open awk\n"));
-		return -1;
-	}
-
-	if (xp_awk_attsrc(awk, process_source, XP_NULL) == -1) 
-	{
-		xp_awk_close (awk);
-		xp_printf (XP_T("Error: cannot attach source\n"));
 		return -1;
 	}
 
@@ -359,8 +381,44 @@ static int __main (int argc, xp_char_t* argv[])
 		if (xp_strcmp(argv[1], XP_T("-m")) == 0)
 #endif
 		{
+			xp_awk_close (awk);
+			xp_printf (XP_T("Usage: %s [-m] source_file\n"), argv[0]);
+			return -1;
+		}
+
+		src_io.input_file = argv[1];
+	}
+	else if (argc == 3)
+	{
+#if defined(__STAND_ALONE) && !defined(_WIN32)
+		if (strcmp(argv[1], "-m") == 0)
+#else
+		if (xp_strcmp(argv[1], XP_T("-m")) == 0)
+#endif
+		{
 			xp_awk_setrunopt (awk, XP_AWK_RUNMAIN);
 		}
+		else
+		{
+			xp_awk_close (awk);
+			xp_printf (XP_T("Usage: %s [-m] source_file\n"), argv[0]);
+			return -1;
+		}
+
+		src_io.input_file = argv[2];
+	}
+	else
+	{
+		xp_awk_close (awk);
+		xp_printf (XP_T("Usage: %s [-m] source_file\n"), argv[0]);
+		return -1;
+	}
+
+	if (xp_awk_attsrc(awk, process_source, (void*)&src_io) == -1) 
+	{
+		xp_awk_close (awk);
+		xp_printf (XP_T("Error: cannot attach source\n"));
+		return -1;
 	}
 
 	if (xp_awk_parse(awk) == -1) 
