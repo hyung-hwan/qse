@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.114 2006-06-29 14:38:01 bacon Exp $
+ * $Id: run.c,v 1.115 2006-06-29 15:40:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -111,6 +111,8 @@ static xp_awk_val_t* __eval_binop_div (
 static xp_awk_val_t* __eval_binop_mod (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
 static xp_awk_val_t* __eval_binop_exp (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
+static xp_awk_val_t* __eval_binop_concat (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
 static xp_awk_val_t* __eval_binop_ma (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
@@ -1514,6 +1516,7 @@ static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		__eval_binop_mod,
 		__eval_binop_exp,
 
+		__eval_binop_concat,
 		__eval_binop_ma,
 		__eval_binop_nm
 	};
@@ -2334,6 +2337,14 @@ static xp_awk_val_t* __eval_binop_exp (
 
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 	return res;
+}
+
+static xp_awk_val_t* __eval_binop_concat (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+xp_printf (XP_T("eval_binop_concat not implemented yet...\n"));
+	PANIC (run, XP_AWK_EINTERNAL);
+	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_binop_ma (

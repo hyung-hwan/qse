@@ -29,4 +29,5 @@ BEGIN
 	getline x < "abc";
 	print x > "abc";
 
+	print "abc" 1 + 2 3 + 49 2 / 3;
 }

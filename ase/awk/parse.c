@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.128 2006-06-29 14:38:01 bacon Exp $
+ * $Id: parse.c,v 1.129 2006-06-29 15:40:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -65,12 +65,6 @@ enum
 	TOKEN_COLON,
 	TOKEN_QUEST,
 
-	TOKEN_INT,
-	TOKEN_REAL,
-	TOKEN_STR,
-	TOKEN_REX,
-
-	TOKEN_IDENT,
 	TOKEN_BEGIN,
 	TOKEN_END,
 	TOKEN_FUNCTION,
@@ -92,6 +86,12 @@ enum
 
 	TOKEN_LOCAL,
 	TOKEN_GLOBAL,
+
+	TOKEN_IDENT,
+	TOKEN_INT,
+	TOKEN_REAL,
+	TOKEN_STR,
+	TOKEN_REX,
 
 	__TOKEN_COUNT__
 };
@@ -136,6 +136,7 @@ static xp_awk_nde_t* __parse_bitwise_and (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_equality (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_relational (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_shift (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_concat (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_additive (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_multiplicative (xp_awk_t* awk);
 
@@ -1127,13 +1128,6 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 {
-	/*
-	 * <expression> ::= <assignment> | <basic expression>
-	 * <assignment> ::= <assignment target> assignmentOperator <basic expression>
-	 * assignmentOperator ::= '='
-	 * <basic expression> ::= 
-	 */
-
 	xp_awk_nde_t* x, * y;
 	xp_awk_nde_ass_t* nde;
 	int opcode;
@@ -1622,7 +1616,47 @@ static xp_awk_nde_t* __parse_shift (xp_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_expr (awk, map, __parse_additive);
+	return __parse_binary_expr (awk, map, __parse_concat);
+}
+
+static xp_awk_nde_t* __parse_concat (xp_awk_t* awk)
+{
+	xp_awk_nde_exp_t* nde;
+	xp_awk_nde_t* left, * right;
+
+	left = __parse_additive (awk);
+	if (left == XP_NULL) return XP_NULL;
+
+	/* TODO: write a better code to do this.... 
+	 *       first of all, is the following check sufficient??? */
+	while (awk->token.type > TOKEN_QUEST)
+	{
+		right = __parse_additive (awk);
+		if (right == XP_NULL) 
+		{
+			xp_awk_clrpt (left);
+			return XP_NULL;
+		}
+
+		nde = (xp_awk_nde_exp_t*) 
+			xp_malloc (xp_sizeof(xp_awk_nde_exp_t));
+		if (nde == XP_NULL)
+		{
+			xp_awk_clrpt (left);
+			xp_awk_clrpt (right);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
+
+		nde->type = XP_AWK_NDE_EXP_BIN;
+		nde->next = XP_NULL;
+		nde->opcode = XP_AWK_BINOP_CONCAT;
+		nde->left = left;
+		nde->right = right;
+		
+		left = (xp_awk_nde_t*)nde;
+	}
+
+	return left;
 }
 
 static xp_awk_nde_t* __parse_additive (xp_awk_t* awk)
