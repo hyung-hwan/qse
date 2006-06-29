@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.8 2006-06-16 14:31:42 bacon Exp $
+ * $Id: tab.h,v 1.9 2006-06-29 09:11:38 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
@@ -48,7 +48,6 @@ xp_size_t xp_awk_tab_rfind (
 	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index);
 xp_size_t xp_awk_tab_rrfind (
 	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index);
-
 
 #ifdef __cplusplus
 }
