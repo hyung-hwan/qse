@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.113 2006-06-28 14:19:01 bacon Exp $
+ * $Id: run.c,v 1.114 2006-06-29 14:38:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3066,39 +3066,45 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_nde_getline_t* p;
-	xp_awk_val_t* in, * res;
-	xp_char_t* str;
+	xp_awk_val_t* v, * res;
+	xp_char_t* in = XP_NULL;
+	const xp_char_t* dst;
 	xp_str_t buf;
 	int errnum, n;
 
 	p = (xp_awk_nde_getline_t*)nde;
 
-	xp_assert (p->in_type == XP_AWK_IN_PIPE ||
-	           p->in_type == XP_AWK_IN_COPROC ||
-		   p->in_type == XP_AWK_IN_FILE);
-	xp_assert (p->in != XP_NULL);
+	xp_assert ((p->in_type == XP_AWK_IN_PIPE && p->in != XP_NULL) ||
+	           (p->in_type == XP_AWK_IN_COPROC && p->in != XP_NULL) ||
+		   (p->in_type == XP_AWK_IN_FILE && p->in != XP_NULL) ||
+	           (p->in_type == XP_AWK_IN_CONSOLE && p->in == XP_NULL));
 
-	in = __eval_expression (run, p->in);
-	if (in == XP_NULL) return XP_NULL;
-
-	xp_awk_refupval (in);
-	str = xp_awk_valtostr (in, &errnum, XP_NULL);
-	if (str == XP_NULL) 
+	if (p->in != XP_NULL)
 	{
-		xp_awk_refdownval (run, in);
-		PANIC (run, errnum);
+		v = __eval_expression (run, p->in);
+		if (v == XP_NULL) return XP_NULL;
+
+		xp_awk_refupval (v);
+		in = xp_awk_valtostr (v, &errnum, XP_NULL);
+		if (in == XP_NULL) 
+		{
+			xp_awk_refdownval (run, v);
+			PANIC (run, errnum);
+		}
+		xp_awk_refdownval (run, v);
 	}
-	xp_awk_refdownval (run, in);
+
+	dst = (in == XP_NULL)? XP_T(""): in;
 
 	/* TODO: optimization in line buffer management */
 	if (xp_str_open (&buf, 256) == XP_NULL)
 	{
-		xp_free (str);
+		if (in != XP_NULL) xp_free (in);
 		PANIC (run, XP_AWK_ENOMEM);
 	}
 
-	n = xp_awk_readextio (run, p->in_type, str, &buf, &errnum);
-	xp_free (str);
+	n = xp_awk_readextio (run, p->in_type, dst, &buf, &errnum);
+	if (in != XP_NULL) xp_free (in);
 
 	if (n < 0 && errnum != XP_AWK_ENOERR) 
 	{

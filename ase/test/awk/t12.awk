@@ -1,5 +1,6 @@
 BEGIN 
 {
+	/*
 	print "line 1" >> "1";
 	print "line 2" > "1";
 	print "line 3" >> "1";
@@ -16,5 +17,16 @@ BEGIN
 
 	getline x < "abc";
 	if (x == "a") print "xxxxxxxxxxxxxxxx"; else print x;
-	
+
+	*/
+
+	/*
+	print getline x;
+	print "[", x, "]";
+	print "--------------";
+	*/
+
+	getline x < "abc";
+	print x > "abc";
+
 }

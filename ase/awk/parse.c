@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.127 2006-06-28 10:40:24 bacon Exp $
+ * $Id: parse.c,v 1.128 2006-06-29 14:38:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1142,7 +1142,11 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 	if (x == XP_NULL) return XP_NULL;
 
 	opcode = __assign_to_opcode (awk);
-	if (opcode == -1) return x;
+	if (opcode == -1) 
+	{
+		/* no assignment operator found. */
+		return x;
+	}
 
 	xp_assert (x->next == XP_NULL);
 	if (!__is_var(x) && x->type != XP_AWK_NDE_POS) 
@@ -2009,7 +2013,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->type = XP_AWK_NDE_GETLINE;
 		nde->next = XP_NULL;
 		nde->var = var;
-		nde->in_type = XP_AWK_IN_FILE;
+		nde->in_type = (in == XP_NULL)? 
+			XP_AWK_IN_CONSOLE: XP_AWK_IN_FILE;
 		nde->in = in;
 
 		return (xp_awk_nde_t*)nde;
