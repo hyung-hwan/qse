@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.47 2006-06-30 04:18:29 bacon Exp $
+ * $Id: awk.c,v 1.48 2006-06-30 04:25:53 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -12,6 +12,7 @@
 #ifndef __STAND_ALONE
 #include <xp/bas/stdio.h>
 #include <xp/bas/string.h>
+#include <xp/bas/sysapi.h>
 #endif
 
 #ifdef _WIN32
@@ -67,16 +68,44 @@ static FILE* fopen_t (const xp_char_t* path, const xp_char_t* mode)
 	mode_mb = mode;
 	#else
 	if (xp_wcstomcs_strict (
-		path, path_mb, xp_countof(path_mb)) == -1) return -1;
+		path, path_mb, xp_countof(path_mb)) == -1) return XP_NULL;
 	if (xp_wcstomcs_strict (
-		mode, mode_mb, xp_countof(mode_mb)) == -1) return -1;
+		mode, mode_mb, xp_countof(mode_mb)) == -1) return XP_NULL;
 	#endif
 
 	return fopen (path_mb, mode_mb);
 #endif
 }
 
+static FILE* popen_t (const xp_char_t* cmd, const xp_char_t* mode)
+{
+#ifdef _WIN32
+	return _tpopen (cmd, mode);
+#else
+	#ifdef XP_CHAR_IS_MCHAR
+	const xp_mchar_t* cmd_mb;
+	const xp_mchar_t* mode_mb;
+	#else
+	xp_mchar_t cmd_mb[2048];
+	xp_mchar_t mode_mb[32];
+	#endif
+
+	#ifdef XP_CHAR_IS_MCHAR
+	cmd_mb = cmd;
+	mode_mb = mode;
+	#else
+	if (xp_wcstomcs_strict (
+		cmd, cmd_mb, xp_countof(cmd_mb)) == -1) return XP_NULL;
+	if (xp_wcstomcs_strict (
+		mode, mode_mb, xp_countof(mode_mb)) == -1) return XP_NULL;
+	#endif
+
+	return popen (cmd_mb, mode_mb);
+#endif
+}
+
 #ifdef WIN32
+{
 	#define fgets_t _fgetts
 	#define fputs_t _fputts
 #else
@@ -100,7 +129,7 @@ static xp_ssize_t process_source (
 		case XP_AWK_IO_OPEN:
 		{
 			if (src_io->input_file == XP_NULL) return 0;
-			src_io->input_handle = fopen_t (src_io->input_file, _T("r"));
+			src_io->input_handle = fopen_t (src_io->input_file, XP_T("r"));
 			if (src_io->input_handle == NULL) return -1;
 			return 0;
 		}
@@ -211,7 +240,7 @@ static xp_ssize_t process_extio_pipe (
 				mode = XP_T("w");
 			else return -1; /* TODO: any way to set the error number? */
 xp_printf (XP_TEXT("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
-			handle = _tpopen (epa->name, mode);
+			handle = popen_t (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
 			return 0;
