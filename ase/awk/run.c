@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.116 2006-06-30 03:53:16 bacon Exp $
+ * $Id: run.c,v 1.117 2006-06-30 11:31:50 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -649,93 +649,93 @@ static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_BLK:
 		{
-			if (__run_block (
-				run, (xp_awk_nde_blk_t*)nde) == -1) return -1;
+			if (__run_block (run, 
+				(xp_awk_nde_blk_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_IF:
 		{
-			if (__run_if (
-				run, (xp_awk_nde_if_t*)nde) == -1) return -1;	
+			if (__run_if (run, 
+				(xp_awk_nde_if_t*)nde) == -1) return -1;	
 			break;
 		}
 
 		case XP_AWK_NDE_WHILE:
 		case XP_AWK_NDE_DOWHILE:
 		{
-			if (__run_while (
-				run, (xp_awk_nde_while_t*)nde) == -1) return -1;
+			if (__run_while (run, 
+				(xp_awk_nde_while_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_FOR:
 		{
-			if (__run_for (
-				run, (xp_awk_nde_for_t*)nde) == -1) return -1;
+			if (__run_for (run, 
+				(xp_awk_nde_for_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_FOREACH:
 		{
-			if (__run_foreach (
-				run, (xp_awk_nde_foreach_t*)nde) == -1) return -1;
+			if (__run_foreach (run, 
+				(xp_awk_nde_foreach_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_BREAK:
 		{
-			if (__run_break (
-				run, (xp_awk_nde_break_t*)nde) == -1) return -1;
+			if (__run_break (run, 
+				(xp_awk_nde_break_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_CONTINUE:
 		{
-			if (__run_continue (
-				run, (xp_awk_nde_continue_t*)nde) == -1) return -1;
+			if (__run_continue (run, 
+				(xp_awk_nde_continue_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_RETURN:
 		{
-			if (__run_return (
-				run, (xp_awk_nde_return_t*)nde) == -1) return -1;
+			if (__run_return (run, 
+				(xp_awk_nde_return_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_EXIT:
 		{
-			if (__run_exit (
-				run, (xp_awk_nde_exit_t*)nde) == -1) return -1;
+			if (__run_exit (run, 
+				(xp_awk_nde_exit_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_NEXT:
 		{
-			if (__run_next (
-				run, (xp_awk_nde_next_t*)nde) == -1) return -1;
+			if (__run_next (run, 
+				(xp_awk_nde_next_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_NEXTFILE:
 		{
-			if (__run_nextfile (
-				run, (xp_awk_nde_nextfile_t*)nde) == -1) return -1;
+			if (__run_nextfile (run, 
+				(xp_awk_nde_nextfile_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_DELETE:
 		{
-			if (__run_delete (
-				run, (xp_awk_nde_delete_t*)nde) == -1) return -1;
+			if (__run_delete (run, 
+				(xp_awk_nde_delete_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case XP_AWK_NDE_PRINT:
 		{
-			if (__run_print (
-				run, (xp_awk_nde_print_t*)nde) == -1) return -1;
+			if (__run_print (run, 
+				(xp_awk_nde_print_t*)nde) == -1) return -1;
 			break;
 		}
 
@@ -1091,9 +1091,54 @@ static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 
 static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 {
-	/* TODO */
-xp_printf (XP_T("**** delete NOT IMPLEMENTED...\n"));
-	return -1;
+	xp_awk_nde_var_t* var;
+
+	var = (xp_awk_nde_var_t*) nde->var;
+
+	xp_assert (var->type == XP_AWK_NDE_NAMED ||
+	           var->type == XP_AWK_NDE_GLOBAL ||
+	           var->type == XP_AWK_NDE_LOCAL ||
+	           var->type == XP_AWK_NDE_ARG ||
+	           var->type == XP_AWK_NDE_NAMEDIDX ||
+	           var->type == XP_AWK_NDE_GLOBALIDX ||
+	           var->type == XP_AWK_NDE_LOCALIDX ||
+	           var->type == XP_AWK_NDE_ARGIDX);
+
+	if (var->type == XP_AWK_NDE_NAMED)
+	{
+		xp_awk_pair_t* pair;
+
+		pair = xp_awk_map_get (&run->named, var->id.name);
+		if (pair != XP_NULL)
+		{
+			if (pair == XP_NULL)
+			{
+				/* value not set */
+				// TODO: create a map here...
+			}
+			else
+			{
+				xp_awk_val_t* val = (xp_awk_val_t*)pair->val;
+
+				xp_assert (val != XP_NULL);
+				if (val->type == XP_AWK_VAL_MAP)
+				{
+					xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
+				}
+				else
+				{
+					PANIC_I (run, XP_AWK_ENOTDELETABLE);
+				}
+			}
+		}
+	}
+	else
+	{
+xp_printf (XP_T("**** delete NOT IMPLEMENTED not implemented for this type of variable...\n"));
+		PANIC_I (run, XP_AWK_EINTERNAL);
+	}
+
+	return 0;
 }
 
 static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
