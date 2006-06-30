@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.117 2006-06-30 11:31:50 bacon Exp $
+ * $Id: run.c,v 1.118 2006-06-30 16:46:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1104,31 +1104,67 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 	           var->type == XP_AWK_NDE_LOCALIDX ||
 	           var->type == XP_AWK_NDE_ARGIDX);
 
+xp_printf (XP_T("hello....... map...\n"));
 	if (var->type == XP_AWK_NDE_NAMED)
 	{
 		xp_awk_pair_t* pair;
 
 		pair = xp_awk_map_get (&run->named, var->id.name);
-		if (pair != XP_NULL)
+		if (pair == XP_NULL)
 		{
-			if (pair == XP_NULL)
+			xp_awk_val_t* tmp;
+
+			/* value not set for the named variable. 
+			 * create a map and assign it to the variable */
+
+			tmp = xp_awk_makemapval (run);
+			if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+
+			if (xp_awk_map_put (&run->named, var->id.name, tmp) == XP_NULL)
 			{
-				/* value not set */
-				// TODO: create a map here...
+				xp_awk_refupval (tmp);
+				xp_awk_refdownval (run, tmp);
+				PANIC_I (run, XP_AWK_ENOMEM);		
+			}
+
+			xp_awk_refupval (tmp);
+		}
+		else
+		{
+			xp_awk_val_t* val = (xp_awk_val_t*)pair->val;
+
+			xp_assert (val != XP_NULL);
+			if (val->type == XP_AWK_VAL_MAP)
+			{
+xp_printf (XP_T("clearing map...\n"));
+				xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
+				/* should not ismply clear it... */
 			}
 			else
 			{
-				xp_awk_val_t* val = (xp_awk_val_t*)pair->val;
+				PANIC_I (run, XP_AWK_ENOTDELETABLE);
+			}
+		}
+	}
+	else if (var->type == XP_AWK_NDE_GLOBAL)
+	{
+		xp_awk_val_t* val;
 
-				xp_assert (val != XP_NULL);
-				if (val->type == XP_AWK_VAL_MAP)
-				{
-					xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
-				}
-				else
-				{
-					PANIC_I (run, XP_AWK_ENOTDELETABLE);
-				}
+		val = STACK_GLOBAL (run,var->id.idxa);
+		if (val == XP_NULL)
+		{
+			/* TODO: */
+		}
+		else
+		{
+			if (val->type == XP_AWK_VAL_MAP)
+			{
+xp_printf (XP_TEXT("clearning....\n"));
+				xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
+			}
+			else
+			{
+				PANIC_I (run, XP_AWK_ENOTDELETABLE);
 			}
 		}
 	}

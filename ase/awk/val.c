@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.33 2006-06-28 08:56:59 bacon Exp $
+ * $Id: val.c,v 1.34 2006-06-30 16:46:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -385,7 +385,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 
 		if (buf == XP_NULL)
 		{
-			tmp = xp_malloc (len + 1 * xp_sizeof(xp_char_t));
+			tmp = xp_malloc ((len + 1) * xp_sizeof(xp_char_t));
 			if (tmp == XP_NULL)
 			{
 				*errnum = XP_AWK_ENOMEM;
