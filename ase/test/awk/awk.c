@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.46 2006-06-29 14:38:01 bacon Exp $
+ * $Id: awk.c,v 1.47 2006-06-30 04:18:29 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -16,6 +16,7 @@
 
 #ifdef _WIN32
 #include <tchar.h>
+#pragma warning (disable: 4996)
 #endif
 
 #ifdef __STAND_ALONE
@@ -48,6 +49,46 @@ struct data_io
 	FILE* input_handle;
 };
 
+static FILE* fopen_t (const xp_char_t* path, const xp_char_t* mode)
+{
+#ifdef _WIN32
+	return _tfopen (path, mode);
+#else
+	#ifdef XP_CHAR_IS_MCHAR
+	const xp_mchar_t* path_mb;
+	const xp_mchar_t* mode_mb;
+	#else
+	xp_mchar_t path_mb[XP_PATH_MAX + 1];
+	xp_mchar_t mode_mb[32];
+	#endif
+
+	#ifdef XP_CHAR_IS_MCHAR
+	path_mb = path;
+	mode_mb = mode;
+	#else
+	if (xp_wcstomcs_strict (
+		path, path_mb, xp_countof(path_mb)) == -1) return -1;
+	if (xp_wcstomcs_strict (
+		mode, mode_mb, xp_countof(mode_mb)) == -1) return -1;
+	#endif
+
+	return fopen (path_mb, mode_mb);
+#endif
+}
+
+#ifdef WIN32
+	#define fgets_t _fgetts
+	#define fputs_t _fputts
+#else
+	#ifdef XP_CHAR_IS_MCHAR
+		#define fgets_t fgets
+		#define fputs_t fputs
+	#else
+		#define fgets_t fgetws
+		#define fputs_t fputws
+	#endif
+#endif
+
 static xp_ssize_t process_source (
 	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
 {
@@ -59,7 +100,7 @@ static xp_ssize_t process_source (
 		case XP_AWK_IO_OPEN:
 		{
 			if (src_io->input_file == XP_NULL) return 0;
-			src_io->input_handle = _tfopen (src_io->input_file, _T("r"));
+			src_io->input_handle = fopen_t (src_io->input_file, _T("r"));
 			if (src_io->input_handle == NULL) return -1;
 			return 0;
 		}
@@ -186,7 +227,7 @@ xp_printf (XP_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 
 		case XP_AWK_IO_READ:
 		{
-			if (_fgetts (data, size, (FILE*)epa->handle) == XP_NULL) 
+			if (fgets_t (data, size, (FILE*)epa->handle) == XP_NULL) 
 				return 0;
 			return xp_strlen(data);
 		}
@@ -194,7 +235,7 @@ xp_printf (XP_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 		case XP_AWK_IO_WRITE:
 		{
 			/*
-			if (_fputts (data, size, (FILE*)epa->handle) == XP_NULL) 
+			if (fputs_t (data, size, (FILE*)epa->handle) == XP_NULL) 
 				return 0;
 			return size;
 			*/
@@ -231,7 +272,7 @@ static xp_ssize_t process_extio_file (
 			else return -1; /* TODO: any way to set the error number? */
 
 xp_printf (XP_TEXT("opending %s of type %d (file)\n"),  epa->name, epa->type);
-			handle = _tfopen (epa->name, mode);
+			handle = fopen_t (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
 			return 0;
@@ -247,7 +288,7 @@ xp_printf (XP_TEXT("closing %s of type %d (file)\n"),  epa->name, epa->type);
 
 		case XP_AWK_IO_READ:
 		{
-			if (_fgetts (data, size, (FILE*)epa->handle) == XP_NULL) 
+			if (fgets_t (data, size, (FILE*)epa->handle) == XP_NULL) 
 				return 0;
 			return xp_strlen(data);
 		}
@@ -255,7 +296,7 @@ xp_printf (XP_TEXT("closing %s of type %d (file)\n"),  epa->name, epa->type);
 		case XP_AWK_IO_WRITE:
 		{
 			/* TODO: how to return error or 0 */
-			_fputts (data, /*size,*/ (FILE*)epa->handle);
+			fputs_t (data, /*size,*/ (FILE*)epa->handle);
 			return -1;
 		}
 
@@ -301,8 +342,8 @@ xp_printf (XP_TEXT("closing [%s] of type %d (console)\n"),  epa->name, epa->type
 
 		case XP_AWK_IO_READ:
 		{
-			if (_fgetts (data, size, (FILE*)epa->handle) == XP_NULL)
-			//if (_fgetts (data, size, stdin) == XP_NULL)
+			if (fgets_t (data, size, (FILE*)epa->handle) == XP_NULL)
+			//if (fgets_t (data, size, stdin) == XP_NULL)
 			{
 				return 0;
 			}
@@ -312,8 +353,8 @@ xp_printf (XP_TEXT("closing [%s] of type %d (console)\n"),  epa->name, epa->type
 		case XP_AWK_IO_WRITE:
 		{
 			/* TODO: how to return error or 0 */
-			_fputts (data, /*size,*/ (FILE*)epa->handle);
-			//_fputts (data, /*size,*/ stdout);
+			fputs_t (data, /*size,*/ (FILE*)epa->handle);
+			//fputs_t (data, /*size,*/ stdout);
 			return size;
 		}
 

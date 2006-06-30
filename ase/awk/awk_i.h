@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.22 2006-06-27 10:53:04 bacon Exp $
+ * $Id: awk_i.h,v 1.23 2006-06-30 04:18:47 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -24,6 +24,10 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/awk/tab.h>
 #include <xp/awk/run.h>
 #include <xp/awk/extio.h>
+
+#ifdef _WIN32
+#pragma warning (disable: 4996)
+#endif
 
 #if defined(_WIN32) && defined(XP_AWK_STAND_ALONE) && defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
