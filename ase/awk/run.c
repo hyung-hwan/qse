@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.118 2006-06-30 16:46:34 bacon Exp $
+ * $Id: run.c,v 1.119 2006-06-30 17:07:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1104,7 +1104,7 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 	           var->type == XP_AWK_NDE_LOCALIDX ||
 	           var->type == XP_AWK_NDE_ARGIDX);
 
-xp_printf (XP_T("hello....... map...\n"));
+xp_printf (XP_T("********** __run_delete **************\n"));
 	if (var->type == XP_AWK_NDE_NAMED)
 	{
 		xp_awk_pair_t* pair;
@@ -1138,7 +1138,6 @@ xp_printf (XP_T("hello....... map...\n"));
 			{
 xp_printf (XP_T("clearing map...\n"));
 				xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
-				/* should not ismply clear it... */
 			}
 			else
 			{
@@ -1150,10 +1149,24 @@ xp_printf (XP_T("clearing map...\n"));
 	{
 		xp_awk_val_t* val;
 
+xp_printf (XP_T("clearing global...\n"));
 		val = STACK_GLOBAL (run,var->id.idxa);
-		if (val == XP_NULL)
+		xp_assert (val != XP_NULL);
+
+		if (val->type == XP_AWK_VAL_NIL)
 		{
-			/* TODO: */
+			xp_awk_val_t* tmp;
+
+			/* value not set for the named variable. 
+			 * create a map and assign it to the variable */
+
+			tmp = xp_awk_makemapval (run);
+			if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+
+			/* no need to reduce the reference count of
+			 * the previous value because it was nil. */
+			STACK_GLOBAL (run,var->id.idxa) = tmp;
+			xp_awk_refupval (tmp);
 		}
 		else
 		{
@@ -1167,6 +1180,43 @@ xp_printf (XP_TEXT("clearning....\n"));
 				PANIC_I (run, XP_AWK_ENOTDELETABLE);
 			}
 		}
+	}
+	else if (var->type == XP_AWK_NDE_LOCAL)
+	{
+		xp_awk_val_t* val;
+
+xp_printf (XP_T("clearing lcoal...\n"));
+		val = STACK_LOCAL (run,var->id.idxa);
+		xp_assert (val != XP_NULL);
+
+		if (val->type == XP_AWK_VAL_NIL)
+		{
+			xp_awk_val_t* tmp;
+
+			/* value not set for the named variable. 
+			 * create a map and assign it to the variable */
+
+			tmp = xp_awk_makemapval (run);
+			if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+
+			/* no need to reduce the reference count of
+			 * the previous value because it was nil. */
+			STACK_LOCAL (run,var->id.idxa) = tmp;
+			xp_awk_refupval (tmp);
+		}
+		else
+		{
+			if (val->type == XP_AWK_VAL_MAP)
+			{
+xp_printf (XP_TEXT("clearning....\n"));
+				xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
+			}
+			else
+			{
+				PANIC_I (run, XP_AWK_ENOTDELETABLE);
+			}
+		}
+
 	}
 	else
 	{
