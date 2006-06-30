@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.129 2006-06-29 15:40:30 bacon Exp $
+ * $Id: parse.c,v 1.130 2006-06-30 03:53:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -68,6 +68,10 @@ enum
 	TOKEN_BEGIN,
 	TOKEN_END,
 	TOKEN_FUNCTION,
+
+	TOKEN_LOCAL,
+	TOKEN_GLOBAL,
+
 	TOKEN_IF,
 	TOKEN_ELSE,
 	TOKEN_WHILE,
@@ -78,15 +82,12 @@ enum
 	TOKEN_RETURN,
 	TOKEN_EXIT,
 	TOKEN_DELETE,
-	TOKEN_GETLINE,
 	TOKEN_NEXT,
 	TOKEN_NEXTFILE,
 	TOKEN_PRINT,
 	TOKEN_PRINTF,
 
-	TOKEN_LOCAL,
-	TOKEN_GLOBAL,
-
+	TOKEN_GETLINE,
 	TOKEN_IDENT,
 	TOKEN_INT,
 	TOKEN_REAL,
@@ -184,11 +185,20 @@ struct __kwent
 
 static struct __kwent __kwtab[] = 
 {
+	/* operators */
+	{ XP_T("in"),       TOKEN_IN,       0 },
+
+	/* top-level block starters */
 	{ XP_T("BEGIN"),    TOKEN_BEGIN,    0 },
 	{ XP_T("END"),      TOKEN_END,      0 },
-
 	{ XP_T("function"), TOKEN_FUNCTION, 0 },
 	{ XP_T("func"),     TOKEN_FUNCTION, 0 },
+
+	/* keywords for variable declaration */
+	{ XP_T("local"),    TOKEN_LOCAL,    XP_AWK_EXPLICIT },
+	{ XP_T("global"),   TOKEN_GLOBAL,   XP_AWK_EXPLICIT },
+
+	/* keywords that start statements excluding expression statements */
 	{ XP_T("if"),       TOKEN_IF,       0 },
 	{ XP_T("else"),     TOKEN_ELSE,     0 },
 	{ XP_T("while"),    TOKEN_WHILE,    0 },
@@ -199,16 +209,13 @@ static struct __kwent __kwtab[] =
 	{ XP_T("return"),   TOKEN_RETURN,   0 },
 	{ XP_T("exit"),     TOKEN_EXIT,     0 },
 	{ XP_T("delete"),   TOKEN_DELETE,   0 },
-	{ XP_T("getline"),  TOKEN_GETLINE,  XP_AWK_EXTIO },
 	{ XP_T("next"),     TOKEN_NEXT,     0 },
 	{ XP_T("nextfile"), TOKEN_NEXTFILE, 0 },
 	{ XP_T("print"),    TOKEN_PRINT,    XP_AWK_EXTIO },
 	{ XP_T("printf"),   TOKEN_PRINTF,   XP_AWK_EXTIO },
 
-	{ XP_T("local"),    TOKEN_LOCAL,    XP_AWK_EXPLICIT },
-	{ XP_T("global"),   TOKEN_GLOBAL,   XP_AWK_EXPLICIT },
-
-	{ XP_T("in"),       TOKEN_IN,       0 },
+	/* keywords that can start an expression */
+	{ XP_T("getline"),  TOKEN_GETLINE,  XP_AWK_EXTIO },
 
 	{ XP_NULL,          0,              0 }
 };
@@ -1629,7 +1636,7 @@ static xp_awk_nde_t* __parse_concat (xp_awk_t* awk)
 
 	/* TODO: write a better code to do this.... 
 	 *       first of all, is the following check sufficient??? */
-	while (awk->token.type > TOKEN_QUEST)
+	while (MATCH(awk,TOKEN_LPAREN) || awk->token.type >= TOKEN_GETLINE)
 	{
 		right = __parse_additive (awk);
 		if (right == XP_NULL) 
