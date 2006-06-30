@@ -57,7 +57,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo
+# ADD LIB32 /nologo /out:"..\..\release\xpawk.lib"
 
 !ELSEIF  "$(CFG)" == "xpawk - Win32 Debug"
 
@@ -87,7 +87,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo
+# ADD LIB32 /nologo /out:"..\..\debug\xpawk.lib"
 
 !ELSEIF  "$(CFG)" == "xpawk - Win32 Debug DLL"
 
@@ -120,7 +120,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:console /dll /debug /machine:I386 /def:".\awk.def" /pdbtype:sept
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 /nologo /subsystem:console /dll /debug /machine:I386 /def:".\awk.def" /pdbtype:sept
+# ADD LINK32 /nologo /subsystem:console /dll /debug /machine:I386 /def:".\awk.def" /out:"..\..\debug\xpawk.dll" /pdbtype:sept
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "xpawk - Win32 Release DLL"
@@ -154,7 +154,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /version:0.1 /subsystem:console /dll /machine:I386 /def:".\awk.def"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 /nologo /version:0.1 /subsystem:console /dll /machine:I386 /def:".\awk.def"
+# ADD LINK32 /nologo /version:0.1 /subsystem:console /dll /machine:I386 /def:".\awk.def" /out:"..\..\release\xpawk.dll"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
