@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.49 2006-06-30 06:09:38 bacon Exp $
+ * $Id: awk.c,v 1.50 2006-06-30 06:16:57 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -113,7 +113,6 @@ static FILE* popen_t (const xp_char_t* cmd, const xp_char_t* mode)
 }
 
 #ifdef WIN32
-{
 	#define fgets_t _fgetts
 	#define fputs_t _fputts
 #else
