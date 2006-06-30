@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.115 2006-06-29 15:40:30 bacon Exp $
+ * $Id: run.c,v 1.116 2006-06-30 03:53:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -12,6 +12,8 @@
 #include <xp/bas/string.h>
 #include <xp/bas/memory.h>
 #endif
+
+#define DEF_BUF_CAPA 256
 
 #define STACK_INCREMENT 512
 
@@ -250,14 +252,14 @@ static int __open_run (
 
 	run->input.buf_pos = 0;
 	run->input.buf_len = 0;
-	if (xp_str_open (&run->input.line, 256) == XP_NULL)
+	if (xp_str_open (&run->input.line, DEF_BUF_CAPA) == XP_NULL)
 	{
 		run->errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
 
 	if (xp_awk_map_open (&run->named, 
-		run, 256, __free_namedval) == XP_NULL) 
+		run, DEF_BUF_CAPA, __free_namedval) == XP_NULL) 
 	{
 		xp_str_close (&run->input.line);
 		run->errnum = XP_AWK_ENOMEM; 
@@ -2342,9 +2344,49 @@ static xp_awk_val_t* __eval_binop_exp (
 static xp_awk_val_t* __eval_binop_concat (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-xp_printf (XP_T("eval_binop_concat not implemented yet...\n"));
-	PANIC (run, XP_AWK_EINTERNAL);
-	return XP_NULL;
+	xp_str_t lv, rv;
+	xp_awk_val_t* res;
+	int errnum;
+
+	if (xp_str_open (&lv, DEF_BUF_CAPA) == XP_NULL) 
+	{
+		PANIC (run, XP_AWK_ENOMEM);
+	}
+
+	if (xp_str_open (&rv, DEF_BUF_CAPA) == XP_NULL)
+	{
+		xp_str_close (&lv);
+		PANIC (run, XP_AWK_ENOMEM);
+	}
+
+	if (xp_awk_valtostr (left, &errnum, &lv) == XP_NULL)
+	{
+		xp_str_close (&lv);
+		xp_str_close (&rv);
+		PANIC (run, errnum);
+	}
+
+	if (xp_awk_valtostr (right, &errnum, &rv) == XP_NULL)
+	{
+		xp_str_close (&lv);
+		xp_str_close (&rv);
+		PANIC (run, errnum);
+	}
+
+	res = xp_awk_makestrval2 (
+		XP_STR_BUF(&lv), XP_STR_LEN(&lv),
+		XP_STR_BUF(&rv), XP_STR_LEN(&rv));
+	if (res == XP_NULL)
+	{
+		xp_str_close (&lv);
+		xp_str_close (&rv);
+		PANIC (run, XP_AWK_ENOMEM);
+	}
+
+	xp_str_close (&lv);
+	xp_str_close (&rv);
+
+	return res;
 }
 
 static xp_awk_val_t* __eval_binop_ma (
@@ -3108,7 +3150,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	dst = (in == XP_NULL)? XP_T(""): in;
 
 	/* TODO: optimization in line buffer management */
-	if (xp_str_open (&buf, 256) == XP_NULL)
+	if (xp_str_open (&buf, DEF_BUF_CAPA) == XP_NULL)
 	{
 		if (in != XP_NULL) xp_free (in);
 		PANIC (run, XP_AWK_ENOMEM);
@@ -3306,7 +3348,7 @@ static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		/* multidimensional index */
 		xp_str_t idxstr;
 
-		if (xp_str_open (&idxstr, 256) == XP_NULL) 
+		if (xp_str_open (&idxstr, DEF_BUF_CAPA) == XP_NULL) 
 		{
 			PANIC (run, XP_AWK_ENOMEM);
 		}
