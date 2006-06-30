@@ -1,18 +1,26 @@
 /*
- * $Id: awk.c,v 1.48 2006-06-30 04:25:53 bacon Exp $
+ * $Id: awk.c,v 1.49 2006-06-30 06:09:38 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
 #include <stdio.h>
 #include <string.h>
+
 #ifdef XP_CHAR_IS_WCHAR
-#include <wchar.h>
+	#include <wchar.h>
 #endif
 
 #ifndef __STAND_ALONE
-#include <xp/bas/stdio.h>
-#include <xp/bas/string.h>
-#include <xp/bas/sysapi.h>
+	#include <xp/bas/stdio.h>
+	#include <xp/bas/string.h>
+	#include <xp/bas/sysapi.h>
+#else
+	#include <limits.h>
+	#ifndef PATH_MAX
+		#define XP_PATH_MAX 4096
+	#else
+		#define XP_PATH_MAX PATH_MAX
+	#endif
 #endif
 
 #ifdef _WIN32
@@ -372,7 +380,7 @@ xp_printf (XP_TEXT("closing [%s] of type %d (console)\n"),  epa->name, epa->type
 		case XP_AWK_IO_READ:
 		{
 			if (fgets_t (data, size, (FILE*)epa->handle) == XP_NULL)
-			//if (fgets_t (data, size, stdin) == XP_NULL)
+			/*if (fgets_t (data, size, stdin) == XP_NULL)*/
 			{
 				return 0;
 			}
@@ -383,7 +391,7 @@ xp_printf (XP_TEXT("closing [%s] of type %d (console)\n"),  epa->name, epa->type
 		{
 			/* TODO: how to return error or 0 */
 			fputs_t (data, /*size,*/ (FILE*)epa->handle);
-			//fputs_t (data, /*size,*/ stdout);
+			/*fputs_t (data, stdout);*/
 			return size;
 		}
 
