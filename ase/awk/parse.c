@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.130 2006-06-30 03:53:16 bacon Exp $
+ * $Id: parse.c,v 1.131 2006-07-01 16:07:06 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -81,9 +81,9 @@ enum
 	TOKEN_CONTINUE,
 	TOKEN_RETURN,
 	TOKEN_EXIT,
-	TOKEN_DELETE,
 	TOKEN_NEXT,
 	TOKEN_NEXTFILE,
+	TOKEN_DELETE,
 	TOKEN_PRINT,
 	TOKEN_PRINTF,
 
@@ -157,11 +157,11 @@ static xp_awk_nde_t* __parse_break (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_continue (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_return (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_exit (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_next (xp_awk_t* awk);
+static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_delete (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_print (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_printf (xp_awk_t* awk);
-static xp_awk_nde_t* __parse_next (xp_awk_t* awk);
-static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk);
 
 static int __get_token (xp_awk_t* awk);
 static int __get_number (xp_awk_t* awk);
@@ -208,9 +208,9 @@ static struct __kwent __kwtab[] =
 	{ XP_T("continue"), TOKEN_CONTINUE, 0 },
 	{ XP_T("return"),   TOKEN_RETURN,   0 },
 	{ XP_T("exit"),     TOKEN_EXIT,     0 },
-	{ XP_T("delete"),   TOKEN_DELETE,   0 },
 	{ XP_T("next"),     TOKEN_NEXT,     0 },
 	{ XP_T("nextfile"), TOKEN_NEXTFILE, 0 },
+	{ XP_T("delete"),   TOKEN_DELETE,   0 },
 	{ XP_T("print"),    TOKEN_PRINT,    XP_AWK_EXTIO },
 	{ XP_T("printf"),   TOKEN_PRINTF,   XP_AWK_EXTIO },
 
@@ -667,7 +667,8 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 		return XP_NULL;
 	}
 
-/* TODO: consider if the parameter names should be saved for some reasons.. */
+	/* TODO: study furthur if the parameter names should be saved 
+	 *       for some reasons */
 	nargs = xp_awk_tab_getsize (&awk->parse.params);
 	/* parameter names are not required anymore. clear them */
 	xp_awk_tab_clear (&awk->parse.params);
@@ -1067,47 +1068,47 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 	else if (MATCH(awk,TOKEN_BREAK)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_break(awk);
+		nde = __parse_break (awk);
 	}
 	else if (MATCH(awk,TOKEN_CONTINUE)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_continue(awk);
+		nde = __parse_continue (awk);
 	}
 	else if (MATCH(awk,TOKEN_RETURN)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_return(awk);
+		nde = __parse_return (awk);
 	}
 	else if (MATCH(awk,TOKEN_EXIT)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_exit(awk);
-	}
-	else if (MATCH(awk,TOKEN_DELETE)) 
-	{
-		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_delete(awk);
+		nde = __parse_exit (awk);
 	}
 	else if (MATCH(awk,TOKEN_NEXT)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_next(awk);
+		nde = __parse_next (awk);
 	}
 	else if (MATCH(awk,TOKEN_NEXTFILE)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_nextfile(awk);
+		nde = __parse_nextfile (awk);
+	}
+	else if (MATCH(awk,TOKEN_DELETE)) 
+	{
+		if (__get_token(awk) == -1) return XP_NULL;
+		nde = __parse_delete (awk);
 	}
 	else if (MATCH(awk,TOKEN_PRINT))
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_print(awk);
+		nde = __parse_print (awk);
 	}
 	else if (MATCH(awk,TOKEN_PRINTF))
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		nde = __parse_printf(awk);
+		nde = __parse_printf (awk);
 	}
 	else 
 	{
@@ -1542,7 +1543,7 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 				return XP_NULL;
 			}
 
-			/* TODO: some constant folding */
+			/* TODO: do constant folding */
 
 			nde = (xp_awk_nde_exp_t*)
 				xp_malloc (xp_sizeof(xp_awk_nde_exp_t));
@@ -1635,7 +1636,7 @@ static xp_awk_nde_t* __parse_concat (xp_awk_t* awk)
 	if (left == XP_NULL) return XP_NULL;
 
 	/* TODO: write a better code to do this.... 
-	 *       first of all, is the following check sufficient??? */
+	 *       first of all, is the following check sufficient? */
 	while (MATCH(awk,TOKEN_LPAREN) || awk->token.type >= TOKEN_GETLINE)
 	{
 		right = __parse_additive (awk);
@@ -2962,7 +2963,7 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_printf (xp_awk_t* awk)
 {
-/* TODO: implement this... */
+	/* TODO: implement this... */
 	return XP_NULL;
 }
 
@@ -3492,7 +3493,7 @@ static int __get_string (xp_awk_t* awk)
 			if (c == XP_T('n')) c = XP_T('\n');
 			else if (c == XP_T('r')) c = XP_T('\r');
 			else if (c == XP_T('t')) c = XP_T('\t');
-			/* TODO: more escape characters */
+			/* TODO: add more escape characters */
 			escaped = xp_false;
 		}
 
