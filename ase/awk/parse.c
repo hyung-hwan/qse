@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.131 2006-07-01 16:07:06 bacon Exp $
+ * $Id: parse.c,v 1.132 2006-07-01 16:24:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3464,7 +3464,7 @@ static int __get_number (xp_awk_t* awk)
 static int __get_string (xp_awk_t* awk)
 {
 	xp_cint_t c;
-	xp_bool_t escaped = xp_false;
+	int escaped = 0;
 
 	GET_CHAR_TO (awk, c);
 	while (1)
@@ -3475,27 +3475,59 @@ static int __get_string (xp_awk_t* awk)
 			return -1;
 		}
 
-		if (escaped == xp_false && c == XP_T('\"'))
+		if (escaped == 0 && c == XP_T('\"'))
 		{
 			GET_CHAR_TO (awk, c);
 			break;
 		}
 
-		if (escaped == xp_false && c == XP_T('\\'))
+		if (escaped == 0 && c == XP_T('\\'))
 		{
 			GET_CHAR_TO (awk, c);
-			escaped = xp_true;
+			escaped = 1;
 			continue;
 		}
 
-		if (escaped == xp_true)
+		if (escaped == 1)
 		{
 			if (c == XP_T('n')) c = XP_T('\n');
 			else if (c == XP_T('r')) c = XP_T('\r');
 			else if (c == XP_T('t')) c = XP_T('\t');
-			/* TODO: add more escape characters */
-			escaped = xp_false;
+			else if (c == XP_T('f')) c = XP_T('\f');
+			else if (c == XP_T('b')) c = XP_T('\b');
+			else if (c == XP_T('v')) c = XP_T('\v');
+			else if (c == XP_T('a')) c = XP_T('\a');
+			else if (c == XP_T('0')) escaped = 2;
+			else if (c == XP_T('x')) escaped = 3;
+		#ifdef XP_CHAR_IS_WCHAR
+			else if (c == XP_T('u')) escaped = 4;
+			else if (c == XP_T('U')) escaped = 5;
+		#endif
+
+			if (escaped == 1) escaped = 0;
 		}
+		else if (escaped == 2)
+		{
+			/* 3-digit octal code */
+			/* TODO */
+		}
+		else if (escaped == 3)
+		{
+			/* 2-digit hex code */
+			/* TODO */
+		}
+	#ifdef XP_CHAR_IS_WCHAR
+		else if (escaped == 4)
+		{
+			/* 4-digit hex unicode */
+			/* TODO */
+		}
+		else if (escaped == 5)
+		{
+			/* 8-digit hex unicode */
+			/* TODO */
+		}
+	#endif
 
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
