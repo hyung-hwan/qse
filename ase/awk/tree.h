@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.55 2006-06-29 14:38:01 bacon Exp $
+ * $Id: tree.h,v 1.56 2006-07-01 07:57:10 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -209,7 +209,10 @@ struct xp_awk_nde_rex_t
 	xp_size_t  len;
 };
 
-/* XP_AWK_NDE_ARG, XP_AWK_NDE_VAR, ... */
+/* XP_AWK_NDE_NAMED, XP_AWK_NDE_GLOBAL, 
+ * XP_AWK_NDE_LOCAL, XP_AWK_NDE_ARG 
+ * XP_AWK_NDE_NAMEDIDX, XP_AWK_NDE_GLOBALIDX, 
+ * XP_AWK_NDE_LOCALIDX, XP_AWK_NDE_ARGIDX */
 struct xp_awk_nde_var_t
 {
 	XP_AWK_NDE_HDR;
@@ -218,7 +221,7 @@ struct xp_awk_nde_var_t
 		xp_char_t* name;
 		xp_size_t idxa;
 	} id;
-	xp_awk_nde_t* idx; /* XP_NULL for XXXIDX */
+	xp_awk_nde_t* idx; /* XP_NULL for non-XXXXIDX */
 };
 
 /* XP_AWK_NDE_BFN, XP_AWK_NDE_UFN */

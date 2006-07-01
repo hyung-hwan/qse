@@ -9,8 +9,10 @@ BEGIN
 
 	b["xxx"] = 20;
 	b["yyy"] = 30;
+	b[1] = 30;
+	b["2"] = 30;
 
 	delete a;
-	delete b;
+	delete b["1"];
 }
 

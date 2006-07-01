@@ -4,7 +4,7 @@ OUT = xpawk
 
 CC = cl
 #CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
-CFLAGS = /nologo /O2 /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I../.. -DXP_AWK_STAND_ALONE -DXP_CHAR_IS_WCHAR
+CFLAGS = /nologo /O2 /MT /W3 /GR- /Za /D_WIN32_WINNT=0x0400 -I../.. -DXP_AWK_STAND_ALONE -DXP_CHAR_IS_WCHAR
 
 all: lib 
 
