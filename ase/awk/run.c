@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.120 2006-07-01 07:57:10 bacon Exp $
+ * $Id: run.c,v 1.121 2006-07-01 16:07:06 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -26,12 +26,16 @@
 /*#define STACK_RETVAL_GLOBAL(run) ((run)->stack[(run)->nglobals+2])*/
 #define STACK_RETVAL_GLOBAL(run) ((run)->stack[(run)->awk->tree.nglobals+2])
 
-#define EXIT_NONE      0
-#define EXIT_BREAK     1
-#define EXIT_CONTINUE  2
-#define EXIT_FUNCTION  3
-#define EXIT_GLOBAL    4
-#define EXIT_ABORT     5
+enum
+{
+	EXIT_NONE,
+	EXIT_BREAK,
+	EXIT_CONTINUE,
+	EXIT_FUNCTION,
+	EXIT_NEXT,
+	EXIT_GLOBAL,
+	EXIT_ABORT,
+};
 
 #define PANIC(run,code) \
 	do { (run)->errnum = (code); return XP_NULL; } while (0)
@@ -415,12 +419,13 @@ static int __run_main (xp_awk_run_t* run)
 		/* stack set up properly. ready to exeucte statement blocks */
 		if (n == 0 && run->awk->tree.begin != XP_NULL) 
 		{
-			xp_assert (run->awk->tree.begin->type == XP_AWK_NDE_BLK);
+			xp_awk_nde_blk_t* blk;
+
+			blk = (xp_awk_nde_blk_t*)run->awk->tree.begin;
+			xp_assert (blk->type == XP_AWK_NDE_BLK);
 
 			run->exit_level = EXIT_NONE;
-
-			if (__run_block (run, 
-				(xp_awk_nde_blk_t*)run->awk->tree.begin) == -1) n = -1;
+			if (__run_block (run, blk) == -1) n = -1;
 		}
 
 		if (n == 0 && run->txtio != XP_NULL)
@@ -430,12 +435,13 @@ static int __run_main (xp_awk_run_t* run)
 
 		if (n == 0 && run->awk->tree.end != XP_NULL) 
 		{
-			xp_assert (run->awk->tree.end->type == XP_AWK_NDE_BLK);
+			xp_awk_nde_blk_t* blk;
+
+			blk = (xp_awk_nde_blk_t*)run->awk->tree.end;
+			xp_assert (blk->type == XP_AWK_NDE_BLK);
 
 			run->exit_level = EXIT_NONE;
-
-			if (__run_block (run, 
-				(xp_awk_nde_blk_t*)run->awk->tree.end) == -1) n = -1;
+			if (__run_block (run, blk) == -1) n = -1;
 		}
 
 		/* restore stack */
@@ -511,12 +517,6 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 		if (x == 0) break; /* end of input */
 
-		/*
-xp_printf (XP_T("**** line [%s]\n"), XP_STR_BUF(&run->input.line));
-		 */
-		/* for each block { run it }
-		 * TODO: handle according if next and nextfile has been called 
-		 */
 		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
 		{
 			/* don't care about the result of input close */
@@ -536,14 +536,24 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 {
 	xp_awk_nde_t* ptn;
 
-	while (chain != XP_NULL)
+	while (run->exit_level != EXIT_GLOBAL &&
+	       run->exit_level != EXIT_ABORT && chain != XP_NULL)
 	{
+
+		if (run->exit_level == EXIT_NEXT)
+		{
+			run->exit_level = EXIT_NONE;
+			break;
+		}
+
 		ptn = chain->pattern;
 
 		if (ptn == XP_NULL)
 		{
 			/* just execute the block */
-			if (__run_block (run, (xp_awk_nde_blk_t*)chain->action) == -1) return -1;
+			xp_awk_nde_blk_t* blk;
+			blk = (xp_awk_nde_blk_t*)chain->action;
+			if (__run_block (run, blk) == -1) return -1;
 		}
 		else
 		{
@@ -558,7 +568,9 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 			{
 				if (xp_awk_valtobool(v1))
 				{
-					if (__run_block (run, (xp_awk_nde_blk_t*)chain->action) == -1) 
+					xp_awk_nde_blk_t* blk;
+					blk = (xp_awk_nde_blk_t*)chain->action;
+					if (__run_block (run, blk) == -1) 
 					{
 						xp_awk_refdownval (run, v1);
 						return -1;
@@ -1074,15 +1086,16 @@ static int __run_exit (xp_awk_run_t* run, xp_awk_nde_exit_t* nde)
 
 static int __run_next (xp_awk_run_t* run, xp_awk_nde_next_t* nde)
 {
-	/* TODO */
-xp_printf (XP_T("**** next NOT IMPLEMENTED...\n"));
-	return -1;
+	/* TODO: trigger an error if "next" is called from BEGIN or END */
+	run->exit_level = EXIT_NEXT;
+	return 0;
 }
 
 static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 {
 	xp_ssize_t n;
 
+	/* TODO: implement this properly */
 	/* TODO: how to pass opt properly for IO_NEXT??? -> READ? WRITE? */
 	n = run->txtio (XP_AWK_IO_NEXT, 0, run->txtio_arg, XP_NULL, 0);
 	if (n == -1) PANIC_I (run, XP_AWK_ETXTINNEXT);
@@ -1095,7 +1108,6 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 
 	var = (xp_awk_nde_var_t*) nde->var;
 
-xp_printf (XP_T("********** __run_delete **************\n"));
 	if (var->type == XP_AWK_NDE_NAMED ||
 	    var->type == XP_AWK_NDE_NAMEDIDX)
 	{
@@ -1137,7 +1149,6 @@ xp_printf (XP_T("********** __run_delete **************\n"));
 			if (val->type != XP_AWK_VAL_MAP)
 				PANIC_I (run, XP_AWK_ENOTDELETABLE);
 
-xp_printf (XP_T("clearing map...\n"));
 			map = ((xp_awk_val_map_t*)val)->map;
 			if (var->type == XP_AWK_NDE_NAMEDIDX)
 			{
@@ -1174,7 +1185,6 @@ xp_printf (XP_T("clearing map...\n"));
 	{
 		xp_awk_val_t* val;
 
-xp_printf (XP_T("clearing global/local/arg...\n"));
 		if (var->type == XP_AWK_NDE_GLOBAL ||
 		    var->type == XP_AWK_NDE_GLOBALIDX)
 			val = STACK_GLOBAL (run,var->id.idxa);
@@ -1214,7 +1224,6 @@ xp_printf (XP_T("clearing global/local/arg...\n"));
 			if (val->type != XP_AWK_VAL_MAP)
 				PANIC_I (run, XP_AWK_ENOTDELETABLE);
 
-xp_printf (XP_T("clearing map...\n"));
 			map = ((xp_awk_val_map_t*)val)->map;
 			if (var->type == XP_AWK_NDE_GLOBALIDX ||
 			    var->type == XP_AWK_NDE_LOCALIDX ||
@@ -1494,9 +1503,18 @@ static xp_awk_val_t* __do_assignment (
 
 	if (var->type == XP_AWK_NDE_NAMED) 
 	{
+		xp_awk_pair_t* pair;
 		int n;
 
-/* TODO: need to check if the old value is a map?? prevent the assignment? */
+		pair = xp_awk_map_get (&run->named, var->id.name);
+		if (pair != XP_NULL && 
+		    ((xp_awk_val_t*)pair->val)->type == XP_AWK_VAL_MAP)
+		{
+			/* once a variable becomes an array,
+			 * it cannot be changed to a scalar variable */
+			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
+		}
+
 		n = xp_awk_map_putx (
 			&run->named, var->id.name, val, XP_NULL);
 		if (n < 0) PANIC (run, XP_AWK_ENOMEM);
@@ -1505,22 +1523,43 @@ static xp_awk_val_t* __do_assignment (
 	}
 	else if (var->type == XP_AWK_NDE_GLOBAL) 
 	{
-/* TODO: need to check if the old value is a map?? prevent the assignment? */
-		xp_awk_refdownval (run, STACK_GLOBAL(run,var->id.idxa));
+		xp_awk_val_t* old = STACK_GLOBAL(run,var->id.idxa);
+		if (old->type == XP_AWK_VAL_MAP)
+		{	
+			/* once a variable becomes an array,
+			 * it cannot be changed to a scalar variable */
+			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
+		}
+
+		xp_awk_refdownval (run, old);
 		STACK_GLOBAL(run,var->id.idxa) = val;
 		xp_awk_refupval (val);
 	}
 	else if (var->type == XP_AWK_NDE_LOCAL) 
 	{
-/* TODO: need to check if the old value is a map?? prevent the assignment? */
-		xp_awk_refdownval (run, STACK_LOCAL(run,var->id.idxa));
+		xp_awk_val_t* old = STACK_LOCAL(run,var->id.idxa);
+		if (old->type == XP_AWK_VAL_MAP)
+		{	
+			/* once the variable becomes an array,
+			 * it cannot be changed to a scalar variable */
+			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
+		}
+
+		xp_awk_refdownval (run, old);
 		STACK_LOCAL(run,var->id.idxa) = val;
 		xp_awk_refupval (val);
 	}
 	else if (var->type == XP_AWK_NDE_ARG) 
 	{
-/* TODO: need to check if the old value is a map?? prevent the assignment? */
-		xp_awk_refdownval (run, STACK_ARG(run,var->id.idxa));
+		xp_awk_val_t* old = STACK_ARG(run,var->id.idxa);
+		if (old->type == XP_AWK_VAL_MAP)
+		{	
+			/* once the variable becomes an array,
+			 * it cannot be changed to a scalar variable */
+			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
+		}
+
+		xp_awk_refdownval (run, old);
 		STACK_ARG(run,var->id.idxa) = val;
 		xp_awk_refupval (val);
 	}
@@ -3306,7 +3345,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	dst = (in == XP_NULL)? XP_T(""): in;
 
-	/* TODO: optimization in line buffer management */
+	/* TODO: optimize the line buffer management */
 	if (xp_str_open (&buf, DEF_BUF_CAPA) == XP_NULL)
 	{
 		if (in != XP_NULL) xp_free (in);

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.75 2006-06-30 11:31:50 bacon Exp $
+ * $Id: awk.h,v 1.76 2006-07-01 16:07:06 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -128,16 +128,17 @@ enum
 	XP_AWK_EGETLINE,       /* getline expected */
 
 	/* run time error */
-	XP_AWK_EDIVBYZERO,     /* divide by zero */
-	XP_AWK_EOPERAND,       /* invalid operand */
-	XP_AWK_ENOSUCHFUNC,    /* no such function */
-	XP_AWK_ENOTASSIGNABLE, /* value not assignable */
-	XP_AWK_ENOTINDEXABLE,  /* not indexable value */
-	XP_AWK_ENOTDELETABLE,  /* not deletable value */
-	XP_AWK_EVALTYPE,       /* wrong value type */
-	XP_AWK_EPIPE,          /* pipe operation error */
-	XP_AWK_EIOIMPL,        /* wrong implementation of user io handler */
-	XP_AWK_EINTERNAL       /* internal error */
+	XP_AWK_EDIVBYZERO,       /* divide by zero */
+	XP_AWK_EOPERAND,         /* invalid operand */
+	XP_AWK_ENOSUCHFUNC,      /* no such function */
+	XP_AWK_ENOTASSIGNABLE,   /* value not assignable */
+	XP_AWK_ENOTINDEXABLE,    /* not indexable variable */
+	XP_AWK_ENOTDELETABLE,    /* not deletable variable */
+	XP_AWK_ENOTSCALARIZABLE, /* not scalarizable variable */
+	XP_AWK_EVALTYPE,         /* wrong value type */
+	XP_AWK_EPIPE,            /* pipe operation error */
+	XP_AWK_EIOIMPL,          /* wrong implementation of user io handler */
+	XP_AWK_EINTERNAL         /* internal error */
 };
 
 /* extio types */

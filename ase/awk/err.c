@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.24 2006-06-30 11:31:50 bacon Exp $
+ * $Id: err.c,v 1.25 2006-07-01 16:07:06 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -64,8 +64,9 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("invalid operand"),
 		XP_T("no such function"),
 		XP_T("value not assignable"),
-		XP_T("value not indexable"),
-		XP_T("value not deletable"),
+		XP_T("variable not indexable"),
+		XP_T("variable not deletable"),
+		XP_T("variable not scalarizable"),
 		XP_T("wrong value type"),
 		XP_T("pipe operation error"),
 		XP_T("wrong implementation of user-defined io handler"),

@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.16 2006-06-29 14:38:01 bacon Exp $
+ * $Id: extio.c,v 1.17 2006-07-01 16:07:06 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -240,7 +240,8 @@ int xp_awk_writeextio (
 		return -1;
 	}
 
-	/* TODO: optimize the buffer management. each xp_awk_run_t have a buffer for this operation???  */
+	/* TODO: optimize the buffer management. 
+	 *       each xp_awk_run_t may have a buffer for this.  */
 	if (xp_str_open (&buf, 256) == XP_NULL)
 	{
 		*errnum = XP_AWK_ENOMEM;

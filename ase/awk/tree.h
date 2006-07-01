@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.56 2006-07-01 07:57:10 bacon Exp $
+ * $Id: tree.h,v 1.57 2006-07-01 16:07:06 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -204,7 +204,7 @@ struct xp_awk_nde_str_t
 struct xp_awk_nde_rex_t
 {
 	XP_AWK_NDE_HDR;
-/* TODO: */
+	/* TODO: implement the regular expression value node */
 	xp_char_t* buf;
 	xp_size_t  len;
 };
