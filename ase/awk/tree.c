@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.61 2006-06-29 15:40:30 bacon Exp $
+ * $Id: tree.c,v 1.62 2006-07-01 07:57:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -93,8 +93,11 @@ static void __print_statements (xp_awk_nde_t* tree, int depth);
 
 static void __print_tabs (int depth)
 {
-	int i;
-	for (i = 0; i < depth; i++) xp_printf (XP_T("\t"));
+	while (depth > 0) 
+	{
+		xp_printf (XP_T("\t"));
+		depth--;
+	}
 }
 
 static int __print_expression (xp_awk_nde_t* nde)
@@ -106,7 +109,8 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_awk_nde_t* p = ((xp_awk_nde_grp_t*)nde)->body;
 
 			xp_printf (XP_T("("));
-			while (p != XP_NULL) {
+			while (p != XP_NULL) 
+			{
 				__print_expression (p);
 				if (p->next != XP_NULL) xp_printf (XP_T(","));
 				p = p->next;

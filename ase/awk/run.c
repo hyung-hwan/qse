@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.119 2006-06-30 17:07:52 bacon Exp $
+ * $Id: run.c,v 1.120 2006-07-01 07:57:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1095,19 +1095,16 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 
 	var = (xp_awk_nde_var_t*) nde->var;
 
-	xp_assert (var->type == XP_AWK_NDE_NAMED ||
-	           var->type == XP_AWK_NDE_GLOBAL ||
-	           var->type == XP_AWK_NDE_LOCAL ||
-	           var->type == XP_AWK_NDE_ARG ||
-	           var->type == XP_AWK_NDE_NAMEDIDX ||
-	           var->type == XP_AWK_NDE_GLOBALIDX ||
-	           var->type == XP_AWK_NDE_LOCALIDX ||
-	           var->type == XP_AWK_NDE_ARGIDX);
-
 xp_printf (XP_T("********** __run_delete **************\n"));
-	if (var->type == XP_AWK_NDE_NAMED)
+	if (var->type == XP_AWK_NDE_NAMED ||
+	    var->type == XP_AWK_NDE_NAMEDIDX)
 	{
 		xp_awk_pair_t* pair;
+
+		xp_assert ((var->type == XP_AWK_NDE_NAMED && 
+		            var->idx == XP_NULL) ||
+		           (var->type == XP_AWK_NDE_NAMEDIDX && 
+		            var->idx != XP_NULL));
 
 		pair = xp_awk_map_get (&run->named, var->id.name);
 		if (pair == XP_NULL)
@@ -1131,26 +1128,61 @@ xp_printf (XP_T("********** __run_delete **************\n"));
 		}
 		else
 		{
-			xp_awk_val_t* val = (xp_awk_val_t*)pair->val;
+			xp_awk_val_t* val;
+			xp_awk_map_t* map;
 
+			val = (xp_awk_val_t*)pair->val;
 			xp_assert (val != XP_NULL);
-			if (val->type == XP_AWK_VAL_MAP)
-			{
+
+			if (val->type != XP_AWK_VAL_MAP)
+				PANIC_I (run, XP_AWK_ENOTDELETABLE);
+
 xp_printf (XP_T("clearing map...\n"));
-				xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
+			map = ((xp_awk_val_map_t*)val)->map;
+			if (var->type == XP_AWK_NDE_NAMEDIDX)
+			{
+				xp_char_t* key;
+				xp_awk_val_t* idx;
+				int errnum;
+
+				xp_assert (var->idx != XP_NULL);
+
+				idx = __eval_expression (run, var->idx);
+				if (idx == XP_NULL) return -1;
+
+				xp_awk_refupval (idx);
+				key = xp_awk_valtostr (idx, &errnum, XP_NULL);
+				xp_awk_refdownval (run, idx);
+
+				if (key == XP_NULL) PANIC_I (run, errnum);
+
+				xp_awk_map_remove (map, key);
+				xp_free (key);
 			}
 			else
 			{
-				PANIC_I (run, XP_AWK_ENOTDELETABLE);
+				xp_awk_map_clear (map);
 			}
 		}
 	}
-	else if (var->type == XP_AWK_NDE_GLOBAL)
+	else if (var->type == XP_AWK_NDE_GLOBAL ||
+	         var->type == XP_AWK_NDE_LOCAL ||
+	         var->type == XP_AWK_NDE_ARG ||
+	         var->type == XP_AWK_NDE_GLOBALIDX ||
+	         var->type == XP_AWK_NDE_LOCALIDX ||
+	         var->type == XP_AWK_NDE_ARGIDX)
 	{
 		xp_awk_val_t* val;
 
-xp_printf (XP_T("clearing global...\n"));
-		val = STACK_GLOBAL (run,var->id.idxa);
+xp_printf (XP_T("clearing global/local/arg...\n"));
+		if (var->type == XP_AWK_NDE_GLOBAL ||
+		    var->type == XP_AWK_NDE_GLOBALIDX)
+			val = STACK_GLOBAL (run,var->id.idxa);
+		else if (var->type == XP_AWK_NDE_LOCAL ||
+		         var->type == XP_AWK_NDE_LOCALIDX)
+			val = STACK_LOCAL (run,var->id.idxa);
+		else val = STACK_ARG (run,var->id.idxa);
+
 		xp_assert (val != XP_NULL);
 
 		if (val->type == XP_AWK_VAL_NIL)
@@ -1165,62 +1197,56 @@ xp_printf (XP_T("clearing global...\n"));
 
 			/* no need to reduce the reference count of
 			 * the previous value because it was nil. */
-			STACK_GLOBAL (run,var->id.idxa) = tmp;
+			if (var->type == XP_AWK_NDE_GLOBAL ||
+			    var->type == XP_AWK_NDE_GLOBALIDX)
+				STACK_GLOBAL(run,var->id.idxa) = tmp;
+			else if (var->type == XP_AWK_NDE_LOCAL ||
+			         var->type == XP_AWK_NDE_LOCALIDX)
+				STACK_LOCAL(run,var->id.idxa) = tmp;
+			else STACK_ARG(run,var->id.idxa) = tmp;
+
 			xp_awk_refupval (tmp);
 		}
 		else
 		{
-			if (val->type == XP_AWK_VAL_MAP)
+			xp_awk_map_t* map;
+
+			if (val->type != XP_AWK_VAL_MAP)
+				PANIC_I (run, XP_AWK_ENOTDELETABLE);
+
+xp_printf (XP_T("clearing map...\n"));
+			map = ((xp_awk_val_map_t*)val)->map;
+			if (var->type == XP_AWK_NDE_GLOBALIDX ||
+			    var->type == XP_AWK_NDE_LOCALIDX ||
+			    var->type == XP_AWK_NDE_ARGIDX)
 			{
-xp_printf (XP_TEXT("clearning....\n"));
-				xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
+				xp_char_t* key;
+				xp_awk_val_t* idx;
+				int errnum;
+
+				xp_assert (var->idx != XP_NULL);
+
+				idx = __eval_expression (run, var->idx);
+				if (idx == XP_NULL) return -1;
+
+				xp_awk_refupval (idx);
+				key = xp_awk_valtostr (idx, &errnum, XP_NULL);
+				xp_awk_refdownval (run, idx);
+
+				if (key == XP_NULL) PANIC_I (run, errnum);
+
+				xp_awk_map_remove (map, key);
+				xp_free (key);
 			}
 			else
 			{
-				PANIC_I (run, XP_AWK_ENOTDELETABLE);
+				xp_awk_map_clear (map);
 			}
 		}
-	}
-	else if (var->type == XP_AWK_NDE_LOCAL)
-	{
-		xp_awk_val_t* val;
-
-xp_printf (XP_T("clearing lcoal...\n"));
-		val = STACK_LOCAL (run,var->id.idxa);
-		xp_assert (val != XP_NULL);
-
-		if (val->type == XP_AWK_VAL_NIL)
-		{
-			xp_awk_val_t* tmp;
-
-			/* value not set for the named variable. 
-			 * create a map and assign it to the variable */
-
-			tmp = xp_awk_makemapval (run);
-			if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
-
-			/* no need to reduce the reference count of
-			 * the previous value because it was nil. */
-			STACK_LOCAL (run,var->id.idxa) = tmp;
-			xp_awk_refupval (tmp);
-		}
-		else
-		{
-			if (val->type == XP_AWK_VAL_MAP)
-			{
-xp_printf (XP_TEXT("clearning....\n"));
-				xp_awk_map_clear (((xp_awk_val_map_t*)val)->map);
-			}
-			else
-			{
-				PANIC_I (run, XP_AWK_ENOTDELETABLE);
-			}
-		}
-
 	}
 	else
 	{
-xp_printf (XP_T("**** delete NOT IMPLEMENTED not implemented for this type of variable...\n"));
+		xp_assert (!"should never happen - wrong variable type for delete");
 		PANIC_I (run, XP_AWK_EINTERNAL);
 	}
 
