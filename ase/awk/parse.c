@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.132 2006-07-01 16:24:36 bacon Exp $
+ * $Id: parse.c,v 1.133 2006-07-02 12:16:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3465,25 +3465,96 @@ static int __get_string (xp_awk_t* awk)
 {
 	xp_cint_t c;
 	int escaped = 0;
+	int digit_count = 0;
+	xp_cint_t c_acc;
 
-	GET_CHAR_TO (awk, c);
 	while (1)
 	{
+		GET_CHAR_TO (awk, c);
+
 		if (c == XP_CHAR_EOF)
 		{
 			awk->errnum = XP_AWK_EENDSTR;
 			return -1;
 		}
 
+		if (escaped == 3)
+		{
+			if (c >= XP_T('0') && c <= XP_T('7'))
+			{
+				c_acc = c_acc * 8 + c - XP_T('0');
+				digit_count++;
+				if (digit_count >= escaped) 
+				{
+					ADD_TOKEN_CHAR (awk, c_acc);
+					escaped = 0;
+				}
+				continue;
+			}
+			else
+			{
+				ADD_TOKEN_CHAR (awk, c_acc);
+				escaped = 0;
+			}
+		}
+		else if (escaped == 2 || escaped == 4 || escaped == 8)
+		{
+			if (c >= XP_T('0') && c <= XP_T('9'))
+			{
+				c_acc = c_acc * 16 + c - XP_T('0');
+				digit_count++;
+				if (digit_count >= escaped) 
+				{
+					ADD_TOKEN_CHAR (awk, c_acc);
+					escaped = 0;
+				}
+				continue;
+			}
+			else if (c >= XP_T('A') && c <= XP_T('F'))
+			{
+				c_acc = c_acc * 16 + c - XP_T('A') + 10;
+				digit_count++;
+				if (digit_count >= escaped) 
+				{
+					ADD_TOKEN_CHAR (awk, c_acc);
+					escaped = 0;
+				}
+				continue;
+			}
+			else if (c >= XP_T('a') && c <= XP_T('f'))
+			{
+				c_acc = c_acc * 16 + c - XP_T('a') + 10;
+				digit_count++;
+				if (digit_count >= escaped) 
+				{
+					ADD_TOKEN_CHAR (awk, c_acc);
+					escaped = 0;
+				}
+				continue;
+			}
+			else
+			{
+				xp_char_t rc;
+
+				rc = (escaped == 2)? XP_T('x'):
+				     (escaped == 4)? XP_T('u'): XP_T('U');
+
+				if (digit_count == 0) ADD_TOKEN_CHAR (awk, rc);
+				else ADD_TOKEN_CHAR (awk, c_acc);
+
+				escaped = 0;
+			}
+		}
+
 		if (escaped == 0 && c == XP_T('\"'))
 		{
+			/* terminating quote */
 			GET_CHAR_TO (awk, c);
 			break;
 		}
 
 		if (escaped == 0 && c == XP_T('\\'))
 		{
-			GET_CHAR_TO (awk, c);
 			escaped = 1;
 			continue;
 		}
@@ -3497,40 +3568,41 @@ static int __get_string (xp_awk_t* awk)
 			else if (c == XP_T('b')) c = XP_T('\b');
 			else if (c == XP_T('v')) c = XP_T('\v');
 			else if (c == XP_T('a')) c = XP_T('\a');
-			else if (c == XP_T('0')) escaped = 2;
-			else if (c == XP_T('x')) escaped = 3;
+			else if (c >= XP_T('0') && c <= XP_T('7')) 
+			{
+				escaped = 3;
+				digit_count = 1;
+				c_acc = c - XP_T('0');
+				continue;
+			}
+			else if (c == XP_T('x')) 
+			{
+				escaped = 2;
+				digit_count = 0;
+				c_acc = 0;
+				continue;
+			}
 		#ifdef XP_CHAR_IS_WCHAR
-			else if (c == XP_T('u')) escaped = 4;
-			else if (c == XP_T('U')) escaped = 5;
+			else if (c == XP_T('u') && xp_sizeof(xp_char_t) >= 2) 
+			{
+				escaped = 4;
+				digit_count = 0;
+				c_acc = 0;
+				continue;
+			}
+			else if (c == XP_T('U') && xp_sizeof(xp_char_t) >= 4) 
+			{
+				escaped = 8;
+				digit_count = 0;
+				c_acc = 0;
+				continue;
+			}
 		#endif
 
-			if (escaped == 1) escaped = 0;
+			escaped = 0;
 		}
-		else if (escaped == 2)
-		{
-			/* 3-digit octal code */
-			/* TODO */
-		}
-		else if (escaped == 3)
-		{
-			/* 2-digit hex code */
-			/* TODO */
-		}
-	#ifdef XP_CHAR_IS_WCHAR
-		else if (escaped == 4)
-		{
-			/* 4-digit hex unicode */
-			/* TODO */
-		}
-		else if (escaped == 5)
-		{
-			/* 8-digit hex unicode */
-			/* TODO */
-		}
-	#endif
 
 		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR_TO (awk, c);
 	}
 	
 	return 0;
