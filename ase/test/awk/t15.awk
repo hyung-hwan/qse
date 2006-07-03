@@ -1,5 +1,12 @@
 BEGIN
 {
+	local a, b;
+
+	a = 12;
+	b = "<" a ">";
+
+	print b;
+
 	print ("\x5C");
 	print ("\x5C6_ABCDEGH");
 	print ("\xZZ5C6_ABCDEGH");
