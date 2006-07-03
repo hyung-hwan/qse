@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.121 2006-07-01 16:07:06 bacon Exp $
+ * $Id: run.c,v 1.122 2006-07-03 04:09:56 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -154,7 +154,7 @@ static int __raw_push (xp_awk_run_t* run, void* val);
 static void __raw_pop (xp_awk_run_t* run);
 static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 
-static int __read_text_input (xp_awk_run_t* run);
+static int __read_record (xp_awk_run_t* run);
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
@@ -254,9 +254,11 @@ static int __open_run (
 	/*run->nglobals = awk->tree.nglobals;*/
 	run->awk = awk;
 
-	run->input.buf_pos = 0;
-	run->input.buf_len = 0;
-	if (xp_str_open (&run->input.line, DEF_BUF_CAPA) == XP_NULL)
+	run->inrec.buf_pos = 0;
+	run->inrec.buf_len = 0;
+	run->inrec.flds = XP_NULL;
+	run->inrec.nflds = 0;
+	if (xp_str_open (&run->inrec.line, DEF_BUF_CAPA) == XP_NULL)
 	{
 		run->errnum = XP_AWK_ENOMEM; 
 		return -1;
@@ -265,7 +267,7 @@ static int __open_run (
 	if (xp_awk_map_open (&run->named, 
 		run, DEF_BUF_CAPA, __free_namedval) == XP_NULL) 
 	{
-		xp_str_close (&run->input.line);
+		xp_str_close (&run->inrec.line);
 		run->errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
@@ -296,7 +298,7 @@ static void __close_run (xp_awk_run_t* run)
 	xp_awk_map_close (&run->named);
 
 	/* destroy input data */
-	xp_str_close (&run->input.line);
+	xp_str_close (&run->inrec.line);
 
 	/* destroy values in free list */
 	while (run->icache_count > 0)
@@ -495,9 +497,9 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 	n = run->txtio (XP_AWK_IO_OPEN, 0, run->txtio_arg, XP_NULL, 0);
 	if (n == -1) PANIC_I (run, XP_AWK_ETXTINOPEN);
 
-	run->input.buf_pos = 0;
-	run->input.buf_len = 0;
-	run->input.eof = xp_false;
+	run->inrec.buf_pos = 0;
+	run->inrec.buf_len = 0;
+	run->inrec.eof = xp_false;
 
 	while (run->exit_level != EXIT_GLOBAL &&
 	       run->exit_level != EXIT_ABORT)
@@ -506,7 +508,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 		run->exit_level = EXIT_NONE;
 
-		x = __read_text_input(run);
+		x = __read_record(run);
 		if (x == -1)
 		{
 			/* don't care about the result of input close */
@@ -3431,45 +3433,57 @@ static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times)
 	}
 }
 
-static int __read_text_input (xp_awk_run_t* run)
+static int __read_record (xp_awk_run_t* run)
 {
 	xp_ssize_t n;
 	xp_char_t c;
 
-	xp_str_clear (&run->input.line);
-	if (run->input.eof) return 0;
+	xp_str_clear (&run->inrec.line);
+	if (run->inrec.flds != XP_NULL) 
+	{
+		xp_free (run->inrec.flds);
+		run->inrec.flds = XP_NULL;
+	}
+	run->inrec.nflds = 0;
 
 	while (1)
 	{
-		if (run->input.buf_pos >= run->input.buf_len)
+		if (run->inrec.buf_pos >= run->inrec.buf_len)
 		{
-			n = run->txtio (XP_AWK_IO_READ, 0, run->txtio_arg,
-				run->input.buf, xp_countof(run->input.buf));
-			if (n == -1) PANIC_I (run, XP_AWK_ETXTINDATA);
-			if (n == 0)
+			if (run->inrec.eof) 
 			{
-				if (XP_STR_LEN(&run->input.line) == 0) return 0;
-				run->input.eof = xp_true;
+				if (XP_STR_LEN(&run->inrec.line) == 0) return 0;
 				break;
 			}
 
-			run->input.buf_pos = 0;
-			run->input.buf_len = n;
+			n = run->txtio (XP_AWK_IO_READ, 0, run->txtio_arg,
+				run->inrec.buf, xp_countof(run->inrec.buf));
+			if (n == -1) PANIC_I (run, XP_AWK_ETXTINDATA);
+			if (n == 0)
+			{
+				run->inrec.eof = xp_true;
+				if (XP_STR_LEN(&run->inrec.line) == 0) return 0;
+				break;
+			}
+
+			run->inrec.buf_len = n;
+			run->inrec.buf_pos = 0;
 		}
 
-		c = run->input.buf[run->input.buf_pos++];
+		c = run->inrec.buf[run->inrec.buf_pos++];
 
-		if (xp_str_ccat (&run->input.line, c) == (xp_size_t)-1)
-		{
-			PANIC_I (run, XP_AWK_ENOMEM);
-		}
-
-		/* TODO: use LF instead of this hard coded value */
+		/* TODO: use RS instead of this hard coded value */
 		/* any better way to tell line terminating with newlines?
 		 * line with new line characters removed or retained? */
 		if (c == XP_T('\n')) break;
+
+		if (xp_str_ccat (&run->inrec.line, c) == (xp_size_t)-1)
+		{
+			PANIC_I (run, XP_AWK_ENOMEM);
+		}
 	}
 
+	/* TODO: compose each field */
 	return 1;
 }
 
