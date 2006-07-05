@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.122 2006-07-03 04:09:56 bacon Exp $
+ * $Id: run.c,v 1.123 2006-07-05 16:20:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -155,6 +155,7 @@ static void __raw_pop (xp_awk_run_t* run);
 static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 
 static int __read_record (xp_awk_run_t* run);
+static int __split_record (xp_awk_run_t* run);
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
@@ -297,7 +298,14 @@ static void __close_run (xp_awk_run_t* run)
 	/* destroy named variables */
 	xp_awk_map_close (&run->named);
 
-	/* destroy input data */
+	/* destroy input record */
+	if (run->inrec.flds != XP_NULL) 
+	{
+		xp_free (run->inrec.flds);
+		run->inrec.flds = XP_NULL;
+		run->inrec.nflds = 0;
+	}
+	xp_assert (run->inrec.nflds == 0);
 	xp_str_close (&run->inrec.line);
 
 	/* destroy values in free list */
@@ -508,7 +516,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 		run->exit_level = EXIT_NONE;
 
-		x = __read_record(run);
+		x = __read_record (run);
 		if (x == -1)
 		{
 			/* don't care about the result of input close */
@@ -3309,9 +3317,42 @@ static xp_awk_val_t* __eval_argidx (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	/* TODO: */
-	xp_printf (XP_T("eval_pos not competed....\n"));
-	return XP_NULL;
+	xp_awk_nde_pos_t* pos = (xp_awk_nde_pos_t*)nde;
+	xp_awk_val_t* v;
+	xp_long_t lv;
+	xp_real_t rv;
+	int n;
+
+	v = __eval_expression (run, pos->val);
+	if (v == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (v);
+	n = __val_to_num (v, &lv, &rv);
+	xp_awk_refdownval (run, v);
+
+	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
+	if (n == 1) lv = (xp_long_t)rv;
+
+	if (lv == 0)
+	{
+		v = xp_awk_makestrval (
+			XP_STR_BUF(&run->inrec.line), 
+			XP_STR_LEN(&run->inrec.line));
+		if (v == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+	}
+	else if (lv > 0 && lv <= run->inrec.nflds)
+	{
+		v = xp_awk_makestrval (
+			run->inrec.flds[lv-1].ptr, 
+			run->inrec.flds[lv-1].len);
+		if (v == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+	}
+	else
+	{
+		v = xp_awk_val_nil;
+	}
+
+	return v;
 }
 
 static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
@@ -3439,12 +3480,6 @@ static int __read_record (xp_awk_run_t* run)
 	xp_char_t c;
 
 	xp_str_clear (&run->inrec.line);
-	if (run->inrec.flds != XP_NULL) 
-	{
-		xp_free (run->inrec.flds);
-		run->inrec.flds = XP_NULL;
-	}
-	run->inrec.nflds = 0;
 
 	while (1)
 	{
@@ -3483,8 +3518,60 @@ static int __read_record (xp_awk_run_t* run)
 		}
 	}
 
-	/* TODO: compose each field */
-	return 1;
+	if (__split_record (run) == -1) return -1;
+
+	return 1; /* has read a record */
+}
+
+static int __split_record (xp_awk_run_t* run)
+{
+	/* TODO: support FS and regular expression */
+
+	xp_char_t* p, * tok;
+	xp_size_t len, tok_len, nflds;
+       
+	/* clear input record fields */
+	if (run->inrec.flds != XP_NULL) 
+	{
+		xp_free (run->inrec.flds);
+		run->inrec.flds = XP_NULL;
+		run->inrec.nflds = 0;
+	}
+	xp_assert (run->inrec.nflds == 0);
+
+	/* scan the input record to count the fields */
+	p = XP_STR_BUF(&run->inrec.line);
+	len = XP_STR_LEN(&run->inrec.line);
+
+	nflds = 0;
+	while (p != XP_NULL)
+	{
+		p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+		nflds++;
+		len = len - tok_len;
+	}
+
+	/* allocate space */
+	run->inrec.flds = xp_malloc (xp_sizeof(*run->inrec.flds) * nflds);
+	if (run->inrec.flds == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+
+	/* scan again and split it */
+	p = XP_STR_BUF(&run->inrec.line);
+	len = XP_STR_LEN(&run->inrec.line);
+
+	while (p != XP_NULL)
+	{
+		p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+
+		run->inrec.flds[run->inrec.nflds].ptr = tok;
+		run->inrec.flds[run->inrec.nflds].len = tok_len;
+
+		run->inrec.nflds++;
+		len = len - tok_len;
+	}
+
+	xp_assert (nflds == run->inrec.nflds);
+	return 0;
 }
 
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
@@ -3498,13 +3585,13 @@ static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
 	if (v->type == XP_AWK_VAL_INT)
 	{
 		*l = ((xp_awk_val_int_t*)v)->val;
-		return 0;
+		return 0; /* long */
 	}
 
 	if (v->type == XP_AWK_VAL_REAL)
 	{
 		*r = ((xp_awk_val_real_t*)v)->val;
-		return 1;
+		return 1; /* real */
 	}
 
 	if (v->type == XP_AWK_VAL_STR)

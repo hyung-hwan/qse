@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.25 2006-07-01 16:07:06 bacon Exp $
+ * $Id: err.c,v 1.26 2006-07-05 16:20:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -62,6 +62,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 
 		XP_T("divide by zero"),
 		XP_T("invalid operand"),
+		XP_T("wrong position index"),
 		XP_T("no such function"),
 		XP_T("value not assignable"),
 		XP_T("variable not indexable"),
