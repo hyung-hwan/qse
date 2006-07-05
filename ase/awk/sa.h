@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.24 2006-06-16 07:35:07 bacon Exp $
+ * $Id: sa.h,v 1.25 2006-07-05 16:20:23 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -110,6 +110,14 @@ int xp_strcmp (const xp_char_t* s1, const xp_char_t* s2);
 int xp_strxncmp (
 	const xp_char_t* s1, xp_size_t len1, 
 	const xp_char_t* s2, xp_size_t len2);
+
+#define xp_strtok xp_awk_strtok
+xp_char_t* xp_strtok (const xp_char_t* s, 
+	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len);
+
+#define xp_strxtok xp_awk_strxtok
+xp_char_t* xp_strxtok (const xp_char_t* s, xp_size_t len,
+	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len);
 
 #define xp_printf xp_awk_printf
 int xp_printf (const xp_char_t* fmt, ...);

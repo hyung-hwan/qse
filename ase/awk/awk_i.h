@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.25 2006-07-03 04:09:56 bacon Exp $
+ * $Id: awk_i.h,v 1.26 2006-07-05 16:20:23 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -166,12 +166,13 @@ struct xp_awk_run_t
 		xp_size_t buf_len;
 		xp_bool_t eof;
 		xp_str_t  line;
-		/*
-		xp_awk_val_t** flds;
+
 		xp_size_t nflds;
-		*/
-		xp_char_t** flds;
-		xp_size_t nflds;
+		struct
+		{
+			xp_char_t* ptr;
+			xp_size_t len;
+		}* flds;
 	} inrec;
 
 	/* extio chain */
