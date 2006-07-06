@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.36 2006-07-06 13:57:31 bacon Exp $
+ * $Id: val.c,v 1.37 2006-07-06 15:54:41 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -53,6 +53,7 @@ xp_awk_val_t* xp_awk_makeintval (xp_awk_run_t* run, xp_long_t v)
 	val->ref = 0;
 	val->val = v;
 
+/*xp_printf (XP_T("makeintval => %p\n"), val);*/
 	return (xp_awk_val_t*)val;
 }
 
@@ -75,6 +76,7 @@ xp_awk_val_t* xp_awk_makerealval (xp_awk_run_t* run, xp_real_t v)
 	val->ref = 0;
 	val->val = v;
 
+/*xp_printf (XP_T("makerealval => %p\n"), val);*/
 	return (xp_awk_val_t*)val;
 }
 
@@ -100,7 +102,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 		return XP_NULL;
 	}
 
-xp_printf (XP_T("makestrval => %p\n"), val);
+/*xp_printf (XP_T("makestrval => %p\n"), val);*/
 	return (xp_awk_val_t*)val;
 }
 
@@ -123,6 +125,7 @@ xp_awk_val_t* xp_awk_makestrval2 (
 		return XP_NULL;
 	}
 
+/*xp_printf (XP_T("makestrval2 => %p\n"), val);*/
 	return (xp_awk_val_t*)val;
 }
 
@@ -144,6 +147,7 @@ xp_awk_val_t* xp_awk_makerexval (const xp_char_t* str, xp_size_t len)
 		return XP_NULL;
 	}
 
+/*xp_printf (XP_T("makerexval => %p\n"), val);*/
 	return (xp_awk_val_t*)val;
 }
 
@@ -191,11 +195,10 @@ void xp_awk_freeval (xp_awk_run_t* run, xp_awk_val_t* val, xp_bool_t cache)
 /*xp_printf (XP_T("freeing [cache=%d] ... "), cache);
 xp_awk_printval (val);
 xp_printf (XP_T("\n"));*/
-xp_printf (XP_TEXT("freeing VAL[%p]\n"), val); 
 	switch (val->type)
 	{
 	case XP_AWK_VAL_NIL:
-		xp_free (val);
+		if (val != xp_awk_val_nil) xp_free (val);
 		return;
 
 	case XP_AWK_VAL_INT:
@@ -219,9 +222,6 @@ xp_printf (XP_TEXT("freeing VAL[%p]\n"), val);
 		return;
 
 	case XP_AWK_VAL_STR:
-xp_printf (XP_TEXT("freeing STR[%p/%s]\n"), 
-	((xp_awk_val_str_t*)val)->buf,
-	((xp_awk_val_str_t*)val)->buf);
 		xp_free (((xp_awk_val_str_t*)val)->buf);
 		xp_free (val);
 		return;
@@ -267,9 +267,11 @@ xp_printf (XP_T("\n"));
 	val->ref--;
 	if (val->ref <= 0) 
 	{
+/*
 xp_printf (XP_T("**FREEING ["));
 xp_awk_printval (val);
 xp_printf (XP_T("]\n"));
+*/
 		xp_awk_freeval(run, val, xp_true);
 	}
 }
@@ -347,7 +349,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 			}
 			else
 			{
-				//xp_str_clear (buf);
+				xp_str_clear (buf);
 				if (xp_str_cat (buf, XP_T("0")) == (xp_size_t)-1)
 				{
 					*errnum = XP_AWK_ENOMEM;
@@ -375,7 +377,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 		}
 		else
 		{
-			//xp_str_clear (buf);
+			xp_str_clear (buf);
 
 			/* get the current end of the buffer */
 			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
@@ -418,7 +420,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 		}
 		else
 		{
-			//xp_str_clear (buf);
+			xp_str_clear (buf);
 			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
 
 			if (xp_str_ncat (buf, 

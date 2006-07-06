@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.25 2006-07-06 13:57:31 bacon Exp $
+ * $Id: sa.c,v 1.26 2006-07-06 15:54:41 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -326,18 +326,35 @@ void xp_str_forfeit (xp_str_t* str)
 	if (str->__dynamic) xp_free (str);
 }
 
+xp_size_t xp_str_cpy (xp_str_t* str, const xp_char_t* s)
+{
+	/* TODO: improve it */
+	return xp_str_ncpy (str, s, xp_strlen(s));
+}
+
+xp_size_t xp_str_ncpy (xp_str_t* str, const xp_char_t* s, xp_size_t len)
+{
+	xp_char_t* buf;
+
+	if (len > str->capa) 
+	{
+		buf = (xp_char_t*) xp_malloc (xp_sizeof(xp_char_t) * (len + 1));
+		if (buf == XP_NULL) return (xp_size_t)-1;
+
+		xp_free (str->buf);
+		str->capa = len;
+		str->buf = buf;
+	}
+
+	str->size = xp_strncpy (str->buf, s, len);
+	str->buf[str->size] = XP_CHAR('\0');
+	return str->size;
+}
+
 xp_size_t xp_str_cat (xp_str_t* str, const xp_char_t* s)
 {
 	/* TODO: improve it */
 	return xp_str_ncat (str, s, xp_strlen(s));
-}
-
-static xp_size_t __strncpy (xp_char_t* buf, const xp_char_t* str, xp_size_t len)
-{
-	const xp_char_t* end = str + len;
-	while (str < end) *buf++ = *str++;
-	*buf = XP_T('\0');
-	return len;
 }
 
 xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len)
@@ -360,7 +377,7 @@ xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len)
 		str->buf = buf;
 	}
 
-	str->size += __strncpy (&str->buf[str->size], s, len);
+	str->size += xp_strncpy (&str->buf[str->size], s, len);
 	str->buf[str->size] = XP_T('\0');
 	return str->size;
 }
