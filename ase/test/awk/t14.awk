@@ -18,6 +18,16 @@ END
 }
 */
 {
-	$3 = "10";
-	print $0, $2, $5;
+	//$3 = "10";
+	//print $0, $2, $5;
+	$0 = "wow this is just a test";
+print "step 1--------------------";
+	//print $0;
+	a = $6;
+print "step 2--------------------";
+	print a;
+	/*
+	print $6;
+	*/
+	print "step 3--------------------";
 }

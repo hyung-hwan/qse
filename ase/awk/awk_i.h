@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.26 2006-07-05 16:20:23 bacon Exp $
+ * $Id: awk_i.h,v 1.27 2006-07-06 13:57:31 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -139,7 +139,6 @@ struct xp_awk_chain_t
 	xp_awk_nde_t* action;
 	xp_awk_chain_t* next;	
 };
-
 
 struct xp_awk_run_t
 {

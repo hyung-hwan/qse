@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.35 2006-07-01 16:07:06 bacon Exp $
+ * $Id: val.c,v 1.36 2006-07-06 13:57:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -100,6 +100,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 		return XP_NULL;
 	}
 
+xp_printf (XP_T("makestrval => %p\n"), val);
 	return (xp_awk_val_t*)val;
 }
 
@@ -190,6 +191,7 @@ void xp_awk_freeval (xp_awk_run_t* run, xp_awk_val_t* val, xp_bool_t cache)
 /*xp_printf (XP_T("freeing [cache=%d] ... "), cache);
 xp_awk_printval (val);
 xp_printf (XP_T("\n"));*/
+xp_printf (XP_TEXT("freeing VAL[%p]\n"), val); 
 	switch (val->type)
 	{
 	case XP_AWK_VAL_NIL:
@@ -217,6 +219,9 @@ xp_printf (XP_T("\n"));*/
 		return;
 
 	case XP_AWK_VAL_STR:
+xp_printf (XP_TEXT("freeing STR[%p/%s]\n"), 
+	((xp_awk_val_str_t*)val)->buf,
+	((xp_awk_val_str_t*)val)->buf);
 		xp_free (((xp_awk_val_str_t*)val)->buf);
 		xp_free (val);
 		return;
@@ -262,11 +267,9 @@ xp_printf (XP_T("\n"));
 	val->ref--;
 	if (val->ref <= 0) 
 	{
-/*
-xp_printf (XP_T("**FREEING "));
+xp_printf (XP_T("**FREEING ["));
 xp_awk_printval (val);
-xp_printf (XP_T("\n"));
-*/
+xp_printf (XP_T("]\n"));
 		xp_awk_freeval(run, val, xp_true);
 	}
 }
@@ -344,6 +347,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 			}
 			else
 			{
+				//xp_str_clear (buf);
 				if (xp_str_cat (buf, XP_T("0")) == (xp_size_t)-1)
 				{
 					*errnum = XP_AWK_ENOMEM;
@@ -371,6 +375,8 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 		}
 		else
 		{
+			//xp_str_clear (buf);
+
 			/* get the current end of the buffer */
 			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
 
@@ -412,6 +418,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 		}
 		else
 		{
+			//xp_str_clear (buf);
 			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
 
 			if (xp_str_ncat (buf, 
@@ -428,6 +435,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 
 /* TODO: process more value types */
 
+xp_printf (XP_TEXT("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtostr v=> %p***\n"), v->type, v);
 	*errnum = XP_AWK_EVALTYPE;
 	return XP_NULL;
 }

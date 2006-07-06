@@ -1,7 +1,7 @@
 CC = bcc32
 CFLAGS = -I..\..\.. -D__STAND_ALONE
 LDFLAGS = -L..\..\..\xp\bas -L..\..\..\xp\awk 
-LIBS = import32.lib cw32mt.lib xpbas.lib xpawk.lib
+LIBS = import32.lib cw32mt.lib xpawk.lib
 STARTUP = c0x32w.obj
 
 all: awk 
