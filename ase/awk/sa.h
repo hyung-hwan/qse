@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.25 2006-07-05 16:20:23 bacon Exp $
+ * $Id: sa.h,v 1.26 2006-07-06 15:54:41 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -141,6 +141,12 @@ void xp_str_close (xp_str_t* str);
 
 #define xp_str_forfeit xp_awk_str_forfeit
 void xp_str_forfeit (xp_str_t* str);
+
+#define xp_str_cpy xp_awk_str_cpy
+xp_size_t xp_str_cpy (xp_str_t* str, const xp_char_t* s);
+
+#define xp_str_ncpy xp_awk_str_ncpy
+xp_size_t xp_str_ncpy (xp_str_t* str, const xp_char_t* s, xp_size_t len);
 
 #define xp_str_cat xp_awk_str_cat
 xp_size_t xp_str_cat (xp_str_t* str, const xp_char_t* s);

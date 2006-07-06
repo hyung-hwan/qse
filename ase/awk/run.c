@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.124 2006-07-06 13:57:31 bacon Exp $
+ * $Id: run.c,v 1.125 2006-07-06 15:54:41 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -263,6 +263,7 @@ static int __open_run (
 	run->inrec.buf_len = 0;
 	run->inrec.flds = XP_NULL;
 	run->inrec.nflds = 0;
+	run->inrec.d0 = xp_awk_val_nil;
 	if (xp_str_open (&run->inrec.line, DEF_BUF_CAPA) == XP_NULL)
 	{
 		run->errnum = XP_AWK_ENOMEM; 
@@ -303,8 +304,12 @@ static void __close_run (xp_awk_run_t* run)
 	xp_awk_map_close (&run->named);
 
 	/* destroy input record */
+	xp_awk_refdownval (run, run->inrec.d0);
 	if (run->inrec.flds != XP_NULL) 
 	{
+		xp_size_t i;
+		for (i = 0; i < run->inrec.nflds; i++) 
+			xp_awk_refdownval (run, run->inrec.flds[i].val);
 		xp_free (run->inrec.flds);
 		run->inrec.flds = XP_NULL;
 		run->inrec.nflds = 0;
@@ -770,8 +775,10 @@ static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			xp_awk_val_t* v;
 			v = __eval_expression(run,nde);
 			if (v == XP_NULL) return -1;
+
 			xp_awk_refupval (v);
 			xp_awk_refdownval (run, v);
+
 			break;
 		}
 	}
@@ -1733,8 +1740,10 @@ static xp_awk_val_t* __do_assignment_pos (
 	xp_awk_val_t* v;
 	xp_long_t lv;
 	xp_real_t rv;
+	xp_char_t* str;
 	int n, errnum;
 
+	/* get the position number */
 	v = __eval_expression (run, pos->val);
 	if (v == XP_NULL) return XP_NULL;
 
@@ -1745,22 +1754,85 @@ static xp_awk_val_t* __do_assignment_pos (
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
 	if (n == 1) lv = (xp_long_t)rv;
 
+	/* convert the value to the string */
+	str = xp_awk_valtostr (val, &errnum, XP_NULL);
+	if (str == XP_NULL) PANIC (run, errnum);
+
 	if (lv == 0)
 	{
-		if (xp_awk_valtostr (
-			val, &errnum, &run->inrec.line) == XP_NULL)
+		if (xp_str_cpy (&run->inrec.line, str) == (xp_size_t)-1)
 		{
+			xp_free (str);
+
+			/* clear $0 ... $NF */
+			if (run->inrec.flds != XP_NULL) 
+			{
+				xp_size_t i;
+				for (i = 0; i < run->inrec.nflds; i++) 
+					xp_awk_refdownval (run, run->inrec.flds[i].val);
+				xp_free (run->inrec.flds);
+				run->inrec.flds = XP_NULL;
+				run->inrec.nflds = 0;
+			}
+			xp_assert (run->inrec.nflds == 0);
+
+			xp_str_clear (&run->inrec.line);
+			xp_awk_refdownval (run, run->inrec.d0);
+			run->inrec.d0 = xp_awk_val_nil;
+
 			PANIC (run, errnum);
 		}
+		xp_free (str);
 
-		if (__split_record (run) == -1) return XP_NULL;
+		xp_awk_refdownval (run, run->inrec.d0);
+		run->inrec.d0 = val;
+		xp_awk_refupval (val);
 	}
 	else
 	{
-xp_printf (XP_T("$X assignemtn NOT IMPLEMENTED\n"));
+		/* TODO: handle out of bound index... */
+
+/* TODO: reimplement this entire function ........... */
+/* what schecm should i use to support $n = value where n is not zero ? */
+/* should i use run->inrec.line to recompose $0 and adjust other fileds? */
+/* or should $0 be composed of fidls separated by FS? if so, what should i
+ * do when FS is a regular expression??? */
+
+#if 0
+		if (xp_str_rpl (&run->inrec.line, 
+			run->inrec.flds[lv].ptr, 
+			run->inrec.flds[lv].len, str) == (xp_size_t)-1)
+		{
+			xp_free (str);
+			/* TODO: clear $0 .. $NF */
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		xp_free (str);
+
+		v = xp_awk_makestrval (
+			XP_STR_BUF(&run->inrec.line),
+			XP_STR_LEN(&run->inrec.line));
+		if (v == XP_NULL)
+		{
+			/* TODO: clear $0 .. $NF */
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		xp_awk_refdownval (run, run->inrec.d0);
+		run->inrec.d0 = v;
+		xp_awk_refupval (v);
+#endif
 	}
 
-//xp_awk_refupval (val);
+	if (__split_record (run) == -1) 
+	{
+		xp_str_clear (&run->inrec.line);
+		xp_awk_refdownval (run, run->inrec.d0);
+		run->inrec.d0 = xp_awk_val_nil;
+		return XP_NULL;
+	}
+
 	return val;
 }
 
@@ -3405,24 +3477,10 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
 	if (n == 1) lv = (xp_long_t)rv;
 
-	if (lv == 0)
-	{
-		v = xp_awk_makestrval (
-			XP_STR_BUF(&run->inrec.line), 
-			XP_STR_LEN(&run->inrec.line));
-		if (v == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
-	}
-	else if (lv > 0 && lv <= run->inrec.nflds)
-	{
-		v = xp_awk_makestrval (
-			run->inrec.flds[lv-1].ptr, 
-			run->inrec.flds[lv-1].len);
-		if (v == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
-	}
-	else
-	{
-		v = xp_awk_val_nil;
-	}
+	if (lv == 0) v = run->inrec.d0;
+	else if (lv > 0 && lv <= run->inrec.nflds) 
+		v = run->inrec.flds[lv-1].val;
+	else v = xp_awk_val_nil;
 
 	return v;
 }
@@ -3549,6 +3607,7 @@ static int __read_record (xp_awk_run_t* run)
 {
 	xp_ssize_t n;
 	xp_char_t c;
+	xp_awk_val_t* v;
 
 	xp_str_clear (&run->inrec.line);
 
@@ -3589,7 +3648,28 @@ static int __read_record (xp_awk_run_t* run)
 		}
 	}
 
-	if (__split_record (run) == -1) return -1;
+	v = xp_awk_makestrval (
+		XP_STR_BUF(&run->inrec.line), 
+		XP_STR_LEN(&run->inrec.line));
+	if (v == XP_NULL)
+	{
+		xp_awk_refdownval (run, run->inrec.d0);
+		run->inrec.d0 = xp_awk_val_nil;
+		xp_str_clear (&run->inrec.line);
+		PANIC_I (run, XP_AWK_ENOMEM);
+	}
+
+	xp_awk_refdownval (run, run->inrec.d0);
+	run->inrec.d0 = v;
+	xp_awk_refupval (v);
+
+	if (__split_record (run) == -1) 
+	{
+		xp_awk_refdownval (run, run->inrec.d0);
+		run->inrec.d0 = xp_awk_val_nil;
+		xp_str_clear (&run->inrec.line);
+		return -1;
+	}
 
 	return 1; /* has read a record */
 }
@@ -3597,13 +3677,16 @@ static int __read_record (xp_awk_run_t* run)
 static int __split_record (xp_awk_run_t* run)
 {
 	/* TODO: support FS and regular expression */
+	/* TODO: set NR after split */
 
 	xp_char_t* p, * tok;
-	xp_size_t len, tok_len, nflds;
+	xp_size_t len, tok_len, nflds, i;
        
 	/* clear input record fields */
 	if (run->inrec.flds != XP_NULL) 
 	{
+		for (i = 0; i < run->inrec.nflds; i++) 
+			xp_awk_refdownval (run, run->inrec.flds[i].val);
 		xp_free (run->inrec.flds);
 		run->inrec.flds = XP_NULL;
 		run->inrec.nflds = 0;
@@ -3639,8 +3722,22 @@ static int __split_record (xp_awk_run_t* run)
 
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
+		run->inrec.flds[run->inrec.nflds].val = 
+			xp_awk_makestrval (tok, tok_len);
+		if (run->inrec.flds[run->inrec.nflds].val == XP_NULL)
+		{
+			for (i = 0; i < run->inrec.nflds; i++) 
+				xp_awk_refdownval (run, run->inrec.flds[i].val);
 
+			xp_free (run->inrec.flds);
+			run->inrec.flds = XP_NULL;
+			run->inrec.nflds = 0;
+			PANIC_I (run, XP_AWK_ENOMEM);
+		}
+
+		xp_awk_refupval (run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
+
 		len = len - tok_len;
 	}
 
