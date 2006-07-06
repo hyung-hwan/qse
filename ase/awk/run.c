@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.123 2006-07-05 16:20:23 bacon Exp $
+ * $Id: run.c,v 1.124 2006-07-06 13:57:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -72,9 +72,13 @@ static xp_awk_val_t* __eval_group (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_assignment (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __do_assignment (
+	xp_awk_run_t* run, xp_awk_nde_t* var, xp_awk_val_t* val);
+static xp_awk_val_t* __do_assignment_scalar (
 	xp_awk_run_t* run, xp_awk_nde_var_t* var, xp_awk_val_t* val);
 static xp_awk_val_t* __do_assignment_map (
 	xp_awk_run_t* run, xp_awk_nde_var_t* var, xp_awk_val_t* val);
+static xp_awk_val_t* __do_assignment_pos (
+	xp_awk_run_t* run, xp_awk_nde_pos_t* pos, xp_awk_val_t* val);
 
 static xp_awk_val_t* __eval_binary (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -969,7 +973,7 @@ static int __run_for (xp_awk_run_t* run, xp_awk_nde_for_t* nde)
 struct __foreach_walker_t
 {
 	xp_awk_run_t* run;
-	xp_awk_nde_var_t* var;
+	xp_awk_nde_t* var;
 	xp_awk_nde_t* body;
 };
 
@@ -1026,7 +1030,7 @@ static int __run_foreach (xp_awk_run_t* run, xp_awk_nde_foreach_t* nde)
 	map = ((xp_awk_val_map_t*)rv)->map;
 
 	walker.run = run;
-	walker.var = (xp_awk_nde_var_t*)test->left;
+	walker.var = test->left;
 	walker.body = nde->body;
 	n = xp_awk_map_walk (map, __walk_foreach, &walker);
 
@@ -1495,21 +1499,70 @@ static xp_awk_val_t* __eval_assignment (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		xp_awk_refupval (val);
 	}
 
-	res = __do_assignment (run, (xp_awk_nde_var_t*)ass->left, val);
+	res = __do_assignment (run, ass->left, val);
 	xp_awk_refdownval (run, val);
 
 	return res;
 }
 
 static xp_awk_val_t* __do_assignment (
-	xp_awk_run_t* run, xp_awk_nde_var_t* var, xp_awk_val_t* val)
+	xp_awk_run_t* run, xp_awk_nde_t* var, xp_awk_val_t* val)
 {
-
 	if (val->type == XP_AWK_VAL_MAP)
 	{
 		/* a map cannot be assigned to a variable */
 		PANIC (run, XP_AWK_ENOTASSIGNABLE);
 	}
+
+	if (var->type == XP_AWK_NDE_NAMED ||
+	    var->type == XP_AWK_NDE_GLOBAL ||
+	    var->type == XP_AWK_NDE_LOCAL ||
+	    var->type == XP_AWK_NDE_ARG) 
+	{
+		if (__do_assignment_scalar (
+			run, (xp_awk_nde_var_t*)var, val) == XP_NULL) 
+		{
+			return XP_NULL;
+		}
+	}
+	else if (var->type == XP_AWK_NDE_NAMEDIDX ||
+	         var->type == XP_AWK_NDE_GLOBALIDX ||
+	         var->type == XP_AWK_NDE_LOCALIDX ||
+	         var->type == XP_AWK_NDE_ARGIDX) 
+	{
+		if (__do_assignment_map (
+			run, (xp_awk_nde_var_t*)var, val) == XP_NULL) 
+		{
+			return XP_NULL;
+		}
+	}
+	else if (var->type == XP_AWK_NDE_POS)
+	{
+		if (__do_assignment_pos (
+			run, (xp_awk_nde_pos_t*)var, val) == XP_NULL) 
+		{
+			return XP_NULL;
+		}
+	}
+	else
+	{
+		xp_assert (!"should never happen - invalid variable type");
+		PANIC (run, XP_AWK_EINTERNAL);
+	}
+
+	return val;
+}
+
+static xp_awk_val_t* __do_assignment_scalar (
+	xp_awk_run_t* run, xp_awk_nde_var_t* var, xp_awk_val_t* val)
+{
+	xp_assert (
+		(var->type == XP_AWK_NDE_NAMED ||
+		 var->type == XP_AWK_NDE_GLOBAL ||
+		 var->type == XP_AWK_NDE_LOCAL ||
+		 var->type == XP_AWK_NDE_ARG) && var->idx == XP_NULL);
+
+	xp_assert (val->type != XP_AWK_VAL_MAP);
 
 	if (var->type == XP_AWK_NDE_NAMED) 
 	{
@@ -1559,7 +1612,7 @@ static xp_awk_val_t* __do_assignment (
 		STACK_LOCAL(run,var->id.idxa) = val;
 		xp_awk_refupval (val);
 	}
-	else if (var->type == XP_AWK_NDE_ARG) 
+	else /* if (var->type == XP_AWK_NDE_ARG) */
 	{
 		xp_awk_val_t* old = STACK_ARG(run,var->id.idxa);
 		if (old->type == XP_AWK_VAL_MAP)
@@ -1572,25 +1625,6 @@ static xp_awk_val_t* __do_assignment (
 		xp_awk_refdownval (run, old);
 		STACK_ARG(run,var->id.idxa) = val;
 		xp_awk_refupval (val);
-	}
-	else if (var->type == XP_AWK_NDE_NAMEDIDX ||
-	         var->type == XP_AWK_NDE_GLOBALIDX ||
-	         var->type == XP_AWK_NDE_LOCALIDX ||
-	         var->type == XP_AWK_NDE_ARGIDX) 
-	{
-		if (__do_assignment_map(run,var,val) == XP_NULL)
-			return XP_NULL;
-	}
-	else if (var->type == XP_AWK_NDE_POS)
-	{
-	        /* TODO: */
-	        xp_printf (XP_T("XP_AWK_NDE_POS not implemented\n"));
-	        PANIC (run, XP_AWK_EINTERNAL);
-	}
-	else
-	{
-		xp_assert (!"should never happen - invalid variable type");
-		PANIC (run, XP_AWK_EINTERNAL);
 	}
 
 	return val;
@@ -1608,6 +1642,7 @@ static xp_awk_val_t* __do_assignment_map (
 		 var->type == XP_AWK_NDE_GLOBALIDX ||
 		 var->type == XP_AWK_NDE_LOCALIDX ||
 		 var->type == XP_AWK_NDE_ARGIDX) && var->idx != XP_NULL);
+	xp_assert (val->type != XP_AWK_VAL_MAP);
 
 	if (var->type == XP_AWK_NDE_NAMEDIDX)
 	{
@@ -1660,7 +1695,7 @@ static xp_awk_val_t* __do_assignment_map (
 			xp_awk_refdownval (run, (xp_awk_val_t*)map);
 			STACK_LOCAL(run,var->id.idxa) = tmp;
 		}
-		else 
+		else /* if (var->type == XP_AWK_NDE_ARGIDX) */
 		{
 			xp_awk_refdownval (run, (xp_awk_val_t*)map);
 			STACK_ARG(run,var->id.idxa) = tmp;
@@ -1689,6 +1724,43 @@ xp_printf (XP_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map->re
 
 	xp_free (str);
 	xp_awk_refupval (val);
+	return val;
+}
+
+static xp_awk_val_t* __do_assignment_pos (
+	xp_awk_run_t* run, xp_awk_nde_pos_t* pos, xp_awk_val_t* val)
+{
+	xp_awk_val_t* v;
+	xp_long_t lv;
+	xp_real_t rv;
+	int n, errnum;
+
+	v = __eval_expression (run, pos->val);
+	if (v == XP_NULL) return XP_NULL;
+
+	xp_awk_refupval (v);
+	n = __val_to_num (v, &lv, &rv);
+	xp_awk_refdownval (run, v);
+
+	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
+	if (n == 1) lv = (xp_long_t)rv;
+
+	if (lv == 0)
+	{
+		if (xp_awk_valtostr (
+			val, &errnum, &run->inrec.line) == XP_NULL)
+		{
+			PANIC (run, errnum);
+		}
+
+		if (__split_record (run) == -1) return XP_NULL;
+	}
+	else
+	{
+xp_printf (XP_T("$X assignemtn NOT IMPLEMENTED\n"));
+	}
+
+//xp_awk_refupval (val);
 	return val;
 }
 
@@ -2797,7 +2869,7 @@ static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		PANIC (run, XP_AWK_EINTERNAL);
 	}
 
-	if (__do_assignment(run, (xp_awk_nde_var_t*)exp->left, res) == XP_NULL)
+	if (__do_assignment (run, exp->left, res) == XP_NULL)
 	{
 		xp_awk_refdownval (run, left);
 		return XP_NULL;
@@ -2911,7 +2983,7 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		PANIC (run, XP_AWK_EINTERNAL);
 	}
 
-	if (__do_assignment(run, (xp_awk_nde_var_t*)exp->left, res2) == XP_NULL)
+	if (__do_assignment (run, exp->left, res2) == XP_NULL)
 	{
 		xp_awk_refdownval (run, left);
 		return XP_NULL;
@@ -3424,8 +3496,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			if (v == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 			xp_awk_refupval (v);
 	
-			if (__do_assignment(run, 
-				(xp_awk_nde_var_t*)p->var, v) == XP_NULL)
+			if (__do_assignment(run, p->var, v) == XP_NULL)
 			{
 				xp_awk_refdownval (run, v);
 				return XP_NULL;
@@ -3546,7 +3617,8 @@ static int __split_record (xp_awk_run_t* run)
 	nflds = 0;
 	while (p != XP_NULL)
 	{
-		p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+		//p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+		p = xp_strtok (p, XP_T(" \t"), &tok, &tok_len);
 		nflds++;
 		len = len - tok_len;
 	}
@@ -3561,7 +3633,9 @@ static int __split_record (xp_awk_run_t* run)
 
 	while (p != XP_NULL)
 	{
-		p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+// TODO: fix the problem in in xp_strxtok...
+		//p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+		p = xp_strtok (p, XP_T(" \t"), &tok, &tok_len);
 
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;

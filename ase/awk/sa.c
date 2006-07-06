@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.24 2006-07-05 16:20:23 bacon Exp $
+ * $Id: sa.c,v 1.25 2006-07-06 13:57:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -295,7 +295,7 @@ xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa)
 {
 	if (str == XP_NULL) 
 	{
-		str = (xp_str_t*)xp_malloc (sizeof(xp_str_t));
+		str = (xp_str_t*) xp_malloc (sizeof(xp_str_t));
 		if (str == XP_NULL) return XP_NULL;
 		str->__dynamic = xp_true;
 	}
