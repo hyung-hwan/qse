@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.133 2006-07-02 12:16:24 bacon Exp $
+ * $Id: parse.c,v 1.134 2006-07-07 09:48:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1637,7 +1637,9 @@ static xp_awk_nde_t* __parse_concat (xp_awk_t* awk)
 
 	/* TODO: write a better code to do this.... 
 	 *       first of all, is the following check sufficient? */
-	while (MATCH(awk,TOKEN_LPAREN) || awk->token.type >= TOKEN_GETLINE)
+	while (MATCH(awk,TOKEN_LPAREN) || 
+	       MATCH(awk,TOKEN_DOLLAR) ||
+	       awk->token.type >= TOKEN_GETLINE)
 	{
 		right = __parse_additive (awk);
 		if (right == XP_NULL) 
