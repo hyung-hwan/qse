@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.125 2006-07-06 15:54:41 bacon Exp $
+ * $Id: run.c,v 1.126 2006-07-07 09:48:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -160,6 +160,7 @@ static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 
 static int __read_record (xp_awk_run_t* run);
 static int __split_record (xp_awk_run_t* run);
+static void __clear_record (xp_awk_run_t* run);
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
@@ -263,6 +264,7 @@ static int __open_run (
 	run->inrec.buf_len = 0;
 	run->inrec.flds = XP_NULL;
 	run->inrec.nflds = 0;
+	run->inrec.maxflds = 0;
 	run->inrec.d0 = xp_awk_val_nil;
 	if (xp_str_open (&run->inrec.line, DEF_BUF_CAPA) == XP_NULL)
 	{
@@ -304,17 +306,13 @@ static void __close_run (xp_awk_run_t* run)
 	xp_awk_map_close (&run->named);
 
 	/* destroy input record */
-	xp_awk_refdownval (run, run->inrec.d0);
+	__clear_record (run);
 	if (run->inrec.flds != XP_NULL) 
 	{
-		xp_size_t i;
-		for (i = 0; i < run->inrec.nflds; i++) 
-			xp_awk_refdownval (run, run->inrec.flds[i].val);
 		xp_free (run->inrec.flds);
 		run->inrec.flds = XP_NULL;
-		run->inrec.nflds = 0;
+		run->inrec.maxflds = 0;
 	}
-	xp_assert (run->inrec.nflds == 0);
 	xp_str_close (&run->inrec.line);
 
 	/* destroy values in free list */
@@ -1760,26 +1758,11 @@ static xp_awk_val_t* __do_assignment_pos (
 
 	if (lv == 0)
 	{
+		__clear_record (run);
+
 		if (xp_str_cpy (&run->inrec.line, str) == (xp_size_t)-1)
 		{
 			xp_free (str);
-
-			/* clear $0 ... $NF */
-			if (run->inrec.flds != XP_NULL) 
-			{
-				xp_size_t i;
-				for (i = 0; i < run->inrec.nflds; i++) 
-					xp_awk_refdownval (run, run->inrec.flds[i].val);
-				xp_free (run->inrec.flds);
-				run->inrec.flds = XP_NULL;
-				run->inrec.nflds = 0;
-			}
-			xp_assert (run->inrec.nflds == 0);
-
-			xp_str_clear (&run->inrec.line);
-			xp_awk_refdownval (run, run->inrec.d0);
-			run->inrec.d0 = xp_awk_val_nil;
-
 			PANIC (run, errnum);
 		}
 		xp_free (str);
@@ -1790,6 +1773,8 @@ static xp_awk_val_t* __do_assignment_pos (
 	}
 	else
 	{
+		/*__clear_record (run, without_destroying_line);*/
+
 		/* TODO: handle out of bound index... */
 
 /* TODO: reimplement this entire function ........... */
@@ -1827,9 +1812,7 @@ static xp_awk_val_t* __do_assignment_pos (
 
 	if (__split_record (run) == -1) 
 	{
-		xp_str_clear (&run->inrec.line);
-		xp_awk_refdownval (run, run->inrec.d0);
-		run->inrec.d0 = xp_awk_val_nil;
+		__clear_record (run);
 		return XP_NULL;
 	}
 
@@ -3609,7 +3592,7 @@ static int __read_record (xp_awk_run_t* run)
 	xp_char_t c;
 	xp_awk_val_t* v;
 
-	xp_str_clear (&run->inrec.line);
+	__clear_record (run);
 
 	while (1)
 	{
@@ -3653,21 +3636,19 @@ static int __read_record (xp_awk_run_t* run)
 		XP_STR_LEN(&run->inrec.line));
 	if (v == XP_NULL)
 	{
-		xp_awk_refdownval (run, run->inrec.d0);
-		run->inrec.d0 = xp_awk_val_nil;
-		xp_str_clear (&run->inrec.line);
+		__clear_record (run);
 		PANIC_I (run, XP_AWK_ENOMEM);
 	}
 
-	xp_awk_refdownval (run, run->inrec.d0);
+	xp_assert (run->inrec.d0 == xp_awk_val_nil);
+	/* the record has been cleared in the beginning of the function.
+	 * so xp_awk_refdownval is not needed over run->inrec.d0 */
 	run->inrec.d0 = v;
 	xp_awk_refupval (v);
 
 	if (__split_record (run) == -1) 
 	{
-		xp_awk_refdownval (run, run->inrec.d0);
-		run->inrec.d0 = xp_awk_val_nil;
-		xp_str_clear (&run->inrec.line);
+		__clear_record (run);
 		return -1;
 	}
 
@@ -3680,17 +3661,9 @@ static int __split_record (xp_awk_run_t* run)
 	/* TODO: set NR after split */
 
 	xp_char_t* p, * tok;
-	xp_size_t len, tok_len, nflds, i;
+	xp_size_t len, tok_len, nflds;
        
-	/* clear input record fields */
-	if (run->inrec.flds != XP_NULL) 
-	{
-		for (i = 0; i < run->inrec.nflds; i++) 
-			xp_awk_refdownval (run, run->inrec.flds[i].val);
-		xp_free (run->inrec.flds);
-		run->inrec.flds = XP_NULL;
-		run->inrec.nflds = 0;
-	}
+	/* inrec should be cleared before __split_record is called */
 	xp_assert (run->inrec.nflds == 0);
 
 	/* scan the input record to count the fields */
@@ -3700,15 +3673,31 @@ static int __split_record (xp_awk_run_t* run)
 	nflds = 0;
 	while (p != XP_NULL)
 	{
-		//p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
-		p = xp_strtok (p, XP_T(" \t"), &tok, &tok_len);
+		p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+
+		if (nflds == 0 && p == XP_NULL && tok_len == 0)
+		{
+			/* no fields */
+			return 0;
+		}
+
+		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
+
 		nflds++;
-		len = len - tok_len;
+		len = XP_STR_LEN(&run->inrec.line) - 
+			(p - XP_STR_BUF(&run->inrec.line));
 	}
 
 	/* allocate space */
-	run->inrec.flds = xp_malloc (xp_sizeof(*run->inrec.flds) * nflds);
-	if (run->inrec.flds == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+	if (nflds > run->inrec.maxflds)
+	{
+		void* tmp = xp_malloc (
+			xp_sizeof(*run->inrec.flds) * nflds);
+		if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+
+		run->inrec.flds = tmp;
+		run->inrec.maxflds = nflds;
+	}
 
 	/* scan again and split it */
 	p = XP_STR_BUF(&run->inrec.line);
@@ -3716,9 +3705,9 @@ static int __split_record (xp_awk_run_t* run)
 
 	while (p != XP_NULL)
 	{
-// TODO: fix the problem in in xp_strxtok...
-		//p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
-		p = xp_strtok (p, XP_T(" \t"), &tok, &tok_len);
+		p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+
+		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
 
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
@@ -3726,23 +3715,42 @@ static int __split_record (xp_awk_run_t* run)
 			xp_awk_makestrval (tok, tok_len);
 		if (run->inrec.flds[run->inrec.nflds].val == XP_NULL)
 		{
-			for (i = 0; i < run->inrec.nflds; i++) 
-				xp_awk_refdownval (run, run->inrec.flds[i].val);
-
-			xp_free (run->inrec.flds);
-			run->inrec.flds = XP_NULL;
-			run->inrec.nflds = 0;
+			__clear_record (run);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
 
 		xp_awk_refupval (run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
 
-		len = len - tok_len;
+		len = XP_STR_LEN(&run->inrec.line) - 
+			(p - XP_STR_BUF(&run->inrec.line));
 	}
 
 	xp_assert (nflds == run->inrec.nflds);
 	return 0;
+}
+
+static void __clear_record (xp_awk_run_t* run)
+{
+	xp_size_t i;
+
+	xp_awk_refdownval (run, run->inrec.d0);
+	run->inrec.d0 = xp_awk_val_nil;
+
+	if (run->inrec.nflds > 0)
+	{
+		xp_assert (run->inrec.flds != XP_NULL);
+
+		for (i = 0; i < run->inrec.nflds; i++) 
+		{
+			xp_assert (run->inrec.flds[i].val != XP_NULL);
+			xp_awk_refdownval (run, run->inrec.flds[i].val);
+		}
+		run->inrec.nflds = 0;
+	}
+
+	xp_assert (run->inrec.nflds == 0);
+	xp_str_clear (&run->inrec.line);
 }
 
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)

@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.28 2006-07-06 15:54:41 bacon Exp $
+ * $Id: awk_i.h,v 1.29 2006-07-07 09:48:23 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -168,6 +168,7 @@ struct xp_awk_run_t
 		xp_str_t line;
 		xp_awk_val_t* d0; /* $0 */
 
+		xp_size_t maxflds;
 		xp_size_t nflds; /* NF */
 		struct
 		{

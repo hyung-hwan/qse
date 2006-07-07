@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.26 2006-07-06 15:54:41 bacon Exp $
+ * $Id: sa.c,v 1.27 2006-07-07 09:48:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -113,23 +113,28 @@ xp_char_t* xp_strtok (const xp_char_t* s,
 	if (delim_mode == 0) { 
 		/* when XP_NULL is given as "delim", it has an effect of cutting
 		   preceding and trailing space characters off "s". */
-		while ((c = *p) != XP_T('\0')) {
-			if (!xp_isspace(c)) {
+		while ((c = *p) != XP_T('\0')) 
+		{
+			if (!xp_isspace(c)) 
+			{
 				if (sp == XP_NULL) sp = p;
 				ep = p;
 			}
 			p++;
 		}
 	}
-	else if (delim_mode == 1) {
-		while ((c = *p) != XP_T('\0')) {
+	else if (delim_mode == 1) 
+	{
+		while ((c = *p) != XP_T('\0')) 
+		{
 			if (xp_isspace(c)) break;
 
 			if (sp == XP_NULL) sp = p;
 			ep = p++;
 		}
 	}
-	else { /* if (delim_mode == 2) { */
+	else /* if (delim_mode == 2) */
+	{ 
 		while ((c = *p) != XP_T('\0')) {
 			if (xp_isspace(c)) {
 				p++;
@@ -181,9 +186,12 @@ xp_char_t* xp_strxtok (const xp_char_t* s, xp_size_t len,
 	{ 
 		/* when XP_NULL is given as "delim", it has an effect of cutting
 		   preceding and trailing space xp_char_tacters off "s". */
-		while (p < end) {
+		while (p < end) 
+		{
 			c = *p;
-			if (!xp_isspace(c)) {
+
+			if (!xp_isspace(c)) 
+			{
 				if (sp == XP_NULL) sp = p;
 				ep = p;
 			}
@@ -200,7 +208,7 @@ xp_char_t* xp_strxtok (const xp_char_t* s, xp_size_t len,
 			ep = p++;
 		}
 	}
-	else /* if (delim_mode == 2) { */ 
+	else /* if (delim_mode == 2) */ 
 	{
 		while (p < end) 
 		{
