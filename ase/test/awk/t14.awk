@@ -21,10 +21,11 @@ END
 	//$3 = "10";
 	//print $0, $2, $5;
 	//print $0 = "wow this is just a test";
-	print $0 = "";
+	//print $0 = "";
 	//print $0;
+	$1="abcdefghi";
 	print a = $6;
-	print a;
+	print "[" $0 "],[" a "]";
 	/*
 	print $6;
 	*/

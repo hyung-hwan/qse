@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.126 2006-07-07 09:48:23 bacon Exp $
+ * $Id: run.c,v 1.127 2006-07-09 16:06:04 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -160,7 +160,7 @@ static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 
 static int __read_record (xp_awk_run_t* run);
 static int __split_record (xp_awk_run_t* run);
-static void __clear_record (xp_awk_run_t* run);
+static void __clear_record (xp_awk_run_t* run, xp_bool_t noline);
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
@@ -306,7 +306,7 @@ static void __close_run (xp_awk_run_t* run)
 	xp_awk_map_close (&run->named);
 
 	/* destroy input record */
-	__clear_record (run);
+	__clear_record (run, xp_false);
 	if (run->inrec.flds != XP_NULL) 
 	{
 		xp_free (run->inrec.flds);
@@ -1751,6 +1751,7 @@ static xp_awk_val_t* __do_assignment_pos (
 
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
 	if (n == 1) lv = (xp_long_t)rv;
+	if (lv < 0) PANIC (run, XP_AWK_EPOSIDX);
 
 	/* convert the value to the string */
 	str = xp_awk_valtostr (val, &errnum, XP_NULL);
@@ -1758,7 +1759,7 @@ static xp_awk_val_t* __do_assignment_pos (
 
 	if (lv == 0)
 	{
-		__clear_record (run);
+		__clear_record (run, xp_false);
 
 		if (xp_str_cpy (&run->inrec.line, str) == (xp_size_t)-1)
 		{
@@ -1770,50 +1771,80 @@ static xp_awk_val_t* __do_assignment_pos (
 		xp_awk_refdownval (run, run->inrec.d0);
 		run->inrec.d0 = val;
 		xp_awk_refupval (val);
+
+		if (__split_record (run) == -1) 
+		{
+			__clear_record (run, xp_false);
+			return XP_NULL;
+		}
 	}
 	else
 	{
-		/*__clear_record (run, without_destroying_line);*/
+		xp_char_t* ptr;
+		xp_size_t len;
+		xp_long_t i;
 
-		/* TODO: handle out of bound index... */
+		xp_str_clear (&run->inrec.line);
 
-/* TODO: reimplement this entire function ........... */
-/* what schecm should i use to support $n = value where n is not zero ? */
-/* should i use run->inrec.line to recompose $0 and adjust other fileds? */
-/* or should $0 be composed of fidls separated by FS? if so, what should i
- * do when FS is a regular expression??? */
+		for (i = 0; i < lv - 1; i++)
+		{
+			ptr = XP_T(""); len = 0;
+			if (i < run->inrec.nflds)
+			{
+				ptr = run->inrec.flds[i].ptr;
+				len = run->inrec.flds[i].len;
+			}
 
-#if 0
-		if (xp_str_rpl (&run->inrec.line, 
-			run->inrec.flds[lv].ptr, 
-			run->inrec.flds[lv].len, str) == (xp_size_t)-1)
+			/* TODO: use OFS for record recomputation */
+			if ((i > 0 && xp_str_ccat (&run->inrec.line, XP_T(' ')) == (xp_size_t)-1) ||
+			    xp_str_ncat (&run->inrec.line, ptr, len) == (xp_size_t)-1)
+			{
+				xp_free (str);
+				__clear_record (run, xp_false);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
+		}
+
+		if (xp_str_cat (&run->inrec.line, str) == (xp_size_t)-1)
 		{
 			xp_free (str);
-			/* TODO: clear $0 .. $NF */
+			__clear_record (run, xp_false);
 			PANIC (run, XP_AWK_ENOMEM);
 		}
 
 		xp_free (str);
 
-		v = xp_awk_makestrval (
-			XP_STR_BUF(&run->inrec.line),
-			XP_STR_LEN(&run->inrec.line));
+		for (i = lv; i < run->inrec.nflds; i++)
+		{
+			ptr = XP_T(""); len = 0;
+			if (i < run->inrec.nflds)
+			{
+				ptr = run->inrec.flds[i].ptr;
+				len = run->inrec.flds[i].len;
+			}
+
+			/* TODO: use OFS for record recomputation */
+			if (xp_str_ccat (&run->inrec.line, XP_T(' ')) == (xp_size_t)-1 ||
+			    xp_str_ncat (&run->inrec.line, ptr, len) == (xp_size_t)-1)
+			{
+				__clear_record (run, xp_false);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
+		}
+
+
+		v = xp_awk_makestrval (XP_STR_BUF(&run->inrec.line), XP_STR_LEN(&run->inrec.line));
 		if (v == XP_NULL)
 		{
-			/* TODO: clear $0 .. $NF */
+			__clear_record (run, xp_false);
 			PANIC (run, XP_AWK_ENOMEM);
 		}
 
 		xp_awk_refdownval (run, run->inrec.d0);
-		run->inrec.d0 = v;
-		xp_awk_refupval (v);
-#endif
-	}
+		run->inrec.d0 = val;
+		xp_awk_refupval (val);
 
-	if (__split_record (run) == -1) 
-	{
-		__clear_record (run);
-		return XP_NULL;
+		/* TODO: adjust fields */
 	}
 
 	return val;
@@ -3460,6 +3491,7 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
 	if (n == 1) lv = (xp_long_t)rv;
 
+	if (lv < 0) PANIC (run, XP_AWK_EPOSIDX);
 	if (lv == 0) v = run->inrec.d0;
 	else if (lv > 0 && lv <= run->inrec.nflds) 
 		v = run->inrec.flds[lv-1].val;
@@ -3592,7 +3624,7 @@ static int __read_record (xp_awk_run_t* run)
 	xp_char_t c;
 	xp_awk_val_t* v;
 
-	__clear_record (run);
+	__clear_record (run, xp_false);
 
 	while (1)
 	{
@@ -3636,7 +3668,7 @@ static int __read_record (xp_awk_run_t* run)
 		XP_STR_LEN(&run->inrec.line));
 	if (v == XP_NULL)
 	{
-		__clear_record (run);
+		__clear_record (run, xp_false);
 		PANIC_I (run, XP_AWK_ENOMEM);
 	}
 
@@ -3648,7 +3680,7 @@ static int __read_record (xp_awk_run_t* run)
 
 	if (__split_record (run) == -1) 
 	{
-		__clear_record (run);
+		__clear_record (run, xp_false);
 		return -1;
 	}
 
@@ -3715,7 +3747,7 @@ static int __split_record (xp_awk_run_t* run)
 			xp_awk_makestrval (tok, tok_len);
 		if (run->inrec.flds[run->inrec.nflds].val == XP_NULL)
 		{
-			__clear_record (run);
+			__clear_record (run, xp_false);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
 
@@ -3730,7 +3762,7 @@ static int __split_record (xp_awk_run_t* run)
 	return 0;
 }
 
-static void __clear_record (xp_awk_run_t* run)
+static void __clear_record (xp_awk_run_t* run, xp_bool_t noline)
 {
 	xp_size_t i;
 
@@ -3750,7 +3782,7 @@ static void __clear_record (xp_awk_run_t* run)
 	}
 
 	xp_assert (run->inrec.nflds == 0);
-	xp_str_clear (&run->inrec.line);
+	if (!noline) xp_str_clear (&run->inrec.line);
 }
 
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
