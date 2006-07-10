@@ -1,4 +1,4 @@
-/*global x, j;*/
+//global x, j;
 
 func func1 (x)
 {

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.134 2006-07-07 09:48:23 bacon Exp $
+ * $Id: parse.c,v 1.135 2006-07-10 14:28:45 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -107,6 +107,8 @@ struct __binmap_t
 
 static xp_awk_t* __parse_progunit (xp_awk_t* awk);
 static xp_awk_t* __collect_globals (xp_awk_t* awk);
+static xp_awk_t* __add_builtin_globals (xp_awk_t* awk);
+static xp_awk_t* __add_global (xp_awk_t* awk, const xp_char_t* name);
 static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 
 static xp_awk_nde_t* __parse_function (xp_awk_t* awk);
@@ -220,33 +222,37 @@ static struct __kwent __kwtab[] =
 	{ XP_NULL,          0,              0 }
 };
 
-/* TODO:
-static struct __kwent __bvtab[] =
+struct __bvent
 {
-	{ XP_T("ARGC"),        TOKEN_ARGC,         0 },
-	{ XP_T("ARGIND"),      TOKEN_ARGIND,       0 },
-	{ XP_T("ARGV"),        TOKEN_ARGV,         0 },
-	{ XP_T("CONVFMT"),     TOKEN_CONVFMT,      0 },
-	{ XP_T("FIELDWIDTHS"), TOKEN_FIELDWIDTHS,  0 },
-	{ XP_T("ENVIRON"),     TOKEN_ENVIRON,      0 },
-	{ XP_T("ERRNO"),       TOKEN_ERRNO,        0 },
-	{ XP_T("FILENAME"),    TOKEN_FILENAME,     0 },
-	{ XP_T("FNR"),         TOKEN_FNR,          0 },
-	{ XP_T("FS"),          TOKEN_FS,           0 },
-	{ XP_T("IGNORECASE"),  TOKEN_IGNORECASE,   0 },
-	{ XP_T("NF"),          TOKEN_NF,           0 },
-	{ XP_T("NR"),          TOKEN_NR,           0 },
-	{ XP_T("OFMT"),        TOKEN_OFMT,         0 },
-	{ XP_T("OFS"),         TOKEN_OFS,          0 },
-	{ XP_T("ORS"),         TOKEN_ORS,          0 },
-	{ XP_T("RS"),          TOKEN_RS,           0 },
-	{ XP_T("RT"),          TOKEN_RT,           0 },
-	{ XP_T("RSTART"),      TOKEN_RSTART,       0 },
-	{ XP_T("RLENGTH"),     TOKEN_RLENGTH,      0 },
-	{ XP_T("SUBSEP"),      TOKEN_SUBSEP,       0 },
-	{ XP_NULL,             0,                  0 }
+	const xp_char_t* name;
+	int valid;
 };
-*/
+
+static struct __bvent __bvtab[] =
+{
+	{ XP_T("ARGC"),        0 },
+	{ XP_T("ARGIND"),      0 },
+	{ XP_T("ARGV"),        0 },
+	{ XP_T("CONVFMT"),     0 },
+	{ XP_T("FIELDWIDTHS"), 0 },
+	{ XP_T("ENVIRON"),     0 },
+	{ XP_T("ERRNO"),       0 },
+	{ XP_T("FILENAME"),    0 },
+	{ XP_T("FNR"),         0 },
+	{ XP_T("FS"),          0 },
+	{ XP_T("IGNORECASE"),  0 },
+	{ XP_T("NF"),          0 },
+	{ XP_T("NR"),          0 },
+	{ XP_T("OFMT"),        0 },
+	{ XP_T("OFS"),         0 },
+	{ XP_T("ORS"),         0 },
+	{ XP_T("RS"),          0 },
+	{ XP_T("RT"),          0 },
+	{ XP_T("RSTART"),      0 },
+	{ XP_T("RLENGTH"),     0 },
+	{ XP_T("SUBSEP"),      0 },
+	{ XP_NULL,             0 }
+};
 
 #define GET_CHAR(awk) \
 	do { if (__get_char(awk) == -1) return -1; } while(0)
@@ -372,6 +378,8 @@ int xp_awk_parse (xp_awk_t* awk)
 	}
 
 	xp_awk_clear (awk);
+
+	if (__add_builtin_globals (awk) == XP_NULL) return -1;
 
 	GET_CHAR (awk);
 	GET_TOKEN (awk);
@@ -894,6 +902,44 @@ and merged to top-level block */
 	return (xp_awk_nde_t*)block;
 }
 
+static xp_awk_t* __add_builtin_globals (xp_awk_t* awk)
+{
+	struct __bvent* p = __bvtab;
+
+	while (p->name != XP_NULL)
+	{
+		if (__add_global (awk, p->name) == XP_NULL) return XP_NULL;
+		p++;
+	}
+
+	return awk;
+}
+
+static xp_awk_t* __add_global (xp_awk_t* awk, const xp_char_t* name)
+{
+	if (awk->opt.parse & XP_AWK_UNIQUE) 
+	{
+		/* check if it conflict with a function name */
+		if (xp_awk_map_get(&awk->tree.afns, name) != XP_NULL) 
+		{
+			PANIC (awk, XP_AWK_EDUPNAME);
+		}
+	}
+
+	/* check if it conflicts with other global variable names */
+	if (xp_awk_tab_find(&awk->parse.globals, name, 0) != (xp_size_t)-1) 
+	{ 
+		PANIC (awk, XP_AWK_EDUPVAR);
+	}
+
+	if (xp_awk_tab_add(&awk->parse.globals, name) == (xp_size_t)-1) 
+	{
+		PANIC (awk, XP_AWK_ENOMEM);
+	}
+
+	return awk;
+}
+
 static xp_awk_t* __collect_globals (xp_awk_t* awk)
 {
 	xp_char_t* global;
@@ -907,25 +953,7 @@ static xp_awk_t* __collect_globals (xp_awk_t* awk)
 
 		global = XP_STR_BUF(&awk->token.name);
 
-		if (awk->opt.parse & XP_AWK_UNIQUE) 
-		{
-			/* check if it conflict with a function name */
-			if (xp_awk_map_get(&awk->tree.afns, global) != XP_NULL) 
-			{
-				PANIC (awk, XP_AWK_EDUPNAME);
-			}
-		}
-
-		/* check if it conflicts with other global variable names */
-		if (xp_awk_tab_find(&awk->parse.globals, global, 0) != (xp_size_t)-1) 
-		{ 
-			PANIC (awk, XP_AWK_EDUPVAR);	
-		}
-
-		if (xp_awk_tab_add(&awk->parse.globals, global) == (xp_size_t)-1) 
-		{
-			PANIC (awk, XP_AWK_ENOMEM);
-		}
+		if (__add_global (awk, global) == XP_NULL) return XP_NULL;
 
 		if (__get_token(awk) == -1) return XP_NULL;
 
@@ -2132,6 +2160,14 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
+		/* TODO: search in the builtin variable name list */
+		/*
+		idxa = ....
+		if (idxa != (xp_size_t)-1)
+		{
+		}
+		*/
+
 		/* search the parameter name list */
 		idxa = xp_awk_tab_find(&awk->parse.params, name_dup, 0);
 		if (idxa != (xp_size_t)-1) 
@@ -2249,6 +2285,14 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		xp_awk_clrpt (idx);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
+
+	/* TODO: search in the builtin variable name list */
+	/*
+	idxa = xp_awk_tab_find (&awk->parse.params, name, 0);
+	if (idxa != (xp_size_t)-1)
+	{
+	}
+	 */
 
 	/* search the parameter name list */
 	idxa = xp_awk_tab_find (&awk->parse.params, name, 0);

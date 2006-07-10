@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.129 2006-07-10 05:20:46 bacon Exp $
+ * $Id: run.c,v 1.130 2006-07-10 14:28:45 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -79,10 +79,6 @@ static xp_awk_val_t* __do_assignment_map (
 	xp_awk_run_t* run, xp_awk_nde_var_t* var, xp_awk_val_t* val);
 static xp_awk_val_t* __do_assignment_pos (
 	xp_awk_run_t* run, xp_awk_nde_pos_t* pos, xp_awk_val_t* val);
-
-static int __recomp_record_fields (
-	xp_awk_run_t* run, xp_size_t lv,
-	xp_char_t* str, xp_size_t len, int* errnum);
 
 static xp_awk_val_t* __eval_binary (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -165,6 +161,9 @@ static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 static int __read_record (xp_awk_run_t* run);
 static int __split_record (xp_awk_run_t* run);
 static void __clear_record (xp_awk_run_t* run, xp_bool_t noline);
+static int __recomp_record_fields (xp_awk_run_t* run, 
+	xp_size_t lv, xp_char_t* str, xp_size_t len, int* errnum);
+
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
@@ -1813,114 +1812,6 @@ static xp_awk_val_t* __do_assignment_pos (
 	}
 
 	return val;
-}
-
-static int __recomp_record_fields (
-	xp_awk_run_t* run, xp_size_t lv,
-	xp_char_t* str, xp_size_t len, int* errnum)
-{
-	xp_size_t max, i, nflds;
-
-	xp_assert (lv > 0);
-	max = (lv > run->inrec.nflds)? lv: run->inrec.nflds;
-
-	nflds = run->inrec.nflds;
-	if (max > run->inrec.maxflds)
-	{
-		void* tmp = xp_realloc (
-			run->inrec.flds, xp_sizeof(*run->inrec.flds) * max);
-		if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
-
-		run->inrec.flds = tmp;
-		run->inrec.maxflds = max;
-	}
-
-	lv = lv - 1; /* adjust the value to 0-based index */
-
-	xp_str_clear (&run->inrec.line);
-
-	for (i = 0; i < max; i++)
-	{
-		if (i > 0)
-		{
-			/* TODO: use OFS */
-			if (xp_str_ccat (
-				&run->inrec.line, XP_T(' ')) == (xp_size_t)-1) 
-			{
-				*errnum = XP_AWK_ENOMEM;
-				return -1;
-			}
-		}
-
-		if (i == lv)
-		{
-			xp_awk_val_t* tmp;
-
-			run->inrec.flds[i].ptr = 
-				XP_STR_BUF(&run->inrec.line) +
-				XP_STR_LEN(&run->inrec.line);
-			run->inrec.flds[i].len = len;
-
-			if (xp_str_ncat (
-				&run->inrec.line, str, len) == (xp_size_t)-1)
-			{
-				*errnum = XP_AWK_ENOMEM;
-				return -1;
-			}
-
-			tmp = xp_awk_makestrval (str,len);
-			if (tmp == XP_NULL) 
-			{
-				*errnum = XP_AWK_ENOMEM;
-				return -1;
-			}
-
-			if (i < nflds)
-				xp_awk_refdownval (run, run->inrec.flds[i].val);
-			else run->inrec.nflds++;
-			run->inrec.flds[i].val = tmp;
-			xp_awk_refupval (tmp);
-		}
-		else if (i >= nflds)
-		{
-			run->inrec.flds[i].ptr = 
-				XP_STR_BUF(&run->inrec.line) +
-				XP_STR_LEN(&run->inrec.line);
-			run->inrec.flds[i].len = 0;
-
-			if (xp_str_cat (
-				&run->inrec.line, XP_T("")) == (xp_size_t)-1)
-			{
-				*errnum = XP_AWK_ENOMEM;
-				return -1;
-			}
-
-			/*xp_awk_refdownval (run, run->inrec.flds[i].val);*/
-			run->inrec.flds[i].val = xp_awk_val_zls;
-			xp_awk_refupval (xp_awk_val_zls);
-			run->inrec.nflds++;
-		}
-		else
-		{
-			xp_awk_val_str_t* tmp;
-
-			tmp = (xp_awk_val_str_t*)run->inrec.flds[i].val;
-
-			run->inrec.flds[i].ptr = 
-				XP_STR_BUF(&run->inrec.line) +
-				XP_STR_LEN(&run->inrec.line);
-			run->inrec.flds[i].len = tmp->len;
-
-			if (xp_str_ncat (&run->inrec.line, 
-				tmp->buf, tmp->len) == (xp_size_t)-1)
-			{
-				*errnum = XP_AWK_ENOMEM;
-				return -1;
-			}
-		}
-	}
-
-	return 0;
 }
 
 static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
@@ -3800,6 +3691,8 @@ static int __split_record (xp_awk_run_t* run)
 			xp_sizeof(*run->inrec.flds) * nflds);
 		if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
 
+		if (run->inrec.flds != NULL) 
+			xp_free (run->inrec.flds);
 		run->inrec.flds = tmp;
 		run->inrec.maxflds = nflds;
 	}
@@ -3856,6 +3749,113 @@ static void __clear_record (xp_awk_run_t* run, xp_bool_t noline)
 
 	xp_assert (run->inrec.nflds == 0);
 	if (!noline) xp_str_clear (&run->inrec.line);
+}
+
+static int __recomp_record_fields (xp_awk_run_t* run, 
+	xp_size_t lv, xp_char_t* str, xp_size_t len, int* errnum)
+{
+	xp_size_t max, i, nflds;
+
+	xp_assert (lv > 0);
+	max = (lv > run->inrec.nflds)? lv: run->inrec.nflds;
+
+	nflds = run->inrec.nflds;
+	if (max > run->inrec.maxflds)
+	{
+		void* tmp = xp_realloc (
+			run->inrec.flds, xp_sizeof(*run->inrec.flds) * max);
+		if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+
+		run->inrec.flds = tmp;
+		run->inrec.maxflds = max;
+	}
+
+	lv = lv - 1; /* adjust the value to 0-based index */
+
+	xp_str_clear (&run->inrec.line);
+
+	for (i = 0; i < max; i++)
+	{
+		if (i > 0)
+		{
+			/* TODO: use OFS */
+			if (xp_str_ccat (
+				&run->inrec.line, XP_T(' ')) == (xp_size_t)-1) 
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+		}
+
+		if (i == lv)
+		{
+			xp_awk_val_t* tmp;
+
+			run->inrec.flds[i].ptr = 
+				XP_STR_BUF(&run->inrec.line) +
+				XP_STR_LEN(&run->inrec.line);
+			run->inrec.flds[i].len = len;
+
+			if (xp_str_ncat (
+				&run->inrec.line, str, len) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+
+			tmp = xp_awk_makestrval (str,len);
+			if (tmp == XP_NULL) 
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+
+			if (i < nflds)
+				xp_awk_refdownval (run, run->inrec.flds[i].val);
+			else run->inrec.nflds++;
+			run->inrec.flds[i].val = tmp;
+			xp_awk_refupval (tmp);
+		}
+		else if (i >= nflds)
+		{
+			run->inrec.flds[i].ptr = 
+				XP_STR_BUF(&run->inrec.line) +
+				XP_STR_LEN(&run->inrec.line);
+			run->inrec.flds[i].len = 0;
+
+			if (xp_str_cat (
+				&run->inrec.line, XP_T("")) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+
+			/*xp_awk_refdownval (run, run->inrec.flds[i].val);*/
+			run->inrec.flds[i].val = xp_awk_val_zls;
+			xp_awk_refupval (xp_awk_val_zls);
+			run->inrec.nflds++;
+		}
+		else
+		{
+			xp_awk_val_str_t* tmp;
+
+			tmp = (xp_awk_val_str_t*)run->inrec.flds[i].val;
+
+			run->inrec.flds[i].ptr = 
+				XP_STR_BUF(&run->inrec.line) +
+				XP_STR_LEN(&run->inrec.line);
+			run->inrec.flds[i].len = tmp->len;
+
+			if (xp_str_ncat (&run->inrec.line, 
+				tmp->buf, tmp->len) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+		}
+	}
+
+	return 0;
 }
 
 static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
