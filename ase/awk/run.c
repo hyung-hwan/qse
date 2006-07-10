@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.128 2006-07-10 04:51:38 bacon Exp $
+ * $Id: run.c,v 1.129 2006-07-10 05:20:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -81,7 +81,7 @@ static xp_awk_val_t* __do_assignment_pos (
 	xp_awk_run_t* run, xp_awk_nde_pos_t* pos, xp_awk_val_t* val);
 
 static int __recomp_record_fields (
-	xp_awk_run_t* run, xp_size_t lv, 
+	xp_awk_run_t* run, xp_size_t lv,
 	xp_char_t* str, xp_size_t len, int* errnum);
 
 static xp_awk_val_t* __eval_binary (
@@ -1788,7 +1788,6 @@ static xp_awk_val_t* __do_assignment_pos (
 		 *       so that xp_strlen doesn't have to be called here */
 		xp_size_t xlen = xp_strlen(str);
 
-		xp_str_clear (&run->inrec.line);
 		if (__recomp_record_fields (
 			run, (xp_size_t)lv, str, xlen, &errnum) == -1)
 		{
@@ -1817,7 +1816,7 @@ static xp_awk_val_t* __do_assignment_pos (
 }
 
 static int __recomp_record_fields (
-	xp_awk_run_t* run, xp_size_t lv, 
+	xp_awk_run_t* run, xp_size_t lv,
 	xp_char_t* str, xp_size_t len, int* errnum)
 {
 	xp_size_t max, i, nflds;
@@ -1837,6 +1836,8 @@ static int __recomp_record_fields (
 	}
 
 	lv = lv - 1; /* adjust the value to 0-based index */
+
+	xp_str_clear (&run->inrec.line);
 
 	for (i = 0; i < max; i++)
 	{
@@ -1876,6 +1877,7 @@ static int __recomp_record_fields (
 
 			if (i < nflds)
 				xp_awk_refdownval (run, run->inrec.flds[i].val);
+			else run->inrec.nflds++;
 			run->inrec.flds[i].val = tmp;
 			xp_awk_refupval (tmp);
 		}
