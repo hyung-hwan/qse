@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.37 2006-07-06 15:54:41 bacon Exp $
+ * $Id: val.c,v 1.38 2006-07-10 04:51:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -12,6 +12,9 @@
 
 static xp_awk_val_nil_t __awk_nil = { XP_AWK_VAL_NIL, 0 };
 xp_awk_val_t* xp_awk_val_nil = (xp_awk_val_t*)&__awk_nil;
+
+static xp_awk_val_str_t __awk_zls = { XP_AWK_VAL_STR, 0, XP_T(""), 0 };
+xp_awk_val_t* xp_awk_val_zls = (xp_awk_val_t*)&__awk_zls; 
 
 static xp_awk_val_int_t __awk_int[] =
 {
@@ -183,7 +186,9 @@ xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run)
 
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val)
 {
-	return val == XP_NULL || val == xp_awk_val_nil ||
+	return val == XP_NULL || 
+	       val == xp_awk_val_nil || 
+	       val == xp_awk_val_zls ||
 	       (val >= (xp_awk_val_t*)&__awk_int[0] &&
 	        val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]);
 }
@@ -198,7 +203,7 @@ xp_printf (XP_T("\n"));*/
 	switch (val->type)
 	{
 	case XP_AWK_VAL_NIL:
-		if (val != xp_awk_val_nil) xp_free (val);
+		xp_free (val);
 		return;
 
 	case XP_AWK_VAL_INT:

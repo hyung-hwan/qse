@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.127 2006-07-09 16:06:04 bacon Exp $
+ * $Id: run.c,v 1.128 2006-07-10 04:51:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -79,6 +79,10 @@ static xp_awk_val_t* __do_assignment_map (
 	xp_awk_run_t* run, xp_awk_nde_var_t* var, xp_awk_val_t* val);
 static xp_awk_val_t* __do_assignment_pos (
 	xp_awk_run_t* run, xp_awk_nde_pos_t* pos, xp_awk_val_t* val);
+
+static int __recomp_record_fields (
+	xp_awk_run_t* run, xp_size_t lv, 
+	xp_char_t* str, xp_size_t len, int* errnum);
 
 static xp_awk_val_t* __eval_binary (
 	xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -1780,60 +1784,24 @@ static xp_awk_val_t* __do_assignment_pos (
 	}
 	else
 	{
-		xp_char_t* ptr;
-		xp_size_t len;
-		xp_long_t i;
+		/* TODO: change xp_awk_valtostr to return the length
+		 *       so that xp_strlen doesn't have to be called here */
+		xp_size_t xlen = xp_strlen(str);
 
 		xp_str_clear (&run->inrec.line);
-
-		for (i = 0; i < lv - 1; i++)
-		{
-			ptr = XP_T(""); len = 0;
-			if (i < run->inrec.nflds)
-			{
-				ptr = run->inrec.flds[i].ptr;
-				len = run->inrec.flds[i].len;
-			}
-
-			/* TODO: use OFS for record recomputation */
-			if ((i > 0 && xp_str_ccat (&run->inrec.line, XP_T(' ')) == (xp_size_t)-1) ||
-			    xp_str_ncat (&run->inrec.line, ptr, len) == (xp_size_t)-1)
-			{
-				xp_free (str);
-				__clear_record (run, xp_false);
-				PANIC (run, XP_AWK_ENOMEM);
-			}
-		}
-
-		if (xp_str_cat (&run->inrec.line, str) == (xp_size_t)-1)
+		if (__recomp_record_fields (
+			run, (xp_size_t)lv, str, xlen, &errnum) == -1)
 		{
 			xp_free (str);
 			__clear_record (run, xp_false);
-			PANIC (run, XP_AWK_ENOMEM);
+			PANIC (run, errnum);
 		}
-
 		xp_free (str);
 
-		for (i = lv; i < run->inrec.nflds; i++)
-		{
-			ptr = XP_T(""); len = 0;
-			if (i < run->inrec.nflds)
-			{
-				ptr = run->inrec.flds[i].ptr;
-				len = run->inrec.flds[i].len;
-			}
-
-			/* TODO: use OFS for record recomputation */
-			if (xp_str_ccat (&run->inrec.line, XP_T(' ')) == (xp_size_t)-1 ||
-			    xp_str_ncat (&run->inrec.line, ptr, len) == (xp_size_t)-1)
-			{
-				__clear_record (run, xp_false);
-				PANIC (run, XP_AWK_ENOMEM);
-			}
-		}
-
-
-		v = xp_awk_makestrval (XP_STR_BUF(&run->inrec.line), XP_STR_LEN(&run->inrec.line));
+		/* recompose $0 */
+		v = xp_awk_makestrval (
+			XP_STR_BUF(&run->inrec.line), 
+			XP_STR_LEN(&run->inrec.line));
 		if (v == XP_NULL)
 		{
 			__clear_record (run, xp_false);
@@ -1841,13 +1809,116 @@ static xp_awk_val_t* __do_assignment_pos (
 		}
 
 		xp_awk_refdownval (run, run->inrec.d0);
-		run->inrec.d0 = val;
-		xp_awk_refupval (val);
-
-		/* TODO: adjust fields */
+		run->inrec.d0 = v;
+		xp_awk_refupval (v);
 	}
 
 	return val;
+}
+
+static int __recomp_record_fields (
+	xp_awk_run_t* run, xp_size_t lv, 
+	xp_char_t* str, xp_size_t len, int* errnum)
+{
+	xp_size_t max, i, nflds;
+
+	xp_assert (lv > 0);
+	max = (lv > run->inrec.nflds)? lv: run->inrec.nflds;
+
+	nflds = run->inrec.nflds;
+	if (max > run->inrec.maxflds)
+	{
+		void* tmp = xp_realloc (
+			run->inrec.flds, xp_sizeof(*run->inrec.flds) * max);
+		if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+
+		run->inrec.flds = tmp;
+		run->inrec.maxflds = max;
+	}
+
+	lv = lv - 1; /* adjust the value to 0-based index */
+
+	for (i = 0; i < max; i++)
+	{
+		if (i > 0)
+		{
+			/* TODO: use OFS */
+			if (xp_str_ccat (
+				&run->inrec.line, XP_T(' ')) == (xp_size_t)-1) 
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+		}
+
+		if (i == lv)
+		{
+			xp_awk_val_t* tmp;
+
+			run->inrec.flds[i].ptr = 
+				XP_STR_BUF(&run->inrec.line) +
+				XP_STR_LEN(&run->inrec.line);
+			run->inrec.flds[i].len = len;
+
+			if (xp_str_ncat (
+				&run->inrec.line, str, len) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+
+			tmp = xp_awk_makestrval (str,len);
+			if (tmp == XP_NULL) 
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+
+			if (i < nflds)
+				xp_awk_refdownval (run, run->inrec.flds[i].val);
+			run->inrec.flds[i].val = tmp;
+			xp_awk_refupval (tmp);
+		}
+		else if (i >= nflds)
+		{
+			run->inrec.flds[i].ptr = 
+				XP_STR_BUF(&run->inrec.line) +
+				XP_STR_LEN(&run->inrec.line);
+			run->inrec.flds[i].len = 0;
+
+			if (xp_str_cat (
+				&run->inrec.line, XP_T("")) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+
+			/*xp_awk_refdownval (run, run->inrec.flds[i].val);*/
+			run->inrec.flds[i].val = xp_awk_val_zls;
+			xp_awk_refupval (xp_awk_val_zls);
+			run->inrec.nflds++;
+		}
+		else
+		{
+			xp_awk_val_str_t* tmp;
+
+			tmp = (xp_awk_val_str_t*)run->inrec.flds[i].val;
+
+			run->inrec.flds[i].ptr = 
+				XP_STR_BUF(&run->inrec.line) +
+				XP_STR_LEN(&run->inrec.line);
+			run->inrec.flds[i].len = tmp->len;
+
+			if (xp_str_ncat (&run->inrec.line, 
+				tmp->buf, tmp->len) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+		}
+	}
+
+	return 0;
 }
 
 static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)
@@ -3495,7 +3566,7 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	if (lv == 0) v = run->inrec.d0;
 	else if (lv > 0 && lv <= run->inrec.nflds) 
 		v = run->inrec.flds[lv-1].val;
-	else v = xp_awk_val_nil;
+	else v = xp_awk_val_zls; /*xp_awk_val_nil;*/
 
 	return v;
 }
