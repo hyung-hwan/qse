@@ -23,9 +23,11 @@ END
 	//print $0 = "wow this is just a test";
 	//print $0 = "";
 	//print $0;
-	$1="abcdefghi";
+
+	$7="abcdefghi";
 	print a = $6;
 	print "[" $0 "],[" a "]";
+
 	/*
 	print $6;
 	*/
