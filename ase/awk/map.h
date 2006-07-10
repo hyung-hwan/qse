@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.12 2006-06-16 14:31:42 bacon Exp $
+ * $Id: map.h,v 1.13 2006-07-10 14:28:45 bacon Exp $
  */
 
 #ifndef _XP_AWK_MAP_H_
@@ -39,13 +39,13 @@ void xp_awk_map_close (xp_awk_map_t* map);
 
 void xp_awk_map_clear (xp_awk_map_t* map);
 
-xp_awk_pair_t* xp_awk_map_get (xp_awk_map_t* map, xp_char_t* key);
+xp_awk_pair_t* xp_awk_map_get (xp_awk_map_t* map, const xp_char_t* key);
 xp_awk_pair_t* xp_awk_map_put (xp_awk_map_t* map, xp_char_t* key, void* val);
 int xp_awk_map_putx (xp_awk_map_t* map, xp_char_t* key, void* val, xp_awk_pair_t** px);
 xp_awk_pair_t* xp_awk_map_set (xp_awk_map_t* map, xp_char_t* key, void* val);
 
 xp_awk_pair_t* xp_awk_map_getpair (
-	xp_awk_map_t* map, xp_char_t* key, void** val);
+	xp_awk_map_t* map, const xp_char_t* key, void** val);
 xp_awk_pair_t* xp_awk_map_setpair (
 	xp_awk_map_t* map, xp_awk_pair_t* pair, void* val);
 

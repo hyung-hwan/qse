@@ -17,19 +17,22 @@ END
 	print "\a";
 }
 */
-{
-	//$3 = "10";
-	//print $0, $2, $5;
-	//print $0 = "wow this is just a test";
-	//print $0 = "";
-	//print $0;
 
-	$7="abcdefghi";
-	print a = $6;
-	print "[" $0 "],[" a "]";
+global x, y;
+{
+	for (i = 0; i < 10; i++)
+	{
+		print $i;
+		if (i == 3) a = $i;
+	}
 
 	/*
-	print $6;
+	$1 = $2;
+	$3 = $2;
+	$2 = $2;
+	print $0;
 	*/
 	print "--------------------";
+	print NF;
+	print "====================";
 }

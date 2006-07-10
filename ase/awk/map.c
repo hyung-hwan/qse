@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.19 2006-05-06 12:52:36 bacon Exp $
+ * $Id: map.c,v 1.20 2006-07-10 14:28:45 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -81,7 +81,7 @@ void xp_awk_map_clear (xp_awk_map_t* map)
 	xp_assert (map->size == 0);
 }
 
-xp_awk_pair_t* xp_awk_map_get (xp_awk_map_t* map, xp_char_t* key)
+xp_awk_pair_t* xp_awk_map_get (xp_awk_map_t* map, const xp_char_t* key)
 {
 	xp_awk_pair_t* pair;
 	xp_size_t hc;
@@ -171,13 +171,14 @@ xp_awk_pair_t* xp_awk_map_set (xp_awk_map_t* map, xp_char_t* key, void* val)
 }
 
 xp_awk_pair_t* xp_awk_map_getpair (
-	xp_awk_map_t* map, xp_char_t* key, void** val)
+	xp_awk_map_t* map, const xp_char_t* key, void** val)
 {
 	xp_awk_pair_t* pair;
 
 	pair = xp_awk_map_get (map, key);
 	if (pair == XP_NULL) return XP_NULL; 
 	*val = pair->val;
+
 	return pair;
 }
 
