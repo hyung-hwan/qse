@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.39 2006-07-12 07:25:15 bacon Exp $
+ * $Id: val.c,v 1.40 2006-07-12 17:04:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -190,8 +190,8 @@ xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run)
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val)
 {
 	return val == XP_NULL || 
-	       val == xp_awk_val_nil || 
-	       val == xp_awk_val_zls ||
+	       val == xp_awk_val_nil || val == xp_awk_val_zls || 
+	       val == xp_awk_val_zero || val == xp_awk_val_one || 
 	       (val >= (xp_awk_val_t*)&__awk_int[0] &&
 	        val <= (xp_awk_val_t*)&__awk_int[xp_countof(__awk_int)-1]);
 }
