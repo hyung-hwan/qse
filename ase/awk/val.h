@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.28 2006-07-10 04:51:38 bacon Exp $
+ * $Id: val.h,v 1.29 2006-07-12 07:25:15 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -94,6 +94,8 @@ extern "C" {
 
 extern xp_awk_val_t* xp_awk_val_nil;
 extern xp_awk_val_t* xp_awk_val_zls;
+extern xp_awk_val_t* xp_awk_val_zero;
+extern xp_awk_val_t* xp_awk_val_one;
 
 xp_awk_val_t* xp_awk_makeintval (xp_awk_run_t* run, xp_long_t v);
 xp_awk_val_t* xp_awk_makerealval (xp_awk_run_t* run, xp_real_t v);

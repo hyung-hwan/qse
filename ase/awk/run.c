@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.130 2006-07-10 14:28:45 bacon Exp $
+ * $Id: run.c,v 1.131 2006-07-12 07:25:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -197,6 +197,14 @@ void xp_awk_setretval (void* run, xp_awk_val_t* val)
 	STACK_RETVAL(r) = val;
 	/* should use the same trick as __run_return_statement */
 	xp_awk_refupval (val); 
+}
+
+void xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
+{
+	xp_awk_run_t* r = (xp_awk_run_t*)run;
+	xp_awk_refdownval (run, STACK_GLOBAL(r,idx));
+	STACK_GLOBAL(r,idx) = val;
+	xp_awk_refupval (val);
 }
 
 void xp_awk_seterrnum (void* run, int errnum)
@@ -3658,6 +3666,7 @@ static int __split_record (xp_awk_run_t* run)
 
 	xp_char_t* p, * tok;
 	xp_size_t len, tok_len, nflds;
+	xp_awk_val_t* v;
        
 	/* inrec should be cleared before __split_record is called */
 	xp_assert (run->inrec.nflds == 0);
@@ -3711,11 +3720,9 @@ static int __split_record (xp_awk_run_t* run)
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
 		run->inrec.flds[run->inrec.nflds].val = 
 			xp_awk_makestrval (tok, tok_len);
+
 		if (run->inrec.flds[run->inrec.nflds].val == XP_NULL)
-		{
-			__clear_record (run, xp_false);
 			PANIC_I (run, XP_AWK_ENOMEM);
-		}
 
 		xp_awk_refupval (run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
@@ -3723,6 +3730,11 @@ static int __split_record (xp_awk_run_t* run)
 		len = XP_STR_LEN(&run->inrec.line) - 
 			(p - XP_STR_BUF(&run->inrec.line));
 	}
+
+	/* set the number of fields */
+	v = xp_awk_makeintval (run, (xp_long_t)nflds);
+	if (v == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+	xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, v);
 
 	xp_assert (nflds == run->inrec.nflds);
 	return 0;
@@ -3745,6 +3757,7 @@ static void __clear_record (xp_awk_run_t* run, xp_bool_t noline)
 			xp_awk_refdownval (run, run->inrec.flds[i].val);
 		}
 		run->inrec.nflds = 0;
+		xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, xp_awk_val_zero);
 	}
 
 	xp_assert (run->inrec.nflds == 0);
@@ -3755,6 +3768,7 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 	xp_size_t lv, xp_char_t* str, xp_size_t len, int* errnum)
 {
 	xp_size_t max, i, nflds;
+	xp_awk_val_t* v;
 
 	xp_assert (lv > 0);
 	max = (lv > run->inrec.nflds)? lv: run->inrec.nflds;
@@ -3853,6 +3867,15 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 				return -1;
 			}
 		}
+	}
+
+	v = STACK_GLOBAL(run, XP_AWK_GLOBAL_NF);
+	xp_assert (v->type == XP_AWK_VAL_INT);
+	if (((xp_awk_val_int_t*)v)->val != max)
+	{
+		v = xp_awk_makeintval (run, (xp_long_t)max);
+		if (v == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+		xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, v);
 	}
 
 	return 0;
@@ -3971,3 +3994,4 @@ static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	return str;
 }
+

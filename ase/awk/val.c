@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.38 2006-07-10 04:51:38 bacon Exp $
+ * $Id: val.c,v 1.39 2006-07-12 07:25:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -30,6 +30,9 @@ static xp_awk_val_int_t __awk_int[] =
 	{ XP_AWK_VAL_INT, 0,  8 },
 	{ XP_AWK_VAL_INT, 0,  9 },
 };
+
+xp_awk_val_t* xp_awk_val_zero = (xp_awk_val_t*)&__awk_int[1];
+xp_awk_val_t* xp_awk_val_one = (xp_awk_val_t*)&__awk_int[2];
 
 xp_awk_val_t* xp_awk_makeintval (xp_awk_run_t* run, xp_long_t v)
 {
