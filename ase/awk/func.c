@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.6 2006-06-30 04:25:53 bacon Exp $
+ * $Id: func.c,v 1.7 2006-07-13 03:10:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -60,7 +60,7 @@ static int __bfn_close (void* run)
 		return -1;
 	}
 
-	if (xp_awk_valtostr (xp_awk_getarg(run, 0), &errnum, &buf) == XP_NULL)
+	if (xp_awk_valtostr (xp_awk_getarg(run, 0), &errnum, &buf, XP_NULL) == XP_NULL)
 	{
 		xp_str_close (&buf);
 		xp_awk_seterrnum (run, errnum);
