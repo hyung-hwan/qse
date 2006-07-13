@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.40 2006-07-12 17:04:02 bacon Exp $
+ * $Id: val.c,v 1.41 2006-07-13 03:10:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -314,7 +314,8 @@ xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
 	return xp_false;
 }
 
-xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
+xp_char_t* xp_awk_valtostr (
+	xp_awk_val_t* v, int* errnum, xp_str_t* buf, xp_size_t* len)
 {
 	if (v->type == XP_AWK_VAL_NIL)
 	{
@@ -322,12 +323,19 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 		{
 			xp_char_t* tmp;
 			tmp = xp_strdup (XP_T(""));
-			if (tmp == XP_NULL) *errnum = XP_AWK_ENOMEM;
+			if (tmp == XP_NULL) 
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return XP_NULL;
+			}
+
+			if (len != XP_NULL) *len = 0;
 			return tmp;
 		}
 		else
 		{
 			xp_str_clear (buf);
+			if (len != XP_NULL) *len = XP_STR_LEN(buf);
 			return XP_STR_BUF(buf);
 		}
 	}
@@ -336,7 +344,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 	{
 		xp_char_t* tmp;
 		xp_long_t t;
-		xp_size_t len = 0;
+		xp_size_t l = 0;
 
 		t = ((xp_awk_val_int_t*)v)->val; 
 		if (t == 0)
@@ -353,6 +361,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 
 				tmp[0] = XP_T('0');
 				tmp[1] = XP_T('\0');
+				if (len != XP_NULL) *len = 1;
 				return tmp;
 			}
 			else
@@ -364,53 +373,55 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 					return XP_NULL;
 				}
 
+				if (len != XP_NULL) *len = XP_STR_LEN(buf);
 				return XP_STR_BUF(buf);
 			}
 		}
 
 		/* non-zero values */
-		if (t < 0) { t = -t; len++; }
-		while (t > 0) { len++; t /= 10; }
+		if (t < 0) { t = -t; l++; }
+		while (t > 0) { l++; t /= 10; }
 
 		if (buf == XP_NULL)
 		{
-			tmp = xp_malloc ((len + 1) * xp_sizeof(xp_char_t));
+			tmp = xp_malloc ((l + 1) * xp_sizeof(xp_char_t));
 			if (tmp == XP_NULL)
 			{
 				*errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 
-			tmp[len] = XP_T('\0');
+			tmp[l] = XP_T('\0');
 		}
 		else
 		{
+			/* clear the buffer */
 			xp_str_clear (buf);
 
-			/* get the current end of the buffer */
-			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
+			tmp = XP_STR_BUF(buf);
 
 			/* extend the buffer */
 			if (xp_str_nccat (
-				buf, XP_T(' '), len) == (xp_size_t)-1)
+				buf, XP_T(' '), l) == (xp_size_t)-1)
 			{
 				*errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 		}
 
+		if (len != XP_NULL) *len = l;
+
 		t = ((xp_awk_val_int_t*)v)->val; 
 		if (t < 0) t = -t;
 
 		while (t > 0) 
 		{
-			tmp[--len] = (xp_char_t)(t % 10) + XP_T('0');
+			tmp[--l] = (xp_char_t)(t % 10) + XP_T('0');
 			t /= 10;
 		}
 
-		if (((xp_awk_val_int_t*)v)->val < 0) tmp[--len] = XP_T('-');
+		if (((xp_awk_val_int_t*)v)->val < 0) tmp[--l] = XP_T('-');
 
-		/*return (buf == XP_NULL) tmp: XP_STR_BUF(buf);*/
 		return tmp;
 	}
 
@@ -429,7 +440,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 		else
 		{
 			xp_str_clear (buf);
-			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
+			tmp = XP_STR_BUF(buf);
 
 			if (xp_str_ncat (buf, 
 				((xp_awk_val_str_t*)v)->buf, 
@@ -440,6 +451,7 @@ xp_char_t* xp_awk_valtostr (xp_awk_val_t* v, int* errnum, xp_str_t* buf)
 			}
 		}
 
+		if (len != XP_NULL) *len = ((xp_awk_val_str_t*)v)->len;
 		return tmp;
 	}
 
