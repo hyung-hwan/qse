@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.57 2006-07-01 16:07:06 bacon Exp $
+ * $Id: tree.h,v 1.58 2006-07-13 15:43:39 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -81,6 +81,7 @@ enum
 	XP_AWK_OUT_CONSOLE
 };
 
+/* afn (awk function defined with the keyword function) */
 typedef struct xp_awk_afn_t xp_awk_afn_t;
 
 typedef struct xp_awk_nde_t           xp_awk_nde_t;

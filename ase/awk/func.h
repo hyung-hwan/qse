@@ -1,5 +1,5 @@
 /*
- * $Id: func.h,v 1.3 2006-06-21 15:37:51 bacon Exp $
+ * $Id: func.h,v 1.4 2006-07-13 15:43:39 bacon Exp $
  */
 
 #ifndef _XP_AWK_FUNC_H_
@@ -19,6 +19,8 @@ struct xp_awk_bfn_t
 	xp_size_t min_args;
 	xp_size_t max_args;
 	int (*handler) (void* run);
+
+	xp_awk_bfn_t* next;
 };
 
 #ifdef __cplusplus
