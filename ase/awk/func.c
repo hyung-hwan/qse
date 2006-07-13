@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.7 2006-07-13 03:10:35 bacon Exp $
+ * $Id: func.c,v 1.8 2006-07-13 15:43:39 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -14,25 +14,37 @@
 static int __bfn_close (void* run);
 
 /* TODO: move it under the awk structure... */
-static xp_awk_bfn_t __bfn[] = 
+static xp_awk_bfn_t __sys_bfn[] = 
 {
-	{ XP_T("system"), (1 << 5),     1, 1, XP_NULL },
-	{ XP_T("close"),  XP_AWK_EXTIO, 1, 1, __bfn_close },
-	{ XP_NULL,        0,            0, 0, XP_NULL }
+	{ XP_T("system"), (1 << 5),      1,  1,  XP_NULL },
+	{ XP_T("close"),  XP_AWK_EXTIO,  1,  1,  __bfn_close },
+	{ XP_NULL,        0,             0,  0,  XP_NULL }
 };
+
+static xp_awk_bfn_t* __usr_bfn = XP_NULL;
 
 xp_awk_bfn_t* xp_awk_addbfn (
 	xp_awk_t* awk, const xp_char_t* name, int when_valid,
 	xp_size_t min_args, xp_size_t max_args, int (*handler)(void*))
 {
 	/* TODO */
+	return XP_NULL;
 }
 
 xp_awk_bfn_t* xp_awk_getbfn (xp_awk_t* awk, const xp_char_t* name)
 {
 	xp_awk_bfn_t* p;
 
-	for (p = __bfn; p->name != XP_NULL; p++)
+	for (p = __sys_bfn; p->name != XP_NULL; p++)
+	{
+		if (p->valid != 0 && 
+		    (awk->opt.parse & p->valid) == 0) continue;
+
+		if (xp_strcmp (p->name, name) == 0) return p;
+	}
+
+/* TODO: */
+	for (p = awk->bfn.user; p != XP_NULL; p = p->next)
 	{
 		if (p->valid != 0 && 
 		    (awk->opt.parse & p->valid) == 0) continue;

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.57 2006-06-27 10:53:04 bacon Exp $ 
+ * $Id: awk.c,v 1.58 2006-07-13 15:43:39 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -88,6 +88,9 @@ xp_awk_t* xp_awk_open (void)
 	awk->lex.column = 1;
 
 	for (i = 0; i < xp_countof(awk->extio); i++) awk->extio[i] = XP_NULL;
+
+	awk->bfn.sys = XP_NULL;
+	awk->bfn.user = XP_NULL;
 
 	return awk;
 }

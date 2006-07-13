@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.29 2006-07-07 09:48:23 bacon Exp $
+ * $Id: awk_i.h,v 1.30 2006-07-13 15:43:39 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -128,6 +128,13 @@ struct xp_awk_t
 		xp_size_t line;
 		xp_size_t column;
 	} token;
+
+	/* builtin functions */
+	struct
+	{
+		xp_awk_bfn_t* sys;
+		xp_awk_bfn_t* user;
+	} bfn;
 
 	/* housekeeping */
 	int errnum;
