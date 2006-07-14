@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.64 2006-07-14 04:19:22 bacon Exp $
+ * $Id: tree.c,v 1.65 2006-07-14 05:21:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -350,8 +350,7 @@ static int __print_expression (xp_awk_nde_t* nde)
 		case XP_AWK_NDE_BFN:
 		{
 			xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)nde;
-			/*xp_printf (XP_T("%s ("), px->what.bfn->name);*/
-			xp_printf (XP_T("__bfn ("));
+			xp_printf (XP_T("%s ("), px->what.bfn.name);
 			if (__print_expression_list (px->args) == -1) return -1;
 			xp_printf (XP_T(")"));
 			break;

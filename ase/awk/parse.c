@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.136 2006-07-14 04:19:21 bacon Exp $
+ * $Id: parse.c,v 1.137 2006-07-14 05:21:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2425,9 +2425,10 @@ static xp_awk_nde_t* __parse_fncall (
 		call->next = XP_NULL;
 
 		/*call->what.bfn = bfn; */
+		call->what.bfn.name     = bfn->name;
 		call->what.bfn.min_args = bfn->min_args;
 		call->what.bfn.max_args = bfn->max_args;
-		call->what.bfn.handler = bfn->handler;
+		call->what.bfn.handler  = bfn->handler;
 
 		call->args = head;
 		call->nargs = nargs;
