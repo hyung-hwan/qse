@@ -1,5 +1,5 @@
 /*
- * $Id: func.h,v 1.5 2006-07-14 04:19:21 bacon Exp $
+ * $Id: func.h,v 1.6 2006-07-14 05:21:30 bacon Exp $
  */
 
 #ifndef _XP_AWK_FUNC_H_
@@ -13,7 +13,7 @@ typedef struct xp_awk_bfn_t xp_awk_bfn_t;
 
 struct xp_awk_bfn_t
 {
-	xp_char_t* name; 
+	const xp_char_t* name; 
 	int valid; /* the entry is valid when this option is set */
 
 	xp_size_t min_args;

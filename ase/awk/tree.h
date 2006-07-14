@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.59 2006-07-14 04:19:22 bacon Exp $
+ * $Id: tree.h,v 1.60 2006-07-14 05:21:30 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -237,6 +237,7 @@ struct xp_awk_nde_call_t
 		 * needed during run-time. */
 		struct
 		{
+			const xp_char_t* name;
 			xp_size_t min_args;
 			xp_size_t max_args;
 			int (*handler) (void* run);
