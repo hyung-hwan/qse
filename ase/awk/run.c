@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.133 2006-07-13 15:43:39 bacon Exp $
+ * $Id: run.c,v 1.134 2006-07-14 04:19:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -382,7 +382,7 @@ static int __run_main (xp_awk_run_t* run)
 		};
 		static xp_awk_nde_call_t nde = 
 		{ 
-			XP_AWK_NDE_UFN, /* type */
+			XP_AWK_NDE_AFN, /* type */
 			XP_NULL,        /* next */
 			m_a_i_n,        /* name */
 			XP_NULL         /* args */
@@ -3070,12 +3070,12 @@ static xp_awk_val_t* __eval_bfn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_nde_call_t* call = (xp_awk_nde_call_t*)nde;
 
 	/* built-in function */
-	if (call->nargs < call->what.bfn->min_args)
+	if (call->nargs < call->what.bfn.min_args)
 	{
 		PANIC (run, XP_AWK_ETOOFEWARGS);
 	}
 
-	if (call->nargs > call->what.bfn->max_args)
+	if (call->nargs > call->what.bfn.max_args)
 	{
 		PANIC (run, XP_AWK_ETOOMANYARGS);
 	}
@@ -3281,12 +3281,12 @@ static xp_awk_val_t* __eval_call (
 		n = 0;
 
 		/* built-in function */
-		xp_assert (call->nargs >= call->what.bfn->min_args &&
-		           call->nargs <= call->what.bfn->max_args);
+		xp_assert (call->nargs >= call->what.bfn.min_args &&
+		           call->nargs <= call->what.bfn.max_args);
 
-		if (call->what.bfn->handler != XP_NULL)
+		if (call->what.bfn.handler != XP_NULL)
 		{
-			n = call->what.bfn->handler (run);
+			n = call->what.bfn.handler (run);
 		}
 	}
 

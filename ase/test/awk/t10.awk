@@ -10,8 +10,10 @@ BEGIN
 	getline x < "abc"; 
 	//print x;  
 	a = close ("abc");      /* close(4) */
+	print "a=" a;
 	//print "hey"
 	b = close ("abc");      /* close(3) */
+	print "b=" b;
 
 	getline x < "Makefile.cl";
 	getline y < "awk.c";

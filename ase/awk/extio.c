@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.18 2006-07-13 03:10:34 bacon Exp $
+ * $Id: extio.c,v 1.19 2006-07-14 04:19:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -12,11 +12,13 @@
 
 enum
 {
-	__MASK_READ  = 0x01FF,
-	__MASK_WRITE = 0x02FF,
-	__MASK_RDWR  = 0x04FF,
-	__MASK_CLEAR = 0x00FF
+	__MASK_READ  = 0x0100,
+	__MASK_WRITE = 0x0200,
+	__MASK_RDWR  = 0x0400,
+
+	__MASK_CLEAR   = 0x00FF
 };
+
 
 int xp_awk_readextio (
 	xp_awk_run_t* run, int in_type,
@@ -346,12 +348,12 @@ int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 	{
 		 /* it handles the first that matches the given name
 		  * regardless of the extio type */
-		if (xp_strcmp(p->name,name) == 0) 
+		if (xp_strcmp (p->name, name) == 0) 
 		{
 			xp_awk_io_t handler;
 		       
 			handler = run->awk->extio[p->type & __MASK_CLEAR];
-			if (handler != NULL)
+			if (handler != XP_NULL)
 			{
 	/* TODO: io command should not be XP_AWK_IO_CLOSE 
 	 *       it should be more generic form than this... */

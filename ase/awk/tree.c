@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.63 2006-07-01 16:07:06 bacon Exp $
+ * $Id: tree.c,v 1.64 2006-07-14 04:19:22 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -350,13 +350,14 @@ static int __print_expression (xp_awk_nde_t* nde)
 		case XP_AWK_NDE_BFN:
 		{
 			xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)nde;
-			xp_printf (XP_T("%s ("), px->what.bfn->name);
+			/*xp_printf (XP_T("%s ("), px->what.bfn->name);*/
+			xp_printf (XP_T("__bfn ("));
 			if (__print_expression_list (px->args) == -1) return -1;
 			xp_printf (XP_T(")"));
 			break;
 		}
 
-		case XP_AWK_NDE_UFN:
+		case XP_AWK_NDE_AFN:
 		{
 			xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)nde;
 			xp_printf (XP_T("%s ("), px->what.name);
@@ -962,7 +963,7 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 				break;
 			}
 
-			case XP_AWK_NDE_UFN:
+			case XP_AWK_NDE_AFN:
 			{
 				xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)p;
 				xp_free (px->what.name);

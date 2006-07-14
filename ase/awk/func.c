@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.8 2006-07-13 15:43:39 bacon Exp $
+ * $Id: func.c,v 1.9 2006-07-14 04:19:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -27,8 +27,70 @@ xp_awk_bfn_t* xp_awk_addbfn (
 	xp_awk_t* awk, const xp_char_t* name, int when_valid,
 	xp_size_t min_args, xp_size_t max_args, int (*handler)(void*))
 {
-	/* TODO */
-	return XP_NULL;
+	xp_awk_bfn_t* p;
+
+/* TODO: complete this function??? */
+
+	p = (xp_awk_bfn_t*) xp_malloc (xp_sizeof(xp_awk_bfn_t));
+	if (p == XP_NULL) return XP_NULL;
+
+	p->name = xp_strdup(name);
+	if (p->name == XP_NULL) 
+	{
+		xp_free (p);
+		return XP_NULL;
+	}
+
+	p->valid = when_valid;
+	p->min_args = min_args;
+	p->max_args = max_args;
+	p->handler = handler;
+
+	p->next = awk->bfn.user;
+	awk->bfn.user = p;
+
+	return p;
+}
+
+int xp_awk_delbfn (xp_awk_t* awk, const xp_char_t* name)
+{
+	xp_awk_bfn_t* p, * pp = XP_NULL;
+
+	for (p = awk->bfn.user; p != XP_NULL; p++)
+	{
+		if (xp_strcmp(p->name, name) == 0)
+		{
+			if (pp == XP_NULL)
+				awk->bfn.user = p->next;
+			else pp->next = p->next;
+
+			xp_free (p->name);
+			xp_free (p);
+			return 0;
+		}
+
+		pp = p;
+	}
+
+	return -1;
+}
+
+void xp_awk_clrbfn (xp_awk_t* awk)
+{
+	xp_awk_bfn_t* p, * np;
+
+	p = awk->bfn.user;
+	while (p != XP_NULL)
+	{
+		np = p;
+
+		xp_free (p->name);
+		xp_free (p);
+
+		p = np;
+	}
+
+	awk->bfn.user = XP_NULL;
 }
 
 xp_awk_bfn_t* xp_awk_getbfn (xp_awk_t* awk, const xp_char_t* name)
@@ -72,7 +134,8 @@ static int __bfn_close (void* run)
 		return -1;
 	}
 
-	if (xp_awk_valtostr (xp_awk_getarg(run, 0), &errnum, &buf, XP_NULL) == XP_NULL)
+	if (xp_awk_valtostr (
+		xp_awk_getarg(run, 0), &errnum, &buf, XP_NULL) == XP_NULL)
 	{
 		xp_str_close (&buf);
 		xp_awk_seterrnum (run, errnum);
