@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.42 2006-07-17 04:17:40 bacon Exp $
+ * $Id: val.c,v 1.43 2006-07-17 06:19:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -425,10 +425,50 @@ xp_char_t* xp_awk_valtostr (
 		return tmp;
 	}
 
-	/* TODO: 
 	if (v->type == XP_AWK_VAL_REAL)
 	{
-	}*/
+		/* TODO: change the code */
+
+		xp_char_t tbuf[256], * tmp;
+
+	#if (XP_SIZEOF_LONG_DOUBLE != 0)
+		xp_sprintf (
+			tbuf, xp_countof(tbuf), XP_T("%Lf"), 
+			(long double)((xp_awk_val_real_t*)v)->val); 
+	#elif (XP_SIZEOF_DOUBLE != 0)
+		xp_sprintf (
+			tbuf, xp_countof(tbuf), XP_T("%f"), 
+			(double)((xp_awk_val_real_t*)v)->val); 
+	#else
+		#error Unsupported floating-point data type
+	#endif
+
+		if (buf == XP_NULL) 
+		{
+			tmp = xp_strdup (tbuf);
+			if (tmp == XP_NULL) 
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return XP_NULL;
+			}
+
+			if (len != XP_NULL) *len = xp_strlen(tmp);
+		}
+		else
+		{
+			xp_str_clear (buf);
+			if (xp_str_cat (buf, tbuf) == (xp_size_t)-1)
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return XP_NULL;
+			}
+
+			tmp = XP_STR_BUF(buf);
+			if (len != XP_NULL) *len = XP_STR_LEN(buf);
+		}
+
+		return tmp;
+	}
 
 	if (v->type == XP_AWK_VAL_STR) 
 	{
@@ -505,7 +545,7 @@ int xp_awk_valtonum (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
 		return 0; /* long */
 	}
 
-xp_printf (XP_T("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtostr v=> %p***\n"), v->type, v);
+xp_printf (XP_T("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtonum v=> %p***\n"), v->type, v);
 	return -1; /* error */
 }
 
