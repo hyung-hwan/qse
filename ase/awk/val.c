@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.43 2006-07-17 06:19:35 bacon Exp $
+ * $Id: val.c,v 1.44 2006-07-17 14:27:09 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -440,7 +440,7 @@ xp_char_t* xp_awk_valtostr (
 			tbuf, xp_countof(tbuf), XP_T("%f"), 
 			(double)((xp_awk_val_real_t*)v)->val); 
 	#else
-		#error Unsupported floating-point data type
+		#error unsupported floating-point data type
 	#endif
 
 		if (buf == XP_NULL) 
