@@ -22,4 +22,4 @@ global x, y;
 	print "====================";
 }
 
-END { system ("dir /w/p"); print sin(90.0); }
+END { system ("dir /w/p"); print sin(270); }

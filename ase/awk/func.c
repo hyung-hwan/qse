@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.12 2006-07-17 06:19:35 bacon Exp $
+ * $Id: func.c,v 1.13 2006-07-17 14:27:09 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -226,7 +226,13 @@ static int __bfn_sin (void* run)
 
 	if (n == 0) rv = (xp_real_t)lv;
 
+#if (XP_SIZEOF_LONG_DOUBLE != 0)
+	v = xp_awk_makerealval (run, (xp_real_t)sinl(rv));
+#elif (XP_SIZEOF_DOUBLE != 0)
 	v = xp_awk_makerealval (run, (xp_real_t)sin(rv));
+#else
+	#error unsupported floating-point data type
+#endif
 	if (v == XP_NULL)
 	{
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
