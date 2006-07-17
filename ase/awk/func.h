@@ -1,5 +1,5 @@
 /*
- * $Id: func.h,v 1.6 2006-07-14 05:21:30 bacon Exp $
+ * $Id: func.h,v 1.7 2006-07-17 04:17:40 bacon Exp $
  */
 
 #ifndef _XP_AWK_FUNC_H_
@@ -22,6 +22,17 @@ struct xp_awk_bfn_t
 
 	xp_awk_bfn_t* next;
 };
+
+enum
+{
+	/* ensure that this matches __sys_bfn in func.c */
+
+	XP_AWK_BFN_CLOSE,
+	XP_AWK_BFN_SYSTEM,
+
+	XP_AWK_BFN_SIN
+};
+
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.27 2006-07-07 09:48:23 bacon Exp $
+ * $Id: sa.c,v 1.28 2006-07-17 04:17:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -355,7 +355,7 @@ xp_size_t xp_str_ncpy (xp_str_t* str, const xp_char_t* s, xp_size_t len)
 	}
 
 	str->size = xp_strncpy (str->buf, s, len);
-	str->buf[str->size] = XP_CHAR('\0');
+	str->buf[str->size] = XP_T('\0');
 	return str->size;
 }
 

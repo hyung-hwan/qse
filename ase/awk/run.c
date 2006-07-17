@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.134 2006-07-14 04:19:21 bacon Exp $
+ * $Id: run.c,v 1.135 2006-07-17 04:17:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -164,7 +164,6 @@ static void __clear_record (xp_awk_run_t* run, xp_bool_t noline);
 static int __recomp_record_fields (xp_awk_run_t* run, 
 	xp_size_t lv, xp_char_t* str, xp_size_t len, int* errnum);
 
-static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
 typedef xp_awk_val_t* (*binop_func_t) (
@@ -612,7 +611,7 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 				xp_assert (ptn->next->next == XP_NULL);
 				/* TODO: implement this */
 				xp_awk_refdownval (run, v1);
-				xp_printf (XP_TEXT("ERROR: pattern, pattern NOT OMPLEMENTED\n"));
+				xp_printf (XP_T("ERROR: pattern, pattern NOT OMPLEMENTED\n"));
 				PANIC_I (run, XP_AWK_EINTERNAL);
 			}
 		}
@@ -1750,7 +1749,7 @@ static xp_awk_val_t* __do_assignment_pos (
 	if (v == XP_NULL) return XP_NULL;
 
 	xp_awk_refupval (v);
-	n = __val_to_num (v, &lv, &rv);
+	n = xp_awk_valtonum (v, &lv, &rv);
 	xp_awk_refdownval (run, v);
 
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
@@ -2444,8 +2443,8 @@ static xp_awk_val_t* __eval_binop_lshift (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = __val_to_num (left, &l1, &r1);
-	n2 = __val_to_num (right, &l2, &r2);
+	n1 = xp_awk_valtonum (left, &l1, &r1);
+	n2 = xp_awk_valtonum (right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -2469,8 +2468,8 @@ static xp_awk_val_t* __eval_binop_rshift (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = __val_to_num (left, &l1, &r1);
-	n2 = __val_to_num (right, &l2, &r2);
+	n1 = xp_awk_valtonum (left, &l1, &r1);
+	n2 = xp_awk_valtonum (right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -2494,8 +2493,8 @@ static xp_awk_val_t* __eval_binop_plus (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = __val_to_num (left, &l1, &r1);
-	n2 = __val_to_num (right, &l2, &r2);
+	n1 = xp_awk_valtonum (left, &l1, &r1);
+	n2 = xp_awk_valtonum (right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 	/*
@@ -2524,8 +2523,8 @@ static xp_awk_val_t* __eval_binop_minus (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = __val_to_num (left, &l1, &r1);
-	n2 = __val_to_num (right, &l2, &r2);
+	n1 = xp_awk_valtonum (left, &l1, &r1);
+	n2 = xp_awk_valtonum (right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -2548,8 +2547,8 @@ static xp_awk_val_t* __eval_binop_mul (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = __val_to_num (left, &l1, &r1);
-	n2 = __val_to_num (right, &l2, &r2);
+	n1 = xp_awk_valtonum (left, &l1, &r1);
+	n2 = xp_awk_valtonum (right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -2572,8 +2571,8 @@ static xp_awk_val_t* __eval_binop_div (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = __val_to_num (left, &l1, &r1);
-	n2 = __val_to_num (right, &l2, &r2);
+	n1 = xp_awk_valtonum (left, &l1, &r1);
+	n2 = xp_awk_valtonum (right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -2609,8 +2608,8 @@ static xp_awk_val_t* __eval_binop_mod (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = __val_to_num (left, &l1, &r1);
-	n2 = __val_to_num (right, &l2, &r2);
+	n1 = xp_awk_valtonum (left, &l1, &r1);
+	n2 = xp_awk_valtonum (right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -2634,8 +2633,8 @@ static xp_awk_val_t* __eval_binop_exp (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = __val_to_num (left, &l1, &r1);
-	n2 = __val_to_num (right, &l2, &r2);
+	n1 = xp_awk_valtonum (left, &l1, &r1);
+	n2 = xp_awk_valtonum (right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -3450,7 +3449,7 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	if (v == XP_NULL) return XP_NULL;
 
 	xp_awk_refupval (v);
-	n = __val_to_num (v, &lv, &rv);
+	n = xp_awk_valtonum (v, &lv, &rv);
 	xp_awk_refdownval (run, v);
 
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
@@ -3911,47 +3910,6 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 	}
 
 	return 0;
-}
-
-static int __val_to_num (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
-{
-	if (v->type == XP_AWK_VAL_NIL) 
-	{
-		*l = 0;
-		return 0;
-	}
-
-	if (v->type == XP_AWK_VAL_INT)
-	{
-		*l = ((xp_awk_val_int_t*)v)->val;
-		return 0; /* long */
-	}
-
-	if (v->type == XP_AWK_VAL_REAL)
-	{
-		*r = ((xp_awk_val_real_t*)v)->val;
-		return 1; /* real */
-	}
-
-	if (v->type == XP_AWK_VAL_STR)
-	{
-		const xp_char_t* endptr;
-
-		/* don't care about val->len */
-		*l = xp_awk_strtolong (((xp_awk_val_str_t*)v)->buf, 0, &endptr);
-	
-		if (*endptr == XP_T('.') ||
-		    *endptr == XP_T('E') ||
-		    *endptr == XP_T('e'))
-		{
-			*r = xp_awk_strtoreal (((xp_awk_val_str_t*)v)->buf);
-			return 1; /* real */
-		}
-	
-		return 0; /* long */
-	}
-
-	return -1; /* error */
 }
 
 static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde)

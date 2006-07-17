@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.34 2006-06-23 11:50:34 bacon Exp $
+ * $Id: macros.h,v 1.35 2006-07-17 04:17:39 bacon Exp $
  */
 
 #ifndef _XP_MACROS_H_
@@ -60,15 +60,17 @@
 	} while (0);
 
 /* obsolete */
-#define XP_MQUOTE(val)  #val
-#define XP_MCHAR(ch)    ((xp_mchar_t)ch)
-#define XP_MTEXT(txt)   ((const xp_mchar_t*)txt)
+#define XP_MQUOTE_I(val)  #val
+#define XP_MQUOTE(val)    XP_MQUOTE_I(val)
+#define XP_MCHAR(ch)      ((xp_mchar_t)ch)
+#define XP_MTEXT(txt)     ((const xp_mchar_t*)txt)
 
 /* new short form */
-#define XP_MQ(val) #val
-#define XP_MC(ch)  ((xp_mchar_t)ch)
-#define XP_MS(str) ((const xp_mchar_t*)str)
-#define XP_MT(txt) (txt)
+#define XP_MQ_I(val) #val
+#define XP_MQ(val)   XP_MQ_I(val)
+#define XP_MC(ch)    ((xp_mchar_t)ch)
+#define XP_MS(str)   ((const xp_mchar_t*)str)
+#define XP_MT(txt)   (txt)
 
 /* TODO: if the compiler doesn't have the built-in wchar_t support
  *       XP_WCHAR & XP_WTEXT must be defined differently.
@@ -77,15 +79,17 @@
  */
 
 /* obsolete */
-#define XP_WQUOTE(val)  ((const xp_char_t*)L###val)
-#define XP_WCHAR(ch)    ((xp_wchar_t)L##ch)
-#define XP_WTEXT(txt)   ((const xp_wchar_t*)L##txt)
+#define XP_WQUOTE_I(val) (L###val)
+#define XP_WQUOTE(val)   XP_WQUOTE_I(val)
+#define XP_WCHAR(ch)     ((xp_wchar_t)L##ch)
+#define XP_WTEXT(txt)    ((const xp_wchar_t*)L##txt)
 
 /* new short form */
-#define XP_WQ(val)  ((const xp_char_t*)L###val)
-#define XP_WC(ch)   ((xp_wchar_t)L##ch)
-#define XP_WS(str)  ((const xp_wchar_t*)L##str)
-#define XP_WT(txt)  (L##txt)
+#define XP_WQ_I(val)  (L###val)
+#define XP_WQ(val)    XP_WQ_I(val)
+#define XP_WC(ch)     ((xp_wchar_t)L##ch)
+#define XP_WS(str)    ((const xp_wchar_t*)L##str)
+#define XP_WT(txt)    (L##txt)
 
 #if defined(XP_CHAR_IS_MCHAR)
 	/* obsolete */
