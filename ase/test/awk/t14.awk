@@ -21,3 +21,5 @@ global x, y;
 	print "NF ===>>> " NF;
 	print "====================";
 }
+
+END { system ("dir /w/p"); print sin(10); }

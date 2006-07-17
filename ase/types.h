@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.49 2006-06-09 06:17:24 bacon Exp $
+ * $Id: types.h,v 1.50 2006-07-17 04:17:40 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -77,17 +77,9 @@
  */
 
 /* boolean type */
-/*
-#ifdef __cplusplus
-	typedef bool xp_bool_t;
-	#define xp_true  true
-	#define xp_false false
-#else
-*/
-	typedef int xp_bool_t;
-	#define xp_true  (0 == 0)
-	#define xp_false (0 != 0)
-/*#endif*/
+typedef int xp_bool_t;
+#define xp_true  (0 == 0)
+#define xp_false (0 != 0)
 
 /* tri-state type */
 typedef int xp_tri_t;
@@ -219,11 +211,11 @@ typedef int  xp_mcint_t;
 	typedef unsigned short xp_wcint_t;
 #elif (XP_SIZEOF_WCHAR_T == 4)
 	#if XP_SIZEOF_LONG == 4
-	typedef long xp_wchar_t;
-	typedef long xp_wcint_t;
+		typedef long xp_wchar_t;
+		typedef long xp_wcint_t;
 	#else
-	typedef int xp_wchar_t;
-	typedef int xp_wcint_t;
+		typedef int xp_wchar_t;
+		typedef int xp_wcint_t;
 	#endif
 #else
 	#error unsupported size of wchar_t
@@ -235,28 +227,28 @@ typedef int  xp_mcint_t;
 	typedef xp_wcint_t xp_cint_t;
 #else
 	#if defined(XP_CHAR_IS_MCHAR)
-	typedef xp_mchar_t xp_char_t;
-	typedef xp_mcint_t xp_cint_t;
+		typedef xp_mchar_t xp_char_t;
+		typedef xp_mcint_t xp_cint_t;
 	#elif defined(XP_CHAR_IS_WCHAR)
-	typedef xp_wchar_t xp_char_t;
-	typedef xp_wcint_t xp_cint_t;
+		typedef xp_wchar_t xp_char_t;
+		typedef xp_wcint_t xp_cint_t;
 	#elif defined(_MBCS)
-	#define XP_CHAR_IS_MCHAR
-	typedef xp_mchar_t xp_char_t;
-	typedef xp_mcint_t xp_cint_t;
+		#define XP_CHAR_IS_MCHAR
+		typedef xp_mchar_t xp_char_t;
+		typedef xp_mcint_t xp_cint_t;
 	#else
-	#define XP_CHAR_IS_WCHAR
-	typedef xp_wchar_t xp_char_t;
-	typedef xp_wcint_t xp_cint_t;
+		#define XP_CHAR_IS_WCHAR
+		typedef xp_wchar_t xp_char_t;
+		typedef xp_wcint_t xp_cint_t;
 	#endif
 #endif
 
 #if defined(XP_CHAR_IS_WCHAR) && defined(_WIN32) 
 	#ifndef UNICODE
-	#define UNICODE
+		#define UNICODE
 	#endif
 	#ifndef _UNICODE
-	#define _UNICODE
+		#define _UNICODE
 	#endif
 #endif
 

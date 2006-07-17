@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.41 2006-07-13 03:10:35 bacon Exp $
+ * $Id: val.c,v 1.42 2006-07-17 04:17:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -425,6 +425,11 @@ xp_char_t* xp_awk_valtostr (
 		return tmp;
 	}
 
+	/* TODO: 
+	if (v->type == XP_AWK_VAL_REAL)
+	{
+	}*/
+
 	if (v->type == XP_AWK_VAL_STR) 
 	{
 		xp_char_t* tmp;
@@ -457,9 +462,51 @@ xp_char_t* xp_awk_valtostr (
 
 /* TODO: process more value types */
 
-xp_printf (XP_TEXT("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtostr v=> %p***\n"), v->type, v);
+xp_printf (XP_T("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtostr v=> %p***\n"), v->type, v);
 	*errnum = XP_AWK_EVALTYPE;
 	return XP_NULL;
+}
+
+int xp_awk_valtonum (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
+{
+	if (v->type == XP_AWK_VAL_NIL) 
+	{
+		*l = 0;
+		return 0;
+	}
+
+	if (v->type == XP_AWK_VAL_INT)
+	{
+		*l = ((xp_awk_val_int_t*)v)->val;
+		return 0; /* long */
+	}
+
+	if (v->type == XP_AWK_VAL_REAL)
+	{
+		*r = ((xp_awk_val_real_t*)v)->val;
+		return 1; /* real */
+	}
+
+	if (v->type == XP_AWK_VAL_STR)
+	{
+		const xp_char_t* endptr;
+
+		/* don't care about val->len */
+		*l = xp_awk_strtolong (((xp_awk_val_str_t*)v)->buf, 0, &endptr);
+	
+		if (*endptr == XP_T('.') ||
+		    *endptr == XP_T('E') ||
+		    *endptr == XP_T('e'))
+		{
+			*r = xp_awk_strtoreal (((xp_awk_val_str_t*)v)->buf);
+			return 1; /* real */
+		}
+	
+		return 0; /* long */
+	}
+
+xp_printf (XP_T("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtostr v=> %p***\n"), v->type, v);
+	return -1; /* error */
 }
 
 static int __print_pair (xp_awk_pair_t* pair, void* arg)

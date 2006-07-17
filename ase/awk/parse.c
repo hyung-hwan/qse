@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.137 2006-07-14 05:21:30 bacon Exp $
+ * $Id: parse.c,v 1.138 2006-07-17 04:17:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3748,7 +3748,7 @@ static int __get_char (xp_awk_t* awk)
 
 	awk->lex.curc = awk->lex.buf[awk->lex.buf_pos++];
 
-	if (awk->lex.curc == XP_CHAR('\n'))
+	if (awk->lex.curc == XP_T('\n'))
 	{
 		awk->lex.line++;
 		awk->lex.column = 1;
@@ -3787,7 +3787,7 @@ static int __skip_comment (xp_awk_t* awk)
 		{ 
 			GET_CHAR_TO (awk, c);
 		} 
-		while (c != '\n' && c != XP_CHAR_EOF);
+		while (c != XP_T('\n') && c != XP_CHAR_EOF);
 
 		GET_CHAR (awk);
 		return 1; /* comment by # */
@@ -3802,7 +3802,7 @@ static int __skip_comment (xp_awk_t* awk)
 		{ 
 			GET_CHAR_TO (awk, c);
 		} 
-		while (c != '\n' && c != XP_CHAR_EOF);
+		while (c != XP_T('\n') && c != XP_CHAR_EOF);
 
 		GET_CHAR (awk);
 		return 1; /* comment by // */
