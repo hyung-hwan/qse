@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.4 2006-07-19 11:45:23 bacon Exp $
+ * $Id: rex.c,v 1.5 2006-07-19 15:58:01 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -90,6 +90,7 @@ void xp_awk_rex_close (xp_awk_rex_t* rex)
 
 int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len)
 {
+
 	rex->ptn.ptr = ptn;
 	rex->ptn.end = rex->ptn.ptr + len;
 	rex->ptn.curp = rex->ptn.ptr;
@@ -98,7 +99,13 @@ int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len)
 	rex->code.size = 0;
 
 	NEXT_CHAR (rex);
-	if (AT_END(rex)) return 0; /* empty pattern */
+	if (AT_END(rex)) 
+	{
+		xp_size_t tmp = 0;
+		ADD_CODE (rex, &tmp, xp_sizeof(tmp)); /* nb */
+		ADD_CODE (rex, &tmp, xp_sizeof(tmp)); /* el */
+		return 0; /* empty pattern */
+	}
 
 	if (__compile_expression (rex) == -1)
 	{
@@ -120,19 +127,30 @@ xp_printf (XP_T("garbage after expression\n"));
 
 static int __compile_expression (xp_awk_rex_t* rex)
 {
+	xp_size_t zero = 0;
+	xp_size_t* nb, * el, * bl;
+
+	nb = (xp_size_t*)&rex->code.buf[rex->code.size];
+	ADD_CODE (rex, &zero, xp_sizeof(zero));
+
+	el = (xp_size_t*)&rex->code.buf[rex->code.size];
+	ADD_CODE (rex, &zero, xp_sizeof(zero));
+
+	bl = (xp_size_t*)&rex->code.buf[rex->code.size];
 	if (__compile_branch (rex) == -1) return -1;
+
+	(*nb) += 1;
+	(*el) += *bl + xp_sizeof(*bl);
 
 	while (!AT_END(rex) && rex->ptn.curc == XP_T('|'))
 	{
 		NEXT_CHAR (rex);
 
-		//branch_base = rex->code_size;
+		bl = (xp_size_t*)&rex->code.buf[rex->code.size];
 		if (__compile_branch(rex) == -1) return -1;
 
-		/*
-		rex->code[branch_base]++;
-		rex->code[len_base] += xxxxx;
-		*/
+		(*nb) += 1;
+		(*el) += *bl + xp_sizeof(*bl);
 	}
 
 	return 0;
@@ -141,13 +159,22 @@ static int __compile_expression (xp_awk_rex_t* rex)
 static int __compile_branch (xp_awk_rex_t* rex)
 {
 	int n;
+	xp_size_t* bl;
+	xp_size_t old_size;
+
+	old_size = rex->code.size;
+
+	bl = (xp_size_t*)&rex->code.buf[rex->code.size];
+	ADD_CODE (rex, zero, xp_sizeof(zero));
 
 	while (!AT_END(rex))
 	{
-		//atom_base = rex->code_size;
-
 		n = __compile_atom (rex);
-		if (n == -1) return -1;
+		if (n == -1) 
+		{
+			rex->code.size = old_size;
+			return -1;
+		}
 		if (n == 1) break;
 
 		if (AT_END(rex)) break;
@@ -157,27 +184,43 @@ static int __compile_branch (xp_awk_rex_t* rex)
 			case XP_T('+'):
 			{
 				//__apply_bound (1, MAX);
-				NEXT_CHAR (rex);
+				if (__next_char(rex) == -1)
+				{
+					rex->code.size = old_size;
+					return -1;
+				}
 				break;
 			}
 
 			case XP_T('*'):
 			{
 				//__apply_bound (0, MAX);
-				NEXT_CHAR (rex);
+				if (__next_char(rex) == -1)
+				{
+					rex->code.size = old_size;
+					return -1;
+				}
 				break;
 			}
 
 			case XP_T('?'):
 			{
 				//__apply_bound (0, 1);
-				NEXT_CHAR (rex);
+				if (__next_char(rex) == -1)
+				{
+					rex->code.size = old_size;
+					return -1;
+				}
 				break;
 			}
 
 			case XP_T('{'):
 			{
-				if (__compile_bound(rex) == -1) return -1;
+				if (__compile_bound(rex) == -1) 
+				{
+					rex->code.size = old_size;
+					return -1;
+				}
 				break;
 			}
 		}
