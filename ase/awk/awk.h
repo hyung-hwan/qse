@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.78 2006-07-12 07:25:15 bacon Exp $
+ * $Id: awk.h,v 1.79 2006-07-19 11:45:23 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -11,6 +11,7 @@
 typedef struct xp_awk_t xp_awk_t;
 typedef struct xp_awk_val_t xp_awk_val_t;
 typedef struct xp_awk_extio_t xp_awk_extio_t;
+typedef struct xp_awk_rex_t xp_awk_rex_t;
 
 typedef xp_ssize_t (*xp_awk_io_t) (
 	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t count);
