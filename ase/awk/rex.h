@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.3 2006-07-19 15:58:01 bacon Exp $
+ * $Id: rex.h,v 1.4 2006-07-20 03:41:00 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -43,7 +43,11 @@ struct xp_awk_rex_t
 		const xp_char_t* ptr;
 		const xp_char_t* end;
 		const xp_char_t* curp;
-		xp_char_t curc;
+		struct
+		{
+			int type;
+			xp_char_t value;
+		} curc;
 	} ptn;
 
 	struct
