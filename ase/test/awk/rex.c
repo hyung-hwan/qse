@@ -23,7 +23,7 @@ int xp_main (int argc, const xp_char_t* argv[])
 	}
 
 
-	ptn = XP_T("^he.llo");
+	ptn = XP_T("^he.llo(jo(in|kk)s|com)+h*e{1,40}abc");
 	if (xp_awk_rex_compile (rex, ptn, xp_strlen(ptn)) == -1)
 	{
 		xp_printf (XP_T("cannot compile pattern...\n"));
@@ -31,6 +31,7 @@ int xp_main (int argc, const xp_char_t* argv[])
 		return -1;
 	}
 
+	xp_awk_rex_print (rex);
 	xp_awk_rex_close (rex);
 	return 0;
 }

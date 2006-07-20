@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.4 2006-07-20 03:41:00 bacon Exp $
+ * $Id: rex.h,v 1.5 2006-07-20 16:21:54 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -17,12 +17,13 @@
  *
  * Compiled form of a regular expression:
  *
- *   | expression                                                       |
- *   | header  | branch                     | branch         | branch   |
- *   | nb | el | bl | cmd | arg | cmd | arg | bl | cmd | arg | bl | cmd |
+ *   | expression                                                                      |
+ *   | header  | branch                          | branch              | branch        |
+ *   | nb | el | na | bl | cmd | arg | cmd | arg | na | bl | cmd | arg | na | bl | cmd |
  *
  *   nb: the number of branches
  *   el: the length of a expression excluding the length of nb and el
+ *   na: the number of atoms
  *   bl: the length of a branch excluding the length of bl
  *   cmd: The command and repetition info encoded together. 
  *      Some commands require an argument to follow them but some other don't.
@@ -67,6 +68,7 @@ extern "C" {
 xp_awk_rex_t* xp_awk_rex_open (xp_awk_rex_t* rex);
 void xp_awk_rex_close (xp_awk_rex_t* rex);
 int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len);
+void xp_awk_rex_print (xp_awk_rex_t* rex);
 
 #ifdef __cplusplus
 }
