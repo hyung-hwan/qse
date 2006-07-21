@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.7 2006-07-20 16:21:54 bacon Exp $
+ * $Id: rex.c,v 1.8 2006-07-21 05:05:03 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -12,16 +12,16 @@
 
 enum
 {
-	__EOF,
-	__NORMAL,
-	__SPECIAL,
+	CT_EOF,
+	CT_SPECIAL,
+	CT_NORMAL
 };
 
 enum
 {
-	__TOP,
-	__IN_CHARSET,
-	__IN_RANGE,
+	LEVEL_TOP,
+	LEVEL_CHARSET,
+	LEVEL_RANGE,
 };
 
 enum
@@ -30,17 +30,23 @@ enum
 	CMD_EOL,
 	CMD_ANY_CHAR,
 	CMD_ORD_CHAR,
-	CMD_CHAR_RANGE,
-	CMD_CHAR_CLASS,
+	CMD_CHARSET,
 	CMD_GROUP
 };
 
 enum
 {
-	CMD_CHAR_CLASS_PUNCT,
-	CMD_CHAR_CLASS_SPACE,
-	CMD_CHAR_CLASS_DIGIT,
-	CMD_CHAR_CLASS_ALNUM
+	CHARSET_ONE,
+	CHARSET_RANGE,
+	CHARSET_CLASS
+};
+
+enum
+{
+	CHARSET_CLASS_PUNCT,
+	CHARSET_CLASS_SPACE,
+	CHARSET_CLASS_DIGIT,
+	CHARSET_CLASS_ALNUM
 };
 
 #define PC_CMD(rex,base)    (rex)->code[(base)].dc.cmd
@@ -55,11 +61,14 @@ enum
 struct __code
 {
 	//xp_byte_t cmd;
-	int cmd;
+	short cmd;
+	short negate; /* only for CMD_CHARSET */
 	xp_size_t lbound;
 	xp_size_t ubound;
 };
 
+#define NCHARS_REMAINING(rex) ((rex)->ptn.end - (rex)->ptn.curp)
+	
 #define NEXT_CHAR(rex,level) \
 	do { if (__next_char(rex,level) == -1) return -1; } while (0)
 
@@ -69,7 +78,7 @@ struct __code
 static int __compile_expression (xp_awk_rex_t* rex);
 static int __compile_branch (xp_awk_rex_t* rex);
 static int __compile_atom (xp_awk_rex_t* rex);
-static int __compile_charset (xp_awk_rex_t* rex);
+static int __compile_charset (xp_awk_rex_t* rex, struct __code* cmd);
 static int __compile_bound (xp_awk_rex_t* rex, struct __code* cmd);
 static int __compile_range (xp_awk_rex_t* rex, struct __code* cmd);
 static int __next_char (xp_awk_rex_t* rex, int level);
@@ -113,12 +122,12 @@ int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len)
 	rex->ptn.end = rex->ptn.ptr + len;
 	rex->ptn.curp = rex->ptn.ptr;
 
-	rex->ptn.curc.type = __EOF;
+	rex->ptn.curc.type = CT_EOF;
 	rex->ptn.curc.value = XP_T('\0');
 
 	rex->code.size = 0;
 
-	NEXT_CHAR (rex, __TOP);
+	NEXT_CHAR (rex, LEVEL_TOP);
 	if (__compile_expression (rex) == -1)
 	{
 		/* TODO: clear expression */
@@ -126,7 +135,7 @@ xp_printf (XP_T("fuck ........ \n"));
 		return -1;
 	}
 
-	if (rex->ptn.curc.type != __EOF)
+	if (rex->ptn.curc.type != CT_EOF)
 	{
 		/* TODO: error handling */
 		/* garbage after the expression */
@@ -134,6 +143,8 @@ xp_printf (XP_T("garbage after expression\n"));
 		return -1;
 	}
 
+xp_printf (XP_T("code.capa = %u\n"), (unsigned int)rex->code.capa);
+xp_printf (XP_T("code.size = %u\n"), (unsigned int)rex->code.size);
 	return 0;
 }
 
@@ -165,10 +176,10 @@ static int __compile_expression (xp_awk_rex_t* rex)
 	(*nb) += 1;
 
 	/* handle subsequent branches if any */
-	while (rex->ptn.curc.type == __SPECIAL && 
+	while (rex->ptn.curc.type == CT_SPECIAL && 
 	       rex->ptn.curc.value == XP_T('|'))
 	{
-		NEXT_CHAR (rex, __TOP);
+		NEXT_CHAR (rex, LEVEL_TOP);
 
 		n = __compile_branch(rex);
 		if (n == -1) return -1;
@@ -238,101 +249,192 @@ static int __compile_branch (xp_awk_rex_t* rex)
 static int __compile_atom (xp_awk_rex_t* rex)
 {
 	int n;
+	struct __code tmp;
 
-	if (rex->ptn.curc.type == __EOF) return 0;
+	if (rex->ptn.curc.type == CT_EOF) return 0;
 
-	if (rex->ptn.curc.type == __SPECIAL)
+	if (rex->ptn.curc.type == CT_SPECIAL)
 	{
 		if (rex->ptn.curc.value == XP_T('('))
 		{
-			struct __code tmp;
-
 			tmp.cmd = CMD_GROUP;
+			tmp.negate = 0;
 			tmp.lbound = 1;
 			tmp.ubound = 1;
-
 			ADD_CODE (rex, &tmp, xp_sizeof(tmp));
-			NEXT_CHAR (rex, __TOP);
+
+			NEXT_CHAR (rex, LEVEL_TOP);
 
 			n = __compile_expression (rex);
 			if (n == -1) return -1;
 
-			if (rex->ptn.curc.type != __SPECIAL || 
+			if (rex->ptn.curc.type != CT_SPECIAL || 
 			    rex->ptn.curc.value != XP_T(')')) 
 			{
 				// rex->errnum = XP_AWK_REX_ERPAREN;
 				return -1;
 			}
-	
-			NEXT_CHAR (rex, __TOP);
 		}
 		else if (rex->ptn.curc.value == XP_T('^'))
 		{
-			struct __code tmp;
-
 			tmp.cmd = CMD_BOL;
+			tmp.negate = 0;
 			tmp.lbound = 1;
 			tmp.ubound = 1;
-
 			ADD_CODE (rex, &tmp, xp_sizeof(tmp));
-			NEXT_CHAR (rex, __TOP);
 		}
 		else if (rex->ptn.curc.value == XP_T('$'))
 		{
-			struct __code tmp;
-
 			tmp.cmd = CMD_EOL;
+			tmp.negate = 0;
 			tmp.lbound = 1;
 			tmp.ubound = 1;
-
 			ADD_CODE (rex, &tmp, xp_sizeof(tmp));
-			NEXT_CHAR (rex, __TOP);
 		}
 		else if (rex->ptn.curc.value == XP_T('.'))
 		{
-			struct __code tmp;
-
 			tmp.cmd = CMD_ANY_CHAR;
+			tmp.negate = 0;
 			tmp.lbound = 1;
 			tmp.ubound = 1;
-
 			ADD_CODE (rex, &tmp, xp_sizeof(tmp));
-			NEXT_CHAR (rex, __TOP);
 		}
 		else if (rex->ptn.curc.value == XP_T('['))
 		{
-			if (__compile_charset (rex) == -1) return -1;
+			struct __code* cmd;
+
+			cmd = (struct __code*)&rex->code.buf[rex->code.size];
+
+			tmp.cmd = CMD_CHARSET;
+			tmp.negate = 0;
+			tmp.lbound = 1;
+			tmp.ubound = 1;
+			ADD_CODE (rex, &tmp, xp_sizeof(tmp));
+
+			NEXT_CHAR (rex, LEVEL_CHARSET);
+
+			n = __compile_charset (rex, cmd);
+			if (n == -1) return -1;
+
+			xp_assert (n != 0);
+
+			if (rex->ptn.curc.type != CT_SPECIAL ||
+			    rex->ptn.curc.value != XP_T(']'))
+			{
+				// TODO	
+				/*rex->errnum = XP_AWK_REX_ERBRACKET;*/
+				return -1;
+			}
+
 		}
 		else return 0;
 
+		NEXT_CHAR (rex, LEVEL_TOP);
 		return 1;
 	}
 	else 
 	{
-		struct __code tmp;
-
-		xp_assert (rex->ptn.curc.type == __NORMAL);
+		xp_assert (rex->ptn.curc.type == CT_NORMAL);
 
 		tmp.cmd = CMD_ORD_CHAR;
+		tmp.negate = 0;
 		tmp.lbound = 1;
 		tmp.ubound = 1;
-
 		ADD_CODE (rex, &tmp, xp_sizeof(tmp));
+
 		ADD_CODE (rex, &rex->ptn.curc.value, xp_sizeof(rex->ptn.curc.value));
-		NEXT_CHAR (rex, __TOP);
+		NEXT_CHAR (rex, LEVEL_TOP);
 
 		return 1;
 	}
 }
 
-static int __compile_charset (xp_awk_rex_t* rex)
+static int __compile_charset (xp_awk_rex_t* rex, struct __code* cmd)
 {
-	return -1;
+	xp_size_t zero = 0;
+	xp_size_t* csc, * csl;
+	xp_size_t old_size;
+
+	old_size = rex->code.size;
+
+	csc = (xp_size_t*)&rex->code.buf[rex->code.size];
+	ADD_CODE (rex, &zero, xp_sizeof(zero));
+	csl = (xp_size_t*)&rex->code.buf[rex->code.size];
+	ADD_CODE (rex, &zero, xp_sizeof(zero));
+
+	if (rex->ptn.curc.type == CT_NORMAL &&
+	    rex->ptn.curc.value == XP_T('^')) 
+	{
+		cmd->negate = 1;
+		NEXT_CHAR (rex, LEVEL_CHARSET);
+	}
+
+	while (rex->ptn.curc.type == CT_NORMAL)
+	{
+		xp_char_t c0, c1, c2;
+
+		c1 = rex->ptn.curc.value;
+		NEXT_CHAR(rex, LEVEL_CHARSET);
+
+		#if 0
+		if (c1 == XP_T('[') &&
+		    rex->ptn.curc.type == CT_NORMAL &&
+		    rex->ptn.curc.value == XP_T(':'))
+		{
+			/* beginning of character class */
+
+			/* change c1 */
+		}
+		#endif
+
+		c2 = c1;
+		if (rex->ptn.curc.type == CT_NORMAL &&
+		    rex->ptn.curc.value == XP_T('-'))
+		{
+			NEXT_CHAR (rex, LEVEL_CHARSET);
+
+			if (rex->ptn.curc.type == CT_NORMAL)
+			{
+				c2 = rex->ptn.curc.value;
+				NEXT_CHAR(rex, LEVEL_CHARSET);
+
+				#if 0
+				if (c2 == XP_T('[') &&
+				    rex->ptn.curc.type == CT_NORMAL &&
+				    rex->ptn.curc.value == XP_T(':'))
+				{
+					/* beginning of character class */
+					/* change c2 */
+				}
+				#endif
+			}	
+		}
+
+
+		if (c1 == c2)
+		{
+			c0 = CHARSET_ONE;
+			ADD_CODE (rex, &c0, xp_sizeof(c0));
+			ADD_CODE (rex, &c1, xp_sizeof(c1));
+		}
+		else
+		{
+			c0 = CHARSET_RANGE;
+			ADD_CODE (rex, &c0, xp_sizeof(c0));
+			ADD_CODE (rex, &c1, xp_sizeof(c1));
+			ADD_CODE (rex, &c2, xp_sizeof(c2));
+		}
+
+		(*csc) += 1;
+	}
+
+	*csl = rex->code.size - old_size;
+	return 1;
 }
 
 static int __compile_bound (xp_awk_rex_t* rex, struct __code* cmd)
 {
-	if (rex->ptn.curc.type != __SPECIAL) return 0;
+	if (rex->ptn.curc.type != CT_SPECIAL) return 0;
 
 	switch (rex->ptn.curc.value)
 	{
@@ -340,7 +442,7 @@ static int __compile_bound (xp_awk_rex_t* rex, struct __code* cmd)
 		{
 			cmd->lbound = 1;
 			cmd->ubound = BOUND_MAX;
-			NEXT_CHAR(rex, __TOP);
+			NEXT_CHAR(rex, LEVEL_TOP);
 			return 1;
 		}
 
@@ -348,7 +450,7 @@ static int __compile_bound (xp_awk_rex_t* rex, struct __code* cmd)
 		{
 			cmd->lbound = 0;
 			cmd->ubound = BOUND_MAX;
-			NEXT_CHAR(rex, __TOP);
+			NEXT_CHAR(rex, LEVEL_TOP);
 			return 1;
 		}
 
@@ -356,24 +458,24 @@ static int __compile_bound (xp_awk_rex_t* rex, struct __code* cmd)
 		{
 			cmd->lbound = 0;
 			cmd->ubound = 1;
-			NEXT_CHAR(rex, __TOP);
+			NEXT_CHAR(rex, LEVEL_TOP);
 			return 1;
 		}
 
 		case XP_T('{'):
 		{
-			NEXT_CHAR (rex, __IN_RANGE);
+			NEXT_CHAR (rex, LEVEL_RANGE);
 
 			if (__compile_range(rex, cmd) == -1) return -1;
 
-			if (rex->ptn.curc.type != __SPECIAL || 
+			if (rex->ptn.curc.type != CT_SPECIAL || 
 			    rex->ptn.curc.value != XP_T('}')) 
 			{
 				// rex->errnum = XP_AWK_REX_ERBRACE
 				return -1;
 			}
 
-			NEXT_CHAR (rex, __TOP);
+			NEXT_CHAR (rex, LEVEL_TOP);
 			return 1;
 		}
 	}
@@ -388,26 +490,26 @@ static int __compile_range (xp_awk_rex_t* rex, struct __code* cmd)
 // TODO: should allow white spaces in the range???
 //  what if it is not in the raight format? convert it to ordinary characters??
 	bound = 0;
-	while (rex->ptn.curc.type == __NORMAL &&
+	while (rex->ptn.curc.type == CT_NORMAL &&
 	       xp_isdigit(rex->ptn.curc.value))
 	{
 		bound = bound * 10 + rex->ptn.curc.value - XP_T('0');
-		NEXT_CHAR (rex, __IN_RANGE);
+		NEXT_CHAR (rex, LEVEL_RANGE);
 	}
 
 	cmd->lbound = bound;
 
-	if (rex->ptn.curc.type == __SPECIAL &&
+	if (rex->ptn.curc.type == CT_SPECIAL &&
 	    rex->ptn.curc.value == XP_T(',')) 
 	{
-		NEXT_CHAR (rex, __IN_RANGE);
+		NEXT_CHAR (rex, LEVEL_RANGE);
 
 		bound = 0;
-		while (rex->ptn.curc.type == __NORMAL &&
+		while (rex->ptn.curc.type == CT_NORMAL &&
 		       xp_isdigit(rex->ptn.curc.value))
 		{
 			bound = bound * 10 + rex->ptn.curc.value - XP_T('0');
-			NEXT_CHAR (rex, __IN_RANGE);
+			NEXT_CHAR (rex, LEVEL_RANGE);
 		}
 
 		cmd->ubound = bound;
@@ -421,12 +523,12 @@ static int __next_char (xp_awk_rex_t* rex, int level)
 {
 	if (rex->ptn.curp >= rex->ptn.end)
 	{
-		rex->ptn.curc.type = __EOF;
+		rex->ptn.curc.type = CT_EOF;
 		rex->ptn.curc.value = XP_T('\0');
 		return 0;
 	}
 
-	rex->ptn.curc.type = __NORMAL;
+	rex->ptn.curc.type = CT_NORMAL;
 	rex->ptn.curc.value = *rex->ptn.curp++;
 
 xp_printf (XP_T("[%c]\n"), rex->ptn.curc.value);
@@ -452,7 +554,7 @@ xp_printf (XP_T("[%c]\n"), rex->ptn.curc.value);
 	}
 	else
 	{
-		if (level == __TOP)
+		if (level == LEVEL_TOP)
 		{
 			if (rex->ptn.curc.value == XP_T('[') ||
 			    rex->ptn.curc.value == XP_T('|') ||
@@ -466,24 +568,30 @@ xp_printf (XP_T("[%c]\n"), rex->ptn.curc.value);
 			    rex->ptn.curc.value == XP_T('(') ||
 			    rex->ptn.curc.value == XP_T(')')) 
 			{
-				rex->ptn.curc.type = __SPECIAL;
+				rex->ptn.curc.type = CT_SPECIAL;
 			}
 		}
-		else if (level == __IN_CHARSET)
+		else if (level == LEVEL_CHARSET)
 		{
+			/*
 			if (rex->ptn.curc.value == XP_T('^') ||
 			    rex->ptn.curc.value == XP_T('-') ||
 			    rex->ptn.curc.value == XP_T(']')) 
 			{
-				rex->ptn.curc.type = __SPECIAL;
+				rex->ptn.curc.type = CT_SPECIAL;
+			}
+			*/
+			if (rex->ptn.curc.value == XP_T(']')) 
+			{
+				rex->ptn.curc.type = CT_SPECIAL;
 			}
 		}
-		else if (level == __IN_RANGE)
+		else if (level == LEVEL_RANGE)
 		{
 			if (rex->ptn.curc.value == XP_T(',') ||
 			    rex->ptn.curc.value == XP_T('}')) 
 			{
-				rex->ptn.curc.type = __SPECIAL;
+				rex->ptn.curc.type = CT_SPECIAL;
 			}
 		}
 	}
@@ -594,6 +702,45 @@ static const xp_byte_t* __print_atom (const xp_byte_t* p)
 		p = __print_expression (p);
 		xp_printf (XP_T(")"));
 	}
+	else if (cp->cmd == CMD_CHARSET)
+	{
+		xp_size_t csc, csl, i;
+
+		p += xp_sizeof(*cp);
+		xp_printf (XP_T("["));
+		if (cp->negate) xp_printf (XP_T("^"));
+
+		csc = *(xp_size_t*)p; p += xp_sizeof(csc);
+		csl = *(xp_size_t*)p; p += xp_sizeof(csl);
+
+		for (i = 0; i < csc; i++)
+		{
+			xp_char_t c0, c1, c2;
+
+			c0 = *(xp_char_t*)p;
+			p += xp_sizeof(c0);
+			if (c0 == CHARSET_ONE)
+			{
+				c1 = *(xp_char_t*)p;
+				xp_printf (XP_T("%c"), c1);
+			}
+			else if (c0 == CHARSET_RANGE)
+			{
+				c1 = *(xp_char_t*)p;
+				p += xp_sizeof(c1);
+				c2 = *(xp_char_t*)p;
+				xp_printf (XP_T("%c-%c"), c1, c2);
+			}
+			else
+			{
+xp_printf (XP_T("FUCK: WRONG CHARSET CODE\n"));
+			}
+
+			p += xp_sizeof(c1);
+		}
+
+		xp_printf (XP_T("]"));
+	}
 	else 
 	{
 xp_printf (XP_T("FUCK FUCK FUCK\n"));
@@ -614,5 +761,3 @@ xp_printf (XP_T("FUCK FUCK FUCK\n"));
 
 	return p;
 }
-
-
