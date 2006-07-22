@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.26 2006-07-06 15:54:41 bacon Exp $
+ * $Id: sa.h,v 1.27 2006-07-22 16:40:39 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -44,6 +44,12 @@
 #define xp_isalpha isalpha
 #define xp_isalnum isalnum
 #define xp_isspace isspace
+#define xp_iscntrl iscntrl
+#define xp_isgraph isgraph
+#define xp_islower islower
+#define xp_isupper isupper
+#define xp_isprint isprint
+#define xp_ispunct ispunct
 #define xp_toupper toupper
 #define xp_tolower tolower
 #else
@@ -52,6 +58,12 @@
 #define xp_isalpha iswalpha
 #define xp_isalnum iswalnum
 #define xp_isspace iswspace
+#define xp_iscntrl iswcntrl
+#define xp_isgraph iswgraph
+#define xp_islower iswlower
+#define xp_isupper iswupper
+#define xp_isprint iswprint
+#define xp_ispunct iswpunct
 #define xp_toupper towupper
 #define xp_tolower towlower
 #endif

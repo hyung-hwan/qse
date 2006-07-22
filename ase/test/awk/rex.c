@@ -23,7 +23,10 @@ int xp_main (int argc, const xp_char_t* argv[])
 	}
 
 
-	ptn = XP_T("^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]|^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]");
+	//ptn = XP_T("|");
+	//ptn = XP_T("^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]|^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]");
+	//ptn = XP_T("^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]");
+	ptn = XP_T("^he.llo(jo(in|kk)s|com)|[^x[:space:][:alpha:]j][^abc][de-f]|^he.llo(jo(in|kk)s|com)|[^x[:space:][:alpha:]j][^abc][de-f]");
 	if (xp_awk_rex_compile (rex, ptn, xp_strlen(ptn)) == -1)
 	{
 		xp_printf (XP_T("cannot compile pattern...\n"));
