@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.8 2006-07-21 05:05:03 bacon Exp $
+ * $Id: rex.c,v 1.9 2006-07-22 16:40:39 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -8,6 +8,7 @@
 #include <xp/bas/memory.h>
 #include <xp/bas/string.h>
 #include <xp/bas/assert.h>
+#include <xp/bas/ctype.h>
 #endif
 
 enum
@@ -49,16 +50,10 @@ enum
 	CHARSET_CLASS_ALNUM
 };
 
-#define PC_CMD(rex,base)    (rex)->code[(base)].dc.cmd
-#define PC_BFLAG(rex,base)  (rex)->code[(base)].dc.bflag
-#define PC_LBOUND(rex,base) (rex)->code[(base)].dc.lbound
-#define PC_UBOUND(rex,base) (rex)->code[(base)].dc.ubound
-#define PC_VALUE(rex,base)  (rex)->code[(base)].cc
-
 #define BOUND_MIN 0
 #define BOUND_MAX (XP_TYPE_MAX(xp_size_t))
 
-struct __code
+struct __code_t
 {
 	//xp_byte_t cmd;
 	short cmd;
@@ -75,18 +70,70 @@ struct __code
 #define ADD_CODE(rex,data,len) \
 	do { if (__add_code(rex,data,len) == -1) return -1; } while (0)
 
+#define CODEAT(rex,pos,type) (*((type*)&(rex)->code.buf[pos]))
+
 static int __compile_expression (xp_awk_rex_t* rex);
 static int __compile_branch (xp_awk_rex_t* rex);
 static int __compile_atom (xp_awk_rex_t* rex);
-static int __compile_charset (xp_awk_rex_t* rex, struct __code* cmd);
-static int __compile_bound (xp_awk_rex_t* rex, struct __code* cmd);
-static int __compile_range (xp_awk_rex_t* rex, struct __code* cmd);
+static int __compile_charset (xp_awk_rex_t* rex, struct __code_t* cmd);
+static int __compile_bound (xp_awk_rex_t* rex, struct __code_t* cmd);
+static int __compile_cclass (xp_awk_rex_t* rex, xp_char_t* cc);
+static int __compile_range (xp_awk_rex_t* rex, struct __code_t* cmd);
 static int __next_char (xp_awk_rex_t* rex, int level);
 static int __add_code (xp_awk_rex_t* rex, void* data, xp_size_t len);
 
 static const xp_byte_t* __print_expression (const xp_byte_t* p);
 static const xp_byte_t* __print_branch (const xp_byte_t* p);
 static const xp_byte_t* __print_atom (const xp_byte_t* p);
+
+static xp_bool_t __begin_with (
+	const xp_char_t* str, xp_size_t len, const xp_char_t* what);
+
+static xp_bool_t __cc_isalnum (xp_char_t c);
+static xp_bool_t __cc_isalpha (xp_char_t c);
+static xp_bool_t __cc_isblank (xp_char_t c);
+static xp_bool_t __cc_iscntrl (xp_char_t c);
+static xp_bool_t __cc_isdigit (xp_char_t c);
+static xp_bool_t __cc_isgraph (xp_char_t c);
+static xp_bool_t __cc_islower (xp_char_t c);
+static xp_bool_t __cc_isprint (xp_char_t c);
+static xp_bool_t __cc_ispunct (xp_char_t c);
+static xp_bool_t __cc_isspace (xp_char_t c);
+static xp_bool_t __cc_isupper (xp_char_t c);
+static xp_bool_t __cc_isxdigit (xp_char_t c);
+
+static struct __char_class_t
+{
+	const xp_char_t* name;
+	xp_bool_t (*func) (xp_char_t c);
+};
+
+static struct __char_class_t __char_class [] =
+{
+	{ XP_T("alnum"),  __cc_isalnum },
+	{ XP_T("alpha"),  __cc_isalpha },
+	{ XP_T("blank"),  __cc_isblank },
+	{ XP_T("cntrl"),  __cc_iscntrl },
+	{ XP_T("digit"),  __cc_isdigit },
+	{ XP_T("graph"),  __cc_isgraph },
+	{ XP_T("lower"),  __cc_islower },
+	{ XP_T("print"),  __cc_isprint },
+	{ XP_T("punct"),  __cc_ispunct },
+	{ XP_T("space"),  __cc_isspace },
+	{ XP_T("upper"),  __cc_isupper },
+	{ XP_T("xdigit"), __cc_isxdigit },
+
+	/*
+	{ XP_T("arabic"),   __cc_isarabic },
+	{ XP_T("chinese"),  __cc_ischinese },
+	{ XP_T("english"),  __cc_isenglish },
+	{ XP_T("japanese"), __cc_isjapanese },
+	{ XP_T("korean"),   __cc_iskorean }, 
+	{ XP_T("thai"),     __cc_isthai }, 
+	*/
+
+	{ XP_NULL,        XP_NULL }
+};
 
 xp_awk_rex_t* xp_awk_rex_open (xp_awk_rex_t* rex)
 {
@@ -151,17 +198,17 @@ xp_printf (XP_T("code.size = %u\n"), (unsigned int)rex->code.size);
 static int __compile_expression (xp_awk_rex_t* rex)
 {
 	xp_size_t zero = 0;
-	xp_size_t* nb, * el;
 	xp_size_t old_size;
+	xp_size_t pos_nb, pos_el;
 	int n;
 
 	old_size = rex->code.size;
 
 	/* secure space for header and set the header fields to zero */
-	nb = (xp_size_t*)&rex->code.buf[rex->code.size];
+	pos_nb = rex->code.size;
 	ADD_CODE (rex, &zero, xp_sizeof(zero));
 
-	el = (xp_size_t*)&rex->code.buf[rex->code.size];
+	pos_el = rex->code.size;
 	ADD_CODE (rex, &zero, xp_sizeof(zero));
 
 	/* handle the first branch */
@@ -169,11 +216,11 @@ static int __compile_expression (xp_awk_rex_t* rex)
 	if (n == -1) return -1;
 	if (n == 0) 
 	{
-		/* TODO: what if the expression starts with a vertical bar??? */
+		/* if the expression is empty, the control reaches here */
 		return 0;
 	}
 
-	(*nb) += 1;
+	CODEAT(rex,pos_nb,xp_size_t) += 1;
 
 	/* handle subsequent branches if any */
 	while (rex->ptn.curc.type == CT_SPECIAL && 
@@ -186,39 +233,37 @@ static int __compile_expression (xp_awk_rex_t* rex)
 		if (n == 0) 
 		{
 			/* if the pattern ends with a vertical bar(|),
-			 * this block can be reached. however, the use
-			 * of such an expression is highly discouraged */
-
-			/* TODO: should it return an error???? */
+			 * this block can be reached. however, such a 
+			 * pattern is highly discouraged */
 			break;
 		}
 
-		(*nb) += 1;
+		CODEAT(rex,pos_nb,xp_size_t) += 1;
 	}
 
-	*el = rex->code.size - old_size;
+	CODEAT(rex,pos_el,xp_size_t) = rex->code.size - old_size;
 	return 1;
 }
 
 static int __compile_branch (xp_awk_rex_t* rex)
 {
 	int n;
-	xp_size_t* na, * bl;
-	xp_size_t old_size;
 	xp_size_t zero = 0;
-	struct __code* cmd;
+	xp_size_t old_size;
+	xp_size_t pos_na, pos_bl;
+	struct __code_t* cmd;
 
 	old_size = rex->code.size;
 
-	na = (xp_size_t*)&rex->code.buf[rex->code.size];
+	pos_na = rex->code.size;
 	ADD_CODE (rex, &zero, xp_sizeof(zero));
 
-	bl = (xp_size_t*)&rex->code.buf[rex->code.size];
+	pos_bl = rex->code.size;
 	ADD_CODE (rex, &zero, xp_sizeof(zero));
 
 	while (1)
 	{
-		cmd = (struct __code*)&rex->code.buf[rex->code.size];
+		cmd = (struct __code_t*)&rex->code.buf[rex->code.size];
 
 		n = __compile_atom (rex);
 		if (n == -1) 
@@ -239,17 +284,17 @@ static int __compile_branch (xp_awk_rex_t* rex)
 		/* n == 0  no bound character. just continue */
 		/* n == 1  bound has been applied by compile_bound */
 
-		(*na) += 1;
+		CODEAT(rex,pos_na,xp_size_t) += 1;
 	}
 
-	*bl = rex->code.size - old_size;
-	return ((*na) == 0)? 0: 1;
+	CODEAT(rex,pos_bl,xp_size_t) = rex->code.size - old_size;
+	return (rex->code.size == old_size)? 0: 1;
 }
 
 static int __compile_atom (xp_awk_rex_t* rex)
 {
 	int n;
-	struct __code tmp;
+	struct __code_t tmp;
 
 	if (rex->ptn.curc.type == CT_EOF) return 0;
 
@@ -301,9 +346,9 @@ static int __compile_atom (xp_awk_rex_t* rex)
 		}
 		else if (rex->ptn.curc.value == XP_T('['))
 		{
-			struct __code* cmd;
+			struct __code_t* cmd;
 
-			cmd = (struct __code*)&rex->code.buf[rex->code.size];
+			cmd = (struct __code_t*)&rex->code.buf[rex->code.size];
 
 			tmp.cmd = CMD_CHARSET;
 			tmp.negate = 0;
@@ -349,17 +394,17 @@ static int __compile_atom (xp_awk_rex_t* rex)
 	}
 }
 
-static int __compile_charset (xp_awk_rex_t* rex, struct __code* cmd)
+static int __compile_charset (xp_awk_rex_t* rex, struct __code_t* cmd)
 {
 	xp_size_t zero = 0;
-	xp_size_t* csc, * csl;
 	xp_size_t old_size;
+	xp_size_t pos_csc, pos_csl;
 
 	old_size = rex->code.size;
 
-	csc = (xp_size_t*)&rex->code.buf[rex->code.size];
+	pos_csc = rex->code.size;
 	ADD_CODE (rex, &zero, xp_sizeof(zero));
-	csl = (xp_size_t*)&rex->code.buf[rex->code.size];
+	pos_csl = rex->code.size;
 	ADD_CODE (rex, &zero, xp_sizeof(zero));
 
 	if (rex->ptn.curc.type == CT_NORMAL &&
@@ -372,20 +417,22 @@ static int __compile_charset (xp_awk_rex_t* rex, struct __code* cmd)
 	while (rex->ptn.curc.type == CT_NORMAL)
 	{
 		xp_char_t c0, c1, c2;
+		int cc = 0;
 
 		c1 = rex->ptn.curc.value;
 		NEXT_CHAR(rex, LEVEL_CHARSET);
 
-		#if 0
 		if (c1 == XP_T('[') &&
 		    rex->ptn.curc.type == CT_NORMAL &&
 		    rex->ptn.curc.value == XP_T(':'))
 		{
-			/* beginning of character class */
+			if (__compile_cclass (rex, &c1) == -1)
+			{
+				return -1;
+			}
 
-			/* change c1 */
+			cc = cc | 1;
 		}
-		#endif
 
 		c2 = c1;
 		if (rex->ptn.curc.type == CT_NORMAL &&
@@ -396,43 +443,105 @@ static int __compile_charset (xp_awk_rex_t* rex, struct __code* cmd)
 			if (rex->ptn.curc.type == CT_NORMAL)
 			{
 				c2 = rex->ptn.curc.value;
-				NEXT_CHAR(rex, LEVEL_CHARSET);
+				NEXT_CHAR (rex, LEVEL_CHARSET);
 
-				#if 0
 				if (c2 == XP_T('[') &&
 				    rex->ptn.curc.type == CT_NORMAL &&
 				    rex->ptn.curc.value == XP_T(':'))
 				{
-					/* beginning of character class */
-					/* change c2 */
+					if (__compile_cclass (rex, &c2) == -1)
+					{
+						return -1;
+					}
+
+					cc = cc | 2;
 				}
-				#endif
 			}	
+			else cc = cc | 4;
 		}
 
 
-		if (c1 == c2)
+		if (cc == 0 || cc == 4)
 		{
-			c0 = CHARSET_ONE;
+			if (c1 == c2)
+			{
+				c0 = CHARSET_ONE;
+				ADD_CODE (rex, &c0, xp_sizeof(c0));
+				ADD_CODE (rex, &c1, xp_sizeof(c1));
+			}
+			else
+			{
+				c0 = CHARSET_RANGE;
+				ADD_CODE (rex, &c0, xp_sizeof(c0));
+				ADD_CODE (rex, &c1, xp_sizeof(c1));
+				ADD_CODE (rex, &c2, xp_sizeof(c2));
+			}
+		}
+		else if (cc == 1)
+		{
+			c0 = CHARSET_CLASS;
 			ADD_CODE (rex, &c0, xp_sizeof(c0));
 			ADD_CODE (rex, &c1, xp_sizeof(c1));
 		}
 		else
 		{
-			c0 = CHARSET_RANGE;
-			ADD_CODE (rex, &c0, xp_sizeof(c0));
-			ADD_CODE (rex, &c1, xp_sizeof(c1));
-			ADD_CODE (rex, &c2, xp_sizeof(c2));
+			/* invalid range */
+xp_printf (XP_T("invalid character set range\n"));
+			return -1;
 		}
 
-		(*csc) += 1;
+		CODEAT(rex,pos_csc,xp_size_t) += 1;
 	}
 
-	*csl = rex->code.size - old_size;
+	CODEAT(rex,pos_csl,xp_size_t) = rex->code.size - old_size;
 	return 1;
 }
 
-static int __compile_bound (xp_awk_rex_t* rex, struct __code* cmd)
+static int __compile_cclass (xp_awk_rex_t* rex, xp_char_t* cc)
+{
+	const struct __char_class_t* ccp = __char_class;
+	xp_size_t len = rex->ptn.end - rex->ptn.curp;
+
+	while (ccp->name != XP_NULL)
+	{
+		if (__begin_with (rex->ptn.curp, len, ccp->name)) break;
+		ccp++;
+	}
+
+	if (ccp->name == XP_NULL)
+	{
+		/* wrong class name */
+xp_printf (XP_T("wrong class name\n"));
+		return -1;
+	}
+
+	rex->ptn.curp += xp_strlen(ccp->name);
+
+	NEXT_CHAR (rex, LEVEL_CHARSET);
+	if (rex->ptn.curc.type != CT_NORMAL ||
+	    rex->ptn.curc.value != XP_T(':'))
+	{
+xp_printf (XP_T(": expected\n"));
+		return -1;
+	}
+
+	NEXT_CHAR (rex, LEVEL_CHARSET); 
+	
+	/* ] happens to be the charset ender ] */
+	if (rex->ptn.curc.type != CT_SPECIAL ||
+	    rex->ptn.curc.value != XP_T(']'))
+	{
+xp_printf (XP_T("] expected\n"));
+		return -1;
+	}
+
+	NEXT_CHAR (rex, LEVEL_CHARSET);
+
+	*cc = (xp_char_t)(ccp - __char_class);
+	return 1;
+}
+
+static int __compile_bound (xp_awk_rex_t* rex, struct __code_t* cmd)
 {
 	if (rex->ptn.curc.type != CT_SPECIAL) return 0;
 
@@ -483,7 +592,7 @@ static int __compile_bound (xp_awk_rex_t* rex, struct __code* cmd)
 	return 0;
 }
 
-static int __compile_range (xp_awk_rex_t* rex, struct __code* cmd)
+static int __compile_range (xp_awk_rex_t* rex, struct __code_t* cmd)
 {
 	xp_size_t bound;
 
@@ -531,7 +640,6 @@ static int __next_char (xp_awk_rex_t* rex, int level)
 	rex->ptn.curc.type = CT_NORMAL;
 	rex->ptn.curc.value = *rex->ptn.curp++;
 
-xp_printf (XP_T("[%c]\n"), rex->ptn.curc.value);
 	if (rex->ptn.curc.value == XP_T('\\'))
 	{	       
 		if (rex->ptn.curp >= rex->ptn.end)
@@ -542,14 +650,6 @@ xp_printf (XP_T("[%c]\n"), rex->ptn.curc.value);
 		}
 
 		rex->ptn.curc.value = *rex->ptn.curp++;
-
-		/* TODO: need this? */
-		/*
-		if (rex->ptn.curc.value == XP_T('n')) rex->ptn.curc = XP_T('\n');
-		else if (rex->ptn.curc.value == XP_T('r')) rex->ptn.curc = XP_T('\r');
-		else if (rex->ptn.curc.value == XP_T('t')) rex->ptn.curc = XP_T('\t');
-		*/
-
 		return 0;
 	}
 	else
@@ -573,14 +673,6 @@ xp_printf (XP_T("[%c]\n"), rex->ptn.curc.value);
 		}
 		else if (level == LEVEL_CHARSET)
 		{
-			/*
-			if (rex->ptn.curc.value == XP_T('^') ||
-			    rex->ptn.curc.value == XP_T('-') ||
-			    rex->ptn.curc.value == XP_T(']')) 
-			{
-				rex->ptn.curc.type = CT_SPECIAL;
-			}
-			*/
 			if (rex->ptn.curc.value == XP_T(']')) 
 			{
 				rex->ptn.curc.type = CT_SPECIAL;
@@ -641,8 +733,7 @@ static const xp_byte_t* __print_expression (const xp_byte_t* p)
 
 	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
 	el = *(xp_size_t*)p; p += xp_sizeof(el);
-//xp_printf (XP_T("NA = %u, EL = %u\n"), 
-//	(unsigned int)nb, (unsigned int)el);
+//xp_printf (XP_T("NA = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
 
 	for (i = 0; i < nb; i++)
 	{
@@ -659,8 +750,7 @@ static const xp_byte_t* __print_branch (const xp_byte_t* p)
 
 	na = *(xp_size_t*)p; p += xp_sizeof(na);
 	bl = *(xp_size_t*)p; p += xp_sizeof(bl);
-//xp_printf (XP_T("NA = %u, BL = %u\n"), 
-//	(unsigned int) na, (unsigned int)bl);
+//xp_printf (XP_T("NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
 
 	for (i = 0; i < na; i++)
 	{
@@ -672,7 +762,7 @@ static const xp_byte_t* __print_branch (const xp_byte_t* p)
 
 static const xp_byte_t* __print_atom (const xp_byte_t* p)
 {
-	struct __code* cp = (struct __code*)p;
+	struct __code_t* cp = (struct __code_t*)p;
 
 	if (cp->cmd == CMD_BOL)
 	{
@@ -731,6 +821,11 @@ static const xp_byte_t* __print_atom (const xp_byte_t* p)
 				c2 = *(xp_char_t*)p;
 				xp_printf (XP_T("%c-%c"), c1, c2);
 			}
+			else if (c0 == CHARSET_CLASS)
+			{
+				c1 = *(xp_char_t*)p;
+				xp_printf (XP_T("[:%s:]"), __char_class[c1]);
+			}
 			else
 			{
 xp_printf (XP_T("FUCK: WRONG CHARSET CODE\n"));
@@ -760,4 +855,119 @@ xp_printf (XP_T("FUCK FUCK FUCK\n"));
 
 
 	return p;
+}
+
+static xp_bool_t __begin_with (
+	const xp_char_t* str, xp_size_t len, const xp_char_t* what)
+{
+	const xp_char_t* end = str + len;
+
+	while (str < end)
+	{
+		if (*what == XP_T('\0')) return xp_true;
+		if (*what != *str) return xp_false;
+
+		str++; what++;
+	}
+
+	if (*what == XP_T('\0')) return xp_true;
+	return xp_false;
+}
+
+int xp_awk_rex_match (xp_awk_rex_t* rex, 
+	const xp_char_t* str, xp_size_t len, 
+	const xp_char_t** match, xp_size_t* match_len)
+{
+	xp_size_t offset = 0;
+
+	while (offset <= len)
+	{
+		__match_expression (rex);
+	}
+}
+
+void __match_expression (xp_awk_rex_t* rex)
+{
+	xp_size_t nb, el, i;
+
+	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
+	el = *(xp_size_t*)p; p += xp_sizeof(el);
+
+	for (i = 0; i < nb; i++)
+	{
+		__match_branch (rex);
+	}
+
+	return p;
+}
+
+void __match_branch (xp_awk_rex_t* rex)
+{
+}
+
+void __match_atom (xp_awk_rex_t* rex)
+{
+}
+
+static const xp_byte_t* __print_branch (const xp_byte_t* p)
+}
+
+static xp_bool_t __cc_isalnum (xp_char_t c)
+{
+	return xp_isalnum (c);
+}
+
+static xp_bool_t __cc_isalpha (xp_char_t c)
+{
+	return xp_isalpha (c);
+}
+
+static xp_bool_t __cc_isblank (xp_char_t c)
+{
+	return c == XP_T(' ') || c == XP_T('\t');
+}
+
+static xp_bool_t __cc_iscntrl (xp_char_t c)
+{
+	return xp_iscntrl (c);
+}
+
+static xp_bool_t __cc_isdigit (xp_char_t c)
+{
+	return xp_isdigit (c);
+}
+
+static xp_bool_t __cc_isgraph (xp_char_t c)
+{
+	return xp_isgraph (c);
+}
+
+static xp_bool_t __cc_islower (xp_char_t c)
+{
+	return xp_islower (c);
+}
+
+static xp_bool_t __cc_isprint (xp_char_t c)
+{
+	return xp_isprint (c);
+}
+
+static xp_bool_t __cc_ispunct (xp_char_t c)
+{
+	return xp_ispunct (c);
+}
+
+static xp_bool_t __cc_isspace (xp_char_t c)
+{
+	return xp_isspace (c);
+}
+
+static xp_bool_t __cc_isupper (xp_char_t c)
+{
+	return xp_isupper (c);
+}
+
+static xp_bool_t __cc_isxdigit (xp_char_t c)
+{
+	return xp_isxdigit (c);
 }
