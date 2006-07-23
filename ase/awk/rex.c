@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.9 2006-07-22 16:40:39 bacon Exp $
+ * $Id: rex.c,v 1.10 2006-07-23 16:31:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -62,6 +62,18 @@ struct __code_t
 	xp_size_t ubound;
 };
 
+struct __match_t
+{
+	const xp_char_t* bp; /* base point */
+	const xp_char_t* end;
+	const xp_char_t* mp; /* match point */
+	xp_bool_t matched;
+	xp_size_t match_len;
+
+	const xp_byte_t* branch;
+	const xp_byte_t* branch_end;
+};
+
 #define NCHARS_REMAINING(rex) ((rex)->ptn.end - (rex)->ptn.curp)
 	
 #define NEXT_CHAR(rex,level) \
@@ -86,8 +98,20 @@ static const xp_byte_t* __print_expression (const xp_byte_t* p);
 static const xp_byte_t* __print_branch (const xp_byte_t* p);
 static const xp_byte_t* __print_atom (const xp_byte_t* p);
 
+
 static xp_bool_t __begin_with (
 	const xp_char_t* str, xp_size_t len, const xp_char_t* what);
+
+static xp_byte_t* __match_expression (
+	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
+static xp_byte_t* __match_branch (
+	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
+static xp_byte_t* __match_branch_body (
+	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
+static xp_byte_t* __match_atom (
+	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
+static xp_byte_t* __match_any_char (
+	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
 
 static xp_bool_t __cc_isalnum (xp_char_t c);
 static xp_bool_t __cc_isalpha (xp_char_t c);
@@ -762,7 +786,7 @@ static const xp_byte_t* __print_branch (const xp_byte_t* p)
 
 static const xp_byte_t* __print_atom (const xp_byte_t* p)
 {
-	struct __code_t* cp = (struct __code_t*)p;
+	const struct __code_t* cp = (const struct __code_t*)p;
 
 	if (cp->cmd == CMD_BOL)
 	{
@@ -876,40 +900,200 @@ static xp_bool_t __begin_with (
 
 int xp_awk_rex_match (xp_awk_rex_t* rex, 
 	const xp_char_t* str, xp_size_t len, 
-	const xp_char_t** match, xp_size_t* match_len)
+	xp_size_t* match_offset, xp_size_t* match_len)
 {
 	xp_size_t offset = 0;
+	struct __match_t mat;
+
+	mat.matched = xp_false;
 
 	while (offset <= len)
 	{
-		__match_expression (rex);
+		mat.bp = str;
+		mat.end = str + len;
+		mat.mp = str + offset;
+
+		__match_expression (rex, rex->code.buf, &mat);
+		if (mat.matched)
+		{
+			*match_offset = offset;
+			*match_len = mat.match_len;
+			break;
+		}
+
+		offset++;
 	}
+
+	return (mat.matched)? 0: -1;
 }
 
-void __match_expression (xp_awk_rex_t* rex)
+static const xp_byte_t* __match_expression (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
+	xp_byte_t* p;
 	xp_size_t nb, el, i;
+	struct __match_t mat2;
 
+	p = base;
 	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
 	el = *(xp_size_t*)p; p += xp_sizeof(el);
 
+	mat->matched = xp_false;
+	mat->match_len = 0;
+
+	mat2.bp = mat->bp;
+	mat2.end = mat->end;
+
 	for (i = 0; i < nb; i++)
 	{
-		__match_branch (rex);
+		mat2.mp = mat->mp;
+
+		p = __match_branch (rex, p, &mat2);
+		if (mat2.matched)
+		{
+			mat->matched = xp_true;
+			mat->match_len = mat2.match_len;
+			break;
+		}
+	}
+
+	return base + el;
+}
+
+static const xp_byte_t* __match_branch (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
+{
+	xp_byte_t* p;
+	xp_size_t na, bl, i;
+
+	p = base;
+
+	na = *(xp_size_t*)p; p += xp_sizeof(na);
+	bl = *(xp_size_t*)p; p += xp_sizeof(bl);
+
+	/* remember the current branch to work on */
+	mat->branch = base;
+	mat->branch_end = base + bl;
+
+	return __match_branch_body (rex, base, mat);
+}
+
+static const xp_byte_t* __match_branch_body (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
+{
+	struct __match_t mat2;
+	const xp_byte_t* p;
+
+	mat->matched = xp_false;
+	mat->match_len = 0;
+
+	mat2.bp = mst->bp;
+	mat2.end = mst->end;
+	mat2.mp = mst->mp;
+	mat2.branch = mst->branch;
+	mat2.branch_end = mst->branch_end;
+
+	p = base;
+
+	while (p < mat->branch_end)
+	{
+		p = __match_atom (rex, p, &mat2);
+
+		if (!mat2.matched) 
+		{
+			mat->matched = xp_false;
+			break; /* stop matching */
+		}
+
+		mat->matched = xp_true;
+		mat->match_len += mat2.match_len;
+
+		mat2.mp = mat2.match_len;
+	}
+
+	return mst->branch_end;
+}
+
+static const xp_byte_t* __match_atom (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
+{
+	xp_byte_t* p;
+	const struct __code_t* cp;
+       
+	p = base;
+	cp = (struct __match_t*)p;
+
+	p += xp_sizeof(*cp);
+
+	if (cp->cmd == CMD_ANY_CHAR)
+	{
+		p = __match_any_char (rex, p, &mat2);
+	}
+	else 
+	{
+xp_printf (XP_T("FUCK: __mtach_atom\n"));
 	}
 
 	return p;
 }
 
-void __match_branch (xp_awk_rex_t* rex)
+static xp_byte_t* __match_any_char (
+	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat)
 {
-}
+	xp_byte_t* p;
+	xp_size_t si = 0;
 
-void __match_atom (xp_awk_rex_t* rex)
-{
-}
+	p = base;
 
-static const xp_byte_t* __print_branch (const xp_byte_t* p)
+	mat->matched = xp_false;
+	mat->match_len = 0;
+
+	/* find the longest match */
+	while (1)
+	{
+		if (si >= cp->ubound) break; 
+		if (mat->mp[si] == XP_T('\0')) break;
+		si++;
+	}
+
+	if (si == cp->ubound)
+	{
+		/* the match found */
+
+		if (cp->lbound == cp->ubound)
+		{
+			/* fixed occurrences requested. returns the match */
+			mat->matched = xp_true;
+			mat->match_len = si;
+		}
+		else
+		{
+			/* otherwise, it checks if the remaining atoms match */
+			while (si >= cp->lbound)
+			{
+				struct __match_t mat2;
+
+				mat2.bp = mat->bp;
+				mat2.end = mat->end;
+				mat2.mp = &mat->mp[si];
+				mat2.branch = mat->branch;
+				mat2.branch_end = mat->branch_end;
+
+				p = match_branch_body (rex, p, &mat2);
+
+				if (mat2.matched)
+				{
+					mat->matched = xp_true;
+					mat->match_len = si + mat2.match_len;
+					break;
+				}
+
+				si--;
+			}
+		}
+	}
+
+	return p;
 }
 
 static xp_bool_t __cc_isalnum (xp_char_t c)
