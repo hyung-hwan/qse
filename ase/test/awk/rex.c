@@ -11,7 +11,6 @@
 
 int xp_main (int argc, const xp_char_t* argv[])
 {
-
 	xp_awk_rex_t* rex;
 	const xp_char_t* ptn;
 
@@ -22,11 +21,11 @@ int xp_main (int argc, const xp_char_t* argv[])
 		return -1;
 	}
 
-
 	//ptn = XP_T("|");
 	//ptn = XP_T("^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]|^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]");
 	//ptn = XP_T("^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]");
-	ptn = XP_T("^he.llo(jo(in|kk)s|com)|[^x[:space:][:alpha:]j][^abc][de-f]|^he.llo(jo(in|kk)s|com)|[^x[:space:][:alpha:]j][^abc][de-f]");
+	//ptn = XP_T("^he.llo(jo(in|kk)s|com)|[^x[:space:][:alpha:]j][^abc][de-f]|^he.llo(jo(in|kk)s|com)|[^x[:space:][:alpha:]j][^abc][de-f]");
+	ptn = XP_T("^.{0,2}.z[^[:space:]]+(abc|zzz){1,2}khg");
 	if (xp_awk_rex_compile (rex, ptn, xp_strlen(ptn)) == -1)
 	{
 		xp_printf (XP_T("cannot compile pattern...\n"));
@@ -35,6 +34,21 @@ int xp_main (int argc, const xp_char_t* argv[])
 	}
 
 	xp_awk_rex_print (rex);
+
+	{
+		const xp_char_t* match_ptr;
+		xp_size_t match_len;
+		//if (xp_awk_rex_match (rex, XP_T("azhabc"), 6, &match_ptr, &match_len) == 0)
+		if (xp_awk_rex_match (rex, XP_T("azhzzzabckhgi"), 13, &match_ptr, &match_len) == 0)
+		{
+			xp_printf (XP_T("match = %s, match length = %u\n"), match_ptr, match_len);
+		}
+		else 
+		{
+			xp_printf (XP_T("go to hell\n"));
+		}
+
+	}
 	xp_awk_rex_close (rex);
 	return 0;
 }

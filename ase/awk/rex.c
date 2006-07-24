@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.10 2006-07-23 16:31:20 bacon Exp $
+ * $Id: rex.c,v 1.11 2006-07-24 11:58:53 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -53,6 +53,7 @@ enum
 #define BOUND_MIN 0
 #define BOUND_MAX (XP_TYPE_MAX(xp_size_t))
 
+
 struct __code_t
 {
 	//xp_byte_t cmd;
@@ -64,15 +65,17 @@ struct __code_t
 
 struct __match_t
 {
-	const xp_char_t* bp; /* base point */
-	const xp_char_t* end;
-	const xp_char_t* mp; /* match point */
+	const xp_char_t* match_ptr;
+
 	xp_bool_t matched;
 	xp_size_t match_len;
 
 	const xp_byte_t* branch;
 	const xp_byte_t* branch_end;
 };
+
+typedef const xp_byte_t* (*atom_matcher_t) (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
 
 #define NCHARS_REMAINING(rex) ((rex)->ptn.end - (rex)->ptn.curp)
 	
@@ -98,20 +101,36 @@ static const xp_byte_t* __print_expression (const xp_byte_t* p);
 static const xp_byte_t* __print_branch (const xp_byte_t* p);
 static const xp_byte_t* __print_atom (const xp_byte_t* p);
 
-
 static xp_bool_t __begin_with (
 	const xp_char_t* str, xp_size_t len, const xp_char_t* what);
 
-static xp_byte_t* __match_expression (
-	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
-static xp_byte_t* __match_branch (
-	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
-static xp_byte_t* __match_branch_body (
-	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
-static xp_byte_t* __match_atom (
-	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
-static xp_byte_t* __match_any_char (
-	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_expression (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_branch (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_branch_body (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_atom (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_bol (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_eol (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_any_char (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_ord_char (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_charset (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+static const xp_byte_t* __match_group (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat);
+
+static const xp_byte_t* __match_bound (
+	xp_awk_rex_t* rex, xp_size_t si, const xp_byte_t* p,
+	const struct __code_t* cp, struct __match_t* mat);
+
+static xp_bool_t __test_charset (
+	const xp_byte_t* p, xp_size_t csc, xp_char_t c);
 
 static xp_bool_t __cc_isalnum (xp_char_t c);
 static xp_bool_t __cc_isalpha (xp_char_t c);
@@ -809,13 +828,6 @@ static const xp_byte_t* __print_atom (const xp_byte_t* p)
 		xp_printf (XP_T("%c"), *(xp_char_t*)p);
 		p += xp_sizeof(xp_char_t);
 	}
-	else if (cp->cmd == CMD_GROUP)
-	{
-		p += xp_sizeof(*cp);
-		xp_printf (XP_T("("));
-		p = __print_expression (p);
-		xp_printf (XP_T(")"));
-	}
 	else if (cp->cmd == CMD_CHARSET)
 	{
 		xp_size_t csc, csl, i;
@@ -848,7 +860,7 @@ static const xp_byte_t* __print_atom (const xp_byte_t* p)
 			else if (c0 == CHARSET_CLASS)
 			{
 				c1 = *(xp_char_t*)p;
-				xp_printf (XP_T("[:%s:]"), __char_class[c1]);
+				xp_printf (XP_T("[:%s:]"), __char_class[c1].name);
 			}
 			else
 			{
@@ -859,6 +871,13 @@ xp_printf (XP_T("FUCK: WRONG CHARSET CODE\n"));
 		}
 
 		xp_printf (XP_T("]"));
+	}
+	else if (cp->cmd == CMD_GROUP)
+	{
+		p += xp_sizeof(*cp);
+		xp_printf (XP_T("("));
+		p = __print_expression (p);
+		xp_printf (XP_T(")"));
 	}
 	else 
 	{
@@ -900,28 +919,30 @@ static xp_bool_t __begin_with (
 
 int xp_awk_rex_match (xp_awk_rex_t* rex, 
 	const xp_char_t* str, xp_size_t len, 
-	xp_size_t* match_offset, xp_size_t* match_len)
+	const xp_char_t** match_ptr, xp_size_t* match_len)
 {
 	xp_size_t offset = 0;
 	struct __match_t mat;
 
 	mat.matched = xp_false;
 
-	while (offset <= len)
-	{
-		mat.bp = str;
-		mat.end = str + len;
-		mat.mp = str + offset;
+	/* store the source string */
+	rex->match.str.ptr = str;
+	rex->match.str.end = str + len;
 
+	mat.match_ptr = str + offset;
+
+	while (mat.match_ptr < rex->match.str.end)
+	{
 		__match_expression (rex, rex->code.buf, &mat);
 		if (mat.matched)
 		{
-			*match_offset = offset;
+			*match_ptr = mat.match_ptr;
 			*match_len = mat.match_len;
 			break;
 		}
 
-		offset++;
+		mat.match_ptr++;
 	}
 
 	return (mat.matched)? 0: -1;
@@ -930,23 +951,21 @@ int xp_awk_rex_match (xp_awk_rex_t* rex,
 static const xp_byte_t* __match_expression (
 	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
-	xp_byte_t* p;
-	xp_size_t nb, el, i;
+	const xp_byte_t* p;
 	struct __match_t mat2;
+	xp_size_t nb, el, i;
 
 	p = base;
 	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
 	el = *(xp_size_t*)p; p += xp_sizeof(el);
 
+xp_printf (XP_T("NB = %u, EL = %u\n"), (unsigned)nb, (unsigned)el);
 	mat->matched = xp_false;
 	mat->match_len = 0;
 
-	mat2.bp = mat->bp;
-	mat2.end = mat->end;
-
 	for (i = 0; i < nb; i++)
 	{
-		mat2.mp = mat->mp;
+		mat2.match_ptr = mat->match_ptr;
 
 		p = __match_branch (rex, p, &mat2);
 		if (mat2.matched)
@@ -963,35 +982,34 @@ static const xp_byte_t* __match_expression (
 static const xp_byte_t* __match_branch (
 	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
-	xp_byte_t* p;
-	xp_size_t na, bl, i;
+	const xp_byte_t* p;
+	xp_size_t na, bl;
 
 	p = base;
 
 	na = *(xp_size_t*)p; p += xp_sizeof(na);
 	bl = *(xp_size_t*)p; p += xp_sizeof(bl);
+xp_printf (XP_T("NA = %u, BL = %u\n"), (unsigned)na, (unsigned)bl);
 
 	/* remember the current branch to work on */
 	mat->branch = base;
 	mat->branch_end = base + bl;
 
-	return __match_branch_body (rex, base, mat);
+	return __match_branch_body (rex, p, mat);
 }
 
 static const xp_byte_t* __match_branch_body (
 	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
-	struct __match_t mat2;
 	const xp_byte_t* p;
+	struct __match_t mat2;
 
 	mat->matched = xp_false;
 	mat->match_len = 0;
 
-	mat2.bp = mst->bp;
-	mat2.end = mst->end;
-	mat2.mp = mst->mp;
-	mat2.branch = mst->branch;
-	mat2.branch_end = mst->branch_end;
+	mat2.match_ptr = mat->match_ptr;
+	mat2.branch = mat->branch;
+	mat2.branch_end = mat->branch_end;
 
 	p = base;
 
@@ -1008,92 +1026,395 @@ static const xp_byte_t* __match_branch_body (
 		mat->matched = xp_true;
 		mat->match_len += mat2.match_len;
 
-		mat2.mp = mat2.match_len;
+		mat2.match_ptr = &mat2.match_ptr[mat2.match_len];
 	}
 
-	return mst->branch_end;
+	return mat->branch_end;
 }
 
 static const xp_byte_t* __match_atom (
 	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
-	xp_byte_t* p;
-	const struct __code_t* cp;
+	static atom_matcher_t matchers[] =
+	{
+		__match_bol,
+		__match_eol,
+		__match_any_char,
+		__match_ord_char,
+		__match_charset,
+		__match_group
+	};
        
-	p = base;
-	cp = (struct __match_t*)p;
+	xp_assert (((struct __code_t*)base)->cmd >= 0 && 
+	           ((struct __code_t*)base)->cmd < xp_countof(matchers));
 
-	p += xp_sizeof(*cp);
+	return matchers[((struct __code_t*)base)->cmd] (rex, base, mat);
+}
 
-	if (cp->cmd == CMD_ANY_CHAR)
-	{
-		p = __match_any_char (rex, p, &mat2);
-	}
-	else 
-	{
-xp_printf (XP_T("FUCK: __mtach_atom\n"));
-	}
+static const xp_byte_t* __match_bol (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
+{
+	const xp_byte_t* p = base;
+	const struct __code_t* cp;
+
+	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
+	xp_assert (cp->cmd == CMD_BOL);
+
+	mat->matched = (mat->match_ptr == rex->match.str.ptr ||
+	               (cp->lbound == cp->ubound && cp->lbound == 0));
+	mat->match_len = 0;
 
 	return p;
 }
 
-static xp_byte_t* __match_any_char (
-	xp_awk_rex_t* rex, xp_byte_t* base, struct __match_t* mat)
+static const xp_byte_t* __match_eol (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
-	xp_byte_t* p;
+	const xp_byte_t* p = base;
+	const struct __code_t* cp;
+
+	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
+	xp_assert (cp->cmd == CMD_EOL);
+
+	mat->matched = (mat->match_ptr == rex->match.str.end ||
+	               (cp->lbound == cp->ubound && cp->lbound == 0));
+	mat->match_len = 0;
+
+	return p;
+}
+
+static const xp_byte_t* __match_any_char (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
+{
+	const xp_byte_t* p = base;
+	const struct __code_t* cp;
 	xp_size_t si = 0;
 
-	p = base;
+	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
+	xp_assert (cp->cmd == CMD_ANY_CHAR);
 
 	mat->matched = xp_false;
 	mat->match_len = 0;
 
 	/* find the longest match */
-	while (1)
+	while (si < cp->ubound)
 	{
-		if (si >= cp->ubound) break; 
-		if (mat->mp[si] == XP_T('\0')) break;
+		if (&mat->match_ptr[si] >= rex->match.str.end) break;
 		si++;
 	}
 
-	if (si == cp->ubound)
+xp_printf (XP_T("max si = %d\n"), si);
+	if (si >= cp->lbound && si <= cp->ubound)
 	{
-		/* the match found */
+		p = __match_bound (rex, si, p, cp, mat);
+	}
 
-		if (cp->lbound == cp->ubound)
+	return p;
+}
+
+static const xp_byte_t* __match_ord_char (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
+{
+	const xp_byte_t* p = base;
+	const struct __code_t* cp;
+	xp_size_t si = 0;
+	xp_char_t cc;
+
+	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
+	xp_assert (cp->cmd == CMD_ORD_CHAR);
+
+	cc = *(xp_char_t*)p; p += xp_sizeof(cc);
+
+	mat->matched = xp_false;
+	mat->match_len = 0;
+
+	/* find the longest match */
+	while (si < cp->ubound)
+	{
+		if (&mat->match_ptr[si] >= rex->match.str.end) break;
+		if (cc != mat->match_ptr[si]) break;
+		si++;
+	}
+
+xp_printf (XP_T("max si = %d\n"), si);
+	if (si >= cp->lbound && si <= cp->ubound)
+	{
+		p = __match_bound (rex, si, p, cp, mat);
+	}
+
+	return p;
+}
+
+static const xp_byte_t* __match_charset (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
+{
+	const xp_byte_t* p = base;
+	const struct __code_t* cp;
+	xp_size_t si = 0, csc, csl;
+	xp_bool_t n;
+
+	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
+	xp_assert (cp->cmd == CMD_CHARSET);
+
+	csc = *(xp_size_t*)p; p += xp_sizeof(csc);
+	csl = *(xp_size_t*)p; p += xp_sizeof(csl);
+
+	mat->matched = xp_false;
+	mat->match_len = 0;
+
+	while (si < cp->ubound)
+	{
+		if (&mat->match_ptr[si] >= rex->match.str.end) break;
+
+		n = __test_charset (p, csc, mat->match_ptr[si]);
+		if (cp->negate) n = !n;
+		if (!n) break;
+
+		si++;
+	}
+
+	p = p + csl - (xp_sizeof(csc) + xp_sizeof(csl));
+
+	if (si >= cp->lbound && si <= cp->ubound)
+	{
+		p = __match_bound (rex, si, p, cp, mat);
+	}
+
+	return p;
+}
+
+static const xp_byte_t* __match_group (
+	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
+{
+	const xp_byte_t* p = base, * sub;
+	const struct __code_t* cp;
+	struct __match_t mat2;
+	xp_size_t si = 0, nb, el;
+
+xp_size_t grp_len[100];
+
+	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
+	xp_assert (cp->cmd == CMD_GROUP);
+
+	/* peep at the header of a subexpression */
+	sub = p;
+	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
+	el = *(xp_size_t*)p; p += xp_sizeof(el);
+
+	mat->matched = xp_false;
+	mat->match_len = 0;
+	
+	mat2.match_ptr = mat->match_ptr;
+
+	/* 
+	 * A grouped expression, unlike other atoms, can match one or more 
+	 * characters. When it is requested with a variable occurrences, 
+	 * the number of characters that have matched at each occurrence 
+	 * needs to be remembered for the backtracking purpose.
+	 *
+	 * An array "grp_len" is used to store the accumulated number of 
+	 * characters. grp_len[0] is set to zero always for convenience.
+	 * grp_len[1] holds the number of characters that have matched
+	 * at the first occurrence, grp_len[2] at the second occurrence, 
+	 * and so on.
+	 *
+	 * Look at the following example
+	 *
+	 *   pattern: (abc){1,3}x   string: abcabcabcxyz
+	 *
+	 *  grp_len[3] => 9 -----------+
+	 *  grp_len[2] => 6 --------+  |
+	 *  grp_len[1] => 3 -----+  |  |
+	 *  grp_len[0] => 0 --+  |  |  |
+	 *                    |  |  |  |
+	 *                     abcabcabcxyz
+	 */
+
+// TODO: make this dynamic......
+grp_len[si] = 0;
+	while (si < cp->ubound)
+	{
+		if (mat2.match_ptr >= rex->match.str.end) break;
+
+		__match_expression (rex, sub, &mat2);
+		if (!mat2.matched) break;
+
+grp_len[si+1] = grp_len[si] + mat2.match_len;
+		mat2.match_ptr += mat2.match_len;
+		mat2.match_len = 0;
+		mat2.matched = xp_false;
+
+		si++;
+	}
+
+	p = sub + el;
+
+	if (si >= cp->lbound && si <= cp->ubound)
+	{
+		if (cp->lbound == cp->ubound || p >= mat->branch_end)
 		{
-			/* fixed occurrences requested. returns the match */
 			mat->matched = xp_true;
-			mat->match_len = si;
+			mat->match_len = grp_len[si];
 		}
-		else
+		else 
 		{
-			/* otherwise, it checks if the remaining atoms match */
-			while (si >= cp->lbound)
-			{
-				struct __match_t mat2;
+			xp_assert (cp->ubound > cp->lbound);
 
-				mat2.bp = mat->bp;
-				mat2.end = mat->end;
-				mat2.mp = &mat->mp[si];
+			do
+			{
+				const xp_byte_t* tmp;
+	
+				mat2.match_ptr = &mat->match_ptr[grp_len[si]];
 				mat2.branch = mat->branch;
 				mat2.branch_end = mat->branch_end;
-
-				p = match_branch_body (rex, p, &mat2);
+	
+xp_printf (XP_T("GROUP si = %d [%s]\n"), si, mat->match_ptr);
+				tmp = __match_branch_body (rex, p, &mat2);
 
 				if (mat2.matched)
 				{
 					mat->matched = xp_true;
-					mat->match_len = si + mat2.match_len;
+					mat->match_len = grp_len[si] + mat2.match_len;
+					p = tmp;
 					break;
 				}
 
+				if (si <= cp->lbound) break;
 				si--;
-			}
+			} 
+			while (1);
 		}
+
 	}
 
 	return p;
+}
+
+static const xp_byte_t* __match_bound (
+	xp_awk_rex_t* rex, xp_size_t si, const xp_byte_t* p,
+	const struct __code_t* cp, struct __match_t* mat)
+{
+	xp_assert (si >= cp->lbound && si <= cp->ubound);
+	/* the match has been found */
+
+	if (cp->lbound == cp->ubound || p >= mat->branch_end)
+	{
+		/* if the match for fixed occurrences was 
+		 * requested or no atoms remain unchecked in 
+		 * the branch, the match is returned. */
+		mat->matched = xp_true;
+		mat->match_len = si;
+	}
+	else 
+	{
+		/* Otherwise, it checks if the remaining atoms 
+		 * match the rest of the string 
+		 * 
+		 * Let's say the caller of this function was processing
+		 * the first period character in the following example.
+		 *
+		 *     pattern: .{1,3}xx   string: xxxyy
+		 * 
+		 * It scans up to the third "x" in the string. si is set 
+		 * to 3 and p points to the first "x" in the pattern. 
+		 * It doesn't change mat.match_ptr so mat.match_ptr remains
+		 * the same.
+		 *
+		 *     si = 3    p -----+    mat.match_ptr ---+
+		 *                      |                     |
+		 *                .{1,3}xx                    xxxyy
+		 *                     
+		 *  When the code reaches here, the string pointed at by
+		 *  &mat.match_ptr[si] is tried to match against the remaining
+		 *  pattern pointed at p.
+		 *  
+		 *     &mat.match_ptr[si] ---+
+		 *                           |
+		 *                        xxxyy
+		 *
+		 * If a match is found, the match and the previous match are
+		 * merged and returned.
+		 *
+		 * If not, si is decremented by one and the match is performed
+		 * from the string pointed at by &mat.match_ptr[si].
+		 *
+		 *     &mat.match_ptr[si] --+
+		 *                          |
+		 *                        xxxyy
+		 *
+		 * This process is repeated until a match is found or si 
+		 * becomes less than cp->lbound. (si never becomes less 
+		 * than cp->lbound in the implementation below, though)
+		 */
+
+		xp_assert (cp->ubound > cp->lbound);
+
+		do
+		{
+			struct __match_t mat2;
+			const xp_byte_t* tmp;
+
+			mat2.match_ptr = &mat->match_ptr[si];
+			mat2.branch = mat->branch;
+			mat2.branch_end = mat->branch_end;
+
+xp_printf (XP_T("si = %d [%s]\n"), si, mat->match_ptr);
+			tmp = __match_branch_body (rex, p, &mat2);
+
+			if (mat2.matched)
+			{
+				mat->matched = xp_true;
+				mat->match_len = si + mat2.match_len;
+				p = tmp;
+				break;
+			}
+
+			if (si <= cp->lbound) break;
+			si--;
+		} 
+		while (1);
+	}
+
+	return p;
+}
+
+xp_bool_t __test_charset (const xp_byte_t* p, xp_size_t csc, xp_char_t c)
+{
+	xp_size_t i;
+
+	for (i = 0; i < csc; i++)
+	{
+		xp_char_t c0, c1, c2;
+
+		c0 = *(xp_char_t*)p;
+		p += xp_sizeof(c0);
+		if (c0 == CHARSET_ONE)
+		{
+			c1 = *(xp_char_t*)p;
+			if (c == c1) return xp_true;
+		}
+		else if (c0 == CHARSET_RANGE)
+		{
+			c1 = *(xp_char_t*)p;
+			p += xp_sizeof(c1);
+			c2 = *(xp_char_t*)p;
+
+			if (c >= c1 && c <= c2) return xp_true;
+		}
+		else if (c0 == CHARSET_CLASS)
+		{
+			c1 = *(xp_char_t*)p;
+			if (__char_class[c1].func (c)) return xp_true;
+		}
+		else
+		{
+xp_printf (XP_T("FUCK: WRONG CHARSET CODE IN MATCH\n"));
+		}
+
+		p += xp_sizeof(c1);
+	}
+
+	return xp_false;
 }
 
 static xp_bool_t __cc_isalnum (xp_char_t c)

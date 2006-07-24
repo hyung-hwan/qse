@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.5 2006-07-20 16:21:54 bacon Exp $
+ * $Id: rex.h,v 1.6 2006-07-24 11:58:54 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -58,6 +58,15 @@ struct xp_awk_rex_t
 		xp_size_t  capa;
 	} code;
 
+	struct
+	{
+		struct
+		{
+			const xp_char_t* ptr;
+			const xp_char_t* end;
+		} str;
+	} match;
+
 	xp_bool_t __dynamic;
 };
 
@@ -67,8 +76,14 @@ extern "C" {
 
 xp_awk_rex_t* xp_awk_rex_open (xp_awk_rex_t* rex);
 void xp_awk_rex_close (xp_awk_rex_t* rex);
+
 int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len);
+
 void xp_awk_rex_print (xp_awk_rex_t* rex);
+
+int xp_awk_rex_match (xp_awk_rex_t* rex, 
+	const xp_char_t* str, xp_size_t len, 
+	const xp_char_t** match_ptr, xp_size_t* match_len);
 
 #ifdef __cplusplus
 }
