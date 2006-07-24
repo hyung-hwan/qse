@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.6 2006-07-24 11:58:54 bacon Exp $
+ * $Id: rex.h,v 1.7 2006-07-24 16:23:19 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -67,7 +67,24 @@ struct xp_awk_rex_t
 		} str;
 	} match;
 
+	int errnum;
 	xp_bool_t __dynamic;
+};
+
+enum
+{
+	XP_AWK_REX_ENOERR,    /* no error */
+	XP_AWK_REX_ENOMEM,    /* ran out of memory */
+	XP_AWK_REX_ENOPTN,    /* no pattern compiled */
+	XP_AWK_REX_ERPAREN,   /* a right parenthesis is expected */
+	XP_AWK_REX_ERBRACKET, /* a right bracket is expected */
+	XP_AWK_REX_ERBRACE,   /* a right brace is expected */
+	XP_AWK_REX_ECOLON,    /* a colon is expected */
+	XP_AWK_REX_ECRANGE,   /* invalid character range */
+	XP_AWK_REX_ECCLASS,   /* invalid character class */
+	XP_AWK_REX_EBRANGE,   /* invalid boundary range */
+	XP_AWK_REX_EEND,      /* unexpected end of the pattern */
+	XP_AWK_REX_EGARBAGE   /* garbage after the pattern */
 };
 
 #ifdef __cplusplus
@@ -76,14 +93,16 @@ extern "C" {
 
 xp_awk_rex_t* xp_awk_rex_open (xp_awk_rex_t* rex);
 void xp_awk_rex_close (xp_awk_rex_t* rex);
+void xp_awk_rex_clear (xp_awk_rex_t* rex);
 
-int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len);
-
-void xp_awk_rex_print (xp_awk_rex_t* rex);
+int xp_awk_rex_compile (
+	xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len);
 
 int xp_awk_rex_match (xp_awk_rex_t* rex, 
 	const xp_char_t* str, xp_size_t len, 
 	const xp_char_t** match_ptr, xp_size_t* match_len);
+
+void xp_awk_rex_print (xp_awk_rex_t* rex);
 
 #ifdef __cplusplus
 }
