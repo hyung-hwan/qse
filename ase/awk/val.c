@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.44 2006-07-17 14:27:09 bacon Exp $
+ * $Id: val.c,v 1.45 2006-07-25 16:41:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -135,25 +135,24 @@ xp_awk_val_t* xp_awk_makestrval2 (
 	return (xp_awk_val_t*)val;
 }
 
-xp_awk_val_t* xp_awk_makerexval (const xp_char_t* str, xp_size_t len)
+xp_awk_val_t* xp_awk_makerexval (const xp_byte_t* buf, xp_size_t len)
 {
 	xp_awk_val_rex_t* val;
 
-/* TDOO: implement the regular expression value */
 	val = (xp_awk_val_rex_t*) xp_malloc (xp_sizeof(xp_awk_val_rex_t));
 	if (val == XP_NULL) return XP_NULL;
 
-	val->type = XP_AWK_VAL_STR;
+	val->type = XP_AWK_VAL_REX;
 	val->ref = 0;
 	val->len = len;
-	val->buf = xp_strxdup (str, len);
+	val->buf = xp_malloc (len);
 	if (val->buf == XP_NULL) 
 	{
 		xp_free (val);
 		return XP_NULL;
 	}
 
-/*xp_printf (XP_T("makerexval => %p\n"), val);*/
+	xp_memcpy (val->buf, buf, len);
 	return (xp_awk_val_t*)val;
 }
 
@@ -235,7 +234,6 @@ xp_printf (XP_T("\n"));*/
 		return;
 
 	case XP_AWK_VAL_REX:
-		/* TODO: implement the regular expression value properly */
 		xp_free (((xp_awk_val_rex_t*)val)->buf);
 		xp_free (val);
 		return;
@@ -306,6 +304,8 @@ xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
 		return ((xp_awk_val_real_t*)val)->val != 0.0;
 	case XP_AWK_VAL_STR:
 		return ((xp_awk_val_str_t*)val)->len > 0;
+	case XP_AWK_VAL_REX: /* TODO: is this correct? */
+		return ((xp_awk_val_rex_t*)val)->len > 0;
 	case XP_AWK_VAL_MAP:
 		return xp_false; /* TODO: is this correct? */
 	}

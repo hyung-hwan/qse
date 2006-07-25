@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.26 2006-07-05 16:20:23 bacon Exp $
+ * $Id: err.c,v 1.27 2006-07-25 16:41:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -59,6 +59,7 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("too few arguments"),
 		XP_T("too many arguments"),
 		XP_T("getline expected"),
+		XP_T("cannot compile the regular expression"),
 
 		XP_T("divide by zero"),
 		XP_T("invalid operand"),
@@ -75,7 +76,8 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("internal error that should never have happened")
 	};
 
-	if (awk->errnum >= 0 && awk->errnum < xp_countof(__errstr)) {
+	if (awk->errnum >= 0 && awk->errnum < xp_countof(__errstr)) 
+	{
 		return __errstr[awk->errnum];
 	}
 

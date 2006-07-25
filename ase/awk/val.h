@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.31 2006-07-17 04:17:40 bacon Exp $
+ * $Id: val.h,v 1.32 2006-07-25 16:41:40 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -104,7 +104,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len);
 xp_awk_val_t* xp_awk_makestrval2 (
 	const xp_char_t* str1, xp_size_t len1, 
 	const xp_char_t* str2, xp_size_t len2);
-xp_awk_val_t* xp_awk_makerexval (const xp_char_t* str, xp_size_t len);
+xp_awk_val_t* xp_awk_makerexval (const xp_byte_t* buf, xp_size_t len);
 xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run);
 
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val);

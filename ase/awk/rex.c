@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.12 2006-07-24 16:23:19 bacon Exp $
+ * $Id: rex.c,v 1.13 2006-07-25 16:41:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -206,6 +206,37 @@ void xp_awk_rex_close (xp_awk_rex_t* rex)
 {
 	xp_free (rex->code.buf);
 	if (rex->__dynamic) xp_free (rex);
+}
+
+int xp_awk_rex_geterrnum (xp_awk_rex_t* rex)
+{
+	return rex->errnum;
+}
+
+const xp_char_t* xp_awk_rex_geterrstr (xp_awk_rex_t* rex)
+{
+	static const xp_char_t* __errstr[] =
+	{
+		XP_T("no error"),
+		XP_T("out of memory"),
+		XP_T("no pattern compiled"),
+		XP_T("a right parenthesis is expected"),
+		XP_T("a right bracket is expected"),
+		XP_T("a right brace is expected"),
+		XP_T("a colon is expected"),
+		XP_T("invalid character range"),
+		XP_T("invalid character class"),
+		XP_T("invalid boundary range"),
+		XP_T("unexpected end of the pattern"),
+		XP_T("garbage after the pattern")
+	};
+
+	if (rex->errnum >= 0 && rex->errnum < xp_countof(__errstr)) 
+	{
+		return __errstr[rex->errnum];
+	}
+
+	return XP_T("unknown error");
 }
 
 int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len)
@@ -799,22 +830,25 @@ int xp_awk_rex_match (xp_awk_rex_t* rex,
 	rex->match.str.ptr = str;
 	rex->match.str.end = str + len;
 
+/* TODO: shoud it allow an offset here??? */
 	mat.match_ptr = str + offset;
 
 	while (mat.match_ptr < rex->match.str.end)
 	{
-		__match_pattern (rex, rex->code.buf, &mat);
+		if (__match_pattern (
+			rex, rex->code.buf, &mat) == XP_NULL) return -1;
+
 		if (mat.matched)
 		{
-			*match_ptr = mat.match_ptr;
-			*match_len = mat.match_len;
+			if (match_ptr != XP_NULL) *match_ptr = mat.match_ptr;
+			if (match_len != XP_NULL) *match_len = mat.match_len;
 			break;
 		}
 
 		mat.match_ptr++;
 	}
 
-	return (mat.matched)? 0: -1;
+	return (mat.matched)? 1: 0;
 }
 
 static const xp_byte_t* __match_pattern (
@@ -837,6 +871,8 @@ static const xp_byte_t* __match_pattern (
 		mat2.match_ptr = mat->match_ptr;
 
 		p = __match_branch (rex, p, &mat2);
+		if (p == XP_NULL) return XP_NULL;
+
 		if (mat2.matched)
 		{
 			mat->matched = xp_true;
@@ -851,40 +887,51 @@ static const xp_byte_t* __match_pattern (
 static const xp_byte_t* __match_branch (
 	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
-	const xp_byte_t* p;
-	xp_size_t na, bl;
-
-	p = base;
-
-	na = *(xp_size_t*)p; p += xp_sizeof(na);
-	bl = *(xp_size_t*)p; p += xp_sizeof(bl);
-//xp_printf (XP_T("NA = %u, BL = %u\n"), (unsigned)na, (unsigned)bl);
-
-	/* remember the current branch to work on */
+	/*
+	 * branch body (base+sizeof(NA)+sizeof(BL)---+
+	 * BL=base+sizeof(NA) ---------+             |
+	 * base=NA ------+             |             |
+	 *               |             |             |
+	 *               |NA(xp_size_t)|BL(xp_size_t)|ATOMS.........|
+	 */
 	mat->branch = base;
-	mat->branch_end = base + bl;
+	mat->branch_end = base + *((xp_size_t*)(base+xp_sizeof(xp_size_t)));
 
-	return __match_branch_body (rex, p, mat);
+	return __match_branch_body (
+		rex, base+xp_sizeof(xp_size_t)*2, mat);
 }
 
 static const xp_byte_t* __match_branch_body (
 	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
 	const xp_byte_t* p;
-	struct __match_t mat2;
+//	struct __match_t mat2;
+	xp_size_t match_len = 0;
 
 	mat->matched = xp_false;
 	mat->match_len = 0;
 
+/* TODO: is mat2 necessary here ? */
+/*
 	mat2.match_ptr = mat->match_ptr;
 	mat2.branch = mat->branch;
 	mat2.branch_end = mat->branch_end;
+*/
 
 	p = base;
 
 	while (p < mat->branch_end)
 	{
+		p = __match_atom (rex, p, mat);
+		if (p == XP_NULL) return XP_NULL;
+
+		if (!mat->matched) break;
+
+		mat->match_ptr = &mat->match_ptr[mat->match_len];
+		match_len += mat->match_len;
+#if 0
 		p = __match_atom (rex, p, &mat2);
+		if (p == XP_NULL) return XP_NULL;
 
 		if (!mat2.matched) 
 		{
@@ -896,8 +943,10 @@ static const xp_byte_t* __match_branch_body (
 		mat->match_len += mat2.match_len;
 
 		mat2.match_ptr = &mat2.match_ptr[mat2.match_len];
+#endif
 	}
 
+	if (mat->matched) mat->match_len = match_len;
 	return mat->branch_end;
 }
 
@@ -1093,26 +1142,17 @@ static const xp_byte_t* __match_charset (
 static const xp_byte_t* __match_group (
 	xp_awk_rex_t* rex, const xp_byte_t* base, struct __match_t* mat)
 {
-	const xp_byte_t* p = base, * sub;
+	const xp_byte_t* p = base;
 	const struct __code_t* cp;
 	struct __match_t mat2;
-	xp_size_t si = 0, nb, el;
-
-xp_size_t grp_len[100];
+	xp_size_t si = 0, grp_len_static[16], * grp_len;
 
 	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
 	xp_assert (cp->cmd == CMD_GROUP);
 
-	/* peep at the header of a subpattern */
-	sub = p;
-	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
-	el = *(xp_size_t*)p; p += xp_sizeof(el);
-
 	mat->matched = xp_false;
 	mat->match_len = 0;
 	
-	mat2.match_ptr = mat->match_ptr;
-
 	/* 
 	 * A grouped pattern, unlike other atoms, can match one or more 
 	 * characters. When it is requested with a variable occurrences, 
@@ -1137,16 +1177,37 @@ xp_size_t grp_len[100];
 	 *                     abcabcabcxyz
 	 */
 
-// TODO: make this dynamic......
-grp_len[si] = 0;
+	if (cp->ubound < xp_countof(grp_len_static))
+	{
+		grp_len = grp_len_static;
+	}
+	else 
+	{
+		grp_len = (xp_size_t*) xp_malloc (
+			xp_sizeof(xp_size_t) * cp->ubound);
+		if (grp_len == XP_NULL)
+		{
+			rex->errnum = XP_AWK_REX_ENOMEM;
+			return XP_NULL;
+		}
+	}
+
+	grp_len[si] = 0;
+
+	mat2.match_ptr = mat->match_ptr;
 	while (si < cp->ubound)
 	{
 		if (mat2.match_ptr >= rex->match.str.end) break;
 
-		__match_pattern (rex, sub, &mat2);
+		if (__match_pattern (rex, p, &mat2) == XP_NULL) 
+		{
+			if (grp_len != grp_len_static) xp_free (grp_len);
+			return XP_NULL;
+		}
 		if (!mat2.matched) break;
 
-grp_len[si+1] = grp_len[si] + mat2.match_len;
+		grp_len[si+1] = grp_len[si] + mat2.match_len;
+
 		mat2.match_ptr += mat2.match_len;
 		mat2.match_len = 0;
 		mat2.matched = xp_false;
@@ -1154,8 +1215,10 @@ grp_len[si+1] = grp_len[si] + mat2.match_len;
 		si++;
 	}
 
-	p = sub + el;
+	/* increment p by the length of the subpattern */
+	p += *(xp_size_t*)(p+xp_sizeof(xp_size_t));
 
+	/* check the boundary */
 	if (si >= cp->lbound && si <= cp->ubound)
 	{
 		if (cp->lbound == cp->ubound || p >= mat->branch_end)
@@ -1177,6 +1240,12 @@ grp_len[si+1] = grp_len[si] + mat2.match_len;
 	
 //xp_printf (XP_T("GROUP si = %d [%s]\n"), si, mat->match_ptr);
 				tmp = __match_branch_body (rex, p, &mat2);
+				if (tmp == XP_NULL)
+				{
+					if (grp_len != grp_len_static) 
+						xp_free (grp_len);
+					return XP_NULL;
+				}
 
 				if (mat2.matched)
 				{
@@ -1194,6 +1263,7 @@ grp_len[si+1] = grp_len[si] + mat2.match_len;
 
 	}
 
+	if (grp_len != grp_len_static) xp_free (grp_len);
 	return p;
 }
 

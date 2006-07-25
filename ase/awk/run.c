@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.135 2006-07-17 04:17:40 bacon Exp $
+ * $Id: run.c,v 1.136 2006-07-25 16:41:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -49,6 +49,7 @@ static void __close_run (xp_awk_run_t* run);
 static int __run_main (xp_awk_run_t* run);
 static int __run_pattern_blocks  (xp_awk_run_t* run);
 static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain);
+static int __handle_pattern (xp_awk_run_t* run, xp_awk_val_t* val);
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static int __run_if (xp_awk_run_t* run, xp_awk_nde_if_t* nde);
@@ -290,6 +291,14 @@ static int __open_run (
 		return -1;
 	}
 
+	if (xp_awk_rex_open (&run->rex_matcher) == XP_NULL)
+	{
+		xp_awk_map_close (&run->named);
+		xp_str_close (&run->inrec.line);
+		run->errnum = XP_AWK_ENOMEM; 
+		return -1;
+	}
+
 	run->extio = XP_NULL;
 	return 0;
 }
@@ -299,6 +308,18 @@ static void __close_run (xp_awk_run_t* run)
 	/* close all pending eio's */
 	/* TODO: what if this operation fails? */
 	xp_awk_clearextio (run);
+
+	/* destroy input record. __clear_record should be called
+	 * before the run stack has been destroyed because it may try
+	 * to change the value to XP_AWK_GLOBAL_NF. */
+	__clear_record (run, xp_false); 
+	if (run->inrec.flds != XP_NULL) 
+	{
+		xp_free (run->inrec.flds);
+		run->inrec.flds = XP_NULL;
+		run->inrec.maxflds = 0;
+	}
+	xp_str_close (&run->inrec.line);
 
 	/* destroy run stack */
 	if (run->stack != XP_NULL)
@@ -312,18 +333,11 @@ static void __close_run (xp_awk_run_t* run)
 		run->stack_limit = 0;
 	}
 
+	/* destroy the regular expression matcher */
+	xp_awk_rex_close (&run->rex_matcher);
+
 	/* destroy named variables */
 	xp_awk_map_close (&run->named);
-
-	/* destroy input record */
-	__clear_record (run, xp_false);
-	if (run->inrec.flds != XP_NULL) 
-	{
-		xp_free (run->inrec.flds);
-		run->inrec.flds = XP_NULL;
-		run->inrec.maxflds = 0;
-	}
-	xp_str_close (&run->inrec.line);
 
 	/* destroy values in free list */
 	while (run->icache_count > 0)
@@ -593,7 +607,14 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 
 			if (ptn->next == XP_NULL)
 			{
-				if (xp_awk_valtobool(v1))
+				int n = __handle_pattern (run, v1);
+				if (n == -1) 
+				{
+					xp_awk_refdownval (run, v1);
+					return -1;
+				}
+
+				if (n == 1) 
 				{
 					xp_awk_nde_blk_t* blk;
 					blk = (xp_awk_nde_blk_t*)chain->action;
@@ -621,6 +642,34 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 
 	return 0;
 }
+
+static int __handle_pattern (xp_awk_run_t* run, xp_awk_val_t* val)
+{
+	int n;
+
+	if (val->type == XP_AWK_VAL_REX)
+	{
+		xp_assert (run->inrec.d0->type == XP_AWK_VAL_STR);
+
+/* TODO: do it properly  match value...*/
+		//xp_awk_rex_setpattern (v->buf, v->len);
+
+		n = xp_awk_rex_match (&run->rex_matcher, 
+			((xp_awk_val_str_t*)run->inrec.d0)->buf,
+			((xp_awk_val_str_t*)run->inrec.d0)->len,
+			XP_NULL, XP_NULL);
+
+		if (n == -1)
+		{
+// TODO: convert rex_matcher->errnum to run->errnum.
+			PANIC_I (run, XP_AWK_ENOMEM);
+		};
+	}
+	else n = xp_awk_valtobool(val)? 1: 0;
+
+	return n;
+}
+
 
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
 {
@@ -1771,11 +1820,29 @@ static xp_awk_val_t* __do_assignment_pos (
 		}
 		xp_free (str);
 
-		/* TODO: consider if "val" of a non-string type should be
-		 *       converted into a string value */
-		xp_awk_refdownval (run, run->inrec.d0);
-		run->inrec.d0 = val;
-		xp_awk_refupval (val);
+		if (val->type == XP_AWK_VAL_STR)
+		{
+			xp_awk_refdownval (run, run->inrec.d0);
+			run->inrec.d0 = val;
+			xp_awk_refupval (val);
+		}
+		else
+		{
+			v = xp_awk_makestrval (
+				XP_STR_BUF(&run->inrec.line), 
+				XP_STR_LEN(&run->inrec.line));
+			if (v == XP_NULL)
+			{
+				__clear_record (run, xp_false);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
+
+			xp_awk_refdownval (run, run->inrec.d0);
+			run->inrec.d0 = v;
+			xp_awk_refupval (v);
+
+			val = v;
+		}
 
 		if (__split_record (run) == -1) 
 		{
@@ -3341,19 +3408,25 @@ static xp_awk_val_t* __eval_real (xp_awk_run_t* run, xp_awk_nde_t* nde)
 static xp_awk_val_t* __eval_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_val_t* val;
+
 	val = xp_awk_makestrval (
 		((xp_awk_nde_str_t*)nde)->buf,
 		((xp_awk_nde_str_t*)nde)->len);
 	if (val == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
 	return val;
 }
 
 static xp_awk_val_t* __eval_rex (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-/* TODO */
-xp_printf (XP_T("eval_rex not implemented yet...\n"));
-	PANIC (run, XP_AWK_EINTERNAL);
-	return XP_NULL;
+	xp_awk_val_t* val;
+
+	val = xp_awk_makerexval (
+		((xp_awk_nde_rex_t*)nde)->buf,
+		((xp_awk_nde_rex_t*)nde)->len);
+	if (val == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
+	return val;
 }
 
 static xp_awk_val_t* __eval_named (xp_awk_run_t* run, xp_awk_nde_t* nde)
