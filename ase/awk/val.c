@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.45 2006-07-25 16:41:40 bacon Exp $
+ * $Id: val.c,v 1.46 2006-07-25 17:15:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
