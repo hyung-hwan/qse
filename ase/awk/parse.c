@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.138 2006-07-17 04:17:40 bacon Exp $
+ * $Id: parse.c,v 1.139 2006-07-25 16:41:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1901,31 +1901,41 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_DIV))
 	{
-		xp_awk_nde_str_t* nde;
+		xp_awk_nde_rex_t* nde;
 
-		/* the regular expression is tokenized because of 
-		 * context-sensitivity of the slash symbol */
+		/* the regular expression is tokenized here because 
+		 * of the context-sensitivity of the slash symbol */
 		SET_TOKEN_TYPE (awk, TOKEN_REX);
 		if (__get_regex(awk) == -1) return XP_NULL;
 		xp_assert (MATCH(awk,TOKEN_REX));
 
-		nde = (xp_awk_nde_str_t*)
+		nde = (xp_awk_nde_rex_t*)
 			xp_malloc (xp_sizeof(xp_awk_nde_rex_t));
 		if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
 		nde->type = XP_AWK_NDE_REX;
 		nde->next = XP_NULL;
-		nde->len = XP_STR_LEN(&awk->token.name);
-		nde->buf = xp_strxdup(XP_STR_BUF(&awk->token.name), nde->len);
-		if (nde->buf == XP_NULL) 
+
+		if (xp_awk_rex_compile (&awk->rex, 
+			XP_STR_BUF(&awk->token.name), 
+			XP_STR_LEN(&awk->token.name)) == -1)
+		{
+			xp_free (nde);
+			PANIC (awk, XP_AWK_EREXCMPL);
+		}
+
+		nde->len = awk->rex.code.size;
+		nde->buf = xp_malloc (nde->len);
+		if (nde->buf == XP_NULL)
 		{
 			xp_free (nde);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
+		xp_memcpy (nde->buf, awk->rex.code.buf, nde->len);
+
 		if (__get_token(awk) == -1) 
 		{
-			xp_free (nde->buf);
 			xp_free (nde);
 			return XP_NULL;			
 		}
@@ -3690,14 +3700,7 @@ static int __get_regex (xp_awk_t* awk)
 			continue;
 		}
 
-		if (escaped == xp_true)
-		{
-			if (c == XP_T('n')) c = XP_T('\n');
-			else if (c == XP_T('r')) c = XP_T('\r');
-			else if (c == XP_T('t')) c = XP_T('\t');
-			/* TODO: more escape characters */
-			escaped = xp_false;
-		}
+		if (escaped == xp_true) escaped = xp_false;
 
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);

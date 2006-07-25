@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.58 2006-07-13 15:43:39 bacon Exp $ 
+ * $Id: awk.c,v 1.59 2006-07-25 16:41:40 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -61,6 +61,17 @@ xp_awk_t* xp_awk_open (void)
 		return XP_NULL;	
 	}
 
+	if (xp_awk_rex_open (&awk->rex) == XP_NULL)
+	{
+		xp_str_close (&awk->token.name);
+		xp_awk_map_close (&awk->tree.afns);
+		xp_awk_tab_close (&awk->parse.globals);
+		xp_awk_tab_close (&awk->parse.locals);
+		xp_awk_tab_close (&awk->parse.params);
+		xp_free (awk);
+		return XP_NULL;	
+	}
+
 	awk->opt.parse = 0;
 	awk->opt.run = 0;
 	awk->errnum = XP_AWK_ENOERR;
@@ -105,6 +116,7 @@ int xp_awk_close (xp_awk_t* awk)
 	xp_awk_tab_close (&awk->parse.globals);
 	xp_awk_tab_close (&awk->parse.locals);
 	xp_awk_tab_close (&awk->parse.params);
+	xp_awk_rex_close (&awk->rex);
 	xp_str_close (&awk->token.name);
 
 	xp_free (awk);

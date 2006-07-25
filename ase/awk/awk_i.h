@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.31 2006-07-17 04:17:40 bacon Exp $
+ * $Id: awk_i.h,v 1.32 2006-07-25 16:41:40 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -17,6 +17,7 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/bas/str.h>
 #endif
 
+#include <xp/awk/rex.h>
 #include <xp/awk/map.h>
 #include <xp/awk/val.h>
 #include <xp/awk/func.h>
@@ -24,7 +25,6 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/awk/tab.h>
 #include <xp/awk/run.h>
 #include <xp/awk/extio.h>
-#include <xp/awk/rex.h>
 
 #ifdef _WIN32
 #pragma warning (disable: 4996)
@@ -102,6 +102,9 @@ struct xp_awk_t
 		xp_awk_tab_t params;
 		xp_size_t nlocals_max;
 	} parse;
+
+	/* regular expression compiler */
+	xp_awk_rex_t rex;
 
 	/* source buffer management */
 	struct 
@@ -188,6 +191,9 @@ struct xp_awk_run_t
 
 	/* extio chain */
 	xp_awk_extio_t* extio;
+
+	/* regular expression matcher */
+	xp_awk_rex_t rex_matcher;
 
 	int opt;
 	int errnum;
