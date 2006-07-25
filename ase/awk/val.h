@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.32 2006-07-25 16:41:40 bacon Exp $
+ * $Id: val.h,v 1.33 2006-07-25 17:15:15 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
