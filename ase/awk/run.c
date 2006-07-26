@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.138 2006-07-26 05:19:46 bacon Exp $
+ * $Id: run.c,v 1.139 2006-07-26 15:00:00 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -644,7 +644,7 @@ static int __handle_pattern (xp_awk_run_t* run, xp_awk_val_t* val)
 		//xp_awk_rex_setpattern (v->buf, v->len);
 
 		n = xp_awk_matchrex (
-			((xp_awk_val_rex_t*)val)->buf,
+			((xp_awk_val_rex_t*)val)->code,
 			((xp_awk_val_str_t*)run->inrec.d0)->buf,
 			((xp_awk_val_str_t*)run->inrec.d0)->len,
 			XP_NULL, XP_NULL);
@@ -3413,7 +3413,8 @@ static xp_awk_val_t* __eval_rex (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	val = xp_awk_makerexval (
 		((xp_awk_nde_rex_t*)nde)->buf,
-		((xp_awk_nde_rex_t*)nde)->len);
+		((xp_awk_nde_rex_t*)nde)->len,
+		((xp_awk_nde_rex_t*)nde)->code);
 	if (val == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 
 	return val;

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.67 2006-07-25 17:15:15 bacon Exp $
+ * $Id: tree.c,v 1.68 2006-07-26 15:00:00 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -227,8 +227,8 @@ static int __print_expression (xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_REX:
 		{
-			/* TODO: print it properly */
-			xp_printf (XP_T("/**REX**/"));
+			/* TODO: buf, len */
+			xp_printf (XP_T("/%s/"), ((xp_awk_nde_rex_t*)nde)->buf);
 			break;
 		}
 
@@ -915,6 +915,7 @@ void xp_awk_clrpt (xp_awk_nde_t* tree)
 			case XP_AWK_NDE_REX:
 			{
 				xp_free (((xp_awk_nde_rex_t*)p)->buf);
+				xp_free (((xp_awk_nde_rex_t*)p)->code);
 				xp_free (p);
 				break;
 			}
