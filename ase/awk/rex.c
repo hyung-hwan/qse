@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.16 2006-07-26 15:00:00 bacon Exp $
+ * $Id: rex.c,v 1.17 2006-07-26 16:43:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -225,7 +225,6 @@ const xp_char_t* xp_awk_getrexerrstr (int errnum)
 	{
 		XP_T("no error"),
 		XP_T("out of memory"),
-		XP_T("no pattern built"),
 		XP_T("a right parenthesis is expected"),
 		XP_T("a right bracket is expected"),
 		XP_T("a right brace is expected"),
@@ -233,8 +232,8 @@ const xp_char_t* xp_awk_getrexerrstr (int errnum)
 		XP_T("invalid character range"),
 		XP_T("invalid character class"),
 		XP_T("invalid boundary range"),
-		XP_T("unexpected end of the pattern"),
-		XP_T("garbage after the pattern")
+		XP_T("unexpected end of the regular expression"),
+		XP_T("garbage after the regular expression")
 	};
 
 	if (errnum >= 0 && errnum < xp_countof(__errstr)) 
@@ -245,14 +244,18 @@ const xp_char_t* xp_awk_getrexerrstr (int errnum)
 	return XP_T("unknown error");
 }
 
-void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len)
+void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum)
 {
 	__builder_t builder;
 
 	builder.code.capa = 512;
 	builder.code.size = 0;
 	builder.code.buf = (xp_byte_t*) xp_malloc (builder.code.capa);
-	if (builder.code.buf == XP_NULL) return XP_NULL;
+	if (builder.code.buf == XP_NULL) 
+	{
+		*errnum = XP_AWK_REX_ENOMEM;
+		return XP_NULL;
+	}
 
 	builder.ptn.ptr = ptn;
 	builder.ptn.end = builder.ptn.ptr + len;
@@ -264,19 +267,21 @@ void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len)
 	//NEXT_CHAR (&builder, LEVEL_TOP);
 	if (__next_char (&builder, LEVEL_TOP) == -1) 
 	{
+		if (errnum != XP_NULL) *errnum = builder.errnum;
 		xp_free (builder.code.buf);
 		return XP_NULL;
 	}
 
 	if (__build_pattern (&builder) == -1) 
 	{
+		if (errnum != XP_NULL) *errnum = builder.errnum;
 		xp_free (builder.code.buf);
 		return XP_NULL;
 	}
 
 	if (builder.ptn.curc.type != CT_EOF)
 	{
-		/* garbage after the pattern */
+		if (errnum != XP_NULL) *errnum = XP_AWK_REX_EGARBAGE;
 		xp_free (builder.code.buf);
 		return XP_NULL;
 	}
@@ -286,7 +291,7 @@ void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len)
 
 int xp_awk_matchrex (void* code,
 	const xp_char_t* str, xp_size_t len, 
-	const xp_char_t** match_ptr, xp_size_t* match_len)
+	const xp_char_t** match_ptr, xp_size_t* match_len, int* errnum)
 {
 	__matcher_t matcher;
 	__match_t mat;
@@ -303,8 +308,11 @@ int xp_awk_matchrex (void* code,
 
 	while (mat.match_ptr < matcher.match.str.end)
 	{
-		if (__match_pattern (
-			&matcher, code, &mat) == XP_NULL) return -1;
+		if (__match_pattern (&matcher, code, &mat) == XP_NULL) 
+		{
+			if (errnum != XP_NULL) *errnum = matcher.errnum;
+			return -1;
+		}
 
 		if (mat.matched)
 		{

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.139 2006-07-26 15:00:00 bacon Exp $
+ * $Id: run.c,v 1.140 2006-07-26 16:43:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -39,8 +39,13 @@ enum
 
 #define PANIC(run,code) \
 	do { (run)->errnum = (code); return XP_NULL; } while (0)
+#define PANIC2(awk,code,subcode) \
+	do { (awk)->errnum = (code); (awk)->suberrnum = (subcode); return XP_NULL; } while (0)
+
 #define PANIC_I(run,code) \
 	do { (run)->errnum = (code); return -1; } while (0)
+#define PANIC2_I(awk,code,subcode) \
+	do { (awk)->errnum = (code); (awk)->suberrnum = (subcode); return -1; } while (0)
 
 static int __open_run (
 	xp_awk_run_t* run, xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg);
@@ -634,32 +639,24 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 
 static int __handle_pattern (xp_awk_run_t* run, xp_awk_val_t* val)
 {
-	int n;
+	int n, errnum;
 
 	if (val->type == XP_AWK_VAL_REX)
 	{
 		xp_assert (run->inrec.d0->type == XP_AWK_VAL_STR);
 
-/* TODO: do it properly  match value...*/
-		//xp_awk_rex_setpattern (v->buf, v->len);
-
 		n = xp_awk_matchrex (
 			((xp_awk_val_rex_t*)val)->code,
 			((xp_awk_val_str_t*)run->inrec.d0)->buf,
 			((xp_awk_val_str_t*)run->inrec.d0)->len,
-			XP_NULL, XP_NULL);
+			XP_NULL, XP_NULL, &errnum);
 
-		if (n == -1)
-		{
-// TODO: convert rex_matcher->errnum to run->errnum.
-			PANIC_I (run, XP_AWK_ENOMEM);
-		};
+		if (n == -1) PANIC2_I (run, XP_AWK_EREXMATCH, errnum);
 	}
 	else n = xp_awk_valtobool(val)? 1: 0;
 
 	return n;
 }
-
 
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
 {

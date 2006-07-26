@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.141 2006-07-26 14:59:59 bacon Exp $
+ * $Id: parse.c,v 1.142 2006-07-26 16:43:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -293,6 +293,9 @@ static struct __bvent __bvtab[] =
 
 #define PANIC(awk,code) \
 	do { (awk)->errnum = (code); return XP_NULL; } while (0)
+
+#define PANIC2(awk,code,subcode) \
+	do { (awk)->errnum = (code); (awk)->suberrnum = (subcode); return XP_NULL; } while (0)
 
 /* TODO: remove stdio.h */
 #ifndef XP_AWK_STAND_ALONE
@@ -1902,6 +1905,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 	else if (MATCH(awk,TOKEN_DIV))
 	{
 		xp_awk_nde_rex_t* nde;
+		int errnum;
 
 		/* the regular expression is tokenized here because 
 		 * of the context-sensitivity of the slash symbol */
@@ -1928,17 +1932,19 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->code = xp_awk_buildrex (
 			XP_STR_BUF(&awk->token.name), 
-			XP_STR_LEN(&awk->token.name));
+			XP_STR_LEN(&awk->token.name), 
+			&errnum);
 		if (nde->code == XP_NULL)
 		{
-			/* TODO: get the proper errnum */
 			xp_free (nde->buf);
 			xp_free (nde);
-			PANIC (awk, XP_AWK_ENOMEM);
+			PANIC2 (awk, XP_AWK_EREXBUILD, errnum);
 		}
 
 		if (__get_token(awk) == -1) 
 		{
+			xp_free (nde->buf);
+			xp_free (nde->code);
 			xp_free (nde);
 			return XP_NULL;			
 		}

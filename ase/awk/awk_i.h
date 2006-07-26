@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.33 2006-07-26 05:19:45 bacon Exp $
+ * $Id: awk_i.h,v 1.34 2006-07-26 16:43:35 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -138,7 +138,8 @@ struct xp_awk_t
 	} bfn;
 
 	/* housekeeping */
-	int errnum;
+	short errnum;
+	short suberrnum;
 };
 
 struct xp_awk_chain_t
@@ -190,7 +191,8 @@ struct xp_awk_run_t
 	xp_awk_extio_t* extio;
 
 	int opt;
-	int errnum;
+	short errnum;
+	short suberrnum;
 
 	/*xp_awk_tree_t* tree;
 	xp_size_t nglobals;*/

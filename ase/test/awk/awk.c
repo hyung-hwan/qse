@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.52 2006-07-06 13:57:31 bacon Exp $
+ * $Id: awk.c,v 1.53 2006-07-26 16:43:35 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -504,15 +504,24 @@ static int __main (int argc, xp_char_t* argv[])
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
-			XP_T("error: cannot parse program - line %u [%d] %ls\n"), 
+			XP_T("ERROR: cannot parse program - line %u [%d] %ls"), 
 			(unsigned int)xp_awk_getsrcline(awk), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
+		if (xp_awk_getsuberrnum(awk) != XP_AWK_ENOERR)
+		{
+			xp_printf (XP_T(" - %ls\n"), xp_awk_getsuberrstr(awk));
+		}
 #else
 		xp_printf (
-			XP_T("error: cannot parse program - line %u [%d] %s\n"), 
+			XP_T("ERROR: cannot parse program - line %u [%d] %s"), 
 			(unsigned int)xp_awk_getsrcline(awk), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
+		if (xp_awk_getsuberrnum(awk) != XP_AWK_ENOERR)
+		{
+			xp_printf (XP_T(" - %s\n"), xp_awk_getsuberrstr(awk));
+		}
 #endif
+		xp_printf (XP_T("\n"));
 		xp_awk_close (awk);
 		return -1;
 	}

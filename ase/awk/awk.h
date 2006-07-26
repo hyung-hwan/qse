@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.80 2006-07-25 16:41:40 bacon Exp $
+ * $Id: awk.h,v 1.81 2006-07-26 16:43:35 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -127,7 +127,8 @@ enum
 	XP_AWK_ETOOFEWARGS,    /* too few arguments */
 	XP_AWK_ETOOMANYARGS,   /* too many arguments */
 	XP_AWK_EGETLINE,       /* getline expected */
-	XP_AWK_EREXCMPL,       /* cannot compile the regular expressio n*/
+	XP_AWK_EREXBUILD,      /* cannot build regexp */
+	XP_AWK_EREXMATCH,      /* an error occurred in matching regexp */
 
 	/* run time error */
 	XP_AWK_EDIVBYZERO,       /* divide by zero */
@@ -166,6 +167,8 @@ int xp_awk_close (xp_awk_t* awk);
 
 int xp_awk_geterrnum (xp_awk_t* awk);
 const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk);
+int xp_awk_getsuberrnum (xp_awk_t* awk);
+const xp_char_t* xp_awk_getsuberrstr (xp_awk_t* awk);
 
 void xp_awk_clear (xp_awk_t* awk);
 void xp_awk_setparseopt (xp_awk_t* awk, int opt);
