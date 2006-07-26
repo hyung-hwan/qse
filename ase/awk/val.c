@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.46 2006-07-25 17:15:15 bacon Exp $
+ * $Id: val.c,v 1.47 2006-07-26 15:00:00 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -135,7 +135,8 @@ xp_awk_val_t* xp_awk_makestrval2 (
 	return (xp_awk_val_t*)val;
 }
 
-xp_awk_val_t* xp_awk_makerexval (const xp_byte_t* buf, xp_size_t len)
+xp_awk_val_t* xp_awk_makerexval (
+	const xp_char_t* buf, xp_size_t len, void* code)
 {
 	xp_awk_val_rex_t* val;
 
@@ -145,14 +146,22 @@ xp_awk_val_t* xp_awk_makerexval (const xp_byte_t* buf, xp_size_t len)
 	val->type = XP_AWK_VAL_REX;
 	val->ref = 0;
 	val->len = len;
-	val->buf = xp_malloc (len);
+	val->buf = xp_strxdup (buf, len);
 	if (val->buf == XP_NULL) 
 	{
 		xp_free (val);
 		return XP_NULL;
 	}
 
-	xp_memcpy (val->buf, buf, len);
+	val->code = xp_malloc (XP_AWK_REXLEN(code));
+	if (val->code == XP_NULL)
+	{
+		xp_free (val->buf);
+		xp_free (val);
+		return XP_NULL;
+	}
+
+	xp_memcpy (val->code, code, XP_AWK_REXLEN(code));
 	return (xp_awk_val_t*)val;
 }
 
@@ -235,6 +244,7 @@ xp_printf (XP_T("\n"));*/
 
 	case XP_AWK_VAL_REX:
 		xp_free (((xp_awk_val_rex_t*)val)->buf);
+		xp_free (((xp_awk_val_rex_t*)val)->code);
 		xp_free (val);
 		return;
 

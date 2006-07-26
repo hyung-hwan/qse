@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.140 2006-07-26 05:19:45 bacon Exp $
+ * $Id: parse.c,v 1.141 2006-07-26 14:59:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1916,17 +1916,26 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->type = XP_AWK_NDE_REX;
 		nde->next = XP_NULL;
 
-		nde->buf = xp_awk_buildrex (
+		nde->len = XP_STR_LEN(&awk->token.name);
+		nde->buf = xp_strxdup (
 			XP_STR_BUF(&awk->token.name), 
 			XP_STR_LEN(&awk->token.name));
 		if (nde->buf == XP_NULL)
 		{
-			/* TODO: get the proper errnum */
 			xp_free (nde);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
-		/* TODO: is nde->len necessary ? */
-		nde->len = XP_AWK_REXLEN(nde->buf);
+
+		nde->code = xp_awk_buildrex (
+			XP_STR_BUF(&awk->token.name), 
+			XP_STR_LEN(&awk->token.name));
+		if (nde->code == XP_NULL)
+		{
+			/* TODO: get the proper errnum */
+			xp_free (nde->buf);
+			xp_free (nde);
+			PANIC (awk, XP_AWK_ENOMEM);
+		}
 
 		if (__get_token(awk) == -1) 
 		{

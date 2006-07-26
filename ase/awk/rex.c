@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.15 2006-07-26 05:19:45 bacon Exp $
+ * $Id: rex.c,v 1.16 2006-07-26 15:00:00 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -262,7 +262,11 @@ void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len)
 	builder.ptn.curc.value = XP_T('\0');
 
 	//NEXT_CHAR (&builder, LEVEL_TOP);
-	if (__next_char (&builder, LEVEL_TOP) == -1) return XP_NULL;
+	if (__next_char (&builder, LEVEL_TOP) == -1) 
+	{
+		xp_free (builder.code.buf);
+		return XP_NULL;
+	}
 
 	if (__build_pattern (&builder) == -1) 
 	{
