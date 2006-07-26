@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.32 2006-07-25 16:41:40 bacon Exp $
+ * $Id: awk_i.h,v 1.33 2006-07-26 05:19:45 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -103,9 +103,6 @@ struct xp_awk_t
 		xp_size_t nlocals_max;
 	} parse;
 
-	/* regular expression compiler */
-	xp_awk_rex_t rex;
-
 	/* source buffer management */
 	struct 
 	{
@@ -191,9 +188,6 @@ struct xp_awk_run_t
 
 	/* extio chain */
 	xp_awk_extio_t* extio;
-
-	/* regular expression matcher */
-	xp_awk_rex_t rex_matcher;
 
 	int opt;
 	int errnum;
