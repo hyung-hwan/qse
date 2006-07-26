@@ -223,6 +223,10 @@ SOURCE=.\parse.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\rex.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\run.c
 # End Source File
 # Begin Source File
@@ -264,6 +268,10 @@ SOURCE=.\func.h
 # Begin Source File
 
 SOURCE=.\map.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\rex.h
 # End Source File
 # Begin Source File
 
