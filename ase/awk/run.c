@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.137 2006-07-25 17:15:15 bacon Exp $
+ * $Id: run.c,v 1.138 2006-07-26 05:19:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -291,14 +291,6 @@ static int __open_run (
 		return -1;
 	}
 
-	if (xp_awk_rex_open (&run->rex_matcher) == XP_NULL)
-	{
-		xp_awk_map_close (&run->named);
-		xp_str_close (&run->inrec.line);
-		run->errnum = XP_AWK_ENOMEM; 
-		return -1;
-	}
-
 	run->extio = XP_NULL;
 	return 0;
 }
@@ -332,9 +324,6 @@ static void __close_run (xp_awk_run_t* run)
 		run->stack_base = 0;
 		run->stack_limit = 0;
 	}
-
-	/* destroy the regular expression matcher */
-	xp_awk_rex_close (&run->rex_matcher);
 
 	/* destroy named variables */
 	xp_awk_map_close (&run->named);
@@ -654,7 +643,8 @@ static int __handle_pattern (xp_awk_run_t* run, xp_awk_val_t* val)
 /* TODO: do it properly  match value...*/
 		//xp_awk_rex_setpattern (v->buf, v->len);
 
-		n = xp_awk_rex_match (&run->rex_matcher, 
+		n = xp_awk_matchrex (
+			((xp_awk_val_rex_t*)val)->buf,
 			((xp_awk_val_str_t*)run->inrec.d0)->buf,
 			((xp_awk_val_str_t*)run->inrec.d0)->len,
 			XP_NULL, XP_NULL);
