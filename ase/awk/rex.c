@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.13 2006-07-25 16:41:40 bacon Exp $
+ * $Id: rex.c,v 1.14 2006-07-26 02:25:47 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -61,6 +61,30 @@ struct __code_t
 	short negate; /* only for CMD_CHARSET */
 	xp_size_t lbound;
 	xp_size_t ubound;
+};
+
+struct __build_t
+{
+	struct
+	{
+		const xp_char_t* ptr;
+		const xp_char_t* end;
+		const xp_char_t* curp;
+		struct
+		{
+			int type;
+			xp_char_t value;
+		} curc;
+	} ptn;
+
+	struct
+	{
+		xp_byte_t* buf;
+		xp_size_t  size;
+		xp_size_t  capa;
+	} code;	
+
+	int errnum;
 };
 
 struct __match_t
@@ -239,6 +263,82 @@ const xp_char_t* xp_awk_rex_geterrstr (xp_awk_rex_t* rex)
 	return XP_T("unknown error");
 }
 
+void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len)
+{
+	xp_awk_rex_t rex;
+
+	rex.code.capa = 512;
+	rex.code.size = 0;
+	rex.code.buf = (xp_byte_t*) xp_malloc (rex.code.capa);
+	if (rex.code.buf == XP_NULL) return XP_NULL;
+
+	rex.ptn.ptr = ptn;
+	rex.ptn.end = rex.ptn.ptr + len;
+	rex.ptn.curp = rex.ptn.ptr;
+
+	rex.ptn.curc.type = CT_EOF;
+	rex.ptn.curc.value = XP_T('\0');
+
+	//NEXT_CHAR (&rex, LEVEL_TOP);
+	if (__next_char (&rex, LEVEL_TOP) == -1) return XP_NULL;
+
+	if (__compile_pattern (&rex) == -1) 
+	{
+		xp_free (rex.code.buf);
+		return XP_NULL;
+	}
+
+	if (rex.ptn.curc.type != CT_EOF)
+	{
+		/* garbage after the pattern */
+		xp_free (rex.code.buf);
+		return XP_NULL;
+	}
+
+	return rex.code.buf;
+}
+
+int xp_awk_matchrex (void* code,
+	const xp_char_t* str, xp_size_t len, 
+	const xp_char_t** match_ptr, xp_size_t* match_len)
+{
+	xp_awk_rex_t rex;
+	struct __match_t mat;
+	xp_size_t offset = 0;
+
+	mat.matched = xp_false;
+
+	/* store the source string */
+	rex.match.str.ptr = str;
+	rex.match.str.end = str + len;
+
+/* TODO: shoud it allow an offset here??? */
+	mat.match_ptr = str + offset;
+
+	while (mat.match_ptr < rex.match.str.end)
+	{
+		if (__match_pattern (
+			&rex, code, &mat) == XP_NULL) return -1;
+
+		if (mat.matched)
+		{
+			if (match_ptr != XP_NULL) *match_ptr = mat.match_ptr;
+			if (match_len != XP_NULL) *match_len = mat.match_len;
+			break;
+		}
+
+		mat.match_ptr++;
+	}
+
+	return (mat.matched)? 1: 0;
+}
+
+void xp_awk_printrex (void* rex)
+{
+	__print_pattern (rex);
+	xp_printf (XP_T("\n"));
+}
+
 int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len)
 {
 	rex->ptn.ptr = ptn;
@@ -255,7 +355,7 @@ int xp_awk_rex_compile (xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len)
 
 	if (rex->ptn.curc.type != CT_EOF)
 	{
-		/* garbage after the patter */
+		/* garbage after the pattern */
 		rex->errnum = XP_AWK_REX_EGARBAGE;
 		return -1;
 	}
