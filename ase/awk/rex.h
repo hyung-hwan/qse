@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.7 2006-07-24 16:23:19 bacon Exp $
+ * $Id: rex.h,v 1.8 2006-07-26 02:25:47 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -91,9 +91,14 @@ enum
 extern "C" {
 #endif
 
+
+void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len);
+int xp_awk_matchrex (void* code,
+	const xp_char_t* str, xp_size_t len, 
+	const xp_char_t** match_ptr, xp_size_t* match_len);
+
 xp_awk_rex_t* xp_awk_rex_open (xp_awk_rex_t* rex);
 void xp_awk_rex_close (xp_awk_rex_t* rex);
-void xp_awk_rex_clear (xp_awk_rex_t* rex);
 
 int xp_awk_rex_compile (
 	xp_awk_rex_t* rex, const xp_char_t* ptn, xp_size_t len);
