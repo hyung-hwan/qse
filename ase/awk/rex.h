@@ -1,15 +1,10 @@
 /*
- * $Id: rex.h,v 1.9 2006-07-26 05:19:45 bacon Exp $
+ * $Id: rex.h,v 1.10 2006-07-26 16:43:35 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
 #define _XP_AWK_REX_H_
 
-/*
-#ifndef _XP_AWK_AWK_H_
-#error Never include this file directly. Include <xp/awk/awk.h> instead
-#endif
-*/
 #include <xp/types.h>
 #include <xp/macros.h>
 
@@ -27,9 +22,9 @@
  *   | nb | el | na | bl | cmd | arg | cmd | arg | na | bl | cmd | arg | na | bl | cmd |
  *
  *   nb: the number of branches
- *   el: the length of a expression excluding the length of nb and el
+ *   el: the length of a expression including the length of nb and el
  *   na: the number of atoms
- *   bl: the length of a branch excluding the length of bl
+ *   bl: the length of a branch including the length of na and bl
  *   cmd: The command and repetition info encoded together. 
  *      Some commands require an argument to follow them but some other don't.
  *      It is encoded as follows:
@@ -46,7 +41,6 @@ enum
 {
 	XP_AWK_REX_ENOERR,    /* no error */
 	XP_AWK_REX_ENOMEM,    /* ran out of memory */
-	XP_AWK_REX_ENOPTN,    /* no pattern compiled */
 	XP_AWK_REX_ERPAREN,   /* a right parenthesis is expected */
 	XP_AWK_REX_ERBRACKET, /* a right bracket is expected */
 	XP_AWK_REX_ERBRACE,   /* a right brace is expected */
@@ -58,22 +52,22 @@ enum
 	XP_AWK_REX_EGARBAGE   /* garbage after the pattern */
 };
 
-#define XP_AWK_REXNA(code) (*(xp_size_t*)(code))
+#define XP_AWK_REX_NA(code) (*(xp_size_t*)(code))
 
-#define XP_AWK_REXLEN(code) \
+#define XP_AWK_REX_LEN(code) \
 	(*(xp_size_t*)((xp_byte_t*)(code)+xp_sizeof(xp_size_t)))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-const xp_char_t* xp_awk_rex_geterrstr (int errnum);
+const xp_char_t* xp_awk_getrexerrstr (int errnum);
 
-void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len);
+void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum);
 
 int xp_awk_matchrex (void* code,
 	const xp_char_t* str, xp_size_t len, 
-	const xp_char_t** match_ptr, xp_size_t* match_len);
+	const xp_char_t** match_ptr, xp_size_t* match_len, int* errnum);
 
 void xp_awk_printrex (void* code);
 

@@ -1,1 +1,1 @@
-/hello/ { print $0; }
+/hello[[:space:]]/ { print $0; }

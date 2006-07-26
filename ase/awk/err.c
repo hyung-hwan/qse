@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.27 2006-07-25 16:41:40 bacon Exp $
+ * $Id: err.c,v 1.28 2006-07-26 16:43:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -7,6 +7,17 @@
 int xp_awk_geterrnum (xp_awk_t* awk)
 {
 	return awk->errnum;
+}
+
+int xp_awk_getsuberrnum (xp_awk_t* awk)
+{
+	if (awk->errnum == XP_AWK_EREXBUILD ||
+	    awk->errnum == XP_AWK_EREXMATCH)
+	{
+		return awk->suberrnum;
+	}
+
+	return XP_AWK_ENOERR;
 }
 
 const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
@@ -59,7 +70,8 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("too few arguments"),
 		XP_T("too many arguments"),
 		XP_T("getline expected"),
-		XP_T("cannot compile the regular expression"),
+		XP_T("cannot build the regular expression"),
+		XP_T("an error occurred in the regular expression match"),
 
 		XP_T("divide by zero"),
 		XP_T("invalid operand"),
@@ -82,4 +94,15 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 	}
 
 	return XP_T("unknown error");
+}
+
+const xp_char_t* xp_awk_getsuberrstr (xp_awk_t* awk)
+{
+	if (awk->errnum == XP_AWK_EREXBUILD ||
+	    awk->errnum == XP_AWK_EREXMATCH)
+	{
+		return xp_awk_getrexerrstr (awk->suberrnum);
+	}
+
+	return XP_T("no error");
 }

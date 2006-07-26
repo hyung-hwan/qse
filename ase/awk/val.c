@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.47 2006-07-26 15:00:00 bacon Exp $
+ * $Id: val.c,v 1.48 2006-07-26 16:43:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -153,7 +153,7 @@ xp_awk_val_t* xp_awk_makerexval (
 		return XP_NULL;
 	}
 
-	val->code = xp_malloc (XP_AWK_REXLEN(code));
+	val->code = xp_malloc (XP_AWK_REX_LEN(code));
 	if (val->code == XP_NULL)
 	{
 		xp_free (val->buf);
@@ -161,7 +161,7 @@ xp_awk_val_t* xp_awk_makerexval (
 		return XP_NULL;
 	}
 
-	xp_memcpy (val->code, code, XP_AWK_REXLEN(code));
+	xp_memcpy (val->code, code, XP_AWK_REX_LEN(code));
 	return (xp_awk_val_t*)val;
 }
 
