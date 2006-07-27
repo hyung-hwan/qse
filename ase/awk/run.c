@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.140 2006-07-26 16:43:35 bacon Exp $
+ * $Id: run.c,v 1.141 2006-07-27 16:50:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -47,8 +47,7 @@ enum
 #define PANIC2_I(awk,code,subcode) \
 	do { (awk)->errnum = (code); (awk)->suberrnum = (subcode); return -1; } while (0)
 
-static int __open_run (
-	xp_awk_run_t* run, xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg);
+static int __open_run (xp_awk_run_t* run, xp_awk_t* awk);
 static void __close_run (xp_awk_run_t* run);
 
 static int __run_main (xp_awk_run_t* run);
@@ -165,6 +164,8 @@ static void __raw_pop (xp_awk_run_t* run);
 static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 
 static int __read_record (xp_awk_run_t* run);
+static int __set_record (
+	xp_awk_run_t* run, const xp_char_t* str, xp_size_t len);
 static int __split_record (xp_awk_run_t* run);
 static void __clear_record (xp_awk_run_t* run, xp_bool_t noline);
 static int __recomp_record_fields (xp_awk_run_t* run, 
@@ -218,7 +219,7 @@ void xp_awk_seterrnum (void* run, int errnum)
 	r->errnum = errnum;
 }
 
-int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg)
+int xp_awk_run (xp_awk_t* awk)
 {
 	xp_awk_run_t* run;
 	int n;
@@ -230,7 +231,7 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg)
 		return -1;
 	}
 
-	if (__open_run (run, awk, txtio, txtio_arg) == -1) 
+	if (__open_run (run, awk) == -1) 
 	{
 /* TODO: find a way to set the errnum into awk object in a thread-safe way */
 		awk->errnum = run->errnum;
@@ -252,8 +253,7 @@ static void __free_namedval (void* run, void* val)
 	xp_awk_refdownval ((xp_awk_run_t*)run, val);
 }
 
-static int __open_run (
-	xp_awk_run_t* run, xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg)
+static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
 {
 	xp_memset (run, 0, xp_sizeof(*run));
 
@@ -266,9 +266,6 @@ static int __open_run (
 
 	run->icache_count = 0;
 	run->rcache_count = 0;
-
-	run->txtio = txtio;
-	run->txtio_arg = txtio_arg;
 
 	run->opt = awk->opt.run;
 	run->errnum = XP_AWK_ENOERR;
@@ -463,7 +460,7 @@ static int __run_main (xp_awk_run_t* run)
 			if (__run_block (run, blk) == -1) n = -1;
 		}
 
-		if (n == 0 && run->txtio != XP_NULL)
+		if (n == 0)
 		{
 			if (__run_pattern_blocks (run) == -1) n = -1;
 		}
@@ -524,11 +521,7 @@ xp_printf (XP_T("-[END VARIABLES]--------------------------\n"));
 static int __run_pattern_blocks (xp_awk_run_t* run)
 {
 	xp_ssize_t n;
-
-	xp_assert (run->txtio != XP_NULL);
-
-	n = run->txtio (XP_AWK_IO_OPEN, 0, run->txtio_arg, XP_NULL, 0);
-	if (n == -1) PANIC_I (run, XP_AWK_ETXTINOPEN);
+	int errnum;
 
 	run->inrec.buf_pos = 0;
 	run->inrec.buf_len = 0;
@@ -545,8 +538,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 		if (x == -1)
 		{
 			/* don't care about the result of input close */
-			run->txtio (XP_AWK_IO_CLOSE, 0, 
-				run->txtio_arg, XP_NULL, 0);
+			xp_awk_closeextio (run, XP_T(""), &errnum);
 			return -1;
 		}
 
@@ -554,15 +546,26 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
 		{
-			/* don't care about the result of input close */
-			run->txtio (XP_AWK_IO_CLOSE, 0, 
-				run->txtio_arg, XP_NULL, 0);
+			xp_awk_closeextio (run, XP_T(""), &errnum);
 			return -1;
 		}
 	}
 
-	n = run->txtio (XP_AWK_IO_CLOSE, 0, run->txtio_arg, XP_NULL, 0);
-	if (n == -1) PANIC_I (run, XP_AWK_ETXTINCLOSE);
+	/* In case of getline, the code would getline return -1, set ERRNO,
+	 * and make this function return 0 after having checke if closextio 
+	 * has returned -1 and errnum has been set to XP_AWK_ENOERR.
+	 * But this part of the code ends the input for the implicit 
+	 * pattern-block loop, which is totally different from getline.
+	 * So it just returns -1 as long as closeextio returns -1 regardless
+	 * of the value of errnum  */
+	n = xp_awk_closeextio (run, XP_T(""), &errnum);
+	if (n == -1) 
+	{
+		if (errnum == XP_AWK_ENOERR)
+			PANIC_I (run, XP_AWK_ETXTINCLOSE);
+		else
+			PANIC_I (run, errnum);
+	}
 
 	return 0;
 }
@@ -1158,13 +1161,17 @@ static int __run_next (xp_awk_run_t* run, xp_awk_nde_next_t* nde)
 
 static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 {
-	xp_ssize_t n;
+//	xp_ssize_t n;
 
 	/* TODO: implement this properly */
 	/* TODO: how to pass opt properly for IO_NEXT??? -> READ? WRITE? */
+/*
 	n = run->txtio (XP_AWK_IO_NEXT, 0, run->txtio_arg, XP_NULL, 0);
 	if (n == -1) PANIC_I (run, XP_AWK_ETXTINNEXT);
 	return (n == -1)? -1: 0;
+*/
+xp_printf (XP_T("nextfile not implemented....\n"));
+	return -1;
 }
 
 static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
@@ -3578,8 +3585,16 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	{
 		if (p->var == XP_NULL)
 		{
-		/* TODO: set $0 if var is null */
-			xp_printf (XP_T("set %s to $0\n"), XP_STR_BUF(&buf));
+			/* set $0 with the input value */
+			__clear_record (run, xp_false);
+
+			if (__set_record (run, 
+				XP_STR_BUF(&buf), XP_STR_LEN(&buf)) == -1)
+			{
+				xp_str_close (&buf);
+				return XP_NULL;
+			}
+
 			xp_str_close (&buf);
 		}
 		else
@@ -3601,6 +3616,10 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			}
 			xp_awk_refdownval (run, v);
 		}
+	}
+	else
+	{
+		xp_str_close (&buf);
 	}
 	
 	res =  xp_awk_makeintval (run, n);
@@ -3646,51 +3665,39 @@ static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times)
 static int __read_record (xp_awk_run_t* run)
 {
 	xp_ssize_t n;
-	xp_char_t c;
-	xp_awk_val_t* v;
+	int errnum;
 
 	__clear_record (run, xp_false);
 
-	while (1)
+	/*TODO: use RS */
+	n = xp_awk_readextio (
+		run, XP_AWK_EXTIO_CONSOLE, 
+		XP_T(""), &run->inrec.line, &errnum);
+	if (n < 0) 
 	{
-		if (run->inrec.buf_pos >= run->inrec.buf_len)
-		{
-			if (run->inrec.eof) 
-			{
-				if (XP_STR_LEN(&run->inrec.line) == 0) return 0;
-				break;
-			}
-
-			n = run->txtio (XP_AWK_IO_READ, 0, run->txtio_arg,
-				run->inrec.buf, xp_countof(run->inrec.buf));
-			if (n == -1) PANIC_I (run, XP_AWK_ETXTINDATA);
-			if (n == 0)
-			{
-				run->inrec.eof = xp_true;
-				if (XP_STR_LEN(&run->inrec.line) == 0) return 0;
-				break;
-			}
-
-			run->inrec.buf_len = n;
-			run->inrec.buf_pos = 0;
-		}
-
-		c = run->inrec.buf[run->inrec.buf_pos++];
-
-		/* TODO: use RS instead of this hard coded value */
-		/* any better way to tell line terminating with newlines?
-		 * line with new line characters removed or retained? */
-		if (c == XP_T('\n')) break;
-
-		if (xp_str_ccat (&run->inrec.line, c) == (xp_size_t)-1)
-		{
-			PANIC_I (run, XP_AWK_ENOMEM);
-		}
+		if (errnum == XP_AWK_ENOERR)
+			PANIC_I (run, XP_AWK_ETXTINDATA);
+		else
+			PANIC_I (run, errnum);
+	}
+	if (n == 0) 
+	{
+		xp_assert (XP_STR_LEN(&run->inrec.line) == 0);
+		return 0;
 	}
 
-	v = xp_awk_makestrval (
+	if (__set_record (run, 
 		XP_STR_BUF(&run->inrec.line), 
-		XP_STR_LEN(&run->inrec.line));
+		XP_STR_LEN(&run->inrec.line)) == -1) return -1;
+
+	return 1;
+}
+
+static int __set_record (xp_awk_run_t* run, const xp_char_t* str, xp_size_t len)
+{
+	xp_awk_val_t* v;
+
+	v = xp_awk_makestrval (str, len);
 	if (v == XP_NULL)
 	{
 		__clear_record (run, xp_false);
@@ -3698,8 +3705,8 @@ static int __read_record (xp_awk_run_t* run)
 	}
 
 	xp_assert (run->inrec.d0 == xp_awk_val_nil);
-	/* the record has been cleared in the beginning of the function.
-	 * so xp_awk_refdownval is not needed over run->inrec.d0 */
+	/* the record should be clear cleared before this function is called
+	 * as it doesn't call xp_awk_refdownval on run->inrec.d0 */
 	run->inrec.d0 = v;
 	xp_awk_refupval (v);
 
@@ -3709,7 +3716,7 @@ static int __read_record (xp_awk_run_t* run)
 		return -1;
 	}
 
-	return 1; /* has read a record */
+	return 0; /* success */
 }
 
 static int __split_record (xp_awk_run_t* run)
