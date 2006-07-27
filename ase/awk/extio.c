@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.19 2006-07-14 04:19:21 bacon Exp $
+ * $Id: extio.c,v 1.20 2006-07-27 16:50:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -45,7 +45,7 @@ int xp_awk_readextio (
 		XP_AWK_IO_PIPE_READ,
 		0,
 		XP_AWK_IO_FILE_READ,
-		XP_AWK_IO_FILE_READ
+		XP_AWK_IO_CONSOLE_READ
 	};
 
 	static int __in_mask_map[] =

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.81 2006-07-26 16:43:35 bacon Exp $
+ * $Id: awk.h,v 1.82 2006-07-27 16:50:28 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -180,9 +180,8 @@ int xp_awk_detsrc (xp_awk_t* awk);
 int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg);
 
 xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
-/* TODO: xp_awk_parse (xp_awk_t* awk, xp_awk_io_t src, void* arg)??? */
 int xp_awk_parse (xp_awk_t* awk);
-int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg);
+int xp_awk_run (xp_awk_t* awk);
 
 /* functions to access internal stack structure */
 xp_size_t xp_awk_getnargs (void* run);
