@@ -1,5 +1,5 @@
 /*
- * $Id: extio.h,v 1.6 2006-07-28 10:34:22 bacon Exp $
+ * $Id: extio.h,v 1.7 2006-07-28 10:36:30 bacon Exp $
  */
 
 #ifndef _XP_AWK_EXTIO_H_
