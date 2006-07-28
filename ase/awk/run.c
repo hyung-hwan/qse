@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.141 2006-07-27 16:50:28 bacon Exp $
+ * $Id: run.c,v 1.142 2006-07-28 10:34:22 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1161,17 +1161,34 @@ static int __run_next (xp_awk_run_t* run, xp_awk_nde_next_t* nde)
 
 static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 {
-//	xp_ssize_t n;
+/* TODO: trigger an error if "nextfile" is called from BEGIN or END */
+/* TODO: some extentions such as nextfile "in/out"; 
+ *  what about awk -i in1,in2,in3 -o out1,out2,out3 ?
+ */
+	int n, errnum;
 
-	/* TODO: implement this properly */
-	/* TODO: how to pass opt properly for IO_NEXT??? -> READ? WRITE? */
-/*
-	n = run->txtio (XP_AWK_IO_NEXT, 0, run->txtio_arg, XP_NULL, 0);
-	if (n == -1) PANIC_I (run, XP_AWK_ETXTINNEXT);
-	return (n == -1)? -1: 0;
-*/
-xp_printf (XP_T("nextfile not implemented....\n"));
-	return -1;
+	n = xp_awk_nextextio_read (
+		run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
+	if (n == -1)
+	{
+		if (errnum == XP_AWK_ENOERR)
+			PANIC_I (run, XP_AWK_ETXTINNEXT);
+		else
+			PANIC_I (run, errnum);
+	}
+
+	if (n == 0)
+	{
+		/* no more input file */
+		run->exit_level = EXIT_GLOBAL;
+		return 0;
+	}
+
+/* TODO: update FILENAME, ARGIND. reset FNR to 1.
+ * some significant changes will be required to do this */
+/* Consider using FILENAME_IN and FILENAME_OUT to accomplish nextfile in/out */
+	run->exit_level = EXIT_NEXT;
+	return 0;
 }
 
 static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
@@ -3575,10 +3592,16 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	n = xp_awk_readextio (run, p->in_type, dst, &buf, &errnum);
 	if (in != XP_NULL) xp_free (in);
 
-	if (n < 0 && errnum != XP_AWK_ENOERR) 
+	if (n < 0) 
 	{
-		xp_str_close (&buf);
-		PANIC (run, errnum);
+		if (errnum != XP_AWK_ENOERR)
+		{
+			xp_str_close (&buf);
+			PANIC (run, errnum);
+		}
+
+		/* if errnum == XP_AWK_ENOERR, make getline return -1 */
+		n = -1;
 	}
 
 	if (n > 0)

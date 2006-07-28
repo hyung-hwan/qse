@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.142 2006-07-26 16:43:35 bacon Exp $
+ * $Id: parse.c,v 1.143 2006-07-28 10:34:22 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3740,8 +3740,9 @@ static int __get_char (xp_awk_t* awk)
 	*/
 	if (awk->lex.buf_pos >= awk->lex.buf_len)
 	{
-		n = awk->srcio (XP_AWK_IO_READ, 0,
-			awk->srcio_arg, awk->lex.buf, xp_countof(awk->lex.buf));
+		n = awk->srcio (
+			XP_AWK_IO_READ, awk->srcio_arg,
+			awk->lex.buf, xp_countof(awk->lex.buf));
 		if (n == -1)
 		{
 			awk->errnum = XP_AWK_ESRCINDATA;

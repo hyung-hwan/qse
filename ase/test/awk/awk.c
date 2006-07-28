@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.54 2006-07-27 16:50:29 bacon Exp $
+ * $Id: awk.c,v 1.55 2006-07-28 10:34:22 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -13,6 +13,7 @@
 #ifndef __STAND_ALONE
 	#include <xp/bas/stdio.h>
 	#include <xp/bas/string.h>
+	#include <xp/bas/memory.h>
 	#include <xp/bas/sysapi.h>
 	#include <xp/bas/assert.h>	
 #else
@@ -40,6 +41,10 @@
 
 	#include <assert.h>
 	#define xp_assert assert
+
+	#include <stdlib.h>
+	#define xp_malloc malloc
+	#define xp_free free
 #endif
 
 #if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
@@ -54,12 +59,6 @@
 struct src_io
 {
 	const xp_char_t* input_file;
-	FILE* input_handle;
-};
-
-struct data_io
-{
-	const char* input_file;
 	FILE* input_handle;
 };
 
@@ -131,7 +130,7 @@ static FILE* popen_t (const xp_char_t* cmd, const xp_char_t* mode)
 #endif
 
 static xp_ssize_t process_source (
-	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
 	struct src_io* src_io = (struct src_io*)arg;
 	xp_char_t c;
@@ -143,7 +142,7 @@ static xp_ssize_t process_source (
 			if (src_io->input_file == XP_NULL) return 0;
 			src_io->input_handle = fopen_t (src_io->input_file, XP_T("r"));
 			if (src_io->input_handle == NULL) return -1;
-			return 0;
+			return 1;
 		}
 
 		case XP_AWK_IO_CLOSE:
@@ -182,7 +181,7 @@ static xp_ssize_t process_source (
 }
 
 static xp_ssize_t process_extio_pipe (
-	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
 	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
 
@@ -193,16 +192,16 @@ static xp_ssize_t process_extio_pipe (
 			FILE* handle;
 			const xp_char_t* mode;
 
-			if (opt == XP_AWK_IO_PIPE_READ)
+			if (epa->mode == XP_AWK_IO_PIPE_READ)
 				mode = XP_T("r");
-			else if (opt == XP_AWK_IO_PIPE_WRITE)
+			else if (epa->mode == XP_AWK_IO_PIPE_WRITE)
 				mode = XP_T("w");
 			else return -1; /* TODO: any way to set the error number? */
 xp_printf (XP_TEXT("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
 			handle = popen_t (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
-			return 0;
+			return 1;
 		}
 
 		case XP_AWK_IO_CLOSE:
@@ -240,7 +239,7 @@ xp_printf (XP_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 }
 
 static xp_ssize_t process_extio_file (
-	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
 	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
 
@@ -251,11 +250,11 @@ static xp_ssize_t process_extio_file (
 			FILE* handle;
 			const xp_char_t* mode;
 
-			if (opt == XP_AWK_IO_FILE_READ)
+			if (epa->mode == XP_AWK_IO_FILE_READ)
 				mode = XP_T("r");
-			else if (opt == XP_AWK_IO_FILE_WRITE)
+			else if (epa->mode == XP_AWK_IO_FILE_WRITE)
 				mode = XP_T("w");
-			else if (opt == XP_AWK_IO_FILE_APPEND)
+			else if (epa->mode == XP_AWK_IO_FILE_APPEND)
 				mode = XP_T("a");
 			else return -1; /* TODO: any way to set the error number? */
 
@@ -263,7 +262,7 @@ xp_printf (XP_TEXT("opending %s of type %d (file)\n"),  epa->name, epa->type);
 			handle = fopen_t (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
-			return 0;
+			return 1;
 		}
 
 		case XP_AWK_IO_CLOSE:
@@ -298,127 +297,186 @@ xp_printf (XP_TEXT("closing %s of type %d (file)\n"),  epa->name, epa->type);
 	return -1;
 }
 
+static int open_extio_console (xp_awk_extio_t* epa);
+static int close_extio_console (xp_awk_extio_t* epa);
+static int next_extio_console (xp_awk_extio_t* epa);
+
+static const xp_char_t* infiles[] =
+{
+	XP_T(""),
+	XP_T("awk.in"),
+	XP_NULL
+};
+
+static xp_size_t infile_no = 0;
 
 static xp_ssize_t process_extio_console (
-	int cmd, int opt, void* arg, xp_char_t* data, xp_size_t size)
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
 	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
 
-	static const xp_char_t* infiles[] =
+	if (cmd == XP_AWK_IO_OPEN)
 	{
-		XP_T(""),
-		//XP_T("awk.in"),
-		XP_NULL
-	};
-
-	static xp_size_t infile_no = 0;
-
-	switch (cmd)
+		return open_extio_console (epa);
+	}
+	else if (cmd == XP_AWK_IO_CLOSE)
 	{
-		case XP_AWK_IO_OPEN:
+		return close_extio_console (epa);
+	}
+	else if (cmd == XP_AWK_IO_READ)
+	{
+		while (fgets_t (data, size, epa->handle) == XP_NULL)
 		{
-			/* TODO: OpenConsole in GUI APPLICATION */
-			/* opt: XP_AWK_IO_CONSOLE_READ, 
-			 *      XP_AWK_IO_CONSOLE_WRITE */
-
-			/* epa->name is always empty for console */
-			xp_assert (epa->name[0] == XP_T('\0'));
-
-xp_printf (XP_TEXT("opening console of type %x\n"), epa->type);
-
-			if (opt == XP_AWK_IO_CONSOLE_READ)
+			/* it has reached the end of the current file.
+			 * open the next file if available */
+			if (infiles[infile_no] == XP_NULL) 
 			{
-				if (infiles[infile_no] == XP_NULL)
+				/* no more input console */
+
+				/* is this correct??? */
+				/*
+				if (epa->handle != XP_NULL &&
+				    epa->handle != stdin &&
+				    epa->handle != stdout &&
+				    epa->handle != stderr) fclose (epa->handle);
+				epa->handle = XP_NULL;
+				*/
+
+				return 0;
+			}
+
+			if (infiles[infile_no][0] == XP_T('\0'))
+			{
+				if (epa->handle != XP_NULL &&
+				    epa->handle != stdin &&
+				    epa->handle != stdout &&
+				    epa->handle != stderr) fclose (epa->handle);
+				epa->handle = stdin;
+			}
+			else
+			{
+				FILE* fp = fopen_t (infiles[infile_no], XP_T("r"));
+				if (fp == XP_NULL)
 				{
-					/* no input file */
-xp_printf (XP_TEXT("failed to open console of type %x - no more input file\n"), epa->type);
+xp_printf (XP_TEXT("failed to open the next console of type %x - fopen failure\n"), epa->type);
 					return -1;
 				}
-				else if (infiles[infile_no][0] == XP_T('\0'))
-				{
-xp_printf (XP_T("    console(r) - <standard input>\n"));
-					epa->handle = stdin;
-				}
-				else
-				{
-xp_printf (XP_T("    console(r) - %s\n"), infiles[infile_no]);
-					epa->handle = fopen_t (infiles[infile_no], XP_T("r"));
-					if (epa->handle == XP_NULL)
-					{
-xp_printf (XP_TEXT("failed to open console of type %x - fopen failure\n"), epa->type);
-						return -1;
-					}
-				}
 
-				infile_no++;
-			}
-			else if (opt == XP_AWK_IO_CONSOLE_WRITE)
-			{
-xp_printf (XP_T("    console(w) - <standard output>\n"));
-				epa->handle = stdout;
-			}
-			else return -1;
+				if (epa->handle != XP_NULL &&
+				    epa->handle != stdin &&
+				    epa->handle != stdout &&
+				    epa->handle != stderr) fclose (epa->handle);
 
-			return 0;
-		}
-
-		case XP_AWK_IO_CLOSE:
-		{
-xp_printf (XP_TEXT("closing [%s] of type %x (console)\n"), epa->name, epa->type);
-			/* TODO: CloseConsole in GUI APPLICATION */
-			return 0;
-		}
-
-		case XP_AWK_IO_READ:
-		{
-			while (fgets_t (data, size, (FILE*)epa->handle) == XP_NULL)
-			{
-				/* it has reached the end of the current file.
-				 * open the next file if available */
-				if (infiles[infile_no] == XP_NULL) 
-				{
-					/* no more input console */
-					return 0;
-				}
-
-				if (epa->handle != stdin) fclose (epa->handle);
-				if (infiles[infile_no][0] == XP_T('\0'))
-				{
-					epa->handle = stdin;
-				}
-				else
-				{
-					epa->handle = fopen_t (infiles[infile_no], XP_T("r"));
-					if (epa->handle == XP_NULL)
-					{
-xp_printf (XP_TEXT("failed to open the next console of type %x - fopen failure\n"), epa->type);
-						return -1;
-					}
-				}
-
-				infile_no++;	
+xp_printf (XP_TEXT("open the next console [%s]\n"), infiles[infile_no]);
+				epa->handle = fp;
 			}
 
-			return xp_strlen(data);
+			infile_no++;	
 		}
 
-		case XP_AWK_IO_WRITE:
-		{
-			/* TODO: how to return error or 0 */
-			fputs_t (data, /*size,*/ (FILE*)epa->handle);
-			/*fputs_t (data, stdout);*/
-			/*MessageBox (NULL, data, data, MB_OK);*/
-			return size;
-		}
-
-		case XP_AWK_IO_NEXT:
-		{
-			return -1;
-		}
-
+		return xp_strlen(data);
+	}
+	else if (cmd == XP_AWK_IO_WRITE)
+	{
+		/* TODO: how to return error or 0 */
+		fputs_t (data, /*size,*/ (FILE*)epa->handle);
+		/*MessageBox (NULL, data, data, MB_OK);*/
+		return size;
+	}
+	else if (cmd == XP_AWK_IO_NEXT)
+	{
+		return next_extio_console (epa);
 	}
 
 	return -1;
+}
+
+static int open_extio_console (xp_awk_extio_t* epa)
+{
+	/* TODO: OpenConsole in GUI APPLICATION */
+
+	/* epa->name is always empty for console */
+	xp_assert (epa->name[0] == XP_T('\0'));
+
+xp_printf (XP_TEXT("opening console[%s] of type %x\n"), epa->name, epa->type);
+
+	if (epa->mode == XP_AWK_IO_CONSOLE_READ)
+	{
+		if (infiles[infile_no] == XP_NULL)
+		{
+			/* no more input file */
+xp_printf (XP_TEXT("console - no more file\n"));;
+			return 0;
+		}
+
+		if (infiles[infile_no][0] == XP_T('\0'))
+		{
+xp_printf (XP_T("    console(r) - <standard input>\n"));
+			epa->handle = stdin;
+		}
+		else
+		{
+			/* a temporary variable fp is used here not to change 
+			 * any fields of epa when the open operation fails */
+			FILE* fp = fopen_t (infiles[infile_no], XP_T("r"));
+			if (fp == XP_NULL)
+			{
+xp_printf (XP_TEXT("failed to open console of type %x - fopen failure\n"), epa->type);
+				return -1;
+			}
+
+xp_printf (XP_T("    console(r) - %s\n"), infiles[infile_no]);
+			epa->handle = fp;
+		}
+
+		infile_no++;
+		return 1;
+	}
+	else if (epa->mode == XP_AWK_IO_CONSOLE_WRITE)
+	{
+xp_printf (XP_T("    console(w) - <standard output>\n"));
+		epa->handle = stdout;
+		return 1;
+	}
+
+	return -1;
+}
+
+static int close_extio_console (xp_awk_extio_t* epa)
+{
+xp_printf (XP_TEXT("closing console of type %x\n"), epa->type);
+
+	if (epa->handle != XP_NULL &&
+	    epa->handle != stdin && 
+	    epa->handle != stdout && 
+	    epa->handle != stderr)
+	{
+		fclose (epa->handle);
+	}
+
+	/* TODO: CloseConsole in GUI APPLICATION */
+	return 0;
+}
+
+static int next_extio_console (xp_awk_extio_t* epa)
+{
+	int n;
+	FILE* fp = epa->handle;
+xp_printf (XP_TEXT("switching console[%s] of type %x\n"), epa->name, epa->type);
+
+	n = open_extio_console(epa);
+	if (n == -1) return -1;
+
+	if (n == 0) 
+	{
+		/* if there is no more file, keep the previous handle */
+		return 0;
+	}
+
+	if (fp != XP_NULL && fp != stdin && 
+	    fp != stdout && fp != stderr) fclose (fp);
+
+	return n;
 }
 
 #if defined(__STAND_ALONE) && !defined(_WIN32)
@@ -428,7 +486,6 @@ static int __main (int argc, xp_char_t* argv[])
 #endif
 {
 	xp_awk_t* awk;
-	struct data_io data_io = { "awk.in", NULL };
 	struct src_io src_io = { NULL, NULL };
 
 	if ((awk = xp_awk_open()) == XP_NULL) 

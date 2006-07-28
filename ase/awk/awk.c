@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.60 2006-07-26 05:19:44 bacon Exp $ 
+ * $Id: awk.c,v 1.61 2006-07-28 10:34:21 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -170,7 +170,7 @@ int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t handler, void* arg)
 	if (xp_awk_detsrc(awk) == -1) return -1;
 
 	xp_assert (awk->srcio == XP_NULL);
-	if (handler (XP_AWK_IO_OPEN, 0, arg, XP_NULL, 0) == -1) 
+	if (handler (XP_AWK_IO_OPEN, arg, XP_NULL, 0) == -1) 
 	{
 		awk->errnum = XP_AWK_ESRCINOPEN;
 		return -1;
@@ -193,8 +193,7 @@ int xp_awk_detsrc (xp_awk_t* awk)
 	{
 		xp_ssize_t n;
 
-		n = awk->srcio (
-			XP_AWK_IO_CLOSE, 0, awk->srcio_arg, XP_NULL, 0);
+		n = awk->srcio (XP_AWK_IO_CLOSE, awk->srcio_arg, XP_NULL, 0);
 		if (n == -1)
 		{
 			awk->errnum = XP_AWK_ESRCINCLOSE;
