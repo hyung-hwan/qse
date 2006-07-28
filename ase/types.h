@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.50 2006-07-17 04:17:40 bacon Exp $
+ * $Id: types.h,v 1.51 2006-07-28 17:20:27 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -210,6 +210,9 @@ typedef int  xp_mcint_t;
 	typedef unsigned short xp_wchar_t;
 	typedef unsigned short xp_wcint_t;
 #elif (XP_SIZEOF_WCHAR_T == 4)
+	#if defined(vms) || defined(__vms)
+		typedef unsigned int xp_wchar_t;
+		typedef int xp_wcint_t;
 	#if XP_SIZEOF_LONG == 4
 		typedef long xp_wchar_t;
 		typedef long xp_wcint_t;
