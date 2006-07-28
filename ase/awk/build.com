@@ -1,7 +1,7 @@
 $
 $! build script for OpenVMS
 $
-$ names := awk,hash,tab,tree,parse,sa
+$ names :=  awk,err,tree,tab,map,parse,run,sa,val,func,misc,extio,rex
 $ gosub compile
 $ gosub archive
 $ exit
