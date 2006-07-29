@@ -4,7 +4,8 @@ CFLAGS = /pointer_size=long /define=XP_AWK_STAND_ALONE
 LIBRFLAGS = 
 
 xpawk.olb : $(objects)
-	$(LIBR)/create $(LIBRFLAGS) $(MMS$TARGET) $(objects)
+	$(LIBR)/create $(MMS$TARGET)
+	$(LIBR)/replace $(LIBRFLAGS) $(MMS$TARGET) $(objects)
 
 awk.obj depends_on awk.c
 err.obj depends_on err.c
