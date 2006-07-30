@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.61 2006-07-28 10:34:21 bacon Exp $ 
+ * $Id: awk.c,v 1.62 2006-07-30 15:53:42 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -228,7 +228,6 @@ xp_size_t xp_awk_getsrcline (xp_awk_t* awk)
 {
 	return awk->token.line;
 }
-
 
 /* TODO: imrove this... should it close io when it is overridden with a new handler??? */
 int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg)

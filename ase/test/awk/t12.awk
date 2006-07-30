@@ -17,7 +17,6 @@ BEGIN
 
 	getline x < "abc";
 	if (x == "a") print "xxxxxxxxxxxxxxxx"; else print x;
-
 	*/
 
 	/*
@@ -26,9 +25,13 @@ BEGIN
 	print "--------------";
 	*/
 
-	getline x < "abc";
-	print x > "abc";
+	if (getline x < "abc" == -1)
+	{
+		print "ERRNO = ", ERRNO;
+	}
 
-	print (1 (2 getline j) j);
-	print "abc" 1 + 2 3 + 49 2 / 3;
+	print x > "def";
+
+//	print (1 (2 getline j) j);
+//	print "abc" 1 + 2 3 + 49 2 / 3;
 }

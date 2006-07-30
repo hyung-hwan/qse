@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.143 2006-07-28 10:36:30 bacon Exp $
+ * $Id: run.c,v 1.144 2006-07-30 15:53:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -460,7 +460,7 @@ static int __run_main (xp_awk_run_t* run)
 			if (__run_block (run, blk) == -1) n = -1;
 		}
 
-		if (n == 0)
+		if (n == 0 && run->awk->tree.chain != XP_NULL)
 		{
 			if (__run_pattern_blocks (run) == -1) n = -1;
 		}
@@ -626,7 +626,9 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 			}
 			else
 			{
+				/* pattern, pattern { ... } */
 				xp_assert (ptn->next->next == XP_NULL);
+
 				/* TODO: implement this */
 				xp_awk_refdownval (run, v1);
 				xp_printf (XP_T("ERROR: pattern, pattern NOT OMPLEMENTED\n"));
@@ -1388,14 +1390,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 
 	if (p->args == XP_NULL)
 	{
-		/* TODO: get $0 ans use it for v */
-		v = xp_awk_makestrval0 (
-			XP_T("<TODO: PRINT $0 WITH A TRAILING NEWLINE>\n"));
-		if (v == XP_NULL)
-		{
-			if (out != XP_NULL) xp_free (out);
-			PANIC_I (run, XP_AWK_ENOMEM);
-		}
+		v = run->inrec.d0;
 
 		xp_awk_refupval (v);
 		n = xp_awk_writeextio (run, p->out_type, dst, v, &errnum);
@@ -1434,29 +1429,29 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 
 			/* TODO: print proper field separator */
 		}
-
-		/* TODO: predefine the new line string 
-		 *       for performance improvement*/
-		v = xp_awk_makestrval (XP_T("\n"), 1);
-		if (v == XP_NULL)
-		{
-			if (out != XP_NULL) xp_free (out);
-			PANIC_I (run, XP_AWK_ENOMEM);
-		}
-		xp_awk_refupval (v);
-
-		n = xp_awk_writeextio (
-			run, p->out_type, dst, v, &errnum);
-		if (n < 0 && errnum != XP_AWK_ENOERR)
-		{
-			if (out != XP_NULL) xp_free (out);
-			xp_awk_refdownval (run, v);
-			PANIC_I (run, errnum);
-		}
-		xp_awk_refdownval (run, v);
-
-		/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
 	}
+
+	/* TODO: predefine the new line string 
+	 *       for performance improvement*/
+	v = xp_awk_makestrval (XP_T("\n"), 1);
+	if (v == XP_NULL)
+	{
+		if (out != XP_NULL) xp_free (out);
+		PANIC_I (run, XP_AWK_ENOMEM);
+	}
+	xp_awk_refupval (v);
+
+	n = xp_awk_writeextio (
+		run, p->out_type, dst, v, &errnum);
+	if (n < 0 && errnum != XP_AWK_ENOERR)
+	{
+		if (out != XP_NULL) xp_free (out);
+		xp_awk_refdownval (run, v);
+		PANIC_I (run, errnum);
+	}
+	xp_awk_refdownval (run, v);
+
+	/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
 
 	if (out != XP_NULL) xp_free (out);
 	return 0;
@@ -1661,6 +1656,7 @@ static xp_awk_val_t* __do_assignment_scalar (
 			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
 		}
 
+/* TODO: if var->id.idxa == XP_AWK_GLOBAL_NF recompute $0, etc */
 		xp_awk_refdownval (run, old);
 		STACK_GLOBAL(run,var->id.idxa) = val;
 		xp_awk_refupval (val);
