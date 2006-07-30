@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.144 2006-07-28 10:36:30 bacon Exp $
+ * $Id: parse.c,v 1.145 2006-07-30 15:53:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2084,7 +2084,9 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 				return XP_NULL;
 			}
 
-			in = __parse_expression (awk);
+			/* TODO: is this correct? */
+			/*in = __parse_expression (awk);*/
+			in = __parse_primary (awk);
 			if (in == XP_NULL)
 			{
 				if (var != XP_NULL) xp_awk_clrpt (var);
@@ -3109,7 +3111,8 @@ static int __get_token (xp_awk_t* awk)
 		SET_TOKEN_TYPE (awk, TOKEN_STR);
 
 		if (__get_string(awk) == -1) return -1;
-		while (1)
+
+		while (awk->opt.parse & XP_AWK_STRCONCAT) 
 		{
 			do 
 			{
@@ -3123,6 +3126,7 @@ static int __get_token (xp_awk_t* awk)
 
 			if (__get_string(awk) == -1) return -1;
 		}
+
 	}
 	else if (c == XP_T('=')) 
 	{

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.83 2006-07-28 10:34:21 bacon Exp $
+ * $Id: awk.h,v 1.84 2006-07-30 15:53:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -61,16 +61,37 @@ enum
 
 /* parse options */
 enum
-{
-	XP_AWK_IMPLICIT   = (1 << 0), /* allow undeclared variables */
-	XP_AWK_EXPLICIT   = (1 << 1), /* variable requires explicit declaration */
-	XP_AWK_UNIQUE     = (1 << 2), /* a function name should not coincide to be a variable name */
-	XP_AWK_SHADING    = (1 << 3), /* allow variable shading */
-	XP_AWK_SHIFT      = (1 << 4), /* support shift operators */
-	XP_AWK_HASHSIGN   = (1 << 5), /* support comments by a hash sign */
-	XP_AWK_DBLSLASHES = (1 << 6), /* support comments by double slashes */
+{ 
+	/* allow undeclared variables */
+	XP_AWK_IMPLICIT   = (1 << 0),
 
-	XP_AWK_EXTIO      = (1 << 7)  /* support getline and print */
+	/* variable requires explicit declaration */
+	XP_AWK_EXPLICIT   = (1 << 1), 
+
+	/* a function name should not coincide to be a variable name */
+	XP_AWK_UNIQUE     = (1 << 2),
+
+	/* allow variable shading */
+	XP_AWK_SHADING    = (1 << 3), 
+
+	/* support shift operators */
+	XP_AWK_SHIFT      = (1 << 4), 
+
+	/* support comments by a hash sign */
+	XP_AWK_HASHSIGN   = (1 << 5), 
+
+	/* support comments by double slashes */
+	XP_AWK_DBLSLASHES = (1 << 6), 
+
+	/* support string concatenation in tokenization.
+	 * this option can change the behavior of a certain construct.
+	 * getline < "abc" ".def" is treated as if it is getline < "abc.def" 
+	 * when this option is on. If this option is off, the same expression
+	 * is treated as if it is (getline < "abc") ".def". */
+	XP_AWK_STRCONCAT  = (1 << 7), 
+
+	/* support getline and print */
+	XP_AWK_EXTIO      = (1 << 8) 
 };
 
 /* run options */
@@ -177,10 +198,9 @@ void xp_awk_setrunopt (xp_awk_t* awk, int opt);
 
 int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg);
 int xp_awk_detsrc (xp_awk_t* awk);
+xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
 
 int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg);
-
-xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
 int xp_awk_parse (xp_awk_t* awk);
 int xp_awk_run (xp_awk_t* awk);
 
