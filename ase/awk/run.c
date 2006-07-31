@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.144 2006-07-30 15:53:42 bacon Exp $
+ * $Id: run.c,v 1.145 2006-07-31 04:25:17 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2925,15 +2925,9 @@ static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_assert (exp->type == XP_AWK_NDE_EXP_INCPRE);
 	xp_assert (exp->left != XP_NULL && exp->right == XP_NULL);
 
-	/* ugly. but let's keep going this way for the time being */
-	/*if (exp->left->type != XP_AWK_NDE_NAMED && 
-	    exp->left->type != XP_AWK_NDE_GLOBAL && 
-	    exp->left->type != XP_AWK_NDE_LOCAL && 
-	    exp->left->type != XP_AWK_NDE_ARG &&
-	    exp->left->type != XP_AWK_NDE_NAMEDIDX &&
-	    exp->left->type != XP_AWK_NDE_GLOBALIDX &&
-	    exp->left->type != XP_AWK_NDE_LOCALIDX &&
-	    exp->left->type != XP_AWK_NDE_ARGIDX) */
+	/* this way of checking if the l-value is assignable is
+	 * ugly as it is dependent of the values defined in tree.h.
+	 * but let's keep going this way for the time being. */
 	if (exp->left->type < XP_AWK_NDE_NAMED ||
 	    exp->left->type > XP_AWK_NDE_ARGIDX)
 	{
@@ -2952,18 +2946,50 @@ static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		{
 			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
 			res = xp_awk_makeintval (run, r + 1);
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 		}
 		else if (left->type == XP_AWK_VAL_REAL)
 		{
 			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
 			res = xp_awk_makerealval (run, r + 1.0);
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 		}
 		else
 		{
-			xp_awk_refdownval (run, left);
-			PANIC (run, XP_AWK_EOPERAND);
+			xp_long_t v1;
+			xp_real_t v2;
+			int n;
+
+			n = xp_awk_valtonum (left, &v1, &v2);
+			if (n == -1)
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_EOPERAND);
+			}
+
+			if (n == 0) 
+			{
+				res = xp_awk_makeintval (run, v1 + 1);
+			}
+			else /* if (n == 1) */
+			{
+				xp_assert (n == 1);
+				res = xp_awk_makerealval (run, v2 + 1.0);
+			}
+
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 		}
 	}
 	else if (exp->opcode == XP_AWK_INCOP_MINUS)
@@ -2972,18 +2998,50 @@ static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		{
 			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
 			res = xp_awk_makeintval (run, r - 1);
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 		}
 		else if (left->type == XP_AWK_VAL_REAL)
 		{
 			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
 			res = xp_awk_makerealval (run, r - 1.0);
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 		}
 		else
 		{
-			xp_awk_refdownval (run, left);
-			PANIC (run, XP_AWK_EOPERAND);
+			xp_long_t v1;
+			xp_real_t v2;
+			int n;
+
+			n = xp_awk_valtonum (left, &v1, &v2);
+			if (n == -1)
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_EOPERAND);
+			}
+
+			if (n == 0) 
+			{
+				res = xp_awk_makeintval (run, v1 - 1);
+			}
+			else /* if (n == 1) */
+			{
+				xp_assert (n == 1);
+				res = xp_awk_makerealval (run, v2 - 1.0);
+			}
+
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 		}
 	}
 	else
@@ -3011,15 +3069,9 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_assert (exp->type == XP_AWK_NDE_EXP_INCPST);
 	xp_assert (exp->left != XP_NULL && exp->right == XP_NULL);
 
-	/* ugly. but let's keep going this way for the time being */
-	/*if (exp->left->type != XP_AWK_NDE_NAMED && 
-	    exp->left->type != XP_AWK_NDE_GLOBAL && 
-	    exp->left->type != XP_AWK_NDE_LOCAL && 
-	    exp->left->type != XP_AWK_NDE_ARG &&
-	    exp->left->type != XP_AWK_NDE_NAMEDIDX &&
-	    exp->left->type != XP_AWK_NDE_GLOBALIDX &&
-	    exp->left->type != XP_AWK_NDE_LOCALIDX &&
-	    exp->left->type != XP_AWK_NDE_ARGIDX) */
+	/* this way of checking if the l-value is assignable is
+	 * ugly as it is dependent of the values defined in tree.h.
+	 * but let's keep going this way for the time being. */
 	if (exp->left->type < XP_AWK_NDE_NAMED ||
 	    exp->left->type > XP_AWK_NDE_ARGIDX)
 	{
@@ -3038,11 +3090,16 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		{
 			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
 			res = xp_awk_makeintval (run, r);
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 
 			res2 = xp_awk_makeintval (run, r + 1);
 			if (res2 == XP_NULL)
 			{
+				xp_awk_refdownval (run, left);
 				xp_awk_freeval (run, res, xp_true);
 				PANIC (run, XP_AWK_ENOMEM);
 			}
@@ -3051,19 +3108,68 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		{
 			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
 			res = xp_awk_makerealval (run, r);
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 
 			res2 = xp_awk_makerealval (run, r + 1.0);
 			if (res2 == XP_NULL)
 			{
+				xp_awk_refdownval (run, left);
 				xp_awk_freeval (run, res, xp_true);
 				PANIC (run, XP_AWK_ENOMEM);
 			}
 		}
 		else
 		{
-			xp_awk_refdownval (run, left);
-			PANIC (run, XP_AWK_EOPERAND);
+			xp_long_t v1;
+			xp_real_t v2;
+			int n;
+
+			n = xp_awk_valtonum (left, &v1, &v2);
+			if (n == -1)
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_EOPERAND);
+			}
+
+			if (n == 0) 
+			{
+				res = xp_awk_makeintval (run, v1);
+				if (res == XP_NULL)
+				{
+					xp_awk_refdownval (run, left);
+					PANIC (run, XP_AWK_ENOMEM);
+				}
+
+				res2 = xp_awk_makeintval (run, v1 + 1);
+				if (res2 == XP_NULL)
+				{
+					xp_awk_refdownval (run, left);
+					xp_awk_freeval (run, res, xp_true);
+					PANIC (run, XP_AWK_ENOMEM);
+				}
+			}
+			else /* if (n == 1) */
+			{
+				xp_assert (n == 1);
+				res = xp_awk_makerealval (run, v2);
+				if (res == XP_NULL)
+				{
+					xp_awk_refdownval (run, left);
+					PANIC (run, XP_AWK_ENOMEM);
+				}
+
+				res2 = xp_awk_makerealval (run, v2 + 1.0);
+				if (res2 == XP_NULL)
+				{
+					xp_awk_refdownval (run, left);
+					xp_awk_freeval (run, res, xp_true);
+					PANIC (run, XP_AWK_ENOMEM);
+				}
+			}
 		}
 	}
 	else if (exp->opcode == XP_AWK_INCOP_MINUS)
@@ -3072,11 +3178,16 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		{
 			xp_long_t r = ((xp_awk_val_int_t*)left)->val;
 			res = xp_awk_makeintval (run, r);
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 
 			res2 = xp_awk_makeintval (run, r - 1);
 			if (res2 == XP_NULL)
 			{
+				xp_awk_refdownval (run, left);
 				xp_awk_freeval (run, res, xp_true);
 				PANIC (run, XP_AWK_ENOMEM);
 			}
@@ -3085,19 +3196,68 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		{
 			xp_real_t r = ((xp_awk_val_real_t*)left)->val;
 			res = xp_awk_makerealval (run, r);
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (res == XP_NULL) 
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
 
 			res2 = xp_awk_makerealval (run, r - 1.0);
 			if (res2 == XP_NULL)
 			{
+				xp_awk_refdownval (run, left);
 				xp_awk_freeval (run, res, xp_true);
 				PANIC (run, XP_AWK_ENOMEM);
 			}
 		}
 		else
 		{
-			xp_awk_refdownval (run, left);
-			PANIC (run, XP_AWK_EOPERAND);
+			xp_long_t v1;
+			xp_real_t v2;
+			int n;
+
+			n = xp_awk_valtonum (left, &v1, &v2);
+			if (n == -1)
+			{
+				xp_awk_refdownval (run, left);
+				PANIC (run, XP_AWK_EOPERAND);
+			}
+
+			if (n == 0) 
+			{
+				res = xp_awk_makeintval (run, v1);
+				if (res == XP_NULL)
+				{
+					xp_awk_refdownval (run, left);
+					PANIC (run, XP_AWK_ENOMEM);
+				}
+
+				res2 = xp_awk_makeintval (run, v1 - 1);
+				if (res2 == XP_NULL)
+				{
+					xp_awk_refdownval (run, left);
+					xp_awk_freeval (run, res, xp_true);
+					PANIC (run, XP_AWK_ENOMEM);
+				}
+			}
+			else /* if (n == 1) */
+			{
+				xp_assert (n == 1);
+				res = xp_awk_makerealval (run, v2);
+				if (res == XP_NULL)
+				{
+					xp_awk_refdownval (run, left);
+					PANIC (run, XP_AWK_ENOMEM);
+				}
+
+				res2 = xp_awk_makerealval (run, v2 - 1.0);
+				if (res2 == XP_NULL)
+				{
+					xp_awk_refdownval (run, left);
+					xp_awk_freeval (run, res, xp_true);
+					PANIC (run, XP_AWK_ENOMEM);
+				}
+			}
 		}
 	}
 	else
