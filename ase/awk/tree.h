@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.63 2006-07-26 15:00:00 bacon Exp $
+ * $Id: tree.h,v 1.64 2006-07-31 04:25:17 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -46,6 +46,9 @@ enum
 	XP_AWK_NDE_REAL,
 	XP_AWK_NDE_STR,
 	XP_AWK_NDE_REX,
+
+	/* keep this order for the following items otherwise, you may have 
+	 * to change __eval_incpre and __eval_incpst in run.c*/
 	XP_AWK_NDE_NAMED,
 	XP_AWK_NDE_GLOBAL,
 	XP_AWK_NDE_LOCAL,
@@ -54,6 +57,8 @@ enum
 	XP_AWK_NDE_GLOBALIDX,
 	XP_AWK_NDE_LOCALIDX,
 	XP_AWK_NDE_ARGIDX,
+	/* ---------------------------------- */
+
 	XP_AWK_NDE_POS,
 	XP_AWK_NDE_GETLINE,
 };
