@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.84 2006-07-30 15:53:42 bacon Exp $
+ * $Id: awk.h,v 1.85 2006-08-01 15:57:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -148,6 +148,10 @@ enum
 	XP_AWK_ELVALUE,        /* l-value required */
 	XP_AWK_ETOOFEWARGS,    /* too few arguments */
 	XP_AWK_ETOOMANYARGS,   /* too many arguments */
+	XP_AWK_EBREAK,         /* break outside a loop */
+	XP_AWK_ECONTINUE,      /* continue outside a loop */
+	XP_AWK_ENEXT,          /* next illegal in BEGIN or END block */
+	XP_AWK_ENEXTFILE,      /* nextfile illegal in BEGIN or END block */
 	XP_AWK_EGETLINE,       /* getline expected */
 	XP_AWK_EREXBUILD,      /* cannot build regexp */
 	XP_AWK_EREXMATCH,      /* an error occurred in matching regexp */

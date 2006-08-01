@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.148 2006-08-01 04:40:14 bacon Exp $
+ * $Id: run.c,v 1.149 2006-08-01 15:57:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -528,6 +528,7 @@ xp_printf (XP_T("-[END VARIABLES]--------------------------\n"));
 static int __run_pattern_blocks (xp_awk_run_t* run)
 {
 	xp_ssize_t n;
+	xp_bool_t need_to_close = xp_false;
 	int errnum;
 
 	run->inrec.buf_pos = 0;
@@ -549,6 +550,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 			return -1;
 		}
 
+		need_to_close = xp_true;
 		if (x == 0) break; /* end of input */
 
 		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
@@ -565,13 +567,16 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 	 * pattern-block loop, which is totally different from getline.
 	 * So it just returns -1 as long as closeextio returns -1 regardless
 	 * of the value of errnum  */
-	n = xp_awk_closeextio (run, XP_T(""), &errnum);
-	if (n == -1) 
+	if (need_to_close)
 	{
-		if (errnum == XP_AWK_ENOERR)
-			PANIC_I (run, XP_AWK_ETXTINCLOSE);
-		else
-			PANIC_I (run, errnum);
+		n = xp_awk_closeextio (run, XP_T(""), &errnum);
+		if (n == -1) 
+		{
+			if (errnum == XP_AWK_ENOERR)
+				PANIC_I (run, XP_AWK_ETXTINCLOSE);
+			else
+				PANIC_I (run, errnum);
+		}
 	}
 
 	return 0;
@@ -2824,6 +2829,7 @@ static xp_awk_val_t* __eval_binop_ma (
 	if (lv == XP_NULL) return XP_NULL;
 
 	xp_awk_refupval (lv);
+
 	rv = __eval_expression0 (run, right);
 	if (rv == XP_NULL)
 	{
@@ -2853,6 +2859,7 @@ static xp_awk_val_t* __eval_binop_nm (
 	if (lv == XP_NULL) return XP_NULL;
 
 	xp_awk_refupval (lv);
+
 	rv = __eval_expression0 (run, right);
 	if (rv == XP_NULL)
 	{

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.62 2006-07-30 15:53:42 bacon Exp $ 
+ * $Id: awk.c,v 1.63 2006-08-01 15:57:42 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -123,6 +123,7 @@ void xp_awk_clear (xp_awk_t* awk)
 	xp_awk_tab_clear (&awk->parse.params);
 
 	awk->parse.nlocals_max = 0; 
+	awk->parse.depth.loop = 0;
 
 	/* clear parse trees */	
 	awk->tree.nglobals = 0;	

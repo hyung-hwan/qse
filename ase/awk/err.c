@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.28 2006-07-26 16:43:35 bacon Exp $
+ * $Id: err.c,v 1.29 2006-08-01 15:57:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -69,6 +69,10 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("l-value required"),
 		XP_T("too few arguments"),
 		XP_T("too many arguments"),
+		XP_T("break outside a loop"),
+		XP_T("continue outside a loop"),
+		XP_T("next illegal in BEGIN or END block"),
+		XP_T("nextfile illegal in BEGIN or END block"),
 		XP_T("getline expected"),
 		XP_T("cannot build the regular expression"),
 		XP_T("an error occurred in the regular expression match"),
