@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.58 2006-07-31 15:59:43 bacon Exp $
+ * $Id: awk.c,v 1.59 2006-08-01 04:36:33 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -602,13 +602,19 @@ static int __main (int argc, xp_char_t* argv[])
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
-			XP_T("error: cannot run program - [%d] %ls\n"), 
+			XP_T("error: cannot run program - [%d] %ls"), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
 #else
 		xp_printf (
-			XP_T("error: cannot run program - [%d] %s\n"), 
+			XP_T("error: cannot run program - [%d] %s"), 
 			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
 #endif
+		if (xp_awk_getsuberrnum(awk) != XP_AWK_ENOERR)
+		{
+			xp_printf (XP_T(" - %ls\n"), xp_awk_getsuberrstr(awk));
+		}
+		xp_printf (XP_T("\n"));
+
 		xp_awk_close (awk);
 		return -1;
 	}
