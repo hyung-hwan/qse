@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.146 2006-07-31 15:59:42 bacon Exp $
+ * $Id: run.c,v 1.147 2006-08-01 04:36:32 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -39,13 +39,13 @@ enum
 
 #define PANIC(run,code) \
 	do { (run)->errnum = (code); return XP_NULL; } while (0)
-#define PANIC2(awk,code,subcode) \
-	do { (awk)->errnum = (code); (awk)->suberrnum = (subcode); return XP_NULL; } while (0)
+#define PANIC2(run,code,subcode) \
+	do { (run)->errnum = (code); (run)->suberrnum = (subcode); return XP_NULL; } while (0)
 
 #define PANIC_I(run,code) \
 	do { (run)->errnum = (code); return -1; } while (0)
 #define PANIC2_I(awk,code,subcode) \
-	do { (awk)->errnum = (code); (awk)->suberrnum = (subcode); return -1; } while (0)
+	do { (run)->errnum = (code); (run)->suberrnum = (subcode); return -1; } while (0)
 
 static int __open_run (xp_awk_run_t* run, xp_awk_t* awk);
 static void __close_run (xp_awk_run_t* run);
@@ -130,12 +130,10 @@ static xp_awk_val_t* __eval_binop_concat (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
 static xp_awk_val_t* __eval_binop_ma (
 	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right);
-static xp_awk_val_t* __eval_binop_ma0 (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
 static xp_awk_val_t* __eval_binop_nm (
 	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right);
-static xp_awk_val_t* __eval_binop_nm0 (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
+static xp_awk_val_t* __eval_binop_match0 (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right, int ret);
 
 static xp_awk_val_t* __eval_unary (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -238,12 +236,17 @@ int xp_awk_run (xp_awk_t* awk)
 	{
 /* TODO: find a way to set the errnum into awk object in a thread-safe way */
 		awk->errnum = run->errnum;
+		awk->suberrnum = run->suberrnum;
 		xp_free (run);
 		return -1;
 	}
 
 	n = __run_main (run);
-	if (n == -1) awk->errnum = run->errnum;
+	if (n == -1) 
+	{
+		awk->errnum = run->errnum;
+		awk->suberrnum = run->suberrnum;
+	}
 
 	__close_run (run);
 	xp_free (run);
@@ -272,6 +275,7 @@ static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
 
 	run->opt = awk->opt.run;
 	run->errnum = XP_AWK_ENOERR;
+	run->suberrnum = XP_AWK_ENOERR;
 	/*run->tree = &awk->tree; */
 	/*run->nglobals = awk->tree.nglobals;*/
 	run->awk = awk;
@@ -2829,66 +2833,12 @@ static xp_awk_val_t* __eval_binop_ma (
 
 	xp_awk_refupval (rv);
 
-	res = __eval_binop_ma0 (run, lv, rv);
+	res = __eval_binop_match0 (run, lv, rv, 1);
 
 	xp_awk_refdownval (run, lv);
 	xp_awk_refdownval (run, rv);
 
 	return res;
-}
-
-static xp_awk_val_t* __eval_binop_ma0 (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
-{
-	xp_awk_val_t* res;
-	int n, errnum;
-	xp_char_t* str;
-	xp_size_t len;
-
-	if (right->type == XP_AWK_VAL_REX)
-	{
-		if (left->type == XP_AWK_VAL_STR)
-		{
-			n = xp_awk_matchrex (
-				((xp_awk_val_rex_t*)right)->code,
-				((xp_awk_val_str_t*)left)->buf,
-				((xp_awk_val_str_t*)left)->len,
-				XP_NULL, XP_NULL, &errnum);
-			if (n == -1) PANIC2 (run, XP_AWK_EREXMATCH, errnum);
-
-			res = xp_awk_makeintval (run, (n != 0));
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
-		}
-		else
-		{
-			str = xp_awk_valtostr (right, &errnum, XP_NULL, &len);
-			if (str == XP_NULL) PANIC (run, errnum);
-
-			n = xp_awk_matchrex (
-				((xp_awk_val_rex_t*)right)->code,
-				str, len,  XP_NULL, XP_NULL, &errnum);
-			if (n == -1) 
-			{
-				xp_free (str);
-				PANIC2 (run, XP_AWK_EREXMATCH, errnum);
-			}
-
-			res = xp_awk_makeintval (run, (n != 0));
-			if (res == XP_NULL) 
-			{
-				xp_free (str);
-				PANIC (run, XP_AWK_ENOMEM);
-			}
-
-			xp_free (str);
-		}
-
-		return res;
-	}
-
-/* TODO: implement the pattern matching operation properly */
-	PANIC (run, XP_AWK_EOPERAND);
-	return XP_NULL;
 }
 
 static xp_awk_val_t* __eval_binop_nm (
@@ -2912,7 +2862,7 @@ static xp_awk_val_t* __eval_binop_nm (
 
 	xp_awk_refupval (rv);
 
-	res = __eval_binop_nm0 (run, lv, rv);
+	res = __eval_binop_match0 (run, lv, rv, 0);
 
 	xp_awk_refdownval (run, lv);
 	xp_awk_refdownval (run, rv);
@@ -2920,58 +2870,93 @@ static xp_awk_val_t* __eval_binop_nm (
 	return res;
 }
 
-static xp_awk_val_t* __eval_binop_nm0 (
-	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+static xp_awk_val_t* __eval_binop_match0 (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right, int ret)
 {
 	xp_awk_val_t* res;
 	int n, errnum;
 	xp_char_t* str;
 	xp_size_t len;
+	void* rex_code;
 
 	if (right->type == XP_AWK_VAL_REX)
 	{
-		if (left->type == XP_AWK_VAL_STR)
+		rex_code = ((xp_awk_val_rex_t*)right)->code;
+	}
+	else if (right->type == XP_AWK_VAL_STR)
+	{
+		rex_code = xp_awk_buildrex ( 
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len, &errnum);
+		if (rex_code == XP_NULL)
+			PANIC2 (run, XP_AWK_EREXBUILD, errnum);
+	}
+	else
+	{
+		str = xp_awk_valtostr (right, &errnum, XP_NULL, &len);
+		if (str == XP_NULL) PANIC (run, errnum);
+
+		rex_code = xp_awk_buildrex (str, len, &errnum);
+		if (rex_code == XP_NULL)
 		{
-			n = xp_awk_matchrex (
-				((xp_awk_val_rex_t*)right)->code,
-				((xp_awk_val_str_t*)left)->buf,
-				((xp_awk_val_str_t*)left)->len,
-				XP_NULL, XP_NULL, &errnum);
-			if (n == -1) PANIC2 (run, XP_AWK_EREXMATCH, errnum);
-
-			res = xp_awk_makeintval (run, (n == 0));
-			if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
-		}
-		else
-		{
-			str = xp_awk_valtostr (right, &errnum, XP_NULL, &len);
-			if (str == XP_NULL) PANIC (run, errnum);
-
-			n = xp_awk_matchrex (
-				((xp_awk_val_rex_t*)right)->code,
-				str, len,  XP_NULL, XP_NULL, &errnum);
-			if (n == -1) 
-			{
-				xp_free (str);
-				PANIC2 (run, XP_AWK_EREXMATCH, errnum);
-			}
-
-			res = xp_awk_makeintval (run, (n == 0));
-			if (res == XP_NULL) 
-			{
-				xp_free (str);
-				PANIC (run, XP_AWK_ENOMEM);
-			}
-
 			xp_free (str);
+			PANIC2 (run, XP_AWK_EREXBUILD, errnum);
 		}
 
-		return res;
+		xp_free (str);
 	}
 
-/* TODO: implement the pattern matching operation properly */
-	PANIC (run, XP_AWK_EOPERAND);
-	return XP_NULL;
+	if (left->type == XP_AWK_VAL_STR)
+	{
+		n = xp_awk_matchrex (
+			rex_code,
+			((xp_awk_val_str_t*)left)->buf,
+			((xp_awk_val_str_t*)left)->len,
+			XP_NULL, XP_NULL, &errnum);
+		if (n == -1) 
+		{
+			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
+			PANIC2 (run, XP_AWK_EREXMATCH, errnum);
+		}
+
+		res = xp_awk_makeintval (run, (n == ret));
+		if (res == XP_NULL) 
+		{
+			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+	}
+	else
+	{
+		str = xp_awk_valtostr (right, &errnum, XP_NULL, &len);
+		if (str == XP_NULL) 
+		{
+			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
+			PANIC (run, errnum);
+		}
+
+		n = xp_awk_matchrex (
+			rex_code, str, len, XP_NULL, XP_NULL, &errnum);
+		if (n == -1) 
+		{
+			xp_free (str);
+			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
+			PANIC2 (run, XP_AWK_EREXMATCH, errnum);
+		}
+
+		res = xp_awk_makeintval (run, (n == ret));
+		if (res == XP_NULL) 
+		{
+			xp_free (str);
+			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		xp_free (str);
+	}
+
+	if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
+	return res;
 }
 
 static xp_awk_val_t* __eval_unary (xp_awk_run_t* run, xp_awk_nde_t* nde)
