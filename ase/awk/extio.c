@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.22 2006-07-30 15:53:42 bacon Exp $
+ * $Id: extio.c,v 1.23 2006-08-01 15:57:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -415,7 +415,8 @@ int xp_awk_nextextio_read (
 	return n;
 }
 
-int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name, int* errnum)
+int xp_awk_closeextio (
+	xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 {
 	xp_awk_extio_t* p = run->extio, * px = XP_NULL;
 

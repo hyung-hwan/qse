@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.147 2006-08-01 04:40:14 bacon Exp $
+ * $Id: parse.c,v 1.148 2006-08-01 15:57:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -95,6 +95,23 @@ enum
 	TOKEN_REX,
 
 	__TOKEN_COUNT__
+};
+
+enum
+{
+	PARSE_BLOCK_GLOBAL,
+	PARSE_BLOCK_FUNCTION,
+	PARSE_BLOCK_BEGIN,
+	PARSE_BLOCK_END,
+	PARSE_BLOCK_PATTERN
+};
+
+enum
+{
+	PARSE_LOOP_NONE,
+	PARSE_LOOP_WHILE,
+	PARSE_LOOP_FOR,
+	PARSE_LOOP_DOWHILE
 };
 
 typedef struct __binmap_t __binmap_t;
@@ -415,9 +432,13 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	function name (parameter-list) { statement }
 	*/
 
+	xp_assert (awk->parse.depth.loop == 0);
+
 	if ((awk->opt.parse & XP_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) 
 	{
 		xp_size_t nglobals;
+
+		awk->parse.id.block = PARSE_BLOCK_GLOBAL;
 
 		if (__get_token(awk) == -1) return XP_NULL;
 
@@ -432,19 +453,23 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_FUNCTION)) 
 	{
+		awk->parse.id.block = PARSE_BLOCK_FUNCTION;
 		if (__parse_function(awk) == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk,TOKEN_BEGIN)) 
 	{
+		awk->parse.id.block = PARSE_BLOCK_BEGIN;
 		if (__parse_begin(awk) == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk,TOKEN_END)) 
 	{
+		awk->parse.id.block = PARSE_BLOCK_END;
 		if (__parse_end(awk) == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk,TOKEN_LBRACE))
 	{
 		/* pattern less block */
+		awk->parse.id.block = PARSE_BLOCK_PATTERN;
 		if (__parse_ptnblock(awk,XP_NULL) == XP_NULL) return XP_NULL;
 	}
 	else
@@ -459,6 +484,8 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		pattern, pattern
 		*/
 		xp_awk_nde_t* ptn;
+
+		awk->parse.id.block = PARSE_BLOCK_PATTERN;
 
 		ptn = __parse_expression (awk);
 		if (ptn == XP_NULL) return XP_NULL;
@@ -1083,12 +1110,22 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 	else if (MATCH(awk,TOKEN_WHILE)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		return __parse_while (awk);
+		
+		awk->parse.depth.loop++;
+		nde = __parse_while (awk);
+		awk->parse.depth.loop--;
+
+		return nde;
 	}
 	else if (MATCH(awk,TOKEN_FOR)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
-		return __parse_for (awk);
+
+		awk->parse.depth.loop++;
+		nde = __parse_for (awk);
+		awk->parse.depth.loop--;
+
+		return nde;
 	}
 
 	/* 
@@ -1097,7 +1134,12 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 	if (MATCH(awk,TOKEN_DO)) 
 	{
 		if (__get_token(awk) == -1) return XP_NULL;
+
+		awk->parse.depth.loop++;
 		nde = __parse_dowhile (awk);
+		awk->parse.depth.loop--;
+
+		return nde;
 	}
 	else if (MATCH(awk,TOKEN_BREAK)) 
 	{
@@ -2815,6 +2857,8 @@ static xp_awk_nde_t* __parse_break (xp_awk_t* awk)
 {
 	xp_awk_nde_break_t* nde;
 
+	if (awk->parse.depth.loop <= 0) PANIC (awk, XP_AWK_EBREAK);
+
 	nde = (xp_awk_nde_break_t*) xp_malloc (xp_sizeof(xp_awk_nde_break_t));
 	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	nde->type = XP_AWK_NDE_BREAK;
@@ -2826,6 +2870,8 @@ static xp_awk_nde_t* __parse_break (xp_awk_t* awk)
 static xp_awk_nde_t* __parse_continue (xp_awk_t* awk)
 {
 	xp_awk_nde_continue_t* nde;
+
+	if (awk->parse.depth.loop <= 0) PANIC (awk, XP_AWK_ECONTINUE);
 
 	nde = (xp_awk_nde_continue_t*)xp_malloc(xp_sizeof(xp_awk_nde_continue_t));
 	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
@@ -3047,6 +3093,12 @@ static xp_awk_nde_t* __parse_next (xp_awk_t* awk)
 {
 	xp_awk_nde_next_t* nde;
 
+	if (awk->parse.id.block == PARSE_BLOCK_BEGIN ||
+	    awk->parse.id.block == PARSE_BLOCK_END)
+	{
+		PANIC (awk, XP_AWK_ENEXT);
+	}
+
 	nde = (xp_awk_nde_next_t*) xp_malloc (xp_sizeof(xp_awk_nde_next_t));
 	if (nde == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	nde->type = XP_AWK_NDE_NEXT;
@@ -3058,6 +3110,12 @@ static xp_awk_nde_t* __parse_next (xp_awk_t* awk)
 static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk)
 {
 	xp_awk_nde_nextfile_t* nde;
+
+	if (awk->parse.id.block == PARSE_BLOCK_BEGIN ||
+	    awk->parse.id.block == PARSE_BLOCK_END)
+	{
+		PANIC (awk, XP_AWK_ENEXTFILE);
+	}
 
 	nde = (xp_awk_nde_nextfile_t*) 
 		xp_malloc (xp_sizeof(xp_awk_nde_nextfile_t));

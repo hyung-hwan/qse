@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.35 2006-07-27 16:50:28 bacon Exp $
+ * $Id: awk_i.h,v 1.36 2006-08-01 15:57:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -93,10 +93,22 @@ struct xp_awk_t
 
 	/* parse tree */
 	xp_awk_tree_t tree;
+	int state;
 
 	/* temporary information that the parser needs */
 	struct
 	{
+		struct
+		{
+			int block;
+			int loop;
+		} id;
+
+		struct
+		{
+			xp_size_t loop;
+		} depth;
+
 		xp_awk_tab_t globals;
 		xp_awk_tab_t locals;
 		xp_awk_tab_t params;
