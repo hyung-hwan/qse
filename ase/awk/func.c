@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.14 2006-08-02 03:22:51 bacon Exp $
+ * $Id: func.c,v 1.15 2006-08-02 11:26:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -159,6 +159,22 @@ static int __bfn_close (void* run)
 
 		name = XP_STR_BUF(&buf);
 		len = XP_STR_LEN(&buf);
+	}
+
+	if (len == 0)
+	{
+		/* getline or print doesn't allow an emptry for the 
+		 * input or output file name. so close should not allow 
+		 * it either.  
+		 * another reason for this is if close is called explicitly 
+		 * with an empty string, it may close the console that uses 
+		 * an empty string for its identification because closeextio
+		 * closes any extios that match the name given unlike 
+		 * closeextio_read or closeextio_write. */ 
+		if (a0->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+		n = -1;
+		/* TODO: need to set ERRNO??? */
+		goto skip_close;
 	}
 
 	while (len > 0)

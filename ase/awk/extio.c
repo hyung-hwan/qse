@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.23 2006-08-01 15:57:42 bacon Exp $
+ * $Id: extio.c,v 1.24 2006-08-02 11:26:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -275,9 +275,8 @@ int xp_awk_writeextio (
 		 *    print "1111" >> "1.tmp"
 		 *    print "1111" > "1.tmp"
 		 */
-
 		if (p->type == (extio_type | extio_mask) && 
-		    xp_strcmp(p->name,name) == 0) break;
+		    xp_strcmp (p->name, name) == 0) break;
 		p = p->next;
 	}
 
@@ -415,6 +414,124 @@ int xp_awk_nextextio_read (
 	return n;
 }
 
+int xp_awk_closeextio_read (
+	xp_awk_run_t* run, int in_type, const xp_char_t* name, int* errnum)
+{
+	xp_awk_extio_t* p = run->extio, * px = XP_NULL;
+	xp_awk_io_t handler;
+	int extio_type, extio_mode, extio_mask;
+
+	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_type_map));
+	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_mode_map));
+	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_mask_map));
+
+	/* translate the in_type into the relevant extio type and mode */
+	extio_type = __in_type_map[in_type];
+	extio_mode = __in_mode_map[in_type];
+	extio_mask = __in_mask_map[in_type];
+
+	handler = run->awk->extio[extio_type];
+	if (handler == XP_NULL)
+	{
+		/* no io handler provided */
+		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		return -1;
+	}
+
+	while (p != XP_NULL)
+	{
+		if (p->type == (extio_type | extio_mask) &&
+		    xp_strcmp (p->name, name) == 0) 
+		{
+			xp_awk_io_t handler;
+		       
+			handler = run->awk->extio[p->type & __MASK_CLEAR];
+			if (handler != XP_NULL)
+			{
+				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
+				{
+					/* this is not a run-time error.*/
+					*errnum = XP_AWK_ENOERR;
+					return -1;
+				}
+			}
+
+			if (px != XP_NULL) px->next = p->next;
+			else run->extio = p->next;
+
+			xp_free (p->name);
+			xp_free (p);
+			return 0;
+		}
+
+		px = p;
+		p = p->next;
+	}
+
+	/* this is not a run-time error */
+	*errnum = XP_AWK_ENOERR;
+	return -1;
+}
+
+int xp_awk_closeextio_write (
+	xp_awk_run_t* run, int out_type, const xp_char_t* name, int* errnum)
+{
+	xp_awk_extio_t* p = run->extio, * px = XP_NULL;
+	xp_awk_io_t handler;
+	int extio_type, extio_mode, extio_mask;
+
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_type_map));
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_mode_map));
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_mask_map));
+
+	/* translate the out_type into the relevant extio type and mode */
+	extio_type = __out_type_map[out_type];
+	extio_mode = __out_mode_map[out_type];
+	extio_mask = __out_mask_map[out_type];
+
+	handler = run->awk->extio[extio_type];
+	if (handler == XP_NULL)
+	{
+		/* no io handler provided */
+		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		return -1;
+	}
+
+	while (p != XP_NULL)
+	{
+		if (p->type == (extio_type | extio_mask) &&
+		    xp_strcmp (p->name, name) == 0) 
+		{
+			xp_awk_io_t handler;
+		       
+			handler = run->awk->extio[p->type & __MASK_CLEAR];
+			if (handler != XP_NULL)
+			{
+				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
+				{
+					/* this is not a run-time error.*/
+					*errnum = XP_AWK_ENOERR;
+					return -1;
+				}
+			}
+
+			if (px != XP_NULL) px->next = p->next;
+			else run->extio = p->next;
+
+			xp_free (p->name);
+			xp_free (p);
+			return 0;
+		}
+
+		px = p;
+		p = p->next;
+	}
+
+	/* this is not a run-time error */
+	*errnum = XP_AWK_ENOERR;
+	return -1;
+}
+
 int xp_awk_closeextio (
 	xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 {
@@ -431,8 +548,6 @@ int xp_awk_closeextio (
 			handler = run->awk->extio[p->type & __MASK_CLEAR];
 			if (handler != XP_NULL)
 			{
-	/* TODO: io command should not be XP_AWK_IO_CLOSE 
-	 *       it should be more generic form than this... */
 				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
 				{
 					/* this is not a run-time error.*/
@@ -471,8 +586,6 @@ void xp_awk_clearextio (xp_awk_run_t* run)
 
 		if (handler != XP_NULL)
 		{
-	/* TODO: io command should not be XP_AWK_INPUT_CLOSE 
-	 *       it should be more generic form than this... */
 			n = handler (XP_AWK_IO_CLOSE, run->extio, XP_NULL, 0);
 			if (n == -1)
 			{
