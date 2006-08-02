@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.60 2006-08-01 04:42:49 bacon Exp $
+ * $Id: awk.c,v 1.61 2006-08-02 14:36:23 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -303,8 +303,8 @@ static int next_extio_console (xp_awk_extio_t* epa);
 
 static const xp_char_t* infiles[] =
 {
-	XP_T(""),
-	//XP_T("awk.in"),
+	//XP_T(""),
+	XP_T("awk.in"),
 	XP_NULL
 };
 
