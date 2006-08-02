@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.152 2006-08-02 03:22:51 bacon Exp $
+ * $Id: run.c,v 1.153 2006-08-02 03:34:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1370,12 +1370,20 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		}
 		xp_awk_refdownval (run, v);
 
+		if (len <= 0) 
+		{
+			/* the output destination name is empty. */
+			xp_free (out);
+			n = -1;
+			goto skip_write;
+		}
+
 		while (len > 0)
 		{
 			if (out[--len] == XP_T('\0'))
 			{
 				/* the output destination name contains a null 
-				 * character. make getline return -1 */
+				 * character. */
 				xp_free (out);
 				goto skip_write;
 				/* TODO: how to handle error???
@@ -3903,6 +3911,15 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			PANIC (run, errnum);
 		}
 		xp_awk_refdownval (run, v);
+
+		if (len <= 0) 
+		{
+			/* the input source name is empty.
+			 * make getline return -1 */
+			xp_free (in);
+			n = -1;
+			goto skip_read;
+		}
 
 		while (len > 0)
 		{
