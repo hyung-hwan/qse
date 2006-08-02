@@ -4,7 +4,7 @@ OUT = xpawk
 
 CC = cl
 #CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
-CFLAGS = /nologo /O2 /MT /W3 /GR- /Za /D_WIN32_WINNT=0x0400 -I../.. -DXP_AWK_STAND_ALONE -DXP_CHAR_IS_WCHAR
+CFLAGS = /nologo /O2 /MT /W3 /GR- /Za /D_WIN32_WINNT=0x0400 -I../.. -DXP_AWK_STAND_ALONE -DXP_CHAR_IS_WCHAR /I"C:\Program Files\IBM\Java141\Include" /I"C:\Program Files\IBM\Java141\Include\Win32"
 
 all: lib 
 
@@ -16,6 +16,11 @@ lib: $(OBJS)
 dll: $(OBJS)
 	link /dll /def:awk.def /subsystem:console /version:0.1 /release @<<
 /nologo /out:$(OUT).dll $(OBJS)
+<<
+
+jni: $(OBJS) jni.obj
+	link /dll /def:jni.def /subsystem:console /version:0.1 /release @<<
+/nologo /out:$(OUT).dll $(OBJS) jni.obj
 <<
 
 clean:

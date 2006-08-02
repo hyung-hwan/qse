@@ -1,0 +1,6 @@
+LIBRARY	"xpawk.dll"
+
+EXPORTS
+	Java_AWK_open
+	Java_AWK_close
+
