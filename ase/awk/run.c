@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.155 2006-08-02 11:27:07 bacon Exp $
+ * $Id: run.c,v 1.156 2006-08-02 14:36:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -53,6 +53,7 @@ static void __close_run (xp_awk_run_t* run);
 static int __run_main (xp_awk_run_t* run);
 static int __run_pattern_blocks  (xp_awk_run_t* run);
 static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain);
+static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain);
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static int __run_if (xp_awk_run_t* run, xp_awk_nde_if_t* nde);
@@ -530,11 +531,21 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 	xp_ssize_t n;
 	xp_bool_t need_to_close = xp_false;
 	int errnum;
+	xp_awk_chain_t* chain;
 
 	run->inrec.buf_pos = 0;
 	run->inrec.buf_len = 0;
 	run->inrec.eof = xp_false;
 
+	/* clear the pattern_range_state */
+	chain = run->awk->tree.chain;
+	while (chain != XP_NULL)
+	{
+		chain->pattern_range_state = 0;
+		chain = chain->next;
+	}
+
+	/* run each pattern block */
 	while (run->exit_level != EXIT_GLOBAL &&
 	       run->exit_level != EXIT_ABORT)
 	{
@@ -562,13 +573,13 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 		}
 	}
 
-	/* In case of getline, the code would getline return -1, set ERRNO,
-	 * and make this function return 0 after having checke if closextio 
-	 * has returned -1 and errnum has been set to XP_AWK_ENOERR.
-	 * But this part of the code ends the input for the implicit 
-	 * pattern-block loop, which is totally different from getline.
-	 * So it just returns -1 as long as closeextio returns -1 regardless
-	 * of the value of errnum  */
+	/* In case of getline, the code would make getline return -1, 
+	 * set ERRNO, make this function return 0 after having checked 
+	 * if closextio has returned -1 and errnum has been set to 
+	 * XP_AWK_ENOERR. But this part of the code ends the input for 
+	 * the implicit pattern-block loop, which is totally different 
+	 * from getline. so it returns -1 as long as closeextio returns 
+	 * -1 regardless of the value of errnum.  */
 	if (need_to_close)
 	{
 		n = xp_awk_closeextio_read (
@@ -587,8 +598,6 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 {
-	xp_awk_nde_t* ptn;
-
 	while (run->exit_level != EXIT_GLOBAL &&
 	       run->exit_level != EXIT_ABORT && chain != XP_NULL)
 	{
@@ -598,52 +607,95 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 			break;
 		}
 
-		ptn = chain->pattern;
+		if (__run_pattern_block (run, chain) == -1) return -1;
+		chain = chain->next;
+	}
 
-		if (ptn == XP_NULL)
+	return 0;
+}
+
+static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
+{
+	xp_awk_nde_t* ptn;
+	xp_awk_nde_blk_t* blk;
+
+	ptn = chain->pattern;
+	blk = (xp_awk_nde_blk_t*)chain->action;
+
+	if (ptn == XP_NULL)
+	{
+		/* just execute the block */
+		if (__run_block (run, blk) == -1) return -1;
+	}
+	else
+	{
+		if (ptn->next == XP_NULL)
 		{
-			/* just execute the block */
-			xp_awk_nde_blk_t* blk;
-			blk = (xp_awk_nde_blk_t*)chain->action;
-			if (__run_block (run, blk) == -1) return -1;
-		}
-		else
-		{
+			/* pattern { ... } */
 			xp_awk_val_t* v1;
-			
+
 			v1 = __eval_expression (run, ptn);
 			if (v1 == XP_NULL) return -1;
 
 			xp_awk_refupval (v1);
 
-			if (ptn->next == XP_NULL)
+			if (xp_awk_valtobool(v1))
 			{
+				if (__run_block (run, blk) == -1) 
+				{
+					xp_awk_refdownval (run, v1);
+					return -1;
+				}
+			}
+
+			xp_awk_refdownval (run, v1);
+		}
+		else
+		{
+			/* pattern, pattern { ... } */
+			xp_assert (ptn->next->next == XP_NULL);
+
+			if (chain->pattern_range_state == 0)
+			{
+				xp_awk_val_t* v1;
+
+				v1 = __eval_expression (run, ptn);
+				if (v1 == XP_NULL) return -1;
+				xp_awk_refupval (v1);
+
 				if (xp_awk_valtobool(v1))
 				{
-					xp_awk_nde_blk_t* blk;
-					blk = (xp_awk_nde_blk_t*)chain->action;
 					if (__run_block (run, blk) == -1) 
 					{
 						xp_awk_refdownval (run, v1);
 						return -1;
 					}
+
+					chain->pattern_range_state = 1;
 				}
 
 				xp_awk_refdownval (run, v1);
 			}
-			else
+			else if (chain->pattern_range_state == 1)
 			{
-				/* pattern, pattern { ... } */
-				xp_assert (ptn->next->next == XP_NULL);
+				xp_awk_val_t* v2;
 
-				/* TODO: implement this */
-				xp_awk_refdownval (run, v1);
-				xp_printf (XP_T("ERROR: pattern, pattern NOT OMPLEMENTED\n"));
-				PANIC_I (run, XP_AWK_EINTERNAL);
+				v2 = __eval_expression (run, ptn->next);
+				if (v2 == XP_NULL) return -1;
+				xp_awk_refupval (v2);
+
+				if (__run_block (run, blk) == -1) 
+				{
+					xp_awk_refdownval (run, v2);
+					return -1;
+				}
+
+				if (xp_awk_valtobool(v2)) 
+					chain->pattern_range_state = 0;
+
+				xp_awk_refdownval (run, v2);
 			}
 		}
-
-		chain = chain->next;
 	}
 
 	return 0;

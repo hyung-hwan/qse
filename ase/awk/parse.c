@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.149 2006-08-01 15:59:27 bacon Exp $
+ * $Id: parse.c,v 1.150 2006-08-02 14:36:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -788,6 +788,7 @@ static xp_awk_nde_t* __parse_ptnblock (xp_awk_t* awk, xp_awk_nde_t* ptn)
 	}
 
 	chain->pattern = ptn;
+	chain->pattern_range_state = 0;
 	chain->action = nde;
 	chain->next = XP_NULL;
 
@@ -2226,14 +2227,6 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
-		/* TODO: search in the builtin variable name list */
-		/*
-		idxa = ....
-		if (idxa != (xp_size_t)-1)
-		{
-		}
-		*/
-
 		/* search the parameter name list */
 		idxa = xp_awk_tab_find(&awk->parse.params, name_dup, 0);
 		if (idxa != (xp_size_t)-1) 
@@ -2351,14 +2344,6 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		xp_awk_clrpt (idx);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
-
-	/* TODO: search in the builtin variable name list */
-	/*
-	idxa = xp_awk_tab_find (&awk->parse.params, name, 0);
-	if (idxa != (xp_size_t)-1)
-	{
-	}
-	 */
 
 	/* search the parameter name list */
 	idxa = xp_awk_tab_find (&awk->parse.params, name, 0);

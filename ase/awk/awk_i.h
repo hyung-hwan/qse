@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.36 2006-08-01 15:57:42 bacon Exp $
+ * $Id: awk_i.h,v 1.37 2006-08-02 14:36:22 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -157,6 +157,7 @@ struct xp_awk_t
 struct xp_awk_chain_t
 {
 	xp_awk_nde_t* pattern;
+	int pattern_range_state; /* used when pattern is a range */
 	xp_awk_nde_t* action;
 	xp_awk_chain_t* next;	
 };
