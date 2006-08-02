@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.13 2006-07-17 14:27:09 bacon Exp $
+ * $Id: func.c,v 1.14 2006-08-02 03:22:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -124,37 +124,67 @@ static int __bfn_close (void* run)
 {
 	xp_size_t nargs;
 	xp_str_t buf;
-	xp_awk_val_t* v;
+	xp_awk_val_t* v, * a0;
 	int errnum, n;
+
+	xp_char_t* name;
+	xp_size_t len;
        
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs == 1);
 /* TODO: support close (xxx, "to"/"from") like gawk */
 
-	if (xp_str_open (&buf, 256) == XP_NULL)
+	a0 = xp_awk_getarg(run, 0);
+	xp_assert (a0 != XP_NULL);
+
+	if (a0->type == XP_AWK_VAL_STR)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
-		return -1;
+		name = ((xp_awk_val_str_t*)a0)->buf;
+		len = ((xp_awk_val_str_t*)a0)->len;
+	}
+	else
+	{
+		if (xp_str_open (&buf, 256) == XP_NULL)
+		{
+			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+			return -1;
+		}
+
+		if (xp_awk_valtostr (a0, &errnum, &buf, XP_NULL) == XP_NULL)
+		{
+			xp_str_close (&buf);
+			xp_awk_seterrnum (run, errnum);
+			return -1;
+		}
+
+		name = XP_STR_BUF(&buf);
+		len = XP_STR_LEN(&buf);
 	}
 
-	if (xp_awk_valtostr (
-		xp_awk_getarg(run, 0), &errnum, &buf, XP_NULL) == XP_NULL)
+	while (len > 0)
 	{
-		xp_str_close (&buf);
-		xp_awk_seterrnum (run, errnum);
-		return -1;
-	}
+		if (name[--len] == XP_T('\0'))
+		{
+			/* the name contains a null string. 
+			 * make close return -1 */
+			if (a0->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+			n = -1;
+			/* TODO: need to set ERRNO??? */
+			goto skip_close;
+		}
+	}	
 
-	n = xp_awk_closeextio (run, XP_STR_BUF(&buf), &errnum);
+	n = xp_awk_closeextio (run, name, &errnum);
 	if (n == -1 && errnum != XP_AWK_ENOERR)
 	{
-		xp_str_close (&buf);
+		if (a0->type != XP_AWK_VAL_STR) xp_str_close (&buf);
 		xp_awk_seterrnum (run, errnum);
 		return -1;
 	}
 
-	xp_str_close (&buf);
+	if (a0->type != XP_AWK_VAL_STR) xp_str_close (&buf);
 
+skip_close:
 	v = xp_awk_makeintval (run, n);
 	if (v == XP_NULL)
 	{
