@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.153 2006-08-02 03:34:34 bacon Exp $
+ * $Id: run.c,v 1.154 2006-08-02 11:26:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -546,7 +546,8 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 		if (x == -1)
 		{
 			/* don't care about the result of input close */
-			xp_awk_closeextio (run, XP_T(""), &errnum);
+			xp_awk_closeextio_read (
+				run, XP_AWK_EXTIO_CONSOLE, XP_T(""), &errnum);
 			return -1;
 		}
 
@@ -555,7 +556,8 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
 		{
-			xp_awk_closeextio (run, XP_T(""), &errnum);
+			xp_awk_closeextio_read (
+				run, XP_AWK_EXTIO_CONSOLE, XP_T(""), &errnum);
 			return -1;
 		}
 	}
@@ -569,7 +571,8 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 	 * of the value of errnum  */
 	if (need_to_close)
 	{
-		n = xp_awk_closeextio (run, XP_T(""), &errnum);
+		n = xp_awk_closeextio_read (
+			run, XP_AWK_EXTIO_CONSOLE, XP_T(""), &errnum);
 		if (n == -1) 
 		{
 			if (errnum == XP_AWK_ENOERR)
