@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.151 2006-08-01 16:00:18 bacon Exp $
+ * $Id: run.c,v 1.152 2006-08-02 03:22:51 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1356,17 +1356,37 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 
 	if (p->out != XP_NULL)
 	{
+		xp_size_t len;
+
 		v = __eval_expression (run, p->out);
 		if (v == XP_NULL) return -1;
 
 		xp_awk_refupval (v);
-		out = xp_awk_valtostr (v, &errnum, XP_NULL, XP_NULL);
+		out = xp_awk_valtostr (v, &errnum, XP_NULL, &len);
 		if (out == XP_NULL) 
 		{
 			xp_awk_refdownval (run, v);
 			PANIC_I (run, errnum);
 		}
 		xp_awk_refdownval (run, v);
+
+		while (len > 0)
+		{
+			if (out[--len] == XP_T('\0'))
+			{
+				/* the output destination name contains a null 
+				 * character. make getline return -1 */
+				xp_free (out);
+				goto skip_write;
+				/* TODO: how to handle error???
+				 *       make print return -1??? not possible.
+				 *       throw an exception??
+				 *       set ERRNO or what??? this seems most
+				 *       reasonable. or can it have a global
+				 *       flag variable for print/printf such
+				 *       as PRINT_ERRNO?  */
+			}
+		}
 	}
 
 	dst = (out == XP_NULL)? XP_T(""): out;
@@ -1424,8 +1444,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 	}
 	xp_awk_refupval (v);
 
-	n = xp_awk_writeextio (
-		run, p->out_type, dst, v, &errnum);
+	n = xp_awk_writeextio (run, p->out_type, dst, v, &errnum);
 	if (n < 0 && errnum != XP_AWK_ENOERR)
 	{
 		if (out != XP_NULL) xp_free (out);
@@ -1437,6 +1456,8 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 	/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
 
 	if (out != XP_NULL) xp_free (out);
+
+skip_write:
 	return 0;
 }
 
@@ -3864,17 +3885,36 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	if (p->in != XP_NULL)
 	{
+		xp_size_t len;
+
 		v = __eval_expression (run, p->in);
 		if (v == XP_NULL) return XP_NULL;
 
+		/* TODO: distinction between v->type == XP_AWK_VAL_STR 
+		 *       and v->type != XP_AWK_VAL_STR
+		 *       if you use the buffer the v directly when
+		 *       v->type == XP_AWK_VAL_STR, xp_awk_refdownval(v)
+		 *       should not be called immediately below */
 		xp_awk_refupval (v);
-		in = xp_awk_valtostr (v, &errnum, XP_NULL, XP_NULL);
+		in = xp_awk_valtostr (v, &errnum, XP_NULL, &len);
 		if (in == XP_NULL) 
 		{
 			xp_awk_refdownval (run, v);
 			PANIC (run, errnum);
 		}
 		xp_awk_refdownval (run, v);
+
+		while (len > 0)
+		{
+			if (in[--len] == XP_T('\0'))
+			{
+				/* the input source name contains a null 
+				 * character. make getline return -1 */
+				xp_free (in);
+				n = -1;
+				goto skip_read;
+			}
+		}
 	}
 
 	dst = (in == XP_NULL)? XP_T(""): in;
@@ -3942,6 +3982,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		xp_str_close (&buf);
 	}
 	
+skip_read:
 	res =  xp_awk_makeintval (run, n);
 	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 
