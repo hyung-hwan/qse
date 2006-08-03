@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.37 2006-08-02 14:36:22 bacon Exp $
+ * $Id: awk_i.h,v 1.38 2006-08-03 15:49:37 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -176,6 +176,8 @@ struct xp_awk_run_t
 	xp_awk_val_real_t* rcache[100]; /* TODO: choose the optimal size  */
 	xp_size_t icache_count;
 	xp_size_t rcache_count;
+
+	xp_awk_nde_blk_t* active_block;
 
 	struct
 	{

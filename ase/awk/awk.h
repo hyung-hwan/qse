@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.86 2006-08-03 09:53:42 bacon Exp $
+ * $Id: awk.h,v 1.87 2006-08-03 15:49:37 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -146,6 +146,8 @@ enum
 	XP_AWK_EWHILE,         /* keyword 'while' is expected */
 	XP_AWK_EASSIGNMENT,    /* assignment statement expected */
 	XP_AWK_EIDENT,         /* identifier expected */
+	XP_AWK_EBEGINBLOCK,    /* BEGIN requires an action block */
+	XP_AWK_EENDBLOCK,      /* END requires an action block */
 	XP_AWK_EDUPBEGIN,      /* duplicate BEGIN */
 	XP_AWK_EDUPEND,        /* duplicate END */
 	XP_AWK_EDUPFUNC,       /* duplicate function name */
@@ -175,6 +177,8 @@ enum
 	XP_AWK_ENOTSCALARIZABLE, /* not scalarizable variable */
 	XP_AWK_EVALTYPE,         /* wrong value type */
 	XP_AWK_EPIPE,            /* pipe operation error */
+	XP_AWK_ENEXTCALL,        /* next called from BEGIN or END */
+	XP_AWK_ENEXTFILECALL,    /* nextfile called from BEGIN or END */
 	XP_AWK_EIOIMPL,          /* wrong implementation of user io handler */
 	XP_AWK_EINTERNAL         /* internal error */
 };
