@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.48 2006-07-26 16:43:35 bacon Exp $
+ * $Id: val.c,v 1.49 2006-08-03 05:05:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -325,7 +325,8 @@ xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
 }
 
 xp_char_t* xp_awk_valtostr (
-	xp_awk_val_t* v, int* errnum, xp_str_t* buf, xp_size_t* len)
+	xp_awk_val_t* v, int* errnum, 
+	xp_bool_t clear_buf, xp_str_t* buf, xp_size_t* len)
 {
 	if (v->type == XP_AWK_VAL_NIL)
 	{
@@ -344,7 +345,8 @@ xp_char_t* xp_awk_valtostr (
 		}
 		else
 		{
-			xp_str_clear (buf);
+			if (clear_buf) xp_str_clear (buf);
+
 			if (len != XP_NULL) *len = XP_STR_LEN(buf);
 			return XP_STR_BUF(buf);
 		}
@@ -376,7 +378,7 @@ xp_char_t* xp_awk_valtostr (
 			}
 			else
 			{
-				xp_str_clear (buf);
+				if (clear_buf) xp_str_clear (buf);
 				if (xp_str_cat (buf, XP_T("0")) == (xp_size_t)-1)
 				{
 					*errnum = XP_AWK_ENOMEM;
@@ -402,13 +404,14 @@ xp_char_t* xp_awk_valtostr (
 			}
 
 			tmp[l] = XP_T('\0');
+			if (len != XP_NULL) *len = l;
 		}
 		else
 		{
 			/* clear the buffer */
-			xp_str_clear (buf);
+			if (clear_buf) xp_str_clear (buf);
 
-			tmp = XP_STR_BUF(buf);
+			tmp = XP_STR_BUF(buf) + XP_STR_LEN(buf);
 
 			/* extend the buffer */
 			if (xp_str_nccat (
@@ -418,8 +421,6 @@ xp_char_t* xp_awk_valtostr (
 				return XP_NULL;
 			}
 		}
-
-		if (len != XP_NULL) *len = l;
 
 		t = ((xp_awk_val_int_t*)v)->val; 
 		if (t < 0) t = -t;
@@ -432,13 +433,18 @@ xp_char_t* xp_awk_valtostr (
 
 		if (((xp_awk_val_int_t*)v)->val < 0) tmp[--l] = XP_T('-');
 
+		if (buf != XP_NULL) 
+		{
+			tmp = XP_STR_BUF(buf);
+			if (len != XP_NULL) *len = XP_STR_LEN(buf);
+		}
+
 		return tmp;
 	}
 
 	if (v->type == XP_AWK_VAL_REAL)
 	{
-		/* TODO: change the code */
-
+/* TODO: change the code */
 		xp_char_t tbuf[256], * tmp;
 
 	#if (XP_SIZEOF_LONG_DOUBLE != 0)
@@ -466,7 +472,8 @@ xp_char_t* xp_awk_valtostr (
 		}
 		else
 		{
-			xp_str_clear (buf);
+			if (clear_buf) xp_str_clear (buf);
+
 			if (xp_str_cat (buf, tbuf) == (xp_size_t)-1)
 			{
 				*errnum = XP_AWK_ENOMEM;
@@ -489,24 +496,30 @@ xp_char_t* xp_awk_valtostr (
 			tmp = xp_strxdup (
 				((xp_awk_val_str_t*)v)->buf, 
 				((xp_awk_val_str_t*)v)->len);
+			if (tmp == XP_NULL) 
+			{
+				*errnum = XP_AWK_ENOMEM;
+				return XP_NULL;
+			}
 
-			if (tmp == XP_NULL) *errnum = XP_AWK_ENOMEM;
+			if (len != XP_NULL) *len = ((xp_awk_val_str_t*)v)->len;
 		}
 		else
 		{
-			xp_str_clear (buf);
-			tmp = XP_STR_BUF(buf);
+			if (clear_buf) xp_str_clear (buf);
 
 			if (xp_str_ncat (buf, 
 				((xp_awk_val_str_t*)v)->buf, 
 				((xp_awk_val_str_t*)v)->len) == (xp_size_t)-1)
 			{
 				*errnum = XP_AWK_ENOMEM;
-				tmp = XP_NULL;
+				return XP_NULL;
 			}
+
+			tmp = XP_STR_BUF(buf);
+			if (len != XP_NULL) *len = XP_STR_LEN(buf);
 		}
 
-		if (len != XP_NULL) *len = ((xp_awk_val_str_t*)v)->len;
 		return tmp;
 	}
 

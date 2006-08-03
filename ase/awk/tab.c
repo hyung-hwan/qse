@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.8 2006-04-16 04:31:38 bacon Exp $
+ * $Id: tab.c,v 1.9 2006-08-03 05:05:47 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -95,13 +95,13 @@ void xp_awk_tab_clear (xp_awk_tab_t* tab)
 
 
 xp_size_t xp_awk_tab_insert (
-	xp_awk_tab_t* tab, xp_size_t index, const xp_char_t* value)
+	xp_awk_tab_t* tab, xp_size_t index, const xp_char_t* str)
 {
 	xp_size_t i;
-	xp_char_t* value_dup;
+	xp_char_t* str_dup;
 
-	value_dup = xp_strdup(value);
-	if (value_dup == XP_NULL) return (xp_size_t)-1;
+	str_dup = xp_strdup(str);
+	if (str_dup == XP_NULL) return (xp_size_t)-1;
 
 	if (index >= tab->capa) 
 	{
@@ -115,13 +115,13 @@ xp_size_t xp_awk_tab_insert (
 
 		if (xp_awk_tab_setcapa(tab,capa) == XP_NULL) 
 		{
-			xp_free (value_dup);
+			xp_free (str_dup);
 			return (xp_size_t)-1;
 		}
 	}
 
 	for (i = tab->size; i > index; i--) tab->buf[i] = tab->buf[i-1];
-	tab->buf[index] = value_dup;
+	tab->buf[index] = str_dup;
 
 	if (index > tab->size) tab->size = index + 1;
 	else tab->size++;
@@ -161,47 +161,50 @@ xp_size_t xp_awk_tab_remove (
 	return count;
 }
 
-xp_size_t xp_awk_tab_add (xp_awk_tab_t* tab, const xp_char_t* value)
+xp_size_t xp_awk_tab_add (xp_awk_tab_t* tab, const xp_char_t* str)
 {
-	return xp_awk_tab_insert (tab, tab->size, value);
+	return xp_awk_tab_insert (tab, tab->size, str);
 }
 
 
 xp_size_t xp_awk_tab_find (
-	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index)
+	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t index)
 {
 	xp_size_t i;
 
-	for (i = index; i < tab->size; i++) {
-		if (xp_strcmp(tab->buf[i], value) == 0) return i;
+	for (i = index; i < tab->size; i++) 
+	{
+		if (xp_strcmp(tab->buf[i], str) == 0) return i;
 	}
 
 	return (xp_size_t)-1;
 }
 
 xp_size_t xp_awk_tab_rfind (
-	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index)
+	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t index)
 {
 	xp_size_t i;
 
 	if (index >= tab->size) return (xp_size_t)-1;
 
-	for (i = index + 1; i-- > 0; ) {
-		if (xp_strcmp(tab->buf[i], value) == 0) return i;
+	for (i = index + 1; i-- > 0; ) 
+	{
+		if (xp_strcmp(tab->buf[i], str) == 0) return i;
 	}
 
 	return (xp_size_t)-1;
 }
 
 xp_size_t xp_awk_tab_rrfind (
-	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index)
+	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t index)
 {
 	xp_size_t i;
 
 	if (index >= tab->size) return (xp_size_t)-1;
 
-	for (i = tab->size - index; i-- > 0; ) {
-		if (xp_strcmp(tab->buf[i], value) == 0) return i;
+	for (i = tab->size - index; i-- > 0; ) 
+	{
+		if (xp_strcmp(tab->buf[i], str) == 0) return i;
 	}
 
 	return (xp_size_t)-1;

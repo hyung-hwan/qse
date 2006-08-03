@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.20 2006-07-10 14:28:45 bacon Exp $
+ * $Id: map.c,v 1.21 2006-08-03 05:05:47 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -13,7 +13,7 @@
 /* TODO: improve the entire map routines.
          support automatic bucket resizing and remaping, etc. */
 
-static xp_size_t __hash (const xp_char_t* key);
+static xp_size_t __hash (const xp_char_t* key, xp_size_t key_len);
 
 #define FREE_PAIR(map,pair) \
 	do { \
@@ -81,45 +81,52 @@ void xp_awk_map_clear (xp_awk_map_t* map)
 	xp_assert (map->size == 0);
 }
 
-xp_awk_pair_t* xp_awk_map_get (xp_awk_map_t* map, const xp_char_t* key)
+xp_awk_pair_t* xp_awk_map_get (
+	xp_awk_map_t* map, const xp_char_t* key, xp_size_t key_len)
 {
 	xp_awk_pair_t* pair;
 	xp_size_t hc;
 
-	hc = __hash(key) % map->capa;
+	hc = __hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
 	while (pair != XP_NULL) 
 	{
-		if (xp_strcmp(pair->key,key) == 0) return pair;
+
+		if (xp_strxncmp (
+			pair->key, pair->key_len, 
+			key, key_len) == 0) return pair;
+
 		pair = pair->next;
 	}
 
 	return XP_NULL;
 }
 
-xp_awk_pair_t* xp_awk_map_put (xp_awk_map_t* map, xp_char_t* key, void* val)
+xp_awk_pair_t* xp_awk_map_put (
+	xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len, void* val)
 {
 	int n;
 	xp_awk_pair_t* px;
 
-	n = xp_awk_map_putx (map, key, val, &px);
+	n = xp_awk_map_putx (map, key, key_len, val, &px);
 	if (n < 0) return XP_NULL;
 	return px;
 }
 
 int xp_awk_map_putx (
-	xp_awk_map_t* map, xp_char_t* key, void* val, xp_awk_pair_t** px)
+	xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len, 
+	void* val, xp_awk_pair_t** px)
 {
 	xp_awk_pair_t* pair;
 	xp_size_t hc;
 
-	hc = __hash(key) % map->capa;
+	hc = __hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
 	while (pair != XP_NULL) 
 	{
-		if (xp_strcmp(pair->key,key) == 0) 
+		if (xp_strxncmp (pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			if (px != XP_NULL)
 				*px = xp_awk_map_setpair (map, pair, val);
@@ -134,13 +141,17 @@ int xp_awk_map_putx (
 	pair = (xp_awk_pair_t*) xp_malloc (xp_sizeof(xp_awk_pair_t));
 	if (pair == XP_NULL) return -1; /* error */
 
-	/*pair->key = key;*/
-	pair->key = xp_strdup (key); /* duplicate the key if it is new */
+	/*pair->key = key;*/ 
+
+	/* duplicate the key if it is new */
+	pair->key = xp_strxdup (key, key_len);
 	if (pair->key == XP_NULL)
 	{
 		xp_free (pair);
 		return -1; /* error */
 	}
+
+	pair->key_len = key_len;
 	pair->val = val;
 	pair->next = map->buck[hc];
 	map->buck[hc] = pair;
@@ -150,17 +161,18 @@ int xp_awk_map_putx (
 	return 1; /* new key added */
 }
 
-xp_awk_pair_t* xp_awk_map_set (xp_awk_map_t* map, xp_char_t* key, void* val)
+xp_awk_pair_t* xp_awk_map_set (
+	xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len, void* val)
 {
 	xp_awk_pair_t* pair;
 	xp_size_t hc;
 
-	hc = __hash(key) % map->capa;
+	hc = __hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
 	while (pair != XP_NULL) 
 	{
-		if (xp_strcmp(pair->key,key) == 0) 
+		if (xp_strxncmp (pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			return xp_awk_map_setpair (map, pair, val);
 		}
@@ -171,11 +183,11 @@ xp_awk_pair_t* xp_awk_map_set (xp_awk_map_t* map, xp_char_t* key, void* val)
 }
 
 xp_awk_pair_t* xp_awk_map_getpair (
-	xp_awk_map_t* map, const xp_char_t* key, void** val)
+	xp_awk_map_t* map, const xp_char_t* key, xp_size_t key_len, void** val)
 {
 	xp_awk_pair_t* pair;
 
-	pair = xp_awk_map_get (map, key);
+	pair = xp_awk_map_get (map, key, key_len);
 	if (pair == XP_NULL) return XP_NULL; 
 	*val = pair->val;
 
@@ -198,18 +210,18 @@ xp_awk_pair_t* xp_awk_map_setpair (
 	return pair;
 }
 
-int xp_awk_map_remove (xp_awk_map_t* map, xp_char_t* key)
+int xp_awk_map_remove (xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len)
 {
 	xp_awk_pair_t* pair, * prev;
 	xp_size_t hc;
 
-	hc = __hash(key) % map->capa;
+	hc = __hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 	prev = XP_NULL;
 
 	while (pair != XP_NULL) 
 	{
-		if (xp_strcmp(pair->key,key) == 0) 
+		if (xp_strxncmp (pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			if (prev == XP_NULL) 
 				map->buck[hc] = pair->next;
@@ -249,11 +261,12 @@ int xp_awk_map_walk (xp_awk_map_t* map,
 	return 0;
 }
 
-static xp_size_t __hash (const xp_char_t* key)
+static xp_size_t __hash (const xp_char_t* key, xp_size_t key_len)
 {
 	xp_size_t n = 0, i;
+	const xp_char_t* end = key + key_len;
 
-	while (*key != XP_T('\0')) 
+	while (key < end)
 	{
 		xp_byte_t* bp = (xp_byte_t*)key;
 		for (i = 0; i < xp_sizeof(*key); i++) n = n * 31 + *bp++;

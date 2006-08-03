@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.156 2006-08-02 14:36:23 bacon Exp $
+ * $Id: run.c,v 1.157 2006-08-03 05:05:47 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -173,7 +173,8 @@ static void __clear_record (xp_awk_run_t* run, xp_bool_t noline);
 static int __recomp_record_fields (xp_awk_run_t* run, 
 	xp_size_t lv, xp_char_t* str, xp_size_t len, int* errnum);
 
-static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static xp_char_t* __idxnde_to_str (
+	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_size_t* len);
 
 typedef xp_awk_val_t* (*binop_func_t) (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right);
@@ -384,23 +385,16 @@ static int __run_main (xp_awk_run_t* run)
 	if (run->opt & XP_AWK_RUNMAIN)
 	{
 /* TODO: should the main function be user-specifiable? */
-		static xp_char_t m_a_i_n[] = 
-		{ 
-			XP_T('m'), 
-			XP_T('a'), 
-			XP_T('i'), 
-			XP_T('n'), 
-			XP_T('\0')
-		};
-		static xp_awk_nde_call_t nde = 
-		{ 
-			XP_AWK_NDE_AFN, /* type */
-			XP_NULL,        /* next */
-			m_a_i_n,        /* name */
-			XP_NULL         /* args */
-		};
+		xp_awk_nde_call_t nde;
 
 		run->exit_level = EXIT_NONE;
+
+		nde.type = XP_AWK_NDE_AFN;
+		nde.next = XP_NULL;
+		nde.what.afn.name = XP_T("main");
+		nde.what.afn.name_len = 4;
+		nde.args = XP_NULL;
+		nde.nargs = 0;
 
 		v = __eval_afn (run, (xp_awk_nde_t*)&nde);
 		if (v == XP_NULL) n = -1;
@@ -1247,7 +1241,8 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 		           (var->type == XP_AWK_NDE_NAMEDIDX && 
 		            var->idx != XP_NULL));
 
-		pair = xp_awk_map_get (&run->named, var->id.name);
+		pair = xp_awk_map_get (
+			&run->named, var->id.name, var->id.name_len);
 		if (pair == XP_NULL)
 		{
 			xp_awk_val_t* tmp;
@@ -1258,7 +1253,8 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 			tmp = xp_awk_makemapval (run);
 			if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
 
-			if (xp_awk_map_put (&run->named, var->id.name, tmp) == XP_NULL)
+			if (xp_awk_map_put (&run->named, 
+				var->id.name, var->id.name_len, tmp) == XP_NULL)
 			{
 				xp_awk_refupval (tmp);
 				xp_awk_refdownval (run, tmp);
@@ -1282,6 +1278,7 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 			if (var->type == XP_AWK_NDE_NAMEDIDX)
 			{
 				xp_char_t* key;
+				xp_size_t key_len;
 				xp_awk_val_t* idx;
 				int errnum;
 
@@ -1291,13 +1288,13 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 				if (idx == XP_NULL) return -1;
 
 				xp_awk_refupval (idx);
-				key = xp_awk_valtostr (
-					idx, &errnum, XP_NULL, XP_NULL);
+				key = xp_awk_valtostr (idx, 
+					&errnum, xp_true, XP_NULL, &key_len);
 				xp_awk_refdownval (run, idx);
 
 				if (key == XP_NULL) PANIC_I (run, errnum);
 
-				xp_awk_map_remove (map, key);
+				xp_awk_map_remove (map, key, key_len);
 				xp_free (key);
 			}
 			else
@@ -1360,6 +1357,7 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 			    var->type == XP_AWK_NDE_ARGIDX)
 			{
 				xp_char_t* key;
+				xp_size_t key_len;
 				xp_awk_val_t* idx;
 				int errnum;
 
@@ -1369,13 +1367,13 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 				if (idx == XP_NULL) return -1;
 
 				xp_awk_refupval (idx);
-				key = xp_awk_valtostr (
-					idx, &errnum, XP_NULL, XP_NULL);
+				key = xp_awk_valtostr (idx, 
+					&errnum, xp_true, XP_NULL, &key_len);
 				xp_awk_refdownval (run, idx);
 
 				if (key == XP_NULL) PANIC_I (run, errnum);
 
-				xp_awk_map_remove (map, key);
+				xp_awk_map_remove (map, key, key_len);
 				xp_free (key);
 			}
 			else
@@ -1417,7 +1415,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		if (v == XP_NULL) return -1;
 
 		xp_awk_refupval (v);
-		out = xp_awk_valtostr (v, &errnum, XP_NULL, &len);
+		out = xp_awk_valtostr (v, &errnum, xp_true, XP_NULL, &len);
 		if (out == XP_NULL) 
 		{
 			xp_awk_refdownval (run, v);
@@ -1733,7 +1731,8 @@ static xp_awk_val_t* __do_assignment_scalar (
 		xp_awk_pair_t* pair;
 		int n;
 
-		pair = xp_awk_map_get (&run->named, var->id.name);
+		pair = xp_awk_map_get (
+			&run->named, var->id.name, var->id.name_len);
 		if (pair != XP_NULL && 
 		    ((xp_awk_val_t*)pair->val)->type == XP_AWK_VAL_MAP)
 		{
@@ -1742,8 +1741,8 @@ static xp_awk_val_t* __do_assignment_scalar (
 			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
 		}
 
-		n = xp_awk_map_putx (
-			&run->named, var->id.name, val, XP_NULL);
+		n = xp_awk_map_putx (&run->named, 
+			var->id.name, var->id.name_len, val, XP_NULL);
 		if (n < 0) PANIC (run, XP_AWK_ENOMEM);
 
 		xp_awk_refupval (val);
@@ -1800,6 +1799,7 @@ static xp_awk_val_t* __do_assignment_map (
 {
 	xp_awk_val_map_t* map;
 	xp_char_t* str;
+	xp_size_t len;
 	int n;
 
 	xp_assert (
@@ -1812,7 +1812,8 @@ static xp_awk_val_t* __do_assignment_map (
 	if (var->type == XP_AWK_NDE_NAMEDIDX)
 	{
 		xp_awk_pair_t* pair;
-		pair = xp_awk_map_get (&run->named, var->id.name);
+		pair = xp_awk_map_get (
+			&run->named, var->id.name, var->id.name_len);
 		map = (pair == XP_NULL)? 
 			(xp_awk_val_map_t*)xp_awk_val_nil: 
 			(xp_awk_val_map_t*)pair->val;
@@ -1839,8 +1840,8 @@ static xp_awk_val_t* __do_assignment_map (
 			/* doesn't have to decrease the reference count 
 			 * of the previous value here as it is done by 
 			 * xp_awk_map_put */
-			if (xp_awk_map_put (
-				&run->named, var->id.name, tmp) == XP_NULL)
+			if (xp_awk_map_put (&run->named, 
+				var->id.name, var->id.name_len, tmp) == XP_NULL)
 			{
 				xp_awk_refupval (tmp);
 				xp_awk_refdownval (run, tmp);
@@ -1874,13 +1875,13 @@ static xp_awk_val_t* __do_assignment_map (
 		PANIC (run, XP_AWK_ENOTINDEXABLE);
 	}
 
-	str = __idxnde_to_str (run, var->idx);
+	str = __idxnde_to_str (run, var->idx, &len);
 	if (str == XP_NULL) return XP_NULL;
 
 /*
 xp_printf (XP_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map->ref, map->type);
 */
-	n = xp_awk_map_putx (map->map, str, val, XP_NULL);
+	n = xp_awk_map_putx (map->map, str, len, val, XP_NULL);
 	if (n < 0)
 	{
 		xp_free (str);
@@ -1915,7 +1916,7 @@ static xp_awk_val_t* __do_assignment_pos (
 	if (lv < 0) PANIC (run, XP_AWK_EPOSIDX);
 
 	/* convert the value to the string */
-	str = xp_awk_valtostr (val, &errnum, XP_NULL, &len);
+	str = xp_awk_valtostr (val, &errnum, xp_true, XP_NULL, &len);
 	if (str == XP_NULL) PANIC (run, errnum);
 
 	if (lv == 0)
@@ -2181,6 +2182,7 @@ static xp_awk_val_t* __eval_binop_in (
 {
 	xp_awk_val_t* rv, * res;
 	xp_char_t* str;
+	xp_size_t len;
 
 	if (right->type != XP_AWK_NDE_GLOBAL &&
 	    right->type != XP_AWK_NDE_LOCAL &&
@@ -2195,8 +2197,8 @@ static xp_awk_val_t* __eval_binop_in (
 
 	/* evaluate the left-hand side of the operator */
 	str = (left->type == XP_AWK_NDE_GRP)?
-		__idxnde_to_str (run, ((xp_awk_nde_grp_t*)left)->body):
-		__idxnde_to_str (run, left);
+		__idxnde_to_str (run, ((xp_awk_nde_grp_t*)left)->body, &len):
+		__idxnde_to_str (run, left, &len);
 	if (str == XP_NULL) return XP_NULL;
 
 	/* evaluate the right-hand side of the operator */
@@ -2228,7 +2230,7 @@ static xp_awk_val_t* __eval_binop_in (
 	{
 		xp_long_t r;
 
-		r = xp_awk_map_get(((xp_awk_val_map_t*)rv)->map,str) != XP_NULL;
+		r = (xp_long_t)(xp_awk_map_get(((xp_awk_val_map_t*)rv)->map,str,len) != XP_NULL);
 
 		res = xp_awk_makeintval (run, r);
 		if (res == XP_NULL) 
@@ -2244,7 +2246,8 @@ static xp_awk_val_t* __eval_binop_in (
 	}
 
 	/* need an array */
-	PANIC (run, XP_AWK_EOPERAND);
+	/* TODO: change the error code to make it clearer */
+	PANIC (run, XP_AWK_EOPERAND); 
 	return XP_NULL;
 }
 
@@ -2856,47 +2859,31 @@ static xp_awk_val_t* __eval_binop_exp (
 static xp_awk_val_t* __eval_binop_concat (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	xp_str_t lv, rv;
+	xp_char_t* strl, * strr;
+	xp_size_t strl_len, strr_len;
 	xp_awk_val_t* res;
 	int errnum;
 
-	if (xp_str_open (&lv, DEF_BUF_CAPA) == XP_NULL) 
-	{
-		PANIC (run, XP_AWK_ENOMEM);
-	}
+	strl = xp_awk_valtostr (left, &errnum, xp_true, XP_NULL, &strl_len);
+	if (strl == XP_NULL) PANIC (run, errnum);
 
-	if (xp_str_open (&rv, DEF_BUF_CAPA) == XP_NULL)
+	strr = xp_awk_valtostr (right, &errnum, xp_true, XP_NULL, &strr_len);
+	if (strr == XP_NULL) 
 	{
-		xp_str_close (&lv);
-		PANIC (run, XP_AWK_ENOMEM);
-	}
-
-	if (xp_awk_valtostr (left, &errnum, &lv, XP_NULL) == XP_NULL)
-	{
-		xp_str_close (&lv);
-		xp_str_close (&rv);
+		xp_free (strl);
 		PANIC (run, errnum);
 	}
 
-	if (xp_awk_valtostr (right, &errnum, &rv, XP_NULL) == XP_NULL)
-	{
-		xp_str_close (&lv);
-		xp_str_close (&rv);
-		PANIC (run, errnum);
-	}
-
-	res = xp_awk_makestrval2 (
-		XP_STR_BUF(&lv), XP_STR_LEN(&lv),
-		XP_STR_BUF(&rv), XP_STR_LEN(&rv));
+	res = xp_awk_makestrval2 (strl, strl_len, strr, strr_len);
 	if (res == XP_NULL)
 	{
-		xp_str_close (&lv);
-		xp_str_close (&rv);
+		xp_free (strl);
+		xp_free (strr);
 		PANIC (run, XP_AWK_ENOMEM);
 	}
 
-	xp_str_close (&lv);
-	xp_str_close (&rv);
+	xp_free (strl);
+	xp_free (strr);
 
 	return res;
 }
@@ -2984,7 +2971,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 	}
 	else
 	{
-		str = xp_awk_valtostr (right, &errnum, XP_NULL, &len);
+		str = xp_awk_valtostr (right, &errnum, xp_true, XP_NULL, &len);
 		if (str == XP_NULL) PANIC (run, errnum);
 
 		rex_code = xp_awk_buildrex (str, len, &errnum);
@@ -3019,7 +3006,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 	}
 	else
 	{
-		str = xp_awk_valtostr (right, &errnum, XP_NULL, &len);
+		str = xp_awk_valtostr (right, &errnum, xp_true, XP_NULL, &len);
 		if (str == XP_NULL) 
 		{
 			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
@@ -3547,7 +3534,8 @@ static xp_awk_val_t* __eval_afn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_afn_t* afn;
 	xp_awk_pair_t* pair;
 
-	pair = xp_awk_map_get (&run->awk->tree.afns, call->what.name);
+	pair = xp_awk_map_get (&run->awk->tree.afns, 
+		call->what.afn.name, call->what.afn.name_len);
 	if (pair == XP_NULL) PANIC (run, XP_AWK_ENOSUCHFUNC);
 
 	afn = (xp_awk_afn_t*)pair->val;
@@ -3827,7 +3815,7 @@ static xp_awk_val_t* __eval_named (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_pair_t* pair;
 	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
 		       
-	pair = xp_awk_map_get(&run->named,tgt->id.name);
+	pair = xp_awk_map_get (&run->named, tgt->id.name, tgt->id.name_len);
 	return (pair == XP_NULL)? xp_awk_val_nil: pair->val;
 }
 
@@ -3855,6 +3843,7 @@ static xp_awk_val_t* __eval_indexed (
 	xp_awk_val_t* res;
 	xp_awk_pair_t* pair;
 	xp_char_t* str;
+	xp_size_t len;
 
 	/* TODO: should it be an error? should it return nil? */
 	if (map->type != XP_AWK_VAL_MAP) 
@@ -3864,11 +3853,11 @@ static xp_awk_val_t* __eval_indexed (
 
 	xp_assert (nde->idx != XP_NULL);
 
-	str = __idxnde_to_str (run, nde->idx);
+	str = __idxnde_to_str (run, nde->idx, &len);
 	if (str == XP_NULL) return XP_NULL;
 
 /* TODO: check this out........ */
-	pair = xp_awk_map_get (((xp_awk_val_map_t*)map)->map, str);
+	pair = xp_awk_map_get (((xp_awk_val_map_t*)map)->map, str, len);
 	res = (pair == XP_NULL)? xp_awk_val_nil: (xp_awk_val_t*)pair->val;
 
 	xp_free (str);
@@ -3880,7 +3869,7 @@ static xp_awk_val_t* __eval_namedidx (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
 	xp_awk_pair_t* pair;
 
-	pair = xp_awk_map_get (&run->named, tgt->id.name);
+	pair = xp_awk_map_get (&run->named, tgt->id.name, tgt->id.name_len);
 	return __eval_indexed (run, tgt, 
 		(pair == XP_NULL)? xp_awk_val_nil: pair->val);
 }
@@ -3959,7 +3948,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		 *       v->type == XP_AWK_VAL_STR, xp_awk_refdownval(v)
 		 *       should not be called immediately below */
 		xp_awk_refupval (v);
-		in = xp_awk_valtostr (v, &errnum, XP_NULL, &len);
+		in = xp_awk_valtostr (v, &errnum, xp_true, XP_NULL, &len);
 		if (in == XP_NULL) 
 		{
 			xp_awk_refdownval (run, v);
@@ -4292,7 +4281,8 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 		v = STACK_GLOBAL(run, XP_AWK_GLOBAL_OFS);
 		if (v != xp_awk_val_nil)
 		{
-			ofsp = xp_awk_valtostr (v, errnum, XP_NULL, &ofs_len);
+			ofsp = xp_awk_valtostr (
+				v, errnum, xp_true, XP_NULL, &ofs_len);
 			if (ofsp == XP_NULL) return -1;
 
 			ofs = ofsp;
@@ -4414,7 +4404,8 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 	return 0;
 }
 
-static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
+static xp_char_t* __idxnde_to_str (
+	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_size_t* len)
 {
 	xp_char_t* str;
 	xp_awk_val_t* idx;
@@ -4430,7 +4421,7 @@ static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 		xp_awk_refupval (idx);
 
-		str = xp_awk_valtostr (idx, &errnum, XP_NULL, XP_NULL);
+		str = xp_awk_valtostr (idx, &errnum, xp_true, XP_NULL, len);
 		if (str == XP_NULL) 
 		{
 			xp_awk_refdownval (run, idx);
@@ -4469,8 +4460,8 @@ static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 				PANIC (run, XP_AWK_ENOMEM);
 			}
 
-			if (xp_awk_valtostr (idx, 
-				&errnum, &idxstr, XP_NULL) == XP_NULL)
+			if (xp_awk_valtostr (idx, &errnum, 
+				xp_false, &idxstr, XP_NULL) == XP_NULL)
 			{
 				xp_awk_refdownval (run, idx);
 				xp_str_close (&idxstr);
@@ -4482,6 +4473,7 @@ static xp_char_t* __idxnde_to_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		}
 
 		str = XP_STR_BUF(&idxstr);
+		*len = XP_STR_LEN(&idxstr);
 		xp_str_forfeit (&idxstr);
 	}
 

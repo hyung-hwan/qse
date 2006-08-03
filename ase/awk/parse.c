@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.150 2006-08-02 14:36:23 bacon Exp $
+ * $Id: parse.c,v 1.151 2006-08-03 05:05:47 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -125,13 +125,14 @@ struct __binmap_t
 static xp_awk_t* __parse_progunit (xp_awk_t* awk);
 static xp_awk_t* __collect_globals (xp_awk_t* awk);
 static xp_awk_t* __add_builtin_globals (xp_awk_t* awk);
-static xp_awk_t* __add_global (xp_awk_t* awk, const xp_char_t* name);
+static xp_awk_t* __add_global (
+	xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len);
 static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals);
 
 static xp_awk_nde_t* __parse_function (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_begin (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_end (xp_awk_t* awk);
-static xp_awk_nde_t* __parse_ptnblock (xp_awk_t* awk, xp_awk_nde_t* ptn);
+static xp_awk_nde_t* __parse_pattern_block (xp_awk_t* awk, xp_awk_nde_t* ptn);
 
 static xp_awk_nde_t* __parse_action (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
@@ -165,9 +166,10 @@ static xp_awk_nde_t* __parse_increment (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_primary (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk);
 
-static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name);
+static xp_awk_nde_t* __parse_hashidx (
+	xp_awk_t* awk, xp_char_t* name, xp_size_t name_len);
 static xp_awk_nde_t* __parse_fncall (
-	xp_awk_t* awk, xp_char_t* name, xp_awk_bfn_t* bfn);
+	xp_awk_t* awk, xp_char_t* name, xp_size_t name_len, xp_awk_bfn_t* bfn);
 static xp_awk_nde_t* __parse_if (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_while (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_for (xp_awk_t* awk);
@@ -245,33 +247,34 @@ static struct __kwent __kwtab[] =
 struct __bvent
 {
 	const xp_char_t* name;
+	xp_size_t name_len;
 	int valid;
 };
 
 static struct __bvent __bvtab[] =
 {
-	{ XP_T("ARGC"),        0 },
-	{ XP_T("ARGIND"),      0 },
-	{ XP_T("ARGV"),        0 },
-	{ XP_T("CONVFMT"),     0 },
-	{ XP_T("FIELDWIDTHS"), 0 },
-	{ XP_T("ENVIRON"),     0 },
-	{ XP_T("ERRNO"),       0 },
-	{ XP_T("FILENAME"),    0 },
-	{ XP_T("FNR"),         0 },
-	{ XP_T("FS"),          0 },
-	{ XP_T("IGNORECASE"),  0 },
-	{ XP_T("NF"),          0 },
-	{ XP_T("NR"),          0 },
-	{ XP_T("OFMT"),        0 },
-	{ XP_T("OFS"),         0 },
-	{ XP_T("ORS"),         0 },
-	{ XP_T("RS"),          0 },
-	{ XP_T("RT"),          0 },
-	{ XP_T("RSTART"),      0 },
-	{ XP_T("RLENGTH"),     0 },
-	{ XP_T("SUBSEP"),      0 },
-	{ XP_NULL,             0 }
+	{ XP_T("ARGC"),         4, 0 },
+	{ XP_T("ARGIND"),       6, 0 },
+	{ XP_T("ARGV"),         4, 0 },
+	{ XP_T("CONVFMT"),      7, 0 },
+	{ XP_T("FIELDWIDTHS"), 11, 0 },
+	{ XP_T("ENVIRON"),      7, 0 },
+	{ XP_T("ERRNO"),        5, 0 },
+	{ XP_T("FILENAME"),     8, 0 },
+	{ XP_T("FNR"),          3, 0 },
+	{ XP_T("FS"),           2, 0 },
+	{ XP_T("IGNORECASE"),  10, 0 },
+	{ XP_T("NF"),           2, 0 },
+	{ XP_T("NR"),           2, 0 },
+	{ XP_T("OFMT"),         4, 0 },
+	{ XP_T("OFS"),          3, 0 },
+	{ XP_T("ORS"),          3, 0 },
+	{ XP_T("RS"),           2, 0 },
+	{ XP_T("RT"),           2, 0 },
+	{ XP_T("RSTART"),       6, 0 },
+	{ XP_T("RLENGTH"),      7, 0 },
+	{ XP_T("SUBSEP"),       6, 0 },
+	{ XP_NULL,              0, 0 }
 };
 
 #define GET_CHAR(awk) \
@@ -470,7 +473,8 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	{
 		/* pattern less block */
 		awk->parse.id.block = PARSE_BLOCK_PATTERN;
-		if (__parse_ptnblock(awk,XP_NULL) == XP_NULL) return XP_NULL;
+		if (__parse_pattern_block (
+			awk, XP_NULL) == XP_NULL) return XP_NULL;
 	}
 	else
 	{
@@ -510,7 +514,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 
 		if (MATCH(awk,TOKEN_LBRACE))
 		{
-			if (__parse_ptnblock (awk,ptn) == XP_NULL) 
+			if (__parse_pattern_block (awk,ptn) == XP_NULL) 
 			{
 				xp_awk_clrpt (ptn);
 				return XP_NULL;	
@@ -533,6 +537,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 {
 	xp_char_t* name;
 	xp_char_t* name_dup;
+	xp_size_t name_len;
 	xp_awk_nde_t* body;
 	xp_awk_afn_t* afn;
 	xp_size_t nargs;
@@ -550,7 +555,8 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	}
 
 	name = XP_STR_BUF(&awk->token.name);
-	if (xp_awk_map_get(&awk->tree.afns, name) != XP_NULL) 
+	name_len = XP_STR_LEN(&awk->token.name);
+	if (xp_awk_map_get(&awk->tree.afns, name, name_len) != XP_NULL) 
 	{
 		/* the function is defined previously */
 		PANIC (awk, XP_AWK_EDUPFUNC);
@@ -566,7 +572,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	}
 
 	/* clone the function name before it is overwritten */
-	name_dup = xp_strdup (name);
+	name_dup = xp_strxdup (name, name_len);
 	if (name_dup == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
 	/* get the next token */
@@ -609,6 +615,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 		while (1) 
 		{
 			xp_char_t* param;
+			xp_size_t param_len;
 
 			if (!MATCH(awk,TOKEN_IDENT)) 
 			{
@@ -618,12 +625,13 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			}
 
 			param = XP_STR_BUF(&awk->token.name);
+			param_len = XP_STR_LEN(&awk->token.name);
 
 			if (awk->opt.parse & XP_AWK_UNIQUE) 
 			{
 				/* check if a parameter conflicts with a function */
-				if (xp_strcmp(name_dup, param) == 0 ||
-				    xp_awk_map_get(&awk->tree.afns, param) != XP_NULL) 
+				if (xp_strxncmp(name_dup, name_len, param, param_len) == 0 ||
+				    xp_awk_map_get(&awk->tree.afns, param, param_len) != XP_NULL) 
 				{
 					xp_free (name_dup);
 					xp_awk_tab_clear (&awk->parse.params);
@@ -726,7 +734,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	afn->nargs = nargs;
 	afn->body  = body;
 
-	n = xp_awk_map_putx (&awk->tree.afns, name_dup, afn, &pair);
+	n = xp_awk_map_putx (&awk->tree.afns, name_dup, name_len, afn, &pair);
 	if (n < 0)
 	{
 		xp_free (name_dup);
@@ -772,7 +780,7 @@ static xp_awk_nde_t* __parse_end (xp_awk_t* awk)
 	return nde;
 }
 
-static xp_awk_nde_t* __parse_ptnblock (xp_awk_t* awk, xp_awk_nde_t* ptn)
+static xp_awk_nde_t* __parse_pattern_block (xp_awk_t* awk, xp_awk_nde_t* ptn)
 {
 	xp_awk_nde_t* nde;
 	xp_awk_chain_t* chain;
@@ -942,19 +950,21 @@ static xp_awk_t* __add_builtin_globals (xp_awk_t* awk)
 
 	while (p->name != XP_NULL)
 	{
-		if (__add_global (awk, p->name) == XP_NULL) return XP_NULL;
+		if (__add_global (awk, 
+			p->name, p->name_len) == XP_NULL) return XP_NULL;
 		p++;
 	}
 
 	return awk;
 }
 
-static xp_awk_t* __add_global (xp_awk_t* awk, const xp_char_t* name)
+static xp_awk_t* __add_global (
+	xp_awk_t* awk, const xp_char_t* name, xp_size_t len)
 {
 	if (awk->opt.parse & XP_AWK_UNIQUE) 
 	{
 		/* check if it conflict with a function name */
-		if (xp_awk_map_get(&awk->tree.afns, name) != XP_NULL) 
+		if (xp_awk_map_get(&awk->tree.afns, name, len) != XP_NULL) 
 		{
 			PANIC (awk, XP_AWK_EDUPNAME);
 		}
@@ -976,8 +986,6 @@ static xp_awk_t* __add_global (xp_awk_t* awk, const xp_char_t* name)
 
 static xp_awk_t* __collect_globals (xp_awk_t* awk)
 {
-	xp_char_t* global;
-
 	while (1) 
 	{
 		if (!MATCH(awk,TOKEN_IDENT)) 
@@ -985,9 +993,9 @@ static xp_awk_t* __collect_globals (xp_awk_t* awk)
 			PANIC (awk, XP_AWK_EIDENT);
 		}
 
-		global = XP_STR_BUF(&awk->token.name);
-
-		if (__add_global (awk, global) == XP_NULL) return XP_NULL;
+		if (__add_global (awk,
+			XP_STR_BUF(&awk->token.name),
+			XP_STR_LEN(&awk->token.name)) == XP_NULL) return XP_NULL;
 
 		if (__get_token(awk) == -1) return XP_NULL;
 
@@ -1010,6 +1018,7 @@ static xp_awk_t* __collect_globals (xp_awk_t* awk)
 static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 {
 	xp_char_t* local;
+	xp_size_t local_len;
 
 	while (1) 
 	{
@@ -1019,13 +1028,15 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 		}
 
 		local = XP_STR_BUF(&awk->token.name);
+		local_len = XP_STR_LEN(&awk->token.name);
 
 		/* NOTE: it is not checked againt globals names */
 
 		if (awk->opt.parse & XP_AWK_UNIQUE) 
 		{
 			/* check if it conflict with a function name */
-			if (xp_awk_map_get(&awk->tree.afns, local) != XP_NULL) 
+			if (xp_awk_map_get (
+				&awk->tree.afns, local, local_len) != XP_NULL) 
 			{
 				PANIC (awk, XP_AWK_EDUPNAME);
 			}
@@ -2166,12 +2177,15 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 {
 	xp_char_t* name_dup;
+	xp_size_t name_len;
 	xp_awk_bfn_t* bfn;
 
 	xp_assert (MATCH(awk,TOKEN_IDENT));
 
-	name_dup = (xp_char_t*)xp_strdup(XP_STR_BUF(&awk->token.name));
+	name_dup = xp_strxdup (
+		XP_STR_BUF(&awk->token.name), XP_STR_LEN(&awk->token.name));
 	if (name_dup == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
+	name_len = XP_STR_LEN(&awk->token.name);
 
 	if (__get_token(awk) == -1) 
 	{
@@ -2193,7 +2207,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 			PANIC (awk, XP_AWK_ELPAREN);
 		}
 
-		nde = __parse_fncall (awk, XP_NULL, bfn);
+		nde = __parse_fncall (awk, XP_NULL, 0, bfn);
 		return (xp_awk_nde_t*)nde;
 	}
 
@@ -2201,7 +2215,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	if (MATCH(awk,TOKEN_LBRACK)) 
 	{
 		xp_awk_nde_t* nde;
-		nde = __parse_hashidx (awk, name_dup);
+		nde = __parse_hashidx (awk, name_dup, name_len);
 		if (nde == XP_NULL) xp_free (name_dup);
 		return (xp_awk_nde_t*)nde;
 	}
@@ -2209,7 +2223,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	{
 		/* function call */
 		xp_awk_nde_t* nde;
-		nde = __parse_fncall (awk, name_dup, XP_NULL);
+		nde = __parse_fncall (awk, name_dup, name_len, XP_NULL);
 		if (nde == XP_NULL) xp_free (name_dup);
 		return (xp_awk_nde_t*)nde;
 	}	
@@ -2235,6 +2249,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 			nde->next = XP_NULL;
 			/*nde->id.name = XP_NULL;*/
 			nde->id.name = name_dup;
+			nde->id.name_len = name_len;
 			nde->id.idxa = idxa;
 			nde->idx = XP_NULL;
 
@@ -2249,6 +2264,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 			nde->next = XP_NULL;
 			/*nde->id.name = XP_NULL;*/
 			nde->id.name = name_dup;
+			nde->id.name_len = name_len;
 			nde->id.idxa = idxa;
 			nde->idx = XP_NULL;
 
@@ -2263,6 +2279,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 			nde->next = XP_NULL;
 			/*nde->id.name = XP_NULL;*/
 			nde->id.name = name_dup;
+			nde->id.name_len = name_len;
 			nde->id.idxa = idxa;
 			nde->idx = XP_NULL;
 
@@ -2274,6 +2291,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 			nde->type = XP_AWK_NDE_NAMED;
 			nde->next = XP_NULL;
 			nde->id.name = name_dup;
+			nde->id.name_len = name_len;
 			nde->id.idxa = (xp_size_t)-1;
 			nde->idx = XP_NULL;
 
@@ -2287,7 +2305,8 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	}
 }
 
-static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
+static xp_awk_nde_t* __parse_hashidx (
+	xp_awk_t* awk, xp_char_t* name, xp_size_t name_len)
 {
 	xp_awk_nde_t* idx, * tmp, * last;
 	xp_awk_nde_var_t* nde;
@@ -2353,6 +2372,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		nde->next = XP_NULL;
 		/*nde->id.name = XP_NULL; */
 		nde->id.name = name;
+		nde->id.name_len = name_len;
 		nde->id.idxa = idxa;
 		nde->idx = idx;
 
@@ -2367,6 +2387,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		nde->next = XP_NULL;
 		/*nde->id.name = XP_NULL; */
 		nde->id.name = name;
+		nde->id.name_len = name_len;
 		nde->id.idxa = idxa;
 		nde->idx = idx;
 
@@ -2381,6 +2402,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		nde->next = XP_NULL;
 		/*nde->id.name = XP_NULL;*/
 		nde->id.name = name;
+		nde->id.name_len = name_len;
 		nde->id.idxa = idxa;
 		nde->idx = idx;
 
@@ -2392,6 +2414,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 		nde->type = XP_AWK_NDE_NAMEDIDX;
 		nde->next = XP_NULL;
 		nde->id.name = name;
+		nde->id.name_len = name_len;
 		nde->id.idxa = (xp_size_t)-1;
 		nde->idx = idx;
 
@@ -2405,7 +2428,7 @@ static xp_awk_nde_t* __parse_hashidx (xp_awk_t* awk, xp_char_t* name)
 }
 
 static xp_awk_nde_t* __parse_fncall (
-	xp_awk_t* awk, xp_char_t* name, xp_awk_bfn_t* bfn)
+	xp_awk_t* awk, xp_char_t* name, xp_size_t name_len, xp_awk_bfn_t* bfn)
 {
 	xp_awk_nde_t* head, * curr, * nde;
 	xp_awk_nde_call_t* call;
@@ -2477,6 +2500,7 @@ static xp_awk_nde_t* __parse_fncall (
 
 		/*call->what.bfn = bfn; */
 		call->what.bfn.name     = bfn->name;
+		call->what.bfn.name_len = bfn->name_len;
 		call->what.bfn.min_args = bfn->min_args;
 		call->what.bfn.max_args = bfn->max_args;
 		call->what.bfn.handler  = bfn->handler;
@@ -2488,7 +2512,8 @@ static xp_awk_nde_t* __parse_fncall (
 	{
 		call->type = XP_AWK_NDE_AFN;
 		call->next = XP_NULL;
-		call->what.name = name; 
+		call->what.afn.name = name; 
+		call->what.afn.name_len = name_len;
 		call->args = head;
 		call->nargs = nargs;
 	}
