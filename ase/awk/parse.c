@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.153 2006-08-03 09:53:45 bacon Exp $
+ * $Id: parse.c,v 1.154 2006-08-03 09:58:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -385,7 +385,12 @@ static void __dump (xp_awk_t* awk)
 			xp_awk_prnptnpt (chain->pattern);
 		}
 
-		if (chain->action != XP_NULL) 
+		if (chain->action == XP_NULL) 
+		{
+			/* blockless pattern */
+			xp_printf (XP_T("\n"));
+		}
+		else 
 		{
 			xp_awk_prnpt (chain->action);	
 		}
