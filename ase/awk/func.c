@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.15 2006-08-02 11:26:11 bacon Exp $
+ * $Id: func.c,v 1.16 2006-08-03 05:05:47 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -27,12 +27,12 @@ static xp_awk_bfn_t __sys_bfn[] =
 {
 	/* ensure that this matches XP_AWK_BNF_XXX in func.h */
 
-	{ XP_T("close"),  XP_AWK_EXTIO,  1,  1,  __bfn_close },
-	{ XP_T("system"), 0,             1,  1,  __bfn_system },
+	{ XP_T("close"),   5,  XP_AWK_EXTIO,  1,  1,  __bfn_close },
+	{ XP_T("system"),  6,  0,             1,  1,  __bfn_system },
 
-	{ XP_T("sin"),    0,             1,  1,  __bfn_sin },
+	{ XP_T("sin"),     3,  0,             1,  1,  __bfn_sin },
 
-	{ XP_NULL,        0,             0,  0,  XP_NULL }
+	{ XP_NULL,         0,  0,             0,  0,  XP_NULL }
 };
 
 xp_awk_bfn_t* xp_awk_addbfn (
@@ -150,7 +150,8 @@ static int __bfn_close (void* run)
 			return -1;
 		}
 
-		if (xp_awk_valtostr (a0, &errnum, &buf, XP_NULL) == XP_NULL)
+		if (xp_awk_valtostr (
+			a0, &errnum, xp_true, &buf, XP_NULL) == XP_NULL)
 		{
 			xp_str_close (&buf);
 			xp_awk_seterrnum (run, errnum);
@@ -223,7 +224,7 @@ static int __bfn_system (void* run)
 	xp_assert (nargs == 1);
 
 	cmd = xp_awk_valtostr (
-		xp_awk_getarg(run, 0), &errnum, XP_NULL, XP_NULL);
+		xp_awk_getarg(run, 0), &errnum, xp_true, XP_NULL, XP_NULL);
 	if (cmd == XP_NULL)
 	{
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);

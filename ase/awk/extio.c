@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.24 2006-08-02 11:26:10 bacon Exp $
+ * $Id: extio.c,v 1.25 2006-08-03 05:05:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -255,7 +255,8 @@ int xp_awk_writeextio (
 		}
 
 		/* convert the value to string representation first */
-		if (xp_awk_valtostr(v, errnum, &buf, XP_NULL) == XP_NULL)
+		if (xp_awk_valtostr (
+			v, errnum, xp_true, &buf, XP_NULL) == XP_NULL)
 		{
 			xp_str_close (&buf);
 			return -1;

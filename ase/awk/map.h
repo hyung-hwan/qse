@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.13 2006-07-10 14:28:45 bacon Exp $
+ * $Id: map.h,v 1.14 2006-08-03 05:05:47 bacon Exp $
  */
 
 #ifndef _XP_AWK_MAP_H_
@@ -15,6 +15,7 @@ typedef struct xp_awk_pair_t xp_awk_pair_t;
 struct xp_awk_pair_t
 {
 	xp_char_t* key;
+	xp_size_t key_len;
 	void* val;
 	xp_awk_pair_t* next;
 };
@@ -35,21 +36,32 @@ extern "C" {
 
 xp_awk_map_t* xp_awk_map_open (xp_awk_map_t* map, 
 	void* owner, xp_size_t capa, void(*freeval)(void*,void*));
+
 void xp_awk_map_close (xp_awk_map_t* map);
 
 void xp_awk_map_clear (xp_awk_map_t* map);
 
-xp_awk_pair_t* xp_awk_map_get (xp_awk_map_t* map, const xp_char_t* key);
-xp_awk_pair_t* xp_awk_map_put (xp_awk_map_t* map, xp_char_t* key, void* val);
-int xp_awk_map_putx (xp_awk_map_t* map, xp_char_t* key, void* val, xp_awk_pair_t** px);
-xp_awk_pair_t* xp_awk_map_set (xp_awk_map_t* map, xp_char_t* key, void* val);
+xp_awk_pair_t* xp_awk_map_get (
+	xp_awk_map_t* map, const xp_char_t* key, xp_size_t key_len);
+
+xp_awk_pair_t* xp_awk_map_put (
+	xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len, void* val);
+
+int xp_awk_map_putx (
+	xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len,
+	void* val, xp_awk_pair_t** px);
+
+xp_awk_pair_t* xp_awk_map_set (
+	xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len, void* val);
 
 xp_awk_pair_t* xp_awk_map_getpair (
-	xp_awk_map_t* map, const xp_char_t* key, void** val);
+	xp_awk_map_t* map, const xp_char_t* key, xp_size_t key_len, void** val);
+
 xp_awk_pair_t* xp_awk_map_setpair (
 	xp_awk_map_t* map, xp_awk_pair_t* pair, void* val);
 
-int xp_awk_map_remove (xp_awk_map_t* map, xp_char_t* key);
+int xp_awk_map_remove (xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len);
+
 int xp_awk_map_walk (xp_awk_map_t* map, 
 	int (*walker)(xp_awk_pair_t*,void*), void* arg);
 

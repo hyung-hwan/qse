@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.64 2006-07-31 04:25:17 bacon Exp $
+ * $Id: tree.h,v 1.65 2006-08-03 05:05:48 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -222,9 +222,10 @@ struct xp_awk_nde_rex_t
 struct xp_awk_nde_var_t
 {
 	XP_AWK_NDE_HDR;
-	struct /* could it be union? */
+	struct 
 	{
 		xp_char_t* name;
+		xp_size_t name_len;
 		xp_size_t idxa;
 	} id;
 	xp_awk_nde_t* idx; /* XP_NULL for non-XXXXIDX */
@@ -236,13 +237,18 @@ struct xp_awk_nde_call_t
 	XP_AWK_NDE_HDR;
 	union
 	{
-		xp_char_t* name;
+		struct
+		{
+			xp_char_t* name;
+			xp_size_t name_len;
+		} afn;
 
 		/* minimum information of a built-in function 
 		 * needed during run-time. */
 		struct
 		{
 			const xp_char_t* name;
+			xp_size_t name_len;
 			xp_size_t min_args;
 			xp_size_t max_args;
 			int (*handler) (void* run);
