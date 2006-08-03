@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.29 2006-08-01 15:57:42 bacon Exp $
+ * $Id: err.c,v 1.30 2006-08-03 09:53:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -34,10 +34,15 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("cannot switch to next source input"),
 		XP_T("cannot read source input"),
 
-		XP_T("cannot open text input"),
-		XP_T("cannot close text input"),
-		XP_T("cannot switch to next text input"),
-		XP_T("cannot read text input"),
+		XP_T("cannot open console for read"),
+		XP_T("cannot close console for read"),
+		XP_T("cannot switch to next console for read"),
+		XP_T("cannot read from console"),
+
+		XP_T("cannot open console for write"),
+		XP_T("cannot close console for write"),
+		XP_T("cannot switch to next console for write"),
+		XP_T("cannot write to console"),
 
 		XP_T("invalid character"),
 		XP_T("cannot unget character"),
