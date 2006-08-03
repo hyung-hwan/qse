@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.9 2006-08-03 05:05:47 bacon Exp $
+ * $Id: tab.c,v 1.10 2006-08-03 06:06:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -52,7 +52,7 @@ xp_size_t xp_awk_tab_getcapa (xp_awk_tab_t* tab)
 
 xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 {
-	xp_char_t** tmp;
+	void* tmp;
 
 	if (tab->size > capa) 
 	{
@@ -62,8 +62,7 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 
 	if (capa > 0) 
 	{
-		tmp = (xp_char_t**)xp_realloc (
-			tab->buf, xp_sizeof(xp_char_t*) * capa);
+		tmp = xp_realloc (tab->buf, xp_sizeof(*tab->buf) * capa);
 		if (tmp == XP_NULL) return XP_NULL;
 	}
 	else 
@@ -86,8 +85,9 @@ void xp_awk_tab_clear (xp_awk_tab_t* tab)
 
 	for (i = 0; i < tab->size; i++) 
 	{
-		xp_free (tab->buf[i]);
-		tab->buf[i] = XP_NULL;
+		xp_free (tab->buf[i].name);
+		tab->buf[i].name = XP_NULL;
+		tab->buf[i].name_len = 0;
 	}
 
 	tab->size = 0;
@@ -95,12 +95,13 @@ void xp_awk_tab_clear (xp_awk_tab_t* tab)
 
 
 xp_size_t xp_awk_tab_insert (
-	xp_awk_tab_t* tab, xp_size_t index, const xp_char_t* str)
+	xp_awk_tab_t* tab, xp_size_t index, 
+	const xp_char_t* str, xp_size_t len)
 {
 	xp_size_t i;
 	xp_char_t* str_dup;
 
-	str_dup = xp_strdup(str);
+	str_dup = xp_strxdup(str, len);
 	if (str_dup == XP_NULL) return (xp_size_t)-1;
 
 	if (index >= tab->capa) 
@@ -121,7 +122,8 @@ xp_size_t xp_awk_tab_insert (
 	}
 
 	for (i = tab->size; i > index; i--) tab->buf[i] = tab->buf[i-1];
-	tab->buf[index] = str_dup;
+	tab->buf[index].name = str_dup;
+	tab->buf[index].name_len = len;
 
 	if (index > tab->size) tab->size = index + 1;
 	else tab->size++;
@@ -143,16 +145,18 @@ xp_size_t xp_awk_tab_remove (
 
 	while (i < k) 
 	{
-		xp_free (tab->buf[i]);	
+		xp_free (tab->buf[i].name);	
 
 		if (j >= tab->size) 
 		{
-			tab->buf[i] = XP_NULL;
+			tab->buf[i].name = XP_NULL;
+			tab->buf[i].name_len = 0; 
 			i++;
 		}
 		else
 		{
-			tab->buf[i] = tab->buf[j];
+			tab->buf[i].name = tab->buf[j].name;
+			tab->buf[i].name_len = tab->buf[j].name_len;
 			i++; j++;		
 		}
 	}
@@ -161,27 +165,31 @@ xp_size_t xp_awk_tab_remove (
 	return count;
 }
 
-xp_size_t xp_awk_tab_add (xp_awk_tab_t* tab, const xp_char_t* str)
+xp_size_t xp_awk_tab_add (
+	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t len)
 {
-	return xp_awk_tab_insert (tab, tab->size, str);
+	return xp_awk_tab_insert (tab, tab->size, str, len);
 }
 
-
 xp_size_t xp_awk_tab_find (
-	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t index)
+	xp_awk_tab_t* tab, xp_size_t index, 
+	const xp_char_t* str, xp_size_t len)
 {
 	xp_size_t i;
 
 	for (i = index; i < tab->size; i++) 
 	{
-		if (xp_strcmp(tab->buf[i], str) == 0) return i;
+		if (xp_strxncmp (
+			tab->buf[i].name, tab->buf[i].name_len, 
+			str, len) == 0) return i;
 	}
 
 	return (xp_size_t)-1;
 }
 
 xp_size_t xp_awk_tab_rfind (
-	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t index)
+	xp_awk_tab_t* tab, xp_size_t index, 
+	const xp_char_t* str, xp_size_t len)
 {
 	xp_size_t i;
 
@@ -189,14 +197,17 @@ xp_size_t xp_awk_tab_rfind (
 
 	for (i = index + 1; i-- > 0; ) 
 	{
-		if (xp_strcmp(tab->buf[i], str) == 0) return i;
+		if (xp_strxncmp (
+			tab->buf[i].name, tab->buf[i].name_len, 
+			str, len) == 0) return i;
 	}
 
 	return (xp_size_t)-1;
 }
 
 xp_size_t xp_awk_tab_rrfind (
-	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t index)
+	xp_awk_tab_t* tab, xp_size_t index,
+	const xp_char_t* str, xp_size_t len)
 {
 	xp_size_t i;
 
@@ -204,7 +215,9 @@ xp_size_t xp_awk_tab_rrfind (
 
 	for (i = tab->size - index; i-- > 0; ) 
 	{
-		if (xp_strcmp(tab->buf[i], str) == 0) return i;
+		if (xp_strxncmp (
+			tab->buf[i].name, tab->buf[i].name_len, 
+			str, len) == 0) return i;
 	}
 
 	return (xp_size_t)-1;

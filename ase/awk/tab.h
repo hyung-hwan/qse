@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.9 2006-06-29 09:11:38 bacon Exp $
+ * $Id: tab.h,v 1.10 2006-08-03 06:06:27 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
@@ -16,7 +16,12 @@ typedef struct xp_awk_tab_t xp_awk_tab_t;
 
 struct xp_awk_tab_t
 {
-	xp_char_t** buf;
+	struct
+	{
+		xp_char_t* name;
+		xp_size_t name_len;
+	}* buf;
+	//xp_char_t** buf;
 	xp_size_t size;
 	xp_size_t capa;
 	xp_bool_t __dynamic;	
@@ -36,18 +41,24 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa);
 void xp_awk_tab_clear (xp_awk_tab_t* tab);
 
 xp_size_t xp_awk_tab_insert (
-	xp_awk_tab_t* tab, xp_size_t index, const xp_char_t* value);
+	xp_awk_tab_t* tab, xp_size_t index, 
+	const xp_char_t* str, xp_size_t len);
+
 xp_size_t xp_awk_tab_remove (
 	xp_awk_tab_t* tab, xp_size_t index, xp_size_t count);
 
-xp_size_t xp_awk_tab_add (xp_awk_tab_t* tab, const xp_char_t* value);
+xp_size_t xp_awk_tab_add (
+	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t len);
 
 xp_size_t xp_awk_tab_find (
-	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index);
+	xp_awk_tab_t* tab, xp_size_t index,
+	const xp_char_t* str, xp_size_t len);
 xp_size_t xp_awk_tab_rfind (
-	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index);
+	xp_awk_tab_t* tab, xp_size_t index,
+	const xp_char_t* str, xp_size_t len);
 xp_size_t xp_awk_tab_rrfind (
-	xp_awk_tab_t* tab, const xp_char_t* value, xp_size_t index);
+	xp_awk_tab_t* tab, xp_size_t index,
+	const xp_char_t* str, xp_size_t len);
 
 #ifdef __cplusplus
 }
