@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.151 2006-08-03 05:05:47 bacon Exp $
+ * $Id: parse.c,v 1.152 2006-08-03 06:06:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -565,7 +565,8 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	if (awk->opt.parse & XP_AWK_UNIQUE) 
 	{
 		/* check if it coincides to be a global variable name */
-		if (xp_awk_tab_find(&awk->parse.globals, name, 0) != (xp_size_t)-1) 
+		if (xp_awk_tab_find (
+			&awk->parse.globals, 0, name, name_len) != (xp_size_t)-1) 
 		{
 			PANIC (awk, XP_AWK_EDUPNAME);
 		}
@@ -630,8 +631,8 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			if (awk->opt.parse & XP_AWK_UNIQUE) 
 			{
 				/* check if a parameter conflicts with a function */
-				if (xp_strxncmp(name_dup, name_len, param, param_len) == 0 ||
-				    xp_awk_map_get(&awk->tree.afns, param, param_len) != XP_NULL) 
+				if (xp_strxncmp (name_dup, name_len, param, param_len) == 0 ||
+				    xp_awk_map_get (&awk->tree.afns, param, param_len) != XP_NULL) 
 				{
 					xp_free (name_dup);
 					xp_awk_tab_clear (&awk->parse.params);
@@ -646,7 +647,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			}
 
 			/* check if a parameter conflicts with other parameters */
-			if (xp_awk_tab_find(&awk->parse.params, param, 0) != (xp_size_t)-1) 
+			if (xp_awk_tab_find (&awk->parse.params, 0, param, param_len) != (xp_size_t)-1) 
 			{
 				xp_free (name_dup);
 				xp_awk_tab_clear (&awk->parse.params);
@@ -654,14 +655,14 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			}
 
 			/* push the parameter to the parameter list */
-			if (xp_awk_tab_add(&awk->parse.params, param) == (xp_size_t)-1) 
+			if (xp_awk_tab_add (&awk->parse.params, param, param_len) == (xp_size_t)-1) 
 			{
 				xp_free (name_dup);
 				xp_awk_tab_clear (&awk->parse.params);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}	
 
-			if (__get_token(awk) == -1) 
+			if (__get_token (awk) == -1) 
 			{
 				xp_free (name_dup);
 				xp_awk_tab_clear (&awk->parse.params);
@@ -971,12 +972,12 @@ static xp_awk_t* __add_global (
 	}
 
 	/* check if it conflicts with other global variable names */
-	if (xp_awk_tab_find(&awk->parse.globals, name, 0) != (xp_size_t)-1) 
+	if (xp_awk_tab_find (&awk->parse.globals, 0, name, len) != (xp_size_t)-1) 
 	{ 
 		PANIC (awk, XP_AWK_EDUPVAR);
 	}
 
-	if (xp_awk_tab_add(&awk->parse.globals, name) == (xp_size_t)-1) 
+	if (xp_awk_tab_add (&awk->parse.globals, name, len) == (xp_size_t)-1) 
 	{
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
@@ -1043,19 +1044,20 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 		}
 
 		/* check if it conflicts with a paremeter name */
-		if (xp_awk_tab_find(&awk->parse.params, local, 0) != (xp_size_t)-1) 
+		if (xp_awk_tab_find (&awk->parse.params, 0, local, local_len) != (xp_size_t)-1) 
 		{
 			PANIC (awk, XP_AWK_EDUPNAME);
 		}
 
 		/* check if it conflicts with other local variable names */
-		if (xp_awk_tab_find(&awk->parse.locals, local, 
-			((awk->opt.parse & XP_AWK_SHADING)? nlocals: 0)) != (xp_size_t)-1)
+		if (xp_awk_tab_find (&awk->parse.locals, 
+			((awk->opt.parse & XP_AWK_SHADING)? nlocals: 0),
+			local, local_len) != (xp_size_t)-1)
 		{
 			PANIC (awk, XP_AWK_EDUPVAR);	
 		}
 
-		if (xp_awk_tab_add(&awk->parse.locals, local) == (xp_size_t)-1) 
+		if (xp_awk_tab_add (&awk->parse.locals, local, local_len) == (xp_size_t)-1) 
 		{
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
@@ -2242,7 +2244,8 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 		}
 
 		/* search the parameter name list */
-		idxa = xp_awk_tab_find(&awk->parse.params, name_dup, 0);
+		idxa = xp_awk_tab_find (
+			&awk->parse.params, 0, name_dup, name_len);
 		if (idxa != (xp_size_t)-1) 
 		{
 			nde->type = XP_AWK_NDE_ARG;
@@ -2257,7 +2260,8 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 		}
 
 		/* search the local variable list */
-		idxa = xp_awk_tab_rrfind(&awk->parse.locals, name_dup, 0);
+		idxa = xp_awk_tab_rrfind (
+			&awk->parse.locals, 0, name_dup, name_len);
 		if (idxa != (xp_size_t)-1) 
 		{
 			nde->type = XP_AWK_NDE_LOCAL;
@@ -2272,7 +2276,8 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 		}
 
 		/* search the global variable list */
-		idxa = xp_awk_tab_rrfind(&awk->parse.globals, name_dup, 0);
+		idxa = xp_awk_tab_rrfind (
+			&awk->parse.globals, 0, name_dup, name_len);
 		if (idxa != (xp_size_t)-1) 
 		{
 			nde->type = XP_AWK_NDE_GLOBAL;
@@ -2365,7 +2370,7 @@ static xp_awk_nde_t* __parse_hashidx (
 	}
 
 	/* search the parameter name list */
-	idxa = xp_awk_tab_find (&awk->parse.params, name, 0);
+	idxa = xp_awk_tab_find (&awk->parse.params, 0, name, name_len);
 	if (idxa != (xp_size_t)-1) 
 	{
 		nde->type = XP_AWK_NDE_ARGIDX;
@@ -2380,7 +2385,7 @@ static xp_awk_nde_t* __parse_hashidx (
 	}
 
 	/* search the local variable list */
-	idxa = xp_awk_tab_rrfind(&awk->parse.locals, name, 0);
+	idxa = xp_awk_tab_rrfind(&awk->parse.locals, 0, name, name_len);
 	if (idxa != (xp_size_t)-1) 
 	{
 		nde->type = XP_AWK_NDE_LOCALIDX;
@@ -2395,7 +2400,7 @@ static xp_awk_nde_t* __parse_hashidx (
 	}
 
 	/* search the global variable list */
-	idxa = xp_awk_tab_rrfind(&awk->parse.globals, name, 0);
+	idxa = xp_awk_tab_rrfind(&awk->parse.globals, 0, name, name_len);
 	if (idxa != (xp_size_t)-1) 
 	{
 		nde->type = XP_AWK_NDE_GLOBALIDX;
@@ -2465,7 +2470,8 @@ static xp_awk_nde_t* __parse_fncall (
 			{
 				if (__get_token(awk) == -1) 
 				{
-					if (head != XP_NULL) xp_awk_clrpt (head);
+					if (head != XP_NULL) 
+						xp_awk_clrpt (head);
 					return XP_NULL;
 				}
 				break;
