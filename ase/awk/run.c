@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.158 2006-08-03 09:53:45 bacon Exp $
+ * $Id: run.c,v 1.159 2006-08-03 15:49:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -458,6 +458,7 @@ static int __run_main (xp_awk_run_t* run)
 			blk = (xp_awk_nde_blk_t*)run->awk->tree.begin;
 			xp_assert (blk->type == XP_AWK_NDE_BLK);
 
+			run->active_block = blk;
 			run->exit_level = EXIT_NONE;
 			if (__run_block (run, blk) == -1) n = -1;
 		}
@@ -474,6 +475,7 @@ static int __run_main (xp_awk_run_t* run)
 			blk = (xp_awk_nde_blk_t*)run->awk->tree.end;
 			xp_assert (blk->type == XP_AWK_NDE_BLK);
 
+			run->active_block = blk;
 			run->exit_level = EXIT_NONE;
 			if (__run_block (run, blk) == -1) n = -1;
 		}
@@ -619,6 +621,7 @@ static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
 	if (ptn == XP_NULL)
 	{
 		/* just execute the block */
+		run->active_block = blk;
 		if (__run_block (run, blk) == -1) return -1;
 	}
 	else
@@ -635,6 +638,7 @@ static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
 
 			if (xp_awk_valtobool(v1))
 			{
+				run->active_block = blk;
 				if (__run_block (run, blk) == -1) 
 				{
 					xp_awk_refdownval (run, v1);
@@ -659,6 +663,7 @@ static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
 
 				if (xp_awk_valtobool(v1))
 				{
+					run->active_block = blk;
 					if (__run_block (run, blk) == -1) 
 					{
 						xp_awk_refdownval (run, v1);
@@ -678,6 +683,7 @@ static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
 				if (v2 == XP_NULL) return -1;
 				xp_awk_refupval (v2);
 
+				run->active_block = blk;
 				if (__run_block (run, blk) == -1) 
 				{
 					xp_awk_refdownval (run, v2);
@@ -1164,7 +1170,6 @@ static int __run_continue (xp_awk_run_t* run, xp_awk_nde_continue_t* nde)
 
 static int __run_return (xp_awk_run_t* run, xp_awk_nde_return_t* nde)
 {
-
 	if (nde->val != XP_NULL)
 	{
 		xp_awk_val_t* val;
@@ -1212,18 +1217,32 @@ static int __run_exit (xp_awk_run_t* run, xp_awk_nde_exit_t* nde)
 
 static int __run_next (xp_awk_run_t* run, xp_awk_nde_next_t* nde)
 {
-	/* TODO: trigger an error if "next" is called from BEGIN or END */
+	/* the parser checks if next has been called in the begin/end
+	 * block or whereever inappropriate. so the runtime doesn't 
+	 * check that explicitly */
+
+	if  (run->active_block == (xp_awk_nde_blk_t*)run->awk->tree.begin ||
+	     run->active_block == (xp_awk_nde_blk_t*)run->awk->tree.end)
+	{
+		PANIC_I (run, XP_AWK_ENEXTCALL);
+	}
+
 	run->exit_level = EXIT_NEXT;
 	return 0;
 }
 
 static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 {
-/* TODO: trigger an error if "nextfile" is called from BEGIN or END */
 /* TODO: some extentions such as nextfile "in/out"; 
  *  what about awk -i in1,in2,in3 -o out1,out2,out3 ?
  */
 	int n, errnum;
+
+	if  (run->active_block == (xp_awk_nde_blk_t*)run->awk->tree.begin ||
+	     run->active_block == (xp_awk_nde_blk_t*)run->awk->tree.end)
+	{
+		PANIC_I (run, XP_AWK_ENEXTFILECALL);
+	}
 
 	n = xp_awk_nextextio_read (
 		run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);

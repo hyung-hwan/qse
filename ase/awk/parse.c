@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.154 2006-08-03 09:58:15 bacon Exp $
+ * $Id: parse.c,v 1.155 2006-08-03 15:49:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -102,12 +102,14 @@ enum
 
 enum
 {
-	PARSE_BLOCK_GLOBAL,
-	PARSE_BLOCK_FUNCTION,
-	PARSE_BLOCK_BEGIN,
-	PARSE_BLOCK_END,
-	PARSE_BLOCK_PATTERN,
-	PARSE_BLOCK_ACTION
+	PARSE_GLOBAL,
+	PARSE_FUNCTION,
+	PARSE_BEGIN,
+	PARSE_END,
+	PARSE_BEGIN_BLOCK,
+	PARSE_END_BLOCK,
+	PARSE_PATTERN,
+	PARSE_ACTION_BLOCK
 };
 
 enum
@@ -139,7 +141,6 @@ static xp_awk_nde_t* __parse_end (xp_awk_t* awk);
 static xp_awk_chain_t* __parse_pattern_block (
 	xp_awk_t* awk, xp_awk_nde_t* ptn, xp_bool_t blockless);
 
-static xp_awk_nde_t* __parse_action (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top);
 static xp_awk_nde_t* __parse_statement (xp_awk_t* awk);
 static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk);
@@ -456,7 +457,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	{
 		xp_size_t nglobals;
 
-		awk->parse.id.block = PARSE_BLOCK_GLOBAL;
+		awk->parse.id.block = PARSE_GLOBAL;
 
 		if (__get_token(awk) == -1) return XP_NULL;
 
@@ -471,23 +472,49 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_FUNCTION)) 
 	{
-		awk->parse.id.block = PARSE_BLOCK_FUNCTION;
+		awk->parse.id.block = PARSE_FUNCTION;
 		if (__parse_function (awk) == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk,TOKEN_BEGIN)) 
 	{
-		awk->parse.id.block = PARSE_BLOCK_BEGIN;
+		awk->parse.id.block = PARSE_BEGIN;
+		if (__get_token(awk) == -1) return XP_NULL; 
+
+		if ((awk->opt.parse & XP_AWK_BLOCKLESS) &&
+		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
+		{
+			/* when the blockless pattern is supported
+	   		 * BEGIN and { should be located on the same line */
+			PANIC (awk, XP_AWK_EBEGINBLOCK);
+		}
+
+		if (!MATCH(awk,TOKEN_LBRACE)) PANIC (awk, XP_AWK_ELBRACE);
+
+		awk->parse.id.block = PARSE_BEGIN_BLOCK;
 		if (__parse_begin (awk) == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk,TOKEN_END)) 
 	{
-		awk->parse.id.block = PARSE_BLOCK_END;
+		awk->parse.id.block = PARSE_END;
+		if (__get_token(awk) == -1) return XP_NULL; 
+
+		if ((awk->opt.parse & XP_AWK_BLOCKLESS) &&
+		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
+		{
+			/* when the blockless pattern is supported
+	   		 * END and { should be located on the same line */
+			PANIC (awk, XP_AWK_EENDBLOCK);
+		}
+
+		if (!MATCH(awk,TOKEN_LBRACE)) PANIC (awk, XP_AWK_ELBRACE);
+
+		awk->parse.id.block = PARSE_END_BLOCK;
 		if (__parse_end (awk) == XP_NULL) return XP_NULL;
 	}
 	else if (MATCH(awk,TOKEN_LBRACE))
 	{
 		/* patternless block */
-		awk->parse.id.block = PARSE_BLOCK_ACTION;
+		awk->parse.id.block = PARSE_ACTION_BLOCK;
 		if (__parse_pattern_block (
 			awk, XP_NULL, xp_false) == XP_NULL) return XP_NULL;
 	}
@@ -504,7 +531,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		*/
 		xp_awk_nde_t* ptn;
 
-		awk->parse.id.block = PARSE_BLOCK_PATTERN;
+		awk->parse.id.block = PARSE_PATTERN;
 
 		ptn = __parse_expression (awk);
 		if (ptn == XP_NULL) return XP_NULL;
@@ -531,10 +558,9 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
 		{
 			/* blockless pattern */
-
 			xp_bool_t newline = MATCH(awk,TOKEN_NEWLINE);
 
-			awk->parse.id.block = PARSE_BLOCK_ACTION;
+			awk->parse.id.block = PARSE_ACTION_BLOCK;
 			if (__parse_pattern_block (
 				awk, ptn, xp_true) == XP_NULL) 
 			{
@@ -554,14 +580,13 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		else
 		{
 			/* parse the action block */
-
 			if (!MATCH(awk,TOKEN_LBRACE))
 			{
 				xp_awk_clrpt (ptn);
 				PANIC (awk, XP_AWK_ELBRACE);
 			}
 
-			awk->parse.id.block = PARSE_BLOCK_ACTION;
+			awk->parse.id.block = PARSE_ACTION_BLOCK;
 			if (__parse_pattern_block (
 				awk, ptn, xp_false) == XP_NULL) 
 			{
@@ -586,6 +611,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	int n;
 
 	/* eat up the keyword 'function' and get the next token */
+	xp_assert (MATCH(awk,TOKEN_FUNCTION));
 	if (__get_token(awk) == -1) return XP_NULL;  
 
 	/* match a function name */
@@ -802,10 +828,10 @@ static xp_awk_nde_t* __parse_begin (xp_awk_t* awk)
 {
 	xp_awk_nde_t* nde;
 
-	if (awk->tree.begin != XP_NULL) PANIC (awk, XP_AWK_EDUPBEGIN);
-	if (__get_token(awk) == -1) return XP_NULL; 
+	xp_assert (MATCH(awk,TOKEN_LBRACE));
 
-	nde = __parse_action (awk);
+	if (__get_token(awk) == -1) return XP_NULL; 
+	nde = __parse_block(awk, xp_true);
 	if (nde == XP_NULL) return XP_NULL;
 
 	awk->tree.begin = nde;
@@ -816,10 +842,10 @@ static xp_awk_nde_t* __parse_end (xp_awk_t* awk)
 {
 	xp_awk_nde_t* nde;
 
-	if (awk->tree.end != XP_NULL) PANIC (awk, XP_AWK_EDUPEND);
-	if (__get_token(awk) == -1) return XP_NULL; 
+	xp_assert (MATCH(awk,TOKEN_LBRACE));
 
-	nde = __parse_action (awk);
+	if (__get_token(awk) == -1) return XP_NULL; 
+	nde = __parse_block(awk, xp_true);
 	if (nde == XP_NULL) return XP_NULL;
 
 	awk->tree.end = nde;
@@ -835,7 +861,9 @@ static xp_awk_chain_t* __parse_pattern_block (
 	if (blockless) nde = XP_NULL;
 	else
 	{
-		nde = __parse_action (awk);
+		xp_assert (MATCH(awk,TOKEN_LBRACE));
+		if (__get_token(awk) == -1) return XP_NULL; 
+		nde = __parse_block(awk, xp_true);
 		if (nde == XP_NULL) return XP_NULL;
 	}
 
@@ -863,13 +891,6 @@ static xp_awk_chain_t* __parse_pattern_block (
 	}
 
 	return chain;
-}
-
-static xp_awk_nde_t* __parse_action (xp_awk_t* awk)
-{
-	if (!MATCH(awk,TOKEN_LBRACE)) PANIC (awk, XP_AWK_ELBRACE);
-	if (__get_token(awk) == -1) return XP_NULL; 
-	return __parse_block(awk, xp_true);
 }
 
 static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top) 
@@ -3160,8 +3181,8 @@ static xp_awk_nde_t* __parse_next (xp_awk_t* awk)
 {
 	xp_awk_nde_next_t* nde;
 
-	if (awk->parse.id.block == PARSE_BLOCK_BEGIN ||
-	    awk->parse.id.block == PARSE_BLOCK_END)
+	if (awk->parse.id.block == PARSE_BEGIN_BLOCK ||
+	    awk->parse.id.block == PARSE_END_BLOCK)
 	{
 		PANIC (awk, XP_AWK_ENEXT);
 	}
@@ -3178,8 +3199,8 @@ static xp_awk_nde_t* __parse_nextfile (xp_awk_t* awk)
 {
 	xp_awk_nde_nextfile_t* nde;
 
-	if (awk->parse.id.block == PARSE_BLOCK_BEGIN ||
-	    awk->parse.id.block == PARSE_BLOCK_END)
+	if (awk->parse.id.block == PARSE_BEGIN_BLOCK ||
+	    awk->parse.id.block == PARSE_END_BLOCK)
 	{
 		PANIC (awk, XP_AWK_ENEXTFILE);
 	}
@@ -3207,13 +3228,14 @@ static int __get_token (xp_awk_t* awk)
 	} 
 	while (n == 1);
 
-
 	xp_str_clear (&awk->token.name);
 	awk->token.line = awk->lex.line;
 	awk->token.column = awk->lex.column;
 
 	if (line != 0 && (awk->opt.parse & XP_AWK_BLOCKLESS) &&
-	    awk->parse.id.block == PARSE_BLOCK_PATTERN)
+	    (awk->parse.id.block == PARSE_PATTERN ||
+	     awk->parse.id.block == PARSE_BEGIN ||
+	     awk->parse.id.block == PARSE_END))
 	{
 		if (awk->token.line != line)
 		{

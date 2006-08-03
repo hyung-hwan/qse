@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.30 2006-08-03 09:53:42 bacon Exp $
+ * $Id: err.c,v 1.31 2006-08-03 15:49:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -64,6 +64,8 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("keyword 'while' expected"),
 		XP_T("assignment statement expected"),
 		XP_T("identifier expected"),
+		XP_T("BEGIN requires an action block"),
+		XP_T("END requires an action block"),
 		XP_T("duplicate BEGIN"),
 		XP_T("duplicate END"),
 		XP_T("duplicate function name"),
@@ -92,8 +94,9 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("variable not scalarizable"),
 		XP_T("wrong value type"),
 		XP_T("pipe operation error"),
+		XP_T("next cannot be called from the BEGIN or END block"),
+		XP_T("nextfile cannot be called from the BEGIN or END block"),
 		XP_T("wrong implementation of user-defined io handler"),
-
 		XP_T("internal error that should never have happened")
 	};
 
