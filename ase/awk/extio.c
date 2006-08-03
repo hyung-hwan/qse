@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.25 2006-08-03 05:05:46 bacon Exp $
+ * $Id: extio.c,v 1.26 2006-08-03 09:53:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -77,6 +77,10 @@ static int __out_mask_map[] =
 	__MASK_WRITE,
 	__MASK_WRITE
 };
+
+static int __writeextio (
+	xp_awk_run_t* run, int out_type, 
+	const xp_char_t* name, xp_awk_val_t* v, int* errnum, xp_bool_t nl);
 
 int xp_awk_readextio (
 	xp_awk_run_t* run, int in_type,
@@ -222,9 +226,25 @@ int xp_awk_writeextio (
 	xp_awk_run_t* run, int out_type, 
 	const xp_char_t* name, xp_awk_val_t* v, int* errnum)
 {
+	return __writeextio (run, out_type, name, v, errnum, xp_false);
+}
+
+int xp_awk_writeextio_nl (
+	xp_awk_run_t* run, int out_type, 
+	const xp_char_t* name, xp_awk_val_t* v, int* errnum)
+{
+	return __writeextio (run, out_type, name, v, errnum, xp_true);
+}
+
+static int __writeextio (
+	xp_awk_run_t* run, int out_type, 
+	const xp_char_t* name, xp_awk_val_t* v, int* errnum, xp_bool_t nl)
+{
 	xp_awk_extio_t* p = run->extio;
 	xp_awk_io_t handler;
 	xp_str_t buf;
+	xp_char_t* str;
+	xp_size_t len;
 	int extio_type, extio_mode, extio_mask, n;
 
 	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_type_map));
@@ -336,33 +356,55 @@ int xp_awk_writeextio (
 /* TODO: */
 	if (v->type != XP_AWK_VAL_STR)
 	{
-		n = handler (XP_AWK_IO_WRITE, p,
-			XP_STR_BUF(&buf), XP_STR_LEN(&buf));
+		str = XP_STR_BUF(&buf);
+		len = XP_STR_LEN(&buf);
 	}
 	else
 	{
-		n = handler (XP_AWK_IO_WRITE, p,
-			((xp_awk_val_str_t*)v)->buf, 
-			((xp_awk_val_str_t*)v)->len);
-	}
-	if (n == -1) 
-	{
-		if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
-
-		/* TODO: use meaningful error code */
-		xp_awk_setglobal (run, 
-			XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
-		*errnum = XP_AWK_ENOERR;
-		return -1;
+		str = ((xp_awk_val_str_t*)v)->buf;
+		len = ((xp_awk_val_str_t*)v)->len;
 	}
 
-	if (n == 0)
+	if (len > 0)
 	{
-		if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
-		return 0;
+		n = handler (XP_AWK_IO_WRITE, p, str, len);
+
+		if (n == -1) 
+		{
+			if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+
+			/* TODO: use meaningful error code */
+			xp_awk_setglobal (run, 
+				XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
+			*errnum = XP_AWK_ENOERR;
+			return -1;
+		}
+
+		if (n == 0)
+		{
+			if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+			return 0;
+		}
 	}
 
 	if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+
+	if (nl)
+	{
+		/* TODO: use proper NEWLINE separator */
+		n = handler (XP_AWK_IO_WRITE, p, XP_T("\n"), 1);
+		if (n == -1) 
+		{
+			/* TODO: use meaningful error code */
+			xp_awk_setglobal (run, 
+				XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
+			*errnum = XP_AWK_ENOERR;
+			return -1;
+		}
+
+		if (n == 0) return 0;
+	}
+
 	return 1;
 }
 

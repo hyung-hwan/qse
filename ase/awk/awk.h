@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.85 2006-08-01 15:57:42 bacon Exp $
+ * $Id: awk.h,v 1.86 2006-08-03 09:53:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -91,7 +91,10 @@ enum
 	XP_AWK_STRCONCAT  = (1 << 7), 
 
 	/* support getline and print */
-	XP_AWK_EXTIO      = (1 << 8) 
+	XP_AWK_EXTIO      = (1 << 8), 
+
+	/* support blockless patterns */
+	XP_AWK_BLOCKLESS  = (1 << 9), 
 };
 
 /* run options */
@@ -113,10 +116,15 @@ enum
 	XP_AWK_ESRCINNEXT,
 	XP_AWK_ESRCINDATA,     /* error in reading source */
 
-	XP_AWK_ETXTINOPEN,
-	XP_AWK_ETXTINCLOSE,
-	XP_AWK_ETXTINNEXT,
-	XP_AWK_ETXTINDATA,     /* error in reading text */
+	XP_AWK_ECONINOPEN,
+	XP_AWK_ECONINCLOSE,
+	XP_AWK_ECONINNEXT,
+	XP_AWK_ECONINDATA, 
+
+	XP_AWK_ECONOUTOPEN,
+	XP_AWK_ECONOUTCLOSE,
+	XP_AWK_ECONOUTNEXT,
+	XP_AWK_ECONOUTDATA,
 
 	XP_AWK_ELXCHR,         /* lexer came accross an wrong character */
 	XP_AWK_ELXUNG,         /* lexer failed to unget a character */

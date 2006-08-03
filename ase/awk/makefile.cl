@@ -1,10 +1,17 @@
-SRCS = awk.c err.c tree.c tab.c map.c parse.c run.c sa.c val.c func.c misc.c extio.c rex.c
+
+SRCS = \
+	awk.c err.c tree.c tab.c map.c parse.c \
+	run.c sa.c val.c func.c misc.c extio.c rex.c
 OBJS = $(SRCS:.c=.obj)
 OUT = xpawk
 
+JAVA_INC = \
+	/I"C:\Program Files\IBM\Java141\Include" \
+	/I"C:\Program Files\IBM\Java141\Include\Win32"
+
 CC = cl
 #CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
-CFLAGS = /nologo /O2 /MT /W3 /GR- /Za /D_WIN32_WINNT=0x0400 -I../.. -DXP_AWK_STAND_ALONE -DXP_CHAR_IS_WCHAR /I"C:\Program Files\IBM\Java141\Include" /I"C:\Program Files\IBM\Java141\Include\Win32"
+CFLAGS = /nologo /O2 /MT /W3 /GR- /Za /D_WIN32_WINNT=0x0400 -I../.. -DXP_AWK_STAND_ALONE -DXP_CHAR_IS_WCHAR $(JAVA_INC)
 
 all: lib 
 

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.63 2006-08-01 15:57:42 bacon Exp $ 
+ * $Id: awk.c,v 1.64 2006-08-03 09:53:41 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -77,8 +77,8 @@ xp_awk_t* xp_awk_open (void)
 
 	awk->token.prev = 0;
 	awk->token.type = 0;
-	awk->token.line = 1;
-	awk->token.column = 1;
+	awk->token.line = 0;
+	awk->token.column = 0;
 
 	awk->lex.curc = XP_CHAR_EOF;
 	awk->lex.ungotc_count = 0;
@@ -153,6 +153,7 @@ void xp_awk_clear (xp_awk_t* awk)
 		xp_free (awk->tree.chain);
 		awk->tree.chain = next;
 	}
+
 	awk->tree.chain_tail = XP_NULL;	
 }
 

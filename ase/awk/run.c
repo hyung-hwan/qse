@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.157 2006-08-03 05:05:47 bacon Exp $
+ * $Id: run.c,v 1.158 2006-08-03 09:53:45 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -552,7 +552,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 		{
 			/* don't care about the result of input close */
 			xp_awk_closeextio_read (
-				run, XP_AWK_EXTIO_CONSOLE, XP_T(""), &errnum);
+				run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
 			return -1;
 		}
 
@@ -562,7 +562,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
 		{
 			xp_awk_closeextio_read (
-				run, XP_AWK_EXTIO_CONSOLE, XP_T(""), &errnum);
+				run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
 			return -1;
 		}
 	}
@@ -577,11 +577,11 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 	if (need_to_close)
 	{
 		n = xp_awk_closeextio_read (
-			run, XP_AWK_EXTIO_CONSOLE, XP_T(""), &errnum);
+			run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
 		if (n == -1) 
 		{
 			if (errnum == XP_AWK_ENOERR)
-				PANIC_I (run, XP_AWK_ETXTINCLOSE);
+				PANIC_I (run, XP_AWK_ECONINCLOSE);
 			else
 				PANIC_I (run, errnum);
 		}
@@ -701,6 +701,30 @@ static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
 	xp_size_t nlocals;
 	xp_size_t saved_stack_top;
 	int n = 0;
+
+	if (nde == XP_NULL)
+	{
+		/* blockless pattern - execute print $0*/
+		int errnum;
+
+		xp_awk_refupval (run->inrec.d0);
+
+		n = xp_awk_writeextio_nl (run, 
+			XP_AWK_OUT_CONSOLE, XP_T(""), run->inrec.d0, &errnum);
+		if (n == -1)
+		{
+			xp_awk_refdownval (run, run->inrec.d0);
+
+			if (errnum == XP_AWK_ENOERR)
+				PANIC_I (run, XP_AWK_ECONOUTDATA);
+			else
+				PANIC_I (run, errnum);
+		}
+
+		xp_awk_refdownval (run, run->inrec.d0);
+
+		return 0;
+	}
 
 	xp_assert (nde->type == XP_AWK_NDE_BLK);
 
@@ -1206,7 +1230,7 @@ static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 	if (n == -1)
 	{
 		if (errnum == XP_AWK_ENOERR)
-			PANIC_I (run, XP_AWK_ETXTINNEXT);
+			PANIC_I (run, XP_AWK_ECONINNEXT);
 		else
 			PANIC_I (run, errnum);
 	}
@@ -1404,7 +1428,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		(p->out_type == XP_AWK_OUT_PIPE && p->out != XP_NULL) ||
 		(p->out_type == XP_AWK_OUT_COPROC && p->out != XP_NULL) ||
 		(p->out_type == XP_AWK_OUT_FILE && p->out != XP_NULL) ||
-		(p->out_type == XP_AWK_OUT_FILE_APPEND  && p->out != XP_NULL) ||
+		(p->out_type == XP_AWK_OUT_FILE_APPEND && p->out != XP_NULL) ||
 		(p->out_type == XP_AWK_OUT_CONSOLE && p->out == XP_NULL));
 
 	if (p->out != XP_NULL)
@@ -1495,24 +1519,15 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		}
 	}
 
-	/* TODO: predefine the new line string 
-	 *       for performance improvement*/
-	v = xp_awk_makestrval (XP_T("\n"), 1);
-	if (v == XP_NULL)
-	{
-		if (out != XP_NULL) xp_free (out);
-		PANIC_I (run, XP_AWK_ENOMEM);
-	}
-	xp_awk_refupval (v);
-
-	n = xp_awk_writeextio (run, p->out_type, dst, v, &errnum);
+	/* TODO: change xp_awk_val_nil to 
+	 *       xp_awk_val_empty_string or something */
+	n = xp_awk_writeextio_nl (
+		run, p->out_type, dst, xp_awk_val_nil, &errnum);
 	if (n < 0 && errnum != XP_AWK_ENOERR)
 	{
 		if (out != XP_NULL) xp_free (out);
-		xp_awk_refdownval (run, v);
 		PANIC_I (run, errnum);
 	}
-	xp_awk_refdownval (run, v);
 
 	/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
 
@@ -2897,7 +2912,10 @@ static xp_awk_val_t* __eval_binop_ma (
 	xp_assert (right->next == XP_NULL);
 
 	lv = __eval_expression (run, left);
-	if (lv == XP_NULL) return XP_NULL;
+	if (lv == XP_NULL) 
+	{
+		return XP_NULL;
+	}
 
 	xp_awk_refupval (lv);
 
@@ -3006,7 +3024,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 	}
 	else
 	{
-		str = xp_awk_valtostr (right, &errnum, xp_true, XP_NULL, &len);
+		str = xp_awk_valtostr (left, &errnum, xp_true, XP_NULL, &len);
 		if (str == XP_NULL) 
 		{
 			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
@@ -4093,12 +4111,12 @@ static int __read_record (xp_awk_run_t* run)
 
 	/*TODO: use RS */
 	n = xp_awk_readextio (
-		run, XP_AWK_EXTIO_CONSOLE, 
+		run, XP_AWK_IN_CONSOLE, 
 		XP_T(""), &run->inrec.line, &errnum);
 	if (n < 0) 
 	{
 		if (errnum == XP_AWK_ENOERR)
-			PANIC_I (run, XP_AWK_ETXTINDATA);
+			PANIC_I (run, XP_AWK_ECONINDATA);
 		else
 			PANIC_I (run, errnum);
 	}
