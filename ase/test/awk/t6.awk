@@ -1,5 +1,4 @@
-BEGIN
-{
+BEGIN {
 	j = -20;
 
 	for (i = -10; i < 10; i++) 
@@ -16,8 +15,7 @@ BEGIN
 	}
 }
 
-END
-{
+END {
 	print "i = ", i;
 	print "j = ", j;
 }

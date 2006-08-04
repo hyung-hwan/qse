@@ -6,8 +6,7 @@ func func1 (x)
 	x["abc"] = 123;
 }
 
-BEGIN
-{
+BEGIN {
 	idx="abc";
 	x[idx] = 12345;
 	i = x[idx];
