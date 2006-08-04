@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.155 2006-08-03 15:49:37 bacon Exp $
+ * $Id: parse.c,v 1.156 2006-08-04 06:39:05 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2267,7 +2267,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 		return XP_NULL;			
 	}
 
-	/* what if name_dup is a built-in function name */
+	/* check if name_dup is a built-in function name */
 	bfn = xp_awk_getbfn (awk, name_dup);
 	if (bfn != XP_NULL)
 	{

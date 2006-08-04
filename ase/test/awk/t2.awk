@@ -15,12 +15,10 @@ function sum (i)
 	return y;
 }
 
-BEGIN 
-{
+END {
 	/*x = sum (10000000);
 	*/
 	x = sum (100);
 	s = x;
 	ss = z;
 }
-
