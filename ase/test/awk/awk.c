@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.64 2006-08-04 16:33:50 bacon Exp $
+ * $Id: awk.c,v 1.65 2006-08-04 17:02:02 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -516,7 +516,7 @@ static int __main (int argc, xp_char_t* argv[])
 	xp_awk_t* awk;
 	xp_awk_runcb_t runcb;
 	struct src_io src_io = { NULL, NULL };
-
+	int opt;
 
 	if ((awk = xp_awk_open()) == XP_NULL) 
 	{
@@ -550,10 +550,10 @@ static int __main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
-	xp_awk_setparseopt (awk, 
-		XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_DBLSLASHES |
+
+	opt = XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_DBLSLASHES |
 		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | 
-		XP_AWK_EXTIO | XP_AWK_BLOCKLESS);
+		XP_AWK_EXTIO | XP_AWK_BLOCKLESS;
 
 	if (argc == 2) 
 	{
@@ -578,7 +578,7 @@ static int __main (int argc, xp_char_t* argv[])
 		if (xp_strcmp(argv[1], XP_T("-m")) == 0)
 #endif
 		{
-			xp_awk_setrunopt (awk, XP_AWK_RUNMAIN);
+			opt |= XP_AWK_RUNMAIN;
 		}
 		else
 		{
@@ -595,6 +595,8 @@ static int __main (int argc, xp_char_t* argv[])
 		xp_printf (XP_T("Usage: %s [-m] source_file\n"), argv[0]);
 		return -1;
 	}
+
+	xp_awk_setopt (awk, opt);
 
 	if (xp_awk_attsrc(awk, process_source, (void*)&src_io) == -1) 
 	{
