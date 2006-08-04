@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.66 2006-08-04 17:36:40 bacon Exp $
+ * $Id: awk.c,v 1.67 2006-08-04 17:54:52 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -514,6 +514,7 @@ static int __main (int argc, xp_char_t* argv[])
 #endif
 {
 	xp_awk_t* awk;
+	xp_awk_srcios_t srcios;
 	xp_awk_runcbs_t runcbs;
 	xp_awk_runios_t runios;
 	struct src_io src_io = { NULL, NULL };
@@ -606,7 +607,11 @@ static int __main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
-	if (xp_awk_parse(awk) == -1) 
+	srcios.in = process_source;
+	srcios.out = XP_NULL;
+	srcios.custom_data = XP_NULL;
+
+	if (xp_awk_parse (awk, &srcios) == -1) 
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
@@ -634,17 +639,17 @@ static int __main (int argc, xp_char_t* argv[])
 
 	signal (SIGINT, __stop_run);
 
-	runcbs.start = __on_run_start;
-	runcbs.end = __on_run_end;
-	runcbs.custom_data = XP_NULL;
-
 	runios.pipe = process_extio_pipe;
 	runios.coproc = XP_NULL;
 	runios.file = process_extio_file;
 	runios.console = process_extio_console;
 	runios.custom_data = XP_NULL;
 
-	if (xp_awk_run (awk, &runcbs, &runios) == -1)
+	runcbs.start = __on_run_start;
+	runcbs.end = __on_run_end;
+	runcbs.custom_data = XP_NULL;
+
+	if (xp_awk_run (awk, &runios, &runcbs) == -1)
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (

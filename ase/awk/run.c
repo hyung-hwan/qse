@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.162 2006-08-04 17:36:40 bacon Exp $
+ * $Id: run.c,v 1.163 2006-08-04 17:54:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -222,7 +222,7 @@ void xp_awk_seterrnum (void* run, int errnum)
 	r->errnum = errnum;
 }
 
-int xp_awk_run (xp_awk_t* awk, xp_awk_runcbs_t* runcbs, xp_awk_runios_t* runios)
+int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 {
 	xp_awk_run_t* run;
 	int n;
