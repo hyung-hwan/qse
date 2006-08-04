@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.156 2006-08-04 06:39:05 bacon Exp $
+ * $Id: parse.c,v 1.157 2006-08-04 16:31:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -356,12 +356,13 @@ static void __dump (xp_awk_t* awk)
 {
 	xp_awk_chain_t* chain;
 
-	if (awk->tree.nglobals > 0) 
+	if (awk->tree.nglobals > awk->tree.nbglobals) 
 	{
 		xp_size_t i;
 
+		xp_assert (awk->tree.nglobals > 0);
 		xp_printf (XP_T("global "));
-		for (i = 0; i < awk->tree.nglobals - 1; i++) 
+		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
 		{
 			xp_printf (XP_T("__global%lu, "), (unsigned long)i);
 		}
@@ -1020,10 +1021,12 @@ static xp_awk_t* __add_builtin_globals (xp_awk_t* awk)
 {
 	struct __bvent* p = __bvtab;
 
+	awk->tree.nbglobals = 0;
 	while (p->name != XP_NULL)
 	{
 		if (__add_global (awk, 
 			p->name, p->name_len) == XP_NULL) return XP_NULL;
+		awk->tree.nbglobals++;
 		p++;
 	}
 

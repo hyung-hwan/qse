@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.64 2006-08-03 09:53:41 bacon Exp $ 
+ * $Id: awk.c,v 1.65 2006-08-04 16:31:21 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -70,6 +70,7 @@ xp_awk_t* xp_awk_open (void)
 	awk->parse.nlocals_max = 0;
 
 	awk->tree.nglobals = 0;
+	awk->tree.nbglobals = 0;
 	awk->tree.begin = XP_NULL;
 	awk->tree.end = XP_NULL;
 	awk->tree.chain = XP_NULL;

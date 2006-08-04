@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.159 2006-08-03 15:49:37 bacon Exp $
+ * $Id: run.c,v 1.160 2006-08-04 16:31:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -222,7 +222,7 @@ void xp_awk_seterrnum (void* run, int errnum)
 	r->errnum = errnum;
 }
 
-int xp_awk_run (xp_awk_t* awk)
+int xp_awk_run (xp_awk_t* awk, xp_awk_runcb_t* runcb)
 {
 	xp_awk_run_t* run;
 	int n;
@@ -243,17 +243,36 @@ int xp_awk_run (xp_awk_t* awk)
 		return -1;
 	}
 
+	if (runcb->start != XP_NULL) runcb->start (awk, run);
+
 	n = __run_main (run);
-	if (n == -1) 
+	if (n == -1)
 	{
 		awk->errnum = run->errnum;
 		awk->suberrnum = run->suberrnum;
 	}
 
+	if (runcb->end != XP_NULL) runcb->end (awk, run);
+
 	__close_run (run);
 	xp_free (run);
 
 	return n;
+}
+
+int xp_awk_stop (xp_awk_t* awk, void* handle)
+{
+	xp_awk_run_t* run = (xp_awk_run_t*)handle;
+
+	if (run->awk != awk)
+	{
+		/* TODO: use awk->errnum or run->errnum??? */
+		run->errnum = XP_AWK_EINVAL;
+		return -1;
+	}
+
+	run->exit_level = EXIT_ABORT;
+	return 0;
 }
 
 static void __free_namedval (void* run, void* val)
@@ -270,7 +289,7 @@ static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
 	run->stack_base = 0;
 	run->stack_limit = 0;
 
-	run->exit_level = 0;
+	run->exit_level = EXIT_NONE;
 
 	run->icache_count = 0;
 	run->rcache_count = 0;
@@ -382,12 +401,12 @@ static int __run_main (xp_awk_run_t* run)
 		}
 	}	
 
+	run->exit_level = EXIT_NONE;
+
 	if (run->opt & XP_AWK_RUNMAIN)
 	{
 /* TODO: should the main function be user-specifiable? */
 		xp_awk_nde_call_t nde;
-
-		run->exit_level = EXIT_NONE;
 
 		nde.type = XP_AWK_NDE_AFN;
 		nde.next = XP_NULL;
@@ -451,7 +470,9 @@ static int __run_main (xp_awk_run_t* run)
 		STACK_NARGS(run) = (void*)nargs;
 	
 		/* stack set up properly. ready to exeucte statement blocks */
-		if (n == 0 && run->awk->tree.begin != XP_NULL) 
+		if (n == 0 && 
+		    run->awk->tree.begin != XP_NULL && 
+		    run->exit_level != EXIT_ABORT)
 		{
 			xp_awk_nde_blk_t* blk;
 
@@ -463,12 +484,16 @@ static int __run_main (xp_awk_run_t* run)
 			if (__run_block (run, blk) == -1) n = -1;
 		}
 
-		if (n == 0 && run->awk->tree.chain != XP_NULL)
+		if (n == 0 && 
+		    run->awk->tree.chain != XP_NULL && 
+		    run->exit_level != EXIT_ABORT)
 		{
 			if (__run_pattern_blocks (run) == -1) n = -1;
 		}
 
-		if (n == 0 && run->awk->tree.end != XP_NULL) 
+		if (n == 0 && 
+		    run->awk->tree.end != XP_NULL && 
+		    run->exit_level != EXIT_ABORT) 
 		{
 			xp_awk_nde_blk_t* blk;
 

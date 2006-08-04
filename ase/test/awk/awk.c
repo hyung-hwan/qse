@@ -1,10 +1,11 @@
 /*
- * $Id: awk.c,v 1.62 2006-08-03 09:53:46 bacon Exp $
+ * $Id: awk.c,v 1.63 2006-08-04 16:31:22 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 
 #ifdef XP_CHAR_IS_WCHAR
 	#include <wchar.h>
@@ -479,6 +480,33 @@ xp_printf (XP_TEXT("switching console[%s] of type %x\n"), epa->name, epa->type);
 	return n;
 }
 
+
+xp_awk_t* app_awk = NULL;
+void* app_run = NULL;
+
+static void __stop_run (int sig)
+{
+	signal  (SIGINT, SIG_IGN);
+	xp_awk_stop (app_awk, app_run);
+	//xp_awk_stoprun (awk, handle);
+	/*xp_awk_stopallruns (awk); */
+	signal  (SIGINT, __stop_run);
+}
+
+static void __on_run_start (xp_awk_t* awk, void* handle)
+{
+	app_awk = awk;	
+	app_run = handle;
+xp_printf (XP_T("AWK PRORAM ABOUT TO START...\n"));
+}
+
+static void __on_run_end (xp_awk_t* awk, void* handle)
+{
+	app_awk = NULL;	
+	app_run = NULL;
+xp_printf (XP_T("AWK PRORAM ABOUT TO END...\n"));
+}
+
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 static int __main (int argc, char* argv[])
 #else
@@ -486,7 +514,9 @@ static int __main (int argc, xp_char_t* argv[])
 #endif
 {
 	xp_awk_t* awk;
+	xp_awk_runcb_t runcb;
 	struct src_io src_io = { NULL, NULL };
+
 
 	if ((awk = xp_awk_open()) == XP_NULL) 
 	{
@@ -599,7 +629,12 @@ static int __main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
-	if (xp_awk_run (awk) == -1)
+	signal (SIGINT, __stop_run);
+
+	runcb.start = __on_run_start;
+	runcb.end = __on_run_end;
+
+	if (xp_awk_run (awk, &runcb) == -1)
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
