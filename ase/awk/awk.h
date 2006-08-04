@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.89 2006-08-04 17:36:40 bacon Exp $
+ * $Id: awk.h,v 1.90 2006-08-04 17:54:52 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -12,6 +12,7 @@ typedef struct xp_awk_t xp_awk_t;
 typedef struct xp_awk_val_t xp_awk_val_t;
 typedef struct xp_awk_extio_t xp_awk_extio_t;
 
+typedef struct xp_awk_srcios_t xp_awk_srcios_t;
 typedef struct xp_awk_runios_t xp_awk_runios_t;
 typedef struct xp_awk_runcbs_t xp_awk_runcbs_t;
 
@@ -37,6 +38,13 @@ struct xp_awk_extio_t
 	} in;
 
 	xp_awk_extio_t* next;
+};
+
+struct xp_awk_srcios_t
+{
+	xp_awk_io_t in;
+	xp_awk_io_t out;
+	void* custom_data;
 };
 
 struct xp_awk_runios_t
@@ -233,10 +241,10 @@ xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
 
 int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg);
 
-int xp_awk_parse (xp_awk_t* awk);
+int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios);
 
 int xp_awk_run (xp_awk_t* awk, 
-	xp_awk_runcbs_t* runcbs, xp_awk_runios_t* runios);
+	xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs);
 
 int xp_awk_stop (xp_awk_t* awk, void* run);
 

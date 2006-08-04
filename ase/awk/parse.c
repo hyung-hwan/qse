@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.158 2006-08-04 17:36:40 bacon Exp $
+ * $Id: parse.c,v 1.159 2006-08-04 17:54:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -408,8 +408,9 @@ static void __dump (xp_awk_t* awk)
 	}
 }
 
-int xp_awk_parse (xp_awk_t* awk)
+int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 {
+/* TODO: switch to srcios */
 	if (awk->srcio == XP_NULL)
 	{
 		/* the source code io handler is not set */
