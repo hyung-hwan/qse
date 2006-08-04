@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.161 2006-08-04 16:32:38 bacon Exp $
+ * $Id: run.c,v 1.162 2006-08-04 17:36:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -222,7 +222,7 @@ void xp_awk_seterrnum (void* run, int errnum)
 	r->errnum = errnum;
 }
 
-int xp_awk_run (xp_awk_t* awk, xp_awk_runcb_t* runcb)
+int xp_awk_run (xp_awk_t* awk, xp_awk_runcbs_t* runcbs, xp_awk_runios_t* runios)
 {
 	xp_awk_run_t* run;
 	int n;
@@ -243,7 +243,8 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runcb_t* runcb)
 		return -1;
 	}
 
-	if (runcb->start != XP_NULL) runcb->start (awk, run);
+	if (runcbs->start != XP_NULL) 
+		runcbs->start (awk, run, runcbs->custom_data);
 
 	n = __run_main (run);
 	if (n == -1)
@@ -252,7 +253,8 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runcb_t* runcb)
 		awk->suberrnum = run->suberrnum;
 	}
 
-	if (runcb->end != XP_NULL) runcb->end (awk, run);
+	if (runcbs->end != XP_NULL) 
+		runcbs->end (awk, run, runcbs->custom_data);
 
 	__close_run (run);
 	xp_free (run);
@@ -260,18 +262,18 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runcb_t* runcb)
 	return n;
 }
 
-int xp_awk_stop (xp_awk_t* awk, void* handle)
+int xp_awk_stop (xp_awk_t* awk, void* run)
 {
-	xp_awk_run_t* run = (xp_awk_run_t*)handle;
+	xp_awk_run_t* r = (xp_awk_run_t*)run;
 
-	if (run->awk != awk)
+	if (r->awk != awk)
 	{
 		/* TODO: use awk->errnum or run->errnum??? */
-		run->errnum = XP_AWK_EINVAL;
+		r->errnum = XP_AWK_EINVAL;
 		return -1;
 	}
 
-	run->exit_level = EXIT_ABORT;
+	r->exit_level = EXIT_ABORT;
 	return 0;
 }
 
@@ -294,7 +296,6 @@ static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
 	run->icache_count = 0;
 	run->rcache_count = 0;
 
-	run->opt = awk->opt.run;
 	run->errnum = XP_AWK_ENOERR;
 	run->suberrnum = XP_AWK_ENOERR;
 	/*run->tree = &awk->tree; */
@@ -403,7 +404,7 @@ static int __run_main (xp_awk_run_t* run)
 
 	run->exit_level = EXIT_NONE;
 
-	if (run->opt & XP_AWK_RUNMAIN)
+	if (run->awk->option & XP_AWK_RUNMAIN)
 	{
 /* TODO: should the main function be user-specifiable? */
 		xp_awk_nde_call_t nde;

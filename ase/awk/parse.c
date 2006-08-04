@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.157 2006-08-04 16:31:21 bacon Exp $
+ * $Id: parse.c,v 1.158 2006-08-04 17:36:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -454,7 +454,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 
 	xp_assert (awk->parse.depth.loop == 0);
 
-	if ((awk->opt.parse & XP_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) 
+	if ((awk->option & XP_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) 
 	{
 		xp_size_t nglobals;
 
@@ -481,7 +481,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		awk->parse.id.block = PARSE_BEGIN;
 		if (__get_token(awk) == -1) return XP_NULL; 
 
-		if ((awk->opt.parse & XP_AWK_BLOCKLESS) &&
+		if ((awk->option & XP_AWK_BLOCKLESS) &&
 		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
 		{
 			/* when the blockless pattern is supported
@@ -499,7 +499,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		awk->parse.id.block = PARSE_END;
 		if (__get_token(awk) == -1) return XP_NULL; 
 
-		if ((awk->opt.parse & XP_AWK_BLOCKLESS) &&
+		if ((awk->option & XP_AWK_BLOCKLESS) &&
 		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
 		{
 			/* when the blockless pattern is supported
@@ -555,7 +555,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 			}
 		}
 
-		if ((awk->opt.parse & XP_AWK_BLOCKLESS) &&
+		if ((awk->option & XP_AWK_BLOCKLESS) &&
 		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
 		{
 			/* blockless pattern */
@@ -630,7 +630,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 		PANIC (awk, XP_AWK_EDUPFUNC);
 	}
 
-	if (awk->opt.parse & XP_AWK_UNIQUE) 
+	if (awk->option & XP_AWK_UNIQUE) 
 	{
 		/* check if it coincides to be a global variable name */
 		if (xp_awk_tab_find (
@@ -696,7 +696,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			param = XP_STR_BUF(&awk->token.name);
 			param_len = XP_STR_LEN(&awk->token.name);
 
-			if (awk->opt.parse & XP_AWK_UNIQUE) 
+			if (awk->option & XP_AWK_UNIQUE) 
 			{
 				/* check if a parameter conflicts with a function */
 				if (xp_strxncmp (name_dup, name_len, param, param_len) == 0 ||
@@ -904,7 +904,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 	nlocals_max = awk->parse.nlocals_max;
 
 	/* local variable declarations */
-	if (awk->opt.parse & XP_AWK_EXPLICIT) 
+	if (awk->option & XP_AWK_EXPLICIT) 
 	{
 		while (1) 
 		{
@@ -1036,7 +1036,7 @@ static xp_awk_t* __add_builtin_globals (xp_awk_t* awk)
 static xp_awk_t* __add_global (
 	xp_awk_t* awk, const xp_char_t* name, xp_size_t len)
 {
-	if (awk->opt.parse & XP_AWK_UNIQUE) 
+	if (awk->option & XP_AWK_UNIQUE) 
 	{
 		/* check if it conflict with a function name */
 		if (xp_awk_map_get(&awk->tree.afns, name, len) != XP_NULL) 
@@ -1107,7 +1107,7 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 
 		/* NOTE: it is not checked againt globals names */
 
-		if (awk->opt.parse & XP_AWK_UNIQUE) 
+		if (awk->option & XP_AWK_UNIQUE) 
 		{
 			/* check if it conflict with a function name */
 			if (xp_awk_map_get (
@@ -1125,7 +1125,7 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 
 		/* check if it conflicts with other local variable names */
 		if (xp_awk_tab_find (&awk->parse.locals, 
-			((awk->opt.parse & XP_AWK_SHADING)? nlocals: 0),
+			((awk->option & XP_AWK_SHADING)? nlocals: 0),
 			local, local_len) != (xp_size_t)-1)
 		{
 			PANIC (awk, XP_AWK_EDUPVAR);	
@@ -1609,7 +1609,7 @@ static xp_awk_nde_t* __parse_regex_match (xp_awk_t* awk)
 
 static xp_awk_nde_t* __parse_bitwise_or (xp_awk_t* awk)
 {
-	if (awk->opt.parse & XP_AWK_EXTIO)
+	if (awk->option & XP_AWK_EXTIO)
 	{
 		return __parse_bitwise_or_with_extio (awk);
 	}
@@ -2366,7 +2366,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 			return (xp_awk_nde_t*)nde;
 		}
 
-		if (awk->opt.parse & XP_AWK_IMPLICIT) 
+		if (awk->option & XP_AWK_IMPLICIT) 
 		{
 			nde->type = XP_AWK_NDE_NAMED;
 			nde->next = XP_NULL;
@@ -2489,7 +2489,7 @@ static xp_awk_nde_t* __parse_hashidx (
 		return (xp_awk_nde_t*)nde;
 	}
 
-	if (awk->opt.parse & XP_AWK_IMPLICIT) 
+	if (awk->option & XP_AWK_IMPLICIT) 
 	{
 		nde->type = XP_AWK_NDE_NAMEDIDX;
 		nde->next = XP_NULL;
@@ -3235,7 +3235,7 @@ static int __get_token (xp_awk_t* awk)
 	awk->token.line = awk->lex.line;
 	awk->token.column = awk->lex.column;
 
-	if (line != 0 && (awk->opt.parse & XP_AWK_BLOCKLESS) &&
+	if (line != 0 && (awk->option & XP_AWK_BLOCKLESS) &&
 	    (awk->parse.id.block == PARSE_PATTERN ||
 	     awk->parse.id.block == PARSE_BEGIN ||
 	     awk->parse.id.block == PARSE_END))
@@ -3280,7 +3280,7 @@ static int __get_token (xp_awk_t* awk)
 
 		if (__get_charstr(awk) == -1) return -1;
 
-		while (awk->opt.parse & XP_AWK_STRCONCAT) 
+		while (awk->option & XP_AWK_STRCONCAT) 
 		{
 			do 
 			{
@@ -3336,7 +3336,7 @@ static int __get_token (xp_awk_t* awk)
 	{
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
-		if ((awk->opt.parse & XP_AWK_SHIFT) && c == XP_T('>')) 
+		if ((awk->option & XP_AWK_SHIFT) && c == XP_T('>')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_RSHIFT);
 			ADD_TOKEN_CHAR (awk, c);
@@ -3358,7 +3358,7 @@ static int __get_token (xp_awk_t* awk)
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 
-		if ((awk->opt.parse & XP_AWK_SHIFT) && c == XP_T('<')) 
+		if ((awk->option & XP_AWK_SHIFT) && c == XP_T('<')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LSHIFT);
 			ADD_TOKEN_CHAR (awk, c);
@@ -3957,7 +3957,7 @@ static int __skip_comment (xp_awk_t* awk)
 {
 	xp_cint_t c = awk->lex.curc;
 
-	if ((awk->opt.parse & XP_AWK_HASHSIGN) && c == XP_T('#'))
+	if ((awk->option & XP_AWK_HASHSIGN) && c == XP_T('#'))
 	{
 		do 
 		{ 
@@ -3972,7 +3972,7 @@ static int __skip_comment (xp_awk_t* awk)
 	if (c != XP_T('/')) return 0; /* not a comment */
 	GET_CHAR_TO (awk, c);
 
-	if ((awk->opt.parse & XP_AWK_DBLSLASHES) && c == XP_T('/')) 
+	if ((awk->option & XP_AWK_DBLSLASHES) && c == XP_T('/')) 
 	{
 		do 
 		{ 
@@ -4017,7 +4017,7 @@ static int __classify_ident (
 	for (kwp = __kwtab; kwp->name != XP_NULL; kwp++) 
 	{
 		if (kwp->valid != 0 && 
-		    (awk->opt.parse & kwp->valid) == 0) continue;
+		    (awk->option & kwp->valid) == 0) continue;
 
 		if (xp_strxncmp (kwp->name, kwp->name_len, name, len) == 0) 
 		{
