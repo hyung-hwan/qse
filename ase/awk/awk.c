@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.65 2006-08-04 16:31:21 bacon Exp $ 
+ * $Id: awk.c,v 1.66 2006-08-04 17:36:40 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -61,8 +61,7 @@ xp_awk_t* xp_awk_open (void)
 		return XP_NULL;	
 	}
 
-	awk->opt.parse = 0;
-	awk->opt.run = 0;
+	awk->option = 0;
 	awk->errnum = XP_AWK_ENOERR;
 	awk->srcio = XP_NULL;
 	awk->srcio_arg = XP_NULL;
@@ -158,14 +157,9 @@ void xp_awk_clear (xp_awk_t* awk)
 	awk->tree.chain_tail = XP_NULL;	
 }
 
-void xp_awk_setparseopt (xp_awk_t* awk, int opt)
+void xp_awk_setopt (xp_awk_t* awk, int opt)
 {
-	awk->opt.parse = opt;
-}
-
-void xp_awk_setrunopt (xp_awk_t* awk, int opt)
-{
-	awk->opt.run = opt;
+	awk->option = opt;
 }
 
 int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t handler, void* arg)

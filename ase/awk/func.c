@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.16 2006-08-03 05:05:47 bacon Exp $
+ * $Id: func.c,v 1.17 2006-08-04 17:36:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -103,7 +103,7 @@ xp_awk_bfn_t* xp_awk_getbfn (xp_awk_t* awk, const xp_char_t* name)
 	for (p = __sys_bfn; p->name != XP_NULL; p++)
 	{
 		if (p->valid != 0 && 
-		    (awk->opt.parse & p->valid) == 0) continue;
+		    (awk->option & p->valid) == 0) continue;
 
 		if (xp_strcmp (p->name, name) == 0) return p;
 	}
@@ -112,7 +112,7 @@ xp_awk_bfn_t* xp_awk_getbfn (xp_awk_t* awk, const xp_char_t* name)
 	for (p = awk->bfn.user; p != XP_NULL; p = p->next)
 	{
 		if (p->valid != 0 && 
-		    (awk->opt.parse & p->valid) == 0) continue;
+		    (awk->option & p->valid) == 0) continue;
 
 		if (xp_strcmp (p->name, name) == 0) return p;
 	}

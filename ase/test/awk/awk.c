@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.65 2006-08-04 17:02:02 bacon Exp $
+ * $Id: awk.c,v 1.66 2006-08-04 17:36:40 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -493,14 +493,14 @@ static void __stop_run (int sig)
 	signal  (SIGINT, __stop_run);
 }
 
-static void __on_run_start (xp_awk_t* awk, void* handle)
+static void __on_run_start (xp_awk_t* awk, void* handle, void* arg)
 {
 	app_awk = awk;	
 	app_run = handle;
 xp_printf (XP_T("AWK PRORAM ABOUT TO START...\n"));
 }
 
-static void __on_run_end (xp_awk_t* awk, void* handle)
+static void __on_run_end (xp_awk_t* awk, void* handle, void* arg)
 {
 	app_awk = NULL;	
 	app_run = NULL;
@@ -514,7 +514,8 @@ static int __main (int argc, xp_char_t* argv[])
 #endif
 {
 	xp_awk_t* awk;
-	xp_awk_runcb_t runcb;
+	xp_awk_runcbs_t runcbs;
+	xp_awk_runios_t runios;
 	struct src_io src_io = { NULL, NULL };
 	int opt;
 
@@ -598,7 +599,7 @@ static int __main (int argc, xp_char_t* argv[])
 
 	xp_awk_setopt (awk, opt);
 
-	if (xp_awk_attsrc(awk, process_source, (void*)&src_io) == -1) 
+	if (xp_awk_attsrc (awk, process_source, (void*)&src_io) == -1) 
 	{
 		xp_awk_close (awk);
 		xp_printf (XP_T("Error: cannot attach source\n"));
@@ -633,10 +634,17 @@ static int __main (int argc, xp_char_t* argv[])
 
 	signal (SIGINT, __stop_run);
 
-	runcb.start = __on_run_start;
-	runcb.end = __on_run_end;
+	runcbs.start = __on_run_start;
+	runcbs.end = __on_run_end;
+	runcbs.custom_data = XP_NULL;
 
-	if (xp_awk_run (awk, &runcb) == -1)
+	runios.pipe = process_extio_pipe;
+	runios.coproc = XP_NULL;
+	runios.file = process_extio_file;
+	runios.console = process_extio_console;
+	runios.custom_data = XP_NULL;
+
+	if (xp_awk_run (awk, &runcbs, &runios) == -1)
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (

@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.39 2006-08-04 16:31:21 bacon Exp $
+ * $Id: awk_i.h,v 1.40 2006-08-04 17:36:40 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -35,39 +35,6 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <crtdbg.h>
 #endif
 
-/*
- *
-struct xp_awk_parse_t
-{
-	int opt;
-};
-
-struct xp_awk_run_t
-{
-	int opt;
-};
-
-awk = xp_awk_open ();
-xp_awk_parse (awk, source_input, source_output);
-thr = create_thread (5);
-
-thr[0]->xp_awk_run (awk, input_stream1, output_stream1);
-thr[1]->xp_awk_run (awk, input_stream2, output_stream2);
-thr[2]->xp_awk_run (awk, input_stream3, output_stream3);
-
-xp_awk_setcallback (void* __command_callback (int cmd, void* arg), void* arg);
-xp_awk_run (awk)
-{
-run_stack = malloc (run_stack_size);
-while ()
-{
-if (command_callback) if (command_callback (XP_AWK_ABORT) == yes) break;
-run with run_stack
-}
-}
-
-*/
-
 struct xp_awk_tree_t
 {
 	xp_size_t nglobals; /* total number of globals */
@@ -82,11 +49,7 @@ struct xp_awk_tree_t
 struct xp_awk_t
 {
 	/* options */
-	struct
-	{
-		int parse;
-		int run;	
-	} opt;
+	int option;
 
 	/* io functions */
 	xp_awk_io_t srcio;
@@ -203,7 +166,6 @@ struct xp_awk_run_t
 	/* extio chain */
 	xp_awk_extio_t* extio;
 
-	int opt;
 	short errnum;
 	short suberrnum;
 
