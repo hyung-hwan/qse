@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.3 2006-08-06 08:15:29 bacon Exp $
+ * $Id: jni.c,v 1.4 2006-08-06 15:02:55 bacon Exp $
  */
 
 #include "jni.h"
@@ -11,8 +11,12 @@
 
 static xp_ssize_t __read_source (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
+static xp_ssize_t __write_source (
+	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 
 static xp_ssize_t __call_java_read_source (
+	JNIEnv* env, jobject obj, xp_char_t* buf, xp_size_t size);
+static xp_ssize_t __call_java_write_source (
 	JNIEnv* env, jobject obj, xp_char_t* buf, xp_size_t size);
 
 typedef struct srcio_data_t srcio_data_t;
@@ -47,7 +51,6 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_open (JNIEnv* env, jobject obj)
 	if (fid == 0) return;
 
 	(*env)->SetLongField (env, obj, fid, (jlong)awk);
-
 
 	opt = XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_DBLSLASHES |
 		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | 
@@ -94,7 +97,7 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_parse (JNIEnv* env, jobject obj)
 	srcio_data.obj = obj;
 
 	srcios.in = __read_source;
-	srcios.out = XP_NULL;
+	srcios.out = __write_source;
 	srcios.custom_data = &srcio_data;
 
 	if (xp_awk_parse (awk, &srcios) == -1)
@@ -119,21 +122,30 @@ static xp_ssize_t __read_source (
 	srcio_data = (srcio_data_t*)arg;
 
 	if (cmd == XP_AWK_IO_OPEN || cmd == XP_AWK_IO_CLOSE) return 0;
-	if (cmd == XP_AWK_IO_NEXT) return -1;
-
 	if (cmd == XP_AWK_IO_READ)
 	{
 		return __call_java_read_source (
 			srcio_data->env, srcio_data->obj, data, count);
 	}
-	else if (cmd == XP_AWK_IO_WRITE)
+
+	return -1;
+}
+
+static xp_ssize_t __write_source (
+	int cmd, void* arg, xp_char_t* data, xp_size_t count)
+{
+	srcio_data_t* srcio_data;
+
+	srcio_data = (srcio_data_t*)arg;
+
+	if (cmd == XP_AWK_IO_OPEN || cmd == XP_AWK_IO_CLOSE) return 0;
+	if (cmd == XP_AWK_IO_WRITE)
 	{
-		return 0;
+		return __call_java_write_source (
+			srcio_data->env, srcio_data->obj, data, count);
 	}
-	else
-	{
-		return -1;
-	}
+
+	return -1;
 }
 
 static xp_ssize_t __call_java_read_source (
@@ -162,4 +174,30 @@ static xp_ssize_t __call_java_read_source (
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
 	return i;
+}
+
+static xp_ssize_t __call_java_write_source (
+	JNIEnv* env, jobject obj, xp_char_t* buf, xp_size_t size)
+{
+	jclass class; 
+	jmethodID mid;
+	jcharArray array;
+	xp_ssize_t i;
+	jchar* tmp;
+	
+	class = (*env)->GetObjectClass(env, obj);
+
+	mid = (*env)->GetMethodID (env, class, "write_source", "([CI)I");
+	if (mid == 0) return -1;
+
+	array = (*env)->NewCharArray (env, size);
+	if (array == NULL) return -1;
+
+// TODO: how to handle error..
+// TODO: what is xp_char_t is xp_mchar_t? use UTF8 ???
+	tmp = (*env)->GetCharArrayElements (env, array, 0);
+	for (i = 0; i < size; i++) tmp[i] = (jchar)buf[i]; 
+	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
+
+	return (*env)->CallIntMethod (env, obj, mid, array, size);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.41 2006-08-06 08:15:29 bacon Exp $
+ * $Id: awk_i.h,v 1.42 2006-08-06 15:02:55 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -23,6 +23,7 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/awk/func.h>
 #include <xp/awk/tree.h>
 #include <xp/awk/tab.h>
+#include <xp/awk/parse.h>
 #include <xp/awk/run.h>
 #include <xp/awk/extio.h>
 
@@ -34,6 +35,10 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #endif
+
+#define XP_AWK_MAX_GLOBALS 9999
+#define XP_AWK_MAX_LOCALS  9999
+#define XP_AWK_MAX_PARAMS  9999
 
 struct xp_awk_tree_t
 {
