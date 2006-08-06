@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.91 2006-08-06 08:15:29 bacon Exp $
+ * $Id: awk.h,v 1.92 2006-08-06 12:35:06 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -136,8 +136,11 @@ enum
 
 	XP_AWK_ESRCINOPEN,
 	XP_AWK_ESRCINCLOSE,
-	XP_AWK_ESRCINNEXT,
-	XP_AWK_ESRCINDATA,     /* error in reading source */
+	XP_AWK_ESRCINREAD, 
+
+	XP_AWK_ESRCOUTOPEN,
+	XP_AWK_ESRCOUTCLOSE,
+	XP_AWK_ESRCOUTWRITE,
 
 	XP_AWK_ECONINOPEN,
 	XP_AWK_ECONINCLOSE,
