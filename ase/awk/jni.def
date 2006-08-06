@@ -1,6 +1,8 @@
 LIBRARY	"xpawk.dll"
 
 EXPORTS
-	Java_xpkit_xpj_awk_AWK_open
-	Java_xpkit_xpj_awk_AWK_close
+	Java_xpkit_xpj_awk_Awk_open
+	Java_xpkit_xpj_awk_Awk_close
+	Java_xpkit_xpj_awk_Awk_parse
+	Java_xpkit_xpj_awk_Awk_run
 

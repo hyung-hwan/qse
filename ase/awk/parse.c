@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.159 2006-08-04 17:54:52 bacon Exp $
+ * $Id: parse.c,v 1.160 2006-08-06 08:15:29 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -207,6 +207,14 @@ static int __assign_to_opcode (xp_awk_t* awk);
 static int __is_plain_var (xp_awk_nde_t* nde);
 static int __is_var (xp_awk_nde_t* nde);
 
+static void __deparse (xp_awk_t* awk);
+static int __deparse_func (xp_awk_pair_t* pair, void* arg);
+static int __put_char (xp_awk_t* awk, xp_char_t c);
+static int __put_charstr (xp_awk_t* awk, const xp_char_t* str);
+static int __put_charstrx (xp_awk_t* awk, const xp_char_t* str, xp_size_t len);
+static int __flush (xp_awk_t* awk);
+
+
 struct __kwent 
 { 
 	const xp_char_t* name; 
@@ -291,7 +299,7 @@ static struct __bvent __bvtab[] =
 #define GET_CHAR_TO(awk,c) \
 	do { \
 		if (__get_char(awk) == -1) return -1; \
-		c = (awk)->lex.curc; \
+		c = (awk)->src.lex.curc; \
 	} while(0)
 
 #define SET_TOKEN_TYPE(awk,code) \
@@ -314,13 +322,7 @@ static struct __bvent __bvtab[] =
 		} \
 	} while (0)
 
-#define GET_TOKEN(awk) \
-	do { if (__get_token(awk) == -1) return -1; } while (0)
-
 #define MATCH(awk,token_type) ((awk)->token.type == (token_type))
-
-#define CONSUME(awk) \
-	do { if (__get_token(awk) == -1) return XP_NULL; } while (0)
 
 #define PANIC(awk,code) \
 	do { (awk)->errnum = (code); return XP_NULL; } while (0)
@@ -337,7 +339,7 @@ static int __dump_func (xp_awk_pair_t* pair, void* arg)
 	xp_awk_afn_t* afn = (xp_awk_afn_t*)pair->val;
 	xp_size_t i;
 
-	xp_assert (xp_strcmp(pair->key, afn->name) == 0);
+	xp_assert (xp_strcmp (pair->key, afn->name) == 0);
 	xp_printf (XP_T("function %s ("), afn->name);
 	for (i = 0; i < afn->nargs; ) 
 	{
@@ -410,22 +412,42 @@ static void __dump (xp_awk_t* awk)
 
 int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 {
-/* TODO: switch to srcios */
-	if (awk->srcio == XP_NULL)
+	int n = 0;
+
+	xp_assert (srcios != XP_NULL && srcios->in != XP_NULL);
+
+	xp_awk_clear (awk);
+	awk->src.ios = srcios;
+
+	if (awk->src.ios->in (
+		XP_AWK_IO_OPEN, awk->src.ios->custom_data, XP_NULL, 0) == -1)
 	{
-		/* the source code io handler is not set */
-		awk->errnum = XP_AWK_ENOSRCIO;
+		awk->errnum = XP_AWK_ESRCINOPEN;
 		return -1;
 	}
 
-/* TODO: consider opening source here rather in attsrc. same for closing.
- * if it does, this part should initialize some of the data like token.line */
-	xp_awk_clear (awk);
+	if (__add_builtin_globals (awk) == XP_NULL) 
+	{
+		n = -1;
+		xp_awk_clear (awk);
+		goto exit_parse;
+	}
 
-	if (__add_builtin_globals (awk) == XP_NULL) return -1;
+	/* get the first character */
+	if (__get_char(awk) == -1) 
+	{
+		n = -1;
+		xp_awk_clear (awk);
+		goto exit_parse;
+	}
 
-	GET_CHAR (awk);
-	GET_TOKEN (awk);
+	/* get the first token */
+	if (__get_token(awk) == -1) 
+	{
+		n = -1;
+		xp_awk_clear (awk);
+		goto exit_parse;
+	}
 
 	while (1) 
 	{
@@ -434,16 +456,32 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 
 		if (__parse_progunit (awk) == XP_NULL) 
 		{
+			n = -1;
 			xp_awk_clear (awk);
-			return -1;
+			goto exit_parse;
 		}
 	}
 
 	awk->tree.nglobals = xp_awk_tab_getsize(&awk->parse.globals);
-xp_printf (XP_T("-----------------------------\n"));
-__dump (awk);
 
-	return 0;
+	if (awk->src.ios->out != XP_NULL) __deparse (awk);
+
+exit_parse:
+	if (awk->src.ios->in (
+		XP_AWK_IO_CLOSE, awk->src.ios->custom_data, XP_NULL, 0) == -1)
+	{
+		xp_awk_clear (awk);
+
+		if (n == 0)
+		{
+			/* this is to keep the earlier error above
+			 * that might be more critical than this */
+			awk->errnum = XP_AWK_ESRCINCLOSE;
+			n = -1;
+		}
+	}
+
+	return n;
 }
 
 static xp_awk_t* __parse_progunit (xp_awk_t* awk)
@@ -805,6 +843,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	}
 
 	afn->name = XP_NULL; /* function name set below */
+	afn->name_len = 0;
 	afn->nargs = nargs;
 	afn->body  = body;
 
@@ -821,6 +860,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	xp_assert (n != 0); 
 
 	afn->name = pair->key; /* do some trick to save a string.  */
+	afn->name_len = pair->key_len;
 	xp_free (name_dup);
 
 	return body;
@@ -3233,8 +3273,8 @@ static int __get_token (xp_awk_t* awk)
 	while (n == 1);
 
 	xp_str_clear (&awk->token.name);
-	awk->token.line = awk->lex.line;
-	awk->token.column = awk->lex.column;
+	awk->token.line = awk->src.lex.line;
+	awk->token.column = awk->src.lex.column;
 
 	if (line != 0 && (awk->option & XP_AWK_BLOCKLESS) &&
 	    (awk->parse.id.block == PARSE_PATTERN ||
@@ -3248,7 +3288,7 @@ static int __get_token (xp_awk_t* awk)
 		}
 	}
 
-	c = awk->lex.curc;
+	c = awk->src.lex.curc;
 
 	if (c == XP_CHAR_EOF) 
 	{
@@ -3290,7 +3330,7 @@ static int __get_token (xp_awk_t* awk)
 			} 
 			while (n == 1);
 
-			c = awk->lex.curc;
+			c = awk->src.lex.curc;
 			if (c != XP_T('\"')) break;
 
 			if (__get_charstr(awk) == -1) return -1;
@@ -3618,7 +3658,7 @@ static int __get_number (xp_awk_t* awk)
 	xp_assert (XP_STR_LEN(&awk->token.name) == 0);
 	SET_TOKEN_TYPE (awk, TOKEN_INT);
 
-	c = awk->lex.curc;
+	c = awk->src.lex.curc;
 
 	if (c == XP_T('0'))
 	{
@@ -3708,22 +3748,22 @@ static int __get_number (xp_awk_t* awk)
 
 static int __get_charstr (xp_awk_t* awk)
 {
-	if (awk->lex.curc != XP_T('\"')) 
+	if (awk->src.lex.curc != XP_T('\"')) 
 	{
 		/* the starting quote has been comsumed before this function
 		 * has been called */
-		ADD_TOKEN_CHAR (awk, awk->lex.curc);
+		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
 	}
 	return __get_string (awk, XP_T('\"'), XP_T('\\'), xp_false);
 }
 
 static int __get_rexstr (xp_awk_t* awk)
 {
-	if (awk->lex.curc != XP_T('/')) 
+	if (awk->src.lex.curc != XP_T('/')) 
 	{
 		/* the starting slash has been comsumed before this function
 		 * has been called */
-		ADD_TOKEN_CHAR (awk, awk->lex.curc);
+		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
 	}
 	return __get_string (awk, XP_T('/'), XP_T('\\'), xp_true);
 }
@@ -3886,9 +3926,9 @@ static int __get_char (xp_awk_t* awk)
 	xp_ssize_t n;
 	/*xp_char_t c;*/
 
-	if (awk->lex.ungotc_count > 0) 
+	if (awk->src.lex.ungotc_count > 0) 
 	{
-		awk->lex.curc = awk->lex.ungotc[--awk->lex.ungotc_count];
+		awk->src.lex.curc = awk->src.lex.ungotc[--awk->src.lex.ungotc_count];
 		return 0;
 	}
 
@@ -3899,13 +3939,13 @@ static int __get_char (xp_awk_t* awk)
 		awk->errnum = XP_AWK_ESRCINDATA;
 		return -1;
 	}
-	awk->lex.curc = (n == 0)? XP_CHAR_EOF: c;
+	awk->src.lex.curc = (n == 0)? XP_CHAR_EOF: c;
 	*/
-	if (awk->lex.buf_pos >= awk->lex.buf_len)
+	if (awk->src.shared.buf_pos >= awk->src.shared.buf_len)
 	{
-		n = awk->srcio (
-			XP_AWK_IO_READ, awk->srcio_arg,
-			awk->lex.buf, xp_countof(awk->lex.buf));
+		n = awk->src.ios->in (
+			XP_AWK_IO_READ, awk->src.ios->custom_data,
+			awk->src.shared.buf, xp_countof(awk->src.shared.buf));
 		if (n == -1)
 		{
 			awk->errnum = XP_AWK_ESRCINDATA;
@@ -3914,41 +3954,41 @@ static int __get_char (xp_awk_t* awk)
 
 		if (n == 0) 
 		{
-			awk->lex.curc = XP_CHAR_EOF;
+			awk->src.lex.curc = XP_CHAR_EOF;
 			return 0;
 		}
 
-		awk->lex.buf_pos = 0;
-		awk->lex.buf_len = n;	
+		awk->src.shared.buf_pos = 0;
+		awk->src.shared.buf_len = n;	
 	}
 
-	awk->lex.curc = awk->lex.buf[awk->lex.buf_pos++];
+	awk->src.lex.curc = awk->src.shared.buf[awk->src.shared.buf_pos++];
 
-	if (awk->lex.curc == XP_T('\n'))
+	if (awk->src.lex.curc == XP_T('\n'))
 	{
-		awk->lex.line++;
-		awk->lex.column = 1;
+		awk->src.lex.line++;
+		awk->src.lex.column = 1;
 	}
-	else awk->lex.column++;
+	else awk->src.lex.column++;
 
 	return 0;
 }
 
 static int __unget_char (xp_awk_t* awk, xp_cint_t c)
 {
-	if (awk->lex.ungotc_count >= xp_countof(awk->lex.ungotc)) 
+	if (awk->src.lex.ungotc_count >= xp_countof(awk->src.lex.ungotc)) 
 	{
 		awk->errnum = XP_AWK_ELXUNG;
 		return -1;
 	}
 
-	awk->lex.ungotc[awk->lex.ungotc_count++] = c;
+	awk->src.lex.ungotc[awk->src.lex.ungotc_count++] = c;
 	return 0;
 }
 
 static int __skip_spaces (xp_awk_t* awk)
 {
-	xp_cint_t c = awk->lex.curc;
+	xp_cint_t c = awk->src.lex.curc;
 
 	while (xp_isspace(c)) GET_CHAR_TO (awk, c);
 	return 0;
@@ -3956,7 +3996,7 @@ static int __skip_spaces (xp_awk_t* awk)
 
 static int __skip_comment (xp_awk_t* awk)
 {
-	xp_cint_t c = awk->lex.curc;
+	xp_cint_t c = awk->src.lex.curc;
 
 	if ((awk->option & XP_AWK_HASHSIGN) && c == XP_T('#'))
 	{
@@ -4005,7 +4045,7 @@ static int __skip_comment (xp_awk_t* awk)
 	}
 
 	if (__unget_char(awk,c) == -1) return -1; /* error */
-	awk->lex.curc = XP_T('/');
+	awk->src.lex.curc = XP_T('/');
 
 	return 0;
 }
@@ -4069,4 +4109,169 @@ static int __is_var (xp_awk_nde_t* nde)
 	       nde->type == XP_AWK_NDE_LOCALIDX ||
 	       nde->type == XP_AWK_NDE_ARGIDX ||
 	       nde->type == XP_AWK_NDE_NAMEDIDX;
+}
+
+struct __deparse_func_t 
+{
+	xp_awk_t* awk;
+	xp_char_t* tmp;
+	xp_size_t tmp_len;
+};
+
+static void __deparse (xp_awk_t* awk)
+{
+	xp_awk_chain_t* chain;
+	xp_char_t tmp[128];
+	struct __deparse_func_t df;
+
+	xp_assert (awk->src.ios->out != XP_NULL);
+
+	awk->src.shared.buf_len = 0;
+	awk->src.shared.buf_pos = 0;
+
+	if (awk->tree.nglobals > awk->tree.nbglobals) 
+	{
+		xp_size_t i;
+
+		xp_assert (awk->tree.nglobals > 0);
+		__put_charstr (awk, XP_T("global "));
+
+		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
+		{
+			xp_sprintf (tmp, xp_countof(tmp), 
+				XP_T("__global%lu, "), (unsigned long)i);
+			__put_charstr (awk, tmp);
+		}
+		xp_sprintf (tmp, xp_countof(tmp),
+			XP_T("__global%lu;\n\n"), (unsigned long)i);
+		__put_charstr (awk, tmp);
+	}
+
+
+	df.awk = awk;
+	df.tmp = tmp;
+	df.tmp_len = xp_countof(tmp);
+
+	xp_awk_map_walk (&awk->tree.afns, __deparse_func, &df);
+
+	if (awk->tree.begin != XP_NULL) 
+	{
+		__put_charstr (awk, XP_T("BEGIN "));
+		xp_awk_prnpt (awk->tree.begin);
+		__put_char (awk, XP_T('\n'));
+	}
+
+	chain = awk->tree.chain;
+	while (chain != XP_NULL) 
+	{
+		if (chain->pattern != XP_NULL) 
+		{
+			/*xp_awk_prnpt (chain->pattern);*/
+			xp_awk_prnptnpt (chain->pattern);
+		}
+
+		if (chain->action == XP_NULL) 
+		{
+			/* blockless pattern */
+			__put_char (awk, XP_T('\n'));
+		}
+		else 
+		{
+			xp_awk_prnpt (chain->action);	
+		}
+
+		__put_char (awk, XP_T('\n'));
+		chain = chain->next;	
+	}
+
+	if (awk->tree.end != XP_NULL) 
+	{
+		__put_charstr (awk, XP_T("END "));
+		xp_awk_prnpt (awk->tree.end);
+	}
+
+	__flush (awk);
+}
+
+static int __deparse_func (xp_awk_pair_t* pair, void* arg)
+{
+	struct __deparse_func_t* df = (struct __deparse_func_t*)arg;
+	xp_awk_afn_t* afn = (xp_awk_afn_t*)pair->val;
+	xp_size_t i;
+
+	xp_assert (xp_strxncmp (
+		pair->key, pair->key_len, afn->name, afn->name_len) == 0);
+
+	__put_charstr (df->awk, XP_T("function \n"));
+	__put_charstr (df->awk, afn->name);
+	__put_charstr (df->awk, XP_T(" ("));
+
+	for (i = 0; i < afn->nargs; ) 
+	{
+		xp_printf (XP_T("__arg%lu"), (unsigned long)i++);
+		if (i >= afn->nargs) break;
+		__put_charstr (df->awk, XP_T(", "));
+	}
+	__put_charstr (df->awk, XP_T(")\n"));
+
+	xp_awk_prnpt (afn->body);
+	__put_char (df->awk, XP_T('\n'));
+
+	return 0;
+}
+
+static int __put_char (xp_awk_t* awk, xp_char_t c)
+{
+	awk->src.shared.buf[awk->src.shared.buf_len++] = c;
+	if (awk->src.shared.buf_len >= xp_countof(awk->src.shared.buf))
+	{
+		if (__flush (awk) == -1) return -1;
+	}
+	return 0;
+}
+
+static int __put_charstr (xp_awk_t* awk, const xp_char_t* str)
+{
+	while (*str != XP_T('\0'))
+	{
+		if (__put_char (awk, *str) == -1) return -1;
+		str++;
+	}
+
+	return 0;
+}
+
+static int __put_charstrx (xp_awk_t* awk, const xp_char_t* str, xp_size_t len)
+{
+	const xp_char_t* end = str + len;
+
+	while (str < end)
+	{
+		if (__put_char (awk, *str) == -1) return -1;
+		str++;
+	}
+
+	return 0;
+}
+
+static int __flush (xp_awk_t* awk)
+{
+	xp_ssize_t n;
+
+	xp_assert (awk->src.ios->out != XP_NULL);
+
+	while (awk->src.shared.buf_pos < awk->src.shared.buf_len)
+	{
+		n = awk->src.ios->out (
+			XP_AWK_IO_WRITE, awk->src.ios->custom_data,
+			&awk->src.shared.buf[awk->src.shared.buf_pos], 
+			awk->src.shared.buf_len - awk->src.shared.buf_pos);
+		if (n <= 0) return -1;
+
+		awk->src.shared.buf_pos += n;
+	}
+
+	awk->src.shared.buf_pos = 0;
+	awk->src.shared.buf_len = 0;
+	return 0;
 }
