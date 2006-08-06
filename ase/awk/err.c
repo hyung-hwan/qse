@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.33 2006-08-06 12:35:06 bacon Exp $
+ * $Id: err.c,v 1.34 2006-08-06 15:02:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -78,6 +78,9 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("l-value required"),
 		XP_T("too few arguments"),
 		XP_T("too many arguments"),
+		XP_T("too many global variables"),
+		XP_T("too many local variables"),
+		XP_T("too many parameters"),
 		XP_T("break outside a loop"),
 		XP_T("continue outside a loop"),
 		XP_T("next illegal in BEGIN or END block"),

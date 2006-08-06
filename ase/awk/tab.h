@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.10 2006-08-03 06:06:27 bacon Exp $
+ * $Id: tab.h,v 1.11 2006-08-06 15:02:55 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
@@ -21,7 +21,6 @@ struct xp_awk_tab_t
 		xp_char_t* name;
 		xp_size_t name_len;
 	}* buf;
-	//xp_char_t** buf;
 	xp_size_t size;
 	xp_size_t capa;
 	xp_bool_t __dynamic;	

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.92 2006-08-06 12:35:06 bacon Exp $
+ * $Id: awk.h,v 1.93 2006-08-06 15:02:54 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -184,6 +184,9 @@ enum
 	XP_AWK_ELVALUE,        /* l-value required */
 	XP_AWK_ETOOFEWARGS,    /* too few arguments */
 	XP_AWK_ETOOMANYARGS,   /* too many arguments */
+	XP_AWK_ETOOMANYGLOBALS, /* too many global variables */
+	XP_AWK_ETOOMANYLOCALS, /* too many local variables */
+	XP_AWK_ETOOMANYPARAMS, /* too many parameters */
 	XP_AWK_EBREAK,         /* break outside a loop */
 	XP_AWK_ECONTINUE,      /* continue outside a loop */
 	XP_AWK_ENEXT,          /* next illegal in BEGIN or END block */

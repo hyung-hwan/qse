@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.69 2006-08-03 05:05:47 bacon Exp $
+ * $Id: tree.c,v 1.70 2006-08-06 15:02:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -86,36 +86,59 @@ static const xp_char_t* __print_outop_str[] =
 	XP_T("")
 };
 
-static void __print_tabs (int depth);
-static int __print_expression (xp_awk_nde_t* nde);
-static int __print_expression_list (xp_awk_nde_t* tree);
-static void __print_statements (xp_awk_nde_t* tree, int depth);
+#define PUT_SRCSTR(awk,str) \
+	do { if (xp_awk_putsrcstr (awk, str) == -1) return- 1; } while (0)
 
-static void __print_tabs (int depth)
+#define PUT_SRCSTRX(awk,str,len) \
+	do { if (xp_awk_putsrcstrx (awk, str, len) == -1) return- 1; } while (0)
+
+#define PRINT_TABS(awk,depth) \
+	do { if (__print_tabs(awk,depth) == -1) return -1; } while (0)
+
+#define PRINT_EXPRESSION(awk,nde) \
+	do { if (__print_expression(awk,nde) == -1) return -1; } while (0)
+
+#define PRINT_EXPRESSION_LIST(awk,nde) \
+	do { if (__print_expression_list(awk,nde) == -1) return -1; } while (0)
+
+#define PRINT_STATEMENTS(awk,nde,depth) \
+	do { if (__print_statements(awk,nde,depth) == -1) return -1; } while (0)
+
+static int __print_tabs (xp_awk_t* awk, int depth);
+static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde);
+static int __print_expression_list (xp_awk_t* awk, xp_awk_nde_t* tree);
+static int __print_statements (xp_awk_t* awk, xp_awk_nde_t* tree, int depth);
+
+static int __print_tabs (xp_awk_t* awk, int depth)
 {
 	while (depth > 0) 
 	{
-		xp_printf (XP_T("\t"));
+		PUT_SRCSTR (awk, XP_T("\t"));
 		depth--;
 	}
+
+	return 0;
 }
 
-static int __print_expression (xp_awk_nde_t* nde)
+static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
+	xp_char_t tmp[128];
+
 	switch (nde->type) 
 	{
 		case XP_AWK_NDE_GRP:
 		{	
 			xp_awk_nde_t* p = ((xp_awk_nde_grp_t*)nde)->body;
 
-			xp_printf (XP_T("("));
+			PUT_SRCSTR (awk, XP_T("("));
 			while (p != XP_NULL) 
 			{
-				__print_expression (p);
-				if (p->next != XP_NULL) xp_printf (XP_T(","));
+				PRINT_EXPRESSION (awk, p);
+				if (p->next != XP_NULL) 
+					PUT_SRCSTR (awk, XP_T(","));
 				p = p->next;
 			}
-			xp_printf (XP_T(")"));
+			PUT_SRCSTR (awk, XP_T(")"));
 			break;
 		}
 
@@ -123,9 +146,12 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_awk_nde_ass_t* px = (xp_awk_nde_ass_t*)nde;
 
-			if (__print_expression (px->left) == -1) return -1;
-			xp_printf (XP_T(" %s "), __assop_str[px->opcode]);
-			if (__print_expression (px->right) == -1) return -1;
+			PRINT_EXPRESSION (awk, px->left);
+			PUT_SRCSTR (awk, XP_T(" "));
+			PUT_SRCSTR (awk, __assop_str[px->opcode]);
+			PUT_SRCSTR (awk, XP_T(" "));
+			PRINT_EXPRESSION (awk, px->right);
+
 			xp_assert (px->right->next == XP_NULL);
 			break;
 		}
@@ -134,15 +160,21 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
 
-			xp_printf (XP_T("("));
-			if (__print_expression(px->left) == -1) return -1;
+			PUT_SRCSTR (awk, XP_T("("));
+			PRINT_EXPRESSION (awk, px->left);
 			xp_assert (px->left->next == XP_NULL);
-			xp_printf (XP_T(" %s "), __binop_str[px->opcode]);
-			if (px->right->type == XP_AWK_NDE_ASS) xp_printf (XP_T("("));
-			if (__print_expression (px->right) == -1) return -1;
-			if (px->right->type == XP_AWK_NDE_ASS) xp_printf (XP_T(")"));
+
+			PUT_SRCSTR (awk, XP_T(" "));
+			PUT_SRCSTR (awk, __binop_str[px->opcode]);
+			PUT_SRCSTR (awk, XP_T(" "));
+
+			if (px->right->type == XP_AWK_NDE_ASS) 
+				PUT_SRCSTR (awk, XP_T("("));
+			PRINT_EXPRESSION (awk, px->right);
+			if (px->right->type == XP_AWK_NDE_ASS) 
+				PUT_SRCSTR (awk, XP_T(")"));
 			xp_assert (px->right->next == XP_NULL); 
-			xp_printf (XP_T(")"));
+			PUT_SRCSTR (awk, XP_T(")"));
 			break;
 		}
 
@@ -151,9 +183,10 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
 			xp_assert (px->right == XP_NULL);
 
-			xp_printf (XP_T("%s("), __unrop_str[px->opcode]);
-			if (__print_expression (px->left) == -1) return -1;
-			xp_printf (XP_T(")"));
+			PUT_SRCSTR (awk, __unrop_str[px->opcode]);
+			PUT_SRCSTR (awk, XP_T("("));
+			PRINT_EXPRESSION (awk, px->left);
+			PUT_SRCSTR (awk, XP_T(")"));
 			break;
 		}
 
@@ -162,9 +195,10 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
 			xp_assert (px->right == XP_NULL);
 
-			xp_printf (XP_T("%s("), __incop_str[px->opcode]);
-			if (__print_expression (px->left) == -1) return -1;
-			xp_printf (XP_T(")"));
+			PUT_SRCSTR (awk, __incop_str[px->opcode]);
+			PUT_SRCSTR (awk, XP_T("("));
+			PRINT_EXPRESSION (awk, px->left);
+			PUT_SRCSTR (awk, XP_T(")"));
 			break;
 		}
 
@@ -173,9 +207,10 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
 			xp_assert (px->right == XP_NULL);
 
-			xp_printf (XP_T("("));
-			if (__print_expression (px->left) == -1) return -1;
-			xp_printf (XP_T(")%s"), __incop_str[px->opcode]);
+			PUT_SRCSTR (awk, XP_T("("));
+			PRINT_EXPRESSION (awk, px->left);
+			PUT_SRCSTR (awk, XP_T(")"));
+			PUT_SRCSTR (awk, __incop_str[px->opcode]);
 			break;
 		}
 
@@ -183,52 +218,63 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_awk_nde_cnd_t* px = (xp_awk_nde_cnd_t*)nde;
 
-			xp_printf (XP_T("("));
-			if (__print_expression(px->test) == -1) return -1;
-			xp_printf (XP_T(")?"));
+			PUT_SRCSTR (awk, XP_T("("));
+			PRINT_EXPRESSION (awk, px->test);
+			PUT_SRCSTR (awk, XP_T(")?"));
 
-			if (__print_expression(px->left) == -1) return -1;
-			xp_printf (XP_T(":"));
-			if (__print_expression(px->right) == -1) return -1;
+			PRINT_EXPRESSION (awk, px->left);
+			PUT_SRCSTR (awk, XP_T(":"));
+			PRINT_EXPRESSION (awk, px->right);
 			break;
 		}
 
 		case XP_AWK_NDE_INT:
 		{
 		#if defined(__LCC__)
-			xp_printf (XP_T("%lld"), 
+			xp_sprintf (tmp, xp_countof(tmp), XP_T("%lld"), 
 				(long long)((xp_awk_nde_int_t*)nde)->val);
 		#elif defined(__BORLANDC__) || defined(_MSC_VER)
-			xp_printf (XP_T("%I64d"),
+			xp_sprintf (tmp, xp_countof(tmp), XP_T("%I64d"),
 				(__int64)((xp_awk_nde_int_t*)nde)->val);
 		#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-			xp_printf (XP_T("%ld"),
+			xp_sprintf (tmp, xp_countof(tmp), XP_T("%ld"),
 				(long)((xp_awk_nde_int_t*)nde)->val);
 		#else
-			xp_printf (XP_T("%lld"),
+			xp_sprintf (tmp, xp_countof(tmp), XP_T("%lld"),
 				(long long)((xp_awk_nde_int_t*)nde)->val);
 		#endif
+
+			PUT_SRCSTR (awk, tmp);
 			break;
 		}
 
 		case XP_AWK_NDE_REAL:
 		{
-			xp_printf (XP_T("%Lf"), 
+			xp_sprintf (tmp, xp_countof(tmp), XP_T("%Lf"), 
 				(long double)((xp_awk_nde_real_t*)nde)->val);
+			PUT_SRCSTR (awk, tmp);
 			break;
 		}
 
 		case XP_AWK_NDE_STR:
 		{
-			/* TODO: buf, len */
-			xp_printf (XP_T("\"%s\""), ((xp_awk_nde_str_t*)nde)->buf);
+			/* TODO: ESCAPING */
+			PUT_SRCSTR (awk, XP_T("\""));
+			PUT_SRCSTRX (awk,
+				((xp_awk_nde_str_t*)nde)->buf, 
+				((xp_awk_nde_str_t*)nde)->len);
+			PUT_SRCSTR (awk, XP_T("\""));
 			break;
 		}
 
 		case XP_AWK_NDE_REX:
 		{
 			/* TODO: buf, len */
-			xp_printf (XP_T("/%s/"), ((xp_awk_nde_rex_t*)nde)->buf);
+			PUT_SRCSTR (awk, XP_T("/"));
+			PUT_SRCSTRX (awk,
+				((xp_awk_nde_rex_t*)nde)->buf, 
+				((xp_awk_nde_rex_t*)nde)->len);
+			PUT_SRCSTR (awk, XP_T("/"));
 			break;
 		}
 
@@ -236,7 +282,12 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			xp_assert (px->id.idxa != (xp_size_t)-1);
-			xp_printf (XP_T("__arg%lu"), (unsigned long)px->id.idxa);
+
+			PUT_SRCSTR (awk, XP_T("__param"));
+			xp_sprintf (tmp, xp_countof(tmp),
+				XP_T("%lu"), (unsigned long)px->id.idxa);
+			PUT_SRCSTR (awk, tmp);
+
 			xp_assert (px->idx == XP_NULL);
 			break;
 		}
@@ -245,10 +296,15 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			xp_assert (px->id.idxa != (xp_size_t)-1);
-			xp_printf (XP_T("__arg%lu["), (unsigned long)px->id.idxa);
 			xp_assert (px->idx != XP_NULL);
-			__print_expression_list (px->idx);
-			xp_printf (XP_T("]"));
+
+			PUT_SRCSTR (awk, XP_T("__param"));
+			xp_sprintf (tmp, xp_countof(tmp),
+				XP_T("%lu"), (unsigned long)px->id.idxa);
+			PUT_SRCSTR (awk, tmp);
+			PUT_SRCSTR (awk, XP_T("["));
+			PRINT_EXPRESSION_LIST (awk, px->idx);
+			PUT_SRCSTR (awk, XP_T("]"));
 			break;
 		}
 
@@ -256,8 +312,9 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			xp_assert (px->id.idxa == (xp_size_t)-1);
-			xp_printf (XP_T("%s"), px->id.name);
 			xp_assert (px->idx == XP_NULL);
+
+			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			break;
 		}
 
@@ -265,10 +322,12 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			xp_assert (px->id.idxa == (xp_size_t)-1);
-			xp_printf (XP_T("%s["), px->id.name);
 			xp_assert (px->idx != XP_NULL);
-			__print_expression_list (px->idx);
-			xp_printf (XP_T("]"));
+
+			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+			PUT_SRCSTR (awk, XP_T("["));
+			PRINT_EXPRESSION_LIST (awk, px->idx);
+			PUT_SRCSTR (awk, XP_T("]"));
 			break;
 		}
 
@@ -277,12 +336,14 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			if (px->id.idxa != (xp_size_t)-1) 
 			{
-				xp_printf (XP_T("__global%lu"), 
-					(unsigned long)px->id.idxa);
+				PUT_SRCSTR (awk, XP_T("__global"));
+				xp_sprintf (tmp, xp_countof(tmp),
+					XP_T("%lu"), (unsigned long)px->id.idxa);
+				PUT_SRCSTR (awk, tmp);
 			}
 			else 
 			{
-				xp_printf (XP_T("%s"), px->id.name);
+				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			}
 			xp_assert (px->idx == XP_NULL);
 			break;
@@ -293,16 +354,20 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			if (px->id.idxa != (xp_size_t)-1) 
 			{
-				xp_printf (XP_T("__global%lu["), 
-					(unsigned long)px->id.idxa);
+				PUT_SRCSTR (awk, XP_T("__global"));
+				xp_sprintf (tmp, xp_countof(tmp),
+					XP_T("%lu"), (unsigned long)px->id.idxa);
+				PUT_SRCSTR (awk, tmp);
+				PUT_SRCSTR (awk, XP_T("["));
 			}
 			else 
 			{
-				xp_printf (XP_T("%s["), px->id.name);
+				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				PUT_SRCSTR (awk, XP_T("["));
 			}
 			xp_assert (px->idx != XP_NULL);
-			__print_expression_list (px->idx);
-			xp_printf (XP_T("]"));
+			PRINT_EXPRESSION_LIST (awk, px->idx);
+			PUT_SRCSTR (awk, XP_T("]"));
 			break;
 		}
 
@@ -311,12 +376,14 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			if (px->id.idxa != (xp_size_t)-1) 
 			{
-				xp_printf (XP_T("__local%lu"), 
-					(unsigned long)px->id.idxa);
+				PUT_SRCSTR (awk, XP_T("__local"));
+				xp_sprintf (tmp, xp_countof(tmp),
+					XP_T("%lu"), (unsigned long)px->id.idxa);
+				PUT_SRCSTR (awk, tmp);
 			}
 			else 
 			{
-				xp_printf (XP_T("%s"), px->id.name);
+				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			}
 			xp_assert (px->idx == XP_NULL);
 			break;
@@ -327,32 +394,38 @@ static int __print_expression (xp_awk_nde_t* nde)
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			if (px->id.idxa != (xp_size_t)-1) 
 			{
-				xp_printf (XP_T("__local%lu["), 
-					(unsigned long)px->id.idxa);
+				PUT_SRCSTR (awk, XP_T("__local"));
+				xp_sprintf (tmp, xp_countof(tmp),
+					XP_T("%lu"), (unsigned long)px->id.idxa);
+				PUT_SRCSTR (awk, tmp);
+				PUT_SRCSTR (awk, XP_T("["));
 			}
 			else 
 			{
-				xp_printf (XP_T("%s["), px->id.name);
+				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				PUT_SRCSTR (awk, XP_T("["));
 			}
 			xp_assert (px->idx != XP_NULL);
-			__print_expression_list (px->idx);
-			xp_printf (XP_T("]"));
+			PRINT_EXPRESSION_LIST (awk, px->idx);
+			PUT_SRCSTR (awk, XP_T("]"));
 			break;
 		}
 
 		case XP_AWK_NDE_POS:
 		{
-			xp_printf (XP_T("$"));
-			__print_expression (((xp_awk_nde_pos_t*)nde)->val);
+			PUT_SRCSTR (awk, XP_T("$"));
+			PRINT_EXPRESSION (awk, ((xp_awk_nde_pos_t*)nde)->val);
 			break;
 		}
 
 		case XP_AWK_NDE_BFN:
 		{
 			xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)nde;
-			xp_printf (XP_T("%s ("), px->what.bfn.name);
-			if (__print_expression_list (px->args) == -1) return -1;
-			xp_printf (XP_T(")"));
+			PUT_SRCSTRX (awk, 
+				px->what.bfn.name, px->what.bfn.name_len);
+			PUT_SRCSTR (awk, XP_T(" ("));
+			PRINT_EXPRESSION_LIST (awk, px->args);
+			PUT_SRCSTR (awk, XP_T(")"));
 			break;
 		}
 
@@ -360,9 +433,11 @@ static int __print_expression (xp_awk_nde_t* nde)
 		{
 			/* TODO: use px->what.afn.name_len */
 			xp_awk_nde_call_t* px = (xp_awk_nde_call_t*)nde;
-			xp_printf (XP_T("%s ("), px->what.afn.name);
-			if (__print_expression_list (px->args) == -1) return -1;
-			xp_printf (XP_T(")"));
+			PUT_SRCSTRX (awk, 
+				px->what.afn.name, px->what.afn.name_len);
+			PUT_SRCSTR (awk, XP_T(" ("));
+			PRINT_EXPRESSION_LIST (awk, px->args);
+			PUT_SRCSTR (awk, XP_T(")"));
 			break;
 		}
 
@@ -373,24 +448,26 @@ static int __print_expression (xp_awk_nde_t* nde)
 			    (px->in_type == XP_AWK_IN_PIPE ||
 			     px->in_type == XP_AWK_IN_COPROC))
 			{
-				__print_expression (px->in);
-				xp_printf (XP_T(" %s "), 
-					__getline_inop_str[px->in_type]);
+				PRINT_EXPRESSION (awk, px->in);
+				PUT_SRCSTR (awk, XP_T(" "));
+				PUT_SRCSTR (awk, __getline_inop_str[px->in_type]);
+				PUT_SRCSTR (awk, XP_T(" "));
 			}
 
-			xp_printf (XP_T("getline"));
+			PUT_SRCSTR (awk, XP_T("getline"));
 			if (px->var != XP_NULL)
 			{
-				xp_printf (XP_T(" "));
-				__print_expression (px->var);
+				PUT_SRCSTR (awk, XP_T(" "));
+				PRINT_EXPRESSION (awk, px->var);
 			}
 
 			if (px->in != XP_NULL &&
 			    px->in_type == XP_AWK_IN_FILE)
 			{
-				xp_printf (XP_T(" %s "), 
-					__getline_inop_str[px->in_type]);
-				__print_expression (px->in);
+				PUT_SRCSTR (awk, XP_T(" "));
+				PUT_SRCSTR (awk, __getline_inop_str[px->in_type]);
+				PUT_SRCSTR (awk, XP_T(" "));
+				PRINT_EXPRESSION (awk, px->in);
 			}	  
 			break;
 		}
@@ -404,23 +481,24 @@ static int __print_expression (xp_awk_nde_t* nde)
 	return 0;
 }
 
-static int __print_expression_list (xp_awk_nde_t* tree)
+static int __print_expression_list (xp_awk_t* awk, xp_awk_nde_t* tree)
 {
 	xp_awk_nde_t* p = tree;
 
 	while (p != XP_NULL) 
 	{
-		if (__print_expression(p) == -1) return -1;
+		PRINT_EXPRESSION (awk, p);
 		p = p->next;
-		if (p != XP_NULL) xp_printf (XP_T(","));
+		if (p != XP_NULL) PUT_SRCSTR (awk, XP_T(","));
 	}
 
 	return 0;
 }
 
-static void __print_statements (xp_awk_nde_t* tree, int depth)
+static int __print_statements (xp_awk_t* awk, xp_awk_nde_t* tree, int depth)
 {
 	xp_awk_nde_t* p = tree;
+	xp_char_t tmp[128];
 	xp_size_t i;
 
 	while (p != XP_NULL) 
@@ -430,8 +508,8 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 		{
 			case XP_AWK_NDE_NULL:
 			{
-				__print_tabs (depth);
-				xp_printf (XP_T(";\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T(";\n"));
 				break;
 			}
 
@@ -439,24 +517,31 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				xp_awk_nde_blk_t* px = (xp_awk_nde_blk_t*)p;
 
-				__print_tabs (depth);
-				xp_printf (XP_T("{\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("{\n"));
 
 				if (px->nlocals > 0) 
 				{
-					__print_tabs (depth + 1);
-					xp_printf (XP_T("local "));
+					PRINT_TABS (awk, depth + 1);
+					PUT_SRCSTR (awk, XP_T("local "));
 
 					for (i = 0; i < px->nlocals - 1; i++) 
 					{
-						xp_printf (XP_T("__local%lu, "), (unsigned long)i);
+						PUT_SRCSTR (awk, XP_T("__local"));
+						xp_sprintf (tmp, xp_countof(tmp), XP_T("%lu"), (unsigned long)i);
+						PUT_SRCSTR (awk, tmp);
+						PUT_SRCSTR (awk, XP_T(", "));
 					}
-					xp_printf (XP_T("__local%lu;\n"), (unsigned long)i);
+
+					PUT_SRCSTR (awk, XP_T("__local"));
+					xp_sprintf (tmp, xp_countof(tmp), XP_T("%lu"), (unsigned long)i);
+					PUT_SRCSTR (awk, tmp);
+					PUT_SRCSTR (awk, XP_T(";\n"));
 				}
 
-				__print_statements (px->body, depth + 1);	
-				__print_tabs (depth);
-				xp_printf (XP_T("}\n"));
+				PRINT_STATEMENTS (awk, px->body, depth + 1);	
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("}\n"));
 				break;
 			}
 
@@ -464,25 +549,25 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				xp_awk_nde_if_t* px = (xp_awk_nde_if_t*)p;
 
-				__print_tabs (depth);
-				xp_printf (XP_T("if ("));	
-				__print_expression (px->test);
-				xp_printf (XP_T(")\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("if ("));	
+				PRINT_EXPRESSION (awk, px->test);
+				PUT_SRCSTR (awk, XP_T(")\n"));
 
 				xp_assert (px->then_part != XP_NULL);
 				if (px->then_part->type == XP_AWK_NDE_BLK)
-					__print_statements (px->then_part, depth);
+					PRINT_STATEMENTS (awk, px->then_part, depth);
 				else
-					__print_statements (px->then_part, depth + 1);
+					PRINT_STATEMENTS (awk, px->then_part, depth + 1);
 
 				if (px->else_part != XP_NULL) 
 				{
-					__print_tabs (depth);
-					xp_printf (XP_T("else\n"));	
+					PRINT_TABS (awk, depth);
+					PUT_SRCSTR (awk, XP_T("else\n"));	
 					if (px->else_part->type == XP_AWK_NDE_BLK)
-						__print_statements (px->else_part, depth);
+						PRINT_STATEMENTS (awk, px->else_part, depth);
 					else
-						__print_statements (px->else_part, depth + 1);
+						PRINT_STATEMENTS (awk, px->else_part, depth + 1);
 				}
 				break;
 			}
@@ -491,17 +576,17 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				xp_awk_nde_while_t* px = (xp_awk_nde_while_t*)p;
 
-				__print_tabs (depth);
-				xp_printf (XP_T("while ("));	
-				__print_expression (px->test);
-				xp_printf (XP_T(")\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("while ("));	
+				PRINT_EXPRESSION (awk, px->test);
+				PUT_SRCSTR (awk, XP_T(")\n"));
 				if (px->body->type == XP_AWK_NDE_BLK) 
 				{
-					__print_statements (px->body, depth);
+					PRINT_STATEMENTS (awk, px->body, depth);
 				}
 				else 
 				{
-					__print_statements (px->body, depth + 1);
+					PRINT_STATEMENTS (awk, px->body, depth + 1);
 				}
 				break;
 			}
@@ -510,21 +595,21 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				xp_awk_nde_while_t* px = (xp_awk_nde_while_t*)p;
 
-				__print_tabs (depth);
-				xp_printf (XP_T("do\n"));	
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("do\n"));	
 				if (px->body->type == XP_AWK_NDE_BLK) 
 				{
-					__print_statements (px->body, depth);
+					PRINT_STATEMENTS (awk, px->body, depth);
 				}
 				else 
 				{
-					__print_statements (px->body, depth + 1);
+					PRINT_STATEMENTS (awk, px->body, depth + 1);
 				}
 
-				__print_tabs (depth);
-				xp_printf (XP_T("while ("));	
-				__print_expression (px->test);
-				xp_printf (XP_T(");\n"));	
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("while ("));	
+				PRINT_EXPRESSION (awk, px->test);
+				PUT_SRCSTR (awk, XP_T(");\n"));	
 				break;
 			}
 
@@ -532,31 +617,31 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				xp_awk_nde_for_t* px = (xp_awk_nde_for_t*)p;
 
-				__print_tabs (depth);
-				xp_printf (XP_T("for ("));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("for ("));
 				if (px->init != XP_NULL) 
 				{
-					__print_expression (px->init);
+					PRINT_EXPRESSION (awk, px->init);
 				}
-				xp_printf (XP_T("; "));
+				PUT_SRCSTR (awk, XP_T("; "));
 				if (px->test != XP_NULL) 
 				{
-					__print_expression (px->test);
+					PRINT_EXPRESSION (awk, px->test);
 				}
-				xp_printf (XP_T("; "));
+				PUT_SRCSTR (awk, XP_T("; "));
 				if (px->incr != XP_NULL) 
 				{
-					__print_expression (px->incr);
+					PRINT_EXPRESSION (awk, px->incr);
 				}
-				xp_printf (XP_T(")\n"));
+				PUT_SRCSTR (awk, XP_T(")\n"));
 
 				if (px->body->type == XP_AWK_NDE_BLK) 
 				{
-					__print_statements (px->body, depth);
+					PRINT_STATEMENTS (awk, px->body, depth);
 				}
 				else 
 				{
-					__print_statements (px->body, depth + 1);
+					PRINT_STATEMENTS (awk, px->body, depth + 1);
 				}
 				break;
 			}
@@ -565,55 +650,49 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				xp_awk_nde_foreach_t* px = (xp_awk_nde_foreach_t*)p;
 
-				__print_tabs (depth);
-				xp_printf (XP_T("for "));
-				__print_expression (px->test);
-				xp_printf (XP_T("\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("for "));
+				PRINT_EXPRESSION (awk, px->test);
+				PUT_SRCSTR (awk, XP_T("\n"));
 				if (px->body->type == XP_AWK_NDE_BLK) 
 				{
-					__print_statements (px->body, depth);
+					PRINT_STATEMENTS (awk, px->body, depth);
 				}
 				else 
 				{
-					__print_statements (px->body, depth + 1);
+					PRINT_STATEMENTS (awk, px->body, depth + 1);
 				}
 				break;
 			}
 
 			case XP_AWK_NDE_BREAK:
 			{
-				__print_tabs (depth);
-				xp_printf (XP_T("break;\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("break;\n"));
 				break;
 			}
 
 			case XP_AWK_NDE_CONTINUE:
 			{
-				__print_tabs (depth);
-				xp_printf (XP_T("continue;\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("continue;\n"));
 				break;
 			}
 
 			case XP_AWK_NDE_RETURN:
 			{
-				__print_tabs (depth);
+				PRINT_TABS (awk, depth);
 				if (((xp_awk_nde_return_t*)p)->val == XP_NULL) 
 				{
-					xp_printf (XP_T("return;\n"));
+					PUT_SRCSTR (awk, XP_T("return;\n"));
 				}
 				else 
 				{
-					xp_printf (XP_T("return "));
+					PUT_SRCSTR (awk, XP_T("return "));
 					xp_assert (((xp_awk_nde_return_t*)p)->val->next == XP_NULL);
-					if (__print_expression(((xp_awk_nde_return_t*)p)->val) == 0) 
-					{
-						xp_printf (XP_T(";\n"));
-					}
-					else 
-					{
-						xp_awk_nde_return_t* x = (xp_awk_nde_return_t*)p;
-						xp_printf (XP_T("***INTERNAL ERROR: unknown nde type - %d\n"), x->type);
-					}
+
+					PRINT_EXPRESSION (awk, ((xp_awk_nde_return_t*)p)->val);
+					PUT_SRCSTR (awk, XP_T(";\n"));
 				}
 				break;
 			}
@@ -621,47 +700,42 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			case XP_AWK_NDE_EXIT:
 			{
 				xp_awk_nde_exit_t* px = (xp_awk_nde_exit_t*)p;
-				__print_tabs (depth);
+				PRINT_TABS (awk, depth);
 
 				if (px->val == XP_NULL) 
 				{
-					xp_printf (XP_T("exit;\n"));
+					PUT_SRCSTR (awk, XP_T("exit;\n"));
 				}
 				else 
 				{
-					xp_printf (XP_T("exit "));
+					PUT_SRCSTR (awk, XP_T("exit "));
 					xp_assert (px->val->next == XP_NULL);
-					if (__print_expression(px->val) == 0) 
-					{
-						xp_printf (XP_T(";\n"));
-					}
-					else 
-					{
-						xp_printf (XP_T("***INTERNAL ERROR: unknown nde type - %d\n"), px->type);
-					}
+					PRINT_EXPRESSION (awk, px->val);
+					PUT_SRCSTR (awk, XP_T(";\n"));
 				}
 				break;
 			}
 
 			case XP_AWK_NDE_NEXT:
 			{
-				__print_tabs (depth);
-				xp_printf (XP_T("next;\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("next;\n"));
 				break;
 			}
 
 			case XP_AWK_NDE_NEXTFILE:
 			{
-				__print_tabs (depth);
-				xp_printf (XP_T("nextfile;\n"));
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("nextfile;\n"));
 				break;
 			}
 
 			case XP_AWK_NDE_DELETE:
 			{
-				__print_tabs (depth);
-				xp_printf (XP_T("delete "));
-				xp_awk_prnpt (((xp_awk_nde_delete_t*)p)->var);
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, XP_T("delete "));
+		/* TODO: can't use __print_expression??? */
+				xp_awk_prnpt (awk, ((xp_awk_nde_delete_t*)p)->var);
 				break;
 			}
 
@@ -669,61 +743,60 @@ static void __print_statements (xp_awk_nde_t* tree, int depth)
 			{
 				xp_awk_nde_print_t* px = (xp_awk_nde_print_t*)p;
 
-				__print_tabs (depth);
+				PRINT_TABS (awk, depth);
 
-				xp_printf (XP_T("print"));
+				PUT_SRCSTR (awk, XP_T("print"));
 				if (px->args != XP_NULL)
 				{
-					xp_printf (XP_T(" "));
-					__print_expression_list (px->args);
+					PUT_SRCSTR (awk, XP_T(" "));
+					PRINT_EXPRESSION_LIST (awk, px->args);
 				}
 
 				if (px->out != XP_NULL)
 				{
-					xp_printf (XP_T(" %s "), 
-						__print_outop_str[px->out_type]);
-					__print_expression (px->out);
+					PUT_SRCSTR (awk, XP_T(" "));
+					PUT_SRCSTR (awk, __print_outop_str[px->out_type]);
+					PUT_SRCSTR (awk, XP_T(" "));
+					PRINT_EXPRESSION (awk, px->out);
 				}
 
-				xp_printf (XP_T(";\n"));
+				PUT_SRCSTR (awk, XP_T(";\n"));
 				break;
 			}
 
 			default:
 			{
-				__print_tabs (depth);
-				if (__print_expression(p) == 0) 
-				{
-					xp_printf (XP_T(";\n"));
-				}
-				else 
-				{
-					xp_printf (XP_T("***INTERNAL ERROR: unknown type - %d\n"), p->type);
-				}
+				PRINT_TABS (awk, depth);
+				PRINT_EXPRESSION (awk, p);
+				PUT_SRCSTR (awk, XP_T(";\n"));
 			}
 		}
 
 		p = p->next;
 	}
+
+	return 0;
 }
 
-void xp_awk_prnpt (xp_awk_nde_t* tree)
+int xp_awk_prnpt (xp_awk_t* awk, xp_awk_nde_t* tree)
 {
-	__print_statements (tree, 0);
+	return __print_statements (awk, tree, 0);
 }
 
-void xp_awk_prnptnpt (xp_awk_nde_t* tree)
+int xp_awk_prnptnpt (xp_awk_t* awk, xp_awk_nde_t* tree)
 {
 	xp_awk_nde_t* nde = tree;
 
 	while (nde != XP_NULL)
 	{
-		__print_expression (nde);
+		if (__print_expression (awk, nde) == -1) return -1;
 		if (nde->next == XP_NULL) break;
 
-		xp_printf (XP_T(","));
+		PUT_SRCSTR (awk, XP_T(","));
 		nde = nde->next;
 	}
+
+	return 0;
 }
 
 void xp_awk_clrpt (xp_awk_nde_t* tree)

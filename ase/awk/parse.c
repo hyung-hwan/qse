@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.161 2006-08-06 12:35:06 bacon Exp $
+ * $Id: parse.c,v 1.162 2006-08-06 15:02:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -210,10 +210,7 @@ static int __is_var (xp_awk_nde_t* nde);
 static int __deparse (xp_awk_t* awk);
 static int __deparse_func (xp_awk_pair_t* pair, void* arg);
 static int __put_char (xp_awk_t* awk, xp_char_t c);
-static int __put_charstr (xp_awk_t* awk, const xp_char_t* str);
-static int __put_charstrx (xp_awk_t* awk, const xp_char_t* str, xp_size_t len);
 static int __flush (xp_awk_t* awk);
-
 
 struct __kwent 
 { 
@@ -692,6 +689,14 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			}
 
 			/* push the parameter to the parameter list */
+			if (xp_awk_tab_getsize (
+				&awk->parse.params) >= XP_AWK_MAX_PARAMS)
+			{
+				xp_free (name_dup);
+				xp_awk_tab_clear (&awk->parse.params);
+				PANIC (awk, XP_AWK_ETOOMANYPARAMS);
+			}
+
 			if (xp_awk_tab_add (
 				&awk->parse.params, 
 				param, param_len) == (xp_size_t)-1) 
@@ -1020,6 +1025,11 @@ static xp_awk_t* __add_global (
 		PANIC (awk, XP_AWK_EDUPVAR);
 	}
 
+	if (xp_awk_tab_getsize(&awk->parse.globals) >= XP_AWK_MAX_GLOBALS)
+	{
+		PANIC (awk, XP_AWK_ETOOMANYGLOBALS);
+	}
+
 	if (xp_awk_tab_add (&awk->parse.globals, name, len) == (xp_size_t)-1) 
 	{
 		PANIC (awk, XP_AWK_ENOMEM);
@@ -1087,7 +1097,8 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 		}
 
 		/* check if it conflicts with a paremeter name */
-		if (xp_awk_tab_find (&awk->parse.params, 0, local, local_len) != (xp_size_t)-1) 
+		if (xp_awk_tab_find (&awk->parse.params,
+			0, local, local_len) != (xp_size_t)-1) 
 		{
 			PANIC (awk, XP_AWK_EDUPNAME);
 		}
@@ -1100,7 +1111,13 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 			PANIC (awk, XP_AWK_EDUPVAR);	
 		}
 
-		if (xp_awk_tab_add (&awk->parse.locals, local, local_len) == (xp_size_t)-1) 
+		if (xp_awk_tab_getsize(&awk->parse.locals) >= XP_AWK_MAX_LOCALS)
+		{
+			PANIC (awk, XP_AWK_ETOOMANYLOCALS);
+		}
+
+		if (xp_awk_tab_add (
+			&awk->parse.locals, local, local_len) == (xp_size_t)-1) 
 		{
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
@@ -1109,10 +1126,7 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 
 		if (MATCH(awk,TOKEN_SEMICOLON)) break;
 
-		if (!MATCH(awk,TOKEN_COMMA)) 
-		{
-			PANIC (awk, XP_AWK_ECOMMA);
-		}
+		if (!MATCH(awk,TOKEN_COMMA)) PANIC (awk, XP_AWK_ECOMMA);
 
 		if (__get_token(awk) == -1) return XP_NULL;
 	}
@@ -4040,7 +4054,7 @@ struct __deparse_func_t
 static int __deparse (xp_awk_t* awk)
 {
 	xp_awk_chain_t* chain;
-	xp_char_t tmp[128];
+	xp_char_t tmp[64];
 	struct __deparse_func_t df;
 	int n;
 
@@ -4057,52 +4071,50 @@ static int __deparse (xp_awk_t* awk)
 		return -1;
 	}
 
+#define EXIT_DEPARSE(num) \
+	do { n = -1; awk->errnum = num ; goto exit_deparse; } while(0)
+
 	if (awk->tree.nglobals > awk->tree.nbglobals) 
 	{
 		xp_size_t i;
 
 		xp_assert (awk->tree.nglobals > 0);
-		if (__put_charstr (awk, XP_T("global ")) == -1)
-		{
-			n = -1;
-			awk->errnum = XP_AWK_ESRCOUTWRITE;
-			goto exit_deparse;
-		}
+		if (xp_awk_putsrcstr (awk, XP_T("global ")) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 
 		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
 		{
 			xp_sprintf (tmp, xp_countof(tmp), 
 				XP_T("__global%lu, "), (unsigned long)i);
-			if (__put_charstr (awk, tmp) == -1)
-			{
-				n = -1;
-				awk->errnum = XP_AWK_ESRCOUTWRITE;
-				goto exit_deparse;
-			}
+			if (xp_awk_putsrcstr (awk, tmp) == -1)
+				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		}
 
 		xp_sprintf (tmp, xp_countof(tmp),
 			XP_T("__global%lu;\n\n"), (unsigned long)i);
-		if (__put_charstr (awk, tmp) == -1)
-		{
-			n = -1;
-			awk->errnum = XP_AWK_ESRCOUTWRITE;
-			goto exit_deparse;
-		}
+		if (xp_awk_putsrcstr (awk, tmp) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 	}
-
 
 	df.awk = awk;
 	df.tmp = tmp;
 	df.tmp_len = xp_countof(tmp);
 
-	xp_awk_map_walk (&awk->tree.afns, __deparse_func, &df);
+	if (xp_awk_map_walk (&awk->tree.afns, __deparse_func, &df) == -1) 
+	{
+		EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
+	}
 
 	if (awk->tree.begin != XP_NULL) 
 	{
-		__put_charstr (awk, XP_T("BEGIN "));
-		xp_awk_prnpt (awk->tree.begin);
-		__put_char (awk, XP_T('\n'));
+		if (xp_awk_putsrcstr (awk, XP_T("BEGIN ")) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
+
+		if (xp_awk_prnpt (awk, awk->tree.begin) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
+
+		if (__put_char (awk, XP_T('\n')) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 	}
 
 	chain = awk->tree.chain;
@@ -4110,36 +4122,37 @@ static int __deparse (xp_awk_t* awk)
 	{
 		if (chain->pattern != XP_NULL) 
 		{
-			/*xp_awk_prnpt (chain->pattern);*/
-			xp_awk_prnptnpt (chain->pattern);
+			if (xp_awk_prnptnpt (awk, chain->pattern) == -1)
+				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		}
 
 		if (chain->action == XP_NULL) 
 		{
 			/* blockless pattern */
-			__put_char (awk, XP_T('\n'));
+			if (__put_char (awk, XP_T('\n')) == -1)
+				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		}
 		else 
 		{
-			xp_awk_prnpt (chain->action);	
+			if (xp_awk_prnpt (awk, chain->action) == -1)
+				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		}
 
-		__put_char (awk, XP_T('\n'));
+		if (__put_char (awk, XP_T('\n')) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
+
 		chain = chain->next;	
 	}
 
 	if (awk->tree.end != XP_NULL) 
 	{
-		__put_charstr (awk, XP_T("END "));
-		xp_awk_prnpt (awk->tree.end);
+		if (xp_awk_putsrcstr (awk, XP_T("END ")) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
+		if (xp_awk_prnpt (awk, awk->tree.end) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 	}
 
-	if (__flush (awk) == -1)
-	{
-		n = -1;
-		awk->errnum = XP_AWK_ESRCOUTWRITE;
-		goto exit_deparse;
-	}
+	if (__flush (awk) == -1) EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 
 exit_deparse:
 	if (awk->src.ios->out (
@@ -4164,22 +4177,23 @@ static int __deparse_func (xp_awk_pair_t* pair, void* arg)
 	xp_assert (xp_strxncmp (
 		pair->key, pair->key_len, afn->name, afn->name_len) == 0);
 
-	__put_charstr (df->awk, XP_T("function \n"));
-	__put_charstr (df->awk, afn->name);
-	__put_charstr (df->awk, XP_T(" ("));
+	if (xp_awk_putsrcstr (df->awk, XP_T("function ")) == -1) return -1;
+	if (xp_awk_putsrcstr (df->awk, afn->name) == -1) return -1;
+	if (xp_awk_putsrcstr (df->awk, XP_T(" (")) == -1) return -1;
 
 	for (i = 0; i < afn->nargs; ) 
 	{
 		xp_sprintf (df->tmp, df->tmp_len, 
-			XP_T("__arg%lu"), (unsigned long)i++);
-		__put_charstr (df->awk, df->tmp);
+			XP_T("__param%lu"), (unsigned long)i++);
+		if (xp_awk_putsrcstr (df->awk, df->tmp) == -1) return -1;
 		if (i >= afn->nargs) break;
-		__put_charstr (df->awk, XP_T(", "));
+		if (xp_awk_putsrcstr (df->awk, XP_T(", ")) == -1) return -1;
 	}
-	__put_charstr (df->awk, XP_T(")\n"));
 
-	xp_awk_prnpt (afn->body);
-	__put_char (df->awk, XP_T('\n'));
+	if (xp_awk_putsrcstr (df->awk, XP_T(")\n")) == -1) return -1;
+
+	if (xp_awk_prnpt (df->awk, afn->body) == -1) return -1;
+	if (xp_awk_putsrcstr (df->awk, XP_T("\n")) == -1) return -1;
 
 	return 0;
 }
@@ -4191,30 +4205,6 @@ static int __put_char (xp_awk_t* awk, xp_char_t c)
 	{
 		if (__flush (awk) == -1) return -1;
 	}
-	return 0;
-}
-
-static int __put_charstr (xp_awk_t* awk, const xp_char_t* str)
-{
-	while (*str != XP_T('\0'))
-	{
-		if (__put_char (awk, *str) == -1) return -1;
-		str++;
-	}
-
-	return 0;
-}
-
-static int __put_charstrx (xp_awk_t* awk, const xp_char_t* str, xp_size_t len)
-{
-	const xp_char_t* end = str + len;
-
-	while (str < end)
-	{
-		if (__put_char (awk, *str) == -1) return -1;
-		str++;
-	}
-
 	return 0;
 }
 
@@ -4239,3 +4229,29 @@ static int __flush (xp_awk_t* awk)
 	awk->src.shared.buf_len = 0;
 	return 0;
 }
+
+int xp_awk_putsrcstr (xp_awk_t* awk, const xp_char_t* str)
+{
+	while (*str != XP_T('\0'))
+	{
+		if (__put_char (awk, *str) == -1) return -1;
+		str++;
+	}
+
+	return 0;
+}
+
+int xp_awk_putsrcstrx (
+	xp_awk_t* awk, const xp_char_t* str, xp_size_t len)
+{
+	const xp_char_t* end = str + len;
+
+	while (str < end)
+	{
+		if (__put_char (awk, *str) == -1) return -1;
+		str++;
+	}
+
+	return 0;
+}
+

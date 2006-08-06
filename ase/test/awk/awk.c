@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.68 2006-08-06 08:16:03 bacon Exp $
+ * $Id: awk.c,v 1.69 2006-08-06 15:03:42 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -153,11 +153,6 @@ static xp_ssize_t process_source (
 			return 0;
 		}
 
-		case XP_AWK_IO_NEXT:
-		{
-			return 0;
-		}
-
 		case XP_AWK_IO_READ:
 		{
 			if (size <= 0) return -1;
@@ -170,16 +165,46 @@ static xp_ssize_t process_source (
 			*data = c;
 			return 1;
 		}
+	}
+
+	return -1;
+}
+
+static xp_ssize_t dump_source (
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+{
+	struct src_io* src_io = (struct src_io*)arg;
+
+	switch (cmd) 
+	{
+		case XP_AWK_IO_OPEN:
+		{
+			return 0;
+		}
+
+		case XP_AWK_IO_CLOSE:
+		{
+			return 0;
+		}
 
 		case XP_AWK_IO_WRITE:
 		{
-			xp_printf (XP_T("XP_AWK_IO_WRITE CALLED FOR SOURCE\n"));
-			return -1;
+			xp_size_t i;
+			for (i = 0; i < size; i++)
+			{
+		#ifdef XP_CHAR_IS_MCHAR
+				fputc (data[i], stdout);
+		#else
+				fputwc (data[i], stdout);
+		#endif
+			}
+			return size;
 		}
 	}
 
 	return -1;
 }
+
 
 static xp_ssize_t process_extio_pipe (
 	int cmd, void* arg, xp_char_t* data, xp_size_t size)
@@ -601,7 +626,7 @@ static int __main (int argc, xp_char_t* argv[])
 	xp_awk_setopt (awk, opt);
 
 	srcios.in = process_source;
-	srcios.out = XP_NULL;
+	srcios.out = dump_source;
 	srcios.custom_data = &src_io;
 
 	if (xp_awk_parse (awk, &srcios) == -1) 
