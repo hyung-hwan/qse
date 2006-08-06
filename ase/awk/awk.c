@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.66 2006-08-04 17:36:40 bacon Exp $ 
+ * $Id: awk.c,v 1.67 2006-08-06 08:15:29 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -63,8 +63,6 @@ xp_awk_t* xp_awk_open (void)
 
 	awk->option = 0;
 	awk->errnum = XP_AWK_ENOERR;
-	awk->srcio = XP_NULL;
-	awk->srcio_arg = XP_NULL;
 
 	awk->parse.nlocals_max = 0;
 
@@ -80,12 +78,13 @@ xp_awk_t* xp_awk_open (void)
 	awk->token.line = 0;
 	awk->token.column = 0;
 
-	awk->lex.curc = XP_CHAR_EOF;
-	awk->lex.ungotc_count = 0;
-	awk->lex.buf_pos = 0;
-	awk->lex.buf_len = 0;
-	awk->lex.line = 1;
-	awk->lex.column = 1;
+	awk->src.ios = XP_NULL;
+	awk->src.lex.curc = XP_CHAR_EOF;
+	awk->src.lex.ungotc_count = 0;
+	awk->src.lex.line = 1;
+	awk->src.lex.column = 1;
+	awk->src.shared.buf_pos = 0;
+	awk->src.shared.buf_len = 0;
 
 	for (i = 0; i < xp_countof(awk->extio); i++) awk->extio[i] = XP_NULL;
 
@@ -98,8 +97,6 @@ xp_awk_t* xp_awk_open (void)
 int xp_awk_close (xp_awk_t* awk)
 {
 	xp_awk_clear (awk);
-
-	if (xp_awk_detsrc(awk) == -1) return -1;
 
 	xp_awk_map_close (&awk->tree.afns);
 	xp_awk_tab_close (&awk->parse.globals);
@@ -117,6 +114,13 @@ int xp_awk_close (xp_awk_t* awk)
 void xp_awk_clear (xp_awk_t* awk)
 {
 /* TODO: kill all associated run instances... */
+	awk->src.ios = XP_NULL;
+	awk->src.lex.curc = XP_CHAR_EOF;
+	awk->src.lex.ungotc_count = 0;
+	awk->src.lex.line = 1;
+	awk->src.lex.column = 1;
+	awk->src.shared.buf_pos = 0;
+	awk->src.shared.buf_len = 0;
 
 	xp_awk_tab_clear (&awk->parse.globals);
 	xp_awk_tab_clear (&awk->parse.locals);
@@ -126,6 +130,7 @@ void xp_awk_clear (xp_awk_t* awk)
 	awk->parse.depth.loop = 0;
 
 	/* clear parse trees */	
+	awk->tree.nbglobals = 0;
 	awk->tree.nglobals = 0;	
 	xp_awk_map_clear (&awk->tree.afns);
 
@@ -160,54 +165,6 @@ void xp_awk_clear (xp_awk_t* awk)
 void xp_awk_setopt (xp_awk_t* awk, int opt)
 {
 	awk->option = opt;
-}
-
-int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t handler, void* arg)
-{
-	if (xp_awk_detsrc(awk) == -1) return -1;
-
-	xp_assert (awk->srcio == XP_NULL);
-	if (handler (XP_AWK_IO_OPEN, arg, XP_NULL, 0) == -1) 
-	{
-		awk->errnum = XP_AWK_ESRCINOPEN;
-		return -1;
-	}
-
-	awk->srcio = handler;
-	awk->srcio_arg = arg;
-	awk->lex.curc = XP_CHAR_EOF;
-	awk->lex.ungotc_count = 0;
-	awk->lex.buf_pos = 0;
-	awk->lex.buf_len = 0;
-	awk->lex.line = 1;
-	awk->lex.column = 1;
-	return 0;
-}
-
-int xp_awk_detsrc (xp_awk_t* awk)
-{
-	if (awk->srcio != XP_NULL) 
-	{
-		xp_ssize_t n;
-
-		n = awk->srcio (XP_AWK_IO_CLOSE, awk->srcio_arg, XP_NULL, 0);
-		if (n == -1)
-		{
-			awk->errnum = XP_AWK_ESRCINCLOSE;
-			return -1;
-		}
-
-		awk->srcio = XP_NULL;
-		awk->srcio_arg = XP_NULL;
-		awk->lex.curc = XP_CHAR_EOF;
-		awk->lex.ungotc_count = 0;
-		awk->lex.buf_pos = 0;
-		awk->lex.buf_len = 0;
-		awk->lex.line = 1;
-		awk->lex.column = 1;
-	}
-
-	return 0;
 }
 
 static void __free_afn (void* owner, void* afn)

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.67 2006-08-04 17:54:52 bacon Exp $
+ * $Id: awk.c,v 1.68 2006-08-06 08:16:03 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -600,16 +600,9 @@ static int __main (int argc, xp_char_t* argv[])
 
 	xp_awk_setopt (awk, opt);
 
-	if (xp_awk_attsrc (awk, process_source, (void*)&src_io) == -1) 
-	{
-		xp_awk_close (awk);
-		xp_printf (XP_T("Error: cannot attach source\n"));
-		return -1;
-	}
-
 	srcios.in = process_source;
 	srcios.out = XP_NULL;
-	srcios.custom_data = XP_NULL;
+	srcios.custom_data = &src_io;
 
 	if (xp_awk_parse (awk, &srcios) == -1) 
 	{

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.90 2006-08-04 17:54:52 bacon Exp $
+ * $Id: awk.h,v 1.91 2006-08-06 08:15:29 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -134,7 +134,6 @@ enum
 	XP_AWK_ENOMEM,         /* out of memory */
 	XP_AWK_EINVAL,         /* invalid parameter */
 
-	XP_AWK_ENOSRCIO,       /* no source io handler set */
 	XP_AWK_ESRCINOPEN,
 	XP_AWK_ESRCINCLOSE,
 	XP_AWK_ESRCINNEXT,
@@ -235,10 +234,7 @@ const xp_char_t* xp_awk_getsuberrstr (xp_awk_t* awk);
 void xp_awk_clear (xp_awk_t* awk);
 void xp_awk_setopt (xp_awk_t* awk, int opt);
 
-int xp_awk_attsrc (xp_awk_t* awk, xp_awk_io_t src, void* arg);
-int xp_awk_detsrc (xp_awk_t* awk);
 xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
-
 int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg);
 
 int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios);

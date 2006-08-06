@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.40 2006-08-04 17:36:40 bacon Exp $
+ * $Id: awk_i.h,v 1.41 2006-08-06 08:15:29 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -51,10 +51,6 @@ struct xp_awk_t
 	/* options */
 	int option;
 
-	/* io functions */
-	xp_awk_io_t srcio;
-	void* srcio_arg;
-
 	/* parse tree */
 	xp_awk_tree_t tree;
 	int state;
@@ -79,20 +75,28 @@ struct xp_awk_t
 		xp_size_t nlocals_max;
 	} parse;
 
-	/* source buffer management */
-	struct 
+	/* source code management */
+	struct
 	{
-		xp_cint_t curc;
-		xp_cint_t ungotc[5];
-		xp_size_t ungotc_count;
+		xp_awk_srcios_t* ios;
 
-		xp_char_t buf[512];
-		xp_size_t buf_pos;
-		xp_size_t buf_len;
+		struct
+		{
+			xp_cint_t curc;
+			xp_cint_t ungotc[5];
+			xp_size_t ungotc_count;
 
-		xp_size_t line;
-		xp_size_t column;
-	} lex;
+			xp_size_t line;
+			xp_size_t column;
+		} lex;
+
+		struct
+		{
+			xp_char_t buf[512];
+			xp_size_t buf_pos;
+			xp_size_t buf_len;
+		} shared;	
+	} src;
 
 	xp_awk_io_t extio[XP_AWK_EXTIO_NUM];
 
