@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.67 2006-08-06 08:15:29 bacon Exp $ 
+ * $Id: awk.c,v 1.68 2006-08-10 16:02:15 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -11,10 +11,9 @@
 
 static void __free_afn (void* awk, void* afn);
 
-xp_awk_t* xp_awk_open (void)
+xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks)
 {	
 	xp_awk_t* awk;
-	xp_size_t i;
 
 	awk = (xp_awk_t*) xp_malloc (xp_sizeof(xp_awk_t));
 	if (awk == XP_NULL) return XP_NULL;
@@ -86,17 +85,21 @@ xp_awk_t* xp_awk_open (void)
 	awk->src.shared.buf_pos = 0;
 	awk->src.shared.buf_len = 0;
 
-	for (i = 0; i < xp_countof(awk->extio); i++) awk->extio[i] = XP_NULL;
-
 	awk->bfn.sys = XP_NULL;
 	awk->bfn.user = XP_NULL;
 
+	awk->run.count = 0;
+	awk->run.ptr = XP_NULL;
+
+	awk->thr.lks = thrlks;
 	return awk;
 }
 
 int xp_awk_close (xp_awk_t* awk)
 {
-	xp_awk_clear (awk);
+	if (xp_awk_clear (awk) == -1) return -1;
+
+	xp_assert (awk->run.count == 0 && awk->run.ptr == XP_NULL);
 
 	xp_awk_map_close (&awk->tree.afns);
 	xp_awk_tab_close (&awk->parse.globals);
@@ -108,12 +111,21 @@ int xp_awk_close (xp_awk_t* awk)
 	return 0;
 }
 
-/* TODO: write a function to clear awk->parse data structure.
-         this would be need either as a separate function or as a part of xp_awk_clear...
-         do i have to pass an option to xp_awk_clear to do this??? */
-void xp_awk_clear (xp_awk_t* awk)
+int xp_awk_clear (xp_awk_t* awk)
 {
-/* TODO: kill all associated run instances... */
+	/* you should stop all running instances beforehand */
+/* TODO: can i stop all instances??? */
+	if (awk->run.ptr != XP_NULL)
+	{
+		awk->errnum = XP_AWK_ERUNNING;
+		return -1;
+	}
+
+/* TOOD: clear bfns when they can be added dynamically 
+	awk->bfn.sys 
+	awk->bfn.user
+*/
+
 	awk->src.ios = XP_NULL;
 	awk->src.lex.curc = XP_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
@@ -160,6 +172,7 @@ void xp_awk_clear (xp_awk_t* awk)
 	}
 
 	awk->tree.chain_tail = XP_NULL;	
+	return 0;
 }
 
 void xp_awk_setopt (xp_awk_t* awk, int opt)
@@ -181,18 +194,5 @@ static void __free_afn (void* owner, void* afn)
 xp_size_t xp_awk_getsrcline (xp_awk_t* awk)
 {
 	return awk->token.line;
-}
-
-/* TODO: imrove this... should it close io when it is overridden with a new handler??? */
-int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg)
-{
-	if (id < 0 || id >= xp_countof(awk->extio)) 
-	{
-		awk->errnum = XP_AWK_EINVAL;
-		return -1;
-	}
-
-	awk->extio[id] = handler;
-	return 0;
 }
 

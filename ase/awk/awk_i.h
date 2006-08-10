@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.42 2006-08-06 15:02:55 bacon Exp $
+ * $Id: awk_i.h,v 1.43 2006-08-10 16:02:15 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -103,8 +103,6 @@ struct xp_awk_t
 		} shared;	
 	} src;
 
-	xp_awk_io_t extio[XP_AWK_EXTIO_NUM];
-
 	/* token */
 	struct 
 	{
@@ -122,9 +120,19 @@ struct xp_awk_t
 		xp_awk_bfn_t* user;
 	} bfn;
 
+	struct
+	{
+		xp_size_t count;
+		xp_awk_run_t* ptr;
+	} run;
+
+	struct
+	{
+		xp_awk_thrlks_t* lks;
+	} thr;
+
 	/* housekeeping */
-	short errnum;
-	short suberrnum;
+	int errnum;
 };
 
 struct xp_awk_chain_t
@@ -137,6 +145,7 @@ struct xp_awk_chain_t
 
 struct xp_awk_run_t
 {
+	int id;
 	xp_awk_map_t named;
 
 	void** stack;
@@ -173,14 +182,17 @@ struct xp_awk_run_t
 	} inrec;
 
 	/* extio chain */
-	xp_awk_extio_t* extio;
+	struct
+	{
+		xp_awk_io_t handler[XP_AWK_EXTIO_NUM];
+		xp_awk_extio_t* chain;
+	} extio;
 
-	short errnum;
-	short suberrnum;
+	int errnum;
 
-	/*xp_awk_tree_t* tree;
-	xp_size_t nglobals;*/
 	xp_awk_t* awk;
+	xp_awk_run_t* prev;
+	xp_awk_run_t* next;
 };
 
 #endif

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.93 2006-08-06 15:02:54 bacon Exp $
+ * $Id: awk.h,v 1.94 2006-08-10 16:02:15 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -12,12 +12,13 @@ typedef struct xp_awk_t xp_awk_t;
 typedef struct xp_awk_val_t xp_awk_val_t;
 typedef struct xp_awk_extio_t xp_awk_extio_t;
 
+typedef struct xp_awk_thrlks_t xp_awk_thrlks_t;
 typedef struct xp_awk_srcios_t xp_awk_srcios_t;
 typedef struct xp_awk_runios_t xp_awk_runios_t;
 typedef struct xp_awk_runcbs_t xp_awk_runcbs_t;
 
+typedef void (*xp_awk_lk_t) (xp_awk_t* awk, void* arg);
 typedef void (*xp_awk_cb_t) (xp_awk_t* awk, void* handle, void* arg);
-
 typedef xp_ssize_t (*xp_awk_io_t) (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 
@@ -40,6 +41,13 @@ struct xp_awk_extio_t
 	xp_awk_extio_t* next;
 };
 
+struct xp_awk_thrlks_t
+{
+	xp_awk_lk_t lock;
+	xp_awk_lk_t unlock;
+	void* custom_data;
+};
+
 struct xp_awk_srcios_t
 {
 	xp_awk_io_t in;
@@ -53,7 +61,6 @@ struct xp_awk_runios_t
 	xp_awk_io_t coproc;
 	xp_awk_io_t file;
 	xp_awk_io_t console;
-	void* custom_data;
 };
 
 struct xp_awk_runcbs_t
@@ -133,6 +140,9 @@ enum
 	XP_AWK_ENOERR,         /* no error */
 	XP_AWK_ENOMEM,         /* out of memory */
 	XP_AWK_EINVAL,         /* invalid parameter */
+	XP_AWK_ERUNTIME,       /* run-time error */
+	XP_AWK_ERUNNING,       /* there are running instances */
+	XP_AWK_ETOOMANYRUNS,   /* too many running instances */
 
 	XP_AWK_ESRCINOPEN,
 	XP_AWK_ESRCINCLOSE,
@@ -192,8 +202,6 @@ enum
 	XP_AWK_ENEXT,          /* next illegal in BEGIN or END block */
 	XP_AWK_ENEXTFILE,      /* nextfile illegal in BEGIN or END block */
 	XP_AWK_EGETLINE,       /* getline expected */
-	XP_AWK_EREXBUILD,      /* cannot build regexp */
-	XP_AWK_EREXMATCH,      /* an error occurred in matching regexp */
 
 	/* run time error */
 	XP_AWK_EDIVBYZERO,       /* divide by zero */
@@ -209,7 +217,18 @@ enum
 	XP_AWK_ENEXTCALL,        /* next called from BEGIN or END */
 	XP_AWK_ENEXTFILECALL,    /* nextfile called from BEGIN or END */
 	XP_AWK_EIOIMPL,          /* wrong implementation of user io handler */
-	XP_AWK_EINTERNAL         /* internal error */
+	XP_AWK_EINTERNAL,        /* internal error */
+
+	/* regular expression error */
+	XP_AWK_EREXRPAREN,       /* a right parenthesis is expected */
+	XP_AWK_EREXRBRACKET,     /* a right bracket is expected */
+	XP_AWK_EREXRBRACE,       /* a right brace is expected */
+	XP_AWK_EREXCOLON,        /* a colon is expected */
+	XP_AWK_EREXCRANGE,       /* invalid character range */
+	XP_AWK_EREXCCLASS,       /* invalid character class */
+	XP_AWK_EREXBRANGE,       /* invalid boundary range */
+	XP_AWK_EREXEND,          /* unexpected end of the pattern */
+	XP_AWK_EREXGARBAGE       /* garbage after the pattern */
 };
 
 /* extio types */
@@ -229,19 +248,13 @@ enum
 extern "C" {
 #endif
 
-xp_awk_t* xp_awk_open (void);
+xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks);
 int xp_awk_close (xp_awk_t* awk);
+int xp_awk_clear (xp_awk_t* awk);
 
 int xp_awk_geterrnum (xp_awk_t* awk);
-const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk);
-int xp_awk_getsuberrnum (xp_awk_t* awk);
-const xp_char_t* xp_awk_getsuberrstr (xp_awk_t* awk);
-
-void xp_awk_clear (xp_awk_t* awk);
-void xp_awk_setopt (xp_awk_t* awk, int opt);
-
 xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
-int xp_awk_setextio (xp_awk_t* awk, int id, xp_awk_io_t handler, void* arg);
+void xp_awk_setopt (xp_awk_t* awk, int opt);
 
 int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios);
 
@@ -249,6 +262,7 @@ int xp_awk_run (xp_awk_t* awk,
 	xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs);
 
 int xp_awk_stop (xp_awk_t* awk, void* run);
+int xp_awk_getrunerrnum (xp_awk_t* awk, void* run, int* errnum);
 
 /* functions to access internal stack structure */
 xp_size_t xp_awk_getnargs (void* run);
@@ -261,6 +275,9 @@ void xp_awk_seterrnum (void* run, int errnum);
 xp_long_t xp_awk_strtolong (
 	const xp_char_t* str, int base, const xp_char_t** endptr);
 xp_real_t xp_awk_strtoreal (const xp_char_t* str);
+
+/* utility functions to convert an error number ot a string */
+const xp_char_t* xp_awk_geterrstr (int errnum);
 
 #ifdef __cplusplus
 }

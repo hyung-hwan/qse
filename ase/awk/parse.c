@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.162 2006-08-06 15:02:55 bacon Exp $
+ * $Id: parse.c,v 1.163 2006-08-10 16:02:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -324,9 +324,6 @@ static struct __bvent __bvtab[] =
 #define PANIC(awk,code) \
 	do { (awk)->errnum = (code); return XP_NULL; } while (0)
 
-#define PANIC2(awk,code,subcode) \
-	do { (awk)->errnum = (code); (awk)->suberrnum = (subcode); return XP_NULL; } while (0)
-
 int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 {
 	int n = 0;
@@ -346,7 +343,6 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 	if (__add_builtin_globals (awk) == XP_NULL) 
 	{
 		n = -1;
-		xp_awk_clear (awk);
 		goto exit_parse;
 	}
 
@@ -354,7 +350,6 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 	if (__get_char(awk) == -1) 
 	{
 		n = -1;
-		xp_awk_clear (awk);
 		goto exit_parse;
 	}
 
@@ -362,7 +357,6 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 	if (__get_token(awk) == -1) 
 	{
 		n = -1;
-		xp_awk_clear (awk);
 		goto exit_parse;
 	}
 
@@ -374,7 +368,6 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 		if (__parse_progunit (awk) == XP_NULL) 
 		{
 			n = -1;
-			xp_awk_clear (awk);
 			goto exit_parse;
 		}
 	}
@@ -386,7 +379,6 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 		if (__deparse (awk) == -1) 
 		{
 			n = -1;
-			xp_awk_clear (awk);
 			goto exit_parse;
 		}
 	}
@@ -395,8 +387,6 @@ exit_parse:
 	if (awk->src.ios->in (
 		XP_AWK_IO_CLOSE, awk->src.ios->custom_data, XP_NULL, 0) == -1)
 	{
-		xp_awk_clear (awk);
-
 		if (n == 0)
 		{
 			/* this is to keep the earlier error above
@@ -406,6 +396,7 @@ exit_parse:
 		}
 	}
 
+	if (n == -1) xp_awk_clear (awk);
 	return n;
 }
 
@@ -2055,7 +2046,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		{
 			xp_free (nde->buf);
 			xp_free (nde);
-			PANIC2 (awk, XP_AWK_EREXBUILD, errnum);
+			PANIC (awk, errnum);
 		}
 
 		if (__get_token(awk) == -1) 
