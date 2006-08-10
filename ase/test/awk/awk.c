@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.69 2006-08-06 15:03:42 bacon Exp $
+ * $Id: awk.c,v 1.70 2006-08-10 16:06:52 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -527,9 +527,17 @@ xp_printf (XP_T("AWK PRORAM ABOUT TO START...\n"));
 
 static void __on_run_end (xp_awk_t* awk, void* handle, void* arg)
 {
+	int x;
+	
+	xp_awk_getrunerrnum (app_awk, app_run, &x);
+	if (x != XP_AWK_ENOERR)
+	{
+		xp_printf (XP_T("AWK PRORAM ABOUT TO END WITH AN ERROR - %d - %s\n"), x, xp_awk_geterrstr (x));
+	}
+	else xp_printf (XP_T("AWK PRORAM ABOUT TO END...\n"));
+
 	app_awk = NULL;	
 	app_run = NULL;
-xp_printf (XP_T("AWK PRORAM ABOUT TO END...\n"));
 }
 
 #if defined(__STAND_ALONE) && !defined(_WIN32)
@@ -545,38 +553,11 @@ static int __main (int argc, xp_char_t* argv[])
 	struct src_io src_io = { NULL, NULL };
 	int opt;
 
-	if ((awk = xp_awk_open()) == XP_NULL) 
+	if ((awk = xp_awk_open(XP_NULL)) == XP_NULL) 
 	{
 		xp_printf (XP_T("Error: cannot open awk\n"));
 		return -1;
 	}
-
-/* TODO: */
-	if (xp_awk_setextio (awk, 
-		XP_AWK_EXTIO_PIPE, process_extio_pipe, XP_NULL) == -1)
-	{
-		xp_awk_close (awk);
-		xp_printf (XP_T("Error: cannot set extio pipe\n"));
-		return -1;
-	}
-
-/* TODO: */
-	if (xp_awk_setextio (awk, 
-		XP_AWK_EXTIO_FILE, process_extio_file, XP_NULL) == -1)
-	{
-		xp_awk_close (awk);
-		xp_printf (XP_T("Error: cannot set extio file\n"));
-		return -1;
-	}
-
-	if (xp_awk_setextio (awk, 
-		XP_AWK_EXTIO_CONSOLE, process_extio_console, XP_NULL) == -1)
-	{
-		xp_awk_close (awk);
-		xp_printf (XP_T("Error: cannot set extio file\n"));
-		return -1;
-	}
-
 
 	opt = XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_DBLSLASHES |
 		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | 
@@ -631,26 +612,18 @@ static int __main (int argc, xp_char_t* argv[])
 
 	if (xp_awk_parse (awk, &srcios) == -1) 
 	{
+		int errnum = xp_awk_geterrnum(awk);
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
-			XP_T("ERROR: cannot parse program - line %u [%d] %ls"), 
+			XP_T("ERROR: cannot parse program - line %u [%d] %ls\n"), 
 			(unsigned int)xp_awk_getsrcline(awk), 
-			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
-		if (xp_awk_getsuberrnum(awk) != XP_AWK_ENOERR)
-		{
-			xp_printf (XP_T(" - %ls\n"), xp_awk_getsuberrstr(awk));
-		}
+			errnum, xp_awk_geterrstr(errnum));
 #else
 		xp_printf (
-			XP_T("ERROR: cannot parse program - line %u [%d] %s"), 
+			XP_T("ERROR: cannot parse program - line %u [%d] %s\n"), 
 			(unsigned int)xp_awk_getsrcline(awk), 
-			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
-		if (xp_awk_getsuberrnum(awk) != XP_AWK_ENOERR)
-		{
-			xp_printf (XP_T(" - %s\n"), xp_awk_getsuberrstr(awk));
-		}
+			errnum, xp_awk_geterrstr(errnum));
 #endif
-		xp_printf (XP_T("\n"));
 		xp_awk_close (awk);
 		return -1;
 	}
@@ -661,28 +634,23 @@ static int __main (int argc, xp_char_t* argv[])
 	runios.coproc = XP_NULL;
 	runios.file = process_extio_file;
 	runios.console = process_extio_console;
-	runios.custom_data = XP_NULL;
 
 	runcbs.start = __on_run_start;
-	runcbs.end = __on_run_end;
+	runcbs.end   = __on_run_end;
 	runcbs.custom_data = XP_NULL;
 
 	if (xp_awk_run (awk, &runios, &runcbs) == -1)
 	{
+		int errnum = xp_awk_geterrnum(awk);
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
 		xp_printf (
-			XP_T("error: cannot run program - [%d] %ls"), 
-			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
+			XP_T("error: cannot run program - [%d] %ls\n"), 
+			errnum, xp_awk_geterrstr(errnum));
 #else
 		xp_printf (
-			XP_T("error: cannot run program - [%d] %s"), 
-			xp_awk_geterrnum(awk), xp_awk_geterrstr(awk));
+			XP_T("error: cannot run program - [%d] %s\n"), 
+			errnum, xp_awk_geterrstr(errnum));
 #endif
-		if (xp_awk_getsuberrnum(awk) != XP_AWK_ENOERR)
-		{
-			xp_printf (XP_T(" - %ls\n"), xp_awk_getsuberrstr(awk));
-		}
-		xp_printf (XP_T("\n"));
 
 		xp_awk_close (awk);
 		return -1;
