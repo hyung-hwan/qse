@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.163 2006-08-04 17:54:52 bacon Exp $
+ * $Id: run.c,v 1.164 2006-08-10 16:02:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -39,16 +39,16 @@ enum
 
 #define PANIC(run,code) \
 	do { (run)->errnum = (code); return XP_NULL; } while (0)
-#define PANIC2(run,code,subcode) \
-	do { (run)->errnum = (code); (run)->suberrnum = (subcode); return XP_NULL; } while (0)
 
 #define PANIC_I(run,code) \
 	do { (run)->errnum = (code); return -1; } while (0)
-#define PANIC2_I(awk,code,subcode) \
-	do { (run)->errnum = (code); (run)->suberrnum = (subcode); return -1; } while (0)
 
-static int __open_run (xp_awk_run_t* run, xp_awk_t* awk);
-static void __close_run (xp_awk_run_t* run);
+static void __add_run (xp_awk_t* awk, xp_awk_run_t* run);
+static void __del_run (xp_awk_t* awk, xp_awk_run_t* run);
+
+static int __init_run (
+	xp_awk_run_t* run, xp_awk_runios_t* runios, int* errnum);
+static void __deinit_run (xp_awk_run_t* run);
 
 static int __run_main (xp_awk_run_t* run);
 static int __run_pattern_blocks  (xp_awk_run_t* run);
@@ -225,7 +225,9 @@ void xp_awk_seterrnum (void* run, int errnum)
 int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 {
 	xp_awk_run_t* run;
-	int n;
+	int n, errnum;
+
+	awk->errnum = XP_AWK_ENOERR;
 
 	run = (xp_awk_run_t*) xp_malloc (xp_sizeof(xp_awk_run_t));
 	if (run == XP_NULL)
@@ -234,11 +236,12 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 		return -1;
 	}
 
-	if (__open_run (run, awk) == -1) 
+	__add_run (awk, run);
+
+	if (__init_run (run, runios, &errnum) == -1) 
 	{
-/* TODO: find a way to set the errnum into awk object in a thread-safe way */
-		awk->errnum = run->errnum;
-		awk->suberrnum = run->suberrnum;
+		awk->errnum = errnum;
+		__del_run (awk, run);
 		xp_free (run);
 		return -1;
 	}
@@ -247,16 +250,14 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 		runcbs->start (awk, run, runcbs->custom_data);
 
 	n = __run_main (run);
-	if (n == -1)
-	{
-		awk->errnum = run->errnum;
-		awk->suberrnum = run->suberrnum;
-	}
+	if (n == -1) awk->errnum = XP_AWK_ERUNTIME;
 
 	if (runcbs->end != XP_NULL) 
 		runcbs->end (awk, run, runcbs->custom_data);
 
-	__close_run (run);
+	__deinit_run (run);
+
+	__del_run (awk, run);
 	xp_free (run);
 
 	return n;
@@ -264,17 +265,65 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 
 int xp_awk_stop (xp_awk_t* awk, void* run)
 {
-	xp_awk_run_t* r = (xp_awk_run_t*)run;
+	xp_awk_run_t* r;
+	int n = 0;
 
-	if (r->awk != awk)
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->lock (awk, awk->thr.lks->custom_data);
+
+	/* check if the run handle given is valid */
+	for (r = awk->run.ptr; r != XP_NULL; r = r->next)
 	{
-		/* TODO: use awk->errnum or run->errnum??? */
-		r->errnum = XP_AWK_EINVAL;
-		return -1;
+		if (r == run)
+		{
+			xp_assert (r->awk == awk);
+			r->exit_level = EXIT_ABORT;
+			break;
+		}
 	}
 
-	r->exit_level = EXIT_ABORT;
-	return 0;
+	if (r == XP_NULL)
+	{
+		/* if it is not found in the awk's run list, 
+		 * it is not a valid handle */
+		awk->errnum = XP_AWK_EINVAL;
+		n = -1;
+	}
+
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->unlock (awk, awk->thr.lks->custom_data);
+
+	return n;
+}
+
+int xp_awk_getrunerrnum (xp_awk_t* awk, void* run, int* errnum)
+{
+	xp_awk_run_t* r;
+	int n = 0;
+
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->lock (awk, awk->thr.lks->custom_data);
+
+	for (r = awk->run.ptr; r != XP_NULL; r = r->next)
+	{
+		if (r == run)
+		{
+			xp_assert (r->awk == awk);
+			*errnum = r->errnum;
+			break;
+		}
+	}
+
+	if (r == XP_NULL)
+	{
+		awk->errnum = XP_AWK_EINVAL;
+		n = -1;
+	}
+
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->unlock (awk, awk->thr.lks->custom_data);
+
+	return n;
 }
 
 static void __free_namedval (void* run, void* val)
@@ -282,10 +331,50 @@ static void __free_namedval (void* run, void* val)
 	xp_awk_refdownval ((xp_awk_run_t*)run, val);
 }
 
-static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
+static void __add_run (xp_awk_t* awk, xp_awk_run_t* run)
 {
-	xp_memset (run, 0, xp_sizeof(*run));
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->lock (awk, awk->thr.lks->custom_data);
 
+	run->awk = awk;
+	run->prev = XP_NULL;
+	run->next = awk->run.ptr;
+	if (run->next != XP_NULL) run->next->prev = run;
+	awk->run.ptr = run;
+	awk->run.count++;
+
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->unlock (awk, awk->thr.lks->custom_data);
+}
+
+static void __del_run (xp_awk_t* awk, xp_awk_run_t* run)
+{
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->lock (awk, awk->thr.lks->custom_data);
+
+	xp_assert (awk->run.ptr != XP_NULL);
+
+	if (run->prev == XP_NULL)
+	{
+		awk->run.ptr = run->next;
+		if (run->next != XP_NULL) run->next->prev = XP_NULL;
+	}
+	else
+	{
+		run->prev->next = run->next;
+		if (run->next != XP_NULL) run->next->prev = run->prev;
+	}
+
+	run->awk = XP_NULL;
+	awk->run.count--;
+
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->unlock (awk, awk->thr.lks->custom_data);
+}
+
+static int __init_run (
+	xp_awk_run_t* run, xp_awk_runios_t* runios, int* errnum)
+{
 	run->stack = XP_NULL;
 	run->stack_top = 0;
 	run->stack_base = 0;
@@ -297,10 +386,6 @@ static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
 	run->rcache_count = 0;
 
 	run->errnum = XP_AWK_ENOERR;
-	run->suberrnum = XP_AWK_ENOERR;
-	/*run->tree = &awk->tree; */
-	/*run->nglobals = awk->tree.nglobals;*/
-	run->awk = awk;
 
 	run->inrec.buf_pos = 0;
 	run->inrec.buf_len = 0;
@@ -310,7 +395,7 @@ static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
 	run->inrec.d0 = xp_awk_val_nil;
 	if (xp_str_open (&run->inrec.line, DEF_BUF_CAPA) == XP_NULL)
 	{
-		run->errnum = XP_AWK_ENOMEM; 
+		*errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
 
@@ -318,19 +403,25 @@ static int __open_run (xp_awk_run_t* run, xp_awk_t* awk)
 		run, DEF_BUF_CAPA, __free_namedval) == XP_NULL) 
 	{
 		xp_str_close (&run->inrec.line);
-		run->errnum = XP_AWK_ENOMEM; 
+		*errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
 
-	run->extio = XP_NULL;
+	run->extio.handler[XP_AWK_EXTIO_PIPE] = runios->pipe;
+	run->extio.handler[XP_AWK_EXTIO_COPROC] = runios->coproc;
+	run->extio.handler[XP_AWK_EXTIO_FILE] = runios->file;
+	run->extio.handler[XP_AWK_EXTIO_CONSOLE] = runios->console;
+	run->extio.chain = XP_NULL;
+
 	return 0;
 }
 
-static void __close_run (xp_awk_run_t* run)
+static void __deinit_run (xp_awk_run_t* run)
 {
 	/* close all pending eio's */
 	/* TODO: what if this operation fails? */
 	xp_awk_clearextio (run);
+	xp_assert (run->extio.chain == XP_NULL);
 
 	/* destroy input record. __clear_record should be called
 	 * before the run stack has been destroyed because it may try
@@ -385,7 +476,6 @@ static int __run_main (xp_awk_run_t* run)
 	/* secure space for global variables */
 	saved_stack_top = run->stack_top;
 
-	/*nglobals = run->nglobals;*/
 	nglobals = run->awk->tree.nglobals;
 
 	while (nglobals > 0)
@@ -1604,7 +1694,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		if (n == -1) 
 		{
 			xp_awk_refdownval (run, v);
-			PANIC2 (run, XP_AWK_EREXMATCH, errnum);
+			PANIC (run, errnum);
 		}
 
 		xp_awk_refdownval (run, v);
@@ -3030,7 +3120,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 			((xp_awk_val_str_t*)right)->buf,
 			((xp_awk_val_str_t*)right)->len, &errnum);
 		if (rex_code == XP_NULL)
-			PANIC2 (run, XP_AWK_EREXBUILD, errnum);
+			PANIC (run, errnum);
 	}
 	else
 	{
@@ -3041,7 +3131,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 		if (rex_code == XP_NULL)
 		{
 			xp_free (str);
-			PANIC2 (run, XP_AWK_EREXBUILD, errnum);
+			PANIC (run, errnum);
 		}
 
 		xp_free (str);
@@ -3057,7 +3147,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 		if (n == -1) 
 		{
 			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
-			PANIC2 (run, XP_AWK_EREXMATCH, errnum);
+			PANIC (run, errnum);
 		}
 
 		res = xp_awk_makeintval (run, (n == ret));
@@ -3082,7 +3172,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 		{
 			xp_free (str);
 			if (right->type != XP_AWK_VAL_REX) xp_free (rex_code);
-			PANIC2 (run, XP_AWK_EREXMATCH, errnum);
+			PANIC (run, errnum);
 		}
 
 		res = xp_awk_makeintval (run, (n == ret));
@@ -4542,3 +4632,4 @@ static xp_char_t* __idxnde_to_str (
 
 	return str;
 }
+

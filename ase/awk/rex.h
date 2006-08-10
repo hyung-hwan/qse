@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.10 2006-07-26 16:43:35 bacon Exp $
+ * $Id: rex.h,v 1.11 2006-08-10 16:02:15 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -37,21 +37,6 @@
  *   ab|xy -> |2|10|4|ORD_CHAR(no bound)|a|ORD_CHAR(no bound)|b|4|ORD_CHAR(no bound)|x|ORD_CHAR(no bound)|y|
  */
 
-enum
-{
-	XP_AWK_REX_ENOERR,    /* no error */
-	XP_AWK_REX_ENOMEM,    /* ran out of memory */
-	XP_AWK_REX_ERPAREN,   /* a right parenthesis is expected */
-	XP_AWK_REX_ERBRACKET, /* a right bracket is expected */
-	XP_AWK_REX_ERBRACE,   /* a right brace is expected */
-	XP_AWK_REX_ECOLON,    /* a colon is expected */
-	XP_AWK_REX_ECRANGE,   /* invalid character range */
-	XP_AWK_REX_ECCLASS,   /* invalid character class */
-	XP_AWK_REX_EBRANGE,   /* invalid boundary range */
-	XP_AWK_REX_EEND,      /* unexpected end of the pattern */
-	XP_AWK_REX_EGARBAGE   /* garbage after the pattern */
-};
-
 #define XP_AWK_REX_NA(code) (*(xp_size_t*)(code))
 
 #define XP_AWK_REX_LEN(code) \
@@ -60,8 +45,6 @@ enum
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-const xp_char_t* xp_awk_getrexerrstr (int errnum);
 
 void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum);
 
