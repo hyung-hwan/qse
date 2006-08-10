@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.17 2006-07-26 16:43:35 bacon Exp $
+ * $Id: rex.c,v 1.18 2006-08-10 16:02:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -219,31 +219,6 @@ static struct __char_class_t __char_class [] =
 	{ XP_NULL,        0, XP_NULL }
 };
 
-const xp_char_t* xp_awk_getrexerrstr (int errnum)
-{
-	static const xp_char_t* __errstr[] =
-	{
-		XP_T("no error"),
-		XP_T("out of memory"),
-		XP_T("a right parenthesis is expected"),
-		XP_T("a right bracket is expected"),
-		XP_T("a right brace is expected"),
-		XP_T("a colon is expected"),
-		XP_T("invalid character range"),
-		XP_T("invalid character class"),
-		XP_T("invalid boundary range"),
-		XP_T("unexpected end of the regular expression"),
-		XP_T("garbage after the regular expression")
-	};
-
-	if (errnum >= 0 && errnum < xp_countof(__errstr)) 
-	{
-		return __errstr[errnum];
-	}
-
-	return XP_T("unknown error");
-}
-
 void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum)
 {
 	__builder_t builder;
@@ -253,7 +228,7 @@ void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum)
 	builder.code.buf = (xp_byte_t*) xp_malloc (builder.code.capa);
 	if (builder.code.buf == XP_NULL) 
 	{
-		*errnum = XP_AWK_REX_ENOMEM;
+		*errnum = XP_AWK_ENOMEM;
 		return XP_NULL;
 	}
 
@@ -281,7 +256,7 @@ void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum)
 
 	if (builder.ptn.curc.type != CT_EOF)
 	{
-		if (errnum != XP_NULL) *errnum = XP_AWK_REX_EGARBAGE;
+		if (errnum != XP_NULL) *errnum = XP_AWK_EREXGARBAGE;
 		xp_free (builder.code.buf);
 		return XP_NULL;
 	}
@@ -454,7 +429,7 @@ static int __build_atom (__builder_t* builder)
 			if (builder->ptn.curc.type != CT_SPECIAL || 
 			    builder->ptn.curc.value != XP_T(')')) 
 			{
-				builder->errnum = XP_AWK_REX_ERPAREN;
+				builder->errnum = XP_AWK_EREXRPAREN;
 				return -1;
 			}
 		}
@@ -504,7 +479,7 @@ static int __build_atom (__builder_t* builder)
 			if (builder->ptn.curc.type != CT_SPECIAL ||
 			    builder->ptn.curc.value != XP_T(']'))
 			{
-				builder->errnum = XP_AWK_REX_ERBRACKET;
+				builder->errnum = XP_AWK_EREXRBRACKET;
 				return -1;
 			}
 
@@ -620,7 +595,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 		{
 			/* invalid range */
 //xp_printf (XP_T("invalid character set range\n"));
-			builder->errnum = XP_AWK_REX_ECRANGE;
+			builder->errnum = XP_AWK_EREXCRANGE;
 			return -1;
 		}
 
@@ -646,7 +621,7 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 	{
 		/* wrong class name */
 //xp_printf (XP_T("wrong class name\n"));
-		builder->errnum = XP_AWK_REX_ECCLASS;
+		builder->errnum = XP_AWK_EREXCCLASS;
 		return -1;
 	}
 
@@ -657,7 +632,7 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 	    builder->ptn.curc.value != XP_T(':'))
 	{
 //xp_printf (XP_T(": expected\n"));
-		builder->errnum = XP_AWK_REX_ECOLON;
+		builder->errnum = XP_AWK_EREXCOLON;
 		return -1;
 	}
 
@@ -668,7 +643,7 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 	    builder->ptn.curc.value != XP_T(']'))
 	{
 //xp_printf (XP_T("] expected\n"));
-		builder->errnum = XP_AWK_REX_ERBRACKET;	
+		builder->errnum = XP_AWK_EREXRBRACKET;	
 		return -1;
 	}
 
@@ -717,7 +692,7 @@ static int __build_boundary (__builder_t* builder, struct __code_t* cmd)
 			if (builder->ptn.curc.type != CT_SPECIAL || 
 			    builder->ptn.curc.value != XP_T('}')) 
 			{
-				builder->errnum = XP_AWK_REX_ERBRACE;
+				builder->errnum = XP_AWK_EREXRBRACE;
 				return -1;
 			}
 
@@ -765,7 +740,7 @@ static int __build_range (__builder_t* builder, struct __code_t* cmd)
 	if (cmd->lbound > cmd->ubound)
 	{
 		/* invalid boundary range */
-		builder->errnum = XP_AWK_REX_EBRANGE;
+		builder->errnum = XP_AWK_EREXBRANGE;
 		return -1;
 	}
 
@@ -788,7 +763,7 @@ static int __next_char (__builder_t* builder, int level)
 	{	       
 		if (builder->ptn.curp >= builder->ptn.end)
 		{
-			builder->errnum = XP_AWK_REX_EEND;
+			builder->errnum = XP_AWK_EREXEND;
 			return -1;	
 		}
 
@@ -847,7 +822,7 @@ static int __add_code (__builder_t* builder, void* data, xp_size_t len)
 		tmp = (xp_byte_t*) xp_realloc (builder->code.buf, capa);
 		if (tmp == XP_NULL)
 		{
-			builder->errnum = XP_AWK_REX_ENOMEM;
+			builder->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 
@@ -1214,7 +1189,7 @@ static const xp_byte_t* __match_group (
 			xp_sizeof(xp_size_t) * cp->ubound);
 		if (grp_len == XP_NULL)
 		{
-			matcher->errnum = XP_AWK_REX_ENOMEM;
+			matcher->errnum = XP_AWK_ENOMEM;
 			return XP_NULL;
 		}
 	}

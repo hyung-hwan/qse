@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.26 2006-08-03 09:53:42 bacon Exp $
+ * $Id: extio.c,v 1.27 2006-08-10 16:02:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -86,7 +86,7 @@ int xp_awk_readextio (
 	xp_awk_run_t* run, int in_type,
 	const xp_char_t* name, xp_str_t* buf, int* errnum)
 {
-	xp_awk_extio_t* p = run->extio;
+	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
 
@@ -99,7 +99,7 @@ int xp_awk_readextio (
 	extio_mode = __in_mode_map[in_type];
 	extio_mask = __in_mask_map[in_type];
 
-	handler = run->awk->extio[extio_type];
+	handler = run->extio.handler[extio_type];
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
@@ -157,8 +157,8 @@ int xp_awk_readextio (
 		}
 
 		/* chain it */
-		p->next = run->extio;
-		run->extio = p;
+		p->next = run->extio.chain;
+		run->extio.chain = p;
 
 		/* n == 0 indicates that it has reached the end of input. 
 		 * the user io handler can return 0 for the open request
@@ -240,7 +240,7 @@ static int __writeextio (
 	xp_awk_run_t* run, int out_type, 
 	const xp_char_t* name, xp_awk_val_t* v, int* errnum, xp_bool_t nl)
 {
-	xp_awk_extio_t* p = run->extio;
+	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
 	xp_str_t buf;
 	xp_char_t* str;
@@ -256,7 +256,7 @@ static int __writeextio (
 	extio_mode = __out_mode_map[out_type];
 	extio_mask = __out_mask_map[out_type];
 
-	handler = run->awk->extio[extio_type];
+	handler = run->extio.handler[extio_type];
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
@@ -342,8 +342,8 @@ static int __writeextio (
 		}
 
 		/* chain it */
-		p->next = run->extio;
-		run->extio = p;
+		p->next = run->extio.chain;
+		run->extio.chain = p;
 
 		/* read the comment in xp_awk_readextio */
 		if (n == 0) return 0;
@@ -411,7 +411,7 @@ static int __writeextio (
 int xp_awk_nextextio_read (
 	xp_awk_run_t* run, int in_type, const xp_char_t* name, int* errnum)
 {
-	xp_awk_extio_t* p = run->extio;
+	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
 
@@ -424,7 +424,7 @@ int xp_awk_nextextio_read (
 	extio_mode = __in_mode_map[in_type];
 	extio_mask = __in_mask_map[in_type];
 
-	handler = run->awk->extio[extio_type];
+	handler = run->extio.handler[extio_type];
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
@@ -460,7 +460,7 @@ int xp_awk_nextextio_read (
 int xp_awk_closeextio_read (
 	xp_awk_run_t* run, int in_type, const xp_char_t* name, int* errnum)
 {
-	xp_awk_extio_t* p = run->extio, * px = XP_NULL;
+	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
 	xp_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask;
 
@@ -473,7 +473,7 @@ int xp_awk_closeextio_read (
 	extio_mode = __in_mode_map[in_type];
 	extio_mask = __in_mask_map[in_type];
 
-	handler = run->awk->extio[extio_type];
+	handler = run->extio.handler[extio_type];
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
@@ -488,7 +488,7 @@ int xp_awk_closeextio_read (
 		{
 			xp_awk_io_t handler;
 		       
-			handler = run->awk->extio[p->type & __MASK_CLEAR];
+			handler = run->extio.handler[p->type & __MASK_CLEAR];
 			if (handler != XP_NULL)
 			{
 				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
@@ -500,7 +500,7 @@ int xp_awk_closeextio_read (
 			}
 
 			if (px != XP_NULL) px->next = p->next;
-			else run->extio = p->next;
+			else run->extio.chain = p->next;
 
 			xp_free (p->name);
 			xp_free (p);
@@ -519,7 +519,7 @@ int xp_awk_closeextio_read (
 int xp_awk_closeextio_write (
 	xp_awk_run_t* run, int out_type, const xp_char_t* name, int* errnum)
 {
-	xp_awk_extio_t* p = run->extio, * px = XP_NULL;
+	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
 	xp_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask;
 
@@ -532,7 +532,7 @@ int xp_awk_closeextio_write (
 	extio_mode = __out_mode_map[out_type];
 	extio_mask = __out_mask_map[out_type];
 
-	handler = run->awk->extio[extio_type];
+	handler = run->extio.handler[extio_type];
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
@@ -547,7 +547,7 @@ int xp_awk_closeextio_write (
 		{
 			xp_awk_io_t handler;
 		       
-			handler = run->awk->extio[p->type & __MASK_CLEAR];
+			handler = run->extio.handler[p->type & __MASK_CLEAR];
 			if (handler != XP_NULL)
 			{
 				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
@@ -559,7 +559,7 @@ int xp_awk_closeextio_write (
 			}
 
 			if (px != XP_NULL) px->next = p->next;
-			else run->extio = p->next;
+			else run->extio.chain = p->next;
 
 			xp_free (p->name);
 			xp_free (p);
@@ -578,7 +578,7 @@ int xp_awk_closeextio_write (
 int xp_awk_closeextio (
 	xp_awk_run_t* run, const xp_char_t* name, int* errnum)
 {
-	xp_awk_extio_t* p = run->extio, * px = XP_NULL;
+	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
 
 	while (p != XP_NULL)
 	{
@@ -588,7 +588,7 @@ int xp_awk_closeextio (
 		{
 			xp_awk_io_t handler;
 		       
-			handler = run->awk->extio[p->type & __MASK_CLEAR];
+			handler = run->extio.handler[p->type & __MASK_CLEAR];
 			if (handler != XP_NULL)
 			{
 				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
@@ -600,7 +600,7 @@ int xp_awk_closeextio (
 			}
 
 			if (px != XP_NULL) px->next = p->next;
-			else run->extio = p->next;
+			else run->extio.chain = p->next;
 
 			xp_free (p->name);
 			xp_free (p);
@@ -622,14 +622,14 @@ void xp_awk_clearextio (xp_awk_run_t* run)
 	xp_awk_io_t handler;
 	int n;
 
-	while (run->extio != XP_NULL)
+	while (run->extio.chain != XP_NULL)
 	{
-		handler = run->awk->extio[run->extio->type & __MASK_CLEAR];
-		next = run->extio->next;
+		handler = run->extio.handler[run->extio.chain->type & __MASK_CLEAR];
+		next = run->extio.chain->next;
 
 		if (handler != XP_NULL)
 		{
-			n = handler (XP_AWK_IO_CLOSE, run->extio, XP_NULL, 0);
+			n = handler (XP_AWK_IO_CLOSE, run->extio.chain, XP_NULL, 0);
 			if (n == -1)
 			{
 				/* TODO: 
@@ -637,9 +637,9 @@ void xp_awk_clearextio (xp_awk_run_t* run)
 			}
 		}
 
-		xp_free (run->extio->name);
-		xp_free (run->extio);
+		xp_free (run->extio.chain->name);
+		xp_free (run->extio.chain);
 
-		run->extio = next;
+		run->extio.chain = next;
 	}
 }

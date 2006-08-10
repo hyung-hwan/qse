@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.34 2006-08-06 15:02:55 bacon Exp $
+ * $Id: err.c,v 1.35 2006-08-10 16:02:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -9,24 +9,16 @@ int xp_awk_geterrnum (xp_awk_t* awk)
 	return awk->errnum;
 }
 
-int xp_awk_getsuberrnum (xp_awk_t* awk)
-{
-	if (awk->errnum == XP_AWK_EREXBUILD ||
-	    awk->errnum == XP_AWK_EREXMATCH)
-	{
-		return awk->suberrnum;
-	}
-
-	return XP_AWK_ENOERR;
-}
-
-const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
+const xp_char_t* xp_awk_geterrstr (int errnum)
 {
 	static const xp_char_t* __errstr[] =
  	{
 		XP_T("no error"),
 		XP_T("out of memory"),
 		XP_T("invalid parameter"),
+		XP_T("run-time error"),
+		XP_T("one or more running instances"),
+		XP_T("too many running instances"),
 
 		XP_T("cannot open source input"),
 		XP_T("cannot close source input"),
@@ -86,8 +78,6 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("next illegal in BEGIN or END block"),
 		XP_T("nextfile illegal in BEGIN or END block"),
 		XP_T("getline expected"),
-		XP_T("cannot build the regular expression"),
-		XP_T("an error occurred in the regular expression match"),
 
 		XP_T("divide by zero"),
 		XP_T("invalid operand"),
@@ -102,24 +92,24 @@ const xp_char_t* xp_awk_geterrstr (xp_awk_t* awk)
 		XP_T("next cannot be called from the BEGIN or END block"),
 		XP_T("nextfile cannot be called from the BEGIN or END block"),
 		XP_T("wrong implementation of user-defined io handler"),
-		XP_T("internal error that should never have happened")
+		XP_T("internal error that should never have happened"),
+
+		XP_T("a right parenthesis is expected in the regular expression"),
+		XP_T("a right bracket is expected in the regular expression"),
+		XP_T("a right brace is expected in the regular expression"),
+		XP_T("a colon is expected in the regular expression"),
+		XP_T("invalid character range in the regular expression"),
+		XP_T("invalid character class in the regular expression"),
+		XP_T("invalid boundary range in the regular expression"),
+		XP_T("unexpected end of the regular expression"),
+		XP_T("garbage after the regular expression")
 	};
 
-	if (awk->errnum >= 0 && awk->errnum < xp_countof(__errstr)) 
+	if (errnum >= 0 && errnum < xp_countof(__errstr)) 
 	{
-		return __errstr[awk->errnum];
+		return __errstr[errnum];
 	}
 
 	return XP_T("unknown error");
 }
 
-const xp_char_t* xp_awk_getsuberrstr (xp_awk_t* awk)
-{
-	if (awk->errnum == XP_AWK_EREXBUILD ||
-	    awk->errnum == XP_AWK_EREXMATCH)
-	{
-		return xp_awk_getrexerrstr (awk->suberrnum);
-	}
-
-	return XP_T("no error");
-}
