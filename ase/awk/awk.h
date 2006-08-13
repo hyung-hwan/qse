@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.94 2006-08-10 16:02:15 bacon Exp $
+ * $Id: awk.h,v 1.95 2006-08-13 05:55:02 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -18,7 +18,6 @@ typedef struct xp_awk_runios_t xp_awk_runios_t;
 typedef struct xp_awk_runcbs_t xp_awk_runcbs_t;
 
 typedef void (*xp_awk_lk_t) (xp_awk_t* awk, void* arg);
-typedef void (*xp_awk_cb_t) (xp_awk_t* awk, void* handle, void* arg);
 typedef xp_ssize_t (*xp_awk_io_t) (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 
@@ -65,8 +64,8 @@ struct xp_awk_runios_t
 
 struct xp_awk_runcbs_t
 {
-	xp_awk_cb_t start;
-	xp_awk_cb_t end;
+	void (*on_start) (xp_awk_t* awk, void* handle, void* arg);
+	void (*on_end) (xp_awk_t* awk, void* handle, int errnum, void* arg);
 	void* custom_data;
 };
 
@@ -258,10 +257,25 @@ void xp_awk_setopt (xp_awk_t* awk, int opt);
 
 int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios);
 
+/*
+ * xp_awk_run return 0 on success and -1 on failure, generally speaking.
+ *  A runtime context is required for it to start running the program.
+ *  Once the runtime context is created, the program starts to run.
+ *  The context creation failure is reported by the return value -1 of
+ *  this function. however, the runtime error after the context creation
+ *  is reported differently depending on the use of the callback.
+ *  When no callback is specified (i.e. runcbs is XP_NULL), xp_awk_run
+ *  returns -1 on an error and awk->errnum is set accordingly.
+ *  However, if a callback is specified (i.e. runcbs is not XP_NULL),
+ *  xp_awk_run returns 0 on both success and failure. Instead, the 
+ *  on_end handler of the callback is triggered with the relevant 
+ *  error number. The third parameter to on_end denotes this error number.
+ */
 int xp_awk_run (xp_awk_t* awk, 
 	xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs);
 
 int xp_awk_stop (xp_awk_t* awk, void* run);
+void xp_awk_stopall (xp_awk_t* awk);
 int xp_awk_getrunerrnum (xp_awk_t* awk, void* run, int* errnum);
 
 /* functions to access internal stack structure */
