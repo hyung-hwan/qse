@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.69 2006-08-13 05:55:02 bacon Exp $ 
+ * $Id: awk.c,v 1.70 2006-08-13 16:04:32 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -175,6 +175,11 @@ int xp_awk_clear (xp_awk_t* awk)
 	awk->tree.chain_tail = XP_NULL;	
 	awk->tree.chain_size = 0;
 	return 0;
+}
+
+int xp_awk_getopt (xp_awk_t* awk)
+{
+	return awk->option;
 }
 
 void xp_awk_setopt (xp_awk_t* awk, int opt)

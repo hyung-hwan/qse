@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.17 2006-08-04 17:36:40 bacon Exp $
+ * $Id: func.c,v 1.18 2006-08-13 16:04:32 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -16,28 +16,38 @@
 	#include <math.h>
 #else
 	#include <stdlib.h>
+	#include <math.h>
 #endif
 
-static int __bfn_close (void* run);
-static int __bfn_system (void* run);
-static int __bfn_sin (void* run);
+static int __bfn_close (xp_awk_t* awk, void* run);
+static int __bfn_index (xp_awk_t* awk, void* run);
+static int __bfn_length (xp_awk_t* awk, void* run);
+static int __bfn_substr (xp_awk_t* awk, void* run);
+static int __bfn_split (xp_awk_t* awk, void* run);
+static int __bfn_system (xp_awk_t* awk, void* run);
+static int __bfn_sin (xp_awk_t* awk, void* run);
 
 /* TODO: move it under the awk structure... */
 static xp_awk_bfn_t __sys_bfn[] = 
 {
 	/* ensure that this matches XP_AWK_BNF_XXX in func.h */
+	{ XP_T("close"),   5,  XP_AWK_EXTIO, 1,  1,  XP_NULL, __bfn_close },
 
-	{ XP_T("close"),   5,  XP_AWK_EXTIO,  1,  1,  __bfn_close },
-	{ XP_T("system"),  6,  0,             1,  1,  __bfn_system },
+	{ XP_T("index"),   5,  0,            2,  2,  XP_NULL, __bfn_index },
+	{ XP_T("length"),  6,  0,            1,  1,  XP_NULL, __bfn_length },
+	{ XP_T("substr"),  6,  0,            2,  3,  XP_NULL, __bfn_substr },
+	{ XP_T("split"),   5,  0,            2,  3,  XP_NULL, __bfn_split },
 
-	{ XP_T("sin"),     3,  0,             1,  1,  __bfn_sin },
+	{ XP_T("system"),  6,  0,            1,  1,  XP_NULL, __bfn_system },
+	{ XP_T("sin"),     3,  0,            1,  1,  XP_NULL, __bfn_sin },
 
-	{ XP_NULL,         0,  0,             0,  0,  XP_NULL }
+	{ XP_NULL,         0,  0,            0,  0,  XP_NULL, XP_NULL }
 };
 
 xp_awk_bfn_t* xp_awk_addbfn (
-	xp_awk_t* awk, const xp_char_t* name, int when_valid,
-	xp_size_t min_args, xp_size_t max_args, int (*handler)(void*))
+	xp_awk_t* awk, const xp_char_t* name, int when_valid, 
+	xp_size_t min_args, xp_size_t max_args, const xp_char_t* arg_spec,
+	int (*handler)(xp_awk_t*,void*))
 {
 	xp_awk_bfn_t* p;
 
@@ -51,6 +61,7 @@ xp_awk_bfn_t* xp_awk_addbfn (
 	p->valid = when_valid;
 	p->min_args = min_args;
 	p->max_args = max_args;
+	p->arg_spec = arg_spec;
 	p->handler = handler;
 
 	p->next = awk->bfn.user;
@@ -120,7 +131,7 @@ xp_awk_bfn_t* xp_awk_getbfn (xp_awk_t* awk, const xp_char_t* name)
 	return XP_NULL;
 }
 
-static int __bfn_close (void* run)
+static int __bfn_close (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
 	xp_str_t buf;
@@ -213,7 +224,208 @@ skip_close:
 	return 0;
 }
 
-static int __bfn_system (void* run)
+static int __bfn_index (xp_awk_t* awk, void* run)
+{
+	xp_size_t nargs;
+	xp_awk_val_t* a0, * a1;
+	xp_char_t* str0, * str1, * ptr;
+	xp_size_t len0, len1;
+	xp_long_t idx;
+	int errnum;
+
+	nargs = xp_awk_getnargs (run);
+	xp_assert (nargs == 2);
+	
+	a0 = xp_awk_getarg (run, 0);
+	a1 = xp_awk_getarg (run, 1);
+
+	if (a0->type == XP_AWK_VAL_STR)
+	{
+		str0 = ((xp_awk_val_str_t*)a0)->buf;
+		len0 = ((xp_awk_val_str_t*)a0)->len;
+	}
+	else
+	{
+		str0 = xp_awk_valtostr (a0, &errnum, xp_true, XP_NULL, &len0);
+		if (str0 == XP_NULL)
+		{
+			xp_awk_seterrnum (run, errnum);
+			return -1;
+		}
+	}
+
+	if (a1->type == XP_AWK_VAL_STR)
+	{
+		str1 = ((xp_awk_val_str_t*)a1)->buf;
+		len1 = ((xp_awk_val_str_t*)a1)->len;
+	}
+	else
+	{
+		str1 = xp_awk_valtostr (a1, &errnum, xp_true, XP_NULL, &len1);
+		if (str1 == XP_NULL)
+		{
+			xp_awk_seterrnum (run, errnum);
+			if (a0->type != XP_AWK_VAL_STR) xp_free (str0);
+			return -1;
+		}
+	}
+
+
+	ptr = xp_strxnstr (str0, len0, str1, len1);
+	idx = (ptr == XP_NULL)? -1: (xp_long_t)(ptr - str0);
+
+	if (xp_awk_getopt(awk) & XP_AWK_STRINDEXONE) idx = idx + 1;
+
+	if (a0->type != XP_AWK_VAL_STR) xp_free (str0);
+	if (a1->type != XP_AWK_VAL_STR) xp_free (str1);
+
+	a0 = xp_awk_makeintval (run, idx);
+	if (a0 == XP_NULL)
+	{
+		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	xp_awk_setretval (run, a0);
+	return 0;
+}
+
+static int __bfn_length (xp_awk_t* awk, void* run)
+{
+	xp_size_t nargs;
+	xp_awk_val_t* v;
+	xp_char_t* str;
+	xp_size_t len;
+	int errnum;
+
+	nargs = xp_awk_getnargs (run);
+	xp_assert (nargs == 1);
+	
+	v = xp_awk_getarg (run, 0);
+	if (v->type == XP_AWK_VAL_STR)
+	{
+		len = ((xp_awk_val_str_t*)v)->len;
+	}
+	else
+	{
+		str = xp_awk_valtostr (v, &errnum, xp_true, XP_NULL, &len);
+		if (str == XP_NULL)
+		{
+			xp_awk_seterrnum (run, errnum);
+			return -1;
+		}
+
+		xp_free (str);
+	}
+
+	v = xp_awk_makeintval (run, len);
+	if (v == XP_NULL)
+	{
+		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	xp_awk_setretval (run, v);
+	return 0;
+}
+
+static int __bfn_substr (xp_awk_t* awk, void* run)
+{
+	xp_size_t nargs;
+	xp_awk_val_t* a0, * a1, * a2;
+	xp_char_t* str;
+	xp_size_t len;
+	xp_long_t lindex, lcount;
+	xp_real_t rindex, rcount;
+	int errnum, n;
+
+	nargs = xp_awk_getnargs (run);
+	xp_assert (nargs >= 2 && nargs <= 3);
+
+	a0 = xp_awk_getarg (run, 0);
+	a1 = xp_awk_getarg (run, 1);
+	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
+
+	if (a0->type == XP_AWK_VAL_STR)
+	{
+		str = ((xp_awk_val_str_t*)a0)->buf;
+		len = ((xp_awk_val_str_t*)a0)->len;
+	}
+	else 
+	{
+		str = xp_awk_valtostr (a0, &errnum, xp_true, XP_NULL, &len);
+		if (str == XP_NULL)
+		{
+			xp_awk_seterrnum (run, errnum);
+			return -1;
+		}
+	}
+
+	n = xp_awk_valtonum (a1, &lindex, &rindex);
+	if (n == -1) 
+	{
+		if (a0->type != XP_AWK_VAL_STR) xp_free (str);
+		xp_awk_seterrnum (run, XP_AWK_EVALTYPE);
+		return -1;
+	}
+	if (n == 1) lindex = (xp_long_t)rindex;
+
+	if (a2 == XP_NULL) lcount = (xp_long_t)len;
+	else 
+	{
+		n = xp_awk_valtonum (a2, &lcount, &rcount);
+		if (n == -1) 
+		{
+			if (a0->type != XP_AWK_VAL_STR) xp_free (str);
+			xp_awk_seterrnum (run, XP_AWK_EVALTYPE);
+			return -1;
+		}
+		if (n == 1) lcount = (xp_long_t)rcount;
+	}
+
+	if (xp_awk_getopt(awk) & XP_AWK_STRINDEXONE) lindex = lindex - 1;
+	if (lindex >= len) lindex = len;
+	else if (lindex < 0) lindex = 0;
+
+	if (lcount < 0) lcount = 0;
+	else if (lcount > len - lindex) lcount = len - lindex;
+
+	a0 = xp_awk_makestrval (&str[lindex], (xp_size_t)lcount);
+	if (a0 == XP_NULL)
+	{
+		if (a0->type != XP_AWK_VAL_STR) xp_free (str);
+		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	if (a0->type != XP_AWK_VAL_STR) xp_free (str);
+	xp_awk_setretval (run, a0);
+	return 0;
+}
+
+static int __bfn_split (xp_awk_t* awk, void* run)
+{
+	xp_size_t nargs;
+	xp_awk_val_t* a0, * a1, * a2;
+
+	nargs = xp_awk_getnargs (run);
+	xp_assert (nargs >= 2 && nargs <= 3);
+
+	a0 = xp_awk_getarg (run, 0);
+	a1 = xp_awk_getarg (run, 1);
+	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
+
+/* TODO: what should i do when it is nil??? */
+	if (a1->type != XP_AWK_VAL_MAP)
+	{
+	}
+/* TODO: */
+
+	xp_awk_setretval (run, a0);
+	return 0;
+}
+
+static int __bfn_system (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
 	xp_char_t* cmd;
@@ -227,7 +439,7 @@ static int __bfn_system (void* run)
 		xp_awk_getarg(run, 0), &errnum, xp_true, XP_NULL, XP_NULL);
 	if (cmd == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_seterrnum (run, errnum);
 		return -1;
 	}
 
@@ -251,7 +463,7 @@ static int __bfn_system (void* run)
 }
 
 /* math functions */
-static int __bfn_sin (void* run)
+static int __bfn_sin (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* v;

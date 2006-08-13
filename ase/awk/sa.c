@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.28 2006-07-17 04:17:40 bacon Exp $
+ * $Id: sa.c,v 1.29 2006-08-13 16:04:32 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -90,6 +90,34 @@ int xp_strxncmp (
 	if (s1 == end1 && s2 == end2) return 0;
 	if (*s1 == *s2) return (s1 < end1)? 1: -1;
 	return (*s1 > *s2)? 1: -1;
+}
+
+xp_char_t* xp_strxnstr (
+	const xp_char_t* str, xp_size_t strsz, 
+	const xp_char_t* sub, xp_size_t subsz)
+{
+	const xp_char_t* end, * subp;
+
+	if (subsz == 0) return (xp_char_t*)str;
+	if (strsz < subsz) return XP_NULL;
+	
+	end = str + strsz - subsz;
+	subp = sub + subsz;
+
+	while (str <= end) {
+		const xp_char_t* x = str;
+		const xp_char_t* y = sub;
+
+		while (xp_true) {
+			if (y >= subp) return (xp_char_t*)str;
+			if (*x != *y) break;
+			x++; y++;
+		}	
+
+		str++;
+	}
+		
+	return XP_NULL;
 }
 
 xp_char_t* xp_strtok (const xp_char_t* s, 
