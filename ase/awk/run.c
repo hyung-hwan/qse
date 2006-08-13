@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.165 2006-08-13 05:55:02 bacon Exp $
+ * $Id: run.c,v 1.166 2006-08-13 16:04:32 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2102,7 +2102,7 @@ static xp_awk_val_t* __do_assignment_pos (
 	n = xp_awk_valtonum (v, &lv, &rv);
 	xp_awk_refdownval (run, v);
 
-	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
+	if (n == -1) PANIC (run, XP_AWK_EPOSIDX); 
 	if (n == 1) lv = (xp_long_t)rv;
 	if (lv < 0) PANIC (run, XP_AWK_EPOSIDX);
 
@@ -2824,7 +2824,7 @@ static xp_awk_val_t* __eval_binop_lshift (
 	n1 = xp_awk_valtonum (left, &l1, &r1);
 	n2 = xp_awk_valtonum (right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
+	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND); 
 
 	n3 = n1 + (n2 << 1);
 	if (n3 == 0)
@@ -2849,7 +2849,7 @@ static xp_awk_val_t* __eval_binop_rshift (
 	n1 = xp_awk_valtonum (left, &l1, &r1);
 	n2 = xp_awk_valtonum (right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
+	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND); 
 
 	n3 = n1 + (n2 << 1);
 	if (n3 == 0)
@@ -2874,7 +2874,7 @@ static xp_awk_val_t* __eval_binop_plus (
 	n1 = xp_awk_valtonum (left, &l1, &r1);
 	n2 = xp_awk_valtonum (right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
+	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND); 
 	/*
 	n1  n2    n3
 	0   0   = 0
@@ -3926,7 +3926,7 @@ static xp_awk_val_t* __eval_call (
 
 		if (call->what.bfn.handler != XP_NULL)
 		{
-			n = call->what.bfn.handler (run);
+			n = call->what.bfn.handler (run->awk, run);
 		}
 	}
 

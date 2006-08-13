@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.67 2006-08-06 15:02:55 bacon Exp $
+ * $Id: tree.h,v 1.68 2006-08-13 16:04:32 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -252,7 +252,8 @@ struct xp_awk_nde_call_t
 			xp_size_t name_len;
 			xp_size_t min_args;
 			xp_size_t max_args;
-			int (*handler) (void* run);
+			const xp_char_t* arg_spec;
+			int (*handler) (xp_awk_t* awk, void* run);
 		} bfn;
 		/* xp_awk_bfn_t* bfn; */
 	} what;

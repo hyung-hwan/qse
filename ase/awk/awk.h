@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.95 2006-08-13 05:55:02 bacon Exp $
+ * $Id: awk.h,v 1.96 2006-08-13 16:04:32 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -96,41 +96,44 @@ enum
 enum
 { 
 	/* allow undeclared variables */
-	XP_AWK_IMPLICIT   = (1 << 0),
+	XP_AWK_IMPLICIT    = (1 << 0),
 
 	/* variable requires explicit declaration */
-	XP_AWK_EXPLICIT   = (1 << 1), 
+	XP_AWK_EXPLICIT    = (1 << 1), 
 
 	/* a function name should not coincide to be a variable name */
-	XP_AWK_UNIQUE     = (1 << 2),
+	XP_AWK_UNIQUE      = (1 << 2),
 
 	/* allow variable shading */
-	XP_AWK_SHADING    = (1 << 3), 
+	XP_AWK_SHADING     = (1 << 3), 
 
 	/* support shift operators */
-	XP_AWK_SHIFT      = (1 << 4), 
+	XP_AWK_SHIFT       = (1 << 4), 
 
 	/* support comments by a hash sign */
-	XP_AWK_HASHSIGN   = (1 << 5), 
+	XP_AWK_HASHSIGN    = (1 << 5), 
 
 	/* support comments by double slashes */
-	XP_AWK_DBLSLASHES = (1 << 6), 
+	XP_AWK_DBLSLASHES  = (1 << 6), 
 
 	/* support string concatenation in tokenization.
 	 * this option can change the behavior of a certain construct.
 	 * getline < "abc" ".def" is treated as if it is getline < "abc.def" 
 	 * when this option is on. If this option is off, the same expression
 	 * is treated as if it is (getline < "abc") ".def". */
-	XP_AWK_STRCONCAT  = (1 << 7), 
+	XP_AWK_STRCONCAT   = (1 << 7), 
 
 	/* support getline and print */
-	XP_AWK_EXTIO      = (1 << 8), 
+	XP_AWK_EXTIO       = (1 << 8), 
 
 	/* support blockless patterns */
-	XP_AWK_BLOCKLESS  = (1 << 9), 
+	XP_AWK_BLOCKLESS   = (1 << 9), 
 
  	/* execution starts from main */
-	XP_AWK_RUNMAIN    = (1 << 10) 
+	XP_AWK_RUNMAIN     = (1 << 10),
+
+	/* use 1 as the start index for string operations */
+	XP_AWK_STRINDEXONE = (1 << 11)
 };
 
 /* error code */
@@ -253,6 +256,8 @@ int xp_awk_clear (xp_awk_t* awk);
 
 int xp_awk_geterrnum (xp_awk_t* awk);
 xp_size_t xp_awk_getsrcline (xp_awk_t* awk);
+
+int xp_awk_getopt (xp_awk_t* awk);
 void xp_awk_setopt (xp_awk_t* awk, int opt);
 
 int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios);
