@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.164 2006-08-10 16:02:15 bacon Exp $
+ * $Id: run.c,v 1.165 2006-08-13 05:55:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -52,8 +52,10 @@ static void __deinit_run (xp_awk_run_t* run);
 
 static int __run_main (xp_awk_run_t* run);
 static int __run_pattern_blocks  (xp_awk_run_t* run);
-static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain);
-static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain);
+static int __run_pattern_block_chain (
+	xp_awk_run_t* run, xp_awk_chain_t* chain);
+static int __run_pattern_block (
+	xp_awk_run_t* run, xp_awk_chain_t* chain, xp_size_t block_no);
 static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde);
 static int __run_statement (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static int __run_if (xp_awk_run_t* run, xp_awk_nde_if_t* nde);
@@ -246,14 +248,29 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 		return -1;
 	}
 
-	if (runcbs->start != XP_NULL) 
-		runcbs->start (awk, run, runcbs->custom_data);
+	if (runcbs != XP_NULL && runcbs->on_start != XP_NULL) 
+	{
+		runcbs->on_start (awk, run, runcbs->custom_data);
+	}
 
 	n = __run_main (run);
-	if (n == -1) awk->errnum = XP_AWK_ERUNTIME;
+	if (n == -1) 
+	{
+		/* if no callback is specified, awk's error number 
+		 * is updated with the run's error number */
+		awk->errnum = (runcbs == XP_NULL)? run->errnum: XP_AWK_ERUNTIME;
+	}
 
-	if (runcbs->end != XP_NULL) 
-		runcbs->end (awk, run, runcbs->custom_data);
+	if (runcbs != XP_NULL && runcbs->on_end != XP_NULL) 
+	{
+		runcbs->on_end (awk, run, 
+			((n == -1)? run->errnum: XP_AWK_ENOERR), 
+			runcbs->custom_data);
+
+		/* when using callbacks, the function always returns 0 after
+		 * the start callbacks has been triggered */
+		n = 0;
+	}
 
 	__deinit_run (run);
 
@@ -294,6 +311,22 @@ int xp_awk_stop (xp_awk_t* awk, void* run)
 		awk->thr.lks->unlock (awk, awk->thr.lks->custom_data);
 
 	return n;
+}
+
+void xp_awk_stopall (xp_awk_t* awk)
+{
+	xp_awk_run_t* r;
+
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->lock (awk, awk->thr.lks->custom_data);
+
+	for (r = awk->run.ptr; r != XP_NULL; r = r->next)
+	{
+		r->exit_level = EXIT_ABORT;
+	}
+
+	if (awk->thr.lks != XP_NULL)
+		awk->thr.lks->unlock (awk, awk->thr.lks->custom_data);
 }
 
 int xp_awk_getrunerrnum (xp_awk_t* awk, void* run, int* errnum)
@@ -407,6 +440,16 @@ static int __init_run (
 		return -1;
 	}
 
+	run->pattern_range_state = (xp_byte_t*)
+		xp_calloc (run->awk->tree.chain_size, xp_sizeof(xp_byte_t));
+	if (run->pattern_range_state == XP_NULL)
+	{
+		xp_awk_map_close (&run->named);
+		xp_str_close (&run->inrec.line);
+		*errnum = XP_AWK_ENOMEM; 
+		return -1;
+	}
+
 	run->extio.handler[XP_AWK_EXTIO_PIPE] = runios->pipe;
 	run->extio.handler[XP_AWK_EXTIO_COPROC] = runios->coproc;
 	run->extio.handler[XP_AWK_EXTIO_FILE] = runios->file;
@@ -418,6 +461,8 @@ static int __init_run (
 
 static void __deinit_run (xp_awk_run_t* run)
 {
+	xp_free (run->pattern_range_state);
+
 	/* close all pending eio's */
 	/* TODO: what if this operation fails? */
 	xp_awk_clearextio (run);
@@ -643,19 +688,10 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 	xp_ssize_t n;
 	xp_bool_t need_to_close = xp_false;
 	int errnum;
-	xp_awk_chain_t* chain;
 
 	run->inrec.buf_pos = 0;
 	run->inrec.buf_len = 0;
 	run->inrec.eof = xp_false;
-
-	/* clear the pattern_range_state */
-	chain = run->awk->tree.chain;
-	while (chain != XP_NULL)
-	{
-		chain->pattern_range_state = 0;
-		chain = chain->next;
-	}
 
 	/* run each pattern block */
 	while (run->exit_level != EXIT_GLOBAL &&
@@ -710,6 +746,8 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 {
+	xp_size_t block_no = 0;
+
 	while (run->exit_level != EXIT_GLOBAL &&
 	       run->exit_level != EXIT_ABORT && chain != XP_NULL)
 	{
@@ -719,14 +757,17 @@ static int __run_pattern_block_chain (xp_awk_run_t* run, xp_awk_chain_t* chain)
 			break;
 		}
 
-		if (__run_pattern_block (run, chain) == -1) return -1;
-		chain = chain->next;
+		if (__run_pattern_block (run, chain, block_no) == -1) return -1;
+
+		chain = chain->next; 
+		block_no++;
 	}
 
 	return 0;
 }
 
-static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
+static int __run_pattern_block (
+	xp_awk_run_t* run, xp_awk_chain_t* chain, xp_size_t block_no)
 {
 	xp_awk_nde_t* ptn;
 	xp_awk_nde_blk_t* blk;
@@ -769,7 +810,7 @@ static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
 			/* pattern, pattern { ... } */
 			xp_assert (ptn->next->next == XP_NULL);
 
-			if (chain->pattern_range_state == 0)
+			if (run->pattern_range_state[block_no] == 0)
 			{
 				xp_awk_val_t* v1;
 
@@ -786,12 +827,12 @@ static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
 						return -1;
 					}
 
-					chain->pattern_range_state = 1;
+					run->pattern_range_state[block_no] = 1;
 				}
 
 				xp_awk_refdownval (run, v1);
 			}
-			else if (chain->pattern_range_state == 1)
+			else if (run->pattern_range_state[block_no] == 1)
 			{
 				xp_awk_val_t* v2;
 
@@ -807,7 +848,7 @@ static int __run_pattern_block (xp_awk_run_t* run, xp_awk_chain_t* chain)
 				}
 
 				if (xp_awk_valtobool(v2)) 
-					chain->pattern_range_state = 0;
+					run->pattern_range_state[block_no] = 0;
 
 				xp_awk_refdownval (run, v2);
 			}

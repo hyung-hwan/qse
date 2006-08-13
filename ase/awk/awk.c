@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.68 2006-08-10 16:02:15 bacon Exp $ 
+ * $Id: awk.c,v 1.69 2006-08-13 05:55:02 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -71,6 +71,7 @@ xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks)
 	awk->tree.end = XP_NULL;
 	awk->tree.chain = XP_NULL;
 	awk->tree.chain_tail = XP_NULL;
+	awk->tree.chain_size = 0;
 
 	awk->token.prev = 0;
 	awk->token.type = 0;
@@ -172,6 +173,7 @@ int xp_awk_clear (xp_awk_t* awk)
 	}
 
 	awk->tree.chain_tail = XP_NULL;	
+	awk->tree.chain_size = 0;
 	return 0;
 }
 

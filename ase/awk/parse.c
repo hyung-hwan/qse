@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.163 2006-08-10 16:02:15 bacon Exp $
+ * $Id: parse.c,v 1.164 2006-08-13 05:55:02 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -841,7 +841,6 @@ static xp_awk_chain_t* __parse_pattern_block (
 	}
 
 	chain->pattern = ptn;
-	chain->pattern_range_state = 0;
 	chain->action = nde;
 	chain->next = XP_NULL;
 
@@ -849,11 +848,13 @@ static xp_awk_chain_t* __parse_pattern_block (
 	{
 		awk->tree.chain = chain;
 		awk->tree.chain_tail = chain;
+		awk->tree.chain_size++;
 	}
 	else 
 	{
 		awk->tree.chain_tail->next = chain;
 		awk->tree.chain_tail = chain;
+		awk->tree.chain_size++;
 	}
 
 	return chain;

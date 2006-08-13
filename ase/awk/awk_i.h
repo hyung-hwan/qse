@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.43 2006-08-10 16:02:15 bacon Exp $
+ * $Id: awk_i.h,v 1.44 2006-08-13 05:55:02 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -49,6 +49,7 @@ struct xp_awk_tree_t
 	xp_awk_nde_t* end;
 	xp_awk_chain_t* chain;
 	xp_awk_chain_t* chain_tail;
+	xp_size_t chain_size; /* number of nodes in the chain */
 };
 
 struct xp_awk_t
@@ -138,7 +139,6 @@ struct xp_awk_t
 struct xp_awk_chain_t
 {
 	xp_awk_nde_t* pattern;
-	int pattern_range_state; /* used when pattern is a range */
 	xp_awk_nde_t* action;
 	xp_awk_chain_t* next;	
 };
@@ -160,6 +160,7 @@ struct xp_awk_run_t
 	xp_size_t rcache_count;
 
 	xp_awk_nde_blk_t* active_block;
+	xp_byte_t* pattern_range_state;
 
 	struct
 	{
