@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.70 2006-08-10 16:06:52 bacon Exp $
+ * $Id: awk.c,v 1.71 2006-08-13 06:33:30 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -525,16 +525,13 @@ static void __on_run_start (xp_awk_t* awk, void* handle, void* arg)
 xp_printf (XP_T("AWK PRORAM ABOUT TO START...\n"));
 }
 
-static void __on_run_end (xp_awk_t* awk, void* handle, void* arg)
+static void __on_run_end (xp_awk_t* awk, void* handle, int errnum, void* arg)
 {
-	int x;
-	
-	xp_awk_getrunerrnum (app_awk, app_run, &x);
-	if (x != XP_AWK_ENOERR)
+	if (errnum != XP_AWK_ENOERR)
 	{
-		xp_printf (XP_T("AWK PRORAM ABOUT TO END WITH AN ERROR - %d - %s\n"), x, xp_awk_geterrstr (x));
+		xp_printf (XP_T("AWK PRORAM ABOUT TO END WITH AN ERROR - %d - %s\n"), errnum, xp_awk_geterrstr (errnum));
 	}
-	else xp_printf (XP_T("AWK PRORAM ABOUT TO END...\n"));
+	else xp_printf (XP_T("AWK PRORAM ENDED SUCCESSFUL\n"));
 
 	app_awk = NULL;	
 	app_run = NULL;
@@ -635,8 +632,8 @@ static int __main (int argc, xp_char_t* argv[])
 	runios.file = process_extio_file;
 	runios.console = process_extio_console;
 
-	runcbs.start = __on_run_start;
-	runcbs.end   = __on_run_end;
+	runcbs.on_start = __on_run_start;
+	runcbs.on_end = __on_run_end;
 	runcbs.custom_data = XP_NULL;
 
 	if (xp_awk_run (awk, &runios, &runcbs) == -1)
