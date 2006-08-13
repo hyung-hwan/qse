@@ -10,6 +10,7 @@
 }
 */
 
+
 BEGIN { c["Europe"] = "XXX"; }
 
 /Europe/, /Africa/ { print $0;  }
