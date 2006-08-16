@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.19 2006-08-10 16:03:35 bacon Exp $
+ * $Id: rex.c,v 1.20 2006-08-16 08:55:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -86,6 +86,12 @@ struct __builder_t
 		xp_size_t  capa;
 	} code;	
 
+	struct
+	{
+		int max;
+		int cur;
+	} depth;
+
 	int errnum;
 };
 
@@ -99,6 +105,12 @@ struct __matcher_t
 			const xp_char_t* end;
 		} str;
 	} match;
+
+	struct
+	{
+		int max;
+		int cur;
+	} depth;
 
 	int errnum;
 };
@@ -128,6 +140,7 @@ typedef const xp_byte_t* (*atom_matcher_t) (
 #define CODEAT(rex,pos,type) (*((type*)&(rex)->code.buf[pos]))
 
 static int __build_pattern (__builder_t* rex);
+static int __build_pattern0 (__builder_t* rex);
 static int __build_branch (__builder_t* rex);
 static int __build_atom (__builder_t* rex);
 static int __build_charset (__builder_t* rex, struct __code_t* cmd);
@@ -145,6 +158,8 @@ static const xp_byte_t* __match_pattern (
 static const xp_byte_t* __match_branch (
 	__matcher_t* matcher, const xp_byte_t* base, __match_t* mat);
 static const xp_byte_t* __match_branch_body (
+	__matcher_t* matcher, const xp_byte_t* base, __match_t* mat);
+static const xp_byte_t* __match_branch_body0 (
 	__matcher_t* matcher, const xp_byte_t* base, __match_t* mat);
 static const xp_byte_t* __match_atom (
 	__matcher_t* matcher, const xp_byte_t* base, __match_t* mat);
@@ -221,6 +236,12 @@ static struct __char_class_t __char_class [] =
 
 void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum)
 {
+	return xp_awk_safebuildrex (ptn, len, 0, errnum);
+}
+
+void* xp_awk_safebuildrex (
+	const xp_char_t* ptn, xp_size_t len, int max_depth, int* errnum)
+{
 	__builder_t builder;
 
 	builder.code.capa = 512;
@@ -239,7 +260,9 @@ void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum)
 	builder.ptn.curc.type = CT_EOF;
 	builder.ptn.curc.value = XP_T('\0');
 
-	//NEXT_CHAR (&builder, LEVEL_TOP);
+	builder.depth.max = max_depth;
+	builder.depth.cur = 0;
+
 	if (__next_char (&builder, LEVEL_TOP) == -1) 
 	{
 		if (errnum != XP_NULL) *errnum = builder.errnum;
@@ -268,16 +291,27 @@ int xp_awk_matchrex (void* code,
 	const xp_char_t* str, xp_size_t len, 
 	const xp_char_t** match_ptr, xp_size_t* match_len, int* errnum)
 {
+	return xp_awk_safematchrex (
+		code, str, len, match_ptr, match_len, 0, errnum);
+}
+
+int xp_awk_safematchrex (void* code,
+	const xp_char_t* str, xp_size_t len, 
+	const xp_char_t** match_ptr, xp_size_t* match_len, 
+	int max_depth, int* errnum)
+{
 	__matcher_t matcher;
 	__match_t mat;
 	xp_size_t offset = 0;
-
-	mat.matched = xp_false;
 
 	/* store the source string */
 	matcher.match.str.ptr = str;
 	matcher.match.str.end = str + len;
 
+	matcher.depth.max = max_depth;
+	matcher.depth.cur = 0;
+
+	mat.matched = xp_false;
 /* TODO: shoud it allow an offset here??? */
 	mat.match_ptr = str + offset;
 
@@ -310,10 +344,28 @@ void xp_awk_printrex (void* rex)
 
 static int __build_pattern (__builder_t* builder)
 {
+	int n;
+
+	if (builder->depth.max > 0 && builder->depth.cur >= builder->depth.max)
+	{
+		builder->errnum = XP_AWK_ERECURSION;
+		return -1;
+	}
+
+	builder->depth.cur++;
+	n = __build_pattern0 (builder);
+	builder->depth.cur--;
+
+	return n;
+}
+
+static int __build_pattern0 (__builder_t* builder)
+{
 	xp_size_t zero = 0;
 	xp_size_t old_size;
 	xp_size_t pos_nb, pos_el;
 	int n;
+
 
 	old_size = builder->code.size;
 
@@ -904,6 +956,24 @@ static const xp_byte_t* __match_branch (
 }
 
 static const xp_byte_t* __match_branch_body (
+	__matcher_t* matcher, const xp_byte_t* base, __match_t* mat)
+{
+	const xp_byte_t* n;
+
+	if (matcher->depth.max > 0 && matcher->depth.cur >= matcher->depth.max)
+	{
+		matcher->errnum = XP_AWK_ERECURSION;
+		return XP_NULL;
+	}
+
+	matcher->depth.cur++;
+	n = __match_branch_body0 (matcher, base, mat);
+	matcher->depth.cur--;
+
+	return n;
+}
+
+static const xp_byte_t* __match_branch_body0 (
 	__matcher_t* matcher, const xp_byte_t* base, __match_t* mat)
 {
 	const xp_byte_t* p;

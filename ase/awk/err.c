@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.35 2006-08-10 16:02:15 bacon Exp $
+ * $Id: err.c,v 1.36 2006-08-16 08:55:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -19,6 +19,7 @@ const xp_char_t* xp_awk_geterrstr (int errnum)
 		XP_T("run-time error"),
 		XP_T("one or more running instances"),
 		XP_T("too many running instances"),
+		XP_T("recursion too deep"),
 
 		XP_T("cannot open source input"),
 		XP_T("cannot close source input"),
