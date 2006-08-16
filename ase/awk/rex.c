@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.22 2006-08-16 11:35:53 bacon Exp $
+ * $Id: rex.c,v 1.23 2006-08-16 15:21:17 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -9,6 +9,7 @@
 #include <xp/bas/assert.h>
 #include <xp/bas/ctype.h>
 #endif
+
 
 enum
 {
@@ -53,6 +54,7 @@ enum
 #pragma warning (disable: 4296)
 #endif
 
+#define DEF_CODE_CAPA 512
 #define BOUND_MIN 0
 #define BOUND_MAX (XP_TYPE_MAX(xp_size_t))
 
@@ -252,7 +254,7 @@ void* xp_awk_safebuildrex (
 {
 	__builder_t builder;
 
-	builder.code.capa = 512;
+	builder.code.capa = DEF_CODE_CAPA;
 	builder.code.size = 0;
 	builder.code.buf = (xp_byte_t*) xp_malloc (builder.code.capa);
 	if (builder.code.buf == XP_NULL) 
@@ -883,7 +885,7 @@ static int __add_code (__builder_t* builder, void* data, xp_size_t len)
 		xp_size_t capa = builder->code.capa * 2;
 		xp_byte_t* tmp;
 		
-		if (capa == 0) capa = 256;
+		if (capa == 0) capa = DEF_CODE_CAPA;
 		while (len > capa - builder->code.size) { capa = capa * 2; }
 
 #ifndef XP_AWK_NTDDK
