@@ -1,0 +1,8 @@
+TARGETNAME=xpawk
+TARGETPATH=obj
+TARGETTYPE=DRIVER_LIBRARY
+
+SOURCES=awk.c err.c tree.c tab.c map.c parse.c run.c sa.c val.c func.c misc.c extio.c rex.c
+
+C_DEFINES=-DXP_AWK_STAND_ALONE  -DXP_AWK_NTDDK
+INCLUDES=..\..

@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.29 2006-08-13 16:04:32 bacon Exp $
+ * $Id: sa.h,v 1.30 2006-08-16 09:35:21 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -15,29 +15,58 @@
 #error Neither XP_CHAR_IS_MCHAR nor XP_CHAR_IS_WCHAR is defined.
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <assert.h>
+#ifdef XP_AWK_NTDDK
+	#include <ntddk.h>
+	#include <stdio.h>
+	#include <stdarg.h>
+	#include <stdlib.h>
 
-#ifdef XP_CHAR_IS_MCHAR
-#include <ctype.h>
+	#ifdef XP_CHAR_IS_MCHAR
+		#include <ctype.h>
+	#else
+		#include <ctype.h>
+		#include <wchar.h>
+	#endif
+
+	#define xp_assert ASSERT
+
+	#define xp_malloc malloc
+	#define xp_calloc calloc
+	#define xp_realloc realloc
+	#define xp_free free
+
+	#define xp_memset(dst,fill,len) RtlFillMemory(dst,len,fill)
+	#define xp_memcpy(dst,src,len) RtlCopyMemory(dst,src,len)
+	#define xp_memcmp(src1,src2,len) RtlCompareMemory(src1,src2,len);
 #else
-#include <ctype.h>
-#include <wchar.h>
-#if !defined(__BEOS__)
-#include <wctype.h>
-#endif
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <stdarg.h>
+	#include <assert.h>
+
+	#ifdef XP_CHAR_IS_MCHAR
+		#include <ctype.h>
+	#else
+		#include <ctype.h>
+		#include <wchar.h>
+		#if !defined(__BEOS__)
+			#include <wctype.h>
+		#endif
+	#endif
+
+	#define xp_assert assert
+
+	#define xp_malloc malloc
+	#define xp_calloc calloc
+	#define xp_realloc realloc
+	#define xp_free free
+
+	#define xp_memset(dst,fill,len)  memset(dst,fill,len)
+	#define xp_memcpy(dst,src,len)   memcpy(dst,src,len)
+	#define xp_memcmp(src1,src2,len) memcmp(src1,src2,len);
 #endif
 
-#define xp_malloc malloc
-#define xp_calloc calloc
-#define xp_realloc realloc
-#define xp_free free
-#define xp_memset memset
-#define xp_memcpy memcpy
-#define xp_assert assert
 
 #ifdef XP_CHAR_IS_MCHAR
 #define xp_isdigit isdigit
@@ -69,8 +98,6 @@
 #define xp_tolower towlower
 #endif
 
-#define xp_memcpy memcpy
-#define xp_memcmp memcmp
 
 #define xp_va_start(pvar,param) va_start(pvar,param)
 #define xp_va_list va_list
