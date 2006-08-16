@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.20 2006-08-16 08:55:43 bacon Exp $
+ * $Id: rex.c,v 1.21 2006-08-16 09:35:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -48,6 +48,10 @@ enum
 	CHARSET_CLASS_DIGIT,
 	CHARSET_CLASS_ALNUM
 };
+
+#ifdef _MSC_VER
+#pragma warning (disable: 4296)
+#endif
 
 #define BOUND_MIN 0
 #define BOUND_MAX (XP_TYPE_MAX(xp_size_t))
