@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.96 2006-08-13 16:04:32 bacon Exp $
+ * $Id: awk.h,v 1.97 2006-08-16 08:55:42 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -145,6 +145,7 @@ enum
 	XP_AWK_ERUNTIME,       /* run-time error */
 	XP_AWK_ERUNNING,       /* there are running instances */
 	XP_AWK_ETOOMANYRUNS,   /* too many running instances */
+	XP_AWK_ERECURSION,     /* recursion too deep */
 
 	XP_AWK_ESRCINOPEN,
 	XP_AWK_ESRCINCLOSE,
