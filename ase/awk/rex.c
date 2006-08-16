@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.21 2006-08-16 09:35:21 bacon Exp $
+ * $Id: rex.c,v 1.22 2006-08-16 11:35:53 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -187,6 +187,7 @@ static const xp_byte_t* __match_boundary (
 static xp_bool_t __test_charset (
 	const xp_byte_t* p, xp_size_t csc, xp_char_t c);
 
+#ifndef XP_AWK_NTDDK
 static xp_bool_t __cc_isalnum (xp_char_t c);
 static xp_bool_t __cc_isalpha (xp_char_t c);
 static xp_bool_t __cc_isblank (xp_char_t c);
@@ -199,11 +200,13 @@ static xp_bool_t __cc_ispunct (xp_char_t c);
 static xp_bool_t __cc_isspace (xp_char_t c);
 static xp_bool_t __cc_isupper (xp_char_t c);
 static xp_bool_t __cc_isxdigit (xp_char_t c);
+#endif
 
 static const xp_byte_t* __print_pattern (const xp_byte_t* p);
 static const xp_byte_t* __print_branch (const xp_byte_t* p);
 static const xp_byte_t* __print_atom (const xp_byte_t* p);
 
+#ifndef XP_AWK_NTDDK
 static struct __char_class_t
 {
 	const xp_char_t* name;
@@ -237,6 +240,7 @@ static struct __char_class_t __char_class [] =
 
 	{ XP_NULL,        0, XP_NULL }
 };
+#endif
 
 void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum)
 {
@@ -340,10 +344,9 @@ int xp_awk_safematchrex (void* code,
 	return (mat.matched)? 1: 0;
 }
 
-void xp_awk_printrex (void* rex)
+void xp_awk_freerex (void* code)
 {
-	__print_pattern (rex);
-	xp_printf (XP_T("\n"));
+	xp_free (code);
 }
 
 static int __build_pattern (__builder_t* builder)
@@ -590,6 +593,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 		c1 = builder->ptn.curc.value;
 		NEXT_CHAR(builder, LEVEL_CHARSET);
 
+#ifndef XP_AWK_NTDDK
 		if (c1 == XP_T('[') &&
 		    builder->ptn.curc.type == CT_NORMAL &&
 		    builder->ptn.curc.value == XP_T(':'))
@@ -597,6 +601,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 			if (__build_cclass (builder, &c1) == -1) return -1;
 			cc = cc | 1;
 		}
+#endif
 
 		c2 = c1;
 		if (builder->ptn.curc.type == CT_NORMAL &&
@@ -609,6 +614,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 				c2 = builder->ptn.curc.value;
 				NEXT_CHAR (builder, LEVEL_CHARSET);
 
+#ifndef XP_AWK_NTDDK
 				if (c2 == XP_T('[') &&
 				    builder->ptn.curc.type == CT_NORMAL &&
 				    builder->ptn.curc.value == XP_T(':'))
@@ -620,6 +626,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 
 					cc = cc | 2;
 				}
+#endif
 			}	
 			else cc = cc | 4;
 		}
@@ -662,6 +669,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 	return 1;
 }
 
+#ifndef XP_AWK_NTDDK
 static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 {
 	const struct __char_class_t* ccp = __char_class;
@@ -708,6 +716,7 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 	*cc = (xp_char_t)(ccp - __char_class);
 	return 1;
 }
+#endif
 
 static int __build_boundary (__builder_t* builder, struct __code_t* cmd)
 {
@@ -768,7 +777,8 @@ static int __build_range (__builder_t* builder, struct __code_t* cmd)
 //  what if it is not in the raight format? convert it to ordinary characters??
 	bound = 0;
 	while (builder->ptn.curc.type == CT_NORMAL &&
-	       xp_isdigit(builder->ptn.curc.value))
+	       (builder->ptn.curc.value >= XP_T('0') && 
+	        builder->ptn.curc.value <= XP_T('9')))
 	{
 		bound = bound * 10 + builder->ptn.curc.value - XP_T('0');
 		NEXT_CHAR (builder, LEVEL_RANGE);
@@ -783,7 +793,8 @@ static int __build_range (__builder_t* builder, struct __code_t* cmd)
 
 		bound = 0;
 		while (builder->ptn.curc.type == CT_NORMAL &&
-		       xp_isdigit(builder->ptn.curc.value))
+		       (builder->ptn.curc.value >= XP_T('0') && 
+		        builder->ptn.curc.value <= XP_T('9')))
 		{
 			bound = bound * 10 + builder->ptn.curc.value - XP_T('0');
 			NEXT_CHAR (builder, LEVEL_RANGE);
@@ -872,15 +883,29 @@ static int __add_code (__builder_t* builder, void* data, xp_size_t len)
 		xp_size_t capa = builder->code.capa * 2;
 		xp_byte_t* tmp;
 		
-		if (capa == 0) capa = 1;
+		if (capa == 0) capa = 256;
 		while (len > capa - builder->code.size) { capa = capa * 2; }
 
+#ifndef XP_AWK_NTDDK
 		tmp = (xp_byte_t*) xp_realloc (builder->code.buf, capa);
 		if (tmp == XP_NULL)
 		{
 			builder->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
+#else
+		tmp = (xp_byte_t*) xp_malloc (capa);
+		if (tmp == XP_NULL)
+		{
+			builder->errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
+		if (builder->code.buf != XP_NULL)
+		{
+			xp_memcpy (tmp, builder->code.buf, builder->code.capa);
+			xp_free (builder->code.buf);
+		}
+#endif
 
 		builder->code.buf = tmp;
 		builder->code.capa = capa;
@@ -1454,11 +1479,13 @@ xp_bool_t __test_charset (const xp_byte_t* p, xp_size_t csc, xp_char_t c)
 
 			if (c >= c1 && c <= c2) return xp_true;
 		}
+#ifndef XP_AWK_NTDDK
 		else if (c0 == CHARSET_CLASS)
 		{
 			c1 = *(xp_char_t*)p;
 			if (__char_class[c1].func (c)) return xp_true;
 		}
+#endif
 		else
 		{
 			xp_assert (!"should never happen - invalid charset code");
@@ -1470,6 +1497,8 @@ xp_bool_t __test_charset (const xp_byte_t* p, xp_size_t csc, xp_char_t c)
 
 	return xp_false;
 }
+
+#ifndef XP_AWK_NTDDK
 
 static xp_bool_t __cc_isalnum (xp_char_t c)
 {
@@ -1529,6 +1558,12 @@ static xp_bool_t __cc_isupper (xp_char_t c)
 static xp_bool_t __cc_isxdigit (xp_char_t c)
 {
 	return xp_isxdigit (c);
+}
+
+void xp_awk_printrex (void* rex)
+{
+	__print_pattern (rex);
+	xp_printf (XP_T("\n"));
 }
 
 static const xp_byte_t* __print_pattern (const xp_byte_t* p)
@@ -1660,3 +1695,5 @@ static const xp_byte_t* __print_atom (const xp_byte_t* p)
 
 	return p;
 }
+
+#endif

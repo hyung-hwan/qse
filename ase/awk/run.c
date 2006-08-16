@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.166 2006-08-13 16:04:32 bacon Exp $
+ * $Id: run.c,v 1.167 2006-08-16 11:35:53 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4248,13 +4248,25 @@ static int __raw_push (xp_awk_run_t* run, void* val)
 {
 	if (run->stack_top >= run->stack_limit)
 	{
-		void* tmp;
+		void** tmp;
 		xp_size_t n;
 	       
 		n = run->stack_limit + STACK_INCREMENT;
-		tmp = (void**) xp_realloc (run->stack, n * xp_sizeof(void*));
-		if (tmp == XP_NULL) return -1;
 
+#ifndef XP_AWK_NTDDK
+		tmp = (void**) xp_realloc (
+			run->stack, n * xp_sizeof(void*)); 
+		if (tmp == XP_NULL) return -1;
+#else
+		tmp = (void**) xp_malloc (n * xp_sizeof(void*));
+		if (tmp == XP_NULL) return -1;
+		if (run->stack != XP_NULL)
+		{
+			xp_memcpy (tmp, run->stack, 
+				run->stack_limit * xp_sizeof(void*)); 
+			xp_free (run->stack);
+		}
+#endif
 		run->stack = tmp;
 		run->stack_limit = n;
 	}
@@ -4454,13 +4466,30 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 	nflds = run->inrec.nflds;
 	if (max > run->inrec.maxflds)
 	{
-		void* tmp = xp_realloc (
+		void* tmp;
+
+#ifndef XP_AWK_NTDDK
+		tmp = xp_realloc (
 			run->inrec.flds, xp_sizeof(*run->inrec.flds) * max);
 		if (tmp == XP_NULL) 
 		{
 			*errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
+#else
+		tmp = xp_malloc (xp_sizeof(*run->inrec.flds) * max);
+		if (tmp == XP_NULL)
+		{
+			*errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
+		if (run->inrec.flds != XP_NULL)
+		{
+			xp_memcpy (tmp, run->inrec.flds, 
+				xp_sizeof(*run->inrec.flds) * run->inrec.maxflds);
+			xp_free (run->inrec.flds);
+		}
+#endif
 
 		run->inrec.flds = tmp;
 		run->inrec.maxflds = max;

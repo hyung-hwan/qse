@@ -1,6 +1,5 @@
 global a;
-BEGIN
-{
+BEGIN {
 	local b;
 
 	//a = 20;
