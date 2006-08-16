@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.30 2006-08-16 09:35:21 bacon Exp $
+ * $Id: sa.h,v 1.31 2006-08-16 11:35:54 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -17,23 +17,12 @@
 
 #ifdef XP_AWK_NTDDK
 	#include <ntddk.h>
-	#include <stdio.h>
 	#include <stdarg.h>
-	#include <stdlib.h>
-
-	#ifdef XP_CHAR_IS_MCHAR
-		#include <ctype.h>
-	#else
-		#include <ctype.h>
-		#include <wchar.h>
-	#endif
 
 	#define xp_assert ASSERT
 
-	#define xp_malloc malloc
-	#define xp_calloc calloc
-	#define xp_realloc realloc
-	#define xp_free free
+	#define xp_malloc(size) ExAllocatePool(PagedPool,size)
+	#define xp_free(ptr) ExFreePool(ptr)
 
 	#define xp_memset(dst,fill,len) RtlFillMemory(dst,len,fill)
 	#define xp_memcpy(dst,src,len) RtlCopyMemory(dst,src,len)
@@ -65,39 +54,38 @@
 	#define xp_memset(dst,fill,len)  memset(dst,fill,len)
 	#define xp_memcpy(dst,src,len)   memcpy(dst,src,len)
 	#define xp_memcmp(src1,src2,len) memcmp(src1,src2,len);
+
+	#ifdef XP_CHAR_IS_MCHAR
+		#define xp_isdigit isdigit
+		#define xp_isxdigit isxdigit
+		#define xp_isalpha isalpha
+		#define xp_isalnum isalnum
+		#define xp_isspace isspace
+		#define xp_iscntrl iscntrl
+		#define xp_isgraph isgraph
+		#define xp_islower islower
+		#define xp_isupper isupper
+		#define xp_isprint isprint
+		#define xp_ispunct ispunct
+		#define xp_toupper toupper
+		#define xp_tolower tolower
+	#else
+		#define xp_isdigit iswdigit
+		#define xp_isxdigit iswxdigit
+		#define xp_isalpha iswalpha
+		#define xp_isalnum iswalnum
+		#define xp_isspace iswspace
+		#define xp_iscntrl iswcntrl
+		#define xp_isgraph iswgraph
+		#define xp_islower iswlower
+		#define xp_isupper iswupper
+		#define xp_isprint iswprint
+		#define xp_ispunct iswpunct
+		#define xp_toupper towupper
+		#define xp_tolower towlower
+	#endif
+
 #endif
-
-
-#ifdef XP_CHAR_IS_MCHAR
-#define xp_isdigit isdigit
-#define xp_isxdigit isxdigit
-#define xp_isalpha isalpha
-#define xp_isalnum isalnum
-#define xp_isspace isspace
-#define xp_iscntrl iscntrl
-#define xp_isgraph isgraph
-#define xp_islower islower
-#define xp_isupper isupper
-#define xp_isprint isprint
-#define xp_ispunct ispunct
-#define xp_toupper toupper
-#define xp_tolower tolower
-#else
-#define xp_isdigit iswdigit
-#define xp_isxdigit iswxdigit
-#define xp_isalpha iswalpha
-#define xp_isalnum iswalnum
-#define xp_isspace iswspace
-#define xp_iscntrl iswcntrl
-#define xp_isgraph iswgraph
-#define xp_islower iswlower
-#define xp_isupper iswupper
-#define xp_isprint iswprint
-#define xp_ispunct iswpunct
-#define xp_toupper towupper
-#define xp_tolower towlower
-#endif
-
 
 #define xp_va_start(pvar,param) va_start(pvar,param)
 #define xp_va_list va_list

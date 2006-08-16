@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.49 2006-08-03 05:05:48 bacon Exp $
+ * $Id: val.c,v 1.50 2006-08-16 11:35:54 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -244,7 +244,7 @@ xp_printf (XP_T("\n"));*/
 
 	case XP_AWK_VAL_REX:
 		xp_free (((xp_awk_val_rex_t*)val)->buf);
-		xp_free (((xp_awk_val_rex_t*)val)->code);
+		xp_awk_freerex (((xp_awk_val_rex_t*)val)->code);
 		xp_free (val);
 		return;
 

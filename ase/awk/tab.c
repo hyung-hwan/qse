@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.10 2006-08-03 06:06:27 bacon Exp $
+ * $Id: tab.c,v 1.11 2006-08-16 11:35:54 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -62,8 +62,20 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 
 	if (capa > 0) 
 	{
+#ifndef XP_AWK_NTDDK
 		tmp = xp_realloc (tab->buf, xp_sizeof(*tab->buf) * capa);
 		if (tmp == XP_NULL) return XP_NULL;
+#else
+		tmp = xp_malloc (xp_sizeof(*tab->buf) * capa);
+		if (tmp == XP_NULL) return XP_NULL;
+		if (tab->buf != XP_NULL) 
+		{
+			xp_size_t x;
+			x = (capa > tab->capa)? tab->capa: capa;
+			xp_memcpy (tmp, tab->buf, xp_sizeof(*tab->buf) * x);
+			xp_free (tab->buf);
+		}
+#endif
 	}
 	else 
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.29 2006-08-13 16:04:32 bacon Exp $
+ * $Id: sa.c,v 1.30 2006-08-16 11:35:53 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -395,22 +395,34 @@ xp_size_t xp_str_cat (xp_str_t* str, const xp_char_t* s)
 
 xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len)
 {
-	xp_char_t* buf;
-	xp_size_t capa;
-
 	if (len > str->capa - str->size) 
 	{
+		xp_char_t* tmp;
+		xp_size_t capa;
+
 		capa = str->size + len;
 
 		/* double the capa if necessary for concatenation */
 		if (capa < str->capa * 2) capa = str->capa * 2;
 
-		buf = (xp_char_t*) xp_realloc (
+#ifndef XP_AWK_NTDDK
+		tmp = (xp_char_t*) xp_realloc (
 			str->buf, xp_sizeof(xp_char_t) * (capa + 1));
-		if (buf == XP_NULL) return (xp_size_t)-1;
+		if (tmp == XP_NULL) return (xp_size_t)-1;
+#else
+		tmp = (xp_char_t*) xp_malloc (
+			xp_sizeof(xp_char_t) * (capa + 1));
+		if (tmp == XP_NULL) return (xp_size_t)-1;
+		if (str->buf != XP_NULL)
+		{
+			xp_memcpy (tmp, str->buf, 
+				xp_sizeof(xp_char_t) * (str->capa + 1));
+			xp_free (str->buf);
+		}
+#endif
 
 		str->capa = capa;
-		str->buf = buf;
+		str->buf = tmp;
 	}
 
 	str->size += xp_strncpy (&str->buf[str->size], s, len);
