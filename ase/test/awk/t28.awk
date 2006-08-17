@@ -17,7 +17,13 @@ END {
 	substr (a, 3, 4);
 	*/
 
-
 	print tolower ("AbcDEF");
 	print toupper ("AbcDEF");
+
+	arr[0] = "xxx";
+	print split ("abc def abc", arr);
+	for (i in arr)
+	{
+		print i, " ", arr[i];
+	}
 }

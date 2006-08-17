@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.167 2006-08-16 11:35:53 bacon Exp $
+ * $Id: run.c,v 1.168 2006-08-17 14:10:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4370,7 +4370,8 @@ static int __split_record (xp_awk_run_t* run)
 
 		if (nflds == 0 && p == XP_NULL && tok_len == 0)
 		{
-			/* no fields */
+			/* there are no fields. it can just return here
+			 * as __clear_record has been called before this */
 			return 0;
 		}
 
