@@ -12,6 +12,12 @@ END {
 	print substr ("abc", "3", 5);
 	print substr ("abc", 4, 5);
 
+	/*
 	a[1] = 20;
 	substr (a, 3, 4);
+	*/
+
+
+	print tolower ("AbcDEF");
+	print toupper ("AbcDEF");
 }
