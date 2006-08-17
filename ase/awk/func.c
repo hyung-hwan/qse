@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.19 2006-08-17 03:49:29 bacon Exp $
+ * $Id: func.c,v 1.20 2006-08-17 14:10:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -337,7 +337,7 @@ static int __bfn_length (xp_awk_t* awk, void* run)
 static int __bfn_substr (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1, * a2;
+	xp_awk_val_t* a0, * a1, * a2, * r;
 	xp_char_t* str;
 	xp_size_t len;
 	xp_long_t lindex, lcount;
@@ -395,8 +395,8 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 	if (lcount < 0) lcount = 0;
 	else if (lcount > len - lindex) lcount = len - lindex;
 
-	a0 = xp_awk_makestrval (&str[lindex], (xp_size_t)lcount);
-	if (a0 == XP_NULL)
+	r = xp_awk_makestrval (&str[lindex], (xp_size_t)lcount);
+	if (r == XP_NULL)
 	{
 		if (a0->type != XP_AWK_VAL_STR) xp_free (str);
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
@@ -404,14 +404,19 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 	}
 
 	if (a0->type != XP_AWK_VAL_STR) xp_free (str);
-	xp_awk_setretval (run, a0);
+	xp_awk_setretval (run, r);
 	return 0;
 }
 
 static int __bfn_split (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1, * a2;
+	xp_awk_val_t* a0, * a1, * a2, * r;
+	xp_char_t* str, * p, * tok;
+	xp_size_t len, left, tok_len;
+	xp_long_t num;
+	int errnum;
+	xp_char_t key[32];
 
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs >= 2 && nargs <= 3);
@@ -420,13 +425,92 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	a1 = xp_awk_getarg (run, 1);
 	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
 
-/* TODO: what should i do when it is nil??? */
-	if (a1->type != XP_AWK_VAL_MAP)
+	if (a0->type == XP_AWK_VAL_STR)
 	{
+		str = ((xp_awk_val_str_t*)a0)->buf;
+		len = ((xp_awk_val_str_t*)a0)->len;
 	}
-/* TODO: */
+	else 
+	{
+		str = xp_awk_valtostr (a0, &errnum, xp_true, XP_NULL, &len);
+		if (str == XP_NULL)
+		{
+			xp_awk_seterrnum (run, errnum);
+			return -1;
+		}
+	}
 
-	xp_awk_setretval (run, a0);
+	if (a1->type == XP_AWK_VAL_MAP)
+	{
+		/* clear the map */
+		xp_awk_map_clear (((xp_awk_val_map_t*)a1)->map);
+	}
+	else 
+	{
+/* TODO: what should i do when it is nil??? */
+		/* change it to a map */
+	}
+
+	xp_assert (a1->type == XP_AWK_VAL_MAP);
+
+	p = str; left = len; num = 0;
+	while (p != XP_NULL)
+	{
+		/* TODO: use FS when a2 is missing. apply a difference scheme */
+		p = xp_strxtok (p, left, XP_T(" \t"), &tok, &tok_len);
+
+		if (num == 0 && p == XP_NULL && tok_len == 0) 
+		{
+			/* no field at all*/
+			break; 
+		}	
+
+		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
+
+		/* create the field string */
+		r = xp_awk_makestrval (tok, tok_len);
+		if (r == XP_NULL)
+		{
+			if (a0->type != XP_AWK_VAL_STR) xp_free (str);
+			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+			return -1;
+		}
+
+		/* put it into the array */
+		/* TODO: remove dependency on xp_sprintf */
+	#if defined(__LCC__)
+		xp_sprintf (key, xp_countof(key), XP_T("%lld"), (long long)num);
+	#elif defined(__BORLANDC__) || defined(_MSC_VER)
+		xp_sprintf (key, xp_countof(key), XP_T("%I64d"), (__int64)num);
+	#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
+		xp_sprintf (key, xp_countof(key), XP_T("%ld"), (long)num);
+	#else
+		xp_sprintf (key, xp_countof(key), XP_T("%lld"), (long long)num);
+	#endif
+
+		if (xp_awk_map_putx (
+			((xp_awk_val_map_t*)a1)->map, 
+			key, xp_strlen(key), r, XP_NULL) == -1)
+		{
+			if (a0->type != XP_AWK_VAL_STR) xp_free (str);
+			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+			return -1;
+		}
+
+		num++;
+		len = len - (p - str);
+	}
+
+	if (a0->type != XP_AWK_VAL_STR) xp_free (str);
+
+	r = xp_awk_makeintval (run, num);
+	if (r == XP_NULL)
+	{
+		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	xp_awk_setretval (run, r);
 	return 0;
 }
 
@@ -435,7 +519,7 @@ static int __bfn_tolower (xp_awk_t* awk, void* run)
 	xp_size_t nargs;
 	xp_char_t* str;
 	xp_size_t len, i;
-	xp_awk_val_t* a0;
+	xp_awk_val_t* a0, * r;
 	int errnum;
 
 	nargs = xp_awk_getnargs (run);
@@ -460,8 +544,8 @@ static int __bfn_tolower (xp_awk_t* awk, void* run)
 
 	for (i = 0; i < len; i++) str[i] = xp_tolower(str[i]);	
 
-	a0 = xp_awk_makestrval (str, len);
-	if (a0 == XP_NULL)
+	r = xp_awk_makestrval (str, len);
+	if (r == XP_NULL)
 	{
 		if (a0->type != XP_AWK_VAL_STR) xp_free (str);
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
@@ -469,7 +553,7 @@ static int __bfn_tolower (xp_awk_t* awk, void* run)
 	}
 
 	if (a0->type != XP_AWK_VAL_STR) xp_free (str);
-	xp_awk_setretval (run, a0);
+	xp_awk_setretval (run, r);
 	return 0;
 }
 
@@ -478,7 +562,7 @@ static int __bfn_toupper (xp_awk_t* awk, void* run)
 	xp_size_t nargs;
 	xp_char_t* str;
 	xp_size_t len, i;
-	xp_awk_val_t* a0;
+	xp_awk_val_t* a0, * r;
 	int errnum;
 
 	nargs = xp_awk_getnargs (run);
@@ -503,8 +587,8 @@ static int __bfn_toupper (xp_awk_t* awk, void* run)
 
 	for (i = 0; i < len; i++) str[i] = xp_toupper(str[i]);	
 
-	a0 = xp_awk_makestrval (str, len);
-	if (a0 == XP_NULL)
+	r = xp_awk_makestrval (str, len);
+	if (r == XP_NULL)
 	{
 		if (a0->type != XP_AWK_VAL_STR) xp_free (str);
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
@@ -512,7 +596,7 @@ static int __bfn_toupper (xp_awk_t* awk, void* run)
 	}
 
 	if (a0->type != XP_AWK_VAL_STR) xp_free (str);
-	xp_awk_setretval (run, a0);
+	xp_awk_setretval (run, r);
 	return 0;
 }
 
