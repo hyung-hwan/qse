@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.168 2006-08-17 14:10:20 bacon Exp $
+ * $Id: run.c,v 1.169 2006-08-18 07:52:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -146,7 +146,8 @@ static xp_awk_val_t* __eval_cnd (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_bfn (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_afn (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_call (
-	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_awk_afn_t* afn);
+	xp_awk_run_t* run, xp_awk_nde_t* nde, 
+	const xp_char_t* bfn_arg_spec, xp_awk_afn_t* afn);
 
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_real (xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -164,7 +165,11 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
 static int __raw_push (xp_awk_run_t* run, void* val);
-static void __raw_pop (xp_awk_run_t* run);
+#define __raw_pop(run) \
+	do { \
+		xp_assert ((run)->stack_top > (run)->stack_base); \
+		(run)->stack_top--; \
+	} while (0)
 static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times);
 
 static int __read_record (xp_awk_run_t* run);
@@ -568,7 +573,6 @@ static int __run_main (xp_awk_run_t* run)
 			/* restore the stack top in a cheesy(?) way */
 			run->stack_top = saved_stack_top;
 			/* pops off global variables in a decent way */	
-			/*__raw_pop_times (run, run->nglobals);*/
 			__raw_pop_times (run, run->awk->tree.nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
@@ -576,7 +580,6 @@ static int __run_main (xp_awk_run_t* run)
 		if (__raw_push(run,(void*)saved_stack_top) == -1) 
 		{
 			run->stack_top = saved_stack_top;
-			/*__raw_pop_times (run, run->nglobals);*/
 			__raw_pop_times (run, run->awk->tree.nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
@@ -585,7 +588,6 @@ static int __run_main (xp_awk_run_t* run)
 		if (__raw_push(run,xp_awk_val_nil) == -1)
 		{
 			run->stack_top = saved_stack_top;
-			/*__raw_pop_times (run, run->nglobals);*/
 			__raw_pop_times (run, run->awk->tree.nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
@@ -594,7 +596,6 @@ static int __run_main (xp_awk_run_t* run)
 		if (__raw_push(run,xp_awk_val_nil) == -1)
 		{
 			run->stack_top = saved_stack_top;
-			/*__raw_pop_times (run, run->nglobals);*/
 			__raw_pop_times (run, run->awk->tree.nglobals);
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
@@ -3719,7 +3720,7 @@ static xp_awk_val_t* __eval_bfn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		PANIC (run, XP_AWK_ETOOMANYARGS);
 	}
 
-	return __eval_call (run, nde, XP_NULL);
+	return __eval_call (run, nde, call->what.bfn.arg_spec, XP_NULL);
 }
 
 static xp_awk_val_t* __eval_afn (xp_awk_run_t* run, xp_awk_nde_t* nde)
@@ -3741,11 +3742,30 @@ static xp_awk_val_t* __eval_afn (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		PANIC (run, XP_AWK_ETOOMANYARGS);
 	}
 
-	return __eval_call (run, nde, afn);
+	return __eval_call (run, nde, XP_NULL, afn);
 }
 
+
+/* run->stack_base has not been set for this  
+ * stack frame. so STACK_ARG cannot be used */ 
+/*xp_awk_refdownval (run, STACK_ARG(run,nargs));*/ 
+#define UNWIND_RUN_STACK(run,nargs) \
+	do { \
+		while ((nargs) > 0) \
+		{ \
+			--(nargs); \
+			xp_awk_refdownval ((run), \
+				(run)->stack[(run)->stack_top-1]); \
+			__raw_pop (run); \
+		} \
+		__raw_pop (run); \
+		__raw_pop (run); \
+		__raw_pop (run); \
+	} while (0)
+
 static xp_awk_val_t* __eval_call (
-	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_awk_afn_t* afn)
+	xp_awk_run_t* run, xp_awk_nde_t* nde, 
+	const xp_char_t* bfn_arg_spec, xp_awk_afn_t* afn)
 {
 	xp_awk_nde_call_t* call = (xp_awk_nde_call_t*)nde;
 	xp_size_t saved_stack_top;
@@ -3804,6 +3824,7 @@ static xp_awk_val_t* __eval_call (
 	{
 		PANIC (run, XP_AWK_ENOMEM);
 	}
+
 	if (__raw_push(run,(void*)saved_stack_top) == -1) 
 	{
 		__raw_pop (run);
@@ -3834,40 +3855,47 @@ static xp_awk_val_t* __eval_call (
 		v = __eval_expression(run,p);
 		if (v == XP_NULL)
 		{
-			while (nargs > 0)
-			{
-/* TODO: test this portion. */
-				--nargs;
-				xp_awk_refdownval (run, STACK_ARG(run,nargs));
-				__raw_pop (run);
-			}	
-
-			__raw_pop (run);
-			__raw_pop (run);
-			__raw_pop (run);
+			UNWIND_RUN_STACK (run, nargs);
 			return XP_NULL;
+		}
+
+		if (bfn_arg_spec != XP_NULL)
+		{
+			xp_char_t spec;
+
+			/* TODO: spec length check */
+			spec = bfn_arg_spec[nargs];
+			if (spec == XP_T('m'))
+			{
+				/*if (v->type == XP_AWK_VAL_NIL)
+				{
+					convert it to a map...	
+					do assignment if the value is by the variable 
+				}
+				else*/ if (v->type != XP_AWK_VAL_MAP)
+				{
+					/* trigger an error */
+					xp_awk_refupval (v);
+					xp_awk_refdownval (run, v);
+
+					UNWIND_RUN_STACK (run, nargs);
+					/* TODO: change the error code */
+					PANIC (run, XP_AWK_EVALTYPE);
+				}
+			}
 		}
 
 		if (__raw_push(run,v) == -1) 
 		{
 			/* ugly - v needs to be freed if it doesn't have
 			 * any reference. but its reference has not been 
-			 * updated for the successful stack push. so it adds
-			 * up a reference and dereferences it*/
+			 * updated yet as it is carried out after the 
+			 * successful stack push. so it adds up a reference 
+			 * and dereferences it */
 			xp_awk_refupval (v);
 			xp_awk_refdownval (run, v);
 
-			while (nargs > 0)
-			{
-/* TODO: test this portion. */
-				--nargs;
-				xp_awk_refdownval (run, STACK_ARG(run,nargs));
-				__raw_pop (run);
-			}	
-
-			__raw_pop (run);
-			__raw_pop (run);
-			__raw_pop (run);
+			UNWIND_RUN_STACK (run, nargs);
 			PANIC (run, XP_AWK_ENOMEM);
 		}
 
@@ -3887,17 +3915,7 @@ static xp_awk_val_t* __eval_call (
 			/* push as many nils as the number of missing actual arguments */
 			if (__raw_push(run,xp_awk_val_nil) == -1)
 			{
-				while (nargs > 0)
-				{
-					/* TODO: test this portion. */
-					--nargs;
-					xp_awk_refdownval (run, STACK_ARG(run,nargs));
-					__raw_pop (run);
-				}	
-
-				__raw_pop (run);
-				__raw_pop (run);
-				__raw_pop (run);
+				UNWIND_RUN_STACK (run, nargs);
 				PANIC (run, XP_AWK_ENOMEM);
 			}
 
@@ -4273,12 +4291,6 @@ static int __raw_push (xp_awk_run_t* run, void* val)
 
 	run->stack[run->stack_top++] = val;
 	return 0;
-}
-
-static void __raw_pop (xp_awk_run_t* run)
-{
-	xp_assert (run->stack_top > run->stack_base);
-	run->stack_top--;
 }
 
 static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times)
