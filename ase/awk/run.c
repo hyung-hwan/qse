@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.169 2006-08-18 07:52:20 bacon Exp $
+ * $Id: run.c,v 1.170 2006-08-18 17:46:07 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -23,7 +23,6 @@
 #define STACK_LOCAL(run,n) STACK_AT(run,3+(xp_size_t)STACK_NARGS(run)+1+(n))
 #define STACK_RETVAL(run) STACK_AT(run,2)
 #define STACK_GLOBAL(run,n) ((run)->stack[(n)])
-/*#define STACK_RETVAL_GLOBAL(run) ((run)->stack[(run)->nglobals+2])*/
 #define STACK_RETVAL_GLOBAL(run) ((run)->stack[(run)->awk->tree.nglobals+2])
 
 enum
@@ -1337,7 +1336,7 @@ static int __run_return (xp_awk_run_t* run, xp_awk_nde_return_t* nde)
 		xp_assert (nde->val->next == XP_NULL); 
 
 /*xp_printf (XP_T("returning....\n"));*/
-		val = __eval_expression(run, nde->val);
+		val = __eval_expression (run, nde->val);
 		if (val == XP_NULL) return -1;
 
 		xp_awk_refdownval (run, STACK_RETVAL(run));
@@ -1360,7 +1359,7 @@ static int __run_exit (xp_awk_run_t* run, xp_awk_nde_exit_t* nde)
 		 * by the parser first of all */
 		xp_assert (nde->val->next == XP_NULL); 
 
-		val = __eval_expression(run, nde->val);
+		val = __eval_expression (run, nde->val);
 		if (val == XP_NULL) return -1;
 
 		xp_awk_refdownval (run, STACK_RETVAL_GLOBAL(run));
@@ -3852,7 +3851,7 @@ static xp_awk_val_t* __eval_call (
 	p = call->args;
 	while (p != XP_NULL)
 	{
-		v = __eval_expression(run,p);
+		v = __eval_expression (run, p);
 		if (v == XP_NULL)
 		{
 			UNWIND_RUN_STACK (run, nargs);
@@ -3863,26 +3862,90 @@ static xp_awk_val_t* __eval_call (
 		{
 			xp_char_t spec;
 
-			/* TODO: spec length check */
+		/* TODO: spec length check */
 			spec = bfn_arg_spec[nargs];
 			if (spec == XP_T('m'))
 			{
-				/*if (v->type == XP_AWK_VAL_NIL)
+				/* reference required */
+				if (p->type != XP_AWK_NDE_NAMED &&
+				    p->type != XP_AWK_NDE_GLOBAL &&
+				    p->type != XP_AWK_NDE_LOCAL &&
+				    p->type != XP_AWK_NDE_ARG &&
+				    p->type != XP_AWK_NDE_NAMEDIDX &&
+				    p->type != XP_AWK_NDE_GLOBALIDX &&
+				    p->type != XP_AWK_NDE_LOCALIDX &&
+				    p->type != XP_AWK_NDE_ARGIDX)
 				{
-					convert it to a map...	
-					do assignment if the value is by the variable 
-				}
-				else*/ if (v->type != XP_AWK_VAL_MAP)
-				{
-					/* trigger an error */
 					xp_awk_refupval (v);
 					xp_awk_refdownval (run, v);
 
 					UNWIND_RUN_STACK (run, nargs);
-					/* TODO: change the error code */
+				/* TODO: change error code */
+					PANIC (run, XP_AWK_EVALTYPE);
+				}
+
+				if (p->type == XP_AWK_NDE_GLOBAL)
+				{
+					xp_awk_val_t* tmp;
+					xp_awk_nde_var_t* tgt = 
+						(xp_awk_nde_var_t*)p;
+
+					tmp = xp_awk_makeintval (
+						run, (xp_long_t)&STACK_GLOBAL(run,tgt->id.idxa));
+					if (tmp == XP_NULL)
+					{
+						xp_awk_refupval (v);
+						xp_awk_refdownval (run, v);
+
+						UNWIND_RUN_STACK (run, nargs);
+						PANIC (run, XP_AWK_ENOMEM);
+					}
+
+					xp_awk_refupval (v);
+					xp_awk_refdownval (run, v);
+
+					v = tmp;
+				}
+			}
+
+#if 0
+			if (spec == XP_T('m'))
+			{
+				if (v->type == XP_AWK_VAL_NIL)
+				{
+					xp_awk_val_t* tmp;
+
+					tmp = xp_awk_makemapval (run);
+					if (tmp == XP_NULL)
+					{
+						xp_awk_refupval (v);
+						xp_awk_refdownval (run, v);
+
+						UNWIND_RUN_STACK (run, nargs);
+						PANIC (run, XP_AWK_ENOMEM);
+					}
+
+					xp_awk_refupval (v);
+					xp_awk_refdownval (run, v);
+
+					v = tmp;
+				}
+				else if (v->type != XP_AWK_VAL_MAP)
+				{
+					xp_awk_refupval (v);
+					xp_awk_refdownval (run, v);
+
+					UNWIND_RUN_STACK (run, nargs);
+				/* TODO: change the error code */
 					PANIC (run, XP_AWK_EVALTYPE);
 				}
 			}
+			/*
+			else if (spec = XP_T('s'))
+			{
+			}
+			*/
+#endif
 		}
 
 		if (__raw_push(run,v) == -1) 
@@ -3943,9 +4006,7 @@ static xp_awk_val_t* __eval_call (
 		           call->nargs <= call->what.bfn.max_args);
 
 		if (call->what.bfn.handler != XP_NULL)
-		{
 			n = call->what.bfn.handler (run->awk, run);
-		}
 	}
 
 /*xp_printf (XP_T("block run complete\n")); */
@@ -3970,10 +4031,7 @@ static xp_awk_val_t* __eval_call (
 	run->stack_top =  (xp_size_t)run->stack[run->stack_base+1];
 	run->stack_base = (xp_size_t)run->stack[run->stack_base+0];
 
-	if (run->exit_level == EXIT_FUNCTION)
-	{	
-		run->exit_level = EXIT_NONE;
-	}
+	if (run->exit_level == EXIT_FUNCTION) run->exit_level = EXIT_NONE;
 
 /*xp_printf (XP_T("returning from function stack_top=%ld, stack_base=%ld\n"), run->stack_top, run->stack_base); */
 	return (n == -1)? XP_NULL: v;
