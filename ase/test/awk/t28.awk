@@ -21,7 +21,8 @@ END {
 	print toupper ("AbcDEF");
 
 	arr[0] = "xxx";
-	print split ("abc def abc", arr);
+	//print split ("abc def abc", arr);
+	print split ("abc def abc", 10);
 	for (i in arr)
 	{
 		print i, " ", arr[i];

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.20 2006-08-17 14:10:20 bacon Exp $
+ * $Id: func.c,v 1.21 2006-08-18 07:52:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -39,7 +39,7 @@ static xp_awk_bfn_t __sys_bfn[] =
 	{ XP_T("index"),   5, 0,            2,  2,  XP_NULL, __bfn_index },
 	{ XP_T("length"),  6, 0,            1,  1,  XP_NULL, __bfn_length },
 	{ XP_T("substr"),  6, 0,            2,  3,  XP_NULL, __bfn_substr },
-	{ XP_T("split"),   5, 0,            2,  3,  XP_NULL, __bfn_split },
+	{ XP_T("split"),   5, 0,            2,  3,  XP_T("vmv"), __bfn_split },
 	{ XP_T("tolower"), 7, 0,            1,  1,  XP_NULL, __bfn_tolower },
 	{ XP_T("toupper"), 7, 0,            1,  1,  XP_NULL, __bfn_toupper },
 
@@ -440,18 +440,9 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		}
 	}
 
-	if (a1->type == XP_AWK_VAL_MAP)
-	{
-		/* clear the map */
-		xp_awk_map_clear (((xp_awk_val_map_t*)a1)->map);
-	}
-	else 
-	{
-/* TODO: what should i do when it is nil??? */
-		/* change it to a map */
-	}
-
 	xp_assert (a1->type == XP_AWK_VAL_MAP);
+
+	xp_awk_map_clear (((xp_awk_val_map_t*)a1)->map);
 
 	p = str; left = len; num = 0;
 	while (p != XP_NULL)
@@ -476,8 +467,8 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			return -1;
 		}
 
-		/* put it into the array */
-		/* TODO: remove dependency on xp_sprintf */
+		/* put it into the map */
+/* TODO: remove dependency on xp_sprintf */
 	#if defined(__LCC__)
 		xp_sprintf (key, xp_countof(key), XP_T("%lld"), (long long)num);
 	#elif defined(__BORLANDC__) || defined(_MSC_VER)
@@ -496,6 +487,11 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 			return -1;
 		}
+
+		/* don't forget to update the reference count 
+		 * when you handle the assignment-like situation
+		 * with the internal data structures */
+		xp_awk_refupval (r);
 
 		num++;
 		len = len - (p - str);
