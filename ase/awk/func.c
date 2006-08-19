@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.22 2006-08-18 17:46:07 bacon Exp $
+ * $Id: func.c,v 1.23 2006-08-19 16:34:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -546,13 +546,18 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	xp_assert (a1->type == XP_AWK_VAL_INT);
 	a1r = (xp_awk_val_t**)((xp_awk_val_int_t*)a1)->val;
 
-/* TODO: error handling... */
+/* TODO: check memory leaks and other errors */
 	t1 = xp_awk_makemapval (run);
 	if (t1 == XP_NULL)
 	{
+		if (a0->type != XP_AWK_VAL_STR) xp_free (str);
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
+
+	xp_awk_refdownval (run, *a1r);
+	*a1r = t1;
+	xp_awk_refupval (*a1r);
 
 	p = str; left = len; num = 0;
 	while (p != XP_NULL)
@@ -608,10 +613,6 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	}
 
 	if (a0->type != XP_AWK_VAL_STR) xp_free (str);
-
-	xp_awk_refdownval (run, *a1r);
-	*a1r = t1;
-	xp_awk_refupval (*a1r);
 
 	t1 = xp_awk_makeintval (run, num);
 	if (t1 == XP_NULL)

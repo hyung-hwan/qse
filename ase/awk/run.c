@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.170 2006-08-18 17:46:07 bacon Exp $
+ * $Id: run.c,v 1.171 2006-08-19 16:34:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -147,6 +147,7 @@ static xp_awk_val_t* __eval_afn (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_call (
 	xp_awk_run_t* run, xp_awk_nde_t* nde, 
 	const xp_char_t* bfn_arg_spec, xp_awk_afn_t* afn);
+static void* __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde);
 
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_real (xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -3866,15 +3867,12 @@ static xp_awk_val_t* __eval_call (
 			spec = bfn_arg_spec[nargs];
 			if (spec == XP_T('m'))
 			{
-				/* reference required */
-				if (p->type != XP_AWK_NDE_NAMED &&
-				    p->type != XP_AWK_NDE_GLOBAL &&
-				    p->type != XP_AWK_NDE_LOCAL &&
-				    p->type != XP_AWK_NDE_ARG &&
-				    p->type != XP_AWK_NDE_NAMEDIDX &&
-				    p->type != XP_AWK_NDE_GLOBALIDX &&
-				    p->type != XP_AWK_NDE_LOCALIDX &&
-				    p->type != XP_AWK_NDE_ARGIDX)
+				void* ref;
+				xp_awk_val_t* tmp;
+			       
+				ref = __get_reference (run, p);
+
+				if (ref == XP_NULL)
 				{
 					xp_awk_refupval (v);
 					xp_awk_refdownval (run, v);
@@ -3884,28 +3882,20 @@ static xp_awk_val_t* __eval_call (
 					PANIC (run, XP_AWK_EVALTYPE);
 				}
 
-				if (p->type == XP_AWK_NDE_GLOBAL)
+				tmp = xp_awk_makeintval (run, (xp_long_t)ref);
+				if (tmp == XP_NULL)
 				{
-					xp_awk_val_t* tmp;
-					xp_awk_nde_var_t* tgt = 
-						(xp_awk_nde_var_t*)p;
-
-					tmp = xp_awk_makeintval (
-						run, (xp_long_t)&STACK_GLOBAL(run,tgt->id.idxa));
-					if (tmp == XP_NULL)
-					{
-						xp_awk_refupval (v);
-						xp_awk_refdownval (run, v);
-
-						UNWIND_RUN_STACK (run, nargs);
-						PANIC (run, XP_AWK_ENOMEM);
-					}
-
 					xp_awk_refupval (v);
 					xp_awk_refdownval (run, v);
 
-					v = tmp;
+					UNWIND_RUN_STACK (run, nargs);
+					PANIC (run, XP_AWK_ENOMEM);
 				}
+
+				xp_awk_refupval (v);
+				xp_awk_refdownval (run, v);
+
+				v = tmp;
 			}
 
 #if 0
@@ -4037,6 +4027,24 @@ static xp_awk_val_t* __eval_call (
 	return (n == -1)? XP_NULL: v;
 }
 
+static void* __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
+{
+	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+
+	if (nde->type == XP_AWK_NDE_GLOBAL)
+		return &STACK_GLOBAL(run,tgt->id.idxa);
+
+	if (nde->type == XP_AWK_NDE_LOCAL)
+		return &STACK_LOCAL(run,tgt->id.idxa);
+
+	if (nde->type == XP_AWK_NDE_ARG)
+		return &STACK_ARG(run,tgt->id.idxa);
+
+	/* TODO: NAMED ... */
+
+	return XP_NULL;
+}
+			
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_val_t* val;
