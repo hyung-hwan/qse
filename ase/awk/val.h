@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.35 2006-08-03 05:05:48 bacon Exp $
+ * $Id: val.h,v 1.36 2006-08-20 15:49:07 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -16,7 +16,22 @@ enum
 	XP_AWK_VAL_REAL = 2,
 	XP_AWK_VAL_STR  = 3,
 	XP_AWK_VAL_REX  = 4,
-	XP_AWK_VAL_MAP  = 5
+	XP_AWK_VAL_MAP  = 5,
+	XP_AWK_VAL_REF  = 6
+};
+
+enum
+{
+	/* keep these items in the same order as corresponding items
+	 * in tree.h */
+	XP_AWK_VAL_REF_NAMED,
+	XP_AWK_VAL_REF_GLOBAL,
+	XP_AWK_VAL_REF_LOCAL,
+	XP_AWK_VAL_REF_ARG,
+	XP_AWK_VAL_REF_NAMEDIDX,
+	XP_AWK_VAL_REF_GLOBALIDX,
+	XP_AWK_VAL_REF_LOCALIDX,
+	XP_AWK_VAL_REF_ARGIDX
 };
 
 typedef struct xp_awk_val_nil_t  xp_awk_val_nil_t;
@@ -25,6 +40,7 @@ typedef struct xp_awk_val_real_t xp_awk_val_real_t;
 typedef struct xp_awk_val_str_t  xp_awk_val_str_t;
 typedef struct xp_awk_val_rex_t  xp_awk_val_rex_t;
 typedef struct xp_awk_val_map_t  xp_awk_val_map_t;
+typedef struct xp_awk_val_ref_t  xp_awk_val_ref_t;
 
 #if XP_SIZEOF_INT == 2
 #define XP_AWK_VAL_HDR \
@@ -89,6 +105,15 @@ struct xp_awk_val_map_t
 	xp_awk_map_t* map; 
 };
 
+/* XP_AWK_VAL_REF */
+struct xp_awk_val_ref_t
+{
+	XP_AWK_VAL_HDR;
+
+	int id;
+	xp_awk_val_t** adr;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -108,6 +133,8 @@ xp_awk_val_t* xp_awk_makestrval2 (
 xp_awk_val_t* xp_awk_makerexval (
 	const xp_char_t* buf, xp_size_t len, void* code);
 xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run);
+xp_awk_val_t* xp_awk_makerefval (
+	xp_awk_run_t* run, int id, xp_awk_val_t** adr);
 
 xp_bool_t xp_awk_isbuiltinval (xp_awk_val_t* val);
 
