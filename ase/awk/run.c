@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.171 2006-08-19 16:34:24 bacon Exp $
+ * $Id: run.c,v 1.172 2006-08-20 15:49:06 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -147,7 +147,10 @@ static xp_awk_val_t* __eval_afn (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_call (
 	xp_awk_run_t* run, xp_awk_nde_t* nde, 
 	const xp_char_t* bfn_arg_spec, xp_awk_afn_t* afn);
-static void* __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde);
+
+static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static xp_awk_val_t** __get_reference_indexed (
+	xp_awk_run_t* run, xp_awk_nde_var_t* nde, xp_awk_val_t** val);
 
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde);
 static xp_awk_val_t* __eval_real (xp_awk_run_t* run, xp_awk_nde_t* nde);
@@ -1930,7 +1933,7 @@ static xp_awk_val_t* __do_assignment_scalar (
 		{
 			/* once a variable becomes an array,
 			 * it cannot be changed to a scalar variable */
-			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
+			PANIC (run, XP_AWK_EMAPTOSCALAR);
 		}
 
 		n = xp_awk_map_putx (&run->named, 
@@ -1946,7 +1949,7 @@ static xp_awk_val_t* __do_assignment_scalar (
 		{	
 			/* once a variable becomes an array,
 			 * it cannot be changed to a scalar variable */
-			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
+			PANIC (run, XP_AWK_EMAPTOSCALAR);
 		}
 
 /* TODO: if var->id.idxa == XP_AWK_GLOBAL_NF recompute $0, etc */
@@ -1961,7 +1964,7 @@ static xp_awk_val_t* __do_assignment_scalar (
 		{	
 			/* once the variable becomes an array,
 			 * it cannot be changed to a scalar variable */
-			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
+			PANIC (run, XP_AWK_EMAPTOSCALAR);
 		}
 
 		xp_awk_refdownval (run, old);
@@ -1975,7 +1978,7 @@ static xp_awk_val_t* __do_assignment_scalar (
 		{	
 			/* once the variable becomes an array,
 			 * it cannot be changed to a scalar variable */
-			PANIC (run, XP_AWK_ENOTSCALARIZABLE);
+			PANIC (run, XP_AWK_EMAPTOSCALAR);
 		}
 
 		xp_awk_refdownval (run, old);
@@ -3865,24 +3868,25 @@ static xp_awk_val_t* __eval_call (
 
 		/* TODO: spec length check */
 			spec = bfn_arg_spec[nargs];
-			if (spec == XP_T('m'))
+			if (spec == XP_T('r'))
 			{
-				void* ref;
+				xp_awk_val_t** ref;
 				xp_awk_val_t* tmp;
 			       
 				ref = __get_reference (run, p);
-
 				if (ref == XP_NULL)
 				{
 					xp_awk_refupval (v);
 					xp_awk_refdownval (run, v);
 
 					UNWIND_RUN_STACK (run, nargs);
-				/* TODO: change error code */
-					PANIC (run, XP_AWK_EVALTYPE);
+					return XP_NULL;
 				}
 
-				tmp = xp_awk_makeintval (run, (xp_long_t)ref);
+				/* p->type-XP_AWK_NDE_NAMED assumes that the
+				 * derived value matches XP_AWK_VAL_REF_XXX */
+				tmp = xp_awk_makerefval (
+					run, p->type-XP_AWK_NDE_NAMED, ref);
 				if (tmp == XP_NULL)
 				{
 					xp_awk_refupval (v);
@@ -3897,45 +3901,6 @@ static xp_awk_val_t* __eval_call (
 
 				v = tmp;
 			}
-
-#if 0
-			if (spec == XP_T('m'))
-			{
-				if (v->type == XP_AWK_VAL_NIL)
-				{
-					xp_awk_val_t* tmp;
-
-					tmp = xp_awk_makemapval (run);
-					if (tmp == XP_NULL)
-					{
-						xp_awk_refupval (v);
-						xp_awk_refdownval (run, v);
-
-						UNWIND_RUN_STACK (run, nargs);
-						PANIC (run, XP_AWK_ENOMEM);
-					}
-
-					xp_awk_refupval (v);
-					xp_awk_refdownval (run, v);
-
-					v = tmp;
-				}
-				else if (v->type != XP_AWK_VAL_MAP)
-				{
-					xp_awk_refupval (v);
-					xp_awk_refdownval (run, v);
-
-					UNWIND_RUN_STACK (run, nargs);
-				/* TODO: change the error code */
-					PANIC (run, XP_AWK_EVALTYPE);
-				}
-			}
-			/*
-			else if (spec = XP_T('s'))
-			{
-			}
-			*/
-#endif
 		}
 
 		if (__raw_push(run,v) == -1) 
@@ -4027,24 +3992,136 @@ static xp_awk_val_t* __eval_call (
 	return (n == -1)? XP_NULL: v;
 }
 
-static void* __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
+static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
 
+	/* refer to __eval_indexed for application of similar concept */
+
+	if (nde->type == XP_AWK_NDE_NAMED)
+	{
+		xp_awk_pair_t* pair;
+
+		pair = xp_awk_map_get (
+			&run->named, tgt->id.name, tgt->id.name_len);
+		if (pair == XP_NULL)
+		{
+			/* it is bad that the named variable has to be
+			 * created in the function named "__get_refernce".
+			 * would there be any better ways to avoid this? */
+			pair = xp_awk_map_put (
+				&run->named, tgt->id.name,
+				tgt->id.name_len, xp_awk_val_nil);
+			if (pair == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		return (xp_awk_val_t**)&pair->val;
+	}
+
 	if (nde->type == XP_AWK_NDE_GLOBAL)
-		return &STACK_GLOBAL(run,tgt->id.idxa);
+	{
+		return (xp_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa);
+	}
 
 	if (nde->type == XP_AWK_NDE_LOCAL)
-		return &STACK_LOCAL(run,tgt->id.idxa);
+	{
+		return (xp_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa);
+	}
 
 	if (nde->type == XP_AWK_NDE_ARG)
-		return &STACK_ARG(run,tgt->id.idxa);
+	{
+		return (xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa);
+	}
 
-	/* TODO: NAMED ... */
+	if (nde->type == XP_AWK_NDE_NAMEDIDX)
+	{
+		xp_awk_pair_t* pair;
 
-	return XP_NULL;
+		pair = xp_awk_map_get (
+			&run->named, tgt->id.name, tgt->id.name_len);
+		if (pair == XP_NULL)
+		{
+			pair = xp_awk_map_put (
+				&run->named, tgt->id.name,
+				tgt->id.name_len, xp_awk_val_nil);
+			if (pair == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		return __get_reference_indexed (
+			run, tgt, (xp_awk_val_t**)&pair->val);
+	}
+
+
+	if (nde->type == XP_AWK_NDE_GLOBALIDX)
+	{
+		return __get_reference_indexed (run, tgt, 
+			(xp_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa));
+	}
+
+	if (nde->type == XP_AWK_NDE_LOCALIDX)
+	{
+		return __get_reference_indexed (run, tgt, 
+			(xp_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa));
+	}
+
+	if (nde->type == XP_AWK_NDE_ARGIDX)
+	{
+		return __get_reference_indexed (run, tgt, 
+			(xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa));
+	}
+
+	PANIC (run, XP_AWK_ENOTREFERENCEABLE);
 }
-			
+
+static xp_awk_val_t** __get_reference_indexed (
+	xp_awk_run_t* run, xp_awk_nde_var_t* nde, xp_awk_val_t** val)
+{
+	xp_awk_pair_t* pair;
+	xp_char_t* str;
+	xp_size_t len;
+
+	xp_assert (val != XP_NULL);
+
+	if ((*val)->type == XP_AWK_VAL_NIL)
+	{
+		xp_awk_val_t* tmp;
+
+		tmp = xp_awk_makemapval (run);
+		if (tmp == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
+		xp_awk_refdownval (run, *val);
+		*val = tmp;
+		xp_awk_refupval ((xp_awk_val_t*)*val);
+	}
+	else if ((*val)->type != XP_AWK_VAL_MAP) 
+	{
+		PANIC (run, XP_AWK_ENOTINDEXABLE);
+	}
+
+	xp_assert (nde->idx != XP_NULL);
+
+	str = __idxnde_to_str (run, nde->idx, &len);
+	if (str == XP_NULL) return XP_NULL;
+
+	pair = xp_awk_map_get ((*(xp_awk_val_map_t**)val)->map, str, len);
+	if (pair == XP_NULL)
+	{
+		pair = xp_awk_map_put (
+			(*(xp_awk_val_map_t**)val)->map, 
+			str, len, xp_awk_val_nil);
+		if (pair == XP_NULL)
+		{
+			xp_free (str);
+			PANIC (run, XP_AWK_ENOMEM);
+		}
+
+		xp_awk_refupval (pair->val);
+	}
+
+	xp_free (str);
+	return (xp_awk_val_t**)&pair->val;
+}
+
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_val_t* val;
@@ -4091,40 +4168,50 @@ static xp_awk_val_t* __eval_rex (xp_awk_run_t* run, xp_awk_nde_t* nde)
 static xp_awk_val_t* __eval_named (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_pair_t* pair;
-	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
 		       
-	pair = xp_awk_map_get (&run->named, tgt->id.name, tgt->id.name_len);
+	pair = xp_awk_map_get (&run->named, 
+		((xp_awk_nde_var_t*)nde)->id.name, 
+		((xp_awk_nde_var_t*)nde)->id.name_len);
+
 	return (pair == XP_NULL)? xp_awk_val_nil: pair->val;
 }
 
 static xp_awk_val_t* __eval_global (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-	return STACK_GLOBAL(run,tgt->id.idxa);
+	return STACK_GLOBAL(run,((xp_awk_nde_var_t*)nde)->id.idxa);
 }
 
 static xp_awk_val_t* __eval_local (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-	return STACK_LOCAL(run,tgt->id.idxa);
+	return STACK_LOCAL(run,((xp_awk_nde_var_t*)nde)->id.idxa);
 }
 
 static xp_awk_val_t* __eval_arg (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-	return STACK_ARG(run,tgt->id.idxa);
+	return STACK_ARG(run,((xp_awk_nde_var_t*)nde)->id.idxa);
 }
 
 static xp_awk_val_t* __eval_indexed (
-	xp_awk_run_t* run, xp_awk_nde_var_t* nde, xp_awk_val_map_t* map)
+	xp_awk_run_t* run, xp_awk_nde_var_t* nde, xp_awk_val_t** val)
 {
-	xp_awk_val_t* res;
 	xp_awk_pair_t* pair;
 	xp_char_t* str;
 	xp_size_t len;
 
-	/* TODO: should it be an error? should it return nil? */
-	if (map->type != XP_AWK_VAL_MAP) 
+	xp_assert (val != XP_NULL);
+
+	if ((*val)->type == XP_AWK_VAL_NIL)
+	{
+		xp_awk_val_t* tmp;
+
+		tmp = xp_awk_makemapval (run);
+		if (tmp == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
+		xp_awk_refdownval (run, *val);
+		*val = tmp;
+		xp_awk_refupval ((xp_awk_val_t*)*val);
+	}
+	else if ((*val)->type != XP_AWK_VAL_MAP) 
 	{
 	        PANIC (run, XP_AWK_ENOTINDEXABLE);
 	}
@@ -4134,12 +4221,10 @@ static xp_awk_val_t* __eval_indexed (
 	str = __idxnde_to_str (run, nde->idx, &len);
 	if (str == XP_NULL) return XP_NULL;
 
-/* TODO: check this out........ */
-	pair = xp_awk_map_get (((xp_awk_val_map_t*)map)->map, str, len);
-	res = (pair == XP_NULL)? xp_awk_val_nil: (xp_awk_val_t*)pair->val;
-
+	pair = xp_awk_map_get ((*(xp_awk_val_map_t**)val)->map, str, len);
 	xp_free (str);
-	return res;
+
+	return (pair == XP_NULL)? xp_awk_val_nil: (xp_awk_val_t*)pair->val;
 }
 
 static xp_awk_val_t* __eval_namedidx (xp_awk_run_t* run, xp_awk_nde_t* nde)
@@ -4148,26 +4233,34 @@ static xp_awk_val_t* __eval_namedidx (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_pair_t* pair;
 
 	pair = xp_awk_map_get (&run->named, tgt->id.name, tgt->id.name_len);
-	return __eval_indexed (run, tgt, 
-		(pair == XP_NULL)? xp_awk_val_nil: pair->val);
+	if (pair == XP_NULL)
+	{
+		pair = xp_awk_map_put (&run->named, 
+			tgt->id.name, tgt->id.name_len, xp_awk_val_nil);
+		if (pair == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+
+		xp_awk_refupval (pair->val); 
+	}
+
+	return __eval_indexed (run, tgt, (xp_awk_val_t**)&pair->val);
 }
 
 static xp_awk_val_t* __eval_globalidx (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-	return __eval_indexed (run, tgt, STACK_GLOBAL(run,tgt->id.idxa));
+	return __eval_indexed (run, (xp_awk_nde_var_t*)nde, 
+		(xp_awk_val_t**)&STACK_GLOBAL(run,((xp_awk_nde_var_t*)nde)->id.idxa));
 }
 
 static xp_awk_val_t* __eval_localidx (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-	return __eval_indexed (run, tgt, STACK_LOCAL(run,tgt->id.idxa));
+	return __eval_indexed (run, (xp_awk_nde_var_t*)nde, 
+		(xp_awk_val_t**)&STACK_LOCAL(run,((xp_awk_nde_var_t*)nde)->id.idxa));
 }
 
 static xp_awk_val_t* __eval_argidx (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
-	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
-	return __eval_indexed (run, tgt, STACK_ARG(run,tgt->id.idxa));
+	return __eval_indexed (run, (xp_awk_nde_var_t*)nde,
+		(xp_awk_val_t**)&STACK_ARG(run,((xp_awk_nde_var_t*)nde)->id.idxa));
 }
 
 static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)

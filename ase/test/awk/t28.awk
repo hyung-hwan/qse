@@ -1,4 +1,8 @@
+//global xyz;
+
 END {
+	//local xyz;
+
 	print index ("abc", "abc");
 	print index ("abc", "b");
 	print index ("abc", "kabc");
@@ -22,9 +26,15 @@ END {
 
 	arr[0] = "xxx";
 	//print split ("abc def abc", arr);
-	print split ("abc def abc", 10);
-	for (i in arr)
+	print split ("abc def abc", j);
+
+	//xyz = 20;
+	//print xyz;
+	print split ("abc def abc", ((xyz)));
+	//for (i in arr)
+
+	for (i in xyz)
 	{
-		print i, " ", arr[i];
+		print i, " ", xyz[i];
 	}
 }
