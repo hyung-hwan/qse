@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.24 2006-08-20 15:49:06 bacon Exp $
+ * $Id: func.c,v 1.25 2006-08-21 14:49:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -20,6 +20,7 @@
 #endif
 
 static int __bfn_close (xp_awk_t* awk, void* run);
+static int __bfn_fflush (xp_awk_t* awk, void* run);
 static int __bfn_index (xp_awk_t* awk, void* run);
 static int __bfn_length (xp_awk_t* awk, void* run);
 static int __bfn_substr (xp_awk_t* awk, void* run);
@@ -32,8 +33,9 @@ static int __bfn_sin (xp_awk_t* awk, void* run);
 /* TODO: move it under the awk structure... */
 static xp_awk_bfn_t __sys_bfn[] = 
 {
-	/* ensure that this matches XP_AWK_BNF_XXX in func.h */
+	/* io functions */
 	{ XP_T("close"),   5, XP_AWK_EXTIO, 1,  1,  XP_NULL, __bfn_close },
+	{ XP_T("fflush"),  6, XP_AWK_EXTIO, 0,  1,  XP_NULL, __bfn_fflush },
 
 	/* string functions */
 	{ XP_T("index"),   5, 0,            2,  2,  XP_NULL, __bfn_index },
@@ -43,6 +45,7 @@ static xp_awk_bfn_t __sys_bfn[] =
 	{ XP_T("tolower"), 7, 0,            1,  1,  XP_NULL, __bfn_tolower },
 	{ XP_T("toupper"), 7, 0,            1,  1,  XP_NULL, __bfn_toupper },
 
+	/* TODO: remove these two functions */
 	{ XP_T("system"),  6, 0,            1,  1,  XP_NULL, __bfn_system },
 	{ XP_T("sin"),     3, 0,            1,  1,  XP_NULL, __bfn_sin },
 
@@ -139,7 +142,6 @@ xp_awk_bfn_t* xp_awk_getbfn (xp_awk_t* awk, const xp_char_t* name)
 static int __bfn_close (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
-	xp_str_t buf;
 	xp_awk_val_t* v, * a0;
 	int errnum, n;
 
@@ -160,22 +162,12 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 	}
 	else
 	{
-		if (xp_str_open (&buf, 256) == XP_NULL)
+		name = xp_awk_valtostr (a0, &errnum, xp_true, XP_NULL, &len);
+		if (name == XP_NULL)
 		{
-			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
-			return -1;
-		}
-
-		if (xp_awk_valtostr (
-			a0, &errnum, xp_true, &buf, XP_NULL) == XP_NULL)
-		{
-			xp_str_close (&buf);
 			xp_awk_seterrnum (run, errnum);
 			return -1;
 		}
-
-		name = XP_STR_BUF(&buf);
-		len = XP_STR_LEN(&buf);
 	}
 
 	if (len == 0)
@@ -188,7 +180,7 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 		 * an empty string for its identification because closeextio
 		 * closes any extios that match the name given unlike 
 		 * closeextio_read or closeextio_write. */ 
-		if (a0->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+		if (a0->type != XP_AWK_VAL_STR) xp_free (name);
 		n = -1;
 		/* TODO: need to set ERRNO??? */
 		goto skip_close;
@@ -200,7 +192,7 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 		{
 			/* the name contains a null string. 
 			 * make close return -1 */
-			if (a0->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+			if (a0->type != XP_AWK_VAL_STR) xp_free (name);
 			n = -1;
 			/* TODO: need to set ERRNO??? */
 			goto skip_close;
@@ -210,12 +202,12 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 	n = xp_awk_closeextio (run, name, &errnum);
 	if (n == -1 && errnum != XP_AWK_ENOERR)
 	{
-		if (a0->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+		if (a0->type != XP_AWK_VAL_STR) xp_free (name);
 		xp_awk_seterrnum (run, errnum);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+	if (a0->type != XP_AWK_VAL_STR) xp_free (name);
 
 skip_close:
 	v = xp_awk_makeintval (run, n);
@@ -226,6 +218,66 @@ skip_close:
 	}
 
 	xp_awk_setretval (run, v);
+	return 0;
+}
+
+static int __bfn_fflush (xp_awk_t* awk, void* run)
+{
+	xp_size_t nargs;
+	xp_awk_val_t* a0;
+	xp_char_t* str0;
+	xp_size_t len0;
+	int errnum, n;
+       
+	nargs = xp_awk_getnargs (run);
+	xp_assert (nargs >= 0 && nargs <= 1);
+
+	if (nargs == 0)
+	{
+		/* flush the console output */
+		n = 0;
+	}
+	else
+	{
+		a0 = xp_awk_getarg (run, 0);
+		if (a0->type == XP_AWK_VAL_STR)
+		{
+			str0 = ((xp_awk_val_str_t*)a0)->buf;
+			len0 = ((xp_awk_val_str_t*)a0)->len;
+		}
+		else
+		{
+			str0 = xp_awk_valtostr (
+				a0, &errnum, xp_true, XP_NULL, &len0);
+			if (str0 == XP_NULL)
+			{
+				xp_awk_seterrnum (run, errnum);
+				return -1;
+			}
+		}
+
+		if (len0 == 0)
+		{
+			/* flush all open files and pipes */
+		}
+		else
+		{
+			/* flush the given extio */
+		}
+
+		if (a0->type != XP_AWK_VAL_STR) xp_free (str0);
+
+		n = 0;
+	}
+
+	a0 = xp_awk_makeintval (run, (xp_long_t)n);
+	if (a0 == XP_NULL)
+	{
+		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	xp_awk_setretval (run, a0);
 	return 0;
 }
 
@@ -274,7 +326,6 @@ static int __bfn_index (xp_awk_t* awk, void* run)
 			return -1;
 		}
 	}
-
 
 	ptr = xp_strxnstr (str0, len0, str1, len1);
 	idx = (ptr == XP_NULL)? -1: (xp_long_t)(ptr - str0);
