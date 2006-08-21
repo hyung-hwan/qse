@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.172 2006-08-20 15:49:06 bacon Exp $
+ * $Id: run.c,v 1.173 2006-08-21 02:53:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -425,6 +425,7 @@ static int __init_run (
 
 	run->icache_count = 0;
 	run->rcache_count = 0;
+	run->fcache_count = 0;
 
 	run->errnum = XP_AWK_ENOERR;
 
@@ -513,6 +514,12 @@ static void __deinit_run (xp_awk_run_t* run)
 	while (run->rcache_count > 0)
 	{
 		xp_awk_val_real_t* tmp = run->rcache[--run->rcache_count];
+		xp_awk_freeval (run, (xp_awk_val_t*)tmp, xp_false);
+	}
+
+	while (run->fcache_count > 0)
+	{
+		xp_awk_val_ref_t* tmp = run->fcache[--run->fcache_count];
 		xp_awk_freeval (run, (xp_awk_val_t*)tmp, xp_false);
 	}
 }

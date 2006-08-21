@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.51 2006-08-20 15:49:07 bacon Exp $
+ * $Id: val.c,v 1.52 2006-08-21 02:53:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -198,8 +198,16 @@ xp_awk_val_t* xp_awk_makerefval (xp_awk_run_t* run, int id, xp_awk_val_t** adr)
 {
 	xp_awk_val_ref_t* val;
 
-	val = (xp_awk_val_ref_t*) xp_malloc (xp_sizeof(xp_awk_val_ref_t));
-	if (val == XP_NULL) return XP_NULL;
+	if (run->fcache_count > 0)
+	{
+		val = run->fcache[--run->fcache_count];
+	}
+	else
+	{
+		val = (xp_awk_val_ref_t*)
+			xp_malloc (xp_sizeof(xp_awk_val_ref_t));
+		if (val == XP_NULL) return XP_NULL;
+	}
 
 	val->type = XP_AWK_VAL_REF;
 	val->ref = 0;
@@ -267,7 +275,13 @@ xp_printf (XP_T("\n"));*/
 	}
 	else if (val->type == XP_AWK_VAL_REF)
 	{
-		xp_free (val);
+		if (cache == xp_true &&
+		    run->fcache_count < xp_countof(run->fcache))
+		{
+			run->fcache[run->fcache_count++] = 
+				(xp_awk_val_ref_t*)val;	
+		}
+		else xp_free (val);
 	}
 	else
 	{
