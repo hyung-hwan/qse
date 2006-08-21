@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.70 2006-08-06 15:02:55 bacon Exp $
+ * $Id: tree.c,v 1.71 2006-08-21 14:51:32 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -87,10 +87,10 @@ static const xp_char_t* __print_outop_str[] =
 };
 
 #define PUT_SRCSTR(awk,str) \
-	do { if (xp_awk_putsrcstr (awk, str) == -1) return- 1; } while (0)
+	do { if (xp_awk_putsrcstr (awk, str) == -1) return -1; } while (0)
 
 #define PUT_SRCSTRX(awk,str,len) \
-	do { if (xp_awk_putsrcstrx (awk, str, len) == -1) return- 1; } while (0)
+	do { if (xp_awk_putsrcstrx (awk, str, len) == -1) return -1; } while (0)
 
 #define PRINT_TABS(awk,depth) \
 	do { if (__print_tabs(awk,depth) == -1) return -1; } while (0)
