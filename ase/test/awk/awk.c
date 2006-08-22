@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.72 2006-08-13 16:05:04 bacon Exp $
+ * $Id: awk.c,v 1.73 2006-08-22 15:11:13 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -136,35 +136,30 @@ static xp_ssize_t process_source (
 	struct src_io* src_io = (struct src_io*)arg;
 	xp_char_t c;
 
-	switch (cmd) 
+	if (cmd == XP_AWK_IO_OPEN)
 	{
-		case XP_AWK_IO_OPEN:
-		{
-			if (src_io->input_file == XP_NULL) return 0;
-			src_io->input_handle = fopen_t (src_io->input_file, XP_T("r"));
-			if (src_io->input_handle == NULL) return -1;
-			return 1;
-		}
-
-		case XP_AWK_IO_CLOSE:
-		{
-			if (src_io->input_file == XP_NULL) return 0;
-			fclose ((FILE*)src_io->input_handle);
-			return 0;
-		}
-
-		case XP_AWK_IO_READ:
-		{
-			if (size <= 0) return -1;
-		#ifdef XP_CHAR_IS_MCHAR
-			c = fgetc ((FILE*)src_io->input_handle);
-		#else
-			c = fgetwc ((FILE*)src_io->input_handle);
-		#endif
-			if (c == XP_CHAR_EOF) return 0;
-			*data = c;
-			return 1;
-		}
+		if (src_io->input_file == XP_NULL) return 0;
+		src_io->input_handle = fopen_t (src_io->input_file, XP_T("r"));
+		if (src_io->input_handle == NULL) return -1;
+		return 1;
+	}
+	else if (cmd == XP_AWK_IO_CLOSE)
+	{
+		if (src_io->input_file == XP_NULL) return 0;
+		fclose ((FILE*)src_io->input_handle);
+		return 0;
+	}
+	else if (cmd == XP_AWK_IO_READ)
+	{
+		if (size <= 0) return -1;
+	#ifdef XP_CHAR_IS_MCHAR
+		c = fgetc ((FILE*)src_io->input_handle);
+	#else
+		c = fgetwc ((FILE*)src_io->input_handle);
+	#endif
+		if (c == XP_CHAR_EOF) return 0;
+		*data = c;
+		return 1;
 	}
 
 	return -1;
@@ -175,36 +170,23 @@ static xp_ssize_t dump_source (
 {
 	struct src_io* src_io = (struct src_io*)arg;
 
-	switch (cmd) 
+	if (cmd == XP_AWK_IO_OPEN || cmd == XP_AWK_IO_CLOSE) return 0;
+	else if (cmd == XP_AWK_IO_WRITE)
 	{
-		case XP_AWK_IO_OPEN:
+		xp_size_t i;
+		for (i = 0; i < size; i++)
 		{
-			return 0;
+	#ifdef XP_CHAR_IS_MCHAR
+			fputc (data[i], stdout);
+	#else
+			fputwc (data[i], stdout);
+	#endif
 		}
-
-		case XP_AWK_IO_CLOSE:
-		{
-			return 0;
-		}
-
-		case XP_AWK_IO_WRITE:
-		{
-			xp_size_t i;
-			for (i = 0; i < size; i++)
-			{
-		#ifdef XP_CHAR_IS_MCHAR
-				fputc (data[i], stdout);
-		#else
-				fputwc (data[i], stdout);
-		#endif
-			}
-			return size;
-		}
+		return size;
 	}
 
 	return -1;
 }
-
 
 static xp_ssize_t process_extio_pipe (
 	int cmd, void* arg, xp_char_t* data, xp_size_t size)
@@ -252,6 +234,11 @@ xp_printf (XP_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 				return 0;
 			return size;
 			*/
+			return -1;
+		}
+
+		case XP_AWK_IO_FLUSH:
+		{
 			return -1;
 		}
 
@@ -310,7 +297,13 @@ xp_printf (XP_TEXT("closing %s of type %d (file)\n"),  epa->name, epa->type);
 		{
 			/* TODO: how to return error or 0 */
 			fputs_t (data, /*size,*/ (FILE*)epa->handle);
-			return -1;
+			return size;
+		}
+
+		case XP_AWK_IO_FLUSH:
+		{
+			if (fflush ((FILE*)epa->handle) == EOF) return -1;
+			return 0;
 		}
 
 		case XP_AWK_IO_NEXT:
@@ -408,6 +401,11 @@ xp_printf (XP_TEXT("open the next console [%s]\n"), infiles[infile_no]);
 		fputs_t (data, /*size,*/ (FILE*)epa->handle);
 		/*MessageBox (NULL, data, data, MB_OK);*/
 		return size;
+	}
+	else if (cmd == XP_AWK_IO_FLUSH)
+	{
+		if (fflush ((FILE*)epa->handle) == EOF) return -1;
+		return 0;
 	}
 	else if (cmd == XP_AWK_IO_NEXT)
 	{

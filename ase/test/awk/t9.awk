@@ -1,5 +1,4 @@
-BEGIN 
-{
+BEGIN {
 	while (("xxx /p" | getline var) > 0) ;
 	while (("dir /w" | getline var) > 0) ;
 	while ((getline var < "t9.awk") > 0) ;

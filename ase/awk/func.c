@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.25 2006-08-21 14:49:08 bacon Exp $
+ * $Id: func.c,v 1.26 2006-08-22 15:10:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -227,7 +227,7 @@ static int __bfn_fflush (xp_awk_t* awk, void* run)
 	xp_awk_val_t* a0;
 	xp_char_t* str0;
 	xp_size_t len0;
-	int errnum, n;
+	int errnum, n, n2;
        
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs >= 0 && nargs <= 1);
@@ -235,10 +235,18 @@ static int __bfn_fflush (xp_awk_t* awk, void* run)
 	if (nargs == 0)
 	{
 		/* flush the console output */
-		n = 0;
+		n = xp_awk_flushextio (run, 
+			XP_AWK_OUT_CONSOLE, XP_T(""), &errnum);
+		if (n == -1 && errnum != XP_AWK_ENOERR)
+		{
+			xp_awk_seterrnum (run, errnum);
+			return -1;
+		}
 	}
 	else
 	{
+		xp_char_t* ptr, * end;
+
 		a0 = xp_awk_getarg (run, 0);
 		if (a0->type == XP_AWK_VAL_STR)
 		{
@@ -254,22 +262,78 @@ static int __bfn_fflush (xp_awk_t* awk, void* run)
 				xp_awk_seterrnum (run, errnum);
 				return -1;
 			}
+
+		}
+
+		/* the target name contains a null character.
+		 * make fflush return -1 and set ERRNO accordingly */
+		ptr = str0; end = str0 + len0;
+		while (ptr < end)
+		{
+			if (*ptr == XP_T('\0')) 
+			{
+				if (a0->type != XP_AWK_VAL_STR) xp_free (str0);
+				n = -1;
+				goto skip_flush;
+			}
+
+			ptr++;
 		}
 
 		if (len0 == 0)
 		{
 			/* flush all open files and pipes */
+			/* TODO: */
 		}
 		else
 		{
 			/* flush the given extio */
+			n = 0;
+
+			/* TODO: no file -> error, at least on file -> not an error */
+			n2 = xp_awk_flushextio (run, 
+				XP_AWK_OUT_FILE, str0, &errnum);
+			if (n2 == -1)
+			{
+				if (errnum != XP_AWK_ENOERR)
+				{
+					xp_awk_seterrnum (run, errnum);
+					return -1;
+				}
+				n = -1;
+			}
+
+			n2 = xp_awk_flushextio (run,
+				XP_AWK_OUT_PIPE, str0, &errnum);
+			if (n2 == -1)
+			{
+				if (errnum != XP_AWK_ENOERR)
+				{
+					xp_awk_seterrnum (run, errnum);
+					return -1;
+				}
+				n = -1;
+			}
+/* TODO: include this */
+#if 0
+			n2 = xp_awk_flushextio (run,
+				XP_AWK_OUT_COPROC, str0, &errnum);
+			if (n2 == -1)
+			{
+				if (errnum != XP_AWK_ENOERR)
+				{
+					xp_awk_seterrnum (run, errnum);
+					return -1;
+				}
+				n = -1;
+			}
+#endif
 		}
 
 		if (a0->type != XP_AWK_VAL_STR) xp_free (str0);
-
-		n = 0;
 	}
 
+skip_flush:
 	a0 = xp_awk_makeintval (run, (xp_long_t)n);
 	if (a0 == XP_NULL)
 	{

@@ -1,5 +1,4 @@
-BEGIN 
-{
+BEGIN {
 	/*
 	print "line 1" >> "1";
 	print "line 2" > "1";
@@ -31,6 +30,7 @@ BEGIN
 	}
 
 	print x > "def";
+	print "fflush() = ", fflush ("def");
 
 //	print (1 (2 getline j) j);
 //	print "abc" 1 + 2 3 + 49 2 / 3;

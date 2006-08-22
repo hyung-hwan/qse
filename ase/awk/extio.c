@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.27 2006-08-10 16:02:15 bacon Exp $
+ * $Id: extio.c,v 1.28 2006-08-22 15:10:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -242,7 +242,6 @@ static int __writeextio (
 {
 	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
-	xp_str_t buf;
 	xp_char_t* str;
 	xp_size_t len;
 	int extio_type, extio_mode, extio_mask, n;
@@ -264,23 +263,20 @@ static int __writeextio (
 		return -1;
 	}
 
-	if (v->type != XP_AWK_VAL_STR)
+	if (v->type == XP_AWK_VAL_STR)
 	{
-		/* TODO: optimize the buffer management. 
-		 *       each xp_awk_run_t may have a buffer for this.  */
-		if (xp_str_open (&buf, 256) == XP_NULL)
-		{
-			*errnum = XP_AWK_ENOMEM;
-			return -1;
-		}
-
+		str = ((xp_awk_val_str_t*)v)->buf;
+		len = ((xp_awk_val_str_t*)v)->len;
+	}
+	else
+	{
 		/* convert the value to string representation first */
-		if (xp_awk_valtostr (
-			v, errnum, xp_true, &buf, XP_NULL) == XP_NULL)
-		{
-			xp_str_close (&buf);
-			return -1;
-		}
+
+		/* TOOD: consider using a shared buffer when calling
+		 *       xp_awk_valtostr. maybe run->shared_buf.extio */
+		str = xp_awk_valtostr (
+			v, errnum, xp_true, NULL, &len);
+		if (str == XP_NULL) return -1;
 	}
 
 	/* look for the corresponding extio for name */
@@ -307,7 +303,7 @@ static int __writeextio (
 		p = (xp_awk_extio_t*) xp_malloc (xp_sizeof(xp_awk_extio_t));
 		if (p == XP_NULL)
 		{
-			if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+			if (v->type != XP_AWK_VAL_STR) xp_free (str);
 			*errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -316,7 +312,7 @@ static int __writeextio (
 		if (p->name == XP_NULL)
 		{
 			xp_free (p);
-			if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+			if (v->type != XP_AWK_VAL_STR) xp_free (str);
 			*errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -331,7 +327,7 @@ static int __writeextio (
 		{
 			xp_free (p->name);
 			xp_free (p);
-			if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+			if (v->type != XP_AWK_VAL_STR) xp_free (str);
 				
 			/* TODO: use meaningful error code */
 			xp_awk_setglobal (run, 
@@ -354,24 +350,13 @@ static int __writeextio (
 /* TODO: if write handler returns less than the request, loop */
 /* TODO: */
 /* TODO: */
-	if (v->type != XP_AWK_VAL_STR)
-	{
-		str = XP_STR_BUF(&buf);
-		len = XP_STR_LEN(&buf);
-	}
-	else
-	{
-		str = ((xp_awk_val_str_t*)v)->buf;
-		len = ((xp_awk_val_str_t*)v)->len;
-	}
-
 	if (len > 0)
 	{
 		n = handler (XP_AWK_IO_WRITE, p, str, len);
 
 		if (n == -1) 
 		{
-			if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+			if (v->type != XP_AWK_VAL_STR) xp_free (str);
 
 			/* TODO: use meaningful error code */
 			xp_awk_setglobal (run, 
@@ -382,12 +367,12 @@ static int __writeextio (
 
 		if (n == 0)
 		{
-			if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+			if (v->type != XP_AWK_VAL_STR) xp_free (str);
 			return 0;
 		}
 	}
 
-	if (v->type != XP_AWK_VAL_STR) xp_str_close (&buf);
+	if (v->type != XP_AWK_VAL_STR) xp_free (str);
 
 	if (nl)
 	{
@@ -406,6 +391,62 @@ static int __writeextio (
 	}
 
 	return 1;
+}
+
+int xp_awk_flushextio (
+	xp_awk_run_t* run, int out_type, const xp_char_t* name, int* errnum)
+{
+	xp_awk_extio_t* p = run->extio.chain;
+	xp_awk_io_t handler;
+	int extio_type, extio_mode, extio_mask, n;
+
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_type_map));
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_mode_map));
+	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_mask_map));
+
+	/* translate the out_type into the relevant extio type and mode */
+	extio_type = __out_type_map[out_type];
+	extio_mode = __out_mode_map[out_type];
+	extio_mask = __out_mask_map[out_type];
+
+	handler = run->extio.handler[extio_type];
+	if (handler == XP_NULL)
+	{
+		/* no io handler provided */
+		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		return -1;
+	}
+
+	/* look for the corresponding extio for name */
+	while (p != XP_NULL)
+	{
+		if (p->type == (extio_type | extio_mask) && 
+		    xp_strcmp (p->name, name) == 0) break;
+		p = p->next;
+	}
+
+	/* there is not corresponding extio for name */
+	if (p == XP_NULL)
+	{
+		/* TODO: use meaningful error code. but is this needed? */
+		xp_awk_setglobal (run, 
+			XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
+		*errnum = XP_AWK_ENOERR;
+		return -1;
+	}
+
+	n = handler (XP_AWK_IO_FLUSH, p, XP_NULL, 0);
+
+	if (n == -1) 
+	{
+		/* TODO: use meaningful error code */
+		xp_awk_setglobal (run, 
+			XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
+		*errnum = XP_AWK_ENOERR;
+		return -1;
+	}
+
+	return 0;
 }
 
 int xp_awk_nextextio_read (
