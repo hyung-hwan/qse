@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.173 2006-08-21 02:53:42 bacon Exp $
+ * $Id: run.c,v 1.174 2006-08-22 15:10:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1649,6 +1649,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 				/* the output destination name contains a null 
 				 * character. */
 				xp_free (out);
+				n = -1;
 				goto skip_write;
 				/* TODO: how to handle error???
 				 *       make print return -1??? not possible.
@@ -4349,6 +4350,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			{
 				/* the input source name contains a null 
 				 * character. make getline return -1 */
+				/* TODO: set ERRNO */
 				xp_free (in);
 				n = -1;
 				goto skip_read;

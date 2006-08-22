@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.98 2006-08-20 15:49:06 bacon Exp $
+ * $Id: awk.h,v 1.99 2006-08-22 15:10:48 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -76,7 +76,8 @@ enum
 	XP_AWK_IO_CLOSE  = 1,
 	XP_AWK_IO_READ   = 2,
 	XP_AWK_IO_WRITE  = 3,
-	XP_AWK_IO_NEXT   = 4  
+	XP_AWK_IO_FLUSH  = 4,
+	XP_AWK_IO_NEXT   = 5  
 };
 
 enum
