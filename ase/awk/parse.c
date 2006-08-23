@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.165 2006-08-13 16:04:32 bacon Exp $
+ * $Id: parse.c,v 1.166 2006-08-23 15:41:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3107,6 +3107,19 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 
 				xp_free (tmp);
 			}
+			else if (ep->opcode == XP_AWK_BINOP_BOR)
+			{
+				xp_awk_nde_t* tmp = args_tail;
+
+				if (tail_prev != XP_NULL) 
+					tail_prev->next = ep->left;
+				else args = ep->left;
+
+				out = ep->right;
+				out_type = XP_AWK_OUT_PIPE;
+
+				xp_free (tmp);
+			}
 		}
 	}
 
@@ -3135,7 +3148,7 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 		}
 	}
 
-	nde = (xp_awk_nde_print_t*)xp_malloc(xp_sizeof(xp_awk_nde_print_t));
+	nde = (xp_awk_nde_print_t*) xp_malloc (xp_sizeof(xp_awk_nde_print_t));
 	if (nde == XP_NULL) 
 	{
 		if (args != XP_NULL) xp_awk_clrpt (args);

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.174 2006-08-22 15:10:48 bacon Exp $
+ * $Id: run.c,v 1.175 2006-08-23 15:41:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -735,7 +735,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 	/* In case of getline, the code would make getline return -1, 
 	 * set ERRNO, make this function return 0 after having checked 
 	 * if closextio has returned -1 and errnum has been set to 
-	 * XP_AWK_ENOERR. But this part of the code ends the input for 
+	 * XP_AWK_EIOHANDLER. But this part of the code ends the input for 
 	 * the implicit pattern-block loop, which is totally different 
 	 * from getline. so it returns -1 as long as closeextio returns 
 	 * -1 regardless of the value of errnum.  */
@@ -745,7 +745,7 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 			run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
 		if (n == -1) 
 		{
-			if (errnum == XP_AWK_ENOERR)
+			if (errnum == XP_AWK_EIOHANDLER)
 				PANIC_I (run, XP_AWK_ECONINCLOSE);
 			else
 				PANIC_I (run, errnum);
@@ -889,7 +889,7 @@ static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
 		{
 			xp_awk_refdownval (run, run->inrec.d0);
 
-			if (errnum == XP_AWK_ENOERR)
+			if (errnum == XP_AWK_EIOHANDLER)
 				PANIC_I (run, XP_AWK_ECONOUTDATA);
 			else
 				PANIC_I (run, errnum);
@@ -1416,7 +1416,7 @@ static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 		run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
 	if (n == -1)
 	{
-		if (errnum == XP_AWK_ENOERR)
+		if (errnum == XP_AWK_EIOHANDLER)
 			PANIC_I (run, XP_AWK_ECONINNEXT);
 		else
 			PANIC_I (run, errnum);
@@ -1670,14 +1670,15 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 
 		xp_awk_refupval (v);
 		n = xp_awk_writeextio (run, p->out_type, dst, v, &errnum);
-		if (n < 0 && errnum != XP_AWK_ENOERR) 
+		if (n < 0 && errnum != XP_AWK_EIOHANDLER) 
 		{
 			if (out != XP_NULL) xp_free (out);
 			xp_awk_refdownval (run, v);
 			PANIC_I (run, errnum);
 		}
 		xp_awk_refdownval (run, v);
-		/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
+		/* TODO: how to handle n == -1 && errnum == XP_AWK_EIOHANDLER. 
+		 * that is the user handler returned an error... */
 	}
 	else
 	{
@@ -1693,7 +1694,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 
 			n = xp_awk_writeextio (
 				run, p->out_type, dst, v, &errnum);
-			if (n < 0 && errnum != XP_AWK_ENOERR) 
+			if (n < 0 && errnum != XP_AWK_EIOHANDLER) 
 			{
 				if (out != XP_NULL) xp_free (out);
 				xp_awk_refdownval (run, v);
@@ -1701,7 +1702,8 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 			}
 			xp_awk_refdownval (run, v);
 
-			/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
+			/* TODO: how to handle n == -1 && errnum == XP_AWK_EIOHANDLER. 
+			 * that is the user handler returned an error... */
 
 			/* TODO: print proper field separator */
 		}
@@ -1711,13 +1713,14 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 	 *       xp_awk_val_empty_string or something */
 	n = xp_awk_writeextio_nl (
 		run, p->out_type, dst, xp_awk_val_nil, &errnum);
-	if (n < 0 && errnum != XP_AWK_ENOERR)
+	if (n < 0 && errnum != XP_AWK_EIOHANDLER)
 	{
 		if (out != XP_NULL) xp_free (out);
 		PANIC_I (run, errnum);
 	}
 
-	/* TODO: how to handle n == -1 && errnum == XP_AWK_ENOERR. that is the user handler returned an error... */
+	/* TODO: how to handle n == -1 && errnum == XP_AWK_EIOHANDLER.
+	 * that is the user handler returned an error... */
 
 	if (out != XP_NULL) xp_free (out);
 
@@ -4372,13 +4375,13 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	if (n < 0) 
 	{
-		if (errnum != XP_AWK_ENOERR)
+		if (errnum != XP_AWK_EIOHANDLER)
 		{
 			xp_str_close (&buf);
 			PANIC (run, errnum);
 		}
 
-		/* if errnum == XP_AWK_ENOERR, make getline return -1 */
+		/* if errnum == XP_AWK_EIOHANDLER, make getline return -1 */
 		n = -1;
 	}
 
@@ -4483,7 +4486,7 @@ static int __read_record (xp_awk_run_t* run)
 		XP_T(""), &run->inrec.line, &errnum);
 	if (n < 0) 
 	{
-		if (errnum == XP_AWK_ENOERR)
+		if (errnum == XP_AWK_EIOHANDLER)
 			PANIC_I (run, XP_AWK_ECONINDATA);
 		else
 			PANIC_I (run, errnum);

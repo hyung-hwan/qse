@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.99 2006-08-22 15:10:48 bacon Exp $
+ * $Id: awk.h,v 1.100 2006-08-23 15:41:45 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -224,6 +224,8 @@ enum
 	XP_AWK_ENEXTCALL,         /* next called from BEGIN or END */
 	XP_AWK_ENEXTFILECALL,     /* nextfile called from BEGIN or END */
 	XP_AWK_EIOIMPL,           /* wrong implementation of user io handler */
+	XP_AWK_ENOSUCHIO,         /* no such io name found */
+	XP_AWK_EIOHANDLER,        /* io handler has returned an error */
 	XP_AWK_EINTERNAL,         /* internal error */
 
 	/* regular expression error */
