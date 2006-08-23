@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.73 2006-08-22 15:11:13 bacon Exp $
+ * $Id: awk.c,v 1.74 2006-08-23 15:42:16 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -229,17 +229,15 @@ xp_printf (XP_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 
 		case XP_AWK_IO_WRITE:
 		{
-			/*
-			if (fputs_t (data, size, (FILE*)epa->handle) == XP_NULL) 
-				return 0;
+			/* TODO: size... */
+			fputs_t (data, (FILE*)epa->handle);
 			return size;
-			*/
-			return -1;
 		}
 
 		case XP_AWK_IO_FLUSH:
 		{
-			return -1;
+			if (epa->mode == XP_AWK_IO_PIPE_READ) return -1;
+			else return 0;
 		}
 
 		case XP_AWK_IO_NEXT:

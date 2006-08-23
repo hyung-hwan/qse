@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.26 2006-08-22 15:10:48 bacon Exp $
+ * $Id: func.c,v 1.27 2006-08-23 15:41:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -200,7 +200,7 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 	}	
 
 	n = xp_awk_closeextio (run, name, &errnum);
-	if (n == -1 && errnum != XP_AWK_ENOERR)
+	if (n == -1 && errnum != XP_AWK_EIOHANDLER)
 	{
 		if (a0->type != XP_AWK_VAL_STR) xp_free (name);
 		xp_awk_seterrnum (run, errnum);
@@ -237,7 +237,9 @@ static int __bfn_fflush (xp_awk_t* awk, void* run)
 		/* flush the console output */
 		n = xp_awk_flushextio (run, 
 			XP_AWK_OUT_CONSOLE, XP_T(""), &errnum);
-		if (n == -1 && errnum != XP_AWK_ENOERR)
+		if (n == -1 && 
+		    errnum != XP_AWK_EIOHANDLER && 
+		    errnum != XP_AWK_ENOSUCHIO)
 		{
 			xp_awk_seterrnum (run, errnum);
 			return -1;
@@ -280,55 +282,77 @@ static int __bfn_fflush (xp_awk_t* awk, void* run)
 			ptr++;
 		}
 
-		if (len0 == 0)
-		{
-			/* flush all open files and pipes */
-			/* TODO: */
-		}
-		else
-		{
-			/* flush the given extio */
-			n = 0;
+		/* flush the given extio */
+		n = 1;
 
-			/* TODO: no file -> error, at least on file -> not an error */
-			n2 = xp_awk_flushextio (run, 
-				XP_AWK_OUT_FILE, str0, &errnum);
+		if (((xp_awk_run_t*)run)->extio.handler[XP_AWK_EXTIO_FILE] != XP_NULL)
+		{
+			n2 = xp_awk_flushextio (
+				run, XP_AWK_OUT_FILE, 
+				((len0 == 0)? XP_NULL: str0), &errnum);
 			if (n2 == -1)
 			{
-				if (errnum != XP_AWK_ENOERR)
+				if (errnum == XP_AWK_EIOHANDLER) n = -1;
+				else if (errnum == XP_AWK_ENOSUCHIO) 
+				{
+					if (n != 0) n = -2;
+				}
+				else
 				{
 					xp_awk_seterrnum (run, errnum);
 					return -1;
 				}
-				n = -1;
 			}
-
-			n2 = xp_awk_flushextio (run,
-				XP_AWK_OUT_PIPE, str0, &errnum);
-			if (n2 == -1)
-			{
-				if (errnum != XP_AWK_ENOERR)
-				{
-					xp_awk_seterrnum (run, errnum);
-					return -1;
-				}
-				n = -1;
-			}
-/* TODO: include this */
-#if 0
-			n2 = xp_awk_flushextio (run,
-				XP_AWK_OUT_COPROC, str0, &errnum);
-			if (n2 == -1)
-			{
-				if (errnum != XP_AWK_ENOERR)
-				{
-					xp_awk_seterrnum (run, errnum);
-					return -1;
-				}
-				n = -1;
-			}
-#endif
+			else if (n != -1) n = 0;
 		}
+
+		if (((xp_awk_run_t*)run)->extio.handler[XP_AWK_EXTIO_PIPE] != XP_NULL)
+		{
+			n2 = xp_awk_flushextio (
+				run, XP_AWK_OUT_PIPE, 
+				((len0 == 0)? XP_NULL: str0), &errnum);
+			if (n2 == -1)
+			{
+				if (errnum == XP_AWK_EIOHANDLER) n = -1;
+				else if (errnum == XP_AWK_ENOSUCHIO) 
+				{
+					if (n != 0) n = -2;
+				}
+				else
+				{
+					xp_awk_seterrnum (run, errnum);
+					return -1;
+				}
+			}
+			else if (n != -1) n = 0;
+		}
+
+		if (((xp_awk_run_t*)run)->extio.handler[XP_AWK_EXTIO_COPROC] != XP_NULL)
+		{
+			n2 = xp_awk_flushextio (
+				run, XP_AWK_OUT_COPROC, 
+				((len0 == 0)? XP_NULL: str0), &errnum);
+			if (n2 == -1)
+			{
+				if (errnum == XP_AWK_EIOHANDLER) n = -1;
+				else if (errnum == XP_AWK_ENOSUCHIO) 
+				{
+					if (n != 0) n = -2;
+				}
+				else
+				{
+					xp_awk_seterrnum (run, errnum);
+					return -1;
+				}
+			}
+			else if (n != -1) n = 0;
+		}
+
+		/* if n remains 1, no ip handlers have been defined for
+		 * file, pipe, and coproc. so make fflush return -1. 
+		 * if n is -2, no such named io has been found at all 
+		 * if n is -1, the io handler has returned an error */
+		if (n != 0) n = -1;
 
 		if (a0->type != XP_AWK_VAL_STR) xp_free (str0);
 	}

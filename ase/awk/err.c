@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.37 2006-08-20 15:49:06 bacon Exp $
+ * $Id: err.c,v 1.38 2006-08-23 15:41:46 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -96,6 +96,8 @@ const xp_char_t* xp_awk_geterrstr (int errnum)
 		XP_T("next cannot be called from the BEGIN or END block"),
 		XP_T("nextfile cannot be called from the BEGIN or END block"),
 		XP_T("wrong implementation of user-defined io handler"),
+		XP_T("no such io name found"),
+		XP_T("io handler has returned an error"),
 		XP_T("internal error that should never have happened"),
 
 		XP_T("a right parenthesis is expected in the regular expression"),
