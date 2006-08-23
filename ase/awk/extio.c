@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.30 2006-08-23 15:43:45 bacon Exp $
+ * $Id: extio.c,v 1.31 2006-08-23 15:45:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
