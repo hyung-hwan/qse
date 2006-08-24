@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.30 2006-08-23 15:46:03 bacon Exp $
+ * $Id: func.c,v 1.31 2006-08-24 03:30:07 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -44,6 +44,7 @@ static xp_awk_bfn_t __sys_bfn[] =
 	{ XP_T("split"),   5, 0,            2,  3,  XP_T("vrv"), __bfn_split },
 	{ XP_T("tolower"), 7, 0,            1,  1,  XP_NULL, __bfn_tolower },
 	{ XP_T("toupper"), 7, 0,            1,  1,  XP_NULL, __bfn_toupper },
+	//{ XP_T("gsub"),    4, 0,            2,  3,  XP_T("vrr"), __bfn_gsub },
 
 	/* TODO: remove these two functions */
 	{ XP_T("system"),  6, 0,            1,  1,  XP_NULL, __bfn_system },

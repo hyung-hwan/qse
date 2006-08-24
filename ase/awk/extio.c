@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.31 2006-08-23 15:45:11 bacon Exp $
+ * $Id: extio.c,v 1.32 2006-08-24 03:30:07 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -88,7 +88,10 @@ int xp_awk_readextio (
 {
 	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
-	int extio_type, extio_mode, extio_mask, n;
+	int extio_type, extio_mode, extio_mask, n, ret;
+	xp_awk_val_t* rs;
+	xp_char_t* rs_ptr;
+	xp_size_t rs_len;
 
 	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_type_map));
 	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_mode_map));
@@ -168,9 +171,37 @@ int xp_awk_readextio (
 		if (n == 0) return 0;
 	}
 
-	/* read a line */
+	/* ready to read a line */
 	xp_str_clear (buf);
 
+	/* get the record separator */
+	rs = xp_awk_getglobal (run, XP_AWK_GLOBAL_RS);
+	xp_awk_refupval (rs);
+
+	if (rs->type == XP_AWK_VAL_NIL)
+	{
+		rs_ptr = XP_NULL;
+		rs_len = 0;
+	}
+	else if (rs->type == XP_AWK_VAL_STR)
+	{
+		rs_ptr = ((xp_awk_val_str_t*)rs)->buf;
+		rs_len = ((xp_awk_val_str_t*)rs)->len;
+	}
+	else 
+	{
+		rs_ptr = xp_awk_valtostr (
+			rs, errnum, xp_true, XP_NULL, &rs_len);
+		if (rs_ptr == XP_NULL)
+		{
+			xp_awk_refdownval (run, rs);
+			return -1;
+		}
+	}
+
+	ret = 1;
+
+	/* call the io handler */
 	while (1)
 	{
 		xp_char_t c;
@@ -181,7 +212,7 @@ int xp_awk_readextio (
 
 			if (p->in.eof)
 			{
-				if (XP_STR_LEN(buf) == 0) return 0;
+				if (XP_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
@@ -195,13 +226,14 @@ int xp_awk_readextio (
 					XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
 
 				*errnum = XP_AWK_EIOHANDLER;
-				return -1;
+				ret = -1;
+				break;
 			}
 
 			if (n == 0) 
 			{
 				p->in.eof = xp_true;
-				if (XP_STR_LEN(buf) == 0) return 0;
+				if (XP_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
@@ -210,16 +242,38 @@ int xp_awk_readextio (
 		}
 
 		c = p->in.buf[p->in.pos++];
-		if (c == XP_C('\n')) break; 
+
+		if (rs_ptr == XP_NULL)
+		{
+			/* separate by a new line */
+			if (c == XP_C('\n')) break; 
+		}
+		else if (rs_len == 0)
+		{
+			/* TODO: */
+			/* separate by a blank line */
+		}
+		else if (rs_len == 1)
+		{
+			if (c == rs_ptr[0]) break;
+		}
+		else
+		{
+			/* TODO: */
+			/* regular expression */
+		}
 
 		if (xp_str_ccat (buf, c) == (xp_size_t)-1)
 		{
 			*errnum = XP_AWK_ENOMEM;
-			return -1;
+			ret = -1;
+			break;
 		}
 	}
 
-	return 1;
+	if (rs_ptr != XP_NULL && rs->type != XP_AWK_VAL_STR) xp_free (rs_ptr);
+	xp_awk_refdownval (run, rs);
+	return ret;
 }
 
 int xp_awk_writeextio (

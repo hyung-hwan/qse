@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.178 2006-08-23 15:47:28 bacon Exp $
+ * $Id: run.c,v 1.179 2006-08-24 03:30:07 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -209,20 +209,15 @@ xp_awk_val_t* xp_awk_getarg (void* run, xp_size_t idx)
 	return STACK_ARG ((xp_awk_run_t*)run, idx);
 }
 
-void xp_awk_setretval (void* run, xp_awk_val_t* val)
+xp_awk_val_t* xp_awk_getglobal (void* run, xp_size_t idx)
 {
-	xp_awk_run_t* r = (xp_awk_run_t*)run;
-	xp_awk_refdownval (r, STACK_RETVAL(r));
-	STACK_RETVAL(r) = val;
-	/* should use the same trick as __run_return_statement */
-	xp_awk_refupval (val); 
+	return STACK_GLOBAL(((xp_awk_run_t*)run),idx);
 }
 
 void xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 {
-	xp_awk_run_t* r = (xp_awk_run_t*)run;
-	xp_awk_refdownval (run, STACK_GLOBAL(r,idx));
-	STACK_GLOBAL(r,idx) = val;
+	xp_awk_refdownval (run, STACK_GLOBAL(((xp_awk_run_t*)run),idx));
+	STACK_GLOBAL(((xp_awk_run_t*)run),idx) = val;
 	xp_awk_refupval (val);
 }
 
@@ -230,6 +225,15 @@ void xp_awk_seterrnum (void* run, int errnum)
 {
 	xp_awk_run_t* r = (xp_awk_run_t*)run;
 	r->errnum = errnum;
+}
+
+void xp_awk_setretval (void* run, xp_awk_val_t* val)
+{
+	xp_awk_run_t* r = (xp_awk_run_t*)run;
+	xp_awk_refdownval (r, STACK_RETVAL(r));
+	STACK_RETVAL(r) = val;
+	/* should use the same trick as __run_return_statement */
+	xp_awk_refupval (val); 
 }
 
 int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
@@ -4480,7 +4484,6 @@ static int __read_record (xp_awk_run_t* run)
 
 	__clear_record (run, xp_false);
 
-	/*TODO: use RS */
 	n = xp_awk_readextio (
 		run, XP_AWK_IN_CONSOLE, 
 		XP_T(""), &run->inrec.line, &errnum);
