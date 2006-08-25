@@ -1,2 +1,2 @@
 BEGIN { RS = ""; }
-{ print "record: ", $0; }
+{ print "RECORD: ", $0; }
