@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.34 2006-08-25 15:52:47 bacon Exp $
+ * $Id: extio.c,v 1.35 2006-08-25 23:50:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -278,6 +278,7 @@ int xp_awk_readextio (
 		}
 		else
 		{
+#if 0
 			xp_char_t* match_ptr;
 			xp_size_t match_len;
 			/* TODO: */
@@ -298,6 +299,7 @@ int xp_awk_readextio (
 				/* matched... */
 				/* DO SOMTHING */
 			}
+#endif
 		}
 
 		if (xp_str_ccat (buf, c) == (xp_size_t)-1)
