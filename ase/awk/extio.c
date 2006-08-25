@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.32 2006-08-24 03:30:07 bacon Exp $
+ * $Id: extio.c,v 1.33 2006-08-25 03:30:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -92,6 +92,7 @@ int xp_awk_readextio (
 	xp_awk_val_t* rs;
 	xp_char_t* rs_ptr;
 	xp_size_t rs_len;
+	xp_size_t line_len = 0;
 
 	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_type_map));
 	xp_assert (in_type >= 0 && in_type <= xp_countof(__in_mode_map));
@@ -138,7 +139,7 @@ int xp_awk_readextio (
 		p->mode = extio_mode;
 		p->handle = XP_NULL;
 
-		p->in.buf[0] = XP_C('\0');
+		p->in.buf[0] = XP_T('\0');
 		p->in.pos = 0;
 		p->in.len = 0;
 		p->in.eof = xp_false;
@@ -246,12 +247,30 @@ int xp_awk_readextio (
 		if (rs_ptr == XP_NULL)
 		{
 			/* separate by a new line */
-			if (c == XP_C('\n')) break; 
+			if (c == XP_T('\n')) break; 
 		}
 		else if (rs_len == 0)
 		{
-			/* TODO: */
 			/* separate by a blank line */
+			/* TODO: handle different line terminator like \r\n */
+			if (line_len == 0 && c == XP_T('\n'))
+			{
+				if (XP_STR_LEN(buf) <= 0) 
+				{
+					/* if the record is empty when a blank 
+					 * line is encountered, the line 
+					 * terminator should not be added to 
+					 * the record */
+					continue;
+				}
+
+				/* when a blank line is encountered,
+				 * it needs to snip off the line 
+				 * terminator of the previous line */
+				/* TODO: handle different line terminator like \r\n */
+				XP_STR_LEN(buf) -= 1;
+				break;
+			}
 		}
 		else if (rs_len == 1)
 		{
@@ -269,6 +288,10 @@ int xp_awk_readextio (
 			ret = -1;
 			break;
 		}
+
+		/* TODO: handle difference line terminator like \r\n */
+		if (c == XP_T('\n')) line_len = 0;
+		else line_len = line_len + 1;
 	}
 
 	if (rs_ptr != XP_NULL && rs->type != XP_AWK_VAL_STR) xp_free (rs_ptr);

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.74 2006-08-23 15:42:16 bacon Exp $
+ * $Id: awk.c,v 1.75 2006-08-25 03:30:38 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -544,7 +544,7 @@ static int __main (int argc, xp_char_t* argv[])
 	xp_awk_runcbs_t runcbs;
 	xp_awk_runios_t runios;
 	struct src_io src_io = { NULL, NULL };
-	int opt;
+	int opt, i, file_count = 0;
 
 	if ((awk = xp_awk_open(XP_NULL)) == XP_NULL) 
 	{
@@ -556,45 +556,32 @@ static int __main (int argc, xp_char_t* argv[])
 		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | 
 		XP_AWK_EXTIO | XP_AWK_BLOCKLESS | XP_AWK_STRINDEXONE;
 
-	if (argc == 2) 
+	for (i = 1; i < argc; i++)
 	{
 #if defined(__STAND_ALONE) && !defined(_WIN32)
-		if (strcmp(argv[1], "-m") == 0)
+		if (strcmp(argv[i], "-m") == 0)
 #else
-		if (xp_strcmp(argv[1], XP_T("-m")) == 0)
-#endif
-		{
-			xp_awk_close (awk);
-			xp_printf (XP_T("Usage: %s [-m] source_file\n"), argv[0]);
-			return -1;
-		}
-
-		src_io.input_file = argv[1];
-	}
-	else if (argc == 3)
-	{
-#if defined(__STAND_ALONE) && !defined(_WIN32)
-		if (strcmp(argv[1], "-m") == 0)
-#else
-		if (xp_strcmp(argv[1], XP_T("-m")) == 0)
+		if (xp_strcmp(argv[i], XP_T("-m")) == 0)
 #endif
 		{
 			opt |= XP_AWK_RUNMAIN;
 		}
+		else if (file_count == 0)
+		{
+			src_io.input_file = argv[i];
+			file_count++;
+		}
+		else if (file_count == 1)
+		{
+			infiles[0] = argv[i];
+			file_count++;
+		}
 		else
 		{
 			xp_awk_close (awk);
-			xp_printf (XP_T("Usage: %s [-m] source_file\n"), argv[0]);
+			xp_printf (XP_T("Usage: %s [-m] source_file [data_file]\n"), argv[0]);
 			return -1;
 		}
-
-		src_io.input_file = argv[2];
-	}
-	else
-	{
-		xp_awk_close (awk);
-		xp_printf (XP_T("Usage: %s [-m] source_file\n"), argv[0]);
-		return -1;
 	}
 
 	xp_awk_setopt (awk, opt);
