@@ -1,9 +1,10 @@
-SRCS = awk.c err.c tree.c tab.c map.c parse.c run.c sa.c val.c func.c misc.c extio.c 
+SRCS = awk.c err.c tree.c tab.c map.c parse.c \
+	run.c sa.c val.c func.c misc.c extio.c rex.c
 OBJS = $(SRCS:.c=.obj)
 OUT = xpawk.lib
 
 CC = bcc32
-CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. -DXP_AWK_STAND_ALONE
+CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. -DXP_AWK_STAND_ALONE -DXP_CHAR_IS_WCHAR
 
 all: $(OBJS)
 	tlib $(OUT) @&&!
