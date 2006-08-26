@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.76 2006-08-26 15:28:08 bacon Exp $
+ * $Id: awk.c,v 1.77 2006-08-26 16:30:53 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -169,7 +169,7 @@ static xp_ssize_t process_source (
 static xp_ssize_t dump_source (
 	int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
-	struct src_io* src_io = (struct src_io*)arg;
+	/*struct src_io* src_io = (struct src_io*)arg;*/
 
 	if (cmd == XP_AWK_IO_OPEN || cmd == XP_AWK_IO_CLOSE) return 0;
 	else if (cmd == XP_AWK_IO_WRITE)
@@ -528,7 +528,7 @@ static void __on_run_end (xp_awk_t* awk, void* handle, int errnum, void* arg)
 	{
 		xp_printf (XP_T("AWK PRORAM ABOUT TO END WITH AN ERROR - %d - %s\n"), errnum, xp_awk_geterrstr (errnum));
 	}
-	else xp_printf (XP_T("AWK PRORAM ENDED SUCCESSFUL\n"));
+	else xp_printf (XP_T("AWK PRORAM ENDED SUCCESSFULLY\n"));
 
 	app_awk = NULL;	
 	app_run = NULL;
@@ -556,6 +556,13 @@ static int __main (int argc, xp_char_t* argv[])
 	opt = XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_DBLSLASHES |
 		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | 
 		XP_AWK_EXTIO | XP_AWK_BLOCKLESS | XP_AWK_STRINDEXONE;
+
+	if (argc <= 1)
+	{
+		xp_awk_close (awk);
+		xp_printf (XP_T("Usage: %s [-m] source_file [data_file]\n"), argv[0]);
+		return -1;
+	}
 
 	for (i = 1; i < argc; i++)
 	{

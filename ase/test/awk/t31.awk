@@ -1,2 +1,2 @@
-BEGIN { /*RS="";*/ }
+BEGIN { RS=""; }
 { print $0; }

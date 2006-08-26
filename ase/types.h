@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.53 2006-08-26 15:28:08 bacon Exp $
+ * $Id: types.h,v 1.54 2006-08-26 16:30:52 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -190,9 +190,16 @@ typedef xp_int_t   xp_ssize_t;
 typedef xp_uint_t  xp_word_t;
 
 /* floating-point number */
-#if XP_SIZEOF_LONG_DOUBLE > XP_SIZEOF_DOUBLE
+#if defined(__FreeBSD__)
+	/* TODO: check if the support for long double is complete.
+	 *       if so, use long double for xp_real_t */
+	#define XP_SIZEOF_REAL XP_SIZEOF_DOUBLE
+	typedef double xp_real_t;
+#elif XP_SIZEOF_LONG_DOUBLE > XP_SIZEOF_DOUBLE
+	#define XP_SIZEOF_REAL XP_SIZEOF_LONG_DOUBLE
 	typedef long double xp_real_t;
 #else
+	#define XP_SIZEOF_REAL XP_SIZEOF_DOUBLE
 	typedef double xp_real_t;
 #endif
 

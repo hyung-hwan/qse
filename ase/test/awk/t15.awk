@@ -1,5 +1,4 @@
-BEGIN
-{
+BEGIN {
 	local a, b;
 
 	a = 12;
