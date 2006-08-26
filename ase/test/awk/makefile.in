@@ -4,7 +4,7 @@ OUTS = $(SRCS:.c=.x)
 CC = @CC@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@
 LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/xp/bas -L@abs_top_builddir@/xp/awk
-LIBS = @LIBS@ -lxpawk -lxpbas
+LIBS = @LIBS@ -lxpawk -lxpbas -lm
 
 all: $(OUTS)
 
