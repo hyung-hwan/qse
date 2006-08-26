@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.31 2006-08-24 03:30:07 bacon Exp $
+ * $Id: func.c,v 1.32 2006-08-26 15:28:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -8,6 +8,8 @@
 #include <xp/bas/memory.h>
 #include <xp/bas/string.h>
 #include <xp/bas/assert.h>
+#include <xp/bas/ctype.h>
+#include <xp/bas/stdio.h>
 #include <xp/bas/str.h>
 #endif
 
@@ -784,7 +786,8 @@ static int __bfn_system (xp_awk_t* awk, void* run)
 #ifdef _WIN32
 	n = _tsystem (cmd);
 #else
-#error NOT SUPPORTED ...
+	/* TODO: support system on other platforms that win32 */
+	n = -1;
 #endif
 
 	xp_free (cmd);

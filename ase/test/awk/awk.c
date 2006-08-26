@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.75 2006-08-25 03:30:38 bacon Exp $
+ * $Id: awk.c,v 1.76 2006-08-26 15:28:08 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -17,6 +17,7 @@
 	#include <xp/bas/memory.h>
 	#include <xp/bas/sysapi.h>
 	#include <xp/bas/assert.h>	
+	#include <xp/bas/locale.h>	
 #else
 	#include <limits.h>
 	#ifndef PATH_MAX

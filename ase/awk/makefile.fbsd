@@ -3,19 +3,18 @@ SRCS = awk.c err.c tree.c tab.c map.c parse.c \
 OBJS = $(SRCS:.c=.o)
 OUT = libxpawk.a
 
-CC = @CC@
-RANLIB = @RANLIB@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@
-LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
+CC = cc
+CFLAGS = -Wall -I../.. -DXP_AWK_STAND_ALONE
 
 all: $(OBJS)
 	ar cr $(OUT) $(OBJS)
-	ranlib $(OUT)
 
 clean:
-	rm -rf $(OBJS) $(OUT) *.o
+	rm -rf $(OBJS) $(OUT) *.obj
 
 .SUFFIXES: .c .o
 .c.o:
 	$(CC) $(CFLAGS) -c $<
+
+
+
