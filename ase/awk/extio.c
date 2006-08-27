@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.35 2006-08-25 23:50:15 bacon Exp $
+ * $Id: extio.c,v 1.36 2006-08-27 15:29:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -80,11 +80,11 @@ static int __out_mask_map[] =
 
 static int __writeextio (
 	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v, int* errnum, xp_bool_t nl);
+	const xp_char_t* name, xp_awk_val_t* v, xp_bool_t nl);
 
 int xp_awk_readextio (
 	xp_awk_run_t* run, int in_type,
-	const xp_char_t* name, xp_str_t* buf, int* errnum)
+	const xp_char_t* name, xp_str_t* buf)
 {
 	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
@@ -107,7 +107,7 @@ int xp_awk_readextio (
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
-		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
@@ -123,7 +123,7 @@ int xp_awk_readextio (
 		p = (xp_awk_extio_t*) xp_malloc (xp_sizeof(xp_awk_extio_t));
 		if (p == XP_NULL)
 		{
-			*errnum = XP_AWK_ENOMEM;
+			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 
@@ -131,7 +131,7 @@ int xp_awk_readextio (
 		if (p->name == XP_NULL)
 		{
 			xp_free (p);
-			*errnum = XP_AWK_ENOMEM;
+			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 
@@ -153,10 +153,11 @@ int xp_awk_readextio (
 			xp_free (p);
 				
 			/* TODO: use meaningful error code */
-			xp_awk_setglobal (run, 
-				XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
+			if (xp_awk_setglobal (
+				run, XP_AWK_GLOBAL_ERRNO, 
+				xp_awk_val_one) == -1) return -1;
 
-			*errnum = XP_AWK_EIOHANDLER;
+			run->errnum = XP_AWK_EIOHANDLER;
 			return -1;
 		}
 
@@ -192,7 +193,7 @@ int xp_awk_readextio (
 	else 
 	{
 		rs_ptr = xp_awk_valtostr (
-			rs, errnum, xp_true, XP_NULL, &rs_len);
+			rs, &run->errnum, xp_true, XP_NULL, &rs_len);
 		if (rs_ptr == XP_NULL)
 		{
 			xp_awk_refdownval (run, rs);
@@ -223,11 +224,17 @@ int xp_awk_readextio (
 			{
 				/* handler error. getline should return -1 */
 				/* TODO: use meaningful error code */
-				xp_awk_setglobal (run, 
-					XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
-
-				*errnum = XP_AWK_EIOHANDLER;
-				ret = -1;
+				if (xp_awk_setglobal (
+					run, XP_AWK_GLOBAL_ERRNO, 
+					xp_awk_val_one) == -1) 
+				{
+					ret = -1;
+				}
+				else
+				{
+					run->errnum = XP_AWK_EIOHANDLER;
+					ret = -1;
+				}
 				break;
 			}
 
@@ -304,7 +311,7 @@ int xp_awk_readextio (
 
 		if (xp_str_ccat (buf, c) == (xp_size_t)-1)
 		{
-			*errnum = XP_AWK_ENOMEM;
+			run->errnum = XP_AWK_ENOMEM;
 			ret = -1;
 			break;
 		}
@@ -321,21 +328,21 @@ int xp_awk_readextio (
 
 int xp_awk_writeextio (
 	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v, int* errnum)
+	const xp_char_t* name, xp_awk_val_t* v)
 {
-	return __writeextio (run, out_type, name, v, errnum, xp_false);
+	return __writeextio (run, out_type, name, v, xp_false);
 }
 
 int xp_awk_writeextio_nl (
 	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v, int* errnum)
+	const xp_char_t* name, xp_awk_val_t* v)
 {
-	return __writeextio (run, out_type, name, v, errnum, xp_true);
+	return __writeextio (run, out_type, name, v, xp_true);
 }
 
 static int __writeextio (
 	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v, int* errnum, xp_bool_t nl)
+	const xp_char_t* name, xp_awk_val_t* v, xp_bool_t nl)
 {
 	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
@@ -356,7 +363,7 @@ static int __writeextio (
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
-		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
@@ -372,7 +379,7 @@ static int __writeextio (
 		/* TOOD: consider using a shared buffer when calling
 		 *       xp_awk_valtostr. maybe run->shared_buf.extio */
 		str = xp_awk_valtostr (
-			v, errnum, xp_true, NULL, &len);
+			v, &run->errnum, xp_true, NULL, &len);
 		if (str == XP_NULL) return -1;
 	}
 
@@ -401,7 +408,7 @@ static int __writeextio (
 		if (p == XP_NULL)
 		{
 			if (v->type != XP_AWK_VAL_STR) xp_free (str);
-			*errnum = XP_AWK_ENOMEM;
+			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 
@@ -410,7 +417,7 @@ static int __writeextio (
 		{
 			xp_free (p);
 			if (v->type != XP_AWK_VAL_STR) xp_free (str);
-			*errnum = XP_AWK_ENOMEM;
+			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 
@@ -427,10 +434,11 @@ static int __writeextio (
 			if (v->type != XP_AWK_VAL_STR) xp_free (str);
 				
 			/* TODO: use meaningful error code */
-			xp_awk_setglobal (run, 
-				XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
+			if (xp_awk_setglobal (
+				run, XP_AWK_GLOBAL_ERRNO, 
+				xp_awk_val_one) == -1) return -1;
 
-			*errnum = XP_AWK_EIOHANDLER;
+			run->errnum = XP_AWK_EIOHANDLER;
 			return -1;
 		}
 
@@ -456,9 +464,11 @@ static int __writeextio (
 			if (v->type != XP_AWK_VAL_STR) xp_free (str);
 
 			/* TODO: use meaningful error code */
-			xp_awk_setglobal (run, 
-				XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
-			*errnum = XP_AWK_EIOHANDLER;
+			if (xp_awk_setglobal (
+				run, XP_AWK_GLOBAL_ERRNO, 
+				xp_awk_val_one) == -1) return -1;
+
+			run->errnum = XP_AWK_EIOHANDLER;
 			return -1;
 		}
 
@@ -478,9 +488,11 @@ static int __writeextio (
 		if (n == -1) 
 		{
 			/* TODO: use meaningful error code */
-			xp_awk_setglobal (run, 
-				XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
-			*errnum = XP_AWK_EIOHANDLER;
+			if (xp_awk_setglobal (
+				run, XP_AWK_GLOBAL_ERRNO, 
+				xp_awk_val_one) == -1) return -1;
+
+			run->errnum = XP_AWK_EIOHANDLER;
 			return -1;
 		}
 
@@ -491,7 +503,7 @@ static int __writeextio (
 }
 
 int xp_awk_flushextio (
-	xp_awk_run_t* run, int out_type, const xp_char_t* name, int* errnum)
+	xp_awk_run_t* run, int out_type, const xp_char_t* name)
 {
 	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
@@ -511,7 +523,7 @@ int xp_awk_flushextio (
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
-		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
@@ -526,9 +538,11 @@ int xp_awk_flushextio (
 			if (n == -1) 
 			{
 				/* TODO: use meaningful error code */
-				xp_awk_setglobal (run, 
-					XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
-				*errnum = XP_AWK_EIOHANDLER;
+				if (xp_awk_setglobal (
+					run, XP_AWK_GLOBAL_ERRNO, 
+					xp_awk_val_one) == -1) return -1;
+
+				run->errnum = XP_AWK_EIOHANDLER;
 				return -1;
 			}
 
@@ -542,14 +556,15 @@ int xp_awk_flushextio (
 
 	/* there is no corresponding extio for name */
 	/* TODO: use meaningful error code. but is this needed? */
-	xp_awk_setglobal (run, 
-		XP_AWK_GLOBAL_ERRNO, xp_awk_val_one);
-	*errnum = XP_AWK_ENOSUCHIO;
+	if (xp_awk_setglobal (
+		run, XP_AWK_GLOBAL_ERRNO, xp_awk_val_one) == -1) return -1;
+
+	run->errnum = XP_AWK_ENOSUCHIO;
 	return -1;
 }
 
 int xp_awk_nextextio_read (
-	xp_awk_run_t* run, int in_type, const xp_char_t* name, int* errnum)
+	xp_awk_run_t* run, int in_type, const xp_char_t* name)
 {
 	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
@@ -568,7 +583,7 @@ int xp_awk_nextextio_read (
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
-		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
@@ -582,7 +597,7 @@ int xp_awk_nextextio_read (
 	if (p == XP_NULL)
 	{
 		/* something is totally wrong */
-		*errnum = XP_AWK_EINTERNAL;
+		run->errnum = XP_AWK_EINTERNAL;
 		return -1;
 	}
 
@@ -590,7 +605,7 @@ int xp_awk_nextextio_read (
 	if (n == -1)
 	{
 		/* TODO: is this errnum correct? */
-		*errnum = XP_AWK_EIOHANDLER;
+		run->errnum = XP_AWK_EIOHANDLER;
 		return -1;
 	}
 
@@ -598,7 +613,7 @@ int xp_awk_nextextio_read (
 }
 
 int xp_awk_closeextio_read (
-	xp_awk_run_t* run, int in_type, const xp_char_t* name, int* errnum)
+	xp_awk_run_t* run, int in_type, const xp_char_t* name)
 {
 	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
 	xp_awk_io_t handler;
@@ -617,7 +632,7 @@ int xp_awk_closeextio_read (
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
-		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
@@ -635,7 +650,7 @@ int xp_awk_closeextio_read (
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
-					*errnum = XP_AWK_EIOHANDLER;
+					run->errnum = XP_AWK_EIOHANDLER;
 					return -1;
 				}
 			}
@@ -653,12 +668,12 @@ int xp_awk_closeextio_read (
 	}
 
 	/* this is not a run-time error */
-	*errnum = XP_AWK_EIOHANDLER;
+	run->errnum = XP_AWK_EIOHANDLER;
 	return -1;
 }
 
 int xp_awk_closeextio_write (
-	xp_awk_run_t* run, int out_type, const xp_char_t* name, int* errnum)
+	xp_awk_run_t* run, int out_type, const xp_char_t* name)
 {
 	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
 	xp_awk_io_t handler;
@@ -677,7 +692,7 @@ int xp_awk_closeextio_write (
 	if (handler == XP_NULL)
 	{
 		/* no io handler provided */
-		*errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
@@ -695,7 +710,7 @@ int xp_awk_closeextio_write (
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
-					*errnum = XP_AWK_EIOHANDLER;
+					run->errnum = XP_AWK_EIOHANDLER;
 					return -1;
 				}
 			}
@@ -714,12 +729,11 @@ int xp_awk_closeextio_write (
 
 	/* this is not a run-time error */
 	/* TODO: set ERRNO */
-	*errnum = XP_AWK_EIOHANDLER;
+	run->errnum = XP_AWK_EIOHANDLER;
 	return -1;
 }
 
-int xp_awk_closeextio (
-	xp_awk_run_t* run, const xp_char_t* name, int* errnum)
+int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name)
 {
 	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
 
@@ -738,7 +752,7 @@ int xp_awk_closeextio (
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
-					*errnum = XP_AWK_EIOHANDLER;
+					run->errnum = XP_AWK_EIOHANDLER;
 					return -1;
 				}
 			}
@@ -757,7 +771,7 @@ int xp_awk_closeextio (
 
 	/* this is not a run-time error */
 	/* TODO: set ERRNO */
-	*errnum = XP_AWK_EIOHANDLER;
+	run->errnum = XP_AWK_EIOHANDLER;
 	return -1;
 }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.180 2006-08-27 10:45:36 bacon Exp $
+ * $Id: run.c,v 1.181 2006-08-27 15:29:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -179,9 +179,9 @@ static int __read_record (xp_awk_run_t* run);
 static int __set_record (
 	xp_awk_run_t* run, const xp_char_t* str, xp_size_t len);
 static int __split_record (xp_awk_run_t* run);
-static void __clear_record (xp_awk_run_t* run, xp_bool_t noline);
-static int __recomp_record_fields (xp_awk_run_t* run, 
-	xp_size_t lv, xp_char_t* str, xp_size_t len, int* errnum);
+static int __clear_record (xp_awk_run_t* run, xp_bool_t noline);
+static int __recomp_record_fields (
+	xp_awk_run_t* run, xp_size_t lv, xp_char_t* str, xp_size_t len);
 
 static xp_char_t* __idxnde_to_str (
 	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_size_t* len);
@@ -216,12 +216,6 @@ xp_awk_val_t* xp_awk_getglobal (void* run, xp_size_t idx)
 
 int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 {
-	/*
-	xp_awk_refdownval (run, STACK_GLOBAL(((xp_awk_run_t*)run),idx));
-	STACK_GLOBAL(((xp_awk_run_t*)run),idx) = val;
-	xp_awk_refupval (val);
-	*/
-
 	xp_awk_val_t* old = STACK_GLOBAL((xp_awk_run_t*)run,idx);
 	if (old->type == XP_AWK_VAL_MAP)
 	{	
@@ -230,8 +224,22 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 		PANIC_I ((xp_awk_run_t*)run, XP_AWK_EMAPTOSCALAR);
 	}
 
-/* TODO: if var->id.idxa == XP_AWK_GLOBAL_NF recompute $0, etc */
+/* TODO: is this correct?? */
+	if (val->type == XP_AWK_VAL_MAP &&
+	    (idx >= XP_AWK_GLOBAL_ARGC && idx <= XP_AWK_GLOBAL_SUBSEP)  &&
+	    idx != XP_AWK_GLOBAL_ARGV)
+	{
+		/* TODO: better error code */
+		PANIC_I ((xp_awk_run_t*)run, XP_AWK_ESCALARTOMAP);
+	}
+
+	if (idx  == XP_AWK_GLOBAL_RS)
+	{
 /* TODO: if idx == XP_AWK_GLOBAL_RS and it is multi-char sttring, compile it */
+	}
+
+/* TODO: if idx == XP_AWK_GLOBAL_NF recompute $0, etc */
+
 	xp_awk_refdownval (run, old);
 	STACK_GLOBAL((xp_awk_run_t*)run,idx) = val;
 	xp_awk_refupval (val);
@@ -502,7 +510,7 @@ static void __deinit_run (xp_awk_run_t* run)
 	/* destroy input record. __clear_record should be called
 	 * before the run stack has been destroyed because it may try
 	 * to change the value to XP_AWK_GLOBAL_NF. */
-	__clear_record (run, xp_false); 
+	__clear_record (run, xp_false);  
 	if (run->inrec.flds != XP_NULL) 
 	{
 		xp_free (run->inrec.flds);
@@ -720,7 +728,6 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 {
 	xp_ssize_t n;
 	xp_bool_t need_to_close = xp_false;
-	int errnum;
 
 	run->inrec.buf_pos = 0;
 	run->inrec.buf_len = 0;
@@ -737,9 +744,13 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 		x = __read_record (run);
 		if (x == -1)
 		{
+			int saved = run->errnum;
+
 			/* don't care about the result of input close */
 			xp_awk_closeextio_read (
-				run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
+				run, XP_AWK_IN_CONSOLE, XP_T(""));
+
+			run->errnum = saved;
 			return -1;
 		}
 
@@ -748,8 +759,12 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
 		{
+			int saved = run->errnum;
+
 			xp_awk_closeextio_read (
-				run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
+				run, XP_AWK_IN_CONSOLE, XP_T(""));
+
+			run->errnum = saved;
 			return -1;
 		}
 	}
@@ -764,13 +779,12 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 	if (need_to_close)
 	{
 		n = xp_awk_closeextio_read (
-			run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
+			run, XP_AWK_IN_CONSOLE, XP_T(""));
 		if (n == -1) 
 		{
-			if (errnum == XP_AWK_EIOHANDLER)
+			if (run->errnum == XP_AWK_EIOHANDLER)
 				PANIC_I (run, XP_AWK_ECONINCLOSE);
-			else
-				PANIC_I (run, errnum);
+			else return -1;
 		}
 	}
 
@@ -901,24 +915,20 @@ static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
 	if (nde == XP_NULL)
 	{
 		/* blockless pattern - execute print $0*/
-		int errnum;
-
 		xp_awk_refupval (run->inrec.d0);
 
 		n = xp_awk_writeextio_nl (run, 
-			XP_AWK_OUT_CONSOLE, XP_T(""), run->inrec.d0, &errnum);
+			XP_AWK_OUT_CONSOLE, XP_T(""), run->inrec.d0);
 		if (n == -1)
 		{
 			xp_awk_refdownval (run, run->inrec.d0);
 
-			if (errnum == XP_AWK_EIOHANDLER)
+			if (run->errnum == XP_AWK_EIOHANDLER)
 				PANIC_I (run, XP_AWK_ECONOUTDATA);
-			else
-				PANIC_I (run, errnum);
+			else return -1;
 		}
 
 		xp_awk_refdownval (run, run->inrec.d0);
-
 		return 0;
 	}
 
@@ -1426,7 +1436,7 @@ static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 /* TODO: some extentions such as nextfile "in/out"; 
  *  what about awk -i in1,in2,in3 -o out1,out2,out3 ?
  */
-	int n, errnum;
+	int n;
 
 	if  (run->active_block == (xp_awk_nde_blk_t*)run->awk->tree.begin ||
 	     run->active_block == (xp_awk_nde_blk_t*)run->awk->tree.end)
@@ -1434,14 +1444,12 @@ static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 		PANIC_I (run, XP_AWK_ENEXTFILECALL);
 	}
 
-	n = xp_awk_nextextio_read (
-		run, XP_AWK_IN_CONSOLE, XP_T(""), &errnum);
+	n = xp_awk_nextextio_read (run, XP_AWK_IN_CONSOLE, XP_T(""));
 	if (n == -1)
 	{
-		if (errnum == XP_AWK_EIOHANDLER)
+		if (run->errnum == XP_AWK_EIOHANDLER)
 			PANIC_I (run, XP_AWK_ECONINNEXT);
-		else
-			PANIC_I (run, errnum);
+		else return -1;
 	}
 
 	if (n == 0)
@@ -1513,7 +1521,6 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 				xp_char_t* key;
 				xp_size_t key_len;
 				xp_awk_val_t* idx;
-				int errnum;
 
 				xp_assert (var->idx != XP_NULL);
 
@@ -1521,11 +1528,12 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 				if (idx == XP_NULL) return -1;
 
 				xp_awk_refupval (idx);
-				key = xp_awk_valtostr (idx, 
-					&errnum, xp_true, XP_NULL, &key_len);
+				key = xp_awk_valtostr (
+					idx, &run->errnum, 
+					xp_true, XP_NULL, &key_len);
 				xp_awk_refdownval (run, idx);
 
-				if (key == XP_NULL) PANIC_I (run, errnum);
+				if (key == XP_NULL) return -1;
 
 				xp_awk_map_remove (map, key, key_len);
 				xp_free (key);
@@ -1569,13 +1577,26 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 			 * the previous value because it was nil. */
 			if (var->type == XP_AWK_NDE_GLOBAL ||
 			    var->type == XP_AWK_NDE_GLOBALIDX)
-				STACK_GLOBAL(run,var->id.idxa) = tmp;
+			{
+				if (xp_awk_setglobal (
+					run, var->id.idxa, tmp) == -1)
+				{
+					xp_awk_refupval (tmp);
+					xp_awk_refdownval (run, tmp);
+					return -1;
+				}
+			}
 			else if (var->type == XP_AWK_NDE_LOCAL ||
 			         var->type == XP_AWK_NDE_LOCALIDX)
+			{
 				STACK_LOCAL(run,var->id.idxa) = tmp;
-			else STACK_ARG(run,var->id.idxa) = tmp;
-
-			xp_awk_refupval (tmp);
+				xp_awk_refupval (tmp);
+			}
+			else 
+			{
+				STACK_ARG(run,var->id.idxa) = tmp;
+				xp_awk_refupval (tmp);
+			}
 		}
 		else
 		{
@@ -1592,7 +1613,6 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 				xp_char_t* key;
 				xp_size_t key_len;
 				xp_awk_val_t* idx;
-				int errnum;
 
 				xp_assert (var->idx != XP_NULL);
 
@@ -1600,11 +1620,12 @@ static int __run_delete (xp_awk_run_t* run, xp_awk_nde_delete_t* nde)
 				if (idx == XP_NULL) return -1;
 
 				xp_awk_refupval (idx);
-				key = xp_awk_valtostr (idx, 
-					&errnum, xp_true, XP_NULL, &key_len);
+				key = xp_awk_valtostr (
+					idx, &run->errnum, 
+					xp_true, XP_NULL, &key_len);
 				xp_awk_refdownval (run, idx);
 
-				if (key == XP_NULL) PANIC_I (run, errnum);
+				if (key == XP_NULL) return -1;
 
 				xp_awk_map_remove (map, key, key_len);
 				xp_free (key);
@@ -1691,12 +1712,12 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		v = run->inrec.d0;
 
 		xp_awk_refupval (v);
-		n = xp_awk_writeextio (run, p->out_type, dst, v, &errnum);
-		if (n < 0 && errnum != XP_AWK_EIOHANDLER) 
+		n = xp_awk_writeextio (run, p->out_type, dst, v);
+		if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
 		{
 			if (out != XP_NULL) xp_free (out);
 			xp_awk_refdownval (run, v);
-			PANIC_I (run, errnum);
+			return -1;
 		}
 		xp_awk_refdownval (run, v);
 		/* TODO: how to handle n == -1 && errnum == XP_AWK_EIOHANDLER. 
@@ -1714,17 +1735,16 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 			}
 			xp_awk_refupval (v);
 
-			n = xp_awk_writeextio (
-				run, p->out_type, dst, v, &errnum);
-			if (n < 0 && errnum != XP_AWK_EIOHANDLER) 
+			n = xp_awk_writeextio (run, p->out_type, dst, v);
+			if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
 			{
 				if (out != XP_NULL) xp_free (out);
 				xp_awk_refdownval (run, v);
-				PANIC_I (run, errnum);
+				return -1;
 			}
 			xp_awk_refdownval (run, v);
 
-			/* TODO: how to handle n == -1 && errnum == XP_AWK_EIOHANDLER. 
+			/* TODO: how to handle n == -1 && run->errnum == XP_AWK_EIOHANDLER. 
 			 * that is the user handler returned an error... */
 
 			/* TODO: print proper field separator */
@@ -1733,12 +1753,11 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 
 	/* TODO: change xp_awk_val_nil to 
 	 *       xp_awk_val_empty_string or something */
-	n = xp_awk_writeextio_nl (
-		run, p->out_type, dst, xp_awk_val_nil, &errnum);
-	if (n < 0 && errnum != XP_AWK_EIOHANDLER)
+	n = xp_awk_writeextio_nl (run, p->out_type, dst, xp_awk_val_nil);
+	if (n < 0 && run->errnum != XP_AWK_EIOHANDLER)
 	{
 		if (out != XP_NULL) xp_free (out);
-		PANIC_I (run, errnum);
+		return -1;
 	}
 
 	/* TODO: how to handle n == -1 && errnum == XP_AWK_EIOHANDLER.
@@ -1977,20 +1996,6 @@ static xp_awk_val_t* __do_assignment_scalar (
 	}
 	else if (var->type == XP_AWK_NDE_GLOBAL) 
 	{
-#if 0
-		xp_awk_val_t* old = STACK_GLOBAL(run,var->id.idxa);
-		if (old->type == XP_AWK_VAL_MAP)
-		{	
-			/* once a variable becomes an array,
-			 * it cannot be changed to a scalar variable */
-			PANIC (run, XP_AWK_EMAPTOSCALAR);
-		}
-
-/* TODO: if var->id.idxa == XP_AWK_GLOBAL_NF recompute $0, etc */
-		xp_awk_refdownval (run, old);
-		STACK_GLOBAL(run,var->id.idxa) = val;
-		xp_awk_refupval (val);
-#endif
 		if (xp_awk_setglobal (
 			run, var->id.idxa, val) == -1) return XP_NULL;
 	}
@@ -2079,27 +2084,39 @@ static xp_awk_val_t* __do_assignment_map (
 				xp_awk_refdownval (run, tmp);
 				PANIC (run, XP_AWK_ENOMEM);		
 			}
+
+			xp_awk_refupval (tmp);
 		}
 		else if (var->type == XP_AWK_NDE_GLOBALIDX)
 		{
 			/* decrease the reference count of the previous value.
 			 * in fact, this is not necessary as map is always 
 			 * xp_awk_val_nil here. */
+			/*
 			xp_awk_refdownval (run, (xp_awk_val_t*)map);
 			STACK_GLOBAL(run,var->id.idxa) = tmp;
+			xp_awk_refupval (tmp);
+			*/
+			if (xp_awk_setglobal (run, var->id.idxa, tmp) == -1)
+			{
+				xp_awk_refupval (tmp);
+				xp_awk_refdownval (run, tmp);
+				return XP_NULL;
+			}
 		}
 		else if (var->type == XP_AWK_NDE_LOCALIDX)
 		{
 			xp_awk_refdownval (run, (xp_awk_val_t*)map);
 			STACK_LOCAL(run,var->id.idxa) = tmp;
+			xp_awk_refupval (tmp);
 		}
 		else /* if (var->type == XP_AWK_NDE_ARGIDX) */
 		{
 			xp_awk_refdownval (run, (xp_awk_val_t*)map);
 			STACK_ARG(run,var->id.idxa) = tmp;
+			xp_awk_refupval (tmp);
 		}
 
-		xp_awk_refupval (tmp);
 		map = (xp_awk_val_map_t*) tmp;
 	}
 	else if (map->type != XP_AWK_VAL_MAP)
@@ -2153,12 +2170,16 @@ static xp_awk_val_t* __do_assignment_pos (
 
 	if (lv == 0)
 	{
-		__clear_record (run, xp_false);
+		if (__clear_record (run, xp_false) == -1)
+		{
+			xp_free (str);
+			return XP_NULL;
+		}
 
 		if (xp_str_ncpy (&run->inrec.line, str, len) == (xp_size_t)-1)
 		{
 			xp_free (str);
-			PANIC (run, errnum);
+			PANIC (run, XP_AWK_ENOMEM);
 		}
 		xp_free (str);
 
@@ -2188,18 +2209,21 @@ static xp_awk_val_t* __do_assignment_pos (
 
 		if (__split_record (run) == -1) 
 		{
+			errnum = run->errnum;
 			__clear_record (run, xp_false);
+			run->errnum = errnum;
 			return XP_NULL;
 		}
 	}
 	else
 	{
-		if (__recomp_record_fields (
-			run, (xp_size_t)lv, str, len, &errnum) == -1)
+		if (__recomp_record_fields (run, (xp_size_t)lv, str, len) == -1)
 		{
+			errnum = run->errnum;
 			xp_free (str);
 			__clear_record (run, xp_false);
-			PANIC (run, errnum);
+			run->errnum = errnum;
+			return XP_NULL;
 		}
 		xp_free (str);
 
@@ -4396,18 +4420,19 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		PANIC (run, XP_AWK_ENOMEM);
 	}
 
-	n = xp_awk_readextio (run, p->in_type, dst, &buf, &errnum);
+	n = xp_awk_readextio (run, p->in_type, dst, &buf);
 	if (in != XP_NULL) xp_free (in);
 
 	if (n < 0) 
 	{
-		if (errnum != XP_AWK_EIOHANDLER)
+		if (run->errnum != XP_AWK_EIOHANDLER)
 		{
 			xp_str_close (&buf);
-			PANIC (run, errnum);
+			return XP_NULL;
 		}
 
-		/* if errnum == XP_AWK_EIOHANDLER, make getline return -1 */
+		/* if run->errnum == XP_AWK_EIOHANDLER, 
+		 * make getline return -1 */
 		n = -1;
 	}
 
@@ -4416,7 +4441,11 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		if (p->var == XP_NULL)
 		{
 			/* set $0 with the input value */
-			__clear_record (run, xp_false);
+			if (__clear_record (run, xp_false) == -1)
+			{
+				xp_str_close (&buf);
+				return XP_NULL;
+			}
 
 			if (__set_record (run, 
 				XP_STR_BUF(&buf), XP_STR_LEN(&buf)) == -1)
@@ -4502,19 +4531,16 @@ static void __raw_pop_times (xp_awk_run_t* run, xp_size_t times)
 static int __read_record (xp_awk_run_t* run)
 {
 	xp_ssize_t n;
-	int errnum;
 
-	__clear_record (run, xp_false);
+	if (__clear_record (run, xp_false) == -1) return -1;
 
 	n = xp_awk_readextio (
-		run, XP_AWK_IN_CONSOLE, 
-		XP_T(""), &run->inrec.line, &errnum);
+		run, XP_AWK_IN_CONSOLE, XP_T(""), &run->inrec.line);
 	if (n < 0) 
 	{
-		if (errnum == XP_AWK_EIOHANDLER)
+		if (run->errnum == XP_AWK_EIOHANDLER)
 			PANIC_I (run, XP_AWK_ECONINDATA);
-		else
-			PANIC_I (run, errnum);
+		else return -1;
 	}
 	if (n == 0) 
 	{
@@ -4532,6 +4558,7 @@ static int __read_record (xp_awk_run_t* run)
 static int __set_record (xp_awk_run_t* run, const xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_t* v;
+	int errnum;
 
 	v = xp_awk_makestrval (str, len);
 	if (v == XP_NULL)
@@ -4548,7 +4575,9 @@ static int __set_record (xp_awk_run_t* run, const xp_char_t* str, xp_size_t len)
 
 	if (__split_record (run) == -1) 
 	{
+		errnum = run->errnum;
 		__clear_record (run, xp_false);
+		run->errnum = errnum;
 		return -1;
 	}
 
@@ -4631,15 +4660,16 @@ static int __split_record (xp_awk_run_t* run)
 	/* set the number of fields */
 	v = xp_awk_makeintval (run, (xp_long_t)nflds);
 	if (v == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
-	xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, v);
+	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, v) == -1) return -1;
 
 	xp_assert (nflds == run->inrec.nflds);
 	return 0;
 }
 
-static void __clear_record (xp_awk_run_t* run, xp_bool_t noline)
+static int __clear_record (xp_awk_run_t* run, xp_bool_t noline)
 {
 	xp_size_t i;
+	int n = 0;
 
 	xp_awk_refdownval (run, run->inrec.d0);
 	run->inrec.d0 = xp_awk_val_nil;
@@ -4654,15 +4684,25 @@ static void __clear_record (xp_awk_run_t* run, xp_bool_t noline)
 			xp_awk_refdownval (run, run->inrec.flds[i].val);
 		}
 		run->inrec.nflds = 0;
-		xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, xp_awk_val_zero);
+
+		if (xp_awk_setglobal (
+			run, XP_AWK_GLOBAL_NF, xp_awk_val_zero) == -1)
+		{
+			/* first of all, this should never happen. 
+			 * if it happened, it would return an error
+			 * after all the clearance tasks */
+			n = -1;
+		}
 	}
 
 	xp_assert (run->inrec.nflds == 0);
 	if (!noline) xp_str_clear (&run->inrec.line);
+
+	return n;
 }
 
-static int __recomp_record_fields (xp_awk_run_t* run, 
-	xp_size_t lv, xp_char_t* str, xp_size_t len, int* errnum)
+static int __recomp_record_fields (
+	xp_awk_run_t* run, xp_size_t lv, xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_t* v;
 	xp_char_t* ofsp = XP_NULL, * ofs;
@@ -4682,14 +4722,14 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 			run->inrec.flds, xp_sizeof(*run->inrec.flds) * max);
 		if (tmp == XP_NULL) 
 		{
-			*errnum = XP_AWK_ENOMEM;
+			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 #else
 		tmp = xp_malloc (xp_sizeof(*run->inrec.flds) * max);
 		if (tmp == XP_NULL)
 		{
-			*errnum = XP_AWK_ENOMEM;
+			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 		if (run->inrec.flds != XP_NULL)
@@ -4714,7 +4754,7 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 		if (v != xp_awk_val_nil)
 		{
 			ofsp = xp_awk_valtostr (
-				v, errnum, xp_true, XP_NULL, &ofs_len);
+				v, &run->errnum, xp_true, XP_NULL, &ofs_len);
 			if (ofsp == XP_NULL) return -1;
 
 			ofs = ofsp;
@@ -4737,7 +4777,7 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 				ofs, ofs_len) == (xp_size_t)-1) 
 			{
 				if (ofsp != XP_NULL) xp_free (ofsp);
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
 		}
@@ -4755,7 +4795,7 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 				&run->inrec.line, str, len) == (xp_size_t)-1)
 			{
 				if (ofsp != XP_NULL) xp_free (ofsp);
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
 
@@ -4763,7 +4803,7 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 			if (tmp == XP_NULL) 
 			{
 				if (ofsp != XP_NULL) xp_free (ofsp);
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
 
@@ -4784,7 +4824,7 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 				&run->inrec.line, XP_T("")) == (xp_size_t)-1)
 			{
 				if (ofsp != XP_NULL) xp_free (ofsp);
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
 
@@ -4811,7 +4851,7 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 				tmp->buf, tmp->len) == (xp_size_t)-1)
 			{
 				if (ofsp != XP_NULL) xp_free (ofsp);
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
 		}
@@ -4826,11 +4866,12 @@ static int __recomp_record_fields (xp_awk_run_t* run,
 		v = xp_awk_makeintval (run, (xp_long_t)max);
 		if (v == XP_NULL) 
 		{
-			*errnum = XP_AWK_ENOMEM;
+			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
 
-		xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, v);
+		if (xp_awk_setglobal (
+			run, XP_AWK_GLOBAL_NF, v) == -1) return -1;
 	}
 
 	return 0;

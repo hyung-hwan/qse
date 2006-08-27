@@ -1,5 +1,4 @@
-BEGIN 
-{ 
+BEGIN { 
 	print "more";
 	//print | "more";
 	//print > "echo";

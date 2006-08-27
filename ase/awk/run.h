@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.15 2006-07-12 07:25:15 bacon Exp $
+ * $Id: run.h,v 1.16 2006-08-27 15:29:21 bacon Exp $
  */
 
 #ifndef _XP_AWK_RUN_H_
@@ -75,7 +75,9 @@ enum
 
 enum
 {
-	/* this table should match __bvtab in parse.c */
+	/* this table should match __bvtab in parse.c.
+	 * in addition, xp_awk_setglobal also counts 
+	 * on the order of these values */
 
 	XP_AWK_GLOBAL_ARGC,
 	XP_AWK_GLOBAL_ARGIND,
