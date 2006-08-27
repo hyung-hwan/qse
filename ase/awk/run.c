@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.179 2006-08-24 03:30:07 bacon Exp $
+ * $Id: run.c,v 1.180 2006-08-27 10:45:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -214,11 +214,29 @@ xp_awk_val_t* xp_awk_getglobal (void* run, xp_size_t idx)
 	return STACK_GLOBAL(((xp_awk_run_t*)run),idx);
 }
 
-void xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
+int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 {
+	/*
 	xp_awk_refdownval (run, STACK_GLOBAL(((xp_awk_run_t*)run),idx));
 	STACK_GLOBAL(((xp_awk_run_t*)run),idx) = val;
 	xp_awk_refupval (val);
+	*/
+
+	xp_awk_val_t* old = STACK_GLOBAL((xp_awk_run_t*)run,idx);
+	if (old->type == XP_AWK_VAL_MAP)
+	{	
+		/* once a variable becomes an array,
+		 * it cannot be changed to a scalar variable */
+		PANIC_I ((xp_awk_run_t*)run, XP_AWK_EMAPTOSCALAR);
+	}
+
+/* TODO: if var->id.idxa == XP_AWK_GLOBAL_NF recompute $0, etc */
+/* TODO: if idx == XP_AWK_GLOBAL_RS and it is multi-char sttring, compile it */
+	xp_awk_refdownval (run, old);
+	STACK_GLOBAL((xp_awk_run_t*)run,idx) = val;
+	xp_awk_refupval (val);
+
+	return 0;
 }
 
 void xp_awk_seterrnum (void* run, int errnum)
@@ -1959,6 +1977,7 @@ static xp_awk_val_t* __do_assignment_scalar (
 	}
 	else if (var->type == XP_AWK_NDE_GLOBAL) 
 	{
+#if 0
 		xp_awk_val_t* old = STACK_GLOBAL(run,var->id.idxa);
 		if (old->type == XP_AWK_VAL_MAP)
 		{	
@@ -1971,6 +1990,9 @@ static xp_awk_val_t* __do_assignment_scalar (
 		xp_awk_refdownval (run, old);
 		STACK_GLOBAL(run,var->id.idxa) = val;
 		xp_awk_refupval (val);
+#endif
+		if (xp_awk_setglobal (
+			run, var->id.idxa, val) == -1) return XP_NULL;
 	}
 	else if (var->type == XP_AWK_NDE_LOCAL) 
 	{
