@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.77 2006-08-26 16:30:53 bacon Exp $
+ * $Id: awk.c,v 1.78 2006-08-28 14:30:08 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -506,6 +506,19 @@ xp_printf (XP_TEXT("switching console[%s] of type %x\n"), epa->name, epa->type);
 xp_awk_t* app_awk = NULL;
 void* app_run = NULL;
 
+#ifdef _WIN32
+static BOOL WINAPI __stop_run (DWORD ctrl_type)
+{
+	if (ctrl_type == CTRL_C_EVENT ||
+	    ctrl_type == CTRL_CLOSE_EVENT)
+	{
+		xp_awk_stop (app_awk, app_run);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+#else
 static void __stop_run (int sig)
 {
 	signal  (SIGINT, SIG_IGN);
@@ -514,6 +527,7 @@ static void __stop_run (int sig)
 	/*xp_awk_stopallruns (awk); */
 	signal  (SIGINT, __stop_run);
 }
+#endif
 
 static void __on_run_start (xp_awk_t* awk, void* handle, void* arg)
 {
@@ -616,7 +630,11 @@ static int __main (int argc, xp_char_t* argv[])
 		return -1;
 	}
 
+#ifdef _WIN32
+	SetConsoleCtrlHandler (__stop_run, TRUE);
+#else
 	signal (SIGINT, __stop_run);
+#endif
 
 	runios.pipe = process_extio_pipe;
 	runios.coproc = XP_NULL;
