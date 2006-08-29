@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.46 2006-08-21 02:53:42 bacon Exp $
+ * $Id: awk_i.h,v 1.47 2006-08-29 15:01:44 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -189,6 +189,7 @@ struct xp_awk_run_t
 	{
 		xp_awk_io_t handler[XP_AWK_EXTIO_NUM];
 		xp_awk_extio_t* chain;
+		void* rs_rex;
 	} extio;
 
 	int errnum;

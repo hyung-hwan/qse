@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.181 2006-08-27 15:29:21 bacon Exp $
+ * $Id: run.c,v 1.182 2006-08-29 15:01:45 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -216,12 +216,14 @@ xp_awk_val_t* xp_awk_getglobal (void* run, xp_size_t idx)
 
 int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 {
-	xp_awk_val_t* old = STACK_GLOBAL((xp_awk_run_t*)run,idx);
+	xp_awk_run_t* r = (xp_awk_run_t*)run;
+
+	xp_awk_val_t* old = STACK_GLOBAL(r,idx);
 	if (old->type == XP_AWK_VAL_MAP)
 	{	
 		/* once a variable becomes an array,
 		 * it cannot be changed to a scalar variable */
-		PANIC_I ((xp_awk_run_t*)run, XP_AWK_EMAPTOSCALAR);
+		PANIC_I (r, XP_AWK_EMAPTOSCALAR);
 	}
 
 /* TODO: is this correct?? */
@@ -230,12 +232,50 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 	    idx != XP_AWK_GLOBAL_ARGV)
 	{
 		/* TODO: better error code */
-		PANIC_I ((xp_awk_run_t*)run, XP_AWK_ESCALARTOMAP);
+		PANIC_I (r, XP_AWK_ESCALARTOMAP);
 	}
 
 	if (idx  == XP_AWK_GLOBAL_RS)
 	{
-/* TODO: if idx == XP_AWK_GLOBAL_RS and it is multi-char sttring, compile it */
+		xp_char_t* rs_ptr;
+		xp_size_t rs_len;
+
+		if (val->type == XP_AWK_VAL_STR)
+		{
+			rs_ptr = ((xp_awk_val_str_t*)val)->buf;
+			rs_len = ((xp_awk_val_str_t*)val)->len;
+		}
+		else
+		{
+			/* due to the expression evaluation rule, the 
+			 * regular expression can not be an assigned value */
+			xp_assert (val->type != XP_AWK_VAL_REX);
+
+			rs_ptr = xp_awk_valtostr (
+				val, &r->errnum, xp_true, XP_NULL, &rs_len);
+			if (rs_ptr == XP_NULL) return -1;
+		}
+
+		if (rs_len > 1)
+		{
+			void* rex;
+
+			/* compile the regular expression */
+			/* TODO: use safebuild */
+			rex = xp_awk_buildrex (rs_ptr, rs_len, &r->errnum);
+			if (rex == XP_NULL)
+			{
+				if (val->type != XP_AWK_VAL_STR) 
+					xp_free (rs_ptr);
+				return -1;
+			}
+
+			if (r->extio.rs_rex != XP_NULL) 
+				xp_awk_freerex (r->extio.rs_rex);
+			r->extio.rs_rex = rex;
+		}
+
+		if (val->type != XP_AWK_VAL_STR) xp_free (rs_ptr);
 	}
 
 /* TODO: if idx == XP_AWK_GLOBAL_NF recompute $0, etc */
@@ -494,6 +534,7 @@ static int __init_run (
 	run->extio.handler[XP_AWK_EXTIO_FILE] = runios->file;
 	run->extio.handler[XP_AWK_EXTIO_CONSOLE] = runios->console;
 	run->extio.chain = XP_NULL;
+	run->extio.rs_rex = XP_NULL;
 
 	return 0;
 }
@@ -506,6 +547,11 @@ static void __deinit_run (xp_awk_run_t* run)
 	/* TODO: what if this operation fails? */
 	xp_awk_clearextio (run);
 	xp_assert (run->extio.chain == XP_NULL);
+	if (run->extio.rs_rex != XP_NULL) 
+	{
+		xp_free (run->extio.rs_rex);
+		run->extio.rs_rex = XP_NULL;
+	}
 
 	/* destroy input record. __clear_record should be called
 	 * before the run stack has been destroyed because it may try

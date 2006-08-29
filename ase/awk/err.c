@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.38 2006-08-23 15:41:46 bacon Exp $
+ * $Id: err.c,v 1.39 2006-08-29 15:01:44 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -43,6 +43,7 @@ const xp_char_t* xp_awk_geterrstr (int errnum)
 		XP_T("cannot unget character"),
 
 		XP_T("unexpected end of source"),
+		XP_T("unexpected end of a comment"),
 		XP_T("unexpected end of a string"),
 		XP_T("unexpected end of a regular expression"),
 		XP_T("left brace expected"),

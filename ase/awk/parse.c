@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.168 2006-08-23 15:46:29 bacon Exp $
+ * $Id: parse.c,v 1.169 2006-08-29 15:01:44 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3970,9 +3970,21 @@ static int __skip_comment (xp_awk_t* awk)
 		do 
 		{
 			GET_CHAR_TO (awk, c);
+			if (c == XP_CHAR_EOF)
+			{
+				awk->errnum = XP_AWK_EENDCOMMENT;
+				return -1;
+			}
+
 			if (c == XP_T('*')) 
 			{
 				GET_CHAR_TO (awk, c);
+				if (c == XP_CHAR_EOF)
+				{
+					awk->errnum = XP_AWK_EENDCOMMENT;
+					return -1;
+				}
+
 				if (c == XP_T('/')) 
 				{
 					GET_CHAR_TO (awk, c);
