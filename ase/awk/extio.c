@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.37 2006-08-29 15:01:44 bacon Exp $
+ * $Id: extio.c,v 1.38 2006-08-30 07:15:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -254,7 +254,8 @@ int xp_awk_readextio (
 		if (rs_ptr == XP_NULL)
 		{
 			/* separate by a new line */
-			if (c == XP_T('\n')) break; 
+			/* TODO: handle different line terminator like \r\n */
+			if (c == XP_T('\n')) break;
 		}
 		else if (rs_len == 0)
 		{
@@ -320,13 +321,50 @@ int xp_awk_readextio (
 			break;
 		}
 
-		/* TODO: handle difference line terminator like \r\n */
+		/* TODO: handle different line terminator like \r\n */
 		if (c == XP_T('\n')) line_len = 0;
 		else line_len = line_len + 1;
 	}
 
 	if (rs_ptr != XP_NULL && rs->type != XP_AWK_VAL_STR) xp_free (rs_ptr);
 	xp_awk_refdownval (run, rs);
+
+	/* increment NR */
+	if (ret != -1)
+	{
+		xp_awk_val_t* nr;
+		xp_long_t lv;
+		xp_real_t rv;
+
+		nr = xp_awk_getglobal (run, XP_AWK_GLOBAL_NR);
+		xp_awk_refupval (nr);
+
+		n = xp_awk_valtonum (nr, &lv, &rv);
+		xp_awk_refdownval (run, nr);
+
+		if (n == -1)
+		{
+			run->errnum = XP_AWK_EVALTYPE;
+			ret = -1;
+		}
+		else
+		{
+			if (n == 1) lv = (xp_long_t)rv;
+
+			nr = xp_awk_makeintval (run, lv + 1);
+			if (nr == XP_NULL) 
+			{
+				run->errnum = XP_AWK_ENOMEM;
+				ret = -1;
+			}
+			else 
+			{
+				if (xp_awk_setglobal (
+					run, XP_AWK_GLOBAL_NR, nr) == -1) ret = -1;
+			}
+		}
+	}
+
 	return ret;
 }
 
