@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.38 2006-08-30 07:15:14 bacon Exp $
+ * $Id: extio.c,v 1.39 2006-08-30 14:48:09 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -286,7 +286,7 @@ int xp_awk_readextio (
 		}
 		else
 		{
-			xp_char_t* match_ptr;
+			const xp_char_t* match_ptr;
 			xp_size_t match_len;
 
 			xp_assert (run->extio.rs_rex != NULL);

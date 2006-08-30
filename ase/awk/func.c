@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.34 2006-08-27 15:29:21 bacon Exp $
+ * $Id: func.c,v 1.35 2006-08-30 14:48:09 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -230,7 +230,7 @@ static int __flush_extio (
 
 	if (run->extio.handler[extio] != XP_NULL)
 	{
-		n2 = xp_awk_flushextio (run, XP_AWK_OUT_FILE, name);
+		n2 = xp_awk_flushextio (run, extio, name);
 		if (n2 == -1)
 		{
 			if (run->errnum == XP_AWK_EIOHANDLER) n = -1;

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.170 2006-08-30 07:15:14 bacon Exp $
+ * $Id: parse.c,v 1.171 2006-08-30 14:48:09 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -10,6 +10,7 @@
 #include <xp/bas/string.h>
 #include <xp/bas/stdlib.h>
 #include <xp/bas/assert.h>
+#include <xp/bas/stdio.h>
 #endif
 
 enum
