@@ -1,5 +1,7 @@
 global x, y;
 
+BEGIN { FS="A"; }
+
 {
 	print "NF = " NF;
 	for (i = 0; i < 10; i++)
@@ -10,11 +12,12 @@ global x, y;
 
 	$1 = 100;
 
-	//$1 = $2;
-	//$3 = $2;
-	//$2 = $2;
+	/*$1 = $2;
+	$3 = $2;
+	$2 = $2;*/
 
-	OFS["1234"]=":";
+	/*OFS["1234"]=":";*/
+
 	$20 = 10;
 	print $0;
 	print "--------------------";
@@ -22,4 +25,4 @@ global x, y;
 	print "====================";
 }
 
-END { system ("dir /w/p"); print sin(270); }
+END { fflush (); system ("dir /w/p"); print sin(270); }

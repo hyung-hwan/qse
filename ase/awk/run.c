@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.184 2006-08-30 14:23:19 bacon Exp $
+ * $Id: run.c,v 1.185 2006-08-30 14:25:33 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>

@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.30 2006-08-16 11:35:53 bacon Exp $
+ * $Id: sa.c,v 1.31 2006-08-30 14:23:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -123,79 +123,25 @@ xp_char_t* xp_strxnstr (
 xp_char_t* xp_strtok (const xp_char_t* s, 
 	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len)
 {
-	const xp_char_t* p = s, *d;
-	const xp_char_t* sp = XP_NULL, * ep = XP_NULL;
-	xp_char_t c; 
-	int delim_mode;
-
-	/* skip preceding space xp_char_tacters */
-	while (/* *p != XP_T('\0') && */ xp_isspace(*p)) p++;
-
-	if (delim == XP_NULL) delim_mode = 0;
-	else {
-		delim_mode = 1;
-		for (d = delim; *d != XP_T('\0'); d++) 
-			if (!xp_isspace(*d)) delim_mode = 2;
-	}
-
-	if (delim_mode == 0) { 
-		/* when XP_NULL is given as "delim", it has an effect of cutting
-		   preceding and trailing space characters off "s". */
-		while ((c = *p) != XP_T('\0')) 
-		{
-			if (!xp_isspace(c)) 
-			{
-				if (sp == XP_NULL) sp = p;
-				ep = p;
-			}
-			p++;
-		}
-	}
-	else if (delim_mode == 1) 
-	{
-		while ((c = *p) != XP_T('\0')) 
-		{
-			if (xp_isspace(c)) break;
-
-			if (sp == XP_NULL) sp = p;
-			ep = p++;
-		}
-	}
-	else /* if (delim_mode == 2) */
-	{ 
-		while ((c = *p) != XP_T('\0')) {
-			if (xp_isspace(c)) {
-				p++;
-				continue;
-			}
-			for (d = delim; *d; d++) {
-				if (c == *d) {
-					goto exit_loop;
-				}
-			}
-			if (sp == XP_NULL) sp = p;
-			ep = p++;
-		}
-	}
-
-exit_loop:
-	if (sp == XP_NULL) {
-		*tok = XP_NULL;
-		*tok_len = (xp_size_t)0;
-	}
-	else {
-		*tok = (xp_char_t*)sp;
-		*tok_len = ep - sp + 1;
-	}
-	return (c == XP_T('\0'))? XP_NULL: ((xp_char_t*)++p);
+	return xp_strxntok (
+		s, xp_strlen(s), delim, xp_strlen(delim), tok, tok_len);
 }
 
 xp_char_t* xp_strxtok (const xp_char_t* s, xp_size_t len,
 	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len)
 {
+	return xp_strxntok (s, len, delim, xp_strlen(delim), tok, tok_len);
+}
+
+xp_char_t* xp_strxntok (
+	const xp_char_t* s, xp_size_t len,
+	const xp_char_t* delim, xp_size_t delim_len, 
+	xp_char_t** tok, xp_size_t* tok_len)
+{
 	const xp_char_t* p = s, *d;
 	const xp_char_t* end = s + len;	
 	const xp_char_t* sp = XP_NULL, * ep = XP_NULL;
+	const xp_char_t* delim_end = delim + delim_len;
 	xp_char_t c; 
 	int delim_mode;
 
@@ -206,7 +152,7 @@ xp_char_t* xp_strxtok (const xp_char_t* s, xp_size_t len,
 	else 
 	{
 		delim_mode = 1;
-		for (d = delim; *d != XP_T('\0'); d++) 
+		for (d = delim; d < delim_end; d++) 
 			if (!xp_isspace(*d)) delim_mode = 2;
 	}
 
@@ -246,7 +192,7 @@ xp_char_t* xp_strxtok (const xp_char_t* s, xp_size_t len,
 				p++;
 				continue;
 			}
-			for (d = delim; *d != XP_T('\0'); d++) 
+			for (d = delim; d < delim_end; d++) 
 			{
 				if (c == *d) goto exit_loop;
 			}
