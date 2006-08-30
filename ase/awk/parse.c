@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.169 2006-08-29 15:01:44 bacon Exp $
+ * $Id: parse.c,v 1.170 2006-08-30 07:15:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3700,7 +3700,7 @@ static int __get_charstr (xp_awk_t* awk)
 {
 	if (awk->src.lex.curc != XP_T('\"')) 
 	{
-		/* the starting quote has been comsumed before this function
+		/* the starting quote has been consumed before this function
 		 * has been called */
 		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
 	}
@@ -3709,13 +3709,18 @@ static int __get_charstr (xp_awk_t* awk)
 
 static int __get_rexstr (xp_awk_t* awk)
 {
-	if (awk->src.lex.curc != XP_T('/')) 
+	if (awk->src.lex.curc == XP_T('/')) 
 	{
-		/* the starting slash has been comsumed before this function
-		 * has been called */
-		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
+		/* this part of the function is different from __get_charstr
+		 * because of the way this function is called */
+		GET_CHAR (awk);
+		return 0;
 	}
-	return __get_string (awk, XP_T('/'), XP_T('\\'), xp_true);
+	else 
+	{
+		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
+		return __get_string (awk, XP_T('/'), XP_T('\\'), xp_true);
+	}
 }
 
 static int __get_string (

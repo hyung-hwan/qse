@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.23 2006-08-16 15:21:17 bacon Exp $
+ * $Id: rex.c,v 1.24 2006-08-30 07:15:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -348,7 +348,26 @@ int xp_awk_safematchrex (void* code,
 
 void xp_awk_freerex (void* code)
 {
+	xp_assert (code != XP_NULL);
 	xp_free (code);
+}
+
+xp_bool_t xp_awk_isemptyrex (void* code)
+{
+	const xp_byte_t* p = code;
+	xp_size_t nb, el;
+
+	xp_assert (p != XP_NULL);
+
+	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
+	el = *(xp_size_t*)p; p += xp_sizeof(el);
+
+	/* an empty regular expression look like:
+	 *  | expression                     | 
+	 *  | header         | branch        |
+	 *  |                | branch header |
+	 *  | NB(1) | EL(16) | NA(1) | BL(8) | */
+	return (nb == 1 && el == xp_sizeof(xp_size_t)*4)? xp_true: xp_false;
 }
 
 static int __build_pattern (__builder_t* builder)
@@ -1574,7 +1593,7 @@ static const xp_byte_t* __print_pattern (const xp_byte_t* p)
 
 	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
 	el = *(xp_size_t*)p; p += xp_sizeof(el);
-//xp_printf (XP_T("NA = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
+xp_printf (XP_T("NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
 
 	for (i = 0; i < nb; i++)
 	{
@@ -1591,7 +1610,7 @@ static const xp_byte_t* __print_branch (const xp_byte_t* p)
 
 	na = *(xp_size_t*)p; p += xp_sizeof(na);
 	bl = *(xp_size_t*)p; p += xp_sizeof(bl);
-//xp_printf (XP_T("NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
+xp_printf (XP_T("NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
 
 	for (i = 0; i < na; i++)
 	{

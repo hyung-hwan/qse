@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.31 2006-08-16 11:35:54 bacon Exp $
+ * $Id: sa.h,v 1.32 2006-08-30 07:15:14 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -96,6 +96,7 @@
 #define XP_STR_SIZE(x) ((x)->size + 1)
 #define XP_STR_CAPA(x) ((x)->capa)
 #define XP_STR_BUF(x)  ((x)->buf)
+#define XP_STR_CHAR(x,idx) ((x)->buf[idx])
 
 typedef struct xp_str_t xp_str_t;
 

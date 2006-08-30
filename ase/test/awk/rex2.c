@@ -19,7 +19,8 @@ int xp_main (int argc, const xp_char_t* argv[])
 	//ptn = XP_T("^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]|^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]");
 	//ptn = XP_T("^he.llo(jo(in|kk)s|com)+h*e{1,40}abc|[^abc][de-f]");
 	//ptn = XP_T("^he.llo(jo(in|kk)s|com)|[^x[:space:][:alpha:]j][^abc][de-f]|^he.llo(jo(in|kk)s|com)|[^x[:space:][:alpha:]j][^abc][de-f]");
-	ptn = XP_T("^.{0,2}.z[^[:space:]]+(abc|zzz){1,2}khg");
+	//ptn = XP_T("^.{0,2}.z[^[:space:]]+(abc|zzz){1,2}khg");
+	ptn = XP_T("");
 
 	rex = xp_awk_buildrex (ptn, xp_strlen(ptn), &errnum);
 	if (rex == XP_NULL)
@@ -28,6 +29,7 @@ int xp_main (int argc, const xp_char_t* argv[])
 		return -1;
 	}
 
+	xp_printf (XP_T("isemptyrex => %d\n"), xp_awk_isemptyrex (rex));
 	xp_printf (XP_T("NA: %u\n"), (unsigned int)XP_AWK_REX_NA(rex));
 	xp_printf (XP_T("LEN: %u\n"), (unsigned int)XP_AWK_REX_LEN(rex));
 	xp_awk_printrex (rex);
