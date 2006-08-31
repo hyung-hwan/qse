@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.40 2006-08-31 14:52:12 bacon Exp $
+ * $Id: extio.c,v 1.41 2006-08-31 15:39:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -193,8 +193,7 @@ int xp_awk_readextio (
 	}
 	else 
 	{
-		rs_ptr = xp_awk_valtostr (
-			rs, &run->errnum, xp_true, XP_NULL, &rs_len);
+		rs_ptr = xp_awk_valtostr (run, rs, xp_true, XP_NULL, &rs_len);
 		if (rs_ptr == XP_NULL)
 		{
 			xp_awk_refdownval (run, rs);
@@ -421,8 +420,7 @@ static int __writeextio (
 
 		/* TOOD: consider using a shared buffer when calling
 		 *       xp_awk_valtostr. maybe run->shared_buf.extio */
-		str = xp_awk_valtostr (
-			v, &run->errnum, xp_true, NULL, &len);
+		str = xp_awk_valtostr (run, v, xp_true, NULL, &len);
 		if (str == XP_NULL) return -1;
 	}
 
