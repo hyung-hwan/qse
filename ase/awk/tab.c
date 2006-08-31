@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.12 2006-08-31 15:09:24 bacon Exp $
+ * $Id: tab.c,v 1.13 2006-08-31 15:11:17 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -64,20 +64,25 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 
 	if (capa > 0) 
 	{
-#ifndef XP_AWK_NTDDK
-		tmp = xp_realloc (tab->buf, xp_sizeof(*tab->buf) * capa);
-		if (tmp == XP_NULL) return XP_NULL;
-#else
-		tmp = xp_malloc (xp_sizeof(*tab->buf) * capa);
-		if (tmp == XP_NULL) return XP_NULL;
-		if (tab->buf != XP_NULL) 
+		if (tab->awk->syscas->realloc != XP_NULL)
 		{
-			xp_size_t x;
-			x = (capa > tab->capa)? tab->capa: capa;
-			xp_memcpy (tmp, tab->buf, xp_sizeof(*tab->buf) * x);
-			XP_AWK_FREE (tab->awk, tab->buf);
+			tmp = XP_AWK_REALLOC (tab->awk, 
+				tab->buf, xp_sizeof(*tab->buf) * capa);
+			if (tmp == XP_NULL) return XP_NULL;
 		}
-#endif
+		else
+		{
+			tmp = XP_AWK_MALLOC (
+				tab->awk, xp_sizeof(*tab->buf) * capa);
+			if (tmp == XP_NULL) return XP_NULL;
+			if (tab->buf != XP_NULL) 
+			{
+				xp_size_t x;
+				x = (capa > tab->capa)? tab->capa: capa;
+				xp_memcpy (tmp, tab->buf, xp_sizeof(*tab->buf) * x);
+				XP_AWK_FREE (tab->awk, tab->buf);
+			}
+		}
 	}
 	else 
 	{
