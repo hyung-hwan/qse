@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.47 2006-08-29 15:01:44 bacon Exp $
+ * $Id: awk_i.h,v 1.48 2006-08-31 04:21:03 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -127,10 +127,7 @@ struct xp_awk_t
 		xp_awk_run_t* ptr;
 	} run;
 
-	struct
-	{
-		xp_awk_thrlks_t* lks;
-	} thr;
+	xp_awk_syscas_t* syscas;
 
 	/* housekeeping */
 	int errnum;

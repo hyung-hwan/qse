@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.33 2006-08-30 14:23:19 bacon Exp $
+ * $Id: sa.h,v 1.34 2006-08-31 04:21:04 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -26,7 +26,9 @@
 
 	#define xp_memset(dst,fill,len) RtlFillMemory(dst,len,fill)
 	#define xp_memcpy(dst,src,len) RtlCopyMemory(dst,src,len)
-	#define xp_memcmp(src1,src2,len) RtlCompareMemory(src1,src2,len);
+	#define xp_memmove(dst,src,len) RtlMoveMemory(dst,src,len)
+	#define xp_memcmp(src1,src2,len) RtlCompareMemory(src1,src2,len)
+	#define xp_memzero(dst,len) RtlZeroMemory(dst,len)
 #else
 	#include <stdio.h>
 	#include <stdlib.h>
@@ -53,7 +55,9 @@
 
 	#define xp_memset(dst,fill,len)  memset(dst,fill,len)
 	#define xp_memcpy(dst,src,len)   memcpy(dst,src,len)
-	#define xp_memcmp(src1,src2,len) memcmp(src1,src2,len);
+	#define xp_memmove(dst,src,len)  memmove(dst,src,len)
+	#define xp_memcmp(src1,src2,len) memcmp(src1,src2,len)
+	#define xp_memzero(dst,len)      memset(dst,0,len)
 
 	#ifdef XP_CHAR_IS_MCHAR
 		#define xp_isdigit isdigit
