@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.80 2006-08-31 04:21:04 bacon Exp $
+ * $Id: awk.c,v 1.81 2006-08-31 14:03:38 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -548,11 +548,13 @@ static void __on_run_end (xp_awk_t* awk, void* handle, int errnum, void* arg)
 	app_run = NULL;
 }
 
+#ifdef _WIN32
 typedef struct syscas_data_t syscas_data_t;
 struct syscas_data_t
 {
 	HANDLE heap;
 };
+#endif
 
 static void* __awk_malloc (xp_size_t n, void* custom_data)
 {
