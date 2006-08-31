@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.173 2006-08-31 14:52:12 bacon Exp $
+ * $Id: parse.c,v 1.174 2006-08-31 16:00:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -308,14 +308,14 @@ static struct __bvent __bvtab[] =
 
 #define ADD_TOKEN_CHAR(awk,c) \
 	do { \
-		if (xp_str_ccat(&(awk)->token.name,(c)) == (xp_size_t)-1) { \
+		if (xp_awk_str_ccat(&(awk)->token.name,(c)) == (xp_size_t)-1) { \
 			(awk)->errnum = XP_AWK_ENOMEM; return -1; \
 		} \
 	} while (0)
 
 #define ADD_TOKEN_STR(awk,str) \
 	do { \
-		if (xp_str_cat(&(awk)->token.name,(str)) == (xp_size_t)-1) { \
+		if (xp_awk_str_cat(&(awk)->token.name,(str)) == (xp_size_t)-1) { \
 			(awk)->errnum = XP_AWK_ENOMEM; return -1; \
 		} \
 	} while (0)
@@ -578,8 +578,8 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 		PANIC (awk, XP_AWK_EIDENT);
 	}
 
-	name = XP_STR_BUF(&awk->token.name);
-	name_len = XP_STR_LEN(&awk->token.name);
+	name = XP_AWK_STR_BUF(&awk->token.name);
+	name_len = XP_AWK_STR_LEN(&awk->token.name);
 	if (xp_awk_map_get(&awk->tree.afns, name, name_len) != XP_NULL) 
 	{
 		/* the function is defined previously */
@@ -649,8 +649,8 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 				PANIC (awk, XP_AWK_EIDENT);
 			}
 
-			param = XP_STR_BUF(&awk->token.name);
-			param_len = XP_STR_LEN(&awk->token.name);
+			param = XP_AWK_STR_BUF(&awk->token.name);
+			param_len = XP_AWK_STR_LEN(&awk->token.name);
 
 			if (awk->option & XP_AWK_UNIQUE) 
 			{
@@ -1041,8 +1041,8 @@ static xp_awk_t* __collect_globals (xp_awk_t* awk)
 		}
 
 		if (__add_global (awk,
-			XP_STR_BUF(&awk->token.name),
-			XP_STR_LEN(&awk->token.name)) == XP_NULL) return XP_NULL;
+			XP_AWK_STR_BUF(&awk->token.name),
+			XP_AWK_STR_LEN(&awk->token.name)) == XP_NULL) return XP_NULL;
 
 		if (__get_token(awk) == -1) return XP_NULL;
 
@@ -1074,8 +1074,8 @@ static xp_awk_t* __collect_locals (xp_awk_t* awk, xp_size_t nlocals)
 			PANIC (awk, XP_AWK_EIDENT);
 		}
 
-		local = XP_STR_BUF(&awk->token.name);
-		local_len = XP_STR_LEN(&awk->token.name);
+		local = XP_AWK_STR_BUF(&awk->token.name);
+		local_len = XP_AWK_STR_LEN(&awk->token.name);
 
 		/* NOTE: it is not checked againt globals names */
 
@@ -1944,11 +1944,11 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->type = XP_AWK_NDE_INT;
 		nde->next = XP_NULL;
 		nde->val = xp_awk_strtolong (
-			XP_STR_BUF(&awk->token.name), 0, XP_NULL);
+			XP_AWK_STR_BUF(&awk->token.name), 0, XP_NULL);
 
 		xp_assert (
-			XP_STR_LEN(&awk->token.name) ==
-			xp_strlen(XP_STR_BUF(&awk->token.name)));
+			XP_AWK_STR_LEN(&awk->token.name) ==
+			xp_strlen(XP_AWK_STR_BUF(&awk->token.name)));
 
 		if (__get_token(awk) == -1) 
 		{
@@ -1968,11 +1968,11 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->type = XP_AWK_NDE_REAL;
 		nde->next = XP_NULL;
-		nde->val = xp_awk_strtoreal (XP_STR_BUF(&awk->token.name));
+		nde->val = xp_awk_strtoreal (XP_AWK_STR_BUF(&awk->token.name));
 
 		xp_assert (
-			XP_STR_LEN(&awk->token.name) ==
-			xp_strlen(XP_STR_BUF(&awk->token.name)));
+			XP_AWK_STR_LEN(&awk->token.name) ==
+			xp_strlen(XP_AWK_STR_BUF(&awk->token.name)));
 
 		if (__get_token(awk) == -1) 
 		{
@@ -1992,8 +1992,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->type = XP_AWK_NDE_STR;
 		nde->next = XP_NULL;
-		nde->len = XP_STR_LEN(&awk->token.name);
-		nde->buf = xp_strxdup(XP_STR_BUF(&awk->token.name), nde->len);
+		nde->len = XP_AWK_STR_LEN(&awk->token.name);
+		nde->buf = xp_strxdup(XP_AWK_STR_BUF(&awk->token.name), nde->len);
 		if (nde->buf == XP_NULL) 
 		{
 			XP_AWK_FREE (awk, nde);
@@ -2017,7 +2017,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		/* the regular expression is tokenized here because 
 		 * of the context-sensitivity of the slash symbol */
 		SET_TOKEN_TYPE (awk, TOKEN_REX);
-		xp_str_clear (&awk->token.name);
+		xp_awk_str_clear (&awk->token.name);
 		if (__get_rexstr (awk) == -1) return XP_NULL;
 		xp_assert (MATCH(awk,TOKEN_REX));
 
@@ -2028,10 +2028,10 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->type = XP_AWK_NDE_REX;
 		nde->next = XP_NULL;
 
-		nde->len = XP_STR_LEN(&awk->token.name);
+		nde->len = XP_AWK_STR_LEN(&awk->token.name);
 		nde->buf = xp_strxdup (
-			XP_STR_BUF(&awk->token.name),
-			XP_STR_LEN(&awk->token.name));
+			XP_AWK_STR_BUF(&awk->token.name),
+			XP_AWK_STR_LEN(&awk->token.name));
 		if (nde->buf == XP_NULL)
 		{
 			XP_AWK_FREE (awk, nde);
@@ -2039,8 +2039,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		}
 
 		nde->code = xp_awk_buildrex (
-			XP_STR_BUF(&awk->token.name), 
-			XP_STR_LEN(&awk->token.name), 
+			XP_AWK_STR_BUF(&awk->token.name), 
+			XP_AWK_STR_LEN(&awk->token.name), 
 			&errnum);
 		if (nde->code == XP_NULL)
 		{
@@ -2234,9 +2234,9 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	xp_assert (MATCH(awk,TOKEN_IDENT));
 
 	name_dup = xp_strxdup (
-		XP_STR_BUF(&awk->token.name), XP_STR_LEN(&awk->token.name));
+		XP_AWK_STR_BUF(&awk->token.name), XP_AWK_STR_LEN(&awk->token.name));
 	if (name_dup == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
-	name_len = XP_STR_LEN(&awk->token.name);
+	name_len = XP_AWK_STR_LEN(&awk->token.name);
 
 	if (__get_token(awk) == -1) 
 	{
@@ -3224,7 +3224,7 @@ static int __get_token (xp_awk_t* awk)
 	} 
 	while (n == 1);
 
-	xp_str_clear (&awk->token.name);
+	xp_awk_str_clear (&awk->token.name);
 	awk->token.line = awk->src.lex.line;
 	awk->token.column = awk->src.lex.column;
 
@@ -3263,8 +3263,8 @@ static int __get_token (xp_awk_t* awk)
 		while (xp_isalpha(c) || c == XP_T('_') || xp_isdigit(c));
 
 		type = __classify_ident (awk, 
-			XP_STR_BUF(&awk->token.name), 
-			XP_STR_LEN(&awk->token.name));
+			XP_AWK_STR_BUF(&awk->token.name), 
+			XP_AWK_STR_LEN(&awk->token.name));
 		SET_TOKEN_TYPE (awk, type);
 	}
 	else if (c == XP_T('\"')) 
@@ -3599,7 +3599,7 @@ static int __get_token (xp_awk_t* awk)
 		return -1;
 	}
 
-/*xp_printf (XP_T("token -> [%s]\n"), XP_STR_BUF(&awk->token.name));*/
+/*xp_printf (XP_T("token -> [%s]\n"), XP_AWK_STR_BUF(&awk->token.name));*/
 	return 0;
 }
 
@@ -3607,7 +3607,7 @@ static int __get_number (xp_awk_t* awk)
 {
 	xp_cint_t c;
 
-	xp_assert (XP_STR_LEN(&awk->token.name) == 0);
+	xp_assert (XP_AWK_STR_LEN(&awk->token.name) == 0);
 	SET_TOKEN_TYPE (awk, TOKEN_INT);
 
 	c = awk->src.lex.curc;

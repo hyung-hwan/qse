@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.41 2006-08-31 15:39:13 bacon Exp $
+ * $Id: extio.c,v 1.42 2006-08-31 16:00:18 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -84,7 +84,7 @@ static int __writeextio (
 
 int xp_awk_readextio (
 	xp_awk_run_t* run, int in_type,
-	const xp_char_t* name, xp_str_t* buf)
+	const xp_char_t* name, xp_awk_str_t* buf)
 {
 	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
@@ -175,7 +175,7 @@ int xp_awk_readextio (
 	}
 
 	/* ready to read a line */
-	xp_str_clear (buf);
+	xp_awk_str_clear (buf);
 
 	/* get the record separator */
 	rs = xp_awk_getglobal (run, XP_AWK_GLOBAL_RS);
@@ -214,7 +214,7 @@ int xp_awk_readextio (
 
 			if (p->in.eof)
 			{
-				if (XP_STR_LEN(buf) == 0) ret = 0;
+				if (XP_AWK_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
@@ -241,7 +241,7 @@ int xp_awk_readextio (
 			if (n == 0) 
 			{
 				p->in.eof = xp_true;
-				if (XP_STR_LEN(buf) == 0) ret = 0;
+				if (XP_AWK_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
@@ -263,7 +263,7 @@ int xp_awk_readextio (
 			/* TODO: handle different line terminator like \r\n */
 			if (line_len == 0 && c == XP_T('\n'))
 			{
-				if (XP_STR_LEN(buf) <= 0) 
+				if (XP_AWK_STR_LEN(buf) <= 0) 
 				{
 					/* if the record is empty when a blank 
 					 * line is encountered, the line 
@@ -276,7 +276,7 @@ int xp_awk_readextio (
 				 * it needs to snip off the line 
 				 * terminator of the previous line */
 				/* TODO: handle different line terminator like \r\n */
-				XP_STR_LEN(buf) -= 1;
+				XP_AWK_STR_LEN(buf) -= 1;
 				break;
 			}
 		}
@@ -293,7 +293,7 @@ int xp_awk_readextio (
 
 			/* TODO: safematchrex */
 			n = xp_awk_matchrex (run->extio.rs_rex, 
-				XP_STR_BUF(buf), XP_STR_LEN(buf), 
+				XP_AWK_STR_BUF(buf), XP_AWK_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)
 			{
@@ -306,15 +306,15 @@ int xp_awk_readextio (
 				/* the match should be found at the end of
 				 * the current buffer */
 				xp_assert (
-					XP_STR_BUF(buf) + XP_STR_LEN(buf) ==
+					XP_AWK_STR_BUF(buf) + XP_AWK_STR_LEN(buf) ==
 					match_ptr + match_len);
 
-				XP_STR_LEN(buf) -= match_len;
+				XP_AWK_STR_LEN(buf) -= match_len;
 				break;
 			}
 		}
 
-		if (xp_str_ccat (buf, c) == (xp_size_t)-1)
+		if (xp_awk_str_ccat (buf, c) == (xp_size_t)-1)
 		{
 			run->errnum = XP_AWK_ENOMEM;
 			ret = -1;

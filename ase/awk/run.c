@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.189 2006-08-31 15:39:14 bacon Exp $
+ * $Id: run.c,v 1.190 2006-08-31 16:00:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -506,7 +506,8 @@ static int __init_run (
 	run->inrec.nflds = 0;
 	run->inrec.maxflds = 0;
 	run->inrec.d0 = xp_awk_val_nil;
-	if (xp_str_open (&run->inrec.line, DEF_BUF_CAPA) == XP_NULL)
+	if (xp_awk_str_open (
+		&run->inrec.line, DEF_BUF_CAPA, run->awk) == XP_NULL)
 	{
 		*errnum = XP_AWK_ENOMEM; 
 		return -1;
@@ -515,7 +516,7 @@ static int __init_run (
 	if (xp_awk_map_open (&run->named, 
 		run, DEF_BUF_CAPA, __free_namedval) == XP_NULL) 
 	{
-		xp_str_close (&run->inrec.line);
+		xp_awk_str_close (&run->inrec.line);
 		*errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
@@ -525,7 +526,7 @@ static int __init_run (
 	if (run->pattern_range_state == XP_NULL)
 	{
 		xp_awk_map_close (&run->named);
-		xp_str_close (&run->inrec.line);
+		xp_awk_str_close (&run->inrec.line);
 		*errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
@@ -564,7 +565,7 @@ static void __deinit_run (xp_awk_run_t* run)
 		run->inrec.flds = XP_NULL;
 		run->inrec.maxflds = 0;
 	}
-	xp_str_close (&run->inrec.line);
+	xp_awk_str_close (&run->inrec.line);
 
 	/* destroy run stack */
 	if (run->stack != XP_NULL)
@@ -2243,7 +2244,7 @@ static xp_awk_val_t* __do_assignment_pos (
 			return XP_NULL;
 		}
 
-		if (xp_str_ncpy (&run->inrec.line, str, len) == (xp_size_t)-1)
+		if (xp_awk_str_ncpy (&run->inrec.line, str, len) == (xp_size_t)-1)
 		{
 			XP_AWK_FREE (run->awk, str);
 			PANIC (run, XP_AWK_ENOMEM);
@@ -2260,8 +2261,8 @@ static xp_awk_val_t* __do_assignment_pos (
 		{
 			v = xp_awk_makestrval (
 				run,
-				XP_STR_BUF(&run->inrec.line), 
-				XP_STR_LEN(&run->inrec.line));
+				XP_AWK_STR_BUF(&run->inrec.line), 
+				XP_AWK_STR_LEN(&run->inrec.line));
 			if (v == XP_NULL)
 			{
 				__clear_record (run, xp_false);
@@ -2298,8 +2299,8 @@ static xp_awk_val_t* __do_assignment_pos (
 		/* recompose $0 */
 		v = xp_awk_makestrval (
 			run,
-			XP_STR_BUF(&run->inrec.line), 
-			XP_STR_LEN(&run->inrec.line));
+			XP_AWK_STR_BUF(&run->inrec.line), 
+			XP_AWK_STR_LEN(&run->inrec.line));
 		if (v == XP_NULL)
 		{
 			__clear_record (run, xp_false);
@@ -4432,7 +4433,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_val_t* v, * res;
 	xp_char_t* in = XP_NULL;
 	const xp_char_t* dst;
-	xp_str_t buf;
+	xp_awk_str_t buf;
 	int n;
 
 	p = (xp_awk_nde_getline_t*)nde;
@@ -4489,7 +4490,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	dst = (in == XP_NULL)? XP_T(""): in;
 
 	/* TODO: optimize the line buffer management */
-	if (xp_str_open (&buf, DEF_BUF_CAPA) == XP_NULL)
+	if (xp_awk_str_open (&buf, DEF_BUF_CAPA, run->awk) == XP_NULL)
 	{
 		if (in != XP_NULL) XP_AWK_FREE (run->awk, in);
 		PANIC (run, XP_AWK_ENOMEM);
@@ -4502,7 +4503,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	{
 		if (run->errnum != XP_AWK_EIOHANDLER)
 		{
-			xp_str_close (&buf);
+			xp_awk_str_close (&buf);
 			return XP_NULL;
 		}
 
@@ -4518,27 +4519,27 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			/* set $0 with the input value */
 			if (__clear_record (run, xp_false) == -1)
 			{
-				xp_str_close (&buf);
+				xp_awk_str_close (&buf);
 				return XP_NULL;
 			}
 
 			if (__set_record (run, 
-				XP_STR_BUF(&buf), XP_STR_LEN(&buf)) == -1)
+				XP_AWK_STR_BUF(&buf), XP_AWK_STR_LEN(&buf)) == -1)
 			{
-				xp_str_close (&buf);
+				xp_awk_str_close (&buf);
 				return XP_NULL;
 			}
 
-			xp_str_close (&buf);
+			xp_awk_str_close (&buf);
 		}
 		else
 		{
 			xp_awk_val_t* v;
 
 			v = xp_awk_makestrval (
-				run, XP_STR_BUF(&buf), XP_STR_LEN(&buf));
+				run, XP_AWK_STR_BUF(&buf), XP_AWK_STR_LEN(&buf));
 
-			xp_str_close (&buf);
+			xp_awk_str_close (&buf);
 
 			if (v == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
 			xp_awk_refupval (v);
@@ -4553,7 +4554,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	}
 	else
 	{
-		xp_str_close (&buf);
+		xp_awk_str_close (&buf);
 	}
 	
 skip_read:
@@ -4623,13 +4624,13 @@ static int __read_record (xp_awk_run_t* run)
 	}
 	if (n == 0) 
 	{
-		xp_assert (XP_STR_LEN(&run->inrec.line) == 0);
+		xp_assert (XP_AWK_STR_LEN(&run->inrec.line) == 0);
 		return 0;
 	}
 
 	if (__set_record (run, 
-		XP_STR_BUF(&run->inrec.line), 
-		XP_STR_LEN(&run->inrec.line)) == -1) return -1;
+		XP_AWK_STR_BUF(&run->inrec.line), 
+		XP_AWK_STR_LEN(&run->inrec.line)) == -1) return -1;
 
 	return 1;
 }
@@ -4696,8 +4697,8 @@ static int __split_record (xp_awk_run_t* run)
 #endif
 
 	/* scan the input record to count the fields */
-	p = XP_STR_BUF(&run->inrec.line);
-	len = XP_STR_LEN(&run->inrec.line);
+	p = XP_AWK_STR_BUF(&run->inrec.line);
+	len = XP_AWK_STR_LEN(&run->inrec.line);
 
 	nflds = 0;
 	while (p != XP_NULL)
@@ -4740,8 +4741,8 @@ static int __split_record (xp_awk_run_t* run)
 		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
 
 		nflds++;
-		len = XP_STR_LEN(&run->inrec.line) - 
-			(p - XP_STR_BUF(&run->inrec.line));
+		len = XP_AWK_STR_LEN(&run->inrec.line) - 
+			(p - XP_AWK_STR_BUF(&run->inrec.line));
 	}
 
 /* THIS PART IS WRONG. XP_AWK_FREE IT AFTER THE NEXT SPLIT LOOP */
@@ -4766,8 +4767,8 @@ static int __split_record (xp_awk_run_t* run)
 	}
 
 	/* scan again and split it */
-	p = XP_STR_BUF(&run->inrec.line);
-	len = XP_STR_LEN(&run->inrec.line);
+	p = XP_AWK_STR_BUF(&run->inrec.line);
+	len = XP_AWK_STR_LEN(&run->inrec.line);
 
 	while (p != XP_NULL)
 	{
@@ -4786,8 +4787,8 @@ static int __split_record (xp_awk_run_t* run)
 		xp_awk_refupval (run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
 
-		len = XP_STR_LEN(&run->inrec.line) - 
-			(p - XP_STR_BUF(&run->inrec.line));
+		len = XP_AWK_STR_LEN(&run->inrec.line) - 
+			(p - XP_AWK_STR_BUF(&run->inrec.line));
 	}
 
 	/* set the number of fields */
@@ -4829,7 +4830,7 @@ static int __clear_record (xp_awk_run_t* run, xp_bool_t noline)
 	}
 
 	xp_assert (run->inrec.nflds == 0);
-	if (!noline) xp_str_clear (&run->inrec.line);
+	if (!noline) xp_awk_str_clear (&run->inrec.line);
 
 	return n;
 }
@@ -4886,7 +4887,7 @@ static int __recomp_record_fields (
 
 	lv = lv - 1; /* adjust the value to 0-based index */
 
-	xp_str_clear (&run->inrec.line);
+	xp_awk_str_clear (&run->inrec.line);
 
 	if (max > 1)
 	{
@@ -4912,7 +4913,7 @@ static int __recomp_record_fields (
 	{
 		if (i > 0)
 		{
-			if (xp_str_ncat (
+			if (xp_awk_str_ncat (
 				&run->inrec.line, 
 				ofs, ofs_len) == (xp_size_t)-1) 
 			{
@@ -4927,11 +4928,11 @@ static int __recomp_record_fields (
 			xp_awk_val_t* tmp;
 
 			run->inrec.flds[i].ptr = 
-				XP_STR_BUF(&run->inrec.line) +
-				XP_STR_LEN(&run->inrec.line);
+				XP_AWK_STR_BUF(&run->inrec.line) +
+				XP_AWK_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = len;
 
-			if (xp_str_ncat (
+			if (xp_awk_str_ncat (
 				&run->inrec.line, str, len) == (xp_size_t)-1)
 			{
 				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
@@ -4956,11 +4957,11 @@ static int __recomp_record_fields (
 		else if (i >= nflds)
 		{
 			run->inrec.flds[i].ptr = 
-				XP_STR_BUF(&run->inrec.line) +
-				XP_STR_LEN(&run->inrec.line);
+				XP_AWK_STR_BUF(&run->inrec.line) +
+				XP_AWK_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = 0;
 
-			if (xp_str_cat (
+			if (xp_awk_str_cat (
 				&run->inrec.line, XP_T("")) == (xp_size_t)-1)
 			{
 				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
@@ -4983,11 +4984,11 @@ static int __recomp_record_fields (
 			tmp = (xp_awk_val_str_t*)run->inrec.flds[i].val;
 
 			run->inrec.flds[i].ptr = 
-				XP_STR_BUF(&run->inrec.line) +
-				XP_STR_LEN(&run->inrec.line);
+				XP_AWK_STR_BUF(&run->inrec.line) +
+				XP_AWK_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = tmp->len;
 
-			if (xp_str_ncat (&run->inrec.line, 
+			if (xp_awk_str_ncat (&run->inrec.line, 
 				tmp->buf, tmp->len) == (xp_size_t)-1)
 			{
 				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
@@ -5045,9 +5046,10 @@ static xp_char_t* __idxnde_to_str (
 	else
 	{
 		/* multidimensional index */
-		xp_str_t idxstr;
+		xp_awk_str_t idxstr;
 
-		if (xp_str_open (&idxstr, DEF_BUF_CAPA) == XP_NULL) 
+		if (xp_awk_str_open (
+			&idxstr, DEF_BUF_CAPA, run->awk) == XP_NULL) 
 		{
 			PANIC (run, XP_AWK_ENOMEM);
 		}
@@ -5057,18 +5059,18 @@ static xp_char_t* __idxnde_to_str (
 			idx = __eval_expression (run, nde);
 			if (idx == XP_NULL) 
 			{
-				xp_str_close (&idxstr);
+				xp_awk_str_close (&idxstr);
 				return XP_NULL;
 			}
 
 			xp_awk_refupval (idx);
 
 /* TODO: configurable index seperator, not just a comma */
-			if (XP_STR_LEN(&idxstr) > 0 &&
-			    xp_str_cat (&idxstr, XP_T(",")) == (xp_size_t)-1)
+			if (XP_AWK_STR_LEN(&idxstr) > 0 &&
+			    xp_awk_str_cat (&idxstr, XP_T(",")) == (xp_size_t)-1)
 			{
 				xp_awk_refdownval (run, idx);
-				xp_str_close (&idxstr);
+				xp_awk_str_close (&idxstr);
 				PANIC (run, XP_AWK_ENOMEM);
 			}
 
@@ -5076,7 +5078,7 @@ static xp_char_t* __idxnde_to_str (
 				idx, xp_false, &idxstr, XP_NULL) == XP_NULL)
 			{
 				xp_awk_refdownval (run, idx);
-				xp_str_close (&idxstr);
+				xp_awk_str_close (&idxstr);
 				return XP_NULL;
 			}
 
@@ -5084,9 +5086,9 @@ static xp_char_t* __idxnde_to_str (
 			nde = nde->next;
 		}
 
-		str = XP_STR_BUF(&idxstr);
-		*len = XP_STR_LEN(&idxstr);
-		xp_str_forfeit (&idxstr);
+		str = XP_AWK_STR_BUF(&idxstr);
+		*len = XP_AWK_STR_LEN(&idxstr);
+		xp_awk_str_forfeit (&idxstr);
 	}
 
 	return str;

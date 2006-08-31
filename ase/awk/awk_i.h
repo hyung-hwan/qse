@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.50 2006-08-31 15:09:24 bacon Exp $
+ * $Id: awk_i.h,v 1.51 2006-08-31 16:00:18 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -13,10 +13,9 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 
 #ifdef XP_AWK_STAND_ALONE
 #include <xp/awk/sa.h>
-#else
-#include <xp/bas/str.h>
 #endif
 
+#include <xp/awk/str.h>
 #include <xp/awk/rex.h>
 #include <xp/awk/map.h>
 #include <xp/awk/val.h>
@@ -116,11 +115,11 @@ struct xp_awk_t
 	/* token */
 	struct 
 	{
-		int       prev;
-		int       type;
-		xp_str_t  name;
-		xp_size_t line;
-		xp_size_t column;
+		int          prev;
+		int          type;
+		xp_awk_str_t name;
+		xp_size_t    line;
+		xp_size_t    column;
 	} token;
 
 	/* builtin functions */
@@ -175,7 +174,7 @@ struct xp_awk_run_t
 		xp_size_t buf_len;
 		xp_bool_t eof;
 
-		xp_str_t line;
+		xp_awk_str_t line;
 		xp_awk_val_t* d0; /* $0 */
 
 		xp_size_t maxflds;
