@@ -1,6 +1,6 @@
 
 SRCS = \
-	awk.c err.c tree.c tab.c map.c parse.c \
+	awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c sa.c val.c func.c misc.c extio.c rex.c
 OBJS = $(SRCS:.c=.obj)
 OUT = xpawk

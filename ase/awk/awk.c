@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.73 2006-08-31 15:09:23 bacon Exp $ 
+ * $Id: awk.c,v 1.74 2006-08-31 16:00:18 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -25,7 +25,7 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 
 	awk->syscas = syscas;
 
-	if (xp_str_open (&awk->token.name, 128) == XP_NULL) 
+	if (xp_awk_str_open (&awk->token.name, 128, awk) == XP_NULL) 
 	{
 		XP_AWK_FREE (awk, awk);
 		return XP_NULL;	
@@ -35,14 +35,14 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 	if (xp_awk_map_open (
 		&awk->tree.afns, awk, 256, __free_afn) == XP_NULL) 
 	{
-		xp_str_close (&awk->token.name);
+		xp_awk_str_close (&awk->token.name);
 		XP_AWK_FREE (awk, awk);
 		return XP_NULL;	
 	}
 
 	if (xp_awk_tab_open (&awk->parse.globals, awk) == XP_NULL) 
 	{
-		xp_str_close (&awk->token.name);
+		xp_awk_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.afns);
 		XP_AWK_FREE (awk, awk);
 		return XP_NULL;	
@@ -50,7 +50,7 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 
 	if (xp_awk_tab_open (&awk->parse.locals, awk) == XP_NULL) 
 	{
-		xp_str_close (&awk->token.name);
+		xp_awk_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.afns);
 		xp_awk_tab_close (&awk->parse.globals);
 		XP_AWK_FREE (awk, awk);
@@ -59,7 +59,7 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 
 	if (xp_awk_tab_open (&awk->parse.params, awk) == XP_NULL) 
 	{
-		xp_str_close (&awk->token.name);
+		xp_awk_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.afns);
 		xp_awk_tab_close (&awk->parse.globals);
 		xp_awk_tab_close (&awk->parse.locals);
@@ -112,7 +112,7 @@ int xp_awk_close (xp_awk_t* awk)
 	xp_awk_tab_close (&awk->parse.globals);
 	xp_awk_tab_close (&awk->parse.locals);
 	xp_awk_tab_close (&awk->parse.params);
-	xp_str_close (&awk->token.name);
+	xp_awk_str_close (&awk->token.name);
 
 	/* XP_AWK_MALLOC, XP_AWK_FREE, etc can not be used 
 	 * from the next line onwards */

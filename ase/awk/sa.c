@@ -1,5 +1,5 @@
 /*
- * $Id: sa.c,v 1.31 2006-08-30 14:23:19 bacon Exp $
+ * $Id: sa.c,v 1.32 2006-08-31 16:00:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -273,143 +273,14 @@ int xp_vsprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_lis
 	return n;
 }
 
-xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa)
-{
-	if (str == XP_NULL) 
-	{
-		str = (xp_str_t*) xp_malloc (sizeof(xp_str_t));
-		if (str == XP_NULL) return XP_NULL;
-		str->__dynamic = xp_true;
-	}
-	else str->__dynamic = xp_false;
-
-	str->buf = (xp_char_t*) xp_malloc (xp_sizeof(xp_char_t) * (capa + 1));
-	if (str->buf == XP_NULL) 
-	{
-		if (str->__dynamic) xp_free (str);
-		return XP_NULL;
-	}
-
-	str->size = 0;
-	str->capa  = capa;
-	str->buf[0] = XP_T('\0');
-
-	return str;
-}
-
-void xp_str_close (xp_str_t* str)
-{
-	xp_free (str->buf);
-	if (str->__dynamic) xp_free (str);
-}
-
-void xp_str_forfeit (xp_str_t* str)
-{
-	if (str->__dynamic) xp_free (str);
-}
-
-xp_size_t xp_str_cpy (xp_str_t* str, const xp_char_t* s)
-{
-	/* TODO: improve it */
-	return xp_str_ncpy (str, s, xp_strlen(s));
-}
-
-xp_size_t xp_str_ncpy (xp_str_t* str, const xp_char_t* s, xp_size_t len)
-{
-	xp_char_t* buf;
-
-	if (len > str->capa) 
-	{
-		buf = (xp_char_t*) xp_malloc (xp_sizeof(xp_char_t) * (len + 1));
-		if (buf == XP_NULL) return (xp_size_t)-1;
-
-		xp_free (str->buf);
-		str->capa = len;
-		str->buf = buf;
-	}
-
-	str->size = xp_strncpy (str->buf, s, len);
-	str->buf[str->size] = XP_T('\0');
-	return str->size;
-}
-
-xp_size_t xp_str_cat (xp_str_t* str, const xp_char_t* s)
-{
-	/* TODO: improve it */
-	return xp_str_ncat (str, s, xp_strlen(s));
-}
-
-xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len)
-{
-	if (len > str->capa - str->size) 
-	{
-		xp_char_t* tmp;
-		xp_size_t capa;
-
-		capa = str->size + len;
-
-		/* double the capa if necessary for concatenation */
-		if (capa < str->capa * 2) capa = str->capa * 2;
-
-#ifndef XP_AWK_NTDDK
-		tmp = (xp_char_t*) xp_realloc (
-			str->buf, xp_sizeof(xp_char_t) * (capa + 1));
-		if (tmp == XP_NULL) return (xp_size_t)-1;
-#else
-		tmp = (xp_char_t*) xp_malloc (
-			xp_sizeof(xp_char_t) * (capa + 1));
-		if (tmp == XP_NULL) return (xp_size_t)-1;
-		if (str->buf != XP_NULL)
-		{
-			xp_memcpy (tmp, str->buf, 
-				xp_sizeof(xp_char_t) * (str->capa + 1));
-			xp_free (str->buf);
-		}
-#endif
-
-		str->capa = capa;
-		str->buf = tmp;
-	}
-
-	str->size += xp_strncpy (&str->buf[str->size], s, len);
-	str->buf[str->size] = XP_T('\0');
-	return str->size;
-}
-
-xp_size_t xp_str_ccat (xp_str_t* str, xp_char_t c)
-{
-	return xp_str_ncat (str, &c, 1);
-}
-
-xp_size_t xp_str_nccat (xp_str_t* str, xp_char_t c, xp_size_t len)
-{
-	while (len > 0)
-	{
-		if (xp_str_ncat (str, &c, 1) == (xp_size_t)-1) 
-		{
-			return (xp_size_t)-1;
-		}
-
-		len--;
-	}
-	return str->size;
-}
-
-void xp_str_clear (xp_str_t* str)
-{
-	str->size = 0;
-	str->buf[0] = XP_T('\0');
-}
-
-
 #define MOD_SHORT       1
 #define MOD_LONG        2
 #define MOD_LONGLONG    3
 
 #define ADDC(str,c) \
 	do { \
-		if (xp_str_ccat(&str, c) == (xp_size_t)-1) { \
-			xp_str_close (&str); \
+		if (xp_awk_str_ccat(&str, c) == (xp_size_t)-1) { \
+			xp_awk_str_close (&str); \
 			return XP_NULL; \
 		} \
 	} while (0)
@@ -418,11 +289,11 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 {
 	const xp_char_t* fp = format;
 	xp_char_t* tmp;
-	xp_str_t str;
+	xp_awk_str_t str;
 	xp_char_t ch;
 	int modifier;
 
-	if (xp_str_open (&str, 256) == XP_NULL) return XP_NULL;
+	if (xp_awk_str_open (&str, 256) == XP_NULL) return XP_NULL;
 
 	while (*fp != XP_T('\0')) 
 	{
@@ -548,8 +419,8 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 		else ADDC (str, ch);
 	}
 
-	tmp = XP_STR_BUF(&str);
-	xp_str_forfeit (&str);
+	tmp = XP_AWK_STR_BUF(&str);
+	xp_awk_str_forfeit (&str);
 	return tmp;
 }
 

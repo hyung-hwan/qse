@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.34 2006-08-31 04:21:04 bacon Exp $
+ * $Id: sa.h,v 1.35 2006-08-31 16:00:19 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -96,22 +96,6 @@
 #define xp_va_end(pvar)      va_end(pvar)
 #define xp_va_arg(pvar,type) va_arg(pvar,type)
 
-#define XP_STR_LEN(x)  ((x)->size)
-#define XP_STR_SIZE(x) ((x)->size + 1)
-#define XP_STR_CAPA(x) ((x)->capa)
-#define XP_STR_BUF(x)  ((x)->buf)
-#define XP_STR_CHAR(x,idx) ((x)->buf[idx])
-
-typedef struct xp_str_t xp_str_t;
-
-struct xp_str_t
-{
-	xp_char_t* buf;
-	xp_size_t size;
-	xp_size_t capa;
-	xp_bool_t __dynamic;
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -176,36 +160,6 @@ int xp_sprintf (
 #define xp_vsprintf xp_awk_vsprintf
 int xp_vsprintf (
 	xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_list ap);
-
-#define xp_str_open xp_awk_str_open
-xp_str_t* xp_str_open (xp_str_t* str, xp_size_t capa);
-
-#define xp_str_close xp_awk_str_close
-void xp_str_close (xp_str_t* str);
-
-#define xp_str_forfeit xp_awk_str_forfeit
-void xp_str_forfeit (xp_str_t* str);
-
-#define xp_str_cpy xp_awk_str_cpy
-xp_size_t xp_str_cpy (xp_str_t* str, const xp_char_t* s);
-
-#define xp_str_ncpy xp_awk_str_ncpy
-xp_size_t xp_str_ncpy (xp_str_t* str, const xp_char_t* s, xp_size_t len);
-
-#define xp_str_cat xp_awk_str_cat
-xp_size_t xp_str_cat (xp_str_t* str, const xp_char_t* s);
-
-#define xp_str_ncat xp_awk_str_ncat
-xp_size_t xp_str_ncat (xp_str_t* str, const xp_char_t* s, xp_size_t len);
-
-#define xp_str_ccat xp_awk_str_ccat
-xp_size_t xp_str_ccat (xp_str_t* str, xp_char_t c);
-
-#define xp_str_nccat xp_awk_str_nccat
-xp_size_t xp_str_nccat (xp_str_t* str, xp_char_t c, xp_size_t len);
-
-#define xp_str_clear xp_awk_str_clear
-void xp_str_clear (xp_str_t* str);
 
 #ifdef __cplusplus
 }
