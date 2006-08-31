@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.54 2006-08-31 15:39:14 bacon Exp $
+ * $Id: val.c,v 1.55 2006-08-31 15:41:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -8,6 +8,7 @@
 #include <xp/bas/string.h>
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
+#include <xp/bas/stdio.h>
 #endif
 
 static xp_awk_val_nil_t __awk_nil = { XP_AWK_VAL_NIL, 0 };
