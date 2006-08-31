@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.187 2006-08-31 14:52:12 bacon Exp $
+ * $Id: run.c,v 1.188 2006-08-31 15:22:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1356,7 +1356,8 @@ static int __walk_foreach (xp_awk_pair_t* pair, void* arg)
 	struct __foreach_walker_t* w = (struct __foreach_walker_t*)arg;
 	xp_awk_val_t* str;
 
-	str = (xp_awk_val_t*)xp_awk_makestrval(pair->key,xp_strlen(pair->key));
+	str = (xp_awk_val_t*) xp_awk_makestrval (
+		w->run, pair->key, xp_strlen(pair->key));
 	if (str == XP_NULL) PANIC_I (w->run, XP_AWK_ENOMEM);
 
 	xp_awk_refupval (str);
@@ -2260,6 +2261,7 @@ static xp_awk_val_t* __do_assignment_pos (
 		else
 		{
 			v = xp_awk_makestrval (
+				run,
 				XP_STR_BUF(&run->inrec.line), 
 				XP_STR_LEN(&run->inrec.line));
 			if (v == XP_NULL)
@@ -2297,6 +2299,7 @@ static xp_awk_val_t* __do_assignment_pos (
 
 		/* recompose $0 */
 		v = xp_awk_makestrval (
+			run,
 			XP_STR_BUF(&run->inrec.line), 
 			XP_STR_LEN(&run->inrec.line));
 		if (v == XP_NULL)
@@ -3198,7 +3201,7 @@ static xp_awk_val_t* __eval_binop_concat (
 		PANIC (run, errnum);
 	}
 
-	res = xp_awk_makestrval2 (strl, strl_len, strr, strr_len);
+	res = xp_awk_makestrval2 (run, strl, strl_len, strr, strr_len);
 	if (res == XP_NULL)
 	{
 		XP_AWK_FREE (run->awk, strl);
@@ -4279,6 +4282,7 @@ static xp_awk_val_t* __eval_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_val_t* val;
 
 	val = xp_awk_makestrval (
+		run,
 		((xp_awk_nde_str_t*)nde)->buf,
 		((xp_awk_nde_str_t*)nde)->len);
 	if (val == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
@@ -4291,6 +4295,7 @@ static xp_awk_val_t* __eval_rex (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	xp_awk_val_t* val;
 
 	val = xp_awk_makerexval (
+		run,
 		((xp_awk_nde_rex_t*)nde)->buf,
 		((xp_awk_nde_rex_t*)nde)->len,
 		((xp_awk_nde_rex_t*)nde)->code);
@@ -4534,7 +4539,7 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			xp_awk_val_t* v;
 
 			v = xp_awk_makestrval (
-				XP_STR_BUF(&buf), XP_STR_LEN(&buf));
+				run, XP_STR_BUF(&buf), XP_STR_LEN(&buf));
 
 			xp_str_close (&buf);
 
@@ -4637,7 +4642,7 @@ static int __set_record (xp_awk_run_t* run, const xp_char_t* str, xp_size_t len)
 	xp_awk_val_t* v;
 	int errnum;
 
-	v = xp_awk_makestrval (str, len);
+	v = xp_awk_makestrval (run, str, len);
 	if (v == XP_NULL)
 	{
 		__clear_record (run, xp_false);
@@ -4776,7 +4781,7 @@ static int __split_record (xp_awk_run_t* run)
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
 		run->inrec.flds[run->inrec.nflds].val = 
-			xp_awk_makestrval (tok, tok_len);
+			xp_awk_makestrval (run, tok, tok_len);
 
 		if (run->inrec.flds[run->inrec.nflds].val == XP_NULL)
 			PANIC_I (run, XP_AWK_ENOMEM);
@@ -4937,7 +4942,7 @@ static int __recomp_record_fields (
 				return -1;
 			}
 
-			tmp = xp_awk_makestrval (str,len);
+			tmp = xp_awk_makestrval (run, str,len);
 			if (tmp == XP_NULL) 
 			{
 				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
