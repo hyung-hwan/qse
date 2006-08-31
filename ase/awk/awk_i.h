@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.48 2006-08-31 04:21:03 bacon Exp $
+ * $Id: awk_i.h,v 1.49 2006-08-31 14:52:11 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -39,6 +39,13 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #define XP_AWK_MAX_GLOBALS 9999
 #define XP_AWK_MAX_LOCALS  9999
 #define XP_AWK_MAX_PARAMS  9999
+
+#define XP_AWK_MALLOC(awk,size) \
+	(awk)->syscas->malloc (size, (awk)->syscas->custom_data)
+#define XP_AWK_REALLOC(awk,ptr,size) \
+	(awk)->syscas->realloc (ptr, size, (awk)->syscas->custom_data)
+#define XP_AWK_FREE(awk,ptr) \
+	(awk)->syscas->free (ptr, (awk)->syscas->custom_data)
 
 struct xp_awk_tree_t
 {

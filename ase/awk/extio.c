@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.39 2006-08-30 14:48:09 bacon Exp $
+ * $Id: extio.c,v 1.40 2006-08-31 14:52:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -120,7 +120,8 @@ int xp_awk_readextio (
 
 	if (p == XP_NULL)
 	{
-		p = (xp_awk_extio_t*) xp_malloc (xp_sizeof(xp_awk_extio_t));
+		p = (xp_awk_extio_t*) XP_AWK_MALLOC (
+			run->awk, xp_sizeof(xp_awk_extio_t));
 		if (p == XP_NULL)
 		{
 			run->errnum = XP_AWK_ENOMEM;
@@ -130,7 +131,7 @@ int xp_awk_readextio (
 		p->name = xp_strdup (name);
 		if (p->name == XP_NULL)
 		{
-			xp_free (p);
+			XP_AWK_FREE (run->awk, p);
 			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -149,8 +150,8 @@ int xp_awk_readextio (
 		n = handler (XP_AWK_IO_OPEN, p, XP_NULL, 0);
 		if (n == -1)
 		{
-			xp_free (p->name);
-			xp_free (p);
+			XP_AWK_FREE (run->awk, p->name);
+			XP_AWK_FREE (run->awk, p);
 				
 			/* TODO: use meaningful error code */
 			if (xp_awk_setglobal (
@@ -326,7 +327,7 @@ int xp_awk_readextio (
 		else line_len = line_len + 1;
 	}
 
-	if (rs_ptr != XP_NULL && rs->type != XP_AWK_VAL_STR) xp_free (rs_ptr);
+	if (rs_ptr != XP_NULL && rs->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, rs_ptr);
 	xp_awk_refdownval (run, rs);
 
 	/* increment NR */
@@ -446,10 +447,11 @@ static int __writeextio (
 	/* if there is not corresponding extio for name, create one */
 	if (p == XP_NULL)
 	{
-		p = (xp_awk_extio_t*) xp_malloc (xp_sizeof(xp_awk_extio_t));
+		p = (xp_awk_extio_t*) XP_AWK_MALLOC (
+			run->awk, xp_sizeof(xp_awk_extio_t));
 		if (p == XP_NULL)
 		{
-			if (v->type != XP_AWK_VAL_STR) xp_free (str);
+			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -457,8 +459,8 @@ static int __writeextio (
 		p->name = xp_strdup (name);
 		if (p->name == XP_NULL)
 		{
-			xp_free (p);
-			if (v->type != XP_AWK_VAL_STR) xp_free (str);
+			XP_AWK_FREE (run->awk, p);
+			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -471,9 +473,9 @@ static int __writeextio (
 		n = handler (XP_AWK_IO_OPEN, p, XP_NULL, 0);
 		if (n == -1)
 		{
-			xp_free (p->name);
-			xp_free (p);
-			if (v->type != XP_AWK_VAL_STR) xp_free (str);
+			XP_AWK_FREE (run->awk, p->name);
+			XP_AWK_FREE (run->awk, p);
+			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 				
 			/* TODO: use meaningful error code */
 			if (xp_awk_setglobal (
@@ -503,7 +505,7 @@ static int __writeextio (
 
 		if (n == -1) 
 		{
-			if (v->type != XP_AWK_VAL_STR) xp_free (str);
+			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 
 			/* TODO: use meaningful error code */
 			if (xp_awk_setglobal (
@@ -516,12 +518,12 @@ static int __writeextio (
 
 		if (n == 0)
 		{
-			if (v->type != XP_AWK_VAL_STR) xp_free (str);
+			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 			return 0;
 		}
 	}
 
-	if (v->type != XP_AWK_VAL_STR) xp_free (str);
+	if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 
 	if (nl)
 	{
@@ -700,8 +702,8 @@ int xp_awk_closeextio_read (
 			if (px != XP_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			xp_free (p->name);
-			xp_free (p);
+			XP_AWK_FREE (run->awk, p->name);
+			XP_AWK_FREE (run->awk, p);
 			return 0;
 		}
 
@@ -760,8 +762,8 @@ int xp_awk_closeextio_write (
 			if (px != XP_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			xp_free (p->name);
-			xp_free (p);
+			XP_AWK_FREE (run->awk, p->name);
+			XP_AWK_FREE (run->awk, p);
 			return 0;
 		}
 
@@ -802,8 +804,8 @@ int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name)
 			if (px != XP_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			xp_free (p->name);
-			xp_free (p);
+			XP_AWK_FREE (run->awk, p->name);
+			XP_AWK_FREE (run->awk, p);
 			return 0;
 		}
 
@@ -825,7 +827,8 @@ void xp_awk_clearextio (xp_awk_run_t* run)
 
 	while (run->extio.chain != XP_NULL)
 	{
-		handler = run->extio.handler[run->extio.chain->type & __MASK_CLEAR];
+		handler = run->extio.handler[
+			run->extio.chain->type & __MASK_CLEAR];
 		next = run->extio.chain->next;
 
 		if (handler != XP_NULL)
@@ -838,8 +841,8 @@ void xp_awk_clearextio (xp_awk_run_t* run)
 			}
 		}
 
-		xp_free (run->extio.chain->name);
-		xp_free (run->extio.chain);
+		XP_AWK_FREE (run->awk, run->extio.chain->name);
+		XP_AWK_FREE (run->awk, run->extio.chain);
 
 		run->extio.chain = next;
 	}
