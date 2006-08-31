@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.52 2006-08-21 02:53:42 bacon Exp $
+ * $Id: val.c,v 1.53 2006-08-31 15:22:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -86,12 +86,13 @@ xp_awk_val_t* xp_awk_makerealval (xp_awk_run_t* run, xp_real_t v)
 	return (xp_awk_val_t*)val;
 }
 
-xp_awk_val_t* xp_awk_makestrval0 (const xp_char_t* str)
+xp_awk_val_t* xp_awk_makestrval0 (xp_awk_run_t* run, const xp_char_t* str)
 {
-	return xp_awk_makestrval (str, xp_strlen(str));
+	return xp_awk_makestrval (run, str, xp_strlen(str));
 }
 
-xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
+xp_awk_val_t* xp_awk_makestrval (
+	xp_awk_run_t* run, const xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_str_t* val;
 
@@ -113,6 +114,7 @@ xp_awk_val_t* xp_awk_makestrval (const xp_char_t* str, xp_size_t len)
 }
 
 xp_awk_val_t* xp_awk_makestrval2 (
+	xp_awk_run_t* run,
 	const xp_char_t* str1, xp_size_t len1, 
 	const xp_char_t* str2, xp_size_t len2)
 {
@@ -136,7 +138,7 @@ xp_awk_val_t* xp_awk_makestrval2 (
 }
 
 xp_awk_val_t* xp_awk_makerexval (
-	const xp_char_t* buf, xp_size_t len, void* code)
+	xp_awk_run_t* run, const xp_char_t* buf, xp_size_t len, void* code)
 {
 	xp_awk_val_rex_t* val;
 

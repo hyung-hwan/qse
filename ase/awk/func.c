@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.36 2006-08-31 14:52:12 bacon Exp $
+ * $Id: func.c,v 1.37 2006-08-31 15:22:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -509,7 +509,7 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 	if (lcount < 0) lcount = 0;
 	else if (lcount > len - lindex) lcount = len - lindex;
 
-	r = xp_awk_makestrval (&str[lindex], (xp_size_t)lcount);
+	r = xp_awk_makestrval (run, &str[lindex], (xp_size_t)lcount);
 	if (r == XP_NULL)
 	{
 		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
@@ -600,7 +600,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
 
 		/* create the field string */
-		t2 = xp_awk_makestrval (tok, tok_len);
+		t2 = xp_awk_makestrval (run, tok, tok_len);
 		if (t2 == XP_NULL)
 		{
 			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
@@ -681,7 +681,7 @@ static int __bfn_tolower (xp_awk_t* awk, void* run)
 
 	for (i = 0; i < len; i++) str[i] = xp_tolower(str[i]);	
 
-	r = xp_awk_makestrval (str, len);
+	r = xp_awk_makestrval (run, str, len);
 	if (r == XP_NULL)
 	{
 		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
@@ -724,7 +724,7 @@ static int __bfn_toupper (xp_awk_t* awk, void* run)
 
 	for (i = 0; i < len; i++) str[i] = xp_toupper(str[i]);	
 
-	r = xp_awk_makestrval (str, len);
+	r = xp_awk_makestrval (run, str, len);
 	if (r == XP_NULL)
 	{
 		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
