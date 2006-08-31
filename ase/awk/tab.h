@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.11 2006-08-06 15:02:55 bacon Exp $
+ * $Id: tab.h,v 1.12 2006-08-31 15:09:24 bacon Exp $
  */
 
 #ifndef _XP_AWK_TAB_H_
@@ -23,6 +23,7 @@ struct xp_awk_tab_t
 	}* buf;
 	xp_size_t size;
 	xp_size_t capa;
+	xp_awk_t* awk;
 	xp_bool_t __dynamic;	
 };
 
@@ -30,7 +31,7 @@ struct xp_awk_tab_t
 extern "C" {
 #endif
 
-xp_awk_tab_t* xp_awk_tab_open (xp_awk_tab_t* tab);
+xp_awk_tab_t* xp_awk_tab_open (xp_awk_tab_t* tab, xp_awk_t* awk);
 void xp_awk_tab_close (xp_awk_tab_t* tab);
 
 xp_size_t xp_awk_tab_getsize (xp_awk_tab_t* tab);
