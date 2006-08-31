@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.53 2006-08-31 15:22:13 bacon Exp $
+ * $Id: val.c,v 1.54 2006-08-31 15:39:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -50,8 +50,8 @@ xp_awk_val_t* xp_awk_makeintval (xp_awk_run_t* run, xp_long_t v)
 	}
 	else
 	{
-		val = (xp_awk_val_int_t*)
-			xp_malloc (xp_sizeof(xp_awk_val_int_t));
+		val = (xp_awk_val_int_t*) XP_AWK_MALLOC (
+			run->awk, xp_sizeof(xp_awk_val_int_t));
 		if (val == XP_NULL) return XP_NULL;
 	}
 
@@ -73,8 +73,8 @@ xp_awk_val_t* xp_awk_makerealval (xp_awk_run_t* run, xp_real_t v)
 	}
 	else
 	{
-		val = (xp_awk_val_real_t*)
-			xp_malloc (xp_sizeof(xp_awk_val_real_t));
+		val = (xp_awk_val_real_t*) XP_AWK_MALLOC (
+			run->awk, xp_sizeof(xp_awk_val_real_t));
 		if (val == XP_NULL) return XP_NULL;
 	}
 
@@ -96,7 +96,8 @@ xp_awk_val_t* xp_awk_makestrval (
 {
 	xp_awk_val_str_t* val;
 
-	val = (xp_awk_val_str_t*) xp_malloc (xp_sizeof(xp_awk_val_str_t));
+	val = (xp_awk_val_str_t*) XP_AWK_MALLOC (
+		run->awk, xp_sizeof(xp_awk_val_str_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_STR;
@@ -105,7 +106,7 @@ xp_awk_val_t* xp_awk_makestrval (
 	val->buf = xp_strxdup (str, len);
 	if (val->buf == XP_NULL) 
 	{
-		xp_free (val);
+		XP_AWK_FREE (run->awk, val);
 		return XP_NULL;
 	}
 
@@ -120,7 +121,8 @@ xp_awk_val_t* xp_awk_makestrval2 (
 {
 	xp_awk_val_str_t* val;
 
-	val = (xp_awk_val_str_t*) xp_malloc (xp_sizeof(xp_awk_val_str_t));
+	val = (xp_awk_val_str_t*) XP_AWK_MALLOC (
+		run->awk, xp_sizeof(xp_awk_val_str_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_STR;
@@ -129,7 +131,7 @@ xp_awk_val_t* xp_awk_makestrval2 (
 	val->buf = xp_strxdup2 (str1, len1, str2, len2);
 	if (val->buf == XP_NULL) 
 	{
-		xp_free (val);
+		XP_AWK_FREE (run->awk, val);
 		return XP_NULL;
 	}
 
@@ -142,7 +144,8 @@ xp_awk_val_t* xp_awk_makerexval (
 {
 	xp_awk_val_rex_t* val;
 
-	val = (xp_awk_val_rex_t*) xp_malloc (xp_sizeof(xp_awk_val_rex_t));
+	val = (xp_awk_val_rex_t*) XP_AWK_MALLOC (
+		run->awk, xp_sizeof(xp_awk_val_rex_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_REX;
@@ -151,15 +154,15 @@ xp_awk_val_t* xp_awk_makerexval (
 	val->buf = xp_strxdup (buf, len);
 	if (val->buf == XP_NULL) 
 	{
-		xp_free (val);
+		XP_AWK_FREE (run->awk, val);
 		return XP_NULL;
 	}
 
-	val->code = xp_malloc (XP_AWK_REX_LEN(code));
+	val->code = XP_AWK_MALLOC (run->awk, XP_AWK_REX_LEN(code));
 	if (val->code == XP_NULL)
 	{
-		xp_free (val->buf);
-		xp_free (val);
+		XP_AWK_FREE (run->awk, val->buf);
+		XP_AWK_FREE (run->awk, val);
 		return XP_NULL;
 	}
 
@@ -181,7 +184,8 @@ xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run)
 {
 	xp_awk_val_map_t* val;
 
-	val = (xp_awk_val_map_t*) xp_malloc (xp_sizeof(xp_awk_val_map_t));
+	val = (xp_awk_val_map_t*) XP_AWK_MALLOC (
+		run->awk, xp_sizeof(xp_awk_val_map_t));
 	if (val == XP_NULL) return XP_NULL;
 
 	val->type = XP_AWK_VAL_MAP;
@@ -189,7 +193,7 @@ xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run)
 	val->map = xp_awk_map_open (XP_NULL, run, 256, __free_map_val);
 	if (val->map == XP_NULL)
 	{
-		xp_free (val);
+		XP_AWK_FREE (run->awk, val);
 		return XP_NULL;
 	}
 
@@ -206,8 +210,8 @@ xp_awk_val_t* xp_awk_makerefval (xp_awk_run_t* run, int id, xp_awk_val_t** adr)
 	}
 	else
 	{
-		val = (xp_awk_val_ref_t*)
-			xp_malloc (xp_sizeof(xp_awk_val_ref_t));
+		val = (xp_awk_val_ref_t*) XP_AWK_MALLOC (
+			run->awk, xp_sizeof(xp_awk_val_ref_t));
 		if (val == XP_NULL) return XP_NULL;
 	}
 
@@ -237,7 +241,7 @@ xp_awk_printval (val);
 xp_printf (XP_T("\n"));*/
 	if (val->type == XP_AWK_VAL_NIL)
 	{
-		xp_free (val);
+		XP_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == XP_AWK_VAL_INT)
 	{
@@ -247,7 +251,7 @@ xp_printf (XP_T("\n"));*/
 			run->icache[run->icache_count++] = 
 				(xp_awk_val_int_t*)val;	
 		}
-		else xp_free (val);
+		else XP_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == XP_AWK_VAL_REAL)
 	{
@@ -257,23 +261,23 @@ xp_printf (XP_T("\n"));*/
 			run->rcache[run->rcache_count++] = 
 				(xp_awk_val_real_t*)val;	
 		}
-		else xp_free (val);
+		else XP_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == XP_AWK_VAL_STR)
 	{
-		xp_free (((xp_awk_val_str_t*)val)->buf);
-		xp_free (val);
+		XP_AWK_FREE (run->awk, ((xp_awk_val_str_t*)val)->buf);
+		XP_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == XP_AWK_VAL_REX)
 	{
-		xp_free (((xp_awk_val_rex_t*)val)->buf);
+		XP_AWK_FREE (run->awk, ((xp_awk_val_rex_t*)val)->buf);
 		xp_awk_freerex (((xp_awk_val_rex_t*)val)->code);
-		xp_free (val);
+		XP_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == XP_AWK_VAL_MAP)
 	{
 		xp_awk_map_close (((xp_awk_val_map_t*)val)->map);
-		xp_free (val);
+		XP_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == XP_AWK_VAL_REF)
 	{
@@ -283,7 +287,7 @@ xp_printf (XP_T("\n"));*/
 			run->fcache[run->fcache_count++] = 
 				(xp_awk_val_ref_t*)val;	
 		}
-		else xp_free (val);
+		else XP_AWK_FREE (run->awk, val);
 	}
 	else
 	{
@@ -361,7 +365,7 @@ xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
 }
 
 xp_char_t* xp_awk_valtostr (
-	xp_awk_val_t* v, int* errnum, 
+	xp_awk_run_t* run, xp_awk_val_t* v,
 	xp_bool_t clear_buf, xp_str_t* buf, xp_size_t* len)
 {
 	if (v->type == XP_AWK_VAL_NIL)
@@ -372,7 +376,7 @@ xp_char_t* xp_awk_valtostr (
 			tmp = xp_strdup (XP_T(""));
 			if (tmp == XP_NULL) 
 			{
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 
@@ -400,10 +404,11 @@ xp_char_t* xp_awk_valtostr (
 			/* handle zero */
 			if (buf == XP_NULL)
 			{
-				tmp = xp_malloc (2 * xp_sizeof(xp_char_t));
+				tmp = XP_AWK_MALLOC (
+					run->awk, 2 * xp_sizeof(xp_char_t));
 				if (tmp == XP_NULL)
 				{
-					*errnum = XP_AWK_ENOMEM;
+					run->errnum = XP_AWK_ENOMEM;
 					return XP_NULL;
 				}
 
@@ -417,7 +422,7 @@ xp_char_t* xp_awk_valtostr (
 				if (clear_buf) xp_str_clear (buf);
 				if (xp_str_cat (buf, XP_T("0")) == (xp_size_t)-1)
 				{
-					*errnum = XP_AWK_ENOMEM;
+					run->errnum = XP_AWK_ENOMEM;
 					return XP_NULL;
 				}
 
@@ -432,10 +437,11 @@ xp_char_t* xp_awk_valtostr (
 
 		if (buf == XP_NULL)
 		{
-			tmp = xp_malloc ((l + 1) * xp_sizeof(xp_char_t));
+			tmp = XP_AWK_MALLOC (
+				run->awk, (l + 1) * xp_sizeof(xp_char_t));
 			if (tmp == XP_NULL)
 			{
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 
@@ -453,7 +459,7 @@ xp_char_t* xp_awk_valtostr (
 			if (xp_str_nccat (
 				buf, XP_T(' '), l) == (xp_size_t)-1)
 			{
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 		}
@@ -500,7 +506,7 @@ xp_char_t* xp_awk_valtostr (
 			tmp = xp_strdup (tbuf);
 			if (tmp == XP_NULL) 
 			{
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 
@@ -512,7 +518,7 @@ xp_char_t* xp_awk_valtostr (
 
 			if (xp_str_cat (buf, tbuf) == (xp_size_t)-1)
 			{
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 
@@ -534,7 +540,7 @@ xp_char_t* xp_awk_valtostr (
 				((xp_awk_val_str_t*)v)->len);
 			if (tmp == XP_NULL) 
 			{
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 
@@ -548,7 +554,7 @@ xp_char_t* xp_awk_valtostr (
 				((xp_awk_val_str_t*)v)->buf, 
 				((xp_awk_val_str_t*)v)->len) == (xp_size_t)-1)
 			{
-				*errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return XP_NULL;
 			}
 
@@ -562,7 +568,7 @@ xp_char_t* xp_awk_valtostr (
 /* TODO: process more value types */
 
 xp_printf (XP_T("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtostr v=> %p***\n"), v->type, v);
-	*errnum = XP_AWK_EVALTYPE;
+	run->errnum = XP_AWK_EVALTYPE;
 	return XP_NULL;
 }
 
