@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.79 2006-08-30 07:15:14 bacon Exp $
+ * $Id: awk.c,v 1.80 2006-08-31 04:21:04 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -548,6 +548,39 @@ static void __on_run_end (xp_awk_t* awk, void* handle, int errnum, void* arg)
 	app_run = NULL;
 }
 
+typedef struct syscas_data_t syscas_data_t;
+struct syscas_data_t
+{
+	HANDLE heap;
+};
+
+static void* __awk_malloc (xp_size_t n, void* custom_data)
+{
+#ifdef _WIN32
+	return HeapAlloc (((syscas_data_t*)custom_data)->heap, 0, n);
+#else
+	return malloc (n);
+#endif
+}
+
+static void* __awk_realloc (void* ptr, xp_size_t n, void* custom_data)
+{
+#ifdef _WIN32
+	return HeapReAlloc (((syscas_data_t*)custom_data)->heap, 0, ptr, n);
+#else
+	return realloc (ptr, n);
+#endif
+}
+
+static void __awk_free (void* ptr, void* custom_data)
+{
+#ifdef _WIN32
+	HeapFree (((syscas_data_t*)custom_data)->heap, 0, ptr);
+#else
+	free (ptr);
+#endif
+}
+
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 static int __main (int argc, char* argv[])
 #else
@@ -558,14 +591,12 @@ static int __main (int argc, xp_char_t* argv[])
 	xp_awk_srcios_t srcios;
 	xp_awk_runcbs_t runcbs;
 	xp_awk_runios_t runios;
+	xp_awk_syscas_t syscas;
 	struct src_io src_io = { NULL, NULL };
 	int opt, i, file_count = 0;
-
-	if ((awk = xp_awk_open(XP_NULL)) == XP_NULL) 
-	{
-		xp_printf (XP_T("Error: cannot open awk\n"));
-		return -1;
-	}
+#ifdef _WIN32
+	syscas_data_t syscas_data;
+#endif
 
 	opt = XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_HASHSIGN |
 		/*XP_AWK_DBLSLASHES |*/
@@ -605,6 +636,33 @@ static int __main (int argc, xp_char_t* argv[])
 			xp_printf (XP_T("Usage: %s [-m] source_file [data_file]\n"), argv[0]);
 			return -1;
 		}
+	}
+
+	memset (&syscas, 0, sizeof(syscas));
+	syscas.malloc = __awk_malloc;
+	syscas.realloc = NULL;
+	syscas.free = __awk_free;
+	syscas.lock = NULL;
+	syscas.unlock = NULL;
+
+#ifdef _WIN32
+	syscas_data.heap = HeapCreate (0, 640 * 1024, 640 * 1024);
+	if (syscas_data.heap == NULL)
+	{
+		xp_printf (XP_T("Error: cannot create an awk heap\n"));
+		return -1;
+	}
+
+	syscas.custom_data = &syscas_data;
+#endif
+
+	if ((awk = xp_awk_open(&syscas)) == XP_NULL) 
+	{
+#ifdef _WIN32
+		HeapDestroy (syscas_data.heap);
+#endif
+		xp_printf (XP_T("Error: cannot open awk\n"));
+		return -1;
 	}
 
 	xp_awk_setopt (awk, opt);
@@ -664,6 +722,9 @@ static int __main (int argc, xp_char_t* argv[])
 	}
 
 	xp_awk_close (awk);
+#ifdef _WIN32
+	HeapDestroy (syscas_data.heap);
+#endif
 	return 0;
 }
 

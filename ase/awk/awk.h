@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.103 2006-08-29 15:01:44 bacon Exp $
+ * $Id: awk.h,v 1.104 2006-08-31 04:21:03 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -12,7 +12,7 @@ typedef struct xp_awk_t xp_awk_t;
 typedef struct xp_awk_val_t xp_awk_val_t;
 typedef struct xp_awk_extio_t xp_awk_extio_t;
 
-typedef struct xp_awk_thrlks_t xp_awk_thrlks_t;
+typedef struct xp_awk_syscas_t xp_awk_syscas_t;
 typedef struct xp_awk_srcios_t xp_awk_srcios_t;
 typedef struct xp_awk_runios_t xp_awk_runios_t;
 typedef struct xp_awk_runcbs_t xp_awk_runcbs_t;
@@ -40,10 +40,25 @@ struct xp_awk_extio_t
 	xp_awk_extio_t* next;
 };
 
+/*
 struct xp_awk_thrlks_t
 {
 	xp_awk_lk_t lock;
 	xp_awk_lk_t unlock;
+	void* custom_data;
+};
+*/
+struct xp_awk_syscas_t
+{
+	/* memory */
+	void* (*malloc) (xp_size_t n, void* custom_data);
+	void* (*realloc) (void* ptr, xp_size_t n, void* custom_data);
+	void  (*free) (void* ptr, void* custom_data);
+
+	/* thread lock */
+	xp_awk_lk_t lock;
+	xp_awk_lk_t unlock;
+
 	void* custom_data;
 };
 
@@ -68,6 +83,7 @@ struct xp_awk_runcbs_t
 	void (*on_end) (xp_awk_t* awk, void* handle, int errnum, void* arg);
 	void* custom_data;
 };
+
 
 /* io function commands */
 enum 
@@ -258,7 +274,7 @@ enum
 extern "C" {
 #endif
 
-xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks);
+xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas);
 int xp_awk_close (xp_awk_t* awk);
 int xp_awk_clear (xp_awk_t* awk);
 

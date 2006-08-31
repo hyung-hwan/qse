@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.70 2006-08-13 16:04:32 bacon Exp $ 
+ * $Id: awk.c,v 1.71 2006-08-31 04:21:03 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -11,16 +11,21 @@
 
 static void __free_afn (void* awk, void* afn);
 
-xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks)
+xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 {	
 	xp_awk_t* awk;
 
-	awk = (xp_awk_t*) xp_malloc (xp_sizeof(xp_awk_t));
+	if (syscas == XP_NULL ||
+	    syscas->malloc == XP_NULL || 
+	    syscas->free == XP_NULL) return XP_NULL;
+
+	awk = (xp_awk_t*) syscas->malloc (
+		xp_sizeof(xp_awk_t), syscas->custom_data);
 	if (awk == XP_NULL) return XP_NULL;
 
 	if (xp_str_open (&awk->token.name, 128) == XP_NULL) 
 	{
-		xp_free (awk);
+		syscas->free (awk, syscas->custom_data);
 		return XP_NULL;	
 	}
 
@@ -29,7 +34,7 @@ xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks)
 		&awk->tree.afns, awk, 256, __free_afn) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
-		xp_free (awk);
+		syscas->free (awk, syscas->custom_data);
 		return XP_NULL;	
 	}
 
@@ -37,7 +42,7 @@ xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks)
 	{
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.afns);
-		xp_free (awk);
+		syscas->free (awk, syscas->custom_data);
 		return XP_NULL;	
 	}
 
@@ -46,7 +51,7 @@ xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks)
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.afns);
 		xp_awk_tab_close (&awk->parse.globals);
-		xp_free (awk);
+		syscas->free (awk, syscas->custom_data);
 		return XP_NULL;	
 	}
 
@@ -56,7 +61,7 @@ xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks)
 		xp_awk_map_close (&awk->tree.afns);
 		xp_awk_tab_close (&awk->parse.globals);
 		xp_awk_tab_close (&awk->parse.locals);
-		xp_free (awk);
+		syscas->free (awk, syscas->custom_data);
 		return XP_NULL;	
 	}
 
@@ -92,7 +97,7 @@ xp_awk_t* xp_awk_open (xp_awk_thrlks_t* thrlks)
 	awk->run.count = 0;
 	awk->run.ptr = XP_NULL;
 
-	awk->thr.lks = thrlks;
+	awk->syscas = syscas;
 	return awk;
 }
 
@@ -108,7 +113,7 @@ int xp_awk_close (xp_awk_t* awk)
 	xp_awk_tab_close (&awk->parse.params);
 	xp_str_close (&awk->token.name);
 
-	xp_free (awk);
+	awk->syscas->free (awk, awk->syscas->custom_data);
 	return 0;
 }
 
