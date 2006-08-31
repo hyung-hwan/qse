@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.49 2006-08-31 14:52:11 bacon Exp $
+ * $Id: awk_i.h,v 1.50 2006-08-31 15:09:24 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -61,6 +61,8 @@ struct xp_awk_tree_t
 
 struct xp_awk_t
 {
+	xp_awk_syscas_t* syscas;
+
 	/* options */
 	int option;
 
@@ -133,8 +135,6 @@ struct xp_awk_t
 		xp_size_t count;
 		xp_awk_run_t* ptr;
 	} run;
-
-	xp_awk_syscas_t* syscas;
 
 	/* housekeeping */
 	int errnum;

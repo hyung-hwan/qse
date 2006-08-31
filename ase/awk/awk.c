@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.72 2006-08-31 14:52:11 bacon Exp $ 
+ * $Id: awk.c,v 1.73 2006-08-31 15:09:23 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -23,9 +23,11 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 		xp_sizeof(xp_awk_t), syscas->custom_data);
 	if (awk == XP_NULL) return XP_NULL;
 
+	awk->syscas = syscas;
+
 	if (xp_str_open (&awk->token.name, 128) == XP_NULL) 
 	{
-		syscas->free (awk, syscas->custom_data);
+		XP_AWK_FREE (awk, awk);
 		return XP_NULL;	
 	}
 
@@ -34,34 +36,34 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 		&awk->tree.afns, awk, 256, __free_afn) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
-		syscas->free (awk, syscas->custom_data);
+		XP_AWK_FREE (awk, awk);
 		return XP_NULL;	
 	}
 
-	if (xp_awk_tab_open (&awk->parse.globals) == XP_NULL) 
+	if (xp_awk_tab_open (&awk->parse.globals, awk) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.afns);
-		syscas->free (awk, syscas->custom_data);
+		XP_AWK_FREE (awk, awk);
 		return XP_NULL;	
 	}
 
-	if (xp_awk_tab_open (&awk->parse.locals) == XP_NULL) 
+	if (xp_awk_tab_open (&awk->parse.locals, awk) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.afns);
 		xp_awk_tab_close (&awk->parse.globals);
-		syscas->free (awk, syscas->custom_data);
+		XP_AWK_FREE (awk, awk);
 		return XP_NULL;	
 	}
 
-	if (xp_awk_tab_open (&awk->parse.params) == XP_NULL) 
+	if (xp_awk_tab_open (&awk->parse.params, awk) == XP_NULL) 
 	{
 		xp_str_close (&awk->token.name);
 		xp_awk_map_close (&awk->tree.afns);
 		xp_awk_tab_close (&awk->parse.globals);
 		xp_awk_tab_close (&awk->parse.locals);
-		syscas->free (awk, syscas->custom_data);
+		XP_AWK_FREE (awk, awk);
 		return XP_NULL;	
 	}
 
@@ -97,7 +99,6 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 	awk->run.count = 0;
 	awk->run.ptr = XP_NULL;
 
-	awk->syscas = syscas;
 	return awk;
 }
 
@@ -113,7 +114,9 @@ int xp_awk_close (xp_awk_t* awk)
 	xp_awk_tab_close (&awk->parse.params);
 	xp_str_close (&awk->token.name);
 
-	awk->syscas->free (awk, awk->syscas->custom_data);
+	/* XP_AWK_MALLOC, XP_AWK_FREE, etc can not be used 
+	 * from the next line onwards */
+	XP_AWK_FREE (awk, awk);
 	return 0;
 }
 
@@ -173,7 +176,7 @@ int xp_awk_clear (xp_awk_t* awk)
 			xp_awk_clrpt (awk->tree.chain->pattern);
 		if (awk->tree.chain->action != XP_NULL)
 			xp_awk_clrpt (awk->tree.chain->action);
-		awk->syscas->free (awk->tree.chain, awk->syscas->custom_data);
+		XP_AWK_FREE (awk, awk->tree.chain);
 		awk->tree.chain = next;
 	}
 
@@ -197,10 +200,10 @@ static void __free_afn (void* owner, void* afn)
 	xp_awk_afn_t* f = (xp_awk_afn_t*)afn;
 
 	/* f->name doesn't have to be freed */
-	/*xp_free (f->name);*/
+	/*XP_AWK_FREE ((xp_awk_t*)owner, f->name);*/
 
 	xp_awk_clrpt (f->body);
-	xp_free (f);
+	XP_AWK_FREE ((xp_awk_t*)owner, f);
 }
 
 xp_size_t xp_awk_getsrcline (xp_awk_t* awk)
