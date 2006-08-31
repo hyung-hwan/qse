@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.11 2006-08-16 11:35:54 bacon Exp $
+ * $Id: tab.c,v 1.12 2006-08-31 15:09:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -10,16 +10,18 @@
 #include <xp/bas/assert.h>
 #endif
 
-xp_awk_tab_t* xp_awk_tab_open (xp_awk_tab_t* tab)
+xp_awk_tab_t* xp_awk_tab_open (xp_awk_tab_t* tab, xp_awk_t* awk)
 {
 	if (tab == XP_NULL) 
 	{
-		tab = (xp_awk_tab_t*) xp_malloc (xp_sizeof(xp_awk_tab_t));
+		tab = (xp_awk_tab_t*) XP_AWK_MALLOC (
+			awk, xp_sizeof(xp_awk_tab_t));
 		if (tab == XP_NULL) return XP_NULL;
 		tab->__dynamic = xp_true;
 	}
 	else tab->__dynamic = xp_false;
 
+	tab->awk = awk;
 	tab->buf = XP_NULL;
 	tab->size = 0;
 	tab->capa = 0;
@@ -32,12 +34,12 @@ void xp_awk_tab_close (xp_awk_tab_t* tab)
 	xp_awk_tab_clear (tab);
 	if (tab->buf != XP_NULL) 
 	{
-		xp_free (tab->buf);
+		XP_AWK_FREE (tab->awk, tab->buf);
 		tab->buf = XP_NULL;
 		tab->capa = 0;
 	}
 
-	if (tab->__dynamic) xp_free (tab);
+	if (tab->__dynamic) XP_AWK_FREE (tab->awk, tab);
 }
 
 xp_size_t xp_awk_tab_getsize (xp_awk_tab_t* tab)
@@ -73,13 +75,13 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 			xp_size_t x;
 			x = (capa > tab->capa)? tab->capa: capa;
 			xp_memcpy (tmp, tab->buf, xp_sizeof(*tab->buf) * x);
-			xp_free (tab->buf);
+			XP_AWK_FREE (tab->awk, tab->buf);
 		}
 #endif
 	}
 	else 
 	{
-		if (tab->buf != XP_NULL) xp_free (tab->buf);
+		if (tab->buf != XP_NULL) XP_AWK_FREE (tab->awk, tab->buf);
 		tmp = XP_NULL;
 	}
 
@@ -97,7 +99,7 @@ void xp_awk_tab_clear (xp_awk_tab_t* tab)
 
 	for (i = 0; i < tab->size; i++) 
 	{
-		xp_free (tab->buf[i].name);
+		XP_AWK_FREE (tab->awk, tab->buf[i].name);
 		tab->buf[i].name = XP_NULL;
 		tab->buf[i].name_len = 0;
 	}
@@ -128,7 +130,7 @@ xp_size_t xp_awk_tab_insert (
 
 		if (xp_awk_tab_setcapa(tab,capa) == XP_NULL) 
 		{
-			xp_free (str_dup);
+			XP_AWK_FREE (tab->awk, str_dup);
 			return (xp_size_t)-1;
 		}
 	}
@@ -157,7 +159,7 @@ xp_size_t xp_awk_tab_remove (
 
 	while (i < k) 
 	{
-		xp_free (tab->buf[i].name);	
+		XP_AWK_FREE (tab->awk, tab->buf[i].name);	
 
 		if (j >= tab->size) 
 		{
