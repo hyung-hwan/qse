@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.71 2006-08-31 04:21:03 bacon Exp $ 
+ * $Id: awk.c,v 1.72 2006-08-31 14:52:11 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -173,7 +173,7 @@ int xp_awk_clear (xp_awk_t* awk)
 			xp_awk_clrpt (awk->tree.chain->pattern);
 		if (awk->tree.chain->action != XP_NULL)
 			xp_awk_clrpt (awk->tree.chain->action);
-		xp_free (awk->tree.chain);
+		awk->syscas->free (awk->tree.chain, awk->syscas->custom_data);
 		awk->tree.chain = next;
 	}
 
