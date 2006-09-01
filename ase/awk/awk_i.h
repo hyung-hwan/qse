@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.51 2006-08-31 16:00:18 bacon Exp $
+ * $Id: awk_i.h,v 1.52 2006-09-01 04:03:28 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -39,12 +39,30 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #define XP_AWK_MAX_LOCALS  9999
 #define XP_AWK_MAX_PARAMS  9999
 
-#define XP_AWK_MALLOC(awk,size) \
-	(awk)->syscas->malloc (size, (awk)->syscas->custom_data)
-#define XP_AWK_REALLOC(awk,ptr,size) \
-	(awk)->syscas->realloc (ptr, size, (awk)->syscas->custom_data)
-#define XP_AWK_FREE(awk,ptr) \
-	(awk)->syscas->free (ptr, (awk)->syscas->custom_data)
+#if defined(_WIN32) && defined(_DEBUG)
+	#define XP_AWK_MALLOC(awk,size) malloc (size)
+	#define XP_AWK_REALLOC(awk,ptr,size) realloc (ptr, size)
+	#define XP_AWK_FREE(awk,ptr) free (ptr)
+#else
+	#define XP_AWK_MALLOC(awk,size) \
+		(awk)->syscas->malloc (size, (awk)->syscas->custom_data)
+	#define XP_AWK_REALLOC(awk,ptr,size) \
+		(awk)->syscas->realloc (ptr, size, (awk)->syscas->custom_data)
+	#define XP_AWK_FREE(awk,ptr) \
+		(awk)->syscas->free (ptr, (awk)->syscas->custom_data)
+#endif
+
+#define XP_AWK_LOCK(awk) \
+	do { \
+		if (awk->syscas != XP_NULL && awk->syscas->lock != XP_NULL) \
+			awk->syscas->lock (awk, awk->syscas->custom_data); \
+	} while (0) 
+
+#define XP_AWK_UNLOCK(awk) \
+	do { \
+		if (awk->syscas != XP_NULL && awk->syscas->unlock != XP_NULL) \
+			awk->syscas->unlock (awk, awk->syscas->custom_data); \
+	} while (0) 
 
 struct xp_awk_tree_t
 {

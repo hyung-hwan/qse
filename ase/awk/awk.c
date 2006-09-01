@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.75 2006-09-01 03:44:15 bacon Exp $ 
+ * $Id: awk.c,v 1.76 2006-09-01 04:03:28 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -19,8 +19,12 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 	    syscas->malloc == XP_NULL || 
 	    syscas->free == XP_NULL) return XP_NULL;
 
+#if defined(_WIN32) && defined(_DEBUG)
+	awk = (xp_awk_t*) malloc (xp_sizeof(xp_awk_t));
+#else
 	awk = (xp_awk_t*) syscas->malloc (
 		xp_sizeof(xp_awk_t), syscas->custom_data);
+#endif
 	if (awk == XP_NULL) return XP_NULL;
 
 	awk->syscas = syscas;
@@ -114,7 +118,7 @@ int xp_awk_close (xp_awk_t* awk)
 	xp_awk_tab_close (&awk->parse.params);
 	xp_awk_str_close (&awk->token.name);
 
-	/* XP_AWK_MALLOC, XP_AWK_FREE, etc can not be used 
+	/* XP_AWK_ALLOC, XP_AWK_FREE, etc can not be used 
 	 * from the next line onwards */
 	XP_AWK_FREE (awk, awk);
 	return 0;

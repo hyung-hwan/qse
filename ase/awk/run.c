@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.191 2006-09-01 03:44:16 bacon Exp $
+ * $Id: run.c,v 1.192 2006-09-01 04:03:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -329,7 +329,7 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 	{
 		awk->errnum = errnum;
 		__del_run (awk, run);
-		awk->syscas->free (run, awk->syscas->custom_data);
+		XP_AWK_FREE (awk, run);
 		return -1;
 	}
 
@@ -360,7 +360,7 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 	__deinit_run (run);
 
 	__del_run (awk, run);
-	awk->syscas->free (run, awk->syscas->custom_data);
+	XP_AWK_FREE (awk, run);
 
 	return n;
 }
@@ -370,8 +370,7 @@ int xp_awk_stop (xp_awk_t* awk, void* run)
 	xp_awk_run_t* r;
 	int n = 0;
 
-	if (awk->syscas != XP_NULL && awk->syscas->lock != XP_NULL)
-		awk->syscas->lock (awk, awk->syscas->custom_data);
+	XP_AWK_LOCK (awk);
 
 	/* check if the run handle given is valid */
 	for (r = awk->run.ptr; r != XP_NULL; r = r->next)
@@ -392,8 +391,7 @@ int xp_awk_stop (xp_awk_t* awk, void* run)
 		n = -1;
 	}
 
-	if (awk->syscas != XP_NULL && awk->syscas->unlock != XP_NULL)
-		awk->syscas->unlock (awk, awk->syscas->custom_data);
+	XP_AWK_UNLOCK (awk);
 
 	return n;
 }
@@ -402,16 +400,14 @@ void xp_awk_stopall (xp_awk_t* awk)
 {
 	xp_awk_run_t* r;
 
-	if (awk->syscas != XP_NULL && awk->syscas->lock != XP_NULL)
-		awk->syscas->lock (awk, awk->syscas->custom_data);
+	XP_AWK_LOCK (awk);
 
 	for (r = awk->run.ptr; r != XP_NULL; r = r->next)
 	{
 		r->exit_level = EXIT_ABORT;
 	}
 
-	if (awk->syscas != XP_NULL && awk->syscas->unlock != XP_NULL)
-		awk->syscas->unlock (awk, awk->syscas->custom_data);
+	XP_AWK_UNLOCK (awk);
 }
 
 int xp_awk_getrunerrnum (xp_awk_t* awk, void* run, int* errnum)
@@ -419,8 +415,7 @@ int xp_awk_getrunerrnum (xp_awk_t* awk, void* run, int* errnum)
 	xp_awk_run_t* r;
 	int n = 0;
 
-	if (awk->syscas != XP_NULL && awk->syscas->lock != XP_NULL)
-		awk->syscas->lock (awk, awk->syscas->custom_data);
+	XP_AWK_LOCK (awk);
 
 	for (r = awk->run.ptr; r != XP_NULL; r = r->next)
 	{
@@ -438,8 +433,7 @@ int xp_awk_getrunerrnum (xp_awk_t* awk, void* run, int* errnum)
 		n = -1;
 	}
 
-	if (awk->syscas != XP_NULL && awk->syscas->unlock != XP_NULL)
-		awk->syscas->unlock (awk, awk->syscas->custom_data);
+	XP_AWK_UNLOCK (awk);
 
 	return n;
 }
@@ -451,8 +445,7 @@ static void __free_namedval (void* run, void* val)
 
 static void __add_run (xp_awk_t* awk, xp_awk_run_t* run)
 {
-	if (awk->syscas != XP_NULL && awk->syscas->lock != XP_NULL)
-		awk->syscas->lock (awk, awk->syscas->custom_data);
+	XP_AWK_LOCK (awk);
 
 	run->awk = awk;
 	run->prev = XP_NULL;
@@ -461,14 +454,12 @@ static void __add_run (xp_awk_t* awk, xp_awk_run_t* run)
 	awk->run.ptr = run;
 	awk->run.count++;
 
-	if (awk->syscas != XP_NULL && awk->syscas->unlock != XP_NULL)
-		awk->syscas->unlock (awk, awk->syscas->custom_data);
+	XP_AWK_UNLOCK (awk);
 }
 
 static void __del_run (xp_awk_t* awk, xp_awk_run_t* run)
 {
-	if (awk->syscas != XP_NULL && awk->syscas->lock != XP_NULL)
-		awk->syscas->lock (awk, awk->syscas->custom_data);
+	XP_AWK_LOCK (awk);
 
 	xp_assert (awk->run.ptr != XP_NULL);
 
@@ -486,8 +477,7 @@ static void __del_run (xp_awk_t* awk, xp_awk_run_t* run)
 	run->awk = XP_NULL;
 	awk->run.count--;
 
-	if (awk->syscas != XP_NULL && awk->syscas->unlock != XP_NULL)
-		awk->syscas->unlock (awk, awk->syscas->custom_data);
+	XP_AWK_UNLOCK (awk);
 }
 
 static int __init_run (
@@ -4887,9 +4877,7 @@ static int __recomp_record_fields (
 			{
 				xp_memcpy (tmp, run->inrec.flds, 
 					xp_sizeof(*run->inrec.flds) * run->inrec.maxflds);
-				run->awk->syscas->free (
-					run->inrec.flds,
-					run->awk->syscas->custom_data);
+				XP_AWK_FREE (run->awk, run->inrec.flds);
 			}
 		}
 
