@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.84 2006-09-01 06:23:57 bacon Exp $
+ * $Id: awk.c,v 1.85 2006-09-01 07:18:40 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -9,6 +9,7 @@
 
 #ifdef XP_CHAR_IS_WCHAR
 	#include <wchar.h>
+	#include <wctype.h>
 #endif
 
 #ifndef __STAND_ALONE

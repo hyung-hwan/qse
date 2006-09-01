@@ -1,12 +1,11 @@
 /*
- * $Id: str.c,v 1.2 2006-09-01 06:22:13 bacon Exp $
+ * $Id: str.c,v 1.3 2006-09-01 07:18:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/memory.h>
-#include <xp/bas/string.h>
 #include <xp/bas/assert.h>
 #endif
 

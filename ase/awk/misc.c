@@ -1,12 +1,12 @@
 /*
- * $Id: misc.c,v 1.10 2006-09-01 06:42:52 bacon Exp $
+ * $Id: misc.c,v 1.11 2006-09-01 07:18:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/ctype.h>
 #include <xp/bas/assert.h>
+#include <xp/bas/stdarg.h>
 #endif
 
 static int __vprintf (

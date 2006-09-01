@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.53 2006-09-01 06:22:11 bacon Exp $
+ * $Id: awk_i.h,v 1.54 2006-09-01 07:18:39 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -22,16 +22,6 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 	#include <string.h>
 	#include <stdarg.h>
 	#include <assert.h>
-
-	#ifdef XP_CHAR_IS_MCHAR
-		#include <ctype.h>
-	#else
-		#include <ctype.h>
-		#include <wchar.h>
-		#if !defined(__BEOS__)
-			#include <wctype.h>
-		#endif
-	#endif
 
 	#define xp_assert assert
 

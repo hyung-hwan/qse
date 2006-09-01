@@ -1,5 +1,5 @@
 /*
- * $Id: func.h,v 1.10 2006-09-01 06:22:11 bacon Exp $
+ * $Id: func.h,v 1.11 2006-09-01 07:18:39 bacon Exp $
  */
 
 #ifndef _XP_AWK_FUNC_H_
@@ -42,16 +42,16 @@ extern "C" {
 #endif
 
 xp_awk_bfn_t* xp_awk_addbfn (
-	xp_awk_t* awk, const xp_char_t* name, size_t name_len, int when_valid, 
-	xp_size_t min_args, xp_size_t max_args, const xp_char_t* arg_spec,
-	int (*handler)(xp_awk_t*,void*));
+	xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len, 
+	int when_valid, xp_size_t min_args, xp_size_t max_args, 
+	const xp_char_t* arg_spec, int (*handler)(xp_awk_t*,void*));
 
-int xp_awk_delbfn (xp_awk_t* awk, const xp_char_t* name, size_t name_len);
+int xp_awk_delbfn (xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len);
 
 void xp_awk_clrbfn (xp_awk_t* awk);
 
 xp_awk_bfn_t* xp_awk_getbfn (
-	xp_awk_t* awk, const xp_char_t* name, size_t name_len);
+	xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len);
 
 #ifdef __cplusplus
 }

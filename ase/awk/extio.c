@@ -1,13 +1,11 @@
 /*
- * $Id: extio.c,v 1.44 2006-09-01 06:22:11 bacon Exp $
+ * $Id: extio.c,v 1.45 2006-09-01 07:18:39 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/assert.h>
-#include <xp/bas/string.h>
-#include <xp/bas/memory.h>
 #endif
 
 enum
@@ -289,7 +287,7 @@ int xp_awk_readextio (
 			const xp_char_t* match_ptr;
 			xp_size_t match_len;
 
-			xp_assert (run->extio.rs_rex != NULL);
+			xp_assert (run->extio.rs_rex != XP_NULL);
 
 			/* TODO: safematchrex */
 			n = xp_awk_matchrex (
@@ -417,7 +415,7 @@ static int __writeextio (
 
 		/* TOOD: consider using a shared buffer when calling
 		 *       xp_awk_valtostr. maybe run->shared_buf.extio */
-		str = xp_awk_valtostr (run, v, xp_true, NULL, &len);
+		str = xp_awk_valtostr (run, v, xp_true, XP_NULL, &len);
 		if (str == XP_NULL) return -1;
 	}
 

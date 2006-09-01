@@ -1,14 +1,11 @@
 /*
- * $Id: parse.c,v 1.176 2006-09-01 06:22:12 bacon Exp $
+ * $Id: parse.c,v 1.177 2006-09-01 07:18:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/memory.h>
-#include <xp/bas/ctype.h>
-#include <xp/bas/string.h>
-#include <xp/bas/stdlib.h>
 #include <xp/bas/assert.h>
 #include <xp/bas/stdio.h>
 #endif
