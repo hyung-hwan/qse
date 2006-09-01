@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.42 2006-08-31 16:00:18 bacon Exp $
+ * $Id: extio.c,v 1.43 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -128,7 +128,7 @@ int xp_awk_readextio (
 			return -1;
 		}
 
-		p->name = xp_strdup (name);
+		p->name = xp_awk_strdup (run->awk, name);
 		if (p->name == XP_NULL)
 		{
 			XP_AWK_FREE (run->awk, p);
@@ -292,7 +292,8 @@ int xp_awk_readextio (
 			xp_assert (run->extio.rs_rex != NULL);
 
 			/* TODO: safematchrex */
-			n = xp_awk_matchrex (run->extio.rs_rex, 
+			n = xp_awk_matchrex (
+				run->awk, run->extio.rs_rex, 
 				XP_AWK_STR_BUF(buf), XP_AWK_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)
@@ -454,7 +455,7 @@ static int __writeextio (
 			return -1;
 		}
 
-		p->name = xp_strdup (name);
+		p->name = xp_awk_strdup (run->awk, name);
 		if (p->name == XP_NULL)
 		{
 			XP_AWK_FREE (run->awk, p);

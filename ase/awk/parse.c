@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.174 2006-08-31 16:00:19 bacon Exp $
+ * $Id: parse.c,v 1.175 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -499,14 +499,14 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		{
 			if (__get_token (awk) == -1) 
 			{
-				xp_awk_clrpt (ptn);
+				xp_awk_clrpt (awk, ptn);
 				return XP_NULL;
 			}	
 
 			ptn->next = __parse_expression (awk);
 			if (ptn->next == XP_NULL) 
 			{
-				xp_awk_clrpt (ptn);
+				xp_awk_clrpt (awk, ptn);
 				return XP_NULL;
 			}
 		}
@@ -521,7 +521,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 			if (__parse_pattern_block (
 				awk, ptn, xp_true) == XP_NULL) 
 			{
-				xp_awk_clrpt (ptn);
+				xp_awk_clrpt (awk, ptn);
 				return XP_NULL;	
 			}
 
@@ -529,7 +529,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 			{
 				if (__get_token (awk) == -1) 
 				{
-					xp_awk_clrpt (ptn);
+					xp_awk_clrpt (awk, ptn);
 					return XP_NULL;
 				}	
 			}
@@ -539,7 +539,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 			/* parse the action block */
 			if (!MATCH(awk,TOKEN_LBRACE))
 			{
-				xp_awk_clrpt (ptn);
+				xp_awk_clrpt (awk, ptn);
 				PANIC (awk, XP_AWK_ELBRACE);
 			}
 
@@ -547,7 +547,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 			if (__parse_pattern_block (
 				awk, ptn, xp_false) == XP_NULL) 
 			{
-				xp_awk_clrpt (ptn);
+				xp_awk_clrpt (awk, ptn);
 				return XP_NULL;	
 			}
 		}
@@ -597,7 +597,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	}
 
 	/* clone the function name before it is overwritten */
-	name_dup = xp_strxdup (name, name_len);
+	name_dup = xp_awk_strxdup (awk, name, name_len);
 	if (name_dup == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 
 	/* get the next token */
@@ -763,7 +763,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	if (afn == XP_NULL) 
 	{
 		XP_AWK_FREE (awk, name_dup);
-		xp_awk_clrpt (body);
+		xp_awk_clrpt (awk, body);
 		return XP_NULL;
 	}
 
@@ -776,7 +776,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	if (n < 0)
 	{
 		XP_AWK_FREE (awk, name_dup);
-		xp_awk_clrpt (body);
+		xp_awk_clrpt (awk, body);
 		XP_AWK_FREE (awk, afn);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
@@ -837,7 +837,7 @@ static xp_awk_chain_t* __parse_pattern_block (
 	chain = (xp_awk_chain_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_chain_t));
 	if (chain == XP_NULL) 
 	{
-		xp_awk_clrpt (nde);
+		xp_awk_clrpt (awk, nde);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -905,7 +905,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 			xp_awk_tab_remove (
 				&awk->parse.locals, nlocals, 
 				xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
-			if (head != XP_NULL) xp_awk_clrpt (head);
+			if (head != XP_NULL) xp_awk_clrpt (awk, head);
 			PANIC (awk, XP_AWK_EENDSRC);
 		}
 
@@ -916,7 +916,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 				xp_awk_tab_remove (
 					&awk->parse.locals, nlocals, 
 					xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
-				if (head != XP_NULL) xp_awk_clrpt (head);
+				if (head != XP_NULL) xp_awk_clrpt (awk, head);
 				return XP_NULL; 
 			}
 			break;
@@ -928,7 +928,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 			xp_awk_tab_remove (
 				&awk->parse.locals, nlocals, 
 				xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
-			if (head != XP_NULL) xp_awk_clrpt (head);
+			if (head != XP_NULL) xp_awk_clrpt (awk, head);
 			return XP_NULL;
 		}
 
@@ -948,7 +948,7 @@ static xp_awk_nde_t* __parse_block (xp_awk_t* awk, xp_bool_t is_top)
 		xp_awk_tab_remove (
 			&awk->parse.locals, nlocals, 
 			xp_awk_tab_getsize(&awk->parse.locals) - nlocals);
-		xp_awk_clrpt (head);
+		xp_awk_clrpt (awk, head);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -1260,14 +1260,14 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 	/* check if a statement ends with a semicolon */
 	if (!MATCH(awk,TOKEN_SEMICOLON)) 
 	{
-		if (nde != XP_NULL) xp_awk_clrpt (nde);
+		if (nde != XP_NULL) xp_awk_clrpt (awk, nde);
 		PANIC (awk, XP_AWK_ESEMICOLON);
 	}
 
 	/* eat up the semicolon and read in the next token */
 	if (__get_token(awk) == -1) 
 	{
-		if (nde != XP_NULL) xp_awk_clrpt (nde);
+		if (nde != XP_NULL) xp_awk_clrpt (awk, nde);
 		return XP_NULL;
 	}
 
@@ -1293,28 +1293,28 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 	xp_assert (x->next == XP_NULL);
 	if (!__is_var(x) && x->type != XP_AWK_NDE_POS) 
 	{
-		xp_awk_clrpt (x);
+		xp_awk_clrpt (awk, x);
 		PANIC (awk, XP_AWK_EASSIGNMENT);
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (x);
+		xp_awk_clrpt (awk, x);
 		return XP_NULL;
 	}
 
 	y = __parse_basic_expr (awk);
 	if (y == XP_NULL) 
 	{
-		xp_awk_clrpt (x);
+		xp_awk_clrpt (awk, x);
 		return XP_NULL;
 	}
 
 	nde = (xp_awk_nde_ass_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_ass_t));
 	if (nde == XP_NULL) 
 	{
-		xp_awk_clrpt (x);
-		xp_awk_clrpt (y);
+		xp_awk_clrpt (awk, x);
+		xp_awk_clrpt (awk, y);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -1343,7 +1343,7 @@ static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
 		n1 = __parse_basic_expr (awk);
 		if (n1 == XP_NULL) 
 		{
-			xp_awk_clrpt (nde);
+			xp_awk_clrpt (awk, nde);
 			return XP_NULL;
 		}
 
@@ -1353,8 +1353,8 @@ static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
 		n2 = __parse_basic_expr (awk);
 		if (n2 == XP_NULL)
 		{
-			xp_awk_clrpt (nde);
-			xp_awk_clrpt (n1);
+			xp_awk_clrpt (awk, nde);
+			xp_awk_clrpt (awk, n1);
 			return XP_NULL;
 		}
 
@@ -1362,9 +1362,9 @@ static xp_awk_nde_t* __parse_basic_expr (xp_awk_t* awk)
 			awk, xp_sizeof(xp_awk_nde_cnd_t));
 		if (tmp == XP_NULL)
 		{
-			xp_awk_clrpt (nde);
-			xp_awk_clrpt (n1);
-			xp_awk_clrpt (n2);
+			xp_awk_clrpt (awk, nde);
+			xp_awk_clrpt (awk, n1);
+			xp_awk_clrpt (awk, n2);
 			return XP_NULL;
 		}
 
@@ -1410,14 +1410,14 @@ static xp_awk_nde_t* __parse_binary_expr (
 
 		if (__get_token(awk) == -1) 
 		{
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, left);
 			return XP_NULL; 
 		}
 
 		right = next_level_func (awk);
 		if (right == XP_NULL) 
 		{
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, left);
 			return XP_NULL;
 		}
 
@@ -1439,7 +1439,7 @@ static xp_awk_nde_t* __parse_binary_expr (
 			else if (opcode == XP_AWK_BINOP_MOD && r != 0) l %= r;
 			else goto skip_constant_folding;
 
-			xp_awk_clrpt (right);
+			xp_awk_clrpt (awk, right);
 			((xp_awk_nde_int_t*)left)->val = l;
 			continue;
 		} 
@@ -1458,7 +1458,7 @@ static xp_awk_nde_t* __parse_binary_expr (
 			else if (opcode == XP_AWK_BINOP_DIV) l /= r;
 			else goto skip_constant_folding;
 
-			xp_awk_clrpt (right);
+			xp_awk_clrpt (awk, right);
 			((xp_awk_nde_real_t*)left)->val = l;
 			continue;
 		}
@@ -1469,8 +1469,8 @@ static xp_awk_nde_t* __parse_binary_expr (
 			awk, xp_sizeof(xp_awk_nde_exp_t));
 		if (nde == XP_NULL) 
 		{
-			xp_awk_clrpt (right);
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, right);
+			xp_awk_clrpt (awk, left);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
@@ -1532,21 +1532,21 @@ static xp_awk_nde_t* __parse_in (xp_awk_t* awk)
 
 		if (__get_token(awk) == -1) 
 		{
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, left);
 			return XP_NULL; 
 		}
 
 		right = __parse_regex_match (awk);
 		if (right == XP_NULL) 
 		{
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, left);
 			return XP_NULL;
 		}
 
 		if (!__is_plain_var(right))
 		{
-			xp_awk_clrpt (right);
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, right);
+			xp_awk_clrpt (awk, left);
 			PANIC (awk, XP_AWK_ENOTVAR);
 		}
 
@@ -1554,8 +1554,8 @@ static xp_awk_nde_t* __parse_in (xp_awk_t* awk)
 			awk, xp_sizeof(xp_awk_nde_exp_t));
 		if (nde == XP_NULL) 
 		{
-			xp_awk_clrpt (right);
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, right);
+			xp_awk_clrpt (awk, left);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
@@ -1620,7 +1620,7 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 		
 		if (__get_token(awk) == -1)
 		{
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, left);
 			return XP_NULL;
 		}
 
@@ -1632,7 +1632,7 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 			/* piped getline */
 			if (__get_token(awk) == -1)
 			{
-				xp_awk_clrpt (left);
+				xp_awk_clrpt (awk, left);
 				return XP_NULL;
 			}
 
@@ -1645,7 +1645,7 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 				var = __parse_primary (awk);
 				if (var == XP_NULL) 
 				{
-					xp_awk_clrpt (left);
+					xp_awk_clrpt (awk, left);
 					return XP_NULL;
 				}
 			}
@@ -1654,7 +1654,7 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 				awk, xp_sizeof(xp_awk_nde_getline_t));
 			if (nde == XP_NULL)
 			{
-				xp_awk_clrpt (left);
+				xp_awk_clrpt (awk, left);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 
@@ -1672,14 +1672,14 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 
 			if (in_type == XP_AWK_IN_COPROC)
 			{
-				xp_awk_clrpt (left);
+				xp_awk_clrpt (awk, left);
 				PANIC (awk, XP_AWK_EGETLINE);
 			}
 
 			right = __parse_bitwise_xor (awk);
 			if (right == XP_NULL)
 			{
-				xp_awk_clrpt (left);
+				xp_awk_clrpt (awk, left);
 				return XP_NULL;
 			}
 
@@ -1689,8 +1689,8 @@ static xp_awk_nde_t* __parse_bitwise_or_with_extio (xp_awk_t* awk)
 				awk, xp_sizeof(xp_awk_nde_exp_t));
 			if (nde == XP_NULL)
 			{
-				xp_awk_clrpt (right);
-				xp_awk_clrpt (left);
+				xp_awk_clrpt (awk, right);
+				xp_awk_clrpt (awk, left);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 
@@ -1784,7 +1784,7 @@ static xp_awk_nde_t* __parse_concat (xp_awk_t* awk)
 		right = __parse_additive (awk);
 		if (right == XP_NULL) 
 		{
-			xp_awk_clrpt (left);
+			xp_awk_clrpt (awk, left);
 			return XP_NULL;
 		}
 
@@ -1792,8 +1792,8 @@ static xp_awk_nde_t* __parse_concat (xp_awk_t* awk)
 			awk, xp_sizeof(xp_awk_nde_exp_t));
 		if (nde == XP_NULL)
 		{
-			xp_awk_clrpt (left);
-			xp_awk_clrpt (right);
+			xp_awk_clrpt (awk, left);
+			xp_awk_clrpt (awk, right);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
@@ -1856,7 +1856,7 @@ static xp_awk_nde_t* __parse_unary (xp_awk_t* awk)
 	nde = (xp_awk_nde_exp_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_exp_t));
 	if (nde == XP_NULL)
 	{
-		xp_awk_clrpt (left);
+		xp_awk_clrpt (awk, left);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -1891,7 +1891,7 @@ static xp_awk_nde_t* __parse_increment (xp_awk_t* awk)
 
 	if (opcode1 != -1 && opcode2 != -1)
 	{
-		xp_awk_clrpt (left);
+		xp_awk_clrpt (awk, left);
 		PANIC (awk, XP_AWK_ELVALUE);
 	}
 	else if (opcode1 == -1 && opcode2 == -1)
@@ -1914,7 +1914,7 @@ static xp_awk_nde_t* __parse_increment (xp_awk_t* awk)
 	nde = (xp_awk_nde_exp_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_exp_t));
 	if (nde == XP_NULL)
 	{
-		xp_awk_clrpt (left);
+		xp_awk_clrpt (awk, left);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -1993,7 +1993,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->type = XP_AWK_NDE_STR;
 		nde->next = XP_NULL;
 		nde->len = XP_AWK_STR_LEN(&awk->token.name);
-		nde->buf = xp_strxdup(XP_AWK_STR_BUF(&awk->token.name), nde->len);
+		nde->buf = xp_awk_strxdup (
+			awk, XP_AWK_STR_BUF(&awk->token.name), nde->len);
 		if (nde->buf == XP_NULL) 
 		{
 			XP_AWK_FREE (awk, nde);
@@ -2029,7 +2030,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->next = XP_NULL;
 
 		nde->len = XP_AWK_STR_LEN(&awk->token.name);
-		nde->buf = xp_strxdup (
+		nde->buf = xp_awk_strxdup (
+			awk,
 			XP_AWK_STR_BUF(&awk->token.name),
 			XP_AWK_STR_LEN(&awk->token.name));
 		if (nde->buf == XP_NULL)
@@ -2039,6 +2041,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		}
 
 		nde->code = xp_awk_buildrex (
+			awk,
 			XP_AWK_STR_BUF(&awk->token.name), 
 			XP_AWK_STR_LEN(&awk->token.name), 
 			&errnum);
@@ -2073,7 +2076,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			awk, xp_sizeof(xp_awk_nde_pos_t));
 		if (nde == XP_NULL) 
 		{
-			xp_awk_clrpt (prim);
+			xp_awk_clrpt (awk, prim);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
@@ -2105,14 +2108,14 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 			if (__get_token(awk) == -1) 
 			{
-				xp_awk_clrpt (nde);
+				xp_awk_clrpt (awk, nde);
 				return XP_NULL;
 			}	
 
 			tmp = __parse_expression (awk);
 			if (tmp == XP_NULL) 
 			{
-				xp_awk_clrpt (nde);
+				xp_awk_clrpt (awk, nde);
 				return XP_NULL;
 			}
 
@@ -2125,13 +2128,13 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		/* check for the closing parenthesis */
 		if (!MATCH(awk,TOKEN_RPAREN)) 
 		{
-			xp_awk_clrpt (nde);
+			xp_awk_clrpt (awk, nde);
 			PANIC (awk, XP_AWK_ERPAREN);
 		}
 
 		if (__get_token(awk) == -1) 
 		{
-			xp_awk_clrpt (nde);
+			xp_awk_clrpt (awk, nde);
 			return XP_NULL;
 		}
 
@@ -2145,7 +2148,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 			if (!MATCH(awk,TOKEN_IN))
 			{
-				xp_awk_clrpt (nde);
+				xp_awk_clrpt (awk, nde);
 				PANIC (awk, XP_AWK_EIN);
 			}
 
@@ -2153,7 +2156,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 				awk, xp_sizeof(xp_awk_nde_grp_t));
 			if (tmp == XP_NULL)
 			{
-				xp_awk_clrpt (nde);
+				xp_awk_clrpt (awk, nde);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}	
 
@@ -2188,7 +2191,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			/* getline [var] < file */
 			if (__get_token(awk) == -1)
 			{
-				if (var != XP_NULL) xp_awk_clrpt (var);
+				if (var != XP_NULL) xp_awk_clrpt (awk, var);
 				return XP_NULL;
 			}
 
@@ -2197,7 +2200,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			in = __parse_primary (awk);
 			if (in == XP_NULL)
 			{
-				if (var != XP_NULL) xp_awk_clrpt (var);
+				if (var != XP_NULL) xp_awk_clrpt (awk, var);
 				return XP_NULL;
 			}
 		}
@@ -2206,8 +2209,8 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 			awk, xp_sizeof(xp_awk_nde_getline_t));
 		if (nde == XP_NULL)
 		{
-			if (var != XP_NULL) xp_awk_clrpt (var);
-			if (in != XP_NULL) xp_awk_clrpt (in);
+			if (var != XP_NULL) xp_awk_clrpt (awk, var);
+			if (in != XP_NULL) xp_awk_clrpt (awk, in);
 			PANIC (awk, XP_AWK_ENOMEM);
 		}
 
@@ -2233,8 +2236,10 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 
 	xp_assert (MATCH(awk,TOKEN_IDENT));
 
-	name_dup = xp_strxdup (
-		XP_AWK_STR_BUF(&awk->token.name), XP_AWK_STR_LEN(&awk->token.name));
+	name_dup = xp_awk_strxdup (
+		awk, 
+		XP_AWK_STR_BUF(&awk->token.name), 
+		XP_AWK_STR_LEN(&awk->token.name));
 	if (name_dup == XP_NULL) PANIC (awk, XP_AWK_ENOMEM);
 	name_len = XP_AWK_STR_LEN(&awk->token.name);
 
@@ -2373,14 +2378,14 @@ static xp_awk_nde_t* __parse_hashidx (
 	{
 		if (__get_token(awk) == -1) 
 		{
-			if (idx != XP_NULL) xp_awk_clrpt (idx);
+			if (idx != XP_NULL) xp_awk_clrpt (awk, idx);
 			return XP_NULL;
 		}
 
 		tmp = __parse_expression (awk);
 		if (tmp == XP_NULL) 
 		{
-			if (idx != XP_NULL) xp_awk_clrpt (idx);
+			if (idx != XP_NULL) xp_awk_clrpt (awk, idx);
 			return XP_NULL;
 		}
 
@@ -2401,20 +2406,20 @@ static xp_awk_nde_t* __parse_hashidx (
 
 	if (!MATCH(awk,TOKEN_RBRACK)) 
 	{
-		xp_awk_clrpt (idx);
+		xp_awk_clrpt (awk, idx);
 		PANIC (awk, XP_AWK_ERBRACK);
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (idx);
+		xp_awk_clrpt (awk, idx);
 		return XP_NULL;
 	}
 
 	nde = (xp_awk_nde_var_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_var_t));
 	if (nde == XP_NULL) 
 	{
-		xp_awk_clrpt (idx);
+		xp_awk_clrpt (awk, idx);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -2476,7 +2481,7 @@ static xp_awk_nde_t* __parse_hashidx (
 	}
 
 	/* undefined variable */
-	xp_awk_clrpt (idx);
+	xp_awk_clrpt (awk, idx);
 	XP_AWK_FREE (awk, nde);
 	PANIC (awk, XP_AWK_EUNDEF);
 }
@@ -2507,7 +2512,7 @@ static xp_awk_nde_t* __parse_fncall (
 			nde = __parse_expression (awk);
 			if (nde == XP_NULL) 
 			{
-				if (head != XP_NULL) xp_awk_clrpt (head);
+				if (head != XP_NULL) xp_awk_clrpt (awk, head);
 				return XP_NULL;
 			}
 	
@@ -2522,7 +2527,7 @@ static xp_awk_nde_t* __parse_fncall (
 				if (__get_token(awk) == -1) 
 				{
 					if (head != XP_NULL) 
-						xp_awk_clrpt (head);
+						xp_awk_clrpt (awk, head);
 					return XP_NULL;
 				}
 				break;
@@ -2530,13 +2535,13 @@ static xp_awk_nde_t* __parse_fncall (
 
 			if (!MATCH(awk,TOKEN_COMMA)) 
 			{
-				if (head != XP_NULL) xp_awk_clrpt (head);
+				if (head != XP_NULL) xp_awk_clrpt (awk, head);
 				PANIC (awk, XP_AWK_ECOMMA);	
 			}
 
 			if (__get_token(awk) == -1) 
 			{
-				if (head != XP_NULL) xp_awk_clrpt (head);
+				if (head != XP_NULL) xp_awk_clrpt (awk, head);
 				return XP_NULL;
 			}
 		}
@@ -2546,7 +2551,7 @@ static xp_awk_nde_t* __parse_fncall (
 	call = (xp_awk_nde_call_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_call_t));
 	if (call == XP_NULL) 
 	{
-		if (head != XP_NULL) xp_awk_clrpt (head);
+		if (head != XP_NULL) xp_awk_clrpt (awk, head);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -2594,20 +2599,20 @@ static xp_awk_nde_t* __parse_if (xp_awk_t* awk)
 
 	if (!MATCH(awk,TOKEN_RPAREN)) 
 	{
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, test);
 		PANIC (awk, XP_AWK_ERPAREN);
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, test);
 		return XP_NULL;
 	}
 
 	then_part = __parse_statement (awk);
 	if (then_part == XP_NULL) 
 	{
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, test);
 		return XP_NULL;
 	}
 
@@ -2615,16 +2620,16 @@ static xp_awk_nde_t* __parse_if (xp_awk_t* awk)
 	{
 		if (__get_token(awk) == -1) 
 		{
-			xp_awk_clrpt (then_part);
-			xp_awk_clrpt (test);
+			xp_awk_clrpt (awk, then_part);
+			xp_awk_clrpt (awk, test);
 			return XP_NULL;
 		}
 
 		else_part = __parse_statement (awk);
 		if (else_part == XP_NULL) 
 		{
-			xp_awk_clrpt (then_part);
-			xp_awk_clrpt (test);
+			xp_awk_clrpt (awk, then_part);
+			xp_awk_clrpt (awk, test);
 			return XP_NULL;
 		}
 	}
@@ -2633,9 +2638,9 @@ static xp_awk_nde_t* __parse_if (xp_awk_t* awk)
 	nde = (xp_awk_nde_if_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_if_t));
 	if (nde == XP_NULL) 
 	{
-		xp_awk_clrpt (else_part);
-		xp_awk_clrpt (then_part);
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, else_part);
+		xp_awk_clrpt (awk, then_part);
+		xp_awk_clrpt (awk, test);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -2661,28 +2666,28 @@ static xp_awk_nde_t* __parse_while (xp_awk_t* awk)
 
 	if (!MATCH(awk,TOKEN_RPAREN)) 
 	{
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, test);
 		PANIC (awk, XP_AWK_ERPAREN);
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, test);
 		return XP_NULL;
 	}
 
 	body = __parse_statement (awk);
 	if (body == XP_NULL) 
 	{
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, test);
 		return XP_NULL;
 	}
 
 	nde = (xp_awk_nde_while_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_while_t));
 	if (nde == XP_NULL) 
 	{
-		xp_awk_clrpt (body);
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, body);
+		xp_awk_clrpt (awk, test);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -2722,13 +2727,13 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 			
 			if (!MATCH(awk,TOKEN_RPAREN))
 			{
-				xp_awk_clrpt (init);
+				xp_awk_clrpt (awk, init);
 				PANIC (awk, XP_AWK_ERPAREN);
 			}
 
 			if (__get_token(awk) == -1) 
 			{
-				xp_awk_clrpt (init);
+				xp_awk_clrpt (awk, init);
 				return XP_NULL;
 
 			}	
@@ -2736,7 +2741,7 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 			body = __parse_statement (awk);
 			if (body == XP_NULL) 
 			{
-				xp_awk_clrpt (init);
+				xp_awk_clrpt (awk, init);
 				return XP_NULL;
 			}
 
@@ -2744,8 +2749,8 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 				awk, xp_sizeof(xp_awk_nde_foreach_t));
 			if (nde2 == XP_NULL)
 			{
-				xp_awk_clrpt (init);
-				xp_awk_clrpt (body);
+				xp_awk_clrpt (awk, init);
+				xp_awk_clrpt (awk, body);
 				PANIC (awk, XP_AWK_ENOMEM);
 			}
 
@@ -2759,14 +2764,14 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 
 		if (!MATCH(awk,TOKEN_SEMICOLON)) 
 		{
-			xp_awk_clrpt (init);
+			xp_awk_clrpt (awk, init);
 			PANIC (awk, XP_AWK_ESEMICOLON);
 		}
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (init);
+		xp_awk_clrpt (awk, init);
 		return XP_NULL;
 	}
 
@@ -2776,22 +2781,22 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 		test = __parse_expression (awk);
 		if (test == XP_NULL) 
 		{
-			xp_awk_clrpt (init);
+			xp_awk_clrpt (awk, init);
 			return XP_NULL;
 		}
 
 		if (!MATCH(awk,TOKEN_SEMICOLON)) 
 		{
-			xp_awk_clrpt (init);
-			xp_awk_clrpt (test);
+			xp_awk_clrpt (awk, init);
+			xp_awk_clrpt (awk, test);
 			PANIC (awk, XP_AWK_ESEMICOLON);
 		}
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (init);
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, init);
+		xp_awk_clrpt (awk, test);
 		return XP_NULL;
 	}
 	
@@ -2801,44 +2806,44 @@ static xp_awk_nde_t* __parse_for (xp_awk_t* awk)
 		incr = __parse_expression (awk);
 		if (incr == XP_NULL) 
 		{
-			xp_awk_clrpt (init);
-			xp_awk_clrpt (test);
+			xp_awk_clrpt (awk, init);
+			xp_awk_clrpt (awk, test);
 			return XP_NULL;
 		}
 
 		if (!MATCH(awk,TOKEN_RPAREN)) 
 		{
-			xp_awk_clrpt (init);
-			xp_awk_clrpt (test);
-			xp_awk_clrpt (incr);
+			xp_awk_clrpt (awk, init);
+			xp_awk_clrpt (awk, test);
+			xp_awk_clrpt (awk, incr);
 			PANIC (awk, XP_AWK_ERPAREN);
 		}
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (init);
-		xp_awk_clrpt (test);
-		xp_awk_clrpt (incr);
+		xp_awk_clrpt (awk, init);
+		xp_awk_clrpt (awk, test);
+		xp_awk_clrpt (awk, incr);
 		return XP_NULL;
 	}
 
 	body = __parse_statement (awk);
 	if (body == XP_NULL) 
 	{
-		xp_awk_clrpt (init);
-		xp_awk_clrpt (test);
-		xp_awk_clrpt (incr);
+		xp_awk_clrpt (awk, init);
+		xp_awk_clrpt (awk, test);
+		xp_awk_clrpt (awk, incr);
 		return XP_NULL;
 	}
 
 	nde = (xp_awk_nde_for_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_for_t));
 	if (nde == XP_NULL) 
 	{
-		xp_awk_clrpt (init);
-		xp_awk_clrpt (test);
-		xp_awk_clrpt (incr);
-		xp_awk_clrpt (body);
+		xp_awk_clrpt (awk, init);
+		xp_awk_clrpt (awk, test);
+		xp_awk_clrpt (awk, incr);
+		xp_awk_clrpt (awk, body);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -2862,54 +2867,54 @@ static xp_awk_nde_t* __parse_dowhile (xp_awk_t* awk)
 
 	if (!MATCH(awk,TOKEN_WHILE)) 
 	{
-		xp_awk_clrpt (body);
+		xp_awk_clrpt (awk, body);
 		PANIC (awk, XP_AWK_EWHILE);
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (body);
+		xp_awk_clrpt (awk, body);
 		return XP_NULL;
 	}
 
 	if (!MATCH(awk,TOKEN_LPAREN)) 
 	{
-		xp_awk_clrpt (body);
+		xp_awk_clrpt (awk, body);
 		PANIC (awk, XP_AWK_ELPAREN);
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (body);
+		xp_awk_clrpt (awk, body);
 		return XP_NULL;
 	}
 
 	test = __parse_expression (awk);
 	if (test == XP_NULL) 
 	{
-		xp_awk_clrpt (body);
+		xp_awk_clrpt (awk, body);
 		return XP_NULL;
 	}
 
 	if (!MATCH(awk,TOKEN_RPAREN)) 
 	{
-		xp_awk_clrpt (body);
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, body);
+		xp_awk_clrpt (awk, test);
 		PANIC (awk, XP_AWK_ERPAREN);
 	}
 
 	if (__get_token(awk) == -1) 
 	{
-		xp_awk_clrpt (body);
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, body);
+		xp_awk_clrpt (awk, test);
 		return XP_NULL;
 	}
 	
 	nde = (xp_awk_nde_while_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_while_t));
 	if (nde == XP_NULL) 
 	{
-		xp_awk_clrpt (body);
-		xp_awk_clrpt (test);
+		xp_awk_clrpt (awk, body);
+		xp_awk_clrpt (awk, test);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -3022,7 +3027,7 @@ static xp_awk_nde_t* __parse_delete (xp_awk_t* awk)
 	if (!__is_var (var))
 	{
 		/* a normal identifier is expected */
-		xp_awk_clrpt (var);
+		xp_awk_clrpt (awk, var);
 		PANIC (awk, XP_AWK_EIDENT);
 	}
 
@@ -3062,14 +3067,14 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 		{
 			if (__get_token(awk) == -1)
 			{
-				xp_awk_clrpt (args);
+				xp_awk_clrpt (awk, args);
 				return XP_NULL;
 			}
 
 			args_tail->next = __parse_expression (awk);
 			if (args_tail->next == XP_NULL)
 			{
-				xp_awk_clrpt (args);
+				xp_awk_clrpt (awk, args);
 				return XP_NULL;
 			}
 
@@ -3137,14 +3142,14 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 		{
 			if (__get_token(awk) == -1)
 			{
-				if (args != XP_NULL) xp_awk_clrpt (args);
+				if (args != XP_NULL) xp_awk_clrpt (awk, args);
 				return XP_NULL;
 			}
 
 			out = __parse_expression(awk);
 			if (out == XP_NULL)
 			{
-				if (args != XP_NULL) xp_awk_clrpt (args);
+				if (args != XP_NULL) xp_awk_clrpt (awk, args);
 				return XP_NULL;
 			}
 		}
@@ -3153,8 +3158,8 @@ static xp_awk_nde_t* __parse_print (xp_awk_t* awk)
 	nde = (xp_awk_nde_print_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_nde_print_t));
 	if (nde == XP_NULL) 
 	{
-		if (args != XP_NULL) xp_awk_clrpt (args);
-		if (out != XP_NULL) xp_awk_clrpt (out);
+		if (args != XP_NULL) xp_awk_clrpt (awk, args);
+		if (out != XP_NULL) xp_awk_clrpt (awk, out);
 		PANIC (awk, XP_AWK_ENOMEM);
 	}
 
@@ -4111,13 +4116,13 @@ static int __deparse (xp_awk_t* awk)
 
 		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
 		{
-			xp_sprintf (tmp, xp_countof(tmp), 
+			xp_awk_sprintf (awk, tmp, xp_countof(tmp), 
 				XP_T("__global%lu, "), (unsigned long)i);
 			if (xp_awk_putsrcstr (awk, tmp) == -1)
 				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		}
 
-		xp_sprintf (tmp, xp_countof(tmp),
+		xp_awk_sprintf (awk, tmp, xp_countof(tmp),
 			XP_T("__global%lu;\n\n"), (unsigned long)i);
 		if (xp_awk_putsrcstr (awk, tmp) == -1)
 			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
@@ -4210,7 +4215,7 @@ static int __deparse_func (xp_awk_pair_t* pair, void* arg)
 
 	for (i = 0; i < afn->nargs; ) 
 	{
-		xp_sprintf (df->tmp, df->tmp_len, 
+		xp_awk_sprintf (df->awk, df->tmp, df->tmp_len, 
 			XP_T("__param%lu"), (unsigned long)i++);
 		if (xp_awk_putsrcstr (df->awk, df->tmp) == -1) return -1;
 		if (i >= afn->nargs) break;

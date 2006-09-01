@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.56 2006-08-31 16:00:20 bacon Exp $
+ * $Id: val.c,v 1.57 2006-09-01 03:44:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -104,7 +104,7 @@ xp_awk_val_t* xp_awk_makestrval (
 	val->type = XP_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len;
-	val->buf = xp_strxdup (str, len);
+	val->buf = xp_awk_strxdup (run->awk, str, len);
 	if (val->buf == XP_NULL) 
 	{
 		XP_AWK_FREE (run->awk, val);
@@ -129,7 +129,7 @@ xp_awk_val_t* xp_awk_makestrval2 (
 	val->type = XP_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len1 + len2;
-	val->buf = xp_strxdup2 (str1, len1, str2, len2);
+	val->buf = xp_awk_strxdup2 (run->awk, str1, len1, str2, len2);
 	if (val->buf == XP_NULL) 
 	{
 		XP_AWK_FREE (run->awk, val);
@@ -152,7 +152,7 @@ xp_awk_val_t* xp_awk_makerexval (
 	val->type = XP_AWK_VAL_REX;
 	val->ref = 0;
 	val->len = len;
-	val->buf = xp_strxdup (buf, len);
+	val->buf = xp_awk_strxdup (run->awk, buf, len);
 	if (val->buf == XP_NULL) 
 	{
 		XP_AWK_FREE (run->awk, val);
@@ -191,7 +191,8 @@ xp_awk_val_t* xp_awk_makemapval (xp_awk_run_t* run)
 
 	val->type = XP_AWK_VAL_MAP;
 	val->ref = 0;
-	val->map = xp_awk_map_open (XP_NULL, run, 256, __free_map_val);
+	val->map = xp_awk_map_open (
+		XP_NULL, run, 256, __free_map_val, run->awk);
 	if (val->map == XP_NULL)
 	{
 		XP_AWK_FREE (run->awk, val);
@@ -272,7 +273,7 @@ xp_printf (XP_T("\n"));*/
 	else if (val->type == XP_AWK_VAL_REX)
 	{
 		XP_AWK_FREE (run->awk, ((xp_awk_val_rex_t*)val)->buf);
-		xp_awk_freerex (((xp_awk_val_rex_t*)val)->code);
+		xp_awk_freerex (run->awk, ((xp_awk_val_rex_t*)val)->code);
 		XP_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == XP_AWK_VAL_MAP)
@@ -374,7 +375,7 @@ xp_char_t* xp_awk_valtostr (
 		if (buf == XP_NULL) 
 		{
 			xp_char_t* tmp;
-			tmp = xp_strdup (XP_T(""));
+			tmp = xp_awk_strdup (run->awk, XP_T(""));
 			if (tmp == XP_NULL) 
 			{
 				run->errnum = XP_AWK_ENOMEM;
@@ -491,12 +492,12 @@ xp_char_t* xp_awk_valtostr (
 		xp_char_t tbuf[256], * tmp;
 
 	#if (XP_SIZEOF_LONG_DOUBLE != 0)
-		xp_sprintf (
-			tbuf, xp_countof(tbuf), XP_T("%Lf"), 
+		xp_awk_sprintf (
+			run->awk, tbuf, xp_countof(tbuf), XP_T("%Lf"), 
 			(long double)((xp_awk_val_real_t*)v)->val); 
 	#elif (XP_SIZEOF_DOUBLE != 0)
-		xp_sprintf (
-			tbuf, xp_countof(tbuf), XP_T("%f"), 
+		xp_awk_sprintf (
+			run->awk, tbuf, xp_countof(tbuf), XP_T("%f"), 
 			(double)((xp_awk_val_real_t*)v)->val); 
 	#else
 		#error unsupported floating-point data type
@@ -504,7 +505,7 @@ xp_char_t* xp_awk_valtostr (
 
 		if (buf == XP_NULL) 
 		{
-			tmp = xp_strdup (tbuf);
+			tmp = xp_awk_strdup (run->awk, tbuf);
 			if (tmp == XP_NULL) 
 			{
 				run->errnum = XP_AWK_ENOMEM;
@@ -536,7 +537,8 @@ xp_char_t* xp_awk_valtostr (
 
 		if (buf == XP_NULL)
 		{
-			tmp = xp_strxdup (
+			tmp = xp_awk_strxdup (
+				run->awk,
 				((xp_awk_val_str_t*)v)->buf, 
 				((xp_awk_val_str_t*)v)->len);
 			if (tmp == XP_NULL) 

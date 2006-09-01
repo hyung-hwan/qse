@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.74 2006-08-31 16:00:18 bacon Exp $ 
+ * $Id: awk.c,v 1.75 2006-09-01 03:44:15 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -33,7 +33,7 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 
 	/* TODO: initial map size?? */
 	if (xp_awk_map_open (
-		&awk->tree.afns, awk, 256, __free_afn) == XP_NULL) 
+		&awk->tree.afns, awk, 256, __free_afn, awk) == XP_NULL) 
 	{
 		xp_awk_str_close (&awk->token.name);
 		XP_AWK_FREE (awk, awk);
@@ -158,14 +158,14 @@ int xp_awk_clear (xp_awk_t* awk)
 	if (awk->tree.begin != XP_NULL) 
 	{
 		xp_assert (awk->tree.begin->next == XP_NULL);
-		xp_awk_clrpt (awk->tree.begin);
+		xp_awk_clrpt (awk, awk->tree.begin);
 		awk->tree.begin = XP_NULL;
 	}
 
 	if (awk->tree.end != XP_NULL) 
 	{
 		xp_assert (awk->tree.end->next == XP_NULL);
-		xp_awk_clrpt (awk->tree.end);
+		xp_awk_clrpt (awk, awk->tree.end);
 		awk->tree.end = XP_NULL;
 	}
 
@@ -173,9 +173,9 @@ int xp_awk_clear (xp_awk_t* awk)
 	{
 		xp_awk_chain_t* next = awk->tree.chain->next;
 		if (awk->tree.chain->pattern != XP_NULL)
-			xp_awk_clrpt (awk->tree.chain->pattern);
+			xp_awk_clrpt (awk, awk->tree.chain->pattern);
 		if (awk->tree.chain->action != XP_NULL)
-			xp_awk_clrpt (awk->tree.chain->action);
+			xp_awk_clrpt (awk, awk->tree.chain->action);
 		XP_AWK_FREE (awk, awk->tree.chain);
 		awk->tree.chain = next;
 	}
@@ -202,7 +202,7 @@ static void __free_afn (void* owner, void* afn)
 	/* f->name doesn't have to be freed */
 	/*XP_AWK_FREE ((xp_awk_t*)owner, f->name);*/
 
-	xp_awk_clrpt (f->body);
+	xp_awk_clrpt ((xp_awk_t*)owner, f->body);
 	XP_AWK_FREE ((xp_awk_t*)owner, f);
 }
 

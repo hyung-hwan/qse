@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.14 2006-08-30 07:15:14 bacon Exp $
+ * $Id: rex.h,v 1.15 2006-09-01 03:44:16 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -46,21 +46,16 @@
 extern "C" {
 #endif
 
-void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum);
+void* xp_awk_buildrex (
+	xp_awk_t* awk, const xp_char_t* ptn, 
+	xp_size_t len, int* errnum);
 
-void* xp_awk_safebuildrex (
-	const xp_char_t* ptn, xp_size_t len, int max_depth, int* errnum);
-
-int xp_awk_matchrex (void* code,
+int xp_awk_matchrex (
+	xp_awk_t* awk, void* code,
 	const xp_char_t* str, xp_size_t len, 
 	const xp_char_t** match_ptr, xp_size_t* match_len, int* errnum);
 
-int xp_awk_safematchrex (void* code,
-	const xp_char_t* str, xp_size_t len, 
-	const xp_char_t** match_ptr, xp_size_t* match_len, 
-	int max_depth, int* errnum);
-
-void xp_awk_freerex (void* code);
+void xp_awk_freerex (xp_awk_t* awk, void* code);
 
 xp_bool_t xp_awk_isemptyrex (void* code);
 

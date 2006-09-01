@@ -1,5 +1,5 @@
 /*
- * $Id: sa.h,v 1.35 2006-08-31 16:00:19 bacon Exp $
+ * $Id: sa.h,v 1.36 2006-09-01 03:44:16 bacon Exp $
  */
 
 #ifndef _XP_AWK_SA_H_
@@ -20,9 +20,6 @@
 	#include <stdarg.h>
 
 	#define xp_assert ASSERT
-
-	#define xp_malloc(size) ExAllocatePool(PagedPool,size)
-	#define xp_free(ptr) ExFreePool(ptr)
 
 	#define xp_memset(dst,fill,len) RtlFillMemory(dst,len,fill)
 	#define xp_memcpy(dst,src,len) RtlCopyMemory(dst,src,len)
@@ -47,11 +44,6 @@
 	#endif
 
 	#define xp_assert assert
-
-	#define xp_malloc malloc
-	#define xp_calloc calloc
-	#define xp_realloc realloc
-	#define xp_free free
 
 	#define xp_memset(dst,fill,len)  memset(dst,fill,len)
 	#define xp_memcpy(dst,src,len)   memcpy(dst,src,len)
@@ -103,17 +95,6 @@ extern "C" {
 #define xp_strlen xp_awk_strlen
 xp_size_t xp_strlen (const xp_char_t* str);
 
-#define xp_strdup xp_awk_strdup
-xp_char_t* xp_strdup (const xp_char_t* str);
-
-#define xp_strxdup xp_awk_strxdup
-xp_char_t* xp_strxdup (const xp_char_t* str, xp_size_t len);
-
-#define xp_strxdup2 xp_awk_strxdup2
-xp_char_t* xp_strxdup2 (
-	const xp_char_t* str1, xp_size_t len1,
-	const xp_char_t* str2, xp_size_t len2);
-
 #define xp_strcpy xp_awk_strcpy
 xp_size_t xp_strcpy (xp_char_t* buf, const xp_char_t* str);
 
@@ -147,19 +128,17 @@ xp_char_t* xp_strxntok (
 	const xp_char_t* delim, xp_size_t delim_len,
 	xp_char_t** tok, xp_size_t* tok_len);
 
-#define xp_printf xp_awk_printf
-int xp_printf (const xp_char_t* fmt, ...);
+int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...);
 
-#define xp_vprintf xp_awk_vprintf
-int xp_vprintf (const xp_char_t* fmt, xp_va_list ap);
+int xp_awk_vprintf (xp_awk_t* awk, const xp_char_t* fmt, xp_va_list ap);
 
-#define xp_sprintf xp_awk_sprintf
-int xp_sprintf (
-	xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...);
+int xp_awk_sprintf (
+	xp_awk_t* awk, xp_char_t* buf, 
+	xp_size_t size, const xp_char_t* fmt, ...);
 
-#define xp_vsprintf xp_awk_vsprintf
-int xp_vsprintf (
-	xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_list ap);
+int xp_awk_vsprintf (
+	xp_awk_t* awk, xp_char_t* buf, xp_size_t size, 
+	const xp_char_t* fmt, xp_va_list ap);
 
 #ifdef __cplusplus
 }

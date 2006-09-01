@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.81 2006-08-31 14:03:38 bacon Exp $
+ * $Id: awk.c,v 1.82 2006-09-01 03:44:51 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -34,8 +34,6 @@
 #endif
 
 #ifdef __STAND_ALONE
-	#define xp_printf xp_awk_printf
-	extern int xp_awk_printf (const xp_char_t* fmt, ...); 
 	#define xp_strcmp xp_awk_strcmp
 	extern int xp_awk_strcmp (const xp_char_t* s1, const xp_char_t* s2);
 	#define xp_strlen xp_awk_strlen
@@ -568,7 +566,11 @@ static void* __awk_malloc (xp_size_t n, void* custom_data)
 static void* __awk_realloc (void* ptr, xp_size_t n, void* custom_data)
 {
 #ifdef _WIN32
-	return HeapReAlloc (((syscas_data_t*)custom_data)->heap, 0, ptr, n);
+	/* HeapReAlloc behaves differently from realloc */
+	if (ptr == NULL)
+		return HeapAlloc (((syscas_data_t*)custom_data)->heap, 0, n);
+	else
+		return HeapReAlloc (((syscas_data_t*)custom_data)->heap, 0, ptr, n);
 #else
 	return realloc (ptr, n);
 #endif
@@ -607,7 +609,6 @@ static int __main (int argc, xp_char_t* argv[])
 
 	if (argc <= 1)
 	{
-		xp_awk_close (awk);
 		xp_printf (XP_T("Usage: %s [-m] source_file [data_file]\n"), argv[0]);
 		return -1;
 	}
@@ -642,13 +643,13 @@ static int __main (int argc, xp_char_t* argv[])
 
 	memset (&syscas, 0, sizeof(syscas));
 	syscas.malloc = __awk_malloc;
-	syscas.realloc = NULL;
+	syscas.realloc = __awk_realloc;
 	syscas.free = __awk_free;
 	syscas.lock = NULL;
 	syscas.unlock = NULL;
 
 #ifdef _WIN32
-	syscas_data.heap = HeapCreate (0, 640 * 1024, 640 * 1024);
+	syscas_data.heap = HeapCreate (0, 1000000, 1000000);
 	if (syscas_data.heap == NULL)
 	{
 		xp_printf (XP_T("Error: cannot create an awk heap\n"));

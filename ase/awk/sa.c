@@ -1,56 +1,18 @@
 /*
- * $Id: sa.c,v 1.32 2006-08-31 16:00:19 bacon Exp $
+ * $Id: sa.c,v 1.33 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifdef XP_AWK_STAND_ALONE
 
-static xp_char_t* __adjust_format (const xp_char_t* format);
+static xp_char_t* __adjust_format (xp_awk_t* awk, const xp_char_t* format);
 
 xp_size_t xp_strlen (const xp_char_t* str)
 {
 	const xp_char_t* p = str;
 	while (*p != XP_T('\0')) p++;
 	return p - str;
-}
-
-xp_char_t* xp_strdup (const xp_char_t* str)
-{
-	xp_char_t* tmp;
-
-	tmp = (xp_char_t*) xp_malloc (
-		(xp_strlen(str) + 1) * xp_sizeof(xp_char_t));
-	if (tmp == XP_NULL) return XP_NULL;
-
-	xp_strcpy (tmp, str);
-	return tmp;
-}
-
-xp_char_t* xp_strxdup (const xp_char_t* str, xp_size_t len)
-{
-	xp_char_t* tmp;
-
-	tmp = (xp_char_t*) xp_malloc ((len + 1) * xp_sizeof(xp_char_t));
-	if (tmp == XP_NULL) return XP_NULL;
-
-	xp_strncpy (tmp, str, len);
-	return tmp;
-}
-
-xp_char_t* xp_strxdup2 (
-	const xp_char_t* str1, xp_size_t len1,
-	const xp_char_t* str2, xp_size_t len2)
-{
-	xp_char_t* tmp;
-
-	tmp = (xp_char_t*) xp_malloc (
-		(len1 + len2 + 1) * xp_sizeof(xp_char_t));
-	if (tmp == XP_NULL) return XP_NULL;
-
-	xp_strncpy (tmp, str1, len1);
-	xp_strncpy (tmp + len1, str2, len2);
-	return tmp;
 }
 
 xp_size_t xp_strcpy (xp_char_t* buf, const xp_char_t* str)
@@ -216,21 +178,21 @@ exit_loop:
 	return (p >= end)? XP_NULL: ((xp_char_t*)++p);
 }
 
-int xp_printf (const xp_char_t* fmt, ...)
+int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...)
 {
 	int n;
 	xp_va_list ap;
 
 	xp_va_start (ap, fmt);
-	n = xp_vprintf (fmt, ap);
+	n = xp_awk_vprintf (awk, fmt, ap);
 	xp_va_end (ap);
 	return n;
 }
 
-int xp_vprintf (const xp_char_t* fmt, xp_va_list ap)
+int xp_awk_vprintf (xp_awk_t* awk, const xp_char_t* fmt, xp_va_list ap)
 {
 	int n;
-	xp_char_t* nf = __adjust_format (fmt);
+	xp_char_t* nf = __adjust_format (awk, fmt);
 	if (nf == XP_NULL) return -1;
 
 #ifdef XP_CHAR_IS_MCHAR
@@ -239,25 +201,29 @@ int xp_vprintf (const xp_char_t* fmt, xp_va_list ap)
 	n =  vwprintf (nf, ap);
 #endif
 
-	xp_free (nf);
+	XP_AWK_FREE (awk, nf);
 	return n;
 }
 
-int xp_sprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, ...)
+int xp_awk_sprintf (
+	xp_awk_t* awk, xp_char_t* buf, xp_size_t size, 
+	const xp_char_t* fmt, ...)
 {
 	int n;
 	xp_va_list ap;
 
 	xp_va_start (ap, fmt);
-	n = xp_vsprintf (buf, size, fmt, ap);
+	n = xp_awk_vsprintf (awk, buf, size, fmt, ap);
 	xp_va_end (ap);
 	return n;
 }
 
-int xp_vsprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_list ap)
+int xp_awk_vsprintf (
+	xp_awk_t* awk, xp_char_t* buf, xp_size_t size, 
+	const xp_char_t* fmt, xp_va_list ap)
 {
 	int n;
-	xp_char_t* nf = __adjust_format (fmt);
+	xp_char_t* nf = __adjust_format (awk, fmt);
 	if (nf == XP_NULL) return -1;
 
 #if defined(dos) || defined(__dos)
@@ -269,7 +235,7 @@ int xp_vsprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_lis
 #else
 	n = vswprintf (buf, size, nf, ap);
 #endif
-	xp_free (nf);
+	XP_AWK_FREE (awk, nf);
 	return n;
 }
 
@@ -285,7 +251,7 @@ int xp_vsprintf (xp_char_t* buf, xp_size_t size, const xp_char_t* fmt, xp_va_lis
 		} \
 	} while (0)
 
-static xp_char_t* __adjust_format (const xp_char_t* format)
+static xp_char_t* __adjust_format (xp_awk_t* awk, const xp_char_t* format)
 {
 	const xp_char_t* fp = format;
 	xp_char_t* tmp;
@@ -293,7 +259,7 @@ static xp_char_t* __adjust_format (const xp_char_t* format)
 	xp_char_t ch;
 	int modifier;
 
-	if (xp_awk_str_open (&str, 256) == XP_NULL) return XP_NULL;
+	if (xp_awk_str_open (&str, 256, awk) == XP_NULL) return XP_NULL;
 
 	while (*fp != XP_T('\0')) 
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.7 2006-05-06 12:52:36 bacon Exp $
+ * $Id: misc.c,v 1.8 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -279,5 +279,45 @@ xp_real_t xp_awk_strtoreal (const xp_char_t* str)
 
 done:
 	return (sign)? -fraction: fraction;
+}
+
+xp_char_t* xp_awk_strdup (xp_awk_t* awk, const xp_char_t* str)
+{
+	xp_char_t* tmp;
+
+	tmp = (xp_char_t*) XP_AWK_MALLOC (
+		awk, (xp_strlen(str) + 1) * xp_sizeof(xp_char_t));
+	if (tmp == XP_NULL) return XP_NULL;
+
+	xp_strcpy (tmp, str);
+	return tmp;
+}
+
+xp_char_t* xp_awk_strxdup (xp_awk_t* awk, const xp_char_t* str, xp_size_t len)
+{
+	xp_char_t* tmp;
+
+	tmp = (xp_char_t*) XP_AWK_MALLOC (
+		awk, (len + 1) * xp_sizeof(xp_char_t));
+	if (tmp == XP_NULL) return XP_NULL;
+
+	xp_strncpy (tmp, str, len);
+	return tmp;
+}
+
+xp_char_t* xp_awk_strxdup2 (
+	xp_awk_t* awk,
+	const xp_char_t* str1, xp_size_t len1,
+	const xp_char_t* str2, xp_size_t len2)
+{
+	xp_char_t* tmp;
+
+	tmp = (xp_char_t*) XP_AWK_MALLOC (
+		awk, (len1 + len2 + 1) * xp_sizeof(xp_char_t));
+	if (tmp == XP_NULL) return XP_NULL;
+
+	xp_strncpy (tmp, str1, len1);
+	xp_strncpy (tmp + len1, str2, len2);
+	return tmp;
 }
 

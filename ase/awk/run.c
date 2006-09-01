@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.190 2006-08-31 16:00:19 bacon Exp $
+ * $Id: run.c,v 1.191 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -262,7 +262,9 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 
 			/* compile the regular expression */
 			/* TODO: use safebuild */
-			rex = xp_awk_buildrex (rs_ptr, rs_len, &r->errnum);
+			rex = xp_awk_buildrex (
+				((xp_awk_run_t*)run)->awk, 
+				rs_ptr, rs_len, &r->errnum);
 			if (rex == XP_NULL)
 			{
 				if (val->type != XP_AWK_VAL_STR) 
@@ -271,7 +273,11 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 			}
 
 			if (r->extio.rs_rex != XP_NULL) 
-				xp_awk_freerex (r->extio.rs_rex);
+			{
+				xp_awk_freerex ( 
+					((xp_awk_run_t*)run)->awk, 
+					r->extio.rs_rex);
+			}
 			r->extio.rs_rex = rex;
 		}
 
@@ -514,15 +520,15 @@ static int __init_run (
 	}
 
 	if (xp_awk_map_open (&run->named, 
-		run, DEF_BUF_CAPA, __free_namedval) == XP_NULL) 
+		run, DEF_BUF_CAPA, __free_namedval, run->awk) == XP_NULL) 
 	{
 		xp_awk_str_close (&run->inrec.line);
 		*errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
 
-	run->pattern_range_state = (xp_byte_t*)
-		xp_calloc (run->awk->tree.chain_size, xp_sizeof(xp_byte_t));
+	run->pattern_range_state = (xp_byte_t*) XP_AWK_MALLOC (
+		run->awk, run->awk->tree.chain_size * xp_sizeof(xp_byte_t));
 	if (run->pattern_range_state == XP_NULL)
 	{
 		xp_awk_map_close (&run->named);
@@ -530,6 +536,9 @@ static int __init_run (
 		*errnum = XP_AWK_ENOMEM; 
 		return -1;
 	}
+
+	xp_memzero (run->pattern_range_state, 
+		run->awk->tree.chain_size * xp_sizeof(xp_byte_t));
 
 	run->extio.handler[XP_AWK_EXTIO_PIPE] = runios->pipe;
 	run->extio.handler[XP_AWK_EXTIO_COPROC] = runios->coproc;
@@ -1849,6 +1858,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 			xp_awk_refupval (v);
 			n = xp_awk_matchrex (
+				((xp_awk_run_t*)run)->awk, 
 				((xp_awk_val_rex_t*)v)->code,
 				((xp_awk_val_str_t*)run->inrec.d0)->buf,
 				((xp_awk_val_str_t*)run->inrec.d0)->len,
@@ -3292,6 +3302,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 	else if (right->type == XP_AWK_VAL_STR)
 	{
 		rex_code = xp_awk_buildrex ( 
+			run->awk,
 			((xp_awk_val_str_t*)right)->buf,
 			((xp_awk_val_str_t*)right)->len, &errnum);
 		if (rex_code == XP_NULL)
@@ -3302,7 +3313,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 		str = xp_awk_valtostr (run, right, xp_true, XP_NULL, &len);
 		if (str == XP_NULL) return XP_NULL;
 
-		rex_code = xp_awk_buildrex (str, len, &errnum);
+		rex_code = xp_awk_buildrex (run->awk, str, len, &errnum);
 		if (rex_code == XP_NULL)
 		{
 			XP_AWK_FREE (run->awk, str);
@@ -3315,7 +3326,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 	if (left->type == XP_AWK_VAL_STR)
 	{
 		n = xp_awk_matchrex (
-			rex_code,
+			run->awk, rex_code,
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			XP_NULL, XP_NULL, &errnum);
@@ -3345,7 +3356,8 @@ static xp_awk_val_t* __eval_binop_match0 (
 		}
 
 		n = xp_awk_matchrex (
-			rex_code, str, len, XP_NULL, XP_NULL, &errnum);
+			run->awk, rex_code, 
+			str, len, XP_NULL, XP_NULL, &errnum);
 		if (n == -1) 
 		{
 			XP_AWK_FREE (run->awk, str);
