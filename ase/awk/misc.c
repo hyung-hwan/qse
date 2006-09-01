@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.11 2006-09-01 07:18:40 bacon Exp $
+ * $Id: misc.c,v 1.12 2006-09-01 16:30:50 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -288,6 +288,79 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 
 done:
 	return (sign)? -fraction: fraction;
+}
+
+xp_size_t xp_awk_longtostr (
+	xp_long_t value, int radix, const xp_char_t* prefix, 
+	xp_char_t* buf, xp_size_t size)
+{
+	xp_long_t t, rem;
+	xp_size_t len, ret, i;
+	xp_size_t prefix_len;
+
+	prefix_len = (prefix != XP_NULL)? xp_awk_strlen(prefix): 0;
+
+	t = value;
+	if (t == 0)
+	{
+		/* zero */
+		if (buf == XP_NULL) return prefix_len + 1;
+
+		if (size < prefix_len+1) 
+		{
+			/* buffer too small */
+			return (xp_size_t)-1;
+		}
+
+		for (i = 0; i < prefix_len; i++) buf[i] = prefix[i];
+		buf[prefix_len] = XP_T('0');
+		if (size > prefix_len+1) buf[prefix_len+1] = XP_T('\0');
+		return 1;
+	}
+
+	/* non-zero values */
+	len = prefix_len;
+	if (t < 0) { t = -t; len++; }
+	while (t > 0) { len++; t /= radix; }
+
+	if (buf == XP_NULL)
+	{
+		/* if buf is not given, return the number of bytes required */
+		return len;
+	}
+
+	if (size < len) return (xp_size_t)-1; /* buffer too small */
+	if (size > len) buf[len] = XP_T('\0');
+	ret = len;
+
+	t = value;
+	if (t < 0) t = -t;
+
+	while (t > 0) 
+	{
+		rem = t % radix;
+		if (rem >= 10)
+			buf[--len] = (xp_char_t)rem + XP_T('a') - 10;
+		else
+			buf[--len] = (xp_char_t)rem + XP_T('0');
+		t /= radix;
+	}
+
+	if (value < 0) 
+	{
+		for (i = 1; i <= prefix_len; i++) 
+		{
+			buf[i] = prefix[i-1];
+			len--;
+		}
+		buf[--len] = XP_T('-');
+	}
+	else
+	{
+		for (i = 0; i < prefix_len; i++) buf[i] = prefix[i];
+	}
+
+	return ret;
 }
 
 xp_char_t* xp_awk_strdup (xp_awk_t* awk, const xp_char_t* str)

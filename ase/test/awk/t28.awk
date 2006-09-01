@@ -1,7 +1,7 @@
-//global xyz;
+#global xyz;
 
 END {
-	//local xyz;
+	#local xyz;
 
 	print index ("abc", "abc");
 	print index ("abc", "b");
@@ -25,13 +25,13 @@ END {
 	print toupper ("AbcDEF");
 
 	arr[0] = "xxx";
-	//print split ("abc def abc", arr);
-	print split ("abc def abc", j);
+	#print split ("abc def abc", arr);
+	print split ("abc def kkk", j);
 
-	//xyz = 20;
-	//print xyz;
-	print split ("abc def abc", ((xyz)));
-	//for (i in arr)
+	#xyz = 20;
+	#print xyz;
+	print split ("abc def kkk", ((xyz)));
+	#for (i in arr)
 
 	for (i in xyz)
 	{

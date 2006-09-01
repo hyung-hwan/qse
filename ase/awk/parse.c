@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.177 2006-09-01 07:18:40 bacon Exp $
+ * $Id: parse.c,v 1.178 2006-09-01 16:30:50 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -7,7 +7,6 @@
 #ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
-#include <xp/bas/stdio.h>
 #endif
 
 enum
@@ -4085,7 +4084,7 @@ struct __deparse_func_t
 static int __deparse (xp_awk_t* awk)
 {
 	xp_awk_chain_t* chain;
-	xp_char_t tmp[64];
+	xp_char_t tmp[xp_sizeof(xp_size_t)*8 + 32];
 	struct __deparse_func_t df;
 	int n;
 
@@ -4115,15 +4114,19 @@ static int __deparse (xp_awk_t* awk)
 
 		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
 		{
-			xp_awk_sprintf (awk, tmp, xp_countof(tmp), 
-				XP_T("__global%lu, "), (unsigned long)i);
+			xp_awk_longtostr ((xp_long_t)i, 
+				10, XP_T("__global"), tmp, xp_countof(tmp));
 			if (xp_awk_putsrcstr (awk, tmp) == -1)
+				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
+			if (xp_awk_putsrcstr (awk, XP_T(", ")) == -1)
 				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		}
 
-		xp_awk_sprintf (awk, tmp, xp_countof(tmp),
-			XP_T("__global%lu;\n\n"), (unsigned long)i);
+		xp_awk_longtostr ((xp_long_t)i, 
+			10, XP_T("__global"), tmp, xp_countof(tmp));
 		if (xp_awk_putsrcstr (awk, tmp) == -1)
+			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
+		if (xp_awk_putsrcstr (awk, XP_T(";\n\n")) == -1)
 			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 	}
 
@@ -4214,8 +4217,8 @@ static int __deparse_func (xp_awk_pair_t* pair, void* arg)
 
 	for (i = 0; i < afn->nargs; ) 
 	{
-		xp_awk_sprintf (df->awk, df->tmp, df->tmp_len, 
-			XP_T("__param%lu"), (unsigned long)i++);
+		xp_awk_longtostr (i++, 10, 
+			XP_T("__param"), df->tmp, df->tmp_len);
 		if (xp_awk_putsrcstr (df->awk, df->tmp) == -1) return -1;
 		if (i >= afn->nargs) break;
 		if (xp_awk_putsrcstr (df->awk, XP_T(", ")) == -1) return -1;
