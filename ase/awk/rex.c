@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.25 2006-09-01 03:44:16 bacon Exp $
+ * $Id: rex.c,v 1.26 2006-09-01 06:42:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -191,21 +191,21 @@ static const xp_byte_t* __match_boundary (
 	xp_size_t lbound, xp_size_t ubound, __match_t* mat);
 
 static xp_bool_t __test_charset (
-	const xp_byte_t* p, xp_size_t csc, xp_char_t c);
+	__matcher_t* matcher, const xp_byte_t* p, xp_size_t csc, xp_char_t c);
 
 #ifndef XP_AWK_NTDDK
-static xp_bool_t __cc_isalnum (xp_char_t c);
-static xp_bool_t __cc_isalpha (xp_char_t c);
-static xp_bool_t __cc_isblank (xp_char_t c);
-static xp_bool_t __cc_iscntrl (xp_char_t c);
-static xp_bool_t __cc_isdigit (xp_char_t c);
-static xp_bool_t __cc_isgraph (xp_char_t c);
-static xp_bool_t __cc_islower (xp_char_t c);
-static xp_bool_t __cc_isprint (xp_char_t c);
-static xp_bool_t __cc_ispunct (xp_char_t c);
-static xp_bool_t __cc_isspace (xp_char_t c);
-static xp_bool_t __cc_isupper (xp_char_t c);
-static xp_bool_t __cc_isxdigit (xp_char_t c);
+static xp_bool_t __cc_isalnum (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_isalpha (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_isblank (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_iscntrl (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_isdigit (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_isgraph (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_islower (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_isprint (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_ispunct (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_isspace (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_isupper (xp_awk_t* awk, xp_char_t c);
+static xp_bool_t __cc_isxdigit (xp_awk_t* awk, xp_char_t c);
 #endif
 
 static const xp_byte_t* __print_pattern (const xp_byte_t* p);
@@ -217,7 +217,7 @@ static struct __char_class_t
 {
 	const xp_char_t* name;
 	xp_size_t name_len;
-	xp_bool_t (*func) (xp_char_t c);
+	xp_bool_t (*func) (xp_awk_t* awk, xp_char_t c);
 };
 
 static struct __char_class_t __char_class [] =
@@ -1248,7 +1248,7 @@ static const xp_byte_t* __match_charset (
 	{
 		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 
-		n = __test_charset (p, csc, mat->match_ptr[si]);
+		n = __test_charset (matcher, p, csc, mat->match_ptr[si]);
 		if (cp->negate) n = !n;
 		if (!n) break;
 
@@ -1482,7 +1482,8 @@ static const xp_byte_t* __match_boundary (
 	return p;
 }
 
-xp_bool_t __test_charset (const xp_byte_t* p, xp_size_t csc, xp_char_t c)
+xp_bool_t __test_charset (
+	__matcher_t* matcher, const xp_byte_t* p, xp_size_t csc, xp_char_t c)
 {
 	xp_size_t i;
 
@@ -1509,7 +1510,8 @@ xp_bool_t __test_charset (const xp_byte_t* p, xp_size_t csc, xp_char_t c)
 		else if (c0 == CHARSET_CLASS)
 		{
 			c1 = *(xp_char_t*)p;
-			if (__char_class[c1].func (c)) return xp_true;
+			if (__char_class[c1].func (
+				matcher->awk, c)) return xp_true;
 		}
 #endif
 		else
@@ -1526,64 +1528,64 @@ xp_bool_t __test_charset (const xp_byte_t* p, xp_size_t csc, xp_char_t c)
 
 #ifndef XP_AWK_NTDDK
 
-static xp_bool_t __cc_isalnum (xp_char_t c)
+static xp_bool_t __cc_isalnum (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_isalnum (c);
+	return XP_AWK_ISALNUM (awk, c);
 }
 
-static xp_bool_t __cc_isalpha (xp_char_t c)
+static xp_bool_t __cc_isalpha (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_isalpha (c);
+	return XP_AWK_ISALPHA (awk, c);
 }
 
-static xp_bool_t __cc_isblank (xp_char_t c)
+static xp_bool_t __cc_isblank (xp_awk_t* awk, xp_char_t c)
 {
 	return c == XP_T(' ') || c == XP_T('\t');
 }
 
-static xp_bool_t __cc_iscntrl (xp_char_t c)
+static xp_bool_t __cc_iscntrl (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_iscntrl (c);
+	return XP_AWK_ISCNTRL (awk, c);
 }
 
-static xp_bool_t __cc_isdigit (xp_char_t c)
+static xp_bool_t __cc_isdigit (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_isdigit (c);
+	return XP_AWK_ISDIGIT (awk, c);
 }
 
-static xp_bool_t __cc_isgraph (xp_char_t c)
+static xp_bool_t __cc_isgraph (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_isgraph (c);
+	return XP_AWK_ISGRAPH (awk, c);
 }
 
-static xp_bool_t __cc_islower (xp_char_t c)
+static xp_bool_t __cc_islower (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_islower (c);
+	return XP_AWK_ISLOWER (awk, c);
 }
 
-static xp_bool_t __cc_isprint (xp_char_t c)
+static xp_bool_t __cc_isprint (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_isprint (c);
+	return XP_AWK_ISPRINT (awk, c);
 }
 
-static xp_bool_t __cc_ispunct (xp_char_t c)
+static xp_bool_t __cc_ispunct (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_ispunct (c);
+	return XP_AWK_ISPUNCT (awk, c);
 }
 
-static xp_bool_t __cc_isspace (xp_char_t c)
+static xp_bool_t __cc_isspace (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_isspace (c);
+	return XP_AWK_ISSPACE (awk, c);
 }
 
-static xp_bool_t __cc_isupper (xp_char_t c)
+static xp_bool_t __cc_isupper (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_isupper (c);
+	return XP_AWK_ISUPPER (awk, c);
 }
 
-static xp_bool_t __cc_isxdigit (xp_char_t c)
+static xp_bool_t __cc_isxdigit (xp_awk_t* awk, xp_char_t c)
 {
-	return xp_isxdigit (c);
+	return XP_AWK_ISXDIGIT (awk, c);
 }
 
 void xp_awk_printrex (void* rex)
