@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.104 2006-08-31 04:21:03 bacon Exp $
+ * $Id: awk.h,v 1.105 2006-09-01 03:44:16 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -319,6 +319,16 @@ void xp_awk_setretval (void* run, xp_awk_val_t* val);
 xp_long_t xp_awk_strtolong (
 	const xp_char_t* str, int base, const xp_char_t** endptr);
 xp_real_t xp_awk_strtoreal (const xp_char_t* str);
+
+/* string functions exported by awk.h */
+xp_char_t* xp_awk_strdup (
+	xp_awk_t* awk, const xp_char_t* str);
+xp_char_t* xp_awk_strxdup (
+	xp_awk_t* awk, const xp_char_t* str, xp_size_t len);
+xp_char_t* xp_awk_strxdup2 (
+	xp_awk_t* awk,
+	const xp_char_t* str1, xp_size_t len1,
+	const xp_char_t* str2, xp_size_t len2);
 
 /* utility functions to convert an error number ot a string */
 const xp_char_t* xp_awk_geterrstr (int errnum);

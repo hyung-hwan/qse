@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.13 2006-08-31 15:11:17 bacon Exp $
+ * $Id: tab.c,v 1.14 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -120,7 +120,7 @@ xp_size_t xp_awk_tab_insert (
 	xp_size_t i;
 	xp_char_t* str_dup;
 
-	str_dup = xp_strxdup(str, len);
+	str_dup = xp_awk_strxdup (tab->awk, str, len);
 	if (str_dup == XP_NULL) return (xp_size_t)-1;
 
 	if (index >= tab->capa) 

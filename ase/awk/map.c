@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.21 2006-08-03 05:05:47 bacon Exp $
+ * $Id: map.c,v 1.22 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -17,28 +17,31 @@ static xp_size_t __hash (const xp_char_t* key, xp_size_t key_len);
 
 #define FREE_PAIR(map,pair) \
 	do { \
-		xp_free ((xp_char_t*)(pair)->key); \
+		XP_AWK_FREE ((map)->awk, (xp_char_t*)(pair)->key); \
 		if ((map)->freeval != XP_NULL) \
 			(map)->freeval ((map)->owner, (pair)->val); \
-		xp_free (pair); \
+		XP_AWK_FREE ((map)->awk, pair); \
 	} while (0)
 
-xp_awk_map_t* xp_awk_map_open (xp_awk_map_t* map, 
-	void* owner, xp_size_t capa, void(*freeval)(void*,void*))
+xp_awk_map_t* xp_awk_map_open (
+	xp_awk_map_t* map, void* owner, xp_size_t capa, 
+	void(*freeval)(void*,void*), xp_awk_t* awk)
 {
 	if (map == XP_NULL) 
 	{
-		map = (xp_awk_map_t*) xp_malloc (xp_sizeof(xp_awk_map_t));
+		map = (xp_awk_map_t*) XP_AWK_MALLOC (
+			awk, xp_sizeof(xp_awk_map_t));
 		if (map == XP_NULL) return XP_NULL;
 		map->__dynamic = xp_true;
 	}
 	else map->__dynamic = xp_false;
 
+	map->awk = awk;
 	map->buck = (xp_awk_pair_t**) 
-		xp_malloc (xp_sizeof(xp_awk_pair_t*) * capa);
+		XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_pair_t*) * capa);
 	if (map->buck == XP_NULL) 
 	{
-		if (map->__dynamic) xp_free (map);
+		if (map->__dynamic) XP_AWK_FREE (awk, map);
 		return XP_NULL;	
 	}
 
@@ -54,8 +57,8 @@ xp_awk_map_t* xp_awk_map_open (xp_awk_map_t* map,
 void xp_awk_map_close (xp_awk_map_t* map)
 {
 	xp_awk_map_clear (map);
-	xp_free (map->buck);
-	if (map->__dynamic) xp_free (map);
+	XP_AWK_FREE (map->awk, map->buck);
+	if (map->__dynamic) XP_AWK_FREE (map->awk, map);
 }
 
 void xp_awk_map_clear (xp_awk_map_t* map)
@@ -138,16 +141,17 @@ int xp_awk_map_putx (
 		pair = pair->next;
 	}
 
-	pair = (xp_awk_pair_t*) xp_malloc (xp_sizeof(xp_awk_pair_t));
+	pair = (xp_awk_pair_t*) XP_AWK_MALLOC (
+		map->awk, xp_sizeof(xp_awk_pair_t));
 	if (pair == XP_NULL) return -1; /* error */
 
 	/*pair->key = key;*/ 
 
 	/* duplicate the key if it is new */
-	pair->key = xp_strxdup (key, key_len);
+	pair->key = xp_awk_strxdup (map->awk, key, key_len);
 	if (pair->key == XP_NULL)
 	{
-		xp_free (pair);
+		XP_AWK_FREE (map->awk, pair);
 		return -1; /* error */
 	}
 

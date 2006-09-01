@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.38 2006-08-31 15:39:13 bacon Exp $
+ * $Id: func.c,v 1.39 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -10,7 +10,6 @@
 #include <xp/bas/assert.h>
 #include <xp/bas/ctype.h>
 #include <xp/bas/stdio.h>
-#include <xp/bas/str.h>
 #endif
 
 #ifdef _WIN32
@@ -581,15 +580,15 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		}
 
 		/* put it into the map */
-/* TODO: remove dependency on xp_sprintf */
+/* TODO: remove dependency on xp_awk_sprintf */
 	#if defined(__LCC__)
-		xp_sprintf (key, xp_countof(key), XP_T("%lld"), (long long)num);
+		xp_awk_sprintf (awk, key, xp_countof(key), XP_T("%lld"), (long long)num);
 	#elif defined(__BORLANDC__) || defined(_MSC_VER)
-		xp_sprintf (key, xp_countof(key), XP_T("%I64d"), (__int64)num);
+		xp_awk_sprintf (awk, key, xp_countof(key), XP_T("%I64d"), (__int64)num);
 	#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-		xp_sprintf (key, xp_countof(key), XP_T("%ld"), (long)num);
+		xp_awk_sprintf (awk, key, xp_countof(key), XP_T("%ld"), (long)num);
 	#else
-		xp_sprintf (key, xp_countof(key), XP_T("%lld"), (long long)num);
+		xp_awk_sprintf (awk, key, xp_countof(key), XP_T("%lld"), (long long)num);
 	#endif
 
 		if (xp_awk_map_putx (

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.24 2006-08-30 07:15:14 bacon Exp $
+ * $Id: rex.c,v 1.25 2006-09-01 03:44:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -73,6 +73,8 @@ struct __code_t
 
 struct __builder_t
 {
+	xp_awk_t* awk;
+
 	struct
 	{
 		const xp_char_t* ptr;
@@ -103,6 +105,8 @@ struct __builder_t
 
 struct __matcher_t
 {
+	xp_awk_t* awk;
+
 	struct
 	{
 		struct
@@ -244,19 +248,16 @@ static struct __char_class_t __char_class [] =
 };
 #endif
 
-void* xp_awk_buildrex (const xp_char_t* ptn, xp_size_t len, int* errnum)
-{
-	return xp_awk_safebuildrex (ptn, len, 0, errnum);
-}
-
-void* xp_awk_safebuildrex (
-	const xp_char_t* ptn, xp_size_t len, int max_depth, int* errnum)
+void* xp_awk_buildrex (
+	xp_awk_t* awk, const xp_char_t* ptn, xp_size_t len, int* errnum)
 {
 	__builder_t builder;
 
+	builder.awk = awk;
 	builder.code.capa = DEF_CODE_CAPA;
 	builder.code.size = 0;
-	builder.code.buf = (xp_byte_t*) xp_malloc (builder.code.capa);
+	builder.code.buf = (xp_byte_t*) 
+		XP_AWK_MALLOC (builder.awk, builder.code.capa);
 	if (builder.code.buf == XP_NULL) 
 	{
 		*errnum = XP_AWK_ENOMEM;
@@ -270,55 +271,53 @@ void* xp_awk_safebuildrex (
 	builder.ptn.curc.type = CT_EOF;
 	builder.ptn.curc.value = XP_T('\0');
 
-	builder.depth.max = max_depth;
+/* TODO: implement the maximum depth 
+	builder.depth.max = awk->max_depth; */
+	builder.depth.max = 0;
 	builder.depth.cur = 0;
 
 	if (__next_char (&builder, LEVEL_TOP) == -1) 
 	{
 		if (errnum != XP_NULL) *errnum = builder.errnum;
-		xp_free (builder.code.buf);
+		XP_AWK_FREE (builder.awk, builder.code.buf);
 		return XP_NULL;
 	}
 
 	if (__build_pattern (&builder) == -1) 
 	{
 		if (errnum != XP_NULL) *errnum = builder.errnum;
-		xp_free (builder.code.buf);
+		XP_AWK_FREE (builder.awk, builder.code.buf);
 		return XP_NULL;
 	}
 
 	if (builder.ptn.curc.type != CT_EOF)
 	{
 		if (errnum != XP_NULL) *errnum = XP_AWK_EREXGARBAGE;
-		xp_free (builder.code.buf);
+		XP_AWK_FREE (builder.awk, builder.code.buf);
 		return XP_NULL;
 	}
 
 	return builder.code.buf;
 }
 
-int xp_awk_matchrex (void* code,
+int xp_awk_matchrex (
+	xp_awk_t* awk, void* code,
 	const xp_char_t* str, xp_size_t len, 
 	const xp_char_t** match_ptr, xp_size_t* match_len, int* errnum)
-{
-	return xp_awk_safematchrex (
-		code, str, len, match_ptr, match_len, 0, errnum);
-}
-
-int xp_awk_safematchrex (void* code,
-	const xp_char_t* str, xp_size_t len, 
-	const xp_char_t** match_ptr, xp_size_t* match_len, 
-	int max_depth, int* errnum)
 {
 	__matcher_t matcher;
 	__match_t mat;
 	xp_size_t offset = 0;
 
+	matcher.awk = awk;
+
 	/* store the source string */
 	matcher.match.str.ptr = str;
 	matcher.match.str.end = str + len;
 
-	matcher.depth.max = max_depth;
+/* TODO: implement the maximum depth 
+	matcher.depth.max = awk->max_depth; */
+	matcher.depth.max = 0;
 	matcher.depth.cur = 0;
 
 	mat.matched = xp_false;
@@ -346,10 +345,10 @@ int xp_awk_safematchrex (void* code,
 	return (mat.matched)? 1: 0;
 }
 
-void xp_awk_freerex (void* code)
+void xp_awk_freerex (xp_awk_t* awk, void* code)
 {
 	xp_assert (code != XP_NULL);
-	xp_free (code);
+	XP_AWK_FREE (awk, code);
 }
 
 xp_bool_t xp_awk_isemptyrex (void* code)
@@ -907,26 +906,31 @@ static int __add_code (__builder_t* builder, void* data, xp_size_t len)
 		if (capa == 0) capa = DEF_CODE_CAPA;
 		while (len > capa - builder->code.size) { capa = capa * 2; }
 
-#ifndef XP_AWK_NTDDK
-		tmp = (xp_byte_t*) xp_realloc (builder->code.buf, capa);
-		if (tmp == XP_NULL)
+		if (builder->awk->syscas->realloc != NULL)
 		{
-			builder->errnum = XP_AWK_ENOMEM;
-			return -1;
+			tmp = (xp_byte_t*) XP_AWK_REALLOC (
+				builder->awk, builder->code.buf, capa);
+			if (tmp == XP_NULL)
+			{
+				builder->errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
 		}
-#else
-		tmp = (xp_byte_t*) xp_malloc (capa);
-		if (tmp == XP_NULL)
+		else
 		{
-			builder->errnum = XP_AWK_ENOMEM;
-			return -1;
+			tmp = (xp_byte_t*) XP_AWK_MALLOC (builder->awk, capa);
+			if (tmp == XP_NULL)
+			{
+				builder->errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
+
+			if (builder->code.buf != XP_NULL)
+			{
+				xp_memcpy (tmp, builder->code.buf, builder->code.capa);
+				XP_AWK_FREE (builder->awk, builder->code.buf);
+			}
 		}
-		if (builder->code.buf != XP_NULL)
-		{
-			xp_memcpy (tmp, builder->code.buf, builder->code.capa);
-			xp_free (builder->code.buf);
-		}
-#endif
 
 		builder->code.buf = tmp;
 		builder->code.capa = capa;
@@ -1305,8 +1309,8 @@ static const xp_byte_t* __match_group (
 	}
 	else 
 	{
-		grp_len = (xp_size_t*) xp_malloc (
-			xp_sizeof(xp_size_t) * cp->ubound);
+		grp_len = (xp_size_t*) XP_AWK_MALLOC (
+			matcher->awk, xp_sizeof(xp_size_t) * cp->ubound);
 		if (grp_len == XP_NULL)
 		{
 			matcher->errnum = XP_AWK_ENOMEM;
@@ -1323,7 +1327,8 @@ static const xp_byte_t* __match_group (
 
 		if (__match_pattern (matcher, p, &mat2) == XP_NULL) 
 		{
-			if (grp_len != grp_len_static) xp_free (grp_len);
+			if (grp_len != grp_len_static) 
+				XP_AWK_FREE (matcher->awk, grp_len);
 			return XP_NULL;
 		}
 		if (!mat2.matched) break;
@@ -1365,7 +1370,7 @@ static const xp_byte_t* __match_group (
 				if (tmp == XP_NULL)
 				{
 					if (grp_len != grp_len_static) 
-						xp_free (grp_len);
+						XP_AWK_FREE (matcher->awk, grp_len);
 					return XP_NULL;
 				}
 
@@ -1385,7 +1390,7 @@ static const xp_byte_t* __match_group (
 
 	}
 
-	if (grp_len != grp_len_static) xp_free (grp_len);
+	if (grp_len != grp_len_static) XP_AWK_FREE (matcher->awk, grp_len);
 	return p;
 }
 
