@@ -235,6 +235,10 @@ SOURCE=.\sa.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\str.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\tab.c
 # End Source File
 # Begin Source File
@@ -280,6 +284,10 @@ SOURCE=.\run.h
 # Begin Source File
 
 SOURCE=.\sa.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\str.h
 # End Source File
 # Begin Source File
 

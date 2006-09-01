@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.82 2006-09-01 03:44:51 bacon Exp $
+ * $Id: awk.c,v 1.83 2006-09-01 04:03:13 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -47,7 +47,7 @@
 	#define xp_free free
 #endif
 
-#if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #endif
@@ -741,7 +741,7 @@ int xp_main (int argc, xp_char_t* argv[])
 #if defined(__linux) && defined(_DEBUG)
 	mtrace ();
 #endif
-/*#if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
+/*#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif*/
 
@@ -750,7 +750,7 @@ int xp_main (int argc, xp_char_t* argv[])
 #if defined(__linux) && defined(_DEBUG)
 	muntrace ();
 #endif
-#if defined(_WIN32) && defined(__STAND_ALONE) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	_CrtDumpMemoryLeaks ();
 	wprintf (L"Press ENTER to quit\n");
 	getchar ();
