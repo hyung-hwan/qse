@@ -30,9 +30,9 @@ BEGIN {
 	}
 
 	print x > "def";
-	//print "fflush(def) = ", fflush ("def");
+	#print "fflush(def) = ", fflush ("def");
 	print "fflush() = ", fflush ("");
 
-//	print (1 (2 getline j) j);
-//	print "abc" 1 + 2 3 + 49 2 / 3;
+#	print (1 (2 getline j) j);
+#	print "abc" 1 + 2 3 + 49 2 / 3;
 }

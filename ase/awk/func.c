@@ -1,15 +1,11 @@
 /*
- * $Id: func.c,v 1.40 2006-09-01 06:22:11 bacon Exp $
+ * $Id: func.c,v 1.41 2006-09-01 06:45:05 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/memory.h>
-#include <xp/bas/string.h>
 #include <xp/bas/assert.h>
-#include <xp/bas/ctype.h>
-#include <xp/bas/stdio.h>
 #endif
 
 #ifdef _WIN32

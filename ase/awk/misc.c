@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.9 2006-09-01 06:22:12 bacon Exp $
+ * $Id: misc.c,v 1.10 2006-09-01 06:42:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -679,7 +679,7 @@ static xp_char_t* __adjust_format (xp_awk_t* awk, const xp_char_t* format)
 	#ifdef XP_CHAR_IS_MCHAR
 			ADDC (str, 'l');
 	#endif
-			ADDC (str, xp_tolower(ch));
+			ADDC (str, XP_AWK_TOLOWER(awk,ch));
 #endif
 		}
 		else if (ch == XP_T('d') || ch == XP_T('i') || 
