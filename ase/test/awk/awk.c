@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.85 2006-09-01 07:18:40 bacon Exp $
+ * $Id: awk.c,v 1.86 2006-09-01 16:31:13 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -768,6 +768,16 @@ int xp_main (int argc, xp_char_t* argv[])
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif*/
 
+{
+xp_char_t buf[xp_sizeof(xp_long_t)*8+2+2];
+xp_size_t n;
+n = xp_awk_longtostr (-0x7FFFFFFFFFFFFFFFi64, 16, XP_T("0x"), buf, xp_countof(buf));
+if (n == (xp_size_t)-1)
+{
+	xp_printf (XP_T("cannot convert...\n"));
+}
+else xp_printf (XP_T("%d, %s\n"), n, buf);
+}
 	n = __main (argc, argv);
 
 #if defined(__linux) && defined(_DEBUG)

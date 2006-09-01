@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.42 2006-09-01 07:18:39 bacon Exp $
+ * $Id: func.c,v 1.43 2006-09-01 16:30:50 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -503,7 +503,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	xp_char_t* str, * p, * tok;
 	xp_size_t len, left, tok_len;
 	xp_long_t num;
-	xp_char_t key[32];
+	xp_char_t key[xp_sizeof(xp_long_t)*8+2];
 
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs >= 2 && nargs <= 3);
@@ -579,16 +579,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		}
 
 		/* put it into the map */
-/* TODO: remove dependency on xp_awk_sprintf */
-	#if defined(__LCC__)
-		xp_awk_sprintf (awk, key, xp_countof(key), XP_T("%lld"), (long long)num);
-	#elif defined(__BORLANDC__) || defined(_MSC_VER)
-		xp_awk_sprintf (awk, key, xp_countof(key), XP_T("%I64d"), (__int64)num);
-	#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-		xp_awk_sprintf (awk, key, xp_countof(key), XP_T("%ld"), (long)num);
-	#else
-		xp_awk_sprintf (awk, key, xp_countof(key), XP_T("%lld"), (long long)num);
-	#endif
+		xp_awk_longtostr (num, 10, XP_NULL, key, xp_countof(key));
 
 		if (xp_awk_map_putx (
 			((xp_awk_val_map_t*)t1)->map, 
