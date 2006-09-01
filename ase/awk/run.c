@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.193 2006-09-01 06:22:12 bacon Exp $
+ * $Id: run.c,v 1.194 2006-09-01 07:18:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -9,7 +9,6 @@
 
 #ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/assert.h>
-#include <xp/bas/string.h>
 #include <xp/bas/memory.h>
 #endif
 

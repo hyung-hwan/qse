@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.26 2006-09-01 06:42:52 bacon Exp $
+ * $Id: rex.c,v 1.27 2006-09-01 07:18:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -213,14 +213,14 @@ static const xp_byte_t* __print_branch (const xp_byte_t* p);
 static const xp_byte_t* __print_atom (const xp_byte_t* p);
 
 #ifndef XP_AWK_NTDDK
-static struct __char_class_t
+struct __char_class_t
 {
 	const xp_char_t* name;
 	xp_size_t name_len;
 	xp_bool_t (*func) (xp_awk_t* awk, xp_char_t c);
-};
+}; 
 
-static struct __char_class_t __char_class [] =
+static struct __char_class_t __char_class[] =
 {
 	{ XP_T("alnum"),  5, __cc_isalnum },
 	{ XP_T("alpha"),  5, __cc_isalpha },
