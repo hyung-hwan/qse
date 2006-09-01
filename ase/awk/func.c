@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.39 2006-09-01 03:44:16 bacon Exp $
+ * $Id: func.c,v 1.40 2006-09-01 06:22:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -55,7 +55,7 @@ static xp_awk_bfn_t __sys_bfn[] =
 };
 
 xp_awk_bfn_t* xp_awk_addbfn (
-	xp_awk_t* awk, const xp_char_t* name, int when_valid, 
+	xp_awk_t* awk, const xp_char_t* name, size_t name_len, int when_valid, 
 	xp_size_t min_args, xp_size_t max_args, const xp_char_t* arg_spec,
 	int (*handler)(xp_awk_t*,void*))
 {
@@ -68,6 +68,7 @@ xp_awk_bfn_t* xp_awk_addbfn (
 
 	/* NOTE: make sure that name is a constant string */
 	p->name = name;  
+	p->name_len = name_len;
 	p->valid = when_valid;
 	p->min_args = min_args;
 	p->max_args = max_args;
@@ -80,13 +81,13 @@ xp_awk_bfn_t* xp_awk_addbfn (
 	return p;
 }
 
-int xp_awk_delbfn (xp_awk_t* awk, const xp_char_t* name)
+int xp_awk_delbfn (xp_awk_t* awk, const xp_char_t* name, size_t name_len)
 {
 	xp_awk_bfn_t* p, * pp = XP_NULL;
 
 	for (p = awk->bfn.user; p != XP_NULL; p++)
 	{
-		if (xp_strcmp(p->name, name) == 0)
+		if (xp_awk_strxncmp(p->name, p->name_len, name, name_len) == 0)
 		{
 			if (pp == XP_NULL)
 				awk->bfn.user = p->next;
@@ -117,7 +118,8 @@ void xp_awk_clrbfn (xp_awk_t* awk)
 	awk->bfn.user = XP_NULL;
 }
 
-xp_awk_bfn_t* xp_awk_getbfn (xp_awk_t* awk, const xp_char_t* name)
+xp_awk_bfn_t* xp_awk_getbfn (
+	xp_awk_t* awk, const xp_char_t* name, size_t name_len)
 {
 	xp_awk_bfn_t* p;
 
@@ -126,16 +128,18 @@ xp_awk_bfn_t* xp_awk_getbfn (xp_awk_t* awk, const xp_char_t* name)
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
-		if (xp_strcmp (p->name, name) == 0) return p;
+		if (xp_awk_strxncmp (
+			p->name, p->name_len, name, name_len) == 0) return p;
 	}
 
-/* TODO: */
+/* TODO: user-added builtin functions... */
 	for (p = awk->bfn.user; p != XP_NULL; p = p->next)
 	{
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
-		if (xp_strcmp (p->name, name) == 0) return p;
+		if (xp_awk_strxncmp (
+			p->name, p->name_len, name, name_len) == 0) return p;
 	}
 
 	return XP_NULL;
@@ -375,7 +379,7 @@ static int __bfn_index (xp_awk_t* awk, void* run)
 		}
 	}
 
-	ptr = xp_strxnstr (str0, len0, str1, len1);
+	ptr = xp_awk_strxnstr (str0, len0, str1, len1);
 	idx = (ptr == XP_NULL)? -1: (xp_long_t)(ptr - str0);
 
 	if (xp_awk_getopt(awk) & XP_AWK_STRINDEXONE) idx = idx + 1;
@@ -456,11 +460,10 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 		if (str == XP_NULL) return -1;
 	}
 
-	n = xp_awk_valtonum (a1, &lindex, &rindex);
+	n = xp_awk_valtonum (run, a1, &lindex, &rindex);
 	if (n == -1) 
 	{
 		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
-		xp_awk_seterrnum (run, XP_AWK_EVALTYPE);
 		return -1;
 	}
 	if (n == 1) lindex = (xp_long_t)rindex;
@@ -468,11 +471,10 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 	if (a2 == XP_NULL) lcount = (xp_long_t)len;
 	else 
 	{
-		n = xp_awk_valtonum (a2, &lcount, &rcount);
+		n = xp_awk_valtonum (run, a2, &lcount, &rcount);
 		if (n == -1) 
 		{
 			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
-			xp_awk_seterrnum (run, XP_AWK_EVALTYPE);
 			return -1;
 		}
 		if (n == 1) lcount = (xp_long_t)rcount;
@@ -560,7 +562,8 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	while (p != XP_NULL)
 	{
 /* TODO: use FS when a2 is missing. apply a difference scheme */
-		p = xp_strxtok (p, left, XP_T(" \t"), &tok, &tok_len);
+		p = xp_awk_strxtok (
+			awk, p, left, XP_T(" \t"), &tok, &tok_len);
 
 		if (num == 0 && p == XP_NULL && tok_len == 0) 
 		{
@@ -593,7 +596,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 
 		if (xp_awk_map_putx (
 			((xp_awk_val_map_t*)t1)->map, 
-			key, xp_strlen(key), t2, XP_NULL) == -1)
+			key, xp_awk_strlen(key), t2, XP_NULL) == -1)
 		{
 			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
 			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
@@ -645,7 +648,7 @@ static int __bfn_tolower (xp_awk_t* awk, void* run)
 		if (str == XP_NULL) return -1;
 	}
 
-	for (i = 0; i < len; i++) str[i] = xp_tolower(str[i]);	
+	for (i = 0; i < len; i++) str[i] = XP_AWK_TOLOWER (awk, str[i]);	
 
 	r = xp_awk_makestrval (run, str, len);
 	if (r == XP_NULL)
@@ -683,7 +686,7 @@ static int __bfn_toupper (xp_awk_t* awk, void* run)
 		if (str == XP_NULL) return -1;
 	}
 
-	for (i = 0; i < len; i++) str[i] = xp_toupper(str[i]);	
+	for (i = 0; i < len; i++) str[i] = XP_AWK_TOUPPER (awk, str[i]);	
 
 	r = xp_awk_makestrval (run, str, len);
 	if (r == XP_NULL)
@@ -744,12 +747,10 @@ static int __bfn_sin (xp_awk_t* awk, void* run)
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs == 1);
 
-	n = xp_awk_valtonum (
-		xp_awk_getarg(run, 0), &lv, &rv);
+	n = xp_awk_valtonum (run, xp_awk_getarg(run, 0), &lv, &rv);
 	if (n == -1)
 	{
 		/* wrong value */
-		xp_awk_seterrnum (run, XP_AWK_EVALTYPE);
 		return  -1;
 	}
 

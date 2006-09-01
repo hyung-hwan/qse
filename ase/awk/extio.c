@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.43 2006-09-01 03:44:16 bacon Exp $
+ * $Id: extio.c,v 1.44 2006-09-01 06:22:11 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -114,7 +114,7 @@ int xp_awk_readextio (
 	while (p != XP_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_strcmp(p->name,name) == 0) break;
+		    xp_awk_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -340,14 +340,10 @@ int xp_awk_readextio (
 		nr = xp_awk_getglobal (run, XP_AWK_GLOBAL_NR);
 		xp_awk_refupval (nr);
 
-		n = xp_awk_valtonum (nr, &lv, &rv);
+		n = xp_awk_valtonum (run, nr, &lv, &rv);
 		xp_awk_refdownval (run, nr);
 
-		if (n == -1)
-		{
-			run->errnum = XP_AWK_EVALTYPE;
-			ret = -1;
-		}
+		if (n == -1) ret = -1;
 		else
 		{
 			if (n == 1) lv = (xp_long_t)rv;
@@ -439,7 +435,7 @@ static int __writeextio (
 		 *    print "1111" > "1.tmp"
 		 */
 		if (p->type == (extio_type | extio_mask) && 
-		    xp_strcmp (p->name, name) == 0) break;
+		    xp_awk_strcmp (p->name, name) == 0) break;
 		p = p->next;
 	}
 
@@ -574,7 +570,7 @@ int xp_awk_flushextio (
 	while (p != XP_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) && 
-		    (name == XP_NULL || xp_strcmp (p->name, name) == 0)) 
+		    (name == XP_NULL || xp_awk_strcmp (p->name, name) == 0)) 
 		{
 			n = handler (XP_AWK_IO_FLUSH, p, XP_NULL, 0);
 
@@ -633,7 +629,7 @@ int xp_awk_nextextio_read (
 	while (p != XP_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_strcmp(p->name,name) == 0) break;
+		    xp_awk_strcmp(p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -682,7 +678,7 @@ int xp_awk_closeextio_read (
 	while (p != XP_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_strcmp (p->name, name) == 0) 
+		    xp_awk_strcmp (p->name, name) == 0) 
 		{
 			xp_awk_io_t handler;
 		       
@@ -742,7 +738,7 @@ int xp_awk_closeextio_write (
 	while (p != XP_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_strcmp (p->name, name) == 0) 
+		    xp_awk_strcmp (p->name, name) == 0) 
 		{
 			xp_awk_io_t handler;
 		       
@@ -784,7 +780,7 @@ int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name)
 	{
 		 /* it handles the first that matches the given name
 		  * regardless of the extio type */
-		if (xp_strcmp (p->name, name) == 0) 
+		if (xp_awk_strcmp (p->name, name) == 0) 
 		{
 			xp_awk_io_t handler;
 		       

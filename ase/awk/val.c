@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.57 2006-09-01 03:44:21 bacon Exp $
+ * $Id: val.c,v 1.58 2006-09-01 06:22:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -89,7 +89,7 @@ xp_awk_val_t* xp_awk_makerealval (xp_awk_run_t* run, xp_real_t v)
 
 xp_awk_val_t* xp_awk_makestrval0 (xp_awk_run_t* run, const xp_char_t* str)
 {
-	return xp_awk_makestrval (run, str, xp_strlen(str));
+	return xp_awk_makestrval (run, str, xp_awk_strlen(str));
 }
 
 xp_awk_val_t* xp_awk_makestrval (
@@ -512,7 +512,7 @@ xp_char_t* xp_awk_valtostr (
 				return XP_NULL;
 			}
 
-			if (len != XP_NULL) *len = xp_strlen(tmp);
+			if (len != XP_NULL) *len = xp_awk_strlen(tmp);
 		}
 		else
 		{
@@ -575,7 +575,8 @@ xp_printf (XP_T("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtostr v=> %p***\n
 	return XP_NULL;
 }
 
-int xp_awk_valtonum (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
+int xp_awk_valtonum (
+	xp_awk_run_t* run, xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
 {
 	if (v->type == XP_AWK_VAL_NIL) 
 	{
@@ -600,13 +601,15 @@ int xp_awk_valtonum (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
 		const xp_char_t* endptr;
 
 		/* don't care about val->len */
-		*l = xp_awk_strtolong (((xp_awk_val_str_t*)v)->buf, 0, &endptr);
+		*l = xp_awk_strtolong (
+			run->awk, ((xp_awk_val_str_t*)v)->buf, 0, &endptr);
 	
 		if (*endptr == XP_T('.') ||
 		    *endptr == XP_T('E') ||
 		    *endptr == XP_T('e'))
 		{
-			*r = xp_awk_strtoreal (((xp_awk_val_str_t*)v)->buf);
+			*r = xp_awk_strtoreal (
+				run->awk, ((xp_awk_val_str_t*)v)->buf);
 			return 1; /* real */
 		}
 	
@@ -614,6 +617,7 @@ int xp_awk_valtonum (xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
 	}
 
 xp_printf (XP_T("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtonum v=> %p***\n"), v->type, v);
+	run->errnum = XP_AWK_EVALTYPE;
 	return -1; /* error */
 }
 

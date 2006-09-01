@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.1 2006-08-31 16:00:19 bacon Exp $
+ * $Id: str.c,v 1.2 2006-09-01 06:22:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -51,7 +51,7 @@ void xp_awk_str_forfeit (xp_awk_str_t* str)
 xp_size_t xp_awk_str_cpy (xp_awk_str_t* str, const xp_char_t* s)
 {
 	/* TODO: improve it */
-	return xp_awk_str_ncpy (str, s, xp_strlen(s));
+	return xp_awk_str_ncpy (str, s, xp_awk_strlen(s));
 }
 
 xp_size_t xp_awk_str_ncpy (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
@@ -69,7 +69,7 @@ xp_size_t xp_awk_str_ncpy (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
 		str->buf = buf;
 	}
 
-	str->size = xp_strncpy (str->buf, s, len);
+	str->size = xp_awk_strncpy (str->buf, s, len);
 	str->buf[str->size] = XP_T('\0');
 	return str->size;
 }
@@ -77,7 +77,7 @@ xp_size_t xp_awk_str_ncpy (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
 xp_size_t xp_awk_str_cat (xp_awk_str_t* str, const xp_char_t* s)
 {
 	/* TODO: improve it */
-	return xp_awk_str_ncat (str, s, xp_strlen(s));
+	return xp_awk_str_ncat (str, s, xp_awk_strlen(s));
 }
 
 xp_size_t xp_awk_str_ncat (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
@@ -116,7 +116,7 @@ xp_size_t xp_awk_str_ncat (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
 		str->buf = tmp;
 	}
 
-	str->size += xp_strncpy (&str->buf[str->size], s, len);
+	str->size += xp_awk_strncpy (&str->buf[str->size], s, len);
 	str->buf[str->size] = XP_T('\0');
 	return str->size;
 }
