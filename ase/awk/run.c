@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.192 2006-09-01 04:03:28 bacon Exp $
+ * $Id: run.c,v 1.193 2006-09-01 06:22:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1357,7 +1357,7 @@ static int __walk_foreach (xp_awk_pair_t* pair, void* arg)
 	xp_awk_val_t* str;
 
 	str = (xp_awk_val_t*) xp_awk_makestrval (
-		w->run, pair->key, xp_strlen(pair->key));
+		w->run, pair->key, xp_awk_strlen(pair->key));
 	if (str == XP_NULL) PANIC_I (w->run, XP_AWK_ENOMEM);
 
 	xp_awk_refupval (str);
@@ -2225,7 +2225,7 @@ static xp_awk_val_t* __do_assignment_pos (
 	if (v == XP_NULL) return XP_NULL;
 
 	xp_awk_refupval (v);
-	n = xp_awk_valtonum (v, &lv, &rv);
+	n = xp_awk_valtonum (run, v, &lv, &rv);
 	xp_awk_refdownval (run, v);
 
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX); 
@@ -2681,7 +2681,7 @@ static xp_awk_val_t* __eval_binop_eq (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_strxncmp (
+		r = xp_awk_strxncmp (
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			((xp_awk_val_str_t*)right)->buf,
@@ -2736,7 +2736,7 @@ static xp_awk_val_t* __eval_binop_ne (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_strxncmp (
+		r = xp_awk_strxncmp (
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			((xp_awk_val_str_t*)right)->buf,
@@ -2785,7 +2785,7 @@ static xp_awk_val_t* __eval_binop_gt (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_strxncmp (
+		r = xp_awk_strxncmp (
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			((xp_awk_val_str_t*)right)->buf,
@@ -2834,7 +2834,7 @@ static xp_awk_val_t* __eval_binop_ge (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_strxncmp (
+		r = xp_awk_strxncmp (
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			((xp_awk_val_str_t*)right)->buf,
@@ -2883,7 +2883,7 @@ static xp_awk_val_t* __eval_binop_lt (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_strxncmp (
+		r = xp_awk_strxncmp (
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			((xp_awk_val_str_t*)right)->buf,
@@ -2932,7 +2932,7 @@ static xp_awk_val_t* __eval_binop_le (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_strxncmp (
+		r = xp_awk_strxncmp (
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			((xp_awk_val_str_t*)right)->buf,
@@ -2956,8 +2956,8 @@ static xp_awk_val_t* __eval_binop_lshift (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = xp_awk_valtonum (left, &l1, &r1);
-	n2 = xp_awk_valtonum (right, &l2, &r2);
+	n1 = xp_awk_valtonum (run, left, &l1, &r1);
+	n2 = xp_awk_valtonum (run, right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND); 
 
@@ -2981,8 +2981,8 @@ static xp_awk_val_t* __eval_binop_rshift (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = xp_awk_valtonum (left, &l1, &r1);
-	n2 = xp_awk_valtonum (right, &l2, &r2);
+	n1 = xp_awk_valtonum (run, left, &l1, &r1);
+	n2 = xp_awk_valtonum (run, right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND); 
 
@@ -3006,8 +3006,8 @@ static xp_awk_val_t* __eval_binop_plus (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = xp_awk_valtonum (left, &l1, &r1);
-	n2 = xp_awk_valtonum (right, &l2, &r2);
+	n1 = xp_awk_valtonum (run, left, &l1, &r1);
+	n2 = xp_awk_valtonum (run, right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND); 
 	/*
@@ -3036,8 +3036,8 @@ static xp_awk_val_t* __eval_binop_minus (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = xp_awk_valtonum (left, &l1, &r1);
-	n2 = xp_awk_valtonum (right, &l2, &r2);
+	n1 = xp_awk_valtonum (run, left, &l1, &r1);
+	n2 = xp_awk_valtonum (run, right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -3060,8 +3060,8 @@ static xp_awk_val_t* __eval_binop_mul (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = xp_awk_valtonum (left, &l1, &r1);
-	n2 = xp_awk_valtonum (right, &l2, &r2);
+	n1 = xp_awk_valtonum (run, left, &l1, &r1);
+	n2 = xp_awk_valtonum (run, right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -3084,8 +3084,8 @@ static xp_awk_val_t* __eval_binop_div (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = xp_awk_valtonum (left, &l1, &r1);
-	n2 = xp_awk_valtonum (right, &l2, &r2);
+	n1 = xp_awk_valtonum (run, left, &l1, &r1);
+	n2 = xp_awk_valtonum (run, right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -3121,8 +3121,8 @@ static xp_awk_val_t* __eval_binop_mod (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = xp_awk_valtonum (left, &l1, &r1);
-	n2 = xp_awk_valtonum (right, &l2, &r2);
+	n1 = xp_awk_valtonum (run, left, &l1, &r1);
+	n2 = xp_awk_valtonum (run, right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -3146,8 +3146,8 @@ static xp_awk_val_t* __eval_binop_exp (
 	xp_real_t r1, r2;
 	xp_awk_val_t* res;
 
-	n1 = xp_awk_valtonum (left, &l1, &r1);
-	n2 = xp_awk_valtonum (right, &l2, &r2);
+	n1 = xp_awk_valtonum (run, left, &l1, &r1);
+	n2 = xp_awk_valtonum (run, right, &l2, &r2);
 
 	if (n1 == -1 || n2 == -1) PANIC (run, XP_AWK_EOPERAND);
 
@@ -3515,7 +3515,7 @@ static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			xp_real_t v2;
 			int n;
 
-			n = xp_awk_valtonum (left, &v1, &v2);
+			n = xp_awk_valtonum (run, left, &v1, &v2);
 			if (n == -1)
 			{
 				xp_awk_refdownval (run, left);
@@ -3567,7 +3567,7 @@ static xp_awk_val_t* __eval_incpre (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			xp_real_t v2;
 			int n;
 
-			n = xp_awk_valtonum (left, &v1, &v2);
+			n = xp_awk_valtonum (run, left, &v1, &v2);
 			if (n == -1)
 			{
 				xp_awk_refdownval (run, left);
@@ -3675,7 +3675,7 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			xp_real_t v2;
 			int n;
 
-			n = xp_awk_valtonum (left, &v1, &v2);
+			n = xp_awk_valtonum (run, left, &v1, &v2);
 			if (n == -1)
 			{
 				xp_awk_refdownval (run, left);
@@ -3763,7 +3763,7 @@ static xp_awk_val_t* __eval_incpst (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			xp_real_t v2;
 			int n;
 
-			n = xp_awk_valtonum (left, &v1, &v2);
+			n = xp_awk_valtonum (run, left, &v1, &v2);
 			if (n == -1)
 			{
 				xp_awk_refdownval (run, left);
@@ -4414,7 +4414,7 @@ static xp_awk_val_t* __eval_pos (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	if (v == XP_NULL) return XP_NULL;
 
 	xp_awk_refupval (v);
-	n = xp_awk_valtonum (v, &lv, &rv);
+	n = xp_awk_valtonum (run, v, &lv, &rv);
 	xp_awk_refdownval (run, v);
 
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
@@ -4710,7 +4710,8 @@ static int __split_record (xp_awk_run_t* run)
 		if (fs->type == XP_AWK_VAL_NIL)
 		{
 #endif
-			p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+			p = xp_awk_strxtok (
+				run->awk, p, len, XP_T(" \t"), &tok, &tok_len);
 #if 0
 		}
 		else if (fs_len == 0)
@@ -4718,7 +4719,8 @@ static int __split_record (xp_awk_run_t* run)
 		}
 		else if (fs_len == 1)
 		{
-			p = xp_strxntok (p, len, 
+			p = xp_awk_strxntok (
+				run->awk, p, len, 
 				fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
@@ -4774,7 +4776,8 @@ static int __split_record (xp_awk_run_t* run)
 
 	while (p != XP_NULL)
 	{
-		p = xp_strxtok (p, len, XP_T(" \t"), &tok, &tok_len);
+		p = xp_awk_strxtok (
+			run->awk, p, len, XP_T(" \t"), &tok, &tok_len);
 
 		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
 

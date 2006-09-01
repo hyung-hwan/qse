@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.175 2006-09-01 03:44:16 bacon Exp $
+ * $Id: parse.c,v 1.176 2006-09-01 06:22:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -655,7 +655,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 			if (awk->option & XP_AWK_UNIQUE) 
 			{
 				/* check if a parameter conflicts with a function */
-				if (xp_strxncmp (name_dup, name_len, param, param_len) == 0 ||
+				if (xp_awk_strxncmp (name_dup, name_len, param, param_len) == 0 ||
 				    xp_awk_map_get (&awk->tree.afns, param, param_len) != XP_NULL) 
 				{
 					XP_AWK_FREE (awk, name_dup);
@@ -1944,11 +1944,11 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->type = XP_AWK_NDE_INT;
 		nde->next = XP_NULL;
 		nde->val = xp_awk_strtolong (
-			XP_AWK_STR_BUF(&awk->token.name), 0, XP_NULL);
+			awk, XP_AWK_STR_BUF(&awk->token.name), 0, XP_NULL);
 
 		xp_assert (
 			XP_AWK_STR_LEN(&awk->token.name) ==
-			xp_strlen(XP_AWK_STR_BUF(&awk->token.name)));
+			xp_awk_strlen(XP_AWK_STR_BUF(&awk->token.name)));
 
 		if (__get_token(awk) == -1) 
 		{
@@ -1968,11 +1968,12 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->type = XP_AWK_NDE_REAL;
 		nde->next = XP_NULL;
-		nde->val = xp_awk_strtoreal (XP_AWK_STR_BUF(&awk->token.name));
+		nde->val = xp_awk_strtoreal (
+			awk, XP_AWK_STR_BUF(&awk->token.name));
 
 		xp_assert (
 			XP_AWK_STR_LEN(&awk->token.name) ==
-			xp_strlen(XP_AWK_STR_BUF(&awk->token.name)));
+			xp_awk_strlen(XP_AWK_STR_BUF(&awk->token.name)));
 
 		if (__get_token(awk) == -1) 
 		{
@@ -2250,7 +2251,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	}
 
 	/* check if name_dup is a built-in function name */
-	bfn = xp_awk_getbfn (awk, name_dup);
+	bfn = xp_awk_getbfn (awk, name_dup, name_len);
 	if (bfn != XP_NULL)
 	{
 		xp_awk_nde_t* nde;
@@ -3251,11 +3252,11 @@ static int __get_token (xp_awk_t* awk)
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_EOF);
 	}	
-	else if (xp_isdigit(c)) 
+	else if (XP_AWK_ISDIGIT (awk, c)) 
 	{
-		if (__get_number(awk) == -1) return -1;
+		if (__get_number (awk) == -1) return -1;
 	}
-	else if (xp_isalpha(c) || c == XP_T('_')) 
+	else if (XP_AWK_ISALPHA (awk, c) || c == XP_T('_')) 
 	{
 		int type;
 
@@ -3265,7 +3266,8 @@ static int __get_token (xp_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR_TO (awk, c);
 		} 
-		while (xp_isalpha(c) || c == XP_T('_') || xp_isdigit(c));
+		while (XP_AWK_ISALPHA (awk, c) || 
+		       c == XP_T('_') || XP_AWK_ISDIGIT(awk,c));
 
 		type = __classify_ident (awk, 
 			XP_AWK_STR_BUF(&awk->token.name), 
@@ -3630,7 +3632,7 @@ static int __get_number (xp_awk_t* awk)
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
 			} 
-			while (xp_isxdigit(c));
+			while (XP_AWK_ISXDIGIT (awk, c));
 
 			return 0;
 		}
@@ -3659,7 +3661,7 @@ static int __get_number (xp_awk_t* awk)
 		}
 	}
 
-	while (xp_isdigit(c)) 
+	while (XP_AWK_ISDIGIT (awk, c)) 
 	{
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
@@ -3673,7 +3675,7 @@ static int __get_number (xp_awk_t* awk)
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 
-		while (xp_isdigit(c))
+		while (XP_AWK_ISDIGIT (awk, c))
 		{
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR_TO (awk, c);
@@ -3693,7 +3695,7 @@ static int __get_number (xp_awk_t* awk)
 			GET_CHAR_TO (awk, c);
 		}
 
-		while (xp_isdigit(c))
+		while (XP_AWK_ISDIGIT (awk, c))
 		{
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR_TO (awk, c);
@@ -3943,7 +3945,7 @@ static int __skip_spaces (xp_awk_t* awk)
 {
 	xp_cint_t c = awk->src.lex.curc;
 
-	while (xp_isspace(c)) GET_CHAR_TO (awk, c);
+	while (XP_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
 	return 0;
 }
 
@@ -4025,7 +4027,7 @@ static int __classify_ident (
 		if (kwp->valid != 0 && 
 		    (awk->option & kwp->valid) == 0) continue;
 
-		if (xp_strxncmp (kwp->name, kwp->name_len, name, len) == 0) 
+		if (xp_awk_strxncmp (kwp->name, kwp->name_len, name, len) == 0) 
 		{
 			return kwp->type;
 		}
@@ -4206,7 +4208,7 @@ static int __deparse_func (xp_awk_pair_t* pair, void* arg)
 	xp_awk_afn_t* afn = (xp_awk_afn_t*)pair->val;
 	xp_size_t i;
 
-	xp_assert (xp_strxncmp (
+	xp_assert (xp_awk_strxncmp (
 		pair->key, pair->key_len, afn->name, afn->name_len) == 0);
 
 	if (xp_awk_putsrcstr (df->awk, XP_T("function ")) == -1) return -1;

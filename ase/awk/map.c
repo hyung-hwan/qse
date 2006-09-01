@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.22 2006-09-01 03:44:16 bacon Exp $
+ * $Id: map.c,v 1.23 2006-09-01 06:22:12 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -96,7 +96,7 @@ xp_awk_pair_t* xp_awk_map_get (
 	while (pair != XP_NULL) 
 	{
 
-		if (xp_strxncmp (
+		if (xp_awk_strxncmp (
 			pair->key, pair->key_len, 
 			key, key_len) == 0) return pair;
 
@@ -129,7 +129,8 @@ int xp_awk_map_putx (
 
 	while (pair != XP_NULL) 
 	{
-		if (xp_strxncmp (pair->key, pair->key_len, key, key_len) == 0) 
+		if (xp_awk_strxncmp (
+			pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			if (px != XP_NULL)
 				*px = xp_awk_map_setpair (map, pair, val);
@@ -176,7 +177,8 @@ xp_awk_pair_t* xp_awk_map_set (
 
 	while (pair != XP_NULL) 
 	{
-		if (xp_strxncmp (pair->key, pair->key_len, key, key_len) == 0) 
+		if (xp_awk_strxncmp (
+			pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			return xp_awk_map_setpair (map, pair, val);
 		}
@@ -225,7 +227,8 @@ int xp_awk_map_remove (xp_awk_map_t* map, xp_char_t* key, xp_size_t key_len)
 
 	while (pair != XP_NULL) 
 	{
-		if (xp_strxncmp (pair->key, pair->key_len, key, key_len) == 0) 
+		if (xp_awk_strxncmp (
+			pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			if (prev == XP_NULL) 
 				map->buck[hc] = pair->next;

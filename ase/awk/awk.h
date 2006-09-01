@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.105 2006-09-01 03:44:16 bacon Exp $
+ * $Id: awk.h,v 1.106 2006-09-01 06:22:11 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -58,6 +58,21 @@ struct xp_awk_syscas_t
 	/* thread lock */
 	xp_awk_lk_t lock;
 	xp_awk_lk_t unlock;
+
+	/* character class */
+	xp_bool_t (*is_upper)  (xp_cint_t c);
+	xp_bool_t (*is_lower)  (xp_cint_t c);
+	xp_bool_t (*is_alpha)  (xp_cint_t c);
+	xp_bool_t (*is_digit)  (xp_cint_t c);
+	xp_bool_t (*is_xdigit) (xp_cint_t c);
+	xp_bool_t (*is_alnum)  (xp_cint_t c);
+	xp_bool_t (*is_space)  (xp_cint_t c);
+	xp_bool_t (*is_print)  (xp_cint_t c);
+	xp_bool_t (*is_graph)  (xp_cint_t c);
+	xp_bool_t (*is_cntrl)  (xp_cint_t c);
+	xp_bool_t (*is_punct)  (xp_cint_t c);
+	xp_cint_t (*to_upper)  (xp_cint_t c);
+	xp_cint_t (*to_lower)  (xp_cint_t c);
 
 	void* custom_data;
 };
@@ -317,8 +332,10 @@ void xp_awk_setretval (void* run, xp_awk_val_t* val);
 
 /* utility functions exported by awk.h */
 xp_long_t xp_awk_strtolong (
-	const xp_char_t* str, int base, const xp_char_t** endptr);
-xp_real_t xp_awk_strtoreal (const xp_char_t* str);
+	xp_awk_t* awk, const xp_char_t* str, 
+	int base, const xp_char_t** endptr);
+xp_real_t xp_awk_strtoreal (
+	xp_awk_t* awk, const xp_char_t* str);
 
 /* string functions exported by awk.h */
 xp_char_t* xp_awk_strdup (
@@ -329,6 +346,38 @@ xp_char_t* xp_awk_strxdup2 (
 	xp_awk_t* awk,
 	const xp_char_t* str1, xp_size_t len1,
 	const xp_char_t* str2, xp_size_t len2);
+
+xp_size_t xp_awk_strlen (const xp_char_t* str);
+xp_size_t xp_awk_strcpy (xp_char_t* buf, const xp_char_t* str);
+xp_size_t xp_awk_strncpy (xp_char_t* buf, const xp_char_t* str, xp_size_t len);
+int xp_awk_strcmp (const xp_char_t* s1, const xp_char_t* s2);
+
+int xp_awk_strxncmp (
+	const xp_char_t* s1, xp_size_t len1, 
+	const xp_char_t* s2, xp_size_t len2);
+
+xp_char_t* xp_awk_strxnstr (
+	const xp_char_t* str, xp_size_t strsz, 
+	const xp_char_t* sub, xp_size_t subsz);
+
+xp_char_t* xp_awk_strtok (
+	xp_awk_t* awk, const xp_char_t* s, 
+	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len);
+
+xp_char_t* xp_awk_strxtok (
+	xp_awk_t* awk, const xp_char_t* s, xp_size_t len,
+	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len);
+
+xp_char_t* xp_awk_strxntok (
+	xp_awk_t* awk, const xp_char_t* s, xp_size_t len,
+	const xp_char_t* delim, xp_size_t delim_len,
+	xp_char_t** tok, xp_size_t* tok_len);
+
+int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...);
+
+int xp_awk_sprintf (
+	xp_awk_t* awk, xp_char_t* buf, 
+	xp_size_t size, const xp_char_t* fmt, ...);
 
 /* utility functions to convert an error number ot a string */
 const xp_char_t* xp_awk_geterrstr (int errnum);

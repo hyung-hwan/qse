@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.14 2006-09-01 03:44:16 bacon Exp $
+ * $Id: tab.c,v 1.15 2006-09-01 06:22:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -198,7 +198,7 @@ xp_size_t xp_awk_tab_find (
 
 	for (i = index; i < tab->size; i++) 
 	{
-		if (xp_strxncmp (
+		if (xp_awk_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}
@@ -216,7 +216,7 @@ xp_size_t xp_awk_tab_rfind (
 
 	for (i = index + 1; i-- > 0; ) 
 	{
-		if (xp_strxncmp (
+		if (xp_awk_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}
@@ -234,7 +234,7 @@ xp_size_t xp_awk_tab_rrfind (
 
 	for (i = tab->size - index; i-- > 0; ) 
 	{
-		if (xp_strxncmp (
+		if (xp_awk_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}

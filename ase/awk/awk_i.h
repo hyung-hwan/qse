@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.52 2006-09-01 04:03:28 bacon Exp $
+ * $Id: awk_i.h,v 1.53 2006-09-01 06:22:11 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -12,7 +12,40 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/awk/awk.h>
 
 #ifdef XP_AWK_STAND_ALONE
-#include <xp/awk/sa.h>
+
+	#if !defined(XP_CHAR_IS_MCHAR) && !defined(XP_CHAR_IS_WCHAR)
+	#error Neither XP_CHAR_IS_MCHAR nor XP_CHAR_IS_WCHAR is defined.
+	#endif
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <stdarg.h>
+	#include <assert.h>
+
+	#ifdef XP_CHAR_IS_MCHAR
+		#include <ctype.h>
+	#else
+		#include <ctype.h>
+		#include <wchar.h>
+		#if !defined(__BEOS__)
+			#include <wctype.h>
+		#endif
+	#endif
+
+	#define xp_assert assert
+
+	#define xp_memset(dst,fill,len)  memset(dst,fill,len)
+	#define xp_memcpy(dst,src,len)   memcpy(dst,src,len)
+	#define xp_memmove(dst,src,len)  memmove(dst,src,len)
+	#define xp_memcmp(src1,src2,len) memcmp(src1,src2,len)
+	#define xp_memzero(dst,len)      memset(dst,0,len)
+
+	#define xp_va_start(pvar,param) va_start(pvar,param)
+	#define xp_va_list va_list
+	#define xp_va_end(pvar) va_end(pvar)
+	#define xp_va_arg(pvar,type) va_arg(pvar,type)
+
 #endif
 
 #include <xp/awk/str.h>
@@ -54,15 +87,29 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 
 #define XP_AWK_LOCK(awk) \
 	do { \
-		if (awk->syscas != XP_NULL && awk->syscas->lock != XP_NULL) \
-			awk->syscas->lock (awk, awk->syscas->custom_data); \
+		if ((awk)->syscas != XP_NULL && (awk)->syscas->lock != XP_NULL) \
+			(awk)->syscas->lock (awk, (awk)->syscas->custom_data); \
 	} while (0) 
 
 #define XP_AWK_UNLOCK(awk) \
 	do { \
-		if (awk->syscas != XP_NULL && awk->syscas->unlock != XP_NULL) \
-			awk->syscas->unlock (awk, awk->syscas->custom_data); \
+		if ((awk)->syscas != XP_NULL && (awk)->syscas->unlock != XP_NULL) \
+			(awk)->syscas->unlock (awk, (awk)->syscas->custom_data); \
 	} while (0) 
+
+#define XP_AWK_ISUPPER(awk,c)  (awk)->syscas->is_upper(c)
+#define XP_AWK_ISLOWER(awk,c)  (awk)->syscas->is_lower(c)
+#define XP_AWK_ISALPHA(awk,c)  (awk)->syscas->is_alpha(c)
+#define XP_AWK_ISDIGIT(awk,c)  (awk)->syscas->is_digit(c)
+#define XP_AWK_ISXDIGIT(awk,c) (awk)->syscas->is_xdigit(c)
+#define XP_AWK_ISALNUM(awk,c)  (awk)->syscas->is_alnum(c)
+#define XP_AWK_ISSPACE(awk,c)  (awk)->syscas->is_space(c)
+#define XP_AWK_ISPRINT(awk,c)  (awk)->syscas->is_print(c)
+#define XP_AWK_ISGRAPH(awk,c)  (awk)->syscas->is_graph(c)
+#define XP_AWK_ISCNTRL(awk,c)  (awk)->syscas->is_cntrl(c)
+#define XP_AWK_ISPUNCT(awk,c)  (awk)->syscas->is_punct(c)
+#define XP_AWK_TOUPPER(awk,c)  (awk)->syscas->to_upper(c)
+#define XP_AWK_TOLOWER(awk,c)  (awk)->syscas->to_lower(c)
 
 struct xp_awk_tree_t
 {

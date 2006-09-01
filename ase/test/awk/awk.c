@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.83 2006-09-01 04:03:13 bacon Exp $
+ * $Id: awk.c,v 1.84 2006-09-01 06:23:57 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -34,17 +34,8 @@
 #endif
 
 #ifdef __STAND_ALONE
-	#define xp_strcmp xp_awk_strcmp
-	extern int xp_awk_strcmp (const xp_char_t* s1, const xp_char_t* s2);
-	#define xp_strlen xp_awk_strlen
-	extern int xp_awk_strlen (const xp_char_t* s);
-
 	#include <assert.h>
 	#define xp_assert assert
-
-	#include <stdlib.h>
-	#define xp_malloc malloc
-	#define xp_free free
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
@@ -223,7 +214,7 @@ xp_printf (XP_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 		{
 			if (fgets_t (data, size, (FILE*)epa->handle) == XP_NULL) 
 				return 0;
-			return xp_strlen(data);
+			return xp_awk_strlen(data);
 		}
 
 		case XP_AWK_IO_WRITE:
@@ -287,7 +278,7 @@ xp_printf (XP_TEXT("closing %s of type %d (file)\n"),  epa->name, epa->type);
 		{
 			if (fgets_t (data, size, (FILE*)epa->handle) == XP_NULL) 
 				return 0;
-			return xp_strlen(data);
+			return xp_awk_strlen(data);
 		}
 
 		case XP_AWK_IO_WRITE:
@@ -390,7 +381,7 @@ xp_printf (XP_TEXT("open the next console [%s]\n"), infiles[infile_no]);
 			infile_no++;	
 		}
 
-		return xp_strlen(data);
+		return xp_awk_strlen(data);
 	}
 	else if (cmd == XP_AWK_IO_WRITE)
 	{
@@ -618,7 +609,7 @@ static int __main (int argc, xp_char_t* argv[])
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 		if (strcmp(argv[i], "-m") == 0)
 #else
-		if (xp_strcmp(argv[i], XP_T("-m")) == 0)
+		if (xp_awk_strcmp(argv[i], XP_T("-m")) == 0)
 #endif
 		{
 			opt |= XP_AWK_RUNMAIN;
@@ -645,8 +636,39 @@ static int __main (int argc, xp_char_t* argv[])
 	syscas.malloc = __awk_malloc;
 	syscas.realloc = __awk_realloc;
 	syscas.free = __awk_free;
+
 	syscas.lock = NULL;
 	syscas.unlock = NULL;
+
+#ifdef XP_CHAR_IS_MCHAR
+	syscas.is_upper  = isupper;
+	syscas.is_lower  = islower;
+	syscas.is_alpha  = isalpha;
+	syscas.is_digit  = isdigit;
+	syscas.is_xdigit = isxdigit;
+	syscas.is_alnum  = isalnum;
+	syscas.is_space  = isspace;
+	syscas.is_print  = isprint;
+	syscas.is_graph  = isgraph;
+	syscas.is_cntrl  = iscntrl;
+	syscas.is_punct  = ispunct;
+	syscas.to_upper  = toupper;
+	syscas.to_lower  = tolower;
+#else
+	syscas.is_upper  = iswupper;
+	syscas.is_lower  = iswlower;
+	syscas.is_alpha  = iswalpha;
+	syscas.is_digit  = iswdigit;
+	syscas.is_xdigit = iswxdigit;
+	syscas.is_alnum  = iswalnum;
+	syscas.is_space  = iswspace;
+	syscas.is_print  = iswprint;
+	syscas.is_graph  = iswgraph;
+	syscas.is_cntrl  = iswcntrl;
+	syscas.is_punct  = iswpunct;
+	syscas.to_upper  = towupper;
+	syscas.to_lower  = towlower;
+#endif
 
 #ifdef _WIN32
 	syscas_data.heap = HeapCreate (0, 1000000, 1000000);
