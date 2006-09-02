@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.178 2006-09-01 16:30:50 bacon Exp $
+ * $Id: parse.c,v 1.179 2006-09-02 14:58:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4106,7 +4106,7 @@ static int __deparse (xp_awk_t* awk)
 
 	if (awk->tree.nglobals > awk->tree.nbglobals) 
 	{
-		xp_size_t i;
+		xp_size_t i, n;
 
 		xp_assert (awk->tree.nglobals > 0);
 		if (xp_awk_putsrcstr (awk, XP_T("global ")) == -1)
@@ -4114,17 +4114,19 @@ static int __deparse (xp_awk_t* awk)
 
 		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
 		{
-			xp_awk_longtostr ((xp_long_t)i, 
+			n = xp_awk_longtostr ((xp_long_t)i, 
 				10, XP_T("__global"), tmp, xp_countof(tmp));
-			if (xp_awk_putsrcstr (awk, tmp) == -1)
+			xp_assert (n != (xp_size_t)-1);
+			if (xp_awk_putsrcstrx (awk, tmp, n) == -1)
 				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 			if (xp_awk_putsrcstr (awk, XP_T(", ")) == -1)
 				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		}
 
-		xp_awk_longtostr ((xp_long_t)i, 
+		n = xp_awk_longtostr ((xp_long_t)i, 
 			10, XP_T("__global"), tmp, xp_countof(tmp));
-		if (xp_awk_putsrcstr (awk, tmp) == -1)
+		xp_assert (n != (xp_size_t)-1);
+		if (xp_awk_putsrcstrx (awk, tmp, n) == -1)
 			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		if (xp_awk_putsrcstr (awk, XP_T(";\n\n")) == -1)
 			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
@@ -4206,7 +4208,7 @@ static int __deparse_func (xp_awk_pair_t* pair, void* arg)
 {
 	struct __deparse_func_t* df = (struct __deparse_func_t*)arg;
 	xp_awk_afn_t* afn = (xp_awk_afn_t*)pair->val;
-	xp_size_t i;
+	xp_size_t i, n;
 
 	xp_assert (xp_awk_strxncmp (
 		pair->key, pair->key_len, afn->name, afn->name_len) == 0);
@@ -4217,9 +4219,10 @@ static int __deparse_func (xp_awk_pair_t* pair, void* arg)
 
 	for (i = 0; i < afn->nargs; ) 
 	{
-		xp_awk_longtostr (i++, 10, 
+		n = xp_awk_longtostr (i++, 10, 
 			XP_T("__param"), df->tmp, df->tmp_len);
-		if (xp_awk_putsrcstr (df->awk, df->tmp) == -1) return -1;
+		xp_assert (n != (xp_size_t)-1);
+		if (xp_awk_putsrcstrx (df->awk, df->tmp, n) == -1) return -1;
 		if (i >= afn->nargs) break;
 		if (xp_awk_putsrcstr (df->awk, XP_T(", ")) == -1) return -1;
 	}

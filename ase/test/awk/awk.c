@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.86 2006-09-01 16:31:13 bacon Exp $
+ * $Id: awk.c,v 1.87 2006-09-02 14:59:15 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -627,7 +627,6 @@ static int __main (int argc, xp_char_t* argv[])
 		}
 		else
 		{
-			xp_awk_close (awk);
 			xp_printf (XP_T("Usage: %s [-m] source_file [data_file]\n"), argv[0]);
 			return -1;
 		}

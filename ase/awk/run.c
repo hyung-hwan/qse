@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.194 2006-09-01 07:18:40 bacon Exp $
+ * $Id: run.c,v 1.195 2006-09-02 14:58:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -633,6 +633,14 @@ static int __run_main (xp_awk_run_t* run)
 		/* it can simply restore the top of the stack this way
 		 * because the values pused onto the stack so far are
 		 * all xp_awk_val_nils */
+		run->stack_top = saved_stack_top;
+		return -1;
+	}
+	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, xp_awk_val_zero) == -1)
+	{
+		/* it can simply restore the top of the stack this way
+		 * because the values pused onto the stack so far are
+		 * all xp_awk_val_nils  and xp_awk_val_zeros */
 		run->stack_top = saved_stack_top;
 		return -1;
 	}
@@ -1833,19 +1841,20 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 
 	if (v->type == XP_AWK_VAL_REX)
 	{
+		xp_awk_refupval (v);
+
 		if (run->inrec.d0->type == XP_AWK_VAL_NIL)
 		{
 			/* the record has never been read. 
 			 * probably, this functions has been triggered
 			 * by the statements in the BEGIN block */
-			n = xp_awk_isemptyrex(
+			n = xp_awk_isemptyrex (
 				((xp_awk_val_rex_t*)v)->code)? 1: 0;
 		}
 		else
 		{
 			xp_assert (run->inrec.d0->type == XP_AWK_VAL_STR);
 
-			xp_awk_refupval (v);
 			n = xp_awk_matchrex (
 				((xp_awk_run_t*)run)->awk, 
 				((xp_awk_val_rex_t*)v)->code,
@@ -1858,10 +1867,9 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 				xp_awk_refdownval (run, v);
 				PANIC (run, errnum);
 			}
-
-			xp_awk_refdownval (run, v);
-
 		}
+
+		xp_awk_refdownval (run, v);
 
 		v = xp_awk_makeintval (run, (n != 0));
 		if (v == XP_NULL) PANIC (run, XP_AWK_ENOMEM);

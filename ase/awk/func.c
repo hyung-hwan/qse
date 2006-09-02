@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.43 2006-09-01 16:30:50 bacon Exp $
+ * $Id: func.c,v 1.44 2006-09-02 14:58:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -504,6 +504,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	xp_size_t len, left, tok_len;
 	xp_long_t num;
 	xp_char_t key[xp_sizeof(xp_long_t)*8+2];
+	xp_size_t key_len;
 
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs >= 2 && nargs <= 3);
@@ -579,11 +580,13 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		}
 
 		/* put it into the map */
-		xp_awk_longtostr (num, 10, XP_NULL, key, xp_countof(key));
+		key_len = xp_awk_longtostr (
+			num, 10, XP_NULL, key, xp_countof(key));
+		xp_assert (key_len != (xp_size_t)-1);
 
 		if (xp_awk_map_putx (
 			((xp_awk_val_map_t*)t1)->map, 
-			key, xp_awk_strlen(key), t2, XP_NULL) == -1)
+			key, key_len, t2, XP_NULL) == -1)
 		{
 			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
 			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
