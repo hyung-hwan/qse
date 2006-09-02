@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.72 2006-09-01 03:44:17 bacon Exp $
+ * $Id: tree.c,v 1.73 2006-09-02 14:58:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -122,8 +122,6 @@ static int __print_tabs (xp_awk_t* awk, int depth)
 
 static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 {
-	xp_char_t tmp[128];
-
 	switch (nde->type) 
 	{
 		case XP_AWK_NDE_GRP:
@@ -230,30 +228,20 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_INT:
 		{
-		#if defined(__LCC__)
-			xp_awk_sprintf (
-				awk, tmp, xp_countof(tmp), XP_T("%lld"), 
-				(long long)((xp_awk_nde_int_t*)nde)->val);
-		#elif defined(__BORLANDC__) || defined(_MSC_VER)
-			xp_awk_sprintf (
-				awk, tmp, xp_countof(tmp), XP_T("%I64d"),
-				(__int64)((xp_awk_nde_int_t*)nde)->val);
-		#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-			xp_awk_sprintf (
-				awk, tmp, xp_countof(tmp), XP_T("%ld"),
-				(long)((xp_awk_nde_int_t*)nde)->val);
-		#else
-			xp_awk_sprintf (
-				awk, tmp, xp_countof(tmp), XP_T("%lld"),
-				(long long)((xp_awk_nde_int_t*)nde)->val);
-		#endif
+			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
+			xp_size_t n;
 
-			PUT_SRCSTR (awk, tmp);
+			n = xp_awk_longtostr (
+				((xp_awk_nde_int_t*)nde)->val,
+				10, XP_NULL, tmp, xp_countof(tmp));
+
+			PUT_SRCSTRX (awk, tmp, n);
 			break;
 		}
 
 		case XP_AWK_NDE_REAL:
 		{
+			xp_char_t tmp[128];
 			xp_awk_sprintf (
 				awk, tmp, xp_countof(tmp), XP_T("%Lf"), 
 				(long double)((xp_awk_nde_real_t*)nde)->val);
@@ -285,14 +273,16 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_ARG:
 		{
+			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
+			xp_size_t n;
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			xp_assert (px->id.idxa != (xp_size_t)-1);
 
+			n = xp_awk_longtostr (
+				px->id.idxa, 10, XP_NULL, tmp, xp_countof(tmp));
+
 			PUT_SRCSTR (awk, XP_T("__param"));
-			xp_awk_sprintf (
-				awk, tmp, xp_countof(tmp),
-				XP_T("%lu"), (unsigned long)px->id.idxa);
-			PUT_SRCSTR (awk, tmp);
+			PUT_SRCSTRX (awk, tmp, n);
 
 			xp_assert (px->idx == XP_NULL);
 			break;
@@ -300,15 +290,16 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_ARGIDX:
 		{
+			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
+			xp_size_t n;
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
 			xp_assert (px->id.idxa != (xp_size_t)-1);
 			xp_assert (px->idx != XP_NULL);
 
 			PUT_SRCSTR (awk, XP_T("__param"));
-			xp_awk_sprintf (
-				awk, tmp, xp_countof(tmp),
-				XP_T("%lu"), (unsigned long)px->id.idxa);
-			PUT_SRCSTR (awk, tmp);
+			n = xp_awk_longtostr (
+				px->id.idxa, 10, XP_NULL, tmp, xp_countof(tmp));
+			PUT_SRCSTRX (awk, tmp, n);
 			PUT_SRCSTR (awk, XP_T("["));
 			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, XP_T("]"));
@@ -340,14 +331,17 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_GLOBAL:
 		{
+			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
+			xp_size_t n;
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+
 			if (px->id.idxa != (xp_size_t)-1) 
 			{
 				PUT_SRCSTR (awk, XP_T("__global"));
-				xp_awk_sprintf (
-					awk, tmp, xp_countof(tmp),
-					XP_T("%lu"), (unsigned long)px->id.idxa);
-				PUT_SRCSTR (awk, tmp);
+				n = xp_awk_longtostr (
+					px->id.idxa, 10, 
+					XP_NULL, tmp, xp_countof(tmp));
+				PUT_SRCSTRX (awk, tmp, n);
 			}
 			else 
 			{
@@ -359,14 +353,17 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_GLOBALIDX:
 		{
+			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
+			xp_size_t n;
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+
 			if (px->id.idxa != (xp_size_t)-1) 
 			{
 				PUT_SRCSTR (awk, XP_T("__global"));
-				xp_awk_sprintf (
-					awk, tmp, xp_countof(tmp),
-					XP_T("%lu"), (unsigned long)px->id.idxa);
-				PUT_SRCSTR (awk, tmp);
+				n = xp_awk_longtostr (
+					px->id.idxa, 10, 
+					XP_NULL, tmp, xp_countof(tmp));
+				PUT_SRCSTRX (awk, tmp, n);
 				PUT_SRCSTR (awk, XP_T("["));
 			}
 			else 
@@ -382,14 +379,17 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_LOCAL:
 		{
+			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
+			xp_size_t n;
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+
 			if (px->id.idxa != (xp_size_t)-1) 
 			{
 				PUT_SRCSTR (awk, XP_T("__local"));
-				xp_awk_sprintf (
-					awk, tmp, xp_countof(tmp),
-					XP_T("%lu"), (unsigned long)px->id.idxa);
-				PUT_SRCSTR (awk, tmp);
+				n = xp_awk_longtostr (
+					px->id.idxa, 10, 
+					XP_NULL, tmp, xp_countof(tmp));
+				PUT_SRCSTRX (awk, tmp, n);
 			}
 			else 
 			{
@@ -401,14 +401,17 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_LOCALIDX:
 		{
+			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
+			xp_size_t n;
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
+
 			if (px->id.idxa != (xp_size_t)-1) 
 			{
 				PUT_SRCSTR (awk, XP_T("__local"));
-				xp_awk_sprintf (
-					awk, tmp, xp_countof(tmp),
-					XP_T("%lu"), (unsigned long)px->id.idxa);
-				PUT_SRCSTR (awk, tmp);
+				n = xp_awk_longtostr (
+					px->id.idxa, 10, 
+					XP_NULL, tmp, xp_countof(tmp));
+				PUT_SRCSTRX (awk, tmp, n);
 				PUT_SRCSTR (awk, XP_T("["));
 			}
 			else 
@@ -509,7 +512,6 @@ static int __print_expression_list (xp_awk_t* awk, xp_awk_nde_t* tree)
 static int __print_statements (xp_awk_t* awk, xp_awk_nde_t* tree, int depth)
 {
 	xp_awk_nde_t* p = tree;
-	xp_char_t tmp[128];
 	xp_size_t i;
 
 	while (p != XP_NULL) 
@@ -526,6 +528,8 @@ static int __print_statements (xp_awk_t* awk, xp_awk_nde_t* tree, int depth)
 
 			case XP_AWK_NDE_BLK:
 			{
+				xp_char_t tmp[xp_sizeof(xp_long_t)*8+2];
+				xp_size_t n;
 				xp_awk_nde_blk_t* px = (xp_awk_nde_blk_t*)p;
 
 				PRINT_TABS (awk, depth);
@@ -539,14 +543,16 @@ static int __print_statements (xp_awk_t* awk, xp_awk_nde_t* tree, int depth)
 					for (i = 0; i < px->nlocals - 1; i++) 
 					{
 						PUT_SRCSTR (awk, XP_T("__local"));
-						xp_awk_sprintf (awk, tmp, xp_countof(tmp), XP_T("%lu"), (unsigned long)i);
-						PUT_SRCSTR (awk, tmp);
+						n = xp_awk_longtostr (
+							i, 10, XP_NULL, tmp, xp_countof(tmp));
+						PUT_SRCSTRX (awk, tmp, n);
 						PUT_SRCSTR (awk, XP_T(", "));
 					}
 
 					PUT_SRCSTR (awk, XP_T("__local"));
-					xp_awk_sprintf (awk, tmp, xp_countof(tmp), XP_T("%lu"), (unsigned long)i);
-					PUT_SRCSTR (awk, tmp);
+					n = xp_awk_longtostr (
+						i, 10, XP_NULL, tmp, xp_countof(tmp));
+					PUT_SRCSTRX (awk, tmp, n);
 					PUT_SRCSTR (awk, XP_T(";\n"));
 				}
 

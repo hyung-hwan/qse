@@ -231,10 +231,6 @@ SOURCE=.\run.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\sa.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\str.c
 # End Source File
 # Begin Source File
@@ -280,10 +276,6 @@ SOURCE=.\rex.h
 # Begin Source File
 
 SOURCE=.\run.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sa.h
 # End Source File
 # Begin Source File
 
