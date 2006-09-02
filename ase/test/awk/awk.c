@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.87 2006-09-02 14:59:15 bacon Exp $
+ * $Id: awk.c,v 1.88 2006-09-02 15:17:44 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -767,6 +767,7 @@ int xp_main (int argc, xp_char_t* argv[])
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif*/
 
+#ifdef _WIN32
 {
 xp_char_t buf[xp_sizeof(xp_long_t)*8+2+2];
 xp_size_t n;
@@ -777,6 +778,8 @@ if (n == (xp_size_t)-1)
 }
 else xp_printf (XP_T("%d, %s\n"), n, buf);
 }
+#endif
+
 	n = __main (argc, argv);
 
 #if defined(__linux) && defined(_DEBUG)
