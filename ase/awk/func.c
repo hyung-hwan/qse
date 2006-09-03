@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.44 2006-09-02 14:58:27 bacon Exp $
+ * $Id: func.c,v 1.45 2006-09-03 15:46:49 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -499,12 +499,14 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 static int __bfn_split (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1r;
-	xp_char_t* str, * p, * tok;
-	xp_size_t len, left, tok_len;
+	xp_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1ref;
+	xp_char_t* str, * str_free, * p, * tok;
+	xp_size_t str_len, str_left, tok_len;
 	xp_long_t num;
 	xp_char_t key[xp_sizeof(xp_long_t)*8+2];
 	xp_size_t key_len;
+	xp_char_t* fs_ptr, * fs_free;
+	xp_size_t fs_len;
 
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs >= 2 && nargs <= 3);
@@ -523,9 +525,9 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		return -1;
 	}
 
-	a1r = (xp_awk_val_t**)((xp_awk_val_ref_t*)a1)->adr;
-	if ((*a1r)->type != XP_AWK_VAL_NIL &&
-	    (*a1r)->type != XP_AWK_VAL_MAP)
+	a1ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a1)->adr;
+	if ((*a1ref)->type != XP_AWK_VAL_NIL &&
+	    (*a1ref)->type != XP_AWK_VAL_MAP)
 	{
 		/* cannot change a scalar value to a map */
 		xp_awk_seterrnum (run, XP_AWK_ESCALARTOMAP);
@@ -535,32 +537,93 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	if (a0->type == XP_AWK_VAL_STR)
 	{
 		str = ((xp_awk_val_str_t*)a0)->buf;
-		len = ((xp_awk_val_str_t*)a0)->len;
+		str_len = ((xp_awk_val_str_t*)a0)->len;
+		str_free = XP_NULL;
 	}
 	else 
 	{
-		str = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &len);
+		str = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &str_len);
 		if (str == XP_NULL) return -1;
+		str_free = str;
+	}
+
+	if (a2 == XP_NULL)
+	{
+		/* get the value from FS */
+		t1 = xp_awk_getglobal (run, XP_AWK_GLOBAL_FS);
+		if (t1->type == XP_AWK_VAL_NIL)
+		{
+			fs_ptr = XP_T(" ");
+			fs_len = 1;
+			fs_free = XP_NULL;
+		}
+		else if (t1->type == XP_AWK_VAL_STR)
+		{
+			fs_ptr = ((xp_awk_val_str_t*)t1)->buf;
+			fs_len = ((xp_awk_val_str_t*)t1)->len;
+			fs_free = XP_NULL;
+		}
+		else
+		{
+			fs_ptr = xp_awk_valtostr (
+				run, t1, xp_true, XP_NULL, &fs_len);
+			if (fs_ptr == XP_NULL)
+			{
+				if (str_free != XP_NULL) 
+					XP_AWK_FREE (awk, str_free);
+				return -1;
+			}
+			fs_free = fs_ptr;
+		}
+	}
+	else
+	{
+		if (a2->type == XP_AWK_VAL_STR)
+		{
+			fs_ptr = ((xp_awk_val_str_t*)a2)->buf;
+			fs_len = ((xp_awk_val_str_t*)a2)->len;
+			fs_free = XP_NULL;
+		}
+		else
+		{
+			fs_ptr = xp_awk_valtostr (
+				run, a2, xp_true, XP_NULL, &fs_len);
+			if (fs_ptr == XP_NULL)
+			{
+				if (str_free != XP_NULL) 
+					XP_AWK_FREE (awk, str_free);
+				return -1;
+			}
+			fs_free = fs_ptr;
+		}
 	}
 
 	t1 = xp_awk_makemapval (run);
 	if (t1 == XP_NULL)
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+		if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
+		if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_refdownval (run, *a1r);
-	*a1r = t1;
-	xp_awk_refupval (*a1r);
+	xp_awk_refdownval (run, *a1ref);
+	*a1ref = t1;
+	xp_awk_refupval (*a1ref);
 
-	p = str; left = len; num = 0;
+	p = str; str_left = str_len; num = 0;
 	while (p != XP_NULL)
 	{
-/* TODO: use FS when a2 is missing. apply a difference scheme */
-		p = xp_awk_strxtok (
-			awk, p, left, XP_T(" \t"), &tok, &tok_len);
+		if (fs_len <= 1)
+		{
+			p = xp_awk_strxntok (awk, 
+				p, str_len, fs_ptr, fs_len, &tok, &tok_len);
+		}
+		else
+		{
+			/* TODO: FS regular expression */
+			xp_printf (XP_T("MULTI-CHARACTER FS NOT READY IN SPLIT\n"));
+		}
 
 		if (num == 0 && p == XP_NULL && tok_len == 0) 
 		{
@@ -574,7 +637,8 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		t2 = xp_awk_makestrval (run, tok, tok_len);
 		if (t2 == XP_NULL)
 		{
-			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+			if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
+			if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
 			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 			return -1;
 		}
@@ -588,7 +652,8 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			((xp_awk_val_map_t*)t1)->map, 
 			key, key_len, t2, XP_NULL) == -1)
 		{
-			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+			if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
+			if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
 			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 			return -1;
 		}
@@ -599,10 +664,11 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		xp_awk_refupval (t2);
 
 		num++;
-		len = len - (p - str);
+		str_len = str_left - (p - str + 1);
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+	if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
+	if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
 
 	t1 = xp_awk_makeintval (run, num);
 	if (t1 == XP_NULL)

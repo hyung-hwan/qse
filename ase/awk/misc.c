@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.12 2006-09-01 16:30:50 bacon Exp $
+ * $Id: misc.c,v 1.13 2006-09-03 15:46:49 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -491,7 +491,18 @@ xp_char_t* xp_awk_strxtok (
 	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len)
 {
 	return xp_awk_strxntok (
-		awk, s, len, delim, xp_awk_strlen(delim), tok, tok_len);
+		awk, s, len, 
+		delim, xp_awk_strlen(delim), tok, tok_len);
+}
+
+xp_char_t* xp_awk_strntok (
+	xp_awk_t* awk, const xp_char_t* s, 
+	const xp_char_t* delim, xp_size_t delim_len,
+	xp_char_t** tok, xp_size_t* tok_len)
+{
+	return xp_awk_strxntok (
+		awk, s, xp_awk_strlen(s), 
+		delim, delim_len, tok, tok_len);
 }
 
 xp_char_t* xp_awk_strxntok (
@@ -506,21 +517,48 @@ xp_char_t* xp_awk_strxntok (
 	xp_char_t c; 
 	int delim_mode;
 
-	/* skip preceding space xp_char_tacters */
-	while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
-
-	if (delim == XP_NULL) delim_mode = 0;
+#define __DELIM_NULL      0
+#define __DELIM_EMPTY     1
+#define __DELIM_SPACES    2
+#define __DELIM_NOSPACES  3
+#define __DELIM_COMPOSITE 4
+	if (delim == XP_NULL) delim_mode = __DELIM_NULL;
 	else 
 	{
-		delim_mode = 1;
-		for (d = delim; d < delim_end; d++) 
-			if (!XP_AWK_ISSPACE(awk,*d)) delim_mode = 2;
-	}
+		delim_mode = __DELIM_EMPTY;
 
-	if (delim_mode == 0) 
+		for (d = delim; d < delim_end; d++) 
+		{
+			if (XP_AWK_ISSPACE(awk,*d)) 
+			{
+				if (delim_mode == __DELIM_EMPTY)
+					delim_mode = __DELIM_SPACES;
+				else if (delim_mode == __DELIM_NOSPACES)
+				{
+					delim_mode = __DELIM_COMPOSITE;
+					break;
+				}
+			}
+			else
+			{
+				if (delim_mode == __DELIM_EMPTY)
+					delim_mode = __DELIM_NOSPACES;
+				else if (delim_mode == __DELIM_SPACES)
+				{
+					delim_mode = __DELIM_COMPOSITE;
+					break;
+				}
+			}
+		}
+	}		
+	
+	if (delim_mode == __DELIM_NULL) 
 	{ 
-		/* when XP_NULL is given as "delim", it has an effect of cutting
-		   preceding and trailing space xp_char_tacters off "s". */
+		/* when XP_NULL is given as "delim", it trims off the 
+		 * leading and trailing spaces characters off the source
+		 * string "s" eventually. */
+
+		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
@@ -533,8 +571,22 @@ xp_char_t* xp_awk_strxntok (
 			p++;
 		}
 	}
-	else if (delim_mode == 1) 
+	else if (delim_mode == __DELIM_EMPTY)
 	{
+		/* each character in the source string "s" becomes a token. */
+		if (p < end)
+		{
+			c = *p;
+			sp = p;
+			ep = p++;
+		}
+	}
+	else if (delim_mode == __DELIM_SPACES) 
+	{
+		/* each token is delimited by space characters. all leading
+		 * and trailing spaces are removed. */
+
+		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
@@ -543,8 +595,22 @@ xp_char_t* xp_awk_strxntok (
 			ep = p++;
 		}
 	}
-	else /* if (delim_mode == 2) */ 
+	else if (delim_mode == __DELIM_NOSPACES)
 	{
+		while (p < end) 
+		{
+			c = *p;
+			for (d = delim; d < delim_end; d++) 
+			{
+				if (c == *d) goto exit_loop;
+			}
+			if (sp == XP_NULL) sp = p;
+			ep = p++;
+		}
+	}
+	else /* if (delim_mode == __DELIM_COMPOSITE) */ 
+	{
+		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
@@ -574,7 +640,9 @@ exit_loop:
 		*tok_len = ep - sp + 1;
 	}
 
-	return (p >= end)? XP_NULL: ((xp_char_t*)++p);
+	/* if XP_NULL is returned, this function should not be called anymore */
+	return (p >= end)? XP_NULL: 
+	       (delim_mode == __DELIM_EMPTY)? p: ((xp_char_t*)++p);
 }
 
 int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...)

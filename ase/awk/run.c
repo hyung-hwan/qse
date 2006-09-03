@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.195 2006-09-02 14:58:28 bacon Exp $
+ * $Id: run.c,v 1.196 2006-09-03 15:46:49 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4678,32 +4678,33 @@ static int __split_record (xp_awk_run_t* run)
 	xp_char_t* p, * tok;
 	xp_size_t len, tok_len, nflds;
 	xp_awk_val_t* v, * fs;
-	xp_char_t* fs_ptr;
+	xp_char_t* fs_ptr, * fs_free;
 	xp_size_t fs_len;
        
 	/* inrec should be cleared before __split_record is called */
 	xp_assert (run->inrec.nflds == 0);
 
 	/* get FS */
-#if 0
 	fs = xp_awk_getglobal (run, XP_AWK_GLOBAL_FS);
 	if (fs->type == XP_AWK_VAL_NIL)
 	{
-		fs_ptr = XP_NULL;
-		fs_len = 0;
+		fs_ptr = XP_T(" ");
+		fs_len = 1;
+		fs_free = XP_NULL;
 	}
 	else if (fs->type == XP_AWK_VAL_STR)
 	{
 		fs_ptr = ((xp_awk_val_str_t*)fs)->buf;
 		fs_len = ((xp_awk_val_str_t*)fs)->len;
+		fs_free = XP_NULL;
 	}
 	else 
 	{
 		fs_ptr = xp_awk_valtostr (
 			run, fs, xp_true, XP_NULL, &fs_len);
 		if (fs_ptr == XP_NULL) return -1;
+		fs_free = fs_ptr;
 	}
-#endif
 
 	/* scan the input record to count the fields */
 	p = XP_AWK_STR_BUF(&run->inrec.line);
@@ -4712,40 +4713,25 @@ static int __split_record (xp_awk_run_t* run)
 	nflds = 0;
 	while (p != XP_NULL)
 	{
-		/* TODO: support FS */
-#if 0
-		if (fs->type == XP_AWK_VAL_NIL)
+		if (fs_len <= 1)
 		{
-#endif
-			p = xp_awk_strxtok (
-				run->awk, p, len, XP_T(" \t"), &tok, &tok_len);
-#if 0
-		}
-		else if (fs_len == 0)
-		{
-		}
-		else if (fs_len == 1)
-		{
-			p = xp_awk_strxntok (
-				run->awk, p, len, 
-				fs_ptr, fs_len, &tok, &tok_len);
+			p = xp_awk_strxntok (run->awk,
+				p, len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
 			/* TODO: FS regular expression */
+			run->errnum = XP_AWK_EINTERNAL;
+			if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
+			xp_printf (XP_T("MULTI-CHARACTER FS NOT READY..\n"));
+			return -1;
 		}
-#endif
 
 		if (nflds == 0 && p == XP_NULL && tok_len == 0)
 		{
 			/* there are no fields. it can just return here
 			 * as __clear_record has been called before this */
-#if 0
-			if (fs->type != XP_AWK_VAL_STR) 
-			{
-				if (fs_ptr != XP_NULL) XP_AWK_FREE (run->awk, fs_ptr);
-			}
-#endif
+			if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
 			return 0;
 		}
 
@@ -4756,20 +4742,16 @@ static int __split_record (xp_awk_run_t* run)
 			(p - XP_AWK_STR_BUF(&run->inrec.line));
 	}
 
-/* THIS PART IS WRONG. XP_AWK_FREE IT AFTER THE NEXT SPLIT LOOP */
-#if 0
-	if (fs->type != XP_AWK_VAL_STR) 
-	{
-		if (fs_ptr != XP_NULL) XP_AWK_FREE (run->awk, fs_ptr);
-	}
-#endif
-
 	/* allocate space */
 	if (nflds > run->inrec.maxflds)
 	{
 		void* tmp = XP_AWK_MALLOC (
 			run->awk, xp_sizeof(*run->inrec.flds) * nflds);
-		if (tmp == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
+		if (tmp == XP_NULL) 
+		{
+			if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
+			PANIC_I (run, XP_AWK_ENOMEM);
+		}
 
 		if (run->inrec.flds != NULL) 
 			XP_AWK_FREE (run->awk, run->inrec.flds);
@@ -4783,8 +4765,24 @@ static int __split_record (xp_awk_run_t* run)
 
 	while (p != XP_NULL)
 	{
-		p = xp_awk_strxtok (
-			run->awk, p, len, XP_T(" \t"), &tok, &tok_len);
+		if (fs->type == XP_AWK_VAL_NIL)
+		{
+			p = xp_awk_strxntok (run->awk, 
+				p, len, XP_T(" "), 1, &tok, &tok_len);
+		}
+		else if (fs_len <= 1)
+		{
+			p = xp_awk_strxntok (run->awk, 
+				p, len, fs_ptr, fs_len, &tok, &tok_len);
+		}
+		else
+		{
+			/* TODO: FS regular expression */
+			run->errnum = XP_AWK_EINTERNAL;
+			if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
+			xp_printf (XP_T("MULTI-CHARACTER FS NOT READY..\n"));
+			return -1;
+		}
 
 		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
 
@@ -4794,7 +4792,10 @@ static int __split_record (xp_awk_run_t* run)
 			xp_awk_makestrval (run, tok, tok_len);
 
 		if (run->inrec.flds[run->inrec.nflds].val == XP_NULL)
+		{
+			if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
 			PANIC_I (run, XP_AWK_ENOMEM);
+		}
 
 		xp_awk_refupval (run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
@@ -4802,6 +4803,8 @@ static int __split_record (xp_awk_run_t* run)
 		len = XP_AWK_STR_LEN(&run->inrec.line) - 
 			(p - XP_AWK_STR_BUF(&run->inrec.line));
 	}
+
+	if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
 
 	/* set the number of fields */
 	v = xp_awk_makeintval (run, (xp_long_t)nflds);
