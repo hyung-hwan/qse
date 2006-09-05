@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.108 2006-09-03 15:46:49 bacon Exp $
+ * $Id: awk.h,v 1.109 2006-09-05 04:10:23 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -381,6 +381,11 @@ xp_char_t* xp_awk_strxntok (
 	xp_awk_t* awk, const xp_char_t* s, xp_size_t len,
 	const xp_char_t* delim, xp_size_t delim_len,
 	xp_char_t** tok, xp_size_t* tok_len);
+
+xp_char_t* xp_awk_strxntokbyrex (
+	xp_awk_t* awk, const xp_char_t* s, xp_size_t len,
+	void* rex, xp_char_t** tok, xp_size_t* tok_len, int* errnum);
+
 
 int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...);
 

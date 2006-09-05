@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.45 2006-09-03 15:46:49 bacon Exp $
+ * $Id: func.c,v 1.46 2006-09-05 04:10:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -507,6 +507,9 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	xp_size_t key_len;
 	xp_char_t* fs_ptr, * fs_free;
 	xp_size_t fs_len;
+	void* fs_rex = XP_NULL; 
+	void* fs_rex_free = XP_NULL;
+	int errnum;
 
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs >= 2 && nargs <= 3);
@@ -575,6 +578,12 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			}
 			fs_free = fs_ptr;
 		}
+
+		if (fs_len > 1) 
+		{
+			fs_rex = ((xp_awk_run_t*)run)->rex.fs;
+			fs_rex_free = XP_NULL;
+		}
 	}
 	else
 	{
@@ -596,6 +605,21 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			}
 			fs_free = fs_ptr;
 		}
+
+		if (fs_len > 1) 
+		{
+			fs_rex = xp_awk_buildrex (awk, fs_ptr, fs_len, &errnum);
+			if (fs_rex == XP_NULL)
+			{
+				if (str_free != XP_NULL) 
+					XP_AWK_FREE (awk, str_free);
+				if (fs_free != XP_NULL) 
+					XP_AWK_FREE (awk, fs_free);
+				xp_awk_seterrnum (run, errnum);
+				return -1;
+			}
+			fs_rex_free = fs_rex;
+		}
 	}
 
 	t1 = xp_awk_makemapval (run);
@@ -603,6 +627,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	{
 		if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
 		if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
+		if (fs_rex_free != XP_NULL) xp_awk_freerex (awk, fs_rex_free);
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
@@ -621,8 +646,19 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		}
 		else
 		{
-			/* TODO: FS regular expression */
-			xp_printf (XP_T("MULTI-CHARACTER FS NOT READY IN SPLIT\n"));
+			p = xp_awk_strxntokbyrex (awk, p, str_len, 
+				fs_rex, &tok, &tok_len, &errnum); 
+			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
+			{
+				if (str_free != XP_NULL) 
+					XP_AWK_FREE (awk, str_free);
+				if (fs_free != XP_NULL) 
+					XP_AWK_FREE (awk, fs_free);
+				if (fs_rex_free != XP_NULL) 
+					xp_awk_freerex (awk, fs_rex_free);
+				xp_awk_seterrnum (run, errnum);
+				return -1;
+			}
 		}
 
 		if (num == 0 && p == XP_NULL && tok_len == 0) 
@@ -639,6 +675,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		{
 			if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
 			if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
+			if (fs_rex_free != XP_NULL) xp_awk_freerex (awk, fs_rex_free);
 			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 			return -1;
 		}
@@ -654,6 +691,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		{
 			if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
 			if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
+			if (fs_rex_free != XP_NULL) xp_awk_freerex (awk, fs_rex_free);
 			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 			return -1;
 		}
@@ -664,11 +702,12 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		xp_awk_refupval (t2);
 
 		num++;
-		str_len = str_left - (p - str + 1);
+		str_len = str_left - (p - str);
 	}
 
 	if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
 	if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
+	if (fs_rex_free != XP_NULL) xp_awk_freerex (awk, fs_rex_free);
 
 	t1 = xp_awk_makeintval (run, num);
 	if (t1 == XP_NULL)
