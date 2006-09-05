@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.196 2006-09-03 15:46:49 bacon Exp $
+ * $Id: run.c,v 1.197 2006-09-05 04:10:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -234,7 +234,7 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 		PANIC_I (r, XP_AWK_ESCALARTOMAP);
 	}
 
-	if (idx  == XP_AWK_GLOBAL_RS)
+	if (idx == XP_AWK_GLOBAL_RS)
 	{
 		xp_char_t* rs_ptr;
 		xp_size_t rs_len;
@@ -271,18 +271,68 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 				return -1;
 			}
 
-			if (r->extio.rs_rex != XP_NULL) 
+			if (r->rex.rs != XP_NULL) 
 			{
 				xp_awk_freerex ( 
 					((xp_awk_run_t*)run)->awk, 
-					r->extio.rs_rex);
+					r->rex.rs);
 			}
-			r->extio.rs_rex = rex;
+			r->rex.rs = rex;
 		}
 
 		if (val->type != XP_AWK_VAL_STR) 
 			XP_AWK_FREE (((xp_awk_run_t*)run)->awk, rs_ptr);
 	}
+	else if (idx == XP_AWK_GLOBAL_FS)
+	{
+		xp_char_t* fs_ptr;
+		xp_size_t fs_len;
+
+		if (val->type == XP_AWK_VAL_STR)
+		{
+			fs_ptr = ((xp_awk_val_str_t*)val)->buf;
+			fs_len = ((xp_awk_val_str_t*)val)->len;
+		}
+		else
+		{
+			/* due to the expression evaluation rule, the 
+			 * regular expression can not be an assigned value */
+			xp_assert (val->type != XP_AWK_VAL_REX);
+
+			fs_ptr = xp_awk_valtostr (
+				run, val, xp_true, XP_NULL, &fs_len);
+			if (fs_ptr == XP_NULL) return -1;
+		}
+
+		if (fs_len > 1)
+		{
+			void* rex;
+
+			/* compile the regular expression */
+			/* TODO: use safebuild */
+			rex = xp_awk_buildrex (
+				((xp_awk_run_t*)run)->awk, 
+				fs_ptr, fs_len, &r->errnum);
+			if (rex == XP_NULL)
+			{
+				if (val->type != XP_AWK_VAL_STR) 
+					XP_AWK_FREE (((xp_awk_run_t*)run)->awk, fs_ptr);
+				return -1;
+			}
+
+			if (r->rex.fs != XP_NULL) 
+			{
+				xp_awk_freerex ( 
+					((xp_awk_run_t*)run)->awk, 
+					r->rex.fs);
+			}
+			r->rex.fs = rex;
+		}
+
+		if (val->type != XP_AWK_VAL_STR) 
+			XP_AWK_FREE (((xp_awk_run_t*)run)->awk, fs_ptr);
+	}
+
 
 /* TODO: if idx == XP_AWK_GLOBAL_NF recompute $0, etc */
 
@@ -534,7 +584,9 @@ static int __init_run (
 	run->extio.handler[XP_AWK_EXTIO_FILE] = runios->file;
 	run->extio.handler[XP_AWK_EXTIO_CONSOLE] = runios->console;
 	run->extio.chain = XP_NULL;
-	run->extio.rs_rex = XP_NULL;
+
+	run->rex.rs = XP_NULL;
+	run->rex.fs = XP_NULL;
 
 	return 0;
 }
@@ -547,10 +599,16 @@ static void __deinit_run (xp_awk_run_t* run)
 	/* TODO: what if this operation fails? */
 	xp_awk_clearextio (run);
 	xp_assert (run->extio.chain == XP_NULL);
-	if (run->extio.rs_rex != XP_NULL) 
+
+	if (run->rex.rs != XP_NULL) 
 	{
-		XP_AWK_FREE (run->awk, run->extio.rs_rex);
-		run->extio.rs_rex = XP_NULL;
+		XP_AWK_FREE (run->awk, run->rex.rs);
+		run->rex.rs = XP_NULL;
+	}
+	if (run->rex.fs != XP_NULL)
+	{
+		XP_AWK_FREE (run->awk, run->rex.fs);
+		run->rex.fs = XP_NULL;
 	}
 
 	/* destroy input record. __clear_record should be called
@@ -4680,6 +4738,7 @@ static int __split_record (xp_awk_run_t* run)
 	xp_awk_val_t* v, * fs;
 	xp_char_t* fs_ptr, * fs_free;
 	xp_size_t fs_len;
+	int errnum;
        
 	/* inrec should be cleared before __split_record is called */
 	xp_assert (run->inrec.nflds == 0);
@@ -4720,11 +4779,14 @@ static int __split_record (xp_awk_run_t* run)
 		}
 		else
 		{
-			/* TODO: FS regular expression */
-			run->errnum = XP_AWK_EINTERNAL;
-			if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
-			xp_printf (XP_T("MULTI-CHARACTER FS NOT READY..\n"));
-			return -1;
+			p = xp_awk_strxntokbyrex (run->awk, p, len, 
+				run->rex.fs, &tok, &tok_len, &errnum); 
+			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
+			{
+				if (fs_free != XP_NULL) 
+					XP_AWK_FREE (run->awk, fs_free);
+				PANIC_I (run, errnum);
+			}
 		}
 
 		if (nflds == 0 && p == XP_NULL && tok_len == 0)
@@ -4765,23 +4827,21 @@ static int __split_record (xp_awk_run_t* run)
 
 	while (p != XP_NULL)
 	{
-		if (fs->type == XP_AWK_VAL_NIL)
-		{
-			p = xp_awk_strxntok (run->awk, 
-				p, len, XP_T(" "), 1, &tok, &tok_len);
-		}
-		else if (fs_len <= 1)
+		if (fs_len <= 1)
 		{
 			p = xp_awk_strxntok (run->awk, 
 				p, len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
-			/* TODO: FS regular expression */
-			run->errnum = XP_AWK_EINTERNAL;
-			if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
-			xp_printf (XP_T("MULTI-CHARACTER FS NOT READY..\n"));
-			return -1;
+			p = xp_awk_strxntokbyrex (run->awk, p, len, 
+				run->rex.fs, &tok, &tok_len, &errnum); 
+			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
+			{
+				if (fs_free != XP_NULL) 
+					XP_AWK_FREE (run->awk, fs_free);
+				PANIC_I (run, errnum);
+			}
 		}
 
 		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);

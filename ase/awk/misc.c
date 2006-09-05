@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.13 2006-09-03 15:46:49 bacon Exp $
+ * $Id: misc.c,v 1.14 2006-09-05 04:10:24 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -594,9 +594,12 @@ xp_char_t* xp_awk_strxntok (
 			if (sp == XP_NULL) sp = p;
 			ep = p++;
 		}
+		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
 	}
 	else if (delim_mode == __DELIM_NOSPACES)
 	{
+		/* each token is delimited by one of charaters 
+		 * in the delimeter set "delim". */
 		while (p < end) 
 		{
 			c = *p;
@@ -610,6 +613,9 @@ xp_char_t* xp_awk_strxntok (
 	}
 	else /* if (delim_mode == __DELIM_COMPOSITE) */ 
 	{
+		/* each token is delimited by one of non-space charaters
+		 * in the delimeter set "delim". however, all space characters
+		 * surrounding the token are removed */
 		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
 		while (p < end) 
 		{
@@ -641,8 +647,38 @@ exit_loop:
 	}
 
 	/* if XP_NULL is returned, this function should not be called anymore */
-	return (p >= end)? XP_NULL: 
-	       (delim_mode == __DELIM_EMPTY)? p: ((xp_char_t*)++p);
+	if (p >= end) return XP_NULL;
+	if (delim_mode == __DELIM_EMPTY || 
+	    delim_mode == __DELIM_SPACES) return (xp_char_t*)p;
+	return (xp_char_t*)++p;
+}
+
+xp_char_t* xp_awk_strxntokbyrex (
+	xp_awk_t* awk, const xp_char_t* s, xp_size_t len,
+	void* rex, xp_char_t** tok, xp_size_t* tok_len, int* errnum)
+{
+	int n;
+	xp_char_t* match_ptr;
+	xp_size_t match_len;
+
+	n = xp_awk_matchrex (awk, rex, s, len, &match_ptr, &match_len, errnum);
+	if (n == -1) return XP_NULL;
+	if (n == 0)
+	{
+		/* no match has been found. 
+		 * return the entire string as a token */
+		*tok = (xp_char_t*)s;
+		*tok_len = len;
+		*errnum = XP_AWK_ENOERR;
+		return XP_NULL; 
+	}
+	
+	assert (n == 1);
+	*tok = (xp_char_t*)s;
+	*tok_len = match_ptr - s;
+
+	*errnum = XP_AWK_ENOERR;
+	return (match_ptr+match_len >= s+len)? XP_NULL: (match_ptr+match_len);
 }
 
 int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...)
