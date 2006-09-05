@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.27 2006-09-01 07:18:40 bacon Exp $
+ * $Id: rex.c,v 1.28 2006-09-05 15:18:16 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -154,7 +154,7 @@ static int __build_pattern0 (__builder_t* rex);
 static int __build_branch (__builder_t* rex);
 static int __build_atom (__builder_t* rex);
 static int __build_charset (__builder_t* rex, struct __code_t* cmd);
-static int __build_boundary (__builder_t* rex, struct __code_t* cmd);
+static int __build_occurrences (__builder_t* rex, struct __code_t* cmd);
 static int __build_cclass (__builder_t* rex, xp_char_t* cc);
 static int __build_range (__builder_t* rex, struct __code_t* cmd);
 static int __next_char (__builder_t* rex, int level);
@@ -186,7 +186,7 @@ static const xp_byte_t* __match_charset (
 static const xp_byte_t* __match_group (
 	__matcher_t* matcher, const xp_byte_t* base, __match_t* mat);
 
-static const xp_byte_t* __match_boundary (
+static const xp_byte_t* __match_occurrences (
 	__matcher_t* matcher, xp_size_t si, const xp_byte_t* p,
 	xp_size_t lbound, xp_size_t ubound, __match_t* mat);
 
@@ -308,6 +308,7 @@ int xp_awk_matchrex (
 	__matcher_t matcher;
 	__match_t mat;
 	xp_size_t offset = 0;
+	/*const xp_char_t* match_ptr_zero = XP_NULL;*/
 
 	matcher.awk = awk;
 
@@ -321,7 +322,7 @@ int xp_awk_matchrex (
 	matcher.depth.cur = 0;
 
 	mat.matched = xp_false;
-/* TODO: shoud it allow an offset here??? */
+/* TODO: should it allow an offset here??? */
 	mat.match_ptr = str + offset;
 
 	while (mat.match_ptr < matcher.match.str.end)
@@ -334,13 +335,34 @@ int xp_awk_matchrex (
 
 		if (mat.matched)
 		{
+			/*
+			if (mat.match_len == 0)
+			{
+				if (match_ptr_zero == XP_NULL)
+					match_ptr_zero = mat.match_ptr;
+				mat.match_ptr++;
+				continue;
+			}
+			*/
+
 			if (match_ptr != XP_NULL) *match_ptr = mat.match_ptr;
 			if (match_len != XP_NULL) *match_len = mat.match_len;
+
+			/*match_ptr_zero = XP_NULL;*/
 			break;
 		}
 
 		mat.match_ptr++;
 	}
+
+	/*
+	if (match_ptr_zero != XP_NULL) 
+	{
+		if (match_ptr != XP_NULL) *match_ptr = match_ptr_zero;
+		if (match_len != XP_NULL) *match_len = 0;
+		return 1;
+	}
+	*/
 
 	return (mat.matched)? 1: 0;
 }
@@ -466,7 +488,7 @@ static int __build_branch (__builder_t* builder)
 
 		if (n == 0) break; /* no atom */
 
-		n = __build_boundary (builder, cmd);
+		n = __build_occurrences (builder, cmd);
 		if (n == -1)
 		{
 			builder->code.size = old_size;
@@ -474,7 +496,7 @@ static int __build_branch (__builder_t* builder)
 		}
 
 		/* n == 0  no bound character. just continue */
-		/* n == 1  bound has been applied by build_boundary */
+		/* n == 1  bound has been applied by build_occurrences */
 
 		CODEAT(builder,pos_na,xp_size_t) += 1;
 	}
@@ -738,7 +760,7 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 }
 #endif
 
-static int __build_boundary (__builder_t* builder, struct __code_t* cmd)
+static int __build_occurrences (__builder_t* builder, struct __code_t* cmd)
 {
 	if (builder->ptn.curc.type != CT_SPECIAL) return 0;
 
@@ -826,7 +848,7 @@ static int __build_range (__builder_t* builder, struct __code_t* cmd)
 
 	if (cmd->lbound > cmd->ubound)
 	{
-		/* invalid boundary range */
+		/* invalid occurrences range */
 		builder->errnum = XP_AWK_EREXBRANGE;
 		return -1;
 	}
@@ -1165,7 +1187,7 @@ static const xp_byte_t* __match_any_char (
 //xp_printf (XP_T("max si = %d\n"), si);
 	if (si >= lbound && si <= ubound)
 	{
-		p = __match_boundary (matcher, si, p, lbound, ubound, mat);
+		p = __match_occurrences (matcher, si, p, lbound, ubound, mat);
 	}
 
 	return p;
@@ -1215,10 +1237,10 @@ static const xp_byte_t* __match_ord_char (
 		si++;
 	}
 
-//xp_printf (XP_T("max si = %d\n"), si);
+//xp_printf (XP_T("max si = %d, lbound = %u, ubound = %u\n"), si, lbound, ubound);
 	if (si >= lbound && si <= ubound)
 	{
-		p = __match_boundary (matcher, si, p, lbound, ubound, mat);
+		p = __match_occurrences (matcher, si, p, lbound, ubound, mat);
 	}
 
 	return p;
@@ -1259,7 +1281,7 @@ static const xp_byte_t* __match_charset (
 
 	if (si >= lbound && si <= ubound)
 	{
-		p = __match_boundary (matcher, si, p, lbound, ubound, mat);
+		p = __match_occurrences (matcher, si, p, lbound, ubound, mat);
 	}
 
 	return p;
@@ -1345,7 +1367,7 @@ static const xp_byte_t* __match_group (
 	/* increment p by the length of the subpattern */
 	p += *(xp_size_t*)(p+xp_sizeof(xp_size_t));
 
-	/* check the boundary */
+	/* check the occurrences */
 	if (si >= cp->lbound && si <= cp->ubound)
 	{
 		if (cp->lbound == cp->ubound || p >= mat->branch_end)
@@ -1394,7 +1416,7 @@ static const xp_byte_t* __match_group (
 	return p;
 }
 
-static const xp_byte_t* __match_boundary (
+static const xp_byte_t* __match_occurrences (
 	__matcher_t* matcher, xp_size_t si, const xp_byte_t* p,
 	xp_size_t lbound, xp_size_t ubound, __match_t* mat)
 {
