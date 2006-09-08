@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.54 2006-08-26 16:30:52 bacon Exp $
+ * $Id: types.h,v 1.55 2006-09-08 11:27:01 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -221,6 +221,9 @@ typedef int  xp_mcint_t;
 		typedef unsigned int xp_wchar_t;
 		typedef int xp_wcint_t;
 	#elif defined(__FreeBSD__)
+		typedef int xp_wchar_t;
+		typedef int xp_wcint_t;
+	#elif (defined(sun) || defined(__sun)) && defined(_LP64)
 		typedef int xp_wchar_t;
 		typedef int xp_wcint_t;
 	#elif XP_SIZEOF_LONG == 4
