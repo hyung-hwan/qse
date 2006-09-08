@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.16 2006-09-08 14:50:52 bacon Exp $
+ * $Id: misc.c,v 1.17 2006-09-08 15:26:49 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -478,35 +478,35 @@ xp_char_t* xp_awk_strxnstr (
 }
 
 xp_char_t* xp_awk_strtok (
-	xp_awk_t* awk, const xp_char_t* s, 
+	xp_awk_run_t* run, const xp_char_t* s, 
 	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len)
 {
 	return xp_awk_strxntok (
-		awk, s, xp_awk_strlen(s), 
+		run, s, xp_awk_strlen(s), 
 		delim, xp_awk_strlen(delim), tok, tok_len);
 }
 
 xp_char_t* xp_awk_strxtok (
-	xp_awk_t* awk, const xp_char_t* s, xp_size_t len,
+	xp_awk_run_t* run, const xp_char_t* s, xp_size_t len,
 	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len)
 {
 	return xp_awk_strxntok (
-		awk, s, len, 
+		run, s, len, 
 		delim, xp_awk_strlen(delim), tok, tok_len);
 }
 
 xp_char_t* xp_awk_strntok (
-	xp_awk_t* awk, const xp_char_t* s, 
+	xp_awk_run_t* run, const xp_char_t* s, 
 	const xp_char_t* delim, xp_size_t delim_len,
 	xp_char_t** tok, xp_size_t* tok_len)
 {
 	return xp_awk_strxntok (
-		awk, s, xp_awk_strlen(s), 
+		run, s, xp_awk_strlen(s), 
 		delim, delim_len, tok, tok_len);
 }
 
 xp_char_t* xp_awk_strxntok (
-	xp_awk_t* awk, const xp_char_t* s, xp_size_t len,
+	xp_awk_run_t* run, const xp_char_t* s, xp_size_t len,
 	const xp_char_t* delim, xp_size_t delim_len, 
 	xp_char_t** tok, xp_size_t* tok_len)
 {
@@ -517,6 +517,7 @@ xp_char_t* xp_awk_strxntok (
 	xp_char_t c; 
 	int delim_mode;
 
+xp_printf (XP_T("ignorecase = %d\n"), run->rex.ignorecase);
 #define __DELIM_NULL      0
 #define __DELIM_EMPTY     1
 #define __DELIM_SPACES    2
@@ -529,7 +530,7 @@ xp_char_t* xp_awk_strxntok (
 
 		for (d = delim; d < delim_end; d++) 
 		{
-			if (XP_AWK_ISSPACE(awk,*d)) 
+			if (XP_AWK_ISSPACE(run->awk,*d)) 
 			{
 				if (delim_mode == __DELIM_EMPTY)
 					delim_mode = __DELIM_SPACES;
@@ -558,12 +559,12 @@ xp_char_t* xp_awk_strxntok (
 		 * leading and trailing spaces characters off the source
 		 * string "s" eventually. */
 
-		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
+		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
 
-			if (!XP_AWK_ISSPACE(awk,c)) 
+			if (!XP_AWK_ISSPACE(run->awk,c)) 
 			{
 				if (sp == XP_NULL) sp = p;
 				ep = p;
@@ -586,15 +587,15 @@ xp_char_t* xp_awk_strxntok (
 		/* each token is delimited by space characters. all leading
 		 * and trailing spaces are removed. */
 
-		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
+		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
-			if (XP_AWK_ISSPACE(awk,c)) break;
+			if (XP_AWK_ISSPACE(run->awk,c)) break;
 			if (sp == XP_NULL) sp = p;
 			ep = p++;
 		}
-		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
+		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
 	}
 	else if (delim_mode == __DELIM_NOSPACES)
 	{
@@ -616,11 +617,11 @@ xp_char_t* xp_awk_strxntok (
 		/* each token is delimited by one of non-space charaters
 		 * in the delimeter set "delim". however, all space characters
 		 * surrounding the token are removed */
-		while (p < end && XP_AWK_ISSPACE(awk,*p)) p++;
+		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
-			if (XP_AWK_ISSPACE(awk,c)) 
+			if (XP_AWK_ISSPACE(run->awk,c)) 
 			{
 				p++;
 				continue;
@@ -654,7 +655,7 @@ exit_loop:
 }
 
 xp_char_t* xp_awk_strxntokbyrex (
-	xp_awk_t* awk, const xp_char_t* s, xp_size_t len,
+	xp_awk_run_t* run, const xp_char_t* s, xp_size_t len,
 	void* rex, xp_char_t** tok, xp_size_t* tok_len, int* errnum)
 {
 	int n;
@@ -665,10 +666,12 @@ xp_char_t* xp_awk_strxntokbyrex (
 	const xp_char_t* str_ptr = s;
 	xp_size_t str_len = len;
 
+xp_printf (XP_T("ignorecase = %d\n"), run->rex.ignorecase);
 	while (len > 0)
 	{
 		n = xp_awk_matchrex (
-			awk, rex, ptr, left, &match_ptr, &match_len, errnum);
+			run->awk, rex, ptr, left, 
+			&match_ptr, &match_len, errnum);
 		if (n == -1) return XP_NULL;
 		if (n == 0)
 		{
@@ -687,14 +690,14 @@ xp_char_t* xp_awk_strxntokbyrex (
 			ptr++;
 			left--;
 		}
-		else if (awk->option & XP_AWK_STRIPSPACES)
+		else if (run->awk->option & XP_AWK_STRIPSPACES)
 		{
 			/* match at the beginning of the input string */
 			if (match_ptr == s) 
 			{
 				for (i = 0; i < match_len; i++)
 				{
-					if (!XP_AWK_ISSPACE(awk, match_ptr[i]))
+					if (!XP_AWK_ISSPACE(run->awk, match_ptr[i]))
 						goto exit_loop;
 				}
 
@@ -724,7 +727,7 @@ exit_loop:
 
 	for (i = 0; i < match_len; i++)
 	{
-		if (!XP_AWK_ISSPACE(awk, match_ptr[i]))
+		if (!XP_AWK_ISSPACE(run->awk, match_ptr[i]))
 		{
 			*errnum = XP_AWK_ENOERR;
 			return match_ptr+match_len;
@@ -733,7 +736,7 @@ exit_loop:
 
 	*errnum = XP_AWK_ENOERR;
 
-	if (awk->option & XP_AWK_STRIPSPACES)
+	if (run->awk->option & XP_AWK_STRIPSPACES)
 	{
 		return (match_ptr+match_len >= s+len)? 
 			XP_NULL: (match_ptr+match_len);

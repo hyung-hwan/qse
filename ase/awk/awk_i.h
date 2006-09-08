@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.55 2006-09-05 04:10:23 bacon Exp $
+ * $Id: awk_i.h,v 1.56 2006-09-08 15:26:49 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -48,6 +48,7 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/awk/parse.h>
 #include <xp/awk/run.h>
 #include <xp/awk/extio.h>
+#include <xp/awk/misc.h>
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
@@ -247,6 +248,7 @@ struct xp_awk_run_t
 	{
 		void* rs;
 		void* fs;
+		int ignorecase;
 	} rex;
 
 	/* extio chain */

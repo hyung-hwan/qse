@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.46 2006-09-05 04:10:24 bacon Exp $
+ * $Id: func.c,v 1.47 2006-09-08 15:26:49 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -641,12 +641,12 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	{
 		if (fs_len <= 1)
 		{
-			p = xp_awk_strxntok (awk, 
+			p = xp_awk_strxntok (run, 
 				p, str_len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
-			p = xp_awk_strxntokbyrex (awk, p, str_len, 
+			p = xp_awk_strxntokbyrex (run, p, str_len, 
 				fs_rex, &tok, &tok_len, &errnum); 
 			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
 			{
