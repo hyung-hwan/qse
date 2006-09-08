@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.15 2006-09-05 15:18:15 bacon Exp $
+ * $Id: misc.c,v 1.16 2006-09-08 14:50:52 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -660,53 +660,67 @@ xp_char_t* xp_awk_strxntokbyrex (
 	int n;
 	xp_char_t* match_ptr;
 	xp_size_t match_len, i;
-	const xp_char_t* p = s;
 	xp_size_t left = len;
+	const xp_char_t* ptr = s;
+	const xp_char_t* str_ptr = s;
+	xp_size_t str_len = len;
 
-// TODO:...
-while (len > 0)
-{
-	n = xp_awk_matchrex (awk, rex, p, left, &match_ptr, &match_len, errnum);
-	if (n == -1) return XP_NULL;
-	if (n == 0)
+	while (len > 0)
 	{
-		/* no match has been found. 
-		 * return the entire string as a token */
-		*tok = (xp_char_t*)s;
-		*tok_len = len;
+		n = xp_awk_matchrex (
+			awk, rex, ptr, left, &match_ptr, &match_len, errnum);
+		if (n == -1) return XP_NULL;
+		if (n == 0)
+		{
+			/* no match has been found. 
+			 * return the entire string as a token */
+			*tok = (xp_char_t*)str_ptr;
+			*tok_len = str_len;
+			*errnum = XP_AWK_ENOERR;
+			return XP_NULL; 
+		}
+
+		assert (n == 1);
+
+		if (match_len == 0)
+		{
+			ptr++;
+			left--;
+		}
+		else if (awk->option & XP_AWK_STRIPSPACES)
+		{
+			/* match at the beginning of the input string */
+			if (match_ptr == s) 
+			{
+				for (i = 0; i < match_len; i++)
+				{
+					if (!XP_AWK_ISSPACE(awk, match_ptr[i]))
+						goto exit_loop;
+				}
+
+				/* the match that are all spaces at the 
+				 * beginning of the input string is skipped */
+				ptr += match_len;
+				left -= match_len;
+				str_ptr = s + match_len;
+				str_len -= match_len;
+			}
+			else  break;
+		}
+		else break;
+	}
+
+exit_loop:
+	if (len == 0)
+	{
+		*tok = (xp_char_t*)str_ptr;
+		*tok_len = str_len;
 		*errnum = XP_AWK_ENOERR;
 		return XP_NULL; 
 	}
 
-	assert (n == 1);
-
-	if (match_len == 0)
-	{
-		p++;
-		left--;
-	}
-	else break;
-}
-
-if (len == 0)
-{
-	*tok = (xp_char_t*)s;
-	*tok_len = len;
-	*errnum = XP_AWK_ENOERR;
-	return XP_NULL; 
-}
-
-#if 0
-//xp_printf (XP_T("%d [%s]\n"), match_len, match_ptr);
-	if (match_len == 0 && s == match_ptr && len > 0) 
-	{
-//xp_printf (XP_T("%d [%s]\n"), match_len, match_ptr);
-		match_ptr++;
-	}
-#endif
-
-	*tok = (xp_char_t*)s;
-	*tok_len = match_ptr - s;
+	*tok = (xp_char_t*)str_ptr;
+	*tok_len = match_ptr - str_ptr;
 
 	for (i = 0; i < match_len; i++)
 	{
@@ -718,7 +732,17 @@ if (len == 0)
 	}
 
 	*errnum = XP_AWK_ENOERR;
-	return (match_ptr+match_len >= s+len)? XP_NULL: (match_ptr+match_len);
+
+	if (awk->option & XP_AWK_STRIPSPACES)
+	{
+		return (match_ptr+match_len >= s+len)? 
+			XP_NULL: (match_ptr+match_len);
+	}
+	else
+	{
+		return (match_ptr+match_len > s+len)? 
+			XP_NULL: (match_ptr+match_len);
+	}
 }
 
 int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...)
