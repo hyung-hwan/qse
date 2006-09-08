@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.197 2006-09-05 04:10:24 bacon Exp $
+ * $Id: run.c,v 1.198 2006-09-08 15:26:49 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -332,7 +332,22 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 		if (val->type != XP_AWK_VAL_STR) 
 			XP_AWK_FREE (((xp_awk_run_t*)run)->awk, fs_ptr);
 	}
-
+	else if (idx == XP_AWK_GLOBAL_IGNORECASE)
+	{
+		if ((val->type == XP_AWK_VAL_INT &&
+		     ((xp_awk_val_int_t*)val)->val == 0) ||
+		    (val->type == XP_AWK_VAL_REAL &&
+		     ((xp_awk_val_real_t*)val)->val == 0.0) ||
+		    (val->type == XP_AWK_VAL_STR &&
+		     ((xp_awk_val_str_t*)val)->len == 0))
+		{
+			((xp_awk_run_t*)run)->rex.ignorecase = 0;
+		}
+		else
+		{
+			((xp_awk_run_t*)run)->rex.ignorecase = 1;
+		}
+	}
 
 /* TODO: if idx == XP_AWK_GLOBAL_NF recompute $0, etc */
 
@@ -587,6 +602,7 @@ static int __init_run (
 
 	run->rex.rs = XP_NULL;
 	run->rex.fs = XP_NULL;
+	run->rex.ignorecase = 0;
 
 	return 0;
 }
@@ -4774,12 +4790,12 @@ static int __split_record (xp_awk_run_t* run)
 	{
 		if (fs_len <= 1)
 		{
-			p = xp_awk_strxntok (run->awk,
+			p = xp_awk_strxntok (run,
 				p, len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
-			p = xp_awk_strxntokbyrex (run->awk, p, len, 
+			p = xp_awk_strxntokbyrex (run, p, len, 
 				run->rex.fs, &tok, &tok_len, &errnum); 
 			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
 			{
@@ -4829,12 +4845,12 @@ static int __split_record (xp_awk_run_t* run)
 	{
 		if (fs_len <= 1)
 		{
-			p = xp_awk_strxntok (run->awk, 
-				p, len, fs_ptr, fs_len, &tok, &tok_len);
+			p = xp_awk_strxntok (
+				run, p, len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
-			p = xp_awk_strxntokbyrex (run->awk, p, len, 
+			p = xp_awk_strxntokbyrex (run, p, len, 
 				run->rex.fs, &tok, &tok_len, &errnum); 
 			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
 			{
