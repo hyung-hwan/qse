@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.88 2006-09-02 15:17:44 bacon Exp $
+ * $Id: awk.c,v 1.89 2006-09-08 14:51:15 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -597,7 +597,8 @@ static int __main (int argc, xp_char_t* argv[])
 	opt = XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_HASHSIGN |
 		/*XP_AWK_DBLSLASHES |*/
 		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | 
-		XP_AWK_EXTIO | XP_AWK_BLOCKLESS | XP_AWK_STRINDEXONE;
+		XP_AWK_EXTIO | XP_AWK_BLOCKLESS | XP_AWK_STRINDEXONE | 
+		XP_AWK_STRIPSPACES;
 
 	if (argc <= 1)
 	{

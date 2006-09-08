@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.109 2006-09-05 04:10:23 bacon Exp $
+ * $Id: awk.h,v 1.110 2006-09-08 14:50:52 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -165,7 +165,11 @@ enum
 	XP_AWK_RUNMAIN     = (1 << 10),
 
 	/* use 1 as the start index for string operations */
-	XP_AWK_STRINDEXONE = (1 << 11)
+	XP_AWK_STRINDEXONE = (1 << 11),
+
+	/* strip off leading and trailing spaces when splitting a record
+	 * into fields with a regular expression */
+	XP_AWK_STRIPSPACES = (1 << 12)
 };
 
 /* error code */
