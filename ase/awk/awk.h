@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.110 2006-09-08 14:50:52 bacon Exp $
+ * $Id: awk.h,v 1.111 2006-09-08 14:57:43 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -168,7 +168,18 @@ enum
 	XP_AWK_STRINDEXONE = (1 << 11),
 
 	/* strip off leading and trailing spaces when splitting a record
-	 * into fields with a regular expression */
+	 * into fields with a regular expression.
+	 *
+	 * Consider the following program.
+	 *  BEGIN { FS="[:[:space:]]+"; } 
+	 *  { 
+	 *  	print "NF=" NF; 
+	 *  	for (i = 0; i < NF; i++) print i " [" $(i+1) "]";
+	 *  }
+	 *
+	 * The program splits " a b c " into [a], [b], [c] when this
+	 * option is on while into [], [a], [b], [c], [] when it is off.
+	 */
 	XP_AWK_STRIPSPACES = (1 << 12)
 };
 
