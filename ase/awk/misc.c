@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.17 2006-09-08 15:26:49 bacon Exp $
+ * $Id: misc.c,v 1.18 2006-09-09 04:52:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -517,7 +517,6 @@ xp_char_t* xp_awk_strxntok (
 	xp_char_t c; 
 	int delim_mode;
 
-xp_printf (XP_T("ignorecase = %d\n"), run->rex.ignorecase);
 #define __DELIM_NULL      0
 #define __DELIM_EMPTY     1
 #define __DELIM_SPACES    2
@@ -601,15 +600,33 @@ xp_printf (XP_T("ignorecase = %d\n"), run->rex.ignorecase);
 	{
 		/* each token is delimited by one of charaters 
 		 * in the delimeter set "delim". */
-		while (p < end) 
+		if (run->rex.ignorecase)
 		{
-			c = *p;
-			for (d = delim; d < delim_end; d++) 
+			while (p < end) 
 			{
-				if (c == *d) goto exit_loop;
+				c = XP_AWK_TOUPPER(run->awk, *p);
+				for (d = delim; d < delim_end; d++) 
+				{
+					if (c == XP_AWK_TOUPPER(run->awk,*d)) goto exit_loop;
+				}
+
+				if (sp == XP_NULL) sp = p;
+				ep = p++;
 			}
-			if (sp == XP_NULL) sp = p;
-			ep = p++;
+		}
+		else
+		{
+			while (p < end) 
+			{
+				c = *p;
+				for (d = delim; d < delim_end; d++) 
+				{
+					if (c == *d) goto exit_loop;
+				}
+
+				if (sp == XP_NULL) sp = p;
+				ep = p++;
+			}
 		}
 	}
 	else /* if (delim_mode == __DELIM_COMPOSITE) */ 
@@ -618,20 +635,41 @@ xp_printf (XP_T("ignorecase = %d\n"), run->rex.ignorecase);
 		 * in the delimeter set "delim". however, all space characters
 		 * surrounding the token are removed */
 		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
-		while (p < end) 
+		if (run->rex.ignorecase)
 		{
-			c = *p;
-			if (XP_AWK_ISSPACE(run->awk,c)) 
+			while (p < end) 
 			{
-				p++;
-				continue;
+				c = XP_AWK_TOUPPER(run->awk, *p);
+				if (XP_AWK_ISSPACE(run->awk,c)) 
+				{
+					p++;
+					continue;
+				}
+				for (d = delim; d < delim_end; d++) 
+				{
+					if (c == XP_AWK_TOUPPER(run->awk,*d)) goto exit_loop;
+				}
+				if (sp == XP_NULL) sp = p;
+				ep = p++;
 			}
-			for (d = delim; d < delim_end; d++) 
+		}
+		else
+		{
+			while (p < end) 
 			{
-				if (c == *d) goto exit_loop;
+				c = *p;
+				if (XP_AWK_ISSPACE(run->awk,c)) 
+				{
+					p++;
+					continue;
+				}
+				for (d = delim; d < delim_end; d++) 
+				{
+					if (c == *d) goto exit_loop;
+				}
+				if (sp == XP_NULL) sp = p;
+				ep = p++;
 			}
-			if (sp == XP_NULL) sp = p;
-			ep = p++;
 		}
 	}
 

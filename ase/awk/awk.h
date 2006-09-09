@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.112 2006-09-08 15:26:49 bacon Exp $
+ * $Id: awk.h,v 1.113 2006-09-09 04:52:39 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -125,7 +125,7 @@ enum
 };
 
 /* various options */
-enum
+enum xp_awk_option_t
 { 
 	/* allow undeclared variables */
 	XP_AWK_IMPLICIT    = (1 << 0),
@@ -184,7 +184,7 @@ enum
 };
 
 /* error code */
-enum
+enum ant_awk_errnum_t
 {
 	XP_AWK_ENOERR,         /* no error */
 	XP_AWK_ENOMEM,         /* out of memory */
