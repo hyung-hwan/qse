@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.56 2006-09-08 15:26:49 bacon Exp $
+ * $Id: awk_i.h,v 1.57 2006-09-09 04:52:40 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -17,8 +17,6 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 	#error Neither XP_CHAR_IS_MCHAR nor XP_CHAR_IS_WCHAR is defined.
 	#endif
 
-	#include <stdio.h>
-	#include <stdlib.h>
 	#include <string.h>
 	#include <stdarg.h>
 	#include <assert.h>
