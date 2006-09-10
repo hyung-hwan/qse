@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.19 2006-09-10 15:50:34 bacon Exp $
+ * $Id: misc.c,v 1.20 2006-09-10 16:04:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -731,7 +731,8 @@ xp_char_t* xp_awk_strxntokbyrex (
 		n = xp_awk_matchrex (
 			run->awk, rex, 
 			((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
-			ptr, left, &match_ptr, &match_len, errnum);
+			ptr, left, (const xp_char_t**)&match_ptr, &match_len, 
+			errnum);
 		if (n == -1) return XP_NULL;
 		if (n == 0)
 		{
@@ -743,7 +744,7 @@ xp_char_t* xp_awk_strxntokbyrex (
 			return XP_NULL; 
 		}
 
-		assert (n == 1);
+		xp_assert (n == 1);
 
 		if (match_len == 0)
 		{
