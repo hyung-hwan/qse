@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.198 2006-09-08 15:26:49 bacon Exp $
+ * $Id: run.c,v 1.199 2006-09-10 15:50:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -181,6 +181,7 @@ static int __split_record (xp_awk_run_t* run);
 static int __clear_record (xp_awk_run_t* run, xp_bool_t noline);
 static int __recomp_record_fields (
 	xp_awk_run_t* run, xp_size_t lv, xp_char_t* str, xp_size_t len);
+static int __shorten_record (xp_awk_run_t* run, xp_size_t nflds);
 
 static xp_char_t* __idxnde_to_str (
 	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_size_t* len);
@@ -348,8 +349,22 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 			((xp_awk_run_t*)run)->rex.ignorecase = 1;
 		}
 	}
+	else if (idx == XP_AWK_GLOBAL_NF)
+	{
+		int n;
+		xp_long_t lv;
+		xp_real_t rv;
 
-/* TODO: if idx == XP_AWK_GLOBAL_NF recompute $0, etc */
+		/* TODO: need to recompute $0, etc */
+		n = xp_awk_valtonum (run, val, &lv, &rv);
+		if (n == -1) return -1;
+		if (n == 1) lv = (xp_long_t)rv;
+
+		if (lv < r->inrec.nflds)
+		{
+			if (__shorten_record (r, (xp_size_t)lv) == -1) return -1;
+		}
+	}
 
 	xp_awk_refdownval (run, old);
 	STACK_GLOBAL((xp_awk_run_t*)run,idx) = val;
@@ -1932,6 +1947,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			n = xp_awk_matchrex (
 				((xp_awk_run_t*)run)->awk, 
 				((xp_awk_val_rex_t*)v)->code,
+				((((xp_awk_run_t*)run)->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 				((xp_awk_val_str_t*)run->inrec.d0)->buf,
 				((xp_awk_val_str_t*)run->inrec.d0)->len,
 				XP_NULL, XP_NULL, &errnum);
@@ -2762,11 +2778,23 @@ static xp_awk_val_t* __eval_binop_eq (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_awk_strxncmp (
-			((xp_awk_val_str_t*)left)->buf,
-			((xp_awk_val_str_t*)left)->len,
-			((xp_awk_val_str_t*)right)->buf,
-			((xp_awk_val_str_t*)right)->len) == 0;
+		if (run->rex.ignorecase)
+		{
+			r = xp_awk_strxncasecmp (
+				run->awk,
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) == 0;
+		}
+		else
+		{
+			r = xp_awk_strxncmp (
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) == 0;
+		}
 	}
 	else
 	{
@@ -2817,11 +2845,23 @@ static xp_awk_val_t* __eval_binop_ne (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_awk_strxncmp (
-			((xp_awk_val_str_t*)left)->buf,
-			((xp_awk_val_str_t*)left)->len,
-			((xp_awk_val_str_t*)right)->buf,
-			((xp_awk_val_str_t*)right)->len) != 0;
+		if (run->rex.ignorecase)
+		{
+			r = xp_awk_strxncasecmp (
+				run->awk,
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) != 0;
+		}
+		else
+		{
+			r = xp_awk_strxncmp (
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) != 0;
+		}
 	}
 	else
 	{
@@ -2866,11 +2906,23 @@ static xp_awk_val_t* __eval_binop_gt (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_awk_strxncmp (
-			((xp_awk_val_str_t*)left)->buf,
-			((xp_awk_val_str_t*)left)->len,
-			((xp_awk_val_str_t*)right)->buf,
-			((xp_awk_val_str_t*)right)->len) > 0;
+		if (run->rex.ignorecase)
+		{
+			r = xp_awk_strxncasecmp (
+				run->awk,
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) > 0;
+		}
+		else
+		{
+			r = xp_awk_strxncmp (
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) > 0;
+		}
 	}
 	else
 	{
@@ -2915,11 +2967,23 @@ static xp_awk_val_t* __eval_binop_ge (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_awk_strxncmp (
-			((xp_awk_val_str_t*)left)->buf,
-			((xp_awk_val_str_t*)left)->len,
-			((xp_awk_val_str_t*)right)->buf,
-			((xp_awk_val_str_t*)right)->len) >= 0;
+		if (run->rex.ignorecase)
+		{
+			r = xp_awk_strxncasecmp (
+				run->awk,
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) >= 0;
+		}
+		else
+		{
+			r = xp_awk_strxncmp (
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) >= 0;
+		}
 	}
 	else
 	{
@@ -2964,11 +3028,23 @@ static xp_awk_val_t* __eval_binop_lt (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_awk_strxncmp (
-			((xp_awk_val_str_t*)left)->buf,
-			((xp_awk_val_str_t*)left)->len,
-			((xp_awk_val_str_t*)right)->buf,
-			((xp_awk_val_str_t*)right)->len) < 0;
+		if (run->rex.ignorecase)
+		{
+			r = xp_awk_strxncasecmp (
+				run->awk,
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) < 0;
+		}
+		else
+		{
+			r = xp_awk_strxncmp (
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) < 0;
+		}
 	}
 	else
 	{
@@ -3013,11 +3089,23 @@ static xp_awk_val_t* __eval_binop_le (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		r = xp_awk_strxncmp (
-			((xp_awk_val_str_t*)left)->buf,
-			((xp_awk_val_str_t*)left)->len,
-			((xp_awk_val_str_t*)right)->buf,
-			((xp_awk_val_str_t*)right)->len) <= 0;
+		if (run->rex.ignorecase)
+		{
+			r = xp_awk_strxncasecmp (
+				run->awk,
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) <= 0;
+		}
+		else
+		{
+			r = xp_awk_strxncmp (
+				((xp_awk_val_str_t*)left)->buf,
+				((xp_awk_val_str_t*)left)->len,
+				((xp_awk_val_str_t*)right)->buf,
+				((xp_awk_val_str_t*)right)->len) <= 0;
+		}
 	}
 	else
 	{
@@ -3398,6 +3486,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 	{
 		n = xp_awk_matchrex (
 			run->awk, rex_code,
+			((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			XP_NULL, XP_NULL, &errnum);
@@ -3428,6 +3517,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 
 		n = xp_awk_matchrex (
 			run->awk, rex_code, 
+			((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 			str, len, XP_NULL, XP_NULL, &errnum);
 		if (n == -1) 
 		{
@@ -4930,7 +5020,7 @@ static int __recomp_record_fields (
 	xp_awk_run_t* run, xp_size_t lv, xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_t* v;
-	xp_char_t* ofsp = XP_NULL, * ofs;
+	xp_char_t* ofs_free = XP_NULL, * ofs;
 	xp_size_t ofs_len;
 	xp_size_t max, i, nflds;
 
@@ -4981,21 +5071,27 @@ static int __recomp_record_fields (
 	if (max > 1)
 	{
 		v = STACK_GLOBAL(run, XP_AWK_GLOBAL_OFS);
-		if (v != xp_awk_val_nil)
-		{
-			ofsp = xp_awk_valtostr (
-				run, v, xp_true, XP_NULL, &ofs_len);
-			if (ofsp == XP_NULL) return -1;
+		xp_awk_refupval (v);
 
-			ofs = ofsp;
-		}
-		else
+		if (v == xp_awk_val_nil)
 		{
 			/* OFS not set */
 			ofs = XP_T(" ");
 			ofs_len = 1;
 		}
+		else if (v->type == XP_AWK_VAL_STR)
+		{
+			ofs = ((xp_awk_val_str_t*)v)->buf;
+			ofs_len = ((xp_awk_val_str_t*)v)->len;
+		}
+		else
+		{
+			ofs = xp_awk_valtostr (
+				run, v, xp_true, XP_NULL, &ofs_len);
+			if (ofs == XP_NULL) return -1;
 
+			ofs_free = ofs;
+		}
 	}
 
 	for (i = 0; i < max; i++)
@@ -5006,7 +5102,9 @@ static int __recomp_record_fields (
 				&run->inrec.line, 
 				ofs, ofs_len) == (xp_size_t)-1) 
 			{
-				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
+				if (ofs_free != XP_NULL) 
+					XP_AWK_FREE (run->awk, ofs_free);
+				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
@@ -5024,7 +5122,9 @@ static int __recomp_record_fields (
 			if (xp_awk_str_ncat (
 				&run->inrec.line, str, len) == (xp_size_t)-1)
 			{
-				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
+				if (ofs_free != XP_NULL) 
+					XP_AWK_FREE (run->awk, ofs_free);
+				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
@@ -5032,7 +5132,9 @@ static int __recomp_record_fields (
 			tmp = xp_awk_makestrval (run, str,len);
 			if (tmp == XP_NULL) 
 			{
-				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
+				if (ofs_free != XP_NULL) 
+					XP_AWK_FREE (run->awk, ofs_free);
+				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
@@ -5053,7 +5155,9 @@ static int __recomp_record_fields (
 			if (xp_awk_str_cat (
 				&run->inrec.line, XP_T("")) == (xp_size_t)-1)
 			{
-				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
+				if (ofs_free != XP_NULL) 
+					XP_AWK_FREE (run->awk, ofs_free);
+				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
@@ -5080,14 +5184,17 @@ static int __recomp_record_fields (
 			if (xp_awk_str_ncat (&run->inrec.line, 
 				tmp->buf, tmp->len) == (xp_size_t)-1)
 			{
-				if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
+				if (ofs_free != XP_NULL) 
+					XP_AWK_FREE (run->awk, ofs_free);
+				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
 		}
 	}
 
-	if (ofsp != XP_NULL) XP_AWK_FREE (run->awk, ofsp);
+	if (ofs_free != XP_NULL) XP_AWK_FREE (run->awk, ofs_free);
+	if (max > 1) xp_awk_refdownval (run, v);
 
 	v = STACK_GLOBAL(run, XP_AWK_GLOBAL_NF);
 	xp_assert (v->type == XP_AWK_VAL_INT);
@@ -5104,6 +5211,98 @@ static int __recomp_record_fields (
 			run, XP_AWK_GLOBAL_NF, v) == -1) return -1;
 	}
 
+	return 0;
+}
+
+static int __shorten_record (xp_awk_run_t* run, xp_size_t nflds)
+{
+	xp_awk_val_t* v;
+	xp_char_t* ofs_free = XP_NULL, * ofs;
+	xp_size_t ofs_len, i;
+	xp_awk_str_t tmp;
+
+	xp_assert (nflds <= run->inrec.nflds);
+
+	if (nflds > 1)
+	{
+		v = STACK_GLOBAL(run, XP_AWK_GLOBAL_OFS);
+		xp_awk_refupval (v);
+
+		if (v == xp_awk_val_nil)
+		{
+			/* OFS not set */
+			ofs = XP_T(" ");
+			ofs_len = 1;
+		}
+		else if (v->type == XP_AWK_VAL_STR)
+		{
+			ofs = ((xp_awk_val_str_t*)v)->buf;
+			ofs_len = ((xp_awk_val_str_t*)v)->len;
+		}
+		else
+		{
+			ofs = xp_awk_valtostr (
+				run, v, xp_true, XP_NULL, &ofs_len);
+			if (ofs == XP_NULL) return -1;
+
+			ofs_free = ofs;
+		}
+	}
+
+	if (xp_awk_str_open (&tmp, 
+		XP_AWK_STR_LEN(&run->inrec.line), run->awk) == XP_NULL)
+	{
+		run->errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
+
+	for (i = 0; i < nflds; i++)
+	{
+		if (i > 0 && xp_awk_str_ncat (&tmp, ofs, ofs_len) == (xp_size_t)-1)
+		{
+			if (ofs_free != XP_NULL) 
+				XP_AWK_FREE (run->awk, ofs_free);
+			if (nflds > 1) xp_awk_refdownval (run, v);
+			run->errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
+
+		if (xp_awk_str_ncat (&tmp, 
+			run->inrec.flds[i].ptr, 
+			run->inrec.flds[i].len) == (xp_size_t)-1)
+		{
+			if (ofs_free != XP_NULL) 
+				XP_AWK_FREE (run->awk, ofs_free);
+			if (nflds > 1) xp_awk_refdownval (run, v);
+			run->errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
+	}
+
+	if (ofs_free != XP_NULL) XP_AWK_FREE (run->awk, ofs_free);
+	if (nflds > 1) xp_awk_refdownval (run, v);
+
+	v = (xp_awk_val_t*) xp_awk_makestrval (
+		run, XP_AWK_STR_BUF(&tmp), XP_AWK_STR_LEN(&tmp));
+	if (v == XP_NULL)
+	{
+		run->errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
+
+	xp_awk_refdownval (run, run->inrec.d0);
+	run->inrec.d0 = v;
+	xp_awk_refupval (run->inrec.d0);
+
+	xp_awk_str_swap (&tmp, &run->inrec.line);
+	xp_awk_str_close (&tmp);
+
+	for (i = nflds; i < run->inrec.nflds; i++)
+	{
+		xp_awk_refdownval (run, run->inrec.flds[i].val);
+	}
+
+	run->inrec.nflds = nflds;
 	return 0;
 }
 

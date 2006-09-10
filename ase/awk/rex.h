@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.15 2006-09-01 03:44:16 bacon Exp $
+ * $Id: rex.h,v 1.16 2006-09-10 15:50:34 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -42,6 +42,11 @@
 #define XP_AWK_REX_LEN(code) \
 	(*(xp_size_t*)((xp_byte_t*)(code)+xp_sizeof(xp_size_t)))
 
+enum xp_awk_rex_option_t
+{
+	XP_AWK_REX_IGNORECASE = (1 << 0)
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,7 +56,7 @@ void* xp_awk_buildrex (
 	xp_size_t len, int* errnum);
 
 int xp_awk_matchrex (
-	xp_awk_t* awk, void* code,
+	xp_awk_t* awk, void* code, int option,
 	const xp_char_t* str, xp_size_t len, 
 	const xp_char_t** match_ptr, xp_size_t* match_len, int* errnum);
 

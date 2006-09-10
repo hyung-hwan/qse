@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.18 2006-09-09 04:52:40 bacon Exp $
+ * $Id: misc.c,v 1.19 2006-09-10 15:50:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -449,6 +449,28 @@ int xp_awk_strxncmp (
 	return (*s1 > *s2)? 1: -1;
 }
 
+int xp_awk_strxncasecmp (
+	xp_awk_t* awk,
+	const xp_char_t* s1, xp_size_t len1, 
+	const xp_char_t* s2, xp_size_t len2)
+{
+	xp_char_t c1, c2;
+	const xp_char_t* end1 = s1 + len1;
+	const xp_char_t* end2 = s2 + len2;
+
+	c1 = XP_AWK_TOUPPER (awk, *s1); 
+	c2 = XP_AWK_TOUPPER (awk, *s2);
+	while (s1 < end1 && s2 < end2 && c1 == c2) 
+	{
+		s1++, s2++;
+		c1 = XP_AWK_TOUPPER (awk, *s1); 
+		c2 = XP_AWK_TOUPPER (awk, *s2);
+	}
+	if (s1 == end1 && s2 == end2) return 0;
+	if (c1 == c2) return (s1 < end1)? 1: -1;
+	return (c1 > c2)? 1: -1;
+}
+
 xp_char_t* xp_awk_strxnstr (
 	const xp_char_t* str, xp_size_t strsz, 
 	const xp_char_t* sub, xp_size_t subsz)
@@ -704,12 +726,12 @@ xp_char_t* xp_awk_strxntokbyrex (
 	const xp_char_t* str_ptr = s;
 	xp_size_t str_len = len;
 
-xp_printf (XP_T("ignorecase = %d\n"), run->rex.ignorecase);
 	while (len > 0)
 	{
 		n = xp_awk_matchrex (
-			run->awk, rex, ptr, left, 
-			&match_ptr, &match_len, errnum);
+			run->awk, rex, 
+			((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
+			ptr, left, &match_ptr, &match_len, errnum);
 		if (n == -1) return XP_NULL;
 		if (n == 0)
 		{

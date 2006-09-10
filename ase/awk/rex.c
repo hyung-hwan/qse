@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.28 2006-09-05 15:18:16 bacon Exp $
+ * $Id: rex.c,v 1.29 2006-09-10 15:50:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -122,6 +122,7 @@ struct __matcher_t
 		int cur;
 	} depth;
 
+	int ignorecase;
 	int errnum;
 };
 
@@ -193,7 +194,6 @@ static const xp_byte_t* __match_occurrences (
 static xp_bool_t __test_charset (
 	__matcher_t* matcher, const xp_byte_t* p, xp_size_t csc, xp_char_t c);
 
-#ifndef XP_AWK_NTDDK
 static xp_bool_t __cc_isalnum (xp_awk_t* awk, xp_char_t c);
 static xp_bool_t __cc_isalpha (xp_awk_t* awk, xp_char_t c);
 static xp_bool_t __cc_isblank (xp_awk_t* awk, xp_char_t c);
@@ -206,13 +206,11 @@ static xp_bool_t __cc_ispunct (xp_awk_t* awk, xp_char_t c);
 static xp_bool_t __cc_isspace (xp_awk_t* awk, xp_char_t c);
 static xp_bool_t __cc_isupper (xp_awk_t* awk, xp_char_t c);
 static xp_bool_t __cc_isxdigit (xp_awk_t* awk, xp_char_t c);
-#endif
 
 static const xp_byte_t* __print_pattern (const xp_byte_t* p);
 static const xp_byte_t* __print_branch (const xp_byte_t* p);
 static const xp_byte_t* __print_atom (const xp_byte_t* p);
 
-#ifndef XP_AWK_NTDDK
 struct __char_class_t
 {
 	const xp_char_t* name;
@@ -246,7 +244,6 @@ static struct __char_class_t __char_class[] =
 
 	{ XP_NULL,        0, XP_NULL }
 };
-#endif
 
 void* xp_awk_buildrex (
 	xp_awk_t* awk, const xp_char_t* ptn, xp_size_t len, int* errnum)
@@ -301,7 +298,7 @@ void* xp_awk_buildrex (
 }
 
 int xp_awk_matchrex (
-	xp_awk_t* awk, void* code,
+	xp_awk_t* awk, void* code, int option,
 	const xp_char_t* str, xp_size_t len, 
 	const xp_char_t** match_ptr, xp_size_t* match_len, int* errnum)
 {
@@ -320,6 +317,8 @@ int xp_awk_matchrex (
 	matcher.depth.max = awk->max_depth; */
 	matcher.depth.max = 0;
 	matcher.depth.cur = 0;
+// TODO: set it to a good value
+	matcher.ignorecase = (option & XP_AWK_REX_IGNORECASE)? 1: 0;
 
 	mat.matched = xp_false;
 /* TODO: should it allow an offset here??? */
@@ -1208,19 +1207,36 @@ static const xp_byte_t* __match_ord_char (
 	ubound = cp->ubound;
 
 	cc = *(xp_char_t*)p; p += xp_sizeof(cc);
+	if (matcher->ignorecase) cc = XP_AWK_TOUPPER(matcher->awk, cc);
 
 	/* merge the same consecutive codes 
 	 * for example, a{1,10}a{0,10} is shortened to a{1,20} 
 	 */
-	while (p < mat->branch_end &&
-	       cp->cmd == ((const struct __code_t*)p)->cmd)
+	if (matcher->ignorecase) 
 	{
-		if (*(xp_char_t*)(p+xp_sizeof(*cp)) != cc) break;
+		while (p < mat->branch_end &&
+		       cp->cmd == ((const struct __code_t*)p)->cmd)
+		{
+			if (XP_AWK_TOUPPER (matcher->awk, *(xp_char_t*)(p+xp_sizeof(*cp))) != cc) break;
 
-		lbound += ((const struct __code_t*)p)->lbound;
-		ubound += ((const struct __code_t*)p)->ubound;
+			lbound += ((const struct __code_t*)p)->lbound;
+			ubound += ((const struct __code_t*)p)->ubound;
 
-		p += xp_sizeof(*cp) + xp_sizeof(cc);
+			p += xp_sizeof(*cp) + xp_sizeof(cc);
+		}
+	}
+	else
+	{
+		while (p < mat->branch_end &&
+		       cp->cmd == ((const struct __code_t*)p)->cmd)
+		{
+			if (*(xp_char_t*)(p+xp_sizeof(*cp)) != cc) break;
+
+			lbound += ((const struct __code_t*)p)->lbound;
+			ubound += ((const struct __code_t*)p)->ubound;
+
+			p += xp_sizeof(*cp) + xp_sizeof(cc);
+		}
 	}
 	
 //xp_printf (XP_T("lbound = %u, ubound = %u\n"), 
@@ -1230,11 +1246,23 @@ static const xp_byte_t* __match_ord_char (
 	mat->match_len = 0;
 
 	/* find the longest match */
-	while (si < ubound)
+	if (matcher->ignorecase) 
 	{
-		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
-		if (cc != mat->match_ptr[si]) break;
-		si++;
+		while (si < ubound)
+		{
+			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
+			if (cc != XP_AWK_TOUPPER (matcher->awk, mat->match_ptr[si])) break;
+			si++;
+		}
+	}
+	else
+	{
+		while (si < ubound)
+		{
+			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
+			if (cc != mat->match_ptr[si]) break;
+			si++;
+		}
 	}
 
 //xp_printf (XP_T("max si = %d, lbound = %u, ubound = %u\n"), si, lbound, ubound);
@@ -1253,6 +1281,7 @@ static const xp_byte_t* __match_charset (
 	const struct __code_t* cp;
 	xp_size_t si = 0, lbound, ubound, csc, csl;
 	xp_bool_t n;
+	xp_char_t c;
 
 	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
 	xp_assert (cp->cmd == CMD_CHARSET);
@@ -1270,7 +1299,10 @@ static const xp_byte_t* __match_charset (
 	{
 		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 
-		n = __test_charset (matcher, p, csc, mat->match_ptr[si]);
+		c = mat->match_ptr[si];
+		if (matcher->ignorecase) c = XP_AWK_TOUPPER(matcher->awk, c);
+
+		n = __test_charset (matcher, p, csc, c);
 		if (cp->negate) n = !n;
 		if (!n) break;
 
@@ -1518,6 +1550,8 @@ xp_bool_t __test_charset (
 		if (c0 == CHARSET_ONE)
 		{
 			c1 = *(xp_char_t*)p;
+			if (matcher->ignorecase) 
+				c1 = XP_AWK_TOUPPER(matcher->awk, c1);
 			if (c == c1) return xp_true;
 		}
 		else if (c0 == CHARSET_RANGE)
@@ -1526,16 +1560,19 @@ xp_bool_t __test_charset (
 			p += xp_sizeof(c1);
 			c2 = *(xp_char_t*)p;
 
+			if (matcher->ignorecase) 
+			{
+				c1 = XP_AWK_TOUPPER(matcher->awk, c1);
+				c2 = XP_AWK_TOUPPER(matcher->awk, c2);
+			}
 			if (c >= c1 && c <= c2) return xp_true;
 		}
-#ifndef XP_AWK_NTDDK
 		else if (c0 == CHARSET_CLASS)
 		{
 			c1 = *(xp_char_t*)p;
 			if (__char_class[c1].func (
 				matcher->awk, c)) return xp_true;
 		}
-#endif
 		else
 		{
 			xp_assert (!"should never happen - invalid charset code");
@@ -1547,8 +1584,6 @@ xp_bool_t __test_charset (
 
 	return xp_false;
 }
-
-#ifndef XP_AWK_NTDDK
 
 static xp_bool_t __cc_isalnum (xp_awk_t* awk, xp_char_t c)
 {
@@ -1746,4 +1781,3 @@ static const xp_byte_t* __print_atom (const xp_byte_t* p)
 	return p;
 }
 
-#endif
