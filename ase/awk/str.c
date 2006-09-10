@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.3 2006-09-01 07:18:40 bacon Exp $
+ * $Id: str.c,v 1.4 2006-09-10 15:50:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -45,6 +45,26 @@ void xp_awk_str_close (xp_awk_str_t* str)
 void xp_awk_str_forfeit (xp_awk_str_t* str)
 {
 	if (str->__dynamic) XP_AWK_FREE (str->awk, str);
+}
+
+void xp_awk_str_swap (xp_awk_str_t* str, xp_awk_str_t* str1)
+{
+	xp_awk_str_t tmp;
+
+	tmp.buf = str->buf;
+	tmp.size = str->size;
+	tmp.capa = str->capa;
+	tmp.awk = str->awk;
+
+	str->buf = str1->buf;
+	str->size = str1->size;
+	str->capa = str1->capa;
+	str->awk = str1->awk;
+
+	str1->buf = tmp.buf;
+	str1->size = tmp.size;
+	str1->capa = tmp.capa;
+	str1->awk = tmp.awk;
 }
 
 xp_size_t xp_awk_str_cpy (xp_awk_str_t* str, const xp_char_t* s)

@@ -1,5 +1,5 @@
 /*
- * $Id: str.h,v 1.1 2006-08-31 16:00:20 bacon Exp $
+ * $Id: str.h,v 1.2 2006-09-10 15:50:34 bacon Exp $
  */
 
 #ifndef _XP_AWK_STR_H_
@@ -36,6 +36,7 @@ xp_awk_str_t* xp_awk_str_open (
 void xp_awk_str_close (xp_awk_str_t* str);
 
 void xp_awk_str_forfeit (xp_awk_str_t* str);
+void xp_awk_str_swap (xp_awk_str_t* str, xp_awk_str_t* str2);
 
 xp_size_t xp_awk_str_cpy (xp_awk_str_t* str, const xp_char_t* s);
 

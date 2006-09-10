@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.46 2006-09-05 04:10:23 bacon Exp $
+ * $Id: extio.c,v 1.47 2006-09-10 15:50:34 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -292,6 +292,7 @@ int xp_awk_readextio (
 			/* TODO: safematchrex */
 			n = xp_awk_matchrex (
 				run->awk, run->rex.rs, 
+				((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 				XP_AWK_STR_BUF(buf), XP_AWK_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)
