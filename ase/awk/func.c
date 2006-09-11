@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.47 2006-09-08 15:26:49 bacon Exp $
+ * $Id: func.c,v 1.48 2006-09-11 14:29:22 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -24,6 +24,7 @@ static int __bfn_substr (xp_awk_t* awk, void* run);
 static int __bfn_split (xp_awk_t* awk, void* run);
 static int __bfn_tolower (xp_awk_t* awk, void* run);
 static int __bfn_toupper (xp_awk_t* awk, void* run);
+static int __bfn_gsub (xp_awk_t* awk, void* run);
 static int __bfn_system (xp_awk_t* awk, void* run);
 static int __bfn_sin (xp_awk_t* awk, void* run);
 
@@ -41,7 +42,7 @@ static xp_awk_bfn_t __sys_bfn[] =
 	{ XP_T("split"),   5, 0,            2,  3,  XP_T("vrv"), __bfn_split },
 	{ XP_T("tolower"), 7, 0,            1,  1,  XP_NULL, __bfn_tolower },
 	{ XP_T("toupper"), 7, 0,            1,  1,  XP_NULL, __bfn_toupper },
-	//{ XP_T("gsub"),    4, 0,            2,  3,  XP_T("vrr"), __bfn_gsub },
+	{ XP_T("gsub"),    4, 0,            2,  3,  XP_T("vvr"), __bfn_gsub },
 
 	/* TODO: remove these two functions */
 	{ XP_T("system"),  6, 0,            1,  1,  XP_NULL, __bfn_system },
@@ -793,6 +794,70 @@ static int __bfn_toupper (xp_awk_t* awk, void* run)
 
 	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
 	xp_awk_setretval (run, r);
+	return 0;
+}
+
+static int __bfn_gsub (xp_awk_t* awk, void* run)
+{
+	xp_size_t nargs;
+	xp_awk_val_t* a0, * a1, * a2;
+	xp_char_t* a0_ptr, * a1_ptr;
+	xp_size_t a0_len, a1_len;
+	xp_char_t* a0_ptr_free = XP_NULL;
+	xp_char_t* a1_ptr_free = XP_NULL;
+
+	nargs = xp_awk_getnargs (run);
+	xp_assert (nargs >= 2 && nargs <= 3);
+
+	a0 = xp_awk_getarg (run, 0);
+	a1 = xp_awk_getarg (run, 1);
+	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
+
+	xp_assert (a2 == XP_NULL || a2->type == XP_AWK_VAL_REF);
+
+	if (a0->type == XP_AWK_VAL_STR)
+	{
+		a0_ptr = ((xp_awk_val_str_t*)a0)->buf;
+		a0_len = ((xp_awk_val_str_t*)a0)->len;
+	}
+	else
+	{
+		a0_ptr = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &a0_len);
+		if (a0_ptr == XP_NULL) return -1;
+		a0_ptr_free = a0_ptr;
+	}
+
+	if (a1->type == XP_AWK_VAL_STR)
+	{
+		a1_ptr = ((xp_awk_val_str_t*)a1)->buf;
+		a1_len = ((xp_awk_val_str_t*)a1)->len;
+	}
+	else
+	{
+		a1_ptr = xp_awk_valtostr (run, a1, xp_true, XP_NULL, &a1_len);
+		if (a1_ptr == XP_NULL) 
+		{
+			if (a0_ptr_free != XP_NULL)
+				XP_AWK_FREE (awk, a0_ptr_free);
+			return -1;
+		}
+		a1_ptr_free = a1_ptr;
+	}
+
+/* TODO: */
+	if (a2 == XP_NULL)
+	{
+		/* operation is on $0 */
+	}
+	else
+	{
+		/* operation is on a2 */
+	}
+
+
+	if (a1_ptr_free != XP_NULL) XP_AWK_FREE (awk, a1_ptr_free);
+	if (a0_ptr_free != XP_NULL) XP_AWK_FREE (awk, a0_ptr_free);
+
 	return 0;
 }
 

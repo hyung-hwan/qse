@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.71 2006-09-01 03:44:21 bacon Exp $
+ * $Id: tree.h,v 1.72 2006-09-11 14:29:23 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -191,6 +191,8 @@ struct xp_awk_nde_int_t
 {
 	XP_AWK_NDE_HDR;
 	xp_long_t val;
+	xp_char_t* str; 
+	xp_size_t  len;
 };
 
 /* XP_AWK_NDE_REAL */
@@ -198,6 +200,8 @@ struct xp_awk_nde_real_t
 {
 	XP_AWK_NDE_HDR;
 	xp_real_t val;
+	xp_char_t* str;
+	xp_size_t  len;
 };
 
 /* XP_AWK_NDE_STR */
