@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.199 2006-09-10 15:50:34 bacon Exp $
+ * $Id: run.c,v 1.200 2006-09-11 03:20:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -5024,6 +5024,9 @@ static int __recomp_record_fields (
 	xp_size_t ofs_len;
 	xp_size_t max, i, nflds;
 
+	/* recomposes the record and the fields when $N has been assigned 
+	 * a new value and recomputes NF accordingly */
+
 	xp_assert (lv > 0);
 	max = (lv > run->inrec.nflds)? lv: run->inrec.nflds;
 
@@ -5031,6 +5034,10 @@ static int __recomp_record_fields (
 	if (max > run->inrec.maxflds)
 	{
 		void* tmp;
+
+		/* if the given field number is greater than the maximum
+		 * number of fields that the current record can hold,
+		 * the field spaces are resized */
 
 		if (run->awk->syscas->realloc != XP_NULL)
 		{
@@ -5070,6 +5077,8 @@ static int __recomp_record_fields (
 
 	if (max > 1)
 	{
+		/* gets the value of OFS to use it as a field separator */
+
 		v = STACK_GLOBAL(run, XP_AWK_GLOBAL_OFS);
 		xp_awk_refupval (v);
 
@@ -5142,6 +5151,7 @@ static int __recomp_record_fields (
 			if (i < nflds)
 				xp_awk_refdownval (run, run->inrec.flds[i].val);
 			else run->inrec.nflds++;
+
 			run->inrec.flds[i].val = tmp;
 			xp_awk_refupval (tmp);
 		}
