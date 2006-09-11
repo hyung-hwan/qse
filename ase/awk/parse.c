@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.179 2006-09-02 14:58:28 bacon Exp $
+ * $Id: parse.c,v 1.180 2006-09-11 14:29:22 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1941,6 +1941,15 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->next = XP_NULL;
 		nde->val = xp_awk_strtolong (
 			awk, XP_AWK_STR_BUF(&awk->token.name), 0, XP_NULL);
+		nde->str = xp_awk_strxdup (awk,
+			XP_AWK_STR_BUF(&awk->token.name),
+			XP_AWK_STR_LEN(&awk->token.name));
+		if (nde->str == XP_NULL)
+		{
+			XP_AWK_FREE (awk, nde);
+			return XP_NULL;			
+		}
+		nde->len = XP_AWK_STR_LEN(&awk->token.name);
 
 		xp_assert (
 			XP_AWK_STR_LEN(&awk->token.name) ==
@@ -1966,6 +1975,15 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		nde->next = XP_NULL;
 		nde->val = xp_awk_strtoreal (
 			awk, XP_AWK_STR_BUF(&awk->token.name));
+		nde->str = xp_awk_strxdup (awk,
+			XP_AWK_STR_BUF(&awk->token.name),
+			XP_AWK_STR_LEN(&awk->token.name));
+		if (nde->str == XP_NULL)
+		{
+			XP_AWK_FREE (awk, nde);
+			return XP_NULL;			
+		}
+		nde->len = XP_AWK_STR_LEN(&awk->token.name);
 
 		xp_assert (
 			XP_AWK_STR_LEN(&awk->token.name) ==
