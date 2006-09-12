@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.48 2006-09-11 14:29:22 bacon Exp $
+ * $Id: func.c,v 1.49 2006-09-12 15:20:18 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -801,10 +801,16 @@ static int __bfn_gsub (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* a0, * a1, * a2;
-	xp_char_t* a0_ptr, * a1_ptr;
-	xp_size_t a0_len, a1_len;
+	xp_char_t* a0_ptr, * a1_ptr, * a2_ptr;
+	xp_size_t a0_len, a1_len, a2_len;
 	xp_char_t* a0_ptr_free = XP_NULL;
 	xp_char_t* a1_ptr_free = XP_NULL;
+	xp_char_t* a2_ptr_free = XP_NULL;
+	void* rex;
+	int opt, n;
+	const xp_char_t* cur_ptr, * match_ptr;
+	xp_size_t cur_len, match_len;
+	xp_awk_str_t new;
 
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs >= 2 && nargs <= 3);
@@ -844,17 +850,142 @@ static int __bfn_gsub (xp_awk_t* awk, void* run)
 		a1_ptr_free = a1_ptr;
 	}
 
-/* TODO: */
 	if (a2 == XP_NULL)
 	{
-		/* operation is on $0 */
+		/* TODO; is this correct??? need to use inrec.d0?? */
+		a2_ptr = XP_AWK_STR_BUF(&((xp_awk_run_t*)run)->inrec.line);
+		a2_len = XP_AWK_STR_LEN(&((xp_awk_run_t*)run)->inrec.line);
 	}
 	else
 	{
 		/* operation is on a2 */
+		/*
+		a2ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a2)->adr;
+		if ((*a2ref)->type != XP_AWK_VAL_NIL &&
+	    	    (*a2ref)->type != XP_AWK_VAL_MAP)
+		{
+		}
+		*/
 	}
 
+	rex = xp_awk_buildrex (awk, 
+		a0_ptr, a0_len, &((xp_awk_run_t*)run)->errnum);
+	if (rex == XP_NULL)
+	{
+		if (a2_ptr_free != XP_NULL) XP_AWK_FREE (awk, a2_ptr_free);
+		if (a1_ptr_free != XP_NULL) XP_AWK_FREE (awk, a1_ptr_free);
+		if (a0_ptr_free != XP_NULL) XP_AWK_FREE (awk, a0_ptr_free);
+		return -1;
+	}
 
+	opt = (((xp_awk_run_t*)run)->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
+	cur_ptr = a2_ptr;
+	cur_len = a2_len;
+
+	if (xp_awk_str_open (&new, a2_len, awk) == XP_NULL)
+	{
+		xp_awk_freerex (awk, rex);
+		if (a2_ptr_free != XP_NULL) XP_AWK_FREE (awk, a2_ptr_free);
+		if (a1_ptr_free != XP_NULL) XP_AWK_FREE (awk, a1_ptr_free);
+		if (a0_ptr_free != XP_NULL) XP_AWK_FREE (awk, a0_ptr_free);
+		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	while (1)
+	{
+		n = xp_awk_matchrex (
+			awk, rex, opt, cur_ptr, cur_len,
+			&match_ptr, &match_len, &((xp_awk_run_t*)run)->errnum);
+		if (n == -1)
+		{
+			xp_awk_str_close (&new);
+			xp_awk_freerex (awk, rex);
+			if (a2_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a2_ptr_free);
+			if (a1_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a1_ptr_free);
+			if (a0_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a0_ptr_free);
+			return -1;
+		}
+
+		if (n == 0) 
+		{ 
+			/* no more match found */
+			if (xp_awk_str_ncat (
+				&new, cur_ptr, cur_len) == (xp_size_t)-1)
+			{
+				xp_awk_str_close (&new);
+				xp_awk_freerex (awk, rex);
+				if (a2_ptr_free != XP_NULL) 
+					XP_AWK_FREE (awk, a2_ptr_free);
+				if (a1_ptr_free != XP_NULL) 
+					XP_AWK_FREE (awk, a1_ptr_free);
+				if (a0_ptr_free != XP_NULL) 
+					XP_AWK_FREE (awk, a0_ptr_free);
+				return -1;
+			}
+			break;
+		}
+
+		if (xp_awk_str_ncat (&new, 
+			cur_ptr, match_ptr - cur_ptr) == (xp_size_t)-1)
+		{
+			xp_awk_str_close (&new);
+			xp_awk_freerex (awk, rex);
+			if (a2_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a2_ptr_free);
+			if (a1_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a1_ptr_free);
+			if (a0_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a0_ptr_free);
+			return -1;
+		}
+		/*TODO: handle & */
+		if (xp_awk_str_ncat (&new, a1_ptr, a1_len) == (xp_size_t)-1)
+		{
+			xp_awk_str_close (&new);
+			xp_awk_freerex (awk, rex);
+			if (a2_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a2_ptr_free);
+			if (a1_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a1_ptr_free);
+			if (a0_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a0_ptr_free);
+			return -1;
+		}
+
+		cur_ptr = match_ptr + match_len;
+		cur_len = cur_len - ((match_ptr - cur_ptr) + match_len);
+	}
+
+	xp_awk_freerex (awk, rex);
+
+xp_printf (XP_T("NEW STRING [%s]\n"), XP_AWK_STR_BUF(&new));
+	if (a2 == XP_NULL)
+	{
+		if (xp_awk_setrecord (run,
+			XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new)) == -1)
+		{
+			xp_awk_str_close (&new);
+			if (a2_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a2_ptr_free);
+			if (a1_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a1_ptr_free);
+			if (a0_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a0_ptr_free);
+			return -1;
+		}
+	}
+	else
+	{
+		/* TODO: */
+	}
+
+	xp_awk_str_close (&new);
+
+	if (a2_ptr_free != XP_NULL) XP_AWK_FREE (awk, a2_ptr_free);
 	if (a1_ptr_free != XP_NULL) XP_AWK_FREE (awk, a1_ptr_free);
 	if (a0_ptr_free != XP_NULL) XP_AWK_FREE (awk, a0_ptr_free);
 

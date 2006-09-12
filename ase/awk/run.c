@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.200 2006-09-11 03:20:42 bacon Exp $
+ * $Id: run.c,v 1.201 2006-09-12 15:20:18 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4690,14 +4690,9 @@ static xp_awk_val_t* __eval_getline (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		if (p->var == XP_NULL)
 		{
 			/* set $0 with the input value */
-			if (__clear_record (run, xp_false) == -1)
-			{
-				xp_awk_str_close (&buf);
-				return XP_NULL;
-			}
-
-			if (__set_record (run, 
-				XP_AWK_STR_BUF(&buf), XP_AWK_STR_LEN(&buf)) == -1)
+			if (xp_awk_setrecord (run, 
+				XP_AWK_STR_BUF(&buf), 
+				XP_AWK_STR_LEN(&buf)) == -1)
 			{
 				xp_awk_str_close (&buf);
 				return XP_NULL;
@@ -4791,9 +4786,12 @@ static int __read_record (xp_awk_run_t* run)
 		run, XP_AWK_IN_CONSOLE, XP_T(""), &run->inrec.line);
 	if (n < 0) 
 	{
-		if (run->errnum == XP_AWK_EIOHANDLER)
-			PANIC_I (run, XP_AWK_ECONINDATA);
-		else return -1;
+		int errnum = run->errnum;
+		__clear_record (run, xp_false);
+		run->errnum = 
+			(errnum == XP_AWK_EIOHANDLER)? 
+			XP_AWK_ECONINDATA: errnum;
+		return -1;
 	}
 	if (n == 0) 
 	{
@@ -4808,7 +4806,23 @@ static int __read_record (xp_awk_run_t* run)
 	return 1;
 }
 
-static int __set_record (xp_awk_run_t* run, const xp_char_t* str, xp_size_t len)
+int xp_awk_setrecord (void* run, const xp_char_t* str, xp_size_t len)
+{
+	if (__clear_record (run, xp_false) == -1) return -1;
+
+	if (xp_awk_str_ncpy (
+		&((xp_awk_run_t*)run)->inrec.line, str, len) == (xp_size_t)-1)
+	{
+		__clear_record (run, xp_false);
+		((xp_awk_run_t*)run)->errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
+
+	return __set_record (run, str, len);
+}
+
+static int __set_record (
+	xp_awk_run_t* run, const xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_t* v;
 	int errnum;
@@ -4820,7 +4834,7 @@ static int __set_record (xp_awk_run_t* run, const xp_char_t* str, xp_size_t len)
 		PANIC_I (run, XP_AWK_ENOMEM);
 	}
 
-	xp_assert (run->inrec.d0 == xp_awk_val_nil);
+	xp_assert (run->inrec.d0->type == XP_AWK_VAL_NIL);
 	/* the record should be clear cleared before this function is called
 	 * as it doesn't call xp_awk_refdownval on run->inrec.d0 */
 	run->inrec.d0 = v;
@@ -5082,7 +5096,7 @@ static int __recomp_record_fields (
 		v = STACK_GLOBAL(run, XP_AWK_GLOBAL_OFS);
 		xp_awk_refupval (v);
 
-		if (v == xp_awk_val_nil)
+		if (v->type == XP_AWK_VAL_NIL)
 		{
 			/* OFS not set */
 			ofs = XP_T(" ");
@@ -5238,7 +5252,7 @@ static int __shorten_record (xp_awk_run_t* run, xp_size_t nflds)
 		v = STACK_GLOBAL(run, XP_AWK_GLOBAL_OFS);
 		xp_awk_refupval (v);
 
-		if (v == xp_awk_val_nil)
+		if (v->type == XP_AWK_VAL_NIL)
 		{
 			/* OFS not set */
 			ofs = XP_T(" ");
