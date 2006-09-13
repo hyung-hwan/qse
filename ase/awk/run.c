@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.202 2006-09-12 15:21:32 bacon Exp $
+ * $Id: run.c,v 1.203 2006-09-13 14:16:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4163,52 +4163,60 @@ static xp_awk_val_t* __eval_call (
 	p = call->args;
 	while (p != XP_NULL)
 	{
-		v = __eval_expression (run, p);
+		xp_assert (bfn_arg_spec == XP_NULL ||
+		           (bfn_arg_spec != XP_NULL && 
+		            xp_awk_strlen(bfn_arg_spec) > nargs));
+
+		if (bfn_arg_spec != XP_NULL && 
+		    bfn_arg_spec[nargs] == XP_T('x'))
+		{
+			/* a regular expression is passed to 
+			 * the function as it is */
+			v = __eval_expression0 (run, p);
+		}
+		else
+		{
+			v = __eval_expression (run, p);
+		}
 		if (v == XP_NULL)
 		{
 			UNWIND_RUN_STACK (run, nargs);
 			return XP_NULL;
 		}
 
-		if (bfn_arg_spec != XP_NULL)
+		if (bfn_arg_spec != XP_NULL && 
+		    bfn_arg_spec[nargs] == XP_T('r'))
 		{
-			xp_char_t spec;
-
-		/* TODO: spec length check */
-			spec = bfn_arg_spec[nargs];
-			if (spec == XP_T('r'))
+			xp_awk_val_t** ref;
+			xp_awk_val_t* tmp;
+			      
+			ref = __get_reference (run, p);
+			if (ref == XP_NULL)
 			{
-				xp_awk_val_t** ref;
-				xp_awk_val_t* tmp;
-			       
-				ref = __get_reference (run, p);
-				if (ref == XP_NULL)
-				{
-					xp_awk_refupval (v);
-					xp_awk_refdownval (run, v);
-
-					UNWIND_RUN_STACK (run, nargs);
-					return XP_NULL;
-				}
-
-				/* p->type-XP_AWK_NDE_NAMED assumes that the
-				 * derived value matches XP_AWK_VAL_REF_XXX */
-				tmp = xp_awk_makerefval (
-					run, p->type-XP_AWK_NDE_NAMED, ref);
-				if (tmp == XP_NULL)
-				{
-					xp_awk_refupval (v);
-					xp_awk_refdownval (run, v);
-
-					UNWIND_RUN_STACK (run, nargs);
-					PANIC (run, XP_AWK_ENOMEM);
-				}
-
 				xp_awk_refupval (v);
 				xp_awk_refdownval (run, v);
 
-				v = tmp;
+				UNWIND_RUN_STACK (run, nargs);
+				return XP_NULL;
 			}
+
+			/* p->type-XP_AWK_NDE_NAMED assumes that the
+			 * derived value matches XP_AWK_VAL_REF_XXX */
+			tmp = xp_awk_makerefval (
+				run, p->type-XP_AWK_NDE_NAMED, ref);
+			if (tmp == XP_NULL)
+			{
+				xp_awk_refupval (v);
+				xp_awk_refdownval (run, v);
+
+				UNWIND_RUN_STACK (run, nargs);
+				PANIC (run, XP_AWK_ENOMEM);
+			}
+
+			xp_awk_refupval (v);
+			xp_awk_refdownval (run, v);
+
+			v = tmp;
 		}
 
 		if (__raw_push(run,v) == -1) 
