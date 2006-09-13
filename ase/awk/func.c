@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.49 2006-09-12 15:20:18 bacon Exp $
+ * $Id: func.c,v 1.50 2006-09-13 14:16:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -42,7 +42,7 @@ static xp_awk_bfn_t __sys_bfn[] =
 	{ XP_T("split"),   5, 0,            2,  3,  XP_T("vrv"), __bfn_split },
 	{ XP_T("tolower"), 7, 0,            1,  1,  XP_NULL, __bfn_tolower },
 	{ XP_T("toupper"), 7, 0,            1,  1,  XP_NULL, __bfn_toupper },
-	{ XP_T("gsub"),    4, 0,            2,  3,  XP_T("vvr"), __bfn_gsub },
+	{ XP_T("gsub"),    4, 0,            2,  3,  XP_T("xvr"), __bfn_gsub },
 
 	/* TODO: remove these two functions */
 	{ XP_T("system"),  6, 0,            1,  1,  XP_NULL, __bfn_system },
@@ -500,7 +500,7 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 static int __bfn_split (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1ref;
+	xp_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
 	xp_char_t* str, * str_free, * p, * tok;
 	xp_size_t str_len, str_left, tok_len;
 	xp_long_t num;
@@ -529,9 +529,9 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		return -1;
 	}
 
-	a1ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a1)->adr;
-	if ((*a1ref)->type != XP_AWK_VAL_NIL &&
-	    (*a1ref)->type != XP_AWK_VAL_MAP)
+	a1_ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a1)->adr;
+	if ((*a1_ref)->type != XP_AWK_VAL_NIL &&
+	    (*a1_ref)->type != XP_AWK_VAL_MAP)
 	{
 		/* cannot change a scalar value to a map */
 		xp_awk_seterrnum (run, XP_AWK_ESCALARTOMAP);
@@ -633,9 +633,9 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		return -1;
 	}
 
-	xp_awk_refdownval (run, *a1ref);
-	*a1ref = t1;
-	xp_awk_refupval (*a1ref);
+	xp_awk_refdownval (run, *a1_ref);
+	*a1_ref = t1;
+	xp_awk_refupval (*a1_ref);
 
 	p = str; str_left = str_len; num = 0;
 	while (p != XP_NULL)
@@ -800,7 +800,7 @@ static int __bfn_toupper (xp_awk_t* awk, void* run)
 static int __bfn_gsub (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1, * a2;
+	xp_awk_val_t* a0, * a1, * a2, ** a2_ref, * v;
 	xp_char_t* a0_ptr, * a1_ptr, * a2_ptr;
 	xp_size_t a0_len, a1_len, a2_len;
 	xp_char_t* a0_ptr_free = XP_NULL;
@@ -811,6 +811,7 @@ static int __bfn_gsub (xp_awk_t* awk, void* run)
 	const xp_char_t* cur_ptr, * match_ptr;
 	xp_size_t cur_len, match_len;
 	xp_awk_str_t new;
+	xp_long_t sub_count;
 
 	nargs = xp_awk_getnargs (run);
 	xp_assert (nargs >= 2 && nargs <= 3);
@@ -821,7 +822,11 @@ static int __bfn_gsub (xp_awk_t* awk, void* run)
 
 	xp_assert (a2 == XP_NULL || a2->type == XP_AWK_VAL_REF);
 
-	if (a0->type == XP_AWK_VAL_STR)
+	if (a0->type == XP_AWK_VAL_REX)
+	{
+		rex = ((xp_awk_val_rex_t*)a0)->code;
+	}
+	else if (a0->type == XP_AWK_VAL_STR)
 	{
 		a0_ptr = ((xp_awk_val_str_t*)a0)->buf;
 		a0_len = ((xp_awk_val_str_t*)a0)->len;
@@ -859,23 +864,48 @@ static int __bfn_gsub (xp_awk_t* awk, void* run)
 	else
 	{
 		/* operation is on a2 */
+		a2_ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a2)->adr;
 		/*
-		a2ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a2)->adr;
-		if ((*a2ref)->type != XP_AWK_VAL_NIL &&
-	    	    (*a2ref)->type != XP_AWK_VAL_MAP)
+		if ((*a2_ref)->type != XP_AWK_VAL_NIL &&
+	    	    (*a2_ref)->type != XP_AWK_VAL_MAP)
 		{
 		}
 		*/
+		if ((*a2_ref)->type == XP_AWK_VAL_STR)
+		{
+			a2_ptr = ((xp_awk_val_str_t*)(*a2_ref))->buf;
+			a2_len = ((xp_awk_val_str_t*)(*a2_ref))->len;
+		}
+		else
+		{
+			a2_ptr = xp_awk_valtostr (
+				run, *a2_ref, xp_true, XP_NULL, &a2_len);
+			if (a2_ptr == XP_NULL) 
+			{
+				if (a1_ptr_free != XP_NULL)
+					XP_AWK_FREE (awk, a1_ptr_free);
+				if (a0_ptr_free != XP_NULL)
+					XP_AWK_FREE (awk, a0_ptr_free);
+				return -1;
+			}
+			a2_ptr_free = a2_ptr;
+		}
 	}
 
-	rex = xp_awk_buildrex (awk, 
-		a0_ptr, a0_len, &((xp_awk_run_t*)run)->errnum);
-	if (rex == XP_NULL)
+	if (a0->type != XP_AWK_VAL_REX)
 	{
-		if (a2_ptr_free != XP_NULL) XP_AWK_FREE (awk, a2_ptr_free);
-		if (a1_ptr_free != XP_NULL) XP_AWK_FREE (awk, a1_ptr_free);
-		if (a0_ptr_free != XP_NULL) XP_AWK_FREE (awk, a0_ptr_free);
-		return -1;
+		rex = xp_awk_buildrex (awk, 
+			a0_ptr, a0_len, &((xp_awk_run_t*)run)->errnum);
+		if (rex == XP_NULL)
+		{
+			if (a2_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a2_ptr_free);
+			if (a1_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a1_ptr_free);
+			if (a0_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a0_ptr_free);
+			return -1;
+		}
 	}
 
 	opt = (((xp_awk_run_t*)run)->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
@@ -891,6 +921,8 @@ static int __bfn_gsub (xp_awk_t* awk, void* run)
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
+
+	sub_count = 0;
 
 	while (1)
 	{
@@ -942,7 +974,7 @@ static int __bfn_gsub (xp_awk_t* awk, void* run)
 				XP_AWK_FREE (awk, a0_ptr_free);
 			return -1;
 		}
-		/*TODO: handle & */
+/*TODO: handle & */
 		if (xp_awk_str_ncat (&new, a1_ptr, a1_len) == (xp_size_t)-1)
 		{
 			xp_awk_str_close (&new);
@@ -956,13 +988,13 @@ static int __bfn_gsub (xp_awk_t* awk, void* run)
 			return -1;
 		}
 
+		sub_count++;
 		cur_ptr = match_ptr + match_len;
 		cur_len = cur_len - ((match_ptr - cur_ptr) + match_len);
 	}
 
-	xp_awk_freerex (awk, rex);
+	if (a0->type != XP_AWK_VAL_REX) xp_awk_freerex (awk, rex);
 
-xp_printf (XP_T("NEW STRING [%s]\n"), XP_AWK_STR_BUF(&new));
 	if (a2 == XP_NULL)
 	{
 		if (xp_awk_setrecord (run,
@@ -980,7 +1012,23 @@ xp_printf (XP_T("NEW STRING [%s]\n"), XP_AWK_STR_BUF(&new));
 	}
 	else
 	{
-		/* TODO: */
+		v = xp_awk_makestrval (run,
+			XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
+		if (v == XP_NULL)
+		{
+			xp_awk_str_close (&new);
+			if (a2_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a2_ptr_free);
+			if (a1_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a1_ptr_free);
+			if (a0_ptr_free != XP_NULL) 
+				XP_AWK_FREE (awk, a0_ptr_free);
+			return -1;
+		}
+
+		xp_awk_refdownval (run, *a2_ref);
+		*a2_ref = v;
+		xp_awk_refupval (*a2_ref);
 	}
 
 	xp_awk_str_close (&new);
@@ -989,6 +1037,14 @@ xp_printf (XP_T("NEW STRING [%s]\n"), XP_AWK_STR_BUF(&new));
 	if (a1_ptr_free != XP_NULL) XP_AWK_FREE (awk, a1_ptr_free);
 	if (a0_ptr_free != XP_NULL) XP_AWK_FREE (awk, a0_ptr_free);
 
+	v = xp_awk_makeintval (run, sub_count);
+	if (v == XP_NULL)
+	{
+		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	xp_awk_setretval (run, v);
 	return 0;
 }
 
