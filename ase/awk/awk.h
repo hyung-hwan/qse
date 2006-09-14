@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.115 2006-09-12 15:20:18 bacon Exp $
+ * $Id: awk.h,v 1.116 2006-09-14 06:40:06 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -266,6 +266,7 @@ enum ant_awk_errnum_t
 	XP_AWK_EIDXVALASSMAP,     /* indexed value cannot be assigned a map */
 	XP_AWK_EMAPTOSCALAR,      /* cannot change a map to a scalar value */
 	XP_AWK_ESCALARTOMAP,      /* cannot change a scalar value to a map */
+	XP_AWK_EMAPNOTALLOWED,    /* a map is not allowed */
 	XP_AWK_EVALTYPE,          /* wrong value type */
 	XP_AWK_EPIPE,             /* pipe operation error */
 	XP_AWK_ENEXTCALL,         /* next called from BEGIN or END */

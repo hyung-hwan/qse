@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.39 2006-08-29 15:01:44 bacon Exp $
+ * $Id: err.c,v 1.40 2006-09-14 06:40:06 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -92,6 +92,7 @@ const xp_char_t* xp_awk_geterrstr (int errnum)
 		XP_T("indexed value cannot be assigned a map"),
 		XP_T("cannot change a map to a scalar value"),
 		XP_T("cannot change a scalar value to a map"),
+		XP_T("a map is not allowed"),
 		XP_T("wrong value type"),
 		XP_T("pipe operation error"),
 		XP_T("next cannot be called from the BEGIN or END block"),
