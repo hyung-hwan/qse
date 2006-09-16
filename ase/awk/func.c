@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.51 2006-09-14 06:40:06 bacon Exp $
+ * $Id: func.c,v 1.52 2006-09-16 12:58:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -822,8 +822,8 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 	xp_char_t* a2_ptr_free = XP_NULL;
 	void* rex;
 	int opt, n;
-	const xp_char_t* cur_ptr, * match_ptr;
-	xp_size_t cur_len, match_len;
+	const xp_char_t* cur_ptr, * mat_ptr;
+	xp_size_t cur_len, mat_len, i, m;
 	xp_awk_str_t new;
 	xp_long_t sub_count;
 
@@ -949,7 +949,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		{
 			n = xp_awk_matchrex (
 				awk, rex, opt, cur_ptr, cur_len,
-				&match_ptr, &match_len, 
+				&mat_ptr, &mat_len, 
 				&((xp_awk_run_t*)run)->errnum);
 		}
 		else n = 0;
@@ -976,8 +976,8 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 			break;
 		}
 
-		if (xp_awk_str_ncat (&new, 
-			cur_ptr, match_ptr - cur_ptr) == (xp_size_t)-1)
+		if (xp_awk_str_ncat (
+			&new, cur_ptr, mat_ptr - cur_ptr) == (xp_size_t)-1)
 		{
 			FREE_A0_REX (awk, rex);
 			xp_awk_str_close (&new);
@@ -985,18 +985,36 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 			return -1;
 		}
 
-/*TODO: handle & */
-		if (xp_awk_str_ncat (&new, a1_ptr, a1_len) == (xp_size_t)-1)
+		for (i = 0; i < a1_len; i++)
 		{
-			FREE_A0_REX (awk, rex);
-			xp_awk_str_close (&new);
-			FREE_A_PTRS (awk);
-			return -1;
+			if ((i+1) < a1_len && 
+			    a1_ptr[i] == XP_T('\\') && 
+			    a1_ptr[i+1] == XP_T('&'))
+			{
+				m = xp_awk_str_ccat (&new, XP_T('&'));
+				i++;
+			}
+			else if (a1_ptr[i] == XP_T('&'))
+			{
+				m = xp_awk_str_ncat (&new, mat_ptr, mat_len);
+			}
+			else 
+			{
+				m = xp_awk_str_ccat (&new, a1_ptr[i]);
+			}
+
+			if (m == (xp_size_t)-1)
+			{
+				FREE_A0_REX (awk, rex);
+				xp_awk_str_close (&new);
+				FREE_A_PTRS (awk);
+				return -1;
+			}
 		}
 
 		sub_count++;
-		cur_ptr = match_ptr + match_len;
-		cur_len = cur_len - ((match_ptr - cur_ptr) + match_len);
+		cur_ptr = mat_ptr + mat_len;
+		cur_len = cur_len - ((mat_ptr - cur_ptr) + mat_len);
 	}
 
 	FREE_A0_REX (awk, rex);
