@@ -1,8 +1,9 @@
 /*
- * $Id: awk.c,v 1.89 2006-09-08 14:51:15 bacon Exp $
+ * $Id: awk.c,v 1.90 2006-09-22 14:05:30 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
+#include <xp/bas/stdio.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -670,6 +671,7 @@ static int __main (int argc, xp_char_t* argv[])
 	syscas.to_upper  = towupper;
 	syscas.to_lower  = towlower;
 #endif
+	syscas.sprintf = xp_sprintf;
 
 #ifdef _WIN32
 	syscas_data.heap = HeapCreate (0, 1000000, 1000000);
@@ -754,6 +756,170 @@ static int __main (int argc, xp_char_t* argv[])
 	return 0;
 }
 
+#ifdef _WIN32
+/*
+NTSYSAPI PTEB NTAPI NtCurrentTeb();
+Function NtCurrentTeb returns address of TEB (Thread Environment Block) for calling thread. 
+NtCurrentTeb isn't typical NT CALL realised via INT 2E, becouse TEB is accessable at address fs:[0018h].
+Microsoft declare NtCurrentTeb as __cdecl, but ntdll.dll export it as __stdcall (it don't have metter, becouse function don't have any parameters), so you cannot use ntdll.dll export. In this case the better way is write NtCurrentTeb manually, declaring it as __cdecl. 
+
+typedef UCHAR BOOLEAN;
+
+typedef struct _TEB {
+
+  NT_TIB                  Tib;
+  PVOID                   EnvironmentPointer;
+  CLIENT_ID               Cid;
+  PVOID                   ActiveRpcInfo;
+  PVOID                   ThreadLocalStoragePointer;
+  PPEB                    Peb;
+  ULONG                   LastErrorValue;
+  ULONG                   CountOfOwnedCriticalSections;
+  PVOID                   CsrClientThread;
+  PVOID                   Win32ThreadInfo;
+  ULONG                   Win32ClientInfo[0x1F];
+  PVOID                   WOW32Reserved;
+  ULONG                   CurrentLocale;
+  ULONG                   FpSoftwareStatusRegister;
+  PVOID                   SystemReserved1[0x36];
+  PVOID                   Spare1;
+  ULONG                   ExceptionCode;
+  ULONG                   SpareBytes1[0x28];
+  PVOID                   SystemReserved2[0xA];
+  ULONG                   GdiRgn;
+  ULONG                   GdiPen;
+  ULONG                   GdiBrush;
+  CLIENT_ID               RealClientId;
+  PVOID                   GdiCachedProcessHandle;
+  ULONG                   GdiClientPID;
+  ULONG                   GdiClientTID;
+  PVOID                   GdiThreadLocaleInfo;
+  PVOID                   UserReserved[5];
+  PVOID                   GlDispatchTable[0x118];
+  ULONG                   GlReserved1[0x1A];
+  PVOID                   GlReserved2;
+  PVOID                   GlSectionInfo;
+  PVOID                   GlSection;
+  PVOID                   GlTable;
+  PVOID                   GlCurrentRC;
+  PVOID                   GlContext;
+  NTSTATUS                LastStatusValue;
+  UNICODE_STRING          StaticUnicodeString;
+  WCHAR                   StaticUnicodeBuffer[0x105];
+  PVOID                   DeallocationStack;
+  PVOID                   TlsSlots[0x40];
+  LIST_ENTRY              TlsLinks;
+  PVOID                   Vdm;
+  PVOID                   ReservedForNtRpc;
+  PVOID                   DbgSsReserved[0x2];
+  ULONG                   HardErrorDisabled;
+  PVOID                   Instrumentation[0x10];
+  PVOID                   WinSockData;
+  ULONG                   GdiBatchCount;
+  ULONG                   Spare2;
+  ULONG                   Spare3;
+  ULONG                   Spare4;
+  PVOID                   ReservedForOle;
+  ULONG                   WaitingOnLoaderLock;
+  PVOID                   StackCommit;
+  PVOID                   StackCommitMax;
+  PVOID                   StackReserved;
+
+} TEB, *PTEB;
+
+typedef struct _PEB {
+  BOOLEAN                 InheritedAddressSpace;
+  BOOLEAN                 ReadImageFileExecOptions;
+  BOOLEAN                 BeingDebugged;
+  BOOLEAN                 Spare;
+  HANDLE                  Mutant;
+  PVOID                   ImageBaseAddress;
+  PPEB_LDR_DATA           LoaderData;
+  PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
+  PVOID                   SubSystemData;
+  PVOID                   ProcessHeap;
+  PVOID                   FastPebLock;
+  PPEBLOCKROUTINE         FastPebLockRoutine;
+  PPEBLOCKROUTINE         FastPebUnlockRoutine;
+  ULONG                   EnvironmentUpdateCount;
+  PPVOID                  KernelCallbackTable;
+  PVOID                   EventLogSection;
+  PVOID                   EventLog;
+  PPEB_FREE_BLOCK         FreeList;
+  ULONG                   TlsExpansionCounter;
+  PVOID                   TlsBitmap;
+  ULONG                   TlsBitmapBits[0x2];
+  PVOID                   ReadOnlySharedMemoryBase;
+  PVOID                   ReadOnlySharedMemoryHeap;
+  PPVOID                  ReadOnlyStaticServerData;
+  PVOID                   AnsiCodePageData;
+  PVOID                   OemCodePageData;
+  PVOID                   UnicodeCaseTableData;
+  ULONG                   NumberOfProcessors;
+  ULONG                   NtGlobalFlag;
+  BYTE                    Spare2[0x4];
+  LARGE_INTEGER           CriticalSectionTimeout;
+  ULONG                   HeapSegmentReserve;
+  ULONG                   HeapSegmentCommit;
+  ULONG                   HeapDeCommitTotalFreeThreshold;
+  ULONG                   HeapDeCommitFreeBlockThreshold;
+  ULONG                   NumberOfHeaps;
+  ULONG                   MaximumNumberOfHeaps;
+  PPVOID                  *ProcessHeaps;
+  PVOID                   GdiSharedHandleTable;
+  PVOID                   ProcessStarterHelper;
+  PVOID                   GdiDCAttributeList;
+  PVOID                   LoaderLock;
+  ULONG                   OSMajorVersion;
+  ULONG                   OSMinorVersion;
+  ULONG                   OSBuildNumber;
+  ULONG                   OSPlatformId;
+  ULONG                   ImageSubSystem;
+  ULONG                   ImageSubSystemMajorVersion;
+  ULONG                   ImageSubSystemMinorVersion;
+  ULONG                   GdiHandleBuffer[0x22];
+  ULONG                   PostProcessInitRoutine;
+  ULONG                   TlsExpansionBitmap;
+  BYTE                    TlsExpansionBitmapBits[0x80];
+  ULONG                   SessionId;
+
+} PEB, *PPEB;
+
+
+*/
+void* get_current_teb ()
+{
+	_asm 
+	{
+		mov eax, fs:[0x18]
+	}
+}
+
+void* get_current_peb ()
+{
+	void* teb = get_current_teb ();
+	return *(void**)((char*)teb + 0x30);
+}
+
+int is_debugger_present ()
+{
+	void *peb = get_current_peb ();
+	return *((char*)peb+0x02);
+}
+
+
+int is_debugger_present2 ()
+{
+	_asm
+	{
+		mov eax, fs:[0x18]
+		mov ebx, [eax+0x30]
+		xor eax, eax
+		mov al, byte ptr[ebx+0x02]
+	}
+}
+#endif
+
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 int main (int argc, char* argv[])
 #else
@@ -779,6 +945,19 @@ if (n == (xp_size_t)-1)
 }
 else xp_printf (XP_T("%d, %s\n"), n, buf);
 }
+
+	if (IsDebuggerPresent ())
+	{
+		xp_printf (XP_T("Running application in a debugger....\n"));
+	}
+	if (is_debugger_present ())
+	{
+		xp_printf (XP_T("Running application in a debugger by is_debugger_present...\n"));
+	}
+	if (is_debugger_present2 ())
+	{
+		xp_printf (XP_T("Running application in a debugger by is_debugger_present2...\n"));
+	}
 #endif
 
 	n = __main (argc, argv);

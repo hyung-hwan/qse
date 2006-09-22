@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.116 2006-09-14 06:40:06 bacon Exp $
+ * $Id: awk.h,v 1.117 2006-09-22 14:04:25 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -73,6 +73,8 @@ struct xp_awk_syscas_t
 	xp_bool_t (*is_punct)  (xp_cint_t c);
 	xp_cint_t (*to_upper)  (xp_cint_t c);
 	xp_cint_t (*to_lower)  (xp_cint_t c);
+
+	int (*sprintf) (xp_char_t* buf, xp_size_t size, xp_char_t* fmt, ...);
 
 	void* custom_data;
 };
@@ -385,12 +387,6 @@ int xp_awk_strxncasecmp (
 xp_char_t* xp_awk_strxnstr (
 	const xp_char_t* str, xp_size_t strsz, 
 	const xp_char_t* sub, xp_size_t subsz);
-
-int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...);
-
-int xp_awk_sprintf (
-	xp_awk_t* awk, xp_char_t* buf, 
-	xp_size_t size, const xp_char_t* fmt, ...);
 
 /* utility functions to convert an error number ot a string */
 const xp_char_t* xp_awk_geterrstr (int errnum);

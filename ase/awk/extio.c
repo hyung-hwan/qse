@@ -1,12 +1,8 @@
 /*
- * $Id: extio.c,v 1.47 2006-09-10 15:50:34 bacon Exp $
+ * $Id: extio.c,v 1.48 2006-09-22 14:04:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
 
 enum
 {
@@ -287,12 +283,12 @@ int xp_awk_readextio (
 			const xp_char_t* match_ptr;
 			xp_size_t match_len;
 
-			xp_assert (run->rex.rs != XP_NULL);
+			xp_assert (run->global.rs != XP_NULL);
 
 			/* TODO: safematchrex */
 			n = xp_awk_matchrex (
-				run->awk, run->rex.rs, 
-				((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
+				run->awk, run->global.rs, 
+				((run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 				XP_AWK_STR_BUF(buf), XP_AWK_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)

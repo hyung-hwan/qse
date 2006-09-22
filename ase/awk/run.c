@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.203 2006-09-13 14:16:13 bacon Exp $
+ * $Id: run.c,v 1.204 2006-09-22 14:04:26 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -9,7 +9,6 @@
 
 #ifndef XP_AWK_STAND_ALONE
 #include <xp/bas/assert.h>
-#include <xp/bas/memory.h>
 #endif
 
 #define DEF_BUF_CAPA 256
@@ -40,6 +39,9 @@ enum
 
 #define PANIC_I(run,code) \
 	do { (run)->errnum = (code); return -1; } while (0)
+
+#define DEFAULT_OFS XP_T(" ")
+#define DEFAULT_SUBSEP XP_T("\034")
 
 static void __add_run (xp_awk_t* awk, xp_awk_run_t* run);
 static void __del_run (xp_awk_t* awk, xp_awk_run_t* run);
@@ -272,13 +274,13 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 				return -1;
 			}
 
-			if (r->rex.rs != XP_NULL) 
+			if (r->global.rs != XP_NULL) 
 			{
 				xp_awk_freerex ( 
 					((xp_awk_run_t*)run)->awk, 
-					r->rex.rs);
+					r->global.rs);
 			}
-			r->rex.rs = rex;
+			r->global.rs = rex;
 		}
 
 		if (val->type != XP_AWK_VAL_STR) 
@@ -321,13 +323,13 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 				return -1;
 			}
 
-			if (r->rex.fs != XP_NULL) 
+			if (r->global.fs != XP_NULL) 
 			{
 				xp_awk_freerex ( 
 					((xp_awk_run_t*)run)->awk, 
-					r->rex.fs);
+					r->global.fs);
 			}
-			r->rex.fs = rex;
+			r->global.fs = rex;
 		}
 
 		if (val->type != XP_AWK_VAL_STR) 
@@ -342,11 +344,11 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 		    (val->type == XP_AWK_VAL_STR &&
 		     ((xp_awk_val_str_t*)val)->len == 0))
 		{
-			((xp_awk_run_t*)run)->rex.ignorecase = 0;
+			((xp_awk_run_t*)run)->global.ignorecase = 0;
 		}
 		else
 		{
-			((xp_awk_run_t*)run)->rex.ignorecase = 1;
+			((xp_awk_run_t*)run)->global.ignorecase = 1;
 		}
 	}
 	else if (idx == XP_AWK_GLOBAL_NF)
@@ -355,7 +357,6 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 		xp_long_t lv;
 		xp_real_t rv;
 
-		/* TODO: need to recompute $0, etc */
 		n = xp_awk_valtonum (run, val, &lv, &rv);
 		if (n == -1) return -1;
 		if (n == 1) lv = (xp_long_t)rv;
@@ -365,9 +366,33 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 			if (__shorten_record (r, (xp_size_t)lv) == -1) return -1;
 		}
 	}
+	else if (idx == XP_AWK_GLOBAL_OFS)
+	{	
+		xp_char_t* ofs_ptr;
+		xp_size_t ofs_len;
 
-	xp_awk_refdownval (run, old);
-	STACK_GLOBAL((xp_awk_run_t*)run,idx) = val;
+		ofs_ptr = xp_awk_valtostr (
+			run, val, xp_true, XP_NULL, &ofs_len);
+		if (ofs_ptr == XP_NULL) return  -1;
+
+		r->global.ofs.ptr = ofs_ptr;
+		r->global.ofs.len = ofs_len;
+	}
+	else if (idx == XP_AWK_GLOBAL_SUBSEP)
+	{
+		xp_char_t* subsep_ptr;
+		xp_size_t subsep_len;
+
+		subsep_ptr = xp_awk_valtostr (
+			run, val, xp_true, XP_NULL, &subsep_len);
+		if (subsep_ptr == XP_NULL) return  -1;
+
+		r->global.subsep.ptr = subsep_ptr;
+		r->global.subsep.len = subsep_len;
+	}
+
+	xp_awk_refdownval (r, old);
+	STACK_GLOBAL(r,idx) = val;
 	xp_awk_refupval (val);
 
 	return 0;
@@ -615,9 +640,13 @@ static int __init_run (
 	run->extio.handler[XP_AWK_EXTIO_CONSOLE] = runios->console;
 	run->extio.chain = XP_NULL;
 
-	run->rex.rs = XP_NULL;
-	run->rex.fs = XP_NULL;
-	run->rex.ignorecase = 0;
+	run->global.rs = XP_NULL;
+	run->global.fs = XP_NULL;
+	run->global.ignorecase = 0;
+	run->global.ofs.ptr = DEFAULT_OFS;
+	run->global.ofs.len = xp_awk_strlen(DEFAULT_OFS);
+	run->global.subsep.ptr = DEFAULT_SUBSEP;
+	run->global.subsep.len = xp_awk_strlen(DEFAULT_SUBSEP);
 
 	return 0;
 }
@@ -631,15 +660,31 @@ static void __deinit_run (xp_awk_run_t* run)
 	xp_awk_clearextio (run);
 	xp_assert (run->extio.chain == XP_NULL);
 
-	if (run->rex.rs != XP_NULL) 
+	if (run->global.rs != XP_NULL) 
 	{
-		XP_AWK_FREE (run->awk, run->rex.rs);
-		run->rex.rs = XP_NULL;
+		XP_AWK_FREE (run->awk, run->global.rs);
+		run->global.rs = XP_NULL;
 	}
-	if (run->rex.fs != XP_NULL)
+	if (run->global.fs != XP_NULL)
 	{
-		XP_AWK_FREE (run->awk, run->rex.fs);
-		run->rex.fs = XP_NULL;
+		XP_AWK_FREE (run->awk, run->global.fs);
+		run->global.fs = XP_NULL;
+	}
+
+	if (run->global.ofs.ptr != XP_NULL && 
+	    run->global.ofs.ptr != DEFAULT_SUBSEP)
+	{
+		XP_AWK_FREE (run->awk, run->global.ofs.ptr);
+		run->global.ofs.ptr = XP_NULL;
+		run->global.ofs.len = 0;
+	}
+
+	if (run->global.subsep.ptr != XP_NULL && 
+	    run->global.subsep.ptr != DEFAULT_SUBSEP)
+	{
+		XP_AWK_FREE (run->awk, run->global.subsep.ptr);
+		run->global.subsep.ptr = XP_NULL;
+		run->global.subsep.len = 0;
 	}
 
 	/* destroy input record. __clear_record should be called
@@ -1947,7 +1992,7 @@ static xp_awk_val_t* __eval_expression (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			n = xp_awk_matchrex (
 				((xp_awk_run_t*)run)->awk, 
 				((xp_awk_val_rex_t*)v)->code,
-				((((xp_awk_run_t*)run)->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
+				((((xp_awk_run_t*)run)->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 				((xp_awk_val_str_t*)run->inrec.d0)->buf,
 				((xp_awk_val_str_t*)run->inrec.d0)->len,
 				XP_NULL, XP_NULL, &errnum);
@@ -2778,7 +2823,7 @@ static xp_awk_val_t* __eval_binop_eq (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		if (run->rex.ignorecase)
+		if (run->global.ignorecase)
 		{
 			r = xp_awk_strxncasecmp (
 				run->awk,
@@ -2845,7 +2890,7 @@ static xp_awk_val_t* __eval_binop_ne (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		if (run->rex.ignorecase)
+		if (run->global.ignorecase)
 		{
 			r = xp_awk_strxncasecmp (
 				run->awk,
@@ -2906,7 +2951,7 @@ static xp_awk_val_t* __eval_binop_gt (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		if (run->rex.ignorecase)
+		if (run->global.ignorecase)
 		{
 			r = xp_awk_strxncasecmp (
 				run->awk,
@@ -2967,7 +3012,7 @@ static xp_awk_val_t* __eval_binop_ge (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		if (run->rex.ignorecase)
+		if (run->global.ignorecase)
 		{
 			r = xp_awk_strxncasecmp (
 				run->awk,
@@ -3028,7 +3073,7 @@ static xp_awk_val_t* __eval_binop_lt (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		if (run->rex.ignorecase)
+		if (run->global.ignorecase)
 		{
 			r = xp_awk_strxncasecmp (
 				run->awk,
@@ -3089,7 +3134,7 @@ static xp_awk_val_t* __eval_binop_le (
 	else if (left->type == XP_AWK_VAL_STR &&
 	         right->type == XP_AWK_VAL_STR)
 	{
-		if (run->rex.ignorecase)
+		if (run->global.ignorecase)
 		{
 			r = xp_awk_strxncasecmp (
 				run->awk,
@@ -3486,7 +3531,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 	{
 		n = xp_awk_matchrex (
 			run->awk, rex_code,
-			((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
+			((run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 			((xp_awk_val_str_t*)left)->buf,
 			((xp_awk_val_str_t*)left)->len,
 			XP_NULL, XP_NULL, &errnum);
@@ -3517,7 +3562,7 @@ static xp_awk_val_t* __eval_binop_match0 (
 
 		n = xp_awk_matchrex (
 			run->awk, rex_code, 
-			((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
+			((run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 			str, len, XP_NULL, XP_NULL, &errnum);
 		if (n == -1) 
 		{
@@ -4908,7 +4953,7 @@ static int __split_record (xp_awk_run_t* run)
 		else
 		{
 			p = xp_awk_strxntokbyrex (run, p, len, 
-				run->rex.fs, &tok, &tok_len, &errnum); 
+				run->global.fs, &tok, &tok_len, &errnum); 
 			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
 			{
 				if (fs_free != XP_NULL) 
@@ -4963,7 +5008,7 @@ static int __split_record (xp_awk_run_t* run)
 		else
 		{
 			p = xp_awk_strxntokbyrex (run, p, len, 
-				run->rex.fs, &tok, &tok_len, &errnum); 
+				run->global.fs, &tok, &tok_len, &errnum); 
 			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
 			{
 				if (fs_free != XP_NULL) 
@@ -5042,8 +5087,6 @@ static int __recomp_record_fields (
 	xp_awk_run_t* run, xp_size_t lv, xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_t* v;
-	xp_char_t* ofs_free = XP_NULL, * ofs;
-	xp_size_t ofs_len;
 	xp_size_t max, i, nflds;
 
 	/* recomposes the record and the fields when $N has been assigned 
@@ -5097,45 +5140,15 @@ static int __recomp_record_fields (
 
 	xp_awk_str_clear (&run->inrec.line);
 
-	if (max > 1)
-	{
-		/* gets the value of OFS to use it as a field separator */
-
-		v = STACK_GLOBAL(run, XP_AWK_GLOBAL_OFS);
-		xp_awk_refupval (v);
-
-		if (v->type == XP_AWK_VAL_NIL)
-		{
-			/* OFS not set */
-			ofs = XP_T(" ");
-			ofs_len = 1;
-		}
-		else if (v->type == XP_AWK_VAL_STR)
-		{
-			ofs = ((xp_awk_val_str_t*)v)->buf;
-			ofs_len = ((xp_awk_val_str_t*)v)->len;
-		}
-		else
-		{
-			ofs = xp_awk_valtostr (
-				run, v, xp_true, XP_NULL, &ofs_len);
-			if (ofs == XP_NULL) return -1;
-
-			ofs_free = ofs;
-		}
-	}
-
 	for (i = 0; i < max; i++)
 	{
 		if (i > 0)
 		{
 			if (xp_awk_str_ncat (
 				&run->inrec.line, 
-				ofs, ofs_len) == (xp_size_t)-1) 
+				run->global.ofs.ptr, 
+				run->global.ofs.len) == (xp_size_t)-1) 
 			{
-				if (ofs_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, ofs_free);
-				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
@@ -5153,9 +5166,6 @@ static int __recomp_record_fields (
 			if (xp_awk_str_ncat (
 				&run->inrec.line, str, len) == (xp_size_t)-1)
 			{
-				if (ofs_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, ofs_free);
-				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
@@ -5163,9 +5173,6 @@ static int __recomp_record_fields (
 			tmp = xp_awk_makestrval (run, str,len);
 			if (tmp == XP_NULL) 
 			{
-				if (ofs_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, ofs_free);
-				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
@@ -5187,9 +5194,6 @@ static int __recomp_record_fields (
 			if (xp_awk_str_cat (
 				&run->inrec.line, XP_T("")) == (xp_size_t)-1)
 			{
-				if (ofs_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, ofs_free);
-				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
@@ -5216,17 +5220,11 @@ static int __recomp_record_fields (
 			if (xp_awk_str_ncat (&run->inrec.line, 
 				tmp->buf, tmp->len) == (xp_size_t)-1)
 			{
-				if (ofs_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, ofs_free);
-				if (max > 1) xp_awk_refdownval (run, v);
 				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
 		}
 	}
-
-	if (ofs_free != XP_NULL) XP_AWK_FREE (run->awk, ofs_free);
-	if (max > 1) xp_awk_refdownval (run, v);
 
 	v = STACK_GLOBAL(run, XP_AWK_GLOBAL_NF);
 	xp_assert (v->type == XP_AWK_VAL_INT);
@@ -5385,9 +5383,10 @@ static xp_char_t* __idxnde_to_str (
 
 			xp_awk_refupval (idx);
 
-/* TODO: configurable index seperator, not just a comma */
 			if (XP_AWK_STR_LEN(&idxstr) > 0 &&
-			    xp_awk_str_cat (&idxstr, XP_T(",")) == (xp_size_t)-1)
+			    xp_awk_str_ncat (&idxstr, 
+			    	run->global.subsep.ptr, 
+			    	run->global.subsep.len) == (xp_size_t)-1)
 			{
 				xp_awk_refdownval (run, idx);
 				xp_awk_str_close (&idxstr);
@@ -5413,4 +5412,3 @@ static xp_char_t* __idxnde_to_str (
 
 	return str;
 }
-

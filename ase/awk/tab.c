@@ -1,11 +1,10 @@
 /*
- * $Id: tab.c,v 1.16 2006-09-01 07:18:40 bacon Exp $
+ * $Id: tab.c,v 1.17 2006-09-22 14:04:26 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
 #endif
 

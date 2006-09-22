@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.57 2006-09-09 04:52:40 bacon Exp $
+ * $Id: awk_i.h,v 1.58 2006-09-22 14:04:25 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -18,7 +18,6 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 	#endif
 
 	#include <string.h>
-	#include <stdarg.h>
 	#include <assert.h>
 
 	#define xp_assert assert
@@ -28,12 +27,9 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 	#define xp_memmove(dst,src,len)  memmove(dst,src,len)
 	#define xp_memcmp(src1,src2,len) memcmp(src1,src2,len)
 	#define xp_memzero(dst,len)      memset(dst,0,len)
-
-	#define xp_va_start(pvar,param) va_start(pvar,param)
-	#define xp_va_list va_list
-	#define xp_va_end(pvar) va_end(pvar)
-	#define xp_va_arg(pvar,type) va_arg(pvar,type)
-
+#else
+	#include <xp/bas/memory.h>
+	#include <xp/bas/assert.h>
 #endif
 
 #include <xp/awk/str.h>
@@ -247,7 +243,18 @@ struct xp_awk_run_t
 		void* rs;
 		void* fs;
 		int ignorecase;
-	} rex;
+
+		struct
+		{
+			xp_char_t* ptr;
+			xp_size_t len;
+		} ofs;
+		struct
+		{
+			xp_char_t* ptr;
+			xp_size_t len;
+		} subsep;
+	} global;
 
 	/* extio chain */
 	struct

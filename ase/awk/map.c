@@ -1,12 +1,8 @@
 /*
- * $Id: map.c,v 1.24 2006-09-01 07:18:39 bacon Exp $
+ * $Id: map.c,v 1.25 2006-09-22 14:04:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
 
 /* TODO: improve the entire map routines.
          support automatic bucket resizing and remaping, etc. */
