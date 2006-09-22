@@ -1,13 +1,11 @@
 /*
- * $Id: rex.c,v 1.29 2006-09-10 15:50:34 bacon Exp $
+ * $Id: rex.c,v 1.30 2006-09-22 14:04:26 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
-#include <xp/bas/ctype.h>
 #endif
 
 

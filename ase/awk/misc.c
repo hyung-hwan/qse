@@ -1,21 +1,8 @@
 /*
- * $Id: misc.c,v 1.20 2006-09-10 16:04:34 bacon Exp $
+ * $Id: misc.c,v 1.21 2006-09-22 14:04:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#include <xp/bas/stdarg.h>
-#endif
-
-static int __vprintf (
-	xp_awk_t* awk, const xp_char_t* fmt, xp_va_list ap);
-static int __vsprintf (
-	xp_awk_t* awk, xp_char_t* buf, xp_size_t size, 
-	const xp_char_t* fmt, xp_va_list ap);
-
-static xp_char_t* __adjust_format (xp_awk_t* awk, const xp_char_t* format);
 
 xp_long_t xp_awk_strtolong (
 	xp_awk_t* awk, const xp_char_t* str, 
@@ -622,7 +609,7 @@ xp_char_t* xp_awk_strxntok (
 	{
 		/* each token is delimited by one of charaters 
 		 * in the delimeter set "delim". */
-		if (run->rex.ignorecase)
+		if (run->global.ignorecase)
 		{
 			while (p < end) 
 			{
@@ -657,7 +644,7 @@ xp_char_t* xp_awk_strxntok (
 		 * in the delimeter set "delim". however, all space characters
 		 * surrounding the token are removed */
 		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
-		if (run->rex.ignorecase)
+		if (run->global.ignorecase)
 		{
 			while (p < end) 
 			{
@@ -730,7 +717,7 @@ xp_char_t* xp_awk_strxntokbyrex (
 	{
 		n = xp_awk_matchrex (
 			run->awk, rex, 
-			((run->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
+			((run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
 			ptr, left, (const xp_char_t**)&match_ptr, &match_len, 
 			errnum);
 		if (n == -1) return XP_NULL;
@@ -809,215 +796,4 @@ exit_loop:
 	}
 }
 
-int xp_awk_printf (xp_awk_t* awk, const xp_char_t* fmt, ...)
-{
-	int n;
-	xp_va_list ap;
-
-	xp_va_start (ap, fmt);
-	n = __vprintf (awk, fmt, ap);
-	xp_va_end (ap);
-	return n;
-}
-
-static int __vprintf (xp_awk_t* awk, const xp_char_t* fmt, xp_va_list ap)
-{
-	int n;
-	xp_char_t* nf = __adjust_format (awk, fmt);
-	if (nf == XP_NULL) return -1;
-
-#ifdef XP_CHAR_IS_MCHAR
-	n = vprintf (nf, ap);
-#else
-	n =  vwprintf (nf, ap);
-#endif
-
-	XP_AWK_FREE (awk, nf);
-	return n;
-}
-
-int xp_awk_sprintf (
-	xp_awk_t* awk, xp_char_t* buf, xp_size_t size, 
-	const xp_char_t* fmt, ...)
-{
-	int n;
-	xp_va_list ap;
-
-	xp_va_start (ap, fmt);
-	n = __vsprintf (awk, buf, size, fmt, ap);
-	xp_va_end (ap);
-	return n;
-}
-
-static int __vsprintf (
-	xp_awk_t* awk, xp_char_t* buf, xp_size_t size, 
-	const xp_char_t* fmt, xp_va_list ap)
-{
-	int n;
-	xp_char_t* nf = __adjust_format (awk, fmt);
-	if (nf == XP_NULL) return -1;
-
-#if defined(dos) || defined(__dos)
-	n = vsprintf (buf, nf, ap); /* TODO: write your own vsnprintf */
-#elif defined(XP_CHAR_IS_MCHAR)
-	n = vsnprintf (buf, size, nf, ap);
-#elif defined(_WIN32)
-	n = _vsnwprintf (buf, size, nf, ap);
-#else
-	n = vswprintf (buf, size, nf, ap);
-#endif
-	XP_AWK_FREE (awk, nf);
-	return n;
-}
-
-#define MOD_SHORT       1
-#define MOD_LONG        2
-#define MOD_LONGLONG    3
-
-#define ADDC(str,c) \
-	do { \
-		if (xp_awk_str_ccat(&str, c) == (xp_size_t)-1) { \
-			xp_awk_str_close (&str); \
-			return XP_NULL; \
-		} \
-	} while (0)
-
-static xp_char_t* __adjust_format (xp_awk_t* awk, const xp_char_t* format)
-{
-	const xp_char_t* fp = format;
-	xp_char_t* tmp;
-	xp_awk_str_t str;
-	xp_char_t ch;
-	int modifier;
-
-	if (xp_awk_str_open (&str, 256, awk) == XP_NULL) return XP_NULL;
-
-	while (*fp != XP_T('\0')) 
-	{
-		while (*fp != XP_T('\0') && *fp != XP_T('%')) 
-		{
-			ADDC (str, *fp++);
-		}
-
-		if (*fp == XP_T('\0')) break;
-		xp_assert (*fp == XP_T('%'));
-
-		ch = *fp++;	
-		ADDC (str, ch); /* add % */
-
-		ch = *fp++;
-
-		/* flags */
-		for (;;) 
-		{
-			if (ch == XP_T(' ') || ch == XP_T('+') ||
-			    ch == XP_T('-') || ch == XP_T('#')) 
-			{
-				ADDC (str, ch);
-			}
-			else if (ch == XP_T('0')) 
-			{
-				ADDC (str, ch);
-				ch = *fp++; 
-				break;
-			}
-			else break;
-
-			ch = *fp++;
-		}
-
-		/* check the width */
-		if (ch == XP_T('*')) ADDC (str, ch);
-		else 
-		{
-			while (XP_AWK_ISDIGIT (awk, ch)) 
-			{
-				ADDC (str, ch);
-				ch = *fp++;
-			}
-		}
-
-		/* precision */
-		if (ch == XP_T('.')) 
-		{
-			ADDC (str, ch);
-			ch = *fp++;
-
-			if (ch == XP_T('*')) ADDC (str, ch);
-			else 
-			{
-				while (XP_AWK_ISDIGIT (awk, ch)) 
-				{
-					ADDC (str, ch);
-					ch = *fp++;
-				}
-			}
-		}
-
-		/* modifier */
-		for (modifier = 0;;) 
-		{
-			if (ch == XP_T('h')) modifier = MOD_SHORT;
-			else if (ch == XP_T('l')) 
-			{
-				modifier = (modifier == MOD_LONG)? MOD_LONGLONG: MOD_LONG;
-			}
-			else break;
-			ch = *fp++;
-		}		
-
-
-		/* type */
-		if (ch == XP_T('%')) ADDC (str, ch);
-		else if (ch == XP_T('c') || ch == XP_T('s')) 
-		{
-#if !defined(XP_CHAR_IS_MCHAR) && !defined(_WIN32)
-			ADDC (str, 'l');
-#endif
-			ADDC (str, ch);
-		}
-		else if (ch == XP_T('C') || ch == XP_T('S')) 
-		{
-#ifdef _WIN32
-			ADDC (str, ch);
-#else
-	#ifdef XP_CHAR_IS_MCHAR
-			ADDC (str, 'l');
-	#endif
-			ADDC (str, XP_AWK_TOLOWER(awk,ch));
-#endif
-		}
-		else if (ch == XP_T('d') || ch == XP_T('i') || 
-		         ch == XP_T('o') || ch == XP_T('u') || 
-		         ch == XP_T('x') || ch == XP_T('X')) 
-		{
-			if (modifier == MOD_SHORT) 
-			{
-				ADDC (str, 'h');
-			}
-			else if (modifier == MOD_LONG) 
-			{
-				ADDC (str, 'l');
-			}
-			else if (modifier == MOD_LONGLONG) 
-			{
-#if defined(_WIN32) && !defined(__LCC__)
-				ADDC (str, 'I');
-				ADDC (str, '6');
-				ADDC (str, '4');
-#else
-				ADDC (str, 'l');
-				ADDC (str, 'l');
-#endif
-			}
-			ADDC (str, ch);
-		}
-		else if (ch == XP_T('\0')) break;
-		else ADDC (str, ch);
-	}
-
-	tmp = XP_AWK_STR_BUF(&str);
-	xp_awk_str_forfeit (&str);
-	return tmp;
-}
 

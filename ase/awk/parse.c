@@ -1,13 +1,8 @@
 /*
- * $Id: parse.c,v 1.180 2006-09-11 14:29:22 bacon Exp $
+ * $Id: parse.c,v 1.181 2006-09-22 14:04:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/memory.h>
-#include <xp/bas/assert.h>
-#endif
 
 enum
 {

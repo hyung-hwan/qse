@@ -1,12 +1,8 @@
 /*
- * $Id: func.c,v 1.52 2006-09-16 12:58:38 bacon Exp $
+ * $Id: func.c,v 1.53 2006-09-22 14:04:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
 
 #ifdef _WIN32
 	#include <tchar.h>
@@ -586,7 +582,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 
 		if (fs_len > 1) 
 		{
-			fs_rex = ((xp_awk_run_t*)run)->rex.fs;
+			fs_rex = ((xp_awk_run_t*)run)->global.fs;
 			fs_rex_free = XP_NULL;
 		}
 	}
@@ -938,7 +934,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		}
 	}
 
-	opt = (((xp_awk_run_t*)run)->rex.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
+	opt = (((xp_awk_run_t*)run)->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
 	cur_ptr = a2_ptr;
 	cur_len = a2_len;
 	sub_count = 0;

@@ -1,13 +1,11 @@
 /*
- * $Id: val.c,v 1.59 2006-09-01 07:18:40 bacon Exp $
+ * $Id: val.c,v 1.60 2006-09-22 14:04:26 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
-#include <xp/bas/stdio.h>
 #endif
 
 static xp_awk_val_nil_t __awk_nil = { XP_AWK_VAL_NIL, 0 };
@@ -491,12 +489,12 @@ xp_char_t* xp_awk_valtostr (
 		xp_char_t tbuf[256], * tmp;
 
 	#if (XP_SIZEOF_LONG_DOUBLE != 0)
-		xp_awk_sprintf (
-			run->awk, tbuf, xp_countof(tbuf), XP_T("%Lf"), 
+		run->awk->syscas->sprintf (
+			tbuf, xp_countof(tbuf), XP_T("%Lf"), 
 			(long double)((xp_awk_val_real_t*)v)->val); 
 	#elif (XP_SIZEOF_DOUBLE != 0)
-		xp_awk_sprintf (
-			run->awk, tbuf, xp_countof(tbuf), XP_T("%f"), 
+		run->awk->syscas->sprintf (
+			tbuf, xp_countof(tbuf), XP_T("%f"), 
 			(double)((xp_awk_val_real_t*)v)->val); 
 	#else
 		#error unsupported floating-point data type

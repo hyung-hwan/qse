@@ -1,13 +1,8 @@
 /* 
- * $Id: awk.c,v 1.76 2006-09-01 04:03:28 bacon Exp $ 
+ * $Id: awk.c,v 1.77 2006-09-22 14:04:25 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/memory.h>
-#include <xp/bas/assert.h>
-#endif
 
 static void __free_afn (void* awk, void* afn);
 

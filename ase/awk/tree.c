@@ -1,13 +1,11 @@
 /*
- * $Id: tree.c,v 1.74 2006-09-11 14:29:22 bacon Exp $
+ * $Id: tree.c,v 1.75 2006-09-22 14:04:26 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 #ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/memory.h>
 #include <xp/bas/assert.h>
-#include <xp/bas/stdio.h>
 #endif
 
 static const xp_char_t* __assop_str[] =
@@ -242,9 +240,17 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		case XP_AWK_NDE_REAL:
 		{
 			xp_char_t tmp[128];
-			xp_awk_sprintf (
-				awk, tmp, xp_countof(tmp), XP_T("%Lf"), 
+		#if (XP_SIZEOF_LONG_DOUBLE != 0)
+			awk->syscas->sprintf (
+				tmp, xp_countof(tmp), XP_T("%Lf"), 
 				(long double)((xp_awk_nde_real_t*)nde)->val);
+		#elif (XP_SIZEOF_DOUBLE != 0)
+			awk->syscas->sprintf (
+				tmp, xp_countof(tmp), XP_T("%f"), 
+				(double)((xp_awk_nde_real_t*)nde)->val);
+		#else
+			#error unsupported floating-point data type
+		#endif
 			PUT_SRCSTR (awk, tmp);
 			break;
 		}
