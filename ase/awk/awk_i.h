@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.58 2006-09-22 14:04:25 bacon Exp $
+ * $Id: awk_i.h,v 1.59 2006-09-25 06:17:19 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -12,23 +12,13 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/awk/awk.h>
 
 #ifdef XP_AWK_STAND_ALONE
-
 	#if !defined(XP_CHAR_IS_MCHAR) && !defined(XP_CHAR_IS_WCHAR)
 	#error Neither XP_CHAR_IS_MCHAR nor XP_CHAR_IS_WCHAR is defined.
 	#endif
 
-	#include <string.h>
 	#include <assert.h>
-
 	#define xp_assert assert
-
-	#define xp_memset(dst,fill,len)  memset(dst,fill,len)
-	#define xp_memcpy(dst,src,len)   memcpy(dst,src,len)
-	#define xp_memmove(dst,src,len)  memmove(dst,src,len)
-	#define xp_memcmp(src1,src2,len) memcmp(src1,src2,len)
-	#define xp_memzero(dst,len)      memset(dst,0,len)
 #else
-	#include <xp/bas/memory.h>
 	#include <xp/bas/assert.h>
 #endif
 
@@ -95,6 +85,20 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #define XP_AWK_ISPUNCT(awk,c)  (awk)->syscas->is_punct(c)
 #define XP_AWK_TOUPPER(awk,c)  (awk)->syscas->to_upper(c)
 #define XP_AWK_TOLOWER(awk,c)  (awk)->syscas->to_lower(c)
+
+#define XP_AWK_MEMCPY(awk,dst,src,len) \
+	do { \
+		if ((awk)->syscas->memcpy == XP_NULL) \
+			xp_awk_memcpy (dst, src, len); \
+		else (awk)->syscas->memcpy (dst, src, len); \
+	} while (0)
+
+#define XP_AWK_MEMSET(awk,dst,val,len) \
+	do { \
+		if ((awk)->syscas->memset == XP_NULL) \
+			xp_awk_memset (dst, val, len); \
+		else (awk)->syscas->memset (dst, val, len); \
+	} while (0)
 
 struct xp_awk_tree_t
 {

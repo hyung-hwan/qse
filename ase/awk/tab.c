@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.17 2006-09-22 14:04:26 bacon Exp $
+ * $Id: tab.c,v 1.18 2006-09-25 06:17:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -77,7 +77,9 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 			{
 				xp_size_t x;
 				x = (capa > tab->capa)? tab->capa: capa;
-				xp_memcpy (tmp, tab->buf, xp_sizeof(*tab->buf) * x);
+				XP_AWK_MEMCPY (
+					tab->awk, tmp, tab->buf, 
+					xp_sizeof(*tab->buf) * x);
 				XP_AWK_FREE (tab->awk, tab->buf);
 			}
 		}

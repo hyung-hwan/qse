@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.90 2006-09-22 14:05:30 bacon Exp $
+ * $Id: awk.c,v 1.91 2006-09-25 06:17:19 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -671,6 +671,8 @@ static int __main (int argc, xp_char_t* argv[])
 	syscas.to_upper  = towupper;
 	syscas.to_lower  = towlower;
 #endif
+	syscas.memcpy = memcpy;
+	syscas.memset = memset;
 	syscas.sprintf = xp_sprintf;
 
 #ifdef _WIN32

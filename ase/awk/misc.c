@@ -1,8 +1,37 @@
 /*
- * $Id: misc.c,v 1.21 2006-09-22 14:04:25 bacon Exp $
+ * $Id: misc.c,v 1.22 2006-09-25 06:17:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
+
+void* xp_awk_memcpy  (void* dst, const void* src, xp_size_t n)
+{
+	void* p = dst;
+	void* e = (xp_byte_t*)dst + n;
+
+	while (dst < e) 
+	{
+		*(xp_byte_t*)dst = *(xp_byte_t*)src;
+		dst = (xp_byte_t*)dst + 1;
+		src = (xp_byte_t*)src + 1;
+	}
+
+	return p;
+}
+
+void* xp_awk_memset (void* dst, int val, xp_size_t n)
+{
+	void* p = dst;
+	void* e = (xp_byte_t*)p + n;
+
+	while (p < e) 
+	{
+		*(xp_byte_t*)p = (xp_byte_t)val;
+		p = (xp_byte_t*)p + 1;
+	}
+
+	return dst;
+}
 
 xp_long_t xp_awk_strtolong (
 	xp_awk_t* awk, const xp_char_t* str, 

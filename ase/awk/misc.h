@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.1 2006-09-08 15:26:49 bacon Exp $
+ * $Id: misc.h,v 1.2 2006-09-25 06:17:19 bacon Exp $
  */
 
 #ifndef _XP_AWK_MISC_H_
@@ -12,6 +12,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void* xp_awk_memcpy  (void* dst, const void* src, xp_size_t n);
+void* xp_awk_memset (void* dst, int val, xp_size_t n);
 
 xp_char_t* xp_awk_strtok (
 	xp_awk_run_t* awk, const xp_char_t* s, 

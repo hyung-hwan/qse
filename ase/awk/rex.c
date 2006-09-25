@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.30 2006-09-22 14:04:26 bacon Exp $
+ * $Id: rex.c,v 1.31 2006-09-25 06:17:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -925,7 +925,7 @@ static int __add_code (__builder_t* builder, void* data, xp_size_t len)
 		if (capa == 0) capa = DEF_CODE_CAPA;
 		while (len > capa - builder->code.size) { capa = capa * 2; }
 
-		if (builder->awk->syscas->realloc != NULL)
+		if (builder->awk->syscas->realloc != XP_NULL)
 		{
 			tmp = (xp_byte_t*) XP_AWK_REALLOC (
 				builder->awk, builder->code.buf, capa);
@@ -946,7 +946,8 @@ static int __add_code (__builder_t* builder, void* data, xp_size_t len)
 
 			if (builder->code.buf != XP_NULL)
 			{
-				xp_memcpy (tmp, builder->code.buf, builder->code.capa);
+				XP_AWK_MEMCPY (builder->awk, tmp, 
+					builder->code.buf, builder->code.capa);
 				XP_AWK_FREE (builder->awk, builder->code.buf);
 			}
 		}
@@ -955,7 +956,8 @@ static int __add_code (__builder_t* builder, void* data, xp_size_t len)
 		builder->code.capa = capa;
 	}
 
-	xp_memcpy (&builder->code.buf[builder->code.size], data, len);
+	XP_AWK_MEMCPY (builder->awk, 
+		&builder->code.buf[builder->code.size], data, len);
 	builder->code.size += len;
 
 	return 0;

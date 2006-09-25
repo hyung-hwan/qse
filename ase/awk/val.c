@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.60 2006-09-22 14:04:26 bacon Exp $
+ * $Id: val.c,v 1.61 2006-09-25 06:17:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -164,7 +164,7 @@ xp_awk_val_t* xp_awk_makerexval (
 		return XP_NULL;
 	}
 
-	xp_memcpy (val->code, code, XP_AWK_REX_LEN(code));
+	XP_AWK_MEMCPY (run->awk, val->code, code, XP_AWK_REX_LEN(code));
 	return (xp_awk_val_t*)val;
 }
 
