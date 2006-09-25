@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.205 2006-09-25 06:17:19 bacon Exp $
+ * $Id: run.c,v 1.206 2006-09-25 14:53:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -458,10 +458,8 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 	}
 
 	__deinit_run (run);
-
 	__del_run (awk, run);
 	XP_AWK_FREE (awk, run);
-
 	return n;
 }
 
@@ -668,7 +666,7 @@ static void __deinit_run (xp_awk_run_t* run)
 	}
 
 	if (run->global.ofs.ptr != XP_NULL && 
-	    run->global.ofs.ptr != DEFAULT_SUBSEP)
+	    run->global.ofs.ptr != DEFAULT_OFS)
 	{
 		XP_AWK_FREE (run->awk, run->global.ofs.ptr);
 		run->global.ofs.ptr = XP_NULL;
