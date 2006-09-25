@@ -1,15 +1,11 @@
 /*
- * $Id: run.c,v 1.204 2006-09-22 14:04:26 bacon Exp $
+ * $Id: run.c,v 1.205 2006-09-25 06:17:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 /* TODO: remove this dependency...*/
 #include <math.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
 
 #define DEF_BUF_CAPA 256
 
@@ -631,7 +627,7 @@ static int __init_run (
 		return -1;
 	}
 
-	xp_memzero (run->pattern_range_state, 
+	XP_AWK_MEMSET (run->awk, run->pattern_range_state, 0, 
 		run->awk->tree.chain_size * xp_sizeof(xp_byte_t));
 
 	run->extio.handler[XP_AWK_EXTIO_PIPE] = runios->pipe;
@@ -4807,7 +4803,7 @@ static int __raw_push (xp_awk_run_t* run, void* val)
 			if (tmp == XP_NULL) return -1;
 			if (run->stack != XP_NULL)
 			{
-				xp_memcpy (tmp, run->stack, 
+				XP_AWK_MEMCPY (run->awk, tmp, run->stack, 
 					run->stack_limit * xp_sizeof(void*)); 
 				XP_AWK_FREE (run->awk, run->stack);
 			}
@@ -4988,7 +4984,7 @@ static int __split_record (xp_awk_run_t* run)
 			PANIC_I (run, XP_AWK_ENOMEM);
 		}
 
-		if (run->inrec.flds != NULL) 
+		if (run->inrec.flds != XP_NULL) 
 			XP_AWK_FREE (run->awk, run->inrec.flds);
 		run->inrec.flds = tmp;
 		run->inrec.maxflds = nflds;
@@ -5126,7 +5122,7 @@ static int __recomp_record_fields (
 			}
 			if (run->inrec.flds != XP_NULL)
 			{
-				xp_memcpy (tmp, run->inrec.flds, 
+				XP_AWK_MEMCPY (run->awk, tmp, run->inrec.flds, 
 					xp_sizeof(*run->inrec.flds) * run->inrec.maxflds);
 				XP_AWK_FREE (run->awk, run->inrec.flds);
 			}

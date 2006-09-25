@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.5 2006-09-22 14:04:26 bacon Exp $
+ * $Id: str.c,v 1.6 2006-09-25 06:17:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -124,7 +124,7 @@ xp_size_t xp_awk_str_ncat (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
 			if (tmp == XP_NULL) return (xp_size_t)-1;
 			if (str->buf != XP_NULL)
 			{
-				xp_memcpy (tmp, str->buf, 
+				XP_AWK_MEMCPY (str->awk, tmp, str->buf, 
 					xp_sizeof(xp_char_t) * (str->capa + 1));
 				XP_AWK_FREE (str->awk, str->buf);
 			}
