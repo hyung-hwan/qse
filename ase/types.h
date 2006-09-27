@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.55 2006-09-08 11:27:01 bacon Exp $
+ * $Id: types.h,v 1.56 2006-09-27 14:14:29 bacon Exp $
  */
 
 #ifndef _XP_TYPES_H_
@@ -88,16 +88,19 @@ typedef int xp_tri_t;
 #define xp_dead   -1
 
 /* integer that can hold a pointer */
-#if XP_SIZEOF_VOID_P == XP_SIZEOF_LONG_LONG
-	typedef long long xp_int_t;
-	typedef unsigned long long xp_uint_t;
+#if XP_SIZEOF_VOID_P == XP_SIZEOF_INT
+	typedef int xp_int_t;
+	typedef unsigned int xp_uint_t;
 #elif XP_SIZEOF_VOID_P == XP_SIZEOF_LONG
 	typedef long xp_int_t;
 	typedef unsigned long xp_uint_t;
+#elif XP_SIZEOF_VOID_P == XP_SIZEOF_LONG_LONG
+	typedef long long xp_int_t;
+	typedef unsigned long long xp_uint_t;
 #else
-	typedef int xp_int_t;
-	typedef unsigned int xp_uint_t;
+	#error Unsupported pointer size
 #endif
+
 
 /* the largest integer supported by the system */
 #if XP_SIZEOF_LONG_LONG != 0

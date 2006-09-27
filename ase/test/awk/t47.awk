@@ -7,8 +7,8 @@ BEGIN {
 
 	for (i in a) print "a[" i "]=" a[i];
 	#SUBSEP=",,,";
-	#SUBSEP=4.5;
-	SUBSEP=555;
+	SUBSEP=4.5;
+	#SUBSEP=555;
 
 	print "------------------------";
 

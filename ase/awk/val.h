@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.40 2006-09-01 06:22:13 bacon Exp $
+ * $Id: val.h,v 1.41 2006-09-27 14:11:32 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -68,6 +68,7 @@ struct xp_awk_val_int_t
 {
 	XP_AWK_VAL_HDR;
 	xp_long_t val;
+	xp_awk_nde_int_t* nde;
 };
 
 /* XP_AWK_VAL_REAL */
@@ -75,6 +76,7 @@ struct xp_awk_val_real_t
 {
 	XP_AWK_VAL_HDR;
 	xp_real_t val;
+	xp_awk_nde_real_t* nde;
 };
 
 /* XP_AWK_VAL_STR */
