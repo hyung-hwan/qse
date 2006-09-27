@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.206 2006-09-25 14:53:10 bacon Exp $
+ * $Id: run.c,v 1.207 2006-09-27 14:11:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2642,7 +2642,7 @@ static xp_awk_val_t* __eval_binop_land (
 static xp_awk_val_t* __eval_binop_in (
 	xp_awk_run_t* run, xp_awk_nde_t* left, xp_awk_nde_t* right)
 {
-	xp_awk_val_t* rv, * res;
+	xp_awk_val_t* rv;
 	xp_char_t* str;
 	xp_size_t len;
 
@@ -2676,21 +2676,14 @@ static xp_awk_val_t* __eval_binop_in (
 
 	if (rv->type == XP_AWK_VAL_NIL)
 	{
-		res = xp_awk_makeintval (run, 0);
-		if (res == XP_NULL) 
-		{
-			XP_AWK_FREE (run->awk, str);
-			xp_awk_refdownval (run, rv);
-			PANIC (run, XP_AWK_ENOMEM);
-		}
-
 		XP_AWK_FREE (run->awk, str);
 		xp_awk_refdownval (run, rv);
-		return res;
+		return xp_awk_val_zero;
 	}
 	else if (rv->type == XP_AWK_VAL_MAP)
 	{
 		xp_long_t r;
+		xp_awk_val_t* res;
 
 		r = (xp_long_t)(xp_awk_map_get(((xp_awk_val_map_t*)rv)->map,str,len) != XP_NULL);
 
@@ -4480,18 +4473,22 @@ static xp_awk_val_t** __get_reference_indexed (
 static xp_awk_val_t* __eval_int (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_val_t* val;
-	val = xp_awk_makeintval (
-		run, ((xp_awk_nde_int_t*)nde)->val);
+
+	val = xp_awk_makeintval (run, ((xp_awk_nde_int_t*)nde)->val);
 	if (val == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+	((xp_awk_val_int_t*)val)->nde = (xp_awk_nde_int_t*)nde; 
+
 	return val;
 }
 
 static xp_awk_val_t* __eval_real (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_val_t* val;
-	val = xp_awk_makerealval (
-		run, ((xp_awk_nde_real_t*)nde)->val);
+
+	val = xp_awk_makerealval (run, ((xp_awk_nde_real_t*)nde)->val);
 	if (val == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+	((xp_awk_val_real_t*)val)->nde = (xp_awk_nde_real_t*)nde;
+
 	return val;
 }
 
@@ -4499,8 +4496,7 @@ static xp_awk_val_t* __eval_str (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_val_t* val;
 
-	val = xp_awk_makestrval (
-		run,
+	val = xp_awk_makestrval (run,
 		((xp_awk_nde_str_t*)nde)->buf,
 		((xp_awk_nde_str_t*)nde)->len);
 	if (val == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
@@ -4512,8 +4508,7 @@ static xp_awk_val_t* __eval_rex (xp_awk_run_t* run, xp_awk_nde_t* nde)
 {
 	xp_awk_val_t* val;
 
-	val = xp_awk_makerexval (
-		run,
+	val = xp_awk_makerexval (run,
 		((xp_awk_nde_rex_t*)nde)->buf,
 		((xp_awk_nde_rex_t*)nde)->len,
 		((xp_awk_nde_rex_t*)nde)->code);
