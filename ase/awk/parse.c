@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.181 2006-09-22 14:04:25 bacon Exp $
+ * $Id: parse.c,v 1.182 2006-09-27 14:11:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1952,6 +1952,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		if (__get_token(awk) == -1) 
 		{
+			XP_AWK_FREE (awk, nde->str);
 			XP_AWK_FREE (awk, nde);
 			return XP_NULL;			
 		}
@@ -1986,6 +1987,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		if (__get_token(awk) == -1) 
 		{
+			XP_AWK_FREE (awk, nde->str);
 			XP_AWK_FREE (awk, nde);
 			return XP_NULL;			
 		}
