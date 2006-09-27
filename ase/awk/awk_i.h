@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.59 2006-09-25 06:17:19 bacon Exp $
+ * $Id: awk_i.h,v 1.60 2006-09-27 14:11:31 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -25,9 +25,9 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/awk/str.h>
 #include <xp/awk/rex.h>
 #include <xp/awk/map.h>
+#include <xp/awk/tree.h>
 #include <xp/awk/val.h>
 #include <xp/awk/func.h>
-#include <xp/awk/tree.h>
 #include <xp/awk/tab.h>
 #include <xp/awk/parse.h>
 #include <xp/awk/run.h>
