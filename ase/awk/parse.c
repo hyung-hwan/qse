@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.183 2006-09-27 14:13:33 bacon Exp $
+ * $Id: parse.c,v 1.184 2006-09-28 14:21:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1432,6 +1432,14 @@ static xp_awk_nde_t* __parse_binary_expr (
 
 			xp_awk_clrpt (awk, right);
 			((xp_awk_nde_int_t*)left)->val = l;
+
+			if (((xp_awk_nde_int_t*)left)->str != XP_NULL)
+			{
+				XP_AWK_FREE (awk, ((xp_awk_nde_int_t*)left)->str);
+				((xp_awk_nde_int_t*)left)->str = XP_NULL;
+				((xp_awk_nde_int_t*)left)->len = 0;
+			}
+
 			continue;
 		} 
 		else if (left->type == XP_AWK_NDE_REAL && 
@@ -1451,6 +1459,14 @@ static xp_awk_nde_t* __parse_binary_expr (
 
 			xp_awk_clrpt (awk, right);
 			((xp_awk_nde_real_t*)left)->val = l;
+
+			if (((xp_awk_nde_real_t*)left)->str != XP_NULL)
+			{
+				XP_AWK_FREE (awk, ((xp_awk_nde_real_t*)left)->str);
+				((xp_awk_nde_real_t*)left)->str = XP_NULL;
+				((xp_awk_nde_real_t*)left)->len = 0;
+			}
+
 			continue;
 		}
 		/* TODO: enhance constant folding more... */

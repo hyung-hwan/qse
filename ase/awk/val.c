@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.63 2006-09-28 06:56:30 bacon Exp $
+ * $Id: val.c,v 1.64 2006-09-28 14:21:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -384,7 +384,7 @@ xp_char_t* xp_awk_valtostr (
 	{
 		xp_awk_val_int_t* vi = (xp_awk_val_int_t*)v;
 
-		if (vi->nde != XP_NULL)
+		if (vi->nde != XP_NULL && vi->nde->str != XP_NULL)
 		{
 			return __str_to_str (
 				run, vi->nde->str, vi->nde->len, 
@@ -400,7 +400,7 @@ xp_char_t* xp_awk_valtostr (
 	{
 		xp_awk_val_real_t* vr = (xp_awk_val_real_t*)v;
 
-		if (vr->nde != XP_NULL)
+		if (vr->nde != XP_NULL && vr->nde->str != XP_NULL)
 		{
 			return __str_to_str (
 				run, vr->nde->str, vr->nde->len, 
@@ -564,10 +564,10 @@ static xp_char_t* __val_real_to_str (
 
 #if (XP_SIZEOF_LONG_DOUBLE != 0)
 	run->awk->syscas->sprintf (
-		tbuf, xp_countof(tbuf), XP_T("%Lf"), (long double)v->val); 
+		tbuf, xp_countof(tbuf), XP_T("%.30Lg"), (long double)v->val); 
 #elif (XP_SIZEOF_DOUBLE != 0)
 	run->awk->syscas->sprintf (
-		tbuf, xp_countof(tbuf), XP_T("%f"), (double)v->val); 
+		tbuf, xp_countof(tbuf), XP_T("%.30g"), (double)v->val); 
 #else
 	#error unsupported floating-point data type
 #endif

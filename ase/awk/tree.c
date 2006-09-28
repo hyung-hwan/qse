@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.76 2006-09-28 06:56:30 bacon Exp $
+ * $Id: tree.c,v 1.77 2006-09-28 14:21:23 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -991,14 +991,16 @@ void xp_awk_clrpt (xp_awk_t* awk, xp_awk_nde_t* tree)
 
 			case XP_AWK_NDE_INT:
 			{
-				XP_AWK_FREE (awk, ((xp_awk_nde_int_t*)p)->str);
+				if (((xp_awk_nde_int_t*)p)->str != XP_NULL)
+					XP_AWK_FREE (awk, ((xp_awk_nde_int_t*)p)->str);
 				XP_AWK_FREE (awk, p);
 				break;
 			}
 
 			case XP_AWK_NDE_REAL:
 			{
-				XP_AWK_FREE (awk, ((xp_awk_nde_real_t*)p)->str);
+				if (((xp_awk_nde_real_t*)p)->str != XP_NULL)
+					XP_AWK_FREE (awk, ((xp_awk_nde_real_t*)p)->str);
 				XP_AWK_FREE (awk, p);
 				break;
 			}
