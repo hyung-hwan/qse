@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.207 2006-09-27 14:11:31 bacon Exp $
+ * $Id: run.c,v 1.208 2006-09-28 04:39:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2570,7 +2570,8 @@ static xp_awk_val_t* __eval_binop_lor (
 	xp_awk_refupval (lv);
 	if (xp_awk_valtobool(lv)) 
 	{
-		res = xp_awk_makeintval (run, 1);
+		/*res = xp_awk_makeintval (run, 1);*/
+		res = xp_awk_val_one;
 	}
 	else
 	{
@@ -2583,13 +2584,14 @@ static xp_awk_val_t* __eval_binop_lor (
 		}
 		xp_awk_refupval (rv);
 
-		res = xp_awk_makeintval (run, (xp_awk_valtobool(rv)? 1: 0));
+		/*res = xp_awk_makeintval (run, (xp_awk_valtobool(rv)? 1: 0));*/
+		res = xp_awk_valtobool(rv)? xp_awk_val_one: xp_awk_val_zero;
 		xp_awk_refdownval (run, rv);
 	}
 
 	xp_awk_refdownval (run, lv);
 
-	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+	/*if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);*/
 	return res;
 }
 
@@ -2616,7 +2618,8 @@ static xp_awk_val_t* __eval_binop_land (
 	xp_awk_refupval (lv);
 	if (!xp_awk_valtobool(lv)) 
 	{
-		res = xp_awk_makeintval (run, 0);
+		/*res = xp_awk_makeintval (run, 0);*/
+		res = xp_awk_val_zero;
 	}
 	else
 	{
@@ -2629,13 +2632,14 @@ static xp_awk_val_t* __eval_binop_land (
 		}
 		xp_awk_refupval (rv);
 
-		res = xp_awk_makeintval (run, (xp_awk_valtobool(rv)? 1: 0));
+		/*res = xp_awk_makeintval (run, (xp_awk_valtobool(rv)? 1: 0));*/
+		res = xp_awk_valtobool(rv)? xp_awk_val_one: xp_awk_val_zero;
 		xp_awk_refdownval (run, rv);
 	}
 
 	xp_awk_refdownval (run, lv);
 
-	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+	/*if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);*/
 	return res;
 }
 
@@ -2682,18 +2686,21 @@ static xp_awk_val_t* __eval_binop_in (
 	}
 	else if (rv->type == XP_AWK_VAL_MAP)
 	{
-		xp_long_t r;
 		xp_awk_val_t* res;
+		xp_awk_map_t* map;
 
-		r = (xp_long_t)(xp_awk_map_get(((xp_awk_val_map_t*)rv)->map,str,len) != XP_NULL);
+		map = ((xp_awk_val_map_t*)rv)->map;
 
+		/*r = (xp_long_t)(xp_awk_map_get (map, str, len) != XP_NULL);
 		res = xp_awk_makeintval (run, r);
 		if (res == XP_NULL) 
 		{
 			XP_AWK_FREE (run->awk, str);
 			xp_awk_refdownval (run, rv);
 			PANIC (run, XP_AWK_ENOMEM);
-		}
+		}*/
+		res = (xp_awk_map_get (map, str, len) == XP_NULL)? 
+			xp_awk_val_zero: xp_awk_val_one;
 
 		XP_AWK_FREE (run->awk, str);
 		xp_awk_refdownval (run, rv);
@@ -2772,71 +2779,251 @@ static xp_awk_val_t* __eval_binop_band (
 	return res;
 }
 
-static xp_awk_val_t* __eval_binop_eq (
+static int __cmp_nil_nil (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	xp_awk_val_t* res = XP_NULL;
-	xp_long_t r = 0;
+	return 0;
+}
 
-	if (left->type == XP_AWK_VAL_NIL || 
-	    right->type == XP_AWK_VAL_NIL)
+static int __cmp_nil_int (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (((xp_awk_val_int_t*)right)->val < 0) return 1;
+	if (((xp_awk_val_int_t*)right)->val > 0) return -1;
+	return 0;
+}
+
+static int __cmp_nil_real (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (((xp_awk_val_real_t*)right)->val < 0) return 1;
+	if (((xp_awk_val_real_t*)right)->val > 0) return -1;
+	return 0;
+}
+
+static int __cmp_nil_str (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	/* TODO */
+}
+
+static int __cmp_int_nil (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (((xp_awk_val_int_t*)left)->val > 0) return 1;
+	if (((xp_awk_val_int_t*)left)->val < 0) return -1;
+	return 0;
+}
+
+static int __cmp_int_int (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (((xp_awk_val_int_t*)left)->val > 
+	    ((xp_awk_val_int_t*)right)->val) return 1;
+	if (((xp_awk_val_int_t*)left)->val < 
+	    ((xp_awk_val_int_t*)right)->val) return -1;
+	return 0;
+}
+
+static int __cmp_int_real (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (((xp_awk_val_int_t*)left)->val > 
+	    ((xp_awk_val_real_t*)right)->val) return 1;
+	if (((xp_awk_val_int_t*)left)->val < 
+	    ((xp_awk_val_real_t*)right)->val) return -1;
+	return 0;
+}
+
+static int __cmp_int_str (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	/* TODO */
+}
+
+static int __cmp_real_nil (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (((xp_awk_val_real_t*)left)->val > 0) return 1;
+	if (((xp_awk_val_real_t*)left)->val < 0) return -1;
+	return 0;
+}
+
+static int __cmp_real_int (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (((xp_awk_val_real_t*)left)->val > 
+	    ((xp_awk_val_int_t*)right)->val) return 1;
+	if (((xp_awk_val_real_t*)left)->val < 
+	    ((xp_awk_val_int_t*)right)->val) return -1;
+	return 0;
+}
+
+static int __cmp_real_real (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (((xp_awk_val_real_t*)left)->val > 
+	    ((xp_awk_val_real_t*)right)->val) return 1;
+	if (((xp_awk_val_real_t*)left)->val < 
+	    ((xp_awk_val_real_t*)right)->val) return -1;
+	return 0;
+}
+
+static int __cmp_real_str (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	/* TODO */
+}
+
+static int __cmp_str_nil (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	return __cmp_nil_str (run, right, left);
+}
+
+static int __cmp_str_int (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	return __cmp_int_str (run, right, left);
+}
+
+static int __cmp_str_real (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	return __cmp_real_str (run, right, left);
+}
+
+static int __cmp_str_str (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	int n;
+	xp_awk_val_str_t* ls, * rs;
+
+	ls = (xp_awk_val_str_t*)left;
+	rs = (xp_awk_val_str_t*)right;
+
+	if (run->global.ignorecase)
 	{
-		r = (left->type == right->type);
-	}
-	else if (left->type == XP_AWK_VAL_INT &&
-	         right->type == XP_AWK_VAL_INT)
-	{
-		r = ((xp_awk_val_int_t*)left)->val ==
-		    ((xp_awk_val_int_t*)right)->val;
-	}
-	else if (left->type == XP_AWK_VAL_REAL && 
-	         right->type == XP_AWK_VAL_REAL)
-	{
-		r = ((xp_awk_val_real_t*)left)->val ==
-		    ((xp_awk_val_real_t*)right)->val;
-	}
-	else if (left->type == XP_AWK_VAL_INT && 
-	         right->type == XP_AWK_VAL_REAL)
-	{
-		r = ((xp_awk_val_int_t*)left)->val ==
-		    ((xp_awk_val_real_t*)right)->val;
-	}
-	else if (left->type == XP_AWK_VAL_REAL &&
-		 right->type == XP_AWK_VAL_INT)
-	{
-		r = ((xp_awk_val_real_t*)left)->val ==
-		    ((xp_awk_val_int_t*)right)->val;
-	}
-	else if (left->type == XP_AWK_VAL_STR &&
-	         right->type == XP_AWK_VAL_STR)
-	{
-		if (run->global.ignorecase)
-		{
-			r = xp_awk_strxncasecmp (
-				run->awk,
-				((xp_awk_val_str_t*)left)->buf,
-				((xp_awk_val_str_t*)left)->len,
-				((xp_awk_val_str_t*)right)->buf,
-				((xp_awk_val_str_t*)right)->len) == 0;
-		}
-		else
-		{
-			r = xp_awk_strxncmp (
-				((xp_awk_val_str_t*)left)->buf,
-				((xp_awk_val_str_t*)left)->len,
-				((xp_awk_val_str_t*)right)->buf,
-				((xp_awk_val_str_t*)right)->len) == 0;
-		}
+		n = xp_awk_strxncasecmp (run->awk, 
+			ls->buf, ls->len, rs->buf, rs->len);
 	}
 	else
 	{
-		PANIC (run, XP_AWK_EOPERAND);
+		n = xp_awk_strxncmp (
+			ls->buf, ls->len, rs->buf, rs->len);
 	}
 
-	res = xp_awk_makeintval (run, r);
-	if (res == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+	return n;
+}
 
-	return res;
+static int __cmp_val (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	typedef int (*cmp_val_t) (xp_awk_run_t*, xp_awk_val_t*, xp_awk_val_t*);
+
+	static cmp_val_t func[] =
+	{
+		__cmp_nil_nil,  __cmp_nil_int,  __cmp_nil_real,  __cmp_nil_str,
+		__cmp_int_nil,  __cmp_int_int,  __cmp_int_real,  __cmp_int_str,
+		__cmp_real_nil, __cmp_real_int, __cmp_real_real, __cmp_real_str,
+		__cmp_str_nil,  __cmp_str_int,  __cmp_str_real,  __cmp_str_str,
+	};
+
+	if (left->type == XP_AWK_VAL_MAP || right->type == XP_AWK_VAL_MAP)
+	{
+		/* a map can't be compared againt other values */
+		return -99; // TODO:
+	}
+
+	return func[left->type*4+right->type] (run, left, right);
+}
+
+
+static xp_awk_val_t* __eval_binop_eq (
+	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
+{
+	if (left->type == XP_AWK_VAL_NIL || 
+	    right->type == XP_AWK_VAL_NIL)
+	{
+		return xp_awk_val_one;
+	}
+
+	if (left->type == XP_AWK_VAL_STR &&
+	    right->type == XP_AWK_VAL_STR)
+	{
+		int n;
+		xp_awk_val_str_t* ls, * rs;
+
+		ls = (xp_awk_val_str_t*)left;
+		rs = (xp_awk_val_str_t*)right;
+
+		if (run->global.ignorecase)
+		{
+			n = xp_awk_strxncasecmp (run->awk, 
+				ls->buf, ls->len, rs->buf, rs->len);
+		}
+		else
+		{
+			n = xp_awk_strxncmp (
+				ls->buf, ls->len, rs->buf, rs->len);
+		}
+
+		return (n == 0)? xp_awk_val_one: xp_awk_val_zero;
+	}
+
+	if (left->type == XP_AWK_VAL_INT &&
+	    right->type == XP_AWK_VAL_INT)
+	{
+		xp_awk_val_int_t* li, * ri;
+		li = (xp_awk_val_int_t*)left;
+		ri = (xp_awk_val_int_t*)right;
+		return (li->val == ri->val)? xp_awk_val_one: xp_awk_val_zero;
+	}
+
+	if (left->type == XP_AWK_VAL_REAL && 
+	    right->type == XP_AWK_VAL_REAL)
+	{
+		xp_awk_val_real_t* lr, * rr;
+		lr = (xp_awk_val_real_t*)left;
+		rr = (xp_awk_val_real_t*)right;
+		return (lr->val == rr->val)? xp_awk_val_one: xp_awk_val_zero;
+	}
+
+
+	if (left->type == XP_AWK_VAL_INT && 
+	    right->type == XP_AWK_VAL_REAL)
+	{
+		xp_awk_val_int_t* li; 
+		xp_awk_val_real_t* rr;
+		li = (xp_awk_val_int_t*)left;
+		rr = (xp_awk_val_real_t*)right;
+		return (li->val == rr->val)? xp_awk_val_one: xp_awk_val_zero;
+	}
+
+	if (left->type == XP_AWK_VAL_REAL &&
+	    right->type == XP_AWK_VAL_INT)
+	{
+		xp_awk_val_real_t* lr; 
+		xp_awk_val_int_t* ri;
+		lr = (xp_awk_val_real_t*)left;
+		ri = (xp_awk_val_int_t*)right;
+		return (lr->val == ri->val)? xp_awk_val_one: xp_awk_val_zero;
+	}
+
+	if (left->type == XP_AWK_VAL_INT &&
+	    right->type == XP_AWK_VAL_STR)
+	{
+		return xp_awk_val_zero;
+	}
+
+	if (left->type == XP_AWK_VAL_REAL &&
+	    right->type == XP_AWK_VAL_STR)
+	{
+		return xp_awk_val_zero;
+	}
+
+	/* not comparable */
+	return xp_awk_val_zero;
 }
 
 static xp_awk_val_t* __eval_binop_ne (
