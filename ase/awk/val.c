@@ -1,12 +1,8 @@
 /*
- * $Id: val.c,v 1.62 2006-09-27 14:11:32 bacon Exp $
+ * $Id: val.c,v 1.63 2006-09-28 06:56:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
 
 static xp_char_t* __str_to_str (
 	xp_awk_run_t* run, const xp_char_t* str, xp_size_t str_len,
