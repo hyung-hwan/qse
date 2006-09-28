@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.210 2006-09-28 06:56:30 bacon Exp $
+ * $Id: run.c,v 1.211 2006-09-28 13:47:58 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2804,8 +2804,7 @@ static int __cmp_nil_real (
 static int __cmp_nil_str (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	/* TODO */
-	return 0;
+	return (((xp_awk_val_str_t*)right)->len == 0)? 0: -1;
 }
 
 static int __cmp_int_nil (
@@ -2881,7 +2880,7 @@ static int __cmp_real_str (
 static int __cmp_str_nil (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return __cmp_nil_str (run, right, left);
+	return (((xp_awk_val_str_t*)left)->len == 0)? 0: 1;
 }
 
 static int __cmp_str_int (
