@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.209 2006-09-28 06:41:25 bacon Exp $
+ * $Id: run.c,v 1.210 2006-09-28 06:56:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2926,6 +2926,8 @@ static int __cmp_val (
 
 	static cmp_val_t func[] =
 	{
+		/* this table must be synchronized with 
+		 * the XP_AWK_VAL_XXX values in val.h */
 		__cmp_nil_nil,  __cmp_nil_int,  __cmp_nil_real,  __cmp_nil_str,
 		__cmp_int_nil,  __cmp_int_int,  __cmp_int_real,  __cmp_int_str,
 		__cmp_real_nil, __cmp_real_int, __cmp_real_real, __cmp_real_str,
@@ -2935,53 +2937,64 @@ static int __cmp_val (
 	if (left->type == XP_AWK_VAL_MAP || right->type == XP_AWK_VAL_MAP)
 	{
 		/* a map can't be compared againt other values */
-		return -99; // TODO:
+		run->errnum = XP_AWK_EOPERAND;
+		return -99; 
 	}
+
+	xp_assert (left->type >= XP_AWK_VAL_NIL &&
+	           left->type <= XP_AWK_VAL_STR);
+	xp_assert (right->type >= XP_AWK_VAL_NIL &&
+	           right->type <= XP_AWK_VAL_STR);
 
 	return func[left->type*4+right->type] (run, left, right);
 }
 
-
 static xp_awk_val_t* __eval_binop_eq (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return (__cmp_val (run, left, right) == 0)? 
-	       	xp_awk_val_one: xp_awk_val_zero;
+	int n = __cmp_val (run, left, right);
+	if (n == -99) return XP_NULL;
+	return (n == 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
 static xp_awk_val_t* __eval_binop_ne (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return (__cmp_val (run, left, right) != 0)? 
-	       	xp_awk_val_one: xp_awk_val_zero;
+	int n = __cmp_val (run, left, right);
+	if (n == -99) return XP_NULL;
+	return (n != 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
 static xp_awk_val_t* __eval_binop_gt (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return (__cmp_val (run, left, right) > 0)? 
-	       	xp_awk_val_one: xp_awk_val_zero;
+	int n = __cmp_val (run, left, right);
+	if (n == -99) return XP_NULL;
+	return (n > 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
 static xp_awk_val_t* __eval_binop_ge (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return (__cmp_val (run, left, right) >= 0)? 
-	       	xp_awk_val_one: xp_awk_val_zero;
+	int n = __cmp_val (run, left, right);
+	if (n == -99) return XP_NULL;
+	return (n >= 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
 static xp_awk_val_t* __eval_binop_lt (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return (__cmp_val (run, left, right) < 0)? 
-	       	xp_awk_val_one: xp_awk_val_zero;
+	int n = __cmp_val (run, left, right);
+	if (n == -99) return XP_NULL;
+	return (n < 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
 static xp_awk_val_t* __eval_binop_le (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return (__cmp_val (run, left, right) <= 0)? 
-	       	xp_awk_val_one: xp_awk_val_zero;
+	int n = __cmp_val (run, left, right);
+	if (n == -99) return XP_NULL;
+	return (n <= 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
 static xp_awk_val_t* __eval_binop_lshift (

@@ -1,13 +1,8 @@
 /*
- * $Id: rex.c,v 1.31 2006-09-25 06:17:19 bacon Exp $
+ * $Id: rex.c,v 1.32 2006-09-28 06:56:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
-
 
 enum
 {

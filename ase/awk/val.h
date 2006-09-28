@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.41 2006-09-27 14:11:32 bacon Exp $
+ * $Id: val.h,v 1.42 2006-09-28 06:56:30 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -11,10 +11,14 @@
 
 enum
 {
+	/* the values between XP_AWK_VAL_NIL and XP_AWK_VAL_STR inclusive
+	 * must be synchronized with an internal table of the __cmp_val 
+	 * function in run.c */
 	XP_AWK_VAL_NIL  = 0,
 	XP_AWK_VAL_INT  = 1,
 	XP_AWK_VAL_REAL = 2,
 	XP_AWK_VAL_STR  = 3,
+
 	XP_AWK_VAL_REX  = 4,
 	XP_AWK_VAL_MAP  = 5,
 	XP_AWK_VAL_REF  = 6

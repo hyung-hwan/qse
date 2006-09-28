@@ -1,12 +1,8 @@
 /*
- * $Id: tab.c,v 1.18 2006-09-25 06:17:19 bacon Exp $
+ * $Id: tab.c,v 1.19 2006-09-28 06:56:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
 
 xp_awk_tab_t* xp_awk_tab_open (xp_awk_tab_t* tab, xp_awk_t* awk)
 {

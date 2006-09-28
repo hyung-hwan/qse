@@ -1,12 +1,8 @@
 /*
- * $Id: str.c,v 1.6 2006-09-25 06:17:19 bacon Exp $
+ * $Id: str.c,v 1.7 2006-09-28 06:56:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
 
 xp_awk_str_t* xp_awk_str_open (
 	xp_awk_str_t* str, xp_size_t capa, xp_awk_t* awk)

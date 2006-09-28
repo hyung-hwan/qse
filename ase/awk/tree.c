@@ -1,12 +1,8 @@
 /*
- * $Id: tree.c,v 1.75 2006-09-22 14:04:26 bacon Exp $
+ * $Id: tree.c,v 1.76 2006-09-28 06:56:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
-
-#ifndef XP_AWK_STAND_ALONE
-#include <xp/bas/assert.h>
-#endif
 
 static const xp_char_t* __assop_str[] =
 {
