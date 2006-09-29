@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.48 2006-09-22 14:04:25 bacon Exp $
+ * $Id: extio.c,v 1.49 2006-09-29 11:18:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -71,10 +71,6 @@ static int __out_mask_map[] =
 	__MASK_WRITE,
 	__MASK_WRITE
 };
-
-static int __writeextio (
-	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v, xp_bool_t nl);
 
 int xp_awk_readextio (
 	xp_awk_run_t* run, int in_type,
@@ -360,28 +356,37 @@ int xp_awk_readextio (
 	return ret;
 }
 
-int xp_awk_writeextio (
+int xp_awk_writeextio_val (
 	xp_awk_run_t* run, int out_type, 
 	const xp_char_t* name, xp_awk_val_t* v)
 {
-	return __writeextio (run, out_type, name, v, xp_false);
+	xp_char_t* str;
+	xp_size_t len;
+	int n;
+
+	if (v->type == XP_AWK_VAL_STR)
+	{
+		str = ((xp_awk_val_str_t*)v)->buf;
+		len = ((xp_awk_val_str_t*)v)->len;
+	}
+	else
+	{
+		str = xp_awk_valtostr (run, v, xp_true, XP_NULL, &len);
+		if (str == XP_NULL) return -1;
+	}
+
+	n = xp_awk_writeextio_str (run, out_type, name, str, len);
+
+	if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
+	return n;
 }
 
-int xp_awk_writeextio_nl (
+int xp_awk_writeextio_str (
 	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v)
-{
-	return __writeextio (run, out_type, name, v, xp_true);
-}
-
-static int __writeextio (
-	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v, xp_bool_t nl)
+	const xp_char_t* name, xp_char_t* str, xp_size_t len)
 {
 	xp_awk_extio_t* p = run->extio.chain;
 	xp_awk_io_t handler;
-	xp_char_t* str;
-	xp_size_t len;
 	int extio_type, extio_mode, extio_mask, n;
 
 	xp_assert (out_type >= 0 && out_type <= xp_countof(__out_type_map));
@@ -399,21 +404,6 @@ static int __writeextio (
 		/* no io handler provided */
 		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
-	}
-
-	if (v->type == XP_AWK_VAL_STR)
-	{
-		str = ((xp_awk_val_str_t*)v)->buf;
-		len = ((xp_awk_val_str_t*)v)->len;
-	}
-	else
-	{
-		/* convert the value to string representation first */
-
-		/* TOOD: consider using a shared buffer when calling
-		 *       xp_awk_valtostr. maybe run->shared_buf.extio */
-		str = xp_awk_valtostr (run, v, xp_true, XP_NULL, &len);
-		if (str == XP_NULL) return -1;
 	}
 
 	/* look for the corresponding extio for name */
@@ -441,7 +431,6 @@ static int __writeextio (
 			run->awk, xp_sizeof(xp_awk_extio_t));
 		if (p == XP_NULL)
 		{
-			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -450,7 +439,6 @@ static int __writeextio (
 		if (p->name == XP_NULL)
 		{
 			XP_AWK_FREE (run->awk, p);
-			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 			run->errnum = XP_AWK_ENOMEM;
 			return -1;
 		}
@@ -465,7 +453,6 @@ static int __writeextio (
 		{
 			XP_AWK_FREE (run->awk, p->name);
 			XP_AWK_FREE (run->awk, p);
-			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 				
 			/* TODO: use meaningful error code */
 			if (xp_awk_setglobal (
@@ -484,41 +471,11 @@ static int __writeextio (
 		if (n == 0) return 0;
 	}
 
-/* TODO: */
-/* TODO: */
 /* TODO: if write handler returns less than the request, loop */
-/* TODO: */
-/* TODO: */
 	if (len > 0)
 	{
 		n = handler (XP_AWK_IO_WRITE, p, str, len);
 
-		if (n == -1) 
-		{
-			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-
-			/* TODO: use meaningful error code */
-			if (xp_awk_setglobal (
-				run, XP_AWK_GLOBAL_ERRNO, 
-				xp_awk_val_one) == -1) return -1;
-
-			run->errnum = XP_AWK_EIOHANDLER;
-			return -1;
-		}
-
-		if (n == 0)
-		{
-			if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-			return 0;
-		}
-	}
-
-	if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-
-	if (nl)
-	{
-		/* TODO: use proper NEWLINE separator */
-		n = handler (XP_AWK_IO_WRITE, p, XP_T("\n"), 1);
 		if (n == -1) 
 		{
 			/* TODO: use meaningful error code */
@@ -535,6 +492,7 @@ static int __writeextio (
 
 	return 1;
 }
+
 
 int xp_awk_flushextio (
 	xp_awk_run_t* run, int out_type, const xp_char_t* name)

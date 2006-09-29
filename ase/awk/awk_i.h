@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.60 2006-09-27 14:11:31 bacon Exp $
+ * $Id: awk_i.h,v 1.61 2006-09-29 11:18:13 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -252,7 +252,17 @@ struct xp_awk_run_t
 		{
 			xp_char_t* ptr;
 			xp_size_t len;
+		} ofmt;
+		struct
+		{
+			xp_char_t* ptr;
+			xp_size_t len;
 		} ofs;
+		struct
+		{
+			xp_char_t* ptr;
+			xp_size_t len;
+		} ors;
 		struct
 		{
 			xp_char_t* ptr;

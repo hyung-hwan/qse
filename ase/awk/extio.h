@@ -1,5 +1,5 @@
 /*
- * $Id: extio.h,v 1.12 2006-08-31 16:00:18 bacon Exp $
+ * $Id: extio.h,v 1.13 2006-09-29 11:18:13 bacon Exp $
  */
 
 #ifndef _XP_AWK_EXTIO_H_
@@ -17,13 +17,13 @@ int xp_awk_readextio (
 	xp_awk_run_t* run, int in_type, 
 	const xp_char_t* name, xp_awk_str_t* buf);
 
-int xp_awk_writeextio (
+int xp_awk_writeextio_val (
 	xp_awk_run_t* run, int out_type, 
 	const xp_char_t* name, xp_awk_val_t* v);
 
-int xp_awk_writeextio_nl (
+int xp_awk_writeextio_str (
 	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v);
+	const xp_char_t* name, xp_char_t* str, xp_size_t len);
 
 int xp_awk_flushextio (
 	xp_awk_run_t* run, int out_type, const xp_char_t* name);
