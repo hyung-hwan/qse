@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.64 2006-09-28 14:21:23 bacon Exp $
+ * $Id: val.c,v 1.65 2006-09-29 11:18:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -564,10 +564,10 @@ static xp_char_t* __val_real_to_str (
 
 #if (XP_SIZEOF_LONG_DOUBLE != 0)
 	run->awk->syscas->sprintf (
-		tbuf, xp_countof(tbuf), XP_T("%.30Lg"), (long double)v->val); 
+		tbuf, xp_countof(tbuf), XP_T("%.6Lg"), (long double)v->val); 
 #elif (XP_SIZEOF_DOUBLE != 0)
 	run->awk->syscas->sprintf (
-		tbuf, xp_countof(tbuf), XP_T("%.30g"), (double)v->val); 
+		tbuf, xp_countof(tbuf), XP_T("%.6g"), (double)v->val); 
 #else
 	#error unsupported floating-point data type
 #endif

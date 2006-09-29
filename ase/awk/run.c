@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.211 2006-09-28 13:47:58 bacon Exp $
+ * $Id: run.c,v 1.212 2006-09-29 11:18:13 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -36,7 +36,16 @@ enum
 #define PANIC_I(run,code) \
 	do { (run)->errnum = (code); return -1; } while (0)
 
+#if (XP_SIZEOF_LONG_DOUBLE != 0)
+	#define DEFAULT_OFMT XP_T("%.6Lg")
+#elif (XP_SIZEOF_DOUBLE != 0)
+	#define DEFAULT_OFMT XP_T("%.6g")
+#else
+	#error Unsupported floating-point type size
+#endif
+
 #define DEFAULT_OFS XP_T(" ")
+#define DEFAULT_ORS XP_T("\n")
 #define DEFAULT_SUBSEP XP_T("\034")
 
 static void __add_run (xp_awk_t* awk, xp_awk_run_t* run);
@@ -233,56 +242,7 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 		PANIC_I (r, XP_AWK_ESCALARTOMAP);
 	}
 
-	if (idx == XP_AWK_GLOBAL_RS)
-	{
-		xp_char_t* rs_ptr;
-		xp_size_t rs_len;
-
-		if (val->type == XP_AWK_VAL_STR)
-		{
-			rs_ptr = ((xp_awk_val_str_t*)val)->buf;
-			rs_len = ((xp_awk_val_str_t*)val)->len;
-		}
-		else
-		{
-			/* due to the expression evaluation rule, the 
-			 * regular expression can not be an assigned value */
-			xp_assert (val->type != XP_AWK_VAL_REX);
-
-			rs_ptr = xp_awk_valtostr (
-				run, val, xp_true, XP_NULL, &rs_len);
-			if (rs_ptr == XP_NULL) return -1;
-		}
-
-		if (rs_len > 1)
-		{
-			void* rex;
-
-			/* compile the regular expression */
-			/* TODO: use safebuild */
-			rex = xp_awk_buildrex (
-				((xp_awk_run_t*)run)->awk, 
-				rs_ptr, rs_len, &r->errnum);
-			if (rex == XP_NULL)
-			{
-				if (val->type != XP_AWK_VAL_STR) 
-					XP_AWK_FREE (((xp_awk_run_t*)run)->awk, rs_ptr);
-				return -1;
-			}
-
-			if (r->global.rs != XP_NULL) 
-			{
-				xp_awk_freerex ( 
-					((xp_awk_run_t*)run)->awk, 
-					r->global.rs);
-			}
-			r->global.rs = rex;
-		}
-
-		if (val->type != XP_AWK_VAL_STR) 
-			XP_AWK_FREE (((xp_awk_run_t*)run)->awk, rs_ptr);
-	}
-	else if (idx == XP_AWK_GLOBAL_FS)
+	if (idx == XP_AWK_GLOBAL_FS)
 	{
 		xp_char_t* fs_ptr;
 		xp_size_t fs_len;
@@ -362,6 +322,18 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 			if (__shorten_record (r, (xp_size_t)lv) == -1) return -1;
 		}
 	}
+	else if (idx == XP_AWK_GLOBAL_OFMT)
+	{
+		xp_char_t* ofmt_ptr;
+		xp_size_t ofmt_len;
+
+		ofmt_ptr = xp_awk_valtostr (
+			run, val, xp_true, XP_NULL, &ofmt_len);
+		if (ofmt_ptr == XP_NULL) return  -1;
+
+		r->global.ofmt.ptr = ofmt_ptr;
+		r->global.ofmt.len = ofmt_len;
+	}
 	else if (idx == XP_AWK_GLOBAL_OFS)
 	{	
 		xp_char_t* ofs_ptr;
@@ -373,6 +345,67 @@ int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val)
 
 		r->global.ofs.ptr = ofs_ptr;
 		r->global.ofs.len = ofs_len;
+	}
+	else if (idx == XP_AWK_GLOBAL_ORS)
+	{	
+		xp_char_t* ors_ptr;
+		xp_size_t ors_len;
+
+		ors_ptr = xp_awk_valtostr (
+			run, val, xp_true, XP_NULL, &ors_len);
+		if (ors_ptr == XP_NULL) return  -1;
+
+		r->global.ors.ptr = ors_ptr;
+		r->global.ors.len = ors_len;
+	}
+	else if (idx == XP_AWK_GLOBAL_RS)
+	{
+		xp_char_t* rs_ptr;
+		xp_size_t rs_len;
+
+		if (val->type == XP_AWK_VAL_STR)
+		{
+			rs_ptr = ((xp_awk_val_str_t*)val)->buf;
+			rs_len = ((xp_awk_val_str_t*)val)->len;
+		}
+		else
+		{
+			/* due to the expression evaluation rule, the 
+			 * regular expression can not be an assigned value */
+			xp_assert (val->type != XP_AWK_VAL_REX);
+
+			rs_ptr = xp_awk_valtostr (
+				run, val, xp_true, XP_NULL, &rs_len);
+			if (rs_ptr == XP_NULL) return -1;
+		}
+
+		if (rs_len > 1)
+		{
+			void* rex;
+
+			/* compile the regular expression */
+			/* TODO: use safebuild */
+			rex = xp_awk_buildrex (
+				((xp_awk_run_t*)run)->awk, 
+				rs_ptr, rs_len, &r->errnum);
+			if (rex == XP_NULL)
+			{
+				if (val->type != XP_AWK_VAL_STR) 
+					XP_AWK_FREE (((xp_awk_run_t*)run)->awk, rs_ptr);
+				return -1;
+			}
+
+			if (r->global.rs != XP_NULL) 
+			{
+				xp_awk_freerex ( 
+					((xp_awk_run_t*)run)->awk, 
+					r->global.rs);
+			}
+			r->global.rs = rex;
+		}
+
+		if (val->type != XP_AWK_VAL_STR) 
+			XP_AWK_FREE (((xp_awk_run_t*)run)->awk, rs_ptr);
 	}
 	else if (idx == XP_AWK_GLOBAL_SUBSEP)
 	{
@@ -637,8 +670,12 @@ static int __init_run (
 	run->global.rs = XP_NULL;
 	run->global.fs = XP_NULL;
 	run->global.ignorecase = 0;
+	run->global.ofmt.ptr = DEFAULT_OFMT;
+	run->global.ofmt.len = xp_awk_strlen(DEFAULT_OFMT);
 	run->global.ofs.ptr = DEFAULT_OFS;
 	run->global.ofs.len = xp_awk_strlen(DEFAULT_OFS);
+	run->global.ors.ptr = DEFAULT_ORS;
+	run->global.ors.len = xp_awk_strlen(DEFAULT_ORS);
 	run->global.subsep.ptr = DEFAULT_SUBSEP;
 	run->global.subsep.len = xp_awk_strlen(DEFAULT_SUBSEP);
 
@@ -665,12 +702,28 @@ static void __deinit_run (xp_awk_run_t* run)
 		run->global.fs = XP_NULL;
 	}
 
+	if (run->global.ofmt.ptr != XP_NULL && 
+	    run->global.ofmt.ptr != DEFAULT_OFMT)
+	{
+		XP_AWK_FREE (run->awk, run->global.ofmt.ptr);
+		run->global.ofmt.ptr = XP_NULL;
+		run->global.ofmt.len = 0;
+	}
+
 	if (run->global.ofs.ptr != XP_NULL && 
 	    run->global.ofs.ptr != DEFAULT_OFS)
 	{
 		XP_AWK_FREE (run->awk, run->global.ofs.ptr);
 		run->global.ofs.ptr = XP_NULL;
 		run->global.ofs.len = 0;
+	}
+
+	if (run->global.ors.ptr != XP_NULL && 
+	    run->global.ors.ptr != DEFAULT_ORS)
+	{
+		XP_AWK_FREE (run->awk, run->global.ors.ptr);
+		run->global.ors.ptr = XP_NULL;
+		run->global.ors.len = 0;
 	}
 
 	if (run->global.subsep.ptr != XP_NULL && 
@@ -1108,8 +1161,12 @@ static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
 		/* blockless pattern - execute print $0*/
 		xp_awk_refupval (run->inrec.d0);
 
-		n = xp_awk_writeextio_nl (run, 
-			XP_AWK_OUT_CONSOLE, XP_T(""), run->inrec.d0);
+		/*n = xp_awk_writeextio_val (run, 
+			XP_AWK_OUT_CONSOLE, XP_T(""), run->inrec.d0);*/
+		n = xp_awk_writeextio_str (run, 
+			XP_AWK_OUT_CONSOLE, XP_T(""),
+			XP_AWK_STR_BUF(&run->inrec.line),
+			XP_AWK_STR_LEN(&run->inrec.line));
 		if (n == -1)
 		{
 			xp_awk_refdownval (run, run->inrec.d0);
@@ -1902,7 +1959,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		v = run->inrec.d0;
 
 		xp_awk_refupval (v);
-		n = xp_awk_writeextio (run, p->out_type, dst, v);
+		n = xp_awk_writeextio_val (run, p->out_type, dst, v);
 		if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
 		{
 			if (out != XP_NULL) XP_AWK_FREE (run->awk, out);
@@ -1925,7 +1982,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 			}
 			xp_awk_refupval (v);
 
-			n = xp_awk_writeextio (run, p->out_type, dst, v);
+			n = xp_awk_writeextio_val (run, p->out_type, dst, v);
 			if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
 			{
 				if (out != XP_NULL) XP_AWK_FREE (run->awk, out);
@@ -1934,6 +1991,15 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 			}
 			xp_awk_refdownval (run, v);
 
+			n = xp_awk_writeextio_str (
+				run, p->out_type, dst, 
+				run->global.ofs.ptr, run->global.ofs.len);
+			if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
+			{
+				if (out != XP_NULL) XP_AWK_FREE (run->awk, out);
+				return -1;
+			}
+
 			/* TODO: how to handle n == -1 && run->errnum == XP_AWK_EIOHANDLER. 
 			 * that is the user handler returned an error... */
 
@@ -1941,9 +2007,9 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 		}
 	}
 
-	/* TODO: change xp_awk_val_nil to 
-	 *       xp_awk_val_empty_string or something */
-	n = xp_awk_writeextio_nl (run, p->out_type, dst, xp_awk_val_nil);
+	n = xp_awk_writeextio_str (
+		run, p->out_type, dst, 
+		run->global.ors.ptr, run->global.ors.len);
 	if (n < 0 && run->errnum != XP_AWK_EIOHANDLER)
 	{
 		if (out != XP_NULL) XP_AWK_FREE (run->awk, out);
