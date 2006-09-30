@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.213 2006-09-30 17:02:36 bacon Exp $
+ * $Id: run.c,v 1.214 2006-09-30 17:09:15 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4128,7 +4128,6 @@ static xp_awk_val_t* __eval_call (
 		    bfn_arg_spec[nargs] == XP_T('r'))
 		{
 			xp_awk_val_t** ref;
-			xp_awk_val_t* tmp;
 			      
 			ref = __get_reference (run, p);
 			if (ref == XP_NULL)
