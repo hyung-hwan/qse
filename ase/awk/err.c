@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.40 2006-09-14 06:40:06 bacon Exp $
+ * $Id: err.c,v 1.41 2006-09-30 17:02:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -16,7 +16,7 @@ const xp_char_t* xp_awk_geterrstr (int errnum)
 		XP_T("no error"),
 		XP_T("out of memory"),
 		XP_T("invalid parameter"),
-		XP_T("run-time error"),
+		XP_T("general run-time error"),
 		XP_T("one or more running instances"),
 		XP_T("too many running instances"),
 		XP_T("recursion too deep"),

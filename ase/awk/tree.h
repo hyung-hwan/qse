@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.72 2006-09-11 14:29:23 bacon Exp $
+ * $Id: tree.h,v 1.73 2006-09-30 17:02:36 bacon Exp $
  */
 
 #ifndef _XP_AWK_TREE_H_
@@ -58,9 +58,9 @@ enum
 	XP_AWK_NDE_GLOBALIDX,
 	XP_AWK_NDE_LOCALIDX,
 	XP_AWK_NDE_ARGIDX,
+	XP_AWK_NDE_POS,
 	/* ---------------------------------- */
 
-	XP_AWK_NDE_POS,
 	XP_AWK_NDE_GETLINE,
 };
 

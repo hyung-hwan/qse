@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.53 2006-09-22 14:04:25 bacon Exp $
+ * $Id: func.c,v 1.54 2006-09-30 17:02:35 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -888,6 +888,14 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 	else
 	{
 		/* operation is on a2 */
+if (((xp_awk_val_ref_t*)a2)->id == XP_AWK_VAL_REF_POS)
+{
+FREE_A_PTRS (awk);
+/* a map is not allowed as the third parameter */
+xp_awk_seterrnum (run, XP_AWK_EMAPNOTALLOWED);
+return -1;
+}
+
 		a2_ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a2)->adr;
 		if ((*a2_ref)->type == XP_AWK_VAL_MAP)
 		{
@@ -1009,8 +1017,8 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		}
 
 		sub_count++;
-		cur_ptr = mat_ptr + mat_len;
 		cur_len = cur_len - ((mat_ptr - cur_ptr) + mat_len);
+		cur_ptr = mat_ptr + mat_len;
 	}
 
 	FREE_A0_REX (awk, rex);
