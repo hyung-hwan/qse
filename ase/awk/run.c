@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.212 2006-09-29 11:18:13 bacon Exp $
+ * $Id: run.c,v 1.213 2006-09-30 17:02:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1956,8 +1956,8 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 
 	if (p->args == XP_NULL)
 	{
+		/*
 		v = run->inrec.d0;
-
 		xp_awk_refupval (v);
 		n = xp_awk_writeextio_val (run, p->out_type, dst, v);
 		if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
@@ -1967,6 +1967,16 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 			return -1;
 		}
 		xp_awk_refdownval (run, v);
+		*/
+		n = xp_awk_writeextio_str (
+			run, p->out_type, dst,
+			XP_AWK_STR_BUF(&run->inrec.line),
+			XP_AWK_STR_LEN(&run->inrec.line));
+		if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
+		{
+			if (out != XP_NULL) XP_AWK_FREE (run->awk, out);
+			return -1;
+		}
 		/* TODO: how to handle n == -1 && errnum == XP_AWK_EIOHANDLER. 
 		 * that is the user handler returned an error... */
 	}
@@ -1974,6 +1984,18 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 	{
 		for (np = p->args; np != XP_NULL; np = np->next)
 		{
+			if (np != p->args)
+			{
+				n = xp_awk_writeextio_str (
+					run, p->out_type, dst, 
+					run->global.ofs.ptr, run->global.ofs.len);
+				if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
+				{
+					if (out != XP_NULL) XP_AWK_FREE (run->awk, out);
+					return -1;
+				}
+			}
+
 			v = __eval_expression (run, np);
 			if (v == XP_NULL) 
 			{
@@ -1991,19 +2013,9 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 			}
 			xp_awk_refdownval (run, v);
 
-			n = xp_awk_writeextio_str (
-				run, p->out_type, dst, 
-				run->global.ofs.ptr, run->global.ofs.len);
-			if (n < 0 && run->errnum != XP_AWK_EIOHANDLER) 
-			{
-				if (out != XP_NULL) XP_AWK_FREE (run->awk, out);
-				return -1;
-			}
 
 			/* TODO: how to handle n == -1 && run->errnum == XP_AWK_EIOHANDLER. 
 			 * that is the user handler returned an error... */
-
-			/* TODO: print proper field separator */
 		}
 	}
 
@@ -4113,7 +4125,25 @@ static xp_awk_val_t* __eval_call (
 		            xp_awk_strlen(bfn_arg_spec) > nargs));
 
 		if (bfn_arg_spec != XP_NULL && 
-		    bfn_arg_spec[nargs] == XP_T('x'))
+		    bfn_arg_spec[nargs] == XP_T('r'))
+		{
+			xp_awk_val_t** ref;
+			xp_awk_val_t* tmp;
+			      
+			ref = __get_reference (run, p);
+			if (ref == XP_NULL)
+			{
+				UNWIND_RUN_STACK (run, nargs);
+				return XP_NULL;
+			}
+
+			/* p->type-XP_AWK_NDE_NAMED assumes that the
+			 * derived value matches XP_AWK_VAL_REF_XXX */
+			v = xp_awk_makerefval (
+				run, p->type-XP_AWK_NDE_NAMED, ref);
+		}
+		else if (bfn_arg_spec != XP_NULL && 
+		         bfn_arg_spec[nargs] == XP_T('x'))
 		{
 			/* a regular expression is passed to 
 			 * the function as it is */
@@ -4129,6 +4159,7 @@ static xp_awk_val_t* __eval_call (
 			return XP_NULL;
 		}
 
+#if 0
 		if (bfn_arg_spec != XP_NULL && 
 		    bfn_arg_spec[nargs] == XP_T('r'))
 		{
@@ -4163,6 +4194,7 @@ static xp_awk_val_t* __eval_call (
 
 			v = tmp;
 		}
+#endif
 
 		if (__raw_push(run,v) == -1) 
 		{
@@ -4312,7 +4344,6 @@ static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			run, tgt, (xp_awk_val_t**)&pair->val);
 	}
 
-
 	if (nde->type == XP_AWK_NDE_GLOBALIDX)
 	{
 		return __get_reference_indexed (run, tgt, 
@@ -4329,6 +4360,31 @@ static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
 	{
 		return __get_reference_indexed (run, tgt, 
 			(xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa));
+	}
+
+	if (nde->type == XP_AWK_NDE_POS)
+	{
+		int n;
+		xp_long_t lv;
+		xp_real_t rv;
+		xp_awk_val_t* v;
+
+		/* the position number is returned for the positional 
+		 * variable unlike other reference types. */
+		v = __eval_expression (run, ((xp_awk_nde_pos_t*)nde)->val);
+		if (v == XP_NULL) return XP_NULL;
+
+		xp_awk_refupval (v);
+		n = xp_awk_valtonum (run, v, &lv, &rv);
+		xp_awk_refdownval (run, v);
+
+		if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
+		if (n == 1) lv = (xp_long_t)rv;
+
+		if (lv < 0) PANIC (run, XP_AWK_EPOSIDX);
+
+/* TODO: ............................................. */
+		return (xp_awk_val_t**)(lv+1); 
 	}
 
 	PANIC (run, XP_AWK_ENOTREFERENCEABLE);
