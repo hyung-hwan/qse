@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.214 2006-09-30 17:09:15 bacon Exp $
+ * $Id: run.c,v 1.215 2006-10-01 14:48:48 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -47,6 +47,17 @@ enum
 #define DEFAULT_OFS XP_T(" ")
 #define DEFAULT_ORS XP_T("\n")
 #define DEFAULT_SUBSEP XP_T("\034")
+
+/* the index of a positional variable should be a positive interger
+ * equal to or less than the maximum value of the type by which
+ * the index is represented. but it has an extra check against the
+ * maximum value of xp_size_t as the reference is represented
+ * in a pointer variable of xp_awk_val_ref_t and sizeof(void*) is
+ * equal to sizeof(xp_size_t). */
+#define IS_VALID_POSIDX(idx) \
+	((idx) >= 0 && \
+	 (idx) < XP_TYPE_MAX(xp_long_t) && \
+	 (idx) < XP_TYPE_MAX(xp_size_t))
 
 static void __add_run (xp_awk_t* awk, xp_awk_run_t* run);
 static void __del_run (xp_awk_t* awk, xp_awk_run_t* run);
@@ -154,7 +165,8 @@ static xp_awk_val_t* __eval_call (
 	xp_awk_run_t* run, xp_awk_nde_t* nde, 
 	const xp_char_t* bfn_arg_spec, xp_awk_afn_t* afn);
 
-static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde);
+static int __get_reference (
+	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_awk_val_t*** ref);
 static xp_awk_val_t** __get_reference_indexed (
 	xp_awk_run_t* run, xp_awk_nde_var_t* nde, xp_awk_val_t** val);
 
@@ -2444,7 +2456,7 @@ static xp_awk_val_t* __do_assignment_pos (
 
 	if (n == -1) PANIC (run, XP_AWK_EPOSIDX); 
 	if (n == 1) lv = (xp_long_t)rv;
-	if (lv < 0) PANIC (run, XP_AWK_EPOSIDX);
+	if (!IS_VALID_POSIDX(lv)) PANIC (run, XP_AWK_EPOSIDX);
 
 	/* convert the value to the string */
 	str = xp_awk_valtostr (run, val, xp_true, XP_NULL, &len);
@@ -4129,8 +4141,7 @@ static xp_awk_val_t* __eval_call (
 		{
 			xp_awk_val_t** ref;
 			      
-			ref = __get_reference (run, p);
-			if (ref == XP_NULL)
+			if (__get_reference (run, p, &ref) == -1)
 			{
 				UNWIND_RUN_STACK (run, nargs);
 				return XP_NULL;
@@ -4284,9 +4295,11 @@ static xp_awk_val_t* __eval_call (
 	return (n == -1)? XP_NULL: v;
 }
 
-static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
+static int __get_reference (
+	xp_awk_run_t* run, xp_awk_nde_t* nde, xp_awk_val_t*** ref)
 {
 	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
+	xp_awk_val_t** tmp;
 
 	/* refer to __eval_indexed for application of similar concept */
 
@@ -4304,25 +4317,33 @@ static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			pair = xp_awk_map_put (
 				&run->named, tgt->id.name,
 				tgt->id.name_len, xp_awk_val_nil);
-			if (pair == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (pair == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
 		}
 
-		return (xp_awk_val_t**)&pair->val;
+		//return (xp_awk_val_t**)&pair->val;
+		*ref = (xp_awk_val_t**)&pair->val;
+		return 0;
 	}
 
 	if (nde->type == XP_AWK_NDE_GLOBAL)
 	{
-		return (xp_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa);
+		//return (xp_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa);
+		*ref = (xp_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa);
+		return 0;
 	}
 
 	if (nde->type == XP_AWK_NDE_LOCAL)
 	{
-		return (xp_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa);
+		//return (xp_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa);
+		*ref = (xp_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa);
+		return 0;
 	}
 
 	if (nde->type == XP_AWK_NDE_ARG)
 	{
-		return (xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa);
+		//return (xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa);
+		*ref = (xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa);
+		return 0;
 	}
 
 	if (nde->type == XP_AWK_NDE_NAMEDIDX)
@@ -4336,29 +4357,39 @@ static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
 			pair = xp_awk_map_put (
 				&run->named, tgt->id.name,
 				tgt->id.name_len, xp_awk_val_nil);
-			if (pair == XP_NULL) PANIC (run, XP_AWK_ENOMEM);
+			if (pair == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
 		}
 
-		return __get_reference_indexed (
+		//return __get_reference_indexed (
+		//	run, tgt, (xp_awk_val_t**)&pair->val);
+		tmp = __get_reference_indexed (
 			run, tgt, (xp_awk_val_t**)&pair->val);
+		if (tmp == XP_NULL) return -1;
+		*ref = tmp;
 	}
 
 	if (nde->type == XP_AWK_NDE_GLOBALIDX)
 	{
-		return __get_reference_indexed (run, tgt, 
+		tmp = __get_reference_indexed (run, tgt, 
 			(xp_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa));
+		if (tmp == XP_NULL) return -1;
+		*ref = tmp;
 	}
 
 	if (nde->type == XP_AWK_NDE_LOCALIDX)
 	{
-		return __get_reference_indexed (run, tgt, 
+		tmp = __get_reference_indexed (run, tgt, 
 			(xp_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa));
+		if (tmp == XP_NULL) return -1;
+		*ref = tmp;
 	}
 
 	if (nde->type == XP_AWK_NDE_ARGIDX)
 	{
-		return __get_reference_indexed (run, tgt, 
+		tmp = __get_reference_indexed (run, tgt, 
 			(xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa));
+		if (tmp == XP_NULL) return -1;
+		*ref = tmp;
 	}
 
 	if (nde->type == XP_AWK_NDE_POS)
@@ -4371,22 +4402,21 @@ static xp_awk_val_t** __get_reference (xp_awk_run_t* run, xp_awk_nde_t* nde)
 		/* the position number is returned for the positional 
 		 * variable unlike other reference types. */
 		v = __eval_expression (run, ((xp_awk_nde_pos_t*)nde)->val);
-		if (v == XP_NULL) return XP_NULL;
+		if (v == XP_NULL) return -1;
 
 		xp_awk_refupval (v);
 		n = xp_awk_valtonum (run, v, &lv, &rv);
 		xp_awk_refdownval (run, v);
 
-		if (n == -1) PANIC (run, XP_AWK_EPOSIDX);
+		if (n == -1) PANIC_I (run, XP_AWK_EPOSIDX);
 		if (n == 1) lv = (xp_long_t)rv;
+		if (!IS_VALID_POSIDX(lv)) PANIC_I (run, XP_AWK_EPOSIDX);
 
-		if (lv < 0) PANIC (run, XP_AWK_EPOSIDX);
-
-/* TODO: ............................................. */
-		return (xp_awk_val_t**)(lv+1); 
+		*ref = (xp_awk_val_t**)(lv);
+		return 0;
 	}
 
-	PANIC (run, XP_AWK_ENOTREFERENCEABLE);
+	PANIC_I (run, XP_AWK_ENOTREFERENCEABLE);
 }
 
 static xp_awk_val_t** __get_reference_indexed (

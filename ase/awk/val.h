@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.43 2006-09-30 17:02:36 bacon Exp $
+ * $Id: val.h,v 1.44 2006-10-01 14:48:48 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -106,8 +106,9 @@ struct xp_awk_val_map_t
 {
 	XP_AWK_VAL_HDR;
 
-	/* TODO: make val_map to array if the indices used are all integers
-	 *       switch to map dynamically once the non-integral index is seen 
+	/* TODO: make val_map to array if the indices used are all 
+	 *       integers switch to map dynamically once the 
+	 *       non-integral index is seen.
 	 */
 	xp_awk_map_t* map; 
 };
@@ -118,6 +119,9 @@ struct xp_awk_val_ref_t
 	XP_AWK_VAL_HDR;
 
 	int id;
+	/* if id is XP_AWK_VAL_REF_POS, adr holds an index of the 
+	 * positionalvariable. Otherwise, adr points to the value 
+	 * directly. */
 	xp_awk_val_t** adr;
 };
 
