@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.54 2006-09-30 17:02:35 bacon Exp $
+ * $Id: func.c,v 1.55 2006-10-02 14:53:44 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -521,6 +521,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 
 	xp_assert (a1->type == XP_AWK_VAL_REF);
 
+/* TODO: XP_AWK_VAL_REF_POS */
 	if (((xp_awk_val_ref_t*)a1)->id >= XP_AWK_VAL_REF_NAMEDIDX &&
 	    ((xp_awk_val_ref_t*)a1)->id <= XP_AWK_VAL_REF_ARGIDX)
 	{
@@ -809,6 +810,7 @@ static int __bfn_sub (xp_awk_t* awk, void* run)
 
 static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 {
+	xp_awk_run_t* r = run;
 	xp_size_t nargs;
 	xp_awk_val_t* a0, * a1, * a2, ** a2_ref, * v;
 	xp_char_t* a0_ptr, * a1_ptr, * a2_ptr;
@@ -882,21 +884,34 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 	if (a2 == XP_NULL)
 	{
 		/* is this correct? any needs to use inrec.d0? */
-		a2_ptr = XP_AWK_STR_BUF(&((xp_awk_run_t*)run)->inrec.line);
-		a2_len = XP_AWK_STR_LEN(&((xp_awk_run_t*)run)->inrec.line);
+		a2_ptr = XP_AWK_STR_BUF(&r->inrec.line);
+		a2_len = XP_AWK_STR_LEN(&r->inrec.line);
+	}
+	else if (((xp_awk_val_ref_t*)a2)->id == XP_AWK_VAL_REF_POS)
+	{
+		xp_size_t idx;
+	       
+		idx = (xp_size_t)((xp_awk_val_ref_t*)a2)->adr;
+		if (idx == 0)
+		{
+			a2_ptr = XP_AWK_STR_BUF(&r->inrec.line);
+			a2_len = XP_AWK_STR_LEN(&r->inrec.line);
+		}
+		else if (idx <= r->inrec.nflds)
+		{
+			a2_ptr = r->inrec.flds[idx-1].ptr;
+			a2_len = r->inrec.flds[idx-1].len;
+		}
+		else
+		{
+			a2_ptr = XP_T("");
+			a2_len = 0;
+		}
 	}
 	else
 	{
-		/* operation is on a2 */
-if (((xp_awk_val_ref_t*)a2)->id == XP_AWK_VAL_REF_POS)
-{
-FREE_A_PTRS (awk);
-/* a map is not allowed as the third parameter */
-xp_awk_seterrnum (run, XP_AWK_EMAPNOTALLOWED);
-return -1;
-}
-
 		a2_ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a2)->adr;
+
 		if ((*a2_ref)->type == XP_AWK_VAL_MAP)
 		{
 			FREE_A_PTRS (awk);
@@ -913,7 +928,7 @@ return -1;
 		else
 		{
 			a2_ptr = xp_awk_valtostr (
-				run, *a2_ref, xp_true, XP_NULL, &a2_len);
+				r, *a2_ref, xp_true, XP_NULL, &a2_len);
 			if (a2_ptr == XP_NULL) 
 			{
 				FREE_A_PTRS (awk);
@@ -1023,30 +1038,57 @@ return -1;
 
 	FREE_A0_REX (awk, rex);
 
-	if (a2 == XP_NULL)
+	if (sub_count > 0)
 	{
-		if (xp_awk_setrecord (run,
-			XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new)) == -1)
+		if (a2 == XP_NULL)
 		{
-			xp_awk_str_close (&new);
-			FREE_A_PTRS (awk);
-			return -1;
+			if (xp_awk_setrecord (run,
+				XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new)) == -1)
+			{
+				xp_awk_str_close (&new);
+				FREE_A_PTRS (awk);
+				return -1;
+			}
 		}
-	}
-	else
-	{
-		v = xp_awk_makestrval (run,
-			XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
-		if (v == XP_NULL)
+		else if (((xp_awk_val_ref_t*)a2)->id == XP_AWK_VAL_REF_POS)
 		{
-			xp_awk_str_close (&new);
-			FREE_A_PTRS (awk);
-			return -1;
-		}
+			int n;
+			xp_size_t idx;
 
-		xp_awk_refdownval (run, *a2_ref);
-		*a2_ref = v;
-		xp_awk_refupval (*a2_ref);
+			idx = (xp_size_t)((xp_awk_val_ref_t*)a2)->adr;
+			if (idx == 0)
+			{
+				n = xp_awk_setrecord (run, 
+					XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
+			}
+			else
+			{
+				n = xp_awk_setfield (run, idx, 
+					XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
+			}
+
+			if (n == -1)
+			{
+				xp_awk_str_close (&new);
+				FREE_A_PTRS (awk);
+				return -1;
+			}
+		}
+		else
+		{
+			v = xp_awk_makestrval (run,
+				XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
+			if (v == XP_NULL)
+			{
+				xp_awk_str_close (&new);
+				FREE_A_PTRS (awk);
+				return -1;
+			}
+
+			xp_awk_refdownval (run, *a2_ref);
+			*a2_ref = v;
+			xp_awk_refupval (*a2_ref);
+		}
 	}
 
 	xp_awk_str_close (&new);

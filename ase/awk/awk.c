@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.77 2006-09-22 14:04:25 bacon Exp $ 
+ * $Id: awk.c,v 1.78 2006-10-02 14:53:44 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -10,9 +10,24 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 {	
 	xp_awk_t* awk;
 
-	if (syscas == XP_NULL ||
-	    syscas->malloc == XP_NULL || 
+	if (syscas == XP_NULL) return XP_NULL;
+
+	if (syscas->malloc == XP_NULL || 
 	    syscas->free == XP_NULL) return XP_NULL;
+
+	if (syscas->is_upper  == XP_NULL ||
+	    syscas->is_lower  == XP_NULL ||
+	    syscas->is_alpha  == XP_NULL ||
+	    syscas->is_digit  == XP_NULL ||
+	    syscas->is_xdigit == XP_NULL ||
+	    syscas->is_alnum  == XP_NULL ||
+	    syscas->is_space  == XP_NULL ||
+	    syscas->is_print  == XP_NULL ||
+	    syscas->is_graph  == XP_NULL ||
+	    syscas->is_cntrl  == XP_NULL ||
+	    syscas->is_punct  == XP_NULL ||
+	    syscas->to_upper  == XP_NULL ||
+	    syscas->to_lower  == XP_NULL) return XP_NULL;
 
 #if defined(_WIN32) && defined(_DEBUG)
 	awk = (xp_awk_t*) malloc (xp_sizeof(xp_awk_t));
