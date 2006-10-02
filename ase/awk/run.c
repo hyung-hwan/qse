@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.215 2006-10-01 14:48:48 bacon Exp $
+ * $Id: run.c,v 1.216 2006-10-02 14:53:44 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -199,7 +199,8 @@ static int __set_record (
 static int __split_record (xp_awk_run_t* run);
 static int __clear_record (xp_awk_run_t* run, xp_bool_t noline);
 static int __recomp_record_fields (
-	xp_awk_run_t* run, xp_size_t lv, xp_char_t* str, xp_size_t len);
+	xp_awk_run_t* run, xp_size_t lv, 
+	const xp_char_t* str, xp_size_t len);
 static int __shorten_record (xp_awk_run_t* run, xp_size_t nflds);
 
 static xp_char_t* __idxnde_to_str (
@@ -2537,6 +2538,7 @@ static xp_awk_val_t* __do_assignment_pos (
 		run->inrec.d0 = v;
 		xp_awk_refupval (v);
 
+/* TODO: this return value is wrong. consider reimplementing this function with setrecord and setfield... also verify setreocrd and setfield.. */
 		val = v;
 	}
 
@@ -4278,7 +4280,7 @@ static xp_awk_val_t* __eval_call (
 	}
 /*xp_printf (XP_T("got return value\n")); */
 
-	/* this is the trick mentioned in __run_return.
+	/* this trick has been mentioned in __run_return.
 	 * adjust the reference count of the return value.
 	 * the value must not be freed even if the reference count
 	 * is decremented to zero because its reference has been incremented 
@@ -4301,7 +4303,7 @@ static int __get_reference (
 	xp_awk_nde_var_t* tgt = (xp_awk_nde_var_t*)nde;
 	xp_awk_val_t** tmp;
 
-	/* refer to __eval_indexed for application of similar concept */
+	/* refer to __eval_indexed for application of a similar concept */
 
 	if (nde->type == XP_AWK_NDE_NAMED)
 	{
@@ -4320,28 +4322,24 @@ static int __get_reference (
 			if (pair == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
 		}
 
-		//return (xp_awk_val_t**)&pair->val;
 		*ref = (xp_awk_val_t**)&pair->val;
 		return 0;
 	}
 
 	if (nde->type == XP_AWK_NDE_GLOBAL)
 	{
-		//return (xp_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa);
 		*ref = (xp_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa);
 		return 0;
 	}
 
 	if (nde->type == XP_AWK_NDE_LOCAL)
 	{
-		//return (xp_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa);
 		*ref = (xp_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa);
 		return 0;
 	}
 
 	if (nde->type == XP_AWK_NDE_ARG)
 	{
-		//return (xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa);
 		*ref = (xp_awk_val_t**)&STACK_ARG(run,tgt->id.idxa);
 		return 0;
 	}
@@ -4360,8 +4358,6 @@ static int __get_reference (
 			if (pair == XP_NULL) PANIC_I (run, XP_AWK_ENOMEM);
 		}
 
-		//return __get_reference_indexed (
-		//	run, tgt, (xp_awk_val_t**)&pair->val);
 		tmp = __get_reference_indexed (
 			run, tgt, (xp_awk_val_t**)&pair->val);
 		if (tmp == XP_NULL) return -1;
@@ -4412,7 +4408,7 @@ static int __get_reference (
 		if (n == 1) lv = (xp_long_t)rv;
 		if (!IS_VALID_POSIDX(lv)) PANIC_I (run, XP_AWK_EPOSIDX);
 
-		*ref = (xp_awk_val_t**)(lv);
+		*ref = (xp_awk_val_t**)lv;
 		return 0;
 	}
 
@@ -4848,17 +4844,59 @@ static int __read_record (xp_awk_run_t* run)
 
 int xp_awk_setrecord (void* run, const xp_char_t* str, xp_size_t len)
 {
-	if (__clear_record (run, xp_false) == -1) return -1;
+	xp_awk_run_t* r = (xp_awk_run_t*)run;
 
-	if (xp_awk_str_ncpy (
-		&((xp_awk_run_t*)run)->inrec.line, str, len) == (xp_size_t)-1)
+	if (__clear_record (r, xp_false) == -1) return -1;
+
+	if (xp_awk_str_ncpy (&r->inrec.line, str, len) == (xp_size_t)-1)
 	{
 		__clear_record (run, xp_false);
-		((xp_awk_run_t*)run)->errnum = XP_AWK_ENOMEM;
+		r->errnum = XP_AWK_ENOMEM;
 		return -1;
 	}
 
 	return __set_record (run, str, len);
+}
+
+int xp_awk_setfield (
+	void* run, xp_size_t idx, const xp_char_t* str, xp_size_t len)
+{
+	xp_awk_run_t* r = (xp_awk_run_t*)run;
+	xp_awk_val_t* v;
+	int errnum;
+
+	if (!IS_VALID_POSIDX(idx)) 
+	{
+		r->errnum = XP_AWK_EPOSIDX;
+		return -1;
+	}
+
+	if (idx == 0) return xp_awk_setrecord (run, str, len);
+
+	if (__recomp_record_fields (r, idx, str, len) == -1)
+	{
+		errnum = r->errnum;
+		__clear_record (r, xp_false);
+		r->errnum = errnum;
+		return -1;
+	}
+
+	/* recompose $0 */
+	v = xp_awk_makestrval (r,
+		XP_AWK_STR_BUF(&r->inrec.line), 
+		XP_AWK_STR_LEN(&r->inrec.line));
+	if (v == XP_NULL)
+	{
+		__clear_record (run, xp_false);
+		r->errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
+
+	xp_awk_refdownval (run, r->inrec.d0);
+	r->inrec.d0 = v;
+	xp_awk_refupval (v);
+
+	return 0;
 }
 
 static int __set_record (
@@ -5071,7 +5109,8 @@ static int __clear_record (xp_awk_run_t* run, xp_bool_t noline)
 }
 
 static int __recomp_record_fields (
-	xp_awk_run_t* run, xp_size_t lv, xp_char_t* str, xp_size_t len)
+	xp_awk_run_t* run, xp_size_t lv, 
+	const xp_char_t* str, xp_size_t len)
 {
 	xp_awk_val_t* v;
 	xp_size_t max, i, nflds;
