@@ -1,5 +1,4 @@
-BEGIN
-{
+BEGIN {
 	print "this is only a test";
 	print;
 	print 1, 2, (3 >> 10);
