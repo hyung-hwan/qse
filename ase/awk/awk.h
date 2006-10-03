@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.119 2006-10-02 14:53:44 bacon Exp $
+ * $Id: awk.h,v 1.120 2006-10-03 14:38:26 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -9,6 +9,7 @@
 #include <xp/macros.h>
 
 typedef struct xp_awk_t xp_awk_t;
+typedef struct xp_awk_run_t xp_awk_run_t;
 typedef struct xp_awk_val_t xp_awk_val_t;
 typedef struct xp_awk_extio_t xp_awk_extio_t;
 
@@ -40,14 +41,6 @@ struct xp_awk_extio_t
 	xp_awk_extio_t* next;
 };
 
-/*
-struct xp_awk_thrlks_t
-{
-	xp_awk_lk_t lock;
-	xp_awk_lk_t unlock;
-	void* custom_data;
-};
-*/
 struct xp_awk_syscas_t
 {
 	/* memory */
@@ -339,22 +332,21 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios);
 int xp_awk_run (xp_awk_t* awk, 
 	xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs);
 
-int xp_awk_stop (xp_awk_t* awk, void* run);
+int xp_awk_stop (xp_awk_t* awk, xp_awk_run_t* run);
 void xp_awk_stopall (xp_awk_t* awk);
-int xp_awk_getrunerrnum (xp_awk_t* awk, void* run, int* errnum);
+int xp_awk_getrunerrnum (xp_awk_t* awk, xp_awk_run_t* run, int* errnum);
 
 /* functions to access internal stack structure */
-xp_size_t xp_awk_getnargs (void* run);
-xp_awk_val_t* xp_awk_getarg (void* run, xp_size_t idx);
-xp_awk_val_t* xp_awk_getglobal (void* run, xp_size_t idx);
-int xp_awk_setglobal (void* run, xp_size_t idx, xp_awk_val_t* val);
-void xp_awk_seterrnum (void* run, int errnum);
-void xp_awk_setretval (void* run, xp_awk_val_t* val);
+xp_size_t xp_awk_getnargs (xp_awk_run_t* run);
+xp_awk_val_t* xp_awk_getarg (xp_awk_run_t* run, xp_size_t idx);
+xp_awk_val_t* xp_awk_getglobal (xp_awk_run_t* run, xp_size_t idx);
+int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val);
+void xp_awk_seterrnum (xp_awk_run_t* run, int errnum);
+void xp_awk_setretval (xp_awk_run_t* run, xp_awk_val_t* val);
 
-int xp_awk_setrecord (
-	void* run, const xp_char_t* str, xp_size_t len);
-int xp_awk_setfield (
-	void* run, xp_size_t idx, const xp_char_t* str, xp_size_t len);
+/* record and field functions */
+int xp_awk_clrrec (xp_awk_run_t* run, xp_bool_t skip_inrec_line);
+int xp_awk_setrec (xp_awk_run_t* run, xp_size_t idx, const xp_char_t* str, xp_size_t len);
 
 /* utility functions exported by awk.h */
 xp_long_t xp_awk_strtolong (

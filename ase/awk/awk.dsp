@@ -223,6 +223,10 @@ SOURCE=.\parse.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\rec.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\rex.c
 # End Source File
 # Begin Source File

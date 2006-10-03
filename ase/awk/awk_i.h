@@ -1,12 +1,11 @@
 /*
- * $Id: awk_i.h,v 1.61 2006-09-29 11:18:13 bacon Exp $
+ * $Id: awk_i.h,v 1.62 2006-10-03 14:38:26 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
 #define _XP_AWK_AWKI_H_
 
 typedef struct xp_awk_chain_t xp_awk_chain_t;
-typedef struct xp_awk_run_t xp_awk_run_t;
 typedef struct xp_awk_tree_t xp_awk_tree_t;
 
 #include <xp/awk/awk.h>
