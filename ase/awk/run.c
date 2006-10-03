@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.217 2006-10-03 14:38:26 bacon Exp $
+ * $Id: run.c,v 1.218 2006-10-03 14:41:27 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2427,7 +2427,6 @@ static xp_awk_val_t* __do_assignment_pos (
 	xp_size_t len;
 	int n;
 
-	/* get the position number */
 	v = __eval_expression (run, pos->val);
 	if (v == XP_NULL) return XP_NULL;
 
@@ -2456,97 +2455,6 @@ static xp_awk_val_t* __do_assignment_pos (
 
 	if (n == -1) return XP_NULL;
 	return (lv == 0)? run->inrec.d0: run->inrec.flds[lv-1].val;
-
-#if 0
-	/* convert the value to the string */
-	str = xp_awk_valtostr (run, val, xp_true, XP_NULL, &len);
-	if (str == XP_NULL) return XP_NULL;
-
-	if (lv == 0)
-	{
-		if (xp_awk_clrrec (run, xp_false) == -1)
-		{
-			if (val->type != XP_AWK_VAL_STR) 
-				XP_AWK_FREE (run->awk, str);
-			return XP_NULL;
-		}
-
-		if (xp_awk_str_ncpy (&run->inrec.line, str, len) == (xp_size_t)-1)
-		{
-			if (val->type != XP_AWK_VAL_STR) 
-				XP_AWK_FREE (run->awk, str);
-			PANIC (run, XP_AWK_ENOMEM);
-		}
-
-
-		if (val->type == XP_AWK_VAL_STR)
-		{
-			xp_awk_refdownval (run, run->inrec.d0);
-			run->inrec.d0 = val;
-			xp_awk_refupval (val);
-		}
-		else
-		{
-			XP_AWK_FREE (run->awk, str);
-
-			v = xp_awk_makestrval (
-				run,
-				XP_AWK_STR_BUF(&run->inrec.line), 
-				XP_AWK_STR_LEN(&run->inrec.line));
-			if (v == XP_NULL)
-			{
-				xp_awk_clrrec (run, xp_false);
-				PANIC (run, XP_AWK_ENOMEM);
-			}
-
-			xp_awk_refdownval (run, run->inrec.d0);
-			run->inrec.d0 = v;
-			xp_awk_refupval (v);
-
-			val = v;
-		}
-
-		if (__split_record (run) == -1) 
-		{
-			errnum = run->errnum;
-			xp_awk_clrrec (run, xp_false);
-			run->errnum = errnum;
-			return XP_NULL;
-		}
-	}
-	else
-	{
-		if (__recomp_record_fields (run, (xp_size_t)lv, str, len) == -1)
-		{
-			errnum = run->errnum;
-			XP_AWK_FREE (run->awk, str);
-			xp_awk_clrrec (run, xp_false);
-			run->errnum = errnum;
-			return XP_NULL;
-		}
-		XP_AWK_FREE (run->awk, str);
-
-		/* recompose $0 */
-		v = xp_awk_makestrval (
-			run,
-			XP_AWK_STR_BUF(&run->inrec.line), 
-			XP_AWK_STR_LEN(&run->inrec.line));
-		if (v == XP_NULL)
-		{
-			xp_awk_clrrec (run, xp_false);
-			PANIC (run, XP_AWK_ENOMEM);
-		}
-
-		xp_awk_refdownval (run, run->inrec.d0);
-		run->inrec.d0 = v;
-		xp_awk_refupval (v);
-
-/* TODO: this return value is wrong. consider reimplementing this function with setrecord and setfield... also verify setreocrd and setfield.. */
-		val = v;
-	}
-
-	return val;
-#endif
 }
 
 static xp_awk_val_t* __eval_binary (xp_awk_run_t* run, xp_awk_nde_t* nde)

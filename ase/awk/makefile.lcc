@@ -1,5 +1,5 @@
-SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c run.c val.c misc.c
-OBJS = awk.obj err.obj tree.obj str.obj tab.obj map.obj parse.obj run.obj val.obj misc.obj
+SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c run.c rec.c val.c misc.c
+OBJS = awk.obj err.obj tree.obj str.obj tab.obj map.obj parse.obj run.obj rec.obj val.obj misc.obj
 OUT = xpawk.lib
 
 CC = lcc
