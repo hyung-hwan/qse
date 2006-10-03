@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.218 2006-10-03 14:41:27 bacon Exp $
+ * $Id: run.c,v 1.219 2006-10-03 15:02:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4739,6 +4739,9 @@ static int __read_record (xp_awk_run_t* run)
 			XP_AWK_ECONINDATA: errnum;
 		return -1;
 	}
+xp_printf (XP_T("len = %d str=[%s]\n"), 
+		XP_AWK_STR_LEN(&run->inrec.line),
+		XP_AWK_STR_BUF(&run->inrec.line));
 	if (n == 0) 
 	{
 		xp_assert (XP_AWK_STR_LEN(&run->inrec.line) == 0);
