@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.55 2006-10-02 14:53:44 bacon Exp $
+ * $Id: func.c,v 1.56 2006-10-03 14:38:26 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1042,7 +1042,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 	{
 		if (a2 == XP_NULL)
 		{
-			if (xp_awk_setrecord (run,
+			if (xp_awk_setrec (run, 0,
 				XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new)) == -1)
 			{
 				xp_awk_str_close (&new);
@@ -1053,19 +1053,10 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		else if (((xp_awk_val_ref_t*)a2)->id == XP_AWK_VAL_REF_POS)
 		{
 			int n;
-			xp_size_t idx;
 
-			idx = (xp_size_t)((xp_awk_val_ref_t*)a2)->adr;
-			if (idx == 0)
-			{
-				n = xp_awk_setrecord (run, 
-					XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
-			}
-			else
-			{
-				n = xp_awk_setfield (run, idx, 
-					XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
-			}
+			n = xp_awk_setrec (
+				run, (xp_size_t)((xp_awk_val_ref_t*)a2)->adr,
+				XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
 
 			if (n == -1)
 			{
