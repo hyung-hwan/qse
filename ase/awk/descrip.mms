@@ -1,4 +1,4 @@
-objects = awk.obj,err.obj,extio.obj,func.obj,map.obj,misc.obj,parse.obj,rex.obj,run.obj,sa.obj,tab.obj,tree.obj,val.obj
+objects = awk.obj,err.obj,extio.obj,func.obj,map.obj,misc.obj,parse.obj,rex.obj,run.obj,rec.obj,sa.obj,tab.obj,tree.obj,val.obj
 
 CFLAGS = /pointer_size=long /define=XP_AWK_STAND_ALONE
 LIBRFLAGS = 
@@ -16,6 +16,7 @@ misc.obj depends_on misc.c
 parse.obj depends_on parse.c
 rex.obj depends_on rex.c
 run.obj depends_on run.c
+rec.obj depends_on rec.c
 sa.obj depends_on sa.c
 tab.obj depends_on tab.c
 tree.obj depends_on tree.c
