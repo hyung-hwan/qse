@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.56 2006-10-03 14:38:26 bacon Exp $
+ * $Id: func.c,v 1.57 2006-10-04 10:11:04 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -24,7 +24,7 @@ static int __bfn_gsub (xp_awk_t* awk, void* run);
 static int __bfn_sub (xp_awk_t* awk, void* run);
 static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count);
 static int __bfn_system (xp_awk_t* awk, void* run);
-static int __bfn_sin (xp_awk_t* awk, void* run);
+/*static int __bfn_sin (xp_awk_t* awk, void* run);*/
 
 
 /* TODO: move it under the awk structure... */
@@ -46,7 +46,7 @@ static xp_awk_bfn_t __sys_bfn[] =
 
 	/* TODO: remove these two functions */
 	{ XP_T("system"),  6, 0,            1,  1,  XP_NULL, __bfn_system },
-	{ XP_T("sin"),     3, 0,            1,  1,  XP_NULL, __bfn_sin },
+	/*{ XP_T("sin"),     3, 0,            1,  1,  XP_NULL, __bfn_sin },*/
 
 	{ XP_NULL,         0, 0,            0,  0,  XP_NULL, XP_NULL }
 };
@@ -1134,6 +1134,7 @@ static int __bfn_system (xp_awk_t* awk, void* run)
 }
 
 /* math functions */
+#if 0
 static int __bfn_sin (xp_awk_t* awk, void* run)
 {
 	xp_size_t nargs;
@@ -1154,13 +1155,14 @@ static int __bfn_sin (xp_awk_t* awk, void* run)
 
 	if (n == 0) rv = (xp_real_t)lv;
 
-#if (XP_SIZEOF_REAL == XP_SIZEOF_LONG_DOUBLE)
+#if (XP_SIZEOF_REAL == XP_SIZEOF_LONG_DOUBLE) 
 	v = xp_awk_makerealval (run, (xp_real_t)sinl(rv));
 #elif (XP_SIZEOF_REAL == XP_SIZEOF_DOUBLE)
 	v = xp_awk_makerealval (run, (xp_real_t)sin(rv));
 #else
 	#error unsupported floating-point data type
 #endif
+
 	if (v == XP_NULL)
 	{
 		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
@@ -1170,3 +1172,4 @@ static int __bfn_sin (xp_awk_t* awk, void* run)
 	xp_awk_setretval (run, v);
 	return 0;
 }
+#endif
