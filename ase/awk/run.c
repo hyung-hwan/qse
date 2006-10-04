@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.220 2006-10-03 15:04:59 bacon Exp $
+ * $Id: run.c,v 1.221 2006-10-04 10:11:04 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1178,7 +1178,7 @@ static int __run_block (xp_awk_run_t* run, xp_awk_nde_blk_t* nde)
 	p = nde->body;
 	nlocals = nde->nlocals;
 
-/*xp_printf (XP_T("securing space for local variables nlocals = %d\n"), nlocals);*/
+/*xp_printf (XP_T("securing space for local variables nlocals = %d\n"), (int)nlocals);*/
 	saved_stack_top = run->stack_top;
 
 	/* secure space for local variables */
@@ -2403,7 +2403,7 @@ static xp_awk_val_t* __do_assignment_map (
 	if (str == XP_NULL) return XP_NULL;
 
 /*
-xp_printf (XP_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, map->ref, map->type);
+xp_printf (XP_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int)map->ref, (int)map->type);
 */
 	n = xp_awk_map_putx (map->map, str, len, val, XP_NULL);
 	if (n < 0)
@@ -4185,7 +4185,7 @@ static xp_awk_val_t* __eval_call (
 
 	/* refdown args in the run.stack */
 	nargs = (xp_size_t)STACK_NARGS(run);
-/*xp_printf (XP_T("block run complete nargs = %d\n"), nargs); */
+/*xp_printf (XP_T("block run complete nargs = %d\n"), (int)nargs); */
 	for (i = 0; i < nargs; i++)
 	{
 		xp_awk_refdownval (run, STACK_ARG(run,i));
@@ -4741,7 +4741,7 @@ static int __read_record (xp_awk_run_t* run)
 	}
 /*
 xp_printf (XP_T("len = %d str=[%s]\n"), 
-		XP_AWK_STR_LEN(&run->inrec.line),
+		(int)XP_AWK_STR_LEN(&run->inrec.line),
 		XP_AWK_STR_BUF(&run->inrec.line));
 */
 	if (n == 0) 

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.32 2006-09-28 06:56:30 bacon Exp $
+ * $Id: rex.c,v 1.33 2006-10-04 10:11:04 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -141,7 +141,13 @@ typedef const xp_byte_t* (*atom_matcher_t) (
 #define ADD_CODE(rex,data,len) \
 	do { if (__add_code(rex,data,len) == -1) return -1; } while (0)
 
-#define CODEAT(rex,pos,type) (*((type*)&(rex)->code.buf[pos]))
+#if defined(__sparc) || defined(__sparc__)
+	#define GET_CODE(rex,pos,type) __get_code(rex,pos)
+	#define SET_CODE(rex,pos,type,code) __set_code(rex,pos,code)
+#else
+	#define GET_CODE(rex,pos,type) (*((type*)&(rex)->code.buf[pos]))
+	#define SET_CODE(rex,pos,type,code) (GET_CODE(rex,pos,type) = (code))
+#endif
 
 static int __build_pattern (__builder_t* rex);
 static int __build_pattern0 (__builder_t* rex);
@@ -153,6 +159,24 @@ static int __build_cclass (__builder_t* rex, xp_char_t* cc);
 static int __build_range (__builder_t* rex, struct __code_t* cmd);
 static int __next_char (__builder_t* rex, int level);
 static int __add_code (__builder_t* rex, void* data, xp_size_t len);
+
+#if defined(__sparc) || defined(__sparc__)
+
+static xp_size_t __get_code (__builder_t* builder, xp_size_t pos)
+{
+	xp_size_t code;
+	XP_AWK_MEMCPY (builder->awk, 
+		&code, &builder->code.buf[pos], xp_sizeof(code));
+	return code;
+}
+
+static void __set_code (__builder_t* builder, xp_size_t pos, xp_size_t code)
+{
+	XP_AWK_MEMCPY (builder->awk, 
+		&builder->code.buf[pos], &code, xp_sizeof(code));
+}
+
+#endif
 
 static xp_bool_t __begin_with (
 	const xp_char_t* str, xp_size_t len, const xp_char_t* what);
@@ -426,7 +450,9 @@ static int __build_pattern0 (__builder_t* builder)
 		return 0;
 	}
 
-	CODEAT(builder,pos_nb,xp_size_t) += 1;
+	/*CODEAT(builder,pos_nb,xp_size_t) += 1;*/
+	SET_CODE (builder, pos_nb, xp_size_t,
+		GET_CODE (builder, pos_nb, xp_size_t) + 1);
 
 	/* handle subsequent branches if any */
 	while (builder->ptn.curc.type == CT_SPECIAL && 
@@ -444,10 +470,13 @@ static int __build_pattern0 (__builder_t* builder)
 			break;
 		}
 
-		CODEAT(builder,pos_nb,xp_size_t) += 1;
+		/*CODEAT(builder,pos_nb,xp_size_t) += 1;*/
+		SET_CODE (builder, pos_nb, xp_size_t, 
+			GET_CODE (builder, pos_nb, xp_size_t) + 1);
 	}
 
-	CODEAT(builder,pos_el,xp_size_t) = builder->code.size - old_size;
+	/*CODEAT(builder,pos_el,xp_size_t) = builder->code.size - old_size;*/
+	SET_CODE (builder, pos_el, xp_size_t, builder->code.size - old_size);
 	return 1;
 }
 
@@ -490,10 +519,13 @@ static int __build_branch (__builder_t* builder)
 		/* n == 0  no bound character. just continue */
 		/* n == 1  bound has been applied by build_occurrences */
 
-		CODEAT(builder,pos_na,xp_size_t) += 1;
+		/*CODEAT(builder,pos_na,xp_size_t) += 1;*/
+		SET_CODE (builder, pos_na, xp_size_t,
+			GET_CODE (builder, pos_na, xp_size_t) + 1);
 	}
 
-	CODEAT(builder,pos_bl,xp_size_t) = builder->code.size - old_size;
+	/*CODEAT(builder,pos_bl,xp_size_t) = builder->code.size - old_size;*/
+	SET_CODE (builder, pos_bl, xp_size_t, builder->code.size - old_size);
 	return (builder->code.size == old_size)? 0: 1;
 }
 
@@ -609,6 +641,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 
 	pos_csc = builder->code.size;
 	ADD_CODE (builder, &zero, xp_sizeof(zero));
+
 	pos_csl = builder->code.size;
 	ADD_CODE (builder, &zero, xp_sizeof(zero));
 
@@ -627,7 +660,6 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 		c1 = builder->ptn.curc.value;
 		NEXT_CHAR(builder, LEVEL_CHARSET);
 
-#ifndef XP_AWK_NTDDK
 		if (c1 == XP_T('[') &&
 		    builder->ptn.curc.type == CT_NORMAL &&
 		    builder->ptn.curc.value == XP_T(':'))
@@ -635,7 +667,6 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 			if (__build_cclass (builder, &c1) == -1) return -1;
 			cc = cc | 1;
 		}
-#endif
 
 		c2 = c1;
 		if (builder->ptn.curc.type == CT_NORMAL &&
@@ -648,7 +679,6 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 				c2 = builder->ptn.curc.value;
 				NEXT_CHAR (builder, LEVEL_CHARSET);
 
-#ifndef XP_AWK_NTDDK
 				if (c2 == XP_T('[') &&
 				    builder->ptn.curc.type == CT_NORMAL &&
 				    builder->ptn.curc.value == XP_T(':'))
@@ -660,7 +690,6 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 
 					cc = cc | 2;
 				}
-#endif
 			}	
 			else cc = cc | 4;
 		}
@@ -696,14 +725,17 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 			return -1;
 		}
 
-		CODEAT(builder,pos_csc,xp_size_t) += 1;
+		/*CODEAT(builder,pos_csc,xp_size_t) += 1;*/
+		SET_CODE (builder, pos_csc, xp_size_t,
+			GET_CODE (builder, pos_csc, xp_size_t) + 1);
 	}
 
-	CODEAT(builder,pos_csl,xp_size_t) = builder->code.size - old_size;
+	/*CODEAT(builder,pos_csl,xp_size_t) = builder->code.size - old_size;*/
+	SET_CODE (builder, pos_csl, xp_size_t, builder->code.size - old_size);
+
 	return 1;
 }
 
-#ifndef XP_AWK_NTDDK
 static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 {
 	const struct __char_class_t* ccp = __char_class;
@@ -750,7 +782,6 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 	*cc = (xp_char_t)(ccp - __char_class);
 	return 1;
 }
-#endif
 
 static int __build_occurrences (__builder_t* builder, struct __code_t* cmd)
 {
@@ -1652,7 +1683,7 @@ static const xp_byte_t* __print_pattern (const xp_byte_t* p)
 
 	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
 	el = *(xp_size_t*)p; p += xp_sizeof(el);
-xp_printf (XP_T("NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
+//xp_printf (XP_T("NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
 
 	for (i = 0; i < nb; i++)
 	{
@@ -1669,7 +1700,7 @@ static const xp_byte_t* __print_branch (const xp_byte_t* p)
 
 	na = *(xp_size_t*)p; p += xp_sizeof(na);
 	bl = *(xp_size_t*)p; p += xp_sizeof(bl);
-xp_printf (XP_T("NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
+//xp_printf (XP_T("NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
 
 	for (i = 0; i < na; i++)
 	{
