@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.221 2006-10-04 10:11:04 bacon Exp $
+ * $Id: run.c,v 1.222 2006-10-04 14:51:20 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -7,8 +7,8 @@
 /* TODO: remove this dependency...*/
 #include <math.h>
 
+#define CMP_ERROR -99
 #define DEF_BUF_CAPA 256
-
 #define STACK_INCREMENT 512
 
 #define STACK_AT(run,n) ((run)->stack[(run)->stack_base+(n)])
@@ -36,14 +36,7 @@ enum
 #define PANIC_I(run,code) \
 	do { (run)->errnum = (code); return -1; } while (0)
 
-#if (XP_SIZEOF_LONG_DOUBLE != 0)
-	#define DEFAULT_OFMT XP_T("%.6Lg")
-#elif (XP_SIZEOF_DOUBLE != 0)
-	#define DEFAULT_OFMT XP_T("%.6g")
-#else
-	#error Unsupported floating-point type size
-#endif
-
+#define DEFAULT_OFMT XP_T("%.6g")
 #define DEFAULT_OFS XP_T(" ")
 #define DEFAULT_ORS XP_T("\n")
 #define DEFAULT_SUBSEP XP_T("\034")
@@ -2842,8 +2835,34 @@ static int __cmp_int_real (
 static int __cmp_int_str (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	/* TODO */
-	return 0;
+	xp_char_t* str;
+	xp_size_t len;
+	int n;
+
+	str = xp_awk_valtostr (run, left, xp_true, XP_NULL, &len);
+	if (str == XP_NULL)
+	{
+		run->errnum = XP_AWK_ENOMEM;
+		return CMP_ERROR;
+	}
+
+	if (run->global.ignorecase)
+	{
+		n = xp_awk_strxncasecmp (
+			run->awk, str, len,
+			((xp_awk_val_str_t*)right)->buf, 
+			((xp_awk_val_str_t*)right)->len);
+	}
+	else
+	{
+		n = xp_awk_strxncmp (
+			str, len,
+			((xp_awk_val_str_t*)right)->buf, 
+			((xp_awk_val_str_t*)right)->len);
+	}
+
+	XP_AWK_FREE (run->awk, str);
+	return n;
 }
 
 static int __cmp_real_nil (
@@ -2877,8 +2896,34 @@ static int __cmp_real_real (
 static int __cmp_real_str (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	/* TODO */
-	return 0;
+	xp_char_t* str;
+	xp_size_t len;
+	int n;
+
+	str = xp_awk_valtostr (run, left, xp_true, XP_NULL, &len);
+	if (str == XP_NULL)
+	{
+		run->errnum = XP_AWK_ENOMEM;
+		return CMP_ERROR;
+	}
+
+	if (run->global.ignorecase)
+	{
+		n = xp_awk_strxncasecmp (
+			run->awk, str, len,
+			((xp_awk_val_str_t*)right)->buf, 
+			((xp_awk_val_str_t*)right)->len);
+	}
+	else
+	{
+		n = xp_awk_strxncmp (
+			str, len,
+			((xp_awk_val_str_t*)right)->buf, 
+			((xp_awk_val_str_t*)right)->len);
+	}
+
+	XP_AWK_FREE (run->awk, str);
+	return n;
 }
 
 static int __cmp_str_nil (
@@ -2941,7 +2986,7 @@ static int __cmp_val (
 	{
 		/* a map can't be compared againt other values */
 		run->errnum = XP_AWK_EOPERAND;
-		return -99; 
+		return CMP_ERROR; 
 	}
 
 	xp_assert (left->type >= XP_AWK_VAL_NIL &&
@@ -2956,7 +3001,7 @@ static xp_awk_val_t* __eval_binop_eq (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
-	if (n == -99) return XP_NULL;
+	if (n == CMP_ERROR) return XP_NULL;
 	return (n == 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
@@ -2964,7 +3009,7 @@ static xp_awk_val_t* __eval_binop_ne (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
-	if (n == -99) return XP_NULL;
+	if (n == CMP_ERROR) return XP_NULL;
 	return (n != 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
@@ -2972,7 +3017,7 @@ static xp_awk_val_t* __eval_binop_gt (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
-	if (n == -99) return XP_NULL;
+	if (n == CMP_ERROR) return XP_NULL;
 	return (n > 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
@@ -2980,7 +3025,7 @@ static xp_awk_val_t* __eval_binop_ge (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
-	if (n == -99) return XP_NULL;
+	if (n == CMP_ERROR) return XP_NULL;
 	return (n >= 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
@@ -2988,7 +3033,7 @@ static xp_awk_val_t* __eval_binop_lt (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
-	if (n == -99) return XP_NULL;
+	if (n == CMP_ERROR) return XP_NULL;
 	return (n < 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 
@@ -2996,7 +3041,7 @@ static xp_awk_val_t* __eval_binop_le (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
-	if (n == -99) return XP_NULL;
+	if (n == CMP_ERROR) return XP_NULL;
 	return (n <= 0)? xp_awk_val_one: xp_awk_val_zero;
 }
 

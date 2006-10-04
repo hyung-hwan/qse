@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.65 2006-09-29 11:18:13 bacon Exp $
+ * $Id: val.c,v 1.66 2006-10-04 14:51:21 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -562,15 +562,23 @@ static xp_char_t* __val_real_to_str (
 /* TODO: change the code */
 	xp_char_t tbuf[256], * tmp;
 
+/* TODO: need to use awk's own version of sprintf so that it would have
+ *       problems with handling long double or double... */
+/*
 #if (XP_SIZEOF_LONG_DOUBLE != 0)
 	run->awk->syscas->sprintf (
-		tbuf, xp_countof(tbuf), XP_T("%.6Lg"), (long double)v->val); 
+		tbuf, xp_countof(tbuf), run->global.ofmt.ptr, (long double)v->val); 
 #elif (XP_SIZEOF_DOUBLE != 0)
+*/
+/* TODO: does it need to check if a null character is included in ofmt??? */
 	run->awk->syscas->sprintf (
-		tbuf, xp_countof(tbuf), XP_T("%.6g"), (double)v->val); 
+		tbuf, xp_countof(tbuf), 
+		run->global.ofmt.ptr, (double)v->val); 
+/*
 #else
 	#error unsupported floating-point data type
 #endif
+*/
 
 	if (buf == XP_NULL) 
 	{
