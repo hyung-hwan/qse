@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.67 2006-10-05 14:20:57 bacon Exp $
+ * $Id: val.c,v 1.68 2006-10-05 14:22:36 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -402,6 +402,7 @@ xp_char_t* xp_awk_valtostr (
 	{
 		xp_awk_val_real_t* vr = (xp_awk_val_real_t*)v;
 
+		/*
 		if (vr->nde != XP_NULL && vr->nde->str != XP_NULL)
 		{
 			return __str_to_str (
@@ -409,9 +410,9 @@ xp_char_t* xp_awk_valtostr (
 				clear_buf, buf, len);
 		}
 		else
-		{
+		{*/
 			return __val_real_to_str (run, vr, clear_buf, buf, len);
-		}
+		/*}*/
 	}
 
 	if (v->type == XP_AWK_VAL_STR) 
