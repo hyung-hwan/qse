@@ -10,8 +10,8 @@ BEGIN {
 	print "1.0!=1 :", (1.0 != 1);
 	print "1.1!=1 :", (1.1 != 1);
 
-	print "abc" == "abc";
-	print "abc" != "abc";
+	print "\"abc\" == \"abc\"", ("abc" == "abc");
+	print "\"abc\" != \"abc\"", ("abc" != "abc");
 
 	print "--------------------------";
 	print "a == \"\" :", (a == "");
