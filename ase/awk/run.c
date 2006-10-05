@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.222 2006-10-04 14:51:20 bacon Exp $
+ * $Id: run.c,v 1.223 2006-10-05 14:20:57 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2837,7 +2837,33 @@ static int __cmp_int_str (
 {
 	xp_char_t* str;
 	xp_size_t len;
+	xp_long_t r;
 	int n;
+
+	r = xp_awk_strxtolong (run->awk, 
+		((xp_awk_val_str_t*)right)->buf,
+		((xp_awk_val_str_t*)right)->len, 0, &str);
+	if (str == ((xp_awk_val_str_t*)right)->buf + 
+		   ((xp_awk_val_str_t*)right)->len)
+	{
+		if (((xp_awk_val_int_t*)left)->val > r) return 1;
+		if (((xp_awk_val_int_t*)left)->val < r) return -1;
+		return 0;
+	}
+
+	/* TODO: */
+	/*
+	r = xp_awk_strxtoreal (run->awk,
+		((xp_awk_val_str_t*)right)->buf,
+		((xp_awk_val_str_t*)right)->len, &str);
+	if (str == ((xp_awk_val_str_t*)right)->buf + 
+		   ((xp_awk_val_str_t*)right)->len)
+	{
+		if (((xp_awk_val_int_t*)left)->val > rr) return 1;
+		if (((xp_awk_val_int_t*)left)->val < rr) return -1;
+		return 0;
+	}
+	*/
 
 	str = xp_awk_valtostr (run, left, xp_true, XP_NULL, &len);
 	if (str == XP_NULL)

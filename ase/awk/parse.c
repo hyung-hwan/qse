@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.184 2006-09-28 14:21:23 bacon Exp $
+ * $Id: parse.c,v 1.185 2006-10-05 14:20:57 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1950,8 +1950,9 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->type = XP_AWK_NDE_INT;
 		nde->next = XP_NULL;
-		nde->val = xp_awk_strtolong (
-			awk, XP_AWK_STR_BUF(&awk->token.name), 0, XP_NULL);
+		nde->val = xp_awk_strxtolong (awk, 
+			XP_AWK_STR_BUF(&awk->token.name), 
+			XP_AWK_STR_LEN(&awk->token.name), 0, XP_NULL);
 		nde->str = xp_awk_strxdup (awk,
 			XP_AWK_STR_BUF(&awk->token.name),
 			XP_AWK_STR_LEN(&awk->token.name));
