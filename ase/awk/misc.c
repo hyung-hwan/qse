@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.22 2006-09-25 06:17:19 bacon Exp $
+ * $Id: misc.c,v 1.23 2006-10-05 14:20:57 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -33,19 +33,25 @@ void* xp_awk_memset (void* dst, int val, xp_size_t n)
 	return dst;
 }
 
-xp_long_t xp_awk_strtolong (
-	xp_awk_t* awk, const xp_char_t* str, 
+xp_long_t xp_awk_strxtolong (
+	xp_awk_t* awk, const xp_char_t* str, xp_size_t len,
 	int base, const xp_char_t** endptr)
 {
 	xp_long_t n = 0;
 	const xp_char_t* p;
+	const xp_char_t* end;
+	xp_size_t rem;
 	int digit, negative = 0;
 
 	xp_assert (base < 37); 
 
-	p = str; while (XP_AWK_ISSPACE(awk,*p)) p++;
+	end = str + len;
+	p = str; 
+	
+	/*while (XP_AWK_ISSPACE(awk,*p)) p++;*/
 
-	while (*p != XP_T('\0')) 
+	/*while (*p != XP_T('\0')) */
+	while (p < end)
 	{
 		if (*p == XP_T('-')) 
 		{
@@ -56,12 +62,15 @@ xp_long_t xp_awk_strtolong (
 		else break;
 	}
 
+	rem = end - p;
 	if (base == 0) 
 	{
-		if (*p == XP_T('0')) 
+		if (rem >= 1 && *p == XP_T('0')) 
 		{
 			p++;
-			if (*p == XP_T('x') || *p == XP_T('X'))
+
+			if (rem == 1) base = 8;
+			else if (*p == XP_T('x') || *p == XP_T('X'))
 			{
 				p++; base = 16;
 			} 
@@ -73,18 +82,19 @@ xp_long_t xp_awk_strtolong (
 		}
 		else base = 10;
 	} 
-	else if (base == 16) 
+	else if (rem >= 2 && base == 16)
 	{
 		if (*p == XP_T('0') && 
 		    (*(p+1) == XP_T('x') || *(p+1) == XP_T('X'))) p += 2; 
 	}
-	else if (base == 2)
+	else if (rem >= 2 && base == 2)
 	{
 		if (*p == XP_T('0') && 
 		    (*(p+1) == XP_T('b') || *(p+1) == XP_T('B'))) p += 2; 
 	}
 
-	while (*p != XP_T('\0'))
+	/*while (*p != XP_T('\0'))*/
+	while (p < end)
 	{
 		if (*p >= XP_T('0') && *p <= XP_T('9'))
 			digit = *p - XP_T('0');
@@ -132,12 +142,13 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
 	 * Used to convert decimal exponents into floating-point numbers.
 	 */ 
-	static xp_real_t powersOf10[] = {
+	static xp_real_t powers_of_10[] = 
+	{
 		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	xp_real_t fraction, dblExp, * d;
+	xp_real_t fraction, dbl_exp, * d;
 	const xp_char_t* p;
 	xp_cint_t c;
 	int exp = 0;		/* Exponent read from "EX" field */
@@ -152,15 +163,15 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	 */
 
 	int frac_exp;
-	int mantSize; /* Number of digits in mantissa. */
-	int decPt;    /* Number of mantissa digits BEFORE decimal point */
-	const xp_char_t *pExp;  /* Temporarily holds location of exponent in string */
-	int sign = 0, expSign = 0;
+	int mant_size; /* Number of digits in mantissa. */
+	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
+	const xp_char_t *pexp;  /* Temporarily holds location of exponent in string */
+	int sign = 0, exp_sign = 0;
 
 	p = str;
 
 	/* Strip off leading blanks and check for a sign */
-	while (XP_AWK_ISSPACE(awk,*p)) p++;
+	/*while (XP_AWK_ISSPACE(awk,*p)) p++;*/
 
 	while (*p != XP_T('\0')) 
 	{
@@ -175,12 +186,14 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 
 	/* Count the number of digits in the mantissa (including the decimal
 	 * point), and also locate the decimal point. */
-	decPt = -1;
-	for (mantSize = 0; ; mantSize++) {
+	dec_pt = -1;
+	for (mant_size = 0; ; mant_size++) 
+	{
 		c = *p;
-		if (!XP_AWK_ISDIGIT (awk, c)) {
-			if ((c != XP_T('.')) || (decPt >= 0)) break;
-			decPt = mantSize;
+		if (!XP_AWK_ISDIGIT (awk, c)) 
+		{
+			if ((c != XP_T('.')) || (dec_pt >= 0)) break;
+			dec_pt = mant_size;
 		}
 		p++;
 	}
@@ -191,28 +204,28 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	 * If the mantissa has more than 18 digits, ignore the extras, since
 	 * they can't affect the value anyway.
 	 */
-	pExp  = p;
-	p -= mantSize;
-	if (decPt < 0) 
+	pexp = p;
+	p -= mant_size;
+	if (dec_pt < 0) 
 	{
-		decPt = mantSize;
+		dec_pt = mant_size;
 	} 
 	else 
 	{
-		mantSize -= 1;	/* One of the digits was the point */
+		mant_size--;	/* One of the digits was the point */
 	}
 
-	if (mantSize > 18) 
+	if (mant_size > 18) 
 	{
-		frac_exp = decPt - 18;
-		mantSize = 18;
+		frac_exp = dec_pt - 18;
+		mant_size = 18;
 	} 
 	else 
 	{
-		frac_exp = decPt - mantSize;
+		frac_exp = dec_pt - mant_size;
 	}
 
-	if (mantSize == 0) 
+	if (mant_size == 0) 
 	{
 		fraction = 0.0;
 		/*p = str;*/
@@ -222,7 +235,7 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	{
 		int frac1, frac2;
 		frac1 = 0;
-		for ( ; mantSize > 9; mantSize -= 1) 
+		for ( ; mant_size > 9; mant_size--) 
 		{
 			c = *p;
 			p++;
@@ -234,7 +247,7 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 			frac1 = 10 * frac1 + (c - XP_T('0'));
 		}
 		frac2 = 0;
-		for (; mantSize > 0; mantSize -= 1) {
+		for (; mant_size > 0; mant_size--) {
 			c = *p;
 			p++;
 			if (c == XP_T('.')) 
@@ -248,23 +261,23 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	}
 
 	/* Skim off the exponent */
-	p = pExp;
+	p = pexp;
 	if ((*p == XP_T('E')) || (*p == XP_T('e'))) 
 	{
 		p++;
 		if (*p == XP_T('-')) 
 		{
-			expSign = 1;
+			exp_sign = 1;
 			p++;
 		} 
 		else 
 		{
 			if (*p == XP_T('+')) p++;
-			expSign = 0;
+			exp_sign = 0;
 		}
 		if (!XP_AWK_ISDIGIT (awk, *p)) 
 		{
-			/* p = pExp; */
+			/* p = pexp; */
 			goto done;
 		}
 		while (XP_AWK_ISDIGIT (awk, *p)) 
@@ -274,7 +287,7 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 		}
 	}
 
-	if (expSign) exp = frac_exp - exp;
+	if (exp_sign) exp = frac_exp - exp;
 	else exp = frac_exp + exp;
 
 	/*
@@ -285,22 +298,22 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	 */
 	if (exp < 0) 
 	{
-		expSign = 1;
+		exp_sign = 1;
 		exp = -exp;
 	} 
-	else expSign = 0;
+	else exp_sign = 0;
 
 	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
 
-	dblExp = 1.0;
+	dbl_exp = 1.0;
 
-	for (d = powersOf10; exp != 0; exp >>= 1, d++) 
+	for (d = powers_of_10; exp != 0; exp >>= 1, d++) 
 	{
-		if (exp & 01) dblExp *= *d;
+		if (exp & 01) dbl_exp *= *d;
 	}
 
-	if (expSign) fraction /= dblExp;
-	else fraction *= dblExp;
+	if (exp_sign) fraction /= dbl_exp;
+	else fraction *= dbl_exp;
 
 done:
 	return (sign)? -fraction: fraction;
