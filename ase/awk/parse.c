@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.185 2006-10-05 14:20:57 bacon Exp $
+ * $Id: parse.c,v 1.186 2006-10-06 03:33:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1412,6 +1412,7 @@ static xp_awk_nde_t* __parse_binary_expr (
 			return XP_NULL;
 		}
 
+#if 0
 		/* TODO: enhance constant folding. do it in a better way */
 		/* TODO: differentiate different types of numbers ... */
 		if (left->type == XP_AWK_NDE_INT && 
@@ -1472,6 +1473,7 @@ static xp_awk_nde_t* __parse_binary_expr (
 		/* TODO: enhance constant folding more... */
 
 	skip_constant_folding:
+#endif
 		nde = (xp_awk_nde_exp_t*) XP_AWK_MALLOC (
 			awk, xp_sizeof(xp_awk_nde_exp_t));
 		if (nde == XP_NULL) 
@@ -1986,8 +1988,9 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		nde->type = XP_AWK_NDE_REAL;
 		nde->next = XP_NULL;
-		nde->val = xp_awk_strtoreal (
-			awk, XP_AWK_STR_BUF(&awk->token.name));
+		nde->val = xp_awk_strxtoreal (awk, 
+			XP_AWK_STR_BUF(&awk->token.name), 
+			XP_AWK_STR_LEN(&awk->token.name), XP_NULL);
 		nde->str = xp_awk_strxdup (awk,
 			XP_AWK_STR_BUF(&awk->token.name),
 			XP_AWK_STR_LEN(&awk->token.name));

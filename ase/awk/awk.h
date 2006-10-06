@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.121 2006-10-05 14:20:57 bacon Exp $
+ * $Id: awk.h,v 1.122 2006-10-06 03:33:43 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -352,8 +352,9 @@ int xp_awk_setrec (xp_awk_run_t* run, xp_size_t idx, const xp_char_t* str, xp_si
 xp_long_t xp_awk_strxtolong (
 	xp_awk_t* awk, const xp_char_t* str, xp_size_t len,
 	int base, const xp_char_t** endptr);
-xp_real_t xp_awk_strtoreal (
-	xp_awk_t* awk, const xp_char_t* str);
+xp_real_t xp_awk_strxtoreal (
+	xp_awk_t* awk, const xp_char_t* str, xp_size_t len, 
+	const xp_char_t* endptr);
 
 xp_size_t xp_awk_longtostr (
 	xp_long_t value, int radix, const xp_char_t* prefix,

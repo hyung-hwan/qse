@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.68 2006-10-05 14:22:36 bacon Exp $
+ * $Id: val.c,v 1.69 2006-10-06 03:33:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -611,7 +611,6 @@ static xp_char_t* __val_real_to_str (
 	return tmp;
 }
 
-
 int xp_awk_valtonum (
 	xp_awk_run_t* run, xp_awk_val_t* v, xp_long_t* l, xp_real_t* r)
 {
@@ -637,7 +636,6 @@ int xp_awk_valtonum (
 	{
 		const xp_char_t* endptr;
 
-		/* don't care about val->len */
 		*l = xp_awk_strxtolong (run->awk, 
 			((xp_awk_val_str_t*)v)->buf, 
 			((xp_awk_val_str_t*)v)->len, 0, &endptr);
@@ -645,8 +643,10 @@ int xp_awk_valtonum (
 		    *endptr == XP_T('E') ||
 		    *endptr == XP_T('e'))
 		{
-			*r = xp_awk_strtoreal (
-				run->awk, ((xp_awk_val_str_t*)v)->buf);
+			*r = xp_awk_strxtoreal (run->awk, 
+				((xp_awk_val_str_t*)v)->buf,
+				((xp_awk_val_str_t*)v)->len, XP_NULL);
+/* TODO: need to check if it is a valid number using endptr for strxtoreal? */
 			return 1; /* real */
 		}
 	

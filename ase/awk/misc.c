@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.23 2006-10-05 14:20:57 bacon Exp $
+ * $Id: misc.c,v 1.24 2006-10-06 03:33:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -45,11 +45,13 @@ xp_long_t xp_awk_strxtolong (
 
 	xp_assert (base < 37); 
 
-	end = str + len;
 	p = str; 
+	end = str + len;
 	
+	/* strip off leading spaces */
 	/*while (XP_AWK_ISSPACE(awk,*p)) p++;*/
 
+	/* check for a sign */
 	/*while (*p != XP_T('\0')) */
 	while (p < end)
 	{
@@ -62,6 +64,7 @@ xp_long_t xp_awk_strxtolong (
 		else break;
 	}
 
+	/* check for a binary/octal/hexadecimal notation */
 	rem = end - p;
 	if (base == 0) 
 	{
@@ -93,6 +96,7 @@ xp_long_t xp_awk_strxtolong (
 		    (*(p+1) == XP_T('b') || *(p+1) == XP_T('B'))) p += 2; 
 	}
 
+	/* process the digits */
 	/*while (*p != XP_T('\0'))*/
 	while (p < end)
 	{
@@ -166,18 +170,19 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	int mant_size; /* Number of digits in mantissa. */
 	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
 	const xp_char_t *pexp;  /* Temporarily holds location of exponent in string */
-	int sign = 0, exp_sign = 0;
+	int negative = 0, exp_negative = 0;
 
 	p = str;
 
-	/* Strip off leading blanks and check for a sign */
+	/* strip off leading blanks */ 
 	/*while (XP_AWK_ISSPACE(awk,*p)) p++;*/
 
+	/* check for a sign */
 	while (*p != XP_T('\0')) 
 	{
 		if (*p == XP_T('-')) 
 		{
-			sign = ~sign;
+			negative = ~negative;
 			p++;
 		}
 		else if (*p == XP_T('+')) p++;
@@ -267,13 +272,13 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 		p++;
 		if (*p == XP_T('-')) 
 		{
-			exp_sign = 1;
+			exp_negative = 1;
 			p++;
 		} 
 		else 
 		{
 			if (*p == XP_T('+')) p++;
-			exp_sign = 0;
+			exp_negative = 0;
 		}
 		if (!XP_AWK_ISDIGIT (awk, *p)) 
 		{
@@ -287,7 +292,7 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 		}
 	}
 
-	if (exp_sign) exp = frac_exp - exp;
+	if (exp_negative) exp = frac_exp - exp;
 	else exp = frac_exp + exp;
 
 	/*
@@ -298,10 +303,10 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	 */
 	if (exp < 0) 
 	{
-		exp_sign = 1;
+		exp_negative = 1;
 		exp = -exp;
 	} 
-	else exp_sign = 0;
+	else exp_negative = 0;
 
 	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
 
@@ -312,11 +317,199 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 		if (exp & 01) dbl_exp *= *d;
 	}
 
-	if (exp_sign) fraction /= dbl_exp;
+	if (exp_negative) fraction /= dbl_exp;
 	else fraction *= dbl_exp;
 
 done:
-	return (sign)? -fraction: fraction;
+	return (negative)? -fraction: fraction;
+}
+
+xp_real_t xp_awk_strxtoreal (
+	xp_awk_t* awk, const xp_char_t* str, xp_size_t len, 
+	const xp_char_t** endptr)
+{
+	/* 
+	 * Table giving binary powers of 10. Entry is 10^2^i.  
+	 * Used to convert decimal exponents into floating-point numbers.
+	 */ 
+	static xp_real_t powers_of_10[] = 
+	{
+		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
+		1.0e32, 1.0e64, 1.0e128, 1.0e256
+	};
+
+	xp_real_t fraction, dbl_exp, * d;
+	const xp_char_t* p, * end;
+	xp_cint_t c;
+	int exp = 0; /* Exponent read from "EX" field */
+
+	/* 
+	 * Exponent that derives from the fractional part.  Under normal 
+	 * circumstatnces, it is the negative of the number of digits in F.
+	 * However, if I is very long, the last digits of I get dropped 
+	 * (otherwise a long I with a large negative exponent could cause an
+	 * unnecessary overflow on I alone).  In this case, frac_exp is 
+	 * incremented one for each dropped digit. 
+	 */
+
+	int frac_exp;
+	int mant_size; /* Number of digits in mantissa. */
+	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
+	const xp_char_t *pexp;  /* Temporarily holds location of exponent in string */
+	int negative = 0, exp_negative = 0;
+
+	p = str;
+	end = str + len;
+
+	/* Strip off leading blanks and check for a sign */
+	/*while (XP_AWK_ISSPACE(awk,*p)) p++;*/
+
+	/*while (*p != XP_T('\0')) */
+	while (p < end)
+	{
+		if (*p == XP_T('-')) 
+		{
+			negative = ~negative;
+			p++;
+		}
+		else if (*p == XP_T('+')) p++;
+		else break;
+	}
+
+	/* Count the number of digits in the mantissa (including the decimal
+	 * point), and also locate the decimal point. */
+	dec_pt = -1;
+	/*for (mant_size = 0; ; mant_size++) */
+	for (mant_size = 0; p < end; mant_size++) 
+	{
+		c = *p;
+		if (!XP_AWK_ISDIGIT (awk, c)) 
+		{
+			if ((c != XP_T('.')) || (dec_pt >= 0)) break;
+			dec_pt = mant_size;
+		}
+		p++;
+	}
+
+	/*
+	 * Now suck up the digits in the mantissa.  Use two integers to
+	 * collect 9 digits each (this is faster than using floating-point).
+	 * If the mantissa has more than 18 digits, ignore the extras, since
+	 * they can't affect the value anyway.
+	 */
+	pexp = p;
+	p -= mant_size;
+	if (dec_pt < 0) 
+	{
+		dec_pt = mant_size;
+	} 
+	else 
+	{
+		mant_size--;	/* One of the digits was the point */
+	}
+
+	if (mant_size > 18)  /* TODO: is 18 correct for xp_real_t??? */
+	{
+		frac_exp = dec_pt - 18;
+		mant_size = 18;
+	} 
+	else 
+	{
+		frac_exp = dec_pt - mant_size;
+	}
+
+	if (mant_size == 0) 
+	{
+		fraction = 0.0;
+		/*p = str;*/
+		goto done;
+	} 
+	else 
+	{
+		int frac1, frac2;
+		frac1 = 0;
+		for ( ; mant_size > 9; mant_size--) 
+		{
+			c = *p;
+			p++;
+			if (c == XP_T('.')) 
+			{
+				c = *p;
+				p++;
+			}
+			frac1 = 10 * frac1 + (c - XP_T('0'));
+		}
+		frac2 = 0;
+		for (; mant_size > 0; mant_size--) {
+			c = *p;
+			p++;
+			if (c == XP_T('.')) 
+			{
+				c = *p;
+				p++;
+			}
+			frac2 = 10*frac2 + (c - XP_T('0'));
+		}
+		fraction = (1.0e9 * frac1) + frac2;
+	}
+
+	/* Skim off the exponent */
+	p = pexp;
+	if ((*p == XP_T('E')) || (*p == XP_T('e'))) 
+	{
+		p++;
+		if (*p == XP_T('-')) 
+		{
+			exp_negative = 1;
+			p++;
+		} 
+		else 
+		{
+			if (*p == XP_T('+')) p++;
+			exp_negative = 0;
+		}
+		if (!XP_AWK_ISDIGIT (awk, *p)) 
+		{
+			/* p = pexp; */
+			goto done;
+		}
+		while (XP_AWK_ISDIGIT (awk, *p)) 
+		{
+			exp = exp * 10 + (*p - XP_T('0'));
+			p++;
+		}
+	}
+
+	if (exp_negative) exp = frac_exp - exp;
+	else exp = frac_exp + exp;
+
+	/*
+	 * Generate a floating-point number that represents the exponent.
+	 * Do this by processing the exponent one bit at a time to combine
+	 * many powers of 2 of 10. Then combine the exponent with the
+	 * fraction.
+	 */
+	if (exp < 0) 
+	{
+		exp_negative = 1;
+		exp = -exp;
+	} 
+	else exp_negative = 0;
+
+	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
+
+	dbl_exp = 1.0;
+
+	for (d = powers_of_10; exp != 0; exp >>= 1, d++) 
+	{
+		if (exp & 01) dbl_exp *= *d;
+	}
+
+	if (exp_negative) fraction /= dbl_exp;
+	else fraction *= dbl_exp;
+
+done:
+	return (negative)? -fraction: fraction;
 }
 
 xp_size_t xp_awk_longtostr (
