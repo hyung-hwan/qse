@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.77 2006-09-28 14:21:23 bacon Exp $
+ * $Id: tree.c,v 1.78 2006-10-06 03:33:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -222,32 +222,50 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 		case XP_AWK_NDE_INT:
 		{
-			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
-			xp_size_t n;
+			if (((xp_awk_nde_int_t*)nde)->str == XP_NULL)
+			{
+				xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
+				xp_size_t n;
 
-			n = xp_awk_longtostr (
-				((xp_awk_nde_int_t*)nde)->val,
-				10, XP_NULL, tmp, xp_countof(tmp));
+				n = xp_awk_longtostr (
+					((xp_awk_nde_int_t*)nde)->val,
+					10, XP_NULL, tmp, xp_countof(tmp));
 
-			PUT_SRCSTRX (awk, tmp, n);
+				PUT_SRCSTRX (awk, tmp, n);
+			}
+			else
+			{
+				PUT_SRCSTRX (awk,
+					((xp_awk_nde_int_t*)nde)->str,
+					((xp_awk_nde_int_t*)nde)->len);
+			}
 			break;
 		}
 
 		case XP_AWK_NDE_REAL:
 		{
-			xp_char_t tmp[128];
-		#if (XP_SIZEOF_LONG_DOUBLE != 0)
-			awk->syscas->sprintf (
-				tmp, xp_countof(tmp), XP_T("%Lf"), 
-				(long double)((xp_awk_nde_real_t*)nde)->val);
-		#elif (XP_SIZEOF_DOUBLE != 0)
-			awk->syscas->sprintf (
-				tmp, xp_countof(tmp), XP_T("%f"), 
-				(double)((xp_awk_nde_real_t*)nde)->val);
-		#else
-			#error unsupported floating-point data type
-		#endif
-			PUT_SRCSTR (awk, tmp);
+			if (((xp_awk_nde_real_t*)nde)->str == XP_NULL)
+			{
+				xp_char_t tmp[128];
+			#if (XP_SIZEOF_LONG_DOUBLE != 0)
+				awk->syscas->sprintf (
+					tmp, xp_countof(tmp), XP_T("%Lf"), 
+					(long double)((xp_awk_nde_real_t*)nde)->val);
+			#elif (XP_SIZEOF_DOUBLE != 0)
+				awk->syscas->sprintf (
+					tmp, xp_countof(tmp), XP_T("%f"), 
+					(double)((xp_awk_nde_real_t*)nde)->val);
+			#else
+				#error unsupported floating-point data type
+			#endif
+				PUT_SRCSTR (awk, tmp);
+			}
+			else
+			{
+				PUT_SRCSTRX (awk,
+					((xp_awk_nde_real_t*)nde)->str,
+					((xp_awk_nde_real_t*)nde)->len);
+			}
 			break;
 		}
 

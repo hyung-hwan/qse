@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.223 2006-10-05 14:20:57 bacon Exp $
+ * $Id: run.c,v 1.224 2006-10-06 03:37:40 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2850,20 +2850,22 @@ static int __cmp_int_str (
 		if (((xp_awk_val_int_t*)left)->val < r) return -1;
 		return 0;
 	}
-
-	/* TODO: */
-	/*
-	r = xp_awk_strxtoreal (run->awk,
-		((xp_awk_val_str_t*)right)->buf,
-		((xp_awk_val_str_t*)right)->len, &str);
-	if (str == ((xp_awk_val_str_t*)right)->buf + 
-		   ((xp_awk_val_str_t*)right)->len)
+	else if (*str == XP_T('.') || *str == XP_T('E') || *sstr == XP_T('e'))
 	{
-		if (((xp_awk_val_int_t*)left)->val > rr) return 1;
-		if (((xp_awk_val_int_t*)left)->val < rr) return -1;
-		return 0;
+		/* TODO: */
+		/*
+		r = xp_awk_strxtoreal (run->awk,
+			((xp_awk_val_str_t*)right)->buf,
+			((xp_awk_val_str_t*)right)->len, &str);
+		if (str == ((xp_awk_val_str_t*)right)->buf + 
+			   ((xp_awk_val_str_t*)right)->len)
+		{
+			if (((xp_awk_val_int_t*)left)->val > rr) return 1;
+			if (((xp_awk_val_int_t*)left)->val < rr) return -1;
+			return 0;
+		}
+		*/
 	}
-	*/
 
 	str = xp_awk_valtostr (run, left, xp_true, XP_NULL, &len);
 	if (str == XP_NULL)
