@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.224 2006-10-06 03:37:40 bacon Exp $
+ * $Id: run.c,v 1.225 2006-10-06 03:41:54 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2842,7 +2842,7 @@ static int __cmp_int_str (
 
 	r = xp_awk_strxtolong (run->awk, 
 		((xp_awk_val_str_t*)right)->buf,
-		((xp_awk_val_str_t*)right)->len, 0, &str);
+		((xp_awk_val_str_t*)right)->len, 0, (const xp_char_t**)&str);
 	if (str == ((xp_awk_val_str_t*)right)->buf + 
 		   ((xp_awk_val_str_t*)right)->len)
 	{
@@ -2850,7 +2850,7 @@ static int __cmp_int_str (
 		if (((xp_awk_val_int_t*)left)->val < r) return -1;
 		return 0;
 	}
-	else if (*str == XP_T('.') || *str == XP_T('E') || *sstr == XP_T('e'))
+	else if (*str == XP_T('.') || *str == XP_T('E') || *str == XP_T('e'))
 	{
 		/* TODO: */
 		/*
