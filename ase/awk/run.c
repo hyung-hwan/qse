@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.225 2006-10-06 03:41:54 bacon Exp $
+ * $Id: run.c,v 1.226 2006-10-06 14:34:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2838,6 +2838,7 @@ static int __cmp_int_str (
 	xp_char_t* str;
 	xp_size_t len;
 	xp_long_t r;
+	xp_real_t rr;
 	int n;
 
 	r = xp_awk_strxtolong (run->awk, 
@@ -2850,11 +2851,10 @@ static int __cmp_int_str (
 		if (((xp_awk_val_int_t*)left)->val < r) return -1;
 		return 0;
 	}
+/* TODO: should i do this???  conversion to real and comparision... */
 	else if (*str == XP_T('.') || *str == XP_T('E') || *str == XP_T('e'))
 	{
-		/* TODO: */
-		/*
-		r = xp_awk_strxtoreal (run->awk,
+		rr = xp_awk_strxtoreal (run->awk,
 			((xp_awk_val_str_t*)right)->buf,
 			((xp_awk_val_str_t*)right)->len, &str);
 		if (str == ((xp_awk_val_str_t*)right)->buf + 
@@ -2864,7 +2864,6 @@ static int __cmp_int_str (
 			if (((xp_awk_val_int_t*)left)->val < rr) return -1;
 			return 0;
 		}
-		*/
 	}
 
 	str = xp_awk_valtostr (run, left, xp_true, XP_NULL, &len);
@@ -2926,7 +2925,19 @@ static int __cmp_real_str (
 {
 	xp_char_t* str;
 	xp_size_t len;
+	xp_real_t rr;
 	int n;
+
+	rr = xp_awk_strxtoreal (run->awk,
+		((xp_awk_val_str_t*)right)->buf,
+		((xp_awk_val_str_t*)right)->len, &str);
+	if (str == ((xp_awk_val_str_t*)right)->buf + 
+		   ((xp_awk_val_str_t*)right)->len)
+	{
+		if (((xp_awk_val_real_t*)left)->val > rr) return 1;
+		if (((xp_awk_val_real_t*)left)->val < rr) return -1;
+		return 0;
+	}
 
 	str = xp_awk_valtostr (run, left, xp_true, XP_NULL, &len);
 	if (str == XP_NULL)

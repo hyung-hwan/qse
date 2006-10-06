@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.24 2006-10-06 03:33:43 bacon Exp $
+ * $Id: misc.c,v 1.25 2006-10-06 14:34:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -234,6 +234,7 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	{
 		fraction = 0.0;
 		/*p = str;*/
+		p = pexp;
 		goto done;
 	} 
 	else 
@@ -283,7 +284,8 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 		if (!XP_AWK_ISDIGIT (awk, *p)) 
 		{
 			/* p = pexp; */
-			goto done;
+			/* goto done; */
+			goto no_exp;
 		}
 		while (XP_AWK_ISDIGIT (awk, *p)) 
 		{
@@ -292,6 +294,7 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 		}
 	}
 
+no_exp:
 	if (exp_negative) exp = frac_exp - exp;
 	else exp = frac_exp + exp;
 
@@ -385,7 +388,7 @@ xp_real_t xp_awk_strxtoreal (
 		c = *p;
 		if (!XP_AWK_ISDIGIT (awk, c)) 
 		{
-			if ((c != XP_T('.')) || (dec_pt >= 0)) break;
+			if (c != XP_T('.') || dec_pt >= 0) break;
 			dec_pt = mant_size;
 		}
 		p++;
@@ -422,11 +425,13 @@ xp_real_t xp_awk_strxtoreal (
 	{
 		fraction = 0.0;
 		/*p = str;*/
+		p = pexp;
 		goto done;
 	} 
 	else 
 	{
 		int frac1, frac2;
+
 		frac1 = 0;
 		for ( ; mant_size > 9; mant_size--) 
 		{
@@ -439,47 +444,56 @@ xp_real_t xp_awk_strxtoreal (
 			}
 			frac1 = 10 * frac1 + (c - XP_T('0'));
 		}
+
 		frac2 = 0;
 		for (; mant_size > 0; mant_size--) {
-			c = *p;
-			p++;
+			c = *p++;
 			if (c == XP_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac2 = 10*frac2 + (c - XP_T('0'));
+			frac2 = 10 * frac2 + (c - XP_T('0'));
 		}
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
 	/* Skim off the exponent */
 	p = pexp;
-	if ((*p == XP_T('E')) || (*p == XP_T('e'))) 
+	if (p < end && (*p == XP_T('E') || *p == XP_T('e'))) 
 	{
 		p++;
-		if (*p == XP_T('-')) 
+
+		if (p < end) 
 		{
-			exp_negative = 1;
-			p++;
-		} 
-		else 
-		{
-			if (*p == XP_T('+')) p++;
-			exp_negative = 0;
+			if (*p == XP_T('-')) 
+			{
+				exp_negative = 1;
+				p++;
+			} 
+			else 
+			{
+				if (*p == XP_T('+')) p++;
+				exp_negative = 0;
+			}
 		}
-		if (!XP_AWK_ISDIGIT (awk, *p)) 
+		else exp_negative = 0;
+
+		if (!(p < end && XP_AWK_ISDIGIT (awk, *p))) 
 		{
-			/* p = pexp; */
-			goto done;
+			/*p = pexp;*/
+			/*goto done;*/
+			goto no_exp;
 		}
-		while (XP_AWK_ISDIGIT (awk, *p)) 
+
+		while (p < end && XP_AWK_ISDIGIT (awk, *p)) 
 		{
 			exp = exp * 10 + (*p - XP_T('0'));
 			p++;
 		}
 	}
 
+no_exp:
 	if (exp_negative) exp = frac_exp - exp;
 	else exp = frac_exp + exp;
 
@@ -509,6 +523,7 @@ xp_real_t xp_awk_strxtoreal (
 	else fraction *= dbl_exp;
 
 done:
+	if (endptr != XP_NULL) *endptr = p;
 	return (negative)? -fraction: fraction;
 }
 

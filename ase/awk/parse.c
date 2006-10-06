@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.186 2006-10-06 03:33:43 bacon Exp $
+ * $Id: parse.c,v 1.187 2006-10-06 14:34:37 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -3283,7 +3283,7 @@ static int __get_token (xp_awk_t* awk)
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_EOF);
 	}	
-	else if (XP_AWK_ISDIGIT (awk, c)) 
+	else if (XP_AWK_ISDIGIT (awk, c) || c == XP_T('.'))
 	{
 		if (__get_number (awk) == -1) return -1;
 	}
