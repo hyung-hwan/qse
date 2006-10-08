@@ -13,7 +13,7 @@ all: $(OBJS)
 !
 
 clean:
-	del $(OBJS) $(OUT) *.obj
+	-del $(OBJS) $(OUT) *.obj
 
 .SUFFIXES: .c .obj
 .c.obj:

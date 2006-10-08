@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.33 2006-10-04 10:11:04 bacon Exp $
+ * $Id: rex.c,v 1.34 2006-10-08 05:46:41 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -57,7 +57,7 @@ typedef struct __match_t __match_t;
 
 struct __code_t
 {
-	//xp_byte_t cmd;
+	/*xp_byte_t cmd;*/
 	short cmd;
 	short negate; /* only for CMD_CHARSET */
 	xp_size_t lbound;
@@ -334,7 +334,6 @@ int xp_awk_matchrex (
 	matcher.depth.max = awk->max_depth; */
 	matcher.depth.max = 0;
 	matcher.depth.cur = 0;
-// TODO: set it to a good value
 	matcher.ignorecase = (option & XP_AWK_REX_IGNORECASE)? 1: 0;
 
 	mat.matched = xp_false;
@@ -720,7 +719,9 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 		else
 		{
 			/* invalid range */
-//xp_printf (XP_T("invalid character set range\n"));
+#ifdef DEBUG_REX
+xp_printf (XP_T("__build_charset: invalid character set range\n"));
+#endif
 			builder->errnum = XP_AWK_EREXCRANGE;
 			return -1;
 		}
@@ -750,7 +751,9 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 	if (ccp->name == XP_NULL)
 	{
 		/* wrong class name */
-//xp_printf (XP_T("wrong class name\n"));
+#ifdef DEBUG_REX
+xp_printf (XP_T("__build_cclass: wrong class name\n"));*/
+#endif
 		builder->errnum = XP_AWK_EREXCCLASS;
 		return -1;
 	}
@@ -761,7 +764,9 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 	if (builder->ptn.curc.type != CT_NORMAL ||
 	    builder->ptn.curc.value != XP_T(':'))
 	{
-//xp_printf (XP_T(": expected\n"));
+#ifdef BUILD_REX
+xp_printf (XP_T("__build_cclass: a colon(:) expected\n"));
+#endif
 		builder->errnum = XP_AWK_EREXCOLON;
 		return -1;
 	}
@@ -772,7 +777,9 @@ static int __build_cclass (__builder_t* builder, xp_char_t* cc)
 	if (builder->ptn.curc.type != CT_SPECIAL ||
 	    builder->ptn.curc.value != XP_T(']'))
 	{
-//xp_printf (XP_T("] expected\n"));
+#ifdef DEBUG_REX
+xp_printf (XP_T("__build_cclass: ] expected\n"));
+#endif
 		builder->errnum = XP_AWK_EREXRBRACKET;	
 		return -1;
 	}
@@ -838,8 +845,8 @@ static int __build_range (__builder_t* builder, struct __code_t* cmd)
 {
 	xp_size_t bound;
 
-// TODO: should allow white spaces in the range???
-//  what if it is not in the raight format? convert it to ordinary characters??
+/* TODO: should allow white spaces in the range???
+what if it is not in the raight format? convert it to ordinary characters?? */
 	bound = 0;
 	while (builder->ptn.curc.type == CT_NORMAL &&
 	       (builder->ptn.curc.value >= XP_T('0') && 
@@ -1017,7 +1024,9 @@ static const xp_byte_t* __match_pattern (
 	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
 	el = *(xp_size_t*)p; p += xp_sizeof(el);
 
-//xp_printf (XP_T("NB = %u, EL = %u\n"), (unsigned)nb, (unsigned)el);
+#ifdef BUILD_REX
+xp_printf (XP_T("__match_pattern: NB = %u, EL = %u\n"), (unsigned)nb, (unsigned)el);
+#endif
 	mat->matched = xp_false;
 	mat->match_len = 0;
 
@@ -1078,7 +1087,7 @@ static const xp_byte_t* __match_branch_body0 (
 	__matcher_t* matcher, const xp_byte_t* base, __match_t* mat)
 {
 	const xp_byte_t* p;
-//	__match_t mat2;
+/*	__match_t mat2;*/
 	xp_size_t match_len = 0;
 
 	mat->matched = xp_false;
@@ -1200,8 +1209,11 @@ static const xp_byte_t* __match_any_char (
 		p += xp_sizeof(*cp);
 	}
 
-//xp_printf (XP_T("lbound = %u, ubound = %u\n"), 
-//(unsigned int)lbound, (unsigned int)ubound);
+#ifdef BUILD_REX
+xp_printf (XP_T("__match_any_char: lbound = %u, ubound = %u\n"), 
+      (unsigned int)lbound, (unsigned int)ubound);
+#endif
+
 	/* find the longest match */
 	while (si < ubound)
 	{
@@ -1209,7 +1221,9 @@ static const xp_byte_t* __match_any_char (
 		si++;
 	}
 
-//xp_printf (XP_T("max si = %d\n"), si);
+#ifdef BUILD_REX
+xp_printf (XP_T("__match_any_char: max si = %d\n"), si);
+#endif
 	if (si >= lbound && si <= ubound)
 	{
 		p = __match_occurrences (matcher, si, p, lbound, ubound, mat);
@@ -1265,8 +1279,10 @@ static const xp_byte_t* __match_ord_char (
 		}
 	}
 	
-//xp_printf (XP_T("lbound = %u, ubound = %u\n"), 
-//(unsigned int)lbound, (unsigned int)ubound);
+#ifdef BUILD_REX
+xp_printf (XP_T("__match_ord_char: lbound = %u, ubound = %u\n"), 
+  (unsigned int)lbound, (unsigned int)ubound);*/
+#endif
 
 	mat->matched = xp_false;
 	mat->match_len = 0;
@@ -1291,7 +1307,10 @@ static const xp_byte_t* __match_ord_char (
 		}
 	}
 
-//xp_printf (XP_T("max si = %d, lbound = %u, ubound = %u\n"), si, lbound, ubound);
+#ifdef DEBUG_REX
+xp_printf (XP_T("__match_ord_char: max si = %d, lbound = %u, ubound = %u\n"), si, lbound, ubound);
+#endif
+
 	if (si >= lbound && si <= ubound)
 	{
 		p = __match_occurrences (matcher, si, p, lbound, ubound, mat);
@@ -1445,7 +1464,9 @@ static const xp_byte_t* __match_group (
 				mat2.branch = mat->branch;
 				mat2.branch_end = mat->branch_end;
 	
-//xp_printf (XP_T("GROUP si = %d [%s]\n"), si, mat->match_ptr);
+#ifdef DEBUG_REX
+xp_printf (XP_T("__match_group: GROUP si = %d [%s]\n"), si, mat->match_ptr);
+#endif
 				tmp = __match_branch_body (matcher, p, &mat2);
 				if (tmp == XP_NULL)
 				{
@@ -1542,7 +1563,9 @@ static const xp_byte_t* __match_occurrences (
 			mat2.branch = mat->branch;
 			mat2.branch_end = mat->branch_end;
 
-//xp_printf (XP_T("si = %d [%s]\n"), si, mat->match_ptr);
+#ifdef DEBUG_REX
+xp_printf (XP_T("__match occurrences: si = %d [%s]\n"), si, mat->match_ptr);
+#endif
 			tmp = __match_branch_body (matcher, p, &mat2);
 
 			if (mat2.matched)
@@ -1683,7 +1706,9 @@ static const xp_byte_t* __print_pattern (const xp_byte_t* p)
 
 	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
 	el = *(xp_size_t*)p; p += xp_sizeof(el);
-//xp_printf (XP_T("NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
+#ifdef DEBUG_REX
+xp_printf (XP_T("__print_pattern: NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
+#endif
 
 	for (i = 0; i < nb; i++)
 	{
@@ -1700,7 +1725,9 @@ static const xp_byte_t* __print_branch (const xp_byte_t* p)
 
 	na = *(xp_size_t*)p; p += xp_sizeof(na);
 	bl = *(xp_size_t*)p; p += xp_sizeof(bl);
-//xp_printf (XP_T("NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
+#ifdef DEBUG_REX
+xp_printf (XP_T("__print_branch: NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
+#endif
 
 	for (i = 0; i < na; i++)
 	{

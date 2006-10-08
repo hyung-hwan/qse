@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.69 2006-10-06 03:33:43 bacon Exp $
+ * $Id: val.c,v 1.70 2006-10-08 05:46:41 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -649,7 +649,7 @@ int xp_awk_valtonum (
 /* TODO: need to check if it is a valid number using endptr for strxtoreal? */
 			return 1; /* real */
 		}
-	
+/* TODO: do should i handle strings ending with invalid number characters like "123xx" or "dkdkdkd"? */
 		return 0; /* long */
 	}
 

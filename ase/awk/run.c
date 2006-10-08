@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.226 2006-10-06 14:34:37 bacon Exp $
+ * $Id: run.c,v 1.227 2006-10-08 05:46:41 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2974,13 +2974,13 @@ static int __cmp_str_nil (
 static int __cmp_str_int (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return __cmp_int_str (run, right, left);
+	return -__cmp_int_str (run, right, left);
 }
 
 static int __cmp_str_real (
 	xp_awk_run_t* run, xp_awk_val_t* left, xp_awk_val_t* right)
 {
-	return __cmp_real_str (run, right, left);
+	return -__cmp_real_str (run, right, left);
 }
 
 static int __cmp_str_str (
