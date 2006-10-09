@@ -1,9 +1,8 @@
 /*
- * $Id: awk.c,v 1.91 2006-09-25 06:17:19 bacon Exp $
+ * $Id: awk.c,v 1.92 2006-10-09 14:37:41 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
-#include <xp/bas/stdio.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -15,6 +14,7 @@
 
 #ifndef __STAND_ALONE
 	#include <xp/bas/stdio.h>
+	#include <xp/bas/stdlib.h>
 	#include <xp/bas/string.h>
 	#include <xp/bas/memory.h>
 	#include <xp/bas/sysapi.h>
@@ -26,6 +26,10 @@
 		#define XP_PATH_MAX 4096
 	#else
 		#define XP_PATH_MAX PATH_MAX
+	#endif
+
+	#ifdef _WIN32
+		#define xp_sprintf _sntprintf
 	#endif
 #endif
 
