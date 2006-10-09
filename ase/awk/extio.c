@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.49 2006-09-29 11:18:13 bacon Exp $
+ * $Id: extio.c,v 1.50 2006-10-09 14:37:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -104,7 +104,7 @@ int xp_awk_readextio (
 	while (p != XP_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_awk_strcmp(p->name,name) == 0) break;
+		    xp_awk_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -582,7 +582,7 @@ int xp_awk_nextextio_read (
 	while (p != XP_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_awk_strcmp(p->name,name) == 0) break;
+		    xp_awk_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 

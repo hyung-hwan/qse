@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.25 2006-10-06 14:34:37 bacon Exp $
+ * $Id: misc.c,v 1.26 2006-10-09 14:37:14 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -677,13 +677,24 @@ int xp_awk_strxncmp (
 	const xp_char_t* s1, xp_size_t len1, 
 	const xp_char_t* s2, xp_size_t len2)
 {
+	xp_char_t c1, c2;
 	const xp_char_t* end1 = s1 + len1;
 	const xp_char_t* end2 = s2 + len2;
 
-	while (s1 < end1 && s2 < end2 && *s1 == *s2) s1++, s2++;
-	if (s1 == end1 && s2 == end2) return 0;
-	if (*s1 == *s2) return (s1 < end1)? 1: -1;
-	return (*s1 > *s2)? 1: -1;
+	while (s1 < end1)
+	{
+		c1 = *s1;
+		if (s2 < end2) 
+		{
+			c2 = *s2;
+			if (c1 > c2) return 1;
+			if (c1 < c2) return -1;
+		}
+		else return 1;
+		s1++; s2++;
+	}
+
+	return (s2 < end2)? -1: 0;
 }
 
 int xp_awk_strxncasecmp (
@@ -695,17 +706,20 @@ int xp_awk_strxncasecmp (
 	const xp_char_t* end1 = s1 + len1;
 	const xp_char_t* end2 = s2 + len2;
 
-	c1 = XP_AWK_TOUPPER (awk, *s1); 
-	c2 = XP_AWK_TOUPPER (awk, *s2);
-	while (s1 < end1 && s2 < end2 && c1 == c2) 
+	while (s1 < end1)
 	{
-		s1++, s2++;
 		c1 = XP_AWK_TOUPPER (awk, *s1); 
-		c2 = XP_AWK_TOUPPER (awk, *s2);
+		if (s2 < end2) 
+		{
+			c2 = XP_AWK_TOUPPER (awk, *s2);
+			if (c1 > c2) return 1;
+			if (c1 < c2) return -1;
+		}
+		else return 1;
+		s1++; s2++;
 	}
-	if (s1 == end1 && s2 == end2) return 0;
-	if (c1 == c2) return (s1 < end1)? 1: -1;
-	return (c1 > c2)? 1: -1;
+
+	return (s2 < end2)? -1: 0;
 }
 
 xp_char_t* xp_awk_strxnstr (
