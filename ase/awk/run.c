@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.228 2006-10-10 07:02:38 bacon Exp $
+ * $Id: run.c,v 1.229 2006-10-10 07:06:42 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -2833,7 +2833,8 @@ static int __cmp_int_str (
 	{
 		rr = xp_awk_strxtoreal (run->awk,
 			((xp_awk_val_str_t*)right)->buf,
-			((xp_awk_val_str_t*)right)->len, &str);
+			((xp_awk_val_str_t*)right)->len, 
+			(const xp_char_t**)&str);
 		if (str == ((xp_awk_val_str_t*)right)->buf + 
 			   ((xp_awk_val_str_t*)right)->len)
 		{
@@ -2907,7 +2908,8 @@ static int __cmp_real_str (
 
 	rr = xp_awk_strxtoreal (run->awk,
 		((xp_awk_val_str_t*)right)->buf,
-		((xp_awk_val_str_t*)right)->len, &str);
+		((xp_awk_val_str_t*)right)->len, 
+		(const xp_char_t**)&str);
 	if (str == ((xp_awk_val_str_t*)right)->buf + 
 		   ((xp_awk_val_str_t*)right)->len)
 	{
@@ -4381,7 +4383,7 @@ static int __get_reference (
 		if (n == 1) lv = (xp_long_t)rv;
 		if (!IS_VALID_POSIDX(lv)) PANIC_I (run, XP_AWK_EPOSIDX);
 
-		*ref = (xp_awk_val_t**)lv;
+		*ref = (xp_awk_val_t**)((xp_size_t)lv);
 		return 0;
 	}
 

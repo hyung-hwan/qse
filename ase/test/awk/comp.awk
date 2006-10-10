@@ -117,4 +117,5 @@ BEGIN {
 	print .123E-;
 	print +.123E-;
 	print -.123E-;
+	print -.123E- + "123";
 }
