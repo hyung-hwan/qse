@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.124 2006-10-10 07:02:38 bacon Exp $
+ * $Id: awk.h,v 1.125 2006-10-10 14:08:55 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -17,6 +17,7 @@ typedef struct xp_awk_syscas_t xp_awk_syscas_t;
 typedef struct xp_awk_srcios_t xp_awk_srcios_t;
 typedef struct xp_awk_runios_t xp_awk_runios_t;
 typedef struct xp_awk_runcbs_t xp_awk_runcbs_t;
+typedef struct xp_awk_runarg_t xp_awk_runarg_t;
 
 typedef void (*xp_awk_lk_t) (xp_awk_t* awk, void* arg);
 typedef xp_ssize_t (*xp_awk_io_t) (
@@ -97,6 +98,11 @@ struct xp_awk_runcbs_t
 	void* custom_data;
 };
 
+struct xp_awk_runarg_t
+{
+	const xp_char_t* ptr;
+	xp_size_t len;
+};
 
 /* io function commands */
 enum 
@@ -331,7 +337,9 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios);
  *  error number. The third parameter to on_end denotes this error number.
  */
 int xp_awk_run (xp_awk_t* awk, 
-	xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs);
+	xp_awk_runios_t* runios, 
+	xp_awk_runcbs_t* runcbs, 
+	xp_awk_runarg_t* runarg);
 
 int xp_awk_stop (xp_awk_t* awk, xp_awk_run_t* run);
 void xp_awk_stopall (xp_awk_t* awk);

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.229 2006-10-10 07:06:42 bacon Exp $
+ * $Id: run.c,v 1.230 2006-10-10 14:08:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -58,6 +58,7 @@ static void __del_run (xp_awk_t* awk, xp_awk_run_t* run);
 static int __init_run (
 	xp_awk_run_t* run, xp_awk_runios_t* runios, int* errnum);
 static void __deinit_run (xp_awk_run_t* run);
+static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg);
 
 static int __run_main (xp_awk_run_t* run);
 static int __run_pattern_blocks  (xp_awk_run_t* run);
@@ -434,7 +435,10 @@ void xp_awk_setrunerrnum (xp_awk_run_t* run, int errnum)
 	run->errnum = errnum;
 }
 
-int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
+int xp_awk_run (xp_awk_t* awk, 
+	xp_awk_runios_t* runios, 
+	xp_awk_runcbs_t* runcbs, 
+	xp_awk_runarg_t* runarg)
 {
 	xp_awk_run_t* run;
 	int n, errnum;
@@ -461,6 +465,12 @@ int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
 	if (runcbs != XP_NULL && runcbs->on_start != XP_NULL) 
 	{
 		runcbs->on_start (awk, run, runcbs->custom_data);
+	}
+
+	if (runarg != XP_NULL && __build_runarg (run, runarg) == -1)
+	{
+/*TODO: cleanup. error handling */
+		return -1;
 	}
 
 	n = __run_main (run);
@@ -742,6 +752,57 @@ static void __deinit_run (xp_awk_run_t* run)
 		xp_awk_val_ref_t* tmp = run->fcache[--run->fcache_count];
 		xp_awk_freeval (run, (xp_awk_val_t*)tmp, xp_false);
 	}
+}
+
+static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
+{
+	xp_awk_runarg_t* p = runarg;
+	xp_size_t argc;
+	xp_awk_val_t* v_argc;
+	xp_awk_val_t* v_argv;
+
+	v_argv = xp_awk_makemapval (run);
+	if (v_argv == XP_NULL)
+	{
+		run->errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
+	xp_awk_refupval (v_argv);
+
+	for (argc = 0, p = runarg; p->ptr != XP_NULL; argc++, p++)
+	{
+		xp_printf (XP_T("ptr = %s, len = %d\n"), p->ptr, p->len);
+/* TODO: create values */
+	}
+xp_printf (XP_T("argc = %d\n"), argc);
+
+	v_argc = xp_awk_makeintval (run, (xp_long_t)argc);
+	if (v_argc == XP_NULL)
+	{
+		xp_awk_refdownval (run, v_argv);
+		run->errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
+
+	xp_awk_refupval (v_argc);
+
+	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_ARGC, v_argc) == -1) 
+	{
+		xp_awk_refdownval (run, v_argc);
+		xp_awk_refdownval (run, v_argv);
+		return -1;
+	}
+
+	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_ARGV, v_argv) == -1)
+	{
+		xp_awk_refdownval (run, v_argc);
+		xp_awk_refdownval (run, v_argv);
+		return -1;
+	}
+
+	xp_awk_refdownval (run, v_argc);
+	xp_awk_refdownval (run, v_argv);
+	return 0;
 }
 
 static int __run_main (xp_awk_run_t* run)

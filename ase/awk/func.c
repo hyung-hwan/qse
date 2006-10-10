@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.58 2006-10-10 07:02:38 bacon Exp $
+ * $Id: func.c,v 1.59 2006-10-10 14:08:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1114,7 +1114,6 @@ static int __bfn_sub (xp_awk_run_t* run)
 {
 	return __substitute (run, 1);
 }
-
 
 static int __bfn_system (xp_awk_run_t* run)
 {
