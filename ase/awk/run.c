@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.227 2006-10-08 05:46:41 bacon Exp $
+ * $Id: run.c,v 1.228 2006-10-10 07:02:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -416,17 +416,22 @@ int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val)
 	return 0;
 }
 
-void xp_awk_seterrnum (xp_awk_run_t* run, int errnum)
-{
-	run->errnum = errnum;
-}
-
 void xp_awk_setretval (xp_awk_run_t* run, xp_awk_val_t* val)
 {
 	xp_awk_refdownval (run, STACK_RETVAL(run));
 	STACK_RETVAL(run) = val;
 	/* should use the same trick as __run_return_statement */
 	xp_awk_refupval (val); 
+}
+
+int xp_awk_getrunerrnum (xp_awk_run_t* run)
+{
+	return run->errnum;
+}
+
+void xp_awk_setrunerrnum (xp_awk_run_t* run, int errnum)
+{
+	run->errnum = errnum;
 }
 
 int xp_awk_run (xp_awk_t* awk, xp_awk_runios_t* runios, xp_awk_runcbs_t* runcbs)
@@ -526,34 +531,6 @@ void xp_awk_stopall (xp_awk_t* awk)
 	}
 
 	XP_AWK_UNLOCK (awk);
-}
-
-int xp_awk_getrunerrnum (xp_awk_t* awk, xp_awk_run_t* run, int* errnum)
-{
-	xp_awk_run_t* r;
-	int n = 0;
-
-	XP_AWK_LOCK (awk);
-
-	for (r = awk->run.ptr; r != XP_NULL; r = r->next)
-	{
-		if (r == run)
-		{
-			xp_assert (r->awk == awk);
-			*errnum = r->errnum;
-			break;
-		}
-	}
-
-	if (r == XP_NULL)
-	{
-		awk->errnum = XP_AWK_EINVAL;
-		n = -1;
-	}
-
-	XP_AWK_UNLOCK (awk);
-
-	return n;
 }
 
 static void __free_namedval (void* run, void* val)
@@ -4262,7 +4239,7 @@ static xp_awk_val_t* __eval_call (
 		           call->nargs <= call->what.bfn.max_args);
 
 		if (call->what.bfn.handler != XP_NULL)
-			n = call->what.bfn.handler (run->awk, run);
+			n = call->what.bfn.handler (run);
 	}
 
 /*xp_printf (XP_T("block run complete\n")); */
