@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.92 2006-10-09 14:37:41 bacon Exp $
+ * $Id: awk.c,v 1.93 2006-10-10 14:09:23 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -592,6 +592,7 @@ static int __main (int argc, xp_char_t* argv[])
 	xp_awk_srcios_t srcios;
 	xp_awk_runcbs_t runcbs;
 	xp_awk_runios_t runios;
+	xp_awk_runarg_t runarg[10];
 	xp_awk_syscas_t syscas;
 	struct src_io src_io = { NULL, NULL };
 	int opt, i, file_count = 0;
@@ -738,7 +739,12 @@ static int __main (int argc, xp_char_t* argv[])
 	runcbs.on_end = __on_run_end;
 	runcbs.custom_data = XP_NULL;
 
-	if (xp_awk_run (awk, &runios, &runcbs) == -1)
+	runarg[0].ptr = XP_T("argument 0");
+	runarg[0].len = xp_awk_strlen(runarg[0].ptr);
+	runarg[1].ptr = XP_NULL;
+	runarg[1].len = 0;
+
+	if (xp_awk_run (awk, &runios, &runcbs, runarg) == -1)
 	{
 		int errnum = xp_awk_geterrnum(awk);
 #if defined(__STAND_ALONE) && !defined(_WIN32) && defined(XP_CHAR_IS_WCHAR)
