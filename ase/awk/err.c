@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.41 2006-09-30 17:02:35 bacon Exp $
+ * $Id: err.c,v 1.42 2006-10-10 07:02:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -89,7 +89,8 @@ const xp_char_t* xp_awk_geterrstr (int errnum)
 		XP_T("variable not indexable"),
 		XP_T("variable not deletable"),
 		XP_T("value not referenceable"),
-		XP_T("indexed value cannot be assigned a map"),
+		XP_T("an indexed value cannot be assigned a map"),
+		XP_T("a positional value cannot be assigned a map"),
 		XP_T("cannot change a map to a scalar value"),
 		XP_T("cannot change a scalar value to a map"),
 		XP_T("a map is not allowed"),

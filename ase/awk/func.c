@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.57 2006-10-04 10:11:04 bacon Exp $
+ * $Id: func.c,v 1.58 2006-10-10 07:02:38 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -12,20 +12,18 @@
 	#include <math.h>
 #endif
 
-static int __bfn_close (xp_awk_t* awk, void* run);
-static int __bfn_fflush (xp_awk_t* awk, void* run);
-static int __bfn_index (xp_awk_t* awk, void* run);
-static int __bfn_length (xp_awk_t* awk, void* run);
-static int __bfn_substr (xp_awk_t* awk, void* run);
-static int __bfn_split (xp_awk_t* awk, void* run);
-static int __bfn_tolower (xp_awk_t* awk, void* run);
-static int __bfn_toupper (xp_awk_t* awk, void* run);
-static int __bfn_gsub (xp_awk_t* awk, void* run);
-static int __bfn_sub (xp_awk_t* awk, void* run);
-static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count);
-static int __bfn_system (xp_awk_t* awk, void* run);
-/*static int __bfn_sin (xp_awk_t* awk, void* run);*/
-
+static int __bfn_close   (xp_awk_run_t* run);
+static int __bfn_fflush  (xp_awk_run_t* run);
+static int __bfn_index   (xp_awk_run_t* run);
+static int __bfn_length  (xp_awk_run_t* run);
+static int __bfn_substr  (xp_awk_run_t* run);
+static int __bfn_split   (xp_awk_run_t* run);
+static int __bfn_tolower (xp_awk_run_t* run);
+static int __bfn_toupper (xp_awk_run_t* run);
+static int __bfn_gsub    (xp_awk_run_t* run);
+static int __bfn_sub     (xp_awk_run_t* run);
+static int __bfn_system  (xp_awk_run_t* run);
+/*static int __bfn_sin   (xp_awk_run_t* run);*/
 
 /* TODO: move it under the awk structure... */
 static xp_awk_bfn_t __sys_bfn[] = 
@@ -54,7 +52,7 @@ static xp_awk_bfn_t __sys_bfn[] =
 xp_awk_bfn_t* xp_awk_addbfn (
 	xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len, 
 	int when_valid, xp_size_t min_args, xp_size_t max_args, 
-	const xp_char_t* arg_spec, int (*handler)(xp_awk_t*,void*))
+	const xp_char_t* arg_spec, int (*handler)(xp_awk_run_t*))
 {
 	xp_awk_bfn_t* p;
 
@@ -142,7 +140,7 @@ xp_awk_bfn_t* xp_awk_getbfn (
 	return XP_NULL;
 }
 
-static int __bfn_close (xp_awk_t* awk, void* run)
+static int __bfn_close (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* v, * a0;
@@ -155,7 +153,7 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 	xp_assert (nargs == 1);
 /* TODO: support close (xxx, "to"/"from") like gawk */
 
-	a0 = xp_awk_getarg(run, 0);
+	a0 = xp_awk_getarg (run, 0);
 	xp_assert (a0 != XP_NULL);
 
 	if (a0->type == XP_AWK_VAL_STR)
@@ -179,7 +177,7 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 		 * an empty string for its identification because closeextio
 		 * closes any extios that match the name given unlike 
 		 * closeextio_read or closeextio_write. */ 
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, name);
+		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, name);
 		n = -1;
 		/* TODO: need to set ERRNO??? */
 		goto skip_close;
@@ -191,7 +189,8 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 		{
 			/* the name contains a null string. 
 			 * make close return -1 */
-			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, name);
+			if (a0->type != XP_AWK_VAL_STR) 
+				XP_AWK_FREE (run->awk, name);
 			n = -1;
 			/* TODO: need to set ERRNO??? */
 			goto skip_close;
@@ -199,19 +198,20 @@ static int __bfn_close (xp_awk_t* awk, void* run)
 	}	
 
 	n = xp_awk_closeextio (run, name);
-	if (n == -1 && ((xp_awk_run_t*)run)->errnum != XP_AWK_EIOHANDLER)
+	if (n == -1 && run->errnum != XP_AWK_EIOHANDLER)
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, name);
+		if (a0->type != XP_AWK_VAL_STR) 
+			XP_AWK_FREE (run->awk, name);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, name);
+	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, name);
 
 skip_close:
 	v = xp_awk_makeintval (run, n);
 	if (v == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -242,7 +242,7 @@ static int __flush_extio (
 	return n;
 }
 
-static int __bfn_fflush (xp_awk_t* awk, void* run)
+static int __bfn_fflush (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* a0;
@@ -258,8 +258,8 @@ static int __bfn_fflush (xp_awk_t* awk, void* run)
 		/* flush the console output */
 		n = xp_awk_flushextio (run, XP_AWK_OUT_CONSOLE, XP_T(""));
 		if (n == -1 && 
-		    ((xp_awk_run_t*)run)->errnum != XP_AWK_EIOHANDLER && 
-		    ((xp_awk_run_t*)run)->errnum != XP_AWK_ENOSUCHIO)
+		    run->errnum != XP_AWK_EIOHANDLER && 
+		    run->errnum != XP_AWK_ENOSUCHIO)
 		{
 			return -1;
 		}
@@ -291,7 +291,8 @@ static int __bfn_fflush (xp_awk_t* awk, void* run)
 		{
 			if (*ptr == XP_T('\0')) 
 			{
-				if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str0);
+				if (a0->type != XP_AWK_VAL_STR) 
+					XP_AWK_FREE (run->awk, str0);
 				n = -1;
 				goto skip_flush;
 			}
@@ -321,14 +322,14 @@ static int __bfn_fflush (xp_awk_t* awk, void* run)
 		 * if n is -1, the io handler has returned an error */
 		if (n != 0) n = -1;
 
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str0);
+		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str0);
 	}
 
 skip_flush:
 	a0 = xp_awk_makeintval (run, (xp_long_t)n);
 	if (a0 == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -336,7 +337,7 @@ skip_flush:
 	return 0;
 }
 
-static int __bfn_index (xp_awk_t* awk, void* run)
+static int __bfn_index (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* a0, * a1;
@@ -371,7 +372,8 @@ static int __bfn_index (xp_awk_t* awk, void* run)
 		str1 = xp_awk_valtostr (run, a1, xp_true, XP_NULL, &len1);
 		if (str1 == XP_NULL)
 		{
-			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str0);
+			if (a0->type != XP_AWK_VAL_STR) 
+				XP_AWK_FREE (run->awk, str0);
 			return -1;
 		}
 	}
@@ -379,15 +381,15 @@ static int __bfn_index (xp_awk_t* awk, void* run)
 	ptr = xp_awk_strxnstr (str0, len0, str1, len1);
 	idx = (ptr == XP_NULL)? -1: (xp_long_t)(ptr - str0);
 
-	if (xp_awk_getopt(awk) & XP_AWK_STRINDEXONE) idx = idx + 1;
+	if (xp_awk_getopt(run->awk) & XP_AWK_STRINDEXONE) idx = idx + 1;
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str0);
-	if (a1->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str1);
+	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str0);
+	if (a1->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str1);
 
 	a0 = xp_awk_makeintval (run, idx);
 	if (a0 == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -395,7 +397,7 @@ static int __bfn_index (xp_awk_t* awk, void* run)
 	return 0;
 }
 
-static int __bfn_length (xp_awk_t* awk, void* run)
+static int __bfn_length (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* v;
@@ -414,14 +416,13 @@ static int __bfn_length (xp_awk_t* awk, void* run)
 	{
 		str = xp_awk_valtostr (run, v, xp_true, XP_NULL, &len);
 		if (str == XP_NULL) return -1;
-
-		XP_AWK_FREE (awk, str);
+		XP_AWK_FREE (run->awk, str);
 	}
 
 	v = xp_awk_makeintval (run, len);
 	if (v == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -429,7 +430,7 @@ static int __bfn_length (xp_awk_t* awk, void* run)
 	return 0;
 }
 
-static int __bfn_substr (xp_awk_t* awk, void* run)
+static int __bfn_substr (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* a0, * a1, * a2, * r;
@@ -460,7 +461,7 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 	n = xp_awk_valtonum (run, a1, &lindex, &rindex);
 	if (n == -1) 
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 		return -1;
 	}
 	if (n == 1) lindex = (xp_long_t)rindex;
@@ -471,13 +472,14 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 		n = xp_awk_valtonum (run, a2, &lcount, &rcount);
 		if (n == -1) 
 		{
-			if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+			if (a0->type != XP_AWK_VAL_STR) 
+				XP_AWK_FREE (run->awk, str);
 			return -1;
 		}
 		if (n == 1) lcount = (xp_long_t)rcount;
 	}
 
-	if (xp_awk_getopt(awk) & XP_AWK_STRINDEXONE) lindex = lindex - 1;
+	if (xp_awk_getopt(run->awk) & XP_AWK_STRINDEXONE) lindex = lindex - 1;
 	if (lindex >= len) lindex = len;
 	else if (lindex < 0) lindex = 0;
 
@@ -487,17 +489,17 @@ static int __bfn_substr (xp_awk_t* awk, void* run)
 	r = xp_awk_makestrval (run, &str[lindex], (xp_size_t)lcount);
 	if (r == XP_NULL)
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 	xp_awk_setretval (run, r);
 	return 0;
 }
 
-static int __bfn_split (xp_awk_t* awk, void* run)
+static int __bfn_split (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
@@ -521,12 +523,18 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 
 	xp_assert (a1->type == XP_AWK_VAL_REF);
 
-/* TODO: XP_AWK_VAL_REF_POS */
 	if (((xp_awk_val_ref_t*)a1)->id >= XP_AWK_VAL_REF_NAMEDIDX &&
 	    ((xp_awk_val_ref_t*)a1)->id <= XP_AWK_VAL_REF_ARGIDX)
 	{
 		/* an indexed value should not be assigned another map */
-		xp_awk_seterrnum (run, XP_AWK_EIDXVALASSMAP);
+		xp_awk_setrunerrnum (run, XP_AWK_EIDXVALASSMAP);
+		return -1;
+	}
+
+	if (((xp_awk_val_ref_t*)a1)->id == XP_AWK_VAL_REF_POS)
+	{
+		/* a positional should not be assigned a map */
+		xp_awk_setrunerrnum (run, XP_AWK_EPOSVALASSMAP);
 		return -1;
 	}
 
@@ -535,7 +543,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	    (*a1_ref)->type != XP_AWK_VAL_MAP)
 	{
 		/* cannot change a scalar value to a map */
-		xp_awk_seterrnum (run, XP_AWK_ESCALARTOMAP);
+		xp_awk_setrunerrnum (run, XP_AWK_ESCALARTOMAP);
 		return -1;
 	}
 
@@ -575,7 +583,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			if (fs_ptr == XP_NULL)
 			{
 				if (str_free != XP_NULL) 
-					XP_AWK_FREE (awk, str_free);
+					XP_AWK_FREE (run->awk, str_free);
 				return -1;
 			}
 			fs_free = fs_ptr;
@@ -583,7 +591,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 
 		if (fs_len > 1) 
 		{
-			fs_rex = ((xp_awk_run_t*)run)->global.fs;
+			fs_rex = run->global.fs;
 			fs_rex_free = XP_NULL;
 		}
 	}
@@ -602,7 +610,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			if (fs_ptr == XP_NULL)
 			{
 				if (str_free != XP_NULL) 
-					XP_AWK_FREE (awk, str_free);
+					XP_AWK_FREE (run->awk, str_free);
 				return -1;
 			}
 			fs_free = fs_ptr;
@@ -610,14 +618,15 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 
 		if (fs_len > 1) 
 		{
-			fs_rex = xp_awk_buildrex (awk, fs_ptr, fs_len, &errnum);
+			fs_rex = xp_awk_buildrex (
+				run->awk, fs_ptr, fs_len, &errnum);
 			if (fs_rex == XP_NULL)
 			{
 				if (str_free != XP_NULL) 
-					XP_AWK_FREE (awk, str_free);
+					XP_AWK_FREE (run->awk, str_free);
 				if (fs_free != XP_NULL) 
-					XP_AWK_FREE (awk, fs_free);
-				xp_awk_seterrnum (run, errnum);
+					XP_AWK_FREE (run->awk, fs_free);
+				xp_awk_setrunerrnum (run, errnum);
 				return -1;
 			}
 			fs_rex_free = fs_rex;
@@ -627,10 +636,13 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	t1 = xp_awk_makemapval (run);
 	if (t1 == XP_NULL)
 	{
-		if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
-		if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
-		if (fs_rex_free != XP_NULL) xp_awk_freerex (awk, fs_rex_free);
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		if (str_free != XP_NULL) 
+			XP_AWK_FREE (run->awk, str_free);
+		if (fs_free != XP_NULL) 
+			XP_AWK_FREE (run->awk, fs_free);
+		if (fs_rex_free != XP_NULL) 
+			xp_awk_freerex (run->awk, fs_rex_free);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -653,12 +665,12 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
 			{
 				if (str_free != XP_NULL) 
-					XP_AWK_FREE (awk, str_free);
+					XP_AWK_FREE (run->awk, str_free);
 				if (fs_free != XP_NULL) 
-					XP_AWK_FREE (awk, fs_free);
+					XP_AWK_FREE (run->awk, fs_free);
 				if (fs_rex_free != XP_NULL) 
-					xp_awk_freerex (awk, fs_rex_free);
-				xp_awk_seterrnum (run, errnum);
+					xp_awk_freerex (run->awk, fs_rex_free);
+				xp_awk_setrunerrnum (run, errnum);
 				return -1;
 			}
 		}
@@ -675,10 +687,13 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		t2 = xp_awk_makestrval (run, tok, tok_len);
 		if (t2 == XP_NULL)
 		{
-			if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
-			if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
-			if (fs_rex_free != XP_NULL) xp_awk_freerex (awk, fs_rex_free);
-			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+			if (str_free != XP_NULL)
+				XP_AWK_FREE (run->awk, str_free);
+			if (fs_free != XP_NULL)
+				XP_AWK_FREE (run->awk, fs_free);
+			if (fs_rex_free != XP_NULL)
+				xp_awk_freerex (run->awk, fs_rex_free);
+			xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -691,10 +706,13 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 			((xp_awk_val_map_t*)t1)->map, 
 			key, key_len, t2, XP_NULL) == -1)
 		{
-			if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
-			if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
-			if (fs_rex_free != XP_NULL) xp_awk_freerex (awk, fs_rex_free);
-			xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+			if (str_free != XP_NULL) 
+				XP_AWK_FREE (run->awk, str_free);
+			if (fs_free != XP_NULL) 
+				XP_AWK_FREE (run->awk, fs_free);
+			if (fs_rex_free != XP_NULL)
+				xp_awk_freerex (run->awk, fs_rex_free);
+			xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -707,14 +725,14 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 		str_len = str_left - (p - str);
 	}
 
-	if (str_free != XP_NULL) XP_AWK_FREE (awk, str_free);
-	if (fs_free != XP_NULL) XP_AWK_FREE (awk, fs_free);
-	if (fs_rex_free != XP_NULL) xp_awk_freerex (awk, fs_rex_free);
+	if (str_free != XP_NULL) XP_AWK_FREE (run->awk, str_free);
+	if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
+	if (fs_rex_free != XP_NULL) xp_awk_freerex (run->awk, fs_rex_free);
 
 	t1 = xp_awk_makeintval (run, num);
 	if (t1 == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -722,7 +740,7 @@ static int __bfn_split (xp_awk_t* awk, void* run)
 	return 0;
 }
 
-static int __bfn_tolower (xp_awk_t* awk, void* run)
+static int __bfn_tolower (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_char_t* str;
@@ -745,22 +763,22 @@ static int __bfn_tolower (xp_awk_t* awk, void* run)
 		if (str == XP_NULL) return -1;
 	}
 
-	for (i = 0; i < len; i++) str[i] = XP_AWK_TOLOWER (awk, str[i]);	
+	for (i = 0; i < len; i++) str[i] = XP_AWK_TOLOWER (run->awk, str[i]);	
 
 	r = xp_awk_makestrval (run, str, len);
 	if (r == XP_NULL)
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 	xp_awk_setretval (run, r);
 	return 0;
 }
 
-static int __bfn_toupper (xp_awk_t* awk, void* run)
+static int __bfn_toupper (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_char_t* str;
@@ -783,34 +801,23 @@ static int __bfn_toupper (xp_awk_t* awk, void* run)
 		if (str == XP_NULL) return -1;
 	}
 
-	for (i = 0; i < len; i++) str[i] = XP_AWK_TOUPPER (awk, str[i]);	
+	for (i = 0; i < len; i++) str[i] = XP_AWK_TOUPPER (run->awk, str[i]);	
 
 	r = xp_awk_makestrval (run, str, len);
 	if (r == XP_NULL)
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (awk, str);
+	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
 	xp_awk_setretval (run, r);
 	return 0;
 }
 
-static int __bfn_gsub (xp_awk_t* awk, void* run)
+static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 {
-	return __substitute (awk, run, 0);
-}
-
-static int __bfn_sub (xp_awk_t* awk, void* run)
-{
-	return __substitute (awk, run, 1);
-}
-
-static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
-{
-	xp_awk_run_t* r = run;
 	xp_size_t nargs;
 	xp_awk_val_t* a0, * a1, * a2, ** a2_ref, * v;
 	xp_char_t* a0_ptr, * a1_ptr, * a2_ptr;
@@ -859,7 +866,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		a0_ptr = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &a0_len);
 		if (a0_ptr == XP_NULL) 
 		{
-			FREE_A_PTRS (awk);
+			FREE_A_PTRS (run->awk);
 			return -1;
 		}	
 		a0_ptr_free = a0_ptr;
@@ -875,7 +882,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		a1_ptr = xp_awk_valtostr (run, a1, xp_true, XP_NULL, &a1_len);
 		if (a1_ptr == XP_NULL) 
 		{
-			FREE_A_PTRS (awk);
+			FREE_A_PTRS (run->awk);
 			return -1;
 		}
 		a1_ptr_free = a1_ptr;
@@ -884,8 +891,8 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 	if (a2 == XP_NULL)
 	{
 		/* is this correct? any needs to use inrec.d0? */
-		a2_ptr = XP_AWK_STR_BUF(&r->inrec.line);
-		a2_len = XP_AWK_STR_LEN(&r->inrec.line);
+		a2_ptr = XP_AWK_STR_BUF(&run->inrec.line);
+		a2_len = XP_AWK_STR_LEN(&run->inrec.line);
 	}
 	else if (((xp_awk_val_ref_t*)a2)->id == XP_AWK_VAL_REF_POS)
 	{
@@ -894,13 +901,13 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		idx = (xp_size_t)((xp_awk_val_ref_t*)a2)->adr;
 		if (idx == 0)
 		{
-			a2_ptr = XP_AWK_STR_BUF(&r->inrec.line);
-			a2_len = XP_AWK_STR_LEN(&r->inrec.line);
+			a2_ptr = XP_AWK_STR_BUF(&run->inrec.line);
+			a2_len = XP_AWK_STR_LEN(&run->inrec.line);
 		}
-		else if (idx <= r->inrec.nflds)
+		else if (idx <= run->inrec.nflds)
 		{
-			a2_ptr = r->inrec.flds[idx-1].ptr;
-			a2_len = r->inrec.flds[idx-1].len;
+			a2_ptr = run->inrec.flds[idx-1].ptr;
+			a2_len = run->inrec.flds[idx-1].len;
 		}
 		else
 		{
@@ -914,9 +921,9 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 
 		if ((*a2_ref)->type == XP_AWK_VAL_MAP)
 		{
-			FREE_A_PTRS (awk);
+			FREE_A_PTRS (run->awk);
 			/* a map is not allowed as the third parameter */
-			xp_awk_seterrnum (run, XP_AWK_EMAPNOTALLOWED);
+			xp_awk_setrunerrnum (run, XP_AWK_EMAPNOTALLOWED);
 			return -1;
 		}
 
@@ -928,36 +935,36 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		else
 		{
 			a2_ptr = xp_awk_valtostr (
-				r, *a2_ref, xp_true, XP_NULL, &a2_len);
+				run, *a2_ref, xp_true, XP_NULL, &a2_len);
 			if (a2_ptr == XP_NULL) 
 			{
-				FREE_A_PTRS (awk);
+				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 			a2_ptr_free = a2_ptr;
 		}
 	}
 
-	if (xp_awk_str_open (&new, a2_len, awk) == XP_NULL)
+	if (xp_awk_str_open (&new, a2_len, run->awk) == XP_NULL)
 	{
-		FREE_A_PTRS (awk);
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		FREE_A_PTRS (run->awk);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
 	if (a0->type != XP_AWK_VAL_REX)
 	{
-		rex = xp_awk_buildrex (awk, 
+		rex = xp_awk_buildrex (run->awk, 
 			a0_ptr, a0_len, &((xp_awk_run_t*)run)->errnum);
 		if (rex == XP_NULL)
 		{
 			xp_awk_str_close (&new);
-			FREE_A_PTRS (awk);
+			FREE_A_PTRS (run->awk);
 			return -1;
 		}
 	}
 
-	opt = (((xp_awk_run_t*)run)->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
+	opt = (run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
 	cur_ptr = a2_ptr;
 	cur_len = a2_len;
 	sub_count = 0;
@@ -967,17 +974,16 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		if (max_count == 0 || sub_count < max_count)
 		{
 			n = xp_awk_matchrex (
-				awk, rex, opt, cur_ptr, cur_len,
-				&mat_ptr, &mat_len, 
-				&((xp_awk_run_t*)run)->errnum);
+				run->awk, rex, opt, cur_ptr, cur_len,
+				&mat_ptr, &mat_len, &run->errnum);
 		}
 		else n = 0;
 
 		if (n == -1)
 		{
-			FREE_A0_REX (awk, rex);
+			FREE_A0_REX (run->awk, rex);
 			xp_awk_str_close (&new);
-			FREE_A_PTRS (awk);
+			FREE_A_PTRS (run->awk);
 			return -1;
 		}
 
@@ -987,9 +993,9 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 			if (xp_awk_str_ncat (
 				&new, cur_ptr, cur_len) == (xp_size_t)-1)
 			{
-				FREE_A0_REX (awk, rex);
+				FREE_A0_REX (run->awk, rex);
 				xp_awk_str_close (&new);
-				FREE_A_PTRS (awk);
+				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 			break;
@@ -998,9 +1004,9 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		if (xp_awk_str_ncat (
 			&new, cur_ptr, mat_ptr - cur_ptr) == (xp_size_t)-1)
 		{
-			FREE_A0_REX (awk, rex);
+			FREE_A0_REX (run->awk, rex);
 			xp_awk_str_close (&new);
-			FREE_A_PTRS (awk);
+			FREE_A_PTRS (run->awk);
 			return -1;
 		}
 
@@ -1024,9 +1030,9 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 
 			if (m == (xp_size_t)-1)
 			{
-				FREE_A0_REX (awk, rex);
+				FREE_A0_REX (run->awk, rex);
 				xp_awk_str_close (&new);
-				FREE_A_PTRS (awk);
+				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 		}
@@ -1036,7 +1042,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 		cur_ptr = mat_ptr + mat_len;
 	}
 
-	FREE_A0_REX (awk, rex);
+	FREE_A0_REX (run->awk, rex);
 
 	if (sub_count > 0)
 	{
@@ -1046,7 +1052,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 				XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new)) == -1)
 			{
 				xp_awk_str_close (&new);
-				FREE_A_PTRS (awk);
+				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 		}
@@ -1061,7 +1067,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 			if (n == -1)
 			{
 				xp_awk_str_close (&new);
-				FREE_A_PTRS (awk);
+				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 		}
@@ -1072,7 +1078,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 			if (v == XP_NULL)
 			{
 				xp_awk_str_close (&new);
-				FREE_A_PTRS (awk);
+				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 
@@ -1083,7 +1089,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 	}
 
 	xp_awk_str_close (&new);
-	FREE_A_PTRS (awk);
+	FREE_A_PTRS (run->awk);
 
 #undef FREE_A0_REX
 #undef FREE_A_PTRS
@@ -1091,7 +1097,7 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 	v = xp_awk_makeintval (run, sub_count);
 	if (v == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1099,7 +1105,18 @@ static int __substitute (xp_awk_t* awk, void* run, xp_long_t max_count)
 	return 0;
 }
 
-static int __bfn_system (xp_awk_t* awk, void* run)
+static int __bfn_gsub (xp_awk_run_t* run)
+{
+	return __substitute (run, 0);
+}
+
+static int __bfn_sub (xp_awk_run_t* run)
+{
+	return __substitute (run, 1);
+}
+
+
+static int __bfn_system (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_char_t* cmd;
@@ -1120,12 +1137,12 @@ static int __bfn_system (xp_awk_t* awk, void* run)
 	n = -1;
 #endif
 
-	XP_AWK_FREE (awk, cmd);
+	XP_AWK_FREE (run->awk, cmd);
 
 	v = xp_awk_makeintval (run, n);
 	if (v == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1135,7 +1152,7 @@ static int __bfn_system (xp_awk_t* awk, void* run)
 
 /* math functions */
 #if 0
-static int __bfn_sin (xp_awk_t* awk, void* run)
+static int __bfn_sin (xp_awk_run_t* run)
 {
 	xp_size_t nargs;
 	xp_awk_val_t* v;
@@ -1165,7 +1182,7 @@ static int __bfn_sin (xp_awk_t* awk, void* run)
 
 	if (v == XP_NULL)
 	{
-		xp_awk_seterrnum (run, XP_AWK_ENOMEM);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 		return -1;
 	}
 

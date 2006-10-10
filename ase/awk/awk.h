@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.123 2006-10-06 03:41:54 bacon Exp $
+ * $Id: awk.h,v 1.124 2006-10-10 07:02:38 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -262,6 +262,7 @@ enum ant_awk_errnum_t
 	XP_AWK_ENOTDELETABLE,     /* not deletable variable */
 	XP_AWK_ENOTREFERENCEABLE, /* not referenceable value */
 	XP_AWK_EIDXVALASSMAP,     /* indexed value cannot be assigned a map */
+	XP_AWK_EPOSVALASSMAP,     /* a positional cannot be assigned a map */
 	XP_AWK_EMAPTOSCALAR,      /* cannot change a map to a scalar value */
 	XP_AWK_ESCALARTOMAP,      /* cannot change a scalar value to a map */
 	XP_AWK_EMAPNOTALLOWED,    /* a map is not allowed */
@@ -334,15 +335,16 @@ int xp_awk_run (xp_awk_t* awk,
 
 int xp_awk_stop (xp_awk_t* awk, xp_awk_run_t* run);
 void xp_awk_stopall (xp_awk_t* awk);
-int xp_awk_getrunerrnum (xp_awk_t* awk, xp_awk_run_t* run, int* errnum);
 
 /* functions to access internal stack structure */
 xp_size_t xp_awk_getnargs (xp_awk_run_t* run);
 xp_awk_val_t* xp_awk_getarg (xp_awk_run_t* run, xp_size_t idx);
 xp_awk_val_t* xp_awk_getglobal (xp_awk_run_t* run, xp_size_t idx);
 int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val);
-void xp_awk_seterrnum (xp_awk_run_t* run, int errnum);
 void xp_awk_setretval (xp_awk_run_t* run, xp_awk_val_t* val);
+
+int xp_awk_getrunerrnum (xp_awk_run_t* run);
+void xp_awk_setrunerrnum (xp_awk_run_t* run, int errnum);
 
 /* record and field functions */
 int xp_awk_clrrec (xp_awk_run_t* run, xp_bool_t skip_inrec_line);
