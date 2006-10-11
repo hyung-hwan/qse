@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.59 2006-10-10 14:08:55 bacon Exp $
+ * $Id: func.c,v 1.60 2006-10-11 03:18:28 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -702,10 +702,18 @@ static int __bfn_split (xp_awk_run_t* run)
 			num, 10, XP_NULL, key, xp_countof(key));
 		xp_assert (key_len != (xp_size_t)-1);
 
+		/* don't forget to update the reference count when you 
+		 * handle the assignment-like situation.  anyway, it is 
+		 * incremented in advance as if the assignment was successful.
+		 * it is decremented if the assignement fails. */
+		xp_awk_refupval (t2);
+
 		if (xp_awk_map_putx (
 			((xp_awk_val_map_t*)t1)->map, 
 			key, key_len, t2, XP_NULL) == -1)
 		{
+			xp_awk_refdownval (run, t2);
+
 			if (str_free != XP_NULL) 
 				XP_AWK_FREE (run->awk, str_free);
 			if (fs_free != XP_NULL) 
@@ -715,11 +723,6 @@ static int __bfn_split (xp_awk_run_t* run)
 			xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
 			return -1;
 		}
-
-		/* don't forget to update the reference count 
-		 * when you handle the assignment-like situation
-		 * with the internal data structures */
-		xp_awk_refupval (t2);
 
 		num++;
 		str_len = str_left - (p - str);

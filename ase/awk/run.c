@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.230 2006-10-10 14:08:55 bacon Exp $
+ * $Id: run.c,v 1.231 2006-10-11 03:18:29 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -60,7 +60,7 @@ static int __init_run (
 static void __deinit_run (xp_awk_run_t* run);
 static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg);
 
-static int __run_main (xp_awk_run_t* run);
+static int __run_main (xp_awk_run_t* run, xp_awk_runarg_t* runarg);
 static int __run_pattern_blocks  (xp_awk_run_t* run);
 static int __run_pattern_block_chain (
 	xp_awk_run_t* run, xp_awk_chain_t* chain);
@@ -233,7 +233,7 @@ int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val)
 
 /* TODO: is this correct?? */
 	if (val->type == XP_AWK_VAL_MAP &&
-	    (idx >= XP_AWK_GLOBAL_ARGC && idx <= XP_AWK_GLOBAL_SUBSEP)  &&
+	    (idx >= XP_AWK_GLOBAL_ARGC && idx <= XP_AWK_GLOBAL_SUBSEP) &&
 	    idx != XP_AWK_GLOBAL_ARGV)
 	{
 		/* TODO: better error code */
@@ -467,13 +467,7 @@ int xp_awk_run (xp_awk_t* awk,
 		runcbs->on_start (awk, run, runcbs->custom_data);
 	}
 
-	if (runarg != XP_NULL && __build_runarg (run, runarg) == -1)
-	{
-/*TODO: cleanup. error handling */
-		return -1;
-	}
-
-	n = __run_main (run);
+	n = __run_main (run, runarg);
 	if (n == -1) 
 	{
 		/* if no callback is specified, awk's error number 
@@ -760,6 +754,9 @@ static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 	xp_size_t argc;
 	xp_awk_val_t* v_argc;
 	xp_awk_val_t* v_argv;
+	xp_awk_val_t* v_tmp;
+	xp_char_t key[xp_sizeof(xp_long_t)*8+2];
+	xp_size_t key_len;
 
 	v_argv = xp_awk_makemapval (run);
 	if (v_argv == XP_NULL)
@@ -771,10 +768,38 @@ static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 
 	for (argc = 0, p = runarg; p->ptr != XP_NULL; argc++, p++)
 	{
-		xp_printf (XP_T("ptr = %s, len = %d\n"), p->ptr, p->len);
-/* TODO: create values */
+		v_tmp = xp_awk_makestrval (run, p->ptr, p->len);
+		if (v_tmp == XP_NULL)
+		{
+			xp_awk_refdownval (run, v_argv);
+			run->errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
+
+		key_len = xp_awk_longtostr (
+			argc, 10, XP_NULL, key, xp_countof(key));
+		xp_assert (key_len != (xp_size_t)-1);
+
+		/* increment reference count of v_tmp in advance as if 
+		 * it has successfully been assigned into the ARGV map */
+		xp_awk_refupval (v_tmp);
+
+		if (xp_awk_map_putx (
+			((xp_awk_val_map_t*)v_argv)->map,
+			key, key_len, v_tmp, XP_NULL) == -1)
+		{
+			/* if the assignment operation fails, decrements
+			 * the reference of v_tmp to free it */
+			xp_awk_refdownval (run, v_tmp);
+
+			/* the other values previously assigned into the map
+			 * will be freeed when v_argv is freed */
+			xp_awk_refdownval (run, v_argv);
+
+			run->errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
 	}
-xp_printf (XP_T("argc = %d\n"), argc);
 
 	v_argc = xp_awk_makeintval (run, (xp_long_t)argc);
 	if (v_argc == XP_NULL)
@@ -786,6 +811,8 @@ xp_printf (XP_T("argc = %d\n"), argc);
 
 	xp_awk_refupval (v_argc);
 
+	xp_assert (STACK_GLOBAL(run,XP_AWK_GLOBAL_ARGC) == xp_awk_val_nil);
+
 	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_ARGC, v_argc) == -1) 
 	{
 		xp_awk_refdownval (run, v_argc);
@@ -795,6 +822,13 @@ xp_printf (XP_T("argc = %d\n"), argc);
 
 	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_ARGV, v_argv) == -1)
 	{
+		/* ARGC is assigned nil when ARGV assignment has failed.
+		 * However, this requires preconditions, as follows:
+		 *  1. __build_runarg should be called in a proper place
+		 *     as it is not a generic-purpose routine.
+		 *  2. ARGC should be nil before __build_runarg is called 
+		 * If the restoration fails, nothing can salvage it. */
+		xp_awk_setglobal (run, XP_AWK_GLOBAL_ARGC, xp_awk_val_nil);
 		xp_awk_refdownval (run, v_argc);
 		xp_awk_refdownval (run, v_argv);
 		return -1;
@@ -805,7 +839,7 @@ xp_printf (XP_T("argc = %d\n"), argc);
 	return 0;
 }
 
-static int __run_main (xp_awk_run_t* run)
+static int __run_main (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 {
 	xp_size_t nglobals, nargs, i;
 	xp_size_t saved_stack_top;
@@ -846,6 +880,17 @@ static int __run_main (xp_awk_run_t* run)
 		/* it can simply restore the top of the stack this way
 		 * because the values pused onto the stack so far are
 		 * all xp_awk_val_nils  and xp_awk_val_zeros */
+		run->stack_top = saved_stack_top;
+		return -1;
+	}
+	
+	if (runarg != XP_NULL && __build_runarg (run, runarg) == -1)
+	{
+		/* it can simply restore the top of the stack this way
+		 * because the values pused onto the stack so far are
+		 * all xp_awk_val_nils and xp_awk_val_zeros and 
+		 * __build_runarg doesn't push other values than them
+		 * when it has failed */
 		run->stack_top = saved_stack_top;
 		return -1;
 	}
