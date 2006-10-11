@@ -1,18 +1,18 @@
 /*
- * $Id: val.c,v 1.70 2006-10-08 05:46:41 bacon Exp $
+ * $Id: val.c,v 1.71 2006-10-11 15:01:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
 
 static xp_char_t* __str_to_str (
 	xp_awk_run_t* run, const xp_char_t* str, xp_size_t str_len,
-	xp_bool_t clear_buf, xp_awk_str_t* buf, xp_size_t* len);
+	int opt, xp_awk_str_t* buf, xp_size_t* len);
 static xp_char_t* __val_int_to_str (
 	xp_awk_run_t* run, xp_awk_val_int_t* v,
-	xp_bool_t clear_buf, xp_awk_str_t* buf, xp_size_t* len);
+	int opt, xp_awk_str_t* buf, xp_size_t* len);
 static xp_char_t* __val_real_to_str (
 	xp_awk_run_t* run, xp_awk_val_real_t* v,
-	xp_bool_t clear_buf, xp_awk_str_t* buf, xp_size_t* len);
+	int opt, xp_awk_str_t* buf, xp_size_t* len);
 
 static xp_awk_val_nil_t __awk_nil = { XP_AWK_VAL_NIL, 0 };
 xp_awk_val_t* xp_awk_val_nil = (xp_awk_val_t*)&__awk_nil;
@@ -373,11 +373,11 @@ xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
 
 xp_char_t* xp_awk_valtostr (
 	xp_awk_run_t* run, xp_awk_val_t* v,
-	xp_bool_t clear_buf, xp_awk_str_t* buf, xp_size_t* len)
+	int opt, xp_awk_str_t* buf, xp_size_t* len)
 {
 	if (v->type == XP_AWK_VAL_NIL)
 	{
-		return __str_to_str (run, XP_T(""), 0, clear_buf, buf, len);
+		return __str_to_str (run, XP_T(""), 0, opt, buf, len);
 	}
 
 	if (v->type == XP_AWK_VAL_INT)
@@ -389,12 +389,12 @@ xp_char_t* xp_awk_valtostr (
 		{
 			return __str_to_str (
 				run, vi->nde->str, vi->nde->len, 
-				clear_buf, buf, len);
+				opt, buf, len);
 		}
 		else
 		{
 			*/
-			return __val_int_to_str (run, vi, clear_buf, buf, len);
+			return __val_int_to_str (run, vi, opt, buf, len);
 		/*}*/
 	}
 
@@ -407,11 +407,11 @@ xp_char_t* xp_awk_valtostr (
 		{
 			return __str_to_str (
 				run, vr->nde->str, vr->nde->len, 
-				clear_buf, buf, len);
+				opt, buf, len);
 		}
 		else
 		{*/
-			return __val_real_to_str (run, vr, clear_buf, buf, len);
+			return __val_real_to_str (run, vr, opt, buf, len);
 		/*}*/
 	}
 
@@ -420,7 +420,7 @@ xp_char_t* xp_awk_valtostr (
 		xp_awk_val_str_t* vs = (xp_awk_val_str_t*)v;
 
 		return __str_to_str (
-			run, vs->buf, vs->len, clear_buf, buf, len);
+			run, vs->buf, vs->len, opt, buf, len);
 	}
 
 /* TODO: process more value types */
@@ -432,7 +432,7 @@ xp_printf (XP_T("*** ERROR: WRONG VALUE TYPE [%d] in xp_awk_valtostr v=> %p***\n
 
 static xp_char_t* __str_to_str (
 	xp_awk_run_t* run, const xp_char_t* str, xp_size_t str_len,
-	xp_bool_t clear_buf, xp_awk_str_t* buf, xp_size_t* len)
+	int opt, xp_awk_str_t* buf, xp_size_t* len)
 {
 	if (buf == XP_NULL)
 	{
@@ -451,7 +451,7 @@ static xp_char_t* __str_to_str (
 	{
 		xp_size_t n;
 
-		if (clear_buf) xp_awk_str_clear (buf);
+		if (opt & XP_AWK_VALTOSTR_CLEAR) xp_awk_str_clear (buf);
 		n = xp_awk_str_ncat (buf, str, str_len);
 		if (n == (xp_size_t)-1)
 		{
@@ -466,7 +466,7 @@ static xp_char_t* __str_to_str (
 
 static xp_char_t* __val_int_to_str (
 	xp_awk_run_t* run, xp_awk_val_int_t* v,
-	xp_bool_t clear_buf, xp_awk_str_t* buf, xp_size_t* len)
+	int opt, xp_awk_str_t* buf, xp_size_t* len)
 {
 	xp_char_t* tmp;
 	xp_long_t t;
@@ -493,7 +493,7 @@ static xp_char_t* __val_int_to_str (
 		}
 		else
 		{
-			if (clear_buf) xp_awk_str_clear (buf);
+			if (opt & XP_AWK_VALTOSTR_CLEAR) xp_awk_str_clear (buf);
 			if (xp_awk_str_cat (buf, XP_T("0")) == (xp_size_t)-1)
 			{
 				run->errnum = XP_AWK_ENOMEM;
@@ -525,7 +525,7 @@ static xp_char_t* __val_int_to_str (
 	else
 	{
 		/* clear the buffer */
-		if (clear_buf) xp_awk_str_clear (buf);
+		if (opt & XP_AWK_VALTOSTR_CLEAR) xp_awk_str_clear (buf);
 
 		tmp = XP_AWK_STR_BUF(buf) + XP_AWK_STR_LEN(buf);
 
@@ -560,29 +560,18 @@ static xp_char_t* __val_int_to_str (
 
 static xp_char_t* __val_real_to_str (
 	xp_awk_run_t* run, xp_awk_val_real_t* v,
-	xp_bool_t clear_buf, xp_awk_str_t* buf, xp_size_t* len)
+	int opt, xp_awk_str_t* buf, xp_size_t* len)
 {
 /* TODO: change the code */
 	xp_char_t tbuf[256], * tmp;
 
+	tmp = (opt & XP_AWK_VALTOSTR_PRINT)? 
+		run->global.ofmt.ptr: run->global.convfmt.ptr;
+
 /* TODO: need to use awk's own version of sprintf so that it would have
  *       problems with handling long double or double... */
-/*
-#if (XP_SIZEOF_LONG_DOUBLE != 0)
-	run->awk->syscas->sprintf (
-		tbuf, xp_countof(tbuf), run->global.ofmt.ptr, (long double)v->val); 
-#elif (XP_SIZEOF_DOUBLE != 0)
-*/
-/* TODO: does it need to check if a null character is included in ofmt??? */
-	run->awk->syscas->sprintf (
-		tbuf, xp_countof(tbuf), 
-		run->global.ofmt.ptr, (double)v->val); 
-/*
-#else
-	#error unsupported floating-point data type
-#endif
-*/
-
+/* TODO: does it need to check if a null character is included in convfmt??? */
+	run->awk->syscas->sprintf (tbuf, xp_countof(tbuf), tmp, (double)v->val); 
 	if (buf == XP_NULL) 
 	{
 		tmp = xp_awk_strdup (run->awk, tbuf);
@@ -596,7 +585,7 @@ static xp_char_t* __val_real_to_str (
 	}
 	else
 	{
-		if (clear_buf) xp_awk_str_clear (buf);
+		if (opt & XP_AWK_VALTOSTR_CLEAR) xp_awk_str_clear (buf);
 
 		if (xp_awk_str_cat (buf, tbuf) == (xp_size_t)-1)
 		{

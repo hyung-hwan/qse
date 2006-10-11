@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.60 2006-10-11 03:18:28 bacon Exp $
+ * $Id: func.c,v 1.61 2006-10-11 15:01:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -163,7 +163,8 @@ static int __bfn_close (xp_awk_run_t* run)
 	}
 	else
 	{
-		name = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &len);
+		name = xp_awk_valtostr (
+			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
 		if (name == XP_NULL) return -1;
 	}
 
@@ -279,7 +280,7 @@ static int __bfn_fflush (xp_awk_run_t* run)
 		else
 		{
 			str0 = xp_awk_valtostr (
-				run, a0, xp_true, XP_NULL, &len0);
+				run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len0);
 			if (str0 == XP_NULL) return -1;
 
 		}
@@ -358,7 +359,8 @@ static int __bfn_index (xp_awk_run_t* run)
 	}
 	else
 	{
-		str0 = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &len0);
+		str0 = xp_awk_valtostr (
+			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len0);
 		if (str0 == XP_NULL) return -1;
 	}
 
@@ -369,7 +371,8 @@ static int __bfn_index (xp_awk_run_t* run)
 	}
 	else
 	{
-		str1 = xp_awk_valtostr (run, a1, xp_true, XP_NULL, &len1);
+		str1 = xp_awk_valtostr (
+			run, a1, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len1);
 		if (str1 == XP_NULL)
 		{
 			if (a0->type != XP_AWK_VAL_STR) 
@@ -414,7 +417,8 @@ static int __bfn_length (xp_awk_run_t* run)
 	}
 	else
 	{
-		str = xp_awk_valtostr (run, v, xp_true, XP_NULL, &len);
+		str = xp_awk_valtostr (
+			run, v, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
 		if (str == XP_NULL) return -1;
 		XP_AWK_FREE (run->awk, str);
 	}
@@ -454,7 +458,8 @@ static int __bfn_substr (xp_awk_run_t* run)
 	}
 	else 
 	{
-		str = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &len);
+		str = xp_awk_valtostr (
+			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
 		if (str == XP_NULL) return -1;
 	}
 
@@ -555,7 +560,8 @@ static int __bfn_split (xp_awk_run_t* run)
 	}
 	else 
 	{
-		str = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &str_len);
+		str = xp_awk_valtostr (
+			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &str_len);
 		if (str == XP_NULL) return -1;
 		str_free = str;
 	}
@@ -579,7 +585,7 @@ static int __bfn_split (xp_awk_run_t* run)
 		else
 		{
 			fs_ptr = xp_awk_valtostr (
-				run, t1, xp_true, XP_NULL, &fs_len);
+				run, t1, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &fs_len);
 			if (fs_ptr == XP_NULL)
 			{
 				if (str_free != XP_NULL) 
@@ -606,7 +612,7 @@ static int __bfn_split (xp_awk_run_t* run)
 		else
 		{
 			fs_ptr = xp_awk_valtostr (
-				run, a2, xp_true, XP_NULL, &fs_len);
+				run, a2, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &fs_len);
 			if (fs_ptr == XP_NULL)
 			{
 				if (str_free != XP_NULL) 
@@ -762,7 +768,8 @@ static int __bfn_tolower (xp_awk_run_t* run)
 	}
 	else 
 	{
-		str = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &len);
+		str = xp_awk_valtostr (
+			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
 		if (str == XP_NULL) return -1;
 	}
 
@@ -800,7 +807,8 @@ static int __bfn_toupper (xp_awk_run_t* run)
 	}
 	else 
 	{
-		str = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &len);
+		str = xp_awk_valtostr (
+			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
 		if (str == XP_NULL) return -1;
 	}
 
@@ -866,7 +874,8 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 	}
 	else
 	{
-		a0_ptr = xp_awk_valtostr (run, a0, xp_true, XP_NULL, &a0_len);
+		a0_ptr = xp_awk_valtostr (
+			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &a0_len);
 		if (a0_ptr == XP_NULL) 
 		{
 			FREE_A_PTRS (run->awk);
@@ -882,7 +891,8 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 	}
 	else
 	{
-		a1_ptr = xp_awk_valtostr (run, a1, xp_true, XP_NULL, &a1_len);
+		a1_ptr = xp_awk_valtostr (
+			run, a1, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &a1_len);
 		if (a1_ptr == XP_NULL) 
 		{
 			FREE_A_PTRS (run->awk);
@@ -937,8 +947,8 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		}
 		else
 		{
-			a2_ptr = xp_awk_valtostr (
-				run, *a2_ref, xp_true, XP_NULL, &a2_len);
+			a2_ptr = xp_awk_valtostr (run, *a2_ref, 
+				XP_AWK_VALTOSTR_CLEAR, XP_NULL, &a2_len);
 			if (a2_ptr == XP_NULL) 
 			{
 				FREE_A_PTRS (run->awk);
@@ -1129,7 +1139,8 @@ static int __bfn_system (xp_awk_run_t* run)
 	xp_assert (nargs == 1);
 
 	cmd = xp_awk_valtostr (
-		run, xp_awk_getarg(run, 0), xp_true, XP_NULL, XP_NULL);
+		run, xp_awk_getarg(run, 0), 
+		XP_AWK_VALTOSTR_CLEAR, XP_NULL, XP_NULL);
 	if (cmd == XP_NULL) return -1;
 
 #ifdef _WIN32

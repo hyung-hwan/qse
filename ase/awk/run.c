@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.231 2006-10-11 03:18:29 bacon Exp $
+ * $Id: run.c,v 1.232 2006-10-11 15:01:55 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -36,6 +36,7 @@ enum
 #define PANIC_I(run,code) \
 	do { (run)->errnum = (code); return -1; } while (0)
 
+#define DEFAULT_CONVFMT XP_T("%.6g")
 #define DEFAULT_OFMT XP_T("%.6g")
 #define DEFAULT_OFS XP_T(" ")
 #define DEFAULT_ORS XP_T("\n")
@@ -240,7 +241,19 @@ int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val)
 		PANIC_I (run, XP_AWK_ESCALARTOMAP);
 	}
 
-	if (idx == XP_AWK_GLOBAL_FS)
+	if (idx == XP_AWK_GLOBAL_CONVFMT)
+	{
+		xp_char_t* convfmt_ptr;
+		xp_size_t convfmt_len;
+
+		convfmt_ptr = xp_awk_valtostr (
+			run, val, xp_true, XP_NULL, &convfmt_len);
+		if (convfmt_ptr == XP_NULL) return  -1;
+
+		run->global.convfmt.ptr = convfmt_ptr;
+		run->global.convfmt.len = convfmt_len;
+	}
+	else if (idx == XP_AWK_GLOBAL_FS)
 	{
 		xp_char_t* fs_ptr;
 		xp_size_t fs_len;
@@ -637,6 +650,8 @@ static int __init_run (xp_awk_run_t* run, xp_awk_runios_t* runios, int* errnum)
 	run->global.rs = XP_NULL;
 	run->global.fs = XP_NULL;
 	run->global.ignorecase = 0;
+	run->global.convfmt.ptr = DEFAULT_CONVFMT;
+	run->global.convfmt.len = xp_awk_strlen(DEFAULT_CONVFMT);
 	run->global.ofmt.ptr = DEFAULT_OFMT;
 	run->global.ofmt.len = xp_awk_strlen(DEFAULT_OFMT);
 	run->global.ofs.ptr = DEFAULT_OFS;
@@ -667,6 +682,14 @@ static void __deinit_run (xp_awk_run_t* run)
 	{
 		XP_AWK_FREE (run->awk, run->global.fs);
 		run->global.fs = XP_NULL;
+	}
+
+	if (run->global.convfmt.ptr != XP_NULL &&
+	    run->global.convfmt.ptr != DEFAULT_CONVFMT)
+	{
+		XP_AWK_FREE (run->awk, run->global.convfmt.ptr);
+		run->global.convfmt.ptr = XP_NULL;
+		run->global.convfmt.len = 0;
 	}
 
 	if (run->global.ofmt.ptr != XP_NULL && 

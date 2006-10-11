@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.44 2006-10-01 14:48:48 bacon Exp $
+ * $Id: val.h,v 1.45 2006-10-11 15:01:55 bacon Exp $
  */
 
 #ifndef _XP_AWK_VAL_H_
@@ -37,6 +37,12 @@ enum
 	XP_AWK_VAL_REF_LOCALIDX,
 	XP_AWK_VAL_REF_ARGIDX,
 	XP_AWK_VAL_REF_POS
+};
+
+enum
+{
+	XP_AWK_VALTOSTR_CLEAR = (1 << 0),
+	XP_AWK_VALTOSTR_PRINT = (1 << 1)
 };
 
 typedef struct xp_awk_val_nil_t  xp_awk_val_nil_t;
@@ -161,7 +167,7 @@ void xp_awk_refdownval_nofree (xp_awk_run_t* run, xp_awk_val_t* val);
 xp_bool_t xp_awk_valtobool (xp_awk_val_t* val);
 xp_char_t* xp_awk_valtostr (
 	xp_awk_run_t* run, xp_awk_val_t* val, 
-	xp_bool_t clear_buf, xp_awk_str_t* buf, xp_size_t* len);
+	int opt, xp_awk_str_t* buf, xp_size_t* len);
 int xp_awk_valtonum (
 	xp_awk_run_t* run, xp_awk_val_t* v, xp_long_t* l, xp_real_t* r);
 
