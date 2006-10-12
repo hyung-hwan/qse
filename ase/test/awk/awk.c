@@ -1,11 +1,12 @@
 /*
- * $Id: awk.c,v 1.94 2006-10-11 03:19:08 bacon Exp $
+ * $Id: awk.c,v 1.95 2006-10-12 04:17:58 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <stdarg.h>
 
 #ifdef XP_CHAR_IS_WCHAR
 	#include <wchar.h>
@@ -21,6 +22,7 @@
 	#include <xp/bas/assert.h>	
 	#include <xp/bas/locale.h>	
 #else
+	#include <xp/bas/stdio.h>
 	#include <limits.h>
 	#ifndef PATH_MAX
 		#define XP_PATH_MAX 4096
@@ -84,6 +86,25 @@ static FILE* fopen_t (const xp_char_t* path, const xp_char_t* mode)
 
 	return fopen (path_mb, mode_mb);
 #endif
+}
+
+static int __dprintf (const xp_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+#ifdef _WIN32
+	xp_char_t buf[1024];
+#endif
+
+	va_start (ap, fmt);
+#ifdef _WIN32
+	n = xp_vsprintf (buf, xp_countof(buf), fmt, ap);
+	MessageBox (NULL, buf, XP_T("ASSERTION FAILURE"), MB_OK | MB_ICONERROR);
+#else
+	n = xp_vprintf (fmt, ap);
+#endif
+	va_end (ap);
+	return n;
 }
 
 static FILE* popen_t (const xp_char_t* cmd, const xp_char_t* mode)
@@ -679,6 +700,8 @@ static int __main (int argc, xp_char_t* argv[])
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
 	syscas.sprintf = xp_sprintf;
+	syscas.dprintf = __dprintf;
+	syscas.abort = abort;
 
 #ifdef _WIN32
 	syscas_data.heap = HeapCreate (0, 1000000, 1000000);

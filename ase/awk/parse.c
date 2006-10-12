@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.187 2006-10-06 14:34:37 bacon Exp $
+ * $Id: parse.c,v 1.188 2006-10-12 04:17:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -320,7 +320,7 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 {
 	int n = 0;
 
-	xp_assert (srcios != XP_NULL && srcios->in != XP_NULL);
+	xp_awk_assert (awk, srcios != XP_NULL && srcios->in != XP_NULL);
 
 	xp_awk_clear (awk);
 	awk->src.ios = srcios;
@@ -399,7 +399,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 	function name (parameter-list) { statement }
 	*/
 
-	xp_assert (awk->parse.depth.loop == 0);
+	xp_awk_assert (awk, awk->parse.depth.loop == 0);
 
 	if ((awk->option & XP_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) 
 	{
@@ -484,7 +484,7 @@ static xp_awk_t* __parse_progunit (xp_awk_t* awk)
 		ptn = __parse_expression (awk);
 		if (ptn == XP_NULL) return XP_NULL;
 
-		xp_assert (ptn->next == XP_NULL);
+		xp_awk_assert (awk, ptn->next == XP_NULL);
 
 		if (MATCH(awk,TOKEN_COMMA))
 		{
@@ -559,7 +559,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	int n;
 
 	/* eat up the keyword 'function' and get the next token */
-	xp_assert (MATCH(awk,TOKEN_FUNCTION));
+	xp_awk_assert (awk, MATCH(awk,TOKEN_FUNCTION));
 	if (__get_token(awk) == -1) return XP_NULL;  
 
 	/* match a function name */
@@ -614,7 +614,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	}
 
 	/* make sure that parameter table is empty */
-	xp_assert (xp_awk_tab_getsize(&awk->parse.params) == 0);
+	xp_awk_assert (awk, xp_awk_tab_getsize(&awk->parse.params) == 0);
 
 	/* read parameter list */
 	if (MATCH(awk,TOKEN_RPAREN)) 
@@ -773,7 +773,7 @@ static xp_awk_nde_t* __parse_function (xp_awk_t* awk)
 	}
 
 	/* duplicate functions should have been detected previously */
-	xp_assert (n != 0); 
+	xp_awk_assert (awk, n != 0); 
 
 	afn->name = pair->key; /* do some trick to save a string.  */
 	afn->name_len = pair->key_len;
@@ -786,7 +786,7 @@ static xp_awk_nde_t* __parse_begin (xp_awk_t* awk)
 {
 	xp_awk_nde_t* nde;
 
-	xp_assert (MATCH(awk,TOKEN_LBRACE));
+	xp_awk_assert (awk, MATCH(awk,TOKEN_LBRACE));
 
 	if (__get_token(awk) == -1) return XP_NULL; 
 	nde = __parse_block(awk, xp_true);
@@ -800,7 +800,7 @@ static xp_awk_nde_t* __parse_end (xp_awk_t* awk)
 {
 	xp_awk_nde_t* nde;
 
-	xp_assert (MATCH(awk,TOKEN_LBRACE));
+	xp_awk_assert (awk, MATCH(awk,TOKEN_LBRACE));
 
 	if (__get_token(awk) == -1) return XP_NULL; 
 	nde = __parse_block(awk, xp_true);
@@ -819,7 +819,7 @@ static xp_awk_chain_t* __parse_pattern_block (
 	if (blockless) nde = XP_NULL;
 	else
 	{
-		xp_assert (MATCH(awk,TOKEN_LBRACE));
+		xp_awk_assert (awk, MATCH(awk,TOKEN_LBRACE));
 		if (__get_token(awk) == -1) return XP_NULL; 
 		nde = __parse_block(awk, xp_true);
 		if (nde == XP_NULL) return XP_NULL;
@@ -1281,7 +1281,7 @@ static xp_awk_nde_t* __parse_expression (xp_awk_t* awk)
 		return x;
 	}
 
-	xp_assert (x->next == XP_NULL);
+	xp_awk_assert (awk, x->next == XP_NULL);
 	if (!__is_var(x) && x->type != XP_AWK_NDE_POS) 
 	{
 		xp_awk_clrpt (awk, x);
@@ -1965,7 +1965,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		}
 		nde->len = XP_AWK_STR_LEN(&awk->token.name);
 
-		xp_assert (
+		xp_awk_assert (awk, 
 			XP_AWK_STR_LEN(&awk->token.name) ==
 			xp_awk_strlen(XP_AWK_STR_BUF(&awk->token.name)));
 
@@ -2001,7 +2001,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		}
 		nde->len = XP_AWK_STR_LEN(&awk->token.name);
 
-		xp_assert (
+		xp_awk_assert (awk, 
 			XP_AWK_STR_LEN(&awk->token.name) ==
 			xp_awk_strlen(XP_AWK_STR_BUF(&awk->token.name)));
 
@@ -2052,7 +2052,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 		SET_TOKEN_TYPE (awk, TOKEN_REX);
 		xp_awk_str_clear (&awk->token.name);
 		if (__get_rexstr (awk) == -1) return XP_NULL;
-		xp_assert (MATCH(awk,TOKEN_REX));
+		xp_awk_assert (awk, MATCH(awk,TOKEN_REX));
 
 		nde = (xp_awk_nde_rex_t*) XP_AWK_MALLOC (
 			awk, xp_sizeof(xp_awk_nde_rex_t));
@@ -2132,7 +2132,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 
 		/* parse subsequent expressions separated by a comma, if any */
 		last = nde;
-		xp_assert (last->next == XP_NULL);
+		xp_awk_assert (awk, last->next == XP_NULL);
 
 		while (MATCH(awk,TOKEN_COMMA))
 		{
@@ -2151,7 +2151,7 @@ static xp_awk_nde_t* __parse_primary (xp_awk_t* awk)
 				return XP_NULL;
 			}
 
-			xp_assert (tmp->next == XP_NULL);
+			xp_awk_assert (awk, tmp->next == XP_NULL);
 			last->next = tmp;
 			last = tmp;
 		} 
@@ -2266,7 +2266,7 @@ static xp_awk_nde_t* __parse_primary_ident (xp_awk_t* awk)
 	xp_size_t name_len;
 	xp_awk_bfn_t* bfn;
 
-	xp_assert (MATCH(awk,TOKEN_IDENT));
+	xp_awk_assert (awk, MATCH(awk,TOKEN_IDENT));
 
 	name_dup = xp_awk_strxdup (
 		awk, 
@@ -2423,7 +2423,7 @@ static xp_awk_nde_t* __parse_hashidx (
 
 		if (idx == XP_NULL)
 		{
-			xp_assert (last == XP_NULL);
+			xp_awk_assert (awk, last == XP_NULL);
 			idx = tmp; last = tmp;
 		}
 		else
@@ -2434,7 +2434,7 @@ static xp_awk_nde_t* __parse_hashidx (
 	}
 	while (MATCH(awk,TOKEN_COMMA));
 
-	xp_assert (idx != XP_NULL);
+	xp_awk_assert (awk, idx != XP_NULL);
 
 	if (!MATCH(awk,TOKEN_RBRACK)) 
 	{
@@ -3645,7 +3645,7 @@ static int __get_number (xp_awk_t* awk)
 {
 	xp_cint_t c;
 
-	xp_assert (XP_AWK_STR_LEN(&awk->token.name) == 0);
+	xp_awk_assert (awk, XP_AWK_STR_LEN(&awk->token.name) == 0);
 	SET_TOKEN_TYPE (awk, TOKEN_INT);
 
 	c = awk->src.lex.curc;
@@ -4123,7 +4123,7 @@ static int __deparse (xp_awk_t* awk)
 	struct __deparse_func_t df;
 	int n;
 
-	xp_assert (awk->src.ios->out != XP_NULL);
+	xp_awk_assert (awk, awk->src.ios->out != XP_NULL);
 
 	awk->src.shared.buf_len = 0;
 	awk->src.shared.buf_pos = 0;
@@ -4143,7 +4143,7 @@ static int __deparse (xp_awk_t* awk)
 	{
 		xp_size_t i, n;
 
-		xp_assert (awk->tree.nglobals > 0);
+		xp_awk_assert (awk, awk->tree.nglobals > 0);
 		if (xp_awk_putsrcstr (awk, XP_T("global ")) == -1)
 			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 
@@ -4151,7 +4151,7 @@ static int __deparse (xp_awk_t* awk)
 		{
 			n = xp_awk_longtostr ((xp_long_t)i, 
 				10, XP_T("__global"), tmp, xp_countof(tmp));
-			xp_assert (n != (xp_size_t)-1);
+			xp_awk_assert (awk, n != (xp_size_t)-1);
 			if (xp_awk_putsrcstrx (awk, tmp, n) == -1)
 				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 			if (xp_awk_putsrcstr (awk, XP_T(", ")) == -1)
@@ -4160,7 +4160,7 @@ static int __deparse (xp_awk_t* awk)
 
 		n = xp_awk_longtostr ((xp_long_t)i, 
 			10, XP_T("__global"), tmp, xp_countof(tmp));
-		xp_assert (n != (xp_size_t)-1);
+		xp_awk_assert (awk, n != (xp_size_t)-1);
 		if (xp_awk_putsrcstrx (awk, tmp, n) == -1)
 			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		if (xp_awk_putsrcstr (awk, XP_T(";\n\n")) == -1)
@@ -4245,7 +4245,7 @@ static int __deparse_func (xp_awk_pair_t* pair, void* arg)
 	xp_awk_afn_t* afn = (xp_awk_afn_t*)pair->val;
 	xp_size_t i, n;
 
-	xp_assert (xp_awk_strxncmp (
+	xp_awk_assert (df->awk, xp_awk_strxncmp (
 		pair->key, pair->key_len, afn->name, afn->name_len) == 0);
 
 	if (xp_awk_putsrcstr (df->awk, XP_T("function ")) == -1) return -1;
@@ -4256,7 +4256,7 @@ static int __deparse_func (xp_awk_pair_t* pair, void* arg)
 	{
 		n = xp_awk_longtostr (i++, 10, 
 			XP_T("__param"), df->tmp, df->tmp_len);
-		xp_assert (n != (xp_size_t)-1);
+		xp_awk_assert (df->awk, n != (xp_size_t)-1);
 		if (xp_awk_putsrcstrx (df->awk, df->tmp, n) == -1) return -1;
 		if (i >= afn->nargs) break;
 		if (xp_awk_putsrcstr (df->awk, XP_T(", ")) == -1) return -1;
@@ -4284,7 +4284,7 @@ static int __flush (xp_awk_t* awk)
 {
 	xp_ssize_t n;
 
-	xp_assert (awk->src.ios->out != XP_NULL);
+	xp_awk_assert (awk, awk->src.ios->out != XP_NULL);
 
 	while (awk->src.shared.buf_pos < awk->src.shared.buf_len)
 	{

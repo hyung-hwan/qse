@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.63 2006-10-11 15:01:54 bacon Exp $
+ * $Id: awk_i.h,v 1.64 2006-10-12 04:17:30 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -9,18 +9,6 @@ typedef struct xp_awk_chain_t xp_awk_chain_t;
 typedef struct xp_awk_tree_t xp_awk_tree_t;
 
 #include <xp/awk/awk.h>
-
-#ifdef XP_AWK_STAND_ALONE
-	#if !defined(XP_CHAR_IS_MCHAR) && !defined(XP_CHAR_IS_WCHAR)
-	#error Neither XP_CHAR_IS_MCHAR nor XP_CHAR_IS_WCHAR is defined.
-	#endif
-
-	#include <assert.h>
-	#define xp_assert assert
-#else
-	#include <xp/bas/assert.h>
-#endif
-
 #include <xp/awk/str.h>
 #include <xp/awk/rex.h>
 #include <xp/awk/map.h>
@@ -33,13 +21,15 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #include <xp/awk/extio.h>
 #include <xp/awk/misc.h>
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4996)
+#ifdef NDEBUG
+	#define xp_awk_assert(awk,expr) ((void)0)
+#else
+	#define xp_awk_assert(awk,expr) (void)((expr) || \
+		(xp_awk_abort(awk, XP_TEXT(#expr), XP_TEXT(__FILE__), __LINE__), 0))
 #endif
 
-#if defined(_WIN32) && defined(XP_AWK_STAND_ALONE) && defined(_DEBUG)
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
+#ifdef _MSC_VER
+#pragma warning (disable: 4996)
 #endif
 
 #define XP_AWK_MAX_GLOBALS 9999
@@ -47,6 +37,9 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 #define XP_AWK_MAX_PARAMS  9999
 
 #if defined(_WIN32) && defined(_DEBUG)
+	#define _CRTDBG_MAP_ALLOC
+	#include <crtdbg.h>
+
 	#define XP_AWK_MALLOC(awk,size) malloc (size)
 	#define XP_AWK_REALLOC(awk,ptr,size) realloc (ptr, size)
 	#define XP_AWK_FREE(awk,ptr) free (ptr)

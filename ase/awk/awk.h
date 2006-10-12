@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.125 2006-10-10 14:08:55 bacon Exp $
+ * $Id: awk.h,v 1.126 2006-10-12 04:17:30 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -71,7 +71,10 @@ struct xp_awk_syscas_t
 	/* utilities */
 	void* (*memcpy)  (void* dst, const void* src, xp_size_t n);
 	void* (*memset)  (void* dst, int val, xp_size_t n);
+
 	int (*sprintf) (xp_char_t* buf, xp_size_t size, xp_char_t* fmt, ...);
+	int (*dprintf) (xp_char_t* fmt, ...);
+	void (*abort) (void);
 
 	void* custom_data;
 };

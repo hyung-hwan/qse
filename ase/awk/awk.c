@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.78 2006-10-02 14:53:44 bacon Exp $ 
+ * $Id: awk.c,v 1.79 2006-10-12 04:17:30 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -28,6 +28,10 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 	    syscas->is_punct  == XP_NULL ||
 	    syscas->to_upper  == XP_NULL ||
 	    syscas->to_lower  == XP_NULL) return XP_NULL;
+
+	if (syscas->sprintf == XP_NULL || 
+	    syscas->dprintf == XP_NULL || 
+	    syscas->abort == XP_NULL) return XP_NULL;
 
 #if defined(_WIN32) && defined(_DEBUG)
 	awk = (xp_awk_t*) malloc (xp_sizeof(xp_awk_t));
@@ -120,7 +124,7 @@ int xp_awk_close (xp_awk_t* awk)
 {
 	if (xp_awk_clear (awk) == -1) return -1;
 
-	xp_assert (awk->run.count == 0 && awk->run.ptr == XP_NULL);
+	xp_awk_assert (awk, awk->run.count == 0 && awk->run.ptr == XP_NULL);
 
 	xp_awk_map_close (&awk->tree.afns);
 	xp_awk_tab_close (&awk->parse.globals);
@@ -171,14 +175,14 @@ int xp_awk_clear (xp_awk_t* awk)
 
 	if (awk->tree.begin != XP_NULL) 
 	{
-		xp_assert (awk->tree.begin->next == XP_NULL);
+		xp_awk_assert (awk, awk->tree.begin->next == XP_NULL);
 		xp_awk_clrpt (awk, awk->tree.begin);
 		awk->tree.begin = XP_NULL;
 	}
 
 	if (awk->tree.end != XP_NULL) 
 	{
-		xp_assert (awk->tree.end->next == XP_NULL);
+		xp_awk_assert (awk, awk->tree.end->next == XP_NULL);
 		xp_awk_clrpt (awk, awk->tree.end);
 		awk->tree.end = XP_NULL;
 	}

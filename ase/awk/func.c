@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.61 2006-10-11 15:01:55 bacon Exp $
+ * $Id: func.c,v 1.62 2006-10-12 04:17:30 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -150,11 +150,11 @@ static int __bfn_close (xp_awk_run_t* run)
 	xp_size_t len;
        
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs == 1);
+	xp_awk_assert (run->awk, nargs == 1);
 /* TODO: support close (xxx, "to"/"from") like gawk */
 
 	a0 = xp_awk_getarg (run, 0);
-	xp_assert (a0 != XP_NULL);
+	xp_awk_assert (run->awk, a0 != XP_NULL);
 
 	if (a0->type == XP_AWK_VAL_STR)
 	{
@@ -252,7 +252,7 @@ static int __bfn_fflush (xp_awk_run_t* run)
 	int n;
        
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs >= 0 && nargs <= 1);
+	xp_awk_assert (run->awk, nargs >= 0 && nargs <= 1);
 
 	if (nargs == 0)
 	{
@@ -347,7 +347,7 @@ static int __bfn_index (xp_awk_run_t* run)
 	xp_long_t idx;
 
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs == 2);
+	xp_awk_assert (run->awk, nargs == 2);
 	
 	a0 = xp_awk_getarg (run, 0);
 	a1 = xp_awk_getarg (run, 1);
@@ -408,7 +408,7 @@ static int __bfn_length (xp_awk_run_t* run)
 	xp_size_t len;
 
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs == 1);
+	xp_awk_assert (run->awk, nargs == 1);
 	
 	v = xp_awk_getarg (run, 0);
 	if (v->type == XP_AWK_VAL_STR)
@@ -445,7 +445,7 @@ static int __bfn_substr (xp_awk_run_t* run)
 	int n;
 
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs >= 2 && nargs <= 3);
+	xp_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
 
 	a0 = xp_awk_getarg (run, 0);
 	a1 = xp_awk_getarg (run, 1);
@@ -520,13 +520,13 @@ static int __bfn_split (xp_awk_run_t* run)
 	int errnum;
 
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs >= 2 && nargs <= 3);
+	xp_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
 
 	a0 = xp_awk_getarg (run, 0);
 	a1 = xp_awk_getarg (run, 1);
 	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
 
-	xp_assert (a1->type == XP_AWK_VAL_REF);
+	xp_awk_assert (run->awk, a1->type == XP_AWK_VAL_REF);
 
 	if (((xp_awk_val_ref_t*)a1)->id >= XP_AWK_VAL_REF_NAMEDIDX &&
 	    ((xp_awk_val_ref_t*)a1)->id <= XP_AWK_VAL_REF_ARGIDX)
@@ -687,7 +687,8 @@ static int __bfn_split (xp_awk_run_t* run)
 			break; 
 		}	
 
-		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
+		xp_awk_assert (run->awk, 
+			(tok != XP_NULL && tok_len > 0) || tok_len == 0);
 
 		/* create the field string */
 		t2 = xp_awk_makestrval (run, tok, tok_len);
@@ -706,7 +707,7 @@ static int __bfn_split (xp_awk_run_t* run)
 		/* put it into the map */
 		key_len = xp_awk_longtostr (
 			num, 10, XP_NULL, key, xp_countof(key));
-		xp_assert (key_len != (xp_size_t)-1);
+		xp_awk_assert (run->awk, key_len != (xp_size_t)-1);
 
 		/* don't forget to update the reference count when you 
 		 * handle the assignment-like situation.  anyway, it is 
@@ -757,7 +758,7 @@ static int __bfn_tolower (xp_awk_run_t* run)
 	xp_awk_val_t* a0, * r;
 
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs == 1);
+	xp_awk_assert (run->awk, nargs == 1);
 
 	a0 = xp_awk_getarg (run, 0);
 
@@ -796,7 +797,7 @@ static int __bfn_toupper (xp_awk_run_t* run)
 	xp_awk_val_t* a0, * r;
 
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs == 1);
+	xp_awk_assert (run->awk, nargs == 1);
 
 	a0 = xp_awk_getarg (run, 0);
 
@@ -844,13 +845,13 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 	xp_long_t sub_count;
 
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs >= 2 && nargs <= 3);
+	xp_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
 
 	a0 = xp_awk_getarg (run, 0);
 	a1 = xp_awk_getarg (run, 1);
 	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
 
-	xp_assert (a2 == XP_NULL || a2->type == XP_AWK_VAL_REF);
+	xp_awk_assert (run->awk, a2 == XP_NULL || a2->type == XP_AWK_VAL_REF);
 
 #define FREE_A_PTRS(awk) \
 	do { \
@@ -947,8 +948,8 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		}
 		else
 		{
-			a2_ptr = xp_awk_valtostr (run, *a2_ref, 
-				XP_AWK_VALTOSTR_CLEAR, XP_NULL, &a2_len);
+			a2_ptr = xp_awk_valtostr (
+				run, *a2_ref, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &a2_len);
 			if (a2_ptr == XP_NULL) 
 			{
 				FREE_A_PTRS (run->awk);
@@ -1136,7 +1137,7 @@ static int __bfn_system (xp_awk_run_t* run)
 	int n;
        
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs == 1);
+	xp_awk_assert (run->awk, nargs == 1);
 
 	cmd = xp_awk_valtostr (
 		run, xp_awk_getarg(run, 0), 
@@ -1174,7 +1175,7 @@ static int __bfn_sin (xp_awk_run_t* run)
 	xp_real_t rv;
        
 	nargs = xp_awk_getnargs (run);
-	xp_assert (nargs == 1);
+	xp_awk_assert (run->awk, nargs == 1);
 
 	n = xp_awk_valtonum (run, xp_awk_getarg(run, 0), &lv, &rv);
 	if (n == -1)

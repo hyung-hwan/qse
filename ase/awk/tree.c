@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.78 2006-10-06 03:33:43 bacon Exp $
+ * $Id: tree.c,v 1.79 2006-10-12 04:17:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -144,7 +144,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			PUT_SRCSTR (awk, XP_T(" "));
 			PRINT_EXPRESSION (awk, px->right);
 
-			xp_assert (px->right->next == XP_NULL);
+			xp_awk_assert (awk, px->right->next == XP_NULL);
 			break;
 		}
 
@@ -154,7 +154,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 
 			PUT_SRCSTR (awk, XP_T("("));
 			PRINT_EXPRESSION (awk, px->left);
-			xp_assert (px->left->next == XP_NULL);
+			xp_awk_assert (awk, px->left->next == XP_NULL);
 
 			PUT_SRCSTR (awk, XP_T(" "));
 			PUT_SRCSTR (awk, __binop_str[px->opcode]);
@@ -165,7 +165,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			PRINT_EXPRESSION (awk, px->right);
 			if (px->right->type == XP_AWK_NDE_ASS) 
 				PUT_SRCSTR (awk, XP_T(")"));
-			xp_assert (px->right->next == XP_NULL); 
+			xp_awk_assert (awk, px->right->next == XP_NULL); 
 			PUT_SRCSTR (awk, XP_T(")"));
 			break;
 		}
@@ -173,7 +173,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		case XP_AWK_NDE_EXP_UNR:
 		{
 			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
-			xp_assert (px->right == XP_NULL);
+			xp_awk_assert (awk, px->right == XP_NULL);
 
 			PUT_SRCSTR (awk, __unrop_str[px->opcode]);
 			PUT_SRCSTR (awk, XP_T("("));
@@ -185,7 +185,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		case XP_AWK_NDE_EXP_INCPRE:
 		{
 			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
-			xp_assert (px->right == XP_NULL);
+			xp_awk_assert (awk, px->right == XP_NULL);
 
 			PUT_SRCSTR (awk, __incop_str[px->opcode]);
 			PUT_SRCSTR (awk, XP_T("("));
@@ -197,7 +197,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		case XP_AWK_NDE_EXP_INCPST:
 		{
 			xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)nde;
-			xp_assert (px->right == XP_NULL);
+			xp_awk_assert (awk, px->right == XP_NULL);
 
 			PUT_SRCSTR (awk, XP_T("("));
 			PRINT_EXPRESSION (awk, px->left);
@@ -296,7 +296,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
 			xp_size_t n;
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
-			xp_assert (px->id.idxa != (xp_size_t)-1);
+			xp_awk_assert (awk, px->id.idxa != (xp_size_t)-1);
 
 			n = xp_awk_longtostr (
 				px->id.idxa, 10, XP_NULL, tmp, xp_countof(tmp));
@@ -304,7 +304,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			PUT_SRCSTR (awk, XP_T("__param"));
 			PUT_SRCSTRX (awk, tmp, n);
 
-			xp_assert (px->idx == XP_NULL);
+			xp_awk_assert (awk, px->idx == XP_NULL);
 			break;
 		}
 
@@ -313,8 +313,8 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			xp_char_t tmp[xp_sizeof(xp_long_t)*8+2]; 
 			xp_size_t n;
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
-			xp_assert (px->id.idxa != (xp_size_t)-1);
-			xp_assert (px->idx != XP_NULL);
+			xp_awk_assert (awk, px->id.idxa != (xp_size_t)-1);
+			xp_awk_assert (awk, px->idx != XP_NULL);
 
 			PUT_SRCSTR (awk, XP_T("__param"));
 			n = xp_awk_longtostr (
@@ -329,8 +329,8 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		case XP_AWK_NDE_NAMED:
 		{
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
-			xp_assert (px->id.idxa == (xp_size_t)-1);
-			xp_assert (px->idx == XP_NULL);
+			xp_awk_assert (awk, px->id.idxa == (xp_size_t)-1);
+			xp_awk_assert (awk, px->idx == XP_NULL);
 
 			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			break;
@@ -339,8 +339,8 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 		case XP_AWK_NDE_NAMEDIDX:
 		{
 			xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)nde;
-			xp_assert (px->id.idxa == (xp_size_t)-1);
-			xp_assert (px->idx != XP_NULL);
+			xp_awk_assert (awk, px->id.idxa == (xp_size_t)-1);
+			xp_awk_assert (awk, px->idx != XP_NULL);
 
 			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			PUT_SRCSTR (awk, XP_T("["));
@@ -367,7 +367,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			{
 				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			}
-			xp_assert (px->idx == XP_NULL);
+			xp_awk_assert (awk, px->idx == XP_NULL);
 			break;
 		}
 
@@ -391,7 +391,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 				PUT_SRCSTR (awk, XP_T("["));
 			}
-			xp_assert (px->idx != XP_NULL);
+			xp_awk_assert (awk, px->idx != XP_NULL);
 			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, XP_T("]"));
 			break;
@@ -415,7 +415,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			{
 				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			}
-			xp_assert (px->idx == XP_NULL);
+			xp_awk_assert (awk, px->idx == XP_NULL);
 			break;
 		}
 
@@ -439,7 +439,7 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 				PUT_SRCSTR (awk, XP_T("["));
 			}
-			xp_assert (px->idx != XP_NULL);
+			xp_awk_assert (awk, px->idx != XP_NULL);
 			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, XP_T("]"));
 			break;
@@ -591,7 +591,7 @@ static int __print_statements (xp_awk_t* awk, xp_awk_nde_t* tree, int depth)
 				PRINT_EXPRESSION (awk, px->test);
 				PUT_SRCSTR (awk, XP_T(")\n"));
 
-				xp_assert (px->then_part != XP_NULL);
+				xp_awk_assert (awk, px->then_part != XP_NULL);
 				if (px->then_part->type == XP_AWK_NDE_BLK)
 					PRINT_STATEMENTS (awk, px->then_part, depth);
 				else
@@ -726,7 +726,7 @@ static int __print_statements (xp_awk_t* awk, xp_awk_nde_t* tree, int depth)
 				else 
 				{
 					PUT_SRCSTR (awk, XP_T("return "));
-					xp_assert (((xp_awk_nde_return_t*)p)->val->next == XP_NULL);
+					xp_awk_assert (awk, ((xp_awk_nde_return_t*)p)->val->next == XP_NULL);
 
 					PRINT_EXPRESSION (awk, ((xp_awk_nde_return_t*)p)->val);
 					PUT_SRCSTR (awk, XP_T(";\n"));
@@ -746,7 +746,7 @@ static int __print_statements (xp_awk_t* awk, xp_awk_nde_t* tree, int depth)
 				else 
 				{
 					PUT_SRCSTR (awk, XP_T("exit "));
-					xp_assert (px->val->next == XP_NULL);
+					xp_awk_assert (awk, px->val->next == XP_NULL);
 					PRINT_EXPRESSION (awk, px->val);
 					PUT_SRCSTR (awk, XP_T(";\n"));
 				}
@@ -978,8 +978,8 @@ void xp_awk_clrpt (xp_awk_t* awk, xp_awk_nde_t* tree)
 			case XP_AWK_NDE_EXP_BIN:
 			{
 				xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)p;
-				xp_assert (px->left->next == XP_NULL);
-				xp_assert (px->right->next == XP_NULL);
+				xp_awk_assert (awk, px->left->next == XP_NULL);
+				xp_awk_assert (awk, px->right->next == XP_NULL);
 
 				xp_awk_clrpt (awk, px->left);
 				xp_awk_clrpt (awk, px->right);
@@ -992,7 +992,7 @@ void xp_awk_clrpt (xp_awk_t* awk, xp_awk_nde_t* tree)
 			case XP_AWK_NDE_EXP_INCPST:
 			{
 				xp_awk_nde_exp_t* px = (xp_awk_nde_exp_t*)p;
-				xp_assert (px->right == XP_NULL);
+				xp_awk_assert (awk, px->right == XP_NULL);
 				xp_awk_clrpt (awk, px->left);
 				XP_AWK_FREE (awk, p);
 				break;
@@ -1044,7 +1044,7 @@ void xp_awk_clrpt (xp_awk_t* awk, xp_awk_nde_t* tree)
 			case XP_AWK_NDE_ARG:
 			{
 				xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)p;
-				xp_assert (px->idx == XP_NULL);
+				xp_awk_assert (awk, px->idx == XP_NULL);
 				if (px->id.name != XP_NULL)
 					XP_AWK_FREE (awk, px->id.name);
 				XP_AWK_FREE (awk, p);
@@ -1057,7 +1057,7 @@ void xp_awk_clrpt (xp_awk_t* awk, xp_awk_nde_t* tree)
 			case XP_AWK_NDE_ARGIDX:
 			{
 				xp_awk_nde_var_t* px = (xp_awk_nde_var_t*)p;
-				xp_assert (px->idx != XP_NULL);
+				xp_awk_assert (awk, px->idx != XP_NULL);
 				xp_awk_clrpt (awk, px->idx);
 				if (px->id.name != XP_NULL)
 					XP_AWK_FREE (awk, px->id.name);
@@ -1104,7 +1104,7 @@ void xp_awk_clrpt (xp_awk_t* awk, xp_awk_nde_t* tree)
 
 			default:
 			{
-				xp_assert (!"should never happen - invalid node type");
+				xp_awk_assert (awk, !"should never happen - invalid node type");
 				XP_AWK_FREE (awk, p);
 				break;
 			}

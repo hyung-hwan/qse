@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.26 2006-10-09 14:37:14 bacon Exp $
+ * $Id: misc.c,v 1.27 2006-10-12 04:17:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -43,7 +43,7 @@ xp_long_t xp_awk_strxtolong (
 	xp_size_t rem;
 	int digit, negative = 0;
 
-	xp_assert (base < 37); 
+	xp_awk_assert (awk, base < 37); 
 
 	p = str; 
 	end = str + len;
@@ -995,7 +995,7 @@ xp_char_t* xp_awk_strxntokbyrex (
 			return XP_NULL; 
 		}
 
-		xp_assert (n == 1);
+		xp_awk_assert (run->awk, n == 1);
 
 		if (match_len == 0)
 		{
@@ -1060,4 +1060,12 @@ exit_loop:
 	}
 }
 
-
+int xp_awk_abort (xp_awk_t* awk, 
+	const xp_char_t* expr, const xp_char_t* file, int line)
+{
+	awk->syscas->dprintf (
+		XP_T("ASSERTION FAILURE AT FILE %s, LINE %d\n%s\n"),
+		file, line, expr);
+	awk->syscas->abort ();
+	return 0;
+}
