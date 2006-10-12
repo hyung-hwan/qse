@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.1 2006-10-03 14:57:01 bacon Exp $
+ * $Id: rec.c,v 1.2 2006-10-12 04:17:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -42,7 +42,7 @@ int xp_awk_setrec (
 			return -1;
 		}
 
-		xp_assert (run->inrec.d0->type == XP_AWK_VAL_NIL);
+		xp_awk_assert (run->awk, run->inrec.d0->type == XP_AWK_VAL_NIL);
 		/* d0 should be cleared before the next line is reached
 		 * as it doesn't call xp_awk_refdownval on run->inrec.d0 */
 		run->inrec.d0 = v;
@@ -95,7 +95,7 @@ static int __split_record (xp_awk_run_t* run)
 	int errnum;
        
 	/* inrec should be cleared before __split_record is called */
-	xp_assert (run->inrec.nflds == 0);
+	xp_awk_assert (run->awk, run->inrec.nflds == 0);
 
 	/* get FS */
 	fs = xp_awk_getglobal (run, XP_AWK_GLOBAL_FS);
@@ -114,7 +114,7 @@ static int __split_record (xp_awk_run_t* run)
 	else 
 	{
 		fs_ptr = xp_awk_valtostr (
-			run, fs, xp_true, XP_NULL, &fs_len);
+			run, fs, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &fs_len);
 		if (fs_ptr == XP_NULL) return -1;
 		fs_free = fs_ptr;
 	}
@@ -152,7 +152,8 @@ static int __split_record (xp_awk_run_t* run)
 			return 0;
 		}
 
-		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
+		xp_awk_assert (run->awk,
+			(tok != XP_NULL && tok_len > 0) || tok_len == 0);
 
 		nflds++;
 		len = XP_AWK_STR_LEN(&run->inrec.line) - 
@@ -201,7 +202,8 @@ static int __split_record (xp_awk_run_t* run)
 			}
 		}
 
-		xp_assert ((tok != XP_NULL && tok_len > 0) || tok_len == 0);
+		xp_awk_assert (run->awk,
+			(tok != XP_NULL && tok_len > 0) || tok_len == 0);
 
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
@@ -234,7 +236,7 @@ static int __split_record (xp_awk_run_t* run)
 
 	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, v) == -1) return -1;
 
-	xp_assert (nflds == run->inrec.nflds);
+	xp_awk_assert (run->awk, nflds == run->inrec.nflds);
 	return 0;
 }
 
@@ -251,11 +253,12 @@ int xp_awk_clrrec (xp_awk_run_t* run, xp_bool_t skip_inrec_line)
 
 	if (run->inrec.nflds > 0)
 	{
-		xp_assert (run->inrec.flds != XP_NULL);
+		xp_awk_assert (run->awk, run->inrec.flds != XP_NULL);
 
 		for (i = 0; i < run->inrec.nflds; i++) 
 		{
-			xp_assert (run->inrec.flds[i].val != XP_NULL);
+			xp_awk_assert (run->awk,
+				run->inrec.flds[i].val != XP_NULL);
 			xp_awk_refdownval (run, run->inrec.flds[i].val);
 		}
 		run->inrec.nflds = 0;
@@ -270,7 +273,7 @@ int xp_awk_clrrec (xp_awk_run_t* run, xp_bool_t skip_inrec_line)
 		}
 	}
 
-	xp_assert (run->inrec.nflds == 0);
+	xp_awk_assert (run->awk, run->inrec.nflds == 0);
 	if (!skip_inrec_line) xp_awk_str_clear (&run->inrec.line);
 
 	return n;
@@ -286,7 +289,7 @@ static int __recomp_record_fields (
 	/* recomposes the record and the fields when $N has been assigned 
 	 * a new value and recomputes NF accordingly */
 
-	xp_assert (lv > 0);
+	xp_awk_assert (run->awk, lv > 0);
 	max = (lv > run->inrec.nflds)? lv: run->inrec.nflds;
 
 	nflds = run->inrec.nflds;
@@ -421,7 +424,7 @@ static int __recomp_record_fields (
 	}
 
 	v = xp_awk_getglobal (run, XP_AWK_GLOBAL_NF);
-	xp_assert (v->type == XP_AWK_VAL_INT);
+	xp_awk_assert (run->awk, v->type == XP_AWK_VAL_INT);
 	if (((xp_awk_val_int_t*)v)->val != max)
 	{
 		v = xp_awk_makeintval (run, (xp_long_t)max);

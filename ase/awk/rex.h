@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.17 2006-10-04 10:11:04 bacon Exp $
+ * $Id: rex.h,v 1.18 2006-10-12 04:17:31 bacon Exp $
  **/
 
 #ifndef _XP_AWK_REX_H_
@@ -62,7 +62,7 @@ int xp_awk_matchrex (
 
 void xp_awk_freerex (xp_awk_t* awk, void* code);
 
-xp_bool_t xp_awk_isemptyrex (void* code);
+xp_bool_t xp_awk_isemptyrex (xp_awk_t* awk, void* code);
 
 void xp_awk_printrex (void* code);
 

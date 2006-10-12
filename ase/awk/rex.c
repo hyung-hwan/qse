@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.34 2006-10-08 05:46:41 bacon Exp $
+ * $Id: rex.c,v 1.35 2006-10-12 04:17:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -384,16 +384,16 @@ int xp_awk_matchrex (
 
 void xp_awk_freerex (xp_awk_t* awk, void* code)
 {
-	xp_assert (code != XP_NULL);
+	xp_awk_assert (awk, code != XP_NULL);
 	XP_AWK_FREE (awk, code);
 }
 
-xp_bool_t xp_awk_isemptyrex (void* code)
+xp_bool_t xp_awk_isemptyrex (xp_awk_t* awk, void* code)
 {
 	const xp_byte_t* p = code;
 	xp_size_t nb, el;
 
-	xp_assert (p != XP_NULL);
+	xp_awk_assert (awk, p != XP_NULL);
 
 	nb = *(xp_size_t*)p; p += xp_sizeof(nb);
 	el = *(xp_size_t*)p; p += xp_sizeof(el);
@@ -598,7 +598,7 @@ static int __build_atom (__builder_t* builder)
 			n = __build_charset (builder, cmd);
 			if (n == -1) return -1;
 
-			xp_assert (n != 0);
+			xp_awk_assert (builder->awk, n != 0);
 
 			if (builder->ptn.curc.type != CT_SPECIAL ||
 			    builder->ptn.curc.value != XP_T(']'))
@@ -615,7 +615,7 @@ static int __build_atom (__builder_t* builder)
 	}
 	else 
 	{
-		xp_assert (builder->ptn.curc.type == CT_NORMAL);
+		xp_awk_assert (builder->awk, builder->ptn.curc.type == CT_NORMAL);
 
 		tmp.cmd = CMD_ORD_CHAR;
 		tmp.negate = 0;
@@ -1145,8 +1145,9 @@ static const xp_byte_t* __match_atom (
 		__match_group
 	};
        
-	xp_assert (((struct __code_t*)base)->cmd >= 0 && 
-	           ((struct __code_t*)base)->cmd < xp_countof(matchers));
+	xp_awk_assert (matcher->awk, 
+		((struct __code_t*)base)->cmd >= 0 && 
+		((struct __code_t*)base)->cmd < xp_countof(matchers));
 
 	return matchers[((struct __code_t*)base)->cmd] (matcher, base, mat);
 }
@@ -1158,7 +1159,7 @@ static const xp_byte_t* __match_bol (
 	const struct __code_t* cp;
 
 	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
-	xp_assert (cp->cmd == CMD_BOL);
+	xp_awk_assert (matcher->awk, cp->cmd == CMD_BOL);
 
 	mat->matched = (mat->match_ptr == matcher->match.str.ptr ||
 	               (cp->lbound == cp->ubound && cp->lbound == 0));
@@ -1174,7 +1175,7 @@ static const xp_byte_t* __match_eol (
 	const struct __code_t* cp;
 
 	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
-	xp_assert (cp->cmd == CMD_EOL);
+	xp_awk_assert (matcher->awk, cp->cmd == CMD_EOL);
 
 	mat->matched = (mat->match_ptr == matcher->match.str.end ||
 	               (cp->lbound == cp->ubound && cp->lbound == 0));
@@ -1191,7 +1192,7 @@ static const xp_byte_t* __match_any_char (
 	xp_size_t si = 0, lbound, ubound;
 
 	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
-	xp_assert (cp->cmd == CMD_ANY_CHAR);
+	xp_awk_assert (matcher->awk, cp->cmd == CMD_ANY_CHAR);
 
 	lbound = cp->lbound;
 	ubound = cp->ubound;
@@ -1241,7 +1242,7 @@ static const xp_byte_t* __match_ord_char (
 	xp_char_t cc;
 
 	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
-	xp_assert (cp->cmd == CMD_ORD_CHAR);
+	xp_awk_assert (matcher->awk, cp->cmd == CMD_ORD_CHAR);
 
 	lbound = cp->lbound; 
 	ubound = cp->ubound;
@@ -1329,7 +1330,7 @@ static const xp_byte_t* __match_charset (
 	xp_char_t c;
 
 	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
-	xp_assert (cp->cmd == CMD_CHARSET);
+	xp_awk_assert (matcher->awk, cp->cmd == CMD_CHARSET);
 
 	lbound = cp->lbound;
 	ubound = cp->ubound;
@@ -1373,7 +1374,7 @@ static const xp_byte_t* __match_group (
 	xp_size_t si = 0, grp_len_static[16], * grp_len;
 
 	cp = (const struct __code_t*)p; p += xp_sizeof(*cp);
-	xp_assert (cp->cmd == CMD_GROUP);
+	xp_awk_assert (matcher->awk, cp->cmd == CMD_GROUP);
 
 	mat->matched = xp_false;
 	mat->match_len = 0;
@@ -1454,7 +1455,7 @@ static const xp_byte_t* __match_group (
 		}
 		else 
 		{
-			xp_assert (cp->ubound > cp->lbound);
+			xp_awk_assert (matcher->awk, cp->ubound > cp->lbound);
 
 			do
 			{
@@ -1499,7 +1500,7 @@ static const xp_byte_t* __match_occurrences (
 	__matcher_t* matcher, xp_size_t si, const xp_byte_t* p,
 	xp_size_t lbound, xp_size_t ubound, __match_t* mat)
 {
-	xp_assert (si >= lbound && si <= ubound);
+	xp_awk_assert (matcher->awk, si >= lbound && si <= ubound);
 	/* the match has been found */
 
 	if (lbound == ubound || p >= mat->branch_end)
@@ -1552,7 +1553,7 @@ static const xp_byte_t* __match_occurrences (
 		 * lbound in the implementation below, though)
 		 */
 
-		xp_assert (ubound > lbound);
+		xp_awk_assert (matcher->awk, ubound > lbound);
 
 		do
 		{
@@ -1624,7 +1625,8 @@ xp_bool_t __test_charset (
 		}
 		else
 		{
-			xp_assert (!"should never happen - invalid charset code");
+			xp_awk_assert (matcher->awk,
+				!"should never happen - invalid charset code");
 			break;
 		}
 
@@ -1799,7 +1801,7 @@ static const xp_byte_t* __print_atom (const xp_byte_t* p)
 			}
 			else
 			{
-				xp_assert (!"should never happen - invalid charset code");
+				xp_printf ("should never happen - invalid charset code\n");
 			}
 
 			p += xp_sizeof(c1);
@@ -1816,7 +1818,7 @@ static const xp_byte_t* __print_atom (const xp_byte_t* p)
 	}
 	else 
 	{
-		xp_assert (!"should never happen - invalid atom code");
+		xp_printf ("should never happen - invalid atom code\n");
 	}
 
 	if (cp->lbound == 0 && cp->ubound == BOUND_MAX)

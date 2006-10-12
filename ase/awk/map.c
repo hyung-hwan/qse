@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.25 2006-09-22 14:04:25 bacon Exp $
+ * $Id: map.c,v 1.26 2006-10-12 04:17:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -75,7 +75,7 @@ void xp_awk_map_clear (xp_awk_map_t* map)
 		map->buck[i] = XP_NULL;
 	}
 
-	xp_assert (map->size == 0);
+	xp_awk_assert (map->awk, map->size == 0);
 }
 
 xp_awk_pair_t* xp_awk_map_get (

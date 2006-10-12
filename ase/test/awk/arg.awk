@@ -13,4 +13,6 @@ BEGIN {
 		print "ARGV[" i "]", ARGV[i];
 	}
 
+
+	if (ARGC >= 0) print "ARGC is positive";
 }

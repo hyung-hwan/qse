@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.19 2006-09-28 06:56:30 bacon Exp $
+ * $Id: tab.c,v 1.20 2006-10-12 04:17:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -53,7 +53,7 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 	if (tab->size > capa) 
 	{
 		xp_awk_tab_remove (tab, capa, tab->size - capa);
-		xp_assert (tab->size <= capa);
+		xp_awk_assert (tab->awk, tab->size <= capa);
 	}
 
 	if (capa > 0) 
@@ -95,8 +95,6 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 void xp_awk_tab_clear (xp_awk_tab_t* tab)
 {
 	xp_size_t i;
-
-	xp_assert (tab != XP_NULL);
 
 	for (i = 0; i < tab->size; i++) 
 	{

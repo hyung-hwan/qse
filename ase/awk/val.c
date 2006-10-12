@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.71 2006-10-11 15:01:55 bacon Exp $
+ * $Id: val.c,v 1.72 2006-10-12 04:17:31 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -298,7 +298,8 @@ xp_printf (XP_T("\n"));*/
 	}
 	else
 	{
-		xp_assert (!"should never happen - invalid value type");
+		xp_awk_assert (run->awk, 
+			!"should never happen - invalid value type");
 	}
 }
 
@@ -324,7 +325,7 @@ xp_awk_printval (val);
 xp_printf (XP_T("\n"));
 */
 
-	xp_assert (val->ref > 0);
+	xp_awk_assert (run->awk, val->ref > 0);
 	val->ref--;
 	if (val->ref <= 0) 
 	{
@@ -341,11 +342,11 @@ void xp_awk_refdownval_nofree (xp_awk_run_t* run, xp_awk_val_t* val)
 {
 	if (xp_awk_isbuiltinval(val)) return;
 
-	xp_assert (val->ref > 0);
+	xp_awk_assert (run->awk, val->ref > 0);
 	val->ref--;
 }
 
-xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
+xp_bool_t xp_awk_valtobool (xp_awk_run_t* run, xp_awk_val_t* val)
 {
 	if (val == XP_NULL) return xp_false;
 
@@ -367,7 +368,7 @@ xp_bool_t xp_awk_valtobool (xp_awk_val_t* val)
 		return xp_false; /* TODO: is this correct? */
 	}
 
-	xp_assert (!"should never happen - invalid value type");
+	xp_awk_assert (run->awk, !"should never happen - invalid value type");
 	return xp_false;
 }
 
@@ -706,7 +707,6 @@ void xp_awk_printval (xp_awk_val_t* val)
 		break;
 
 	default:
-		xp_assert (!"should never happen - invalid value type");
 		xp_printf (XP_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }
