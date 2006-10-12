@@ -1,10 +1,14 @@
 /*
- * $Id: jni.c,v 1.4 2006-08-06 15:02:55 bacon Exp $
+ * $Id: jni.c,v 1.5 2006-10-12 14:36:25 bacon Exp $
  */
 
-#include "jni.h"
-#include "awk.h"
-#include "sa.h"
+#include <xp/awk/jni.h>
+#include <xp/awk/awk.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wctype.h>
+#include <wchar.h>
+#include <stdio.h>
 
 #define EXCEPTION_AWK "xpkit/xpj/awk/AwkException"
 #define FIELD_AWK     "__awk"
@@ -27,6 +31,20 @@ struct srcio_data_t
 	jobject obj;
 };
 
+static void* __awk_malloc (xp_size_t n, void* custom_data)
+{
+	return malloc (n);
+}
+
+static void* __awk_realloc (void* ptr, xp_size_t n, void* custom_data)
+{
+	return realloc (ptr, n);
+}
+
+static void __awk_free (void* ptr, void* custom_data)
+{
+	free (ptr);
+}
 
 JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_open (JNIEnv* env, jobject obj)
 {
@@ -34,11 +52,38 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_open (JNIEnv* env, jobject obj)
 	jfieldID fid;
 	jthrowable except;
 	xp_awk_t* awk;
+	xp_awk_syscas_t syscas;
 	int opt;
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	awk = xp_awk_open ();
+	memset (&syscas, 0, sizeof(syscas));
+	syscas.malloc = __awk_malloc;
+	syscas.realloc = __awk_realloc;
+	syscas.free = __awk_free;
+
+	syscas.is_upper  = iswupper;
+	syscas.is_lower  = iswlower;
+	syscas.is_alpha  = iswalpha;
+	syscas.is_digit  = iswdigit;
+	syscas.is_xdigit = iswxdigit;
+	syscas.is_alnum  = iswalnum;
+	syscas.is_space  = iswspace;
+	syscas.is_print  = iswprint;
+	syscas.is_graph  = iswgraph;
+	syscas.is_cntrl  = iswcntrl;
+	syscas.is_punct  = iswpunct;
+	syscas.to_upper  = towupper;
+	syscas.to_lower  = towlower;
+
+	syscas.memcpy = memcpy;
+	syscas.memset = memset;
+/* TODO: */
+	syscas.sprintf = _snwprintf;
+	syscas.dprintf = wprintf;
+	syscas.abort = abort;
+
+	awk = xp_awk_open (&syscas);
 	if (awk == NULL)
 	{
 		except = (*env)->FindClass (env, EXCEPTION_AWK);
@@ -57,7 +102,7 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_open (JNIEnv* env, jobject obj)
 		XP_AWK_EXTIO | XP_AWK_BLOCKLESS;
 	xp_awk_setopt (awk, opt);
 
-xp_printf (XP_T("__awk(native) done => %u, 0x%X\n"), awk, awk);
+printf ("__awk(native) done => %u, 0x%X\n", awk, awk);
 }
 
 JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_close (JNIEnv* env, jobject obj)
@@ -73,7 +118,7 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_close (JNIEnv* env, jobject obj)
 	xp_awk_close ((xp_awk_t*) (*env)->GetLongField (env, obj, fid));
 	(*env)->SetLongField (env, obj, fid, (jlong)0);
 
-xp_printf (XP_T("close (native) done\n"));
+printf ("close (native) done\n");
 }
 
 JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_parse (JNIEnv* env, jobject obj)
@@ -100,12 +145,14 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_parse (JNIEnv* env, jobject obj)
 	srcios.out = __write_source;
 	srcios.custom_data = &srcio_data;
 
+printf ("OK.......\n");
 	if (xp_awk_parse (awk, &srcios) == -1)
 	{
+printf ("parse error.......\n");
 		except = (*env)->FindClass (env, EXCEPTION_AWK);
 		if (except == 0) return;
 		(*env)->ThrowNew (env, except, "ERROR ....");
-xp_printf (XP_T("parse error -> line [%d] %s\n"), xp_awk_getsrcline(awk), xp_awk_geterrstr(awk));
+printf ("parse error -> line [%d] %S\n", xp_awk_getsrcline(awk), xp_awk_geterrstr(xp_awk_geterrnum(awk)));
 		return;
 	}
 }
@@ -122,6 +169,7 @@ static xp_ssize_t __read_source (
 	srcio_data = (srcio_data_t*)arg;
 
 	if (cmd == XP_AWK_IO_OPEN || cmd == XP_AWK_IO_CLOSE) return 0;
+
 	if (cmd == XP_AWK_IO_READ)
 	{
 		return __call_java_read_source (

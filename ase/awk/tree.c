@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.79 2006-10-12 04:17:31 bacon Exp $
+ * $Id: tree.c,v 1.80 2006-10-12 14:36:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -248,11 +248,11 @@ static int __print_expression (xp_awk_t* awk, xp_awk_nde_t* nde)
 			{
 				xp_char_t tmp[128];
 			#if (XP_SIZEOF_LONG_DOUBLE != 0)
-				awk->syscas->sprintf (
+				awk->syscas.sprintf (
 					tmp, xp_countof(tmp), XP_T("%Lf"), 
 					(long double)((xp_awk_nde_real_t*)nde)->val);
 			#elif (XP_SIZEOF_DOUBLE != 0)
-				awk->syscas->sprintf (
+				awk->syscas.sprintf (
 					tmp, xp_countof(tmp), XP_T("%f"), 
 					(double)((xp_awk_nde_real_t*)nde)->val);
 			#else

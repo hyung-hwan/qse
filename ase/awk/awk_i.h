@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.64 2006-10-12 04:17:30 bacon Exp $
+ * $Id: awk_i.h,v 1.65 2006-10-12 14:36:25 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -45,52 +45,41 @@ typedef struct xp_awk_tree_t xp_awk_tree_t;
 	#define XP_AWK_FREE(awk,ptr) free (ptr)
 #else
 	#define XP_AWK_MALLOC(awk,size) \
-		(awk)->syscas->malloc (size, (awk)->syscas->custom_data)
+		(awk)->syscas.malloc (size, (awk)->syscas.custom_data)
 	#define XP_AWK_REALLOC(awk,ptr,size) \
-		(awk)->syscas->realloc (ptr, size, (awk)->syscas->custom_data)
+		(awk)->syscas.realloc (ptr, size, (awk)->syscas.custom_data)
 	#define XP_AWK_FREE(awk,ptr) \
-		(awk)->syscas->free (ptr, (awk)->syscas->custom_data)
+		(awk)->syscas.free (ptr, (awk)->syscas.custom_data)
 #endif
 
 #define XP_AWK_LOCK(awk) \
 	do { \
-		if ((awk)->syscas != XP_NULL && (awk)->syscas->lock != XP_NULL) \
-			(awk)->syscas->lock (awk, (awk)->syscas->custom_data); \
+		if ((awk)->syscas.lock != XP_NULL) \
+			(awk)->syscas.lock (awk, (awk)->syscas.custom_data); \
 	} while (0) 
 
 #define XP_AWK_UNLOCK(awk) \
 	do { \
-		if ((awk)->syscas != XP_NULL && (awk)->syscas->unlock != XP_NULL) \
-			(awk)->syscas->unlock (awk, (awk)->syscas->custom_data); \
+		if ((awk)->syscas.unlock != XP_NULL) \
+			(awk)->syscas.unlock (awk, (awk)->syscas.custom_data); \
 	} while (0) 
 
-#define XP_AWK_ISUPPER(awk,c)  (awk)->syscas->is_upper(c)
-#define XP_AWK_ISLOWER(awk,c)  (awk)->syscas->is_lower(c)
-#define XP_AWK_ISALPHA(awk,c)  (awk)->syscas->is_alpha(c)
-#define XP_AWK_ISDIGIT(awk,c)  (awk)->syscas->is_digit(c)
-#define XP_AWK_ISXDIGIT(awk,c) (awk)->syscas->is_xdigit(c)
-#define XP_AWK_ISALNUM(awk,c)  (awk)->syscas->is_alnum(c)
-#define XP_AWK_ISSPACE(awk,c)  (awk)->syscas->is_space(c)
-#define XP_AWK_ISPRINT(awk,c)  (awk)->syscas->is_print(c)
-#define XP_AWK_ISGRAPH(awk,c)  (awk)->syscas->is_graph(c)
-#define XP_AWK_ISCNTRL(awk,c)  (awk)->syscas->is_cntrl(c)
-#define XP_AWK_ISPUNCT(awk,c)  (awk)->syscas->is_punct(c)
-#define XP_AWK_TOUPPER(awk,c)  (awk)->syscas->to_upper(c)
-#define XP_AWK_TOLOWER(awk,c)  (awk)->syscas->to_lower(c)
+#define XP_AWK_ISUPPER(awk,c)  (awk)->syscas.is_upper(c)
+#define XP_AWK_ISLOWER(awk,c)  (awk)->syscas.is_lower(c)
+#define XP_AWK_ISALPHA(awk,c)  (awk)->syscas.is_alpha(c)
+#define XP_AWK_ISDIGIT(awk,c)  (awk)->syscas.is_digit(c)
+#define XP_AWK_ISXDIGIT(awk,c) (awk)->syscas.is_xdigit(c)
+#define XP_AWK_ISALNUM(awk,c)  (awk)->syscas.is_alnum(c)
+#define XP_AWK_ISSPACE(awk,c)  (awk)->syscas.is_space(c)
+#define XP_AWK_ISPRINT(awk,c)  (awk)->syscas.is_print(c)
+#define XP_AWK_ISGRAPH(awk,c)  (awk)->syscas.is_graph(c)
+#define XP_AWK_ISCNTRL(awk,c)  (awk)->syscas.is_cntrl(c)
+#define XP_AWK_ISPUNCT(awk,c)  (awk)->syscas.is_punct(c)
+#define XP_AWK_TOUPPER(awk,c)  (awk)->syscas.to_upper(c)
+#define XP_AWK_TOLOWER(awk,c)  (awk)->syscas.to_lower(c)
 
-#define XP_AWK_MEMCPY(awk,dst,src,len) \
-	do { \
-		if ((awk)->syscas->memcpy == XP_NULL) \
-			xp_awk_memcpy (dst, src, len); \
-		else (awk)->syscas->memcpy (dst, src, len); \
-	} while (0)
-
-#define XP_AWK_MEMSET(awk,dst,val,len) \
-	do { \
-		if ((awk)->syscas->memset == XP_NULL) \
-			xp_awk_memset (dst, val, len); \
-		else (awk)->syscas->memset (dst, val, len); \
-	} while (0)
+#define XP_AWK_MEMCPY(awk,dst,src,len) (awk)->syscas.memcpy (dst, src, len)
+#define XP_AWK_MEMSET(awk,dst,val,len) (awk)->syscas.memset (dst, val, len)
 
 struct xp_awk_tree_t
 {
@@ -106,7 +95,7 @@ struct xp_awk_tree_t
 
 struct xp_awk_t
 {
-	xp_awk_syscas_t* syscas;
+	xp_awk_syscas_t syscas;
 
 	/* options */
 	int option;

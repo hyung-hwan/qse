@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.72 2006-10-12 04:17:31 bacon Exp $
+ * $Id: val.c,v 1.73 2006-10-12 14:36:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -572,7 +572,7 @@ static xp_char_t* __val_real_to_str (
 /* TODO: need to use awk's own version of sprintf so that it would have
  *       problems with handling long double or double... */
 /* TODO: does it need to check if a null character is included in convfmt??? */
-	run->awk->syscas->sprintf (tbuf, xp_countof(tbuf), tmp, (double)v->val); 
+	run->awk->syscas.sprintf (tbuf, xp_countof(tbuf), tmp, (double)v->val); 
 	if (buf == XP_NULL) 
 	{
 		tmp = xp_awk_strdup (run->awk, tbuf);

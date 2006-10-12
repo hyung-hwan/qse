@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.2 2006-10-12 04:17:31 bacon Exp $
+ * $Id: rec.c,v 1.3 2006-10-12 14:36:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -301,7 +301,7 @@ static int __recomp_record_fields (
 		 * number of fields that the current record can hold,
 		 * the field spaces are resized */
 
-		if (run->awk->syscas->realloc != XP_NULL)
+		if (run->awk->syscas.realloc != XP_NULL)
 		{
 			tmp = XP_AWK_REALLOC (
 				run->awk, run->inrec.flds, 
