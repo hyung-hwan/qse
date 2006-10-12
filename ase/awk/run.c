@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.233 2006-10-12 04:17:31 bacon Exp $
+ * $Id: run.c,v 1.234 2006-10-12 14:36:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -4885,7 +4885,7 @@ static int __raw_push (xp_awk_run_t* run, void* val)
 	       
 		n = run->stack_limit + STACK_INCREMENT;
 
-		if (run->awk->syscas->realloc != XP_NULL)
+		if (run->awk->syscas.realloc != XP_NULL)
 		{
 			tmp = (void**) XP_AWK_REALLOC (
 				run->awk, run->stack, n * xp_sizeof(void*)); 

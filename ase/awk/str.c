@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.7 2006-09-28 06:56:30 bacon Exp $
+ * $Id: str.c,v 1.8 2006-10-12 14:36:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -106,7 +106,7 @@ xp_size_t xp_awk_str_ncat (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
 		/* double the capa if necessary for concatenation */
 		if (capa < str->capa * 2) capa = str->capa * 2;
 
-		if (str->awk->syscas->realloc != XP_NULL)
+		if (str->awk->syscas.realloc != XP_NULL)
 		{
 			tmp = (xp_char_t*) XP_AWK_REALLOC (
 				str->awk, str->buf, 

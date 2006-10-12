@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.20 2006-10-12 04:17:31 bacon Exp $
+ * $Id: tab.c,v 1.21 2006-10-12 14:36:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -58,7 +58,7 @@ xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa)
 
 	if (capa > 0) 
 	{
-		if (tab->awk->syscas->realloc != XP_NULL)
+		if (tab->awk->syscas.realloc != XP_NULL)
 		{
 			tmp = XP_AWK_REALLOC (tab->awk, 
 				tab->buf, xp_sizeof(*tab->buf) * capa);

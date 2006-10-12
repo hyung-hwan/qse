@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.79 2006-10-12 04:17:30 bacon Exp $ 
+ * $Id: awk.c,v 1.80 2006-10-12 14:36:25 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -41,7 +41,13 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 #endif
 	if (awk == XP_NULL) return XP_NULL;
 
-	awk->syscas = syscas;
+	if (syscas->memcpy == XP_NULL)
+	{
+		xp_awk_memcpy (&awk->syscas, syscas, xp_sizeof(awk->syscas));
+		awk->syscas.memcpy = xp_awk_memcpy;
+	}
+	else syscas->memcpy (&awk->syscas, syscas, xp_sizeof(awk->syscas));
+	if (syscas->memset == XP_NULL) awk->syscas.memset = xp_awk_memset;
 
 	if (xp_awk_str_open (&awk->token.name, 128, awk) == XP_NULL) 
 	{

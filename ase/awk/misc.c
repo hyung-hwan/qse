@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.27 2006-10-12 04:17:31 bacon Exp $
+ * $Id: misc.c,v 1.28 2006-10-12 14:36:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1063,9 +1063,9 @@ exit_loop:
 int xp_awk_abort (xp_awk_t* awk, 
 	const xp_char_t* expr, const xp_char_t* file, int line)
 {
-	awk->syscas->dprintf (
+	awk->syscas.dprintf (
 		XP_T("ASSERTION FAILURE AT FILE %s, LINE %d\n%s\n"),
 		file, line, expr);
-	awk->syscas->abort ();
+	awk->syscas.abort ();
 	return 0;
 }

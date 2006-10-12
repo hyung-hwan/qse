@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.35 2006-10-12 04:17:31 bacon Exp $
+ * $Id: rex.c,v 1.36 2006-10-12 14:36:25 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -958,7 +958,7 @@ static int __add_code (__builder_t* builder, void* data, xp_size_t len)
 		if (capa == 0) capa = DEF_CODE_CAPA;
 		while (len > capa - builder->code.size) { capa = capa * 2; }
 
-		if (builder->awk->syscas->realloc != XP_NULL)
+		if (builder->awk->syscas.realloc != XP_NULL)
 		{
 			tmp = (xp_byte_t*) XP_AWK_REALLOC (
 				builder->awk, builder->code.buf, capa);
