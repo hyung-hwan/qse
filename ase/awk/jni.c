@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.5 2006-10-12 14:36:25 bacon Exp $
+ * $Id: jni.c,v 1.6 2006-10-13 10:18:10 bacon Exp $
  */
 
 #include <xp/awk/jni.h>
@@ -13,19 +13,31 @@
 #define EXCEPTION_AWK "xpkit/xpj/awk/AwkException"
 #define FIELD_AWK     "__awk"
 
+enum
+{
+	SOURCE_READ = 1,
+	SOURCE_WRITE = 2
+};
+
+/* TODO: what if xp_char_t is xp_mchar_t??? */
+
 static xp_ssize_t __read_source (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 static xp_ssize_t __write_source (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
-
-static xp_ssize_t __call_java_read_source (
-	JNIEnv* env, jobject obj, xp_char_t* buf, xp_size_t size);
-static xp_ssize_t __call_java_write_source (
-	JNIEnv* env, jobject obj, xp_char_t* buf, xp_size_t size);
+static xp_ssize_t __process_extio_console (
+	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 
 typedef struct srcio_data_t srcio_data_t;
+typedef struct runio_data_t runio_data_t;
 
 struct srcio_data_t
+{
+	JNIEnv* env;
+	jobject obj;
+};
+
+struct runio_data_t
 {
 	JNIEnv* env;
 	jobject obj;
@@ -78,10 +90,16 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
-/* TODO: */
+#ifdef _WIN32
 	syscas.sprintf = _snwprintf;
 	syscas.dprintf = wprintf;
 	syscas.abort = abort;
+#else
+	/* TODO: */
+	syscas.sprintf = XXXXX;
+	syscas.dprintf = XXXXX;
+	syscas.abort = abort;
+#endif
 
 	awk = xp_awk_open (&syscas);
 	if (awk == NULL)
@@ -145,13 +163,12 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_parse (JNIEnv* env, jobject obj)
 	srcios.out = __write_source;
 	srcios.custom_data = &srcio_data;
 
-printf ("OK.......\n");
 	if (xp_awk_parse (awk, &srcios) == -1)
 	{
 printf ("parse error.......\n");
 		except = (*env)->FindClass (env, EXCEPTION_AWK);
 		if (except == 0) return;
-		(*env)->ThrowNew (env, except, "ERROR ....");
+		(*env)->ThrowNew (env, except, "Parse Error ...");
 printf ("parse error -> line [%d] %S\n", xp_awk_getsrcline(awk), xp_awk_geterrstr(xp_awk_geterrnum(awk)));
 		return;
 	}
@@ -159,41 +176,83 @@ printf ("parse error -> line [%d] %S\n", xp_awk_getsrcline(awk), xp_awk_geterrst
 
 JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_run (JNIEnv* env, jobject obj)
 {
+	jclass class;
+	jfieldID fid;
+	jthrowable except;
+
+	xp_awk_t* awk;
+	xp_awk_runios_t runios;
+	runio_data_t runio_data;
+
+	class = (*env)->GetObjectClass (env, obj);
+
+	fid = (*env)->GetFieldID (env, class, FIELD_AWK, "J");
+	if (fid == 0) return;
+
+	awk = (xp_awk_t*) (*env)->GetLongField (env, obj, fid);
+
+	runio_data.env = env;
+	runio_data.obj = obj;
+
+	runios.pipe = XP_NULL;
+	runios.coproc = XP_NULL;
+	runios.file = XP_NULL;
+	runios.console = __process_extio_console;
+	runios.custom_data = &runio_data;
+
+	if (xp_awk_run (awk, &runios, XP_NULL, XP_NULL) == -1)
+	{
+		except = (*env)->FindClass (env, EXCEPTION_AWK);
+		if (except == 0) return;
+		(*env)->ThrowNew (env, except, "Run Error ...");
+		return;
+	}
 }
 
-static xp_ssize_t __read_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count)
+static xp_ssize_t __call_java_open_source (JNIEnv* env, jobject obj, int mode)
 {
-	srcio_data_t* srcio_data;
+	jclass class; 
+	jmethodID mid;
+	jthrowable thrown;
+	jint ret;
+	
+	class = (*env)->GetObjectClass(env, obj);
 
-	srcio_data = (srcio_data_t*)arg;
+	mid = (*env)->GetMethodID (env, class, "open_source", "(I)I");
+	if (mid == 0) return -1;
 
-	if (cmd == XP_AWK_IO_OPEN || cmd == XP_AWK_IO_CLOSE) return 0;
-
-	if (cmd == XP_AWK_IO_READ)
+	ret = (*env)->CallIntMethod (env, obj, mid, mode);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
 	{
-		return __call_java_read_source (
-			srcio_data->env, srcio_data->obj, data, count);
+		(*env)->ExceptionClear (env);
+		ret = -1;
 	}
 
-	return -1;
+	return ret;
 }
 
-static xp_ssize_t __write_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count)
+static xp_ssize_t __call_java_close_source (JNIEnv* env, jobject obj, int mode)
 {
-	srcio_data_t* srcio_data;
+	jclass class; 
+	jmethodID mid;
+	jthrowable thrown;
+	jint ret;
+	
+	class = (*env)->GetObjectClass(env, obj);
 
-	srcio_data = (srcio_data_t*)arg;
+	mid = (*env)->GetMethodID (env, class, "close_source", "(I)I");
+	if (mid == 0) return -1;
 
-	if (cmd == XP_AWK_IO_OPEN || cmd == XP_AWK_IO_CLOSE) return 0;
-	if (cmd == XP_AWK_IO_WRITE)
+	ret = (*env)->CallIntMethod (env, obj, mid, mode);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
 	{
-		return __call_java_write_source (
-			srcio_data->env, srcio_data->obj, data, count);
+		(*env)->ExceptionClear (env);
+		ret = -1;
 	}
 
-	return -1;
+	return ret;
 }
 
 static xp_ssize_t __call_java_read_source (
@@ -202,23 +261,28 @@ static xp_ssize_t __call_java_read_source (
 	jclass class; 
 	jmethodID mid;
 	jcharArray array;
-	xp_ssize_t i, n;
 	jchar* tmp;
+	jint ret, i;
+	jthrowable thrown;
 	
 	class = (*env)->GetObjectClass(env, obj);
 
 	mid = (*env)->GetMethodID (env, class, "read_source", "([CI)I");
 	if (mid == 0) return -1;
 
-	array = (*env)->NewCharArray (env, 1024);
+	array = (*env)->NewCharArray (env, size);
 	if (array == NULL) return -1;
 
-	n = (*env)->CallIntMethod (env, obj, mid, array, 1024);
+	ret = (*env)->CallIntMethod (env, obj, mid, array, size);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+		(*env)->ExceptionClear (env);
+		ret = -1;
+	}
 
-// TODO: how to handle error..
-// TODO: what is xp_char_t is xp_mchar_t? use UTF8 ???
 	tmp = (*env)->GetCharArrayElements (env, array, 0);
-	for (i = 0; i < n && i < size; i++) buf[i] = (xp_char_t)tmp[i]; 
+	for (i = 0; i < ret; i++) buf[i] = (xp_char_t)tmp[i]; 
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
 	return i;
@@ -230,8 +294,9 @@ static xp_ssize_t __call_java_write_source (
 	jclass class; 
 	jmethodID mid;
 	jcharArray array;
-	xp_ssize_t i;
 	jchar* tmp;
+	jint ret, i;
+	jthrowable thrown;
 	
 	class = (*env)->GetObjectClass(env, obj);
 
@@ -241,11 +306,224 @@ static xp_ssize_t __call_java_write_source (
 	array = (*env)->NewCharArray (env, size);
 	if (array == NULL) return -1;
 
-// TODO: how to handle error..
-// TODO: what is xp_char_t is xp_mchar_t? use UTF8 ???
 	tmp = (*env)->GetCharArrayElements (env, array, 0);
 	for (i = 0; i < size; i++) tmp[i] = (jchar)buf[i]; 
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
-	return (*env)->CallIntMethod (env, obj, mid, array, size);
+	ret = (*env)->CallIntMethod (env, obj, mid, array, size);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+		(*env)->ExceptionClear (env);
+		ret = -1;
+	}
+
+	return ret;
+}
+
+static xp_ssize_t __call_java_open_extio (JNIEnv* env, jobject obj, char* name)
+{
+	jclass class; 
+	jmethodID mid;
+	jthrowable thrown;
+	jint ret;
+	
+	class = (*env)->GetObjectClass(env, obj);
+
+	mid = (*env)->GetMethodID (env, class, name, "()I");
+	if (mid == 0) return -1;
+
+	ret = (*env)->CallIntMethod (env, obj, mid);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+		(*env)->ExceptionClear (env);
+		ret = -1;
+	}
+
+	return ret;
+}
+
+static xp_ssize_t __call_java_close_extio (JNIEnv* env, jobject obj, char* name)
+{
+	jclass class; 
+	jmethodID mid;
+	jthrowable thrown;
+	jint ret;
+	
+	class = (*env)->GetObjectClass(env, obj);
+
+	mid = (*env)->GetMethodID (env, class, name, "()I");
+	if (mid == 0) return -1;
+
+	ret = (*env)->CallIntMethod (env, obj, mid);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+		(*env)->ExceptionClear (env);
+		ret = -1;
+	}
+
+	return ret;
+}
+
+static xp_ssize_t __call_java_read_extio (
+	JNIEnv* env, jobject obj, char* name, xp_char_t* buf, xp_size_t size)
+{
+	jclass class; 
+	jmethodID mid;
+	jcharArray array;
+	jchar* tmp;
+	jint ret, i;
+	jthrowable thrown;
+	
+	class = (*env)->GetObjectClass(env, obj);
+
+	mid = (*env)->GetMethodID (env, class, name, "([CI)I");
+	if (mid == 0) return -1;
+
+	array = (*env)->NewCharArray (env, size);
+	if (array == NULL) return -1;
+
+	ret = (*env)->CallIntMethod (env, obj, mid, array, size);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+		(*env)->ExceptionClear (env);
+		ret = -1;
+	}
+
+	tmp = (*env)->GetCharArrayElements (env, array, 0);
+	for (i = 0; i < ret; i++) buf[i] = (xp_char_t)tmp[i]; 
+	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
+
+	return ret;
+}
+
+static xp_ssize_t __call_java_write_extio (
+	JNIEnv* env, jobject obj, char* name, xp_char_t* data, xp_size_t size)
+{
+	jclass class; 
+	jmethodID mid;
+	jcharArray array;
+	xp_ssize_t i;
+	jchar* tmp;
+	jint ret;
+	jthrowable thrown;
+	
+	class = (*env)->GetObjectClass(env, obj);
+
+	mid = (*env)->GetMethodID (env, class, name, "([CI)I");
+	if (mid == 0) return -1;
+
+	array = (*env)->NewCharArray (env, size);
+	if (array == NULL) return -1;
+
+	tmp = (*env)->GetCharArrayElements (env, array, 0);
+	for (i = 0; i < size; i++) tmp[i] = (jchar)data[i]; 
+	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
+
+	ret = (*env)->CallIntMethod (env, obj, mid, array, size);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+		(*env)->ExceptionClear (env);
+		ret = -1;
+	}
+
+	return ret;
+}
+
+static xp_ssize_t __read_source (
+	int cmd, void* arg, xp_char_t* data, xp_size_t count)
+{
+	srcio_data_t* srcio_data = (srcio_data_t*)arg;
+
+	if (cmd == XP_AWK_IO_OPEN) 
+	{
+		return __call_java_open_source (
+			srcio_data->env, srcio_data->obj, SOURCE_READ);
+	}
+	else if (cmd == XP_AWK_IO_CLOSE)
+	{
+		return __call_java_close_source (
+			srcio_data->env, srcio_data->obj, SOURCE_READ);
+	}
+	else if (cmd == XP_AWK_IO_READ)
+	{
+		return __call_java_read_source (
+			srcio_data->env, srcio_data->obj, data, count);
+	}
+
+	return -1;
+}
+
+static xp_ssize_t __write_source (
+	int cmd, void* arg, xp_char_t* data, xp_size_t count)
+{
+	srcio_data_t* srcio_data = (srcio_data_t*)arg;
+
+	if (cmd == XP_AWK_IO_OPEN) 
+	{
+		return __call_java_open_source (
+			srcio_data->env, srcio_data->obj, SOURCE_WRITE);
+	}
+	else if (cmd == XP_AWK_IO_CLOSE)
+	{
+		return __call_java_close_source (
+			srcio_data->env, srcio_data->obj, SOURCE_WRITE);
+	}
+	else if (cmd == XP_AWK_IO_WRITE)
+	{
+		return __call_java_write_source (
+			srcio_data->env, srcio_data->obj, data, count);
+	}
+
+	return -1;
+}
+
+static xp_ssize_t __process_extio_console (
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+{
+	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
+	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
+
+	if (cmd == XP_AWK_IO_OPEN)
+	{
+		return __call_java_open_extio (
+			runio_data->env, runio_data->obj, "open_console");
+	}
+	else if (cmd == XP_AWK_IO_CLOSE)
+	{
+		return __call_java_close_extio (
+			runio_data->env, runio_data->obj, "close_console");
+	}
+
+	else if (cmd == XP_AWK_IO_READ)
+	{
+		return __call_java_read_extio (
+			runio_data->env, runio_data->obj, "read_console",
+			data, size);
+	}
+	else if (cmd == XP_AWK_IO_WRITE)
+	{
+		/* epa->handle not used at all */
+		/* TODO: error handling */
+		return __call_java_write_extio (
+			runio_data->env, runio_data->obj, "write_console",
+			data, size);
+	}
+#if 0
+	else if (cmd == XP_AWK_IO_FLUSH)
+	{
+		if (fflush ((FILE*)epa->handle) == EOF) return -1;
+		return 0;
+	}
+	else if (cmd == XP_AWK_IO_NEXT)
+	{
+		return next_extio_console (epa);
+	}
+
+#endif
+	return -1;
 }
