@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.6 2006-10-13 10:18:10 bacon Exp $
+ * $Id: jni.c,v 1.7 2006-10-13 14:05:24 bacon Exp $
  */
 
 #include <xp/awk/jni.h>
@@ -26,6 +26,8 @@ static xp_ssize_t __read_source (
 static xp_ssize_t __write_source (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 static xp_ssize_t __process_extio_console (
+	int cmd, void* arg, xp_char_t* data, xp_size_t count);
+static xp_ssize_t __process_extio_file (
 	int cmd, void* arg, xp_char_t* data, xp_size_t count);
 
 typedef struct srcio_data_t srcio_data_t;
@@ -196,7 +198,7 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_run (JNIEnv* env, jobject obj)
 
 	runios.pipe = XP_NULL;
 	runios.coproc = XP_NULL;
-	runios.file = XP_NULL;
+	runios.file = __process_extio_file;
 	runios.console = __process_extio_console;
 	runios.custom_data = &runio_data;
 
@@ -321,7 +323,8 @@ static xp_ssize_t __call_java_write_source (
 	return ret;
 }
 
-static xp_ssize_t __call_java_open_extio (JNIEnv* env, jobject obj, char* name)
+static xp_ssize_t __call_java_open_extio (
+	JNIEnv* env, jobject obj, char* meth, const xp_char_t* name)
 {
 	jclass class; 
 	jmethodID mid;
@@ -330,10 +333,27 @@ static xp_ssize_t __call_java_open_extio (JNIEnv* env, jobject obj, char* name)
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	mid = (*env)->GetMethodID (env, class, name, "()I");
-	if (mid == 0) return -1;
+	if (name == XP_NULL)
+	{
+		mid = (*env)->GetMethodID (env, class, meth, "()I");
+		if (mid == 0) return -1;
 
-	ret = (*env)->CallIntMethod (env, obj, mid);
+		ret = (*env)->CallIntMethod (env, obj, mid);
+	}
+	else
+	{
+		jstring name_str;
+
+		mid = (*env)->GetMethodID (
+			env, class, meth, "(Ljava/lang/String;)I");
+		if (mid == 0) return -1;
+
+		name_str = (*env)->NewString (env, name, xp_awk_strlen(name));
+		if (name_str == 0) return -1;
+
+		ret = (*env)->CallIntMethod (env, obj, mid, name_str);
+	}
+
 	thrown = (*env)->ExceptionOccurred (env);
 	if (thrown)
 	{
@@ -344,7 +364,8 @@ static xp_ssize_t __call_java_open_extio (JNIEnv* env, jobject obj, char* name)
 	return ret;
 }
 
-static xp_ssize_t __call_java_close_extio (JNIEnv* env, jobject obj, char* name)
+static xp_ssize_t __call_java_close_extio (
+	JNIEnv* env, jobject obj, char* meth, const xp_char_t* name)
 {
 	jclass class; 
 	jmethodID mid;
@@ -353,10 +374,27 @@ static xp_ssize_t __call_java_close_extio (JNIEnv* env, jobject obj, char* name)
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	mid = (*env)->GetMethodID (env, class, name, "()I");
-	if (mid == 0) return -1;
+	if (name == XP_NULL)
+	{
+		mid = (*env)->GetMethodID (env, class, meth, "()I");
+		if (mid == 0) return -1;
 
-	ret = (*env)->CallIntMethod (env, obj, mid);
+		ret = (*env)->CallIntMethod (env, obj, mid);
+	}
+	else
+	{
+		jstring name_str;
+
+		mid = (*env)->GetMethodID (
+			env, class, meth, "(Ljava/lang/String;)I");
+		if (mid == 0) return -1;
+
+		name_str = (*env)->NewString (env, name, xp_awk_strlen(name));
+		if (name_str == 0) return -1;
+
+		ret = (*env)->CallIntMethod (env, obj, mid, name_str);
+	}
+
 	thrown = (*env)->ExceptionOccurred (env);
 	if (thrown)
 	{
@@ -368,7 +406,7 @@ static xp_ssize_t __call_java_close_extio (JNIEnv* env, jobject obj, char* name)
 }
 
 static xp_ssize_t __call_java_read_extio (
-	JNIEnv* env, jobject obj, char* name, xp_char_t* buf, xp_size_t size)
+	JNIEnv* env, jobject obj, char* meth, xp_char_t* buf, xp_size_t size)
 {
 	jclass class; 
 	jmethodID mid;
@@ -379,7 +417,7 @@ static xp_ssize_t __call_java_read_extio (
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	mid = (*env)->GetMethodID (env, class, name, "([CI)I");
+	mid = (*env)->GetMethodID (env, class, meth, "([CI)I");
 	if (mid == 0) return -1;
 
 	array = (*env)->NewCharArray (env, size);
@@ -401,7 +439,7 @@ static xp_ssize_t __call_java_read_extio (
 }
 
 static xp_ssize_t __call_java_write_extio (
-	JNIEnv* env, jobject obj, char* name, xp_char_t* data, xp_size_t size)
+	JNIEnv* env, jobject obj, char* meth, xp_char_t* data, xp_size_t size)
 {
 	jclass class; 
 	jmethodID mid;
@@ -413,7 +451,7 @@ static xp_ssize_t __call_java_write_extio (
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	mid = (*env)->GetMethodID (env, class, name, "([CI)I");
+	mid = (*env)->GetMethodID (env, class, meth, "([CI)I");
 	if (mid == 0) return -1;
 
 	array = (*env)->NewCharArray (env, size);
@@ -491,12 +529,14 @@ static xp_ssize_t __process_extio_console (
 	if (cmd == XP_AWK_IO_OPEN)
 	{
 		return __call_java_open_extio (
-			runio_data->env, runio_data->obj, "open_console");
+			runio_data->env, runio_data->obj, 
+			"open_console", XP_NULL);
 	}
 	else if (cmd == XP_AWK_IO_CLOSE)
 	{
 		return __call_java_close_extio (
-			runio_data->env, runio_data->obj, "close_console");
+			runio_data->env, runio_data->obj, 
+			"close_console", XP_NULL);
 	}
 
 	else if (cmd == XP_AWK_IO_READ)
@@ -507,8 +547,6 @@ static xp_ssize_t __process_extio_console (
 	}
 	else if (cmd == XP_AWK_IO_WRITE)
 	{
-		/* epa->handle not used at all */
-		/* TODO: error handling */
 		return __call_java_write_extio (
 			runio_data->env, runio_data->obj, "write_console",
 			data, size);
@@ -516,14 +554,39 @@ static xp_ssize_t __process_extio_console (
 #if 0
 	else if (cmd == XP_AWK_IO_FLUSH)
 	{
-		if (fflush ((FILE*)epa->handle) == EOF) return -1;
-		return 0;
+		return __call_java_flush_extio (
+			runio_data->env, runio_data->obj, "flush_console",
+			data, size);
 	}
 	else if (cmd == XP_AWK_IO_NEXT)
 	{
-		return next_extio_console (epa);
+		return __call_java_next_extio (
+			runio_data->env, runio_data->obj, "flush_console",
+			data, size);
+	}
+#endif
+
+	return -1;
+}
+
+static xp_ssize_t __process_extio_file (
+	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+{
+	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
+	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
+
+	if (cmd == XP_AWK_IO_OPEN)
+	{
+		return __call_java_open_extio (
+			runio_data->env, runio_data->obj, 
+			"open_file", epa->name);
+	}
+	else if (cmd == XP_AWK_IO_CLOSE)
+	{
+		return __call_java_close_extio (
+			runio_data->env, runio_data->obj, 
+			"close_file", epa->name);
 	}
 
-#endif
 	return -1;
 }
