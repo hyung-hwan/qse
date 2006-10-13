@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.52 2006-10-12 04:17:30 bacon Exp $
+ * $Id: extio.c,v 1.53 2006-10-13 10:18:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -132,13 +132,13 @@ int xp_awk_readextio (
 		p->type = (extio_type | extio_mask);
 		p->mode = extio_mode;
 		p->handle = XP_NULL;
+		p->next = XP_NULL;
+		p->custom_data = run->extio.custom_data;
 
 		p->in.buf[0] = XP_T('\0');
 		p->in.pos = 0;
 		p->in.len = 0;
 		p->in.eof = xp_false;
-
-		p->next = XP_NULL;
 
 		n = handler (XP_AWK_IO_OPEN, p, XP_NULL, 0);
 		if (n == -1)
@@ -159,11 +159,11 @@ int xp_awk_readextio (
 		p->next = run->extio.chain;
 		run->extio.chain = p;
 
-		/* n == 0 indicates that it has reached the end of input. 
-		 * the user io handler can return 0 for the open request
-		 * if it doesn't have any files to open. One advantage 
-		 * of doing this would be that you can skip the entire
-		 * pattern-block matching and exeuction. */
+		/* usually, n == 0 indicates that it has reached the end 
+		 * of the input. the user io handler can return 0 for the 
+		 * open request if it doesn't have any files to open. One 
+		 * advantage of doing this would be that you can skip the 
+		 * entire pattern-block matching and exeuction. */
 		if (n == 0) return 0;
 	}
 
@@ -457,6 +457,7 @@ int xp_awk_writeextio_str (
 		p->mode = extio_mode;
 		p->handle = XP_NULL;
 		p->next = XP_NULL;
+		p->custom_data = run->extio.custom_data;
 
 		n = handler (XP_AWK_IO_OPEN, p, XP_NULL, 0);
 		if (n == -1)
@@ -477,7 +478,11 @@ int xp_awk_writeextio_str (
 		p->next = run->extio.chain;
 		run->extio.chain = p;
 
-		/* read the comment in xp_awk_readextio */
+		/* usually, n == 0 indicates that it has reached the end 
+		 * of the input. the user io handler can return 0 for the 
+		 * open request if it doesn't have any files to open. One 
+		 * advantage of doing this would be that you can skip the 
+		 * entire pattern-block matching and exeuction. */
 		if (n == 0) return 0;
 	}
 

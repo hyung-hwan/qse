@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.234 2006-10-12 14:36:25 bacon Exp $
+ * $Id: run.c,v 1.235 2006-10-13 10:18:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -645,6 +645,7 @@ static int __init_run (xp_awk_run_t* run, xp_awk_runios_t* runios, int* errnum)
 	run->extio.handler[XP_AWK_EXTIO_COPROC] = runios->coproc;
 	run->extio.handler[XP_AWK_EXTIO_FILE] = runios->file;
 	run->extio.handler[XP_AWK_EXTIO_CONSOLE] = runios->console;
+	run->extio.custom_data = runios->custom_data;
 	run->extio.chain = XP_NULL;
 
 	run->global.rs = XP_NULL;
@@ -789,38 +790,42 @@ static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 	}
 	xp_awk_refupval (v_argv);
 
-	for (argc = 0, p = runarg; p->ptr != XP_NULL; argc++, p++)
+	if (runarg == XP_NULL) argc = 0;
+	else
 	{
-		v_tmp = xp_awk_makestrval (run, p->ptr, p->len);
-		if (v_tmp == XP_NULL)
+		for (argc = 0, p = runarg; p->ptr != XP_NULL; argc++, p++)
 		{
-			xp_awk_refdownval (run, v_argv);
-			run->errnum = XP_AWK_ENOMEM;
-			return -1;
-		}
+			v_tmp = xp_awk_makestrval (run, p->ptr, p->len);
+			if (v_tmp == XP_NULL)
+			{
+				xp_awk_refdownval (run, v_argv);
+					run->errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
 
-		key_len = xp_awk_longtostr (
-			argc, 10, XP_NULL, key, xp_countof(key));
-		xp_awk_assert (run->awk, key_len != (xp_size_t)-1);
+			key_len = xp_awk_longtostr (
+				argc, 10, XP_NULL, key, xp_countof(key));
+			xp_awk_assert (run->awk, key_len != (xp_size_t)-1);
 
-		/* increment reference count of v_tmp in advance as if 
-		 * it has successfully been assigned into the ARGV map */
-		xp_awk_refupval (v_tmp);
+			/* increment reference count of v_tmp in advance as if 
+			 * it has successfully been assigned into ARGV. */
+			xp_awk_refupval (v_tmp);
 
-		if (xp_awk_map_putx (
-			((xp_awk_val_map_t*)v_argv)->map,
-			key, key_len, v_tmp, XP_NULL) == -1)
-		{
-			/* if the assignment operation fails, decrements
-			 * the reference of v_tmp to free it */
-			xp_awk_refdownval (run, v_tmp);
+			if (xp_awk_map_putx (
+				((xp_awk_val_map_t*)v_argv)->map,
+				key, key_len, v_tmp, XP_NULL) == -1)
+			{
+				/* if the assignment operation fails, decrements
+				 * the reference of v_tmp to free it */
+				xp_awk_refdownval (run, v_tmp);
 
-			/* the other values previously assigned into the map
-			 * will be freeed when v_argv is freed */
-			xp_awk_refdownval (run, v_argv);
+				/* the values previously assigned into the
+				 * map will be freeed when v_argv is freed */
+				xp_awk_refdownval (run, v_argv);
 
-			run->errnum = XP_AWK_ENOMEM;
-			return -1;
+				run->errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
 		}
 	}
 
@@ -2105,6 +2110,7 @@ static int __run_print (xp_awk_run_t* run, xp_awk_nde_print_t* nde)
 				xp_awk_refdownval (run, v);
 				return -1;
 			}
+
 			xp_awk_refdownval (run, v);
 
 

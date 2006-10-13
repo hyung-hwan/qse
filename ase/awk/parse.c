@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.188 2006-10-12 04:17:31 bacon Exp $
+ * $Id: parse.c,v 1.189 2006-10-13 10:18:10 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -318,16 +318,19 @@ static struct __bvent __bvtab[] =
 
 int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 {
-	int n = 0;
+	int n = 0, op;
 
 	xp_awk_assert (awk, srcios != XP_NULL && srcios->in != XP_NULL);
 
 	xp_awk_clear (awk);
 	awk->src.ios = srcios;
 
-	if (awk->src.ios->in (
-		XP_AWK_IO_OPEN, awk->src.ios->custom_data, XP_NULL, 0) == -1)
+	op = awk->src.ios->in (
+		XP_AWK_IO_OPEN, awk->src.ios->custom_data, XP_NULL, 0);
+	if (op == -1)
 	{
+		/* cannot open the source file.
+		 * it doesn't even have to call CLOSE */
 		awk->errnum = XP_AWK_ESRCINOPEN;
 		return -1;
 	}
@@ -338,29 +341,36 @@ int xp_awk_parse (xp_awk_t* awk, xp_awk_srcios_t* srcios)
 		goto exit_parse;
 	}
 
-	/* get the first character */
-	if (__get_char(awk) == -1) 
+	/* the user io handler for the source code input returns 0 when
+	 * it doesn't have any files to open. this is the same condition
+	 * as the source code file is empty. so it will perform the parsing
+	 * when op is positive, which means there are something to parse */
+	if (op > 0)
 	{
-		n = -1;
-		goto exit_parse;
-	}
-
-	/* get the first token */
-	if (__get_token(awk) == -1) 
-	{
-		n = -1;
-		goto exit_parse;
-	}
-
-	while (1) 
-	{
-		if (MATCH(awk,TOKEN_EOF)) break;
-		if (MATCH(awk,TOKEN_NEWLINE)) continue;
-
-		if (__parse_progunit (awk) == XP_NULL) 
+		/* get the first character */
+		if (__get_char(awk) == -1) 
 		{
 			n = -1;
 			goto exit_parse;
+		}
+
+		/* get the first token */
+		if (__get_token(awk) == -1) 
+		{
+			n = -1;
+			goto exit_parse;
+		}
+
+		while (1) 
+		{
+			if (MATCH(awk,TOKEN_EOF)) break;
+			if (MATCH(awk,TOKEN_NEWLINE)) continue;
+
+			if (__parse_progunit (awk) == XP_NULL) 
+			{
+				n = -1;
+				goto exit_parse;
+			}
 		}
 	}
 
@@ -379,7 +389,7 @@ exit_parse:
 	if (awk->src.ios->in (
 		XP_AWK_IO_CLOSE, awk->src.ios->custom_data, XP_NULL, 0) == -1)
 	{
-		if (n == 0)
+		if (n != -1)
 		{
 			/* this is to keep the earlier error above
 			 * that might be more critical than this */
@@ -4121,19 +4131,36 @@ static int __deparse (xp_awk_t* awk)
 	xp_awk_chain_t* chain;
 	xp_char_t tmp[xp_sizeof(xp_size_t)*8 + 32];
 	struct __deparse_func_t df;
-	int n;
+	int n = 0, op;
 
 	xp_awk_assert (awk, awk->src.ios->out != XP_NULL);
 
 	awk->src.shared.buf_len = 0;
 	awk->src.shared.buf_pos = 0;
 
-/* TODO: more error handling */
-	if (awk->src.ios->out (
-		XP_AWK_IO_OPEN, awk->src.ios->custom_data, XP_NULL, 0) == -1)
+	op = awk->src.ios->out (
+		XP_AWK_IO_OPEN, awk->src.ios->custom_data, XP_NULL, 0);
+	if (op == -1)
 	{
 		awk->errnum = XP_AWK_ESRCOUTOPEN;
 		return -1;
+	}
+
+	if (op == 0)
+	{
+		/* the result of the open operation indicates that the 
+		 * file has been open but reached the end. so it has to 
+		 * skip the entire deparsing procedure as it can't write 
+		 * any single characters on such an io handler. but note 
+		 * that this is not really an error for the parse and deparser. 
+		 *
+		 * in fact, there are two ways to skip deparsing.
+		 *    1. set awk->src.ios.out to NULL.
+		 *    2. set awk->src.ios.out to a normal handler but
+		 *       make it return 0 on the OPEN request.
+		 */
+		n = 0;
+		goto exit_deparse;
 	}
 
 #define EXIT_DEPARSE(num) \
@@ -4141,7 +4168,7 @@ static int __deparse (xp_awk_t* awk)
 
 	if (awk->tree.nglobals > awk->tree.nbglobals) 
 	{
-		xp_size_t i, n;
+		xp_size_t i, len;
 
 		xp_awk_assert (awk, awk->tree.nglobals > 0);
 		if (xp_awk_putsrcstr (awk, XP_T("global ")) == -1)
@@ -4149,19 +4176,19 @@ static int __deparse (xp_awk_t* awk)
 
 		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
 		{
-			n = xp_awk_longtostr ((xp_long_t)i, 
+			len = xp_awk_longtostr ((xp_long_t)i, 
 				10, XP_T("__global"), tmp, xp_countof(tmp));
-			xp_awk_assert (awk, n != (xp_size_t)-1);
-			if (xp_awk_putsrcstrx (awk, tmp, n) == -1)
+			xp_awk_assert (awk, len != (xp_size_t)-1);
+			if (xp_awk_putsrcstrx (awk, tmp, len) == -1)
 				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 			if (xp_awk_putsrcstr (awk, XP_T(", ")) == -1)
 				EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		}
 
-		n = xp_awk_longtostr ((xp_long_t)i, 
+		len = xp_awk_longtostr ((xp_long_t)i, 
 			10, XP_T("__global"), tmp, xp_countof(tmp));
-		xp_awk_assert (awk, n != (xp_size_t)-1);
-		if (xp_awk_putsrcstrx (awk, tmp, n) == -1)
+		xp_awk_assert (awk, len != (xp_size_t)-1);
+		if (xp_awk_putsrcstrx (awk, tmp, len) == -1)
 			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
 		if (xp_awk_putsrcstr (awk, XP_T(";\n\n")) == -1)
 			EXIT_DEPARSE (XP_AWK_ESRCOUTWRITE);
@@ -4231,7 +4258,7 @@ exit_deparse:
 	{
 		if (n != -1)
 		{
-			awk->errnum = XP_AWK_ESRCOUTOPEN;
+			awk->errnum = XP_AWK_ESRCOUTCLOSE;
 			n = -1;
 		}
 	}

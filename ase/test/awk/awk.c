@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.95 2006-10-12 04:17:58 bacon Exp $
+ * $Id: awk.c,v 1.96 2006-10-13 10:18:39 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -187,7 +187,8 @@ static xp_ssize_t dump_source (
 {
 	/*struct src_io* src_io = (struct src_io*)arg;*/
 
-	if (cmd == XP_AWK_IO_OPEN || cmd == XP_AWK_IO_CLOSE) return 0;
+	if (cmd == XP_AWK_IO_OPEN) return 1;
+	else if (cmd == XP_AWK_IO_CLOSE) return 0;
 	else if (cmd == XP_AWK_IO_WRITE)
 	{
 		xp_size_t i;

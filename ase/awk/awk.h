@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.126 2006-10-12 04:17:30 bacon Exp $
+ * $Id: awk.h,v 1.127 2006-10-13 10:18:10 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -25,10 +25,11 @@ typedef xp_ssize_t (*xp_awk_io_t) (
 
 struct xp_awk_extio_t 
 {
-	int type;         /* [IN] console, file, coproc, pipe */
-	int mode;         /* [IN] read, write, etc */
-	xp_char_t* name;  /* [IN] */
-	void* handle;     /* [OUT] */
+	int type;          /* [IN] console, file, coproc, pipe */
+	int mode;          /* [IN] read, write, etc */
+	xp_char_t* name;   /* [IN] */
+	void* custom_data; /* [IN] */
+	void* handle;      /* [OUT] */
 
 	/* input buffer */
 	struct
@@ -92,6 +93,7 @@ struct xp_awk_runios_t
 	xp_awk_io_t coproc;
 	xp_awk_io_t file;
 	xp_awk_io_t console;
+	void* custom_data;
 };
 
 struct xp_awk_runcbs_t
