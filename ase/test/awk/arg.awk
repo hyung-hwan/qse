@@ -14,5 +14,10 @@ BEGIN {
 	}
 
 
+	#for (i = 0
+	#     i < 20
+	#     i;;) print i;
+
+
 	if (ARGC >= 0) print "ARGC is positive";
 }

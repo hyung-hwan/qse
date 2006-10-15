@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.66 2006-10-13 10:18:10 bacon Exp $
+ * $Id: awk_i.h,v 1.67 2006-10-15 15:45:41 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWKI_H_
@@ -122,6 +122,8 @@ struct xp_awk_t
 		xp_awk_tab_t locals;
 		xp_awk_tab_t params;
 		xp_size_t nlocals_max;
+
+		int nl_semicolon;
 	} parse;
 
 	/* source code management */

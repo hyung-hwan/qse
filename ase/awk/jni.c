@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.7 2006-10-13 14:05:24 bacon Exp $
+ * $Id: jni.c,v 1.8 2006-10-15 15:45:41 bacon Exp $
  */
 
 #include <xp/awk/jni.h>
@@ -209,6 +209,13 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_run (JNIEnv* env, jobject obj)
 		(*env)->ThrowNew (env, except, "Run Error ...");
 		return;
 	}
+}
+
+JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_set_1extio_1handle (
+	JNIEnv* env, jobject obj, jlong extio, jobject handle)
+{
+	xp_awk_extio_t* epa = (xp_awk_extio_t*)extio;
+	epa->handle = (void*)handle;
 }
 
 static xp_ssize_t __call_java_open_source (JNIEnv* env, jobject obj, int mode)

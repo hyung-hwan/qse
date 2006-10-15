@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.80 2006-10-12 14:36:25 bacon Exp $ 
+ * $Id: awk.c,v 1.81 2006-10-15 15:45:41 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -95,6 +95,7 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 	awk->errnum = XP_AWK_ENOERR;
 
 	awk->parse.nlocals_max = 0;
+	awk->parse.nl_semicolon = 0;
 
 	awk->tree.nglobals = 0;
 	awk->tree.nbglobals = 0;

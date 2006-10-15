@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.189 2006-10-13 10:18:10 bacon Exp $
+ * $Id: parse.c,v 1.190 2006-10-15 15:45:41 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -1155,7 +1155,11 @@ static xp_awk_nde_t* __parse_statement (xp_awk_t* awk)
 		if (__get_token(awk) == -1) return XP_NULL; 
 		nde = __parse_block (awk, xp_false);
 	}
-	else nde = __parse_statement_nb (awk);
+	else 
+	{
+		nde = __parse_statement_nb (awk);
+awk->parse.nl_semicolon = 0;
+	}
 
 	return nde;
 }
@@ -1193,6 +1197,7 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 		return nde;
 	}
 
+awk->parse.nl_semicolon = 1;
 	/* 
 	 * keywords that require a terminating semicolon 
 	 */
@@ -1256,6 +1261,7 @@ static xp_awk_nde_t* __parse_statement_nb (xp_awk_t* awk)
 		nde = __parse_expression(awk);
 	}
 
+awk->parse.nl_semicolon = 0;
 	if (nde == XP_NULL) return XP_NULL;
 
 	/* check if a statement ends with a semicolon */
@@ -3623,8 +3629,10 @@ static int __get_token (xp_awk_t* awk)
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
 	}
-	else if (c == XP_T(';')) 
+	else if (c == XP_T(';') || 
+	         (c == XP_T('\n') && (awk->option & XP_AWK_NEWLINE))) 
 	{
+	/* TODO: more check on the newline terminator... */
 		SET_TOKEN_TYPE (awk, TOKEN_SEMICOLON);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
@@ -3986,7 +3994,15 @@ static int __skip_spaces (xp_awk_t* awk)
 {
 	xp_cint_t c = awk->src.lex.curc;
 
-	while (XP_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
+	if (awk->option & XP_AWK_NEWLINE && awk->parse.nl_semicolon)
+	{
+		while (c != XP_T('\n') &&
+		       XP_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
+	}
+	else
+	{
+		while (XP_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
+	}
 	return 0;
 }
 

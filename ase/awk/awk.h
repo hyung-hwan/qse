@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.127 2006-10-13 10:18:10 bacon Exp $
+ * $Id: awk.h,v 1.128 2006-10-15 15:45:41 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -189,7 +189,10 @@ enum xp_awk_option_t
 	 * The program splits " a b c " into [a], [b], [c] when this
 	 * option is on while into [], [a], [b], [c], [] when it is off.
 	 */
-	XP_AWK_STRIPSPACES = (1 << 12)
+	XP_AWK_STRIPSPACES = (1 << 12),
+
+	/* a newline terminates a statement */
+	XP_AWK_NEWLINE = (1 << 13)
 };
 
 /* error code */
