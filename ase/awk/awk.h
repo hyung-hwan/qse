@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.128 2006-10-15 15:45:41 bacon Exp $
+ * $Id: awk.h,v 1.129 2006-10-16 14:38:43 bacon Exp $
  */
 
 #ifndef _XP_AWK_AWK_H_
@@ -25,10 +25,12 @@ typedef xp_ssize_t (*xp_awk_io_t) (
 
 struct xp_awk_extio_t 
 {
+	xp_awk_run_t* run; /* [IN] */
 	int type;          /* [IN] console, file, coproc, pipe */
 	int mode;          /* [IN] read, write, etc */
 	xp_char_t* name;   /* [IN] */
 	void* custom_data; /* [IN] */
+
 	void* handle;      /* [OUT] */
 
 	/* input buffer */
@@ -358,6 +360,9 @@ xp_awk_val_t* xp_awk_getarg (xp_awk_run_t* run, xp_size_t idx);
 xp_awk_val_t* xp_awk_getglobal (xp_awk_run_t* run, xp_size_t idx);
 int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val);
 void xp_awk_setretval (xp_awk_run_t* run, xp_awk_val_t* val);
+
+int xp_awk_setconsolename (
+	xp_awk_run_t* run, const xp_char_t* name, xp_size_t len);
 
 int xp_awk_getrunerrnum (xp_awk_run_t* run);
 void xp_awk_setrunerrnum (xp_awk_run_t* run, int errnum);

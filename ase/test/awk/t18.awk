@@ -1,20 +1,17 @@
-/hello/ 
-{ 
-	//print FILENAME; 
+/hello/ { 
+	print FILENAME; 
 	print "**1**" $0;
-	//nextfile;
+	#nextfile;
 	print "----------------";
 }
 
-/hello/ 
-{ 
-	//print FILENAME; 
+/hello/ { 
+	print FILENAME; 
 	print "**2**" $0; 
 	nextfile;
 	print "----------------";
 }
 
-END
-{
+END {
 	print "== END OF PROGRAM ==";
 }
