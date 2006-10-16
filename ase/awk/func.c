@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.62 2006-10-12 04:17:30 bacon Exp $
+ * $Id: func.c,v 1.63 2006-10-16 08:47:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -510,7 +510,7 @@ static int __bfn_split (xp_awk_run_t* run)
 	xp_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
 	xp_char_t* str, * str_free, * p, * tok;
 	xp_size_t str_len, str_left, tok_len;
-	xp_long_t num;
+	xp_long_t sta, num;
 	xp_char_t key[xp_sizeof(xp_long_t)*8+2];
 	xp_size_t key_len;
 	xp_char_t* fs_ptr, * fs_free;
@@ -656,7 +656,10 @@ static int __bfn_split (xp_awk_run_t* run)
 	*a1_ref = t1;
 	xp_awk_refupval (*a1_ref);
 
-	p = str; str_left = str_len; num = 0;
+	p = str; str_left = str_len; 
+	sta = (xp_awk_getopt(run->awk) & XP_AWK_STRINDEXONE)? 1: 0;
+	num = sta;
+
 	while (p != XP_NULL)
 	{
 		if (fs_len <= 1)
@@ -738,6 +741,8 @@ static int __bfn_split (xp_awk_run_t* run)
 	if (str_free != XP_NULL) XP_AWK_FREE (run->awk, str_free);
 	if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
 	if (fs_rex_free != XP_NULL) xp_awk_freerex (run->awk, fs_rex_free);
+
+	if (sta == 1) num--;
 
 	t1 = xp_awk_makeintval (run, num);
 	if (t1 == XP_NULL)

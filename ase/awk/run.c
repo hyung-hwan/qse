@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.235 2006-10-13 10:18:10 bacon Exp $
+ * $Id: run.c,v 1.236 2006-10-16 08:47:59 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -59,7 +59,9 @@ static void __del_run (xp_awk_t* awk, xp_awk_run_t* run);
 static int __init_run (
 	xp_awk_run_t* run, xp_awk_runios_t* runios, int* errnum);
 static void __deinit_run (xp_awk_run_t* run);
+
 static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg);
+static int __set_globals_to_default (xp_awk_run_t* run);
 
 static int __run_main (xp_awk_run_t* run, xp_awk_runarg_t* runarg);
 static int __run_pattern_blocks  (xp_awk_run_t* run);
@@ -465,6 +467,8 @@ int xp_awk_run (xp_awk_t* awk,
 		return -1;
 	}
 
+	XP_AWK_MEMSET (awk, run, 0, xp_sizeof(xp_awk_run_t));
+
 	__add_run (awk, run);
 
 	if (__init_run (run, runios, &errnum) == -1) 
@@ -651,16 +655,6 @@ static int __init_run (xp_awk_run_t* run, xp_awk_runios_t* runios, int* errnum)
 	run->global.rs = XP_NULL;
 	run->global.fs = XP_NULL;
 	run->global.ignorecase = 0;
-	run->global.convfmt.ptr = DEFAULT_CONVFMT;
-	run->global.convfmt.len = xp_awk_strlen(DEFAULT_CONVFMT);
-	run->global.ofmt.ptr = DEFAULT_OFMT;
-	run->global.ofmt.len = xp_awk_strlen(DEFAULT_OFMT);
-	run->global.ofs.ptr = DEFAULT_OFS;
-	run->global.ofs.len = xp_awk_strlen(DEFAULT_OFS);
-	run->global.ors.ptr = DEFAULT_ORS;
-	run->global.ors.len = xp_awk_strlen(DEFAULT_ORS);
-	run->global.subsep.ptr = DEFAULT_SUBSEP;
-	run->global.subsep.len = xp_awk_strlen(DEFAULT_SUBSEP);
 
 	return 0;
 }
@@ -839,7 +833,8 @@ static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 
 	xp_awk_refupval (v_argc);
 
-	xp_awk_assert (run->awk, STACK_GLOBAL(run,XP_AWK_GLOBAL_ARGC) == xp_awk_val_nil);
+	xp_awk_assert (run->awk, 
+		STACK_GLOBAL(run,XP_AWK_GLOBAL_ARGC) == xp_awk_val_nil);
 
 	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_ARGC, v_argc) == -1) 
 	{
@@ -867,12 +862,64 @@ static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 	return 0;
 }
 
+static int __set_globals_to_default (xp_awk_run_t* run)
+{
+	struct __gtab_t
+	{
+		int idx;
+		const xp_char_t* str;
+	};
+       
+	static struct __gtab_t gtab[] =
+	{
+		{ XP_AWK_GLOBAL_CONVFMT, DEFAULT_CONVFMT },
+		{ XP_AWK_GLOBAL_OFMT,    DEFAULT_OFMT },
+		{ XP_AWK_GLOBAL_OFS,     DEFAULT_OFS },
+		{ XP_AWK_GLOBAL_ORS,     DEFAULT_ORS },
+		{ XP_AWK_GLOBAL_SUBSEP,  DEFAULT_SUBSEP },
+	};
+
+	xp_awk_val_t* tmp;
+	xp_size_t i, j;
+
+	for (i = 0; i < xp_countof(gtab); i++)
+	{
+		tmp = xp_awk_makestrval0 (run, gtab[i].str);
+		if (tmp == XP_NULL)
+		{
+			run->errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
+		
+		xp_awk_refupval (tmp);
+
+		xp_awk_assert (run->awk, 
+			STACK_GLOBAL(run,gtab[i].idx) == xp_awk_val_nil);
+
+		if (xp_awk_setglobal (run, gtab[i].idx, tmp) == -1)
+		{
+			for (j = 0; j < i; j++)
+			{
+				xp_awk_setglobal (
+					run, gtab[i].idx, xp_awk_val_nil);
+			}
+
+			xp_awk_refdownval (run, tmp);
+			return -1;
+		}
+
+		xp_awk_refdownval (run, tmp);
+	}
+
+	return 0;
+}
+
 static int __run_main (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 {
 	xp_size_t nglobals, nargs, i;
 	xp_size_t saved_stack_top;
 	xp_awk_val_t* v;
-	int n = 0;
+	int n;
 
 	xp_awk_assert (run->awk, run->stack_base == 0 && run->stack_top == 0);
 
@@ -903,6 +950,7 @@ static int __run_main (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 		run->stack_top = saved_stack_top;
 		return -1;
 	}
+
 	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_NF, xp_awk_val_zero) == -1)
 	{
 		/* it can simply restore the top of the stack this way
@@ -925,7 +973,8 @@ static int __run_main (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 
 	run->exit_level = EXIT_NONE;
 
-	if (run->awk->option & XP_AWK_RUNMAIN)
+	n = __set_globals_to_default (run);
+	if (n == 0 && (run->awk->option & XP_AWK_RUNMAIN))
 	{
 /* TODO: should the main function be user-specifiable? */
 		xp_awk_nde_call_t nde;
@@ -946,7 +995,7 @@ static int __run_main (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 			xp_awk_refdownval (run, v);
 		}
 	}
-	else
+	else if (n == 0)
 	{
 		saved_stack_top = run->stack_top;
 		if (__raw_push(run,(void*)run->stack_base) == -1) 

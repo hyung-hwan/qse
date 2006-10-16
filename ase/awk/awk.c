@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.81 2006-10-15 15:45:41 bacon Exp $ 
+ * $Id: awk.c,v 1.82 2006-10-16 08:47:59 bacon Exp $ 
  */
 
 #include <xp/awk/awk_i.h>
@@ -40,6 +40,10 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 		xp_sizeof(xp_awk_t), syscas->custom_data);
 #endif
 	if (awk == XP_NULL) return XP_NULL;
+
+	/* it uses the built-in xp_awk_memset because awk is not 
+	 * fully initialized yet */
+	xp_awk_memset (awk, 0, xp_sizeof(xp_awk_t));
 
 	if (syscas->memcpy == XP_NULL)
 	{

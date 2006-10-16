@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.97 2006-10-15 15:46:14 bacon Exp $
+ * $Id: awk.c,v 1.98 2006-10-16 08:48:19 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -99,7 +99,12 @@ static int __dprintf (const xp_char_t* fmt, ...)
 	va_start (ap, fmt);
 #ifdef _WIN32
 	n = xp_vsprintf (buf, xp_countof(buf), fmt, ap);
-	MessageBox (NULL, buf, XP_T("ASSERTION FAILURE"), MB_OK | MB_ICONERROR);
+#if defined(_MSC_VER) && (_MSC_VER>=1400)
+	MessageBox (NULL, buf, XP_T("\uD655\uC778\uC2E4\uD328 Assertion Failure"), MB_OK | MB_ICONERROR);
+#else
+	MessageBox (NULL, buf, XP_T("Assertion Failure"), MB_OK | MB_ICONERROR);
+#endif
+
 #else
 	n = xp_vprintf (fmt, ap);
 #endif
