@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.98 2006-10-16 08:48:19 bacon Exp $
+ * $Id: awk.c,v 1.99 2006-10-16 09:11:53 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -772,8 +772,10 @@ static int __main (int argc, xp_char_t* argv[])
 	runarg[0].len = xp_awk_strlen(runarg[0].ptr);
 	runarg[1].ptr = XP_T("argumetn 1");
 	runarg[1].len = xp_awk_strlen(runarg[1].ptr);
-	runarg[2].ptr = XP_NULL;
-	runarg[2].len = 0;
+	runarg[2].ptr = XP_T("argumetn 2");
+	runarg[2].len = xp_awk_strlen(runarg[2].ptr);
+	runarg[3].ptr = XP_NULL;
+	runarg[3].len = 0;
 
 	if (xp_awk_run (awk, &runios, &runcbs, runarg) == -1)
 	{
