@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.237 2006-10-16 09:11:53 bacon Exp $
+ * $Id: run.c,v 1.238 2006-10-16 14:38:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -450,6 +450,30 @@ void xp_awk_setretval (xp_awk_run_t* run, xp_awk_val_t* val)
 	xp_awk_refupval (val); 
 }
 
+int xp_awk_setconsolename (
+	xp_awk_run_t* run, const xp_char_t* name, xp_size_t len)
+{
+	xp_awk_val_t* tmp;
+	int n;
+
+	if (len == 0) tmp = xp_awk_val_zls;
+	else
+	{
+		tmp = xp_awk_makestrval (run, name, len);
+		if (tmp == XP_NULL)
+		{
+			run->errnum = XP_AWK_ENOMEM;
+			return -1;
+		}
+	}
+
+	xp_awk_refupval (tmp);
+	n = xp_awk_setglobal (run, XP_AWK_GLOBAL_FILENAME, tmp);
+	xp_awk_refdownval (run, tmp);
+
+	return n;
+}
+
 int xp_awk_getrunerrnum (xp_awk_run_t* run)
 {
 	return run->errnum;
@@ -882,11 +906,12 @@ static int __set_globals_to_default (xp_awk_run_t* run)
        
 	static struct __gtab_t gtab[] =
 	{
-		{ XP_AWK_GLOBAL_CONVFMT, DEFAULT_CONVFMT },
-		{ XP_AWK_GLOBAL_OFMT,    DEFAULT_OFMT },
-		{ XP_AWK_GLOBAL_OFS,     DEFAULT_OFS },
-		{ XP_AWK_GLOBAL_ORS,     DEFAULT_ORS },
-		{ XP_AWK_GLOBAL_SUBSEP,  DEFAULT_SUBSEP },
+		{ XP_AWK_GLOBAL_CONVFMT,  DEFAULT_CONVFMT },
+		{ XP_AWK_GLOBAL_FILENAME, XP_NULL },
+		{ XP_AWK_GLOBAL_OFMT,     DEFAULT_OFMT },
+		{ XP_AWK_GLOBAL_OFS,      DEFAULT_OFS },
+		{ XP_AWK_GLOBAL_ORS,      DEFAULT_ORS },
+		{ XP_AWK_GLOBAL_SUBSEP,   DEFAULT_SUBSEP },
 	};
 
 	xp_awk_val_t* tmp;
@@ -894,11 +919,18 @@ static int __set_globals_to_default (xp_awk_run_t* run)
 
 	for (i = 0; i < xp_countof(gtab); i++)
 	{
-		tmp = xp_awk_makestrval0 (run, gtab[i].str);
-		if (tmp == XP_NULL)
+		if (gtab[i].str == XP_NULL || gtab[i].str[0] == XP_T('\0'))
 		{
-			run->errnum = XP_AWK_ENOMEM;
-			return -1;
+			tmp = xp_awk_val_zls;
+		}
+		else 
+		{
+			tmp = xp_awk_makestrval0 (run, gtab[i].str);
+			if (tmp == XP_NULL)
+			{
+				run->errnum = XP_AWK_ENOMEM;
+				return -1;
+			}
 		}
 		
 		xp_awk_refupval (tmp);

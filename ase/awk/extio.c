@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.53 2006-10-13 10:18:10 bacon Exp $
+ * $Id: extio.c,v 1.54 2006-10-16 14:38:43 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -129,6 +129,7 @@ int xp_awk_readextio (
 			return -1;
 		}
 
+		p->run = run;
 		p->type = (extio_type | extio_mask);
 		p->mode = extio_mode;
 		p->handle = XP_NULL;
@@ -453,6 +454,7 @@ int xp_awk_writeextio_str (
 			return -1;
 		}
 
+		p->run = run;
 		p->type = (extio_type | extio_mask);
 		p->mode = extio_mode;
 		p->handle = XP_NULL;

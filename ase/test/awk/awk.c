@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.99 2006-10-16 09:11:53 bacon Exp $
+ * $Id: awk.c,v 1.100 2006-10-16 14:39:21 bacon Exp $
  */
 
 #include <xp/awk/awk.h>
@@ -295,6 +295,7 @@ static xp_ssize_t process_extio_file (
 xp_printf (XP_TEXT("opending %s of type %d (file)\n"),  epa->name, epa->type);
 			handle = fopen_t (epa->name, mode);
 			if (handle == NULL) return -1;
+
 			epa->handle = (void*)handle;
 			return 1;
 		}
@@ -341,14 +342,13 @@ static int open_extio_console (xp_awk_extio_t* epa);
 static int close_extio_console (xp_awk_extio_t* epa);
 static int next_extio_console (xp_awk_extio_t* epa);
 
-static const xp_char_t* infiles[] =
+static xp_size_t infile_no = 0;
+static const xp_char_t* infiles[10000] =
 {
-	//XP_T(""),
-	XP_T("awk.in"),
+	XP_T(""),
 	XP_NULL
 };
 
-static xp_size_t infile_no = 0;
 
 static xp_ssize_t process_extio_console (
 	int cmd, void* arg, xp_char_t* data, xp_size_t size)
@@ -471,6 +471,14 @@ xp_printf (XP_TEXT("failed to open console of type %x - fopen failure\n"), epa->
 			}
 
 xp_printf (XP_T("    console(r) - %s\n"), infiles[infile_no]);
+			if (xp_awk_setconsolename (
+				epa->run, infiles[infile_no], 
+				xp_awk_strlen(infiles[infile_no])) == -1)
+			{
+				fclose (fp);
+				return -1;
+			}
+
 			epa->handle = fp;
 		}
 
@@ -480,6 +488,8 @@ xp_printf (XP_T("    console(r) - %s\n"), infiles[infile_no]);
 	else if (epa->mode == XP_AWK_IO_CONSOLE_WRITE)
 	{
 xp_printf (XP_T("    console(w) - <standard output>\n"));
+		/* TODO: does output console has a name??? */
+		/*xp_awk_setconsolename (XP_T(""));*/
 		epa->handle = stdout;
 		return 1;
 	}
@@ -635,7 +645,7 @@ static int __main (int argc, xp_char_t* argv[])
 
 	if (argc <= 1)
 	{
-		xp_printf (XP_T("Usage: %s [-m] source_file [data_file]\n"), argv[0]);
+		xp_printf (XP_T("Usage: %s [-m] source_file [data_file ...]\n"), argv[0]);
 		return -1;
 	}
 
@@ -654,14 +664,15 @@ static int __main (int argc, xp_char_t* argv[])
 			src_io.input_file = argv[i];
 			file_count++;
 		}
-		else if (file_count == 1)
+		else if (file_count >= 1 && file_count < xp_countof(infiles)-1)
 		{
-			infiles[0] = argv[i];
+			infiles[file_count-1] = argv[i];
+			infiles[file_count] = XP_NULL;
 			file_count++;
 		}
 		else
 		{
-			xp_printf (XP_T("Usage: %s [-m] source_file [data_file]\n"), argv[0]);
+			xp_printf (XP_T("Usage: %s [-m] [-f source_file] [data_file ...]\n"), argv[0]);
 			return -1;
 		}
 	}
