@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.236 2006-10-16 08:47:59 bacon Exp $
+ * $Id: run.c,v 1.237 2006-10-16 09:11:53 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -252,6 +252,8 @@ int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val)
 			run, val, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &convfmt_len);
 		if (convfmt_ptr == XP_NULL) return  -1;
 
+		if (run->global.convfmt.ptr != XP_NULL)
+			XP_AWK_FREE (run->awk, run->global.convfmt.ptr);
 		run->global.convfmt.ptr = convfmt_ptr;
 		run->global.convfmt.len = convfmt_len;
 	}
@@ -340,6 +342,8 @@ int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val)
 			run, val, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &ofmt_len);
 		if (ofmt_ptr == XP_NULL) return  -1;
 
+		if (run->global.ofmt.ptr != XP_NULL)
+			XP_AWK_FREE (run->awk, run->global.ofmt.ptr);
 		run->global.ofmt.ptr = ofmt_ptr;
 		run->global.ofmt.len = ofmt_len;
 	}
@@ -352,6 +356,8 @@ int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val)
 			run, val, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &ofs_len);
 		if (ofs_ptr == XP_NULL) return  -1;
 
+		if (run->global.ofs.ptr != XP_NULL)
+			XP_AWK_FREE (run->awk, run->global.ofs.ptr);
 		run->global.ofs.ptr = ofs_ptr;
 		run->global.ofs.len = ofs_len;
 	}
@@ -364,6 +370,8 @@ int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val)
 			run, val, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &ors_len);
 		if (ors_ptr == XP_NULL) return  -1;
 
+		if (run->global.ors.ptr != XP_NULL)
+			XP_AWK_FREE (run->awk, run->global.ors.ptr);
 		run->global.ors.ptr = ors_ptr;
 		run->global.ors.len = ors_len;
 	}
@@ -421,6 +429,8 @@ int xp_awk_setglobal (xp_awk_run_t* run, xp_size_t idx, xp_awk_val_t* val)
 			run, val, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &subsep_len);
 		if (subsep_ptr == XP_NULL) return  -1;
 
+		if (run->global.subsep.ptr != XP_NULL)
+			XP_AWK_FREE (run->awk, run->global.subsep.ptr);
 		run->global.subsep.ptr = subsep_ptr;
 		run->global.subsep.len = subsep_len;
 	}
@@ -793,7 +803,7 @@ static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 			if (v_tmp == XP_NULL)
 			{
 				xp_awk_refdownval (run, v_argv);
-					run->errnum = XP_AWK_ENOMEM;
+				run->errnum = XP_AWK_ENOMEM;
 				return -1;
 			}
 
