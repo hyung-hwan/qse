@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.63 2006-10-16 08:47:59 bacon Exp $
+ * $Id: func.c,v 1.64 2006-10-17 09:36:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -29,24 +29,25 @@ static int __bfn_system  (xp_awk_run_t* run);
 static xp_awk_bfn_t __sys_bfn[] = 
 {
 	/* io functions */
-	{ XP_T("close"),   5, XP_AWK_EXTIO, 1,  1,  XP_NULL, __bfn_close },
-	{ XP_T("fflush"),  6, XP_AWK_EXTIO, 0,  1,  XP_NULL, __bfn_fflush },
+	{ XP_T("close"),   5, XP_AWK_EXTIO, 1,  1,  XP_NULL,     __bfn_close },
+	{ XP_T("fflush"),  6, XP_AWK_EXTIO, 0,  1,  XP_NULL,     __bfn_fflush },
 
 	/* string functions */
-	{ XP_T("index"),   5, 0,            2,  2,  XP_NULL, __bfn_index },
-	{ XP_T("length"),  6, 0,            1,  1,  XP_NULL, __bfn_length },
-	{ XP_T("substr"),  6, 0,            2,  3,  XP_NULL, __bfn_substr },
+	{ XP_T("index"),   5, 0,            2,  2,  XP_NULL,     __bfn_index },
+	{ XP_T("length"),  6, 0,            1,  1,  XP_NULL,     __bfn_length },
+	{ XP_T("substr"),  6, 0,            2,  3,  XP_NULL,     __bfn_substr },
 	{ XP_T("split"),   5, 0,            2,  3,  XP_T("vrv"), __bfn_split },
-	{ XP_T("tolower"), 7, 0,            1,  1,  XP_NULL, __bfn_tolower },
-	{ XP_T("toupper"), 7, 0,            1,  1,  XP_NULL, __bfn_toupper },
+	{ XP_T("tolower"), 7, 0,            1,  1,  XP_NULL,     __bfn_tolower },
+	{ XP_T("toupper"), 7, 0,            1,  1,  XP_NULL,     __bfn_toupper },
 	{ XP_T("gsub"),    4, 0,            2,  3,  XP_T("xvr"), __bfn_gsub },
 	{ XP_T("sub"),     3, 0,            2,  3,  XP_T("xvr"), __bfn_sub },
+	/*{ XP_T("match"),   5, 0, ...  }, */
 
 	/* TODO: remove these two functions */
-	{ XP_T("system"),  6, 0,            1,  1,  XP_NULL, __bfn_system },
-	/*{ XP_T("sin"),     3, 0,            1,  1,  XP_NULL, __bfn_sin },*/
+	{ XP_T("system"),  6, 0,            1,  1,  XP_NULL,     __bfn_system },
+	/*{ XP_T("sin"),     3, 0,            1,  1,  XP_NULL,   __bfn_sin },*/
 
-	{ XP_NULL,         0, 0,            0,  0,  XP_NULL, XP_NULL }
+	{ XP_NULL,         0, 0,            0,  0,  XP_NULL,     XP_NULL }
 };
 
 xp_awk_bfn_t* xp_awk_addbfn (
