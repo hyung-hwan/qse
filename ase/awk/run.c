@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.238 2006-10-16 14:38:43 bacon Exp $
+ * $Id: run.c,v 1.239 2006-10-17 09:36:08 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -896,6 +896,29 @@ static int __build_runarg (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 	return 0;
 }
 
+static int __update_fnr (xp_awk_run_t* run, xp_size_t fnr)
+{
+	xp_awk_val_t* tmp;
+
+	tmp = xp_awk_makeintval (run, fnr);
+	if (tmp == XP_NULL)
+	{
+		run->errnum = XP_AWK_ENOMEM;
+		return -1;
+	}
+
+	xp_awk_refupval (tmp);
+	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_FNR, tmp) == -1)
+	{
+		xp_awk_refdownval (run, tmp);
+		return -1;
+	}
+
+	xp_awk_refdownval (run, tmp);
+	run->global.fnr = fnr;
+	return 0;
+}
+
 static int __set_globals_to_default (xp_awk_run_t* run)
 {
 	struct __gtab_t
@@ -1015,7 +1038,8 @@ static int __run_main (xp_awk_run_t* run, xp_awk_runarg_t* runarg)
 
 	run->exit_level = EXIT_NONE;
 
-	n = __set_globals_to_default (run);
+	n = __update_fnr (run, 0);
+	if (n == 0) n = __set_globals_to_default (run);
 	if (n == 0 && (run->awk->option & XP_AWK_RUNMAIN))
 	{
 /* TODO: should the main function be user-specifiable? */
@@ -1188,6 +1212,8 @@ static int __run_pattern_blocks (xp_awk_run_t* run)
 
 		need_to_close = xp_true;
 		if (x == 0) break; /* end of input */
+
+		__update_fnr (run, run->global.fnr + 1);
 
 		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
 		{
@@ -1878,15 +1904,16 @@ static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 	if  (run->active_block == (xp_awk_nde_blk_t*)run->awk->tree.begin ||
 	     run->active_block == (xp_awk_nde_blk_t*)run->awk->tree.end)
 	{
-		PANIC_I (run, XP_AWK_ENEXTFILECALL);
+		run->errnum = XP_AWK_ENEXTFILECALL;
+		return -1;
 	}
 
 	n = xp_awk_nextextio_read (run, XP_AWK_IN_CONSOLE, XP_T(""));
 	if (n == -1)
 	{
 		if (run->errnum == XP_AWK_EIOHANDLER)
-			PANIC_I (run, XP_AWK_ECONINNEXT);
-		else return -1;
+			run->errnum = XP_AWK_ECONINNEXT;
+		return -1;
 	}
 
 	if (n == 0)
@@ -1896,9 +1923,9 @@ static int __run_nextfile (xp_awk_run_t* run, xp_awk_nde_nextfile_t* nde)
 		return 0;
 	}
 
-/* TODO: update FILENAME, ARGIND. reset FNR to 1.
- * some significant changes will be required to do this */
-/* Consider using FILENAME_IN and FILENAME_OUT to accomplish nextfile in/out */
+	if (__update_fnr (run, 0) == -1) return -1;
+
+/* TODO: Consider using FILENAME_IN and FILENAME_OUT to accomplish nextfile in/out */
 	run->exit_level = EXIT_NEXT;
 	return 0;
 }
@@ -2561,20 +2588,13 @@ static xp_awk_val_t* __do_assignment_map (
 		}
 		else if (var->type == XP_AWK_NDE_GLOBALIDX)
 		{
-			/* decrease the reference count of the previous value.
-			 * in fact, this is not necessary as map is always 
-			 * xp_awk_val_nil here. */
-			/*
-			xp_awk_refdownval (run, (xp_awk_val_t*)map);
-			STACK_GLOBAL(run,var->id.idxa) = tmp;
 			xp_awk_refupval (tmp);
-			*/
 			if (xp_awk_setglobal (run, var->id.idxa, tmp) == -1)
 			{
-				xp_awk_refupval (tmp);
 				xp_awk_refdownval (run, tmp);
 				return XP_NULL;
 			}
+			xp_awk_refdownval (run, tmp);
 		}
 		else if (var->type == XP_AWK_NDE_LOCALIDX)
 		{
