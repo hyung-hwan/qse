@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.9 2006-10-17 09:36:08 bacon Exp $
+ * $Id: jni.c,v 1.10 2006-10-18 14:02:19 bacon Exp $
  */
 
 #include <xp/awk/jni.h>
@@ -338,7 +338,7 @@ static xp_ssize_t __call_java_write_source (
 }
 
 static xp_ssize_t __call_java_open_extio (
-	JNIEnv* env, jobject obj, char* meth, const xp_char_t* name)
+	JNIEnv* env, jobject obj, char* meth, xp_awk_extio_t* extio)
 {
 	jclass class; 
 	jmethodID mid;
@@ -347,7 +347,7 @@ static xp_ssize_t __call_java_open_extio (
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	if (name == XP_NULL)
+	if (extio == XP_NULL)
 	{
 		mid = (*env)->GetMethodID (env, class, meth, "()I");
 		if (mid == 0) return -1;
@@ -356,6 +356,7 @@ static xp_ssize_t __call_java_open_extio (
 	}
 	else
 	{
+		/*
 		jstring name_str;
 
 		mid = (*env)->GetMethodID (
@@ -366,6 +367,7 @@ static xp_ssize_t __call_java_open_extio (
 		if (name_str == 0) return -1;
 
 		ret = (*env)->CallIntMethod (env, obj, mid, name_str);
+		*/
 	}
 
 	thrown = (*env)->ExceptionOccurred (env);
@@ -379,7 +381,7 @@ static xp_ssize_t __call_java_open_extio (
 }
 
 static xp_ssize_t __call_java_close_extio (
-	JNIEnv* env, jobject obj, char* meth, const xp_char_t* name)
+	JNIEnv* env, jobject obj, char* meth, xp_awk_extio_t* extio)
 {
 	jclass class; 
 	jmethodID mid;
@@ -388,7 +390,7 @@ static xp_ssize_t __call_java_close_extio (
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	if (name == XP_NULL)
+	if (extio == XP_NULL)
 	{
 		mid = (*env)->GetMethodID (env, class, meth, "()I");
 		if (mid == 0) return -1;
@@ -397,6 +399,7 @@ static xp_ssize_t __call_java_close_extio (
 	}
 	else
 	{
+		/*
 		jstring name_str;
 
 		mid = (*env)->GetMethodID (
@@ -407,6 +410,7 @@ static xp_ssize_t __call_java_close_extio (
 		if (name_str == 0) return -1;
 
 		ret = (*env)->CallIntMethod (env, obj, mid, name_str);
+		*/
 	}
 
 	thrown = (*env)->ExceptionOccurred (env);
@@ -593,13 +597,13 @@ static xp_ssize_t __process_extio_file (
 	{
 		return __call_java_open_extio (
 			runio_data->env, runio_data->obj, 
-			"open_file", epa->name);
+			"open_file", epa);
 	}
 	else if (cmd == XP_AWK_IO_CLOSE)
 	{
 		return __call_java_close_extio (
 			runio_data->env, runio_data->obj, 
-			"close_file", epa->name);
+			"close_file", epa);
 	}
 
 	return -1;
