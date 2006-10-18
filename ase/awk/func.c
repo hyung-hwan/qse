@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.64 2006-10-17 09:36:08 bacon Exp $
+ * $Id: func.c,v 1.65 2006-10-18 14:02:19 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -22,6 +22,7 @@ static int __bfn_tolower (xp_awk_run_t* run);
 static int __bfn_toupper (xp_awk_run_t* run);
 static int __bfn_gsub    (xp_awk_run_t* run);
 static int __bfn_sub     (xp_awk_run_t* run);
+static int __bfn_match   (xp_awk_run_t* run);
 static int __bfn_system  (xp_awk_run_t* run);
 /*static int __bfn_sin   (xp_awk_run_t* run);*/
 
@@ -29,25 +30,25 @@ static int __bfn_system  (xp_awk_run_t* run);
 static xp_awk_bfn_t __sys_bfn[] = 
 {
 	/* io functions */
-	{ XP_T("close"),   5, XP_AWK_EXTIO, 1,  1,  XP_NULL,     __bfn_close },
-	{ XP_T("fflush"),  6, XP_AWK_EXTIO, 0,  1,  XP_NULL,     __bfn_fflush },
+	{XP_T("close"),   5, XP_AWK_EXTIO, 1,  1,  XP_NULL,     __bfn_close},
+	{XP_T("fflush"),  6, XP_AWK_EXTIO, 0,  1,  XP_NULL,     __bfn_fflush},
 
 	/* string functions */
-	{ XP_T("index"),   5, 0,            2,  2,  XP_NULL,     __bfn_index },
-	{ XP_T("length"),  6, 0,            1,  1,  XP_NULL,     __bfn_length },
-	{ XP_T("substr"),  6, 0,            2,  3,  XP_NULL,     __bfn_substr },
-	{ XP_T("split"),   5, 0,            2,  3,  XP_T("vrv"), __bfn_split },
-	{ XP_T("tolower"), 7, 0,            1,  1,  XP_NULL,     __bfn_tolower },
-	{ XP_T("toupper"), 7, 0,            1,  1,  XP_NULL,     __bfn_toupper },
-	{ XP_T("gsub"),    4, 0,            2,  3,  XP_T("xvr"), __bfn_gsub },
-	{ XP_T("sub"),     3, 0,            2,  3,  XP_T("xvr"), __bfn_sub },
-	/*{ XP_T("match"),   5, 0, ...  }, */
+	{XP_T("index"),   5, 0,            2,  2,  XP_NULL,     __bfn_index},
+	{XP_T("substr"),  6, 0,            2,  3,  XP_NULL,     __bfn_substr},
+	{XP_T("length"),  6, 0,            1,  1,  XP_NULL,     __bfn_length},
+	{XP_T("split"),   5, 0,            2,  3,  XP_T("vrv"), __bfn_split},
+	{XP_T("tolower"), 7, 0,            1,  1,  XP_NULL,     __bfn_tolower},
+	{XP_T("toupper"), 7, 0,            1,  1,  XP_NULL,     __bfn_toupper},
+	{XP_T("gsub"),    4, 0,            2,  3,  XP_T("xvr"), __bfn_gsub},
+	{XP_T("sub"),     3, 0,            2,  3,  XP_T("xvr"), __bfn_sub},
+	{XP_T("match"),   5, 0,            2,  2,  XP_T("vx"),  __bfn_match},
 
 	/* TODO: remove these two functions */
-	{ XP_T("system"),  6, 0,            1,  1,  XP_NULL,     __bfn_system },
-	/*{ XP_T("sin"),     3, 0,            1,  1,  XP_NULL,   __bfn_sin },*/
+	{XP_T("system"),  6, 0,            1,  1,  XP_NULL,     __bfn_system},
+	/*{ XP_T("sin"),     3, 0,            1,  1,  XP_NULL,   __bfn_sin},*/
 
-	{ XP_NULL,         0, 0,            0,  0,  XP_NULL,     XP_NULL }
+	{XP_NULL,         0, 0,            0,  0,  XP_NULL,     XP_NULL}
 };
 
 xp_awk_bfn_t* xp_awk_addbfn (
@@ -974,8 +975,7 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 
 	if (a0->type != XP_AWK_VAL_REX)
 	{
-		rex = xp_awk_buildrex (run->awk, 
-			a0_ptr, a0_len, &((xp_awk_run_t*)run)->errnum);
+		rex = xp_awk_buildrex (run->awk, a0_ptr, a0_len, &run->errnum);
 		if (rex == XP_NULL)
 		{
 			xp_awk_str_close (&new);
@@ -1133,6 +1133,124 @@ static int __bfn_gsub (xp_awk_run_t* run)
 static int __bfn_sub (xp_awk_run_t* run)
 {
 	return __substitute (run, 1);
+}
+
+static int __bfn_match (xp_awk_run_t* run)
+{
+	xp_size_t nargs;
+	xp_awk_val_t* a0, * a1;
+	xp_char_t* str0, * str1;
+	xp_size_t len0, len1;
+	xp_long_t idx;
+	void* rex;
+	int opt, n;
+	const xp_char_t* mat_ptr;
+	xp_size_t mat_len;
+
+	nargs = xp_awk_getnargs (run);
+	xp_awk_assert (run->awk, nargs == 2);
+	
+	a0 = xp_awk_getarg (run, 0);
+	a1 = xp_awk_getarg (run, 1);
+
+	if (a0->type == XP_AWK_VAL_STR)
+	{
+		str0 = ((xp_awk_val_str_t*)a0)->buf;
+		len0 = ((xp_awk_val_str_t*)a0)->len;
+	}
+	else
+	{
+		str0 = xp_awk_valtostr (
+			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len0);
+		if (str0 == XP_NULL) return -1;
+	}
+
+	if (a1->type == XP_AWK_VAL_REX)
+	{
+		rex = ((xp_awk_val_rex_t*)a1)->code;
+	}
+	else 
+	{
+		if (a1->type == XP_AWK_VAL_STR)
+		{
+			str1 = ((xp_awk_val_str_t*)a1)->buf;
+			len1 = ((xp_awk_val_str_t*)a1)->len;
+		}
+		else
+		{
+			str1 = xp_awk_valtostr (
+				run, a1, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len1);
+			if (str1 == XP_NULL)
+			{
+				if (a0->type != XP_AWK_VAL_STR) 
+					XP_AWK_FREE (run->awk, str0);
+				return -1;
+			}
+		}
+
+		rex = xp_awk_buildrex (run->awk, str1, len1, &run->errnum);
+		if (rex == XP_NULL)
+		{
+			if (a0->type != XP_AWK_VAL_STR) 
+				XP_AWK_FREE (run->awk, str0);
+			return -1;
+		}
+
+		if (a1->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str1);
+	}
+
+	opt = (run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
+	n = xp_awk_matchrex (
+		run->awk, rex, opt, str0, len0,
+		&mat_ptr, &mat_len, &run->errnum);
+
+	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str0);
+	if (a1->type != XP_AWK_VAL_REX) xp_awk_freerex (run->awk, rex);
+
+	if (n == -1) return -1;
+
+	idx = (n == 0)? -1: (xp_long_t)(mat_ptr - str0);
+	if (xp_awk_getopt(run->awk) & XP_AWK_STRINDEXONE) idx = idx + 1;
+
+	a0 = xp_awk_makeintval (run, idx);
+	if (a0 == XP_NULL)
+	{
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	xp_awk_refupval (a0);
+
+	a1 = xp_awk_makeintval (run, 
+		((n == 0)? (xp_long_t)-1: (xp_long_t)mat_len));
+	if (a1 == XP_NULL)
+	{
+		xp_awk_refdownval (run, a0);
+		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		return -1;
+	}
+
+	xp_awk_refupval (a1);
+
+	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_RSTART, a0) == -1)
+	{
+		xp_awk_refdownval (run, a1);
+		xp_awk_refdownval (run, a0);
+		return -1;
+	}
+
+	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_RLENGTH, a1) == -1)
+	{
+		xp_awk_refdownval (run, a1);
+		xp_awk_refdownval (run, a0);
+		return -1;
+	}
+
+	xp_awk_setretval (run, a0);
+
+	xp_awk_refdownval (run, a1);
+	xp_awk_refdownval (run, a0);
+	return 0;
 }
 
 static int __bfn_system (xp_awk_run_t* run)
