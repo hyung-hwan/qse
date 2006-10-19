@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.190 2006-10-15 15:45:41 bacon Exp $
+ * $Id: parse.c,v 1.191 2006-10-19 11:08:54 bacon Exp $
  */
 
 #include <xp/awk/awk_i.h>
@@ -259,10 +259,8 @@ struct __bvent
 static struct __bvent __bvtab[] =
 {
 	{ XP_T("ARGC"),         4, 0 },
-	{ XP_T("ARGIND"),       6, 0 },
 	{ XP_T("ARGV"),         4, 0 },
 	{ XP_T("CONVFMT"),      7, 0 },
-	{ XP_T("FIELDWIDTHS"), 11, 0 },
 	{ XP_T("ENVIRON"),      7, 0 },
 	{ XP_T("ERRNO"),        5, 0 },
 	{ XP_T("FILENAME"),     8, 0 },
