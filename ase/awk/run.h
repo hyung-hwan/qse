@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.17 2006-09-08 15:26:49 bacon Exp $
+ * $Id: run.h,v 1.18 2006-10-19 11:08:54 bacon Exp $
  */
 
 #ifndef _XP_AWK_RUN_H_
@@ -80,10 +80,8 @@ enum
 	 * on the order of these values */
 
 	XP_AWK_GLOBAL_ARGC,
-	XP_AWK_GLOBAL_ARGIND,
 	XP_AWK_GLOBAL_ARGV,
 	XP_AWK_GLOBAL_CONVFMT,
-	XP_AWK_GLOBAL_FIELDWIDTHS,
 	XP_AWK_GLOBAL_ENVIRON,
 	XP_AWK_GLOBAL_ERRNO,
 	XP_AWK_GLOBAL_FILENAME,
