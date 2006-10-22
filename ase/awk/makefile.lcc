@@ -1,9 +1,9 @@
 SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c run.c rec.c val.c misc.c
 OBJS = awk.obj err.obj tree.obj str.obj tab.obj map.obj parse.obj run.obj rec.obj val.obj misc.obj
-OUT = xpawk.lib
+OUT = sseawk.lib
 
 CC = lcc
-CFLAGS = -I../..  -A -ansic -libcdll  -DXP_AWK_STAND_ALONE
+CFLAGS = -I../..  -A -ansic -libcdll  
 LDFLAGS =
 LIBS = 
 

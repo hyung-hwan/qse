@@ -1,22 +1,22 @@
-LIBRARY	"xpawk.dll"
+LIBRARY	"sseawk.dll"
 
 EXPORTS
-	xp_awk_open 
-	xp_awk_close
+	sse_awk_open 
+	sse_awk_close
 
-	xp_awk_geterrnum 
-	xp_awk_geterrstr 
+	sse_awk_geterrnum 
+	sse_awk_geterrstr 
 
-	xp_awk_clear 
-	xp_awk_setparseopt 
-	xp_awk_setrunopt 
+	sse_awk_clear 
+	sse_awk_setparseopt 
+	sse_awk_setrunopt 
 
-	xp_awk_attsrc 
-	xp_awk_detsrc 
+	sse_awk_attsrc 
+	sse_awk_detsrc 
 
-	xp_awk_parse 
-	xp_awk_run 
+	sse_awk_parse 
+	sse_awk_run 
 
-	xp_awk_printf
-	xp_awk_strcmp
+	sse_awk_printf
+	sse_awk_strcmp
 

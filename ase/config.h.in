@@ -1,78 +1,78 @@
 /* Big Endian */
-#undef XP_ENDIAN_BIG
+#undef SSE_ENDIAN_BIG
 
 /* Little Endian */
-#undef XP_ENDIAN_LITTLE
+#undef SSE_ENDIAN_LITTLE
 
 /* Unknown Endian */
-#undef XP_ENDIAN_UNKNOWN
+#undef SSE_ENDIAN_UNKNOWN
 
 /* long long */
-#undef XP_HAVE_LONG_LONG
+#undef SSE_HAVE_LONG_LONG
 
 /* long double */
-#undef XP_HAVE_LONG_DOUBLE
+#undef SSE_HAVE_LONG_DOUBLE
 
 /* data type size */
-#define XP_SIZEOF_CHAR 0
-#define XP_SIZEOF_SHORT 0
-#define XP_SIZEOF_INT  0
-#define XP_SIZEOF_LONG 0
-#define XP_SIZEOF_LONG_LONG  0
-#define XP_SIZEOF___INT8 0
-#define XP_SIZEOF___INT16 0
-#define XP_SIZEOF___INT32 0
-#define XP_SIZEOF___INT64 0
-#define XP_SIZEOF___INT128 0
-#define XP_SIZEOF_VOID_P  0
-#define XP_SIZEOF_FLOAT 0
-#define XP_SIZEOF_DOUBLE 0
-#define XP_SIZEOF_LONG_DOUBLE 0
-#define XP_SIZEOF_PID_T 0
-#define XP_SIZEOF_WCHAR_T 0
+#define SSE_SIZEOF_CHAR 0
+#define SSE_SIZEOF_SHORT 0
+#define SSE_SIZEOF_INT  0
+#define SSE_SIZEOF_LONG 0
+#define SSE_SIZEOF_LONG_LONG  0
+#define SSE_SIZEOF___INT8 0
+#define SSE_SIZEOF___INT16 0
+#define SSE_SIZEOF___INT32 0
+#define SSE_SIZEOF___INT64 0
+#define SSE_SIZEOF___INT128 0
+#define SSE_SIZEOF_VOID_P  0
+#define SSE_SIZEOF_FLOAT 0
+#define SSE_SIZEOF_DOUBLE 0
+#define SSE_SIZEOF_LONG_DOUBLE 0
+#define SSE_SIZEOF_PID_T 0
+#define SSE_SIZEOF_WCHAR_T 0
 
 /* fcntl.h */
-#undef XP_HAVE_FCNTL_H
+#undef SSE_HAVE_FCNTL_H
 
 /* limits.h */
-#undef XP_HAVE_LIMITS_H
+#undef SSE_HAVE_LIMITS_H
 
 /* stdarg.h */
-#undef XP_HAVE_STDARG_H
+#undef SSE_HAVE_STDARG_H
 
 /* stddef.h */
-#undef XP_HAVE_STDDEF_H
+#undef SSE_HAVE_STDDEF_H
 
 /* unistd.h */
-#undef XP_HAVE_UNISTD_H
+#undef SSE_HAVE_UNISTD_H
 
 /* wchar.h */
-#undef XP_HAVE_WCHAR_H
+#undef SSE_HAVE_WCHAR_H
 
 /* poll.h */
-#undef XP_HAVE_POLL_H
+#undef SSE_HAVE_POLL_H
 
 /* sys/poll.h */
-#undef XP_HAVE_SYS_EPOLL_H
+#undef SSE_HAVE_SYS_EPOLL_H
 
 /* pthread.h */
-#undef XP_HAVE_PTHREAD_H
+#undef SSE_HAVE_PTHREAD_H
 
 /* sys/sysinfo.h */
-#undef XP_HAVE_SYS_SYSINFO_H
+#undef SSE_HAVE_SYS_SYSINFO_H
 
 /* sys/sysinfo.mem_unit */
-#undef XP_HAVE_SYS_SYSINFO_MEM_UNIT
+#undef SSE_HAVE_SYS_SYSINFO_MEM_UNIT
 
 /* in6.scope_id */
-#undef XP_HAVE_IN6_SCOPE_ID
+#undef SSE_HAVE_IN6_SCOPE_ID
 
 /* sockaddr_storage.ss_family */
-#undef XP_HAVE_SS_FAMILY
+#undef SSE_HAVE_SS_FAMILY
 
 /* char is wchar */
-#undef XP_CHAR_IS_WCHAR
+#undef SSE_CHAR_IS_WCHAR
 
 /* char is mchar */
-#undef XP_CHAR_IS_MCHAR
+#undef SSE_CHAR_IS_MCHAR
 

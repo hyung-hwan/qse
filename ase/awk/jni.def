@@ -1,10 +1,10 @@
-LIBRARY	"xpawk.dll"
+LIBRARY	"sseawk.dll"
 
 EXPORTS
-	Java_xpkit_xpj_awk_Awk_open
-	Java_xpkit_xpj_awk_Awk_close
-	Java_xpkit_xpj_awk_Awk_parse
-	Java_xpkit_xpj_awk_Awk_run
-	Java_xpkit_xpj_awk_Awk_get_1extio
-	Java_xpkit_xpj_awk_Awk_set_1extio
+	Java_sse_awk_Awk_open
+	Java_sse_awk_Awk_close
+	Java_sse_awk_Awk_parse
+	Java_sse_awk_Awk_run
+	Java_sse_awk_Awk_get_1extio
+	Java_sse_awk_Awk_set_1extio
 

@@ -3,7 +3,7 @@ objects = awk.obj,err.obj,extio.obj,func.obj,map.obj,misc.obj,parse.obj,rex.obj,
 CFLAGS = /pointer_size=long /define=XP_AWK_STAND_ALONE
 LIBRFLAGS = 
 
-xpawk.olb : $(objects)
+sseawk.olb : $(objects)
 	$(LIBR)/create $(MMS$TARGET)
 	$(LIBR)/replace $(LIBRFLAGS) $(MMS$TARGET) $(objects)
 

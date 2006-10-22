@@ -1,10 +1,10 @@
 SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
 OBJS = $(SRCS:.c=.o)
-OUT = libxpawk.a
+OUT = libsseawk.a
 
 CC = cc
-CFLAGS = -Wall -I../.. -DXP_AWK_STAND_ALONE
+CFLAGS = -Wall -I../.. 
 
 all: $(OBJS)
 	ar cr $(OUT) $(OBJS)
