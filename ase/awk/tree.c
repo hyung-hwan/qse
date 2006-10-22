@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.81 2006-10-22 11:34:53 bacon Exp $
+ * $Id: tree.c,v 1.82 2006-10-22 12:39:30 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -89,18 +89,18 @@ static const sse_char_t* __print_outop_str[] =
 #define PRINT_TABS(awk,depth) \
 	do { if (__print_tabs(awk,depth) == -1) return -1; } while (0)
 
-#define PRINT_ESSERESSION(awk,nde) \
-	do { if (__print_esseression(awk,nde) == -1) return -1; } while (0)
+#define PRINT_EXPRESSION(awk,nde) \
+	do { if (__print_expression(awk,nde) == -1) return -1; } while (0)
 
-#define PRINT_ESSERESSION_LIST(awk,nde) \
-	do { if (__print_esseression_list(awk,nde) == -1) return -1; } while (0)
+#define PRINT_EXPRESSION_LIST(awk,nde) \
+	do { if (__print_expression_list(awk,nde) == -1) return -1; } while (0)
 
 #define PRINT_STATEMENTS(awk,nde,depth) \
 	do { if (__print_statements(awk,nde,depth) == -1) return -1; } while (0)
 
 static int __print_tabs (sse_awk_t* awk, int depth);
-static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde);
-static int __print_esseression_list (sse_awk_t* awk, sse_awk_nde_t* tree);
+static int __print_expression (sse_awk_t* awk, sse_awk_nde_t* nde);
+static int __print_expression_list (sse_awk_t* awk, sse_awk_nde_t* tree);
 static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth);
 
 static int __print_tabs (sse_awk_t* awk, int depth)
@@ -114,7 +114,7 @@ static int __print_tabs (sse_awk_t* awk, int depth)
 	return 0;
 }
 
-static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
+static int __print_expression (sse_awk_t* awk, sse_awk_nde_t* nde)
 {
 	switch (nde->type) 
 	{
@@ -125,7 +125,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 			PUT_SRCSTR (awk, SSE_T("("));
 			while (p != SSE_NULL) 
 			{
-				PRINT_ESSERESSION (awk, p);
+				PRINT_EXPRESSION (awk, p);
 				if (p->next != SSE_NULL) 
 					PUT_SRCSTR (awk, SSE_T(","));
 				p = p->next;
@@ -138,22 +138,22 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 		{
 			sse_awk_nde_ass_t* px = (sse_awk_nde_ass_t*)nde;
 
-			PRINT_ESSERESSION (awk, px->left);
+			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, SSE_T(" "));
 			PUT_SRCSTR (awk, __assop_str[px->opcode]);
 			PUT_SRCSTR (awk, SSE_T(" "));
-			PRINT_ESSERESSION (awk, px->right);
+			PRINT_EXPRESSION (awk, px->right);
 
 			sse_awk_assert (awk, px->right->next == SSE_NULL);
 			break;
 		}
 
-		case SSE_AWK_NDE_ESSE_BIN:
+		case SSE_AWK_NDE_EXP_BIN:
 		{
-			sse_awk_nde_esse_t* px = (sse_awk_nde_esse_t*)nde;
+			sse_awk_nde_exp_t* px = (sse_awk_nde_exp_t*)nde;
 
 			PUT_SRCSTR (awk, SSE_T("("));
-			PRINT_ESSERESSION (awk, px->left);
+			PRINT_EXPRESSION (awk, px->left);
 			sse_awk_assert (awk, px->left->next == SSE_NULL);
 
 			PUT_SRCSTR (awk, SSE_T(" "));
@@ -162,7 +162,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 
 			if (px->right->type == SSE_AWK_NDE_ASS) 
 				PUT_SRCSTR (awk, SSE_T("("));
-			PRINT_ESSERESSION (awk, px->right);
+			PRINT_EXPRESSION (awk, px->right);
 			if (px->right->type == SSE_AWK_NDE_ASS) 
 				PUT_SRCSTR (awk, SSE_T(")"));
 			sse_awk_assert (awk, px->right->next == SSE_NULL); 
@@ -170,37 +170,37 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 			break;
 		}
 
-		case SSE_AWK_NDE_ESSE_UNR:
+		case SSE_AWK_NDE_EXP_UNR:
 		{
-			sse_awk_nde_esse_t* px = (sse_awk_nde_esse_t*)nde;
+			sse_awk_nde_exp_t* px = (sse_awk_nde_exp_t*)nde;
 			sse_awk_assert (awk, px->right == SSE_NULL);
 
 			PUT_SRCSTR (awk, __unrop_str[px->opcode]);
 			PUT_SRCSTR (awk, SSE_T("("));
-			PRINT_ESSERESSION (awk, px->left);
+			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, SSE_T(")"));
 			break;
 		}
 
-		case SSE_AWK_NDE_ESSE_INCPRE:
+		case SSE_AWK_NDE_EXP_INCPRE:
 		{
-			sse_awk_nde_esse_t* px = (sse_awk_nde_esse_t*)nde;
+			sse_awk_nde_exp_t* px = (sse_awk_nde_exp_t*)nde;
 			sse_awk_assert (awk, px->right == SSE_NULL);
 
 			PUT_SRCSTR (awk, __incop_str[px->opcode]);
 			PUT_SRCSTR (awk, SSE_T("("));
-			PRINT_ESSERESSION (awk, px->left);
+			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, SSE_T(")"));
 			break;
 		}
 
-		case SSE_AWK_NDE_ESSE_INCPST:
+		case SSE_AWK_NDE_EXP_INCPST:
 		{
-			sse_awk_nde_esse_t* px = (sse_awk_nde_esse_t*)nde;
+			sse_awk_nde_exp_t* px = (sse_awk_nde_exp_t*)nde;
 			sse_awk_assert (awk, px->right == SSE_NULL);
 
 			PUT_SRCSTR (awk, SSE_T("("));
-			PRINT_ESSERESSION (awk, px->left);
+			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, SSE_T(")"));
 			PUT_SRCSTR (awk, __incop_str[px->opcode]);
 			break;
@@ -211,12 +211,12 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 			sse_awk_nde_cnd_t* px = (sse_awk_nde_cnd_t*)nde;
 
 			PUT_SRCSTR (awk, SSE_T("("));
-			PRINT_ESSERESSION (awk, px->test);
+			PRINT_EXPRESSION (awk, px->test);
 			PUT_SRCSTR (awk, SSE_T(")?"));
 
-			PRINT_ESSERESSION (awk, px->left);
+			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, SSE_T(":"));
-			PRINT_ESSERESSION (awk, px->right);
+			PRINT_EXPRESSION (awk, px->right);
 			break;
 		}
 
@@ -321,7 +321,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 				px->id.idxa, 10, SSE_NULL, tmp, sse_countof(tmp));
 			PUT_SRCSTRX (awk, tmp, n);
 			PUT_SRCSTR (awk, SSE_T("["));
-			PRINT_ESSERESSION_LIST (awk, px->idx);
+			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, SSE_T("]"));
 			break;
 		}
@@ -344,7 +344,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 
 			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			PUT_SRCSTR (awk, SSE_T("["));
-			PRINT_ESSERESSION_LIST (awk, px->idx);
+			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, SSE_T("]"));
 			break;
 		}
@@ -392,7 +392,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 				PUT_SRCSTR (awk, SSE_T("["));
 			}
 			sse_awk_assert (awk, px->idx != SSE_NULL);
-			PRINT_ESSERESSION_LIST (awk, px->idx);
+			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, SSE_T("]"));
 			break;
 		}
@@ -440,7 +440,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 				PUT_SRCSTR (awk, SSE_T("["));
 			}
 			sse_awk_assert (awk, px->idx != SSE_NULL);
-			PRINT_ESSERESSION_LIST (awk, px->idx);
+			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, SSE_T("]"));
 			break;
 		}
@@ -448,7 +448,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 		case SSE_AWK_NDE_POS:
 		{
 			PUT_SRCSTR (awk, SSE_T("$"));
-			PRINT_ESSERESSION (awk, ((sse_awk_nde_pos_t*)nde)->val);
+			PRINT_EXPRESSION (awk, ((sse_awk_nde_pos_t*)nde)->val);
 			break;
 		}
 
@@ -458,7 +458,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 			PUT_SRCSTRX (awk, 
 				px->what.bfn.name, px->what.bfn.name_len);
 			PUT_SRCSTR (awk, SSE_T(" ("));
-			PRINT_ESSERESSION_LIST (awk, px->args);
+			PRINT_EXPRESSION_LIST (awk, px->args);
 			PUT_SRCSTR (awk, SSE_T(")"));
 			break;
 		}
@@ -470,7 +470,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 			PUT_SRCSTRX (awk, 
 				px->what.afn.name, px->what.afn.name_len);
 			PUT_SRCSTR (awk, SSE_T(" ("));
-			PRINT_ESSERESSION_LIST (awk, px->args);
+			PRINT_EXPRESSION_LIST (awk, px->args);
 			PUT_SRCSTR (awk, SSE_T(")"));
 			break;
 		}
@@ -482,7 +482,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 			    (px->in_type == SSE_AWK_IN_PIPE ||
 			     px->in_type == SSE_AWK_IN_COPROC))
 			{
-				PRINT_ESSERESSION (awk, px->in);
+				PRINT_EXPRESSION (awk, px->in);
 				PUT_SRCSTR (awk, SSE_T(" "));
 				PUT_SRCSTR (awk, __getline_inop_str[px->in_type]);
 				PUT_SRCSTR (awk, SSE_T(" "));
@@ -492,7 +492,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 			if (px->var != SSE_NULL)
 			{
 				PUT_SRCSTR (awk, SSE_T(" "));
-				PRINT_ESSERESSION (awk, px->var);
+				PRINT_EXPRESSION (awk, px->var);
 			}
 
 			if (px->in != SSE_NULL &&
@@ -501,7 +501,7 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 				PUT_SRCSTR (awk, SSE_T(" "));
 				PUT_SRCSTR (awk, __getline_inop_str[px->in_type]);
 				PUT_SRCSTR (awk, SSE_T(" "));
-				PRINT_ESSERESSION (awk, px->in);
+				PRINT_EXPRESSION (awk, px->in);
 			}	  
 			break;
 		}
@@ -515,13 +515,13 @@ static int __print_esseression (sse_awk_t* awk, sse_awk_nde_t* nde)
 	return 0;
 }
 
-static int __print_esseression_list (sse_awk_t* awk, sse_awk_nde_t* tree)
+static int __print_expression_list (sse_awk_t* awk, sse_awk_nde_t* tree)
 {
 	sse_awk_nde_t* p = tree;
 
 	while (p != SSE_NULL) 
 	{
-		PRINT_ESSERESSION (awk, p);
+		PRINT_EXPRESSION (awk, p);
 		p = p->next;
 		if (p != SSE_NULL) PUT_SRCSTR (awk, SSE_T(","));
 	}
@@ -588,7 +588,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 
 				PRINT_TABS (awk, depth);
 				PUT_SRCSTR (awk, SSE_T("if ("));	
-				PRINT_ESSERESSION (awk, px->test);
+				PRINT_EXPRESSION (awk, px->test);
 				PUT_SRCSTR (awk, SSE_T(")\n"));
 
 				sse_awk_assert (awk, px->then_part != SSE_NULL);
@@ -615,7 +615,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 
 				PRINT_TABS (awk, depth);
 				PUT_SRCSTR (awk, SSE_T("while ("));	
-				PRINT_ESSERESSION (awk, px->test);
+				PRINT_EXPRESSION (awk, px->test);
 				PUT_SRCSTR (awk, SSE_T(")\n"));
 				if (px->body->type == SSE_AWK_NDE_BLK) 
 				{
@@ -645,7 +645,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 
 				PRINT_TABS (awk, depth);
 				PUT_SRCSTR (awk, SSE_T("while ("));	
-				PRINT_ESSERESSION (awk, px->test);
+				PRINT_EXPRESSION (awk, px->test);
 				PUT_SRCSTR (awk, SSE_T(");\n"));	
 				break;
 			}
@@ -658,17 +658,17 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 				PUT_SRCSTR (awk, SSE_T("for ("));
 				if (px->init != SSE_NULL) 
 				{
-					PRINT_ESSERESSION (awk, px->init);
+					PRINT_EXPRESSION (awk, px->init);
 				}
 				PUT_SRCSTR (awk, SSE_T("; "));
 				if (px->test != SSE_NULL) 
 				{
-					PRINT_ESSERESSION (awk, px->test);
+					PRINT_EXPRESSION (awk, px->test);
 				}
 				PUT_SRCSTR (awk, SSE_T("; "));
 				if (px->incr != SSE_NULL) 
 				{
-					PRINT_ESSERESSION (awk, px->incr);
+					PRINT_EXPRESSION (awk, px->incr);
 				}
 				PUT_SRCSTR (awk, SSE_T(")\n"));
 
@@ -689,7 +689,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 
 				PRINT_TABS (awk, depth);
 				PUT_SRCSTR (awk, SSE_T("for "));
-				PRINT_ESSERESSION (awk, px->test);
+				PRINT_EXPRESSION (awk, px->test);
 				PUT_SRCSTR (awk, SSE_T("\n"));
 				if (px->body->type == SSE_AWK_NDE_BLK) 
 				{
@@ -728,7 +728,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 					PUT_SRCSTR (awk, SSE_T("return "));
 					sse_awk_assert (awk, ((sse_awk_nde_return_t*)p)->val->next == SSE_NULL);
 
-					PRINT_ESSERESSION (awk, ((sse_awk_nde_return_t*)p)->val);
+					PRINT_EXPRESSION (awk, ((sse_awk_nde_return_t*)p)->val);
 					PUT_SRCSTR (awk, SSE_T(";\n"));
 				}
 				break;
@@ -747,7 +747,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 				{
 					PUT_SRCSTR (awk, SSE_T("exit "));
 					sse_awk_assert (awk, px->val->next == SSE_NULL);
-					PRINT_ESSERESSION (awk, px->val);
+					PRINT_EXPRESSION (awk, px->val);
 					PUT_SRCSTR (awk, SSE_T(";\n"));
 				}
 				break;
@@ -771,7 +771,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 			{
 				PRINT_TABS (awk, depth);
 				PUT_SRCSTR (awk, SSE_T("delete "));
-		/* TODO: can't use __print_esseression??? */
+		/* TODO: can't use __print_expression??? */
 				sse_awk_prnpt (awk, ((sse_awk_nde_delete_t*)p)->var);
 				break;
 			}
@@ -786,7 +786,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 				if (px->args != SSE_NULL)
 				{
 					PUT_SRCSTR (awk, SSE_T(" "));
-					PRINT_ESSERESSION_LIST (awk, px->args);
+					PRINT_EXPRESSION_LIST (awk, px->args);
 				}
 
 				if (px->out != SSE_NULL)
@@ -794,7 +794,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 					PUT_SRCSTR (awk, SSE_T(" "));
 					PUT_SRCSTR (awk, __print_outop_str[px->out_type]);
 					PUT_SRCSTR (awk, SSE_T(" "));
-					PRINT_ESSERESSION (awk, px->out);
+					PRINT_EXPRESSION (awk, px->out);
 				}
 
 				PUT_SRCSTR (awk, SSE_T(";\n"));
@@ -804,7 +804,7 @@ static int __print_statements (sse_awk_t* awk, sse_awk_nde_t* tree, int depth)
 			default:
 			{
 				PRINT_TABS (awk, depth);
-				PRINT_ESSERESSION (awk, p);
+				PRINT_EXPRESSION (awk, p);
 				PUT_SRCSTR (awk, SSE_T(";\n"));
 			}
 		}
@@ -826,7 +826,7 @@ int sse_awk_prnptnpt (sse_awk_t* awk, sse_awk_nde_t* tree)
 
 	while (nde != SSE_NULL)
 	{
-		if (__print_esseression (awk, nde) == -1) return -1;
+		if (__print_expression (awk, nde) == -1) return -1;
 		if (nde->next == SSE_NULL) break;
 
 		PUT_SRCSTR (awk, SSE_T(","));
@@ -975,9 +975,9 @@ void sse_awk_clrpt (sse_awk_t* awk, sse_awk_nde_t* tree)
 				break;
 			}
 
-			case SSE_AWK_NDE_ESSE_BIN:
+			case SSE_AWK_NDE_EXP_BIN:
 			{
-				sse_awk_nde_esse_t* px = (sse_awk_nde_esse_t*)p;
+				sse_awk_nde_exp_t* px = (sse_awk_nde_exp_t*)p;
 				sse_awk_assert (awk, px->left->next == SSE_NULL);
 				sse_awk_assert (awk, px->right->next == SSE_NULL);
 
@@ -987,11 +987,11 @@ void sse_awk_clrpt (sse_awk_t* awk, sse_awk_nde_t* tree)
 				break;
 			}
 
-			case SSE_AWK_NDE_ESSE_UNR:
-			case SSE_AWK_NDE_ESSE_INCPRE:
-			case SSE_AWK_NDE_ESSE_INCPST:
+			case SSE_AWK_NDE_EXP_UNR:
+			case SSE_AWK_NDE_EXP_INCPRE:
+			case SSE_AWK_NDE_EXP_INCPST:
 			{
-				sse_awk_nde_esse_t* px = (sse_awk_nde_esse_t*)p;
+				sse_awk_nde_exp_t* px = (sse_awk_nde_exp_t*)p;
 				sse_awk_assert (awk, px->right == SSE_NULL);
 				sse_awk_clrpt (awk, px->left);
 				SSE_AWK_FREE (awk, p);

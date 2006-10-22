@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.19 2006-10-22 11:34:53 bacon Exp $
+ * $Id: rex.h,v 1.20 2006-10-22 12:39:29 bacon Exp $
  **/
 
 #ifndef _SSE_AWK_REX_H_
@@ -11,26 +11,26 @@
 
 /*
  * Regular Esseression Syntax
- *   A regular esseression is zero or more branches, separated by '|'.
+ *   A regular expression is zero or more branches, separated by '|'.
  *   ......
  *   ......
  *
- * Compiled form of a regular esseression:
+ * Compiled form of a regular expression:
  *
- *   | esseression                                                                      |
+ *   | expression                                                                      |
  *   | header  | branch                          | branch              | branch        |
  *   | nb | el | na | bl | cmd | arg | cmd | arg | na | bl | cmd | arg | na | bl | cmd |
  *
  *   nb: the number of branches
- *   el: the length of a esseression including the length of nb and el
+ *   el: the length of a expression including the length of nb and el
  *   na: the number of atoms
  *   bl: the length of a branch including the length of na and bl
  *   cmd: The command and repetition info encoded together. 
  *      Some commands require an argument to follow them but some other don't.
  *      It is encoded as follows:
  *
- *   Subesseressions can be nested by having the command "GROUP" 
- *   and a subesseression as its argument.
+ *   Subexpressions can be nested by having the command "GROUP" 
+ *   and a subexpression as its argument.
  *
  * Examples:
  *   a.c -> |1|6|5|ORD_CHAR(no bound)|a|ANY_CHAR(no bound)|ORD_CHAR(no bound)|c|

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.130 2006-10-22 11:34:52 bacon Exp $
+ * $Id: awk.h,v 1.131 2006-10-22 12:39:29 bacon Exp $
  */
 
 #ifndef _SSE_AWK_AWK_H_
@@ -141,8 +141,8 @@ enum sse_awk_option_t
 	/* allow undeclared variables */
 	SSE_AWK_IMPLICIT    = (1 << 0),
 
-	/* variable requires esselicit declaration */
-	SSE_AWK_ESSELICIT    = (1 << 1), 
+	/* variable requires explicit declaration */
+	SSE_AWK_EXPLICIT    = (1 << 1), 
 
 	/* a function name should not coincide to be a variable name */
 	SSE_AWK_UNIQUE      = (1 << 2),
@@ -162,7 +162,7 @@ enum sse_awk_option_t
 	/* support string concatenation in tokenization.
 	 * this option can change the behavior of a certain construct.
 	 * getline < "abc" ".def" is treated as if it is getline < "abc.def" 
-	 * when this option is on. If this option is off, the same esseression
+	 * when this option is on. If this option is off, the same expression
 	 * is treated as if it is (getline < "abc") ".def". */
 	SSE_AWK_STRCONCAT   = (1 << 7), 
 
@@ -179,7 +179,7 @@ enum sse_awk_option_t
 	SSE_AWK_STRINDEXONE = (1 << 11),
 
 	/* strip off leading and trailing spaces when splitting a record
-	 * into fields with a regular esseression.
+	 * into fields with a regular expression.
 	 *
 	 * Consider the following program.
 	 *  BEGIN { FS="[:[:space:]]+"; } 
@@ -229,24 +229,24 @@ enum ant_awk_errnum_t
 	SSE_AWK_ELXCHR,         /* lexer came accross an wrong character */
 	SSE_AWK_ELXUNG,         /* lexer failed to unget a character */
 
-	SSE_AWK_EENDSRC,        /* unesseected end of source */
-	SSE_AWK_EENDCOMMENT,    /* unesseected end of a comment */
-	SSE_AWK_EENDSTR,        /* unesseected end of a string */
-	SSE_AWK_EENDREX,        /* unesseected end of a regular esseression */
-	SSE_AWK_ELBRACE,        /* left brace esseected */
-	SSE_AWK_ELPAREN,        /* left parenthesis esseected */
-	SSE_AWK_ERPAREN,        /* right parenthesis esseected */
-	SSE_AWK_ERBRACK,        /* right bracket esseected */
-	SSE_AWK_ECOMMA,         /* comma esseected */
-	SSE_AWK_ESEMICOLON,     /* semicolon esseected */
-	SSE_AWK_ECOLON,         /* colon esseected */
-	SSE_AWK_EIN,            /* keyword 'in' is esseected */
+	SSE_AWK_EENDSRC,        /* unexpected end of source */
+	SSE_AWK_EENDCOMMENT,    /* unexpected end of a comment */
+	SSE_AWK_EENDSTR,        /* unexpected end of a string */
+	SSE_AWK_EENDREX,        /* unexpected end of a regular expression */
+	SSE_AWK_ELBRACE,        /* left brace expected */
+	SSE_AWK_ELPAREN,        /* left parenthesis expected */
+	SSE_AWK_ERPAREN,        /* right parenthesis expected */
+	SSE_AWK_ERBRACK,        /* right bracket expected */
+	SSE_AWK_ECOMMA,         /* comma expected */
+	SSE_AWK_ESEMICOLON,     /* semicolon expected */
+	SSE_AWK_ECOLON,         /* colon expected */
+	SSE_AWK_EIN,            /* keyword 'in' is expected */
 	SSE_AWK_ENOTVAR,        /* not a variable name after 'in' */
-	SSE_AWK_EESSERESSION,    /* esseression esseected */
+	SSE_AWK_EEXPRESSION,    /* expression expected */
 
-	SSE_AWK_EWHILE,         /* keyword 'while' is esseected */
-	SSE_AWK_EASSIGNMENT,    /* assignment statement esseected */
-	SSE_AWK_EIDENT,         /* identifier esseected */
+	SSE_AWK_EWHILE,         /* keyword 'while' is expected */
+	SSE_AWK_EASSIGNMENT,    /* assignment statement expected */
+	SSE_AWK_EIDENT,         /* identifier expected */
 	SSE_AWK_EBEGINBLOCK,    /* BEGIN requires an action block */
 	SSE_AWK_EENDBLOCK,      /* END requires an action block */
 	SSE_AWK_EDUPBEGIN,      /* duplicate BEGIN */
@@ -266,7 +266,7 @@ enum ant_awk_errnum_t
 	SSE_AWK_ECONTINUE,      /* continue outside a loop */
 	SSE_AWK_ENEXT,          /* next illegal in BEGIN or END block */
 	SSE_AWK_ENEXTFILE,      /* nextfile illegal in BEGIN or END block */
-	SSE_AWK_EGETLINE,       /* getline esseected */
+	SSE_AWK_EGETLINE,       /* getline expected */
 
 	/* run time error */
 	SSE_AWK_EDIVBYZERO,        /* divide by zero */
@@ -291,15 +291,15 @@ enum ant_awk_errnum_t
 	SSE_AWK_EIOHANDLER,        /* io handler has returned an error */
 	SSE_AWK_EINTERNAL,         /* internal error */
 
-	/* regular esseression error */
-	SSE_AWK_EREXRPAREN,       /* a right parenthesis is esseected */
-	SSE_AWK_EREXRBRACKET,     /* a right bracket is esseected */
-	SSE_AWK_EREXRBRACE,       /* a right brace is esseected */
-	SSE_AWK_EREXCOLON,        /* a colon is esseected */
+	/* regular expression error */
+	SSE_AWK_EREXRPAREN,       /* a right parenthesis is expected */
+	SSE_AWK_EREXRBRACKET,     /* a right bracket is expected */
+	SSE_AWK_EREXRBRACE,       /* a right brace is expected */
+	SSE_AWK_EREXCOLON,        /* a colon is expected */
 	SSE_AWK_EREXCRANGE,       /* invalid character range */
 	SSE_AWK_EREXCCLASS,       /* invalid character class */
 	SSE_AWK_EREXBRANGE,       /* invalid boundary range */
-	SSE_AWK_EREXEND,          /* unesseected end of the pattern */
+	SSE_AWK_EREXEND,          /* unexpected end of the pattern */
 	SSE_AWK_EREXGARBAGE       /* garbage after the pattern */
 };
 
@@ -371,7 +371,7 @@ void sse_awk_setrunerrnum (sse_awk_run_t* run, int errnum);
 int sse_awk_clrrec (sse_awk_run_t* run, sse_bool_t skip_inrec_line);
 int sse_awk_setrec (sse_awk_run_t* run, sse_size_t idx, const sse_char_t* str, sse_size_t len);
 
-/* utility functions esseorted by awk.h */
+/* utility functions exported by awk.h */
 sse_long_t sse_awk_strxtolong (
 	sse_awk_t* awk, const sse_char_t* str, sse_size_t len,
 	int base, const sse_char_t** endptr);
@@ -383,7 +383,7 @@ sse_size_t sse_awk_longtostr (
 	sse_long_t value, int radix, const sse_char_t* prefix,
 	sse_char_t* buf, sse_size_t size);
 
-/* string functions esseorted by awk.h */
+/* string functions exported by awk.h */
 sse_char_t* sse_awk_strdup (
 	sse_awk_t* awk, const sse_char_t* str);
 sse_char_t* sse_awk_strxdup (

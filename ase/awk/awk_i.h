@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.69 2006-10-22 11:34:52 bacon Exp $
+ * $Id: awk_i.h,v 1.70 2006-10-22 12:39:29 bacon Exp $
  */
 
 #ifndef _SSE_AWK_AWKI_H_
@@ -22,10 +22,10 @@ typedef struct sse_awk_tree_t sse_awk_tree_t;
 #include <sse/awk/misc.h>
 
 #ifdef NDEBUG
-	#define sse_awk_assert(awk,esser) ((void)0)
+	#define sse_awk_assert(awk,expr) ((void)0)
 #else
-	#define sse_awk_assert(awk,esser) (void)((esser) || \
-		(sse_awk_abort(awk, SSE_TEXT(#esser), SSE_TEXT(__FILE__), __LINE__), 0))
+	#define sse_awk_assert(awk,expr) (void)((expr) || \
+		(sse_awk_abort(awk, SSE_TEXT(#expr), SSE_TEXT(__FILE__), __LINE__), 0))
 #endif
 
 #ifdef _MSC_VER

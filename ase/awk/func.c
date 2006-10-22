@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.66 2006-10-22 11:34:53 bacon Exp $
+ * $Id: func.c,v 1.67 2006-10-22 12:39:29 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -175,7 +175,7 @@ static int __bfn_close (sse_awk_run_t* run)
 		/* getline or print doesn't allow an emptry for the 
 		 * input or output file name. so close should not allow 
 		 * it either.  
-		 * another reason for this is if close is called esselicitly 
+		 * another reason for this is if close is called explicitly 
 		 * with an empty string, it may close the console that uses 
 		 * an empty string for its identification because closeextio
 		 * closes any extios that match the name given unlike 
