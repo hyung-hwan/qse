@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.9 2006-10-22 11:34:53 bacon Exp $
+ * $Id: str.c,v 1.10 2006-10-22 12:52:50 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -9,7 +9,8 @@ sse_awk_str_t* sse_awk_str_open (
 {
 	if (str == SSE_NULL) 
 	{
-		str = (sse_awk_str_t*) SSE_AWK_MALLOC (awk, sizeof(sse_awk_str_t));
+		str = (sse_awk_str_t*) 
+			SSE_AWK_MALLOC (awk, sizeof(sse_awk_str_t));
 		if (str == SSE_NULL) return SSE_NULL;
 		str->__dynamic = sse_true;
 	}
@@ -68,7 +69,8 @@ sse_size_t sse_awk_str_cpy (sse_awk_str_t* str, const sse_char_t* s)
 	return sse_awk_str_ncpy (str, s, sse_awk_strlen(s));
 }
 
-sse_size_t sse_awk_str_ncpy (sse_awk_str_t* str, const sse_char_t* s, sse_size_t len)
+sse_size_t sse_awk_str_ncpy (
+	sse_awk_str_t* str, const sse_char_t* s, sse_size_t len)
 {
 	sse_char_t* buf;
 
@@ -94,7 +96,8 @@ sse_size_t sse_awk_str_cat (sse_awk_str_t* str, const sse_char_t* s)
 	return sse_awk_str_ncat (str, s, sse_awk_strlen(s));
 }
 
-sse_size_t sse_awk_str_ncat (sse_awk_str_t* str, const sse_char_t* s, sse_size_t len)
+sse_size_t sse_awk_str_ncat (
+	sse_awk_str_t* str, const sse_char_t* s, sse_size_t len)
 {
 	if (len > str->capa - str->size) 
 	{
