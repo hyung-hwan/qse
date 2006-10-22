@@ -1,13 +1,18 @@
 /* 
- * $Id: awk.c,v 1.83 2006-10-22 11:34:52 bacon Exp $ 
+ * $Id: awk.c,v 1.84 2006-10-22 14:00:05 bacon Exp $ 
  */
+
+#if defined(__BORLANDC__)
+#pragma hdrstop
+#define Library
+#endif
 
 #include <sse/awk/awk_i.h>
 
 static void __free_afn (void* awk, void* afn);
 
 sse_awk_t* sse_awk_open (sse_awk_syscas_t* syscas)
-{	
+{
 	sse_awk_t* awk;
 
 	if (syscas == SSE_NULL) return SSE_NULL;
