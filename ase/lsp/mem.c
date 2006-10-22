@@ -1,308 +1,308 @@
 /*
- * $Id: mem.c,v 1.7 2005-09-20 12:06:51 bacon Exp $
+ * $Id: mem.c,v 1.8 2006-10-22 13:10:46 bacon Exp $
  */
 
-#include <xp/lsp/mem.h> 
-#include <xp/lsp/prim.h>
+#include <sse/lsp/mem.h> 
+#include <sse/lsp/prim.h>
 
-#include <xp/bas/memory.h>
-#include <xp/bas/string.h>
-#include <xp/bas/assert.h>
+#include <sse/bas/memory.h>
+#include <sse/bas/string.h>
+#include <sse/bas/assert.h>
 
-xp_lsp_mem_t* xp_lsp_mem_new (xp_size_t ubound, xp_size_t ubound_inc)
+sse_lsp_mem_t* sse_lsp_mem_new (sse_size_t ubound, sse_size_t ubound_inc)
 {
-	xp_lsp_mem_t* mem;
-	xp_size_t i;
+	sse_lsp_mem_t* mem;
+	sse_size_t i;
 
 	// allocate memory
-	mem = (xp_lsp_mem_t*)xp_malloc (xp_sizeof(xp_lsp_mem_t));	
-	if (mem == XP_NULL) return XP_NULL;
+	mem = (sse_lsp_mem_t*)sse_malloc (sse_sizeof(sse_lsp_mem_t));	
+	if (mem == SSE_NULL) return SSE_NULL;
 
 	// create a new root environment frame
-	mem->frame = xp_lsp_frame_new ();
-	if (mem->frame == XP_NULL) {
-		xp_free (mem);
-		return XP_NULL;
+	mem->frame = sse_lsp_frame_new ();
+	if (mem->frame == SSE_NULL) {
+		sse_free (mem);
+		return SSE_NULL;
 	}
 	mem->root_frame     = mem->frame;
-	mem->brooding_frame = XP_NULL;
+	mem->brooding_frame = SSE_NULL;
 
 	// create an array to hold temporary objects
-	mem->temp_array = xp_lsp_array_new (512);
-	if (mem->temp_array == XP_NULL) {
-		xp_lsp_frame_free (mem->frame);
-		xp_free (mem);
-		return XP_NULL;
+	mem->temp_array = sse_lsp_array_new (512);
+	if (mem->temp_array == SSE_NULL) {
+		sse_lsp_frame_free (mem->frame);
+		sse_free (mem);
+		return SSE_NULL;
 	}
 
 	// initialize object allocation list
 	mem->ubound     = ubound;
 	mem->ubound_inc = ubound_inc;
 	mem->count      = 0;
-	for (i = 0; i < XP_LSP_TYPE_COUNT; i++) {
-		mem->used[i] = XP_NULL;
-		mem->free[i] = XP_NULL;
+	for (i = 0; i < SSE_LSP_TYPE_COUNT; i++) {
+		mem->used[i] = SSE_NULL;
+		mem->free[i] = SSE_NULL;
 	}
-	mem->locked = XP_NULL;
+	mem->locked = SSE_NULL;
 
 	// when "ubound" is too small, the garbage collection can
 	// be performed while making the common objects.
-	mem->nil    = XP_NULL;
-	mem->t      = XP_NULL;
-	mem->quote  = XP_NULL;
-	mem->lambda = XP_NULL;
-	mem->macro  = XP_NULL;
+	mem->nil    = SSE_NULL;
+	mem->t      = SSE_NULL;
+	mem->quote  = SSE_NULL;
+	mem->lambda = SSE_NULL;
+	mem->macro  = SSE_NULL;
 
 	// initialize common object pointers
-	mem->nil     = xp_lsp_make_nil    (mem);
-	mem->t       = xp_lsp_make_true   (mem);
-	mem->quote   = xp_lsp_make_symbol (mem, XP_TEXT("quote"));
-	mem->lambda  = xp_lsp_make_symbol (mem, XP_TEXT("lambda"));
-	mem->macro   = xp_lsp_make_symbol (mem, XP_TEXT("macro"));
+	mem->nil     = sse_lsp_make_nil    (mem);
+	mem->t       = sse_lsp_make_true   (mem);
+	mem->quote   = sse_lsp_make_symbol (mem, SSE_TEXT("quote"));
+	mem->lambda  = sse_lsp_make_symbol (mem, SSE_TEXT("lambda"));
+	mem->macro   = sse_lsp_make_symbol (mem, SSE_TEXT("macro"));
 
-	if (mem->nil    == XP_NULL ||
-	    mem->t      == XP_NULL ||
-	    mem->quote  == XP_NULL ||
-	    mem->lambda == XP_NULL ||
-	    mem->macro  == XP_NULL) {
-		xp_lsp_dispose_all (mem);
-		xp_lsp_array_free (mem->temp_array);
-		xp_lsp_frame_free (mem->frame);
-		xp_free (mem);
-		return XP_NULL;
+	if (mem->nil    == SSE_NULL ||
+	    mem->t      == SSE_NULL ||
+	    mem->quote  == SSE_NULL ||
+	    mem->lambda == SSE_NULL ||
+	    mem->macro  == SSE_NULL) {
+		sse_lsp_dispose_all (mem);
+		sse_lsp_array_free (mem->temp_array);
+		sse_lsp_frame_free (mem->frame);
+		sse_free (mem);
+		return SSE_NULL;
 	}
 
 	return mem;
 }
 
-void xp_lsp_mem_free (xp_lsp_mem_t* mem)
+void sse_lsp_mem_free (sse_lsp_mem_t* mem)
 {
-	xp_assert (mem != XP_NULL);
+	sse_assert (mem != SSE_NULL);
 
 	// dispose of the allocated objects
-	xp_lsp_dispose_all (mem);
+	sse_lsp_dispose_all (mem);
 
 	// dispose of the temporary object arrays
-	xp_lsp_array_free (mem->temp_array);
+	sse_lsp_array_free (mem->temp_array);
 
 	// dispose of environment frames
-	xp_lsp_frame_free (mem->frame);
+	sse_lsp_frame_free (mem->frame);
 
 	// free the memory
-	xp_free (mem);
+	sse_free (mem);
 }
 
-static int __add_prim (xp_lsp_mem_t* mem, 
-	const xp_char_t* name, xp_size_t len, xp_lsp_prim_t prim)
+static int __add_prim (sse_lsp_mem_t* mem, 
+	const sse_char_t* name, sse_size_t len, sse_lsp_prim_t prim)
 {
-	xp_lsp_obj_t* n, * p;
+	sse_lsp_obj_t* n, * p;
 	
-	n = xp_lsp_make_symbolx (mem, name, len);
-	if (n == XP_NULL) return -1;
+	n = sse_lsp_make_symbolx (mem, name, len);
+	if (n == SSE_NULL) return -1;
 
-	xp_lsp_lock (n);
+	sse_lsp_lock (n);
 
-	p = xp_lsp_make_prim (mem, prim);
-	if (p == XP_NULL) return -1;
+	p = sse_lsp_make_prim (mem, prim);
+	if (p == SSE_NULL) return -1;
 
-	xp_lsp_unlock (n);
+	sse_lsp_unlock (n);
 
-	if (xp_lsp_set_func(mem, n, p) == XP_NULL) return -1;
+	if (sse_lsp_set_func(mem, n, p) == SSE_NULL) return -1;
 
 	return 0;
 }
 
 
-int xp_lsp_add_builtin_prims (xp_lsp_mem_t* mem)
+int sse_lsp_add_builtin_prims (sse_lsp_mem_t* mem)
 {
 
 #define ADD_PRIM(mem,name,len,prim) \
 	if (__add_prim(mem,name,len,prim) == -1) return -1;
 
-	ADD_PRIM (mem, XP_TEXT("abort"), 5, xp_lsp_prim_abort);
-	ADD_PRIM (mem, XP_TEXT("eval"),  4, xp_lsp_prim_eval);
-	ADD_PRIM (mem, XP_TEXT("prog1"), 5, xp_lsp_prim_prog1);
-	ADD_PRIM (mem, XP_TEXT("progn"), 5, xp_lsp_prim_progn);
-	ADD_PRIM (mem, XP_TEXT("gc"),    2, xp_lsp_prim_gc);
+	ADD_PRIM (mem, SSE_TEXT("abort"), 5, sse_lsp_prim_abort);
+	ADD_PRIM (mem, SSE_TEXT("eval"),  4, sse_lsp_prim_eval);
+	ADD_PRIM (mem, SSE_TEXT("prog1"), 5, sse_lsp_prim_prog1);
+	ADD_PRIM (mem, SSE_TEXT("progn"), 5, sse_lsp_prim_progn);
+	ADD_PRIM (mem, SSE_TEXT("gc"),    2, sse_lsp_prim_gc);
 
-	ADD_PRIM (mem, XP_TEXT("cond"),  4, xp_lsp_prim_cond);
-	ADD_PRIM (mem, XP_TEXT("if"),    2, xp_lsp_prim_if);
-	ADD_PRIM (mem, XP_TEXT("while"), 5, xp_lsp_prim_while);
+	ADD_PRIM (mem, SSE_TEXT("cond"),  4, sse_lsp_prim_cond);
+	ADD_PRIM (mem, SSE_TEXT("if"),    2, sse_lsp_prim_if);
+	ADD_PRIM (mem, SSE_TEXT("while"), 5, sse_lsp_prim_while);
 
-	ADD_PRIM (mem, XP_TEXT("car"),   3, xp_lsp_prim_car);
-	ADD_PRIM (mem, XP_TEXT("cdr"),   3, xp_lsp_prim_cdr);
-	ADD_PRIM (mem, XP_TEXT("cons"),  4, xp_lsp_prim_cons);
-	ADD_PRIM (mem, XP_TEXT("set"),   3, xp_lsp_prim_set);
-	ADD_PRIM (mem, XP_TEXT("setq"),  4, xp_lsp_prim_setq);
-	ADD_PRIM (mem, XP_TEXT("quote"), 5, xp_lsp_prim_quote);
-	ADD_PRIM (mem, XP_TEXT("defun"), 5, xp_lsp_prim_defun);
-	ADD_PRIM (mem, XP_TEXT("demac"), 5, xp_lsp_prim_demac);
-	ADD_PRIM (mem, XP_TEXT("let"),   3, xp_lsp_prim_let);
-	ADD_PRIM (mem, XP_TEXT("let*"),  4, xp_lsp_prim_letx);
+	ADD_PRIM (mem, SSE_TEXT("car"),   3, sse_lsp_prim_car);
+	ADD_PRIM (mem, SSE_TEXT("cdr"),   3, sse_lsp_prim_cdr);
+	ADD_PRIM (mem, SSE_TEXT("cons"),  4, sse_lsp_prim_cons);
+	ADD_PRIM (mem, SSE_TEXT("set"),   3, sse_lsp_prim_set);
+	ADD_PRIM (mem, SSE_TEXT("setq"),  4, sse_lsp_prim_setq);
+	ADD_PRIM (mem, SSE_TEXT("quote"), 5, sse_lsp_prim_quote);
+	ADD_PRIM (mem, SSE_TEXT("defun"), 5, sse_lsp_prim_defun);
+	ADD_PRIM (mem, SSE_TEXT("demac"), 5, sse_lsp_prim_demac);
+	ADD_PRIM (mem, SSE_TEXT("let"),   3, sse_lsp_prim_let);
+	ADD_PRIM (mem, SSE_TEXT("let*"),  4, sse_lsp_prim_letx);
 
-	ADD_PRIM (mem, XP_TEXT(">"),     1, xp_lsp_prim_gt);
-	ADD_PRIM (mem, XP_TEXT("<"),     1, xp_lsp_prim_lt);
+	ADD_PRIM (mem, SSE_TEXT(">"),     1, sse_lsp_prim_gt);
+	ADD_PRIM (mem, SSE_TEXT("<"),     1, sse_lsp_prim_lt);
 
-	ADD_PRIM (mem, XP_TEXT("+"),     1, xp_lsp_prim_plus);
-	ADD_PRIM (mem, XP_TEXT("-"),     1, xp_lsp_prim_minus);
+	ADD_PRIM (mem, SSE_TEXT("+"),     1, sse_lsp_prim_plus);
+	ADD_PRIM (mem, SSE_TEXT("-"),     1, sse_lsp_prim_minus);
 
 	return 0;
 }
 
 
-xp_lsp_obj_t* xp_lsp_alloc (xp_lsp_mem_t* mem, int type, xp_size_t size)
+sse_lsp_obj_t* sse_lsp_alloc (sse_lsp_mem_t* mem, int type, sse_size_t size)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 	
-	if (mem->count >= mem->ubound) xp_lsp_garbage_collect (mem);
+	if (mem->count >= mem->ubound) sse_lsp_garbage_collect (mem);
 	if (mem->count >= mem->ubound) {
 		mem->ubound += mem->ubound_inc;
-		if (mem->count >= mem->ubound) return XP_NULL;
+		if (mem->count >= mem->ubound) return SSE_NULL;
 	}
 
-	obj = (xp_lsp_obj_t*)xp_malloc (size);
-	if (obj == XP_NULL) {
-		xp_lsp_garbage_collect (mem);
+	obj = (sse_lsp_obj_t*)sse_malloc (size);
+	if (obj == SSE_NULL) {
+		sse_lsp_garbage_collect (mem);
 
-		obj = (xp_lsp_obj_t*)xp_malloc (size);
-		if (obj == XP_NULL) return XP_NULL;
+		obj = (sse_lsp_obj_t*)sse_malloc (size);
+		if (obj == SSE_NULL) return SSE_NULL;
 	}
 
-	XP_LSP_TYPE(obj) = type;
-	XP_LSP_SIZE(obj) = size;
-	XP_LSP_MARK(obj) = 0;
-	XP_LSP_LOCK(obj) = 0;
+	SSE_LSP_TYPE(obj) = type;
+	SSE_LSP_SIZE(obj) = size;
+	SSE_LSP_MARK(obj) = 0;
+	SSE_LSP_LOCK(obj) = 0;
 
 	// insert the object at the head of the used list
-	XP_LSP_LINK(obj) = mem->used[type];
+	SSE_LSP_LINK(obj) = mem->used[type];
 	mem->used[type] = obj;
 	mem->count++;
 
 #if 0
-	xp_dprint1 (XP_TEXT("mem->count: %u\n"), mem->count);
+	sse_dprint1 (SSE_TEXT("mem->count: %u\n"), mem->count);
 #endif
 
 	return obj;
 }
 
-void xp_lsp_dispose (xp_lsp_mem_t* mem, xp_lsp_obj_t* prev, xp_lsp_obj_t* obj)
+void sse_lsp_dispose (sse_lsp_mem_t* mem, sse_lsp_obj_t* prev, sse_lsp_obj_t* obj)
 {
-	xp_assert (mem != XP_NULL);
-	xp_assert (obj != XP_NULL);
-	xp_assert (mem->count > 0);
+	sse_assert (mem != SSE_NULL);
+	sse_assert (obj != SSE_NULL);
+	sse_assert (mem->count > 0);
 
 	// TODO: push the object to the free list for more 
 	//       efficient memory management
 
-	if (prev == XP_NULL) 
-		mem->used[XP_LSP_TYPE(obj)] = XP_LSP_LINK(obj);
-	else XP_LSP_LINK(prev) = XP_LSP_LINK(obj);
+	if (prev == SSE_NULL) 
+		mem->used[SSE_LSP_TYPE(obj)] = SSE_LSP_LINK(obj);
+	else SSE_LSP_LINK(prev) = SSE_LSP_LINK(obj);
 
 	mem->count--;
 #if 0
-	xp_dprint1 (XP_TEXT("mem->count: %u\n"), mem->count);
+	sse_dprint1 (SSE_TEXT("mem->count: %u\n"), mem->count);
 #endif
 
-	xp_free (obj);	
+	sse_free (obj);	
 }
 
-void xp_lsp_dispose_all (xp_lsp_mem_t* mem)
+void sse_lsp_dispose_all (sse_lsp_mem_t* mem)
 {
-	xp_lsp_obj_t* obj, * next;
-	xp_size_t i;
+	sse_lsp_obj_t* obj, * next;
+	sse_size_t i;
 
-	for (i = 0; i < XP_LSP_TYPE_COUNT; i++) {
+	for (i = 0; i < SSE_LSP_TYPE_COUNT; i++) {
 		obj = mem->used[i];
 
-		while (obj != XP_NULL) {
-			next = XP_LSP_LINK(obj);
-			xp_lsp_dispose (mem, XP_NULL, obj);
+		while (obj != SSE_NULL) {
+			next = SSE_LSP_LINK(obj);
+			sse_lsp_dispose (mem, SSE_NULL, obj);
 			obj = next;
 		}
 	}
 }
 
-static void xp_lsp_mark_obj (xp_lsp_obj_t* obj)
+static void sse_lsp_mark_obj (sse_lsp_obj_t* obj)
 {
-	xp_assert (obj != XP_NULL);
+	sse_assert (obj != SSE_NULL);
 
 	// TODO:....
 	// can it be recursive?
-	if (XP_LSP_MARK(obj) != 0) return;
+	if (SSE_LSP_MARK(obj) != 0) return;
 
-	XP_LSP_MARK(obj) = 1;
+	SSE_LSP_MARK(obj) = 1;
 
-	if (XP_LSP_TYPE(obj) == XP_LSP_OBJ_CONS) {
-		xp_lsp_mark_obj (XP_LSP_CAR(obj));
-		xp_lsp_mark_obj (XP_LSP_CDR(obj));
+	if (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_CONS) {
+		sse_lsp_mark_obj (SSE_LSP_CAR(obj));
+		sse_lsp_mark_obj (SSE_LSP_CDR(obj));
 	}
-	else if (XP_LSP_TYPE(obj) == XP_LSP_OBJ_FUNC) {
-		xp_lsp_mark_obj (XP_LSP_FFORMAL(obj));
-		xp_lsp_mark_obj (XP_LSP_FBODY(obj));
+	else if (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_FUNC) {
+		sse_lsp_mark_obj (SSE_LSP_FFORMAL(obj));
+		sse_lsp_mark_obj (SSE_LSP_FBODY(obj));
 	}
-	else if (XP_LSP_TYPE(obj) == XP_LSP_OBJ_MACRO) {
-		xp_lsp_mark_obj (XP_LSP_MFORMAL(obj));
-		xp_lsp_mark_obj (XP_LSP_MBODY(obj));
+	else if (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_MACRO) {
+		sse_lsp_mark_obj (SSE_LSP_MFORMAL(obj));
+		sse_lsp_mark_obj (SSE_LSP_MBODY(obj));
 	}
 }
 
 /*
- * xp_lsp_lock and xp_lsp_unlock_all are just called by xp_lsp_read.
+ * sse_lsp_lock and sse_lsp_unlock_all are just called by sse_lsp_read.
  */
-void xp_lsp_lock (xp_lsp_obj_t* obj)
+void sse_lsp_lock (sse_lsp_obj_t* obj)
 {
-	xp_assert (obj != XP_NULL);
-	XP_LSP_LOCK(obj) = 1;
-	//XP_LSP_MARK(obj) = 1;
+	sse_assert (obj != SSE_NULL);
+	SSE_LSP_LOCK(obj) = 1;
+	//SSE_LSP_MARK(obj) = 1;
 }
 
-void xp_lsp_unlock (xp_lsp_obj_t* obj)
+void sse_lsp_unlock (sse_lsp_obj_t* obj)
 {
-	xp_assert (obj != XP_NULL);
-	XP_LSP_LOCK(obj) = 0;
+	sse_assert (obj != SSE_NULL);
+	SSE_LSP_LOCK(obj) = 0;
 }
 
-void xp_lsp_unlock_all (xp_lsp_obj_t* obj)
+void sse_lsp_unlock_all (sse_lsp_obj_t* obj)
 {
-	xp_assert (obj != XP_NULL);
+	sse_assert (obj != SSE_NULL);
 
-	XP_LSP_LOCK(obj) = 0;
+	SSE_LSP_LOCK(obj) = 0;
 
-	if (XP_LSP_TYPE(obj) == XP_LSP_OBJ_CONS) {
-		xp_lsp_unlock_all (XP_LSP_CAR(obj));
-		xp_lsp_unlock_all (XP_LSP_CDR(obj));
+	if (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_CONS) {
+		sse_lsp_unlock_all (SSE_LSP_CAR(obj));
+		sse_lsp_unlock_all (SSE_LSP_CDR(obj));
 	}
-	else if (XP_LSP_TYPE(obj) == XP_LSP_OBJ_FUNC) {
-		xp_lsp_unlock_all (XP_LSP_FFORMAL(obj));
-		xp_lsp_unlock_all (XP_LSP_FBODY(obj));
+	else if (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_FUNC) {
+		sse_lsp_unlock_all (SSE_LSP_FFORMAL(obj));
+		sse_lsp_unlock_all (SSE_LSP_FBODY(obj));
 	}
-	else if (XP_LSP_TYPE(obj) == XP_LSP_OBJ_MACRO) {
-		xp_lsp_unlock_all (XP_LSP_MFORMAL(obj));
-		xp_lsp_unlock_all (XP_LSP_MBODY(obj));
+	else if (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_MACRO) {
+		sse_lsp_unlock_all (SSE_LSP_MFORMAL(obj));
+		sse_lsp_unlock_all (SSE_LSP_MBODY(obj));
 	}
 }
 
-static void xp_lsp_mark (xp_lsp_mem_t* mem)
+static void sse_lsp_mark (sse_lsp_mem_t* mem)
 {
-	xp_lsp_frame_t* frame;
-	xp_lsp_assoc_t* assoc;
-	xp_lsp_array_t* array;
-	xp_size_t       i;
+	sse_lsp_frame_t* frame;
+	sse_lsp_assoc_t* assoc;
+	sse_lsp_array_t* array;
+	sse_size_t       i;
 
 #if 0
-	xp_dprint0 (XP_TEXT("marking environment frames\n"));
+	sse_dprint0 (SSE_TEXT("marking environment frames\n"));
 #endif
 	// mark objects in the environment frames
 	frame = mem->frame;
-	while (frame != XP_NULL) {
+	while (frame != SSE_NULL) {
 		assoc = frame->assoc;
-		while (assoc != XP_NULL) {
-			xp_lsp_mark_obj (assoc->name);
+		while (assoc != SSE_NULL) {
+			sse_lsp_mark_obj (assoc->name);
 
-			if (assoc->value != XP_NULL) 
-				xp_lsp_mark_obj (assoc->value);
-			if (assoc->func != XP_NULL) 
-				xp_lsp_mark_obj (assoc->func);
+			if (assoc->value != SSE_NULL) 
+				sse_lsp_mark_obj (assoc->value);
+			if (assoc->func != SSE_NULL) 
+				sse_lsp_mark_obj (assoc->func);
 
 			assoc = assoc->link;
 		}
@@ -311,21 +311,21 @@ static void xp_lsp_mark (xp_lsp_mem_t* mem)
 	}
 
 #if 0
-	xp_dprint0 (XP_TEXT("marking interim frames\n"));
+	sse_dprint0 (SSE_TEXT("marking interim frames\n"));
 #endif
 
 	// mark objects in the interim frames
 	frame = mem->brooding_frame;
-	while (frame != XP_NULL) {
+	while (frame != SSE_NULL) {
 
 		assoc = frame->assoc;
-		while (assoc != XP_NULL) {
-			xp_lsp_mark_obj (assoc->name);
+		while (assoc != SSE_NULL) {
+			sse_lsp_mark_obj (assoc->name);
 
-			if (assoc->value != XP_NULL) 
-				xp_lsp_mark_obj (assoc->value);
-			if (assoc->func != XP_NULL) 
-				xp_lsp_mark_obj (assoc->func);
+			if (assoc->value != SSE_NULL) 
+				sse_lsp_mark_obj (assoc->value);
+			if (assoc->func != SSE_NULL) 
+				sse_lsp_mark_obj (assoc->func);
 
 			assoc = assoc->link;
 		}
@@ -334,55 +334,55 @@ static void xp_lsp_mark (xp_lsp_mem_t* mem)
 	}
 
 	/*
-	xp_dprint0 (XP_TEXT("marking the locked object\n"));
-	if (mem->locked != XP_NULL) xp_lsp_mark_obj (mem->locked);
+	sse_dprint0 (SSE_TEXT("marking the locked object\n"));
+	if (mem->locked != SSE_NULL) sse_lsp_mark_obj (mem->locked);
 	*/
 
 #if 0
-	xp_dprint0 (XP_TEXT("marking termporary objects\n"));
+	sse_dprint0 (SSE_TEXT("marking termporary objects\n"));
 #endif
 	array = mem->temp_array;
 	for (i = 0; i < array->size; i++) {
-		xp_lsp_mark_obj (array->buffer[i]);
+		sse_lsp_mark_obj (array->buffer[i]);
 	}
 
 #if 0
-	xp_dprint0 (XP_TEXT("marking builtin objects\n"));
+	sse_dprint0 (SSE_TEXT("marking builtin objects\n"));
 #endif
 	// mark common objects
-	if (mem->t      != XP_NULL) xp_lsp_mark_obj (mem->t);
-	if (mem->nil    != XP_NULL) xp_lsp_mark_obj (mem->nil);
-	if (mem->quote  != XP_NULL) xp_lsp_mark_obj (mem->quote);
-	if (mem->lambda != XP_NULL) xp_lsp_mark_obj (mem->lambda);
-	if (mem->macro  != XP_NULL) xp_lsp_mark_obj (mem->macro);
+	if (mem->t      != SSE_NULL) sse_lsp_mark_obj (mem->t);
+	if (mem->nil    != SSE_NULL) sse_lsp_mark_obj (mem->nil);
+	if (mem->quote  != SSE_NULL) sse_lsp_mark_obj (mem->quote);
+	if (mem->lambda != SSE_NULL) sse_lsp_mark_obj (mem->lambda);
+	if (mem->macro  != SSE_NULL) sse_lsp_mark_obj (mem->macro);
 }
 
-static void xp_lsp_sweep (xp_lsp_mem_t* mem)
+static void sse_lsp_sweep (sse_lsp_mem_t* mem)
 {
-	xp_lsp_obj_t* obj, * prev, * next;
-	xp_size_t i;
+	sse_lsp_obj_t* obj, * prev, * next;
+	sse_size_t i;
 
 	// scan all the allocated objects and get rid of unused objects
-	for (i = 0; i < XP_LSP_TYPE_COUNT; i++) {
-	//for (i = XP_LSP_TYPE_COUNT; i > 0; /*i--*/) {
-		prev = XP_NULL;
+	for (i = 0; i < SSE_LSP_TYPE_COUNT; i++) {
+	//for (i = SSE_LSP_TYPE_COUNT; i > 0; /*i--*/) {
+		prev = SSE_NULL;
 		obj = mem->used[i];
 		//obj = mem->used[--i];
 
 #if 0
-		xp_dprint1 (XP_TEXT("sweeping objects of type: %u\n"), i);
+		sse_dprint1 (SSE_TEXT("sweeping objects of type: %u\n"), i);
 #endif
 
-		while (obj != XP_NULL) {
-			next = XP_LSP_LINK(obj);
+		while (obj != SSE_NULL) {
+			next = SSE_LSP_LINK(obj);
 
-			if (XP_LSP_LOCK(obj) == 0 && XP_LSP_MARK(obj) == 0) {
+			if (SSE_LSP_LOCK(obj) == 0 && SSE_LSP_MARK(obj) == 0) {
 				// dispose of unused objects
-				xp_lsp_dispose (mem, prev, obj);
+				sse_lsp_dispose (mem, prev, obj);
 			}
 			else {
 				// unmark the object in use
-				XP_LSP_MARK(obj) = 0; 
+				SSE_LSP_MARK(obj) = 0; 
 				prev = obj;
 			}
 
@@ -391,228 +391,228 @@ static void xp_lsp_sweep (xp_lsp_mem_t* mem)
 	}
 }
 
-void xp_lsp_garbage_collect (xp_lsp_mem_t* mem)
+void sse_lsp_garbage_collect (sse_lsp_mem_t* mem)
 {
-	xp_lsp_mark (mem);
-	xp_lsp_sweep (mem);
+	sse_lsp_mark (mem);
+	sse_lsp_sweep (mem);
 }
 
-xp_lsp_obj_t* xp_lsp_make_nil (xp_lsp_mem_t* mem)
+sse_lsp_obj_t* sse_lsp_make_nil (sse_lsp_mem_t* mem)
 {
-	if (mem->nil != XP_NULL) return mem->nil;
-	mem->nil = xp_lsp_alloc (mem, XP_LSP_OBJ_NIL, xp_sizeof(xp_lsp_obj_nil_t));
+	if (mem->nil != SSE_NULL) return mem->nil;
+	mem->nil = sse_lsp_alloc (mem, SSE_LSP_OBJ_NIL, sse_sizeof(sse_lsp_obj_nil_t));
 	return mem->nil;
 }
 
-xp_lsp_obj_t* xp_lsp_make_true (xp_lsp_mem_t* mem)
+sse_lsp_obj_t* sse_lsp_make_true (sse_lsp_mem_t* mem)
 {
-	if (mem->t != XP_NULL) return mem->t;
-	mem->t = xp_lsp_alloc (mem, XP_LSP_OBJ_TRUE, xp_sizeof(xp_lsp_obj_true_t));
+	if (mem->t != SSE_NULL) return mem->t;
+	mem->t = sse_lsp_alloc (mem, SSE_LSP_OBJ_TRUE, sse_sizeof(sse_lsp_obj_true_t));
 	return mem->t;
 }
 
-xp_lsp_obj_t* xp_lsp_make_int (xp_lsp_mem_t* mem, xp_lsp_int_t value)
+sse_lsp_obj_t* sse_lsp_make_int (sse_lsp_mem_t* mem, sse_lsp_int_t value)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 
-	obj = xp_lsp_alloc (mem, 
-		XP_LSP_OBJ_INT, xp_sizeof(xp_lsp_obj_int_t));
-	if (obj == XP_NULL) return XP_NULL;
+	obj = sse_lsp_alloc (mem, 
+		SSE_LSP_OBJ_INT, sse_sizeof(sse_lsp_obj_int_t));
+	if (obj == SSE_NULL) return SSE_NULL;
 
-	XP_LSP_IVALUE(obj) = value;
+	SSE_LSP_IVALUE(obj) = value;
 
 	return obj;
 }
 
-xp_lsp_obj_t* xp_lsp_make_real (xp_lsp_mem_t* mem, xp_lsp_real_t value)
+sse_lsp_obj_t* sse_lsp_make_real (sse_lsp_mem_t* mem, sse_lsp_real_t value)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 
-	obj = xp_lsp_alloc (mem, 
-		XP_LSP_OBJ_REAL, xp_sizeof(xp_lsp_obj_real_t));
-	if (obj == XP_NULL) return XP_NULL;
+	obj = sse_lsp_alloc (mem, 
+		SSE_LSP_OBJ_REAL, sse_sizeof(sse_lsp_obj_real_t));
+	if (obj == SSE_NULL) return SSE_NULL;
 	
-	XP_LSP_RVALUE(obj) = value;
+	SSE_LSP_RVALUE(obj) = value;
 
 	return obj;
 }
 
-xp_lsp_obj_t* xp_lsp_make_symbol (xp_lsp_mem_t* mem, const xp_char_t* str)
+sse_lsp_obj_t* sse_lsp_make_symbol (sse_lsp_mem_t* mem, const sse_char_t* str)
 {
-	return xp_lsp_make_symbolx (mem, str, xp_strlen(str));
+	return sse_lsp_make_symbolx (mem, str, sse_strlen(str));
 }
 
-xp_lsp_obj_t* xp_lsp_make_symbolx (
-	xp_lsp_mem_t* mem, const xp_char_t* str, xp_size_t len)
+sse_lsp_obj_t* sse_lsp_make_symbolx (
+	sse_lsp_mem_t* mem, const sse_char_t* str, sse_size_t len)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 
 	// look for a sysmbol with the given name
-	obj = mem->used[XP_LSP_OBJ_SYMBOL];
-	while (obj != XP_NULL) {
+	obj = mem->used[SSE_LSP_OBJ_SYMBOL];
+	while (obj != SSE_NULL) {
 		// if there is a symbol with the same name, it is just used.
-		if (xp_lsp_comp_symbol2 (obj, str, len) == 0) return obj;
-		obj = XP_LSP_LINK(obj);
+		if (sse_lsp_comp_symbol2 (obj, str, len) == 0) return obj;
+		obj = SSE_LSP_LINK(obj);
 	}
 
 	// no such symbol found. create a new one 
-	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_SYMBOL,
-		xp_sizeof(xp_lsp_obj_symbol_t) + (len + 1) * xp_sizeof(xp_char_t));
-	if (obj == XP_NULL) return XP_NULL;
+	obj = sse_lsp_alloc (mem, SSE_LSP_OBJ_SYMBOL,
+		sse_sizeof(sse_lsp_obj_symbol_t) + (len + 1) * sse_sizeof(sse_char_t));
+	if (obj == SSE_NULL) return SSE_NULL;
 
 	// fill in the symbol buffer
-	xp_lsp_copy_string2 (XP_LSP_SYMVALUE(obj), str, len);
+	sse_lsp_copy_string2 (SSE_LSP_SYMVALUE(obj), str, len);
 
 	return obj;
 }
 
-xp_lsp_obj_t* xp_lsp_make_string (xp_lsp_mem_t* mem, const xp_char_t* str)
+sse_lsp_obj_t* sse_lsp_make_string (sse_lsp_mem_t* mem, const sse_char_t* str)
 {
-	return xp_lsp_make_stringx (mem, str, xp_strlen(str));
+	return sse_lsp_make_stringx (mem, str, sse_strlen(str));
 }
 
-xp_lsp_obj_t* xp_lsp_make_stringx (
-	xp_lsp_mem_t* mem, const xp_char_t* str, xp_size_t len)
+sse_lsp_obj_t* sse_lsp_make_stringx (
+	sse_lsp_mem_t* mem, const sse_char_t* str, sse_size_t len)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 
 	// allocate memory for the string
-	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_STRING,
-		xp_sizeof(xp_lsp_obj_string_t) + (len + 1) * xp_sizeof(xp_char_t));
-	if (obj == XP_NULL) return XP_NULL;
+	obj = sse_lsp_alloc (mem, SSE_LSP_OBJ_STRING,
+		sse_sizeof(sse_lsp_obj_string_t) + (len + 1) * sse_sizeof(sse_char_t));
+	if (obj == SSE_NULL) return SSE_NULL;
 
 	// fill in the string buffer
-	xp_lsp_copy_string2 (XP_LSP_STRVALUE(obj), str, len);
+	sse_lsp_copy_string2 (SSE_LSP_STRVALUE(obj), str, len);
 
 	return obj;
 }
 
-xp_lsp_obj_t* xp_lsp_make_cons (
-	xp_lsp_mem_t* mem, xp_lsp_obj_t* car, xp_lsp_obj_t* cdr)
+sse_lsp_obj_t* sse_lsp_make_cons (
+	sse_lsp_mem_t* mem, sse_lsp_obj_t* car, sse_lsp_obj_t* cdr)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 
-	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_CONS, xp_sizeof(xp_lsp_obj_cons_t));
-	if (obj == XP_NULL) return XP_NULL;
+	obj = sse_lsp_alloc (mem, SSE_LSP_OBJ_CONS, sse_sizeof(sse_lsp_obj_cons_t));
+	if (obj == SSE_NULL) return SSE_NULL;
 
-	XP_LSP_CAR(obj) = car;
-	XP_LSP_CDR(obj) = cdr;
+	SSE_LSP_CAR(obj) = car;
+	SSE_LSP_CDR(obj) = cdr;
 
 	return obj;
 }
 
-xp_lsp_obj_t* xp_lsp_make_func (
-	xp_lsp_mem_t* mem, xp_lsp_obj_t* formal, xp_lsp_obj_t* body)
+sse_lsp_obj_t* sse_lsp_make_func (
+	sse_lsp_mem_t* mem, sse_lsp_obj_t* formal, sse_lsp_obj_t* body)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 
-	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_FUNC, xp_sizeof(xp_lsp_obj_func_t));
-	if (obj == XP_NULL) return XP_NULL;
+	obj = sse_lsp_alloc (mem, SSE_LSP_OBJ_FUNC, sse_sizeof(sse_lsp_obj_func_t));
+	if (obj == SSE_NULL) return SSE_NULL;
 
-	XP_LSP_FFORMAL(obj) = formal;
-	XP_LSP_FBODY(obj)   = body;
+	SSE_LSP_FFORMAL(obj) = formal;
+	SSE_LSP_FBODY(obj)   = body;
 
 	return obj;
 }
 
-xp_lsp_obj_t* xp_lsp_make_macro (
-	xp_lsp_mem_t* mem, xp_lsp_obj_t* formal, xp_lsp_obj_t* body)
+sse_lsp_obj_t* sse_lsp_make_macro (
+	sse_lsp_mem_t* mem, sse_lsp_obj_t* formal, sse_lsp_obj_t* body)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 
-	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_MACRO, xp_sizeof(xp_lsp_obj_macro_t));
-	if (obj == XP_NULL) return XP_NULL;
+	obj = sse_lsp_alloc (mem, SSE_LSP_OBJ_MACRO, sse_sizeof(sse_lsp_obj_macro_t));
+	if (obj == SSE_NULL) return SSE_NULL;
 
-	XP_LSP_MFORMAL(obj) = formal;
-	XP_LSP_MBODY(obj)   = body;
+	SSE_LSP_MFORMAL(obj) = formal;
+	SSE_LSP_MBODY(obj)   = body;
 
 	return obj;
 }
 
-xp_lsp_obj_t* xp_lsp_make_prim (xp_lsp_mem_t* mem, void* impl)
+sse_lsp_obj_t* sse_lsp_make_prim (sse_lsp_mem_t* mem, void* impl)
 {
-	xp_lsp_obj_t* obj;
+	sse_lsp_obj_t* obj;
 
-	obj = xp_lsp_alloc (mem, XP_LSP_OBJ_PRIM, xp_sizeof(xp_lsp_obj_prim_t));
-	if (obj == XP_NULL) return XP_NULL;
+	obj = sse_lsp_alloc (mem, SSE_LSP_OBJ_PRIM, sse_sizeof(sse_lsp_obj_prim_t));
+	if (obj == SSE_NULL) return SSE_NULL;
 
-	XP_LSP_PRIM(obj) = impl;
+	SSE_LSP_PRIM(obj) = impl;
 
 	return obj;
 }
 
-xp_lsp_assoc_t* xp_lsp_lookup (xp_lsp_mem_t* mem, xp_lsp_obj_t* name)
+sse_lsp_assoc_t* sse_lsp_lookup (sse_lsp_mem_t* mem, sse_lsp_obj_t* name)
 {
-	xp_lsp_frame_t* frame;
-	xp_lsp_assoc_t* assoc;
+	sse_lsp_frame_t* frame;
+	sse_lsp_assoc_t* assoc;
 
-	xp_assert (XP_LSP_TYPE(name) == XP_LSP_OBJ_SYMBOL);
+	sse_assert (SSE_LSP_TYPE(name) == SSE_LSP_OBJ_SYMBOL);
 
 	frame = mem->frame;
 
-	while (frame != XP_NULL) {
-		assoc = xp_lsp_frame_lookup (frame, name);
-		if (assoc != XP_NULL) return assoc;
+	while (frame != SSE_NULL) {
+		assoc = sse_lsp_frame_lookup (frame, name);
+		if (assoc != SSE_NULL) return assoc;
 		frame = frame->link;
 	}
 
-	return XP_NULL;
+	return SSE_NULL;
 }
 
-xp_lsp_assoc_t* xp_lsp_set_value (
-	xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* value)
+sse_lsp_assoc_t* sse_lsp_set_value (
+	sse_lsp_mem_t* mem, sse_lsp_obj_t* name, sse_lsp_obj_t* value)
 {
-	xp_lsp_assoc_t* assoc;
+	sse_lsp_assoc_t* assoc;
 
-	assoc = xp_lsp_lookup (mem, name);
-	if (assoc == XP_NULL)  {
-		assoc = xp_lsp_frame_insert_value (
+	assoc = sse_lsp_lookup (mem, name);
+	if (assoc == SSE_NULL)  {
+		assoc = sse_lsp_frame_insert_value (
 			mem->root_frame, name, value);
-		if (assoc == XP_NULL) return XP_NULL;
+		if (assoc == SSE_NULL) return SSE_NULL;
 	}
 	else assoc->value = value;
 
 	return assoc;
 }
 
-xp_lsp_assoc_t* xp_lsp_set_func (
-	xp_lsp_mem_t* mem, xp_lsp_obj_t* name, xp_lsp_obj_t* func)
+sse_lsp_assoc_t* sse_lsp_set_func (
+	sse_lsp_mem_t* mem, sse_lsp_obj_t* name, sse_lsp_obj_t* func)
 {
-	xp_lsp_assoc_t* assoc;
+	sse_lsp_assoc_t* assoc;
 
-	assoc = xp_lsp_lookup (mem, name);
-	if (assoc == XP_NULL)  {
-		assoc = xp_lsp_frame_insert_func (mem->root_frame, name, func);
-		if (assoc == XP_NULL) return XP_NULL;
+	assoc = sse_lsp_lookup (mem, name);
+	if (assoc == SSE_NULL)  {
+		assoc = sse_lsp_frame_insert_func (mem->root_frame, name, func);
+		if (assoc == SSE_NULL) return SSE_NULL;
 	}
 	else assoc->func = func;
 
 	return assoc;
 }
 
-xp_size_t xp_lsp_cons_len (xp_lsp_mem_t* mem, xp_lsp_obj_t* obj)
+sse_size_t sse_lsp_cons_len (sse_lsp_mem_t* mem, sse_lsp_obj_t* obj)
 {
-	xp_size_t count;
+	sse_size_t count;
 
-	xp_assert (obj == mem->nil || XP_LSP_TYPE(obj) == XP_LSP_OBJ_CONS);
+	sse_assert (obj == mem->nil || SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_CONS);
 
 	count = 0;
 	//while (obj != mem->nil) {
-	while (XP_LSP_TYPE(obj) == XP_LSP_OBJ_CONS) {
+	while (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_CONS) {
 		count++;
-		obj = XP_LSP_CDR(obj);
+		obj = SSE_LSP_CDR(obj);
 	}
 
 	return count;
 }
 
-int xp_lsp_probe_args (xp_lsp_mem_t* mem, xp_lsp_obj_t* obj, xp_size_t* len)
+int sse_lsp_probe_args (sse_lsp_mem_t* mem, sse_lsp_obj_t* obj, sse_size_t* len)
 {
-	xp_size_t count = 0;
+	sse_size_t count = 0;
 
-	while (XP_LSP_TYPE(obj) == XP_LSP_OBJ_CONS) {
+	while (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_CONS) {
 		count++;
-		obj = XP_LSP_CDR(obj);
+		obj = SSE_LSP_CDR(obj);
 	}	
 
 	if (obj != mem->nil) return -1;
@@ -621,36 +621,36 @@ int xp_lsp_probe_args (xp_lsp_mem_t* mem, xp_lsp_obj_t* obj, xp_size_t* len)
 	return 0;
 }
 
-int xp_lsp_comp_symbol (xp_lsp_obj_t* obj, const xp_char_t* str)
+int sse_lsp_comp_symbol (sse_lsp_obj_t* obj, const sse_char_t* str)
 {
-	xp_char_t* p;
-	xp_size_t index, length;
+	sse_char_t* p;
+	sse_size_t index, length;
 
-	xp_assert (XP_LSP_TYPE(obj) == XP_LSP_OBJ_SYMBOL);
+	sse_assert (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_SYMBOL);
 	
 	index = 0;
-	length = XP_LSP_SYMLEN(obj);
+	length = SSE_LSP_SYMLEN(obj);
 
-	p = XP_LSP_SYMVALUE(obj);
+	p = SSE_LSP_SYMVALUE(obj);
 	while (index < length) {
 		if (*p > *str) return 1;
 		if (*p < *str) return -1;
 		index++; p++; str++;
 	}
 
-	return (*str == XP_CHAR('\0'))? 0: -1;
+	return (*str == SSE_CHAR('\0'))? 0: -1;
 }
 
-int xp_lsp_comp_symbol2 (xp_lsp_obj_t* obj, const xp_char_t* str, xp_size_t len)
+int sse_lsp_comp_symbol2 (sse_lsp_obj_t* obj, const sse_char_t* str, sse_size_t len)
 {
-	xp_char_t* p;
-	xp_size_t index, length;
+	sse_char_t* p;
+	sse_size_t index, length;
 
-	xp_assert (XP_LSP_TYPE(obj) == XP_LSP_OBJ_SYMBOL);
+	sse_assert (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_SYMBOL);
 	
 	index = 0;
-	length = XP_LSP_SYMLEN(obj);
-	p = XP_LSP_SYMVALUE(obj);
+	length = SSE_LSP_SYMLEN(obj);
+	p = SSE_LSP_SYMVALUE(obj);
 
 	while (index < length && index < len) {
 		if (*p > *str) return 1;
@@ -662,36 +662,36 @@ int xp_lsp_comp_symbol2 (xp_lsp_obj_t* obj, const xp_char_t* str, xp_size_t len)
 	       (length > len)?  1: 0;
 }
 
-int xp_lsp_comp_string (xp_lsp_obj_t* obj, const xp_char_t* str)
+int sse_lsp_comp_string (sse_lsp_obj_t* obj, const sse_char_t* str)
 {
-	xp_char_t* p;
-	xp_size_t index, length;
+	sse_char_t* p;
+	sse_size_t index, length;
 
-	xp_assert (XP_LSP_TYPE(obj) == XP_LSP_OBJ_STRING);
+	sse_assert (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_STRING);
 	
 	index = 0;
-	length = XP_LSP_STRLEN(obj);
+	length = SSE_LSP_STRLEN(obj);
 
-	p = XP_LSP_STRVALUE(obj);
+	p = SSE_LSP_STRVALUE(obj);
 	while (index < length) {
 		if (*p > *str) return 1;
 		if (*p < *str) return -1;
 		index++; p++; str++;
 	}
 
-	return (*str == XP_CHAR('\0'))? 0: -1;
+	return (*str == SSE_CHAR('\0'))? 0: -1;
 }
 
-int xp_lsp_comp_string2 (xp_lsp_obj_t* obj, const xp_char_t* str, xp_size_t len)
+int sse_lsp_comp_string2 (sse_lsp_obj_t* obj, const sse_char_t* str, sse_size_t len)
 {
-	xp_char_t* p;
-	xp_size_t index, length;
+	sse_char_t* p;
+	sse_size_t index, length;
 
-	xp_assert (XP_LSP_TYPE(obj) == XP_LSP_OBJ_STRING);
+	sse_assert (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_STRING);
 	
 	index = 0;
-	length = XP_LSP_STRLEN(obj);
-	p = XP_LSP_STRVALUE(obj);
+	length = SSE_LSP_STRLEN(obj);
+	p = SSE_LSP_STRVALUE(obj);
 
 	while (index < length && index < len) {
 		if (*p > *str) return 1;
@@ -703,20 +703,20 @@ int xp_lsp_comp_string2 (xp_lsp_obj_t* obj, const xp_char_t* str, xp_size_t len)
 	       (length > len)?  1: 0;
 }
 
-void xp_lsp_copy_string (xp_char_t* dst, const xp_char_t* str)
+void sse_lsp_copy_string (sse_char_t* dst, const sse_char_t* str)
 {
 	// the buffer pointed by dst should be big enough to hold str
-	while (*str != XP_CHAR('\0')) *dst++ = *str++;
-	*dst = XP_CHAR('\0');
+	while (*str != SSE_CHAR('\0')) *dst++ = *str++;
+	*dst = SSE_CHAR('\0');
 }
 
-void xp_lsp_copy_string2 (xp_char_t* dst, const xp_char_t* str, xp_size_t len)
+void sse_lsp_copy_string2 (sse_char_t* dst, const sse_char_t* str, sse_size_t len)
 {
 	// the buffer pointed by dst should be big enough to hold str
 	while (len > 0) {
 		*dst++ = *str++;
 		len--;
 	}
-	*dst = XP_CHAR('\0');
+	*dst = SSE_CHAR('\0');
 }
 

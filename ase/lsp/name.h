@@ -1,37 +1,37 @@
 /*
- * $Id: name.h,v 1.3 2005-12-05 15:11:29 bacon Exp $
+ * $Id: name.h,v 1.4 2006-10-22 13:10:46 bacon Exp $
  */
 
-#ifndef _XP_LSP_NAME_H_
-#define _XP_LSP_NAME_H_
+#ifndef _SSE_LSP_NAME_H_
+#define _SSE_LSP_NAME_H_
 
-#include <xp/types.h>
-#include <xp/macros.h>
+#include <sse/types.h>
+#include <sse/macros.h>
 
-struct xp_lsp_name_t 
+struct sse_lsp_name_t 
 {
-	xp_word_t capacity;
-	xp_word_t size;
-	xp_char_t* buffer;
-	xp_char_t static_buffer[128];
-	xp_bool_t __dynamic;
+	sse_word_t capacity;
+	sse_word_t size;
+	sse_char_t* buffer;
+	sse_char_t static_buffer[128];
+	sse_bool_t __dynamic;
 };
 
-typedef struct xp_lsp_name_t xp_lsp_name_t;
+typedef struct sse_lsp_name_t sse_lsp_name_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_lsp_name_t* xp_lsp_name_open (
-	xp_lsp_name_t* name, xp_word_t capacity);
-void xp_lsp_name_close (xp_lsp_name_t* name);
+sse_lsp_name_t* sse_lsp_name_open (
+	sse_lsp_name_t* name, sse_word_t capacity);
+void sse_lsp_name_close (sse_lsp_name_t* name);
 
-int xp_lsp_name_addc (xp_lsp_name_t* name, xp_cint_t c);
-int xp_lsp_name_adds (xp_lsp_name_t* name, const xp_char_t* s);
-void xp_lsp_name_clear (xp_lsp_name_t* name);
-xp_char_t* xp_lsp_name_yield (xp_lsp_name_t* name, xp_word_t capacity);
-int xp_lsp_name_compare (xp_lsp_name_t* name, const xp_char_t* str);
+int sse_lsp_name_addc (sse_lsp_name_t* name, sse_cint_t c);
+int sse_lsp_name_adds (sse_lsp_name_t* name, const sse_char_t* s);
+void sse_lsp_name_clear (sse_lsp_name_t* name);
+sse_char_t* sse_lsp_name_yield (sse_lsp_name_t* name, sse_word_t capacity);
+int sse_lsp_name_compare (sse_lsp_name_t* name, const sse_char_t* str);
 
 #ifdef __cplusplus
 }

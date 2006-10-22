@@ -1,9 +1,9 @@
 /*
- * $Id: lsp.h,v 1.20 2005-12-05 15:11:29 bacon Exp $
+ * $Id: lsp.h,v 1.21 2006-10-22 13:10:46 bacon Exp $
  */
 
-#ifndef _XP_LSP_LSP_H_
-#define _XP_LSP_LSP_H_
+#ifndef _SSE_LSP_LSP_H_
+#define _SSE_LSP_LSP_H_
 
 /* 
  * HEADER: Lisp
@@ -12,86 +12,86 @@
  *
  */
 
-#include <xp/lsp/types.h>
-#include <xp/lsp/token.h>
-#include <xp/lsp/obj.h>
-#include <xp/lsp/mem.h>
+#include <sse/lsp/types.h>
+#include <sse/lsp/token.h>
+#include <sse/lsp/obj.h>
+#include <sse/lsp/mem.h>
 
-#define XP_LSP_ERR(lsp)  ((lsp)->errnum)
+#define SSE_LSP_ERR(lsp)  ((lsp)->errnum)
 enum 
 {
-	XP_LSP_ERR_NONE = 0,
-	XP_LSP_ERR_ABORT,
-	XP_LSP_ERR_END,
-	XP_LSP_ERR_MEMORY,
-	XP_LSP_ERR_INPUT_NOT_ATTACHED,
-	XP_LSP_ERR_INPUT,
-	XP_LSP_ERR_OUTPUT_NOT_ATTACHED,
-	XP_LSP_ERR_OUTPUT,
-	XP_LSP_ERR_SYNTAX,
-	XP_LSP_ERR_BAD_ARG,
-	XP_LSP_ERR_WRONG_ARG,
-	XP_LSP_ERR_TOO_FEW_ARGS,
-	XP_LSP_ERR_TOO_MANY_ARGS,
-	XP_LSP_ERR_UNDEF_FUNC,
-	XP_LSP_ERR_BAD_FUNC,
-	XP_LSP_ERR_DUP_FORMAL,
-	XP_LSP_ERR_BAD_SYMBOL,
-	XP_LSP_ERR_UNDEF_SYMBOL,
-	XP_LSP_ERR_EMPTY_BODY,
-	XP_LSP_ERR_BAD_VALUE,
-	XP_LSP_ERR_DIVIDE_BY_ZERO
+	SSE_LSP_ERR_NONE = 0,
+	SSE_LSP_ERR_ABORT,
+	SSE_LSP_ERR_END,
+	SSE_LSP_ERR_MEMORY,
+	SSE_LSP_ERR_INPUT_NOT_ATTACHED,
+	SSE_LSP_ERR_INPUT,
+	SSE_LSP_ERR_OUTPUT_NOT_ATTACHED,
+	SSE_LSP_ERR_OUTPUT,
+	SSE_LSP_ERR_SYNTAX,
+	SSE_LSP_ERR_BAD_ARG,
+	SSE_LSP_ERR_WRONG_ARG,
+	SSE_LSP_ERR_TOO_FEW_ARGS,
+	SSE_LSP_ERR_TOO_MANY_ARGS,
+	SSE_LSP_ERR_UNDEF_FUNC,
+	SSE_LSP_ERR_BAD_FUNC,
+	SSE_LSP_ERR_DUP_FORMAL,
+	SSE_LSP_ERR_BAD_SYMBOL,
+	SSE_LSP_ERR_UNDEF_SYMBOL,
+	SSE_LSP_ERR_EMPTY_BODY,
+	SSE_LSP_ERR_BAD_VALUE,
+	SSE_LSP_ERR_DIVIDE_BY_ZERO
 };
 
 /*
- * TYPE: xp_lsp_t
+ * TYPE: sse_lsp_t
  *   Defines a lisp processor type
  */
-typedef struct xp_lsp_t xp_lsp_t;
+typedef struct sse_lsp_t sse_lsp_t;
 
 /*
- * TYPE: xp_lsp_io_t
+ * TYPE: sse_lsp_io_t
  *   Defines an IO handler type
  */
-typedef xp_ssize_t (*xp_lsp_io_t) (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count);
+typedef sse_ssize_t (*sse_lsp_io_t) (
+	int cmd, void* arg, sse_char_t* data, sse_size_t count);
 
 enum 
 {
-	XP_LSP_IO_OPEN,
-	XP_LSP_IO_CLOSE,
-	XP_LSP_IO_DATA
+	SSE_LSP_IO_OPEN,
+	SSE_LSP_IO_CLOSE,
+	SSE_LSP_IO_DATA
 };
 
 /*
- * TYPEDEF: xp_lsp_prim_t
+ * TYPEDEF: sse_lsp_prim_t
  *   Defines a primitive type
  */
-typedef xp_lsp_obj_t* (*xp_lsp_prim_t) (xp_lsp_t* lsp, xp_lsp_obj_t* obj);
+typedef sse_lsp_obj_t* (*sse_lsp_prim_t) (sse_lsp_t* lsp, sse_lsp_obj_t* obj);
 
-struct xp_lsp_t 
+struct sse_lsp_t 
 {
 	/* error number */
 	int errnum;
 	int opt_undef_symbol;
 
 	/* for read */
-	xp_cint_t curc;
-	xp_lsp_token_t token;
+	sse_cint_t curc;
+	sse_lsp_token_t token;
 
 	/* io functions */
-	xp_lsp_io_t input_func;
-	xp_lsp_io_t output_func;
+	sse_lsp_io_t input_func;
+	sse_lsp_io_t output_func;
 	void* input_arg;
 	void* output_arg;
 
 	/* security options */
-	xp_size_t max_eval_depth;
-	xp_size_t cur_eval_depth;
+	sse_size_t max_eval_depth;
+	sse_size_t cur_eval_depth;
 
 	/* memory manager */
-	xp_lsp_mem_t* mem;
-	xp_bool_t __dynamic;
+	sse_lsp_mem_t* mem;
+	sse_bool_t __dynamic;
 };
 
 #ifdef __cplusplus
@@ -99,33 +99,33 @@ extern "C" {
 #endif
 
 /*
- * FUNCTION: xp_lsp_open
+ * FUNCTION: sse_lsp_open
  *   Instantiates a lisp processor
  *
  * PARAMETERS:
- *   lsp - pointer to lisp processor space or XP_NULL
+ *   lsp - pointer to lisp processor space or SSE_NULL
  *   mem_ubound - memory upper bound
  *   mem_ubound_inc - memory increment 
  */
-xp_lsp_t* xp_lsp_open (xp_lsp_t* lsp, 
-	xp_size_t mem_ubound, xp_size_t mem_ubound_inc);
+sse_lsp_t* sse_lsp_open (sse_lsp_t* lsp, 
+	sse_size_t mem_ubound, sse_size_t mem_ubound_inc);
 
 /*
- * FUNCTION: xp_lsp_close
+ * FUNCTION: sse_lsp_close
  *   Destroys a lisp processor
  *
  * PARAMETERS:
  *   lsp - the pointer to the lisp object
  */
-void xp_lsp_close (xp_lsp_t* lsp);
+void sse_lsp_close (sse_lsp_t* lsp);
 
 /*
- * FUNCTION: xp_lsp_error
+ * FUNCTION: sse_lsp_error
  */
-int xp_lsp_error (xp_lsp_t* lsp, xp_char_t* buf, xp_size_t size);
+int sse_lsp_error (sse_lsp_t* lsp, sse_char_t* buf, sse_size_t size);
 
 /*
- * FUNCTION: xp_lsp_attach_input
+ * FUNCTION: sse_lsp_attach_input
  *   Attaches an input handler function
  *
  * PARAMETERS:
@@ -136,19 +136,19 @@ int xp_lsp_error (xp_lsp_t* lsp, xp_char_t* buf, xp_size_t size);
  * RETURNS:
  *   0 on success, -1 on failure
  */
-int xp_lsp_attach_input (xp_lsp_t* lsp, xp_lsp_io_t input, void* arg);
+int sse_lsp_attach_input (sse_lsp_t* lsp, sse_lsp_io_t input, void* arg);
 
 /*
- * FUNCTION: xp_lsp_detach_input
+ * FUNCTION: sse_lsp_detach_input
  *   Detaches an input handler function
  * 
  * RETURNS:
  *   0 on success, -1 on failure
  */
-int xp_lsp_detach_input (xp_lsp_t* lsp);
+int sse_lsp_detach_input (sse_lsp_t* lsp);
 
 /*
- * FUNCTION: xp_lsp_attach_output
+ * FUNCTION: sse_lsp_attach_output
  *   Attaches an output handler function
  *
  * PARAMETERS:
@@ -159,46 +159,46 @@ int xp_lsp_detach_input (xp_lsp_t* lsp);
  * RETURNS:
  *   0 on success, -1 on failure
  */
-int xp_lsp_attach_output (xp_lsp_t* lsp, xp_lsp_io_t output, void* arg);
+int sse_lsp_attach_output (sse_lsp_t* lsp, sse_lsp_io_t output, void* arg);
 
 /*
- * FUNCTION: xp_lsp_detach_output
+ * FUNCTION: sse_lsp_detach_output
  *   Detaches an output handler function
  * 
  * RETURNS:
  *   0 on success, -1 on failure
  */
-int xp_lsp_detach_output (xp_lsp_t* lsp);
+int sse_lsp_detach_output (sse_lsp_t* lsp);
 
 /*
- * FUNCTION: xp_lsp_read
+ * FUNCTION: sse_lsp_read
  *   Reads a lisp expression
  */
-xp_lsp_obj_t* xp_lsp_read (xp_lsp_t* lsp);
+sse_lsp_obj_t* sse_lsp_read (sse_lsp_t* lsp);
 
 /*
- * FUNCTION: xp_lsp_eval
+ * FUNCTION: sse_lsp_eval
  *   Evaluates a lisp object
  */
-xp_lsp_obj_t* xp_lsp_eval (xp_lsp_t* lsp, xp_lsp_obj_t* obj);
+sse_lsp_obj_t* sse_lsp_eval (sse_lsp_t* lsp, sse_lsp_obj_t* obj);
 
 /*
- * FUNCTION: xp_lsp_print
+ * FUNCTION: sse_lsp_print
  *   Prints a lisp object
  */
-int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj);
+int sse_lsp_print (sse_lsp_t* lsp, const sse_lsp_obj_t* obj);
 
 /*
- * FUNCTION: xp_lsp_add_prim
+ * FUNCTION: sse_lsp_add_prim
  *   Adds a user-defined primitive
  */
-int xp_lsp_add_prim (xp_lsp_t* lsp, const xp_char_t* name, xp_lsp_prim_t prim);
+int sse_lsp_add_prim (sse_lsp_t* lsp, const sse_char_t* name, sse_lsp_prim_t prim);
 
 /*
- * FUNCTION: xp_lsp_remove_prim
+ * FUNCTION: sse_lsp_remove_prim
  *   Removes a user-defined primitive
  */
-int xp_lsp_remove_prim (xp_lsp_t* lsp, const xp_char_t* name);
+int sse_lsp_remove_prim (sse_lsp_t* lsp, const sse_char_t* name);
 
 #ifdef __cplusplus
 }

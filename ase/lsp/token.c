@@ -1,77 +1,77 @@
 /*
- * $Id: token.c,v 1.12 2005-12-05 15:11:29 bacon Exp $
+ * $Id: token.c,v 1.13 2006-10-22 13:10:46 bacon Exp $
  */
 
-#include <xp/lsp/token.h>
-#include <xp/bas/memory.h>
+#include <sse/lsp/token.h>
+#include <sse/bas/memory.h>
 
-xp_lsp_token_t* xp_lsp_token_open (
-	xp_lsp_token_t* token, xp_word_t capacity)
+sse_lsp_token_t* sse_lsp_token_open (
+	sse_lsp_token_t* token, sse_word_t capacity)
 {
-	if (token == XP_NULL) {
-		token = (xp_lsp_token_t*)
-			xp_malloc (xp_sizeof(xp_lsp_token_t));
-		if (token == XP_NULL) return XP_NULL;
-		token->__dynamic = xp_true;
+	if (token == SSE_NULL) {
+		token = (sse_lsp_token_t*)
+			sse_malloc (sse_sizeof(sse_lsp_token_t));
+		if (token == SSE_NULL) return SSE_NULL;
+		token->__dynamic = sse_true;
 	}
-	else token->__dynamic = xp_false;
+	else token->__dynamic = sse_false;
 	
-	if (xp_lsp_name_open(&token->name, capacity) == XP_NULL) {
-		if (token->__dynamic) xp_free (token);
-		return XP_NULL;
+	if (sse_lsp_name_open(&token->name, capacity) == SSE_NULL) {
+		if (token->__dynamic) sse_free (token);
+		return SSE_NULL;
 	}
 
 	/*
 	token->ivalue    = 0;
 	token->fvalue    = .0;
 	*/
-	token->type      = XP_LSP_TOKEN_END;
+	token->type      = SSE_LSP_TOKEN_END;
 	return token;
 }
 
-void xp_lsp_token_close (xp_lsp_token_t* token)
+void sse_lsp_token_close (sse_lsp_token_t* token)
 {
-	xp_lsp_name_close (&token->name);
-	if (token->__dynamic) xp_free (token);
+	sse_lsp_name_close (&token->name);
+	if (token->__dynamic) sse_free (token);
 }
 
-int xp_lsp_token_addc (xp_lsp_token_t* token, xp_cint_t c)
+int sse_lsp_token_addc (sse_lsp_token_t* token, sse_cint_t c)
 {
-	return xp_lsp_name_addc (&token->name, c);
+	return sse_lsp_name_addc (&token->name, c);
 }
 
-int xp_lsp_token_adds (xp_lsp_token_t* token, const xp_char_t* s)
+int sse_lsp_token_adds (sse_lsp_token_t* token, const sse_char_t* s)
 {
-	return xp_lsp_name_adds (&token->name, s);
+	return sse_lsp_name_adds (&token->name, s);
 }
 
-void xp_lsp_token_clear (xp_lsp_token_t* token)
+void sse_lsp_token_clear (sse_lsp_token_t* token)
 {
 	/*
 	token->ivalue = 0;
 	token->fvalue = .0;
 	*/
 
-	token->type = XP_LSP_TOKEN_END;
-	xp_lsp_name_clear (&token->name);
+	token->type = SSE_LSP_TOKEN_END;
+	sse_lsp_name_clear (&token->name);
 }
 
-xp_char_t* xp_lsp_token_yield (xp_lsp_token_t* token, xp_word_t capacity)
+sse_char_t* sse_lsp_token_yield (sse_lsp_token_t* token, sse_word_t capacity)
 {
-	xp_char_t* p;
+	sse_char_t* p;
 
-	p = xp_lsp_name_yield (&token->name, capacity);
-	if (p == XP_NULL) return XP_NULL;
+	p = sse_lsp_name_yield (&token->name, capacity);
+	if (p == SSE_NULL) return SSE_NULL;
 
 	/*
 	token->ivalue = 0;
 	token->fvalue = .0;
 	*/
-	token->type = XP_LSP_TOKEN_END;
+	token->type = SSE_LSP_TOKEN_END;
 	return p;
 }
 
-int xp_lsp_token_compare_name (xp_lsp_token_t* token, const xp_char_t* str)
+int sse_lsp_token_compare_name (sse_lsp_token_t* token, const sse_char_t* str)
 {
-	return xp_lsp_name_compare (&token->name, str);
+	return sse_lsp_name_compare (&token->name, str);
 }
