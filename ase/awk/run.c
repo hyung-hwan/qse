@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.241 2006-10-22 12:39:29 bacon Exp $
+ * $Id: run.c,v 1.242 2006-10-22 14:17:40 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -3254,10 +3254,12 @@ static int __cmp_val (
 		return CMP_ERROR; 
 	}
 
-	sse_awk_assert (run->awk, left->type >= SSE_AWK_VAL_NIL &&
-	           left->type <= SSE_AWK_VAL_STR);
-	sse_awk_assert (run->awk, right->type >= SSE_AWK_VAL_NIL &&
-	           right->type <= SSE_AWK_VAL_STR);
+	sse_awk_assert (run->awk, 
+		left->type >= SSE_AWK_VAL_NIL &&
+		left->type <= SSE_AWK_VAL_STR);
+	sse_awk_assert (run->awk, 
+		right->type >= SSE_AWK_VAL_NIL &&
+		right->type <= SSE_AWK_VAL_STR);
 
 	return func[left->type*4+right->type] (run, left, right);
 }
