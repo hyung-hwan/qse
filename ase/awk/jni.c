@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.10 2006-10-18 14:02:19 bacon Exp $
+ * $Id: jni.c,v 1.11 2006-10-22 07:05:34 bacon Exp $
  */
 
 #include <xp/awk/jni.h>
@@ -301,6 +301,7 @@ static xp_ssize_t __call_java_read_source (
 	for (i = 0; i < ret; i++) buf[i] = (xp_char_t)tmp[i]; 
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
+	(*env)->DeleteLocalRef (env, array);
 	return i;
 }
 
@@ -334,6 +335,7 @@ static xp_ssize_t __call_java_write_source (
 		ret = -1;
 	}
 
+	(*env)->DeleteLocalRef (env, array);
 	return ret;
 }
 
@@ -363,11 +365,34 @@ static xp_ssize_t __call_java_open_extio (
 			env, class, meth, "(Ljava/lang/String;)I");
 		if (mid == 0) return -1;
 
-		name_str = (*env)->NewString (env, name, xp_awk_strlen(name));
+		name_str = (*env)->NewString (
+			env, extio->name, xp_awk_strlen(extio->name));
 		if (name_str == 0) return -1;
 
 		ret = (*env)->CallIntMethod (env, obj, mid, name_str);
+
+		(*env)->DeleteLocalRef (env, name_str);
 		*/
+		jclass extio_class;
+		jmethodID extio_cons;
+		jobject extio_object;
+
+		extio_class = (*env)->FindClass (env, "xpkit/xpj/awk/Extio");
+		if (extio_class == NULL) return -1;
+
+		extio_cons = (*env)->GetMethodID (
+			env, extio_class, "<init>", "(J)V");
+		if (extio_cons == NULL) return -1;
+
+		mid = (*env)->GetMethodID (
+			env, class, meth, "(Lxpkit/xpj/awk/Extio;)I");
+		if (mid == NULL) return -1;
+
+		extio_object = (*env)->NewObject (
+			env, extio_class, extio_cons, (jlong)extio);
+		if (extio_object == NULL) return -1;
+
+		ret = (*env)->CallIntMethod (env, obj, mid, extio_object);
 	}
 
 	thrown = (*env)->ExceptionOccurred (env);
@@ -399,18 +424,18 @@ static xp_ssize_t __call_java_close_extio (
 	}
 	else
 	{
-		/*
 		jstring name_str;
 
 		mid = (*env)->GetMethodID (
 			env, class, meth, "(Ljava/lang/String;)I");
 		if (mid == 0) return -1;
 
-		name_str = (*env)->NewString (env, name, xp_awk_strlen(name));
+		name_str = (*env)->NewString (
+			env, extio->name, xp_awk_strlen(extio->name));
 		if (name_str == 0) return -1;
 
 		ret = (*env)->CallIntMethod (env, obj, mid, name_str);
-		*/
+		(*env)->DeleteLocalRef (env, name_str);
 	}
 
 	thrown = (*env)->ExceptionOccurred (env);
@@ -453,6 +478,7 @@ static xp_ssize_t __call_java_read_extio (
 	for (i = 0; i < ret; i++) buf[i] = (xp_char_t)tmp[i]; 
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
+	(*env)->DeleteLocalRef (env, array);
 	return ret;
 }
 
@@ -487,6 +513,7 @@ static xp_ssize_t __call_java_write_extio (
 		ret = -1;
 	}
 
+	(*env)->DeleteLocalRef (env, array);
 	return ret;
 }
 
