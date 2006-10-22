@@ -3,43 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "xpawk"=.\xp\awk\xpawk.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "xpbas"=.\xp\bas\xpbas.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "xpmsw"=.\xp\msw\xpmsw.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "xptestawk"=.\xp\test\awk\xptestawk.dsp - Package Owner=<4>
+Project: "awk"=.\awk\awk.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

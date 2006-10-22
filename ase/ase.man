@@ -1,16 +1,10 @@
 == Introduction ==
-  Expider is a toolkit for developers written in the hope that it will ease 
-  a lot of tedious programming tasks. It provides a wide range of functions 
-  and classes to cover for general purpose programming.
+SSE is a collection of scriping engines for various programming languages.
+It has been written in the hopt that it will be useful for programmers.
 
 == License ==
-  The toolkit is distributed under the PIOWAVE license.
+The toolkit is distributed under the SSE general license.
 
 == Author ==
-  Chung, Hyung-Hwan, the sole author of Expider, is ...
+Chung, Hyung-Hwan, the sole author of SSE, is ...
 
-== Logo ==
-  Expider eXpider 
-  Expide  eXpide
-  Exprius Expon 
-  Expada Expica Expata Experion Expanx
