@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.75 2006-10-22 11:34:53 bacon Exp $
+ * $Id: tree.h,v 1.76 2006-10-22 12:39:30 bacon Exp $
  */
 
 #ifndef _SSE_AWK_TREE_H_
@@ -29,16 +29,16 @@ enum
 	SSE_AWK_NDE_DELETE,
 	SSE_AWK_NDE_PRINT,
 
-	/* esseression */
+	/* expression */
 	/* if you change the following values including their order,
-	 * you should change __eval_func of __eval_esseression 
+	 * you should change __eval_func of __eval_expression 
 	 * in run.c accordingly */
 	SSE_AWK_NDE_GRP, 
 	SSE_AWK_NDE_ASS,
-	SSE_AWK_NDE_ESSE_BIN,
-	SSE_AWK_NDE_ESSE_UNR,
-	SSE_AWK_NDE_ESSE_INCPRE,
-	SSE_AWK_NDE_ESSE_INCPST,
+	SSE_AWK_NDE_EXP_BIN,
+	SSE_AWK_NDE_EXP_UNR,
+	SSE_AWK_NDE_EXP_INCPRE,
+	SSE_AWK_NDE_EXP_INCPST,
 	SSE_AWK_NDE_CND,
 	SSE_AWK_NDE_BFN,
 	SSE_AWK_NDE_AFN,
@@ -95,7 +95,7 @@ typedef struct sse_awk_nde_t sse_awk_nde_t;
 typedef struct sse_awk_nde_blk_t       sse_awk_nde_blk_t;
 typedef struct sse_awk_nde_grp_t       sse_awk_nde_grp_t;
 typedef struct sse_awk_nde_ass_t       sse_awk_nde_ass_t;
-typedef struct sse_awk_nde_esse_t       sse_awk_nde_esse_t;
+typedef struct sse_awk_nde_exp_t       sse_awk_nde_exp_t;
 typedef struct sse_awk_nde_cnd_t       sse_awk_nde_cnd_t;
 typedef struct sse_awk_nde_pos_t       sse_awk_nde_pos_t;
 typedef struct sse_awk_nde_int_t       sse_awk_nde_int_t;
@@ -144,7 +144,7 @@ struct sse_awk_nde_blk_t
 	sse_awk_nde_t* body;
 };
 
-/* SSE_AWK_NDE_GRP - esseression group */
+/* SSE_AWK_NDE_GRP - expression group */
 struct sse_awk_nde_grp_t
 {
 	SSE_AWK_NDE_HDR;
@@ -160,9 +160,9 @@ struct sse_awk_nde_ass_t
 	sse_awk_nde_t* right;
 };
 
-/* SSE_AWK_NDE_ESSE_BIN, SSE_AWK_NDE_ESSE_UNR, 
- * SSE_AWK_NDE_ESSE_INCPRE, SSE_AW_NDE_ESSE_INCPST */
-struct sse_awk_nde_esse_t
+/* SSE_AWK_NDE_EXP_BIN, SSE_AWK_NDE_EXP_UNR, 
+ * SSE_AWK_NDE_EXP_INCPRE, SSE_AW_NDE_EXP_INCPST */
+struct sse_awk_nde_exp_t
 {
 	SSE_AWK_NDE_HDR;
 	int opcode;

@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.29 2006-10-22 11:34:53 bacon Exp $
+ * $Id: misc.c,v 1.30 2006-10-22 12:39:29 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -135,16 +135,16 @@ sse_long_t sse_awk_strxtolong (
  * notice appear in all copies.  The University of California
  * makes no representations about the suitability of this
  * software for any purpose.  It is provided "as is" without
- * esseress or implied warranty.
+ * express or implied warranty.
  */
 
-#define MAX_ESSEONENT 511
+#define MAX_EXPONENT 511
 
 sse_real_t sse_awk_strtoreal (sse_awk_t* awk, const sse_char_t* str)
 {
 	/* 
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
-	 * Used to convert decimal esseonents into floating-point numbers.
+	 * Used to convert decimal exponents into floating-point numbers.
 	 */ 
 	static sse_real_t powers_of_10[] = 
 	{
@@ -152,25 +152,25 @@ sse_real_t sse_awk_strtoreal (sse_awk_t* awk, const sse_char_t* str)
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	sse_real_t fraction, dbl_esse, * d;
+	sse_real_t fraction, dbl_exp, * d;
 	const sse_char_t* p;
 	sse_cint_t c;
-	int esse = 0;		/* Esseonent read from "EX" field */
+	int exp = 0;		/* Esseonent read from "EX" field */
 
 	/* 
 	 * Esseonent that derives from the fractional part.  Under normal 
 	 * circumstatnces, it is the negative of the number of digits in F.
 	 * However, if I is very long, the last digits of I get dropped 
-	 * (otherwise a long I with a large negative esseonent could cause an
-	 * unnecessary overflow on I alone).  In this case, frac_esse is 
+	 * (otherwise a long I with a large negative exponent could cause an
+	 * unnecessary overflow on I alone).  In this case, frac_exp is 
 	 * incremented one for each dropped digit. 
 	 */
 
-	int frac_esse;
+	int frac_exp;
 	int mant_size; /* Number of digits in mantissa. */
 	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
-	const sse_char_t *pesse;  /* Temporarily holds location of esseonent in string */
-	int negative = 0, esse_negative = 0;
+	const sse_char_t *pexp;  /* Temporarily holds location of exponent in string */
+	int negative = 0, exp_negative = 0;
 
 	p = str;
 
@@ -209,7 +209,7 @@ sse_real_t sse_awk_strtoreal (sse_awk_t* awk, const sse_char_t* str)
 	 * If the mantissa has more than 18 digits, ignore the extras, since
 	 * they can't affect the value anyway.
 	 */
-	pesse = p;
+	pexp = p;
 	p -= mant_size;
 	if (dec_pt < 0) 
 	{
@@ -222,19 +222,19 @@ sse_real_t sse_awk_strtoreal (sse_awk_t* awk, const sse_char_t* str)
 
 	if (mant_size > 18) 
 	{
-		frac_esse = dec_pt - 18;
+		frac_exp = dec_pt - 18;
 		mant_size = 18;
 	} 
 	else 
 	{
-		frac_esse = dec_pt - mant_size;
+		frac_exp = dec_pt - mant_size;
 	}
 
 	if (mant_size == 0) 
 	{
 		fraction = 0.0;
 		/*p = str;*/
-		p = pesse;
+		p = pexp;
 		goto done;
 	} 
 	else 
@@ -266,62 +266,62 @@ sse_real_t sse_awk_strtoreal (sse_awk_t* awk, const sse_char_t* str)
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
-	/* Skim off the esseonent */
-	p = pesse;
+	/* Skim off the exponent */
+	p = pexp;
 	if ((*p == SSE_T('E')) || (*p == SSE_T('e'))) 
 	{
 		p++;
 		if (*p == SSE_T('-')) 
 		{
-			esse_negative = 1;
+			exp_negative = 1;
 			p++;
 		} 
 		else 
 		{
 			if (*p == SSE_T('+')) p++;
-			esse_negative = 0;
+			exp_negative = 0;
 		}
 		if (!SSE_AWK_ISDIGIT (awk, *p)) 
 		{
-			/* p = pesse; */
+			/* p = pexp; */
 			/* goto done; */
-			goto no_esse;
+			goto no_exp;
 		}
 		while (SSE_AWK_ISDIGIT (awk, *p)) 
 		{
-			esse = esse * 10 + (*p - SSE_T('0'));
+			exp = exp * 10 + (*p - SSE_T('0'));
 			p++;
 		}
 	}
 
-no_esse:
-	if (esse_negative) esse = frac_esse - esse;
-	else esse = frac_esse + esse;
+no_exp:
+	if (exp_negative) exp = frac_exp - exp;
+	else exp = frac_exp + exp;
 
 	/*
-	 * Generate a floating-point number that represents the esseonent.
-	 * Do this by processing the esseonent one bit at a time to combine
-	 * many powers of 2 of 10. Then combine the esseonent with the
+	 * Generate a floating-point number that represents the exponent.
+	 * Do this by processing the exponent one bit at a time to combine
+	 * many powers of 2 of 10. Then combine the exponent with the
 	 * fraction.
 	 */
-	if (esse < 0) 
+	if (exp < 0) 
 	{
-		esse_negative = 1;
-		esse = -esse;
+		exp_negative = 1;
+		exp = -exp;
 	} 
-	else esse_negative = 0;
+	else exp_negative = 0;
 
-	if (esse > MAX_ESSEONENT) esse = MAX_ESSEONENT;
+	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
 
-	dbl_esse = 1.0;
+	dbl_exp = 1.0;
 
-	for (d = powers_of_10; esse != 0; esse >>= 1, d++) 
+	for (d = powers_of_10; exp != 0; exp >>= 1, d++) 
 	{
-		if (esse & 01) dbl_esse *= *d;
+		if (exp & 01) dbl_exp *= *d;
 	}
 
-	if (esse_negative) fraction /= dbl_esse;
-	else fraction *= dbl_esse;
+	if (exp_negative) fraction /= dbl_exp;
+	else fraction *= dbl_exp;
 
 done:
 	return (negative)? -fraction: fraction;
@@ -333,7 +333,7 @@ sse_real_t sse_awk_strxtoreal (
 {
 	/* 
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
-	 * Used to convert decimal esseonents into floating-point numbers.
+	 * Used to convert decimal exponents into floating-point numbers.
 	 */ 
 	static sse_real_t powers_of_10[] = 
 	{
@@ -341,25 +341,25 @@ sse_real_t sse_awk_strxtoreal (
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	sse_real_t fraction, dbl_esse, * d;
+	sse_real_t fraction, dbl_exp, * d;
 	const sse_char_t* p, * end;
 	sse_cint_t c;
-	int esse = 0; /* Esseonent read from "EX" field */
+	int exp = 0; /* Esseonent read from "EX" field */
 
 	/* 
 	 * Esseonent that derives from the fractional part.  Under normal 
 	 * circumstatnces, it is the negative of the number of digits in F.
 	 * However, if I is very long, the last digits of I get dropped 
-	 * (otherwise a long I with a large negative esseonent could cause an
-	 * unnecessary overflow on I alone).  In this case, frac_esse is 
+	 * (otherwise a long I with a large negative exponent could cause an
+	 * unnecessary overflow on I alone).  In this case, frac_exp is 
 	 * incremented one for each dropped digit. 
 	 */
 
-	int frac_esse;
+	int frac_exp;
 	int mant_size; /* Number of digits in mantissa. */
 	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
-	const sse_char_t *pesse;  /* Temporarily holds location of esseonent in string */
-	int negative = 0, esse_negative = 0;
+	const sse_char_t *pexp;  /* Temporarily holds location of exponent in string */
+	int negative = 0, exp_negative = 0;
 
 	p = str;
 	end = str + len;
@@ -400,7 +400,7 @@ sse_real_t sse_awk_strxtoreal (
 	 * If the mantissa has more than 18 digits, ignore the extras, since
 	 * they can't affect the value anyway.
 	 */
-	pesse = p;
+	pexp = p;
 	p -= mant_size;
 	if (dec_pt < 0) 
 	{
@@ -413,19 +413,19 @@ sse_real_t sse_awk_strxtoreal (
 
 	if (mant_size > 18)  /* TODO: is 18 correct for sse_real_t??? */
 	{
-		frac_esse = dec_pt - 18;
+		frac_exp = dec_pt - 18;
 		mant_size = 18;
 	} 
 	else 
 	{
-		frac_esse = dec_pt - mant_size;
+		frac_exp = dec_pt - mant_size;
 	}
 
 	if (mant_size == 0) 
 	{
 		fraction = 0.0;
 		/*p = str;*/
-		p = pesse;
+		p = pexp;
 		goto done;
 	} 
 	else 
@@ -458,8 +458,8 @@ sse_real_t sse_awk_strxtoreal (
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
-	/* Skim off the esseonent */
-	p = pesse;
+	/* Skim off the exponent */
+	p = pexp;
 	if (p < end && (*p == SSE_T('E') || *p == SSE_T('e'))) 
 	{
 		p++;
@@ -468,59 +468,59 @@ sse_real_t sse_awk_strxtoreal (
 		{
 			if (*p == SSE_T('-')) 
 			{
-				esse_negative = 1;
+				exp_negative = 1;
 				p++;
 			} 
 			else 
 			{
 				if (*p == SSE_T('+')) p++;
-				esse_negative = 0;
+				exp_negative = 0;
 			}
 		}
-		else esse_negative = 0;
+		else exp_negative = 0;
 
 		if (!(p < end && SSE_AWK_ISDIGIT (awk, *p))) 
 		{
-			/*p = pesse;*/
+			/*p = pexp;*/
 			/*goto done;*/
-			goto no_esse;
+			goto no_exp;
 		}
 
 		while (p < end && SSE_AWK_ISDIGIT (awk, *p)) 
 		{
-			esse = esse * 10 + (*p - SSE_T('0'));
+			exp = exp * 10 + (*p - SSE_T('0'));
 			p++;
 		}
 	}
 
-no_esse:
-	if (esse_negative) esse = frac_esse - esse;
-	else esse = frac_esse + esse;
+no_exp:
+	if (exp_negative) exp = frac_exp - exp;
+	else exp = frac_exp + exp;
 
 	/*
-	 * Generate a floating-point number that represents the esseonent.
-	 * Do this by processing the esseonent one bit at a time to combine
-	 * many powers of 2 of 10. Then combine the esseonent with the
+	 * Generate a floating-point number that represents the exponent.
+	 * Do this by processing the exponent one bit at a time to combine
+	 * many powers of 2 of 10. Then combine the exponent with the
 	 * fraction.
 	 */
-	if (esse < 0) 
+	if (exp < 0) 
 	{
-		esse_negative = 1;
-		esse = -esse;
+		exp_negative = 1;
+		exp = -exp;
 	} 
-	else esse_negative = 0;
+	else exp_negative = 0;
 
-	if (esse > MAX_ESSEONENT) esse = MAX_ESSEONENT;
+	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
 
-	dbl_esse = 1.0;
+	dbl_exp = 1.0;
 
-	for (d = powers_of_10; esse != 0; esse >>= 1, d++) 
+	for (d = powers_of_10; exp != 0; exp >>= 1, d++) 
 	{
-		if (esse & 01) dbl_esse *= *d;
+		if (exp & 01) dbl_exp *= *d;
 	}
 
-	if (esse_negative) fraction /= dbl_esse;
-	else fraction *= dbl_esse;
+	if (exp_negative) fraction /= dbl_exp;
+	else fraction *= dbl_exp;
 
 done:
 	if (endptr != SSE_NULL) *endptr = p;
@@ -1061,11 +1061,11 @@ exit_loop:
 }
 
 int sse_awk_abort (sse_awk_t* awk, 
-	const sse_char_t* esser, const sse_char_t* file, int line)
+	const sse_char_t* expr, const sse_char_t* file, int line)
 {
 	awk->syscas.dprintf (
 		SSE_T("ASSERTION FAILURE AT FILE %s, LINE %d\n%s\n"),
-		file, line, esser);
+		file, line, expr);
 	awk->syscas.abort ();
 	return 0;
 }

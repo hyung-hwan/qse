@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.13 2006-10-22 11:40:51 bacon Exp $
+ * $Id: jni.c,v 1.14 2006-10-22 12:39:29 bacon Exp $
  */
 
 #include <sse/awk/jni.h>
@@ -60,7 +60,7 @@ static void __awk_free (void* ptr, void* custom_data)
 	free (ptr);
 }
 
-JNIESSEORT void JNICALL Java_sse_awk_Awk_open (JNIEnv* env, jobject obj)
+JNIEXPORT void JNICALL Java_sse_awk_Awk_open (JNIEnv* env, jobject obj)
 {
 	jclass class; 
 	jfieldID fid;
@@ -117,7 +117,7 @@ JNIESSEORT void JNICALL Java_sse_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	(*env)->SetLongField (env, obj, fid, (jlong)awk);
 
-	opt = SSE_AWK_ESSELICIT | SSE_AWK_UNIQUE | SSE_AWK_DBLSLASHES |
+	opt = SSE_AWK_EXPLICIT | SSE_AWK_UNIQUE | SSE_AWK_DBLSLASHES |
 		SSE_AWK_SHADING | SSE_AWK_IMPLICIT | SSE_AWK_SHIFT | 
 		SSE_AWK_EXTIO | SSE_AWK_BLOCKLESS;
 	sse_awk_setopt (awk, opt);
@@ -125,7 +125,7 @@ JNIESSEORT void JNICALL Java_sse_awk_Awk_open (JNIEnv* env, jobject obj)
 printf ("__awk(native) done => %u, 0x%X\n", awk, awk);
 }
 
-JNIESSEORT void JNICALL Java_sse_awk_Awk_close (JNIEnv* env, jobject obj)
+JNIEXPORT void JNICALL Java_sse_awk_Awk_close (JNIEnv* env, jobject obj)
 {
 	jclass class; 
 	jfieldID fid;
@@ -141,7 +141,7 @@ JNIESSEORT void JNICALL Java_sse_awk_Awk_close (JNIEnv* env, jobject obj)
 printf ("close (native) done\n");
 }
 
-JNIESSEORT void JNICALL Java_sse_awk_Awk_parse (JNIEnv* env, jobject obj)
+JNIEXPORT void JNICALL Java_sse_awk_Awk_parse (JNIEnv* env, jobject obj)
 {
 	jclass class;
 	jfieldID fid;
@@ -176,7 +176,7 @@ printf ("parse error -> line [%d] %S\n", sse_awk_getsrcline(awk), sse_awk_geterr
 	}
 }
 
-JNIESSEORT void JNICALL Java_sse_awk_Awk_run (JNIEnv* env, jobject obj)
+JNIEXPORT void JNICALL Java_sse_awk_Awk_run (JNIEnv* env, jobject obj)
 {
 	jclass class;
 	jfieldID fid;
@@ -211,14 +211,14 @@ JNIESSEORT void JNICALL Java_sse_awk_Awk_run (JNIEnv* env, jobject obj)
 	}
 }
 
-JNIESSEORT void JNICALL Java_sse_awk_Awk_set_1extio (
+JNIEXPORT void JNICALL Java_sse_awk_Awk_set_1extio (
 	JNIEnv* env, jobject obj, jlong extio, jobject handle)
 {
 	sse_awk_extio_t* epa = (sse_awk_extio_t*)extio;
 	epa->handle = (void*)handle;
 }
 
-JNIESSEORT jobject JNICALL Java_sse_awk_Awk_get_1extio (
+JNIEXPORT jobject JNICALL Java_sse_awk_Awk_get_1extio (
 	JNIEnv* env, jobject obj, jlong extio)
 {
 	sse_awk_extio_t* epa = (sse_awk_extio_t*)extio;

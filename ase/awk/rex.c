@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.37 2006-10-22 11:34:53 bacon Exp $
+ * $Id: rex.c,v 1.38 2006-10-22 12:39:29 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -398,8 +398,8 @@ sse_bool_t sse_awk_isemptyrex (sse_awk_t* awk, void* code)
 	nb = *(sse_size_t*)p; p += sse_sizeof(nb);
 	el = *(sse_size_t*)p; p += sse_sizeof(el);
 
-	/* an empty regular esseression look like:
-	 *  | esseression                     | 
+	/* an empty regular expression look like:
+	 *  | expression                     | 
 	 *  | header         | branch        |
 	 *  |                | branch header |
 	 *  | NB(1) | EL(16) | NA(1) | BL(8) | */
@@ -720,7 +720,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 		{
 			/* invalid range */
 #ifdef DEBUG_REX
-sse_printf (SSE_T("__build_charset: invalid character set range\n"));
+xp_printf (SSE_T("__build_charset: invalid character set range\n"));
 #endif
 			builder->errnum = SSE_AWK_EREXCRANGE;
 			return -1;
@@ -752,7 +752,7 @@ static int __build_cclass (__builder_t* builder, sse_char_t* cc)
 	{
 		/* wrong class name */
 #ifdef DEBUG_REX
-sse_printf (SSE_T("__build_cclass: wrong class name\n"));*/
+xp_printf (SSE_T("__build_cclass: wrong class name\n"));*/
 #endif
 		builder->errnum = SSE_AWK_EREXCCLASS;
 		return -1;
@@ -765,7 +765,7 @@ sse_printf (SSE_T("__build_cclass: wrong class name\n"));*/
 	    builder->ptn.curc.value != SSE_T(':'))
 	{
 #ifdef BUILD_REX
-sse_printf (SSE_T("__build_cclass: a colon(:) esseected\n"));
+xp_printf (SSE_T("__build_cclass: a colon(:) expected\n"));
 #endif
 		builder->errnum = SSE_AWK_EREXCOLON;
 		return -1;
@@ -778,7 +778,7 @@ sse_printf (SSE_T("__build_cclass: a colon(:) esseected\n"));
 	    builder->ptn.curc.value != SSE_T(']'))
 	{
 #ifdef DEBUG_REX
-sse_printf (SSE_T("__build_cclass: ] esseected\n"));
+xp_printf (SSE_T("__build_cclass: ] expected\n"));
 #endif
 		builder->errnum = SSE_AWK_EREXRBRACKET;	
 		return -1;
@@ -1025,7 +1025,7 @@ static const sse_byte_t* __match_pattern (
 	el = *(sse_size_t*)p; p += sse_sizeof(el);
 
 #ifdef BUILD_REX
-sse_printf (SSE_T("__match_pattern: NB = %u, EL = %u\n"), (unsigned)nb, (unsigned)el);
+xp_printf (SSE_T("__match_pattern: NB = %u, EL = %u\n"), (unsigned)nb, (unsigned)el);
 #endif
 	mat->matched = sse_false;
 	mat->match_len = 0;
@@ -1211,7 +1211,7 @@ static const sse_byte_t* __match_any_char (
 	}
 
 #ifdef BUILD_REX
-sse_printf (SSE_T("__match_any_char: lbound = %u, ubound = %u\n"), 
+xp_printf (SSE_T("__match_any_char: lbound = %u, ubound = %u\n"), 
       (unsigned int)lbound, (unsigned int)ubound);
 #endif
 
@@ -1223,7 +1223,7 @@ sse_printf (SSE_T("__match_any_char: lbound = %u, ubound = %u\n"),
 	}
 
 #ifdef BUILD_REX
-sse_printf (SSE_T("__match_any_char: max si = %d\n"), si);
+xp_printf (SSE_T("__match_any_char: max si = %d\n"), si);
 #endif
 	if (si >= lbound && si <= ubound)
 	{
@@ -1281,7 +1281,7 @@ static const sse_byte_t* __match_ord_char (
 	}
 	
 #ifdef BUILD_REX
-sse_printf (SSE_T("__match_ord_char: lbound = %u, ubound = %u\n"), 
+xp_printf (SSE_T("__match_ord_char: lbound = %u, ubound = %u\n"), 
   (unsigned int)lbound, (unsigned int)ubound);*/
 #endif
 
@@ -1309,7 +1309,7 @@ sse_printf (SSE_T("__match_ord_char: lbound = %u, ubound = %u\n"),
 	}
 
 #ifdef DEBUG_REX
-sse_printf (SSE_T("__match_ord_char: max si = %d, lbound = %u, ubound = %u\n"), si, lbound, ubound);
+xp_printf (SSE_T("__match_ord_char: max si = %d, lbound = %u, ubound = %u\n"), si, lbound, ubound);
 #endif
 
 	if (si >= lbound && si <= ubound)
@@ -1466,7 +1466,7 @@ static const sse_byte_t* __match_group (
 				mat2.branch_end = mat->branch_end;
 	
 #ifdef DEBUG_REX
-sse_printf (SSE_T("__match_group: GROUP si = %d [%s]\n"), si, mat->match_ptr);
+xp_printf (SSE_T("__match_group: GROUP si = %d [%s]\n"), si, mat->match_ptr);
 #endif
 				tmp = __match_branch_body (matcher, p, &mat2);
 				if (tmp == SSE_NULL)
@@ -1565,7 +1565,7 @@ static const sse_byte_t* __match_occurrences (
 			mat2.branch_end = mat->branch_end;
 
 #ifdef DEBUG_REX
-sse_printf (SSE_T("__match occurrences: si = %d [%s]\n"), si, mat->match_ptr);
+xp_printf (SSE_T("__match occurrences: si = %d [%s]\n"), si, mat->match_ptr);
 #endif
 			tmp = __match_branch_body (matcher, p, &mat2);
 
@@ -1699,7 +1699,7 @@ static sse_bool_t __cc_isxdigit (sse_awk_t* awk, sse_char_t c)
 void sse_awk_printrex (void* rex)
 {
 	__print_pattern (rex);
-	sse_printf (SSE_T("\n"));
+	xp_printf (SSE_T("\n"));
 }
 
 static const sse_byte_t* __print_pattern (const sse_byte_t* p)
@@ -1709,12 +1709,12 @@ static const sse_byte_t* __print_pattern (const sse_byte_t* p)
 	nb = *(sse_size_t*)p; p += sse_sizeof(nb);
 	el = *(sse_size_t*)p; p += sse_sizeof(el);
 #ifdef DEBUG_REX
-sse_printf (SSE_T("__print_pattern: NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
+xp_printf (SSE_T("__print_pattern: NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
 #endif
 
 	for (i = 0; i < nb; i++)
 	{
-		if (i != 0) sse_printf (SSE_T("|"));
+		if (i != 0) xp_printf (SSE_T("|"));
 		p = __print_branch (p);
 	}
 
@@ -1728,7 +1728,7 @@ static const sse_byte_t* __print_branch (const sse_byte_t* p)
 	na = *(sse_size_t*)p; p += sse_sizeof(na);
 	bl = *(sse_size_t*)p; p += sse_sizeof(bl);
 #ifdef DEBUG_REX
-sse_printf (SSE_T("__print_branch: NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
+xp_printf (SSE_T("__print_branch: NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
 #endif
 
 	for (i = 0; i < na; i++)
@@ -1745,23 +1745,23 @@ static const sse_byte_t* __print_atom (const sse_byte_t* p)
 
 	if (cp->cmd == CMD_BOL)
 	{
-		sse_printf (SSE_T("^"));
+		xp_printf (SSE_T("^"));
 		p += sse_sizeof(*cp);
 	}
 	else if (cp->cmd == CMD_EOL)
 	{
-		sse_printf (SSE_T("$"));
+		xp_printf (SSE_T("$"));
 		p += sse_sizeof(*cp);
 	}
 	else if (cp->cmd == CMD_ANY_CHAR) 
 	{
-		sse_printf (SSE_T("."));
+		xp_printf (SSE_T("."));
 		p += sse_sizeof(*cp);
 	}
 	else if (cp->cmd == CMD_ORD_CHAR) 
 	{
 		p += sse_sizeof(*cp);
-		sse_printf (SSE_T("%c"), *(sse_char_t*)p);
+		xp_printf (SSE_T("%c"), *(sse_char_t*)p);
 		p += sse_sizeof(sse_char_t);
 	}
 	else if (cp->cmd == CMD_CHARSET)
@@ -1769,8 +1769,8 @@ static const sse_byte_t* __print_atom (const sse_byte_t* p)
 		sse_size_t csc, csl, i;
 
 		p += sse_sizeof(*cp);
-		sse_printf (SSE_T("["));
-		if (cp->negate) sse_printf (SSE_T("^"));
+		xp_printf (SSE_T("["));
+		if (cp->negate) xp_printf (SSE_T("^"));
 
 		csc = *(sse_size_t*)p; p += sse_sizeof(csc);
 		csl = *(sse_size_t*)p; p += sse_sizeof(csl);
@@ -1785,51 +1785,51 @@ static const sse_byte_t* __print_atom (const sse_byte_t* p)
 			if (c0 == CHARSET_ONE)
 			{
 				c1 = *(sse_char_t*)p;
-				sse_printf (SSE_T("%c"), c1);
+				xp_printf (SSE_T("%c"), c1);
 			}
 			else if (c0 == CHARSET_RANGE)
 			{
 				c1 = *(sse_char_t*)p;
 				p += sse_sizeof(c1);
 				c2 = *(sse_char_t*)p;
-				sse_printf (SSE_T("%c-%c"), c1, c2);
+				xp_printf (SSE_T("%c-%c"), c1, c2);
 			}
 			else if (c0 == CHARSET_CLASS)
 			{
 				c1 = *(sse_char_t*)p;
-				sse_printf (SSE_T("[:%s:]"), __char_class[c1].name);
+				xp_printf (SSE_T("[:%s:]"), __char_class[c1].name);
 			}
 			else
 			{
-				sse_printf ("should never happen - invalid charset code\n");
+				xp_printf ("should never happen - invalid charset code\n");
 			}
 
 			p += sse_sizeof(c1);
 		}
 
-		sse_printf (SSE_T("]"));
+		xp_printf (SSE_T("]"));
 	}
 	else if (cp->cmd == CMD_GROUP)
 	{
 		p += sse_sizeof(*cp);
-		sse_printf (SSE_T("("));
+		xp_printf (SSE_T("("));
 		p = __print_pattern (p);
-		sse_printf (SSE_T(")"));
+		xp_printf (SSE_T(")"));
 	}
 	else 
 	{
-		sse_printf ("should never happen - invalid atom code\n");
+		xp_printf ("should never happen - invalid atom code\n");
 	}
 
 	if (cp->lbound == 0 && cp->ubound == BOUND_MAX)
-		sse_printf (SSE_T("*"));
+		xp_printf (SSE_T("*"));
 	else if (cp->lbound == 1 && cp->ubound == BOUND_MAX)
-		sse_printf (SSE_T("+"));
+		xp_printf (SSE_T("+"));
 	else if (cp->lbound == 0 && cp->ubound == 1)
-		sse_printf (SSE_T("?"));
+		xp_printf (SSE_T("?"));
 	else if (cp->lbound != 1 || cp->ubound != 1)
 	{
-		sse_printf (SSE_T("{%lu,%lu}"), 
+		xp_printf (SSE_T("{%lu,%lu}"), 
 			(unsigned long)cp->lbound, (unsigned long)cp->ubound);
 	}
 

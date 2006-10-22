@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.240 2006-10-22 11:34:53 bacon Exp $
+ * $Id: run.c,v 1.241 2006-10-22 12:39:29 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -84,8 +84,8 @@ static int __run_nextfile (sse_awk_run_t* run, sse_awk_nde_nextfile_t* nde);
 static int __run_delete (sse_awk_run_t* run, sse_awk_nde_delete_t* nde);
 static int __run_print (sse_awk_run_t* run, sse_awk_nde_print_t* nde);
 
-static sse_awk_val_t* __eval_esseression (sse_awk_run_t* run, sse_awk_nde_t* nde);
-static sse_awk_val_t* __eval_esseression0 (sse_awk_run_t* run, sse_awk_nde_t* nde);
+static sse_awk_val_t* __eval_expression (sse_awk_run_t* run, sse_awk_nde_t* nde);
+static sse_awk_val_t* __eval_expression0 (sse_awk_run_t* run, sse_awk_nde_t* nde);
 
 static sse_awk_val_t* __eval_group (sse_awk_run_t* run, sse_awk_nde_t* nde);
 
@@ -140,7 +140,7 @@ static sse_awk_val_t* __eval_binop_div (
 	sse_awk_run_t* run, sse_awk_val_t* left, sse_awk_val_t* right);
 static sse_awk_val_t* __eval_binop_mod (
 	sse_awk_run_t* run, sse_awk_val_t* left, sse_awk_val_t* right);
-static sse_awk_val_t* __eval_binop_esse (
+static sse_awk_val_t* __eval_binop_exp (
 	sse_awk_run_t* run, sse_awk_val_t* left, sse_awk_val_t* right);
 static sse_awk_val_t* __eval_binop_concat (
 	sse_awk_run_t* run, sse_awk_val_t* left, sse_awk_val_t* right);
@@ -198,14 +198,14 @@ static sse_char_t* __idxnde_to_str (
 
 typedef sse_awk_val_t* (*binop_func_t) (
 	sse_awk_run_t* run, sse_awk_val_t* left, sse_awk_val_t* right);
-typedef sse_awk_val_t* (*eval_esser_t) (sse_awk_run_t* run, sse_awk_nde_t* nde);
+typedef sse_awk_val_t* (*eval_expr_t) (sse_awk_run_t* run, sse_awk_nde_t* nde);
 
 /* TODO: remove this function */
 static int __printval (sse_awk_pair_t* pair, void* arg)
 {
-	sse_printf (SSE_T("%s = "), (const sse_char_t*)pair->key);
+	xp_printf (SSE_T("%s = "), (const sse_char_t*)pair->key);
 	sse_awk_printval ((sse_awk_val_t*)pair->val);
-	sse_printf (SSE_T("\n"));
+	xp_printf (SSE_T("\n"));
 	return 0;
 }
 
@@ -269,8 +269,8 @@ int sse_awk_setglobal (sse_awk_run_t* run, sse_size_t idx, sse_awk_val_t* val)
 		}
 		else
 		{
-			/* due to the esseression evaluation rule, the 
-			 * regular esseression can not be an assigned value */
+			/* due to the expression evaluation rule, the 
+			 * regular expression can not be an assigned value */
 			sse_awk_assert (run->awk, val->type != SSE_AWK_VAL_REX);
 
 			fs_ptr = sse_awk_valtostr (
@@ -282,7 +282,7 @@ int sse_awk_setglobal (sse_awk_run_t* run, sse_size_t idx, sse_awk_val_t* val)
 		{
 			void* rex;
 
-			/* compile the regular esseression */
+			/* compile the regular expression */
 			/* TODO: use safebuild */
 			rex = sse_awk_buildrex (
 				run->awk, fs_ptr, fs_len, &run->errnum);
@@ -387,8 +387,8 @@ int sse_awk_setglobal (sse_awk_run_t* run, sse_size_t idx, sse_awk_val_t* val)
 		}
 		else
 		{
-			/* due to the esseression evaluation rule, the 
-			 * regular esseression can not be an assigned value */
+			/* due to the expression evaluation rule, the 
+			 * regular expression can not be an assigned value */
 			sse_awk_assert (run->awk, val->type != SSE_AWK_VAL_REX);
 
 			rs_ptr = sse_awk_valtostr (
@@ -400,7 +400,7 @@ int sse_awk_setglobal (sse_awk_run_t* run, sse_size_t idx, sse_awk_val_t* val)
 		{
 			void* rex;
 
-			/* compile the regular esseression */
+			/* compile the regular expression */
 			/* TODO: use safebuild */
 			rex = sse_awk_buildrex (
 				run->awk, rs_ptr, rs_len, &run->errnum);
@@ -1147,9 +1147,9 @@ static int __run_main (sse_awk_run_t* run, sse_awk_runarg_t* runarg)
 		}
 
 		v = STACK_RETVAL(run);
-sse_printf (SSE_T("Return Value - "));
+xp_printf (SSE_T("Return Value - "));
 sse_awk_printval (v);
-sse_printf (SSE_T("\n"));
+xp_printf (SSE_T("\n"));
 		/* the life of the global return value is over here
 		 * unlike the return value of each function */
 		/*sse_awk_refdownval_nofree (awk, v);*/
@@ -1173,9 +1173,9 @@ sse_printf (SSE_T("\n"));
 	/* just reset the exit level */
 	run->exit_level = EXIT_NONE;
 
-sse_printf (SSE_T("-[VARIABLES]------------------------\n"));
+xp_printf (SSE_T("-[VARIABLES]------------------------\n"));
 sse_awk_map_walk (&run->named, __printval, SSE_NULL);
-sse_printf (SSE_T("-[END VARIABLES]--------------------------\n"));
+xp_printf (SSE_T("-[END VARIABLES]--------------------------\n"));
 
 	return n;
 }
@@ -1293,7 +1293,7 @@ static int __run_pattern_block (
 			/* pattern { ... } */
 			sse_awk_val_t* v1;
 
-			v1 = __eval_esseression (run, ptn);
+			v1 = __eval_expression (run, ptn);
 			if (v1 == SSE_NULL) return -1;
 
 			sse_awk_refupval (v1);
@@ -1319,7 +1319,7 @@ static int __run_pattern_block (
 			{
 				sse_awk_val_t* v1;
 
-				v1 = __eval_esseression (run, ptn);
+				v1 = __eval_expression (run, ptn);
 				if (v1 == SSE_NULL) return -1;
 				sse_awk_refupval (v1);
 
@@ -1341,7 +1341,7 @@ static int __run_pattern_block (
 			{
 				sse_awk_val_t* v2;
 
-				v2 = __eval_esseression (run, ptn->next);
+				v2 = __eval_expression (run, ptn->next);
 				if (v2 == SSE_NULL) return -1;
 				sse_awk_refupval (v2);
 
@@ -1399,7 +1399,7 @@ static int __run_block (sse_awk_run_t* run, sse_awk_nde_blk_t* nde)
 	p = nde->body;
 	nlocals = nde->nlocals;
 
-/*sse_printf (SSE_T("securing space for local variables nlocals = %d\n"), (int)nlocals);*/
+/*xp_printf (SSE_T("securing space for local variables nlocals = %d\n"), (int)nlocals);*/
 	saved_stack_top = run->stack_top;
 
 	/* secure space for local variables */
@@ -1416,10 +1416,10 @@ static int __run_block (sse_awk_run_t* run, sse_awk_nde_blk_t* nde)
 		/* refupval is not required for sse_awk_val_nil */
 	}
 
-/*sse_printf (SSE_T("executing block statements\n"));*/
+/*xp_printf (SSE_T("executing block statements\n"));*/
 	while (p != SSE_NULL && run->exit_level == EXIT_NONE) 
 	{
-/*sse_printf (SSE_T("running a statement\n"));*/
+/*xp_printf (SSE_T("running a statement\n"));*/
 		if (__run_statement(run,p) == -1) 
 		{
 			n = -1;
@@ -1428,7 +1428,7 @@ static int __run_block (sse_awk_run_t* run, sse_awk_nde_blk_t* nde)
 		p = p->next;
 	}
 
-/*sse_printf (SSE_T("popping off local variables\n"));*/
+/*xp_printf (SSE_T("popping off local variables\n"));*/
 	/* pop off local variables */
 	nlocals = nde->nlocals;
 	while (nlocals > 0)
@@ -1546,7 +1546,7 @@ static int __run_statement (sse_awk_run_t* run, sse_awk_nde_t* nde)
 		default:
 		{
 			sse_awk_val_t* v;
-			v = __eval_esseression(run,nde);
+			v = __eval_expression(run,nde);
 			if (v == SSE_NULL) return -1;
 
 			sse_awk_refupval (v);
@@ -1564,12 +1564,12 @@ static int __run_if (sse_awk_run_t* run, sse_awk_nde_if_t* nde)
 	sse_awk_val_t* test;
 	int n = 0;
 
-	/* the test esseression for the if statement cannot have 
-	 * chained esseressions. this should not be allowed by the
+	/* the test expression for the if statement cannot have 
+	 * chained expressions. this should not be allowed by the
 	 * parser first of all */
 	sse_awk_assert (run->awk, nde->test->next == SSE_NULL);
 
-	test = __eval_esseression (run, nde->test);
+	test = __eval_expression (run, nde->test);
 	if (test == SSE_NULL) return -1;
 
 	sse_awk_refupval (test);
@@ -1592,14 +1592,14 @@ static int __run_while (sse_awk_run_t* run, sse_awk_nde_while_t* nde)
 
 	if (nde->type == SSE_AWK_NDE_WHILE)
 	{
-		/* no chained esseressions are allowed for the test 
-		 * esseression of the while statement */
+		/* no chained expressions are allowed for the test 
+		 * expression of the while statement */
 		sse_awk_assert (run->awk, nde->test->next == SSE_NULL);
 
 		/* TODO: handle run-time abortion... */
 		while (1)
 		{
-			test = __eval_esseression (run, nde->test);
+			test = __eval_expression (run, nde->test);
 			if (test == SSE_NULL) return -1;
 
 			sse_awk_refupval (test);
@@ -1634,8 +1634,8 @@ static int __run_while (sse_awk_run_t* run, sse_awk_nde_while_t* nde)
 	}
 	else if (nde->type == SSE_AWK_NDE_DOWHILE)
 	{
-		/* no chained esseressions are allowed for the test 
-		 * esseression of the while statement */
+		/* no chained expressions are allowed for the test 
+		 * expression of the while statement */
 		sse_awk_assert (run->awk, nde->test->next == SSE_NULL);
 
 		/* TODO: handle run-time abortion... */
@@ -1654,7 +1654,7 @@ static int __run_while (sse_awk_run_t* run, sse_awk_nde_while_t* nde)
 			}
 			else if (run->exit_level != EXIT_NONE) break;
 
-			test = __eval_esseression (run, nde->test);
+			test = __eval_expression (run, nde->test);
 			if (test == SSE_NULL) return -1;
 
 			sse_awk_refupval (test);
@@ -1680,7 +1680,7 @@ static int __run_for (sse_awk_run_t* run, sse_awk_nde_for_t* nde)
 	if (nde->init != SSE_NULL)
 	{
 		sse_awk_assert (run->awk, nde->init->next == SSE_NULL);
-		val = __eval_esseression(run,nde->init);
+		val = __eval_expression(run,nde->init);
 		if (val == SSE_NULL) return -1;
 
 		sse_awk_refupval (val);
@@ -1693,11 +1693,11 @@ static int __run_for (sse_awk_run_t* run, sse_awk_nde_for_t* nde)
 		{
 			sse_awk_val_t* test;
 
-			/* no chained esseressions for the test esseression of
+			/* no chained expressions for the test expression of
 			 * the for statement are allowed */
 			sse_awk_assert (run->awk, nde->test->next == SSE_NULL);
 
-			test = __eval_esseression (run, nde->test);
+			test = __eval_expression (run, nde->test);
 			if (test == SSE_NULL) return -1;
 
 			sse_awk_refupval (test);
@@ -1739,7 +1739,7 @@ static int __run_for (sse_awk_run_t* run, sse_awk_nde_for_t* nde)
 		if (nde->incr != SSE_NULL)
 		{
 			sse_awk_assert (run->awk, nde->incr->next == SSE_NULL);
-			val = __eval_esseression(run,nde->incr);
+			val = __eval_expression(run,nde->incr);
 			if (val == SSE_NULL) return -1;
 
 			sse_awk_refupval (val);
@@ -1786,20 +1786,20 @@ static int __walk_foreach (sse_awk_pair_t* pair, void* arg)
 static int __run_foreach (sse_awk_run_t* run, sse_awk_nde_foreach_t* nde)
 {
 	int n;
-	sse_awk_nde_esse_t* test;
+	sse_awk_nde_exp_t* test;
 	sse_awk_val_t* rv;
 	sse_awk_map_t* map;
 	struct __foreach_walker_t walker;
 
-	test = (sse_awk_nde_esse_t*)nde->test;
-	sse_awk_assert (run->awk, test->type == SSE_AWK_NDE_ESSE_BIN && 
+	test = (sse_awk_nde_exp_t*)nde->test;
+	sse_awk_assert (run->awk, test->type == SSE_AWK_NDE_EXP_BIN && 
 	           test->opcode == SSE_AWK_BINOP_IN);
 
-	/* chained esseressions should not be allowed 
+	/* chained expressions should not be allowed 
 	 * by the parser first of all */
 	sse_awk_assert (run->awk, test->right->next == SSE_NULL); 
 
-	rv = __eval_esseression (run, test->right);
+	rv = __eval_expression (run, test->right);
 	if (rv == SSE_NULL) return -1;
 
 	sse_awk_refupval (rv);
@@ -1837,18 +1837,18 @@ static int __run_return (sse_awk_run_t* run, sse_awk_nde_return_t* nde)
 	{
 		sse_awk_val_t* val;
 
-		/* chained esseressions should not be allowed 
+		/* chained expressions should not be allowed 
 		 * by the parser first of all */
 		sse_awk_assert (run->awk, nde->val->next == SSE_NULL); 
 
-/*sse_printf (SSE_T("returning....\n"));*/
-		val = __eval_esseression (run, nde->val);
+/*xp_printf (SSE_T("returning....\n"));*/
+		val = __eval_expression (run, nde->val);
 		if (val == SSE_NULL) return -1;
 
 		sse_awk_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
 		sse_awk_refupval (val); /* see __eval_call for the trick */
-/*sse_printf (SSE_T("set return value....\n"));*/
+/*xp_printf (SSE_T("set return value....\n"));*/
 	}
 	
 	run->exit_level = EXIT_FUNCTION;
@@ -1861,11 +1861,11 @@ static int __run_exit (sse_awk_run_t* run, sse_awk_nde_exit_t* nde)
 	{
 		sse_awk_val_t* val;
 
-		/* chained esseressions should not be allowed 
+		/* chained expressions should not be allowed 
 		 * by the parser first of all */
 		sse_awk_assert (run->awk, nde->val->next == SSE_NULL); 
 
-		val = __eval_esseression (run, nde->val);
+		val = __eval_expression (run, nde->val);
 		if (val == SSE_NULL) return -1;
 
 		sse_awk_refdownval (run, STACK_RETVAL_GLOBAL(run));
@@ -1882,7 +1882,7 @@ static int __run_next (sse_awk_run_t* run, sse_awk_nde_next_t* nde)
 {
 	/* the parser checks if next has been called in the begin/end
 	 * block or whereever inappropriate. so the runtime doesn't 
-	 * check that esselicitly */
+	 * check that explicitly */
 
 	if  (run->active_block == (sse_awk_nde_blk_t*)run->awk->tree.begin ||
 	     run->active_block == (sse_awk_nde_blk_t*)run->awk->tree.end)
@@ -1988,7 +1988,7 @@ static int __run_delete (sse_awk_run_t* run, sse_awk_nde_delete_t* nde)
 
 				sse_awk_assert (run->awk, var->idx != SSE_NULL);
 
-				idx = __eval_esseression (run, var->idx);
+				idx = __eval_expression (run, var->idx);
 				if (idx == SSE_NULL) return -1;
 
 				sse_awk_refupval (idx);
@@ -2079,7 +2079,7 @@ static int __run_delete (sse_awk_run_t* run, sse_awk_nde_delete_t* nde)
 
 				sse_awk_assert (run->awk, var->idx != SSE_NULL);
 
-				idx = __eval_esseression (run, var->idx);
+				idx = __eval_expression (run, var->idx);
 				if (idx == SSE_NULL) return -1;
 
 				sse_awk_refupval (idx);
@@ -2127,7 +2127,7 @@ static int __run_print (sse_awk_run_t* run, sse_awk_nde_print_t* nde)
 	{
 		sse_size_t len;
 
-		v = __eval_esseression (run, p->out);
+		v = __eval_expression (run, p->out);
 		if (v == SSE_NULL) return -1;
 
 		sse_awk_refupval (v);
@@ -2213,7 +2213,7 @@ static int __run_print (sse_awk_run_t* run, sse_awk_nde_print_t* nde)
 				}
 			}
 
-			v = __eval_esseression (run, np);
+			v = __eval_expression (run, np);
 			if (v == SSE_NULL) 
 			{
 				if (out != SSE_NULL) SSE_AWK_FREE (run->awk, out);
@@ -2255,12 +2255,12 @@ skip_write:
 	return 0;
 }
 
-static sse_awk_val_t* __eval_esseression (sse_awk_run_t* run, sse_awk_nde_t* nde)
+static sse_awk_val_t* __eval_expression (sse_awk_run_t* run, sse_awk_nde_t* nde)
 {
 	sse_awk_val_t* v;
 	int n, errnum;
 
-	v = __eval_esseression0 (run, nde);
+	v = __eval_expression0 (run, nde);
 	if (v == SSE_NULL) return SSE_NULL;
 
 	if (v->type == SSE_AWK_VAL_REX)
@@ -2302,9 +2302,9 @@ static sse_awk_val_t* __eval_esseression (sse_awk_run_t* run, sse_awk_nde_t* nde
 	return v;
 }
 
-static sse_awk_val_t* __eval_esseression0 (sse_awk_run_t* run, sse_awk_nde_t* nde)
+static sse_awk_val_t* __eval_expression0 (sse_awk_run_t* run, sse_awk_nde_t* nde)
 {
-	static eval_esser_t __eval_func[] =
+	static eval_expr_t __eval_func[] =
 	{
 		/* the order of functions here should match the order
 		 * of node types declared in tree.h */
@@ -2356,7 +2356,7 @@ static sse_awk_val_t* __eval_assignment (sse_awk_run_t* run, sse_awk_nde_t* nde)
 	sse_awk_assert (run->awk, ass->left != SSE_NULL && ass->right != SSE_NULL);
 
 	sse_awk_assert (run->awk, ass->right->next == SSE_NULL);
-	val = __eval_esseression (run, ass->right);
+	val = __eval_expression (run, ass->right);
 	if (val == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (val);
@@ -2366,7 +2366,7 @@ static sse_awk_val_t* __eval_assignment (sse_awk_run_t* run, sse_awk_nde_t* nde)
 		sse_awk_val_t* val2, * tmp;
 
 		sse_awk_assert (run->awk, ass->left->next == SSE_NULL);
-		val2 = __eval_esseression (run, ass->left);
+		val2 = __eval_expression (run, ass->left);
 		if (val2 == SSE_NULL)
 		{
 			sse_awk_refdownval (run, val);
@@ -2395,9 +2395,9 @@ static sse_awk_val_t* __eval_assignment (sse_awk_run_t* run, sse_awk_nde_t* nde)
 		{
 			tmp = __eval_binop_mod (run, val2, val);
 		}
-		else if (ass->opcode == SSE_AWK_ASSOP_ESSE)
+		else if (ass->opcode == SSE_AWK_ASSOP_EXP)
 		{
-			tmp = __eval_binop_esse (run, val2, val);
+			tmp = __eval_binop_exp (run, val2, val);
 		}
 		else
 		{
@@ -2620,7 +2620,7 @@ static sse_awk_val_t* __do_assignment_map (
 	if (str == SSE_NULL) return SSE_NULL;
 
 /*
-sse_printf (SSE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int)map->ref, (int)map->type);
+xp_printf (SSE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int)map->ref, (int)map->type);
 */
 	n = sse_awk_map_putx (map->map, str, len, val, SSE_NULL);
 	if (n < 0)
@@ -2644,7 +2644,7 @@ static sse_awk_val_t* __do_assignment_pos (
 	sse_size_t len;
 	int n;
 
-	v = __eval_esseression (run, pos->val);
+	v = __eval_expression (run, pos->val);
 	if (v == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (v);
@@ -2704,49 +2704,49 @@ static sse_awk_val_t* __eval_binary (sse_awk_run_t* run, sse_awk_nde_t* nde)
 		__eval_binop_mul,
 		__eval_binop_div,
 		__eval_binop_mod,
-		__eval_binop_esse,
+		__eval_binop_exp,
 
 		__eval_binop_concat,
 		SSE_NULL, /* __eval_binop_ma */
 		SSE_NULL  /* __eval_binop_nm */
 	};
 
-	sse_awk_nde_esse_t* esse = (sse_awk_nde_esse_t*)nde;
+	sse_awk_nde_exp_t* exp = (sse_awk_nde_exp_t*)nde;
 	sse_awk_val_t* left, * right, * res;
 
-	sse_awk_assert (run->awk, esse->type == SSE_AWK_NDE_ESSE_BIN);
+	sse_awk_assert (run->awk, exp->type == SSE_AWK_NDE_EXP_BIN);
 
-	if (esse->opcode == SSE_AWK_BINOP_LAND)
+	if (exp->opcode == SSE_AWK_BINOP_LAND)
 	{
-		res = __eval_binop_land (run, esse->left, esse->right);
+		res = __eval_binop_land (run, exp->left, exp->right);
 	}
-	else if (esse->opcode == SSE_AWK_BINOP_LOR)
+	else if (exp->opcode == SSE_AWK_BINOP_LOR)
 	{
-		res = __eval_binop_lor (run, esse->left, esse->right);
+		res = __eval_binop_lor (run, exp->left, exp->right);
 	}
-	else if (esse->opcode == SSE_AWK_BINOP_IN)
+	else if (exp->opcode == SSE_AWK_BINOP_IN)
 	{
 		/* treat the in operator specially */
-		res = __eval_binop_in (run, esse->left, esse->right);
+		res = __eval_binop_in (run, exp->left, exp->right);
 	}
-	else if (esse->opcode == SSE_AWK_BINOP_NM)
+	else if (exp->opcode == SSE_AWK_BINOP_NM)
 	{
-		res = __eval_binop_nm (run, esse->left, esse->right);
+		res = __eval_binop_nm (run, exp->left, exp->right);
 	}
-	else if (esse->opcode == SSE_AWK_BINOP_MA)
+	else if (exp->opcode == SSE_AWK_BINOP_MA)
 	{
-		res = __eval_binop_ma (run, esse->left, esse->right);
+		res = __eval_binop_ma (run, exp->left, exp->right);
 	}
 	else
 	{
-		sse_awk_assert (run->awk, esse->left->next == SSE_NULL);
-		left = __eval_esseression (run, esse->left);
+		sse_awk_assert (run->awk, exp->left->next == SSE_NULL);
+		left = __eval_expression (run, exp->left);
 		if (left == SSE_NULL) return SSE_NULL;
 
 		sse_awk_refupval (left);
 
-		sse_awk_assert (run->awk, esse->right->next == SSE_NULL);
-		right = __eval_esseression (run, esse->right);
+		sse_awk_assert (run->awk, exp->right->next == SSE_NULL);
+		right = __eval_expression (run, exp->right);
 		if (right == SSE_NULL) 
 		{
 			sse_awk_refdownval (run, left);
@@ -2755,11 +2755,11 @@ static sse_awk_val_t* __eval_binary (sse_awk_run_t* run, sse_awk_nde_t* nde)
 
 		sse_awk_refupval (right);
 
-		sse_awk_assert (run->awk, esse->opcode >= 0 && 
-			esse->opcode < sse_countof(__binop_func));
-		sse_awk_assert (run->awk, __binop_func[esse->opcode] != SSE_NULL);
+		sse_awk_assert (run->awk, exp->opcode >= 0 && 
+			exp->opcode < sse_countof(__binop_func));
+		sse_awk_assert (run->awk, __binop_func[exp->opcode] != SSE_NULL);
 
-		res = __binop_func[esse->opcode] (run, left, right);
+		res = __binop_func[exp->opcode] (run, left, right);
 
 		sse_awk_refdownval (run, left);
 		sse_awk_refdownval (run, right);
@@ -2785,7 +2785,7 @@ static sse_awk_val_t* __eval_binop_lor (
 	sse_awk_val_t* lv, * rv, * res;
 
 	sse_awk_assert (run->awk, left->next == SSE_NULL);
-	lv = __eval_esseression (run, left);
+	lv = __eval_expression (run, left);
 	if (lv == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (lv);
@@ -2797,7 +2797,7 @@ static sse_awk_val_t* __eval_binop_lor (
 	else
 	{
 		sse_awk_assert (run->awk, right->next == SSE_NULL);
-		rv = __eval_esseression (run, right);
+		rv = __eval_expression (run, right);
 		if (rv == SSE_NULL)
 		{
 			sse_awk_refdownval (run, lv);
@@ -2833,7 +2833,7 @@ static sse_awk_val_t* __eval_binop_land (
 	sse_awk_val_t* lv, * rv, * res;
 
 	sse_awk_assert (run->awk, left->next == SSE_NULL);
-	lv = __eval_esseression (run, left);
+	lv = __eval_expression (run, left);
 	if (lv == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (lv);
@@ -2845,7 +2845,7 @@ static sse_awk_val_t* __eval_binop_land (
 	else
 	{
 		sse_awk_assert (run->awk, right->next == SSE_NULL);
-		rv = __eval_esseression (run, right);
+		rv = __eval_expression (run, right);
 		if (rv == SSE_NULL)
 		{
 			sse_awk_refdownval (run, lv);
@@ -2890,7 +2890,7 @@ static sse_awk_val_t* __eval_binop_in (
 
 	/* evaluate the right-hand side of the operator */
 	sse_awk_assert (run->awk, right->next == SSE_NULL);
-	rv = __eval_esseression (run, right);
+	rv = __eval_expression (run, right);
 	if (rv == SSE_NULL) 
 	{
 		SSE_AWK_FREE (run->awk, str);
@@ -3500,7 +3500,7 @@ static sse_awk_val_t* __eval_binop_mod (
 	return res;
 }
 
-static sse_awk_val_t* __eval_binop_esse (
+static sse_awk_val_t* __eval_binop_exp (
 	sse_awk_run_t* run, sse_awk_val_t* left, sse_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -3585,7 +3585,7 @@ static sse_awk_val_t* __eval_binop_ma (
 	sse_awk_assert (run->awk, left->next == SSE_NULL);
 	sse_awk_assert (run->awk, right->next == SSE_NULL);
 
-	lv = __eval_esseression (run, left);
+	lv = __eval_expression (run, left);
 	if (lv == SSE_NULL) 
 	{
 		return SSE_NULL;
@@ -3593,7 +3593,7 @@ static sse_awk_val_t* __eval_binop_ma (
 
 	sse_awk_refupval (lv);
 
-	rv = __eval_esseression0 (run, right);
+	rv = __eval_expression0 (run, right);
 	if (rv == SSE_NULL)
 	{
 		sse_awk_refdownval (run, lv);
@@ -3618,12 +3618,12 @@ static sse_awk_val_t* __eval_binop_nm (
 	sse_awk_assert (run->awk, left->next == SSE_NULL);
 	sse_awk_assert (run->awk, right->next == SSE_NULL);
 
-	lv = __eval_esseression (run, left);
+	lv = __eval_expression (run, left);
 	if (lv == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (lv);
 
-	rv = __eval_esseression0 (run, right);
+	rv = __eval_expression0 (run, right);
 	if (rv == SSE_NULL)
 	{
 		sse_awk_refdownval (run, lv);
@@ -3743,18 +3743,18 @@ static sse_awk_val_t* __eval_binop_match0 (
 static sse_awk_val_t* __eval_unary (sse_awk_run_t* run, sse_awk_nde_t* nde)
 {
 	sse_awk_val_t* left, * res = SSE_NULL;
-	sse_awk_nde_esse_t* esse = (sse_awk_nde_esse_t*)nde;
+	sse_awk_nde_exp_t* exp = (sse_awk_nde_exp_t*)nde;
 
-	sse_awk_assert (run->awk, esse->type == SSE_AWK_NDE_ESSE_UNR);
-	sse_awk_assert (run->awk, esse->left != SSE_NULL && esse->right == SSE_NULL);
+	sse_awk_assert (run->awk, exp->type == SSE_AWK_NDE_EXP_UNR);
+	sse_awk_assert (run->awk, exp->left != SSE_NULL && exp->right == SSE_NULL);
 
-	sse_awk_assert (run->awk, esse->left->next == SSE_NULL);
-	left = __eval_esseression (run, esse->left);
+	sse_awk_assert (run->awk, exp->left->next == SSE_NULL);
+	left = __eval_expression (run, exp->left);
 	if (left == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (left);
 
-	if (esse->opcode == SSE_AWK_UNROP_PLUS) 
+	if (exp->opcode == SSE_AWK_UNROP_PLUS) 
 	{
 		if (left->type == SSE_AWK_VAL_INT)
 		{
@@ -3772,7 +3772,7 @@ static sse_awk_val_t* __eval_unary (sse_awk_run_t* run, sse_awk_nde_t* nde)
 			PANIC (run, SSE_AWK_EOPERAND);
 		}
 	}
-	else if (esse->opcode == SSE_AWK_UNROP_MINUS)
+	else if (exp->opcode == SSE_AWK_UNROP_MINUS)
 	{
 		if (left->type == SSE_AWK_VAL_INT)
 		{
@@ -3790,7 +3790,7 @@ static sse_awk_val_t* __eval_unary (sse_awk_run_t* run, sse_awk_nde_t* nde)
 			PANIC (run, SSE_AWK_EOPERAND);
 		}
 	}
-	else if (esse->opcode == SSE_AWK_UNROP_NOT)
+	else if (exp->opcode == SSE_AWK_UNROP_NOT)
 	{
 		if (left->type == SSE_AWK_VAL_INT)
 		{
@@ -3808,7 +3808,7 @@ static sse_awk_val_t* __eval_unary (sse_awk_run_t* run, sse_awk_nde_t* nde)
 			PANIC (run, SSE_AWK_EOPERAND);
 		}
 	}
-	else if (esse->opcode == SSE_AWK_UNROP_BNOT)
+	else if (exp->opcode == SSE_AWK_UNROP_BNOT)
 	{
 		if (left->type == SSE_AWK_VAL_INT)
 		{
@@ -3835,27 +3835,27 @@ static sse_awk_val_t* __eval_unary (sse_awk_run_t* run, sse_awk_nde_t* nde)
 static sse_awk_val_t* __eval_incpre (sse_awk_run_t* run, sse_awk_nde_t* nde)
 {
 	sse_awk_val_t* left, * res;
-	sse_awk_nde_esse_t* esse = (sse_awk_nde_esse_t*)nde;
+	sse_awk_nde_exp_t* exp = (sse_awk_nde_exp_t*)nde;
 
-	sse_awk_assert (run->awk, esse->type == SSE_AWK_NDE_ESSE_INCPRE);
-	sse_awk_assert (run->awk, esse->left != SSE_NULL && esse->right == SSE_NULL);
+	sse_awk_assert (run->awk, exp->type == SSE_AWK_NDE_EXP_INCPRE);
+	sse_awk_assert (run->awk, exp->left != SSE_NULL && exp->right == SSE_NULL);
 
 	/* this way of checking if the l-value is assignable is
 	 * ugly as it is dependent of the values defined in tree.h.
 	 * but let's keep going this way for the time being. */
-	if (esse->left->type < SSE_AWK_NDE_NAMED ||
-	    esse->left->type > SSE_AWK_NDE_ARGIDX)
+	if (exp->left->type < SSE_AWK_NDE_NAMED ||
+	    exp->left->type > SSE_AWK_NDE_ARGIDX)
 	{
 		PANIC (run, SSE_AWK_EOPERAND);
 	}
 
-	sse_awk_assert (run->awk, esse->left->next == SSE_NULL);
-	left = __eval_esseression (run, esse->left);
+	sse_awk_assert (run->awk, exp->left->next == SSE_NULL);
+	left = __eval_expression (run, exp->left);
 	if (left == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (left);
 
-	if (esse->opcode == SSE_AWK_INCOP_PLUS) 
+	if (exp->opcode == SSE_AWK_INCOP_PLUS) 
 	{
 		if (left->type == SSE_AWK_VAL_INT)
 		{
@@ -3907,7 +3907,7 @@ static sse_awk_val_t* __eval_incpre (sse_awk_run_t* run, sse_awk_nde_t* nde)
 			}
 		}
 	}
-	else if (esse->opcode == SSE_AWK_INCOP_MINUS)
+	else if (exp->opcode == SSE_AWK_INCOP_MINUS)
 	{
 		if (left->type == SSE_AWK_VAL_INT)
 		{
@@ -3966,7 +3966,7 @@ static sse_awk_val_t* __eval_incpre (sse_awk_run_t* run, sse_awk_nde_t* nde)
 		PANIC (run, SSE_AWK_EINTERNAL);
 	}
 
-	if (__do_assignment (run, esse->left, res) == SSE_NULL)
+	if (__do_assignment (run, exp->left, res) == SSE_NULL)
 	{
 		sse_awk_refdownval (run, left);
 		return SSE_NULL;
@@ -3979,27 +3979,27 @@ static sse_awk_val_t* __eval_incpre (sse_awk_run_t* run, sse_awk_nde_t* nde)
 static sse_awk_val_t* __eval_incpst (sse_awk_run_t* run, sse_awk_nde_t* nde)
 {
 	sse_awk_val_t* left, * res, * res2;
-	sse_awk_nde_esse_t* esse = (sse_awk_nde_esse_t*)nde;
+	sse_awk_nde_exp_t* exp = (sse_awk_nde_exp_t*)nde;
 
-	sse_awk_assert (run->awk, esse->type == SSE_AWK_NDE_ESSE_INCPST);
-	sse_awk_assert (run->awk, esse->left != SSE_NULL && esse->right == SSE_NULL);
+	sse_awk_assert (run->awk, exp->type == SSE_AWK_NDE_EXP_INCPST);
+	sse_awk_assert (run->awk, exp->left != SSE_NULL && exp->right == SSE_NULL);
 
 	/* this way of checking if the l-value is assignable is
 	 * ugly as it is dependent of the values defined in tree.h.
 	 * but let's keep going this way for the time being. */
-	if (esse->left->type < SSE_AWK_NDE_NAMED ||
-	    esse->left->type > SSE_AWK_NDE_ARGIDX)
+	if (exp->left->type < SSE_AWK_NDE_NAMED ||
+	    exp->left->type > SSE_AWK_NDE_ARGIDX)
 	{
 		PANIC (run, SSE_AWK_EOPERAND);
 	}
 
-	sse_awk_assert (run->awk, esse->left->next == SSE_NULL);
-	left = __eval_esseression (run, esse->left);
+	sse_awk_assert (run->awk, exp->left->next == SSE_NULL);
+	left = __eval_expression (run, exp->left);
 	if (left == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (left);
 
-	if (esse->opcode == SSE_AWK_INCOP_PLUS) 
+	if (exp->opcode == SSE_AWK_INCOP_PLUS) 
 	{
 		if (left->type == SSE_AWK_VAL_INT)
 		{
@@ -4087,7 +4087,7 @@ static sse_awk_val_t* __eval_incpst (sse_awk_run_t* run, sse_awk_nde_t* nde)
 			}
 		}
 	}
-	else if (esse->opcode == SSE_AWK_INCOP_MINUS)
+	else if (exp->opcode == SSE_AWK_INCOP_MINUS)
 	{
 		if (left->type == SSE_AWK_VAL_INT)
 		{
@@ -4182,7 +4182,7 @@ static sse_awk_val_t* __eval_incpst (sse_awk_run_t* run, sse_awk_nde_t* nde)
 		PANIC (run, SSE_AWK_EINTERNAL);
 	}
 
-	if (__do_assignment (run, esse->left, res2) == SSE_NULL)
+	if (__do_assignment (run, exp->left, res2) == SSE_NULL)
 	{
 		sse_awk_refdownval (run, left);
 		return SSE_NULL;
@@ -4198,7 +4198,7 @@ static sse_awk_val_t* __eval_cnd (sse_awk_run_t* run, sse_awk_nde_t* nde)
 	sse_awk_nde_cnd_t* cnd = (sse_awk_nde_cnd_t*)nde;
 
 	sse_awk_assert (run->awk, cnd->test->next == SSE_NULL);
-	tv = __eval_esseression (run, cnd->test);
+	tv = __eval_expression (run, cnd->test);
 	if (tv == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (tv);
@@ -4206,8 +4206,8 @@ static sse_awk_val_t* __eval_cnd (sse_awk_run_t* run, sse_awk_nde_t* nde)
 	sse_awk_assert (run->awk, cnd->left->next == SSE_NULL &&
 	           cnd->right->next == SSE_NULL);
 	v = (sse_awk_valtobool (run, tv))?
-		__eval_esseression (run, cnd->left):
-		__eval_esseression (run, cnd->right);
+		__eval_expression (run, cnd->left):
+		__eval_expression (run, cnd->right);
 
 	sse_awk_refdownval (run, tv);
 	return v;
@@ -4327,7 +4327,7 @@ static sse_awk_val_t* __eval_call (
 
 	saved_stack_top = run->stack_top;
 
-/*sse_printf (SSE_T("setting up function stack frame stack_top = %ld stack_base = %ld\n"), run->stack_top, run->stack_base); */
+/*xp_printf (SSE_T("setting up function stack frame stack_top = %ld stack_base = %ld\n"), run->stack_top, run->stack_base); */
 	if (__raw_push(run,(void*)run->stack_base) == -1) 
 	{
 		PANIC (run, SSE_AWK_ENOMEM);
@@ -4383,13 +4383,13 @@ static sse_awk_val_t* __eval_call (
 		else if (bfn_arg_spec != SSE_NULL && 
 		         bfn_arg_spec[nargs] == SSE_T('x'))
 		{
-			/* a regular esseression is passed to 
+			/* a regular expression is passed to 
 			 * the function as it is */
-			v = __eval_esseression0 (run, p);
+			v = __eval_expression0 (run, p);
 		}
 		else
 		{
-			v = __eval_esseression (run, p);
+			v = __eval_expression (run, p);
 		}
 		if (v == SSE_NULL)
 		{
@@ -4475,7 +4475,7 @@ static sse_awk_val_t* __eval_call (
 	run->stack_base = saved_stack_top;
 	STACK_NARGS(run) = (void*)nargs;
 	
-/*sse_printf (SSE_T("running function body\n")); */
+/*xp_printf (SSE_T("running function body\n")); */
 
 	if (afn != SSE_NULL)
 	{
@@ -4495,16 +4495,16 @@ static sse_awk_val_t* __eval_call (
 			n = call->what.bfn.handler (run);
 	}
 
-/*sse_printf (SSE_T("block run complete\n")); */
+/*xp_printf (SSE_T("block run complete\n")); */
 
 	/* refdown args in the run.stack */
 	nargs = (sse_size_t)STACK_NARGS(run);
-/*sse_printf (SSE_T("block run complete nargs = %d\n"), (int)nargs); */
+/*xp_printf (SSE_T("block run complete nargs = %d\n"), (int)nargs); */
 	for (i = 0; i < nargs; i++)
 	{
 		sse_awk_refdownval (run, STACK_ARG(run,i));
 	}
-/*sse_printf (SSE_T("got return value\n")); */
+/*xp_printf (SSE_T("got return value\n")); */
 
 	/* this trick has been mentioned in __run_return.
 	 * adjust the reference count of the return value.
@@ -4519,7 +4519,7 @@ static sse_awk_val_t* __eval_call (
 
 	if (run->exit_level == EXIT_FUNCTION) run->exit_level = EXIT_NONE;
 
-/*sse_printf (SSE_T("returning from function stack_top=%ld, stack_base=%ld\n"), run->stack_top, run->stack_base); */
+/*xp_printf (SSE_T("returning from function stack_top=%ld, stack_base=%ld\n"), run->stack_top, run->stack_base); */
 	return (n == -1)? SSE_NULL: v;
 }
 
@@ -4623,7 +4623,7 @@ static int __get_reference (
 
 		/* the position number is returned for the positional 
 		 * variable unlike other reference types. */
-		v = __eval_esseression (run, ((sse_awk_nde_pos_t*)nde)->val);
+		v = __eval_expression (run, ((sse_awk_nde_pos_t*)nde)->val);
 		if (v == SSE_NULL) return -1;
 
 		sse_awk_refupval (v);
@@ -4843,7 +4843,7 @@ static sse_awk_val_t* __eval_pos (sse_awk_run_t* run, sse_awk_nde_t* nde)
 	sse_real_t rv;
 	int n;
 
-	v = __eval_esseression (run, pos->val);
+	v = __eval_expression (run, pos->val);
 	if (v == SSE_NULL) return SSE_NULL;
 
 	sse_awk_refupval (v);
@@ -4882,7 +4882,7 @@ static sse_awk_val_t* __eval_getline (sse_awk_run_t* run, sse_awk_nde_t* nde)
 	{
 		sse_size_t len;
 
-		v = __eval_esseression (run, p->in);
+		v = __eval_expression (run, p->in);
 		if (v == SSE_NULL) return SSE_NULL;
 
 		/* TODO: distinction between v->type == SSE_AWK_VAL_STR 
@@ -5055,7 +5055,7 @@ static int __read_record (sse_awk_run_t* run)
 		return -1;
 	}
 /*
-sse_printf (SSE_T("len = %d str=[%s]\n"), 
+xp_printf (SSE_T("len = %d str=[%s]\n"), 
 		(int)SSE_AWK_STR_LEN(&run->inrec.line),
 		SSE_AWK_STR_BUF(&run->inrec.line));
 */
@@ -5175,7 +5175,7 @@ static sse_char_t* __idxnde_to_str (
 	if (nde->next == SSE_NULL)
 	{
 		/* single node index */
-		idx = __eval_esseression (run, nde);
+		idx = __eval_expression (run, nde);
 		if (idx == SSE_NULL) return SSE_NULL;
 
 		sse_awk_refupval (idx);
@@ -5203,7 +5203,7 @@ static sse_char_t* __idxnde_to_str (
 
 		while (nde != SSE_NULL)
 		{
-			idx = __eval_esseression (run, nde);
+			idx = __eval_expression (run, nde);
 			if (idx == SSE_NULL) 
 			{
 				sse_awk_str_close (&idxstr);

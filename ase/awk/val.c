@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.74 2006-10-22 11:34:53 bacon Exp $
+ * $Id: val.c,v 1.75 2006-10-22 12:39:30 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -64,7 +64,7 @@ sse_awk_val_t* sse_awk_makeintval (sse_awk_run_t* run, sse_long_t v)
 	val->val = v;
 	val->nde = SSE_NULL;
 
-/*sse_printf (SSE_T("makeintval => %p\n"), val);*/
+/*xp_printf (SSE_T("makeintval => %p\n"), val);*/
 	return (sse_awk_val_t*)val;
 }
 
@@ -88,7 +88,7 @@ sse_awk_val_t* sse_awk_makerealval (sse_awk_run_t* run, sse_real_t v)
 	val->val = v;
 	val->nde = SSE_NULL;
 
-/*sse_printf (SSE_T("makerealval => %p\n"), val);*/
+/*xp_printf (SSE_T("makerealval => %p\n"), val);*/
 	return (sse_awk_val_t*)val;
 }
 
@@ -116,7 +116,7 @@ sse_awk_val_t* sse_awk_makestrval (
 		return SSE_NULL;
 	}
 
-/*sse_printf (SSE_T("makestrval => %p\n"), val);*/
+/*xp_printf (SSE_T("makestrval => %p\n"), val);*/
 	return (sse_awk_val_t*)val;
 }
 
@@ -141,7 +141,7 @@ sse_awk_val_t* sse_awk_makestrval2 (
 		return SSE_NULL;
 	}
 
-/*sse_printf (SSE_T("makestrval2 => %p\n"), val);*/
+/*xp_printf (SSE_T("makestrval2 => %p\n"), val);*/
 	return (sse_awk_val_t*)val;
 }
 
@@ -179,9 +179,9 @@ sse_awk_val_t* sse_awk_makerexval (
 static void __free_map_val (void* run, void* v)
 {
 /*
-sse_printf (SSE_T("refdown in map free..."));
+xp_printf (SSE_T("refdown in map free..."));
 sse_awk_printval (v);
-sse_printf (SSE_T("\n"));
+xp_printf (SSE_T("\n"));
 */
 	sse_awk_refdownval (run, v);
 }
@@ -243,9 +243,9 @@ void sse_awk_freeval (sse_awk_run_t* run, sse_awk_val_t* val, sse_bool_t cache)
 {
 	if (sse_awk_isbuiltinval(val)) return;
 
-/*sse_printf (SSE_T("freeing [cache=%d] ... "), cache);
+/*xp_printf (SSE_T("freeing [cache=%d] ... "), cache);
 sse_awk_printval (val);
-sse_printf (SSE_T("\n"));*/
+xp_printf (SSE_T("\n"));*/
 	if (val->type == SSE_AWK_VAL_NIL)
 	{
 		SSE_AWK_FREE (run->awk, val);
@@ -307,9 +307,9 @@ void sse_awk_refupval (sse_awk_val_t* val)
 {
 	if (sse_awk_isbuiltinval(val)) return;
 /*
-sse_printf (SSE_T("ref up "));
+xp_printf (SSE_T("ref up "));
 sse_awk_printval (val);
-sse_printf (SSE_T("\n"));
+xp_printf (SSE_T("\n"));
 */
 	val->ref++;
 }
@@ -319,10 +319,10 @@ void sse_awk_refdownval (sse_awk_run_t* run, sse_awk_val_t* val)
 	if (sse_awk_isbuiltinval(val)) return;
 
 /*
-sse_printf (SSE_T("%p, %p, %p\n"), sse_awk_val_nil, &__awk_nil, val);
-sse_printf (SSE_T("ref down [count=>%d]\n"), (int)val->ref);
+xp_printf (SSE_T("%p, %p, %p\n"), sse_awk_val_nil, &__awk_nil, val);
+xp_printf (SSE_T("ref down [count=>%d]\n"), (int)val->ref);
 sse_awk_printval (val);
-sse_printf (SSE_T("\n"));
+xp_printf (SSE_T("\n"));
 */
 
 	sse_awk_assert (run->awk, val->ref > 0);
@@ -330,9 +330,9 @@ sse_printf (SSE_T("\n"));
 	if (val->ref <= 0) 
 	{
 /*
-sse_printf (SSE_T("**FREEING ["));
+xp_printf (SSE_T("**FREEING ["));
 sse_awk_printval (val);
-sse_printf (SSE_T("]\n"));
+xp_printf (SSE_T("]\n"));
 */
 		sse_awk_freeval(run, val, sse_true);
 	}
@@ -426,7 +426,7 @@ sse_char_t* sse_awk_valtostr (
 
 /* TODO: process more value types */
 
-sse_printf (SSE_T("*** ERROR: WRONG VALUE TYPE [%d] in sse_awk_valtostr v=> %p***\n"), v->type, v);
+xp_printf (SSE_T("*** ERROR: WRONG VALUE TYPE [%d] in sse_awk_valtostr v=> %p***\n"), v->type, v);
 	run->errnum = SSE_AWK_EVALTYPE;
 	return SSE_NULL;
 }
@@ -643,16 +643,16 @@ int sse_awk_valtonum (
 		return 0; /* long */
 	}
 
-sse_printf (SSE_T("*** ERROR: WRONG VALUE TYPE [%d] in sse_awk_valtonum v=> %p***\n"), v->type, v);
+xp_printf (SSE_T("*** ERROR: WRONG VALUE TYPE [%d] in sse_awk_valtonum v=> %p***\n"), v->type, v);
 	run->errnum = SSE_AWK_EVALTYPE;
 	return -1; /* error */
 }
 
 static int __print_pair (sse_awk_pair_t* pair, void* arg)
 {
-	sse_printf (SSE_T(" %s=>"), pair->key);	
+	xp_printf (SSE_T(" %s=>"), pair->key);	
 	sse_awk_printval (pair->val);
-	sse_printf (SSE_T(" "));
+	xp_printf (SSE_T(" "));
 	return 0;
 }
 
@@ -662,51 +662,51 @@ void sse_awk_printval (sse_awk_val_t* val)
 	switch (val->type)
 	{
 	case SSE_AWK_VAL_NIL:
-		sse_printf (SSE_T("nil"));
+		xp_printf (SSE_T("nil"));
 	       	break;
 
 	case SSE_AWK_VAL_INT:
 #if defined(__LCC__)
-		sse_printf (SSE_T("%lld"), 
+		xp_printf (SSE_T("%lld"), 
 			(long long)((sse_awk_val_int_t*)val)->val);
 #elif defined(__BORLANDC__) || defined(_MSC_VER)
-		sse_printf (SSE_T("%I64d"), 
+		xp_printf (SSE_T("%I64d"), 
 			(__int64)((sse_awk_nde_int_t*)val)->val);
 #elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-		sse_printf (SSE_T("%ld"), 
+		xp_printf (SSE_T("%ld"), 
 			(long)((sse_awk_val_int_t*)val)->val);
 #else
-		sse_printf (SSE_T("%lld"), 
+		xp_printf (SSE_T("%lld"), 
 			(long long)((sse_awk_val_int_t*)val)->val);
 #endif
 		break;
 
 	case SSE_AWK_VAL_REAL:
-		sse_printf (SSE_T("%Lf"), 
+		xp_printf (SSE_T("%Lf"), 
 			(long double)((sse_awk_val_real_t*)val)->val);
 		break;
 
 	case SSE_AWK_VAL_STR:
-		sse_printf (SSE_T("%s"), ((sse_awk_val_str_t*)val)->buf);
+		xp_printf (SSE_T("%s"), ((sse_awk_val_str_t*)val)->buf);
 		break;
 
 	case SSE_AWK_VAL_REX:
-		sse_printf (SSE_T("REX[%s]"), ((sse_awk_val_rex_t*)val)->buf);
+		xp_printf (SSE_T("REX[%s]"), ((sse_awk_val_rex_t*)val)->buf);
 		break;
 
 	case SSE_AWK_VAL_MAP:
-		sse_printf (SSE_T("MAP["));
+		xp_printf (SSE_T("MAP["));
 		sse_awk_map_walk (((sse_awk_val_map_t*)val)->map, __print_pair, SSE_NULL);
-		sse_printf (SSE_T("]"));
+		xp_printf (SSE_T("]"));
 		break;
 	
 	case SSE_AWK_VAL_REF:
-		sse_printf (SSE_T("REF[id=%d,val="), ((sse_awk_val_ref_t*)val)->id);
+		xp_printf (SSE_T("REF[id=%d,val="), ((sse_awk_val_ref_t*)val)->id);
 		sse_awk_printval (*((sse_awk_val_ref_t*)val)->adr);
-		sse_printf (SSE_T("]"));
+		xp_printf (SSE_T("]"));
 		break;
 
 	default:
-		sse_printf (SSE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
+		xp_printf (SSE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }

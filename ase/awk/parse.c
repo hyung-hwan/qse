@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.192 2006-10-22 11:34:53 bacon Exp $
+ * $Id: parse.c,v 1.193 2006-10-22 12:39:29 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -17,7 +17,7 @@ enum
 	TOKEN_MUL_ASSIGN,
 	TOKEN_DIV_ASSIGN,
 	TOKEN_MOD_ASSIGN,
-	TOKEN_ESSE_ASSIGN,
+	TOKEN_EXP_ASSIGN,
 
 	TOKEN_EQ,
 	TOKEN_NE,
@@ -44,7 +44,7 @@ enum
 	TOKEN_RSHIFT,
 	TOKEN_LSHIFT,
 	TOKEN_IN,
-	TOKEN_ESSE,
+	TOKEN_EXP,
 
 	TOKEN_LPAREN,
 	TOKEN_RPAREN,
@@ -136,11 +136,11 @@ static sse_awk_chain_t* __parse_pattern_block (
 static sse_awk_nde_t* __parse_block (sse_awk_t* awk, sse_bool_t is_top);
 static sse_awk_nde_t* __parse_statement (sse_awk_t* awk);
 static sse_awk_nde_t* __parse_statement_nb (sse_awk_t* awk);
-static sse_awk_nde_t* __parse_esseression (sse_awk_t* awk);
+static sse_awk_nde_t* __parse_expression (sse_awk_t* awk);
 
-static sse_awk_nde_t* __parse_basic_esser (sse_awk_t* awk);
+static sse_awk_nde_t* __parse_basic_expr (sse_awk_t* awk);
 
-static sse_awk_nde_t* __parse_binary_esser (
+static sse_awk_nde_t* __parse_binary_expr (
 	sse_awk_t* awk, const __binmap_t* binmap,
 	sse_awk_nde_t*(*next_level_func)(sse_awk_t*));
 
@@ -224,10 +224,10 @@ static struct __kwent __kwtab[] =
 	{ SSE_T("func"),     4, TOKEN_FUNCTION, 0 },
 
 	/* keywords for variable declaration */
-	{ SSE_T("local"),    5, TOKEN_LOCAL,    SSE_AWK_ESSELICIT },
-	{ SSE_T("global"),   6, TOKEN_GLOBAL,   SSE_AWK_ESSELICIT },
+	{ SSE_T("local"),    5, TOKEN_LOCAL,    SSE_AWK_EXPLICIT },
+	{ SSE_T("global"),   6, TOKEN_GLOBAL,   SSE_AWK_EXPLICIT },
 
-	/* keywords that start statements excluding esseression statements */
+	/* keywords that start statements excluding expression statements */
 	{ SSE_T("if"),       2, TOKEN_IF,       0 },
 	{ SSE_T("else"),     4, TOKEN_ELSE,     0 },
 	{ SSE_T("while"),    5, TOKEN_WHILE,    0 },
@@ -243,7 +243,7 @@ static struct __kwent __kwtab[] =
 	{ SSE_T("print"),    5, TOKEN_PRINT,    SSE_AWK_EXTIO },
 	{ SSE_T("printf"),   6, TOKEN_PRINTF,   SSE_AWK_EXTIO },
 
-	/* keywords that can start an esseression */
+	/* keywords that can start an expression */
 	{ SSE_T("getline"),  7, TOKEN_GETLINE,  SSE_AWK_EXTIO },
 
 	{ SSE_NULL,          0,              0 }
@@ -409,7 +409,7 @@ static sse_awk_t* __parse_progunit (sse_awk_t* awk)
 
 	sse_awk_assert (awk, awk->parse.depth.loop == 0);
 
-	if ((awk->option & SSE_AWK_ESSELICIT) && MATCH(awk,TOKEN_GLOBAL)) 
+	if ((awk->option & SSE_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) 
 	{
 		sse_size_t nglobals;
 
@@ -477,8 +477,8 @@ static sse_awk_t* __parse_progunit (sse_awk_t* awk)
 	else
 	{
 		/* 
-		esseressions 
-		/regular esseression/
+		expressions 
+		/regular expression/
 		pattern && pattern
 		pattern || pattern
 		!pattern
@@ -489,7 +489,7 @@ static sse_awk_t* __parse_progunit (sse_awk_t* awk)
 
 		awk->parse.id.block = PARSE_PATTERN;
 
-		ptn = __parse_esseression (awk);
+		ptn = __parse_expression (awk);
 		if (ptn == SSE_NULL) return SSE_NULL;
 
 		sse_awk_assert (awk, ptn->next == SSE_NULL);
@@ -502,7 +502,7 @@ static sse_awk_t* __parse_progunit (sse_awk_t* awk)
 				return SSE_NULL;
 			}	
 
-			ptn->next = __parse_esseression (awk);
+			ptn->next = __parse_expression (awk);
 			if (ptn->next == SSE_NULL) 
 			{
 				sse_awk_clrpt (awk, ptn);
@@ -870,7 +870,7 @@ static sse_awk_nde_t* __parse_block (sse_awk_t* awk, sse_bool_t is_top)
 	nlocals_max = awk->parse.nlocals_max;
 
 	/* local variable declarations */
-	if (awk->option & SSE_AWK_ESSELICIT) 
+	if (awk->option & SSE_AWK_EXPLICIT) 
 	{
 		while (1) 
 		{
@@ -1256,7 +1256,7 @@ awk->parse.nl_semicolon = 1;
 	}
 	else 
 	{
-		nde = __parse_esseression(awk);
+		nde = __parse_expression(awk);
 	}
 
 awk->parse.nl_semicolon = 0;
@@ -1279,13 +1279,13 @@ awk->parse.nl_semicolon = 0;
 	return nde;
 }
 
-static sse_awk_nde_t* __parse_esseression (sse_awk_t* awk)
+static sse_awk_nde_t* __parse_expression (sse_awk_t* awk)
 {
 	sse_awk_nde_t* x, * y;
 	sse_awk_nde_ass_t* nde;
 	int opcode;
 
-	x = __parse_basic_esser (awk);
+	x = __parse_basic_expr (awk);
 	if (x == SSE_NULL) return SSE_NULL;
 
 	opcode = __assign_to_opcode (awk);
@@ -1308,7 +1308,7 @@ static sse_awk_nde_t* __parse_esseression (sse_awk_t* awk)
 		return SSE_NULL;
 	}
 
-	y = __parse_basic_esser (awk);
+	y = __parse_basic_expr (awk);
 	if (y == SSE_NULL) 
 	{
 		sse_awk_clrpt (awk, x);
@@ -1332,7 +1332,7 @@ static sse_awk_nde_t* __parse_esseression (sse_awk_t* awk)
 	return (sse_awk_nde_t*)nde;
 }
 
-static sse_awk_nde_t* __parse_basic_esser (sse_awk_t* awk)
+static sse_awk_nde_t* __parse_basic_expr (sse_awk_t* awk)
 {
 	sse_awk_nde_t* nde, * n1, * n2;
 	
@@ -1345,7 +1345,7 @@ static sse_awk_nde_t* __parse_basic_esser (sse_awk_t* awk)
 
 		if (__get_token(awk) == -1) return SSE_NULL;
 
-		n1 = __parse_basic_esser (awk);
+		n1 = __parse_basic_expr (awk);
 		if (n1 == SSE_NULL) 
 		{
 			sse_awk_clrpt (awk, nde);
@@ -1355,7 +1355,7 @@ static sse_awk_nde_t* __parse_basic_esser (sse_awk_t* awk)
 		if (!MATCH(awk,TOKEN_COLON)) PANIC (awk, SSE_AWK_ECOLON);
 		if (__get_token(awk) == -1) return SSE_NULL;
 
-		n2 = __parse_basic_esser (awk);
+		n2 = __parse_basic_expr (awk);
 		if (n2 == SSE_NULL)
 		{
 			sse_awk_clrpt (awk, nde);
@@ -1385,11 +1385,11 @@ static sse_awk_nde_t* __parse_basic_esser (sse_awk_t* awk)
 	return nde;
 }
 
-static sse_awk_nde_t* __parse_binary_esser (
+static sse_awk_nde_t* __parse_binary_expr (
 	sse_awk_t* awk, const __binmap_t* binmap,
 	sse_awk_nde_t*(*next_level_func)(sse_awk_t*))
 {
-	sse_awk_nde_esse_t* nde;
+	sse_awk_nde_exp_t* nde;
 	sse_awk_nde_t* left, * right;
 	int opcode;
 
@@ -1488,8 +1488,8 @@ static sse_awk_nde_t* __parse_binary_esser (
 
 	skip_constant_folding:
 #endif
-		nde = (sse_awk_nde_esse_t*) SSE_AWK_MALLOC (
-			awk, sse_sizeof(sse_awk_nde_esse_t));
+		nde = (sse_awk_nde_exp_t*) SSE_AWK_MALLOC (
+			awk, sse_sizeof(sse_awk_nde_exp_t));
 		if (nde == SSE_NULL) 
 		{
 			sse_awk_clrpt (awk, right);
@@ -1497,7 +1497,7 @@ static sse_awk_nde_t* __parse_binary_esser (
 			PANIC (awk, SSE_AWK_ENOMEM);
 		}
 
-		nde->type = SSE_AWK_NDE_ESSE_BIN;
+		nde->type = SSE_AWK_NDE_EXP_BIN;
 		nde->next = SSE_NULL;
 		nde->opcode = opcode; 
 		nde->left = left;
@@ -1517,7 +1517,7 @@ static sse_awk_nde_t* __parse_logical_or (sse_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_logical_and);
+	return __parse_binary_expr (awk, map, __parse_logical_and);
 }
 
 static sse_awk_nde_t* __parse_logical_and (sse_awk_t* awk)
@@ -1528,7 +1528,7 @@ static sse_awk_nde_t* __parse_logical_and (sse_awk_t* awk)
 		{ TOKEN_EOF,  0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_in);
+	return __parse_binary_expr (awk, map, __parse_in);
 }
 
 static sse_awk_nde_t* __parse_in (sse_awk_t* awk)
@@ -1540,10 +1540,10 @@ static sse_awk_nde_t* __parse_in (sse_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_regex_match);
+	return __parse_binary_expr (awk, map, __parse_regex_match);
 	*/
 
-	sse_awk_nde_esse_t* nde;
+	sse_awk_nde_exp_t* nde;
 	sse_awk_nde_t* left, * right;
 
 	left = __parse_regex_match (awk);
@@ -1573,8 +1573,8 @@ static sse_awk_nde_t* __parse_in (sse_awk_t* awk)
 			PANIC (awk, SSE_AWK_ENOTVAR);
 		}
 
-		nde = (sse_awk_nde_esse_t*) SSE_AWK_MALLOC (
-			awk, sse_sizeof(sse_awk_nde_esse_t));
+		nde = (sse_awk_nde_exp_t*) SSE_AWK_MALLOC (
+			awk, sse_sizeof(sse_awk_nde_exp_t));
 		if (nde == SSE_NULL) 
 		{
 			sse_awk_clrpt (awk, right);
@@ -1582,7 +1582,7 @@ static sse_awk_nde_t* __parse_in (sse_awk_t* awk)
 			PANIC (awk, SSE_AWK_ENOMEM);
 		}
 
-		nde->type = SSE_AWK_NDE_ESSE_BIN;
+		nde->type = SSE_AWK_NDE_EXP_BIN;
 		nde->next = SSE_NULL;
 		nde->opcode = SSE_AWK_BINOP_IN; 
 		nde->left = left;
@@ -1603,7 +1603,7 @@ static sse_awk_nde_t* __parse_regex_match (sse_awk_t* awk)
 		{ TOKEN_EOF,   0 },
 	};
 
-	return __parse_binary_esser (awk, map, __parse_bitwise_or);
+	return __parse_binary_expr (awk, map, __parse_bitwise_or);
 }
 
 static sse_awk_nde_t* __parse_bitwise_or (sse_awk_t* awk)
@@ -1620,7 +1620,7 @@ static sse_awk_nde_t* __parse_bitwise_or (sse_awk_t* awk)
 			{ TOKEN_EOF, 0 }
 		};
 
-		return __parse_binary_esser (awk, map, __parse_bitwise_xor);
+		return __parse_binary_expr (awk, map, __parse_bitwise_xor);
 	}
 }
 
@@ -1691,7 +1691,7 @@ static sse_awk_nde_t* __parse_bitwise_or_with_extio (sse_awk_t* awk)
 		}
 		else
 		{
-			sse_awk_nde_esse_t* nde;
+			sse_awk_nde_exp_t* nde;
 
 			if (in_type == SSE_AWK_IN_COPROC)
 			{
@@ -1708,8 +1708,8 @@ static sse_awk_nde_t* __parse_bitwise_or_with_extio (sse_awk_t* awk)
 
 			/* TODO: do constant folding */
 
-			nde = (sse_awk_nde_esse_t*) SSE_AWK_MALLOC (
-				awk, sse_sizeof(sse_awk_nde_esse_t));
+			nde = (sse_awk_nde_exp_t*) SSE_AWK_MALLOC (
+				awk, sse_sizeof(sse_awk_nde_exp_t));
 			if (nde == SSE_NULL)
 			{
 				sse_awk_clrpt (awk, right);
@@ -1717,7 +1717,7 @@ static sse_awk_nde_t* __parse_bitwise_or_with_extio (sse_awk_t* awk)
 				PANIC (awk, SSE_AWK_ENOMEM);
 			}
 
-			nde->type = SSE_AWK_NDE_ESSE_BIN;
+			nde->type = SSE_AWK_NDE_EXP_BIN;
 			nde->next = SSE_NULL;
 			nde->opcode = SSE_AWK_BINOP_BOR;
 			nde->left = left;
@@ -1738,7 +1738,7 @@ static sse_awk_nde_t* __parse_bitwise_xor (sse_awk_t* awk)
 		{ TOKEN_EOF,  0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_bitwise_and);
+	return __parse_binary_expr (awk, map, __parse_bitwise_and);
 }
 
 static sse_awk_nde_t* __parse_bitwise_and (sse_awk_t* awk)
@@ -1749,7 +1749,7 @@ static sse_awk_nde_t* __parse_bitwise_and (sse_awk_t* awk)
 		{ TOKEN_EOF,  0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_equality);
+	return __parse_binary_expr (awk, map, __parse_equality);
 }
 
 static sse_awk_nde_t* __parse_equality (sse_awk_t* awk)
@@ -1761,7 +1761,7 @@ static sse_awk_nde_t* __parse_equality (sse_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_relational);
+	return __parse_binary_expr (awk, map, __parse_relational);
 }
 
 static sse_awk_nde_t* __parse_relational (sse_awk_t* awk)
@@ -1775,7 +1775,7 @@ static sse_awk_nde_t* __parse_relational (sse_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_shift);
+	return __parse_binary_expr (awk, map, __parse_shift);
 }
 
 static sse_awk_nde_t* __parse_shift (sse_awk_t* awk)
@@ -1787,12 +1787,12 @@ static sse_awk_nde_t* __parse_shift (sse_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_concat);
+	return __parse_binary_expr (awk, map, __parse_concat);
 }
 
 static sse_awk_nde_t* __parse_concat (sse_awk_t* awk)
 {
-	sse_awk_nde_esse_t* nde;
+	sse_awk_nde_exp_t* nde;
 	sse_awk_nde_t* left, * right;
 
 	left = __parse_additive (awk);
@@ -1811,8 +1811,8 @@ static sse_awk_nde_t* __parse_concat (sse_awk_t* awk)
 			return SSE_NULL;
 		}
 
-		nde = (sse_awk_nde_esse_t*) SSE_AWK_MALLOC (
-			awk, sse_sizeof(sse_awk_nde_esse_t));
+		nde = (sse_awk_nde_exp_t*) SSE_AWK_MALLOC (
+			awk, sse_sizeof(sse_awk_nde_exp_t));
 		if (nde == SSE_NULL)
 		{
 			sse_awk_clrpt (awk, left);
@@ -1820,7 +1820,7 @@ static sse_awk_nde_t* __parse_concat (sse_awk_t* awk)
 			PANIC (awk, SSE_AWK_ENOMEM);
 		}
 
-		nde->type = SSE_AWK_NDE_ESSE_BIN;
+		nde->type = SSE_AWK_NDE_EXP_BIN;
 		nde->next = SSE_NULL;
 		nde->opcode = SSE_AWK_BINOP_CONCAT;
 		nde->left = left;
@@ -1841,7 +1841,7 @@ static sse_awk_nde_t* __parse_additive (sse_awk_t* awk)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_multiplicative);
+	return __parse_binary_expr (awk, map, __parse_multiplicative);
 }
 
 static sse_awk_nde_t* __parse_multiplicative (sse_awk_t* awk)
@@ -1851,16 +1851,16 @@ static sse_awk_nde_t* __parse_multiplicative (sse_awk_t* awk)
 		{ TOKEN_MUL, SSE_AWK_BINOP_MUL },
 		{ TOKEN_DIV, SSE_AWK_BINOP_DIV },
 		{ TOKEN_MOD, SSE_AWK_BINOP_MOD },
-		{ TOKEN_ESSE, SSE_AWK_BINOP_ESSE },
+		{ TOKEN_EXP, SSE_AWK_BINOP_EXP },
 		{ TOKEN_EOF, 0 }
 	};
 
-	return __parse_binary_esser (awk, map, __parse_unary);
+	return __parse_binary_expr (awk, map, __parse_unary);
 }
 
 static sse_awk_nde_t* __parse_unary (sse_awk_t* awk)
 {
-	sse_awk_nde_esse_t* nde; 
+	sse_awk_nde_exp_t* nde; 
 	sse_awk_nde_t* left;
 	int opcode;
 
@@ -1876,14 +1876,14 @@ static sse_awk_nde_t* __parse_unary (sse_awk_t* awk)
 	left = __parse_unary (awk);
 	if (left == SSE_NULL) return SSE_NULL;
 
-	nde = (sse_awk_nde_esse_t*) SSE_AWK_MALLOC (awk, sse_sizeof(sse_awk_nde_esse_t));
+	nde = (sse_awk_nde_exp_t*) SSE_AWK_MALLOC (awk, sse_sizeof(sse_awk_nde_exp_t));
 	if (nde == SSE_NULL)
 	{
 		sse_awk_clrpt (awk, left);
 		PANIC (awk, SSE_AWK_ENOMEM);
 	}
 
-	nde->type = SSE_AWK_NDE_ESSE_UNR;
+	nde->type = SSE_AWK_NDE_EXP_UNR;
 	nde->next = SSE_NULL;
 	nde->opcode = opcode;
 	nde->left = left;
@@ -1894,7 +1894,7 @@ static sse_awk_nde_t* __parse_unary (sse_awk_t* awk)
 
 static sse_awk_nde_t* __parse_increment (sse_awk_t* awk)
 {
-	sse_awk_nde_esse_t* nde;
+	sse_awk_nde_exp_t* nde;
 	sse_awk_nde_t* left;
 	int type, opcode, opcode1, opcode2;
 
@@ -1923,18 +1923,18 @@ static sse_awk_nde_t* __parse_increment (sse_awk_t* awk)
 	}
 	else if (opcode1 != -1) 
 	{
-		type = SSE_AWK_NDE_ESSE_INCPRE;
+		type = SSE_AWK_NDE_EXP_INCPRE;
 		opcode = opcode1;
 	}
 	else if (opcode2 != -1) 
 	{
-		type = SSE_AWK_NDE_ESSE_INCPST;
+		type = SSE_AWK_NDE_EXP_INCPST;
 		opcode = opcode2;
 
 		if (__get_token(awk) == -1) return SSE_NULL;
 	}
 
-	nde = (sse_awk_nde_esse_t*) SSE_AWK_MALLOC (awk, sse_sizeof(sse_awk_nde_esse_t));
+	nde = (sse_awk_nde_exp_t*) SSE_AWK_MALLOC (awk, sse_sizeof(sse_awk_nde_exp_t));
 	if (nde == SSE_NULL)
 	{
 		sse_awk_clrpt (awk, left);
@@ -2061,7 +2061,7 @@ static sse_awk_nde_t* __parse_primary (sse_awk_t* awk)
 		sse_awk_nde_rex_t* nde;
 		int errnum;
 
-		/* the regular esseression is tokenized here because 
+		/* the regular expression is tokenized here because 
 		 * of the context-sensitivity of the slash symbol */
 		SET_TOKEN_TYPE (awk, TOKEN_REX);
 		sse_awk_str_clear (&awk->token.name);
@@ -2140,11 +2140,11 @@ static sse_awk_nde_t* __parse_primary (sse_awk_t* awk)
 		/* eat up the left parenthesis */
 		if (__get_token(awk) == -1) return SSE_NULL;
 
-		/* parse the sub-esseression inside the parentheses */
-		nde = __parse_esseression (awk);
+		/* parse the sub-expression inside the parentheses */
+		nde = __parse_expression (awk);
 		if (nde == SSE_NULL) return SSE_NULL;
 
-		/* parse subsequent esseressions separated by a comma, if any */
+		/* parse subsequent expressions separated by a comma, if any */
 		last = nde;
 		sse_awk_assert (awk, last->next == SSE_NULL);
 
@@ -2158,7 +2158,7 @@ static sse_awk_nde_t* __parse_primary (sse_awk_t* awk)
 				return SSE_NULL;
 			}	
 
-			tmp = __parse_esseression (awk);
+			tmp = __parse_expression (awk);
 			if (tmp == SSE_NULL) 
 			{
 				sse_awk_clrpt (awk, nde);
@@ -2187,8 +2187,8 @@ static sse_awk_nde_t* __parse_primary (sse_awk_t* awk)
 		/* check if it is a chained node */
 		if (nde->next != SSE_NULL)
 		{
-			/* if so, it is a esseression group */
-			/* (esser1, esser2, esser2) */
+			/* if so, it is a expression group */
+			/* (expr1, expr2, expr2) */
 
 			sse_awk_nde_grp_t* tmp;
 
@@ -2242,7 +2242,7 @@ static sse_awk_nde_t* __parse_primary (sse_awk_t* awk)
 			}
 
 			/* TODO: is this correct? */
-			/*in = __parse_esseression (awk);*/
+			/*in = __parse_expression (awk);*/
 			in = __parse_primary (awk);
 			if (in == SSE_NULL)
 			{
@@ -2270,8 +2270,8 @@ static sse_awk_nde_t* __parse_primary (sse_awk_t* awk)
 		return (sse_awk_nde_t*)nde;
 	}
 
-	/* valid esseression introducer is esseected */
-	PANIC (awk, SSE_AWK_EESSERESSION);
+	/* valid expression introducer is expected */
+	PANIC (awk, SSE_AWK_EEXPRESSION);
 }
 
 static sse_awk_nde_t* __parse_primary_ident (sse_awk_t* awk)
@@ -2428,7 +2428,7 @@ static sse_awk_nde_t* __parse_hashidx (
 			return SSE_NULL;
 		}
 
-		tmp = __parse_esseression (awk);
+		tmp = __parse_expression (awk);
 		if (tmp == SSE_NULL) 
 		{
 			if (idx != SSE_NULL) sse_awk_clrpt (awk, idx);
@@ -2555,7 +2555,7 @@ static sse_awk_nde_t* __parse_fncall (
 
 		while (1) 
 		{
-			nde = __parse_esseression (awk);
+			nde = __parse_expression (awk);
 			if (nde == SSE_NULL) 
 			{
 				if (head != SSE_NULL) sse_awk_clrpt (awk, head);
@@ -2640,7 +2640,7 @@ static sse_awk_nde_t* __parse_if (sse_awk_t* awk)
 	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, SSE_AWK_ELPAREN);
 	if (__get_token(awk) == -1) return SSE_NULL;
 
-	test = __parse_esseression (awk);
+	test = __parse_expression (awk);
 	if (test == SSE_NULL) return SSE_NULL;
 
 	if (!MATCH(awk,TOKEN_RPAREN)) 
@@ -2707,7 +2707,7 @@ static sse_awk_nde_t* __parse_while (sse_awk_t* awk)
 	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, SSE_AWK_ELPAREN);
 	if (__get_token(awk) == -1) return SSE_NULL;
 
-	test = __parse_esseression (awk);
+	test = __parse_expression (awk);
 	if (test == SSE_NULL) return SSE_NULL;
 
 	if (!MATCH(awk,TOKEN_RPAREN)) 
@@ -2758,16 +2758,16 @@ static sse_awk_nde_t* __parse_for (sse_awk_t* awk)
 	else 
 	{
 		/* this line is very ugly. it checks the entire next 
-		 * esseression or the first element in the esseression
+		 * expression or the first element in the expression
 		 * is wrapped by a parenthesis */
 		int no_foreach = MATCH(awk,TOKEN_LPAREN);
 
-		init = __parse_esseression (awk);
+		init = __parse_expression (awk);
 		if (init == SSE_NULL) return SSE_NULL;
 
-		if (!no_foreach && init->type == SSE_AWK_NDE_ESSE_BIN &&
-		    ((sse_awk_nde_esse_t*)init)->opcode == SSE_AWK_BINOP_IN &&
-		    __is_plain_var(((sse_awk_nde_esse_t*)init)->left))
+		if (!no_foreach && init->type == SSE_AWK_NDE_EXP_BIN &&
+		    ((sse_awk_nde_exp_t*)init)->opcode == SSE_AWK_BINOP_IN &&
+		    __is_plain_var(((sse_awk_nde_exp_t*)init)->left))
 		{	
 			/* switch to foreach */
 			
@@ -2824,7 +2824,7 @@ static sse_awk_nde_t* __parse_for (sse_awk_t* awk)
 	if (MATCH(awk,TOKEN_SEMICOLON)) test = SSE_NULL;
 	else 
 	{
-		test = __parse_esseression (awk);
+		test = __parse_expression (awk);
 		if (test == SSE_NULL) 
 		{
 			sse_awk_clrpt (awk, init);
@@ -2849,7 +2849,7 @@ static sse_awk_nde_t* __parse_for (sse_awk_t* awk)
 	if (MATCH(awk,TOKEN_RPAREN)) incr = SSE_NULL;
 	else 
 	{
-		incr = __parse_esseression (awk);
+		incr = __parse_expression (awk);
 		if (incr == SSE_NULL) 
 		{
 			sse_awk_clrpt (awk, init);
@@ -2935,7 +2935,7 @@ static sse_awk_nde_t* __parse_dowhile (sse_awk_t* awk)
 		return SSE_NULL;
 	}
 
-	test = __parse_esseression (awk);
+	test = __parse_expression (awk);
 	if (test == SSE_NULL) 
 	{
 		sse_awk_clrpt (awk, body);
@@ -3019,7 +3019,7 @@ static sse_awk_nde_t* __parse_return (sse_awk_t* awk)
 	}
 	else 
 	{
-		val = __parse_esseression (awk);
+		val = __parse_expression (awk);
 		if (val == SSE_NULL) 
 		{
 			SSE_AWK_FREE (awk, nde);
@@ -3048,7 +3048,7 @@ static sse_awk_nde_t* __parse_exit (sse_awk_t* awk)
 	}
 	else 
 	{
-		val = __parse_esseression (awk);
+		val = __parse_expression (awk);
 		if (val == SSE_NULL) 
 		{
 			SSE_AWK_FREE (awk, nde);
@@ -3072,7 +3072,7 @@ static sse_awk_nde_t* __parse_delete (sse_awk_t* awk)
 
 	if (!__is_var (var))
 	{
-		/* a normal identifier is esseected */
+		/* a normal identifier is expected */
 		sse_awk_clrpt (awk, var);
 		PANIC (awk, SSE_AWK_EIDENT);
 	}
@@ -3103,7 +3103,7 @@ static sse_awk_nde_t* __parse_print (sse_awk_t* awk)
 	    !MATCH(awk,TOKEN_BOR) &&
 	    !MATCH(awk,TOKEN_BORAND)) 
 	{
-		args = __parse_esseression (awk);
+		args = __parse_expression (awk);
 		if (args == SSE_NULL) return SSE_NULL;
 
 		args_tail = args;
@@ -3117,7 +3117,7 @@ static sse_awk_nde_t* __parse_print (sse_awk_t* awk)
 				return SSE_NULL;
 			}
 
-			args_tail->next = __parse_esseression (awk);
+			args_tail->next = __parse_expression (awk);
 			if (args_tail->next == SSE_NULL)
 			{
 				sse_awk_clrpt (awk, args);
@@ -3131,9 +3131,9 @@ static sse_awk_nde_t* __parse_print (sse_awk_t* awk)
 		/* print 1 > 2 would print 1 to the file named 2. 
 		 * print (1 > 2) would print (1 > 2) in the console */
 		if (awk->token.prev != TOKEN_RPAREN &&
-		    args_tail->type == SSE_AWK_NDE_ESSE_BIN)
+		    args_tail->type == SSE_AWK_NDE_EXP_BIN)
 		{
-			sse_awk_nde_esse_t* ep = (sse_awk_nde_esse_t*)args_tail;
+			sse_awk_nde_exp_t* ep = (sse_awk_nde_exp_t*)args_tail;
 			if (ep->opcode == SSE_AWK_BINOP_GT)
 			{
 				sse_awk_nde_t* tmp = args_tail;
@@ -3192,7 +3192,7 @@ static sse_awk_nde_t* __parse_print (sse_awk_t* awk)
 				return SSE_NULL;
 			}
 
-			out = __parse_esseression(awk);
+			out = __parse_expression(awk);
 			if (out == SSE_NULL)
 			{
 				if (args != SSE_NULL) sse_awk_clrpt (awk, args);
@@ -3527,13 +3527,13 @@ static int __get_token (sse_awk_t* awk)
 			GET_CHAR_TO (awk, c);
 			if (c == SSE_T('='))
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_ESSE_ASSIGN);
+				SET_TOKEN_TYPE (awk, TOKEN_EXP_ASSIGN);
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
 			}
 			else 
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_ESSE);
+				SET_TOKEN_TYPE (awk, TOKEN_EXP);
 			}
 		}
 		else
@@ -3653,7 +3653,7 @@ static int __get_token (sse_awk_t* awk)
 		return -1;
 	}
 
-/*sse_printf (SSE_T("token -> [%s]\n"), SSE_AWK_STR_BUF(&awk->token.name));*/
+/*xp_printf (SSE_T("token -> [%s]\n"), SSE_AWK_STR_BUF(&awk->token.name));*/
 	return 0;
 }
 
@@ -4101,11 +4101,11 @@ static int __assign_to_opcode (sse_awk_t* awk)
 		SSE_AWK_ASSOP_MUL,
 		SSE_AWK_ASSOP_DIV,
 		SSE_AWK_ASSOP_MOD,
-		SSE_AWK_ASSOP_ESSE
+		SSE_AWK_ASSOP_EXP
 	};
 
 	if (awk->token.type >= TOKEN_ASSIGN &&
-	    awk->token.type <= TOKEN_ESSE_ASSIGN)
+	    awk->token.type <= TOKEN_EXP_ASSIGN)
 	{
 		return __assop[awk->token.type - TOKEN_ASSIGN];
 	}

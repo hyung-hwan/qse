@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.43 2006-10-22 11:34:53 bacon Exp $
+ * $Id: err.c,v 1.44 2006-10-22 12:39:29 bacon Exp $
  */
 
 #include <sse/awk/awk_i.h>
@@ -42,24 +42,24 @@ const sse_char_t* sse_awk_geterrstr (int errnum)
 		SSE_T("invalid character"),
 		SSE_T("cannot unget character"),
 
-		SSE_T("unesseected end of source"),
-		SSE_T("unesseected end of a comment"),
-		SSE_T("unesseected end of a string"),
-		SSE_T("unesseected end of a regular esseression"),
-		SSE_T("left brace esseected"),
-		SSE_T("left parenthesis esseected"),
-		SSE_T("right parenthesis esseected"),
-		SSE_T("right bracket esseected"),
-		SSE_T("comma esseected"),
-		SSE_T("semicolon esseected"),
-		SSE_T("colon esseected"),
-		SSE_T("keyword 'in' esseected"),
+		SSE_T("unexpected end of source"),
+		SSE_T("unexpected end of a comment"),
+		SSE_T("unexpected end of a string"),
+		SSE_T("unexpected end of a regular expression"),
+		SSE_T("left brace expected"),
+		SSE_T("left parenthesis expected"),
+		SSE_T("right parenthesis expected"),
+		SSE_T("right bracket expected"),
+		SSE_T("comma expected"),
+		SSE_T("semicolon expected"),
+		SSE_T("colon expected"),
+		SSE_T("keyword 'in' expected"),
 		SSE_T("not a variable after 'in'"),
-		SSE_T("esseression esseected"),
+		SSE_T("expression expected"),
 
-		SSE_T("keyword 'while' esseected"),
-		SSE_T("assignment statement esseected"),
-		SSE_T("identifier esseected"),
+		SSE_T("keyword 'while' expected"),
+		SSE_T("assignment statement expected"),
+		SSE_T("identifier expected"),
 		SSE_T("BEGIN requires an action block"),
 		SSE_T("END requires an action block"),
 		SSE_T("duplicate BEGIN"),
@@ -79,7 +79,7 @@ const sse_char_t* sse_awk_geterrstr (int errnum)
 		SSE_T("continue outside a loop"),
 		SSE_T("next illegal in BEGIN or END block"),
 		SSE_T("nextfile illegal in BEGIN or END block"),
-		SSE_T("getline esseected"),
+		SSE_T("getline expected"),
 
 		SSE_T("divide by zero"),
 		SSE_T("invalid operand"),
@@ -103,15 +103,15 @@ const sse_char_t* sse_awk_geterrstr (int errnum)
 		SSE_T("io handler has returned an error"),
 		SSE_T("internal error that should never have happened"),
 
-		SSE_T("a right parenthesis is esseected in the regular esseression"),
-		SSE_T("a right bracket is esseected in the regular esseression"),
-		SSE_T("a right brace is esseected in the regular esseression"),
-		SSE_T("a colon is esseected in the regular esseression"),
-		SSE_T("invalid character range in the regular esseression"),
-		SSE_T("invalid character class in the regular esseression"),
-		SSE_T("invalid boundary range in the regular esseression"),
-		SSE_T("unesseected end of the regular esseression"),
-		SSE_T("garbage after the regular esseression")
+		SSE_T("a right parenthesis is expected in the regular expression"),
+		SSE_T("a right bracket is expected in the regular expression"),
+		SSE_T("a right brace is expected in the regular expression"),
+		SSE_T("a colon is expected in the regular expression"),
+		SSE_T("invalid character range in the regular expression"),
+		SSE_T("invalid character class in the regular expression"),
+		SSE_T("invalid boundary range in the regular expression"),
+		SSE_T("unexpected end of the regular expression"),
+		SSE_T("garbage after the regular expression")
 	};
 
 	if (errnum >= 0 && errnum < sse_countof(__errstr)) 
