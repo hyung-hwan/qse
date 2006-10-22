@@ -1,80 +1,80 @@
 /*
- * $Id: prim.c,v 1.8 2005-09-24 08:16:02 bacon Exp $
+ * $Id: prim.c,v 1.9 2006-10-22 13:10:46 bacon Exp $
  */
 
-#include <xp/lsp/lsp.h>
-#include <xp/lsp/mem.h>
-#include <xp/lsp/prim.h>
+#include <sse/lsp/lsp.h>
+#include <sse/lsp/mem.h>
+#include <sse/lsp/prim.h>
 
-#include <xp/bas/string.h>
-#include <xp/bas/assert.h>
+#include <sse/bas/string.h>
+#include <sse/bas/assert.h>
 
-static int __add_prim (xp_lsp_mem_t* mem, 
-	const xp_char_t* name, xp_size_t len, xp_lsp_prim_t prim);
+static int __add_prim (sse_lsp_mem_t* mem, 
+	const sse_char_t* name, sse_size_t len, sse_lsp_prim_t prim);
 
-int xp_lsp_add_prim (
-	xp_lsp_t* lsp, const xp_char_t* name, xp_lsp_prim_t prim)
+int sse_lsp_add_prim (
+	sse_lsp_t* lsp, const sse_char_t* name, sse_lsp_prim_t prim)
 {
-	return __add_prim (lsp->mem, name, xp_strlen(name), prim);
+	return __add_prim (lsp->mem, name, sse_strlen(name), prim);
 }
 
-int xp_lsp_remove_prim (xp_lsp_t* lsp, const xp_char_t* name)
+int sse_lsp_remove_prim (sse_lsp_t* lsp, const sse_char_t* name)
 {
 	// TODO:
 	return -1;
 }
 
-static int __add_prim (xp_lsp_mem_t* mem, 
-	const xp_char_t* name, xp_size_t len, xp_lsp_prim_t prim)
+static int __add_prim (sse_lsp_mem_t* mem, 
+	const sse_char_t* name, sse_size_t len, sse_lsp_prim_t prim)
 {
-	xp_lsp_obj_t* n, * p;
+	sse_lsp_obj_t* n, * p;
 	
-	n = xp_lsp_make_symbolx (mem, name, len);
-	if (n == XP_NULL) return -1;
+	n = sse_lsp_make_symbolx (mem, name, len);
+	if (n == SSE_NULL) return -1;
 
-	xp_lsp_lock (n);
+	sse_lsp_lock (n);
 
-	p = xp_lsp_make_prim (mem, prim);
-	if (p == XP_NULL) return -1;
+	p = sse_lsp_make_prim (mem, prim);
+	if (p == SSE_NULL) return -1;
 
-	xp_lsp_unlock (n);
+	sse_lsp_unlock (n);
 
-	if (xp_lsp_set_func(mem, n, p) == XP_NULL) return -1;
+	if (sse_lsp_set_func(mem, n, p) == SSE_NULL) return -1;
 
 	return 0;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_abort (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_abort (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
-	lsp->errnum = XP_LSP_ERR_ABORT;
-	return XP_NULL;
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
+	lsp->errnum = SSE_LSP_ERR_ABORT;
+	return SSE_NULL;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_eval (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_eval (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
-	xp_lsp_obj_t* tmp;
+	sse_lsp_obj_t* tmp;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_assert (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
+	sse_assert (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS);
 
-	tmp = xp_lsp_eval (lsp, XP_LSP_CAR(args));
-	if (tmp == XP_NULL) return XP_NULL;
+	tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
+	if (tmp == SSE_NULL) return SSE_NULL;
 
-	tmp = xp_lsp_eval (lsp, tmp);
-	if (tmp == XP_NULL) return XP_NULL;
+	tmp = sse_lsp_eval (lsp, tmp);
+	if (tmp == SSE_NULL) return SSE_NULL;
 
 	return tmp;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_gc (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_gc (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
-	xp_lsp_garbage_collect (lsp->mem);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
+	sse_lsp_garbage_collect (lsp->mem);
 	return lsp->mem->nil;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_cond (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_cond (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (cond 
@@ -84,181 +84,181 @@ xp_lsp_obj_t* xp_lsp_prim_cond (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 	 *     (t resultN))
 	 */
 
-	xp_lsp_obj_t* tmp, * ret;
+	sse_lsp_obj_t* tmp, * ret;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, XP_LSP_PRIM_MAX_ARG_COUNT);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, SSE_LSP_PRIM_MAX_ARG_COUNT);
 
-	while (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS) {
-		if (XP_LSP_TYPE(XP_LSP_CAR(args)) != XP_LSP_OBJ_CONS) {
-			lsp->errnum = XP_LSP_ERR_BAD_ARG;
-			return XP_NULL;
+	while (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS) {
+		if (SSE_LSP_TYPE(SSE_LSP_CAR(args)) != SSE_LSP_OBJ_CONS) {
+			lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+			return SSE_NULL;
 		}
 
-		tmp = xp_lsp_eval (lsp, XP_LSP_CAR(XP_LSP_CAR(args)));
-		if (tmp == XP_NULL) return XP_NULL;
+		tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(SSE_LSP_CAR(args)));
+		if (tmp == SSE_NULL) return SSE_NULL;
 
 		if (tmp != lsp->mem->nil) {
-			tmp = XP_LSP_CDR(XP_LSP_CAR(args));
+			tmp = SSE_LSP_CDR(SSE_LSP_CAR(args));
 			ret = lsp->mem->nil;
-			while (XP_LSP_TYPE(tmp) == XP_LSP_OBJ_CONS) {
-				ret = xp_lsp_eval (lsp, XP_LSP_CAR(tmp));
-				if (ret == XP_NULL) return XP_NULL;
-				tmp = XP_LSP_CDR(tmp);
+			while (SSE_LSP_TYPE(tmp) == SSE_LSP_OBJ_CONS) {
+				ret = sse_lsp_eval (lsp, SSE_LSP_CAR(tmp));
+				if (ret == SSE_NULL) return SSE_NULL;
+				tmp = SSE_LSP_CDR(tmp);
 			}
 			if (tmp != lsp->mem->nil) {
-				lsp->errnum = XP_LSP_ERR_BAD_ARG;
-				return XP_NULL;
+				lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+				return SSE_NULL;
 			}
 			return ret;
 		}
 
-		args = XP_LSP_CDR(args);
+		args = SSE_LSP_CDR(args);
 	}
 
 	return lsp->mem->nil;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_if (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_if (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
-	xp_lsp_obj_t* tmp;
+	sse_lsp_obj_t* tmp;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, XP_LSP_PRIM_MAX_ARG_COUNT);
-	xp_assert (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, SSE_LSP_PRIM_MAX_ARG_COUNT);
+	sse_assert (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS);
 	
-	tmp = xp_lsp_eval (lsp, XP_LSP_CAR(args));
-	if (tmp == XP_NULL) return XP_NULL;
+	tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
+	if (tmp == SSE_NULL) return SSE_NULL;
 
 	if (tmp != lsp->mem->nil) {
-		tmp = xp_lsp_eval (lsp, XP_LSP_CAR(XP_LSP_CDR(args)));
-		if (tmp == XP_NULL) return XP_NULL;
+		tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(SSE_LSP_CDR(args)));
+		if (tmp == SSE_NULL) return SSE_NULL;
 		return tmp;
 	}	
 	else {
-		xp_lsp_obj_t* res = lsp->mem->nil;
+		sse_lsp_obj_t* res = lsp->mem->nil;
 
-		tmp = XP_LSP_CDR(XP_LSP_CDR(args));
+		tmp = SSE_LSP_CDR(SSE_LSP_CDR(args));
 
-		while (XP_LSP_TYPE(tmp) == XP_LSP_OBJ_CONS) {
-			res = xp_lsp_eval (lsp, XP_LSP_CAR(tmp));
-			if (res == XP_NULL) return XP_NULL;
-			tmp = XP_LSP_CDR(tmp);
+		while (SSE_LSP_TYPE(tmp) == SSE_LSP_OBJ_CONS) {
+			res = sse_lsp_eval (lsp, SSE_LSP_CAR(tmp));
+			if (res == SSE_NULL) return SSE_NULL;
+			tmp = SSE_LSP_CDR(tmp);
 		}
 		if (tmp != lsp->mem->nil) {
-			lsp->errnum = XP_LSP_ERR_BAD_ARG;
-			return XP_NULL;
+			lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+			return SSE_NULL;
 		}
 
 		return res;
 	}
 }
 
-xp_lsp_obj_t* xp_lsp_prim_while (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_while (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (setq a 1)
 	 * (while (< a 100) (setq a (+ a 1)))
 	 */
 
-	xp_lsp_obj_t* tmp;
+	sse_lsp_obj_t* tmp;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, XP_LSP_PRIM_MAX_ARG_COUNT);
-	xp_assert (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, SSE_LSP_PRIM_MAX_ARG_COUNT);
+	sse_assert (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS);
 
 	for (;;) {
-		tmp = xp_lsp_eval (lsp, XP_LSP_CAR(args));
-		if (tmp == XP_NULL) return XP_NULL;
+		tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
+		if (tmp == SSE_NULL) return SSE_NULL;
 		if (tmp == lsp->mem->nil) break;
 
-		tmp = XP_LSP_CDR(args);
-		while (XP_LSP_TYPE(tmp) == XP_LSP_OBJ_CONS) {
-			if (xp_lsp_eval(lsp, XP_LSP_CAR(tmp)) == XP_NULL) 
-				return XP_NULL;
-			tmp = XP_LSP_CDR(tmp);
+		tmp = SSE_LSP_CDR(args);
+		while (SSE_LSP_TYPE(tmp) == SSE_LSP_OBJ_CONS) {
+			if (sse_lsp_eval(lsp, SSE_LSP_CAR(tmp)) == SSE_NULL) 
+				return SSE_NULL;
+			tmp = SSE_LSP_CDR(tmp);
 		}
 
 		if (tmp != lsp->mem->nil) {
-			lsp->errnum = XP_LSP_ERR_BAD_ARG;
-			return XP_NULL;
+			lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+			return SSE_NULL;
 		}
 	}
 
 	return lsp->mem->nil;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_car (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_car (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (car '(10 20 30))
 	 */
 
-	xp_lsp_obj_t* tmp;
+	sse_lsp_obj_t* tmp;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_assert (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
+	sse_assert (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS);
 
-	tmp = xp_lsp_eval (lsp, XP_LSP_CAR(args));
-	if (tmp == XP_NULL) return XP_NULL;
+	tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
+	if (tmp == SSE_NULL) return SSE_NULL;
 	if (tmp == lsp->mem->nil) return lsp->mem->nil;
 
-	if (XP_LSP_TYPE(tmp) != XP_LSP_OBJ_CONS) {
-		lsp->errnum = XP_LSP_ERR_BAD_ARG;
-		return XP_NULL;
+	if (SSE_LSP_TYPE(tmp) != SSE_LSP_OBJ_CONS) {
+		lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+		return SSE_NULL;
 	}
 
-	return XP_LSP_CAR(tmp);
+	return SSE_LSP_CAR(tmp);
 }
 
-xp_lsp_obj_t* xp_lsp_prim_cdr (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_cdr (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (cdr '(10 20 30))
 	 */
 
-	xp_lsp_obj_t* tmp;
+	sse_lsp_obj_t* tmp;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_assert (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
+	sse_assert (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS);
 
-	tmp = xp_lsp_eval (lsp, XP_LSP_CAR(args));
-	if (tmp == XP_NULL) return XP_NULL;
+	tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
+	if (tmp == SSE_NULL) return SSE_NULL;
 	if (tmp == lsp->mem->nil) return lsp->mem->nil;
 
-	if (XP_LSP_TYPE(tmp) != XP_LSP_OBJ_CONS) {
-		lsp->errnum = XP_LSP_ERR_BAD_ARG;
-		return XP_NULL;
+	if (SSE_LSP_TYPE(tmp) != SSE_LSP_OBJ_CONS) {
+		lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+		return SSE_NULL;
 	}
 
-	return XP_LSP_CDR(tmp);
+	return SSE_LSP_CDR(tmp);
 }
 
-xp_lsp_obj_t* xp_lsp_prim_cons (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_cons (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (cons 10 20)
 	 * (cons '(10 20) 30)
 	 */
 
-	xp_lsp_obj_t* car, * cdr, * cons;
+	sse_lsp_obj_t* car, * cdr, * cons;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_assert (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
+	sse_assert (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS);
 
-	car = xp_lsp_eval (lsp, XP_LSP_CAR(args));
-	if (car == XP_NULL) return XP_NULL;
+	car = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
+	if (car == SSE_NULL) return SSE_NULL;
 
-	cdr = xp_lsp_eval (lsp, XP_LSP_CAR(XP_LSP_CDR(args)));
-	if (cdr == XP_NULL) return XP_NULL;
+	cdr = sse_lsp_eval (lsp, SSE_LSP_CAR(SSE_LSP_CDR(args)));
+	if (cdr == SSE_NULL) return SSE_NULL;
 
-	cons = xp_lsp_make_cons (lsp->mem, car, cdr);
-	if (cons == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEMORY;
-		return XP_NULL;
+	cons = sse_lsp_make_cons (lsp->mem, car, cdr);
+	if (cons == SSE_NULL) {
+		lsp->errnum = SSE_LSP_ERR_MEMORY;
+		return SSE_NULL;
 	}
 
 	return cons;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_set (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_set (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (set 'flowers 'rose)
@@ -266,79 +266,79 @@ xp_lsp_obj_t* xp_lsp_prim_set (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 	 * (rose)
 	 */
 
-	xp_lsp_obj_t* p1, * p2;
+	sse_lsp_obj_t* p1, * p2;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	xp_assert (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
+	sse_assert (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS);
 
-	p1 = xp_lsp_eval (lsp, XP_LSP_CAR(args));
-	if (p1 == XP_NULL) return XP_NULL;
+	p1 = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
+	if (p1 == SSE_NULL) return SSE_NULL;
 
-	if (XP_LSP_TYPE(p1) != XP_LSP_OBJ_SYMBOL) {
-		lsp->errnum = XP_LSP_ERR_BAD_ARG;
-		return XP_NULL;
+	if (SSE_LSP_TYPE(p1) != SSE_LSP_OBJ_SYMBOL) {
+		lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+		return SSE_NULL;
 	}
 
-	p2 = xp_lsp_eval (lsp, XP_LSP_CAR(XP_LSP_CDR(args)));
-	if (p2 == XP_NULL) return XP_NULL;
+	p2 = sse_lsp_eval (lsp, SSE_LSP_CAR(SSE_LSP_CDR(args)));
+	if (p2 == SSE_NULL) return SSE_NULL;
 
-	if (xp_lsp_set_value (lsp->mem, p1, p2) == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEMORY;
-		return XP_NULL;
+	if (sse_lsp_set_value (lsp->mem, p1, p2) == SSE_NULL) {
+		lsp->errnum = SSE_LSP_ERR_MEMORY;
+		return SSE_NULL;
 	}
 
 	return p2;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_setq (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_setq (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (setq x 10)
 	 * (setq x "stirng")
 	 */
 
-	xp_lsp_obj_t* p = args, * p1, * p2 = lsp->mem->nil;
+	sse_lsp_obj_t* p = args, * p1, * p2 = lsp->mem->nil;
 
 	while (p != lsp->mem->nil) {
-		xp_assert (XP_LSP_TYPE(p) == XP_LSP_OBJ_CONS);
+		sse_assert (SSE_LSP_TYPE(p) == SSE_LSP_OBJ_CONS);
 
-		p1 = XP_LSP_CAR(p);
-		if (XP_LSP_TYPE(p1) != XP_LSP_OBJ_SYMBOL) {
-			lsp->errnum = XP_LSP_ERR_BAD_ARG;
-			return XP_NULL;
+		p1 = SSE_LSP_CAR(p);
+		if (SSE_LSP_TYPE(p1) != SSE_LSP_OBJ_SYMBOL) {
+			lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+			return SSE_NULL;
 		}
 
-		if (XP_LSP_TYPE(XP_LSP_CDR(p)) != XP_LSP_OBJ_CONS) {
-			lsp->errnum = XP_LSP_ERR_TOO_FEW_ARGS;
-			return XP_NULL;
+		if (SSE_LSP_TYPE(SSE_LSP_CDR(p)) != SSE_LSP_OBJ_CONS) {
+			lsp->errnum = SSE_LSP_ERR_TOO_FEW_ARGS;
+			return SSE_NULL;
 		}
 
-		p2 = xp_lsp_eval (lsp, XP_LSP_CAR(XP_LSP_CDR(p)));
-		if (p2 == XP_NULL) return XP_NULL;
+		p2 = sse_lsp_eval (lsp, SSE_LSP_CAR(SSE_LSP_CDR(p)));
+		if (p2 == SSE_NULL) return SSE_NULL;
 
-		if (xp_lsp_set_value (lsp->mem, p1, p2) == XP_NULL) {
-			lsp->errnum = XP_LSP_ERR_MEMORY;
-			return XP_NULL;
+		if (sse_lsp_set_value (lsp->mem, p1, p2) == SSE_NULL) {
+			lsp->errnum = SSE_LSP_ERR_MEMORY;
+			return SSE_NULL;
 		}
 
-		p = XP_LSP_CDR(XP_LSP_CDR(p));
+		p = SSE_LSP_CDR(SSE_LSP_CDR(p));
 	}
 
 	return p2;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_quote (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_quote (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (quote (10 20 30 50))
 	 */
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	xp_assert (XP_LSP_TYPE(args) == XP_LSP_OBJ_CONS);
-	return XP_LSP_CAR(args);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
+	sse_assert (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS);
+	return SSE_LSP_CAR(args);
 }
 
-xp_lsp_obj_t* xp_lsp_prim_defun (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_defun (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (defun x (a b)  (+ a b 100))
@@ -349,51 +349,51 @@ xp_lsp_obj_t* xp_lsp_prim_defun (xp_lsp_t* lsp, xp_lsp_obj_t* args)
 	 * temp 
 	 */
 
-	xp_lsp_obj_t* name, * fun;
+	sse_lsp_obj_t* name, * fun;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 3, XP_LSP_PRIM_MAX_ARG_COUNT);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 3, SSE_LSP_PRIM_MAX_ARG_COUNT);
 
-	name = XP_LSP_CAR(args);
-	if (XP_LSP_TYPE(name) != XP_LSP_OBJ_SYMBOL) {
-		lsp->errnum = XP_LSP_ERR_BAD_ARG;
-		return XP_NULL;
+	name = SSE_LSP_CAR(args);
+	if (SSE_LSP_TYPE(name) != SSE_LSP_OBJ_SYMBOL) {
+		lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+		return SSE_NULL;
 	}
 
-	fun = xp_lsp_make_func (lsp->mem, 
-		XP_LSP_CAR(XP_LSP_CDR(args)), XP_LSP_CDR(XP_LSP_CDR(args)));
-	if (fun == XP_NULL) return XP_NULL;
+	fun = sse_lsp_make_func (lsp->mem, 
+		SSE_LSP_CAR(SSE_LSP_CDR(args)), SSE_LSP_CDR(SSE_LSP_CDR(args)));
+	if (fun == SSE_NULL) return SSE_NULL;
 
-	if (xp_lsp_set_func (lsp->mem, XP_LSP_CAR(args), fun) == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEMORY;
-		return XP_NULL;
+	if (sse_lsp_set_func (lsp->mem, SSE_LSP_CAR(args), fun) == SSE_NULL) {
+		lsp->errnum = SSE_LSP_ERR_MEMORY;
+		return SSE_NULL;
 	}
 	return fun;
 }
 
-xp_lsp_obj_t* xp_lsp_prim_demac (xp_lsp_t* lsp, xp_lsp_obj_t* args)
+sse_lsp_obj_t* sse_lsp_prim_demac (sse_lsp_t* lsp, sse_lsp_obj_t* args)
 {
 	/*
 	 * (demac x (abc)  x y z)
 	 *(setq x (macro (abc) x y z))
 	 */
 
-	xp_lsp_obj_t* name, * mac;
+	sse_lsp_obj_t* name, * mac;
 
-	XP_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 3, XP_LSP_PRIM_MAX_ARG_COUNT);
+	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 3, SSE_LSP_PRIM_MAX_ARG_COUNT);
 
-	name = XP_LSP_CAR(args);
-	if (XP_LSP_TYPE(name) != XP_LSP_OBJ_SYMBOL) {
-		lsp->errnum = XP_LSP_ERR_BAD_ARG;
-		return XP_NULL;
+	name = SSE_LSP_CAR(args);
+	if (SSE_LSP_TYPE(name) != SSE_LSP_OBJ_SYMBOL) {
+		lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+		return SSE_NULL;
 	}
 
-	mac = xp_lsp_make_macro (lsp->mem, 
-		XP_LSP_CAR(XP_LSP_CDR(args)), XP_LSP_CDR(XP_LSP_CDR(args)));
-	if (mac == XP_NULL) return XP_NULL;
+	mac = sse_lsp_make_macro (lsp->mem, 
+		SSE_LSP_CAR(SSE_LSP_CDR(args)), SSE_LSP_CDR(SSE_LSP_CDR(args)));
+	if (mac == SSE_NULL) return SSE_NULL;
 
-	if (xp_lsp_set_func (lsp->mem, XP_LSP_CAR(args), mac) == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_MEMORY;
-		return XP_NULL;
+	if (sse_lsp_set_func (lsp->mem, SSE_LSP_CAR(args), mac) == SSE_NULL) {
+		lsp->errnum = SSE_LSP_ERR_MEMORY;
+		return SSE_NULL;
 	}
 	return mac;
 }

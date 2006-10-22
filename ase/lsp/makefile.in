@@ -6,7 +6,7 @@ OUT = libxplsp.a
 
 CC = @CC@
 RANLIB = @RANLIB@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 

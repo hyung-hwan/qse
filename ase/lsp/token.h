@@ -1,44 +1,44 @@
 /*
- * $Id: token.h,v 1.11 2005-12-05 15:11:29 bacon Exp $
+ * $Id: token.h,v 1.12 2006-10-22 13:10:46 bacon Exp $
  */
 
-#ifndef _XP_LSP_TOKEN_H_
-#define _XP_LSP_TOKEN_H_
+#ifndef _SSE_LSP_TOKEN_H_
+#define _SSE_LSP_TOKEN_H_
 
-#include <xp/lsp/types.h>
-#include <xp/lsp/name.h>
+#include <sse/lsp/types.h>
+#include <sse/lsp/name.h>
 
 enum 
 {
-	XP_LSP_TOKEN_END
+	SSE_LSP_TOKEN_END
 };
 
-struct xp_lsp_token_t 
+struct sse_lsp_token_t 
 {
 	int type;
 
-	xp_lsp_int_t ivalue;
-	xp_lsp_real_t rvalue;
+	sse_lsp_int_t ivalue;
+	sse_lsp_real_t rvalue;
 
-	xp_lsp_name_t name;
-	xp_bool_t __dynamic;
+	sse_lsp_name_t name;
+	sse_bool_t __dynamic;
 };
 
-typedef struct xp_lsp_token_t xp_lsp_token_t;
+typedef struct sse_lsp_token_t sse_lsp_token_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_lsp_token_t* xp_lsp_token_open (
-	xp_lsp_token_t* token, xp_word_t capacity);
-void xp_lsp_token_close (xp_lsp_token_t* token);
+sse_lsp_token_t* sse_lsp_token_open (
+	sse_lsp_token_t* token, sse_word_t capacity);
+void sse_lsp_token_close (sse_lsp_token_t* token);
 
-int xp_lsp_token_addc (xp_lsp_token_t* token, xp_cint_t c);
-int xp_lsp_token_adds (xp_lsp_token_t* token, const xp_char_t* s);
-void xp_lsp_token_clear (xp_lsp_token_t* token);
-xp_char_t* xp_lsp_token_yield (xp_lsp_token_t* token, xp_word_t capacity);
-int xp_lsp_token_compare_name (xp_lsp_token_t* token, const xp_char_t* str);
+int sse_lsp_token_addc (sse_lsp_token_t* token, sse_cint_t c);
+int sse_lsp_token_adds (sse_lsp_token_t* token, const sse_char_t* s);
+void sse_lsp_token_clear (sse_lsp_token_t* token);
+sse_char_t* sse_lsp_token_yield (sse_lsp_token_t* token, sse_word_t capacity);
+int sse_lsp_token_compare_name (sse_lsp_token_t* token, const sse_char_t* str);
 
 #ifdef __cplusplus
 }

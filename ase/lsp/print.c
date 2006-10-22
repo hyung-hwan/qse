@@ -1,174 +1,174 @@
 /*
- * $Id: print.c,v 1.12 2005-09-20 11:19:15 bacon Exp $
+ * $Id: print.c,v 1.13 2006-10-22 13:10:46 bacon Exp $
  */
 
-#include <xp/lsp/lsp.h>
-#include <xp/bas/stdio.h>
-#include <xp/bas/string.h>
+#include <sse/lsp/lsp.h>
+#include <sse/bas/stdio.h>
+#include <sse/bas/string.h>
 
-void xp_lsp_print_debug (xp_lsp_obj_t* obj)
+void sse_lsp_print_debug (sse_lsp_obj_t* obj)
 {
-	switch (XP_LSP_TYPE(obj)) {
-	case XP_LSP_OBJ_NIL:
-		xp_printf (XP_TEXT("nil"));
+	switch (SSE_LSP_TYPE(obj)) {
+	case SSE_LSP_OBJ_NIL:
+		sse_printf (SSE_TEXT("nil"));
 		break;
-	case XP_LSP_OBJ_TRUE:
-		xp_printf (XP_TEXT("t"));
+	case SSE_LSP_OBJ_TRUE:
+		sse_printf (SSE_TEXT("t"));
 		break;
-	case XP_LSP_OBJ_INT:
-		xp_printf (XP_TEXT("%d"), XP_LSP_IVALUE(obj));
+	case SSE_LSP_OBJ_INT:
+		sse_printf (SSE_TEXT("%d"), SSE_LSP_IVALUE(obj));
 		break;
-	case XP_LSP_OBJ_REAL:
-		xp_printf (XP_TEXT("%f"), XP_LSP_RVALUE(obj));
+	case SSE_LSP_OBJ_REAL:
+		sse_printf (SSE_TEXT("%f"), SSE_LSP_RVALUE(obj));
 		break;
-	case XP_LSP_OBJ_SYMBOL:
-		xp_printf (XP_TEXT("%s"), XP_LSP_SYMVALUE(obj));
+	case SSE_LSP_OBJ_SYMBOL:
+		sse_printf (SSE_TEXT("%s"), SSE_LSP_SYMVALUE(obj));
 		break;
-	case XP_LSP_OBJ_STRING:
-		xp_printf (XP_TEXT("%s"), XP_LSP_STRVALUE(obj));
+	case SSE_LSP_OBJ_STRING:
+		sse_printf (SSE_TEXT("%s"), SSE_LSP_STRVALUE(obj));
 		break;
-	case XP_LSP_OBJ_CONS:
+	case SSE_LSP_OBJ_CONS:
 		{
-			xp_lsp_obj_t* p = obj;
-			xp_printf (XP_TEXT("("));
+			sse_lsp_obj_t* p = obj;
+			sse_printf (SSE_TEXT("("));
 			do {
-				xp_lsp_print_debug (XP_LSP_CAR(p));
-				p = XP_LSP_CDR(p);
-				if (XP_LSP_TYPE(p) != XP_LSP_OBJ_NIL) {
-					xp_printf (XP_TEXT(" "));
-					if (XP_LSP_TYPE(p) != XP_LSP_OBJ_CONS) {
-						xp_printf (XP_TEXT(". "));
-						xp_lsp_print_debug (p);
+				sse_lsp_print_debug (SSE_LSP_CAR(p));
+				p = SSE_LSP_CDR(p);
+				if (SSE_LSP_TYPE(p) != SSE_LSP_OBJ_NIL) {
+					sse_printf (SSE_TEXT(" "));
+					if (SSE_LSP_TYPE(p) != SSE_LSP_OBJ_CONS) {
+						sse_printf (SSE_TEXT(". "));
+						sse_lsp_print_debug (p);
 					}
 				}
-			} while (XP_LSP_TYPE(p) != XP_LSP_OBJ_NIL && XP_LSP_TYPE(p) == XP_LSP_OBJ_CONS);
-			xp_printf (XP_TEXT(")"));
+			} while (SSE_LSP_TYPE(p) != SSE_LSP_OBJ_NIL && SSE_LSP_TYPE(p) == SSE_LSP_OBJ_CONS);
+			sse_printf (SSE_TEXT(")"));
 		}
 		break;
-	case XP_LSP_OBJ_FUNC:
-		xp_printf (XP_TEXT("func"));
+	case SSE_LSP_OBJ_FUNC:
+		sse_printf (SSE_TEXT("func"));
 		break;
-	case XP_LSP_OBJ_MACRO:
-		xp_printf (XP_TEXT("macro"));
+	case SSE_LSP_OBJ_MACRO:
+		sse_printf (SSE_TEXT("macro"));
 		break;
-	case XP_LSP_OBJ_PRIM:
-		xp_printf (XP_TEXT("prim"));
+	case SSE_LSP_OBJ_PRIM:
+		sse_printf (SSE_TEXT("prim"));
 		break;
 	default:
-		xp_printf (XP_TEXT("unknown object type: %d"), XP_LSP_TYPE(obj)); 
+		sse_printf (SSE_TEXT("unknown object type: %d"), SSE_LSP_TYPE(obj)); 
 	}
 }
 
 #define OUTPUT_STR(lsp,str) \
 	do { \
-		if (lsp->output_func(XP_LSP_IO_DATA, lsp->output_arg, (xp_char_t*)str, xp_strlen(str)) == -1) { \
-			lsp->errnum = XP_LSP_ERR_OUTPUT; \
+		if (lsp->output_func(SSE_LSP_IO_DATA, lsp->output_arg, (sse_char_t*)str, sse_strlen(str)) == -1) { \
+			lsp->errnum = SSE_LSP_ERR_OUTPUT; \
 			return -1; \
 		} \
 	} while (0)
 
 #define OUTPUT_STRX(lsp,str,len) \
 	do { \
-		if (lsp->output_func(XP_LSP_IO_DATA, lsp->output_arg, (xp_char_t*)str, len) == -1) { \
-			lsp->errnum = XP_LSP_ERR_OUTPUT; \
+		if (lsp->output_func(SSE_LSP_IO_DATA, lsp->output_arg, (sse_char_t*)str, len) == -1) { \
+			lsp->errnum = SSE_LSP_ERR_OUTPUT; \
 			return -1; \
 		} \
 	} while (0)
 
-static int __print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj, xp_bool_t prt_cons_par)
+static int __print (sse_lsp_t* lsp, const sse_lsp_obj_t* obj, sse_bool_t prt_cons_par)
 {
-	xp_char_t buf[256];
+	sse_char_t buf[256];
 
-	if (lsp->output_func == XP_NULL) {
-		lsp->errnum = XP_LSP_ERR_OUTPUT_NOT_ATTACHED;
+	if (lsp->output_func == SSE_NULL) {
+		lsp->errnum = SSE_LSP_ERR_OUTPUT_NOT_ATTACHED;
 		return -1;
 	}
 
-	switch (XP_LSP_TYPE(obj)) {
-	case XP_LSP_OBJ_NIL:
-		OUTPUT_STR (lsp, XP_TEXT("nil"));
+	switch (SSE_LSP_TYPE(obj)) {
+	case SSE_LSP_OBJ_NIL:
+		OUTPUT_STR (lsp, SSE_TEXT("nil"));
 		break;
-	case XP_LSP_OBJ_TRUE:
-		OUTPUT_STR (lsp, XP_TEXT("t"));
+	case SSE_LSP_OBJ_TRUE:
+		OUTPUT_STR (lsp, SSE_TEXT("t"));
 		break;
-	case XP_LSP_OBJ_INT:
-		if (xp_sizeof(xp_lsp_int_t) == xp_sizeof(int)) {
-			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%d"), XP_LSP_IVALUE(obj));
+	case SSE_LSP_OBJ_INT:
+		if (sse_sizeof(sse_lsp_int_t) == sse_sizeof(int)) {
+			sse_sprintf (buf, sse_countof(buf), SSE_TEXT("%d"), SSE_LSP_IVALUE(obj));
 		}
-		else if (xp_sizeof(xp_lsp_int_t) == xp_sizeof(long)) {
-			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%ld"), XP_LSP_IVALUE(obj));
+		else if (sse_sizeof(sse_lsp_int_t) == sse_sizeof(long)) {
+			sse_sprintf (buf, sse_countof(buf), SSE_TEXT("%ld"), SSE_LSP_IVALUE(obj));
 		}
-		else if (xp_sizeof(xp_lsp_int_t) == xp_sizeof(long long)) {
-			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%lld"), XP_LSP_IVALUE(obj));
-		}
-
-		OUTPUT_STR (lsp, buf);
-		break;
-	case XP_LSP_OBJ_REAL:
-		if (xp_sizeof(xp_lsp_real_t) == xp_sizeof(double)) {
-			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%f"), 
-				(double)XP_LSP_RVALUE(obj));
-		}
-		else if (xp_sizeof(xp_lsp_real_t) == xp_sizeof(long double)) {
-			xp_sprintf (buf, xp_countof(buf), XP_TEXT("%Lf"), 
-				(long double)XP_LSP_RVALUE(obj));
+		else if (sse_sizeof(sse_lsp_int_t) == sse_sizeof(long long)) {
+			sse_sprintf (buf, sse_countof(buf), SSE_TEXT("%lld"), SSE_LSP_IVALUE(obj));
 		}
 
 		OUTPUT_STR (lsp, buf);
 		break;
-	case XP_LSP_OBJ_SYMBOL:
-		OUTPUT_STR (lsp, XP_LSP_SYMVALUE(obj));
+	case SSE_LSP_OBJ_REAL:
+		if (sse_sizeof(sse_lsp_real_t) == sse_sizeof(double)) {
+			sse_sprintf (buf, sse_countof(buf), SSE_TEXT("%f"), 
+				(double)SSE_LSP_RVALUE(obj));
+		}
+		else if (sse_sizeof(sse_lsp_real_t) == sse_sizeof(long double)) {
+			sse_sprintf (buf, sse_countof(buf), SSE_TEXT("%Lf"), 
+				(long double)SSE_LSP_RVALUE(obj));
+		}
+
+		OUTPUT_STR (lsp, buf);
 		break;
-	case XP_LSP_OBJ_STRING:
-		OUTPUT_STR (lsp, XP_LSP_STRVALUE(obj));
+	case SSE_LSP_OBJ_SYMBOL:
+		OUTPUT_STR (lsp, SSE_LSP_SYMVALUE(obj));
 		break;
-	case XP_LSP_OBJ_CONS:
+	case SSE_LSP_OBJ_STRING:
+		OUTPUT_STR (lsp, SSE_LSP_STRVALUE(obj));
+		break;
+	case SSE_LSP_OBJ_CONS:
 		{
-			const xp_lsp_obj_t* p = obj;
-			if (prt_cons_par) OUTPUT_STR (lsp, XP_TEXT("("));
+			const sse_lsp_obj_t* p = obj;
+			if (prt_cons_par) OUTPUT_STR (lsp, SSE_TEXT("("));
 			do {
-				xp_lsp_print (lsp, XP_LSP_CAR(p));
-				p = XP_LSP_CDR(p);
+				sse_lsp_print (lsp, SSE_LSP_CAR(p));
+				p = SSE_LSP_CDR(p);
 				if (p != lsp->mem->nil) {
-					OUTPUT_STR (lsp, XP_TEXT(" "));
-					if (XP_LSP_TYPE(p) != XP_LSP_OBJ_CONS) {
-						OUTPUT_STR (lsp, XP_TEXT(". "));
-						xp_lsp_print (lsp, p);
+					OUTPUT_STR (lsp, SSE_TEXT(" "));
+					if (SSE_LSP_TYPE(p) != SSE_LSP_OBJ_CONS) {
+						OUTPUT_STR (lsp, SSE_TEXT(". "));
+						sse_lsp_print (lsp, p);
 					}
 				}
-			} while (p != lsp->mem->nil && XP_LSP_TYPE(p) == XP_LSP_OBJ_CONS);
-			if (prt_cons_par) OUTPUT_STR (lsp, XP_TEXT(")"));
+			} while (p != lsp->mem->nil && SSE_LSP_TYPE(p) == SSE_LSP_OBJ_CONS);
+			if (prt_cons_par) OUTPUT_STR (lsp, SSE_TEXT(")"));
 		}
 		break;
-	case XP_LSP_OBJ_FUNC:
-		/*OUTPUT_STR (lsp, XP_TEXT("func"));*/
-		OUTPUT_STR (lsp, XP_TEXT("(lambda "));
-		if (__print (lsp, XP_LSP_FFORMAL(obj), xp_true) == -1) return -1;
-		OUTPUT_STR (lsp, XP_TEXT(" "));
-		if (__print (lsp, XP_LSP_FBODY(obj), xp_false) == -1) return -1;
-		OUTPUT_STR (lsp, XP_TEXT(")"));
+	case SSE_LSP_OBJ_FUNC:
+		/*OUTPUT_STR (lsp, SSE_TEXT("func"));*/
+		OUTPUT_STR (lsp, SSE_TEXT("(lambda "));
+		if (__print (lsp, SSE_LSP_FFORMAL(obj), sse_true) == -1) return -1;
+		OUTPUT_STR (lsp, SSE_TEXT(" "));
+		if (__print (lsp, SSE_LSP_FBODY(obj), sse_false) == -1) return -1;
+		OUTPUT_STR (lsp, SSE_TEXT(")"));
 		break;
-	case XP_LSP_OBJ_MACRO:
-		/*OUTPUT_STR (lsp, XP_TEXT("macro"));*/
-		OUTPUT_STR (lsp, XP_TEXT("(macro "));
-		if (__print (lsp, XP_LSP_FFORMAL(obj), xp_true) == -1) return -1;
-		OUTPUT_STR (lsp, XP_TEXT(" "));
-		if (__print (lsp, XP_LSP_FBODY(obj), xp_false) == -1) return -1;
-		OUTPUT_STR (lsp, XP_TEXT(")"));
+	case SSE_LSP_OBJ_MACRO:
+		/*OUTPUT_STR (lsp, SSE_TEXT("macro"));*/
+		OUTPUT_STR (lsp, SSE_TEXT("(macro "));
+		if (__print (lsp, SSE_LSP_FFORMAL(obj), sse_true) == -1) return -1;
+		OUTPUT_STR (lsp, SSE_TEXT(" "));
+		if (__print (lsp, SSE_LSP_FBODY(obj), sse_false) == -1) return -1;
+		OUTPUT_STR (lsp, SSE_TEXT(")"));
 		break;
-	case XP_LSP_OBJ_PRIM:
-		OUTPUT_STR (lsp, XP_TEXT("prim"));
+	case SSE_LSP_OBJ_PRIM:
+		OUTPUT_STR (lsp, SSE_TEXT("prim"));
 		break;
 	default:
-		xp_sprintf (buf, xp_countof(buf),
-			XP_TEXT("unknown object type: %d"), XP_LSP_TYPE(obj)); 
+		sse_sprintf (buf, sse_countof(buf),
+			SSE_TEXT("unknown object type: %d"), SSE_LSP_TYPE(obj)); 
 		OUTPUT_STR (lsp, buf);
 	}
 
 	return 0;
 }
 
-int xp_lsp_print (xp_lsp_t* lsp, const xp_lsp_obj_t* obj)
+int sse_lsp_print (sse_lsp_t* lsp, const sse_lsp_obj_t* obj)
 {
-	return __print (lsp, obj, xp_true);
+	return __print (lsp, obj, sse_true);
 }
