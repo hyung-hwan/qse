@@ -1,8 +1,8 @@
 /*
- * $Id: extio.c,v 1.54 2006-10-16 14:38:43 bacon Exp $
+ * $Id: extio.c,v 1.55 2006-10-22 11:34:53 bacon Exp $
  */
 
-#include <xp/awk/awk_i.h>
+#include <sse/awk/awk_i.h>
 
 enum
 {
@@ -16,21 +16,21 @@ enum
 static int __in_type_map[] =
 {
 	/* the order should match the order of the 
-	 * XP_AWK_IN_XXX values in tree.h */
-	XP_AWK_EXTIO_PIPE,
-	XP_AWK_EXTIO_COPROC,
-	XP_AWK_EXTIO_FILE,
-	XP_AWK_EXTIO_CONSOLE
+	 * SSE_AWK_IN_XXX values in tree.h */
+	SSE_AWK_EXTIO_PIPE,
+	SSE_AWK_EXTIO_COPROC,
+	SSE_AWK_EXTIO_FILE,
+	SSE_AWK_EXTIO_CONSOLE
 };
 
 static int __in_mode_map[] =
 {
 	/* the order should match the order of the 
-	 * XP_AWK_IN_XXX values in tree.h */
-	XP_AWK_IO_PIPE_READ,
+	 * SSE_AWK_IN_XXX values in tree.h */
+	SSE_AWK_IO_PIPE_READ,
 	0,
-	XP_AWK_IO_FILE_READ,
-	XP_AWK_IO_CONSOLE_READ
+	SSE_AWK_IO_FILE_READ,
+	SSE_AWK_IO_CONSOLE_READ
 };
 
 static int __in_mask_map[] =
@@ -44,23 +44,23 @@ static int __in_mask_map[] =
 static int __out_type_map[] =
 {
 	/* the order should match the order of the 
-	 * XP_AWK_OUT_XXX values in tree.h */
-	XP_AWK_EXTIO_PIPE,
-	XP_AWK_EXTIO_COPROC,
-	XP_AWK_EXTIO_FILE,
-	XP_AWK_EXTIO_FILE,
-	XP_AWK_EXTIO_CONSOLE
+	 * SSE_AWK_OUT_XXX values in tree.h */
+	SSE_AWK_EXTIO_PIPE,
+	SSE_AWK_EXTIO_COPROC,
+	SSE_AWK_EXTIO_FILE,
+	SSE_AWK_EXTIO_FILE,
+	SSE_AWK_EXTIO_CONSOLE
 };
 
 static int __out_mode_map[] =
 {
 	/* the order should match the order of the 
-	 * XP_AWK_OUT_XXX values in tree.h */
-	XP_AWK_IO_PIPE_WRITE,
+	 * SSE_AWK_OUT_XXX values in tree.h */
+	SSE_AWK_IO_PIPE_WRITE,
 	0,
-	XP_AWK_IO_FILE_WRITE,
-	XP_AWK_IO_FILE_APPEND,
-	XP_AWK_IO_CONSOLE_WRITE
+	SSE_AWK_IO_FILE_WRITE,
+	SSE_AWK_IO_FILE_APPEND,
+	SSE_AWK_IO_CONSOLE_WRITE
 };
 
 static int __out_mask_map[] =
@@ -72,24 +72,24 @@ static int __out_mask_map[] =
 	__MASK_WRITE
 };
 
-int xp_awk_readextio (
-	xp_awk_run_t* run, int in_type,
-	const xp_char_t* name, xp_awk_str_t* buf)
+int sse_awk_readextio (
+	sse_awk_run_t* run, int in_type,
+	const sse_char_t* name, sse_awk_str_t* buf)
 {
-	xp_awk_extio_t* p = run->extio.chain;
-	xp_awk_io_t handler;
+	sse_awk_extio_t* p = run->extio.chain;
+	sse_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n, ret;
-	xp_awk_val_t* rs;
-	xp_char_t* rs_ptr;
-	xp_size_t rs_len;
-	xp_size_t line_len = 0;
+	sse_awk_val_t* rs;
+	sse_char_t* rs_ptr;
+	sse_size_t rs_len;
+	sse_size_t line_len = 0;
 
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_type_map));
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_mode_map));
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_mask_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_type_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_mode_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = __in_type_map[in_type];
@@ -97,62 +97,62 @@ int xp_awk_readextio (
 	extio_mask = __in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == XP_NULL)
+	if (handler == SSE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = SSE_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_awk_strcmp (p->name,name) == 0) break;
+		    sse_awk_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
-	if (p == XP_NULL)
+	if (p == SSE_NULL)
 	{
-		p = (xp_awk_extio_t*) XP_AWK_MALLOC (
-			run->awk, xp_sizeof(xp_awk_extio_t));
-		if (p == XP_NULL)
+		p = (sse_awk_extio_t*) SSE_AWK_MALLOC (
+			run->awk, sse_sizeof(sse_awk_extio_t));
+		if (p == SSE_NULL)
 		{
-			run->errnum = XP_AWK_ENOMEM;
+			run->errnum = SSE_AWK_ENOMEM;
 			return -1;
 		}
 
-		p->name = xp_awk_strdup (run->awk, name);
-		if (p->name == XP_NULL)
+		p->name = sse_awk_strdup (run->awk, name);
+		if (p->name == SSE_NULL)
 		{
-			XP_AWK_FREE (run->awk, p);
-			run->errnum = XP_AWK_ENOMEM;
+			SSE_AWK_FREE (run->awk, p);
+			run->errnum = SSE_AWK_ENOMEM;
 			return -1;
 		}
 
 		p->run = run;
 		p->type = (extio_type | extio_mask);
 		p->mode = extio_mode;
-		p->handle = XP_NULL;
-		p->next = XP_NULL;
+		p->handle = SSE_NULL;
+		p->next = SSE_NULL;
 		p->custom_data = run->extio.custom_data;
 
-		p->in.buf[0] = XP_T('\0');
+		p->in.buf[0] = SSE_T('\0');
 		p->in.pos = 0;
 		p->in.len = 0;
-		p->in.eof = xp_false;
+		p->in.eof = sse_false;
 
-		n = handler (XP_AWK_IO_OPEN, p, XP_NULL, 0);
+		n = handler (SSE_AWK_IO_OPEN, p, SSE_NULL, 0);
 		if (n == -1)
 		{
-			XP_AWK_FREE (run->awk, p->name);
-			XP_AWK_FREE (run->awk, p);
+			SSE_AWK_FREE (run->awk, p->name);
+			SSE_AWK_FREE (run->awk, p);
 				
 			/* TODO: use meaningful error code */
-			if (xp_awk_setglobal (
-				run, XP_AWK_GLOBAL_ERRNO, 
-				xp_awk_val_one) == -1) return -1;
+			if (sse_awk_setglobal (
+				run, SSE_AWK_GLOBAL_ERRNO, 
+				sse_awk_val_one) == -1) return -1;
 
-			run->errnum = XP_AWK_EIOHANDLER;
+			run->errnum = SSE_AWK_EIOHANDLER;
 			return -1;
 		}
 
@@ -169,29 +169,29 @@ int xp_awk_readextio (
 	}
 
 	/* ready to read a line */
-	xp_awk_str_clear (buf);
+	sse_awk_str_clear (buf);
 
 	/* get the record separator */
-	rs = xp_awk_getglobal (run, XP_AWK_GLOBAL_RS);
-	xp_awk_refupval (rs);
+	rs = sse_awk_getglobal (run, SSE_AWK_GLOBAL_RS);
+	sse_awk_refupval (rs);
 
-	if (rs->type == XP_AWK_VAL_NIL)
+	if (rs->type == SSE_AWK_VAL_NIL)
 	{
-		rs_ptr = XP_NULL;
+		rs_ptr = SSE_NULL;
 		rs_len = 0;
 	}
-	else if (rs->type == XP_AWK_VAL_STR)
+	else if (rs->type == SSE_AWK_VAL_STR)
 	{
-		rs_ptr = ((xp_awk_val_str_t*)rs)->buf;
-		rs_len = ((xp_awk_val_str_t*)rs)->len;
+		rs_ptr = ((sse_awk_val_str_t*)rs)->buf;
+		rs_len = ((sse_awk_val_str_t*)rs)->len;
 	}
 	else 
 	{
-		rs_ptr = xp_awk_valtostr (
-			run, rs, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &rs_len);
-		if (rs_ptr == XP_NULL)
+		rs_ptr = sse_awk_valtostr (
+			run, rs, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &rs_len);
+		if (rs_ptr == SSE_NULL)
 		{
-			xp_awk_refdownval (run, rs);
+			sse_awk_refdownval (run, rs);
 			return -1;
 		}
 	}
@@ -201,33 +201,33 @@ int xp_awk_readextio (
 	/* call the io handler */
 	while (1)
 	{
-		xp_char_t c;
+		sse_char_t c;
 
 		if (p->in.pos >= p->in.len)
 		{
-			xp_ssize_t n;
+			sse_ssize_t n;
 
 			if (p->in.eof)
 			{
-				if (XP_AWK_STR_LEN(buf) == 0) ret = 0;
+				if (SSE_AWK_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
-			n = handler (XP_AWK_IO_READ, p, 
-				p->in.buf, xp_countof(p->in.buf));
+			n = handler (SSE_AWK_IO_READ, p, 
+				p->in.buf, sse_countof(p->in.buf));
 			if (n == -1) 
 			{
 				/* handler error. getline should return -1 */
 				/* TODO: use meaningful error code */
-				if (xp_awk_setglobal (
-					run, XP_AWK_GLOBAL_ERRNO, 
-					xp_awk_val_one) == -1) 
+				if (sse_awk_setglobal (
+					run, SSE_AWK_GLOBAL_ERRNO, 
+					sse_awk_val_one) == -1) 
 				{
 					ret = -1;
 				}
 				else
 				{
-					run->errnum = XP_AWK_EIOHANDLER;
+					run->errnum = SSE_AWK_EIOHANDLER;
 					ret = -1;
 				}
 				break;
@@ -235,8 +235,8 @@ int xp_awk_readextio (
 
 			if (n == 0) 
 			{
-				p->in.eof = xp_true;
-				if (XP_AWK_STR_LEN(buf) == 0) ret = 0;
+				p->in.eof = sse_true;
+				if (SSE_AWK_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
@@ -246,19 +246,19 @@ int xp_awk_readextio (
 
 		c = p->in.buf[p->in.pos++];
 
-		if (rs_ptr == XP_NULL)
+		if (rs_ptr == SSE_NULL)
 		{
 			/* separate by a new line */
 			/* TODO: handle different line terminator like \r\n */
-			if (c == XP_T('\n')) break;
+			if (c == SSE_T('\n')) break;
 		}
 		else if (rs_len == 0)
 		{
 			/* separate by a blank line */
 			/* TODO: handle different line terminator like \r\n */
-			if (line_len == 0 && c == XP_T('\n'))
+			if (line_len == 0 && c == SSE_T('\n'))
 			{
-				if (XP_AWK_STR_LEN(buf) <= 0) 
+				if (SSE_AWK_STR_LEN(buf) <= 0) 
 				{
 					/* if the record is empty when a blank 
 					 * line is encountered, the line 
@@ -271,7 +271,7 @@ int xp_awk_readextio (
 				 * it needs to snip off the line 
 				 * terminator of the previous line */
 				/* TODO: handle different line terminator like \r\n */
-				XP_AWK_STR_LEN(buf) -= 1;
+				SSE_AWK_STR_LEN(buf) -= 1;
 				break;
 			}
 		}
@@ -281,16 +281,16 @@ int xp_awk_readextio (
 		}
 		else
 		{
-			const xp_char_t* match_ptr;
-			xp_size_t match_len;
+			const sse_char_t* match_ptr;
+			sse_size_t match_len;
 
-			xp_awk_assert (run->awk, run->global.rs != XP_NULL);
+			sse_awk_assert (run->awk, run->global.rs != SSE_NULL);
 
 			/* TODO: safematchrex */
-			n = xp_awk_matchrex (
+			n = sse_awk_matchrex (
 				run->awk, run->global.rs, 
-				((run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
-				XP_AWK_STR_BUF(buf), XP_AWK_STR_LEN(buf), 
+				((run->global.ignorecase)? SSE_AWK_REX_IGNORECASE: 0),
+				SSE_AWK_STR_BUF(buf), SSE_AWK_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)
 			{
@@ -302,58 +302,58 @@ int xp_awk_readextio (
 			{
 				/* the match should be found at the end of
 				 * the current buffer */
-				xp_awk_assert (run->awk,
-					XP_AWK_STR_BUF(buf) + XP_AWK_STR_LEN(buf) ==
+				sse_awk_assert (run->awk,
+					SSE_AWK_STR_BUF(buf) + SSE_AWK_STR_LEN(buf) ==
 					match_ptr + match_len);
 
-				XP_AWK_STR_LEN(buf) -= match_len;
+				SSE_AWK_STR_LEN(buf) -= match_len;
 				break;
 			}
 		}
 
-		if (xp_awk_str_ccat (buf, c) == (xp_size_t)-1)
+		if (sse_awk_str_ccat (buf, c) == (sse_size_t)-1)
 		{
-			run->errnum = XP_AWK_ENOMEM;
+			run->errnum = SSE_AWK_ENOMEM;
 			ret = -1;
 			break;
 		}
 
 		/* TODO: handle different line terminator like \r\n */
-		if (c == XP_T('\n')) line_len = 0;
+		if (c == SSE_T('\n')) line_len = 0;
 		else line_len = line_len + 1;
 	}
 
-	if (rs_ptr != XP_NULL && rs->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, rs_ptr);
-	xp_awk_refdownval (run, rs);
+	if (rs_ptr != SSE_NULL && rs->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, rs_ptr);
+	sse_awk_refdownval (run, rs);
 
 	/* increment NR */
 	if (ret != -1)
 	{
-		xp_awk_val_t* nr;
-		xp_long_t lv;
-		xp_real_t rv;
+		sse_awk_val_t* nr;
+		sse_long_t lv;
+		sse_real_t rv;
 
-		nr = xp_awk_getglobal (run, XP_AWK_GLOBAL_NR);
-		xp_awk_refupval (nr);
+		nr = sse_awk_getglobal (run, SSE_AWK_GLOBAL_NR);
+		sse_awk_refupval (nr);
 
-		n = xp_awk_valtonum (run, nr, &lv, &rv);
-		xp_awk_refdownval (run, nr);
+		n = sse_awk_valtonum (run, nr, &lv, &rv);
+		sse_awk_refdownval (run, nr);
 
 		if (n == -1) ret = -1;
 		else
 		{
-			if (n == 1) lv = (xp_long_t)rv;
+			if (n == 1) lv = (sse_long_t)rv;
 
-			nr = xp_awk_makeintval (run, lv + 1);
-			if (nr == XP_NULL) 
+			nr = sse_awk_makeintval (run, lv + 1);
+			if (nr == SSE_NULL) 
 			{
-				run->errnum = XP_AWK_ENOMEM;
+				run->errnum = SSE_AWK_ENOMEM;
 				ret = -1;
 			}
 			else 
 			{
-				if (xp_awk_setglobal (
-					run, XP_AWK_GLOBAL_NR, nr) == -1) ret = -1;
+				if (sse_awk_setglobal (
+					run, SSE_AWK_GLOBAL_NR, nr) == -1) ret = -1;
 			}
 		}
 	}
@@ -361,48 +361,48 @@ int xp_awk_readextio (
 	return ret;
 }
 
-int xp_awk_writeextio_val (
-	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_awk_val_t* v)
+int sse_awk_writeextio_val (
+	sse_awk_run_t* run, int out_type, 
+	const sse_char_t* name, sse_awk_val_t* v)
 {
-	xp_char_t* str;
-	xp_size_t len;
+	sse_char_t* str;
+	sse_size_t len;
 	int n;
 
-	if (v->type == XP_AWK_VAL_STR)
+	if (v->type == SSE_AWK_VAL_STR)
 	{
-		str = ((xp_awk_val_str_t*)v)->buf;
-		len = ((xp_awk_val_str_t*)v)->len;
+		str = ((sse_awk_val_str_t*)v)->buf;
+		len = ((sse_awk_val_str_t*)v)->len;
 	}
 	else
 	{
-		str = xp_awk_valtostr (
+		str = sse_awk_valtostr (
 			run, v, 
-			XP_AWK_VALTOSTR_CLEAR | XP_AWK_VALTOSTR_PRINT, 
-			XP_NULL, &len);
-		if (str == XP_NULL) return -1;
+			SSE_AWK_VALTOSTR_CLEAR | SSE_AWK_VALTOSTR_PRINT, 
+			SSE_NULL, &len);
+		if (str == SSE_NULL) return -1;
 	}
 
-	n = xp_awk_writeextio_str (run, out_type, name, str, len);
+	n = sse_awk_writeextio_str (run, out_type, name, str, len);
 
-	if (v->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
+	if (v->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str);
 	return n;
 }
 
-int xp_awk_writeextio_str (
-	xp_awk_run_t* run, int out_type, 
-	const xp_char_t* name, xp_char_t* str, xp_size_t len)
+int sse_awk_writeextio_str (
+	sse_awk_run_t* run, int out_type, 
+	const sse_char_t* name, sse_char_t* str, sse_size_t len)
 {
-	xp_awk_extio_t* p = run->extio.chain;
-	xp_awk_io_t handler;
+	sse_awk_extio_t* p = run->extio.chain;
+	sse_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
 
-	xp_awk_assert (run->awk, 
-		out_type >= 0 && out_type <= xp_countof(__out_type_map));
-	xp_awk_assert (run->awk,
-		out_type >= 0 && out_type <= xp_countof(__out_mode_map));
-	xp_awk_assert (run->awk,
-		out_type >= 0 && out_type <= xp_countof(__out_mask_map));
+	sse_awk_assert (run->awk, 
+		out_type >= 0 && out_type <= sse_countof(__out_type_map));
+	sse_awk_assert (run->awk,
+		out_type >= 0 && out_type <= sse_countof(__out_mode_map));
+	sse_awk_assert (run->awk,
+		out_type >= 0 && out_type <= sse_countof(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];
@@ -410,69 +410,69 @@ int xp_awk_writeextio_str (
 	extio_mask = __out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == XP_NULL)
+	if (handler == SSE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = SSE_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
 	/* look for the corresponding extio for name */
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		/* the file "1.tmp", in the following code snippets, 
 		 * would be opened by the first print statement, but not by
 		 * the second print statement. this is because
-		 * both XP_AWK_OUT_FILE and XP_AWK_OUT_FILE_APPEND are
-		 * translated to XP_AWK_EXTIO_FILE and it is used to
+		 * both SSE_AWK_OUT_FILE and SSE_AWK_OUT_FILE_APPEND are
+		 * translated to SSE_AWK_EXTIO_FILE and it is used to
 		 * keep track of file handles..
 		 *
 		 *    print "1111" >> "1.tmp"
 		 *    print "1111" > "1.tmp"
 		 */
 		if (p->type == (extio_type | extio_mask) && 
-		    xp_awk_strcmp (p->name, name) == 0) break;
+		    sse_awk_strcmp (p->name, name) == 0) break;
 		p = p->next;
 	}
 
 	/* if there is not corresponding extio for name, create one */
-	if (p == XP_NULL)
+	if (p == SSE_NULL)
 	{
-		p = (xp_awk_extio_t*) XP_AWK_MALLOC (
-			run->awk, xp_sizeof(xp_awk_extio_t));
-		if (p == XP_NULL)
+		p = (sse_awk_extio_t*) SSE_AWK_MALLOC (
+			run->awk, sse_sizeof(sse_awk_extio_t));
+		if (p == SSE_NULL)
 		{
-			run->errnum = XP_AWK_ENOMEM;
+			run->errnum = SSE_AWK_ENOMEM;
 			return -1;
 		}
 
-		p->name = xp_awk_strdup (run->awk, name);
-		if (p->name == XP_NULL)
+		p->name = sse_awk_strdup (run->awk, name);
+		if (p->name == SSE_NULL)
 		{
-			XP_AWK_FREE (run->awk, p);
-			run->errnum = XP_AWK_ENOMEM;
+			SSE_AWK_FREE (run->awk, p);
+			run->errnum = SSE_AWK_ENOMEM;
 			return -1;
 		}
 
 		p->run = run;
 		p->type = (extio_type | extio_mask);
 		p->mode = extio_mode;
-		p->handle = XP_NULL;
-		p->next = XP_NULL;
+		p->handle = SSE_NULL;
+		p->next = SSE_NULL;
 		p->custom_data = run->extio.custom_data;
 
-		n = handler (XP_AWK_IO_OPEN, p, XP_NULL, 0);
+		n = handler (SSE_AWK_IO_OPEN, p, SSE_NULL, 0);
 		if (n == -1)
 		{
-			XP_AWK_FREE (run->awk, p->name);
-			XP_AWK_FREE (run->awk, p);
+			SSE_AWK_FREE (run->awk, p->name);
+			SSE_AWK_FREE (run->awk, p);
 				
 			/* TODO: use meaningful error code */
-			if (xp_awk_setglobal (
-				run, XP_AWK_GLOBAL_ERRNO, 
-				xp_awk_val_one) == -1) return -1;
+			if (sse_awk_setglobal (
+				run, SSE_AWK_GLOBAL_ERRNO, 
+				sse_awk_val_one) == -1) return -1;
 
-			run->errnum = XP_AWK_EIOHANDLER;
+			run->errnum = SSE_AWK_EIOHANDLER;
 			return -1;
 		}
 
@@ -491,16 +491,16 @@ int xp_awk_writeextio_str (
 /* TODO: if write handler returns less than the request, loop */
 	if (len > 0)
 	{
-		n = handler (XP_AWK_IO_WRITE, p, str, len);
+		n = handler (SSE_AWK_IO_WRITE, p, str, len);
 
 		if (n == -1) 
 		{
 			/* TODO: use meaningful error code */
-			if (xp_awk_setglobal (
-				run, XP_AWK_GLOBAL_ERRNO, 
-				xp_awk_val_one) == -1) return -1;
+			if (sse_awk_setglobal (
+				run, SSE_AWK_GLOBAL_ERRNO, 
+				sse_awk_val_one) == -1) return -1;
 
-			run->errnum = XP_AWK_EIOHANDLER;
+			run->errnum = SSE_AWK_EIOHANDLER;
 			return -1;
 		}
 
@@ -511,20 +511,20 @@ int xp_awk_writeextio_str (
 }
 
 
-int xp_awk_flushextio (
-	xp_awk_run_t* run, int out_type, const xp_char_t* name)
+int sse_awk_flushextio (
+	sse_awk_run_t* run, int out_type, const sse_char_t* name)
 {
-	xp_awk_extio_t* p = run->extio.chain;
-	xp_awk_io_t handler;
+	sse_awk_extio_t* p = run->extio.chain;
+	sse_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
-	xp_bool_t ok = xp_false;
+	sse_bool_t ok = sse_false;
 
-	xp_awk_assert (run->awk,
-		out_type >= 0 && out_type <= xp_countof(__out_type_map));
-	xp_awk_assert (run->awk,
-		out_type >= 0 && out_type <= xp_countof(__out_mode_map));
-	xp_awk_assert (run->awk,
-		out_type >= 0 && out_type <= xp_countof(__out_mask_map));
+	sse_awk_assert (run->awk,
+		out_type >= 0 && out_type <= sse_countof(__out_type_map));
+	sse_awk_assert (run->awk,
+		out_type >= 0 && out_type <= sse_countof(__out_mode_map));
+	sse_awk_assert (run->awk,
+		out_type >= 0 && out_type <= sse_countof(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];
@@ -532,33 +532,33 @@ int xp_awk_flushextio (
 	extio_mask = __out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == XP_NULL)
+	if (handler == SSE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = SSE_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
 	/* look for the corresponding extio for name */
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) && 
-		    (name == XP_NULL || xp_awk_strcmp (p->name, name) == 0)) 
+		    (name == SSE_NULL || sse_awk_strcmp (p->name, name) == 0)) 
 		{
-			n = handler (XP_AWK_IO_FLUSH, p, XP_NULL, 0);
+			n = handler (SSE_AWK_IO_FLUSH, p, SSE_NULL, 0);
 
 			if (n == -1) 
 			{
 				/* TODO: use meaningful error code */
-				if (xp_awk_setglobal (
-					run, XP_AWK_GLOBAL_ERRNO, 
-					xp_awk_val_one) == -1) return -1;
+				if (sse_awk_setglobal (
+					run, SSE_AWK_GLOBAL_ERRNO, 
+					sse_awk_val_one) == -1) return -1;
 
-				run->errnum = XP_AWK_EIOHANDLER;
+				run->errnum = SSE_AWK_EIOHANDLER;
 				return -1;
 			}
 
-			ok = xp_true;
+			ok = sse_true;
 		}
 
 		p = p->next;
@@ -568,26 +568,26 @@ int xp_awk_flushextio (
 
 	/* there is no corresponding extio for name */
 	/* TODO: use meaningful error code. but is this needed? */
-	if (xp_awk_setglobal (
-		run, XP_AWK_GLOBAL_ERRNO, xp_awk_val_one) == -1) return -1;
+	if (sse_awk_setglobal (
+		run, SSE_AWK_GLOBAL_ERRNO, sse_awk_val_one) == -1) return -1;
 
-	run->errnum = XP_AWK_ENOSUCHIO;
+	run->errnum = SSE_AWK_ENOSUCHIO;
 	return -1;
 }
 
-int xp_awk_nextextio_read (
-	xp_awk_run_t* run, int in_type, const xp_char_t* name)
+int sse_awk_nextextio_read (
+	sse_awk_run_t* run, int in_type, const sse_char_t* name)
 {
-	xp_awk_extio_t* p = run->extio.chain;
-	xp_awk_io_t handler;
+	sse_awk_extio_t* p = run->extio.chain;
+	sse_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
 
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_type_map));
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_mode_map));
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_mask_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_type_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_mode_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = __in_type_map[in_type];
@@ -595,51 +595,51 @@ int xp_awk_nextextio_read (
 	extio_mask = __in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == XP_NULL)
+	if (handler == SSE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = SSE_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_awk_strcmp (p->name,name) == 0) break;
+		    sse_awk_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
-	if (p == XP_NULL)
+	if (p == SSE_NULL)
 	{
 		/* something is totally wrong */
-		run->errnum = XP_AWK_EINTERNAL;
+		run->errnum = SSE_AWK_EINTERNAL;
 		return -1;
 	}
 
-	n = handler (XP_AWK_IO_NEXT, p, XP_NULL, 0);
+	n = handler (SSE_AWK_IO_NEXT, p, SSE_NULL, 0);
 	if (n == -1)
 	{
 		/* TODO: is this errnum correct? */
-		run->errnum = XP_AWK_EIOHANDLER;
+		run->errnum = SSE_AWK_EIOHANDLER;
 		return -1;
 	}
 
 	return n;
 }
 
-int xp_awk_closeextio_read (
-	xp_awk_run_t* run, int in_type, const xp_char_t* name)
+int sse_awk_closeextio_read (
+	sse_awk_run_t* run, int in_type, const sse_char_t* name)
 {
-	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
-	xp_awk_io_t handler;
+	sse_awk_extio_t* p = run->extio.chain, * px = SSE_NULL;
+	sse_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask;
 
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_type_map));
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_mode_map));
-	xp_awk_assert (run->awk,
-		in_type >= 0 && in_type <= xp_countof(__in_mask_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_type_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_mode_map));
+	sse_awk_assert (run->awk,
+		in_type >= 0 && in_type <= sse_countof(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = __in_type_map[in_type];
@@ -647,37 +647,37 @@ int xp_awk_closeextio_read (
 	extio_mask = __in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == XP_NULL)
+	if (handler == SSE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = SSE_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_awk_strcmp (p->name, name) == 0) 
+		    sse_awk_strcmp (p->name, name) == 0) 
 		{
-			xp_awk_io_t handler;
+			sse_awk_io_t handler;
 		       
 			handler = run->extio.handler[p->type & __MASK_CLEAR];
-			if (handler != XP_NULL)
+			if (handler != SSE_NULL)
 			{
-				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
+				if (handler (SSE_AWK_IO_CLOSE, p, SSE_NULL, 0) == -1)
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
-					run->errnum = XP_AWK_EIOHANDLER;
+					run->errnum = SSE_AWK_EIOHANDLER;
 					return -1;
 				}
 			}
 
-			if (px != XP_NULL) px->next = p->next;
+			if (px != SSE_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			XP_AWK_FREE (run->awk, p->name);
-			XP_AWK_FREE (run->awk, p);
+			SSE_AWK_FREE (run->awk, p->name);
+			SSE_AWK_FREE (run->awk, p);
 			return 0;
 		}
 
@@ -686,23 +686,23 @@ int xp_awk_closeextio_read (
 	}
 
 	/* this is not a run-time error */
-	run->errnum = XP_AWK_EIOHANDLER;
+	run->errnum = SSE_AWK_EIOHANDLER;
 	return -1;
 }
 
-int xp_awk_closeextio_write (
-	xp_awk_run_t* run, int out_type, const xp_char_t* name)
+int sse_awk_closeextio_write (
+	sse_awk_run_t* run, int out_type, const sse_char_t* name)
 {
-	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
-	xp_awk_io_t handler;
+	sse_awk_extio_t* p = run->extio.chain, * px = SSE_NULL;
+	sse_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask;
 
-	xp_awk_assert (run->awk,
-		out_type >= 0 && out_type <= xp_countof(__out_type_map));
-	xp_awk_assert (run->awk,
-		out_type >= 0 && out_type <= xp_countof(__out_mode_map));
-	xp_awk_assert (run->awk,
-		out_type >= 0 && out_type <= xp_countof(__out_mask_map));
+	sse_awk_assert (run->awk,
+		out_type >= 0 && out_type <= sse_countof(__out_type_map));
+	sse_awk_assert (run->awk,
+		out_type >= 0 && out_type <= sse_countof(__out_mode_map));
+	sse_awk_assert (run->awk,
+		out_type >= 0 && out_type <= sse_countof(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];
@@ -710,37 +710,37 @@ int xp_awk_closeextio_write (
 	extio_mask = __out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == XP_NULL)
+	if (handler == SSE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = XP_AWK_EIOIMPL; /* TODO: change the error code */
+		run->errnum = SSE_AWK_EIOIMPL; /* TODO: change the error code */
 		return -1;
 	}
 
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    xp_awk_strcmp (p->name, name) == 0) 
+		    sse_awk_strcmp (p->name, name) == 0) 
 		{
-			xp_awk_io_t handler;
+			sse_awk_io_t handler;
 		       
 			handler = run->extio.handler[p->type & __MASK_CLEAR];
-			if (handler != XP_NULL)
+			if (handler != SSE_NULL)
 			{
-				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
+				if (handler (SSE_AWK_IO_CLOSE, p, SSE_NULL, 0) == -1)
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
-					run->errnum = XP_AWK_EIOHANDLER;
+					run->errnum = SSE_AWK_EIOHANDLER;
 					return -1;
 				}
 			}
 
-			if (px != XP_NULL) px->next = p->next;
+			if (px != SSE_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			XP_AWK_FREE (run->awk, p->name);
-			XP_AWK_FREE (run->awk, p);
+			SSE_AWK_FREE (run->awk, p->name);
+			SSE_AWK_FREE (run->awk, p);
 			return 0;
 		}
 
@@ -750,39 +750,39 @@ int xp_awk_closeextio_write (
 
 	/* this is not a run-time error */
 	/* TODO: set ERRNO */
-	run->errnum = XP_AWK_EIOHANDLER;
+	run->errnum = SSE_AWK_EIOHANDLER;
 	return -1;
 }
 
-int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name)
+int sse_awk_closeextio (sse_awk_run_t* run, const sse_char_t* name)
 {
-	xp_awk_extio_t* p = run->extio.chain, * px = XP_NULL;
+	sse_awk_extio_t* p = run->extio.chain, * px = SSE_NULL;
 
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		 /* it handles the first that matches the given name
 		  * regardless of the extio type */
-		if (xp_awk_strcmp (p->name, name) == 0) 
+		if (sse_awk_strcmp (p->name, name) == 0) 
 		{
-			xp_awk_io_t handler;
+			sse_awk_io_t handler;
 		       
 			handler = run->extio.handler[p->type & __MASK_CLEAR];
-			if (handler != XP_NULL)
+			if (handler != SSE_NULL)
 			{
-				if (handler (XP_AWK_IO_CLOSE, p, XP_NULL, 0) == -1)
+				if (handler (SSE_AWK_IO_CLOSE, p, SSE_NULL, 0) == -1)
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
-					run->errnum = XP_AWK_EIOHANDLER;
+					run->errnum = SSE_AWK_EIOHANDLER;
 					return -1;
 				}
 			}
 
-			if (px != XP_NULL) px->next = p->next;
+			if (px != SSE_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			XP_AWK_FREE (run->awk, p->name);
-			XP_AWK_FREE (run->awk, p);
+			SSE_AWK_FREE (run->awk, p->name);
+			SSE_AWK_FREE (run->awk, p);
 			return 0;
 		}
 
@@ -792,25 +792,25 @@ int xp_awk_closeextio (xp_awk_run_t* run, const xp_char_t* name)
 
 	/* this is not a run-time error */
 	/* TODO: set ERRNO */
-	run->errnum = XP_AWK_EIOHANDLER;
+	run->errnum = SSE_AWK_EIOHANDLER;
 	return -1;
 }
 
-void xp_awk_clearextio (xp_awk_run_t* run)
+void sse_awk_clearextio (sse_awk_run_t* run)
 {
-	xp_awk_extio_t* next;
-	xp_awk_io_t handler;
+	sse_awk_extio_t* next;
+	sse_awk_io_t handler;
 	int n;
 
-	while (run->extio.chain != XP_NULL)
+	while (run->extio.chain != SSE_NULL)
 	{
 		handler = run->extio.handler[
 			run->extio.chain->type & __MASK_CLEAR];
 		next = run->extio.chain->next;
 
-		if (handler != XP_NULL)
+		if (handler != SSE_NULL)
 		{
-			n = handler (XP_AWK_IO_CLOSE, run->extio.chain, XP_NULL, 0);
+			n = handler (SSE_AWK_IO_CLOSE, run->extio.chain, SSE_NULL, 0);
 			if (n == -1)
 			{
 				/* TODO: 
@@ -818,8 +818,8 @@ void xp_awk_clearextio (xp_awk_run_t* run)
 			}
 		}
 
-		XP_AWK_FREE (run->awk, run->extio.chain->name);
-		XP_AWK_FREE (run->awk, run->extio.chain);
+		SSE_AWK_FREE (run->awk, run->extio.chain->name);
+		SSE_AWK_FREE (run->awk, run->extio.chain);
 
 		run->extio.chain = next;
 	}

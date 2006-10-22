@@ -1,16 +1,16 @@
 /*
- * $Id: jni.c,v 1.11 2006-10-22 07:05:34 bacon Exp $
+ * $Id: jni.c,v 1.12 2006-10-22 11:34:53 bacon Exp $
  */
 
-#include <xp/awk/jni.h>
-#include <xp/awk/awk.h>
+#include <sse/awk/jni.h>
+#include <sse/awk/awk.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wctype.h>
 #include <wchar.h>
 #include <stdio.h>
 
-#define EXCEPTION_AWK "xpkit/xpj/awk/AwkException"
+#define EXCEPTION_AWK "ssekit/ssej/awk/AwkException"
 #define FIELD_AWK     "__awk"
 
 enum
@@ -19,16 +19,16 @@ enum
 	SOURCE_WRITE = 2
 };
 
-/* TODO: what if xp_char_t is xp_mchar_t??? */
+/* TODO: what if sse_char_t is sse_mchar_t??? */
 
-static xp_ssize_t __read_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count);
-static xp_ssize_t __write_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count);
-static xp_ssize_t __process_extio_console (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count);
-static xp_ssize_t __process_extio_file (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count);
+static sse_ssize_t __read_source (
+	int cmd, void* arg, sse_char_t* data, sse_size_t count);
+static sse_ssize_t __write_source (
+	int cmd, void* arg, sse_char_t* data, sse_size_t count);
+static sse_ssize_t __process_extio_console (
+	int cmd, void* arg, sse_char_t* data, sse_size_t count);
+static sse_ssize_t __process_extio_file (
+	int cmd, void* arg, sse_char_t* data, sse_size_t count);
 
 typedef struct srcio_data_t srcio_data_t;
 typedef struct runio_data_t runio_data_t;
@@ -45,12 +45,12 @@ struct runio_data_t
 	jobject obj;
 };
 
-static void* __awk_malloc (xp_size_t n, void* custom_data)
+static void* __awk_malloc (sse_size_t n, void* custom_data)
 {
 	return malloc (n);
 }
 
-static void* __awk_realloc (void* ptr, xp_size_t n, void* custom_data)
+static void* __awk_realloc (void* ptr, sse_size_t n, void* custom_data)
 {
 	return realloc (ptr, n);
 }
@@ -60,13 +60,13 @@ static void __awk_free (void* ptr, void* custom_data)
 	free (ptr);
 }
 
-JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_open (JNIEnv* env, jobject obj)
+JNIESSEORT void JNICALL Java_ssekit_ssej_awk_Awk_open (JNIEnv* env, jobject obj)
 {
 	jclass class; 
 	jfieldID fid;
 	jthrowable except;
-	xp_awk_t* awk;
-	xp_awk_syscas_t syscas;
+	sse_awk_t* awk;
+	sse_awk_syscas_t syscas;
 	int opt;
 	
 	class = (*env)->GetObjectClass(env, obj);
@@ -103,7 +103,7 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_open (JNIEnv* env, jobject obj)
 	syscas.abort = abort;
 #endif
 
-	awk = xp_awk_open (&syscas);
+	awk = sse_awk_open (&syscas);
 	if (awk == NULL)
 	{
 		except = (*env)->FindClass (env, EXCEPTION_AWK);
@@ -117,15 +117,15 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	(*env)->SetLongField (env, obj, fid, (jlong)awk);
 
-	opt = XP_AWK_EXPLICIT | XP_AWK_UNIQUE | XP_AWK_DBLSLASHES |
-		XP_AWK_SHADING | XP_AWK_IMPLICIT | XP_AWK_SHIFT | 
-		XP_AWK_EXTIO | XP_AWK_BLOCKLESS;
-	xp_awk_setopt (awk, opt);
+	opt = SSE_AWK_ESSELICIT | SSE_AWK_UNIQUE | SSE_AWK_DBLSLASHES |
+		SSE_AWK_SHADING | SSE_AWK_IMPLICIT | SSE_AWK_SHIFT | 
+		SSE_AWK_EXTIO | SSE_AWK_BLOCKLESS;
+	sse_awk_setopt (awk, opt);
 
 printf ("__awk(native) done => %u, 0x%X\n", awk, awk);
 }
 
-JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_close (JNIEnv* env, jobject obj)
+JNIESSEORT void JNICALL Java_ssekit_ssej_awk_Awk_close (JNIEnv* env, jobject obj)
 {
 	jclass class; 
 	jfieldID fid;
@@ -135,20 +135,20 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_close (JNIEnv* env, jobject obj)
 	fid = (*env)->GetFieldID (env, class, FIELD_AWK, "J");
 	if (fid == 0) return;
 
-	xp_awk_close ((xp_awk_t*) (*env)->GetLongField (env, obj, fid));
+	sse_awk_close ((sse_awk_t*) (*env)->GetLongField (env, obj, fid));
 	(*env)->SetLongField (env, obj, fid, (jlong)0);
 
 printf ("close (native) done\n");
 }
 
-JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_parse (JNIEnv* env, jobject obj)
+JNIESSEORT void JNICALL Java_ssekit_ssej_awk_Awk_parse (JNIEnv* env, jobject obj)
 {
 	jclass class;
 	jfieldID fid;
 	jthrowable except;
 
-	xp_awk_t* awk;
-	xp_awk_srcios_t srcios;
+	sse_awk_t* awk;
+	sse_awk_srcios_t srcios;
 	srcio_data_t srcio_data;
 
 	class = (*env)->GetObjectClass (env, obj);
@@ -156,7 +156,7 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_parse (JNIEnv* env, jobject obj)
 	fid = (*env)->GetFieldID (env, class, FIELD_AWK, "J");
 	if (fid == 0) return;
 
-	awk = (xp_awk_t*) (*env)->GetLongField (env, obj, fid);
+	awk = (sse_awk_t*) (*env)->GetLongField (env, obj, fid);
 
 	srcio_data.env = env;
 	srcio_data.obj = obj;
@@ -165,25 +165,25 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_parse (JNIEnv* env, jobject obj)
 	srcios.out = __write_source;
 	srcios.custom_data = &srcio_data;
 
-	if (xp_awk_parse (awk, &srcios) == -1)
+	if (sse_awk_parse (awk, &srcios) == -1)
 	{
 printf ("parse error.......\n");
 		except = (*env)->FindClass (env, EXCEPTION_AWK);
 		if (except == 0) return;
 		(*env)->ThrowNew (env, except, "Parse Error ...");
-printf ("parse error -> line [%d] %S\n", xp_awk_getsrcline(awk), xp_awk_geterrstr(xp_awk_geterrnum(awk)));
+printf ("parse error -> line [%d] %S\n", sse_awk_getsrcline(awk), sse_awk_geterrstr(sse_awk_geterrnum(awk)));
 		return;
 	}
 }
 
-JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_run (JNIEnv* env, jobject obj)
+JNIESSEORT void JNICALL Java_ssekit_ssej_awk_Awk_run (JNIEnv* env, jobject obj)
 {
 	jclass class;
 	jfieldID fid;
 	jthrowable except;
 
-	xp_awk_t* awk;
-	xp_awk_runios_t runios;
+	sse_awk_t* awk;
+	sse_awk_runios_t runios;
 	runio_data_t runio_data;
 
 	class = (*env)->GetObjectClass (env, obj);
@@ -191,18 +191,18 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_run (JNIEnv* env, jobject obj)
 	fid = (*env)->GetFieldID (env, class, FIELD_AWK, "J");
 	if (fid == 0) return;
 
-	awk = (xp_awk_t*) (*env)->GetLongField (env, obj, fid);
+	awk = (sse_awk_t*) (*env)->GetLongField (env, obj, fid);
 
 	runio_data.env = env;
 	runio_data.obj = obj;
 
-	runios.pipe = XP_NULL;
-	runios.coproc = XP_NULL;
+	runios.pipe = SSE_NULL;
+	runios.coproc = SSE_NULL;
 	runios.file = __process_extio_file;
 	runios.console = __process_extio_console;
 	runios.custom_data = &runio_data;
 
-	if (xp_awk_run (awk, &runios, XP_NULL, XP_NULL) == -1)
+	if (sse_awk_run (awk, &runios, SSE_NULL, SSE_NULL) == -1)
 	{
 		except = (*env)->FindClass (env, EXCEPTION_AWK);
 		if (except == 0) return;
@@ -211,21 +211,21 @@ JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_run (JNIEnv* env, jobject obj)
 	}
 }
 
-JNIEXPORT void JNICALL Java_xpkit_xpj_awk_Awk_set_1extio (
+JNIESSEORT void JNICALL Java_ssekit_ssej_awk_Awk_set_1extio (
 	JNIEnv* env, jobject obj, jlong extio, jobject handle)
 {
-	xp_awk_extio_t* epa = (xp_awk_extio_t*)extio;
+	sse_awk_extio_t* epa = (sse_awk_extio_t*)extio;
 	epa->handle = (void*)handle;
 }
 
-JNIEXPORT jobject JNICALL Java_xpkit_xpj_awk_Awk_get_1extio (
+JNIESSEORT jobject JNICALL Java_ssekit_ssej_awk_Awk_get_1extio (
 	JNIEnv* env, jobject obj, jlong extio)
 {
-	xp_awk_extio_t* epa = (xp_awk_extio_t*)extio;
+	sse_awk_extio_t* epa = (sse_awk_extio_t*)extio;
 	return (jobject)epa->handle;
 }
 
-static xp_ssize_t __call_java_open_source (JNIEnv* env, jobject obj, int mode)
+static sse_ssize_t __call_java_open_source (JNIEnv* env, jobject obj, int mode)
 {
 	jclass class; 
 	jmethodID mid;
@@ -248,7 +248,7 @@ static xp_ssize_t __call_java_open_source (JNIEnv* env, jobject obj, int mode)
 	return ret;
 }
 
-static xp_ssize_t __call_java_close_source (JNIEnv* env, jobject obj, int mode)
+static sse_ssize_t __call_java_close_source (JNIEnv* env, jobject obj, int mode)
 {
 	jclass class; 
 	jmethodID mid;
@@ -271,8 +271,8 @@ static xp_ssize_t __call_java_close_source (JNIEnv* env, jobject obj, int mode)
 	return ret;
 }
 
-static xp_ssize_t __call_java_read_source (
-	JNIEnv* env, jobject obj, xp_char_t* buf, xp_size_t size)
+static sse_ssize_t __call_java_read_source (
+	JNIEnv* env, jobject obj, sse_char_t* buf, sse_size_t size)
 {
 	jclass class; 
 	jmethodID mid;
@@ -298,15 +298,15 @@ static xp_ssize_t __call_java_read_source (
 	}
 
 	tmp = (*env)->GetCharArrayElements (env, array, 0);
-	for (i = 0; i < ret; i++) buf[i] = (xp_char_t)tmp[i]; 
+	for (i = 0; i < ret; i++) buf[i] = (sse_char_t)tmp[i]; 
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
 	(*env)->DeleteLocalRef (env, array);
 	return i;
 }
 
-static xp_ssize_t __call_java_write_source (
-	JNIEnv* env, jobject obj, xp_char_t* buf, xp_size_t size)
+static sse_ssize_t __call_java_write_source (
+	JNIEnv* env, jobject obj, sse_char_t* buf, sse_size_t size)
 {
 	jclass class; 
 	jmethodID mid;
@@ -339,8 +339,8 @@ static xp_ssize_t __call_java_write_source (
 	return ret;
 }
 
-static xp_ssize_t __call_java_open_extio (
-	JNIEnv* env, jobject obj, char* meth, xp_awk_extio_t* extio)
+static sse_ssize_t __call_java_open_extio (
+	JNIEnv* env, jobject obj, char* meth, sse_awk_extio_t* extio)
 {
 	jclass class; 
 	jmethodID mid;
@@ -349,7 +349,7 @@ static xp_ssize_t __call_java_open_extio (
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	if (extio == XP_NULL)
+	if (extio == SSE_NULL)
 	{
 		mid = (*env)->GetMethodID (env, class, meth, "()I");
 		if (mid == 0) return -1;
@@ -366,7 +366,7 @@ static xp_ssize_t __call_java_open_extio (
 		if (mid == 0) return -1;
 
 		name_str = (*env)->NewString (
-			env, extio->name, xp_awk_strlen(extio->name));
+			env, extio->name, sse_awk_strlen(extio->name));
 		if (name_str == 0) return -1;
 
 		ret = (*env)->CallIntMethod (env, obj, mid, name_str);
@@ -377,7 +377,7 @@ static xp_ssize_t __call_java_open_extio (
 		jmethodID extio_cons;
 		jobject extio_object;
 
-		extio_class = (*env)->FindClass (env, "xpkit/xpj/awk/Extio");
+		extio_class = (*env)->FindClass (env, "ssekit/ssej/awk/Extio");
 		if (extio_class == NULL) return -1;
 
 		extio_cons = (*env)->GetMethodID (
@@ -385,7 +385,7 @@ static xp_ssize_t __call_java_open_extio (
 		if (extio_cons == NULL) return -1;
 
 		mid = (*env)->GetMethodID (
-			env, class, meth, "(Lxpkit/xpj/awk/Extio;)I");
+			env, class, meth, "(Lssekit/ssej/awk/Extio;)I");
 		if (mid == NULL) return -1;
 
 		extio_object = (*env)->NewObject (
@@ -405,8 +405,8 @@ static xp_ssize_t __call_java_open_extio (
 	return ret;
 }
 
-static xp_ssize_t __call_java_close_extio (
-	JNIEnv* env, jobject obj, char* meth, xp_awk_extio_t* extio)
+static sse_ssize_t __call_java_close_extio (
+	JNIEnv* env, jobject obj, char* meth, sse_awk_extio_t* extio)
 {
 	jclass class; 
 	jmethodID mid;
@@ -415,7 +415,7 @@ static xp_ssize_t __call_java_close_extio (
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	if (extio == XP_NULL)
+	if (extio == SSE_NULL)
 	{
 		mid = (*env)->GetMethodID (env, class, meth, "()I");
 		if (mid == 0) return -1;
@@ -431,7 +431,7 @@ static xp_ssize_t __call_java_close_extio (
 		if (mid == 0) return -1;
 
 		name_str = (*env)->NewString (
-			env, extio->name, xp_awk_strlen(extio->name));
+			env, extio->name, sse_awk_strlen(extio->name));
 		if (name_str == 0) return -1;
 
 		ret = (*env)->CallIntMethod (env, obj, mid, name_str);
@@ -448,8 +448,8 @@ static xp_ssize_t __call_java_close_extio (
 	return ret;
 }
 
-static xp_ssize_t __call_java_read_extio (
-	JNIEnv* env, jobject obj, char* meth, xp_char_t* buf, xp_size_t size)
+static sse_ssize_t __call_java_read_extio (
+	JNIEnv* env, jobject obj, char* meth, sse_char_t* buf, sse_size_t size)
 {
 	jclass class; 
 	jmethodID mid;
@@ -475,20 +475,20 @@ static xp_ssize_t __call_java_read_extio (
 	}
 
 	tmp = (*env)->GetCharArrayElements (env, array, 0);
-	for (i = 0; i < ret; i++) buf[i] = (xp_char_t)tmp[i]; 
+	for (i = 0; i < ret; i++) buf[i] = (sse_char_t)tmp[i]; 
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
 	(*env)->DeleteLocalRef (env, array);
 	return ret;
 }
 
-static xp_ssize_t __call_java_write_extio (
-	JNIEnv* env, jobject obj, char* meth, xp_char_t* data, xp_size_t size)
+static sse_ssize_t __call_java_write_extio (
+	JNIEnv* env, jobject obj, char* meth, sse_char_t* data, sse_size_t size)
 {
 	jclass class; 
 	jmethodID mid;
 	jcharArray array;
-	xp_ssize_t i;
+	sse_ssize_t i;
 	jchar* tmp;
 	jint ret;
 	jthrowable thrown;
@@ -517,22 +517,22 @@ static xp_ssize_t __call_java_write_extio (
 	return ret;
 }
 
-static xp_ssize_t __read_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count)
+static sse_ssize_t __read_source (
+	int cmd, void* arg, sse_char_t* data, sse_size_t count)
 {
 	srcio_data_t* srcio_data = (srcio_data_t*)arg;
 
-	if (cmd == XP_AWK_IO_OPEN) 
+	if (cmd == SSE_AWK_IO_OPEN) 
 	{
 		return __call_java_open_source (
 			srcio_data->env, srcio_data->obj, SOURCE_READ);
 	}
-	else if (cmd == XP_AWK_IO_CLOSE)
+	else if (cmd == SSE_AWK_IO_CLOSE)
 	{
 		return __call_java_close_source (
 			srcio_data->env, srcio_data->obj, SOURCE_READ);
 	}
-	else if (cmd == XP_AWK_IO_READ)
+	else if (cmd == SSE_AWK_IO_READ)
 	{
 		return __call_java_read_source (
 			srcio_data->env, srcio_data->obj, data, count);
@@ -541,22 +541,22 @@ static xp_ssize_t __read_source (
 	return -1;
 }
 
-static xp_ssize_t __write_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t count)
+static sse_ssize_t __write_source (
+	int cmd, void* arg, sse_char_t* data, sse_size_t count)
 {
 	srcio_data_t* srcio_data = (srcio_data_t*)arg;
 
-	if (cmd == XP_AWK_IO_OPEN) 
+	if (cmd == SSE_AWK_IO_OPEN) 
 	{
 		return __call_java_open_source (
 			srcio_data->env, srcio_data->obj, SOURCE_WRITE);
 	}
-	else if (cmd == XP_AWK_IO_CLOSE)
+	else if (cmd == SSE_AWK_IO_CLOSE)
 	{
 		return __call_java_close_source (
 			srcio_data->env, srcio_data->obj, SOURCE_WRITE);
 	}
-	else if (cmd == XP_AWK_IO_WRITE)
+	else if (cmd == SSE_AWK_IO_WRITE)
 	{
 		return __call_java_write_source (
 			srcio_data->env, srcio_data->obj, data, count);
@@ -565,45 +565,45 @@ static xp_ssize_t __write_source (
 	return -1;
 }
 
-static xp_ssize_t __process_extio_console (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static sse_ssize_t __process_extio_console (
+	int cmd, void* arg, sse_char_t* data, sse_size_t size)
 {
-	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
+	sse_awk_extio_t* epa = (sse_awk_extio_t*)arg;
 	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
 
-	if (cmd == XP_AWK_IO_OPEN)
+	if (cmd == SSE_AWK_IO_OPEN)
 	{
 		return __call_java_open_extio (
 			runio_data->env, runio_data->obj, 
-			"open_console", XP_NULL);
+			"open_console", SSE_NULL);
 	}
-	else if (cmd == XP_AWK_IO_CLOSE)
+	else if (cmd == SSE_AWK_IO_CLOSE)
 	{
 		return __call_java_close_extio (
 			runio_data->env, runio_data->obj, 
-			"close_console", XP_NULL);
+			"close_console", SSE_NULL);
 	}
 
-	else if (cmd == XP_AWK_IO_READ)
+	else if (cmd == SSE_AWK_IO_READ)
 	{
 		return __call_java_read_extio (
 			runio_data->env, runio_data->obj, "read_console",
 			data, size);
 	}
-	else if (cmd == XP_AWK_IO_WRITE)
+	else if (cmd == SSE_AWK_IO_WRITE)
 	{
 		return __call_java_write_extio (
 			runio_data->env, runio_data->obj, "write_console",
 			data, size);
 	}
 #if 0
-	else if (cmd == XP_AWK_IO_FLUSH)
+	else if (cmd == SSE_AWK_IO_FLUSH)
 	{
 		return __call_java_flush_extio (
 			runio_data->env, runio_data->obj, "flush_console",
 			data, size);
 	}
-	else if (cmd == XP_AWK_IO_NEXT)
+	else if (cmd == SSE_AWK_IO_NEXT)
 	{
 		return __call_java_next_extio (
 			runio_data->env, runio_data->obj, "flush_console",
@@ -614,19 +614,19 @@ static xp_ssize_t __process_extio_console (
 	return -1;
 }
 
-static xp_ssize_t __process_extio_file (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static sse_ssize_t __process_extio_file (
+	int cmd, void* arg, sse_char_t* data, sse_size_t size)
 {
-	xp_awk_extio_t* epa = (xp_awk_extio_t*)arg;
+	sse_awk_extio_t* epa = (sse_awk_extio_t*)arg;
 	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
 
-	if (cmd == XP_AWK_IO_OPEN)
+	if (cmd == SSE_AWK_IO_OPEN)
 	{
 		return __call_java_open_extio (
 			runio_data->env, runio_data->obj, 
 			"open_file", epa);
 	}
-	else if (cmd == XP_AWK_IO_CLOSE)
+	else if (cmd == SSE_AWK_IO_CLOSE)
 	{
 		return __call_java_close_extio (
 			runio_data->env, runio_data->obj, 

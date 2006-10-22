@@ -1,124 +1,124 @@
 /*
- * $Id: err.c,v 1.42 2006-10-10 07:02:38 bacon Exp $
+ * $Id: err.c,v 1.43 2006-10-22 11:34:53 bacon Exp $
  */
 
-#include <xp/awk/awk_i.h>
+#include <sse/awk/awk_i.h>
 
-int xp_awk_geterrnum (xp_awk_t* awk)
+int sse_awk_geterrnum (sse_awk_t* awk)
 {
 	return awk->errnum;
 }
 
-const xp_char_t* xp_awk_geterrstr (int errnum)
+const sse_char_t* sse_awk_geterrstr (int errnum)
 {
-	static const xp_char_t* __errstr[] =
+	static const sse_char_t* __errstr[] =
  	{
-		XP_T("no error"),
-		XP_T("out of memory"),
-		XP_T("invalid parameter"),
-		XP_T("general run-time error"),
-		XP_T("one or more running instances"),
-		XP_T("too many running instances"),
-		XP_T("recursion too deep"),
+		SSE_T("no error"),
+		SSE_T("out of memory"),
+		SSE_T("invalid parameter"),
+		SSE_T("general run-time error"),
+		SSE_T("one or more running instances"),
+		SSE_T("too many running instances"),
+		SSE_T("recursion too deep"),
 
-		XP_T("cannot open source input"),
-		XP_T("cannot close source input"),
-		XP_T("cannot read source input"),
+		SSE_T("cannot open source input"),
+		SSE_T("cannot close source input"),
+		SSE_T("cannot read source input"),
 
-		XP_T("cannot open source output"),
-		XP_T("cannot close source output"),
-		XP_T("cannot write source output"),
+		SSE_T("cannot open source output"),
+		SSE_T("cannot close source output"),
+		SSE_T("cannot write source output"),
 
-		XP_T("cannot open console for read"),
-		XP_T("cannot close console for read"),
-		XP_T("cannot switch to next console for read"),
-		XP_T("cannot read from console"),
+		SSE_T("cannot open console for read"),
+		SSE_T("cannot close console for read"),
+		SSE_T("cannot switch to next console for read"),
+		SSE_T("cannot read from console"),
 
-		XP_T("cannot open console for write"),
-		XP_T("cannot close console for write"),
-		XP_T("cannot switch to next console for write"),
-		XP_T("cannot write to console"),
+		SSE_T("cannot open console for write"),
+		SSE_T("cannot close console for write"),
+		SSE_T("cannot switch to next console for write"),
+		SSE_T("cannot write to console"),
 
-		XP_T("invalid character"),
-		XP_T("cannot unget character"),
+		SSE_T("invalid character"),
+		SSE_T("cannot unget character"),
 
-		XP_T("unexpected end of source"),
-		XP_T("unexpected end of a comment"),
-		XP_T("unexpected end of a string"),
-		XP_T("unexpected end of a regular expression"),
-		XP_T("left brace expected"),
-		XP_T("left parenthesis expected"),
-		XP_T("right parenthesis expected"),
-		XP_T("right bracket expected"),
-		XP_T("comma expected"),
-		XP_T("semicolon expected"),
-		XP_T("colon expected"),
-		XP_T("keyword 'in' expected"),
-		XP_T("not a variable after 'in'"),
-		XP_T("expression expected"),
+		SSE_T("unesseected end of source"),
+		SSE_T("unesseected end of a comment"),
+		SSE_T("unesseected end of a string"),
+		SSE_T("unesseected end of a regular esseression"),
+		SSE_T("left brace esseected"),
+		SSE_T("left parenthesis esseected"),
+		SSE_T("right parenthesis esseected"),
+		SSE_T("right bracket esseected"),
+		SSE_T("comma esseected"),
+		SSE_T("semicolon esseected"),
+		SSE_T("colon esseected"),
+		SSE_T("keyword 'in' esseected"),
+		SSE_T("not a variable after 'in'"),
+		SSE_T("esseression esseected"),
 
-		XP_T("keyword 'while' expected"),
-		XP_T("assignment statement expected"),
-		XP_T("identifier expected"),
-		XP_T("BEGIN requires an action block"),
-		XP_T("END requires an action block"),
-		XP_T("duplicate BEGIN"),
-		XP_T("duplicate END"),
-		XP_T("duplicate function name"),
-		XP_T("duplicate parameter name"),
-		XP_T("duplicate variable name"),
-		XP_T("duplicate name"),
-		XP_T("undefined identifier"),
-		XP_T("l-value required"),
-		XP_T("too few arguments"),
-		XP_T("too many arguments"),
-		XP_T("too many global variables"),
-		XP_T("too many local variables"),
-		XP_T("too many parameters"),
-		XP_T("break outside a loop"),
-		XP_T("continue outside a loop"),
-		XP_T("next illegal in BEGIN or END block"),
-		XP_T("nextfile illegal in BEGIN or END block"),
-		XP_T("getline expected"),
+		SSE_T("keyword 'while' esseected"),
+		SSE_T("assignment statement esseected"),
+		SSE_T("identifier esseected"),
+		SSE_T("BEGIN requires an action block"),
+		SSE_T("END requires an action block"),
+		SSE_T("duplicate BEGIN"),
+		SSE_T("duplicate END"),
+		SSE_T("duplicate function name"),
+		SSE_T("duplicate parameter name"),
+		SSE_T("duplicate variable name"),
+		SSE_T("duplicate name"),
+		SSE_T("undefined identifier"),
+		SSE_T("l-value required"),
+		SSE_T("too few arguments"),
+		SSE_T("too many arguments"),
+		SSE_T("too many global variables"),
+		SSE_T("too many local variables"),
+		SSE_T("too many parameters"),
+		SSE_T("break outside a loop"),
+		SSE_T("continue outside a loop"),
+		SSE_T("next illegal in BEGIN or END block"),
+		SSE_T("nextfile illegal in BEGIN or END block"),
+		SSE_T("getline esseected"),
 
-		XP_T("divide by zero"),
-		XP_T("invalid operand"),
-		XP_T("wrong position index"),
-		XP_T("no such function"),
-		XP_T("value not assignable"),
-		XP_T("variable not indexable"),
-		XP_T("variable not deletable"),
-		XP_T("value not referenceable"),
-		XP_T("an indexed value cannot be assigned a map"),
-		XP_T("a positional value cannot be assigned a map"),
-		XP_T("cannot change a map to a scalar value"),
-		XP_T("cannot change a scalar value to a map"),
-		XP_T("a map is not allowed"),
-		XP_T("wrong value type"),
-		XP_T("pipe operation error"),
-		XP_T("next cannot be called from the BEGIN or END block"),
-		XP_T("nextfile cannot be called from the BEGIN or END block"),
-		XP_T("wrong implementation of user-defined io handler"),
-		XP_T("no such io name found"),
-		XP_T("io handler has returned an error"),
-		XP_T("internal error that should never have happened"),
+		SSE_T("divide by zero"),
+		SSE_T("invalid operand"),
+		SSE_T("wrong position index"),
+		SSE_T("no such function"),
+		SSE_T("value not assignable"),
+		SSE_T("variable not indexable"),
+		SSE_T("variable not deletable"),
+		SSE_T("value not referenceable"),
+		SSE_T("an indexed value cannot be assigned a map"),
+		SSE_T("a positional value cannot be assigned a map"),
+		SSE_T("cannot change a map to a scalar value"),
+		SSE_T("cannot change a scalar value to a map"),
+		SSE_T("a map is not allowed"),
+		SSE_T("wrong value type"),
+		SSE_T("pipe operation error"),
+		SSE_T("next cannot be called from the BEGIN or END block"),
+		SSE_T("nextfile cannot be called from the BEGIN or END block"),
+		SSE_T("wrong implementation of user-defined io handler"),
+		SSE_T("no such io name found"),
+		SSE_T("io handler has returned an error"),
+		SSE_T("internal error that should never have happened"),
 
-		XP_T("a right parenthesis is expected in the regular expression"),
-		XP_T("a right bracket is expected in the regular expression"),
-		XP_T("a right brace is expected in the regular expression"),
-		XP_T("a colon is expected in the regular expression"),
-		XP_T("invalid character range in the regular expression"),
-		XP_T("invalid character class in the regular expression"),
-		XP_T("invalid boundary range in the regular expression"),
-		XP_T("unexpected end of the regular expression"),
-		XP_T("garbage after the regular expression")
+		SSE_T("a right parenthesis is esseected in the regular esseression"),
+		SSE_T("a right bracket is esseected in the regular esseression"),
+		SSE_T("a right brace is esseected in the regular esseression"),
+		SSE_T("a colon is esseected in the regular esseression"),
+		SSE_T("invalid character range in the regular esseression"),
+		SSE_T("invalid character class in the regular esseression"),
+		SSE_T("invalid boundary range in the regular esseression"),
+		SSE_T("unesseected end of the regular esseression"),
+		SSE_T("garbage after the regular esseression")
 	};
 
-	if (errnum >= 0 && errnum < xp_countof(__errstr)) 
+	if (errnum >= 0 && errnum < sse_countof(__errstr)) 
 	{
 		return __errstr[errnum];
 	}
 
-	return XP_T("unknown error");
+	return SSE_T("unknown error");
 }
 

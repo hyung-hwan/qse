@@ -1,107 +1,107 @@
 /*
- * $Id: awk_i.h,v 1.68 2006-10-17 09:36:08 bacon Exp $
+ * $Id: awk_i.h,v 1.69 2006-10-22 11:34:52 bacon Exp $
  */
 
-#ifndef _XP_AWK_AWKI_H_
-#define _XP_AWK_AWKI_H_
+#ifndef _SSE_AWK_AWKI_H_
+#define _SSE_AWK_AWKI_H_
 
-typedef struct xp_awk_chain_t xp_awk_chain_t;
-typedef struct xp_awk_tree_t xp_awk_tree_t;
+typedef struct sse_awk_chain_t sse_awk_chain_t;
+typedef struct sse_awk_tree_t sse_awk_tree_t;
 
-#include <xp/awk/awk.h>
-#include <xp/awk/str.h>
-#include <xp/awk/rex.h>
-#include <xp/awk/map.h>
-#include <xp/awk/tree.h>
-#include <xp/awk/val.h>
-#include <xp/awk/func.h>
-#include <xp/awk/tab.h>
-#include <xp/awk/parse.h>
-#include <xp/awk/run.h>
-#include <xp/awk/extio.h>
-#include <xp/awk/misc.h>
+#include <sse/awk/awk.h>
+#include <sse/awk/str.h>
+#include <sse/awk/rex.h>
+#include <sse/awk/map.h>
+#include <sse/awk/tree.h>
+#include <sse/awk/val.h>
+#include <sse/awk/func.h>
+#include <sse/awk/tab.h>
+#include <sse/awk/parse.h>
+#include <sse/awk/run.h>
+#include <sse/awk/extio.h>
+#include <sse/awk/misc.h>
 
 #ifdef NDEBUG
-	#define xp_awk_assert(awk,expr) ((void)0)
+	#define sse_awk_assert(awk,esser) ((void)0)
 #else
-	#define xp_awk_assert(awk,expr) (void)((expr) || \
-		(xp_awk_abort(awk, XP_TEXT(#expr), XP_TEXT(__FILE__), __LINE__), 0))
+	#define sse_awk_assert(awk,esser) (void)((esser) || \
+		(sse_awk_abort(awk, SSE_TEXT(#esser), SSE_TEXT(__FILE__), __LINE__), 0))
 #endif
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
 #endif
 
-#define XP_AWK_MAX_GLOBALS 9999
-#define XP_AWK_MAX_LOCALS  9999
-#define XP_AWK_MAX_PARAMS  9999
+#define SSE_AWK_MAX_GLOBALS 9999
+#define SSE_AWK_MAX_LOCALS  9999
+#define SSE_AWK_MAX_PARAMS  9999
 
 #if defined(_WIN32) && defined(_DEBUG)
 	#define _CRTDBG_MAP_ALLOC
 	#include <crtdbg.h>
 
-	#define XP_AWK_MALLOC(awk,size) malloc (size)
-	#define XP_AWK_REALLOC(awk,ptr,size) realloc (ptr, size)
-	#define XP_AWK_FREE(awk,ptr) free (ptr)
+	#define SSE_AWK_MALLOC(awk,size) malloc (size)
+	#define SSE_AWK_REALLOC(awk,ptr,size) realloc (ptr, size)
+	#define SSE_AWK_FREE(awk,ptr) free (ptr)
 #else
-	#define XP_AWK_MALLOC(awk,size) \
+	#define SSE_AWK_MALLOC(awk,size) \
 		(awk)->syscas.malloc (size, (awk)->syscas.custom_data)
-	#define XP_AWK_REALLOC(awk,ptr,size) \
+	#define SSE_AWK_REALLOC(awk,ptr,size) \
 		(awk)->syscas.realloc (ptr, size, (awk)->syscas.custom_data)
-	#define XP_AWK_FREE(awk,ptr) \
+	#define SSE_AWK_FREE(awk,ptr) \
 		(awk)->syscas.free (ptr, (awk)->syscas.custom_data)
 #endif
 
-#define XP_AWK_LOCK(awk) \
+#define SSE_AWK_LOCK(awk) \
 	do { \
-		if ((awk)->syscas.lock != XP_NULL) \
+		if ((awk)->syscas.lock != SSE_NULL) \
 			(awk)->syscas.lock (awk, (awk)->syscas.custom_data); \
 	} while (0) 
 
-#define XP_AWK_UNLOCK(awk) \
+#define SSE_AWK_UNLOCK(awk) \
 	do { \
-		if ((awk)->syscas.unlock != XP_NULL) \
+		if ((awk)->syscas.unlock != SSE_NULL) \
 			(awk)->syscas.unlock (awk, (awk)->syscas.custom_data); \
 	} while (0) 
 
-#define XP_AWK_ISUPPER(awk,c)  (awk)->syscas.is_upper(c)
-#define XP_AWK_ISLOWER(awk,c)  (awk)->syscas.is_lower(c)
-#define XP_AWK_ISALPHA(awk,c)  (awk)->syscas.is_alpha(c)
-#define XP_AWK_ISDIGIT(awk,c)  (awk)->syscas.is_digit(c)
-#define XP_AWK_ISXDIGIT(awk,c) (awk)->syscas.is_xdigit(c)
-#define XP_AWK_ISALNUM(awk,c)  (awk)->syscas.is_alnum(c)
-#define XP_AWK_ISSPACE(awk,c)  (awk)->syscas.is_space(c)
-#define XP_AWK_ISPRINT(awk,c)  (awk)->syscas.is_print(c)
-#define XP_AWK_ISGRAPH(awk,c)  (awk)->syscas.is_graph(c)
-#define XP_AWK_ISCNTRL(awk,c)  (awk)->syscas.is_cntrl(c)
-#define XP_AWK_ISPUNCT(awk,c)  (awk)->syscas.is_punct(c)
-#define XP_AWK_TOUPPER(awk,c)  (awk)->syscas.to_upper(c)
-#define XP_AWK_TOLOWER(awk,c)  (awk)->syscas.to_lower(c)
+#define SSE_AWK_ISUPPER(awk,c)  (awk)->syscas.is_upper(c)
+#define SSE_AWK_ISLOWER(awk,c)  (awk)->syscas.is_lower(c)
+#define SSE_AWK_ISALPHA(awk,c)  (awk)->syscas.is_alpha(c)
+#define SSE_AWK_ISDIGIT(awk,c)  (awk)->syscas.is_digit(c)
+#define SSE_AWK_ISXDIGIT(awk,c) (awk)->syscas.is_xdigit(c)
+#define SSE_AWK_ISALNUM(awk,c)  (awk)->syscas.is_alnum(c)
+#define SSE_AWK_ISSPACE(awk,c)  (awk)->syscas.is_space(c)
+#define SSE_AWK_ISPRINT(awk,c)  (awk)->syscas.is_print(c)
+#define SSE_AWK_ISGRAPH(awk,c)  (awk)->syscas.is_graph(c)
+#define SSE_AWK_ISCNTRL(awk,c)  (awk)->syscas.is_cntrl(c)
+#define SSE_AWK_ISPUNCT(awk,c)  (awk)->syscas.is_punct(c)
+#define SSE_AWK_TOUPPER(awk,c)  (awk)->syscas.to_upper(c)
+#define SSE_AWK_TOLOWER(awk,c)  (awk)->syscas.to_lower(c)
 
-#define XP_AWK_MEMCPY(awk,dst,src,len) (awk)->syscas.memcpy (dst, src, len)
-#define XP_AWK_MEMSET(awk,dst,val,len) (awk)->syscas.memset (dst, val, len)
+#define SSE_AWK_MEMCPY(awk,dst,src,len) (awk)->syscas.memcpy (dst, src, len)
+#define SSE_AWK_MEMSET(awk,dst,val,len) (awk)->syscas.memset (dst, val, len)
 
-struct xp_awk_tree_t
+struct sse_awk_tree_t
 {
-	xp_size_t nglobals; /* total number of globals */
-	xp_size_t nbglobals; /* number of builtin globals */
-	xp_awk_map_t afns; /* awk function map */
-	xp_awk_nde_t* begin;
-	xp_awk_nde_t* end;
-	xp_awk_chain_t* chain;
-	xp_awk_chain_t* chain_tail;
-	xp_size_t chain_size; /* number of nodes in the chain */
+	sse_size_t nglobals; /* total number of globals */
+	sse_size_t nbglobals; /* number of builtin globals */
+	sse_awk_map_t afns; /* awk function map */
+	sse_awk_nde_t* begin;
+	sse_awk_nde_t* end;
+	sse_awk_chain_t* chain;
+	sse_awk_chain_t* chain_tail;
+	sse_size_t chain_size; /* number of nodes in the chain */
 };
 
-struct xp_awk_t
+struct sse_awk_t
 {
-	xp_awk_syscas_t syscas;
+	sse_awk_syscas_t syscas;
 
 	/* options */
 	int option;
 
 	/* parse tree */
-	xp_awk_tree_t tree;
+	sse_awk_tree_t tree;
 	int state;
 
 	/* temporary information that the parser needs */
@@ -115,13 +115,13 @@ struct xp_awk_t
 
 		struct
 		{
-			xp_size_t loop;
+			sse_size_t loop;
 		} depth;
 
-		xp_awk_tab_t globals;
-		xp_awk_tab_t locals;
-		xp_awk_tab_t params;
-		xp_size_t nlocals_max;
+		sse_awk_tab_t globals;
+		sse_awk_tab_t locals;
+		sse_awk_tab_t params;
+		sse_size_t nlocals_max;
 
 		int nl_semicolon;
 	} parse;
@@ -129,23 +129,23 @@ struct xp_awk_t
 	/* source code management */
 	struct
 	{
-		xp_awk_srcios_t* ios;
+		sse_awk_srcios_t* ios;
 
 		struct
 		{
-			xp_cint_t curc;
-			xp_cint_t ungotc[5];
-			xp_size_t ungotc_count;
+			sse_cint_t curc;
+			sse_cint_t ungotc[5];
+			sse_size_t ungotc_count;
 
-			xp_size_t line;
-			xp_size_t column;
+			sse_size_t line;
+			sse_size_t column;
 		} lex;
 
 		struct
 		{
-			xp_char_t buf[512];
-			xp_size_t buf_pos;
-			xp_size_t buf_len;
+			sse_char_t buf[512];
+			sse_size_t buf_pos;
+			sse_size_t buf_len;
 		} shared;	
 	} src;
 
@@ -154,73 +154,73 @@ struct xp_awk_t
 	{
 		int          prev;
 		int          type;
-		xp_awk_str_t name;
-		xp_size_t    line;
-		xp_size_t    column;
+		sse_awk_str_t name;
+		sse_size_t    line;
+		sse_size_t    column;
 	} token;
 
 	/* builtin functions */
 	struct
 	{
-		xp_awk_bfn_t* sys;
-		xp_awk_bfn_t* user;
+		sse_awk_bfn_t* sys;
+		sse_awk_bfn_t* user;
 	} bfn;
 
 	struct
 	{
-		xp_size_t count;
-		xp_awk_run_t* ptr;
+		sse_size_t count;
+		sse_awk_run_t* ptr;
 	} run;
 
 	/* housekeeping */
 	int errnum;
 };
 
-struct xp_awk_chain_t
+struct sse_awk_chain_t
 {
-	xp_awk_nde_t* pattern;
-	xp_awk_nde_t* action;
-	xp_awk_chain_t* next;	
+	sse_awk_nde_t* pattern;
+	sse_awk_nde_t* action;
+	sse_awk_chain_t* next;	
 };
 
-struct xp_awk_run_t
+struct sse_awk_run_t
 {
 	int id;
-	xp_awk_map_t named;
+	sse_awk_map_t named;
 
 	void** stack;
-	xp_size_t stack_top;
-	xp_size_t stack_base;
-	xp_size_t stack_limit;
+	sse_size_t stack_top;
+	sse_size_t stack_base;
+	sse_size_t stack_limit;
 	int exit_level;
 
-	xp_awk_val_int_t* icache[100]; /* TODO: choose the optimal size  */
-	xp_awk_val_real_t* rcache[100]; /* TODO: choose the optimal size  */
-	xp_awk_val_ref_t* fcache[100]; /* TODO: choose the optimal size */
-	xp_size_t icache_count;
-	xp_size_t rcache_count;
-	xp_size_t fcache_count;
+	sse_awk_val_int_t* icache[100]; /* TODO: choose the optimal size  */
+	sse_awk_val_real_t* rcache[100]; /* TODO: choose the optimal size  */
+	sse_awk_val_ref_t* fcache[100]; /* TODO: choose the optimal size */
+	sse_size_t icache_count;
+	sse_size_t rcache_count;
+	sse_size_t fcache_count;
 
-	xp_awk_nde_blk_t* active_block;
-	xp_byte_t* pattern_range_state;
+	sse_awk_nde_blk_t* active_block;
+	sse_byte_t* pattern_range_state;
 
 	struct
 	{
-		xp_char_t buf[1024];
-		xp_size_t buf_pos;
-		xp_size_t buf_len;
-		xp_bool_t eof;
+		sse_char_t buf[1024];
+		sse_size_t buf_pos;
+		sse_size_t buf_len;
+		sse_bool_t eof;
 
-		xp_awk_str_t line;
-		xp_awk_val_t* d0; /* $0 */
+		sse_awk_str_t line;
+		sse_awk_val_t* d0; /* $0 */
 
-		xp_size_t maxflds;
-		xp_size_t nflds; /* NF */
+		sse_size_t maxflds;
+		sse_size_t nflds; /* NF */
 		struct
 		{
-			xp_char_t*    ptr;
-			xp_size_t     len;
-			xp_awk_val_t* val; /* $1 .. $NF */
+			sse_char_t*    ptr;
+			sse_size_t     len;
+			sse_awk_val_t* val; /* $1 .. $NF */
 		}* flds;
 
 	} inrec;
@@ -230,48 +230,48 @@ struct xp_awk_run_t
 		void* rs;
 		void* fs;
 		int ignorecase;
-		xp_size_t fnr;
+		sse_size_t fnr;
 
 		struct 
 		{
-			xp_char_t* ptr;
-			xp_size_t len;
+			sse_char_t* ptr;
+			sse_size_t len;
 		} convfmt;
 		struct
 		{
-			xp_char_t* ptr;
-			xp_size_t len;
+			sse_char_t* ptr;
+			sse_size_t len;
 		} ofmt;
 		struct
 		{
-			xp_char_t* ptr;
-			xp_size_t len;
+			sse_char_t* ptr;
+			sse_size_t len;
 		} ofs;
 		struct
 		{
-			xp_char_t* ptr;
-			xp_size_t len;
+			sse_char_t* ptr;
+			sse_size_t len;
 		} ors;
 		struct
 		{
-			xp_char_t* ptr;
-			xp_size_t len;
+			sse_char_t* ptr;
+			sse_size_t len;
 		} subsep;
 	} global;
 
 	/* extio chain */
 	struct
 	{
-		xp_awk_io_t handler[XP_AWK_EXTIO_NUM];
+		sse_awk_io_t handler[SSE_AWK_EXTIO_NUM];
 		void* custom_data;
-		xp_awk_extio_t* chain;
+		sse_awk_extio_t* chain;
 	} extio;
 
 	int errnum;
 
-	xp_awk_t* awk;
-	xp_awk_run_t* prev;
-	xp_awk_run_t* next;
+	sse_awk_t* awk;
+	sse_awk_run_t* prev;
+	sse_awk_run_t* next;
 };
 
 #endif
