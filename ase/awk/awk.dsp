@@ -275,6 +275,10 @@ SOURCE=.\map.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\parse.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\rex.h
 # End Source File
 # Begin Source File
