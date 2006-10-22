@@ -1,66 +1,66 @@
 /*
- * $Id: misc.c,v 1.28 2006-10-12 14:36:25 bacon Exp $
+ * $Id: misc.c,v 1.29 2006-10-22 11:34:53 bacon Exp $
  */
 
-#include <xp/awk/awk_i.h>
+#include <sse/awk/awk_i.h>
 
-void* xp_awk_memcpy  (void* dst, const void* src, xp_size_t n)
+void* sse_awk_memcpy  (void* dst, const void* src, sse_size_t n)
 {
 	void* p = dst;
-	void* e = (xp_byte_t*)dst + n;
+	void* e = (sse_byte_t*)dst + n;
 
 	while (dst < e) 
 	{
-		*(xp_byte_t*)dst = *(xp_byte_t*)src;
-		dst = (xp_byte_t*)dst + 1;
-		src = (xp_byte_t*)src + 1;
+		*(sse_byte_t*)dst = *(sse_byte_t*)src;
+		dst = (sse_byte_t*)dst + 1;
+		src = (sse_byte_t*)src + 1;
 	}
 
 	return p;
 }
 
-void* xp_awk_memset (void* dst, int val, xp_size_t n)
+void* sse_awk_memset (void* dst, int val, sse_size_t n)
 {
 	void* p = dst;
-	void* e = (xp_byte_t*)p + n;
+	void* e = (sse_byte_t*)p + n;
 
 	while (p < e) 
 	{
-		*(xp_byte_t*)p = (xp_byte_t)val;
-		p = (xp_byte_t*)p + 1;
+		*(sse_byte_t*)p = (sse_byte_t)val;
+		p = (sse_byte_t*)p + 1;
 	}
 
 	return dst;
 }
 
-xp_long_t xp_awk_strxtolong (
-	xp_awk_t* awk, const xp_char_t* str, xp_size_t len,
-	int base, const xp_char_t** endptr)
+sse_long_t sse_awk_strxtolong (
+	sse_awk_t* awk, const sse_char_t* str, sse_size_t len,
+	int base, const sse_char_t** endptr)
 {
-	xp_long_t n = 0;
-	const xp_char_t* p;
-	const xp_char_t* end;
-	xp_size_t rem;
+	sse_long_t n = 0;
+	const sse_char_t* p;
+	const sse_char_t* end;
+	sse_size_t rem;
 	int digit, negative = 0;
 
-	xp_awk_assert (awk, base < 37); 
+	sse_awk_assert (awk, base < 37); 
 
 	p = str; 
 	end = str + len;
 	
 	/* strip off leading spaces */
-	/*while (XP_AWK_ISSPACE(awk,*p)) p++;*/
+	/*while (SSE_AWK_ISSPACE(awk,*p)) p++;*/
 
 	/* check for a sign */
-	/*while (*p != XP_T('\0')) */
+	/*while (*p != SSE_T('\0')) */
 	while (p < end)
 	{
-		if (*p == XP_T('-')) 
+		if (*p == SSE_T('-')) 
 		{
 			negative = ~negative;
 			p++;
 		}
-		else if (*p == XP_T('+')) p++;
+		else if (*p == SSE_T('+')) p++;
 		else break;
 	}
 
@@ -68,16 +68,16 @@ xp_long_t xp_awk_strxtolong (
 	rem = end - p;
 	if (base == 0) 
 	{
-		if (rem >= 1 && *p == XP_T('0')) 
+		if (rem >= 1 && *p == SSE_T('0')) 
 		{
 			p++;
 
 			if (rem == 1) base = 8;
-			else if (*p == XP_T('x') || *p == XP_T('X'))
+			else if (*p == SSE_T('x') || *p == SSE_T('X'))
 			{
 				p++; base = 16;
 			} 
-			else if (*p == XP_T('b') || *p == XP_T('B'))
+			else if (*p == SSE_T('b') || *p == SSE_T('B'))
 			{
 				p++; base = 2;
 			}
@@ -87,25 +87,25 @@ xp_long_t xp_awk_strxtolong (
 	} 
 	else if (rem >= 2 && base == 16)
 	{
-		if (*p == XP_T('0') && 
-		    (*(p+1) == XP_T('x') || *(p+1) == XP_T('X'))) p += 2; 
+		if (*p == SSE_T('0') && 
+		    (*(p+1) == SSE_T('x') || *(p+1) == SSE_T('X'))) p += 2; 
 	}
 	else if (rem >= 2 && base == 2)
 	{
-		if (*p == XP_T('0') && 
-		    (*(p+1) == XP_T('b') || *(p+1) == XP_T('B'))) p += 2; 
+		if (*p == SSE_T('0') && 
+		    (*(p+1) == SSE_T('b') || *(p+1) == SSE_T('B'))) p += 2; 
 	}
 
 	/* process the digits */
-	/*while (*p != XP_T('\0'))*/
+	/*while (*p != SSE_T('\0'))*/
 	while (p < end)
 	{
-		if (*p >= XP_T('0') && *p <= XP_T('9'))
-			digit = *p - XP_T('0');
-		else if (*p >= XP_T('A') && *p <= XP_T('Z'))
-			digit = *p - XP_T('A') + 10;
-		else if (*p >= XP_T('a') && *p <= XP_T('z'))
-			digit = *p - XP_T('a') + 10;
+		if (*p >= SSE_T('0') && *p <= SSE_T('9'))
+			digit = *p - SSE_T('0');
+		else if (*p >= SSE_T('A') && *p <= SSE_T('Z'))
+			digit = *p - SSE_T('A') + 10;
+		else if (*p >= SSE_T('a') && *p <= SSE_T('z'))
+			digit = *p - SSE_T('a') + 10;
 		else break;
 
 		if (digit >= base) break;
@@ -114,13 +114,13 @@ xp_long_t xp_awk_strxtolong (
 		p++;
 	}
 
-	if (endptr != XP_NULL) *endptr = p;
+	if (endptr != SSE_NULL) *endptr = p;
 	return (negative)? -n: n;
 }
 
 
 /*
- * xp_awk_strtoreal is almost a replica of strtod.
+ * sse_awk_strtoreal is almost a replica of strtod.
  *
  * strtod.c --
  *
@@ -135,57 +135,57 @@ xp_long_t xp_awk_strxtolong (
  * notice appear in all copies.  The University of California
  * makes no representations about the suitability of this
  * software for any purpose.  It is provided "as is" without
- * express or implied warranty.
+ * esseress or implied warranty.
  */
 
-#define MAX_EXPONENT 511
+#define MAX_ESSEONENT 511
 
-xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
+sse_real_t sse_awk_strtoreal (sse_awk_t* awk, const sse_char_t* str)
 {
 	/* 
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
-	 * Used to convert decimal exponents into floating-point numbers.
+	 * Used to convert decimal esseonents into floating-point numbers.
 	 */ 
-	static xp_real_t powers_of_10[] = 
+	static sse_real_t powers_of_10[] = 
 	{
 		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	xp_real_t fraction, dbl_exp, * d;
-	const xp_char_t* p;
-	xp_cint_t c;
-	int exp = 0;		/* Exponent read from "EX" field */
+	sse_real_t fraction, dbl_esse, * d;
+	const sse_char_t* p;
+	sse_cint_t c;
+	int esse = 0;		/* Esseonent read from "EX" field */
 
 	/* 
-	 * Exponent that derives from the fractional part.  Under normal 
+	 * Esseonent that derives from the fractional part.  Under normal 
 	 * circumstatnces, it is the negative of the number of digits in F.
 	 * However, if I is very long, the last digits of I get dropped 
-	 * (otherwise a long I with a large negative exponent could cause an
-	 * unnecessary overflow on I alone).  In this case, frac_exp is 
+	 * (otherwise a long I with a large negative esseonent could cause an
+	 * unnecessary overflow on I alone).  In this case, frac_esse is 
 	 * incremented one for each dropped digit. 
 	 */
 
-	int frac_exp;
+	int frac_esse;
 	int mant_size; /* Number of digits in mantissa. */
 	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
-	const xp_char_t *pexp;  /* Temporarily holds location of exponent in string */
-	int negative = 0, exp_negative = 0;
+	const sse_char_t *pesse;  /* Temporarily holds location of esseonent in string */
+	int negative = 0, esse_negative = 0;
 
 	p = str;
 
 	/* strip off leading blanks */ 
-	/*while (XP_AWK_ISSPACE(awk,*p)) p++;*/
+	/*while (SSE_AWK_ISSPACE(awk,*p)) p++;*/
 
 	/* check for a sign */
-	while (*p != XP_T('\0')) 
+	while (*p != SSE_T('\0')) 
 	{
-		if (*p == XP_T('-')) 
+		if (*p == SSE_T('-')) 
 		{
 			negative = ~negative;
 			p++;
 		}
-		else if (*p == XP_T('+')) p++;
+		else if (*p == SSE_T('+')) p++;
 		else break;
 	}
 
@@ -195,9 +195,9 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	for (mant_size = 0; ; mant_size++) 
 	{
 		c = *p;
-		if (!XP_AWK_ISDIGIT (awk, c)) 
+		if (!SSE_AWK_ISDIGIT (awk, c)) 
 		{
-			if ((c != XP_T('.')) || (dec_pt >= 0)) break;
+			if ((c != SSE_T('.')) || (dec_pt >= 0)) break;
 			dec_pt = mant_size;
 		}
 		p++;
@@ -209,7 +209,7 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 	 * If the mantissa has more than 18 digits, ignore the extras, since
 	 * they can't affect the value anyway.
 	 */
-	pexp = p;
+	pesse = p;
 	p -= mant_size;
 	if (dec_pt < 0) 
 	{
@@ -222,19 +222,19 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 
 	if (mant_size > 18) 
 	{
-		frac_exp = dec_pt - 18;
+		frac_esse = dec_pt - 18;
 		mant_size = 18;
 	} 
 	else 
 	{
-		frac_exp = dec_pt - mant_size;
+		frac_esse = dec_pt - mant_size;
 	}
 
 	if (mant_size == 0) 
 	{
 		fraction = 0.0;
 		/*p = str;*/
-		p = pexp;
+		p = pesse;
 		goto done;
 	} 
 	else 
@@ -245,137 +245,137 @@ xp_real_t xp_awk_strtoreal (xp_awk_t* awk, const xp_char_t* str)
 		{
 			c = *p;
 			p++;
-			if (c == XP_T('.')) 
+			if (c == SSE_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac1 = 10 * frac1 + (c - XP_T('0'));
+			frac1 = 10 * frac1 + (c - SSE_T('0'));
 		}
 		frac2 = 0;
 		for (; mant_size > 0; mant_size--) {
 			c = *p;
 			p++;
-			if (c == XP_T('.')) 
+			if (c == SSE_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac2 = 10*frac2 + (c - XP_T('0'));
+			frac2 = 10*frac2 + (c - SSE_T('0'));
 		}
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
-	/* Skim off the exponent */
-	p = pexp;
-	if ((*p == XP_T('E')) || (*p == XP_T('e'))) 
+	/* Skim off the esseonent */
+	p = pesse;
+	if ((*p == SSE_T('E')) || (*p == SSE_T('e'))) 
 	{
 		p++;
-		if (*p == XP_T('-')) 
+		if (*p == SSE_T('-')) 
 		{
-			exp_negative = 1;
+			esse_negative = 1;
 			p++;
 		} 
 		else 
 		{
-			if (*p == XP_T('+')) p++;
-			exp_negative = 0;
+			if (*p == SSE_T('+')) p++;
+			esse_negative = 0;
 		}
-		if (!XP_AWK_ISDIGIT (awk, *p)) 
+		if (!SSE_AWK_ISDIGIT (awk, *p)) 
 		{
-			/* p = pexp; */
+			/* p = pesse; */
 			/* goto done; */
-			goto no_exp;
+			goto no_esse;
 		}
-		while (XP_AWK_ISDIGIT (awk, *p)) 
+		while (SSE_AWK_ISDIGIT (awk, *p)) 
 		{
-			exp = exp * 10 + (*p - XP_T('0'));
+			esse = esse * 10 + (*p - SSE_T('0'));
 			p++;
 		}
 	}
 
-no_exp:
-	if (exp_negative) exp = frac_exp - exp;
-	else exp = frac_exp + exp;
+no_esse:
+	if (esse_negative) esse = frac_esse - esse;
+	else esse = frac_esse + esse;
 
 	/*
-	 * Generate a floating-point number that represents the exponent.
-	 * Do this by processing the exponent one bit at a time to combine
-	 * many powers of 2 of 10. Then combine the exponent with the
+	 * Generate a floating-point number that represents the esseonent.
+	 * Do this by processing the esseonent one bit at a time to combine
+	 * many powers of 2 of 10. Then combine the esseonent with the
 	 * fraction.
 	 */
-	if (exp < 0) 
+	if (esse < 0) 
 	{
-		exp_negative = 1;
-		exp = -exp;
+		esse_negative = 1;
+		esse = -esse;
 	} 
-	else exp_negative = 0;
+	else esse_negative = 0;
 
-	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
+	if (esse > MAX_ESSEONENT) esse = MAX_ESSEONENT;
 
-	dbl_exp = 1.0;
+	dbl_esse = 1.0;
 
-	for (d = powers_of_10; exp != 0; exp >>= 1, d++) 
+	for (d = powers_of_10; esse != 0; esse >>= 1, d++) 
 	{
-		if (exp & 01) dbl_exp *= *d;
+		if (esse & 01) dbl_esse *= *d;
 	}
 
-	if (exp_negative) fraction /= dbl_exp;
-	else fraction *= dbl_exp;
+	if (esse_negative) fraction /= dbl_esse;
+	else fraction *= dbl_esse;
 
 done:
 	return (negative)? -fraction: fraction;
 }
 
-xp_real_t xp_awk_strxtoreal (
-	xp_awk_t* awk, const xp_char_t* str, xp_size_t len, 
-	const xp_char_t** endptr)
+sse_real_t sse_awk_strxtoreal (
+	sse_awk_t* awk, const sse_char_t* str, sse_size_t len, 
+	const sse_char_t** endptr)
 {
 	/* 
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
-	 * Used to convert decimal exponents into floating-point numbers.
+	 * Used to convert decimal esseonents into floating-point numbers.
 	 */ 
-	static xp_real_t powers_of_10[] = 
+	static sse_real_t powers_of_10[] = 
 	{
 		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	xp_real_t fraction, dbl_exp, * d;
-	const xp_char_t* p, * end;
-	xp_cint_t c;
-	int exp = 0; /* Exponent read from "EX" field */
+	sse_real_t fraction, dbl_esse, * d;
+	const sse_char_t* p, * end;
+	sse_cint_t c;
+	int esse = 0; /* Esseonent read from "EX" field */
 
 	/* 
-	 * Exponent that derives from the fractional part.  Under normal 
+	 * Esseonent that derives from the fractional part.  Under normal 
 	 * circumstatnces, it is the negative of the number of digits in F.
 	 * However, if I is very long, the last digits of I get dropped 
-	 * (otherwise a long I with a large negative exponent could cause an
-	 * unnecessary overflow on I alone).  In this case, frac_exp is 
+	 * (otherwise a long I with a large negative esseonent could cause an
+	 * unnecessary overflow on I alone).  In this case, frac_esse is 
 	 * incremented one for each dropped digit. 
 	 */
 
-	int frac_exp;
+	int frac_esse;
 	int mant_size; /* Number of digits in mantissa. */
 	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
-	const xp_char_t *pexp;  /* Temporarily holds location of exponent in string */
-	int negative = 0, exp_negative = 0;
+	const sse_char_t *pesse;  /* Temporarily holds location of esseonent in string */
+	int negative = 0, esse_negative = 0;
 
 	p = str;
 	end = str + len;
 
 	/* Strip off leading blanks and check for a sign */
-	/*while (XP_AWK_ISSPACE(awk,*p)) p++;*/
+	/*while (SSE_AWK_ISSPACE(awk,*p)) p++;*/
 
-	/*while (*p != XP_T('\0')) */
+	/*while (*p != SSE_T('\0')) */
 	while (p < end)
 	{
-		if (*p == XP_T('-')) 
+		if (*p == SSE_T('-')) 
 		{
 			negative = ~negative;
 			p++;
 		}
-		else if (*p == XP_T('+')) p++;
+		else if (*p == SSE_T('+')) p++;
 		else break;
 	}
 
@@ -386,9 +386,9 @@ xp_real_t xp_awk_strxtoreal (
 	for (mant_size = 0; p < end; mant_size++) 
 	{
 		c = *p;
-		if (!XP_AWK_ISDIGIT (awk, c)) 
+		if (!SSE_AWK_ISDIGIT (awk, c)) 
 		{
-			if (c != XP_T('.') || dec_pt >= 0) break;
+			if (c != SSE_T('.') || dec_pt >= 0) break;
 			dec_pt = mant_size;
 		}
 		p++;
@@ -400,7 +400,7 @@ xp_real_t xp_awk_strxtoreal (
 	 * If the mantissa has more than 18 digits, ignore the extras, since
 	 * they can't affect the value anyway.
 	 */
-	pexp = p;
+	pesse = p;
 	p -= mant_size;
 	if (dec_pt < 0) 
 	{
@@ -411,21 +411,21 @@ xp_real_t xp_awk_strxtoreal (
 		mant_size--;	/* One of the digits was the point */
 	}
 
-	if (mant_size > 18)  /* TODO: is 18 correct for xp_real_t??? */
+	if (mant_size > 18)  /* TODO: is 18 correct for sse_real_t??? */
 	{
-		frac_exp = dec_pt - 18;
+		frac_esse = dec_pt - 18;
 		mant_size = 18;
 	} 
 	else 
 	{
-		frac_exp = dec_pt - mant_size;
+		frac_esse = dec_pt - mant_size;
 	}
 
 	if (mant_size == 0) 
 	{
 		fraction = 0.0;
 		/*p = str;*/
-		p = pexp;
+		p = pesse;
 		goto done;
 	} 
 	else 
@@ -437,121 +437,121 @@ xp_real_t xp_awk_strxtoreal (
 		{
 			c = *p;
 			p++;
-			if (c == XP_T('.')) 
+			if (c == SSE_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac1 = 10 * frac1 + (c - XP_T('0'));
+			frac1 = 10 * frac1 + (c - SSE_T('0'));
 		}
 
 		frac2 = 0;
 		for (; mant_size > 0; mant_size--) {
 			c = *p++;
-			if (c == XP_T('.')) 
+			if (c == SSE_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac2 = 10 * frac2 + (c - XP_T('0'));
+			frac2 = 10 * frac2 + (c - SSE_T('0'));
 		}
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
-	/* Skim off the exponent */
-	p = pexp;
-	if (p < end && (*p == XP_T('E') || *p == XP_T('e'))) 
+	/* Skim off the esseonent */
+	p = pesse;
+	if (p < end && (*p == SSE_T('E') || *p == SSE_T('e'))) 
 	{
 		p++;
 
 		if (p < end) 
 		{
-			if (*p == XP_T('-')) 
+			if (*p == SSE_T('-')) 
 			{
-				exp_negative = 1;
+				esse_negative = 1;
 				p++;
 			} 
 			else 
 			{
-				if (*p == XP_T('+')) p++;
-				exp_negative = 0;
+				if (*p == SSE_T('+')) p++;
+				esse_negative = 0;
 			}
 		}
-		else exp_negative = 0;
+		else esse_negative = 0;
 
-		if (!(p < end && XP_AWK_ISDIGIT (awk, *p))) 
+		if (!(p < end && SSE_AWK_ISDIGIT (awk, *p))) 
 		{
-			/*p = pexp;*/
+			/*p = pesse;*/
 			/*goto done;*/
-			goto no_exp;
+			goto no_esse;
 		}
 
-		while (p < end && XP_AWK_ISDIGIT (awk, *p)) 
+		while (p < end && SSE_AWK_ISDIGIT (awk, *p)) 
 		{
-			exp = exp * 10 + (*p - XP_T('0'));
+			esse = esse * 10 + (*p - SSE_T('0'));
 			p++;
 		}
 	}
 
-no_exp:
-	if (exp_negative) exp = frac_exp - exp;
-	else exp = frac_exp + exp;
+no_esse:
+	if (esse_negative) esse = frac_esse - esse;
+	else esse = frac_esse + esse;
 
 	/*
-	 * Generate a floating-point number that represents the exponent.
-	 * Do this by processing the exponent one bit at a time to combine
-	 * many powers of 2 of 10. Then combine the exponent with the
+	 * Generate a floating-point number that represents the esseonent.
+	 * Do this by processing the esseonent one bit at a time to combine
+	 * many powers of 2 of 10. Then combine the esseonent with the
 	 * fraction.
 	 */
-	if (exp < 0) 
+	if (esse < 0) 
 	{
-		exp_negative = 1;
-		exp = -exp;
+		esse_negative = 1;
+		esse = -esse;
 	} 
-	else exp_negative = 0;
+	else esse_negative = 0;
 
-	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
+	if (esse > MAX_ESSEONENT) esse = MAX_ESSEONENT;
 
-	dbl_exp = 1.0;
+	dbl_esse = 1.0;
 
-	for (d = powers_of_10; exp != 0; exp >>= 1, d++) 
+	for (d = powers_of_10; esse != 0; esse >>= 1, d++) 
 	{
-		if (exp & 01) dbl_exp *= *d;
+		if (esse & 01) dbl_esse *= *d;
 	}
 
-	if (exp_negative) fraction /= dbl_exp;
-	else fraction *= dbl_exp;
+	if (esse_negative) fraction /= dbl_esse;
+	else fraction *= dbl_esse;
 
 done:
-	if (endptr != XP_NULL) *endptr = p;
+	if (endptr != SSE_NULL) *endptr = p;
 	return (negative)? -fraction: fraction;
 }
 
-xp_size_t xp_awk_longtostr (
-	xp_long_t value, int radix, const xp_char_t* prefix, 
-	xp_char_t* buf, xp_size_t size)
+sse_size_t sse_awk_longtostr (
+	sse_long_t value, int radix, const sse_char_t* prefix, 
+	sse_char_t* buf, sse_size_t size)
 {
-	xp_long_t t, rem;
-	xp_size_t len, ret, i;
-	xp_size_t prefix_len;
+	sse_long_t t, rem;
+	sse_size_t len, ret, i;
+	sse_size_t prefix_len;
 
-	prefix_len = (prefix != XP_NULL)? xp_awk_strlen(prefix): 0;
+	prefix_len = (prefix != SSE_NULL)? sse_awk_strlen(prefix): 0;
 
 	t = value;
 	if (t == 0)
 	{
 		/* zero */
-		if (buf == XP_NULL) return prefix_len + 1;
+		if (buf == SSE_NULL) return prefix_len + 1;
 
 		if (size < prefix_len+1) 
 		{
 			/* buffer too small */
-			return (xp_size_t)-1;
+			return (sse_size_t)-1;
 		}
 
 		for (i = 0; i < prefix_len; i++) buf[i] = prefix[i];
-		buf[prefix_len] = XP_T('0');
-		if (size > prefix_len+1) buf[prefix_len+1] = XP_T('\0');
+		buf[prefix_len] = SSE_T('0');
+		if (size > prefix_len+1) buf[prefix_len+1] = SSE_T('\0');
 		return 1;
 	}
 
@@ -560,14 +560,14 @@ xp_size_t xp_awk_longtostr (
 	if (t < 0) { t = -t; len++; }
 	while (t > 0) { len++; t /= radix; }
 
-	if (buf == XP_NULL)
+	if (buf == SSE_NULL)
 	{
 		/* if buf is not given, return the number of bytes required */
 		return len;
 	}
 
-	if (size < len) return (xp_size_t)-1; /* buffer too small */
-	if (size > len) buf[len] = XP_T('\0');
+	if (size < len) return (sse_size_t)-1; /* buffer too small */
+	if (size > len) buf[len] = SSE_T('\0');
 	ret = len;
 
 	t = value;
@@ -577,9 +577,9 @@ xp_size_t xp_awk_longtostr (
 	{
 		rem = t % radix;
 		if (rem >= 10)
-			buf[--len] = (xp_char_t)rem + XP_T('a') - 10;
+			buf[--len] = (sse_char_t)rem + SSE_T('a') - 10;
 		else
-			buf[--len] = (xp_char_t)rem + XP_T('0');
+			buf[--len] = (sse_char_t)rem + SSE_T('0');
 		t /= radix;
 	}
 
@@ -590,7 +590,7 @@ xp_size_t xp_awk_longtostr (
 			buf[i] = prefix[i-1];
 			len--;
 		}
-		buf[--len] = XP_T('-');
+		buf[--len] = SSE_T('-');
 	}
 	else
 	{
@@ -600,86 +600,86 @@ xp_size_t xp_awk_longtostr (
 	return ret;
 }
 
-xp_char_t* xp_awk_strdup (xp_awk_t* awk, const xp_char_t* str)
+sse_char_t* sse_awk_strdup (sse_awk_t* awk, const sse_char_t* str)
 {
-	xp_char_t* tmp;
+	sse_char_t* tmp;
 
-	tmp = (xp_char_t*) XP_AWK_MALLOC (
-		awk, (xp_awk_strlen(str) + 1) * xp_sizeof(xp_char_t));
-	if (tmp == XP_NULL) return XP_NULL;
+	tmp = (sse_char_t*) SSE_AWK_MALLOC (
+		awk, (sse_awk_strlen(str) + 1) * sse_sizeof(sse_char_t));
+	if (tmp == SSE_NULL) return SSE_NULL;
 
-	xp_awk_strcpy (tmp, str);
+	sse_awk_strcpy (tmp, str);
 	return tmp;
 }
 
-xp_char_t* xp_awk_strxdup (xp_awk_t* awk, const xp_char_t* str, xp_size_t len)
+sse_char_t* sse_awk_strxdup (sse_awk_t* awk, const sse_char_t* str, sse_size_t len)
 {
-	xp_char_t* tmp;
+	sse_char_t* tmp;
 
-	tmp = (xp_char_t*) XP_AWK_MALLOC (
-		awk, (len + 1) * xp_sizeof(xp_char_t));
-	if (tmp == XP_NULL) return XP_NULL;
+	tmp = (sse_char_t*) SSE_AWK_MALLOC (
+		awk, (len + 1) * sse_sizeof(sse_char_t));
+	if (tmp == SSE_NULL) return SSE_NULL;
 
-	xp_awk_strncpy (tmp, str, len);
+	sse_awk_strncpy (tmp, str, len);
 	return tmp;
 }
 
-xp_char_t* xp_awk_strxdup2 (
-	xp_awk_t* awk,
-	const xp_char_t* str1, xp_size_t len1,
-	const xp_char_t* str2, xp_size_t len2)
+sse_char_t* sse_awk_strxdup2 (
+	sse_awk_t* awk,
+	const sse_char_t* str1, sse_size_t len1,
+	const sse_char_t* str2, sse_size_t len2)
 {
-	xp_char_t* tmp;
+	sse_char_t* tmp;
 
-	tmp = (xp_char_t*) XP_AWK_MALLOC (
-		awk, (len1 + len2 + 1) * xp_sizeof(xp_char_t));
-	if (tmp == XP_NULL) return XP_NULL;
+	tmp = (sse_char_t*) SSE_AWK_MALLOC (
+		awk, (len1 + len2 + 1) * sse_sizeof(sse_char_t));
+	if (tmp == SSE_NULL) return SSE_NULL;
 
-	xp_awk_strncpy (tmp, str1, len1);
-	xp_awk_strncpy (tmp + len1, str2, len2);
+	sse_awk_strncpy (tmp, str1, len1);
+	sse_awk_strncpy (tmp + len1, str2, len2);
 	return tmp;
 }
 
-xp_size_t xp_awk_strlen (const xp_char_t* str)
+sse_size_t sse_awk_strlen (const sse_char_t* str)
 {
-	const xp_char_t* p = str;
-	while (*p != XP_T('\0')) p++;
+	const sse_char_t* p = str;
+	while (*p != SSE_T('\0')) p++;
 	return p - str;
 }
 
-xp_size_t xp_awk_strcpy (xp_char_t* buf, const xp_char_t* str)
+sse_size_t sse_awk_strcpy (sse_char_t* buf, const sse_char_t* str)
 {
-	xp_char_t* org = buf;
-	while ((*buf++ = *str++) != XP_T('\0'));
+	sse_char_t* org = buf;
+	while ((*buf++ = *str++) != SSE_T('\0'));
 	return buf - org - 1;
 }
 
-xp_size_t xp_awk_strncpy (xp_char_t* buf, const xp_char_t* str, xp_size_t len)
+sse_size_t sse_awk_strncpy (sse_char_t* buf, const sse_char_t* str, sse_size_t len)
 {
-	const xp_char_t* end = str + len;
+	const sse_char_t* end = str + len;
 	while (str < end) *buf++ = *str++;
-	*buf = XP_T('\0');
+	*buf = SSE_T('\0');
 	return len;
 }
 
-int xp_awk_strcmp (const xp_char_t* s1, const xp_char_t* s2)
+int sse_awk_strcmp (const sse_char_t* s1, const sse_char_t* s2)
 {
 	while (*s1 == *s2) 
 	{
-		if (*s1 == XP_C('\0')) return 0;
+		if (*s1 == SSE_C('\0')) return 0;
 		s1++, s2++;
 	}
 
 	return (*s1 > *s2)? 1: -1;
 }
 
-int xp_awk_strxncmp (
-	const xp_char_t* s1, xp_size_t len1, 
-	const xp_char_t* s2, xp_size_t len2)
+int sse_awk_strxncmp (
+	const sse_char_t* s1, sse_size_t len1, 
+	const sse_char_t* s2, sse_size_t len2)
 {
-	xp_char_t c1, c2;
-	const xp_char_t* end1 = s1 + len1;
-	const xp_char_t* end2 = s2 + len2;
+	sse_char_t c1, c2;
+	const sse_char_t* end1 = s1 + len1;
+	const sse_char_t* end2 = s2 + len2;
 
 	while (s1 < end1)
 	{
@@ -697,21 +697,21 @@ int xp_awk_strxncmp (
 	return (s2 < end2)? -1: 0;
 }
 
-int xp_awk_strxncasecmp (
-	xp_awk_t* awk,
-	const xp_char_t* s1, xp_size_t len1, 
-	const xp_char_t* s2, xp_size_t len2)
+int sse_awk_strxncasecmp (
+	sse_awk_t* awk,
+	const sse_char_t* s1, sse_size_t len1, 
+	const sse_char_t* s2, sse_size_t len2)
 {
-	xp_char_t c1, c2;
-	const xp_char_t* end1 = s1 + len1;
-	const xp_char_t* end2 = s2 + len2;
+	sse_char_t c1, c2;
+	const sse_char_t* end1 = s1 + len1;
+	const sse_char_t* end2 = s2 + len2;
 
 	while (s1 < end1)
 	{
-		c1 = XP_AWK_TOUPPER (awk, *s1); 
+		c1 = SSE_AWK_TOUPPER (awk, *s1); 
 		if (s2 < end2) 
 		{
-			c2 = XP_AWK_TOUPPER (awk, *s2);
+			c2 = SSE_AWK_TOUPPER (awk, *s2);
 			if (c1 > c2) return 1;
 			if (c1 < c2) return -1;
 		}
@@ -722,24 +722,24 @@ int xp_awk_strxncasecmp (
 	return (s2 < end2)? -1: 0;
 }
 
-xp_char_t* xp_awk_strxnstr (
-	const xp_char_t* str, xp_size_t strsz, 
-	const xp_char_t* sub, xp_size_t subsz)
+sse_char_t* sse_awk_strxnstr (
+	const sse_char_t* str, sse_size_t strsz, 
+	const sse_char_t* sub, sse_size_t subsz)
 {
-	const xp_char_t* end, * subp;
+	const sse_char_t* end, * subp;
 
-	if (subsz == 0) return (xp_char_t*)str;
-	if (strsz < subsz) return XP_NULL;
+	if (subsz == 0) return (sse_char_t*)str;
+	if (strsz < subsz) return SSE_NULL;
 	
 	end = str + strsz - subsz;
 	subp = sub + subsz;
 
 	while (str <= end) {
-		const xp_char_t* x = str;
-		const xp_char_t* y = sub;
+		const sse_char_t* x = str;
+		const sse_char_t* y = sub;
 
-		while (xp_true) {
-			if (y >= subp) return (xp_char_t*)str;
+		while (sse_true) {
+			if (y >= subp) return (sse_char_t*)str;
 			if (*x != *y) break;
 			x++; y++;
 		}	
@@ -747,47 +747,47 @@ xp_char_t* xp_awk_strxnstr (
 		str++;
 	}
 		
-	return XP_NULL;
+	return SSE_NULL;
 }
 
-xp_char_t* xp_awk_strtok (
-	xp_awk_run_t* run, const xp_char_t* s, 
-	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len)
+sse_char_t* sse_awk_strtok (
+	sse_awk_run_t* run, const sse_char_t* s, 
+	const sse_char_t* delim, sse_char_t** tok, sse_size_t* tok_len)
 {
-	return xp_awk_strxntok (
-		run, s, xp_awk_strlen(s), 
-		delim, xp_awk_strlen(delim), tok, tok_len);
+	return sse_awk_strxntok (
+		run, s, sse_awk_strlen(s), 
+		delim, sse_awk_strlen(delim), tok, tok_len);
 }
 
-xp_char_t* xp_awk_strxtok (
-	xp_awk_run_t* run, const xp_char_t* s, xp_size_t len,
-	const xp_char_t* delim, xp_char_t** tok, xp_size_t* tok_len)
+sse_char_t* sse_awk_strxtok (
+	sse_awk_run_t* run, const sse_char_t* s, sse_size_t len,
+	const sse_char_t* delim, sse_char_t** tok, sse_size_t* tok_len)
 {
-	return xp_awk_strxntok (
+	return sse_awk_strxntok (
 		run, s, len, 
-		delim, xp_awk_strlen(delim), tok, tok_len);
+		delim, sse_awk_strlen(delim), tok, tok_len);
 }
 
-xp_char_t* xp_awk_strntok (
-	xp_awk_run_t* run, const xp_char_t* s, 
-	const xp_char_t* delim, xp_size_t delim_len,
-	xp_char_t** tok, xp_size_t* tok_len)
+sse_char_t* sse_awk_strntok (
+	sse_awk_run_t* run, const sse_char_t* s, 
+	const sse_char_t* delim, sse_size_t delim_len,
+	sse_char_t** tok, sse_size_t* tok_len)
 {
-	return xp_awk_strxntok (
-		run, s, xp_awk_strlen(s), 
+	return sse_awk_strxntok (
+		run, s, sse_awk_strlen(s), 
 		delim, delim_len, tok, tok_len);
 }
 
-xp_char_t* xp_awk_strxntok (
-	xp_awk_run_t* run, const xp_char_t* s, xp_size_t len,
-	const xp_char_t* delim, xp_size_t delim_len, 
-	xp_char_t** tok, xp_size_t* tok_len)
+sse_char_t* sse_awk_strxntok (
+	sse_awk_run_t* run, const sse_char_t* s, sse_size_t len,
+	const sse_char_t* delim, sse_size_t delim_len, 
+	sse_char_t** tok, sse_size_t* tok_len)
 {
-	const xp_char_t* p = s, *d;
-	const xp_char_t* end = s + len;	
-	const xp_char_t* sp = XP_NULL, * ep = XP_NULL;
-	const xp_char_t* delim_end = delim + delim_len;
-	xp_char_t c; 
+	const sse_char_t* p = s, *d;
+	const sse_char_t* end = s + len;	
+	const sse_char_t* sp = SSE_NULL, * ep = SSE_NULL;
+	const sse_char_t* delim_end = delim + delim_len;
+	sse_char_t c; 
 	int delim_mode;
 
 #define __DELIM_NULL      0
@@ -795,14 +795,14 @@ xp_char_t* xp_awk_strxntok (
 #define __DELIM_SPACES    2
 #define __DELIM_NOSPACES  3
 #define __DELIM_COMPOSITE 4
-	if (delim == XP_NULL) delim_mode = __DELIM_NULL;
+	if (delim == SSE_NULL) delim_mode = __DELIM_NULL;
 	else 
 	{
 		delim_mode = __DELIM_EMPTY;
 
 		for (d = delim; d < delim_end; d++) 
 		{
-			if (XP_AWK_ISSPACE(run->awk,*d)) 
+			if (SSE_AWK_ISSPACE(run->awk,*d)) 
 			{
 				if (delim_mode == __DELIM_EMPTY)
 					delim_mode = __DELIM_SPACES;
@@ -827,18 +827,18 @@ xp_char_t* xp_awk_strxntok (
 	
 	if (delim_mode == __DELIM_NULL) 
 	{ 
-		/* when XP_NULL is given as "delim", it trims off the 
+		/* when SSE_NULL is given as "delim", it trims off the 
 		 * leading and trailing spaces characters off the source
 		 * string "s" eventually. */
 
-		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
+		while (p < end && SSE_AWK_ISSPACE(run->awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
 
-			if (!XP_AWK_ISSPACE(run->awk,c)) 
+			if (!SSE_AWK_ISSPACE(run->awk,c)) 
 			{
-				if (sp == XP_NULL) sp = p;
+				if (sp == SSE_NULL) sp = p;
 				ep = p;
 			}
 			p++;
@@ -859,15 +859,15 @@ xp_char_t* xp_awk_strxntok (
 		/* each token is delimited by space characters. all leading
 		 * and trailing spaces are removed. */
 
-		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
+		while (p < end && SSE_AWK_ISSPACE(run->awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
-			if (XP_AWK_ISSPACE(run->awk,c)) break;
-			if (sp == XP_NULL) sp = p;
+			if (SSE_AWK_ISSPACE(run->awk,c)) break;
+			if (sp == SSE_NULL) sp = p;
 			ep = p++;
 		}
-		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
+		while (p < end && SSE_AWK_ISSPACE(run->awk,*p)) p++;
 	}
 	else if (delim_mode == __DELIM_NOSPACES)
 	{
@@ -877,13 +877,13 @@ xp_char_t* xp_awk_strxntok (
 		{
 			while (p < end) 
 			{
-				c = XP_AWK_TOUPPER(run->awk, *p);
+				c = SSE_AWK_TOUPPER(run->awk, *p);
 				for (d = delim; d < delim_end; d++) 
 				{
-					if (c == XP_AWK_TOUPPER(run->awk,*d)) goto exit_loop;
+					if (c == SSE_AWK_TOUPPER(run->awk,*d)) goto exit_loop;
 				}
 
-				if (sp == XP_NULL) sp = p;
+				if (sp == SSE_NULL) sp = p;
 				ep = p++;
 			}
 		}
@@ -897,7 +897,7 @@ xp_char_t* xp_awk_strxntok (
 					if (c == *d) goto exit_loop;
 				}
 
-				if (sp == XP_NULL) sp = p;
+				if (sp == SSE_NULL) sp = p;
 				ep = p++;
 			}
 		}
@@ -907,22 +907,22 @@ xp_char_t* xp_awk_strxntok (
 		/* each token is delimited by one of non-space charaters
 		 * in the delimeter set "delim". however, all space characters
 		 * surrounding the token are removed */
-		while (p < end && XP_AWK_ISSPACE(run->awk,*p)) p++;
+		while (p < end && SSE_AWK_ISSPACE(run->awk,*p)) p++;
 		if (run->global.ignorecase)
 		{
 			while (p < end) 
 			{
-				c = XP_AWK_TOUPPER(run->awk, *p);
-				if (XP_AWK_ISSPACE(run->awk,c)) 
+				c = SSE_AWK_TOUPPER(run->awk, *p);
+				if (SSE_AWK_ISSPACE(run->awk,c)) 
 				{
 					p++;
 					continue;
 				}
 				for (d = delim; d < delim_end; d++) 
 				{
-					if (c == XP_AWK_TOUPPER(run->awk,*d)) goto exit_loop;
+					if (c == SSE_AWK_TOUPPER(run->awk,*d)) goto exit_loop;
 				}
-				if (sp == XP_NULL) sp = p;
+				if (sp == SSE_NULL) sp = p;
 				ep = p++;
 			}
 		}
@@ -931,7 +931,7 @@ xp_char_t* xp_awk_strxntok (
 			while (p < end) 
 			{
 				c = *p;
-				if (XP_AWK_ISSPACE(run->awk,c)) 
+				if (SSE_AWK_ISSPACE(run->awk,c)) 
 				{
 					p++;
 					continue;
@@ -940,76 +940,76 @@ xp_char_t* xp_awk_strxntok (
 				{
 					if (c == *d) goto exit_loop;
 				}
-				if (sp == XP_NULL) sp = p;
+				if (sp == SSE_NULL) sp = p;
 				ep = p++;
 			}
 		}
 	}
 
 exit_loop:
-	if (sp == XP_NULL) 
+	if (sp == SSE_NULL) 
 	{
-		*tok = XP_NULL;
-		*tok_len = (xp_size_t)0;
+		*tok = SSE_NULL;
+		*tok_len = (sse_size_t)0;
 	}
 	else 
 	{
-		*tok = (xp_char_t*)sp;
+		*tok = (sse_char_t*)sp;
 		*tok_len = ep - sp + 1;
 	}
 
-	/* if XP_NULL is returned, this function should not be called anymore */
-	if (p >= end) return XP_NULL;
+	/* if SSE_NULL is returned, this function should not be called anymore */
+	if (p >= end) return SSE_NULL;
 	if (delim_mode == __DELIM_EMPTY || 
-	    delim_mode == __DELIM_SPACES) return (xp_char_t*)p;
-	return (xp_char_t*)++p;
+	    delim_mode == __DELIM_SPACES) return (sse_char_t*)p;
+	return (sse_char_t*)++p;
 }
 
-xp_char_t* xp_awk_strxntokbyrex (
-	xp_awk_run_t* run, const xp_char_t* s, xp_size_t len,
-	void* rex, xp_char_t** tok, xp_size_t* tok_len, int* errnum)
+sse_char_t* sse_awk_strxntokbyrex (
+	sse_awk_run_t* run, const sse_char_t* s, sse_size_t len,
+	void* rex, sse_char_t** tok, sse_size_t* tok_len, int* errnum)
 {
 	int n;
-	xp_char_t* match_ptr;
-	xp_size_t match_len, i;
-	xp_size_t left = len;
-	const xp_char_t* ptr = s;
-	const xp_char_t* str_ptr = s;
-	xp_size_t str_len = len;
+	sse_char_t* match_ptr;
+	sse_size_t match_len, i;
+	sse_size_t left = len;
+	const sse_char_t* ptr = s;
+	const sse_char_t* str_ptr = s;
+	sse_size_t str_len = len;
 
 	while (len > 0)
 	{
-		n = xp_awk_matchrex (
+		n = sse_awk_matchrex (
 			run->awk, rex, 
-			((run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0),
-			ptr, left, (const xp_char_t**)&match_ptr, &match_len, 
+			((run->global.ignorecase)? SSE_AWK_REX_IGNORECASE: 0),
+			ptr, left, (const sse_char_t**)&match_ptr, &match_len, 
 			errnum);
-		if (n == -1) return XP_NULL;
+		if (n == -1) return SSE_NULL;
 		if (n == 0)
 		{
 			/* no match has been found. 
 			 * return the entire string as a token */
-			*tok = (xp_char_t*)str_ptr;
+			*tok = (sse_char_t*)str_ptr;
 			*tok_len = str_len;
-			*errnum = XP_AWK_ENOERR;
-			return XP_NULL; 
+			*errnum = SSE_AWK_ENOERR;
+			return SSE_NULL; 
 		}
 
-		xp_awk_assert (run->awk, n == 1);
+		sse_awk_assert (run->awk, n == 1);
 
 		if (match_len == 0)
 		{
 			ptr++;
 			left--;
 		}
-		else if (run->awk->option & XP_AWK_STRIPSPACES)
+		else if (run->awk->option & SSE_AWK_STRIPSPACES)
 		{
 			/* match at the beginning of the input string */
 			if (match_ptr == s) 
 			{
 				for (i = 0; i < match_len; i++)
 				{
-					if (!XP_AWK_ISSPACE(run->awk, match_ptr[i]))
+					if (!SSE_AWK_ISSPACE(run->awk, match_ptr[i]))
 						goto exit_loop;
 				}
 
@@ -1028,44 +1028,44 @@ xp_char_t* xp_awk_strxntokbyrex (
 exit_loop:
 	if (len == 0)
 	{
-		*tok = (xp_char_t*)str_ptr;
+		*tok = (sse_char_t*)str_ptr;
 		*tok_len = str_len;
-		*errnum = XP_AWK_ENOERR;
-		return XP_NULL; 
+		*errnum = SSE_AWK_ENOERR;
+		return SSE_NULL; 
 	}
 
-	*tok = (xp_char_t*)str_ptr;
+	*tok = (sse_char_t*)str_ptr;
 	*tok_len = match_ptr - str_ptr;
 
 	for (i = 0; i < match_len; i++)
 	{
-		if (!XP_AWK_ISSPACE(run->awk, match_ptr[i]))
+		if (!SSE_AWK_ISSPACE(run->awk, match_ptr[i]))
 		{
-			*errnum = XP_AWK_ENOERR;
+			*errnum = SSE_AWK_ENOERR;
 			return match_ptr+match_len;
 		}
 	}
 
-	*errnum = XP_AWK_ENOERR;
+	*errnum = SSE_AWK_ENOERR;
 
-	if (run->awk->option & XP_AWK_STRIPSPACES)
+	if (run->awk->option & SSE_AWK_STRIPSPACES)
 	{
 		return (match_ptr+match_len >= s+len)? 
-			XP_NULL: (match_ptr+match_len);
+			SSE_NULL: (match_ptr+match_len);
 	}
 	else
 	{
 		return (match_ptr+match_len > s+len)? 
-			XP_NULL: (match_ptr+match_len);
+			SSE_NULL: (match_ptr+match_len);
 	}
 }
 
-int xp_awk_abort (xp_awk_t* awk, 
-	const xp_char_t* expr, const xp_char_t* file, int line)
+int sse_awk_abort (sse_awk_t* awk, 
+	const sse_char_t* esser, const sse_char_t* file, int line)
 {
 	awk->syscas.dprintf (
-		XP_T("ASSERTION FAILURE AT FILE %s, LINE %d\n%s\n"),
-		file, line, expr);
+		SSE_T("ASSERTION FAILURE AT FILE %s, LINE %d\n%s\n"),
+		file, line, esser);
 	awk->syscas.abort ();
 	return 0;
 }

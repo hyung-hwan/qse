@@ -1,64 +1,64 @@
 /*
- * $Id: tab.h,v 1.12 2006-08-31 15:09:24 bacon Exp $
+ * $Id: tab.h,v 1.13 2006-10-22 11:34:53 bacon Exp $
  */
 
-#ifndef _XP_AWK_TAB_H_
-#define _XP_AWK_TAB_H_
+#ifndef _SSE_AWK_TAB_H_
+#define _SSE_AWK_TAB_H_
 
-#ifndef _XP_AWK_AWK_H_
-#error Never include this file directly. Include <xp/awk/awk.h> instead
+#ifndef _SSE_AWK_AWK_H_
+#error Never include this file directly. Include <sse/awk/awk.h> instead
 #endif
 
 /* TODO: you have to turn this into a hash table.
 	 as of now, this is an arrayed table. */
 
-typedef struct xp_awk_tab_t xp_awk_tab_t;
+typedef struct sse_awk_tab_t sse_awk_tab_t;
 
-struct xp_awk_tab_t
+struct sse_awk_tab_t
 {
 	struct
 	{
-		xp_char_t* name;
-		xp_size_t name_len;
+		sse_char_t* name;
+		sse_size_t name_len;
 	}* buf;
-	xp_size_t size;
-	xp_size_t capa;
-	xp_awk_t* awk;
-	xp_bool_t __dynamic;	
+	sse_size_t size;
+	sse_size_t capa;
+	sse_awk_t* awk;
+	sse_bool_t __dynamic;	
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_awk_tab_t* xp_awk_tab_open (xp_awk_tab_t* tab, xp_awk_t* awk);
-void xp_awk_tab_close (xp_awk_tab_t* tab);
+sse_awk_tab_t* sse_awk_tab_open (sse_awk_tab_t* tab, sse_awk_t* awk);
+void sse_awk_tab_close (sse_awk_tab_t* tab);
 
-xp_size_t xp_awk_tab_getsize (xp_awk_tab_t* tab);
-xp_size_t xp_awk_tab_getcapa (xp_awk_tab_t* tab);
-xp_awk_tab_t* xp_awk_tab_setcapa (xp_awk_tab_t* tab, xp_size_t capa);
+sse_size_t sse_awk_tab_getsize (sse_awk_tab_t* tab);
+sse_size_t sse_awk_tab_getcapa (sse_awk_tab_t* tab);
+sse_awk_tab_t* sse_awk_tab_setcapa (sse_awk_tab_t* tab, sse_size_t capa);
 
-void xp_awk_tab_clear (xp_awk_tab_t* tab);
+void sse_awk_tab_clear (sse_awk_tab_t* tab);
 
-xp_size_t xp_awk_tab_insert (
-	xp_awk_tab_t* tab, xp_size_t index, 
-	const xp_char_t* str, xp_size_t len);
+sse_size_t sse_awk_tab_insert (
+	sse_awk_tab_t* tab, sse_size_t index, 
+	const sse_char_t* str, sse_size_t len);
 
-xp_size_t xp_awk_tab_remove (
-	xp_awk_tab_t* tab, xp_size_t index, xp_size_t count);
+sse_size_t sse_awk_tab_remove (
+	sse_awk_tab_t* tab, sse_size_t index, sse_size_t count);
 
-xp_size_t xp_awk_tab_add (
-	xp_awk_tab_t* tab, const xp_char_t* str, xp_size_t len);
+sse_size_t sse_awk_tab_add (
+	sse_awk_tab_t* tab, const sse_char_t* str, sse_size_t len);
 
-xp_size_t xp_awk_tab_find (
-	xp_awk_tab_t* tab, xp_size_t index,
-	const xp_char_t* str, xp_size_t len);
-xp_size_t xp_awk_tab_rfind (
-	xp_awk_tab_t* tab, xp_size_t index,
-	const xp_char_t* str, xp_size_t len);
-xp_size_t xp_awk_tab_rrfind (
-	xp_awk_tab_t* tab, xp_size_t index,
-	const xp_char_t* str, xp_size_t len);
+sse_size_t sse_awk_tab_find (
+	sse_awk_tab_t* tab, sse_size_t index,
+	const sse_char_t* str, sse_size_t len);
+sse_size_t sse_awk_tab_rfind (
+	sse_awk_tab_t* tab, sse_size_t index,
+	const sse_char_t* str, sse_size_t len);
+sse_size_t sse_awk_tab_rrfind (
+	sse_awk_tab_t* tab, sse_size_t index,
+	const sse_char_t* str, sse_size_t len);
 
 #ifdef __cplusplus
 }

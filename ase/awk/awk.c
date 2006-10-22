@@ -1,112 +1,112 @@
 /* 
- * $Id: awk.c,v 1.82 2006-10-16 08:47:59 bacon Exp $ 
+ * $Id: awk.c,v 1.83 2006-10-22 11:34:52 bacon Exp $ 
  */
 
-#include <xp/awk/awk_i.h>
+#include <sse/awk/awk_i.h>
 
 static void __free_afn (void* awk, void* afn);
 
-xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
+sse_awk_t* sse_awk_open (sse_awk_syscas_t* syscas)
 {	
-	xp_awk_t* awk;
+	sse_awk_t* awk;
 
-	if (syscas == XP_NULL) return XP_NULL;
+	if (syscas == SSE_NULL) return SSE_NULL;
 
-	if (syscas->malloc == XP_NULL || 
-	    syscas->free == XP_NULL) return XP_NULL;
+	if (syscas->malloc == SSE_NULL || 
+	    syscas->free == SSE_NULL) return SSE_NULL;
 
-	if (syscas->is_upper  == XP_NULL ||
-	    syscas->is_lower  == XP_NULL ||
-	    syscas->is_alpha  == XP_NULL ||
-	    syscas->is_digit  == XP_NULL ||
-	    syscas->is_xdigit == XP_NULL ||
-	    syscas->is_alnum  == XP_NULL ||
-	    syscas->is_space  == XP_NULL ||
-	    syscas->is_print  == XP_NULL ||
-	    syscas->is_graph  == XP_NULL ||
-	    syscas->is_cntrl  == XP_NULL ||
-	    syscas->is_punct  == XP_NULL ||
-	    syscas->to_upper  == XP_NULL ||
-	    syscas->to_lower  == XP_NULL) return XP_NULL;
+	if (syscas->is_upper  == SSE_NULL ||
+	    syscas->is_lower  == SSE_NULL ||
+	    syscas->is_alpha  == SSE_NULL ||
+	    syscas->is_digit  == SSE_NULL ||
+	    syscas->is_xdigit == SSE_NULL ||
+	    syscas->is_alnum  == SSE_NULL ||
+	    syscas->is_space  == SSE_NULL ||
+	    syscas->is_print  == SSE_NULL ||
+	    syscas->is_graph  == SSE_NULL ||
+	    syscas->is_cntrl  == SSE_NULL ||
+	    syscas->is_punct  == SSE_NULL ||
+	    syscas->to_upper  == SSE_NULL ||
+	    syscas->to_lower  == SSE_NULL) return SSE_NULL;
 
-	if (syscas->sprintf == XP_NULL || 
-	    syscas->dprintf == XP_NULL || 
-	    syscas->abort == XP_NULL) return XP_NULL;
+	if (syscas->sprintf == SSE_NULL || 
+	    syscas->dprintf == SSE_NULL || 
+	    syscas->abort == SSE_NULL) return SSE_NULL;
 
 #if defined(_WIN32) && defined(_DEBUG)
-	awk = (xp_awk_t*) malloc (xp_sizeof(xp_awk_t));
+	awk = (sse_awk_t*) malloc (sse_sizeof(sse_awk_t));
 #else
-	awk = (xp_awk_t*) syscas->malloc (
-		xp_sizeof(xp_awk_t), syscas->custom_data);
+	awk = (sse_awk_t*) syscas->malloc (
+		sse_sizeof(sse_awk_t), syscas->custom_data);
 #endif
-	if (awk == XP_NULL) return XP_NULL;
+	if (awk == SSE_NULL) return SSE_NULL;
 
-	/* it uses the built-in xp_awk_memset because awk is not 
+	/* it uses the built-in sse_awk_memset because awk is not 
 	 * fully initialized yet */
-	xp_awk_memset (awk, 0, xp_sizeof(xp_awk_t));
+	sse_awk_memset (awk, 0, sse_sizeof(sse_awk_t));
 
-	if (syscas->memcpy == XP_NULL)
+	if (syscas->memcpy == SSE_NULL)
 	{
-		xp_awk_memcpy (&awk->syscas, syscas, xp_sizeof(awk->syscas));
-		awk->syscas.memcpy = xp_awk_memcpy;
+		sse_awk_memcpy (&awk->syscas, syscas, sse_sizeof(awk->syscas));
+		awk->syscas.memcpy = sse_awk_memcpy;
 	}
-	else syscas->memcpy (&awk->syscas, syscas, xp_sizeof(awk->syscas));
-	if (syscas->memset == XP_NULL) awk->syscas.memset = xp_awk_memset;
+	else syscas->memcpy (&awk->syscas, syscas, sse_sizeof(awk->syscas));
+	if (syscas->memset == SSE_NULL) awk->syscas.memset = sse_awk_memset;
 
-	if (xp_awk_str_open (&awk->token.name, 128, awk) == XP_NULL) 
+	if (sse_awk_str_open (&awk->token.name, 128, awk) == SSE_NULL) 
 	{
-		XP_AWK_FREE (awk, awk);
-		return XP_NULL;	
+		SSE_AWK_FREE (awk, awk);
+		return SSE_NULL;	
 	}
 
 	/* TODO: initial map size?? */
-	if (xp_awk_map_open (
-		&awk->tree.afns, awk, 256, __free_afn, awk) == XP_NULL) 
+	if (sse_awk_map_open (
+		&awk->tree.afns, awk, 256, __free_afn, awk) == SSE_NULL) 
 	{
-		xp_awk_str_close (&awk->token.name);
-		XP_AWK_FREE (awk, awk);
-		return XP_NULL;	
+		sse_awk_str_close (&awk->token.name);
+		SSE_AWK_FREE (awk, awk);
+		return SSE_NULL;	
 	}
 
-	if (xp_awk_tab_open (&awk->parse.globals, awk) == XP_NULL) 
+	if (sse_awk_tab_open (&awk->parse.globals, awk) == SSE_NULL) 
 	{
-		xp_awk_str_close (&awk->token.name);
-		xp_awk_map_close (&awk->tree.afns);
-		XP_AWK_FREE (awk, awk);
-		return XP_NULL;	
+		sse_awk_str_close (&awk->token.name);
+		sse_awk_map_close (&awk->tree.afns);
+		SSE_AWK_FREE (awk, awk);
+		return SSE_NULL;	
 	}
 
-	if (xp_awk_tab_open (&awk->parse.locals, awk) == XP_NULL) 
+	if (sse_awk_tab_open (&awk->parse.locals, awk) == SSE_NULL) 
 	{
-		xp_awk_str_close (&awk->token.name);
-		xp_awk_map_close (&awk->tree.afns);
-		xp_awk_tab_close (&awk->parse.globals);
-		XP_AWK_FREE (awk, awk);
-		return XP_NULL;	
+		sse_awk_str_close (&awk->token.name);
+		sse_awk_map_close (&awk->tree.afns);
+		sse_awk_tab_close (&awk->parse.globals);
+		SSE_AWK_FREE (awk, awk);
+		return SSE_NULL;	
 	}
 
-	if (xp_awk_tab_open (&awk->parse.params, awk) == XP_NULL) 
+	if (sse_awk_tab_open (&awk->parse.params, awk) == SSE_NULL) 
 	{
-		xp_awk_str_close (&awk->token.name);
-		xp_awk_map_close (&awk->tree.afns);
-		xp_awk_tab_close (&awk->parse.globals);
-		xp_awk_tab_close (&awk->parse.locals);
-		XP_AWK_FREE (awk, awk);
-		return XP_NULL;	
+		sse_awk_str_close (&awk->token.name);
+		sse_awk_map_close (&awk->tree.afns);
+		sse_awk_tab_close (&awk->parse.globals);
+		sse_awk_tab_close (&awk->parse.locals);
+		SSE_AWK_FREE (awk, awk);
+		return SSE_NULL;	
 	}
 
 	awk->option = 0;
-	awk->errnum = XP_AWK_ENOERR;
+	awk->errnum = SSE_AWK_ENOERR;
 
 	awk->parse.nlocals_max = 0;
 	awk->parse.nl_semicolon = 0;
 
 	awk->tree.nglobals = 0;
 	awk->tree.nbglobals = 0;
-	awk->tree.begin = XP_NULL;
-	awk->tree.end = XP_NULL;
-	awk->tree.chain = XP_NULL;
-	awk->tree.chain_tail = XP_NULL;
+	awk->tree.begin = SSE_NULL;
+	awk->tree.end = SSE_NULL;
+	awk->tree.chain = SSE_NULL;
+	awk->tree.chain_tail = SSE_NULL;
 	awk->tree.chain_size = 0;
 
 	awk->token.prev = 0;
@@ -114,48 +114,48 @@ xp_awk_t* xp_awk_open (xp_awk_syscas_t* syscas)
 	awk->token.line = 0;
 	awk->token.column = 0;
 
-	awk->src.ios = XP_NULL;
-	awk->src.lex.curc = XP_CHAR_EOF;
+	awk->src.ios = SSE_NULL;
+	awk->src.lex.curc = SSE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
 	awk->src.lex.line = 1;
 	awk->src.lex.column = 1;
 	awk->src.shared.buf_pos = 0;
 	awk->src.shared.buf_len = 0;
 
-	awk->bfn.sys = XP_NULL;
-	awk->bfn.user = XP_NULL;
+	awk->bfn.sys = SSE_NULL;
+	awk->bfn.user = SSE_NULL;
 
 	awk->run.count = 0;
-	awk->run.ptr = XP_NULL;
+	awk->run.ptr = SSE_NULL;
 
 	return awk;
 }
 
-int xp_awk_close (xp_awk_t* awk)
+int sse_awk_close (sse_awk_t* awk)
 {
-	if (xp_awk_clear (awk) == -1) return -1;
+	if (sse_awk_clear (awk) == -1) return -1;
 
-	xp_awk_assert (awk, awk->run.count == 0 && awk->run.ptr == XP_NULL);
+	sse_awk_assert (awk, awk->run.count == 0 && awk->run.ptr == SSE_NULL);
 
-	xp_awk_map_close (&awk->tree.afns);
-	xp_awk_tab_close (&awk->parse.globals);
-	xp_awk_tab_close (&awk->parse.locals);
-	xp_awk_tab_close (&awk->parse.params);
-	xp_awk_str_close (&awk->token.name);
+	sse_awk_map_close (&awk->tree.afns);
+	sse_awk_tab_close (&awk->parse.globals);
+	sse_awk_tab_close (&awk->parse.locals);
+	sse_awk_tab_close (&awk->parse.params);
+	sse_awk_str_close (&awk->token.name);
 
-	/* XP_AWK_ALLOC, XP_AWK_FREE, etc can not be used 
+	/* SSE_AWK_ALLOC, SSE_AWK_FREE, etc can not be used 
 	 * from the next line onwards */
-	XP_AWK_FREE (awk, awk);
+	SSE_AWK_FREE (awk, awk);
 	return 0;
 }
 
-int xp_awk_clear (xp_awk_t* awk)
+int sse_awk_clear (sse_awk_t* awk)
 {
 	/* you should stop all running instances beforehand */
 /* TODO: can i stop all instances??? */
-	if (awk->run.ptr != XP_NULL)
+	if (awk->run.ptr != SSE_NULL)
 	{
-		awk->errnum = XP_AWK_ERUNNING;
+		awk->errnum = SSE_AWK_ERUNNING;
 		return -1;
 	}
 
@@ -164,17 +164,17 @@ int xp_awk_clear (xp_awk_t* awk)
 	awk->bfn.user
 */
 
-	awk->src.ios = XP_NULL;
-	awk->src.lex.curc = XP_CHAR_EOF;
+	awk->src.ios = SSE_NULL;
+	awk->src.lex.curc = SSE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
 	awk->src.lex.line = 1;
 	awk->src.lex.column = 1;
 	awk->src.shared.buf_pos = 0;
 	awk->src.shared.buf_len = 0;
 
-	xp_awk_tab_clear (&awk->parse.globals);
-	xp_awk_tab_clear (&awk->parse.locals);
-	xp_awk_tab_clear (&awk->parse.params);
+	sse_awk_tab_clear (&awk->parse.globals);
+	sse_awk_tab_clear (&awk->parse.locals);
+	sse_awk_tab_clear (&awk->parse.params);
 
 	awk->parse.nlocals_max = 0; 
 	awk->parse.depth.loop = 0;
@@ -182,60 +182,60 @@ int xp_awk_clear (xp_awk_t* awk)
 	/* clear parse trees */	
 	awk->tree.nbglobals = 0;
 	awk->tree.nglobals = 0;	
-	xp_awk_map_clear (&awk->tree.afns);
+	sse_awk_map_clear (&awk->tree.afns);
 
-	if (awk->tree.begin != XP_NULL) 
+	if (awk->tree.begin != SSE_NULL) 
 	{
-		xp_awk_assert (awk, awk->tree.begin->next == XP_NULL);
-		xp_awk_clrpt (awk, awk->tree.begin);
-		awk->tree.begin = XP_NULL;
+		sse_awk_assert (awk, awk->tree.begin->next == SSE_NULL);
+		sse_awk_clrpt (awk, awk->tree.begin);
+		awk->tree.begin = SSE_NULL;
 	}
 
-	if (awk->tree.end != XP_NULL) 
+	if (awk->tree.end != SSE_NULL) 
 	{
-		xp_awk_assert (awk, awk->tree.end->next == XP_NULL);
-		xp_awk_clrpt (awk, awk->tree.end);
-		awk->tree.end = XP_NULL;
+		sse_awk_assert (awk, awk->tree.end->next == SSE_NULL);
+		sse_awk_clrpt (awk, awk->tree.end);
+		awk->tree.end = SSE_NULL;
 	}
 
-	while (awk->tree.chain != XP_NULL) 
+	while (awk->tree.chain != SSE_NULL) 
 	{
-		xp_awk_chain_t* next = awk->tree.chain->next;
-		if (awk->tree.chain->pattern != XP_NULL)
-			xp_awk_clrpt (awk, awk->tree.chain->pattern);
-		if (awk->tree.chain->action != XP_NULL)
-			xp_awk_clrpt (awk, awk->tree.chain->action);
-		XP_AWK_FREE (awk, awk->tree.chain);
+		sse_awk_chain_t* next = awk->tree.chain->next;
+		if (awk->tree.chain->pattern != SSE_NULL)
+			sse_awk_clrpt (awk, awk->tree.chain->pattern);
+		if (awk->tree.chain->action != SSE_NULL)
+			sse_awk_clrpt (awk, awk->tree.chain->action);
+		SSE_AWK_FREE (awk, awk->tree.chain);
 		awk->tree.chain = next;
 	}
 
-	awk->tree.chain_tail = XP_NULL;	
+	awk->tree.chain_tail = SSE_NULL;	
 	awk->tree.chain_size = 0;
 	return 0;
 }
 
-int xp_awk_getopt (xp_awk_t* awk)
+int sse_awk_getopt (sse_awk_t* awk)
 {
 	return awk->option;
 }
 
-void xp_awk_setopt (xp_awk_t* awk, int opt)
+void sse_awk_setopt (sse_awk_t* awk, int opt)
 {
 	awk->option = opt;
 }
 
 static void __free_afn (void* owner, void* afn)
 {
-	xp_awk_afn_t* f = (xp_awk_afn_t*)afn;
+	sse_awk_afn_t* f = (sse_awk_afn_t*)afn;
 
 	/* f->name doesn't have to be freed */
-	/*XP_AWK_FREE ((xp_awk_t*)owner, f->name);*/
+	/*SSE_AWK_FREE ((sse_awk_t*)owner, f->name);*/
 
-	xp_awk_clrpt ((xp_awk_t*)owner, f->body);
-	XP_AWK_FREE ((xp_awk_t*)owner, f);
+	sse_awk_clrpt ((sse_awk_t*)owner, f->body);
+	SSE_AWK_FREE ((sse_awk_t*)owner, f);
 }
 
-xp_size_t xp_awk_getsrcline (xp_awk_t* awk)
+sse_size_t sse_awk_getsrcline (sse_awk_t* awk)
 {
 	return awk->token.line;
 }

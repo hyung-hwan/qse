@@ -1,50 +1,50 @@
 /*
- * $Id: str.c,v 1.8 2006-10-12 14:36:25 bacon Exp $
+ * $Id: str.c,v 1.9 2006-10-22 11:34:53 bacon Exp $
  */
 
-#include <xp/awk/awk_i.h>
+#include <sse/awk/awk_i.h>
 
-xp_awk_str_t* xp_awk_str_open (
-	xp_awk_str_t* str, xp_size_t capa, xp_awk_t* awk)
+sse_awk_str_t* sse_awk_str_open (
+	sse_awk_str_t* str, sse_size_t capa, sse_awk_t* awk)
 {
-	if (str == XP_NULL) 
+	if (str == SSE_NULL) 
 	{
-		str = (xp_awk_str_t*) XP_AWK_MALLOC (awk, sizeof(xp_awk_str_t));
-		if (str == XP_NULL) return XP_NULL;
-		str->__dynamic = xp_true;
+		str = (sse_awk_str_t*) SSE_AWK_MALLOC (awk, sizeof(sse_awk_str_t));
+		if (str == SSE_NULL) return SSE_NULL;
+		str->__dynamic = sse_true;
 	}
-	else str->__dynamic = xp_false;
+	else str->__dynamic = sse_false;
 
 	str->awk = awk;
-	str->buf = (xp_char_t*) XP_AWK_MALLOC (
-		awk, xp_sizeof(xp_char_t) * (capa + 1));
-	if (str->buf == XP_NULL) 
+	str->buf = (sse_char_t*) SSE_AWK_MALLOC (
+		awk, sse_sizeof(sse_char_t) * (capa + 1));
+	if (str->buf == SSE_NULL) 
 	{
-		if (str->__dynamic) XP_AWK_FREE (awk, str);
-		return XP_NULL;
+		if (str->__dynamic) SSE_AWK_FREE (awk, str);
+		return SSE_NULL;
 	}
 
 	str->size = 0;
 	str->capa  = capa;
-	str->buf[0] = XP_T('\0');
+	str->buf[0] = SSE_T('\0');
 
 	return str;
 }
 
-void xp_awk_str_close (xp_awk_str_t* str)
+void sse_awk_str_close (sse_awk_str_t* str)
 {
-	XP_AWK_FREE (str->awk, str->buf);
-	if (str->__dynamic) XP_AWK_FREE (str->awk, str);
+	SSE_AWK_FREE (str->awk, str->buf);
+	if (str->__dynamic) SSE_AWK_FREE (str->awk, str);
 }
 
-void xp_awk_str_forfeit (xp_awk_str_t* str)
+void sse_awk_str_forfeit (sse_awk_str_t* str)
 {
-	if (str->__dynamic) XP_AWK_FREE (str->awk, str);
+	if (str->__dynamic) SSE_AWK_FREE (str->awk, str);
 }
 
-void xp_awk_str_swap (xp_awk_str_t* str, xp_awk_str_t* str1)
+void sse_awk_str_swap (sse_awk_str_t* str, sse_awk_str_t* str1)
 {
-	xp_awk_str_t tmp;
+	sse_awk_str_t tmp;
 
 	tmp.buf = str->buf;
 	tmp.size = str->size;
@@ -62,67 +62,67 @@ void xp_awk_str_swap (xp_awk_str_t* str, xp_awk_str_t* str1)
 	str1->awk = tmp.awk;
 }
 
-xp_size_t xp_awk_str_cpy (xp_awk_str_t* str, const xp_char_t* s)
+sse_size_t sse_awk_str_cpy (sse_awk_str_t* str, const sse_char_t* s)
 {
 	/* TODO: improve it */
-	return xp_awk_str_ncpy (str, s, xp_awk_strlen(s));
+	return sse_awk_str_ncpy (str, s, sse_awk_strlen(s));
 }
 
-xp_size_t xp_awk_str_ncpy (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
+sse_size_t sse_awk_str_ncpy (sse_awk_str_t* str, const sse_char_t* s, sse_size_t len)
 {
-	xp_char_t* buf;
+	sse_char_t* buf;
 
 	if (len > str->capa) 
 	{
-		buf = (xp_char_t*) XP_AWK_MALLOC (
-			str->awk, xp_sizeof(xp_char_t) * (len + 1));
-		if (buf == XP_NULL) return (xp_size_t)-1;
+		buf = (sse_char_t*) SSE_AWK_MALLOC (
+			str->awk, sse_sizeof(sse_char_t) * (len + 1));
+		if (buf == SSE_NULL) return (sse_size_t)-1;
 
-		XP_AWK_FREE (str->awk, str->buf);
+		SSE_AWK_FREE (str->awk, str->buf);
 		str->capa = len;
 		str->buf = buf;
 	}
 
-	str->size = xp_awk_strncpy (str->buf, s, len);
-	str->buf[str->size] = XP_T('\0');
+	str->size = sse_awk_strncpy (str->buf, s, len);
+	str->buf[str->size] = SSE_T('\0');
 	return str->size;
 }
 
-xp_size_t xp_awk_str_cat (xp_awk_str_t* str, const xp_char_t* s)
+sse_size_t sse_awk_str_cat (sse_awk_str_t* str, const sse_char_t* s)
 {
 	/* TODO: improve it */
-	return xp_awk_str_ncat (str, s, xp_awk_strlen(s));
+	return sse_awk_str_ncat (str, s, sse_awk_strlen(s));
 }
 
-xp_size_t xp_awk_str_ncat (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
+sse_size_t sse_awk_str_ncat (sse_awk_str_t* str, const sse_char_t* s, sse_size_t len)
 {
 	if (len > str->capa - str->size) 
 	{
-		xp_char_t* tmp;
-		xp_size_t capa;
+		sse_char_t* tmp;
+		sse_size_t capa;
 
 		capa = str->size + len;
 
 		/* double the capa if necessary for concatenation */
 		if (capa < str->capa * 2) capa = str->capa * 2;
 
-		if (str->awk->syscas.realloc != XP_NULL)
+		if (str->awk->syscas.realloc != SSE_NULL)
 		{
-			tmp = (xp_char_t*) XP_AWK_REALLOC (
+			tmp = (sse_char_t*) SSE_AWK_REALLOC (
 				str->awk, str->buf, 
-				xp_sizeof(xp_char_t) * (capa + 1));
-			if (tmp == XP_NULL) return (xp_size_t)-1;
+				sse_sizeof(sse_char_t) * (capa + 1));
+			if (tmp == SSE_NULL) return (sse_size_t)-1;
 		}
 		else
 		{
-			tmp = (xp_char_t*) XP_AWK_MALLOC (
-				str->awk, xp_sizeof(xp_char_t) * (capa + 1));
-			if (tmp == XP_NULL) return (xp_size_t)-1;
-			if (str->buf != XP_NULL)
+			tmp = (sse_char_t*) SSE_AWK_MALLOC (
+				str->awk, sse_sizeof(sse_char_t) * (capa + 1));
+			if (tmp == SSE_NULL) return (sse_size_t)-1;
+			if (str->buf != SSE_NULL)
 			{
-				XP_AWK_MEMCPY (str->awk, tmp, str->buf, 
-					xp_sizeof(xp_char_t) * (str->capa + 1));
-				XP_AWK_FREE (str->awk, str->buf);
+				SSE_AWK_MEMCPY (str->awk, tmp, str->buf, 
+					sse_sizeof(sse_char_t) * (str->capa + 1));
+				SSE_AWK_FREE (str->awk, str->buf);
 			}
 		}
 
@@ -130,23 +130,23 @@ xp_size_t xp_awk_str_ncat (xp_awk_str_t* str, const xp_char_t* s, xp_size_t len)
 		str->buf = tmp;
 	}
 
-	str->size += xp_awk_strncpy (&str->buf[str->size], s, len);
-	str->buf[str->size] = XP_T('\0');
+	str->size += sse_awk_strncpy (&str->buf[str->size], s, len);
+	str->buf[str->size] = SSE_T('\0');
 	return str->size;
 }
 
-xp_size_t xp_awk_str_ccat (xp_awk_str_t* str, xp_char_t c)
+sse_size_t sse_awk_str_ccat (sse_awk_str_t* str, sse_char_t c)
 {
-	return xp_awk_str_ncat (str, &c, 1);
+	return sse_awk_str_ncat (str, &c, 1);
 }
 
-xp_size_t xp_awk_str_nccat (xp_awk_str_t* str, xp_char_t c, xp_size_t len)
+sse_size_t sse_awk_str_nccat (sse_awk_str_t* str, sse_char_t c, sse_size_t len)
 {
 	while (len > 0)
 	{
-		if (xp_awk_str_ncat (str, &c, 1) == (xp_size_t)-1) 
+		if (sse_awk_str_ncat (str, &c, 1) == (sse_size_t)-1) 
 		{
-			return (xp_size_t)-1;
+			return (sse_size_t)-1;
 		}
 
 		len--;
@@ -154,9 +154,9 @@ xp_size_t xp_awk_str_nccat (xp_awk_str_t* str, xp_char_t c, xp_size_t len)
 	return str->size;
 }
 
-void xp_awk_str_clear (xp_awk_str_t* str)
+void sse_awk_str_clear (sse_awk_str_t* str)
 {
 	str->size = 0;
-	str->buf[0] = XP_T('\0');
+	str->buf[0] = SSE_T('\0');
 }
 

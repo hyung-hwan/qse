@@ -1,8 +1,8 @@
 /*
- * $Id: func.c,v 1.65 2006-10-18 14:02:19 bacon Exp $
+ * $Id: func.c,v 1.66 2006-10-22 11:34:53 bacon Exp $
  */
 
-#include <xp/awk/awk_i.h>
+#include <sse/awk/awk_i.h>
 
 #ifdef _WIN32
 	#include <tchar.h>
@@ -12,56 +12,56 @@
 	#include <math.h>
 #endif
 
-static int __bfn_close   (xp_awk_run_t* run);
-static int __bfn_fflush  (xp_awk_run_t* run);
-static int __bfn_index   (xp_awk_run_t* run);
-static int __bfn_length  (xp_awk_run_t* run);
-static int __bfn_substr  (xp_awk_run_t* run);
-static int __bfn_split   (xp_awk_run_t* run);
-static int __bfn_tolower (xp_awk_run_t* run);
-static int __bfn_toupper (xp_awk_run_t* run);
-static int __bfn_gsub    (xp_awk_run_t* run);
-static int __bfn_sub     (xp_awk_run_t* run);
-static int __bfn_match   (xp_awk_run_t* run);
-static int __bfn_system  (xp_awk_run_t* run);
-/*static int __bfn_sin   (xp_awk_run_t* run);*/
+static int __bfn_close   (sse_awk_run_t* run);
+static int __bfn_fflush  (sse_awk_run_t* run);
+static int __bfn_index   (sse_awk_run_t* run);
+static int __bfn_length  (sse_awk_run_t* run);
+static int __bfn_substr  (sse_awk_run_t* run);
+static int __bfn_split   (sse_awk_run_t* run);
+static int __bfn_tolower (sse_awk_run_t* run);
+static int __bfn_toupper (sse_awk_run_t* run);
+static int __bfn_gsub    (sse_awk_run_t* run);
+static int __bfn_sub     (sse_awk_run_t* run);
+static int __bfn_match   (sse_awk_run_t* run);
+static int __bfn_system  (sse_awk_run_t* run);
+/*static int __bfn_sin   (sse_awk_run_t* run);*/
 
 /* TODO: move it under the awk structure... */
-static xp_awk_bfn_t __sys_bfn[] = 
+static sse_awk_bfn_t __sys_bfn[] = 
 {
 	/* io functions */
-	{XP_T("close"),   5, XP_AWK_EXTIO, 1,  1,  XP_NULL,     __bfn_close},
-	{XP_T("fflush"),  6, XP_AWK_EXTIO, 0,  1,  XP_NULL,     __bfn_fflush},
+	{SSE_T("close"),   5, SSE_AWK_EXTIO, 1,  1,  SSE_NULL,     __bfn_close},
+	{SSE_T("fflush"),  6, SSE_AWK_EXTIO, 0,  1,  SSE_NULL,     __bfn_fflush},
 
 	/* string functions */
-	{XP_T("index"),   5, 0,            2,  2,  XP_NULL,     __bfn_index},
-	{XP_T("substr"),  6, 0,            2,  3,  XP_NULL,     __bfn_substr},
-	{XP_T("length"),  6, 0,            1,  1,  XP_NULL,     __bfn_length},
-	{XP_T("split"),   5, 0,            2,  3,  XP_T("vrv"), __bfn_split},
-	{XP_T("tolower"), 7, 0,            1,  1,  XP_NULL,     __bfn_tolower},
-	{XP_T("toupper"), 7, 0,            1,  1,  XP_NULL,     __bfn_toupper},
-	{XP_T("gsub"),    4, 0,            2,  3,  XP_T("xvr"), __bfn_gsub},
-	{XP_T("sub"),     3, 0,            2,  3,  XP_T("xvr"), __bfn_sub},
-	{XP_T("match"),   5, 0,            2,  2,  XP_T("vx"),  __bfn_match},
+	{SSE_T("index"),   5, 0,            2,  2,  SSE_NULL,     __bfn_index},
+	{SSE_T("substr"),  6, 0,            2,  3,  SSE_NULL,     __bfn_substr},
+	{SSE_T("length"),  6, 0,            1,  1,  SSE_NULL,     __bfn_length},
+	{SSE_T("split"),   5, 0,            2,  3,  SSE_T("vrv"), __bfn_split},
+	{SSE_T("tolower"), 7, 0,            1,  1,  SSE_NULL,     __bfn_tolower},
+	{SSE_T("toupper"), 7, 0,            1,  1,  SSE_NULL,     __bfn_toupper},
+	{SSE_T("gsub"),    4, 0,            2,  3,  SSE_T("xvr"), __bfn_gsub},
+	{SSE_T("sub"),     3, 0,            2,  3,  SSE_T("xvr"), __bfn_sub},
+	{SSE_T("match"),   5, 0,            2,  2,  SSE_T("vx"),  __bfn_match},
 
 	/* TODO: remove these two functions */
-	{XP_T("system"),  6, 0,            1,  1,  XP_NULL,     __bfn_system},
-	/*{ XP_T("sin"),     3, 0,            1,  1,  XP_NULL,   __bfn_sin},*/
+	{SSE_T("system"),  6, 0,            1,  1,  SSE_NULL,     __bfn_system},
+	/*{ SSE_T("sin"),     3, 0,            1,  1,  SSE_NULL,   __bfn_sin},*/
 
-	{XP_NULL,         0, 0,            0,  0,  XP_NULL,     XP_NULL}
+	{SSE_NULL,         0, 0,            0,  0,  SSE_NULL,     SSE_NULL}
 };
 
-xp_awk_bfn_t* xp_awk_addbfn (
-	xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len, 
-	int when_valid, xp_size_t min_args, xp_size_t max_args, 
-	const xp_char_t* arg_spec, int (*handler)(xp_awk_run_t*))
+sse_awk_bfn_t* sse_awk_addbfn (
+	sse_awk_t* awk, const sse_char_t* name, sse_size_t name_len, 
+	int when_valid, sse_size_t min_args, sse_size_t max_args, 
+	const sse_char_t* arg_spec, int (*handler)(sse_awk_run_t*))
 {
-	xp_awk_bfn_t* p;
+	sse_awk_bfn_t* p;
 
 /* TODO: complete this function??? */
 
-	p = (xp_awk_bfn_t*) XP_AWK_MALLOC (awk, xp_sizeof(xp_awk_bfn_t));
-	if (p == XP_NULL) return XP_NULL;
+	p = (sse_awk_bfn_t*) SSE_AWK_MALLOC (awk, sse_sizeof(sse_awk_bfn_t));
+	if (p == SSE_NULL) return SSE_NULL;
 
 	/* NOTE: make sure that name is a constant string */
 	p->name = name;  
@@ -78,19 +78,19 @@ xp_awk_bfn_t* xp_awk_addbfn (
 	return p;
 }
 
-int xp_awk_delbfn (xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len)
+int sse_awk_delbfn (sse_awk_t* awk, const sse_char_t* name, sse_size_t name_len)
 {
-	xp_awk_bfn_t* p, * pp = XP_NULL;
+	sse_awk_bfn_t* p, * pp = SSE_NULL;
 
-	for (p = awk->bfn.user; p != XP_NULL; p++)
+	for (p = awk->bfn.user; p != SSE_NULL; p++)
 	{
-		if (xp_awk_strxncmp(p->name, p->name_len, name, name_len) == 0)
+		if (sse_awk_strxncmp(p->name, p->name_len, name, name_len) == 0)
 		{
-			if (pp == XP_NULL)
+			if (pp == SSE_NULL)
 				awk->bfn.user = p->next;
 			else pp->next = p->next;
 
-			XP_AWK_FREE (awk, p);
+			SSE_AWK_FREE (awk, p);
 			return 0;
 		}
 
@@ -100,74 +100,74 @@ int xp_awk_delbfn (xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len)
 	return -1;
 }
 
-void xp_awk_clrbfn (xp_awk_t* awk)
+void sse_awk_clrbfn (sse_awk_t* awk)
 {
-	xp_awk_bfn_t* p, * np;
+	sse_awk_bfn_t* p, * np;
 
 	p = awk->bfn.user;
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		np = p;
-		XP_AWK_FREE (awk, p);
+		SSE_AWK_FREE (awk, p);
 		p = np;
 	}
 
-	awk->bfn.user = XP_NULL;
+	awk->bfn.user = SSE_NULL;
 }
 
-xp_awk_bfn_t* xp_awk_getbfn (
-	xp_awk_t* awk, const xp_char_t* name, xp_size_t name_len)
+sse_awk_bfn_t* sse_awk_getbfn (
+	sse_awk_t* awk, const sse_char_t* name, sse_size_t name_len)
 {
-	xp_awk_bfn_t* p;
+	sse_awk_bfn_t* p;
 
-	for (p = __sys_bfn; p->name != XP_NULL; p++)
+	for (p = __sys_bfn; p->name != SSE_NULL; p++)
 	{
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
-		if (xp_awk_strxncmp (
+		if (sse_awk_strxncmp (
 			p->name, p->name_len, name, name_len) == 0) return p;
 	}
 
 /* TODO: user-added builtin functions... */
-	for (p = awk->bfn.user; p != XP_NULL; p = p->next)
+	for (p = awk->bfn.user; p != SSE_NULL; p = p->next)
 	{
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
-		if (xp_awk_strxncmp (
+		if (sse_awk_strxncmp (
 			p->name, p->name_len, name, name_len) == 0) return p;
 	}
 
-	return XP_NULL;
+	return SSE_NULL;
 }
 
-static int __bfn_close (xp_awk_run_t* run)
+static int __bfn_close (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* v, * a0;
+	sse_size_t nargs;
+	sse_awk_val_t* v, * a0;
 	int n;
 
-	xp_char_t* name;
-	xp_size_t len;
+	sse_char_t* name;
+	sse_size_t len;
        
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs == 1);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs == 1);
 /* TODO: support close (xxx, "to"/"from") like gawk */
 
-	a0 = xp_awk_getarg (run, 0);
-	xp_awk_assert (run->awk, a0 != XP_NULL);
+	a0 = sse_awk_getarg (run, 0);
+	sse_awk_assert (run->awk, a0 != SSE_NULL);
 
-	if (a0->type == XP_AWK_VAL_STR)
+	if (a0->type == SSE_AWK_VAL_STR)
 	{
-		name = ((xp_awk_val_str_t*)a0)->buf;
-		len = ((xp_awk_val_str_t*)a0)->len;
+		name = ((sse_awk_val_str_t*)a0)->buf;
+		len = ((sse_awk_val_str_t*)a0)->len;
 	}
 	else
 	{
-		name = xp_awk_valtostr (
-			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
-		if (name == XP_NULL) return -1;
+		name = sse_awk_valtostr (
+			run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len);
+		if (name == SSE_NULL) return -1;
 	}
 
 	if (len == 0)
@@ -175,12 +175,12 @@ static int __bfn_close (xp_awk_run_t* run)
 		/* getline or print doesn't allow an emptry for the 
 		 * input or output file name. so close should not allow 
 		 * it either.  
-		 * another reason for this is if close is called explicitly 
+		 * another reason for this is if close is called esselicitly 
 		 * with an empty string, it may close the console that uses 
 		 * an empty string for its identification because closeextio
 		 * closes any extios that match the name given unlike 
 		 * closeextio_read or closeextio_write. */ 
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, name);
+		if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, name);
 		n = -1;
 		/* TODO: need to set ERRNO??? */
 		goto skip_close;
@@ -188,52 +188,52 @@ static int __bfn_close (xp_awk_run_t* run)
 
 	while (len > 0)
 	{
-		if (name[--len] == XP_T('\0'))
+		if (name[--len] == SSE_T('\0'))
 		{
 			/* the name contains a null string. 
 			 * make close return -1 */
-			if (a0->type != XP_AWK_VAL_STR) 
-				XP_AWK_FREE (run->awk, name);
+			if (a0->type != SSE_AWK_VAL_STR) 
+				SSE_AWK_FREE (run->awk, name);
 			n = -1;
 			/* TODO: need to set ERRNO??? */
 			goto skip_close;
 		}
 	}	
 
-	n = xp_awk_closeextio (run, name);
-	if (n == -1 && run->errnum != XP_AWK_EIOHANDLER)
+	n = sse_awk_closeextio (run, name);
+	if (n == -1 && run->errnum != SSE_AWK_EIOHANDLER)
 	{
-		if (a0->type != XP_AWK_VAL_STR) 
-			XP_AWK_FREE (run->awk, name);
+		if (a0->type != SSE_AWK_VAL_STR) 
+			SSE_AWK_FREE (run->awk, name);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, name);
+	if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, name);
 
 skip_close:
-	v = xp_awk_makeintval (run, n);
-	if (v == XP_NULL)
+	v = sse_awk_makeintval (run, n);
+	if (v == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_setretval (run, v);
+	sse_awk_setretval (run, v);
 	return 0;
 }
 
 static int __flush_extio (
-	xp_awk_run_t* run, int extio, const xp_char_t* name, int n)
+	sse_awk_run_t* run, int extio, const sse_char_t* name, int n)
 {
 	int n2;
 
-	if (run->extio.handler[extio] != XP_NULL)
+	if (run->extio.handler[extio] != SSE_NULL)
 	{
-		n2 = xp_awk_flushextio (run, extio, name);
+		n2 = sse_awk_flushextio (run, extio, name);
 		if (n2 == -1)
 		{
-			if (run->errnum == XP_AWK_EIOHANDLER) n = -1;
-			else if (run->errnum == XP_AWK_ENOSUCHIO) 
+			if (run->errnum == SSE_AWK_EIOHANDLER) n = -1;
+			else if (run->errnum == SSE_AWK_ENOSUCHIO) 
 			{
 				if (n != 0) n = -2;
 			}
@@ -245,24 +245,24 @@ static int __flush_extio (
 	return n;
 }
 
-static int __bfn_fflush (xp_awk_run_t* run)
+static int __bfn_fflush (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* a0;
-	xp_char_t* str0;
-	xp_size_t len0;
+	sse_size_t nargs;
+	sse_awk_val_t* a0;
+	sse_char_t* str0;
+	sse_size_t len0;
 	int n;
        
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs >= 0 && nargs <= 1);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs >= 0 && nargs <= 1);
 
 	if (nargs == 0)
 	{
 		/* flush the console output */
-		n = xp_awk_flushextio (run, XP_AWK_OUT_CONSOLE, XP_T(""));
+		n = sse_awk_flushextio (run, SSE_AWK_OUT_CONSOLE, SSE_T(""));
 		if (n == -1 && 
-		    run->errnum != XP_AWK_EIOHANDLER && 
-		    run->errnum != XP_AWK_ENOSUCHIO)
+		    run->errnum != SSE_AWK_EIOHANDLER && 
+		    run->errnum != SSE_AWK_ENOSUCHIO)
 		{
 			return -1;
 		}
@@ -271,19 +271,19 @@ static int __bfn_fflush (xp_awk_run_t* run)
 	}
 	else
 	{
-		xp_char_t* ptr, * end;
+		sse_char_t* ptr, * end;
 
-		a0 = xp_awk_getarg (run, 0);
-		if (a0->type == XP_AWK_VAL_STR)
+		a0 = sse_awk_getarg (run, 0);
+		if (a0->type == SSE_AWK_VAL_STR)
 		{
-			str0 = ((xp_awk_val_str_t*)a0)->buf;
-			len0 = ((xp_awk_val_str_t*)a0)->len;
+			str0 = ((sse_awk_val_str_t*)a0)->buf;
+			len0 = ((sse_awk_val_str_t*)a0)->len;
 		}
 		else
 		{
-			str0 = xp_awk_valtostr (
-				run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len0);
-			if (str0 == XP_NULL) return -1;
+			str0 = sse_awk_valtostr (
+				run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len0);
+			if (str0 == SSE_NULL) return -1;
 
 		}
 
@@ -292,10 +292,10 @@ static int __bfn_fflush (xp_awk_run_t* run)
 		ptr = str0; end = str0 + len0;
 		while (ptr < end)
 		{
-			if (*ptr == XP_T('\0')) 
+			if (*ptr == SSE_T('\0')) 
 			{
-				if (a0->type != XP_AWK_VAL_STR) 
-					XP_AWK_FREE (run->awk, str0);
+				if (a0->type != SSE_AWK_VAL_STR) 
+					SSE_AWK_FREE (run->awk, str0);
 				n = -1;
 				goto skip_flush;
 			}
@@ -307,16 +307,16 @@ static int __bfn_fflush (xp_awk_run_t* run)
 		n = 1;
 
 		n = __flush_extio (
-			run, XP_AWK_EXTIO_FILE, 
-			((len0 == 0)? XP_NULL: str0), 1);
+			run, SSE_AWK_EXTIO_FILE, 
+			((len0 == 0)? SSE_NULL: str0), 1);
 		if (n == -99) return -1;
 		n = __flush_extio (
-			run, XP_AWK_EXTIO_PIPE,
-			((len0 == 0)? XP_NULL: str0), n);
+			run, SSE_AWK_EXTIO_PIPE,
+			((len0 == 0)? SSE_NULL: str0), n);
 		if (n == -99) return -1;
 		n = __flush_extio (
-			run, XP_AWK_EXTIO_COPROC,
-			((len0 == 0)? XP_NULL: str0), n);
+			run, SSE_AWK_EXTIO_COPROC,
+			((len0 == 0)? SSE_NULL: str0), n);
 		if (n == -99) return -1;
 
 		/* if n remains 1, no ip handlers have been defined for
@@ -325,273 +325,273 @@ static int __bfn_fflush (xp_awk_run_t* run)
 		 * if n is -1, the io handler has returned an error */
 		if (n != 0) n = -1;
 
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str0);
+		if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str0);
 	}
 
 skip_flush:
-	a0 = xp_awk_makeintval (run, (xp_long_t)n);
-	if (a0 == XP_NULL)
+	a0 = sse_awk_makeintval (run, (sse_long_t)n);
+	if (a0 == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_setretval (run, a0);
+	sse_awk_setretval (run, a0);
 	return 0;
 }
 
-static int __bfn_index (xp_awk_run_t* run)
+static int __bfn_index (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1;
-	xp_char_t* str0, * str1, * ptr;
-	xp_size_t len0, len1;
-	xp_long_t idx;
+	sse_size_t nargs;
+	sse_awk_val_t* a0, * a1;
+	sse_char_t* str0, * str1, * ptr;
+	sse_size_t len0, len1;
+	sse_long_t idx;
 
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs == 2);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs == 2);
 	
-	a0 = xp_awk_getarg (run, 0);
-	a1 = xp_awk_getarg (run, 1);
+	a0 = sse_awk_getarg (run, 0);
+	a1 = sse_awk_getarg (run, 1);
 
-	if (a0->type == XP_AWK_VAL_STR)
+	if (a0->type == SSE_AWK_VAL_STR)
 	{
-		str0 = ((xp_awk_val_str_t*)a0)->buf;
-		len0 = ((xp_awk_val_str_t*)a0)->len;
+		str0 = ((sse_awk_val_str_t*)a0)->buf;
+		len0 = ((sse_awk_val_str_t*)a0)->len;
 	}
 	else
 	{
-		str0 = xp_awk_valtostr (
-			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len0);
-		if (str0 == XP_NULL) return -1;
+		str0 = sse_awk_valtostr (
+			run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len0);
+		if (str0 == SSE_NULL) return -1;
 	}
 
-	if (a1->type == XP_AWK_VAL_STR)
+	if (a1->type == SSE_AWK_VAL_STR)
 	{
-		str1 = ((xp_awk_val_str_t*)a1)->buf;
-		len1 = ((xp_awk_val_str_t*)a1)->len;
+		str1 = ((sse_awk_val_str_t*)a1)->buf;
+		len1 = ((sse_awk_val_str_t*)a1)->len;
 	}
 	else
 	{
-		str1 = xp_awk_valtostr (
-			run, a1, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len1);
-		if (str1 == XP_NULL)
+		str1 = sse_awk_valtostr (
+			run, a1, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len1);
+		if (str1 == SSE_NULL)
 		{
-			if (a0->type != XP_AWK_VAL_STR) 
-				XP_AWK_FREE (run->awk, str0);
+			if (a0->type != SSE_AWK_VAL_STR) 
+				SSE_AWK_FREE (run->awk, str0);
 			return -1;
 		}
 	}
 
-	ptr = xp_awk_strxnstr (str0, len0, str1, len1);
-	idx = (ptr == XP_NULL)? -1: (xp_long_t)(ptr - str0);
+	ptr = sse_awk_strxnstr (str0, len0, str1, len1);
+	idx = (ptr == SSE_NULL)? -1: (sse_long_t)(ptr - str0);
 
-	if (xp_awk_getopt(run->awk) & XP_AWK_STRINDEXONE) idx = idx + 1;
+	if (sse_awk_getopt(run->awk) & SSE_AWK_STRINDEXONE) idx = idx + 1;
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str0);
-	if (a1->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str1);
+	if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str0);
+	if (a1->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str1);
 
-	a0 = xp_awk_makeintval (run, idx);
-	if (a0 == XP_NULL)
+	a0 = sse_awk_makeintval (run, idx);
+	if (a0 == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_setretval (run, a0);
+	sse_awk_setretval (run, a0);
 	return 0;
 }
 
-static int __bfn_length (xp_awk_run_t* run)
+static int __bfn_length (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* v;
-	xp_char_t* str;
-	xp_size_t len;
+	sse_size_t nargs;
+	sse_awk_val_t* v;
+	sse_char_t* str;
+	sse_size_t len;
 
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs == 1);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs == 1);
 	
-	v = xp_awk_getarg (run, 0);
-	if (v->type == XP_AWK_VAL_STR)
+	v = sse_awk_getarg (run, 0);
+	if (v->type == SSE_AWK_VAL_STR)
 	{
-		len = ((xp_awk_val_str_t*)v)->len;
+		len = ((sse_awk_val_str_t*)v)->len;
 	}
 	else
 	{
-		str = xp_awk_valtostr (
-			run, v, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
-		if (str == XP_NULL) return -1;
-		XP_AWK_FREE (run->awk, str);
+		str = sse_awk_valtostr (
+			run, v, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len);
+		if (str == SSE_NULL) return -1;
+		SSE_AWK_FREE (run->awk, str);
 	}
 
-	v = xp_awk_makeintval (run, len);
-	if (v == XP_NULL)
+	v = sse_awk_makeintval (run, len);
+	if (v == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_setretval (run, v);
+	sse_awk_setretval (run, v);
 	return 0;
 }
 
-static int __bfn_substr (xp_awk_run_t* run)
+static int __bfn_substr (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1, * a2, * r;
-	xp_char_t* str;
-	xp_size_t len;
-	xp_long_t lindex, lcount;
-	xp_real_t rindex, rcount;
+	sse_size_t nargs;
+	sse_awk_val_t* a0, * a1, * a2, * r;
+	sse_char_t* str;
+	sse_size_t len;
+	sse_long_t lindex, lcount;
+	sse_real_t rindex, rcount;
 	int n;
 
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
 
-	a0 = xp_awk_getarg (run, 0);
-	a1 = xp_awk_getarg (run, 1);
-	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
+	a0 = sse_awk_getarg (run, 0);
+	a1 = sse_awk_getarg (run, 1);
+	a2 = (nargs >= 3)? sse_awk_getarg (run, 2): SSE_NULL;
 
-	if (a0->type == XP_AWK_VAL_STR)
+	if (a0->type == SSE_AWK_VAL_STR)
 	{
-		str = ((xp_awk_val_str_t*)a0)->buf;
-		len = ((xp_awk_val_str_t*)a0)->len;
+		str = ((sse_awk_val_str_t*)a0)->buf;
+		len = ((sse_awk_val_str_t*)a0)->len;
 	}
 	else 
 	{
-		str = xp_awk_valtostr (
-			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
-		if (str == XP_NULL) return -1;
+		str = sse_awk_valtostr (
+			run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len);
+		if (str == SSE_NULL) return -1;
 	}
 
-	n = xp_awk_valtonum (run, a1, &lindex, &rindex);
+	n = sse_awk_valtonum (run, a1, &lindex, &rindex);
 	if (n == -1) 
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
+		if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str);
 		return -1;
 	}
-	if (n == 1) lindex = (xp_long_t)rindex;
+	if (n == 1) lindex = (sse_long_t)rindex;
 
-	if (a2 == XP_NULL) lcount = (xp_long_t)len;
+	if (a2 == SSE_NULL) lcount = (sse_long_t)len;
 	else 
 	{
-		n = xp_awk_valtonum (run, a2, &lcount, &rcount);
+		n = sse_awk_valtonum (run, a2, &lcount, &rcount);
 		if (n == -1) 
 		{
-			if (a0->type != XP_AWK_VAL_STR) 
-				XP_AWK_FREE (run->awk, str);
+			if (a0->type != SSE_AWK_VAL_STR) 
+				SSE_AWK_FREE (run->awk, str);
 			return -1;
 		}
-		if (n == 1) lcount = (xp_long_t)rcount;
+		if (n == 1) lcount = (sse_long_t)rcount;
 	}
 
-	if (xp_awk_getopt(run->awk) & XP_AWK_STRINDEXONE) lindex = lindex - 1;
+	if (sse_awk_getopt(run->awk) & SSE_AWK_STRINDEXONE) lindex = lindex - 1;
 	if (lindex >= len) lindex = len;
 	else if (lindex < 0) lindex = 0;
 
 	if (lcount < 0) lcount = 0;
 	else if (lcount > len - lindex) lcount = len - lindex;
 
-	r = xp_awk_makestrval (run, &str[lindex], (xp_size_t)lcount);
-	if (r == XP_NULL)
+	r = sse_awk_makestrval (run, &str[lindex], (sse_size_t)lcount);
+	if (r == SSE_NULL)
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-	xp_awk_setretval (run, r);
+	if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str);
+	sse_awk_setretval (run, r);
 	return 0;
 }
 
-static int __bfn_split (xp_awk_run_t* run)
+static int __bfn_split (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
-	xp_char_t* str, * str_free, * p, * tok;
-	xp_size_t str_len, str_left, tok_len;
-	xp_long_t sta, num;
-	xp_char_t key[xp_sizeof(xp_long_t)*8+2];
-	xp_size_t key_len;
-	xp_char_t* fs_ptr, * fs_free;
-	xp_size_t fs_len;
-	void* fs_rex = XP_NULL; 
-	void* fs_rex_free = XP_NULL;
+	sse_size_t nargs;
+	sse_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
+	sse_char_t* str, * str_free, * p, * tok;
+	sse_size_t str_len, str_left, tok_len;
+	sse_long_t sta, num;
+	sse_char_t key[sse_sizeof(sse_long_t)*8+2];
+	sse_size_t key_len;
+	sse_char_t* fs_ptr, * fs_free;
+	sse_size_t fs_len;
+	void* fs_rex = SSE_NULL; 
+	void* fs_rex_free = SSE_NULL;
 	int errnum;
 
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
 
-	a0 = xp_awk_getarg (run, 0);
-	a1 = xp_awk_getarg (run, 1);
-	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
+	a0 = sse_awk_getarg (run, 0);
+	a1 = sse_awk_getarg (run, 1);
+	a2 = (nargs >= 3)? sse_awk_getarg (run, 2): SSE_NULL;
 
-	xp_awk_assert (run->awk, a1->type == XP_AWK_VAL_REF);
+	sse_awk_assert (run->awk, a1->type == SSE_AWK_VAL_REF);
 
-	if (((xp_awk_val_ref_t*)a1)->id >= XP_AWK_VAL_REF_NAMEDIDX &&
-	    ((xp_awk_val_ref_t*)a1)->id <= XP_AWK_VAL_REF_ARGIDX)
+	if (((sse_awk_val_ref_t*)a1)->id >= SSE_AWK_VAL_REF_NAMEDIDX &&
+	    ((sse_awk_val_ref_t*)a1)->id <= SSE_AWK_VAL_REF_ARGIDX)
 	{
 		/* an indexed value should not be assigned another map */
-		xp_awk_setrunerrnum (run, XP_AWK_EIDXVALASSMAP);
+		sse_awk_setrunerrnum (run, SSE_AWK_EIDXVALASSMAP);
 		return -1;
 	}
 
-	if (((xp_awk_val_ref_t*)a1)->id == XP_AWK_VAL_REF_POS)
+	if (((sse_awk_val_ref_t*)a1)->id == SSE_AWK_VAL_REF_POS)
 	{
 		/* a positional should not be assigned a map */
-		xp_awk_setrunerrnum (run, XP_AWK_EPOSVALASSMAP);
+		sse_awk_setrunerrnum (run, SSE_AWK_EPOSVALASSMAP);
 		return -1;
 	}
 
-	a1_ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a1)->adr;
-	if ((*a1_ref)->type != XP_AWK_VAL_NIL &&
-	    (*a1_ref)->type != XP_AWK_VAL_MAP)
+	a1_ref = (sse_awk_val_t**)((sse_awk_val_ref_t*)a1)->adr;
+	if ((*a1_ref)->type != SSE_AWK_VAL_NIL &&
+	    (*a1_ref)->type != SSE_AWK_VAL_MAP)
 	{
 		/* cannot change a scalar value to a map */
-		xp_awk_setrunerrnum (run, XP_AWK_ESCALARTOMAP);
+		sse_awk_setrunerrnum (run, SSE_AWK_ESCALARTOMAP);
 		return -1;
 	}
 
-	if (a0->type == XP_AWK_VAL_STR)
+	if (a0->type == SSE_AWK_VAL_STR)
 	{
-		str = ((xp_awk_val_str_t*)a0)->buf;
-		str_len = ((xp_awk_val_str_t*)a0)->len;
-		str_free = XP_NULL;
+		str = ((sse_awk_val_str_t*)a0)->buf;
+		str_len = ((sse_awk_val_str_t*)a0)->len;
+		str_free = SSE_NULL;
 	}
 	else 
 	{
-		str = xp_awk_valtostr (
-			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &str_len);
-		if (str == XP_NULL) return -1;
+		str = sse_awk_valtostr (
+			run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &str_len);
+		if (str == SSE_NULL) return -1;
 		str_free = str;
 	}
 
-	if (a2 == XP_NULL)
+	if (a2 == SSE_NULL)
 	{
 		/* get the value from FS */
-		t1 = xp_awk_getglobal (run, XP_AWK_GLOBAL_FS);
-		if (t1->type == XP_AWK_VAL_NIL)
+		t1 = sse_awk_getglobal (run, SSE_AWK_GLOBAL_FS);
+		if (t1->type == SSE_AWK_VAL_NIL)
 		{
-			fs_ptr = XP_T(" ");
+			fs_ptr = SSE_T(" ");
 			fs_len = 1;
-			fs_free = XP_NULL;
+			fs_free = SSE_NULL;
 		}
-		else if (t1->type == XP_AWK_VAL_STR)
+		else if (t1->type == SSE_AWK_VAL_STR)
 		{
-			fs_ptr = ((xp_awk_val_str_t*)t1)->buf;
-			fs_len = ((xp_awk_val_str_t*)t1)->len;
-			fs_free = XP_NULL;
+			fs_ptr = ((sse_awk_val_str_t*)t1)->buf;
+			fs_len = ((sse_awk_val_str_t*)t1)->len;
+			fs_free = SSE_NULL;
 		}
 		else
 		{
-			fs_ptr = xp_awk_valtostr (
-				run, t1, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &fs_len);
-			if (fs_ptr == XP_NULL)
+			fs_ptr = sse_awk_valtostr (
+				run, t1, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &fs_len);
+			if (fs_ptr == SSE_NULL)
 			{
-				if (str_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, str_free);
+				if (str_free != SSE_NULL) 
+					SSE_AWK_FREE (run->awk, str_free);
 				return -1;
 			}
 			fs_free = fs_ptr;
@@ -600,25 +600,25 @@ static int __bfn_split (xp_awk_run_t* run)
 		if (fs_len > 1) 
 		{
 			fs_rex = run->global.fs;
-			fs_rex_free = XP_NULL;
+			fs_rex_free = SSE_NULL;
 		}
 	}
 	else
 	{
-		if (a2->type == XP_AWK_VAL_STR)
+		if (a2->type == SSE_AWK_VAL_STR)
 		{
-			fs_ptr = ((xp_awk_val_str_t*)a2)->buf;
-			fs_len = ((xp_awk_val_str_t*)a2)->len;
-			fs_free = XP_NULL;
+			fs_ptr = ((sse_awk_val_str_t*)a2)->buf;
+			fs_len = ((sse_awk_val_str_t*)a2)->len;
+			fs_free = SSE_NULL;
 		}
 		else
 		{
-			fs_ptr = xp_awk_valtostr (
-				run, a2, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &fs_len);
-			if (fs_ptr == XP_NULL)
+			fs_ptr = sse_awk_valtostr (
+				run, a2, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &fs_len);
+			if (fs_ptr == SSE_NULL)
 			{
-				if (str_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, str_free);
+				if (str_free != SSE_NULL) 
+					SSE_AWK_FREE (run->awk, str_free);
 				return -1;
 			}
 			fs_free = fs_ptr;
@@ -626,113 +626,113 @@ static int __bfn_split (xp_awk_run_t* run)
 
 		if (fs_len > 1) 
 		{
-			fs_rex = xp_awk_buildrex (
+			fs_rex = sse_awk_buildrex (
 				run->awk, fs_ptr, fs_len, &errnum);
-			if (fs_rex == XP_NULL)
+			if (fs_rex == SSE_NULL)
 			{
-				if (str_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, str_free);
-				if (fs_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, fs_free);
-				xp_awk_setrunerrnum (run, errnum);
+				if (str_free != SSE_NULL) 
+					SSE_AWK_FREE (run->awk, str_free);
+				if (fs_free != SSE_NULL) 
+					SSE_AWK_FREE (run->awk, fs_free);
+				sse_awk_setrunerrnum (run, errnum);
 				return -1;
 			}
 			fs_rex_free = fs_rex;
 		}
 	}
 
-	t1 = xp_awk_makemapval (run);
-	if (t1 == XP_NULL)
+	t1 = sse_awk_makemapval (run);
+	if (t1 == SSE_NULL)
 	{
-		if (str_free != XP_NULL) 
-			XP_AWK_FREE (run->awk, str_free);
-		if (fs_free != XP_NULL) 
-			XP_AWK_FREE (run->awk, fs_free);
-		if (fs_rex_free != XP_NULL) 
-			xp_awk_freerex (run->awk, fs_rex_free);
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		if (str_free != SSE_NULL) 
+			SSE_AWK_FREE (run->awk, str_free);
+		if (fs_free != SSE_NULL) 
+			SSE_AWK_FREE (run->awk, fs_free);
+		if (fs_rex_free != SSE_NULL) 
+			sse_awk_freerex (run->awk, fs_rex_free);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_refdownval (run, *a1_ref);
+	sse_awk_refdownval (run, *a1_ref);
 	*a1_ref = t1;
-	xp_awk_refupval (*a1_ref);
+	sse_awk_refupval (*a1_ref);
 
 	p = str; str_left = str_len; 
-	sta = (xp_awk_getopt(run->awk) & XP_AWK_STRINDEXONE)? 1: 0;
+	sta = (sse_awk_getopt(run->awk) & SSE_AWK_STRINDEXONE)? 1: 0;
 	num = sta;
 
-	while (p != XP_NULL)
+	while (p != SSE_NULL)
 	{
 		if (fs_len <= 1)
 		{
-			p = xp_awk_strxntok (run, 
+			p = sse_awk_strxntok (run, 
 				p, str_len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
-			p = xp_awk_strxntokbyrex (run, p, str_len, 
+			p = sse_awk_strxntokbyrex (run, p, str_len, 
 				fs_rex, &tok, &tok_len, &errnum); 
-			if (p == XP_NULL && errnum != XP_AWK_ENOERR)
+			if (p == SSE_NULL && errnum != SSE_AWK_ENOERR)
 			{
-				if (str_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, str_free);
-				if (fs_free != XP_NULL) 
-					XP_AWK_FREE (run->awk, fs_free);
-				if (fs_rex_free != XP_NULL) 
-					xp_awk_freerex (run->awk, fs_rex_free);
-				xp_awk_setrunerrnum (run, errnum);
+				if (str_free != SSE_NULL) 
+					SSE_AWK_FREE (run->awk, str_free);
+				if (fs_free != SSE_NULL) 
+					SSE_AWK_FREE (run->awk, fs_free);
+				if (fs_rex_free != SSE_NULL) 
+					sse_awk_freerex (run->awk, fs_rex_free);
+				sse_awk_setrunerrnum (run, errnum);
 				return -1;
 			}
 		}
 
-		if (num == 0 && p == XP_NULL && tok_len == 0) 
+		if (num == 0 && p == SSE_NULL && tok_len == 0) 
 		{
 			/* no field at all*/
 			break; 
 		}	
 
-		xp_awk_assert (run->awk, 
-			(tok != XP_NULL && tok_len > 0) || tok_len == 0);
+		sse_awk_assert (run->awk, 
+			(tok != SSE_NULL && tok_len > 0) || tok_len == 0);
 
 		/* create the field string */
-		t2 = xp_awk_makestrval (run, tok, tok_len);
-		if (t2 == XP_NULL)
+		t2 = sse_awk_makestrval (run, tok, tok_len);
+		if (t2 == SSE_NULL)
 		{
-			if (str_free != XP_NULL)
-				XP_AWK_FREE (run->awk, str_free);
-			if (fs_free != XP_NULL)
-				XP_AWK_FREE (run->awk, fs_free);
-			if (fs_rex_free != XP_NULL)
-				xp_awk_freerex (run->awk, fs_rex_free);
-			xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+			if (str_free != SSE_NULL)
+				SSE_AWK_FREE (run->awk, str_free);
+			if (fs_free != SSE_NULL)
+				SSE_AWK_FREE (run->awk, fs_free);
+			if (fs_rex_free != SSE_NULL)
+				sse_awk_freerex (run->awk, fs_rex_free);
+			sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 			return -1;
 		}
 
 		/* put it into the map */
-		key_len = xp_awk_longtostr (
-			num, 10, XP_NULL, key, xp_countof(key));
-		xp_awk_assert (run->awk, key_len != (xp_size_t)-1);
+		key_len = sse_awk_longtostr (
+			num, 10, SSE_NULL, key, sse_countof(key));
+		sse_awk_assert (run->awk, key_len != (sse_size_t)-1);
 
 		/* don't forget to update the reference count when you 
 		 * handle the assignment-like situation.  anyway, it is 
 		 * incremented in advance as if the assignment was successful.
 		 * it is decremented if the assignement fails. */
-		xp_awk_refupval (t2);
+		sse_awk_refupval (t2);
 
-		if (xp_awk_map_putx (
-			((xp_awk_val_map_t*)t1)->map, 
-			key, key_len, t2, XP_NULL) == -1)
+		if (sse_awk_map_putx (
+			((sse_awk_val_map_t*)t1)->map, 
+			key, key_len, t2, SSE_NULL) == -1)
 		{
-			xp_awk_refdownval (run, t2);
+			sse_awk_refdownval (run, t2);
 
-			if (str_free != XP_NULL) 
-				XP_AWK_FREE (run->awk, str_free);
-			if (fs_free != XP_NULL) 
-				XP_AWK_FREE (run->awk, fs_free);
-			if (fs_rex_free != XP_NULL)
-				xp_awk_freerex (run->awk, fs_rex_free);
-			xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+			if (str_free != SSE_NULL) 
+				SSE_AWK_FREE (run->awk, str_free);
+			if (fs_free != SSE_NULL) 
+				SSE_AWK_FREE (run->awk, fs_free);
+			if (fs_rex_free != SSE_NULL)
+				sse_awk_freerex (run->awk, fs_rex_free);
+			sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -740,151 +740,151 @@ static int __bfn_split (xp_awk_run_t* run)
 		str_len = str_left - (p - str);
 	}
 
-	if (str_free != XP_NULL) XP_AWK_FREE (run->awk, str_free);
-	if (fs_free != XP_NULL) XP_AWK_FREE (run->awk, fs_free);
-	if (fs_rex_free != XP_NULL) xp_awk_freerex (run->awk, fs_rex_free);
+	if (str_free != SSE_NULL) SSE_AWK_FREE (run->awk, str_free);
+	if (fs_free != SSE_NULL) SSE_AWK_FREE (run->awk, fs_free);
+	if (fs_rex_free != SSE_NULL) sse_awk_freerex (run->awk, fs_rex_free);
 
 	if (sta == 1) num--;
 
-	t1 = xp_awk_makeintval (run, num);
-	if (t1 == XP_NULL)
+	t1 = sse_awk_makeintval (run, num);
+	if (t1 == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_setretval (run, t1);
+	sse_awk_setretval (run, t1);
 	return 0;
 }
 
-static int __bfn_tolower (xp_awk_run_t* run)
+static int __bfn_tolower (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_char_t* str;
-	xp_size_t len, i;
-	xp_awk_val_t* a0, * r;
+	sse_size_t nargs;
+	sse_char_t* str;
+	sse_size_t len, i;
+	sse_awk_val_t* a0, * r;
 
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs == 1);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs == 1);
 
-	a0 = xp_awk_getarg (run, 0);
+	a0 = sse_awk_getarg (run, 0);
 
-	if (a0->type == XP_AWK_VAL_STR)
+	if (a0->type == SSE_AWK_VAL_STR)
 	{
-		str = ((xp_awk_val_str_t*)a0)->buf;
-		len = ((xp_awk_val_str_t*)a0)->len;
+		str = ((sse_awk_val_str_t*)a0)->buf;
+		len = ((sse_awk_val_str_t*)a0)->len;
 	}
 	else 
 	{
-		str = xp_awk_valtostr (
-			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
-		if (str == XP_NULL) return -1;
+		str = sse_awk_valtostr (
+			run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len);
+		if (str == SSE_NULL) return -1;
 	}
 
-	for (i = 0; i < len; i++) str[i] = XP_AWK_TOLOWER (run->awk, str[i]);	
+	for (i = 0; i < len; i++) str[i] = SSE_AWK_TOLOWER (run->awk, str[i]);	
 
-	r = xp_awk_makestrval (run, str, len);
-	if (r == XP_NULL)
+	r = sse_awk_makestrval (run, str, len);
+	if (r == SSE_NULL)
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-	xp_awk_setretval (run, r);
+	if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str);
+	sse_awk_setretval (run, r);
 	return 0;
 }
 
-static int __bfn_toupper (xp_awk_run_t* run)
+static int __bfn_toupper (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_char_t* str;
-	xp_size_t len, i;
-	xp_awk_val_t* a0, * r;
+	sse_size_t nargs;
+	sse_char_t* str;
+	sse_size_t len, i;
+	sse_awk_val_t* a0, * r;
 
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs == 1);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs == 1);
 
-	a0 = xp_awk_getarg (run, 0);
+	a0 = sse_awk_getarg (run, 0);
 
-	if (a0->type == XP_AWK_VAL_STR)
+	if (a0->type == SSE_AWK_VAL_STR)
 	{
-		str = ((xp_awk_val_str_t*)a0)->buf;
-		len = ((xp_awk_val_str_t*)a0)->len;
+		str = ((sse_awk_val_str_t*)a0)->buf;
+		len = ((sse_awk_val_str_t*)a0)->len;
 	}
 	else 
 	{
-		str = xp_awk_valtostr (
-			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len);
-		if (str == XP_NULL) return -1;
+		str = sse_awk_valtostr (
+			run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len);
+		if (str == SSE_NULL) return -1;
 	}
 
-	for (i = 0; i < len; i++) str[i] = XP_AWK_TOUPPER (run->awk, str[i]);	
+	for (i = 0; i < len; i++) str[i] = SSE_AWK_TOUPPER (run->awk, str[i]);	
 
-	r = xp_awk_makestrval (run, str, len);
-	if (r == XP_NULL)
+	r = sse_awk_makestrval (run, str, len);
+	if (r == SSE_NULL)
 	{
-		if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str);
-	xp_awk_setretval (run, r);
+	if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str);
+	sse_awk_setretval (run, r);
 	return 0;
 }
 
-static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
+static int __substitute (sse_awk_run_t* run, sse_long_t max_count)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1, * a2, ** a2_ref, * v;
-	xp_char_t* a0_ptr, * a1_ptr, * a2_ptr;
-	xp_size_t a0_len, a1_len, a2_len;
-	xp_char_t* a0_ptr_free = XP_NULL;
-	xp_char_t* a1_ptr_free = XP_NULL;
-	xp_char_t* a2_ptr_free = XP_NULL;
+	sse_size_t nargs;
+	sse_awk_val_t* a0, * a1, * a2, ** a2_ref, * v;
+	sse_char_t* a0_ptr, * a1_ptr, * a2_ptr;
+	sse_size_t a0_len, a1_len, a2_len;
+	sse_char_t* a0_ptr_free = SSE_NULL;
+	sse_char_t* a1_ptr_free = SSE_NULL;
+	sse_char_t* a2_ptr_free = SSE_NULL;
 	void* rex;
 	int opt, n;
-	const xp_char_t* cur_ptr, * mat_ptr;
-	xp_size_t cur_len, mat_len, i, m;
-	xp_awk_str_t new;
-	xp_long_t sub_count;
+	const sse_char_t* cur_ptr, * mat_ptr;
+	sse_size_t cur_len, mat_len, i, m;
+	sse_awk_str_t new;
+	sse_long_t sub_count;
 
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs >= 2 && nargs <= 3);
 
-	a0 = xp_awk_getarg (run, 0);
-	a1 = xp_awk_getarg (run, 1);
-	a2 = (nargs >= 3)? xp_awk_getarg (run, 2): XP_NULL;
+	a0 = sse_awk_getarg (run, 0);
+	a1 = sse_awk_getarg (run, 1);
+	a2 = (nargs >= 3)? sse_awk_getarg (run, 2): SSE_NULL;
 
-	xp_awk_assert (run->awk, a2 == XP_NULL || a2->type == XP_AWK_VAL_REF);
+	sse_awk_assert (run->awk, a2 == SSE_NULL || a2->type == SSE_AWK_VAL_REF);
 
 #define FREE_A_PTRS(awk) \
 	do { \
-		if (a2_ptr_free != XP_NULL) XP_AWK_FREE (awk, a2_ptr_free); \
-		if (a1_ptr_free != XP_NULL) XP_AWK_FREE (awk, a1_ptr_free); \
-		if (a0_ptr_free != XP_NULL) XP_AWK_FREE (awk, a0_ptr_free); \
+		if (a2_ptr_free != SSE_NULL) SSE_AWK_FREE (awk, a2_ptr_free); \
+		if (a1_ptr_free != SSE_NULL) SSE_AWK_FREE (awk, a1_ptr_free); \
+		if (a0_ptr_free != SSE_NULL) SSE_AWK_FREE (awk, a0_ptr_free); \
 	} while (0)
 #define FREE_A0_REX(awk,rex) \
 	do { \
-		if (a0->type != XP_AWK_VAL_REX) xp_awk_freerex (awk, rex); \
+		if (a0->type != SSE_AWK_VAL_REX) sse_awk_freerex (awk, rex); \
 	} while (0)
 
-	if (a0->type == XP_AWK_VAL_REX)
+	if (a0->type == SSE_AWK_VAL_REX)
 	{
-		rex = ((xp_awk_val_rex_t*)a0)->code;
+		rex = ((sse_awk_val_rex_t*)a0)->code;
 	}
-	else if (a0->type == XP_AWK_VAL_STR)
+	else if (a0->type == SSE_AWK_VAL_STR)
 	{
-		a0_ptr = ((xp_awk_val_str_t*)a0)->buf;
-		a0_len = ((xp_awk_val_str_t*)a0)->len;
+		a0_ptr = ((sse_awk_val_str_t*)a0)->buf;
+		a0_len = ((sse_awk_val_str_t*)a0)->len;
 	}
 	else
 	{
-		a0_ptr = xp_awk_valtostr (
-			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &a0_len);
-		if (a0_ptr == XP_NULL) 
+		a0_ptr = sse_awk_valtostr (
+			run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &a0_len);
+		if (a0_ptr == SSE_NULL) 
 		{
 			FREE_A_PTRS (run->awk);
 			return -1;
@@ -892,16 +892,16 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		a0_ptr_free = a0_ptr;
 	}
 
-	if (a1->type == XP_AWK_VAL_STR)
+	if (a1->type == SSE_AWK_VAL_STR)
 	{
-		a1_ptr = ((xp_awk_val_str_t*)a1)->buf;
-		a1_len = ((xp_awk_val_str_t*)a1)->len;
+		a1_ptr = ((sse_awk_val_str_t*)a1)->buf;
+		a1_len = ((sse_awk_val_str_t*)a1)->len;
 	}
 	else
 	{
-		a1_ptr = xp_awk_valtostr (
-			run, a1, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &a1_len);
-		if (a1_ptr == XP_NULL) 
+		a1_ptr = sse_awk_valtostr (
+			run, a1, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &a1_len);
+		if (a1_ptr == SSE_NULL) 
 		{
 			FREE_A_PTRS (run->awk);
 			return -1;
@@ -909,21 +909,21 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		a1_ptr_free = a1_ptr;
 	}
 
-	if (a2 == XP_NULL)
+	if (a2 == SSE_NULL)
 	{
 		/* is this correct? any needs to use inrec.d0? */
-		a2_ptr = XP_AWK_STR_BUF(&run->inrec.line);
-		a2_len = XP_AWK_STR_LEN(&run->inrec.line);
+		a2_ptr = SSE_AWK_STR_BUF(&run->inrec.line);
+		a2_len = SSE_AWK_STR_LEN(&run->inrec.line);
 	}
-	else if (((xp_awk_val_ref_t*)a2)->id == XP_AWK_VAL_REF_POS)
+	else if (((sse_awk_val_ref_t*)a2)->id == SSE_AWK_VAL_REF_POS)
 	{
-		xp_size_t idx;
+		sse_size_t idx;
 	       
-		idx = (xp_size_t)((xp_awk_val_ref_t*)a2)->adr;
+		idx = (sse_size_t)((sse_awk_val_ref_t*)a2)->adr;
 		if (idx == 0)
 		{
-			a2_ptr = XP_AWK_STR_BUF(&run->inrec.line);
-			a2_len = XP_AWK_STR_LEN(&run->inrec.line);
+			a2_ptr = SSE_AWK_STR_BUF(&run->inrec.line);
+			a2_len = SSE_AWK_STR_LEN(&run->inrec.line);
 		}
 		else if (idx <= run->inrec.nflds)
 		{
@@ -932,32 +932,32 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		}
 		else
 		{
-			a2_ptr = XP_T("");
+			a2_ptr = SSE_T("");
 			a2_len = 0;
 		}
 	}
 	else
 	{
-		a2_ref = (xp_awk_val_t**)((xp_awk_val_ref_t*)a2)->adr;
+		a2_ref = (sse_awk_val_t**)((sse_awk_val_ref_t*)a2)->adr;
 
-		if ((*a2_ref)->type == XP_AWK_VAL_MAP)
+		if ((*a2_ref)->type == SSE_AWK_VAL_MAP)
 		{
 			FREE_A_PTRS (run->awk);
 			/* a map is not allowed as the third parameter */
-			xp_awk_setrunerrnum (run, XP_AWK_EMAPNOTALLOWED);
+			sse_awk_setrunerrnum (run, SSE_AWK_EMAPNOTALLOWED);
 			return -1;
 		}
 
-		if ((*a2_ref)->type == XP_AWK_VAL_STR)
+		if ((*a2_ref)->type == SSE_AWK_VAL_STR)
 		{
-			a2_ptr = ((xp_awk_val_str_t*)(*a2_ref))->buf;
-			a2_len = ((xp_awk_val_str_t*)(*a2_ref))->len;
+			a2_ptr = ((sse_awk_val_str_t*)(*a2_ref))->buf;
+			a2_len = ((sse_awk_val_str_t*)(*a2_ref))->len;
 		}
 		else
 		{
-			a2_ptr = xp_awk_valtostr (
-				run, *a2_ref, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &a2_len);
-			if (a2_ptr == XP_NULL) 
+			a2_ptr = sse_awk_valtostr (
+				run, *a2_ref, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &a2_len);
+			if (a2_ptr == SSE_NULL) 
 			{
 				FREE_A_PTRS (run->awk);
 				return -1;
@@ -966,25 +966,25 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		}
 	}
 
-	if (xp_awk_str_open (&new, a2_len, run->awk) == XP_NULL)
+	if (sse_awk_str_open (&new, a2_len, run->awk) == SSE_NULL)
 	{
 		FREE_A_PTRS (run->awk);
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (a0->type != XP_AWK_VAL_REX)
+	if (a0->type != SSE_AWK_VAL_REX)
 	{
-		rex = xp_awk_buildrex (run->awk, a0_ptr, a0_len, &run->errnum);
-		if (rex == XP_NULL)
+		rex = sse_awk_buildrex (run->awk, a0_ptr, a0_len, &run->errnum);
+		if (rex == SSE_NULL)
 		{
-			xp_awk_str_close (&new);
+			sse_awk_str_close (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
 	}
 
-	opt = (run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
+	opt = (run->global.ignorecase)? SSE_AWK_REX_IGNORECASE: 0;
 	cur_ptr = a2_ptr;
 	cur_len = a2_len;
 	sub_count = 0;
@@ -993,7 +993,7 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 	{
 		if (max_count == 0 || sub_count < max_count)
 		{
-			n = xp_awk_matchrex (
+			n = sse_awk_matchrex (
 				run->awk, rex, opt, cur_ptr, cur_len,
 				&mat_ptr, &mat_len, &run->errnum);
 		}
@@ -1002,7 +1002,7 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		if (n == -1)
 		{
 			FREE_A0_REX (run->awk, rex);
-			xp_awk_str_close (&new);
+			sse_awk_str_close (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
@@ -1010,22 +1010,22 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		if (n == 0) 
 		{ 
 			/* no more match found */
-			if (xp_awk_str_ncat (
-				&new, cur_ptr, cur_len) == (xp_size_t)-1)
+			if (sse_awk_str_ncat (
+				&new, cur_ptr, cur_len) == (sse_size_t)-1)
 			{
 				FREE_A0_REX (run->awk, rex);
-				xp_awk_str_close (&new);
+				sse_awk_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 			break;
 		}
 
-		if (xp_awk_str_ncat (
-			&new, cur_ptr, mat_ptr - cur_ptr) == (xp_size_t)-1)
+		if (sse_awk_str_ncat (
+			&new, cur_ptr, mat_ptr - cur_ptr) == (sse_size_t)-1)
 		{
 			FREE_A0_REX (run->awk, rex);
-			xp_awk_str_close (&new);
+			sse_awk_str_close (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
@@ -1033,25 +1033,25 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 		for (i = 0; i < a1_len; i++)
 		{
 			if ((i+1) < a1_len && 
-			    a1_ptr[i] == XP_T('\\') && 
-			    a1_ptr[i+1] == XP_T('&'))
+			    a1_ptr[i] == SSE_T('\\') && 
+			    a1_ptr[i+1] == SSE_T('&'))
 			{
-				m = xp_awk_str_ccat (&new, XP_T('&'));
+				m = sse_awk_str_ccat (&new, SSE_T('&'));
 				i++;
 			}
-			else if (a1_ptr[i] == XP_T('&'))
+			else if (a1_ptr[i] == SSE_T('&'))
 			{
-				m = xp_awk_str_ncat (&new, mat_ptr, mat_len);
+				m = sse_awk_str_ncat (&new, mat_ptr, mat_len);
 			}
 			else 
 			{
-				m = xp_awk_str_ccat (&new, a1_ptr[i]);
+				m = sse_awk_str_ccat (&new, a1_ptr[i]);
 			}
 
-			if (m == (xp_size_t)-1)
+			if (m == (sse_size_t)-1)
 			{
 				FREE_A0_REX (run->awk, rex);
-				xp_awk_str_close (&new);
+				sse_awk_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1066,207 +1066,207 @@ static int __substitute (xp_awk_run_t* run, xp_long_t max_count)
 
 	if (sub_count > 0)
 	{
-		if (a2 == XP_NULL)
+		if (a2 == SSE_NULL)
 		{
-			if (xp_awk_setrec (run, 0,
-				XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new)) == -1)
+			if (sse_awk_setrec (run, 0,
+				SSE_AWK_STR_BUF(&new), SSE_AWK_STR_LEN(&new)) == -1)
 			{
-				xp_awk_str_close (&new);
+				sse_awk_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 		}
-		else if (((xp_awk_val_ref_t*)a2)->id == XP_AWK_VAL_REF_POS)
+		else if (((sse_awk_val_ref_t*)a2)->id == SSE_AWK_VAL_REF_POS)
 		{
 			int n;
 
-			n = xp_awk_setrec (
-				run, (xp_size_t)((xp_awk_val_ref_t*)a2)->adr,
-				XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
+			n = sse_awk_setrec (
+				run, (sse_size_t)((sse_awk_val_ref_t*)a2)->adr,
+				SSE_AWK_STR_BUF(&new), SSE_AWK_STR_LEN(&new));
 
 			if (n == -1)
 			{
-				xp_awk_str_close (&new);
+				sse_awk_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 		}
 		else
 		{
-			v = xp_awk_makestrval (run,
-				XP_AWK_STR_BUF(&new), XP_AWK_STR_LEN(&new));
-			if (v == XP_NULL)
+			v = sse_awk_makestrval (run,
+				SSE_AWK_STR_BUF(&new), SSE_AWK_STR_LEN(&new));
+			if (v == SSE_NULL)
 			{
-				xp_awk_str_close (&new);
+				sse_awk_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 
-			xp_awk_refdownval (run, *a2_ref);
+			sse_awk_refdownval (run, *a2_ref);
 			*a2_ref = v;
-			xp_awk_refupval (*a2_ref);
+			sse_awk_refupval (*a2_ref);
 		}
 	}
 
-	xp_awk_str_close (&new);
+	sse_awk_str_close (&new);
 	FREE_A_PTRS (run->awk);
 
 #undef FREE_A0_REX
 #undef FREE_A_PTRS
 
-	v = xp_awk_makeintval (run, sub_count);
-	if (v == XP_NULL)
+	v = sse_awk_makeintval (run, sub_count);
+	if (v == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_setretval (run, v);
+	sse_awk_setretval (run, v);
 	return 0;
 }
 
-static int __bfn_gsub (xp_awk_run_t* run)
+static int __bfn_gsub (sse_awk_run_t* run)
 {
 	return __substitute (run, 0);
 }
 
-static int __bfn_sub (xp_awk_run_t* run)
+static int __bfn_sub (sse_awk_run_t* run)
 {
 	return __substitute (run, 1);
 }
 
-static int __bfn_match (xp_awk_run_t* run)
+static int __bfn_match (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* a0, * a1;
-	xp_char_t* str0, * str1;
-	xp_size_t len0, len1;
-	xp_long_t idx;
+	sse_size_t nargs;
+	sse_awk_val_t* a0, * a1;
+	sse_char_t* str0, * str1;
+	sse_size_t len0, len1;
+	sse_long_t idx;
 	void* rex;
 	int opt, n;
-	const xp_char_t* mat_ptr;
-	xp_size_t mat_len;
+	const sse_char_t* mat_ptr;
+	sse_size_t mat_len;
 
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs == 2);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs == 2);
 	
-	a0 = xp_awk_getarg (run, 0);
-	a1 = xp_awk_getarg (run, 1);
+	a0 = sse_awk_getarg (run, 0);
+	a1 = sse_awk_getarg (run, 1);
 
-	if (a0->type == XP_AWK_VAL_STR)
+	if (a0->type == SSE_AWK_VAL_STR)
 	{
-		str0 = ((xp_awk_val_str_t*)a0)->buf;
-		len0 = ((xp_awk_val_str_t*)a0)->len;
+		str0 = ((sse_awk_val_str_t*)a0)->buf;
+		len0 = ((sse_awk_val_str_t*)a0)->len;
 	}
 	else
 	{
-		str0 = xp_awk_valtostr (
-			run, a0, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len0);
-		if (str0 == XP_NULL) return -1;
+		str0 = sse_awk_valtostr (
+			run, a0, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len0);
+		if (str0 == SSE_NULL) return -1;
 	}
 
-	if (a1->type == XP_AWK_VAL_REX)
+	if (a1->type == SSE_AWK_VAL_REX)
 	{
-		rex = ((xp_awk_val_rex_t*)a1)->code;
+		rex = ((sse_awk_val_rex_t*)a1)->code;
 	}
 	else 
 	{
-		if (a1->type == XP_AWK_VAL_STR)
+		if (a1->type == SSE_AWK_VAL_STR)
 		{
-			str1 = ((xp_awk_val_str_t*)a1)->buf;
-			len1 = ((xp_awk_val_str_t*)a1)->len;
+			str1 = ((sse_awk_val_str_t*)a1)->buf;
+			len1 = ((sse_awk_val_str_t*)a1)->len;
 		}
 		else
 		{
-			str1 = xp_awk_valtostr (
-				run, a1, XP_AWK_VALTOSTR_CLEAR, XP_NULL, &len1);
-			if (str1 == XP_NULL)
+			str1 = sse_awk_valtostr (
+				run, a1, SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, &len1);
+			if (str1 == SSE_NULL)
 			{
-				if (a0->type != XP_AWK_VAL_STR) 
-					XP_AWK_FREE (run->awk, str0);
+				if (a0->type != SSE_AWK_VAL_STR) 
+					SSE_AWK_FREE (run->awk, str0);
 				return -1;
 			}
 		}
 
-		rex = xp_awk_buildrex (run->awk, str1, len1, &run->errnum);
-		if (rex == XP_NULL)
+		rex = sse_awk_buildrex (run->awk, str1, len1, &run->errnum);
+		if (rex == SSE_NULL)
 		{
-			if (a0->type != XP_AWK_VAL_STR) 
-				XP_AWK_FREE (run->awk, str0);
+			if (a0->type != SSE_AWK_VAL_STR) 
+				SSE_AWK_FREE (run->awk, str0);
 			return -1;
 		}
 
-		if (a1->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str1);
+		if (a1->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str1);
 	}
 
-	opt = (run->global.ignorecase)? XP_AWK_REX_IGNORECASE: 0;
-	n = xp_awk_matchrex (
+	opt = (run->global.ignorecase)? SSE_AWK_REX_IGNORECASE: 0;
+	n = sse_awk_matchrex (
 		run->awk, rex, opt, str0, len0,
 		&mat_ptr, &mat_len, &run->errnum);
 
-	if (a0->type != XP_AWK_VAL_STR) XP_AWK_FREE (run->awk, str0);
-	if (a1->type != XP_AWK_VAL_REX) xp_awk_freerex (run->awk, rex);
+	if (a0->type != SSE_AWK_VAL_STR) SSE_AWK_FREE (run->awk, str0);
+	if (a1->type != SSE_AWK_VAL_REX) sse_awk_freerex (run->awk, rex);
 
 	if (n == -1) return -1;
 
-	idx = (n == 0)? -1: (xp_long_t)(mat_ptr - str0);
-	if (xp_awk_getopt(run->awk) & XP_AWK_STRINDEXONE) idx = idx + 1;
+	idx = (n == 0)? -1: (sse_long_t)(mat_ptr - str0);
+	if (sse_awk_getopt(run->awk) & SSE_AWK_STRINDEXONE) idx = idx + 1;
 
-	a0 = xp_awk_makeintval (run, idx);
-	if (a0 == XP_NULL)
+	a0 = sse_awk_makeintval (run, idx);
+	if (a0 == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_refupval (a0);
+	sse_awk_refupval (a0);
 
-	a1 = xp_awk_makeintval (run, 
-		((n == 0)? (xp_long_t)-1: (xp_long_t)mat_len));
-	if (a1 == XP_NULL)
+	a1 = sse_awk_makeintval (run, 
+		((n == 0)? (sse_long_t)-1: (sse_long_t)mat_len));
+	if (a1 == SSE_NULL)
 	{
-		xp_awk_refdownval (run, a0);
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_refdownval (run, a0);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_refupval (a1);
+	sse_awk_refupval (a1);
 
-	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_RSTART, a0) == -1)
+	if (sse_awk_setglobal (run, SSE_AWK_GLOBAL_RSTART, a0) == -1)
 	{
-		xp_awk_refdownval (run, a1);
-		xp_awk_refdownval (run, a0);
+		sse_awk_refdownval (run, a1);
+		sse_awk_refdownval (run, a0);
 		return -1;
 	}
 
-	if (xp_awk_setglobal (run, XP_AWK_GLOBAL_RLENGTH, a1) == -1)
+	if (sse_awk_setglobal (run, SSE_AWK_GLOBAL_RLENGTH, a1) == -1)
 	{
-		xp_awk_refdownval (run, a1);
-		xp_awk_refdownval (run, a0);
+		sse_awk_refdownval (run, a1);
+		sse_awk_refdownval (run, a0);
 		return -1;
 	}
 
-	xp_awk_setretval (run, a0);
+	sse_awk_setretval (run, a0);
 
-	xp_awk_refdownval (run, a1);
-	xp_awk_refdownval (run, a0);
+	sse_awk_refdownval (run, a1);
+	sse_awk_refdownval (run, a0);
 	return 0;
 }
 
-static int __bfn_system (xp_awk_run_t* run)
+static int __bfn_system (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_char_t* cmd;
-	xp_awk_val_t* v;
+	sse_size_t nargs;
+	sse_char_t* cmd;
+	sse_awk_val_t* v;
 	int n;
        
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs == 1);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs == 1);
 
-	cmd = xp_awk_valtostr (
-		run, xp_awk_getarg(run, 0), 
-		XP_AWK_VALTOSTR_CLEAR, XP_NULL, XP_NULL);
-	if (cmd == XP_NULL) return -1;
+	cmd = sse_awk_valtostr (
+		run, sse_awk_getarg(run, 0), 
+		SSE_AWK_VALTOSTR_CLEAR, SSE_NULL, SSE_NULL);
+	if (cmd == SSE_NULL) return -1;
 
 #ifdef _WIN32
 	n = _tsystem (cmd);
@@ -1275,56 +1275,56 @@ static int __bfn_system (xp_awk_run_t* run)
 	n = -1;
 #endif
 
-	XP_AWK_FREE (run->awk, cmd);
+	SSE_AWK_FREE (run->awk, cmd);
 
-	v = xp_awk_makeintval (run, n);
-	if (v == XP_NULL)
+	v = sse_awk_makeintval (run, n);
+	if (v == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_setretval (run, v);
+	sse_awk_setretval (run, v);
 	return 0;
 }
 
 /* math functions */
 #if 0
-static int __bfn_sin (xp_awk_run_t* run)
+static int __bfn_sin (sse_awk_run_t* run)
 {
-	xp_size_t nargs;
-	xp_awk_val_t* v;
+	sse_size_t nargs;
+	sse_awk_val_t* v;
 	int n;
-	xp_long_t lv;
-	xp_real_t rv;
+	sse_long_t lv;
+	sse_real_t rv;
        
-	nargs = xp_awk_getnargs (run);
-	xp_awk_assert (run->awk, nargs == 1);
+	nargs = sse_awk_getnargs (run);
+	sse_awk_assert (run->awk, nargs == 1);
 
-	n = xp_awk_valtonum (run, xp_awk_getarg(run, 0), &lv, &rv);
+	n = sse_awk_valtonum (run, sse_awk_getarg(run, 0), &lv, &rv);
 	if (n == -1)
 	{
 		/* wrong value */
 		return  -1;
 	}
 
-	if (n == 0) rv = (xp_real_t)lv;
+	if (n == 0) rv = (sse_real_t)lv;
 
-#if (XP_SIZEOF_REAL == XP_SIZEOF_LONG_DOUBLE) 
-	v = xp_awk_makerealval (run, (xp_real_t)sinl(rv));
-#elif (XP_SIZEOF_REAL == XP_SIZEOF_DOUBLE)
-	v = xp_awk_makerealval (run, (xp_real_t)sin(rv));
+#if (SSE_SIZEOF_REAL == SSE_SIZEOF_LONG_DOUBLE) 
+	v = sse_awk_makerealval (run, (sse_real_t)sinl(rv));
+#elif (SSE_SIZEOF_REAL == SSE_SIZEOF_DOUBLE)
+	v = sse_awk_makerealval (run, (sse_real_t)sin(rv));
 #else
 	#error unsupported floating-point data type
 #endif
 
-	if (v == XP_NULL)
+	if (v == SSE_NULL)
 	{
-		xp_awk_setrunerrnum (run, XP_AWK_ENOMEM);
+		sse_awk_setrunerrnum (run, SSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	xp_awk_setretval (run, v);
+	sse_awk_setretval (run, v);
 	return 0;
 }
 #endif

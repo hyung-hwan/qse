@@ -1,103 +1,103 @@
 /*
- * $Id: run.h,v 1.18 2006-10-19 11:08:54 bacon Exp $
+ * $Id: run.h,v 1.19 2006-10-22 11:34:53 bacon Exp $
  */
 
-#ifndef _XP_AWK_RUN_H_
-#define _XP_AWK_RUN_H_
+#ifndef _SSE_AWK_RUN_H_
+#define _SSE_AWK_RUN_H_
 
-#ifndef _XP_AWK_AWK_H_
-#error Never include this file directly. Include <xp/awk/awk.h> instead
+#ifndef _SSE_AWK_AWK_H_
+#error Never include this file directly. Include <sse/awk/awk.h> instead
 #endif
 
 enum
 {
 	/* if you change this, you have to change __assop_str in tree.c */
-	XP_AWK_ASSOP_NONE,
-	XP_AWK_ASSOP_PLUS,
-	XP_AWK_ASSOP_MINUS,
-	XP_AWK_ASSOP_MUL,
-	XP_AWK_ASSOP_DIV,
-	XP_AWK_ASSOP_MOD,
-	XP_AWK_ASSOP_EXP
+	SSE_AWK_ASSOP_NONE,
+	SSE_AWK_ASSOP_PLUS,
+	SSE_AWK_ASSOP_MINUS,
+	SSE_AWK_ASSOP_MUL,
+	SSE_AWK_ASSOP_DIV,
+	SSE_AWK_ASSOP_MOD,
+	SSE_AWK_ASSOP_ESSE
 };
 
 enum 
 {
 	/* if you change this, you have to change 
 	 * __binop_str in tree.c and __binop_func in run.c accordingly. */ 
-	XP_AWK_BINOP_LOR,
-	XP_AWK_BINOP_LAND,
-	XP_AWK_BINOP_IN,
+	SSE_AWK_BINOP_LOR,
+	SSE_AWK_BINOP_LAND,
+	SSE_AWK_BINOP_IN,
 
-	XP_AWK_BINOP_BOR,
-	XP_AWK_BINOP_BXOR,
-	XP_AWK_BINOP_BAND,
+	SSE_AWK_BINOP_BOR,
+	SSE_AWK_BINOP_BXOR,
+	SSE_AWK_BINOP_BAND,
 
-	XP_AWK_BINOP_EQ,
-	XP_AWK_BINOP_NE,
-	XP_AWK_BINOP_GT,
-	XP_AWK_BINOP_GE,
-	XP_AWK_BINOP_LT,
-	XP_AWK_BINOP_LE,
+	SSE_AWK_BINOP_EQ,
+	SSE_AWK_BINOP_NE,
+	SSE_AWK_BINOP_GT,
+	SSE_AWK_BINOP_GE,
+	SSE_AWK_BINOP_LT,
+	SSE_AWK_BINOP_LE,
 
-	XP_AWK_BINOP_LSHIFT,
-	XP_AWK_BINOP_RSHIFT,
+	SSE_AWK_BINOP_LSHIFT,
+	SSE_AWK_BINOP_RSHIFT,
 
-	XP_AWK_BINOP_PLUS,
-	XP_AWK_BINOP_MINUS,
-	XP_AWK_BINOP_MUL,
-	XP_AWK_BINOP_DIV,
-	XP_AWK_BINOP_MOD,
-	XP_AWK_BINOP_EXP,
+	SSE_AWK_BINOP_PLUS,
+	SSE_AWK_BINOP_MINUS,
+	SSE_AWK_BINOP_MUL,
+	SSE_AWK_BINOP_DIV,
+	SSE_AWK_BINOP_MOD,
+	SSE_AWK_BINOP_ESSE,
 
-	XP_AWK_BINOP_CONCAT,
-	XP_AWK_BINOP_MA,
-	XP_AWK_BINOP_NM
+	SSE_AWK_BINOP_CONCAT,
+	SSE_AWK_BINOP_MA,
+	SSE_AWK_BINOP_NM
 };
 
 enum
 {
 	/* if you change this, you have to change 
 	 * __unrop_str in tree.c accordingly. */ 
-	XP_AWK_UNROP_PLUS,
-	XP_AWK_UNROP_MINUS,
-	XP_AWK_UNROP_NOT,
-	XP_AWK_UNROP_BNOT
+	SSE_AWK_UNROP_PLUS,
+	SSE_AWK_UNROP_MINUS,
+	SSE_AWK_UNROP_NOT,
+	SSE_AWK_UNROP_BNOT
 };
 
 enum
 {
 	/* if you change this, you have to change 
 	 * __incop_str in tree.c accordingly. */ 
-	XP_AWK_INCOP_PLUS,
-	XP_AWK_INCOP_MINUS
+	SSE_AWK_INCOP_PLUS,
+	SSE_AWK_INCOP_MINUS
 };
 
 enum
 {
 	/* this table should match __bvtab in parse.c.
-	 * in addition, xp_awk_setglobal also counts 
+	 * in addition, sse_awk_setglobal also counts 
 	 * on the order of these values */
 
-	XP_AWK_GLOBAL_ARGC,
-	XP_AWK_GLOBAL_ARGV,
-	XP_AWK_GLOBAL_CONVFMT,
-	XP_AWK_GLOBAL_ENVIRON,
-	XP_AWK_GLOBAL_ERRNO,
-	XP_AWK_GLOBAL_FILENAME,
-	XP_AWK_GLOBAL_FNR,
-	XP_AWK_GLOBAL_FS,
-	XP_AWK_GLOBAL_IGNORECASE,
-	XP_AWK_GLOBAL_NF,
-	XP_AWK_GLOBAL_NR,
-	XP_AWK_GLOBAL_OFMT,
-	XP_AWK_GLOBAL_OFS,
-	XP_AWK_GLOBAL_ORS,
-	XP_AWK_GLOBAL_RS,
-	XP_AWK_GLOBAL_RT,
-	XP_AWK_GLOBAL_RSTART,
-	XP_AWK_GLOBAL_RLENGTH,
-	XP_AWK_GLOBAL_SUBSEP
+	SSE_AWK_GLOBAL_ARGC,
+	SSE_AWK_GLOBAL_ARGV,
+	SSE_AWK_GLOBAL_CONVFMT,
+	SSE_AWK_GLOBAL_ENVIRON,
+	SSE_AWK_GLOBAL_ERRNO,
+	SSE_AWK_GLOBAL_FILENAME,
+	SSE_AWK_GLOBAL_FNR,
+	SSE_AWK_GLOBAL_FS,
+	SSE_AWK_GLOBAL_IGNORECASE,
+	SSE_AWK_GLOBAL_NF,
+	SSE_AWK_GLOBAL_NR,
+	SSE_AWK_GLOBAL_OFMT,
+	SSE_AWK_GLOBAL_OFS,
+	SSE_AWK_GLOBAL_ORS,
+	SSE_AWK_GLOBAL_RS,
+	SSE_AWK_GLOBAL_RT,
+	SSE_AWK_GLOBAL_RSTART,
+	SSE_AWK_GLOBAL_RLENGTH,
+	SSE_AWK_GLOBAL_SUBSEP
 };
 
 #endif
