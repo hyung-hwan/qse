@@ -2,7 +2,7 @@ SRCS = \
 	awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
 OBJS = $(SRCS:.c=.obj)
-OUT = xpawk
+OUT = sseawk
 
 JAVA_INC = \
 	/I"C:\Program Files\IBM\Java141\Include" \
