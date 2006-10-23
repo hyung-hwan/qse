@@ -1,5 +1,5 @@
 /*
- * $Id: array.c,v 1.8 2006-10-22 13:10:45 bacon Exp $
+ * $Id: array.c,v 1.9 2006-10-23 10:57:59 bacon Exp $
  */
 
 #include <sse/lsp/array.h>
@@ -11,10 +11,10 @@ sse_lsp_array_t* sse_lsp_array_new (sse_size_t capacity)
 	sse_lsp_array_t* array;
 
 	sse_assert (capacity > 0);
-	array = (sse_lsp_array_t*)malloc (sizeof(sse_lsp_array_t));
+	array = (sse_lsp_array_t*) sse_malloc (sizeof(sse_lsp_array_t));
 	if (array == SSE_NULL) return SSE_NULL;
 
-	array->buffer = (void**)malloc (capacity + 1);
+	array->buffer = (void**) sse_malloc (capacity + 1);
 	if (array->buffer == SSE_NULL) {
 		free (array);
 		return SSE_NULL;
@@ -90,7 +90,7 @@ void** sse_lsp_array_yield (sse_lsp_array_t* array, sse_size_t capacity)
 {
 	void** old_buffer, ** new_buffer;
    
-	new_buffer = (void**)malloc(capacity + 1);
+	new_buffer = (void**) sse_malloc (capacity + 1);
 	if (new_buffer == SSE_NULL) return SSE_NULL;
 
 	old_buffer = array->buffer;
