@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.1 2006-10-23 10:54:15 bacon Exp $
+ * $Id: err.c,v 1.2 2006-10-23 14:42:38 bacon Exp $
  */
 
 #include <sse/lsp/lsp.h>
@@ -7,9 +7,9 @@
 static const sse_char_t* __errstr[] = 
 {
 	SSE_T("no error"),
+	SSE_T("out of memory"),
 	SSE_T("abort"),
 	SSE_T("end"),
-	SSE_T("memory"),
 	SSE_T("input not attached"),
 	SSE_T("input"),
 	SSE_T("output not attached"),
