@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.84 2006-10-22 14:00:05 bacon Exp $ 
+ * $Id: awk.c,v 1.85 2006-10-23 14:44:42 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -11,7 +11,7 @@
 
 static void __free_afn (void* awk, void* afn);
 
-sse_awk_t* sse_awk_open (sse_awk_syscas_t* syscas)
+sse_awk_t* sse_awk_open (const sse_awk_syscas_t* syscas)
 {
 	sse_awk_t* awk;
 

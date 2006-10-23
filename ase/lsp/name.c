@@ -1,10 +1,8 @@
 /*
- * $Id: name.c,v 1.4 2006-10-22 13:10:46 bacon Exp $
+ * $Id: name.c,v 1.5 2006-10-23 14:42:38 bacon Exp $
  */
 
 #include <sse/lsp/name.h>
-#include <sse/bas/memory.h>
-#include <sse/bas/assert.h>
 
 sse_lsp_name_t* sse_lsp_name_open (
 	sse_lsp_name_t* name, sse_word_t capacity)

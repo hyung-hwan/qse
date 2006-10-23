@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.7 2006-10-22 13:10:46 bacon Exp $
+ * $Id: mem.h,v 1.8 2006-10-23 14:42:38 bacon Exp $
  */
 
 #ifndef _SSE_LSP_MEM_H_
@@ -52,18 +52,18 @@ extern "C" {
 #endif
 	
 sse_lsp_mem_t* sse_lsp_mem_new   (sse_size_t ubound, sse_size_t ubound_inc);
-void       sse_lsp_mem_free  (sse_lsp_mem_t* mem);
+void sse_lsp_mem_free  (sse_lsp_mem_t* mem);
 
 int sse_lsp_add_builtin_prims (sse_lsp_mem_t* mem);
 
 sse_lsp_obj_t* sse_lsp_alloc (sse_lsp_mem_t* mem, int type, sse_size_t size);
-void       sse_lsp_dispose  (sse_lsp_mem_t* mem, sse_lsp_obj_t* prev, sse_lsp_obj_t* obj);
-void       sse_lsp_dispose_all     (sse_lsp_mem_t* mem);
-void       sse_lsp_garbage_collect (sse_lsp_mem_t* mem);
+void sse_lsp_dispose  (sse_lsp_mem_t* mem, sse_lsp_obj_t* prev, sse_lsp_obj_t* obj);
+void sse_lsp_dispose_all (sse_lsp_mem_t* mem);
+void sse_lsp_garbage_collect (sse_lsp_mem_t* mem);
 
-void       sse_lsp_lock       (sse_lsp_obj_t* obj);
-void       sse_lsp_unlock     (sse_lsp_obj_t* obj);
-void       sse_lsp_unlock_all (sse_lsp_obj_t* obj);
+void sse_lsp_lock (sse_lsp_obj_t* obj);
+void sse_lsp_unlock (sse_lsp_obj_t* obj);
+void sse_lsp_unlock_all (sse_lsp_obj_t* obj);
 
 // object creation of standard types
 sse_lsp_obj_t* sse_lsp_make_nil    (sse_lsp_mem_t* mem);

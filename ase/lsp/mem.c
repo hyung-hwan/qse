@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.9 2006-10-23 10:57:59 bacon Exp $
+ * $Id: mem.c,v 1.10 2006-10-23 14:44:43 bacon Exp $
  */
 
 #include <sse/lsp/mem.h> 
@@ -56,9 +56,9 @@ sse_lsp_mem_t* sse_lsp_mem_new (sse_size_t ubound, sse_size_t ubound_inc)
 	// initialize common object pointers
 	mem->nil     = sse_lsp_make_nil    (mem);
 	mem->t       = sse_lsp_make_true   (mem);
-	mem->quote   = sse_lsp_make_symbol (mem, SSE_TEXT("quote"));
-	mem->lambda  = sse_lsp_make_symbol (mem, SSE_TEXT("lambda"));
-	mem->macro   = sse_lsp_make_symbol (mem, SSE_TEXT("macro"));
+	mem->quote   = sse_lsp_make_symbol (mem, SSE_T("quote"));
+	mem->lambda  = sse_lsp_make_symbol (mem, SSE_T("lambda"));
+	mem->macro   = sse_lsp_make_symbol (mem, SSE_T("macro"));
 
 	if (mem->nil    == SSE_NULL ||
 	    mem->t      == SSE_NULL ||
@@ -119,32 +119,32 @@ int sse_lsp_add_builtin_prims (sse_lsp_mem_t* mem)
 #define ADD_PRIM(mem,name,len,prim) \
 	if (__add_prim(mem,name,len,prim) == -1) return -1;
 
-	ADD_PRIM (mem, SSE_TEXT("abort"), 5, sse_lsp_prim_abort);
-	ADD_PRIM (mem, SSE_TEXT("eval"),  4, sse_lsp_prim_eval);
-	ADD_PRIM (mem, SSE_TEXT("prog1"), 5, sse_lsp_prim_prog1);
-	ADD_PRIM (mem, SSE_TEXT("progn"), 5, sse_lsp_prim_progn);
-	ADD_PRIM (mem, SSE_TEXT("gc"),    2, sse_lsp_prim_gc);
+	ADD_PRIM (mem, SSE_T("abort"), 5, sse_lsp_prim_abort);
+	ADD_PRIM (mem, SSE_T("eval"),  4, sse_lsp_prim_eval);
+	ADD_PRIM (mem, SSE_T("prog1"), 5, sse_lsp_prim_prog1);
+	ADD_PRIM (mem, SSE_T("progn"), 5, sse_lsp_prim_progn);
+	ADD_PRIM (mem, SSE_T("gc"),    2, sse_lsp_prim_gc);
 
-	ADD_PRIM (mem, SSE_TEXT("cond"),  4, sse_lsp_prim_cond);
-	ADD_PRIM (mem, SSE_TEXT("if"),    2, sse_lsp_prim_if);
-	ADD_PRIM (mem, SSE_TEXT("while"), 5, sse_lsp_prim_while);
+	ADD_PRIM (mem, SSE_T("cond"),  4, sse_lsp_prim_cond);
+	ADD_PRIM (mem, SSE_T("if"),    2, sse_lsp_prim_if);
+	ADD_PRIM (mem, SSE_T("while"), 5, sse_lsp_prim_while);
 
-	ADD_PRIM (mem, SSE_TEXT("car"),   3, sse_lsp_prim_car);
-	ADD_PRIM (mem, SSE_TEXT("cdr"),   3, sse_lsp_prim_cdr);
-	ADD_PRIM (mem, SSE_TEXT("cons"),  4, sse_lsp_prim_cons);
-	ADD_PRIM (mem, SSE_TEXT("set"),   3, sse_lsp_prim_set);
-	ADD_PRIM (mem, SSE_TEXT("setq"),  4, sse_lsp_prim_setq);
-	ADD_PRIM (mem, SSE_TEXT("quote"), 5, sse_lsp_prim_quote);
-	ADD_PRIM (mem, SSE_TEXT("defun"), 5, sse_lsp_prim_defun);
-	ADD_PRIM (mem, SSE_TEXT("demac"), 5, sse_lsp_prim_demac);
-	ADD_PRIM (mem, SSE_TEXT("let"),   3, sse_lsp_prim_let);
-	ADD_PRIM (mem, SSE_TEXT("let*"),  4, sse_lsp_prim_letx);
+	ADD_PRIM (mem, SSE_T("car"),   3, sse_lsp_prim_car);
+	ADD_PRIM (mem, SSE_T("cdr"),   3, sse_lsp_prim_cdr);
+	ADD_PRIM (mem, SSE_T("cons"),  4, sse_lsp_prim_cons);
+	ADD_PRIM (mem, SSE_T("set"),   3, sse_lsp_prim_set);
+	ADD_PRIM (mem, SSE_T("setq"),  4, sse_lsp_prim_setq);
+	ADD_PRIM (mem, SSE_T("quote"), 5, sse_lsp_prim_quote);
+	ADD_PRIM (mem, SSE_T("defun"), 5, sse_lsp_prim_defun);
+	ADD_PRIM (mem, SSE_T("demac"), 5, sse_lsp_prim_demac);
+	ADD_PRIM (mem, SSE_T("let"),   3, sse_lsp_prim_let);
+	ADD_PRIM (mem, SSE_T("let*"),  4, sse_lsp_prim_letx);
 
-	ADD_PRIM (mem, SSE_TEXT(">"),     1, sse_lsp_prim_gt);
-	ADD_PRIM (mem, SSE_TEXT("<"),     1, sse_lsp_prim_lt);
+	ADD_PRIM (mem, SSE_T(">"),     1, sse_lsp_prim_gt);
+	ADD_PRIM (mem, SSE_T("<"),     1, sse_lsp_prim_lt);
 
-	ADD_PRIM (mem, SSE_TEXT("+"),     1, sse_lsp_prim_plus);
-	ADD_PRIM (mem, SSE_TEXT("-"),     1, sse_lsp_prim_minus);
+	ADD_PRIM (mem, SSE_T("+"),     1, sse_lsp_prim_plus);
+	ADD_PRIM (mem, SSE_T("-"),     1, sse_lsp_prim_minus);
 
 	return 0;
 }
@@ -179,7 +179,7 @@ sse_lsp_obj_t* sse_lsp_alloc (sse_lsp_mem_t* mem, int type, sse_size_t size)
 	mem->count++;
 
 #if 0
-	sse_dprint1 (SSE_TEXT("mem->count: %u\n"), mem->count);
+	sse_dprint1 (SSE_T("mem->count: %u\n"), mem->count);
 #endif
 
 	return obj;
@@ -200,7 +200,7 @@ void sse_lsp_dispose (sse_lsp_mem_t* mem, sse_lsp_obj_t* prev, sse_lsp_obj_t* ob
 
 	mem->count--;
 #if 0
-	sse_dprint1 (SSE_TEXT("mem->count: %u\n"), mem->count);
+	sse_dprint1 (SSE_T("mem->count: %u\n"), mem->count);
 #endif
 
 	sse_free (obj);	
@@ -290,7 +290,7 @@ static void sse_lsp_mark (sse_lsp_mem_t* mem)
 	sse_size_t       i;
 
 #if 0
-	sse_dprint0 (SSE_TEXT("marking environment frames\n"));
+	sse_dprint0 (SSE_T("marking environment frames\n"));
 #endif
 	// mark objects in the environment frames
 	frame = mem->frame;
@@ -311,7 +311,7 @@ static void sse_lsp_mark (sse_lsp_mem_t* mem)
 	}
 
 #if 0
-	sse_dprint0 (SSE_TEXT("marking interim frames\n"));
+	sse_dprint0 (SSE_T("marking interim frames\n"));
 #endif
 
 	// mark objects in the interim frames
@@ -334,12 +334,12 @@ static void sse_lsp_mark (sse_lsp_mem_t* mem)
 	}
 
 	/*
-	sse_dprint0 (SSE_TEXT("marking the locked object\n"));
+	sse_dprint0 (SSE_T("marking the locked object\n"));
 	if (mem->locked != SSE_NULL) sse_lsp_mark_obj (mem->locked);
 	*/
 
 #if 0
-	sse_dprint0 (SSE_TEXT("marking termporary objects\n"));
+	sse_dprint0 (SSE_T("marking termporary objects\n"));
 #endif
 	array = mem->temp_array;
 	for (i = 0; i < array->size; i++) {
@@ -347,7 +347,7 @@ static void sse_lsp_mark (sse_lsp_mem_t* mem)
 	}
 
 #if 0
-	sse_dprint0 (SSE_TEXT("marking builtin objects\n"));
+	sse_dprint0 (SSE_T("marking builtin objects\n"));
 #endif
 	// mark common objects
 	if (mem->t      != SSE_NULL) sse_lsp_mark_obj (mem->t);
@@ -370,7 +370,7 @@ static void sse_lsp_sweep (sse_lsp_mem_t* mem)
 		//obj = mem->used[--i];
 
 #if 0
-		sse_dprint1 (SSE_TEXT("sweeping objects of type: %u\n"), i);
+		sse_dprint1 (SSE_T("sweeping objects of type: %u\n"), i);
 #endif
 
 		while (obj != SSE_NULL) {
@@ -638,7 +638,7 @@ int sse_lsp_comp_symbol (sse_lsp_obj_t* obj, const sse_char_t* str)
 		index++; p++; str++;
 	}
 
-	return (*str == SSE_CHAR('\0'))? 0: -1;
+	return (*str == SSE_T('\0'))? 0: -1;
 }
 
 int sse_lsp_comp_symbol2 (sse_lsp_obj_t* obj, const sse_char_t* str, sse_size_t len)
@@ -679,7 +679,7 @@ int sse_lsp_comp_string (sse_lsp_obj_t* obj, const sse_char_t* str)
 		index++; p++; str++;
 	}
 
-	return (*str == SSE_CHAR('\0'))? 0: -1;
+	return (*str == SSE_T('\0'))? 0: -1;
 }
 
 int sse_lsp_comp_string2 (sse_lsp_obj_t* obj, const sse_char_t* str, sse_size_t len)
@@ -706,8 +706,8 @@ int sse_lsp_comp_string2 (sse_lsp_obj_t* obj, const sse_char_t* str, sse_size_t 
 void sse_lsp_copy_string (sse_char_t* dst, const sse_char_t* str)
 {
 	// the buffer pointed by dst should be big enough to hold str
-	while (*str != SSE_CHAR('\0')) *dst++ = *str++;
-	*dst = SSE_CHAR('\0');
+	while (*str != SSE_T('\0')) *dst++ = *str++;
+	*dst = SSE_T('\0');
 }
 
 void sse_lsp_copy_string2 (sse_char_t* dst, const sse_char_t* str, sse_size_t len)
@@ -717,6 +717,6 @@ void sse_lsp_copy_string2 (sse_char_t* dst, const sse_char_t* str, sse_size_t le
 		*dst++ = *str++;
 		len--;
 	}
-	*dst = SSE_CHAR('\0');
+	*dst = SSE_T('\0');
 }
 

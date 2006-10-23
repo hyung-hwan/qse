@@ -10,7 +10,7 @@ JAVA_INC = \
 
 CC = cl
 LD = link
-CFLAGS = /nologo /O2 /MT /W3 /GR- /Za /D_WIN32_WINNT=0x0400 -I../.. -DXP_CHAR_IS_WCHAR $(JAVA_INC) 
+CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. -DSSE_CHAR_IS_WCHAR $(JAVA_INC) 
 
 all: lib 
 

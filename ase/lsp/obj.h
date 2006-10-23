@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.5 2006-10-22 13:10:46 bacon Exp $
+ * $Id: obj.h,v 1.6 2006-10-23 14:42:38 bacon Exp $
  */
 
 #ifndef _SSE_LSP_OBJ_H_
@@ -76,7 +76,7 @@ struct sse_lsp_obj_real_t
 struct sse_lsp_obj_symbol_t
 {
 	sse_lsp_objhdr_t hdr;
-#ifdef __BORLANDC__
+#if defined(__BORLANDC__) || defined(_MSC_VER)
 #else
 	sse_char_t buffer[0];
 #endif
@@ -85,7 +85,7 @@ struct sse_lsp_obj_symbol_t
 struct sse_lsp_obj_string_t
 {
 	sse_lsp_objhdr_t hdr;
-#ifdef __BORLANDC__
+#if defined(__BORLANDC__) || defined(_MSC_VER)
 #else
 	sse_char_t buffer[0];
 #endif

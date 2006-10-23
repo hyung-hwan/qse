@@ -1,11 +1,10 @@
 /*
- * $Id: prim.h,v 1.6 2006-10-22 13:10:46 bacon Exp $
+ * $Id: prim.h,v 1.7 2006-10-23 14:42:38 bacon Exp $
  */
 
 #ifndef _SSE_LSP_PRIM_H_
 #define _SSE_LSP_PRIM_H_
 
-#include <sse/lsp/types.h>
 #include <sse/lsp/lsp.h>
 
 #ifdef __cplusplus

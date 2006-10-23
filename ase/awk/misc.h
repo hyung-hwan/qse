@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.5 2006-10-22 12:39:29 bacon Exp $
+ * $Id: misc.h,v 1.6 2006-10-23 14:44:43 bacon Exp $
  */
 
 #ifndef _SSE_AWK_MISC_H_
@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-void* sse_awk_memcpy  (void* dst, const void* src, sse_size_t n);
+void* sse_awk_memcpy (void* dst, const void* src, sse_size_t n);
 void* sse_awk_memset (void* dst, int val, sse_size_t n);
 
 sse_char_t* sse_awk_strtok (
