@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.8 2006-10-22 13:10:46 bacon Exp $
+ * $Id: mem.c,v 1.9 2006-10-23 10:57:59 bacon Exp $
  */
 
 #include <sse/lsp/mem.h> 
@@ -15,7 +15,7 @@ sse_lsp_mem_t* sse_lsp_mem_new (sse_size_t ubound, sse_size_t ubound_inc)
 	sse_size_t i;
 
 	// allocate memory
-	mem = (sse_lsp_mem_t*)sse_malloc (sse_sizeof(sse_lsp_mem_t));	
+	mem = (sse_lsp_mem_t*) sse_malloc (sse_sizeof(sse_lsp_mem_t));	
 	if (mem == SSE_NULL) return SSE_NULL;
 
 	// create a new root environment frame
@@ -160,11 +160,11 @@ sse_lsp_obj_t* sse_lsp_alloc (sse_lsp_mem_t* mem, int type, sse_size_t size)
 		if (mem->count >= mem->ubound) return SSE_NULL;
 	}
 
-	obj = (sse_lsp_obj_t*)sse_malloc (size);
+	obj = (sse_lsp_obj_t*) sse_malloc (size);
 	if (obj == SSE_NULL) {
 		sse_lsp_garbage_collect (mem);
 
-		obj = (sse_lsp_obj_t*)sse_malloc (size);
+		obj = (sse_lsp_obj_t*) sse_malloc (size);
 		if (obj == SSE_NULL) return SSE_NULL;
 	}
 

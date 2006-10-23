@@ -1,17 +1,17 @@
-SRCS = name.c token.c array.c mem.c env.c error.c \
+SRCS = name.c token.c array.c mem.c env.c err.c \
 	init.c read.c eval.c print.c \
 	prim.c prim_prog.c prim_let.c prim_compar.c prim_math.c
 OBJS = $(SRCS:.c=.obj)
 OUT = xplsp.lib
 
 CC = cl
-CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
+LD = link
+CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. -DSSE_CHAR_IS_WCHAR
 
 all: $(OBJS)
-	link -lib @<<
+	$(LD) -lib @<<
 /nologo /out:$(OUT) $(OBJS)
 <<
-
 
 clean:
 	del $(OBJS) $(OUT) *.obj
