@@ -1,10 +1,8 @@
 /*
- * $Id: array.c,v 1.9 2006-10-23 10:57:59 bacon Exp $
+ * $Id: array.c,v 1.10 2006-10-23 14:49:16 bacon Exp $
  */
 
-#include <sse/lsp/array.h>
-#include <sse/bas/memory.h>
-#include <sse/bas/assert.h>
+#include <sse/lsp/lsp_i.h>
 
 sse_lsp_array_t* sse_lsp_array_new (sse_size_t capacity)
 {

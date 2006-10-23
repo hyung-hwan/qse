@@ -1,14 +1,14 @@
 /*
- * $Id: token.c,v 1.13 2006-10-22 13:10:46 bacon Exp $
+ * $Id: token.c,v 1.14 2006-10-23 14:49:16 bacon Exp $
  */
 
-#include <sse/lsp/token.h>
-#include <sse/bas/memory.h>
+#include <sse/lsp/lsp_i.h>
 
 sse_lsp_token_t* sse_lsp_token_open (
 	sse_lsp_token_t* token, sse_word_t capacity)
 {
-	if (token == SSE_NULL) {
+	if (token == SSE_NULL) 
+	{
 		token = (sse_lsp_token_t*)
 			sse_malloc (sse_sizeof(sse_lsp_token_t));
 		if (token == SSE_NULL) return SSE_NULL;
@@ -25,7 +25,7 @@ sse_lsp_token_t* sse_lsp_token_open (
 	token->ivalue    = 0;
 	token->fvalue    = .0;
 	*/
-	token->type      = SSE_LSP_TOKEN_END;
+	token->type = SSE_LSP_TOKEN_END;
 	return token;
 }
 

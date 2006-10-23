@@ -1,12 +1,11 @@
 /*
- * $Id: lsp.h,v 1.23 2006-10-23 14:42:38 bacon Exp $
+ * $Id: lsp.h,v 1.24 2006-10-23 14:57:44 bacon Exp $
  */
 
 #ifndef _SSE_LSP_LSP_H_
 #define _SSE_LSP_LSP_H_
 
-#include <sse/types.h>
-#include <sse/macros.h>
+#include <sse/lsp/types.h>
 
 typedef struct sse_lsp_t sse_lsp_t;
 typedef struct sse_lsp_obj_t sse_lsp_obj_t;
