@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.131 2006-10-22 12:39:29 bacon Exp $
+ * $Id: awk.h,v 1.132 2006-10-23 14:44:42 bacon Exp $
  */
 
 #ifndef _SSE_AWK_AWK_H_
@@ -136,7 +136,7 @@ enum
 };
 
 /* various options */
-enum sse_awk_option_t
+enum 
 { 
 	/* allow undeclared variables */
 	SSE_AWK_IMPLICIT    = (1 << 0),
@@ -198,7 +198,7 @@ enum sse_awk_option_t
 };
 
 /* error code */
-enum ant_awk_errnum_t
+enum 
 {
 	SSE_AWK_ENOERR,         /* no error */
 	SSE_AWK_ENOMEM,         /* out of memory */
@@ -320,7 +320,7 @@ enum
 extern "C" {
 #endif
 
-sse_awk_t* sse_awk_open (sse_awk_syscas_t* syscas);
+sse_awk_t* sse_awk_open (const sse_awk_syscas_t* syscas);
 int sse_awk_close (sse_awk_t* awk);
 int sse_awk_clear (sse_awk_t* awk);
 

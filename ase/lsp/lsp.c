@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.5 2006-10-23 14:42:38 bacon Exp $
+ * $Id: lsp.c,v 1.6 2006-10-23 14:44:43 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -170,39 +170,39 @@ static int __add_builtin_prims (sse_lsp_t* lsp)
 #define ADD_PRIM(mem,name,prim) \
 	if (sse_lsp_add_prim(mem,name,prim) == -1) return -1;
 
-	ADD_PRIM (lsp, SSE_TEXT("abort"), sse_lsp_prim_abort);
-	ADD_PRIM (lsp, SSE_TEXT("eval"),  sse_lsp_prim_eval);
-	ADD_PRIM (lsp, SSE_TEXT("prog1"), sse_lsp_prim_prog1);
-	ADD_PRIM (lsp, SSE_TEXT("progn"), sse_lsp_prim_progn);
-	ADD_PRIM (lsp, SSE_TEXT("gc"),    sse_lsp_prim_gc);
+	ADD_PRIM (lsp, SSE_T("abort"), sse_lsp_prim_abort);
+	ADD_PRIM (lsp, SSE_T("eval"),  sse_lsp_prim_eval);
+	ADD_PRIM (lsp, SSE_T("prog1"), sse_lsp_prim_prog1);
+	ADD_PRIM (lsp, SSE_T("progn"), sse_lsp_prim_progn);
+	ADD_PRIM (lsp, SSE_T("gc"),    sse_lsp_prim_gc);
 
-	ADD_PRIM (lsp, SSE_TEXT("cond"),  sse_lsp_prim_cond);
-	ADD_PRIM (lsp, SSE_TEXT("if"),    sse_lsp_prim_if);
-	ADD_PRIM (lsp, SSE_TEXT("while"), sse_lsp_prim_while);
+	ADD_PRIM (lsp, SSE_T("cond"),  sse_lsp_prim_cond);
+	ADD_PRIM (lsp, SSE_T("if"),    sse_lsp_prim_if);
+	ADD_PRIM (lsp, SSE_T("while"), sse_lsp_prim_while);
 
-	ADD_PRIM (lsp, SSE_TEXT("car"),   sse_lsp_prim_car);
-	ADD_PRIM (lsp, SSE_TEXT("cdr"),   sse_lsp_prim_cdr);
-	ADD_PRIM (lsp, SSE_TEXT("cons"),  sse_lsp_prim_cons);
-	ADD_PRIM (lsp, SSE_TEXT("set"),   sse_lsp_prim_set);
-	ADD_PRIM (lsp, SSE_TEXT("setq"),  sse_lsp_prim_setq);
-	ADD_PRIM (lsp, SSE_TEXT("quote"), sse_lsp_prim_quote);
-	ADD_PRIM (lsp, SSE_TEXT("defun"), sse_lsp_prim_defun);
-	ADD_PRIM (lsp, SSE_TEXT("demac"), sse_lsp_prim_demac);
-	ADD_PRIM (lsp, SSE_TEXT("let"),   sse_lsp_prim_let);
-	ADD_PRIM (lsp, SSE_TEXT("let*"),  sse_lsp_prim_letx);
+	ADD_PRIM (lsp, SSE_T("car"),   sse_lsp_prim_car);
+	ADD_PRIM (lsp, SSE_T("cdr"),   sse_lsp_prim_cdr);
+	ADD_PRIM (lsp, SSE_T("cons"),  sse_lsp_prim_cons);
+	ADD_PRIM (lsp, SSE_T("set"),   sse_lsp_prim_set);
+	ADD_PRIM (lsp, SSE_T("setq"),  sse_lsp_prim_setq);
+	ADD_PRIM (lsp, SSE_T("quote"), sse_lsp_prim_quote);
+	ADD_PRIM (lsp, SSE_T("defun"), sse_lsp_prim_defun);
+	ADD_PRIM (lsp, SSE_T("demac"), sse_lsp_prim_demac);
+	ADD_PRIM (lsp, SSE_T("let"),   sse_lsp_prim_let);
+	ADD_PRIM (lsp, SSE_T("let*"),  sse_lsp_prim_letx);
 
-	ADD_PRIM (lsp, SSE_TEXT("="),     sse_lsp_prim_eq);
-	ADD_PRIM (lsp, SSE_TEXT("/="),    sse_lsp_prim_ne);
-	ADD_PRIM (lsp, SSE_TEXT(">"),     sse_lsp_prim_gt);
-	ADD_PRIM (lsp, SSE_TEXT("<"),     sse_lsp_prim_lt);
-	ADD_PRIM (lsp, SSE_TEXT(">="),    sse_lsp_prim_ge);
-	ADD_PRIM (lsp, SSE_TEXT("<="),    sse_lsp_prim_le);
+	ADD_PRIM (lsp, SSE_T("="),     sse_lsp_prim_eq);
+	ADD_PRIM (lsp, SSE_T("/="),    sse_lsp_prim_ne);
+	ADD_PRIM (lsp, SSE_T(">"),     sse_lsp_prim_gt);
+	ADD_PRIM (lsp, SSE_T("<"),     sse_lsp_prim_lt);
+	ADD_PRIM (lsp, SSE_T(">="),    sse_lsp_prim_ge);
+	ADD_PRIM (lsp, SSE_T("<="),    sse_lsp_prim_le);
 
-	ADD_PRIM (lsp, SSE_TEXT("+"),     sse_lsp_prim_plus);
-	ADD_PRIM (lsp, SSE_TEXT("-"),     sse_lsp_prim_minus);
-	ADD_PRIM (lsp, SSE_TEXT("*"),     sse_lsp_prim_multiply);
-	ADD_PRIM (lsp, SSE_TEXT("/"),     sse_lsp_prim_divide);
-	ADD_PRIM (lsp, SSE_TEXT("%"),     sse_lsp_prim_modulus);
+	ADD_PRIM (lsp, SSE_T("+"),     sse_lsp_prim_plus);
+	ADD_PRIM (lsp, SSE_T("-"),     sse_lsp_prim_minus);
+	ADD_PRIM (lsp, SSE_T("*"),     sse_lsp_prim_multiply);
+	ADD_PRIM (lsp, SSE_T("/"),     sse_lsp_prim_divide);
+	ADD_PRIM (lsp, SSE_T("%"),     sse_lsp_prim_modulus);
 
 	return 0;
 }
