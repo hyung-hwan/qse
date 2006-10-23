@@ -1,28 +1,76 @@
 /*
- * $Id: lsp.h,v 1.22 2006-10-23 10:54:15 bacon Exp $
+ * $Id: lsp.h,v 1.23 2006-10-23 14:42:38 bacon Exp $
  */
 
 #ifndef _SSE_LSP_LSP_H_
 #define _SSE_LSP_LSP_H_
 
-/* 
- * HEADER: Lisp
- *   A lisp-like embeddable language processor is provided for application
- *   development that requires simple scripting.
- *
- */
+#include <sse/types.h>
+#include <sse/macros.h>
 
-#include <sse/lsp/types.h>
-#include <sse/lsp/token.h>
-#include <sse/lsp/obj.h>
-#include <sse/lsp/mem.h>
+typedef struct sse_lsp_t sse_lsp_t;
+typedef struct sse_lsp_obj_t sse_lsp_obj_t;
+typedef struct sse_lsp_syscas_t sse_lsp_syscas_t;
 
+typedef sse_ssize_t (*sse_lsp_io_t) (
+	int cmd, void* arg, sse_char_t* data, sse_size_t count);
+
+struct sse_lsp_syscas_t
+{
+	/* memory */
+	void* (*malloc) (sse_size_t n, void* custom_data);
+	void* (*realloc) (void* ptr, sse_size_t n, void* custom_data);
+	void  (*free) (void* ptr, void* custom_data);
+
+	/* character class */
+	sse_bool_t (*is_upper)  (sse_cint_t c);
+	sse_bool_t (*is_lower)  (sse_cint_t c);
+	sse_bool_t (*is_alpha)  (sse_cint_t c);
+	sse_bool_t (*is_digit)  (sse_cint_t c);
+	sse_bool_t (*is_xdigit) (sse_cint_t c);
+	sse_bool_t (*is_alnum)  (sse_cint_t c);
+	sse_bool_t (*is_space)  (sse_cint_t c);
+	sse_bool_t (*is_print)  (sse_cint_t c);
+	sse_bool_t (*is_graph)  (sse_cint_t c);
+	sse_bool_t (*is_cntrl)  (sse_cint_t c);
+	sse_bool_t (*is_punct)  (sse_cint_t c);
+	sse_cint_t (*to_upper)  (sse_cint_t c);
+	sse_cint_t (*to_lower)  (sse_cint_t c);
+
+	/* utilities */
+	void* (*memcpy)  (void* dst, const void* src, sse_size_t n);
+	void* (*memset)  (void* dst, int val, sse_size_t n);
+
+	int (*sprintf) (sse_char_t* buf, sse_size_t size, sse_char_t* fmt, ...);
+	int (*dprintf) (sse_char_t* fmt, ...);
+	void (*abort) (void);
+
+	void* custom_data;
+};
+
+/* io function commands */
 enum 
 {
-	SSE_LSP_ERR_NONE = 0,
+	SSE_LSP_IO_OPEN   = 0,
+	SSE_LSP_IO_CLOSE  = 1,
+	SSE_LSP_IO_READ   = 2,
+	SSE_LSP_IO_WRITE  = 3
+};
+
+/* option code */
+enum
+{
+	SSE_LSP_UNDEFSYMBOL = (1 << 0)
+};
+
+/* error code */
+enum 
+{
+	SSE_LSP_ENOERR,
+	SSE_LSP_ENOMEM,
+
 	SSE_LSP_ERR_ABORT,
 	SSE_LSP_ERR_END,
-	SSE_LSP_ERR_MEMORY,
 	SSE_LSP_ERR_INPUT_NOT_ATTACHED,
 	SSE_LSP_ERR_INPUT,
 	SSE_LSP_ERR_OUTPUT_NOT_ATTACHED,
@@ -39,66 +87,23 @@ enum
 	SSE_LSP_ERR_UNDEF_SYMBOL,
 	SSE_LSP_ERR_EMPTY_BODY,
 	SSE_LSP_ERR_BAD_VALUE,
-	SSE_LSP_ERR_DIVIDE_BY_ZERO
-};
 
-/*
- * TYPE: sse_lsp_t
- *   Defines a lisp processor type
- */
-typedef struct sse_lsp_t sse_lsp_t;
-
-/*
- * TYPE: sse_lsp_io_t
- *   Defines an IO handler type
- */
-typedef sse_ssize_t (*sse_lsp_io_t) (
-	int cmd, void* arg, sse_char_t* data, sse_size_t count);
-
-enum 
-{
-	SSE_LSP_IO_OPEN,
-	SSE_LSP_IO_CLOSE,
-	SSE_LSP_IO_DATA
+	SSE_LSP_EDIVBYZERO
 };
 
 typedef sse_lsp_obj_t* (*sse_lsp_prim_t) (sse_lsp_t* lsp, sse_lsp_obj_t* obj);
-
-struct sse_lsp_t 
-{
-	/* error number */
-	int errnum;
-	int opt_undef_symbol;
-
-	/* for read */
-	sse_cint_t curc;
-	sse_lsp_token_t token;
-
-	/* io functions */
-	sse_lsp_io_t input_func;
-	sse_lsp_io_t output_func;
-	void* input_arg;
-	void* output_arg;
-
-	/* security options */
-	sse_size_t max_eval_depth;
-	sse_size_t cur_eval_depth;
-
-	/* memory manager */
-	sse_lsp_mem_t* mem;
-	sse_bool_t __dynamic;
-};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 sse_lsp_t* sse_lsp_open (
-	sse_lsp_t* lsp, sse_size_t mem_ubound, sse_size_t mem_ubound_inc);
+	const sse_lsp_syscas_t* syscas,
+	sse_size_t mem_ubound, sse_size_t mem_ubound_inc);
 
 void sse_lsp_close (sse_lsp_t* lsp);
 
-int sse_lsp_geterrnum (sse_lsp_t* awk);
+int sse_lsp_geterrnum (sse_lsp_t* lsp);
 
 int sse_lsp_attach_input (sse_lsp_t* lsp, sse_lsp_io_t input, void* arg);
 int sse_lsp_detach_input (sse_lsp_t* lsp);

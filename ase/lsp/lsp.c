@@ -1,30 +1,72 @@
 /*
- * $Id: init.c,v 1.12 2006-10-22 13:10:46 bacon Exp $
+ * $Id: lsp.c,v 1.5 2006-10-23 14:42:38 bacon Exp $
  */
 
-#include <sse/lsp/lsp.h>
-#include <sse/lsp/prim.h>
-#include <sse/bas/memory.h>
-#include <sse/bas/assert.h>
+#if defined(__BORLANDC__)
+#pragma hdrstop
+#define Library
+#endif
+
+#include <sse/lsp/lsp_i.h>
 
 static int __add_builtin_prims (sse_lsp_t* lsp);
 
-sse_lsp_t* sse_lsp_open (sse_lsp_t* lsp, 
+sse_lsp_t* sse_lsp_open (
+	const sse_lsp_syscas_t* syscas, 
 	sse_size_t mem_ubound, sse_size_t mem_ubound_inc)
 {
-	if (lsp == SSE_NULL) {
-		lsp = (sse_lsp_t*)sse_malloc(sse_sizeof(sse_lsp_t));
-		if (lsp == SSE_NULL) return lsp;
-		lsp->__dynamic = sse_true;
-	}
-	else lsp->__dynamic = sse_false;
+	sse_lsp_t* lsp;
 
-	if (sse_lsp_token_open(&lsp->token, 0) == SSE_NULL) {
-		if (lsp->__dynamic) sse_free (lsp);
+	if (syscas == SSE_NULL) return SSE_NULL;
+
+	if (syscas->malloc == SSE_NULL || 
+	    syscas->free == SSE_NULL) return SSE_NULL;
+
+	if (syscas->is_upper  == SSE_NULL ||
+	    syscas->is_lower  == SSE_NULL ||
+	    syscas->is_alpha  == SSE_NULL ||
+	    syscas->is_digit  == SSE_NULL ||
+	    syscas->is_xdigit == SSE_NULL ||
+	    syscas->is_alnum  == SSE_NULL ||
+	    syscas->is_space  == SSE_NULL ||
+	    syscas->is_print  == SSE_NULL ||
+	    syscas->is_graph  == SSE_NULL ||
+	    syscas->is_cntrl  == SSE_NULL ||
+	    syscas->is_punct  == SSE_NULL ||
+	    syscas->to_upper  == SSE_NULL ||
+	    syscas->to_lower  == SSE_NULL) return SSE_NULL;
+
+	if (syscas->sprintf == SSE_NULL || 
+	    syscas->dprintf == SSE_NULL || 
+	    syscas->abort == SSE_NULL) return SSE_NULL;
+
+#if defined(_WIN32) && defined(_DEBUG)
+	lsp = (sse_lsp_t*) malloc (sse_sizeof(sse_lsp_t));
+#else
+	lsp = (sse_lsp_t*) syscas->malloc (
+		sse_sizeof(sse_lsp_t), syscas->custom_data);
+#endif
+	if (lsp == SSE_NULL) return SSE_NULL;
+
+	/* it uses the built-in sse_lsp_memset because lsp is not 
+	 * fully initialized yet */
+	sse_lsp_memset (lsp, 0, sse_sizeof(sse_lsp_t));
+
+	if (syscas->memcpy == SSE_NULL)
+	{
+		sse_lsp_memcpy (&lsp->syscas, syscas, sse_sizeof(lsp->syscas));
+		lsp->syscas.memcpy = sse_lsp_memcpy;
+	}
+	else syscas->memcpy (&lsp->syscas, syscas, sse_sizeof(lsp->syscas));
+	if (syscas->memset == SSE_NULL) lsp->syscas.memset = sse_lsp_memset;
+
+	if (sse_lsp_token_open(&lsp->token, 0) == SSE_NULL) 
+	{
+		if (lsp->__dynamic) SSE_LSP_FREE (lsp, lsp);
 		return SSE_NULL;
 	}
 
-	lsp->errnum = SSE_LSP_ERR_NONE;
+	lsp->errnum = SSE_LSP_ENOERR;
 	lsp->opt_undef_symbol = 1;
 	//lsp->opt_undef_symbol = 0;
 
@@ -37,14 +79,14 @@ sse_lsp_t* sse_lsp_open (sse_lsp_t* lsp,
 	lsp->mem = sse_lsp_mem_new (mem_ubound, mem_ubound_inc);
 	if (lsp->mem == SSE_NULL) {
 		sse_lsp_token_close (&lsp->token);
-		if (lsp->__dynamic) sse_free (lsp);
+		if (lsp->__dynamic) SSE_LSP_FREE (lsp, lsp);
 		return SSE_NULL;
 	}
 
 	if (__add_builtin_prims(lsp) == -1) {
 		sse_lsp_mem_free (lsp->mem);
 		sse_lsp_token_close (&lsp->token);
-		if (lsp->__dynamic) sse_free (lsp);
+		if (lsp->__dynamic) SSE_LSP_FREE (lsp, lsp);
 		return SSE_NULL;
 	}
 
@@ -56,17 +98,16 @@ sse_lsp_t* sse_lsp_open (sse_lsp_t* lsp,
 
 void sse_lsp_close (sse_lsp_t* lsp)
 {
-	sse_assert (lsp != SSE_NULL);
 	sse_lsp_mem_free (lsp->mem);
 	sse_lsp_token_close (&lsp->token);
-	if (lsp->__dynamic) sse_free (lsp);
+	if (lsp->__dynamic) SSE_LSP_FREE (lsp, lsp);
 }
 
 int sse_lsp_attach_input (sse_lsp_t* lsp, sse_lsp_io_t input, void* arg)
 {
 	if (sse_lsp_detach_input(lsp) == -1) return -1;
 
-	sse_assert (lsp->input_func == SSE_NULL);
+	sse_lsp_assert (lsp, lsp->input_func == SSE_NULL);
 
 	if (input(SSE_LSP_IO_OPEN, arg, SSE_NULL, 0) == -1) {
 		/* TODO: set error number */
@@ -98,7 +139,7 @@ int sse_lsp_attach_output (sse_lsp_t* lsp, sse_lsp_io_t output, void* arg)
 {
 	if (sse_lsp_detach_output(lsp) == -1) return -1;
 
-	sse_assert (lsp->output_func == SSE_NULL);
+	sse_lsp_assert (lsp, lsp->output_func == SSE_NULL);
 
 	if (output(SSE_LSP_IO_OPEN, arg, SSE_NULL, 0) == -1) {
 		/* TODO: set error number */
