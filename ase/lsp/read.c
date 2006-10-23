@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.18 2006-10-22 13:10:46 bacon Exp $
+ * $Id: read.c,v 1.19 2006-10-23 14:44:43 bacon Exp $
  */
 
 #include <sse/lsp/lsp.h>
@@ -13,12 +13,12 @@
 #define IS_ALNUM(x) sse_isalnum(x)
 
 #define IS_IDENT(c) \
-	((c) == SSE_CHAR('+') || (c) == SSE_CHAR('-') || \
-	 (c) == SSE_CHAR('*') || (c) == SSE_CHAR('/') || \
-	 (c) == SSE_CHAR('%') || (c) == SSE_CHAR('&') || \
-	 (c) == SSE_CHAR('<') || (c) == SSE_CHAR('>') || \
-	 (c) == SSE_CHAR('=') || (c) == SSE_CHAR('_') || \
-	 (c) == SSE_CHAR('?'))
+	((c) == SSE_T('+') || (c) == SSE_T('-') || \
+	 (c) == SSE_T('*') || (c) == SSE_T('/') || \
+	 (c) == SSE_T('%') || (c) == SSE_T('&') || \
+	 (c) == SSE_T('<') || (c) == SSE_T('>') || \
+	 (c) == SSE_T('=') || (c) == SSE_T('_') || \
+	 (c) == SSE_T('?'))
 
 #define TOKEN_CLEAR(lsp)   sse_lsp_token_clear (&(lsp)->token)
 #define TOKEN_TYPE(lsp)    (lsp)->token.type
@@ -66,7 +66,7 @@ static int read_string (sse_lsp_t* lsp);
 
 sse_lsp_obj_t* sse_lsp_read (sse_lsp_t* lsp)
 {
-	if (lsp->curc == SSE_CHAR_EOF && 
+	if (lsp->curc == SSE_T_EOF && 
 	    read_char(lsp) == -1) return SSE_NULL;
 
 	lsp->errnum = SSE_LSP_ERR_NONE;
@@ -112,8 +112,8 @@ static sse_lsp_obj_t* read_obj (sse_lsp_t* lsp)
 		return obj;
 	case TOKEN_IDENT:
 		sse_assert (lsp->mem->nil != SSE_NULL && lsp->mem->t != SSE_NULL); 
-		if (TOKEN_COMPARE(lsp,SSE_TEXT("nil")) == 0) obj = lsp->mem->nil;
-		else if (TOKEN_COMPARE(lsp,SSE_TEXT("t")) == 0) obj = lsp->mem->t;
+		if (TOKEN_COMPARE(lsp,SSE_T("nil")) == 0) obj = lsp->mem->nil;
+		else if (TOKEN_COMPARE(lsp,SSE_T("t")) == 0) obj = lsp->mem->t;
 		else {
 			obj = sse_lsp_make_symbolx (
 				lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
@@ -238,7 +238,7 @@ static int read_char (sse_lsp_t* lsp)
 		return -1;
 	}
 
-	if (n == 0) lsp->curc = SSE_CHAR_EOF;
+	if (n == 0) lsp->curc = SSE_T_EOF;
 	return 0;
 }
 
@@ -253,43 +253,43 @@ static int read_token (sse_lsp_t* lsp)
 		while (IS_SPACE(lsp->curc)) NEXT_CHAR (lsp);
 
 		// skip the comments here
-		if (lsp->curc == SSE_CHAR(';')) {
+		if (lsp->curc == SSE_T(';')) {
 			do {
 				NEXT_CHAR (lsp);
-			} while (lsp->curc != SSE_CHAR('\n') && lsp->curc != SSE_CHAR_EOF);
+			} while (lsp->curc != SSE_T('\n') && lsp->curc != SSE_T_EOF);
 		}
 		else break;
 	}
 
-	if (lsp->curc == SSE_CHAR_EOF) {
+	if (lsp->curc == SSE_T_EOF) {
 		TOKEN_TYPE(lsp) = TOKEN_END;
 		return 0;
 	}
-	else if (lsp->curc == SSE_CHAR('(')) {
+	else if (lsp->curc == SSE_T('(')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_LPAREN;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == SSE_CHAR(')')) {
+	else if (lsp->curc == SSE_T(')')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_RPAREN;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == SSE_CHAR('\'')) {
+	else if (lsp->curc == SSE_T('\'')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_QUOTE;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == SSE_CHAR('.')) {
+	else if (lsp->curc == SSE_T('.')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_DOT;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == SSE_CHAR('-')) {
+	else if (lsp->curc == SSE_T('-')) {
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
 		if (IS_DIGIT(lsp->curc)) {
@@ -309,7 +309,7 @@ static int read_token (sse_lsp_t* lsp)
 	else if (IS_ALPHA(lsp->curc) || IS_IDENT(lsp->curc)) {
 		return read_ident (lsp);
 	}
-	else if (lsp->curc == SSE_CHAR('\"')) {
+	else if (lsp->curc == SSE_T('\"')) {
 		NEXT_CHAR (lsp);
 		return read_string (lsp);
 	}
@@ -325,20 +325,20 @@ static int read_number (sse_lsp_t* lsp, int negative)
 	sse_lsp_real_t rvalue = 0.;
 
 	do {
-		ivalue = ivalue * 10 + (lsp->curc - SSE_CHAR('0'));
+		ivalue = ivalue * 10 + (lsp->curc - SSE_T('0'));
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
 	} while (IS_DIGIT(lsp->curc));
 
 /* TODO: extend parsing floating point number  */
-	if (lsp->curc == SSE_CHAR('.')) {
+	if (lsp->curc == SSE_T('.')) {
 		sse_lsp_real_t fraction = 0.1;
 
 		NEXT_CHAR (lsp);
 		rvalue = (sse_lsp_real_t)ivalue;
 
 		while (IS_DIGIT(lsp->curc)) {
-			rvalue += (sse_lsp_real_t)(lsp->curc - SSE_CHAR('0')) * fraction;
+			rvalue += (sse_lsp_real_t)(lsp->curc - SSE_T('0')) * fraction;
 			fraction *= 0.1;
 			NEXT_CHAR (lsp);
 		}
@@ -372,7 +372,7 @@ static int read_string (sse_lsp_t* lsp)
 	sse_cint_t code = 0;
 
 	do {
-		if (lsp->curc == SSE_CHAR_EOF) {
+		if (lsp->curc == SSE_T_EOF) {
 			TOKEN_TYPE(lsp) = TOKEN_UNTERM_STRING;
 			return 0;
 		}
@@ -386,34 +386,34 @@ static int read_string (sse_lsp_t* lsp)
 		}
 		else if (escaped == 1) {
 			/* backslash + character */
-			if (lsp->curc == SSE_CHAR('a')) 
-				lsp->curc = SSE_CHAR('\a');
-			else if (lsp->curc == SSE_CHAR('b')) 
-				lsp->curc = SSE_CHAR('\b');
-			else if (lsp->curc == SSE_CHAR('f')) 
-				lsp->curc = SSE_CHAR('\f');
-			else if (lsp->curc == SSE_CHAR('n')) 
-				lsp->curc = SSE_CHAR('\n');
-			else if (lsp->curc == SSE_CHAR('r')) 
-				lsp->curc = SSE_CHAR('\r');
-			else if (lsp->curc == SSE_CHAR('t')) 
-				lsp->curc = SSE_CHAR('\t');
-			else if (lsp->curc == SSE_CHAR('v')) 
-				lsp->curc = SSE_CHAR('\v');
-			else if (lsp->curc == SSE_CHAR('0')) {
+			if (lsp->curc == SSE_T('a')) 
+				lsp->curc = SSE_T('\a');
+			else if (lsp->curc == SSE_T('b')) 
+				lsp->curc = SSE_T('\b');
+			else if (lsp->curc == SSE_T('f')) 
+				lsp->curc = SSE_T('\f');
+			else if (lsp->curc == SSE_T('n')) 
+				lsp->curc = SSE_T('\n');
+			else if (lsp->curc == SSE_T('r')) 
+				lsp->curc = SSE_T('\r');
+			else if (lsp->curc == SSE_T('t')) 
+				lsp->curc = SSE_T('\t');
+			else if (lsp->curc == SSE_T('v')) 
+				lsp->curc = SSE_T('\v');
+			else if (lsp->curc == SSE_T('0')) {
 				escaped = 2;
 				code = 0;
 				NEXT_CHAR (lsp);
 				continue;
 			}
-			else if (lsp->curc == SSE_CHAR('x')) {
+			else if (lsp->curc == SSE_T('x')) {
 				escaped = 3;
 				code = 0;
 				NEXT_CHAR (lsp);
 				continue;
 			}
 		}
-		else if (lsp->curc == SSE_CHAR('\\')) {
+		else if (lsp->curc == SSE_T('\\')) {
 			escaped = 1;
 			NEXT_CHAR (lsp);
 			continue;
@@ -421,7 +421,7 @@ static int read_string (sse_lsp_t* lsp)
 
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
-	} while (lsp->curc != SSE_CHAR('\"'));
+	} while (lsp->curc != SSE_T('\"'));
 
 	TOKEN_TYPE(lsp) = TOKEN_STRING;
 	NEXT_CHAR (lsp);

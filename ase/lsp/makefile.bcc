@@ -4,19 +4,19 @@ SRCS = lsp.c name.c token.c array.c mem.c env.c err.c \
 OBJS = $(SRCS:.c=.obj)
 OUT = sselsp.lib
 
-CC = cl
-LD = link
-CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. -DSSE_CHAR_IS_WCHAR
+CC = bcc32
+CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. 
 
 all: $(OBJS)
-	$(LD) -lib @<<
-/nologo /out:$(OUT) $(OBJS)
-<<
+	tlib $(OUT) @&&!
++-$(**: = &^
++-)
+!
 
 clean:
-	del $(OBJS) $(OUT) *.obj
+	-del $(OBJS) $(OUT) *.obj
 
 .SUFFIXES: .c .obj
 .c.obj:
-	$(CC) $(CFLAGS) /c $<
+	$(CC) $(CFLAGS) -c $<
 

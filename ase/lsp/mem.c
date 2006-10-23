@@ -1,13 +1,8 @@
 /*
- * $Id: mem.c,v 1.10 2006-10-23 14:44:43 bacon Exp $
+ * $Id: mem.c,v 1.11 2006-10-23 14:49:16 bacon Exp $
  */
 
-#include <sse/lsp/mem.h> 
-#include <sse/lsp/prim.h>
-
-#include <sse/bas/memory.h>
-#include <sse/bas/string.h>
-#include <sse/bas/assert.h>
+#include <sse/lsp/lsp_i.h>
 
 sse_lsp_mem_t* sse_lsp_mem_new (sse_size_t ubound, sse_size_t ubound_inc)
 {

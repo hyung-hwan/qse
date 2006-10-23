@@ -103,11 +103,15 @@ SOURCE=.\eval.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\init.c
+SOURCE=.\lsp.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\mem.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\misc.c
 # End Source File
 # Begin Source File
 
@@ -164,6 +168,10 @@ SOURCE=.\lsp.h
 # Begin Source File
 
 SOURCE=.\mem.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\misc.h
 # End Source File
 # Begin Source File
 
