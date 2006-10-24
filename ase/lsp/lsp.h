@@ -1,47 +1,47 @@
 /*
- * $Id: lsp.h,v 1.24 2006-10-23 14:57:44 bacon Exp $
+ * $Id: lsp.h,v 1.25 2006-10-24 04:22:39 bacon Exp $
  */
 
-#ifndef _SSE_LSP_LSP_H_
-#define _SSE_LSP_LSP_H_
+#ifndef _ASE_LSP_LSP_H_
+#define _ASE_LSP_LSP_H_
 
-#include <sse/lsp/types.h>
+#include <ase/lsp/types.h>
 
-typedef struct sse_lsp_t sse_lsp_t;
-typedef struct sse_lsp_obj_t sse_lsp_obj_t;
-typedef struct sse_lsp_syscas_t sse_lsp_syscas_t;
+typedef struct ase_lsp_t ase_lsp_t;
+typedef struct ase_lsp_obj_t ase_lsp_obj_t;
+typedef struct ase_lsp_syscas_t ase_lsp_syscas_t;
 
-typedef sse_ssize_t (*sse_lsp_io_t) (
-	int cmd, void* arg, sse_char_t* data, sse_size_t count);
+typedef ase_ssize_t (*ase_lsp_io_t) (
+	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
-struct sse_lsp_syscas_t
+struct ase_lsp_syscas_t
 {
 	/* memory */
-	void* (*malloc) (sse_size_t n, void* custom_data);
-	void* (*realloc) (void* ptr, sse_size_t n, void* custom_data);
+	void* (*malloc) (ase_size_t n, void* custom_data);
+	void* (*realloc) (void* ptr, ase_size_t n, void* custom_data);
 	void  (*free) (void* ptr, void* custom_data);
 
 	/* character class */
-	sse_bool_t (*is_upper)  (sse_cint_t c);
-	sse_bool_t (*is_lower)  (sse_cint_t c);
-	sse_bool_t (*is_alpha)  (sse_cint_t c);
-	sse_bool_t (*is_digit)  (sse_cint_t c);
-	sse_bool_t (*is_xdigit) (sse_cint_t c);
-	sse_bool_t (*is_alnum)  (sse_cint_t c);
-	sse_bool_t (*is_space)  (sse_cint_t c);
-	sse_bool_t (*is_print)  (sse_cint_t c);
-	sse_bool_t (*is_graph)  (sse_cint_t c);
-	sse_bool_t (*is_cntrl)  (sse_cint_t c);
-	sse_bool_t (*is_punct)  (sse_cint_t c);
-	sse_cint_t (*to_upper)  (sse_cint_t c);
-	sse_cint_t (*to_lower)  (sse_cint_t c);
+	ase_bool_t (*is_upper)  (ase_cint_t c);
+	ase_bool_t (*is_lower)  (ase_cint_t c);
+	ase_bool_t (*is_alpha)  (ase_cint_t c);
+	ase_bool_t (*is_digit)  (ase_cint_t c);
+	ase_bool_t (*is_xdigit) (ase_cint_t c);
+	ase_bool_t (*is_alnum)  (ase_cint_t c);
+	ase_bool_t (*is_space)  (ase_cint_t c);
+	ase_bool_t (*is_print)  (ase_cint_t c);
+	ase_bool_t (*is_graph)  (ase_cint_t c);
+	ase_bool_t (*is_cntrl)  (ase_cint_t c);
+	ase_bool_t (*is_punct)  (ase_cint_t c);
+	ase_cint_t (*to_upper)  (ase_cint_t c);
+	ase_cint_t (*to_lower)  (ase_cint_t c);
 
 	/* utilities */
-	void* (*memcpy)  (void* dst, const void* src, sse_size_t n);
-	void* (*memset)  (void* dst, int val, sse_size_t n);
+	void* (*memcpy)  (void* dst, const void* src, ase_size_t n);
+	void* (*memset)  (void* dst, int val, ase_size_t n);
 
-	int (*sprintf) (sse_char_t* buf, sse_size_t size, sse_char_t* fmt, ...);
-	int (*dprintf) (sse_char_t* fmt, ...);
+	int (*sprintf) (ase_char_t* buf, ase_size_t size, ase_char_t* fmt, ...);
+	int (*dprintf) (ase_char_t* fmt, ...);
 	void (*abort) (void);
 
 	void* custom_data;
@@ -50,75 +50,75 @@ struct sse_lsp_syscas_t
 /* io function commands */
 enum 
 {
-	SSE_LSP_IO_OPEN   = 0,
-	SSE_LSP_IO_CLOSE  = 1,
-	SSE_LSP_IO_READ   = 2,
-	SSE_LSP_IO_WRITE  = 3
+	ASE_LSP_IO_OPEN   = 0,
+	ASE_LSP_IO_CLOSE  = 1,
+	ASE_LSP_IO_READ   = 2,
+	ASE_LSP_IO_WRITE  = 3
 };
 
 /* option code */
 enum
 {
-	SSE_LSP_UNDEFSYMBOL = (1 << 0)
+	ASE_LSP_UNDEFSYMBOL = (1 << 0)
 };
 
 /* error code */
 enum 
 {
-	SSE_LSP_ENOERR,
-	SSE_LSP_ENOMEM,
+	ASE_LSP_ENOERR,
+	ASE_LSP_ENOMEM,
 
-	SSE_LSP_ERR_ABORT,
-	SSE_LSP_ERR_END,
-	SSE_LSP_ERR_INPUT_NOT_ATTACHED,
-	SSE_LSP_ERR_INPUT,
-	SSE_LSP_ERR_OUTPUT_NOT_ATTACHED,
-	SSE_LSP_ERR_OUTPUT,
-	SSE_LSP_ERR_SYNTAX,
-	SSE_LSP_ERR_BAD_ARG,
-	SSE_LSP_ERR_WRONG_ARG,
-	SSE_LSP_ERR_TOO_FEW_ARGS,
-	SSE_LSP_ERR_TOO_MANY_ARGS,
-	SSE_LSP_ERR_UNDEF_FUNC,
-	SSE_LSP_ERR_BAD_FUNC,
-	SSE_LSP_ERR_DUP_FORMAL,
-	SSE_LSP_ERR_BAD_SYMBOL,
-	SSE_LSP_ERR_UNDEF_SYMBOL,
-	SSE_LSP_ERR_EMPTY_BODY,
-	SSE_LSP_ERR_BAD_VALUE,
+	ASE_LSP_ERR_ABORT,
+	ASE_LSP_ERR_END,
+	ASE_LSP_ERR_INPUT_NOT_ATTACHED,
+	ASE_LSP_ERR_INPUT,
+	ASE_LSP_ERR_OUTPUT_NOT_ATTACHED,
+	ASE_LSP_ERR_OUTPUT,
+	ASE_LSP_ERR_SYNTAX,
+	ASE_LSP_ERR_BAD_ARG,
+	ASE_LSP_ERR_WRONG_ARG,
+	ASE_LSP_ERR_TOO_FEW_ARGS,
+	ASE_LSP_ERR_TOO_MANY_ARGS,
+	ASE_LSP_ERR_UNDEF_FUNC,
+	ASE_LSP_ERR_BAD_FUNC,
+	ASE_LSP_ERR_DUP_FORMAL,
+	ASE_LSP_ERR_BAD_SYMBOL,
+	ASE_LSP_ERR_UNDEF_SYMBOL,
+	ASE_LSP_ERR_EMPTY_BODY,
+	ASE_LSP_ERR_BAD_VALUE,
 
-	SSE_LSP_EDIVBYZERO
+	ASE_LSP_EDIVBYZERO
 };
 
-typedef sse_lsp_obj_t* (*sse_lsp_prim_t) (sse_lsp_t* lsp, sse_lsp_obj_t* obj);
+typedef ase_lsp_obj_t* (*ase_lsp_prim_t) (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-sse_lsp_t* sse_lsp_open (
-	const sse_lsp_syscas_t* syscas,
-	sse_size_t mem_ubound, sse_size_t mem_ubound_inc);
+ase_lsp_t* ase_lsp_open (
+	const ase_lsp_syscas_t* syscas,
+	ase_size_t mem_ubound, ase_size_t mem_ubound_inc);
 
-void sse_lsp_close (sse_lsp_t* lsp);
+void ase_lsp_close (ase_lsp_t* lsp);
 
-int sse_lsp_geterrnum (sse_lsp_t* lsp);
+int ase_lsp_geterrnum (ase_lsp_t* lsp);
 
-int sse_lsp_attach_input (sse_lsp_t* lsp, sse_lsp_io_t input, void* arg);
-int sse_lsp_detach_input (sse_lsp_t* lsp);
+int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg);
+int ase_lsp_detach_input (ase_lsp_t* lsp);
 
-int sse_lsp_attach_output (sse_lsp_t* lsp, sse_lsp_io_t output, void* arg);
-int sse_lsp_detach_output (sse_lsp_t* lsp);
+int ase_lsp_attach_output (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg);
+int ase_lsp_detach_output (ase_lsp_t* lsp);
 
-sse_lsp_obj_t* sse_lsp_read (sse_lsp_t* lsp);
-sse_lsp_obj_t* sse_lsp_eval (sse_lsp_t* lsp, sse_lsp_obj_t* obj);
-int sse_lsp_print (sse_lsp_t* lsp, const sse_lsp_obj_t* obj);
+ase_lsp_obj_t* ase_lsp_read (ase_lsp_t* lsp);
+ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
+int ase_lsp_print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj);
 
-int sse_lsp_add_prim (sse_lsp_t* lsp, const sse_char_t* name, sse_lsp_prim_t prim);
-int sse_lsp_remove_prim (sse_lsp_t* lsp, const sse_char_t* name);
+int ase_lsp_add_prim (ase_lsp_t* lsp, const ase_char_t* name, ase_lsp_prim_t prim);
+int ase_lsp_remove_prim (ase_lsp_t* lsp, const ase_char_t* name);
 
 
-const sse_char_t* sse_lsp_geterrstr (int errnum);
+const ase_char_t* ase_lsp_geterrstr (int errnum);
 
 #ifdef __cplusplus
 }

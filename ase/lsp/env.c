@@ -1,99 +1,99 @@
 /*
- * $Id: env.c,v 1.9 2006-10-22 13:10:45 bacon Exp $
+ * $Id: env.c,v 1.10 2006-10-24 04:22:39 bacon Exp $
  */
 
-#include <sse/lsp/env.h>
-#include <sse/bas/memory.h>
-#include <sse/bas/assert.h>
+#include <ase/lsp/env.h>
+#include <ase/bas/memory.h>
+#include <ase/bas/assert.h>
 
 // TODO: make the frame hash accessible....
 
-sse_lsp_assoc_t* sse_lsp_assoc_new (
-	sse_lsp_obj_t* name, sse_lsp_obj_t* value, sse_lsp_obj_t* func)
+ase_lsp_assoc_t* ase_lsp_assoc_new (
+	ase_lsp_obj_t* name, ase_lsp_obj_t* value, ase_lsp_obj_t* func)
 {
-	sse_lsp_assoc_t* assoc;
+	ase_lsp_assoc_t* assoc;
 
-	assoc = (sse_lsp_assoc_t*) sse_malloc (sizeof(sse_lsp_assoc_t));
-	if (assoc == SSE_NULL) return SSE_NULL;
+	assoc = (ase_lsp_assoc_t*) ase_malloc (sizeof(ase_lsp_assoc_t));
+	if (assoc == ASE_NULL) return ASE_NULL;
 
 	assoc->name  = name;
 	assoc->value = value;
 	assoc->func  = func;
-	assoc->link  = SSE_NULL;
+	assoc->link  = ASE_NULL;
 
 	return assoc;
 }
 
-void sse_lsp_assoc_free (sse_lsp_assoc_t* assoc)
+void ase_lsp_assoc_free (ase_lsp_assoc_t* assoc)
 {
-	sse_free (assoc);
+	ase_free (assoc);
 }
 
-sse_lsp_frame_t* sse_lsp_frame_new (void)
+ase_lsp_frame_t* ase_lsp_frame_new (void)
 {
-	sse_lsp_frame_t* frame;
+	ase_lsp_frame_t* frame;
 
-	frame = (sse_lsp_frame_t*) sse_malloc (sizeof(sse_lsp_frame_t));
-	if (frame == SSE_NULL) return SSE_NULL;
+	frame = (ase_lsp_frame_t*) ase_malloc (sizeof(ase_lsp_frame_t));
+	if (frame == ASE_NULL) return ASE_NULL;
 
-	frame->assoc = SSE_NULL;
-	frame->link  = SSE_NULL;
+	frame->assoc = ASE_NULL;
+	frame->link  = ASE_NULL;
 
 	return frame;
 }
 
-void sse_lsp_frame_free (sse_lsp_frame_t* frame)
+void ase_lsp_frame_free (ase_lsp_frame_t* frame)
 {
-	sse_lsp_assoc_t* assoc, * link;
+	ase_lsp_assoc_t* assoc, * link;
 
 	// destroy the associations
 	assoc = frame->assoc;
-	while (assoc != SSE_NULL) {
+	while (assoc != ASE_NULL) {
 		link = assoc->link;
-		sse_lsp_assoc_free (assoc);	
+		ase_lsp_assoc_free (assoc);	
 		assoc = link;
 	}
 
-	sse_free (frame);
+	ase_free (frame);
 }
 
-sse_lsp_assoc_t* sse_lsp_frame_lookup (sse_lsp_frame_t* frame, sse_lsp_obj_t* name)
+ase_lsp_assoc_t* ase_lsp_frame_lookup (ase_lsp_frame_t* frame, ase_lsp_obj_t* name)
 {
-	sse_lsp_assoc_t* assoc;
+	ase_lsp_assoc_t* assoc;
 
-	sse_assert (SSE_LSP_TYPE(name) == SSE_LSP_OBJ_SYMBOL);
+	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYMBOL);
 
 	assoc = frame->assoc;
-	while (assoc != SSE_NULL) {
+	while (assoc != ASE_NULL) {
 		if (name == assoc->name) return assoc;
 		assoc = assoc->link;
 	}
-	return SSE_NULL;
+	return ASE_NULL;
 }
 
-sse_lsp_assoc_t* sse_lsp_frame_insert_value (
-	sse_lsp_frame_t* frame, sse_lsp_obj_t* name, sse_lsp_obj_t* value)
+ase_lsp_assoc_t* ase_lsp_frame_insert_value (
+	ase_lsp_frame_t* frame, ase_lsp_obj_t* name, ase_lsp_obj_t* value)
 {
-	sse_lsp_assoc_t* assoc;
+	ase_lsp_assoc_t* assoc;
 
-	sse_assert (SSE_LSP_TYPE(name) == SSE_LSP_OBJ_SYMBOL);
+	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYMBOL);
 
-	assoc = sse_lsp_assoc_new (name, value, SSE_NULL);
-	if (assoc == SSE_NULL) return SSE_NULL;
+	assoc = ase_lsp_assoc_new (name, value, ASE_NULL);
+	if (assoc == ASE_NULL) return ASE_NULL;
 	assoc->link  = frame->assoc;
 	frame->assoc = assoc;
 	return assoc;
 }
 
-sse_lsp_assoc_t* sse_lsp_frame_insert_func (
-	sse_lsp_frame_t* frame, sse_lsp_obj_t* name, sse_lsp_obj_t* func)
+ase_lsp_assoc_t* ase_lsp_frame_insert_func (
+	ase_lsp_frame_t* frame, ase_lsp_obj_t* name, ase_lsp_obj_t* func)
 {
-	sse_lsp_assoc_t* assoc;
+	ase_lsp_assoc_t* assoc;
 
-	sse_assert (SSE_LSP_TYPE(name) == SSE_LSP_OBJ_SYMBOL);
+	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYMBOL);
 
-	assoc = sse_lsp_assoc_new (name, SSE_NULL, func);
-	if (assoc == SSE_NULL) return SSE_NULL;
+	assoc = ase_lsp_assoc_new (name, ASE_NULL, func);
+	if (assoc == ASE_NULL) return ASE_NULL;
 	assoc->link  = frame->assoc;
 	frame->assoc = assoc;
 	return assoc;

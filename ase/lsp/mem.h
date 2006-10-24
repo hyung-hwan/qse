@@ -1,111 +1,111 @@
 /*
- * $Id: mem.h,v 1.8 2006-10-23 14:42:38 bacon Exp $
+ * $Id: mem.h,v 1.9 2006-10-24 04:22:39 bacon Exp $
  */
 
-#ifndef _SSE_LSP_MEM_H_
-#define _SSE_LSP_MEM_H_
+#ifndef _ASE_LSP_MEM_H_
+#define _ASE_LSP_MEM_H_
 
-#include <sse/lsp/obj.h>
-#include <sse/lsp/env.h>
-#include <sse/lsp/array.h>
+#include <ase/lsp/obj.h>
+#include <ase/lsp/env.h>
+#include <ase/lsp/array.h>
 
-struct sse_lsp_mem_t
+struct ase_lsp_mem_t
 {
 	/* 
 	 * object allocation list
 	 */
-	sse_size_t     ubound;     // upper bounds of the maximum number of objects
-	sse_size_t     ubound_inc; // increment of the upper bounds
-	sse_size_t     count;      // the number of objects currently allocated
-	sse_lsp_obj_t* used[SSE_LSP_TYPE_COUNT];
-	sse_lsp_obj_t* free[SSE_LSP_TYPE_COUNT];
-	sse_lsp_obj_t* locked;
+	ase_size_t     ubound;     // upper bounds of the maximum number of objects
+	ase_size_t     ubound_inc; // increment of the upper bounds
+	ase_size_t     count;      // the number of objects currently allocated
+	ase_lsp_obj_t* used[ASE_LSP_TYPE_COUNT];
+	ase_lsp_obj_t* free[ASE_LSP_TYPE_COUNT];
+	ase_lsp_obj_t* locked;
 
 	/*
 	 * commonly accessed objects 
 	 */
-	sse_lsp_obj_t* nil;	    // sse_lsp_obj_nil_t
-	sse_lsp_obj_t* t;       // sse_lsp_obj_true_t
-	sse_lsp_obj_t* quote;   // sse_lsp_obj_symbol_t
-	sse_lsp_obj_t* lambda;  // sse_lsp_obj_symbol_t
-	sse_lsp_obj_t* macro;   // sse_lsp_obj_symbol_t
+	ase_lsp_obj_t* nil;	    // ase_lsp_obj_nil_t
+	ase_lsp_obj_t* t;       // ase_lsp_obj_true_t
+	ase_lsp_obj_t* quote;   // ase_lsp_obj_symbol_t
+	ase_lsp_obj_t* lambda;  // ase_lsp_obj_symbol_t
+	ase_lsp_obj_t* macro;   // ase_lsp_obj_symbol_t
 
 	/*
 	 * run-time environment frame
 	 */
-	sse_lsp_frame_t* frame;
+	ase_lsp_frame_t* frame;
 	// pointer to a global-level frame
-	sse_lsp_frame_t* root_frame;
+	ase_lsp_frame_t* root_frame;
 	// pointer to an interim frame not yet added to "frame"
-	sse_lsp_frame_t* brooding_frame; 
+	ase_lsp_frame_t* brooding_frame; 
 
 	/* 
 	 * temporary objects
 	 */
-	sse_lsp_array_t* temp_array;
+	ase_lsp_array_t* temp_array;
 };
 
-typedef struct sse_lsp_mem_t sse_lsp_mem_t;
+typedef struct ase_lsp_mem_t ase_lsp_mem_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 	
-sse_lsp_mem_t* sse_lsp_mem_new   (sse_size_t ubound, sse_size_t ubound_inc);
-void sse_lsp_mem_free  (sse_lsp_mem_t* mem);
+ase_lsp_mem_t* ase_lsp_mem_new   (ase_size_t ubound, ase_size_t ubound_inc);
+void ase_lsp_mem_free  (ase_lsp_mem_t* mem);
 
-int sse_lsp_add_builtin_prims (sse_lsp_mem_t* mem);
+int ase_lsp_add_builtin_prims (ase_lsp_mem_t* mem);
 
-sse_lsp_obj_t* sse_lsp_alloc (sse_lsp_mem_t* mem, int type, sse_size_t size);
-void sse_lsp_dispose  (sse_lsp_mem_t* mem, sse_lsp_obj_t* prev, sse_lsp_obj_t* obj);
-void sse_lsp_dispose_all (sse_lsp_mem_t* mem);
-void sse_lsp_garbage_collect (sse_lsp_mem_t* mem);
+ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size);
+void ase_lsp_dispose  (ase_lsp_mem_t* mem, ase_lsp_obj_t* prev, ase_lsp_obj_t* obj);
+void ase_lsp_dispose_all (ase_lsp_mem_t* mem);
+void ase_lsp_garbage_collect (ase_lsp_mem_t* mem);
 
-void sse_lsp_lock (sse_lsp_obj_t* obj);
-void sse_lsp_unlock (sse_lsp_obj_t* obj);
-void sse_lsp_unlock_all (sse_lsp_obj_t* obj);
+void ase_lsp_lock (ase_lsp_obj_t* obj);
+void ase_lsp_unlock (ase_lsp_obj_t* obj);
+void ase_lsp_unlock_all (ase_lsp_obj_t* obj);
 
 // object creation of standard types
-sse_lsp_obj_t* sse_lsp_make_nil    (sse_lsp_mem_t* mem);
-sse_lsp_obj_t* sse_lsp_make_true   (sse_lsp_mem_t* mem);
-sse_lsp_obj_t* sse_lsp_make_int    (sse_lsp_mem_t* mem, sse_lsp_int_t value);
-sse_lsp_obj_t* sse_lsp_make_real  (sse_lsp_mem_t* mem, sse_lsp_real_t value);
+ase_lsp_obj_t* ase_lsp_make_nil    (ase_lsp_mem_t* mem);
+ase_lsp_obj_t* ase_lsp_make_true   (ase_lsp_mem_t* mem);
+ase_lsp_obj_t* ase_lsp_make_int    (ase_lsp_mem_t* mem, ase_lsp_int_t value);
+ase_lsp_obj_t* ase_lsp_make_real  (ase_lsp_mem_t* mem, ase_lsp_real_t value);
 
-sse_lsp_obj_t* sse_lsp_make_symbol (
-	sse_lsp_mem_t* mem, const sse_char_t* str);
-sse_lsp_obj_t* sse_lsp_make_symbolx (
-	sse_lsp_mem_t* mem, const sse_char_t* str, sse_size_t len);
-sse_lsp_obj_t* sse_lsp_make_string (
-	sse_lsp_mem_t* mem, const sse_char_t* str);
-sse_lsp_obj_t* sse_lsp_make_stringx (
-	sse_lsp_mem_t* mem, const sse_char_t* str, sse_size_t len);
-sse_lsp_obj_t* sse_lsp_make_cons (
-	sse_lsp_mem_t* mem, sse_lsp_obj_t* car, sse_lsp_obj_t* cdr);
-sse_lsp_obj_t* sse_lsp_make_func (
-	sse_lsp_mem_t* mem, sse_lsp_obj_t* formal, sse_lsp_obj_t* body);
-sse_lsp_obj_t* sse_lsp_make_macro (
-	sse_lsp_mem_t* mem, sse_lsp_obj_t* formal, sse_lsp_obj_t* body);
+ase_lsp_obj_t* ase_lsp_make_symbol (
+	ase_lsp_mem_t* mem, const ase_char_t* str);
+ase_lsp_obj_t* ase_lsp_make_symbolx (
+	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len);
+ase_lsp_obj_t* ase_lsp_make_string (
+	ase_lsp_mem_t* mem, const ase_char_t* str);
+ase_lsp_obj_t* ase_lsp_make_stringx (
+	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len);
+ase_lsp_obj_t* ase_lsp_make_cons (
+	ase_lsp_mem_t* mem, ase_lsp_obj_t* car, ase_lsp_obj_t* cdr);
+ase_lsp_obj_t* ase_lsp_make_func (
+	ase_lsp_mem_t* mem, ase_lsp_obj_t* formal, ase_lsp_obj_t* body);
+ase_lsp_obj_t* ase_lsp_make_macro (
+	ase_lsp_mem_t* mem, ase_lsp_obj_t* formal, ase_lsp_obj_t* body);
 
-sse_lsp_obj_t* sse_lsp_make_prim (sse_lsp_mem_t* mem, void* impl);
+ase_lsp_obj_t* ase_lsp_make_prim (ase_lsp_mem_t* mem, void* impl);
 
 // frame lookup 
-sse_lsp_assoc_t* sse_lsp_lookup (sse_lsp_mem_t* mem, sse_lsp_obj_t* name);
-sse_lsp_assoc_t* sse_lsp_set_value (
-	sse_lsp_mem_t* mem, sse_lsp_obj_t* name, sse_lsp_obj_t* value);
-sse_lsp_assoc_t* sse_lsp_set_func (
-	sse_lsp_mem_t* mem, sse_lsp_obj_t* name, sse_lsp_obj_t* func);
+ase_lsp_assoc_t* ase_lsp_lookup (ase_lsp_mem_t* mem, ase_lsp_obj_t* name);
+ase_lsp_assoc_t* ase_lsp_set_value (
+	ase_lsp_mem_t* mem, ase_lsp_obj_t* name, ase_lsp_obj_t* value);
+ase_lsp_assoc_t* ase_lsp_set_func (
+	ase_lsp_mem_t* mem, ase_lsp_obj_t* name, ase_lsp_obj_t* func);
 
 // cons operations
-sse_size_t sse_lsp_cons_len (sse_lsp_mem_t* mem, sse_lsp_obj_t* obj);
-int sse_lsp_probe_args (sse_lsp_mem_t* mem, sse_lsp_obj_t* obj, sse_size_t* len);
+ase_size_t ase_lsp_cons_len (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj);
+int ase_lsp_probe_args (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj, ase_size_t* len);
 
 // symbol and string operations
-int  sse_lsp_comp_symbol  (sse_lsp_obj_t* obj, const sse_char_t* str);
-int  sse_lsp_comp_symbol2 (sse_lsp_obj_t* obj, const sse_char_t* str, sse_size_t len);
-int  sse_lsp_comp_string  (sse_lsp_obj_t* obj, const sse_char_t* str);
-int  sse_lsp_comp_string2 (sse_lsp_obj_t* obj, const sse_char_t* str, sse_size_t len);
-void sse_lsp_copy_string  (sse_char_t* dst,  const sse_char_t* str);
-void sse_lsp_copy_string2 (sse_char_t* dst,  const sse_char_t* str, sse_size_t len);
+int  ase_lsp_comp_symbol  (ase_lsp_obj_t* obj, const ase_char_t* str);
+int  ase_lsp_comp_symbol2 (ase_lsp_obj_t* obj, const ase_char_t* str, ase_size_t len);
+int  ase_lsp_comp_string  (ase_lsp_obj_t* obj, const ase_char_t* str);
+int  ase_lsp_comp_string2 (ase_lsp_obj_t* obj, const ase_char_t* str, ase_size_t len);
+void ase_lsp_copy_string  (ase_char_t* dst,  const ase_char_t* str);
+void ase_lsp_copy_string2 (ase_char_t* dst,  const ase_char_t* str, ase_size_t len);
 
 #ifdef __cplusplus
 }

@@ -1,46 +1,46 @@
 /*
- * $Id: env.h,v 1.8 2006-10-22 13:10:45 bacon Exp $
+ * $Id: env.h,v 1.9 2006-10-24 04:22:39 bacon Exp $
  */
 
-#ifndef _SSE_LSP_ENV_H_
-#define _SSE_LSP_ENV_H_
+#ifndef _ASE_LSP_ENV_H_
+#define _ASE_LSP_ENV_H_
 
-#include <sse/lsp/obj.h>
+#include <ase/lsp/obj.h>
 
-struct sse_lsp_assoc_t
+struct ase_lsp_assoc_t
 {
-	sse_lsp_obj_t* name; // sse_lsp_obj_symbol_t
-	/*sse_lsp_obj_t* value;*/
-	sse_lsp_obj_t* value; /* value as a variable */
-	sse_lsp_obj_t* func;  /* function definition */
-	struct sse_lsp_assoc_t* link;
+	ase_lsp_obj_t* name; // ase_lsp_obj_symbol_t
+	/*ase_lsp_obj_t* value;*/
+	ase_lsp_obj_t* value; /* value as a variable */
+	ase_lsp_obj_t* func;  /* function definition */
+	struct ase_lsp_assoc_t* link;
 };
 
-struct sse_lsp_frame_t
+struct ase_lsp_frame_t
 {
-	struct sse_lsp_assoc_t* assoc;
-	struct sse_lsp_frame_t* link;
+	struct ase_lsp_assoc_t* assoc;
+	struct ase_lsp_frame_t* link;
 };
 
-typedef struct sse_lsp_assoc_t sse_lsp_assoc_t;
-typedef struct sse_lsp_frame_t sse_lsp_frame_t;
+typedef struct ase_lsp_assoc_t ase_lsp_assoc_t;
+typedef struct ase_lsp_frame_t ase_lsp_frame_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-sse_lsp_assoc_t* sse_lsp_assoc_new (
-	sse_lsp_obj_t* name, sse_lsp_obj_t* value, sse_lsp_obj_t* func);
-void sse_lsp_assoc_free (sse_lsp_assoc_t* assoc);
+ase_lsp_assoc_t* ase_lsp_assoc_new (
+	ase_lsp_obj_t* name, ase_lsp_obj_t* value, ase_lsp_obj_t* func);
+void ase_lsp_assoc_free (ase_lsp_assoc_t* assoc);
 
-sse_lsp_frame_t* sse_lsp_frame_new (void);
-void sse_lsp_frame_free (sse_lsp_frame_t* frame);
-sse_lsp_assoc_t* sse_lsp_frame_lookup (sse_lsp_frame_t* frame, sse_lsp_obj_t* name);
+ase_lsp_frame_t* ase_lsp_frame_new (void);
+void ase_lsp_frame_free (ase_lsp_frame_t* frame);
+ase_lsp_assoc_t* ase_lsp_frame_lookup (ase_lsp_frame_t* frame, ase_lsp_obj_t* name);
 
-sse_lsp_assoc_t* sse_lsp_frame_insert_value (
-	sse_lsp_frame_t* frame, sse_lsp_obj_t* name, sse_lsp_obj_t* value);
-sse_lsp_assoc_t* sse_lsp_frame_insert_func (
-	sse_lsp_frame_t* frame, sse_lsp_obj_t* name, sse_lsp_obj_t* func);
+ase_lsp_assoc_t* ase_lsp_frame_insert_value (
+	ase_lsp_frame_t* frame, ase_lsp_obj_t* name, ase_lsp_obj_t* value);
+ase_lsp_assoc_t* ase_lsp_frame_insert_func (
+	ase_lsp_frame_t* frame, ase_lsp_obj_t* name, ase_lsp_obj_t* func);
 
 #ifdef __cplusplus
 }

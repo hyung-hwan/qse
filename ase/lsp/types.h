@@ -1,14 +1,14 @@
 /*
- * $Id: types.h,v 1.8 2006-10-22 13:10:46 bacon Exp $
+ * $Id: types.h,v 1.9 2006-10-24 04:22:40 bacon Exp $
  */
 
-#ifndef _SSE_LSP_TYPES_H_
-#define _SSE_LSP_TYPES_H_
+#ifndef _ASE_LSP_TYPES_H_
+#define _ASE_LSP_TYPES_H_
 
-#include <sse/types.h>
-#include <sse/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
-typedef sse_long_t sse_lsp_int_t;
-typedef sse_real_t sse_lsp_real_t;
+typedef ase_long_t ase_lsp_int_t;
+typedef ase_real_t ase_lsp_real_t;
 
 #endif

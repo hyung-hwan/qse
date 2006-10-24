@@ -1,49 +1,49 @@
 /*
- * $Id: prim_prog.c,v 1.2 2006-10-22 13:10:46 bacon Exp $
+ * $Id: prim_prog.c,v 1.3 2006-10-24 04:22:39 bacon Exp $
  */
 
-#include <sse/lsp/prim.h>
+#include <ase/lsp/prim.h>
 
-sse_lsp_obj_t* sse_lsp_prim_prog1 (sse_lsp_t* lsp, sse_lsp_obj_t* args)
+ase_lsp_obj_t* ase_lsp_prim_prog1 (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
-	sse_lsp_obj_t* res = SSE_NULL, * tmp;
+	ase_lsp_obj_t* res = ASE_NULL, * tmp;
 
-	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, SSE_LSP_PRIM_MAX_ARG_COUNT);
+	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
 
 	//while (args != lsp->mem->nil) {
-	while (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS) {
+	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) {
 
-		tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
-		if (tmp == SSE_NULL) return SSE_NULL;
+		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
+		if (tmp == ASE_NULL) return ASE_NULL;
 
-		if (res == SSE_NULL) {
+		if (res == ASE_NULL) {
 			/*
-			sse_lsp_array_t* ta = lsp->mem->temp_array;
-			sse_lsp_array_insert (ta, ta->size, tmp);
+			ase_lsp_array_t* ta = lsp->mem->temp_array;
+			ase_lsp_array_insert (ta, ta->size, tmp);
 			*/
 			res = tmp;
 		}
-		args = SSE_LSP_CDR(args);
+		args = ASE_LSP_CDR(args);
 	}
 
 	return res;
 }
 
-sse_lsp_obj_t* sse_lsp_prim_progn (sse_lsp_t* lsp, sse_lsp_obj_t* args)
+ase_lsp_obj_t* ase_lsp_prim_progn (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
-	sse_lsp_obj_t* res, * tmp;
+	ase_lsp_obj_t* res, * tmp;
 
-	SSE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, SSE_LSP_PRIM_MAX_ARG_COUNT);
+	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
 
 	res = lsp->mem->nil;
 	//while (args != lsp->mem->nil) {
-	while (SSE_LSP_TYPE(args) == SSE_LSP_OBJ_CONS) {
+	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) {
 
-		tmp = sse_lsp_eval (lsp, SSE_LSP_CAR(args));
-		if (tmp == SSE_NULL) return SSE_NULL;
+		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
+		if (tmp == ASE_NULL) return ASE_NULL;
 
 		res = tmp;
-		args = SSE_LSP_CDR(args);
+		args = ASE_LSP_CDR(args);
 	}
 
 	return res;
