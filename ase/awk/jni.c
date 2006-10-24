@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.15 2006-10-24 04:10:12 bacon Exp $
+ * $Id: jni.c,v 1.16 2006-10-24 04:57:29 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -377,7 +377,7 @@ static ase_ssize_t __call_java_open_extio (
 		jmethodID extio_cons;
 		jobject extio_object;
 
-		extio_class = (*env)->FindClass (env, "ssekit/ssej/awk/Extio");
+		extio_class = (*env)->FindClass (env, "ase/awk/Extio");
 		if (extio_class == NULL) return -1;
 
 		extio_cons = (*env)->GetMethodID (
@@ -385,7 +385,7 @@ static ase_ssize_t __call_java_open_extio (
 		if (extio_cons == NULL) return -1;
 
 		mid = (*env)->GetMethodID (
-			env, class, meth, "(Lssekit/ssej/awk/Extio;)I");
+			env, class, meth, "(Lase/awk/Extio;)I");
 		if (mid == NULL) return -1;
 
 		extio_object = (*env)->NewObject (

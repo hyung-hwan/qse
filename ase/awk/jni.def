@@ -1,10 +1,10 @@
-LIBRARY	"sseawk.dll"
+LIBRARY	"aseawk.dll"
 
 EXPORTS
-	Java_sse_awk_Awk_open
-	Java_sse_awk_Awk_close
-	Java_sse_awk_Awk_parse
-	Java_sse_awk_Awk_run
-	Java_sse_awk_Awk_get_1extio
-	Java_sse_awk_Awk_set_1extio
+	Java_ase_awk_Awk_open
+	Java_ase_awk_Awk_close
+	Java_ase_awk_Awk_parse
+	Java_ase_awk_Awk_run
+	Java_ase_awk_Awk_get_1extio
+	Java_ase_awk_Awk_set_1extio
 
