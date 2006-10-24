@@ -1,41 +1,41 @@
 /*
- * $Id: eval.c,v 1.14 2006-10-22 13:10:45 bacon Exp $
+ * $Id: eval.c,v 1.15 2006-10-24 04:22:39 bacon Exp $
  */
 
-#include <sse/lsp/lsp.h>
-#include <sse/lsp/env.h>
-#include <sse/lsp/prim.h>
-#include <sse/bas/assert.h>
+#include <ase/lsp/lsp.h>
+#include <ase/lsp/env.h>
+#include <ase/lsp/prim.h>
+#include <ase/bas/assert.h>
 
-static sse_lsp_obj_t* make_func (
-	sse_lsp_t* lsp, sse_lsp_obj_t* cdr, int is_macro);
-static sse_lsp_obj_t* eval_cons (
-	sse_lsp_t* lsp, sse_lsp_obj_t* cons);
-static sse_lsp_obj_t* apply (
-	sse_lsp_t* lsp, sse_lsp_obj_t* func, sse_lsp_obj_t* actual);
+static ase_lsp_obj_t* make_func (
+	ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macro);
+static ase_lsp_obj_t* eval_cons (
+	ase_lsp_t* lsp, ase_lsp_obj_t* cons);
+static ase_lsp_obj_t* apply (
+	ase_lsp_t* lsp, ase_lsp_obj_t* func, ase_lsp_obj_t* actual);
 
-sse_lsp_obj_t* sse_lsp_eval (sse_lsp_t* lsp, sse_lsp_obj_t* obj)
+ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	lsp->errnum = SSE_LSP_ERR_NONE;
+	lsp->errnum = ASE_LSP_ERR_NONE;
 
-	if (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_CONS) 
+	if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
 		return eval_cons (lsp, obj);
-	else if (SSE_LSP_TYPE(obj) == SSE_LSP_OBJ_SYMBOL) {
-		sse_lsp_assoc_t* assoc; 
+	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_SYMBOL) {
+		ase_lsp_assoc_t* assoc; 
 
 		/*
 		if (obj == lsp->mem->lambda || obj == lsp->mem->macro) {
 			printf ("lambda or macro can't be used as a normal symbol\n");
-			lsp->errnum = SSE_LSP_ERR_BAD_SYMBOL;
-			return SSE_NULL;
+			lsp->errnum = ASE_LSP_ERR_BAD_SYMBOL;
+			return ASE_NULL;
 		}
 		*/
 
-		assoc = sse_lsp_lookup(lsp->mem, obj);
-		if (assoc == SSE_NULL || assoc->value == SSE_NULL) {
+		assoc = ase_lsp_lookup(lsp->mem, obj);
+		if (assoc == ASE_NULL || assoc->value == ASE_NULL) {
 			if (lsp->opt_undef_symbol) {
-				lsp->errnum = SSE_LSP_ERR_UNDEF_SYMBOL;
-				return SSE_NULL;
+				lsp->errnum = ASE_LSP_ERR_UNDEF_SYMBOL;
+				return ASE_NULL;
 			}
 			return lsp->mem->nil;
 		}
@@ -46,58 +46,58 @@ sse_lsp_obj_t* sse_lsp_eval (sse_lsp_t* lsp, sse_lsp_obj_t* obj)
 	return obj;
 }
 
-static sse_lsp_obj_t* make_func (sse_lsp_t* lsp, sse_lsp_obj_t* cdr, int is_macro)
+static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macro)
 {
-	sse_lsp_obj_t* func, * formal, * body, * p;
+	ase_lsp_obj_t* func, * formal, * body, * p;
 
 	if (cdr == lsp->mem->nil) {
-		lsp->errnum = SSE_LSP_ERR_TOO_FEW_ARGS;
-		return SSE_NULL;
+		lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS;
+		return ASE_NULL;
 	}
 
-	if (SSE_LSP_TYPE(cdr) != SSE_LSP_OBJ_CONS) {
-		lsp->errnum = SSE_LSP_ERR_BAD_ARG;
-		return SSE_NULL;
+	if (ASE_LSP_TYPE(cdr) != ASE_LSP_OBJ_CONS) {
+		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		return ASE_NULL;
 	}
 
-	formal = SSE_LSP_CAR(cdr);
-	body = SSE_LSP_CDR(cdr);
+	formal = ASE_LSP_CAR(cdr);
+	body = ASE_LSP_CDR(cdr);
 
 	if (body == lsp->mem->nil) {
-		lsp->errnum = SSE_LSP_ERR_EMPTY_BODY;
-		return SSE_NULL;
+		lsp->errnum = ASE_LSP_ERR_EMPTY_BODY;
+		return ASE_NULL;
 	}
 
 // TODO: more lambda expression syntax checks required???.
 
 	/* check if the lambda express has non-nil value 
 	 * at the terminating cdr */
-	for (p = body; SSE_LSP_TYPE(p) == SSE_LSP_OBJ_CONS; p = SSE_LSP_CDR(p));
+	for (p = body; ASE_LSP_TYPE(p) == ASE_LSP_OBJ_CONS; p = ASE_LSP_CDR(p));
 	if (p != lsp->mem->nil) {
 		/* like in (lambda (x) (+ x 10) . 4) */
-		lsp->errnum = SSE_LSP_ERR_BAD_ARG;
-		return SSE_NULL;
+		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		return ASE_NULL;
 	}
 
 	func = (is_macro)?
-		sse_lsp_make_macro (lsp->mem, formal, body):
-		sse_lsp_make_func (lsp->mem, formal, body);
-	if (func == SSE_NULL) {
-		lsp->errnum = SSE_LSP_ERR_MEMORY;
-		return SSE_NULL;
+		ase_lsp_make_macro (lsp->mem, formal, body):
+		ase_lsp_make_func (lsp->mem, formal, body);
+	if (func == ASE_NULL) {
+		lsp->errnum = ASE_LSP_ERR_MEMORY;
+		return ASE_NULL;
 	}
 
 	return func;
 }
 
-static sse_lsp_obj_t* eval_cons (sse_lsp_t* lsp, sse_lsp_obj_t* cons)
+static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 {
-	sse_lsp_obj_t* car, * cdr;
+	ase_lsp_obj_t* car, * cdr;
    
-	sse_assert (SSE_LSP_TYPE(cons) == SSE_LSP_OBJ_CONS);
+	ase_assert (ASE_LSP_TYPE(cons) == ASE_LSP_OBJ_CONS);
 
-	car = SSE_LSP_CAR(cons);
-	cdr = SSE_LSP_CDR(cons);
+	car = ASE_LSP_CAR(cons);
+	cdr = ASE_LSP_CDR(cons);
 
 	if (car == lsp->mem->lambda) {
 		return make_func (lsp, cdr, 0);
@@ -105,92 +105,92 @@ static sse_lsp_obj_t* eval_cons (sse_lsp_t* lsp, sse_lsp_obj_t* cons)
 	else if (car == lsp->mem->macro) {
 		return make_func (lsp, cdr, 1);
 	}
-	else if (SSE_LSP_TYPE(car) == SSE_LSP_OBJ_SYMBOL) {
-		sse_lsp_assoc_t* assoc;
+	else if (ASE_LSP_TYPE(car) == ASE_LSP_OBJ_SYMBOL) {
+		ase_lsp_assoc_t* assoc;
 
-		if ((assoc = sse_lsp_lookup(lsp->mem, car)) != SSE_NULL) {
-			//sse_lsp_obj_t* func = assoc->value;
-			sse_lsp_obj_t* func = assoc->func;
-			if (func == SSE_NULL) {
+		if ((assoc = ase_lsp_lookup(lsp->mem, car)) != ASE_NULL) {
+			//ase_lsp_obj_t* func = assoc->value;
+			ase_lsp_obj_t* func = assoc->func;
+			if (func == ASE_NULL) {
 				/* the symbol's function definition is void */
-				lsp->errnum = SSE_LSP_ERR_UNDEF_FUNC;
-				return SSE_NULL;
+				lsp->errnum = ASE_LSP_ERR_UNDEF_FUNC;
+				return ASE_NULL;
 			}
 
-			if (SSE_LSP_TYPE(func) == SSE_LSP_OBJ_FUNC ||
-			    SSE_LSP_TYPE(func) == SSE_LSP_OBJ_MACRO) {
+			if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_FUNC ||
+			    ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO) {
 				return apply (lsp, func, cdr);
 			}
-			else if (SSE_LSP_TYPE(func) == SSE_LSP_OBJ_PRIM) {
+			else if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_PRIM) {
 				/* primitive function */
-				return SSE_LSP_PRIM(func) (lsp, cdr);
+				return ASE_LSP_PRIM(func) (lsp, cdr);
 			}
 			else {
 //TODO: emit the name for debugging
-				lsp->errnum = SSE_LSP_ERR_UNDEF_FUNC;
-				return SSE_NULL;
+				lsp->errnum = ASE_LSP_ERR_UNDEF_FUNC;
+				return ASE_NULL;
 			}
 		}
 		else {
 			//TODO: better error handling.
 //TODO: emit the name for debugging
-			lsp->errnum = SSE_LSP_ERR_UNDEF_FUNC;
-			return SSE_NULL;
+			lsp->errnum = ASE_LSP_ERR_UNDEF_FUNC;
+			return ASE_NULL;
 		}
 	}
-	else if (SSE_LSP_TYPE(car) == SSE_LSP_OBJ_FUNC || 
-	         SSE_LSP_TYPE(car) == SSE_LSP_OBJ_MACRO) {
+	else if (ASE_LSP_TYPE(car) == ASE_LSP_OBJ_FUNC || 
+	         ASE_LSP_TYPE(car) == ASE_LSP_OBJ_MACRO) {
 		return apply (lsp, car, cdr);
 	}
-	else if (SSE_LSP_TYPE(car) == SSE_LSP_OBJ_CONS) {
-		if (SSE_LSP_CAR(car) == lsp->mem->lambda) {
-			sse_lsp_obj_t* func = make_func (lsp, SSE_LSP_CDR(car), 0);
-			if (func == SSE_NULL) return SSE_NULL;
+	else if (ASE_LSP_TYPE(car) == ASE_LSP_OBJ_CONS) {
+		if (ASE_LSP_CAR(car) == lsp->mem->lambda) {
+			ase_lsp_obj_t* func = make_func (lsp, ASE_LSP_CDR(car), 0);
+			if (func == ASE_NULL) return ASE_NULL;
 			return apply (lsp, func, cdr);
 		}
-		else if (SSE_LSP_CAR(car) == lsp->mem->macro) {
-			sse_lsp_obj_t* func = make_func (lsp, SSE_LSP_CDR(car), 1);
-			if (func == SSE_NULL) return SSE_NULL;
+		else if (ASE_LSP_CAR(car) == lsp->mem->macro) {
+			ase_lsp_obj_t* func = make_func (lsp, ASE_LSP_CDR(car), 1);
+			if (func == ASE_NULL) return ASE_NULL;
 			return apply (lsp, func, cdr);
 		}
 	}
 
 //TODO: emit the name for debugging
-	lsp->errnum = SSE_LSP_ERR_BAD_FUNC;
-	return SSE_NULL;
+	lsp->errnum = ASE_LSP_ERR_BAD_FUNC;
+	return ASE_NULL;
 }
 
-static sse_lsp_obj_t* apply (
-	sse_lsp_t* lsp, sse_lsp_obj_t* func, sse_lsp_obj_t* actual)
+static ase_lsp_obj_t* apply (
+	ase_lsp_t* lsp, ase_lsp_obj_t* func, ase_lsp_obj_t* actual)
 {
-	sse_lsp_frame_t* frame;
-	sse_lsp_obj_t* formal;
-	sse_lsp_obj_t* body;
-	sse_lsp_obj_t* value;
-	sse_lsp_mem_t* mem;
+	ase_lsp_frame_t* frame;
+	ase_lsp_obj_t* formal;
+	ase_lsp_obj_t* body;
+	ase_lsp_obj_t* value;
+	ase_lsp_mem_t* mem;
 
-	sse_assert (
-		SSE_LSP_TYPE(func) == SSE_LSP_OBJ_FUNC ||
-		SSE_LSP_TYPE(func) == SSE_LSP_OBJ_MACRO);
+	ase_assert (
+		ASE_LSP_TYPE(func) == ASE_LSP_OBJ_FUNC ||
+		ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO);
 
-	sse_assert (SSE_LSP_TYPE(SSE_LSP_CDR(func)) == SSE_LSP_OBJ_CONS);
+	ase_assert (ASE_LSP_TYPE(ASE_LSP_CDR(func)) == ASE_LSP_OBJ_CONS);
 
 	mem = lsp->mem;
 
-	if (SSE_LSP_TYPE(func) == SSE_LSP_OBJ_MACRO) {
-		formal = SSE_LSP_MFORMAL (func);
-		body   = SSE_LSP_MBODY   (func);
+	if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO) {
+		formal = ASE_LSP_MFORMAL (func);
+		body   = ASE_LSP_MBODY   (func);
 	}
 	else {
-		formal = SSE_LSP_FFORMAL (func);
-		body   = SSE_LSP_FBODY   (func);
+		formal = ASE_LSP_FFORMAL (func);
+		body   = ASE_LSP_FBODY   (func);
 	}
 
 	// make a new frame.
-	frame = sse_lsp_frame_new ();
-	if (frame == SSE_NULL) {
-		lsp->errnum = SSE_LSP_ERR_MEMORY;
-		return SSE_NULL;
+	frame = ase_lsp_frame_new ();
+	if (frame == ASE_NULL) {
+		lsp->errnum = ASE_LSP_ERR_MEMORY;
+		return ASE_NULL;
 	}
 
 	// attach it to the brooding frame list to 
@@ -201,56 +201,56 @@ static sse_lsp_obj_t* apply (
 	// evaluate arguments and push them into the frame.
 	while (formal != mem->nil) {
 		if (actual == mem->nil) {
-			lsp->errnum = SSE_LSP_ERR_TOO_FEW_ARGS;
+			lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS;
 			mem->brooding_frame = frame->link;
-			sse_lsp_frame_free (frame);
-			return SSE_NULL;
+			ase_lsp_frame_free (frame);
+			return ASE_NULL;
 		}
 
-		value = SSE_LSP_CAR(actual);
-		if (SSE_LSP_TYPE(func) != SSE_LSP_OBJ_MACRO) {
+		value = ASE_LSP_CAR(actual);
+		if (ASE_LSP_TYPE(func) != ASE_LSP_OBJ_MACRO) {
 			// macro doesn't evaluate actual arguments.
-			value = sse_lsp_eval (lsp, value);
-			if (value == SSE_NULL) {
+			value = ase_lsp_eval (lsp, value);
+			if (value == ASE_NULL) {
 				mem->brooding_frame = frame->link;
-				sse_lsp_frame_free (frame);
-				return SSE_NULL;
+				ase_lsp_frame_free (frame);
+				return ASE_NULL;
 			}
 		}
 
-		if (sse_lsp_frame_lookup (
-			frame, SSE_LSP_CAR(formal)) != SSE_NULL) {
+		if (ase_lsp_frame_lookup (
+			frame, ASE_LSP_CAR(formal)) != ASE_NULL) {
 
-			lsp->errnum = SSE_LSP_ERR_DUP_FORMAL;
+			lsp->errnum = ASE_LSP_ERR_DUP_FORMAL;
 			mem->brooding_frame = frame->link;
-			sse_lsp_frame_free (frame);
-			return SSE_NULL;
+			ase_lsp_frame_free (frame);
+			return ASE_NULL;
 		}
 
-		if (sse_lsp_frame_insert_value (
-			frame, SSE_LSP_CAR(formal), value) == SSE_NULL) {
+		if (ase_lsp_frame_insert_value (
+			frame, ASE_LSP_CAR(formal), value) == ASE_NULL) {
 
-			lsp->errnum = SSE_LSP_ERR_MEMORY;
+			lsp->errnum = ASE_LSP_ERR_MEMORY;
 			mem->brooding_frame = frame->link;
-			sse_lsp_frame_free (frame);
-			return SSE_NULL;
+			ase_lsp_frame_free (frame);
+			return ASE_NULL;
 		}
 
-		actual = SSE_LSP_CDR(actual);
-		formal = SSE_LSP_CDR(formal);
+		actual = ASE_LSP_CDR(actual);
+		formal = ASE_LSP_CDR(formal);
 	}
 
-	if (SSE_LSP_TYPE(actual) == SSE_LSP_OBJ_CONS) {
-		lsp->errnum = SSE_LSP_ERR_TOO_MANY_ARGS;
+	if (ASE_LSP_TYPE(actual) == ASE_LSP_OBJ_CONS) {
+		lsp->errnum = ASE_LSP_ERR_TOO_MANY_ARGS;
 		mem->brooding_frame = frame->link;
-		sse_lsp_frame_free (frame);
-		return SSE_NULL;
+		ase_lsp_frame_free (frame);
+		return ASE_NULL;
 	}
 	else if (actual != mem->nil) {
-		lsp->errnum = SSE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 		mem->brooding_frame = frame->link;
-		sse_lsp_frame_free (frame);
-		return SSE_NULL;
+		ase_lsp_frame_free (frame);
+		return ASE_NULL;
 	}
 
 	// push the frame
@@ -261,25 +261,25 @@ static sse_lsp_obj_t* apply (
 	// do the evaluation of the body
 	value = mem->nil;
 	while (body != mem->nil) {
-		value = sse_lsp_eval(lsp, SSE_LSP_CAR(body));
-		if (value == SSE_NULL) {
+		value = ase_lsp_eval(lsp, ASE_LSP_CAR(body));
+		if (value == ASE_NULL) {
 			mem->frame = frame->link;
-			sse_lsp_frame_free (frame);
-			return SSE_NULL;
+			ase_lsp_frame_free (frame);
+			return ASE_NULL;
 		}
-		body = SSE_LSP_CDR(body);
+		body = ASE_LSP_CDR(body);
 	}
 
 	// pop the frame.
 	mem->frame = frame->link;
 
 	// destroy the frame.
-	sse_lsp_frame_free (frame);
+	ase_lsp_frame_free (frame);
 
-	//if (SSE_LSP_CAR(func) == mem->macro) {
-	if (SSE_LSP_TYPE(func) == SSE_LSP_OBJ_MACRO) {
-		value = sse_lsp_eval(lsp, value);
-		if (value == SSE_NULL) return SSE_NULL;
+	//if (ASE_LSP_CAR(func) == mem->macro) {
+	if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO) {
+		value = ase_lsp_eval(lsp, value);
+		if (value == ASE_NULL) return ASE_NULL;
 	}
 
 	return value;

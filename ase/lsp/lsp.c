@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.6 2006-10-23 14:44:43 bacon Exp $
+ * $Id: lsp.c,v 1.7 2006-10-24 04:22:39 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -7,87 +7,87 @@
 #define Library
 #endif
 
-#include <sse/lsp/lsp_i.h>
+#include <ase/lsp/lsp_i.h>
 
-static int __add_builtin_prims (sse_lsp_t* lsp);
+static int __add_builtin_prims (ase_lsp_t* lsp);
 
-sse_lsp_t* sse_lsp_open (
-	const sse_lsp_syscas_t* syscas, 
-	sse_size_t mem_ubound, sse_size_t mem_ubound_inc)
+ase_lsp_t* ase_lsp_open (
+	const ase_lsp_syscas_t* syscas, 
+	ase_size_t mem_ubound, ase_size_t mem_ubound_inc)
 {
-	sse_lsp_t* lsp;
+	ase_lsp_t* lsp;
 
-	if (syscas == SSE_NULL) return SSE_NULL;
+	if (syscas == ASE_NULL) return ASE_NULL;
 
-	if (syscas->malloc == SSE_NULL || 
-	    syscas->free == SSE_NULL) return SSE_NULL;
+	if (syscas->malloc == ASE_NULL || 
+	    syscas->free == ASE_NULL) return ASE_NULL;
 
-	if (syscas->is_upper  == SSE_NULL ||
-	    syscas->is_lower  == SSE_NULL ||
-	    syscas->is_alpha  == SSE_NULL ||
-	    syscas->is_digit  == SSE_NULL ||
-	    syscas->is_xdigit == SSE_NULL ||
-	    syscas->is_alnum  == SSE_NULL ||
-	    syscas->is_space  == SSE_NULL ||
-	    syscas->is_print  == SSE_NULL ||
-	    syscas->is_graph  == SSE_NULL ||
-	    syscas->is_cntrl  == SSE_NULL ||
-	    syscas->is_punct  == SSE_NULL ||
-	    syscas->to_upper  == SSE_NULL ||
-	    syscas->to_lower  == SSE_NULL) return SSE_NULL;
+	if (syscas->is_upper  == ASE_NULL ||
+	    syscas->is_lower  == ASE_NULL ||
+	    syscas->is_alpha  == ASE_NULL ||
+	    syscas->is_digit  == ASE_NULL ||
+	    syscas->is_xdigit == ASE_NULL ||
+	    syscas->is_alnum  == ASE_NULL ||
+	    syscas->is_space  == ASE_NULL ||
+	    syscas->is_print  == ASE_NULL ||
+	    syscas->is_graph  == ASE_NULL ||
+	    syscas->is_cntrl  == ASE_NULL ||
+	    syscas->is_punct  == ASE_NULL ||
+	    syscas->to_upper  == ASE_NULL ||
+	    syscas->to_lower  == ASE_NULL) return ASE_NULL;
 
-	if (syscas->sprintf == SSE_NULL || 
-	    syscas->dprintf == SSE_NULL || 
-	    syscas->abort == SSE_NULL) return SSE_NULL;
+	if (syscas->sprintf == ASE_NULL || 
+	    syscas->dprintf == ASE_NULL || 
+	    syscas->abort == ASE_NULL) return ASE_NULL;
 
 #if defined(_WIN32) && defined(_DEBUG)
-	lsp = (sse_lsp_t*) malloc (sse_sizeof(sse_lsp_t));
+	lsp = (ase_lsp_t*) malloc (ase_sizeof(ase_lsp_t));
 #else
-	lsp = (sse_lsp_t*) syscas->malloc (
-		sse_sizeof(sse_lsp_t), syscas->custom_data);
+	lsp = (ase_lsp_t*) syscas->malloc (
+		ase_sizeof(ase_lsp_t), syscas->custom_data);
 #endif
-	if (lsp == SSE_NULL) return SSE_NULL;
+	if (lsp == ASE_NULL) return ASE_NULL;
 
-	/* it uses the built-in sse_lsp_memset because lsp is not 
+	/* it uses the built-in ase_lsp_memset because lsp is not 
 	 * fully initialized yet */
-	sse_lsp_memset (lsp, 0, sse_sizeof(sse_lsp_t));
+	ase_lsp_memset (lsp, 0, ase_sizeof(ase_lsp_t));
 
-	if (syscas->memcpy == SSE_NULL)
+	if (syscas->memcpy == ASE_NULL)
 	{
-		sse_lsp_memcpy (&lsp->syscas, syscas, sse_sizeof(lsp->syscas));
-		lsp->syscas.memcpy = sse_lsp_memcpy;
+		ase_lsp_memcpy (&lsp->syscas, syscas, ase_sizeof(lsp->syscas));
+		lsp->syscas.memcpy = ase_lsp_memcpy;
 	}
-	else syscas->memcpy (&lsp->syscas, syscas, sse_sizeof(lsp->syscas));
-	if (syscas->memset == SSE_NULL) lsp->syscas.memset = sse_lsp_memset;
+	else syscas->memcpy (&lsp->syscas, syscas, ase_sizeof(lsp->syscas));
+	if (syscas->memset == ASE_NULL) lsp->syscas.memset = ase_lsp_memset;
 
-	if (sse_lsp_token_open(&lsp->token, 0) == SSE_NULL) 
+	if (ase_lsp_token_open(&lsp->token, 0) == ASE_NULL) 
 	{
-		if (lsp->__dynamic) SSE_LSP_FREE (lsp, lsp);
-		return SSE_NULL;
+		if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
+		return ASE_NULL;
 	}
 
-	lsp->errnum = SSE_LSP_ENOERR;
+	lsp->errnum = ASE_LSP_ENOERR;
 	lsp->opt_undef_symbol = 1;
 	//lsp->opt_undef_symbol = 0;
 
-	lsp->curc = SSE_CHAR_EOF;
-	lsp->input_func = SSE_NULL;
-	lsp->output_func = SSE_NULL;
-	lsp->input_arg = SSE_NULL;
-	lsp->output_arg = SSE_NULL;
+	lsp->curc = ASE_CHAR_EOF;
+	lsp->input_func = ASE_NULL;
+	lsp->output_func = ASE_NULL;
+	lsp->input_arg = ASE_NULL;
+	lsp->output_arg = ASE_NULL;
 
-	lsp->mem = sse_lsp_mem_new (mem_ubound, mem_ubound_inc);
-	if (lsp->mem == SSE_NULL) {
-		sse_lsp_token_close (&lsp->token);
-		if (lsp->__dynamic) SSE_LSP_FREE (lsp, lsp);
-		return SSE_NULL;
+	lsp->mem = ase_lsp_mem_new (mem_ubound, mem_ubound_inc);
+	if (lsp->mem == ASE_NULL) {
+		ase_lsp_token_close (&lsp->token);
+		if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
+		return ASE_NULL;
 	}
 
 	if (__add_builtin_prims(lsp) == -1) {
-		sse_lsp_mem_free (lsp->mem);
-		sse_lsp_token_close (&lsp->token);
-		if (lsp->__dynamic) SSE_LSP_FREE (lsp, lsp);
-		return SSE_NULL;
+		ase_lsp_mem_free (lsp->mem);
+		ase_lsp_token_close (&lsp->token);
+		if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
+		return ASE_NULL;
 	}
 
 	lsp->max_eval_depth = 0; // TODO: put restriction here....
@@ -96,52 +96,52 @@ sse_lsp_t* sse_lsp_open (
 	return lsp;
 }
 
-void sse_lsp_close (sse_lsp_t* lsp)
+void ase_lsp_close (ase_lsp_t* lsp)
 {
-	sse_lsp_mem_free (lsp->mem);
-	sse_lsp_token_close (&lsp->token);
-	if (lsp->__dynamic) SSE_LSP_FREE (lsp, lsp);
+	ase_lsp_mem_free (lsp->mem);
+	ase_lsp_token_close (&lsp->token);
+	if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
 }
 
-int sse_lsp_attach_input (sse_lsp_t* lsp, sse_lsp_io_t input, void* arg)
+int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
 {
-	if (sse_lsp_detach_input(lsp) == -1) return -1;
+	if (ase_lsp_detach_input(lsp) == -1) return -1;
 
-	sse_lsp_assert (lsp, lsp->input_func == SSE_NULL);
+	ase_lsp_assert (lsp, lsp->input_func == ASE_NULL);
 
-	if (input(SSE_LSP_IO_OPEN, arg, SSE_NULL, 0) == -1) {
+	if (input(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) {
 		/* TODO: set error number */
 		return -1;
 	}
 
 	lsp->input_func = input;
 	lsp->input_arg = arg;
-	lsp->curc = SSE_CHAR_EOF;
+	lsp->curc = ASE_CHAR_EOF;
 	return 0;
 }
 
-int sse_lsp_detach_input (sse_lsp_t* lsp)
+int ase_lsp_detach_input (ase_lsp_t* lsp)
 {
-	if (lsp->input_func != SSE_NULL) {
-		if (lsp->input_func(SSE_LSP_IO_CLOSE, lsp->input_arg, SSE_NULL, 0) == -1) {
+	if (lsp->input_func != ASE_NULL) {
+		if (lsp->input_func(ASE_LSP_IO_CLOSE, lsp->input_arg, ASE_NULL, 0) == -1) {
 			/* TODO: set error number */
 			return -1;
 		}
-		lsp->input_func = SSE_NULL;
-		lsp->input_arg = SSE_NULL;
-		lsp->curc = SSE_CHAR_EOF;
+		lsp->input_func = ASE_NULL;
+		lsp->input_arg = ASE_NULL;
+		lsp->curc = ASE_CHAR_EOF;
 	}
 
 	return 0;
 }
 
-int sse_lsp_attach_output (sse_lsp_t* lsp, sse_lsp_io_t output, void* arg)
+int ase_lsp_attach_output (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg)
 {
-	if (sse_lsp_detach_output(lsp) == -1) return -1;
+	if (ase_lsp_detach_output(lsp) == -1) return -1;
 
-	sse_lsp_assert (lsp, lsp->output_func == SSE_NULL);
+	ase_lsp_assert (lsp, lsp->output_func == ASE_NULL);
 
-	if (output(SSE_LSP_IO_OPEN, arg, SSE_NULL, 0) == -1) {
+	if (output(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) {
 		/* TODO: set error number */
 		return -1;
 	}
@@ -150,59 +150,59 @@ int sse_lsp_attach_output (sse_lsp_t* lsp, sse_lsp_io_t output, void* arg)
 	return 0;
 }
 
-int sse_lsp_detach_output (sse_lsp_t* lsp)
+int ase_lsp_detach_output (ase_lsp_t* lsp)
 {
-	if (lsp->output_func != SSE_NULL) {
-		if (lsp->output_func(SSE_LSP_IO_CLOSE, lsp->output_arg, SSE_NULL, 0) == -1) {
+	if (lsp->output_func != ASE_NULL) {
+		if (lsp->output_func(ASE_LSP_IO_CLOSE, lsp->output_arg, ASE_NULL, 0) == -1) {
 			/* TODO: set error number */
 			return -1;
 		}
-		lsp->output_func = SSE_NULL;
-		lsp->output_arg = SSE_NULL;
+		lsp->output_func = ASE_NULL;
+		lsp->output_arg = ASE_NULL;
 	}
 
 	return 0;
 }
 
-static int __add_builtin_prims (sse_lsp_t* lsp)
+static int __add_builtin_prims (ase_lsp_t* lsp)
 {
 
 #define ADD_PRIM(mem,name,prim) \
-	if (sse_lsp_add_prim(mem,name,prim) == -1) return -1;
+	if (ase_lsp_add_prim(mem,name,prim) == -1) return -1;
 
-	ADD_PRIM (lsp, SSE_T("abort"), sse_lsp_prim_abort);
-	ADD_PRIM (lsp, SSE_T("eval"),  sse_lsp_prim_eval);
-	ADD_PRIM (lsp, SSE_T("prog1"), sse_lsp_prim_prog1);
-	ADD_PRIM (lsp, SSE_T("progn"), sse_lsp_prim_progn);
-	ADD_PRIM (lsp, SSE_T("gc"),    sse_lsp_prim_gc);
+	ADD_PRIM (lsp, ASE_T("abort"), ase_lsp_prim_abort);
+	ADD_PRIM (lsp, ASE_T("eval"),  ase_lsp_prim_eval);
+	ADD_PRIM (lsp, ASE_T("prog1"), ase_lsp_prim_prog1);
+	ADD_PRIM (lsp, ASE_T("progn"), ase_lsp_prim_progn);
+	ADD_PRIM (lsp, ASE_T("gc"),    ase_lsp_prim_gc);
 
-	ADD_PRIM (lsp, SSE_T("cond"),  sse_lsp_prim_cond);
-	ADD_PRIM (lsp, SSE_T("if"),    sse_lsp_prim_if);
-	ADD_PRIM (lsp, SSE_T("while"), sse_lsp_prim_while);
+	ADD_PRIM (lsp, ASE_T("cond"),  ase_lsp_prim_cond);
+	ADD_PRIM (lsp, ASE_T("if"),    ase_lsp_prim_if);
+	ADD_PRIM (lsp, ASE_T("while"), ase_lsp_prim_while);
 
-	ADD_PRIM (lsp, SSE_T("car"),   sse_lsp_prim_car);
-	ADD_PRIM (lsp, SSE_T("cdr"),   sse_lsp_prim_cdr);
-	ADD_PRIM (lsp, SSE_T("cons"),  sse_lsp_prim_cons);
-	ADD_PRIM (lsp, SSE_T("set"),   sse_lsp_prim_set);
-	ADD_PRIM (lsp, SSE_T("setq"),  sse_lsp_prim_setq);
-	ADD_PRIM (lsp, SSE_T("quote"), sse_lsp_prim_quote);
-	ADD_PRIM (lsp, SSE_T("defun"), sse_lsp_prim_defun);
-	ADD_PRIM (lsp, SSE_T("demac"), sse_lsp_prim_demac);
-	ADD_PRIM (lsp, SSE_T("let"),   sse_lsp_prim_let);
-	ADD_PRIM (lsp, SSE_T("let*"),  sse_lsp_prim_letx);
+	ADD_PRIM (lsp, ASE_T("car"),   ase_lsp_prim_car);
+	ADD_PRIM (lsp, ASE_T("cdr"),   ase_lsp_prim_cdr);
+	ADD_PRIM (lsp, ASE_T("cons"),  ase_lsp_prim_cons);
+	ADD_PRIM (lsp, ASE_T("set"),   ase_lsp_prim_set);
+	ADD_PRIM (lsp, ASE_T("setq"),  ase_lsp_prim_setq);
+	ADD_PRIM (lsp, ASE_T("quote"), ase_lsp_prim_quote);
+	ADD_PRIM (lsp, ASE_T("defun"), ase_lsp_prim_defun);
+	ADD_PRIM (lsp, ASE_T("demac"), ase_lsp_prim_demac);
+	ADD_PRIM (lsp, ASE_T("let"),   ase_lsp_prim_let);
+	ADD_PRIM (lsp, ASE_T("let*"),  ase_lsp_prim_letx);
 
-	ADD_PRIM (lsp, SSE_T("="),     sse_lsp_prim_eq);
-	ADD_PRIM (lsp, SSE_T("/="),    sse_lsp_prim_ne);
-	ADD_PRIM (lsp, SSE_T(">"),     sse_lsp_prim_gt);
-	ADD_PRIM (lsp, SSE_T("<"),     sse_lsp_prim_lt);
-	ADD_PRIM (lsp, SSE_T(">="),    sse_lsp_prim_ge);
-	ADD_PRIM (lsp, SSE_T("<="),    sse_lsp_prim_le);
+	ADD_PRIM (lsp, ASE_T("="),     ase_lsp_prim_eq);
+	ADD_PRIM (lsp, ASE_T("/="),    ase_lsp_prim_ne);
+	ADD_PRIM (lsp, ASE_T(">"),     ase_lsp_prim_gt);
+	ADD_PRIM (lsp, ASE_T("<"),     ase_lsp_prim_lt);
+	ADD_PRIM (lsp, ASE_T(">="),    ase_lsp_prim_ge);
+	ADD_PRIM (lsp, ASE_T("<="),    ase_lsp_prim_le);
 
-	ADD_PRIM (lsp, SSE_T("+"),     sse_lsp_prim_plus);
-	ADD_PRIM (lsp, SSE_T("-"),     sse_lsp_prim_minus);
-	ADD_PRIM (lsp, SSE_T("*"),     sse_lsp_prim_multiply);
-	ADD_PRIM (lsp, SSE_T("/"),     sse_lsp_prim_divide);
-	ADD_PRIM (lsp, SSE_T("%"),     sse_lsp_prim_modulus);
+	ADD_PRIM (lsp, ASE_T("+"),     ase_lsp_prim_plus);
+	ADD_PRIM (lsp, ASE_T("-"),     ase_lsp_prim_minus);
+	ADD_PRIM (lsp, ASE_T("*"),     ase_lsp_prim_multiply);
+	ADD_PRIM (lsp, ASE_T("/"),     ase_lsp_prim_divide);
+	ADD_PRIM (lsp, ASE_T("%"),     ase_lsp_prim_modulus);
 
 	return 0;
 }

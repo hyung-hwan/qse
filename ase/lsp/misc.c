@@ -1,66 +1,66 @@
 /*
- * $Id: misc.c,v 1.1 2006-10-23 14:42:38 bacon Exp $
+ * $Id: misc.c,v 1.2 2006-10-24 04:22:39 bacon Exp $
  */
 
-#include <sse/lsp/lsp_i.h>
+#include <ase/lsp/lsp_i.h>
 
-void* sse_lsp_memcpy  (void* dst, const void* src, sse_size_t n)
+void* ase_lsp_memcpy  (void* dst, const void* src, ase_size_t n)
 {
 	void* p = dst;
-	void* e = (sse_byte_t*)dst + n;
+	void* e = (ase_byte_t*)dst + n;
 
 	while (dst < e) 
 	{
-		*(sse_byte_t*)dst = *(sse_byte_t*)src;
-		dst = (sse_byte_t*)dst + 1;
-		src = (sse_byte_t*)src + 1;
+		*(ase_byte_t*)dst = *(ase_byte_t*)src;
+		dst = (ase_byte_t*)dst + 1;
+		src = (ase_byte_t*)src + 1;
 	}
 
 	return p;
 }
 
-void* sse_lsp_memset (void* dst, int val, sse_size_t n)
+void* ase_lsp_memset (void* dst, int val, ase_size_t n)
 {
 	void* p = dst;
-	void* e = (sse_byte_t*)p + n;
+	void* e = (ase_byte_t*)p + n;
 
 	while (p < e) 
 	{
-		*(sse_byte_t*)p = (sse_byte_t)val;
-		p = (sse_byte_t*)p + 1;
+		*(ase_byte_t*)p = (ase_byte_t)val;
+		p = (ase_byte_t*)p + 1;
 	}
 
 	return dst;
 }
 
-sse_long_t sse_lsp_strxtolong (
-	sse_lsp_t* lsp, const sse_char_t* str, sse_size_t len,
-	int base, const sse_char_t** endptr)
+ase_long_t ase_lsp_strxtolong (
+	ase_lsp_t* lsp, const ase_char_t* str, ase_size_t len,
+	int base, const ase_char_t** endptr)
 {
-	sse_long_t n = 0;
-	const sse_char_t* p;
-	const sse_char_t* end;
-	sse_size_t rem;
+	ase_long_t n = 0;
+	const ase_char_t* p;
+	const ase_char_t* end;
+	ase_size_t rem;
 	int digit, negative = 0;
 
-	sse_lsp_assert (lsp, base < 37); 
+	ase_lsp_assert (lsp, base < 37); 
 
 	p = str; 
 	end = str + len;
 	
 	/* strip off leading spaces */
-	/*while (SSE_LSP_ISSPACE(lsp,*p)) p++;*/
+	/*while (ASE_LSP_ISSPACE(lsp,*p)) p++;*/
 
 	/* check for a sign */
-	/*while (*p != SSE_T('\0')) */
+	/*while (*p != ASE_T('\0')) */
 	while (p < end)
 	{
-		if (*p == SSE_T('-')) 
+		if (*p == ASE_T('-')) 
 		{
 			negative = ~negative;
 			p++;
 		}
-		else if (*p == SSE_T('+')) p++;
+		else if (*p == ASE_T('+')) p++;
 		else break;
 	}
 
@@ -68,16 +68,16 @@ sse_long_t sse_lsp_strxtolong (
 	rem = end - p;
 	if (base == 0) 
 	{
-		if (rem >= 1 && *p == SSE_T('0')) 
+		if (rem >= 1 && *p == ASE_T('0')) 
 		{
 			p++;
 
 			if (rem == 1) base = 8;
-			else if (*p == SSE_T('x') || *p == SSE_T('X'))
+			else if (*p == ASE_T('x') || *p == ASE_T('X'))
 			{
 				p++; base = 16;
 			} 
-			else if (*p == SSE_T('b') || *p == SSE_T('B'))
+			else if (*p == ASE_T('b') || *p == ASE_T('B'))
 			{
 				p++; base = 2;
 			}
@@ -87,25 +87,25 @@ sse_long_t sse_lsp_strxtolong (
 	} 
 	else if (rem >= 2 && base == 16)
 	{
-		if (*p == SSE_T('0') && 
-		    (*(p+1) == SSE_T('x') || *(p+1) == SSE_T('X'))) p += 2; 
+		if (*p == ASE_T('0') && 
+		    (*(p+1) == ASE_T('x') || *(p+1) == ASE_T('X'))) p += 2; 
 	}
 	else if (rem >= 2 && base == 2)
 	{
-		if (*p == SSE_T('0') && 
-		    (*(p+1) == SSE_T('b') || *(p+1) == SSE_T('B'))) p += 2; 
+		if (*p == ASE_T('0') && 
+		    (*(p+1) == ASE_T('b') || *(p+1) == ASE_T('B'))) p += 2; 
 	}
 
 	/* process the digits */
-	/*while (*p != SSE_T('\0'))*/
+	/*while (*p != ASE_T('\0'))*/
 	while (p < end)
 	{
-		if (*p >= SSE_T('0') && *p <= SSE_T('9'))
-			digit = *p - SSE_T('0');
-		else if (*p >= SSE_T('A') && *p <= SSE_T('Z'))
-			digit = *p - SSE_T('A') + 10;
-		else if (*p >= SSE_T('a') && *p <= SSE_T('z'))
-			digit = *p - SSE_T('a') + 10;
+		if (*p >= ASE_T('0') && *p <= ASE_T('9'))
+			digit = *p - ASE_T('0');
+		else if (*p >= ASE_T('A') && *p <= ASE_T('Z'))
+			digit = *p - ASE_T('A') + 10;
+		else if (*p >= ASE_T('a') && *p <= ASE_T('z'))
+			digit = *p - ASE_T('a') + 10;
 		else break;
 
 		if (digit >= base) break;
@@ -114,13 +114,13 @@ sse_long_t sse_lsp_strxtolong (
 		p++;
 	}
 
-	if (endptr != SSE_NULL) *endptr = p;
+	if (endptr != ASE_NULL) *endptr = p;
 	return (negative)? -n: n;
 }
 
 
 /*
- * sse_lsp_strtoreal is almost a replica of strtod.
+ * ase_lsp_strtoreal is almost a replica of strtod.
  *
  * strtod.c --
  *
@@ -140,21 +140,21 @@ sse_long_t sse_lsp_strxtolong (
 
 #define MAX_EXPONENT 511
 
-sse_real_t sse_lsp_strtoreal (sse_lsp_t* lsp, const sse_char_t* str)
+ase_real_t ase_lsp_strtoreal (ase_lsp_t* lsp, const ase_char_t* str)
 {
 	/* 
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
 	 * Used to convert decimal exponents into floating-point numbers.
 	 */ 
-	static sse_real_t powers_of_10[] = 
+	static ase_real_t powers_of_10[] = 
 	{
 		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	sse_real_t fraction, dbl_exp, * d;
-	const sse_char_t* p;
-	sse_cint_t c;
+	ase_real_t fraction, dbl_exp, * d;
+	const ase_char_t* p;
+	ase_cint_t c;
 	int exp = 0;		/* Esseonent read from "EX" field */
 
 	/* 
@@ -169,23 +169,23 @@ sse_real_t sse_lsp_strtoreal (sse_lsp_t* lsp, const sse_char_t* str)
 	int frac_exp;
 	int mant_size; /* Number of digits in mantissa. */
 	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
-	const sse_char_t *pexp;  /* Temporarily holds location of exponent in string */
+	const ase_char_t *pexp;  /* Temporarily holds location of exponent in string */
 	int negative = 0, exp_negative = 0;
 
 	p = str;
 
 	/* strip off leading blanks */ 
-	/*while (SSE_LSP_ISSPACE(lsp,*p)) p++;*/
+	/*while (ASE_LSP_ISSPACE(lsp,*p)) p++;*/
 
 	/* check for a sign */
-	while (*p != SSE_T('\0')) 
+	while (*p != ASE_T('\0')) 
 	{
-		if (*p == SSE_T('-')) 
+		if (*p == ASE_T('-')) 
 		{
 			negative = ~negative;
 			p++;
 		}
-		else if (*p == SSE_T('+')) p++;
+		else if (*p == ASE_T('+')) p++;
 		else break;
 	}
 
@@ -195,9 +195,9 @@ sse_real_t sse_lsp_strtoreal (sse_lsp_t* lsp, const sse_char_t* str)
 	for (mant_size = 0; ; mant_size++) 
 	{
 		c = *p;
-		if (!SSE_LSP_ISDIGIT (lsp, c)) 
+		if (!ASE_LSP_ISDIGIT (lsp, c)) 
 		{
-			if ((c != SSE_T('.')) || (dec_pt >= 0)) break;
+			if ((c != ASE_T('.')) || (dec_pt >= 0)) break;
 			dec_pt = mant_size;
 		}
 		p++;
@@ -245,51 +245,51 @@ sse_real_t sse_lsp_strtoreal (sse_lsp_t* lsp, const sse_char_t* str)
 		{
 			c = *p;
 			p++;
-			if (c == SSE_T('.')) 
+			if (c == ASE_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac1 = 10 * frac1 + (c - SSE_T('0'));
+			frac1 = 10 * frac1 + (c - ASE_T('0'));
 		}
 		frac2 = 0;
 		for (; mant_size > 0; mant_size--) {
 			c = *p;
 			p++;
-			if (c == SSE_T('.')) 
+			if (c == ASE_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac2 = 10*frac2 + (c - SSE_T('0'));
+			frac2 = 10*frac2 + (c - ASE_T('0'));
 		}
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
 	/* Skim off the exponent */
 	p = pexp;
-	if ((*p == SSE_T('E')) || (*p == SSE_T('e'))) 
+	if ((*p == ASE_T('E')) || (*p == ASE_T('e'))) 
 	{
 		p++;
-		if (*p == SSE_T('-')) 
+		if (*p == ASE_T('-')) 
 		{
 			exp_negative = 1;
 			p++;
 		} 
 		else 
 		{
-			if (*p == SSE_T('+')) p++;
+			if (*p == ASE_T('+')) p++;
 			exp_negative = 0;
 		}
-		if (!SSE_LSP_ISDIGIT (lsp, *p)) 
+		if (!ASE_LSP_ISDIGIT (lsp, *p)) 
 		{
 			/* p = pexp; */
 			/* goto done; */
 			goto no_exp;
 		}
-		while (SSE_LSP_ISDIGIT (lsp, *p)) 
+		while (ASE_LSP_ISDIGIT (lsp, *p)) 
 		{
-			exp = exp * 10 + (*p - SSE_T('0'));
+			exp = exp * 10 + (*p - ASE_T('0'));
 			p++;
 		}
 	}
@@ -327,23 +327,23 @@ done:
 	return (negative)? -fraction: fraction;
 }
 
-sse_real_t sse_lsp_strxtoreal (
-	sse_lsp_t* lsp, const sse_char_t* str, sse_size_t len, 
-	const sse_char_t** endptr)
+ase_real_t ase_lsp_strxtoreal (
+	ase_lsp_t* lsp, const ase_char_t* str, ase_size_t len, 
+	const ase_char_t** endptr)
 {
 	/* 
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
 	 * Used to convert decimal exponents into floating-point numbers.
 	 */ 
-	static sse_real_t powers_of_10[] = 
+	static ase_real_t powers_of_10[] = 
 	{
 		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	sse_real_t fraction, dbl_exp, * d;
-	const sse_char_t* p, * end;
-	sse_cint_t c;
+	ase_real_t fraction, dbl_exp, * d;
+	const ase_char_t* p, * end;
+	ase_cint_t c;
 	int exp = 0; /* Esseonent read from "EX" field */
 
 	/* 
@@ -358,24 +358,24 @@ sse_real_t sse_lsp_strxtoreal (
 	int frac_exp;
 	int mant_size; /* Number of digits in mantissa. */
 	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
-	const sse_char_t *pexp;  /* Temporarily holds location of exponent in string */
+	const ase_char_t *pexp;  /* Temporarily holds location of exponent in string */
 	int negative = 0, exp_negative = 0;
 
 	p = str;
 	end = str + len;
 
 	/* Strip off leading blanks and check for a sign */
-	/*while (SSE_LSP_ISSPACE(lsp,*p)) p++;*/
+	/*while (ASE_LSP_ISSPACE(lsp,*p)) p++;*/
 
-	/*while (*p != SSE_T('\0')) */
+	/*while (*p != ASE_T('\0')) */
 	while (p < end)
 	{
-		if (*p == SSE_T('-')) 
+		if (*p == ASE_T('-')) 
 		{
 			negative = ~negative;
 			p++;
 		}
-		else if (*p == SSE_T('+')) p++;
+		else if (*p == ASE_T('+')) p++;
 		else break;
 	}
 
@@ -386,9 +386,9 @@ sse_real_t sse_lsp_strxtoreal (
 	for (mant_size = 0; p < end; mant_size++) 
 	{
 		c = *p;
-		if (!SSE_LSP_ISDIGIT (lsp, c)) 
+		if (!ASE_LSP_ISDIGIT (lsp, c)) 
 		{
-			if (c != SSE_T('.') || dec_pt >= 0) break;
+			if (c != ASE_T('.') || dec_pt >= 0) break;
 			dec_pt = mant_size;
 		}
 		p++;
@@ -411,7 +411,7 @@ sse_real_t sse_lsp_strxtoreal (
 		mant_size--;	/* One of the digits was the point */
 	}
 
-	if (mant_size > 18)  /* TODO: is 18 correct for sse_real_t??? */
+	if (mant_size > 18)  /* TODO: is 18 correct for ase_real_t??? */
 	{
 		frac_exp = dec_pt - 18;
 		mant_size = 18;
@@ -437,58 +437,58 @@ sse_real_t sse_lsp_strxtoreal (
 		{
 			c = *p;
 			p++;
-			if (c == SSE_T('.')) 
+			if (c == ASE_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac1 = 10 * frac1 + (c - SSE_T('0'));
+			frac1 = 10 * frac1 + (c - ASE_T('0'));
 		}
 
 		frac2 = 0;
 		for (; mant_size > 0; mant_size--) {
 			c = *p++;
-			if (c == SSE_T('.')) 
+			if (c == ASE_T('.')) 
 			{
 				c = *p;
 				p++;
 			}
-			frac2 = 10 * frac2 + (c - SSE_T('0'));
+			frac2 = 10 * frac2 + (c - ASE_T('0'));
 		}
 		fraction = (1.0e9 * frac1) + frac2;
 	}
 
 	/* Skim off the exponent */
 	p = pexp;
-	if (p < end && (*p == SSE_T('E') || *p == SSE_T('e'))) 
+	if (p < end && (*p == ASE_T('E') || *p == ASE_T('e'))) 
 	{
 		p++;
 
 		if (p < end) 
 		{
-			if (*p == SSE_T('-')) 
+			if (*p == ASE_T('-')) 
 			{
 				exp_negative = 1;
 				p++;
 			} 
 			else 
 			{
-				if (*p == SSE_T('+')) p++;
+				if (*p == ASE_T('+')) p++;
 				exp_negative = 0;
 			}
 		}
 		else exp_negative = 0;
 
-		if (!(p < end && SSE_LSP_ISDIGIT (lsp, *p))) 
+		if (!(p < end && ASE_LSP_ISDIGIT (lsp, *p))) 
 		{
 			/*p = pexp;*/
 			/*goto done;*/
 			goto no_exp;
 		}
 
-		while (p < end && SSE_LSP_ISDIGIT (lsp, *p)) 
+		while (p < end && ASE_LSP_ISDIGIT (lsp, *p)) 
 		{
-			exp = exp * 10 + (*p - SSE_T('0'));
+			exp = exp * 10 + (*p - ASE_T('0'));
 			p++;
 		}
 	}
@@ -523,35 +523,35 @@ no_exp:
 	else fraction *= dbl_exp;
 
 done:
-	if (endptr != SSE_NULL) *endptr = p;
+	if (endptr != ASE_NULL) *endptr = p;
 	return (negative)? -fraction: fraction;
 }
 
-sse_size_t sse_lsp_longtostr (
-	sse_long_t value, int radix, const sse_char_t* prefix, 
-	sse_char_t* buf, sse_size_t size)
+ase_size_t ase_lsp_longtostr (
+	ase_long_t value, int radix, const ase_char_t* prefix, 
+	ase_char_t* buf, ase_size_t size)
 {
-	sse_long_t t, rem;
-	sse_size_t len, ret, i;
-	sse_size_t prefix_len;
+	ase_long_t t, rem;
+	ase_size_t len, ret, i;
+	ase_size_t prefix_len;
 
-	prefix_len = (prefix != SSE_NULL)? sse_lsp_strlen(prefix): 0;
+	prefix_len = (prefix != ASE_NULL)? ase_lsp_strlen(prefix): 0;
 
 	t = value;
 	if (t == 0)
 	{
 		/* zero */
-		if (buf == SSE_NULL) return prefix_len + 1;
+		if (buf == ASE_NULL) return prefix_len + 1;
 
 		if (size < prefix_len+1) 
 		{
 			/* buffer too small */
-			return (sse_size_t)-1;
+			return (ase_size_t)-1;
 		}
 
 		for (i = 0; i < prefix_len; i++) buf[i] = prefix[i];
-		buf[prefix_len] = SSE_T('0');
-		if (size > prefix_len+1) buf[prefix_len+1] = SSE_T('\0');
+		buf[prefix_len] = ASE_T('0');
+		if (size > prefix_len+1) buf[prefix_len+1] = ASE_T('\0');
 		return 1;
 	}
 
@@ -560,14 +560,14 @@ sse_size_t sse_lsp_longtostr (
 	if (t < 0) { t = -t; len++; }
 	while (t > 0) { len++; t /= radix; }
 
-	if (buf == SSE_NULL)
+	if (buf == ASE_NULL)
 	{
 		/* if buf is not given, return the number of bytes required */
 		return len;
 	}
 
-	if (size < len) return (sse_size_t)-1; /* buffer too small */
-	if (size > len) buf[len] = SSE_T('\0');
+	if (size < len) return (ase_size_t)-1; /* buffer too small */
+	if (size > len) buf[len] = ASE_T('\0');
 	ret = len;
 
 	t = value;
@@ -577,9 +577,9 @@ sse_size_t sse_lsp_longtostr (
 	{
 		rem = t % radix;
 		if (rem >= 10)
-			buf[--len] = (sse_char_t)rem + SSE_T('a') - 10;
+			buf[--len] = (ase_char_t)rem + ASE_T('a') - 10;
 		else
-			buf[--len] = (sse_char_t)rem + SSE_T('0');
+			buf[--len] = (ase_char_t)rem + ASE_T('0');
 		t /= radix;
 	}
 
@@ -590,7 +590,7 @@ sse_size_t sse_lsp_longtostr (
 			buf[i] = prefix[i-1];
 			len--;
 		}
-		buf[--len] = SSE_T('-');
+		buf[--len] = ASE_T('-');
 	}
 	else
 	{
@@ -600,86 +600,86 @@ sse_size_t sse_lsp_longtostr (
 	return ret;
 }
 
-sse_char_t* sse_lsp_strdup (sse_lsp_t* lsp, const sse_char_t* str)
+ase_char_t* ase_lsp_strdup (ase_lsp_t* lsp, const ase_char_t* str)
 {
-	sse_char_t* tmp;
+	ase_char_t* tmp;
 
-	tmp = (sse_char_t*) SSE_LSP_MALLOC (
-		lsp, (sse_lsp_strlen(str) + 1) * sse_sizeof(sse_char_t));
-	if (tmp == SSE_NULL) return SSE_NULL;
+	tmp = (ase_char_t*) ASE_LSP_MALLOC (
+		lsp, (ase_lsp_strlen(str) + 1) * ase_sizeof(ase_char_t));
+	if (tmp == ASE_NULL) return ASE_NULL;
 
-	sse_lsp_strcpy (tmp, str);
+	ase_lsp_strcpy (tmp, str);
 	return tmp;
 }
 
-sse_char_t* sse_lsp_strxdup (sse_lsp_t* lsp, const sse_char_t* str, sse_size_t len)
+ase_char_t* ase_lsp_strxdup (ase_lsp_t* lsp, const ase_char_t* str, ase_size_t len)
 {
-	sse_char_t* tmp;
+	ase_char_t* tmp;
 
-	tmp = (sse_char_t*) SSE_LSP_MALLOC (
-		lsp, (len + 1) * sse_sizeof(sse_char_t));
-	if (tmp == SSE_NULL) return SSE_NULL;
+	tmp = (ase_char_t*) ASE_LSP_MALLOC (
+		lsp, (len + 1) * ase_sizeof(ase_char_t));
+	if (tmp == ASE_NULL) return ASE_NULL;
 
-	sse_lsp_strncpy (tmp, str, len);
+	ase_lsp_strncpy (tmp, str, len);
 	return tmp;
 }
 
-sse_char_t* sse_lsp_strxdup2 (
-	sse_lsp_t* lsp,
-	const sse_char_t* str1, sse_size_t len1,
-	const sse_char_t* str2, sse_size_t len2)
+ase_char_t* ase_lsp_strxdup2 (
+	ase_lsp_t* lsp,
+	const ase_char_t* str1, ase_size_t len1,
+	const ase_char_t* str2, ase_size_t len2)
 {
-	sse_char_t* tmp;
+	ase_char_t* tmp;
 
-	tmp = (sse_char_t*) SSE_LSP_MALLOC (
-		lsp, (len1 + len2 + 1) * sse_sizeof(sse_char_t));
-	if (tmp == SSE_NULL) return SSE_NULL;
+	tmp = (ase_char_t*) ASE_LSP_MALLOC (
+		lsp, (len1 + len2 + 1) * ase_sizeof(ase_char_t));
+	if (tmp == ASE_NULL) return ASE_NULL;
 
-	sse_lsp_strncpy (tmp, str1, len1);
-	sse_lsp_strncpy (tmp + len1, str2, len2);
+	ase_lsp_strncpy (tmp, str1, len1);
+	ase_lsp_strncpy (tmp + len1, str2, len2);
 	return tmp;
 }
 
-sse_size_t sse_lsp_strlen (const sse_char_t* str)
+ase_size_t ase_lsp_strlen (const ase_char_t* str)
 {
-	const sse_char_t* p = str;
-	while (*p != SSE_T('\0')) p++;
+	const ase_char_t* p = str;
+	while (*p != ASE_T('\0')) p++;
 	return p - str;
 }
 
-sse_size_t sse_lsp_strcpy (sse_char_t* buf, const sse_char_t* str)
+ase_size_t ase_lsp_strcpy (ase_char_t* buf, const ase_char_t* str)
 {
-	sse_char_t* org = buf;
-	while ((*buf++ = *str++) != SSE_T('\0'));
+	ase_char_t* org = buf;
+	while ((*buf++ = *str++) != ASE_T('\0'));
 	return buf - org - 1;
 }
 
-sse_size_t sse_lsp_strncpy (sse_char_t* buf, const sse_char_t* str, sse_size_t len)
+ase_size_t ase_lsp_strncpy (ase_char_t* buf, const ase_char_t* str, ase_size_t len)
 {
-	const sse_char_t* end = str + len;
+	const ase_char_t* end = str + len;
 	while (str < end) *buf++ = *str++;
-	*buf = SSE_T('\0');
+	*buf = ASE_T('\0');
 	return len;
 }
 
-int sse_lsp_strcmp (const sse_char_t* s1, const sse_char_t* s2)
+int ase_lsp_strcmp (const ase_char_t* s1, const ase_char_t* s2)
 {
 	while (*s1 == *s2) 
 	{
-		if (*s1 == SSE_C('\0')) return 0;
+		if (*s1 == ASE_C('\0')) return 0;
 		s1++, s2++;
 	}
 
 	return (*s1 > *s2)? 1: -1;
 }
 
-int sse_lsp_strxncmp (
-	const sse_char_t* s1, sse_size_t len1, 
-	const sse_char_t* s2, sse_size_t len2)
+int ase_lsp_strxncmp (
+	const ase_char_t* s1, ase_size_t len1, 
+	const ase_char_t* s2, ase_size_t len2)
 {
-	sse_char_t c1, c2;
-	const sse_char_t* end1 = s1 + len1;
-	const sse_char_t* end2 = s2 + len2;
+	ase_char_t c1, c2;
+	const ase_char_t* end1 = s1 + len1;
+	const ase_char_t* end2 = s2 + len2;
 
 	while (s1 < end1)
 	{
@@ -697,21 +697,21 @@ int sse_lsp_strxncmp (
 	return (s2 < end2)? -1: 0;
 }
 
-int sse_lsp_strxncasecmp (
-	sse_lsp_t* lsp,
-	const sse_char_t* s1, sse_size_t len1, 
-	const sse_char_t* s2, sse_size_t len2)
+int ase_lsp_strxncasecmp (
+	ase_lsp_t* lsp,
+	const ase_char_t* s1, ase_size_t len1, 
+	const ase_char_t* s2, ase_size_t len2)
 {
-	sse_char_t c1, c2;
-	const sse_char_t* end1 = s1 + len1;
-	const sse_char_t* end2 = s2 + len2;
+	ase_char_t c1, c2;
+	const ase_char_t* end1 = s1 + len1;
+	const ase_char_t* end2 = s2 + len2;
 
 	while (s1 < end1)
 	{
-		c1 = SSE_LSP_TOUPPER (lsp, *s1); 
+		c1 = ASE_LSP_TOUPPER (lsp, *s1); 
 		if (s2 < end2) 
 		{
-			c2 = SSE_LSP_TOUPPER (lsp, *s2);
+			c2 = ASE_LSP_TOUPPER (lsp, *s2);
 			if (c1 > c2) return 1;
 			if (c1 < c2) return -1;
 		}
@@ -722,24 +722,24 @@ int sse_lsp_strxncasecmp (
 	return (s2 < end2)? -1: 0;
 }
 
-sse_char_t* sse_lsp_strxnstr (
-	const sse_char_t* str, sse_size_t strsz, 
-	const sse_char_t* sub, sse_size_t subsz)
+ase_char_t* ase_lsp_strxnstr (
+	const ase_char_t* str, ase_size_t strsz, 
+	const ase_char_t* sub, ase_size_t subsz)
 {
-	const sse_char_t* end, * subp;
+	const ase_char_t* end, * subp;
 
-	if (subsz == 0) return (sse_char_t*)str;
-	if (strsz < subsz) return SSE_NULL;
+	if (subsz == 0) return (ase_char_t*)str;
+	if (strsz < subsz) return ASE_NULL;
 	
 	end = str + strsz - subsz;
 	subp = sub + subsz;
 
 	while (str <= end) {
-		const sse_char_t* x = str;
-		const sse_char_t* y = sub;
+		const ase_char_t* x = str;
+		const ase_char_t* y = sub;
 
-		while (sse_true) {
-			if (y >= subp) return (sse_char_t*)str;
+		while (ase_true) {
+			if (y >= subp) return (ase_char_t*)str;
 			if (*x != *y) break;
 			x++; y++;
 		}	
@@ -747,14 +747,14 @@ sse_char_t* sse_lsp_strxnstr (
 		str++;
 	}
 		
-	return SSE_NULL;
+	return ASE_NULL;
 }
 
-int sse_lsp_abort (sse_lsp_t* lsp, 
-	const sse_char_t* expr, const sse_char_t* file, int line)
+int ase_lsp_abort (ase_lsp_t* lsp, 
+	const ase_char_t* expr, const ase_char_t* file, int line)
 {
 	lsp->syscas.dprintf (
-		SSE_T("ASSERTION FAILURE AT FILE %s, LINE %d\n%s\n"),
+		ASE_T("ASSERTION FAILURE AT FILE %s, LINE %d\n%s\n"),
 		file, line, expr);
 	lsp->syscas.abort ();
 	return 0;
