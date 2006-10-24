@@ -1,4 +1,4 @@
-LIBRARY	"sseawk.dll"
+LIBRARY	"aseawk.dll"
 
 EXPORTS
 	sse_awk_open 

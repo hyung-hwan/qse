@@ -1,41 +1,46 @@
-SRCS = \
-	awk.c err.c tree.c str.c tab.c map.c parse.c \
-	run.c rec.c val.c func.c misc.c extio.c rex.c
-OBJS = $(SRCS:.c=.obj)
 OUT = aseawk
 
-JAVA_INC = \
-	/I"C:\Program Files\IBM\Java141\Include" \
-	/I"C:\Program Files\IBM\Java141\Include\Win32"
+# source files
+C_SRCS = \
+	awk.c err.c tree.c str.c tab.c map.c parse.c \
+	run.c rec.c val.c func.c misc.c extio.c rex.c
+JNI_SRCS = $(C_SRCS) jni.c
+JAVA_SRCS = Awk.java Exception.java Extio.java
+
+# object files
+C_OBJS = $(C_SRCS:.c=.obj)
+JNI_OBJS = $(JNI_SRCS:.c=.obj)
+JAVA_OBJS = $(JAVA_SRCS:.java=.class)
+
+JNI_INC = \
+	/I"C:\Program Files\Java\jdk1.5.0_09\include" \
+	/I"C:\Program Files\Java\jdk1.5.0_09\include\win32" 
 
 CC = cl
 LD = link
-CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. -DSSE_CHAR_IS_WCHAR $(JAVA_INC) 
+JAVAC = javac
 
-all: lib 
+CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. -DSSE_CHAR_IS_WCHAR $(JNI_INC) 
+JAVACFLAGS = -classpath ../..
+
+all: lib jni
 
 lib: $(OBJS)
 	$(LD) /lib @<<
 /nologo /out:$(OUT).lib $(OBJS)
 <<
 
-dll: $(OBJS)
-	$(LD) /dll /def:awk.def /subsystem:console /version:0.1 /release @<<
-/nologo /out:$(OUT).dll $(OBJS)
-<<
-
-jni: $(OBJS) jni.obj
+jni: $(JNI_OBJS) $(JAVA_OBJS) 
 	$(LD) /dll /def:jni.def /subsystem:console /version:0.1 /release @<<
-/nologo /out:$(OUT).dll $(OBJS) jni.obj 
+/nologo /out:$(OUT).dll $(JNI_OBJS)
 <<
-
-java:
-	javac -classpath ../.. Awk.java Extio.java Exception.java
 
 clean:
 	del $(OBJS) $(OUT) *.obj *.class
 
-.SUFFIXES: .c .obj
+.SUFFIXES: .c .obj .java .class
 .c.obj:
 	$(CC) $(CFLAGS) /c $<
 
+.java.class:
+	$(JAVAC) $(JAVACFLAGS) $<
