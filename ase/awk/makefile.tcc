@@ -6,7 +6,7 @@ SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c misc.c extio.c rex.c
 OBJS = awk.obj err.obj tree.obj str.obj tab.obj map.obj parse.obj \
 	run.obj rec.obj val.obj misc.obj extio.obj rex.obj
-OUT = sseawk.lib
+OUT = aseawk.lib
 
 CC = tcc
 AR = tlib

@@ -1,7 +1,7 @@
 SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
 OBJS = $(SRCS:.c=.obj)
-OUT = sseawk.lib
+OUT = aseawk.lib
 
 CC = bcc32
 CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. 
