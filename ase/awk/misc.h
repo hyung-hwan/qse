@@ -1,45 +1,45 @@
 /*
- * $Id: misc.h,v 1.6 2006-10-23 14:44:43 bacon Exp $
+ * $Id: misc.h,v 1.7 2006-10-24 04:10:12 bacon Exp $
  */
 
-#ifndef _SSE_AWK_MISC_H_
-#define _SSE_AWK_MISC_H_
+#ifndef _ASE_AWK_MISC_H_
+#define _ASE_AWK_MISC_H_
 
-#ifndef _SSE_AWK_AWK_H_
-#error Never include this file directly. Include <sse/awk/awk.h> instead
+#ifndef _ASE_AWK_AWK_H_
+#error Never include this file directly. Include <ase/awk/awk.h> instead
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void* sse_awk_memcpy (void* dst, const void* src, sse_size_t n);
-void* sse_awk_memset (void* dst, int val, sse_size_t n);
+void* ase_awk_memcpy (void* dst, const void* src, ase_size_t n);
+void* ase_awk_memset (void* dst, int val, ase_size_t n);
 
-sse_char_t* sse_awk_strtok (
-	sse_awk_run_t* run, const sse_char_t* s, 
-	const sse_char_t* delim, sse_char_t** tok, sse_size_t* tok_len);
+ase_char_t* ase_awk_strtok (
+	ase_awk_run_t* run, const ase_char_t* s, 
+	const ase_char_t* delim, ase_char_t** tok, ase_size_t* tok_len);
 
-sse_char_t* sse_awk_strxtok (
-	sse_awk_run_t* run, const sse_char_t* s, sse_size_t len,
-	const sse_char_t* delim, sse_char_t** tok, sse_size_t* tok_len);
+ase_char_t* ase_awk_strxtok (
+	ase_awk_run_t* run, const ase_char_t* s, ase_size_t len,
+	const ase_char_t* delim, ase_char_t** tok, ase_size_t* tok_len);
 
-sse_char_t* sse_awk_strntok (
-	sse_awk_run_t* run, const sse_char_t* s, 
-	const sse_char_t* delim, sse_size_t delim_len,
-	sse_char_t** tok, sse_size_t* tok_len);
+ase_char_t* ase_awk_strntok (
+	ase_awk_run_t* run, const ase_char_t* s, 
+	const ase_char_t* delim, ase_size_t delim_len,
+	ase_char_t** tok, ase_size_t* tok_len);
 
-sse_char_t* sse_awk_strxntok (
-	sse_awk_run_t* run, const sse_char_t* s, sse_size_t len,
-	const sse_char_t* delim, sse_size_t delim_len,
-	sse_char_t** tok, sse_size_t* tok_len);
+ase_char_t* ase_awk_strxntok (
+	ase_awk_run_t* run, const ase_char_t* s, ase_size_t len,
+	const ase_char_t* delim, ase_size_t delim_len,
+	ase_char_t** tok, ase_size_t* tok_len);
 
-sse_char_t* sse_awk_strxntokbyrex (
-	sse_awk_run_t* run, const sse_char_t* s, sse_size_t len,
-	void* rex, sse_char_t** tok, sse_size_t* tok_len, int* errnum);
+ase_char_t* ase_awk_strxntokbyrex (
+	ase_awk_run_t* run, const ase_char_t* s, ase_size_t len,
+	void* rex, ase_char_t** tok, ase_size_t* tok_len, int* errnum);
 
-int sse_awk_abort (sse_awk_t* awk, 
-	const sse_char_t* expr, const sse_char_t* file, int line);
+int ase_awk_abort (ase_awk_t* awk, 
+	const ase_char_t* expr, const ase_char_t* file, int line);
 
 #ifdef __cplusplus
 }

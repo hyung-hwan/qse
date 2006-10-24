@@ -1,48 +1,48 @@
 /*
- * $Id: extio.h,v 1.14 2006-10-22 11:34:53 bacon Exp $
+ * $Id: extio.h,v 1.15 2006-10-24 04:10:12 bacon Exp $
  */
 
-#ifndef _SSE_AWK_EXTIO_H_
-#define _SSE_AWK_EXTIO_H_
+#ifndef _ASE_AWK_EXTIO_H_
+#define _ASE_AWK_EXTIO_H_
 
-#ifndef _SSE_AWK_AWK_H_
-#error Never include this file directly. Include <sse/awk/awk.h> instead
+#ifndef _ASE_AWK_AWK_H_
+#error Never include this file directly. Include <ase/awk/awk.h> instead
 #endif
 
 #ifdef __cplusplus
 extern "C"
 #endif
 
-int sse_awk_readextio (
-	sse_awk_run_t* run, int in_type, 
-	const sse_char_t* name, sse_awk_str_t* buf);
+int ase_awk_readextio (
+	ase_awk_run_t* run, int in_type, 
+	const ase_char_t* name, ase_awk_str_t* buf);
 
-int sse_awk_writeextio_val (
-	sse_awk_run_t* run, int out_type, 
-	const sse_char_t* name, sse_awk_val_t* v);
+int ase_awk_writeextio_val (
+	ase_awk_run_t* run, int out_type, 
+	const ase_char_t* name, ase_awk_val_t* v);
 
-int sse_awk_writeextio_str (
-	sse_awk_run_t* run, int out_type, 
-	const sse_char_t* name, sse_char_t* str, sse_size_t len);
+int ase_awk_writeextio_str (
+	ase_awk_run_t* run, int out_type, 
+	const ase_char_t* name, ase_char_t* str, ase_size_t len);
 
-int sse_awk_flushextio (
-	sse_awk_run_t* run, int out_type, const sse_char_t* name);
+int ase_awk_flushextio (
+	ase_awk_run_t* run, int out_type, const ase_char_t* name);
 
-int sse_awk_nextextio_read (
-	sse_awk_run_t* run, int in_type, const sse_char_t* name);
+int ase_awk_nextextio_read (
+	ase_awk_run_t* run, int in_type, const ase_char_t* name);
 
 /* TODO:
-int sse_awk_nextextio_write (
-	sse_awk_run_t* run, int out_type, const sse_char_t* name);
+int ase_awk_nextextio_write (
+	ase_awk_run_t* run, int out_type, const ase_char_t* name);
 */
 
-int sse_awk_closeextio_read (
-	sse_awk_run_t* run, int in_type, const sse_char_t* name);
-int sse_awk_closeextio_write (
-	sse_awk_run_t* run, int out_type, const sse_char_t* name);
-int sse_awk_closeextio (sse_awk_run_t* run, const sse_char_t* name);
+int ase_awk_closeextio_read (
+	ase_awk_run_t* run, int in_type, const ase_char_t* name);
+int ase_awk_closeextio_write (
+	ase_awk_run_t* run, int out_type, const ase_char_t* name);
+int ase_awk_closeextio (ase_awk_run_t* run, const ase_char_t* name);
 
-void sse_awk_clearextio (sse_awk_run_t* run);
+void ase_awk_clearextio (ase_awk_run_t* run);
 
 #ifdef __cplusplus
 }

@@ -1,180 +1,180 @@
 /*
- * $Id: val.h,v 1.47 2006-10-22 11:34:53 bacon Exp $
+ * $Id: val.h,v 1.48 2006-10-24 04:10:12 bacon Exp $
  */
 
-#ifndef _SSE_AWK_VAL_H_
-#define _SSE_AWK_VAL_H_
+#ifndef _ASE_AWK_VAL_H_
+#define _ASE_AWK_VAL_H_
 
-#ifndef _SSE_AWK_AWK_H_
-#error Never include this file directly. Include <sse/awk/awk.h> instead
+#ifndef _ASE_AWK_AWK_H_
+#error Never include this file directly. Include <ase/awk/awk.h> instead
 #endif
 
 enum
 {
-	/* the values between SSE_AWK_VAL_NIL and SSE_AWK_VAL_STR inclusive
+	/* the values between ASE_AWK_VAL_NIL and ASE_AWK_VAL_STR inclusive
 	 * must be synchronized with an internal table of the __cmp_val 
 	 * function in run.c */
-	SSE_AWK_VAL_NIL  = 0,
-	SSE_AWK_VAL_INT  = 1,
-	SSE_AWK_VAL_REAL = 2,
-	SSE_AWK_VAL_STR  = 3,
+	ASE_AWK_VAL_NIL  = 0,
+	ASE_AWK_VAL_INT  = 1,
+	ASE_AWK_VAL_REAL = 2,
+	ASE_AWK_VAL_STR  = 3,
 
-	SSE_AWK_VAL_REX  = 4,
-	SSE_AWK_VAL_MAP  = 5,
-	SSE_AWK_VAL_REF  = 6
+	ASE_AWK_VAL_REX  = 4,
+	ASE_AWK_VAL_MAP  = 5,
+	ASE_AWK_VAL_REF  = 6
 };
 
 enum
 {
 	/* keep these items in the same order as corresponding items
 	 * in tree.h */
-	SSE_AWK_VAL_REF_NAMED,
-	SSE_AWK_VAL_REF_GLOBAL,
-	SSE_AWK_VAL_REF_LOCAL,
-	SSE_AWK_VAL_REF_ARG,
-	SSE_AWK_VAL_REF_NAMEDIDX,
-	SSE_AWK_VAL_REF_GLOBALIDX,
-	SSE_AWK_VAL_REF_LOCALIDX,
-	SSE_AWK_VAL_REF_ARGIDX,
-	SSE_AWK_VAL_REF_POS
+	ASE_AWK_VAL_REF_NAMED,
+	ASE_AWK_VAL_REF_GLOBAL,
+	ASE_AWK_VAL_REF_LOCAL,
+	ASE_AWK_VAL_REF_ARG,
+	ASE_AWK_VAL_REF_NAMEDIDX,
+	ASE_AWK_VAL_REF_GLOBALIDX,
+	ASE_AWK_VAL_REF_LOCALIDX,
+	ASE_AWK_VAL_REF_ARGIDX,
+	ASE_AWK_VAL_REF_POS
 };
 
 enum
 {
-	SSE_AWK_VALTOSTR_CLEAR = (1 << 0),
-	SSE_AWK_VALTOSTR_PRINT = (1 << 1)
+	ASE_AWK_VALTOSTR_CLEAR = (1 << 0),
+	ASE_AWK_VALTOSTR_PRINT = (1 << 1)
 };
 
-typedef struct sse_awk_val_nil_t  sse_awk_val_nil_t;
-typedef struct sse_awk_val_int_t  sse_awk_val_int_t;
-typedef struct sse_awk_val_real_t sse_awk_val_real_t;
-typedef struct sse_awk_val_str_t  sse_awk_val_str_t;
-typedef struct sse_awk_val_rex_t  sse_awk_val_rex_t;
-typedef struct sse_awk_val_map_t  sse_awk_val_map_t;
-typedef struct sse_awk_val_ref_t  sse_awk_val_ref_t;
+typedef struct ase_awk_val_nil_t  ase_awk_val_nil_t;
+typedef struct ase_awk_val_int_t  ase_awk_val_int_t;
+typedef struct ase_awk_val_real_t ase_awk_val_real_t;
+typedef struct ase_awk_val_str_t  ase_awk_val_str_t;
+typedef struct ase_awk_val_rex_t  ase_awk_val_rex_t;
+typedef struct ase_awk_val_map_t  ase_awk_val_map_t;
+typedef struct ase_awk_val_ref_t  ase_awk_val_ref_t;
 
-#if SSE_SIZEOF_INT == 2
-#define SSE_AWK_VAL_HDR \
+#if ASE_SIZEOF_INT == 2
+#define ASE_AWK_VAL_HDR \
 	unsigned int type: 3; \
 	unsigned int ref: 13
 #else
-#define SSE_AWK_VAL_HDR \
+#define ASE_AWK_VAL_HDR \
 	unsigned int type: 3; \
 	unsigned int ref: 29
 #endif
 
-struct sse_awk_val_t
+struct ase_awk_val_t
 {
-	SSE_AWK_VAL_HDR;	
+	ASE_AWK_VAL_HDR;	
 };
 
-/* SSE_AWK_VAL_NIL */
-struct sse_awk_val_nil_t
+/* ASE_AWK_VAL_NIL */
+struct ase_awk_val_nil_t
 {
-	SSE_AWK_VAL_HDR;
+	ASE_AWK_VAL_HDR;
 };
 
-/* SSE_AWK_VAL_INT */
-struct sse_awk_val_int_t
+/* ASE_AWK_VAL_INT */
+struct ase_awk_val_int_t
 {
-	SSE_AWK_VAL_HDR;
-	sse_long_t val;
-	sse_awk_nde_int_t* nde;
+	ASE_AWK_VAL_HDR;
+	ase_long_t val;
+	ase_awk_nde_int_t* nde;
 };
 
-/* SSE_AWK_VAL_REAL */
-struct sse_awk_val_real_t
+/* ASE_AWK_VAL_REAL */
+struct ase_awk_val_real_t
 {
-	SSE_AWK_VAL_HDR;
-	sse_real_t val;
-	sse_awk_nde_real_t* nde;
+	ASE_AWK_VAL_HDR;
+	ase_real_t val;
+	ase_awk_nde_real_t* nde;
 };
 
-/* SSE_AWK_VAL_STR */
-struct sse_awk_val_str_t
+/* ASE_AWK_VAL_STR */
+struct ase_awk_val_str_t
 {
-	SSE_AWK_VAL_HDR;
-	sse_char_t* buf;
-	sse_size_t  len;
+	ASE_AWK_VAL_HDR;
+	ase_char_t* buf;
+	ase_size_t  len;
 };
 
-/* SSE_AWK_VAL_REX */
-struct sse_awk_val_rex_t
+/* ASE_AWK_VAL_REX */
+struct ase_awk_val_rex_t
 {
-	SSE_AWK_VAL_HDR;
-	sse_char_t* buf;
-	sse_size_t  len;
+	ASE_AWK_VAL_HDR;
+	ase_char_t* buf;
+	ase_size_t  len;
 	void*      code;
 };
 
-/* SSE_AWK_VAL_MAP */
-struct sse_awk_val_map_t
+/* ASE_AWK_VAL_MAP */
+struct ase_awk_val_map_t
 {
-	SSE_AWK_VAL_HDR;
+	ASE_AWK_VAL_HDR;
 
 	/* TODO: make val_map to array if the indices used are all 
 	 *       integers switch to map dynamically once the 
 	 *       non-integral index is seen.
 	 */
-	sse_awk_map_t* map; 
+	ase_awk_map_t* map; 
 };
 
-/* SSE_AWK_VAL_REF */
-struct sse_awk_val_ref_t
+/* ASE_AWK_VAL_REF */
+struct ase_awk_val_ref_t
 {
-	SSE_AWK_VAL_HDR;
+	ASE_AWK_VAL_HDR;
 
 	int id;
-	/* if id is SSE_AWK_VAL_REF_POS, adr holds an index of the 
+	/* if id is ASE_AWK_VAL_REF_POS, adr holds an index of the 
 	 * positionalvariable. Otherwise, adr points to the value 
 	 * directly. */
-	sse_awk_val_t** adr;
+	ase_awk_val_t** adr;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern sse_awk_val_t* sse_awk_val_nil;
-extern sse_awk_val_t* sse_awk_val_zls;
-extern sse_awk_val_t* sse_awk_val_zero;
-extern sse_awk_val_t* sse_awk_val_one;
+extern ase_awk_val_t* ase_awk_val_nil;
+extern ase_awk_val_t* ase_awk_val_zls;
+extern ase_awk_val_t* ase_awk_val_zero;
+extern ase_awk_val_t* ase_awk_val_one;
 
-sse_awk_val_t* sse_awk_makeintval (sse_awk_run_t* run, sse_long_t v);
-sse_awk_val_t* sse_awk_makerealval (sse_awk_run_t* run, sse_real_t v);
+ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v);
+ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v);
 
-sse_awk_val_t* sse_awk_makestrval0 (sse_awk_run_t* run, const sse_char_t* str);
-sse_awk_val_t* sse_awk_makestrval (
-	sse_awk_run_t* run, const sse_char_t* str, sse_size_t len);
-sse_awk_val_t* sse_awk_makestrval2 (
-	sse_awk_run_t* run,
-	const sse_char_t* str1, sse_size_t len1, 
-	const sse_char_t* str2, sse_size_t len2);
+ase_awk_val_t* ase_awk_makestrval0 (ase_awk_run_t* run, const ase_char_t* str);
+ase_awk_val_t* ase_awk_makestrval (
+	ase_awk_run_t* run, const ase_char_t* str, ase_size_t len);
+ase_awk_val_t* ase_awk_makestrval2 (
+	ase_awk_run_t* run,
+	const ase_char_t* str1, ase_size_t len1, 
+	const ase_char_t* str2, ase_size_t len2);
 
-sse_awk_val_t* sse_awk_makerexval (
-	sse_awk_run_t* run, const sse_char_t* buf, sse_size_t len, void* code);
-sse_awk_val_t* sse_awk_makemapval (sse_awk_run_t* run);
-sse_awk_val_t* sse_awk_makerefval (
-	sse_awk_run_t* run, int id, sse_awk_val_t** adr);
+ase_awk_val_t* ase_awk_makerexval (
+	ase_awk_run_t* run, const ase_char_t* buf, ase_size_t len, void* code);
+ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run);
+ase_awk_val_t* ase_awk_makerefval (
+	ase_awk_run_t* run, int id, ase_awk_val_t** adr);
 
-sse_bool_t sse_awk_isbuiltinval (sse_awk_val_t* val);
+ase_bool_t ase_awk_isbuiltinval (ase_awk_val_t* val);
 
-void sse_awk_freeval (sse_awk_run_t* run, sse_awk_val_t* val, sse_bool_t cache);
-void sse_awk_refupval (sse_awk_val_t* val);
-void sse_awk_refdownval (sse_awk_run_t* run, sse_awk_val_t* val);
-void sse_awk_refdownval_nofree (sse_awk_run_t* run, sse_awk_val_t* val);
+void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache);
+void ase_awk_refupval (ase_awk_val_t* val);
+void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val);
+void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val);
 
-sse_bool_t sse_awk_valtobool (
-	sse_awk_run_t* run, sse_awk_val_t* val);
+ase_bool_t ase_awk_valtobool (
+	ase_awk_run_t* run, ase_awk_val_t* val);
 
-sse_char_t* sse_awk_valtostr (
-	sse_awk_run_t* run, sse_awk_val_t* val, 
-	int opt, sse_awk_str_t* buf, sse_size_t* len);
+ase_char_t* ase_awk_valtostr (
+	ase_awk_run_t* run, ase_awk_val_t* val, 
+	int opt, ase_awk_str_t* buf, ase_size_t* len);
 
-int sse_awk_valtonum (
-	sse_awk_run_t* run, sse_awk_val_t* v, sse_long_t* l, sse_real_t* r);
+int ase_awk_valtonum (
+	ase_awk_run_t* run, ase_awk_val_t* v, ase_long_t* l, ase_real_t* r);
 
-void sse_awk_printval (sse_awk_val_t* val);
+void ase_awk_printval (ase_awk_val_t* val);
 
 #ifdef __cplusplus
 }

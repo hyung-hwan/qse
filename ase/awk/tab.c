@@ -1,89 +1,89 @@
 /*
- * $Id: tab.c,v 1.22 2006-10-22 11:34:53 bacon Exp $
+ * $Id: tab.c,v 1.23 2006-10-24 04:10:12 bacon Exp $
  */
 
-#include <sse/awk/awk_i.h>
+#include <ase/awk/awk_i.h>
 
-sse_awk_tab_t* sse_awk_tab_open (sse_awk_tab_t* tab, sse_awk_t* awk)
+ase_awk_tab_t* ase_awk_tab_open (ase_awk_tab_t* tab, ase_awk_t* awk)
 {
-	if (tab == SSE_NULL) 
+	if (tab == ASE_NULL) 
 	{
-		tab = (sse_awk_tab_t*) SSE_AWK_MALLOC (
-			awk, sse_sizeof(sse_awk_tab_t));
-		if (tab == SSE_NULL) return SSE_NULL;
-		tab->__dynamic = sse_true;
+		tab = (ase_awk_tab_t*) ASE_AWK_MALLOC (
+			awk, ase_sizeof(ase_awk_tab_t));
+		if (tab == ASE_NULL) return ASE_NULL;
+		tab->__dynamic = ase_true;
 	}
-	else tab->__dynamic = sse_false;
+	else tab->__dynamic = ase_false;
 
 	tab->awk = awk;
-	tab->buf = SSE_NULL;
+	tab->buf = ASE_NULL;
 	tab->size = 0;
 	tab->capa = 0;
 
 	return tab;
 }
 
-void sse_awk_tab_close (sse_awk_tab_t* tab)
+void ase_awk_tab_close (ase_awk_tab_t* tab)
 {
-	sse_awk_tab_clear (tab);
-	if (tab->buf != SSE_NULL) 
+	ase_awk_tab_clear (tab);
+	if (tab->buf != ASE_NULL) 
 	{
-		SSE_AWK_FREE (tab->awk, tab->buf);
-		tab->buf = SSE_NULL;
+		ASE_AWK_FREE (tab->awk, tab->buf);
+		tab->buf = ASE_NULL;
 		tab->capa = 0;
 	}
 
-	if (tab->__dynamic) SSE_AWK_FREE (tab->awk, tab);
+	if (tab->__dynamic) ASE_AWK_FREE (tab->awk, tab);
 }
 
-sse_size_t sse_awk_tab_getsize (sse_awk_tab_t* tab)
+ase_size_t ase_awk_tab_getsize (ase_awk_tab_t* tab)
 {
 	return tab->size;
 }
 
-sse_size_t sse_awk_tab_getcapa (sse_awk_tab_t* tab)
+ase_size_t ase_awk_tab_getcapa (ase_awk_tab_t* tab)
 {
 	return tab->capa;
 }
 
-sse_awk_tab_t* sse_awk_tab_setcapa (sse_awk_tab_t* tab, sse_size_t capa)
+ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 {
 	void* tmp;
 
 	if (tab->size > capa) 
 	{
-		sse_awk_tab_remove (tab, capa, tab->size - capa);
-		sse_awk_assert (tab->awk, tab->size <= capa);
+		ase_awk_tab_remove (tab, capa, tab->size - capa);
+		ase_awk_assert (tab->awk, tab->size <= capa);
 	}
 
 	if (capa > 0) 
 	{
-		if (tab->awk->syscas.realloc != SSE_NULL)
+		if (tab->awk->syscas.realloc != ASE_NULL)
 		{
-			tmp = SSE_AWK_REALLOC (tab->awk, 
-				tab->buf, sse_sizeof(*tab->buf) * capa);
-			if (tmp == SSE_NULL) return SSE_NULL;
+			tmp = ASE_AWK_REALLOC (tab->awk, 
+				tab->buf, ase_sizeof(*tab->buf) * capa);
+			if (tmp == ASE_NULL) return ASE_NULL;
 		}
 		else
 		{
-			tmp = SSE_AWK_MALLOC (
-				tab->awk, sse_sizeof(*tab->buf) * capa);
-			if (tmp == SSE_NULL) return SSE_NULL;
-			if (tab->buf != SSE_NULL) 
+			tmp = ASE_AWK_MALLOC (
+				tab->awk, ase_sizeof(*tab->buf) * capa);
+			if (tmp == ASE_NULL) return ASE_NULL;
+			if (tab->buf != ASE_NULL) 
 			{
-				sse_size_t x;
+				ase_size_t x;
 				x = (capa > tab->capa)? tab->capa: capa;
-				SSE_AWK_MEMCPY (
+				ASE_AWK_MEMCPY (
 					tab->awk, tmp, tab->buf, 
-					sse_sizeof(*tab->buf) * x);
-				SSE_AWK_FREE (tab->awk, tab->buf);
+					ase_sizeof(*tab->buf) * x);
+				ASE_AWK_FREE (tab->awk, tab->buf);
 			}
 		}
 	}
 	else 
 	{
-		if (tab->buf != SSE_NULL) SSE_AWK_FREE (tab->awk, tab->buf);
-		tmp = SSE_NULL;
+		if (tab->buf != ASE_NULL) ASE_AWK_FREE (tab->awk, tab->buf);
+		tmp = ASE_NULL;
 	}
 
 	tab->buf = tmp;
@@ -92,14 +92,14 @@ sse_awk_tab_t* sse_awk_tab_setcapa (sse_awk_tab_t* tab, sse_size_t capa)
 	return tab;
 }
 
-void sse_awk_tab_clear (sse_awk_tab_t* tab)
+void ase_awk_tab_clear (ase_awk_tab_t* tab)
 {
-	sse_size_t i;
+	ase_size_t i;
 
 	for (i = 0; i < tab->size; i++) 
 	{
-		SSE_AWK_FREE (tab->awk, tab->buf[i].name);
-		tab->buf[i].name = SSE_NULL;
+		ASE_AWK_FREE (tab->awk, tab->buf[i].name);
+		tab->buf[i].name = ASE_NULL;
 		tab->buf[i].name_len = 0;
 	}
 
@@ -107,19 +107,19 @@ void sse_awk_tab_clear (sse_awk_tab_t* tab)
 }
 
 
-sse_size_t sse_awk_tab_insert (
-	sse_awk_tab_t* tab, sse_size_t index, 
-	const sse_char_t* str, sse_size_t len)
+ase_size_t ase_awk_tab_insert (
+	ase_awk_tab_t* tab, ase_size_t index, 
+	const ase_char_t* str, ase_size_t len)
 {
-	sse_size_t i;
-	sse_char_t* str_dup;
+	ase_size_t i;
+	ase_char_t* str_dup;
 
-	str_dup = sse_awk_strxdup (tab->awk, str, len);
-	if (str_dup == SSE_NULL) return (sse_size_t)-1;
+	str_dup = ase_awk_strxdup (tab->awk, str, len);
+	if (str_dup == ASE_NULL) return (ase_size_t)-1;
 
 	if (index >= tab->capa) 
 	{
-		sse_size_t capa;
+		ase_size_t capa;
 
 		if (tab->capa <= 0) capa = (index + 1);
 		else 
@@ -127,10 +127,10 @@ sse_size_t sse_awk_tab_insert (
 			do { capa = tab->capa * 2; } while (index >= capa);
 		}
 
-		if (sse_awk_tab_setcapa(tab,capa) == SSE_NULL) 
+		if (ase_awk_tab_setcapa(tab,capa) == ASE_NULL) 
 		{
-			SSE_AWK_FREE (tab->awk, str_dup);
-			return (sse_size_t)-1;
+			ASE_AWK_FREE (tab->awk, str_dup);
+			return (ase_size_t)-1;
 		}
 	}
 
@@ -144,10 +144,10 @@ sse_size_t sse_awk_tab_insert (
 	return index;
 }
 
-sse_size_t sse_awk_tab_remove (
-	sse_awk_tab_t* tab, sse_size_t index, sse_size_t count)
+ase_size_t ase_awk_tab_remove (
+	ase_awk_tab_t* tab, ase_size_t index, ase_size_t count)
 {
-	sse_size_t i, j, k;
+	ase_size_t i, j, k;
 
 	if (index >= tab->size) return 0;
 	if (count > tab->size - index) count = tab->size - index;
@@ -158,11 +158,11 @@ sse_size_t sse_awk_tab_remove (
 
 	while (i < k) 
 	{
-		SSE_AWK_FREE (tab->awk, tab->buf[i].name);	
+		ASE_AWK_FREE (tab->awk, tab->buf[i].name);	
 
 		if (j >= tab->size) 
 		{
-			tab->buf[i].name = SSE_NULL;
+			tab->buf[i].name = ASE_NULL;
 			tab->buf[i].name_len = 0; 
 			i++;
 		}
@@ -178,60 +178,60 @@ sse_size_t sse_awk_tab_remove (
 	return count;
 }
 
-sse_size_t sse_awk_tab_add (
-	sse_awk_tab_t* tab, const sse_char_t* str, sse_size_t len)
+ase_size_t ase_awk_tab_add (
+	ase_awk_tab_t* tab, const ase_char_t* str, ase_size_t len)
 {
-	return sse_awk_tab_insert (tab, tab->size, str, len);
+	return ase_awk_tab_insert (tab, tab->size, str, len);
 }
 
-sse_size_t sse_awk_tab_find (
-	sse_awk_tab_t* tab, sse_size_t index, 
-	const sse_char_t* str, sse_size_t len)
+ase_size_t ase_awk_tab_find (
+	ase_awk_tab_t* tab, ase_size_t index, 
+	const ase_char_t* str, ase_size_t len)
 {
-	sse_size_t i;
+	ase_size_t i;
 
 	for (i = index; i < tab->size; i++) 
 	{
-		if (sse_awk_strxncmp (
+		if (ase_awk_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}
 
-	return (sse_size_t)-1;
+	return (ase_size_t)-1;
 }
 
-sse_size_t sse_awk_tab_rfind (
-	sse_awk_tab_t* tab, sse_size_t index, 
-	const sse_char_t* str, sse_size_t len)
+ase_size_t ase_awk_tab_rfind (
+	ase_awk_tab_t* tab, ase_size_t index, 
+	const ase_char_t* str, ase_size_t len)
 {
-	sse_size_t i;
+	ase_size_t i;
 
-	if (index >= tab->size) return (sse_size_t)-1;
+	if (index >= tab->size) return (ase_size_t)-1;
 
 	for (i = index + 1; i-- > 0; ) 
 	{
-		if (sse_awk_strxncmp (
+		if (ase_awk_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}
 
-	return (sse_size_t)-1;
+	return (ase_size_t)-1;
 }
 
-sse_size_t sse_awk_tab_rrfind (
-	sse_awk_tab_t* tab, sse_size_t index,
-	const sse_char_t* str, sse_size_t len)
+ase_size_t ase_awk_tab_rrfind (
+	ase_awk_tab_t* tab, ase_size_t index,
+	const ase_char_t* str, ase_size_t len)
 {
-	sse_size_t i;
+	ase_size_t i;
 
-	if (index >= tab->size) return (sse_size_t)-1;
+	if (index >= tab->size) return (ase_size_t)-1;
 
 	for (i = tab->size - index; i-- > 0; ) 
 	{
-		if (sse_awk_strxncmp (
+		if (ase_awk_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}
 
-	return (sse_size_t)-1;
+	return (ase_size_t)-1;
 }

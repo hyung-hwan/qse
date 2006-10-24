@@ -1,71 +1,71 @@
 /*
- * $Id: map.h,v 1.16 2006-10-22 11:34:53 bacon Exp $
+ * $Id: map.h,v 1.17 2006-10-24 04:10:12 bacon Exp $
  */
 
-#ifndef _SSE_AWK_MAP_H_
-#define _SSE_AWK_MAP_H_
+#ifndef _ASE_AWK_MAP_H_
+#define _ASE_AWK_MAP_H_
 
-#ifndef _SSE_AWK_AWK_H_
-#error Never include this file directly. Include <sse/awk/awk.h> instead
+#ifndef _ASE_AWK_AWK_H_
+#error Never include this file directly. Include <ase/awk/awk.h> instead
 #endif
 
-typedef struct sse_awk_map_t sse_awk_map_t;
-typedef struct sse_awk_pair_t sse_awk_pair_t;
+typedef struct ase_awk_map_t ase_awk_map_t;
+typedef struct ase_awk_pair_t ase_awk_pair_t;
 
-struct sse_awk_pair_t
+struct ase_awk_pair_t
 {
-	sse_char_t* key;
-	sse_size_t key_len;
+	ase_char_t* key;
+	ase_size_t key_len;
 	void* val;
-	sse_awk_pair_t* next;
+	ase_awk_pair_t* next;
 };
 
-struct sse_awk_map_t
+struct ase_awk_map_t
 {
 	void* owner;
-	sse_size_t size;
-	sse_size_t capa;
-	sse_awk_pair_t** buck;
+	ase_size_t size;
+	ase_size_t capa;
+	ase_awk_pair_t** buck;
 	void (*freeval) (void*,void*);
-	sse_awk_t* awk;
-	sse_bool_t __dynamic;
+	ase_awk_t* awk;
+	ase_bool_t __dynamic;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-sse_awk_map_t* sse_awk_map_open (
-	sse_awk_map_t* map, void* owner, sse_size_t capa, 
-	void(*freeval)(void*,void*), sse_awk_t* awk);
+ase_awk_map_t* ase_awk_map_open (
+	ase_awk_map_t* map, void* owner, ase_size_t capa, 
+	void(*freeval)(void*,void*), ase_awk_t* awk);
 
-void sse_awk_map_close (sse_awk_map_t* map);
+void ase_awk_map_close (ase_awk_map_t* map);
 
-void sse_awk_map_clear (sse_awk_map_t* map);
+void ase_awk_map_clear (ase_awk_map_t* map);
 
-sse_awk_pair_t* sse_awk_map_get (
-	sse_awk_map_t* map, const sse_char_t* key, sse_size_t key_len);
+ase_awk_pair_t* ase_awk_map_get (
+	ase_awk_map_t* map, const ase_char_t* key, ase_size_t key_len);
 
-sse_awk_pair_t* sse_awk_map_put (
-	sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len, void* val);
+ase_awk_pair_t* ase_awk_map_put (
+	ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len, void* val);
 
-int sse_awk_map_putx (
-	sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len,
-	void* val, sse_awk_pair_t** px);
+int ase_awk_map_putx (
+	ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len,
+	void* val, ase_awk_pair_t** px);
 
-sse_awk_pair_t* sse_awk_map_set (
-	sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len, void* val);
+ase_awk_pair_t* ase_awk_map_set (
+	ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len, void* val);
 
-sse_awk_pair_t* sse_awk_map_getpair (
-	sse_awk_map_t* map, const sse_char_t* key, sse_size_t key_len, void** val);
+ase_awk_pair_t* ase_awk_map_getpair (
+	ase_awk_map_t* map, const ase_char_t* key, ase_size_t key_len, void** val);
 
-sse_awk_pair_t* sse_awk_map_setpair (
-	sse_awk_map_t* map, sse_awk_pair_t* pair, void* val);
+ase_awk_pair_t* ase_awk_map_setpair (
+	ase_awk_map_t* map, ase_awk_pair_t* pair, void* val);
 
-int sse_awk_map_remove (sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len);
+int ase_awk_map_remove (ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len);
 
-int sse_awk_map_walk (sse_awk_map_t* map, 
-	int (*walker)(sse_awk_pair_t*,void*), void* arg);
+int ase_awk_map_walk (ase_awk_map_t* map, 
+	int (*walker)(ase_awk_pair_t*,void*), void* arg);
 
 #ifdef __cplusplus
 }
