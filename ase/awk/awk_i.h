@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.72 2006-10-24 04:10:12 bacon Exp $
+ * $Id: awk_i.h,v 1.73 2006-10-24 04:48:52 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -20,13 +20,6 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #include <ase/awk/run.h>
 #include <ase/awk/extio.h>
 #include <ase/awk/misc.h>
-
-#ifdef NDEBUG
-	#define ase_awk_assert(awk,expr) ((void)0)
-#else
-	#define ase_awk_assert(awk,expr) (void)((expr) || \
-		(ase_awk_abort(awk, ASE_T(#expr), ASE_T(__FILE__), __LINE__), 0))
-#endif
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)

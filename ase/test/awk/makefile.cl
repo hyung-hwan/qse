@@ -1,8 +1,7 @@
 CC = cl
-#CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\..
-CFLAGS = /nologo /MT /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\.. -D__STAND_ALONE
-LDFLAGS = /libpath:..\..\bas /libpath:..\..\awk
-LIBS = xpbas.lib xpawk.lib user32.lib
+CFLAGS = /nologo /MT /W3 /GR- -I..\..\.. -I$(XPKIT) -D_WIN32_WINNT=0x0400 -D__STAND_ALONE
+LDFLAGS = /libpath:..\..\awk /libpath:$(XPKIT)\xp\bas 
+LIBS = aseawk.lib xpbas.lib kernel32.lib user32.lib
 
 all: awk #rex2 rex3
 

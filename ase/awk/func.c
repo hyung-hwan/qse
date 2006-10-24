@@ -1,16 +1,8 @@
 /*
- * $Id: func.c,v 1.68 2006-10-24 04:10:12 bacon Exp $
+ * $Id: func.c,v 1.69 2006-10-24 04:48:52 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
-
-#ifdef _WIN32
-	#include <tchar.h>
-	#include <math.h>
-#else
-	#include <stdlib.h>
-	#include <math.h>
-#endif
 
 static int __bfn_close   (ase_awk_run_t* run);
 static int __bfn_fflush  (ase_awk_run_t* run);
@@ -23,8 +15,6 @@ static int __bfn_toupper (ase_awk_run_t* run);
 static int __bfn_gsub    (ase_awk_run_t* run);
 static int __bfn_sub     (ase_awk_run_t* run);
 static int __bfn_match   (ase_awk_run_t* run);
-static int __bfn_system  (ase_awk_run_t* run);
-/*static int __bfn_sin   (ase_awk_run_t* run);*/
 
 /* TODO: move it under the awk structure... */
 static ase_awk_bfn_t __sys_bfn[] = 
@@ -43,10 +33,6 @@ static ase_awk_bfn_t __sys_bfn[] =
 	{ASE_T("gsub"),    4, 0,            2,  3,  ASE_T("xvr"), __bfn_gsub},
 	{ASE_T("sub"),     3, 0,            2,  3,  ASE_T("xvr"), __bfn_sub},
 	{ASE_T("match"),   5, 0,            2,  2,  ASE_T("vx"),  __bfn_match},
-
-	/* TODO: remove these two functions */
-	{ASE_T("system"),  6, 0,            1,  1,  ASE_NULL,     __bfn_system},
-	/*{ ASE_T("sin"),     3, 0,            1,  1,  ASE_NULL,   __bfn_sin},*/
 
 	{ASE_NULL,         0, 0,            0,  0,  ASE_NULL,     ASE_NULL}
 };
@@ -1253,6 +1239,7 @@ static int __bfn_match (ase_awk_run_t* run)
 	return 0;
 }
 
+#if 0
 static int __bfn_system (ase_awk_run_t* run)
 {
 	ase_size_t nargs;
@@ -1289,7 +1276,6 @@ static int __bfn_system (ase_awk_run_t* run)
 }
 
 /* math functions */
-#if 0
 static int __bfn_sin (ase_awk_run_t* run)
 {
 	ase_size_t nargs;
