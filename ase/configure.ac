@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
-AC_INIT([sse], [deb-0.1.0])
-AC_REVISION([$Revision: 1.69 $])
+AC_INIT([ase], [deb-0.1.0])
+AC_REVISION([$Revision: 1.70 $])
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
