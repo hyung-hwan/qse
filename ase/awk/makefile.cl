@@ -33,7 +33,7 @@ java:
 	javac -classpath ../.. Awk.java Extio.java Exception.java
 
 clean:
-	del $(OBJS) $(OUT) *.obj
+	del $(OBJS) $(OUT) *.obj *.class
 
 .SUFFIXES: .c .obj
 .c.obj:
