@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.20 2006-10-24 04:22:39 bacon Exp $
+ * $Id: read.c,v 1.21 2006-10-24 15:31:35 bacon Exp $
  */
 
 #include <ase/lsp/lsp.h>
@@ -73,7 +73,7 @@ ase_lsp_obj_t* ase_lsp_read (ase_lsp_t* lsp)
 	NEXT_TOKEN (lsp);
 
 	if (lsp->mem->locked != ASE_NULL) {
-		ase_lsp_unlock_all (lsp->mem->locked);
+		ase_lsp_unlockallobjs (lsp->mem->locked);
 		lsp->mem->locked = ASE_NULL;
 	}
 	lsp->mem->locked = read_obj (lsp);
@@ -97,18 +97,18 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 	case TOKEN_INT:
 		obj = ase_lsp_make_int (lsp->mem, TOKEN_IVALUE(lsp));
 		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ERR_MEMORY;
-		ase_lsp_lock (obj);
+		ase_lsp_lockobj (obj);
 		return obj;
 	case TOKEN_REAL:
 		obj = ase_lsp_make_real (lsp->mem, TOKEN_RVALUE(lsp));
 		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ERR_MEMORY;
-		ase_lsp_lock (obj);
+		ase_lsp_lockobj (obj);
 		return obj;
 	case TOKEN_STRING:
 		obj = ase_lsp_make_stringx (
 			lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
 		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ERR_MEMORY;
-		ase_lsp_lock (obj);
+		ase_lsp_lockobj (obj);
 		return obj;
 	case TOKEN_IDENT:
 		ase_assert (lsp->mem->nil != ASE_NULL && lsp->mem->t != ASE_NULL); 
@@ -118,7 +118,7 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 			obj = ase_lsp_make_symbolx (
 				lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
 			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ERR_MEMORY;
-			ase_lsp_lock (obj);
+			ase_lsp_lockobj (obj);
 		}
 		return obj;
 	}
@@ -179,7 +179,7 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 			lsp->errnum = ASE_LSP_ERR_MEMORY;
 			return ASE_NULL;
 		}
-		ase_lsp_lock ((ase_lsp_obj_t*)p);
+		ase_lsp_lockobj ((ase_lsp_obj_t*)p);
 
 		if (first == ASE_NULL) first = p;
 		if (prev != ASE_NULL) prev->cdr = (ase_lsp_obj_t*)p;
@@ -211,14 +211,14 @@ static ase_lsp_obj_t* read_quote (ase_lsp_t* lsp)
 		lsp->errnum = ASE_LSP_ERR_MEMORY;
 		return ASE_NULL;
 	}
-	ase_lsp_lock (cons);
+	ase_lsp_lockobj (cons);
 
 	cons = ase_lsp_make_cons (lsp->mem, lsp->mem->quote, cons);
 	if (cons == ASE_NULL) {
 		lsp->errnum = ASE_LSP_ERR_MEMORY;
 		return ASE_NULL;
 	}
-	ase_lsp_lock (cons);
+	ase_lsp_lockobj (cons);
 
 	return cons;
 }
