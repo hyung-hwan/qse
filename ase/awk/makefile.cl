@@ -26,8 +26,15 @@ dll: $(OBJS)
 
 jni: $(OBJS) jni.obj
 	$(LD) /dll /def:jni.def /subsystem:console /version:0.1 /release @<<
-/nologo /out:$(OUT).dll $(OBJS) jni.obj ..\bas\xpbas.lib
+/nologo /out:$(OUT).dll $(OBJS) jni.obj 
 <<
+
+java:
+	javac -classpath ../.. Awk.java TestAwk.java Extio.java AwkException.java
+
+jrun:
+	java -classpath ../.. ase.awk.TestAwk
+
 
 clean:
 	del $(OBJS) $(OUT) *.obj
