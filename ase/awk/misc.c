@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.31 2006-10-24 04:10:12 bacon Exp $
+ * $Id: misc.c,v 1.32 2006-10-24 04:48:52 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1060,7 +1060,7 @@ exit_loop:
 	}
 }
 
-int ase_awk_abort (ase_awk_t* awk, 
+int ase_awk_assertfail (ase_awk_t* awk, 
 	const ase_char_t* expr, const ase_char_t* file, int line)
 {
 	awk->syscas.dprintf (

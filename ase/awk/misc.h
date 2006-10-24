@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.7 2006-10-24 04:10:12 bacon Exp $
+ * $Id: misc.h,v 1.8 2006-10-24 04:48:52 bacon Exp $
  */
 
 #ifndef _ASE_AWK_MISC_H_
@@ -37,9 +37,6 @@ ase_char_t* ase_awk_strxntok (
 ase_char_t* ase_awk_strxntokbyrex (
 	ase_awk_run_t* run, const ase_char_t* s, ase_size_t len,
 	void* rex, ase_char_t** tok, ase_size_t* tok_len, int* errnum);
-
-int ase_awk_abort (ase_awk_t* awk, 
-	const ase_char_t* expr, const ase_char_t* file, int line);
 
 #ifdef __cplusplus
 }
