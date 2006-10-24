@@ -1,118 +1,118 @@
 /*
- * $Id: macros.h,v 1.36 2006-10-22 11:44:46 bacon Exp $
+ * $Id: macros.h,v 1.37 2006-10-24 04:30:13 bacon Exp $
  */
 
-#ifndef _SSE_MACROS_H_
-#define _SSE_MACROS_H_
+#ifndef _ASE_MACROS_H_
+#define _ASE_MACROS_H_
 
-#include <sse/types.h>
+#include <ase/types.h>
 
 #ifdef __cplusplus
-	/*#define SSE_NULL ((sse_uint_t)0)*/
-	#define SSE_NULL (0)
+	/*#define ASE_NULL ((ase_uint_t)0)*/
+	#define ASE_NULL (0)
 #else
-	#define SSE_NULL ((void*)0)
+	#define ASE_NULL ((void*)0)
 #endif
 
-#define SSE_CHAR_EOF  ((sse_cint_t)-1)
+#define ASE_CHAR_EOF  ((ase_cint_t)-1)
 
-#define sse_sizeof(n)   (sizeof(n))
-#define sse_countof(n)  (sizeof(n) / sizeof(n[0]))
-#define sse_offsetof(type,member) ((sse_size_t)&((type*)0)->member)
+#define ase_sizeof(n)   (sizeof(n))
+#define ase_countof(n)  (sizeof(n) / sizeof(n[0]))
+#define ase_offsetof(type,member) ((ase_size_t)&((type*)0)->member)
 
-#if defined(_WIN32) && defined(SSE_CHAR_IS_WCHAR) && !defined(__LCC__)
-	#define sse_main wmain
-#elif defined(SSE_CHAR_IS_MCHAR)
-	#define sse_main main
+#if defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR) && !defined(__LCC__)
+	#define ase_main wmain
+#elif defined(ASE_CHAR_IS_MCHAR)
+	#define ase_main main
 #endif
 
-#define SSE_TYPE_IS_SIGNED(type) (((type)0) > ((type)-1))
-#define SSE_TYPE_IS_UNSIGNED(type) (((type)0) < ((type)-1))
-#define SSE_TYPE_MAX(type) \
-	((SSE_TYPE_IS_SIGNED(type)? (type)~((type)1 << (sse_sizeof(type) * 8 - 1)): (type)(~(type)0)))
-#define SSE_TYPE_MIN(type) \
-	((SSE_TYPE_IS_SIGNED(type)? (type)((type)1 << (sse_sizeof(type) * 8 - 1)): (type)0))
+#define ASE_TYPE_IS_SIGNED(type) (((type)0) > ((type)-1))
+#define ASE_TYPE_IS_UNSIGNED(type) (((type)0) < ((type)-1))
+#define ASE_TYPE_MAX(type) \
+	((ASE_TYPE_IS_SIGNED(type)? (type)~((type)1 << (ase_sizeof(type) * 8 - 1)): (type)(~(type)0)))
+#define ASE_TYPE_MIN(type) \
+	((ASE_TYPE_IS_SIGNED(type)? (type)((type)1 << (ase_sizeof(type) * 8 - 1)): (type)0))
 
-#define SSE_NUM_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
-#define SSE_SWAP(x,y,original_type,casting_type) \
+#define ASE_NUM_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
+#define ASE_SWAP(x,y,original_type,casting_type) \
 	do { \
 		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
 		y = (original_type)((casting_type)(y) ^ (casting_type)(x)); \
 		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
 	} while (0)
-#define SSE_ABS(x) ((x) < 0? -(x): (x))
+#define ASE_ABS(x) ((x) < 0? -(x): (x))
 
-#define SSE_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__;
-#define SSE_LOOP_BREAK(id)    goto __loop_ ## id ## _end__;
-#define SSE_LOOP_BEGIN(id)    __loop_ ## id ## _begin__: {
-#define SSE_LOOP_END(id)      SSE_LOOP_CONTINUE(id) } __loop_ ## id ## _end__:;
+#define ASE_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__;
+#define ASE_LOOP_BREAK(id)    goto __loop_ ## id ## _end__;
+#define ASE_LOOP_BEGIN(id)    __loop_ ## id ## _begin__: {
+#define ASE_LOOP_END(id)      ASE_LOOP_CONTINUE(id) } __loop_ ## id ## _end__:;
 
-#define SSE_REPEAT(n,blk) \
+#define ASE_REPEAT(n,blk) \
 	do { \
-		sse_size_t __sse_repeat_x1 = (sse_size_t)(n); \
-		sse_size_t __sse_repeat_x2 = __sse_repeat_x1 >> 4; \
-		__sse_repeat_x1 &= 15; \
-		while (__sse_repeat_x1-- > 0) { blk; } \
-		while (__sse_repeat_x2-- > 0) { \
+		ase_size_t __ase_repeat_x1 = (ase_size_t)(n); \
+		ase_size_t __ase_repeat_x2 = __ase_repeat_x1 >> 4; \
+		__ase_repeat_x1 &= 15; \
+		while (__ase_repeat_x1-- > 0) { blk; } \
+		while (__ase_repeat_x2-- > 0) { \
 			blk; blk; blk; blk; blk; blk; blk; blk; \
 			blk; blk; blk; blk; blk; blk; blk; blk; \
 		} \
 	} while (0);
 
 /* obsolete */
-#define SSE_MQUOTE_I(val)  #val
-#define SSE_MQUOTE(val)    SSE_MQUOTE_I(val)
-#define SSE_MCHAR(ch)      ((sse_mchar_t)ch)
-#define SSE_MTEXT(txt)     ((const sse_mchar_t*)txt)
+#define ASE_MQUOTE_I(val)  #val
+#define ASE_MQUOTE(val)    ASE_MQUOTE_I(val)
+#define ASE_MCHAR(ch)      ((ase_mchar_t)ch)
+#define ASE_MTEXT(txt)     ((const ase_mchar_t*)txt)
 
 /* new short form */
-#define SSE_MQ_I(val) #val
-#define SSE_MQ(val)   SSE_MQ_I(val)
-#define SSE_MC(ch)    ((sse_mchar_t)ch)
-#define SSE_MS(str)   ((const sse_mchar_t*)str)
-#define SSE_MT(txt)   (txt)
+#define ASE_MQ_I(val) #val
+#define ASE_MQ(val)   ASE_MQ_I(val)
+#define ASE_MC(ch)    ((ase_mchar_t)ch)
+#define ASE_MS(str)   ((const ase_mchar_t*)str)
+#define ASE_MT(txt)   (txt)
 
 /* TODO: if the compiler doesn't have the built-in wchar_t support
- *       SSE_WCHAR & SSE_WTEXT must be defined differently.
-#define SSE_WCHAR(ch) ((sse_wchar_t)ch)
-#define SSE_WTEXT(txt) don't know yet... may have to call a function?
+ *       ASE_WCHAR & ASE_WTEXT must be defined differently.
+#define ASE_WCHAR(ch) ((ase_wchar_t)ch)
+#define ASE_WTEXT(txt) don't know yet... may have to call a function?
  */
 
 /* obsolete */
-#define SSE_WQUOTE_I(val) (L###val)
-#define SSE_WQUOTE(val)   SSE_WQUOTE_I(val)
-#define SSE_WCHAR(ch)     ((sse_wchar_t)L##ch)
-#define SSE_WTEXT(txt)    ((const sse_wchar_t*)L##txt)
+#define ASE_WQUOTE_I(val) (L###val)
+#define ASE_WQUOTE(val)   ASE_WQUOTE_I(val)
+#define ASE_WCHAR(ch)     ((ase_wchar_t)L##ch)
+#define ASE_WTEXT(txt)    ((const ase_wchar_t*)L##txt)
 
 /* new short form */
-#define SSE_WQ_I(val)  (L###val)
-#define SSE_WQ(val)    SSE_WQ_I(val)
-#define SSE_WC(ch)     ((sse_wchar_t)L##ch)
-#define SSE_WS(str)    ((const sse_wchar_t*)L##str)
-#define SSE_WT(txt)    (L##txt)
+#define ASE_WQ_I(val)  (L###val)
+#define ASE_WQ(val)    ASE_WQ_I(val)
+#define ASE_WC(ch)     ((ase_wchar_t)L##ch)
+#define ASE_WS(str)    ((const ase_wchar_t*)L##str)
+#define ASE_WT(txt)    (L##txt)
 
-#if defined(SSE_CHAR_IS_MCHAR)
+#if defined(ASE_CHAR_IS_MCHAR)
 	/* obsolete */
-	#define SSE_CHAR(ch)   SSE_MCHAR(ch)
-	#define SSE_TEXT(txt)  SSE_MTEXT(txt)
-	#define SSE_QUOTE(val) SSE_MQUOTE(val)
+	#define ASE_CHAR(ch)   ASE_MCHAR(ch)
+	#define ASE_TEXT(txt)  ASE_MTEXT(txt)
+	#define ASE_QUOTE(val) ASE_MQUOTE(val)
 
 	/* new short form */
-	#define SSE_C(ch)  SSE_MC(ch)
-	#define SSE_S(str) SSE_MS(str)
-	#define SSE_T(txt) SSE_MT(txt)
-	#define SSE_Q(val) SSE_MQ(val)
+	#define ASE_C(ch)  ASE_MC(ch)
+	#define ASE_S(str) ASE_MS(str)
+	#define ASE_T(txt) ASE_MT(txt)
+	#define ASE_Q(val) ASE_MQ(val)
 #else
 	/* obsolete */
-	#define SSE_CHAR(ch)   SSE_WCHAR(ch)
-	#define SSE_TEXT(txt)  SSE_WTEXT(txt)
-	#define SSE_QUOTE(val) SSE_WQUOTE(val)
+	#define ASE_CHAR(ch)   ASE_WCHAR(ch)
+	#define ASE_TEXT(txt)  ASE_WTEXT(txt)
+	#define ASE_QUOTE(val) ASE_WQUOTE(val)
 
 	/* new short form */
-	#define SSE_C(ch)  SSE_WC(ch)
-	#define SSE_S(str) SSE_WS(str)
-	#define SSE_T(txt) SSE_WT(txt)
-	#define SSE_Q(val) SSE_WQ(val)
+	#define ASE_C(ch)  ASE_WC(ch)
+	#define ASE_S(str) ASE_WS(str)
+	#define ASE_T(txt) ASE_WT(txt)
+	#define ASE_Q(val) ASE_WQ(val)
 #endif
 
 #endif
