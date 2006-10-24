@@ -30,11 +30,7 @@ jni: $(OBJS) jni.obj
 <<
 
 java:
-	javac -classpath ../.. Awk.java TestAwk.java Extio.java AwkException.java
-
-jrun:
-	java -classpath ../.. ase.awk.TestAwk
-
+	javac -classpath ../.. Awk.java Extio.java Exception.java
 
 clean:
 	del $(OBJS) $(OUT) *.obj
