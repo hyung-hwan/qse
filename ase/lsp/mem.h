@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.9 2006-10-24 04:22:39 bacon Exp $
+ * $Id: mem.h,v 1.10 2006-10-24 15:31:35 bacon Exp $
  */
 
 #ifndef _ASE_LSP_MEM_H_
@@ -9,8 +9,12 @@
 #include <ase/lsp/env.h>
 #include <ase/lsp/array.h>
 
+typedef struct ase_lsp_mem_t ase_lsp_mem_t;
+
 struct ase_lsp_mem_t
 {
+	ase_lsp_t* lsp;
+
 	/* 
 	 * object allocation list
 	 */
@@ -45,25 +49,25 @@ struct ase_lsp_mem_t
 	ase_lsp_array_t* temp_array;
 };
 
-typedef struct ase_lsp_mem_t ase_lsp_mem_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 	
-ase_lsp_mem_t* ase_lsp_mem_new   (ase_size_t ubound, ase_size_t ubound_inc);
-void ase_lsp_mem_free  (ase_lsp_mem_t* mem);
+ase_lsp_mem_t* ase_lsp_openmem (
+	ase_lsp_t* lsp, ase_size_t ubound, ase_size_t ubound_inc);
+void ase_lsp_closemem (ase_lsp_mem_t* mem);
 
 int ase_lsp_add_builtin_prims (ase_lsp_mem_t* mem);
 
 ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size);
 void ase_lsp_dispose  (ase_lsp_mem_t* mem, ase_lsp_obj_t* prev, ase_lsp_obj_t* obj);
 void ase_lsp_dispose_all (ase_lsp_mem_t* mem);
-void ase_lsp_garbage_collect (ase_lsp_mem_t* mem);
+void ase_lsp_collectgarbage (ase_lsp_mem_t* mem);
 
-void ase_lsp_lock (ase_lsp_obj_t* obj);
-void ase_lsp_unlock (ase_lsp_obj_t* obj);
-void ase_lsp_unlock_all (ase_lsp_obj_t* obj);
+void ase_lsp_lockobj (ase_lsp_obj_t* obj);
+void ase_lsp_unlockobj (ase_lsp_obj_t* obj);
+void ase_lsp_unlockallobjs (ase_lsp_obj_t* obj);
 
 // object creation of standard types
 ase_lsp_obj_t* ase_lsp_make_nil    (ase_lsp_mem_t* mem);

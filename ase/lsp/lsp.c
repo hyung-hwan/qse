@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.7 2006-10-24 04:22:39 bacon Exp $
+ * $Id: lsp.c,v 1.8 2006-10-24 15:31:35 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -76,15 +76,17 @@ ase_lsp_t* ase_lsp_open (
 	lsp->input_arg = ASE_NULL;
 	lsp->output_arg = ASE_NULL;
 
-	lsp->mem = ase_lsp_mem_new (mem_ubound, mem_ubound_inc);
-	if (lsp->mem == ASE_NULL) {
+	lsp->mem = ase_lsp_openmem (lsp, mem_ubound, mem_ubound_inc);
+	if (lsp->mem == ASE_NULL) 
+	{
 		ase_lsp_token_close (&lsp->token);
 		if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
 		return ASE_NULL;
 	}
 
-	if (__add_builtin_prims(lsp) == -1) {
-		ase_lsp_mem_free (lsp->mem);
+	if (__add_builtin_prims(lsp) == -1) 
+	{
+		ase_lsp_closemem (lsp->mem);
 		ase_lsp_token_close (&lsp->token);
 		if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
 		return ASE_NULL;
@@ -98,7 +100,7 @@ ase_lsp_t* ase_lsp_open (
 
 void ase_lsp_close (ase_lsp_t* lsp)
 {
-	ase_lsp_mem_free (lsp->mem);
+	ase_lsp_closemem (lsp->mem);
 	ase_lsp_token_close (&lsp->token);
 	if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
 }
