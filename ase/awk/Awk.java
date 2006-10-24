@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.1 2006-10-24 04:57:29 bacon Exp $
+ * $Id: Awk.java,v 1.2 2006-10-24 06:03:14 bacon Exp $
  */
 
 package ase.awk;
@@ -19,15 +19,15 @@ public abstract class Awk
 
 	private long __awk;
 
-	public Awk () throws AwkException
+	public Awk () throws ase.awk.Exception
 	{
 		open ();
 	}
 
 	public native void close ();
-	public native void parse () throws AwkException;
-	public native void run () throws AwkException;
-	private native void open () throws AwkException;
+	public native void parse () throws ase.awk.Exception;
+	public native void run () throws ase.awk.Exception;
+	private native void open () throws ase.awk.Exception;
 
 	/*
 	protected native void set_extio (long extio, Object obj);
