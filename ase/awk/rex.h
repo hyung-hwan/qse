@@ -1,12 +1,12 @@
 /*
- * $Id: rex.h,v 1.20 2006-10-22 12:39:29 bacon Exp $
+ * $Id: rex.h,v 1.21 2006-10-24 04:10:12 bacon Exp $
  **/
 
-#ifndef _SSE_AWK_REX_H_
-#define _SSE_AWK_REX_H_
+#ifndef _ASE_AWK_REX_H_
+#define _ASE_AWK_REX_H_
 
-#include <sse/types.h>
-#include <sse/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
 
 /*
@@ -37,34 +37,34 @@
  *   ab|xy -> |2|10|4|ORD_CHAR(no bound)|a|ORD_CHAR(no bound)|b|4|ORD_CHAR(no bound)|x|ORD_CHAR(no bound)|y|
  */
 
-#define SSE_AWK_REX_NA(code) (*(sse_size_t*)(code))
+#define ASE_AWK_REX_NA(code) (*(ase_size_t*)(code))
 
-#define SSE_AWK_REX_LEN(code) \
-	(*(sse_size_t*)((sse_byte_t*)(code)+sse_sizeof(sse_size_t)))
+#define ASE_AWK_REX_LEN(code) \
+	(*(ase_size_t*)((ase_byte_t*)(code)+ase_sizeof(ase_size_t)))
 
-enum sse_awk_rex_option_t
+enum ase_awk_rex_option_t
 {
-	SSE_AWK_REX_IGNORECASE = (1 << 0)
+	ASE_AWK_REX_IGNORECASE = (1 << 0)
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void* sse_awk_buildrex (
-	sse_awk_t* awk, const sse_char_t* ptn, 
-	sse_size_t len, int* errnum);
+void* ase_awk_buildrex (
+	ase_awk_t* awk, const ase_char_t* ptn, 
+	ase_size_t len, int* errnum);
 
-int sse_awk_matchrex (
-	sse_awk_t* awk, void* code, int option,
-	const sse_char_t* str, sse_size_t len, 
-	const sse_char_t** match_ptr, sse_size_t* match_len, int* errnum);
+int ase_awk_matchrex (
+	ase_awk_t* awk, void* code, int option,
+	const ase_char_t* str, ase_size_t len, 
+	const ase_char_t** match_ptr, ase_size_t* match_len, int* errnum);
 
-void sse_awk_freerex (sse_awk_t* awk, void* code);
+void ase_awk_freerex (ase_awk_t* awk, void* code);
 
-sse_bool_t sse_awk_isemptyrex (sse_awk_t* awk, void* code);
+ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code);
 
-void sse_awk_printrex (void* code);
+void ase_awk_printrex (void* code);
 
 #ifdef __cplusplus
 }

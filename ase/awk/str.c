@@ -1,51 +1,51 @@
 /*
- * $Id: str.c,v 1.10 2006-10-22 12:52:50 bacon Exp $
+ * $Id: str.c,v 1.11 2006-10-24 04:10:12 bacon Exp $
  */
 
-#include <sse/awk/awk_i.h>
+#include <ase/awk/awk_i.h>
 
-sse_awk_str_t* sse_awk_str_open (
-	sse_awk_str_t* str, sse_size_t capa, sse_awk_t* awk)
+ase_awk_str_t* ase_awk_str_open (
+	ase_awk_str_t* str, ase_size_t capa, ase_awk_t* awk)
 {
-	if (str == SSE_NULL) 
+	if (str == ASE_NULL) 
 	{
-		str = (sse_awk_str_t*) 
-			SSE_AWK_MALLOC (awk, sizeof(sse_awk_str_t));
-		if (str == SSE_NULL) return SSE_NULL;
-		str->__dynamic = sse_true;
+		str = (ase_awk_str_t*) 
+			ASE_AWK_MALLOC (awk, sizeof(ase_awk_str_t));
+		if (str == ASE_NULL) return ASE_NULL;
+		str->__dynamic = ase_true;
 	}
-	else str->__dynamic = sse_false;
+	else str->__dynamic = ase_false;
 
 	str->awk = awk;
-	str->buf = (sse_char_t*) SSE_AWK_MALLOC (
-		awk, sse_sizeof(sse_char_t) * (capa + 1));
-	if (str->buf == SSE_NULL) 
+	str->buf = (ase_char_t*) ASE_AWK_MALLOC (
+		awk, ase_sizeof(ase_char_t) * (capa + 1));
+	if (str->buf == ASE_NULL) 
 	{
-		if (str->__dynamic) SSE_AWK_FREE (awk, str);
-		return SSE_NULL;
+		if (str->__dynamic) ASE_AWK_FREE (awk, str);
+		return ASE_NULL;
 	}
 
 	str->size = 0;
 	str->capa  = capa;
-	str->buf[0] = SSE_T('\0');
+	str->buf[0] = ASE_T('\0');
 
 	return str;
 }
 
-void sse_awk_str_close (sse_awk_str_t* str)
+void ase_awk_str_close (ase_awk_str_t* str)
 {
-	SSE_AWK_FREE (str->awk, str->buf);
-	if (str->__dynamic) SSE_AWK_FREE (str->awk, str);
+	ASE_AWK_FREE (str->awk, str->buf);
+	if (str->__dynamic) ASE_AWK_FREE (str->awk, str);
 }
 
-void sse_awk_str_forfeit (sse_awk_str_t* str)
+void ase_awk_str_forfeit (ase_awk_str_t* str)
 {
-	if (str->__dynamic) SSE_AWK_FREE (str->awk, str);
+	if (str->__dynamic) ASE_AWK_FREE (str->awk, str);
 }
 
-void sse_awk_str_swap (sse_awk_str_t* str, sse_awk_str_t* str1)
+void ase_awk_str_swap (ase_awk_str_t* str, ase_awk_str_t* str1)
 {
-	sse_awk_str_t tmp;
+	ase_awk_str_t tmp;
 
 	tmp.buf = str->buf;
 	tmp.size = str->size;
@@ -63,69 +63,69 @@ void sse_awk_str_swap (sse_awk_str_t* str, sse_awk_str_t* str1)
 	str1->awk = tmp.awk;
 }
 
-sse_size_t sse_awk_str_cpy (sse_awk_str_t* str, const sse_char_t* s)
+ase_size_t ase_awk_str_cpy (ase_awk_str_t* str, const ase_char_t* s)
 {
 	/* TODO: improve it */
-	return sse_awk_str_ncpy (str, s, sse_awk_strlen(s));
+	return ase_awk_str_ncpy (str, s, ase_awk_strlen(s));
 }
 
-sse_size_t sse_awk_str_ncpy (
-	sse_awk_str_t* str, const sse_char_t* s, sse_size_t len)
+ase_size_t ase_awk_str_ncpy (
+	ase_awk_str_t* str, const ase_char_t* s, ase_size_t len)
 {
-	sse_char_t* buf;
+	ase_char_t* buf;
 
 	if (len > str->capa) 
 	{
-		buf = (sse_char_t*) SSE_AWK_MALLOC (
-			str->awk, sse_sizeof(sse_char_t) * (len + 1));
-		if (buf == SSE_NULL) return (sse_size_t)-1;
+		buf = (ase_char_t*) ASE_AWK_MALLOC (
+			str->awk, ase_sizeof(ase_char_t) * (len + 1));
+		if (buf == ASE_NULL) return (ase_size_t)-1;
 
-		SSE_AWK_FREE (str->awk, str->buf);
+		ASE_AWK_FREE (str->awk, str->buf);
 		str->capa = len;
 		str->buf = buf;
 	}
 
-	str->size = sse_awk_strncpy (str->buf, s, len);
-	str->buf[str->size] = SSE_T('\0');
+	str->size = ase_awk_strncpy (str->buf, s, len);
+	str->buf[str->size] = ASE_T('\0');
 	return str->size;
 }
 
-sse_size_t sse_awk_str_cat (sse_awk_str_t* str, const sse_char_t* s)
+ase_size_t ase_awk_str_cat (ase_awk_str_t* str, const ase_char_t* s)
 {
 	/* TODO: improve it */
-	return sse_awk_str_ncat (str, s, sse_awk_strlen(s));
+	return ase_awk_str_ncat (str, s, ase_awk_strlen(s));
 }
 
-sse_size_t sse_awk_str_ncat (
-	sse_awk_str_t* str, const sse_char_t* s, sse_size_t len)
+ase_size_t ase_awk_str_ncat (
+	ase_awk_str_t* str, const ase_char_t* s, ase_size_t len)
 {
 	if (len > str->capa - str->size) 
 	{
-		sse_char_t* tmp;
-		sse_size_t capa;
+		ase_char_t* tmp;
+		ase_size_t capa;
 
 		capa = str->size + len;
 
 		/* double the capa if necessary for concatenation */
 		if (capa < str->capa * 2) capa = str->capa * 2;
 
-		if (str->awk->syscas.realloc != SSE_NULL)
+		if (str->awk->syscas.realloc != ASE_NULL)
 		{
-			tmp = (sse_char_t*) SSE_AWK_REALLOC (
+			tmp = (ase_char_t*) ASE_AWK_REALLOC (
 				str->awk, str->buf, 
-				sse_sizeof(sse_char_t) * (capa + 1));
-			if (tmp == SSE_NULL) return (sse_size_t)-1;
+				ase_sizeof(ase_char_t) * (capa + 1));
+			if (tmp == ASE_NULL) return (ase_size_t)-1;
 		}
 		else
 		{
-			tmp = (sse_char_t*) SSE_AWK_MALLOC (
-				str->awk, sse_sizeof(sse_char_t) * (capa + 1));
-			if (tmp == SSE_NULL) return (sse_size_t)-1;
-			if (str->buf != SSE_NULL)
+			tmp = (ase_char_t*) ASE_AWK_MALLOC (
+				str->awk, ase_sizeof(ase_char_t) * (capa + 1));
+			if (tmp == ASE_NULL) return (ase_size_t)-1;
+			if (str->buf != ASE_NULL)
 			{
-				SSE_AWK_MEMCPY (str->awk, tmp, str->buf, 
-					sse_sizeof(sse_char_t) * (str->capa + 1));
-				SSE_AWK_FREE (str->awk, str->buf);
+				ASE_AWK_MEMCPY (str->awk, tmp, str->buf, 
+					ase_sizeof(ase_char_t) * (str->capa + 1));
+				ASE_AWK_FREE (str->awk, str->buf);
 			}
 		}
 
@@ -133,23 +133,23 @@ sse_size_t sse_awk_str_ncat (
 		str->buf = tmp;
 	}
 
-	str->size += sse_awk_strncpy (&str->buf[str->size], s, len);
-	str->buf[str->size] = SSE_T('\0');
+	str->size += ase_awk_strncpy (&str->buf[str->size], s, len);
+	str->buf[str->size] = ASE_T('\0');
 	return str->size;
 }
 
-sse_size_t sse_awk_str_ccat (sse_awk_str_t* str, sse_char_t c)
+ase_size_t ase_awk_str_ccat (ase_awk_str_t* str, ase_char_t c)
 {
-	return sse_awk_str_ncat (str, &c, 1);
+	return ase_awk_str_ncat (str, &c, 1);
 }
 
-sse_size_t sse_awk_str_nccat (sse_awk_str_t* str, sse_char_t c, sse_size_t len)
+ase_size_t ase_awk_str_nccat (ase_awk_str_t* str, ase_char_t c, ase_size_t len)
 {
 	while (len > 0)
 	{
-		if (sse_awk_str_ncat (str, &c, 1) == (sse_size_t)-1) 
+		if (ase_awk_str_ncat (str, &c, 1) == (ase_size_t)-1) 
 		{
-			return (sse_size_t)-1;
+			return (ase_size_t)-1;
 		}
 
 		len--;
@@ -157,9 +157,9 @@ sse_size_t sse_awk_str_nccat (sse_awk_str_t* str, sse_char_t c, sse_size_t len)
 	return str->size;
 }
 
-void sse_awk_str_clear (sse_awk_str_t* str)
+void ase_awk_str_clear (ase_awk_str_t* str)
 {
 	str->size = 0;
-	str->buf[0] = SSE_T('\0');
+	str->buf[0] = ASE_T('\0');
 }
 

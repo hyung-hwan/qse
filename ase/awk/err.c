@@ -1,124 +1,124 @@
 /*
- * $Id: err.c,v 1.44 2006-10-22 12:39:29 bacon Exp $
+ * $Id: err.c,v 1.45 2006-10-24 04:10:12 bacon Exp $
  */
 
-#include <sse/awk/awk_i.h>
+#include <ase/awk/awk_i.h>
 
-int sse_awk_geterrnum (sse_awk_t* awk)
+int ase_awk_geterrnum (ase_awk_t* awk)
 {
 	return awk->errnum;
 }
 
-const sse_char_t* sse_awk_geterrstr (int errnum)
+const ase_char_t* ase_awk_geterrstr (int errnum)
 {
-	static const sse_char_t* __errstr[] =
+	static const ase_char_t* __errstr[] =
  	{
-		SSE_T("no error"),
-		SSE_T("out of memory"),
-		SSE_T("invalid parameter"),
-		SSE_T("general run-time error"),
-		SSE_T("one or more running instances"),
-		SSE_T("too many running instances"),
-		SSE_T("recursion too deep"),
+		ASE_T("no error"),
+		ASE_T("out of memory"),
+		ASE_T("invalid parameter"),
+		ASE_T("general run-time error"),
+		ASE_T("one or more running instances"),
+		ASE_T("too many running instances"),
+		ASE_T("recursion too deep"),
 
-		SSE_T("cannot open source input"),
-		SSE_T("cannot close source input"),
-		SSE_T("cannot read source input"),
+		ASE_T("cannot open source input"),
+		ASE_T("cannot close source input"),
+		ASE_T("cannot read source input"),
 
-		SSE_T("cannot open source output"),
-		SSE_T("cannot close source output"),
-		SSE_T("cannot write source output"),
+		ASE_T("cannot open source output"),
+		ASE_T("cannot close source output"),
+		ASE_T("cannot write source output"),
 
-		SSE_T("cannot open console for read"),
-		SSE_T("cannot close console for read"),
-		SSE_T("cannot switch to next console for read"),
-		SSE_T("cannot read from console"),
+		ASE_T("cannot open console for read"),
+		ASE_T("cannot close console for read"),
+		ASE_T("cannot switch to next console for read"),
+		ASE_T("cannot read from console"),
 
-		SSE_T("cannot open console for write"),
-		SSE_T("cannot close console for write"),
-		SSE_T("cannot switch to next console for write"),
-		SSE_T("cannot write to console"),
+		ASE_T("cannot open console for write"),
+		ASE_T("cannot close console for write"),
+		ASE_T("cannot switch to next console for write"),
+		ASE_T("cannot write to console"),
 
-		SSE_T("invalid character"),
-		SSE_T("cannot unget character"),
+		ASE_T("invalid character"),
+		ASE_T("cannot unget character"),
 
-		SSE_T("unexpected end of source"),
-		SSE_T("unexpected end of a comment"),
-		SSE_T("unexpected end of a string"),
-		SSE_T("unexpected end of a regular expression"),
-		SSE_T("left brace expected"),
-		SSE_T("left parenthesis expected"),
-		SSE_T("right parenthesis expected"),
-		SSE_T("right bracket expected"),
-		SSE_T("comma expected"),
-		SSE_T("semicolon expected"),
-		SSE_T("colon expected"),
-		SSE_T("keyword 'in' expected"),
-		SSE_T("not a variable after 'in'"),
-		SSE_T("expression expected"),
+		ASE_T("unexpected end of source"),
+		ASE_T("unexpected end of a comment"),
+		ASE_T("unexpected end of a string"),
+		ASE_T("unexpected end of a regular expression"),
+		ASE_T("left brace expected"),
+		ASE_T("left parenthesis expected"),
+		ASE_T("right parenthesis expected"),
+		ASE_T("right bracket expected"),
+		ASE_T("comma expected"),
+		ASE_T("semicolon expected"),
+		ASE_T("colon expected"),
+		ASE_T("keyword 'in' expected"),
+		ASE_T("not a variable after 'in'"),
+		ASE_T("expression expected"),
 
-		SSE_T("keyword 'while' expected"),
-		SSE_T("assignment statement expected"),
-		SSE_T("identifier expected"),
-		SSE_T("BEGIN requires an action block"),
-		SSE_T("END requires an action block"),
-		SSE_T("duplicate BEGIN"),
-		SSE_T("duplicate END"),
-		SSE_T("duplicate function name"),
-		SSE_T("duplicate parameter name"),
-		SSE_T("duplicate variable name"),
-		SSE_T("duplicate name"),
-		SSE_T("undefined identifier"),
-		SSE_T("l-value required"),
-		SSE_T("too few arguments"),
-		SSE_T("too many arguments"),
-		SSE_T("too many global variables"),
-		SSE_T("too many local variables"),
-		SSE_T("too many parameters"),
-		SSE_T("break outside a loop"),
-		SSE_T("continue outside a loop"),
-		SSE_T("next illegal in BEGIN or END block"),
-		SSE_T("nextfile illegal in BEGIN or END block"),
-		SSE_T("getline expected"),
+		ASE_T("keyword 'while' expected"),
+		ASE_T("assignment statement expected"),
+		ASE_T("identifier expected"),
+		ASE_T("BEGIN requires an action block"),
+		ASE_T("END requires an action block"),
+		ASE_T("duplicate BEGIN"),
+		ASE_T("duplicate END"),
+		ASE_T("duplicate function name"),
+		ASE_T("duplicate parameter name"),
+		ASE_T("duplicate variable name"),
+		ASE_T("duplicate name"),
+		ASE_T("undefined identifier"),
+		ASE_T("l-value required"),
+		ASE_T("too few arguments"),
+		ASE_T("too many arguments"),
+		ASE_T("too many global variables"),
+		ASE_T("too many local variables"),
+		ASE_T("too many parameters"),
+		ASE_T("break outside a loop"),
+		ASE_T("continue outside a loop"),
+		ASE_T("next illegal in BEGIN or END block"),
+		ASE_T("nextfile illegal in BEGIN or END block"),
+		ASE_T("getline expected"),
 
-		SSE_T("divide by zero"),
-		SSE_T("invalid operand"),
-		SSE_T("wrong position index"),
-		SSE_T("no such function"),
-		SSE_T("value not assignable"),
-		SSE_T("variable not indexable"),
-		SSE_T("variable not deletable"),
-		SSE_T("value not referenceable"),
-		SSE_T("an indexed value cannot be assigned a map"),
-		SSE_T("a positional value cannot be assigned a map"),
-		SSE_T("cannot change a map to a scalar value"),
-		SSE_T("cannot change a scalar value to a map"),
-		SSE_T("a map is not allowed"),
-		SSE_T("wrong value type"),
-		SSE_T("pipe operation error"),
-		SSE_T("next cannot be called from the BEGIN or END block"),
-		SSE_T("nextfile cannot be called from the BEGIN or END block"),
-		SSE_T("wrong implementation of user-defined io handler"),
-		SSE_T("no such io name found"),
-		SSE_T("io handler has returned an error"),
-		SSE_T("internal error that should never have happened"),
+		ASE_T("divide by zero"),
+		ASE_T("invalid operand"),
+		ASE_T("wrong position index"),
+		ASE_T("no such function"),
+		ASE_T("value not assignable"),
+		ASE_T("variable not indexable"),
+		ASE_T("variable not deletable"),
+		ASE_T("value not referenceable"),
+		ASE_T("an indexed value cannot be assigned a map"),
+		ASE_T("a positional value cannot be assigned a map"),
+		ASE_T("cannot change a map to a scalar value"),
+		ASE_T("cannot change a scalar value to a map"),
+		ASE_T("a map is not allowed"),
+		ASE_T("wrong value type"),
+		ASE_T("pipe operation error"),
+		ASE_T("next cannot be called from the BEGIN or END block"),
+		ASE_T("nextfile cannot be called from the BEGIN or END block"),
+		ASE_T("wrong implementation of user-defined io handler"),
+		ASE_T("no such io name found"),
+		ASE_T("io handler has returned an error"),
+		ASE_T("internal error that should never have happened"),
 
-		SSE_T("a right parenthesis is expected in the regular expression"),
-		SSE_T("a right bracket is expected in the regular expression"),
-		SSE_T("a right brace is expected in the regular expression"),
-		SSE_T("a colon is expected in the regular expression"),
-		SSE_T("invalid character range in the regular expression"),
-		SSE_T("invalid character class in the regular expression"),
-		SSE_T("invalid boundary range in the regular expression"),
-		SSE_T("unexpected end of the regular expression"),
-		SSE_T("garbage after the regular expression")
+		ASE_T("a right parenthesis is expected in the regular expression"),
+		ASE_T("a right bracket is expected in the regular expression"),
+		ASE_T("a right brace is expected in the regular expression"),
+		ASE_T("a colon is expected in the regular expression"),
+		ASE_T("invalid character range in the regular expression"),
+		ASE_T("invalid character class in the regular expression"),
+		ASE_T("invalid boundary range in the regular expression"),
+		ASE_T("unexpected end of the regular expression"),
+		ASE_T("garbage after the regular expression")
 	};
 
-	if (errnum >= 0 && errnum < sse_countof(__errstr)) 
+	if (errnum >= 0 && errnum < ase_countof(__errstr)) 
 	{
 		return __errstr[errnum];
 	}
 
-	return SSE_T("unknown error");
+	return ASE_T("unknown error");
 }
 

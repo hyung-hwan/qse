@@ -1,70 +1,70 @@
 /*
- * $Id: map.c,v 1.27 2006-10-22 11:34:53 bacon Exp $
+ * $Id: map.c,v 1.28 2006-10-24 04:10:12 bacon Exp $
  */
 
-#include <sse/awk/awk_i.h>
+#include <ase/awk/awk_i.h>
 
 /* TODO: improve the entire map routines.
          support automatic bucket resizing and remaping, etc. */
 
-static sse_size_t __hash (const sse_char_t* key, sse_size_t key_len);
+static ase_size_t __hash (const ase_char_t* key, ase_size_t key_len);
 
 #define FREE_PAIR(map,pair) \
 	do { \
-		SSE_AWK_FREE ((map)->awk, (sse_char_t*)(pair)->key); \
-		if ((map)->freeval != SSE_NULL) \
+		ASE_AWK_FREE ((map)->awk, (ase_char_t*)(pair)->key); \
+		if ((map)->freeval != ASE_NULL) \
 			(map)->freeval ((map)->owner, (pair)->val); \
-		SSE_AWK_FREE ((map)->awk, pair); \
+		ASE_AWK_FREE ((map)->awk, pair); \
 	} while (0)
 
-sse_awk_map_t* sse_awk_map_open (
-	sse_awk_map_t* map, void* owner, sse_size_t capa, 
-	void(*freeval)(void*,void*), sse_awk_t* awk)
+ase_awk_map_t* ase_awk_map_open (
+	ase_awk_map_t* map, void* owner, ase_size_t capa, 
+	void(*freeval)(void*,void*), ase_awk_t* awk)
 {
-	if (map == SSE_NULL) 
+	if (map == ASE_NULL) 
 	{
-		map = (sse_awk_map_t*) SSE_AWK_MALLOC (
-			awk, sse_sizeof(sse_awk_map_t));
-		if (map == SSE_NULL) return SSE_NULL;
-		map->__dynamic = sse_true;
+		map = (ase_awk_map_t*) ASE_AWK_MALLOC (
+			awk, ase_sizeof(ase_awk_map_t));
+		if (map == ASE_NULL) return ASE_NULL;
+		map->__dynamic = ase_true;
 	}
-	else map->__dynamic = sse_false;
+	else map->__dynamic = ase_false;
 
 	map->awk = awk;
-	map->buck = (sse_awk_pair_t**) 
-		SSE_AWK_MALLOC (awk, sse_sizeof(sse_awk_pair_t*) * capa);
-	if (map->buck == SSE_NULL) 
+	map->buck = (ase_awk_pair_t**) 
+		ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_pair_t*) * capa);
+	if (map->buck == ASE_NULL) 
 	{
-		if (map->__dynamic) SSE_AWK_FREE (awk, map);
-		return SSE_NULL;	
+		if (map->__dynamic) ASE_AWK_FREE (awk, map);
+		return ASE_NULL;	
 	}
 
 	map->owner = owner;
 	map->capa = capa;
 	map->size = 0;
 	map->freeval = freeval;
-	while (capa > 0) map->buck[--capa] = SSE_NULL;
+	while (capa > 0) map->buck[--capa] = ASE_NULL;
 
 	return map;
 }
 
-void sse_awk_map_close (sse_awk_map_t* map)
+void ase_awk_map_close (ase_awk_map_t* map)
 {
-	sse_awk_map_clear (map);
-	SSE_AWK_FREE (map->awk, map->buck);
-	if (map->__dynamic) SSE_AWK_FREE (map->awk, map);
+	ase_awk_map_clear (map);
+	ASE_AWK_FREE (map->awk, map->buck);
+	if (map->__dynamic) ASE_AWK_FREE (map->awk, map);
 }
 
-void sse_awk_map_clear (sse_awk_map_t* map)
+void ase_awk_map_clear (ase_awk_map_t* map)
 {
-	sse_size_t i;
-	sse_awk_pair_t* pair, * next;
+	ase_size_t i;
+	ase_awk_pair_t* pair, * next;
 
 	for (i = 0; i < map->capa; i++) 
 	{
 		pair = map->buck[i];
 
-		while (pair != SSE_NULL) 
+		while (pair != ASE_NULL) 
 		{
 			next = pair->next;
 			FREE_PAIR (map, pair);
@@ -72,81 +72,81 @@ void sse_awk_map_clear (sse_awk_map_t* map)
 			pair = next;
 		}
 
-		map->buck[i] = SSE_NULL;
+		map->buck[i] = ASE_NULL;
 	}
 
-	sse_awk_assert (map->awk, map->size == 0);
+	ase_awk_assert (map->awk, map->size == 0);
 }
 
-sse_awk_pair_t* sse_awk_map_get (
-	sse_awk_map_t* map, const sse_char_t* key, sse_size_t key_len)
+ase_awk_pair_t* ase_awk_map_get (
+	ase_awk_map_t* map, const ase_char_t* key, ase_size_t key_len)
 {
-	sse_awk_pair_t* pair;
-	sse_size_t hc;
+	ase_awk_pair_t* pair;
+	ase_size_t hc;
 
 	hc = __hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
-	while (pair != SSE_NULL) 
+	while (pair != ASE_NULL) 
 	{
 
-		if (sse_awk_strxncmp (
+		if (ase_awk_strxncmp (
 			pair->key, pair->key_len, 
 			key, key_len) == 0) return pair;
 
 		pair = pair->next;
 	}
 
-	return SSE_NULL;
+	return ASE_NULL;
 }
 
-sse_awk_pair_t* sse_awk_map_put (
-	sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len, void* val)
+ase_awk_pair_t* ase_awk_map_put (
+	ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len, void* val)
 {
 	int n;
-	sse_awk_pair_t* px;
+	ase_awk_pair_t* px;
 
-	n = sse_awk_map_putx (map, key, key_len, val, &px);
-	if (n < 0) return SSE_NULL;
+	n = ase_awk_map_putx (map, key, key_len, val, &px);
+	if (n < 0) return ASE_NULL;
 	return px;
 }
 
-int sse_awk_map_putx (
-	sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len, 
-	void* val, sse_awk_pair_t** px)
+int ase_awk_map_putx (
+	ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len, 
+	void* val, ase_awk_pair_t** px)
 {
-	sse_awk_pair_t* pair;
-	sse_size_t hc;
+	ase_awk_pair_t* pair;
+	ase_size_t hc;
 
 	hc = __hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
-	while (pair != SSE_NULL) 
+	while (pair != ASE_NULL) 
 	{
-		if (sse_awk_strxncmp (
+		if (ase_awk_strxncmp (
 			pair->key, pair->key_len, key, key_len) == 0) 
 		{
-			if (px != SSE_NULL)
-				*px = sse_awk_map_setpair (map, pair, val);
+			if (px != ASE_NULL)
+				*px = ase_awk_map_setpair (map, pair, val);
 			else
-				sse_awk_map_setpair (map, pair, val);
+				ase_awk_map_setpair (map, pair, val);
 
 			return 0; /* value changed for the existing key */
 		}
 		pair = pair->next;
 	}
 
-	pair = (sse_awk_pair_t*) SSE_AWK_MALLOC (
-		map->awk, sse_sizeof(sse_awk_pair_t));
-	if (pair == SSE_NULL) return -1; /* error */
+	pair = (ase_awk_pair_t*) ASE_AWK_MALLOC (
+		map->awk, ase_sizeof(ase_awk_pair_t));
+	if (pair == ASE_NULL) return -1; /* error */
 
 	/*pair->key = key;*/ 
 
 	/* duplicate the key if it is new */
-	pair->key = sse_awk_strxdup (map->awk, key, key_len);
-	if (pair->key == SSE_NULL)
+	pair->key = ase_awk_strxdup (map->awk, key, key_len);
+	if (pair->key == ASE_NULL)
 	{
-		SSE_AWK_FREE (map->awk, pair);
+		ASE_AWK_FREE (map->awk, pair);
 		return -1; /* error */
 	}
 
@@ -156,51 +156,51 @@ int sse_awk_map_putx (
 	map->buck[hc] = pair;
 	map->size++;
 
-	if (px != SSE_NULL) *px = pair;
+	if (px != ASE_NULL) *px = pair;
 	return 1; /* new key added */
 }
 
-sse_awk_pair_t* sse_awk_map_set (
-	sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len, void* val)
+ase_awk_pair_t* ase_awk_map_set (
+	ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len, void* val)
 {
-	sse_awk_pair_t* pair;
-	sse_size_t hc;
+	ase_awk_pair_t* pair;
+	ase_size_t hc;
 
 	hc = __hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
-	while (pair != SSE_NULL) 
+	while (pair != ASE_NULL) 
 	{
-		if (sse_awk_strxncmp (
+		if (ase_awk_strxncmp (
 			pair->key, pair->key_len, key, key_len) == 0) 
 		{
-			return sse_awk_map_setpair (map, pair, val);
+			return ase_awk_map_setpair (map, pair, val);
 		}
 		pair = pair->next;
 	}
 
-	return SSE_NULL;
+	return ASE_NULL;
 }
 
-sse_awk_pair_t* sse_awk_map_getpair (
-	sse_awk_map_t* map, const sse_char_t* key, sse_size_t key_len, void** val)
+ase_awk_pair_t* ase_awk_map_getpair (
+	ase_awk_map_t* map, const ase_char_t* key, ase_size_t key_len, void** val)
 {
-	sse_awk_pair_t* pair;
+	ase_awk_pair_t* pair;
 
-	pair = sse_awk_map_get (map, key, key_len);
-	if (pair == SSE_NULL) return SSE_NULL; 
+	pair = ase_awk_map_get (map, key, key_len);
+	if (pair == ASE_NULL) return ASE_NULL; 
 	*val = pair->val;
 
 	return pair;
 }
 
-sse_awk_pair_t* sse_awk_map_setpair (
-	sse_awk_map_t* map, sse_awk_pair_t* pair, void* val)
+ase_awk_pair_t* ase_awk_map_setpair (
+	ase_awk_map_t* map, ase_awk_pair_t* pair, void* val)
 {
 	/* use this function with care */
 	if (pair->val != val) 
 	{
-		if (map->freeval != SSE_NULL) 
+		if (map->freeval != ASE_NULL) 
 		{
 			map->freeval (map->owner, pair->val);
 		}
@@ -210,21 +210,21 @@ sse_awk_pair_t* sse_awk_map_setpair (
 	return pair;
 }
 
-int sse_awk_map_remove (sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len)
+int ase_awk_map_remove (ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len)
 {
-	sse_awk_pair_t* pair, * prev;
-	sse_size_t hc;
+	ase_awk_pair_t* pair, * prev;
+	ase_size_t hc;
 
 	hc = __hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
-	prev = SSE_NULL;
+	prev = ASE_NULL;
 
-	while (pair != SSE_NULL) 
+	while (pair != ASE_NULL) 
 	{
-		if (sse_awk_strxncmp (
+		if (ase_awk_strxncmp (
 			pair->key, pair->key_len, key, key_len) == 0) 
 		{
-			if (prev == SSE_NULL) 
+			if (prev == ASE_NULL) 
 				map->buck[hc] = pair->next;
 			else prev->next = pair->next;
 
@@ -241,17 +241,17 @@ int sse_awk_map_remove (sse_awk_map_t* map, sse_char_t* key, sse_size_t key_len)
 	return -1;
 }
 
-int sse_awk_map_walk (sse_awk_map_t* map, 
-	int (*walker) (sse_awk_pair_t*,void*), void* arg)
+int ase_awk_map_walk (ase_awk_map_t* map, 
+	int (*walker) (ase_awk_pair_t*,void*), void* arg)
 {
-	sse_size_t i;
-	sse_awk_pair_t* pair, * next;
+	ase_size_t i;
+	ase_awk_pair_t* pair, * next;
 
 	for (i = 0; i < map->capa; i++) 
 	{
 		pair = map->buck[i];
 
-		while (pair != SSE_NULL) 
+		while (pair != ASE_NULL) 
 		{
 			next = pair->next;
 			if (walker(pair,arg) == -1) return -1;
@@ -262,15 +262,15 @@ int sse_awk_map_walk (sse_awk_map_t* map,
 	return 0;
 }
 
-static sse_size_t __hash (const sse_char_t* key, sse_size_t key_len)
+static ase_size_t __hash (const ase_char_t* key, ase_size_t key_len)
 {
-	sse_size_t n = 0, i;
-	const sse_char_t* end = key + key_len;
+	ase_size_t n = 0, i;
+	const ase_char_t* end = key + key_len;
 
 	while (key < end)
 	{
-		sse_byte_t* bp = (sse_byte_t*)key;
-		for (i = 0; i < sse_sizeof(*key); i++) n = n * 31 + *bp++;
+		ase_byte_t* bp = (ase_byte_t*)key;
+		for (i = 0; i < ase_sizeof(*key); i++) n = n * 31 + *bp++;
 		key++;
 	}	
 
