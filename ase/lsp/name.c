@@ -1,11 +1,11 @@
 /*
- * $Id: name.c,v 1.6 2006-10-24 04:22:39 bacon Exp $
+ * $Id: name.c,v 1.7 2006-10-25 14:42:40 bacon Exp $
  */
 
 #include <ase/lsp/name.h>
 
 ase_lsp_name_t* ase_lsp_name_open (
-	ase_lsp_name_t* name, ase_word_t capacity)
+	ase_lsp_name_t* name, ase_size_t capacity)
 {
 	if (capacity == 0) 
 		capacity = ase_countof(name->static_buffer) - 1;
@@ -97,7 +97,7 @@ void ase_lsp_name_clear (ase_lsp_name_t* name)
 	name->buffer[0] = ASE_CHAR('\0');
 }
 
-ase_char_t* ase_lsp_name_yield (ase_lsp_name_t* name, ase_word_t capacity)
+ase_char_t* ase_lsp_name_yield (ase_lsp_name_t* name, ase_size_t capacity)
 {
 	ase_char_t* old_buffer, * new_buffer;
 
@@ -133,7 +133,7 @@ ase_char_t* ase_lsp_name_yield (ase_lsp_name_t* name, ase_word_t capacity)
 int ase_lsp_name_compare (ase_lsp_name_t* name, const ase_char_t* str)
 {
 	ase_char_t* p = name->buffer;
-	ase_word_t index = 0;
+	ase_size_t index = 0;
 
 	while (index < name->size) {
 		if (*p > *str) return 1;

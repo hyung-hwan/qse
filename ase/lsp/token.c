@@ -1,11 +1,11 @@
 /*
- * $Id: token.c,v 1.15 2006-10-24 04:22:40 bacon Exp $
+ * $Id: token.c,v 1.16 2006-10-25 14:42:40 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
 
 ase_lsp_token_t* ase_lsp_token_open (
-	ase_lsp_token_t* token, ase_word_t capacity)
+	ase_lsp_token_t* token, ase_size_t capacity)
 {
 	if (token == ASE_NULL) 
 	{
@@ -56,7 +56,7 @@ void ase_lsp_token_clear (ase_lsp_token_t* token)
 	ase_lsp_name_clear (&token->name);
 }
 
-ase_char_t* ase_lsp_token_yield (ase_lsp_token_t* token, ase_word_t capacity)
+ase_char_t* ase_lsp_token_yield (ase_lsp_token_t* token, ase_size_t capacity)
 {
 	ase_char_t* p;
 
