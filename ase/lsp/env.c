@@ -1,10 +1,8 @@
 /*
- * $Id: env.c,v 1.10 2006-10-24 04:22:39 bacon Exp $
+ * $Id: env.c,v 1.11 2006-10-25 13:42:30 bacon Exp $
  */
 
-#include <ase/lsp/env.h>
-#include <ase/bas/memory.h>
-#include <ase/bas/assert.h>
+#include <ase/lsp/lsp_i.h>
 
 // TODO: make the frame hash accessible....
 
@@ -48,7 +46,8 @@ void ase_lsp_frame_free (ase_lsp_frame_t* frame)
 
 	// destroy the associations
 	assoc = frame->assoc;
-	while (assoc != ASE_NULL) {
+	while (assoc != ASE_NULL) 
+	{
 		link = assoc->link;
 		ase_lsp_assoc_free (assoc);	
 		assoc = link;
@@ -61,10 +60,11 @@ ase_lsp_assoc_t* ase_lsp_frame_lookup (ase_lsp_frame_t* frame, ase_lsp_obj_t* na
 {
 	ase_lsp_assoc_t* assoc;
 
-	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYMBOL);
+	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = frame->assoc;
-	while (assoc != ASE_NULL) {
+	while (assoc != ASE_NULL) 
+	{
 		if (name == assoc->name) return assoc;
 		assoc = assoc->link;
 	}
@@ -76,7 +76,7 @@ ase_lsp_assoc_t* ase_lsp_frame_insert_value (
 {
 	ase_lsp_assoc_t* assoc;
 
-	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYMBOL);
+	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = ase_lsp_assoc_new (name, value, ASE_NULL);
 	if (assoc == ASE_NULL) return ASE_NULL;
@@ -90,7 +90,7 @@ ase_lsp_assoc_t* ase_lsp_frame_insert_func (
 {
 	ase_lsp_assoc_t* assoc;
 
-	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYMBOL);
+	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = ase_lsp_assoc_new (name, ASE_NULL, func);
 	if (assoc == ASE_NULL) return ASE_NULL;

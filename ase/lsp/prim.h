@@ -1,5 +1,5 @@
 /*
- * $Id: prim.h,v 1.8 2006-10-24 04:22:39 bacon Exp $
+ * $Id: prim.h,v 1.9 2006-10-25 13:42:31 bacon Exp $
  */
 
 #ifndef _ASE_LSP_PRIM_H_
@@ -57,7 +57,7 @@ ase_lsp_obj_t* ase_lsp_prim_modulus  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 #define ASE_LSP_PRIM_CHECK_ARG_COUNT(lsp,args,min,max) \
 { \
 	ase_size_t count; \
-	if (ase_lsp_probe_args(lsp->mem, args, &count) == -1) { \
+	if (ase_lsp_probeargs(lsp->mem, args, &count) == -1) { \
 		lsp->errnum = ASE_LSP_ERR_BAD_ARG; \
 		return ASE_NULL; \
 	} \

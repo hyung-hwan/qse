@@ -1,5 +1,5 @@
 /*
- * $Id: token.h,v 1.13 2006-10-24 04:22:40 bacon Exp $
+ * $Id: token.h,v 1.14 2006-10-25 13:42:31 bacon Exp $
  */
 
 #ifndef _ASE_LSP_TOKEN_H_
@@ -17,8 +17,8 @@ struct ase_lsp_token_t
 {
 	int type;
 
-	ase_lsp_int_t ivalue;
-	ase_lsp_real_t rvalue;
+	ase_long_t ivalue;
+	ase_real_t rvalue;
 
 	ase_lsp_name_t name;
 	ase_bool_t __dynamic;
