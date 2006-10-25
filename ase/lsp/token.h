@@ -1,12 +1,11 @@
 /*
- * $Id: token.h,v 1.14 2006-10-25 13:42:31 bacon Exp $
+ * $Id: token.h,v 1.15 2006-10-25 14:42:40 bacon Exp $
  */
 
 #ifndef _ASE_LSP_TOKEN_H_
 #define _ASE_LSP_TOKEN_H_
 
-#include <ase/lsp/types.h>
-#include <ase/lsp/name.h>
+#include <ase/lsp/lsp_i.h>
 
 enum 
 {
@@ -31,13 +30,13 @@ extern "C" {
 #endif
 
 ase_lsp_token_t* ase_lsp_token_open (
-	ase_lsp_token_t* token, ase_word_t capacity);
+	ase_lsp_token_t* token, ase_size_t capacity);
 void ase_lsp_token_close (ase_lsp_token_t* token);
 
 int ase_lsp_token_addc (ase_lsp_token_t* token, ase_cint_t c);
 int ase_lsp_token_adds (ase_lsp_token_t* token, const ase_char_t* s);
 void ase_lsp_token_clear (ase_lsp_token_t* token);
-ase_char_t* ase_lsp_token_yield (ase_lsp_token_t* token, ase_word_t capacity);
+ase_char_t* ase_lsp_token_yield (ase_lsp_token_t* token, ase_size_t capacity);
 int ase_lsp_token_compare_name (ase_lsp_token_t* token, const ase_char_t* str);
 
 #ifdef __cplusplus
