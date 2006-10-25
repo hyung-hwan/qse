@@ -1,8 +1,8 @@
 /*
- * $Id: err.c,v 1.3 2006-10-24 04:22:39 bacon Exp $
+ * $Id: err.c,v 1.4 2006-10-25 13:42:31 bacon Exp $
  */
 
-#include <ase/lsp/lsp.h>
+#include <ase/lsp/lsp_i.h>
 
 static const ase_char_t* __errstr[] = 
 {

@@ -1,5 +1,5 @@
 /*
- * $Id: prim_let.c,v 1.5 2006-10-24 04:22:39 bacon Exp $
+ * $Id: prim_let.c,v 1.6 2006-10-25 13:42:31 bacon Exp $
  */
 
 #include <ase/lsp/prim.h>
@@ -40,7 +40,7 @@ static ase_lsp_obj_t* __prim_let (
 			ase_lsp_obj_t* n = ASE_LSP_CAR(ass);
 			ase_lsp_obj_t* v = ASE_LSP_CDR(ass);
 
-			if (ASE_LSP_TYPE(n) != ASE_LSP_OBJ_SYMBOL) {
+			if (ASE_LSP_TYPE(n) != ASE_LSP_OBJ_SYM) {
 				lsp->errnum = ASE_LSP_ERR_BAD_ARG; // must be a symbol
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
@@ -79,7 +79,7 @@ static ase_lsp_obj_t* __prim_let (
 				return ASE_NULL;
 			}
 		}
-		else if (ASE_LSP_TYPE(ass) == ASE_LSP_OBJ_SYMBOL) {
+		else if (ASE_LSP_TYPE(ass) == ASE_LSP_OBJ_SYM) {
 			if (ase_lsp_frame_lookup(frame, ass) != ASE_NULL) {
 				lsp->errnum = ASE_LSP_ERR_DUP_FORMAL;
 				if (sequential) lsp->mem->frame = frame->link;

@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.10 2006-10-24 04:22:39 bacon Exp $
+ * $Id: prim.c,v 1.11 2006-10-25 13:42:31 bacon Exp $
  */
 
 #include <ase/lsp/lsp.h>
@@ -29,17 +29,17 @@ static int __add_prim (ase_lsp_mem_t* mem,
 {
 	ase_lsp_obj_t* n, * p;
 	
-	n = ase_lsp_make_symbolx (mem, name, len);
+	n = ase_lsp_makesymobj (mem, name, len);
 	if (n == ASE_NULL) return -1;
 
 	ase_lsp_lock (n);
 
-	p = ase_lsp_make_prim (mem, prim);
+	p = ase_lsp_makeprim (mem, prim);
 	if (p == ASE_NULL) return -1;
 
 	ase_lsp_unlock (n);
 
-	if (ase_lsp_set_func(mem, n, p) == ASE_NULL) return -1;
+	if (ase_lsp_setfunc(mem, n, p) == ASE_NULL) return -1;
 
 	return 0;
 }
@@ -249,9 +249,10 @@ ase_lsp_obj_t* ase_lsp_prim_cons (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	cdr = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(args)));
 	if (cdr == ASE_NULL) return ASE_NULL;
 
-	cons = ase_lsp_make_cons (lsp->mem, car, cdr);
-	if (cons == ASE_NULL) {
-		lsp->errnum = ASE_LSP_ERR_MEMORY;
+	cons = ase_lsp_makecons (lsp->mem, car, cdr);
+	if (cons == ASE_NULL) 
+	{
+		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
 
@@ -274,7 +275,7 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (p1 == ASE_NULL) return ASE_NULL;
 
-	if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYMBOL) {
+	if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) {
 		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 		return ASE_NULL;
 	}
@@ -282,7 +283,7 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	p2 = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(args)));
 	if (p2 == ASE_NULL) return ASE_NULL;
 
-	if (ase_lsp_set_value (lsp->mem, p1, p2) == ASE_NULL) {
+	if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) {
 		lsp->errnum = ASE_LSP_ERR_MEMORY;
 		return ASE_NULL;
 	}
@@ -303,7 +304,7 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		ase_assert (ASE_LSP_TYPE(p) == ASE_LSP_OBJ_CONS);
 
 		p1 = ASE_LSP_CAR(p);
-		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYMBOL) {
+		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) {
 			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 			return ASE_NULL;
 		}
@@ -316,7 +317,7 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		p2 = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(p)));
 		if (p2 == ASE_NULL) return ASE_NULL;
 
-		if (ase_lsp_set_value (lsp->mem, p1, p2) == ASE_NULL) {
+		if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) {
 			lsp->errnum = ASE_LSP_ERR_MEMORY;
 			return ASE_NULL;
 		}
@@ -354,16 +355,18 @@ ase_lsp_obj_t* ase_lsp_prim_defun (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 3, ASE_LSP_PRIM_MAX_ARG_COUNT);
 
 	name = ASE_LSP_CAR(args);
-	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYMBOL) {
+	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYM) 
+	{
 		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 		return ASE_NULL;
 	}
 
-	fun = ase_lsp_make_func (lsp->mem, 
+	fun = ase_lsp_makefunc (lsp->mem, 
 		ASE_LSP_CAR(ASE_LSP_CDR(args)), ASE_LSP_CDR(ASE_LSP_CDR(args)));
 	if (fun == ASE_NULL) return ASE_NULL;
 
-	if (ase_lsp_set_func (lsp->mem, ASE_LSP_CAR(args), fun) == ASE_NULL) {
+	if (ase_lsp_setfunc (lsp->mem, ASE_LSP_CAR(args), fun) == ASE_NULL) 
+	{
 		lsp->errnum = ASE_LSP_ERR_MEMORY;
 		return ASE_NULL;
 	}
@@ -382,16 +385,18 @@ ase_lsp_obj_t* ase_lsp_prim_demac (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 3, ASE_LSP_PRIM_MAX_ARG_COUNT);
 
 	name = ASE_LSP_CAR(args);
-	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYMBOL) {
+	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYM) 
+	{
 		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 		return ASE_NULL;
 	}
 
-	mac = ase_lsp_make_macro (lsp->mem, 
+	mac = ase_lsp_makemacro (lsp->mem, 
 		ASE_LSP_CAR(ASE_LSP_CDR(args)), ASE_LSP_CDR(ASE_LSP_CDR(args)));
 	if (mac == ASE_NULL) return ASE_NULL;
 
-	if (ase_lsp_set_func (lsp->mem, ASE_LSP_CAR(args), mac) == ASE_NULL) {
+	if (ase_lsp_setfunc (lsp->mem, ASE_LSP_CAR(args), mac) == ASE_NULL) 
+	{
 		lsp->errnum = ASE_LSP_ERR_MEMORY;
 		return ASE_NULL;
 	}

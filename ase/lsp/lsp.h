@@ -1,11 +1,12 @@
 /*
- * $Id: lsp.h,v 1.25 2006-10-24 04:22:39 bacon Exp $
+ * $Id: lsp.h,v 1.26 2006-10-25 13:42:31 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSP_H_
 #define _ASE_LSP_LSP_H_
 
-#include <ase/lsp/types.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
 typedef struct ase_lsp_t ase_lsp_t;
 typedef struct ase_lsp_obj_t ase_lsp_obj_t;
@@ -117,6 +118,32 @@ int ase_lsp_print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj);
 int ase_lsp_add_prim (ase_lsp_t* lsp, const ase_char_t* name, ase_lsp_prim_t prim);
 int ase_lsp_remove_prim (ase_lsp_t* lsp, const ase_char_t* name);
 
+/* string functions exported by lsp.h */
+ase_char_t* ase_lsp_strdup (ase_lsp_t* lsp, const ase_char_t* str);
+ase_char_t* ase_lsp_strxdup (
+	ase_lsp_t* lsp, const ase_char_t* str, ase_size_t len);
+ase_char_t* ase_lsp_strxdup2 (
+	ase_lsp_t* lsp,
+	const ase_char_t* str1, ase_size_t len1,
+	const ase_char_t* str2, ase_size_t len2);
+
+ase_size_t ase_lsp_strlen (const ase_char_t* str);
+ase_size_t ase_lsp_strcpy (ase_char_t* buf, const ase_char_t* str);
+ase_size_t ase_lsp_strncpy (ase_char_t* buf, const ase_char_t* str, ase_size_t len);
+int ase_lsp_strcmp (const ase_char_t* s1, const ase_char_t* s2);
+
+int ase_lsp_strxncmp (
+	const ase_char_t* s1, ase_size_t len1, 
+	const ase_char_t* s2, ase_size_t len2);
+
+int ase_lsp_strxncasecmp (
+	ase_lsp_t* lsp,
+	const ase_char_t* s1, ase_size_t len1, 
+	const ase_char_t* s2, ase_size_t len2);
+
+ase_char_t* ase_lsp_strxnstr (
+	const ase_char_t* str, ase_size_t strsz, 
+	const ase_char_t* sub, ase_size_t subsz);
 
 const ase_char_t* ase_lsp_geterrstr (int errnum);
 

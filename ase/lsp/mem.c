@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.13 2006-10-24 15:31:35 bacon Exp $
+ * $Id: mem.c,v 1.14 2006-10-25 13:42:31 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -56,11 +56,11 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	mem->macro  = ASE_NULL;
 
 	/* initialize common object pointers */
-	mem->nil     = ase_lsp_make_nil    (mem);
-	mem->t       = ase_lsp_make_true   (mem);
-	mem->quote   = ase_lsp_make_symbol (mem, ASE_T("quote"));
-	mem->lambda  = ase_lsp_make_symbol (mem, ASE_T("lambda"));
-	mem->macro   = ase_lsp_make_symbol (mem, ASE_T("macro"));
+	mem->nil     = ase_lsp_makenil    (mem);
+	mem->t       = ase_lsp_maketrue   (mem);
+	mem->quote   = ase_lsp_makesymobj (mem, ASE_T("quote"),  5);
+	mem->lambda  = ase_lsp_makesymobj (mem, ASE_T("lambda"), 6);
+	mem->macro   = ase_lsp_makesymobj (mem, ASE_T("macro"),  5);
 
 	if (mem->nil    == ASE_NULL ||
 	    mem->t      == ASE_NULL ||
@@ -98,17 +98,17 @@ static int __add_prim (ase_lsp_mem_t* mem,
 {
 	ase_lsp_obj_t* n, * p;
 	
-	n = ase_lsp_make_symbolx (mem, name, len);
+	n = ase_lsp_makesymobj (mem, name, len);
 	if (n == ASE_NULL) return -1;
 
-	ase_lsp_lock (n);
+	ase_lsp_lockobj (mem->lsp, n);
 
-	p = ase_lsp_make_prim (mem, prim);
+	p = ase_lsp_makeprim (mem, prim);
 	if (p == ASE_NULL) return -1;
 
-	ase_lsp_unlock (n);
+	ase_lsp_unlockobj (mem->lsp, n);
 
-	if (ase_lsp_set_func(mem, n, p) == ASE_NULL) return -1;
+	if (ase_lsp_setfunc(mem, n, p) == ASE_NULL) return -1;
 
 	return 0;
 }
@@ -161,11 +161,12 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 		if (mem->count >= mem->ubound) return ASE_NULL;
 	}
 
-	obj = (ase_lsp_obj_t*) ase_malloc (size);
-	if (obj == ASE_NULL) {
+	obj = (ase_lsp_obj_t*) ASE_LSP_MALLOC (mem->lsp, size);
+	if (obj == ASE_NULL) 
+	{
 		ase_lsp_collectgarbage (mem);
 
-		obj = (ase_lsp_obj_t*) ase_malloc (size);
+		obj = (ase_lsp_obj_t*) ASE_LSP_MALLOC (mem->lsp, size);
 		if (obj == ASE_NULL) return ASE_NULL;
 	}
 
@@ -225,9 +226,9 @@ void ase_lsp_dispose_all (ase_lsp_mem_t* mem)
 	}
 }
 
-static void __mark_obj (ase_lsp_obj_t* obj)
+static void __mark_obj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_assert (obj != ASE_NULL);
+	ase_lsp_assert (lsp, obj != ASE_NULL);
 
 	// TODO:....
 	// can it be recursive?
@@ -237,57 +238,57 @@ static void __mark_obj (ase_lsp_obj_t* obj)
 
 	if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
 	{
-		__mark_obj (ASE_LSP_CAR(obj));
-		__mark_obj (ASE_LSP_CDR(obj));
+		__mark_obj (lsp, ASE_LSP_CAR(obj));
+		__mark_obj (lsp, ASE_LSP_CDR(obj));
 	}
 	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_FUNC) 
 	{
-		__mark_obj (ASE_LSP_FFORMAL(obj));
-		__mark_obj (ASE_LSP_FBODY(obj));
+		__mark_obj (lsp, ASE_LSP_FFORMAL(obj));
+		__mark_obj (lsp, ASE_LSP_FBODY(obj));
 	}
 	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_MACRO) 
 	{
-		__mark_obj (ASE_LSP_MFORMAL(obj));
-		__mark_obj (ASE_LSP_MBODY(obj));
+		__mark_obj (lsp, ASE_LSP_MFORMAL(obj));
+		__mark_obj (lsp, ASE_LSP_MBODY(obj));
 	}
 }
 
 /*
- * ase_lsp_lock and ase_lsp_unlockallobjs are just called by ase_lsp_read.
+ * ase_lsp_lockobj and ase_lsp_unlockallobjs are just called by ase_lsp_read.
  */
-void ase_lsp_lockobj (ase_lsp_obj_t* obj)
+void ase_lsp_lockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_assert (obj != ASE_NULL);
+	ase_lsp_assert (lsp, obj != ASE_NULL);
 	ASE_LSP_LOCK(obj) = 1;
 	//ASE_LSP_MARK(obj) = 1;
 }
 
-void ase_lsp_unlockobj (ase_lsp_obj_t* obj)
+void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_assert (obj != ASE_NULL);
+	ase_lsp_assert (lsp, obj != ASE_NULL);
 	ASE_LSP_LOCK(obj) = 0;
 }
 
-void ase_lsp_unlockallobjs (ase_lsp_obj_t* obj)
+void ase_lsp_unlockallobjs (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_assert (obj != ASE_NULL);
+	ase_lsp_assert (lsp, obj != ASE_NULL);
 
 	ASE_LSP_LOCK(obj) = 0;
 
 	if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
 	{
-		ase_lsp_unlockallobjs (ASE_LSP_CAR(obj));
-		ase_lsp_unlockallobjs (ASE_LSP_CDR(obj));
+		ase_lsp_unlockallobjs (lsp, ASE_LSP_CAR(obj));
+		ase_lsp_unlockallobjs (lsp, ASE_LSP_CDR(obj));
 	}
 	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_FUNC) 
 	{
-		ase_lsp_unlockallobjs (ASE_LSP_FFORMAL(obj));
-		ase_lsp_unlockallobjs (ASE_LSP_FBODY(obj));
+		ase_lsp_unlockallobjs (lsp, ASE_LSP_FFORMAL(obj));
+		ase_lsp_unlockallobjs (lsp, ASE_LSP_FBODY(obj));
 	}
 	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_MACRO) 
 	{
-		ase_lsp_unlockallobjs (ASE_LSP_MFORMAL(obj));
-		ase_lsp_unlockallobjs (ASE_LSP_MBODY(obj));
+		ase_lsp_unlockallobjs (lsp, ASE_LSP_MFORMAL(obj));
+		ase_lsp_unlockallobjs (lsp, ASE_LSP_MBODY(obj));
 	}
 }
 
@@ -308,12 +309,12 @@ static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
 		assoc = frame->assoc;
 		while (assoc != ASE_NULL) 
 		{
-			__mark_obj (assoc->name);
+			__mark_obj (mem->lsp, assoc->name);
 
 			if (assoc->value != ASE_NULL) 
-				__mark_obj (assoc->value);
+				__mark_obj (mem->lsp, assoc->value);
 			if (assoc->func != ASE_NULL) 
-				__mark_obj (assoc->func);
+				__mark_obj (mem->lsp, assoc->func);
 
 			assoc = assoc->link;
 		}
@@ -331,12 +332,12 @@ static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
 
 		assoc = frame->assoc;
 		while (assoc != ASE_NULL) {
-			__mark_obj (assoc->name);
+			__mark_obj (mem->lsp, assoc->name);
 
 			if (assoc->value != ASE_NULL) 
-				__mark_obj (assoc->value);
+				__mark_obj (mem->lsp, assoc->value);
 			if (assoc->func != ASE_NULL) 
-				__mark_obj (assoc->func);
+				__mark_obj (mem->lsp, assoc->func);
 
 			assoc = assoc->link;
 		}
@@ -346,26 +347,27 @@ static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
 
 	/*
 	ase_dprint0 (ASE_T("marking the locked object\n"));
-	if (mem->locked != ASE_NULL) __mark_obj (mem->locked);
+	if (mem->locked != ASE_NULL) __mark_obj (mem->lsp, mem->locked);
 	*/
 
 #if 0
 	ase_dprint0 (ASE_T("marking termporary objects\n"));
 #endif
 	array = mem->temp_array;
-	for (i = 0; i < array->size; i++) {
-		__mark_obj (array->buffer[i]);
+	for (i = 0; i < array->size; i++) 
+	{
+		__mark_obj (mem->lsp, array->buffer[i]);
 	}
 
 #if 0
 	ase_dprint0 (ASE_T("marking builtin objects\n"));
 #endif
 	// mark common objects
-	if (mem->t      != ASE_NULL) __mark_obj (mem->t);
-	if (mem->nil    != ASE_NULL) __mark_obj (mem->nil);
-	if (mem->quote  != ASE_NULL) __mark_obj (mem->quote);
-	if (mem->lambda != ASE_NULL) __mark_obj (mem->lambda);
-	if (mem->macro  != ASE_NULL) __mark_obj (mem->macro);
+	if (mem->t      != ASE_NULL) __mark_obj (mem->lsp, mem->t);
+	if (mem->nil    != ASE_NULL) __mark_obj (mem->lsp, mem->nil);
+	if (mem->quote  != ASE_NULL) __mark_obj (mem->lsp, mem->quote);
+	if (mem->lambda != ASE_NULL) __mark_obj (mem->lsp, mem->lambda);
+	if (mem->macro  != ASE_NULL) __mark_obj (mem->lsp, mem->macro);
 }
 
 static void ase_lsp_sweepunmarkedobjs (ase_lsp_mem_t* mem)
@@ -408,21 +410,23 @@ void ase_lsp_collectgarbage (ase_lsp_mem_t* mem)
 	ase_lsp_sweepunmarkedobjs (mem);
 }
 
-ase_lsp_obj_t* ase_lsp_make_nil (ase_lsp_mem_t* mem)
+ase_lsp_obj_t* ase_lsp_makenil (ase_lsp_mem_t* mem)
 {
 	if (mem->nil != ASE_NULL) return mem->nil;
-	mem->nil = ase_lsp_alloc (mem, ASE_LSP_OBJ_NIL, ase_sizeof(ase_lsp_obj_nil_t));
+	mem->nil = ase_lsp_alloc (
+		mem, ASE_LSP_OBJ_NIL, ase_sizeof(ase_lsp_obj_nil_t));
 	return mem->nil;
 }
 
-ase_lsp_obj_t* ase_lsp_make_true (ase_lsp_mem_t* mem)
+ase_lsp_obj_t* ase_lsp_maketrue (ase_lsp_mem_t* mem)
 {
 	if (mem->t != ASE_NULL) return mem->t;
-	mem->t = ase_lsp_alloc (mem, ASE_LSP_OBJ_TRUE, ase_sizeof(ase_lsp_obj_true_t));
+	mem->t = ase_lsp_alloc (
+		mem, ASE_LSP_OBJ_TRUE, ase_sizeof(ase_lsp_obj_true_t));
 	return mem->t;
 }
 
-ase_lsp_obj_t* ase_lsp_make_int (ase_lsp_mem_t* mem, ase_lsp_int_t value)
+ase_lsp_obj_t* ase_lsp_makeintobj (ase_lsp_mem_t* mem, ase_long_t value)
 {
 	ase_lsp_obj_t* obj;
 
@@ -435,7 +439,7 @@ ase_lsp_obj_t* ase_lsp_make_int (ase_lsp_mem_t* mem, ase_lsp_int_t value)
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_make_real (ase_lsp_mem_t* mem, ase_lsp_real_t value)
+ase_lsp_obj_t* ase_lsp_makerealobj (ase_lsp_mem_t* mem, ase_real_t value)
 {
 	ase_lsp_obj_t* obj;
 
@@ -448,57 +452,50 @@ ase_lsp_obj_t* ase_lsp_make_real (ase_lsp_mem_t* mem, ase_lsp_real_t value)
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_make_symbol (ase_lsp_mem_t* mem, const ase_char_t* str)
-{
-	return ase_lsp_make_symbolx (mem, str, ase_strlen(str));
-}
-
-ase_lsp_obj_t* ase_lsp_make_symbolx (
+ase_lsp_obj_t* ase_lsp_makesymobj (
 	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len)
 {
 	ase_lsp_obj_t* obj;
 
 	// look for a sysmbol with the given name
-	obj = mem->used[ASE_LSP_OBJ_SYMBOL];
-	while (obj != ASE_NULL) {
+	obj = mem->used[ASE_LSP_OBJ_SYM];
+	while (obj != ASE_NULL) 
+	{
 		// if there is a symbol with the same name, it is just used.
-		if (ase_lsp_comp_symbol2 (obj, str, len) == 0) return obj;
+		if (ase_lsp_strxncmp (
+			ASE_LSP_SYMVALUE(obj), 
+			ASE_LSP_SYMLEN(obj), str, len) == 0) return obj;
 		obj = ASE_LSP_LINK(obj);
 	}
 
 	// no such symbol found. create a new one 
-	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_SYMBOL,
-		ase_sizeof(ase_lsp_obj_symbol_t) + (len + 1) * ase_sizeof(ase_char_t));
+	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_SYM,
+		ase_sizeof(ase_lsp_obj_sym_t)+(len + 1)*ase_sizeof(ase_char_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	// fill in the symbol buffer
-	ase_lsp_copy_string2 (ASE_LSP_SYMVALUE(obj), str, len);
+	ase_lsp_strncpy (ASE_LSP_SYMVALUE(obj), str, len);
 
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_make_string (ase_lsp_mem_t* mem, const ase_char_t* str)
-{
-	return ase_lsp_make_stringx (mem, str, ase_strlen(str));
-}
-
-ase_lsp_obj_t* ase_lsp_make_stringx (
+ase_lsp_obj_t* ase_lsp_makestrobj (
 	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len)
 {
 	ase_lsp_obj_t* obj;
 
 	// allocate memory for the string
-	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_STRING,
-		ase_sizeof(ase_lsp_obj_string_t) + (len + 1) * ase_sizeof(ase_char_t));
+	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_STR,
+		ase_sizeof(ase_lsp_obj_str_t)+(len + 1)*ase_sizeof(ase_char_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	// fill in the string buffer
-	ase_lsp_copy_string2 (ASE_LSP_STRVALUE(obj), str, len);
+	ase_lsp_strncpy (ASE_LSP_STRVALUE(obj), str, len);
 
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_make_cons (
+ase_lsp_obj_t* ase_lsp_makecons (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* car, ase_lsp_obj_t* cdr)
 {
 	ase_lsp_obj_t* obj;
@@ -512,7 +509,7 @@ ase_lsp_obj_t* ase_lsp_make_cons (
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_make_func (
+ase_lsp_obj_t* ase_lsp_makefunc (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* formal, ase_lsp_obj_t* body)
 {
 	ase_lsp_obj_t* obj;
@@ -526,7 +523,7 @@ ase_lsp_obj_t* ase_lsp_make_func (
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_make_macro (
+ase_lsp_obj_t* ase_lsp_makemacro (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* formal, ase_lsp_obj_t* body)
 {
 	ase_lsp_obj_t* obj;
@@ -540,15 +537,16 @@ ase_lsp_obj_t* ase_lsp_make_macro (
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_make_prim (ase_lsp_mem_t* mem, void* impl)
+ase_lsp_obj_t* ase_lsp_makeprim (ase_lsp_mem_t* mem, void* impl)
 {
 	ase_lsp_obj_t* obj;
 
-	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_PRIM, ase_sizeof(ase_lsp_obj_prim_t));
+	obj = ase_lsp_alloc (
+		mem, ASE_LSP_OBJ_PRIM, ase_sizeof(ase_lsp_obj_prim_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
-	ASE_LSP_PRIM(obj) = impl;
-
+	/*ASE_LSP_PRIM(obj) = (ase_lsp_prim_t)impl;*/
+	((ase_lsp_obj_prim_t*)obj)->impl = impl;
 	return obj;
 }
 
@@ -557,11 +555,12 @@ ase_lsp_assoc_t* ase_lsp_lookup (ase_lsp_mem_t* mem, ase_lsp_obj_t* name)
 	ase_lsp_frame_t* frame;
 	ase_lsp_assoc_t* assoc;
 
-	ase_assert (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYMBOL);
+	ase_lsp_assert (mem->lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	frame = mem->frame;
 
-	while (frame != ASE_NULL) {
+	while (frame != ASE_NULL) 
+	{
 		assoc = ase_lsp_frame_lookup (frame, name);
 		if (assoc != ASE_NULL) return assoc;
 		frame = frame->link;
@@ -570,13 +569,14 @@ ase_lsp_assoc_t* ase_lsp_lookup (ase_lsp_mem_t* mem, ase_lsp_obj_t* name)
 	return ASE_NULL;
 }
 
-ase_lsp_assoc_t* ase_lsp_set_value (
+ase_lsp_assoc_t* ase_lsp_setvalue (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* name, ase_lsp_obj_t* value)
 {
 	ase_lsp_assoc_t* assoc;
 
 	assoc = ase_lsp_lookup (mem, name);
-	if (assoc == ASE_NULL)  {
+	if (assoc == ASE_NULL)
+	{
 		assoc = ase_lsp_frame_insert_value (
 			mem->root_frame, name, value);
 		if (assoc == ASE_NULL) return ASE_NULL;
@@ -586,13 +586,14 @@ ase_lsp_assoc_t* ase_lsp_set_value (
 	return assoc;
 }
 
-ase_lsp_assoc_t* ase_lsp_set_func (
+ase_lsp_assoc_t* ase_lsp_setfunc (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* name, ase_lsp_obj_t* func)
 {
 	ase_lsp_assoc_t* assoc;
 
 	assoc = ase_lsp_lookup (mem, name);
-	if (assoc == ASE_NULL)  {
+	if (assoc == ASE_NULL) 
+	{
 		assoc = ase_lsp_frame_insert_func (mem->root_frame, name, func);
 		if (assoc == ASE_NULL) return ASE_NULL;
 	}
@@ -605,11 +606,13 @@ ase_size_t ase_lsp_cons_len (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj)
 {
 	ase_size_t count;
 
-	ase_assert (obj == mem->nil || ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (mem->lsp, 
+		obj == mem->nil || ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS);
 
 	count = 0;
 	//while (obj != mem->nil) {
-	while (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) {
+	while (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
+	{
 		count++;
 		obj = ASE_LSP_CDR(obj);
 	}
@@ -617,11 +620,12 @@ ase_size_t ase_lsp_cons_len (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj)
 	return count;
 }
 
-int ase_lsp_probe_args (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj, ase_size_t* len)
+int ase_lsp_probeargs (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj, ase_size_t* len)
 {
 	ase_size_t count = 0;
 
-	while (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) {
+	while (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
+	{
 		count++;
 		obj = ASE_LSP_CDR(obj);
 	}	
@@ -632,102 +636,4 @@ int ase_lsp_probe_args (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj, ase_size_t* len)
 	return 0;
 }
 
-int ase_lsp_comp_symbol (ase_lsp_obj_t* obj, const ase_char_t* str)
-{
-	ase_char_t* p;
-	ase_size_t index, length;
-
-	ase_assert (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_SYMBOL);
-	
-	index = 0;
-	length = ASE_LSP_SYMLEN(obj);
-
-	p = ASE_LSP_SYMVALUE(obj);
-	while (index < length) {
-		if (*p > *str) return 1;
-		if (*p < *str) return -1;
-		index++; p++; str++;
-	}
-
-	return (*str == ASE_T('\0'))? 0: -1;
-}
-
-int ase_lsp_comp_symbol2 (ase_lsp_obj_t* obj, const ase_char_t* str, ase_size_t len)
-{
-	ase_char_t* p;
-	ase_size_t index, length;
-
-	ase_assert (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_SYMBOL);
-	
-	index = 0;
-	length = ASE_LSP_SYMLEN(obj);
-	p = ASE_LSP_SYMVALUE(obj);
-
-	while (index < length && index < len) {
-		if (*p > *str) return 1;
-		if (*p < *str) return -1;
-		index++; p++; str++;
-	}
-
-	return (length < len)? -1: 
-	       (length > len)?  1: 0;
-}
-
-int ase_lsp_comp_string (ase_lsp_obj_t* obj, const ase_char_t* str)
-{
-	ase_char_t* p;
-	ase_size_t index, length;
-
-	ase_assert (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_STRING);
-	
-	index = 0;
-	length = ASE_LSP_STRLEN(obj);
-
-	p = ASE_LSP_STRVALUE(obj);
-	while (index < length) {
-		if (*p > *str) return 1;
-		if (*p < *str) return -1;
-		index++; p++; str++;
-	}
-
-	return (*str == ASE_T('\0'))? 0: -1;
-}
-
-int ase_lsp_comp_string2 (ase_lsp_obj_t* obj, const ase_char_t* str, ase_size_t len)
-{
-	ase_char_t* p;
-	ase_size_t index, length;
-
-	ase_assert (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_STRING);
-	
-	index = 0;
-	length = ASE_LSP_STRLEN(obj);
-	p = ASE_LSP_STRVALUE(obj);
-
-	while (index < length && index < len) {
-		if (*p > *str) return 1;
-		if (*p < *str) return -1;
-		index++; p++; str++;
-	}
-
-	return (length < len)? -1: 
-	       (length > len)?  1: 0;
-}
-
-void ase_lsp_copy_string (ase_char_t* dst, const ase_char_t* str)
-{
-	// the buffer pointed by dst should be big enough to hold str
-	while (*str != ASE_T('\0')) *dst++ = *str++;
-	*dst = ASE_T('\0');
-}
-
-void ase_lsp_copy_string2 (ase_char_t* dst, const ase_char_t* str, ase_size_t len)
-{
-	// the buffer pointed by dst should be big enough to hold str
-	while (len > 0) {
-		*dst++ = *str++;
-		len--;
-	}
-	*dst = ASE_T('\0');
-}
 

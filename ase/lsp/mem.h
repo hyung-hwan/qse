@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.10 2006-10-24 15:31:35 bacon Exp $
+ * $Id: mem.h,v 1.11 2006-10-25 13:42:31 bacon Exp $
  */
 
 #ifndef _ASE_LSP_MEM_H_
@@ -65,51 +65,40 @@ void ase_lsp_dispose  (ase_lsp_mem_t* mem, ase_lsp_obj_t* prev, ase_lsp_obj_t* o
 void ase_lsp_dispose_all (ase_lsp_mem_t* mem);
 void ase_lsp_collectgarbage (ase_lsp_mem_t* mem);
 
-void ase_lsp_lockobj (ase_lsp_obj_t* obj);
-void ase_lsp_unlockobj (ase_lsp_obj_t* obj);
-void ase_lsp_unlockallobjs (ase_lsp_obj_t* obj);
+void ase_lsp_lockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
+void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
+void ase_lsp_unlockallobjs (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 
 // object creation of standard types
-ase_lsp_obj_t* ase_lsp_make_nil    (ase_lsp_mem_t* mem);
-ase_lsp_obj_t* ase_lsp_make_true   (ase_lsp_mem_t* mem);
-ase_lsp_obj_t* ase_lsp_make_int    (ase_lsp_mem_t* mem, ase_lsp_int_t value);
-ase_lsp_obj_t* ase_lsp_make_real  (ase_lsp_mem_t* mem, ase_lsp_real_t value);
+ase_lsp_obj_t* ase_lsp_makenil     (ase_lsp_mem_t* mem);
+ase_lsp_obj_t* ase_lsp_maketrue    (ase_lsp_mem_t* mem);
+ase_lsp_obj_t* ase_lsp_makeintobj  (ase_lsp_mem_t* mem, ase_long_t value);
+ase_lsp_obj_t* ase_lsp_makerealobj (ase_lsp_mem_t* mem, ase_real_t value);
 
-ase_lsp_obj_t* ase_lsp_make_symbol (
-	ase_lsp_mem_t* mem, const ase_char_t* str);
-ase_lsp_obj_t* ase_lsp_make_symbolx (
+ase_lsp_obj_t* ase_lsp_makesymobj (
 	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len);
-ase_lsp_obj_t* ase_lsp_make_string (
-	ase_lsp_mem_t* mem, const ase_char_t* str);
-ase_lsp_obj_t* ase_lsp_make_stringx (
+ase_lsp_obj_t* ase_lsp_makestrobj (
 	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len);
-ase_lsp_obj_t* ase_lsp_make_cons (
+
+ase_lsp_obj_t* ase_lsp_makecons (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* car, ase_lsp_obj_t* cdr);
-ase_lsp_obj_t* ase_lsp_make_func (
+ase_lsp_obj_t* ase_lsp_makefunc (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* formal, ase_lsp_obj_t* body);
-ase_lsp_obj_t* ase_lsp_make_macro (
+ase_lsp_obj_t* ase_lsp_makemacro (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* formal, ase_lsp_obj_t* body);
 
-ase_lsp_obj_t* ase_lsp_make_prim (ase_lsp_mem_t* mem, void* impl);
+ase_lsp_obj_t* ase_lsp_makeprim (ase_lsp_mem_t* mem, void* impl);
 
 // frame lookup 
 ase_lsp_assoc_t* ase_lsp_lookup (ase_lsp_mem_t* mem, ase_lsp_obj_t* name);
-ase_lsp_assoc_t* ase_lsp_set_value (
+ase_lsp_assoc_t* ase_lsp_setvalue (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* name, ase_lsp_obj_t* value);
-ase_lsp_assoc_t* ase_lsp_set_func (
+ase_lsp_assoc_t* ase_lsp_setfunc (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* name, ase_lsp_obj_t* func);
 
 // cons operations
 ase_size_t ase_lsp_cons_len (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj);
-int ase_lsp_probe_args (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj, ase_size_t* len);
-
-// symbol and string operations
-int  ase_lsp_comp_symbol  (ase_lsp_obj_t* obj, const ase_char_t* str);
-int  ase_lsp_comp_symbol2 (ase_lsp_obj_t* obj, const ase_char_t* str, ase_size_t len);
-int  ase_lsp_comp_string  (ase_lsp_obj_t* obj, const ase_char_t* str);
-int  ase_lsp_comp_string2 (ase_lsp_obj_t* obj, const ase_char_t* str, ase_size_t len);
-void ase_lsp_copy_string  (ase_char_t* dst,  const ase_char_t* str);
-void ase_lsp_copy_string2 (ase_char_t* dst,  const ase_char_t* str, ase_size_t len);
+int ase_lsp_probeargs (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj, ase_size_t* len);
 
 #ifdef __cplusplus
 }

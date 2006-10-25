@@ -1,11 +1,8 @@
 /*
- * $Id: read.c,v 1.21 2006-10-24 15:31:35 bacon Exp $
+ * $Id: read.c,v 1.22 2006-10-25 13:42:31 bacon Exp $
  */
 
-#include <ase/lsp/lsp.h>
-#include <ase/lsp/token.h>
-#include <ase/bas/assert.h>
-#include <ase/bas/ctype.h>
+#include <ase/lsp/lsp_i.h>
 
 #define IS_SPACE(x) ase_isspace(x)
 #define IS_DIGIT(x) ase_isdigit(x)
@@ -29,7 +26,7 @@
 
 #define TOKEN_ADD_CHAR(lsp,ch) do { \
 	if (ase_lsp_token_addc(&(lsp)->token, ch) == -1) { \
-		lsp->errnum = ASE_LSP_ERR_MEMORY; \
+		lsp->errnum = ASE_LSP_ENOMEM; \
 		return -1; \
 	} \
 } while (0)
@@ -66,14 +63,15 @@ static int read_string (ase_lsp_t* lsp);
 
 ase_lsp_obj_t* ase_lsp_read (ase_lsp_t* lsp)
 {
-	if (lsp->curc == ASE_T_EOF && 
+	if (lsp->curc == ASE_CHAR_EOF && 
 	    read_char(lsp) == -1) return ASE_NULL;
 
-	lsp->errnum = ASE_LSP_ERR_NONE;
+	lsp->errnum = ASE_LSP_ENOERR;
 	NEXT_TOKEN (lsp);
 
-	if (lsp->mem->locked != ASE_NULL) {
-		ase_lsp_unlockallobjs (lsp->mem->locked);
+	if (lsp->mem->locked != ASE_NULL) 
+	{
+		ase_lsp_unlockallobjs (lsp, lsp->mem->locked);
 		lsp->mem->locked = ASE_NULL;
 	}
 	lsp->mem->locked = read_obj (lsp);
@@ -95,30 +93,31 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 		NEXT_TOKEN (lsp);
 		return read_quote (lsp);
 	case TOKEN_INT:
-		obj = ase_lsp_make_int (lsp->mem, TOKEN_IVALUE(lsp));
-		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ERR_MEMORY;
-		ase_lsp_lockobj (obj);
+		obj = ase_lsp_makeintobj (lsp->mem, TOKEN_IVALUE(lsp));
+		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+		ase_lsp_lockobj (lsp, obj);
 		return obj;
 	case TOKEN_REAL:
-		obj = ase_lsp_make_real (lsp->mem, TOKEN_RVALUE(lsp));
-		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ERR_MEMORY;
-		ase_lsp_lockobj (obj);
+		obj = ase_lsp_makerealobj (lsp->mem, TOKEN_RVALUE(lsp));
+		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+		ase_lsp_lockobj (lsp, obj);
 		return obj;
 	case TOKEN_STRING:
-		obj = ase_lsp_make_stringx (
+		obj = ase_lsp_makestrobj (
 			lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
-		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ERR_MEMORY;
-		ase_lsp_lockobj (obj);
+		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+		ase_lsp_lockobj (lsp, obj);
 		return obj;
 	case TOKEN_IDENT:
 		ase_assert (lsp->mem->nil != ASE_NULL && lsp->mem->t != ASE_NULL); 
 		if (TOKEN_COMPARE(lsp,ASE_T("nil")) == 0) obj = lsp->mem->nil;
 		else if (TOKEN_COMPARE(lsp,ASE_T("t")) == 0) obj = lsp->mem->t;
-		else {
-			obj = ase_lsp_make_symbolx (
+		else 
+		{
+			obj = ase_lsp_makesymobj (
 				lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
-			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ERR_MEMORY;
-			ase_lsp_lockobj (obj);
+			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+			ase_lsp_lockobj (lsp, obj);
 		}
 		return obj;
 	}
@@ -165,21 +164,24 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 		}
 
 		obj = read_obj (lsp);
-		if (obj == ASE_NULL) {
-			if (lsp->errnum == ASE_LSP_ERR_END) { 
+		if (obj == ASE_NULL) 
+		{
+			if (lsp->errnum == ASE_LSP_ERR_END)
+			{	
 				// unexpected end of input
 				lsp->errnum = ASE_LSP_ERR_SYNTAX;
 			}
 			return ASE_NULL;
 		}
 
-		p = (ase_lsp_obj_cons_t*)ase_lsp_make_cons (
+		p = (ase_lsp_obj_cons_t*)ase_lsp_makecons (
 			lsp->mem, lsp->mem->nil, lsp->mem->nil);
-		if (p == ASE_NULL) {
-			lsp->errnum = ASE_LSP_ERR_MEMORY;
+		if (p == ASE_NULL) 
+		{
+			lsp->errnum = ASE_LSP_ENOMEM;
 			return ASE_NULL;
 		}
-		ase_lsp_lockobj ((ase_lsp_obj_t*)p);
+		ase_lsp_lockobj (lsp, (ase_lsp_obj_t*)p);
 
 		if (first == ASE_NULL) first = p;
 		if (prev != ASE_NULL) prev->cdr = (ase_lsp_obj_t*)p;
@@ -198,27 +200,31 @@ static ase_lsp_obj_t* read_quote (ase_lsp_t* lsp)
 	ase_lsp_obj_t* cons, * tmp;
 
 	tmp = read_obj (lsp);
-	if (tmp == ASE_NULL) {
-		if (lsp->errnum == ASE_LSP_ERR_END) {
+	if (tmp == ASE_NULL) 
+	{
+		if (lsp->errnum == ASE_LSP_ERR_END) 
+		{
 			// unexpected end of input
 			lsp->errnum = ASE_LSP_ERR_SYNTAX;
 		}
 		return ASE_NULL;
 	}
 
-	cons = ase_lsp_make_cons (lsp->mem, tmp, lsp->mem->nil);
-	if (cons == ASE_NULL) {
-		lsp->errnum = ASE_LSP_ERR_MEMORY;
+	cons = ase_lsp_makecons (lsp->mem, tmp, lsp->mem->nil);
+	if (cons == ASE_NULL) 
+	{
+		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
-	ase_lsp_lockobj (cons);
+	ase_lsp_lockobj (lsp, cons);
 
-	cons = ase_lsp_make_cons (lsp->mem, lsp->mem->quote, cons);
-	if (cons == ASE_NULL) {
-		lsp->errnum = ASE_LSP_ERR_MEMORY;
+	cons = ase_lsp_makecons (lsp->mem, lsp->mem->quote, cons);
+	if (cons == ASE_NULL) 
+	{
+		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
-	ase_lsp_lockobj (cons);
+	ase_lsp_lockobj (lsp, cons);
 
 	return cons;
 }
@@ -227,18 +233,20 @@ static int read_char (ase_lsp_t* lsp)
 {
 	ase_ssize_t n;
 
-	if (lsp->input_func == ASE_NULL) {
+	if (lsp->input_func == ASE_NULL) 
+	{
 		lsp->errnum = ASE_LSP_ERR_INPUT_NOT_ATTACHED;
 		return -1;
 	}
 
 	n = lsp->input_func(ASE_LSP_IO_DATA, lsp->input_arg, &lsp->curc, 1);
-	if (n == -1) {
+	if (n == -1) 
+	{
 		lsp->errnum = ASE_LSP_ERR_INPUT;
 		return -1;
 	}
 
-	if (n == 0) lsp->curc = ASE_T_EOF;
+	if (n == 0) lsp->curc = ASE_CHAR_EOF;
 	return 0;
 }
 
@@ -248,68 +256,84 @@ static int read_token (ase_lsp_t* lsp)
 
 	TOKEN_CLEAR (lsp);
 
-	for (;;) {
+	while (1)
+	{
 		// skip white spaces
 		while (IS_SPACE(lsp->curc)) NEXT_CHAR (lsp);
 
 		// skip the comments here
-		if (lsp->curc == ASE_T(';')) {
-			do {
+		if (lsp->curc == ASE_T(';')) 
+		{
+			do 
+			{
 				NEXT_CHAR (lsp);
-			} while (lsp->curc != ASE_T('\n') && lsp->curc != ASE_T_EOF);
+			} 
+			while (lsp->curc != ASE_T('\n') && lsp->curc != ASE_CHAR_EOF);
 		}
 		else break;
 	}
 
-	if (lsp->curc == ASE_T_EOF) {
+	if (lsp->curc == ASE_CHAR_EOF) 
+	{
 		TOKEN_TYPE(lsp) = TOKEN_END;
 		return 0;
 	}
-	else if (lsp->curc == ASE_T('(')) {
+	else if (lsp->curc == ASE_T('(')) 
+	{
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_LPAREN;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == ASE_T(')')) {
+	else if (lsp->curc == ASE_T(')')) 
+	{
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_RPAREN;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == ASE_T('\'')) {
+	else if (lsp->curc == ASE_T('\'')) 
+	{
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_QUOTE;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == ASE_T('.')) {
+	else if (lsp->curc == ASE_T('.')) 
+	{
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		TOKEN_TYPE(lsp) = TOKEN_DOT;
 		NEXT_CHAR (lsp);
 		return 0;
 	}
-	else if (lsp->curc == ASE_T('-')) {
+	else if (lsp->curc == ASE_T('-')) 
+	{
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
-		if (IS_DIGIT(lsp->curc)) {
+		if (IS_DIGIT(lsp->curc)) 
+		{
 			return read_number (lsp, 1);
 		}
-		else if (IS_IDENT(lsp->curc)) {
+		else if (IS_IDENT(lsp->curc)) 
+		{
 			return read_ident (lsp);
 		}
-		else {
+		else 
+		{
 			TOKEN_TYPE(lsp) = TOKEN_IDENT;
 			return 0;
 		}
 	}
-	else if (IS_DIGIT(lsp->curc)) {
+	else if (IS_DIGIT(lsp->curc)) 
+	{
 		return read_number (lsp, 0);
 	}
-	else if (IS_ALPHA(lsp->curc) || IS_IDENT(lsp->curc)) {
+	else if (IS_ALPHA(lsp->curc) || IS_IDENT(lsp->curc)) 
+	{
 		return read_ident (lsp);
 	}
-	else if (lsp->curc == ASE_T('\"')) {
+	else if (lsp->curc == ASE_T('\"')) 
+	{
 		NEXT_CHAR (lsp);
 		return read_string (lsp);
 	}
@@ -321,24 +345,28 @@ static int read_token (ase_lsp_t* lsp)
 
 static int read_number (ase_lsp_t* lsp, int negative)
 {
-	ase_lsp_int_t ivalue = 0;
-	ase_lsp_real_t rvalue = 0.;
+	ase_long_t ivalue = 0;
+	ase_real_t rvalue = 0.;
 
-	do {
+	do 
+	{
 		ivalue = ivalue * 10 + (lsp->curc - ASE_T('0'));
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
-	} while (IS_DIGIT(lsp->curc));
+	} 
+	while (IS_DIGIT(lsp->curc));
 
 /* TODO: extend parsing floating point number  */
-	if (lsp->curc == ASE_T('.')) {
-		ase_lsp_real_t fraction = 0.1;
+	if (lsp->curc == ASE_T('.')) 
+	{
+		ase_real_t fraction = 0.1;
 
 		NEXT_CHAR (lsp);
-		rvalue = (ase_lsp_real_t)ivalue;
+		rvalue = (ase_real_t)ivalue;
 
-		while (IS_DIGIT(lsp->curc)) {
-			rvalue += (ase_lsp_real_t)(lsp->curc - ASE_T('0')) * fraction;
+		while (IS_DIGIT(lsp->curc)) 
+		{
+			rvalue += (ase_real_t)(lsp->curc - ASE_T('0')) * fraction;
 			fraction *= 0.1;
 			NEXT_CHAR (lsp);
 		}
@@ -372,7 +400,7 @@ static int read_string (ase_lsp_t* lsp)
 	ase_cint_t code = 0;
 
 	do {
-		if (lsp->curc == ASE_T_EOF) {
+		if (lsp->curc == ASE_CHAR_EOF) {
 			TOKEN_TYPE(lsp) = TOKEN_UNTERM_STRING;
 			return 0;
 		}

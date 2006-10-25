@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.15 2006-10-24 04:22:39 bacon Exp $
+ * $Id: eval.c,v 1.16 2006-10-25 13:42:31 bacon Exp $
  */
 
 #include <ase/lsp/lsp.h>
@@ -20,7 +20,7 @@ ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 
 	if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
 		return eval_cons (lsp, obj);
-	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_SYMBOL) {
+	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_SYM) {
 		ase_lsp_assoc_t* assoc; 
 
 		/*
@@ -80,8 +80,8 @@ static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macr
 	}
 
 	func = (is_macro)?
-		ase_lsp_make_macro (lsp->mem, formal, body):
-		ase_lsp_make_func (lsp->mem, formal, body);
+		ase_lsp_makemacro (lsp->mem, formal, body):
+		ase_lsp_makefunc (lsp->mem, formal, body);
 	if (func == ASE_NULL) {
 		lsp->errnum = ASE_LSP_ERR_MEMORY;
 		return ASE_NULL;
@@ -99,16 +99,20 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 	car = ASE_LSP_CAR(cons);
 	cdr = ASE_LSP_CDR(cons);
 
-	if (car == lsp->mem->lambda) {
+	if (car == lsp->mem->lambda) 
+	{
 		return make_func (lsp, cdr, 0);
 	}
-	else if (car == lsp->mem->macro) {
+	else if (car == lsp->mem->macro) 
+	{
 		return make_func (lsp, cdr, 1);
 	}
-	else if (ASE_LSP_TYPE(car) == ASE_LSP_OBJ_SYMBOL) {
+	else if (ASE_LSP_TYPE(car) == ASE_LSP_OBJ_SYM) 
+	{
 		ase_lsp_assoc_t* assoc;
 
-		if ((assoc = ase_lsp_lookup(lsp->mem, car)) != ASE_NULL) {
+		if ((assoc = ase_lsp_lookup(lsp->mem, car)) != ASE_NULL) 
+		{
 			//ase_lsp_obj_t* func = assoc->value;
 			ase_lsp_obj_t* func = assoc->func;
 			if (func == ASE_NULL) {
@@ -118,14 +122,17 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 			}
 
 			if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_FUNC ||
-			    ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO) {
+			    ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO) 
+			{
 				return apply (lsp, func, cdr);
 			}
-			else if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_PRIM) {
+			else if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_PRIM) 
+			{
 				/* primitive function */
 				return ASE_LSP_PRIM(func) (lsp, cdr);
 			}
-			else {
+			else 
+			{
 //TODO: emit the name for debugging
 				lsp->errnum = ASE_LSP_ERR_UNDEF_FUNC;
 				return ASE_NULL;
