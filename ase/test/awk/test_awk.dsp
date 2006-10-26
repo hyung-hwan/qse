@@ -1,24 +1,24 @@
-# Microsoft Developer Studio Project File - Name="xptestawk" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="test_awk" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Console Application" 0x0103
 
-CFG=xptestawk - Win32 Debug
+CFG=test_awk - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "xptestawk.mak".
+!MESSAGE NMAKE /f "test_awk.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "xptestawk.mak" CFG="xptestawk - Win32 Debug"
+!MESSAGE NMAKE /f "test_awk.mak" CFG="test_awk - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "xptestawk - Win32 Release" (based on "Win32 (x86) Console Application")
-!MESSAGE "xptestawk - Win32 Debug" (based on "Win32 (x86) Console Application")
+!MESSAGE "test_awk - Win32 Release" (based on "Win32 (x86) Console Application")
+!MESSAGE "test_awk - Win32 Debug" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -28,7 +28,7 @@ CFG=xptestawk - Win32 Debug
 CPP=cl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "xptestawk - Win32 Release"
+!IF  "$(CFG)" == "test_awk - Win32 Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "..\..\.." /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_UNICODE" /D "__STAND_ALONE" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "..\..\.." /I "\projects\xpkit" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_UNICODE" /D _WIN32_WINNT=0x0400 /D "__STAND_ALONE" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,9 +50,9 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 xpawk.lib /nologo /subsystem:console /machine:I386 /out:"..\..\..\release\awk.exe" /libpath:"..\..\..\release"
+# ADD LINK32 aseawk.lib  xpbas.lib user32.lib kernel32.lib /nologo /subsystem:console /machine:I386 /out:"..\..\..\release\awk.exe" /libpath:"..\..\release" /libpath:"\projects\xpkit\release"
 
-!ELSEIF  "$(CFG)" == "xptestawk - Win32 Debug"
+!ELSEIF  "$(CFG)" == "test_awk - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "..\..\.." /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_UNICODE" /D _WIN32_WINNT=0x0400 /D "__STAND_ALONE" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "..\..\.." /I "\projects\xpkit" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_UNICODE" /D _WIN32_WINNT=0x0400 /D "__STAND_ALONE" /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -74,14 +74,14 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 xpawk.lib xpbas.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /out:"..\..\..\debug\awk.exe" /pdbtype:sept /libpath:"..\..\..\debug"
+# ADD LINK32 aseawk.lib xpbas.lib user32.lib kernel32.lib /nologo /subsystem:console /debug /machine:I386 /out:"..\..\..\debug\awk.exe" /pdbtype:sept /libpath:"..\..\debug" /libpath:"\projects\xpkit\debug"
 
 !ENDIF 
 
 # Begin Target
 
-# Name "xptestawk - Win32 Release"
-# Name "xptestawk - Win32 Debug"
+# Name "test_awk - Win32 Release"
+# Name "test_awk - Win32 Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -97,10 +97,6 @@ SOURCE=.\awk.c
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-# Begin Source File
-
-SOURCE=..\..\..\debug\xpawk.lib
-# End Source File
 # End Group
 # End Target
 # End Project
