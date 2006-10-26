@@ -1,10 +1,10 @@
-SRCS = lisp.c
+SRCS = lsp.c
 OUTS = $(SRCS:.c=.x)
 
 CC = @CC@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/xp/bas -L@abs_top_builddir@/xp/lsp
-LIBS = @LIBS@ -lxpbas -lxplsp
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/lsp
+LIBS = @LIBS@ -lxpbas -laselsp
 
 all: $(OUTS)
 
