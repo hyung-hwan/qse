@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.195 2006-10-26 09:27:15 bacon Exp $
+ * $Id: parse.c,v 1.196 2006-10-26 14:21:40 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -281,11 +281,11 @@ static struct __bvent __bvtab[] =
 };
 
 #define GET_CHAR(awk) \
-	do { if (__get_char(awk) == -1) return -1; } while(0)
+	do { if (__get_char (awk) == -1) return -1; } while(0)
 
 #define GET_CHAR_TO(awk,c) \
 	do { \
-		if (__get_char(awk) == -1) return -1; \
+		if (__get_char (awk) == -1) return -1; \
 		c = (awk)->src.lex.curc; \
 	} while(0)
 
@@ -1247,12 +1247,52 @@ awk->parse.nl_semicolon = 1;
 	else if (MATCH(awk,TOKEN_PRINT))
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
-		nde = __parse_print (awk);
+		if (MATCH (awk, TOKEN_LPAREN)) 
+		{
+			if (__get_token(awk) == -1) return ASE_NULL;
+			nde = __parse_print (awk);
+			if (nde == ASE_NULL) return ASE_NULL;
+
+			if (!MATCH (awk, TOKEN_RPAREN))
+			{
+				ase_awk_clrpt (awk, nde);
+				PANIC (awk, ASE_AWK_ERPAREN);
+			}
+			if (__get_token(awk) == -1) 
+			{
+				ase_awk_clrpt (awk, nde);
+				return ASE_NULL;
+			}
+		}
+		else
+		{
+			nde = __parse_print (awk);
+		}
 	}
 	else if (MATCH(awk,TOKEN_PRINTF))
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
-		nde = __parse_printf (awk);
+		if (MATCH (awk, TOKEN_LPAREN)) 
+		{
+			if (__get_token(awk) == -1) return ASE_NULL;
+			nde = __parse_printf (awk);
+			if (nde == ASE_NULL) return ASE_NULL;
+
+			if (!MATCH (awk, TOKEN_RPAREN))
+			{
+				ase_awk_clrpt (awk, nde);
+				PANIC (awk, ASE_AWK_ERPAREN);
+			}
+			if (__get_token(awk) == -1) 
+			{
+				ase_awk_clrpt (awk, nde);
+				return ASE_NULL;
+			}
+		}
+		else
+		{
+			nde = __parse_printf (awk);
+		}
 	}
 	else 
 	{
@@ -2227,7 +2267,6 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk)
 		if (MATCH(awk,TOKEN_IDENT))
 		{
 			/* getline var */
-			
 			var = __parse_primary (awk);
 			if (var == ASE_NULL) return ASE_NULL;
 		}
@@ -3221,6 +3260,8 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk)
 static ase_awk_nde_t* __parse_printf (ase_awk_t* awk)
 {
 	/* TODO: implement this... */
+ASE_AWK_ASSERT (awk, !"printf not implemented yet");
+awk->errnum = ASE_AWK_EINTERNAL;
 	return ASE_NULL;
 }
 
@@ -3297,9 +3338,25 @@ static int __get_token (ase_awk_t* awk)
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_EOF);
 	}	
-	else if (ASE_AWK_ISDIGIT (awk, c) || c == ASE_T('.'))
+	else if (ASE_AWK_ISDIGIT (awk, c)/*|| c == ASE_T('.')*/)
 	{
 		if (__get_number (awk) == -1) return -1;
+	}
+	else if (c == ASE_T('.'))
+	{
+		if (__get_char (awk) == -1) return -1;
+		c = awk->src.lex.curc;
+
+		if (ASE_AWK_ISDIGIT (awk, c))
+		{
+			if (__unget_char (awk, c) == -1) return -1;
+			if (__get_number (awk) == -1) return -1;
+		}
+		else
+		{
+			awk->errnum = ASE_AWK_ELXCHR;
+			return -1;
+		}
 	}
 	else if (ASE_AWK_ISALPHA (awk, c) || c == ASE_T('_')) 
 	{
@@ -4066,7 +4123,7 @@ static int __skip_comment (ase_awk_t* awk)
 		return 1; /* c-style comment */
 	}
 
-	if (__unget_char(awk,c) == -1) return -1; /* error */
+	if (__unget_char (awk, c) == -1) return -1; /* error */
 	awk->src.lex.curc = ASE_T('/');
 
 	return 0;

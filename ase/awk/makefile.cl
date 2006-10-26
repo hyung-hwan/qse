@@ -22,9 +22,9 @@ JAVACFLAGS = -classpath ../..
 
 all: lib jni
 
-lib: $(OBJS)
+lib: $(C_OBJS)
 	$(LD) /lib @<<
-/nologo /out:$(OUT).lib $(OBJS)
+/nologo /out:$(OUT).lib $(C_OBJS)
 <<
 
 jni: $(JNI_OBJS) $(JAVA_OBJS) 
