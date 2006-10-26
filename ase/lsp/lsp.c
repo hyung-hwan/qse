@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.8 2006-10-24 15:31:35 bacon Exp $
+ * $Id: lsp.c,v 1.9 2006-10-26 08:17:37 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -20,6 +20,7 @@ ase_lsp_t* ase_lsp_open (
 	if (syscas == ASE_NULL) return ASE_NULL;
 
 	if (syscas->malloc == ASE_NULL || 
+	    syscas->realloc == ASE_NULL || 
 	    syscas->free == ASE_NULL) return ASE_NULL;
 
 	if (syscas->is_upper  == ASE_NULL ||
@@ -60,9 +61,9 @@ ase_lsp_t* ase_lsp_open (
 	else syscas->memcpy (&lsp->syscas, syscas, ase_sizeof(lsp->syscas));
 	if (syscas->memset == ASE_NULL) lsp->syscas.memset = ase_lsp_memset;
 
-	if (ase_lsp_token_open(&lsp->token, 0) == ASE_NULL) 
+	if (ase_lsp_name_open(&lsp->token.name, 0, lsp) == ASE_NULL) 
 	{
-		if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
+		ASE_LSP_FREE (lsp, lsp);
 		return ASE_NULL;
 	}
 
@@ -79,16 +80,16 @@ ase_lsp_t* ase_lsp_open (
 	lsp->mem = ase_lsp_openmem (lsp, mem_ubound, mem_ubound_inc);
 	if (lsp->mem == ASE_NULL) 
 	{
-		ase_lsp_token_close (&lsp->token);
-		if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
+		ase_lsp_name_close (&lsp->token.name);
+		ASE_LSP_FREE (lsp, lsp);
 		return ASE_NULL;
 	}
 
 	if (__add_builtin_prims(lsp) == -1) 
 	{
 		ase_lsp_closemem (lsp->mem);
-		ase_lsp_token_close (&lsp->token);
-		if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
+		ase_lsp_name_close (&lsp->token.name);
+		ASE_LSP_FREE (lsp, lsp);
 		return ASE_NULL;
 	}
 
@@ -101,8 +102,8 @@ ase_lsp_t* ase_lsp_open (
 void ase_lsp_close (ase_lsp_t* lsp)
 {
 	ase_lsp_closemem (lsp->mem);
-	ase_lsp_token_close (&lsp->token);
-	if (lsp->__dynamic) ASE_LSP_FREE (lsp, lsp);
+	ase_lsp_name_close (&lsp->token.name);
+	ASE_LSP_FREE (lsp, lsp);
 }
 
 int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)

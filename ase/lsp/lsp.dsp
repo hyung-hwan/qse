@@ -87,10 +87,6 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\array.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\env.c
 # End Source File
 # Begin Source File
@@ -145,18 +141,10 @@ SOURCE=.\print.c
 
 SOURCE=.\read.c
 # End Source File
-# Begin Source File
-
-SOURCE=.\token.c
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=.\array.h
-# End Source File
 # Begin Source File
 
 SOURCE=.\env.h
@@ -184,10 +172,6 @@ SOURCE=.\obj.h
 # Begin Source File
 
 SOURCE=.\prim.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\token.h
 # End Source File
 # Begin Source File
 

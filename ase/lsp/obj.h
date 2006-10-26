@@ -1,11 +1,13 @@
 /*
- * $Id: obj.h,v 1.8 2006-10-25 13:42:31 bacon Exp $
+ * $Id: obj.h,v 1.9 2006-10-26 08:17:37 bacon Exp $
  */
 
 #ifndef _ASE_LSP_OBJ_H_
 #define _ASE_LSP_OBJ_H_
 
-#include <ase/lsp/types.h>
+#ifndef _ASE_LSP_LSP_H_
+#error Never include this file directly. Include <ase/lsp/lsp.h> instead
+#endif
 
 /* object types */
 enum 
@@ -24,18 +26,18 @@ enum
 	ASE_LSP_TYPE_COUNT // the number of lsp object types
 };
 
-typedef struct ase_lsp_objhdr_t      ase_lsp_objhdr_t;
-typedef struct ase_lsp_obj_t         ase_lsp_obj_t;
-typedef struct ase_lsp_obj_nil_t     ase_lsp_obj_nil_t;
-typedef struct ase_lsp_obj_true_t    ase_lsp_obj_true_t;
-typedef struct ase_lsp_obj_int_t     ase_lsp_obj_int_t;
-typedef struct ase_lsp_obj_real_t    ase_lsp_obj_real_t;
-typedef struct ase_lsp_obj_sym_t  ase_lsp_obj_sym_t;
-typedef struct ase_lsp_obj_str_t  ase_lsp_obj_str_t;
-typedef struct ase_lsp_obj_cons_t    ase_lsp_obj_cons_t;
-typedef struct ase_lsp_obj_func_t    ase_lsp_obj_func_t;
-typedef struct ase_lsp_obj_macro_t   ase_lsp_obj_macro_t;
-typedef struct ase_lsp_obj_prim_t    ase_lsp_obj_prim_t;
+typedef struct ase_lsp_objhdr_t     ase_lsp_objhdr_t;
+typedef struct ase_lsp_obj_t        ase_lsp_obj_t;
+typedef struct ase_lsp_obj_nil_t    ase_lsp_obj_nil_t;
+typedef struct ase_lsp_obj_true_t   ase_lsp_obj_true_t;
+typedef struct ase_lsp_obj_int_t    ase_lsp_obj_int_t;
+typedef struct ase_lsp_obj_real_t   ase_lsp_obj_real_t;
+typedef struct ase_lsp_obj_sym_t    ase_lsp_obj_sym_t;
+typedef struct ase_lsp_obj_str_t    ase_lsp_obj_str_t;
+typedef struct ase_lsp_obj_cons_t   ase_lsp_obj_cons_t;
+typedef struct ase_lsp_obj_func_t   ase_lsp_obj_func_t;
+typedef struct ase_lsp_obj_macro_t  ase_lsp_obj_macro_t;
+typedef struct ase_lsp_obj_prim_t   ase_lsp_obj_prim_t;
 
 struct ase_lsp_objhdr_t
 {
@@ -130,16 +132,16 @@ struct ase_lsp_obj_prim_t
 #define ASE_LSP_RVALUE(x)   (((ase_lsp_obj_real_t*)x)->value)
 
 #if defined(__BORLANDC__) || defined(_MSC_VER)
-#define ASE_LSP_SYMVALUE(x) ((ase_char_t*)(((ase_lsp_obj_sym_t*)x) + 1))
+#define ASE_LSP_SYMPTR(x) ((ase_char_t*)(((ase_lsp_obj_sym_t*)x) + 1))
 #else
-#define ASE_LSP_SYMVALUE(x) (((ase_lsp_obj_sym_t*)x)->buffer)
+#define ASE_LSP_SYMPTR(x) (((ase_lsp_obj_sym_t*)x)->buffer)
 #endif
 #define ASE_LSP_SYMLEN(x)   ((((ase_lsp_obj_sym_t*)x)->hdr.size - sizeof(ase_lsp_obj_t)) / sizeof(ase_char_t) - 1)
 
 #if defined(__BORLANDC__) || defined(_MSC_VER)
-#define ASE_LSP_STRVALUE(x) ((ase_char_t*)(((ase_lsp_obj_str_t*)x) + 1))
+#define ASE_LSP_STRPTR(x) ((ase_char_t*)(((ase_lsp_obj_str_t*)x) + 1))
 #else
-#define ASE_LSP_STRVALUE(x) (((ase_lsp_obj_str_t*)x)->buffer)
+#define ASE_LSP_STRPTR(x) (((ase_lsp_obj_str_t*)x)->buffer)
 #endif
 #define ASE_LSP_STRLEN(x)   ((((ase_lsp_obj_str_t*)x)->hdr.size - sizeof(ase_lsp_obj_t)) / sizeof(ase_char_t) - 1)
 

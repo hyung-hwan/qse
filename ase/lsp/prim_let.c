@@ -1,8 +1,8 @@
 /*
- * $Id: prim_let.c,v 1.6 2006-10-25 13:42:31 bacon Exp $
+ * $Id: prim_let.c,v 1.7 2006-10-26 08:17:37 bacon Exp $
  */
 
-#include <ase/lsp/prim.h>
+#include <ase/lsp/lsp_i.h>
 
 static ase_lsp_obj_t* __prim_let (
 	ase_lsp_t* lsp, ase_lsp_obj_t* args, int sequential)
@@ -15,18 +15,21 @@ static ase_lsp_obj_t* __prim_let (
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
 
 	// create a new frame
-	frame = ase_lsp_frame_new ();
-	if (frame == ASE_NULL) {
-		lsp->errnum = ASE_LSP_ERR_MEMORY;
+	frame = ase_lsp_newframe (lsp);
+	if (frame == ASE_NULL) 
+	{
+		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
 	//frame->link = lsp->mem->frame;
 
-	if (sequential) {
+	if (sequential) 
+	{
 		frame->link = lsp->mem->frame;
 		lsp->mem->frame = frame;
 	}
-	else {
+	else 
+	{
 		frame->link = lsp->mem->brooding_frame;
 		lsp->mem->brooding_frame = frame;
 	}
@@ -34,72 +37,84 @@ static ase_lsp_obj_t* __prim_let (
 	assoc = ASE_LSP_CAR(args);
 
 	//while (assoc != lsp->mem->nil) {
-	while (ASE_LSP_TYPE(assoc) == ASE_LSP_OBJ_CONS) {
+	while (ASE_LSP_TYPE(assoc) == ASE_LSP_OBJ_CONS) 
+	{
 		ase_lsp_obj_t* ass = ASE_LSP_CAR(assoc);
-		if (ASE_LSP_TYPE(ass) == ASE_LSP_OBJ_CONS) {
+		if (ASE_LSP_TYPE(ass) == ASE_LSP_OBJ_CONS) 
+		{
 			ase_lsp_obj_t* n = ASE_LSP_CAR(ass);
 			ase_lsp_obj_t* v = ASE_LSP_CDR(ass);
 
-			if (ASE_LSP_TYPE(n) != ASE_LSP_OBJ_SYM) {
+			if (ASE_LSP_TYPE(n) != ASE_LSP_OBJ_SYM) 
+			{
 				lsp->errnum = ASE_LSP_ERR_BAD_ARG; // must be a symbol
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
-				ase_lsp_frame_free (frame);
+				ase_lsp_freeframe (lsp, frame);
 				return ASE_NULL;
 			}
 
-			if (v != lsp->mem->nil) {
-				if (ASE_LSP_CDR(v) != lsp->mem->nil) {
+			if (v != lsp->mem->nil) 
+			{
+				if (ASE_LSP_CDR(v) != lsp->mem->nil) 
+				{
 					lsp->errnum = ASE_LSP_ERR_TOO_MANY_ARGS; // must be a symbol
 					if (sequential) lsp->mem->frame = frame->link;
 					else lsp->mem->brooding_frame = frame->link;
-					ase_lsp_frame_free (frame);
+					ase_lsp_freeframe (lsp, frame);
 					return ASE_NULL;
 				}
-				if ((v = ase_lsp_eval(lsp, ASE_LSP_CAR(v))) == ASE_NULL) {
+				if ((v = ase_lsp_eval(lsp, ASE_LSP_CAR(v))) == ASE_NULL) 
+				{
 					if (sequential) lsp->mem->frame = frame->link;
 					else lsp->mem->brooding_frame = frame->link;
-					ase_lsp_frame_free (frame);
+					ase_lsp_freeframe (lsp, frame);
 					return ASE_NULL;
 				}
 			}
 
-			if (ase_lsp_frame_lookup (frame, n) != ASE_NULL) {
+			if (ase_lsp_lookupinframe (lsp, frame, n) != ASE_NULL) 
+			{
 				lsp->errnum = ASE_LSP_ERR_DUP_FORMAL;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
-				ase_lsp_frame_free (frame);
+				ase_lsp_freeframe (lsp, frame);
 				return ASE_NULL;
 			}
-			if (ase_lsp_frame_insert_value(frame, n, v) == ASE_NULL) {
-				lsp->errnum = ASE_LSP_ERR_MEMORY;
+			if (ase_lsp_insertvalueintoframe (lsp, frame, n, v) == ASE_NULL) 
+			{
+				lsp->errnum = ASE_LSP_ENOMEM;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
-				ase_lsp_frame_free (frame);
+				ase_lsp_freeframe (lsp, frame);
 				return ASE_NULL;
 			}
 		}
-		else if (ASE_LSP_TYPE(ass) == ASE_LSP_OBJ_SYM) {
-			if (ase_lsp_frame_lookup(frame, ass) != ASE_NULL) {
+		else if (ASE_LSP_TYPE(ass) == ASE_LSP_OBJ_SYM) 
+		{
+			if (ase_lsp_lookupinframe (lsp, frame, ass) != ASE_NULL)
+			{
 				lsp->errnum = ASE_LSP_ERR_DUP_FORMAL;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
-				ase_lsp_frame_free (frame);
+				ase_lsp_freeframe (lsp, frame);
 				return ASE_NULL;
 			}
-			if (ase_lsp_frame_insert_value(frame, ass, lsp->mem->nil) == ASE_NULL) {
-				lsp->errnum = ASE_LSP_ERR_MEMORY;
+			if (ase_lsp_insertvalueintoframe (lsp, frame, ass, lsp->mem->nil) == ASE_NULL) 
+			{
+				lsp->errnum = ASE_LSP_ENOMEM;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
-				ase_lsp_frame_free (frame);
+				ase_lsp_freeframe (lsp, frame);
 				return ASE_NULL;
 			}
 		}
-		else {
+		else 
+		{
 			lsp->errnum = ASE_LSP_ERR_BAD_ARG;		
 			if (sequential) lsp->mem->frame = frame->link;
 			else lsp->mem->brooding_frame = frame->link;
-			ase_lsp_frame_free (frame);
+			ase_lsp_freeframe (lsp, frame);
 			return ASE_NULL;
 		}
 
@@ -110,7 +125,7 @@ static ase_lsp_obj_t* __prim_let (
 		lsp->errnum = ASE_LSP_ERR_BAD_ARG;	
 		if (sequential) lsp->mem->frame = frame->link;
 		else lsp->mem->brooding_frame = frame->link;
-		ase_lsp_frame_free (frame);
+		ase_lsp_freeframe (lsp, frame);
 		return ASE_NULL;
 	}
 
@@ -128,7 +143,7 @@ static ase_lsp_obj_t* __prim_let (
 		value = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
 		if (value == ASE_NULL) {
 			lsp->mem->frame = frame->link;
-			ase_lsp_frame_free (frame);
+			ase_lsp_freeframe (lsp, frame);
 			return ASE_NULL;
 		}
 		body = ASE_LSP_CDR(body);
@@ -138,7 +153,7 @@ static ase_lsp_obj_t* __prim_let (
 	lsp->mem->frame = frame->link;
 
 	// destroy the frame
-	ase_lsp_frame_free (frame);
+	ase_lsp_freeframe (lsp, frame);
 	return value;
 }
 
