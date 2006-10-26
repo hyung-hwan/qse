@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.24 2006-10-26 09:31:28 bacon Exp $
+ * $Id: read.c,v 1.25 2006-10-26 14:22:01 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -347,6 +347,7 @@ static int read_token (ase_lsp_t* lsp)
 	return 0;
 }
 
+#if 0
 static int read_number (ase_lsp_t* lsp, int negative)
 {
 	ase_long_t ivalue = 0;
@@ -383,6 +384,102 @@ static int read_number (ase_lsp_t* lsp, int negative)
 		TOKEN_IVALUE(lsp) = ivalue;
 		TOKEN_TYPE(lsp) = TOKEN_INT;
 		if (negative) ivalue *= -1;
+	}
+
+	return 0;
+}
+#endif
+
+static int __read_number (ase_lsp_t* lsp, int negative)
+{
+	ase_cint_t c;
+
+	ASE_LSP_ASSERT (lsp, ASE_LSP_STR_LEN(&lsp->token.name) == 0);
+	SET_TOKEN_TYPE (lsp, TOKEN_INT);
+
+	c = lsp->src.lex.curc;
+
+	if (c == ASE_T('0'))
+	{
+		ADD_TOKEN_CHAR (lsp, c);
+		GET_CHAR_TO (lsp, c);
+
+		if (c == ASE_T('x') || c == ASE_T('X'))
+		{
+			/* hexadecimal number */
+			do 
+			{
+				ADD_TOKEN_CHAR (lsp, c);
+				GET_CHAR_TO (lsp, c);
+			} 
+			while (ASE_LSP_ISXDIGIT (lsp, c));
+
+			return 0;
+		}
+		else if (c == ASE_T('b') || c == ASE_T('B'))
+		{
+			/* binary number */
+			do
+			{
+				ADD_TOKEN_CHAR (lsp, c);
+				GET_CHAR_TO (lsp, c);
+			} 
+			while (c == ASE_T('0') || c == ASE_T('1'));
+
+			return 0;
+		}
+		else if (c != '.')
+		{
+			/* octal number */
+			while (c >= ASE_T('0') && c <= ASE_T('7'))
+			{
+				ADD_TOKEN_CHAR (lsp, c);
+				GET_CHAR_TO (lsp, c);
+			}
+
+			return 0;
+		}
+	}
+
+	while (ASE_LSP_ISDIGIT (lsp, c)) 
+	{
+		ADD_TOKEN_CHAR (lsp, c);
+		GET_CHAR_TO (lsp, c);
+	} 
+
+	if (c == ASE_T('.'))
+	{
+		/* floating-point number */
+		SET_TOKEN_TYPE (lsp, TOKEN_REAL);
+
+		ADD_TOKEN_CHAR (lsp, c);
+		GET_CHAR_TO (lsp, c);
+
+		while (ASE_LSP_ISDIGIT (lsp, c))
+		{
+			ADD_TOKEN_CHAR (lsp, c);
+			GET_CHAR_TO (lsp, c);
+		}
+	}
+
+	if (c == ASE_T('E') || c == ASE_T('e'))
+	{
+		SET_TOKEN_TYPE (lsp, TOKEN_REAL);
+
+		ADD_TOKEN_CHAR (lsp, c);
+		GET_CHAR_TO (lsp, c);
+
+		if (c == ASE_T('+') || c == ASE_T('-'))
+		{
+			ADD_TOKEN_CHAR (lsp, c);
+			GET_CHAR_TO (lsp, c);
+		}
+
+		while (ASE_LSP_ISDIGIT (lsp, c))
+		{
+			ADD_TOKEN_CHAR (lsp, c);
+			GET_CHAR_TO (lsp, c);
+		}
 	}
 
 	return 0;
