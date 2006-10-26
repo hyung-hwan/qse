@@ -1,13 +1,8 @@
 /*
- * $Id: prim.c,v 1.11 2006-10-25 13:42:31 bacon Exp $
+ * $Id: prim.c,v 1.12 2006-10-26 08:17:37 bacon Exp $
  */
 
-#include <ase/lsp/lsp.h>
-#include <ase/lsp/mem.h>
-#include <ase/lsp/prim.h>
-
-#include <ase/bas/string.h>
-#include <ase/bas/assert.h>
+#include <ase/lsp/lsp_i.h>
 
 static int __add_prim (ase_lsp_mem_t* mem, 
 	const ase_char_t* name, ase_size_t len, ase_lsp_prim_t prim);
@@ -15,7 +10,7 @@ static int __add_prim (ase_lsp_mem_t* mem,
 int ase_lsp_add_prim (
 	ase_lsp_t* lsp, const ase_char_t* name, ase_lsp_prim_t prim)
 {
-	return __add_prim (lsp->mem, name, ase_strlen(name), prim);
+	return __add_prim (lsp->mem, name, ase_lsp_strlen(name), prim);
 }
 
 int ase_lsp_remove_prim (ase_lsp_t* lsp, const ase_char_t* name)
@@ -32,12 +27,12 @@ static int __add_prim (ase_lsp_mem_t* mem,
 	n = ase_lsp_makesymobj (mem, name, len);
 	if (n == ASE_NULL) return -1;
 
-	ase_lsp_lock (n);
+	ase_lsp_lockobj (mem->lsp, n);
 
 	p = ase_lsp_makeprim (mem, prim);
 	if (p == ASE_NULL) return -1;
 
-	ase_lsp_unlock (n);
+	ase_lsp_unlockobj (mem->lsp, n);
 
 	if (ase_lsp_setfunc(mem, n, p) == ASE_NULL) return -1;
 
@@ -56,7 +51,7 @@ ase_lsp_obj_t* ase_lsp_prim_eval (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* tmp;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	ase_assert (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp == ASE_NULL) return ASE_NULL;
@@ -70,7 +65,7 @@ ase_lsp_obj_t* ase_lsp_prim_eval (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 ase_lsp_obj_t* ase_lsp_prim_gc (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, 0);
-	ase_lsp_garbage_collect (lsp->mem);
+	ase_lsp_collectgarbage (lsp->mem);
 	return lsp->mem->nil;
 }
 
@@ -123,7 +118,7 @@ ase_lsp_obj_t* ase_lsp_prim_if (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* tmp;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, ASE_LSP_PRIM_MAX_ARG_COUNT);
-	ase_assert (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 	
 	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp == ASE_NULL) return ASE_NULL;
@@ -162,7 +157,7 @@ ase_lsp_obj_t* ase_lsp_prim_while (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* tmp;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
-	ase_assert (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	for (;;) {
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
@@ -194,7 +189,7 @@ ase_lsp_obj_t* ase_lsp_prim_car (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* tmp;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	ase_assert (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp == ASE_NULL) return ASE_NULL;
@@ -217,7 +212,7 @@ ase_lsp_obj_t* ase_lsp_prim_cdr (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* tmp;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	ase_assert (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp == ASE_NULL) return ASE_NULL;
@@ -241,7 +236,7 @@ ase_lsp_obj_t* ase_lsp_prim_cons (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* car, * cdr, * cons;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	ase_assert (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	car = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (car == ASE_NULL) return ASE_NULL;
@@ -270,7 +265,7 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* p1, * p2;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
-	ase_assert (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (p1 == ASE_NULL) return ASE_NULL;
@@ -284,7 +279,7 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	if (p2 == ASE_NULL) return ASE_NULL;
 
 	if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) {
-		lsp->errnum = ASE_LSP_ERR_MEMORY;
+		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
 
@@ -301,7 +296,7 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* p = args, * p1, * p2 = lsp->mem->nil;
 
 	while (p != lsp->mem->nil) {
-		ase_assert (ASE_LSP_TYPE(p) == ASE_LSP_OBJ_CONS);
+		ase_lsp_assert (lsp, ASE_LSP_TYPE(p) == ASE_LSP_OBJ_CONS);
 
 		p1 = ASE_LSP_CAR(p);
 		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) {
@@ -318,7 +313,7 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (p2 == ASE_NULL) return ASE_NULL;
 
 		if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) {
-			lsp->errnum = ASE_LSP_ERR_MEMORY;
+			lsp->errnum = ASE_LSP_ENOMEM;
 			return ASE_NULL;
 		}
 
@@ -335,7 +330,7 @@ ase_lsp_obj_t* ase_lsp_prim_quote (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	 */
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, 1);
-	ase_assert (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 	return ASE_LSP_CAR(args);
 }
 
@@ -367,7 +362,7 @@ ase_lsp_obj_t* ase_lsp_prim_defun (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	if (ase_lsp_setfunc (lsp->mem, ASE_LSP_CAR(args), fun) == ASE_NULL) 
 	{
-		lsp->errnum = ASE_LSP_ERR_MEMORY;
+		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
 	return fun;
@@ -397,7 +392,7 @@ ase_lsp_obj_t* ase_lsp_prim_demac (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	if (ase_lsp_setfunc (lsp->mem, ASE_LSP_CAR(args), mac) == ASE_NULL) 
 	{
-		lsp->errnum = ASE_LSP_ERR_MEMORY;
+		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
 	return mac;

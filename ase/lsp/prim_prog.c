@@ -1,8 +1,8 @@
 /*
- * $Id: prim_prog.c,v 1.3 2006-10-24 04:22:39 bacon Exp $
+ * $Id: prim_prog.c,v 1.4 2006-10-26 08:17:38 bacon Exp $
  */
 
-#include <ase/lsp/prim.h>
+#include <ase/lsp/lsp_i.h>
 
 ase_lsp_obj_t* ase_lsp_prim_prog1 (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
@@ -18,8 +18,8 @@ ase_lsp_obj_t* ase_lsp_prim_prog1 (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 		if (res == ASE_NULL) {
 			/*
-			ase_lsp_array_t* ta = lsp->mem->temp_array;
-			ase_lsp_array_insert (ta, ta->size, tmp);
+			ase_lsp_arr_t* ta = lsp->mem->temp_arr;
+			ase_lsp_arr_insert (ta, ta->size, tmp);
 			*/
 			res = tmp;
 		}

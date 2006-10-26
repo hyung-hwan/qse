@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.14 2006-10-25 13:42:31 bacon Exp $
+ * $Id: mem.c,v 1.15 2006-10-26 08:17:37 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -18,7 +18,7 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	mem->lsp = lsp;
 
 	/* create a new root environment frame */
-	mem->frame = ase_lsp_frame_new ();
+	mem->frame = ase_lsp_newframe (lsp);
 	if (mem->frame == ASE_NULL) 
 	{
 		ASE_LSP_FREE (lsp, mem);
@@ -28,13 +28,15 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	mem->brooding_frame = ASE_NULL;
 
 	/* create an array to hold temporary objects */
-	mem->temp_array = ase_lsp_array_new (512);
-	if (mem->temp_array == ASE_NULL) 
+	/*
+	mem->temp_arr = ase_lsp_arr_new (512);
+	if (mem->temp_arr == ASE_NULL) 
 	{
-		ase_lsp_frame_free (mem->frame);
+		ase_lsp_freeframe (lsp, mem->frame);
 		ASE_LSP_FREE (lsp, mem);
 		return ASE_NULL;
 	}
+	*/
 
 	/* initialize object allocation list */
 	mem->ubound     = ubound;
@@ -69,8 +71,8 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	    mem->macro  == ASE_NULL) 
 	{
 		ase_lsp_dispose_all (mem);
-		ase_lsp_array_free (mem->temp_array);
-		ase_lsp_frame_free (mem->frame);
+		/*ase_lsp_arr_free (mem->temp_arr);*/
+		ase_lsp_freeframe (lsp, mem->frame);
 		ASE_LSP_FREE (lsp, mem);
 		return ASE_NULL;
 	}
@@ -83,11 +85,11 @@ void ase_lsp_closemem (ase_lsp_mem_t* mem)
 	/* dispose of the allocated objects */
 	ase_lsp_dispose_all (mem);
 
-	/* dispose of the temporary object arrays */
-	ase_lsp_array_free (mem->temp_array);
+	/* dispose of the temporary object arrs */
+	/*ase_lsp_arr_free (mem->temp_arr);*/
 
 	/* dispose of environment frames */
-	ase_lsp_frame_free (mem->frame);
+	ase_lsp_freeframe (mem->lsp, mem->frame);
 
 	/* free the memory */
 	ASE_LSP_FREE (mem->lsp, mem);
@@ -175,7 +177,7 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 	ASE_LSP_MARK(obj) = 0;
 	ASE_LSP_LOCK(obj) = 0;
 
-	// insert the object at the head of the used list
+	/* insert the object at the head of the used list */
 	ASE_LSP_LINK(obj) = mem->used[type];
 	mem->used[type] = obj;
 	mem->count++;
@@ -296,8 +298,8 @@ static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
 {
 	ase_lsp_frame_t* frame;
 	ase_lsp_assoc_t* assoc;
-	ase_lsp_array_t* array;
-	ase_size_t       i;
+	/*ase_lsp_arr_t* arr;*/
+	/*ase_size_t       i;*/
 
 #if 0
 	ase_dprint0 (ASE_T("marking environment frames\n"));
@@ -353,11 +355,13 @@ static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
 #if 0
 	ase_dprint0 (ASE_T("marking termporary objects\n"));
 #endif
-	array = mem->temp_array;
-	for (i = 0; i < array->size; i++) 
+	/*
+	arr = mem->temp_arr;
+	for (i = 0; i < arr->size; i++) 
 	{
-		__mark_obj (mem->lsp, array->buffer[i]);
+		__mark_obj (mem->lsp, arr->buffer[i]);
 	}
+	*/
 
 #if 0
 	ase_dprint0 (ASE_T("marking builtin objects\n"));
@@ -463,7 +467,7 @@ ase_lsp_obj_t* ase_lsp_makesymobj (
 	{
 		// if there is a symbol with the same name, it is just used.
 		if (ase_lsp_strxncmp (
-			ASE_LSP_SYMVALUE(obj), 
+			ASE_LSP_SYMPTR(obj), 
 			ASE_LSP_SYMLEN(obj), str, len) == 0) return obj;
 		obj = ASE_LSP_LINK(obj);
 	}
@@ -474,7 +478,7 @@ ase_lsp_obj_t* ase_lsp_makesymobj (
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	// fill in the symbol buffer
-	ase_lsp_strncpy (ASE_LSP_SYMVALUE(obj), str, len);
+	ase_lsp_strncpy (ASE_LSP_SYMPTR(obj), str, len);
 
 	return obj;
 }
@@ -490,7 +494,7 @@ ase_lsp_obj_t* ase_lsp_makestrobj (
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	// fill in the string buffer
-	ase_lsp_strncpy (ASE_LSP_STRVALUE(obj), str, len);
+	ase_lsp_strncpy (ASE_LSP_STRPTR(obj), str, len);
 
 	return obj;
 }
@@ -561,7 +565,7 @@ ase_lsp_assoc_t* ase_lsp_lookup (ase_lsp_mem_t* mem, ase_lsp_obj_t* name)
 
 	while (frame != ASE_NULL) 
 	{
-		assoc = ase_lsp_frame_lookup (frame, name);
+		assoc = ase_lsp_lookupinframe (mem->lsp, frame, name);
 		if (assoc != ASE_NULL) return assoc;
 		frame = frame->link;
 	}
@@ -577,8 +581,8 @@ ase_lsp_assoc_t* ase_lsp_setvalue (
 	assoc = ase_lsp_lookup (mem, name);
 	if (assoc == ASE_NULL)
 	{
-		assoc = ase_lsp_frame_insert_value (
-			mem->root_frame, name, value);
+		assoc = ase_lsp_insertvalueintoframe (
+			mem->lsp, mem->root_frame, name, value);
 		if (assoc == ASE_NULL) return ASE_NULL;
 	}
 	else assoc->value = value;
@@ -594,7 +598,8 @@ ase_lsp_assoc_t* ase_lsp_setfunc (
 	assoc = ase_lsp_lookup (mem, name);
 	if (assoc == ASE_NULL) 
 	{
-		assoc = ase_lsp_frame_insert_func (mem->root_frame, name, func);
+		assoc = ase_lsp_insertfuncintoframe (
+			mem->lsp, mem->root_frame, name, func);
 		if (assoc == ASE_NULL) return ASE_NULL;
 	}
 	else assoc->func = func;

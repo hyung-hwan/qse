@@ -1,15 +1,17 @@
 /*
- * $Id: lsp_i.h,v 1.1 2006-10-24 15:10:25 bacon Exp $
+ * $Id: lsp_i.h,v 1.2 2006-10-26 08:17:37 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSPI_H_
 #define _ASE_LSP_LSPI_H_
 
 #include <ase/lsp/lsp.h>
-#include <ase/lsp/token.h>
+#include <ase/lsp/env.h>
+#include <ase/lsp/obj.h>
 #include <ase/lsp/mem.h>
 #include <ase/lsp/misc.h>
 #include <ase/lsp/prim.h>
+#include <ase/lsp/name.h>
 
 #ifdef NDEBUG
 	#define ase_lsp_assert(lsp,expr) ((void)0)
@@ -65,7 +67,13 @@ struct ase_lsp_t
 
 	/* for read */
 	ase_cint_t curc;
-	ase_lsp_token_t token;
+	struct
+	{
+		int type;
+		ase_long_t ivalue;
+		ase_real_t rvalue;
+		ase_lsp_name_t name;
+	} token;
 
 	/* io functions */
 	ase_lsp_io_t input_func;
@@ -79,7 +87,6 @@ struct ase_lsp_t
 
 	/* memory manager */
 	ase_lsp_mem_t* mem;
-	ase_bool_t __dynamic;
 };
 
 #endif

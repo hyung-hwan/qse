@@ -1,13 +1,13 @@
 /*
- * $Id: mem.h,v 1.11 2006-10-25 13:42:31 bacon Exp $
+ * $Id: mem.h,v 1.12 2006-10-26 08:17:37 bacon Exp $
  */
 
 #ifndef _ASE_LSP_MEM_H_
 #define _ASE_LSP_MEM_H_
 
-#include <ase/lsp/obj.h>
-#include <ase/lsp/env.h>
-#include <ase/lsp/array.h>
+#ifndef _ASE_LSP_LSP_H_
+#error Never include this file directly. Include <ase/lsp/lsp.h> instead
+#endif
 
 typedef struct ase_lsp_mem_t ase_lsp_mem_t;
 
@@ -46,7 +46,7 @@ struct ase_lsp_mem_t
 	/* 
 	 * temporary objects
 	 */
-	ase_lsp_array_t* temp_array;
+	/*ase_lsp_arr_t* temp_arr;*/
 };
 
 

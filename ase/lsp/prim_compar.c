@@ -1,9 +1,8 @@
 /*
- * $Id: prim_compar.c,v 1.5 2006-10-25 13:42:31 bacon Exp $
+ * $Id: prim_compar.c,v 1.6 2006-10-26 08:17:37 bacon Exp $
  */
 
-#include <ase/lsp/prim.h>
-#include <ase/bas/assert.h>
+#include <ase/lsp/lsp_i.h>
 
 ase_lsp_obj_t* ase_lsp_prim_eq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
@@ -57,8 +56,8 @@ ase_lsp_obj_t* ase_lsp_prim_eq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_SYM) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_SYMVALUE(p1), ASE_LSP_SYMLEN(p1),
-				ASE_LSP_SYMVALUE(p2), ASE_LSP_SYMLEN(p2)) == 0;
+				ASE_LSP_SYMPTR(p1), ASE_LSP_SYMLEN(p1),
+				ASE_LSP_SYMPTR(p2), ASE_LSP_SYMLEN(p2)) == 0;
 		}
 		else 
 		{
@@ -71,8 +70,8 @@ ase_lsp_obj_t* ase_lsp_prim_eq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_STR) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_STRVALUE(p1), ASE_LSP_STRLEN(p1),	
-				ASE_LSP_STRVALUE(p2), ASE_LSP_STRLEN(p2)) == 0;
+				ASE_LSP_STRPTR(p1), ASE_LSP_STRLEN(p1),	
+				ASE_LSP_STRPTR(p2), ASE_LSP_STRLEN(p2)) == 0;
 		}
 		else {
 			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;
@@ -140,8 +139,8 @@ ase_lsp_obj_t* ase_lsp_prim_ne (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_SYM) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_SYMVALUE(p1), ASE_LSP_SYMLEN(p1),
-				ASE_LSP_SYMVALUE(p2), ASE_LSP_SYMLEN(p2)) != 0;
+				ASE_LSP_SYMPTR(p1), ASE_LSP_SYMLEN(p1),
+				ASE_LSP_SYMPTR(p2), ASE_LSP_SYMLEN(p2)) != 0;
 		}
 		else 
 		{
@@ -154,8 +153,8 @@ ase_lsp_obj_t* ase_lsp_prim_ne (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_STR) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_STRVALUE(p1), ASE_LSP_STRLEN(p1),	
-				ASE_LSP_STRVALUE(p2), ASE_LSP_STRLEN(p2)) != 0;
+				ASE_LSP_STRPTR(p1), ASE_LSP_STRLEN(p1),	
+				ASE_LSP_STRPTR(p2), ASE_LSP_STRLEN(p2)) != 0;
 		}
 		else 
 		{
@@ -224,8 +223,8 @@ ase_lsp_obj_t* ase_lsp_prim_gt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_SYM) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_SYMVALUE(p1), ASE_LSP_SYMLEN(p1),
-				ASE_LSP_SYMVALUE(p2), ASE_LSP_SYMLEN(p2)) > 0;
+				ASE_LSP_SYMPTR(p1), ASE_LSP_SYMLEN(p1),
+				ASE_LSP_SYMPTR(p2), ASE_LSP_SYMLEN(p2)) > 0;
 		}
 		else 
 		{
@@ -238,8 +237,8 @@ ase_lsp_obj_t* ase_lsp_prim_gt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_STR) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_STRVALUE(p1), ASE_LSP_STRLEN(p1),	
-				ASE_LSP_STRVALUE(p2), ASE_LSP_STRLEN(p2)) > 0;
+				ASE_LSP_STRPTR(p1), ASE_LSP_STRLEN(p1),	
+				ASE_LSP_STRPTR(p2), ASE_LSP_STRLEN(p2)) > 0;
 		}
 		else 
 		{
@@ -308,8 +307,8 @@ ase_lsp_obj_t* ase_lsp_prim_lt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_SYM) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_SYMVALUE(p1), ASE_LSP_SYMLEN(p1),
-				ASE_LSP_SYMVALUE(p2), ASE_LSP_SYMLEN(p2)) < 0;
+				ASE_LSP_SYMPTR(p1), ASE_LSP_SYMLEN(p1),
+				ASE_LSP_SYMPTR(p2), ASE_LSP_SYMLEN(p2)) < 0;
 		}
 		else 
 		{
@@ -322,8 +321,8 @@ ase_lsp_obj_t* ase_lsp_prim_lt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_STR) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_STRVALUE(p1), ASE_LSP_STRLEN(p1),
-				ASE_LSP_STRVALUE(p2), ASE_LSP_STRLEN(p2)) < 0;
+				ASE_LSP_STRPTR(p1), ASE_LSP_STRLEN(p1),
+				ASE_LSP_STRPTR(p2), ASE_LSP_STRLEN(p2)) < 0;
 		}
 		else {
 			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;
@@ -391,8 +390,8 @@ ase_lsp_obj_t* ase_lsp_prim_ge (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_SYM) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_SYMVALUE(p1), ASE_LSP_SYMLEN(p1),
-				ASE_LSP_SYMVALUE(p2), ASE_LSP_SYMLEN(p2)) >= 0;
+				ASE_LSP_SYMPTR(p1), ASE_LSP_SYMLEN(p1),
+				ASE_LSP_SYMPTR(p2), ASE_LSP_SYMLEN(p2)) >= 0;
 		}
 		else 
 		{
@@ -405,8 +404,8 @@ ase_lsp_obj_t* ase_lsp_prim_ge (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_STR) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_STRVALUE(p1), ASE_LSP_STRLEN(p1),
-				ASE_LSP_STRVALUE(p2), ASE_LSP_STRLEN(p2)) >= 0;
+				ASE_LSP_STRPTR(p1), ASE_LSP_STRLEN(p1),
+				ASE_LSP_STRPTR(p2), ASE_LSP_STRLEN(p2)) >= 0;
 		}
 		else {
 			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;
@@ -474,8 +473,8 @@ ase_lsp_obj_t* ase_lsp_prim_le (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_SYM) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_SYMVALUE(p1), ASE_LSP_SYMLEN(p1),
-				ASE_LSP_SYMVALUE(p2), ASE_LSP_SYMLEN(p2)) <= 0;
+				ASE_LSP_SYMPTR(p1), ASE_LSP_SYMLEN(p1),
+				ASE_LSP_SYMPTR(p2), ASE_LSP_SYMLEN(p2)) <= 0;
 		}
 		else 
 		{
@@ -488,8 +487,8 @@ ase_lsp_obj_t* ase_lsp_prim_le (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_STR) 
 		{
 			res = ase_lsp_strxncmp (
-				ASE_LSP_STRVALUE(p1), ASE_LSP_STRLEN(p1),	
-				ASE_LSP_STRVALUE(p2), ASE_LSP_STRLEN(p2)) <= 0;
+				ASE_LSP_STRPTR(p1), ASE_LSP_STRLEN(p1),	
+				ASE_LSP_STRPTR(p2), ASE_LSP_STRLEN(p2)) <= 0;
 		}
 		else {
 			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;

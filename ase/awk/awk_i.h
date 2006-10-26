@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.73 2006-10-24 04:48:52 bacon Exp $
+ * $Id: awk_i.h,v 1.74 2006-10-26 08:17:37 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -145,8 +145,8 @@ struct ase_awk_t
 	/* token */
 	struct 
 	{
-		int          prev;
-		int          type;
+		int           prev;
+		int           type;
 		ase_awk_str_t name;
 		ase_size_t    line;
 		ase_size_t    column;
