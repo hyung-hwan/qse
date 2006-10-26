@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.32 2006-10-24 04:48:52 bacon Exp $
+ * $Id: misc.c,v 1.33 2006-10-26 09:27:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -43,7 +43,7 @@ ase_long_t ase_awk_strxtolong (
 	ase_size_t rem;
 	int digit, negative = 0;
 
-	ase_awk_assert (awk, base < 37); 
+	ASE_AWK_ASSERT (awk, base < 37); 
 
 	p = str; 
 	end = str + len;
@@ -995,7 +995,7 @@ ase_char_t* ase_awk_strxntokbyrex (
 			return ASE_NULL; 
 		}
 
-		ase_awk_assert (run->awk, n == 1);
+		ASE_AWK_ASSERT (run->awk, n == 1);
 
 		if (match_len == 0)
 		{

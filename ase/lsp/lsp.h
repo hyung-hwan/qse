@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.26 2006-10-25 13:42:31 bacon Exp $
+ * $Id: lsp.h,v 1.27 2006-10-26 09:31:28 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSP_H_
@@ -93,6 +93,14 @@ enum
 
 typedef ase_lsp_obj_t* (*ase_lsp_prim_t) (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 
+#ifdef NDEBUG
+	#define ASE_LSP_ASSERT(lsp,expr) ((void)0)
+#else
+	#define ASE_LSP_ASSERT(lsp,expr) (void)((expr) || \
+		(ase_lsp_assertfail(lsp, ASE_T(#expr), ASE_T(__FILE__), __LINE__), 0))
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -144,6 +152,11 @@ int ase_lsp_strxncasecmp (
 ase_char_t* ase_lsp_strxnstr (
 	const ase_char_t* str, ase_size_t strsz, 
 	const ase_char_t* sub, ase_size_t subsz);
+
+
+/* abort function for assertion. use ASE_LSP_ASSERT instead */
+int ase_lsp_assertfail (ase_lsp_t* lsp,
+	const ase_char_t* expr, const ase_char_t* file, int line);
 
 const ase_char_t* ase_lsp_geterrstr (int errnum);
 

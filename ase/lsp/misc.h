@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.2 2006-10-24 04:22:39 bacon Exp $
+ * $Id: misc.h,v 1.3 2006-10-26 09:31:28 bacon Exp $
  */
 
 #ifndef _ASE_LSP_MISC_H_
@@ -15,9 +15,6 @@ extern "C" {
 
 void* ase_lsp_memcpy (void* dst, const void* src, ase_size_t n);
 void* ase_lsp_memset (void* dst, int val, ase_size_t n);
-
-int ase_lsp_abort (ase_lsp_t* lsp, 
-	const ase_char_t* expr, const ase_char_t* file, int line);
 
 #ifdef __cplusplus
 }

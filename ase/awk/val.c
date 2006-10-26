@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.76 2006-10-24 04:10:12 bacon Exp $
+ * $Id: val.c,v 1.77 2006-10-26 09:27:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -298,7 +298,7 @@ xp_printf (ASE_T("\n"));*/
 	}
 	else
 	{
-		ase_awk_assert (run->awk, 
+		ASE_AWK_ASSERT (run->awk, 
 			!"should never happen - invalid value type");
 	}
 }
@@ -325,7 +325,7 @@ ase_awk_printval (val);
 xp_printf (ASE_T("\n"));
 */
 
-	ase_awk_assert (run->awk, val->ref > 0);
+	ASE_AWK_ASSERT (run->awk, val->ref > 0);
 	val->ref--;
 	if (val->ref <= 0) 
 	{
@@ -342,7 +342,7 @@ void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val)
 {
 	if (ase_awk_isbuiltinval(val)) return;
 
-	ase_awk_assert (run->awk, val->ref > 0);
+	ASE_AWK_ASSERT (run->awk, val->ref > 0);
 	val->ref--;
 }
 
@@ -368,7 +368,7 @@ ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
 		return ase_false; /* TODO: is this correct? */
 	}
 
-	ase_awk_assert (run->awk, !"should never happen - invalid value type");
+	ASE_AWK_ASSERT (run->awk, !"should never happen - invalid value type");
 	return ase_false;
 }
 

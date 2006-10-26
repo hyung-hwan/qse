@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.17 2006-10-26 08:17:37 bacon Exp $
+ * $Id: eval.c,v 1.18 2006-10-26 09:31:28 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -91,7 +91,7 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 {
 	ase_lsp_obj_t* car, * cdr;
    
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(cons) == ASE_LSP_OBJ_CONS);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(cons) == ASE_LSP_OBJ_CONS);
 
 	car = ASE_LSP_CAR(cons);
 	cdr = ASE_LSP_CDR(cons);
@@ -173,11 +173,11 @@ static ase_lsp_obj_t* apply (
 	ase_lsp_obj_t* value;
 	ase_lsp_mem_t* mem;
 
-	ase_lsp_assert (lsp,
+	ASE_LSP_ASSERT (lsp,
 		ASE_LSP_TYPE(func) == ASE_LSP_OBJ_FUNC ||
 		ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO);
 
-	ase_lsp_assert (lsp,
+	ASE_LSP_ASSERT (lsp,
 		ASE_LSP_TYPE(ASE_LSP_CDR(func)) == ASE_LSP_OBJ_CONS);
 
 	mem = lsp->mem;

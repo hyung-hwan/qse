@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.56 2006-10-24 04:10:12 bacon Exp $
+ * $Id: extio.c,v 1.57 2006-10-26 09:27:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -84,11 +84,11 @@ int ase_awk_readextio (
 	ase_size_t rs_len;
 	ase_size_t line_len = 0;
 
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_type_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_mode_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
@@ -284,7 +284,7 @@ int ase_awk_readextio (
 			const ase_char_t* match_ptr;
 			ase_size_t match_len;
 
-			ase_awk_assert (run->awk, run->global.rs != ASE_NULL);
+			ASE_AWK_ASSERT (run->awk, run->global.rs != ASE_NULL);
 
 			/* TODO: safematchrex */
 			n = ase_awk_matchrex (
@@ -302,7 +302,7 @@ int ase_awk_readextio (
 			{
 				/* the match should be found at the end of
 				 * the current buffer */
-				ase_awk_assert (run->awk,
+				ASE_AWK_ASSERT (run->awk,
 					ASE_AWK_STR_BUF(buf) + ASE_AWK_STR_LEN(buf) ==
 					match_ptr + match_len);
 
@@ -397,11 +397,11 @@ int ase_awk_writeextio_str (
 	ase_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
 
-	ase_awk_assert (run->awk, 
+	ASE_AWK_ASSERT (run->awk, 
 		out_type >= 0 && out_type <= ase_countof(__out_type_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_mode_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
@@ -519,11 +519,11 @@ int ase_awk_flushextio (
 	int extio_type, extio_mode, extio_mask, n;
 	ase_bool_t ok = ase_false;
 
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_type_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_mode_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
@@ -582,11 +582,11 @@ int ase_awk_nextextio_read (
 	ase_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
 
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_type_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_mode_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
@@ -634,11 +634,11 @@ int ase_awk_closeextio_read (
 	ase_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask;
 
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_type_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_mode_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
@@ -697,11 +697,11 @@ int ase_awk_closeextio_write (
 	ase_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask;
 
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_type_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_mode_map));
-	ase_awk_assert (run->awk,
+	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */

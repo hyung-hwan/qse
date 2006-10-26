@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.15 2006-10-26 08:17:37 bacon Exp $
+ * $Id: mem.c,v 1.16 2006-10-26 09:31:28 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -192,8 +192,8 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 void ase_lsp_dispose (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* prev, ase_lsp_obj_t* obj)
 {
-	ase_lsp_assert (mem->lsp, obj != ASE_NULL);
-	ase_lsp_assert (mem->lsp, mem->count > 0);
+	ASE_LSP_ASSERT (mem->lsp, obj != ASE_NULL);
+	ASE_LSP_ASSERT (mem->lsp, mem->count > 0);
 
 	// TODO: push the object to the free list for more 
 	//       efficient memory management
@@ -230,7 +230,7 @@ void ase_lsp_dispose_all (ase_lsp_mem_t* mem)
 
 static void __mark_obj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_lsp_assert (lsp, obj != ASE_NULL);
+	ASE_LSP_ASSERT (lsp, obj != ASE_NULL);
 
 	// TODO:....
 	// can it be recursive?
@@ -260,20 +260,20 @@ static void __mark_obj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
  */
 void ase_lsp_lockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_lsp_assert (lsp, obj != ASE_NULL);
+	ASE_LSP_ASSERT (lsp, obj != ASE_NULL);
 	ASE_LSP_LOCK(obj) = 1;
 	//ASE_LSP_MARK(obj) = 1;
 }
 
 void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_lsp_assert (lsp, obj != ASE_NULL);
+	ASE_LSP_ASSERT (lsp, obj != ASE_NULL);
 	ASE_LSP_LOCK(obj) = 0;
 }
 
 void ase_lsp_unlockallobjs (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_lsp_assert (lsp, obj != ASE_NULL);
+	ASE_LSP_ASSERT (lsp, obj != ASE_NULL);
 
 	ASE_LSP_LOCK(obj) = 0;
 
@@ -559,7 +559,7 @@ ase_lsp_assoc_t* ase_lsp_lookup (ase_lsp_mem_t* mem, ase_lsp_obj_t* name)
 	ase_lsp_frame_t* frame;
 	ase_lsp_assoc_t* assoc;
 
-	ase_lsp_assert (mem->lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	ASE_LSP_ASSERT (mem->lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	frame = mem->frame;
 
@@ -611,7 +611,7 @@ ase_size_t ase_lsp_cons_len (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj)
 {
 	ase_size_t count;
 
-	ase_lsp_assert (mem->lsp, 
+	ASE_LSP_ASSERT (mem->lsp, 
 		obj == mem->nil || ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS);
 
 	count = 0;

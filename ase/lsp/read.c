@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.23 2006-10-26 08:17:38 bacon Exp $
+ * $Id: read.c,v 1.24 2006-10-26 09:31:28 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -105,7 +105,7 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 		ase_lsp_lockobj (lsp, obj);
 		return obj;
 	case TOKEN_IDENT:
-		ase_lsp_assert (lsp,
+		ASE_LSP_ASSERT (lsp,
 			lsp->mem->nil != ASE_NULL && lsp->mem->t != ASE_NULL); 
 		if (TOKEN_COMPARE(lsp,ASE_T("nil")) == 0) obj = lsp->mem->nil;
 		else if (TOKEN_COMPARE(lsp,ASE_T("t")) == 0) obj = lsp->mem->t;
@@ -255,7 +255,7 @@ static int read_char (ase_lsp_t* lsp)
 
 static int read_token (ase_lsp_t* lsp)
 {
-	ase_lsp_assert (lsp, lsp->input_func != ASE_NULL);
+	ASE_LSP_ASSERT (lsp, lsp->input_func != ASE_NULL);
 
 	TOKEN_CLEAR (lsp);
 
