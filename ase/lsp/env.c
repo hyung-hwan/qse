@@ -1,5 +1,5 @@
 /*
- * $Id: env.c,v 1.12 2006-10-26 08:17:37 bacon Exp $
+ * $Id: env.c,v 1.13 2006-10-26 09:31:28 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -59,7 +59,7 @@ ase_lsp_assoc_t* ase_lsp_lookupinframe (
 {
 	ase_lsp_assoc_t* assoc;
 
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = frame->assoc;
 	while (assoc != ASE_NULL) 
@@ -76,7 +76,7 @@ ase_lsp_assoc_t* ase_lsp_insertvalueintoframe (
 {
 	ase_lsp_assoc_t* assoc;
 
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = __new_assoc (lsp, name, value, ASE_NULL);
 	if (assoc == ASE_NULL) return ASE_NULL;
@@ -91,7 +91,7 @@ ase_lsp_assoc_t* ase_lsp_insertfuncintoframe (
 {
 	ase_lsp_assoc_t* assoc;
 
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = __new_assoc (lsp, name, ASE_NULL, func);
 	if (assoc == ASE_NULL) return ASE_NULL;

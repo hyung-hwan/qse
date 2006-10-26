@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.39 2006-10-24 04:10:12 bacon Exp $
+ * $Id: rex.c,v 1.40 2006-10-26 09:27:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -384,7 +384,7 @@ int ase_awk_matchrex (
 
 void ase_awk_freerex (ase_awk_t* awk, void* code)
 {
-	ase_awk_assert (awk, code != ASE_NULL);
+	ASE_AWK_ASSERT (awk, code != ASE_NULL);
 	ASE_AWK_FREE (awk, code);
 }
 
@@ -393,7 +393,7 @@ ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code)
 	const ase_byte_t* p = code;
 	ase_size_t nb, el;
 
-	ase_awk_assert (awk, p != ASE_NULL);
+	ASE_AWK_ASSERT (awk, p != ASE_NULL);
 
 	nb = *(ase_size_t*)p; p += ase_sizeof(nb);
 	el = *(ase_size_t*)p; p += ase_sizeof(el);
@@ -598,7 +598,7 @@ static int __build_atom (__builder_t* builder)
 			n = __build_charset (builder, cmd);
 			if (n == -1) return -1;
 
-			ase_awk_assert (builder->awk, n != 0);
+			ASE_AWK_ASSERT (builder->awk, n != 0);
 
 			if (builder->ptn.curc.type != CT_SPECIAL ||
 			    builder->ptn.curc.value != ASE_T(']'))
@@ -615,7 +615,7 @@ static int __build_atom (__builder_t* builder)
 	}
 	else 
 	{
-		ase_awk_assert (builder->awk, builder->ptn.curc.type == CT_NORMAL);
+		ASE_AWK_ASSERT (builder->awk, builder->ptn.curc.type == CT_NORMAL);
 
 		tmp.cmd = CMD_ORD_CHAR;
 		tmp.negate = 0;
@@ -1145,7 +1145,7 @@ static const ase_byte_t* __match_atom (
 		__match_group
 	};
        
-	ase_awk_assert (matcher->awk, 
+	ASE_AWK_ASSERT (matcher->awk, 
 		((struct __code_t*)base)->cmd >= 0 && 
 		((struct __code_t*)base)->cmd < ase_countof(matchers));
 
@@ -1159,7 +1159,7 @@ static const ase_byte_t* __match_bol (
 	const struct __code_t* cp;
 
 	cp = (const struct __code_t*)p; p += ase_sizeof(*cp);
-	ase_awk_assert (matcher->awk, cp->cmd == CMD_BOL);
+	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_BOL);
 
 	mat->matched = (mat->match_ptr == matcher->match.str.ptr ||
 	               (cp->lbound == cp->ubound && cp->lbound == 0));
@@ -1175,7 +1175,7 @@ static const ase_byte_t* __match_eol (
 	const struct __code_t* cp;
 
 	cp = (const struct __code_t*)p; p += ase_sizeof(*cp);
-	ase_awk_assert (matcher->awk, cp->cmd == CMD_EOL);
+	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_EOL);
 
 	mat->matched = (mat->match_ptr == matcher->match.str.end ||
 	               (cp->lbound == cp->ubound && cp->lbound == 0));
@@ -1192,7 +1192,7 @@ static const ase_byte_t* __match_any_char (
 	ase_size_t si = 0, lbound, ubound;
 
 	cp = (const struct __code_t*)p; p += ase_sizeof(*cp);
-	ase_awk_assert (matcher->awk, cp->cmd == CMD_ANY_CHAR);
+	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_ANY_CHAR);
 
 	lbound = cp->lbound;
 	ubound = cp->ubound;
@@ -1242,7 +1242,7 @@ static const ase_byte_t* __match_ord_char (
 	ase_char_t cc;
 
 	cp = (const struct __code_t*)p; p += ase_sizeof(*cp);
-	ase_awk_assert (matcher->awk, cp->cmd == CMD_ORD_CHAR);
+	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_ORD_CHAR);
 
 	lbound = cp->lbound; 
 	ubound = cp->ubound;
@@ -1330,7 +1330,7 @@ static const ase_byte_t* __match_charset (
 	ase_char_t c;
 
 	cp = (const struct __code_t*)p; p += ase_sizeof(*cp);
-	ase_awk_assert (matcher->awk, cp->cmd == CMD_CHARSET);
+	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_CHARSET);
 
 	lbound = cp->lbound;
 	ubound = cp->ubound;
@@ -1374,7 +1374,7 @@ static const ase_byte_t* __match_group (
 	ase_size_t si = 0, grp_len_static[16], * grp_len;
 
 	cp = (const struct __code_t*)p; p += ase_sizeof(*cp);
-	ase_awk_assert (matcher->awk, cp->cmd == CMD_GROUP);
+	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_GROUP);
 
 	mat->matched = ase_false;
 	mat->match_len = 0;
@@ -1455,7 +1455,7 @@ static const ase_byte_t* __match_group (
 		}
 		else 
 		{
-			ase_awk_assert (matcher->awk, cp->ubound > cp->lbound);
+			ASE_AWK_ASSERT (matcher->awk, cp->ubound > cp->lbound);
 
 			do
 			{
@@ -1500,7 +1500,7 @@ static const ase_byte_t* __match_occurrences (
 	__matcher_t* matcher, ase_size_t si, const ase_byte_t* p,
 	ase_size_t lbound, ase_size_t ubound, __match_t* mat)
 {
-	ase_awk_assert (matcher->awk, si >= lbound && si <= ubound);
+	ASE_AWK_ASSERT (matcher->awk, si >= lbound && si <= ubound);
 	/* the match has been found */
 
 	if (lbound == ubound || p >= mat->branch_end)
@@ -1553,7 +1553,7 @@ static const ase_byte_t* __match_occurrences (
 		 * lbound in the implementation below, though)
 		 */
 
-		ase_awk_assert (matcher->awk, ubound > lbound);
+		ASE_AWK_ASSERT (matcher->awk, ubound > lbound);
 
 		do
 		{
@@ -1625,7 +1625,7 @@ ase_bool_t __test_charset (
 		}
 		else
 		{
-			ase_awk_assert (matcher->awk,
+			ASE_AWK_ASSERT (matcher->awk,
 				!"should never happen - invalid charset code");
 			break;
 		}

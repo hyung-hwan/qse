@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.134 2006-10-24 04:48:52 bacon Exp $
+ * $Id: awk.h,v 1.135 2006-10-26 09:27:15 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -318,9 +318,9 @@ enum
 
 /* assertion statement */
 #ifdef NDEBUG
-	#define ase_awk_assert(awk,expr) ((void)0)
+	#define ASE_AWK_ASSERT(awk,expr) ((void)0)
 #else
-	#define ase_awk_assert(awk,expr) (void)((expr) || \
+	#define ASE_AWK_ASSERT(awk,expr) (void)((expr) || \
 		(ase_awk_assertfail (awk, ASE_T(#expr), ASE_T(__FILE__), __LINE__), 0))
 #endif
 
@@ -419,7 +419,7 @@ ase_char_t* ase_awk_strxnstr (
 	const ase_char_t* str, ase_size_t strsz, 
 	const ase_char_t* sub, ase_size_t subsz);
 
-/* abort function for assertion. use ase_awk_assert instead */
+/* abort function for assertion. use ASE_AWK_ASSERT instead */
 int ase_awk_assertfail (ase_awk_t* awk, 
 	const ase_char_t* expr, const ase_char_t* file, int line);
 

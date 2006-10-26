@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.86 2006-10-24 04:10:12 bacon Exp $ 
+ * $Id: awk.c,v 1.87 2006-10-26 09:27:15 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -140,7 +140,7 @@ int ase_awk_close (ase_awk_t* awk)
 {
 	if (ase_awk_clear (awk) == -1) return -1;
 
-	ase_awk_assert (awk, awk->run.count == 0 && awk->run.ptr == ASE_NULL);
+	ASE_AWK_ASSERT (awk, awk->run.count == 0 && awk->run.ptr == ASE_NULL);
 
 	ase_awk_map_close (&awk->tree.afns);
 	ase_awk_tab_close (&awk->parse.globals);
@@ -191,14 +191,14 @@ int ase_awk_clear (ase_awk_t* awk)
 
 	if (awk->tree.begin != ASE_NULL) 
 	{
-		ase_awk_assert (awk, awk->tree.begin->next == ASE_NULL);
+		ASE_AWK_ASSERT (awk, awk->tree.begin->next == ASE_NULL);
 		ase_awk_clrpt (awk, awk->tree.begin);
 		awk->tree.begin = ASE_NULL;
 	}
 
 	if (awk->tree.end != ASE_NULL) 
 	{
-		ase_awk_assert (awk, awk->tree.end->next == ASE_NULL);
+		ASE_AWK_ASSERT (awk, awk->tree.end->next == ASE_NULL);
 		ase_awk_clrpt (awk, awk->tree.end);
 		awk->tree.end = ASE_NULL;
 	}

@@ -2,8 +2,8 @@ SRCS = lsp.c
 OUTS = $(SRCS:.c=.x)
 
 CC = @CC@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/lsp
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. -I$(XPKIT)
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/lsp -L$(XPKIT)/xp/bas
 LIBS = @LIBS@ -lxpbas -laselsp
 
 all: $(OUTS)

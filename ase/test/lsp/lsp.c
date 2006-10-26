@@ -5,6 +5,10 @@
 #include <xp/bas/locale.h>
 #include <xp/bas/sio.h>
 
+#include <string.h>
+#include <wctype.h>
+#include <stdlib.h>
+
 #ifdef __linux
 #include <mcheck.h>
 #endif

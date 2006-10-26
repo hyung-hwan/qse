@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.2 2006-10-24 04:22:39 bacon Exp $
+ * $Id: misc.c,v 1.3 2006-10-26 09:31:28 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -43,7 +43,7 @@ ase_long_t ase_lsp_strxtolong (
 	ase_size_t rem;
 	int digit, negative = 0;
 
-	ase_lsp_assert (lsp, base < 37); 
+	ASE_LSP_ASSERT (lsp, base < 37); 
 
 	p = str; 
 	end = str + len;
@@ -750,7 +750,7 @@ ase_char_t* ase_lsp_strxnstr (
 	return ASE_NULL;
 }
 
-int ase_lsp_abort (ase_lsp_t* lsp, 
+int ase_lsp_assertfail (ase_lsp_t* lsp, 
 	const ase_char_t* expr, const ase_char_t* file, int line)
 {
 	lsp->syscas.dprintf (

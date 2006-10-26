@@ -1,5 +1,5 @@
 /*
- * $Id: name.c,v 1.8 2006-10-26 08:17:37 bacon Exp $
+ * $Id: name.c,v 1.9 2006-10-26 09:31:28 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -46,7 +46,7 @@ void ase_lsp_name_close (ase_lsp_name_t* name)
 {
 	if (name->capa >= ase_countof(name->static_buf)) 
 	{
-		ase_lsp_assert (name->lsp, name->buf != name->static_buf);
+		ASE_LSP_ASSERT (name->lsp, name->buf != name->static_buf);
 		ASE_LSP_FREE (name->lsp, name->buf);
 	}
 	if (name->__dynamic) ASE_LSP_FREE (name->lsp, name);

@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.23 2006-10-24 04:10:12 bacon Exp $
+ * $Id: tab.c,v 1.24 2006-10-26 09:27:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -53,7 +53,7 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 	if (tab->size > capa) 
 	{
 		ase_awk_tab_remove (tab, capa, tab->size - capa);
-		ase_awk_assert (tab->awk, tab->size <= capa);
+		ASE_AWK_ASSERT (tab->awk, tab->size <= capa);
 	}
 
 	if (capa > 0) 

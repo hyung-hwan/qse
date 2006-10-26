@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.10 2006-10-26 08:17:38 bacon Exp $
+ * $Id: prim_math.c,v 1.11 2006-10-26 09:31:28 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -12,7 +12,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_bool_t realnum = ase_false;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
 	//while (body != lsp->mem->nil) {
@@ -25,7 +25,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) {
 			if (body == args) {
-				ase_lsp_assert (lsp, realnum == ase_false);
+				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				ivalue = ASE_LSP_IVALUE(tmp);
 			}
 			else {
@@ -37,7 +37,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) {
 			if (body == args) {
-				ase_lsp_assert (lsp, realnum == ase_false);
+				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				realnum = ase_true;
 				rvalue = ASE_LSP_RVALUE(tmp);
 			}
@@ -58,7 +58,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		body = ASE_LSP_CDR(body);
 	}
 
-	ase_lsp_assert (lsp, body == lsp->mem->nil);
+	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = (realnum)?
 		ase_lsp_makerealobj (lsp->mem, rvalue):
@@ -79,7 +79,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_bool_t realnum = ase_false;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
 	//while (body != lsp->mem->nil) {
@@ -90,7 +90,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) {
 			if (body == args) {
-				ase_lsp_assert (lsp, realnum == ase_false);
+				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				ivalue = ASE_LSP_IVALUE(tmp);
 			}
 			else {
@@ -102,7 +102,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) {
 			if (body == args) {
-				ase_lsp_assert (lsp, realnum == ase_false);
+				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				realnum = ase_true;
 				rvalue = ASE_LSP_RVALUE(tmp);
 			}
@@ -123,7 +123,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		body = ASE_LSP_CDR(body);
 	}
 
-	ase_lsp_assert (lsp, body == lsp->mem->nil);
+	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = (realnum)?
 		ase_lsp_makerealobj (lsp->mem, rvalue):
@@ -144,7 +144,7 @@ ase_lsp_obj_t* ase_lsp_prim_multiply (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_bool_t realnum = ase_false;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
 	//while (body != lsp->mem->nil) {
@@ -155,7 +155,7 @@ ase_lsp_obj_t* ase_lsp_prim_multiply (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) {
 			if (body == args) {
-				ase_lsp_assert (lsp, realnum == ase_false);
+				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				ivalue = ASE_LSP_IVALUE(tmp);
 			}
 			else {
@@ -167,7 +167,7 @@ ase_lsp_obj_t* ase_lsp_prim_multiply (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) {
 			if (body == args) {
-				ase_lsp_assert (lsp, realnum == ase_false);
+				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				realnum = ase_true;
 				rvalue = ASE_LSP_RVALUE(tmp);
 			}
@@ -188,7 +188,7 @@ ase_lsp_obj_t* ase_lsp_prim_multiply (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		body = ASE_LSP_CDR(body);
 	}
 
-	ase_lsp_assert (lsp, body == lsp->mem->nil);
+	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = (realnum)?
 		ase_lsp_makerealobj (lsp->mem, rvalue):
@@ -209,7 +209,7 @@ ase_lsp_obj_t* ase_lsp_prim_divide (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_bool_t realnum = ase_false;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
 	//while (body != lsp->mem->nil) {
@@ -220,7 +220,7 @@ ase_lsp_obj_t* ase_lsp_prim_divide (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) {
 			if (body == args) {
-				ase_lsp_assert (lsp, realnum == ase_false);
+				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				ivalue = ASE_LSP_IVALUE(tmp);
 			}
 			else {
@@ -237,7 +237,7 @@ ase_lsp_obj_t* ase_lsp_prim_divide (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) {
 			if (body == args) {
-				ase_lsp_assert (lsp, realnum == ase_false);
+				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				realnum = ase_true;
 				rvalue = ASE_LSP_RVALUE(tmp);
 			}
@@ -258,7 +258,7 @@ ase_lsp_obj_t* ase_lsp_prim_divide (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		body = ASE_LSP_CDR(body);
 	}
 
-	ase_lsp_assert (lsp, body == lsp->mem->nil);
+	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = (realnum)?
 		ase_lsp_makerealobj (lsp->mem, rvalue):
@@ -278,7 +278,7 @@ ase_lsp_obj_t* ase_lsp_prim_modulus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_long_t ivalue = 0;
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
-	ase_lsp_assert (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
 	//while (body != lsp->mem->nil) {
@@ -320,7 +320,7 @@ ase_lsp_obj_t* ase_lsp_prim_modulus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		body = ASE_LSP_CDR(body);
 	}
 
-	ase_lsp_assert (lsp, body == lsp->mem->nil);
+	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = ase_lsp_makeintobj (lsp->mem, ivalue);
 	if (tmp == ASE_NULL) 

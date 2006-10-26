@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.28 2006-10-24 04:10:12 bacon Exp $
+ * $Id: map.c,v 1.29 2006-10-26 09:27:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -75,7 +75,7 @@ void ase_awk_map_clear (ase_awk_map_t* map)
 		map->buck[i] = ASE_NULL;
 	}
 
-	ase_awk_assert (map->awk, map->size == 0);
+	ASE_AWK_ASSERT (map->awk, map->size == 0);
 }
 
 ase_awk_pair_t* ase_awk_map_get (

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.9 2006-10-26 08:17:37 bacon Exp $
+ * $Id: lsp.c,v 1.10 2006-10-26 09:31:28 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -110,7 +110,7 @@ int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
 {
 	if (ase_lsp_detach_input(lsp) == -1) return -1;
 
-	ase_lsp_assert (lsp, lsp->input_func == ASE_NULL);
+	ASE_LSP_ASSERT (lsp, lsp->input_func == ASE_NULL);
 
 	if (input(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) {
 		/* TODO: set error number */
@@ -142,7 +142,7 @@ int ase_lsp_attach_output (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg)
 {
 	if (ase_lsp_detach_output(lsp) == -1) return -1;
 
-	ase_lsp_assert (lsp, lsp->output_func == ASE_NULL);
+	ASE_LSP_ASSERT (lsp, lsp->output_func == ASE_NULL);
 
 	if (output(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) {
 		/* TODO: set error number */

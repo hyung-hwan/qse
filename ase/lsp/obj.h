@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.9 2006-10-26 08:17:37 bacon Exp $
+ * $Id: obj.h,v 1.10 2006-10-26 09:25:03 bacon Exp $
  */
 
 #ifndef _ASE_LSP_OBJ_H_
@@ -27,7 +27,6 @@ enum
 };
 
 typedef struct ase_lsp_objhdr_t     ase_lsp_objhdr_t;
-typedef struct ase_lsp_obj_t        ase_lsp_obj_t;
 typedef struct ase_lsp_obj_nil_t    ase_lsp_obj_nil_t;
 typedef struct ase_lsp_obj_true_t   ase_lsp_obj_true_t;
 typedef struct ase_lsp_obj_int_t    ase_lsp_obj_int_t;
@@ -96,22 +95,22 @@ struct ase_lsp_obj_str_t
 struct ase_lsp_obj_cons_t
 {
 	ase_lsp_objhdr_t hdr;
-	struct ase_lsp_obj_t* car;
-	struct ase_lsp_obj_t* cdr;
+	ase_lsp_obj_t* car;
+	ase_lsp_obj_t* cdr;
 };
 
 struct ase_lsp_obj_func_t
 {
 	ase_lsp_objhdr_t hdr;
-	struct ase_lsp_obj_t* formal;
-	struct ase_lsp_obj_t* body;
+	ase_lsp_obj_t* formal;
+	ase_lsp_obj_t* body;
 };
 
 struct ase_lsp_obj_macro_t
 {
 	ase_lsp_objhdr_t hdr;
-	struct ase_lsp_obj_t* formal;
-	struct ase_lsp_obj_t* body;
+	ase_lsp_obj_t* formal;
+	ase_lsp_obj_t* body;
 };
 
 struct ase_lsp_obj_prim_t

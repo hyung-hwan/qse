@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h,v 1.2 2006-10-26 08:17:37 bacon Exp $
+ * $Id: lsp_i.h,v 1.3 2006-10-26 09:31:28 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSPI_H_
@@ -12,13 +12,6 @@
 #include <ase/lsp/misc.h>
 #include <ase/lsp/prim.h>
 #include <ase/lsp/name.h>
-
-#ifdef NDEBUG
-	#define ase_lsp_assert(lsp,expr) ((void)0)
-#else
-	#define ase_lsp_assert(lsp,expr) (void)((expr) || \
-		(ase_lsp_abort(lsp, ASE_T(#expr), ASE_T(__FILE__), __LINE__), 0))
-#endif
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
