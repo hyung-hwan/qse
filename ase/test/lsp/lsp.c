@@ -178,7 +178,7 @@ static int __dprintf (const xp_char_t* fmt, ...)
 }
 
 
-int xp_main (int argc, xp_char_t* argv[])
+int __main (int argc, xp_char_t* argv[])
 {
 	ase_lsp_t* lsp;
 	ase_lsp_obj_t* obj;
@@ -186,9 +186,6 @@ int xp_main (int argc, xp_char_t* argv[])
 	int mem, inc;
 	ase_lsp_syscas_t syscas;
 
-#ifdef __linux
-	mtrace ();
-#endif
 
 	if (xp_setlocale () == -1) {
 		xp_fprintf (xp_stderr,
@@ -304,10 +301,29 @@ int xp_main (int argc, xp_char_t* argv[])
 
 	ase_lsp_close (lsp);
 
-#ifdef __linux
-	muntrace ();
-#endif
+
 	return 0;
 }
 
 
+int xp_main (int argc, xp_char_t* argv[])
+{
+	int n;
+
+#if defined(__linux) && defined(_DEBUG)
+	mtrace ();
+#endif
+
+	n = __main (argc, argv);
+
+#if defined(__linux) && defined(_DEBUG)
+	muntrace ();
+#endif
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
+	_CrtDumpMemoryLeaks ();
+	wprintf (L"Press ENTER to quit\n");
+	getchar ();
+#endif
+
+	return n;
+}
