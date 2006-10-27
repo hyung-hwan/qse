@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.74 2006-10-26 08:17:37 bacon Exp $
+ * $Id: awk_i.h,v 1.75 2006-10-27 10:28:52 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -23,6 +23,12 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
+#endif
+
+/* TODO: remove this */
+#ifdef _WIN32
+#include <tchar.h>
+#define xp_printf _tprintf
 #endif
 
 #define ASE_AWK_MAX_GLOBALS 9999
