@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.40 2006-10-26 09:27:15 bacon Exp $
+ * $Id: rex.c,v 1.41 2006-10-27 10:34:40 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1801,7 +1801,7 @@ static const ase_byte_t* __print_atom (const ase_byte_t* p)
 			}
 			else
 			{
-				xp_printf ("should never happen - invalid charset code\n");
+				xp_printf (ASE_T("should never happen - invalid charset code\n"));
 			}
 
 			p += ase_sizeof(c1);
@@ -1818,7 +1818,7 @@ static const ase_byte_t* __print_atom (const ase_byte_t* p)
 	}
 	else 
 	{
-		xp_printf ("should never happen - invalid atom code\n");
+		xp_printf (ASE_T("should never happen - invalid atom code\n"));
 	}
 
 	if (cp->lbound == 0 && cp->ubound == BOUND_MAX)
