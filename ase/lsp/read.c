@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.25 2006-10-26 14:22:01 bacon Exp $
+ * $Id: read.c,v 1.26 2006-10-27 08:31:06 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -347,7 +347,6 @@ static int read_token (ase_lsp_t* lsp)
 	return 0;
 }
 
-#if 0
 static int read_number (ase_lsp_t* lsp, int negative)
 {
 	ase_long_t ivalue = 0;
@@ -388,8 +387,8 @@ static int read_number (ase_lsp_t* lsp, int negative)
 
 	return 0;
 }
-#endif
 
+#if 0
 static int __read_number (ase_lsp_t* lsp, int negative)
 {
 	ase_cint_t c;
@@ -484,6 +483,7 @@ static int __read_number (ase_lsp_t* lsp, int negative)
 
 	return 0;
 }
+#endif
 
 static int read_ident (ase_lsp_t* lsp)
 {
