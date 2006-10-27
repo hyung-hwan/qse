@@ -1,19 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
-  <PersonalityInfo>
-    <Option>
-      <Option Name="Personality">Default.Personality</Option>
-      <Option Name="ProjectType"></Option>
-      <Option Name="Version">1.0</Option>
-      <Option Name="GUID">{AEC503C7-4ABE-4581-B864-3F9D5490DBAC}</Option>
-    </Option>
-  </PersonalityInfo>
-  <Default.Personality>
-    
-    
-    <Projects>
+	<PersonalityInfo>
+		<Option>
+			<Option Name="Personality">Default.Personality</Option>
+			<Option Name="ProjectType"></Option>
+			<Option Name="Version">1.0</Option>
+			<Option Name="GUID">{AEC503C7-4ABE-4581-B864-3F9D5490DBAC}</Option>
+		</Option>
+	</PersonalityInfo>
+	<Default.Personality>  <Projects>
       <Projects Name="aseawk.lib">awk\aseawk.bdsproj</Projects>
-      <Projects Name="Targets">aseawk.lib</Projects>
+      <Projects Name="aseawk.exe">test\awk\aseawk.bdsproj</Projects>
+      <Projects Name="Targets">aseawk.lib aseawk.exe</Projects>
     </Projects>
     <Dependencies/>
   </Default.Personality>
