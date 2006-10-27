@@ -12,8 +12,8 @@
     
     
     <Projects>
-      <Projects Name="awk.lib">awk\awk.bdsproj</Projects>
-      <Projects Name="Targets">awk.lib</Projects>
+      <Projects Name="aseawk.lib">awk\aseawk.bdsproj</Projects>
+      <Projects Name="Targets">aseawk.lib</Projects>
     </Projects>
     <Dependencies/>
   </Default.Personality>
