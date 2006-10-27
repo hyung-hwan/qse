@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.105 2006-10-27 10:28:53 bacon Exp $
+ * $Id: awk.c,v 1.106 2006-10-27 11:06:09 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -224,7 +224,7 @@ static ase_ssize_t process_extio_pipe (
 			else if (epa->mode == ASE_AWK_IO_PIPE_WRITE)
 				mode = ASE_T("w");
 			else return -1; /* TODO: any way to set the error number? */
-xp_printf (ASE_TEXT("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
+xp_printf (ASE_T("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
 			handle = popen_t (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
@@ -233,7 +233,7 @@ xp_printf (ASE_TEXT("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
 
 		case ASE_AWK_IO_CLOSE:
 		{
-xp_printf (ASE_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
+xp_printf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -288,7 +288,7 @@ static ase_ssize_t process_extio_file (
 				mode = ASE_T("a");
 			else return -1; /* TODO: any way to set the error number? */
 
-xp_printf (ASE_TEXT("opending %s of type %d (file)\n"),  epa->name, epa->type);
+xp_printf (ASE_T("opending %s of type %d (file)\n"),  epa->name, epa->type);
 			handle = fopen_t (epa->name, mode);
 			if (handle == NULL) return -1;
 
@@ -298,7 +298,7 @@ xp_printf (ASE_TEXT("opending %s of type %d (file)\n"),  epa->name, epa->type);
 
 		case ASE_AWK_IO_CLOSE:
 		{
-xp_printf (ASE_TEXT("closing %s of type %d (file)\n"),  epa->name, epa->type);
+xp_printf (ASE_T("closing %s of type %d (file)\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -394,7 +394,7 @@ static ase_ssize_t process_extio_console (
 				FILE* fp = fopen_t (infiles[infile_no], ASE_T("r"));
 				if (fp == ASE_NULL)
 				{
-xp_printf (ASE_TEXT("failed to open the next console of type %x - fopen failure\n"), epa->type);
+xp_printf (ASE_T("failed to open the next console of type %x - fopen failure\n"), epa->type);
 					return -1;
 				}
 
@@ -403,7 +403,7 @@ xp_printf (ASE_TEXT("failed to open the next console of type %x - fopen failure\
 				    epa->handle != stdout &&
 				    epa->handle != stderr) fclose (epa->handle);
 
-xp_printf (ASE_TEXT("open the next console [%s]\n"), infiles[infile_no]);
+xp_printf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
 				epa->handle = fp;
 			}
 
@@ -439,14 +439,14 @@ static int open_extio_console (ase_awk_extio_t* epa)
 	/* epa->name is always empty for console */
 	xp_assert (epa->name[0] == ASE_T('\0'));
 
-xp_printf (ASE_TEXT("opening console[%s] of type %x\n"), epa->name, epa->type);
+xp_printf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
 
 	if (epa->mode == ASE_AWK_IO_CONSOLE_READ)
 	{
 		if (infiles[infile_no] == ASE_NULL)
 		{
 			/* no more input file */
-xp_printf (ASE_TEXT("console - no more file\n"));;
+xp_printf (ASE_T("console - no more file\n"));;
 			return 0;
 		}
 
@@ -462,7 +462,7 @@ xp_printf (ASE_T("    console(r) - <standard input>\n"));
 			FILE* fp = fopen_t (infiles[infile_no], ASE_T("r"));
 			if (fp == ASE_NULL)
 			{
-xp_printf (ASE_TEXT("failed to open console of type %x - fopen failure\n"), epa->type);
+xp_printf (ASE_T("failed to open console of type %x - fopen failure\n"), epa->type);
 				return -1;
 			}
 
@@ -495,7 +495,7 @@ xp_printf (ASE_T("    console(w) - <standard output>\n"));
 
 static int close_extio_console (ase_awk_extio_t* epa)
 {
-xp_printf (ASE_TEXT("closing console of type %x\n"), epa->type);
+xp_printf (ASE_T("closing console of type %x\n"), epa->type);
 
 	if (epa->handle != ASE_NULL &&
 	    epa->handle != stdin && 
@@ -513,7 +513,7 @@ static int next_extio_console (ase_awk_extio_t* epa)
 {
 	int n;
 	FILE* fp = epa->handle;
-xp_printf (ASE_TEXT("switching console[%s] of type %x\n"), epa->name, epa->type);
+xp_printf (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
 
 	n = open_extio_console(epa);
 	if (n == -1) return -1;
