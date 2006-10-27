@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.245 2006-10-27 11:04:16 bacon Exp $
+ * $Id: run.c,v 1.246 2006-10-27 13:49:43 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -807,7 +807,7 @@ static void __deinit_run (ase_awk_run_t* run)
 
 static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 {
-	ase_awk_runarg_t* p = runarg;
+	ase_awk_runarg_t* p;
 	ase_size_t argc;
 	ase_awk_val_t* v_argc;
 	ase_awk_val_t* v_argv;
@@ -2943,67 +2943,78 @@ static ase_awk_val_t* __eval_binop_in (
 static ase_awk_val_t* __eval_binop_bor (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
-	ase_awk_val_t* res = ASE_NULL;
-
 	if (left->type == ASE_AWK_VAL_INT &&
 	    right->type == ASE_AWK_VAL_INT)
 	{
+		ase_awk_val_t* res;
 		ase_long_t r = 
 			((ase_awk_val_int_t*)left)->val | 
 			((ase_awk_val_int_t*)right)->val;
+
 		res = ase_awk_makeintval (run, r);
-	}
-	else
-	{
-		PANIC (run, ASE_AWK_EOPERAND);
+
+		if (res == ASE_NULL) 
+		{
+			run->errnum = ASE_AWK_ENOMEM;
+			return ASE_NULL;
+		}
+
+		return res;
 	}
 
-	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
-	return res;
+	run->errnum = ASE_AWK_EOPERAND;
+	return ASE_NULL;
 }
 
 static ase_awk_val_t* __eval_binop_bxor (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
-	ase_awk_val_t* res = ASE_NULL;
-
 	if (left->type == ASE_AWK_VAL_INT &&
 	    right->type == ASE_AWK_VAL_INT)
 	{
+		ase_awk_val_t* res;
 		ase_long_t r = 
 			((ase_awk_val_int_t*)left)->val ^ 
 			((ase_awk_val_int_t*)right)->val;
 		res = ase_awk_makeintval (run, r);
-	}
-	else
-	{
-		PANIC (run, ASE_AWK_EOPERAND);
+
+		if (res == ASE_NULL) 
+		{
+			run->errnum = ASE_AWK_ENOMEM;
+			return ASE_NULL;
+		}
+
+		return res;
 	}
 
-	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
-	return res;
+	run->errnum = ASE_AWK_EOPERAND;
+	return ASE_NULL;
 }
 
 static ase_awk_val_t* __eval_binop_band (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
-	ase_awk_val_t* res = ASE_NULL;
-
 	if (left->type == ASE_AWK_VAL_INT &&
 	    right->type == ASE_AWK_VAL_INT)
 	{
+		ase_awk_val_t* res;
+
 		ase_long_t r = 
 			((ase_awk_val_int_t*)left)->val &
 			((ase_awk_val_int_t*)right)->val;
 		res = ase_awk_makeintval (run, r);
-	}
-	else
-	{
-		PANIC (run, ASE_AWK_EOPERAND);
+
+		if (res == ASE_NULL) 
+		{
+			run->errnum = ASE_AWK_ENOMEM;
+			return ASE_NULL;
+		}
+
+		return res;
 	}
 
-	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
-	return res;
+	run->errnum = ASE_AWK_EOPERAND;
+	return ASE_NULL;
 }
 
 static int __cmp_nil_nil (

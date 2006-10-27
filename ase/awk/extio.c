@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.57 2006-10-26 09:27:15 bacon Exp $
+ * $Id: extio.c,v 1.58 2006-10-27 13:49:43 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -516,7 +516,7 @@ int ase_awk_flushextio (
 {
 	ase_awk_extio_t* p = run->extio.chain;
 	ase_awk_io_t handler;
-	int extio_type, extio_mode, extio_mask, n;
+	int extio_type, /*extio_mode,*/ extio_mask, n;
 	ase_bool_t ok = ase_false;
 
 	ASE_AWK_ASSERT (run->awk,
@@ -528,7 +528,7 @@ int ase_awk_flushextio (
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];
-	extio_mode = __out_mode_map[out_type];
+	/*extio_mode = __out_mode_map[out_type];*/
 	extio_mask = __out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
@@ -580,7 +580,7 @@ int ase_awk_nextextio_read (
 {
 	ase_awk_extio_t* p = run->extio.chain;
 	ase_awk_io_t handler;
-	int extio_type, extio_mode, extio_mask, n;
+	int extio_type, /*extio_mode,*/ extio_mask, n;
 
 	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_type_map));
@@ -591,7 +591,7 @@ int ase_awk_nextextio_read (
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = __in_type_map[in_type];
-	extio_mode = __in_mode_map[in_type];
+	/*extio_mode = __in_mode_map[in_type];*/
 	extio_mask = __in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
@@ -632,7 +632,7 @@ int ase_awk_closeextio_read (
 {
 	ase_awk_extio_t* p = run->extio.chain, * px = ASE_NULL;
 	ase_awk_io_t handler;
-	int extio_type, extio_mode, extio_mask;
+	int extio_type, /*extio_mode,*/ extio_mask;
 
 	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ase_countof(__in_type_map));
@@ -643,7 +643,7 @@ int ase_awk_closeextio_read (
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = __in_type_map[in_type];
-	extio_mode = __in_mode_map[in_type];
+	/*extio_mode = __in_mode_map[in_type];*/
 	extio_mask = __in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
@@ -695,7 +695,7 @@ int ase_awk_closeextio_write (
 {
 	ase_awk_extio_t* p = run->extio.chain, * px = ASE_NULL;
 	ase_awk_io_t handler;
-	int extio_type, extio_mode, extio_mask;
+	int extio_type, /*extio_mode,*/ extio_mask;
 
 	ASE_AWK_ASSERT (run->awk,
 		out_type >= 0 && out_type <= ase_countof(__out_type_map));
@@ -706,7 +706,7 @@ int ase_awk_closeextio_write (
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];
-	extio_mode = __out_mode_map[out_type];
+	/*extio_mode = __out_mode_map[out_type];*/
 	extio_mask = __out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.70 2006-10-26 09:27:15 bacon Exp $
+ * $Id: func.c,v 1.71 2006-10-27 13:49:43 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -290,8 +290,6 @@ static int __bfn_fflush (ase_awk_run_t* run)
 		}
 
 		/* flush the given extio */
-		n = 1;
-
 		n = __flush_extio (
 			run, ASE_AWK_EXTIO_FILE, 
 			((len0 == 0)? ASE_NULL: str0), 1);
