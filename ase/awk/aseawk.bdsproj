@@ -14,7 +14,7 @@
 		</Source>
 		<BCBPROJECT>
       <project version="10.0">
-        <property category="build.config" name="active" value="1"/>
+        <property category="build.config" name="active" value="0"/>
         <property category="build.config" name="count" value="1"/>
         <property category="build.config" name="excludedefaultforzero" value="0"/>
         <property category="build.config.0" name="builddir" value="Debug"/>
@@ -200,6 +200,7 @@
         <FILE FILENAME="str.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="str" FORMNAME="" DESIGNCLASS=""/>
         <FILE FILENAME="tab.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="tab" FORMNAME="" DESIGNCLASS=""/>
         <FILE FILENAME="tree.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="tree" FORMNAME="" DESIGNCLASS=""/>
+        <FILE FILENAME="val.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="val" FORMNAME="" DESIGNCLASS=""/>
       </FILELIST>
       <IDEOPTIONS>
         <VersionInfo>

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.104 2006-10-27 09:19:21 bacon Exp $
+ * $Id: awk.c,v 1.105 2006-10-27 10:28:53 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -615,11 +615,7 @@ static void __awk_free (void* ptr, void* custom_data)
 #endif
 }
 
-#if defined(__STAND_ALONE) && !defined(_WIN32)
-static int __main (int argc, char* argv[])
-#else
 static int __main (int argc, ase_char_t* argv[])
-#endif
 {
 	ase_awk_t* awk;
 	ase_awk_srcios_t srcios;
@@ -647,11 +643,7 @@ static int __main (int argc, ase_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-#if defined(__STAND_ALONE) && !defined(_WIN32)
-		if (strcmp(argv[i], "-m") == 0)
-#else
 		if (ase_awk_strcmp(argv[i], ASE_T("-m")) == 0)
-#endif
 		{
 			opt |= ASE_AWK_RUNMAIN;
 		}
@@ -745,13 +737,13 @@ static int __main (int argc, ase_char_t* argv[])
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{
 		int errnum = ase_awk_geterrnum(awk);
-#if defined(__STAND_ALONE) && !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
-		xp_printf (
+#if !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
+		wprintf (
 			ASE_T("ERROR: cannot parse program - line %u [%d] %ls\n"), 
 			(unsigned int)ase_awk_getsrcline(awk), 
 			errnum, ase_awk_geterrstr(errnum));
 #else
-		xp_printf (
+		_tprintf (
 			ASE_T("ERROR: cannot parse program - line %u [%d] %s\n"), 
 			(unsigned int)ase_awk_getsrcline(awk), 
 			errnum, ase_awk_geterrstr(errnum));
@@ -787,12 +779,12 @@ static int __main (int argc, ase_char_t* argv[])
 	if (ase_awk_run (awk, &runios, &runcbs, runarg) == -1)
 	{
 		int errnum = ase_awk_geterrnum(awk);
-#if defined(__STAND_ALONE) && !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
-		xp_printf (
+#if !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
+		wprintf (
 			ASE_T("error: cannot run program - [%d] %ls\n"), 
 			errnum, ase_awk_geterrstr(errnum));
 #else
-		xp_printf (
+		_tprintf (
 			ASE_T("error: cannot run program - [%d] %s\n"), 
 			errnum, ase_awk_geterrstr(errnum));
 #endif
@@ -939,9 +931,9 @@ typedef struct _PEB {
 
 
 */
-void* __declspec(naked) get_current_teb (void)
+void* /*__declspec(naked)*/ get_current_teb (void)
 {
-	_asm 
+	_asm
 	{
 		mov eax, fs:[0x18]
 	}
@@ -960,7 +952,7 @@ int is_debugger_present (void)
 }
 
 
-int __declspec(naked) is_debugger_present2 (void)
+int /*__declspec(naked)*/ is_debugger_present2 (void)
 {
 	_asm
 	{
@@ -974,8 +966,6 @@ int __declspec(naked) is_debugger_present2 (void)
 
 #if defined(_WIN32)
 int _tmain (int argc, ase_char_t* argv[])
-#elif defined(__STAND_ALONE) 
-int main (int argc, char* argv[])
 #else
 int xp_main (int argc, ase_char_t* argv[])
 #endif
@@ -988,29 +978,18 @@ int xp_main (int argc, ase_char_t* argv[])
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif*/
 
-#ifdef _WIN32
-{
-ase_char_t buf[ase_sizeof(ase_long_t)*8+2+2];
-ase_size_t n;
-n = ase_awk_longtostr (-0x7FFFFFFFFFFFFFFFi64, 16, ASE_T("0x"), buf, ase_countof(buf));
-if (n == (ase_size_t)-1)
-{
-	xp_printf (ASE_T("cannot convert...\n"));
-}
-else xp_printf (ASE_T("%d, %s\n"), n, buf);
-}
-
+#if defined(_WIN32)
 	if (IsDebuggerPresent ())
 	{
-		xp_printf (ASE_T("Running application in a debugger....\n"));
+		_tprintf (_T("Running application in a debugger....\n"));
 	}
 	if (is_debugger_present ())
 	{
-		xp_printf (ASE_T("Running application in a debugger by is_debugger_present...\n"));
+		_tprintf (_T("Running application in a debugger by is_debugger_present...\n"));
 	}
 	if (is_debugger_present2 ())
 	{
-		xp_printf (ASE_T("Running application in a debugger by is_debugger_present2...\n"));
+		_tprintf (_T("Running application in a debugger by is_debugger_present2...\n"));
 	}
 #endif
 
@@ -1019,9 +998,11 @@ else xp_printf (ASE_T("%d, %s\n"), n, buf);
 #if defined(__linux) && defined(_DEBUG)
 	muntrace ();
 #endif
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_DEBUG)
+	#if defined(_MSC_VER)
 	_CrtDumpMemoryLeaks ();
-	wprintf (L"Press ENTER to quit\n");
+	#endif
+	_tprintf (_T("Press ENTER to quit\n"));
 	getchar ();
 #endif
 
