@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.103 2006-10-26 14:22:01 bacon Exp $
+ * $Id: awk.c,v 1.104 2006-10-27 09:19:21 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -13,37 +13,32 @@
 	#include <wctype.h>
 #endif
 
-#ifndef __STAND_ALONE
-	#include <xp/bas/stdio.h>
-	#include <xp/bas/stdlib.h>
-	#include <xp/bas/string.h>
-	#include <xp/bas/memory.h>
-	#include <xp/bas/sysapi.h>
-	#include <xp/bas/assert.h>	
-	#include <xp/bas/locale.h>	
-#else
-	#include <xp/bas/stdio.h>
+#ifdef _WIN32
+	#include <windows.h>
+	#include <tchar.h>
 	#include <limits.h>
+	#include <assert.h>
+
 	#ifndef PATH_MAX
 		#define ASE_PATH_MAX 4096
 	#else
 		#define ASE_PATH_MAX PATH_MAX
 	#endif
 
-	#ifdef _WIN32
-		#define xp_sprintf _sntprintf
-	#endif
-#endif
-
-#ifdef _WIN32
-#include <windows.h>
-#include <tchar.h>
-#pragma warning (disable: 4996)
-#endif
-
-#ifdef __STAND_ALONE
-	#include <assert.h>
+	#define xp_vsprintf _vsntprintf
+	#define xp_sprintf _sntprintf
+	#define xp_printf _tprintf
 	#define xp_assert assert
+
+	#pragma warning (disable: 4996)
+#else
+	#include <xp/bas/stdio.h>
+	#include <xp/bas/stdlib.h>
+	#include <xp/bas/string.h>
+	#include <xp/bas/memory.h>
+	#include <xp/bas/sysapi.h>
+	#include <xp/bas/assert.h>
+	#include <xp/bas/locale.h>
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
@@ -57,21 +52,21 @@
 
 struct src_io
 {
-	const xp_char_t* input_file;
+	const ase_char_t* input_file;
 	FILE* input_handle;
 };
 
-static FILE* fopen_t (const xp_char_t* path, const xp_char_t* mode)
+static FILE* fopen_t (const ase_char_t* path, const ase_char_t* mode)
 {
 #ifdef _WIN32
 	return _tfopen (path, mode);
 #else
 	#ifdef ASE_CHAR_IS_MCHAR
-	const xp_mchar_t* path_mb;
-	const xp_mchar_t* mode_mb;
+	const ase_mchar_t* path_mb;
+	const ase_mchar_t* mode_mb;
 	#else
-	xp_mchar_t path_mb[XP_PATH_MAX + 1];
-	xp_mchar_t mode_mb[32];
+	ase_mchar_t path_mb[XP_PATH_MAX + 1];
+	ase_mchar_t mode_mb[32];
 	#endif
 
 	#ifdef ASE_CHAR_IS_MCHAR
@@ -79,30 +74,31 @@ static FILE* fopen_t (const xp_char_t* path, const xp_char_t* mode)
 	mode_mb = mode;
 	#else
 	if (xp_wcstomcs_strict (
-		path, path_mb, xp_countof(path_mb)) == -1) return ASE_NULL;
+		path, path_mb, ase_countof(path_mb)) == -1) return ASE_NULL;
 	if (xp_wcstomcs_strict (
-		mode, mode_mb, xp_countof(mode_mb)) == -1) return ASE_NULL;
+		mode, mode_mb, ase_countof(mode_mb)) == -1) return ASE_NULL;
 	#endif
 
 	return fopen (path_mb, mode_mb);
 #endif
 }
 
-static int __dprintf (const xp_char_t* fmt, ...)
+static int __dprintf (const ase_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
 #ifdef _WIN32
-	xp_char_t buf[1024];
+	ase_char_t buf[1024];
 #endif
 
 	va_start (ap, fmt);
 #ifdef _WIN32
-	n = xp_vsprintf (buf, xp_countof(buf), fmt, ap);
-#if defined(_MSC_VER) && (_MSC_VER>=1400)
-	MessageBox (NULL, buf, ASE_T("\uD655\uC778\uC2E4\uD328 Assertion Failure"), MB_OK | MB_ICONERROR);
-#else
+	n = _vsntprintf (buf, ase_countof(buf), fmt, ap);
+
+#if defined(_MSC_VER) && (_MSC_VER<1400)
 	MessageBox (NULL, buf, ASE_T("Assertion Failure"), MB_OK | MB_ICONERROR);
+#else
+	MessageBox (NULL, buf, ASE_T("\uD655\uC778\uC2E4\uD328 Assertion Failure"), MB_OK | MB_ICONERROR);
 #endif
 
 #else
@@ -112,17 +108,17 @@ static int __dprintf (const xp_char_t* fmt, ...)
 	return n;
 }
 
-static FILE* popen_t (const xp_char_t* cmd, const xp_char_t* mode)
+static FILE* popen_t (const ase_char_t* cmd, const ase_char_t* mode)
 {
 #ifdef _WIN32
 	return _tpopen (cmd, mode);
 #else
 	#ifdef ASE_CHAR_IS_MCHAR
-	const xp_mchar_t* cmd_mb;
-	const xp_mchar_t* mode_mb;
+	const ase_mchar_t* cmd_mb;
+	const ase_mchar_t* mode_mb;
 	#else
-	xp_mchar_t cmd_mb[2048];
-	xp_mchar_t mode_mb[32];
+	ase_mchar_t cmd_mb[2048];
+	ase_mchar_t mode_mb[32];
 	#endif
 
 	#ifdef ASE_CHAR_IS_MCHAR
@@ -130,9 +126,9 @@ static FILE* popen_t (const xp_char_t* cmd, const xp_char_t* mode)
 	mode_mb = mode;
 	#else
 	if (xp_wcstomcs_strict (
-		cmd, cmd_mb, xp_countof(cmd_mb)) == -1) return ASE_NULL;
+		cmd, cmd_mb, ase_countof(cmd_mb)) == -1) return ASE_NULL;
 	if (xp_wcstomcs_strict (
-		mode, mode_mb, xp_countof(mode_mb)) == -1) return ASE_NULL;
+		mode, mode_mb, ase_countof(mode_mb)) == -1) return ASE_NULL;
 	#endif
 
 	return popen (cmd_mb, mode_mb);
@@ -152,11 +148,11 @@ static FILE* popen_t (const xp_char_t* cmd, const xp_char_t* mode)
 	#endif
 #endif
 
-static xp_ssize_t process_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static ase_ssize_t process_source (
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	struct src_io* src_io = (struct src_io*)arg;
-	xp_char_t c;
+	ase_char_t c;
 
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
@@ -187,8 +183,8 @@ static xp_ssize_t process_source (
 	return -1;
 }
 
-static xp_ssize_t dump_source (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static ase_ssize_t dump_source (
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	/*struct src_io* src_io = (struct src_io*)arg;*/
 
@@ -196,7 +192,7 @@ static xp_ssize_t dump_source (
 	else if (cmd == ASE_AWK_IO_CLOSE) return 0;
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
-		xp_size_t i;
+		ase_size_t i;
 		for (i = 0; i < size; i++)
 		{
 	#ifdef ASE_CHAR_IS_MCHAR
@@ -211,8 +207,8 @@ static xp_ssize_t dump_source (
 	return -1;
 }
 
-static xp_ssize_t process_extio_pipe (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static ase_ssize_t process_extio_pipe (
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 
@@ -221,7 +217,7 @@ static xp_ssize_t process_extio_pipe (
 		case ASE_AWK_IO_OPEN:
 		{
 			FILE* handle;
-			const xp_char_t* mode;
+			const ase_char_t* mode;
 
 			if (epa->mode == ASE_AWK_IO_PIPE_READ)
 				mode = ASE_T("r");
@@ -272,8 +268,8 @@ xp_printf (ASE_TEXT("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 	return -1;
 }
 
-static xp_ssize_t process_extio_file (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static ase_ssize_t process_extio_file (
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 
@@ -282,7 +278,7 @@ static xp_ssize_t process_extio_file (
 		case ASE_AWK_IO_OPEN:
 		{
 			FILE* handle;
-			const xp_char_t* mode;
+			const ase_char_t* mode;
 
 			if (epa->mode == ASE_AWK_IO_FILE_READ)
 				mode = ASE_T("r");
@@ -342,16 +338,16 @@ static int open_extio_console (ase_awk_extio_t* epa);
 static int close_extio_console (ase_awk_extio_t* epa);
 static int next_extio_console (ase_awk_extio_t* epa);
 
-static xp_size_t infile_no = 0;
-static const xp_char_t* infiles[10000] =
+static ase_size_t infile_no = 0;
+static const ase_char_t* infiles[10000] =
 {
 	ASE_T(""),
 	ASE_NULL
 };
 
 
-static xp_ssize_t process_extio_console (
-	int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static ase_ssize_t process_extio_console (
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 
@@ -588,7 +584,7 @@ struct syscas_data_t
 };
 #endif
 
-static void* __awk_malloc (xp_size_t n, void* custom_data)
+static void* __awk_malloc (ase_size_t n, void* custom_data)
 {
 #ifdef _WIN32
 	return HeapAlloc (((syscas_data_t*)custom_data)->heap, 0, n);
@@ -597,7 +593,7 @@ static void* __awk_malloc (xp_size_t n, void* custom_data)
 #endif
 }
 
-static void* __awk_realloc (void* ptr, xp_size_t n, void* custom_data)
+static void* __awk_realloc (void* ptr, ase_size_t n, void* custom_data)
 {
 #ifdef _WIN32
 	/* HeapReAlloc behaves differently from realloc */
@@ -622,7 +618,7 @@ static void __awk_free (void* ptr, void* custom_data)
 #if defined(__STAND_ALONE) && !defined(_WIN32)
 static int __main (int argc, char* argv[])
 #else
-static int __main (int argc, xp_char_t* argv[])
+static int __main (int argc, ase_char_t* argv[])
 #endif
 {
 	ase_awk_t* awk;
@@ -664,7 +660,7 @@ static int __main (int argc, xp_char_t* argv[])
 			src_io.input_file = argv[i];
 			file_count++;
 		}
-		else if (file_count >= 1 && file_count < xp_countof(infiles)-1)
+		else if (file_count >= 1 && file_count < ase_countof(infiles)-1)
 		{
 			infiles[file_count-1] = argv[i];
 			infiles[file_count] = ASE_NULL;
@@ -677,7 +673,7 @@ static int __main (int argc, xp_char_t* argv[])
 		}
 	}
 
-	memset (&syscas, 0, sizeof(syscas));
+	memset (&syscas, 0, ase_sizeof(syscas));
 	syscas.malloc = __awk_malloc;
 	syscas.realloc = __awk_realloc;
 	syscas.free = __awk_free;
@@ -943,7 +939,7 @@ typedef struct _PEB {
 
 
 */
-void* get_current_teb ()
+void* __declspec(naked) get_current_teb (void)
 {
 	_asm 
 	{
@@ -951,20 +947,20 @@ void* get_current_teb ()
 	}
 }
 
-void* get_current_peb ()
+void* get_current_peb (void)
 {
 	void* teb = get_current_teb ();
 	return *(void**)((char*)teb + 0x30);
 }
 
-int is_debugger_present ()
+int is_debugger_present (void)
 {
 	void *peb = get_current_peb ();
 	return *((char*)peb+0x02);
 }
 
 
-int is_debugger_present2 ()
+int __declspec(naked) is_debugger_present2 (void)
 {
 	_asm
 	{
@@ -976,10 +972,12 @@ int is_debugger_present2 ()
 }
 #endif
 
-#if defined(__STAND_ALONE) && !defined(_WIN32)
+#if defined(_WIN32)
+int _tmain (int argc, ase_char_t* argv[])
+#elif defined(__STAND_ALONE) 
 int main (int argc, char* argv[])
 #else
-int xp_main (int argc, xp_char_t* argv[])
+int xp_main (int argc, ase_char_t* argv[])
 #endif
 {
 	int n;
@@ -992,10 +990,10 @@ int xp_main (int argc, xp_char_t* argv[])
 
 #ifdef _WIN32
 {
-xp_char_t buf[xp_sizeof(xp_long_t)*8+2+2];
-xp_size_t n;
-n = ase_awk_longtostr (-0x7FFFFFFFFFFFFFFFi64, 16, ASE_T("0x"), buf, xp_countof(buf));
-if (n == (xp_size_t)-1)
+ase_char_t buf[ase_sizeof(ase_long_t)*8+2+2];
+ase_size_t n;
+n = ase_awk_longtostr (-0x7FFFFFFFFFFFFFFFi64, 16, ASE_T("0x"), buf, ase_countof(buf));
+if (n == (ase_size_t)-1)
 {
 	xp_printf (ASE_T("cannot convert...\n"));
 }
