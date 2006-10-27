@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.244 2006-10-26 09:27:15 bacon Exp $
+ * $Id: run.c,v 1.245 2006-10-27 11:04:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -666,18 +666,22 @@ static int __init_run (ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum
 		return -1;
 	}
 
-	run->pattern_range_state = (ase_byte_t*) ASE_AWK_MALLOC (
-		run->awk, run->awk->tree.chain_size * ase_sizeof(ase_byte_t));
-	if (run->pattern_range_state == ASE_NULL)
+	if (run->awk->tree.chain_size > 0)
 	{
-		ase_awk_map_close (&run->named);
-		ase_awk_str_close (&run->inrec.line);
-		*errnum = ASE_AWK_ENOMEM; 
-		return -1;
-	}
+		run->pattern_range_state = (ase_byte_t*) ASE_AWK_MALLOC (
+			run->awk, run->awk->tree.chain_size*ase_sizeof(ase_byte_t));
+		if (run->pattern_range_state == ASE_NULL)
+		{
+			ase_awk_map_close (&run->named);
+			ase_awk_str_close (&run->inrec.line);
+			*errnum = ASE_AWK_ENOMEM; 
+				return -1;
+		}
 
-	ASE_AWK_MEMSET (run->awk, run->pattern_range_state, 0, 
-		run->awk->tree.chain_size * ase_sizeof(ase_byte_t));
+		ASE_AWK_MEMSET (run->awk, run->pattern_range_state, 0, 
+			run->awk->tree.chain_size * ase_sizeof(ase_byte_t));
+	}
+	else run->pattern_range_state = ASE_NULL;
 
 	run->extio.handler[ASE_AWK_EXTIO_PIPE] = runios->pipe;
 	run->extio.handler[ASE_AWK_EXTIO_COPROC] = runios->coproc;
@@ -695,7 +699,8 @@ static int __init_run (ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum
 
 static void __deinit_run (ase_awk_run_t* run)
 {
-	ASE_AWK_FREE (run->awk, run->pattern_range_state);
+	if (run->pattern_range_state != ASE_NULL)
+		ASE_AWK_FREE (run->awk, run->pattern_range_state);
 
 	/* close all pending eio's */
 	/* TODO: what if this operation fails? */
@@ -1314,6 +1319,7 @@ static int __run_pattern_block (
 		{
 			/* pattern, pattern { ... } */
 			ASE_AWK_ASSERT (run->awk, ptn->next->next == ASE_NULL);
+			ASE_AWK_ASSERT (run->awk, run->pattern_range_state != ASE_NULL);
 
 			if (run->pattern_range_state[block_no] == 0)
 			{
