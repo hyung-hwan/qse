@@ -1,13 +1,14 @@
 CC = bcc32
-CFLAGS = -I..\..\.. -D__STAND_ALONE
-LDFLAGS = -L..\..\..\xp\bas -L..\..\..\xp\awk 
-LIBS = import32.lib cw32mt.lib xpawk.lib
+LD = ilink32
+CFLAGS = -I..\..\.. 
+LDFLAGS = -L..\..\awk -L"c:\program files\borland\bds\4.0\lib"
+LIBS = import32.lib cw32mt.lib aseawk.lib
 STARTUP = c0x32w.obj
 
 all: awk 
 
 awk: awk.obj
-	ilink32 $(LDFLAGS) $(STARTUP) awk.obj,awk.exe,,$(LIBS),,
+	$(LD) $(LDFLAGS) $(STARTUP) awk.obj,awk.exe,,$(LIBS),,
 
 clean:
 	del $(OBJS) *.obj $(OUT)
