@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.75 2006-10-27 10:28:52 bacon Exp $
+ * $Id: awk_i.h,v 1.76 2006-10-28 12:17:24 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -110,11 +110,13 @@ struct ase_awk_t
 		{
 			int block;
 			int loop;
+			int stmnt; /* statement */
 		} id;
 
 		struct
 		{
 			ase_size_t loop;
+			ase_size_t expr; /* expression */
 		} depth;
 
 		ase_awk_tab_t globals;
@@ -128,7 +130,7 @@ struct ase_awk_t
 	/* source code management */
 	struct
 	{
-		ase_awk_srcios_t* ios;
+		ase_awk_srcios_t ios;
 
 		struct
 		{
