@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.247 2006-10-27 13:52:25 bacon Exp $
+ * $Id: run.c,v 1.248 2006-10-28 05:24:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -200,14 +200,16 @@ typedef ase_awk_val_t* (*binop_func_t) (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
 typedef ase_awk_val_t* (*eval_expr_t) (ase_awk_run_t* run, ase_awk_nde_t* nde);
 
-/* TODO: remove this function */
+#ifdef _DEBUG
 static int __printval (ase_awk_pair_t* pair, void* arg)
 {
-	xp_printf (ASE_T("%s = "), (const ase_char_t*)pair->key);
-	ase_awk_printval ((ase_awk_val_t*)pair->val);
-	xp_printf (ASE_T("\n"));
+	ase_awk_run_t* run = (ase_awk_run_t*)arg;
+	run->awk->syscas.dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
+	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
+	run->awk->syscas.dprintf (ASE_T("\n"));
 	return 0;
 }
+#endif
 
 ase_size_t ase_awk_getnargs (ase_awk_run_t* run)
 {
@@ -1152,9 +1154,13 @@ static int __run_main (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 		}
 
 		v = STACK_RETVAL(run);
-xp_printf (ASE_T("Return Value - "));
-ase_awk_printval (v);
-xp_printf (ASE_T("\n"));
+
+#ifdef _DEBUG
+		run->awk->syscas.dprintf (ASE_T("[RETURN] - "));
+		ase_awk_dprintval (run, v);
+		run->awk->syscas.dprintf (ASE_T("\n"));
+#endif
+
 		/* the life of the global return value is over here
 		 * unlike the return value of each function */
 		/*ase_awk_refdownval_nofree (awk, v);*/
@@ -1178,9 +1184,11 @@ xp_printf (ASE_T("\n"));
 	/* just reset the exit level */
 	run->exit_level = EXIT_NONE;
 
-xp_printf (ASE_T("-[VARIABLES]------------------------\n"));
-ase_awk_map_walk (&run->named, __printval, ASE_NULL);
-xp_printf (ASE_T("-[END VARIABLES]--------------------------\n"));
+#ifdef _DEBUG
+	run->awk->syscas.dprintf (ASE_T("[VARIABLES]\n"));
+	ase_awk_map_walk (&run->named, __printval, run);
+	run->awk->syscas.dprintf (ASE_T("[END VARIABLES]\n"));
+#endif
 
 	return n;
 }

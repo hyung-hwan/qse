@@ -4,7 +4,10 @@ OBJS = $(SRCS:.c=.obj)
 OUT = aseawk.lib
 
 CC = bcc32
-CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. 
+CFLAGS_COMMON = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. 
+CFLAGS_RELEASE = $(CFLAGS_COMMON) -DNDEBUG
+CFLAGS_DEBUG = $(CFLAGS_COMMON) -D_DEBUG
+CFLAGS = $(CFLAGS_DEBUG)
 
 all: $(OBJS)
 	tlib $(OUT) @&&!

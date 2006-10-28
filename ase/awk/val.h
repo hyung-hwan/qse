@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.48 2006-10-24 04:10:12 bacon Exp $
+ * $Id: val.h,v 1.49 2006-10-28 05:24:08 bacon Exp $
  */
 
 #ifndef _ASE_AWK_VAL_H_
@@ -174,7 +174,7 @@ ase_char_t* ase_awk_valtostr (
 int ase_awk_valtonum (
 	ase_awk_run_t* run, ase_awk_val_t* v, ase_long_t* l, ase_real_t* r);
 
-void ase_awk_printval (ase_awk_val_t* val);
+void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.77 2006-10-26 09:27:16 bacon Exp $
+ * $Id: val.c,v 1.78 2006-10-28 05:24:08 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -180,7 +180,7 @@ static void __free_map_val (void* run, void* v)
 {
 /*
 xp_printf (ASE_T("refdown in map free..."));
-ase_awk_printval (v);
+ase_awk_dprintval (v);
 xp_printf (ASE_T("\n"));
 */
 	ase_awk_refdownval (run, v);
@@ -244,7 +244,7 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	if (ase_awk_isbuiltinval(val)) return;
 
 /*xp_printf (ASE_T("freeing [cache=%d] ... "), cache);
-ase_awk_printval (val);
+ase_awk_dprintval (val);
 xp_printf (ASE_T("\n"));*/
 	if (val->type == ASE_AWK_VAL_NIL)
 	{
@@ -308,7 +308,7 @@ void ase_awk_refupval (ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 /*
 xp_printf (ASE_T("ref up "));
-ase_awk_printval (val);
+ase_awk_dprintval (val);
 xp_printf (ASE_T("\n"));
 */
 	val->ref++;
@@ -321,7 +321,7 @@ void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 /*
 xp_printf (ASE_T("%p, %p, %p\n"), ase_awk_val_nil, &__awk_nil, val);
 xp_printf (ASE_T("ref down [count=>%d]\n"), (int)val->ref);
-ase_awk_printval (val);
+ase_awk_dprintval (val);
 xp_printf (ASE_T("\n"));
 */
 
@@ -331,7 +331,7 @@ xp_printf (ASE_T("\n"));
 	{
 /*
 xp_printf (ASE_T("**FREEING ["));
-ase_awk_printval (val);
+ase_awk_dprintval (val);
 xp_printf (ASE_T("]\n"));
 */
 		ase_awk_freeval(run, val, ase_true);
@@ -648,65 +648,67 @@ xp_printf (ASE_T("*** ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum v=> %p***
 	return -1; /* error */
 }
 
+#define __DPRINTF run->awk->syscas.dprintf
+
 static int __print_pair (ase_awk_pair_t* pair, void* arg)
 {
-	xp_printf (ASE_T(" %s=>"), pair->key);	
-	ase_awk_printval (pair->val);
-	xp_printf (ASE_T(" "));
+	ase_awk_run_t* run = (ase_awk_run_t*)arg;
+
+	__DPRINTF (ASE_T(" %s=>"), pair->key);	
+	ase_awk_dprintval ((ase_awk_run_t*)arg, pair->val);
+	__DPRINTF (ASE_T(" "));
 	return 0;
 }
 
-void ase_awk_printval (ase_awk_val_t* val)
+void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 {
-/* TODO: better value printing...................... */
+	/* TODO: better value printing ... */
+
 	switch (val->type)
 	{
 	case ASE_AWK_VAL_NIL:
-		xp_printf (ASE_T("nil"));
+		__DPRINTF (ASE_T("nil"));
 	       	break;
 
 	case ASE_AWK_VAL_INT:
-#if defined(__LCC__)
-		xp_printf (ASE_T("%lld"), 
-			(long long)((ase_awk_val_int_t*)val)->val);
-#elif defined(__BORLANDC__) || defined(_MSC_VER)
-		xp_printf (ASE_T("%I64d"), 
+#if defined(__BORLANDC__) || defined(_MSC_VER)
+		__DPRINTF (ASE_T("%I64d"), 
 			(__int64)((ase_awk_nde_int_t*)val)->val);
 #elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-		xp_printf (ASE_T("%ld"), 
+		__DPRINTF (ASE_T("%ld"), 
 			(long)((ase_awk_val_int_t*)val)->val);
 #else
-		xp_printf (ASE_T("%lld"), 
+		__DPRINTF (ASE_T("%lld"), 
 			(long long)((ase_awk_val_int_t*)val)->val);
 #endif
 		break;
 
 	case ASE_AWK_VAL_REAL:
-		xp_printf (ASE_T("%Lf"), 
+		__DPRINTF (ASE_T("%Lf"), 
 			(long double)((ase_awk_val_real_t*)val)->val);
 		break;
 
 	case ASE_AWK_VAL_STR:
-		xp_printf (ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
+		__DPRINTF (ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
 		break;
 
 	case ASE_AWK_VAL_REX:
-		xp_printf (ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
+		__DPRINTF (ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
 		break;
 
 	case ASE_AWK_VAL_MAP:
-		xp_printf (ASE_T("MAP["));
-		ase_awk_map_walk (((ase_awk_val_map_t*)val)->map, __print_pair, ASE_NULL);
-		xp_printf (ASE_T("]"));
+		__DPRINTF (ASE_T("MAP["));
+		ase_awk_map_walk (((ase_awk_val_map_t*)val)->map, __print_pair, run);
+		__DPRINTF (ASE_T("]"));
 		break;
 	
 	case ASE_AWK_VAL_REF:
-		xp_printf (ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
-		ase_awk_printval (*((ase_awk_val_ref_t*)val)->adr);
-		xp_printf (ASE_T("]"));
+		__DPRINTF (ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
+		ase_awk_dprintval (run, *((ase_awk_val_ref_t*)val)->adr);
+		__DPRINTF (ASE_T("]"));
 		break;
 
 	default:
-		xp_printf (ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
+		__DPRINTF (ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }
