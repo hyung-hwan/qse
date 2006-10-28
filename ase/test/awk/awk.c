@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.106 2006-10-27 11:06:09 bacon Exp $
+ * $Id: awk.c,v 1.107 2006-10-28 05:24:08 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -27,6 +27,7 @@
 
 	#define xp_vsprintf _vsntprintf
 	#define xp_sprintf _sntprintf
+	#define xp_frintf _ftprintf
 	#define xp_printf _tprintf
 	#define xp_assert assert
 
@@ -83,7 +84,7 @@ static FILE* fopen_t (const ase_char_t* path, const ase_char_t* mode)
 #endif
 }
 
-static int __dprintf (const ase_char_t* fmt, ...)
+static int __aprintf (const ase_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
@@ -107,6 +108,23 @@ static int __dprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 	return n;
 }
+
+static int __dprintf (const ase_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+	va_start (ap, fmt);
+
+#ifdef _WIN32
+	n = _vftprintf (stderr, fmt, ap);
+#else
+	n = xp_vfprintf (stderr, fmt, ap);
+#endif
+
+	va_end (ap);
+	return n;
+}
+
 
 static FILE* popen_t (const ase_char_t* cmd, const ase_char_t* mode)
 {
@@ -561,7 +579,8 @@ static void __on_run_start (ase_awk_t* awk, void* handle, void* arg)
 {
 	app_awk = awk;	
 	app_run = handle;
-xp_printf (ASE_T("AWK PRORAM ABOUT TO START...\n"));
+
+	xp_printf (ASE_T("AWK PRORAM ABOUT TO START...\n"));
 }
 
 static void __on_run_end (ase_awk_t* awk, void* handle, int errnum, void* arg)
@@ -705,6 +724,7 @@ static int __main (int argc, ase_char_t* argv[])
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
 	syscas.sprintf = xp_sprintf;
+	syscas.aprintf = __aprintf;
 	syscas.dprintf = __dprintf;
 	syscas.abort = abort;
 

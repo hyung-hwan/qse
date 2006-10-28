@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.71 2006-10-27 13:49:43 bacon Exp $
+ * $Id: func.c,v 1.72 2006-10-28 05:24:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -240,7 +240,7 @@ static int __bfn_fflush (ase_awk_run_t* run)
 	int n;
        
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs >= 0 && nargs <= 1);
+	ASE_AWK_ASSERT (run->awk, nargs == 0 || nargs == 1);
 
 	if (nargs == 0)
 	{
