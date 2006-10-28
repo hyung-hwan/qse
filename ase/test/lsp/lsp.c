@@ -17,7 +17,8 @@ static xp_ssize_t get_input (int cmd, void* arg, xp_char_t* data, xp_size_t size
 {
 	xp_ssize_t n;
 
-	switch (cmd) {
+	switch (cmd) 
+	{
 	case ASE_LSP_IO_OPEN:
 	case ASE_LSP_IO_CLOSE:
 		return 0;
@@ -36,7 +37,8 @@ static xp_ssize_t get_input (int cmd, void* arg, xp_char_t* data, xp_size_t size
 static xp_ssize_t put_output (int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
 
-	switch (cmd) {
+	switch (cmd) 
+	{
 	case ASE_LSP_IO_OPEN:
 	case ASE_LSP_IO_CLOSE:
 		return 0;
@@ -53,7 +55,8 @@ int to_int (const xp_char_t* str)
 {
 	int r = 0;
 
-	while (*str != XP_CHAR('\0')) {
+	while (*str != XP_CHAR('\0')) 
+	{
 		if (!xp_isdigit(*str))	break;
 		r = r * 10 + (*str - XP_CHAR('0'));
 		str++;
@@ -157,7 +160,7 @@ static void __lsp_free (void* ptr, void* custom_data)
 #endif
 }
 
-static int __dprintf (const xp_char_t* fmt, ...)
+static int __aprintf (const xp_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
@@ -181,6 +184,21 @@ static int __dprintf (const xp_char_t* fmt, ...)
 	return n;
 }
 
+static int __dprintf (const ase_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+	va_start (ap, fmt);
+
+#ifdef _WIN32
+	n = _vftprintf (stderr, fmt, ap);
+#else
+	n = xp_vfprintf (stderr, fmt, ap);
+#endif
+
+	va_end (ap);
+	return n;
+}
 
 int __main (int argc, xp_char_t* argv[])
 {
@@ -247,6 +265,7 @@ int __main (int argc, xp_char_t* argv[])
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
 	syscas.sprintf = xp_sprintf;
+	syscas.aprintf = __aprintf;
 	syscas.dprintf = __dprintf;
 	syscas.abort = abort;
 
