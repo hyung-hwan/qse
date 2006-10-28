@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.197 2006-10-27 13:49:43 bacon Exp $
+ * $Id: parse.c,v 1.198 2006-10-28 12:17:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -120,6 +120,8 @@ struct __binmap_t
 	int binop;
 };
 
+static int __parse (ase_awk_t* awk);
+
 static ase_awk_t* __parse_progunit (ase_awk_t* awk);
 static ase_awk_t* __collect_globals (ase_awk_t* awk);
 static ase_awk_t* __add_builtin_globals (ase_awk_t* awk);
@@ -136,8 +138,9 @@ static ase_awk_chain_t* __parse_pattern_block (
 static ase_awk_nde_t* __parse_block (ase_awk_t* awk, ase_bool_t is_top);
 static ase_awk_nde_t* __parse_statement (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk);
-static ase_awk_nde_t* __parse_expression (ase_awk_t* awk);
 
+static ase_awk_nde_t* __parse_expression (ase_awk_t* awk);
+static ase_awk_nde_t* __parse_expression0 (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_basic_expr (ase_awk_t* awk);
 
 static ase_awk_nde_t* __parse_binary_expr (
@@ -316,15 +319,31 @@ static struct __bvent __bvtab[] =
 
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 {
-	int n = 0, op;
+	int n;
 
 	ASE_AWK_ASSERT (awk, srcios != ASE_NULL && srcios->in != ASE_NULL);
+	ASE_AWK_ASSERT (awk, awk->parse.depth.loop == 0);
+	ASE_AWK_ASSERT (awk, awk->parse.depth.expr == 0);
 
 	ase_awk_clear (awk);
-	awk->src.ios = srcios;
+	ASE_AWK_MEMCPY (awk, &awk->src.ios, srcios, ase_sizeof(awk->src.ios));
 
-	op = awk->src.ios->in (
-		ASE_AWK_IO_OPEN, awk->src.ios->custom_data, ASE_NULL, 0);
+	n = __parse (awk);
+
+	ASE_AWK_ASSERT (awk, awk->parse.depth.loop == 0);
+	ASE_AWK_ASSERT (awk, awk->parse.depth.expr == 0);
+
+	return n;
+}
+
+static int __parse (ase_awk_t* awk)
+{
+	int n = 0, op;
+
+	ASE_AWK_ASSERT (awk, awk->src.ios.in != ASE_NULL);
+
+	op = awk->src.ios.in (
+		ASE_AWK_IO_OPEN, awk->src.ios.custom_data, ASE_NULL, 0);
 	if (op == -1)
 	{
 		/* cannot open the source file.
@@ -374,7 +393,7 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 
 	awk->tree.nglobals = ase_awk_tab_getsize(&awk->parse.globals);
 
-	if (awk->src.ios->out != ASE_NULL) 
+	if (awk->src.ios.out != ASE_NULL) 
 	{
 		if (__deparse (awk) == -1) 
 		{
@@ -384,8 +403,8 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 	}
 
 exit_parse:
-	if (awk->src.ios->in (
-		ASE_AWK_IO_CLOSE, awk->src.ios->custom_data, ASE_NULL, 0) == -1)
+	if (awk->src.ios.in (
+		ASE_AWK_IO_CLOSE, awk->src.ios.custom_data, ASE_NULL, 0) == -1)
 	{
 		if (n != -1)
 		{
@@ -1155,7 +1174,10 @@ static ase_awk_nde_t* __parse_statement (ase_awk_t* awk)
 	}
 	else 
 	{
+		int old_id = awk->parse.id.stmnt;
+		awk->parse.id.stmnt = awk->token.type;
 		nde = __parse_statement_nb (awk);
+		awk->parse.id.stmnt = old_id;
 awk->parse.nl_semicolon = 0;
 	}
 
@@ -1166,9 +1188,7 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk)
 {
 	ase_awk_nde_t* nde;
 
-	/* 
-	 * keywords that don't require any terminating semicolon 
-	 */
+	/* keywords that don't require any terminating semicolon */
 	if (MATCH(awk,TOKEN_IF)) 
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
@@ -1196,9 +1216,7 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk)
 	}
 
 awk->parse.nl_semicolon = 1;
-	/* 
-	 * keywords that require a terminating semicolon 
-	 */
+	/* keywords that require a terminating semicolon */
 	if (MATCH(awk,TOKEN_DO)) 
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
@@ -1281,6 +1299,17 @@ awk->parse.nl_semicolon = 0;
 }
 
 static ase_awk_nde_t* __parse_expression (ase_awk_t* awk)
+{
+	ase_awk_nde_t* nde;
+
+	awk->parse.depth.expr++;
+	nde = __parse_expression0 (awk);
+	awk->parse.depth.expr--;
+
+	return nde;
+}
+
+static ase_awk_nde_t* __parse_expression0 (ase_awk_t* awk)
 {
 	ase_awk_nde_t* x, * y;
 	ase_awk_nde_ass_t* nde;
@@ -2193,12 +2222,15 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk)
 
 			ase_awk_nde_grp_t* tmp;
 
-/* TODO: how to handle this situation??? */
-			if (/*!MATCH(awk,TOKEN_SEMICOLON) &&*/
-			    !MATCH(awk,TOKEN_IN))
+			if ((awk->parse.id.stmnt != TOKEN_PRINT &&
+			     awk->parse.id.stmnt != TOKEN_PRINTF) ||
+			    awk->parse.depth.expr != 1)
 			{
-				ase_awk_clrpt (awk, nde);
-				PANIC (awk, ASE_AWK_EIN);
+				if (!MATCH(awk,TOKEN_IN))
+				{
+					ase_awk_clrpt (awk, nde);
+					PANIC (awk, ASE_AWK_EIN);
+				}
 			}
 
 			tmp = (ase_awk_nde_grp_t*) ASE_AWK_MALLOC (
@@ -3125,23 +3157,29 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk)
 		args_tail = args;
 		tail_prev = ASE_NULL;
 
-		while (MATCH(awk,TOKEN_COMMA))
+		if (args->type != ASE_AWK_NDE_GRP)
 		{
-			if (__get_token(awk) == -1)
+			/* args->type == ASE_AWK_NDE_GRP when print (a, b, c) 
+			 * args->type != ASE_AWK_NDE_GRP when print a, b, c */
+			
+			while (MATCH(awk,TOKEN_COMMA))
 			{
-				ase_awk_clrpt (awk, args);
-				return ASE_NULL;
-			}
+				if (__get_token(awk) == -1)
+				{
+					ase_awk_clrpt (awk, args);
+					return ASE_NULL;
+				}
 
-			args_tail->next = __parse_expression (awk);
-			if (args_tail->next == ASE_NULL)
-			{
-				ase_awk_clrpt (awk, args);
-				return ASE_NULL;
-			}
+				args_tail->next = __parse_expression (awk);
+				if (args_tail->next == ASE_NULL)
+				{
+					ase_awk_clrpt (awk, args);
+					return ASE_NULL;
+				}
 
-			tail_prev = args_tail;
-			args_tail = args_tail->next;
+				tail_prev = args_tail;
+				args_tail = args_tail->next;
+			}
 		}
 
 		/* print 1 > 2 would print 1 to the file named 2. 
@@ -3688,7 +3726,6 @@ static int __get_token (ase_awk_t* awk)
 		return -1;
 	}
 
-/*xp_printf (ASE_T("token -> [%s]\n"), ASE_AWK_STR_BUF(&awk->token.name));*/
 	return 0;
 }
 
@@ -3981,8 +4018,8 @@ static int __get_char (ase_awk_t* awk)
 
 	if (awk->src.shared.buf_pos >= awk->src.shared.buf_len)
 	{
-		n = awk->src.ios->in (
-			ASE_AWK_IO_READ, awk->src.ios->custom_data,
+		n = awk->src.ios.in (
+			ASE_AWK_IO_READ, awk->src.ios.custom_data,
 			awk->src.shared.buf, ase_countof(awk->src.shared.buf));
 		if (n == -1)
 		{
@@ -4184,13 +4221,13 @@ static int __deparse (ase_awk_t* awk)
 	struct __deparse_func_t df;
 	int n = 0, op;
 
-	ASE_AWK_ASSERT (awk, awk->src.ios->out != ASE_NULL);
+	ASE_AWK_ASSERT (awk, awk->src.ios.out != ASE_NULL);
 
 	awk->src.shared.buf_len = 0;
 	awk->src.shared.buf_pos = 0;
 
-	op = awk->src.ios->out (
-		ASE_AWK_IO_OPEN, awk->src.ios->custom_data, ASE_NULL, 0);
+	op = awk->src.ios.out (
+		ASE_AWK_IO_OPEN, awk->src.ios.custom_data, ASE_NULL, 0);
 	if (op == -1)
 	{
 		awk->errnum = ASE_AWK_ESRCOUTOPEN;
@@ -4304,8 +4341,8 @@ static int __deparse (ase_awk_t* awk)
 	if (__flush (awk) == -1) EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
 
 exit_deparse:
-	if (awk->src.ios->out (
-		ASE_AWK_IO_CLOSE, awk->src.ios->custom_data, ASE_NULL, 0) == -1)
+	if (awk->src.ios.out (
+		ASE_AWK_IO_CLOSE, awk->src.ios.custom_data, ASE_NULL, 0) == -1)
 	{
 		if (n != -1)
 		{
@@ -4362,12 +4399,12 @@ static int __flush (ase_awk_t* awk)
 {
 	ase_ssize_t n;
 
-	ASE_AWK_ASSERT (awk, awk->src.ios->out != ASE_NULL);
+	ASE_AWK_ASSERT (awk, awk->src.ios.out != ASE_NULL);
 
 	while (awk->src.shared.buf_pos < awk->src.shared.buf_len)
 	{
-		n = awk->src.ios->out (
-			ASE_AWK_IO_WRITE, awk->src.ios->custom_data,
+		n = awk->src.ios.out (
+			ASE_AWK_IO_WRITE, awk->src.ios.custom_data,
 			&awk->src.shared.buf[awk->src.shared.buf_pos], 
 			awk->src.shared.buf_len - awk->src.shared.buf_pos);
 		if (n <= 0) return -1;

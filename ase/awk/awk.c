@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.88 2006-10-28 05:24:07 bacon Exp $ 
+ * $Id: awk.c,v 1.89 2006-10-28 12:17:24 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -120,7 +120,6 @@ ase_awk_t* ase_awk_open (const ase_awk_syscas_t* syscas)
 	awk->token.line = 0;
 	awk->token.column = 0;
 
-	awk->src.ios = ASE_NULL;
 	awk->src.lex.curc = ASE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
 	awk->src.lex.line = 1;
@@ -130,6 +129,9 @@ ase_awk_t* ase_awk_open (const ase_awk_syscas_t* syscas)
 
 	awk->bfn.sys = ASE_NULL;
 	awk->bfn.user = ASE_NULL;
+
+	awk->parse.depth.loop = 0;
+	awk->parse.depth.expr = 0;
 
 	awk->run.count = 0;
 	awk->run.ptr = ASE_NULL;
@@ -170,7 +172,7 @@ int ase_awk_clear (ase_awk_t* awk)
 	awk->bfn.user
 */
 
-	awk->src.ios = ASE_NULL;
+	ASE_AWK_MEMSET (awk, &awk->src.ios, 0, ase_sizeof(awk->src.ios));
 	awk->src.lex.curc = ASE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
 	awk->src.lex.line = 1;
@@ -183,6 +185,7 @@ int ase_awk_clear (ase_awk_t* awk)
 	ase_awk_tab_clear (&awk->parse.params);
 
 	awk->parse.nlocals_max = 0; 
+	awk->parse.depth.expr = 0;
 	awk->parse.depth.loop = 0;
 
 	/* clear parse trees */	

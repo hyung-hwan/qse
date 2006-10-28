@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.248 2006-10-28 05:24:07 bacon Exp $
+ * $Id: run.c,v 1.249 2006-10-28 12:17:25 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1557,6 +1557,14 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			break;
 		}
 
+		/*
+		case ASE_AWK_NDE_PRINT:
+		{
+			TODO: PRINTF 
+			break;
+		}
+		*/
+
 		default:
 		{
 			ase_awk_val_t* v;
@@ -2127,7 +2135,6 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	ase_char_t* out = ASE_NULL;
 	const ase_char_t* dst;
 	ase_awk_val_t* v;
-	ase_awk_nde_t* np;
 	int n;
 
 	ASE_AWK_ASSERT (run->awk, 
@@ -2212,9 +2219,19 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	}
 	else
 	{
-		for (np = p->args; np != ASE_NULL; np = np->next)
+		ase_awk_nde_t* head, * np;
+
+		if (p->args->type == ASE_AWK_NDE_GRP)
 		{
-			if (np != p->args)
+			/* parenthesized print */
+			ASE_AWK_ASSERT (run->awk, p->args->next == ASE_NULL);
+			head = ((ase_awk_nde_grp_t*)p->args)->body;
+		}
+		else head = p->args;
+
+		for (np = head; np != ASE_NULL; np = np->next)
+		{
+			if (np != head)
 			{
 				n = ase_awk_writeextio_str (
 					run, p->out_type, dst, 
