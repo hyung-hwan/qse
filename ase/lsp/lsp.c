@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.11 2006-10-28 16:08:34 bacon Exp $
+ * $Id: lsp.c,v 1.12 2006-10-28 16:24:40 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -26,7 +26,7 @@ ase_lsp_t* ase_lsp_open (
 	if (syscas->is_upper  == ASE_NULL ||
 	    syscas->is_lower  == ASE_NULL ||
 	    syscas->is_alpha  == ASE_NULL ||
-	    syscas->is_digit  == ASE_NULL ||
+		syscas->is_digit  == ASE_NULL ||
 	    syscas->is_xdigit == ASE_NULL ||
 	    syscas->is_alnum  == ASE_NULL ||
 	    syscas->is_space  == ASE_NULL ||
@@ -210,3 +210,5 @@ static int __add_builtin_prims (ase_lsp_t* lsp)
 
 	return 0;
 }
+
+

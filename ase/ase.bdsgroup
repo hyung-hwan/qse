@@ -11,7 +11,8 @@
 	<Default.Personality>  <Projects>
       <Projects Name="aseawk.lib">awk\aseawk.bdsproj</Projects>
       <Projects Name="aseawk.exe">test\awk\aseawk.bdsproj</Projects>
-      <Projects Name="Targets">aseawk.lib aseawk.exe</Projects>
+      <Projects Name="aselsp.lib">lsp\aselsp.bdsproj</Projects>
+      <Projects Name="Targets">aseawk.lib aseawk.exe aselsp.lib</Projects>
     </Projects>
     <Dependencies>
       <Dependency GUID="{F0848980-053C-44B1-B7A0-4C834C1EB585}">
