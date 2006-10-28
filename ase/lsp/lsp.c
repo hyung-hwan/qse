@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.10 2006-10-26 09:31:28 bacon Exp $
+ * $Id: lsp.c,v 1.11 2006-10-28 16:08:34 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -38,6 +38,7 @@ ase_lsp_t* ase_lsp_open (
 	    syscas->to_lower  == ASE_NULL) return ASE_NULL;
 
 	if (syscas->sprintf == ASE_NULL || 
+	    syscas->aprintf == ASE_NULL || 
 	    syscas->dprintf == ASE_NULL || 
 	    syscas->abort == ASE_NULL) return ASE_NULL;
 

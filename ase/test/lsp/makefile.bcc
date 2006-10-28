@@ -1,0 +1,19 @@
+CC = bcc32
+LD = ilink32
+CFLAGS = -I..\..\.. -I$(XPKIT)
+LDFLAGS = -L..\..\lsp -L"c:\program files\borland\bds\4.0\lib" -L$(XPKIT)\xp\bas
+LIBS = import32.lib cw32mt.lib aselsp.lib xpbas.lib
+STARTUP = c0x32w.obj
+
+all: lsp 
+
+lsp: lsp.obj
+	$(LD) $(LDFLAGS) $(STARTUP) lsp.obj,lsp.exe,,$(LIBS),,
+
+clean:
+	del $(OBJS) *.obj $(OUT)
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) $(CFLAGS) -c $< 
+

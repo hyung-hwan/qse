@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.27 2006-10-26 09:31:28 bacon Exp $
+ * $Id: lsp.h,v 1.28 2006-10-28 16:08:34 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSP_H_
@@ -42,6 +42,7 @@ struct ase_lsp_syscas_t
 	void* (*memset)  (void* dst, int val, ase_size_t n);
 
 	int (*sprintf) (ase_char_t* buf, ase_size_t size, ase_char_t* fmt, ...);
+	int (*aprintf) (ase_char_t* fmt, ...);
 	int (*dprintf) (ase_char_t* fmt, ...);
 	void (*abort) (void);
 

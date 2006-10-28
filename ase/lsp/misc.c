@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.3 2006-10-26 09:31:28 bacon Exp $
+ * $Id: misc.c,v 1.4 2006-10-28 16:08:34 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -753,7 +753,7 @@ ase_char_t* ase_lsp_strxnstr (
 int ase_lsp_assertfail (ase_lsp_t* lsp, 
 	const ase_char_t* expr, const ase_char_t* file, int line)
 {
-	lsp->syscas.dprintf (
+	lsp->syscas.aprintf (
 		ASE_T("ASSERTION FAILURE AT FILE %s, LINE %d\n%s\n"),
 		file, line, expr);
 	lsp->syscas.abort ();
