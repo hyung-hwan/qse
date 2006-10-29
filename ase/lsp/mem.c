@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.16 2006-10-26 09:31:28 bacon Exp $
+ * $Id: mem.c,v 1.17 2006-10-29 13:00:39 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -95,17 +95,18 @@ void ase_lsp_closemem (ase_lsp_mem_t* mem)
 	ASE_LSP_FREE (mem->lsp, mem);
 }
 
-static int __add_prim (ase_lsp_mem_t* mem, 
-	const ase_char_t* name, ase_size_t len, ase_lsp_prim_t prim)
+static int __add_prim (
+	ase_lsp_mem_t* mem, const ase_char_t* name, ase_size_t name_len, 
+	ase_lsp_prim_t pimpl, ase_size_t min_args, ase_size_t max_args)
 {
 	ase_lsp_obj_t* n, * p;
 	
-	n = ase_lsp_makesymobj (mem, name, len);
+	n = ase_lsp_makesymobj (mem, name, name_len);
 	if (n == ASE_NULL) return -1;
 
 	ase_lsp_lockobj (mem->lsp, n);
 
-	p = ase_lsp_makeprim (mem, prim);
+	p = ase_lsp_makeprim (mem, pimpl, min_args, max_args);
 	if (p == ASE_NULL) return -1;
 
 	ase_lsp_unlockobj (mem->lsp, n);
@@ -114,44 +115,6 @@ static int __add_prim (ase_lsp_mem_t* mem,
 
 	return 0;
 }
-
-
-int ase_lsp_add_builtin_prims (ase_lsp_mem_t* mem)
-{
-
-#define ADD_PRIM(mem,name,len,prim) \
-	if (__add_prim(mem,name,len,prim) == -1) return -1;
-
-	ADD_PRIM (mem, ASE_T("abort"), 5, ase_lsp_prim_abort);
-	ADD_PRIM (mem, ASE_T("eval"),  4, ase_lsp_prim_eval);
-	ADD_PRIM (mem, ASE_T("prog1"), 5, ase_lsp_prim_prog1);
-	ADD_PRIM (mem, ASE_T("progn"), 5, ase_lsp_prim_progn);
-	ADD_PRIM (mem, ASE_T("gc"),    2, ase_lsp_prim_gc);
-
-	ADD_PRIM (mem, ASE_T("cond"),  4, ase_lsp_prim_cond);
-	ADD_PRIM (mem, ASE_T("if"),    2, ase_lsp_prim_if);
-	ADD_PRIM (mem, ASE_T("while"), 5, ase_lsp_prim_while);
-
-	ADD_PRIM (mem, ASE_T("car"),   3, ase_lsp_prim_car);
-	ADD_PRIM (mem, ASE_T("cdr"),   3, ase_lsp_prim_cdr);
-	ADD_PRIM (mem, ASE_T("cons"),  4, ase_lsp_prim_cons);
-	ADD_PRIM (mem, ASE_T("set"),   3, ase_lsp_prim_set);
-	ADD_PRIM (mem, ASE_T("setq"),  4, ase_lsp_prim_setq);
-	ADD_PRIM (mem, ASE_T("quote"), 5, ase_lsp_prim_quote);
-	ADD_PRIM (mem, ASE_T("defun"), 5, ase_lsp_prim_defun);
-	ADD_PRIM (mem, ASE_T("demac"), 5, ase_lsp_prim_demac);
-	ADD_PRIM (mem, ASE_T("let"),   3, ase_lsp_prim_let);
-	ADD_PRIM (mem, ASE_T("let*"),  4, ase_lsp_prim_letx);
-
-	ADD_PRIM (mem, ASE_T(">"),     1, ase_lsp_prim_gt);
-	ADD_PRIM (mem, ASE_T("<"),     1, ase_lsp_prim_lt);
-
-	ADD_PRIM (mem, ASE_T("+"),     1, ase_lsp_prim_plus);
-	ADD_PRIM (mem, ASE_T("-"),     1, ase_lsp_prim_minus);
-
-	return 0;
-}
-
 
 ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 {
@@ -541,7 +504,8 @@ ase_lsp_obj_t* ase_lsp_makemacro (
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_makeprim (ase_lsp_mem_t* mem, void* impl)
+ase_lsp_obj_t* ase_lsp_makeprim (ase_lsp_mem_t* mem, 
+	ase_lsp_prim_t impl, ase_size_t min_args, ase_size_t max_args)
 {
 	ase_lsp_obj_t* obj;
 
@@ -549,8 +513,9 @@ ase_lsp_obj_t* ase_lsp_makeprim (ase_lsp_mem_t* mem, void* impl)
 		mem, ASE_LSP_OBJ_PRIM, ase_sizeof(ase_lsp_obj_prim_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
-	/*ASE_LSP_PRIM(obj) = (ase_lsp_prim_t)impl;*/
-	((ase_lsp_obj_prim_t*)obj)->impl = impl;
+	ASE_LSP_PIMPL(obj) = impl;
+	ASE_LSP_PMINARGS(obj) = min_args;
+	ASE_LSP_PMAXARGS(obj) = max_args;
 	return obj;
 }
 
@@ -607,7 +572,7 @@ ase_lsp_assoc_t* ase_lsp_setfunc (
 	return assoc;
 }
 
-ase_size_t ase_lsp_cons_len (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj)
+ase_size_t ase_lsp_conslen (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj)
 {
 	ase_size_t count;
 
@@ -615,7 +580,7 @@ ase_size_t ase_lsp_cons_len (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj)
 		obj == mem->nil || ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS);
 
 	count = 0;
-	//while (obj != mem->nil) {
+	/*while (obj != mem->nil) {*/
 	while (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
 	{
 		count++;

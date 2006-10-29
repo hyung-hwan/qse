@@ -5,13 +5,20 @@
 #include <xp/bas/locale.h>
 #include <xp/bas/sio.h>
 
+#include <tchar.h>
 #include <string.h>
 #include <wctype.h>
 #include <stdlib.h>
 
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
+
 #ifdef __linux
 #include <mcheck.h>
 #endif
+
 
 static xp_ssize_t get_input (int cmd, void* arg, xp_char_t* data, xp_size_t size)
 {
@@ -207,13 +214,18 @@ int __main (int argc, xp_char_t* argv[])
 	xp_cli_t* cli;
 	int mem, inc;
 	ase_lsp_syscas_t syscas;
+#ifdef _WIN32
+	syscas_data_t syscas_data;
+#endif
 
 
+	/*
 	if (xp_setlocale () == -1) {
 		xp_fprintf (xp_stderr,
 			XP_T("error: cannot set locale\n"));
 		return -1;
 	}
+	*/
 
 	if ((cli = parse_cli (argc, argv)) == XP_NULL) return -1;
 	mem = to_int(xp_getclioptval(cli, XP_T("memory")));
@@ -269,10 +281,25 @@ int __main (int argc, xp_char_t* argv[])
 	syscas.dprintf = __dprintf;
 	syscas.abort = abort;
 
+#ifdef _WIN32
+	syscas_data.heap = HeapCreate (0, 1000000, 1000000);
+	if (syscas_data.heap == NULL)
+	{
+		xp_printf (ASE_T("Error: cannot create an awk heap\n"));
+		return -1;
+	}
+
+	syscas.custom_data = &syscas_data;
+#endif
+
+
 
 	lsp = ase_lsp_open (&syscas, mem, inc);
 	if (lsp == XP_NULL) 
 	{
+#ifdef _WIN32
+		HeapDestroy (syscas_data.heap);
+#endif
 		xp_fprintf (xp_stderr, 
 			XP_T("error: cannot create a lsp instance\n"));
 		return -1;
@@ -285,31 +312,36 @@ int __main (int argc, xp_char_t* argv[])
 
 	while (1)
 	{
+		xp_sio_puts (xp_sio_out, XP_T("["));
 		xp_sio_puts (xp_sio_out, argv[0]);
-		xp_sio_puts (xp_sio_out, XP_T("> "));
+		xp_sio_puts (xp_sio_out, XP_T("]"));
 		xp_sio_flush (xp_sio_out);
 
 		obj = ase_lsp_read (lsp);
 		if (obj == XP_NULL) 
 		{
 			int errnum = ase_lsp_geterrnum(lsp);
+			const xp_char_t* errstr;
 
 			if (errnum != ASE_LSP_ERR_END && 
 			    errnum != ASE_LSP_ERR_ABORT) 
 			{
+				errstr = ase_lsp_geterrstr(errnum);
 				xp_fprintf (xp_stderr, 
-					XP_T("error while reading: %d\n"), errnum);
+					XP_T("error in read: [%d] %s\n"), errnum, errstr);
 			}
 
 			if (errnum < ASE_LSP_ERR_SYNTAX) break;
 			continue;
 		}
 
-		if ((obj = ase_lsp_eval (lsp, obj)) != XP_NULL) {
+		if ((obj = ase_lsp_eval (lsp, obj)) != XP_NULL) 
+		{
 			ase_lsp_print (lsp, obj);
 			xp_sio_puts (xp_sio_out, XP_T("\n"));
 		}
-		else {
+		else 
+		{
 			int errnum;
 			const xp_char_t* errstr;
 
@@ -318,13 +350,15 @@ int __main (int argc, xp_char_t* argv[])
 
 			errstr = ase_lsp_geterrstr(errnum);
 			xp_fprintf (xp_stderr, 
-				XP_T("error: [%d] %s\n"), errnum, errstr);
+				XP_T("error in eval: [%d] %s\n"), errnum, errstr);
 		}
 	}
 
 	ase_lsp_close (lsp);
 
-
+#ifdef _WIN32
+	HeapDestroy (syscas_data.heap);
+#endif
 	return 0;
 }
 

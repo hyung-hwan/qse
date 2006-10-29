@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.78 2006-10-28 05:24:08 bacon Exp $
+ * $Id: val.c,v 1.79 2006-10-29 13:00:39 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -352,20 +352,20 @@ ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
 
 	switch (val->type)
 	{
-	case ASE_AWK_VAL_NIL:
-		return ase_false;
-	case ASE_AWK_VAL_INT:
-		return ((ase_awk_val_int_t*)val)->val != 0;
-	case ASE_AWK_VAL_REAL:
-		return ((ase_awk_val_real_t*)val)->val != 0.0;
-	case ASE_AWK_VAL_STR:
-		return ((ase_awk_val_str_t*)val)->len > 0;
-	case ASE_AWK_VAL_REX: /* TODO: is this correct? */
-		return ((ase_awk_val_rex_t*)val)->len > 0;
-	case ASE_AWK_VAL_MAP:
-		return ase_false; /* TODO: is this correct? */
-	case ASE_AWK_VAL_REF:
-		return ase_false; /* TODO: is this correct? */
+		case ASE_AWK_VAL_NIL:
+			return ase_false;
+		case ASE_AWK_VAL_INT:
+			return ((ase_awk_val_int_t*)val)->val != 0;
+		case ASE_AWK_VAL_REAL:
+			return ((ase_awk_val_real_t*)val)->val != 0.0;
+		case ASE_AWK_VAL_STR:
+			return ((ase_awk_val_str_t*)val)->len > 0;
+		case ASE_AWK_VAL_REX: /* TODO: is this correct? */
+			return ((ase_awk_val_rex_t*)val)->len > 0;
+		case ASE_AWK_VAL_MAP:
+			return ase_false; /* TODO: is this correct? */
+		case ASE_AWK_VAL_REF:
+			return ase_false; /* TODO: is this correct? */
 	}
 
 	ASE_AWK_ASSERT (run->awk, !"should never happen - invalid value type");
@@ -666,49 +666,49 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 
 	switch (val->type)
 	{
-	case ASE_AWK_VAL_NIL:
-		__DPRINTF (ASE_T("nil"));
-	       	break;
+		case ASE_AWK_VAL_NIL:
+			__DPRINTF (ASE_T("nil"));
+		       	break;
 
-	case ASE_AWK_VAL_INT:
-#if defined(__BORLANDC__) || defined(_MSC_VER)
-		__DPRINTF (ASE_T("%I64d"), 
-			(__int64)((ase_awk_nde_int_t*)val)->val);
-#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-		__DPRINTF (ASE_T("%ld"), 
-			(long)((ase_awk_val_int_t*)val)->val);
-#else
-		__DPRINTF (ASE_T("%lld"), 
-			(long long)((ase_awk_val_int_t*)val)->val);
-#endif
-		break;
+		case ASE_AWK_VAL_INT:
+		#if defined(__BORLANDC__) || defined(_MSC_VER)
+			__DPRINTF (ASE_T("%I64d"), 
+				(__int64)((ase_awk_nde_int_t*)val)->val);
+		#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
+			__DPRINTF (ASE_T("%ld"), 
+				(long)((ase_awk_val_int_t*)val)->val);
+		#else
+			__DPRINTF (ASE_T("%lld"), 
+				(long long)((ase_awk_val_int_t*)val)->val);
+		#endif
+			break;
 
-	case ASE_AWK_VAL_REAL:
-		__DPRINTF (ASE_T("%Lf"), 
-			(long double)((ase_awk_val_real_t*)val)->val);
-		break;
+		case ASE_AWK_VAL_REAL:
+			__DPRINTF (ASE_T("%Lf"), 
+				(long double)((ase_awk_val_real_t*)val)->val);
+			break;
 
-	case ASE_AWK_VAL_STR:
-		__DPRINTF (ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
-		break;
+		case ASE_AWK_VAL_STR:
+			__DPRINTF (ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
+			break;
 
-	case ASE_AWK_VAL_REX:
-		__DPRINTF (ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
-		break;
+		case ASE_AWK_VAL_REX:
+			__DPRINTF (ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
+			break;
 
-	case ASE_AWK_VAL_MAP:
-		__DPRINTF (ASE_T("MAP["));
-		ase_awk_map_walk (((ase_awk_val_map_t*)val)->map, __print_pair, run);
-		__DPRINTF (ASE_T("]"));
-		break;
+		case ASE_AWK_VAL_MAP:
+			__DPRINTF (ASE_T("MAP["));
+			ase_awk_map_walk (((ase_awk_val_map_t*)val)->map, __print_pair, run);
+			__DPRINTF (ASE_T("]"));
+			break;
 	
-	case ASE_AWK_VAL_REF:
-		__DPRINTF (ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
-		ase_awk_dprintval (run, *((ase_awk_val_ref_t*)val)->adr);
-		__DPRINTF (ASE_T("]"));
-		break;
+		case ASE_AWK_VAL_REF:
+			__DPRINTF (ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
+			ase_awk_dprintval (run, *((ase_awk_val_ref_t*)val)->adr);
+			__DPRINTF (ASE_T("]"));
+			break;
 
-	default:
-		__DPRINTF (ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
+		default:
+			__DPRINTF (ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }

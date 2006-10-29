@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.12 2006-10-28 16:24:40 bacon Exp $
+ * $Id: lsp.c,v 1.13 2006-10-29 13:00:39 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -26,7 +26,7 @@ ase_lsp_t* ase_lsp_open (
 	if (syscas->is_upper  == ASE_NULL ||
 	    syscas->is_lower  == ASE_NULL ||
 	    syscas->is_alpha  == ASE_NULL ||
-		syscas->is_digit  == ASE_NULL ||
+	    syscas->is_digit  == ASE_NULL ||
 	    syscas->is_xdigit == ASE_NULL ||
 	    syscas->is_alnum  == ASE_NULL ||
 	    syscas->is_space  == ASE_NULL ||
@@ -171,42 +171,42 @@ int ase_lsp_detach_output (ase_lsp_t* lsp)
 static int __add_builtin_prims (ase_lsp_t* lsp)
 {
 
-#define ADD_PRIM(mem,name,prim) \
-	if (ase_lsp_add_prim(mem,name,prim) == -1) return -1;
+#define ADD_PRIM(mem,name,name_len,pimpl,min_args,max_args) \
+	if (ase_lsp_addprim(mem,name,name_len,pimpl,min_args,max_args) == -1) return -1;
 
-	ADD_PRIM (lsp, ASE_T("abort"), ase_lsp_prim_abort);
-	ADD_PRIM (lsp, ASE_T("eval"),  ase_lsp_prim_eval);
-	ADD_PRIM (lsp, ASE_T("prog1"), ase_lsp_prim_prog1);
-	ADD_PRIM (lsp, ASE_T("progn"), ase_lsp_prim_progn);
-	ADD_PRIM (lsp, ASE_T("gc"),    ase_lsp_prim_gc);
+	ADD_PRIM (lsp, ASE_T("abort"), 5, ase_lsp_prim_abort, 0, 0);
+	ADD_PRIM (lsp, ASE_T("eval"),  4, ase_lsp_prim_eval,  1, 1);
+	ADD_PRIM (lsp, ASE_T("prog1"), 5, ase_lsp_prim_prog1, 1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("progn"), 5, ase_lsp_prim_progn, 1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("gc"),    2, ase_lsp_prim_gc,    0, 0);
 
-	ADD_PRIM (lsp, ASE_T("cond"),  ase_lsp_prim_cond);
-	ADD_PRIM (lsp, ASE_T("if"),    ase_lsp_prim_if);
-	ADD_PRIM (lsp, ASE_T("while"), ase_lsp_prim_while);
+	ADD_PRIM (lsp, ASE_T("cond"),  4, ase_lsp_prim_cond,  0, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("if"),    2, ase_lsp_prim_if,    2, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("while"), 5, ase_lsp_prim_while, 1, ASE_TYPE_MAX(ase_size_t));
 
-	ADD_PRIM (lsp, ASE_T("car"),   ase_lsp_prim_car);
-	ADD_PRIM (lsp, ASE_T("cdr"),   ase_lsp_prim_cdr);
-	ADD_PRIM (lsp, ASE_T("cons"),  ase_lsp_prim_cons);
-	ADD_PRIM (lsp, ASE_T("set"),   ase_lsp_prim_set);
-	ADD_PRIM (lsp, ASE_T("setq"),  ase_lsp_prim_setq);
-	ADD_PRIM (lsp, ASE_T("quote"), ase_lsp_prim_quote);
-	ADD_PRIM (lsp, ASE_T("defun"), ase_lsp_prim_defun);
-	ADD_PRIM (lsp, ASE_T("demac"), ase_lsp_prim_demac);
-	ADD_PRIM (lsp, ASE_T("let"),   ase_lsp_prim_let);
-	ADD_PRIM (lsp, ASE_T("let*"),  ase_lsp_prim_letx);
+	ADD_PRIM (lsp, ASE_T("car"),   3, ase_lsp_prim_car,   1, 1);
+	ADD_PRIM (lsp, ASE_T("cdr"),   3, ase_lsp_prim_cdr,   1, 1);
+	ADD_PRIM (lsp, ASE_T("cons"),  4, ase_lsp_prim_cons,  2, 2);
+	ADD_PRIM (lsp, ASE_T("set"),   3, ase_lsp_prim_set,   2, 2);
+	ADD_PRIM (lsp, ASE_T("setq"),  4, ase_lsp_prim_setq,  1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("quote"), 5, ase_lsp_prim_quote, 1, 1);
+	ADD_PRIM (lsp, ASE_T("defun"), 5, ase_lsp_prim_defun, 3, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("demac"), 5, ase_lsp_prim_demac, 3, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("let"),   3, ase_lsp_prim_let,   1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("let*"),  4, ase_lsp_prim_letx,  1, ASE_TYPE_MAX(ase_size_t));
 
-	ADD_PRIM (lsp, ASE_T("="),     ase_lsp_prim_eq);
-	ADD_PRIM (lsp, ASE_T("/="),    ase_lsp_prim_ne);
-	ADD_PRIM (lsp, ASE_T(">"),     ase_lsp_prim_gt);
-	ADD_PRIM (lsp, ASE_T("<"),     ase_lsp_prim_lt);
-	ADD_PRIM (lsp, ASE_T(">="),    ase_lsp_prim_ge);
-	ADD_PRIM (lsp, ASE_T("<="),    ase_lsp_prim_le);
+	ADD_PRIM (lsp, ASE_T("="),     1, ase_lsp_prim_eq,    2, 2);
+	ADD_PRIM (lsp, ASE_T("/="),    2, ase_lsp_prim_ne,    2, 2);
+	ADD_PRIM (lsp, ASE_T(">"),     1, ase_lsp_prim_gt,    2, 2);
+	ADD_PRIM (lsp, ASE_T("<"),     1, ase_lsp_prim_lt,    2, 2);
+	ADD_PRIM (lsp, ASE_T(">="),    2, ase_lsp_prim_ge,    2, 2);
+	ADD_PRIM (lsp, ASE_T("<="),    2, ase_lsp_prim_le,    2, 2);
 
-	ADD_PRIM (lsp, ASE_T("+"),     ase_lsp_prim_plus);
-	ADD_PRIM (lsp, ASE_T("-"),     ase_lsp_prim_minus);
-	ADD_PRIM (lsp, ASE_T("*"),     ase_lsp_prim_multiply);
-	ADD_PRIM (lsp, ASE_T("/"),     ase_lsp_prim_divide);
-	ADD_PRIM (lsp, ASE_T("%"),     ase_lsp_prim_modulus);
+	ADD_PRIM (lsp, ASE_T("+"),     1, ase_lsp_prim_plus,, 1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("-"),     1, ase_lsp_prim_minus, 1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("*"),     1, ase_lsp_prim_mul,   1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("/"),     1, ase_lsp_prim_div,   1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("%"),     1, ase_lsp_prim_mod  , 1, ASE_TYPE_MAX(ase_size_t));
 
 	return 0;
 }

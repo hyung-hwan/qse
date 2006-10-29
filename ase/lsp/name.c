@@ -1,5 +1,5 @@
 /*
- * $Id: name.c,v 1.9 2006-10-26 09:31:28 bacon Exp $
+ * $Id: name.c,v 1.10 2006-10-29 13:00:39 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -7,8 +7,7 @@
 ase_lsp_name_t* ase_lsp_name_open (
 	ase_lsp_name_t* name, ase_size_t capa, ase_lsp_t* lsp)
 {
-	if (capa == 0) 
-		capa = ase_countof(name->static_buf) - 1;
+	if (capa == 0) capa = ase_countof(name->static_buf) - 1;
 
 	if (name == ASE_NULL) 
 	{

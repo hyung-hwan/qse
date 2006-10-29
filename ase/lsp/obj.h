@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.10 2006-10-26 09:25:03 bacon Exp $
+ * $Id: obj.h,v 1.11 2006-10-29 13:00:39 bacon Exp $
  */
 
 #ifndef _ASE_LSP_OBJ_H_
@@ -116,7 +116,9 @@ struct ase_lsp_obj_macro_t
 struct ase_lsp_obj_prim_t
 {
 	ase_lsp_objhdr_t hdr;
-	void* impl;  /* ase_lsp_prim_t */
+	ase_lsp_prim_t impl;
+	ase_size_t min_args;
+	ase_size_t max_args;
 };
 
 /* header access */
@@ -150,6 +152,8 @@ struct ase_lsp_obj_prim_t
 #define ASE_LSP_FBODY(x)    (((ase_lsp_obj_func_t*)x)->body)
 #define ASE_LSP_MFORMAL(x)  (((ase_lsp_obj_macro_t*)x)->formal)
 #define ASE_LSP_MBODY(x)    (((ase_lsp_obj_macro_t*)x)->body)
-#define ASE_LSP_PRIM(x)     ((ase_lsp_prim_t)(((ase_lsp_obj_prim_t*)x)->impl))
+#define ASE_LSP_PIMPL(x)    (((ase_lsp_obj_prim_t*)x)->impl)
+#define ASE_LSP_PMINARGS(x) (((ase_lsp_obj_prim_t*)x)->min_args)
+#define ASE_LSP_PMAXARGS(x) (((ase_lsp_obj_prim_t*)x)->max_args)
 
 #endif
