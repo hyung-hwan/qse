@@ -155,6 +155,10 @@ SOURCE=.\lsp.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\lsp_i.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\mem.h
 # End Source File
 # Begin Source File
@@ -172,10 +176,6 @@ SOURCE=.\obj.h
 # Begin Source File
 
 SOURCE=.\prim.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\types.h
 # End Source File
 # End Group
 # End Target

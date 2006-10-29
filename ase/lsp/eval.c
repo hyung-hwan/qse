@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.19 2006-10-29 13:00:39 bacon Exp $
+ * $Id: eval.c,v 1.20 2006-10-29 13:40:30 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -9,6 +9,8 @@ static ase_lsp_obj_t* make_func (
 static ase_lsp_obj_t* eval_cons (
 	ase_lsp_t* lsp, ase_lsp_obj_t* cons);
 static ase_lsp_obj_t* apply (
+	ase_lsp_t* lsp, ase_lsp_obj_t* func, ase_lsp_obj_t* actual);
+static ase_lsp_obj_t* apply_to_prim (
 	ase_lsp_t* lsp, ase_lsp_obj_t* func, ase_lsp_obj_t* actual);
 
 ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
@@ -139,7 +141,7 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 			else if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_PRIM) 
 			{
 				/* primitive function */
-				return ASE_LSP_PIMPL(func) (lsp, cdr);
+				return apply_to_prim (lsp, func, cdr);
 			}
 			else 
 			{
@@ -321,3 +323,37 @@ static ase_lsp_obj_t* apply (
 	return value;
 }
 
+static ase_lsp_obj_t* apply_to_prim (
+	ase_lsp_t* lsp, ase_lsp_obj_t* func, ase_lsp_obj_t* actual)
+{
+	ase_lsp_obj_t* obj;
+	ase_size_t count = 0;
+
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(func) == ASE_LSP_OBJ_PRIM);
+
+	obj = actual;
+	while (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
+	{
+		count++;
+		obj = ASE_LSP_CDR(obj);
+	}	
+	if (obj != lsp->mem->nil) 
+	{
+		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		return ASE_NULL;
+	}
+
+	if (count < ASE_LSP_PMINARGS(func))
+	{
+		lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS;
+		return ASE_NULL;
+	}
+
+	if (count > ASE_LSP_PMAXARGS(func))
+	{
+		lsp->errnum = ASE_LSP_ERR_TOO_MANY_ARGS;
+		return ASE_NULL;
+	} 
+
+	return ASE_LSP_PIMPL(func) (lsp, actual);
+}

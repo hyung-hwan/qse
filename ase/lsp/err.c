@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.5 2006-10-29 13:00:39 bacon Exp $
+ * $Id: err.c,v 1.6 2006-10-29 13:40:30 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -15,7 +15,7 @@ const ase_char_t* ase_lsp_geterrstr (int errnum)
 	{
 		ASE_T("no error"),
 		ASE_T("out of memory"),
-		ASE_T("abort"),
+		ASE_T("exit"),
 		ASE_T("end"),
 		ASE_T("input not attached"),
 		ASE_T("input"),

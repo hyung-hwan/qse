@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.29 2006-10-29 13:00:39 bacon Exp $
+ * $Id: lsp.h,v 1.30 2006-10-29 13:40:32 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSP_H_
@@ -70,7 +70,7 @@ enum
 	ASE_LSP_ENOERR,
 	ASE_LSP_ENOMEM,
 
-	ASE_LSP_ERR_ABORT,
+	ASE_LSP_ERR_EXIT,
 	ASE_LSP_ERR_END,
 	ASE_LSP_ERR_INPUT_NOT_ATTACHED,
 	ASE_LSP_ERR_INPUT,
