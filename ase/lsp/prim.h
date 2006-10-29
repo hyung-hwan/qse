@@ -1,17 +1,19 @@
 /*
- * $Id: prim.h,v 1.10 2006-10-29 13:00:39 bacon Exp $
+ * $Id: prim.h,v 1.11 2006-10-29 13:40:33 bacon Exp $
  */
 
 #ifndef _ASE_LSP_PRIM_H_
 #define _ASE_LSP_PRIM_H_
 
-#include <ase/lsp/lsp.h>
+#ifndef _ASE_LSP_LSP_H_
+#error Never include this file directly. Include <ase/lsp/lsp.h> instead
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-ase_lsp_obj_t* ase_lsp_prim_abort (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_exit  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 ase_lsp_obj_t* ase_lsp_prim_eval  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 ase_lsp_obj_t* ase_lsp_prim_prog1 (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 ase_lsp_obj_t* ase_lsp_prim_progn (ase_lsp_t* lsp, ase_lsp_obj_t* args);
@@ -53,24 +55,5 @@ ase_lsp_obj_t* ase_lsp_prim_mod   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 #ifdef __cplusplus
 }
 #endif
-
-#define ASE_LSP_PRIM_CHECK_ARG_COUNT(lsp,args,min,max) \
-{ \
-	ase_size_t count; \
-	if (ase_lsp_probeargs(lsp->mem, args, &count) == -1) { \
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG; \
-		return ASE_NULL; \
-	} \
-	if (count < min) { \
-		lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS; \
-		return ASE_NULL; \
-	} \
-	if (count > max) { \
-		lsp->errnum = ASE_LSP_ERR_TOO_MANY_ARGS; \
-		return ASE_NULL; \
-	} \
-}
-
-#define ASE_LSP_PRIM_MAX_ARG_COUNT ((ase_size_t)~(ase_size_t)0)
 
 #endif

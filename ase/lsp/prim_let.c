@@ -1,5 +1,5 @@
 /*
- * $Id: prim_let.c,v 1.7 2006-10-26 08:17:37 bacon Exp $
+ * $Id: prim_let.c,v 1.8 2006-10-29 13:40:33 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -11,8 +11,6 @@ static ase_lsp_obj_t* __prim_let (
 	ase_lsp_obj_t* assoc;
 	ase_lsp_obj_t* body;
 	ase_lsp_obj_t* value;
-
-	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 1, ASE_LSP_PRIM_MAX_ARG_COUNT);
 
 	// create a new frame
 	frame = ase_lsp_newframe (lsp);
@@ -129,19 +127,22 @@ static ase_lsp_obj_t* __prim_let (
 		return ASE_NULL;
 	}
 
-	// push the frame
-	if (!sequential) {
+	/* push the frame */
+	if (!sequential) 
+	{
 		lsp->mem->brooding_frame = frame->link;
 		frame->link = lsp->mem->frame;
 		lsp->mem->frame = frame;
 	}
 
-	// evaluate forms in the body
+	/* evaluate forms in the body */
 	value = lsp->mem->nil;
 	body = ASE_LSP_CDR(args);
-	while (body != lsp->mem->nil) {
+	while (body != lsp->mem->nil) 
+	{
 		value = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
-		if (value == ASE_NULL) {
+		if (value == ASE_NULL) 
+		{
 			lsp->mem->frame = frame->link;
 			ase_lsp_freeframe (lsp, frame);
 			return ASE_NULL;
@@ -149,10 +150,10 @@ static ase_lsp_obj_t* __prim_let (
 		body = ASE_LSP_CDR(body);
 	}
 
-	// pop the frame
+	/* pop the frame */
 	lsp->mem->frame = frame->link;
 
-	// destroy the frame
+	/* destroy the frame */
 	ase_lsp_freeframe (lsp, frame);
 	return value;
 }

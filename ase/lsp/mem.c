@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.17 2006-10-29 13:00:39 bacon Exp $
+ * $Id: mem.c,v 1.18 2006-10-29 13:40:33 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -590,20 +590,5 @@ ase_size_t ase_lsp_conslen (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj)
 	return count;
 }
 
-int ase_lsp_probeargs (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj, ase_size_t* len)
-{
-	ase_size_t count = 0;
-
-	while (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
-	{
-		count++;
-		obj = ASE_LSP_CDR(obj);
-	}	
-
-	if (obj != mem->nil) return -1;
-
-	*len = count;
-	return 0;
-}
 
 

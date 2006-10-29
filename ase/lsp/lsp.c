@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.13 2006-10-29 13:00:39 bacon Exp $
+ * $Id: lsp.c,v 1.14 2006-10-29 13:40:31 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -174,7 +174,7 @@ static int __add_builtin_prims (ase_lsp_t* lsp)
 #define ADD_PRIM(mem,name,name_len,pimpl,min_args,max_args) \
 	if (ase_lsp_addprim(mem,name,name_len,pimpl,min_args,max_args) == -1) return -1;
 
-	ADD_PRIM (lsp, ASE_T("abort"), 5, ase_lsp_prim_abort, 0, 0);
+	ADD_PRIM (lsp, ASE_T("exit"),  4, ase_lsp_prim_exit,  0, 0);
 	ADD_PRIM (lsp, ASE_T("eval"),  4, ase_lsp_prim_eval,  1, 1);
 	ADD_PRIM (lsp, ASE_T("prog1"), 5, ase_lsp_prim_prog1, 1, ASE_TYPE_MAX(ase_size_t));
 	ADD_PRIM (lsp, ASE_T("progn"), 5, ase_lsp_prim_progn, 1, ASE_TYPE_MAX(ase_size_t));
@@ -202,7 +202,7 @@ static int __add_builtin_prims (ase_lsp_t* lsp)
 	ADD_PRIM (lsp, ASE_T(">="),    2, ase_lsp_prim_ge,    2, 2);
 	ADD_PRIM (lsp, ASE_T("<="),    2, ase_lsp_prim_le,    2, 2);
 
-	ADD_PRIM (lsp, ASE_T("+"),     1, ase_lsp_prim_plus,, 1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("+"),     1, ase_lsp_prim_plus,  1, ASE_TYPE_MAX(ase_size_t));
 	ADD_PRIM (lsp, ASE_T("-"),     1, ase_lsp_prim_minus, 1, ASE_TYPE_MAX(ase_size_t));
 	ADD_PRIM (lsp, ASE_T("*"),     1, ase_lsp_prim_mul,   1, ASE_TYPE_MAX(ase_size_t));
 	ADD_PRIM (lsp, ASE_T("/"),     1, ase_lsp_prim_div,   1, ASE_TYPE_MAX(ase_size_t));

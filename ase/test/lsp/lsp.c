@@ -324,7 +324,7 @@ int __main (int argc, xp_char_t* argv[])
 			const xp_char_t* errstr;
 
 			if (errnum != ASE_LSP_ERR_END && 
-			    errnum != ASE_LSP_ERR_ABORT) 
+			    errnum != ASE_LSP_ERR_EXIT) 
 			{
 				errstr = ase_lsp_geterrstr(errnum);
 				xp_fprintf (xp_stderr, 
@@ -346,7 +346,7 @@ int __main (int argc, xp_char_t* argv[])
 			const xp_char_t* errstr;
 
 			errnum = ase_lsp_geterrnum(lsp);
-			if (errnum == ASE_LSP_ERR_ABORT) break;
+			if (errnum == ASE_LSP_ERR_EXIT) break;
 
 			errstr = ase_lsp_geterrstr(errnum);
 			xp_fprintf (xp_stderr, 

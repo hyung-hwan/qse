@@ -1,5 +1,5 @@
 /*
- * $Id: prim_compar.c,v 1.7 2006-10-26 09:31:28 bacon Exp $
+ * $Id: prim_compar.c,v 1.8 2006-10-29 13:40:33 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -9,7 +9,6 @@ ase_lsp_obj_t* ase_lsp_prim_eq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* p1, * p2;
 	int res;
 
-	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
@@ -92,7 +91,6 @@ ase_lsp_obj_t* ase_lsp_prim_ne (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* p1, * p2;
 	int res;
 
-	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
@@ -176,7 +174,6 @@ ase_lsp_obj_t* ase_lsp_prim_gt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* p1, * p2;
 	int res;
 
-	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
@@ -260,7 +257,6 @@ ase_lsp_obj_t* ase_lsp_prim_lt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* p1, * p2;
 	int res;
 
-	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
@@ -343,7 +339,6 @@ ase_lsp_obj_t* ase_lsp_prim_ge (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* p1, * p2;
 	int res;
 
-	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
@@ -426,7 +421,6 @@ ase_lsp_obj_t* ase_lsp_prim_le (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* p1, * p2;
 	int res;
 
-	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 2, 2);
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
@@ -490,7 +484,8 @@ ase_lsp_obj_t* ase_lsp_prim_le (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 				ASE_LSP_STRPTR(p1), ASE_LSP_STRLEN(p1),	
 				ASE_LSP_STRPTR(p2), ASE_LSP_STRLEN(p2)) <= 0;
 		}
-		else {
+		else 
+		{
 			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;
 			return ASE_NULL;
 		}
