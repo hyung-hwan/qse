@@ -5,7 +5,10 @@
 #include <xp/bas/locale.h>
 #include <xp/bas/sio.h>
 
+#ifdef _WIN32
 #include <tchar.h>
+#endif
+
 #include <string.h>
 #include <wctype.h>
 #include <stdlib.h>
