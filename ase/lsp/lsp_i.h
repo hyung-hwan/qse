@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h,v 1.3 2006-10-26 09:31:28 bacon Exp $
+ * $Id: lsp_i.h,v 1.4 2006-10-29 13:00:39 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSPI_H_
@@ -63,8 +63,8 @@ struct ase_lsp_t
 	struct
 	{
 		int type;
-		ase_long_t ivalue;
-		ase_real_t rvalue;
+		ase_long_t ival;
+		ase_real_t rval;
 		ase_lsp_name_t name;
 	} token;
 

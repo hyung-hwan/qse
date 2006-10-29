@@ -1,35 +1,38 @@
 /*
- * $Id: prim.c,v 1.13 2006-10-26 09:31:28 bacon Exp $
+ * $Id: prim.c,v 1.14 2006-10-29 13:00:39 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
 
 static int __add_prim (ase_lsp_mem_t* mem, 
-	const ase_char_t* name, ase_size_t len, ase_lsp_prim_t prim);
+	const ase_char_t* name, ase_size_t len, 
+	ase_lsp_prim_t pimpl, ase_size_t min_args, ase_size_t max_args);
 
-int ase_lsp_add_prim (
-	ase_lsp_t* lsp, const ase_char_t* name, ase_lsp_prim_t prim)
+int ase_lsp_addprim (
+	ase_lsp_t* lsp, const ase_char_t* name, ase_size_t name_len,
+	ase_lsp_prim_t prim, ase_size_t min_args, ase_size_t max_args)
 {
-	return __add_prim (lsp->mem, name, ase_lsp_strlen(name), prim);
+	return __add_prim (lsp->mem, name, name_len, prim, min_args, max_args);
 }
 
-int ase_lsp_remove_prim (ase_lsp_t* lsp, const ase_char_t* name)
+int ase_lsp_removeprim (ase_lsp_t* lsp, const ase_char_t* name)
 {
 	// TODO:
 	return -1;
 }
 
 static int __add_prim (ase_lsp_mem_t* mem, 
-	const ase_char_t* name, ase_size_t len, ase_lsp_prim_t prim)
+	const ase_char_t* name, ase_size_t name_len, 
+	ase_lsp_prim_t pimpl, ase_size_t min_args, ase_size_t max_args)
 {
 	ase_lsp_obj_t* n, * p;
 	
-	n = ase_lsp_makesymobj (mem, name, len);
+	n = ase_lsp_makesymobj (mem, name, name_len);
 	if (n == ASE_NULL) return -1;
 
 	ase_lsp_lockobj (mem->lsp, n);
 
-	p = ase_lsp_makeprim (mem, prim);
+	p = ase_lsp_makeprim (mem, pimpl, min_args, max_args);
 	if (p == ASE_NULL) return -1;
 
 	ase_lsp_unlockobj (mem->lsp, n);
@@ -83,8 +86,10 @@ ase_lsp_obj_t* ase_lsp_prim_cond (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	ASE_LSP_PRIM_CHECK_ARG_COUNT (lsp, args, 0, ASE_LSP_PRIM_MAX_ARG_COUNT);
 
-	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) {
-		if (ASE_LSP_TYPE(ASE_LSP_CAR(args)) != ASE_LSP_OBJ_CONS) {
+	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) 
+	{
+		if (ASE_LSP_TYPE(ASE_LSP_CAR(args)) != ASE_LSP_OBJ_CONS) 
+		{
 			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 			return ASE_NULL;
 		}
@@ -92,15 +97,18 @@ ase_lsp_obj_t* ase_lsp_prim_cond (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CAR(args)));
 		if (tmp == ASE_NULL) return ASE_NULL;
 
-		if (tmp != lsp->mem->nil) {
+		if (tmp != lsp->mem->nil) 
+		{
 			tmp = ASE_LSP_CDR(ASE_LSP_CAR(args));
 			ret = lsp->mem->nil;
-			while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) {
+			while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) 
+			{
 				ret = ase_lsp_eval (lsp, ASE_LSP_CAR(tmp));
 				if (ret == ASE_NULL) return ASE_NULL;
 				tmp = ASE_LSP_CDR(tmp);
 			}
-			if (tmp != lsp->mem->nil) {
+			if (tmp != lsp->mem->nil) 
+			{
 				lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 				return ASE_NULL;
 			}
@@ -123,22 +131,26 @@ ase_lsp_obj_t* ase_lsp_prim_if (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp == ASE_NULL) return ASE_NULL;
 
-	if (tmp != lsp->mem->nil) {
+	if (tmp != lsp->mem->nil) 
+	{
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(args)));
 		if (tmp == ASE_NULL) return ASE_NULL;
 		return tmp;
 	}	
-	else {
+	else 
+	{
 		ase_lsp_obj_t* res = lsp->mem->nil;
 
 		tmp = ASE_LSP_CDR(ASE_LSP_CDR(args));
 
-		while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) {
+		while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) 
+		{
 			res = ase_lsp_eval (lsp, ASE_LSP_CAR(tmp));
 			if (res == ASE_NULL) return ASE_NULL;
 			tmp = ASE_LSP_CDR(tmp);
 		}
-		if (tmp != lsp->mem->nil) {
+		if (tmp != lsp->mem->nil) 
+		{
 			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 			return ASE_NULL;
 		}
@@ -165,13 +177,15 @@ ase_lsp_obj_t* ase_lsp_prim_while (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (tmp == lsp->mem->nil) break;
 
 		tmp = ASE_LSP_CDR(args);
-		while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) {
+		while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) 
+		{
 			if (ase_lsp_eval(lsp, ASE_LSP_CAR(tmp)) == ASE_NULL) 
 				return ASE_NULL;
 			tmp = ASE_LSP_CDR(tmp);
 		}
 
-		if (tmp != lsp->mem->nil) {
+		if (tmp != lsp->mem->nil) 
+		{
 			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 			return ASE_NULL;
 		}
@@ -195,7 +209,8 @@ ase_lsp_obj_t* ase_lsp_prim_car (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	if (tmp == ASE_NULL) return ASE_NULL;
 	if (tmp == lsp->mem->nil) return lsp->mem->nil;
 
-	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) {
+	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) 
+	{
 		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 		return ASE_NULL;
 	}
@@ -218,7 +233,8 @@ ase_lsp_obj_t* ase_lsp_prim_cdr (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	if (tmp == ASE_NULL) return ASE_NULL;
 	if (tmp == lsp->mem->nil) return lsp->mem->nil;
 
-	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) {
+	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) 
+	{
 		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 		return ASE_NULL;
 	}
@@ -270,7 +286,8 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (p1 == ASE_NULL) return ASE_NULL;
 
-	if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) {
+	if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
+	{
 		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 		return ASE_NULL;
 	}
@@ -278,7 +295,8 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	p2 = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(args)));
 	if (p2 == ASE_NULL) return ASE_NULL;
 
-	if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) {
+	if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) 
+	{
 		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
@@ -295,16 +313,19 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	ase_lsp_obj_t* p = args, * p1, * p2 = lsp->mem->nil;
 
-	while (p != lsp->mem->nil) {
+	while (p != lsp->mem->nil) 
+	{
 		ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(p) == ASE_LSP_OBJ_CONS);
 
 		p1 = ASE_LSP_CAR(p);
-		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) {
+		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
+		{
 			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
 			return ASE_NULL;
 		}
 
-		if (ASE_LSP_TYPE(ASE_LSP_CDR(p)) != ASE_LSP_OBJ_CONS) {
+		if (ASE_LSP_TYPE(ASE_LSP_CDR(p)) != ASE_LSP_OBJ_CONS) 
+		{
 			lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS;
 			return ASE_NULL;
 		}
@@ -312,7 +333,8 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		p2 = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(p)));
 		if (p2 == ASE_NULL) return ASE_NULL;
 
-		if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) {
+		if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) 
+		{
 			lsp->errnum = ASE_LSP_ENOMEM;
 			return ASE_NULL;
 		}

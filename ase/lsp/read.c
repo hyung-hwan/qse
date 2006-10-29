@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.26 2006-10-27 08:31:06 bacon Exp $
+ * $Id: read.c,v 1.27 2006-10-29 13:00:39 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -12,12 +12,12 @@
 	 (c) == ASE_T('=') || (c) == ASE_T('_') || \
 	 (c) == ASE_T('?'))
 
-#define TOKEN_CLEAR(lsp)   ase_lsp_name_clear (&(lsp)->token.name)
-#define TOKEN_TYPE(lsp)    (lsp)->token.type
-#define TOKEN_IVALUE(lsp)  (lsp)->token.ivalue
-#define TOKEN_RVALUE(lsp)  (lsp)->token.rvalue
-#define TOKEN_SVALUE(lsp)  (lsp)->token.name.buf
-#define TOKEN_SLENGTH(lsp) (lsp)->token.name.size
+#define TOKEN_CLEAR(lsp)  ase_lsp_name_clear (&(lsp)->token.name)
+#define TOKEN_TYPE(lsp)  (lsp)->token.type
+#define TOKEN_IVAL(lsp)  (lsp)->token.ival
+#define TOKEN_RVAL(lsp)  (lsp)->token.rval
+#define TOKEN_SVAL(lsp)  (lsp)->token.name.buf
+#define TOKEN_SLEN(lsp)  (lsp)->token.name.size
 
 #define TOKEN_ADD_CHAR(lsp,ch) do { \
 	if (ase_lsp_name_addc(&(lsp)->token.name, ch) == -1) { \
@@ -79,44 +79,50 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 
 	switch (TOKEN_TYPE(lsp)) 
 	{
-	case TOKEN_END:
-		lsp->errnum = ASE_LSP_ERR_END;
-		return ASE_NULL;
-	case TOKEN_LPAREN:
-		NEXT_TOKEN (lsp);
-		return read_list (lsp);
-	case TOKEN_QUOTE:
-		NEXT_TOKEN (lsp);
-		return read_quote (lsp);
-	case TOKEN_INT:
-		obj = ase_lsp_makeintobj (lsp->mem, TOKEN_IVALUE(lsp));
-		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
-		ase_lsp_lockobj (lsp, obj);
-		return obj;
-	case TOKEN_REAL:
-		obj = ase_lsp_makerealobj (lsp->mem, TOKEN_RVALUE(lsp));
-		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
-		ase_lsp_lockobj (lsp, obj);
-		return obj;
-	case TOKEN_STRING:
-		obj = ase_lsp_makestrobj (
-			lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
-		if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
-		ase_lsp_lockobj (lsp, obj);
-		return obj;
-	case TOKEN_IDENT:
-		ASE_LSP_ASSERT (lsp,
-			lsp->mem->nil != ASE_NULL && lsp->mem->t != ASE_NULL); 
-		if (TOKEN_COMPARE(lsp,ASE_T("nil")) == 0) obj = lsp->mem->nil;
-		else if (TOKEN_COMPARE(lsp,ASE_T("t")) == 0) obj = lsp->mem->t;
-		else 
-		{
-			obj = ase_lsp_makesymobj (
-				lsp->mem, TOKEN_SVALUE(lsp), TOKEN_SLENGTH(lsp));
+		case TOKEN_END:
+			lsp->errnum = ASE_LSP_ERR_END;
+			return ASE_NULL;
+
+		case TOKEN_LPAREN:
+			NEXT_TOKEN (lsp);
+			return read_list (lsp);
+
+		case TOKEN_QUOTE:
+			NEXT_TOKEN (lsp);
+			return read_quote (lsp);
+
+		case TOKEN_INT:
+			obj = ase_lsp_makeintobj (lsp->mem, TOKEN_IVAL(lsp));
 			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
 			ase_lsp_lockobj (lsp, obj);
-		}
-		return obj;
+			return obj;
+
+		case TOKEN_REAL:
+			obj = ase_lsp_makerealobj (lsp->mem, TOKEN_RVAL(lsp));
+			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+			ase_lsp_lockobj (lsp, obj);
+			return obj;
+
+		case TOKEN_STRING:
+			obj = ase_lsp_makestrobj (
+				lsp->mem, TOKEN_SVAL(lsp), TOKEN_SLEN(lsp));
+			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+			ase_lsp_lockobj (lsp, obj);
+			return obj;
+
+		case TOKEN_IDENT:
+			ASE_LSP_ASSERT (lsp,
+				lsp->mem->nil != ASE_NULL && lsp->mem->t != ASE_NULL); 
+			if (TOKEN_COMPARE(lsp,ASE_T("nil")) == 0) obj = lsp->mem->nil;
+			else if (TOKEN_COMPARE(lsp,ASE_T("t")) == 0) obj = lsp->mem->t;
+			else 
+			{
+				obj = ase_lsp_makesymobj (
+					lsp->mem, TOKEN_SVAL(lsp), TOKEN_SLEN(lsp));
+				if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+				ase_lsp_lockobj (lsp, obj);
+			}
+			return obj;
 	}
 
 	lsp->errnum = ASE_LSP_ERR_SYNTAX;
@@ -235,6 +241,7 @@ static ase_lsp_obj_t* read_quote (ase_lsp_t* lsp)
 static int read_char (ase_lsp_t* lsp)
 {
 	ase_ssize_t n;
+	ase_char_t c;
 
 	if (lsp->input_func == ASE_NULL) 
 	{
@@ -242,7 +249,7 @@ static int read_char (ase_lsp_t* lsp)
 		return -1;
 	}
 
-	n = lsp->input_func(ASE_LSP_IO_READ, lsp->input_arg, &lsp->curc, 1);
+	n = lsp->input_func(ASE_LSP_IO_READ, lsp->input_arg, &c, 1);
 	if (n == -1) 
 	{
 		lsp->errnum = ASE_LSP_ERR_INPUT;
@@ -250,6 +257,7 @@ static int read_char (ase_lsp_t* lsp)
 	}
 
 	if (n == 0) lsp->curc = ASE_CHAR_EOF;
+	else lsp->curc = c;
 	return 0;
 }
 
@@ -349,12 +357,12 @@ static int read_token (ase_lsp_t* lsp)
 
 static int read_number (ase_lsp_t* lsp, int negative)
 {
-	ase_long_t ivalue = 0;
-	ase_real_t rvalue = 0.;
+	ase_long_t ival = 0;
+	ase_real_t rval = 0.;
 
 	do 
 	{
-		ivalue = ivalue * 10 + (lsp->curc - ASE_T('0'));
+		ival = ival * 10 + (lsp->curc - ASE_T('0'));
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
 	} 
@@ -366,23 +374,23 @@ static int read_number (ase_lsp_t* lsp, int negative)
 		ase_real_t fraction = 0.1;
 
 		NEXT_CHAR (lsp);
-		rvalue = (ase_real_t)ivalue;
+		rval = (ase_real_t)ival;
 
 		while (ASE_LSP_ISDIGIT(lsp, lsp->curc)) 
 		{
-			rvalue += (ase_real_t)(lsp->curc - ASE_T('0')) * fraction;
+			rval += (ase_real_t)(lsp->curc - ASE_T('0')) * fraction;
 			fraction *= 0.1;
 			NEXT_CHAR (lsp);
 		}
 
-		TOKEN_RVALUE(lsp) = rvalue;
+		TOKEN_RVAL(lsp) = rval;
 		TOKEN_TYPE(lsp) = TOKEN_REAL;
-		if (negative) rvalue *= -1;
+		if (negative) rval *= -1;
 	}
 	else {
-		TOKEN_IVALUE(lsp) = ivalue;
+		TOKEN_IVAL(lsp) = ival;
 		TOKEN_TYPE(lsp) = TOKEN_INT;
-		if (negative) ivalue *= -1;
+		if (negative) ival *= -1;
 	}
 
 	return 0;

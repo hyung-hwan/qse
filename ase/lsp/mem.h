@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.12 2006-10-26 08:17:37 bacon Exp $
+ * $Id: mem.h,v 1.13 2006-10-29 13:00:39 bacon Exp $
  */
 
 #ifndef _ASE_LSP_MEM_H_
@@ -58,8 +58,6 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	ase_lsp_t* lsp, ase_size_t ubound, ase_size_t ubound_inc);
 void ase_lsp_closemem (ase_lsp_mem_t* mem);
 
-int ase_lsp_add_builtin_prims (ase_lsp_mem_t* mem);
-
 ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size);
 void ase_lsp_dispose  (ase_lsp_mem_t* mem, ase_lsp_obj_t* prev, ase_lsp_obj_t* obj);
 void ase_lsp_dispose_all (ase_lsp_mem_t* mem);
@@ -87,7 +85,8 @@ ase_lsp_obj_t* ase_lsp_makefunc (
 ase_lsp_obj_t* ase_lsp_makemacro (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* formal, ase_lsp_obj_t* body);
 
-ase_lsp_obj_t* ase_lsp_makeprim (ase_lsp_mem_t* mem, void* impl);
+ase_lsp_obj_t* ase_lsp_makeprim (ase_lsp_mem_t* mem, 
+	ase_lsp_prim_t impl, ase_size_t min_args, ase_size_t max_args);
 
 // frame lookup 
 ase_lsp_assoc_t* ase_lsp_lookup (ase_lsp_mem_t* mem, ase_lsp_obj_t* name);
@@ -97,7 +96,7 @@ ase_lsp_assoc_t* ase_lsp_setfunc (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* name, ase_lsp_obj_t* func);
 
 // cons operations
-ase_size_t ase_lsp_cons_len (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj);
+ase_size_t ase_lsp_conslen (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj);
 int ase_lsp_probeargs (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj, ase_size_t* len);
 
 #ifdef __cplusplus

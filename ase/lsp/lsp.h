@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.28 2006-10-28 16:08:34 bacon Exp $
+ * $Id: lsp.h,v 1.29 2006-10-29 13:00:39 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSP_H_
@@ -124,8 +124,10 @@ ase_lsp_obj_t* ase_lsp_read (ase_lsp_t* lsp);
 ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 int ase_lsp_print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj);
 
-int ase_lsp_add_prim (ase_lsp_t* lsp, const ase_char_t* name, ase_lsp_prim_t prim);
-int ase_lsp_remove_prim (ase_lsp_t* lsp, const ase_char_t* name);
+int ase_lsp_addprim (
+	ase_lsp_t* lsp, const ase_char_t* name, ase_size_t name_len, 
+	ase_lsp_prim_t prim, ase_size_t min_args, ase_size_t max_args);
+int ase_lsp_removeprim (ase_lsp_t* lsp, const ase_char_t* name);
 
 /* string functions exported by lsp.h */
 ase_char_t* ase_lsp_strdup (ase_lsp_t* lsp, const ase_char_t* str);

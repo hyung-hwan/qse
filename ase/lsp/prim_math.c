@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.11 2006-10-26 09:31:28 bacon Exp $
+ * $Id: prim_math.c,v 1.12 2006-10-29 13:00:39 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -136,7 +136,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	return tmp;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_multiply (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
 	ase_long_t ivalue = 0;
@@ -201,7 +201,7 @@ ase_lsp_obj_t* ase_lsp_prim_multiply (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	return tmp;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_divide (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
 	ase_long_t ivalue = 0;
@@ -272,7 +272,7 @@ ase_lsp_obj_t* ase_lsp_prim_divide (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	return tmp;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_modulus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
 	ase_long_t ivalue = 0;
