@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.136 2006-10-28 05:24:07 bacon Exp $
+ * $Id: awk.h,v 1.137 2006-10-30 14:31:36 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -320,9 +320,12 @@ enum
 /* assertion statement */
 #ifdef NDEBUG
 	#define ASE_AWK_ASSERT(awk,expr) ((void)0)
+	#define ASE_AWK_ASSERTX(awk,expr,desc) ((void)0)
 #else
 	#define ASE_AWK_ASSERT(awk,expr) (void)((expr) || \
-		(ase_awk_assertfail (awk, ASE_T(#expr), ASE_T(__FILE__), __LINE__), 0))
+		(ase_awk_assertfail (awk, ASE_T(#expr), ASE_NULL, ASE_T(__FILE__), __LINE__), 0))
+	#define ASE_AWK_ASSERTX(awk,expr,desc) (void)((expr) || \
+		(ase_awk_assertfail (awk, ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
 #endif
 
 #ifdef __cplusplus
@@ -422,7 +425,8 @@ ase_char_t* ase_awk_strxnstr (
 
 /* abort function for assertion. use ASE_AWK_ASSERT instead */
 int ase_awk_assertfail (ase_awk_t* awk, 
-	const ase_char_t* expr, const ase_char_t* file, int line);
+	const ase_char_t* expr, const ase_char_t* desc, 
+	const ase_char_t* file, int line);
 
 /* utility functions to convert an error number ot a string */
 const ase_char_t* ase_awk_geterrstr (int errnum);

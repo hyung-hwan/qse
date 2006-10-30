@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.32 2006-10-30 11:26:56 bacon Exp $
+ * $Id: lsp.h,v 1.33 2006-10-30 14:31:37 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSP_H_
@@ -93,13 +93,16 @@ enum
 
 typedef ase_lsp_obj_t* (*ase_lsp_prim_t) (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 
+/* assertion statement */
 #ifdef NDEBUG
 	#define ASE_LSP_ASSERT(lsp,expr) ((void)0)
+	#define ASE_LSP_ASSERTX(lsp,expr,desc) ((void)0)
 #else
 	#define ASE_LSP_ASSERT(lsp,expr) (void)((expr) || \
-		(ase_lsp_assertfail(lsp, ASE_T(#expr), ASE_T(__FILE__), __LINE__), 0))
+		(ase_lsp_assertfail (lsp, ASE_T(#expr), ASE_NULL, ASE_T(__FILE__), __LINE__), 0))
+	#define ASE_LSP_ASSERTX(lsp,expr,desc) (void)((expr) || \
+		(ase_lsp_assertfail (lsp, ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
 #endif
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -158,7 +161,8 @@ ase_char_t* ase_lsp_strxnstr (
 
 /* abort function for assertion. use ASE_LSP_ASSERT instead */
 int ase_lsp_assertfail (ase_lsp_t* lsp,
-	const ase_char_t* expr, const ase_char_t* file, int line);
+	const ase_char_t* expr, const ase_char_t* desc,
+	const ase_char_t* file, int line);
 
 const ase_char_t* ase_lsp_geterrstr (int errnum);
 

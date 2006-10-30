@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.20 2006-10-30 11:26:56 bacon Exp $
+ * $Id: mem.c,v 1.21 2006-10-30 14:31:37 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -224,22 +224,27 @@ static void __mark_obj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
  */
 void ase_lsp_lockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ASE_LSP_ASSERT (lsp, obj != ASE_NULL);
-	ASE_LSP_LOCK(obj) = 1;
-	//ASE_LSP_MARK(obj) = 1;
+	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
+		"an object pointer should not be ASE_NULL");
+	ASE_LSP_LOCK(obj)++;
 }
 
 void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ASE_LSP_ASSERT (lsp, obj != ASE_NULL);
-	ASE_LSP_LOCK(obj) = 0;
+	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
+		"an object pointer should not be ASE_NULL");
+	ASE_LSP_ASSERTX (lsp, ASE_LSP_LOCK(obj) > 0,
+		"the lock count should be greater than zero to be unlocked");
+	ASE_LSP_LOCK(obj)--;
 }
 
 void ase_lsp_unlockallobjs (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ASE_LSP_ASSERT (lsp, obj != ASE_NULL);
-
-	ASE_LSP_LOCK(obj) = 0;
+	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
+		"an object pointer should not be ASE_NULL");
+	ASE_LSP_ASSERTX (lsp, ASE_LSP_LOCK(obj) > 0,
+		"the lock count should be greater than zero to be unlocked");
+	ASE_LSP_LOCK(obj)--;
 
 	if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
 	{
