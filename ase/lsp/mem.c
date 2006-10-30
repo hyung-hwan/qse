@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.19 2006-10-30 03:49:05 bacon Exp $
+ * $Id: mem.c,v 1.20 2006-10-30 11:26:56 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -121,7 +121,8 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 	ase_lsp_obj_t* obj;
 	
 	if (mem->count >= mem->ubound) ase_lsp_collectgarbage (mem);
-	if (mem->count >= mem->ubound) {
+	if (mem->count >= mem->ubound) 
+	{
 		mem->ubound += mem->ubound_inc;
 		if (mem->count >= mem->ubound) return ASE_NULL;
 	}
@@ -373,6 +374,7 @@ static void ase_lsp_sweepunmarkedobjs (ase_lsp_mem_t* mem)
 
 void ase_lsp_collectgarbage (ase_lsp_mem_t* mem)
 {
+xp_printf (ASE_T("collecting garbage...\n"));
 	ase_lsp_markobjsinuse (mem);
 	ase_lsp_sweepunmarkedobjs (mem);
 }
