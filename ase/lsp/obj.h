@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.12 2006-10-30 03:49:05 bacon Exp $
+ * $Id: obj.h,v 1.13 2006-10-30 14:31:37 bacon Exp $
  */
 
 #ifndef _ASE_LSP_OBJ_H_
@@ -40,9 +40,9 @@ typedef struct ase_lsp_obj_prim_t   ase_lsp_obj_prim_t;
 
 struct ase_lsp_objhdr_t
 {
-	ase_uint32_t   type: 24;
-	ase_uint32_t   mark:  4;
-	ase_uint32_t   lock:  4;
+	ase_uint32_t   type:  8;
+	ase_uint32_t   mark:  8;
+	ase_uint32_t   lock: 16;
 	ase_size_t     size;
 	ase_lsp_obj_t* link;
 };
