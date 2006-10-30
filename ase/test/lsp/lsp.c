@@ -365,7 +365,6 @@ int __main (int argc, xp_char_t* argv[])
 	return 0;
 }
 
-
 int xp_main (int argc, xp_char_t* argv[])
 {
 	int n;

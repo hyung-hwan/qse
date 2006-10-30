@@ -12,11 +12,12 @@
       <Projects Name="aseawk.lib">awk\aseawk.bdsproj</Projects>
       <Projects Name="aseawk.exe">test\awk\aseawk.bdsproj</Projects>
       <Projects Name="aselsp.lib">lsp\aselsp.bdsproj</Projects>
-      <Projects Name="Targets">aseawk.lib aseawk.exe aselsp.lib</Projects>
+      <Projects Name="aselsp.exe">test\lsp\aselsp.bdsproj</Projects>
+      <Projects Name="Targets">aseawk.lib aseawk.exe aselsp.lib aselsp.exe</Projects>
     </Projects>
     <Dependencies>
       <Dependency GUID="{F0848980-053C-44B1-B7A0-4C834C1EB585}">
-        <Dependency GUID="{EDEF16CC-0C39-4E6B-A3CC-3DBF585BBD77}"/>
+        <Dependency GUID="{ECF01FD9-EC35-4278-B781-5106BC34F70E}"/>
       </Dependency>
     </Dependencies>
   </Default.Personality>
