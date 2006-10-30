@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.18 2006-10-29 13:40:33 bacon Exp $
+ * $Id: mem.c,v 1.19 2006-10-30 03:49:05 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -401,7 +401,7 @@ ase_lsp_obj_t* ase_lsp_makeintobj (ase_lsp_mem_t* mem, ase_long_t value)
 		ASE_LSP_OBJ_INT, ase_sizeof(ase_lsp_obj_int_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
-	ASE_LSP_IVALUE(obj) = value;
+	ASE_LSP_IVAL(obj) = value;
 
 	return obj;
 }
@@ -414,7 +414,7 @@ ase_lsp_obj_t* ase_lsp_makerealobj (ase_lsp_mem_t* mem, ase_real_t value)
 		ASE_LSP_OBJ_REAL, ase_sizeof(ase_lsp_obj_real_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 	
-	ASE_LSP_RVALUE(obj) = value;
+	ASE_LSP_RVAL(obj) = value;
 
 	return obj;
 }

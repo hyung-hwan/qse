@@ -1,5 +1,5 @@
 /*
- * $Id: prim_compar.c,v 1.8 2006-10-29 13:40:33 bacon Exp $
+ * $Id: prim_compar.c,v 1.9 2006-10-30 03:49:05 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -22,11 +22,11 @@ ase_lsp_obj_t* ase_lsp_prim_eq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_IVALUE(p1) == ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_IVAL(p1) == ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_IVALUE(p1) == ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_IVAL(p1) == ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -38,11 +38,11 @@ ase_lsp_obj_t* ase_lsp_prim_eq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_RVALUE(p1) == ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_RVAL(p1) == ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_RVALUE(p1) == ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_RVAL(p1) == ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -104,11 +104,11 @@ ase_lsp_obj_t* ase_lsp_prim_ne (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_IVALUE(p1) != ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_IVAL(p1) != ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_IVALUE(p1) != ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_IVAL(p1) != ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -120,11 +120,11 @@ ase_lsp_obj_t* ase_lsp_prim_ne (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_RVALUE(p1) != ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_RVAL(p1) != ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_RVALUE(p1) != ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_RVAL(p1) != ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -187,11 +187,11 @@ ase_lsp_obj_t* ase_lsp_prim_gt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_IVALUE(p1) > ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_IVAL(p1) > ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_IVALUE(p1) > ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_IVAL(p1) > ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -203,11 +203,11 @@ ase_lsp_obj_t* ase_lsp_prim_gt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_RVALUE(p1) > ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_RVAL(p1) > ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_RVALUE(p1) > ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_RVAL(p1) > ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -270,11 +270,11 @@ ase_lsp_obj_t* ase_lsp_prim_lt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_IVALUE(p1) < ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_IVAL(p1) < ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_IVALUE(p1) < ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_IVAL(p1) < ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -286,11 +286,11 @@ ase_lsp_obj_t* ase_lsp_prim_lt (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_RVALUE(p1) < ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_RVAL(p1) < ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_RVALUE(p1) < ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_RVAL(p1) < ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -352,11 +352,11 @@ ase_lsp_obj_t* ase_lsp_prim_ge (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_IVALUE(p1) >= ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_IVAL(p1) >= ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_IVALUE(p1) >= ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_IVAL(p1) >= ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -368,11 +368,11 @@ ase_lsp_obj_t* ase_lsp_prim_ge (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_RVALUE(p1) >= ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_RVAL(p1) >= ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_RVALUE(p1) >= ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_RVAL(p1) >= ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -434,11 +434,11 @@ ase_lsp_obj_t* ase_lsp_prim_le (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_IVALUE(p1) <= ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_IVAL(p1) <= ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_IVALUE(p1) <= ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_IVAL(p1) <= ASE_LSP_RVAL(p2);
 		}
 		else 
 		{
@@ -450,11 +450,11 @@ ase_lsp_obj_t* ase_lsp_prim_le (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_INT) 
 		{
-			res = ASE_LSP_RVALUE(p1) <= ASE_LSP_IVALUE(p2);
+			res = ASE_LSP_RVAL(p1) <= ASE_LSP_IVAL(p2);
 		}
 		else if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_REAL) 
 		{
-			res = ASE_LSP_RVALUE(p1) <= ASE_LSP_RVALUE(p2);
+			res = ASE_LSP_RVAL(p1) <= ASE_LSP_RVAL(p2);
 		}
 		else 
 		{

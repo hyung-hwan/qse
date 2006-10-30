@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.17 2006-10-29 13:00:39 bacon Exp $
+ * $Id: print.c,v 1.18 2006-10-30 03:49:06 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -44,22 +44,22 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 		#if defined(__BORLANDC__) || defined(_MSC_VER)
 			lsp->syscas.sprintf (
 				buf, ase_countof(buf), 
-				ASE_T("%I64d"), (__int64)ASE_LSP_IVALUE(obj));
+				ASE_T("%I64d"), (__int64)ASE_LSP_IVAL(obj));
 		#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
 			lsp->syscas.sprintf (
 				buf, ase_countof(buf), 
-				ASE_T("%ld"), (long)ASE_LSP_IVALUE(obj));
+				ASE_T("%ld"), (long)ASE_LSP_IVAL(obj));
 		#else
 			lsp->syscas.sprintf (
 				buf, ase_countof(buf), 
-				ASE_T("%lld"), (long long)ASE_LSP_IVALUE(obj));
+				ASE_T("%lld"), (long long)ASE_LSP_IVAL(obj));
 		#endif
 			OUTPUT_STR (lsp, buf);
 			break;
 
 		case ASE_LSP_OBJ_REAL:
 			lsp->syscas.sprintf (buf, ase_countof(buf), 
-				ASE_T("%Lf"), (long double)ASE_LSP_RVALUE(obj));
+				ASE_T("%Lf"), (long double)ASE_LSP_RVAL(obj));
 
 			OUTPUT_STR (lsp, buf);
 			break;
