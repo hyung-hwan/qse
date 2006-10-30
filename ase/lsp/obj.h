@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.11 2006-10-29 13:00:39 bacon Exp $
+ * $Id: obj.h,v 1.12 2006-10-30 03:49:05 bacon Exp $
  */
 
 #ifndef _ASE_LSP_OBJ_H_
@@ -129,8 +129,8 @@ struct ase_lsp_obj_prim_t
 #define ASE_LSP_LINK(x)     (((ase_lsp_obj_t*)x)->hdr.link)
 
 /* value access */
-#define ASE_LSP_IVALUE(x)   (((ase_lsp_obj_int_t*)x)->value)
-#define ASE_LSP_RVALUE(x)   (((ase_lsp_obj_real_t*)x)->value)
+#define ASE_LSP_IVAL(x)   (((ase_lsp_obj_int_t*)x)->value)
+#define ASE_LSP_RVAL(x)   (((ase_lsp_obj_real_t*)x)->value)
 
 #if defined(__BORLANDC__) || defined(_MSC_VER)
 #define ASE_LSP_SYMPTR(x) ((ase_char_t*)(((ase_lsp_obj_sym_t*)x) + 1))

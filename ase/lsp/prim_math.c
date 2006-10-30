@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.13 2006-10-29 13:40:33 bacon Exp $
+ * $Id: prim_math.c,v 1.14 2006-10-30 03:49:06 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -7,8 +7,8 @@
 ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ivalue = 0;
-	ase_real_t rvalue = .0;
+	ase_long_t ival = 0;
+	ase_real_t rval = .0;
 	ase_bool_t realnum = ase_false;
 
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
@@ -29,14 +29,14 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			if (body == args) 
 			{
 				ASE_LSP_ASSERT (lsp, realnum == ase_false);
-				ivalue = ASE_LSP_IVALUE(tmp);
+				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
-					ivalue = ivalue + ASE_LSP_IVALUE(tmp);
+					ival = ival + ASE_LSP_IVAL(tmp);
 				else
-					rvalue = rvalue + ASE_LSP_IVALUE(tmp);
+					rval = rval + ASE_LSP_IVAL(tmp);
 			}
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
@@ -45,16 +45,16 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			{
 				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				realnum = ase_true;
-				rvalue = ASE_LSP_RVALUE(tmp);
+				rval = ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
 					realnum = ase_true;
-					rvalue = (ase_real_t)ivalue;
+					rval = (ase_real_t)ival;
 				}
-				rvalue = rvalue + ASE_LSP_RVALUE(tmp);
+				rval = rval + ASE_LSP_RVAL(tmp);
 			}
 		}
 		else 
@@ -70,8 +70,8 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		ase_lsp_makerealobj (lsp->mem, rvalue):
-		ase_lsp_makeintobj (lsp->mem, ivalue);
+		ase_lsp_makerealobj (lsp->mem, rval):
+		ase_lsp_makeintobj (lsp->mem, ival);
 	if (tmp == ASE_NULL) 
 	{
 		lsp->errnum = ASE_LSP_ENOMEM;
@@ -84,8 +84,8 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ivalue = 0;
-	ase_real_t rvalue = .0;
+	ase_long_t ival = 0;
+	ase_real_t rval = .0;
 	ase_bool_t realnum = ase_false;
 
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
@@ -103,14 +103,14 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			if (body == args) 
 			{
 				ASE_LSP_ASSERT (lsp, realnum == ase_false);
-				ivalue = ASE_LSP_IVALUE(tmp);
+				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
-					ivalue = ivalue - ASE_LSP_IVALUE(tmp);
+					ival = ival - ASE_LSP_IVAL(tmp);
 				else
-					rvalue = rvalue - ASE_LSP_IVALUE(tmp);
+					rval = rval - ASE_LSP_IVAL(tmp);
 			}
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
@@ -119,16 +119,16 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			{
 				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				realnum = ase_true;
-				rvalue = ASE_LSP_RVALUE(tmp);
+				rval = ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
 					realnum = ase_true;
-					rvalue = (ase_real_t)ivalue;
+					rval = (ase_real_t)ival;
 				}
-				rvalue = rvalue - ASE_LSP_RVALUE(tmp);
+				rval = rval - ASE_LSP_RVAL(tmp);
 			}
 		}
 		else 
@@ -144,8 +144,8 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		ase_lsp_makerealobj (lsp->mem, rvalue):
-		ase_lsp_makeintobj (lsp->mem, ivalue);
+		ase_lsp_makerealobj (lsp->mem, rval):
+		ase_lsp_makeintobj (lsp->mem, ival);
 	if (tmp == ASE_NULL) 
 	{
 		lsp->errnum = ASE_LSP_ENOMEM;
@@ -158,8 +158,8 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ivalue = 0;
-	ase_real_t rvalue = .0;
+	ase_long_t ival = 0;
+	ase_real_t rval = .0;
 	ase_bool_t realnum = ase_false;
 
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
@@ -176,14 +176,14 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			if (body == args) 
 			{
 				ASE_LSP_ASSERT (lsp, realnum == ase_false);
-				ivalue = ASE_LSP_IVALUE(tmp);
+				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
-					ivalue = ivalue * ASE_LSP_IVALUE(tmp);
+					ival = ival * ASE_LSP_IVAL(tmp);
 				else
-					rvalue = rvalue * ASE_LSP_IVALUE(tmp);
+					rval = rval * ASE_LSP_IVAL(tmp);
 			}
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
@@ -192,16 +192,16 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			{
 				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				realnum = ase_true;
-				rvalue = ASE_LSP_RVALUE(tmp);
+				rval = ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
 					realnum = ase_true;
-					rvalue = (ase_real_t)ivalue;
+					rval = (ase_real_t)ival;
 				}
-				rvalue = rvalue * ASE_LSP_RVALUE(tmp);
+				rval = rval * ASE_LSP_RVAL(tmp);
 			}
 		}
 		else 
@@ -217,8 +217,8 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		ase_lsp_makerealobj (lsp->mem, rvalue):
-		ase_lsp_makeintobj (lsp->mem, ivalue);
+		ase_lsp_makerealobj (lsp->mem, rval):
+		ase_lsp_makeintobj (lsp->mem, ival);
 	if (tmp == ASE_NULL) 
 	{
 		lsp->errnum = ASE_LSP_ENOMEM;
@@ -231,8 +231,8 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ivalue = 0;
-	ase_real_t rvalue = .0;
+	ase_long_t ival = 0;
+	ase_real_t rval = .0;
 	ase_bool_t realnum = ase_false;
 
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
@@ -249,21 +249,21 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			if (body == args) 
 			{
 				ASE_LSP_ASSERT (lsp, realnum == ase_false);
-				ivalue = ASE_LSP_IVALUE(tmp);
+				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					if (ASE_LSP_IVALUE(tmp) == 0) 
+					if (ASE_LSP_IVAL(tmp) == 0) 
 					{
 						lsp->errnum = ASE_LSP_EDIVBYZERO;
 						return ASE_NULL;
 					}
-					ivalue = ivalue / ASE_LSP_IVALUE(tmp);
+					ival = ival / ASE_LSP_IVAL(tmp);
 				}
 				else
-					rvalue = rvalue / ASE_LSP_IVALUE(tmp);
+					rval = rval / ASE_LSP_IVAL(tmp);
 			}
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
@@ -272,16 +272,16 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			{
 				ASE_LSP_ASSERT (lsp, realnum == ase_false);
 				realnum = ase_true;
-				rvalue = ASE_LSP_RVALUE(tmp);
+				rval = ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
 					realnum = ase_true;
-					rvalue = (ase_real_t)ivalue;
+					rval = (ase_real_t)ival;
 				}
-				rvalue = rvalue / ASE_LSP_RVALUE(tmp);
+				rval = rval / ASE_LSP_RVAL(tmp);
 			}
 		}
 		else 
@@ -297,8 +297,8 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		ase_lsp_makerealobj (lsp->mem, rvalue):
-		ase_lsp_makeintobj (lsp->mem, ivalue);
+		ase_lsp_makerealobj (lsp->mem, rval):
+		ase_lsp_makeintobj (lsp->mem, ival);
 	if (tmp == ASE_NULL) 
 	{
 		lsp->errnum = ASE_LSP_ENOMEM;
@@ -311,7 +311,7 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ivalue = 0;
+	ase_long_t ival = 0;
 
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
@@ -326,33 +326,33 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ivalue = ASE_LSP_IVALUE(tmp);
+				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
 			{
-				if (ASE_LSP_IVALUE(tmp) == 0) 
+				if (ASE_LSP_IVAL(tmp) == 0) 
 				{
 					lsp->errnum = ASE_LSP_EDIVBYZERO;
 					return ASE_NULL;
 				}
-				ivalue = ivalue % ASE_LSP_IVALUE(tmp);
+				ival = ival % ASE_LSP_IVAL(tmp);
 			}
 		}
 		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
 		{
 			if (body == args) 
 			{
-				ivalue = (ase_long_t)ASE_LSP_RVALUE(tmp);
+				ival = (ase_long_t)ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
-				ase_long_t tmpi = (ase_long_t)ASE_LSP_RVALUE(tmp);
+				ase_long_t tmpi = (ase_long_t)ASE_LSP_RVAL(tmp);
 				if (tmpi == 0) 
 				{
 					lsp->errnum = ASE_LSP_EDIVBYZERO;
 					return ASE_NULL;
 				}
-				ivalue = ivalue % tmpi;
+				ival = ival % tmpi;
 			}
 		}
 		else 
@@ -367,7 +367,7 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
-	tmp = ase_lsp_makeintobj (lsp->mem, ivalue);
+	tmp = ase_lsp_makeintobj (lsp->mem, ival);
 	if (tmp == ASE_NULL) 
 	{
 		lsp->errnum = ASE_LSP_ENOMEM;
