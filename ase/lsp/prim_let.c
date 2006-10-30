@@ -1,5 +1,5 @@
 /*
- * $Id: prim_let.c,v 1.8 2006-10-29 13:40:33 bacon Exp $
+ * $Id: prim_let.c,v 1.9 2006-10-30 03:34:41 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -45,7 +45,7 @@ static ase_lsp_obj_t* __prim_let (
 
 			if (ASE_LSP_TYPE(n) != ASE_LSP_OBJ_SYM) 
 			{
-				lsp->errnum = ASE_LSP_ERR_BAD_ARG; // must be a symbol
+				lsp->errnum = ASE_LSP_EARGBAD; // must be a symbol
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				ase_lsp_freeframe (lsp, frame);
@@ -56,7 +56,7 @@ static ase_lsp_obj_t* __prim_let (
 			{
 				if (ASE_LSP_CDR(v) != lsp->mem->nil) 
 				{
-					lsp->errnum = ASE_LSP_ERR_TOO_MANY_ARGS; // must be a symbol
+					lsp->errnum = ASE_LSP_EARGMANY;
 					if (sequential) lsp->mem->frame = frame->link;
 					else lsp->mem->brooding_frame = frame->link;
 					ase_lsp_freeframe (lsp, frame);
@@ -109,7 +109,7 @@ static ase_lsp_obj_t* __prim_let (
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_ARG;		
+			lsp->errnum = ASE_LSP_EARGBAD;		
 			if (sequential) lsp->mem->frame = frame->link;
 			else lsp->mem->brooding_frame = frame->link;
 			ase_lsp_freeframe (lsp, frame);
@@ -119,8 +119,9 @@ static ase_lsp_obj_t* __prim_let (
 		assoc = ASE_LSP_CDR(assoc);
 	}
 
-	if (assoc != lsp->mem->nil) {
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;	
+	if (assoc != lsp->mem->nil) 
+	{
+		lsp->errnum = ASE_LSP_EARGBAD;	
 		if (sequential) lsp->mem->frame = frame->link;
 		else lsp->mem->brooding_frame = frame->link;
 		ase_lsp_freeframe (lsp, frame);

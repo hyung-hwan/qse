@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.14 2006-10-29 13:40:31 bacon Exp $
+ * $Id: lsp.c,v 1.15 2006-10-30 03:34:41 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -156,8 +156,10 @@ int ase_lsp_attach_output (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg)
 
 int ase_lsp_detach_output (ase_lsp_t* lsp)
 {
-	if (lsp->output_func != ASE_NULL) {
-		if (lsp->output_func(ASE_LSP_IO_CLOSE, lsp->output_arg, ASE_NULL, 0) == -1) {
+	if (lsp->output_func != ASE_NULL) 
+	{
+		if (lsp->output_func(ASE_LSP_IO_CLOSE, lsp->output_arg, ASE_NULL, 0) == -1) 
+		{
 			/* TODO: set error number */
 			return -1;
 		}

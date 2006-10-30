@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.6 2006-10-29 13:40:30 bacon Exp $
+ * $Id: err.c,v 1.7 2006-10-30 03:34:40 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -23,7 +23,6 @@ const ase_char_t* ase_lsp_geterrstr (int errnum)
 		ASE_T("output"),
 		ASE_T("syntax"),
 		ASE_T("bad arguments"),
-		ASE_T("wrong arguments"),
 		ASE_T("too few arguments"),
 		ASE_T("too many arguments"),
 		ASE_T("undefined function"),
