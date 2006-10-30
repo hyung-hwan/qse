@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.20 2006-10-29 13:40:30 bacon Exp $
+ * $Id: eval.c,v 1.21 2006-10-30 03:34:40 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -56,13 +56,13 @@ static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macr
 
 	if (cdr == lsp->mem->nil) 
 	{
-		lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS;
+		lsp->errnum = ASE_LSP_EARGFEW;
 		return ASE_NULL;
 	}
 
 	if (ASE_LSP_TYPE(cdr) != ASE_LSP_OBJ_CONS) 
 	{
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		return ASE_NULL;
 	}
 
@@ -83,7 +83,7 @@ static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macr
 	if (p != lsp->mem->nil) 
 	{
 		/* like in (lambda (x) (+ x 10) . 4) */
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		return ASE_NULL;
 	}
 
@@ -232,7 +232,7 @@ static ase_lsp_obj_t* apply (
 	{
 		if (actual == mem->nil) 
 		{
-			lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS;
+			lsp->errnum = ASE_LSP_EARGFEW;
 			mem->brooding_frame = frame->link;
 			ase_lsp_freeframe (lsp, frame);
 			return ASE_NULL;
@@ -275,14 +275,14 @@ static ase_lsp_obj_t* apply (
 
 	if (ASE_LSP_TYPE(actual) == ASE_LSP_OBJ_CONS) 
 	{
-		lsp->errnum = ASE_LSP_ERR_TOO_MANY_ARGS;
+		lsp->errnum = ASE_LSP_EARGMANY;
 		mem->brooding_frame = frame->link;
 		ase_lsp_freeframe (lsp, frame);
 		return ASE_NULL;
 	}
 	else if (actual != mem->nil) 
 	{
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		mem->brooding_frame = frame->link;
 		ase_lsp_freeframe (lsp, frame);
 		return ASE_NULL;
@@ -339,19 +339,19 @@ static ase_lsp_obj_t* apply_to_prim (
 	}	
 	if (obj != lsp->mem->nil) 
 	{
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		return ASE_NULL;
 	}
 
 	if (count < ASE_LSP_PMINARGS(func))
 	{
-		lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS;
+		lsp->errnum = ASE_LSP_EARGFEW;
 		return ASE_NULL;
 	}
 
 	if (count > ASE_LSP_PMAXARGS(func))
 	{
-		lsp->errnum = ASE_LSP_ERR_TOO_MANY_ARGS;
+		lsp->errnum = ASE_LSP_EARGMANY;
 		return ASE_NULL;
 	} 
 

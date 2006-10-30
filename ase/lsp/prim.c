@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.15 2006-10-29 13:40:33 bacon Exp $
+ * $Id: prim.c,v 1.16 2006-10-30 03:34:41 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -85,7 +85,7 @@ ase_lsp_obj_t* ase_lsp_prim_cond (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(ASE_LSP_CAR(args)) != ASE_LSP_OBJ_CONS) 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+			lsp->errnum = ASE_LSP_EARGBAD;
 			return ASE_NULL;
 		}
 
@@ -104,7 +104,7 @@ ase_lsp_obj_t* ase_lsp_prim_cond (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			}
 			if (tmp != lsp->mem->nil) 
 			{
-				lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+				lsp->errnum = ASE_LSP_EARGBAD;
 				return ASE_NULL;
 			}
 			return ret;
@@ -145,7 +145,7 @@ ase_lsp_obj_t* ase_lsp_prim_if (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		if (tmp != lsp->mem->nil) 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+			lsp->errnum = ASE_LSP_EARGBAD;
 			return ASE_NULL;
 		}
 
@@ -180,7 +180,7 @@ ase_lsp_obj_t* ase_lsp_prim_while (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 		if (tmp != lsp->mem->nil) 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+			lsp->errnum = ASE_LSP_EARGBAD;
 			return ASE_NULL;
 		}
 	}
@@ -204,7 +204,7 @@ ase_lsp_obj_t* ase_lsp_prim_car (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) 
 	{
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		return ASE_NULL;
 	}
 
@@ -227,7 +227,7 @@ ase_lsp_obj_t* ase_lsp_prim_cdr (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) 
 	{
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		return ASE_NULL;
 	}
 
@@ -278,7 +278,7 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
 	{
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		return ASE_NULL;
 	}
 
@@ -310,13 +310,13 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		p1 = ASE_LSP_CAR(p);
 		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+			lsp->errnum = ASE_LSP_EARGBAD;
 			return ASE_NULL;
 		}
 
 		if (ASE_LSP_TYPE(ASE_LSP_CDR(p)) != ASE_LSP_OBJ_CONS) 
 		{
-			lsp->errnum = ASE_LSP_ERR_TOO_FEW_ARGS;
+			lsp->errnum = ASE_LSP_EARGFEW;
 			return ASE_NULL;
 		}
 
@@ -361,7 +361,7 @@ ase_lsp_obj_t* ase_lsp_prim_defun (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	name = ASE_LSP_CAR(args);
 	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYM) 
 	{
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		return ASE_NULL;
 	}
 
@@ -389,7 +389,7 @@ ase_lsp_obj_t* ase_lsp_prim_demac (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	name = ASE_LSP_CAR(args);
 	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYM) 
 	{
-		lsp->errnum = ASE_LSP_ERR_BAD_ARG;
+		lsp->errnum = ASE_LSP_EARGBAD;
 		return ASE_NULL;
 	}
 
