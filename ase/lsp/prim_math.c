@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.14 2006-10-30 03:49:06 bacon Exp $
+ * $Id: prim_math.c,v 1.15 2006-10-30 11:26:57 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -20,7 +20,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
 		if (tmp == ASE_NULL) 
 		{
-			/*lsp->errnum = ASE_LSP_ERR_BAD_VALUE; */
+			/*lsp->errnum = ASE_LSP_EVALBAD; */
 			return ASE_NULL;
 		}
 
@@ -59,7 +59,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;	
+			lsp->errnum = ASE_LSP_EVALBAD;	
 			return ASE_NULL;
 		}
 
@@ -133,7 +133,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;	
+			lsp->errnum = ASE_LSP_EVALBAD;	
 			return ASE_NULL;
 		}
 
@@ -206,7 +206,7 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;	
+			lsp->errnum = ASE_LSP_EVALBAD;	
 			return ASE_NULL;
 		}
 
@@ -286,7 +286,7 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;	
+			lsp->errnum = ASE_LSP_EVALBAD;	
 			return ASE_NULL;
 		}
 
@@ -357,7 +357,7 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_ERR_BAD_VALUE;	
+			lsp->errnum = ASE_LSP_EVALBAD;	
 			return ASE_NULL;
 		}
 

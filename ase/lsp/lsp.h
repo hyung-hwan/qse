@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.31 2006-10-30 03:34:41 bacon Exp $
+ * $Id: lsp.h,v 1.32 2006-10-30 11:26:56 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSP_H_
@@ -86,7 +86,7 @@ enum
 	ASE_LSP_ERR_BAD_SYMBOL,
 	ASE_LSP_ERR_UNDEF_SYMBOL,
 	ASE_LSP_ERR_EMPTY_BODY,
-	ASE_LSP_ERR_BAD_VALUE,
+	ASE_LSP_EVALBAD,
 
 	ASE_LSP_EDIVBYZERO
 };
