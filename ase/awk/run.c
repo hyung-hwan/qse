@@ -1,11 +1,8 @@
 /*
- * $Id: run.c,v 1.250 2006-10-31 10:13:15 bacon Exp $
+ * $Id: run.c,v 1.251 2006-10-31 14:31:46 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
-
-/* TODO: remove this dependency...*/
-#include <math.h>
 
 #define CMP_ERROR -99
 #define DEF_BUF_CAPA 256
@@ -3704,6 +3701,10 @@ static ase_awk_val_t* __eval_binop_exp (
 	ase_real_t r1, r2;
 	ase_awk_val_t* res;
 
+	ASE_AWK_ASSERTX (run->awk, run->awk->syscas.pow != ASE_NULL,
+		"the pow function should be provided when the awk object "
+		"is created to make the exponentiation work properly.");
+
 	n1 = ase_awk_valtonum (run, left, &l1, &r1);
 	n2 = ase_awk_valtonum (run, right, &l2, &r2);
 
@@ -3726,14 +3727,14 @@ static ase_awk_val_t* __eval_binop_exp (
 	}
 	else if (n3 == 2)
 	{
-		res = ase_awk_makerealval (
-			run, pow((ase_real_t)l1,(ase_real_t)r2));
+		res = ase_awk_makerealval (run, 
+			run->awk->syscas.pow((ase_real_t)l1,(ase_real_t)r2));
 	}
 	else
 	{
 		ASE_AWK_ASSERT (run->awk, n3 == 3);
-		res = ase_awk_makerealval (
-			run, pow((ase_real_t)r1,(ase_real_t)r2));
+		res = ase_awk_makerealval (run,
+			run->awk->syscas.pow((ase_real_t)r1,(ase_real_t)r2));
 	}
 
 	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);

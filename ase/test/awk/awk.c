@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.108 2006-10-31 10:12:44 bacon Exp $
+ * $Id: awk.c,v 1.109 2006-10-31 14:32:50 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -7,6 +7,7 @@
 #include <string.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <math.h>
 
 #ifdef ASE_CHAR_IS_WCHAR
 	#include <wchar.h>
@@ -125,6 +126,10 @@ static int __dprintf (const ase_char_t* fmt, ...)
 	return n;
 }
 
+static ase_real_t __pow (ase_real_t x, ase_real_t y)
+{
+	return pow (x, y);
+}
 
 static FILE* popen_t (const ase_char_t* cmd, const ase_char_t* mode)
 {
@@ -723,6 +728,7 @@ static int __main (int argc, ase_char_t* argv[])
 #endif
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
+	syscas.pow = __pow;
 	syscas.sprintf = xp_sprintf;
 	syscas.aprintf = __aprintf;
 	syscas.dprintf = __dprintf;
