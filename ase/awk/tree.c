@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.84 2006-10-26 09:27:15 bacon Exp $
+ * $Id: tree.c,v 1.85 2006-10-31 10:13:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -777,12 +777,16 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			}
 
 			case ASE_AWK_NDE_PRINT:
+			case ASE_AWK_NDE_PRINTF:
 			{
 				ase_awk_nde_print_t* px = (ase_awk_nde_print_t*)p;
 
 				PRINT_TABS (awk, depth);
 
-				PUT_SRCSTR (awk, ASE_T("print"));
+				if (p->type == ASE_AWK_NDE_PRINT) 
+					PUT_SRCSTR (awk, ASE_T("print"));
+				else PUT_SRCSTR (awk, ASE_T("printf"));
+
 				if (px->args != ASE_NULL)
 				{
 					PUT_SRCSTR (awk, ASE_T(" "));
@@ -949,6 +953,7 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			}
 
 			case ASE_AWK_NDE_PRINT:
+			case ASE_AWK_NDE_PRINTF:
 			{
 				ase_awk_nde_print_t* px = 
 					(ase_awk_nde_print_t*)p;

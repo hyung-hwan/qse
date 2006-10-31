@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.35 2006-10-30 14:31:37 bacon Exp $
+ * $Id: misc.c,v 1.36 2006-10-31 10:13:14 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1058,6 +1058,13 @@ exit_loop:
 		return (match_ptr+match_len > s+len)? 
 			ASE_NULL: (match_ptr+match_len);
 	}
+}
+
+int ase_awk_sprintf (ase_awk_t* awk,
+	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
+{
+	/* TODO: */
+	return -1;
 }
 
 int ase_awk_assertfail (ase_awk_t* awk, 

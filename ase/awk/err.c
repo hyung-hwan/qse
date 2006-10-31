@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.45 2006-10-24 04:10:12 bacon Exp $
+ * $Id: err.c,v 1.46 2006-10-31 10:13:14 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -80,6 +80,7 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("next illegal in BEGIN or END block"),
 		ASE_T("nextfile illegal in BEGIN or END block"),
 		ASE_T("getline expected"),
+		ASE_T("printf requires one or more arguments"),
 
 		ASE_T("divide by zero"),
 		ASE_T("invalid operand"),
