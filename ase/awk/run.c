@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.249 2006-10-28 12:17:25 bacon Exp $
+ * $Id: run.c,v 1.250 2006-10-31 10:13:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -83,6 +83,7 @@ static int __run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde);
 static int __run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde);
 static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde);
 static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde);
+static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde);
 
 static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde);
 static ase_awk_val_t* __eval_expression0 (ase_awk_run_t* run, ase_awk_nde_t* nde);
@@ -1557,6 +1558,13 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			break;
 		}
 
+		case ASE_AWK_NDE_PRINTF:
+		{
+			if (__run_printf (run, 
+				(ase_awk_nde_print_t*)nde) == -1) return -1;
+			break;
+		}
+
 		/*
 		case ASE_AWK_NDE_PRINT:
 		{
@@ -1741,10 +1749,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 		}	
 		else
 		{
-			if (__run_statement(run,nde->body) == -1)
-			{
-				return -1;
-			}
+			if (__run_statement(run,nde->body) == -1) return -1;
 		}
 
 		if (run->exit_level == EXIT_BREAK)
@@ -1978,16 +1983,23 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			 * create a map and assign it to the variable */
 
 			tmp = ase_awk_makemapval (run);
-			if (tmp == ASE_NULL) PANIC_I (run, ASE_AWK_ENOMEM);
+			if (tmp == ASE_NULL) 
+			{
+				run->errnum = ASE_AWK_ENOMEM;
+				return -1;
+			}
 
 			if (ase_awk_map_put (&run->named, 
 				var->id.name, var->id.name_len, tmp) == ASE_NULL)
 			{
 				ase_awk_refupval (tmp);
 				ase_awk_refdownval (run, tmp);
-				PANIC_I (run, ASE_AWK_ENOMEM);		
+				run->errnum = ASE_AWK_ENOMEM;
+				return -1;
 			}
 
+			/* as this is the assignment, it needs to update
+			 * the reference count of the target value */
 			ase_awk_refupval (tmp);
 		}
 		else
@@ -1999,7 +2011,10 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			ASE_AWK_ASSERT (run->awk, val != ASE_NULL);
 
 			if (val->type != ASE_AWK_VAL_MAP)
-				PANIC_I (run, ASE_AWK_ENOTDELETABLE);
+			{
+				run->errnum = ASE_AWK_ENOTDELETABLE;
+				return -1;
+			}
 
 			map = ((ase_awk_val_map_t*)val)->map;
 			if (var->type == ASE_AWK_NDE_NAMEDIDX)
@@ -2015,7 +2030,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 				ase_awk_refupval (idx);
 				key = ase_awk_valtostr (
-					run, idx, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &key_len);
+					run, idx, ASE_AWK_VALTOSTR_CLEAR, 
+					ASE_NULL, &key_len);
 				ase_awk_refdownval (run, idx);
 
 				if (key == ASE_NULL) return -1;
@@ -2056,7 +2072,11 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			 * create a map and assign it to the variable */
 
 			tmp = ase_awk_makemapval (run);
-			if (tmp == ASE_NULL) PANIC_I (run, ASE_AWK_ENOMEM);
+			if (tmp == ASE_NULL) 
+			{
+				run->errnum = ASE_AWK_ENOMEM;
+				return -1;
+			}
 
 			/* no need to reduce the reference count of
 			 * the previous value because it was nil. */
@@ -2088,7 +2108,10 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			ase_awk_map_t* map;
 
 			if (val->type != ASE_AWK_VAL_MAP)
-				PANIC_I (run, ASE_AWK_ENOTDELETABLE);
+			{
+				run->errnum = ASE_AWK_ENOTDELETABLE;
+				return -1;
+			}
 
 			map = ((ase_awk_val_map_t*)val)->map;
 			if (var->type == ASE_AWK_NDE_GLOBALIDX ||
@@ -2106,7 +2129,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 				ase_awk_refupval (idx);
 				key = ase_awk_valtostr (
-					run, idx, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &key_len);
+					run, idx, ASE_AWK_VALTOSTR_CLEAR,
+					ASE_NULL, &key_len);
 				ase_awk_refdownval (run, idx);
 
 				if (key == ASE_NULL) return -1;
@@ -2122,8 +2146,13 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, !"should never happen - wrong variable type for delete");
-		PANIC_I (run, ASE_AWK_EINTERNAL);
+		ASE_AWK_ASSERTX (run->awk, 
+			!"should never happen - wrong variable type for delete",
+			"the delete statement cannot be called with other "
+			"nodes than the variables such as a named variable, "
+			"a named indexed variable, etc");
+		run->errnum = ASE_AWK_EINTERNAL;
+		return -1;
 	}
 
 	return 0;
@@ -2193,18 +2222,6 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 
 	if (p->args == ASE_NULL)
 	{
-		/*
-		v = run->inrec.d0;
-		ase_awk_refupval (v);
-		n = ase_awk_writeextio_val (run, p->out_type, dst, v);
-		if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
-		{
-			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-			ase_awk_refdownval (run, v);
-			return -1;
-		}
-		ase_awk_refdownval (run, v);
-		*/
 		n = ase_awk_writeextio_str (
 			run, p->out_type, dst,
 			ASE_AWK_STR_BUF(&run->inrec.line),
@@ -2286,6 +2303,137 @@ skip_write:
 	return 0;
 }
 
+static int xxx__run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
+{
+ASE_AWK_ASSERTX (run->awk, !"should never happen - not implemented",
+	"the runtime function for the printf statement has not been "
+	"implemented yet. please do not use printf until it is fully "
+	"implemented");
+
+	run->errnum = ASE_AWK_EINTERNAL;
+	return -1;
+}
+
+static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
+{
+	ase_awk_nde_print_t* p = (ase_awk_nde_print_t*)nde;
+	ase_char_t* out = ASE_NULL;
+	const ase_char_t* dst;
+	ase_awk_val_t* v;
+	ase_awk_nde_t* head, * np;
+	int n;
+
+	ASE_AWK_ASSERT (run->awk, 
+		(p->out_type == ASE_AWK_OUT_PIPE && p->out != ASE_NULL) ||
+		(p->out_type == ASE_AWK_OUT_COPROC && p->out != ASE_NULL) ||
+		(p->out_type == ASE_AWK_OUT_FILE && p->out != ASE_NULL) ||
+		(p->out_type == ASE_AWK_OUT_FILE_APPEND && p->out != ASE_NULL) ||
+		(p->out_type == ASE_AWK_OUT_CONSOLE && p->out == ASE_NULL));
+
+	if (p->out != ASE_NULL)
+	{
+		ase_size_t len;
+
+		v = __eval_expression (run, p->out);
+		if (v == ASE_NULL) return -1;
+
+		ase_awk_refupval (v);
+		out = ase_awk_valtostr (
+			run, v, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
+		if (out == ASE_NULL) 
+		{
+			ase_awk_refdownval (run, v);
+			return -1;
+		}
+		ase_awk_refdownval (run, v);
+
+		if (len <= 0) 
+		{
+			/* the output destination name is empty. */
+			ASE_AWK_FREE (run->awk, out);
+			n = -1;
+			goto skip_write;
+		}
+
+		while (len > 0)
+		{
+			if (out[--len] == ASE_T('\0'))
+			{
+				/* the output destination name contains a null 
+				 * character. */
+				ASE_AWK_FREE (run->awk, out);
+				n = -1;
+				goto skip_write;
+				/* TODO: how to handle error???
+				 *       make print return -1??? not possible.
+				 *       throw an exception??
+				 *       set ERRNO or what??? this seems most
+				 *       reasonable. or can it have a global
+				 *       flag variable for print/printf such
+				 *       as PRINT_ERRNO?  */
+			}
+		}
+	}
+
+	dst = (out == ASE_NULL)? ASE_T(""): out;
+
+	ASE_AWK_ASSERTX (run->awk, p->args != ASE_NULL, 
+		"a valid printf statement should have at least one argument. "
+		"the parser must ensure this.");
+	
+
+	if (p->args->type == ASE_AWK_NDE_GRP)
+	{
+		/* parenthesized print */
+		ASE_AWK_ASSERT (run->awk, p->args->next == ASE_NULL);
+		head = ((ase_awk_nde_grp_t*)p->args)->body;
+	}
+	else head = p->args;
+
+	for (np = head; np != ASE_NULL; np = np->next)
+	{
+		if (np != head)
+		{
+			n = ase_awk_writeextio_str (
+				run, p->out_type, dst, 
+				run->global.ofs.ptr, 
+				run->global.ofs.len);
+			if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
+			{
+				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+				return -1;
+			}
+		}
+
+		v = __eval_expression (run, np);
+		if (v == ASE_NULL) 
+		{
+			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+			return -1;
+		}
+		ase_awk_refupval (v);
+
+		n = ase_awk_writeextio_val (run, p->out_type, dst, v);
+		if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
+		{
+			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+			ase_awk_refdownval (run, v);
+			return -1;
+		}
+
+		ase_awk_refdownval (run, v);
+
+
+		/* TODO: how to handle n == -1 && run->errnum == ASE_AWK_EIOHANDLER. 
+		 * that is the user handler returned an error... */
+	}
+
+	if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+
+skip_write:
+	return 0;
+}
+
 static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* v;
@@ -2307,7 +2455,11 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		}
 		else
 		{
-			ASE_AWK_ASSERT (run->awk, run->inrec.d0->type == ASE_AWK_VAL_STR);
+			ASE_AWK_ASSERTX (run->awk, 
+				run->inrec.d0->type == ASE_AWK_VAL_STR,
+				"the internal value representing $0 should "
+				"always be of the string type once it has been "
+				"set/updated. it is nil initially.");
 
 			n = ase_awk_matchrex (
 				((ase_awk_run_t*)run)->awk, 

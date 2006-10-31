@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.77 2006-10-24 04:10:12 bacon Exp $
+ * $Id: tree.h,v 1.78 2006-10-31 10:13:15 bacon Exp $
  */
 
 #ifndef _ASE_AWK_TREE_H_
@@ -28,6 +28,7 @@ enum
 	ASE_AWK_NDE_NEXTFILE,
 	ASE_AWK_NDE_DELETE,
 	ASE_AWK_NDE_PRINT,
+	ASE_AWK_NDE_PRINTF,
 
 	/* expression */
 	/* if you change the following values including their order,

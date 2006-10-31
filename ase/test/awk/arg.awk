@@ -19,5 +19,5 @@ BEGIN {
 	#     i;;) print i;
 
 
-	if (ARGC >= 0) print "ARGC is positive";
+	if (ARGC >= 0) printf "ARGC is positive";
 }

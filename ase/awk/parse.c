@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.198 2006-10-28 12:17:24 bacon Exp $
+ * $Id: parse.c,v 1.199 2006-10-31 10:13:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -182,8 +182,7 @@ static ase_awk_nde_t* __parse_exit (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_next (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_nextfile (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_delete (ase_awk_t* awk);
-static ase_awk_nde_t* __parse_print (ase_awk_t* awk);
-static ase_awk_nde_t* __parse_printf (ase_awk_t* awk);
+static ase_awk_nde_t* __parse_print (ase_awk_t* awk, int type);
 
 static int __get_token (ase_awk_t* awk);
 static int __get_number (ase_awk_t* awk);
@@ -1265,12 +1264,12 @@ awk->parse.nl_semicolon = 1;
 	else if (MATCH(awk,TOKEN_PRINT))
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
-		nde = __parse_print (awk);
+		nde = __parse_print (awk, ASE_AWK_NDE_PRINT);
 	}
 	else if (MATCH(awk,TOKEN_PRINTF))
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
-		nde = __parse_printf (awk);
+		nde = __parse_print (awk, ASE_AWK_NDE_PRINTF);
 	}
 	else 
 	{
@@ -3135,7 +3134,7 @@ static ase_awk_nde_t* __parse_delete (ase_awk_t* awk)
 	return (ase_awk_nde_t*)nde;
 }
 
-static ase_awk_nde_t* __parse_print (ase_awk_t* awk)
+static ase_awk_nde_t* __parse_print (ase_awk_t* awk, int type)
 {
 	ase_awk_nde_print_t* nde;
 	ase_awk_nde_t* args = ASE_NULL; 
@@ -3261,24 +3260,30 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk)
 	{
 		if (args != ASE_NULL) ase_awk_clrpt (awk, args);
 		if (out != ASE_NULL) ase_awk_clrpt (awk, out);
-		PANIC (awk, ASE_AWK_ENOMEM);
+
+		awk->errnum = ASE_AWK_ENOMEM;
+		return ASE_NULL;
 	}
 
-	nde->type = ASE_AWK_NDE_PRINT;
+	ASE_AWK_ASSERTX (awk, 
+		type == ASE_AWK_NDE_PRINT || type == ASE_AWK_NDE_PRINTF, 
+		"the node type should be either ASE_AWK_NDE_PRINT or "
+		"ASE_AWK_NDE_PRINTF");
+
+	if (type == ASE_AWK_NDE_PRINTF && args == ASE_NULL)
+	{
+		if (out != ASE_NULL) ase_awk_clrpt (awk, out);
+		awk->errnum = ASE_AWK_EPRINTFARG;
+		return ASE_NULL;
+	}
+
+	nde->type = type;
 	nde->next = ASE_NULL;
 	nde->args = args;
 	nde->out_type = out_type;
 	nde->out = out;
 
 	return (ase_awk_nde_t*)nde;
-}
-
-static ase_awk_nde_t* __parse_printf (ase_awk_t* awk)
-{
-	/* TODO: implement this... */
-ASE_AWK_ASSERT (awk, !"printf not implemented yet");
-awk->errnum = ASE_AWK_EINTERNAL;
-	return ASE_NULL;
 }
 
 static ase_awk_nde_t* __parse_next (ase_awk_t* awk)

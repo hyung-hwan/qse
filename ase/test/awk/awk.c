@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.107 2006-10-28 05:24:08 bacon Exp $
+ * $Id: awk.c,v 1.108 2006-10-31 10:12:44 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -99,7 +99,7 @@ static int __aprintf (const ase_char_t* fmt, ...)
 #if defined(_MSC_VER) && (_MSC_VER<1400)
 	MessageBox (NULL, buf, ASE_T("Assertion Failure"), MB_OK | MB_ICONERROR);
 #else
-	MessageBox (NULL, buf, ASE_T("\uD655\uC778\uC2E4\uD328 Assertion Failure"), MB_OK | MB_ICONERROR);
+	MessageBox (NULL, buf, ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK | MB_ICONERROR);
 #endif
 
 #else
