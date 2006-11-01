@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.199 2006-10-31 10:13:15 bacon Exp $
+ * $Id: parse.c,v 1.200 2006-11-01 04:41:01 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -163,6 +163,8 @@ static ase_awk_nde_t* __parse_additive (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_multiplicative (ase_awk_t* awk);
 
 static ase_awk_nde_t* __parse_unary (ase_awk_t* awk);
+static ase_awk_nde_t* __parse_exponent (ase_awk_t* awk);
+static ase_awk_nde_t* __parse_unary_exp (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_increment (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_primary (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk);
@@ -1880,7 +1882,7 @@ static ase_awk_nde_t* __parse_multiplicative (ase_awk_t* awk)
 		{ TOKEN_MUL, ASE_AWK_BINOP_MUL },
 		{ TOKEN_DIV, ASE_AWK_BINOP_DIV },
 		{ TOKEN_MOD, ASE_AWK_BINOP_MOD },
-		{ TOKEN_EXP, ASE_AWK_BINOP_EXP },
+		/* { TOKEN_EXP, ASE_AWK_BINOP_EXP }, */
 		{ TOKEN_EOF, 0 }
 	};
 
@@ -1898,6 +1900,53 @@ static ase_awk_nde_t* __parse_unary (ase_awk_t* awk)
 	         (MATCH(awk,TOKEN_NOT))?   ASE_AWK_UNROP_NOT:
 	         (MATCH(awk,TOKEN_TILDE))? ASE_AWK_UNROP_BNOT: -1;
 
+	/*if (opcode == -1) return __parse_increment (awk);*/
+	if (opcode == -1) return __parse_exponent (awk);
+
+	if (__get_token(awk) == -1) return ASE_NULL;
+
+	left = __parse_unary (awk);
+	if (left == ASE_NULL) return ASE_NULL;
+
+	nde = (ase_awk_nde_exp_t*) 
+		ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_nde_exp_t));
+	if (nde == ASE_NULL)
+	{
+		ase_awk_clrpt (awk, left);
+		PANIC (awk, ASE_AWK_ENOMEM);
+	}
+
+	nde->type = ASE_AWK_NDE_EXP_UNR;
+	nde->next = ASE_NULL;
+	nde->opcode = opcode;
+	nde->left = left;
+	nde->right = ASE_NULL;
+
+	return (ase_awk_nde_t*)nde;
+}
+
+static ase_awk_nde_t* __parse_exponent (ase_awk_t* awk)
+{
+	static __binmap_t map[] = 
+	{
+		{ TOKEN_EXP, ASE_AWK_BINOP_EXP },
+		{ TOKEN_EOF, 0 }
+	};
+
+	return __parse_binary_expr (awk, map, __parse_unary_exp);
+}
+
+static ase_awk_nde_t* __parse_unary_exp (ase_awk_t* awk)
+{
+	ase_awk_nde_exp_t* nde; 
+	ase_awk_nde_t* left;
+	int opcode;
+
+	opcode = (MATCH(awk,TOKEN_PLUS))?  ASE_AWK_UNROP_PLUS:
+	         (MATCH(awk,TOKEN_MINUS))? ASE_AWK_UNROP_MINUS:
+	         (MATCH(awk,TOKEN_NOT))?   ASE_AWK_UNROP_NOT:
+	         (MATCH(awk,TOKEN_TILDE))? ASE_AWK_UNROP_BNOT: -1;
+
 	if (opcode == -1) return __parse_increment (awk);
 
 	if (__get_token(awk) == -1) return ASE_NULL;
@@ -1905,7 +1954,8 @@ static ase_awk_nde_t* __parse_unary (ase_awk_t* awk)
 	left = __parse_unary (awk);
 	if (left == ASE_NULL) return ASE_NULL;
 
-	nde = (ase_awk_nde_exp_t*) ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_nde_exp_t));
+	nde = (ase_awk_nde_exp_t*) 
+		ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_nde_exp_t));
 	if (nde == ASE_NULL)
 	{
 		ase_awk_clrpt (awk, left);
