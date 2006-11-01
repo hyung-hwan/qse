@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.85 2006-10-31 10:13:15 bacon Exp $
+ * $Id: tree.c,v 1.86 2006-11-01 04:41:01 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -175,9 +175,11 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ase_awk_nde_exp_t* px = (ase_awk_nde_exp_t*)nde;
 			ASE_AWK_ASSERT (awk, px->right == ASE_NULL);
 
+			PUT_SRCSTR (awk, ASE_T("("));
 			PUT_SRCSTR (awk, __unrop_str[px->opcode]);
 			PUT_SRCSTR (awk, ASE_T("("));
 			PRINT_EXPRESSION (awk, px->left);
+			PUT_SRCSTR (awk, ASE_T(")"));
 			PUT_SRCSTR (awk, ASE_T(")"));
 			break;
 		}
