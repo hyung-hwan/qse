@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.251 2006-10-31 14:31:46 bacon Exp $
+ * $Id: run.c,v 1.252 2006-11-01 04:16:08 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -3713,25 +3713,55 @@ static ase_awk_val_t* __eval_binop_exp (
 	n3 = n1 + (n2 << 1);
 	if (n3 == 0)
 	{
-		ase_long_t v = 1;
-		while (l2-- > 0) v *= l1;
-		res = ase_awk_makeintval (run, v);
+		/* left - int, right - int */
+		if (l2 >= 0)
+		{
+			ase_long_t v = 1;
+			while (l2-- > 0) v *= l1;
+			res = ase_awk_makeintval (run, v);
+		}
+		else if (l1 == 0)
+		{
+			PANIC (run, ASE_AWK_EDIVBYZERO);
+		}
+		else
+		{
+			ase_real_t v = 1.0;
+			l2 *= -1;
+			while (l2-- > 0) v /= l1;
+			res = ase_awk_makerealval (run, v);
+		}
 	}
 	else if (n3 == 1)
 	{
-		/*res = ase_awk_makerealval (
-			run, pow((ase_real_t)r1,(ase_real_t)l2));*/
-		ase_real_t v = 1.0;
-		while (l2-- > 0) v *= r1;
-		res = ase_awk_makerealval (run, v);
+		/* left - real, right - int */
+		if (l2 >= 0)
+		{
+			ase_real_t v = 1.0;
+			while (l2-- > 0) v *= r1;
+			res = ase_awk_makerealval (run, v);
+		}
+		else if (r1 == 0.0)
+		{
+			PANIC (run, ASE_AWK_EDIVBYZERO);
+		}
+		else
+		{
+			ase_real_t v = 1.0;
+			l2 *= -1;
+			while (l2-- > 0) v /= r1;
+			res = ase_awk_makerealval (run, v);
+		}
 	}
 	else if (n3 == 2)
 	{
+		/* left - int, right - real */
 		res = ase_awk_makerealval (run, 
 			run->awk->syscas.pow((ase_real_t)l1,(ase_real_t)r2));
 	}
 	else
 	{
+		/* left - real, right - real */
 		ASE_AWK_ASSERT (run->awk, n3 == 3);
 		res = ase_awk_makerealval (run,
 			run->awk->syscas.pow((ase_real_t)r1,(ase_real_t)r2));
