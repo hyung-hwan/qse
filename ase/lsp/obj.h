@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.14 2006-11-02 06:46:31 bacon Exp $
+ * $Id: obj.h,v 1.15 2006-11-02 10:12:01 bacon Exp $
  */
 
 #ifndef _ASE_LSP_OBJ_H_
@@ -41,7 +41,8 @@ typedef struct ase_lsp_obj_prim_t   ase_lsp_obj_prim_t;
 struct ase_lsp_objhdr_t
 {
 	ase_uint32_t   type:  8;
-	ase_uint32_t   mark:  8;
+	ase_uint32_t   mark:  4;
+	ase_uint32_t   perm:  4;
 	ase_uint32_t   lock: 16;
 	ase_size_t     size;
 	ase_lsp_obj_t* link;
@@ -120,11 +121,12 @@ struct ase_lsp_obj_prim_t
 };
 
 /* header access */
-#define ASE_LSP_TYPE(x) (((ase_lsp_obj_t*)x)->hdr.type)
-#define ASE_LSP_SIZE(x) (((ase_lsp_obj_t*)x)->hdr.size)
-#define ASE_LSP_MARK(x) (((ase_lsp_obj_t*)x)->hdr.mark)
-#define ASE_LSP_LOCK(x) (((ase_lsp_obj_t*)x)->hdr.lock)
-#define ASE_LSP_LINK(x) (((ase_lsp_obj_t*)x)->hdr.link)
+#define ASE_LSP_TYPE(x)  (((ase_lsp_obj_t*)x)->hdr.type)
+#define ASE_LSP_SIZE(x)  (((ase_lsp_obj_t*)x)->hdr.size)
+#define ASE_LSP_MARK(x)  (((ase_lsp_obj_t*)x)->hdr.mark)
+#define ASE_LSP_PERM(x)  (((ase_lsp_obj_t*)x)->hdr.perm)
+#define ASE_LSP_LOCK(x)  (((ase_lsp_obj_t*)x)->hdr.lock)
+#define ASE_LSP_LINK(x)  (((ase_lsp_obj_t*)x)->hdr.link)
 
 /* value access */
 #define ASE_LSP_IVAL(x) (((ase_lsp_obj_int_t*)x)->value)

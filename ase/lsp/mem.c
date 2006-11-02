@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.22 2006-11-02 06:46:31 bacon Exp $
+ * $Id: mem.c,v 1.23 2006-11-02 10:12:01 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -27,17 +27,6 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	mem->root_frame     = mem->frame;
 	mem->brooding_frame = ASE_NULL;
 
-	/* create an array to hold temporary objects */
-	/*
-	mem->temp_arr = ase_lsp_arr_new (512);
-	if (mem->temp_arr == ASE_NULL) 
-	{
-		ase_lsp_freeframe (lsp, mem->frame);
-		ASE_LSP_FREE (lsp, mem);
-		return ASE_NULL;
-	}
-	*/
-
 	/* initialize object allocation list */
 	mem->ubound     = ubound;
 	mem->ubound_inc = ubound_inc;
@@ -47,7 +36,7 @@ ase_lsp_mem_t* ase_lsp_openmem (
 		mem->used[i] = ASE_NULL;
 		mem->free[i] = ASE_NULL;
 	}
-	mem->locked = ASE_NULL;
+	mem->read = ASE_NULL;
 
 	/* when "ubound" is too small, the garbage collection can
 	 * be performed while making the common objects. */
@@ -58,11 +47,11 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	mem->macro  = ASE_NULL;
 
 	/* initialize common object pointers */
-	mem->nil     = ase_lsp_makenil    (mem);
-	mem->t       = ase_lsp_maketrue   (mem);
-	mem->quote   = ase_lsp_makesymobj (mem, ASE_T("quote"),  5);
-	mem->lambda  = ase_lsp_makesymobj (mem, ASE_T("lambda"), 6);
-	mem->macro   = ase_lsp_makesymobj (mem, ASE_T("macro"),  5);
+	mem->nil     = ase_lsp_makenil  (mem);
+	mem->t       = ase_lsp_maketrue (mem);
+	mem->quote   = ase_lsp_makesym  (mem, ASE_T("quote"),  5);
+	mem->lambda  = ase_lsp_makesym  (mem, ASE_T("lambda"), 6);
+	mem->macro   = ase_lsp_makesym  (mem, ASE_T("macro"),  5);
 
 	if (mem->nil    == ASE_NULL ||
 	    mem->t      == ASE_NULL ||
@@ -71,11 +60,16 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	    mem->macro  == ASE_NULL) 
 	{
 		ase_lsp_dispose_all (mem);
-		/*ase_lsp_arr_free (mem->temp_arr);*/
 		ase_lsp_freeframe (lsp, mem->frame);
 		ASE_LSP_FREE (lsp, mem);
 		return ASE_NULL;
 	}
+
+	ASE_LSP_PERM(mem->nil)    = 1;
+	ASE_LSP_PERM(mem->t)      = 1;
+	ASE_LSP_PERM(mem->quote)  = 1;
+	ASE_LSP_PERM(mem->lambda) = 1;
+	ASE_LSP_PERM(mem->macro)  = 1;
 
 	return mem;
 }
@@ -85,35 +79,11 @@ void ase_lsp_closemem (ase_lsp_mem_t* mem)
 	/* dispose of the allocated objects */
 	ase_lsp_dispose_all (mem);
 
-	/* dispose of the temporary object arrs */
-	/*ase_lsp_arr_free (mem->temp_arr);*/
-
 	/* dispose of environment frames */
 	ase_lsp_freeframe (mem->lsp, mem->frame);
 
 	/* free the memory */
 	ASE_LSP_FREE (mem->lsp, mem);
-}
-
-static int __add_prim (
-	ase_lsp_mem_t* mem, const ase_char_t* name, ase_size_t name_len, 
-	ase_lsp_prim_t pimpl, ase_size_t min_args, ase_size_t max_args)
-{
-	ase_lsp_obj_t* n, * p;
-	
-	n = ase_lsp_makesymobj (mem, name, name_len);
-	if (n == ASE_NULL) return -1;
-
-	ase_lsp_lockobj (mem->lsp, n);
-
-	p = ase_lsp_makeprim (mem, pimpl, min_args, max_args);
-	if (p == ASE_NULL) return -1;
-
-	ase_lsp_unlockobj (mem->lsp, n);
-
-	if (ase_lsp_setfunc(mem, n, p) == ASE_NULL) return -1;
-
-	return 0;
 }
 
 ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
@@ -139,6 +109,7 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 	ASE_LSP_TYPE(obj) = type;
 	ASE_LSP_SIZE(obj) = size;
 	ASE_LSP_MARK(obj) = 0;
+	ASE_LSP_PERM(obj) = 0;
 	ASE_LSP_LOCK(obj) = 0;
 
 	/* insert the object at the head of the used list */
@@ -159,8 +130,8 @@ void ase_lsp_dispose (
 	ASE_LSP_ASSERT (mem->lsp, obj != ASE_NULL);
 	ASE_LSP_ASSERT (mem->lsp, mem->count > 0);
 
-	// TODO: push the object to the free list for more 
-	//       efficient memory management
+	/* TODO: push the object to the free list for more 
+	 *       efficient memory management */
 
 	if (prev == ASE_NULL) 
 		mem->used[ASE_LSP_TYPE(obj)] = ASE_LSP_LINK(obj);
@@ -220,50 +191,57 @@ static void __mark_obj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 }
 
 /*
- * ase_lsp_lockobj and ase_lsp_unlockallobjs are just called by ase_lsp_read.
+ * ase_lsp_lockobj and ase_lsp_deepunlockobj are just called by ase_lsp_read.
  */
 void ase_lsp_lockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
 	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
 		"an object pointer should not be ASE_NULL");
-	ASE_LSP_LOCK(obj)++;
+	if (ASE_LSP_PERM(obj) == 0) ASE_LSP_LOCK(obj)++;
 }
 
 void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
 	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
 		"an object pointer should not be ASE_NULL");
+
+	if (ASE_LSP_PERM(obj) != 0) return;
 	ASE_LSP_ASSERTX (lsp, ASE_LSP_LOCK(obj) > 0,
 		"the lock count should be greater than zero to be unlocked");
+
 	ASE_LSP_LOCK(obj)--;
 }
 
-void ase_lsp_unlockallobjs (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
+void ase_lsp_deepunlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
 	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
 		"an object pointer should not be ASE_NULL");
-	ASE_LSP_ASSERTX (lsp, ASE_LSP_LOCK(obj) > 0,
-		"the lock count should be greater than zero to be unlocked");
-	ASE_LSP_LOCK(obj)--;
+
+	if (ASE_LSP_PERM(obj) == 0) 
+	{
+		ASE_LSP_ASSERTX (lsp, ASE_LSP_LOCK(obj) > 0,
+			"the lock count should be greater than zero to be unlocked");
+		ASE_LSP_LOCK(obj)--;
+	}
 
 	if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
 	{
-		ase_lsp_unlockallobjs (lsp, ASE_LSP_CAR(obj));
-		ase_lsp_unlockallobjs (lsp, ASE_LSP_CDR(obj));
+		ase_lsp_deepunlockobj (lsp, ASE_LSP_CAR(obj));
+		ase_lsp_deepunlockobj (lsp, ASE_LSP_CDR(obj));
 	}
 	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_FUNC) 
 	{
-		ase_lsp_unlockallobjs (lsp, ASE_LSP_FFORMAL(obj));
-		ase_lsp_unlockallobjs (lsp, ASE_LSP_FBODY(obj));
+		ase_lsp_deepunlockobj (lsp, ASE_LSP_FFORMAL(obj));
+		ase_lsp_deepunlockobj (lsp, ASE_LSP_FBODY(obj));
 	}
 	else if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_MACRO) 
 	{
-		ase_lsp_unlockallobjs (lsp, ASE_LSP_MFORMAL(obj));
-		ase_lsp_unlockallobjs (lsp, ASE_LSP_MBODY(obj));
+		ase_lsp_deepunlockobj (lsp, ASE_LSP_MFORMAL(obj));
+		ase_lsp_deepunlockobj (lsp, ASE_LSP_MBODY(obj));
 	}
 }
 
-static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
+static void __mark_objs_in_use (ase_lsp_mem_t* mem)
 {
 	ase_lsp_frame_t* frame;
 	ase_lsp_assoc_t* assoc;
@@ -297,7 +275,7 @@ static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
 	ase_dprint0 (ASE_T("marking interim frames\n"));
 #endif
 
-	// mark objects in the interim frames
+	/* mark objects in the interim frames */
 	frame = mem->brooding_frame;
 	while (frame != ASE_NULL) {
 
@@ -316,26 +294,13 @@ static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
 		frame = frame->link;
 	}
 
-	/*
-	ase_dprint0 (ASE_T("marking the locked object\n"));
-	if (mem->locked != ASE_NULL) __mark_obj (mem->lsp, mem->locked);
-	*/
-
-#if 0
-	ase_dprint0 (ASE_T("marking termporary objects\n"));
-#endif
-	/*
-	arr = mem->temp_arr;
-	for (i = 0; i < arr->size; i++) 
-	{
-		__mark_obj (mem->lsp, arr->buffer[i]);
-	}
-	*/
+	/* ase_dprint0 (ASE_T("marking the read object\n"));*/
+	if (mem->read != ASE_NULL) __mark_obj (mem->lsp, mem->read);
 
 #if 0
 	ase_dprint0 (ASE_T("marking builtin objects\n"));
 #endif
-	// mark common objects
+	/* mark common objects */
 	if (mem->t      != ASE_NULL) __mark_obj (mem->lsp, mem->t);
 	if (mem->nil    != ASE_NULL) __mark_obj (mem->lsp, mem->nil);
 	if (mem->quote  != ASE_NULL) __mark_obj (mem->lsp, mem->quote);
@@ -343,7 +308,7 @@ static void ase_lsp_markobjsinuse (ase_lsp_mem_t* mem)
 	if (mem->macro  != ASE_NULL) __mark_obj (mem->lsp, mem->macro);
 }
 
-static void ase_lsp_sweepunmarkedobjs (ase_lsp_mem_t* mem)
+static void __sweep_unmarked_objs (ase_lsp_mem_t* mem)
 {
 	ase_lsp_obj_t* obj, * prev, * next;
 	ase_size_t i;
@@ -351,10 +316,8 @@ static void ase_lsp_sweepunmarkedobjs (ase_lsp_mem_t* mem)
 	/* scan all the allocated objects and get rid of unused objects */
 	for (i = 0; i < ASE_LSP_TYPE_COUNT; i++) 
 	{
-	//for (i = ASE_LSP_TYPE_COUNT; i > 0; /*i--*/) {
 		prev = ASE_NULL;
 		obj = mem->used[i];
-		//obj = mem->used[--i];
 
 #if 0
 		ase_dprint1 (ASE_T("sweeping objects of type: %u\n"), i);
@@ -363,9 +326,15 @@ static void ase_lsp_sweepunmarkedobjs (ase_lsp_mem_t* mem)
 		{
 			next = ASE_LSP_LINK(obj);
 
-			if (ASE_LSP_LOCK(obj) == 0 && ASE_LSP_MARK(obj) == 0) 
+			if (ASE_LSP_LOCK(obj) == 0 && 
+			    ASE_LSP_MARK(obj) == 0 && 
+			    ASE_LSP_PERM(obj) == 0) 
 			{
 				/* dispose of unused objects */
+if (i == ASE_LSP_OBJ_INT)
+xp_printf (ASE_T("disposing....%d [%d]\n"), i, ASE_LSP_IVAL(obj));
+else
+xp_printf (ASE_T("disposing....%d\n"), i);
 				ase_lsp_dispose (mem, prev, obj);
 			}
 			else 
@@ -382,9 +351,8 @@ static void ase_lsp_sweepunmarkedobjs (ase_lsp_mem_t* mem)
 
 void ase_lsp_collectgarbage (ase_lsp_mem_t* mem)
 {
-xp_printf (ASE_T("collecting garbage...\n"));
-	ase_lsp_markobjsinuse (mem);
-	ase_lsp_sweepunmarkedobjs (mem);
+	__mark_objs_in_use (mem);
+	__sweep_unmarked_objs (mem);
 }
 
 ase_lsp_obj_t* ase_lsp_makenil (ase_lsp_mem_t* mem)
@@ -429,7 +397,7 @@ ase_lsp_obj_t* ase_lsp_makerealobj (ase_lsp_mem_t* mem, ase_real_t value)
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_makesymobj (
+ase_lsp_obj_t* ase_lsp_makesym (
 	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len)
 {
 	ase_lsp_obj_t* obj;
@@ -456,7 +424,7 @@ ase_lsp_obj_t* ase_lsp_makesymobj (
 	return obj;
 }
 
-ase_lsp_obj_t* ase_lsp_makestrobj (
+ase_lsp_obj_t* ase_lsp_makestr (
 	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len)
 {
 	ase_lsp_obj_t* obj;
@@ -505,7 +473,8 @@ ase_lsp_obj_t* ase_lsp_makemacro (
 {
 	ase_lsp_obj_t* obj;
 
-	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_MACRO, ase_sizeof(ase_lsp_obj_macro_t));
+	obj = ase_lsp_alloc (mem, 
+		ASE_LSP_OBJ_MACRO, ase_sizeof(ase_lsp_obj_macro_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	ASE_LSP_MFORMAL(obj) = formal;

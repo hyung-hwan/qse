@@ -1,5 +1,5 @@
 /*
- * $Id: name.h,v 1.7 2006-10-26 08:17:37 bacon Exp $
+ * $Id: name.h,v 1.8 2006-11-02 10:12:01 bacon Exp $
  */
 
 #ifndef _ASE_LSP_NAME_H_
@@ -31,7 +31,6 @@ void ase_lsp_name_close (ase_lsp_name_t* name);
 int ase_lsp_name_addc (ase_lsp_name_t* name, ase_cint_t c);
 int ase_lsp_name_adds (ase_lsp_name_t* name, const ase_char_t* s);
 void ase_lsp_name_clear (ase_lsp_name_t* name);
-ase_char_t* ase_lsp_name_yield (ase_lsp_name_t* name, ase_size_t capa);
 int ase_lsp_name_compare (ase_lsp_name_t* name, const ase_char_t* str);
 
 #ifdef __cplusplus

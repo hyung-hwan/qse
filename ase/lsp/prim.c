@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.16 2006-10-30 03:34:41 bacon Exp $
+ * $Id: prim.c,v 1.17 2006-11-02 10:12:01 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -27,7 +27,7 @@ static int __add_prim (ase_lsp_mem_t* mem,
 {
 	ase_lsp_obj_t* n, * p;
 	
-	n = ase_lsp_makesymobj (mem, name, name_len);
+	n = ase_lsp_makesym (mem, name, name_len);
 	if (n == ASE_NULL) return -1;
 
 	ase_lsp_lockobj (mem->lsp, n);

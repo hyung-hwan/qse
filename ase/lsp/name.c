@@ -1,5 +1,5 @@
 /*
- * $Id: name.c,v 1.10 2006-10-29 13:00:39 bacon Exp $
+ * $Id: name.c,v 1.11 2006-11-02 10:12:01 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -55,7 +55,7 @@ int ase_lsp_name_addc (ase_lsp_name_t* name, ase_cint_t c)
 {
 	if (name->size >= name->capa) 
 	{
-		/* double the capa. */
+		/* double the capacity */
 		ase_size_t new_capa = name->capa * 2;
 
 		if (new_capa >= ase_countof(name->static_buf)) 
@@ -106,43 +106,6 @@ void ase_lsp_name_clear (ase_lsp_name_t* name)
 {
 	name->size   = 0;
 	name->buf[0] = ASE_CHAR('\0');
-}
-
-ase_char_t* ase_lsp_name_yield (ase_lsp_name_t* name, ase_size_t capa)
-{
-	ase_char_t* old_buf, * new_buf;
-
-	if (capa == 0) capa = ase_countof(name->static_buf) - 1;
-   
-	if (name->capa < ase_countof(name->static_buf)) 
-	{
-		old_buf = (ase_char_t*) ASE_LSP_MALLOC (
-			name->lsp, (name->capa+1)*ase_sizeof(ase_char_t));
-		if (old_buf == ASE_NULL) return ASE_NULL;
-
-		ASE_LSP_MEMCPY (
-			name->lsp, old_buf, name->buf, 
-			(name->capa+1)*ase_sizeof(ase_char_t));
-	}
-	else old_buf = name->buf;
-
-	if (capa < ase_countof(name->static_buf)) 
-	{
-		new_buf = name->static_buf;
-	}
-	else 
-	{
-		new_buf = (ase_char_t*) ASE_LSP_MALLOC (
-			name->lsp, (capa+1)*ase_sizeof(ase_char_t));
-		if (new_buf == ASE_NULL) return ASE_NULL;
-	}
-
-	name->buf    = new_buf;
-	name->size   = 0;
-	name->capa   = capa;
-	name->buf[0] = ASE_CHAR('\0');
-
-	return old_buf;
 }
 
 int ase_lsp_name_compare (ase_lsp_name_t* name, const ase_char_t* str)

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.15 2006-10-30 03:34:41 bacon Exp $
+ * $Id: lsp.c,v 1.16 2006-11-02 10:12:01 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -70,7 +70,7 @@ ase_lsp_t* ase_lsp_open (
 
 	lsp->errnum = ASE_LSP_ENOERR;
 	lsp->opt_undef_symbol = 1;
-	//lsp->opt_undef_symbol = 0;
+	/*lsp->opt_undef_symbol = 0;*/
 
 	lsp->curc = ASE_CHAR_EOF;
 	lsp->input_func = ASE_NULL;
@@ -94,7 +94,7 @@ ase_lsp_t* ase_lsp_open (
 		return ASE_NULL;
 	}
 
-	lsp->max_eval_depth = 0; // TODO: put restriction here....
+	lsp->max_eval_depth = 0; /* TODO: put restriction here.... */
 	lsp->cur_eval_depth = 0;
 
 	return lsp;
@@ -113,7 +113,8 @@ int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
 
 	ASE_LSP_ASSERT (lsp, lsp->input_func == ASE_NULL);
 
-	if (input(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) {
+	if (input(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) 
+	{
 		/* TODO: set error number */
 		return -1;
 	}
@@ -126,8 +127,11 @@ int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
 
 int ase_lsp_detach_input (ase_lsp_t* lsp)
 {
-	if (lsp->input_func != ASE_NULL) {
-		if (lsp->input_func(ASE_LSP_IO_CLOSE, lsp->input_arg, ASE_NULL, 0) == -1) {
+	if (lsp->input_func != ASE_NULL) 
+	{
+		if (lsp->input_func (
+			ASE_LSP_IO_CLOSE, lsp->input_arg, ASE_NULL, 0) == -1) 
+		{
 			/* TODO: set error number */
 			return -1;
 		}
@@ -145,7 +149,8 @@ int ase_lsp_attach_output (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg)
 
 	ASE_LSP_ASSERT (lsp, lsp->output_func == ASE_NULL);
 
-	if (output(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) {
+	if (output(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) 
+	{
 		/* TODO: set error number */
 		return -1;
 	}
@@ -158,7 +163,8 @@ int ase_lsp_detach_output (ase_lsp_t* lsp)
 {
 	if (lsp->output_func != ASE_NULL) 
 	{
-		if (lsp->output_func(ASE_LSP_IO_CLOSE, lsp->output_arg, ASE_NULL, 0) == -1) 
+		if (lsp->output_func (
+			ASE_LSP_IO_CLOSE, lsp->output_arg, ASE_NULL, 0) == -1) 
 		{
 			/* TODO: set error number */
 			return -1;
@@ -175,27 +181,28 @@ static int __add_builtin_prims (ase_lsp_t* lsp)
 
 #define ADD_PRIM(mem,name,name_len,pimpl,min_args,max_args) \
 	if (ase_lsp_addprim(mem,name,name_len,pimpl,min_args,max_args) == -1) return -1;
+#define MAX_ARGS ASE_TYPE_MAX(ase_size_t)
 
 	ADD_PRIM (lsp, ASE_T("exit"),  4, ase_lsp_prim_exit,  0, 0);
 	ADD_PRIM (lsp, ASE_T("eval"),  4, ase_lsp_prim_eval,  1, 1);
-	ADD_PRIM (lsp, ASE_T("prog1"), 5, ase_lsp_prim_prog1, 1, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("progn"), 5, ase_lsp_prim_progn, 1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("prog1"), 5, ase_lsp_prim_prog1, 1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("progn"), 5, ase_lsp_prim_progn, 1, MAX_ARGS);
 	ADD_PRIM (lsp, ASE_T("gc"),    2, ase_lsp_prim_gc,    0, 0);
 
-	ADD_PRIM (lsp, ASE_T("cond"),  4, ase_lsp_prim_cond,  0, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("if"),    2, ase_lsp_prim_if,    2, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("while"), 5, ase_lsp_prim_while, 1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("cond"),  4, ase_lsp_prim_cond,  0, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("if"),    2, ase_lsp_prim_if,    2, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("while"), 5, ase_lsp_prim_while, 1, MAX_ARGS);
 
 	ADD_PRIM (lsp, ASE_T("car"),   3, ase_lsp_prim_car,   1, 1);
 	ADD_PRIM (lsp, ASE_T("cdr"),   3, ase_lsp_prim_cdr,   1, 1);
 	ADD_PRIM (lsp, ASE_T("cons"),  4, ase_lsp_prim_cons,  2, 2);
 	ADD_PRIM (lsp, ASE_T("set"),   3, ase_lsp_prim_set,   2, 2);
-	ADD_PRIM (lsp, ASE_T("setq"),  4, ase_lsp_prim_setq,  1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("setq"),  4, ase_lsp_prim_setq,  1, MAX_ARGS);
 	ADD_PRIM (lsp, ASE_T("quote"), 5, ase_lsp_prim_quote, 1, 1);
-	ADD_PRIM (lsp, ASE_T("defun"), 5, ase_lsp_prim_defun, 3, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("demac"), 5, ase_lsp_prim_demac, 3, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("let"),   3, ase_lsp_prim_let,   1, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("let*"),  4, ase_lsp_prim_letx,  1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("defun"), 5, ase_lsp_prim_defun, 3, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("demac"), 5, ase_lsp_prim_demac, 3, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("let"),   3, ase_lsp_prim_let,   1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("let*"),  4, ase_lsp_prim_letx,  1, MAX_ARGS);
 
 	ADD_PRIM (lsp, ASE_T("="),     1, ase_lsp_prim_eq,    2, 2);
 	ADD_PRIM (lsp, ASE_T("/="),    2, ase_lsp_prim_ne,    2, 2);
@@ -204,13 +211,11 @@ static int __add_builtin_prims (ase_lsp_t* lsp)
 	ADD_PRIM (lsp, ASE_T(">="),    2, ase_lsp_prim_ge,    2, 2);
 	ADD_PRIM (lsp, ASE_T("<="),    2, ase_lsp_prim_le,    2, 2);
 
-	ADD_PRIM (lsp, ASE_T("+"),     1, ase_lsp_prim_plus,  1, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("-"),     1, ase_lsp_prim_minus, 1, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("*"),     1, ase_lsp_prim_mul,   1, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("/"),     1, ase_lsp_prim_div,   1, ASE_TYPE_MAX(ase_size_t));
-	ADD_PRIM (lsp, ASE_T("%"),     1, ase_lsp_prim_mod  , 1, ASE_TYPE_MAX(ase_size_t));
+	ADD_PRIM (lsp, ASE_T("+"),     1, ase_lsp_prim_plus,  1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("-"),     1, ase_lsp_prim_minus, 1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("*"),     1, ase_lsp_prim_mul,   1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("/"),     1, ase_lsp_prim_div,   1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("%"),     1, ase_lsp_prim_mod  , 1, MAX_ARGS);
 
 	return 0;
 }
-
-
