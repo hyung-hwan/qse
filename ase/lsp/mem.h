@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.14 2006-10-29 13:40:33 bacon Exp $
+ * $Id: mem.h,v 1.15 2006-11-02 06:46:31 bacon Exp $
  */
 
 #ifndef _ASE_LSP_MEM_H_
@@ -15,40 +15,28 @@ struct ase_lsp_mem_t
 {
 	ase_lsp_t* lsp;
 
-	/* 
-	 * object allocation list
-	 */
-	ase_size_t     ubound;     // upper bounds of the maximum number of objects
-	ase_size_t     ubound_inc; // increment of the upper bounds
-	ase_size_t     count;      // the number of objects currently allocated
+	/* object allocation list */
+	ase_size_t ubound; /* upper bounds of the maximum number of objects */
+	ase_size_t ubound_inc; /* increment of the upper bounds */
+	ase_size_t count;  /* the number of objects currently allocated */
 	ase_lsp_obj_t* used[ASE_LSP_TYPE_COUNT];
 	ase_lsp_obj_t* free[ASE_LSP_TYPE_COUNT];
 	ase_lsp_obj_t* locked;
 
-	/*
-	 * commonly accessed objects 
-	 */
-	ase_lsp_obj_t* nil;	    // ase_lsp_obj_nil_t
-	ase_lsp_obj_t* t;       // ase_lsp_obj_true_t
-	ase_lsp_obj_t* quote;   // ase_lsp_obj_symbol_t
-	ase_lsp_obj_t* lambda;  // ase_lsp_obj_symbol_t
-	ase_lsp_obj_t* macro;   // ase_lsp_obj_symbol_t
+	/* commonly accessed objects */
+	ase_lsp_obj_t* nil;     /* ase_lsp_obj_nil_t */
+	ase_lsp_obj_t* t;       /* ase_lsp_obj_true_t */
+	ase_lsp_obj_t* quote;   /* ase_lsp_obj_symbol_t */
+	ase_lsp_obj_t* lambda;  /* ase_lsp_obj_symbol_t */
+	ase_lsp_obj_t* macro;   /* ase_lsp_obj_symbol_t */
 
-	/*
-	 * run-time environment frame
-	 */
+	/* run-time environment frame */
 	ase_lsp_frame_t* frame;
-	// pointer to a global-level frame
+	/* pointer to a global-level frame */
 	ase_lsp_frame_t* root_frame;
-	// pointer to an interim frame not yet added to "frame"
+	/* pointer to an interim frame not yet added to "frame" */
 	ase_lsp_frame_t* brooding_frame; 
-
-	/* 
-	 * temporary objects
-	 */
-	/*ase_lsp_arr_t* temp_arr;*/
 };
-
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.21 2006-10-30 14:31:37 bacon Exp $
+ * $Id: mem.c,v 1.22 2006-11-02 06:46:31 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -348,8 +348,9 @@ static void ase_lsp_sweepunmarkedobjs (ase_lsp_mem_t* mem)
 	ase_lsp_obj_t* obj, * prev, * next;
 	ase_size_t i;
 
-	// scan all the allocated objects and get rid of unused objects
-	for (i = 0; i < ASE_LSP_TYPE_COUNT; i++) {
+	/* scan all the allocated objects and get rid of unused objects */
+	for (i = 0; i < ASE_LSP_TYPE_COUNT; i++) 
+	{
 	//for (i = ASE_LSP_TYPE_COUNT; i > 0; /*i--*/) {
 		prev = ASE_NULL;
 		obj = mem->used[i];
@@ -358,16 +359,18 @@ static void ase_lsp_sweepunmarkedobjs (ase_lsp_mem_t* mem)
 #if 0
 		ase_dprint1 (ASE_T("sweeping objects of type: %u\n"), i);
 #endif
-
-		while (obj != ASE_NULL) {
+		while (obj != ASE_NULL) 
+		{
 			next = ASE_LSP_LINK(obj);
 
-			if (ASE_LSP_LOCK(obj) == 0 && ASE_LSP_MARK(obj) == 0) {
-				// dispose of unused objects
+			if (ASE_LSP_LOCK(obj) == 0 && ASE_LSP_MARK(obj) == 0) 
+			{
+				/* dispose of unused objects */
 				ase_lsp_dispose (mem, prev, obj);
 			}
-			else {
-				// unmark the object in use
+			else 
+			{
+				/* unmark the object in use */
 				ASE_LSP_MARK(obj) = 0; 
 				prev = obj;
 			}

@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.27 2006-10-29 13:00:39 bacon Exp $
+ * $Id: read.c,v 1.28 2006-11-02 06:46:31 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -138,14 +138,15 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 	{
 		if (TOKEN_TYPE(lsp) == TOKEN_END) 
 		{
-			lsp->errnum = ASE_LSP_ERR_SYNTAX; // unexpected end of input
+			lsp->errnum = ASE_LSP_ERR_SYNTAX; /* unexpected end of input */
 			return ASE_NULL;
 		}
 
 		if (TOKEN_TYPE(lsp) == TOKEN_DOT) 
 		{
-			if (prev == ASE_NULL) {
-				lsp->errnum = ASE_LSP_ERR_SYNTAX; // unexpected .
+			if (prev == ASE_NULL) 
+			{
+				lsp->errnum = ASE_LSP_ERR_SYNTAX; /* unexpected dot */
 				return ASE_NULL;
 			}
 
@@ -155,7 +156,7 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 			{
 				if (lsp->errnum == ASE_LSP_ERR_END) 
 				{
-					//unexpected end of input
+					/* unexpected end of input */
 					lsp->errnum = ASE_LSP_ERR_SYNTAX; 
 				}
 				return ASE_NULL;
@@ -165,7 +166,7 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 			NEXT_TOKEN (lsp);
 			if (TOKEN_TYPE(lsp) != TOKEN_RPAREN) 
 			{
-				lsp->errnum = ASE_LSP_ERR_SYNTAX; // ) expected
+				lsp->errnum = ASE_LSP_ERR_SYNTAX; /* ) expected */
 				return ASE_NULL;
 			}
 
