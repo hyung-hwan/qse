@@ -1,5 +1,5 @@
 /*
- * $Id: prim.h,v 1.12 2006-11-02 06:46:31 bacon Exp $
+ * $Id: prim.h,v 1.13 2006-11-02 11:10:12 bacon Exp $
  */
 
 #ifndef _ASE_LSP_PRIM_H_
@@ -32,6 +32,7 @@ ase_lsp_obj_t* ase_lsp_prim_defun (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 ase_lsp_obj_t* ase_lsp_prim_demac (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 ase_lsp_obj_t* ase_lsp_prim_let   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 ase_lsp_obj_t* ase_lsp_prim_letx  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_or    (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 
 /*---------------------
        prim_compar.c 

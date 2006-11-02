@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.16 2006-11-02 10:12:01 bacon Exp $
+ * $Id: lsp.c,v 1.17 2006-11-02 11:10:12 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -203,6 +203,7 @@ static int __add_builtin_prims (ase_lsp_t* lsp)
 	ADD_PRIM (lsp, ASE_T("demac"), 5, ase_lsp_prim_demac, 3, MAX_ARGS);
 	ADD_PRIM (lsp, ASE_T("let"),   3, ase_lsp_prim_let,   1, MAX_ARGS);
 	ADD_PRIM (lsp, ASE_T("let*"),  4, ase_lsp_prim_letx,  1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("or"),    2, ase_lsp_prim_or,    2, MAX_ARGS);
 
 	ADD_PRIM (lsp, ASE_T("="),     1, ase_lsp_prim_eq,    2, 2);
 	ADD_PRIM (lsp, ASE_T("/="),    2, ase_lsp_prim_ne,    2, 2);

@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.23 2006-11-02 10:12:01 bacon Exp $
+ * $Id: mem.c,v 1.24 2006-11-02 11:10:12 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -90,6 +90,7 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 {
 	ase_lsp_obj_t* obj;
 	
+ase_lsp_collectgarbage(mem);
 	if (mem->count >= mem->ubound) ase_lsp_collectgarbage (mem);
 	if (mem->count >= mem->ubound) 
 	{
