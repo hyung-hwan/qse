@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.21 2006-10-30 03:34:40 bacon Exp $
+ * $Id: eval.c,v 1.22 2006-11-02 10:30:28 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -223,7 +223,7 @@ static ase_lsp_obj_t* apply (
 	}
 
 	/* attach it to the brooding frame list to 
-	 * make them not to be garbage collected. */
+	 * prevent them from begin garbage-collected. */
 	frame->link = mem->brooding_frame;
 	mem->brooding_frame = frame;
 
@@ -241,7 +241,7 @@ static ase_lsp_obj_t* apply (
 		value = ASE_LSP_CAR(actual);
 		if (ASE_LSP_TYPE(func) != ASE_LSP_OBJ_MACRO) 
 		{
-			// macro doesn't evaluate actual arguments.
+			/* macro doesn't evaluate actual arguments. */
 			value = ase_lsp_eval (lsp, value);
 			if (value == ASE_NULL) 
 			{
@@ -288,12 +288,12 @@ static ase_lsp_obj_t* apply (
 		return ASE_NULL;
 	}
 
-	// push the frame
+	/* push the frame */
 	mem->brooding_frame = frame->link;
 	frame->link = mem->frame;
 	mem->frame = frame;
 
-	// do the evaluation of the body
+	/* do the evaluation of the body */
 	value = mem->nil;
 	while (body != mem->nil) 
 	{
@@ -316,7 +316,7 @@ static ase_lsp_obj_t* apply (
 	/*if (ASE_LSP_CAR(func) == mem->macro) {*/
 	if (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO) 
 	{
-		value = ase_lsp_eval(lsp, value);
+		value = ase_lsp_eval (lsp, value);
 		if (value == ASE_NULL) return ASE_NULL;
 	}
 
