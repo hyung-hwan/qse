@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.109 2006-10-31 14:32:50 bacon Exp $
+ * $Id: awk.c,v 1.110 2006-11-02 11:36:41 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -161,13 +161,15 @@ static FILE* popen_t (const ase_char_t* cmd, const ase_char_t* mode)
 #ifdef WIN32
 	#define fgets_t _fgetts
 	#define fputs_t _fputts
+	#define fputc_t _fputtc
 #else
 	#ifdef ASE_CHAR_IS_MCHAR
 		#define fgets_t fgets
 		#define fputs_t fputs
+		#define fputc_t fputc
 	#else
 		#define fgets_t fgetws
-		#define fputs_t fputws
+		#define fputc_t fputwc
 	#endif
 #endif
 
@@ -271,8 +273,12 @@ xp_printf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 
 		case ASE_AWK_IO_WRITE:
 		{
-			/* TODO: size... */
-			fputs_t (data, (FILE*)epa->handle);
+			ase_size_t i;
+			/* TODO: how to return error or 0 */
+			for (i = 0; i < size; i++)
+			{
+				fputc_t (data[i], (FILE*)epa->handle);
+			}
 			return size;
 		}
 
@@ -336,8 +342,12 @@ xp_printf (ASE_T("closing %s of type %d (file)\n"),  epa->name, epa->type);
 
 		case ASE_AWK_IO_WRITE:
 		{
+			ase_size_t i;
 			/* TODO: how to return error or 0 */
-			fputs_t (data, /*size,*/ (FILE*)epa->handle);
+			for (i = 0; i < size; i++)
+			{
+				fputc_t (data[i], (FILE*)epa->handle);
+			}
 			return size;
 		}
 
@@ -437,8 +447,13 @@ xp_printf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
+		ase_size_t i;
 		/* TODO: how to return error or 0 */
-		fputs_t (data, /*size,*/ (FILE*)epa->handle);
+		for (i = 0; i < size; i++)
+		{
+			fputc_t (data[i], (FILE*)epa->handle);
+		}
+
 		/*MessageBox (NULL, data, data, MB_OK);*/
 		return size;
 	}

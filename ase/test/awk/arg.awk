@@ -13,11 +13,13 @@ BEGIN {
 		print "ARGV[" i "]", ARGV[i];
 	}
 
-
 	#for (i = 0
 	#     i < 20
-	#     i;;) print i;
+	#     i;;) print "[" i "]";
+	#for (i = 0
+	#     (i < 20)
+	#     i;;) print "[" i "]";
 
-
-	if (ARGC >= 0) printf "ARGC is positive";
+	#printf 10, 20, 30;
+	if (ARGC >= 0) printf "ARGC is positive\n";
 }

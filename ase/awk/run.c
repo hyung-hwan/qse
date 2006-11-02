@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.252 2006-11-01 04:16:08 bacon Exp $
+ * $Id: run.c,v 1.253 2006-11-02 11:36:41 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1562,14 +1562,6 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			break;
 		}
 
-		/*
-		case ASE_AWK_NDE_PRINT:
-		{
-			TODO: PRINTF 
-			break;
-		}
-		*/
-
 		default:
 		{
 			ase_awk_val_t* v;
@@ -2316,7 +2308,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	ase_awk_nde_print_t* p = (ase_awk_nde_print_t*)nde;
 	ase_char_t* out = ASE_NULL;
 	const ase_char_t* dst;
-	ase_awk_val_t* v;
+	ase_awk_val_t* v, * fmt;
 	ase_awk_nde_t* head, * np;
 	int n;
 
@@ -2377,7 +2369,6 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	ASE_AWK_ASSERTX (run->awk, p->args != ASE_NULL, 
 		"a valid printf statement should have at least one argument. "
 		"the parser must ensure this.");
-	
 
 	if (p->args->type == ASE_AWK_NDE_GRP)
 	{
@@ -2387,29 +2378,22 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	}
 	else head = p->args;
 
-	for (np = head; np != ASE_NULL; np = np->next)
+	ASE_AWK_ASSERTX (run->awk, head != ASE_NULL,
+		"a valid printf statement should have at least one argument. "
+		"the parser must ensure this.");
+
+	v = __eval_expression (run, head);
+	if (v == ASE_NULL) 
 	{
-		if (np != head)
-		{
-			n = ase_awk_writeextio_str (
-				run, p->out_type, dst, 
-				run->global.ofs.ptr, 
-				run->global.ofs.len);
-			if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
-			{
-				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-				return -1;
-			}
-		}
+		if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+		return -1;
+	}
 
-		v = __eval_expression (run, np);
-		if (v == ASE_NULL) 
-		{
-			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-			return -1;
-		}
-		ase_awk_refupval (v);
-
+	ase_awk_refupval (v);
+	if (v->type != ASE_AWK_VAL_STR)
+	{
+		/* the remaining arguments are ignored as the format cannot 
+		 * contain any % characters */
 		n = ase_awk_writeextio_val (run, p->out_type, dst, v);
 		if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
 		{
@@ -2417,13 +2401,29 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			ase_awk_refdownval (run, v);
 			return -1;
 		}
-
-		ase_awk_refdownval (run, v);
-
-
-		/* TODO: how to handle n == -1 && run->errnum == ASE_AWK_EIOHANDLER. 
-		 * that is the user handler returned an error... */
 	}
+	else
+	{
+		/* check the formatting characters */
+		ase_char_t* fmt = ((ase_awk_val_str_t*)v)->buf;
+		ase_size_t fmt_len = ((ase_awk_val_str_t*)v)->len;
+		ase_size_t i;
+
+		for (i = 0; i < fmt_len; i++)
+		{
+			if (fmt[i] == ASE_T('%'))
+			{
+				/* TODO: */
+			}
+			else
+			{
+				/* TODO: do buffering and call these... */
+				ase_awk_writeextio_str (
+					run, p->out_type, dst, &fmt[i], 1);
+			}
+		}
+	}
+	ase_awk_refdownval (run, v);
 
 	if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 
@@ -4772,7 +4772,11 @@ static int __get_reference (
 			pair = ase_awk_map_put (
 				&run->named, tgt->id.name,
 				tgt->id.name_len, ase_awk_val_nil);
-			if (pair == ASE_NULL) PANIC_I (run, ASE_AWK_ENOMEM);
+			if (pair == ASE_NULL) 
+			{
+				run->errnum = ASE_AWK_ENOMEM;
+				return -1;
+			}
 		}
 
 		*ref = (ase_awk_val_t**)&pair->val;
@@ -4808,7 +4812,11 @@ static int __get_reference (
 			pair = ase_awk_map_put (
 				&run->named, tgt->id.name,
 				tgt->id.name_len, ase_awk_val_nil);
-			if (pair == ASE_NULL) PANIC_I (run, ASE_AWK_ENOMEM);
+			if (pair == ASE_NULL) 
+			{
+				run->errnum = ASE_AWK_ENOMEM;
+				return -1;
+			}
 		}
 
 		tmp = __get_reference_indexed (
@@ -4857,15 +4865,24 @@ static int __get_reference (
 		n = ase_awk_valtonum (run, v, &lv, &rv);
 		ase_awk_refdownval (run, v);
 
-		if (n == -1) PANIC_I (run, ASE_AWK_EPOSIDX);
+		if (n == -1) 
+		{
+			run->errnum = ASE_AWK_EPOSIDX;
+			return -1;
+		}
 		if (n == 1) lv = (ase_long_t)rv;
-		if (!IS_VALID_POSIDX(lv)) PANIC_I (run, ASE_AWK_EPOSIDX);
+		if (!IS_VALID_POSIDX(lv)) 
+		{
+			run->errnum = ASE_AWK_EPOSIDX;
+			return -1;
+		}
 
 		*ref = (ase_awk_val_t**)((ase_size_t)lv);
 		return 0;
 	}
 
-	PANIC_I (run, ASE_AWK_ENOTREFERENCEABLE);
+	run->errnum = ASE_AWK_ENOTREFERENCEABLE;
+	return -1;
 }
 
 static ase_awk_val_t** __get_reference_indexed (
