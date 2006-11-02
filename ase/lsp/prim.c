@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.17 2006-11-02 10:12:01 bacon Exp $
+ * $Id: prim.c,v 1.18 2006-11-02 11:10:12 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -404,3 +404,26 @@ ase_lsp_obj_t* ase_lsp_prim_demac (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	}
 	return mac;
 }
+
+ase_lsp_obj_t* ase_lsp_prim_or (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+{
+	/*
+	 * (or 10 20 30 40)
+	 * (or (= n 20) (= n 30))
+	 */
+	ase_lsp_obj_t* tmp;
+
+/* TODO: this is wrong. redo the work */
+	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) 
+	{
+		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
+		if (tmp == ASE_NULL) return ASE_NULL;
+
+		if (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_INT)
+		if (tmp != lsp->mem->nil) return lsp->mem->t;
+		args = ASE_LSP_CDR(args);
+	}
+
+	return lsp->mem->nil;
+}
+

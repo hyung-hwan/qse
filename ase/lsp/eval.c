@@ -1,9 +1,10 @@
 /*
- * $Id: eval.c,v 1.22 2006-11-02 10:30:28 bacon Exp $
+ * $Id: eval.c,v 1.23 2006-11-02 11:10:12 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
 
+static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 static ase_lsp_obj_t* make_func (
 	ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macro);
 static ase_lsp_obj_t* eval_cons (
@@ -14,6 +15,18 @@ static ase_lsp_obj_t* apply_to_prim (
 	ase_lsp_t* lsp, ase_lsp_obj_t* func, ase_lsp_obj_t* actual);
 
 ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
+{
+	ase_lsp_obj_t* ret;
+
+	//push_to_eval_stack (obj); 
+
+	ret = __eval (lsp, obj);
+	//pop ();
+
+	return ret;
+}
+
+static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
 	lsp->errnum = ASE_LSP_ENOERR;
 
