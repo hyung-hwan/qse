@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.28 2006-11-02 06:46:31 bacon Exp $
+ * $Id: read.c,v 1.29 2006-11-02 10:12:01 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -64,13 +64,10 @@ ase_lsp_obj_t* ase_lsp_read (ase_lsp_t* lsp)
 	lsp->errnum = ASE_LSP_ENOERR;
 	NEXT_TOKEN (lsp);
 
-	if (lsp->mem->locked != ASE_NULL) 
-	{
-		ase_lsp_unlockallobjs (lsp, lsp->mem->locked);
-		lsp->mem->locked = ASE_NULL;
-	}
-	lsp->mem->locked = read_obj (lsp);
-	return lsp->mem->locked;
+	lsp->mem->read = read_obj (lsp);
+	if (lsp->mem->read != ASE_NULL) 
+		ase_lsp_deepunlockobj (lsp, lsp->mem->read);
+	return lsp->mem->read;
 }
 
 static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
@@ -104,7 +101,7 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 			return obj;
 
 		case TOKEN_STRING:
-			obj = ase_lsp_makestrobj (
+			obj = ase_lsp_makestr (
 				lsp->mem, TOKEN_SVAL(lsp), TOKEN_SLEN(lsp));
 			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
 			ase_lsp_lockobj (lsp, obj);
@@ -113,15 +110,21 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 		case TOKEN_IDENT:
 			ASE_LSP_ASSERT (lsp,
 				lsp->mem->nil != ASE_NULL && lsp->mem->t != ASE_NULL); 
-			if (TOKEN_COMPARE(lsp,ASE_T("nil")) == 0) obj = lsp->mem->nil;
-			else if (TOKEN_COMPARE(lsp,ASE_T("t")) == 0) obj = lsp->mem->t;
+			if (TOKEN_COMPARE(lsp,ASE_T("nil")) == 0) 
+			{
+				obj = lsp->mem->nil;
+			}
+			else if (TOKEN_COMPARE(lsp,ASE_T("t")) == 0) 
+			{
+				obj = lsp->mem->t;
+			}
 			else 
 			{
-				obj = ase_lsp_makesymobj (
+				obj = ase_lsp_makesym (
 					lsp->mem, TOKEN_SVAL(lsp), TOKEN_SLEN(lsp));
 				if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
-				ase_lsp_lockobj (lsp, obj);
 			}
+			ase_lsp_lockobj (lsp, obj);
 			return obj;
 	}
 
@@ -178,7 +181,7 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 		{
 			if (lsp->errnum == ASE_LSP_ERR_END)
 			{	
-				// unexpected end of input
+				/* unexpected end of input */
 				lsp->errnum = ASE_LSP_ERR_SYNTAX;
 			}
 			return ASE_NULL;
@@ -234,7 +237,7 @@ static ase_lsp_obj_t* read_quote (ase_lsp_t* lsp)
 		lsp->errnum = ASE_LSP_ENOMEM;
 		return ASE_NULL;
 	}
-	ase_lsp_lockobj (lsp, cons);
+	ase_lsp_lockobj (lsp, cons); 
 
 	return cons;
 }

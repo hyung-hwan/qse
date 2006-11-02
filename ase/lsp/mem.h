@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.15 2006-11-02 06:46:31 bacon Exp $
+ * $Id: mem.h,v 1.16 2006-11-02 10:12:01 bacon Exp $
  */
 
 #ifndef _ASE_LSP_MEM_H_
@@ -21,14 +21,14 @@ struct ase_lsp_mem_t
 	ase_size_t count;  /* the number of objects currently allocated */
 	ase_lsp_obj_t* used[ASE_LSP_TYPE_COUNT];
 	ase_lsp_obj_t* free[ASE_LSP_TYPE_COUNT];
-	ase_lsp_obj_t* locked;
+	ase_lsp_obj_t* read;
 
 	/* commonly accessed objects */
 	ase_lsp_obj_t* nil;     /* ase_lsp_obj_nil_t */
 	ase_lsp_obj_t* t;       /* ase_lsp_obj_true_t */
-	ase_lsp_obj_t* quote;   /* ase_lsp_obj_symbol_t */
-	ase_lsp_obj_t* lambda;  /* ase_lsp_obj_symbol_t */
-	ase_lsp_obj_t* macro;   /* ase_lsp_obj_symbol_t */
+	ase_lsp_obj_t* quote;   /* ase_lsp_obj_sym_t */
+	ase_lsp_obj_t* lambda;  /* ase_lsp_obj_sym_t */
+	ase_lsp_obj_t* macro;   /* ase_lsp_obj_sym_t */
 
 	/* run-time environment frame */
 	ase_lsp_frame_t* frame;
@@ -53,7 +53,7 @@ void ase_lsp_collectgarbage (ase_lsp_mem_t* mem);
 
 void ase_lsp_lockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
-void ase_lsp_unlockallobjs (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
+void ase_lsp_deepunlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 
 /* object creation of standard types */
 ase_lsp_obj_t* ase_lsp_makenil     (ase_lsp_mem_t* mem);
@@ -61,9 +61,9 @@ ase_lsp_obj_t* ase_lsp_maketrue    (ase_lsp_mem_t* mem);
 ase_lsp_obj_t* ase_lsp_makeintobj  (ase_lsp_mem_t* mem, ase_long_t value);
 ase_lsp_obj_t* ase_lsp_makerealobj (ase_lsp_mem_t* mem, ase_real_t value);
 
-ase_lsp_obj_t* ase_lsp_makesymobj (
+ase_lsp_obj_t* ase_lsp_makesym (
 	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len);
-ase_lsp_obj_t* ase_lsp_makestrobj (
+ase_lsp_obj_t* ase_lsp_makestr (
 	ase_lsp_mem_t* mem, const ase_char_t* str, ase_size_t len);
 
 ase_lsp_obj_t* ase_lsp_makecons (
