@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.254 2006-11-03 14:46:33 bacon Exp $
+ * $Id: run.c,v 1.255 2006-11-06 15:02:31 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1805,12 +1805,12 @@ static int __walk_foreach (ase_awk_pair_t* pair, void* arg)
 static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 {
 	int n;
-	ase_awk_nde_ease_tt* test;
+	ase_awk_nde_exp_t* test;
 	ase_awk_val_t* rv;
 	ase_awk_map_t* map;
 	struct __foreach_walker_t walker;
 
-	test = (ase_awk_nde_ease_tt*)nde->test;
+	test = (ase_awk_nde_exp_t*)nde->test;
 	ASE_AWK_ASSERT (run->awk, test->type == ASE_AWK_NDE_EXP_BIN && 
 	           test->opcode == ASE_AWK_BINOP_IN);
 
@@ -2471,6 +2471,7 @@ static int __formatted_output (
 	}
 #endif
 
+#if 0
 	const ase_char_t* end = fmt + fmt_len;
 	const ase_char_t* s;
 	int modifier;
@@ -2623,6 +2624,7 @@ static int __formatted_output (
 		else ADDC (str, ch);
 	}
 
+#endif
 	return 0;
 }
 
@@ -3086,10 +3088,10 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		ASE_NULL  /* __eval_binop_nm */
 	};
 
-	ase_awk_nde_ease_tt* exp = (ase_awk_nde_ease_tt*)nde;
+	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 	ase_awk_val_t* left, * right, * res;
 
-	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EASE_BIN);
+	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EXP_BIN);
 
 	if (exp->opcode == ASE_AWK_BINOP_LAND)
 	{
@@ -4165,9 +4167,9 @@ static ase_awk_val_t* __eval_binop_match0 (
 static ase_awk_val_t* __eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* left, * res = ASE_NULL;
-	ase_awk_nde_ease_tt* exp = (ase_awk_nde_ease_tt*)nde;
+	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EASE_UNR);
+	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EXP_UNR);
 	ASE_AWK_ASSERT (run->awk, exp->left != ASE_NULL && exp->right == ASE_NULL);
 
 	ASE_AWK_ASSERT (run->awk, exp->left->next == ASE_NULL);
@@ -4257,9 +4259,9 @@ static ase_awk_val_t* __eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* left, * res;
-	ase_awk_nde_ease_tt* exp = (ase_awk_nde_ease_tt*)nde;
+	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EASE_INCPRE);
+	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EXP_INCPRE);
 	ASE_AWK_ASSERT (run->awk, exp->left != ASE_NULL && exp->right == ASE_NULL);
 
 	/* this way of checking if the l-value is assignable is
@@ -4401,9 +4403,9 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* left, * res, * res2;
-	ase_awk_nde_ease_tt* exp = (ase_awk_nde_ease_tt*)nde;
+	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EASE_INCPST);
+	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EXP_INCPST);
 	ASE_AWK_ASSERT (run->awk, exp->left != ASE_NULL && exp->right == ASE_NULL);
 
 	/* this way of checking if the l-value is assignable is
