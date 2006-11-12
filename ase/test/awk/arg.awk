@@ -21,5 +21,5 @@ BEGIN {
 	#     i;;) print "[" i "]";
 
 	#printf 10, 20, 30;
-	if (ARGC >= 0) printf "ARGC is positive\n";
+	if (ARGC >= 0) printf "ARGC %d is positive\n", 10;
 }
