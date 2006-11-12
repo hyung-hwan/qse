@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.255 2006-11-06 15:02:31 bacon Exp $
+ * $Id: run.c,v 1.256 2006-11-12 15:09:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2431,45 +2431,106 @@ static int __formatted_output (
 	ase_awk_run_t* run, int out_type, const ase_char_t* dst, 
 	const ase_char_t* fmt, ase_size_t fmt_len, ase_awk_nde_t* args)
 {
-#if 0
 	ase_size_t i;
-	ase_bool_t formatting = ase_false;
+
+#define FLUSH() \
+	do { \
+		int n = ase_awk_writeextio_str ( \
+			run, out_type, dst, \
+			run->format.out.buf, run->format.out.len); \
+		if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) return -1; \
+		run->format.out.len = 0; \
+	} while (0)
+
+#define OUTPUT_CHAR(c) \
+	do { \
+		run->format.out.buf[run->format.out.len++] = (c); \
+		if (run->format.out.len >= \
+		    ase_countof(run->format.out.buf)) FLUSH (); \
+	} while (0)
+
+	run->format.out.len = 0;
+	run->format.fmt.len = 0;
 
 	for (i = 0; i < fmt_len; i++)
 	{
-		if (formatting)
+		if (run->format.fmt.len == 0)
 		{
-			if (fmt[i] == ASE_T('-'))
+			if (fmt[i] == ASE_T('%')) 
 			{
+				run->format.fmt.buf[run->format.fmt.len++] = fmt[i];
 			}
-
-			if (fmt[i] == ASE_T('c'))
-			else if (fmt[i] == ASE_T('d') || fmt[i] == ASE_T('i'))
-			else if (fmt[i] == ASE_T('e'))
-			else if (fmt[i] == ASE_T('f'))
-			else if (fmt[i] == ASE_T('g'))
-			else if (fmt[i] == ASE_T('o'))
-			else if (fmt[i] == ASE_T('s'))
-			else if (fmt[i] == ASE_T('x'))
-			else if (fmt[i] == ASE_T('X'))
-			else /*if (fmt[i] == ASE_T('%'))*/
-			{
-			}
-
-			formatting = ase_false;
+			else OUTPUT_CHAR (fmt[i]);
+			continue;
 		}
-		else
+
+#if 0
+		if (fmt[i] == ASE_T('-'))
 		{
-			if (fmt[i] == ASE_T('%')) formatting = ase_true;
-			else
-			{
-				/* TODO: do buffering and call these... */
-				ase_awk_writeextio_str (
-					run, out_type, dst, &fmt[i], 1);
-			}
 		}
-	}
 #endif
+
+		/*if (fmt[i] == ASE_T('c'))
+		else*/ if (fmt[i] == ASE_T('d') || fmt[i] == ASE_T('i'))
+		{
+			ase_awk_val_t* v;
+			ase_long_t l;
+			ase_real_t r;
+			ase_char_t* p;
+			int n;
+
+			if (args == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_EPRINTFARG;
+				return -1;
+			}
+
+			/* TODO: length check of fmt.buf */
+			run->format.fmt.buf[run->format.fmt.len++] = ASE_T('l');
+			run->format.fmt.buf[run->format.fmt.len++] = ASE_T('l');
+			run->format.fmt.buf[run->format.fmt.len++] = ASE_T('d');
+			run->format.fmt.buf[run->format.fmt.len] = ASE_T('\0');
+
+			v = __eval_expression (run, args);
+			if (v == ASE_NULL) return -1;
+
+			ase_awk_refupval (v);
+			n = ase_awk_valtonum (run, args, &l, &r);
+			ase_awk_refdownval (run, v);
+
+			if (n == -1) return -1; 
+			if (n == 1) l = (ase_long_t)r;
+
+			/* TODO: check the return value of syscas.sprintf and handle an error */
+			run->awk->syscas.sprintf (
+				run->format.buf, 
+				ase_countof(run->format.buf),
+				run->format.fmt.buf, (long long)l);
+
+			p = run->format.buf;
+			while (*p != ASE_T('\0'))
+			{
+				OUTPUT_CHAR (*p);
+				p++;
+			}
+		}
+		/*else if (fmt[i] == ASE_T('e'))
+		else if (fmt[i] == ASE_T('f'))
+		else if (fmt[i] == ASE_T('g'))
+		else if (fmt[i] == ASE_T('o'))
+		else if (fmt[i] == ASE_T('s'))
+		else if (fmt[i] == ASE_T('x'))
+		else if (fmt[i] == ASE_T('X'))*/
+		else /*if (fmt[i] == ASE_T('%'))*/
+		{
+			OUTPUT_CHAR (fmt[i]);
+		}
+
+		args = args->next;
+		run->format.fmt.len = 0;
+	}
+
+	FLUSH ();
 
 #if 0
 	const ase_char_t* end = fmt + fmt_len;
@@ -2479,13 +2540,13 @@ static int __formatted_output (
 
 	while (fmt < end)
 	{
-		while (*fmt != ASE_CHAR('\0') && *fmt != ASE_CHAR('%')) 
+		while (*fmt != ASE_T('\0') && *fmt != ASE_T('%')) 
 		{
 			ADDC (str, *fmt++);
 		}
 
 		if (fmt < end) break;
-		ASE_AWK_ASSERTX (run->awk, *fmt == ASE_CHAR('%'), 
+		ASE_AWK_ASSERTX (run->awk, *fmt == ASE_T('%'), 
 			"the current character must be % as all characters "
 			"except % have been skippe.d");
 
@@ -2496,11 +2557,11 @@ static int __formatted_output (
 		{
 			ch = *fmt;
 
-			if (ch != ASE_CHAR(' ') &&
-			    ch != ASE_CHAR('+') &&
-			    ch != ASE_CHAR('-') &&
-			    ch != ASE_CHAR('#') &&
-			    ch != ASE_CHAR('0')) break;
+			if (ch != ASE_T(' ') &&
+			    ch != ASE_T('+') &&
+			    ch != ASE_T('-') &&
+			    ch != ASE_T('#') &&
+			    ch != ASE_T('0')) break;
 
 			fmt++;
 		}
@@ -2508,15 +2569,15 @@ static int __formatted_output (
 		/* flags */
 		while (1)
 		{
-			if (ch == ASE_CHAR(' ') || ch == ASE_CHAR('+') ||
-			    ch == ASE_CHAR('-') || ch == ASE_CHAR('#')) 
+			if (ch == ASE_T(' ') || ch == ASE_T('+') ||
+			    ch == ASE_T('-') || ch == ASE_T('#')) 
 			{
 				ADDC (str, ch);
 				ch = *fmt++;
 			}
 			else 
 			{
-				if (ch == ASE_CHAR('0')) 
+				if (ch == ASE_T('0')) 
 				{
 					ADDC (str, ch);
 					ch = *fmt++; 
@@ -2527,7 +2588,7 @@ static int __formatted_output (
 		}
 
 		/* check the width */
-		if (ch == ASE_CHAR('*')) 
+		if (ch == ASE_T('*')) 
 		{
 			ADDC (str, ch);
 			ch = *fmt++;
@@ -2542,12 +2603,12 @@ static int __formatted_output (
 		}
 
 		/* precision */
-		if (ch == ASE_CHAR('.')) 
+		if (ch == ASE_T('.')) 
 		{
 			ADDC (str, ch);
 			ch = *fmt++;
 
-			if (ch == ASE_CHAR('*')) 
+			if (ch == ASE_T('*')) 
 			{
 				ADDC (str, ch);
 				ch = *fmt++;
@@ -2565,8 +2626,8 @@ static int __formatted_output (
 		/* modifier */
 		for (modifier = 0;;) 
 		{
-			if (ch == ASE_CHAR('h')) modifier = MOD_SHORT;
-			else if (ch == ASE_CHAR('l')) 
+			if (ch == ASE_T('h')) modifier = MOD_SHORT;
+			else if (ch == ASE_T('l')) 
 			{
 				modifier = (modifier == MOD_LONG)? MOD_LONGLONG: MOD_LONG;
 			}
@@ -2576,28 +2637,28 @@ static int __formatted_output (
 
 
 		/* type */
-		if (ch == ASE_CHAR('%')) ADDC (str, ch);
-		else if (ch == ASE_CHAR('c') || ch == ASE_CHAR('s')) 
+		if (ch == ASE_T('%')) ADDC (str, ch);
+		else if (ch == ASE_T('c') || ch == ASE_T('s')) 
 		{
-#if !defined(ASE_CHAR_IS_MCHAR) && !defined(_WIN32)
+#if !defined(ASE_T_IS_MCHAR) && !defined(_WIN32)
 			ADDC (str, 'l');
 #endif
 			ADDC (str, ch);
 		}
-		else if (ch == ASE_CHAR('C') || ch == ASE_CHAR('S')) 
+		else if (ch == ASE_T('C') || ch == ASE_T('S')) 
 		{
 #ifdef _WIN32
 			ADDC (str, ch);
 #else
-	#ifdef ASE_CHAR_IS_MCHAR
+	#ifdef ASE_T_IS_MCHAR
 			ADDC (str, 'l');
 	#endif
 			ADDC (str, ase_ttolower(ch));
 #endif
 		}
-		else if (ch == ASE_CHAR('d') || ch == ASE_CHAR('i') || 
-		         ch == ASE_CHAR('o') || ch == ASE_CHAR('u') || 
-		         ch == ASE_CHAR('x') || ch == ASE_CHAR('X')) 
+		else if (ch == ASE_T('d') || ch == ASE_T('i') || 
+		         ch == ASE_T('o') || ch == ASE_T('u') || 
+		         ch == ASE_T('x') || ch == ASE_T('X')) 
 		{
 			if (modifier == MOD_SHORT) 
 			{
@@ -2620,7 +2681,7 @@ static int __formatted_output (
 			}
 			ADDC (str, ch);
 		}
-		else if (ch == ASE_CHAR('\0')) break;
+		else if (ch == ASE_T('\0')) break;
 		else ADDC (str, ch);
 	}
 
