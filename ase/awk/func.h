@@ -1,5 +1,5 @@
 /*
- * $Id: func.h,v 1.14 2006-10-24 04:10:12 bacon Exp $
+ * $Id: func.h,v 1.15 2006-11-13 09:37:00 bacon Exp $
  */
 
 #ifndef _ASE_AWK_FUNC_H_
@@ -24,18 +24,6 @@ struct ase_awk_bfn_t
 
 	ase_awk_bfn_t* next;
 };
-
-enum
-{
-	/* ensure that this matches __sys_bfn in func.c */
-
-	ASE_AWK_BFN_CLOSE,
-	ASE_AWK_BFN_INDEX,
-	ASE_AWK_BFN_LENGTH,
-	ASE_AWK_BFN_SYSTEM,
-	ASE_AWK_BFN_SIN
-};
-
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.72 2006-10-28 05:24:07 bacon Exp $
+ * $Id: func.c,v 1.73 2006-11-13 09:37:00 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -15,26 +15,31 @@ static int __bfn_toupper (ase_awk_run_t* run);
 static int __bfn_gsub    (ase_awk_run_t* run);
 static int __bfn_sub     (ase_awk_run_t* run);
 static int __bfn_match   (ase_awk_run_t* run);
+static int __bfn_sprintf (ase_awk_run_t* run);
+
+#undef MAX
+#define MAX ASE_TYPE_MAX(ase_size_t)
 
 /* TODO: move it under the awk structure... */
 static ase_awk_bfn_t __sys_bfn[] = 
 {
 	/* io functions */
-	{ASE_T("close"),   5, ASE_AWK_EXTIO, 1,  1,  ASE_NULL,     __bfn_close},
-	{ASE_T("fflush"),  6, ASE_AWK_EXTIO, 0,  1,  ASE_NULL,     __bfn_fflush},
+	{ASE_T("close"),   5, ASE_AWK_EXTIO, 1, 1,  ASE_NULL, __bfn_close},
+	{ASE_T("fflush"),  6, ASE_AWK_EXTIO, 0, 1,  ASE_NULL, __bfn_fflush},
 
 	/* string functions */
-	{ASE_T("index"),   5, 0,            2,  2,  ASE_NULL,     __bfn_index},
-	{ASE_T("substr"),  6, 0,            2,  3,  ASE_NULL,     __bfn_substr},
-	{ASE_T("length"),  6, 0,            1,  1,  ASE_NULL,     __bfn_length},
-	{ASE_T("split"),   5, 0,            2,  3,  ASE_T("vrv"), __bfn_split},
-	{ASE_T("tolower"), 7, 0,            1,  1,  ASE_NULL,     __bfn_tolower},
-	{ASE_T("toupper"), 7, 0,            1,  1,  ASE_NULL,     __bfn_toupper},
-	{ASE_T("gsub"),    4, 0,            2,  3,  ASE_T("xvr"), __bfn_gsub},
-	{ASE_T("sub"),     3, 0,            2,  3,  ASE_T("xvr"), __bfn_sub},
-	{ASE_T("match"),   5, 0,            2,  2,  ASE_T("vx"),  __bfn_match},
+	{ASE_T("index"),   5, 0,  2,   2,  ASE_NULL,     __bfn_index},
+	{ASE_T("substr"),  6, 0,  2,   3,  ASE_NULL,     __bfn_substr},
+	{ASE_T("length"),  6, 0,  1,   1,  ASE_NULL,     __bfn_length},
+	{ASE_T("split"),   5, 0,  2,   3,  ASE_T("vrv"), __bfn_split},
+	{ASE_T("tolower"), 7, 0,  1,   1,  ASE_NULL,     __bfn_tolower},
+	{ASE_T("toupper"), 7, 0,  1,   1,  ASE_NULL,     __bfn_toupper},
+	{ASE_T("gsub"),    4, 0,  2,   3,  ASE_T("xvr"), __bfn_gsub},
+	{ASE_T("sub"),     3, 0,  2,   3,  ASE_T("xvr"), __bfn_sub},
+	{ASE_T("match"),   5, 0,  2,   2,  ASE_T("vx"),  __bfn_match},
+	{ASE_T("sprintf"), 7, 0,  1, MAX,  ASE_NULL,     __bfn_sprintf},
 
-	{ASE_NULL,         0, 0,            0,  0,  ASE_NULL,     ASE_NULL}
+	{ASE_NULL,         0, 0,  0,   0,  ASE_NULL,     ASE_NULL}
 };
 
 ase_awk_bfn_t* ase_awk_addbfn (
@@ -1235,6 +1240,11 @@ static int __bfn_match (ase_awk_run_t* run)
 	ase_awk_refdownval (run, a1);
 	ase_awk_refdownval (run, a0);
 	return 0;
+}
+
+static int __bfn_sprintf (ase_awk_run_t* run)
+{
+	return -1;
 }
 
 #if 0
