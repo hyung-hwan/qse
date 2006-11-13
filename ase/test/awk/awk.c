@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.110 2006-11-02 11:36:41 bacon Exp $
+ * $Id: awk.c,v 1.111 2006-11-13 09:11:09 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -126,7 +126,7 @@ static int __dprintf (const ase_char_t* fmt, ...)
 	return n;
 }
 
-static ase_real_t __pow (ase_real_t x, ase_real_t y)
+static ase_real_t __awk_pow (ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
 }
@@ -743,7 +743,7 @@ static int __main (int argc, ase_char_t* argv[])
 #endif
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
-	syscas.pow = __pow;
+	syscas.pow = __awk_pow;
 	syscas.sprintf = xp_sprintf;
 	syscas.aprintf = __aprintf;
 	syscas.dprintf = __dprintf;
