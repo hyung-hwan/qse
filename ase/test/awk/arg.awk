@@ -21,5 +21,12 @@ BEGIN {
 	#     i;;) print "[" i "]";
 
 	#printf 10, 20, 30;
-	if (ARGC >= 0) printf "ARGC %d is positive\n", 10;
+	if (ARGC >= 0) printf ("ARGC [%++#10.10i] is positive\n", 10);
+	if (ARGC >= 0) printf ("ARGC [%++#10.10f] is positive\n", 10);
+	if (ARGC >= 0) printf ("ARGC [%++#10.10E] is positive\n", 10124.1123);
+	if (ARGC >= 0) printf ("ARGC [%++#10.10G] is positive\n", 10124.1123);
+	if (ARGC >= 0) printf ("ARGC [%++#10.10g] is positive\n", 10124.1123);
+	if (ARGC >= 0) printf ("ARGC [%++#10.10f] is positive\n", 10124.1123);
+	printf ("[%d], [%f], [%s]\n", 10124.1123, 10124.1123, 10124.1123);
+	printf ("[%-10c] [% 0*.*d]\n", 65, 45, 48, -1);
 }

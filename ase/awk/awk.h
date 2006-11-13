@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.139 2006-10-31 14:31:46 bacon Exp $
+ * $Id: awk.h,v 1.140 2006-11-13 09:02:22 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -271,6 +271,7 @@ enum
 	ASE_AWK_ENEXTFILE,      /* nextfile illegal in BEGIN or END block */
 	ASE_AWK_EGETLINE,       /* getline expected */
 	ASE_AWK_EPRINTFARG,     /* printf must have one or more arguments */
+	ASE_AWK_EFMTSEQ,        /* wrong formatting sequence */
 
 	/* run time error */
 	ASE_AWK_EDIVBYZERO,        /* divide by zero */
