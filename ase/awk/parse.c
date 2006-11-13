@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.200 2006-11-01 04:41:01 bacon Exp $
+ * $Id: parse.c,v 1.201 2006-11-13 09:02:23 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -3810,6 +3810,7 @@ static int __get_number (ase_awk_t* awk)
 
 			return 0;
 		}
+		#if 0
 		else if (c == ASE_T('b') || c == ASE_T('B'))
 		{
 			/* binary number */
@@ -3822,6 +3823,7 @@ static int __get_number (ase_awk_t* awk)
 
 			return 0;
 		}
+		#endif
 		else if (c != '.')
 		{
 			/* octal number */

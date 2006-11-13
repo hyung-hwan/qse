@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.36 2006-10-31 10:13:14 bacon Exp $
+ * $Id: misc.c,v 1.37 2006-11-13 09:02:23 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -612,7 +612,8 @@ ase_char_t* ase_awk_strdup (ase_awk_t* awk, const ase_char_t* str)
 	return tmp;
 }
 
-ase_char_t* ase_awk_strxdup (ase_awk_t* awk, const ase_char_t* str, ase_size_t len)
+ase_char_t* ase_awk_strxdup (
+	ase_awk_t* awk, const ase_char_t* str, ase_size_t len)
 {
 	ase_char_t* tmp;
 

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.256 2006-11-12 15:09:15 bacon Exp $
+ * $Id: run.c,v 1.257 2006-11-13 09:02:23 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2431,7 +2431,7 @@ static int __formatted_output (
 	ase_awk_run_t* run, int out_type, const ase_char_t* dst, 
 	const ase_char_t* fmt, ase_size_t fmt_len, ase_awk_nde_t* args)
 {
-	ase_size_t i;
+	ase_size_t i, j;
 
 #define FLUSH() \
 	do { \
@@ -2449,6 +2449,20 @@ static int __formatted_output (
 		    ase_countof(run->format.out.buf)) FLUSH (); \
 	} while (0)
 
+#define ADD_TO_FMTBUF(c) \
+	do { \
+		if (run->format.fmt.len < ase_countof(run->format.fmt.buf)-1) \
+		{ \
+			run->format.fmt.buf[run->format.fmt.len++] = (c); \
+			run->format.fmt.buf[run->format.fmt.len] = ASE_T('\0'); \
+		} \
+		else \
+		{ \
+			run->errnum = ASE_AWK_EFMTSEQ; \
+			return -1; \
+		} \
+	} while (0)
+
 	run->format.out.len = 0;
 	run->format.fmt.len = 0;
 
@@ -2464,14 +2478,15 @@ static int __formatted_output (
 			continue;
 		}
 
-#if 0
-		if (fmt[i] == ASE_T('-'))
+		while (i < fmt_len &&
+		       (fmt[i] == ASE_T(' ') || fmt[i] == ASE_T('#') ||
+		        fmt[i] == ASE_T('0') || fmt[i] == ASE_T('+') ||
+		        fmt[i] == ASE_T('-')))
 		{
+			ADD_TO_FMTBUF (fmt[i]); i++;
 		}
-#endif
 
-		/*if (fmt[i] == ASE_T('c'))
-		else*/ if (fmt[i] == ASE_T('d') || fmt[i] == ASE_T('i'))
+		if (i < fmt_len && fmt[i] == ASE_T('*'))
 		{
 			ase_awk_val_t* v;
 			ase_long_t l;
@@ -2485,17 +2500,118 @@ static int __formatted_output (
 				return -1;
 			}
 
-			/* TODO: length check of fmt.buf */
-			run->format.fmt.buf[run->format.fmt.len++] = ASE_T('l');
-			run->format.fmt.buf[run->format.fmt.len++] = ASE_T('l');
-			run->format.fmt.buf[run->format.fmt.len++] = ASE_T('d');
-			run->format.fmt.buf[run->format.fmt.len] = ASE_T('\0');
+			v = __eval_expression (run, args);
+			if (v == ASE_NULL) return -1;
+
+			ase_awk_refupval (v);
+			n = ase_awk_valtonum (run, v, &l, &r);
+			ase_awk_refdownval (run, v);
+
+			if (n == -1) return -1; 
+			if (n == 1) l = (ase_long_t)r;
+
+			run->awk->syscas.sprintf (
+				run->format.buf, 
+				ase_countof(run->format.buf),
+				ASE_T("%lld"), (long long)l);
+
+			p = run->format.buf;
+			while (*p != ASE_T('\0'))
+			{
+				ADD_TO_FMTBUF (*p);
+				p++;
+			}
+
+			args = args->next;
+			i++;
+		}
+		else
+		{
+			while (i < fmt_len && ASE_AWK_ISDIGIT(run->awk, fmt[i]))
+			{
+				ADD_TO_FMTBUF (fmt[i]); i++;
+			}
+		}
+
+		if (i < fmt_len && fmt[i] == ASE_T('.'))
+		{
+			ADD_TO_FMTBUF (fmt[i]); i++;
+		}
+
+		if (i < fmt_len && fmt[i] == ASE_T('*'))
+		{
+			ase_awk_val_t* v;
+			ase_long_t l;
+			ase_real_t r;
+			ase_char_t* p;
+			int n;
+
+			if (args == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_EPRINTFARG;
+				return -1;
+			}
 
 			v = __eval_expression (run, args);
 			if (v == ASE_NULL) return -1;
 
 			ase_awk_refupval (v);
-			n = ase_awk_valtonum (run, args, &l, &r);
+			n = ase_awk_valtonum (run, v, &l, &r);
+			ase_awk_refdownval (run, v);
+
+			if (n == -1) return -1; 
+			if (n == 1) l = (ase_long_t)r;
+
+			run->awk->syscas.sprintf (
+				run->format.buf, 
+				ase_countof(run->format.buf),
+				ASE_T("%lld"), (long long)l);
+
+			p = run->format.buf;
+			while (*p != ASE_T('\0'))
+			{
+				ADD_TO_FMTBUF (*p);
+				p++;
+			}
+
+			args = args->next;
+			i++;
+		}
+		else
+		{
+			while (i < fmt_len && ASE_AWK_ISDIGIT(run->awk, fmt[i]))
+			{
+				ADD_TO_FMTBUF (fmt[i]); i++;
+			}
+		}
+
+		if (i >= fmt_len) break;
+
+		if (fmt[i] == ASE_T('d') || fmt[i] == ASE_T('i') || 
+		    fmt[i] == ASE_T('x') || fmt[i] == ASE_T('X') ||
+		    fmt[i] == ASE_T('o'))
+		{
+			ase_awk_val_t* v;
+			ase_long_t l;
+			ase_real_t r;
+			ase_char_t* p;
+			int n;
+
+			if (args == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_EPRINTFARG;
+				return -1;
+			}
+
+			ADD_TO_FMTBUF (ASE_T('l'));
+			ADD_TO_FMTBUF (ASE_T('l'));
+			ADD_TO_FMTBUF (fmt[i]);
+
+			v = __eval_expression (run, args);
+			if (v == ASE_NULL) return -1;
+
+			ase_awk_refupval (v);
+			n = ase_awk_valtonum (run, v, &l, &r);
 			ase_awk_refdownval (run, v);
 
 			if (n == -1) return -1; 
@@ -2514,15 +2630,179 @@ static int __formatted_output (
 				p++;
 			}
 		}
-		/*else if (fmt[i] == ASE_T('e'))
-		else if (fmt[i] == ASE_T('f'))
-		else if (fmt[i] == ASE_T('g'))
-		else if (fmt[i] == ASE_T('o'))
-		else if (fmt[i] == ASE_T('s'))
-		else if (fmt[i] == ASE_T('x'))
-		else if (fmt[i] == ASE_T('X'))*/
+		else if (fmt[i] == ASE_T('e') || fmt[i] == ASE_T('E') ||
+		         fmt[i] == ASE_T('g') || fmt[i] == ASE_T('G') ||
+		         fmt[i] == ASE_T('f'))
+		{
+			ase_awk_val_t* v;
+			ase_long_t l;
+			ase_real_t r;
+			ase_char_t* p;
+			int n;
+
+			if (args == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_EPRINTFARG;
+				return -1;
+			}
+
+			ADD_TO_FMTBUF (ASE_T('L'));
+			ADD_TO_FMTBUF (fmt[i]);
+
+			v = __eval_expression (run, args);
+			if (v == ASE_NULL) return -1;
+
+			ase_awk_refupval (v);
+			n = ase_awk_valtonum (run, v, &l, &r);
+			ase_awk_refdownval (run, v);
+
+			if (n == -1) return -1; 
+			if (n == 0) r = (ase_real_t)l;
+
+			/* TODO: check the return value of syscas.sprintf and handle an error */
+			run->awk->syscas.sprintf (
+				run->format.buf, 
+				ase_countof(run->format.buf),
+				run->format.fmt.buf, (long double)r);
+
+			p = run->format.buf;
+			while (*p != ASE_T('\0'))
+			{
+				OUTPUT_CHAR (*p);
+				p++;
+			}
+		}
+		else if (fmt[i] == ASE_T('c')) 
+		{
+			ase_awk_val_t* v;
+			ase_char_t* p;
+
+			if (args == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_EPRINTFARG;
+				return -1;
+			}
+
+			ADD_TO_FMTBUF (fmt[i]);
+
+			v = __eval_expression (run, args);
+			if (v == ASE_NULL) return -1;
+
+			ase_awk_refupval (v);
+			if (v->type == ASE_AWK_VAL_NIL)
+			{
+				run->format.buf[0] = ASE_T('\0');
+			}
+			else if (v->type == ASE_AWK_VAL_INT)
+			{
+				run->awk->syscas.sprintf (
+					run->format.buf, 
+					ase_countof(run->format.buf),
+					run->format.fmt.buf, 
+					(int)((ase_awk_val_int_t*)v)->val);
+			}
+			else if (v->type == ASE_AWK_VAL_REAL)
+			{
+				run->awk->syscas.sprintf (
+					run->format.buf, 
+					ase_countof(run->format.buf),
+					run->format.fmt.buf, 
+					(int)((ase_awk_val_real_t*)v)->val);
+			}
+			else if (v->type == ASE_AWK_VAL_STR)
+			{
+				ase_awk_val_str_t* str = (ase_awk_val_str_t*)v;
+
+				if (str->len > 0)
+				{
+					run->awk->syscas.sprintf (
+						run->format.buf, 
+						ase_countof(run->format.buf),
+						run->format.fmt.buf, str->buf[0]);
+				}
+				else run->format.buf[0] = ASE_T('\0');
+			}
+			else
+			{
+				ase_awk_refdownval (run, v);
+				run->errnum = ASE_AWK_EVALTYPE;
+				return -1;
+			}
+
+			ase_awk_refdownval (run, v);
+
+			p = run->format.buf;
+			while (*p != ASE_T('\0'))
+			{
+				OUTPUT_CHAR (*p);
+				p++;
+			}
+		}
+		else if (fmt[i] == ASE_T('s')) 
+		{
+			ase_awk_val_t* v;
+			ase_char_t* p;
+
+			if (args == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_EPRINTFARG;
+				return -1;
+			}
+
+			ADD_TO_FMTBUF (fmt[i]);
+
+			v = __eval_expression (run, args);
+			if (v == ASE_NULL) return -1;
+
+			ase_awk_refupval (v);
+			if (v->type == ASE_AWK_VAL_NIL)
+			{
+				run->format.buf[0] = ASE_T('\0');
+			}
+			else if (v->type == ASE_AWK_VAL_STR)
+			{
+				/* TODO: handle a string contailing null characters */
+				/* TODO: handle error conditions of sprintf */
+
+				run->awk->syscas.sprintf (
+					run->format.buf, 
+					ase_countof(run->format.buf),
+					run->format.fmt.buf, 
+					((ase_awk_val_str_t*)v)->buf);
+			}
+			else
+			{
+				ase_char_t* str;
+				ase_size_t len;
+
+				str = ase_awk_valtostr (run, v, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
+				if (str == ASE_NULL)
+				{
+					ase_awk_refdownval (run, v);
+					return -1;
+				}
+
+				run->awk->syscas.sprintf (
+					run->format.buf, 
+					ase_countof(run->format.buf),
+					run->format.fmt.buf, str);
+
+				ASE_AWK_FREE (run->awk, str);
+			}
+			
+			ase_awk_refdownval (run, v);
+
+			p = run->format.buf;
+			while (*p != ASE_T('\0'))
+			{
+				OUTPUT_CHAR (*p);
+				p++;
+			}
+		}
 		else /*if (fmt[i] == ASE_T('%'))*/
 		{
+			for (j = 0; j < run->format.fmt.len; j++)
+				OUTPUT_CHAR (run->format.fmt.buf[j]);
 			OUTPUT_CHAR (fmt[i]);
 		}
 
@@ -2530,163 +2810,13 @@ static int __formatted_output (
 		run->format.fmt.len = 0;
 	}
 
-	FLUSH ();
-
-#if 0
-	const ase_char_t* end = fmt + fmt_len;
-	const ase_char_t* s;
-	int modifier;
-	ase_char_t ch;
-
-	while (fmt < end)
+	if (run->format.fmt.len > 0)
 	{
-		while (*fmt != ASE_T('\0') && *fmt != ASE_T('%')) 
-		{
-			ADDC (str, *fmt++);
-		}
-
-		if (fmt < end) break;
-		ASE_AWK_ASSERTX (run->awk, *fmt == ASE_T('%'), 
-			"the current character must be % as all characters "
-			"except % have been skippe.d");
-
-		s = fmt++; /* remember the position of % */
-
-		/* flags */
-		while (fmt < end)
-		{
-			ch = *fmt;
-
-			if (ch != ASE_T(' ') &&
-			    ch != ASE_T('+') &&
-			    ch != ASE_T('-') &&
-			    ch != ASE_T('#') &&
-			    ch != ASE_T('0')) break;
-
-			fmt++;
-		}
-
-		/* flags */
-		while (1)
-		{
-			if (ch == ASE_T(' ') || ch == ASE_T('+') ||
-			    ch == ASE_T('-') || ch == ASE_T('#')) 
-			{
-				ADDC (str, ch);
-				ch = *fmt++;
-			}
-			else 
-			{
-				if (ch == ASE_T('0')) 
-				{
-					ADDC (str, ch);
-					ch = *fmt++; 
-				}
-
-				break;
-			}
-		}
-
-		/* check the width */
-		if (ch == ASE_T('*')) 
-		{
-			ADDC (str, ch);
-			ch = *fmt++;
-		}
-		else 
-		{
-			while (ASE_AWK_ISDIGIT (run->awk, ch)) 
-			{
-				ADDC (str, ch);
-				ch = *fmt++;
-			}
-		}
-
-		/* precision */
-		if (ch == ASE_T('.')) 
-		{
-			ADDC (str, ch);
-			ch = *fmt++;
-
-			if (ch == ASE_T('*')) 
-			{
-				ADDC (str, ch);
-				ch = *fmt++;
-			}
-			else 
-			{
-				while (ASE_AWK_ISDIGIT (run->awk, ch)) 
-				{
-					ADDC (str, ch);
-					ch = *fmt++;
-				}
-			}
-		}
-
-		/* modifier */
-		for (modifier = 0;;) 
-		{
-			if (ch == ASE_T('h')) modifier = MOD_SHORT;
-			else if (ch == ASE_T('l')) 
-			{
-				modifier = (modifier == MOD_LONG)? MOD_LONGLONG: MOD_LONG;
-			}
-			else break;
-			ch = *fmt++;
-		}		
-
-
-		/* type */
-		if (ch == ASE_T('%')) ADDC (str, ch);
-		else if (ch == ASE_T('c') || ch == ASE_T('s')) 
-		{
-#if !defined(ASE_T_IS_MCHAR) && !defined(_WIN32)
-			ADDC (str, 'l');
-#endif
-			ADDC (str, ch);
-		}
-		else if (ch == ASE_T('C') || ch == ASE_T('S')) 
-		{
-#ifdef _WIN32
-			ADDC (str, ch);
-#else
-	#ifdef ASE_T_IS_MCHAR
-			ADDC (str, 'l');
-	#endif
-			ADDC (str, ase_ttolower(ch));
-#endif
-		}
-		else if (ch == ASE_T('d') || ch == ASE_T('i') || 
-		         ch == ASE_T('o') || ch == ASE_T('u') || 
-		         ch == ASE_T('x') || ch == ASE_T('X')) 
-		{
-			if (modifier == MOD_SHORT) 
-			{
-				ADDC (str, 'h');
-			}
-			else if (modifier == MOD_LONG) 
-			{
-				ADDC (str, 'l');
-			}
-			else if (modifier == MOD_LONGLONG) 
-			{
-#if defined(_WIN32) && !defined(__LCC__)
-				ADDC (str, 'I');
-				ADDC (str, '6');
-				ADDC (str, '4');
-#else
-				ADDC (str, 'l');
-				ADDC (str, 'l');
-#endif
-			}
-			ADDC (str, ch);
-		}
-		else if (ch == ASE_T('\0')) break;
-		else ADDC (str, ch);
+		/* flush uncompleted formatting sequence */
+		for (j = 0; j < run->format.fmt.len; j++)
+			OUTPUT_CHAR (run->format.fmt.buf[j]);
 	}
-
-#endif
-	return 0;
+	FLUSH ();
 }
 
 static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
