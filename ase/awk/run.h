@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.21 2006-10-24 04:10:12 bacon Exp $
+ * $Id: run.h,v 1.22 2006-11-13 15:08:54 bacon Exp $
  */
 
 #ifndef _ASE_AWK_RUN_H_
@@ -99,5 +99,17 @@ enum
 	ASE_AWK_GLOBAL_RLENGTH,
 	ASE_AWK_GLOBAL_SUBSEP
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+ase_char_t* ase_awk_sprintf (
+	ase_awk_run_t* run, const ase_char_t* fmt, 
+	ase_size_t fmt_len, ase_awk_nde_t* args, ase_size_t* len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

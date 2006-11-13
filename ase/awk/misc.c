@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.37 2006-11-13 09:02:23 bacon Exp $
+ * $Id: misc.c,v 1.38 2006-11-13 15:08:53 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1061,13 +1061,6 @@ exit_loop:
 	}
 }
 
-int ase_awk_sprintf (ase_awk_t* awk,
-	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
-{
-	/* TODO: */
-	return -1;
-}
-
 int ase_awk_assertfail (ase_awk_t* awk, 
 	const ase_char_t* expr, const ase_char_t* desc, 
 	const ase_char_t* file, int line)
@@ -1088,3 +1081,4 @@ int ase_awk_assertfail (ase_awk_t* awk,
 	awk->syscas.abort ();
 	return 0;
 }
+

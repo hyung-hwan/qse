@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.80 2006-10-30 14:31:37 bacon Exp $
+ * $Id: val.c,v 1.81 2006-11-13 15:08:54 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -300,8 +300,7 @@ xp_printf (ASE_T("\n"));*/
 	{
 		ASE_AWK_ASSERTX (run->awk, 
 			!"should never happen - invalid value type",
-			"the type of a value should be one of ASE_AWK_VAL_XXX's"
-			"defined in val.h");
+			"the type of a value should be one of ASE_AWK_VAL_XXX's defined in val.h");
 	}
 }
 
@@ -328,8 +327,7 @@ xp_printf (ASE_T("\n"));
 */
 
 	ASE_AWK_ASSERTX (run->awk, val->ref > 0, 
-		"the reference count of a value should be greater than zero"
-		"for it to be decremented. check the source code for any bugs");
+		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
 
 	val->ref--;
 	if (val->ref <= 0) 
@@ -348,8 +346,7 @@ void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 
 	ASE_AWK_ASSERTX (run->awk, val->ref > 0,
-		"the reference count of a value should be greater than zero"
-		"for it to be decremented. check the source code for any bugs");
+		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
 	val->ref--;
 }
 
@@ -377,8 +374,7 @@ ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
 
 	ASE_AWK_ASSERTX (run->awk, 
 		!"should never happen - invalid value type",
-		"the type of a value should be one of ASE_AWK_VAL_XXX's"
-		"defined in val.h");
+		"the type of a value should be one of ASE_AWK_VAL_XXX's defined in val.h");
 	return ase_false;
 }
 
