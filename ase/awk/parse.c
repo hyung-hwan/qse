@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.201 2006-11-13 09:02:23 bacon Exp $
+ * $Id: parse.c,v 1.202 2006-11-13 15:08:17 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -3317,8 +3317,7 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk, int type)
 
 	ASE_AWK_ASSERTX (awk, 
 		type == ASE_AWK_NDE_PRINT || type == ASE_AWK_NDE_PRINTF, 
-		"the node type should be either ASE_AWK_NDE_PRINT or "
-		"ASE_AWK_NDE_PRINTF");
+		"the node type should be either ASE_AWK_NDE_PRINT or ASE_AWK_NDE_PRINTF");
 
 	if (type == ASE_AWK_NDE_PRINTF && args == ASE_NULL)
 	{

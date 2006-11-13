@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.77 2006-11-12 15:09:14 bacon Exp $
+ * $Id: awk_i.h,v 1.78 2006-11-13 15:08:53 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -270,20 +270,10 @@ struct ase_awk_run_t
 
 	struct
 	{
-		struct
-		{
-			ase_size_t len;
-			ase_char_t buf[1024];
-		} out;
-
-		struct
-		{
-			ase_size_t len;
-			ase_char_t buf[256];
-		} fmt;
-
-		ase_char_t buf[4096];
-	} format;
+		ase_awk_str_t fmt;
+		ase_awk_str_t out;
+		ase_char_t tmp[4096];
+	} sprintf;
 
 	int errnum;
 
