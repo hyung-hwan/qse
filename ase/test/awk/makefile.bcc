@@ -1,3 +1,9 @@
+
+# ilink32.exe     link.exe
+# -aa             /subsystem:windows
+# -ap             /subsystem:console
+# -ad             /subsystem:native
+
 CC = bcc32
 LD = ilink32
 CFLAGS = -O2 -WM -WU -RT- -w -I..\..\.. 
