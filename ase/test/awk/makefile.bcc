@@ -1,7 +1,7 @@
 CC = bcc32
 LD = ilink32
-CFLAGS = -I..\..\.. 
-LDFLAGS = -L..\..\awk -L"c:\program files\borland\bds\4.0\lib"
+CFLAGS = -O2 -WM -WU -RT- -w -I..\..\.. 
+LDFLAGS = -ap -L..\..\awk -L"c:\program files\borland\bds\4.0\lib"
 LIBS = import32.lib cw32mt.lib aseawk.lib
 STARTUP = c0x32w.obj
 
