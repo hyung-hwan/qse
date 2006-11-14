@@ -29,4 +29,6 @@ BEGIN {
 	if (ARGC >= 0) printf ("ARGC [%++#10.10f] is positive\n", 10124.1123);
 	printf ("[%d], [%f], [%s]\n", 10124.1123, 10124.1123, 10124.1123);
 	printf ("[%-10c] [% 0*.*d]\n", 65, 45, 48, -1);
+
+	print sprintf ("abc%d %*.*d %c %s %c", 10, 20, 30, 40, "good", "good", 75.34);
 }

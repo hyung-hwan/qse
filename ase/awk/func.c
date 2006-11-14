@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.73 2006-11-13 09:37:00 bacon Exp $
+ * $Id: func.c,v 1.74 2006-11-14 14:54:17 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1243,8 +1243,41 @@ static int __bfn_match (ase_awk_run_t* run)
 }
 
 static int __bfn_sprintf (ase_awk_run_t* run)
-{
-	return -1;
+{	
+	ase_size_t nargs;
+	ase_awk_val_t* a0;
+	ase_char_t* str0, * ptr;
+	ase_size_t len0, len;
+
+	nargs = ase_awk_getnargs (run);
+	ASE_AWK_ASSERT (run->awk, nargs > 0);
+
+	a0 = ase_awk_getarg (run, 0);
+	if (a0->type == ASE_AWK_VAL_STR)
+	{
+		str0 = ((ase_awk_val_str_t*)a0)->buf;
+		len0 = ((ase_awk_val_str_t*)a0)->len;
+	}
+	else
+	{
+		str0 = ase_awk_valtostr (
+			run, a0, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len0);
+		if (str0 == ASE_NULL) return -1;
+	}
+
+	ptr = ase_awk_sprintf (run, str0, len0, nargs, ASE_NULL, &len);
+	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str0);
+	if (ptr == ASE_NULL) return -1;
+	
+	a0 = ase_awk_makestrval (run, ptr, len);
+	if (a0 == ASE_NULL) 
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	ase_awk_setretval (run, a0);
+	return 0;
 }
 
 #if 0

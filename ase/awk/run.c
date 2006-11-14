@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.258 2006-11-13 15:07:24 bacon Exp $
+ * $Id: run.c,v 1.259 2006-11-14 14:54:17 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2441,7 +2441,7 @@ static int __formatted_output (
 	ase_size_t len;
 	int n;
 
-	ptr = ase_awk_sprintf (run, fmt, fmt_len, args, &len);
+	ptr = ase_awk_sprintf (run, fmt, fmt_len, 0, args, &len);
 	if (ptr == ASE_NULL) return -1;
 
 	n = ase_awk_writeextio_str (run, out_type, dst, ptr, len);
@@ -3537,7 +3537,7 @@ static ase_awk_val_t* __eval_binop_lshift (
 	if (n3 == 0)
 	{
 		if  (l2 == 0) PANIC (run, ASE_AWK_EDIVBYZERO);
-		res = ase_awk_makeintval (run, (ase_long_t)l1 << (ase_long_t)l2);
+		res = ase_awk_makeintval (run, (ase_long_t)l1<<(ase_long_t)l2);
 	}
 	else PANIC (run, ASE_AWK_EOPERAND);
 
@@ -3562,7 +3562,7 @@ static ase_awk_val_t* __eval_binop_rshift (
 	if (n3 == 0)
 	{
 		if  (l2 == 0) PANIC (run, ASE_AWK_EDIVBYZERO);
-		res = ase_awk_makeintval (run, (ase_long_t)l1 >> (ase_long_t)l2);
+		res = ase_awk_makeintval (run, (ase_long_t)l1>>(ase_long_t)l2);
 	}
 	else PANIC (run, ASE_AWK_EOPERAND);
 
@@ -5503,10 +5503,11 @@ static ase_char_t* __idxnde_to_str (
 }
 
 ase_char_t* ase_awk_sprintf (
-	ase_awk_run_t* run, const ase_char_t* fmt, 
-	ase_size_t fmt_len, ase_awk_nde_t* args, ase_size_t* len)
+	ase_awk_run_t* run, const ase_char_t* fmt, ase_size_t fmt_len, 
+	ase_size_t nargs_on_stack, ase_awk_nde_t* args, ase_size_t* len)
 {
 	ase_size_t i, j;
+	ase_size_t stack_arg_idx = 1;
 
 #define OUT_CHAR(c) \
 	do { \
@@ -5554,13 +5555,15 @@ ase_char_t* ase_awk_sprintf (
 			ase_char_t* p;
 			int n;
 
-			if (args == ASE_NULL)
+			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
 				run->errnum = ASE_AWK_EPRINTFARG;
 				return ASE_NULL;
 			}
 
-			v = __eval_expression (run, args);
+			v = (args == ASE_NULL)? 
+				ase_awk_getarg (run, stack_arg_idx):
+				__eval_expression (run, args);
 			if (v == ASE_NULL) return ASE_NULL;
 
 			ase_awk_refupval (v);
@@ -5586,7 +5589,8 @@ ase_char_t* ase_awk_sprintf (
 				p++;
 			}
 
-			args = args->next;
+			if (args == ASE_NULL) stack_arg_idx++;
+			else args = args->next;
 			i++;
 		}
 		else
@@ -5610,13 +5614,15 @@ ase_char_t* ase_awk_sprintf (
 			ase_char_t* p;
 			int n;
 
-			if (args == ASE_NULL)
+			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
 				run->errnum = ASE_AWK_EPRINTFARG;
 				return ASE_NULL;
 			}
 
-			v = __eval_expression (run, args);
+			v = (args == ASE_NULL)? 
+				ase_awk_getarg (run, stack_arg_idx):
+				__eval_expression (run, args);
 			if (v == ASE_NULL) return ASE_NULL;
 
 			ase_awk_refupval (v);
@@ -5642,7 +5648,8 @@ ase_char_t* ase_awk_sprintf (
 				p++;
 			}
 
-			args = args->next;
+			if (args == ASE_NULL) stack_arg_idx++;
+			else args = args->next;
 			i++;
 		}
 		else
@@ -5665,7 +5672,7 @@ ase_char_t* ase_awk_sprintf (
 			ase_char_t* p;
 			int n;
 
-			if (args == ASE_NULL)
+			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
 				run->errnum = ASE_AWK_EPRINTFARG;
 				return ASE_NULL;
@@ -5675,7 +5682,9 @@ ase_char_t* ase_awk_sprintf (
 			FMT_CHAR (ASE_T('l'));
 			FMT_CHAR (fmt[i]);
 
-			v = __eval_expression (run, args);
+			v = (args == ASE_NULL)? 
+				ase_awk_getarg (run, stack_arg_idx):
+				__eval_expression (run, args);
 			if (v == ASE_NULL) return ASE_NULL;
 
 			ase_awk_refupval (v);
@@ -5712,7 +5721,7 @@ ase_char_t* ase_awk_sprintf (
 			ase_char_t* p;
 			int n;
 
-			if (args == ASE_NULL)
+			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
 				run->errnum = ASE_AWK_EPRINTFARG;
 				return ASE_NULL;
@@ -5721,7 +5730,9 @@ ase_char_t* ase_awk_sprintf (
 			FMT_CHAR (ASE_T('L'));
 			FMT_CHAR (fmt[i]);
 
-			v = __eval_expression (run, args);
+			v = (args == ASE_NULL)? 
+				ase_awk_getarg (run, stack_arg_idx):
+				__eval_expression (run, args);
 			if (v == ASE_NULL) return ASE_NULL;
 
 			ase_awk_refupval (v);
@@ -5749,7 +5760,7 @@ ase_char_t* ase_awk_sprintf (
 			ase_awk_val_t* v;
 			ase_char_t* p;
 
-			if (args == ASE_NULL)
+			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
 				run->errnum = ASE_AWK_EPRINTFARG;
 				return ASE_NULL;
@@ -5757,7 +5768,9 @@ ase_char_t* ase_awk_sprintf (
 
 			FMT_CHAR (fmt[i]);
 
-			v = __eval_expression (run, args);
+			v = (args == ASE_NULL)? 
+				ase_awk_getarg (run, stack_arg_idx):
+				__eval_expression (run, args);
 			if (v == ASE_NULL) return ASE_NULL;
 
 			ase_awk_refupval (v);
@@ -5815,7 +5828,7 @@ ase_char_t* ase_awk_sprintf (
 			ase_awk_val_t* v;
 			ase_char_t* p;
 
-			if (args == ASE_NULL)
+			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
 				run->errnum = ASE_AWK_EPRINTFARG;
 				return ASE_NULL;
@@ -5823,7 +5836,9 @@ ase_char_t* ase_awk_sprintf (
 
 			FMT_CHAR (fmt[i]);
 
-			v = __eval_expression (run, args);
+			v = (args == ASE_NULL)? 
+				ase_awk_getarg (run, stack_arg_idx):
+				__eval_expression (run, args);
 			if (v == ASE_NULL) return ASE_NULL;
 
 			ase_awk_refupval (v);
@@ -5878,7 +5893,8 @@ ase_char_t* ase_awk_sprintf (
 			OUT_CHAR (fmt[i]);
 		}
 
-		args = args->next;
+		if (args == ASE_NULL) stack_arg_idx++;
+		else args = args->next;
 		ase_awk_str_clear (&run->sprintf.fmt);
 	}
 
