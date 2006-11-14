@@ -1,24 +1,51 @@
-SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
+OUT = aseawk
+
+C_SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
-OBJS = $(SRCS:.c=.obj)
-OUT = aseawk.lib
+JNI_SRCS = $(C_SRCS) jni.c
+JAVA_SRCS = Awk.java Exception.java Extio.java
+
+C_OBJS = $(C_SRCS:.c=.obj)
+JNI_OBJS = $(JNI_SRCS:.c=.obj)
+JAVA_OBJS = $(JAVA_SRCS:.java=.class)
+
+JNI_INC = \
+	/I"C:\Program Files\Java\jdk1.5.0_09\include" \
+	/I"C:\Program Files\Java\jdk1.5.0_09\include\win32" 
 
 CC = bcc32
-CFLAGS_COMMON = -O2 -WM -WU -RT- -w -I../.. 
+LD = ilink32
+AR = tlib
+JAVAC = javac
+
+
+CFLAGS_COMMON = -O2 -WM -WU -RT- -w -I../.. $(JNI_INC) 
 CFLAGS_RELEASE = $(CFLAGS_COMMON) -DNDEBUG
 CFLAGS_DEBUG = $(CFLAGS_COMMON) -D_DEBUG
 CFLAGS = $(CFLAGS_DEBUG)
+JAVACFLAGS = -classpath ../..
 
-all: $(OBJS)
-	tlib $(OUT) @&&!
+LDFLAGS = -Tpd -ap -Gn -L"c:\program files\borland\bds\4.0\lib"
+STARTUP = c0d32w.obj
+LIBS = import32.lib cw32mt.lib 
+
+all: lib jni
+
+lib: $(C_OBJS)
+	$(AR) $(OUT).lib @&&!
 +-$(**: = &^
 +-)
 !
 
-clean:
-	-del $(OBJS) $(OUT) *.obj
+jni: $(JNI_OBJS) $(JAVA_OBJS)
+	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT).dll,,$(LIBS),,
 
-.SUFFIXES: .c .obj
+clean:
+	-del $(OBJS) $(OUT).lib $(OUT).dll *.obj *.class
+
+.SUFFIXES: .c .obj .java .class
 .c.obj:
 	$(CC) $(CFLAGS) -c $<
 
+.java.class:
+	$(JAVAC) $(JAVACFLAGS) $<
