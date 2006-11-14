@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.81 2006-11-13 15:08:54 bacon Exp $
+ * $Id: val.c,v 1.82 2006-11-14 14:54:18 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -578,6 +578,7 @@ static ase_char_t* __val_real_to_str (
 /* TODO: need to use awk's own version of sprintf so that it would have
  *       problems with handling long double or double... */
 /* TODO: does it need to check if a null character is included in convfmt??? */
+/* TODO: check if convfmt contains more that one format specifier */
 	run->awk->syscas.sprintf (tbuf, ase_countof(tbuf), tmp, (double)v->val); 
 	if (buf == ASE_NULL) 
 	{
