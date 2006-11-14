@@ -1,22 +1,22 @@
 LIBRARY	"aseawk.dll"
 
 EXPORTS
-	sse_awk_open 
-	sse_awk_close
+	ase_awk_open 
+	ase_awk_close
 
-	sse_awk_geterrnum 
-	sse_awk_geterrstr 
+	ase_awk_geterrnum 
+	ase_awk_geterrstr 
 
-	sse_awk_clear 
-	sse_awk_setparseopt 
-	sse_awk_setrunopt 
+	ase_awk_clear 
+	ase_awk_setparseopt 
+	ase_awk_setrunopt 
 
-	sse_awk_attsrc 
-	sse_awk_detsrc 
+	ase_awk_attsrc 
+	ase_awk_detsrc 
 
-	sse_awk_parse 
-	sse_awk_run 
+	ase_awk_parse 
+	ase_awk_run 
 
-	sse_awk_printf
-	sse_awk_strcmp
+	ase_awk_printf
+	ase_awk_strcmp
 
