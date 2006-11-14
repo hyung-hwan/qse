@@ -33,7 +33,7 @@ jni: $(JNI_OBJS) $(JAVA_OBJS)
 <<
 
 clean:
-	del $(OBJS) $(OUT) *.obj *.class
+	del $(OBJS) $(OUT).lib $(OUT).dll *.obj *.class
 
 .SUFFIXES: .c .obj .java .class
 .c.obj:
