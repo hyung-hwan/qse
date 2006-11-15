@@ -1,5 +1,5 @@
 /*
- * $Id: conf_dos.h,v 1.7 2006-10-24 04:30:13 bacon Exp $
+ * $Id: conf_dos.h,v 1.8 2006-11-15 05:49:22 bacon Exp $
  */
 
 #if !defined(__LARGE__) && !defined(__HUGE__)
@@ -25,7 +25,7 @@
 
 #define ASE_SIZEOF_FLOAT 4
 #define ASE_SIZEOF_DOUBLE 8
-#define ASE_SIZEOF_LONG_DOUBLE 10  /* turbo c 2.01 */
+#define ASE_SIZEOF_LONG_DOUBLE 10  /* turbo c 2.01/turbo c++ 1.0 */
 #define ASE_SIZEOF_WCHAR_T 0 
 
 #define ASE_CHAR_IS_MCHAR

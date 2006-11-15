@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.41 2006-10-27 10:34:40 bacon Exp $
+ * $Id: rex.c,v 1.42 2006-11-15 05:49:22 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1696,6 +1696,8 @@ static ase_bool_t __cc_isxdigit (ase_awk_t* awk, ase_char_t c)
 	return ASE_AWK_ISXDIGIT (awk, c);
 }
 
+#ifdef DEBUG_REX
+
 void ase_awk_printrex (void* rex)
 {
 	__print_pattern (rex);
@@ -1836,3 +1838,4 @@ static const ase_byte_t* __print_atom (const ase_byte_t* p)
 	return p;
 }
 
+#endif

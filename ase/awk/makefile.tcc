@@ -3,14 +3,14 @@
 #
 
 SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
-	run.c rec.c val.c misc.c extio.c rex.c
+	run.c rec.c val.c func.c misc.c extio.c rex.c
 OBJS = awk.obj err.obj tree.obj str.obj tab.obj map.obj parse.obj \
-	run.obj rec.obj val.obj misc.obj extio.obj rex.obj
+	run.obj rec.obj val.obj func.obj misc.obj extio.obj rex.obj
 OUT = aseawk.lib
 
 CC = tcc
 AR = tlib
-CFLAGS = -1 -O -mh -w -f87 -G -I..\.. -Ddos 
+CFLAGS = -1 -O -mh -w -f87 -G -g0 -I..\.. -D_DEBUG
 
 all: $(OBJS)
 	-del $(OUT)
@@ -24,6 +24,7 @@ all: $(OBJS)
 	$(AR) $(OUT) +run.obj
 	$(AR) $(OUT) +rec.obj
 	$(AR) $(OUT) +val.obj
+	$(AR) $(OUT) +func.obj
 	$(AR) $(OUT) +misc.obj
 	$(AR) $(OUT) +extio.obj
 	$(AR) $(OUT) +rex.obj

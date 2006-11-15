@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.82 2006-11-14 14:54:18 bacon Exp $
+ * $Id: val.c,v 1.83 2006-11-15 05:49:22 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -431,8 +431,10 @@ ase_char_t* ase_awk_valtostr (
 	}
 
 /* TODO: process more value types */
+	run->awk->syscas.dprintf (
+		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr\n"), 
+		v->type);
 
-xp_printf (ASE_T("*** ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr v=> %p***\n"), v->type, v);
 	run->errnum = ASE_AWK_EVALTYPE;
 	return ASE_NULL;
 }
@@ -650,7 +652,10 @@ int ase_awk_valtonum (
 		return 0; /* long */
 	}
 
-xp_printf (ASE_T("*** ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum v=> %p***\n"), v->type, v);
+	run->awk->syscas.dprintf (
+		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum\n"), 
+		v->type);
+
 	run->errnum = ASE_AWK_EVALTYPE;
 	return -1; /* error */
 }

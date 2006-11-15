@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.111 2006-11-13 09:11:09 bacon Exp $
+ * $Id: awk.c,v 1.112 2006-11-15 05:49:22 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -14,7 +14,7 @@
 	#include <wctype.h>
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	#include <windows.h>
 	#include <tchar.h>
 	#include <limits.h>
@@ -28,11 +28,25 @@
 
 	#define xp_vsprintf _vsntprintf
 	#define xp_sprintf _sntprintf
-	#define xp_frintf _ftprintf
+	#define xp_fprintf _ftprintf
 	#define xp_printf _tprintf
 	#define xp_assert assert
 
 	#pragma warning (disable: 4996)
+#elif defined(__MSDOS__)
+	#include <limits.h>
+	#include <assert.h>
+	#include <ctype.h>
+	#include <stdlib.h>
+
+	#ifndef PATH_MAX
+		#define ASE_PATH_MAX 4096
+	#else
+		#define ASE_PATH_MAX PATH_MAX
+	#endif
+
+	#define xp_printf printf
+	#define xp_assert assert
 #else
 	#include <xp/bas/stdio.h>
 	#include <xp/bas/stdlib.h>
@@ -85,6 +99,25 @@ static FILE* fopen_t (const ase_char_t* path, const ase_char_t* mode)
 #endif
 }
 
+static int __sprintf (
+	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+
+	va_start (ap, fmt);
+#if defined(_WIN32)
+	n = _sntprintf (buf, len, fmt, ap);
+#elif defined(__MSDOS__)
+	/* TODO: check buffer overflow */
+	n = vsprintf (buf, fmt, ap);
+#else
+	n = xp_vsprintf (buf, len, fmt, ap);
+#endif
+	va_end (ap);
+	return n;
+}
+
 static int __aprintf (const ase_char_t* fmt, ...)
 {
 	int n;
@@ -94,15 +127,16 @@ static int __aprintf (const ase_char_t* fmt, ...)
 #endif
 
 	va_start (ap, fmt);
-#ifdef _WIN32
+#if defined(_WIN32)
 	n = _vsntprintf (buf, ase_countof(buf), fmt, ap);
 
-#if defined(_MSC_VER) && (_MSC_VER<1400)
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
 	MessageBox (NULL, buf, ASE_T("Assertion Failure"), MB_OK | MB_ICONERROR);
-#else
+	#else
 	MessageBox (NULL, buf, ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK | MB_ICONERROR);
-#endif
-
+	#endif
+#elif defined(__MSDOS__)
+	n = vprintf (fmt, ap);
 #else
 	n = xp_vprintf (fmt, ap);
 #endif
@@ -116,8 +150,10 @@ static int __dprintf (const ase_char_t* fmt, ...)
 	va_list ap;
 	va_start (ap, fmt);
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	n = _vftprintf (stderr, fmt, ap);
+#elif defined(__MSDOS__)
+	n = vfprintf (stderr, fmt, ap);
 #else
 	n = xp_vfprintf (stderr, fmt, ap);
 #endif
@@ -133,8 +169,11 @@ static ase_real_t __awk_pow (ase_real_t x, ase_real_t y)
 
 static FILE* popen_t (const ase_char_t* cmd, const ase_char_t* mode)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	return _tpopen (cmd, mode);
+#elif defined(__MSDOS__)
+	/* TODO: support this */
+	return NULL;
 #else
 	#ifdef ASE_CHAR_IS_MCHAR
 	const ase_mchar_t* cmd_mb;
@@ -220,11 +259,11 @@ static ase_ssize_t dump_source (
 		ase_size_t i;
 		for (i = 0; i < size; i++)
 		{
-	#ifdef ASE_CHAR_IS_MCHAR
+		#ifdef ASE_CHAR_IS_MCHAR
 			fputc (data[i], stdout);
-	#else
+		#else
 			fputwc (data[i], stdout);
-	#endif
+		#endif
 		}
 		return size;
 	}
@@ -589,7 +628,7 @@ static void __stop_run (int sig)
 {
 	signal  (SIGINT, SIG_IGN);
 	ase_awk_stop (app_awk, app_run);
-	//ase_awk_stoprun (awk, handle);
+	/*ase_awk_stoprun (awk, handle);*/
 	/*ase_awk_stopallruns (awk); */
 	signal  (SIGINT, __stop_run);
 }
@@ -654,6 +693,53 @@ static void __awk_free (void* ptr, void* custom_data)
 #endif
 }
 
+#if defined(ASE_CHAR_IS_MCHAR) 
+	#if (__TURBOC__<=513) /* turboc 2.01 or earlier */
+		static int __awk_isupper (int c) { return isupper (c); }
+		static int __awk_islower (int c) { return islower (c); }
+		static int __awk_isalpha (int c) { return isalpha (c); }
+		static int __awk_isdigit (int c) { return isdigit (c); }
+		static int __awk_isxdigit (int c) { return isxdigit (c); }
+		static int __awk_isalnum (int c) { return isalnum (c); }
+		static int __awk_isspace (int c) { return isspace (c); }
+		static int __awk_isprint (int c) { return isprint (c); }
+		static int __awk_isgraph (int c) { return isgraph (c); }
+		static int __awk_iscntrl (int c) { return iscntrl (c); }
+		static int __awk_ispunct (int c) { return ispunct (c); }
+		static int __awk_toupper (int c) { return toupper (c); }
+		static int __awk_tolower (int c) { return tolower (c); }
+	#else
+		#define __awk_isupper  isupper
+		#define __awk_islower  islower
+		#define __awk_isalpha  isalpha
+		#define __awk_isdigit  isdigit
+		#define __awk_isxdigit isxdigit
+		#define __awk_isalnum  isalnum
+		#define __awk_isspace  isspace
+		#define __awk_isprint  isprint
+		#define __awk_isgraph  isgraph
+		#define __awk_iscntrl  iscntrl
+		#define __awk_ispunct  ispunct
+		#define __awk_toupper tolower
+		#define __awk_toupper toupper
+	#endif
+#else
+	#define __awk_isupper  iswupper
+	#define __awk_islower  iswlower
+	#define __awk_isalpha  iswalpha
+	#define __awk_isdigit  iswdigit
+	#define __awk_isxdigit iswxdigit
+	#define __awk_isalnum  iswalnum
+	#define __awk_isspace  iswspace
+	#define __awk_isprint  iswprint
+	#define __awk_isgraph  iswgraph
+	#define __awk_iscntrl  iswcntrl
+	#define __awk_ispunct  iswpunct
+
+	#define __awk_toupper  towlower
+	#define __awk_toupper  towupper
+#endif
+
 static int __main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
@@ -712,39 +798,24 @@ static int __main (int argc, ase_char_t* argv[])
 	syscas.lock = NULL;
 	syscas.unlock = NULL;
 
-#ifdef ASE_CHAR_IS_MCHAR
-	syscas.is_upper  = isupper;
-	syscas.is_lower  = islower;
-	syscas.is_alpha  = isalpha;
-	syscas.is_digit  = isdigit;
-	syscas.is_xdigit = isxdigit;
-	syscas.is_alnum  = isalnum;
-	syscas.is_space  = isspace;
-	syscas.is_print  = isprint;
-	syscas.is_graph  = isgraph;
-	syscas.is_cntrl  = iscntrl;
-	syscas.is_punct  = ispunct;
-	syscas.to_upper  = toupper;
-	syscas.to_lower  = tolower;
-#else
-	syscas.is_upper  = iswupper;
-	syscas.is_lower  = iswlower;
-	syscas.is_alpha  = iswalpha;
-	syscas.is_digit  = iswdigit;
-	syscas.is_xdigit = iswxdigit;
-	syscas.is_alnum  = iswalnum;
-	syscas.is_space  = iswspace;
-	syscas.is_print  = iswprint;
-	syscas.is_graph  = iswgraph;
-	syscas.is_cntrl  = iswcntrl;
-	syscas.is_punct  = iswpunct;
-	syscas.to_upper  = towupper;
-	syscas.to_lower  = towlower;
-#endif
+	syscas.is_upper  = __awk_isupper;
+	syscas.is_lower  = __awk_islower;
+	syscas.is_alpha  = __awk_isalpha;
+	syscas.is_digit  = __awk_isdigit;
+	syscas.is_xdigit = __awk_isxdigit;
+	syscas.is_alnum  = __awk_isalnum;
+	syscas.is_space  = __awk_isspace;
+	syscas.is_print  = __awk_isprint;
+	syscas.is_graph  = __awk_isgraph;
+	syscas.is_cntrl  = __awk_iscntrl;
+	syscas.is_punct  = __awk_ispunct;
+	syscas.to_upper  = __awk_toupper;
+	syscas.to_lower  = __awk_tolower;
+
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
 	syscas.pow = __awk_pow;
-	syscas.sprintf = xp_sprintf;
+	syscas.sprintf = __sprintf;
 	syscas.aprintf = __aprintf;
 	syscas.dprintf = __dprintf;
 	syscas.abort = abort;
@@ -778,17 +849,10 @@ static int __main (int argc, ase_char_t* argv[])
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{
 		int errnum = ase_awk_geterrnum(awk);
-#if !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
-		wprintf (
-			ASE_T("ERROR: cannot parse program - line %u [%d] %ls\n"), 
-			(unsigned int)ase_awk_getsrcline(awk), 
-			errnum, ase_awk_geterrstr(errnum));
-#else
-		_tprintf (
+		xp_printf (
 			ASE_T("ERROR: cannot parse program - line %u [%d] %s\n"), 
 			(unsigned int)ase_awk_getsrcline(awk), 
 			errnum, ase_awk_geterrstr(errnum));
-#endif
 		ase_awk_close (awk);
 		return -1;
 	}
@@ -820,16 +884,9 @@ static int __main (int argc, ase_char_t* argv[])
 	if (ase_awk_run (awk, &runios, &runcbs, runarg) == -1)
 	{
 		int errnum = ase_awk_geterrnum(awk);
-#if !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
-		wprintf (
-			ASE_T("error: cannot run program - [%d] %ls\n"), 
-			errnum, ase_awk_geterrstr(errnum));
-#else
-		_tprintf (
+		xp_printf (
 			ASE_T("error: cannot run program - [%d] %s\n"), 
 			errnum, ase_awk_geterrstr(errnum));
-#endif
-
 		ase_awk_close (awk);
 		return -1;
 	}
@@ -1007,6 +1064,8 @@ int /*__declspec(naked)*/ is_debugger_present2 (void)
 
 #if defined(_WIN32)
 int _tmain (int argc, ase_char_t* argv[])
+#elif defined(__MSDOS__)
+int main (int argc, ase_char_t* argv[])
 #else
 int xp_main (int argc, ase_char_t* argv[])
 #endif
