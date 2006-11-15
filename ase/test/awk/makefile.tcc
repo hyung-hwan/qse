@@ -1,7 +1,7 @@
 CC = tcc
-CFLAGS = -1 -O -mh -w -f87 -I..\..\.. -Ddos -D__STAND_ALONE
+CFLAGS = -1 -O -mh -w -f87 -I..\..\.. 
 LDFLAGS = -L..\..\awk
-LIBS = xpawk.lib 
+LIBS = aseawk.lib 
 
 all: awk 
 
