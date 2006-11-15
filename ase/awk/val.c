@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.83 2006-11-15 05:49:22 bacon Exp $
+ * $Id: val.c,v 1.84 2006-11-15 15:04:41 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -573,18 +573,32 @@ static ase_char_t* __val_real_to_str (
 {
 /* TODO: change the code */
 	ase_char_t tbuf[256], * tmp;
+	ase_size_t tmp_len;
 
-	tmp = (opt & ASE_AWK_VALTOSTR_PRINT)? 
-		run->global.ofmt.ptr: run->global.convfmt.ptr;
+	if (opt & ASE_AWK_VALTOSTR_PRINT)
+	{
+		tmp = run->global.ofmt.ptr;
+		tmp_len = run->global.ofmt.len;
+	}
+	else
+	{
+		tmp = run->global.convfmt.ptr;
+		tmp_len = run->global.convfmt.len;
+	}
 
 /* TODO: need to use awk's own version of sprintf so that it would have
  *       problems with handling long double or double... */
 /* TODO: does it need to check if a null character is included in convfmt??? */
 /* TODO: check if convfmt contains more that one format specifier */
-	run->awk->syscas.sprintf (tbuf, ase_countof(tbuf), tmp, (double)v->val); 
+	//run->awk->syscas.sprintf (tbuf, ase_countof(tbuf), tmp, (double)v->val);
+	tmp = ase_awk_sprintf (run, tmp, tmp_len, 
+		(ase_size_t)-1, (ase_awk_nde_t*)v, &tmp_len);
+
+
 	if (buf == ASE_NULL) 
 	{
-		tmp = ase_awk_strdup (run->awk, tbuf);
+		//tmp = ase_awk_strdup (run->awk, tbuf);
+		tmp = ase_awk_strxdup (run->awk, tmp, tmp_len);
 		if (tmp == ASE_NULL) 
 		{
 			run->errnum = ASE_AWK_ENOMEM;
@@ -597,7 +611,8 @@ static ase_char_t* __val_real_to_str (
 	{
 		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_awk_str_clear (buf);
 
-		if (ase_awk_str_cat (buf, tbuf) == (ase_size_t)-1)
+		//if (ase_awk_str_cat (buf, tbuf) == (ase_size_t)-1)
+		if (ase_awk_str_ncat (buf, tmp, tmp_len) == (ase_size_t)-1)
 		{
 			run->errnum = ASE_AWK_ENOMEM;
 			return ASE_NULL;
