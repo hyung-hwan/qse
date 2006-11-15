@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.112 2006-11-15 05:49:22 bacon Exp $
+ * $Id: awk.c,v 1.113 2006-11-15 06:00:08 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -107,7 +107,7 @@ static int __sprintf (
 
 	va_start (ap, fmt);
 #if defined(_WIN32)
-	n = _sntprintf (buf, len, fmt, ap);
+	n = _vsntprintf (buf, len, fmt, ap);
 #elif defined(__MSDOS__)
 	/* TODO: check buffer overflow */
 	n = vsprintf (buf, fmt, ap);
@@ -720,8 +720,8 @@ static void __awk_free (void* ptr, void* custom_data)
 		#define __awk_isgraph  isgraph
 		#define __awk_iscntrl  iscntrl
 		#define __awk_ispunct  ispunct
-		#define __awk_toupper tolower
-		#define __awk_toupper toupper
+		#define __awk_toupper  tolower
+		#define __awk_tolower  tolower
 	#endif
 #else
 	#define __awk_isupper  iswupper
@@ -737,7 +737,7 @@ static void __awk_free (void* ptr, void* custom_data)
 	#define __awk_ispunct  iswpunct
 
 	#define __awk_toupper  towlower
-	#define __awk_toupper  towupper
+	#define __awk_tolower  towlower
 #endif
 
 static int __main (int argc, ase_char_t* argv[])
