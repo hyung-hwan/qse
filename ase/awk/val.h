@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.50 2006-11-16 11:53:16 bacon Exp $
+ * $Id: val.h,v 1.51 2006-11-16 15:16:25 bacon Exp $
  */
 
 #ifndef _ASE_AWK_VAL_H_
@@ -143,9 +143,12 @@ extern ase_awk_val_t* ase_awk_val_one;
 ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v);
 ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v);
 
-ase_awk_val_t* ase_awk_makestrval0 (ase_awk_run_t* run, const ase_char_t* str);
+ase_awk_val_t* ase_awk_makestrval0 (
+	ase_awk_run_t* run, const ase_char_t* str);
 ase_awk_val_t* ase_awk_makestrval (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t len);
+ase_awk_val_t* ase_awk_makestrval_nodup (
+	ase_awk_run_t* run, ase_char_t* str, ase_size_t len);
 ase_awk_val_t* ase_awk_makestrval2 (
 	ase_awk_run_t* run,
 	const ase_char_t* str1, ase_size_t len1, 

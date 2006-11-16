@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.23 2006-11-14 14:54:18 bacon Exp $
+ * $Id: run.h,v 1.24 2006-11-16 15:16:25 bacon Exp $
  */
 
 #ifndef _ASE_AWK_RUN_H_
@@ -105,7 +105,8 @@ extern "C" {
 #endif
 
 ase_char_t* ase_awk_sprintf (
-	ase_awk_run_t* run, const ase_char_t* fmt, ase_size_t fmt_len, 
+	ase_awk_run_t* run, ase_awk_str_t* out, ase_awk_str_t* fbu,
+	const ase_char_t* fmt, ase_size_t fmt_len, 
 	ase_size_t nargs_on_stack, ase_awk_nde_t* args, ase_size_t* len);
 
 #ifdef __cplusplus
