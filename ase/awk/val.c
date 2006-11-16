@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.85 2006-11-16 04:44:16 bacon Exp $
+ * $Id: val.c,v 1.86 2006-11-16 11:53:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -304,14 +304,16 @@ xp_printf (ASE_T("\n"));*/
 	}
 }
 
-void ase_awk_refupval (ase_awk_val_t* val)
+void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val)
 {
 	if (ase_awk_isbuiltinval(val)) return;
+
 /*
-xp_printf (ASE_T("ref up "));
-ase_awk_dprintval (val);
-xp_printf (ASE_T("\n"));
+run->awk->syscas.dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
+ase_awk_dprintval (run, val);
+run->awk->syscas.dprintf (ASE_T("\n"));
 */
+
 	val->ref++;
 }
 
@@ -320,10 +322,9 @@ void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 
 /*
-xp_printf (ASE_T("%p, %p, %p\n"), ase_awk_val_nil, &__awk_nil, val);
-xp_printf (ASE_T("ref down [count=>%d]\n"), (int)val->ref);
-ase_awk_dprintval (val);
-xp_printf (ASE_T("\n"));
+run->awk->syscas.dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
+ase_awk_dprintval (run, val);
+run->awk->syscas.dprintf (ASE_T("\n"));
 */
 
 	ASE_AWK_ASSERTX (run->awk, val->ref > 0, 
@@ -572,7 +573,7 @@ static ase_char_t* __val_real_to_str (
 	int opt, ase_awk_str_t* buf, ase_size_t* len)
 {
 /* TODO: change the code */
-	ase_char_t tbuf[256], * tmp;
+	ase_char_t* tmp;
 	ase_size_t tmp_len;
 
 	if (opt & ASE_AWK_VALTOSTR_PRINT)
