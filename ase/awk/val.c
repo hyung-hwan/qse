@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.84 2006-11-15 15:04:41 bacon Exp $
+ * $Id: val.c,v 1.85 2006-11-16 04:44:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -593,7 +593,7 @@ static ase_char_t* __val_real_to_str (
 	//run->awk->syscas.sprintf (tbuf, ase_countof(tbuf), tmp, (double)v->val);
 	tmp = ase_awk_sprintf (run, tmp, tmp_len, 
 		(ase_size_t)-1, (ase_awk_nde_t*)v, &tmp_len);
-
+	if (tmp == ASE_NULL) return ASE_NULL;
 
 	if (buf == ASE_NULL) 
 	{
