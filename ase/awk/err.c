@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.47 2006-11-13 09:02:23 bacon Exp $
+ * $Id: err.c,v 1.48 2006-11-16 04:44:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -81,8 +81,8 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("nextfile illegal in BEGIN or END block"),
 		ASE_T("getline expected"),
 		ASE_T("printf requires one or more arguments"),
-		ASE_T("formatting sequence is wrong"),
 
+		ASE_T("internal error that should never have happened"),
 		ASE_T("divide by zero"),
 		ASE_T("invalid operand"),
 		ASE_T("wrong position index"),
@@ -103,12 +103,13 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("wrong implementation of user-defined io handler"),
 		ASE_T("no such io name found"),
 		ASE_T("io handler has returned an error"),
-		ASE_T("internal error that should never have happened"),
+		ASE_T("not sufficient arguments to formatting sequence"),
+		ASE_T("recursion detected in format conversion"),
 
-		ASE_T("a right parenthesis is expected in the regular expression"),
-		ASE_T("a right bracket is expected in the regular expression"),
-		ASE_T("a right brace is expected in the regular expression"),
-		ASE_T("a colon is expected in the regular expression"),
+		ASE_T("a right parenthesis expected in the regular expression"),
+		ASE_T("a right bracket expected in the regular expression"),
+		ASE_T("a right brace expected in the regular expression"),
+		ASE_T("a colon expected in the regular expression"),
 		ASE_T("invalid character range in the regular expression"),
 		ASE_T("invalid character class in the regular expression"),
 		ASE_T("invalid boundary range in the regular expression"),

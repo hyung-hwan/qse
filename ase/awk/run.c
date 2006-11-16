@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.260 2006-11-15 15:04:41 bacon Exp $
+ * $Id: run.c,v 1.261 2006-11-16 04:44:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -5598,7 +5598,7 @@ ase_char_t* ase_awk_sprintf (
 
 			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
-				run->errnum = ASE_AWK_EPRINTFARG;
+				run->errnum = ASE_AWK_EFMTARG;
 				return ASE_NULL;
 			}
 
@@ -5658,7 +5658,7 @@ ase_char_t* ase_awk_sprintf (
 
 			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
-				run->errnum = ASE_AWK_EPRINTFARG;
+				run->errnum = ASE_AWK_EFMTARG;
 				return ASE_NULL;
 			}
 
@@ -5717,7 +5717,7 @@ ase_char_t* ase_awk_sprintf (
 
 			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
-				run->errnum = ASE_AWK_EPRINTFARG;
+				run->errnum = ASE_AWK_EFMTARG;
 				return ASE_NULL;
 			}
 
@@ -5768,7 +5768,7 @@ ase_char_t* ase_awk_sprintf (
 
 			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
-				run->errnum = ASE_AWK_EPRINTFARG;
+				run->errnum = ASE_AWK_EFMTARG;
 				return ASE_NULL;
 			}
 
@@ -5809,7 +5809,7 @@ ase_char_t* ase_awk_sprintf (
 
 			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
-				run->errnum = ASE_AWK_EPRINTFARG;
+				run->errnum = ASE_AWK_EFMTARG;
 				return ASE_NULL;
 			}
 
@@ -5879,7 +5879,7 @@ ase_char_t* ase_awk_sprintf (
 
 			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
 			{
-				run->errnum = ASE_AWK_EPRINTFARG;
+				run->errnum = ASE_AWK_EFMTARG;
 				return ASE_NULL;
 			}
 
@@ -5911,14 +5911,12 @@ ase_char_t* ase_awk_sprintf (
 			{
 				ase_size_t l;
 
-			/* TODO:XXXXX
-			if (v == val)
-			{
-				ase_awk_refdownval (run, v);
-				run->errnum = ASE_AWK_EPRINTFARG;
-				return ASE_NULL;
-			}
-			*/
+				if (v == val)
+				{
+					ase_awk_refdownval (run, v);
+					run->errnum = ASE_AWK_EFMTCONV;
+					return ASE_NULL;
+				}
 
 				p = ase_awk_valtostr (run, v, 
 					ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &l);
