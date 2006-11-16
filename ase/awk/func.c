@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.75 2006-11-16 11:53:16 bacon Exp $
+ * $Id: func.c,v 1.76 2006-11-16 15:16:25 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1248,9 +1248,22 @@ static int __bfn_sprintf (ase_awk_run_t* run)
 	ase_awk_val_t* a0;
 	ase_char_t* str0, * ptr;
 	ase_size_t len0, len;
+	ase_awk_str_t out, fbu;
 
 	nargs = ase_awk_getnargs (run);
 	ASE_AWK_ASSERT (run->awk, nargs > 0);
+
+	if (ase_awk_str_open (&out, 256, run->awk) == ASE_NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+	if (ase_awk_str_open (&fbu, 256, run->awk) == ASE_NULL)
+	{
+		ase_awk_str_close (&out);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
 
 	a0 = ase_awk_getarg (run, 0);
 	if (a0->type == ASE_AWK_VAL_STR)
@@ -1262,20 +1275,35 @@ static int __bfn_sprintf (ase_awk_run_t* run)
 	{
 		str0 = ase_awk_valtostr (
 			run, a0, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len0);
-		if (str0 == ASE_NULL) return -1;
+		if (str0 == ASE_NULL) 
+		{
+			ase_awk_str_close (&fbu);
+			ase_awk_str_close (&out);
+			return -1;
+		}
 	}
 
-	ptr = ase_awk_sprintf (run, str0, len0, nargs, ASE_NULL, &len);
+	ptr = ase_awk_sprintf (run, 
+		&out, &fbu, str0, len0, nargs, ASE_NULL, &len);
 	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str0);
-	if (ptr == ASE_NULL) return -1;
+	if (ptr == ASE_NULL) 
+	{
+		ase_awk_str_close (&fbu);
+		ase_awk_str_close (&out);
+		return -1;
+	}
 	
-	a0 = ase_awk_makestrval (run, ptr, len);
+	a0 = ase_awk_makestrval_nodup (run, ptr, len);
 	if (a0 == ASE_NULL) 
 	{
+		ase_awk_str_close (&fbu);
+		ase_awk_str_close (&out);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
 
+	ase_awk_str_close (&fbu);
+	ase_awk_str_forfeit (&out);
 	ase_awk_setretval (run, a0);
 	return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.262 2006-11-16 11:53:16 bacon Exp $
+ * $Id: run.c,v 1.263 2006-11-16 15:16:25 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -676,30 +676,9 @@ static int __init_run (ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum
 		return -1;
 	}
 
-	if (ase_awk_str_open (&run->sconvf.out, 256, run->awk) == ASE_NULL)
-	{
-		ase_awk_str_close (&run->sprintf.fmt);
-		ase_awk_str_close (&run->sprintf.out);
-		ase_awk_str_close (&run->inrec.line);
-		*errnum = ASE_AWK_ENOMEM;
-		return -1;
-	}
-
-	if (ase_awk_str_open (&run->sconvf.fmt, 256, run->awk) == ASE_NULL)
-	{
-		ase_awk_str_close (&run->sconvf.out);
-		ase_awk_str_close (&run->sprintf.fmt);
-		ase_awk_str_close (&run->sprintf.out);
-		ase_awk_str_close (&run->inrec.line);
-		*errnum = ASE_AWK_ENOMEM;
-		return -1;
-	}
-
 	if (ase_awk_map_open (&run->named, 
 		run, DEF_BUF_CAPA, __free_namedval, run->awk) == ASE_NULL) 
 	{
-		ase_awk_str_close (&run->sconvf.fmt);
-		ase_awk_str_close (&run->sconvf.out);
 		ase_awk_str_close (&run->sprintf.fmt);
 		ase_awk_str_close (&run->sprintf.out);
 		ase_awk_str_close (&run->inrec.line);
@@ -714,8 +693,6 @@ static int __init_run (ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum
 		if (run->pattern_range_state == ASE_NULL)
 		{
 			ase_awk_map_close (&run->named);
-			ase_awk_str_close (&run->sconvf.fmt);
-			ase_awk_str_close (&run->sconvf.out);
 			ase_awk_str_close (&run->sprintf.fmt);
 			ase_awk_str_close (&run->sprintf.out);
 			ase_awk_str_close (&run->inrec.line);
@@ -804,8 +781,6 @@ static void __deinit_run (ase_awk_run_t* run)
 		run->global.subsep.len = 0;
 	}
 
-	ase_awk_str_close (&run->sconvf.fmt);
-	ase_awk_str_close (&run->sconvf.out);
 	ase_awk_str_close (&run->sprintf.fmt);
 	ase_awk_str_close (&run->sprintf.out);
 
@@ -2466,7 +2441,8 @@ static int __formatted_output (
 	ase_size_t len;
 	int n;
 
-	ptr = ase_awk_sprintf (run, fmt, fmt_len, 0, args, &len);
+	ptr = ase_awk_sprintf (run, 
+		ASE_NULL, ASE_NULL, fmt, fmt_len, 0, args, &len);
 	if (ptr == ASE_NULL) return -1;
 
 	n = ase_awk_writeextio_str (run, out_type, dst, ptr, len);
@@ -5527,12 +5503,12 @@ static ase_char_t* __idxnde_to_str (
 }
 
 ase_char_t* ase_awk_sprintf (
-	ase_awk_run_t* run, const ase_char_t* fmt, ase_size_t fmt_len, 
+	ase_awk_run_t* run, ase_awk_str_t* out, ase_awk_str_t* fbu,
+	const ase_char_t* fmt, ase_size_t fmt_len, 
 	ase_size_t nargs_on_stack, ase_awk_nde_t* args, ase_size_t* len)
 {
 	ase_size_t i, j;
 	ase_size_t stack_arg_idx = 1;
-	ase_awk_str_t* out, * fbu;
 	ase_awk_val_t* val;
 
 #define OUT_CHAR(c) \
@@ -5555,17 +5531,16 @@ ase_char_t* ase_awk_sprintf (
 
 	if (nargs_on_stack == (ase_size_t)-1) 
 	{
-		out = &run->sconvf.out;
-		fbu = &run->sconvf.fmt;
 		val = (ase_awk_val_t*)args;
 		nargs_on_stack = 2;
 	}
 	else 
 	{
-		out = &run->sprintf.out;
-		fbu = &run->sprintf.fmt;
 		val = ASE_NULL;
 	}
+
+	if (out == ASE_NULL) out = &run->sprintf.out;
+	if (fbu == ASE_NULL) fbu = &run->sprintf.fmt;
 
 	ase_awk_str_clear (out);
 	ase_awk_str_clear (fbu);

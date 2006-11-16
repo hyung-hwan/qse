@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.86 2006-11-16 11:53:16 bacon Exp $
+ * $Id: val.c,v 1.87 2006-11-16 15:16:25 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -117,6 +117,22 @@ ase_awk_val_t* ase_awk_makestrval (
 	}
 
 /*xp_printf (ASE_T("makestrval => %p\n"), val);*/
+	return (ase_awk_val_t*)val;
+}
+
+ase_awk_val_t* ase_awk_makestrval_nodup (
+	ase_awk_run_t* run, ase_char_t* str, ase_size_t len)
+{
+	ase_awk_val_str_t* val;
+
+	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
+		run->awk, ase_sizeof(ase_awk_val_str_t));
+	if (val == ASE_NULL) return ASE_NULL;
+
+	val->type = ASE_AWK_VAL_STR;
+	val->ref = 0;
+	val->len = len;
+	val->buf = str;
 	return (ase_awk_val_t*)val;
 }
 
@@ -572,9 +588,9 @@ static ase_char_t* __val_real_to_str (
 	ase_awk_run_t* run, ase_awk_val_real_t* v,
 	int opt, ase_awk_str_t* buf, ase_size_t* len)
 {
-/* TODO: change the code */
 	ase_char_t* tmp;
 	ase_size_t tmp_len;
+	ase_awk_str_t out, fbu;
 
 	if (opt & ASE_AWK_VALTOSTR_PRINT)
 	{
@@ -587,40 +603,52 @@ static ase_char_t* __val_real_to_str (
 		tmp_len = run->global.convfmt.len;
 	}
 
-/* TODO: need to use awk's own version of sprintf so that it would have
- *       problems with handling long double or double... */
+	if (ase_awk_str_open (&out, 256, run->awk) == ASE_NULL)
+	{
+		run->errnum = ASE_AWK_ENOMEM;
+		return ASE_NULL;
+	}
+
+	if (ase_awk_str_open (&fbu, 256, run->awk) == ASE_NULL)
+	{
+		ase_awk_str_close (&out);
+		run->errnum = ASE_AWK_ENOMEM;
+		return ASE_NULL;
+	}
+
 /* TODO: does it need to check if a null character is included in convfmt??? */
 /* TODO: check if convfmt contains more that one format specifier */
-	//run->awk->syscas.sprintf (tbuf, ase_countof(tbuf), tmp, (double)v->val);
-	tmp = ase_awk_sprintf (run, tmp, tmp_len, 
+	tmp = ase_awk_sprintf (run, &out, &fbu, tmp, tmp_len, 
 		(ase_size_t)-1, (ase_awk_nde_t*)v, &tmp_len);
-	if (tmp == ASE_NULL) return ASE_NULL;
+	if (tmp == ASE_NULL) 
+	{
+		ase_awk_str_close (&fbu);
+		ase_awk_str_close (&out);
+		return ASE_NULL;
+	}
 
 	if (buf == ASE_NULL) 
 	{
-		//tmp = ase_awk_strdup (run->awk, tbuf);
-		tmp = ase_awk_strxdup (run->awk, tmp, tmp_len);
-		if (tmp == ASE_NULL) 
-		{
-			run->errnum = ASE_AWK_ENOMEM;
-			return ASE_NULL;
-		}
-
-		if (len != ASE_NULL) *len = ase_awk_strlen(tmp);
+		ase_awk_str_close (&fbu);
+		ase_awk_str_forfeit (&out);
 	}
 	else
 	{
 		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_awk_str_clear (buf);
 
-		//if (ase_awk_str_cat (buf, tbuf) == (ase_size_t)-1)
 		if (ase_awk_str_ncat (buf, tmp, tmp_len) == (ase_size_t)-1)
 		{
+			ase_awk_str_close (&fbu);
+			ase_awk_str_close (&out);
 			run->errnum = ASE_AWK_ENOMEM;
 			return ASE_NULL;
 		}
 
 		tmp = ASE_AWK_STR_BUF(buf);
 		if (len != ASE_NULL) *len = ASE_AWK_STR_LEN(buf);
+
+		ase_awk_str_close (&fbu);
+		ase_awk_str_close (&out);
 	}
 
 	return tmp;
