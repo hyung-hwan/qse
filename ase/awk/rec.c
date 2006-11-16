@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.6 2006-10-26 09:27:15 bacon Exp $
+ * $Id: rec.c,v 1.7 2006-11-16 11:53:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -46,7 +46,7 @@ int ase_awk_setrec (
 		/* d0 should be cleared before the next line is reached
 		 * as it doesn't call ase_awk_refdownval on run->inrec.d0 */
 		run->inrec.d0 = v;
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 
 		if (__split_record (run) == -1) 
 		{
@@ -79,7 +79,7 @@ int ase_awk_setrec (
 
 		ase_awk_refdownval (run, run->inrec.d0);
 		run->inrec.d0 = v;
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 	}
 
 	return 0;
@@ -217,7 +217,7 @@ static int __split_record (ase_awk_run_t* run)
 			return -1;
 		}
 
-		ase_awk_refupval (run->inrec.flds[run->inrec.nflds].val);
+		ase_awk_refupval (run, run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
 
 		len = ASE_AWK_STR_LEN(&run->inrec.line) - 
@@ -379,7 +379,7 @@ static int __recomp_record_fields (
 			else run->inrec.nflds++;
 
 			run->inrec.flds[i].val = tmp;
-			ase_awk_refupval (tmp);
+			ase_awk_refupval (run, tmp);
 		}
 		else if (i >= nflds)
 		{
@@ -400,7 +400,7 @@ static int __recomp_record_fields (
 			 * to any valid values */
 			/*ase_awk_refdownval (run, run->inrec.flds[i].val);*/
 			run->inrec.flds[i].val = ase_awk_val_zls;
-			ase_awk_refupval (ase_awk_val_zls);
+			ase_awk_refupval (run, ase_awk_val_zls);
 			run->inrec.nflds++;
 		}
 		else

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.74 2006-11-14 14:54:17 bacon Exp $
+ * $Id: func.c,v 1.75 2006-11-16 11:53:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -645,7 +645,7 @@ static int __bfn_split (ase_awk_run_t* run)
 
 	ase_awk_refdownval (run, *a1_ref);
 	*a1_ref = t1;
-	ase_awk_refupval (*a1_ref);
+	ase_awk_refupval (run, *a1_ref);
 
 	p = str; str_left = str_len; 
 	sta = (ase_awk_getopt(run->awk) & ASE_AWK_STRINDEXONE)? 1: 0;
@@ -707,7 +707,7 @@ static int __bfn_split (ase_awk_run_t* run)
 		 * handle the assignment-like situation.  anyway, it is 
 		 * incremented in advance as if the assignment was successful.
 		 * it is decremented if the assignement fails. */
-		ase_awk_refupval (t2);
+		ase_awk_refupval (run, t2);
 
 		if (ase_awk_map_putx (
 			((ase_awk_val_map_t*)t1)->map, 
@@ -1093,7 +1093,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 
 			ase_awk_refdownval (run, *a2_ref);
 			*a2_ref = v;
-			ase_awk_refupval (*a2_ref);
+			ase_awk_refupval (run, *a2_ref);
 		}
 	}
 
@@ -1208,7 +1208,7 @@ static int __bfn_match (ase_awk_run_t* run)
 		return -1;
 	}
 
-	ase_awk_refupval (a0);
+	ase_awk_refupval (run, a0);
 
 	a1 = ase_awk_makeintval (run, 
 		((n == 0)? (ase_long_t)-1: (ase_long_t)mat_len));
@@ -1219,7 +1219,7 @@ static int __bfn_match (ase_awk_run_t* run)
 		return -1;
 	}
 
-	ase_awk_refupval (a1);
+	ase_awk_refupval (run, a1);
 
 	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_RSTART, a0) == -1)
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.49 2006-10-28 05:24:08 bacon Exp $
+ * $Id: val.h,v 1.50 2006-11-16 11:53:16 bacon Exp $
  */
 
 #ifndef _ASE_AWK_VAL_H_
@@ -160,7 +160,7 @@ ase_awk_val_t* ase_awk_makerefval (
 ase_bool_t ase_awk_isbuiltinval (ase_awk_val_t* val);
 
 void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache);
-void ase_awk_refupval (ase_awk_val_t* val);
+void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val);
 void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val);
 void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val);
 

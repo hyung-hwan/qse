@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.58 2006-10-27 13:49:43 bacon Exp $
+ * $Id: extio.c,v 1.59 2006-11-16 11:53:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -173,7 +173,7 @@ int ase_awk_readextio (
 
 	/* get the record separator */
 	rs = ase_awk_getglobal (run, ASE_AWK_GLOBAL_RS);
-	ase_awk_refupval (rs);
+	ase_awk_refupval (run, rs);
 
 	if (rs->type == ASE_AWK_VAL_NIL)
 	{
@@ -334,7 +334,7 @@ int ase_awk_readextio (
 		ase_real_t rv;
 
 		nr = ase_awk_getglobal (run, ASE_AWK_GLOBAL_NR);
-		ase_awk_refupval (nr);
+		ase_awk_refupval (run, nr);
 
 		n = ase_awk_valtonum (run, nr, &lv, &rv);
 		ase_awk_refdownval (run, nr);

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.261 2006-11-16 04:44:16 bacon Exp $
+ * $Id: run.c,v 1.262 2006-11-16 11:53:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -440,7 +440,7 @@ int ase_awk_setglobal (ase_awk_run_t* run, ase_size_t idx, ase_awk_val_t* val)
 
 	ase_awk_refdownval (run, old);
 	STACK_GLOBAL(run,idx) = val;
-	ase_awk_refupval (val);
+	ase_awk_refupval (run, val);
 
 	return 0;
 }
@@ -450,7 +450,7 @@ void ase_awk_setretval (ase_awk_run_t* run, ase_awk_val_t* val)
 	ase_awk_refdownval (run, STACK_RETVAL(run));
 	STACK_RETVAL(run) = val;
 	/* should use the same trick as __run_return_statement */
-	ase_awk_refupval (val); 
+	ase_awk_refupval (run, val); 
 }
 
 int ase_awk_setconsolename (
@@ -470,7 +470,7 @@ int ase_awk_setconsolename (
 		}
 	}
 
-	ase_awk_refupval (tmp);
+	ase_awk_refupval (run, tmp);
 	n = ase_awk_setglobal (run, ASE_AWK_GLOBAL_FILENAME, tmp);
 	ase_awk_refdownval (run, tmp);
 
@@ -872,7 +872,7 @@ static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 		run->errnum = ASE_AWK_ENOMEM;
 		return -1;
 	}
-	ase_awk_refupval (v_argv);
+	ase_awk_refupval (run, v_argv);
 
 	if (runarg == ASE_NULL) argc = 0;
 	else
@@ -893,7 +893,7 @@ static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 
 			/* increment reference count of v_tmp in advance as if 
 			 * it has successfully been assigned into ARGV. */
-			ase_awk_refupval (v_tmp);
+			ase_awk_refupval (run, v_tmp);
 
 			if (ase_awk_map_putx (
 				((ase_awk_val_map_t*)v_argv)->map,
@@ -921,7 +921,7 @@ static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 		return -1;
 	}
 
-	ase_awk_refupval (v_argc);
+	ase_awk_refupval (run, v_argc);
 
 	ASE_AWK_ASSERT (run->awk, 
 		STACK_GLOBAL(run,ASE_AWK_GLOBAL_ARGC) == ase_awk_val_nil);
@@ -963,7 +963,7 @@ static int __update_fnr (ase_awk_run_t* run, ase_size_t fnr)
 		return -1;
 	}
 
-	ase_awk_refupval (tmp);
+	ase_awk_refupval (run, tmp);
 	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_FNR, tmp) == -1)
 	{
 		ase_awk_refdownval (run, tmp);
@@ -1012,7 +1012,7 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 			}
 		}
 		
-		ase_awk_refupval (tmp);
+		ase_awk_refupval (run, tmp);
 
 		ASE_AWK_ASSERT (run->awk, 
 			STACK_GLOBAL(run,gtab[i].idx) == ase_awk_val_nil);
@@ -1113,7 +1113,7 @@ static int __run_main (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 		else
 		{
 			/* destroy the return value if necessary */
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			ase_awk_refdownval (run, v);
 		}
 	}
@@ -1358,7 +1358,7 @@ static int __run_pattern_block (
 			v1 = __eval_expression (run, ptn);
 			if (v1 == ASE_NULL) return -1;
 
-			ase_awk_refupval (v1);
+			ase_awk_refupval (run, v1);
 
 			if (ase_awk_valtobool (run, v1))
 			{
@@ -1384,7 +1384,7 @@ static int __run_pattern_block (
 
 				v1 = __eval_expression (run, ptn);
 				if (v1 == ASE_NULL) return -1;
-				ase_awk_refupval (v1);
+				ase_awk_refupval (run, v1);
 
 				if (ase_awk_valtobool (run, v1))
 				{
@@ -1406,7 +1406,7 @@ static int __run_pattern_block (
 
 				v2 = __eval_expression (run, ptn->next);
 				if (v2 == ASE_NULL) return -1;
-				ase_awk_refupval (v2);
+				ase_awk_refupval (run, v2);
 
 				run->active_block = blk;
 				if (__run_block (run, blk) == -1) 
@@ -1436,7 +1436,7 @@ static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	if (nde == ASE_NULL)
 	{
 		/* blockless pattern - execute print $0*/
-		ase_awk_refupval (run->inrec.d0);
+		ase_awk_refupval (run, run->inrec.d0);
 
 		/*n = ase_awk_writeextio_val (run, 
 			ASE_AWK_OUT_CONSOLE, ASE_T(""), run->inrec.d0);*/
@@ -1462,7 +1462,7 @@ static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	p = nde->body;
 	nlocals = nde->nlocals;
 
-/*ase_tprintf (ASE_T("securing space for local variables nlocals = %d\n"), (int)nlocals);*/
+/*run->awk->syscas.dprintf (ASE_T("securing space for local variables nlocals = %d\n"), (int)nlocals);*/
 	saved_stack_top = run->stack_top;
 
 	/* secure space for local variables */
@@ -1479,10 +1479,10 @@ static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		/* refupval is not required for ase_awk_val_nil */
 	}
 
-/*ase_tprintf (ASE_T("executing block statements\n"));*/
+/*run->awk->syscas.dprintf (ASE_T("executing block statements\n"));*/
 	while (p != ASE_NULL && run->exit_level == EXIT_NONE) 
 	{
-/*ase_tprintf (ASE_T("running a statement\n"));*/
+/*run->awk->syscas.dprintf (ASE_T("running a statement\n"));*/
 		if (__run_statement(run,p) == -1) 
 		{
 			n = -1;
@@ -1491,7 +1491,7 @@ static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		p = p->next;
 	}
 
-/*ase_tprintf (ASE_T("popping off local variables\n"));*/
+/*run->awk->syscas.dprintf (ASE_T("popping off local variables\n"));*/
 	/* pop off local variables */
 	nlocals = nde->nlocals;
 	while (nlocals > 0)
@@ -1619,7 +1619,7 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			v = __eval_expression(run,nde);
 			if (v == ASE_NULL) return -1;
 
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			ase_awk_refdownval (run, v);
 
 			break;
@@ -1642,7 +1642,7 @@ static int __run_if (ase_awk_run_t* run, ase_awk_nde_if_t* nde)
 	test = __eval_expression (run, nde->test);
 	if (test == ASE_NULL) return -1;
 
-	ase_awk_refupval (test);
+	ase_awk_refupval (run, test);
 	if (ase_awk_valtobool (run, test))
 	{
 		n = __run_statement (run, nde->then_part);
@@ -1672,7 +1672,7 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 			test = __eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
 
-			ase_awk_refupval (test);
+			ase_awk_refupval (run, test);
 
 			if (ase_awk_valtobool (run, test))
 			{
@@ -1727,7 +1727,7 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 			test = __eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
 
-			ase_awk_refupval (test);
+			ase_awk_refupval (run, test);
 
 			if (!ase_awk_valtobool (run, test))
 			{
@@ -1753,7 +1753,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 		val = __eval_expression(run,nde->init);
 		if (val == ASE_NULL) return -1;
 
-		ase_awk_refupval (val);
+		ase_awk_refupval (run, val);
 		ase_awk_refdownval (run, val);
 	}
 
@@ -1770,7 +1770,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 			test = __eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
 
-			ase_awk_refupval (test);
+			ase_awk_refupval (run, test);
 			if (ase_awk_valtobool (run, test))
 			{
 				if (__run_statement(run,nde->body) == -1)
@@ -1809,7 +1809,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 			val = __eval_expression(run,nde->incr);
 			if (val == ASE_NULL) return -1;
 
-			ase_awk_refupval (val);
+			ase_awk_refupval (run, val);
 			ase_awk_refdownval (run, val);
 		}
 	}
@@ -1833,7 +1833,7 @@ static int __walk_foreach (ase_awk_pair_t* pair, void* arg)
 		w->run, pair->key, ase_awk_strlen(pair->key));
 	if (str == ASE_NULL) PANIC_I (w->run, ASE_AWK_ENOMEM);
 
-	ase_awk_refupval (str);
+	ase_awk_refupval (w->run, str);
 	if (__do_assignment (w->run, w->var, str) == ASE_NULL)
 	{
 		ase_awk_refdownval (w->run, str);
@@ -1869,7 +1869,7 @@ static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 	rv = __eval_expression (run, test->right);
 	if (rv == ASE_NULL) return -1;
 
-	ase_awk_refupval (rv);
+	ase_awk_refupval (run, rv);
 	if (rv->type != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_refdownval (run, rv);
@@ -1908,14 +1908,14 @@ static int __run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde)
 		 * by the parser first of all */
 		ASE_AWK_ASSERT (run->awk, nde->val->next == ASE_NULL); 
 
-/*ase_tprintf (ASE_T("returning....\n"));*/
+/*run->awk->syscas.dprintf (ASE_T("returning....\n"));*/
 		val = __eval_expression (run, nde->val);
 		if (val == ASE_NULL) return -1;
 
 		ase_awk_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
-		ase_awk_refupval (val); /* see __eval_call for the trick */
-/*ase_tprintf (ASE_T("set return value....\n"));*/
+		ase_awk_refupval (run, val); /* see __eval_call for the trick */
+/*run->awk->syscas.dprintf (ASE_T("set return value....\n"));*/
 	}
 	
 	run->exit_level = EXIT_FUNCTION;
@@ -1938,7 +1938,7 @@ static int __run_exit (ase_awk_run_t* run, ase_awk_nde_exit_t* nde)
 		ase_awk_refdownval (run, STACK_RETVAL_GLOBAL(run));
 		STACK_RETVAL_GLOBAL(run) = val; /* global return value */
 
-		ase_awk_refupval (val);
+		ase_awk_refupval (run, val);
 	}
 
 	run->exit_level = EXIT_GLOBAL;
@@ -2032,7 +2032,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			if (ase_awk_map_put (&run->named, 
 				var->id.name, var->id.name_len, tmp) == ASE_NULL)
 			{
-				ase_awk_refupval (tmp);
+				ase_awk_refupval (run, tmp);
 				ase_awk_refdownval (run, tmp);
 				run->errnum = ASE_AWK_ENOMEM;
 				return -1;
@@ -2040,7 +2040,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 			/* as this is the assignment, it needs to update
 			 * the reference count of the target value */
-			ase_awk_refupval (tmp);
+			ase_awk_refupval (run, tmp);
 		}
 		else
 		{
@@ -2068,7 +2068,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				idx = __eval_expression (run, var->idx);
 				if (idx == ASE_NULL) return -1;
 
-				ase_awk_refupval (idx);
+				ase_awk_refupval (run, idx);
 				key = ase_awk_valtostr (
 					run, idx, ASE_AWK_VALTOSTR_CLEAR, 
 					ASE_NULL, &key_len);
@@ -2126,7 +2126,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				if (ase_awk_setglobal (
 					run, var->id.idxa, tmp) == -1)
 				{
-					ase_awk_refupval (tmp);
+					ase_awk_refupval (run, tmp);
 					ase_awk_refdownval (run, tmp);
 					return -1;
 				}
@@ -2135,12 +2135,12 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			         var->type == ASE_AWK_NDE_LOCALIDX)
 			{
 				STACK_LOCAL(run,var->id.idxa) = tmp;
-				ase_awk_refupval (tmp);
+				ase_awk_refupval (run, tmp);
 			}
 			else 
 			{
 				STACK_ARG(run,var->id.idxa) = tmp;
-				ase_awk_refupval (tmp);
+				ase_awk_refupval (run, tmp);
 			}
 		}
 		else
@@ -2167,7 +2167,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				idx = __eval_expression (run, var->idx);
 				if (idx == ASE_NULL) return -1;
 
-				ase_awk_refupval (idx);
+				ase_awk_refupval (run, idx);
 				key = ase_awk_valtostr (
 					run, idx, ASE_AWK_VALTOSTR_CLEAR,
 					ASE_NULL, &key_len);
@@ -2217,7 +2217,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		v = __eval_expression (run, nde->out);
 		if (v == ASE_NULL) return -1;
 
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 		out = ase_awk_valtostr (
 			run, v, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
 		if (out == ASE_NULL) 
@@ -2304,7 +2304,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 				return -1;
 			}
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 
 			n = ase_awk_writeextio_val (run, nde->out_type, dst, v);
 			if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
@@ -2362,7 +2362,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		v = __eval_expression (run, nde->out);
 		if (v == ASE_NULL) return -1;
 
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 		out = ase_awk_valtostr (
 			run, v, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
 		if (out == ASE_NULL) 
@@ -2423,7 +2423,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		return -1;
 	}
 
-	ase_awk_refupval (v);
+	ase_awk_refupval (run, v);
 	if (v->type != ASE_AWK_VAL_STR)
 	{
 		/* the remaining arguments are ignored as the format cannot 
@@ -2485,7 +2485,7 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 	if (v->type == ASE_AWK_VAL_REX)
 	{
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 
 		if (run->inrec.d0->type == ASE_AWK_VAL_NIL)
 		{
@@ -2581,7 +2581,7 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	val = __eval_expression (run, ass->right);
 	if (val == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (val);
+	ase_awk_refupval (run, val);
 
 	if (ass->opcode != ASE_AWK_ASSOP_NONE)
 	{
@@ -2595,7 +2595,7 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			return ASE_NULL;
 		}
 
-		ase_awk_refupval (val2);
+		ase_awk_refupval (run, val2);
 
 		if (ass->opcode == ASE_AWK_ASSOP_PLUS)
 		{
@@ -2636,7 +2636,7 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 		ase_awk_refdownval (run, val);
 		val = tmp;
-		ase_awk_refupval (val);
+		ase_awk_refupval (run, val);
 	}
 
 	ret = __do_assignment (run, ass->left, val);
@@ -2713,7 +2713,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 			var->id.name, var->id.name_len, val, ASE_NULL);
 		if (n < 0) PANIC (run, ASE_AWK_ENOMEM);
 
-		ase_awk_refupval (val);
+		ase_awk_refupval (run, val);
 	}
 	else if (var->type == ASE_AWK_NDE_GLOBAL) 
 	{
@@ -2732,7 +2732,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 
 		ase_awk_refdownval (run, old);
 		STACK_LOCAL(run,var->id.idxa) = val;
-		ase_awk_refupval (val);
+		ase_awk_refupval (run, val);
 	}
 	else /* if (var->type == ASE_AWK_NDE_ARG) */
 	{
@@ -2746,7 +2746,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 
 		ase_awk_refdownval (run, old);
 		STACK_ARG(run,var->id.idxa) = val;
-		ase_awk_refupval (val);
+		ase_awk_refupval (run, val);
 	}
 
 	return val;
@@ -2801,16 +2801,16 @@ static ase_awk_val_t* __do_assignment_map (
 			if (ase_awk_map_put (&run->named, 
 				var->id.name, var->id.name_len, tmp) == ASE_NULL)
 			{
-				ase_awk_refupval (tmp);
+				ase_awk_refupval (run, tmp);
 				ase_awk_refdownval (run, tmp);
 				PANIC (run, ASE_AWK_ENOMEM);		
 			}
 
-			ase_awk_refupval (tmp);
+			ase_awk_refupval (run, tmp);
 		}
 		else if (var->type == ASE_AWK_NDE_GLOBALIDX)
 		{
-			ase_awk_refupval (tmp);
+			ase_awk_refupval (run, tmp);
 			if (ase_awk_setglobal (run, var->id.idxa, tmp) == -1)
 			{
 				ase_awk_refdownval (run, tmp);
@@ -2822,13 +2822,13 @@ static ase_awk_val_t* __do_assignment_map (
 		{
 			ase_awk_refdownval (run, (ase_awk_val_t*)map);
 			STACK_LOCAL(run,var->id.idxa) = tmp;
-			ase_awk_refupval (tmp);
+			ase_awk_refupval (run, tmp);
 		}
 		else /* if (var->type == ASE_AWK_NDE_ARGIDX) */
 		{
 			ase_awk_refdownval (run, (ase_awk_val_t*)map);
 			STACK_ARG(run,var->id.idxa) = tmp;
-			ase_awk_refupval (tmp);
+			ase_awk_refupval (run, tmp);
 		}
 
 		map = (ase_awk_val_map_t*) tmp;
@@ -2841,9 +2841,7 @@ static ase_awk_val_t* __do_assignment_map (
 	str = __idxnde_to_str (run, var->idx, &len);
 	if (str == ASE_NULL) return ASE_NULL;
 
-/*
-ase_tprintf (ASE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int)map->ref, (int)map->type);
-*/
+/*run->awk->syscas.dprintf (ASE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int)map->ref, (int)map->type);*/
 	n = ase_awk_map_putx (map->map, str, len, val, ASE_NULL);
 	if (n < 0)
 	{
@@ -2852,7 +2850,7 @@ ase_tprintf (ASE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int
 	}
 
 	ASE_AWK_FREE (run->awk, str);
-	ase_awk_refupval (val);
+	ase_awk_refupval (run, val);
 	return val;
 }
 
@@ -2869,7 +2867,7 @@ static ase_awk_val_t* __do_assignment_pos (
 	v = __eval_expression (run, pos->val);
 	if (v == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (v);
+	ase_awk_refupval (run, v);
 	n = ase_awk_valtonum (run, v, &lv, &rv);
 	ase_awk_refdownval (run, v);
 
@@ -2965,7 +2963,7 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		left = __eval_expression (run, exp->left);
 		if (left == ASE_NULL) return ASE_NULL;
 
-		ase_awk_refupval (left);
+		ase_awk_refupval (run, left);
 
 		ASE_AWK_ASSERT (run->awk, exp->right->next == ASE_NULL);
 		right = __eval_expression (run, exp->right);
@@ -2975,7 +2973,7 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			return ASE_NULL;
 		}
 
-		ase_awk_refupval (right);
+		ase_awk_refupval (run, right);
 
 		ASE_AWK_ASSERT (run->awk, exp->opcode >= 0 && 
 			exp->opcode < ase_countof(__binop_func));
@@ -3010,7 +3008,7 @@ static ase_awk_val_t* __eval_binop_lor (
 	lv = __eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (lv);
+	ase_awk_refupval (run, lv);
 	if (ase_awk_valtobool (run, lv)) 
 	{
 		/*res = ase_awk_makeintval (run, 1);*/
@@ -3025,7 +3023,7 @@ static ase_awk_val_t* __eval_binop_lor (
 			ase_awk_refdownval (run, lv);
 			return ASE_NULL;
 		}
-		ase_awk_refupval (rv);
+		ase_awk_refupval (run, rv);
 
 		/*res = ase_awk_makeintval (run, (ase_awk_valtobool(run,rv)? 1: 0));*/
 		res = ase_awk_valtobool(run,rv)? ase_awk_val_one: ase_awk_val_zero;
@@ -3058,7 +3056,7 @@ static ase_awk_val_t* __eval_binop_land (
 	lv = __eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (lv);
+	ase_awk_refupval (run, lv);
 	if (!ase_awk_valtobool (run, lv)) 
 	{
 		/*res = ase_awk_makeintval (run, 0);*/
@@ -3073,7 +3071,7 @@ static ase_awk_val_t* __eval_binop_land (
 			ase_awk_refdownval (run, lv);
 			return ASE_NULL;
 		}
-		ase_awk_refupval (rv);
+		ase_awk_refupval (run, rv);
 
 		/*res = ase_awk_makeintval (run, (ase_awk_valtobool(run,rv)? 1: 0));*/
 		res = ase_awk_valtobool(run,rv)? ase_awk_val_one: ase_awk_val_zero;
@@ -3119,7 +3117,7 @@ static ase_awk_val_t* __eval_binop_in (
 		return ASE_NULL;
 	}
 
-	ase_awk_refupval (rv);
+	ase_awk_refupval (run, rv);
 
 	if (rv->type == ASE_AWK_VAL_NIL)
 	{
@@ -3859,7 +3857,7 @@ static ase_awk_val_t* __eval_binop_ma (
 		return ASE_NULL;
 	}
 
-	ase_awk_refupval (lv);
+	ase_awk_refupval (run, lv);
 
 	rv = __eval_expression0 (run, right);
 	if (rv == ASE_NULL)
@@ -3868,7 +3866,7 @@ static ase_awk_val_t* __eval_binop_ma (
 		return ASE_NULL;
 	}
 
-	ase_awk_refupval (rv);
+	ase_awk_refupval (run, rv);
 
 	res = __eval_binop_match0 (run, lv, rv, 1);
 
@@ -3889,7 +3887,7 @@ static ase_awk_val_t* __eval_binop_nm (
 	lv = __eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (lv);
+	ase_awk_refupval (run, lv);
 
 	rv = __eval_expression0 (run, right);
 	if (rv == ASE_NULL)
@@ -3898,7 +3896,7 @@ static ase_awk_val_t* __eval_binop_nm (
 		return ASE_NULL;
 	}
 
-	ase_awk_refupval (rv);
+	ase_awk_refupval (run, rv);
 
 	res = __eval_binop_match0 (run, lv, rv, 0);
 
@@ -4020,7 +4018,7 @@ static ase_awk_val_t* __eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	left = __eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (left);
+	ase_awk_refupval (run, left);
 
 	if (exp->opcode == ASE_AWK_UNROP_PLUS) 
 	{
@@ -4121,7 +4119,7 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	left = __eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (left);
+	ase_awk_refupval (run, left);
 
 	if (exp->opcode == ASE_AWK_INCOP_PLUS) 
 	{
@@ -4265,7 +4263,7 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	left = __eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (left);
+	ase_awk_refupval (run, left);
 
 	if (exp->opcode == ASE_AWK_INCOP_PLUS) 
 	{
@@ -4469,7 +4467,7 @@ static ase_awk_val_t* __eval_cnd (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	tv = __eval_expression (run, cnd->test);
 	if (tv == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (tv);
+	ase_awk_refupval (run, tv);
 
 	ASE_AWK_ASSERT (run->awk, cnd->left->next == ASE_NULL &&
 	           cnd->right->next == ASE_NULL);
@@ -4534,9 +4532,10 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 				(run)->stack[(run)->stack_top-1]); \
 			__raw_pop (run); \
 		} \
-		__raw_pop (run); \
-		__raw_pop (run); \
-		__raw_pop (run); \
+		__raw_pop (run); /* nargs */ \
+		__raw_pop (run); /* return */ \
+		__raw_pop (run); /* prev stack top */ \
+		__raw_pop (run); /* prev stack back */ \
 	} while (0)
 
 static ase_awk_val_t* __eval_call (
@@ -4595,7 +4594,7 @@ static ase_awk_val_t* __eval_call (
 
 	saved_stack_top = run->stack_top;
 
-/*ase_tprintf (ASE_T("setting up function stack frame stack_top = %ld stack_base = %ld\n"), run->stack_top, run->stack_base); */
+/*run->awk->syscas.dprintf (ASE_T("setting up function stack frame stack_top = %ld stack_base = %ld\n"), run->stack_top, run->stack_base); */
 	if (__raw_push(run,(void*)run->stack_base) == -1) 
 	{
 		PANIC (run, ASE_AWK_ENOMEM);
@@ -4675,7 +4674,7 @@ static ase_awk_val_t* __eval_call (
 			ref = __get_reference (run, p);
 			if (ref == ASE_NULL)
 			{
-				ase_awk_refupval (v);
+				ase_awk_refupval (run, v);
 				ase_awk_refdownval (run, v);
 
 				UNWIND_RUN_STACK (run, nargs);
@@ -4688,14 +4687,14 @@ static ase_awk_val_t* __eval_call (
 				run, p->type-ASE_AWK_NDE_NAMED, ref);
 			if (tmp == ASE_NULL)
 			{
-				ase_awk_refupval (v);
+				ase_awk_refupval (run, v);
 				ase_awk_refdownval (run, v);
 
 				UNWIND_RUN_STACK (run, nargs);
 				PANIC (run, ASE_AWK_ENOMEM);
 			}
 
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			ase_awk_refdownval (run, v);
 
 			v = tmp;
@@ -4709,14 +4708,14 @@ static ase_awk_val_t* __eval_call (
 			 * updated yet as it is carried out after the 
 			 * successful stack push. so it adds up a reference 
 			 * and dereferences it */
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			ase_awk_refdownval (run, v);
 
 			UNWIND_RUN_STACK (run, nargs);
 			PANIC (run, ASE_AWK_ENOMEM);
 		}
 
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 		nargs++;
 		p = p->next;
 	}
@@ -4743,7 +4742,7 @@ static ase_awk_val_t* __eval_call (
 	run->stack_base = saved_stack_top;
 	STACK_NARGS(run) = (void*)nargs;
 	
-/*ase_tprintf (ASE_T("running function body\n")); */
+/*run->awk->syscas.dprintf (ASE_T("running function body\n")); */
 
 	if (afn != ASE_NULL)
 	{
@@ -4763,16 +4762,16 @@ static ase_awk_val_t* __eval_call (
 			n = call->what.bfn.handler (run);
 	}
 
-/*ase_tprintf (ASE_T("block run complete\n")); */
+/*run->awk->syscas.dprintf (ASE_T("block run complete\n")); */
 
 	/* refdown args in the run.stack */
 	nargs = (ase_size_t)STACK_NARGS(run);
-/*ase_tprintf (ASE_T("block run complete nargs = %d\n"), (int)nargs); */
+/*run->awk->syscas.dprintf (ASE_T("block run complete nargs = %d\n"), (int)nargs); */
 	for (i = 0; i < nargs; i++)
 	{
 		ase_awk_refdownval (run, STACK_ARG(run,i));
 	}
-/*ase_tprintf (ASE_T("got return value\n")); */
+/*run->awk->syscas.dprintf (ASE_T("got return value\n")); */
 
 	/* this trick has been mentioned in __run_return.
 	 * adjust the reference count of the return value.
@@ -4787,7 +4786,7 @@ static ase_awk_val_t* __eval_call (
 
 	if (run->exit_level == EXIT_FUNCTION) run->exit_level = EXIT_NONE;
 
-/*ase_tprintf (ASE_T("returning from function stack_top=%ld, stack_base=%ld\n"), run->stack_top, run->stack_base); */
+/*run->awk->syscas.dprintf (ASE_T("returning from function stack_top=%ld, stack_base=%ld\n"), run->stack_top, run->stack_base); */
 	return (n == -1)? ASE_NULL: v;
 }
 
@@ -4902,7 +4901,7 @@ static int __get_reference (
 		v = __eval_expression (run, ((ase_awk_nde_pos_t*)nde)->val);
 		if (v == ASE_NULL) return -1;
 
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 		n = ase_awk_valtonum (run, v, &lv, &rv);
 		ase_awk_refdownval (run, v);
 
@@ -4944,7 +4943,7 @@ static ase_awk_val_t** __get_reference_indexed (
 
 		ase_awk_refdownval (run, *val);
 		*val = tmp;
-		ase_awk_refupval ((ase_awk_val_t*)*val);
+		ase_awk_refupval (run, (ase_awk_val_t*)*val);
 	}
 	else if ((*val)->type != ASE_AWK_VAL_MAP) 
 	{
@@ -4968,7 +4967,7 @@ static ase_awk_val_t** __get_reference_indexed (
 			PANIC (run, ASE_AWK_ENOMEM);
 		}
 
-		ase_awk_refupval (pair->val);
+		ase_awk_refupval (run, pair->val);
 	}
 
 	ASE_AWK_FREE (run->awk, str);
@@ -5066,7 +5065,7 @@ static ase_awk_val_t* __eval_indexed (
 
 		ase_awk_refdownval (run, *val);
 		*val = tmp;
-		ase_awk_refupval ((ase_awk_val_t*)*val);
+		ase_awk_refupval (run, (ase_awk_val_t*)*val);
 	}
 	else if ((*val)->type != ASE_AWK_VAL_MAP) 
 	{
@@ -5096,7 +5095,7 @@ static ase_awk_val_t* __eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			tgt->id.name, tgt->id.name_len, ase_awk_val_nil);
 		if (pair == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
 
-		ase_awk_refupval (pair->val); 
+		ase_awk_refupval (run, pair->val); 
 	}
 
 	return __eval_indexed (run, tgt, (ase_awk_val_t**)&pair->val);
@@ -5131,7 +5130,7 @@ static ase_awk_val_t* __eval_pos (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	v = __eval_expression (run, pos->val);
 	if (v == ASE_NULL) return ASE_NULL;
 
-	ase_awk_refupval (v);
+	ase_awk_refupval (run, v);
 	n = ase_awk_valtonum (run, v, &lv, &rv);
 	ase_awk_refdownval (run, v);
 
@@ -5175,7 +5174,7 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		 *       if you use the buffer the v directly when
 		 *       v->type == ASE_AWK_VAL_STR, ase_awk_refdownval(v)
 		 *       should not be called immediately below */
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 		in = ase_awk_valtostr (
 			run, v, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
 		if (in == ASE_NULL) 
@@ -5257,7 +5256,7 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			ase_awk_str_close (&buf);
 			if (v == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
 
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			if (__do_assignment(run, p->var, v) == ASE_NULL)
 			{
 				ase_awk_refdownval (run, v);
@@ -5340,7 +5339,7 @@ static int __read_record (ase_awk_run_t* run)
 		return -1;
 	}
 /*
-ase_tprintf (ASE_T("len = %d str=[%s]\n"), 
+run->awk->syscas.dprintf (ASE_T("len = %d str=[%s]\n"), 
 		(int)ASE_AWK_STR_LEN(&run->inrec.line),
 		ASE_AWK_STR_BUF(&run->inrec.line));
 */
@@ -5369,7 +5368,7 @@ static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 	if (nflds > 1)
 	{
 		v = STACK_GLOBAL(run, ASE_AWK_GLOBAL_OFS);
-		ase_awk_refupval (v);
+		ase_awk_refupval (run, v);
 
 		if (v->type == ASE_AWK_VAL_NIL)
 		{
@@ -5435,7 +5434,7 @@ static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 
 	ase_awk_refdownval (run, run->inrec.d0);
 	run->inrec.d0 = v;
-	ase_awk_refupval (run->inrec.d0);
+	ase_awk_refupval (run, run->inrec.d0);
 
 	ase_awk_str_swap (&tmp, &run->inrec.line);
 	ase_awk_str_close (&tmp);
@@ -5463,7 +5462,7 @@ static ase_char_t* __idxnde_to_str (
 		idx = __eval_expression (run, nde);
 		if (idx == ASE_NULL) return ASE_NULL;
 
-		ase_awk_refupval (idx);
+		ase_awk_refupval (run, idx);
 
 		str = ase_awk_valtostr (
 			run, idx, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, len);
@@ -5495,7 +5494,7 @@ static ase_char_t* __idxnde_to_str (
 				return ASE_NULL;
 			}
 
-			ase_awk_refupval (idx);
+			ase_awk_refupval (run, idx);
 
 			if (ASE_AWK_STR_LEN(&idxstr) > 0 &&
 			    ase_awk_str_ncat (&idxstr, 
@@ -5596,19 +5595,34 @@ ase_char_t* ase_awk_sprintf (
 			ase_char_t* p;
 			int n;
 
-			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
+			if (args == ASE_NULL)
 			{
-				run->errnum = ASE_AWK_EFMTARG;
-				return ASE_NULL;
+				if (stack_arg_idx >= nargs_on_stack)
+				{
+					run->errnum = ASE_AWK_EFMTARG;
+					return ASE_NULL;
+				}
+				v = ase_awk_getarg (run, stack_arg_idx);
+			}
+			else
+			{
+				if (val != ASE_NULL) 
+				{
+					if (stack_arg_idx >= nargs_on_stack)
+					{
+						run->errnum = ASE_AWK_EFMTARG;
+						return ASE_NULL;
+					}
+					v = val;
+				}
+				else 
+				{
+					v = __eval_expression (run, args);
+					if (v == ASE_NULL) return ASE_NULL;
+				}
 			}
 
-			v = (args == ASE_NULL)? 
-				ase_awk_getarg (run, stack_arg_idx):
-			    (val == ASE_NULL)?
-				__eval_expression (run, args): val;
-			if (v == ASE_NULL) return ASE_NULL;
-
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			n = ase_awk_valtonum (run, v, &l, &r);
 			ase_awk_refdownval (run, v);
 
@@ -5631,7 +5645,7 @@ ase_char_t* ase_awk_sprintf (
 				p++;
 			}
 
-			if (args == ASE_NULL) stack_arg_idx++;
+			if (args == ASE_NULL || val != ASE_NULL) stack_arg_idx++;
 			else args = args->next;
 			i++;
 		}
@@ -5656,19 +5670,34 @@ ase_char_t* ase_awk_sprintf (
 			ase_char_t* p;
 			int n;
 
-			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
+			if (args == ASE_NULL)
 			{
-				run->errnum = ASE_AWK_EFMTARG;
-				return ASE_NULL;
+				if (stack_arg_idx >= nargs_on_stack)
+				{
+					run->errnum = ASE_AWK_EFMTARG;
+					return ASE_NULL;
+				}
+				v = ase_awk_getarg (run, stack_arg_idx);
+			}
+			else
+			{
+				if (val != ASE_NULL) 
+				{
+					if (stack_arg_idx >= nargs_on_stack)
+					{
+						run->errnum = ASE_AWK_EFMTARG;
+						return ASE_NULL;
+					}
+					v = val;
+				}
+				else 
+				{
+					v = __eval_expression (run, args);
+					if (v == ASE_NULL) return ASE_NULL;
+				}
 			}
 
-			v = (args == ASE_NULL)? 
-				ase_awk_getarg (run, stack_arg_idx):
-			    (val == ASE_NULL)?
-				__eval_expression (run, args): val;
-			if (v == ASE_NULL) return ASE_NULL;
-
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			n = ase_awk_valtonum (run, v, &l, &r);
 			ase_awk_refdownval (run, v);
 
@@ -5691,7 +5720,7 @@ ase_char_t* ase_awk_sprintf (
 				p++;
 			}
 
-			if (args == ASE_NULL) stack_arg_idx++;
+			if (args == ASE_NULL || val != ASE_NULL) stack_arg_idx++;
 			else args = args->next;
 			i++;
 		}
@@ -5715,23 +5744,38 @@ ase_char_t* ase_awk_sprintf (
 			ase_char_t* p;
 			int n;
 
-			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
-			{
-				run->errnum = ASE_AWK_EFMTARG;
-				return ASE_NULL;
-			}
-
 			FMT_CHAR (ASE_T('l'));
 			FMT_CHAR (ASE_T('l'));
 			FMT_CHAR (fmt[i]);
 
-			v = (args == ASE_NULL)? 
-				ase_awk_getarg (run, stack_arg_idx):
-			    (val == ASE_NULL)?
-				__eval_expression (run, args): val;
-			if (v == ASE_NULL) return ASE_NULL;
+			if (args == ASE_NULL)
+			{
+				if (stack_arg_idx >= nargs_on_stack)
+				{
+					run->errnum = ASE_AWK_EFMTARG;
+					return ASE_NULL;
+				}
+				v = ase_awk_getarg (run, stack_arg_idx);
+			}
+			else
+			{
+				if (val != ASE_NULL) 
+				{
+					if (stack_arg_idx >= nargs_on_stack)
+					{
+						run->errnum = ASE_AWK_EFMTARG;
+						return ASE_NULL;
+					}
+					v = val;
+				}
+				else 
+				{
+					v = __eval_expression (run, args);
+					if (v == ASE_NULL) return ASE_NULL;
+				}
+			}
 
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			n = ase_awk_valtonum (run, v, &l, &r);
 			ase_awk_refdownval (run, v);
 
@@ -5766,22 +5810,37 @@ ase_char_t* ase_awk_sprintf (
 			ase_char_t* p;
 			int n;
 
-			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
-			{
-				run->errnum = ASE_AWK_EFMTARG;
-				return ASE_NULL;
-			}
-
 			FMT_CHAR (ASE_T('L'));
 			FMT_CHAR (fmt[i]);
 
-			v = (args == ASE_NULL)? 
-				ase_awk_getarg (run, stack_arg_idx):
-			    (val == ASE_NULL)?
-				__eval_expression (run, args): val;
-			if (v == ASE_NULL) return ASE_NULL;
+			if (args == ASE_NULL)
+			{
+				if (stack_arg_idx >= nargs_on_stack)
+				{
+					run->errnum = ASE_AWK_EFMTARG;
+					return ASE_NULL;
+				}
+				v = ase_awk_getarg (run, stack_arg_idx);
+			}
+			else
+			{
+				if (val != ASE_NULL) 
+				{
+					if (stack_arg_idx >= nargs_on_stack)
+					{
+						run->errnum = ASE_AWK_EFMTARG;
+						return ASE_NULL;
+					}
+					v = val;
+				}
+				else 
+				{
+					v = __eval_expression (run, args);
+					if (v == ASE_NULL) return ASE_NULL;
+				}
+			}
 
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			n = ase_awk_valtonum (run, v, &l, &r);
 			ase_awk_refdownval (run, v);
 
@@ -5807,21 +5866,36 @@ ase_char_t* ase_awk_sprintf (
 			ase_awk_val_t* v;
 			ase_char_t* p;
 
-			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
-			{
-				run->errnum = ASE_AWK_EFMTARG;
-				return ASE_NULL;
-			}
-
 			FMT_CHAR (fmt[i]);
 
-			v = (args == ASE_NULL)? 
-				ase_awk_getarg (run, stack_arg_idx):
-			    (val == ASE_NULL)?
-				__eval_expression (run, args): val;
-			if (v == ASE_NULL) return ASE_NULL;
+			if (args == ASE_NULL)
+			{
+				if (stack_arg_idx >= nargs_on_stack)
+				{
+					run->errnum = ASE_AWK_EFMTARG;
+					return ASE_NULL;
+				}
+				v = ase_awk_getarg (run, stack_arg_idx);
+			}
+			else
+			{
+				if (val != ASE_NULL) 
+				{
+					if (stack_arg_idx >= nargs_on_stack)
+					{
+						run->errnum = ASE_AWK_EFMTARG;
+						return ASE_NULL;
+					}
+					v = val;
+				}
+				else 
+				{
+					v = __eval_expression (run, args);
+					if (v == ASE_NULL) return ASE_NULL;
+				}
+			}
 
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			if (v->type == ASE_AWK_VAL_NIL)
 			{
 				run->sprintf.tmp[0] = ASE_T('\0');
@@ -5877,21 +5951,36 @@ ase_char_t* ase_awk_sprintf (
 			ase_awk_val_t* v;
 			ase_char_t* p;
 
-			if (args == ASE_NULL && stack_arg_idx >= nargs_on_stack)
-			{
-				run->errnum = ASE_AWK_EFMTARG;
-				return ASE_NULL;
-			}
-
 			FMT_CHAR (fmt[i]);
 
-			v = (args == ASE_NULL)? 
-				ase_awk_getarg (run, stack_arg_idx):
-			    (val == ASE_NULL)?
-				__eval_expression (run, args): val;
-			if (v == ASE_NULL) return ASE_NULL;
+			if (args == ASE_NULL)
+			{
+				if (stack_arg_idx >= nargs_on_stack)
+				{
+					run->errnum = ASE_AWK_EFMTARG;
+					return ASE_NULL;
+				}
+				v = ase_awk_getarg (run, stack_arg_idx);
+			}
+			else
+			{
+				if (val != ASE_NULL) 
+				{
+					if (stack_arg_idx >= nargs_on_stack)
+					{
+						run->errnum = ASE_AWK_EFMTARG;
+						return ASE_NULL;
+					}
+					v = val;
+				}
+				else 
+				{
+					v = __eval_expression (run, args);
+					if (v == ASE_NULL) return ASE_NULL;
+				}
+			}
 
-			ase_awk_refupval (v);
+			ase_awk_refupval (run, v);
 			if (v->type == ASE_AWK_VAL_NIL)
 			{
 				run->sprintf.tmp[0] = ASE_T('\0');
@@ -5900,7 +5989,6 @@ ase_char_t* ase_awk_sprintf (
 			{
 				/* TODO: handle a string contailing null characters */
 				/* TODO: handle error conditions of sprintf */
-
 				run->awk->syscas.sprintf (
 					run->sprintf.tmp, 
 					ase_countof(run->sprintf.tmp),
@@ -5950,7 +6038,7 @@ ase_char_t* ase_awk_sprintf (
 			OUT_CHAR (fmt[i]);
 		}
 
-		if (args == ASE_NULL) stack_arg_idx++;
+		if (args == ASE_NULL || val != ASE_NULL) stack_arg_idx++;
 		else args = args->next;
 		ase_awk_str_clear (fbu);
 	}
