@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.87 2006-11-16 15:16:25 bacon Exp $
+ * $Id: val.c,v 1.88 2006-11-17 07:04:32 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -631,6 +631,7 @@ static ase_char_t* __val_real_to_str (
 	{
 		ase_awk_str_close (&fbu);
 		ase_awk_str_forfeit (&out);
+		if (len != ASE_NULL) *len = tmp_len;
 	}
 	else
 	{

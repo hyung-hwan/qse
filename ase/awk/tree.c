@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.86 2006-11-01 04:41:01 bacon Exp $
+ * $Id: tree.c,v 1.87 2006-11-17 07:04:32 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -273,11 +273,36 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_STR:
 		{
-			/* TODO: ESCAPING */
+			ase_char_t* ptr;
+			ase_size_t len, i;
+
 			PUT_SRCSTR (awk, ASE_T("\""));
+			/*
 			PUT_SRCSTRX (awk,
 				((ase_awk_nde_str_t*)nde)->buf, 
 				((ase_awk_nde_str_t*)nde)->len);
+			*/
+
+			ptr = ((ase_awk_nde_str_t*)nde)->buf;
+			len = ((ase_awk_nde_str_t*)nde)->len;
+			for (i = 0; i < len; i++)
+			{
+				/* TODO: more deescaping  */
+				if (ptr[i] == ASE_T('\n'))
+					PUT_SRCSTR (awk, ASE_T("\\n"));
+				else if (ptr[i] == ASE_T('\r'))
+					PUT_SRCSTR (awk, ASE_T("\\r"));
+				else if (ptr[i] == ASE_T('\f'))
+					PUT_SRCSTR (awk, ASE_T("\\f"));
+				else if (ptr[i] == ASE_T('\b'))
+					PUT_SRCSTR (awk, ASE_T("\\b"));
+				else if (ptr[i] == ASE_T('\v'))
+					PUT_SRCSTR (awk, ASE_T("\\v"));
+				else if (ptr[i] == ASE_T('\a'))
+					PUT_SRCSTR (awk, ASE_T("\\a"));
+				else
+					PUT_SRCSTRX (awk, &ptr[i], 1);
+			}
 			PUT_SRCSTR (awk, ASE_T("\""));
 			break;
 		}

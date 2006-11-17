@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.80 2006-11-16 15:16:24 bacon Exp $
+ * $Id: awk_i.h,v 1.81 2006-11-17 07:04:31 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -195,9 +195,9 @@ struct ase_awk_run_t
 	ase_size_t stack_limit;
 	int exit_level;
 
-	ase_awk_val_int_t* icache[100]; /* TODO: choose the optimal size  */
-	ase_awk_val_real_t* rcache[100]; /* TODO: choose the optimal size  */
-	ase_awk_val_ref_t* fcache[100]; /* TODO: choose the optimal size */
+	ase_awk_val_int_t* icache[200]; /* TODO: choose the optimal size  */
+	ase_awk_val_real_t* rcache[200]; /* TODO: choose the optimal size  */
+	ase_awk_val_ref_t* fcache[200]; /* TODO: choose the optimal size */
 	ase_size_t icache_count;
 	ase_size_t rcache_count;
 	ase_size_t fcache_count;
