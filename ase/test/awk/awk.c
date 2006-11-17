@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.114 2006-11-17 06:51:27 bacon Exp $
+ * $Id: awk.c,v 1.115 2006-11-17 07:49:10 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -1092,6 +1092,10 @@ int xp_main (int argc, ase_char_t* argv[])
 	{
 		_tprintf (_T("Running application in a debugger by is_debugger_present2...\n"));
 	}
+#endif
+
+#if defined(__unix) || defined(__unix__)
+	xp_setlocale ();
 #endif
 
 	n = __main (argc, argv);
