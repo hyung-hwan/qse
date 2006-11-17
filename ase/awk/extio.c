@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.59 2006-11-16 11:53:15 bacon Exp $
+ * $Id: extio.c,v 1.60 2006-11-17 07:26:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -327,7 +327,7 @@ int ase_awk_readextio (
 	ase_awk_refdownval (run, rs);
 
 	/* increment NR */
-	if (ret != -1)
+	if (ret != -1 && ret != 0)
 	{
 		ase_awk_val_t* nr;
 		ase_long_t lv;
@@ -335,7 +335,6 @@ int ase_awk_readextio (
 
 		nr = ase_awk_getglobal (run, ASE_AWK_GLOBAL_NR);
 		ase_awk_refupval (run, nr);
-
 		n = ase_awk_valtonum (run, nr, &lv, &rv);
 		ase_awk_refdownval (run, nr);
 
