@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.263 2006-11-16 15:16:25 bacon Exp $
+ * $Id: run.c,v 1.264 2006-11-17 07:04:31 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1149,7 +1149,8 @@ static int __run_main (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 		}
 
 		if (n == 0 && 
-		    run->awk->tree.chain != ASE_NULL && 
+		    (run->awk->tree.chain != ASE_NULL ||
+		     run->awk->tree.end != ASE_NULL) && 
 		    run->exit_level != EXIT_ABORT)
 		{
 			if (__run_pattern_blocks (run) == -1) n = -1;
@@ -1197,7 +1198,7 @@ static int __run_main (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 	}
 
 	/* pops off the global variables */
-	nglobals = run->awk->tree.nglobals; /*run->nglobals */
+	nglobals = run->awk->tree.nglobals;
 	while (nglobals > 0)
 	{
 		--nglobals;
@@ -1252,15 +1253,19 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 
 		__update_fnr (run, run->global.fnr + 1);
 
-		if (__run_pattern_block_chain (run, run->awk->tree.chain) == -1)
+		if (run->awk->tree.chain != ASE_NULL)
 		{
-			int saved = run->errnum;
+			if (__run_pattern_block_chain (
+				run, run->awk->tree.chain) == -1)
+			{
+				int saved = run->errnum;
 
-			ase_awk_closeextio_read (
-				run, ASE_AWK_IN_CONSOLE, ASE_T(""));
+				ase_awk_closeextio_read (
+					run, ASE_AWK_IN_CONSOLE, ASE_T(""));
 
-			run->errnum = saved;
-			return -1;
+				run->errnum = saved;
+				return -1;
+			}
 		}
 	}
 
@@ -1419,6 +1424,18 @@ static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 			ASE_AWK_OUT_CONSOLE, ASE_T(""),
 			ASE_AWK_STR_BUF(&run->inrec.line),
 			ASE_AWK_STR_LEN(&run->inrec.line));
+		if (n == -1)
+		{
+			ase_awk_refdownval (run, run->inrec.d0);
+
+			if (run->errnum == ASE_AWK_EIOHANDLER)
+				PANIC_I (run, ASE_AWK_ECONOUTDATA);
+			else return -1;
+		}
+
+		n = ase_awk_writeextio_str (
+			run, ASE_AWK_OUT_CONSOLE, ASE_T(""),
+			run->global.ors.ptr, run->global.ors.len);
 		if (n == -1)
 		{
 			ase_awk_refdownval (run, run->inrec.d0);

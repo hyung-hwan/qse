@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.202 2006-11-13 15:08:17 bacon Exp $
+ * $Id: parse.c,v 1.203 2006-11-17 07:04:31 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -4376,6 +4376,11 @@ static int __deparse (ase_awk_t* awk)
 		}
 		else 
 		{
+			if (chain->pattern != ASE_NULL)
+			{
+				if (__put_char (awk, ASE_T(' ')) == -1)
+					EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			}
 			if (ase_awk_prnpt (awk, chain->action) == -1)
 				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
 		}
