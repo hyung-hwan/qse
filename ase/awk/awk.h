@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.141 2006-11-16 04:44:15 bacon Exp $
+ * $Id: awk.h,v 1.142 2006-11-18 12:15:20 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -296,6 +296,8 @@ enum
 	ASE_AWK_EIOHANDLER,        /* io handler has returned an error */
 	ASE_AWK_EFMTARG,           /* arguments to format string not sufficient */
 	ASE_AWK_EFMTCONV,          /* recursion detected in format conversion */
+	ASE_AWK_ECONVFMTCHAR,      /* an invalid character found in CONVFMT */
+	ASE_AWK_EOFMTCHAR,         /* an invalid character found in OFMT */
 
 	/* regular expression error */
 	ASE_AWK_EREXRPAREN,       /* a right parenthesis is expected */
