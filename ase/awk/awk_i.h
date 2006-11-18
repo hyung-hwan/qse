@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.81 2006-11-17 07:04:31 bacon Exp $
+ * $Id: awk_i.h,v 1.82 2006-11-18 15:36:56 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -273,6 +273,16 @@ struct ase_awk_run_t
 		ase_awk_str_t fmt;
 		ase_awk_str_t out;
 		ase_char_t tmp[4096];
+
+		/*
+		struct
+		{
+			ase_char_t* ptr;
+			ase_size_t len;	
+		} tmp;
+		*/
+
+		ase_bool_t c99; /* syscas.sprintf returns -1 on error */
 	} sprintf;
 
 	int errnum;

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.76 2006-11-16 15:16:25 bacon Exp $
+ * $Id: func.c,v 1.77 2006-11-18 15:36:57 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1283,7 +1283,7 @@ static int __bfn_sprintf (ase_awk_run_t* run)
 		}
 	}
 
-	ptr = ase_awk_sprintf (run, 
+	ptr = ase_awk_format (run, 
 		&out, &fbu, str0, len0, nargs, ASE_NULL, &len);
 	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str0);
 	if (ptr == ASE_NULL) 

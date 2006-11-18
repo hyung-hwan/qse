@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.87 2006-11-17 07:04:32 bacon Exp $
+ * $Id: tree.c,v 1.88 2006-11-18 15:36:57 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -248,7 +248,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		{
 			if (((ase_awk_nde_real_t*)nde)->str == ASE_NULL)
 			{
-				ase_char_t tmp[128];
+				ase_char_t tmp[256];
 			#if (ASE_SIZEOF_LONG_DOUBLE != 0)
 				awk->syscas.sprintf (
 					tmp, ase_countof(tmp), ASE_T("%Lf"), 
@@ -277,11 +277,6 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ase_size_t len, i;
 
 			PUT_SRCSTR (awk, ASE_T("\""));
-			/*
-			PUT_SRCSTRX (awk,
-				((ase_awk_nde_str_t*)nde)->buf, 
-				((ase_awk_nde_str_t*)nde)->len);
-			*/
 
 			ptr = ((ase_awk_nde_str_t*)nde)->buf;
 			len = ((ase_awk_nde_str_t*)nde)->len;

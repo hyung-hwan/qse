@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.142 2006-11-18 12:15:20 bacon Exp $
+ * $Id: awk.h,v 1.143 2006-11-18 15:36:56 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -77,10 +77,9 @@ struct ase_awk_syscas_t
 	ase_real_t (*pow) (ase_real_t x, ase_real_t y);
 
 	int (*sprintf) (ase_char_t* buf, ase_size_t size, ase_char_t* fmt, ...);
-	int (*aprintf) (ase_char_t* fmt, ...); /* assertion */
-	int (*dprintf) (ase_char_t* fmt, ...); /* debug */
+	void (*aprintf) (ase_char_t* fmt, ...); /* assertion */
+	void (*dprintf) (ase_char_t* fmt, ...); /* debug */
 	void (*abort) (void);
-
 
 	void* custom_data;
 };
