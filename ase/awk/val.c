@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.88 2006-11-17 07:04:32 bacon Exp $
+ * $Id: val.c,v 1.89 2006-11-18 12:15:20 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -616,8 +616,6 @@ static ase_char_t* __val_real_to_str (
 		return ASE_NULL;
 	}
 
-/* TODO: does it need to check if a null character is included in convfmt??? */
-/* TODO: check if convfmt contains more that one format specifier */
 	tmp = ase_awk_sprintf (run, &out, &fbu, tmp, tmp_len, 
 		(ase_size_t)-1, (ase_awk_nde_t*)v, &tmp_len);
 	if (tmp == ASE_NULL) 
