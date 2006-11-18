@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.265 2006-11-18 12:15:20 bacon Exp $
+ * $Id: run.c,v 1.266 2006-11-18 15:36:57 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2478,7 +2478,7 @@ static int __formatted_output (
 	ase_size_t len;
 	int n;
 
-	ptr = ase_awk_sprintf (run, 
+	ptr = ase_awk_format (run, 
 		ASE_NULL, ASE_NULL, fmt, fmt_len, 0, args, &len);
 	if (ptr == ASE_NULL) return -1;
 
@@ -5538,7 +5538,7 @@ static ase_char_t* __idxnde_to_str (
 	return str;
 }
 
-ase_char_t* ase_awk_sprintf (
+ase_char_t* ase_awk_format (
 	ase_awk_run_t* run, ase_awk_str_t* out, ase_awk_str_t* fbu,
 	const ase_char_t* fmt, ase_size_t fmt_len, 
 	ase_size_t nargs_on_stack, ase_awk_nde_t* args, ase_size_t* len)
@@ -5640,8 +5640,9 @@ ase_char_t* ase_awk_sprintf (
 			if (n == -1) return ASE_NULL; 
 			if (n == 1) l = (ase_long_t)r;
 
+
 			run->awk->syscas.sprintf (
-				run->sprintf.tmp, 
+				run->sprintf.tmp,
 				ase_countof(run->sprintf.tmp),
 			#ifdef _WIN32
 				ASE_T("%I64d"), (__int64)l);
@@ -5655,6 +5656,37 @@ ase_char_t* ase_awk_sprintf (
 				FMT_CHAR (*p);
 				p++;
 			}
+
+/*
+			while (1)
+			{
+				n = run->awk->syscas.sprintf (
+					run->sprintf.tmp.ptr, 
+					run->sprintf.tmp.len,
+				#ifdef _WIN32
+					ASE_T("%I64d"), (__int64)l);
+				#else
+					ASE_T("%lld"), (long long)l);
+				#endif
+
+				if ((!run->sprintf.tmp.c99 && n == -1) ||
+				    (run->sprintf.tmp.c99 && 
+				     n != ase_awk_strlen(run->sprintf.tmp.ptr)) 
+				{
+					
+					continue;
+				}
+
+				
+			}
+
+			p = run->sprintf.tmp.ptr;
+			while (*p != ASE_T('\0'))
+			{
+				FMT_CHAR (*p);
+				p++;
+			}
+*/
 
 			if (args == ASE_NULL || val != ASE_NULL) stack_arg_idx++;
 			else args = args->next;
@@ -5793,7 +5825,6 @@ ase_char_t* ase_awk_sprintf (
 			if (n == -1) return ASE_NULL; 
 			if (n == 1) l = (ase_long_t)r;
 
-			/* TODO: check the return value of syscas.sprintf and handle an error */
 			run->awk->syscas.sprintf (
 				run->sprintf.tmp, 
 				ase_countof(run->sprintf.tmp),
@@ -5858,7 +5889,6 @@ ase_char_t* ase_awk_sprintf (
 			if (n == -1) return ASE_NULL;
 			if (n == 0) r = (ase_real_t)l;
 
-			/* TODO: check the return value of syscas.sprintf and handle an error */
 			run->awk->syscas.sprintf (
 				run->sprintf.tmp, 
 				ase_countof(run->sprintf.tmp),
@@ -5999,7 +6029,6 @@ ase_char_t* ase_awk_sprintf (
 			else if (v->type == ASE_AWK_VAL_STR)
 			{
 				/* TODO: handle a string contailing null characters */
-				/* TODO: handle error conditions of sprintf */
 				run->awk->syscas.sprintf (
 					run->sprintf.tmp, 
 					ase_countof(run->sprintf.tmp),

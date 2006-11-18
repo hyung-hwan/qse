@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.115 2006-11-17 07:49:10 bacon Exp $
+ * $Id: awk.c,v 1.116 2006-11-18 15:36:57 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -26,9 +26,6 @@
 		#define ASE_PATH_MAX PATH_MAX
 	#endif
 
-	#define xp_vsprintf _vsntprintf
-	#define xp_sprintf _sntprintf
-	#define xp_fprintf _ftprintf
 	#define xp_printf _tprintf
 	#define xp_assert assert
 
@@ -108,6 +105,11 @@ static int __awk_sprintf (
 	va_start (ap, fmt);
 #if defined(_WIN32)
 	n = _vsntprintf (buf, len, fmt, ap);
+	if (n < 0 || (ase_size_t)n >= len)
+	{
+		if (len >= 0) buf[len-1] = ASE_T('\0');
+		n = -1;
+	}
 #elif defined(__MSDOS__)
 	/* TODO: check buffer overflow */
 	n = vsprintf (buf, fmt, ap);
@@ -118,48 +120,48 @@ static int __awk_sprintf (
 	return n;
 }
 
-static int __awk_aprintf (const ase_char_t* fmt, ...)
+static void __awk_aprintf (const ase_char_t* fmt, ...)
 {
-	int n;
 	va_list ap;
 #ifdef _WIN32
+	int n;
 	ase_char_t buf[1024];
 #endif
 
 	va_start (ap, fmt);
 #if defined(_WIN32)
 	n = _vsntprintf (buf, ase_countof(buf), fmt, ap);
+	if (n < 0) buf[ase_countof(buf)-1] = ASE_T('\0');
 
 	#if defined(_MSC_VER) && (_MSC_VER<1400)
-	MessageBox (NULL, buf, ASE_T("Assertion Failure"), MB_OK | MB_ICONERROR);
+	MessageBox (NULL, buf, 
+		ASE_T("Assertion Failure"), MB_OK|MB_ICONERROR);
 	#else
-	MessageBox (NULL, buf, ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK | MB_ICONERROR);
+	MessageBox (NULL, buf, 
+		ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK|MB_ICONERROR);
 	#endif
 #elif defined(__MSDOS__)
-	n = vprintf (fmt, ap);
+	vprintf (fmt, ap);
 #else
-	n = xp_vprintf (fmt, ap);
+	xp_vprintf (fmt, ap);
 #endif
 	va_end (ap);
-	return n;
 }
 
-static int __awk_dprintf (const ase_char_t* fmt, ...)
+static void __awk_dprintf (const ase_char_t* fmt, ...)
 {
-	int n;
 	va_list ap;
 	va_start (ap, fmt);
 
 #if defined(_WIN32)
-	n = _vftprintf (stderr, fmt, ap);
+	_vftprintf (stderr, fmt, ap);
 #elif defined(__MSDOS__)
-	n = vfprintf (stderr, fmt, ap);
+	vfprintf (stderr, fmt, ap);
 #else
-	n = xp_vfprintf (stderr, fmt, ap);
+	xp_vfprintf (stderr, fmt, ap);
 #endif
 
 	va_end (ap);
-	return n;
 }
 
 static ase_real_t __awk_pow (ase_real_t x, ase_real_t y)
