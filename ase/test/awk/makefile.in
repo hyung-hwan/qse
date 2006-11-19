@@ -6,13 +6,16 @@ CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. -I$(XPKIT)
 LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/awk -L$(XPKIT)/xp/bas
 LIBS = @LIBS@ -laseawk -lxpbas -lm
 
-all: awk
+all: xpkit awk
 
 awk: $(OBJS)
 	$(CC) -o $@ awk.o $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -rf *.o awk
+
+xpkit:
+	@if [ "$(XPKIT)" = "" ]; then echo "ERROR: XPKIT not set. Check XPKIT first"; return 1; fi
 
 .SUFFIXES: .c .o
 .c.o:
