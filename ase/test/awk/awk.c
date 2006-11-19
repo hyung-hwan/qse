@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.119 2006-11-19 15:24:20 bacon Exp $
+ * $Id: awk.c,v 1.120 2006-11-19 15:33:40 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -93,7 +93,7 @@ static int __awk_sprintf (
 	n = _vsntprintf (buf, len, fmt, ap);
 	if (n < 0 || (ase_size_t)n >= len)
 	{
-		if (len >= 0) buf[len-1] = ASE_T('\0');
+		if (len > 0) buf[len-1] = ASE_T('\0');
 		n = -1;
 	}
 #elif defined(__MSDOS__)
