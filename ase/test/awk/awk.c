@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.116 2006-11-18 15:36:57 bacon Exp $
+ * $Id: awk.c,v 1.117 2006-11-19 07:45:46 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -17,30 +17,16 @@
 #if defined(_WIN32)
 	#include <windows.h>
 	#include <tchar.h>
-	#include <limits.h>
 	#include <assert.h>
-
-	#ifndef PATH_MAX
-		#define ASE_PATH_MAX 4096
-	#else
-		#define ASE_PATH_MAX PATH_MAX
-	#endif
 
 	#define xp_printf _tprintf
 	#define xp_assert assert
 
 	#pragma warning (disable: 4996)
 #elif defined(__MSDOS__)
-	#include <limits.h>
 	#include <assert.h>
 	#include <ctype.h>
 	#include <stdlib.h>
-
-	#ifndef PATH_MAX
-		#define ASE_PATH_MAX 4096
-	#else
-		#define ASE_PATH_MAX PATH_MAX
-	#endif
 
 	#define xp_printf printf
 	#define xp_assert assert

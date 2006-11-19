@@ -1,0 +1,8 @@
+{
+	last = $0;
+}
+
+END {
+	print last;
+}
+Susie	4.25	18

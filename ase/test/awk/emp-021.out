@@ -1,0 +1,8 @@
+{
+	names = ((names   $1)   " ");
+}
+
+END {
+	print names;
+}
+Beth Dan Kathy Mark Mary Susie 

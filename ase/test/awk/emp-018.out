@@ -1,0 +1,4 @@
+END {
+	print __global10,"employees";
+}
+6 employees
