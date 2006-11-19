@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.117 2006-11-19 07:45:46 bacon Exp $
+ * $Id: awk.c,v 1.118 2006-11-19 11:21:06 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -743,9 +743,9 @@ static int __main (int argc, ase_char_t* argv[])
 	syscas_data_t syscas_data;
 #endif
 
-	opt = ASE_AWK_EXPLICIT | ASE_AWK_UNIQUE | ASE_AWK_HASHSIGN |
+	opt = ASE_AWK_IMPLICIT | ASE_AWK_EXPLICIT | ASE_AWK_UNIQUE | ASE_AWK_HASHSIGN |
 		/*ASE_AWK_DBLSLASHES |*/
-		ASE_AWK_SHADING | ASE_AWK_IMPLICIT | ASE_AWK_SHIFT | 
+		ASE_AWK_SHADING | ASE_AWK_SHIFT | 
 		ASE_AWK_EXTIO | ASE_AWK_BLOCKLESS | ASE_AWK_STRINDEXONE | 
 		ASE_AWK_STRIPSPACES /*| ASE_AWK_NEWLINE*/;
 
