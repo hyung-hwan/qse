@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.275 2006-11-19 14:55:20 bacon Exp $
+ * $Id: run.c,v 1.276 2006-11-19 15:08:13 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -24,7 +24,7 @@ enum exit_level_t
 	EXIT_FUNCTION,
 	EXIT_NEXT,
 	EXIT_GLOBAL,
-	EXIT_ABORT,
+	EXIT_ABORT
 };
 
 #define PANIC(run,code) \
@@ -5388,8 +5388,8 @@ run->awk->syscas.dprintf (ASE_T("len = %d str=[%s]\n"),
 
 static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 {
-	ase_awk_val_t* v = ASE_NULL;
-	ase_char_t* ofs_free = ASE_NULL, * ofs = ASE_NULL;
+	ase_awk_val_t* v;
+	ase_char_t* ofs_free = ASE_NULL, * ofs;
 	ase_size_t ofs_len, i;
 	ase_awk_str_t tmp;
 

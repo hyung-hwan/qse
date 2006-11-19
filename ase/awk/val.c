@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.90 2006-11-18 15:36:57 bacon Exp $
+ * $Id: val.c,v 1.91 2006-11-19 15:08:13 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -726,15 +726,20 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 		       	break;
 
 		case ASE_AWK_VAL_INT:
-		#if defined(__BORLANDC__) || defined(_MSC_VER)
-			__DPRINTF (ASE_T("%I64d"), 
-				(__int64)((ase_awk_nde_int_t*)val)->val);
-		#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-			__DPRINTF (ASE_T("%ld"), 
-				(long)((ase_awk_val_int_t*)val)->val);
-		#else
+		#if ASE_SIZEOF_LONG_LONG > 0
 			__DPRINTF (ASE_T("%lld"), 
 				(long long)((ase_awk_val_int_t*)val)->val);
+		#elif ASE_SIZEOF___INT64 > 0
+			__DPRINTF (ASE_T("%I64d"), 
+				(__int64)((ase_awk_nde_int_t*)val)->val);
+		#elif ASE_SIZEOF_LONG > 0
+			__DPRINTF (ASE_T("%ld"), 
+				(long)((ase_awk_val_int_t*)val)->val);
+		#elif ASE_SIZEOF_INT > 0
+			__DPRINTF (ASE_T("%d"), 
+				(int)((ase_awk_val_int_t*)val)->val);
+		#else
+			#error unsupported integer size
 		#endif
 			break;
 
