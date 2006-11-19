@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.269 2006-11-19 10:05:42 bacon Exp $
+ * $Id: run.c,v 1.270 2006-11-19 10:12:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -706,12 +706,27 @@ static int __init_run (ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum
 		return -1;
 	}
 
+	run->format.tmp.ptr = (ase_char_t*)
+		ASE_AWK_MALLOC (run->awk, 4096*ase_sizeof(ase_char_t*));
+	if (run->format.tmp.ptr == ASE_NULL)
+	{
+		ase_awk_map_close (&run->named);
+		ase_awk_str_close (&run->format.fmt);
+		ase_awk_str_close (&run->format.out);
+		ase_awk_str_close (&run->inrec.line);
+		*errnum = ASE_AWK_ENOMEM; 
+		return -1;
+	}
+	run->format.tmp.len = 4096;
+	run->format.tmp.ptr = 4096;
+
 	if (run->awk->tree.chain_size > 0)
 	{
 		run->pattern_range_state = (ase_byte_t*) ASE_AWK_MALLOC (
 			run->awk, run->awk->tree.chain_size*ase_sizeof(ase_byte_t));
 		if (run->pattern_range_state == ASE_NULL)
 		{
+			ASE_AWK_FREE (run->awk, run->format.tmp.ptr);
 			ase_awk_map_close (&run->named);
 			ase_awk_str_close (&run->format.fmt);
 			ase_awk_str_close (&run->format.out);
@@ -801,6 +816,9 @@ static void __deinit_run (ase_awk_run_t* run)
 		run->global.subsep.len = 0;
 	}
 
+	ASE_AWK_FREE (run->awk, run->format.tmp.ptr);
+	run->format.tmp.ptr = ASE_NULL;
+	run->format.tmp.len = 0;
 	ase_awk_str_close (&run->format.fmt);
 	ase_awk_str_close (&run->format.out);
 
@@ -5573,9 +5591,13 @@ ase_char_t* ase_awk_format (
 			(buf)->ptr = ASE_NULL; \
 		} \
 		(buf)->len += (buf)->inc; \
-		(buf)->ptr = ASE_AWK_MALLOC (run->awk, (buf)->len); \
+		(buf)->ptr = (ase_char_t*)ASE_AWK_MALLOC ( \
+			run->awk, (buf)->len * ase_sizeof(ase_char_t)); \
 		if ((buf)->ptr == ASE_NULL) (buf)->len = 0; \
 	} while (0) 
+
+	ASE_AWK_ASSERTX (run->awk, run->format.tmp.ptr != ASE_NULL,
+		"run->format.tmp.ptr should have been assigned a pointer to a block of memory before this function has been called");
 
 	if (nargs_on_stack == (ase_size_t)-1) 
 	{
