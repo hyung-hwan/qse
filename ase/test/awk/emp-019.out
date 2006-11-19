@@ -1,0 +1,12 @@
+{
+	pay = (pay + ($2 * $3));
+}
+
+END {
+	print __global10,"employees";
+	print "total pay is",pay;
+	print "average pay is",(pay / __global10);
+}
+6 employees
+total pay is 337.5
+average pay is 56.25

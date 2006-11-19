@@ -1,0 +1,9 @@
+{
+	nc = ((nc + length ($0)) + 1);
+	nw = (nw + __global9);
+}
+
+END {
+	print __global10,"lines,",nw,"words,",nc,"characters";
+}
+6 lines, 18 words, 77 characters
