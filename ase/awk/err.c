@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.50 2006-11-19 10:03:18 bacon Exp $
+ * $Id: err.c,v 1.51 2006-11-19 10:12:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -105,8 +105,6 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("io handler has returned an error"),
 		ASE_T("not sufficient arguments to formatting sequence"),
 		ASE_T("recursion detected in format conversion"),
-		ASE_T("invalid format specifier width"),
-		ASE_T("invalid format specifier precision"),
 		ASE_T("invalid character in CONVFMT"),
 		ASE_T("invalid character in OFMT"),
 

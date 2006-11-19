@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.144 2006-11-19 10:03:18 bacon Exp $
+ * $Id: awk.h,v 1.145 2006-11-19 10:12:07 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -295,8 +295,6 @@ enum
 	ASE_AWK_EIOHANDLER,        /* io handler has returned an error */
 	ASE_AWK_EFMTARG,           /* arguments to format string not sufficient */
 	ASE_AWK_EFMTCONV,          /* recursion detected in format conversion */
-	ASE_AWK_EFMTWIDTH,         /* invalid format specifier width */
-	ASE_AWK_EFMTPREC,          /* invalid format specifier precision */
 	ASE_AWK_ECONVFMTCHAR,      /* an invalid character found in CONVFMT */
 	ASE_AWK_EOFMTCHAR,         /* an invalid character found in OFMT */
 
