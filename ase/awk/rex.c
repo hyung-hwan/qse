@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.42 2006-11-15 05:49:22 bacon Exp $
+ * $Id: rex.c,v 1.43 2006-11-19 06:15:25 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1586,7 +1586,7 @@ xp_printf (ASE_T("__match occurrences: si = %d [%s]\n"), si, mat->match_ptr);
 	return p;
 }
 
-ase_bool_t __test_charset (
+static ase_bool_t __test_charset (
 	__matcher_t* matcher, const ase_byte_t* p, ase_size_t csc, ase_char_t c)
 {
 	ase_size_t i;
@@ -1595,20 +1595,20 @@ ase_bool_t __test_charset (
 	{
 		ase_char_t c0, c1, c2;
 
-		c0 = *(ase_char_t*)p;
+		c0 = *(const ase_char_t*)p;
 		p += ase_sizeof(c0);
 		if (c0 == CHARSET_ONE)
 		{
-			c1 = *(ase_char_t*)p;
+			c1 = *(const ase_char_t*)p;
 			if (matcher->ignorecase) 
 				c1 = ASE_AWK_TOUPPER(matcher->awk, c1);
 			if (c == c1) return ase_true;
 		}
 		else if (c0 == CHARSET_RANGE)
 		{
-			c1 = *(ase_char_t*)p;
+			c1 = *(const ase_char_t*)p;
 			p += ase_sizeof(c1);
-			c2 = *(ase_char_t*)p;
+			c2 = *(const ase_char_t*)p;
 
 			if (matcher->ignorecase) 
 			{
@@ -1619,7 +1619,7 @@ ase_bool_t __test_charset (
 		}
 		else if (c0 == CHARSET_CLASS)
 		{
-			c1 = *(ase_char_t*)p;
+			c1 = *(const ase_char_t*)p;
 			if (__char_class[c1].func (
 				matcher->awk, c)) return ase_true;
 		}

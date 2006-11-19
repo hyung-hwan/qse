@@ -17,7 +17,7 @@ STARTUP = c0x32w.obj
 all: awk 
 
 awk: awk.obj
-	$(LD) $(LDFLAGS) $(STARTUP) awk.obj,awk.exe,,$(LIBS),,
+	$(LD) $(LDFLAGS) $(STARTUP) awk.obj,$@.exe,,$(LIBS),,
 
 clean:
 	del $(OBJS) *.obj $(OUT)

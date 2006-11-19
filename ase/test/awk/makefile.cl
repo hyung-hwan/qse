@@ -6,7 +6,7 @@ LIBS = aseawk.lib kernel32.lib user32.lib
 all: awk #rex2 rex3
 
 awk: awk.obj
-	link /nologo /out:awk.exe $(LDFLAGS) $(LIBS) awk.obj
+	link /nologo /out:$@.exe $(LDFLAGS) $(LIBS) awk.obj
 
 rex: rex.obj
 	link /nologo /out:rex.exe $(LDFLAGS) $(LIBS) rex.obj

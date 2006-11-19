@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.266 2006-11-18 15:36:57 bacon Exp $
+ * $Id: run.c,v 1.267 2006-11-19 06:15:25 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -5644,10 +5644,14 @@ ase_char_t* ase_awk_format (
 			run->awk->syscas.sprintf (
 				run->sprintf.tmp,
 				ase_countof(run->sprintf.tmp),
-			#ifdef _WIN32
-				ASE_T("%I64d"), (__int64)l);
-			#else
+			#if ASE_SIZEOF_LONG_LONG > 0
 				ASE_T("%lld"), (long long)l);
+			#elif ASE_SIZEOF___INT64 > 0
+				ASE_T("%I64d"), (__int64)l);
+			#elif ASE_SIZEOF_LONG > 0
+				ASE_T("%ld"), (long)l);
+			#elif ASE_SIZEOF_INT > 0
+				ASE_T("%d"), (int)l);
 			#endif
 
 			p = run->sprintf.tmp;
@@ -5750,10 +5754,14 @@ ase_char_t* ase_awk_format (
 			run->awk->syscas.sprintf (
 				run->sprintf.tmp, 
 				ase_countof(run->sprintf.tmp),
-			#ifdef _WIN32
-				ASE_T("%I64d"), (__int64)l);
-			#else
+			#if ASE_SIZEOF_LONG_LONG > 0
 				ASE_T("%lld"), (long long)l);
+			#elif ASE_SIZEOF___INT64 > 0
+				ASE_T("%I64d"), (__int64)l);
+			#elif ASE_SIZEOF_LONG > 0
+				ASE_T("%ld"), (long)l);
+			#elif ASE_SIZEOF_INT > 0
+				ASE_T("%d"), (int)l);
 			#endif
 
 			p = run->sprintf.tmp;
@@ -5787,9 +5795,23 @@ ase_char_t* ase_awk_format (
 			ase_char_t* p;
 			int n;
 
+		#if ASE_SIZEOF_LONG_LONG > 0
 			FMT_CHAR (ASE_T('l'));
 			FMT_CHAR (ASE_T('l'));
 			FMT_CHAR (fmt[i]);
+		#elif ASE_SIZEOF___INT64 > 0
+			FMT_CHAR (ASE_T('I'));
+			FMT_CHAR (ASE_T('6'));
+			FMT_CHAR (ASE_T('4'));
+			FMT_CHAR (fmt[i]);
+		#elif ASE_SIZEOF_LONG > 0
+			FMT_CHAR (ASE_T('l'));
+			FMT_CHAR (fmt[i]);
+		#elif ASE_SIZEOF_INT > 0
+			FMT_CHAR (fmt[i]);
+		#else
+			#error unsupported integer size
+		#endif	
 
 			if (args == ASE_NULL)
 			{
@@ -5829,11 +5851,15 @@ ase_char_t* ase_awk_format (
 				run->sprintf.tmp, 
 				ase_countof(run->sprintf.tmp),
 				ASE_AWK_STR_BUF(fbu),
-			#ifdef _WIN32
-				(__int64)l);
-			#else
+		#if ASE_SIZEOF_LONG_LONG > 0
 				(long long)l);
-			#endif
+		#elif ASE_SIZEOF___INT64 > 0
+				(__int64)l);
+		#elif ASE_SIZEOF_LONG > 0
+				(long)l);
+		#elif ASE_SIZEOF_INT > 0
+				(int)l);
+		#endif
 
 			p = run->sprintf.tmp;
 			while (*p != ASE_T('\0'))
