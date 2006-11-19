@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.44 2006-11-19 10:47:06 bacon Exp $
+ * $Id: rex.c,v 1.45 2006-11-19 14:52:30 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -15,7 +15,7 @@ enum
 {
 	LEVEL_TOP,
 	LEVEL_CHARSET,
-	LEVEL_RANGE,
+	LEVEL_RANGE
 };
 
 enum

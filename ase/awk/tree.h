@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.79 2006-11-19 11:55:17 bacon Exp $
+ * $Id: tree.h,v 1.80 2006-11-19 14:52:30 bacon Exp $
  */
 
 #ifndef _ASE_AWK_TREE_H_
@@ -62,7 +62,7 @@ enum ase_awk_nde_type_t
 	ASE_AWK_NDE_POS,
 	/* ---------------------------------- */
 
-	ASE_AWK_NDE_GETLINE,
+	ASE_AWK_NDE_GETLINE
 };
 
 enum ase_awk_in_type_t
