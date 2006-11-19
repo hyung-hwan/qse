@@ -9,7 +9,7 @@ LIBS = @LIBS@ -laseawk -lxpbas -lm
 all: awk
 
 awk: $(OBJS)
-	$(CC) -o awk awk.o $(LDFLAGS) $(LIBS)
+	$(CC) -o $@ awk.o $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -rf *.o awk
