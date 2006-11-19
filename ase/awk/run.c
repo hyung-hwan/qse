@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.276 2006-11-19 15:08:13 bacon Exp $
+ * $Id: run.c,v 1.277 2006-11-19 15:16:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -6070,6 +6070,7 @@ ase_char_t* ase_awk_format (
 	
 					if (str->len > 0)
 					{
+						/* TODO: what if str->buf[0] is '\0'?? */
 						n = run->awk->syscas.sprintf (
 							run->format.tmp.ptr, 
 							run->format.tmp.len, 
