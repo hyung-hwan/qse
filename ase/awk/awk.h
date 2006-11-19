@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.146 2006-11-19 11:21:06 bacon Exp $
+ * $Id: awk.h,v 1.147 2006-11-19 15:24:20 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -365,6 +365,7 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
  *  error number. The third parameter to on_end denotes this error number.
  */
 int ase_awk_run (ase_awk_t* awk, 
+	const ase_char_t* main,
 	ase_awk_runios_t* runios, 
 	ase_awk_runcbs_t* runcbs, 
 	ase_awk_runarg_t* runarg);

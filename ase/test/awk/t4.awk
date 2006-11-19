@@ -13,4 +13,6 @@ function main ()
 	{
 		if (i in abc) j[i] = i;
 	}
+
+	print "end of program";
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.277 2006-11-19 15:16:06 bacon Exp $
+ * $Id: run.c,v 1.278 2006-11-19 15:24:20 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -60,7 +60,8 @@ static void __deinit_run (ase_awk_run_t* run);
 static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg);
 static int __set_globals_to_default (ase_awk_run_t* run);
 
-static int __run_main (ase_awk_run_t* run, ase_awk_runarg_t* runarg);
+static int __run_main (
+	ase_awk_run_t* run, const ase_char_t* main, ase_awk_runarg_t* runarg);
 static int __run_pattern_blocks  (ase_awk_run_t* run);
 static int __run_pattern_block_chain (
 	ase_awk_run_t* run, ase_awk_chain_t* chain);
@@ -508,6 +509,7 @@ void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum)
 }
 
 int ase_awk_run (ase_awk_t* awk, 
+	const ase_char_t* main,
 	ase_awk_runios_t* runios, 
 	ase_awk_runcbs_t* runcbs, 
 	ase_awk_runarg_t* runarg)
@@ -541,7 +543,7 @@ int ase_awk_run (ase_awk_t* awk,
 		runcbs->on_start (awk, run, runcbs->custom_data);
 	}
 
-	n = __run_main (run, runarg);
+	n = __run_main (run, main, runarg);
 	if (n == -1) 
 	{
 		/* if no callback is specified, awk's error number 
@@ -1048,7 +1050,8 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __run_main (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
+static int __run_main (
+	ase_awk_run_t* run, const ase_char_t* main, ase_awk_runarg_t* runarg)
 {
 	ase_size_t nglobals, nargs, i;
 	ase_size_t saved_stack_top;
@@ -1109,15 +1112,14 @@ static int __run_main (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 
 	n = __update_fnr (run, 0);
 	if (n == 0) n = __set_globals_to_default (run);
-	if (n == 0 && (run->awk->option & ASE_AWK_RUNMAIN))
+	if (n == 0 && main != ASE_NULL)
 	{
-/* TODO: should the main function be user-specifiable? */
 		ase_awk_nde_call_t nde;
 
 		nde.type = ASE_AWK_NDE_AFN;
 		nde.next = ASE_NULL;
-		nde.what.afn.name = ASE_T("main");
-		nde.what.afn.name_len = 4;
+		nde.what.afn.name = main;
+		nde.what.afn.name_len = ase_awk_strlen(main);
 		nde.args = ASE_NULL;
 		nde.nargs = 0;
 
