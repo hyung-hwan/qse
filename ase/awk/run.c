@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.268 2006-11-19 10:03:18 bacon Exp $
+ * $Id: run.c,v 1.269 2006-11-19 10:05:42 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -5568,12 +5568,12 @@ ase_char_t* ase_awk_format (
 #define GROW(buf) \
 	do { \
 		if ((buf)->ptr != ASE_NULL) \
-		{
+		{ \
 			ASE_AWK_FREE (run->awk, (buf)->ptr); \
-			(buf)->ptr = ASE_NULL; \	
-		}
+			(buf)->ptr = ASE_NULL; \
+		} \
 		(buf)->len += (buf)->inc; \
-		(buf)->ptr = AES_AWK_MALLOC (run->awk, (buf)->len); \
+		(buf)->ptr = ASE_AWK_MALLOC (run->awk, (buf)->len); \
 		if ((buf)->ptr == ASE_NULL) (buf)->len = 0; \
 	} while (0) 
 
@@ -5878,7 +5878,7 @@ ase_char_t* ase_awk_format (
 				#elif ASE_SIZEOF_INT > 0
 					(int)l
 				#endif
-					};
+					);
 					
 				if (n == -1)
 				{
@@ -5985,6 +5985,7 @@ ase_char_t* ase_awk_format (
 		{
 			ase_awk_val_t* v;
 			ase_char_t* p;
+			int n;
 
 			FMT_CHAR (fmt[i]);
 
@@ -6092,6 +6093,7 @@ ase_char_t* ase_awk_format (
 		{
 			ase_awk_val_t* v;
 			ase_char_t* p;
+			int n;
 
 			FMT_CHAR (fmt[i]);
 
