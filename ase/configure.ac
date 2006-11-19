@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.72 $])
+AC_REVISION([$Revision: 1.73 $])
 AC_CONFIG_HEADER([conf_unx.h])
 
 # Checks for programs.
@@ -9,46 +9,9 @@ AC_PROG_CC
 AC_PROG_RANLIB
 
 # Checks for libraries.
-AC_CHECK_LIB(pthread, pthread_create)
-AC_CHECK_LIB(nsl, gethostbyname)
-AC_CHECK_LIB(socket, connect)
-AC_CHECK_LIB(rt, nanosleep)
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADER([unistd.h], [AC_DEFINE([ASE_HAVE_UNISTD_H],[],[unistd.h])])
-AC_CHECK_HEADER([fcntl.h], [AC_DEFINE([ASE_HAVE_FCNTL_H],[],[fcntl.h])])
-AC_CHECK_HEADER([stdarg.h], [AC_DEFINE([ASE_HAVE_STDARG_H],[],[stdarg.h])])
-AC_CHECK_HEADER([stddef.h], [AC_DEFINE([ASE_HAVE_STDDEF_H],[],[stddef.h])])
-AC_CHECK_HEADER([limits.h], [AC_DEFINE([ASE_HAVE_LIMITS_H],[],[limits.h])])
-AC_CHECK_HEADER([wchar.h], [AC_DEFINE([ASE_HAVE_WCHAR_H],[],[wchar.h])])
-AC_CHECK_HEADER([poll.h], [AC_DEFINE([ASE_HAVE_POLL_H],[],[poll.h])])
-AC_CHECK_HEADER([sys/epoll.h], [AC_DEFINE([ASE_HAVE_SYS_EPOLL_H],[],[sys/epoll.h])])
-AC_CHECK_HEADER([pthread.h], [AC_DEFINE([ASE_HAVE_PTHREAD_H],[],[pthread.h])])
-
-AC_CHECK_HEADER([sys/sysinfo.h],
-	[AC_DEFINE([ASE_HAVE_SYS_SYSINFO_H],[],[sys/sysinfo.h])])
-
-# Checks for structure members
-AC_CHECK_HEADER([sys/sysinfo.h], [
-	AC_CHECK_MEMBER(struct sysinfo.mem_unit,
-		[AC_DEFINE([ASE_HAVE_SYS_SYSINFO_MEM_UNIT],[],[sys/sysinfo.mem_unit])],
-		[],
-		[#include <sys/sysinfo.h>])])
-
-AC_CHECK_MEMBER(struct sockaddr_in6.sin6_scope_id,
-	[AC_DEFINE([ASE_HAVE_IN6_SCOPE_ID],[],[in6.scope_id])],
-	[],
-	[#include <sys/types.h> 
-	 #include <sys/socket.h> 
-	 #include <netinet/in.h>])
-
-AC_CHECK_MEMBER(struct sockaddr_storage.ss_family,
-	[AC_DEFINE([ASE_HAVE_SS_FAMILY],[],[sockaddr_storage.ss_family])],
-	[],
-	[#include <sys/types.h> 
-	 #include <sys/socket.h> 
-	 #include <netdb.h>])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN(
@@ -75,7 +38,6 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
-AC_CHECK_SIZEOF(pid_t)
 AC_CHECK_SIZEOF(wchar_t)
 
 AC_DEFINE_UNQUOTED(ASE_SIZEOF_CHAR,${ac_cv_sizeof_char})
@@ -93,18 +55,9 @@ AC_DEFINE_UNQUOTED(ASE_SIZEOF_VOID_P,${ac_cv_sizeof_void_p})
 AC_DEFINE_UNQUOTED(ASE_SIZEOF_FLOAT,${ac_cv_sizeof_float})
 AC_DEFINE_UNQUOTED(ASE_SIZEOF_DOUBLE,${ac_cv_sizeof_double})
 AC_DEFINE_UNQUOTED(ASE_SIZEOF_LONG_DOUBLE,${ac_cv_sizeof_long_double})
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_PID_T,${ac_cv_sizeof_pid_t})
 AC_DEFINE_UNQUOTED(ASE_SIZEOF_WCHAR_T,${ac_cv_sizeof_wchar_t})
 
-#AC_CHECK_FUNC(nanosleep,[AC_DEFINE([ASE_HAVE_NANOSLEEP])],
-#	[AC_CHECK_LIB(rt,nanosleep, LIBS="${LIBS} -lrt", 	 
-#		[AC_CHECK_LIB(posix4,nanosleep, LIBS="${LIBS} -lposix4")])]) 	 
-
 # Checks for library functions.
-#AC_FUNC_MEMCMP
-#AC_FUNC_REALLOC
-#AC_CHECK_FUNCS([memset])
-
 AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 	[use wchar_t a default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)
