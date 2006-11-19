@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.272 2006-11-19 10:47:06 bacon Exp $
+ * $Id: run.c,v 1.273 2006-11-19 10:52:51 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -5921,7 +5921,7 @@ ase_char_t* ase_awk_format (
 			p = run->format.tmp.ptr;
 			while (*p != ASE_T('\0'))
 			{
-				FMT_CHAR (*p);
+				OUT_CHAR (*p);
 				p++;
 			}
 		}
