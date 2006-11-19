@@ -99,11 +99,6 @@ SOURCE=.\awk.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\awk.def
-# PROP Exclude_From_Build 1
-# End Source File
-# Begin Source File
-
 SOURCE=.\err.c
 # End Source File
 # Begin Source File
