@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h,v 1.5 2006-10-24 04:30:13 bacon Exp $
+ * $Id: conf_msw.h,v 1.6 2006-11-19 06:15:57 bacon Exp $
  */
 
 /*
@@ -29,14 +29,26 @@ _M_X64 x64 platform
 	#define ASE_SIZEOF_LONG 4
 #endif
 
-#define ASE_SIZEOF_LONG_LONG 0
+#ifdef __POCC__ 
+	/* pelles c with no microsoft extension */
+	#define ASE_SIZEOF_LONG_LONG 8
 
-#define ASE_SIZEOF___INT8 1
-#define ASE_SIZEOF___INT16 2
-#define ASE_SIZEOF___INT32 4
-#define ASE_SIZEOF___INT64 8
-#define ASE_SIZEOF___INT96 0
-#define ASE_SIZEOF___INT128 0
+	#define ASE_SIZEOF___INT8 0
+	#define ASE_SIZEOF___INT16 0
+	#define ASE_SIZEOF___INT32 0
+	#define ASE_SIZEOF___INT64 0
+	#define ASE_SIZEOF___INT96 0
+	#define ASE_SIZEOF___INT128 0
+#else
+	#define ASE_SIZEOF_LONG_LONG 0
+
+	#define ASE_SIZEOF___INT8 1
+	#define ASE_SIZEOF___INT16 2
+	#define ASE_SIZEOF___INT32 4
+	#define ASE_SIZEOF___INT64 8
+	#define ASE_SIZEOF___INT96 0
+	#define ASE_SIZEOF___INT128 0
+#endif
 
 #ifdef _WIN64
 	#define ASE_SIZEOF_VOID_P 8
