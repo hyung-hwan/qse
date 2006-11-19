@@ -1,12 +1,12 @@
-.title Introduction To XPAWK
+.title Introduction To ASE AWK
 
 == OVERVIEW ==
 
 === What is it? ===
-'''''XPAWK''''' is an embeddable implementation of the AWK programming language. It is composed of a set of C functions to help programmers embed the AWK interpreter to their own applications easily. 
+'''''ASE AWK''''' is an embeddable implementation of the AWK programming language. It is composed of a set of C functions to help programmers embed the AWK interpreter to their own applications easily. 
 
 === What does it do? ===
-'''''XPAWK''''' can do most of the things that other existing AWK interpreters can do. <TODO:>
+'''''ASE AWK''''' can do most of the things that other existing AWK interpreters can do. <TODO:>
 
 === Differences with other implementations ===
 There exist a number of AWK interpreters available. Most of Unix/Linux operating systems come with an AWK interpreter. <TODO:>
@@ -14,26 +14,26 @@ There exist a number of AWK interpreters available. Most of Unix/Linux operating
 == DESCRIPTION ==
 
 === Interpreter ===
-Multiple instances of interpreters can be created in a single application and each instance of the interpreter created maintains its own state in the data structure pointed at by its handle of the type ''xp_awk_t''.
+Multiple instances of interpreters can be created in a single application and each instance of the interpreter created maintains its own state in the data structure pointed at by its handle of the type ''ase_awk_t''.
 
- * xp_awk_t - an abstract type to an interpreter object.
- * xp_awk_open - creates an interpreter object.
- * xp_awk_close - destroys the interprer object created by xp_awk_open.
+ * ase_awk_t - an abstract type to an interpreter object.
+ * ase_awk_open - creates an interpreter object.
+ * ase_awk_close - destroys the interprer object created by ase_awk_open.
 
 {{{
-xp_awk_t* xp_awk_open (void);
-void xp_awk_close (xp_awk_t* awk); 
+ase_awk_t* ase_awk_open (void);
+void ase_awk_close (ase_awk_t* awk); 
 }}}
 
 The interpreter provides two distinct functionalites in large; the parser and the executor. The parser transforms the source code into the internal parse tree and the executor evaluates the parse tree and runs the code.
 
 {{{
-int xp_awk_parse (xp_awk_t* awk);
-int xp_awk_run (xp_awk_t* awk, xp_awk_io_t txtio, void* txtio_arg); 
+int ase_awk_parse (ase_awk_t* awk);
+int ase_awk_run (ase_awk_t* awk, ase_awk_io_t txtio, void* txtio_arg); 
 }}}
 
 === IO Handlers ===
-'''''XPAWK''''' does not provide any built-in IO handling routines. Instead, it requires users to provide them. 4 different IO streams should be provided to take full advantage of the interpreter.
+'''''ASE AWK''''' does not provide any built-in IO handling routines. Instead, it requires users to provide them. 4 different IO streams should be provided to take full advantage of the interpreter.
 
  * Source code input
  * Source code output
@@ -54,29 +54,29 @@ enum
 	XP_AWK_OUTPUT_DATA  = 7
 };
 
-typedef xp_ssize_t (*xp_awk_io_t) (int cmd, void* arg, xp_char_t* data, xp_size_t count);
+typedef ase_ssize_t (*ase_awk_io_t) (int cmd, void* arg, ase_char_t* data, ase_size_t count);
 }}}
 
 === Miscellaneous Functions ===
-'''''XPAWK''''' provides extra utility routines as well as the interpreter. These routines used by the interpreter can be accessed from the interested applications directly without regard to the interpreter.
+'''''ASE AWK''''' provides extra utility routines as well as the interpreter. These routines used by the interpreter can be accessed from the interested applications directly without regard to the interpreter.
 
 ==== String ====
 
 ==== Conversion ====
- * xp_awk_strtolong - convert a numeric string to an integer of the xp_long_t type. 
- * xp_awk_strtoreal - convert a numeric string to a decimal number of the xp_real_t type.
+ * ase_awk_strtolong - convert a numeric string to an integer of the ase_long_t type. 
+ * ase_awk_strtoreal - convert a numeric string to a decimal number of the ase_real_t type.
 
 {{{
-xp_long_t xp_awk_strtolong (const xp_char_t* str, int base, const xp_char_t** endptr); 
-xp_real_t xp_awk_strtoreal (const xp_char_t* str); 
+ase_long_t ase_awk_strtolong (const ase_char_t* str, int base, const ase_char_t** endptr); 
+ase_real_t ase_awk_strtoreal (const ase_char_t* str); 
 }}}
 
 ==== Regular Expression ====
 The regular expression routines built into the interpreter can replace other regular expression libraries available. By utilizing this, the application can have the identical regular expression functionalities as the embedded AWK interpreter.
 
 {{{
-xp_awk_rex_t* xp_awk_rex_open (xp_awk_rex_t* rex);
-void xp_awk_rex_close (xp_awk_rex_t* rex);
+ase_awk_rex_t* ase_awk_rex_open (ase_awk_rex_t* rex);
+void ase_awk_rex_close (ase_awk_rex_t* rex);
 }}}
 
 === User-defined Built-in Functions ===
@@ -86,7 +86,7 @@ Custom built-in functions can be added to the interpreter. This requires the dee
 {{{
 #include <xp/awk/awk.h>
 
-int xp_main ()
+int ase_main ()
 {
 	return 0;
 }
