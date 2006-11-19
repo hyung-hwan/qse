@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.16 2006-10-24 04:57:29 bacon Exp $
+ * $Id: jni.c,v 1.17 2006-11-19 15:33:39 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -9,6 +9,12 @@
 #include <wctype.h>
 #include <wchar.h>
 #include <stdio.h>
+#include <stdarg.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <tchar.h>
+#endif
 
 #define EXCEPTION_AWK "ase/awk/AwkException"
 #define FIELD_AWK     "__awk"
@@ -60,6 +66,74 @@ static void __awk_free (void* ptr, void* custom_data)
 	free (ptr);
 }
 
+static int __awk_sprintf (
+	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+
+	va_start (ap, fmt);
+#if defined(_WIN32)
+	n = _vsntprintf (buf, len, fmt, ap);
+	if (n < 0 || (ase_size_t)n >= len)
+	{
+		if (len > 0) buf[len-1] = ASE_T('\0');
+		n = -1;
+	}
+#elif defined(__MSDOS__)
+	/* TODO: check buffer overflow */
+	n = vsprintf (buf, fmt, ap);
+#else
+	n = xp_vsprintf (buf, len, fmt, ap);
+#endif
+	va_end (ap);
+	return n;
+}
+
+static void __awk_aprintf (const ase_char_t* fmt, ...)
+{
+	va_list ap;
+#ifdef _WIN32
+	int n;
+	ase_char_t buf[1024];
+#endif
+
+	va_start (ap, fmt);
+#if defined(_WIN32)
+	n = _vsntprintf (buf, ase_countof(buf), fmt, ap);
+	if (n < 0) buf[ase_countof(buf)-1] = ASE_T('\0');
+
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
+	MessageBox (NULL, buf, 
+		ASE_T("Assertion Failure"), MB_OK|MB_ICONERROR);
+	#else
+	MessageBox (NULL, buf, 
+		ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK|MB_ICONERROR);
+	#endif
+#elif defined(__MSDOS__)
+	vprintf (fmt, ap);
+#else
+	xp_vprintf (fmt, ap);
+#endif
+	va_end (ap);
+}
+
+static void __awk_dprintf (const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	va_start (ap, fmt);
+
+#if defined(_WIN32)
+	_vftprintf (stderr, fmt, ap);
+#elif defined(__MSDOS__)
+	vfprintf (stderr, fmt, ap);
+#else
+	xp_vfprintf (stderr, fmt, ap);
+#endif
+
+	va_end (ap);
+}
+
 JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 {
 	jclass class; 
@@ -92,16 +166,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
-#ifdef _WIN32
-	syscas.sprintf = _snwprintf;
-	syscas.dprintf = wprintf;
+	syscas.sprintf = __awk_sprintf;
+	syscas.aprintf = __awk_aprintf;
+	syscas.dprintf = __awk_dprintf;
 	syscas.abort = abort;
-#else
-	/* TODO: */
-	syscas.sprintf = XXXXX;
-	syscas.dprintf = XXXXX;
-	syscas.abort = abort;
-#endif
 
 	awk = ase_awk_open (&syscas);
 	if (awk == NULL)
@@ -202,7 +270,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 	runios.console = __process_extio_console;
 	runios.custom_data = &runio_data;
 
-	if (ase_awk_run (awk, &runios, ASE_NULL, ASE_NULL) == -1)
+	if (ase_awk_run (awk, ASE_NULL, &runios, ASE_NULL, ASE_NULL) == -1)
 	{
 		except = (*env)->FindClass (env, EXCEPTION_AWK);
 		if (except == 0) return;
