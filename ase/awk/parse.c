@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.203 2006-11-17 07:04:31 bacon Exp $
+ * $Id: parse.c,v 1.204 2006-11-19 11:21:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -4325,6 +4325,15 @@ static int __deparse (ase_awk_t* awk)
 			ASE_AWK_ASSERT (awk, len != (ase_size_t)-1);
 			if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
 				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			/*
+			if (ase_awk_putsrcstrx (awk, 
+				awk->parse.globals.buf[i].name, 
+				awk->parse.globals.buf[i].name_len) == -1)
+			{
+				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			}
+			*/
+
 			if (ase_awk_putsrcstr (awk, ASE_T(", ")) == -1)
 				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
 		}
@@ -4334,6 +4343,15 @@ static int __deparse (ase_awk_t* awk)
 		ASE_AWK_ASSERT (awk, len != (ase_size_t)-1);
 		if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
 			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+		/*
+		if (ase_awk_putsrcstrx (awk, 
+			awk->parse.globals.buf[i].name, 
+			awk->parse.globals.buf[i].name_len) == -1)
+		{
+			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+		}
+		*/
+
 		if (ase_awk_putsrcstr (awk, ASE_T(";\n\n")) == -1)
 			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
 	}

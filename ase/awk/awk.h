@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.145 2006-11-19 10:12:07 bacon Exp $
+ * $Id: awk.h,v 1.146 2006-11-19 11:21:06 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -143,7 +143,7 @@ enum
 	/* allow undeclared variables */
 	ASE_AWK_IMPLICIT    = (1 << 0),
 
-	/* variable requires explicit declaration */
+	/* allow explicit variable declarations */
 	ASE_AWK_EXPLICIT    = (1 << 1), 
 
 	/* a function name should not coincide to be a variable name */

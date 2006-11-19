@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.88 2006-11-18 15:36:57 bacon Exp $
+ * $Id: tree.c,v 1.89 2006-11-19 11:21:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -384,6 +384,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 					px->id.idxa, 10, 
 					ASE_NULL, tmp, ase_countof(tmp));
 				PUT_SRCSTRX (awk, tmp, n);
+				/*PUT_SRCSTRX (awk, px->id.name, px->id.name_len);*/
 			}
 			else 
 			{
@@ -406,6 +407,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 					px->id.idxa, 10, 
 					ASE_NULL, tmp, ase_countof(tmp));
 				PUT_SRCSTRX (awk, tmp, n);
+				/*PUT_SRCSTRX (awk, px->id.name, px->id.name_len);*/
 				PUT_SRCSTR (awk, ASE_T("["));
 			}
 			else 
