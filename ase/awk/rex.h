@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.22 2006-11-15 05:49:22 bacon Exp $
+ * $Id: rex.h,v 1.23 2006-11-19 11:55:16 bacon Exp $
  **/
 
 #ifndef _ASE_AWK_REX_H_
@@ -42,7 +42,7 @@
 #define ASE_AWK_REX_LEN(code) \
 	(*(ase_size_t*)((ase_byte_t*)(code)+ase_sizeof(ase_size_t)))
 
-enum ase_awk_rex_option_t
+enum ase_awk_rex_opt_t
 {
 	ASE_AWK_REX_IGNORECASE = (1 << 0)
 };

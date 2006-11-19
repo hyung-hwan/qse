@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.78 2006-10-31 10:13:15 bacon Exp $
+ * $Id: tree.h,v 1.79 2006-11-19 11:55:17 bacon Exp $
  */
 
 #ifndef _ASE_AWK_TREE_H_
@@ -9,7 +9,7 @@
 #error Never include this file directly. Include <ase/awk/awk.h> instead
 #endif
 
-enum
+enum ase_awk_nde_type_t
 {
 	ASE_AWK_NDE_NULL,
 
@@ -65,7 +65,7 @@ enum
 	ASE_AWK_NDE_GETLINE,
 };
 
-enum
+enum ase_awk_in_type_t
 {
 	/* the order of these values match 
 	 * __in_type_map and __in_opt_map in extio.c */
@@ -76,7 +76,7 @@ enum
 	ASE_AWK_IN_CONSOLE
 };
 
-enum
+enum ase_awk_out_type_t
 {
 	/* the order of these values match 
 	 * __out_type_map and __out_opt_map in extio.c */

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.273 2006-11-19 10:52:51 bacon Exp $
+ * $Id: run.c,v 1.274 2006-11-19 11:55:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -16,7 +16,7 @@
 #define STACK_GLOBAL(run,n) ((run)->stack[(n)])
 #define STACK_RETVAL_GLOBAL(run) ((run)->stack[(run)->awk->tree.nglobals+2])
 
-enum
+enum exit_level_t
 {
 	EXIT_NONE,
 	EXIT_BREAK,

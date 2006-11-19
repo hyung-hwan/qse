@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.25 2006-11-18 15:36:57 bacon Exp $
+ * $Id: run.h,v 1.26 2006-11-19 11:55:17 bacon Exp $
  */
 
 #ifndef _ASE_AWK_RUN_H_
@@ -9,19 +9,19 @@
 #error Never include this file directly. Include <ase/awk/awk.h> instead
 #endif
 
-enum
+enum ase_awk_assop_type_t
 {
 	/* if you change this, you have to change __assop_str in tree.c */
-	ASE_AWK_ASSOP_NONE,
-	ASE_AWK_ASSOP_PLUS,
-	ASE_AWK_ASSOP_MINUS,
-	ASE_AWK_ASSOP_MUL,
-	ASE_AWK_ASSOP_DIV,
-	ASE_AWK_ASSOP_MOD,
-	ASE_AWK_ASSOP_EXP
+	ASE_AWK_ASSOP_NONE, 
+	ASE_AWK_ASSOP_PLUS,  /* += */
+	ASE_AWK_ASSOP_MINUS, /* -= */
+	ASE_AWK_ASSOP_MUL,   /* *= */
+	ASE_AWK_ASSOP_DIV,   /* /= */
+	ASE_AWK_ASSOP_MOD,   /* %= */
+	ASE_AWK_ASSOP_EXP    /* **= */
 };
 
-enum 
+enum  ase_awk_binop_type_t
 {
 	/* if you change this, you have to change 
 	 * __binop_str in tree.c and __binop_func in run.c accordingly. */ 
@@ -55,7 +55,7 @@ enum
 	ASE_AWK_BINOP_NM
 };
 
-enum
+enum ase_awk_unrop_type_t
 {
 	/* if you change this, you have to change 
 	 * __unrop_str in tree.c accordingly. */ 
@@ -65,7 +65,7 @@ enum
 	ASE_AWK_UNROP_BNOT
 };
 
-enum
+enum ase_awk_incop_type_t
 {
 	/* if you change this, you have to change 
 	 * __incop_str in tree.c accordingly. */ 
@@ -73,7 +73,7 @@ enum
 	ASE_AWK_INCOP_MINUS
 };
 
-enum
+enum ase_awk_global_id_t
 {
 	/* this table should match __bvtab in parse.c.
 	 * in addition, ase_awk_setglobal also counts 
