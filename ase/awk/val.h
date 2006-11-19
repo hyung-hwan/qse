@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.51 2006-11-16 15:16:25 bacon Exp $
+ * $Id: val.h,v 1.52 2006-11-19 11:55:17 bacon Exp $
  */
 
 #ifndef _ASE_AWK_VAL_H_
@@ -9,7 +9,7 @@
 #error Never include this file directly. Include <ase/awk/awk.h> instead
 #endif
 
-enum
+enum ase_awk_val_type_t
 {
 	/* the values between ASE_AWK_VAL_NIL and ASE_AWK_VAL_STR inclusive
 	 * must be synchronized with an internal table of the __cmp_val 
@@ -24,7 +24,7 @@ enum
 	ASE_AWK_VAL_REF  = 6
 };
 
-enum
+enum ase_awk_val_ref_id_t
 {
 	/* keep these items in the same order as corresponding items
 	 * in tree.h */
@@ -39,7 +39,7 @@ enum
 	ASE_AWK_VAL_REF_POS
 };
 
-enum
+enum ase_awk_valtostr_opt_t
 {
 	ASE_AWK_VALTOSTR_CLEAR = (1 << 0),
 	ASE_AWK_VALTOSTR_PRINT = (1 << 1)
