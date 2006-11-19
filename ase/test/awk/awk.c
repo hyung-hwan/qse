@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.118 2006-11-19 11:21:06 bacon Exp $
+ * $Id: awk.c,v 1.119 2006-11-19 15:24:20 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -742,6 +742,7 @@ static int __main (int argc, ase_char_t* argv[])
 #ifdef _WIN32
 	syscas_data_t syscas_data;
 #endif
+	const ase_char_t* mfn = ASE_NULL;
 
 	opt = ASE_AWK_IMPLICIT | ASE_AWK_EXPLICIT | ASE_AWK_UNIQUE | ASE_AWK_HASHSIGN |
 		/*ASE_AWK_DBLSLASHES |*/
@@ -759,7 +760,7 @@ static int __main (int argc, ase_char_t* argv[])
 	{
 		if (ase_awk_strcmp(argv[i], ASE_T("-m")) == 0)
 		{
-			opt |= ASE_AWK_RUNMAIN;
+			mfn = ASE_T("main");
 		}
 		else if (file_count == 0)
 		{
@@ -870,7 +871,7 @@ static int __main (int argc, ase_char_t* argv[])
 	runarg[3].ptr = ASE_NULL;
 	runarg[3].len = 0;
 
-	if (ase_awk_run (awk, &runios, &runcbs, runarg) == -1)
+	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg) == -1)
 	{
 		int errnum = ase_awk_geterrnum(awk);
 		xp_printf (
