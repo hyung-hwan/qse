@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.59 2006-11-15 05:49:22 bacon Exp $
+ * $Id: types.h,v 1.60 2006-11-19 08:01:45 bacon Exp $
  */
 
 #ifndef _ASE_TYPES_H_
@@ -11,8 +11,10 @@
 	#include <ase/conf_vms.h>
 #elif defined(__MSDOS__) || defined(_MSDOS) || defined(MSDOS) 
 	#include <ase/conf_dos.h>
-#else
-	#include <ase/config.h>
+#elif defined(__unix__) || defined(__unix)
+	#include <ase/conf_unx.h>
+#elif
+	#error unsupport operating system
 #endif
 
 /* boolean type */
