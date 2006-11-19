@@ -18,7 +18,7 @@ test()
 		output=`echo $script | sed 's/\.awk$/.out/g'`
 		./awk $script emp-en.data > "$output.$pid"
 
-		diff $output "$output.$pid" 
+		diff -y $output "$output.$pid" 
 		if [ $? -ne 0 ]
 		then
 			echo "###################################"
@@ -35,6 +35,12 @@ test()
 #--------#
 #  main  #
 #--------#
+
+if [ ! -x ./awk ]
+then
+	echo "Error: cannot locate a relevant awk interpreter"
+	exit 1;
+fi
 
 if [ $# -ne 1 ]
 then
