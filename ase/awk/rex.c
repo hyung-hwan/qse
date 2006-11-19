@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.43 2006-11-19 06:15:25 bacon Exp $
+ * $Id: rex.c,v 1.44 2006-11-19 10:47:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -224,9 +224,11 @@ static ase_bool_t __cc_isspace (ase_awk_t* awk, ase_char_t c);
 static ase_bool_t __cc_isupper (ase_awk_t* awk, ase_char_t c);
 static ase_bool_t __cc_isxdigit (ase_awk_t* awk, ase_char_t c);
 
+#ifdef DEBUG_REX
 static const ase_byte_t* __print_pattern (const ase_byte_t* p);
 static const ase_byte_t* __print_branch (const ase_byte_t* p);
 static const ase_byte_t* __print_atom (const ase_byte_t* p);
+#endif
 
 struct __char_class_t
 {

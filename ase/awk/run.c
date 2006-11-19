@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.271 2006-11-19 10:14:14 bacon Exp $
+ * $Id: run.c,v 1.272 2006-11-19 10:47:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -718,7 +718,7 @@ static int __init_run (ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum
 		return -1;
 	}
 	run->format.tmp.len = 4096;
-	run->format.tmp.inc = 4096;
+	run->format.tmp.inc = 40960;
 
 	if (run->awk->tree.chain_size > 0)
 	{
