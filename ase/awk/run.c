@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.278 2006-11-19 15:24:20 bacon Exp $
+ * $Id: run.c,v 1.279 2006-11-20 14:29:33 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -5619,6 +5619,9 @@ ase_char_t* ase_awk_format (
 
 	for (i = 0; i < fmt_len; i++)
 	{
+		ase_long_t width = -1, prec = -1;
+		ase_bool_t minus = ase_false;
+
 		if (ASE_AWK_STR_LEN(fbu) == 0)
 		{
 			if (fmt[i] == ASE_T('%')) FMT_CHAR (fmt[i]);
@@ -5631,13 +5634,13 @@ ase_char_t* ase_awk_format (
 		        fmt[i] == ASE_T('0') || fmt[i] == ASE_T('+') ||
 		        fmt[i] == ASE_T('-')))
 		{
+			if (fmt[i] == ASE_T('-')) minus = ase_true;
 			FMT_CHAR (fmt[i]); i++;
 		}
 
 		if (i < fmt_len && fmt[i] == ASE_T('*'))
 		{
 			ase_awk_val_t* v;
-			ase_long_t l;
 			ase_real_t r;
 			ase_char_t* p;
 			int n;
@@ -5670,11 +5673,11 @@ ase_char_t* ase_awk_format (
 			}
 
 			ase_awk_refupval (run, v);
-			n = ase_awk_valtonum (run, v, &l, &r);
+			n = ase_awk_valtonum (run, v, &width, &r);
 			ase_awk_refdownval (run, v);
 
 			if (n == -1) return ASE_NULL; 
-			if (n == 1) l = (ase_long_t)r;
+			if (n == 1) width = (ase_long_t)r;
 
 			do
 			{
@@ -5682,13 +5685,13 @@ ase_char_t* ase_awk_format (
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
-					ASE_T("%lld"), (long long)l
+					ASE_T("%lld"), (long long)width
 				#elif ASE_SIZEOF___INT64 > 0
-					ASE_T("%I64d"), (__int64)l
+					ASE_T("%I64d"), (__int64)width
 				#elif ASE_SIZEOF_LONG > 0
-					ASE_T("%ld"), (long)l
+					ASE_T("%ld"), (long)width
 				#elif ASE_SIZEOF_INT > 0
-					ASE_T("%d"), (int)l
+					ASE_T("%d"), (int)width
 				#endif
 					);
 				if (n == -1)
@@ -5720,21 +5723,27 @@ ase_char_t* ase_awk_format (
 		}
 		else
 		{
-			while (i < fmt_len && ASE_AWK_ISDIGIT(run->awk, fmt[i]))
+			if (i < fmt_len && ASE_AWK_ISDIGIT(run->awk, fmt[i]))
 			{
-				FMT_CHAR (fmt[i]); i++;
+				width = 0;
+				do
+				{
+					width = width * 10 + fmt[i] - ASE_T('0');
+					FMT_CHAR (fmt[i]); i++;
+				}
+				while (i < fmt_len && ASE_AWK_ISDIGIT(run->awk, fmt[i]));
 			}
 		}
 
 		if (i < fmt_len && fmt[i] == ASE_T('.'))
 		{
+			prec = 0;
 			FMT_CHAR (fmt[i]); i++;
 		}
 
 		if (i < fmt_len && fmt[i] == ASE_T('*'))
 		{
 			ase_awk_val_t* v;
-			ase_long_t l;
 			ase_real_t r;
 			ase_char_t* p;
 			int n;
@@ -5767,11 +5776,11 @@ ase_char_t* ase_awk_format (
 			}
 
 			ase_awk_refupval (run, v);
-			n = ase_awk_valtonum (run, v, &l, &r);
+			n = ase_awk_valtonum (run, v, &prec, &r);
 			ase_awk_refdownval (run, v);
 
 			if (n == -1) return ASE_NULL; 
-			if (n == 1) l = (ase_long_t)r;
+			if (n == 1) prec = (ase_long_t)r;
 
 			do
 			{
@@ -5779,13 +5788,13 @@ ase_char_t* ase_awk_format (
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
-					ASE_T("%lld"), (long long)l
+					ASE_T("%lld"), (long long)prec
 				#elif ASE_SIZEOF___INT64 > 0
-					ASE_T("%I64d"), (__int64)l
+					ASE_T("%I64d"), (__int64)prec
 				#elif ASE_SIZEOF_LONG > 0
-					ASE_T("%ld"), (long)l
+					ASE_T("%ld"), (long)prec
 				#elif ASE_SIZEOF_INT > 0
-					ASE_T("%d"), (int)l
+					ASE_T("%d"), (int)prec
 				#endif
 					);
 				if (n == -1)
@@ -5817,9 +5826,15 @@ ase_char_t* ase_awk_format (
 		}
 		else
 		{
-			while (i < fmt_len && ASE_AWK_ISDIGIT(run->awk, fmt[i]))
+			if (i < fmt_len && ASE_AWK_ISDIGIT(run->awk, fmt[i]))
 			{
-				FMT_CHAR (fmt[i]); i++;
+				prec = 0;
+				do
+				{
+					prec = prec * 10 + fmt[i] - ASE_T('0');
+					FMT_CHAR (fmt[i]); i++;
+				}
+				while (i < fmt_len && ASE_AWK_ISDIGIT(run->awk, fmt[i]));
 			}
 		}
 
@@ -6007,11 +6022,9 @@ ase_char_t* ase_awk_format (
 		}
 		else if (fmt[i] == ASE_T('c')) 
 		{
+			ase_char_t ch;
+			ase_size_t ch_len;
 			ase_awk_val_t* v;
-			ase_char_t* p;
-			int n;
-
-			FMT_CHAR (fmt[i]);
 
 			if (args == ASE_NULL)
 			{
@@ -6041,86 +6054,87 @@ ase_char_t* ase_awk_format (
 			}
 
 			ase_awk_refupval (run, v);
-
-			do 
+			if (v->type == ASE_AWK_VAL_NIL)
 			{
-				n = 0;
+				ch = ASE_T('\0');
+				ch_len = 0;
+			}
+			else if (v->type == ASE_AWK_VAL_INT)
+			{
+				ch = (ase_char_t)((ase_awk_val_int_t*)v)->val;
+				ch_len = 1;
+			}
+			else if (v->type == ASE_AWK_VAL_REAL)
+			{
+				ch = (ase_char_t)((ase_awk_val_real_t*)v)->val;
+				ch_len = 1;
+			}
+			else if (v->type == ASE_AWK_VAL_STR)
+			{
+				ch_len = ((ase_awk_val_str_t*)v)->len;
+				if (ch_len > 0) 
+				{
+					ch = ((ase_awk_val_str_t*)v)->buf[0];
+					ch_len = 1;
+				}
+				else ch = ASE_T('\0');
+			}
+			else
+			{
+				ase_awk_refdownval (run, v);
+				run->errnum = ASE_AWK_EVALTYPE;
+				return ASE_NULL;
+			}
 
-				if (v->type == ASE_AWK_VAL_NIL)
-				{
-					run->format.tmp.ptr[0] = ASE_T('\0');
-				}
-				else if (v->type == ASE_AWK_VAL_INT)
-				{
-					n = run->awk->syscas.sprintf (
-						run->format.tmp.ptr, 
-						run->format.tmp.len, 
-						ASE_AWK_STR_BUF(fbu),
-						(int)((ase_awk_val_int_t*)v)->val);
-				}
-				else if (v->type == ASE_AWK_VAL_REAL)
-				{
-					n = run->awk->syscas.sprintf (
-						run->format.tmp.ptr, 
-						run->format.tmp.len, 
-						ASE_AWK_STR_BUF(fbu),
-						(int)((ase_awk_val_real_t*)v)->val);
-				}
-				else if (v->type == ASE_AWK_VAL_STR)
-				{
-					ase_awk_val_str_t* str = (ase_awk_val_str_t*)v;
-	
-					if (str->len > 0)
-					{
-						/* TODO: what if str->buf[0] is '\0'?? */
-						n = run->awk->syscas.sprintf (
-							run->format.tmp.ptr, 
-							run->format.tmp.len, 
-							ASE_AWK_STR_BUF(fbu),
-							str->buf[0]);
-					}
-					else run->format.tmp.ptr[0] = ASE_T('\0');
-				}
-				else
-				{
-					ase_awk_refdownval (run, v);
-					run->errnum = ASE_AWK_EVALTYPE;
-					return ASE_NULL;
-				}
 
-				if (n == -1)
+			if (prec == -1 || prec == 0 || prec > ch_len ) prec = ch_len;
+			if (prec > width) width = prec;
+
+			if (!minus)
+			{
+				while (width > prec) 
 				{
-					GROW (&run->format.tmp);
-					if (run->format.tmp.ptr == ASE_NULL)
-					{
+					if (ase_awk_str_ccat (out, ASE_T(' ')) == -1) 
+					{ 
 						ase_awk_refdownval (run, v);
 						run->errnum = ASE_AWK_ENOMEM;
-						return ASE_NULL;
-					}
-
-					continue;
+						return ASE_NULL; 
+					} 
+					width--;
 				}
-
-				break;
 			}
-			while (1);
+
+			if (prec > 0)
+			{
+				if (ase_awk_str_ccat (out, ch) == -1) 
+				{ 
+					ase_awk_refdownval (run, v);
+					run->errnum = ASE_AWK_ENOMEM;
+					return ASE_NULL; 
+				} 
+			}
+
+			if (minus)
+			{
+				while (width > prec) 
+				{
+					if (ase_awk_str_ccat (out, ASE_T(' ')) == -1) 
+					{ 
+						ase_awk_refdownval (run, v);
+						run->errnum = ASE_AWK_ENOMEM;
+						return ASE_NULL; 
+					} 
+					width--;
+				}
+			}
 
 			ase_awk_refdownval (run, v);
-
-			p = run->format.tmp.ptr;
-			while (*p != ASE_T('\0'))
-			{
-				OUT_CHAR (*p);
-				p++;
-			}
 		}
 		else if (fmt[i] == ASE_T('s')) 
 		{
+			ase_char_t* str;
+			ase_size_t str_len, k;
 			ase_awk_val_t* v;
-			ase_char_t* p;
-			int n;
-
-			FMT_CHAR (fmt[i]);
 
 			if (args == ASE_NULL)
 			{
@@ -6150,75 +6164,76 @@ ase_char_t* ase_awk_format (
 			}
 
 			ase_awk_refupval (run, v);
-			do
+			if (v->type == ASE_AWK_VAL_NIL)
 			{
-				n = 0;
-	
-				if (v->type == ASE_AWK_VAL_NIL)
+				str = ASE_T("");
+				str_len = 0;
+			}
+			else if (v->type == ASE_AWK_VAL_STR)
+			{
+				str = ((ase_awk_val_str_t*)v)->buf;
+				str_len = ((ase_awk_val_str_t*)v)->len;
+			}
+			else
+			{
+				if (v == val)
 				{
-					run->format.tmp.ptr[0] = ASE_T('\0');
+					ase_awk_refdownval (run, v);
+					run->errnum = ASE_AWK_EFMTCONV;
+					return ASE_NULL;
 				}
-				else if (v->type == ASE_AWK_VAL_STR)
+	
+				str = ase_awk_valtostr (run, v, 
+					ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &str_len);
+				if (str == ASE_NULL)
 				{
-					/* TODO: handle a string contailing null characters */
-					n = run->awk->syscas.sprintf (
-						run->format.tmp.ptr, 
-						run->format.tmp.len, 
-						ASE_AWK_STR_BUF(fbu),
-						((ase_awk_val_str_t*)v)->buf);
+					ase_awk_refdownval (run, v);
+					return ASE_NULL;
 				}
-				else
-				{
-					ase_size_t l;
-	
-					if (v == val)
-					{
-						ase_awk_refdownval (run, v);
-						run->errnum = ASE_AWK_EFMTCONV;
-						return ASE_NULL;
-					}
-	
-					p = ase_awk_valtostr (run, v, 
-						ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &l);
-					if (p == ASE_NULL)
-					{
-						ase_awk_refdownval (run, v);
-						return ASE_NULL;
-					}
-	
-					n = run->awk->syscas.sprintf (
-						run->format.tmp.ptr, 
-						run->format.tmp.len, 
-						ASE_AWK_STR_BUF(fbu),
-						p);
+			}
 
-					ASE_AWK_FREE (run->awk, p);
-				}
+			if (prec == -1 || prec > str_len ) prec = str_len;
+			if (prec > width) width = prec;
 
-				if (n == -1)
+			if (!minus)
+			{
+				while (width > prec) 
 				{
-					GROW (&run->format.tmp);
-					if (run->format.tmp.ptr == ASE_NULL)
-					{
+					if (ase_awk_str_ccat (out, ASE_T(' ')) == -1) 
+					{ 
 						ase_awk_refdownval (run, v);
 						run->errnum = ASE_AWK_ENOMEM;
-						return ASE_NULL;
-					}
-
-					continue;
+						return ASE_NULL; 
+					} 
+					width--;
 				}
-
-				break;
 			}
-			while (1);
-			ase_awk_refdownval (run, v);
 
-			p = run->format.tmp.ptr;
-			while (*p != ASE_T('\0'))
+			for (k = 0; k < prec; k++) 
 			{
-				OUT_CHAR (*p);
-				p++;
+				if (ase_awk_str_ccat (out, str[k]) == -1) 
+				{ 
+					ase_awk_refdownval (run, v);
+					run->errnum = ASE_AWK_ENOMEM;
+					return ASE_NULL; 
+				} 
 			}
+
+			if (minus)
+			{
+				while (width > prec) 
+				{
+					if (ase_awk_str_ccat (out, ASE_T(' ')) == -1) 
+					{ 
+						ase_awk_refdownval (run, v);
+						run->errnum = ASE_AWK_ENOMEM;
+						return ASE_NULL; 
+					} 
+					width--;
+				}
+			}
+
+			ase_awk_refdownval (run, v);
 		}
 		else /*if (fmt[i] == ASE_T('%'))*/
 		{
