@@ -1,10 +1,10 @@
 /*
- * $Id: misc.c,v 1.38 2006-11-13 15:08:53 bacon Exp $
+ * $Id: misc.c,v 1.39 2006-11-20 11:08:08 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
 
-void* ase_awk_memcpy  (void* dst, const void* src, ase_size_t n)
+void* ase_awk_memcpy (void* dst, const void* src, ase_size_t n)
 {
 	void* p = dst;
 	void* e = (ase_byte_t*)dst + n;
