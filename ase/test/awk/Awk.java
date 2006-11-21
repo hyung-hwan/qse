@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.1 2006-10-24 06:03:14 bacon Exp $
+ * $Id: Awk.java,v 1.2 2006-11-21 15:06:50 bacon Exp $
  */
 
 package ase.test.awk;
@@ -11,6 +11,8 @@ public class Awk extends ase.awk.Awk
 	private FileReader insrc;
 	private FileWriter outsrc;
 
+	private InputStreamReader console_in = null;
+
 	public Awk () throws ase.awk.Exception
 	{
 		super ();
@@ -20,13 +22,13 @@ public class Awk extends ase.awk.Awk
 	{
 		if (mode == SOURCE_READ)
 		{
-			try { insrc = new FileReader ("test.awk"); }
+			try { insrc = new FileReader ("t.awk"); }
 			catch (IOException e) { return -1; }
 			return 1;
 		}
 		else if (mode == SOURCE_WRITE)
 		{
-			try { outsrc = new FileWriter ("test.out"); }
+			try { outsrc = new FileWriter ("t.out"); }
 			catch (IOException e) { return -1; }
 			return 1;
 		}
@@ -65,39 +67,107 @@ public class Awk extends ase.awk.Awk
 		return len;
 	}
 
-	protected int open_console ()
+	protected int open_console (ase.awk.Extio extio)
 	{
-		System.err.println ("[open_console called....]");
-		return 1;
+		System.err.println ("[open_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
+
+		int mode = extio.getMode ();
+
+		if (mode == ase.awk.Extio.MODE_CONSOLE_READ)
+		{
+			InputStreamReader isr = 
+				new InputStreamReader (System.in);
+			extio.setHandle (isr);
+			return 1;
+		}
+		else if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
+		{
+			OutputStreamWriter osw =
+				new OutputStreamWriter (System.out);
+			extio.setHandle (osw);
+			return 1;
+		}
+
+		return -1;
 	}
 
-	protected int close_console ()
+	protected int close_console (ase.awk.Extio extio)
 	{
-		System.err.println ("[close_console called....]");
-		return 1;
+		System.err.println ("[close_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
+
+		int mode = extio.getMode ();
+
+		if (mode == ase.awk.Extio.MODE_CONSOLE_READ)
+		{
+			InputStreamReader isr = (InputStreamReader)extio.getHandle ();
+			try { isr.close (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+		else if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
+		{
+			OutputStreamWriter osw = (OutputStreamWriter)extio.getHandle ();
+			//try { osw.close (); }
+			//catch (IOException e) { return -1; }
+			return 0;
+		}
+
+		return -1;
 	}
 
-	protected int read_console (char[] buf, int len)
+	protected int read_console (ase.awk.Extio extio, char[] buf, int len)
 	{
-		return 0;
+		int mode = extio.getMode ();
+
+		if (mode == ase.awk.Extio.MODE_CONSOLE_READ)
+		{
+			InputStreamReader isr = (InputStreamReader)extio.getHandle ();
+			try 
+			{ 
+				len = isr.read (buf, 0, len); 
+				if (len == -1) len = 0;
+			}
+			catch (IOException e) { System.out.println ("EXCEPTIN---"+e.getMessage());return -1; }
+
+			return len;
+		}
+		else if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
+		{
+			return -1;
+		}
+
+		return -1;
 	}
 
-	protected int write_console (char[] buf, int len) 
+	protected int write_console (ase.awk.Extio extio, char[] buf, int len) 
 	{
-		System.out.print (new String (buf, 0, len));
-		return len;
+		int mode = extio.getMode ();
+
+		if (mode == ase.awk.Extio.MODE_CONSOLE_READ)
+		{
+			return -1;
+		}
+		else if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
+		{
+			OutputStreamWriter osw = (OutputStreamWriter)extio.getHandle ();
+			try { osw.write (buf, 0, len); osw.flush (); }
+			catch (IOException e) { return -1; }
+
+			return len;
+		}
+		return -1;
 	}
 
-	protected int next_console (char[] buf, int len)
+	protected int next_console (ase.awk.Extio extio, char[] buf, int len)
 	{
 		return 0;
 	}
 
 	public int open_file (ase.awk.Extio extio)
 	{
-		System.out.print ("opening file [");
-		//System.out.print (extio.name());
-		System.out.println ("]");
+		/*System.out.print ("opening file [");
+		System.out.print (extio.getName());
+		System.out.println ("]");*/
 
 		/*
 		FileInputStream f = new FileInputStream (extio.name());
@@ -106,22 +176,21 @@ public class Awk extends ase.awk.Awk
 		return 1;
 	}
 	
-	/*
-	public int open_file (String name)
+	public int close_file (ase.awk.Extio extio)
 	{
-		System.out.print ("opening file [");
-		System.out.print (name);
-		System.out.println ("]");
-		return 1;
-	}
-	*/
-
-	public int close_file (String name)
-	{
-		System.out.print ("closing file [");
-		System.out.print (name);
-		System.out.println ("]");
+		/*System.out.print ("closing file [");
+		System.out.print (extio.getName());
+		System.out.println ("]");*/
 		return 0;
+	}
+
+	protected int read_file (ase.awk.Extio extio, char[] buf, int len) 
+	{
+		return -1;
+	}
+	protected int write_file (ase.awk.Extio extio, char[] buf, int len) 
+	{
+		return -1;
 	}
 
 	public static void main (String[] args)

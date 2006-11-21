@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.89 2006-11-19 11:21:06 bacon Exp $
+ * $Id: tree.c,v 1.90 2006-11-21 15:06:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -282,7 +282,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			len = ((ase_awk_nde_str_t*)nde)->len;
 			for (i = 0; i < len; i++)
 			{
-				/* TODO: more deescaping  */
+				/* TODO: maybe more de-escaping?? */
 				if (ptr[i] == ASE_T('\n'))
 					PUT_SRCSTR (awk, ASE_T("\\n"));
 				else if (ptr[i] == ASE_T('\r'))
@@ -304,7 +304,6 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_REX:
 		{
-			/* TODO: buf, len */
 			PUT_SRCSTR (awk, ASE_T("/"));
 			PUT_SRCSTRX (awk,
 				((ase_awk_nde_rex_t*)nde)->buf, 
@@ -489,7 +488,6 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_AFN:
 		{
-			/* TODO: use px->what.afn.name_len */
 			ase_awk_nde_call_t* px = (ase_awk_nde_call_t*)nde;
 			PUT_SRCSTRX (awk, 
 				px->what.afn.name, px->what.afn.name_len);
@@ -795,7 +793,6 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			{
 				PRINT_TABS (awk, depth);
 				PUT_SRCSTR (awk, ASE_T("delete "));
-		/* TODO: can't use __print_expression??? */
 				ase_awk_prnpt (awk, ((ase_awk_nde_delete_t*)p)->var);
 				break;
 			}

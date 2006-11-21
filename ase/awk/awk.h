@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.147 2006-11-19 15:24:20 bacon Exp $
+ * $Id: awk.h,v 1.148 2006-11-21 15:06:14 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -26,21 +26,28 @@ typedef ase_ssize_t (*ase_awk_io_t) (
 struct ase_awk_extio_t 
 {
 	ase_awk_run_t* run; /* [IN] */
-	int type;          /* [IN] console, file, coproc, pipe */
-	int mode;          /* [IN] read, write, etc */
+	int type;           /* [IN] console, file, coproc, pipe */
+	int mode;           /* [IN] read, write, etc */
 	ase_char_t* name;   /* [IN] */
-	void* custom_data; /* [IN] */
+	void* custom_data;  /* [IN] */
+	void* handle;       /* [OUT] */
 
-	void* handle;      /* [OUT] */
-
-	/* input buffer */
+	/* input */
 	struct
 	{
 		ase_char_t buf[2048];
 		ase_size_t pos;
 		ase_size_t len;
 		ase_bool_t eof;
+		ase_bool_t eos;
 	} in;
+
+	/* output */
+	struct
+	{
+		ase_bool_t eof;
+		ase_bool_t eos;
+	} out;
 
 	ase_awk_extio_t* next;
 };
@@ -126,15 +133,21 @@ enum
 
 enum
 {
-	ASE_AWK_IO_PIPE_READ      = 0,
-	ASE_AWK_IO_PIPE_WRITE     = 1,
+	ASE_AWK_EXTIO_PIPE_READ      = 0,
+	ASE_AWK_EXTIO_PIPE_WRITE     = 1,
 
-	ASE_AWK_IO_FILE_READ      = 0,
-	ASE_AWK_IO_FILE_WRITE     = 1,
-	ASE_AWK_IO_FILE_APPEND    = 2,
+	/*
+	ASE_AWK_EXTIO_COPROC_READ    = 0,
+	ASE_AWK_EXTIO_COPROC_WRITE   = 1,
+	ASE_AWK_EXTIO_COPROC_RDWR    = 2,
+	*/
 
-	ASE_AWK_IO_CONSOLE_READ   = 0,
-	ASE_AWK_IO_CONSOLE_WRITE  = 1
+	ASE_AWK_EXTIO_FILE_READ      = 0,
+	ASE_AWK_EXTIO_FILE_WRITE     = 1,
+	ASE_AWK_EXTIO_FILE_APPEND    = 2,
+
+	ASE_AWK_EXTIO_CONSOLE_READ   = 0,
+	ASE_AWK_EXTIO_CONSOLE_WRITE  = 1
 };
 
 /* various options */
@@ -311,7 +324,7 @@ enum
 };
 
 /* extio types */
-enum
+enum ase_awk_extio_type_t
 {
 	/* extio types available */
 	ASE_AWK_EXTIO_PIPE,

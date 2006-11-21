@@ -19,8 +19,14 @@ all: awk
 awk: awk.obj
 	$(LD) $(LDFLAGS) $(STARTUP) awk.obj,$@.exe,,$(LIBS),,
 
+java: 
+	javac -classpath ../../.. Awk.java
+
+jrun:
+	java -Xms1m -Xmx2m -classpath ../../.. ase.test.awk.Awk
+
 clean:
-	del $(OBJS) *.obj $(OUT)
+	del $(OBJS) *.obj *.class awk.exe 
 
 .SUFFIXES: .c .obj
 .c.obj:
