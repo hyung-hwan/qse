@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.60 2006-11-17 07:26:15 bacon Exp $
+ * $Id: extio.c,v 1.61 2006-11-21 15:06:14 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -27,10 +27,10 @@ static int __in_mode_map[] =
 {
 	/* the order should match the order of the 
 	 * ASE_AWK_IN_XXX values in tree.h */
-	ASE_AWK_IO_PIPE_READ,
+	ASE_AWK_EXTIO_PIPE_READ,
 	0,
-	ASE_AWK_IO_FILE_READ,
-	ASE_AWK_IO_CONSOLE_READ
+	ASE_AWK_EXTIO_FILE_READ,
+	ASE_AWK_EXTIO_CONSOLE_READ
 };
 
 static int __in_mask_map[] =
@@ -56,11 +56,11 @@ static int __out_mode_map[] =
 {
 	/* the order should match the order of the 
 	 * ASE_AWK_OUT_XXX values in tree.h */
-	ASE_AWK_IO_PIPE_WRITE,
+	ASE_AWK_EXTIO_PIPE_WRITE,
 	0,
-	ASE_AWK_IO_FILE_WRITE,
-	ASE_AWK_IO_FILE_APPEND,
-	ASE_AWK_IO_CONSOLE_WRITE
+	ASE_AWK_EXTIO_FILE_WRITE,
+	ASE_AWK_EXTIO_FILE_APPEND,
+	ASE_AWK_EXTIO_CONSOLE_WRITE
 };
 
 static int __out_mask_map[] =
@@ -140,6 +140,7 @@ int ase_awk_readextio (
 		p->in.pos = 0;
 		p->in.len = 0;
 		p->in.eof = ase_false;
+		p->in.eos = ase_false;
 
 		n = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
 		if (n == -1)
@@ -165,7 +166,17 @@ int ase_awk_readextio (
 		 * open request if it doesn't have any files to open. One 
 		 * advantage of doing this would be that you can skip the 
 		 * entire pattern-block matching and exeuction. */
-		if (n == 0) return 0;
+		if (n == 0) 
+		{
+			p->in.eos = ase_true;
+			return 0;
+		}
+	}
+
+	if (p->in.eos) 
+	{
+		/* no more streams. */
+		return 0;
 	}
 
 	/* ready to read a line */
@@ -323,7 +334,8 @@ int ase_awk_readextio (
 		else line_len = line_len + 1;
 	}
 
-	if (rs_ptr != ASE_NULL && rs->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, rs_ptr);
+	if (rs_ptr != ASE_NULL && 
+	    rs->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, rs_ptr);
 	ase_awk_refdownval (run, rs);
 
 	/* increment NR */
@@ -460,6 +472,9 @@ int ase_awk_writeextio_str (
 		p->next = ASE_NULL;
 		p->custom_data = run->extio.custom_data;
 
+		p->out.eof = ase_false;
+		p->out.eos = ase_false;
+
 		n = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
 		if (n == -1)
 		{
@@ -484,11 +499,27 @@ int ase_awk_writeextio_str (
 		 * open request if it doesn't have any files to open. One 
 		 * advantage of doing this would be that you can skip the 
 		 * entire pattern-block matching and exeuction. */
-		if (n == 0) return 0;
+		if (n == 0) 
+		{
+			p->out.eos = ase_true;
+			return 0;
+		}
 	}
 
-/* TODO: if write handler returns less than the request, loop */
-	if (len > 0)
+	if (p->out.eos) 
+	{
+		/* no more streams */
+		return 0;
+	}
+
+	if (p->out.eof) 
+	{
+		/* it has reached the end of the stream but this function
+		 * has been recalled */
+		return 0;
+	}
+
+	while (len > 0)
 	{
 		n = handler (ASE_AWK_IO_WRITE, p, str, len);
 
@@ -503,12 +534,18 @@ int ase_awk_writeextio_str (
 			return -1;
 		}
 
-		if (n == 0) return 0;
+		if (n == 0) 
+		{
+			p->out.eof = ase_true;
+			return 0;
+		}
+
+		len -= n;
+		str += n;
 	}
 
 	return 1;
 }
-
 
 int ase_awk_flushextio (
 	ase_awk_run_t* run, int out_type, const ase_char_t* name)
@@ -615,12 +652,32 @@ int ase_awk_nextextio_read (
 		return -1;
 	}
 
+	if (p->in.eos) 
+	{
+		/* no more streams. */
+		return 0;
+	}
+
 	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
 	if (n == -1)
 	{
 		/* TODO: is this errnum correct? */
 		run->errnum = ASE_AWK_EIOHANDLER;
 		return -1;
+	}
+
+	if (n == 0) 
+	{
+		/* the next stream cannot be opened. 
+		 * set the eos flags so that the next call to nextextio_read
+		 * will return 0 without executing the handler */
+		p->in.eos = ase_true;
+	}
+	else 
+	{
+		/* as the next stream has been opened successfully,
+		 * the eof flag should be cleared if set */
+		p->in.eof = ase_false;
 	}
 
 	return n;

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.120 2006-11-19 15:33:40 bacon Exp $
+ * $Id: awk.c,v 1.121 2006-11-21 15:06:51 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -271,9 +271,9 @@ static ase_ssize_t process_extio_pipe (
 			FILE* handle;
 			const ase_char_t* mode;
 
-			if (epa->mode == ASE_AWK_IO_PIPE_READ)
+			if (epa->mode == ASE_AWK_EXTIO_PIPE_READ)
 				mode = ASE_T("r");
-			else if (epa->mode == ASE_AWK_IO_PIPE_WRITE)
+			else if (epa->mode == ASE_AWK_EXTIO_PIPE_WRITE)
 				mode = ASE_T("w");
 			else return -1; /* TODO: any way to set the error number? */
 			__awk_dprintf (ASE_T("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
@@ -311,7 +311,7 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_FLUSH:
 		{
-			if (epa->mode == ASE_AWK_IO_PIPE_READ) return -1;
+			if (epa->mode == ASE_AWK_EXTIO_PIPE_READ) return -1;
 			else return 0;
 		}
 
@@ -336,11 +336,11 @@ static ase_ssize_t process_extio_file (
 			FILE* handle;
 			const ase_char_t* mode;
 
-			if (epa->mode == ASE_AWK_IO_FILE_READ)
+			if (epa->mode == ASE_AWK_EXTIO_FILE_READ)
 				mode = ASE_T("r");
-			else if (epa->mode == ASE_AWK_IO_FILE_WRITE)
+			else if (epa->mode == ASE_AWK_EXTIO_FILE_WRITE)
 				mode = ASE_T("w");
-			else if (epa->mode == ASE_AWK_IO_FILE_APPEND)
+			else if (epa->mode == ASE_AWK_EXTIO_FILE_APPEND)
 				mode = ASE_T("a");
 			else return -1; /* TODO: any way to set the error number? */
 
@@ -506,7 +506,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 
 	__awk_dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
 
-	if (epa->mode == ASE_AWK_IO_CONSOLE_READ)
+	if (epa->mode == ASE_AWK_EXTIO_CONSOLE_READ)
 	{
 		if (infiles[infile_no] == ASE_NULL)
 		{
@@ -546,7 +546,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 		infile_no++;
 		return 1;
 	}
-	else if (epa->mode == ASE_AWK_IO_CONSOLE_WRITE)
+	else if (epa->mode == ASE_AWK_EXTIO_CONSOLE_WRITE)
 	{
 		__awk_dprintf (ASE_T("    console(w) - <standard output>\n"));
 		/* TODO: does output console has a name??? */

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.279 2006-11-20 14:29:33 bacon Exp $
+ * $Id: run.c,v 1.280 2006-11-21 15:06:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -562,6 +562,7 @@ int ase_awk_run (ase_awk_t* awk,
 		n = 0;
 	}
 
+
 	__deinit_run (run);
 	__del_run (awk, run);
 	ASE_AWK_FREE (awk, run);
@@ -758,7 +759,6 @@ static int __init_run (ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum
 
 static void __deinit_run (ase_awk_run_t* run)
 {
-
 	if (run->pattern_range_state != ASE_NULL)
 		ASE_AWK_FREE (run->awk, run->pattern_range_state);
 
@@ -1281,8 +1281,8 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 			int saved = run->errnum;
 
 			/* don't care about the result of input close */
-			ase_awk_closeextio_read (
-				run, ASE_AWK_IN_CONSOLE, ASE_T(""));
+//			ase_awk_closeextio_read (
+//				run, ASE_AWK_IN_CONSOLE, ASE_T(""));
 
 			run->errnum = saved;
 			return -1;
@@ -1300,8 +1300,8 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 			{
 				int saved = run->errnum;
 
-				ase_awk_closeextio_read (
-					run, ASE_AWK_IN_CONSOLE, ASE_T(""));
+//				ase_awk_closeextio_read (
+//					run, ASE_AWK_IN_CONSOLE, ASE_T(""));
 
 				run->errnum = saved;
 				return -1;
@@ -1318,6 +1318,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 	 * -1 regardless of the value of errnum.  */
 	if (need_to_close)
 	{
+/* TODO: do i have to close exito here...
 		n = ase_awk_closeextio_read (
 			run, ASE_AWK_IN_CONSOLE, ASE_T(""));
 		if (n == -1) 
@@ -1326,6 +1327,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 				PANIC_I (run, ASE_AWK_ECONINCLOSE);
 			else return -1;
 		}
+*/
 	}
 
 	return 0;
@@ -6087,7 +6089,7 @@ ase_char_t* ase_awk_format (
 			}
 
 
-			if (prec == -1 || prec == 0 || prec > ch_len ) prec = ch_len;
+			if (prec == -1 || prec == 0 || prec > ch_len) prec = ch_len;
 			if (prec > width) width = prec;
 
 			if (!minus)
