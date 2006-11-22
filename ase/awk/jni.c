@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.18 2006-11-21 15:06:15 bacon Exp $
+ * $Id: jni.c,v 1.19 2006-11-22 05:58:26 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -293,20 +293,6 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 		(*env)->ThrowNew (env, except, msg);
 		return;
 	}
-}
-
-JNIEXPORT void JNICALL Java_ase_awk_Awk_set_1extio (
-	JNIEnv* env, jobject obj, jlong extio, jobject handle)
-{
-	ase_awk_extio_t* epa = (ase_awk_extio_t*)extio;
-	epa->handle = (void*)handle;
-}
-
-JNIEXPORT jobject JNICALL Java_ase_awk_Awk_get_1extio (
-	JNIEnv* env, jobject obj, jlong extio)
-{
-	ase_awk_extio_t* epa = (ase_awk_extio_t*)extio;
-	return (jobject)epa->handle;
 }
 
 static ase_ssize_t __call_java_open_source (JNIEnv* env, jobject obj, int mode)

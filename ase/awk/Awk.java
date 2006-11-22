@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.4 2006-11-21 15:06:14 bacon Exp $
+ * $Id: Awk.java,v 1.5 2006-11-22 05:58:26 bacon Exp $
  */
 
 package ase.awk;
@@ -83,11 +83,18 @@ public abstract class Awk
 		return -1;
 	}
 
+	protected int next_extio (Extio extio)
+	{
+		int type = extio.getType ();
+		if (type == Extio.TYPE_CONSOLE) return next_console (extio);
+		return -1;
+	}
+
 	protected abstract int open_console (Extio extio);
 	protected abstract int close_console (Extio extio);
 	protected abstract int read_console (Extio extio, char[] buf, int len);
-	protected abstract int write_console (Extio extio, char[] buf, int len); 
-	protected abstract int next_console (Extio extio, char[] buf, int len);
+	protected abstract int write_console (Extio extio, char[] buf, int len);
+	protected abstract int next_console (Extio extio);
 
 	protected abstract int open_file (Extio extio);
 	protected abstract int close_file (Extio name);
