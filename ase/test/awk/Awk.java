@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.3 2006-11-22 02:57:52 bacon Exp $
+ * $Id: Awk.java,v 1.4 2006-11-22 05:58:26 bacon Exp $
  */
 
 package ase.test.awk;
@@ -156,8 +156,9 @@ public class Awk extends ase.awk.Awk
 		return -1;
 	}
 
-	protected int next_console (ase.awk.Extio extio, char[] buf, int len)
+	protected int next_console (ase.awk.Extio extio)
 	{
+		/* TODO */
 		return 0;
 	}
 
