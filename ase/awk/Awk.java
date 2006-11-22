@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.5 2006-11-22 05:58:26 bacon Exp $
+ * $Id: Awk.java,v 1.6 2006-11-22 15:12:03 bacon Exp $
  */
 
 package ase.awk;
@@ -28,6 +28,17 @@ public abstract class Awk
 	public native void parse () throws Exception;
 	public native void run () throws Exception;
 	private native void open () throws Exception;
+	private native int setconsolename (long run_id, String name);
+
+	public void setConsoleName (long run_id, String name) //throws Exception
+	{
+		/* TODO: setconsolename is not safe. for example, it can 
+		 * crash the program if run_id is invalid. so this wrapper
+		 * needs to do some sanity check. */
+		//if (setconsolename (run_id, name) == -1)
+		//	throw new Exception ("cannot set the consle name");
+		setconsolename (run_id, name);
+	}
 
 	/* abstrace methods */
 	protected abstract int open_source (int mode);

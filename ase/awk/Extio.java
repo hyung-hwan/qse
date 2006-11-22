@@ -20,13 +20,15 @@ public class Extio
 	private String name;
 	private int type;
 	private int mode;
+	private long run_id;
 	private Object handle;
 
-	protected Extio (String name, int type, int mode)
+	protected Extio (String name, int type, int mode, long run_id)
 	{
 		this.name = name;
 		this.type = type;
 		this.mode = mode;
+		this.run_id = run_id;
 		this.handle = null;
 	}
 
@@ -43,6 +45,11 @@ public class Extio
 	public int getMode ()
 	{
 		return this.mode;
+	}
+
+	public long getRunId ()
+	{
+		return this.run_id;
 	}
 
 	public void setHandle (Object handle)
