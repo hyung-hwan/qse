@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.2 2006-11-21 15:06:50 bacon Exp $
+ * $Id: Awk.java,v 1.3 2006-11-22 02:57:52 bacon Exp $
  */
 
 package ase.test.awk;
@@ -10,8 +10,6 @@ public class Awk extends ase.awk.Awk
 {
 	private FileReader insrc;
 	private FileWriter outsrc;
-
-	private InputStreamReader console_in = null;
 
 	public Awk () throws ase.awk.Exception
 	{
@@ -165,31 +163,114 @@ public class Awk extends ase.awk.Awk
 
 	public int open_file (ase.awk.Extio extio)
 	{
-		/*System.out.print ("opening file [");
-		System.out.print (extio.getName());
-		System.out.println ("]");*/
+		int mode = extio.getMode();
 
-		/*
-		FileInputStream f = new FileInputStream (extio.name());
-		extio.setHandle (f);
-		*/
-		return 1;
+		if (mode == ase.awk.Extio.MODE_FILE_READ)
+		{
+			FileInputStream fis;
+			InputStreamReader isr;
+
+			try { fis = new FileInputStream (extio.getName()); }
+			catch (IOException e) { return -1; }
+
+			isr = new InputStreamReader (fis); 
+			extio.setHandle (isr);
+			return 1;
+		}
+		else if (mode == ase.awk.Extio.MODE_FILE_WRITE)
+		{
+			FileOutputStream fos;
+			OutputStreamWriter osw;
+
+			try { fos = new FileOutputStream (extio.getName()); }
+			catch (IOException e) { return -1; }
+
+			osw = new OutputStreamWriter (fos);
+			extio.setHandle (osw);
+			return 1;
+		}
+		else if (mode == ase.awk.Extio.MODE_FILE_APPEND)
+		{
+			FileOutputStream fos;
+			OutputStreamWriter osw;
+
+			try { fos = new FileOutputStream (extio.getName(), true); }
+			catch (IOException e) { return -1; }
+
+			osw = new OutputStreamWriter (fos); 
+			extio.setHandle (osw);
+			return 1;
+		}
+
+		return -1;
 	}
 	
 	public int close_file (ase.awk.Extio extio)
 	{
-		/*System.out.print ("closing file [");
-		System.out.print (extio.getName());
-		System.out.println ("]");*/
-		return 0;
+		int mode = extio.getMode();
+
+		if (mode == ase.awk.Extio.MODE_FILE_READ)
+		{
+			InputStreamReader isr;
+			isr = (InputStreamReader)extio.getHandle();
+			try { isr.close (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+		else if (mode == ase.awk.Extio.MODE_FILE_WRITE)
+		{
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle();
+			try { osw.close (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+		else if (mode == ase.awk.Extio.MODE_FILE_APPEND)
+		{
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle();
+			try { osw.close (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+		
+		return -1;
 	}
 
 	protected int read_file (ase.awk.Extio extio, char[] buf, int len) 
 	{
+		int mode = extio.getMode();
+
+		if (mode == ase.awk.Extio.MODE_FILE_READ)
+		{
+			InputStreamReader isr;
+			isr = (InputStreamReader)extio.getHandle();
+
+			try 
+			{
+				len = isr.read (buf, 0, len);
+				if (len == -1) len = 0;
+			}
+			catch (IOException e) { len = -1; }
+			return len; 
+		}
+
 		return -1;
 	}
 	protected int write_file (ase.awk.Extio extio, char[] buf, int len) 
 	{
+		int mode = extio.getMode();
+
+		if (mode == ase.awk.Extio.MODE_FILE_WRITE ||
+		    mode == ase.awk.Extio.MODE_FILE_APPEND)
+		{
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle();
+			try { osw.write (buf, 0, len); }
+			catch (IOException e) { len = -1; }
+			return len;
+		}
+
 		return -1;
 	}
 
