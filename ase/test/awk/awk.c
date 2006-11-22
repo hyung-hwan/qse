@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.121 2006-11-21 15:06:51 bacon Exp $
+ * $Id: awk.c,v 1.122 2006-11-22 15:11:37 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -401,6 +401,11 @@ static int next_extio_console (ase_awk_extio_t* epa);
 static ase_size_t infile_no = 0;
 static const ase_char_t* infiles[10000] =
 {
+	/*
+	ASE_T("c1.txt"),
+	ASE_T("c2.txt"),
+	ASE_T("c3.txt"),
+	*/
 	ASE_T(""),
 	ASE_NULL
 };

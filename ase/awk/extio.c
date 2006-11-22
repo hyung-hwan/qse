@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.61 2006-11-21 15:06:14 bacon Exp $
+ * $Id: extio.c,v 1.62 2006-11-22 15:12:04 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -678,6 +678,10 @@ int ase_awk_nextextio_read (
 		/* as the next stream has been opened successfully,
 		 * the eof flag should be cleared if set */
 		p->in.eof = ase_false;
+
+		/* also the previous input buffer must be reset */
+		p->in.pos = 0;
+		p->in.len = 0;
 	}
 
 	return n;

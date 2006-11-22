@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.4 2006-11-22 05:58:26 bacon Exp $
+ * $Id: Awk.java,v 1.5 2006-11-22 15:11:36 bacon Exp $
  */
 
 package ase.test.awk;
@@ -11,9 +11,25 @@ public class Awk extends ase.awk.Awk
 	private FileReader insrc;
 	private FileWriter outsrc;
 
+	private String[] cin;
+	private int cin_no;
+
+	private String[] cout;
+	private int cout_no;
+
 	public Awk () throws ase.awk.Exception
 	{
 		super ();
+
+		cin = new String[3];
+		cin[0] = "c1.txt";
+		cin[1] = "c2.txt";
+		cin[2] = "c3.txt";
+		cin_no = 0;
+
+		cout = new String[1];
+		cout[0] = "";
+		cout_no = 0;
 	}
 
 	protected int open_source (int mode)
@@ -65,6 +81,7 @@ public class Awk extends ase.awk.Awk
 		return len;
 	}
 
+	/* ===== console ===== */
 	protected int open_console (ase.awk.Extio extio)
 	{
 		System.err.println ("[open_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
@@ -73,15 +90,35 @@ public class Awk extends ase.awk.Awk
 
 		if (mode == ase.awk.Extio.MODE_CONSOLE_READ)
 		{
-			InputStreamReader isr = 
-				new InputStreamReader (System.in);
+			InputStreamReader isr;
+			if (cin_no >= cin.length) return 0;
+			isr = get_input_stream (cin[cin_no]);
+			if (isr == null) return -1;
+
 			extio.setHandle (isr);
+			setConsoleName (extio.getRunId(), cin[cin_no]);
+
+			cin_no++;
 			return 1;
 		}
 		else if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
 		{
-			OutputStreamWriter osw =
-				new OutputStreamWriter (System.out);
+			OutputStreamWriter osw;
+		       
+			if (cout_no >= cout.length) return 0;
+			if (cout[cout_no].length() == 0)
+			{
+				osw = new OutputStreamWriter (System.out);
+			}
+			else
+			{
+				FileOutputStream fos;
+				try { fos = new FileOutputStream (cout[cout_no]); }
+				catch (IOException e) { return -1; }
+				osw = new OutputStreamWriter (fos);
+			}
+
+			cout_no++;
 			extio.setHandle (osw);
 			return 1;
 		}
@@ -119,19 +156,33 @@ public class Awk extends ase.awk.Awk
 
 		if (mode == ase.awk.Extio.MODE_CONSOLE_READ)
 		{
-			InputStreamReader isr = (InputStreamReader)extio.getHandle ();
-			try 
-			{ 
-				len = isr.read (buf, 0, len); 
-				if (len == -1) len = 0;
-			}
-			catch (IOException e) { System.out.println ("EXCEPTIN---"+e.getMessage());return -1; }
+			InputStreamReader isr, tmp;
+			int n;
+		       
+			isr = (InputStreamReader)extio.getHandle ();
 
-			return len;
-		}
-		else if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
-		{
-			return -1;
+			try { n = isr.read (buf, 0, len); }
+			catch  (IOException e) { return -1; }
+
+			while (n == -1)
+			{
+				if (cin_no >= cin.length) return 0;
+				tmp = get_input_stream (cin[cin_no]);
+				if (tmp == null) return -1;
+
+				try { isr.close (); }
+				catch (IOException e) { /* ignore */ }
+
+				extio.setHandle (tmp);
+				setConsoleName (extio.getRunId(), cin[cin_no]);
+				isr = (InputStreamReader)extio.getHandle ();
+				cin_no++;
+
+				try { n = isr.read (buf, 0, len); }
+				catch (IOException e) { return -1; }
+			}
+
+			return n;
 		}
 
 		return -1;
@@ -141,11 +192,7 @@ public class Awk extends ase.awk.Awk
 	{
 		int mode = extio.getMode ();
 
-		if (mode == ase.awk.Extio.MODE_CONSOLE_READ)
-		{
-			return -1;
-		}
-		else if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
+		if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
 		{
 			OutputStreamWriter osw = (OutputStreamWriter)extio.getHandle ();
 			try { osw.write (buf, 0, len); osw.flush (); }
@@ -153,15 +200,57 @@ public class Awk extends ase.awk.Awk
 
 			return len;
 		}
+
 		return -1;
 	}
 
 	protected int next_console (ase.awk.Extio extio)
 	{
-		/* TODO */
-		return 0;
+		int mode = extio.getMode ();
+
+		if (mode == ase.awk.Extio.MODE_CONSOLE_READ)
+		{
+			InputStreamReader isr, tmp;
+
+			isr = (InputStreamReader)extio.getHandle ();
+
+			if (cin_no >= cin.length) return 0;
+			tmp = get_input_stream (cin[cin_no]);
+			if (tmp == null) return -1;
+
+			try { isr.close (); }
+			catch (IOException e) { /* ignore */ }
+
+			extio.setHandle (tmp);
+			setConsoleName (extio.getRunId(), cin[cin_no]);
+
+			cin_no++;
+			return 1;
+		}
+
+		return -1;
 	}
 
+	private InputStreamReader get_input_stream (String name)
+	{
+		InputStreamReader isr;
+
+		if (name == null || name.length() == 0)
+		{
+			isr = new InputStreamReader (System.in);
+		}
+		else
+		{
+			FileInputStream fis;
+			try { fis = new FileInputStream (name); }
+			catch (IOException e) { return null; }
+			isr = new InputStreamReader (fis);
+		}
+
+		return isr;
+	}
+
+	/* ===== file ===== */
 	public int open_file (ase.awk.Extio extio)
 	{
 		int mode = extio.getMode();

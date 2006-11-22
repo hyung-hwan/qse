@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.19 2006-11-22 05:58:26 bacon Exp $
+ * $Id: jni.c,v 1.20 2006-11-22 15:12:04 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -460,7 +460,7 @@ static ase_ssize_t __call_java_open_extio (
 
 	/* get the constructor */
 	extio_cons = (*env)->GetMethodID (
-		env, extio_class, "<init>", "(Ljava/lang/String;II)V");
+		env, extio_class, "<init>", "(Ljava/lang/String;IIJ)V");
 	if (extio_cons == NULL) 
 	{
 		(*env)->DeleteLocalRef (env, extio_class);
@@ -490,7 +490,7 @@ static ase_ssize_t __call_java_open_extio (
 	/* construct the extio object */
 	extio_object = (*env)->NewObject (
 		env, extio_class, extio_cons, 
-		extio_name, extio->type & 0xFF, extio->mode);
+		extio_name, extio->type & 0xFF, extio->mode, extio->run);
 	if (extio_object == NULL) 
 	{
 		(*env)->DeleteLocalRef (env, extio_name);
@@ -574,6 +574,7 @@ static ase_ssize_t __call_java_read_extio (
 	jint ret, i;
 	jthrowable thrown;
 	
+printf  ("java_read_extio>>>\n");
 	class = (*env)->GetObjectClass(env, obj);
 
 	mid = (*env)->GetMethodID (env, class, meth, "(Lase/awk/Extio;[CI)I");
@@ -651,6 +652,37 @@ static ase_ssize_t __call_java_write_extio (
 	}
 
 	(*env)->DeleteLocalRef (env, array);
+	(*env)->DeleteLocalRef (env, class);
+	return ret;
+}
+
+static ase_ssize_t __call_java_next_extio (
+	JNIEnv* env, jobject obj, char* meth, ase_awk_extio_t* extio)
+{
+	jclass class; 
+	jmethodID mid;
+	jthrowable thrown;
+	jint ret;
+	
+	class = (*env)->GetObjectClass(env, obj);
+
+	mid = (*env)->GetMethodID (
+		env, class, meth, "(Lase/awk/Extio;)I");
+	if (mid == NULL) 
+	{
+		(*env)->DeleteLocalRef (env, class);
+		return -1;
+	}
+
+	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+(*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
+		ret = -1;
+	}
+
 	(*env)->DeleteLocalRef (env, class);
 	return ret;
 }
@@ -733,6 +765,12 @@ static ase_ssize_t __process_extio (
 			runio_data->env, runio_data->obj, 
 			"write_extio", epa, data, size);
 	}
+	else if (cmd == ASE_AWK_IO_NEXT)
+	{
+		return __call_java_next_extio (
+			runio_data->env, runio_data->obj, 
+			"next_console", epa);
+	}
 #if 0
 	else if (cmd == ASE_AWK_IO_FLUSH)
 	{
@@ -740,13 +778,22 @@ static ase_ssize_t __process_extio (
 			runio_data->env, runio_data->obj, "flush_console",
 			data, size);
 	}
-	else if (cmd == ASE_AWK_IO_NEXT)
-	{
-		return __call_java_next_extio (
-			runio_data->env, runio_data->obj, "flush_console",
-			data, size);
-	}
 #endif
 
 	return -1;
 }
+
+JNIEXPORT int JNICALL Java_ase_awk_Awk_setconsolename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
+{
+	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
+	const jchar* str;
+	int len, n;
+
+	str = (*env)->GetStringChars (env, name, JNI_FALSE);
+	len = (*env)->GetStringLength (env, name);
+	n = ase_awk_setconsolename (run, str, len);
+	(*env)->ReleaseStringChars (env, name, str);
+	return n;
+}
+
+
