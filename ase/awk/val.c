@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.91 2006-11-19 15:08:13 bacon Exp $
+ * $Id: val.c,v 1.92 2006-11-22 06:05:45 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -22,17 +22,17 @@ ase_awk_val_t* ase_awk_val_zls = (ase_awk_val_t*)&__awk_zls;
 
 static ase_awk_val_int_t __awk_int[] =
 {
-	{ ASE_AWK_VAL_INT, 0, -1 },
-	{ ASE_AWK_VAL_INT, 0,  0 },
-	{ ASE_AWK_VAL_INT, 0,  1 },
-	{ ASE_AWK_VAL_INT, 0,  2 },
-	{ ASE_AWK_VAL_INT, 0,  3 },
-	{ ASE_AWK_VAL_INT, 0,  4 },
-	{ ASE_AWK_VAL_INT, 0,  5 },
-	{ ASE_AWK_VAL_INT, 0,  6 },
-	{ ASE_AWK_VAL_INT, 0,  7 },
-	{ ASE_AWK_VAL_INT, 0,  8 },
-	{ ASE_AWK_VAL_INT, 0,  9 },
+	{ ASE_AWK_VAL_INT, 0, -1, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  0, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  1, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  2, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  3, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  4, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  5, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  6, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  7, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  8, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0,  9, ASE_NULL }
 };
 
 ase_awk_val_t* ase_awk_val_zero = (ase_awk_val_t*)&__awk_int[1];
