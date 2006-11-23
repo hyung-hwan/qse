@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.53 2006-11-23 14:27:52 bacon Exp $
+ * $Id: val.h,v 1.54 2006-11-23 14:28:30 bacon Exp $
  */
 
 #ifndef _ASE_AWK_VAL_H_
@@ -138,7 +138,6 @@ extern "C" {
 extern ase_awk_val_t* ase_awk_val_nil;
 extern ase_awk_val_t* ase_awk_val_zls;
 extern ase_awk_val_t* ase_awk_val_nl;
-extern ase_awk_val_t* ase_awk_val_bnl;
 extern ase_awk_val_t* ase_awk_val_zero;
 extern ase_awk_val_t* ase_awk_val_one;
 
