@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.5 2006-11-22 15:11:36 bacon Exp $
+ * $Id: Awk.java,v 1.6 2006-11-23 03:31:58 bacon Exp $
  */
 
 package ase.test.awk;
@@ -27,8 +27,10 @@ public class Awk extends ase.awk.Awk
 		cin[2] = "c3.txt";
 		cin_no = 0;
 
-		cout = new String[1];
-		cout[0] = "";
+		cout = new String[3];
+		cout[0] = "c4.txt";
+		cout[1] = "c5.txt";
+		cout[2] = "";
 		cout_no = 0;
 	}
 
@@ -96,7 +98,7 @@ public class Awk extends ase.awk.Awk
 			if (isr == null) return -1;
 
 			extio.setHandle (isr);
-			setConsoleName (extio.getRunId(), cin[cin_no]);
+			setConsoleName (extio, cin[cin_no]);
 
 			cin_no++;
 			return 1;
@@ -106,20 +108,13 @@ public class Awk extends ase.awk.Awk
 			OutputStreamWriter osw;
 		       
 			if (cout_no >= cout.length) return 0;
-			if (cout[cout_no].length() == 0)
-			{
-				osw = new OutputStreamWriter (System.out);
-			}
-			else
-			{
-				FileOutputStream fos;
-				try { fos = new FileOutputStream (cout[cout_no]); }
-				catch (IOException e) { return -1; }
-				osw = new OutputStreamWriter (fos);
-			}
+			osw = get_output_stream (cout[cout_no]);
+			if (osw == null) return -1;
+
+			extio.setHandle (osw);
+			setOutputConsoleName (extio, cout[cout_no]);
 
 			cout_no++;
-			extio.setHandle (osw);
 			return 1;
 		}
 
@@ -174,7 +169,7 @@ public class Awk extends ase.awk.Awk
 				catch (IOException e) { /* ignore */ }
 
 				extio.setHandle (tmp);
-				setConsoleName (extio.getRunId(), cin[cin_no]);
+				setConsoleName (extio, cin[cin_no]);
 				isr = (InputStreamReader)extio.getHandle ();
 				cin_no++;
 
@@ -195,6 +190,9 @@ public class Awk extends ase.awk.Awk
 		if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
 		{
 			OutputStreamWriter osw = (OutputStreamWriter)extio.getHandle ();
+			// as the write operation below doesn't indicate 
+			// if it has reached the end, console can't be
+			// switched here unlike read_console.
 			try { osw.write (buf, 0, len); osw.flush (); }
 			catch (IOException e) { return -1; }
 
@@ -222,9 +220,28 @@ public class Awk extends ase.awk.Awk
 			catch (IOException e) { /* ignore */ }
 
 			extio.setHandle (tmp);
-			setConsoleName (extio.getRunId(), cin[cin_no]);
+			setConsoleName (extio, cin[cin_no]);
 
 			cin_no++;
+			return 1;
+		}
+		else if (mode == ase.awk.Extio.MODE_CONSOLE_WRITE)
+		{
+			OutputStreamWriter osw, tmp;
+
+			osw = (OutputStreamWriter)extio.getHandle ();
+
+			if (cout_no >= cout.length) return 0;
+			tmp = get_output_stream (cout[cout_no]);
+			if (tmp == null) return -1;
+
+			try { osw.close (); }
+			catch (IOException e) { /* ignore */ }
+
+			extio.setHandle (tmp);
+			setOutputConsoleName (extio, cout[cout_no]);
+
+			cout_no++;
 			return 1;
 		}
 
@@ -248,6 +265,25 @@ public class Awk extends ase.awk.Awk
 		}
 
 		return isr;
+	}
+
+	private OutputStreamWriter get_output_stream (String name)
+	{
+		OutputStreamWriter osw;
+
+		if (name == null || name.length() == 0)
+		{
+			osw = new OutputStreamWriter (System.out);
+		}
+		else
+		{
+			FileOutputStream fos;
+			try { fos = new FileOutputStream (name); }
+			catch (IOException e) { return null; }
+			osw = new OutputStreamWriter (fos);
+		}
+
+		return osw;
 	}
 
 	/* ===== file ===== */

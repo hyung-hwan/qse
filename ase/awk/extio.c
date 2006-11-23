@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.62 2006-11-22 15:12:04 bacon Exp $
+ * $Id: extio.c,v 1.63 2006-11-23 03:31:35 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -648,6 +648,8 @@ int ase_awk_nextextio_read (
 	if (p == ASE_NULL)
 	{
 		/* something is totally wrong */
+		ASE_AWK_ASSERT (run->awk, 
+			!"should never happen - cannot find the relevant extio entry");
 		run->errnum = ASE_AWK_EINTERNAL;
 		return -1;
 	}
@@ -682,6 +684,81 @@ int ase_awk_nextextio_read (
 		/* also the previous input buffer must be reset */
 		p->in.pos = 0;
 		p->in.len = 0;
+	}
+
+	return n;
+}
+
+int ase_awk_nextextio_write (
+	ase_awk_run_t* run, int out_type, const ase_char_t* name)
+{
+	ase_awk_extio_t* p = run->extio.chain;
+	ase_awk_io_t handler;
+	int extio_type, /*extio_mode,*/ extio_mask, n;
+
+	ASE_AWK_ASSERT (run->awk,
+		out_type >= 0 && out_type <= ase_countof(__out_type_map));
+	ASE_AWK_ASSERT (run->awk,
+		out_type >= 0 && out_type <= ase_countof(__out_mode_map));
+	ASE_AWK_ASSERT (run->awk,
+		out_type >= 0 && out_type <= ase_countof(__out_mask_map));
+
+	/* translate the out_type into the relevant extio type and mode */
+	extio_type = __out_type_map[out_type];
+	/*extio_mode = __out_mode_map[out_type];*/
+	extio_mask = __out_mask_map[out_type];
+
+	handler = run->extio.handler[extio_type];
+	if (handler == ASE_NULL)
+	{
+		/* no io handler provided */
+		run->errnum = ASE_AWK_EIOIMPL; /* TODO: change the error code */
+		return -1;
+	}
+
+	while (p != ASE_NULL)
+	{
+		if (p->type == (extio_type | extio_mask) &&
+		    ase_awk_strcmp (p->name,name) == 0) break;
+		p = p->next;
+	}
+
+	if (p == ASE_NULL)
+	{
+		/* something is totally wrong */
+		ASE_AWK_ASSERT (run->awk, 
+			!"should never happen - cannot find the relevant extio entry");
+
+		run->errnum = ASE_AWK_EINTERNAL;
+		return -1;
+	}
+
+	if (p->out.eos) 
+	{
+		/* no more streams. */
+		return 0;
+	}
+
+	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
+	if (n == -1)
+	{
+		/* TODO: is this errnum correct? */
+		run->errnum = ASE_AWK_EIOHANDLER;
+		return -1;
+	}
+
+	if (n == 0) 
+	{
+		/* the next stream cannot be opened. 
+		 * set the eos flags so that the next call to nextextio_write
+		 * will return 0 without executing the handler */
+		p->out.eos = ase_true;
+	}
+	else 
+	{
+		/* as the next stream has been opened successfully,
+		 * the eof flag should be cleared if set */
+		p->out.eof = ase_false;
 	}
 
 	return n;

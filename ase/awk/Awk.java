@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.6 2006-11-22 15:12:03 bacon Exp $
+ * $Id: Awk.java,v 1.7 2006-11-23 03:31:35 bacon Exp $
  */
 
 package ase.awk;
@@ -30,14 +30,19 @@ public abstract class Awk
 	private native void open () throws Exception;
 	private native int setconsolename (long run_id, String name);
 
-	public void setConsoleName (long run_id, String name) //throws Exception
+	public void setConsoleName (Extio extio, String name) //throws Exception
 	{
 		/* TODO: setconsolename is not safe. for example, it can 
 		 * crash the program if run_id is invalid. so this wrapper
 		 * needs to do some sanity check. */
 		//if (setconsolename (run_id, name) == -1)
 		//	throw new Exception ("cannot set the consle name");
-		setconsolename (run_id, name);
+		setconsolename (extio.getRunId(), name);
+	}
+
+	public void setOutputConsoleName (Extio extio, String name)
+	{
+		// TODO:
 	}
 
 	/* abstrace methods */
@@ -68,6 +73,12 @@ public abstract class Awk
 
 	protected int read_extio (Extio extio, char[] buf, int len)
 	{
+		// this check is needed because 0 is used to indicate
+		// the end of the stream. java streams can return 0 
+		// if the data given is 0 bytes and it didn't reach 
+		// the end of the stream. 
+		if (len <= 0) return -1;
+
 		int type = extio.getType ();
 		if (type == Extio.TYPE_CONSOLE) 
 			return read_console (extio, buf, len);
@@ -82,6 +93,8 @@ public abstract class Awk
 
 	protected int write_extio (Extio extio, char[] buf, int len)
 	{
+		if (len <= 0) return -1;
+
 		int type = extio.getType ();
 		if (type == Extio.TYPE_CONSOLE) 
 			return write_console (extio, buf, len);

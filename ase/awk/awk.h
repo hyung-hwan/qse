@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.148 2006-11-21 15:06:14 bacon Exp $
+ * $Id: awk.h,v 1.149 2006-11-23 03:31:35 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -131,25 +131,6 @@ enum
 	ASE_AWK_IO_NEXT   = 5  
 };
 
-enum
-{
-	ASE_AWK_EXTIO_PIPE_READ      = 0,
-	ASE_AWK_EXTIO_PIPE_WRITE     = 1,
-
-	/*
-	ASE_AWK_EXTIO_COPROC_READ    = 0,
-	ASE_AWK_EXTIO_COPROC_WRITE   = 1,
-	ASE_AWK_EXTIO_COPROC_RDWR    = 2,
-	*/
-
-	ASE_AWK_EXTIO_FILE_READ      = 0,
-	ASE_AWK_EXTIO_FILE_WRITE     = 1,
-	ASE_AWK_EXTIO_FILE_APPEND    = 2,
-
-	ASE_AWK_EXTIO_CONSOLE_READ   = 0,
-	ASE_AWK_EXTIO_CONSOLE_WRITE  = 1
-};
-
 /* various options */
 enum 
 { 
@@ -208,8 +189,11 @@ enum
 	 */
 	ASE_AWK_STRIPSPACES = (1 << 12),
 
+	/* enable the nextoutfile keyword */
+	ASE_AWK_NEXTOUTFILE = (1 << 13),
+
 	/* a newline terminates a statement */
-	ASE_AWK_NEWLINE = (1 << 13)
+	ASE_AWK_NEWLINE = (1 << 14)
 };
 
 /* error code */
@@ -334,6 +318,25 @@ enum ase_awk_extio_type_t
 
 	/* reserved for internal use only */
 	ASE_AWK_EXTIO_NUM
+};
+
+enum
+{
+	ASE_AWK_EXTIO_PIPE_READ      = 0,
+	ASE_AWK_EXTIO_PIPE_WRITE     = 1,
+
+	/*
+	ASE_AWK_EXTIO_COPROC_READ    = 0,
+	ASE_AWK_EXTIO_COPROC_WRITE   = 1,
+	ASE_AWK_EXTIO_COPROC_RDWR    = 2,
+	*/
+
+	ASE_AWK_EXTIO_FILE_READ      = 0,
+	ASE_AWK_EXTIO_FILE_WRITE     = 1,
+	ASE_AWK_EXTIO_FILE_APPEND    = 2,
+
+	ASE_AWK_EXTIO_CONSOLE_READ   = 0,
+	ASE_AWK_EXTIO_CONSOLE_WRITE  = 1
 };
 
 /* assertion statement */

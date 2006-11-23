@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.280 2006-11-21 15:06:15 bacon Exp $
+ * $Id: run.c,v 1.281 2006-11-23 03:31:36 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1118,7 +1118,7 @@ static int __run_main (
 
 		nde.type = ASE_AWK_NDE_AFN;
 		nde.next = ASE_NULL;
-		nde.what.afn.name = main;
+		nde.what.afn.name = (ase_char_t*)main;
 		nde.what.afn.name_len = ase_awk_strlen(main);
 		nde.args = ASE_NULL;
 		nde.nargs = 0;
@@ -1260,7 +1260,7 @@ static int __run_main (
 
 static int __run_pattern_blocks (ase_awk_run_t* run)
 {
-	ase_ssize_t n;
+//	ase_ssize_t n;
 	ase_bool_t need_to_close = ase_false;
 
 	run->inrec.buf_pos = 0;
@@ -1995,13 +1995,11 @@ static int __run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde)
 	return 0;
 }
 
-static int __run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
+static int __run_nextinfile (ase_awk_run_t* run)
 {
-/* TODO: some extentions such as nextfile "in/out"; 
- *  what about awk -i in1,in2,in3 -o out1,out2,out3 ?
- */
 	int n;
 
+	/* normal nextfile statement */
 	if  (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.begin ||
 	     run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.end)
 	{
@@ -2019,16 +2017,45 @@ static int __run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 
 	if (n == 0)
 	{
-		/* no more input file */
+		/* no more input console */
 		run->exit_level = EXIT_GLOBAL;
 		return 0;
 	}
 
 	if (__update_fnr (run, 0) == -1) return -1;
 
-/* TODO: Consider using FILENAME_IN and FILENAME_OUT to accomplish nextfile in/out */
 	run->exit_level = EXIT_NEXT;
 	return 0;
+
+}
+
+static int __run_nextoutfile (ase_awk_run_t* run)
+{
+	int n;
+
+	n = ase_awk_nextextio_write (run, ASE_AWK_OUT_CONSOLE, ASE_T(""));
+	if (n == -1)
+	{
+		if (run->errnum == ASE_AWK_EIOHANDLER)
+			run->errnum = ASE_AWK_ECONOUTNEXT;
+		return -1;
+	}
+
+	if (n == 0)
+	{
+		/* TODO: should it terminate the program 
+	 	 *       when there is no more output console? */
+		/*run->exit_level = EXIT_GLOBAL;*/
+		return 0;
+	}
+
+	/* TODO: update_ofnr */
+	return 0;
+}
+
+static int __run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
+{
+	return (nde->out)? __run_nextoutfile (run): __run_nextinfile (run);
 }
 
 static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
@@ -6088,7 +6115,6 @@ ase_char_t* ase_awk_format (
 				return ASE_NULL;
 			}
 
-
 			if (prec == -1 || prec == 0 || prec > ch_len) prec = ch_len;
 			if (prec > width) width = prec;
 
@@ -6134,7 +6160,7 @@ ase_char_t* ase_awk_format (
 		}
 		else if (fmt[i] == ASE_T('s')) 
 		{
-			ase_char_t* str;
+			ase_char_t* str, * str_free = ASE_NULL;
 			ase_size_t str_len, k;
 			ase_awk_val_t* v;
 
@@ -6192,6 +6218,8 @@ ase_char_t* ase_awk_format (
 					ase_awk_refdownval (run, v);
 					return ASE_NULL;
 				}
+
+				str_free = str;
 			}
 
 			if (prec == -1 || prec > str_len ) prec = str_len;
@@ -6203,6 +6231,8 @@ ase_char_t* ase_awk_format (
 				{
 					if (ase_awk_str_ccat (out, ASE_T(' ')) == -1) 
 					{ 
+						if (str_free != ASE_NULL) 
+							ASE_AWK_FREE (awk, str_free);
 						ase_awk_refdownval (run, v);
 						run->errnum = ASE_AWK_ENOMEM;
 						return ASE_NULL; 
@@ -6215,11 +6245,15 @@ ase_char_t* ase_awk_format (
 			{
 				if (ase_awk_str_ccat (out, str[k]) == -1) 
 				{ 
+					if (str_free != ASE_NULL) 
+						ASE_AWK_FREE (awk, str_free);
 					ase_awk_refdownval (run, v);
 					run->errnum = ASE_AWK_ENOMEM;
 					return ASE_NULL; 
 				} 
 			}
+
+			if (str_free != ASE_NULL) ASE_AWK_FREE (awk, str_free);
 
 			if (minus)
 			{
