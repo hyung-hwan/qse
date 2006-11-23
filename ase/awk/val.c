@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.92 2006-11-22 06:05:45 bacon Exp $
+ * $Id: val.c,v 1.93 2006-11-23 14:27:52 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -15,10 +15,13 @@ static ase_char_t* __val_real_to_str (
 	int opt, ase_awk_str_t* buf, ase_size_t* len);
 
 static ase_awk_val_nil_t __awk_nil = { ASE_AWK_VAL_NIL, 0 };
-ase_awk_val_t* ase_awk_val_nil = (ase_awk_val_t*)&__awk_nil;
-
 static ase_awk_val_str_t __awk_zls = { ASE_AWK_VAL_STR, 0, ASE_T(""), 0 };
+/* TODO: consider different line ending schemes */
+static ase_awk_val_str_t __awk_nl = { ASE_AWK_VAL_STR, 0, ASE_T("\n"), 1 };
+
+ase_awk_val_t* ase_awk_val_nil = (ase_awk_val_t*)&__awk_nil;
 ase_awk_val_t* ase_awk_val_zls = (ase_awk_val_t*)&__awk_zls; 
+ase_awk_val_t* ase_awk_val_nl = (ase_awk_val_t*)&__awk_nl;
 
 static ase_awk_val_int_t __awk_int[] =
 {
@@ -249,8 +252,11 @@ ase_awk_val_t* ase_awk_makerefval (ase_awk_run_t* run, int id, ase_awk_val_t** a
 ase_bool_t ase_awk_isbuiltinval (ase_awk_val_t* val)
 {
 	return val == ASE_NULL || 
-	       val == ase_awk_val_nil || val == ase_awk_val_zls || 
-	       val == ase_awk_val_zero || val == ase_awk_val_one || 
+	       val == ase_awk_val_nil || 
+	       val == ase_awk_val_zls || 
+	       val == ase_awk_val_nl || 
+	       val == ase_awk_val_zero || 
+	       val == ase_awk_val_one || 
 	       (val >= (ase_awk_val_t*)&__awk_int[0] &&
 	        val <= (ase_awk_val_t*)&__awk_int[ase_countof(__awk_int)-1]);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.21 2006-11-23 03:31:36 bacon Exp $
+ * $Id: jni.c,v 1.22 2006-11-23 14:27:51 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -197,7 +197,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	opt = ASE_AWK_EXPLICIT | ASE_AWK_UNIQUE | ASE_AWK_DBLSLASHES |
 		ASE_AWK_SHADING | ASE_AWK_IMPLICIT | ASE_AWK_SHIFT | 
 		ASE_AWK_EXTIO | ASE_AWK_BLOCKLESS | ASE_AWK_HASHSIGN | 
-		ASE_AWK_NEXTOUTFILE;
+		ASE_AWK_NEXTOFILE;
 	ase_awk_setopt (awk, opt);
 
 printf ("__awk(native) done => %u, 0x%X\n", awk, awk);

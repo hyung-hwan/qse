@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.282 2006-11-23 03:45:06 bacon Exp $
+ * $Id: run.c,v 1.283 2006-11-23 14:27:51 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2049,7 +2049,6 @@ static int __run_nextoutfile (ase_awk_run_t* run)
 		return 0;
 	}
 
-	/* TODO: update_ofnr */
 	return 0;
 }
 

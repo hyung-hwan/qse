@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.205 2006-11-23 03:31:36 bacon Exp $
+ * $Id: parse.c,v 1.206 2006-11-23 14:27:51 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -79,7 +79,7 @@ enum
 	TOKEN_NEXT,
 	TOKEN_NEXTFILE,
 	TOKEN_NEXTINFILE,
-	TOKEN_NEXTOUTFILE,
+	TOKEN_NEXTOFILE,
 	TOKEN_DELETE,
 	TOKEN_PRINT,
 	TOKEN_PRINTF,
@@ -128,7 +128,7 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk);
 static ase_awk_t* __collect_globals (ase_awk_t* awk);
 static ase_awk_t* __add_builtin_globals (ase_awk_t* awk);
 static ase_awk_t* __add_global (
-	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len);
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, int force);
 static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals);
 
 static ase_awk_nde_t* __parse_function (ase_awk_t* awk);
@@ -245,7 +245,7 @@ static struct __kwent __kwtab[] =
 	{ ASE_T("exit"),         4, TOKEN_EXIT,        0 },
 	{ ASE_T("next"),         4, TOKEN_NEXT,        0 },
 	{ ASE_T("nextfile"),     8, TOKEN_NEXTFILE,    0 },
-	{ ASE_T("nextoutfile"), 11, TOKEN_NEXTOUTFILE, ASE_AWK_NEXTOUTFILE },
+	{ ASE_T("nextofile"),    9, TOKEN_NEXTOFILE,   ASE_AWK_NEXTOFILE },
 	{ ASE_T("delete"),       6, TOKEN_DELETE,      0 },
 	{ ASE_T("print"),        5, TOKEN_PRINT,       ASE_AWK_EXTIO },
 	{ ASE_T("printf"),       6, TOKEN_PRINTF,      ASE_AWK_EXTIO },
@@ -265,26 +265,25 @@ struct __bvent
 
 static struct __bvent __bvtab[] =
 {
-	{ ASE_T("ARGC"),         4, 0 },
-	{ ASE_T("ARGV"),         4, 0 },
-	{ ASE_T("CONVFMT"),      7, 0 },
-	{ ASE_T("ENVIRON"),      7, 0 },
-	{ ASE_T("ERRNO"),        5, 0 },
-	{ ASE_T("FILENAME"),     8, 0 },
-	{ ASE_T("FNR"),          3, 0 },
-	{ ASE_T("FS"),           2, 0 },
-	{ ASE_T("IGNORECASE"),  10, 0 },
-	{ ASE_T("NF"),           2, 0 },
-	{ ASE_T("NR"),           2, 0 },
-	{ ASE_T("OFMT"),         4, 0 },
-	{ ASE_T("OFS"),          3, 0 },
-	{ ASE_T("ORS"),          3, 0 },
-	{ ASE_T("RS"),           2, 0 },
-	{ ASE_T("RT"),           2, 0 },
-	{ ASE_T("RSTART"),       6, 0 },
-	{ ASE_T("RLENGTH"),      7, 0 },
-	{ ASE_T("SUBSEP"),       6, 0 },
-	{ ASE_NULL,              0, 0 }
+	{ ASE_T("ARGC"),         4,  0 },
+	{ ASE_T("ARGV"),         4,  0 },
+	{ ASE_T("CONVFMT"),      7,  0 },
+	{ ASE_T("ENVIRON"),      7,  0 },
+	{ ASE_T("ERRNO"),        5,  0 },
+	{ ASE_T("FILENAME"),     8,  0 },
+	{ ASE_T("FNR"),          3,  0 },
+	{ ASE_T("FS"),           2,  0 },
+	{ ASE_T("IGNORECASE"),  10,  0 },
+	{ ASE_T("NF"),           2,  0 },
+	{ ASE_T("NR"),           2,  0 },
+	{ ASE_T("OFMT"),         4,  0 },
+	{ ASE_T("OFS"),          3,  0 },
+	{ ASE_T("ORS"),          3,  0 },
+	{ ASE_T("RLENGTH"),      7,  0 },
+	{ ASE_T("RS"),           2,  0 },
+	{ ASE_T("RSTART"),       6,  0 },
+	{ ASE_T("SUBSEP"),       6,  0 },
+	{ ASE_NULL,              0,  0 }
 };
 
 #define GET_CHAR(awk) \
@@ -1009,12 +1008,26 @@ and merged to top-level block */
 static ase_awk_t* __add_builtin_globals (ase_awk_t* awk)
 {
 	struct __bvent* p = __bvtab;
+	ase_awk_t* tmp;
 
 	awk->tree.nbglobals = 0;
 	while (p->name != ASE_NULL)
 	{
-		if (__add_global (awk, 
-			p->name, p->name_len) == ASE_NULL) return ASE_NULL;
+
+		if (p->valid != 0 && (awk->option & p->valid) == 0)
+		{
+			/* an invalid global variable are still added
+			 * to the global variable table with an empty name.
+			 * this is to prevent the run-time from looking up
+			 * the variable */
+			tmp =__add_global (awk, ASE_T(""), 0, 1);
+		}
+		else 
+		{
+			tmp =__add_global (awk, p->name, p->name_len, 0);
+		}
+		if (tmp == ASE_NULL) return ASE_NULL;
+
 		awk->tree.nbglobals++;
 		p++;
 	}
@@ -1023,21 +1036,26 @@ static ase_awk_t* __add_builtin_globals (ase_awk_t* awk)
 }
 
 static ase_awk_t* __add_global (
-	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, int force)
 {
-	if (awk->option & ASE_AWK_UNIQUE) 
+	if (!force)
 	{
-		/* check if it conflict with a function name */
-		if (ase_awk_map_get(&awk->tree.afns, name, len) != ASE_NULL) 
+		if (awk->option & ASE_AWK_UNIQUE) 
 		{
-			PANIC (awk, ASE_AWK_EDUPNAME);
+			/* check if it conflict with a function name */
+			if (ase_awk_map_get (
+				&awk->tree.afns, name, len) != ASE_NULL) 
+			{
+				PANIC (awk, ASE_AWK_EDUPNAME);
+			}
 		}
-	}
 
-	/* check if it conflicts with other global variable names */
-	if (ase_awk_tab_find (&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
-	{ 
-		PANIC (awk, ASE_AWK_EDUPVAR);
+		/* check if it conflicts with other global variable names */
+		if (ase_awk_tab_find (
+			&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
+		{ 
+			PANIC (awk, ASE_AWK_EDUPVAR);
+		}
 	}
 
 	if (ase_awk_tab_getsize(&awk->parse.globals) >= ASE_AWK_MAX_GLOBALS)
@@ -1062,9 +1080,11 @@ static ase_awk_t* __collect_globals (ase_awk_t* awk)
 			PANIC (awk, ASE_AWK_EIDENT);
 		}
 
-		if (__add_global (awk,
+		if (__add_global (
+			awk,
 			ASE_AWK_STR_BUF(&awk->token.name),
-			ASE_AWK_STR_LEN(&awk->token.name)) == ASE_NULL) return ASE_NULL;
+			ASE_AWK_STR_LEN(&awk->token.name),
+			0) == ASE_NULL) return ASE_NULL;
 
 		if (__get_token(awk) == -1) return ASE_NULL;
 
@@ -1261,7 +1281,7 @@ awk->parse.nl_semicolon = 1;
 		if (__get_token(awk) == -1) return ASE_NULL;
 		nde = __parse_nextfile (awk, 0);
 	}
-	else if (MATCH(awk,TOKEN_NEXTOUTFILE))
+	else if (MATCH(awk,TOKEN_NEXTOFILE))
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
 		nde = __parse_nextfile (awk, 1);
