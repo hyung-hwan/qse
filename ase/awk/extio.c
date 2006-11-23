@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.63 2006-11-23 03:31:35 bacon Exp $
+ * $Id: extio.c,v 1.64 2006-11-23 14:27:51 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -283,6 +283,7 @@ int ase_awk_readextio (
 				 * terminator of the previous line */
 				/* TODO: handle different line terminator like \r\n */
 				ASE_AWK_STR_LEN(buf) -= 1;
+
 				break;
 			}
 		}

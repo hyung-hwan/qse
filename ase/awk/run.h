@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.26 2006-11-19 11:55:17 bacon Exp $
+ * $Id: run.h,v 1.27 2006-11-23 14:27:52 bacon Exp $
  */
 
 #ifndef _ASE_AWK_RUN_H_
@@ -93,10 +93,9 @@ enum ase_awk_global_id_t
 	ASE_AWK_GLOBAL_OFMT,
 	ASE_AWK_GLOBAL_OFS,
 	ASE_AWK_GLOBAL_ORS,
-	ASE_AWK_GLOBAL_RS,
-	ASE_AWK_GLOBAL_RT,
-	ASE_AWK_GLOBAL_RSTART,
 	ASE_AWK_GLOBAL_RLENGTH,
+	ASE_AWK_GLOBAL_RS,
+	ASE_AWK_GLOBAL_RSTART,
 	ASE_AWK_GLOBAL_SUBSEP
 };
 
