@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.281 2006-11-23 03:31:36 bacon Exp $
+ * $Id: run.c,v 1.282 2006-11-23 03:45:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -6232,7 +6232,7 @@ ase_char_t* ase_awk_format (
 					if (ase_awk_str_ccat (out, ASE_T(' ')) == -1) 
 					{ 
 						if (str_free != ASE_NULL) 
-							ASE_AWK_FREE (awk, str_free);
+							ASE_AWK_FREE (run->awk, str_free);
 						ase_awk_refdownval (run, v);
 						run->errnum = ASE_AWK_ENOMEM;
 						return ASE_NULL; 
@@ -6246,14 +6246,14 @@ ase_char_t* ase_awk_format (
 				if (ase_awk_str_ccat (out, str[k]) == -1) 
 				{ 
 					if (str_free != ASE_NULL) 
-						ASE_AWK_FREE (awk, str_free);
+						ASE_AWK_FREE (run->awk, str_free);
 					ase_awk_refdownval (run, v);
 					run->errnum = ASE_AWK_ENOMEM;
 					return ASE_NULL; 
 				} 
 			}
 
-			if (str_free != ASE_NULL) ASE_AWK_FREE (awk, str_free);
+			if (str_free != ASE_NULL) ASE_AWK_FREE (run->awk, str_free);
 
 			if (minus)
 			{
