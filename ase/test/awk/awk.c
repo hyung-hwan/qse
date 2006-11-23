@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.122 2006-11-22 15:11:37 bacon Exp $
+ * $Id: awk.c,v 1.123 2006-11-23 03:31:58 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -753,7 +753,7 @@ static int __main (int argc, ase_char_t* argv[])
 		/*ASE_AWK_DBLSLASHES |*/
 		ASE_AWK_SHADING | ASE_AWK_SHIFT | 
 		ASE_AWK_EXTIO | ASE_AWK_BLOCKLESS | ASE_AWK_STRINDEXONE | 
-		ASE_AWK_STRIPSPACES /*| ASE_AWK_NEWLINE*/;
+		ASE_AWK_STRIPSPACES | ASE_AWK_NEXTOUTFILE /*| ASE_AWK_NEWLINE*/;
 
 	if (argc <= 1)
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: extio.h,v 1.15 2006-10-24 04:10:12 bacon Exp $
+ * $Id: extio.h,v 1.16 2006-11-23 03:31:36 bacon Exp $
  */
 
 #ifndef _ASE_AWK_EXTIO_H_
@@ -31,10 +31,8 @@ int ase_awk_flushextio (
 int ase_awk_nextextio_read (
 	ase_awk_run_t* run, int in_type, const ase_char_t* name);
 
-/* TODO:
 int ase_awk_nextextio_write (
 	ase_awk_run_t* run, int out_type, const ase_char_t* name);
-*/
 
 int ase_awk_closeextio_read (
 	ase_awk_run_t* run, int in_type, const ase_char_t* name);

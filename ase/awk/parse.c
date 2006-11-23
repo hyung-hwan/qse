@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.204 2006-11-19 11:21:06 bacon Exp $
+ * $Id: parse.c,v 1.205 2006-11-23 03:31:36 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -78,6 +78,8 @@ enum
 	TOKEN_EXIT,
 	TOKEN_NEXT,
 	TOKEN_NEXTFILE,
+	TOKEN_NEXTINFILE,
+	TOKEN_NEXTOUTFILE,
 	TOKEN_DELETE,
 	TOKEN_PRINT,
 	TOKEN_PRINTF,
@@ -182,7 +184,7 @@ static ase_awk_nde_t* __parse_continue (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_return (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_exit (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_next (ase_awk_t* awk);
-static ase_awk_nde_t* __parse_nextfile (ase_awk_t* awk);
+static ase_awk_nde_t* __parse_nextfile (ase_awk_t* awk, int out);
 static ase_awk_nde_t* __parse_delete (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_print (ase_awk_t* awk, int type);
 
@@ -219,38 +221,39 @@ struct __kwent
 static struct __kwent __kwtab[] = 
 {
 	/* operators */
-	{ ASE_T("in"),       2, TOKEN_IN,       0 },
+	{ ASE_T("in"),           2, TOKEN_IN,          0 },
 
 	/* top-level block starters */
-	{ ASE_T("BEGIN"),    5, TOKEN_BEGIN,    0 },
-	{ ASE_T("END"),      3, TOKEN_END,      0 },
-	{ ASE_T("function"), 8, TOKEN_FUNCTION, 0 },
-	{ ASE_T("func"),     4, TOKEN_FUNCTION, 0 },
+	{ ASE_T("BEGIN"),        5, TOKEN_BEGIN,       0 },
+	{ ASE_T("END"),          3, TOKEN_END,         0 },
+	{ ASE_T("function"),     8, TOKEN_FUNCTION,    0 },
+	{ ASE_T("func"),         4, TOKEN_FUNCTION,    0 },
 
 	/* keywords for variable declaration */
-	{ ASE_T("local"),    5, TOKEN_LOCAL,    ASE_AWK_EXPLICIT },
-	{ ASE_T("global"),   6, TOKEN_GLOBAL,   ASE_AWK_EXPLICIT },
+	{ ASE_T("local"),        5, TOKEN_LOCAL,       ASE_AWK_EXPLICIT },
+	{ ASE_T("global"),       6, TOKEN_GLOBAL,      ASE_AWK_EXPLICIT },
 
 	/* keywords that start statements excluding expression statements */
-	{ ASE_T("if"),       2, TOKEN_IF,       0 },
-	{ ASE_T("else"),     4, TOKEN_ELSE,     0 },
-	{ ASE_T("while"),    5, TOKEN_WHILE,    0 },
-	{ ASE_T("for"),      3, TOKEN_FOR,      0 },
-	{ ASE_T("do"),       2, TOKEN_DO,       0 },
-	{ ASE_T("break"),    5, TOKEN_BREAK,    0 },
-	{ ASE_T("continue"), 8, TOKEN_CONTINUE, 0 },
-	{ ASE_T("return"),   6, TOKEN_RETURN,   0 },
-	{ ASE_T("exit"),     4, TOKEN_EXIT,     0 },
-	{ ASE_T("next"),     4, TOKEN_NEXT,     0 },
-	{ ASE_T("nextfile"), 8, TOKEN_NEXTFILE, 0 },
-	{ ASE_T("delete"),   6, TOKEN_DELETE,   0 },
-	{ ASE_T("print"),    5, TOKEN_PRINT,    ASE_AWK_EXTIO },
-	{ ASE_T("printf"),   6, TOKEN_PRINTF,   ASE_AWK_EXTIO },
+	{ ASE_T("if"),           2, TOKEN_IF,          0 },
+	{ ASE_T("else"),         4, TOKEN_ELSE,        0 },
+	{ ASE_T("while"),        5, TOKEN_WHILE,       0 },
+	{ ASE_T("for"),          3, TOKEN_FOR,         0 },
+	{ ASE_T("do"),           2, TOKEN_DO,          0 },
+	{ ASE_T("break"),        5, TOKEN_BREAK,       0 },
+	{ ASE_T("continue"),     8, TOKEN_CONTINUE,    0 },
+	{ ASE_T("return"),       6, TOKEN_RETURN,      0 },
+	{ ASE_T("exit"),         4, TOKEN_EXIT,        0 },
+	{ ASE_T("next"),         4, TOKEN_NEXT,        0 },
+	{ ASE_T("nextfile"),     8, TOKEN_NEXTFILE,    0 },
+	{ ASE_T("nextoutfile"), 11, TOKEN_NEXTOUTFILE, ASE_AWK_NEXTOUTFILE },
+	{ ASE_T("delete"),       6, TOKEN_DELETE,      0 },
+	{ ASE_T("print"),        5, TOKEN_PRINT,       ASE_AWK_EXTIO },
+	{ ASE_T("printf"),       6, TOKEN_PRINTF,      ASE_AWK_EXTIO },
 
 	/* keywords that can start an expression */
-	{ ASE_T("getline"),  7, TOKEN_GETLINE,  ASE_AWK_EXTIO },
+	{ ASE_T("getline"),      7, TOKEN_GETLINE,     ASE_AWK_EXTIO },
 
-	{ ASE_NULL,          0,              0 }
+	{ ASE_NULL,              0, 0,                 0 }
 };
 
 struct __bvent
@@ -1256,7 +1259,12 @@ awk->parse.nl_semicolon = 1;
 	else if (MATCH(awk,TOKEN_NEXTFILE)) 
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
-		nde = __parse_nextfile (awk);
+		nde = __parse_nextfile (awk, 0);
+	}
+	else if (MATCH(awk,TOKEN_NEXTOUTFILE))
+	{
+		if (__get_token(awk) == -1) return ASE_NULL;
+		nde = __parse_nextfile (awk, 1);
 	}
 	else if (MATCH(awk,TOKEN_DELETE)) 
 	{
@@ -3353,9 +3361,10 @@ static ase_awk_nde_t* __parse_next (ase_awk_t* awk)
 	return (ase_awk_nde_t*)nde;
 }
 
-static ase_awk_nde_t* __parse_nextfile (ase_awk_t* awk)
+static ase_awk_nde_t* __parse_nextfile (ase_awk_t* awk, int out)
 {
 	ase_awk_nde_nextfile_t* nde;
+	int stream = 1;
 
 	if (awk->parse.id.block == PARSE_BEGIN_BLOCK ||
 	    awk->parse.id.block == PARSE_END_BLOCK)
@@ -3368,6 +3377,7 @@ static ase_awk_nde_t* __parse_nextfile (ase_awk_t* awk)
 	if (nde == ASE_NULL) PANIC (awk, ASE_AWK_ENOMEM);
 	nde->type = ASE_AWK_NDE_NEXTFILE;
 	nde->next = ASE_NULL;
+	nde->out = out;
 	
 	return (ase_awk_nde_t*)nde;
 }
