@@ -1,16 +1,11 @@
 /*
- * $Id: Awk.java,v 1.8 2006-11-24 15:37:29 bacon Exp $
+ * $Id: Awk.java,v 1.9 2006-11-24 15:40:54 bacon Exp $
  */
 
 package ase.test.awk;
 
-import java.io.*;
-
 public class Awk extends ase.awk.StdAwk
 {
-	private FileReader insrc;
-	private FileWriter outsrc;
-
 	private String[] cin;
 	private int cin_no;
 
@@ -45,19 +40,6 @@ public class Awk extends ase.awk.StdAwk
 		String[] cout = new String[1];
 		cout[0] = "t.awk";
 		return cout;
-	}
-
-	protected int read_source (char[] buf, int len)
-	{
-		try { return insrc.read (buf, 0, len); }
-		catch (IOException e) { return -1; }
-	}
-
-	protected int write_source (char[] buf, int len)
-	{
-		try { outsrc.write (buf, 0, len); }
-		catch (IOException e) { return -1; }
-		return len;
 	}
 
 	public static void main (String[] args)
