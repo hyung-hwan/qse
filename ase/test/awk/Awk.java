@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.7 2006-11-24 13:25:12 bacon Exp $
+ * $Id: Awk.java,v 1.8 2006-11-24 15:37:29 bacon Exp $
  */
 
 package ase.test.awk;
@@ -40,40 +40,11 @@ public class Awk extends ase.awk.StdAwk
 		return cout;
 	}
 
-	protected int open_source (int mode)
+	protected String[] getSourceNames ()
 	{
-		if (mode == SOURCE_READ)
-		{
-			try { insrc = new FileReader ("t.awk"); }
-			catch (IOException e) { return -1; }
-			return 1;
-		}
-		else if (mode == SOURCE_WRITE)
-		{
-			try { outsrc = new FileWriter ("t.out"); }
-			catch (IOException e) { return -1; }
-			return 1;
-		}
-
-		return -1;
-	}
-
-	protected int close_source (int mode)
-	{
-		if (mode == SOURCE_READ)
-		{
-			try { insrc.close (); }
-			catch (IOException e) { return -1; }
-			return 0;
-		}
-		else if (mode == SOURCE_WRITE)
-		{
-			try { outsrc.close (); }
-			catch (IOException e) { return -1; }
-			return 0;
-		}
-
-		return -1;
+		String[] cout = new String[1];
+		cout[0] = "t.awk";
+		return cout;
 	}
 
 	protected int read_source (char[] buf, int len)
