@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.83 2006-11-19 10:03:18 bacon Exp $
+ * $Id: awk_i.h,v 1.84 2006-11-24 15:22:33 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -23,6 +23,7 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
+#pragma warning (disable: 4296)
 #endif
 
 /* TODO: remove this */
