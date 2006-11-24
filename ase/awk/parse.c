@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.207 2006-11-24 13:20:49 bacon Exp $
+ * $Id: parse.c,v 1.208 2006-11-24 15:07:18 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -3385,7 +3385,6 @@ static ase_awk_nde_t* __parse_next (ase_awk_t* awk)
 static ase_awk_nde_t* __parse_nextfile (ase_awk_t* awk, int out)
 {
 	ase_awk_nde_nextfile_t* nde;
-	int stream = 1;
 
 	if (awk->parse.id.block == PARSE_BEGIN_BLOCK ||
 	    awk->parse.id.block == PARSE_END_BLOCK)

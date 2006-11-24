@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.1 2006-11-24 13:20:48 bacon Exp $
+ * $Id: StdAwk.java,v 1.2 2006-11-24 15:04:23 bacon Exp $
  */
 
 package ase.awk;
@@ -135,7 +135,8 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_CONSOLE_WRITE)
 		{
-			OutputStreamWriter osw = (OutputStreamWriter)extio.getHandle ();
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle ();
 			// as the write operation below doesn't indicate 
 			// if it has reached the end, console can't be
 			// switched here unlike read_console.
@@ -143,6 +144,22 @@ public abstract class StdAwk extends Awk
 			catch (IOException e) { return -1; }
 
 			return len;
+		}
+
+		return -1;
+	}
+
+	protected int flush_console (Extio extio)
+	{
+		int mode = extio.getMode ();
+
+		if (mode == Extio.MODE_CONSOLE_WRITE)
+		{
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle ();
+			try { osw.flush (); }
+			catch (IOException e) { return -1; }
+			return 0;
 		}
 
 		return -1;
@@ -348,4 +365,131 @@ public abstract class StdAwk extends Awk
 
 		return -1;
 	}
+
+	protected int flush_file (Extio extio)
+	{
+		int mode = extio.getMode ();
+
+		if (mode == Extio.MODE_FILE_WRITE ||
+		    mode == Extio.MODE_FILE_APPEND)
+		{
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle ();
+			try { osw.flush (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+
+		return -1;
+	}
+
+	/* ===== pipe ===== */
+	public int open_pipe (Extio extio)
+	{
+		int mode = extio.getMode();
+
+		if (mode == Extio.MODE_PIPE_READ)
+		{
+
+			Process proc;
+			InputStreamReader isr;
+		       
+			try { proc = Runtime.getRuntime().exec (extio.getName()); }
+			catch (IOException e) { return -1; }
+			isr = new InputStreamReader (proc.getInputStream()); 
+			extio.setHandle (isr);
+			return 1;
+		}
+		else if (mode == Extio.MODE_PIPE_WRITE)
+		{
+			Process proc;
+			OutputStreamWriter osw;
+
+			try { proc = Runtime.getRuntime().exec (extio.getName()); }
+			catch (IOException e) { return -1; }
+			osw = new OutputStreamWriter (proc.getOutputStream());
+			extio.setHandle (osw);
+			return 1;
+		}
+
+		return -1;
+	}
+	
+	public int close_pipe (Extio extio)
+	{
+		int mode = extio.getMode();
+
+		if (mode == Extio.MODE_PIPE_READ)
+		{
+			InputStreamReader isr;
+			isr = (InputStreamReader)extio.getHandle();
+			try { isr.close (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+		else if (mode == Extio.MODE_PIPE_WRITE)
+		{
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle();
+			try { osw.close (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+		
+		return -1;
+	}
+
+	protected int read_pipe (Extio extio, char[] buf, int len) 
+	{
+		int mode = extio.getMode();
+
+		if (mode == Extio.MODE_PIPE_READ)
+		{
+			InputStreamReader isr;
+			isr = (InputStreamReader)extio.getHandle();
+
+			try 
+			{
+				len = isr.read (buf, 0, len);
+				if (len == -1) len = 0;
+			}
+			catch (IOException e) { len = -1; }
+			return len; 
+		}
+
+		return -1;
+	}
+
+	protected int write_pipe (Extio extio, char[] buf, int len) 
+	{
+		int mode = extio.getMode();
+
+		if (mode == Extio.MODE_PIPE_WRITE)
+		{
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle();
+			try { osw.write (buf, 0, len); }
+			catch (IOException e) { len = -1; }
+			return len;
+		}
+
+		return -1;
+	}
+
+	protected int flush_pipe (Extio extio)
+	{
+		int mode = extio.getMode ();
+
+		if (mode == Extio.MODE_PIPE_WRITE)
+		{
+			OutputStreamWriter osw;
+			osw = (OutputStreamWriter)extio.getHandle ();
+			try { osw.flush (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+
+		return -1;
+	}
+
 }
