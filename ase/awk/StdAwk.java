@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.2 2006-11-24 15:04:23 bacon Exp $
+ * $Id: StdAwk.java,v 1.3 2006-11-24 15:37:05 bacon Exp $
  */
 
 package ase.awk;
@@ -8,6 +8,8 @@ import java.io.*;
 
 public abstract class StdAwk extends Awk
 {
+	private FileReader insrc;
+
 	private String[] cin;
 	private int cin_no;
 	private String[] cout;
@@ -17,15 +19,80 @@ public abstract class StdAwk extends Awk
 	{
 		super ();
 
+		insrc = null;
+
 		cin = getInputConsoleNames ();
 		cout = getOutputConsoleNames ();
 		cin_no = 0;
 		cout_no = 0;
 	}
 
-	/* ===== standard console names ===== */
+	/* ===== source code names ===== */
+	protected abstract String[] getSourceNames ();
+	protected String getDeparseName () { return null; }
+
+	/* ===== console names ===== */
 	protected abstract String[] getInputConsoleNames ();
 	protected abstract String[] getOutputConsoleNames ();
+
+	/* ===== source code ===== */
+	protected int open_source (int mode)
+	{
+		if (mode == SOURCE_READ)
+		{
+			try { insrc = new FileReader ("t.awk"); }
+			catch (IOException e) { return -1; }
+			return 1;
+		}
+		else if (mode == SOURCE_WRITE)
+		{
+			/*
+			try { outsrc = new FileWriter ("t.out"); }
+			catch (IOException e) { return -1; }
+			return 1;
+			*/
+			return 1;
+		}
+
+		return -1;
+	}
+
+	protected int close_source (int mode)
+	{
+		if (mode == SOURCE_READ)
+		{
+			try { insrc.close (); }
+			catch (IOException e) { return -1; }
+			return 0;
+		}
+		else if (mode == SOURCE_WRITE)
+		{
+			/*
+			try { outsrc.close (); }
+			catch (IOException e) { return -1; }
+			return 0;
+			*/
+			return 0;
+		}
+
+		return -1;
+	}
+
+	protected int read_source (char[] buf, int len)
+	{
+		try { return insrc.read (buf, 0, len); }
+		catch (IOException e) { return -1; }
+	}
+
+	protected int write_source (char[] buf, int len)
+	{
+		/*
+		try { outsrc.write (buf, 0, len); }
+		catch (IOException e) { return -1; }
+		return len;
+		*/
+		return len;
+	}
 
 	/* ===== console ===== */
 	protected int open_console (Extio extio)
