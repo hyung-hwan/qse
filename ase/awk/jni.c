@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.23 2006-11-24 13:20:49 bacon Exp $
+ * $Id: jni.c,v 1.24 2006-11-24 15:04:23 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -274,7 +274,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 	runio_data.env = env;
 	runio_data.obj = obj;
 
-	runios.pipe = ASE_NULL;
+	runios.pipe = __process_extio;
 	runios.coproc = ASE_NULL;
 	runios.file = __process_extio;
 	runios.console = __process_extio;
@@ -656,6 +656,38 @@ static ase_ssize_t __call_java_write_extio (
 	return ret;
 }
 
+
+static ase_ssize_t __call_java_flush_extio (
+	JNIEnv* env, jobject obj, char* meth, ase_awk_extio_t* extio)
+{
+	jclass class; 
+	jmethodID mid;
+	jthrowable thrown;
+	jint ret;
+	
+	class = (*env)->GetObjectClass(env, obj);
+
+	mid = (*env)->GetMethodID (
+		env, class, meth, "(Lase/awk/Extio;)I");
+	if (mid == NULL) 
+	{
+		(*env)->DeleteLocalRef (env, class);
+		return -1;
+	}
+
+	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+(*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
+		ret = -1;
+	}
+
+	(*env)->DeleteLocalRef (env, class);
+	return ret;
+}
+
 static ase_ssize_t __call_java_next_extio (
 	JNIEnv* env, jobject obj, char* meth, ase_awk_extio_t* extio)
 {
@@ -765,20 +797,18 @@ static ase_ssize_t __process_extio (
 			runio_data->env, runio_data->obj, 
 			"write_extio", epa, data, size);
 	}
+	else if (cmd == ASE_AWK_IO_FLUSH)
+	{
+		return __call_java_flush_extio (
+			runio_data->env, runio_data->obj,
+			"flush_console", epa);
+	}
 	else if (cmd == ASE_AWK_IO_NEXT)
 	{
 		return __call_java_next_extio (
 			runio_data->env, runio_data->obj, 
 			"next_console", epa);
 	}
-#if 0
-	else if (cmd == ASE_AWK_IO_FLUSH)
-	{
-		return __call_java_flush_extio (
-			runio_data->env, runio_data->obj, "flush_console",
-			data, size);
-	}
-#endif
 
 	return -1;
 }

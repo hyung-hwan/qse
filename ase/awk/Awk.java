@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.8 2006-11-24 13:20:48 bacon Exp $
+ * $Id: Awk.java,v 1.9 2006-11-24 15:04:23 bacon Exp $
  */
 
 package ase.awk;
@@ -58,8 +58,8 @@ public abstract class Awk
 		int type = extio.getType ();
 		if (type == Extio.TYPE_CONSOLE) return open_console (extio);
 		if (type == Extio.TYPE_FILE) return open_file (extio);
-		/*if (type == Extio.TYPE_PIPE) return open_pipe (extio);
-		if (type == Extio.TYPE_COPROC) return open_coproc (extio);*/
+		if (type == Extio.TYPE_PIPE) return open_pipe (extio);
+		//if (type == Extio.TYPE_COPROC) return open_coproc (extio);
 		return -1;
 	}
 
@@ -68,8 +68,8 @@ public abstract class Awk
 		int type = extio.getType ();
 		if (type == Extio.TYPE_CONSOLE) return close_console (extio);
 		if (type == Extio.TYPE_FILE) return close_file (extio);
-		/*if (type == Extio.TYPE_PIPE) return close_pipe (extio);
-		if (type == Extio.TYPE_COPROC) return close_coproc (extio);*/
+		if (type == Extio.TYPE_PIPE) return close_pipe (extio);
+		//if (type == Extio.TYPE_COPROC) return close_coproc (extio);
 		return -1;
 	}
 
@@ -86,10 +86,10 @@ public abstract class Awk
 			return read_console (extio, buf, len);
 		if (type == Extio.TYPE_FILE) 
 			return read_file (extio, buf, len);
-		/*if (type == Extio.TYPE_PIPE)
-		 * 	return read_pipe (extio, buf, len);
-		if (type == Extio.TYPE_COPROC)
-			return read_coproc (extio, buf, len);*/
+		if (type == Extio.TYPE_PIPE)
+		 	return read_pipe (extio, buf, len);
+		//if (type == Extio.TYPE_COPROC)
+		//	return read_coproc (extio, buf, len);
 		return -1;
 	}
 
@@ -102,10 +102,20 @@ public abstract class Awk
 			return write_console (extio, buf, len);
 		if (type == Extio.TYPE_FILE) 
 			return write_file (extio, buf, len);
-		/*if (type == Extio.TYPE_PIPE) 
-		 *	return write_pipe (extio, buf, len);
-		if (type == Extio.TYPE_COPROC)
-			return write_coproc (extio, buf, len);*/
+		if (type == Extio.TYPE_PIPE) 
+			return write_pipe (extio, buf, len);
+		//if (type == Extio.TYPE_COPROC)
+		//	return write_coproc (extio, buf, len);
+		return -1;
+	}
+
+	protected int flush_extio (Extio extio)
+	{
+		int type = extio.getType ();
+		if (type == Extio.TYPE_CONSOLE) return flush_console (extio);
+		if (type == Extio.TYPE_FILE) return flush_file (extio);
+		if (type == Extio.TYPE_PIPE) return flush_pipe (extio);
+		//if (type == Extio.TYPE_COPROC) return flush_coproc (extio);
 		return -1;
 	}
 
@@ -120,10 +130,18 @@ public abstract class Awk
 	protected abstract int close_console (Extio extio);
 	protected abstract int read_console (Extio extio, char[] buf, int len);
 	protected abstract int write_console (Extio extio, char[] buf, int len);
+	protected abstract int flush_console (Extio extio);
 	protected abstract int next_console (Extio extio);
 
 	protected abstract int open_file (Extio extio);
-	protected abstract int close_file (Extio name);
+	protected abstract int close_file (Extio extio);
 	protected abstract int read_file (Extio extio, char[] buf, int len);
 	protected abstract int write_file (Extio extio, char[] buf, int len); 
+	protected abstract int flush_file (Extio extio);
+
+	protected abstract int open_pipe (Extio extio);
+	protected abstract int close_pipe (Extio extio);
+	protected abstract int read_pipe (Extio extio, char[] buf, int len);
+	protected abstract int write_pipe (Extio extio, char[] buf, int len); 
+	protected abstract int flush_pipe (Extio extio);
 }
