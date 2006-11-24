@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.283 2006-11-23 14:27:51 bacon Exp $
+ * $Id: run.c,v 1.284 2006-11-24 13:20:49 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -474,7 +474,7 @@ void ase_awk_setretval (ase_awk_run_t* run, ase_awk_val_t* val)
 	ase_awk_refupval (run, val); 
 }
 
-int ase_awk_setconsolename (
+int ase_awk_setfilename (
 	ase_awk_run_t* run, const ase_char_t* name, ase_size_t len)
 {
 	ase_awk_val_t* tmp;
@@ -494,6 +494,34 @@ int ase_awk_setconsolename (
 	ase_awk_refupval (run, tmp);
 	n = ase_awk_setglobal (run, ASE_AWK_GLOBAL_FILENAME, tmp);
 	ase_awk_refdownval (run, tmp);
+
+	return n;
+}
+
+int ase_awk_setofilename (
+	ase_awk_run_t* run, const ase_char_t* name, ase_size_t len)
+{
+	ase_awk_val_t* tmp;
+	int n;
+
+	if (run->awk->option & ASE_AWK_NEXTOFILE)
+	{
+		if (len == 0) tmp = ase_awk_val_zls;
+		else
+		{
+			tmp = ase_awk_makestrval (run, name, len);
+			if (tmp == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_ENOMEM;
+				return -1;
+			}
+		}
+
+		ase_awk_refupval (run, tmp);
+		n = ase_awk_setglobal (run, ASE_AWK_GLOBAL_OFILENAME, tmp);
+		ase_awk_refdownval (run, tmp);
+	}
+	else n = 0;
 
 	return n;
 }
@@ -1000,12 +1028,13 @@ static int __set_globals_to_default (ase_awk_run_t* run)
        
 	static struct __gtab_t gtab[] =
 	{
-		{ ASE_AWK_GLOBAL_CONVFMT,  DEFAULT_CONVFMT },
-		{ ASE_AWK_GLOBAL_FILENAME, ASE_NULL },
-		{ ASE_AWK_GLOBAL_OFMT,     DEFAULT_OFMT },
-		{ ASE_AWK_GLOBAL_OFS,      DEFAULT_OFS },
-		{ ASE_AWK_GLOBAL_ORS,      DEFAULT_ORS },
-		{ ASE_AWK_GLOBAL_SUBSEP,   DEFAULT_SUBSEP },
+		{ ASE_AWK_GLOBAL_CONVFMT,   DEFAULT_CONVFMT },
+		{ ASE_AWK_GLOBAL_FILENAME,  ASE_NULL },
+		{ ASE_AWK_GLOBAL_OFILENAME, ASE_NULL },
+		{ ASE_AWK_GLOBAL_OFMT,      DEFAULT_OFMT },
+		{ ASE_AWK_GLOBAL_OFS,       DEFAULT_OFS },
+		{ ASE_AWK_GLOBAL_ORS,       DEFAULT_ORS },
+		{ ASE_AWK_GLOBAL_SUBSEP,    DEFAULT_SUBSEP },
 	};
 
 	ase_awk_val_t* tmp;

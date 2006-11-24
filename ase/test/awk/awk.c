@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.124 2006-11-23 14:31:59 bacon Exp $
+ * $Id: awk.c,v 1.125 2006-11-24 13:25:12 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -537,7 +537,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 			}
 
 			__awk_dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
-			if (ase_awk_setconsolename (
+			if (ase_awk_setfilename (
 				epa->run, infiles[infile_no], 
 				ase_awk_strlen(infiles[infile_no])) == -1)
 			{

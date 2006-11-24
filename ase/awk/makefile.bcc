@@ -3,7 +3,7 @@ OUT = aseawk
 C_SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
 JNI_SRCS = $(C_SRCS) jni.c
-JAVA_SRCS = Awk.java Exception.java Extio.java
+JAVA_SRCS = Exception.java Extio.java Awk.java StdAwk.java
 
 C_OBJS = $(C_SRCS:.c=.obj)
 JNI_OBJS = $(JNI_SRCS:.c=.obj)

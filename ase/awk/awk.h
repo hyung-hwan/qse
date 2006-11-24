@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.150 2006-11-23 14:27:51 bacon Exp $
+ * $Id: awk.h,v 1.151 2006-11-24 13:20:48 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -396,7 +396,9 @@ ase_awk_val_t* ase_awk_getglobal (ase_awk_run_t* run, ase_size_t idx);
 int ase_awk_setglobal (ase_awk_run_t* run, ase_size_t idx, ase_awk_val_t* val);
 void ase_awk_setretval (ase_awk_run_t* run, ase_awk_val_t* val);
 
-int ase_awk_setconsolename (
+int ase_awk_setfilename (
+	ase_awk_run_t* run, const ase_char_t* name, ase_size_t len);
+int ase_awk_setofilename (
 	ase_awk_run_t* run, const ase_char_t* name, ase_size_t len);
 
 int ase_awk_getrunerrnum (ase_awk_run_t* run);

@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.22 2006-11-23 14:27:51 bacon Exp $
+ * $Id: jni.c,v 1.23 2006-11-24 13:20:49 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -783,7 +783,7 @@ static ase_ssize_t __process_extio (
 	return -1;
 }
 
-JNIEXPORT int JNICALL Java_ase_awk_Awk_setconsolename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
+JNIEXPORT int JNICALL Java_ase_awk_Awk_setfilename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
 	const jchar* str;
@@ -791,9 +791,22 @@ JNIEXPORT int JNICALL Java_ase_awk_Awk_setconsolename (JNIEnv* env, jobject obj,
 
 	str = (*env)->GetStringChars (env, name, JNI_FALSE);
 	len = (*env)->GetStringLength (env, name);
-	n = ase_awk_setconsolename (run, str, len);
+	n = ase_awk_setfilename (run, str, len);
 	(*env)->ReleaseStringChars (env, name, str);
 	return n;
 }
 
+
+JNIEXPORT int JNICALL Java_ase_awk_Awk_setofilename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
+{
+	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
+	const jchar* str;
+	int len, n;
+
+	str = (*env)->GetStringChars (env, name, JNI_FALSE);
+	len = (*env)->GetStringLength (env, name);
+	n = ase_awk_setofilename (run, str, len);
+	(*env)->ReleaseStringChars (env, name, str);
+	return n;
+}
 

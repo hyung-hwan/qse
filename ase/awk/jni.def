@@ -5,5 +5,6 @@ EXPORTS
 	Java_ase_awk_Awk_close
 	Java_ase_awk_Awk_parse
 	Java_ase_awk_Awk_run
-	Java_ase_awk_Awk_setconsolename
+	Java_ase_awk_Awk_setfilename
+	Java_ase_awk_Awk_setofilename
 
