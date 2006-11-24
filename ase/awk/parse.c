@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.206 2006-11-23 14:27:51 bacon Exp $
+ * $Id: parse.c,v 1.207 2006-11-24 13:20:49 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -276,6 +276,7 @@ static struct __bvent __bvtab[] =
 	{ ASE_T("IGNORECASE"),  10,  0 },
 	{ ASE_T("NF"),           2,  0 },
 	{ ASE_T("NR"),           2,  0 },
+	{ ASE_T("OFILENAME"),    9,  ASE_AWK_NEXTOFILE },
 	{ ASE_T("OFMT"),         4,  0 },
 	{ ASE_T("OFS"),          3,  0 },
 	{ ASE_T("ORS"),          3,  0 },
