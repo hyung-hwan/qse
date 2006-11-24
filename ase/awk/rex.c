@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.45 2006-11-19 14:52:30 bacon Exp $
+ * $Id: rex.c,v 1.46 2006-11-24 15:22:33 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -42,10 +42,6 @@ enum
 	CHARSET_CLASS_DIGIT,
 	CHARSET_CLASS_ALNUM
 };
-
-#ifdef _MSC_VER
-#pragma warning (disable: 4296)
-#endif
 
 #define DEF_CODE_CAPA 512
 #define BOUND_MIN 0
