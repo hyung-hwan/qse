@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.84 2006-11-24 15:22:33 bacon Exp $
+ * $Id: awk_i.h,v 1.85 2006-11-25 15:51:30 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -116,8 +116,18 @@ struct ase_awk_t
 
 		struct
 		{
-			ase_size_t loop;
-			ase_size_t expr; /* expression */
+			struct
+			{
+				ase_size_t block;
+				ase_size_t loop;
+				ase_size_t expr; /* expression */
+			} cur;
+
+			struct
+			{
+				ase_size_t block;
+				ase_size_t expr;
+			} max;
 		} depth;
 
 		ase_awk_tab_t globals;
@@ -126,6 +136,8 @@ struct ase_awk_t
 		ase_size_t nlocals_max;
 
 		int nl_semicolon;
+
+		ase_awk_nde_t* (*parse_block) (ase_awk_t*,ase_bool_t);
 	} parse;
 
 	/* source code management */

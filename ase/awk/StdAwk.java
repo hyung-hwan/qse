@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.3 2006-11-24 15:37:05 bacon Exp $
+ * $Id: StdAwk.java,v 1.4 2006-11-25 15:51:29 bacon Exp $
  */
 
 package ase.awk;
@@ -8,28 +8,41 @@ import java.io.*;
 
 public abstract class StdAwk extends Awk
 {
-	private FileReader insrc;
+	private InputStreamReader src_in   = null;
+	private OutputStreamWriter src_out = null;
 
-	private String[] cin;
-	private int cin_no;
-	private String[] cout;
-	private int cout_no;
+	private String[] sin  = null;
+	private int sin_no    = 0;
+	private String sout   = null;
+
+	private String[] cin  = null;
+	private int cin_no    = 0;
+	private String[] cout = null;
+	private int cout_no   = 0;
 
 	public StdAwk () throws Exception
 	{
 		super ();
+	}
 
-		insrc = null;
+	/* ===== overridden major methods ===== */
+	public void parse () throws Exception
+	{
+		sin = getSourceNames (); sin_no = 0;
+		sout = getDeparsedSourceName ();
+		super.parse ();
+	}
 
-		cin = getInputConsoleNames ();
-		cout = getOutputConsoleNames ();
-		cin_no = 0;
-		cout_no = 0;
+	public void run () throws Exception
+	{
+		cin = getInputConsoleNames (); cin_no = 0;
+		cout = getOutputConsoleNames (); cout_no = 0;
+		super.run ();
 	}
 
 	/* ===== source code names ===== */
 	protected abstract String[] getSourceNames ();
-	protected String getDeparseName () { return null; }
+	protected String getDeparsedSourceName () { return null; }
 
 	/* ===== console names ===== */
 	protected abstract String[] getInputConsoleNames ();
@@ -40,17 +53,24 @@ public abstract class StdAwk extends Awk
 	{
 		if (mode == SOURCE_READ)
 		{
-			try { insrc = new FileReader ("t.awk"); }
-			catch (IOException e) { return -1; }
+			InputStreamReader isr;
+			sin_no = 0;
+
+			if (sin_no >= sin.length) return 0;
+			isr = get_input_stream (sin[sin_no]);
+			if (isr == null) return -1;
+
+			src_in = isr;
+			sin_no++;
 			return 1;
 		}
 		else if (mode == SOURCE_WRITE)
 		{
-			/*
-			try { outsrc = new FileWriter ("t.out"); }
-			catch (IOException e) { return -1; }
-			return 1;
-			*/
+			OutputStreamWriter osw;
+			if (sout == null) return 1;
+			osw = get_output_stream (sout);
+			if (osw == null) return -1;
+			src_out = osw;
 			return 1;
 		}
 
@@ -61,17 +81,15 @@ public abstract class StdAwk extends Awk
 	{
 		if (mode == SOURCE_READ)
 		{
-			try { insrc.close (); }
+			try { src_in.close (); }
 			catch (IOException e) { return -1; }
 			return 0;
 		}
 		else if (mode == SOURCE_WRITE)
 		{
-			/*
-			try { outsrc.close (); }
+			if (src_out == null) return 0;
+			try { src_out.close (); }
 			catch (IOException e) { return -1; }
-			return 0;
-			*/
 			return 0;
 		}
 
@@ -80,17 +98,41 @@ public abstract class StdAwk extends Awk
 
 	protected int read_source (char[] buf, int len)
 	{
-		try { return insrc.read (buf, 0, len); }
-		catch (IOException e) { return -1; }
+		int n;
+
+		try { 
+			n = src_in.read (buf, 0, len); 
+			while (n == -1)
+			{
+				InputStreamReader isr;
+				if (sin_no >= sin.length) return 0;
+
+				isr = get_input_stream (sin[sin_no]);
+				if (isr == null) return -1;
+
+				try { src_in.close (); }
+				catch (IOException ec) { /* ignore */ }
+
+				src_in = isr;
+				sin_no++;
+
+				n = src_in.read (buf, 0, len); 
+			}
+
+			return n;
+		}
+		catch (IOException e) 
+		{ 
+			return -1; 
+		}
 	}
 
 	protected int write_source (char[] buf, int len)
 	{
-		/*
-		try { outsrc.write (buf, 0, len); }
+//System.out.println (new String(buf, 0, len));
+		if (src_out == null) return len;
+		try { src_out.write (buf, 0, len); }
 		catch (IOException e) { return -1; }
-		return len;
-		*/
 		return len;
 	}
 
@@ -104,6 +146,8 @@ public abstract class StdAwk extends Awk
 		if (mode == Extio.MODE_CONSOLE_READ)
 		{
 			InputStreamReader isr;
+			cin_no = 0;
+
 			if (cin_no >= cin.length) return 0;
 			isr = get_input_stream (cin[cin_no]);
 			if (isr == null) return -1;
@@ -117,6 +161,7 @@ public abstract class StdAwk extends Awk
 		else if (mode == Extio.MODE_CONSOLE_WRITE)
 		{
 			OutputStreamWriter osw;
+			cout_no = 0;
 		       
 			if (cout_no >= cout.length) return 0;
 			osw = get_output_stream (cout[cout_no]);

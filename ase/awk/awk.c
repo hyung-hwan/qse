@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.90 2006-10-31 14:31:46 bacon Exp $ 
+ * $Id: awk.c,v 1.91 2006-11-25 15:51:30 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -132,8 +132,12 @@ ase_awk_t* ase_awk_open (const ase_awk_syscas_t* syscas)
 	awk->bfn.sys = ASE_NULL;
 	awk->bfn.user = ASE_NULL;
 
-	awk->parse.depth.loop = 0;
-	awk->parse.depth.expr = 0;
+	awk->parse.depth.cur.block = 0;
+	awk->parse.depth.cur.loop = 0;
+	awk->parse.depth.cur.expr = 0;
+
+	ase_awk_setmaxparsedepth (awk, ASE_AWK_DEPTH_BLOCK, 0);
+	ase_awk_setmaxparsedepth (awk, ASE_AWK_DEPTH_EXPR, 0);
 
 	awk->run.count = 0;
 	awk->run.ptr = ASE_NULL;
@@ -187,8 +191,9 @@ int ase_awk_clear (ase_awk_t* awk)
 	ase_awk_tab_clear (&awk->parse.params);
 
 	awk->parse.nlocals_max = 0; 
-	awk->parse.depth.expr = 0;
-	awk->parse.depth.loop = 0;
+	awk->parse.depth.cur.block = 0;
+	awk->parse.depth.cur.loop = 0;
+	awk->parse.depth.cur.expr = 0;
 
 	/* clear parse trees */	
 	awk->tree.nbglobals = 0;

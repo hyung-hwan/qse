@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.151 2006-11-24 13:20:48 bacon Exp $
+ * $Id: awk.h,v 1.152 2006-11-25 15:51:30 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -307,6 +307,12 @@ enum
 	ASE_AWK_EREXGARBAGE       /* garbage after the pattern */
 };
 
+/* depth types */
+enum ase_awk_depth_t
+{
+	ASE_AWK_DEPTH_BLOCK = (1 << 0),
+	ASE_AWK_DEPTH_EXPR  = (1 << 1)
+};
 /* extio types */
 enum ase_awk_extio_type_t
 {
@@ -364,6 +370,7 @@ ase_size_t ase_awk_getsrcline (ase_awk_t* awk);
 int ase_awk_getopt (ase_awk_t* awk);
 void ase_awk_setopt (ase_awk_t* awk, int opt);
 
+void ase_awk_setmaxparsedepth (ase_awk_t*, int types, ase_size_t depth);
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
 
 /*
