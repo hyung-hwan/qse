@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.9 2006-11-24 15:40:54 bacon Exp $
+ * $Id: Awk.java,v 1.10 2006-11-25 15:51:57 bacon Exp $
  */
 
 package ase.test.awk;
@@ -41,6 +41,13 @@ public class Awk extends ase.awk.StdAwk
 		cout[0] = "t.awk";
 		return cout;
 	}
+
+	/*
+	protected String getDeparsedSourceName ()
+	{
+		return "";
+	}
+	*/
 
 	public static void main (String[] args)
 	{

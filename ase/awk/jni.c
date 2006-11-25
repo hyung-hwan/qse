@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.24 2006-11-24 15:04:23 bacon Exp $
+ * $Id: jni.c,v 1.25 2006-11-25 15:51:30 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -243,6 +243,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 	srcios.out = __write_source;
 	srcios.custom_data = &srcio_data;
 
+	ase_awk_setmaxparsedepth (awk, ASE_AWK_DEPTH_BLOCK, 10);
 	if (ase_awk_parse (awk, &srcios) == -1)
 	{
 printf ("parse error.......\n");
@@ -429,6 +430,7 @@ static ase_ssize_t __call_java_write_source (
 	thrown = (*env)->ExceptionOccurred (env);
 	if (thrown)
 	{
+(*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}

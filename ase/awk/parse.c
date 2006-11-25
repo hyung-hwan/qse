@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.208 2006-11-24 15:07:18 bacon Exp $
+ * $Id: parse.c,v 1.209 2006-11-25 15:51:30 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -138,6 +138,7 @@ static ase_awk_chain_t* __parse_pattern_block (
 	ase_awk_t* awk, ase_awk_nde_t* ptn, ase_bool_t blockless);
 
 static ase_awk_nde_t* __parse_block (ase_awk_t* awk, ase_bool_t is_top);
+static ase_awk_nde_t* __parse_block_dc (ase_awk_t* awk, ase_bool_t is_top);
 static ase_awk_nde_t* __parse_statement (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk);
 
@@ -321,21 +322,38 @@ static struct __bvent __bvtab[] =
 #define PANIC(awk,code) \
 	do { (awk)->errnum = (code); return ASE_NULL; } while (0)
 
+void ase_awk_setmaxparsedepth (ase_awk_t* awk, int types, ase_size_t depth)
+{
+	if (types & ASE_AWK_DEPTH_BLOCK)
+	{
+		awk->parse.depth.max.block = depth;
+		if (depth <= 0)
+			awk->parse.parse_block = __parse_block;
+		else
+			awk->parse.parse_block = __parse_block_dc;
+	}
+
+	if (types & ASE_AWK_DEPTH_EXPR)
+	{
+		awk->parse.depth.max.expr = depth;
+	}
+}
+
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 {
 	int n;
 
 	ASE_AWK_ASSERT (awk, srcios != ASE_NULL && srcios->in != ASE_NULL);
-	ASE_AWK_ASSERT (awk, awk->parse.depth.loop == 0);
-	ASE_AWK_ASSERT (awk, awk->parse.depth.expr == 0);
+	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
+	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.expr == 0);
 
 	ase_awk_clear (awk);
 	ASE_AWK_MEMCPY (awk, &awk->src.ios, srcios, ase_sizeof(awk->src.ios));
 
 	n = __parse (awk);
 
-	ASE_AWK_ASSERT (awk, awk->parse.depth.loop == 0);
-	ASE_AWK_ASSERT (awk, awk->parse.depth.expr == 0);
+	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
+	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.expr == 0);
 
 	return n;
 }
@@ -430,7 +448,7 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk)
 	function name (parameter-list) { statement }
 	*/
 
-	ASE_AWK_ASSERT (awk, awk->parse.depth.loop == 0);
+	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
 
 	if ((awk->option & ASE_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) 
 	{
@@ -767,7 +785,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	}
 
 	/* actual function body */
-	body = __parse_block (awk, ase_true);
+	body = awk->parse.parse_block (awk, ase_true);
 	if (body == ASE_NULL) 
 	{
 		ASE_AWK_FREE (awk, name_dup);
@@ -792,7 +810,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	afn->name = ASE_NULL; /* function name set below */
 	afn->name_len = 0;
 	afn->nargs = nargs;
-	afn->body  = body;
+	afn->body = body;
 
 	n = ase_awk_map_putx (&awk->tree.afns, name_dup, name_len, afn, &pair);
 	if (n < 0)
@@ -820,7 +838,7 @@ static ase_awk_nde_t* __parse_begin (ase_awk_t* awk)
 	ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_LBRACE));
 
 	if (__get_token(awk) == -1) return ASE_NULL; 
-	nde = __parse_block(awk, ase_true);
+	nde = awk->parse.parse_block (awk, ase_true);
 	if (nde == ASE_NULL) return ASE_NULL;
 
 	awk->tree.begin = nde;
@@ -834,7 +852,7 @@ static ase_awk_nde_t* __parse_end (ase_awk_t* awk)
 	ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_LBRACE));
 
 	if (__get_token(awk) == -1) return ASE_NULL; 
-	nde = __parse_block(awk, ase_true);
+	nde = awk->parse.parse_block (awk, ase_true);
 	if (nde == ASE_NULL) return ASE_NULL;
 
 	awk->tree.end = nde;
@@ -852,7 +870,7 @@ static ase_awk_chain_t* __parse_pattern_block (
 	{
 		ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_LBRACE));
 		if (__get_token(awk) == -1) return ASE_NULL; 
-		nde = __parse_block(awk, ase_true);
+		nde = awk->parse.parse_block (awk, ase_true);
 		if (nde == ASE_NULL) return ASE_NULL;
 	}
 
@@ -1004,6 +1022,25 @@ and merged to top-level block */
 	}
 
 	return (ase_awk_nde_t*)block;
+}
+
+static ase_awk_nde_t* __parse_block_dc (ase_awk_t* awk, ase_bool_t is_top) 
+{
+	ase_awk_nde_t* nde;
+		
+	ASE_AWK_ASSERT (awk, awk->parse.depth.max.block > 0);
+
+	if (awk->parse.depth.cur.block >= awk->parse.depth.max.block)
+	{
+		awk->errnum = ASE_AWK_ERECURSION;
+		return ASE_NULL;
+	}
+
+	awk->parse.depth.cur.block++;
+	nde = __parse_block (awk, is_top);
+	awk->parse.depth.cur.block--;
+
+	return nde;
 }
 
 static ase_awk_t* __add_builtin_globals (ase_awk_t* awk)
@@ -1195,7 +1232,7 @@ static ase_awk_nde_t* __parse_statement (ase_awk_t* awk)
 	else if (MATCH(awk,TOKEN_LBRACE)) 
 	{
 		if (__get_token(awk) == -1) return ASE_NULL; 
-		nde = __parse_block (awk, ase_false);
+		nde = awk->parse.parse_block (awk, ase_false);
 	}
 	else 
 	{
@@ -1223,9 +1260,9 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk)
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
 		
-		awk->parse.depth.loop++;
+		awk->parse.depth.cur.loop++;
 		nde = __parse_while (awk);
-		awk->parse.depth.loop--;
+		awk->parse.depth.cur.loop--;
 
 		return nde;
 	}
@@ -1233,9 +1270,9 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk)
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
 
-		awk->parse.depth.loop++;
+		awk->parse.depth.cur.loop++;
 		nde = __parse_for (awk);
-		awk->parse.depth.loop--;
+		awk->parse.depth.cur.loop--;
 
 		return nde;
 	}
@@ -1246,9 +1283,9 @@ awk->parse.nl_semicolon = 1;
 	{
 		if (__get_token(awk) == -1) return ASE_NULL;
 
-		awk->parse.depth.loop++;
+		awk->parse.depth.cur.loop++;
 		nde = __parse_dowhile (awk);
-		awk->parse.depth.loop--;
+		awk->parse.depth.cur.loop--;
 
 		return nde;
 	}
@@ -1332,9 +1369,9 @@ static ase_awk_nde_t* __parse_expression (ase_awk_t* awk)
 {
 	ase_awk_nde_t* nde;
 
-	awk->parse.depth.expr++;
+	awk->parse.depth.cur.expr++;
 	nde = __parse_expression0 (awk);
-	awk->parse.depth.expr--;
+	awk->parse.depth.cur.expr--;
 
 	return nde;
 }
@@ -2302,7 +2339,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk)
 
 			if ((awk->parse.id.stmnt != TOKEN_PRINT &&
 			     awk->parse.id.stmnt != TOKEN_PRINTF) ||
-			    awk->parse.depth.expr != 1)
+			    awk->parse.depth.cur.expr != 1)
 			{
 				if (!MATCH(awk,TOKEN_IN))
 				{
@@ -3101,7 +3138,7 @@ static ase_awk_nde_t* __parse_break (ase_awk_t* awk)
 {
 	ase_awk_nde_break_t* nde;
 
-	if (awk->parse.depth.loop <= 0) PANIC (awk, ASE_AWK_EBREAK);
+	if (awk->parse.depth.cur.loop <= 0) PANIC (awk, ASE_AWK_EBREAK);
 
 	nde = (ase_awk_nde_break_t*) ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_nde_break_t));
 	if (nde == ASE_NULL) PANIC (awk, ASE_AWK_ENOMEM);
@@ -3115,7 +3152,7 @@ static ase_awk_nde_t* __parse_continue (ase_awk_t* awk)
 {
 	ase_awk_nde_continue_t* nde;
 
-	if (awk->parse.depth.loop <= 0) PANIC (awk, ASE_AWK_ECONTINUE);
+	if (awk->parse.depth.cur.loop <= 0) PANIC (awk, ASE_AWK_ECONTINUE);
 
 	nde = (ase_awk_nde_continue_t*) ASE_AWK_MALLOC (
 		awk, ase_sizeof(ase_awk_nde_continue_t));
