@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.10 2006-11-25 15:51:57 bacon Exp $
+ * $Id: Awk.java,v 1.11 2006-11-26 16:17:51 bacon Exp $
  */
 
 package ase.test.awk;
@@ -48,6 +48,15 @@ public class Awk extends ase.awk.StdAwk
 		return "";
 	}
 	*/
+	protected int getMaxParseDepth ()
+	{
+		return 50;
+	}
+
+	protected int getMaxRunDepth ()
+	{
+		return 50;
+	}
 
 	public static void main (String[] args)
 	{
