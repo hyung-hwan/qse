@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.209 2006-11-25 15:51:30 bacon Exp $
+ * $Id: parse.c,v 1.210 2006-11-26 15:55:44 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1369,6 +1369,13 @@ static ase_awk_nde_t* __parse_expression (ase_awk_t* awk)
 {
 	ase_awk_nde_t* nde;
 
+	if (awk->parse.depth.max.expr > 0 &&
+	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
+	{
+		awk->errnum = ASE_AWK_ERECURSION;
+		return ASE_NULL;
+	}
+
 	awk->parse.depth.cur.expr++;
 	nde = __parse_expression0 (awk);
 	awk->parse.depth.cur.expr--;
@@ -1971,7 +1978,15 @@ static ase_awk_nde_t* __parse_unary (ase_awk_t* awk)
 
 	if (__get_token(awk) == -1) return ASE_NULL;
 
+	if (awk->parse.depth.max.expr > 0 &&
+	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
+	{
+		awk->errnum = ASE_AWK_ERECURSION;
+		return ASE_NULL;
+	}
+	awk->parse.depth.cur.expr++;
 	left = __parse_unary (awk);
+	awk->parse.depth.cur.expr--;
 	if (left == ASE_NULL) return ASE_NULL;
 
 	nde = (ase_awk_nde_exp_t*) 
@@ -2017,7 +2032,15 @@ static ase_awk_nde_t* __parse_unary_exp (ase_awk_t* awk)
 
 	if (__get_token(awk) == -1) return ASE_NULL;
 
+	if (awk->parse.depth.max.expr > 0 &&
+	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
+	{
+		awk->errnum = ASE_AWK_ERECURSION;
+		return ASE_NULL;
+	}
+	awk->parse.depth.cur.expr++;
 	left = __parse_unary (awk);
+	awk->parse.depth.cur.expr--;
 	if (left == ASE_NULL) return ASE_NULL;
 
 	nde = (ase_awk_nde_exp_t*) 

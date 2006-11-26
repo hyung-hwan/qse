@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.4 2006-11-25 15:51:29 bacon Exp $
+ * $Id: StdAwk.java,v 1.5 2006-11-26 15:55:43 bacon Exp $
  */
 
 package ase.awk;
@@ -25,7 +25,7 @@ public abstract class StdAwk extends Awk
 		super ();
 	}
 
-	/* ===== overridden major methods ===== */
+	/* == major methods == */
 	public void parse () throws Exception
 	{
 		sin = getSourceNames (); sin_no = 0;
@@ -40,16 +40,16 @@ public abstract class StdAwk extends Awk
 		super.run ();
 	}
 
-	/* ===== source code names ===== */
+	/* == source code names == */
 	protected abstract String[] getSourceNames ();
 	protected String getDeparsedSourceName () { return null; }
 
-	/* ===== console names ===== */
+	/* == console names == */
 	protected abstract String[] getInputConsoleNames ();
 	protected abstract String[] getOutputConsoleNames ();
 
-	/* ===== source code ===== */
-	protected int open_source (int mode)
+	/* == source code == */
+	protected int openSource (int mode)
 	{
 		if (mode == SOURCE_READ)
 		{
@@ -77,7 +77,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int close_source (int mode)
+	protected int closeSource (int mode)
 	{
 		if (mode == SOURCE_READ)
 		{
@@ -96,12 +96,10 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int read_source (char[] buf, int len)
+	protected int readSource (char[] buf, int len)
 	{
-		int n;
-
 		try { 
-			n = src_in.read (buf, 0, len); 
+			int n = src_in.read (buf, 0, len); 
 			while (n == -1)
 			{
 				InputStreamReader isr;
@@ -127,17 +125,16 @@ public abstract class StdAwk extends Awk
 		}
 	}
 
-	protected int write_source (char[] buf, int len)
+	protected int writeSource (char[] buf, int len)
 	{
-//System.out.println (new String(buf, 0, len));
 		if (src_out == null) return len;
 		try { src_out.write (buf, 0, len); }
 		catch (IOException e) { return -1; }
 		return len;
 	}
 
-	/* ===== console ===== */
-	protected int open_console (Extio extio)
+	/* == console interface == */
+	protected int openConsole (Extio extio)
 	{
 		System.err.println ("[open_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
 
@@ -177,7 +174,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int close_console (Extio extio)
+	protected int closeConsole (Extio extio)
 	{
 		System.err.println ("[close_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
 
@@ -203,7 +200,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int read_console (Extio extio, char[] buf, int len)
+	protected int readConsole (Extio extio, char[] buf, int len)
 	{
 		int mode = extio.getMode ();
 
@@ -241,7 +238,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int write_console (Extio extio, char[] buf, int len) 
+	protected int writeConsole (Extio extio, char[] buf, int len) 
 	{
 		int mode = extio.getMode ();
 
@@ -261,7 +258,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int flush_console (Extio extio)
+	protected int flushConsole (Extio extio)
 	{
 		int mode = extio.getMode ();
 
@@ -277,7 +274,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int next_console (Extio extio)
+	protected int nextConsole (Extio extio)
 	{
 		int mode = extio.getMode ();
 
@@ -310,7 +307,7 @@ public abstract class StdAwk extends Awk
 			tmp = get_output_stream (cout[cout_no]);
 			if (tmp == null) return -1;
 
-			/* TODO: selective close the stream...
+			/* TODO: selectively close the stream...
 			 * system.out should not be closed??? */
 			try { osw.close (); }
 			catch (IOException e) { /* ignore */ }
@@ -363,8 +360,8 @@ public abstract class StdAwk extends Awk
 		return osw;
 	}
 
-	/* ===== file ===== */
-	public int open_file (Extio extio)
+	/* == file interface == */
+	protected int openFile (Extio extio)
 	{
 		int mode = extio.getMode();
 
@@ -408,7 +405,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 	
-	public int close_file (Extio extio)
+	protected int closeFile (Extio extio)
 	{
 		int mode = extio.getMode();
 
@@ -440,7 +437,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int read_file (Extio extio, char[] buf, int len) 
+	protected int readFile (Extio extio, char[] buf, int len) 
 	{
 		int mode = extio.getMode();
 
@@ -461,7 +458,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int write_file (Extio extio, char[] buf, int len) 
+	protected int writeFile (Extio extio, char[] buf, int len) 
 	{
 		int mode = extio.getMode();
 
@@ -478,7 +475,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int flush_file (Extio extio)
+	protected int flushFile (Extio extio)
 	{
 		int mode = extio.getMode ();
 
@@ -495,8 +492,8 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	/* ===== pipe ===== */
-	public int open_pipe (Extio extio)
+	/* == pipe interface == */
+	protected int openPipe (Extio extio)
 	{
 		int mode = extio.getMode();
 
@@ -527,7 +524,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 	
-	public int close_pipe (Extio extio)
+	protected int closePipe (Extio extio)
 	{
 		int mode = extio.getMode();
 
@@ -551,7 +548,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int read_pipe (Extio extio, char[] buf, int len) 
+	protected int readPipe (Extio extio, char[] buf, int len) 
 	{
 		int mode = extio.getMode();
 
@@ -572,7 +569,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int write_pipe (Extio extio, char[] buf, int len) 
+	protected int writePipe (Extio extio, char[] buf, int len) 
 	{
 		int mode = extio.getMode();
 
@@ -588,7 +585,7 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int flush_pipe (Extio extio)
+	protected int flushPipe (Extio extio)
 	{
 		int mode = extio.getMode ();
 
