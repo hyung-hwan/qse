@@ -1,10 +1,11 @@
 /*
- * $Id: Awk.java,v 1.10 2006-11-26 15:55:43 bacon Exp $
+ * $Id: Awk.java,v 1.11 2006-11-26 16:16:34 bacon Exp $
  */
 
 package ase.awk;
 
-import java.io.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 public abstract class Awk
 {
@@ -14,7 +15,15 @@ public abstract class Awk
 
 	static
 	{
-		System.load ("c://projects//ase/awk/aseawk.dll");
+		//System.load ("c://projects//ase/awk/aseawk.dll");
+		AccessController.doPrivileged (new PrivilegedAction ()
+		{
+			public Object run ()
+			{
+				//System.load ("c://projects//ase/awk/aseawk.dll");
+				return null;
+			}
+		});
 	}
 
 	private long handle;

@@ -20,10 +20,10 @@ awk: awk.obj
 	$(LD) $(LDFLAGS) $(STARTUP) awk.obj,$@.exe,,$(LIBS),,
 
 java: 
-	javac -classpath ../../.. Awk.java
+	javac -classpath ../../.. Awk.java AwkApplet.java
 
 jrun:
-	java -Xms1m -Xmx2m -classpath ../../.. ase.test.awk.Awk
+	java -Xms1m -Xmx2m -classpath ../../.. ase.test.awk.Awk 
 
 ada:
 	gnatmake -I..\.. -I..\..\awk awk
