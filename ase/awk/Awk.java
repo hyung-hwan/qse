@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.9 2006-11-24 15:04:23 bacon Exp $
+ * $Id: Awk.java,v 1.10 2006-11-26 15:55:43 bacon Exp $
  */
 
 package ase.awk;
@@ -17,20 +17,29 @@ public abstract class Awk
 		System.load ("c://projects//ase/awk/aseawk.dll");
 	}
 
-	private long __awk;
+	private long handle;
 
 	public Awk () throws Exception
 	{
 		open ();
 	}
 
+	/* == just in case == */
+	protected void finalize ()
+	{
+		if (handle != 0) close ();
+	}
+
+	/* == methods to provide major functionalities */
 	public native void close ();
 	public native void parse () throws Exception;
 	public native void run () throws Exception;
+
 	private native void open () throws Exception;
 	private native int setfilename (long run_id, String name);
 	private native int setofilename (long run_id, String name);
 
+	/* == console name setters == */
 	public void setInputConsoleName (Extio extio, String name) //throws Exception
 	{
 		/* TODO: setconsolename is not safe. for example, it can 
@@ -47,33 +56,44 @@ public abstract class Awk
 		setofilename (extio.getRunId(), name);
 	}
 
-	/* abstrace methods */
-	protected abstract int open_source (int mode);
-	protected abstract int close_source (int mode);
-	protected abstract int read_source (char[] buf, int len);
-	protected abstract int write_source (char[] buf, int len);
+	/* == recursion depth limiting == */
+	protected int getMaxParseDepth ()
+	{
+		return 0;
+	}
+	protected int getMaxRunDepth ()
+	{
+		return 0;
+	}
 
-	protected int open_extio (Extio extio)
+	/* == source code management == */
+	protected abstract int openSource (int mode);
+	protected abstract int closeSource (int mode);
+	protected abstract int readSource (char[] buf, int len);
+	protected abstract int writeSource (char[] buf, int len);
+
+	/* == external io interface == */
+	protected int openExtio (Extio extio)
 	{
 		int type = extio.getType ();
-		if (type == Extio.TYPE_CONSOLE) return open_console (extio);
-		if (type == Extio.TYPE_FILE) return open_file (extio);
-		if (type == Extio.TYPE_PIPE) return open_pipe (extio);
-		//if (type == Extio.TYPE_COPROC) return open_coproc (extio);
+		if (type == Extio.TYPE_CONSOLE) return openConsole (extio);
+		if (type == Extio.TYPE_FILE) return openFile (extio);
+		if (type == Extio.TYPE_PIPE) return openPipe (extio);
+		//if (type == Extio.TYPE_COPROC) return openCoproc (extio);
 		return -1;
 	}
 
-	protected int close_extio (Extio extio)
+	protected int closeExtio (Extio extio)
 	{
 		int type = extio.getType ();
-		if (type == Extio.TYPE_CONSOLE) return close_console (extio);
-		if (type == Extio.TYPE_FILE) return close_file (extio);
-		if (type == Extio.TYPE_PIPE) return close_pipe (extio);
-		//if (type == Extio.TYPE_COPROC) return close_coproc (extio);
+		if (type == Extio.TYPE_CONSOLE) return closeConsole (extio);
+		if (type == Extio.TYPE_FILE) return closeFile (extio);
+		if (type == Extio.TYPE_PIPE) return closePipe (extio);
+		//if (type == Extio.TYPE_COPROC) return closeCoproc (extio);
 		return -1;
 	}
 
-	protected int read_extio (Extio extio, char[] buf, int len)
+	protected int readExtio (Extio extio, char[] buf, int len)
 	{
 		// this check is needed because 0 is used to indicate
 		// the end of the stream. java streams can return 0 
@@ -83,65 +103,65 @@ public abstract class Awk
 
 		int type = extio.getType ();
 		if (type == Extio.TYPE_CONSOLE) 
-			return read_console (extio, buf, len);
+			return readConsole (extio, buf, len);
 		if (type == Extio.TYPE_FILE) 
-			return read_file (extio, buf, len);
+			return readFile (extio, buf, len);
 		if (type == Extio.TYPE_PIPE)
-		 	return read_pipe (extio, buf, len);
+		 	return readPipe (extio, buf, len);
 		//if (type == Extio.TYPE_COPROC)
-		//	return read_coproc (extio, buf, len);
+		//	return readCoproc (extio, buf, len);
 		return -1;
 	}
 
-	protected int write_extio (Extio extio, char[] buf, int len)
+	protected int writeExtio (Extio extio, char[] buf, int len)
 	{
 		if (len <= 0) return -1;
 
 		int type = extio.getType ();
 		if (type == Extio.TYPE_CONSOLE) 
-			return write_console (extio, buf, len);
+			return writeConsole (extio, buf, len);
 		if (type == Extio.TYPE_FILE) 
-			return write_file (extio, buf, len);
+			return writeFile (extio, buf, len);
 		if (type == Extio.TYPE_PIPE) 
-			return write_pipe (extio, buf, len);
+			return writePipe (extio, buf, len);
 		//if (type == Extio.TYPE_COPROC)
-		//	return write_coproc (extio, buf, len);
+		//	return writeCoproc (extio, buf, len);
 		return -1;
 	}
 
-	protected int flush_extio (Extio extio)
+	protected int flushExtio (Extio extio)
 	{
 		int type = extio.getType ();
-		if (type == Extio.TYPE_CONSOLE) return flush_console (extio);
-		if (type == Extio.TYPE_FILE) return flush_file (extio);
-		if (type == Extio.TYPE_PIPE) return flush_pipe (extio);
-		//if (type == Extio.TYPE_COPROC) return flush_coproc (extio);
+		if (type == Extio.TYPE_CONSOLE) return flushConsole (extio);
+		if (type == Extio.TYPE_FILE) return flushFile (extio);
+		if (type == Extio.TYPE_PIPE) return flushPipe (extio);
+		//if (type == Extio.TYPE_COPROC) return flushCoproc (extio);
 		return -1;
 	}
 
-	protected int next_extio (Extio extio)
+	protected int nextExtio (Extio extio)
 	{
 		int type = extio.getType ();
-		if (type == Extio.TYPE_CONSOLE) return next_console (extio);
+		if (type == Extio.TYPE_CONSOLE) return nextConsole (extio);
 		return -1;
 	}
 
-	protected abstract int open_console (Extio extio);
-	protected abstract int close_console (Extio extio);
-	protected abstract int read_console (Extio extio, char[] buf, int len);
-	protected abstract int write_console (Extio extio, char[] buf, int len);
-	protected abstract int flush_console (Extio extio);
-	protected abstract int next_console (Extio extio);
+	protected abstract int openConsole (Extio extio);
+	protected abstract int closeConsole (Extio extio);
+	protected abstract int readConsole (Extio extio, char[] buf, int len);
+	protected abstract int writeConsole (Extio extio, char[] buf, int len);
+	protected abstract int flushConsole (Extio extio);
+	protected abstract int nextConsole (Extio extio);
 
-	protected abstract int open_file (Extio extio);
-	protected abstract int close_file (Extio extio);
-	protected abstract int read_file (Extio extio, char[] buf, int len);
-	protected abstract int write_file (Extio extio, char[] buf, int len); 
-	protected abstract int flush_file (Extio extio);
+	protected abstract int openFile (Extio extio);
+	protected abstract int closeFile (Extio extio);
+	protected abstract int readFile (Extio extio, char[] buf, int len);
+	protected abstract int writeFile (Extio extio, char[] buf, int len); 
+	protected abstract int flushFile (Extio extio);
 
-	protected abstract int open_pipe (Extio extio);
-	protected abstract int close_pipe (Extio extio);
-	protected abstract int read_pipe (Extio extio, char[] buf, int len);
-	protected abstract int write_pipe (Extio extio, char[] buf, int len); 
-	protected abstract int flush_pipe (Extio extio);
+	protected abstract int openPipe (Extio extio);
+	protected abstract int closePipe (Extio extio);
+	protected abstract int readPipe (Extio extio, char[] buf, int len);
+	protected abstract int writePipe (Extio extio, char[] buf, int len); 
+	protected abstract int flushPipe (Extio extio);
 }
