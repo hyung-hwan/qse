@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.125 2006-11-24 13:25:12 bacon Exp $
+ * $Id: awk.c,v 1.126 2006-11-26 14:41:22 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -840,6 +840,9 @@ static int __main (int argc, ase_char_t* argv[])
 	srcios.in = process_source;
 	srcios.out = dump_source;
 	srcios.custom_data = &src_io;
+
+	ase_awk_setmaxparsedepth (
+		awk, ASE_AWK_DEPTH_BLOCK | ASE_AWK_DEPTH_EXPR, 20);
 
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{
