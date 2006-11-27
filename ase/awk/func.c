@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.77 2006-11-18 15:36:57 bacon Exp $
+ * $Id: func.c,v 1.78 2006-11-27 15:10:34 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -24,22 +24,22 @@ static int __bfn_sprintf (ase_awk_run_t* run);
 static ase_awk_bfn_t __sys_bfn[] = 
 {
 	/* io functions */
-	{ASE_T("close"),   5, ASE_AWK_EXTIO, 1, 1,  ASE_NULL, __bfn_close},
-	{ASE_T("fflush"),  6, ASE_AWK_EXTIO, 0, 1,  ASE_NULL, __bfn_fflush},
+	{ {ASE_T("close"),   5}, ASE_AWK_EXTIO, 1, 1,  ASE_NULL, __bfn_close},
+	{ {ASE_T("fflush"),  6}, ASE_AWK_EXTIO, 0, 1,  ASE_NULL, __bfn_fflush},
 
 	/* string functions */
-	{ASE_T("index"),   5, 0,  2,   2,  ASE_NULL,     __bfn_index},
-	{ASE_T("substr"),  6, 0,  2,   3,  ASE_NULL,     __bfn_substr},
-	{ASE_T("length"),  6, 0,  1,   1,  ASE_NULL,     __bfn_length},
-	{ASE_T("split"),   5, 0,  2,   3,  ASE_T("vrv"), __bfn_split},
-	{ASE_T("tolower"), 7, 0,  1,   1,  ASE_NULL,     __bfn_tolower},
-	{ASE_T("toupper"), 7, 0,  1,   1,  ASE_NULL,     __bfn_toupper},
-	{ASE_T("gsub"),    4, 0,  2,   3,  ASE_T("xvr"), __bfn_gsub},
-	{ASE_T("sub"),     3, 0,  2,   3,  ASE_T("xvr"), __bfn_sub},
-	{ASE_T("match"),   5, 0,  2,   2,  ASE_T("vx"),  __bfn_match},
-	{ASE_T("sprintf"), 7, 0,  1, MAX,  ASE_NULL,     __bfn_sprintf},
+	{ {ASE_T("index"),   5}, 0,  2,   2,  ASE_NULL,     __bfn_index},
+	{ {ASE_T("substr"),  6}, 0,  2,   3,  ASE_NULL,     __bfn_substr},
+	{ {ASE_T("length"),  6}, 0,  1,   1,  ASE_NULL,     __bfn_length},
+	{ {ASE_T("split"),   5}, 0,  2,   3,  ASE_T("vrv"), __bfn_split},
+	{ {ASE_T("tolower"), 7}, 0,  1,   1,  ASE_NULL,     __bfn_tolower},
+	{ {ASE_T("toupper"), 7}, 0,  1,   1,  ASE_NULL,     __bfn_toupper},
+	{ {ASE_T("gsub"),    4}, 0,  2,   3,  ASE_T("xvr"), __bfn_gsub},
+	{ {ASE_T("sub"),     3}, 0,  2,   3,  ASE_T("xvr"), __bfn_sub},
+	{ {ASE_T("match"),   5}, 0,  2,   2,  ASE_T("vx"),  __bfn_match},
+	{ {ASE_T("sprintf"), 7}, 0,  1, MAX,  ASE_NULL,     __bfn_sprintf},
 
-	{ASE_NULL,         0, 0,  0,   0,  ASE_NULL,     ASE_NULL}
+	{ {ASE_NULL,         0}, 0,  0,   0,  ASE_NULL,     ASE_NULL}
 };
 
 ase_awk_bfn_t* ase_awk_addbfn (
@@ -49,18 +49,36 @@ ase_awk_bfn_t* ase_awk_addbfn (
 {
 	ase_awk_bfn_t* p;
 
-/* TODO: complete this function??? */
-
 	p = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_bfn_t));
-	if (p == ASE_NULL) return ASE_NULL;
+	if (p == ASE_NULL) 
+	{
+		awk->errnum = ASE_AWK_ENOMEM;
+		return ASE_NULL;
+	}
 
-	/* NOTE: make sure that name is a constant string */
-	p->name = name;  
-	p->name_len = name_len;
+	p->name.ptr = ase_awk_strxdup (awk, name, name_len);  
+	if (p->name.ptr == ASE_NULL)
+	{
+		ASE_AWK_FREE (awk, p);
+		awk->errnum = ASE_AWK_ENOMEM;
+		return ASE_NULL;
+	}
+	p->name.len = name_len;
 	p->valid = when_valid;
-	p->min_args = min_args;
-	p->max_args = max_args;
-	p->arg_spec = arg_spec;
+	p->arg.min = min_args;
+	p->arg.max = max_args;
+	if (arg_spec == ASE_NULL) p->arg.spec = ASE_NULL;
+	else
+	{
+		p->arg.spec = ase_awk_strdup (awk, arg_spec);
+		if (p->arg.spec == ASE_NULL)
+		{
+			ASE_AWK_FREE (awk, p->name.ptr);
+			ASE_AWK_FREE (awk, p);
+			awk->errnum = ASE_AWK_ENOMEM;
+			return ASE_NULL;
+		}
+	}
 	p->handler = handler;
 
 	p->next = awk->bfn.user;
@@ -75,12 +93,16 @@ int ase_awk_delbfn (ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 
 	for (p = awk->bfn.user; p != ASE_NULL; p++)
 	{
-		if (ase_awk_strxncmp(p->name, p->name_len, name, name_len) == 0)
+		if (ase_awk_strxncmp (
+			p->name.ptr, p->name.len, name, name_len) == 0)
 		{
 			if (pp == ASE_NULL)
 				awk->bfn.user = p->next;
 			else pp->next = p->next;
 
+			if (p->arg.spec != ASE_NULL)
+				ASE_AWK_FREE (awk, p->arg.spec);
+			ASE_AWK_FREE (awk, p->name.ptr);
 			ASE_AWK_FREE (awk, p);
 			return 0;
 		}
@@ -98,7 +120,10 @@ void ase_awk_clrbfn (ase_awk_t* awk)
 	p = awk->bfn.user;
 	while (p != ASE_NULL)
 	{
-		np = p;
+		np = p->next;
+		if (p->arg.spec != ASE_NULL)
+			ASE_AWK_FREE (awk, p->arg.spec);
+		ASE_AWK_FREE (awk, p->name.ptr);
 		ASE_AWK_FREE (awk, p);
 		p = np;
 	}
@@ -111,23 +136,24 @@ ase_awk_bfn_t* ase_awk_getbfn (
 {
 	ase_awk_bfn_t* p;
 
-	for (p = __sys_bfn; p->name != ASE_NULL; p++)
+	for (p = __sys_bfn; p->name.ptr != ASE_NULL; p++)
 	{
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
 		if (ase_awk_strxncmp (
-			p->name, p->name_len, name, name_len) == 0) return p;
+			p->name.ptr, p->name.len, 
+			name, name_len) == 0) return p;
 	}
 
-/* TODO: user-added builtin functions... */
 	for (p = awk->bfn.user; p != ASE_NULL; p = p->next)
 	{
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
 		if (ase_awk_strxncmp (
-			p->name, p->name_len, name, name_len) == 0) return p;
+			p->name.ptr, p->name.len, 
+			name, name_len) == 0) return p;
 	}
 
 	return ASE_NULL;
@@ -1307,79 +1333,3 @@ static int __bfn_sprintf (ase_awk_run_t* run)
 	ase_awk_setretval (run, a0);
 	return 0;
 }
-
-#if 0
-static int __bfn_system (ase_awk_run_t* run)
-{
-	ase_size_t nargs;
-	ase_char_t* cmd;
-	ase_awk_val_t* v;
-	int n;
-       
-	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 1);
-
-	cmd = ase_awk_valtostr (
-		run, ase_awk_getarg(run, 0), 
-		ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, ASE_NULL);
-	if (cmd == ASE_NULL) return -1;
-
-#ifdef _WIN32
-	n = _tsystem (cmd);
-#else
-	/* TODO: support system on other platforms that win32 */
-	n = -1;
-#endif
-
-	ASE_AWK_FREE (run->awk, cmd);
-
-	v = ase_awk_makeintval (run, n);
-	if (v == ASE_NULL)
-	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return -1;
-	}
-
-	ase_awk_setretval (run, v);
-	return 0;
-}
-
-/* math functions */
-static int __bfn_sin (ase_awk_run_t* run)
-{
-	ase_size_t nargs;
-	ase_awk_val_t* v;
-	int n;
-	ase_long_t lv;
-	ase_real_t rv;
-       
-	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 1);
-
-	n = ase_awk_valtonum (run, ase_awk_getarg(run, 0), &lv, &rv);
-	if (n == -1)
-	{
-		/* wrong value */
-		return  -1;
-	}
-
-	if (n == 0) rv = (ase_real_t)lv;
-
-#if (ASE_SIZEOF_REAL == ASE_SIZEOF_LONG_DOUBLE) 
-	v = ase_awk_makerealval (run, (ase_real_t)sinl(rv));
-#elif (ASE_SIZEOF_REAL == ASE_SIZEOF_DOUBLE)
-	v = ase_awk_makerealval (run, (ase_real_t)sin(rv));
-#else
-	#error unsupported floating-point data type
-#endif
-
-	if (v == ASE_NULL)
-	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return -1;
-	}
-
-	ase_awk_setretval (run, v);
-	return 0;
-}
-#endif

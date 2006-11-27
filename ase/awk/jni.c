@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.27 2006-11-27 04:33:22 bacon Exp $
+ * $Id: jni.c,v 1.28 2006-11-27 15:10:34 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -882,7 +882,8 @@ static ase_ssize_t __process_extio (
 	return -1;
 }
 
-JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (
+	JNIEnv* env, jobject obj, jlong run_id, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
 	const jchar* str;
@@ -895,7 +896,8 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (JNIEnv* env, jobject obj, j
 	return n;
 }
 
-JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
+	JNIEnv* env, jobject obj, jlong run_id, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
 	const jchar* str;
@@ -913,6 +915,7 @@ static int __handle_bfn (ase_awk_run_t* run)
 	jclass class; 
 	jmethodID mid;
 
+printf ("BFN CALLED.....\n");
 	/*
 	class = (*env)->GetObjectClass(env, obj);
 

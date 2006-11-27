@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.81 2006-11-23 03:31:36 bacon Exp $
+ * $Id: tree.h,v 1.82 2006-11-27 15:10:35 bacon Exp $
  */
 
 #ifndef _ASE_AWK_TREE_H_
@@ -246,19 +246,30 @@ struct ase_awk_nde_call_t
 	{
 		struct
 		{
-			ase_char_t* name;
-			ase_size_t name_len;
+			struct
+			{
+				ase_char_t* ptr;
+				ase_size_t len;
+			} name;
 		} afn;
 
 		/* minimum information of a built-in function 
 		 * needed during run-time. */
 		struct
 		{
-			const ase_char_t* name;
-			ase_size_t name_len;
-			ase_size_t min_args;
-			ase_size_t max_args;
-			const ase_char_t* arg_spec;
+			struct
+			{
+				const ase_char_t* ptr;
+				ase_size_t len;
+			} name;
+
+			struct
+			{
+				ase_size_t min;
+				ase_size_t max;
+				const ase_char_t* spec;
+			} arg;
+
 			int (*handler) (ase_awk_run_t* awk);
 		} bfn;
 		/* ase_awk_bfn_t* bfn; */
