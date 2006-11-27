@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.26 2006-11-26 15:55:43 bacon Exp $
+ * $Id: jni.c,v 1.27 2006-11-27 04:33:22 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -21,8 +21,9 @@
 	#error this module supports ASE_CHAR_IS_WCHAR only
 #endif
 
-#define EXCEPTION_AWK "ase/awk/Exception"
-#define FIELD_HANDLE  "handle"
+#define CLASS_EXCEPTION "ase/awk/Exception"
+#define CLASS_EXTIO     "ase/awk/Extio"
+#define FIELD_HANDLE    "handle"
 
 enum
 {
@@ -143,7 +144,7 @@ static void __awk_dprintf (const ase_char_t* fmt, ...)
 JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 {
 	jclass class; 
-	jfieldID fid;
+	jfieldID fid_handle;
 	jthrowable except;
 	ase_awk_t* awk;
 	ase_awk_syscas_t syscas;
@@ -181,39 +182,55 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	awk = ase_awk_open (&syscas);
 	if (awk == NULL)
 	{
-		except = (*env)->FindClass (env, EXCEPTION_AWK);
-		if (except == 0) return;
+		(*env)->DeleteLocalRef (env, class);
+
+		except = (*env)->FindClass (env, CLASS_EXCEPTION);
+		if (except == NULL) return;
+
 		(*env)->ThrowNew (env, except, "cannot create awk"); 
+		(*env)->DeleteLocalRef (env, except);
 		return;
 	}
 
-	fid = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
-	if (fid == 0) return;
+	fid_handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	if (fid_handle == 0) 
+	{
+		/* something wrong. should not happen */
+		(*env)->DeleteLocalRef (env, class);
+		return;
+	}
 
-	(*env)->SetLongField (env, obj, fid, (jlong)awk);
+	(*env)->SetLongField (env, obj, fid_handle, (jlong)awk);
 
-	opt = ASE_AWK_EXPLICIT | ASE_AWK_UNIQUE | ASE_AWK_DBLSLASHES |
+	opt = ASE_AWK_EXPLICIT | ASE_AWK_UNIQUEAFN | ASE_AWK_DBLSLASHES |
 		ASE_AWK_SHADING | ASE_AWK_IMPLICIT | ASE_AWK_SHIFT | 
 		ASE_AWK_EXTIO | ASE_AWK_BLOCKLESS | ASE_AWK_HASHSIGN | 
 		ASE_AWK_NEXTOFILE;
 	ase_awk_setopt (awk, opt);
 
+	(*env)->DeleteLocalRef (env, class);
 printf ("__awk(native) done => %u, 0x%X\n", awk, awk);
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj)
 {
 	jclass class; 
-	jfieldID fid;
+	jfieldID fid_handle;
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	fid = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
-	if (fid == 0) return;
+	fid_handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	if (fid_handle == NULL) 
+	{
+		/* something wrong. should not happen */
+		(*env)->DeleteLocalRef (env, class);
+		return;
+	}
 
-	ase_awk_close ((ase_awk_t*) (*env)->GetLongField (env, obj, fid));
-	(*env)->SetLongField (env, obj, fid, (jlong)0);
+	ase_awk_close ((ase_awk_t*)(*env)->GetLongField (env, obj, fid_handle));
+	(*env)->SetLongField (env, obj, fid_handle, (jlong)0);
 
+	(*env)->DeleteLocalRef (env, class);
 printf ("close (native) done\n");
 }
 
@@ -280,8 +297,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 		char msg[256];
 		int n;
 
-		except = (*env)->FindClass (env, EXCEPTION_AWK);
-		if (except == 0) return;
+		except = (*env)->FindClass (env, CLASS_EXCEPTION);
+		if (except == NULL) return;
 
 		snprintf (msg, sizeof(msg), "parse error at line %d: %S", 
 			ase_awk_getsrcline(awk),
@@ -289,6 +306,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 		if (n < 0 || n >= sizeof(msg)) msg[sizeof(msg)-1] = '\0';
 
 		(*env)->ThrowNew (env, except, msg);
+		(*env)->DeleteLocalRef (env, except);
 		return;
 	}
 }
@@ -296,7 +314,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 {
 	jclass class;
-	jfieldID fid;
+	jfieldID fid_handle;
 	jthrowable except;
 
 	ase_awk_t* awk;
@@ -305,10 +323,14 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 
 	class = (*env)->GetObjectClass (env, obj);
 
-	fid = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
-	if (fid == 0) return;
+	fid_handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	if (fid_handle == 0) 
+	{
+		(*env)->DeleteLocalRef (env, class);
+		return;
+	}
 
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, fid);
+	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, fid_handle);
 
 	runio_data.env = env;
 	runio_data.obj = obj;
@@ -326,15 +348,20 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 		char msg[256];
 		int n;
 
-		except = (*env)->FindClass (env, EXCEPTION_AWK);
-		if (except == 0) return;
+		(*env)->DeleteLocalRef (env, class);
+
+		except = (*env)->FindClass (env, CLASS_EXCEPTION);
+		if (except == NULL) return; /* exception thrown */
 
 		snprintf (msg, sizeof(msg), "%S", 
 			ase_awk_geterrstr(ase_awk_geterrnum(awk)));
 		if (n < 0 || n >= sizeof(msg)) msg[sizeof(msg)-1] = '\0';
 		(*env)->ThrowNew (env, except, msg);
+		(*env)->DeleteLocalRef (env, except);
 		return;
 	}
+
+	(*env)->DeleteLocalRef (env, class);
 }
 
 static ase_ssize_t __java_open_source (JNIEnv* env, jobject obj, int mode)
@@ -494,7 +521,7 @@ static ase_ssize_t __java_open_extio (
 	
 	class = (*env)->GetObjectClass(env, obj);
 
-	extio_class = (*env)->FindClass (env, "ase/awk/Extio");
+	extio_class = (*env)->FindClass (env, CLASS_EXTIO);
 	if (extio_class == NULL) 
 	{
 		(*env)->DeleteLocalRef (env, class);
@@ -855,11 +882,11 @@ static ase_ssize_t __process_extio (
 	return -1;
 }
 
-JNIEXPORT int JNICALL Java_ase_awk_Awk_setfilename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
 	const jchar* str;
-	int len, n;
+	jint len, n;
 
 	str = (*env)->GetStringChars (env, name, JNI_FALSE);
 	len = (*env)->GetStringLength (env, name);
@@ -868,11 +895,11 @@ JNIEXPORT int JNICALL Java_ase_awk_Awk_setfilename (JNIEnv* env, jobject obj, jl
 	return n;
 }
 
-JNIEXPORT int JNICALL Java_ase_awk_Awk_setofilename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (JNIEnv* env, jobject obj, jlong run_id, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
 	const jchar* str;
-	int len, n;
+	jint len, n;
 
 	str = (*env)->GetStringChars (env, name, JNI_FALSE);
 	len = (*env)->GetStringLength (env, name);
@@ -881,3 +908,73 @@ JNIEXPORT int JNICALL Java_ase_awk_Awk_setofilename (JNIEnv* env, jobject obj, j
 	return n;
 }
 
+static int __handle_bfn (ase_awk_run_t* run)
+{
+	jclass class; 
+	jmethodID mid;
+
+	/*
+	class = (*env)->GetObjectClass(env, obj);
+
+	mid = (*env)->GetMethodID (env, class, funtion_name...., "(I)I");
+	if (mid == NULL) 
+	{
+		(*env)->DeleteLocalRef (env, class);
+		return -1;
+	}
+	*/
+
+/*
+CreateObjectArray...
+Call the method with this array.
+Delete the array...
+*/
+
+	/*
+	(*env)->DeleteLocalRef (env, class);
+	*/
+	return 0;
+}
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
+	JNIEnv* env, jobject obj, jstring name, jint min_args, jint max_args)
+{
+	jclass class; 
+	jfieldID fid_handle;
+	jthrowable except;
+
+	ase_awk_t* awk;
+	const jchar* str;
+	jint len;
+
+	class = (*env)->GetObjectClass(env, obj);
+
+	fid_handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	if (fid_handle == NULL) 
+	{
+		(*env)->DeleteLocalRef (env, class);
+		return;
+	}
+
+	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, fid_handle);
+
+	str = (*env)->GetStringChars (env, name, JNI_FALSE);
+	len = (*env)->GetStringLength (env, name);
+
+	if (ase_awk_addbfn (awk, str, len, 0, 
+		min_args, max_args, ASE_NULL, __handle_bfn) == ASE_NULL)
+	{
+		(*env)->ReleaseStringChars (env, name, str);
+		(*env)->DeleteLocalRef (env, class);
+
+		except = (*env)->FindClass (env, CLASS_EXCEPTION);
+		if (except == NULL) return;
+
+		(*env)->ThrowNew (env, except, "cannot add the function");
+		(*env)->DeleteLocalRef (env, except);
+		return;
+	}
+
+	(*env)->ReleaseStringChars (env, name, str);
+	(*env)->DeleteLocalRef (env, class);
+}

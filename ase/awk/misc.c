@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.39 2006-11-20 11:08:08 bacon Exp $
+ * $Id: misc.c,v 1.40 2006-11-27 04:33:22 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -541,7 +541,12 @@ ase_size_t ase_awk_longtostr (
 	if (t == 0)
 	{
 		/* zero */
-		if (buf == ASE_NULL) return prefix_len + 1;
+		if (buf == ASE_NULL) 
+		{
+			/* if buf is not given, 
+			 * return the number of bytes required */
+			return prefix_len + 1;
+		}
 
 		if (size < prefix_len+1) 
 		{
@@ -552,7 +557,7 @@ ase_size_t ase_awk_longtostr (
 		for (i = 0; i < prefix_len; i++) buf[i] = prefix[i];
 		buf[prefix_len] = ASE_T('0');
 		if (size > prefix_len+1) buf[prefix_len+1] = ASE_T('\0');
-		return 1;
+		return prefix_len+1;
 	}
 
 	/* non-zero values */
