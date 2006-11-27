@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.10 2006-11-27 04:33:22 bacon Exp $
+ * $Id: jni.h,v 1.11 2006-11-27 15:10:34 bacon Exp $
  */
 
 #ifndef _ASE_AWK_JNI_H_
@@ -11,12 +11,17 @@
 extern "C" {
 #endif
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv*, jobject);
-JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv*, jobject);
-JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv*, jobject);
-JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv*, jobject);
-JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (JNIEnv*, jobject, jlong, jstring);
-JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (JNIEnv*, jobject, jlong, jstring);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj);
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
+	JNIEnv* env, jobject obj, jstring name, jint min_args, jint max_args);
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (
+	JNIEnv* env, jobject obj, jlong run_id, jstring name);
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
+	JNIEnv* env, jobject obj, jlong run_id, jstring name);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.90 2006-11-21 15:06:15 bacon Exp $
+ * $Id: tree.c,v 1.91 2006-11-27 15:10:35 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -479,7 +479,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		{
 			ase_awk_nde_call_t* px = (ase_awk_nde_call_t*)nde;
 			PUT_SRCSTRX (awk, 
-				px->what.bfn.name, px->what.bfn.name_len);
+				px->what.bfn.name.ptr, px->what.bfn.name.len);
 			PUT_SRCSTR (awk, ASE_T(" ("));
 			PRINT_EXPRESSION_LIST (awk, px->args);
 			PUT_SRCSTR (awk, ASE_T(")"));
@@ -490,7 +490,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		{
 			ase_awk_nde_call_t* px = (ase_awk_nde_call_t*)nde;
 			PUT_SRCSTRX (awk, 
-				px->what.afn.name, px->what.afn.name_len);
+				px->what.afn.name.ptr, px->what.afn.name.len);
 			PUT_SRCSTR (awk, ASE_T(" ("));
 			PRINT_EXPRESSION_LIST (awk, px->args);
 			PUT_SRCSTR (awk, ASE_T(")"));
@@ -1110,7 +1110,7 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			case ASE_AWK_NDE_AFN:
 			{
 				ase_awk_nde_call_t* px = (ase_awk_nde_call_t*)p;
-				ASE_AWK_FREE (awk, px->what.afn.name);
+				ASE_AWK_FREE (awk, px->what.afn.name.ptr);
 				ase_awk_clrpt (awk, px->args);
 				ASE_AWK_FREE (awk, p);
 				break;

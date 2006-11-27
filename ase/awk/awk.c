@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.91 2006-11-25 15:51:30 bacon Exp $ 
+ * $Id: awk.c,v 1.92 2006-11-27 15:10:34 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -227,6 +227,8 @@ int ase_awk_clear (ase_awk_t* awk)
 
 	awk->tree.chain_tail = ASE_NULL;	
 	awk->tree.chain_size = 0;
+
+	ase_awk_clrbfn (awk);
 	return 0;
 }
 

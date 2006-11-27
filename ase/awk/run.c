@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.284 2006-11-24 13:20:49 bacon Exp $
+ * $Id: run.c,v 1.285 2006-11-27 15:10:35 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1147,8 +1147,8 @@ static int __run_main (
 
 		nde.type = ASE_AWK_NDE_AFN;
 		nde.next = ASE_NULL;
-		nde.what.afn.name = (ase_char_t*)main;
-		nde.what.afn.name_len = ase_awk_strlen(main);
+		nde.what.afn.name.ptr = (ase_char_t*)main;
+		nde.what.afn.name.len = ase_awk_strlen(main);
 		nde.args = ASE_NULL;
 		nde.nargs = 0;
 
@@ -4573,17 +4573,17 @@ static ase_awk_val_t* __eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_nde_call_t* call = (ase_awk_nde_call_t*)nde;
 
 	/* built-in function */
-	if (call->nargs < call->what.bfn.min_args)
+	if (call->nargs < call->what.bfn.arg.min)
 	{
 		PANIC (run, ASE_AWK_ETOOFEWARGS);
 	}
 
-	if (call->nargs > call->what.bfn.max_args)
+	if (call->nargs > call->what.bfn.arg.max)
 	{
 		PANIC (run, ASE_AWK_ETOOMANYARGS);
 	}
 
-	return __eval_call (run, nde, call->what.bfn.arg_spec, ASE_NULL);
+	return __eval_call (run, nde, call->what.bfn.arg.spec, ASE_NULL);
 }
 
 static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
@@ -4593,7 +4593,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_pair_t* pair;
 
 	pair = ase_awk_map_get (&run->awk->tree.afns, 
-		call->what.afn.name, call->what.afn.name_len);
+		call->what.afn.name.ptr, call->what.afn.name.len);
 	if (pair == ASE_NULL) PANIC (run, ASE_AWK_ENOSUCHFUNC);
 
 	afn = (ase_awk_afn_t*)pair->val;
@@ -4844,8 +4844,8 @@ static ase_awk_val_t* __eval_call (
 		n = 0;
 
 		/* built-in function */
-		ASE_AWK_ASSERT (run->awk, call->nargs >= call->what.bfn.min_args &&
-		           call->nargs <= call->what.bfn.max_args);
+		ASE_AWK_ASSERT (run->awk, call->nargs >= call->what.bfn.arg.min &&
+		           call->nargs <= call->what.bfn.arg.max);
 
 		if (call->what.bfn.handler != ASE_NULL)
 			n = call->what.bfn.handler (run);

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.12 2006-11-27 04:33:21 bacon Exp $
+ * $Id: Awk.java,v 1.13 2006-11-27 15:10:34 bacon Exp $
  */
 
 package ase.awk;
@@ -39,14 +39,24 @@ public abstract class Awk
 		if (handle != 0) close ();
 	}
 
-	/* == methods to provide major functionalities */
-	public native void close ();
-	public native void parse () throws Exception;
-	public native void run () throws Exception;
-
+	/* == native methods == */
 	private native void open () throws Exception;
+	public  native void close ();
+	public  native void parse () throws Exception;
+	public  native void run () throws Exception;
+
+	private native void addbfn (String name, int min_args, int max_args);
+	//private native int delbfn (String name);
+
 	private native int setfilename (long run_id, String name);
 	private native int setofilename (long run_id, String name);
+
+	/* == builtin functions == */
+	public void addBuiltinFunction (
+		String name, int min_args, int max_args) throws Exception
+	{
+		addbfn (name, min_args, max_args);
+	}
 
 	/* == console name setters == */
 	public void setInputConsoleName (Extio extio, String name) //throws Exception

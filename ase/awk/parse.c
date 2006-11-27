@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.211 2006-11-27 04:33:22 bacon Exp $
+ * $Id: parse.c,v 1.212 2006-11-27 15:10:34 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2801,11 +2801,11 @@ static ase_awk_nde_t* __parse_fncall (
 		call->next = ASE_NULL;
 
 		/*call->what.bfn = bfn; */
-		call->what.bfn.name     = bfn->name;
-		call->what.bfn.name_len = bfn->name_len;
-		call->what.bfn.min_args = bfn->min_args;
-		call->what.bfn.max_args = bfn->max_args;
-		call->what.bfn.arg_spec = bfn->arg_spec;
+		call->what.bfn.name.ptr = bfn->name.ptr;
+		call->what.bfn.name.len = bfn->name.len;
+		call->what.bfn.arg.min = bfn->arg.min;
+		call->what.bfn.arg.max = bfn->arg.max;
+		call->what.bfn.arg.spec = bfn->arg.spec;
 		call->what.bfn.handler  = bfn->handler;
 
 		call->args = head;
@@ -2815,8 +2815,8 @@ static ase_awk_nde_t* __parse_fncall (
 	{
 		call->type = ASE_AWK_NDE_AFN;
 		call->next = ASE_NULL;
-		call->what.afn.name = name; 
-		call->what.afn.name_len = name_len;
+		call->what.afn.name.ptr = name; 
+		call->what.afn.name.len = name_len;
 		call->args = head;
 		call->nargs = nargs;
 	}
