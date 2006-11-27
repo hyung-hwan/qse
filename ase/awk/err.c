@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.51 2006-11-19 10:12:07 bacon Exp $
+ * $Id: err.c,v 1.52 2006-11-27 04:33:22 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -64,7 +64,10 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("END requires an action block"),
 		ASE_T("duplicate BEGIN"),
 		ASE_T("duplicate END"),
-		ASE_T("duplicate function name"),
+		ASE_T("the function name redefines a built-in function"),
+		ASE_T("a function cannot be redefined with the same name"),
+		ASE_T("the function name redefines a global variable"),
+		ASE_T("a parameter name cannot be the same as the name of the owning function"),
 		ASE_T("duplicate parameter name"),
 		ASE_T("duplicate variable name"),
 		ASE_T("duplicate name"),

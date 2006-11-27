@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.11 2006-11-26 16:16:34 bacon Exp $
+ * $Id: Awk.java,v 1.12 2006-11-27 04:33:21 bacon Exp $
  */
 
 package ase.awk;
@@ -20,7 +20,7 @@ public abstract class Awk
 		{
 			public Object run ()
 			{
-				//System.load ("c://projects//ase/awk/aseawk.dll");
+				System.load ("c://projects//ase/awk/aseawk.dll");
 				return null;
 			}
 		});

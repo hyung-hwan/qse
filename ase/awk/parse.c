@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.210 2006-11-26 15:55:44 bacon Exp $
+ * $Id: parse.c,v 1.211 2006-11-27 04:33:22 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -620,19 +620,28 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 
 	name = ASE_AWK_STR_BUF(&awk->token.name);
 	name_len = ASE_AWK_STR_LEN(&awk->token.name);
+
+	/* check if it is a builtin function */
+	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
+	{
+		PANIC (awk, ASE_AWK_EFNREDEFBFN);
+	}
+
 	if (ase_awk_map_get(&awk->tree.afns, name, name_len) != ASE_NULL) 
 	{
 		/* the function is defined previously */
-		PANIC (awk, ASE_AWK_EDUPFUNC);
+		PANIC (awk, ASE_AWK_EFNREDEFAFN);
 	}
 
-	if (awk->option & ASE_AWK_UNIQUE) 
+	if (awk->option & ASE_AWK_UNIQUEAFN) 
 	{
 		/* check if it coincides to be a global variable name */
-		if (ase_awk_tab_find (
-			&awk->parse.globals, 0, name, name_len) != (ase_size_t)-1) 
+		ase_size_t g;
+
+		g = ase_awk_tab_find (&awk->parse.globals, 0, name, name_len);
+		if (g != (ase_size_t)-1) 
 		{
-			PANIC (awk, ASE_AWK_EDUPNAME);
+			PANIC (awk, ASE_AWK_EFNREDEFGLOBAL);
 		}
 	}
 
@@ -692,7 +701,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 			param = ASE_AWK_STR_BUF(&awk->token.name);
 			param_len = ASE_AWK_STR_LEN(&awk->token.name);
 
-			if (awk->option & ASE_AWK_UNIQUE) 
+			if (awk->option & ASE_AWK_UNIQUEAFN) 
 			{
 				/* check if a parameter conflicts with a function */
 				if (ase_awk_strxncmp (name_dup, name_len, param, param_len) == 0 ||
@@ -700,7 +709,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 				{
 					ASE_AWK_FREE (awk, name_dup);
 					ase_awk_tab_clear (&awk->parse.params);
-					PANIC (awk, ASE_AWK_EDUPNAME);
+					PANIC (awk, ASE_AWK_EPARREDEFAFN);
 				}
 
 				/* NOTE: the following is not a conflict
@@ -1078,7 +1087,7 @@ static ase_awk_t* __add_global (
 {
 	if (!force)
 	{
-		if (awk->option & ASE_AWK_UNIQUE) 
+		if (awk->option & ASE_AWK_UNIQUEAFN) 
 		{
 			/* check if it conflict with a function name */
 			if (ase_awk_map_get (
@@ -1159,7 +1168,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 
 		/* NOTE: it is not checked againt globals names */
 
-		if (awk->option & ASE_AWK_UNIQUE) 
+		if (awk->option & ASE_AWK_UNIQUEAFN) 
 		{
 			/* check if it conflict with a function name */
 			if (ase_awk_map_get (

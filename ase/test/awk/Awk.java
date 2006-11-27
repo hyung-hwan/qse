@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.11 2006-11-26 16:17:51 bacon Exp $
+ * $Id: Awk.java,v 1.12 2006-11-27 04:33:22 bacon Exp $
  */
 
 package ase.test.awk;
@@ -15,6 +15,12 @@ public class Awk extends ase.awk.StdAwk
 	public Awk () throws ase.awk.Exception
 	{
 		super ();
+
+		addbfn (bfn_sin, 1, 3);
+	}
+
+	public void bfn_sin ()
+	{
 	}
 
 	protected String[] getInputConsoleNames ()

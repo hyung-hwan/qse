@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.152 2006-11-25 15:51:30 bacon Exp $
+ * $Id: awk.h,v 1.153 2006-11-27 04:33:22 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -141,7 +141,7 @@ enum
 	ASE_AWK_EXPLICIT    = (1 << 1), 
 
 	/* a function name should not coincide to be a variable name */
-	ASE_AWK_UNIQUE      = (1 << 2),
+	ASE_AWK_UNIQUEAFN   = (1 << 2),
 
 	/* allow variable shading */
 	ASE_AWK_SHADING     = (1 << 3), 
@@ -250,7 +250,10 @@ enum
 	ASE_AWK_EENDBLOCK,      /* END requires an action block */
 	ASE_AWK_EDUPBEGIN,      /* duplicate BEGIN */
 	ASE_AWK_EDUPEND,        /* duplicate END */
-	ASE_AWK_EDUPFUNC,       /* duplicate function name */
+	ASE_AWK_EFNREDEFBFN,    /* function redefines a builtin function */
+	ASE_AWK_EFNREDEFAFN,    /* function redefines an existing function */
+	ASE_AWK_EFNREDEFGLOBAL, /* function redefines a global variable */
+	ASE_AWK_EPARREDEFAFN,   /* parameter redefines the function name */
 	ASE_AWK_EDUPPARAM,      /* duplicate parameter name */
 	ASE_AWK_EDUPVAR,        /* duplicate variable name */
 	ASE_AWK_EDUPNAME,       /* duplicate name - function, variable, etc */
