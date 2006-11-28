@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.92 2006-11-27 15:10:34 bacon Exp $ 
+ * $Id: awk.c,v 1.93 2006-11-28 04:30:21 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -148,6 +148,7 @@ ase_awk_t* ase_awk_open (const ase_awk_syscas_t* syscas)
 int ase_awk_close (ase_awk_t* awk)
 {
 	if (ase_awk_clear (awk) == -1) return -1;
+	ase_awk_clrbfn (awk);
 
 	ASE_AWK_ASSERT (awk, awk->run.count == 0 && awk->run.ptr == ASE_NULL);
 
@@ -228,7 +229,6 @@ int ase_awk_clear (ase_awk_t* awk)
 	awk->tree.chain_tail = ASE_NULL;	
 	awk->tree.chain_size = 0;
 
-	ase_awk_clrbfn (awk);
 	return 0;
 }
 

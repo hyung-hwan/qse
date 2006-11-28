@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.82 2006-11-27 15:10:35 bacon Exp $
+ * $Id: tree.h,v 1.83 2006-11-28 04:30:22 bacon Exp $
  */
 
 #ifndef _ASE_AWK_TREE_H_
@@ -270,9 +270,9 @@ struct ase_awk_nde_call_t
 				const ase_char_t* spec;
 			} arg;
 
-			int (*handler) (ase_awk_run_t* awk);
+			int (*handler) (
+				ase_awk_run_t*, const ase_char_t*, ase_size_t);
 		} bfn;
-		/* ase_awk_bfn_t* bfn; */
 	} what;
 	ase_awk_nde_t* args;
 	ase_size_t nargs;

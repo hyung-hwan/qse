@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.13 2006-11-27 15:11:14 bacon Exp $
+ * $Id: Awk.java,v 1.14 2006-11-28 04:30:57 bacon Exp $
  */
 
 package ase.test.awk;
@@ -19,8 +19,10 @@ public class Awk extends ase.awk.StdAwk
 		addBuiltinFunction ("sin", 1, 1);
 	}
 
-	public void bfn_sin ()
+	public int sin ()
 	{
+		System.out.println ("BFN_SIN....");
+		return 0;
 	}
 
 	protected String[] getInputConsoleNames ()

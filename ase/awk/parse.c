@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.212 2006-11-27 15:10:34 bacon Exp $
+ * $Id: parse.c,v 1.213 2006-11-28 04:30:21 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -175,7 +175,8 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_hashidx (
 	ase_awk_t* awk, ase_char_t* name, ase_size_t name_len);
 static ase_awk_nde_t* __parse_fncall (
-	ase_awk_t* awk, ase_char_t* name, ase_size_t name_len, ase_awk_bfn_t* bfn);
+	ase_awk_t* awk, ase_char_t* name, ase_size_t name_len, 
+	ase_awk_bfn_t* bfn);
 static ase_awk_nde_t* __parse_if (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_while (ase_awk_t* awk);
 static ase_awk_nde_t* __parse_for (ase_awk_t* awk);
@@ -2727,7 +2728,8 @@ static ase_awk_nde_t* __parse_hashidx (
 }
 
 static ase_awk_nde_t* __parse_fncall (
-	ase_awk_t* awk, ase_char_t* name, ase_size_t name_len, ase_awk_bfn_t* bfn)
+	ase_awk_t* awk, ase_char_t* name, ase_size_t name_len, 
+	ase_awk_bfn_t* bfn)
 {
 	ase_awk_nde_t* head, * curr, * nde;
 	ase_awk_nde_call_t* call;
@@ -2788,7 +2790,8 @@ static ase_awk_nde_t* __parse_fncall (
 
 	}
 
-	call = (ase_awk_nde_call_t*) ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_nde_call_t));
+	call = (ase_awk_nde_call_t*) 
+		ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_nde_call_t));
 	if (call == ASE_NULL) 
 	{
 		if (head != ASE_NULL) ase_awk_clrpt (awk, head);

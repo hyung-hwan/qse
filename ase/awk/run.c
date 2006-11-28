@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.285 2006-11-27 15:10:35 bacon Exp $
+ * $Id: run.c,v 1.286 2006-11-28 04:30:21 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -54,7 +54,8 @@ static void __add_run (ase_awk_t* awk, ase_awk_run_t* run);
 static void __del_run (ase_awk_t* awk, ase_awk_run_t* run);
 
 static int __init_run (
-	ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum);
+	ase_awk_run_t* run, ase_awk_runios_t* runios, 
+	void* custom_data, int* errnum);
 static void __deinit_run (ase_awk_run_t* run);
 
 static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg);
@@ -526,6 +527,16 @@ int ase_awk_setofilename (
 	return n;
 }
 
+ase_awk_t* ase_awk_getrunawk (ase_awk_run_t* run)
+{
+	return run->awk;
+}
+
+void* ase_awk_getruncustomdata (ase_awk_run_t* run)
+{
+	return run->custom_data;
+}
+
 int ase_awk_getrunerrnum (ase_awk_run_t* run)
 {
 	return run->errnum;
@@ -540,7 +551,8 @@ int ase_awk_run (ase_awk_t* awk,
 	const ase_char_t* main,
 	ase_awk_runios_t* runios, 
 	ase_awk_runcbs_t* runcbs, 
-	ase_awk_runarg_t* runarg)
+	ase_awk_runarg_t* runarg,
+	void* custom_data)
 {
 	ase_awk_run_t* run;
 	int n, errnum;
@@ -558,7 +570,7 @@ int ase_awk_run (ase_awk_t* awk,
 
 	__add_run (awk, run);
 
-	if (__init_run (run, runios, &errnum) == -1) 
+	if (__init_run (run, runios, custom_data, &errnum) == -1) 
 	{
 		awk->errnum = errnum;
 		__del_run (awk, run);
@@ -684,8 +696,12 @@ static void __del_run (ase_awk_t* awk, ase_awk_run_t* run)
 	ASE_AWK_UNLOCK (awk);
 }
 
-static int __init_run (ase_awk_run_t* run, ase_awk_runios_t* runios, int* errnum)
+static int __init_run (
+	ase_awk_run_t* run, ase_awk_runios_t* runios, 
+	void* custom_data, int* errnum)
 {
+	run->custom_data = custom_data;
+
 	run->stack = ASE_NULL;
 	run->stack_top = 0;
 	run->stack_base = 0;
@@ -4575,12 +4591,14 @@ static ase_awk_val_t* __eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	/* built-in function */
 	if (call->nargs < call->what.bfn.arg.min)
 	{
-		PANIC (run, ASE_AWK_ETOOFEWARGS);
+		run->errnum = ASE_AWK_ETOOFEWARGS;
+		return ASE_NULL;
 	}
 
 	if (call->nargs > call->what.bfn.arg.max)
 	{
-		PANIC (run, ASE_AWK_ETOOMANYARGS);
+		run->errnum = ASE_AWK_ETOOMANYARGS;
+		return ASE_NULL;
 	}
 
 	return __eval_call (run, nde, call->what.bfn.arg.spec, ASE_NULL);
@@ -4594,15 +4612,21 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 	pair = ase_awk_map_get (&run->awk->tree.afns, 
 		call->what.afn.name.ptr, call->what.afn.name.len);
-	if (pair == ASE_NULL) PANIC (run, ASE_AWK_ENOSUCHFUNC);
+	if (pair == ASE_NULL) 
+	{
+		run->errnum = ASE_AWK_ENOSUCHFN;
+		return ASE_NULL;
+	}
 
 	afn = (ase_awk_afn_t*)pair->val;
 	ASE_AWK_ASSERT (run->awk, afn != ASE_NULL);
 
 	if (call->nargs > afn->nargs)
 	{
-		/* TODO: is this correct? what if i want to allow arbitarary numbers of arguments? */
-		PANIC (run, ASE_AWK_ETOOMANYARGS);
+		/* TODO: is this correct? what if i want to 
+		 *       allow arbitarary numbers of arguments? */
+		run->errnum = ASE_AWK_ETOOMANYARGS;
+		return ASE_NULL;
 	}
 
 	return __eval_call (run, nde, ASE_NULL, afn);
@@ -4712,13 +4736,16 @@ static ase_awk_val_t* __eval_call (
 		PANIC (run, ASE_AWK_ENOMEM);
 	}
 
-	nargs = 0;
-	p = call->args;
+	/*
+	nargs = 0; p = call->args;
 	while (p != ASE_NULL)
+	*/
+	for (p = call->args, nargs = 0; p != ASE_NULL; p = p->next, nargs++)
 	{
-		ASE_AWK_ASSERT (run->awk, bfn_arg_spec == ASE_NULL ||
-		           (bfn_arg_spec != ASE_NULL && 
-		            ase_awk_strlen(bfn_arg_spec) > nargs));
+		ASE_AWK_ASSERT (run->awk, 
+			bfn_arg_spec == ASE_NULL ||
+			(bfn_arg_spec != ASE_NULL && 
+			 ase_awk_strlen(bfn_arg_spec) > nargs));
 
 		if (bfn_arg_spec != ASE_NULL && 
 		    bfn_arg_spec[nargs] == ASE_T('r'))
@@ -4753,43 +4780,6 @@ static ase_awk_val_t* __eval_call (
 			return ASE_NULL;
 		}
 
-#if 0
-		if (bfn_arg_spec != ASE_NULL && 
-		    bfn_arg_spec[nargs] == ASE_T('r'))
-		{
-			ase_awk_val_t** ref;
-			ase_awk_val_t* tmp;
-			      
-			ref = __get_reference (run, p);
-			if (ref == ASE_NULL)
-			{
-				ase_awk_refupval (run, v);
-				ase_awk_refdownval (run, v);
-
-				UNWIND_RUN_STACK (run, nargs);
-				return ASE_NULL;
-			}
-
-			/* p->type-ASE_AWK_NDE_NAMED assumes that the
-			 * derived value matches ASE_AWK_VAL_REF_XXX */
-			tmp = ase_awk_makerefval (
-				run, p->type-ASE_AWK_NDE_NAMED, ref);
-			if (tmp == ASE_NULL)
-			{
-				ase_awk_refupval (run, v);
-				ase_awk_refdownval (run, v);
-
-				UNWIND_RUN_STACK (run, nargs);
-				PANIC (run, ASE_AWK_ENOMEM);
-			}
-
-			ase_awk_refupval (run, v);
-			ase_awk_refdownval (run, v);
-
-			v = tmp;
-		}
-#endif
-
 		if (__raw_push(run,v) == -1) 
 		{
 			/* ugly - v needs to be freed if it doesn't have
@@ -4805,8 +4795,7 @@ static ase_awk_val_t* __eval_call (
 		}
 
 		ase_awk_refupval (run, v);
-		nargs++;
-		p = p->next;
+		/*nargs++; p = p->next;*/
 	}
 
 	ASE_AWK_ASSERT (run->awk, nargs == call->nargs);
@@ -4844,11 +4833,17 @@ static ase_awk_val_t* __eval_call (
 		n = 0;
 
 		/* built-in function */
-		ASE_AWK_ASSERT (run->awk, call->nargs >= call->what.bfn.arg.min &&
-		           call->nargs <= call->what.bfn.arg.max);
+		ASE_AWK_ASSERT (run->awk, 
+			call->nargs >= call->what.bfn.arg.min &&
+			call->nargs <= call->what.bfn.arg.max);
 
 		if (call->what.bfn.handler != ASE_NULL)
-			n = call->what.bfn.handler (run);
+		{
+			n = call->what.bfn.handler (
+				run,
+				call->what.bfn.name.ptr, 
+				call->what.bfn.name.len);
+		}
 	}
 
 /*run->awk->syscas.dprintf (ASE_T("block run complete\n")); */
