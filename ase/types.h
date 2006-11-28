@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.60 2006-11-19 08:01:45 bacon Exp $
+ * $Id: types.h,v 1.61 2006-11-28 11:44:28 bacon Exp $
  */
 
 #ifndef _ASE_TYPES_H_
@@ -13,7 +13,7 @@
 	#include <ase/conf_dos.h>
 #elif defined(__unix__) || defined(__unix)
 	#include <ase/conf_unx.h>
-#elif
+#else
 	#error unsupport operating system
 #endif
 
