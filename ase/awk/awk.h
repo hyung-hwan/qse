@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.154 2006-11-28 04:30:21 bacon Exp $
+ * $Id: awk.h,v 1.155 2006-11-28 15:09:53 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -109,8 +109,10 @@ struct ase_awk_runios_t
 
 struct ase_awk_runcbs_t
 {
-	void (*on_start) (ase_awk_t* awk, void* handle, void* arg);
-	void (*on_end) (ase_awk_t* awk, void* handle, int errnum, void* arg);
+	void (*on_start) (
+		ase_awk_t* awk, void* handle, void* custom_data);
+	void (*on_end) (
+		ase_awk_t* awk, void* handle, int errnum, void* custom_data);
 	void* custom_data;
 };
 
@@ -202,6 +204,7 @@ enum
 	ASE_AWK_ENOERR,         /* no error */
 	ASE_AWK_ENOMEM,         /* out of memory */
 	ASE_AWK_EINVAL,         /* invalid parameter */
+	ASE_AWK_EEXIST,         /* existing data found */
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_ERUNNING,       /* there are running instances */
 	ASE_AWK_ETOOMANYRUNS,   /* too many running instances */
@@ -390,12 +393,10 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
  *  on_end handler of the callback is triggered with the relevant 
  *  error number. The third parameter to on_end denotes this error number.
  */
-int ase_awk_run (ase_awk_t* awk, 
-	const ase_char_t* main,
-	ase_awk_runios_t* runios, 
-	ase_awk_runcbs_t* runcbs, 
-	ase_awk_runarg_t* runarg,
-	void* custom_data);
+int ase_awk_run (
+	ase_awk_t* awk, const ase_char_t* main,
+	ase_awk_runios_t* runios, ase_awk_runcbs_t* runcbs, 
+	ase_awk_runarg_t* runarg, void* custom_data);
 
 int ase_awk_stop (ase_awk_t* awk, ase_awk_run_t* run);
 void ase_awk_stopall (ase_awk_t* awk);

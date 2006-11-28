@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.79 2006-11-28 04:30:21 bacon Exp $
+ * $Id: func.c,v 1.80 2006-11-28 15:09:53 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -48,6 +48,12 @@ void* ase_awk_addbfn (
 	int (*handler)(ase_awk_run_t*,const ase_char_t*,ase_size_t))
 {
 	ase_awk_bfn_t* p;
+
+	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
+	{
+		awk->errnum = ASE_AWK_EEXIST;
+		return ASE_NULL;
+	}
 
 	p = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_bfn_t));
 	if (p == ASE_NULL) 
