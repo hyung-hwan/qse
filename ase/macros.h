@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.39 2006-11-28 11:34:34 bacon Exp $
+ * $Id: macros.h,v 1.40 2006-11-28 11:47:43 bacon Exp $
  */
 
 #ifndef _ASE_MACROS_H_
@@ -59,8 +59,6 @@
 		} \
 	} while (0);
 
-#define ASE_MQ_I(val) #val
-#define ASE_MQ(val)   ASE_MQ_I(val)
 #define ASE_MC(ch)    ((ase_mchar_t)ch)
 #define ASE_MS(str)   ((const ase_mchar_t*)str)
 #define ASE_MT(txt)   (txt)
@@ -72,8 +70,6 @@
  */
 
 /* new short form */
-#define ASE_WQ_I(val)  (L ## #val)
-#define ASE_WQ(val)    ASE_WQ_I(val)
 #define ASE_WC(ch)     ((ase_wchar_t)L ## ch)
 #define ASE_WS(str)    ((const ase_wchar_t*)L ## str)
 #define ASE_WT(txt)    (L ## txt)
@@ -82,13 +78,11 @@
 	#define ASE_C(ch)  ASE_MC(ch)
 	#define ASE_S(str) ASE_MS(str)
 	#define ASE_T(txt) ASE_MT(txt)
-	#define ASE_Q(val) ASE_MQ(val)
 #else
 	/* new short form */
 	#define ASE_C(ch)  ASE_WC(ch)
 	#define ASE_S(str) ASE_WS(str)
 	#define ASE_T(txt) ASE_WT(txt)
-	#define ASE_Q(val) ASE_WQ(val)
 #endif
 
 #endif
