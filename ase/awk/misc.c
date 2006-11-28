@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.41 2006-11-28 04:30:21 bacon Exp $
+ * $Id: misc.c,v 1.42 2006-11-28 11:26:47 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -11,7 +11,7 @@ void* ase_awk_malloc (ase_awk_t* awk, ase_size_t size)
 
 void ase_awk_free (ase_awk_t* awk, void* ptr)
 {
-	return ASE_AWK_FREE (awk, ptr);
+	ASE_AWK_FREE (awk, ptr);
 }
 
 void* ase_awk_memcpy (void* dst, const void* src, ase_size_t n)

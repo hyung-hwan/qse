@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.37 2006-10-24 04:30:13 bacon Exp $
+ * $Id: macros.h,v 1.38 2006-11-28 11:28:38 bacon Exp $
  */
 
 #ifndef _ASE_MACROS_H_
@@ -59,13 +59,6 @@
 		} \
 	} while (0);
 
-/* obsolete */
-#define ASE_MQUOTE_I(val)  #val
-#define ASE_MQUOTE(val)    ASE_MQUOTE_I(val)
-#define ASE_MCHAR(ch)      ((ase_mchar_t)ch)
-#define ASE_MTEXT(txt)     ((const ase_mchar_t*)txt)
-
-/* new short form */
 #define ASE_MQ_I(val) #val
 #define ASE_MQ(val)   ASE_MQ_I(val)
 #define ASE_MC(ch)    ((ase_mchar_t)ch)
@@ -78,12 +71,6 @@
 #define ASE_WTEXT(txt) don't know yet... may have to call a function?
  */
 
-/* obsolete */
-#define ASE_WQUOTE_I(val) (L###val)
-#define ASE_WQUOTE(val)   ASE_WQUOTE_I(val)
-#define ASE_WCHAR(ch)     ((ase_wchar_t)L##ch)
-#define ASE_WTEXT(txt)    ((const ase_wchar_t*)L##txt)
-
 /* new short form */
 #define ASE_WQ_I(val)  (L###val)
 #define ASE_WQ(val)    ASE_WQ_I(val)
@@ -92,22 +79,11 @@
 #define ASE_WT(txt)    (L##txt)
 
 #if defined(ASE_CHAR_IS_MCHAR)
-	/* obsolete */
-	#define ASE_CHAR(ch)   ASE_MCHAR(ch)
-	#define ASE_TEXT(txt)  ASE_MTEXT(txt)
-	#define ASE_QUOTE(val) ASE_MQUOTE(val)
-
-	/* new short form */
 	#define ASE_C(ch)  ASE_MC(ch)
 	#define ASE_S(str) ASE_MS(str)
 	#define ASE_T(txt) ASE_MT(txt)
 	#define ASE_Q(val) ASE_MQ(val)
 #else
-	/* obsolete */
-	#define ASE_CHAR(ch)   ASE_WCHAR(ch)
-	#define ASE_TEXT(txt)  ASE_WTEXT(txt)
-	#define ASE_QUOTE(val) ASE_WQUOTE(val)
-
 	/* new short form */
 	#define ASE_C(ch)  ASE_WC(ch)
 	#define ASE_S(str) ASE_WS(str)
