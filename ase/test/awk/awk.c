@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.128 2006-11-27 15:11:14 bacon Exp $
+ * $Id: awk.c,v 1.129 2006-11-28 04:30:57 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -896,7 +896,7 @@ ase_awk_addbfn (awk, ASE_T("bufa"), 4, 0,
 	runarg[3].ptr = ASE_NULL;
 	runarg[3].len = 0;
 
-	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg) == -1)
+	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg, ASE_NULL) == -1)
 	{
 		int errnum = ase_awk_geterrnum(awk);
 		xp_printf (

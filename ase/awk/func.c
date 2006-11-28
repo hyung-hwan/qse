@@ -1,26 +1,25 @@
 /*
- * $Id: func.c,v 1.78 2006-11-27 15:10:34 bacon Exp $
+ * $Id: func.c,v 1.79 2006-11-28 04:30:21 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
 
-static int __bfn_close   (ase_awk_run_t* run);
-static int __bfn_fflush  (ase_awk_run_t* run);
-static int __bfn_index   (ase_awk_run_t* run);
-static int __bfn_length  (ase_awk_run_t* run);
-static int __bfn_substr  (ase_awk_run_t* run);
-static int __bfn_split   (ase_awk_run_t* run);
-static int __bfn_tolower (ase_awk_run_t* run);
-static int __bfn_toupper (ase_awk_run_t* run);
-static int __bfn_gsub    (ase_awk_run_t* run);
-static int __bfn_sub     (ase_awk_run_t* run);
-static int __bfn_match   (ase_awk_run_t* run);
-static int __bfn_sprintf (ase_awk_run_t* run);
+static int __bfn_close   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_fflush  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_index   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_length  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_substr  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_split   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_tolower (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_toupper (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_gsub    (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_sub     (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_match   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int __bfn_sprintf (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 
 #undef MAX
 #define MAX ASE_TYPE_MAX(ase_size_t)
 
-/* TODO: move it under the awk structure... */
 static ase_awk_bfn_t __sys_bfn[] = 
 {
 	/* io functions */
@@ -42,10 +41,11 @@ static ase_awk_bfn_t __sys_bfn[] =
 	{ {ASE_NULL,         0}, 0,  0,   0,  ASE_NULL,     ASE_NULL}
 };
 
-ase_awk_bfn_t* ase_awk_addbfn (
+void* ase_awk_addbfn (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len, 
 	int when_valid, ase_size_t min_args, ase_size_t max_args, 
-	const ase_char_t* arg_spec, int (*handler)(ase_awk_run_t*))
+	const ase_char_t* arg_spec, 
+	int (*handler)(ase_awk_run_t*,const ase_char_t*,ase_size_t))
 {
 	ase_awk_bfn_t* p;
 
@@ -132,7 +132,7 @@ void ase_awk_clrbfn (ase_awk_t* awk)
 }
 
 ase_awk_bfn_t* ase_awk_getbfn (
-	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
 	ase_awk_bfn_t* p;
 
@@ -142,8 +142,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		    (awk->option & p->valid) == 0) continue;
 
 		if (ase_awk_strxncmp (
-			p->name.ptr, p->name.len, 
-			name, name_len) == 0) return p;
+			p->name.ptr, p->name.len, name, len) == 0) return p;
 	}
 
 	for (p = awk->bfn.user; p != ASE_NULL; p = p->next)
@@ -152,14 +151,14 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		    (awk->option & p->valid) == 0) continue;
 
 		if (ase_awk_strxncmp (
-			p->name.ptr, p->name.len, 
-			name, name_len) == 0) return p;
+			p->name.ptr, p->name.len, name, len) == 0) return p;
 	}
 
 	return ASE_NULL;
 }
 
-static int __bfn_close (ase_awk_run_t* run)
+static int __bfn_close (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_awk_val_t* v, * a0;
@@ -262,7 +261,8 @@ static int __flush_extio (
 	return n;
 }
 
-static int __bfn_fflush (ase_awk_run_t* run)
+static int __bfn_fflush (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_awk_val_t* a0;
@@ -355,7 +355,8 @@ skip_flush:
 	return 0;
 }
 
-static int __bfn_index (ase_awk_run_t* run)
+static int __bfn_index (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_awk_val_t* a0, * a1;
@@ -417,7 +418,8 @@ static int __bfn_index (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __bfn_length (ase_awk_run_t* run)
+static int __bfn_length (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_awk_val_t* v;
@@ -451,7 +453,8 @@ static int __bfn_length (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __bfn_substr (ase_awk_run_t* run)
+static int __bfn_substr (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_awk_val_t* a0, * a1, * a2, * r;
@@ -521,7 +524,8 @@ static int __bfn_substr (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __bfn_split (ase_awk_run_t* run)
+static int __bfn_split (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
@@ -772,7 +776,8 @@ static int __bfn_split (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __bfn_tolower (ase_awk_run_t* run)
+static int __bfn_tolower (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_char_t* str;
@@ -811,7 +816,8 @@ static int __bfn_tolower (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __bfn_toupper (ase_awk_run_t* run)
+static int __bfn_toupper (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_char_t* str;
@@ -1140,17 +1146,20 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	return 0;
 }
 
-static int __bfn_gsub (ase_awk_run_t* run)
+static int __bfn_gsub (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	return __substitute (run, 0);
 }
 
-static int __bfn_sub (ase_awk_run_t* run)
+static int __bfn_sub (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	return __substitute (run, 1);
 }
 
-static int __bfn_match (ase_awk_run_t* run)
+static int __bfn_match (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_awk_val_t* a0, * a1;
@@ -1268,7 +1277,8 @@ static int __bfn_match (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __bfn_sprintf (ase_awk_run_t* run)
+static int __bfn_sprintf (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {	
 	ase_size_t nargs;
 	ase_awk_val_t* a0;

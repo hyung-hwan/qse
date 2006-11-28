@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.153 2006-11-27 04:33:22 bacon Exp $
+ * $Id: awk.h,v 1.154 2006-11-28 04:30:21 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -276,7 +276,7 @@ enum
 	ASE_AWK_EDIVBYZERO,        /* divide by zero */
 	ASE_AWK_EOPERAND,          /* invalid operand */
 	ASE_AWK_EPOSIDX,           /* wrong position index */
-	ASE_AWK_ENOSUCHFUNC,       /* no such function */
+	ASE_AWK_ENOSUCHFN,         /* no such function */
 	ASE_AWK_ENOTASSIGNABLE,    /* value not assignable */
 	ASE_AWK_ENOTINDEXABLE,     /* not indexable variable */
 	ASE_AWK_ENOTDELETABLE,     /* not deletable variable */
@@ -394,7 +394,8 @@ int ase_awk_run (ase_awk_t* awk,
 	const ase_char_t* main,
 	ase_awk_runios_t* runios, 
 	ase_awk_runcbs_t* runcbs, 
-	ase_awk_runarg_t* runarg);
+	ase_awk_runarg_t* runarg,
+	void* custom_data);
 
 int ase_awk_stop (ase_awk_t* awk, ase_awk_run_t* run);
 void ase_awk_stopall (ase_awk_t* awk);
@@ -411,14 +412,31 @@ int ase_awk_setfilename (
 int ase_awk_setofilename (
 	ase_awk_run_t* run, const ase_char_t* name, ase_size_t len);
 
+ase_awk_t* ase_awk_getrunawk (ase_awk_run_t* awk);
+void* ase_awk_getruncustomdata (ase_awk_run_t* awk);
 int ase_awk_getrunerrnum (ase_awk_run_t* run);
 void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
+
+/* functions to manipulate built-in functions */
+void* ase_awk_addbfn (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len, 
+	int when_valid, ase_size_t min_args, ase_size_t max_args, 
+	const ase_char_t* arg_spec, 
+	int (*handler)(ase_awk_run_t*,const ase_char_t*,ase_size_t));
+
+int ase_awk_delbfn (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len);
+
+void ase_awk_clrbfn (ase_awk_t* awk);
 
 /* record and field functions */
 int ase_awk_clrrec (ase_awk_run_t* run, ase_bool_t skip_inrec_line);
 int ase_awk_setrec (ase_awk_run_t* run, ase_size_t idx, const ase_char_t* str, ase_size_t len);
 
 /* utility functions exported by awk.h */
+void* ase_awk_malloc (ase_awk_t* awk, ase_size_t size);
+void ase_awk_free (ase_awk_t* awk, void* ptr);
+
 ase_long_t ase_awk_strxtolong (
 	ase_awk_t* awk, const ase_char_t* str, ase_size_t len,
 	int base, const ase_char_t** endptr);

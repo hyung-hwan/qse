@@ -27,7 +27,7 @@ END {
 	arr[0] = "xxx";
 	#print split ("abc def abc", arr);
 	print split ("abc def kkk", j);
-	print split ("abc def kkk", $0);
+	print split ("abc def kkk", $0); # error
 
 	#xyz = 20;
 	#print xyz;

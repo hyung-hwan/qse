@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.28 2006-11-27 15:10:34 bacon Exp $
+ * $Id: jni.c,v 1.29 2006-11-28 04:30:21 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -40,6 +40,7 @@ static ase_ssize_t __process_extio (
 
 typedef struct srcio_data_t srcio_data_t;
 typedef struct runio_data_t runio_data_t;
+typedef struct run_data_t   run_data_t;
 
 struct srcio_data_t
 {
@@ -48,6 +49,12 @@ struct srcio_data_t
 };
 
 struct runio_data_t
+{
+	JNIEnv* env;
+	jobject obj;
+};
+
+struct run_data_t
 {
 	JNIEnv* env;
 	jobject obj;
@@ -320,6 +327,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 	ase_awk_t* awk;
 	ase_awk_runios_t runios;
 	runio_data_t runio_data;
+	run_data_t run_data;
 
 	class = (*env)->GetObjectClass (env, obj);
 
@@ -332,6 +340,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 
 	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, fid_handle);
 
+	run_data.env = env;
+	run_data.obj = obj;
+
 	runio_data.env = env;
 	runio_data.obj = obj;
 
@@ -343,7 +354,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 
 	//depth = __java_get_max_depth (env, obj, "getMaxRunDepth");
 
-	if (ase_awk_run (awk, ASE_NULL, &runios, ASE_NULL, ASE_NULL) == -1)
+	if (ase_awk_run (awk, 
+		ASE_NULL, &runios, ASE_NULL, ASE_NULL, &run_data) == -1)
 	{
 		char msg[256];
 		int n;
@@ -910,22 +922,59 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
 	return n;
 }
 
-static int __handle_bfn (ase_awk_run_t* run)
+static int __handle_bfn (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	jclass class; 
 	jmethodID mid;
+	jstring name;
+	jthrowable thrown;
+	char* buf;
+	ase_awk_t* awk;
+	run_data_t* run_data;
+	JNIEnv* env; 
+	jobject obj;
 
-printf ("BFN CALLED.....\n");
-	/*
+	awk = ase_awk_getrunawk (run);
+	run_data = ase_awk_getruncustomdata (run);
+
+	env = run_data->env;
+	obj = run_data->obj;
+
+	buf = ase_awk_malloc (awk, fnl * 5);
+	if (buf == NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	name = (*env)->NewString (env, fnm, fnl);
+	if (name == NULL)
+	{
+		ase_awk_free (awk, buf);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	(*env)->GetStringUTFRegion (env, name, 0, fnl, buf);
+	thrown = (*env)->ExceptionOccurred (env);
+	if (thrown)
+	{
+		(*env)->ExceptionClear (env);
+		ase_awk_free (awk, buf);
+		ase_awk_setrunerrnum (run, ASE_AWK_EINTERNAL);
+		return -1;
+	}
+
+	(*env)->DeleteLocalRef (env, name);
+
 	class = (*env)->GetObjectClass(env, obj);
-
-	mid = (*env)->GetMethodID (env, class, funtion_name...., "(I)I");
+	mid = (*env)->GetMethodID (env, class, buf, "()I");
 	if (mid == NULL) 
 	{
 		(*env)->DeleteLocalRef (env, class);
 		return -1;
 	}
-	*/
 
 /*
 CreateObjectArray...
