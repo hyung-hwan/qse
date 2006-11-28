@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.286 2006-11-28 04:30:21 bacon Exp $
+ * $Id: run.c,v 1.287 2006-11-28 11:21:40 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -3665,8 +3665,8 @@ static ase_awk_val_t* __eval_binop_lshift (
 	n3 = n1 + (n2 << 1);
 	if (n3 == 0)
 	{
-		if  (l2 == 0) PANIC (run, ASE_AWK_EDIVBYZERO);
-		res = ase_awk_makeintval (run, (ase_long_t)l1<<(ase_long_t)l2);
+		res = ase_awk_makeintval (
+			run, (ase_long_t)l1<<(ase_long_t)l2);
 	}
 	else PANIC (run, ASE_AWK_EOPERAND);
 
@@ -3690,8 +3690,8 @@ static ase_awk_val_t* __eval_binop_rshift (
 	n3 = n1 + (n2 << 1);
 	if (n3 == 0)
 	{
-		if  (l2 == 0) PANIC (run, ASE_AWK_EDIVBYZERO);
-		res = ase_awk_makeintval (run, (ase_long_t)l1>>(ase_long_t)l2);
+		res = ase_awk_makeintval (
+			run, (ase_long_t)l1>>(ase_long_t)l2);
 	}
 	else PANIC (run, ASE_AWK_EOPERAND);
 
