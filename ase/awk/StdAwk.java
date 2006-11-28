@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.6 2006-11-28 04:38:07 bacon Exp $
+ * $Id: StdAwk.java,v 1.7 2006-11-28 15:09:53 bacon Exp $
  */
 
 package ase.awk;
@@ -23,14 +23,6 @@ public abstract class StdAwk extends Awk
 	public StdAwk () throws Exception
 	{
 		super ();
-
-		addBuiltinFunction ("xxx", 1, 1);
-	}
-
-	public int xxx ()
-	{
-		System.out.println ("xxx....\n");
-		return 0;
 	}
 
 	/* == major methods == */

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.130 2006-11-28 04:38:07 bacon Exp $
+ * $Id: awk.c,v 1.131 2006-11-28 15:09:03 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <math.h>
+#include <assert.h>
 
 #ifdef ASE_CHAR_IS_WCHAR
 	#include <wchar.h>
@@ -17,26 +18,21 @@
 #if defined(_WIN32)
 	#include <windows.h>
 	#include <tchar.h>
-	#include <assert.h>
 
 	#define xp_printf _tprintf
-	#define xp_assert assert
-
 	#pragma warning (disable: 4996)
+	#pragma warning (disable: 4296)
 #elif defined(__MSDOS__)
-	#include <assert.h>
 	#include <ctype.h>
 	#include <stdlib.h>
 
 	#define xp_printf printf
-	#define xp_assert assert
 #else
 	#include <xp/bas/stdio.h>
 	#include <xp/bas/stdlib.h>
 	#include <xp/bas/string.h>
 	#include <xp/bas/memory.h>
 	#include <xp/bas/sysapi.h>
-	#include <xp/bas/assert.h>
 	#include <xp/bas/locale.h>
 #endif
 
@@ -507,7 +503,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 	/* TODO: OpenConsole in GUI APPLICATION */
 
 	/* epa->name is always empty for console */
-	xp_assert (epa->name[0] == ASE_T('\0'));
+	assert (epa->name[0] == ASE_T('\0'));
 
 	__awk_dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
 
