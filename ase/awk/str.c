@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.11 2006-10-24 04:10:12 bacon Exp $
+ * $Id: str.c,v 1.12 2006-11-29 02:54:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -10,7 +10,7 @@ ase_awk_str_t* ase_awk_str_open (
 	if (str == ASE_NULL) 
 	{
 		str = (ase_awk_str_t*) 
-			ASE_AWK_MALLOC (awk, sizeof(ase_awk_str_t));
+			ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_str_t));
 		if (str == ASE_NULL) return ASE_NULL;
 		str->__dynamic = ase_true;
 	}
@@ -18,7 +18,7 @@ ase_awk_str_t* ase_awk_str_open (
 
 	str->awk = awk;
 	str->buf = (ase_char_t*) ASE_AWK_MALLOC (
-		awk, ase_sizeof(ase_char_t) * (capa + 1));
+		awk, ASE_SIZEOF(ase_char_t) * (capa + 1));
 	if (str->buf == ASE_NULL) 
 	{
 		if (str->__dynamic) ASE_AWK_FREE (awk, str);
@@ -77,7 +77,7 @@ ase_size_t ase_awk_str_ncpy (
 	if (len > str->capa) 
 	{
 		buf = (ase_char_t*) ASE_AWK_MALLOC (
-			str->awk, ase_sizeof(ase_char_t) * (len + 1));
+			str->awk, ASE_SIZEOF(ase_char_t) * (len + 1));
 		if (buf == ASE_NULL) return (ase_size_t)-1;
 
 		ASE_AWK_FREE (str->awk, str->buf);
@@ -113,18 +113,18 @@ ase_size_t ase_awk_str_ncat (
 		{
 			tmp = (ase_char_t*) ASE_AWK_REALLOC (
 				str->awk, str->buf, 
-				ase_sizeof(ase_char_t) * (capa + 1));
+				ASE_SIZEOF(ase_char_t) * (capa + 1));
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 		}
 		else
 		{
 			tmp = (ase_char_t*) ASE_AWK_MALLOC (
-				str->awk, ase_sizeof(ase_char_t) * (capa + 1));
+				str->awk, ASE_SIZEOF(ase_char_t) * (capa + 1));
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 			if (str->buf != ASE_NULL)
 			{
 				ASE_AWK_MEMCPY (str->awk, tmp, str->buf, 
-					ase_sizeof(ase_char_t) * (str->capa + 1));
+					ASE_SIZEOF(ase_char_t) * (str->capa + 1));
 				ASE_AWK_FREE (str->awk, str->buf);
 			}
 		}

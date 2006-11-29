@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.24 2006-11-02 11:10:12 bacon Exp $
+ * $Id: mem.c,v 1.25 2006-11-29 02:54:17 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -11,10 +11,10 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	ase_size_t i;
 
 	/* allocate memory */
-	mem = (ase_lsp_mem_t*) ASE_LSP_MALLOC (lsp, ase_sizeof(ase_lsp_mem_t));	
+	mem = (ase_lsp_mem_t*) ASE_LSP_MALLOC (lsp, ASE_SIZEOF(ase_lsp_mem_t));	
 	if (mem == ASE_NULL) return ASE_NULL;
 
-	ASE_LSP_MEMSET (lsp, mem, 0, ase_sizeof(ase_lsp_mem_t));
+	ASE_LSP_MEMSET (lsp, mem, 0, ASE_SIZEOF(ase_lsp_mem_t));
 	mem->lsp = lsp;
 
 	/* create a new root environment frame */
@@ -360,7 +360,7 @@ ase_lsp_obj_t* ase_lsp_makenil (ase_lsp_mem_t* mem)
 {
 	if (mem->nil != ASE_NULL) return mem->nil;
 	mem->nil = ase_lsp_alloc (
-		mem, ASE_LSP_OBJ_NIL, ase_sizeof(ase_lsp_obj_nil_t));
+		mem, ASE_LSP_OBJ_NIL, ASE_SIZEOF(ase_lsp_obj_nil_t));
 	return mem->nil;
 }
 
@@ -368,7 +368,7 @@ ase_lsp_obj_t* ase_lsp_maketrue (ase_lsp_mem_t* mem)
 {
 	if (mem->t != ASE_NULL) return mem->t;
 	mem->t = ase_lsp_alloc (
-		mem, ASE_LSP_OBJ_TRUE, ase_sizeof(ase_lsp_obj_true_t));
+		mem, ASE_LSP_OBJ_TRUE, ASE_SIZEOF(ase_lsp_obj_true_t));
 	return mem->t;
 }
 
@@ -377,7 +377,7 @@ ase_lsp_obj_t* ase_lsp_makeintobj (ase_lsp_mem_t* mem, ase_long_t value)
 	ase_lsp_obj_t* obj;
 
 	obj = ase_lsp_alloc (mem, 
-		ASE_LSP_OBJ_INT, ase_sizeof(ase_lsp_obj_int_t));
+		ASE_LSP_OBJ_INT, ASE_SIZEOF(ase_lsp_obj_int_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	ASE_LSP_IVAL(obj) = value;
@@ -390,7 +390,7 @@ ase_lsp_obj_t* ase_lsp_makerealobj (ase_lsp_mem_t* mem, ase_real_t value)
 	ase_lsp_obj_t* obj;
 
 	obj = ase_lsp_alloc (mem, 
-		ASE_LSP_OBJ_REAL, ase_sizeof(ase_lsp_obj_real_t));
+		ASE_LSP_OBJ_REAL, ASE_SIZEOF(ase_lsp_obj_real_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 	
 	ASE_LSP_RVAL(obj) = value;
@@ -416,7 +416,7 @@ ase_lsp_obj_t* ase_lsp_makesym (
 
 	// no such symbol found. create a new one 
 	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_SYM,
-		ase_sizeof(ase_lsp_obj_sym_t)+(len + 1)*ase_sizeof(ase_char_t));
+		ASE_SIZEOF(ase_lsp_obj_sym_t)+(len + 1)*ASE_SIZEOF(ase_char_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	// fill in the symbol buffer
@@ -432,7 +432,7 @@ ase_lsp_obj_t* ase_lsp_makestr (
 
 	// allocate memory for the string
 	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_STR,
-		ase_sizeof(ase_lsp_obj_str_t)+(len + 1)*ase_sizeof(ase_char_t));
+		ASE_SIZEOF(ase_lsp_obj_str_t)+(len + 1)*ASE_SIZEOF(ase_char_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	// fill in the string buffer
@@ -446,7 +446,7 @@ ase_lsp_obj_t* ase_lsp_makecons (
 {
 	ase_lsp_obj_t* obj;
 
-	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_CONS, ase_sizeof(ase_lsp_obj_cons_t));
+	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_CONS, ASE_SIZEOF(ase_lsp_obj_cons_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	ASE_LSP_CAR(obj) = car;
@@ -460,7 +460,7 @@ ase_lsp_obj_t* ase_lsp_makefunc (
 {
 	ase_lsp_obj_t* obj;
 
-	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_FUNC, ase_sizeof(ase_lsp_obj_func_t));
+	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_FUNC, ASE_SIZEOF(ase_lsp_obj_func_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	ASE_LSP_FFORMAL(obj) = formal;
@@ -475,7 +475,7 @@ ase_lsp_obj_t* ase_lsp_makemacro (
 	ase_lsp_obj_t* obj;
 
 	obj = ase_lsp_alloc (mem, 
-		ASE_LSP_OBJ_MACRO, ase_sizeof(ase_lsp_obj_macro_t));
+		ASE_LSP_OBJ_MACRO, ASE_SIZEOF(ase_lsp_obj_macro_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	ASE_LSP_MFORMAL(obj) = formal;
@@ -490,7 +490,7 @@ ase_lsp_obj_t* ase_lsp_makeprim (ase_lsp_mem_t* mem,
 	ase_lsp_obj_t* obj;
 
 	obj = ase_lsp_alloc (
-		mem, ASE_LSP_OBJ_PRIM, ase_sizeof(ase_lsp_obj_prim_t));
+		mem, ASE_LSP_OBJ_PRIM, ASE_SIZEOF(ase_lsp_obj_prim_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	ASE_LSP_PIMPL(obj) = impl;

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.287 2006-11-28 11:21:40 bacon Exp $
+ * $Id: run.c,v 1.288 2006-11-29 02:54:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -559,14 +559,14 @@ int ase_awk_run (ase_awk_t* awk,
 
 	awk->errnum = ASE_AWK_ENOERR;
 
-	run = (ase_awk_run_t*) ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_run_t));
+	run = (ase_awk_run_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_run_t));
 	if (run == ASE_NULL)
 	{
 		awk->errnum = ASE_AWK_ENOMEM;
 		return -1;
 	}
 
-	ASE_AWK_MEMSET (awk, run, 0, ase_sizeof(ase_awk_run_t));
+	ASE_AWK_MEMSET (awk, run, 0, ASE_SIZEOF(ase_awk_run_t));
 
 	__add_run (awk, run);
 
@@ -754,7 +754,7 @@ static int __init_run (
 	}
 
 	run->format.tmp.ptr = (ase_char_t*)
-		ASE_AWK_MALLOC (run->awk, 4096*ase_sizeof(ase_char_t*));
+		ASE_AWK_MALLOC (run->awk, 4096*ASE_SIZEOF(ase_char_t*));
 	if (run->format.tmp.ptr == ASE_NULL)
 	{
 		ase_awk_map_close (&run->named);
@@ -770,7 +770,7 @@ static int __init_run (
 	if (run->awk->tree.chain_size > 0)
 	{
 		run->pattern_range_state = (ase_byte_t*) ASE_AWK_MALLOC (
-			run->awk, run->awk->tree.chain_size*ase_sizeof(ase_byte_t));
+			run->awk, run->awk->tree.chain_size*ASE_SIZEOF(ase_byte_t));
 		if (run->pattern_range_state == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, run->format.tmp.ptr);
@@ -783,7 +783,7 @@ static int __init_run (
 		}
 
 		ASE_AWK_MEMSET (run->awk, run->pattern_range_state, 0, 
-			run->awk->tree.chain_size * ase_sizeof(ase_byte_t));
+			run->awk->tree.chain_size * ASE_SIZEOF(ase_byte_t));
 	}
 	else run->pattern_range_state = ASE_NULL;
 
@@ -922,7 +922,7 @@ static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 	ase_awk_val_t* v_argc;
 	ase_awk_val_t* v_argv;
 	ase_awk_val_t* v_tmp;
-	ase_char_t key[ase_sizeof(ase_long_t)*8+2];
+	ase_char_t key[ASE_SIZEOF(ase_long_t)*8+2];
 	ase_size_t key_len;
 
 	v_argv = ase_awk_makemapval (run);
@@ -947,7 +947,7 @@ static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 			}
 
 			key_len = ase_awk_longtostr (
-				argc, 10, ASE_NULL, key, ase_countof(key));
+				argc, 10, ASE_NULL, key, ASE_COUNTOF(key));
 			ASE_AWK_ASSERT (run->awk, key_len != (ase_size_t)-1);
 
 			/* increment reference count of v_tmp in advance as if 
@@ -1056,7 +1056,7 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 	ase_awk_val_t* tmp;
 	ase_size_t i, j;
 
-	for (i = 0; i < ase_countof(gtab); i++)
+	for (i = 0; i < ASE_COUNTOF(gtab); i++)
 	{
 		if (gtab[i].str == ASE_NULL || gtab[i].str[0] == ASE_T('\0'))
 		{
@@ -2662,7 +2662,7 @@ static ase_awk_val_t* __eval_expression0 (ase_awk_run_t* run, ase_awk_nde_t* nde
 	};
 
 	ASE_AWK_ASSERT (run->awk, nde->type >= ASE_AWK_NDE_GRP &&
-		(nde->type - ASE_AWK_NDE_GRP) < ase_countof(__eval_func));
+		(nde->type - ASE_AWK_NDE_GRP) < ASE_COUNTOF(__eval_func));
 
 	return __eval_func[nde->type-ASE_AWK_NDE_GRP] (run, nde);
 }
@@ -3082,7 +3082,7 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		ase_awk_refupval (run, right);
 
 		ASE_AWK_ASSERT (run->awk, exp->opcode >= 0 && 
-			exp->opcode < ase_countof(__binop_func));
+			exp->opcode < ASE_COUNTOF(__binop_func));
 		ASE_AWK_ASSERT (run->awk, __binop_func[exp->opcode] != ASE_NULL);
 
 		res = __binop_func[exp->opcode] (run, left, right);
@@ -4702,8 +4702,8 @@ static ase_awk_val_t* __eval_call (
 	 * ---------------------
 	 */
 
-	ASE_AWK_ASSERT (run->awk, ase_sizeof(void*) >= ase_sizeof(run->stack_top));
-	ASE_AWK_ASSERT (run->awk, ase_sizeof(void*) >= ase_sizeof(run->stack_base));
+	ASE_AWK_ASSERT (run->awk, ASE_SIZEOF(void*) >= ASE_SIZEOF(run->stack_top));
+	ASE_AWK_ASSERT (run->awk, ASE_SIZEOF(void*) >= ASE_SIZEOF(run->stack_base));
 
 	saved_stack_top = run->stack_top;
 
@@ -5373,18 +5373,18 @@ static int __raw_push (ase_awk_run_t* run, void* val)
 		if (run->awk->syscas.realloc != ASE_NULL)
 		{
 			tmp = (void**) ASE_AWK_REALLOC (
-				run->awk, run->stack, n * ase_sizeof(void*)); 
+				run->awk, run->stack, n * ASE_SIZEOF(void*)); 
 			if (tmp == ASE_NULL) return -1;
 		}
 		else
 		{
 			tmp = (void**) ASE_AWK_MALLOC (
-				run->awk, n * ase_sizeof(void*));
+				run->awk, n * ASE_SIZEOF(void*));
 			if (tmp == ASE_NULL) return -1;
 			if (run->stack != ASE_NULL)
 			{
 				ASE_AWK_MEMCPY (run->awk, tmp, run->stack, 
-					run->stack_limit * ase_sizeof(void*)); 
+					run->stack_limit * ASE_SIZEOF(void*)); 
 				ASE_AWK_FREE (run->awk, run->stack);
 			}
 		}
@@ -5646,7 +5646,7 @@ ase_char_t* ase_awk_format (
 		} \
 		(buf)->len += (buf)->inc; \
 		(buf)->ptr = (ase_char_t*)ASE_AWK_MALLOC ( \
-			run->awk, (buf)->len * ase_sizeof(ase_char_t)); \
+			run->awk, (buf)->len * ASE_SIZEOF(ase_char_t)); \
 		if ((buf)->ptr == ASE_NULL) (buf)->len = 0; \
 	} while (0) 
 

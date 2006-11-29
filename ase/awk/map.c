@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.31 2006-11-13 15:08:53 bacon Exp $
+ * $Id: map.c,v 1.32 2006-11-29 02:54:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -24,7 +24,7 @@ ase_awk_map_t* ase_awk_map_open (
 	if (map == ASE_NULL) 
 	{
 		map = (ase_awk_map_t*) ASE_AWK_MALLOC (
-			awk, ase_sizeof(ase_awk_map_t));
+			awk, ASE_SIZEOF(ase_awk_map_t));
 		if (map == ASE_NULL) return ASE_NULL;
 		map->__dynamic = ase_true;
 	}
@@ -32,7 +32,7 @@ ase_awk_map_t* ase_awk_map_open (
 
 	map->awk = awk;
 	map->buck = (ase_awk_pair_t**) 
-		ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_pair_t*) * capa);
+		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_pair_t*) * capa);
 	if (map->buck == ASE_NULL) 
 	{
 		if (map->__dynamic) ASE_AWK_FREE (awk, map);
@@ -138,7 +138,7 @@ int ase_awk_map_putx (
 	}
 
 	pair = (ase_awk_pair_t*) ASE_AWK_MALLOC (
-		map->awk, ase_sizeof(ase_awk_pair_t));
+		map->awk, ASE_SIZEOF(ase_awk_pair_t));
 	if (pair == ASE_NULL) return -1; /* error */
 
 	/*pair->key = key;*/ 
@@ -271,7 +271,7 @@ static ase_size_t __hash (const ase_char_t* key, ase_size_t key_len)
 	while (key < end)
 	{
 		ase_byte_t* bp = (ase_byte_t*)key;
-		for (i = 0; i < ase_sizeof(*key); i++) n = n * 31 + *bp++;
+		for (i = 0; i < ASE_SIZEOF(*key); i++) n = n * 31 + *bp++;
 		key++;
 	}	
 

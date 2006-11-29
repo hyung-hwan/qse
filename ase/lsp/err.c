@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.7 2006-10-30 03:34:40 bacon Exp $
+ * $Id: err.c,v 1.8 2006-11-29 02:54:17 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -35,7 +35,7 @@ const ase_char_t* ase_lsp_geterrstr (int errnum)
 		ASE_T("divide by zero")
 	};
 
-	if (errnum >= 0 && errnum < ase_countof(__errstr)) 
+	if (errnum >= 0 && errnum < ASE_COUNTOF(__errstr)) 
 	{
 		return __errstr[errnum];
 	}

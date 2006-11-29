@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.41 2006-11-29 02:39:09 bacon Exp $
+ * $Id: macros.h,v 1.42 2006-11-29 02:54:14 bacon Exp $
  */
 
 #ifndef _ASE_MACROS_H_
@@ -15,26 +15,20 @@
 #endif
 
 #define ASE_CHAR_EOF  ((ase_cint_t)-1)
-#define ASE_UNREFERENCED(x) ((x) = (x))
+#define ASE_UNUSED(x) ((x) = (x))
 
-#define ASE_SIZEOF(n)   (sizeof(n))
-#define ASE_COUNTOF(n)  (sizeof(n) / sizeof(n[0]))
+#define ASE_SIZEOF(n)  (sizeof(n))
+#define ASE_COUNTOF(n) (sizeof(n)/sizeof(n[0]))
 #define ASE_OFFSETOF(type,member) ((ase_size_t)&((type*)0)->member)
-
-#if defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR) && !defined(__LCC__)
-	#define ase_main wmain
-#elif defined(ASE_CHAR_IS_MCHAR)
-	#define ase_main main
-#endif
 
 #define ASE_TYPE_IS_SIGNED(type) (((type)0) > ((type)-1))
 #define ASE_TYPE_IS_UNSIGNED(type) (((type)0) < ((type)-1))
 #define ASE_TYPE_MAX(type) \
-	((ASE_TYPE_IS_SIGNED(type)? (type)~((type)1 << (ase_sizeof(type) * 8 - 1)): (type)(~(type)0)))
+	((ASE_TYPE_IS_SIGNED(type)? (type)~((type)1 << (ASE_SIZEOF(type) * 8 - 1)): (type)(~(type)0)))
 #define ASE_TYPE_MIN(type) \
-	((ASE_TYPE_IS_SIGNED(type)? (type)((type)1 << (ase_sizeof(type) * 8 - 1)): (type)0))
+	((ASE_TYPE_IS_SIGNED(type)? (type)((type)1 << (ASE_SIZEOF(type) * 8 - 1)): (type)0))
 
-#define ASE_NUM_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
+#define ASE_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
 #define ASE_SWAP(x,y,original_type,casting_type) \
 	do { \
 		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
@@ -64,13 +58,6 @@
 #define ASE_MS(str)   ((const ase_mchar_t*)str)
 #define ASE_MT(txt)   (txt)
 
-/* TODO: if the compiler doesn't have the built-in wchar_t support
- *       ASE_WCHAR & ASE_WTEXT must be defined differently.
-#define ASE_WCHAR(ch) ((ase_wchar_t)ch)
-#define ASE_WTEXT(txt) don't know yet... may have to call a function?
- */
-
-/* new short form */
 #define ASE_WC(ch)     ((ase_wchar_t)L ## ch)
 #define ASE_WS(str)    ((const ase_wchar_t*)L ## str)
 #define ASE_WT(txt)    (L ## txt)
@@ -80,7 +67,6 @@
 	#define ASE_S(str) ASE_MS(str)
 	#define ASE_T(txt) ASE_MT(txt)
 #else
-	/* new short form */
 	#define ASE_C(ch)  ASE_WC(ch)
 	#define ASE_S(str) ASE_WS(str)
 	#define ASE_T(txt) ASE_WT(txt)

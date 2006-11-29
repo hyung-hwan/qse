@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.5 2006-10-30 14:31:37 bacon Exp $
+ * $Id: misc.c,v 1.6 2006-11-29 02:54:17 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -605,7 +605,7 @@ ase_char_t* ase_lsp_strdup (ase_lsp_t* lsp, const ase_char_t* str)
 	ase_char_t* tmp;
 
 	tmp = (ase_char_t*) ASE_LSP_MALLOC (
-		lsp, (ase_lsp_strlen(str) + 1) * ase_sizeof(ase_char_t));
+		lsp, (ase_lsp_strlen(str) + 1) * ASE_SIZEOF(ase_char_t));
 	if (tmp == ASE_NULL) return ASE_NULL;
 
 	ase_lsp_strcpy (tmp, str);
@@ -617,7 +617,7 @@ ase_char_t* ase_lsp_strxdup (ase_lsp_t* lsp, const ase_char_t* str, ase_size_t l
 	ase_char_t* tmp;
 
 	tmp = (ase_char_t*) ASE_LSP_MALLOC (
-		lsp, (len + 1) * ase_sizeof(ase_char_t));
+		lsp, (len + 1) * ASE_SIZEOF(ase_char_t));
 	if (tmp == ASE_NULL) return ASE_NULL;
 
 	ase_lsp_strncpy (tmp, str, len);
@@ -632,7 +632,7 @@ ase_char_t* ase_lsp_strxdup2 (
 	ase_char_t* tmp;
 
 	tmp = (ase_char_t*) ASE_LSP_MALLOC (
-		lsp, (len1 + len2 + 1) * ase_sizeof(ase_char_t));
+		lsp, (len1 + len2 + 1) * ASE_SIZEOF(ase_char_t));
 	if (tmp == ASE_NULL) return ASE_NULL;
 
 	ase_lsp_strncpy (tmp, str1, len1);

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.23 2006-11-19 11:55:16 bacon Exp $
+ * $Id: rex.h,v 1.24 2006-11-29 02:54:16 bacon Exp $
  **/
 
 #ifndef _ASE_AWK_REX_H_
@@ -40,7 +40,7 @@
 #define ASE_AWK_REX_NA(code) (*(ase_size_t*)(code))
 
 #define ASE_AWK_REX_LEN(code) \
-	(*(ase_size_t*)((ase_byte_t*)(code)+ase_sizeof(ase_size_t)))
+	(*(ase_size_t*)((ase_byte_t*)(code)+ASE_SIZEOF(ase_size_t)))
 
 enum ase_awk_rex_opt_t
 {
