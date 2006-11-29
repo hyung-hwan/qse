@@ -1,25 +1,21 @@
 /*
- * $Id: Awk.java,v 1.16 2006-11-29 11:41:15 bacon Exp $
+ * $Id: Awk.java,v 1.17 2006-11-29 14:52:36 bacon Exp $
  */
 
 package ase.test.awk;
 
 public class Awk extends ase.awk.StdAwk
 {
-	private String[] cin;
-	private int cin_no;
-
-	private String[] cout;
-	private int cout_no;
-
 	public Awk () throws ase.awk.Exception
 	{
 		super ();
 
-		try { addBuiltinFunction ("sin", 1, 10); } 
-		catch (ase.awk.Exception e) { System.out.println (">>>>>> CANNOT ADD sin"); }
-		try { addBuiltinFunction ("xxx", 1, 1); } 
-		catch (ase.awk.Exception e) { System.out.println (">>>>>> CANNOT ADD xxx"); }
+		addBuiltinFunction ("sin", 1, 10); 
+		addBuiltinFunction ("xxx", 1, 1); 
+		//addBuiltinFunction ("xxx", 1, 1); 
+
+		//deleteBuiltinFunction ("sin");
+		//deleteBuiltinFunction ("sin");
 	}
 
 	public Object xxx (Object[] args)
@@ -27,6 +23,7 @@ public class Awk extends ase.awk.StdAwk
 		System.out.println ("BFN_XXX");
 		return null;
 	}
+
 	public Object sin (Object[] args)
 	{
 		System.out.println ("<<BFN_SIN>>");
@@ -38,6 +35,12 @@ public class Awk extends ase.awk.StdAwk
 			else System.out.println (args[i].toString());
 		}
 		return null;
+		//return new String ("return value");
+		//return new Double (1.234);
+		//return new Float (1.234);
+		//return new Integer (1001);
+		//return new Long (1001);
+		//return new Short ((short)1001);
 	}
 
 	protected String[] getInputConsoleNames ()

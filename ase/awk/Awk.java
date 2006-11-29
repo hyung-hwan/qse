@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.13 2006-11-27 15:10:34 bacon Exp $
+ * $Id: Awk.java,v 1.14 2006-11-29 14:52:06 bacon Exp $
  */
 
 package ase.awk;
@@ -45,8 +45,8 @@ public abstract class Awk
 	public  native void parse () throws Exception;
 	public  native void run () throws Exception;
 
-	private native void addbfn (String name, int min_args, int max_args);
-	//private native int delbfn (String name);
+	private native int addbfn (String name, int min_args, int max_args);
+	private native int delbfn (String name);
 
 	private native int setfilename (long run_id, String name);
 	private native int setofilename (long run_id, String name);
@@ -55,7 +55,20 @@ public abstract class Awk
 	public void addBuiltinFunction (
 		String name, int min_args, int max_args) throws Exception
 	{
-		addbfn (name, min_args, max_args);
+		if (addbfn (name, min_args, max_args) == -1)
+		{
+			throw new Exception (
+				"cannot add the built-in function - " + name);
+		}
+	}
+
+	public void deleteBuiltinFunction (String name) throws Exception
+	{
+		if (delbfn (name) == -1) 
+		{
+			throw new Exception (
+				"cannot delete the built-in function - " + name);
+		}
 	}
 
 	/* == console name setters == */
