@@ -18,7 +18,8 @@ run_test()
 		output=`echo $script | sed 's/\.awk$/.out/g'`
 		./awk $script emp-en.data > "$output.$pid"
 
-		diff -y $output "$output.$pid" 
+		#diff -y $output "$output.$pid" 
+		diff $output "$output.$pid" 
 		if [ $? -ne 0 ]
 		then
 			echo "###################################"
