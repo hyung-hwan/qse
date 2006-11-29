@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.55 2006-11-29 02:54:15 bacon Exp $
+ * $Id: err.c,v 1.56 2006-11-29 14:52:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -17,6 +17,7 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("out of memory"),
 		ASE_T("invalid parameter"),
 		ASE_T("existing data found"),
+		ASE_T("no such data entry found"),
 		ASE_T("general run-time error"),
 		ASE_T("one or more running instances"),
 		ASE_T("too many running instances"),
@@ -105,6 +106,7 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("next cannot be called from the BEGIN or END block"),
 		ASE_T("nextfile cannot be called from the BEGIN or END block"),
 		ASE_T("wrong implementation of user-defined io handler"),
+		ASE_T("wrong implementation of built-in function handler"),
 		ASE_T("no such io name found"),
 		ASE_T("io handler has returned an error"),
 		ASE_T("not sufficient arguments to formatting sequence"),

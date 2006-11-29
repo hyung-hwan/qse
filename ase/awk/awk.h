@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.156 2006-11-29 02:39:09 bacon Exp $
+ * $Id: awk.h,v 1.157 2006-11-29 14:52:06 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -205,6 +205,7 @@ enum
 	ASE_AWK_ENOMEM,         /* out of memory */
 	ASE_AWK_EINVAL,         /* invalid parameter */
 	ASE_AWK_EEXIST,         /* existing data found */
+	ASE_AWK_ENOENT,         /* no such data entry found */
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_ERUNNING,       /* there are running instances */
 	ASE_AWK_ETOOMANYRUNS,   /* too many running instances */
@@ -293,7 +294,8 @@ enum
 	ASE_AWK_EPIPE,             /* pipe operation error */
 	ASE_AWK_ENEXTCALL,         /* next called from BEGIN or END */
 	ASE_AWK_ENEXTFILECALL,     /* nextfile called from BEGIN or END */
-	ASE_AWK_EIOIMPL,           /* wrong implementation of user io handler */
+	ASE_AWK_EIOIMPL,           /* wrong user io handler implementation */
+	ASE_AWK_EBFNIMPL,          /* wrong builtin function implementation */
 	ASE_AWK_ENOSUCHIO,         /* no such io name found */
 	ASE_AWK_EIOHANDLER,        /* io handler has returned an error */
 	ASE_AWK_EFMTARG,           /* arguments to format string not sufficient */

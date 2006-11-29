@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.83 2006-11-29 03:18:18 bacon Exp $
+ * $Id: func.c,v 1.84 2006-11-29 14:52:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -69,6 +69,7 @@ void* ase_awk_addbfn (
 		awk->errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;
 	}
+
 	p->name.len = name_len;
 	p->valid = when_valid;
 	p->arg.min = min_args;
@@ -97,7 +98,7 @@ int ase_awk_delbfn (ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 {
 	ase_awk_bfn_t* p, * pp = ASE_NULL;
 
-	for (p = awk->bfn.user; p != ASE_NULL; p++)
+	for (p = awk->bfn.user; p != ASE_NULL; p = p->next)
 	{
 		if (ase_awk_strxncmp (
 			p->name.ptr, p->name.len, name, name_len) == 0)
@@ -116,6 +117,7 @@ int ase_awk_delbfn (ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 		pp = p;
 	}
 
+	awk->errnum = ASE_AWK_ENOENT;
 	return -1;
 }
 
