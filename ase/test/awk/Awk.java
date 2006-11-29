@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.15 2006-11-28 15:09:03 bacon Exp $
+ * $Id: Awk.java,v 1.16 2006-11-29 11:41:15 bacon Exp $
  */
 
 package ase.test.awk;
@@ -16,7 +16,7 @@ public class Awk extends ase.awk.StdAwk
 	{
 		super ();
 
-		try { addBuiltinFunction ("sin", 1, 1); } 
+		try { addBuiltinFunction ("sin", 1, 10); } 
 		catch (ase.awk.Exception e) { System.out.println (">>>>>> CANNOT ADD sin"); }
 		try { addBuiltinFunction ("xxx", 1, 1); } 
 		catch (ase.awk.Exception e) { System.out.println (">>>>>> CANNOT ADD xxx"); }
@@ -29,8 +29,15 @@ public class Awk extends ase.awk.StdAwk
 	}
 	public Object sin (Object[] args)
 	{
-		System.out.println ("BFN_SIN: " + (String)args[0]);
-		return args[0];
+		System.out.println ("<<BFN_SIN>>");
+		for (int i = 0; i < args.length; i++)
+		{
+			System.out.print ("ARG #" + i);
+			System.out.print (": ");
+			if (args[i] == null) System.out.println ("nil");
+			else System.out.println (args[i].toString());
+		}
+		return null;
 	}
 
 	protected String[] getInputConsoleNames ()

@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.32 2006-11-29 03:18:18 bacon Exp $
+ * $Id: jni.c,v 1.33 2006-11-29 11:41:14 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -64,6 +64,11 @@ struct run_data_t
 {
 	JNIEnv* env;
 	jobject obj;
+
+	jclass string_class;
+	jclass integer_class;
+	jclass double_class;
+	jclass object_class;
 };
 
 static void* __awk_malloc (ase_size_t n, void* custom_data)
@@ -347,6 +352,17 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 	run_data.env = env;
 	run_data.obj = obj;
 
+	/* would global reference be necessary? */
+	run_data.string_class = (*env)->FindClass (env, "java/lang/String");
+	run_data.integer_class = (*env)->FindClass (env, "java/lang/Integer");
+	run_data.double_class = (*env)->FindClass (env, "java/lang/Double");
+	run_data.object_class = (*env)->FindClass (env, "java/lang/Object");
+
+	ASE_AWK_ASSERT (awk, run_data.string_class != NULL);
+	ASE_AWK_ASSERT (awk, run_data.integer_class != NULL);
+	ASE_AWK_ASSERT (awk, run_data.double_class != NULL);
+	ASE_AWK_ASSERT (awk, run_data.object_class != NULL);
+
 	runio_data.env = env;
 	runio_data.obj = obj;
 
@@ -366,8 +382,6 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 		char msg[MSG_SIZE];
 		int n;
 
-		(*env)->DeleteLocalRef (env, class);
-
 		except = (*env)->FindClass (env, CLASS_EXCEPTION);
 		if (except == NULL) return; /* exception thrown */
 
@@ -377,10 +391,18 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 
 		(*env)->ThrowNew (env, except, msg);
 		(*env)->DeleteLocalRef (env, except);
+
+		(*env)->DeleteLocalRef (env, run_data.integer_class);
+		(*env)->DeleteLocalRef (env, run_data.double_class);
+		(*env)->DeleteLocalRef (env, run_data.string_class);
+		(*env)->DeleteLocalRef (env, run_data.object_class);
 		return;
 	}
 
-	(*env)->DeleteLocalRef (env, class);
+	(*env)->DeleteLocalRef (env, run_data.integer_class);
+	(*env)->DeleteLocalRef (env, run_data.double_class);
+	(*env)->DeleteLocalRef (env, run_data.string_class);
+	(*env)->DeleteLocalRef (env, run_data.object_class);
 }
 
 static ase_ssize_t __java_open_source (JNIEnv* env, jobject obj, int mode)
@@ -591,6 +613,13 @@ static ase_ssize_t __java_open_extio (
 		 * ret ==  0 opened the stream and reached its end 
 		 * ret ==  1 opened the stream. */
 		extio->handle = (*env)->NewGlobalRef (env, extio_object);
+		/* TODO: close it...
+		if (extio->handle == NULL) 
+		{
+			close it again...
+			ret = -1;
+		}
+		*/
 	}
 
 	(*env)->DeleteLocalRef (env, extio_object);
@@ -874,18 +903,21 @@ static int __handle_bfn (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	jclass class; 
-	jmethodID method;
+	jmethodID method, init;
 	jthrowable thrown;
 	jstring name;
 	const char* name_utf;
 	run_data_t* run_data;
 	JNIEnv* env; 
 	jobject obj;
-	jint ret, i, j, nargs;
+	jint i, nargs;
 	jobjectArray args;
-	jobject arg;
+	jobject arg, ret;
+
+	ase_awk_t* awk;
 	ase_awk_val_t* v;
 
+	awk = ase_awk_getrunawk (run);
 	run_data = ase_awk_getruncustomdata (run);
 	nargs = ase_awk_getnargs (run);
 
@@ -919,35 +951,43 @@ static int __handle_bfn (
 		return -1;
 	}
 
-	class = (*env)->FindClass (env, "java/lang/Object");
-	if (class == NULL)
-	{
-		ase_awk_setrunerrnum (run, ASE_AWK_EINTERNAL);
-		return -1;
-	}
-
-	args = (*env)->NewObjectArray (env, nargs, class, NULL);
-	(*env)->DeleteLocalRef (env, class);
+	args = (*env)->NewObjectArray (
+		env, nargs, run_data->object_class, NULL);
 	if (args == NULL)
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
 
-/* A LOT OF TODO's HERE */
 	for (i = 0; i < nargs; i++)
 	{
 		v = ase_awk_getarg (run, i);
 
-		if (v->type == ASE_AWK_VAL_NIL)
+		arg = NULL;
+
+		if (v->type == ASE_AWK_VAL_INT)
 		{
-			
-		}
-		else if (v->type == ASE_AWK_VAL_INT)
-		{
+			jint jv;
+
+			init = (*env)->GetMethodID (env, 
+				run_data->integer_class, "<init>", "(I)V");
+			ASE_AWK_ASSERT (awk, init != NULL);
+
+			jv = ((ase_awk_val_int_t*)v)->val;
+			arg = (*env)->NewObject (env, 
+				run_data->integer_class, init, jv);
 		}
 		else if (v->type == ASE_AWK_VAL_REAL)
 		{
+			jdouble jv;
+
+			init =  (*env)->GetMethodID (env, 
+				run_data->double_class, "<init>", "(D)V");
+			ASE_AWK_ASSERT (awk, init != NULL);
+
+			jv = ((ase_awk_val_real_t*)v)->val;
+			arg = (*env)->NewObject (env, 
+				run_data->double_class, init, jv);
 		}
 		else if (v->type == ASE_AWK_VAL_STR)
 		{
@@ -955,39 +995,45 @@ static int __handle_bfn (
 				((ase_awk_val_str_t*)v)->buf, 
 				((ase_awk_val_str_t*)v)->len);
 		}
-		else
-		{
-			/* something wrong ... */
-		}
 
-		if (arg == NULL)
+		if (v->type != ASE_AWK_VAL_NIL && arg == NULL)
 		{
-			/* unwinde the local references */
-			for (j = 0; j < i; j++)
-			{
-				arg = (*env)->GetObjectArrayElement (env, args, i);
-				if (arg != NULL) (*env)->DeleteLocalRef (env, arg);
-			}
-
-			/* TODO... */
+			(*env)->DeleteLocalRef (env, args);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
 		(*env)->SetObjectArrayElement (env, args, i, arg);
+		if (arg != NULL) (*env)->DeleteLocalRef (env, arg);
 	}
 
 	ret = (*env)->CallObjectMethod (env, obj, method, args);
 	thrown = (*env)->ExceptionOccurred (env);
 	if (thrown)
 	{
+(*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, args);
 		ase_awk_setrunerrnum (run, ASE_AWK_EINTERNAL);
 		return -1;
 	}
-		
+
+/* TODO ... */
+	if ((*env)->IsInstanceOf (env, ret, run_data->string_class))
+	{
+		ase_awk_setretval (...);
+	}
+	else if ((*env)->IsInstanceOf (env, ret, run_data->integer_class))
+	{
+		ase_awk_setretval (...);
+	}
+	else if ((*env)->IsInstanceOf (env, ret, run_data->double_class))
+	{
+		ase_awk_setretval (...);
+	}
+	
 	(*env)->DeleteLocalRef (env, args);
-	return ret;
+	return 0;
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
