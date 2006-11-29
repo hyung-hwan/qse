@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.18 2006-11-29 02:54:17 bacon Exp $
+ * $Id: lsp.c,v 1.19 2006-11-29 03:19:48 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -42,7 +42,7 @@ ase_lsp_t* ase_lsp_open (
 	    syscas->dprintf == ASE_NULL || 
 	    syscas->abort == ASE_NULL) return ASE_NULL;
 
-#if defined(_WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	lsp = (ase_lsp_t*) malloc (ASE_SIZEOF(ase_lsp_t));
 #else
 	lsp = (ase_lsp_t*) syscas->malloc (

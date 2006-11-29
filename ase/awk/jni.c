@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.31 2006-11-29 02:39:09 bacon Exp $
+ * $Id: jni.c,v 1.32 2006-11-29 03:18:18 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -965,7 +965,7 @@ static int __handle_bfn (
 			/* unwinde the local references */
 			for (j = 0; j < i; j++)
 			{
-				arg = (*env)->GetObjectArrayElement (env, args, i, arg);
+				arg = (*env)->GetObjectArrayElement (env, args, i);
 				if (arg != NULL) (*env)->DeleteLocalRef (env, arg);
 			}
 

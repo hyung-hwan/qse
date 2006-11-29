@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.94 2006-11-29 02:54:14 bacon Exp $ 
+ * $Id: awk.c,v 1.95 2006-11-29 03:18:18 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -41,7 +41,7 @@ ase_awk_t* ase_awk_open (const ase_awk_syscas_t* syscas)
 
 	if (syscas->pow == ASE_NULL) return ASE_NULL;
 
-#if defined(_WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	awk = (ase_awk_t*) malloc (ASE_SIZEOF(ase_awk_t));
 #else
 	awk = (ase_awk_t*) syscas->malloc (

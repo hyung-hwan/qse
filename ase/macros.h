@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.43 2006-11-29 03:02:07 bacon Exp $
+ * $Id: macros.h,v 1.44 2006-11-29 03:18:18 bacon Exp $
  */
 
 #ifndef _ASE_MACROS_H_
@@ -15,7 +15,6 @@
 #endif
 
 #define ASE_CHAR_EOF  ((ase_cint_t)-1)
-#define ASE_UNUSED(x) ((x) = (x))
 
 #define ASE_SIZEOF(n)  (sizeof(n))
 #define ASE_COUNTOF(n) (sizeof(n)/sizeof(n[0]))

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.82 2006-11-29 02:54:15 bacon Exp $
+ * $Id: func.c,v 1.83 2006-11-29 03:18:18 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -23,22 +23,22 @@ static int __bfn_sprintf (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 static ase_awk_bfn_t __sys_bfn[] = 
 {
 	/* io functions */
-	{ {ASE_T("close"),   5}, ASE_AWK_EXTIO, 1, 1,  ASE_NULL, __bfn_close},
-	{ {ASE_T("fflush"),  6}, ASE_AWK_EXTIO, 0, 1,  ASE_NULL, __bfn_fflush},
+	{ {ASE_T("close"),   5}, ASE_AWK_EXTIO, {1, 1, ASE_NULL}, __bfn_close},
+	{ {ASE_T("fflush"),  6}, ASE_AWK_EXTIO, {0, 1, ASE_NULL}, __bfn_fflush},
 
 	/* string functions */
-	{ {ASE_T("index"),   5}, 0,  2,   2,  ASE_NULL,     __bfn_index},
-	{ {ASE_T("substr"),  6}, 0,  2,   3,  ASE_NULL,     __bfn_substr},
-	{ {ASE_T("length"),  6}, 0,  1,   1,  ASE_NULL,     __bfn_length},
-	{ {ASE_T("split"),   5}, 0,  2,   3,  ASE_T("vrv"), __bfn_split},
-	{ {ASE_T("tolower"), 7}, 0,  1,   1,  ASE_NULL,     __bfn_tolower},
-	{ {ASE_T("toupper"), 7}, 0,  1,   1,  ASE_NULL,     __bfn_toupper},
-	{ {ASE_T("gsub"),    4}, 0,  2,   3,  ASE_T("xvr"), __bfn_gsub},
-	{ {ASE_T("sub"),     3}, 0,  2,   3,  ASE_T("xvr"), __bfn_sub},
-	{ {ASE_T("match"),   5}, 0,  2,   2,  ASE_T("vx"),  __bfn_match},
-	{ {ASE_T("sprintf"), 7}, 0,  1, MAX,  ASE_NULL,     __bfn_sprintf},
+	{ {ASE_T("index"),   5}, 0,  {2,   2, ASE_NULL},     __bfn_index},
+	{ {ASE_T("substr"),  6}, 0,  {2,   3, ASE_NULL},     __bfn_substr},
+	{ {ASE_T("length"),  6}, 0,  {1,   1, ASE_NULL},     __bfn_length},
+	{ {ASE_T("split"),   5}, 0,  {2,   3, ASE_T("vrv")}, __bfn_split},
+	{ {ASE_T("tolower"), 7}, 0,  {1,   1, ASE_NULL},     __bfn_tolower},
+	{ {ASE_T("toupper"), 7}, 0,  {1,   1, ASE_NULL},     __bfn_toupper},
+	{ {ASE_T("gsub"),    4}, 0,  {2,   3, ASE_T("xvr")}, __bfn_gsub},
+	{ {ASE_T("sub"),     3}, 0,  {2,   3, ASE_T("xvr")}, __bfn_sub},
+	{ {ASE_T("match"),   5}, 0,  {2,   2, ASE_T("vx")},  __bfn_match},
+	{ {ASE_T("sprintf"), 7}, 0,  {1, MAX, ASE_NULL},     __bfn_sprintf},
 
-	{ {ASE_NULL,         0}, 0,  0,   0,  ASE_NULL,     ASE_NULL}
+	{ {ASE_NULL,         0}, 0,  {0,   0, ASE_NULL},     ASE_NULL}
 };
 
 void* ase_awk_addbfn (
@@ -275,7 +275,7 @@ static int __bfn_fflush (
 	ase_char_t* str0;
 	ase_size_t len0;
 	int n;
-       
+
 	nargs = ase_awk_getnargs (run);
 	ASE_AWK_ASSERT (run->awk, nargs == 0 || nargs == 1);
 
