@@ -1,6 +1,6 @@
 #!/bin/sh
 
-init()
+run_init()
 {
 	for script in emp-???.awk
 	do
@@ -9,7 +9,7 @@ init()
 	done
 }
 
-test()
+run_test()
 {
 	pid=$$
 
@@ -51,10 +51,10 @@ fi
 
 if [ "$1" = "init" ]
 then
-	init	
+	run_init	
 elif [ "$1" = "test" ]
 then
-	test
+	run_test
 else
 	echo "Usage: $0 init"
 	echo "       $0 test"
