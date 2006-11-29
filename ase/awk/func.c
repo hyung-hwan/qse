@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.81 2006-11-29 02:39:09 bacon Exp $
+ * $Id: func.c,v 1.82 2006-11-29 02:54:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -55,7 +55,7 @@ void* ase_awk_addbfn (
 		return ASE_NULL;
 	}
 
-	p = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, ase_sizeof(ase_awk_bfn_t));
+	p = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_bfn_t));
 	if (p == ASE_NULL) 
 	{
 		awk->errnum = ASE_AWK_ENOMEM;
@@ -538,7 +538,7 @@ static int __bfn_split (
 	ase_char_t* str, * str_free, * p, * tok;
 	ase_size_t str_len, str_left, tok_len;
 	ase_long_t sta, num;
-	ase_char_t key[ase_sizeof(ase_long_t)*8+2];
+	ase_char_t key[ASE_SIZEOF(ase_long_t)*8+2];
 	ase_size_t key_len;
 	ase_char_t* fs_ptr, * fs_free;
 	ase_size_t fs_len;
@@ -736,7 +736,7 @@ static int __bfn_split (
 
 		/* put it into the map */
 		key_len = ase_awk_longtostr (
-			num, 10, ASE_NULL, key, ase_countof(key));
+			num, 10, ASE_NULL, key, ASE_COUNTOF(key));
 		ASE_AWK_ASSERT (run->awk, key_len != (ase_size_t)-1);
 
 		/* don't forget to update the reference count when you 

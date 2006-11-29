@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.7 2006-11-16 11:53:16 bacon Exp $
+ * $Id: rec.c,v 1.8 2006-11-29 02:54:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -164,7 +164,7 @@ static int __split_record (ase_awk_run_t* run)
 	if (nflds > run->inrec.maxflds)
 	{
 		void* tmp = ASE_AWK_MALLOC (
-			run->awk, ase_sizeof(*run->inrec.flds) * nflds);
+			run->awk, ASE_SIZEOF(*run->inrec.flds) * nflds);
 		if (tmp == ASE_NULL) 
 		{
 			if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
@@ -305,7 +305,7 @@ static int __recomp_record_fields (
 		{
 			tmp = ASE_AWK_REALLOC (
 				run->awk, run->inrec.flds, 
-				ase_sizeof(*run->inrec.flds) * max);
+				ASE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == ASE_NULL) 
 			{
 				run->errnum = ASE_AWK_ENOMEM;
@@ -315,7 +315,7 @@ static int __recomp_record_fields (
 		else
 		{
 			tmp = ASE_AWK_MALLOC (
-				run->awk, ase_sizeof(*run->inrec.flds) * max);
+				run->awk, ASE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == ASE_NULL)
 			{
 				run->errnum = ASE_AWK_ENOMEM;
@@ -324,7 +324,7 @@ static int __recomp_record_fields (
 			if (run->inrec.flds != ASE_NULL)
 			{
 				ASE_AWK_MEMCPY (run->awk, tmp, run->inrec.flds, 
-					ase_sizeof(*run->inrec.flds) * run->inrec.maxflds);
+					ASE_SIZEOF(*run->inrec.flds) * run->inrec.maxflds);
 				ASE_AWK_FREE (run->awk, run->inrec.flds);
 			}
 		}

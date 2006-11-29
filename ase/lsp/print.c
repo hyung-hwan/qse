@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.18 2006-10-30 03:49:06 bacon Exp $
+ * $Id: print.c,v 1.19 2006-11-29 02:54:17 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -43,22 +43,22 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 		case ASE_LSP_OBJ_INT:
 		#if defined(__BORLANDC__) || defined(_MSC_VER)
 			lsp->syscas.sprintf (
-				buf, ase_countof(buf), 
+				buf, ASE_COUNTOF(buf), 
 				ASE_T("%I64d"), (__int64)ASE_LSP_IVAL(obj));
 		#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
 			lsp->syscas.sprintf (
-				buf, ase_countof(buf), 
+				buf, ASE_COUNTOF(buf), 
 				ASE_T("%ld"), (long)ASE_LSP_IVAL(obj));
 		#else
 			lsp->syscas.sprintf (
-				buf, ase_countof(buf), 
+				buf, ASE_COUNTOF(buf), 
 				ASE_T("%lld"), (long long)ASE_LSP_IVAL(obj));
 		#endif
 			OUTPUT_STR (lsp, buf);
 			break;
 
 		case ASE_LSP_OBJ_REAL:
-			lsp->syscas.sprintf (buf, ase_countof(buf), 
+			lsp->syscas.sprintf (buf, ASE_COUNTOF(buf), 
 				ASE_T("%Lf"), (long double)ASE_LSP_RVAL(obj));
 
 			OUTPUT_STR (lsp, buf);
@@ -117,7 +117,7 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 			break;
 
 		default:
-			lsp->syscas.sprintf (buf, ase_countof(buf),
+			lsp->syscas.sprintf (buf, ASE_COUNTOF(buf),
 				ASE_T("unknown object type: %d"), ASE_LSP_TYPE(obj)); 
 			OUTPUT_STR (lsp, buf);
 	}

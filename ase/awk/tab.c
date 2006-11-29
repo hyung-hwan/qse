@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.24 2006-10-26 09:27:15 bacon Exp $
+ * $Id: tab.c,v 1.25 2006-11-29 02:54:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -9,7 +9,7 @@ ase_awk_tab_t* ase_awk_tab_open (ase_awk_tab_t* tab, ase_awk_t* awk)
 	if (tab == ASE_NULL) 
 	{
 		tab = (ase_awk_tab_t*) ASE_AWK_MALLOC (
-			awk, ase_sizeof(ase_awk_tab_t));
+			awk, ASE_SIZEOF(ase_awk_tab_t));
 		if (tab == ASE_NULL) return ASE_NULL;
 		tab->__dynamic = ase_true;
 	}
@@ -61,13 +61,13 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 		if (tab->awk->syscas.realloc != ASE_NULL)
 		{
 			tmp = ASE_AWK_REALLOC (tab->awk, 
-				tab->buf, ase_sizeof(*tab->buf) * capa);
+				tab->buf, ASE_SIZEOF(*tab->buf) * capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
 		}
 		else
 		{
 			tmp = ASE_AWK_MALLOC (
-				tab->awk, ase_sizeof(*tab->buf) * capa);
+				tab->awk, ASE_SIZEOF(*tab->buf) * capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
 			if (tab->buf != ASE_NULL) 
 			{
@@ -75,7 +75,7 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 				x = (capa > tab->capa)? tab->capa: capa;
 				ASE_AWK_MEMCPY (
 					tab->awk, tmp, tab->buf, 
-					ase_sizeof(*tab->buf) * x);
+					ASE_SIZEOF(*tab->buf) * x);
 				ASE_AWK_FREE (tab->awk, tab->buf);
 			}
 		}

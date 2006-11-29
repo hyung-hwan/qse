@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.17 2006-11-02 11:10:12 bacon Exp $
+ * $Id: lsp.c,v 1.18 2006-11-29 02:54:17 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -43,23 +43,23 @@ ase_lsp_t* ase_lsp_open (
 	    syscas->abort == ASE_NULL) return ASE_NULL;
 
 #if defined(_WIN32) && defined(_DEBUG)
-	lsp = (ase_lsp_t*) malloc (ase_sizeof(ase_lsp_t));
+	lsp = (ase_lsp_t*) malloc (ASE_SIZEOF(ase_lsp_t));
 #else
 	lsp = (ase_lsp_t*) syscas->malloc (
-		ase_sizeof(ase_lsp_t), syscas->custom_data);
+		ASE_SIZEOF(ase_lsp_t), syscas->custom_data);
 #endif
 	if (lsp == ASE_NULL) return ASE_NULL;
 
 	/* it uses the built-in ase_lsp_memset because lsp is not 
 	 * fully initialized yet */
-	ase_lsp_memset (lsp, 0, ase_sizeof(ase_lsp_t));
+	ase_lsp_memset (lsp, 0, ASE_SIZEOF(ase_lsp_t));
 
 	if (syscas->memcpy == ASE_NULL)
 	{
-		ase_lsp_memcpy (&lsp->syscas, syscas, ase_sizeof(lsp->syscas));
+		ase_lsp_memcpy (&lsp->syscas, syscas, ASE_SIZEOF(lsp->syscas));
 		lsp->syscas.memcpy = ase_lsp_memcpy;
 	}
-	else syscas->memcpy (&lsp->syscas, syscas, ase_sizeof(lsp->syscas));
+	else syscas->memcpy (&lsp->syscas, syscas, ASE_SIZEOF(lsp->syscas));
 	if (syscas->memset == ASE_NULL) lsp->syscas.memset = ase_lsp_memset;
 
 	if (ase_lsp_name_open(&lsp->token.name, 0, lsp) == ASE_NULL) 

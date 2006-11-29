@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.42 2006-11-28 11:26:47 bacon Exp $
+ * $Id: misc.c,v 1.43 2006-11-29 02:54:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -620,7 +620,7 @@ ase_char_t* ase_awk_strdup (ase_awk_t* awk, const ase_char_t* str)
 	ase_char_t* tmp;
 
 	tmp = (ase_char_t*) ASE_AWK_MALLOC (
-		awk, (ase_awk_strlen(str) + 1) * ase_sizeof(ase_char_t));
+		awk, (ase_awk_strlen(str) + 1) * ASE_SIZEOF(ase_char_t));
 	if (tmp == ASE_NULL) return ASE_NULL;
 
 	ase_awk_strcpy (tmp, str);
@@ -633,7 +633,7 @@ ase_char_t* ase_awk_strxdup (
 	ase_char_t* tmp;
 
 	tmp = (ase_char_t*) ASE_AWK_MALLOC (
-		awk, (len + 1) * ase_sizeof(ase_char_t));
+		awk, (len + 1) * ASE_SIZEOF(ase_char_t));
 	if (tmp == ASE_NULL) return ASE_NULL;
 
 	ase_awk_strncpy (tmp, str, len);
@@ -648,7 +648,7 @@ ase_char_t* ase_awk_strxdup2 (
 	ase_char_t* tmp;
 
 	tmp = (ase_char_t*) ASE_AWK_MALLOC (
-		awk, (len1 + len2 + 1) * ase_sizeof(ase_char_t));
+		awk, (len1 + len2 + 1) * ASE_SIZEOF(ase_char_t));
 	if (tmp == ASE_NULL) return ASE_NULL;
 
 	ase_awk_strncpy (tmp, str1, len1);

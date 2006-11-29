@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.54 2006-11-29 02:39:09 bacon Exp $
+ * $Id: err.c,v 1.55 2006-11-29 02:54:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -123,7 +123,7 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("garbage after the regular expression")
 	};
 
-	if (errnum >= 0 && errnum < ase_countof(__errstr)) 
+	if (errnum >= 0 && errnum < ASE_COUNTOF(__errstr)) 
 	{
 		return __errstr[errnum];
 	}

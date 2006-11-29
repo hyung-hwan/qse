@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.93 2006-11-28 04:30:21 bacon Exp $ 
+ * $Id: awk.c,v 1.94 2006-11-29 02:54:14 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -42,23 +42,23 @@ ase_awk_t* ase_awk_open (const ase_awk_syscas_t* syscas)
 	if (syscas->pow == ASE_NULL) return ASE_NULL;
 
 #if defined(_WIN32) && defined(_DEBUG)
-	awk = (ase_awk_t*) malloc (ase_sizeof(ase_awk_t));
+	awk = (ase_awk_t*) malloc (ASE_SIZEOF(ase_awk_t));
 #else
 	awk = (ase_awk_t*) syscas->malloc (
-		ase_sizeof(ase_awk_t), syscas->custom_data);
+		ASE_SIZEOF(ase_awk_t), syscas->custom_data);
 #endif
 	if (awk == ASE_NULL) return ASE_NULL;
 
 	/* it uses the built-in ase_awk_memset because awk is not 
 	 * fully initialized yet */
-	ase_awk_memset (awk, 0, ase_sizeof(ase_awk_t));
+	ase_awk_memset (awk, 0, ASE_SIZEOF(ase_awk_t));
 
 	if (syscas->memcpy == ASE_NULL)
 	{
-		ase_awk_memcpy (&awk->syscas, syscas, ase_sizeof(awk->syscas));
+		ase_awk_memcpy (&awk->syscas, syscas, ASE_SIZEOF(awk->syscas));
 		awk->syscas.memcpy = ase_awk_memcpy;
 	}
-	else syscas->memcpy (&awk->syscas, syscas, ase_sizeof(awk->syscas));
+	else syscas->memcpy (&awk->syscas, syscas, ASE_SIZEOF(awk->syscas));
 	if (syscas->memset == ASE_NULL) awk->syscas.memset = ase_awk_memset;
 
 	if (ase_awk_str_open (&awk->token.name, 128, awk) == ASE_NULL) 
@@ -179,7 +179,7 @@ int ase_awk_clear (ase_awk_t* awk)
 	awk->bfn.user
 */
 
-	ASE_AWK_MEMSET (awk, &awk->src.ios, 0, ase_sizeof(awk->src.ios));
+	ASE_AWK_MEMSET (awk, &awk->src.ios, 0, ASE_SIZEOF(awk->src.ios));
 	awk->src.lex.curc = ASE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
 	awk->src.lex.line = 1;

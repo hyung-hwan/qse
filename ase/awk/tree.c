@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.91 2006-11-27 15:10:35 bacon Exp $
+ * $Id: tree.c,v 1.92 2006-11-29 02:54:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -226,12 +226,12 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		{
 			if (((ase_awk_nde_int_t*)nde)->str == ASE_NULL)
 			{
-				ase_char_t tmp[ase_sizeof(ase_long_t)*8+2]; 
+				ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 				ase_size_t n;
 
 				n = ase_awk_longtostr (
 					((ase_awk_nde_int_t*)nde)->val,
-					10, ASE_NULL, tmp, ase_countof(tmp));
+					10, ASE_NULL, tmp, ASE_COUNTOF(tmp));
 
 				PUT_SRCSTRX (awk, tmp, n);
 			}
@@ -251,11 +251,11 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				ase_char_t tmp[256];
 			#if (ASE_SIZEOF_LONG_DOUBLE != 0)
 				awk->syscas.sprintf (
-					tmp, ase_countof(tmp), ASE_T("%Lf"), 
+					tmp, ASE_COUNTOF(tmp), ASE_T("%Lf"), 
 					(long double)((ase_awk_nde_real_t*)nde)->val);
 			#elif (ASE_SIZEOF_DOUBLE != 0)
 				awk->syscas.sprintf (
-					tmp, ase_countof(tmp), ASE_T("%f"), 
+					tmp, ASE_COUNTOF(tmp), ASE_T("%f"), 
 					(double)((ase_awk_nde_real_t*)nde)->val);
 			#else
 				#error unsupported floating-point data type
@@ -314,13 +314,13 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_ARG:
 		{
-			ase_char_t tmp[ase_sizeof(ase_long_t)*8+2]; 
+			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 			ase_size_t n;
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 			ASE_AWK_ASSERT (awk, px->id.idxa != (ase_size_t)-1);
 
 			n = ase_awk_longtostr (
-				px->id.idxa, 10, ASE_NULL, tmp, ase_countof(tmp));
+				px->id.idxa, 10, ASE_NULL, tmp, ASE_COUNTOF(tmp));
 
 			PUT_SRCSTR (awk, ASE_T("__param"));
 			PUT_SRCSTRX (awk, tmp, n);
@@ -331,7 +331,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_ARGIDX:
 		{
-			ase_char_t tmp[ase_sizeof(ase_long_t)*8+2]; 
+			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 			ase_size_t n;
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 			ASE_AWK_ASSERT (awk, px->id.idxa != (ase_size_t)-1);
@@ -339,7 +339,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 			PUT_SRCSTR (awk, ASE_T("__param"));
 			n = ase_awk_longtostr (
-				px->id.idxa, 10, ASE_NULL, tmp, ase_countof(tmp));
+				px->id.idxa, 10, ASE_NULL, tmp, ASE_COUNTOF(tmp));
 			PUT_SRCSTRX (awk, tmp, n);
 			PUT_SRCSTR (awk, ASE_T("["));
 			PRINT_EXPRESSION_LIST (awk, px->idx);
@@ -372,7 +372,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_GLOBAL:
 		{
-			ase_char_t tmp[ase_sizeof(ase_long_t)*8+2]; 
+			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 			ase_size_t n;
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 
@@ -381,7 +381,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				PUT_SRCSTR (awk, ASE_T("__global"));
 				n = ase_awk_longtostr (
 					px->id.idxa, 10, 
-					ASE_NULL, tmp, ase_countof(tmp));
+					ASE_NULL, tmp, ASE_COUNTOF(tmp));
 				PUT_SRCSTRX (awk, tmp, n);
 				/*PUT_SRCSTRX (awk, px->id.name, px->id.name_len);*/
 			}
@@ -395,7 +395,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_GLOBALIDX:
 		{
-			ase_char_t tmp[ase_sizeof(ase_long_t)*8+2]; 
+			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 			ase_size_t n;
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 
@@ -404,7 +404,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				PUT_SRCSTR (awk, ASE_T("__global"));
 				n = ase_awk_longtostr (
 					px->id.idxa, 10, 
-					ASE_NULL, tmp, ase_countof(tmp));
+					ASE_NULL, tmp, ASE_COUNTOF(tmp));
 				PUT_SRCSTRX (awk, tmp, n);
 				/*PUT_SRCSTRX (awk, px->id.name, px->id.name_len);*/
 				PUT_SRCSTR (awk, ASE_T("["));
@@ -422,7 +422,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_LOCAL:
 		{
-			ase_char_t tmp[ase_sizeof(ase_long_t)*8+2]; 
+			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 			ase_size_t n;
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 
@@ -431,7 +431,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				PUT_SRCSTR (awk, ASE_T("__local"));
 				n = ase_awk_longtostr (
 					px->id.idxa, 10, 
-					ASE_NULL, tmp, ase_countof(tmp));
+					ASE_NULL, tmp, ASE_COUNTOF(tmp));
 				PUT_SRCSTRX (awk, tmp, n);
 			}
 			else 
@@ -444,7 +444,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_LOCALIDX:
 		{
-			ase_char_t tmp[ase_sizeof(ase_long_t)*8+2]; 
+			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 			ase_size_t n;
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 
@@ -453,7 +453,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				PUT_SRCSTR (awk, ASE_T("__local"));
 				n = ase_awk_longtostr (
 					px->id.idxa, 10, 
-					ASE_NULL, tmp, ase_countof(tmp));
+					ASE_NULL, tmp, ASE_COUNTOF(tmp));
 				PUT_SRCSTRX (awk, tmp, n);
 				PUT_SRCSTR (awk, ASE_T("["));
 			}
@@ -570,7 +570,7 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 
 			case ASE_AWK_NDE_BLK:
 			{
-				ase_char_t tmp[ase_sizeof(ase_long_t)*8+2];
+				ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2];
 				ase_size_t n;
 				ase_awk_nde_blk_t* px = (ase_awk_nde_blk_t*)p;
 
@@ -586,14 +586,14 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 					{
 						PUT_SRCSTR (awk, ASE_T("__local"));
 						n = ase_awk_longtostr (
-							i, 10, ASE_NULL, tmp, ase_countof(tmp));
+							i, 10, ASE_NULL, tmp, ASE_COUNTOF(tmp));
 						PUT_SRCSTRX (awk, tmp, n);
 						PUT_SRCSTR (awk, ASE_T(", "));
 					}
 
 					PUT_SRCSTR (awk, ASE_T("__local"));
 					n = ase_awk_longtostr (
-						i, 10, ASE_NULL, tmp, ase_countof(tmp));
+						i, 10, ASE_NULL, tmp, ASE_COUNTOF(tmp));
 					PUT_SRCSTRX (awk, tmp, n);
 					PUT_SRCSTR (awk, ASE_T(";\n"));
 				}
