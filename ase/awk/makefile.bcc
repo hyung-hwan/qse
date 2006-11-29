@@ -24,7 +24,7 @@ CFLAGS_DEBUG = $(CFLAGS_COMMON) -D_DEBUG
 CFLAGS = $(CFLAGS_DEBUG)
 JAVACFLAGS = -classpath ../..
 
-LDFLAGS = -Tpd -ap -Gn -L"c:\program files\borland\bds\4.0\lib"
+LDFLAGS = -Tpd -ap -Gn -c -r -L"c:\program files\borland\bds\4.0\lib"
 STARTUP = c0d32w.obj
 LIBS = import32.lib cw32mt.lib 
 
@@ -37,7 +37,7 @@ lib: $(C_OBJS)
 !
 
 jni: $(JNI_OBJS) $(JAVA_OBJS)
-	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT).dll,,$(LIBS),,
+	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT).dll,,$(LIBS),jni.def,
 
 ada:
 	gnatmake -I.. ase-awk

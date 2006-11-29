@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.53 2006-11-28 15:09:53 bacon Exp $
+ * $Id: err.c,v 1.54 2006-11-29 02:39:09 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>

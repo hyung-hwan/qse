@@ -17,7 +17,8 @@ CC = cl
 LD = link
 JAVAC = javac
 
-CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. $(JNI_INC) 
+#CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. $(JNI_INC) 
+CFLAGS = /nologo /O2 /MT /W3 /GR- -I../.. $(JNI_INC) 
 JAVACFLAGS = -classpath ../..
 
 all: lib jni
@@ -29,7 +30,7 @@ lib: $(C_OBJS)
 
 jni: $(JNI_OBJS) $(JAVA_OBJS) 
 	$(LD) /dll /def:jni.def /subsystem:windows /version:0.1 /release @<<
-/nologo /out:$(OUT).dll $(JNI_OBJS)
+/nologo /out:$(OUT).dll $(JNI_OBJS) user32.lib
 <<
 
 clean:

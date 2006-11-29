@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.80 2006-11-28 15:09:53 bacon Exp $
+ * $Id: func.c,v 1.81 2006-11-29 02:39:09 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
