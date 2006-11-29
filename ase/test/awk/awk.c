@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.131 2006-11-28 15:09:03 bacon Exp $
+ * $Id: awk.c,v 1.132 2006-11-29 03:55:56 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -69,9 +69,9 @@ static FILE* fopen_t (const ase_char_t* path, const ase_char_t* mode)
 	mode_mb = mode;
 	#else
 	if (xp_wcstomcs_strict (
-		path, path_mb, ase_countof(path_mb)) == -1) return ASE_NULL;
+		path, path_mb, ASE_COUNTOF(path_mb)) == -1) return ASE_NULL;
 	if (xp_wcstomcs_strict (
-		mode, mode_mb, ase_countof(mode_mb)) == -1) return ASE_NULL;
+		mode, mode_mb, ASE_COUNTOF(mode_mb)) == -1) return ASE_NULL;
 	#endif
 
 	return fopen (path_mb, mode_mb);
@@ -112,8 +112,8 @@ static void __awk_aprintf (const ase_char_t* fmt, ...)
 
 	va_start (ap, fmt);
 #if defined(_WIN32)
-	n = _vsntprintf (buf, ase_countof(buf), fmt, ap);
-	if (n < 0) buf[ase_countof(buf)-1] = ASE_T('\0');
+	n = _vsntprintf (buf, ASE_COUNTOF(buf), fmt, ap);
+	if (n < 0) buf[ASE_COUNTOF(buf)-1] = ASE_T('\0');
 
 	#if defined(_MSC_VER) && (_MSC_VER<1400)
 	MessageBox (NULL, buf, 
@@ -172,9 +172,9 @@ static FILE* popen_t (const ase_char_t* cmd, const ase_char_t* mode)
 	mode_mb = mode;
 	#else
 	if (xp_wcstomcs_strict (
-		cmd, cmd_mb, ase_countof(cmd_mb)) == -1) return ASE_NULL;
+		cmd, cmd_mb, ASE_COUNTOF(cmd_mb)) == -1) return ASE_NULL;
 	if (xp_wcstomcs_strict (
-		mode, mode_mb, ase_countof(mode_mb)) == -1) return ASE_NULL;
+		mode, mode_mb, ASE_COUNTOF(mode_mb)) == -1) return ASE_NULL;
 	#endif
 
 	return popen (cmd_mb, mode_mb);
@@ -780,7 +780,7 @@ static int __main (int argc, ase_char_t* argv[])
 			src_io.input_file = argv[i];
 			file_count++;
 		}
-		else if (file_count >= 1 && file_count < ase_countof(infiles)-1)
+		else if (file_count >= 1 && file_count < ASE_COUNTOF(infiles)-1)
 		{
 			infiles[file_count-1] = argv[i];
 			infiles[file_count] = ASE_NULL;
@@ -793,7 +793,7 @@ static int __main (int argc, ase_char_t* argv[])
 		}
 	}
 
-	memset (&syscas, 0, ase_sizeof(syscas));
+	memset (&syscas, 0, ASE_SIZEOF(syscas));
 	syscas.malloc = __awk_malloc;
 	syscas.realloc = __awk_realloc;
 	syscas.free = __awk_free;
