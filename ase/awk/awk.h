@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.155 2006-11-28 15:09:53 bacon Exp $
+ * $Id: awk.h,v 1.156 2006-11-29 02:39:09 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_

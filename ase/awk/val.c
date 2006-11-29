@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.93 2006-11-23 14:27:52 bacon Exp $
+ * $Id: val.c,v 1.94 2006-11-29 02:39:10 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -46,7 +46,7 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 	ase_awk_val_int_t* val;
 
 	if (v >= __awk_int[0].val && 
-	    v <= __awk_int[ase_countof(__awk_int)-1].val)
+	    v <= __awk_int[ASE_COUNTOF(__awk_int)-1].val)
 	{
 		return (ase_awk_val_t*)&__awk_int[v-__awk_int[0].val];
 	}
@@ -58,7 +58,7 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 	else
 	{
 		val = (ase_awk_val_int_t*) ASE_AWK_MALLOC (
-			run->awk, ase_sizeof(ase_awk_val_int_t));
+			run->awk, ASE_SIZEOF(ase_awk_val_int_t));
 		if (val == ASE_NULL) return ASE_NULL;
 	}
 
@@ -82,7 +82,7 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 	else
 	{
 		val = (ase_awk_val_real_t*) ASE_AWK_MALLOC (
-			run->awk, ase_sizeof(ase_awk_val_real_t));
+			run->awk, ASE_SIZEOF(ase_awk_val_real_t));
 		if (val == ASE_NULL) return ASE_NULL;
 	}
 
@@ -106,7 +106,7 @@ ase_awk_val_t* ase_awk_makestrval (
 	ase_awk_val_str_t* val;
 
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
-		run->awk, ase_sizeof(ase_awk_val_str_t));
+		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
 	if (val == ASE_NULL) return ASE_NULL;
 
 	val->type = ASE_AWK_VAL_STR;
@@ -129,7 +129,7 @@ ase_awk_val_t* ase_awk_makestrval_nodup (
 	ase_awk_val_str_t* val;
 
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
-		run->awk, ase_sizeof(ase_awk_val_str_t));
+		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
 	if (val == ASE_NULL) return ASE_NULL;
 
 	val->type = ASE_AWK_VAL_STR;
@@ -147,7 +147,7 @@ ase_awk_val_t* ase_awk_makestrval2 (
 	ase_awk_val_str_t* val;
 
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
-		run->awk, ase_sizeof(ase_awk_val_str_t));
+		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
 	if (val == ASE_NULL) return ASE_NULL;
 
 	val->type = ASE_AWK_VAL_STR;
@@ -170,7 +170,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	ase_awk_val_rex_t* val;
 
 	val = (ase_awk_val_rex_t*) ASE_AWK_MALLOC (
-		run->awk, ase_sizeof(ase_awk_val_rex_t));
+		run->awk, ASE_SIZEOF(ase_awk_val_rex_t));
 	if (val == ASE_NULL) return ASE_NULL;
 
 	val->type = ASE_AWK_VAL_REX;
@@ -210,7 +210,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 	ase_awk_val_map_t* val;
 
 	val = (ase_awk_val_map_t*) ASE_AWK_MALLOC (
-		run->awk, ase_sizeof(ase_awk_val_map_t));
+		run->awk, ASE_SIZEOF(ase_awk_val_map_t));
 	if (val == ASE_NULL) return ASE_NULL;
 
 	val->type = ASE_AWK_VAL_MAP;
@@ -237,7 +237,7 @@ ase_awk_val_t* ase_awk_makerefval (ase_awk_run_t* run, int id, ase_awk_val_t** a
 	else
 	{
 		val = (ase_awk_val_ref_t*) ASE_AWK_MALLOC (
-			run->awk, ase_sizeof(ase_awk_val_ref_t));
+			run->awk, ASE_SIZEOF(ase_awk_val_ref_t));
 		if (val == ASE_NULL) return ASE_NULL;
 	}
 
@@ -258,7 +258,7 @@ ase_bool_t ase_awk_isbuiltinval (ase_awk_val_t* val)
 	       val == ase_awk_val_zero || 
 	       val == ase_awk_val_one || 
 	       (val >= (ase_awk_val_t*)&__awk_int[0] &&
-	        val <= (ase_awk_val_t*)&__awk_int[ase_countof(__awk_int)-1]);
+	        val <= (ase_awk_val_t*)&__awk_int[ASE_COUNTOF(__awk_int)-1]);
 }
 
 void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
@@ -275,7 +275,7 @@ xp_printf (ASE_T("\n"));*/
 	else if (val->type == ASE_AWK_VAL_INT)
 	{
 		if (cache == ase_true &&
-		    run->icache_count < ase_countof(run->icache))
+		    run->icache_count < ASE_COUNTOF(run->icache))
 		{
 			run->icache[run->icache_count++] = 
 				(ase_awk_val_int_t*)val;	
@@ -285,7 +285,7 @@ xp_printf (ASE_T("\n"));*/
 	else if (val->type == ASE_AWK_VAL_REAL)
 	{
 		if (cache == ase_true &&
-		    run->rcache_count < ase_countof(run->rcache))
+		    run->rcache_count < ASE_COUNTOF(run->rcache))
 		{
 			run->rcache[run->rcache_count++] = 
 				(ase_awk_val_real_t*)val;	
@@ -311,7 +311,7 @@ xp_printf (ASE_T("\n"));*/
 	else if (val->type == ASE_AWK_VAL_REF)
 	{
 		if (cache == ase_true &&
-		    run->fcache_count < ase_countof(run->fcache))
+		    run->fcache_count < ASE_COUNTOF(run->fcache))
 		{
 			run->fcache[run->fcache_count++] = 
 				(ase_awk_val_ref_t*)val;	
@@ -511,7 +511,7 @@ static ase_char_t* __val_int_to_str (
 		if (buf == ASE_NULL)
 		{
 			tmp = ASE_AWK_MALLOC (
-				run->awk, 2 * ase_sizeof(ase_char_t));
+				run->awk, 2 * ASE_SIZEOF(ase_char_t));
 			if (tmp == ASE_NULL)
 			{
 				run->errnum = ASE_AWK_ENOMEM;
@@ -544,7 +544,7 @@ static ase_char_t* __val_int_to_str (
 	if (buf == ASE_NULL)
 	{
 		tmp = ASE_AWK_MALLOC (
-			run->awk, (l + 1) * ase_sizeof(ase_char_t));
+			run->awk, (l + 1) * ASE_SIZEOF(ase_char_t));
 		if (tmp == ASE_NULL)
 		{
 			run->errnum = ASE_AWK_ENOMEM;

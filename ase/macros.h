@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.40 2006-11-28 11:47:43 bacon Exp $
+ * $Id: macros.h,v 1.41 2006-11-29 02:39:09 bacon Exp $
  */
 
 #ifndef _ASE_MACROS_H_
@@ -15,10 +15,11 @@
 #endif
 
 #define ASE_CHAR_EOF  ((ase_cint_t)-1)
+#define ASE_UNREFERENCED(x) ((x) = (x))
 
-#define ase_sizeof(n)   (sizeof(n))
-#define ase_countof(n)  (sizeof(n) / sizeof(n[0]))
-#define ase_offsetof(type,member) ((ase_size_t)&((type*)0)->member)
+#define ASE_SIZEOF(n)   (sizeof(n))
+#define ASE_COUNTOF(n)  (sizeof(n) / sizeof(n[0]))
+#define ASE_OFFSETOF(type,member) ((ase_size_t)&((type*)0)->member)
 
 #if defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR) && !defined(__LCC__)
 	#define ase_main wmain
