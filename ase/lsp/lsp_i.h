@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h,v 1.4 2006-10-29 13:00:39 bacon Exp $
+ * $Id: lsp_i.h,v 1.5 2006-11-29 03:19:49 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSPI_H_
@@ -17,7 +17,7 @@
 #pragma warning (disable: 4996)
 #endif
 
-#if defined(_WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	#define _CRTDBG_MAP_ALLOC
 	#include <crtdbg.h>
 

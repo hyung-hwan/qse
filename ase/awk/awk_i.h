@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.86 2006-11-28 04:30:21 bacon Exp $
+ * $Id: awk_i.h,v 1.87 2006-11-29 03:18:18 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -36,7 +36,7 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_MAX_LOCALS  9999
 #define ASE_AWK_MAX_PARAMS  9999
 
-#if defined(_WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	#define _CRTDBG_MAP_ALLOC
 	#include <crtdbg.h>
 
