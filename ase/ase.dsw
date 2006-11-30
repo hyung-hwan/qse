@@ -15,7 +15,19 @@ Package=<4>
 
 ###############################################################################
 
-Project: "awk_activex"=".\com\awk\awk.dsp" - Package Owner=<4>
+Project: "awk.activex"=".\com\awk\awk.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "awk.test"=.\test\awk\awk.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -39,19 +51,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "awk_test"=.\test\awk\awk.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "test_lsp"=.\test\lsp\test_lsp.dsp - Package Owner=<4>
+Project: "lsp.test"=.\test\lsp\lsp.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
