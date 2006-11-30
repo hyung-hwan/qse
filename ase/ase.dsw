@@ -39,7 +39,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "test_awk"=.\test\awk\test_awk.dsp - Package Owner=<4>
+Project: "awk_test"=.\test\awk\awk.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

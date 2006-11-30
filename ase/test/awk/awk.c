@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.132 2006-11-29 03:55:56 bacon Exp $
+ * $Id: awk.c,v 1.133 2006-11-30 10:40:40 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -733,6 +733,7 @@ static void __awk_free (void* ptr, void* custom_data)
 static int __handle_bfn (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	xp_printf (ASE_T("__handle_bfn\n"));
+	return 0;
 }
 
 static int __main (int argc, ase_char_t* argv[])
