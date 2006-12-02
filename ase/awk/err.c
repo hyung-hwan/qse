@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.56 2006-11-29 14:52:06 bacon Exp $
+ * $Id: err.c,v 1.57 2006-12-02 16:26:03 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -107,6 +107,7 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("nextfile cannot be called from the BEGIN or END block"),
 		ASE_T("wrong implementation of user-defined io handler"),
 		ASE_T("wrong implementation of built-in function handler"),
+		ASE_T("built-in function handler returned an error"),
 		ASE_T("no such io name found"),
 		ASE_T("io handler has returned an error"),
 		ASE_T("not sufficient arguments to formatting sequence"),

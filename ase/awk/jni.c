@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.34 2006-11-29 14:52:06 bacon Exp $
+ * $Id: jni.c,v 1.35 2006-12-02 16:26:03 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -1000,7 +1000,7 @@ static int __handle_bfn (
 	class = (*env)->GetObjectClass(env, obj);
 	method = (*env)->GetMethodID (
 		env, class, name_utf, 
-		"([Ljava/lang/Object;)Ljava/lang/Object;");
+		"(J[Ljava/lang/Object;)Ljava/lang/Object;");
 	(*env)->DeleteLocalRef (env, class);
 	(*env)->ReleaseStringUTFChars (env, name, name_utf);
 	(*env)->DeleteLocalRef (env, name);
@@ -1064,14 +1064,17 @@ static int __handle_bfn (
 		if (arg != NULL) (*env)->DeleteLocalRef (env, arg);
 	}
 
-	ret = (*env)->CallObjectMethod (env, obj, method, args);
+	ret = (*env)->CallObjectMethod (env, obj, method, (jlong)run, args);
 	thrown = (*env)->ExceptionOccurred (env);
 	if (thrown)
 	{
 (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, args);
-		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
+		ase_awk_setrunerrnum (run, ASE_AWK_EBFNFAIL);
+
+		// TODO:
+		//ase_awk_setrunerror (run, ASE_AWK_EBFNFAIL, "EXCEPTION:....");
 		return -1;
 	}
 
@@ -1210,7 +1213,7 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_addbfn (
 	class = (*env)->GetObjectClass(env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL) return;
+	if (handle == NULL) return -1;
 
 	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
 
@@ -1254,13 +1257,14 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (
 	JNIEnv* env, jobject obj, jlong run_id, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
-	const jchar* str;
-	jint len, n;
+	const jchar* ptr;
+	jsize len;
+	jint n;
 
-	str = (*env)->GetStringChars (env, name, JNI_FALSE);
+	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
 	len = (*env)->GetStringLength (env, name);
-	n = ase_awk_setfilename (run, str, len);
-	(*env)->ReleaseStringChars (env, name, str);
+	n = ase_awk_setfilename (run, ptr, len);
+	(*env)->ReleaseStringChars (env, name, ptr);
 	return n;
 }
 
@@ -1268,13 +1272,57 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
 	JNIEnv* env, jobject obj, jlong run_id, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)run_id;
-	const jchar* str;
-	jint len, n;
+	const jchar* ptr;
+	jsize len;
+	jint n;
 
-	str = (*env)->GetStringChars (env, name, JNI_FALSE);
+	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
 	len = (*env)->GetStringLength (env, name);
-	n = ase_awk_setofilename (run, str, len);
-	(*env)->ReleaseStringChars (env, name, str);
+	n = ase_awk_setofilename (run, ptr, len);
+	(*env)->ReleaseStringChars (env, name, ptr);
 	return n;
+}
+
+JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
+	JNIEnv* env, jobject obj, jlong runid, jstring str)
+{
+	const jchar* ptr;
+	jsize len;
+	jint n;
+	ase_long_t lv;
+	ase_real_t rv;
+	jobject ret;
+	run_data_t* run_data;
+
+	ptr = (*env)->GetStringChars (env, str, JNI_FALSE);
+	len = (*env)->GetStringLength (env, str);
+	n = ase_awk_strtonum ((ase_awk_run_t*)runid, ptr, len, &lv, &rv);
+	(*env)->ReleaseStringChars (env, str, ptr);
+
+	run_data = ase_awk_getruncustomdata ((ase_awk_run_t*)runid);
+	if (n == 0)
+	{
+		ret = (*env)->NewObject (env,
+			run_data->long_class, 
+			run_data->long_init, (jlong)lv);
+	}
+	else
+	{
+		ret = (*env)->NewObject (env,
+			run_data->double_class, 
+			run_data->double_init, (jdouble)rv);
+	}
+
+	/*
+	{
+		jthrowable except;
+		except = (*env)->FindClass (env, CLASS_EXCEPTION);
+		if (except == NULL) return;
+		(*env)->ThrowNew (env, except, "cannot create awk"); 
+		(*env)->DeleteLocalRef (env, except);
+	}
+	*/
+
+	return ret;
 }
 

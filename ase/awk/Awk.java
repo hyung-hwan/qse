@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.14 2006-11-29 14:52:06 bacon Exp $
+ * $Id: Awk.java,v 1.15 2006-12-02 16:26:03 bacon Exp $
  */
 
 package ase.awk;
@@ -20,7 +20,10 @@ public abstract class Awk
 		{
 			public Object run ()
 			{
-				System.load ("c://projects//ase/awk/aseawk.dll");
+				String dll = ase.awk.Awk.class.getResource("aseawk.dll").getFile();
+				System.load (dll);
+				//System.load ("c://projects//ase/awk/aseawk.dll");
+				//System.loadLibrary ("aseawk");
 				return null;
 			}
 		});
@@ -48,8 +51,11 @@ public abstract class Awk
 	private native int addbfn (String name, int min_args, int max_args);
 	private native int delbfn (String name);
 
-	private native int setfilename (long run_id, String name);
-	private native int setofilename (long run_id, String name);
+	private native int setfilename (long runid, String name);
+	private native int setofilename (long runid, String name);
+
+	private native Object strtonum (long runid, String str);
+	private native String valtostr (long runid, Object obj);
 
 	/* == builtin functions == */
 	public void addBuiltinFunction (
@@ -71,13 +77,96 @@ public abstract class Awk
 		}
 	}
 
+	public long builtinFunctionArgumentToLong (long runid, Object obj)
+	{
+		long n;
+
+		if (obj == null) n = 0;
+		else
+		{
+			if (obj instanceof String)
+				obj = strtonum (runid, (String)obj);
+
+			if (obj instanceof Long)
+			{
+				n = ((Long)obj).longValue ();
+			}
+			else if (obj instanceof Double)
+			{
+				n = ((Double)obj).longValue ();
+			}
+			else if (obj instanceof Integer)
+			{
+				n = ((Integer)obj).longValue ();
+			}
+			else if (obj instanceof Short)
+			{
+				n = ((Short)obj).longValue ();
+			}
+			else if (obj instanceof Float)
+			{
+				n = ((Float)obj).longValue ();
+			}
+			else n = 0;
+		}
+
+		return n;
+	}
+
+	public double builtinFunctionArgumentToDouble (long runid, Object obj)
+	{
+		double n;
+
+		if (obj == null) n = 0.0;
+		else
+		{
+			if (obj instanceof String)
+				obj = strtonum (runid, (String)obj);
+
+			if (obj instanceof Long)
+			{
+				n = ((Long)obj).doubleValue ();
+			}
+			else if (obj instanceof Double)
+			{
+				n = ((Double)obj).doubleValue ();
+			}
+			else if (obj instanceof Integer)
+			{
+				n = ((Integer)obj).doubleValue ();
+			}
+			else if (obj instanceof Short)
+			{
+				n = ((Short)obj).doubleValue ();
+			}
+			else if (obj instanceof Float)
+			{
+				n = ((Float)obj).doubleValue ();
+			}
+			else n = 0.0;
+		}
+
+		return n;
+	}
+
+	public String builtinFunctionArgumentToString (long runid, Object obj)
+	{
+		String str;
+
+		if (obj == null) str = "";
+		else if (obj instanceof String) str = (String)obj;
+		else str = valtostr (runid, obj);
+
+		return str;
+	}
+
 	/* == console name setters == */
 	public void setInputConsoleName (Extio extio, String name) //throws Exception
 	{
 		/* TODO: setconsolename is not safe. for example, it can 
-		 * crash the program if run_id is invalid. so this wrapper
+		 * crash the program if runid is invalid. so this wrapper
 		 * needs to do some sanity check. */
-		//if (setconsolename (run_id, name) == -1)
+		//if (setconsolename (runid, name) == -1)
 		//	throw new Exception ("cannot set the consle name");
 		setfilename (extio.getRunId(), name);
 	}

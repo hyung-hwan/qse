@@ -9,4 +9,5 @@ EXPORTS
 	Java_ase_awk_Awk_delbfn
 	Java_ase_awk_Awk_setfilename
 	Java_ase_awk_Awk_setofilename
+	Java_ase_awk_Awk_strtonum
 

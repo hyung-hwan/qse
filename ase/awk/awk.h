@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.157 2006-11-29 14:52:06 bacon Exp $
+ * $Id: awk.h,v 1.158 2006-12-02 16:26:03 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -296,6 +296,7 @@ enum
 	ASE_AWK_ENEXTFILECALL,     /* nextfile called from BEGIN or END */
 	ASE_AWK_EIOIMPL,           /* wrong user io handler implementation */
 	ASE_AWK_EBFNIMPL,          /* wrong builtin function implementation */
+	ASE_AWK_EBFNFAIL,          /* builtin function handler failed */
 	ASE_AWK_ENOSUCHIO,         /* no such io name found */
 	ASE_AWK_EIOHANDLER,        /* io handler has returned an error */
 	ASE_AWK_EFMTARG,           /* arguments to format string not sufficient */

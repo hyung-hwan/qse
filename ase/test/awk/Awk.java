@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.17 2006-11-29 14:52:36 bacon Exp $
+ * $Id: Awk.java,v 1.18 2006-12-02 16:26:29 bacon Exp $
  */
 
 package ase.test.awk;
@@ -10,21 +10,19 @@ public class Awk extends ase.awk.StdAwk
 	{
 		super ();
 
-		addBuiltinFunction ("sin", 1, 10); 
-		addBuiltinFunction ("xxx", 1, 1); 
+		addBuiltinFunction ("sin", 1, 1); 
+		addBuiltinFunction ("cos", 1, 1); 
+		addBuiltinFunction ("tan", 1, 1); 
+
+		addBuiltinFunction ("system", 1, 1); 
+
+		addBuiltinFunction ("xxx", 1, 10); 
 		//addBuiltinFunction ("xxx", 1, 1); 
-
 		//deleteBuiltinFunction ("sin");
 		//deleteBuiltinFunction ("sin");
 	}
 
-	public Object xxx (Object[] args)
-	{
-		System.out.println ("BFN_XXX");
-		return null;
-	}
-
-	public Object sin (Object[] args)
+	public Object xxx (long runid, Object[] args)
 	{
 		System.out.println ("<<BFN_SIN>>");
 		for (int i = 0; i < args.length; i++)
