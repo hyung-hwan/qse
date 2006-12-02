@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.94 2006-11-29 02:39:10 bacon Exp $
+ * $Id: val.c,v 1.95 2006-12-02 16:26:03 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -682,6 +682,11 @@ int ase_awk_valtonum (
 
 	if (v->type == ASE_AWK_VAL_STR)
 	{
+		return ase_awk_strtonum (run, 
+			((ase_awk_val_str_t*)v)->buf, 
+			((ase_awk_val_str_t*)v)->len, l, r);
+
+#if 0
 		const ase_char_t* endptr;
 
 		*l = ase_awk_strxtolong (run->awk, 
@@ -699,14 +704,37 @@ int ase_awk_valtonum (
 		}
 /* TODO: do should i handle strings ending with invalid number characters like "123xx" or "dkdkdkd"? */
 		return 0; /* long */
+#endif
 	}
 
+#ifdef _DEBUG
 	run->awk->syscas.dprintf (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum\n"), 
 		v->type);
+#endif
 
 	run->errnum = ASE_AWK_EVALTYPE;
 	return -1; /* error */
+}
+
+int ase_awk_strtonum (
+	ase_awk_run_t* run, const ase_awk_str_t* ptr, ase_size_t len, 
+	ase_long_t* l, ase_real_t* r)
+{
+	const ase_char_t* endptr;
+
+	*l = ase_awk_strxtolong (run->awk, ptr, len, 0, &endptr);
+	if (*endptr == ASE_T('.') ||
+	    *endptr == ASE_T('E') ||
+	    *endptr == ASE_T('e'))
+	{
+		*r = ase_awk_strxtoreal (run->awk, ptr, len, ASE_NULL);
+/* TODO: need to check if it is a valid number using endptr for strxtoreal? */
+		return 1; /* real */
+	}
+/* TODO: do should i handle strings ending with invalid number characters like "123xx" or "dkdkdkd"? */
+	return 0; /* long */
+
 }
 
 #define __DPRINTF run->awk->syscas.dprintf

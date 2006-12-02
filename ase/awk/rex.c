@@ -1,9 +1,10 @@
 /*
- * $Id: rex.c,v 1.48 2006-11-29 02:54:16 bacon Exp $
+ * $Id: rex.c,v 1.49 2006-12-02 16:26:03 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
 
+//#define DEBUG_REX
 enum
 {
 	CT_EOF,
@@ -717,9 +718,10 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 		else
 		{
 			/* invalid range */
-#ifdef DEBUG_REX
-xp_printf (ASE_T("__build_charset: invalid character set range\n"));
-#endif
+		#ifdef DEBUG_REX
+			builder->awk->syscas.dprintf (
+				ASE_T("__build_charset: invalid character set range\n"));
+		#endif
 			builder->errnum = ASE_AWK_EREXCRANGE;
 			return -1;
 		}
@@ -749,9 +751,10 @@ static int __build_cclass (__builder_t* builder, ase_char_t* cc)
 	if (ccp->name == ASE_NULL)
 	{
 		/* wrong class name */
-#ifdef DEBUG_REX
-xp_printf (ASE_T("__build_cclass: wrong class name\n"));*/
-#endif
+	#ifdef DEBUG_REX
+		builder->awk->syscas.dprintf (
+			ASE_T("__build_cclass: wrong class name\n"));
+	#endif
 		builder->errnum = ASE_AWK_EREXCCLASS;
 		return -1;
 	}
@@ -762,9 +765,10 @@ xp_printf (ASE_T("__build_cclass: wrong class name\n"));*/
 	if (builder->ptn.curc.type != CT_NORMAL ||
 	    builder->ptn.curc.value != ASE_T(':'))
 	{
-#ifdef BUILD_REX
-xp_printf (ASE_T("__build_cclass: a colon(:) expected\n"));
-#endif
+	#ifdef BUILD_REX
+		builder->awk->syscas.dprintf (
+			ASE_T("__build_cclass: a colon(:) expected\n"));
+	#endif
 		builder->errnum = ASE_AWK_EREXCOLON;
 		return -1;
 	}
@@ -775,9 +779,10 @@ xp_printf (ASE_T("__build_cclass: a colon(:) expected\n"));
 	if (builder->ptn.curc.type != CT_SPECIAL ||
 	    builder->ptn.curc.value != ASE_T(']'))
 	{
-#ifdef DEBUG_REX
-xp_printf (ASE_T("__build_cclass: ] expected\n"));
-#endif
+	#ifdef DEBUG_REX
+		builder->awk->syscas.dprintf (
+			ASE_T("__build_cclass: ] expected\n"));
+	#endif
 		builder->errnum = ASE_AWK_EREXRBRACKET;	
 		return -1;
 	}
@@ -1023,7 +1028,9 @@ static const ase_byte_t* __match_pattern (
 	el = *(ase_size_t*)p; p += ASE_SIZEOF(el);
 
 #ifdef BUILD_REX
-xp_printf (ASE_T("__match_pattern: NB = %u, EL = %u\n"), (unsigned)nb, (unsigned)el);
+	matcher->awk->syscas.dprintf (
+		ASE_T("__match_pattern: NB = %u, EL = %u\n"), 
+		(unsigned)nb, (unsigned)el);
 #endif
 	mat->matched = ase_false;
 	mat->match_len = 0;
@@ -1209,8 +1216,9 @@ static const ase_byte_t* __match_any_char (
 	}
 
 #ifdef BUILD_REX
-xp_printf (ASE_T("__match_any_char: lbound = %u, ubound = %u\n"), 
-      (unsigned int)lbound, (unsigned int)ubound);
+	matcher->awk->syscas.dprintf (
+		ASE_T("__match_any_char: lbound = %u, ubound = %u\n"), 
+		(unsigned int)lbound, (unsigned int)ubound);
 #endif
 
 	/* find the longest match */
@@ -1221,7 +1229,8 @@ xp_printf (ASE_T("__match_any_char: lbound = %u, ubound = %u\n"),
 	}
 
 #ifdef BUILD_REX
-xp_printf (ASE_T("__match_any_char: max si = %d\n"), si);
+	matcher->awk->syscas.dprintf (
+		ASE_T("__match_any_char: max si = %u\n"), (unsigned)si);
 #endif
 	if (si >= lbound && si <= ubound)
 	{
@@ -1279,8 +1288,9 @@ static const ase_byte_t* __match_ord_char (
 	}
 	
 #ifdef BUILD_REX
-xp_printf (ASE_T("__match_ord_char: lbound = %u, ubound = %u\n"), 
-  (unsigned int)lbound, (unsigned int)ubound);*/
+	matcher->awk->syscas.dprintf (
+		ASE_T("__match_ord_char: lbound = %u, ubound = %u\n"), 
+		(unsigned int)lbound, (unsigned int)ubound);
 #endif
 
 	mat->matched = ase_false;
@@ -1301,13 +1311,19 @@ xp_printf (ASE_T("__match_ord_char: lbound = %u, ubound = %u\n"),
 		while (si < ubound)
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
+#ifdef DEBUG_REX
+	matcher->awk->syscas.dprintf (
+		ASE_T("__match_ord_char: %c %c\n"), cc, mat->match_ptr[si]);
+#endif
 			if (cc != mat->match_ptr[si]) break;
 			si++;
 		}
 	}
 
 #ifdef DEBUG_REX
-xp_printf (ASE_T("__match_ord_char: max si = %d, lbound = %u, ubound = %u\n"), si, lbound, ubound);
+	matcher->awk->syscas.dprintf (
+		ASE_T("__match_ord_char: max si=%u, lbound=%u, ubound=%u\n"), 
+		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
 #endif
 
 	if (si >= lbound && si <= ubound)
@@ -1336,6 +1352,12 @@ static const ase_byte_t* __match_charset (
 	csc = *(ase_size_t*)p; p += ASE_SIZEOF(csc);
 	csl = *(ase_size_t*)p; p += ASE_SIZEOF(csl);
 
+#ifdef BUILD_REX
+	matcher->awk->syscas.dprintf (
+		ASE_T("__match_charset: lbound = %u, ubound = %u\n"), 
+		(unsigned int)lbound, (unsigned int)ubound);
+#endif
+
 	mat->matched = ase_false;
 	mat->match_len = 0;
 
@@ -1355,6 +1377,11 @@ static const ase_byte_t* __match_charset (
 
 	p = p + csl - (ASE_SIZEOF(csc) + ASE_SIZEOF(csl));
 
+#ifdef DEBUG_REX
+	matcher->awk->syscas.dprintf (
+		ASE_T("__match_charset: max si=%u, lbound=%u, ubound=%u\n"), 
+		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
+#endif
 	if (si >= lbound && si <= ubound)
 	{
 		p = __match_occurrences (matcher, si, p, lbound, ubound, mat);
@@ -1463,9 +1490,11 @@ static const ase_byte_t* __match_group (
 				mat2.branch = mat->branch;
 				mat2.branch_end = mat->branch_end;
 	
-#ifdef DEBUG_REX
-xp_printf (ASE_T("__match_group: GROUP si = %d [%s]\n"), si, mat->match_ptr);
-#endif
+			#ifdef DEBUG_REX
+				matcher->awk->syscas.dprintf (
+					ASE_T("__match_group: GROUP si=%d [%s]\n"),
+					(unsigned)si, mat->match_ptr);
+			#endif
 				tmp = __match_branch_body (matcher, p, &mat2);
 				if (tmp == ASE_NULL)
 				{
@@ -1562,9 +1591,11 @@ static const ase_byte_t* __match_occurrences (
 			mat2.branch = mat->branch;
 			mat2.branch_end = mat->branch_end;
 
-#ifdef DEBUG_REX
-xp_printf (ASE_T("__match occurrences: si = %d [%s]\n"), si, mat->match_ptr);
-#endif
+		#ifdef DEBUG_REX
+			matcher->awk->syscas.dprintf (
+				ASE_T("__match occurrences: si=%u [%s]\n"), 
+				(unsigned)si, mat->match_ptr);
+		#endif
 			tmp = __match_branch_body (matcher, p, &mat2);
 
 			if (mat2.matched)
@@ -1696,10 +1727,10 @@ static ase_bool_t __cc_isxdigit (ase_awk_t* awk, ase_char_t c)
 
 #ifdef DEBUG_REX
 
-void ase_awk_printrex (void* rex)
+void ase_awk_printrex (ase_awk_t* awk, void* rex)
 {
 	__print_pattern (rex);
-	xp_printf (ASE_T("\n"));
+	awk->syscas.dprintf (ASE_T("\n"));
 }
 
 static const ase_byte_t* __print_pattern (const ase_byte_t* p)
@@ -1708,6 +1739,7 @@ static const ase_byte_t* __print_pattern (const ase_byte_t* p)
 
 	nb = *(ase_size_t*)p; p += ASE_SIZEOF(nb);
 	el = *(ase_size_t*)p; p += ASE_SIZEOF(el);
+
 #ifdef DEBUG_REX
 xp_printf (ASE_T("__print_pattern: NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
 #endif

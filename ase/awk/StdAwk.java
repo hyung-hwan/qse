@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.7 2006-11-28 15:09:53 bacon Exp $
+ * $Id: StdAwk.java,v 1.8 2006-12-02 16:26:03 bacon Exp $
  */
 
 package ase.awk;
@@ -20,9 +20,15 @@ public abstract class StdAwk extends Awk
 	private String[] cout = null;
 	private int cout_no   = 0;
 
+	private long seed;
+	private java.util.Random random;
+
 	public StdAwk () throws Exception
 	{
 		super ();
+
+		seed = System.currentTimeMillis();
+		random = new java.util.Random (seed);
 	}
 
 	/* == major methods == */
@@ -601,4 +607,95 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
+
+	/* == arithmetic built-in functions */
+	public Object sin (long runid, Object[] args) 
+	{
+		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		return new Double (Math.sin(x));
+	}
+
+	public Object cos (long runid, Object[] args)
+	{
+		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		return new Double (Math.cos(x));
+	}
+
+	public Object tan (long runid, Object[] args)
+	{
+		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		return new Double (Math.tan(x));
+	}
+
+	public Object atan2 (long runid, Object[] args)
+	{
+		double y = builtinFunctionArgumentToDouble (runid, args[0]);
+		double x = builtinFunctionArgumentToDouble (runid, args[1]);
+		return new Double (Math.atan2(y,x));
+	}
+
+	public Object log (long runid, Object[] args)
+	{
+		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		return new Double (Math.log(x));
+	}
+
+	public Object exp (long runid, Object[] args)
+	{
+		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		return new Double (Math.exp(x));
+	}
+
+	public Object sqrt (long runid, Object[] args)
+	{
+		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		return new Double (Math.sqrt(x));
+	}
+
+	public Object rand (long runid, Object[] args)
+	{
+		return new Double (random.nextDouble ());
+	}
+
+	public Object srand (long runid, Object[] args)
+	{
+		long prev_seed = seed;
+
+		seed = (args == null || args.length == 0)?
+			System.currentTimeMillis ():
+			builtinFunctionArgumentToLong (runid, args[0]);
+
+		random.setSeed (seed);
+		return new Long (prev_seed);
+	}
+
+	/* miscellaneous built-in functions */
+	public Object system (long runid, Object[] args)
+	{
+		String str = builtinFunctionArgumentToString (runid, args[0]);
+		Process proc = null;
+		int n = 0;
+
+		str = builtinFunctionArgumentToString (runid, args[0]);
+
+		try { proc = Runtime.getRuntime().exec (str); }
+		catch (IOException e) { n = -1; }
+
+System.out.println ("EXECUTED....\n");
+		if (proc != null)
+		{
+System.out.println ("WAITING....\n");
+/*
+			try { n = proc.waitFor (); } 
+			catch (InterruptedException e) 
+			{ 
+				proc.destroy (); 
+				n = -1; 
+			}
+*/
+System.out.println ("DONE WAITING....\n");
+		}
+
+		return new Long (n);	
+	}
 }

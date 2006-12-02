@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.13 2006-11-29 14:52:06 bacon Exp $
+ * $Id: jni.h,v 1.14 2006-12-02 16:26:03 bacon Exp $
  */
 
 #ifndef _ASE_AWK_JNI_H_
@@ -22,9 +22,11 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_delbfn (
 	JNIEnv* env, jobject obj, jstring name);
 
 JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (
-	JNIEnv* env, jobject obj, jlong run_id, jstring name);
+	JNIEnv* env, jobject obj, jlong runid, jstring name);
 JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
-	JNIEnv* env, jobject obj, jlong run_id, jstring name);
+	JNIEnv* env, jobject obj, jlong runid, jstring name);
+JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
+	JNIEnv* env, jobject obj, jlong runid, jstring str);
 
 #ifdef __cplusplus
 }

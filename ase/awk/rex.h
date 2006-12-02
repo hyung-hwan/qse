@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.24 2006-11-29 02:54:16 bacon Exp $
+ * $Id: rex.h,v 1.25 2006-12-02 16:26:03 bacon Exp $
  **/
 
 #ifndef _ASE_AWK_REX_H_
@@ -65,7 +65,7 @@ void ase_awk_freerex (ase_awk_t* awk, void* code);
 ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code);
 
 #ifdef DEBUG_REX
-void ase_awk_printrex (void* rex);
+void ase_awk_printrex (ase_awk_t* awk, void* rex);
 #endif
 
 #ifdef __cplusplus
