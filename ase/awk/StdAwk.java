@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.8 2006-12-02 16:26:03 bacon Exp $
+ * $Id: StdAwk.java,v 1.9 2006-12-03 06:53:25 bacon Exp $
  */
 
 package ase.awk;
@@ -509,8 +509,9 @@ public abstract class StdAwk extends Awk
 			Process proc;
 			InputStreamReader isr;
 		       
-			try { proc = Runtime.getRuntime().exec (extio.getName()); }
+			try { proc = popen (extio.getName()); }
 			catch (IOException e) { return -1; }
+
 			isr = new InputStreamReader (proc.getInputStream()); 
 			extio.setHandle (isr);
 			return 1;
@@ -520,8 +521,9 @@ public abstract class StdAwk extends Awk
 			Process proc;
 			OutputStreamWriter osw;
 
-			try { proc = Runtime.getRuntime().exec (extio.getName()); }
+			try { proc = popen (extio.getName()); }
 			catch (IOException e) { return -1; }
+
 			osw = new OutputStreamWriter (proc.getOutputStream());
 			extio.setHandle (osw);
 			return 1;
@@ -678,24 +680,53 @@ public abstract class StdAwk extends Awk
 
 		str = builtinFunctionArgumentToString (runid, args[0]);
 
-		try { proc = Runtime.getRuntime().exec (str); }
+		try { proc = popen (str); }
 		catch (IOException e) { n = -1; }
 
-System.out.println ("EXECUTED....\n");
 		if (proc != null)
 		{
-System.out.println ("WAITING....\n");
-/*
+			InputStream is;
+			byte[] buf = new byte[1024];
+
+			is = proc.getInputStream(); 
+
+		// TODO; better error handling... program execution.. io redirection??? 
+			try { while (is.read (buf) != -1) ; } 
+			catch (IOException e) { n = -1; };
+
 			try { n = proc.waitFor (); } 
 			catch (InterruptedException e) 
 			{ 
 				proc.destroy (); 
 				n = -1; 
 			}
-*/
-System.out.println ("DONE WAITING....\n");
 		}
 
 		return new Long (n);	
+	}
+
+
+	/* == utility functions == */
+	private Process popen (String command) throws IOException
+	{
+		String full;
+
+		/* TODO: consider OS names and versions */
+		full = System.getenv ("ComSpec");
+		if (full != null)
+		{	
+			full = full + " /c " + command;
+		}
+		else
+		{
+			full = System.getenv ("SHELL");
+			if (full != null)
+			{
+				full = "/bin/sh -c \"" + command + "\"";
+			}
+			else full = command;
+		}
+
+		return Runtime.getRuntime().exec (full);
 	}
 }
