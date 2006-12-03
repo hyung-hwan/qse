@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.288 2006-11-29 02:54:16 bacon Exp $
+ * $Id: run.c,v 1.289 2006-12-03 15:05:01 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -3794,7 +3794,17 @@ static ase_awk_val_t* __eval_binop_div (
 	if (n3 == 0)
 	{
 		if  (l2 == 0) PANIC (run, ASE_AWK_EDIVBYZERO);
-		res = ase_awk_makeintval (run, (ase_long_t)l1 / (ase_long_t)l2);
+
+		if (((ase_long_t)l1 % (ase_long_t)l2) == 0)
+		{
+			res = ase_awk_makeintval (
+				run, (ase_long_t)l1 / (ase_long_t)l2);
+		}
+		else
+		{
+			res = ase_awk_makerealval (
+				run, (ase_real_t)l1 / (ase_real_t)l2);
+		}
 	}
 	else if (n3 == 1)
 	{
