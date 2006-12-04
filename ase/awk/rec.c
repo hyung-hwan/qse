@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.8 2006-11-29 02:54:16 bacon Exp $
+ * $Id: rec.c,v 1.9 2006-12-04 07:17:12 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -10,7 +10,8 @@ static int __recomp_record_fields (
 	const ase_char_t* str, ase_size_t len);
 
 int ase_awk_setrec (
-	ase_awk_run_t* run, ase_size_t idx, const ase_char_t* str, ase_size_t len)
+	ase_awk_run_t* run, ase_size_t idx, 
+	const ase_char_t* str, ase_size_t len)
 {
 	ase_awk_val_t* v;
 	int errnum;

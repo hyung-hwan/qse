@@ -1,5 +1,5 @@
 {
-	names = ((names   $1)   " ");
+	names = ((names ~ $1) ~ " ");
 }
 
 END {

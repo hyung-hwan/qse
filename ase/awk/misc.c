@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.43 2006-11-29 02:54:15 bacon Exp $
+ * $Id: misc.c,v 1.44 2006-12-04 07:17:12 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -839,6 +839,11 @@ ase_char_t* ase_awk_strxntok (
 				}
 			}
 		}
+
+		/* TODO: verify the following statement... */
+		if (delim_mode == __DELIM_SPACES && 
+		    delim_len == 1 && 
+		    delim[0] != ASE_T(' ')) delim_mode = __DELIM_NOSPACES;
 	}		
 	
 	if (delim_mode == __DELIM_NULL) 
