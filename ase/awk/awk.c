@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.95 2006-11-29 03:18:18 bacon Exp $ 
+ * $Id: awk.c,v 1.96 2006-12-04 12:58:23 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -138,6 +138,8 @@ ase_awk_t* ase_awk_open (const ase_awk_syscas_t* syscas)
 
 	ase_awk_setmaxparsedepth (awk, ASE_AWK_DEPTH_BLOCK, 0);
 	ase_awk_setmaxparsedepth (awk, ASE_AWK_DEPTH_EXPR, 0);
+	ase_awk_setmaxrundepth (awk, ASE_AWK_DEPTH_BLOCK, 0);
+	ase_awk_setmaxrundepth (awk, ASE_AWK_DEPTH_EXPR, 0);
 
 	awk->run.count = 0;
 	awk->run.ptr = ASE_NULL;
@@ -173,11 +175,6 @@ int ase_awk_clear (ase_awk_t* awk)
 		awk->errnum = ASE_AWK_ERUNNING;
 		return -1;
 	}
-
-/* TOOD: clear bfns when they can be added dynamically 
-	awk->bfn.sys 
-	awk->bfn.user
-*/
 
 	ASE_AWK_MEMSET (awk, &awk->src.ios, 0, ASE_SIZEOF(awk->src.ios));
 	awk->src.lex.curc = ASE_CHAR_EOF;
@@ -256,5 +253,18 @@ static void __free_afn (void* owner, void* afn)
 ase_size_t ase_awk_getsrcline (ase_awk_t* awk)
 {
 	return awk->token.line;
+}
+
+void ase_awk_setmaxrundepth (ase_awk_t* awk, int types, ase_size_t depth)
+{
+	if (types & ASE_AWK_DEPTH_BLOCK)
+	{
+		awk->run.depth.max.block = depth;
+	}
+
+	if (types & ASE_AWK_DEPTH_EXPR)
+	{
+		awk->run.depth.max.expr = depth;
+	}
 }
 

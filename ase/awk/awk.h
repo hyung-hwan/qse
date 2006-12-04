@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.159 2006-12-04 06:04:05 bacon Exp $
+ * $Id: awk.h,v 1.160 2006-12-04 12:58:23 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -380,6 +380,8 @@ int ase_awk_getopt (ase_awk_t* awk);
 void ase_awk_setopt (ase_awk_t* awk, int opt);
 
 void ase_awk_setmaxparsedepth (ase_awk_t*, int types, ase_size_t depth);
+void ase_awk_setmaxrundepth (ase_awk_t*, int types, ase_size_t depth);
+
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
 
 /*

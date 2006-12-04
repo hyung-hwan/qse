@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.134 2006-12-04 06:04:07 bacon Exp $
+ * $Id: awk.c,v 1.135 2006-12-04 12:59:00 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -730,12 +730,6 @@ static void __awk_free (void* ptr, void* custom_data)
 	#define __awk_tolower  towlower
 #endif
 
-static int __handle_bfn (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
-{
-	xp_printf (ASE_T("__handle_bfn\n"));
-	return 0;
-}
-
 static int __main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
@@ -851,12 +845,10 @@ static int __main (int argc, ase_char_t* argv[])
 	srcios.custom_data = &src_io;
 
 
-ase_awk_addbfn (awk, ASE_T("bufa"), 4, 0, 
-	1, 1, ASE_NULL, __handle_bfn);
-	
-
 	ase_awk_setmaxparsedepth (
 		awk, ASE_AWK_DEPTH_BLOCK | ASE_AWK_DEPTH_EXPR, 20);
+	ase_awk_setmaxrundepth (
+		awk, ASE_AWK_DEPTH_BLOCK | ASE_AWK_DEPTH_EXPR, 50);
 
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{
