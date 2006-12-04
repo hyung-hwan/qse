@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.291 2006-12-04 06:28:56 bacon Exp $
+ * $Id: run.c,v 1.292 2006-12-04 06:50:26 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -4067,7 +4067,6 @@ static ase_awk_val_t* __eval_binop_nm (
 
 	ase_awk_refupval (run, rv);
 
-wprintf (L"STRING: [%S]\n", ((ase_awk_val_str_t*)lv)->buf);
 	res = __eval_binop_match0 (run, lv, rv, 0);
 
 	ase_awk_refdownval (run, lv);
@@ -4160,6 +4159,7 @@ static ase_awk_val_t* __eval_binop_match0 (
 			PANIC (run, errnum);
 		}
 
+wprintf (L"n=%d, ret=%d\n", n, ret);	
 		res = ase_awk_makeintval (run, (n == ret));
 		if (res == ASE_NULL) 
 		{

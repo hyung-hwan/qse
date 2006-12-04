@@ -1,10 +1,9 @@
 /*
- * $Id: rex.c,v 1.49 2006-12-02 16:26:03 bacon Exp $
+ * $Id: rex.c,v 1.50 2006-12-04 06:50:26 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
 
-//#define DEBUG_REX
 enum
 {
 	CT_EOF,
@@ -1232,6 +1231,7 @@ static const ase_byte_t* __match_any_char (
 	matcher->awk->syscas.dprintf (
 		ASE_T("__match_any_char: max si = %u\n"), (unsigned)si);
 #endif
+
 	if (si >= lbound && si <= ubound)
 	{
 		p = __match_occurrences (matcher, si, p, lbound, ubound, mat);
@@ -1289,8 +1289,8 @@ static const ase_byte_t* __match_ord_char (
 	
 #ifdef BUILD_REX
 	matcher->awk->syscas.dprintf (
-		ASE_T("__match_ord_char: lbound = %u, ubound = %u\n"), 
-		(unsigned int)lbound, (unsigned int)ubound);
+		ASE_T("__match_ord_char: cc = %c, lbound = %u, ubound = %u\n"), 
+		cc, (unsigned int)lbound, (unsigned int)ubound);
 #endif
 
 	mat->matched = ase_false;
@@ -1302,6 +1302,11 @@ static const ase_byte_t* __match_ord_char (
 		while (si < ubound)
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
+#ifdef DEBUG_REX
+			matcher->awk->syscas.dprintf (
+				ASE_T("__match_ord_char: <ignorecase> %c %c\n"), 
+				cc, mat->match_ptr[si]);
+#endif
 			if (cc != ASE_AWK_TOUPPER (matcher->awk, mat->match_ptr[si])) break;
 			si++;
 		}
@@ -1312,8 +1317,9 @@ static const ase_byte_t* __match_ord_char (
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 #ifdef DEBUG_REX
-	matcher->awk->syscas.dprintf (
-		ASE_T("__match_ord_char: %c %c\n"), cc, mat->match_ptr[si]);
+			matcher->awk->syscas.dprintf (
+				ASE_T("__match_ord_char: %c %c\n"), 
+				cc, mat->match_ptr[si]);
 #endif
 			if (cc != mat->match_ptr[si]) break;
 			si++;
@@ -1322,7 +1328,7 @@ static const ase_byte_t* __match_ord_char (
 
 #ifdef DEBUG_REX
 	matcher->awk->syscas.dprintf (
-		ASE_T("__match_ord_char: max si=%u, lbound=%u, ubound=%u\n"), 
+		ASE_T("__match_ord_char: max occurrences=%u, lbound=%u, ubound=%u\n"), 
 		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
 #endif
 
@@ -1379,7 +1385,7 @@ static const ase_byte_t* __match_charset (
 
 #ifdef DEBUG_REX
 	matcher->awk->syscas.dprintf (
-		ASE_T("__match_charset: max si=%u, lbound=%u, ubound=%u\n"), 
+		ASE_T("__match_charset: max occurrences=%u, lbound=%u, ubound=%u\n"), 
 		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
 #endif
 	if (si >= lbound && si <= ubound)
@@ -1631,6 +1637,10 @@ static ase_bool_t __test_charset (
 			c1 = *(const ase_char_t*)p;
 			if (matcher->ignorecase) 
 				c1 = ASE_AWK_TOUPPER(matcher->awk, c1);
+		#ifdef DEBUG_REX
+			matcher->awk->syscas.dprintf (
+				ASE_T("__match_charset: <one> %c %c\n"), c, c1);
+		#endif
 			if (c == c1) return ase_true;
 		}
 		else if (c0 == CHARSET_RANGE)
@@ -1644,11 +1654,20 @@ static ase_bool_t __test_charset (
 				c1 = ASE_AWK_TOUPPER(matcher->awk, c1);
 				c2 = ASE_AWK_TOUPPER(matcher->awk, c2);
 			}
+		#ifdef DEBUG_REX
+			matcher->awk->syscas.dprintf (
+				ASE_T("__match_charset: <range> %c %c-%c\n"), c, c1, c2);
+		#endif
 			if (c >= c1 && c <= c2) return ase_true;
 		}
 		else if (c0 == CHARSET_CLASS)
 		{
 			c1 = *(const ase_char_t*)p;
+		#ifdef DEBUG_REX
+			matcher->awk->syscas.dprintf (
+				ASE_T("__match_charset: <class> %c %s\n"), 
+				c, __char_class[c1].name);
+		#endif
 			if (__char_class[c1].func (
 				matcher->awk, c)) return ase_true;
 		}
