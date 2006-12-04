@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.95 2006-12-02 16:26:03 bacon Exp $
+ * $Id: val.c,v 1.96 2006-12-04 12:58:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -718,7 +718,7 @@ int ase_awk_valtonum (
 }
 
 int ase_awk_strtonum (
-	ase_awk_run_t* run, const ase_awk_str_t* ptr, ase_size_t len, 
+	ase_awk_run_t* run, const ase_char_t* ptr, ase_size_t len, 
 	ase_long_t* l, ase_real_t* r)
 {
 	const ase_char_t* endptr;

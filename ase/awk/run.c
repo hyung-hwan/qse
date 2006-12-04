@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.292 2006-12-04 06:50:26 bacon Exp $
+ * $Id: run.c,v 1.293 2006-12-04 12:58:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -54,8 +54,8 @@ static void __add_run (ase_awk_t* awk, ase_awk_run_t* run);
 static void __del_run (ase_awk_t* awk, ase_awk_run_t* run);
 
 static int __init_run (
-	ase_awk_run_t* run, ase_awk_runios_t* runios, 
-	void* custom_data, int* errnum);
+	ase_awk_run_t* run, ase_awk_t* awk,
+	ase_awk_runios_t* runios, void* custom_data, int* errnum);
 static void __deinit_run (ase_awk_run_t* run);
 
 static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg);
@@ -69,6 +69,7 @@ static int __run_pattern_block_chain (
 static int __run_pattern_block (
 	ase_awk_run_t* run, ase_awk_chain_t* chain, ase_size_t block_no);
 static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde);
+static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde);
 static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde);
 static int __run_if (ase_awk_run_t* run, ase_awk_nde_if_t* nde);
 static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde);
@@ -572,7 +573,7 @@ int ase_awk_run (ase_awk_t* awk,
 
 	__add_run (awk, run);
 
-	if (__init_run (run, runios, custom_data, &errnum) == -1) 
+	if (__init_run (run, awk, runios, custom_data, &errnum) == -1) 
 	{
 		awk->errnum = errnum;
 		__del_run (awk, run);
@@ -699,8 +700,8 @@ static void __del_run (ase_awk_t* awk, ase_awk_run_t* run)
 }
 
 static int __init_run (
-	ase_awk_run_t* run, ase_awk_runios_t* runios, 
-	void* custom_data, int* errnum)
+	ase_awk_run_t* run, ase_awk_t* awk,
+	ase_awk_runios_t* runios, void* custom_data, int* errnum)
 {
 	run->custom_data = custom_data;
 
@@ -799,6 +800,11 @@ static int __init_run (
 	run->global.rs = ASE_NULL;
 	run->global.fs = ASE_NULL;
 	run->global.ignorecase = 0;
+
+	run->depth.max.block = awk->run.depth.max.block;
+	run->depth.max.expr = awk->run.depth.max.expr;
+	run->depth.cur.block = 0; 
+	run->depth.cur.expr = 0;
 
 	return 0;
 }
@@ -1496,6 +1502,24 @@ static int __run_pattern_block (
 }
 
 static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
+{
+	int n;
+
+	if (run->depth.max.block > 0 &&
+	    run->depth.cur.block >= run->depth.max.block)
+	{
+		run->errnum = ASE_AWK_ERECURSION;
+		return -1;;
+	}
+
+	run->depth.cur.block++;
+	n = __run_block0 (run, nde);
+	run->depth.cur.block--;
+	
+	return n;
+}
+
+static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 {
 	ase_awk_nde_t* p;
 	ase_size_t nlocals;
@@ -4159,7 +4183,6 @@ static ase_awk_val_t* __eval_binop_match0 (
 			PANIC (run, errnum);
 		}
 
-wprintf (L"n=%d, ret=%d\n", n, ret);	
 		res = ase_awk_makeintval (run, (n == ret));
 		if (res == ASE_NULL) 
 		{

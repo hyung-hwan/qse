@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.215 2006-12-04 06:04:06 bacon Exp $
+ * $Id: parse.c,v 1.216 2006-12-04 12:58:23 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1424,14 +1424,16 @@ static ase_awk_nde_t* __parse_expression0 (ase_awk_t* awk)
 		return ASE_NULL;
 	}
 
-	y = __parse_basic_expr (awk);
+	/*y = __parse_basic_expr (awk);*/
+	y = __parse_expression (awk);
 	if (y == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, x);
 		return ASE_NULL;
 	}
 
-	nde = (ase_awk_nde_ass_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_ass_t));
+	nde = (ase_awk_nde_ass_t*) 
+		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_ass_t));
 	if (nde == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, x);
@@ -1461,7 +1463,8 @@ static ase_awk_nde_t* __parse_basic_expr (ase_awk_t* awk)
 
 		if (__get_token(awk) == -1) return ASE_NULL;
 
-		n1 = __parse_basic_expr (awk);
+		/*n1 = __parse_basic_expr (awk);*/
+		n1 = __parse_expression (awk);
 		if (n1 == ASE_NULL) 
 		{
 			ase_awk_clrpt (awk, nde);
@@ -1471,7 +1474,8 @@ static ase_awk_nde_t* __parse_basic_expr (ase_awk_t* awk)
 		if (!MATCH(awk,TOKEN_COLON)) PANIC (awk, ASE_AWK_ECOLON);
 		if (__get_token(awk) == -1) return ASE_NULL;
 
-		n2 = __parse_basic_expr (awk);
+		/*n2 = __parse_basic_expr (awk);*/
+		n2 = __parse_expression (awk);
 		if (n2 == ASE_NULL)
 		{
 			ase_awk_clrpt (awk, nde);

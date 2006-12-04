@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.87 2006-11-29 03:18:18 bacon Exp $
+ * $Id: awk_i.h,v 1.88 2006-12-04 12:58:23 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -184,6 +184,21 @@ struct ase_awk_t
 	{
 		ase_size_t count;
 		ase_awk_run_t* ptr;
+
+		struct
+		{
+			struct
+			{
+				ase_size_t block;
+				ase_size_t expr; 
+			} cur;
+
+			struct
+			{
+				ase_size_t block;
+				ase_size_t expr;
+			} max;
+		} depth;
 	} run;
 
 	/* housekeeping */
@@ -293,6 +308,21 @@ struct ase_awk_run_t
 			ase_size_t inc;
 		} tmp;
 	} format;
+
+	struct
+	{
+		struct
+		{
+			ase_size_t block;
+			ase_size_t expr; /* expression */
+		} cur;
+
+		struct
+		{
+			ase_size_t block;
+			ase_size_t expr;
+		} max;
+	} depth;
 
 	int errnum;
 	void* custom_data;
