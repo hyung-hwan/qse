@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.214 2006-11-29 02:54:15 bacon Exp $
+ * $Id: parse.c,v 1.215 2006-12-04 06:04:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -16,6 +16,7 @@ enum
 	TOKEN_MINUS_ASSIGN,
 	TOKEN_MUL_ASSIGN,
 	TOKEN_DIV_ASSIGN,
+	TOKEN_IDIV_ASSIGN,
 	TOKEN_MOD_ASSIGN,
 	TOKEN_EXP_ASSIGN,
 
@@ -33,6 +34,7 @@ enum
 	TOKEN_MINUSMINUS,
 	TOKEN_MUL,
 	TOKEN_DIV,
+	TOKEN_IDIV,
 	TOKEN_MOD,
 	TOKEN_LOR,
 	TOKEN_LAND,
@@ -1540,68 +1542,6 @@ static ase_awk_nde_t* __parse_binary_expr (
 			return ASE_NULL;
 		}
 
-#if 0
-		/* TODO: enhance constant folding. do it in a better way */
-		/* TODO: differentiate different types of numbers ... */
-		if (left->type == ASE_AWK_NDE_INT && 
-		    right->type == ASE_AWK_NDE_INT) 
-		{
-			ase_long_t l, r;
-
-			l = ((ase_awk_nde_int_t*)left)->val; 
-			r = ((ase_awk_nde_int_t*)right)->val; 
-
-			/* TODO: more operators */
-			if (opcode == ASE_AWK_BINOP_PLUS) l += r;
-			else if (opcode == ASE_AWK_BINOP_MINUS) l -= r;
-			else if (opcode == ASE_AWK_BINOP_MUL) l *= r;
-			else if (opcode == ASE_AWK_BINOP_DIV && r != 0) l /= r;
-			else if (opcode == ASE_AWK_BINOP_MOD && r != 0) l %= r;
-			else goto skip_constant_folding;
-
-			ase_awk_clrpt (awk, right);
-			((ase_awk_nde_int_t*)left)->val = l;
-
-			if (((ase_awk_nde_int_t*)left)->str != ASE_NULL)
-			{
-				ASE_AWK_FREE (awk, ((ase_awk_nde_int_t*)left)->str);
-				((ase_awk_nde_int_t*)left)->str = ASE_NULL;
-				((ase_awk_nde_int_t*)left)->len = 0;
-			}
-
-			continue;
-		} 
-		else if (left->type == ASE_AWK_NDE_REAL && 
-		         right->type == ASE_AWK_NDE_REAL) 
-		{
-			ase_real_t l, r;
-
-			l = ((ase_awk_nde_real_t*)left)->val; 
-			r = ((ase_awk_nde_real_t*)right)->val; 
-
-			/* TODO: more operators */
-			if (opcode == ASE_AWK_BINOP_PLUS) l += r;
-			else if (opcode == ASE_AWK_BINOP_MINUS) l -= r;
-			else if (opcode == ASE_AWK_BINOP_MUL) l *= r;
-			else if (opcode == ASE_AWK_BINOP_DIV) l /= r;
-			else goto skip_constant_folding;
-
-			ase_awk_clrpt (awk, right);
-			((ase_awk_nde_real_t*)left)->val = l;
-
-			if (((ase_awk_nde_real_t*)left)->str != ASE_NULL)
-			{
-				ASE_AWK_FREE (awk, ((ase_awk_nde_real_t*)left)->str);
-				((ase_awk_nde_real_t*)left)->str = ASE_NULL;
-				((ase_awk_nde_real_t*)left)->len = 0;
-			}
-
-			continue;
-		}
-		/* TODO: enhance constant folding more... */
-
-	skip_constant_folding:
-#endif
 		nde = (ase_awk_nde_exp_t*) ASE_AWK_MALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_exp_t));
 		if (nde == ASE_NULL) 
@@ -1962,9 +1902,10 @@ static ase_awk_nde_t* __parse_multiplicative (ase_awk_t* awk)
 {
 	static __binmap_t map[] = 
 	{
-		{ TOKEN_MUL, ASE_AWK_BINOP_MUL },
-		{ TOKEN_DIV, ASE_AWK_BINOP_DIV },
-		{ TOKEN_MOD, ASE_AWK_BINOP_MOD },
+		{ TOKEN_MUL,  ASE_AWK_BINOP_MUL },
+		{ TOKEN_DIV,  ASE_AWK_BINOP_DIV },
+		{ TOKEN_IDIV, ASE_AWK_BINOP_IDIV },
+		{ TOKEN_MOD,  ASE_AWK_BINOP_MOD },
 		/* { TOKEN_EXP, ASE_AWK_BINOP_EXP }, */
 		{ TOKEN_EOF, 0 }
 	};
@@ -3781,11 +3722,46 @@ static int __get_token (ase_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR (awk);
 		}
+		else if ((awk->option & ASE_AWK_IDIV) && c == ASE_T('/'))
+		{
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR_TO (awk, c);
+			if (c == ASE_T('='))
+			{
+				SET_TOKEN_TYPE (awk, TOKEN_IDIV_ASSIGN);
+				ADD_TOKEN_CHAR (awk, c);
+				GET_CHAR (awk);
+			}
+			else 
+			{
+				SET_TOKEN_TYPE (awk, TOKEN_IDIV);
+			}
+		}
 		else
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_DIV);
 		}
 	}
+#if 0 
+	/* TODO: is it a good idea to use a back-slash for 
+	 *       the idiv operator like BASIC? */
+	else if ((awk->option & ASE_AWK_IDIV) && c == ASE_T('\\'))
+	{
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+
+		if (c == ASE_T('='))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_IDIV_ASSIGN);
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR (awk);
+		}
+		else
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_IDIV);
+		}
+	}
+#endif
 	else if (c == ASE_T('%')) 
 	{
 		ADD_TOKEN_CHAR (awk, c);
@@ -4254,6 +4230,7 @@ static int __skip_comment (ase_awk_t* awk)
 	if (c != ASE_T('/')) return 0; /* not a comment */
 	GET_CHAR_TO (awk, c);
 
+#if 0
 	if ((awk->option & ASE_AWK_DBLSLASHES) && c == ASE_T('/')) 
 	{
 		do 
@@ -4265,7 +4242,9 @@ static int __skip_comment (ase_awk_t* awk)
 		GET_CHAR (awk);
 		return 1; /* comment by // */
 	}
-	else if (c == ASE_T('*')) 
+	else
+#endif
+	if (c == ASE_T('*')) 
 	{
 		do 
 		{
@@ -4332,6 +4311,7 @@ static int __assign_to_opcode (ase_awk_t* awk)
 		ASE_AWK_ASSOP_MINUS,
 		ASE_AWK_ASSOP_MUL,
 		ASE_AWK_ASSOP_DIV,
+		ASE_AWK_ASSOP_IDIV,
 		ASE_AWK_ASSOP_MOD,
 		ASE_AWK_ASSOP_EXP
 	};

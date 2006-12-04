@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.158 2006-12-02 16:26:03 bacon Exp $
+ * $Id: awk.h,v 1.159 2006-12-04 06:04:05 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -151,11 +151,11 @@ enum
 	/* support shift operators */
 	ASE_AWK_SHIFT       = (1 << 4), 
 
-	/* support comments by a hash sign */
-	ASE_AWK_HASHSIGN    = (1 << 5), 
+	/* enable the idiv operator (double slashes) */
+	ASE_AWK_IDIV        = (1 << 5), 
 
-	/* support comments by double slashes */
-	ASE_AWK_DBLSLASHES  = (1 << 6), 
+	/* support comments by a hash sign */
+	ASE_AWK_HASHSIGN    = (1 << 6), 
 
 	/* support string concatenation in tokenization.
 	 * this option can change the behavior of a certain construct.
