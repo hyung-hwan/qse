@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.93 2006-12-04 06:04:07 bacon Exp $
+ * $Id: tree.c,v 1.94 2006-12-04 11:25:21 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -40,6 +40,7 @@ static const ase_char_t* __binop_str[] =
 	ASE_T("-"),
 	ASE_T("*"),
 	ASE_T("/"),
+	ASE_T("//"),
 	ASE_T("%"),
 	ASE_T("**"),
 

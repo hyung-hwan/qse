@@ -1,4 +1,4 @@
-($4 + /Asia/)
+($4 !~ /Asia/)
 
 Canada	3852	25	North America
 USA	3615	237	North America

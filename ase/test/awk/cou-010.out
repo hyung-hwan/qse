@@ -1,4 +1,4 @@
-($0 !~ /Asia/)
+($0 ~ /Asia/)
 
 USSR	8649	275	Asia
 China	3705	1032	Asia
