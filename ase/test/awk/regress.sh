@@ -1,12 +1,45 @@
 #!/bin/sh
 
+run_script_for_init()
+{
+	script="$1"
+	data="$2"
+	output=`echo $script | sed 's/\.awk$/.out/g'`
+
+	./awk "$script" "$data" > "$output"
+}
+
 run_init()
 {
 	for script in emp-???.awk
 	do
-		output=`echo $script | sed 's/\.awk$/.out/g'`
-		./awk $script emp-en.data > "$output"
+		run_script_for_init "$script" "emp-en.data"
 	done
+
+	for script in cou-???.awk
+	do
+		run_script_for_init "$script" "cou-en.data"
+	done
+}
+
+run_script_for_test()
+{
+	script="$1"
+	data="$2"
+	output=`echo $script | sed 's/\.awk$/.out/g'`
+
+	./awk "$script" "$data" > "$output.$pid"
+
+	#diff -y "$output" "$output.$pid" 
+	diff "$output" "$output.$pid" 
+	if [ $? -ne 0 ]
+	then
+		rm -f "$output.$pid"
+		return 1
+	fi
+
+	rm -f "$output.$pid"
+	return 0
 }
 
 run_test()
@@ -15,21 +48,26 @@ run_test()
 
 	for script in emp-???.awk
 	do
-		output=`echo $script | sed 's/\.awk$/.out/g'`
-		./awk $script emp-en.data > "$output.$pid"
-
-		#diff -y $output "$output.$pid" 
-		diff $output "$output.$pid" 
+		run_script_for_test "$script" "emp-en.data"
 		if [ $? -ne 0 ]
 		then
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
-			rm -f "$output.$pid"
 			break
 		fi
+	done
 
-		rm -f "$output.$pid"
+	for script in cou-???.awk
+	do
+		run_script_for_test "$script" "cou-en.data"
+		if [ $? -ne 0 ]
+		then
+			echo "###################################"
+			echo "PROBLEM(S) DETECTED IN $script.".
+			echo "###################################"
+			break
+		fi
 	done
 }
 
