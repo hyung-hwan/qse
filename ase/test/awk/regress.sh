@@ -28,6 +28,7 @@ run_script_for_test()
 	data="$2"
 	output=`echo $script | sed 's/\.awk$/.out/g'`
 
+	echo ">> RUNNING $script"
 	./awk "$script" "$data" > "$output.$pid"
 
 	#diff -y "$output" "$output.$pid" 
