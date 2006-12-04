@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.35 2006-12-02 16:26:03 bacon Exp $
+ * $Id: jni.c,v 1.36 2006-12-04 06:04:06 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -234,8 +234,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	(*env)->SetLongField (env, obj, fid_handle, (jlong)awk);
 
-	opt = ASE_AWK_EXPLICIT | ASE_AWK_UNIQUEAFN | ASE_AWK_DBLSLASHES |
-		ASE_AWK_SHADING | ASE_AWK_IMPLICIT | ASE_AWK_SHIFT | 
+	opt = ASE_AWK_EXPLICIT | ASE_AWK_UNIQUEAFN | ASE_AWK_SHADING |
+		ASE_AWK_IMPLICIT | ASE_AWK_SHIFT | ASE_AWK_IDIV |
 		ASE_AWK_EXTIO | ASE_AWK_BLOCKLESS | ASE_AWK_HASHSIGN | 
 		ASE_AWK_NEXTOFILE;
 	ase_awk_setopt (awk, opt);

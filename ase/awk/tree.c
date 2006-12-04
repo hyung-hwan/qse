@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.92 2006-11-29 02:54:16 bacon Exp $
+ * $Id: tree.c,v 1.93 2006-12-04 06:04:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -11,6 +11,7 @@ static const ase_char_t* __assop_str[] =
 	ASE_T("-="),
 	ASE_T("*="),
 	ASE_T("/="),
+	ASE_T("//="),
 	ASE_T("%="),
 	ASE_T("**=")
 };

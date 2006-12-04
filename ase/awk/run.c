@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.289 2006-12-03 15:05:01 bacon Exp $
+ * $Id: run.c,v 1.290 2006-12-04 06:04:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -140,6 +140,8 @@ static ase_awk_val_t* __eval_binop_minus (
 static ase_awk_val_t* __eval_binop_mul (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
 static ase_awk_val_t* __eval_binop_div (
+	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
+static ase_awk_val_t* __eval_binop_idiv (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
 static ase_awk_val_t* __eval_binop_mod (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
@@ -2719,6 +2721,10 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		{
 			tmp = __eval_binop_div (run, val2, val);
 		}
+		else if (ass->opcode == ASE_AWK_ASSOP_IDIV)
+		{
+			tmp = __eval_binop_idiv (run, val2, val);
+		}
 		else if (ass->opcode == ASE_AWK_ASSOP_MOD)
 		{
 			tmp = __eval_binop_mod (run, val2, val);
@@ -3029,6 +3035,7 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		__eval_binop_minus,
 		__eval_binop_mul,
 		__eval_binop_div,
+		__eval_binop_idiv,
 		__eval_binop_mod,
 		__eval_binop_exp,
 
@@ -3808,16 +3815,61 @@ static ase_awk_val_t* __eval_binop_div (
 	}
 	else if (n3 == 1)
 	{
-		res = ase_awk_makerealval (run, (ase_real_t)r1 / (ase_real_t)l2);
+		res = ase_awk_makerealval (
+			run, (ase_real_t)r1 / (ase_real_t)l2);
 	}
 	else if (n3 == 2)
 	{
-		res = ase_awk_makerealval (run, (ase_real_t)l1 / (ase_real_t)r2);
+		res = ase_awk_makerealval (
+			run, (ase_real_t)l1 / (ase_real_t)r2);
 	}
 	else
 	{
 		ASE_AWK_ASSERT (run->awk, n3 == 3);
-		res = ase_awk_makerealval (run, (ase_real_t)r1 / (ase_real_t)r2);
+		res = ase_awk_makerealval (
+			run, (ase_real_t)r1 / (ase_real_t)r2);
+	}
+
+	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
+	return res;
+}
+
+static ase_awk_val_t* __eval_binop_idiv (
+	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
+{
+	int n1, n2, n3;
+	ase_long_t l1, l2;
+	ase_real_t r1, r2, quo;
+	ase_awk_val_t* res;
+
+	n1 = ase_awk_valtonum (run, left, &l1, &r1);
+	n2 = ase_awk_valtonum (run, right, &l2, &r2);
+
+	if (n1 == -1 || n2 == -1) PANIC (run, ASE_AWK_EOPERAND);
+
+	n3 = n1 + (n2 << 1);
+	if (n3 == 0)
+	{
+		if (l2 == 0) PANIC (run, ASE_AWK_EDIVBYZERO);
+		res = ase_awk_makeintval (
+			run, (ase_long_t)l1 / (ase_long_t)l2);
+	}
+	else if (n3 == 1)
+	{
+		quo = (ase_real_t)r1 / (ase_real_t)l2;
+		res = ase_awk_makeintval (run, (ase_long_t)quo);
+	}
+	else if (n3 == 2)
+	{
+		quo = (ase_real_t)l1 / (ase_real_t)r2;
+		res = ase_awk_makeintval (run, (ase_long_t)quo);
+	}
+	else
+	{
+		ASE_AWK_ASSERT (run->awk, n3 == 3);
+
+		quo = (ase_real_t)r1 / (ase_real_t)r2;
+		res = ase_awk_makeintval (run, (ase_long_t)quo);
 	}
 
 	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
@@ -3841,7 +3893,8 @@ static ase_awk_val_t* __eval_binop_mod (
 	if (n3 == 0)
 	{
 		if  (l2 == 0) PANIC (run, ASE_AWK_EDIVBYZERO);
-		res = ase_awk_makeintval (run, (ase_long_t)l1 % (ase_long_t)l2);
+		res = ase_awk_makeintval (
+			run, (ase_long_t)l1 % (ase_long_t)l2);
 	}
 	else PANIC (run, ASE_AWK_EOPERAND);
 

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.133 2006-11-30 10:40:40 bacon Exp $
+ * $Id: awk.c,v 1.134 2006-12-04 06:04:07 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -755,7 +755,7 @@ static int __main (int argc, ase_char_t* argv[])
 	      ASE_AWK_EXPLICIT | 
 	      ASE_AWK_UNIQUEAFN | 
 	      ASE_AWK_HASHSIGN | 
-	      /*ASE_AWK_DBLSLASHES |*/ 
+	      ASE_AWK_IDIV |
 	      ASE_AWK_SHADING | 
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 

@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.28 2006-11-24 13:20:49 bacon Exp $
+ * $Id: run.h,v 1.29 2006-12-04 06:04:07 bacon Exp $
  */
 
 #ifndef _ASE_AWK_RUN_H_
@@ -17,6 +17,7 @@ enum ase_awk_assop_type_t
 	ASE_AWK_ASSOP_MINUS, /* -= */
 	ASE_AWK_ASSOP_MUL,   /* *= */
 	ASE_AWK_ASSOP_DIV,   /* /= */
+	ASE_AWK_ASSOP_IDIV,  /* //= */
 	ASE_AWK_ASSOP_MOD,   /* %= */
 	ASE_AWK_ASSOP_EXP    /* **= */
 };
@@ -47,6 +48,7 @@ enum  ase_awk_binop_type_t
 	ASE_AWK_BINOP_MINUS,
 	ASE_AWK_BINOP_MUL,
 	ASE_AWK_BINOP_DIV,
+	ASE_AWK_BINOP_IDIV,
 	ASE_AWK_BINOP_MOD,
 	ASE_AWK_BINOP_EXP,
 
