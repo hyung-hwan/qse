@@ -4,14 +4,13 @@ OBJS = $(SRCS:.c=.o)
 OUT = libaselsp.a
 
 CC = @CC@
-RANLIB = @RANLIB@
+AR = ar
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 
 all: $(OBJS)
-	ar cr $(OUT) $(OBJS)
-	ranlib $(OUT)
+	$(AR) cr $(OUT) $(OBJS)
 
 clean:
 	rm -rf $(OBJS) $(OUT) *.o

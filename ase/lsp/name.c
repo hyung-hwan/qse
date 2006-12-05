@@ -1,5 +1,5 @@
 /*
- * $Id: name.c,v 1.12 2006-11-29 02:54:17 bacon Exp $
+ * $Id: name.c,v 1.13 2006-12-05 03:38:11 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -35,7 +35,7 @@ ase_lsp_name_t* ase_lsp_name_open (
 
 	name->size   = 0;
 	name->capa   = capa;
-	name->buf[0] = ASE_CHAR('\0');
+	name->buf[0] = ASE_T('\0');
 	name->lsp    = lsp;
 
 	return name;
@@ -87,13 +87,13 @@ int ase_lsp_name_addc (ase_lsp_name_t* name, ase_cint_t c)
 	}
 
 	name->buf[name->size++] = c;
-	name->buf[name->size]   = ASE_CHAR('\0');
+	name->buf[name->size]   = ASE_T('\0');
 	return 0;
 }
 
 int ase_lsp_name_adds (ase_lsp_name_t* name, const ase_char_t* s)
 {
-	while (*s != ASE_CHAR('\0')) 
+	while (*s != ASE_T('\0')) 
 	{
 		if (ase_lsp_name_addc(name, *s) == -1) return -1;
 		s++;
@@ -105,7 +105,7 @@ int ase_lsp_name_adds (ase_lsp_name_t* name, const ase_char_t* s)
 void ase_lsp_name_clear (ase_lsp_name_t* name)
 {
 	name->size   = 0;
-	name->buf[0] = ASE_CHAR('\0');
+	name->buf[0] = ASE_T('\0');
 }
 
 int ase_lsp_name_compare (ase_lsp_name_t* name, const ase_char_t* str)
@@ -120,5 +120,5 @@ int ase_lsp_name_compare (ase_lsp_name_t* name, const ase_char_t* str)
 		index++; p++; str++;
 	}
 
-	return (*str == ASE_CHAR('\0'))? 0: -1;
+	return (*str == ASE_T('\0'))? 0: -1;
 }
