@@ -27,5 +27,3 @@ extio.obj depends_on extio.c
 rex.obj depends_on rex.c
 
 
-nds_on rex.c
-
