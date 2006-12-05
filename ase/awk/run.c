@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.293 2006-12-04 12:58:24 bacon Exp $
+ * $Id: run.c,v 1.294 2006-12-05 02:54:22 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2707,7 +2707,8 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_val_t* val, * ret;
 	ase_awk_nde_ass_t* ass = (ase_awk_nde_ass_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, ass->left != ASE_NULL && ass->right != ASE_NULL);
+	ASE_AWK_ASSERT (run->awk, ass->left != ASE_NULL);
+	ASE_AWK_ASSERT (run->awk, ass->right != ASE_NULL);
 
 	ASE_AWK_ASSERT (run->awk, ass->right->next == ASE_NULL);
 	val = __eval_expression (run, ass->right);
@@ -2718,6 +2719,17 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	if (ass->opcode != ASE_AWK_ASSOP_NONE)
 	{
 		ase_awk_val_t* val2, * tmp;
+		static binop_func_t __binop_func[] =
+		{
+			ASE_NULL, /* ASE_AWK_ASSOP_NONE */
+			__eval_binop_plus,
+			__eval_binop_minus,
+			__eval_binop_mul,
+			__eval_binop_div,
+			__eval_binop_idiv,
+			__eval_binop_mod,
+			__eval_binop_exp
+		};
 
 		ASE_AWK_ASSERT (run->awk, ass->left->next == ASE_NULL);
 		val2 = __eval_expression (run, ass->left);
@@ -2729,48 +2741,21 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 		ase_awk_refupval (run, val2);
 
-		if (ass->opcode == ASE_AWK_ASSOP_PLUS)
-		{
-			tmp = __eval_binop_plus (run, val2, val);
-		}
-		else if (ass->opcode == ASE_AWK_ASSOP_MINUS)
-		{
-			tmp = __eval_binop_minus (run, val2, val);
-		}
-		else if (ass->opcode == ASE_AWK_ASSOP_MUL)
-		{
-			tmp = __eval_binop_mul (run, val2, val);
-		}
-		else if (ass->opcode == ASE_AWK_ASSOP_DIV)
-		{
-			tmp = __eval_binop_div (run, val2, val);
-		}
-		else if (ass->opcode == ASE_AWK_ASSOP_IDIV)
-		{
-			tmp = __eval_binop_idiv (run, val2, val);
-		}
-		else if (ass->opcode == ASE_AWK_ASSOP_MOD)
-		{
-			tmp = __eval_binop_mod (run, val2, val);
-		}
-		else if (ass->opcode == ASE_AWK_ASSOP_EXP)
-		{
-			tmp = __eval_binop_exp (run, val2, val);
-		}
-		else
-		{
-			ASE_AWK_ASSERT (run->awk, !"should never happen - invalid assignment opcode");
-			PANIC (run, ASE_AWK_EINTERNAL);
-		}
+		ASE_AWK_ASSERT (run->awk, ass->opcode >= 0);
+		ASE_AWK_ASSERT (run->awk, ass->opcode < ASE_COUNTOF(__binop_func));
+		ASE_AWK_ASSERT (run->awk, __binop_func[ass->opcode] != ASE_NULL);
 
+		tmp = __binop_func[ass->opcode] (run, val2, val);
 		if (tmp == ASE_NULL)
 		{
-			ase_awk_refdownval (run, val);
 			ase_awk_refdownval (run, val2);
+			ase_awk_refdownval (run, val);
 			return ASE_NULL;
 		}
 
+		ase_awk_refdownval (run, val2);
 		ase_awk_refdownval (run, val);
+
 		val = tmp;
 		ase_awk_refupval (run, val);
 	}
