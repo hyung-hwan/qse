@@ -5,14 +5,13 @@ OUT = libaseawk.a
 
 CC = @CC@
 AR = ar
-RANLIB = ranlib
+RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 
 all: $(OBJS)
 	$(AR) cr $(OUT) $(OBJS)
-	$(RANLIB) $(OUT)
 
 clean:
 	rm -rf $(OBJS) $(OUT) *.o
