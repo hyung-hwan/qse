@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.216 2006-12-04 12:58:23 bacon Exp $
+ * $Id: parse.c,v 1.217 2006-12-08 06:02:41 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -346,7 +346,9 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 {
 	int n;
 
-	ASE_AWK_ASSERT (awk, srcios != ASE_NULL && srcios->in != ASE_NULL);
+	ASE_AWK_ASSERTX (awk, 
+		srcios != ASE_NULL && srcios->in != ASE_NULL,
+		"the source code input stream must be provided at least");
 	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
 	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.expr == 0);
 
