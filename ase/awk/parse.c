@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.217 2006-12-08 06:02:41 bacon Exp $
+ * $Id: parse.c,v 1.218 2006-12-09 11:49:03 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -371,7 +371,7 @@ static int __parse (ase_awk_t* awk)
 
 	op = awk->src.ios.in (
 		ASE_AWK_IO_OPEN, awk->src.ios.custom_data, ASE_NULL, 0);
-	if (op == -1)
+	if (op <= -1)
 	{
 		/* cannot open the source file.
 		 * it doesn't even have to call CLOSE */
@@ -431,9 +431,9 @@ static int __parse (ase_awk_t* awk)
 
 exit_parse:
 	if (awk->src.ios.in (
-		ASE_AWK_IO_CLOSE, awk->src.ios.custom_data, ASE_NULL, 0) == -1)
+		ASE_AWK_IO_CLOSE, awk->src.ios.custom_data, ASE_NULL, 0) != 0)
 	{
-		if (n != -1)
+		if (n == 0)
 		{
 			/* this is to keep the earlier error above
 			 * that might be more critical than this */
@@ -4161,7 +4161,7 @@ static int __get_char (ase_awk_t* awk)
 		n = awk->src.ios.in (
 			ASE_AWK_IO_READ, awk->src.ios.custom_data,
 			awk->src.shared.buf, ASE_COUNTOF(awk->src.shared.buf));
-		if (n == -1)
+		if (n <= -1)
 		{
 			awk->errnum = ASE_AWK_ESRCINREAD;
 			return -1;
@@ -4372,7 +4372,7 @@ static int __deparse (ase_awk_t* awk)
 
 	op = awk->src.ios.out (
 		ASE_AWK_IO_OPEN, awk->src.ios.custom_data, ASE_NULL, 0);
-	if (op == -1)
+	if (op <= -1)
 	{
 		awk->errnum = ASE_AWK_ESRCOUTOPEN;
 		return -1;
@@ -4509,9 +4509,9 @@ static int __deparse (ase_awk_t* awk)
 
 exit_deparse:
 	if (awk->src.ios.out (
-		ASE_AWK_IO_CLOSE, awk->src.ios.custom_data, ASE_NULL, 0) == -1)
+		ASE_AWK_IO_CLOSE, awk->src.ios.custom_data, ASE_NULL, 0) != 0)
 	{
-		if (n != -1)
+		if (n == 0)
 		{
 			awk->errnum = ASE_AWK_ESRCOUTCLOSE;
 			n = -1;
