@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.36 2006-12-04 06:04:06 bacon Exp $
+ * $Id: jni.c,v 1.37 2006-12-09 17:36:27 bacon Exp $
  */
 
 #include <ase/awk/jni.h>
@@ -669,7 +669,7 @@ static ase_ssize_t __java_open_extio (
 		ret = -1;
 	}
 
-	if (ret != -1) 
+	if (ret >= 0) 
 	{
 		/* ret == -1 failed to open the stream
 		 * ret ==  0 opened the stream and reached its end 
@@ -713,7 +713,7 @@ static ase_ssize_t __java_close_extio (
 		ret = -1;
 	}
 
-	if (ret != -1) 
+	if (ret >= 0) 
 	{
 		/* ret == -1  failed to close the stream
 		 * ret ==  0  closed the stream */

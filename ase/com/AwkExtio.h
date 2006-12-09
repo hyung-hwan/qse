@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.h,v 1.2 2006-12-09 12:01:26 bacon Exp $
+ * $Id: AwkExtio.h,v 1.3 2006-12-09 17:36:27 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWKEXTIO_H_
@@ -18,6 +18,7 @@ public:
 	CComBSTR name;
 	int type;
 	int mode;
+	CComVariant handle;
 
 	CAwkExtio ();
 	~CAwkExtio ();
@@ -34,11 +35,8 @@ END_COM_MAP()
 // IAwkExtio
 public:
 	STDMETHOD(get_Mode)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(put_Mode)(/*[in]*/ int newVal);
 	STDMETHOD(get_Type)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(put_Type)(/*[in]*/ int newVal);
 	STDMETHOD(get_Name)(/*[out, retval]*/ BSTR *pVal);
-	STDMETHOD(put_Name)(/*[in]*/ BSTR newVal);
 };
 
 #endif //__AWKEXTIO_H_

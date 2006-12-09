@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.294 2006-12-05 02:54:22 bacon Exp $
+ * $Id: run.c,v 1.295 2006-12-09 17:36:27 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -790,12 +790,15 @@ static int __init_run (
 	}
 	else run->pattern_range_state = ASE_NULL;
 
-	run->extio.handler[ASE_AWK_EXTIO_PIPE] = runios->pipe;
-	run->extio.handler[ASE_AWK_EXTIO_COPROC] = runios->coproc;
-	run->extio.handler[ASE_AWK_EXTIO_FILE] = runios->file;
-	run->extio.handler[ASE_AWK_EXTIO_CONSOLE] = runios->console;
-	run->extio.custom_data = runios->custom_data;
-	run->extio.chain = ASE_NULL;
+	if (runios != ASE_NULL)
+	{
+		run->extio.handler[ASE_AWK_EXTIO_PIPE] = runios->pipe;
+		run->extio.handler[ASE_AWK_EXTIO_COPROC] = runios->coproc;
+		run->extio.handler[ASE_AWK_EXTIO_FILE] = runios->file;
+		run->extio.handler[ASE_AWK_EXTIO_CONSOLE] = runios->console;
+		run->extio.custom_data = runios->custom_data;
+		run->extio.chain = ASE_NULL;
+	}
 
 	run->global.rs = ASE_NULL;
 	run->global.fs = ASE_NULL;
@@ -3279,78 +3282,73 @@ static ase_awk_val_t* __eval_binop_in (
 static ase_awk_val_t* __eval_binop_bor (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
-	if (left->type == ASE_AWK_VAL_INT &&
-	    right->type == ASE_AWK_VAL_INT)
-	{
-		ase_awk_val_t* res;
-		ase_long_t r = 
-			((ase_awk_val_int_t*)left)->val | 
-			((ase_awk_val_int_t*)right)->val;
+	int n1, n2, n3;
+	ase_long_t l1, l2;
+	ase_real_t r1, r2;
+	ase_awk_val_t* res;
 
-		res = ase_awk_makeintval (run, r);
+	n1 = ase_awk_valtonum (run, left, &l1, &r1);
+	n2 = ase_awk_valtonum (run, right, &l2, &r2);
 
-		if (res == ASE_NULL) 
-		{
-			run->errnum = ASE_AWK_ENOMEM;
-			return ASE_NULL;
-		}
+	if (n1 == -1 || n2 == -1) PANIC (run, ASE_AWK_EOPERAND); 
 
-		return res;
-	}
+	n3 = n1 + (n2 << 1);
+	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1|(ase_long_t)l2):
+	      (n3 == 1)? ase_awk_makeintval(run,(ase_long_t)r1|(ase_long_t)l2):
+	      (n3 == 2)? ase_awk_makeintval(run,(ase_long_t)l1|(ase_long_t)r2):
+	                 ase_awk_makeintval(run,(ase_long_t)r1|(ase_long_t)r2);
 
-	run->errnum = ASE_AWK_EOPERAND;
-	return ASE_NULL;
+	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
+	return res;
 }
 
 static ase_awk_val_t* __eval_binop_bxor (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
-	if (left->type == ASE_AWK_VAL_INT &&
-	    right->type == ASE_AWK_VAL_INT)
-	{
-		ase_awk_val_t* res;
-		ase_long_t r = 
-			((ase_awk_val_int_t*)left)->val ^ 
-			((ase_awk_val_int_t*)right)->val;
-		res = ase_awk_makeintval (run, r);
+	int n1, n2, n3;
+	ase_long_t l1, l2;
+	ase_real_t r1, r2;
+	ase_awk_val_t* res;
 
-		if (res == ASE_NULL) 
-		{
-			run->errnum = ASE_AWK_ENOMEM;
-			return ASE_NULL;
-		}
+	n1 = ase_awk_valtonum (run, left, &l1, &r1);
+	n2 = ase_awk_valtonum (run, right, &l2, &r2);
 
-		return res;
-	}
+	if (n1 == -1 || n2 == -1) PANIC (run, ASE_AWK_EOPERAND); 
 
-	run->errnum = ASE_AWK_EOPERAND;
-	return ASE_NULL;
+	n3 = n1 + (n2 << 1);
+	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1^(ase_long_t)l2):
+	      (n3 == 1)? ase_awk_makeintval(run,(ase_long_t)r1^(ase_long_t)l2):
+	      (n3 == 2)? ase_awk_makeintval(run,(ase_long_t)l1^(ase_long_t)r2):
+	                 ase_awk_makeintval(run,(ase_long_t)r1^(ase_long_t)r2);
+
+	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
+	return res;
 }
 
 static ase_awk_val_t* __eval_binop_band (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
-	if (left->type == ASE_AWK_VAL_INT &&
-	    right->type == ASE_AWK_VAL_INT)
-	{
-		ase_awk_val_t* res;
+	int n1, n2, n3;
+	ase_long_t l1, l2;
+	ase_real_t r1, r2;
+	ase_awk_val_t* res;
 
-		ase_long_t r = 
-			((ase_awk_val_int_t*)left)->val &
-			((ase_awk_val_int_t*)right)->val;
-		res = ase_awk_makeintval (run, r);
+	n1 = ase_awk_valtonum (run, left, &l1, &r1);
+	n2 = ase_awk_valtonum (run, right, &l2, &r2);
 
-		if (res == ASE_NULL) 
-		{
-			run->errnum = ASE_AWK_ENOMEM;
-			return ASE_NULL;
-		}
+	if (n1 == -1 || n2 == -1) PANIC (run, ASE_AWK_EOPERAND); 
 
-		return res;
-	}
+	n3 = n1 + (n2 << 1);
+	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1&(ase_long_t)l2):
+	      (n3 == 1)? ase_awk_makeintval(run,(ase_long_t)r1&(ase_long_t)l2):
+	      (n3 == 2)? ase_awk_makeintval(run,(ase_long_t)l1&(ase_long_t)r2):
+	                 ase_awk_makeintval(run,(ase_long_t)r1&(ase_long_t)r2);
 
-	run->errnum = ASE_AWK_EOPERAND;
-	return ASE_NULL;
+	if (res == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
+	return res;
 }
 
 static int __cmp_nil_nil (

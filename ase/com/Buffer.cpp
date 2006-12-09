@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.cpp,v 1.1 2006-12-09 11:50:08 bacon Exp $
+ * $Id: Buffer.cpp,v 1.2 2006-12-09 17:36:27 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -9,7 +9,7 @@ CBuffer::CBuffer ()
 {
 #ifdef _DEBUG
 	TCHAR x[128];
-	_sntprintf (x, 128, _T("CBuffer::~CBuffer %p"), this);
+	_sntprintf (x, 128, _T("CBuffer::CBuffer %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
 #endif
 }

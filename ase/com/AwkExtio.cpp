@@ -1,20 +1,31 @@
 /*
- * $Id: AwkExtio.cpp,v 1.1 2006-12-09 11:50:08 bacon Exp $
+ * $Id: AwkExtio.cpp,v 1.2 2006-12-09 17:36:27 bacon Exp $
  */
 
 #include "stdafx.h"
 #include "ase.h"
 #include "AwkExtio.h"
 
+#include <stdio.h>
 /////////////////////////////////////////////////////////////////////////////
 // CAwkExtio
 
 CAwkExtio::CAwkExtio ()
 {
+#ifdef _DEBUG
+	TCHAR x[128];
+	_sntprintf (x, 128, _T("CAwkExtio::CAwkExtio %p"), this);
+	MessageBox (NULL, x, x, MB_OK);
+#endif
 }
 
 CAwkExtio::~CAwkExtio ()
 {
+#ifdef _DEBUG
+	TCHAR x[128];
+	_sntprintf (x, 128, _T("CAwkExtio::~CAwkExtio %p"), this);
+	MessageBox (NULL, x, x, MB_OK);
+#endif
 }
 
 STDMETHODIMP CAwkExtio::get_Name(BSTR *pVal)
@@ -24,21 +35,9 @@ STDMETHODIMP CAwkExtio::get_Name(BSTR *pVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwkExtio::put_Name(BSTR newVal)
-{
-	name = newVal;
-	return S_OK;
-}
-
 STDMETHODIMP CAwkExtio::get_Type(int *pVal)
 {
 	*pVal = type;
-	return S_OK;
-}
-
-STDMETHODIMP CAwkExtio::put_Type(int newVal)
-{
-	type = newVal;
 	return S_OK;
 }
 
@@ -49,9 +48,3 @@ STDMETHODIMP CAwkExtio::get_Mode(int *pVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwkExtio::put_Mode(int newVal)
-{
-	// TODO: Add your implementation code here
-
-	return S_OK;
-}
