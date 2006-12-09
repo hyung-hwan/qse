@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.65 2006-11-29 02:54:15 bacon Exp $
+ * $Id: extio.c,v 1.66 2006-12-09 11:49:03 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -143,7 +143,7 @@ int ase_awk_readextio (
 		p->in.eos = ase_false;
 
 		n = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
-		if (n == -1)
+		if (n <= -1)
 		{
 			ASE_AWK_FREE (run->awk, p->name);
 			ASE_AWK_FREE (run->awk, p);
@@ -226,7 +226,7 @@ int ase_awk_readextio (
 
 			n = handler (ASE_AWK_IO_READ, p, 
 				p->in.buf, ASE_COUNTOF(p->in.buf));
-			if (n == -1) 
+			if (n <= -1) 
 			{
 				/* handler error. getline should return -1 */
 				/* TODO: use meaningful error code */
@@ -477,7 +477,7 @@ int ase_awk_writeextio_str (
 		p->out.eos = ase_false;
 
 		n = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
-		if (n == -1)
+		if (n <= -1)
 		{
 			ASE_AWK_FREE (run->awk, p->name);
 			ASE_AWK_FREE (run->awk, p);
@@ -524,7 +524,7 @@ int ase_awk_writeextio_str (
 	{
 		n = handler (ASE_AWK_IO_WRITE, p, str, len);
 
-		if (n == -1) 
+		if (n <= -1) 
 		{
 			/* TODO: use meaningful error code */
 			if (ase_awk_setglobal (
@@ -584,7 +584,7 @@ int ase_awk_flushextio (
 		{
 			n = handler (ASE_AWK_IO_FLUSH, p, ASE_NULL, 0);
 
-			if (n == -1) 
+			if (n <= -1) 
 			{
 				/* TODO: use meaningful error code */
 				if (ase_awk_setglobal (
@@ -662,7 +662,7 @@ int ase_awk_nextextio_read (
 	}
 
 	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
-	if (n == -1)
+	if (n <= -1)
 	{
 		/* TODO: is this errnum correct? */
 		run->errnum = ASE_AWK_EIOHANDLER;
@@ -741,7 +741,7 @@ int ase_awk_nextextio_write (
 	}
 
 	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
-	if (n == -1)
+	if (n <= -1)
 	{
 		/* TODO: is this errnum correct? */
 		run->errnum = ASE_AWK_EIOHANDLER;
@@ -802,7 +802,7 @@ int ase_awk_closeextio_read (
 			handler = run->extio.handler[p->type & __MASK_CLEAR];
 			if (handler != ASE_NULL)
 			{
-				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) == -1)
+				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
@@ -865,7 +865,7 @@ int ase_awk_closeextio_write (
 			handler = run->extio.handler[p->type & __MASK_CLEAR];
 			if (handler != ASE_NULL)
 			{
-				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) == -1)
+				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
@@ -907,7 +907,7 @@ int ase_awk_closeextio (ase_awk_run_t* run, const ase_char_t* name)
 			handler = run->extio.handler[p->type & __MASK_CLEAR];
 			if (handler != ASE_NULL)
 			{
-				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) == -1)
+				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
 					/* TODO: set ERRNO */
@@ -949,7 +949,7 @@ void ase_awk_clearextio (ase_awk_run_t* run)
 		if (handler != ASE_NULL)
 		{
 			n = handler (ASE_AWK_IO_CLOSE, run->extio.chain, ASE_NULL, 0);
-			if (n == -1)
+			if (n <= -1)
 			{
 				/* TODO: 
 				 * some warning actions need to be taken */

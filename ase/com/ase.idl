@@ -1,0 +1,135 @@
+/*
+ * $Id: ase.idl,v 1.1 2006-12-09 11:50:08 bacon Exp $
+ */
+
+import "oaidl.idl";
+import "ocidl.idl";
+	
+/* IAwk */
+[
+	object,
+	uuid(05BC1C9F-7C4E-4F77-B186-2E0FD26C0641),
+	dual,
+	helpstring("ASE Awk Interface"),
+	pointer_default(unique)
+]
+interface IAwk : IDispatch
+{
+	[id(1), helpstring("method Parse")] 
+	HRESULT Parse([out, retval] int* ret);
+
+	[id(2), helpstring("method Run")] 
+	HRESULT Run([out, retval] int* ret);
+};
+
+/* ASELib */
+[
+	uuid(F9C69806-16A1-4162-998A-876B33C470BF),
+	version(1.0),
+	helpstring("ASE 1.0 Type Library")
+]
+library ASELib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+
+	/* IBuffer */
+	[
+		object,
+		uuid(AD5EA986-37E9-410E-A78E-21799104293A),
+		dual,
+		helpstring("IBuffer Interface"),
+		pointer_default(unique)
+	]
+	interface IBuffer : IDispatch
+	{
+		[propget, id(1), helpstring("property Value")]
+		HRESULT Value([out, retval] BSTR *pVal);
+
+		[propput, id(1), helpstring("property Value")]
+		HRESULT Value([in] BSTR newVal);
+	};
+
+	/* IAwkEvents */
+	[ 
+		uuid(1351DC8F-10AD-4C40-A2FA-9A2E89C27AC8),
+		helpstring("ASE Awk Events Interface")
+	]
+	dispinterface IAwkEvents
+	{
+	properties:
+	methods:
+		[id(1), helpstring("method OpenSource")]
+		int OpenSource([in] int mode);
+
+		[id(2), helpstring("method CloseSource")]
+		int CloseSource([in] int mode);
+
+		[id(3), helpstring("method ReadSource")]
+		int ReadSource([in] IBuffer* buf);
+
+		[id(4), helpstring("method WriteSource")]
+		int WriteSource([in] IBuffer* buf);
+	};
+
+	/* IAwkExtio */
+	[
+		object,
+		uuid(BE0B91FF-9944-4DFC-A55B-1FE14E24AFEE),
+		dual,
+		helpstring("IAwkExtio Interface"),
+		pointer_default(unique)
+	]
+	interface IAwkExtio : IDispatch
+	{
+		[propget, id(1), helpstring("property Name")]
+		HRESULT Name([out, retval] BSTR *pVal);
+
+		/*[propput, id(1), helpstring("property Name")]
+		HRESULT Value([in] BSTR newVal); */
+
+		[propget, id(2), helpstring("property Type")]
+		HRESULT Type([out, retval] int *pVal);
+
+		/*[propput, id(2), helpstring("property Type")]
+		HRESULT Type([in] int newVal);*/
+
+		[propget, id(3), helpstring("property Mode")]
+		HRESULT Mode([out, retval] int *pVal);
+
+		/*[propput, id(3), helpstring("property Mode")]
+		HRESULT Mode([in] int newVal);*/
+	};
+
+	/* Awk */
+	[
+		uuid(AD863B53-F5EC-45C3-8B1C-6AC678227DC8),
+		helpstring("ASE Awk Class")
+	]
+	coclass Awk
+	{
+		[default] interface IAwk;
+		[default,source] dispinterface IAwkEvents;
+	};
+
+	/* AwkExtio */
+	[
+		uuid(F52F065A-5FD4-4F4D-AFEA-F5E446B16383),
+		helpstring("ASE AwkExtio Class")
+	]
+	coclass AwkExtio
+	{
+		[default] interface IAwkExtio;
+	};
+
+	/* Buffer */
+	[
+		uuid(866B79A7-7628-4808-8AE7-784BE2491C80),
+		helpstring("ASE Buffer Class")
+	]
+	coclass Buffer
+	{
+		[default] interface IBuffer;
+	};
+};
