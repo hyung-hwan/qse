@@ -19,7 +19,7 @@ function awk_ReadSource (buf)
 	WScript.echo ("ReadSource - buf: [" + buf.Value + "]");
 	if (first)
 	{
-		buf.Value = "BEGIN {print 1; print 2; print 3 > \"x\";}"
+		buf.Value = "BEGIN {print 1; print 2;}"
 		first = false
 		return buf.Value.length;
 	}
@@ -29,6 +29,24 @@ function awk_ReadSource (buf)
 function awk_WriteSource (buf)
 {
 	//WScript.echo ("WriteSource - cnt: " + cnt)
+	WScript.echo (buf.Value);
+	return buf.Value.length;
+}
+
+function awk_OpenExtio (extio)
+{
+	WScript.echo ("OpenExtio - type: " + extio.Type + " mode: " + extio.Mode + " name: [" + extio.Name + "]");
+	return 1;
+}
+
+function awk_CloseExtio (extio)
+{
+	WScript.echo ("CloseExtio");
+	return 0;
+}
+
+function awk_WriteExtio (extio, buf)
+{
 	WScript.echo (buf.Value);
 	return buf.Value.length;
 }

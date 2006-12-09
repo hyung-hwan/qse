@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.1 2006-12-09 11:50:07 bacon Exp $
+ * $Id: Awk.h,v 1.2 2006-12-09 17:36:27 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -30,12 +30,13 @@ class CAwk :
 {
 public:
 	ase_awk_t* handle;
+
 	IBuffer* read_source_buf;
 	IBuffer* write_source_buf;
-
 	ase_size_t read_source_pos;
 	ase_size_t read_source_len;
 
+	IBuffer* write_extio_buf;
 public:
 	CAwk();
 	~CAwk ();

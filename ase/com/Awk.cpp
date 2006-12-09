@@ -1,10 +1,11 @@
 /*
- * $Id: Awk.cpp,v 1.1 2006-12-09 11:50:07 bacon Exp $
+ * $Id: Awk.cpp,v 1.2 2006-12-09 17:36:27 bacon Exp $
  */
 
 #include "stdafx.h"
 #include "ase.h"
 #include "Awk.h"
+#include "AwkExtio.h"
 #include "Buffer.h"
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +29,8 @@ STDMETHODIMP CAwk::InterfaceSupportsErrorInfo(REFIID riid)
 }
 
 CAwk::CAwk (): handle(NULL), 
-	read_source_buf(NULL), write_source_buf(NULL)
+	read_source_buf(NULL), write_source_buf(NULL),
+	write_extio_buf(NULL)
 {
 #ifdef _DEBUG
 	TCHAR x[128];
@@ -44,6 +46,11 @@ CAwk::~CAwk ()
 	_sntprintf (x, 128, _T("CAwk::~CAwk %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
 #endif
+
+	if (write_extio_buf != NULL)
+	{
+		write_extio_buf->Release ();
+	}
 
 	if (write_source_buf != NULL)
 	{
@@ -185,11 +192,11 @@ MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
 
 		if (awk->read_source_pos >= awk->read_source_len)
 		{
-			LONG n = awk->Fire_ReadSource (awk->read_source_buf);
+			INT n = awk->Fire_ReadSource (awk->read_source_buf);
 			if (n <= 0) return (ase_ssize_t)n;
 
 			awk->read_source_buf->get_Value (&val);
-			if (n > (LONG)val.Length()) return -1;
+			if (n > (INT)val.Length()) return -1;
 
 			awk->read_source_pos = 0;
 			awk->read_source_len = n;
@@ -202,7 +209,7 @@ MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
 		ASE_AWK_ASSERT (awk->handle, 
 			awk->read_source_pos < awk->read_source_len);
 
-		LONG left = awk->read_source_len - awk->read_source_pos;
+		INT left = awk->read_source_len - awk->read_source_pos;
 		if (left > (ase_ssize_t)count)
 		{
 			memcpy (data,
@@ -256,15 +263,9 @@ MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
 		}
 
 		awk->write_source_buf->put_Value (CComBSTR(count,data));
-		LONG n = awk->Fire_WriteSource (awk->write_source_buf);
+		INT n = awk->Fire_WriteSource (awk->write_source_buf);
 
-		/*
-		ASE_AWK_ASSERTX (
-			awk->handle, n <= (LONG)count, 
-			"the source code output stream should not return more than requested");
-		*/
-		if (n > (LONG)count) return -1; 
-
+		if (n > (INT)count) return -1; 
 		return (ase_ssize_t)n;
 	}
 
@@ -332,7 +333,6 @@ HRESULT CAwk::Parse (int* ret)
 	srcios.in = __read_source;
 	srcios.out = __write_source;
 	srcios.custom_data = this;
-
 	
 	if (ase_awk_parse (handle, &srcios) == -1)
 	{
@@ -352,19 +352,83 @@ static ase_ssize_t __process_extio (
 
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
-				
+		IAwkExtio* extio;
+		CAwkExtio* extio2;
+
+		HRESULT hr = CoCreateInstance (
+			CLSID_AwkExtio, NULL, CLSCTX_ALL, 
+			IID_IAwkExtio, (void**)&extio);
+		if (FAILED(hr)) return -1; /* TODO: better error handling.. */
+
+		extio2 = (CAwkExtio*)extio;
+		extio2->name = epa->name;
+		extio2->type = epa->type & 0xFF;
+		extio2->mode = epa->mode;
+		VariantClear (&extio2->handle);
+
+		INT n = awk->Fire_OpenExtio (extio);
+		if (n >= 0)
+		{
+			extio->AddRef ();
+			epa->handle = extio;
+		}
+
+		extio->Release ();
+		return n;
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
+		IAwkExtio* extio = (IAwkExtio*)epa->handle;
+		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+
+		INT n = awk->Fire_CloseExtio (extio);
+		if (n >= 0)
+		{
+			extio->Release();
+			epa->handle = NULL;
+		}
+		return n;
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
+		/*
+		IAwkExtio* extio = (IAwkExtio*)epa->handle;
+		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+
+		if (awk->write_extio_buf == NULL)
+		{
+			HRESULT hr = CoCreateInstance (
+				CLSID_Buffer, NULL, CLSCTX_ALL, 
+				IID_IBuffer, (void**)&awk->write_extio_buf);
+			if (FAILED(hr)) return -1;
+		}
+
+		INT n = awk->Fire_ReadExtio (extio, awk->write_extio_buf);
+		if (n > (INT)size) return -1; 
+		return (ase_ssize_t)n;
+		*/
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
+		IAwkExtio* extio = (IAwkExtio*)epa->handle;
+		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+
+		if (awk->write_extio_buf == NULL)
+		{
+			HRESULT hr = CoCreateInstance (
+				CLSID_Buffer, NULL, CLSCTX_ALL, 
+				IID_IBuffer, (void**)&awk->write_extio_buf);
+			if (FAILED(hr)) return -1;
+		}
+
+		awk->write_extio_buf->put_Value (CComBSTR(size,data));
+		INT n = awk->Fire_WriteExtio (extio, awk->write_extio_buf);
+		if (n > (INT)size) return -1; 
+		return (ase_ssize_t)n;
 	}
 	else if (cmd == ASE_AWK_IO_FLUSH)
 	{
+		return 1;
 	}
 	else if (cmd == ASE_AWK_IO_NEXT)
 	{
@@ -384,14 +448,16 @@ HRESULT CAwk::Run (int* ret)
 	}
 
 	ase_awk_runios_t runios;
-	runios.pipe = __process_extio;
+	runios.pipe = NULL;
 	runios.coproc = NULL;
 	runios.file = NULL;
-	runios.console = NULL;
+	runios.console = __process_extio;
 	runios.custom_data = this;
 
 	if (ase_awk_run (handle, NULL, &runios, NULL, NULL, this) == -1)
 	{
+		int err = ase_awk_geterrnum (handle);
+MessageBox (NULL, ase_awk_geterrstr(err), ase_awk_geterrstr(err), MB_OK);
 		*ret = -1;
 		return S_OK;
 	}
