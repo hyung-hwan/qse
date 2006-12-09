@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.h,v 1.1 2006-12-09 11:50:08 bacon Exp $
+ * $Id: Buffer.h,v 1.2 2006-12-09 11:57:40 bacon Exp $
  */
 
 #ifndef _ASE_COM_BUFFER_H_
@@ -20,7 +20,7 @@ public:
 	CBuffer ();
 	~CBuffer ();
 	
-DECLARE_REGISTRY_RESOURCEID(IDR_AWKBUFFER)
+DECLARE_REGISTRY_RESOURCEID(IDR_BUFFER)
 
 DECLARE_PROTECT_FINAL_CONSTRUCT()
 

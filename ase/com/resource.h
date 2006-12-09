@@ -4,8 +4,8 @@
 //
 #define IDS_PROJNAME                    100
 #define IDR_AWK                         101
-#define IDR_AWKBUFFER                   102
-#define IDR_AWKEXTIO                    104
+#define IDR_AWKEXTIO                    102
+#define IDR_BUFFER                      103
 
 // Next default values for new objects
 // 

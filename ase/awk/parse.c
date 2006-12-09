@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.218 2006-12-09 11:49:03 bacon Exp $
+ * $Id: parse.c,v 1.219 2006-12-09 11:51:01 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>

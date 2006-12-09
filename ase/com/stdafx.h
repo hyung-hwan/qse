@@ -1,9 +1,9 @@
-// stdafx.h : include file for standard system include files,
-//      or project specific include files that are used frequently,
-//      but are changed infrequently
+/*
+ * $Id: stdafx.h,v 1.2 2006-12-09 12:01:26 bacon Exp $
+ */
 
-#if !defined(AFX_STDAFX_H__D5DBF84D_6B4D_4C38_AD19_6B4208C02215__INCLUDED_)
-#define AFX_STDAFX_H__D5DBF84D_6B4D_4C38_AD19_6B4208C02215__INCLUDED_
+#ifndef _ASE_COM_STDAFX_H_ 
+#define _ASE_COM_STDAFX_H_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -24,4 +24,4 @@ extern CComModule _Module;
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_STDAFX_H__D5DBF84D_6B4D_4C38_AD19_6B4208C02215__INCLUDED)
+#endif 

@@ -1,9 +1,11 @@
-// AwkExtio.h : Declaration of the CAwkExtio
+/*
+ * $Id: AwkExtio.h,v 1.2 2006-12-09 12:01:26 bacon Exp $
+ */
 
-#ifndef __AWKEXTIO_H_
-#define __AWKEXTIO_H_
+#ifndef _ASE_COM_AWKEXTIO_H_
+#define _ASE_COM_AWKEXTIO_H_
 
-#include "resource.h"       // main symbols
+#include "resource.h" 
 
 /////////////////////////////////////////////////////////////////////////////
 // CAwkExtio

@@ -96,8 +96,8 @@ END
 //
 
 IDR_AWK                 REGISTRY DISCARDABLE    "Awk.rgs"
-IDR_AWKBUFFER           REGISTRY DISCARDABLE    "Buffer.rgs"
 IDR_AWKEXTIO            REGISTRY DISCARDABLE    "AwkExtio.rgs"
+IDR_BUFFER           REGISTRY DISCARDABLE    "Buffer.rgs"
 
 /////////////////////////////////////////////////////////////////////////////
 //
