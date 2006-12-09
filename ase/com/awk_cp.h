@@ -1,5 +1,5 @@
 /*
- * $Id: awk_cp.h,v 1.1 2006-12-09 11:50:08 bacon Exp $
+ * $Id: awk_cp.h,v 1.2 2006-12-09 12:09:42 bacon Exp $
  */
 
 #ifndef _AWK_CP_H_
@@ -10,60 +10,102 @@
 template <class T>
 class CProxyIAwkEvents : public IConnectionPointImpl<T, &DIID_IAwkEvents, CComDynamicUnkArray>
 {
-	//Warning this class may be recreated by the wizard.
 public:
 	LONG Fire_OpenSource(LONG mode)
 	{
-		CComVariant varResult;
 		T* pT = static_cast<T*>(this);
-		int nConnectionIndex;
-		CComVariant* pvars = new CComVariant[1];
-		int nConnections = m_vec.GetSize();
+		int i, nconns = m_vec.GetSize();
+		CComVariant args[1], ret;
 		
-		for (nConnectionIndex = 0; nConnectionIndex < nConnections; nConnectionIndex++)
+		for (i = 0; i < nconns; i++)
 		{
 			pT->Lock();
-			CComPtr<IUnknown> sp = m_vec.GetAt(nConnectionIndex);
+			CComPtr<IUnknown> sp = m_vec.GetAt(i);
 			pT->Unlock();
-			IDispatch* pDispatch = reinterpret_cast<IDispatch*>(sp.p);
-			if (pDispatch != NULL)
+
+			IDispatch* pDispatch = 
+				reinterpret_cast<IDispatch*>(sp.p);
+			if (pDispatch == NULL) continue;
+
+			VariantClear (&ret);
+			VariantClear (&args[0]);
+
+			args[0] = mode;
+
+			DISPPARAMS disp = { args, NULL, 1, 0 };
+			HRESULT hr = pDispatch->Invoke (
+				0x1, IID_NULL, LOCALE_USER_DEFAULT,
+				DISPATCH_METHOD, &disp, &ret, NULL, NULL);
+			if (FAILED(hr)) continue;
+
+			if (ret.vt == VT_EMPTY)
 			{
-				VariantClear(&varResult);
-				pvars[0] = mode;
-				DISPPARAMS disp = { pvars, NULL, 1, 0 };
-				pDispatch->Invoke(0x1, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &disp, &varResult, NULL, NULL);
+				/* probably, the handler has not been implemeted*/
+				continue;
 			}
+
+			hr = ret.ChangeType (VT_I4);
+			if (FAILED(hr))
+			{
+				/* TODO: set the error code properly... */
+				/* invalid value returned... */
+				return -1;
+			}
+
+			return ret.lVal;
 		}
-		delete[] pvars;
-		return varResult.lVal;
-	
+
+		return -1;
 	}
+
 	LONG Fire_CloseSource(LONG mode)
 	{
-		CComVariant varResult;
 		T* pT = static_cast<T*>(this);
-		int nConnectionIndex;
-		CComVariant* pvars = new CComVariant[1];
-		int nConnections = m_vec.GetSize();
+		int i, nconns = m_vec.GetSize();
+		CComVariant args[1], ret;
 		
-		for (nConnectionIndex = 0; nConnectionIndex < nConnections; nConnectionIndex++)
+		for (i = 0; i < nconns; i++)
 		{
 			pT->Lock();
-			CComPtr<IUnknown> sp = m_vec.GetAt(nConnectionIndex);
+			CComPtr<IUnknown> sp = m_vec.GetAt(i);
 			pT->Unlock();
-			IDispatch* pDispatch = reinterpret_cast<IDispatch*>(sp.p);
-			if (pDispatch != NULL)
+
+			IDispatch* pDispatch = 
+				reinterpret_cast<IDispatch*>(sp.p);
+			if (pDispatch == NULL) continue;
+
+
+			VariantClear (&ret);
+			VariantClear (&args[0]);
+
+			args[0] = mode;
+
+			DISPPARAMS disp = { args, NULL, 1, 0 };
+			HRESULT hr = pDispatch->Invoke (
+				0x2, IID_NULL, LOCALE_USER_DEFAULT, 
+				DISPATCH_METHOD, &disp, &ret, NULL, NULL);
+			if (FAILED(hr)) continue;
+
+			if (ret.vt == VT_EMPTY)
 			{
-				VariantClear(&varResult);
-				pvars[0] = mode;
-				DISPPARAMS disp = { pvars, NULL, 1, 0 };
-				pDispatch->Invoke(0x2, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &disp, &varResult, NULL, NULL);
+				/* probably, the handler has not been implemeted*/
+				continue;
 			}
+
+			hr = ret.ChangeType (VT_I4);
+			if (FAILED(hr))
+			{
+				/* TODO: set the error code properly... */
+				/* invalid value returned... */
+				return -1;
+			}
+
+			return ret.lVal;
 		}
-		delete[] pvars;
-		return varResult.lVal;
-	
+
+		return -1;
 	}
+
 	LONG Fire_ReadSource (IBuffer* buf)
 	{
 		T* pT = static_cast<T*>(this);
@@ -171,4 +213,5 @@ public:
 		return bstr.Length();
 	}
 };
+
 #endif
