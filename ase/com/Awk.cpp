@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.3 2006-12-10 05:59:52 bacon Exp $
+ * $Id: Awk.cpp,v 1.4 2006-12-10 16:13:50 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -193,24 +193,16 @@ MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
 		{
 			INT n = awk->Fire_ReadSource (awk->read_source_buf);
 			if (n <= 0) return (ase_ssize_t)n;
-			//if (n > (INT)tmp->str.Length()) return -1;
-			if (n > (INT)SysStringLen(tmp->str)) return -1;
 
+			if (SysStringLen(tmp->str) < (UINT)n) return -1;
 			awk->read_source_pos = 0;
 			awk->read_source_len = n;
-		}
-
-		BSTR str = tmp->str;
-		if (str == NULL) 
-		{
-			/* it can't be emptry here ... */
-			return -1;
 		}
 
 		ASE_AWK_ASSERT (awk->handle, 
 			awk->read_source_pos < awk->read_source_len);
 
-
+		BSTR str = tmp->str;
 		INT left = awk->read_source_len - awk->read_source_pos;
 		if (left > (ase_ssize_t)count)
 		{
@@ -263,16 +255,15 @@ MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
 			}
 		}
 
+		/*
 		BSTR bstr = SysAllocStringLen (data, count);
-		if (bstr == NULL) return -1; /* TODO: bettter error handling */
-
+		if (bstr == NULL) return -1; 
 		hr = awk->write_source_buf->put_Value (bstr);
-SysFreeString (bstr);
-		if (FAILED(hr))
-		{
-//SysFreeString (bstr);
-			return -1;
-		}
+		SysFreeString (bstr);
+		if (FAILED(hr)) return -1;
+		*/
+		CBuffer* tmp = (CBuffer*)awk->write_source_buf;
+		if (tmp->PutValue (data, count) == FALSE) return -1; /* TODO: better error handling */
 
 		INT n = awk->Fire_WriteSource (awk->write_source_buf);
 		if (n > (INT)count) return -1; 
@@ -370,19 +361,14 @@ static ase_ssize_t __process_extio (
 			IID_IAwkExtio, (void**)&extio);
 		if (FAILED(hr)) return -1; /* TODO: better error handling.. */
 
-		BSTR bstr = SysAllocString (epa->name);
-		if (bstr == NULL) 
+		extio2 = (CAwkExtio*)extio;
+		if (extio2->PutName (epa->name) == FALSE)
 		{
 			extio->Release ();
 			return -1; /* TODO: better error handling */
 		}
-
-		extio2 = (CAwkExtio*)extio;
-		extio2->name.Empty ();
-		extio2->name.Attach (bstr);
 		extio2->type = epa->type & 0xFF;
 		extio2->mode = epa->mode;
-		VariantClear (&extio2->handle);
 
 		INT n = awk->Fire_OpenExtio (extio);
 		if (n >= 0)
@@ -440,16 +426,15 @@ static ase_ssize_t __process_extio (
 			if (FAILED(hr)) return -1;
 		}
 
+		/*
 		BSTR bstr = SysAllocStringLen (data, size);
-		if (bstr == NULL) return -1; /* TODO: error code */
-
+		if (bstr == NULL) return -1; 
 		hr = awk->write_extio_buf->put_Value (bstr);
-SysFreeString (bstr);
-		if (FAILED(hr))
-		{
-//			SysFreeString (bstr);
-			return -1;
-		}
+		SysFreeString (bstr);
+		if (FAILED(hr)) return -1;
+		*/
+		CBuffer* tmp = (CBuffer*)awk->write_extio_buf;
+		if (tmp->PutValue (data, size) == FALSE) return -1; /* TODO: better error handling */
 
 		INT n = awk->Fire_WriteExtio (extio, awk->write_extio_buf);
 		if (n > (INT)size) return -1; 

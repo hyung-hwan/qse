@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.cpp,v 1.3 2006-12-10 05:59:52 bacon Exp $
+ * $Id: Buffer.cpp,v 1.4 2006-12-10 16:13:50 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -40,7 +40,6 @@ STDMETHODIMP CBuffer::get_Value (BSTR *pVal)
 
 STDMETHODIMP CBuffer::put_Value (BSTR newVal)
 {
-
 	if (str != NULL) SysFreeString (str);
 	if (newVal == NULL) str = newVal;
 	else 
@@ -50,4 +49,11 @@ STDMETHODIMP CBuffer::put_Value (BSTR newVal)
 	}
 
 	return S_OK;
+}
+
+BOOL CBuffer::PutValue (const TCHAR* val, SIZE_T len)
+{
+	if (str != NULL) SysFreeString (str);
+	str = SysAllocStringLen (val, len);
+	return (str == NULL)? FALSE: TRUE;
 }

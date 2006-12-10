@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.h,v 1.3 2006-12-10 05:59:52 bacon Exp $
+ * $Id: Buffer.h,v 1.4 2006-12-10 16:13:50 bacon Exp $
  */
 
 #ifndef _ASE_COM_BUFFER_H_
@@ -14,8 +14,8 @@ class ATL_NO_VTABLE CBuffer :
 	public IDispatchImpl<IBuffer, &IID_IBuffer, &LIBID_ASELib>
 {
 public:
-	//CComBSTR str;
 	BSTR str;
+	BOOL PutValue (const TCHAR* val, SIZE_T len);
 
 public:
 	CBuffer ();

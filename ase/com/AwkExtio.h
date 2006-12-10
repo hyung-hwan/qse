@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.h,v 1.3 2006-12-09 17:36:27 bacon Exp $
+ * $Id: AwkExtio.h,v 1.4 2006-12-10 16:13:50 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWKEXTIO_H_
@@ -15,10 +15,12 @@ class ATL_NO_VTABLE CAwkExtio :
 	public IDispatchImpl<IAwkExtio, &IID_IAwkExtio, &LIBID_ASELib>
 {
 public:
-	CComBSTR name;
+	BSTR name;
 	int type;
 	int mode;
 	CComVariant handle;
+
+	BOOL PutName (const TCHAR* val);
 
 	CAwkExtio ();
 	~CAwkExtio ();
