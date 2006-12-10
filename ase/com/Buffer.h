@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.h,v 1.2 2006-12-09 11:57:40 bacon Exp $
+ * $Id: Buffer.h,v 1.3 2006-12-10 05:59:52 bacon Exp $
  */
 
 #ifndef _ASE_COM_BUFFER_H_
@@ -13,8 +13,9 @@ class ATL_NO_VTABLE CBuffer :
 	public CComCoClass<CBuffer, &CLSID_Buffer>,
 	public IDispatchImpl<IBuffer, &IID_IBuffer, &LIBID_ASELib>
 {
-private:
-	CComBSTR str;
+public:
+	//CComBSTR str;
+	BSTR str;
 
 public:
 	CBuffer ();
