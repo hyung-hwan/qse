@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.2 2006-12-09 17:36:27 bacon Exp $
+ * $Id: Awk.cpp,v 1.3 2006-12-10 05:59:52 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -172,12 +172,9 @@ static ase_ssize_t __read_source (
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
-		HRESULT hr;
-		CComBSTR val;
-
 		if (awk->read_source_buf == NULL)
 		{
-			hr = CoCreateInstance (
+			HRESULT hr = CoCreateInstance (
 				CLSID_Buffer, NULL, CLSCTX_ALL, 
 				IID_IBuffer, (void**)&awk->read_source_buf);
 			if (FAILED(hr))
@@ -190,30 +187,35 @@ MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
 			awk->read_source_len = 0;
 		}
 
+		CBuffer* tmp = (CBuffer*)awk->read_source_buf;
+
 		if (awk->read_source_pos >= awk->read_source_len)
 		{
 			INT n = awk->Fire_ReadSource (awk->read_source_buf);
 			if (n <= 0) return (ase_ssize_t)n;
-
-			awk->read_source_buf->get_Value (&val);
-			if (n > (INT)val.Length()) return -1;
+			//if (n > (INT)tmp->str.Length()) return -1;
+			if (n > (INT)SysStringLen(tmp->str)) return -1;
 
 			awk->read_source_pos = 0;
 			awk->read_source_len = n;
 		}
-		else
+
+		BSTR str = tmp->str;
+		if (str == NULL) 
 		{
-			awk->read_source_buf->get_Value (&val);
+			/* it can't be emptry here ... */
+			return -1;
 		}
 
 		ASE_AWK_ASSERT (awk->handle, 
 			awk->read_source_pos < awk->read_source_len);
 
+
 		INT left = awk->read_source_len - awk->read_source_pos;
 		if (left > (ase_ssize_t)count)
 		{
 			memcpy (data,
-				((TCHAR*)(BSTR)val)+awk->read_source_pos, 
+				((TCHAR*)str)+awk->read_source_pos,
 				count * ASE_SIZEOF(ase_char_t));
 			awk->read_source_pos += count;
 			return count;
@@ -221,14 +223,13 @@ MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
 		else
 		{
 			memcpy (data, 
-				((TCHAR*)(BSTR)val)+awk->read_source_pos, 
+				((TCHAR*)str)+awk->read_source_pos,
 				left * ASE_SIZEOF(ase_char_t));
 			awk->read_source_pos = 0;
 			awk->read_source_len = 0;
 			return (ase_ssize_t)left;
 		}
 	}
-
 
 	return -1;
 }
@@ -262,9 +263,18 @@ MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
 			}
 		}
 
-		awk->write_source_buf->put_Value (CComBSTR(count,data));
-		INT n = awk->Fire_WriteSource (awk->write_source_buf);
+		BSTR bstr = SysAllocStringLen (data, count);
+		if (bstr == NULL) return -1; /* TODO: bettter error handling */
 
+		hr = awk->write_source_buf->put_Value (bstr);
+SysFreeString (bstr);
+		if (FAILED(hr))
+		{
+//SysFreeString (bstr);
+			return -1;
+		}
+
+		INT n = awk->Fire_WriteSource (awk->write_source_buf);
 		if (n > (INT)count) return -1; 
 		return (ase_ssize_t)n;
 	}
@@ -360,8 +370,16 @@ static ase_ssize_t __process_extio (
 			IID_IAwkExtio, (void**)&extio);
 		if (FAILED(hr)) return -1; /* TODO: better error handling.. */
 
+		BSTR bstr = SysAllocString (epa->name);
+		if (bstr == NULL) 
+		{
+			extio->Release ();
+			return -1; /* TODO: better error handling */
+		}
+
 		extio2 = (CAwkExtio*)extio;
-		extio2->name = epa->name;
+		extio2->name.Empty ();
+		extio2->name.Attach (bstr);
 		extio2->type = epa->type & 0xFF;
 		extio2->mode = epa->mode;
 		VariantClear (&extio2->handle);
@@ -410,18 +428,29 @@ static ase_ssize_t __process_extio (
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
+		HRESULT hr;
 		IAwkExtio* extio = (IAwkExtio*)epa->handle;
 		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
 
 		if (awk->write_extio_buf == NULL)
 		{
-			HRESULT hr = CoCreateInstance (
+			hr = CoCreateInstance (
 				CLSID_Buffer, NULL, CLSCTX_ALL, 
 				IID_IBuffer, (void**)&awk->write_extio_buf);
 			if (FAILED(hr)) return -1;
 		}
 
-		awk->write_extio_buf->put_Value (CComBSTR(size,data));
+		BSTR bstr = SysAllocStringLen (data, size);
+		if (bstr == NULL) return -1; /* TODO: error code */
+
+		hr = awk->write_extio_buf->put_Value (bstr);
+SysFreeString (bstr);
+		if (FAILED(hr))
+		{
+//			SysFreeString (bstr);
+			return -1;
+		}
+
 		INT n = awk->Fire_WriteExtio (extio, awk->write_extio_buf);
 		if (n > (INT)size) return -1; 
 		return (ase_ssize_t)n;

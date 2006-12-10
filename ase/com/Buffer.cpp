@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.cpp,v 1.2 2006-12-09 17:36:27 bacon Exp $
+ * $Id: Buffer.cpp,v 1.3 2006-12-10 05:59:52 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -12,6 +12,7 @@ CBuffer::CBuffer ()
 	_sntprintf (x, 128, _T("CBuffer::CBuffer %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
 #endif
+	str = NULL;
 }
 
 CBuffer::~CBuffer ()
@@ -21,16 +22,32 @@ CBuffer::~CBuffer ()
 	_sntprintf (x, 128, _T("CBuffer::~CBuffer %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
 #endif
+	if (str != NULL) SysFreeString (str);
 }
 
-STDMETHODIMP CBuffer::get_Value(BSTR *pVal)
+STDMETHODIMP CBuffer::get_Value (BSTR *pVal)
 {
-	*pVal = str;
+	if (str == NULL) *pVal = NULL;
+	else
+	{
+		BSTR tmp = SysAllocStringLen(str, SysStringLen(str));
+		if (tmp == NULL) return E_OUTOFMEMORY;
+		*pVal = tmp;
+	}
+
 	return S_OK;
 }
 
-STDMETHODIMP CBuffer::put_Value(BSTR newVal)
+STDMETHODIMP CBuffer::put_Value (BSTR newVal)
 {
-	str = newVal;
+
+	if (str != NULL) SysFreeString (str);
+	if (newVal == NULL) str = newVal;
+	else 
+	{
+		str = SysAllocStringLen (newVal, SysStringLen(newVal));
+		if (str == NULL) return E_OUTOFMEMORY;
+	}
+
 	return S_OK;
 }
