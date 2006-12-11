@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.h,v 1.4 2006-12-10 16:13:50 bacon Exp $
+ * $Id: AwkExtio.h,v 1.5 2006-12-11 06:29:19 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWKEXTIO_H_
@@ -19,6 +19,10 @@ public:
 	int type;
 	int mode;
 	CComVariant handle;
+
+	IBuffer* read_buf;
+	ase_size_t read_buf_pos;
+	ase_size_t read_buf_len;
 
 	BOOL PutName (const TCHAR* val);
 
