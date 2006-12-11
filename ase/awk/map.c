@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.32 2006-11-29 02:54:15 bacon Exp $
+ * $Id: map.c,v 1.33 2006-12-11 08:44:52 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -77,6 +77,11 @@ void ase_awk_map_clear (ase_awk_map_t* map)
 
 	ASE_AWK_ASSERTX (map->awk, map->size == 0, 
 		"the map should not contain any pairs of a key and a value after it has been cleared");
+}
+
+ase_size_t ase_awk_map_getsize (ase_awk_map_t* map)
+{
+	return map->size;
 }
 
 ase_awk_pair_t* ase_awk_map_get (

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.94 2006-12-04 11:25:21 bacon Exp $
+ * $Id: tree.c,v 1.95 2006-12-11 08:44:52 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -380,12 +380,14 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 			if (px->id.idxa != (ase_size_t)-1) 
 			{
+				/*
 				PUT_SRCSTR (awk, ASE_T("__global"));
 				n = ase_awk_longtostr (
 					px->id.idxa, 10, 
 					ASE_NULL, tmp, ASE_COUNTOF(tmp));
 				PUT_SRCSTRX (awk, tmp, n);
-				/*PUT_SRCSTRX (awk, px->id.name, px->id.name_len);*/
+				*/
+				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			}
 			else 
 			{
@@ -403,12 +405,14 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 			if (px->id.idxa != (ase_size_t)-1) 
 			{
+				/*
 				PUT_SRCSTR (awk, ASE_T("__global"));
 				n = ase_awk_longtostr (
 					px->id.idxa, 10, 
 					ASE_NULL, tmp, ASE_COUNTOF(tmp));
 				PUT_SRCSTRX (awk, tmp, n);
-				/*PUT_SRCSTRX (awk, px->id.name, px->id.name_len);*/
+				*/
+				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 				PUT_SRCSTR (awk, ASE_T("["));
 			}
 			else 
