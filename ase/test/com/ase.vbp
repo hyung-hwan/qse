@@ -1,10 +1,11 @@
 Type=Exe
 Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\WINDOWS\System32\stdole2.tlb#OLE Automation
-Reference=*\G{F9C69806-16A1-4162-998A-876B33C470BF}#1.0#0#..\..\debug\win32\vs60\ase.dll#ASE Awk 1.0 Type Library
+Reference=*\G{F9C69806-16A1-4162-998A-876B33C470BF}#1.0#0#..\..\release\win32\vs60\ase.dll#ASE Awk 1.0 Type Library
 Form=AwkForm.frm
+Class=AwkExtioConsole; AwkExtioConsole.cls
 Startup="AwkForm"
 Command32=""
-Name="ASE COM"
+Name="ASECOM"
 HelpContextID="0"
 CompatibleMode="0"
 MajorVer=1
