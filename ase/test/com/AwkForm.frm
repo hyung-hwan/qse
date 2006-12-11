@@ -97,6 +97,8 @@ Public WithEvents abc As ASELib.Awk
 Attribute abc.VB_VarHelpID = -1
 Private first As Boolean
 
+Private extio_first As Boolean
+
 Private Sub Execute_Click()
     Dim a As Long
     Dim x As Object
@@ -157,6 +159,7 @@ End Function
 
 Function abc_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
 MsgBox "abc_OpenExtio"
+    extio_first = True
     abc_OpenExtio = 1
 End Function
 
@@ -166,7 +169,16 @@ MsgBox "abc_CloseExtio"
 End Function
 
 Function abc_ReadExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
-    abc_ReadExtio = 0
+    Dim value As String
+    
+    If extio_first Then
+        value = ConsoleIn.Text
+        extio_first = False
+        buf.value = value
+        abc_ReadExtio = Len(value)
+    Else
+        abc_ReadExtio = 0
+    End If
 End Function
 
 Function abc_WriteExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
