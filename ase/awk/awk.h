@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.161 2006-12-08 06:02:41 bacon Exp $
+ * $Id: awk.h,v 1.162 2006-12-11 14:58:25 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -170,11 +170,8 @@ enum
 	/* support blockless patterns */
 	ASE_AWK_BLOCKLESS   = (1 << 9), 
 
- 	/* execution starts from main */
-	ASE_AWK_RUNMAIN     = (1 << 10),
-
 	/* use 1 as the start index for string operations */
-	ASE_AWK_STRINDEXONE = (1 << 11),
+	ASE_AWK_STRINDEXONE = (1 << 10),
 
 	/* strip off leading and trailing spaces when splitting a record
 	 * into fields with a regular expression.
@@ -189,13 +186,13 @@ enum
 	 * The program splits " a b c " into [a], [b], [c] when this
 	 * option is on while into [], [a], [b], [c], [] when it is off.
 	 */
-	ASE_AWK_STRIPSPACES = (1 << 12),
+	ASE_AWK_STRIPSPACES = (1 << 11),
 
 	/* enable the nextoutfile keyword */
-	ASE_AWK_NEXTOFILE   = (1 << 13),
+	ASE_AWK_NEXTOFILE   = (1 << 12),
 
 	/* a newline terminates a statement */
-	ASE_AWK_NEWLINE     = (1 << 14)
+	ASE_AWK_NEWLINE     = (1 << 13)
 };
 
 /* error code */

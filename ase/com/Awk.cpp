@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.6 2006-12-11 08:44:52 bacon Exp $
+ * $Id: Awk.cpp,v 1.7 2006-12-11 14:58:25 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -37,6 +37,20 @@ CAwk::CAwk (): handle(NULL),
 	_sntprintf (x, 128, _T("CAwk::CAwk %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
 #endif
+
+	/* TODO: what is the best default option? */
+	option = ASE_AWK_IMPLICIT | 
+	      ASE_AWK_EXPLICIT | 
+	      ASE_AWK_UNIQUEAFN | 
+	      ASE_AWK_HASHSIGN | 
+	      /*ASE_AWK_IDIV |
+	      ASE_AWK_SHADING | 
+	      ASE_AWK_SHIFT | */
+	      ASE_AWK_EXTIO /*| 
+	      ASE_AWK_BLOCKLESS | 
+	      ASE_AWK_STRINDEXONE | 
+	      ASE_AWK_STRIPSPACES | 
+	      ASE_AWK_NEXTOFILE*/;
 }
 
 CAwk::~CAwk ()
@@ -306,20 +320,7 @@ HRESULT CAwk::Parse (int* ret)
 			return S_OK;
 		}
 
-		int opt = ASE_AWK_IMPLICIT | 
-		      ASE_AWK_EXPLICIT | 
-			  ASE_AWK_UNIQUEAFN | 
-		      ASE_AWK_HASHSIGN | 
-		      /*ASE_AWK_IDIV |
-		      ASE_AWK_SHADING | 
-		      ASE_AWK_SHIFT | */
-		      ASE_AWK_EXTIO /*| 
-		      ASE_AWK_BLOCKLESS | 
-		      ASE_AWK_STRINDEXONE | 
-		      ASE_AWK_STRIPSPACES | 
-		      ASE_AWK_NEXTOFILE*/;
-
-		ase_awk_setopt (handle, opt);
+		ase_awk_setopt (handle, option);
 	}
 
 	ase_awk_srcios_t srcios;
@@ -477,10 +478,15 @@ static ase_ssize_t __process_extio (
 	}
 	else if (cmd == ASE_AWK_IO_FLUSH)
 	{
-		return 1;
+		IAwkExtio* extio = (IAwkExtio*)epa->handle;
+		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+		return awk->Fire_FlushExtio (extio);
 	}
 	else if (cmd == ASE_AWK_IO_NEXT)
 	{
+		IAwkExtio* extio = (IAwkExtio*)epa->handle;
+		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+		return awk->Fire_NextExtio (extio);
 	}
 
 	return -1;
@@ -512,5 +518,17 @@ MessageBox (NULL, ase_awk_geterrstr(err), ase_awk_geterrstr(err), MB_OK);
 	}
 
 	*ret = 0;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_Option (int *pVal)
+{
+	*pVal = option;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_Option (int newVal)
+{
+	newVal = option;
 	return S_OK;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.3 2006-12-11 06:29:19 bacon Exp $
+ * $Id: Awk.h,v 1.4 2006-12-11 14:58:25 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -29,6 +29,7 @@ class CAwk :
 
 {
 public:
+	int option;
 	ase_awk_t* handle;
 
 	IBuffer* read_src_buf;
@@ -64,6 +65,8 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
+	STDMETHOD(get_Option)(/*[out, retval]*/ int *pVal);
+	STDMETHOD(put_Option)(/*[in]*/ int newVal);
 	HRESULT __stdcall Parse (int* ret);
 	HRESULT __stdcall Run (int* ret);
 };

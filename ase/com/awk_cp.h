@@ -1,5 +1,5 @@
 /*
- * $Id: awk_cp.h,v 1.4 2006-12-11 08:44:52 bacon Exp $
+ * $Id: awk_cp.h,v 1.5 2006-12-11 14:58:25 bacon Exp $
  */
 
 #ifndef _AWK_CP_H_
@@ -408,6 +408,102 @@ public:
 
 		return -1;
 	}
+
+	
+	INT Fire_FlushExtio (IAwkExtio* extio)
+	{
+		T* pT = static_cast<T*>(this);
+		int i, nconns = m_vec.GetSize();
+		CComVariant args[1], ret;
+		
+		for (i = 0; i < nconns; i++)
+		{
+			pT->Lock();
+			CComPtr<IUnknown> sp = m_vec.GetAt(i);
+			pT->Unlock();
+
+			IDispatch* pDispatch = 
+				reinterpret_cast<IDispatch*>(sp.p);
+			if (pDispatch == NULL) continue;
+
+			VariantClear (&ret);
+			VariantClear (&args[0]);
+
+			args[0] = (IUnknown*)extio;
+
+			DISPPARAMS disp = { args, NULL, 1, 0 };
+			HRESULT hr = pDispatch->Invoke (
+				0x9, IID_NULL, LOCALE_USER_DEFAULT, 
+				DISPATCH_METHOD, &disp, &ret, NULL, NULL);
+			if (FAILED(hr)) continue;
+
+			if (ret.vt == VT_EMPTY)
+			{
+				/* probably, the handler has not been implemeted*/
+				continue;
+			}
+
+			hr = ret.ChangeType (VT_I4);
+			if (FAILED(hr))
+			{
+				/* TODO: set the error code properly... */
+				/* invalid value returned... */
+				return -1;
+			}
+
+			return ret.lVal;
+		}
+
+		return -1;
+	}
+
+	INT Fire_NextExtio (IAwkExtio* extio)
+	{
+		T* pT = static_cast<T*>(this);
+		int i, nconns = m_vec.GetSize();
+		CComVariant args[1], ret;
+		
+		for (i = 0; i < nconns; i++)
+		{
+			pT->Lock();
+			CComPtr<IUnknown> sp = m_vec.GetAt(i);
+			pT->Unlock();
+
+			IDispatch* pDispatch = 
+				reinterpret_cast<IDispatch*>(sp.p);
+			if (pDispatch == NULL) continue;
+
+			VariantClear (&ret);
+			VariantClear (&args[0]);
+
+			args[0] = (IUnknown*)extio;
+
+			DISPPARAMS disp = { args, NULL, 1, 0 };
+			HRESULT hr = pDispatch->Invoke (
+				0xA, IID_NULL, LOCALE_USER_DEFAULT, 
+				DISPATCH_METHOD, &disp, &ret, NULL, NULL);
+			if (FAILED(hr)) continue;
+
+			if (ret.vt == VT_EMPTY)
+			{
+				/* probably, the handler has not been implemeted*/
+				continue;
+			}
+
+			hr = ret.ChangeType (VT_I4);
+			if (FAILED(hr))
+			{
+				/* TODO: set the error code properly... */
+				/* invalid value returned... */
+				return -1;
+			}
+
+			return ret.lVal;
+		}
+
+		return -1;
+	}
+
 };
 
 #endif
