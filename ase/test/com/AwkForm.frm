@@ -1,13 +1,13 @@
 VERSION 5.00
 Begin VB.Form AwkForm 
    Caption         =   "ASE COM AWK"
-   ClientHeight    =   7695
+   ClientHeight    =   7770
    ClientLeft      =   60
    ClientTop       =   345
-   ClientWidth     =   9435
+   ClientWidth     =   10335
    LinkTopic       =   "AwkForm"
-   ScaleHeight     =   7695
-   ScaleWidth      =   9435
+   ScaleHeight     =   7770
+   ScaleWidth      =   10335
    StartUpPosition =   3  'Windows Default
    Begin VB.TextBox ConsoleIn 
       BeginProperty Font 
@@ -20,11 +20,11 @@ Begin VB.Form AwkForm
          Strikethrough   =   0   'False
       EndProperty
       Height          =   2895
-      Left            =   360
+      Left            =   120
       MultiLine       =   -1  'True
       TabIndex        =   4
       Top             =   3600
-      Width           =   4095
+      Width           =   5055
    End
    Begin VB.TextBox SourceIn 
       BeginProperty Font 
@@ -37,11 +37,11 @@ Begin VB.Form AwkForm
          Strikethrough   =   0   'False
       EndProperty
       Height          =   2775
-      Left            =   480
+      Left            =   120
       MultiLine       =   -1  'True
       TabIndex        =   3
       Top             =   480
-      Width           =   3975
+      Width           =   5055
    End
    Begin VB.TextBox SourceOut 
       BeginProperty Font 
@@ -54,11 +54,11 @@ Begin VB.Form AwkForm
          Strikethrough   =   0   'False
       EndProperty
       Height          =   2775
-      Left            =   4680
+      Left            =   5280
       MultiLine       =   -1  'True
       TabIndex        =   2
       Top             =   480
-      Width           =   4095
+      Width           =   4935
    End
    Begin VB.CommandButton Execute 
       Caption         =   "Execute"
@@ -79,11 +79,11 @@ Begin VB.Form AwkForm
          Strikethrough   =   0   'False
       EndProperty
       Height          =   2895
-      Left            =   4680
+      Left            =   5280
       MultiLine       =   -1  'True
       TabIndex        =   0
       Top             =   3600
-      Width           =   4095
+      Width           =   4935
    End
 End
 Attribute VB_Name = "AwkForm"
@@ -109,8 +109,12 @@ Private Sub Execute_Click()
     SourceOut.Text = ""
     
     Set abc = New ASELib.Awk
-    Call abc.Parse
-    Call abc.Run
+    If abc.Parse() = -1 Then
+        MsgBox "PARSE ERROR OCCURRED!!!"
+    End If
+    If abc.Run() = -1 Then
+        MsgBox "RUN ERROR OCCURRED!!!"
+    End If
     Set abc = Nothing
 End Sub
 
@@ -159,8 +163,16 @@ End Function
 
 Function abc_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
 MsgBox "abc_OpenExtio"
-    extio_first = True
-    abc_OpenExtio = 1
+    If extio.mode = 0 Then
+        extio_first = True
+        abc_OpenExtio = 1
+        Exit Function
+    ElseIf extio.mode = 1 Then
+        abc_OpenExtio = 1
+        Exit Function
+    End If
+    
+    abc_OpenExtio = -1
 End Function
 
 Function abc_CloseExtio(ByVal extio As ASELib.AwkExtio) As Long
@@ -169,13 +181,33 @@ MsgBox "abc_CloseExtio"
 End Function
 
 Function abc_ReadExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
-    Dim value As String
+    Dim value As String, value2 As String
+    Dim l As Integer, i As Integer
     
+    If extio.mode <> 0 Then
+        abc_ReadExtio = -1
+        Exit Function
+    End If
+        
     If extio_first Then
         value = ConsoleIn.Text
+        l = Len(value)
+        
+        For i = 1 To l - 1
+            If Mid(value, i, 2) = vbCrLf Then
+                value2 = value2 + vbLf
+                i = i + 1
+            Else
+                value2 = value2 + Mid(value, i, 1)
+            End If
+        Next
+        If i = l Then
+            value2 = value2 + Mid(value, i, 1)
+        End If
+        
         extio_first = False
-        buf.value = value
-        abc_ReadExtio = Len(value)
+        buf.value = value2
+        abc_ReadExtio = Len(value2)
     Else
         abc_ReadExtio = 0
     End If
@@ -184,6 +216,11 @@ End Function
 Function abc_WriteExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
     Dim value As String, i As Long, value2 As String
     
+    If extio.mode <> 1 Then
+        abc_WriteExtio = -1
+        Exit Function
+    End If
+        
     value = buf.value
     
     'For i = 0 To 5000000

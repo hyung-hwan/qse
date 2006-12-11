@@ -1,14 +1,13 @@
 /*
- * $Id: awk_cp.h,v 1.3 2006-12-09 17:36:27 bacon Exp $
+ * $Id: awk_cp.h,v 1.4 2006-12-11 08:44:52 bacon Exp $
  */
 
 #ifndef _AWK_CP_H_
 #define _AWK_CP_H_
 
-/*#import "C:\projects\ase\debug\win32\vs60\aseawk.dll" raw_interfaces_only, raw_native_types, no_namespace, named_guids*/
-
 template <class T>
-class CProxyIAwkEvents : public IConnectionPointImpl<T, &DIID_IAwkEvents, CComDynamicUnkArray>
+class CProxyIAwkEvents: 
+	public IConnectionPointImpl<T, &DIID_IAwkEvents, CComDynamicUnkArray>
 {
 public:
 	INT Fire_OpenSource(INT mode)
@@ -285,6 +284,58 @@ public:
 				0x6, IID_NULL, LOCALE_USER_DEFAULT, 
 				DISPATCH_METHOD, &disp, &ret, NULL, NULL);
 			if (FAILED(hr)) continue;
+
+			if (ret.vt == VT_EMPTY)
+			{
+				/* probably, the handler has not been implemeted*/
+				continue;
+			}
+
+			hr = ret.ChangeType (VT_I4);
+			if (FAILED(hr))
+			{
+				/* TODO: set the error code properly... */
+				/* invalid value returned... */
+				return -1;
+			}
+
+			return ret.lVal;
+		}
+
+		return -1;
+	}
+
+	INT Fire_ReadExtio (IAwkExtio* extio, IBuffer* buf)
+	{
+		T* pT = static_cast<T*>(this);
+		int i, nconns = m_vec.GetSize();
+		CComVariant args[2], ret;
+	
+		for (i = 0; i < nconns; i++)
+		{
+			pT->Lock();
+			CComPtr<IUnknown> sp = m_vec.GetAt(i);
+			pT->Unlock();
+
+			IDispatch* pDispatch = 
+				reinterpret_cast<IDispatch*>(sp.p);
+			if (pDispatch == NULL) continue;
+
+			VariantClear (&ret);
+			VariantClear (&args[0]);
+			VariantClear (&args[1]);
+
+			args[1] = (IUnknown*)extio;
+			args[0] = (IUnknown*)buf;
+
+			DISPPARAMS disp = { args, NULL, 2, 0 };
+			HRESULT hr = pDispatch->Invoke (
+				0x7, IID_NULL, LOCALE_USER_DEFAULT, 
+				DISPATCH_METHOD, &disp, &ret, NULL, NULL);
+			if (FAILED(hr))
+			{
+				continue;
+			}
 
 			if (ret.vt == VT_EMPTY)
 			{

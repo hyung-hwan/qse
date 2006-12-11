@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.17 2006-10-24 04:10:12 bacon Exp $
+ * $Id: map.h,v 1.18 2006-12-11 08:44:52 bacon Exp $
  */
 
 #ifndef _ASE_AWK_MAP_H_
@@ -42,6 +42,8 @@ ase_awk_map_t* ase_awk_map_open (
 void ase_awk_map_close (ase_awk_map_t* map);
 
 void ase_awk_map_clear (ase_awk_map_t* map);
+
+ase_size_t ase_awk_map_getsize (ase_awk_map_t* map);
 
 ase_awk_pair_t* ase_awk_map_get (
 	ase_awk_map_t* map, const ase_char_t* key, ase_size_t key_len);

@@ -1,11 +1,12 @@
 /*
- * $Id: AwkExtio.h,v 1.5 2006-12-11 06:29:19 bacon Exp $
+ * $Id: AwkExtio.h,v 1.6 2006-12-11 08:44:52 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWKEXTIO_H_
 #define _ASE_COM_AWKEXTIO_H_
 
 #include "resource.h" 
+#include <ase/awk/awk.h>
 
 /////////////////////////////////////////////////////////////////////////////
 // CAwkExtio

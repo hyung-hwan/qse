@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.219 2006-12-09 11:51:01 bacon Exp $
+ * $Id: parse.c,v 1.220 2006-12-11 08:44:52 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -360,6 +360,7 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
 	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.expr == 0);
 
+	if (n == -1) ase_awk_clear (awk);
 	return n;
 }
 
@@ -4408,37 +4409,37 @@ static int __deparse (ase_awk_t* awk)
 
 		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
 		{
+			/*
 			len = ase_awk_longtostr ((ase_long_t)i, 
 				10, ASE_T("__global"), tmp, ASE_COUNTOF(tmp));
 			ASE_AWK_ASSERT (awk, len != (ase_size_t)-1);
 			if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
 				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
-			/*
+			*/
 			if (ase_awk_putsrcstrx (awk, 
 				awk->parse.globals.buf[i].name, 
 				awk->parse.globals.buf[i].name_len) == -1)
 			{
 				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
 			}
-			*/
 
 			if (ase_awk_putsrcstr (awk, ASE_T(", ")) == -1)
 				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
 		}
 
+		/*
 		len = ase_awk_longtostr ((ase_long_t)i, 
 			10, ASE_T("__global"), tmp, ASE_COUNTOF(tmp));
 		ASE_AWK_ASSERT (awk, len != (ase_size_t)-1);
 		if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
 			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
-		/*
+		*/
 		if (ase_awk_putsrcstrx (awk, 
 			awk->parse.globals.buf[i].name, 
 			awk->parse.globals.buf[i].name_len) == -1)
 		{
 			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
 		}
-		*/
 
 		if (ase_awk_putsrcstr (awk, ASE_T(";\n\n")) == -1)
 			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);

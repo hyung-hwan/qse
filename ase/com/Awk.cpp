@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.5 2006-12-11 06:29:18 bacon Exp $
+ * $Id: Awk.cpp,v 1.6 2006-12-11 08:44:52 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -306,11 +306,11 @@ HRESULT CAwk::Parse (int* ret)
 			return S_OK;
 		}
 
-		int opt = /*ASE_AWK_IMPLICIT | 
+		int opt = ASE_AWK_IMPLICIT | 
 		      ASE_AWK_EXPLICIT | 
 			  ASE_AWK_UNIQUEAFN | 
 		      ASE_AWK_HASHSIGN | 
-		      ASE_AWK_IDIV |
+		      /*ASE_AWK_IDIV |
 		      ASE_AWK_SHADING | 
 		      ASE_AWK_SHIFT | */
 		      ASE_AWK_EXTIO /*| 
@@ -423,7 +423,7 @@ static ase_ssize_t __process_extio (
 		CBuffer* tmp = (CBuffer*)extio2->read_buf;
 		if (extio2->read_buf_pos >= extio2->read_buf_len)
 		{
-			INT n = awk->Fire_ReadSource (extio2->read_buf);
+			INT n = awk->Fire_ReadExtio (extio, extio2->read_buf);
 			if (n <= 0) return (ase_ssize_t)n;
 
 			if (SysStringLen(tmp->str) < (UINT)n) return -1;
