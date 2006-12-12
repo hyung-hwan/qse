@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.cpp,v 1.4 2006-12-11 14:58:25 bacon Exp $
+ * $Id: AwkExtio.cpp,v 1.5 2006-12-12 05:54:33 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -63,7 +63,7 @@ STDMETHODIMP CAwkExtio::get_Mode(int *pVal)
 
 STDMETHODIMP CAwkExtio::get_Handle (VARIANT *pVal)
 {
-	*pVal = handle;
+	VariantCopy (pVal, &handle);
 	return S_OK;
 }
 

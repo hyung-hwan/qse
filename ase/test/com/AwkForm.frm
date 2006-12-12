@@ -215,7 +215,7 @@ Function Awk_ReadExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffe
         Exit Function
     End If
         
-    Let console = extio.Handle
+    Set console = extio.Handle
     If console.Count = 0 Then
         value = ConsoleIn.Text
         l = Len(value)
