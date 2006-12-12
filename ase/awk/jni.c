@@ -1,16 +1,17 @@
 /*
- * $Id: jni.c,v 1.37 2006-12-09 17:36:27 bacon Exp $
+ * $Id: jni.c,v 1.38 2006-12-12 05:44:41 bacon Exp $
  */
 
-#include <ase/awk/jni.h>
-#include <ase/awk/awk_i.h>
+#include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wctype.h>
 #include <wchar.h>
-#include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
+#include <ase/awk/jni.h>
+#include <ase/awk/awk_i.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -569,8 +570,9 @@ static ase_ssize_t __java_write_source (
 	jmethodID mid;
 	jcharArray array;
 	jchar* tmp;
-	jint ret, i;
+	jint ret;
 	jthrowable thrown;
+	ase_size_t i;
 	
 	class = (*env)->GetObjectClass(env, obj);
 	mid = (*env)->GetMethodID (env, class, "writeSource", "([CI)I");
@@ -775,9 +777,9 @@ static ase_ssize_t __java_write_extio (
 	jclass class; 
 	jmethodID mid;
 	jcharArray array;
-	ase_ssize_t i;
 	jchar* tmp;
 	jint ret;
+	ase_size_t i;
 	jthrowable thrown;
 	
 	class = (*env)->GetObjectClass(env, obj);
