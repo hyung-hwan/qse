@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.297 2006-12-12 05:16:30 bacon Exp $
+ * $Id: run.c,v 1.298 2006-12-12 14:34:13 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -58,7 +58,9 @@ static int __init_run (
 	ase_awk_runios_t* runios, void* custom_data, int* errnum);
 static void __deinit_run (ase_awk_run_t* run);
 
-static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg);
+static int __build_runarg (
+	ase_awk_run_t* run, ase_awk_runarg_t* runarg, ase_size_t* nargs);
+static void __cleanup_globals (ase_awk_run_t* run);
 static int __set_globals_to_default (ase_awk_run_t* run);
 
 static int __run_main (
@@ -937,7 +939,8 @@ static void __deinit_run (ase_awk_run_t* run)
 	}
 }
 
-static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
+static int __build_runarg (
+	ase_awk_run_t* run, ase_awk_runarg_t* runarg, ase_size_t* nargs)
 {
 	ase_awk_runarg_t* p;
 	ase_size_t argc;
@@ -1030,7 +1033,20 @@ static int __build_runarg (ase_awk_run_t* run, ase_awk_runarg_t* runarg)
 
 	ase_awk_refdownval (run, v_argc);
 	ase_awk_refdownval (run, v_argv);
+
+	*nargs = argc;
 	return 0;
+}
+
+static void __cleanup_globals (ase_awk_run_t* run)
+{
+	ase_size_t nglobals = run->awk->tree.nglobals;
+	while (nglobals > 0)
+	{
+		--nglobals;
+		ase_awk_refdownval (run, STACK_GLOBAL(run,nglobals));
+		STACK_GLOBAL (run, nglobals) = ase_awk_val_nil;
+	}
 }
 
 static int __update_fnr (ase_awk_run_t* run, ase_size_t fnr)
@@ -1120,7 +1136,7 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 static int __run_main (
 	ase_awk_run_t* run, const ase_char_t* main, ase_awk_runarg_t* runarg)
 {
-	ase_size_t nglobals, nargs, i;
+	ase_size_t nglobals, nargs, nrunargs, i;
 	ase_size_t saved_stack_top;
 	ase_awk_val_t* v;
 	int n;
@@ -1164,7 +1180,8 @@ static int __run_main (
 		return -1;
 	}
 	
-	if (runarg != ASE_NULL && __build_runarg (run, runarg) == -1)
+	if (runarg == ASE_NULL) nrunargs = 0;
+	else if (__build_runarg (run, runarg, &nrunargs) == -1)
 	{
 		/* it can simply restore the top of the stack this way
 		 * because the values pused onto the stack so far are
@@ -1181,14 +1198,68 @@ static int __run_main (
 	if (n == 0) n = __set_globals_to_default (run);
 	if (n == 0 && main != ASE_NULL)
 	{
+		/* run the given function */
 		ase_awk_nde_call_t nde;
 
 		nde.type = ASE_AWK_NDE_AFN;
 		nde.next = ASE_NULL;
 		nde.what.afn.name.ptr = (ase_char_t*)main;
 		nde.what.afn.name.len = ase_awk_strlen(main);
+
 		nde.args = ASE_NULL;
 		nde.nargs = 0;
+
+		if (runarg != ASE_NULL)
+		{
+			for (i = nrunargs; i > 0; )
+			{
+				ase_awk_nde_str_t* tmp, * tmp2;
+
+				i--;
+				tmp = (ase_awk_nde_str_t*) ASE_AWK_MALLOC (
+					run->awk, ASE_SIZEOF(*tmp));
+				if (tmp == ASE_NULL)
+				{
+					tmp = (ase_awk_nde_str_t*)nde.args;
+					while (tmp != ASE_NULL)
+					{
+						tmp2 = (ase_awk_nde_str_t*)tmp->next;
+						ASE_AWK_FREE (run->awk, tmp->buf);
+						ASE_AWK_FREE (run->awk, tmp);
+						tmp = tmp2;
+					}
+					__cleanup_globals (run);
+					run->stack_top = saved_stack_top;
+					PANIC_I (run, ASE_AWK_ENOMEM);
+				}
+
+				tmp->type = ASE_AWK_NDE_STR;
+				tmp->buf = ase_awk_strxdup (run->awk,
+					runarg[i].ptr, runarg[i].len);
+				if (tmp->buf == ASE_NULL)
+				{
+					ASE_AWK_FREE (run->awk, tmp);
+					tmp = (ase_awk_nde_str_t*)nde.args;
+					while (tmp != ASE_NULL)
+					{
+						tmp2 = (ase_awk_nde_str_t*)tmp->next;
+						ASE_AWK_FREE (run->awk, tmp->buf);
+						ASE_AWK_FREE (run->awk, tmp);
+						tmp = tmp2;
+					} 
+					__cleanup_globals (run);
+					run->stack_top = saved_stack_top;
+					PANIC_I (run, ASE_AWK_ENOMEM);
+				}
+
+				tmp->len = runarg[i].len;
+				tmp->next = nde.args;
+				nde.args = (ase_awk_nde_t*)tmp;
+				nde.nargs++;
+			}
+
+			ASE_AWK_ASSERT (run->awk, nrunargs == nde.nargs);
+		}
 
 		v = __eval_afn (run, (ase_awk_nde_t*)&nde);
 		if (v == ASE_NULL) n = -1;
@@ -1198,15 +1269,21 @@ static int __run_main (
 			ase_awk_refupval (run, v);
 			ase_awk_refdownval (run, v);
 		}
+
+		if (nde.args != ASE_NULL) ase_awk_clrpt (run->awk, nde.args);
 	}
 	else if (n == 0)
 	{
+		/* no main function is specified. 
+		 * run the normal patter blocks including BEGIN and END */
 		saved_stack_top = run->stack_top;
+
 		if (__raw_push(run,(void*)run->stack_base) == -1) 
 		{
 			/* restore the stack top in a cheesy(?) way */
 			run->stack_top = saved_stack_top;
 			/* pops off global variables in a decent way */	
+			__cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 			PANIC_I (run, ASE_AWK_ENOMEM);
 		}
@@ -1214,6 +1291,7 @@ static int __run_main (
 		if (__raw_push(run,(void*)saved_stack_top) == -1) 
 		{
 			run->stack_top = saved_stack_top;
+			__cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 			PANIC_I (run, ASE_AWK_ENOMEM);
 		}
@@ -1222,6 +1300,7 @@ static int __run_main (
 		if (__raw_push(run,ase_awk_val_nil) == -1)
 		{
 			run->stack_top = saved_stack_top;
+			__cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 			PANIC_I (run, ASE_AWK_ENOMEM);
 		}
@@ -1230,6 +1309,7 @@ static int __run_main (
 		if (__raw_push(run,ase_awk_val_nil) == -1)
 		{
 			run->stack_top = saved_stack_top;
+			__cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 			PANIC_I (run, ASE_AWK_ENOMEM);
 		}
