@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.57 2006-12-02 16:26:03 bacon Exp $
+ * $Id: err.c,v 1.58 2006-12-12 05:16:29 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -18,6 +18,7 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("invalid parameter"),
 		ASE_T("existing data found"),
 		ASE_T("no such data entry found"),
+		ASE_T("permission denied"),
 		ASE_T("general run-time error"),
 		ASE_T("one or more running instances"),
 		ASE_T("too many running instances"),

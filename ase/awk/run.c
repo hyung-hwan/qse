@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.296 2006-12-11 08:44:52 bacon Exp $
+ * $Id: run.c,v 1.297 2006-12-12 05:16:30 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -568,8 +568,9 @@ int ase_awk_run (ase_awk_t* awk,
 	    awk->tree.chain_size == 0 &&
 	    ase_awk_map_getsize(&awk->tree.afns) == 0)
 	{
-		/* no code to execute */
-		return 0;
+		/* the code has not been parsed. deny the run */
+		awk->errnum = ASE_AWK_EACCES;
+		return -1;
 	}
 	
 	run = (ase_awk_run_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_run_t));

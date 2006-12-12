@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.162 2006-12-11 14:58:25 bacon Exp $
+ * $Id: awk.h,v 1.163 2006-12-12 05:16:29 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -203,6 +203,7 @@ enum
 	ASE_AWK_EINVAL,         /* invalid parameter */
 	ASE_AWK_EEXIST,         /* existing data found */
 	ASE_AWK_ENOENT,         /* no such data entry found */
+	ASE_AWK_EACCES,         /* access denied */
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_ERUNNING,       /* there are running instances */
 	ASE_AWK_ETOOMANYRUNS,   /* too many running instances */

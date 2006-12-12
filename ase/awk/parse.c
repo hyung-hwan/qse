@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.220 2006-12-11 08:44:52 bacon Exp $
+ * $Id: parse.c,v 1.221 2006-12-12 05:16:30 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -360,7 +360,6 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
 	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.expr == 0);
 
-	if (n == -1) ase_awk_clear (awk);
 	return n;
 }
 
@@ -444,6 +443,8 @@ exit_parse:
 	}
 
 	if (n == -1) ase_awk_clear (awk);
+	else awk->tree.ok = 1;
+
 	return n;
 }
 
@@ -4401,7 +4402,7 @@ static int __deparse (ase_awk_t* awk)
 
 	if (awk->tree.nglobals > awk->tree.nbglobals) 
 	{
-		ase_size_t i, len;
+		ase_size_t i/*, len*/;
 
 		ASE_AWK_ASSERT (awk, awk->tree.nglobals > 0);
 		if (ase_awk_putsrcstr (awk, ASE_T("global ")) == -1)
