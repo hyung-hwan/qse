@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.95 2006-12-11 08:44:52 bacon Exp $
+ * $Id: tree.c,v 1.96 2006-12-12 05:16:30 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -374,8 +374,8 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_GLOBAL:
 		{
-			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
-			ase_size_t n;
+			/*ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
+			ase_size_t n;*/
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 
 			if (px->id.idxa != (ase_size_t)-1) 
@@ -399,8 +399,8 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_GLOBALIDX:
 		{
-			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
-			ase_size_t n;
+			/*ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
+			ase_size_t n;*/
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 
 			if (px->id.idxa != (ase_size_t)-1) 

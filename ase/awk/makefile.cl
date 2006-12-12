@@ -2,7 +2,7 @@ OUT = aseawk
 
 C_SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
-JNI_SRCS = $(C_SRCS) jni.c
+JNI_SRCS = jni.c
 JAVA_SRCS = Awk.java Exception.java Extio.java
 
 C_OBJS = $(C_SRCS:.c=.obj)
@@ -28,10 +28,11 @@ lib: $(C_OBJS)
 /nologo /out:$(OUT).lib $(C_OBJS)
 <<
 
-jni: $(JNI_OBJS) $(JAVA_OBJS) 
+jni: lib $(JNI_OBJS) $(JAVA_OBJS) 
 	$(LD) /dll /def:jni.def /subsystem:windows /version:0.1 /release @<<
-/nologo /out:$(OUT).dll $(JNI_OBJS) user32.lib
+/nologo /out:$(OUT).dll $(JNI_OBJS) /implib:tmp.lib user32.lib $(OUT).lib
 <<
+	del tmp.lib tmp.exp
 
 clean:
 	del $(OBJS) $(OUT).lib $(OUT).dll *.obj *.class

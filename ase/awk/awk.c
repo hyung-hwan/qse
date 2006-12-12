@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.96 2006-12-04 12:58:23 bacon Exp $ 
+ * $Id: awk.c,v 1.97 2006-12-12 05:16:29 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -194,6 +194,7 @@ int ase_awk_clear (ase_awk_t* awk)
 	awk->parse.depth.cur.expr = 0;
 
 	/* clear parse trees */	
+	awk->tree.ok = 0;
 	awk->tree.nbglobals = 0;
 	awk->tree.nglobals = 0;	
 	ase_awk_map_clear (&awk->tree.afns);

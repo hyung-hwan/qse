@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.88 2006-12-04 12:58:23 bacon Exp $
+ * $Id: awk_i.h,v 1.89 2006-12-12 05:16:29 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -91,6 +91,7 @@ struct ase_awk_tree_t
 	ase_awk_chain_t* chain;
 	ase_awk_chain_t* chain_tail;
 	ase_size_t chain_size; /* number of nodes in the chain */
+	int ok;
 };
 
 struct ase_awk_t
@@ -102,7 +103,6 @@ struct ase_awk_t
 
 	/* parse tree */
 	ase_awk_tree_t tree;
-	int state;
 
 	/* temporary information that the parser needs */
 	struct

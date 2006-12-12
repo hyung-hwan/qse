@@ -2,7 +2,7 @@ OUT = aseawk
 
 C_SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
-JNI_SRCS = $(C_SRCS) jni.c
+JNI_SRCS = jni.c
 JAVA_SRCS = Exception.java Extio.java Awk.java StdAwk.java
 
 C_OBJS = $(C_SRCS:.c=.obj)
@@ -29,17 +29,18 @@ JAVACFLAGS = -classpath ../..
 LDFLAGS = -Tpd -ap -Gn -c -q $(BDS_LIBPATH)
 STARTUP = c0d32w.obj
 LIBS = import32.lib cw32mt.lib 
+JNI_LIBS = $(LIBS) $(OUT).lib
 
 all: lib jni
 
 lib: $(C_OBJS)
-	$(AR) aseawk.lib @&&!
+	$(AR) $(OUT).lib @&&!
 +-$(**: = &^
 +-)
 !
 
-jni: $(JNI_OBJS) $(JAVA_OBJS)
-	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT).dll,,$(LIBS),jni.def,
+jni: lib $(JNI_OBJS) $(JAVA_OBJS)
+	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT).dll,,$(JNI_LIBS),jni.def,
 
 ada:
 	gnatmake -I.. ase-awk
