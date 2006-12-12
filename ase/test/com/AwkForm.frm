@@ -177,7 +177,7 @@ Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
             Set console = New AwkExtioConsole
             console.Active = True
             console.Count = 0
-            extio.Handle = console
+            Set extio.Handle = console
             Awk_OpenExtio = 1
         End If
     Case ASELib.AWK_EXTIO_FILE
