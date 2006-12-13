@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.163 2006-12-12 05:16:29 bacon Exp $
+ * $Id: awk.h,v 1.164 2006-12-13 14:13:07 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -13,13 +13,29 @@ typedef struct ase_awk_run_t ase_awk_run_t;
 typedef struct ase_awk_val_t ase_awk_val_t;
 typedef struct ase_awk_extio_t ase_awk_extio_t;
 
-typedef struct ase_awk_syscas_t ase_awk_syscas_t;
+typedef struct ase_awk_sysfns_t ase_awk_sysfns_t;
 typedef struct ase_awk_srcios_t ase_awk_srcios_t;
 typedef struct ase_awk_runios_t ase_awk_runios_t;
 typedef struct ase_awk_runcbs_t ase_awk_runcbs_t;
 typedef struct ase_awk_runarg_t ase_awk_runarg_t;
 
-typedef void (*ase_awk_lk_t) (ase_awk_t* awk, void* arg);
+typedef void* (*ase_awk_malloc_t) (ase_size_t n, void* custom_data); 
+typedef void* (*ase_awk_realloc_t) (void* ptr, ase_size_t n, void* custom_data);
+typedef void* (*ase_awk_free_t) (void* ptr, void* custom_data); 
+typedef void* (*ase_awk_memcpy_t) (void* dst, const void* src, ase_size_t n);
+typedef void* (*ase_awk_memset_t) (void* dst, int val, ase_size_t n);
+
+typedef ase_bool_t (*ase_awk_isctype_t) (ase_cint_t c);
+typedef ase_cint_t (*ase_awk_toctype_t) (ase_cint_t c);
+typedef ase_real_t (*ase_awk_pow_t) (ase_real_t x, ase_real_t y);
+typedef int (*ase_awk_sprintf_t) (
+	ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...);
+typedef void (*ase_awk_aprintf_t) (const ase_char_t* fmt, ...); 
+typedef void (*ase_awk_dprintf_t) (const ase_char_t* fmt, ...); 
+typedef void (*ase_awk_abort_t) (void);
+
+typedef void (*ase_awk_lock_t) (ase_awk_t* awk, void* custom_data);
+
 typedef ase_ssize_t (*ase_awk_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
@@ -52,43 +68,43 @@ struct ase_awk_extio_t
 	ase_awk_extio_t* next;
 };
 
-struct ase_awk_syscas_t
+struct ase_awk_sysfns_t
 {
-	/* memory */
-	void* (*malloc) (ase_size_t n, void* custom_data);
-	void* (*realloc) (void* ptr, ase_size_t n, void* custom_data);
-	void  (*free) (void* ptr, void* custom_data);
+	/* memory allocation/deallocation */
+	ase_awk_malloc_t  malloc;      /* required */
+	ase_awk_realloc_t realloc;     /* optional */
+	ase_awk_free_t    free;        /* required */
+	ase_awk_memcpy_t  memcpy;      /* optional */
+	ase_awk_memset_t  memset;      /* optional */
 
-	/* thread lock */
-	ase_awk_lk_t lock;
-	ase_awk_lk_t unlock;
-
-	/* character class */
-	ase_bool_t (*is_upper)  (ase_cint_t c);
-	ase_bool_t (*is_lower)  (ase_cint_t c);
-	ase_bool_t (*is_alpha)  (ase_cint_t c);
-	ase_bool_t (*is_digit)  (ase_cint_t c);
-	ase_bool_t (*is_xdigit) (ase_cint_t c);
-	ase_bool_t (*is_alnum)  (ase_cint_t c);
-	ase_bool_t (*is_space)  (ase_cint_t c);
-	ase_bool_t (*is_print)  (ase_cint_t c);
-	ase_bool_t (*is_graph)  (ase_cint_t c);
-	ase_bool_t (*is_cntrl)  (ase_cint_t c);
-	ase_bool_t (*is_punct)  (ase_cint_t c);
-	ase_cint_t (*to_upper)  (ase_cint_t c);
-	ase_cint_t (*to_lower)  (ase_cint_t c);
+	/* character classes */
+	ase_awk_isctype_t is_upper;    /* required */
+	ase_awk_isctype_t is_lower;    /* required */
+	ase_awk_isctype_t is_alpha;    /* required */
+	ase_awk_isctype_t is_digit;    /* required */
+	ase_awk_isctype_t is_xdigit;   /* required */
+	ase_awk_isctype_t is_alnum;    /* required */
+	ase_awk_isctype_t is_space;    /* required */
+	ase_awk_isctype_t is_print;    /* required */
+	ase_awk_isctype_t is_graph;    /* required */
+	ase_awk_isctype_t is_cntrl;    /* required */
+	ase_awk_isctype_t is_punct;    /* required */
+	ase_awk_toctype_t to_upper;    /* required */
+	ase_awk_toctype_t to_lower;    /* required */
 
 	/* utilities */
-	void* (*memcpy) (void* dst, const void* src, ase_size_t n);
-	void* (*memset) (void* dst, int val, ase_size_t n);
-	ase_real_t (*pow) (ase_real_t x, ase_real_t y);
+	ase_awk_pow_t     pow;         /* required */
+	ase_awk_sprintf_t sprintf;     /* required */
+	ase_awk_aprintf_t aprintf;     /* required in the debug mode */
+	ase_awk_dprintf_t dprintf;     /* required in the debug mode */
+	ase_awk_abort_t   abort;       /* required in the debug mode */
 
-	int (*sprintf) (ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...);
-	void (*aprintf) (const ase_char_t* fmt, ...); /* assertion */
-	void (*dprintf) (const ase_char_t* fmt, ...); /* debug */
-	void (*abort) (void);
+	/* thread lock */
+	ase_awk_lock_t    lock;        /* required if multi-threaded */
+	ase_awk_lock_t    unlock;      /* required if multi-threaded */
 
-	void* custom_data;
+	/* user-defined data passed to selected system functions */
+	void*             custom_data; /* optional */
 };
 
 struct ase_awk_srcios_t
@@ -367,7 +383,7 @@ enum
 extern "C" {
 #endif
 
-ase_awk_t* ase_awk_open (const ase_awk_syscas_t* syscas);
+ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns);
 int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 

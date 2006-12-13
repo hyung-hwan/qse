@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.89 2006-12-12 05:16:29 bacon Exp $
+ * $Id: awk_i.h,v 1.90 2006-12-13 14:13:07 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -45,41 +45,41 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 	#define ASE_AWK_FREE(awk,ptr) free (ptr)
 #else
 	#define ASE_AWK_MALLOC(awk,size) \
-		(awk)->syscas.malloc (size, (awk)->syscas.custom_data)
+		(awk)->sysfns.malloc (size, (awk)->sysfns.custom_data)
 	#define ASE_AWK_REALLOC(awk,ptr,size) \
-		(awk)->syscas.realloc (ptr, size, (awk)->syscas.custom_data)
+		(awk)->sysfns.realloc (ptr, size, (awk)->sysfns.custom_data)
 	#define ASE_AWK_FREE(awk,ptr) \
-		(awk)->syscas.free (ptr, (awk)->syscas.custom_data)
+		(awk)->sysfns.free (ptr, (awk)->sysfns.custom_data)
 #endif
 
 #define ASE_AWK_LOCK(awk) \
 	do { \
-		if ((awk)->syscas.lock != ASE_NULL) \
-			(awk)->syscas.lock (awk, (awk)->syscas.custom_data); \
+		if ((awk)->sysfns.lock != ASE_NULL) \
+			(awk)->sysfns.lock (awk, (awk)->sysfns.custom_data); \
 	} while (0) 
 
 #define ASE_AWK_UNLOCK(awk) \
 	do { \
-		if ((awk)->syscas.unlock != ASE_NULL) \
-			(awk)->syscas.unlock (awk, (awk)->syscas.custom_data); \
+		if ((awk)->sysfns.unlock != ASE_NULL) \
+			(awk)->sysfns.unlock (awk, (awk)->sysfns.custom_data); \
 	} while (0) 
 
-#define ASE_AWK_ISUPPER(awk,c)  (awk)->syscas.is_upper(c)
-#define ASE_AWK_ISLOWER(awk,c)  (awk)->syscas.is_lower(c)
-#define ASE_AWK_ISALPHA(awk,c)  (awk)->syscas.is_alpha(c)
-#define ASE_AWK_ISDIGIT(awk,c)  (awk)->syscas.is_digit(c)
-#define ASE_AWK_ISXDIGIT(awk,c) (awk)->syscas.is_xdigit(c)
-#define ASE_AWK_ISALNUM(awk,c)  (awk)->syscas.is_alnum(c)
-#define ASE_AWK_ISSPACE(awk,c)  (awk)->syscas.is_space(c)
-#define ASE_AWK_ISPRINT(awk,c)  (awk)->syscas.is_print(c)
-#define ASE_AWK_ISGRAPH(awk,c)  (awk)->syscas.is_graph(c)
-#define ASE_AWK_ISCNTRL(awk,c)  (awk)->syscas.is_cntrl(c)
-#define ASE_AWK_ISPUNCT(awk,c)  (awk)->syscas.is_punct(c)
-#define ASE_AWK_TOUPPER(awk,c)  (awk)->syscas.to_upper(c)
-#define ASE_AWK_TOLOWER(awk,c)  (awk)->syscas.to_lower(c)
+#define ASE_AWK_ISUPPER(awk,c)  (awk)->sysfns.is_upper(c)
+#define ASE_AWK_ISLOWER(awk,c)  (awk)->sysfns.is_lower(c)
+#define ASE_AWK_ISALPHA(awk,c)  (awk)->sysfns.is_alpha(c)
+#define ASE_AWK_ISDIGIT(awk,c)  (awk)->sysfns.is_digit(c)
+#define ASE_AWK_ISXDIGIT(awk,c) (awk)->sysfns.is_xdigit(c)
+#define ASE_AWK_ISALNUM(awk,c)  (awk)->sysfns.is_alnum(c)
+#define ASE_AWK_ISSPACE(awk,c)  (awk)->sysfns.is_space(c)
+#define ASE_AWK_ISPRINT(awk,c)  (awk)->sysfns.is_print(c)
+#define ASE_AWK_ISGRAPH(awk,c)  (awk)->sysfns.is_graph(c)
+#define ASE_AWK_ISCNTRL(awk,c)  (awk)->sysfns.is_cntrl(c)
+#define ASE_AWK_ISPUNCT(awk,c)  (awk)->sysfns.is_punct(c)
+#define ASE_AWK_TOUPPER(awk,c)  (awk)->sysfns.to_upper(c)
+#define ASE_AWK_TOLOWER(awk,c)  (awk)->sysfns.to_lower(c)
 
-#define ASE_AWK_MEMCPY(awk,dst,src,len) (awk)->syscas.memcpy (dst, src, len)
-#define ASE_AWK_MEMSET(awk,dst,val,len) (awk)->syscas.memset (dst, val, len)
+#define ASE_AWK_MEMCPY(awk,dst,src,len) (awk)->sysfns.memcpy (dst, src, len)
+#define ASE_AWK_MEMSET(awk,dst,val,len) (awk)->sysfns.memset (dst, val, len)
 
 struct ase_awk_tree_t
 {
@@ -96,7 +96,7 @@ struct ase_awk_tree_t
 
 struct ase_awk_t
 {
-	ase_awk_syscas_t syscas;
+	ase_awk_sysfns_t sysfns;
 
 	/* options */
 	int option;
