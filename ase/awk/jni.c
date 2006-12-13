@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.39 2006-12-13 14:13:07 bacon Exp $
+ * $Id: jni.c,v 1.40 2006-12-13 14:16:12 bacon Exp $
  */
 
 #include <stdio.h>
