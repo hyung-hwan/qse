@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.51 2006-12-13 14:13:07 bacon Exp $
+ * $Id: rex.c,v 1.52 2006-12-13 14:16:12 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
