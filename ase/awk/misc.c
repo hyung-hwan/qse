@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.44 2006-12-04 07:17:12 bacon Exp $
+ * $Id: misc.c,v 1.45 2006-12-13 14:13:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1087,18 +1087,18 @@ int ase_awk_assertfail (ase_awk_t* awk,
 {
 	if (desc == ASE_NULL)
 	{
-		awk->syscas.aprintf (
+		awk->sysfns.aprintf (
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n"),
 			file, line, expr);
 	}
 	else
 	{
-		awk->syscas.aprintf (
+		awk->sysfns.aprintf (
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n\nDESCRIPTION:\n%s\n"),
 			file, line, expr, desc);
 
 	}
-	awk->syscas.abort ();
+	awk->sysfns.abort ();
 	return 0;
 }
 

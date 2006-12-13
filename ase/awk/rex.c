@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.50 2006-12-04 06:50:26 bacon Exp $
+ * $Id: rex.c,v 1.51 2006-12-13 14:13:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -718,7 +718,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 		{
 			/* invalid range */
 		#ifdef DEBUG_REX
-			builder->awk->syscas.dprintf (
+			builder->awk->sysfns.dprintf (
 				ASE_T("__build_charset: invalid character set range\n"));
 		#endif
 			builder->errnum = ASE_AWK_EREXCRANGE;
@@ -751,7 +751,7 @@ static int __build_cclass (__builder_t* builder, ase_char_t* cc)
 	{
 		/* wrong class name */
 	#ifdef DEBUG_REX
-		builder->awk->syscas.dprintf (
+		builder->awk->sysfns.dprintf (
 			ASE_T("__build_cclass: wrong class name\n"));
 	#endif
 		builder->errnum = ASE_AWK_EREXCCLASS;
@@ -765,7 +765,7 @@ static int __build_cclass (__builder_t* builder, ase_char_t* cc)
 	    builder->ptn.curc.value != ASE_T(':'))
 	{
 	#ifdef BUILD_REX
-		builder->awk->syscas.dprintf (
+		builder->awk->sysfns.dprintf (
 			ASE_T("__build_cclass: a colon(:) expected\n"));
 	#endif
 		builder->errnum = ASE_AWK_EREXCOLON;
@@ -779,7 +779,7 @@ static int __build_cclass (__builder_t* builder, ase_char_t* cc)
 	    builder->ptn.curc.value != ASE_T(']'))
 	{
 	#ifdef DEBUG_REX
-		builder->awk->syscas.dprintf (
+		builder->awk->sysfns.dprintf (
 			ASE_T("__build_cclass: ] expected\n"));
 	#endif
 		builder->errnum = ASE_AWK_EREXRBRACKET;	
@@ -960,7 +960,7 @@ static int __add_code (__builder_t* builder, void* data, ase_size_t len)
 		if (capa == 0) capa = DEF_CODE_CAPA;
 		while (len > capa - builder->code.size) { capa = capa * 2; }
 
-		if (builder->awk->syscas.realloc != ASE_NULL)
+		if (builder->awk->sysfns.realloc != ASE_NULL)
 		{
 			tmp = (ase_byte_t*) ASE_AWK_REALLOC (
 				builder->awk, builder->code.buf, capa);
@@ -1027,7 +1027,7 @@ static const ase_byte_t* __match_pattern (
 	el = *(ase_size_t*)p; p += ASE_SIZEOF(el);
 
 #ifdef BUILD_REX
-	matcher->awk->syscas.dprintf (
+	matcher->awk->sysfns.dprintf (
 		ASE_T("__match_pattern: NB = %u, EL = %u\n"), 
 		(unsigned)nb, (unsigned)el);
 #endif
@@ -1215,7 +1215,7 @@ static const ase_byte_t* __match_any_char (
 	}
 
 #ifdef BUILD_REX
-	matcher->awk->syscas.dprintf (
+	matcher->awk->sysfns.dprintf (
 		ASE_T("__match_any_char: lbound = %u, ubound = %u\n"), 
 		(unsigned int)lbound, (unsigned int)ubound);
 #endif
@@ -1228,7 +1228,7 @@ static const ase_byte_t* __match_any_char (
 	}
 
 #ifdef BUILD_REX
-	matcher->awk->syscas.dprintf (
+	matcher->awk->sysfns.dprintf (
 		ASE_T("__match_any_char: max si = %u\n"), (unsigned)si);
 #endif
 
@@ -1288,7 +1288,7 @@ static const ase_byte_t* __match_ord_char (
 	}
 	
 #ifdef BUILD_REX
-	matcher->awk->syscas.dprintf (
+	matcher->awk->sysfns.dprintf (
 		ASE_T("__match_ord_char: cc = %c, lbound = %u, ubound = %u\n"), 
 		cc, (unsigned int)lbound, (unsigned int)ubound);
 #endif
@@ -1303,7 +1303,7 @@ static const ase_byte_t* __match_ord_char (
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 #ifdef DEBUG_REX
-			matcher->awk->syscas.dprintf (
+			matcher->awk->sysfns.dprintf (
 				ASE_T("__match_ord_char: <ignorecase> %c %c\n"), 
 				cc, mat->match_ptr[si]);
 #endif
@@ -1317,7 +1317,7 @@ static const ase_byte_t* __match_ord_char (
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 #ifdef DEBUG_REX
-			matcher->awk->syscas.dprintf (
+			matcher->awk->sysfns.dprintf (
 				ASE_T("__match_ord_char: %c %c\n"), 
 				cc, mat->match_ptr[si]);
 #endif
@@ -1327,7 +1327,7 @@ static const ase_byte_t* __match_ord_char (
 	}
 
 #ifdef DEBUG_REX
-	matcher->awk->syscas.dprintf (
+	matcher->awk->sysfns.dprintf (
 		ASE_T("__match_ord_char: max occurrences=%u, lbound=%u, ubound=%u\n"), 
 		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
 #endif
@@ -1359,7 +1359,7 @@ static const ase_byte_t* __match_charset (
 	csl = *(ase_size_t*)p; p += ASE_SIZEOF(csl);
 
 #ifdef BUILD_REX
-	matcher->awk->syscas.dprintf (
+	matcher->awk->sysfns.dprintf (
 		ASE_T("__match_charset: lbound = %u, ubound = %u\n"), 
 		(unsigned int)lbound, (unsigned int)ubound);
 #endif
@@ -1384,7 +1384,7 @@ static const ase_byte_t* __match_charset (
 	p = p + csl - (ASE_SIZEOF(csc) + ASE_SIZEOF(csl));
 
 #ifdef DEBUG_REX
-	matcher->awk->syscas.dprintf (
+	matcher->awk->sysfns.dprintf (
 		ASE_T("__match_charset: max occurrences=%u, lbound=%u, ubound=%u\n"), 
 		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
 #endif
@@ -1497,7 +1497,7 @@ static const ase_byte_t* __match_group (
 				mat2.branch_end = mat->branch_end;
 	
 			#ifdef DEBUG_REX
-				matcher->awk->syscas.dprintf (
+				matcher->awk->sysfns.dprintf (
 					ASE_T("__match_group: GROUP si=%d [%s]\n"),
 					(unsigned)si, mat->match_ptr);
 			#endif
@@ -1598,7 +1598,7 @@ static const ase_byte_t* __match_occurrences (
 			mat2.branch_end = mat->branch_end;
 
 		#ifdef DEBUG_REX
-			matcher->awk->syscas.dprintf (
+			matcher->awk->sysfns.dprintf (
 				ASE_T("__match occurrences: si=%u [%s]\n"), 
 				(unsigned)si, mat->match_ptr);
 		#endif
@@ -1638,7 +1638,7 @@ static ase_bool_t __test_charset (
 			if (matcher->ignorecase) 
 				c1 = ASE_AWK_TOUPPER(matcher->awk, c1);
 		#ifdef DEBUG_REX
-			matcher->awk->syscas.dprintf (
+			matcher->awk->sysfns.dprintf (
 				ASE_T("__match_charset: <one> %c %c\n"), c, c1);
 		#endif
 			if (c == c1) return ase_true;
@@ -1655,7 +1655,7 @@ static ase_bool_t __test_charset (
 				c2 = ASE_AWK_TOUPPER(matcher->awk, c2);
 			}
 		#ifdef DEBUG_REX
-			matcher->awk->syscas.dprintf (
+			matcher->awk->sysfns.dprintf (
 				ASE_T("__match_charset: <range> %c %c-%c\n"), c, c1, c2);
 		#endif
 			if (c >= c1 && c <= c2) return ase_true;
@@ -1664,7 +1664,7 @@ static ase_bool_t __test_charset (
 		{
 			c1 = *(const ase_char_t*)p;
 		#ifdef DEBUG_REX
-			matcher->awk->syscas.dprintf (
+			matcher->awk->sysfns.dprintf (
 				ASE_T("__match_charset: <class> %c %s\n"), 
 				c, __char_class[c1].name);
 		#endif
@@ -1749,7 +1749,7 @@ static ase_bool_t __cc_isxdigit (ase_awk_t* awk, ase_char_t c)
 void ase_awk_printrex (ase_awk_t* awk, void* rex)
 {
 	__print_pattern (rex);
-	awk->syscas.dprintf (ASE_T("\n"));
+	awk->sysfns.dprintf (ASE_T("\n"));
 }
 
 static const ase_byte_t* __print_pattern (const ase_byte_t* p)
