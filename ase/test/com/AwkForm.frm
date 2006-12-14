@@ -92,15 +92,13 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-
+Dim source_first As Boolean
 Public WithEvents Awk As ASELib.Awk
 Attribute Awk.VB_VarHelpID = -1
-Private first As Boolean
-
-Private extio_first As Boolean
 
 Private Sub Execute_Click()
-    first = True
+
+    source_first = True
     
     ConsoleOut.Text = ""
     SourceOut.Text = ""
@@ -127,10 +125,10 @@ Function Awk_CloseSource(ByVal mode As Long) As Long
 End Function
 
 Function Awk_ReadSource(ByVal buf As ASELib.Buffer) As Long
-    If first Then
+    If source_first Then
         buf.value = SourceIn.Text
         Awk_ReadSource = Len(buf.value)
-        first = False
+        source_first = False
     Else
         Awk_ReadSource = 0
     End If
@@ -162,22 +160,23 @@ Function Awk_WriteSource(ByVal buf As ASELib.Buffer) As Long
 End Function
 
 Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
-
-    Dim console As AwkExtioConsole
     Awk_OpenExtio = -1
     
     Select Case extio.Type
     Case ASELib.AWK_EXTIO_CONSOLE
         If extio.mode = ASELib.AWK_EXTIO_CONSOLE_READ Then
-            extio_first = True
-            extio.Handle = 1234
+            extio.Handle = New AwkExtioConsole
+            With extio.Handle
+                .Active = True
+                .Count = 0
+            End With
             Awk_OpenExtio = 1
         ElseIf extio.mode = ASELib.AWK_EXTIO_CONSOLE_WRITE Then
-            extio_first = True
-            Set console = New AwkExtioConsole
-            console.Active = True
-            console.Count = 0
-            Set extio.Handle = console
+            extio.Handle = New AwkExtioConsole
+            With extio.Handle
+                .Active = True
+                .Count = 0
+            End With
             Awk_OpenExtio = 1
         End If
     Case ASELib.AWK_EXTIO_FILE
@@ -188,14 +187,15 @@ Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
 End Function
 
 Function Awk_CloseExtio(ByVal extio As ASELib.AwkExtio) As Long
-
     Awk_CloseExtio = -1
     
     Select Case extio.Type
     Case ASELib.AWK_EXTIO_CONSOLE
         If extio.mode = ASELib.AWK_EXTIO_CONSOLE_READ Then
+            extio.Handle = Nothing
             Awk_CloseExtio = 0
         ElseIf extio.mode = ASELib.AWK_EXTIO_CONSOLE_WRITE Then
+            extio.Handle = Nothing
             Awk_CloseExtio = 0
         End If
     Case ASELib.AWK_EXTIO_FILE
@@ -206,17 +206,24 @@ Function Awk_CloseExtio(ByVal extio As ASELib.AwkExtio) As Long
 End Function
 
 Function Awk_ReadExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
-    Dim console As AwkExtioConsole
+    Awk_ReadExtio = -1
+    
+    Select Case extio.Type
+    Case ASELib.AWK_EXTIO_CONSOLE
+        If extio.mode = ASELib.AWK_EXTIO_CONSOLE_READ Then
+            Awk_ReadExtio = Awk_ReadExtioConsole(extio, buf)
+        End If
+    Case ASELib.AWK_EXTIO_FILE
+    Case ASELib.AWK_EXTIO_PIPE
+    Case ASELib.AWK_EXTIO_COPROC
+    End Select
+End Function
+
+Function Awk_ReadExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
     Dim value As String, value2 As String
     Dim l As Integer, i As Integer
-    
-    If extio.mode <> 0 Then
-        Awk_ReadExtio = -1
-        Exit Function
-    End If
-        
-    Set console = extio.Handle
-    If console.Count = 0 Then
+
+    If extio.Handle.Count = 0 Then
         value = ConsoleIn.Text
         l = Len(value)
         
@@ -232,21 +239,30 @@ Function Awk_ReadExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffe
             value2 = value2 + Mid(value, i, 1)
         End If
         
-        console.Count = console.Count + 1
+        extio.Handle.Count = extio.Handle.Count + 1
         buf.value = value2
-        Awk_ReadExtio = Len(value2)
+        Awk_ReadExtioConsole = Len(value2)
     Else
-        Awk_ReadExtio = 0
+        Awk_ReadExtioConsole = 0
     End If
 End Function
 
 Function Awk_WriteExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
-    Dim value As String, i As Long, value2 As String
+    Awk_WriteExtio = -1
     
-    If extio.mode <> 1 Then
-        Awk_WriteExtio = -1
-        Exit Function
-    End If
+    Select Case extio.Type
+    Case ASELib.AWK_EXTIO_CONSOLE
+        If extio.mode = ASELib.AWK_EXTIO_CONSOLE_WRITE Then
+            Awk_WriteExtio = Awk_WriteExtioConsole(extio, buf)
+        End If
+    Case ASELib.AWK_EXTIO_FILE
+    Case ASELib.AWK_EXTIO_PIPE
+    Case ASELib.AWK_EXTIO_COPROC
+    End Select
+End Function
+    
+Function Awk_WriteExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
+    Dim value As String, i As Long, value2 As String
         
     value = buf.value
     
@@ -257,14 +273,15 @@ Function Awk_WriteExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buff
     
     If value = vbLf Then
         ConsoleOut.Text = ConsoleOut.Text + vbCrLf
-        Awk_WriteExtio = 1
+        Awk_WriteExtioConsole = 1
     Else
         ConsoleOut.Text = ConsoleOut.Text + value
-        Awk_WriteExtio = Len(value)
+        Awk_WriteExtioConsole = Len(value)
     End If
 End Function
 
 Private Sub Form_Load()
+    Dim x As Variant
     SourceIn.Text = "BEGIN { print 123.12; print 995; print 5432.1; }"
     SourceOut.Text = ""
     ConsoleIn.Text = ""

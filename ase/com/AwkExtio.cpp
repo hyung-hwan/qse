@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.cpp,v 1.5 2006-12-12 05:54:33 bacon Exp $
+ * $Id: AwkExtio.cpp,v 1.6 2006-12-14 07:55:52 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -10,22 +10,22 @@
 /////////////////////////////////////////////////////////////////////////////
 // CAwkExtio
 
-CAwkExtio::CAwkExtio (): name (NULL)
+CAwkExtio::CAwkExtio (): name (NULL)/*, handle (NULL)*/
 {
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	TCHAR x[128];
 	_sntprintf (x, 128, _T("CAwkExtio::CAwkExtio %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
-#endif
+//#endif
 }
 
 CAwkExtio::~CAwkExtio ()
 {
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	TCHAR x[128];
 	_sntprintf (x, 128, _T("CAwkExtio::~CAwkExtio %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
-#endif
+//#endif
 	if (name != NULL) SysFreeString (name);
 }
 

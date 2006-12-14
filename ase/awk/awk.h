@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.164 2006-12-13 14:13:07 bacon Exp $
+ * $Id: awk.h,v 1.165 2006-12-14 07:55:51 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -21,7 +21,7 @@ typedef struct ase_awk_runarg_t ase_awk_runarg_t;
 
 typedef void* (*ase_awk_malloc_t) (ase_size_t n, void* custom_data); 
 typedef void* (*ase_awk_realloc_t) (void* ptr, ase_size_t n, void* custom_data);
-typedef void* (*ase_awk_free_t) (void* ptr, void* custom_data); 
+typedef void (*ase_awk_free_t) (void* ptr, void* custom_data); 
 typedef void* (*ase_awk_memcpy_t) (void* dst, const void* src, ase_size_t n);
 typedef void* (*ase_awk_memset_t) (void* dst, int val, ase_size_t n);
 

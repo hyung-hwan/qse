@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.7 2006-12-11 14:58:25 bacon Exp $
+ * $Id: Awk.cpp,v 1.8 2006-12-14 07:55:51 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -284,36 +284,36 @@ HRESULT CAwk::Parse (int* ret)
 {
  	if (handle == NULL)
 	{
-		ase_awk_syscas_t syscas;
+		ase_awk_sysfns_t sysfns;
 
-		memset (&syscas, 0, sizeof(syscas));
-		syscas.malloc = __awk_malloc;
-		syscas.realloc = __awk_realloc;
-		syscas.free = __awk_free;
+		memset (&sysfns, 0, sizeof(sysfns));
+		sysfns.malloc = __awk_malloc;
+		sysfns.realloc = __awk_realloc;
+		sysfns.free = __awk_free;
 
-		syscas.is_upper  = iswupper;
-		syscas.is_lower  = iswlower;
-		syscas.is_alpha  = iswalpha;
-		syscas.is_digit  = iswdigit;
-		syscas.is_xdigit = iswxdigit;
-		syscas.is_alnum  = iswalnum;
-		syscas.is_space  = iswspace;
-		syscas.is_print  = iswprint;
-		syscas.is_graph  = iswgraph;
-		syscas.is_cntrl  = iswcntrl;
-		syscas.is_punct  = iswpunct;
-		syscas.to_upper  = towupper;
-		syscas.to_lower  = towlower;
+		sysfns.is_upper  = iswupper;
+		sysfns.is_lower  = iswlower;
+		sysfns.is_alpha  = iswalpha;
+		sysfns.is_digit  = iswdigit;
+		sysfns.is_xdigit = iswxdigit;
+		sysfns.is_alnum  = iswalnum;
+		sysfns.is_space  = iswspace;
+		sysfns.is_print  = iswprint;
+		sysfns.is_graph  = iswgraph;
+		sysfns.is_cntrl  = iswcntrl;
+		sysfns.is_punct  = iswpunct;
+		sysfns.to_upper  = towupper;
+		sysfns.to_lower  = towlower;
 
-		syscas.memcpy = memcpy;
-		syscas.memset = memset;
-		syscas.pow = __awk_pow;
-		syscas.sprintf = __awk_sprintf;
-		syscas.aprintf = __awk_aprintf;
-		syscas.dprintf = __awk_dprintf;
-		syscas.abort = abort;
+		sysfns.memcpy = memcpy;
+		sysfns.memset = memset;
+		sysfns.pow = __awk_pow;
+		sysfns.sprintf = __awk_sprintf;
+		sysfns.aprintf = __awk_aprintf;
+		sysfns.dprintf = __awk_dprintf;
+		sysfns.abort = abort;
 
-		handle = ase_awk_open (&syscas);
+		handle = ase_awk_open (&sysfns);
 		if (handle == NULL)
 		{
 			*ret = -1;
