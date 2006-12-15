@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.58 2006-12-12 05:16:29 bacon Exp $
+ * $Id: err.c,v 1.59 2006-12-15 14:58:14 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -23,6 +23,7 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("one or more running instances"),
 		ASE_T("too many running instances"),
 		ASE_T("recursion too deep"),
+		ASE_T("system functions not provided or not proper"),
 
 		ASE_T("cannot open source input"),
 		ASE_T("cannot close source input"),

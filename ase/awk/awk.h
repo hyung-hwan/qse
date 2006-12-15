@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.165 2006-12-14 07:55:51 bacon Exp $
+ * $Id: awk.h,v 1.166 2006-12-15 14:58:14 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -19,22 +19,22 @@ typedef struct ase_awk_runios_t ase_awk_runios_t;
 typedef struct ase_awk_runcbs_t ase_awk_runcbs_t;
 typedef struct ase_awk_runarg_t ase_awk_runarg_t;
 
-typedef void* (*ase_awk_malloc_t) (ase_size_t n, void* custom_data); 
+typedef void* (*ase_awk_malloc_t)  (ase_size_t n, void* custom_data); 
 typedef void* (*ase_awk_realloc_t) (void* ptr, ase_size_t n, void* custom_data);
-typedef void (*ase_awk_free_t) (void* ptr, void* custom_data); 
-typedef void* (*ase_awk_memcpy_t) (void* dst, const void* src, ase_size_t n);
-typedef void* (*ase_awk_memset_t) (void* dst, int val, ase_size_t n);
+typedef void  (*ase_awk_free_t)    (void* ptr, void* custom_data); 
+typedef void* (*ase_awk_memcpy_t)  (void* dst, const void* src, ase_size_t n);
+typedef void* (*ase_awk_memset_t)  (void* dst, int val, ase_size_t n);
 
 typedef ase_bool_t (*ase_awk_isctype_t) (ase_cint_t c);
 typedef ase_cint_t (*ase_awk_toctype_t) (ase_cint_t c);
 typedef ase_real_t (*ase_awk_pow_t) (ase_real_t x, ase_real_t y);
+
 typedef int (*ase_awk_sprintf_t) (
 	ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...);
 typedef void (*ase_awk_aprintf_t) (const ase_char_t* fmt, ...); 
 typedef void (*ase_awk_dprintf_t) (const ase_char_t* fmt, ...); 
-typedef void (*ase_awk_abort_t) (void);
-
-typedef void (*ase_awk_lock_t) (ase_awk_t* awk, void* custom_data);
+typedef void (*ase_awk_abort_t)   (void);
+typedef void (*ase_awk_lock_t)    (ase_awk_t* awk, void* custom_data);
 
 typedef ase_ssize_t (*ase_awk_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
@@ -183,11 +183,14 @@ enum
 	/* support getline and print */
 	ASE_AWK_EXTIO       = (1 << 8), 
 
+	/* support co-process */
+	ASE_AWK_COPROC      = (1 << 9),
+
 	/* support blockless patterns */
-	ASE_AWK_BLOCKLESS   = (1 << 9), 
+	ASE_AWK_BLOCKLESS   = (1 << 10), 
 
 	/* use 1 as the start index for string operations */
-	ASE_AWK_STRINDEXONE = (1 << 10),
+	ASE_AWK_STRINDEXONE = (1 << 11),
 
 	/* strip off leading and trailing spaces when splitting a record
 	 * into fields with a regular expression.
@@ -202,13 +205,13 @@ enum
 	 * The program splits " a b c " into [a], [b], [c] when this
 	 * option is on while into [], [a], [b], [c], [] when it is off.
 	 */
-	ASE_AWK_STRIPSPACES = (1 << 11),
+	ASE_AWK_STRIPSPACES = (1 << 12),
 
 	/* enable the nextoutfile keyword */
-	ASE_AWK_NEXTOFILE   = (1 << 12),
+	ASE_AWK_NEXTOFILE   = (1 << 13),
 
 	/* a newline terminates a statement */
-	ASE_AWK_NEWLINE     = (1 << 13)
+	ASE_AWK_NEWLINE     = (1 << 14)
 };
 
 /* error code */
@@ -220,10 +223,12 @@ enum
 	ASE_AWK_EEXIST,         /* existing data found */
 	ASE_AWK_ENOENT,         /* no such data entry found */
 	ASE_AWK_EACCES,         /* access denied */
+
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_ERUNNING,       /* there are running instances */
 	ASE_AWK_ETOOMANYRUNS,   /* too many running instances */
 	ASE_AWK_ERECURSION,     /* recursion too deep */
+	ASE_AWK_ESYSFNS,        /* system functions not proper */
 
 	ASE_AWK_ESRCINOPEN,
 	ASE_AWK_ESRCINCLOSE,
@@ -383,7 +388,7 @@ enum
 extern "C" {
 #endif
 
-ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns);
+ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum);
 int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 

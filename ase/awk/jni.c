@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.40 2006-12-13 14:16:12 bacon Exp $
+ * $Id: jni.c,v 1.41 2006-12-15 14:58:15 bacon Exp $
  */
 
 #include <stdio.h>
@@ -182,7 +182,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	jthrowable except;
 	ase_awk_t* awk;
 	ase_awk_sysfns_t sysfns;
-	int opt;
+	int opt, errnum;
 	
 	memset (&sysfns, 0, sizeof(sysfns));
 	sysfns.malloc = __awk_malloc;
@@ -211,7 +211,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	sysfns.dprintf = __awk_dprintf;
 	sysfns.abort = abort;
 
-	awk = ase_awk_open (&sysfns);
+	awk = ase_awk_open (&sysfns, &errnum);
 	if (awk == NULL)
 	{
 		except = (*env)->FindClass (env, CLASS_EXCEPTION);

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.136 2006-12-13 14:17:01 bacon Exp $
+ * $Id: awk.c,v 1.137 2006-12-15 14:58:37 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -739,7 +739,7 @@ static int __main (int argc, ase_char_t* argv[])
 	ase_awk_runarg_t runarg[10];
 	ase_awk_sysfns_t sysfns;
 	struct src_io src_io = { NULL, NULL };
-	int opt, i, file_count = 0;
+	int opt, i, file_count = 0, errnum;
 #ifdef _WIN32
 	sysfns_data_t sysfns_data;
 #endif
@@ -753,6 +753,7 @@ static int __main (int argc, ase_char_t* argv[])
 	      ASE_AWK_SHADING | 
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 
+	      /*ASE_AWK_COPROC |*/
 	      ASE_AWK_BLOCKLESS | 
 	      ASE_AWK_STRINDEXONE | 
 	      ASE_AWK_STRIPSPACES | 
@@ -829,12 +830,14 @@ static int __main (int argc, ase_char_t* argv[])
 	sysfns.custom_data = &sysfns_data;
 #endif
 
-	if ((awk = ase_awk_open(&sysfns)) == ASE_NULL) 
+	if ((awk = ase_awk_open(&sysfns, &errnum)) == ASE_NULL) 
 	{
 #ifdef _WIN32
 		HeapDestroy (sysfns_data.heap);
 #endif
-		xp_printf (ASE_T("Error: cannot open awk\n"));
+		xp_printf (
+			ASE_T("ERROR: cannot parse awk [%d] %s\n"), 
+			errnum, ase_awk_geterrstr(errnum));
 		return -1;
 	}
 
