@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.98 2006-12-13 14:13:06 bacon Exp $ 
+ * $Id: awk.c,v 1.99 2006-12-15 14:58:14 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -11,16 +11,14 @@
 
 static void __free_afn (void* awk, void* afn);
 
-ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns)
+ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum)
 {
 	ase_awk_t* awk;
 
-	if (sysfns == ASE_NULL) return ASE_NULL;
-
-	if (sysfns->malloc == ASE_NULL || 
-	    sysfns->free == ASE_NULL) return ASE_NULL;
-
-	if (sysfns->is_upper  == ASE_NULL ||
+	if (sysfns            == ASE_NULL ||
+	    sysfns->malloc    == ASE_NULL || 
+	    sysfns->free      == ASE_NULL ||
+	    sysfns->is_upper  == ASE_NULL ||
 	    sysfns->is_lower  == ASE_NULL ||
 	    sysfns->is_alpha  == ASE_NULL ||
 	    sysfns->is_digit  == ASE_NULL ||
@@ -32,14 +30,16 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns)
 	    sysfns->is_cntrl  == ASE_NULL ||
 	    sysfns->is_punct  == ASE_NULL ||
 	    sysfns->to_upper  == ASE_NULL ||
-	    sysfns->to_lower  == ASE_NULL) return ASE_NULL;
-
-	if (sysfns->sprintf == ASE_NULL || 
-	    sysfns->aprintf == ASE_NULL || 
-	    sysfns->dprintf == ASE_NULL || 
-	    sysfns->abort   == ASE_NULL) return ASE_NULL;
-
-	if (sysfns->pow == ASE_NULL) return ASE_NULL;
+	    sysfns->to_lower  == ASE_NULL ||
+	    sysfns->pow       == ASE_NULL ||
+	    sysfns->sprintf   == ASE_NULL || 
+	    sysfns->aprintf   == ASE_NULL || 
+	    sysfns->dprintf   == ASE_NULL || 
+	    sysfns->abort     == ASE_NULL) 
+	{
+		*errnum = ASE_AWK_ESYSFNS;
+		return ASE_NULL;
+	}
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	awk = (ase_awk_t*) malloc (ASE_SIZEOF(ase_awk_t));
@@ -47,7 +47,11 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns)
 	awk = (ase_awk_t*) sysfns->malloc (
 		ASE_SIZEOF(ase_awk_t), sysfns->custom_data);
 #endif
-	if (awk == ASE_NULL) return ASE_NULL;
+	if (awk == ASE_NULL) 
+	{
+		*errnum = ASE_AWK_ENOMEM;
+		return ASE_NULL;
+	}
 
 	/* it uses the built-in ase_awk_memset because awk is not 
 	 * fully initialized yet */
@@ -64,6 +68,7 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns)
 	if (ase_awk_str_open (&awk->token.name, 128, awk) == ASE_NULL) 
 	{
 		ASE_AWK_FREE (awk, awk);
+		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 
@@ -73,6 +78,7 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns)
 	{
 		ase_awk_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
+		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 
@@ -81,6 +87,7 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns)
 		ase_awk_str_close (&awk->token.name);
 		ase_awk_map_close (&awk->tree.afns);
 		ASE_AWK_FREE (awk, awk);
+		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 
@@ -90,6 +97,7 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns)
 		ase_awk_map_close (&awk->tree.afns);
 		ase_awk_tab_close (&awk->parse.globals);
 		ASE_AWK_FREE (awk, awk);
+		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 
@@ -100,6 +108,7 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns)
 		ase_awk_tab_close (&awk->parse.globals);
 		ase_awk_tab_close (&awk->parse.locals);
 		ASE_AWK_FREE (awk, awk);
+		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 

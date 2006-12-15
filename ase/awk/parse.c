@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.221 2006-12-12 05:16:30 bacon Exp $
+ * $Id: parse.c,v 1.222 2006-12-15 14:58:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -3608,7 +3608,7 @@ static int __get_token (ase_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR (awk);
 		}
-		else if (c == ASE_T('&'))
+		else if ((awk->option & ASE_AWK_COPROC) && c == ASE_T('&'))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_BORAND);
 			ADD_TOKEN_CHAR (awk, c);
