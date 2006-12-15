@@ -1,5 +1,5 @@
 BEGIN {
-	__global7 = "	";
+	FS = "	";
 	printf ("%10s %6s %5s    %s\n\n","COUNTRY","AREA","POP","CONTINENT");
 }
 
