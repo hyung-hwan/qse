@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.8 2006-12-14 07:55:51 bacon Exp $
+ * $Id: Awk.cpp,v 1.9 2006-12-15 06:47:07 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -43,14 +43,14 @@ CAwk::CAwk (): handle(NULL),
 	      ASE_AWK_EXPLICIT | 
 	      ASE_AWK_UNIQUEAFN | 
 	      ASE_AWK_HASHSIGN | 
-	      /*ASE_AWK_IDIV |
+	      ASE_AWK_IDIV |
 	      ASE_AWK_SHADING | 
-	      ASE_AWK_SHIFT | */
-	      ASE_AWK_EXTIO /*| 
+	      ASE_AWK_SHIFT | 
+	      ASE_AWK_EXTIO | 
 	      ASE_AWK_BLOCKLESS | 
 	      ASE_AWK_STRINDEXONE | 
 	      ASE_AWK_STRIPSPACES | 
-	      ASE_AWK_NEXTOFILE*/;
+	      ASE_AWK_NEXTOFILE;
 }
 
 CAwk::~CAwk ()
@@ -505,7 +505,7 @@ HRESULT CAwk::Run (int* ret)
 	ase_awk_runios_t runios;
 	runios.pipe = NULL;
 	runios.coproc = NULL;
-	runios.file = NULL;
+	runios.file = __process_extio;
 	runios.console = __process_extio;
 	runios.custom_data = this;
 

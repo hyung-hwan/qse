@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.h,v 1.7 2006-12-11 14:58:25 bacon Exp $
+ * $Id: AwkExtio.h,v 1.8 2006-12-15 06:47:08 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWKEXTIO_H_
@@ -19,7 +19,7 @@ public:
 	BSTR name;
 	int type;
 	int mode;
-	CComVariant handle;
+	VARIANT handle;
 
 	IBuffer* read_buf;
 	ase_size_t read_buf_pos;
