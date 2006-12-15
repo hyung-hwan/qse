@@ -1,5 +1,5 @@
 BEGIN {
-	__global7 = __global13 = "	";
+	FS = OFS = "	";
 }
 
 ($4 == "North America") {
