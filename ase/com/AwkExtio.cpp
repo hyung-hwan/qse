@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.cpp,v 1.6 2006-12-14 07:55:52 bacon Exp $
+ * $Id: AwkExtio.cpp,v 1.7 2006-12-15 06:47:08 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -10,23 +10,25 @@
 /////////////////////////////////////////////////////////////////////////////
 // CAwkExtio
 
-CAwkExtio::CAwkExtio (): name (NULL)/*, handle (NULL)*/
+CAwkExtio::CAwkExtio (): name (NULL)
 {
-//#ifdef _DEBUG
+#ifdef _DEBUG
 	TCHAR x[128];
 	_sntprintf (x, 128, _T("CAwkExtio::CAwkExtio %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
-//#endif
+#endif
+	VariantInit (&handle);
 }
 
 CAwkExtio::~CAwkExtio ()
 {
-//#ifdef _DEBUG
+#ifdef _DEBUG
 	TCHAR x[128];
 	_sntprintf (x, 128, _T("CAwkExtio::~CAwkExtio %p"), this);
 	MessageBox (NULL, x, x, MB_OK);
-//#endif
+#endif
 	if (name != NULL) SysFreeString (name);
+	VariantClear (&handle);
 }
 
 STDMETHODIMP CAwkExtio::get_Name (BSTR *pVal)
@@ -35,7 +37,7 @@ STDMETHODIMP CAwkExtio::get_Name (BSTR *pVal)
 	else
 	{
 		BSTR tmp = SysAllocStringLen (name, SysStringLen(name));
-		if (tmp = NULL) return E_OUTOFMEMORY;
+		if (tmp == NULL) return E_OUTOFMEMORY;
 		*pVal = tmp;
 	}
 
@@ -63,12 +65,14 @@ STDMETHODIMP CAwkExtio::get_Mode(int *pVal)
 
 STDMETHODIMP CAwkExtio::get_Handle (VARIANT *pVal)
 {
+	VariantClear (pVal);
 	VariantCopy (pVal, &handle);
 	return S_OK;
 }
 
 STDMETHODIMP CAwkExtio::put_Handle (VARIANT newVal)
 {
-	handle.Copy (&newVal);
+	VariantClear (&handle);
+	VariantCopy (&handle, &newVal);
 	return S_OK;
 }

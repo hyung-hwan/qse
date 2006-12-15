@@ -11,36 +11,22 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-Private m_active As Boolean
-Private m_count As Long
-
-Public Enum Status
-    STATUS_ON = 1
-    STATUS_OFF = 2
-End Enum
+Private m_eof As Boolean
 
 Private Sub Class_Initialize()
-    m_active = False
-    m_count = 0
-    MsgBox "AwkExtio Initializeing"
+    m_eof = False
+    'MsgBox "AwkExtio Initializeing"
 End Sub
 
 Private Sub Class_Terminate()
-    MsgBox "AwkExtio Terminating..."
+    'MsgBox "AwkExtio Terminating..."
 End Sub
 
-Public Property Let Active(v As Boolean)
-    m_active = v
+Public Property Let EOF(v As Boolean)
+    m_eof = v
 End Property
 
-Public Property Get Active() As Boolean
-     Active = m_active
+Public Property Get EOF() As Boolean
+     EOF = m_eof
 End Property
 
-Public Property Let Count(v As Long)
-    m_count = v
-End Property
-
-Public Property Get Count() As Long
-    Count = m_count
-End Property
