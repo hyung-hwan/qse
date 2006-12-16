@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.301 2006-12-16 14:43:51 bacon Exp $
+ * $Id: run.c,v 1.302 2006-12-16 16:14:40 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -587,7 +587,7 @@ int ase_awk_run (ase_awk_t* awk,
 	    ase_awk_map_getsize(&awk->tree.afns) == 0)
 	{
 		/* if not, deny the run */
-		awk->errnum = ASE_AWK_EACCES;
+		awk->errnum = ASE_AWK_ENOPER;
 		return -1;
 	}
 	

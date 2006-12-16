@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.99 2006-12-16 14:43:51 bacon Exp $
+ * $Id: val.c,v 1.100 2006-12-16 16:14:40 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -35,7 +35,18 @@ static ase_awk_val_int_t __awk_int[] =
 	{ ASE_AWK_VAL_INT, 0,  6, ASE_NULL },
 	{ ASE_AWK_VAL_INT, 0,  7, ASE_NULL },
 	{ ASE_AWK_VAL_INT, 0,  8, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  9, ASE_NULL }
+	{ ASE_AWK_VAL_INT, 0,  9, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 10, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 11, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 12, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 13, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 14, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 15, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 16, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 17, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 18, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 19, ASE_NULL },
+	{ ASE_AWK_VAL_INT, 0, 20, ASE_NULL }
 };
 
 ase_awk_val_t* ase_awk_val_negone = (ase_awk_val_t*)&__awk_int[0];

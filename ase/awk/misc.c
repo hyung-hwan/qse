@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.47 2006-12-16 14:43:50 bacon Exp $
+ * $Id: misc.c,v 1.48 2006-12-16 16:12:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1116,7 +1116,7 @@ int ase_awk_assertfail (ase_awk_t* awk,
 			file, line, expr, desc);
 
 	}
-	awk->sysfns.abort ();
+	awk->sysfns.abort (awk->sysfns.custom_data);
 	return 0;
 }
 

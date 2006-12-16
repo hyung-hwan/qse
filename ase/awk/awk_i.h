@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.91 2006-12-16 14:43:50 bacon Exp $
+ * $Id: awk_i.h,v 1.92 2006-12-16 16:12:07 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -55,13 +55,13 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_LOCK(awk) \
 	do { \
 		if ((awk)->sysfns.lock != ASE_NULL) \
-			(awk)->sysfns.lock (awk, (awk)->sysfns.custom_data); \
+			(awk)->sysfns.lock ((awk)->sysfns.custom_data); \
 	} while (0) 
 
 #define ASE_AWK_UNLOCK(awk) \
 	do { \
 		if ((awk)->sysfns.unlock != ASE_NULL) \
-			(awk)->sysfns.unlock (awk, (awk)->sysfns.custom_data); \
+			(awk)->sysfns.unlock ((awk)->sysfns.custom_data); \
 	} while (0) 
 
 #define ASE_AWK_ISUPPER(awk,c)  (awk)->sysfns.is_upper(c)

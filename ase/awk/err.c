@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.59 2006-12-15 14:58:14 bacon Exp $
+ * $Id: err.c,v 1.60 2006-12-16 16:12:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -14,11 +14,24 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 	static const ase_char_t* __errstr[] =
  	{
 		ASE_T("no error"),
-		ASE_T("out of memory"),
+
 		ASE_T("invalid parameter"),
-		ASE_T("existing data found"),
-		ASE_T("no such data entry found"),
-		ASE_T("permission denied"),
+		ASE_T("out of memory"),
+		ASE_T("not supported"),
+		ASE_T("operation not allowed"),
+		ASE_T("no such device"),
+		ASE_T("no space left on device"),
+		ASE_T("no such file, directory, or data"),
+		ASE_T("too many open files"),
+		ASE_T("too many links"),
+		ASE_T("resource temporarily unavailable"),
+		ASE_T("file or data exists"),
+		ASE_T("file or data too big"),
+		ASE_T("operation interrupted"),
+		ASE_T("system too busy"),
+		ASE_T("is a directory"),
+		ASE_T("i/o error"),
+		
 		ASE_T("general run-time error"),
 		ASE_T("one or more running instances"),
 		ASE_T("too many running instances"),
