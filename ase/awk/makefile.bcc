@@ -42,9 +42,6 @@ lib: $(C_OBJS)
 jni: lib $(JNI_OBJS) $(JAVA_OBJS)
 	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT).dll,,$(JNI_LIBS),jni.def,
 
-ada:
-	gnatmake -I.. ase-awk
-
 clean:
 	-del $(OBJS) $(OUT).lib $(OUT).dll *.obj *.class
 

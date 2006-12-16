@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.98 2006-12-13 14:16:12 bacon Exp $
+ * $Id: val.c,v 1.99 2006-12-16 14:43:51 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -38,6 +38,7 @@ static ase_awk_val_int_t __awk_int[] =
 	{ ASE_AWK_VAL_INT, 0,  9, ASE_NULL }
 };
 
+ase_awk_val_t* ase_awk_val_negone = (ase_awk_val_t*)&__awk_int[0];
 ase_awk_val_t* ase_awk_val_zero = (ase_awk_val_t*)&__awk_int[1];
 ase_awk_val_t* ase_awk_val_one = (ase_awk_val_t*)&__awk_int[2];
 

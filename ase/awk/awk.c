@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.99 2006-12-15 14:58:14 bacon Exp $ 
+ * $Id: awk.c,v 1.100 2006-12-16 14:43:49 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -116,7 +116,6 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum)
 	awk->errnum = ASE_AWK_ENOERR;
 
 	awk->parse.nlocals_max = 0;
-	awk->parse.nl_semicolon = 0;
 
 	awk->tree.nglobals = 0;
 	awk->tree.nbglobals = 0;
@@ -126,7 +125,9 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum)
 	awk->tree.chain_tail = ASE_NULL;
 	awk->tree.chain_size = 0;
 
-	awk->token.prev = 0;
+	awk->token.prev.type = 0;
+	awk->token.prev.line = 0;
+	awk->token.prev.column = 0;
 	awk->token.type = 0;
 	awk->token.line = 0;
 	awk->token.column = 0;
