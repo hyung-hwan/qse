@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.302 2006-12-16 16:14:40 bacon Exp $
+ * $Id: run.c,v 1.303 2006-12-16 16:22:05 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2496,8 +2496,25 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		{
 			/* if the destination name is empty, it skips the 
 			 * writing and flags an error and ERRNO */
+
+			ase_awk_val_t* no;
 			ASE_AWK_FREE (run->awk, out);
-			ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_negone);
+
+			no = ase_awk_makeintval (run, ASE_AWK_ENOENT);
+			if (no == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_ENOMEM;
+				return -1;
+			}
+
+			ase_awk_refupval (run, no);
+			if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, no) == -1)
+			{
+				ase_awk_refdownval (run, no);
+				return -1;
+			}
+
+			ase_awk_refdownval (run, no);
 			goto skip_write;
 		}
 
@@ -2508,8 +2525,25 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			if (out[--len] == ASE_T('\0'))
 			{
 				/* if so, the error is flagged thru ERRNO */
+
+				ase_awk_val_t* no;
 				ASE_AWK_FREE (run->awk, out);
-				ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_negone);
+
+				no = ase_awk_makeintval (run, ASE_AWK_ENOENT);
+				if (no == ASE_NULL)
+				{
+					run->errnum = ASE_AWK_ENOMEM;
+					return -1;
+				}
+	
+				ase_awk_refupval (run, no);
+				if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, no) == -1)
+				{
+					ase_awk_refdownval (run, no);
+					return -1;
+				}
+	
+				ase_awk_refdownval (run, no);
 				goto skip_write;
 			}
 		}
@@ -2648,8 +2682,24 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (len <= 0) 
 		{
 			/* the output destination name is empty. */
+			ase_awk_val_t* no;
 			ASE_AWK_FREE (run->awk, out);
-			ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_negone);
+
+			no = ase_awk_makeintval (run, ASE_AWK_ENOENT);
+			if (no == ASE_NULL)
+			{
+				run->errnum = ASE_AWK_ENOMEM;
+				return -1;
+			}
+
+			ase_awk_refupval (run, no);
+			if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, no) == -1)
+			{
+				ase_awk_refdownval (run, no);
+				return -1;
+			}
+
+			ase_awk_refdownval (run, no);
 			goto skip_write;
 		}
 
@@ -2659,8 +2709,25 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			{
 				/* the output destination name contains a null 
 				 * character. */
+
+				ase_awk_val_t* no;
 				ASE_AWK_FREE (run->awk, out);
-				ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_negone);
+
+				no = ase_awk_makeintval (run, ASE_AWK_ENOENT);
+				if (no == ASE_NULL)
+				{
+					run->errnum = ASE_AWK_ENOMEM;
+					return -1;
+				}
+	
+				ase_awk_refupval (run, no);
+				if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, no) == -1)
+				{
+					ase_awk_refdownval (run, no);
+					return -1;
+				}
+	
+				ase_awk_refdownval (run, no);
 				goto skip_write;
 			}
 		}
