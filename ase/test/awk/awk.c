@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.138 2006-12-16 14:45:02 bacon Exp $
+ * $Id: awk.c,v 1.139 2006-12-16 16:12:07 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -149,6 +149,11 @@ static void awk_dprintf (const ase_char_t* fmt, ...)
 static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
+}
+
+static void awk_abort (void* custom_data)
+{
+	abort ();
 }
 
 static FILE* popen_t (const ase_char_t* cmd, const ase_char_t* mode)
@@ -796,12 +801,12 @@ static int __main (int argc, ase_char_t* argv[])
 	}
 
 	memset (&sysfns, 0, ASE_SIZEOF(sysfns));
-	sysfns.malloc = awk_malloc;
-	sysfns.realloc = awk_realloc;
-	sysfns.free = awk_free;
 
-	sysfns.lock = NULL;
-	sysfns.unlock = NULL;
+	sysfns.malloc  = awk_malloc;
+	sysfns.realloc = awk_realloc;
+	sysfns.free    = awk_free;
+	sysfns.memcpy  = memcpy;
+	sysfns.memset  = memset;
 
 	sysfns.is_upper  = awk_isupper;
 	sysfns.is_lower  = awk_islower;
@@ -817,13 +822,13 @@ static int __main (int argc, ase_char_t* argv[])
 	sysfns.to_upper  = awk_toupper;
 	sysfns.to_lower  = awk_tolower;
 
-	sysfns.memcpy = memcpy;
-	sysfns.memset = memset;
-	sysfns.pow = awk_pow;
+	sysfns.pow     = awk_pow;
 	sysfns.sprintf = awk_sprintf;
 	sysfns.aprintf = awk_aprintf;
 	sysfns.dprintf = awk_dprintf;
-	sysfns.abort = abort;
+	sysfns.abort   = awk_abort;
+	sysfns.lock    = NULL;
+	sysfns.unlock  = NULL;
 
 #ifdef _WIN32
 	sysfns_data.heap = HeapCreate (0, 1000000, 1000000);

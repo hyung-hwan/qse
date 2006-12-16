@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.167 2006-12-16 14:43:50 bacon Exp $
+ * $Id: awk.h,v 1.168 2006-12-16 16:12:07 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -33,8 +33,8 @@ typedef int (*ase_awk_sprintf_t) (
 	ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...);
 typedef void (*ase_awk_aprintf_t) (const ase_char_t* fmt, ...); 
 typedef void (*ase_awk_dprintf_t) (const ase_char_t* fmt, ...); 
-typedef void (*ase_awk_abort_t)   (void);
-typedef void (*ase_awk_lock_t)    (ase_awk_t* awk, void* custom_data);
+typedef void (*ase_awk_abort_t)   (void* custom_data);
+typedef void (*ase_awk_lock_t)    (void* custom_data);
 
 typedef ase_ssize_t (*ase_awk_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
@@ -208,21 +208,30 @@ enum
 	ASE_AWK_STRIPSPACES = (1 << 12),
 
 	/* enable the nextoutfile keyword */
-	ASE_AWK_NEXTOFILE   = (1 << 13),
-
-	/* a newline terminates a statement */
-	ASE_AWK_NEWLINE     = (1 << 14)
+	ASE_AWK_NEXTOFILE   = (1 << 13)
 };
 
 /* error code */
 enum 
 {
 	ASE_AWK_ENOERR,         /* no error */
-	ASE_AWK_ENOMEM,         /* out of memory */
+
 	ASE_AWK_EINVAL,         /* invalid parameter */
-	ASE_AWK_EEXIST,         /* existing data found */
-	ASE_AWK_ENOENT,         /* no such data entry found */
-	ASE_AWK_EACCES,         /* access denied */
+	ASE_AWK_ENOMEM,         /* out of memory */
+	ASE_AWK_ENOSUP,         /* not supported */
+	ASE_AWK_ENOPER,         /* operation not allowed */
+	ASE_AWK_ENODEV,         /* no such device */
+	ASE_AWK_ENOSPC,         /* no space left on device */
+	ASE_AWK_ENOENT,         /* no such file, directory, or data */
+	ASE_AWK_EMFILE,         /* too many open files */
+	ASE_AWK_EMLINK,         /* too many links */
+	ASE_AWK_EAGAIN,         /* resource temporarily unavailable */
+	ASE_AWK_EEXIST,         /* file or data exists */
+	ASE_AWK_EFTBIG,         /* file or data too big */
+	ASE_AWK_EINTER,         /* operation interrupted */
+	ASE_AWK_ETBUSY,         /* system too busy */
+	ASE_AWK_EISDIR,         /* is a directory */
+	ASE_AWK_EIOERR,         /* i/o error */
 
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_ERUNNING,       /* there are running instances */

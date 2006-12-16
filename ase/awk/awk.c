@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.100 2006-12-16 14:43:49 bacon Exp $ 
+ * $Id: awk.c,v 1.101 2006-12-16 16:12:07 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -157,6 +157,17 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum)
 	return awk;
 }
 
+static void __free_afn (void* owner, void* afn)
+{
+	ase_awk_afn_t* f = (ase_awk_afn_t*)afn;
+
+	/* f->name doesn't have to be freed */
+	/*ASE_AWK_FREE ((ase_awk_t*)owner, f->name);*/
+
+	ase_awk_clrpt ((ase_awk_t*)owner, f->body);
+	ASE_AWK_FREE ((ase_awk_t*)owner, f);
+}
+
 int ase_awk_close (ase_awk_t* awk)
 {
 	if (ase_awk_clear (awk) == -1) return -1;
@@ -179,7 +190,6 @@ int ase_awk_close (ase_awk_t* awk)
 int ase_awk_clear (ase_awk_t* awk)
 {
 	/* you should stop all running instances beforehand */
-/* TODO: can i stop all instances??? */
 	if (awk->run.ptr != ASE_NULL)
 	{
 		awk->errnum = ASE_AWK_ERUNNING;
@@ -248,17 +258,6 @@ int ase_awk_getopt (ase_awk_t* awk)
 void ase_awk_setopt (ase_awk_t* awk, int opt)
 {
 	awk->option = opt;
-}
-
-static void __free_afn (void* owner, void* afn)
-{
-	ase_awk_afn_t* f = (ase_awk_afn_t*)afn;
-
-	/* f->name doesn't have to be freed */
-	/*ASE_AWK_FREE ((ase_awk_t*)owner, f->name);*/
-
-	ase_awk_clrpt ((ase_awk_t*)owner, f->body);
-	ASE_AWK_FREE ((ase_awk_t*)owner, f);
 }
 
 ase_size_t ase_awk_getsrcline (ase_awk_t* awk)
