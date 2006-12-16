@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.166 2006-12-15 14:58:14 bacon Exp $
+ * $Id: awk.h,v 1.167 2006-12-16 14:43:50 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -126,9 +126,9 @@ struct ase_awk_runios_t
 struct ase_awk_runcbs_t
 {
 	void (*on_start) (
-		ase_awk_t* awk, void* handle, void* custom_data);
+		ase_awk_t* awk, ase_awk_run_t* run, void* custom_data);
 	void (*on_end) (
-		ase_awk_t* awk, void* handle, int errnum, void* custom_data);
+		ase_awk_t* awk, ase_awk_run_t* run, int errnum, void* custom_data);
 	void* custom_data;
 };
 
@@ -439,8 +439,12 @@ int ase_awk_setofilename (
 
 ase_awk_t* ase_awk_getrunawk (ase_awk_run_t* awk);
 void* ase_awk_getruncustomdata (ase_awk_run_t* awk);
+
+/* functions to manipulate the run-time error */
 int ase_awk_getrunerrnum (ase_awk_run_t* run);
+const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run);
 void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
+void ase_awk_setrunerrmsg (ase_awk_run_t* run, const ase_char_t* msg);
 
 /* functions to manipulate built-in functions */
 void* ase_awk_addbfn (
@@ -485,7 +489,10 @@ ase_char_t* ase_awk_strxdup2 (
 
 ase_size_t ase_awk_strlen (const ase_char_t* str);
 ase_size_t ase_awk_strcpy (ase_char_t* buf, const ase_char_t* str);
-ase_size_t ase_awk_strncpy (ase_char_t* buf, const ase_char_t* str, ase_size_t len);
+ase_size_t ase_awk_strxcpy (
+	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str);
+ase_size_t ase_awk_strncpy (
+	ase_char_t* buf, const ase_char_t* str, ase_size_t len);
 int ase_awk_strcmp (const ase_char_t* s1, const ase_char_t* s2);
 
 int ase_awk_strxncmp (

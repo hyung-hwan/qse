@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.222 2006-12-15 14:58:15 bacon Exp $
+ * $Id: parse.c,v 1.223 2006-12-16 14:43:50 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -300,11 +300,15 @@ static struct __bvent __bvtab[] =
 		c = (awk)->src.lex.curc; \
 	} while(0)
 
+/*
 #define SET_TOKEN_TYPE(awk,code) \
 	do { \
-		(awk)->token.prev = (awk)->token.type; \
+		(awk)->token.prev.type = (awk)->token.type; \
 		(awk)->token.type = (code); \
-	} while (0);
+	} while (0)
+*/
+#define SET_TOKEN_TYPE(awk,code) \
+	do { (awk)->token.type = (code); } while (0)
 
 #define ADD_TOKEN_CHAR(awk,c) \
 	do { \
@@ -890,7 +894,8 @@ static ase_awk_chain_t* __parse_pattern_block (
 		if (nde == ASE_NULL) return ASE_NULL;
 	}
 
-	chain = (ase_awk_chain_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_chain_t));
+	chain = (ase_awk_chain_t*) 
+		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_chain_t));
 	if (chain == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, nde);
@@ -998,7 +1003,8 @@ static ase_awk_nde_t* __parse_block (ase_awk_t* awk, ase_bool_t is_top)
 		curr = nde;
 	}
 
-	block = (ase_awk_nde_blk_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_blk_t));
+	block = (ase_awk_nde_blk_t*) 
+		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_blk_t));
 	if (block == ASE_NULL) 
 	{
 		ase_awk_tab_remove (
@@ -1018,6 +1024,7 @@ static ase_awk_nde_t* __parse_block (ase_awk_t* awk, ase_bool_t is_top)
 	/* if (head == ASE_NULL) tmp = 0; */
 
 	block->type = ASE_AWK_NDE_BLK;
+	//block->line = 
 	block->next = ASE_NULL;
 	block->body = head;
 
@@ -1252,11 +1259,22 @@ static ase_awk_nde_t* __parse_statement (ase_awk_t* awk)
 	}
 	else 
 	{
+		/* the statement id held in awk->parse.id.stmnt denotes
+		 * the token id of the statement currently being parsed.
+		 * the current statement id is saved here because the 
+		 * statement id can be changed in __parse_statement_nb.
+		 * it will, in turn, call __parse_statement which will
+		 * eventually change the statement id. */
 		int old_id = awk->parse.id.stmnt;
+
+		/* set the current statement id */
 		awk->parse.id.stmnt = awk->token.type;
+
+		/* proceed parsing the statement */
 		nde = __parse_statement_nb (awk);
+
+		/* restore the statement id saved previously */
 		awk->parse.id.stmnt = old_id;
-awk->parse.nl_semicolon = 0;
 	}
 
 	return nde;
@@ -1293,7 +1311,6 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk)
 		return nde;
 	}
 
-awk->parse.nl_semicolon = 1;
 	/* keywords that require a terminating semicolon */
 	if (MATCH(awk,TOKEN_DO)) 
 	{
@@ -1360,8 +1377,6 @@ awk->parse.nl_semicolon = 1;
 		nde = __parse_expression(awk);
 	}
 
-/* TODO: newline ... */
-awk->parse.nl_semicolon = 0;
 	if (nde == ASE_NULL) return ASE_NULL;
 
 	/* check if a statement ends with a semicolon */
@@ -2191,6 +2206,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk)
 		/* the regular expression is tokenized here because 
 		 * of the context-sensitivity of the slash symbol */
 		SET_TOKEN_TYPE (awk, TOKEN_REX);
+
 		ase_awk_str_clear (&awk->token.name);
 		if (__get_rexstr (awk) == -1) return ASE_NULL;
 		ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_REX));
@@ -2203,8 +2219,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk)
 		nde->next = ASE_NULL;
 
 		nde->len = ASE_AWK_STR_LEN(&awk->token.name);
-		nde->buf = ase_awk_strxdup (
-			awk,
+		nde->buf = ase_awk_strxdup (awk,
 			ASE_AWK_STR_BUF(&awk->token.name),
 			ASE_AWK_STR_LEN(&awk->token.name));
 		if (nde->buf == ASE_NULL)
@@ -2213,8 +2228,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk)
 			PANIC (awk, ASE_AWK_ENOMEM);
 		}
 
-		nde->code = ase_awk_buildrex (
-			awk,
+		nde->code = ase_awk_buildrex (awk,
 			ASE_AWK_STR_BUF(&awk->token.name), 
 			ASE_AWK_STR_LEN(&awk->token.name), 
 			&errnum);
@@ -3282,8 +3296,8 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk, int type)
 		}
 
 		/* print 1 > 2 would print 1 to the file named 2. 
-		 * print (1 > 2) would print (1 > 2) in the console */
-		if (awk->token.prev != TOKEN_RPAREN &&
+		 * print (1 > 2) would print (1 > 2) on the console */
+		if (awk->token.prev.type != TOKEN_RPAREN &&
 		    args_tail->type == ASE_AWK_NDE_EXP_BIN)
 		{
 			ase_awk_nde_exp_t* ep = (ase_awk_nde_exp_t*)args_tail;
@@ -3430,6 +3444,11 @@ static int __get_token (ase_awk_t* awk)
 	int n;
 
 	line = awk->token.line;
+
+	awk->token.prev.type = awk->token.type;
+	awk->token.prev.line = awk->token.line;
+	awk->token.prev.column = awk->token.column;
+
 	do 
 	{
 		if (__skip_spaces(awk) == -1) return -1;
@@ -3840,8 +3859,7 @@ static int __get_token (ase_awk_t* awk)
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR (awk);
 	}
-	else if (c == ASE_T(';') || 
-	         (c == ASE_T('\n') && (awk->option & ASE_AWK_NEWLINE))) 
+	else if (c == ASE_T(';'))
 	{
 	/* TODO: more check on the newline terminator... */
 		SET_TOKEN_TYPE (awk, TOKEN_SEMICOLON);
@@ -4206,16 +4224,7 @@ static int __unget_char (ase_awk_t* awk, ase_cint_t c)
 static int __skip_spaces (ase_awk_t* awk)
 {
 	ase_cint_t c = awk->src.lex.curc;
-
-	if (awk->option & ASE_AWK_NEWLINE && awk->parse.nl_semicolon)
-	{
-		while (c != ASE_T('\n') &&
-		       ASE_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
-	}
-	else
-	{
-		while (ASE_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
-	}
+	while (ASE_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
 	return 0;
 }
 

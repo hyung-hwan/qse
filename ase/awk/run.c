@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.300 2006-12-13 14:15:24 bacon Exp $
+ * $Id: run.c,v 1.301 2006-12-16 14:43:51 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -547,9 +547,23 @@ int ase_awk_getrunerrnum (ase_awk_run_t* run)
 	return run->errnum;
 }
 
+const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run)
+{
+	if (run->errmsg[0] == ASE_T('\0')) 
+		return ase_awk_geterrstr (run->errnum);
+
+	return run->errmsg;
+}
+
 void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum)
 {
 	run->errnum = errnum;
+	run->errmsg[0] = ASE_T('\0');
+}
+
+void ase_awk_setrunerrmsg (ase_awk_run_t* run, const ase_char_t* msg)
+{
+	ase_awk_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), msg);
 }
 
 int ase_awk_run (ase_awk_t* awk, 
@@ -562,65 +576,82 @@ int ase_awk_run (ase_awk_t* awk,
 	ase_awk_run_t* run;
 	int n, errnum;
 
+	/* clear the awk error code */
 	awk->errnum = ASE_AWK_ENOERR;
 
+	/* check if the code has ever been parsed */
 	if (awk->tree.nglobals == 0 && 
 	    awk->tree.begin == ASE_NULL &&
 	    awk->tree.end == ASE_NULL &&
 	    awk->tree.chain_size == 0 &&
 	    ase_awk_map_getsize(&awk->tree.afns) == 0)
 	{
-		/* the code has not been parsed. deny the run */
+		/* if not, deny the run */
 		awk->errnum = ASE_AWK_EACCES;
 		return -1;
 	}
 	
+	/* allocate the storage for the run object */
 	run = (ase_awk_run_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_run_t));
 	if (run == ASE_NULL)
 	{
+		/* if it fails, the failure is reported thru 
+		 * the awk object */
 		awk->errnum = ASE_AWK_ENOMEM;
 		return -1;
 	}
 
+	/* clear the run object space */
 	ASE_AWK_MEMSET (awk, run, 0, ASE_SIZEOF(ase_awk_run_t));
 
+	/* add the run object to the awk object */
 	__add_run (awk, run);
 
+	/* initialize the run object */
 	if (__init_run (run, awk, runios, custom_data, &errnum) == -1) 
 	{
+		/* if it fails, the failure is still reported thru 
+		 * the awk object */
 		awk->errnum = errnum;
 		__del_run (awk, run);
+
 		ASE_AWK_FREE (awk, run);
 		return -1;
 	}
 
-	if (runcbs != ASE_NULL && runcbs->on_start != ASE_NULL) 
-	{
-		runcbs->on_start (awk, run, runcbs->custom_data);
-	}
+	/* clear the run error code */
+	run->errnum = ASE_AWK_ENOERR;
 
+	/* execute the start callback if it exists */
+	if (runcbs != ASE_NULL && runcbs->on_start != ASE_NULL) 
+		runcbs->on_start (awk, run, runcbs->custom_data);
+
+	/* enter the main run loop */
 	n = __run_main (run, main, runarg);
 	if (n == -1) 
 	{
 		/* if no callback is specified, awk's error number 
 		 * is updated with the run's error number */
-		awk->errnum = (runcbs == ASE_NULL)? run->errnum: ASE_AWK_ERUNTIME;
+		awk->errnum = (runcbs == ASE_NULL)? 
+			run->errnum: ASE_AWK_ERUNTIME;
 	}
 
+	/* the run loop ended. execute the end callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_end != ASE_NULL) 
 	{
 		runcbs->on_end (awk, run, 
 			((n == -1)? run->errnum: ASE_AWK_ENOERR), 
 			runcbs->custom_data);
 
-		/* when using callbacks, the function always returns 0 after
-		 * the start callbacks has been triggered */
+		/* when using callbacks, this function always returns 0 
+		 * after the start callbacks has been triggered */
 		n = 0;
 	}
 
-
+	/* uninitialize the run object */
 	__deinit_run (run);
 	__del_run (awk, run);
+
 	ASE_AWK_FREE (awk, run);
 	return n;
 }
@@ -2441,10 +2472,12 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		(nde->out_type == ASE_AWK_OUT_FILE_APPEND && nde->out != ASE_NULL) ||
 		(nde->out_type == ASE_AWK_OUT_CONSOLE && nde->out == ASE_NULL));
 
+	/* check if destination has been specified. */
 	if (nde->out != ASE_NULL)
 	{
 		ase_size_t len;
 
+		/* if so, resolve the destination name */
 		v = __eval_expression (run, nde->out);
 		if (v == ASE_NULL) return -1;
 
@@ -2454,42 +2487,42 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (out == ASE_NULL) 
 		{
 			ase_awk_refdownval (run, v);
+			//ase_awk_setrunerrline (nde->line);
 			return -1;
 		}
 		ase_awk_refdownval (run, v);
 
 		if (len <= 0) 
 		{
-			/* the output destination name is empty. */
+			/* if the destination name is empty, it skips the 
+			 * writing and flags an error and ERRNO */
 			ASE_AWK_FREE (run->awk, out);
-			n = -1;
+			ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_negone);
 			goto skip_write;
 		}
 
+		/* it needs to check if the destination name contains
+		 * any invalid characters to the underlying system */
 		while (len > 0)
 		{
 			if (out[--len] == ASE_T('\0'))
 			{
-				/* the output destination name contains a null 
-				 * character. */
+				/* if so, the error is flagged thru ERRNO */
 				ASE_AWK_FREE (run->awk, out);
-				n = -1;
+				ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_negone);
 				goto skip_write;
-				/* TODO: how to handle error???
-				 *       make print return -1??? not possible.
-				 *       throw an exception??
-				 *       set ERRNO or what??? this seems most
-				 *       reasonable. or can it have a global
-				 *       flag variable for print/printf such
-				 *       as PRINT_ERRNO?  */
 			}
 		}
 	}
 
+	/* transforms the destination to suit the usage with extio */
 	dst = (out == ASE_NULL)? ASE_T(""): out;
 
+	/* check if print is followed by any arguments */
 	if (nde->args == ASE_NULL)
 	{
+		/* if it doesn't have any arguments, print the entire 
+		 * input record */
 		n = ase_awk_writeextio_str (
 			run, nde->out_type, dst,
 			ASE_AWK_STR_BUF(&run->inrec.line),
@@ -2497,6 +2530,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
 		{
 			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+			//ase_awk_setrunerrline (nde->line);
 			return -1;
 		}
 		/* TODO: how to handle n == -1 && errnum == ASE_AWK_EIOHANDLER. 
@@ -2504,6 +2538,8 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	}
 	else
 	{
+		/* if it has any arguments, print the arguments separated by
+		 * the value OFS */
 		ase_awk_nde_t* head, * np;
 
 		if (nde->args->type == ASE_AWK_NDE_GRP)
@@ -2525,6 +2561,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 				if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
 				{
 					if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+					//ase_awk_setrunerrline (nde->line);
 					return -1;
 				}
 			}
@@ -2533,6 +2570,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			if (v == ASE_NULL) 
 			{
 				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+				//ase_awk_setrunerrline (nde->line);
 				return -1;
 			}
 			ase_awk_refupval (run, v);
@@ -2542,6 +2580,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			{
 				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 				ase_awk_refdownval (run, v);
+				//ase_awk_setrunerrline (nde->line);
 				return -1;
 			}
 
@@ -2553,12 +2592,14 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		}
 	}
 
+	/* print the value ORS to terminate the operation */
 	n = ase_awk_writeextio_str (
 		run, nde->out_type, dst, 
 		run->global.ors.ptr, run->global.ors.len);
 	if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER)
 	{
 		if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+		//ase_awk_setrunerrline (nde->line);
 		return -1;
 	}
 
@@ -2566,6 +2607,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	 * that is the user handler returned an error... */
 
 	if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+	ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_zero);
 
 skip_write:
 	return 0;
@@ -2607,7 +2649,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		{
 			/* the output destination name is empty. */
 			ASE_AWK_FREE (run->awk, out);
-			n = -1;
+			ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_negone);
 			goto skip_write;
 		}
 
@@ -2618,15 +2660,8 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 				/* the output destination name contains a null 
 				 * character. */
 				ASE_AWK_FREE (run->awk, out);
-				n = -1;
+				ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_negone);
 				goto skip_write;
-				/* TODO: how to handle error???
-				 *       make print return -1??? not possible.
-				 *       throw an exception??
-				 *       set ERRNO or what??? this seems most
-				 *       reasonable. or can it have a global
-				 *       flag variable for print/printf such
-				 *       as PRINT_ERRNO?  */
 			}
 		}
 	}

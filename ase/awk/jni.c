@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.41 2006-12-15 14:58:15 bacon Exp $
+ * $Id: jni.c,v 1.42 2006-12-16 14:43:50 bacon Exp $
  */
 
 #include <stdio.h>
@@ -329,8 +329,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 		except = (*env)->FindClass (env, CLASS_EXCEPTION);
 		if (except == NULL) return;
 
-		n = snprintf (msg, sizeof(msg), "parse error at line %d: %S", 
-			ase_awk_getsrcline(awk),
+		n = snprintf (msg, sizeof(msg), 
+			"parse error at line %d: %S", 
+			ase_awk_getsrcline(awk), 
 			ase_awk_geterrstr(ase_awk_geterrnum(awk)));
 		if (n < 0 || n >= sizeof(msg)) msg[sizeof(msg)-1] = '\0';
 

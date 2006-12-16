@@ -25,9 +25,6 @@ java:
 jrun:
 	java -Xms1m -Xmx2m -classpath ../../.. ase.test.awk.Awk 
 
-ada:
-	gnatmake -I..\.. -I..\..\awk awk
-
 clean:
 	del $(OBJS) *.obj *.class awk.exe 
 

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.83 2006-11-28 04:30:22 bacon Exp $
+ * $Id: tree.h,v 1.84 2006-12-16 14:43:51 bacon Exp $
  */
 
 #ifndef _ASE_AWK_TREE_H_
@@ -130,6 +130,7 @@ struct ase_awk_afn_t
 
 #define ASE_AWK_NDE_HDR \
 	int type; \
+	ase_size_t line; \
 	ase_awk_nde_t* next
 
 struct ase_awk_nde_t

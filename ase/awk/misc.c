@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.46 2006-12-13 14:16:12 bacon Exp $
+ * $Id: misc.c,v 1.47 2006-12-16 14:43:50 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -670,7 +670,25 @@ ase_size_t ase_awk_strcpy (ase_char_t* buf, const ase_char_t* str)
 	return buf - org - 1;
 }
 
-ase_size_t ase_awk_strncpy (ase_char_t* buf, const ase_char_t* str, ase_size_t len)
+ase_size_t ase_awk_strxcpy (
+	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str)
+{
+	ase_char_t* p, * p2;
+
+	p = buf; p2 = buf + bsz - 1;
+
+	while (p < p2) 
+	{
+		if (*str == ASE_T('\0')) break;
+		*p++ = *str++;
+	}
+
+	if (bsz > 0) *p = ASE_T('\0');
+	return p - buf;
+}
+
+ase_size_t ase_awk_strncpy (
+	ase_char_t* buf, const ase_char_t* str, ase_size_t len)
 {
 	const ase_char_t* end = str + len;
 	while (str < end) *buf++ = *str++;

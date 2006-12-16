@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.137 2006-12-15 14:58:37 bacon Exp $
+ * $Id: awk.c,v 1.138 2006-12-16 14:45:02 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -78,7 +78,7 @@ static FILE* fopen_t (const ase_char_t* path, const ase_char_t* mode)
 #endif
 }
 
-static int __awk_sprintf (
+static int awk_sprintf (
 	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
 {
 	int n;
@@ -102,7 +102,7 @@ static int __awk_sprintf (
 	return n;
 }
 
-static void __awk_aprintf (const ase_char_t* fmt, ...)
+static void awk_aprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 #ifdef _WIN32
@@ -130,7 +130,7 @@ static void __awk_aprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static void __awk_dprintf (const ase_char_t* fmt, ...)
+static void awk_dprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
@@ -146,7 +146,7 @@ static void __awk_dprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static ase_real_t __awk_pow (ase_real_t x, ase_real_t y)
+static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
 }
@@ -272,7 +272,7 @@ static ase_ssize_t process_extio_pipe (
 			else if (epa->mode == ASE_AWK_EXTIO_PIPE_WRITE)
 				mode = ASE_T("w");
 			else return -1; /* TODO: any way to set the error number? */
-			__awk_dprintf (ASE_T("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
+			awk_dprintf (ASE_T("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
 			handle = popen_t (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
@@ -281,7 +281,7 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_CLOSE:
 		{
-			__awk_dprintf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
+			awk_dprintf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -340,7 +340,7 @@ static ase_ssize_t process_extio_file (
 				mode = ASE_T("a");
 			else return -1; /* TODO: any way to set the error number? */
 
-			__awk_dprintf (ASE_T("opending %s of type %d (file)\n"), epa->name, epa->type);
+			awk_dprintf (ASE_T("opending %s of type %d (file)\n"), epa->name, epa->type);
 			handle = fopen_t (epa->name, mode);
 			if (handle == NULL) return -1;
 
@@ -350,7 +350,7 @@ static ase_ssize_t process_extio_file (
 
 		case ASE_AWK_IO_CLOSE:
 		{
-			__awk_dprintf (ASE_T("closing %s of type %d (file)\n"), epa->name, epa->type);
+			awk_dprintf (ASE_T("closing %s of type %d (file)\n"), epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -455,7 +455,7 @@ static ase_ssize_t process_extio_console (
 				FILE* fp = fopen_t (infiles[infile_no], ASE_T("r"));
 				if (fp == ASE_NULL)
 				{
-					__awk_dprintf (ASE_T("failed to open the next console of type %x - fopen failure\n"), epa->type);
+					awk_dprintf (ASE_T("failed to open the next console of type %x - fopen failure\n"), epa->type);
 					return -1;
 				}
 
@@ -464,7 +464,7 @@ static ase_ssize_t process_extio_console (
 				    epa->handle != stdout &&
 				    epa->handle != stderr) fclose (epa->handle);
 
-				__awk_dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
+				awk_dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
 				epa->handle = fp;
 			}
 
@@ -505,20 +505,20 @@ static int open_extio_console (ase_awk_extio_t* epa)
 	/* epa->name is always empty for console */
 	assert (epa->name[0] == ASE_T('\0'));
 
-	__awk_dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
+	awk_dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
 
 	if (epa->mode == ASE_AWK_EXTIO_CONSOLE_READ)
 	{
 		if (infiles[infile_no] == ASE_NULL)
 		{
 			/* no more input file */
-			__awk_dprintf (ASE_T("console - no more file\n"));;
+			awk_dprintf (ASE_T("console - no more file\n"));;
 			return 0;
 		}
 
 		if (infiles[infile_no][0] == ASE_T('\0'))
 		{
-			__awk_dprintf (ASE_T("    console(r) - <standard input>\n"));
+			awk_dprintf (ASE_T("    console(r) - <standard input>\n"));
 			epa->handle = stdin;
 		}
 		else
@@ -528,11 +528,11 @@ static int open_extio_console (ase_awk_extio_t* epa)
 			FILE* fp = fopen_t (infiles[infile_no], ASE_T("r"));
 			if (fp == ASE_NULL)
 			{
-				__awk_dprintf (ASE_T("cannot open console of type %x - fopen failure\n"), epa->type);
+				awk_dprintf (ASE_T("cannot open console of type %x - fopen failure\n"), epa->type);
 				return -1;
 			}
 
-			__awk_dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
+			awk_dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
 			if (ase_awk_setfilename (
 				epa->run, infiles[infile_no], 
 				ase_awk_strlen(infiles[infile_no])) == -1)
@@ -549,7 +549,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 	}
 	else if (epa->mode == ASE_AWK_EXTIO_CONSOLE_WRITE)
 	{
-		__awk_dprintf (ASE_T("    console(w) - <standard output>\n"));
+		awk_dprintf (ASE_T("    console(w) - <standard output>\n"));
 		/* TODO: does output console has a name??? */
 		/*ase_awk_setconsolename (ASE_T(""));*/
 		epa->handle = stdout;
@@ -561,7 +561,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 
 static int close_extio_console (ase_awk_extio_t* epa)
 {
-	__awk_dprintf (ASE_T("closing console of type %x\n"), epa->type);
+	awk_dprintf (ASE_T("closing console of type %x\n"), epa->type);
 
 	if (epa->handle != ASE_NULL &&
 	    epa->handle != stdin && 
@@ -580,7 +580,7 @@ static int next_extio_console (ase_awk_extio_t* epa)
 	int n;
 	FILE* fp = epa->handle;
 
-	__awk_dprintf (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
+	awk_dprintf (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
 
 	n = open_extio_console(epa);
 	if (n == -1) return -1;
@@ -599,7 +599,7 @@ static int next_extio_console (ase_awk_extio_t* epa)
 
 
 ase_awk_t* app_awk = NULL;
-void* app_run = NULL;
+ase_awk_t* app_run = NULL;
 
 #ifdef _WIN32
 static BOOL WINAPI __stop_run (DWORD ctrl_type)
@@ -624,21 +624,27 @@ static void __stop_run (int sig)
 }
 #endif
 
-static void __on_run_start (ase_awk_t* awk, void* handle, void* arg)
+static void on_run_start (
+	ase_awk_t* awk, ase_awk_run_t* run, void* custom_data)
 {
 	app_awk = awk;	
-	app_run = handle;
+	app_run = run;
 
-	__awk_dprintf (ASE_T("AWK PRORAM ABOUT TO START...\n"));
+	awk_dprintf (ASE_T("AWK ABOUT TO START...\n"));
 }
 
-static void __on_run_end (ase_awk_t* awk, void* handle, int errnum, void* arg)
+static void on_run_end (
+	ase_awk_t* awk, ase_awk_run_t* run, 
+	int errnum, void* custom_data)
 {
 	if (errnum != ASE_AWK_ENOERR)
 	{
-		__awk_dprintf (ASE_T("AWK PRORAM ABOUT TO END WITH AN ERROR - %d - %s\n"), errnum, ase_awk_geterrstr (errnum));
+		//const ase_awk_t* errmsg = ase_awk_getrunerrmsg (run);
+		awk_dprintf (
+			ASE_T("AWK ABOUT TO END WITH AN ERROR - [%d] %s\n"),
+			errnum, ase_awk_getrunerrmsg (run));
 	}
-	else __awk_dprintf (ASE_T("AWK PRORAM ENDED SUCCESSFULLY\n"));
+	else awk_dprintf (ASE_T("AWK ENDED SUCCESSFULLY\n"));
 
 	app_awk = NULL;	
 	app_run = NULL;
@@ -652,7 +658,7 @@ struct sysfns_data_t
 };
 #endif
 
-static void* __awk_malloc (ase_size_t n, void* custom_data)
+static void* awk_malloc (ase_size_t n, void* custom_data)
 {
 #ifdef _WIN32
 	return HeapAlloc (((sysfns_data_t*)custom_data)->heap, 0, n);
@@ -661,7 +667,7 @@ static void* __awk_malloc (ase_size_t n, void* custom_data)
 #endif
 }
 
-static void* __awk_realloc (void* ptr, ase_size_t n, void* custom_data)
+static void* awk_realloc (void* ptr, ase_size_t n, void* custom_data)
 {
 #ifdef _WIN32
 	/* HeapReAlloc behaves differently from realloc */
@@ -674,7 +680,7 @@ static void* __awk_realloc (void* ptr, ase_size_t n, void* custom_data)
 #endif
 }
 
-static void __awk_free (void* ptr, void* custom_data)
+static void awk_free (void* ptr, void* custom_data)
 {
 #ifdef _WIN32
 	HeapFree (((sysfns_data_t*)custom_data)->heap, 0, ptr);
@@ -685,49 +691,49 @@ static void __awk_free (void* ptr, void* custom_data)
 
 #if defined(ASE_CHAR_IS_MCHAR) 
 	#if (__TURBOC__<=513) /* turboc 2.01 or earlier */
-		static int __awk_isupper (int c) { return isupper (c); }
-		static int __awk_islower (int c) { return islower (c); }
-		static int __awk_isalpha (int c) { return isalpha (c); }
-		static int __awk_isdigit (int c) { return isdigit (c); }
-		static int __awk_isxdigit (int c) { return isxdigit (c); }
-		static int __awk_isalnum (int c) { return isalnum (c); }
-		static int __awk_isspace (int c) { return isspace (c); }
-		static int __awk_isprint (int c) { return isprint (c); }
-		static int __awk_isgraph (int c) { return isgraph (c); }
-		static int __awk_iscntrl (int c) { return iscntrl (c); }
-		static int __awk_ispunct (int c) { return ispunct (c); }
-		static int __awk_toupper (int c) { return toupper (c); }
-		static int __awk_tolower (int c) { return tolower (c); }
+		static int awk_isupper (int c) { return isupper (c); }
+		static int awk_islower (int c) { return islower (c); }
+		static int awk_isalpha (int c) { return isalpha (c); }
+		static int awk_isdigit (int c) { return isdigit (c); }
+		static int awk_isxdigit (int c) { return isxdigit (c); }
+		static int awk_isalnum (int c) { return isalnum (c); }
+		static int awk_isspace (int c) { return isspace (c); }
+		static int awk_isprint (int c) { return isprint (c); }
+		static int awk_isgraph (int c) { return isgraph (c); }
+		static int awk_iscntrl (int c) { return iscntrl (c); }
+		static int awk_ispunct (int c) { return ispunct (c); }
+		static int awk_toupper (int c) { return toupper (c); }
+		static int awk_tolower (int c) { return tolower (c); }
 	#else
-		#define __awk_isupper  isupper
-		#define __awk_islower  islower
-		#define __awk_isalpha  isalpha
-		#define __awk_isdigit  isdigit
-		#define __awk_isxdigit isxdigit
-		#define __awk_isalnum  isalnum
-		#define __awk_isspace  isspace
-		#define __awk_isprint  isprint
-		#define __awk_isgraph  isgraph
-		#define __awk_iscntrl  iscntrl
-		#define __awk_ispunct  ispunct
-		#define __awk_toupper  tolower
-		#define __awk_tolower  tolower
+		#define awk_isupper  isupper
+		#define awk_islower  islower
+		#define awk_isalpha  isalpha
+		#define awk_isdigit  isdigit
+		#define awk_isxdigit isxdigit
+		#define awk_isalnum  isalnum
+		#define awk_isspace  isspace
+		#define awk_isprint  isprint
+		#define awk_isgraph  isgraph
+		#define awk_iscntrl  iscntrl
+		#define awk_ispunct  ispunct
+		#define awk_toupper  tolower
+		#define awk_tolower  tolower
 	#endif
 #else
-	#define __awk_isupper  iswupper
-	#define __awk_islower  iswlower
-	#define __awk_isalpha  iswalpha
-	#define __awk_isdigit  iswdigit
-	#define __awk_isxdigit iswxdigit
-	#define __awk_isalnum  iswalnum
-	#define __awk_isspace  iswspace
-	#define __awk_isprint  iswprint
-	#define __awk_isgraph  iswgraph
-	#define __awk_iscntrl  iswcntrl
-	#define __awk_ispunct  iswpunct
+	#define awk_isupper  iswupper
+	#define awk_islower  iswlower
+	#define awk_isalpha  iswalpha
+	#define awk_isdigit  iswdigit
+	#define awk_isxdigit iswxdigit
+	#define awk_isalnum  iswalnum
+	#define awk_isspace  iswspace
+	#define awk_isprint  iswprint
+	#define awk_isgraph  iswgraph
+	#define awk_iscntrl  iswcntrl
+	#define awk_ispunct  iswpunct
 
-	#define __awk_toupper  towlower
-	#define __awk_tolower  towlower
+	#define awk_toupper  towlower
+	#define awk_tolower  towlower
 #endif
 
 static int __main (int argc, ase_char_t* argv[])
@@ -790,33 +796,33 @@ static int __main (int argc, ase_char_t* argv[])
 	}
 
 	memset (&sysfns, 0, ASE_SIZEOF(sysfns));
-	sysfns.malloc = __awk_malloc;
-	sysfns.realloc = __awk_realloc;
-	sysfns.free = __awk_free;
+	sysfns.malloc = awk_malloc;
+	sysfns.realloc = awk_realloc;
+	sysfns.free = awk_free;
 
 	sysfns.lock = NULL;
 	sysfns.unlock = NULL;
 
-	sysfns.is_upper  = __awk_isupper;
-	sysfns.is_lower  = __awk_islower;
-	sysfns.is_alpha  = __awk_isalpha;
-	sysfns.is_digit  = __awk_isdigit;
-	sysfns.is_xdigit = __awk_isxdigit;
-	sysfns.is_alnum  = __awk_isalnum;
-	sysfns.is_space  = __awk_isspace;
-	sysfns.is_print  = __awk_isprint;
-	sysfns.is_graph  = __awk_isgraph;
-	sysfns.is_cntrl  = __awk_iscntrl;
-	sysfns.is_punct  = __awk_ispunct;
-	sysfns.to_upper  = __awk_toupper;
-	sysfns.to_lower  = __awk_tolower;
+	sysfns.is_upper  = awk_isupper;
+	sysfns.is_lower  = awk_islower;
+	sysfns.is_alpha  = awk_isalpha;
+	sysfns.is_digit  = awk_isdigit;
+	sysfns.is_xdigit = awk_isxdigit;
+	sysfns.is_alnum  = awk_isalnum;
+	sysfns.is_space  = awk_isspace;
+	sysfns.is_print  = awk_isprint;
+	sysfns.is_graph  = awk_isgraph;
+	sysfns.is_cntrl  = awk_iscntrl;
+	sysfns.is_punct  = awk_ispunct;
+	sysfns.to_upper  = awk_toupper;
+	sysfns.to_lower  = awk_tolower;
 
 	sysfns.memcpy = memcpy;
 	sysfns.memset = memset;
-	sysfns.pow = __awk_pow;
-	sysfns.sprintf = __awk_sprintf;
-	sysfns.aprintf = __awk_aprintf;
-	sysfns.dprintf = __awk_dprintf;
+	sysfns.pow = awk_pow;
+	sysfns.sprintf = awk_sprintf;
+	sysfns.aprintf = awk_aprintf;
+	sysfns.dprintf = awk_dprintf;
 	sysfns.abort = abort;
 
 #ifdef _WIN32
@@ -875,8 +881,8 @@ static int __main (int argc, ase_char_t* argv[])
 	runios.file = process_extio_file;
 	runios.console = process_extio_console;
 
-	runcbs.on_start = __on_run_start;
-	runcbs.on_end = __on_run_end;
+	runcbs.on_start = on_run_start;
+	runcbs.on_end = on_run_end;
 	runcbs.custom_data = ASE_NULL;
 
 	runarg[0].ptr = ASE_T("argument 0");
