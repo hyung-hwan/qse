@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.60 2006-12-16 16:12:07 bacon Exp $
+ * $Id: err.c,v 1.61 2006-12-17 14:56:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -117,14 +117,14 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("cannot change a scalar value to a map"),
 		ASE_T("a map is not allowed"),
 		ASE_T("wrong value type"),
-		ASE_T("pipe operation error"),
 		ASE_T("next cannot be called from the BEGIN or END block"),
 		ASE_T("nextfile cannot be called from the BEGIN or END block"),
 		ASE_T("wrong implementation of user-defined io handler"),
 		ASE_T("wrong implementation of built-in function handler"),
 		ASE_T("built-in function handler returned an error"),
 		ASE_T("no such io name found"),
-		ASE_T("io handler has returned an error"),
+		ASE_T("i/o handler returned an error"),
+		ASE_T("invalid i/o name"),
 		ASE_T("not sufficient arguments to formatting sequence"),
 		ASE_T("recursion detected in format conversion"),
 		ASE_T("invalid character in CONVFMT"),

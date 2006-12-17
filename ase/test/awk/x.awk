@@ -25,5 +25,7 @@ BEGIN {
 
 	print .0;
 	print 10;
+
+	print fflush ("abc");
 }
 
