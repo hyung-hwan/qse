@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.61 2006-11-28 11:44:28 bacon Exp $
+ * $Id: types.h,v 1.62 2006-12-17 10:33:41 bacon Exp $
  */
 
 #ifndef _ASE_TYPES_H_
@@ -11,7 +11,13 @@
 	#include <ase/conf_vms.h>
 #elif defined(__MSDOS__) || defined(_MSDOS) || defined(MSDOS) 
 	#include <ase/conf_dos.h>
-#elif defined(__unix__) || defined(__unix)
+#elif defined(__unix__) || defined(__unix) || defined(__NetBSD__)
+	#if !defined(__unix__)
+		#define __unix__
+	#endif
+	#if !defined(__unix)
+		#define __unix
+	#endif
 	#include <ase/conf_unx.h>
 #else
 	#error unsupport operating system
@@ -164,7 +170,7 @@ typedef int  ase_mcint_t;
 	#if defined(vms) || defined(__vms)
 		typedef unsigned int ase_wchar_t;
 		typedef int ase_wcint_t;
-	#elif defined(__FreeBSD__)
+	#elif defined(__FreeBSD__) || defined(__NetBSD__)
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
 	#elif (defined(sun) || defined(__sun)) && defined(_LP64)
