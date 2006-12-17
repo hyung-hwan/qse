@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.141 2006-12-17 12:50:59 bacon Exp $
+ * $Id: awk.c,v 1.142 2006-12-17 13:12:08 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <math.h>
+#include <limits.h>
 #include <assert.h>
 
 #if defined(_WIN32)
@@ -22,13 +23,13 @@
 #else
 	#include <wchar.h>
 	#include <wctype.h>
+	#include <locale.h>
 
 	#include <xp/bas/stdio.h>
 	#include <xp/bas/stdlib.h>
 	#include <xp/bas/string.h>
 	#include <xp/bas/memory.h>
 	#include <xp/bas/sysapi.h>
-	#include <xp/bas/locale.h>
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
@@ -46,31 +47,14 @@ struct src_io
 	FILE* input_handle;
 };
 
-static FILE* fopen_t (const ase_char_t* path, const ase_char_t* mode)
+static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
 {
-#ifdef _WIN32
-	return _tfopen (path, mode);
-#else
-	#ifdef ASE_CHAR_IS_MCHAR
-	const ase_mchar_t* path_mb;
-	const ase_mchar_t* mode_mb;
-	#else
-	ase_mchar_t path_mb[XP_PATH_MAX + 1];
-	ase_mchar_t mode_mb[32];
-	#endif
+	return pow (x, y);
+}
 
-	#ifdef ASE_CHAR_IS_MCHAR
-	path_mb = path;
-	mode_mb = mode;
-	#else
-	if (xp_wcstomcs_strict (
-		path, path_mb, ASE_COUNTOF(path_mb)) == -1) return ASE_NULL;
-	if (xp_wcstomcs_strict (
-		mode, mode_mb, ASE_COUNTOF(mode_mb)) == -1) return ASE_NULL;
-	#endif
-
-	return fopen (path_mb, mode_mb);
-#endif
+static void awk_abort (void* custom_data)
+{
+	abort ();
 }
 
 static int awk_sprintf (
@@ -158,59 +142,67 @@ static void awk_printf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
+static FILE* awk_fopen (const ase_char_t* path, const ase_char_t* mode)
 {
-	return pow (x, y);
+#ifdef _WIN32
+	return _tfopen (path, mode);
+#elif defined(ASE_CHAR_IS_MCHAR)
+	return fopen (path, mode);
+#else
+	char path_mb[PATH_MAX + 1];
+	char mode_mb[32];
+	size_t n;
+
+	n = wcstombs (path, path_mb, ASE_COUNTOF(path_mb))
+	if (n == -1) return NULL;
+	if (n == ASE_COUNTOF(path_mb)) path_mb[ASE_COUNTOF(path_mb)-1] = '\0';
+
+	n = wcstombs (mode, mode_mb, ASE_COUNTOF(mode_mb))
+	if (n == -1) return NULL;
+	if (n == ASE_COUNTOF(mode_mb)) path_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
+
+	return fopen (path_mb, mode_mb);
+#endif
 }
 
-static void awk_abort (void* custom_data)
-{
-	abort ();
-}
-
-static FILE* popen_t (const ase_char_t* cmd, const ase_char_t* mode)
+static FILE* awk_popen (const ase_char_t* cmd, const ase_char_t* mode)
 {
 #if defined(_WIN32)
 	return _tpopen (cmd, mode);
 #elif defined(__MSDOS__)
 	/* TODO: support this */
 	return NULL;
+#elif defined(ASE_CHAR_IS_MCHAR)
+	return popen (cmd, mode);
 #else
-	#ifdef ASE_CHAR_IS_MCHAR
-	const ase_mchar_t* cmd_mb;
-	const ase_mchar_t* mode_mb;
-	#else
-	ase_mchar_t cmd_mb[2048];
-	ase_mchar_t mode_mb[32];
-	#endif
+	char cmd_mb[PATH_MAX + 1];
+	char mode_mb[32];
+	size_t n;
 
-	#ifdef ASE_CHAR_IS_MCHAR
-	cmd_mb = cmd;
-	mode_mb = mode;
-	#else
-	if (xp_wcstomcs_strict (
-		cmd, cmd_mb, ASE_COUNTOF(cmd_mb)) == -1) return ASE_NULL;
-	if (xp_wcstomcs_strict (
-		mode, mode_mb, ASE_COUNTOF(mode_mb)) == -1) return ASE_NULL;
-	#endif
+	n = wcstombs (cmd, cmd_mb, ASE_COUNTOF(cmd_mb))
+	if (n == -1) return NULL;
+	if (n == ASE_COUNTOF(cmd_mb)) cmd_mb[ASE_COUNTOF(cmd_mb)-1] = '\0';
+
+	n = wcstombs (mode, mode_mb, ASE_COUNTOF(mode_mb))
+	if (n == -1) return NULL;
+	if (n == ASE_COUNTOF(mode_mb)) cmd_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
 
 	return popen (cmd_mb, mode_mb);
 #endif
 }
 
-#ifdef WIN32
-	#define fgets_t _fgetts
-	#define fputs_t _fputts
-	#define fputc_t _fputtc
+#if defined(_WIN32)
+	#define awk_fgets _fgetts
+	#define awk_fputs _fputts
+	#define awk_fputc _fputtc
+#elif defined(ASE_CHAR_IS_MCHAR)
+	#define awk_fgets fgets
+	#define awk_fputs fputs
+	#define awk_fputc fputc
 #else
-	#ifdef ASE_CHAR_IS_MCHAR
-		#define fgets_t fgets
-		#define fputs_t fputs
-		#define fputc_t fputc
-	#else
-		#define fgets_t fgetws
-		#define fputc_t fputwc
-	#endif
+	#define awk_fgets fgetws
+	#define awk_fputs fputws
+	#define awk_fputc fputwc
 #endif
 
 static ase_ssize_t process_source (
@@ -222,7 +214,7 @@ static ase_ssize_t process_source (
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
 		if (src_io->input_file == ASE_NULL) return 0;
-		src_io->input_handle = fopen_t (src_io->input_file, ASE_T("r"));
+		src_io->input_handle = awk_fopen (src_io->input_file, ASE_T("r"));
 		if (src_io->input_handle == NULL) return -1;
 		return 1;
 	}
@@ -290,7 +282,7 @@ static ase_ssize_t process_extio_pipe (
 				mode = ASE_T("w");
 			else return -1; /* TODO: any way to set the error number? */
 			awk_dprintf (ASE_T("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
-			handle = popen_t (epa->name, mode);
+			handle = awk_popen (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
 			return 1;
@@ -306,7 +298,7 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_READ:
 		{
-			if (fgets_t (data, size, (FILE*)epa->handle) == ASE_NULL) 
+			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
 				return 0;
 			return ase_awk_strlen(data);
 		}
@@ -317,7 +309,7 @@ static ase_ssize_t process_extio_pipe (
 			/* TODO: how to return error or 0 */
 			for (i = 0; i < size; i++)
 			{
-				fputc_t (data[i], (FILE*)epa->handle);
+				awk_fputc (data[i], (FILE*)epa->handle);
 			}
 			return size;
 		}
@@ -358,7 +350,7 @@ static ase_ssize_t process_extio_file (
 			else return -1; /* TODO: any way to set the error number? */
 
 			awk_dprintf (ASE_T("opending %s of type %d (file)\n"), epa->name, epa->type);
-			handle = fopen_t (epa->name, mode);
+			handle = awk_fopen (epa->name, mode);
 			if (handle == NULL) return -1;
 
 			epa->handle = (void*)handle;
@@ -375,7 +367,7 @@ static ase_ssize_t process_extio_file (
 
 		case ASE_AWK_IO_READ:
 		{
-			if (fgets_t (data, size, (FILE*)epa->handle) == ASE_NULL) 
+			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
 				return 0;
 			return ase_awk_strlen(data);
 		}
@@ -386,7 +378,7 @@ static ase_ssize_t process_extio_file (
 			/* TODO: how to return error or 0 */
 			for (i = 0; i < size; i++)
 			{
-				fputc_t (data[i], (FILE*)epa->handle);
+				awk_fputc (data[i], (FILE*)epa->handle);
 			}
 			return size;
 		}
@@ -439,7 +431,7 @@ static ase_ssize_t process_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
-		while (fgets_t (data, size, epa->handle) == ASE_NULL)
+		while (awk_fgets (data, size, epa->handle) == ASE_NULL)
 		{
 			/* it has reached the end of the current file.
 			 * open the next file if available */
@@ -469,7 +461,7 @@ static ase_ssize_t process_extio_console (
 			}
 			else
 			{
-				FILE* fp = fopen_t (infiles[infile_no], ASE_T("r"));
+				FILE* fp = awk_fopen (infiles[infile_no], ASE_T("r"));
 				if (fp == ASE_NULL)
 				{
 					awk_dprintf (ASE_T("failed to open the next console of type %x - fopen failure\n"), epa->type);
@@ -496,7 +488,7 @@ static ase_ssize_t process_extio_console (
 		/* TODO: how to return error or 0 */
 		for (i = 0; i < size; i++)
 		{
-			fputc_t (data[i], (FILE*)epa->handle);
+			awk_fputc (data[i], (FILE*)epa->handle);
 		}
 
 		/*MessageBox (NULL, data, data, MB_OK);*/
@@ -542,7 +534,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 		{
 			/* a temporary variable fp is used here not to change 
 			 * any fields of epa when the open operation fails */
-			FILE* fp = fopen_t (infiles[infile_no], ASE_T("r"));
+			FILE* fp = awk_fopen (infiles[infile_no], ASE_T("r"));
 			if (fp == ASE_NULL)
 			{
 				awk_dprintf (ASE_T("cannot open console of type %x - fopen failure\n"), epa->type);
