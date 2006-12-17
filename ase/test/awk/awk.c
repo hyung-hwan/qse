@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.140 2006-12-17 12:33:31 bacon Exp $
+ * $Id: awk.c,v 1.141 2006-12-17 12:50:59 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -10,24 +10,19 @@
 #include <math.h>
 #include <assert.h>
 
-#ifdef ASE_CHAR_IS_WCHAR
-	#include <wchar.h>
-	#include <wctype.h>
-#endif
-
 #if defined(_WIN32)
 	#include <windows.h>
 	#include <tchar.h>
-
-	#define xp_printf _tprintf
 	#pragma warning (disable: 4996)
 	#pragma warning (disable: 4296)
-#elif defined(__MSDOS__)
+#elif defined(ASE_CHAR_IS_MCHAR)
 	#include <ctype.h>
 	#include <stdlib.h>
-
-	#define xp_printf printf
+	#include <locale.h>
 #else
+	#include <wchar.h>
+	#include <wctype.h>
+
 	#include <xp/bas/stdio.h>
 	#include <xp/bas/stdlib.h>
 	#include <xp/bas/string.h>
@@ -95,6 +90,8 @@ static int awk_sprintf (
 #elif defined(__MSDOS__)
 	/* TODO: check buffer overflow */
 	n = vsprintf (buf, fmt, ap);
+#elif defined(ASE_CHAR_IS_MCHAR)
+	n = vsnprintf (buf, len, fmt, ap);
 #else
 	n = xp_vsprintf (buf, len, fmt, ap);
 #endif
@@ -122,7 +119,7 @@ static void awk_aprintf (const ase_char_t* fmt, ...)
 	MessageBox (NULL, buf, 
 		ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK|MB_ICONERROR);
 	#endif
-#elif defined(__MSDOS__)
+#elif defined(ASE_CHAR_IS_MCHAR)
 	vprintf (fmt, ap);
 #else
 	xp_vprintf (fmt, ap);
@@ -137,12 +134,27 @@ static void awk_dprintf (const ase_char_t* fmt, ...)
 
 #if defined(_WIN32)
 	_vftprintf (stderr, fmt, ap);
-#elif defined(__MSDOS__)
+#elif defined(ASE_CHAR_IS_MCHAR)
 	vfprintf (stderr, fmt, ap);
 #else
 	xp_vfprintf (stderr, fmt, ap);
 #endif
 
+	va_end (ap);
+}
+
+static void awk_printf (const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	va_start (ap, fmt);
+
+#if defined(_WIN32)
+	_vtprintf (fmt, ap);
+#elif defined(ASE_CHAR_IS_MCHAR)
+	vprintf (fmt, ap);
+#else
+	xp_vprintf (fmt, ap);
+#endif
 	va_end (ap);
 }
 
@@ -604,7 +616,7 @@ static int next_extio_console (ase_awk_extio_t* epa)
 
 
 ase_awk_t* app_awk = NULL;
-ase_awk_t* app_run = NULL;
+ase_awk_run_t* app_run = NULL;
 
 #ifdef _WIN32
 static BOOL WINAPI __stop_run (DWORD ctrl_type)
@@ -772,7 +784,7 @@ static int __main (int argc, ase_char_t* argv[])
 
 	if (argc <= 1)
 	{
-		xp_printf (ASE_T("Usage: %s [-m] source_file [data_file ...]\n"), argv[0]);
+		awk_printf (ASE_T("Usage: %s [-m] source_file [data_file ...]\n"), argv[0]);
 		return -1;
 	}
 
@@ -795,7 +807,7 @@ static int __main (int argc, ase_char_t* argv[])
 		}
 		else
 		{
-			xp_printf (ASE_T("Usage: %s [-m] [-f source_file] [data_file ...]\n"), argv[0]);
+			awk_printf (ASE_T("Usage: %s [-m] [-f source_file] [data_file ...]\n"), argv[0]);
 			return -1;
 		}
 	}
@@ -834,7 +846,7 @@ static int __main (int argc, ase_char_t* argv[])
 	sysfns_data.heap = HeapCreate (0, 1000000, 1000000);
 	if (sysfns_data.heap == NULL)
 	{
-		xp_printf (ASE_T("Error: cannot create an awk heap\n"));
+		awk_printf (ASE_T("Error: cannot create an awk heap\n"));
 		return -1;
 	}
 
@@ -846,7 +858,7 @@ static int __main (int argc, ase_char_t* argv[])
 #ifdef _WIN32
 		HeapDestroy (sysfns_data.heap);
 #endif
-		xp_printf (
+		awk_printf (
 			ASE_T("ERROR: cannot parse awk [%d] %s\n"), 
 			errnum, ase_awk_geterrstr(errnum));
 		return -1;
@@ -867,7 +879,7 @@ static int __main (int argc, ase_char_t* argv[])
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{
 		int errnum = ase_awk_geterrnum(awk);
-		xp_printf (
+		awk_printf (
 			ASE_T("ERROR: cannot parse program - line %u [%d] %s\n"), 
 			(unsigned int)ase_awk_getsrcline(awk), 
 			errnum, ase_awk_geterrstr(errnum));
@@ -902,7 +914,7 @@ static int __main (int argc, ase_char_t* argv[])
 	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg, ASE_NULL) == -1)
 	{
 		int errnum = ase_awk_geterrnum(awk);
-		xp_printf (
+		awk_printf (
 			ASE_T("error: cannot run program - [%d] %s\n"), 
 			errnum, ase_awk_geterrstr(errnum));
 		ase_awk_close (awk);
@@ -1082,7 +1094,7 @@ int /*__declspec(naked)*/ is_debugger_present2 (void)
 
 #if defined(_WIN32)
 int _tmain (int argc, ase_char_t* argv[])
-#elif defined(__MSDOS__)
+#elif defined(__MSDOS__) || defined(ASE_CHAR_IS_MCHAR)
 int main (int argc, ase_char_t* argv[])
 #else
 int xp_main (int argc, ase_char_t* argv[])
@@ -1112,7 +1124,7 @@ int xp_main (int argc, ase_char_t* argv[])
 #endif
 
 #if defined(__unix)
-	xp_setlocale ();
+	setlocale (LC_ALL, "");
 #endif
 
 	n = __main (argc, argv);
