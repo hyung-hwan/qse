@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.62 2006-12-17 10:33:41 bacon Exp $
+ * $Id: types.h,v 1.63 2006-12-17 12:33:31 bacon Exp $
  */
 
 #ifndef _ASE_TYPES_H_
@@ -11,7 +11,7 @@
 	#include <ase/conf_vms.h>
 #elif defined(__MSDOS__) || defined(_MSDOS) || defined(MSDOS) 
 	#include <ase/conf_dos.h>
-#elif defined(__unix__) || defined(__unix) || defined(__NetBSD__)
+#elif defined(__unix__) || defined(__unix) || defined(__NetBSD__) || defined(__OpenBSD__)
 	#if !defined(__unix__)
 		#define __unix__
 	#endif

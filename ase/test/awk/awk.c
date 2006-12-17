@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.139 2006-12-16 16:12:07 bacon Exp $
+ * $Id: awk.c,v 1.140 2006-12-17 12:33:31 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -1111,7 +1111,7 @@ int xp_main (int argc, ase_char_t* argv[])
 	}
 #endif
 
-#if defined(__unix) || defined(__unix__)
+#if defined(__unix)
 	xp_setlocale ();
 #endif
 
