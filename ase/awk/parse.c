@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.223 2006-12-16 14:43:50 bacon Exp $
+ * $Id: parse.c,v 1.224 2006-12-17 14:56:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -273,7 +273,6 @@ static struct __bvent __bvtab[] =
 	{ ASE_T("ARGV"),         4,  0 },
 	{ ASE_T("CONVFMT"),      7,  0 },
 	{ ASE_T("ENVIRON"),      7,  0 },
-	{ ASE_T("ERRNO"),        5,  0 },
 	{ ASE_T("FILENAME"),     8,  0 },
 	{ ASE_T("FNR"),          3,  0 },
 	{ ASE_T("FS"),           2,  0 },
@@ -1024,7 +1023,6 @@ static ase_awk_nde_t* __parse_block (ase_awk_t* awk, ase_bool_t is_top)
 	/* if (head == ASE_NULL) tmp = 0; */
 
 	block->type = ASE_AWK_NDE_BLK;
-	//block->line = 
 	block->next = ASE_NULL;
 	block->body = head;
 
@@ -3253,7 +3251,10 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk, int type)
 	ase_awk_nde_print_t* nde;
 	ase_awk_nde_t* args = ASE_NULL; 
 	ase_awk_nde_t* out = ASE_NULL;
+	ase_size_t line;
 	int out_type;
+
+	line = awk->token.prev.line;
 
 	if (!MATCH(awk,TOKEN_SEMICOLON) &&
 	    !MATCH(awk,TOKEN_GT) &&
@@ -3391,6 +3392,7 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk, int type)
 	}
 
 	nde->type = type;
+	nde->line = line;
 	nde->next = ASE_NULL;
 	nde->args = args;
 	nde->out_type = out_type;

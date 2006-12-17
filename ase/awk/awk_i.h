@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.92 2006-12-16 16:12:07 bacon Exp $
+ * $Id: awk_i.h,v 1.93 2006-12-17 14:56:06 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -329,6 +329,7 @@ struct ase_awk_run_t
 	} depth;
 
 	int errnum;
+	ase_size_t errlin;
 	ase_char_t errmsg[256];
 
 	void* custom_data;

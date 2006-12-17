@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.142 2006-12-17 13:12:08 bacon Exp $
+ * $Id: awk.c,v 1.143 2006-12-17 14:56:07 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -281,7 +281,7 @@ static ase_ssize_t process_extio_pipe (
 			else if (epa->mode == ASE_AWK_EXTIO_PIPE_WRITE)
 				mode = ASE_T("w");
 			else return -1; /* TODO: any way to set the error number? */
-			awk_dprintf (ASE_T("opending %s of type %d (pipe)\n"),  epa->name, epa->type);
+			awk_dprintf (ASE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);
 			handle = awk_popen (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
@@ -349,7 +349,7 @@ static ase_ssize_t process_extio_file (
 				mode = ASE_T("a");
 			else return -1; /* TODO: any way to set the error number? */
 
-			awk_dprintf (ASE_T("opending %s of type %d (file)\n"), epa->name, epa->type);
+			awk_dprintf (ASE_T("opening %s of type %d (file)\n"), epa->name, epa->type);
 			handle = awk_fopen (epa->name, mode);
 			if (handle == NULL) return -1;
 
@@ -648,10 +648,11 @@ static void on_run_end (
 {
 	if (errnum != ASE_AWK_ENOERR)
 	{
-		//const ase_awk_t* errmsg = ase_awk_getrunerrmsg (run);
-		awk_dprintf (
-			ASE_T("AWK ABOUT TO END WITH AN ERROR - [%d] %s\n"),
-			errnum, ase_awk_getrunerrmsg (run));
+		awk_dprintf (ASE_T("AWK ENDED WITH AN ERROR\n"));
+		awk_dprintf (ASE_T("CODE [%d] LINE [%u] %s\n"),
+			errnum, 
+			(unsigned int)ase_awk_getrunerrlin(run),
+			ase_awk_getrunerrmsg(run));
 	}
 	else awk_dprintf (ASE_T("AWK ENDED SUCCESSFULLY\n"));
 

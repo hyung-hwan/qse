@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.303 2006-12-16 16:22:05 bacon Exp $
+ * $Id: run.c,v 1.304 2006-12-17 14:56:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -547,6 +547,11 @@ int ase_awk_getrunerrnum (ase_awk_run_t* run)
 	return run->errnum;
 }
 
+int ase_awk_getrunerrlin (ase_awk_run_t* run)
+{
+	return run->errlin;
+}
+
 const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run)
 {
 	if (run->errmsg[0] == ASE_T('\0')) 
@@ -558,12 +563,18 @@ const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run)
 void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum)
 {
 	run->errnum = errnum;
+	run->errlin = 0;
 	run->errmsg[0] = ASE_T('\0');
 }
 
-void ase_awk_setrunerrmsg (ase_awk_run_t* run, const ase_char_t* msg)
+void ase_awk_setrunerror (
+	ase_awk_run_t* run, int errnum, 
+	ase_size_t errlin, const ase_char_t* msg)
 {
-	ase_awk_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), msg);
+	run->errnum = errnum;
+	run->errlin = errlin;
+	if (msg == ASE_NULL) run->errmsg[0] = ASE_T('\0');
+	else ase_awk_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), msg);
 }
 
 int ase_awk_run (ase_awk_t* awk, 
@@ -619,8 +630,10 @@ int ase_awk_run (ase_awk_t* awk,
 		return -1;
 	}
 
-	/* clear the run error code */
-	run->errnum = ASE_AWK_ENOERR;
+	/* clear the run error */
+	run->errnum    = ASE_AWK_ENOERR;
+	run->errlin    = 0;
+	run->errmsg[0] = ASE_T('\0');
 
 	/* execute the start callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_start != ASE_NULL) 
@@ -1494,7 +1507,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 	}
 
 	/* In case of getline, the code would make getline return -1, 
-	 * set ERRNO, make this function return 0 after having checked 
+	 * and make this function return 0 after having checked 
 	 * if closextio has returned -1 and errnum has been set to 
 	 * ASE_AWK_EIOHANDLER. But this part of the code ends the input for 
 	 * the implicit pattern-block loop, which is totally different 
@@ -2479,7 +2492,12 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 
 		/* if so, resolve the destination name */
 		v = __eval_expression (run, nde->out);
-		if (v == ASE_NULL) return -1;
+		if (v == ASE_NULL) 
+		{
+			ase_awk_setrunerror (
+				run, run->errnum, nde->line, ASE_NULL);
+			return -1;
+		}
 
 		ase_awk_refupval (run, v);
 		out = ase_awk_valtostr (
@@ -2487,35 +2505,20 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (out == ASE_NULL) 
 		{
 			ase_awk_refdownval (run, v);
-			//ase_awk_setrunerrline (nde->line);
+			ase_awk_setrunerror (
+				run, run->errnum, nde->line, ASE_NULL);
 			return -1;
 		}
 		ase_awk_refdownval (run, v);
 
 		if (len <= 0) 
 		{
-			/* if the destination name is empty, it skips the 
-			 * writing and flags an error and ERRNO */
-
-			ase_awk_val_t* no;
+			/* the destination name is empty */
 			ASE_AWK_FREE (run->awk, out);
-
-			no = ase_awk_makeintval (run, ASE_AWK_ENOENT);
-			if (no == ASE_NULL)
-			{
-				run->errnum = ASE_AWK_ENOMEM;
-				return -1;
-			}
-
-			ase_awk_refupval (run, no);
-			if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, no) == -1)
-			{
-				ase_awk_refdownval (run, no);
-				return -1;
-			}
-
-			ase_awk_refdownval (run, no);
-			goto skip_write;
+			ase_awk_setrunerror (
+				run, ASE_AWK_EIONAME, nde->line,
+				ASE_T("destination name empty in print"));
+			return -1;
 		}
 
 		/* it needs to check if the destination name contains
@@ -2524,27 +2527,12 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		{
 			if (out[--len] == ASE_T('\0'))
 			{
-				/* if so, the error is flagged thru ERRNO */
-
-				ase_awk_val_t* no;
+				/* if so, it skips writing */
 				ASE_AWK_FREE (run->awk, out);
-
-				no = ase_awk_makeintval (run, ASE_AWK_ENOENT);
-				if (no == ASE_NULL)
-				{
-					run->errnum = ASE_AWK_ENOMEM;
-					return -1;
-				}
-	
-				ase_awk_refupval (run, no);
-				if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, no) == -1)
-				{
-					ase_awk_refdownval (run, no);
-					return -1;
-				}
-	
-				ase_awk_refdownval (run, no);
-				goto skip_write;
+				ase_awk_setrunerror (
+					run, ASE_AWK_EIONAME, nde->line,
+					ASE_T("destination name containing a null character in print"));
+				return -1;
 			}
 		}
 	}
@@ -2561,14 +2549,13 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			run, nde->out_type, dst,
 			ASE_AWK_STR_BUF(&run->inrec.line),
 			ASE_AWK_STR_LEN(&run->inrec.line));
-		if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
+		if (n < 0 /*&& run->errnum != ASE_AWK_EIOHANDLER*/)
 		{
 			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-			//ase_awk_setrunerrline (nde->line);
+			ase_awk_setrunerror (
+				run, run->errnum, nde->line, ASE_NULL);
 			return -1;
 		}
-		/* TODO: how to handle n == -1 && errnum == ASE_AWK_EIOHANDLER. 
-		 * that is the user handler returned an error... */
 	}
 	else
 	{
@@ -2592,10 +2579,11 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 					run, nde->out_type, dst, 
 					run->global.ofs.ptr, 
 					run->global.ofs.len);
-				if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
+				if (n < 0 /*&& run->errnum != ASE_AWK_EIOHANDLER*/) 
 				{
 					if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-					//ase_awk_setrunerrline (nde->line);
+					ase_awk_setrunerror (
+						run, run->errnum, nde->line, ASE_NULL);
 					return -1;
 				}
 			}
@@ -2604,25 +2592,23 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			if (v == ASE_NULL) 
 			{
 				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-				//ase_awk_setrunerrline (nde->line);
+				ase_awk_setrunerror (
+					run, run->errnum, nde->line, ASE_NULL);
 				return -1;
 			}
 			ase_awk_refupval (run, v);
 
 			n = ase_awk_writeextio_val (run, nde->out_type, dst, v);
-			if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
+			if (n < 0 /*&& run->errnum != ASE_AWK_EIOHANDLER*/) 
 			{
 				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 				ase_awk_refdownval (run, v);
-				//ase_awk_setrunerrline (nde->line);
+				ase_awk_setrunerror (
+					run, run->errnum, nde->line, ASE_NULL);
 				return -1;
 			}
 
 			ase_awk_refdownval (run, v);
-
-
-			/* TODO: how to handle n == -1 && run->errnum == ASE_AWK_EIOHANDLER. 
-			 * that is the user handler returned an error... */
 		}
 	}
 
@@ -2630,18 +2616,14 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	n = ase_awk_writeextio_str (
 		run, nde->out_type, dst, 
 		run->global.ors.ptr, run->global.ors.len);
-	if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER)
+	if (n < 0 /*&& run->errnum != ASE_AWK_EIOHANDLER*/)
 	{
 		if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-		//ase_awk_setrunerrline (nde->line);
+		ase_awk_setrunerror (run, run->errnum, nde->line, ASE_NULL);
 		return -1;
 	}
 
-	/* TODO: how to handle n == -1 && errnum == ASE_AWK_EIOHANDLER.
-	 * that is the user handler returned an error... */
-
 	if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-	ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, ase_awk_val_zero);
 
 skip_write:
 	return 0;
@@ -2667,7 +2649,12 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		ase_size_t len;
 
 		v = __eval_expression (run, nde->out);
-		if (v == ASE_NULL) return -1;
+		if (v == ASE_NULL)
+		{
+			ase_awk_setrunerror (
+				run, run->errnum, nde->line, ASE_NULL);
+			return -1;
+		}
 
 		ase_awk_refupval (run, v);
 		out = ase_awk_valtostr (
@@ -2675,6 +2662,8 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (out == ASE_NULL) 
 		{
 			ase_awk_refdownval (run, v);
+			ase_awk_setrunerror (
+				run, run->errnum, nde->line, ASE_NULL);
 			return -1;
 		}
 		ase_awk_refdownval (run, v);
@@ -2682,25 +2671,11 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (len <= 0) 
 		{
 			/* the output destination name is empty. */
-			ase_awk_val_t* no;
 			ASE_AWK_FREE (run->awk, out);
-
-			no = ase_awk_makeintval (run, ASE_AWK_ENOENT);
-			if (no == ASE_NULL)
-			{
-				run->errnum = ASE_AWK_ENOMEM;
-				return -1;
-			}
-
-			ase_awk_refupval (run, no);
-			if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, no) == -1)
-			{
-				ase_awk_refdownval (run, no);
-				return -1;
-			}
-
-			ase_awk_refdownval (run, no);
-			goto skip_write;
+			ase_awk_setrunerror (
+				run, ASE_AWK_EIONAME, nde->line,
+				ASE_T("destination name empty in printf"));
+			return -1;
 		}
 
 		while (len > 0)
@@ -2709,26 +2684,11 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			{
 				/* the output destination name contains a null 
 				 * character. */
-
-				ase_awk_val_t* no;
 				ASE_AWK_FREE (run->awk, out);
-
-				no = ase_awk_makeintval (run, ASE_AWK_ENOENT);
-				if (no == ASE_NULL)
-				{
-					run->errnum = ASE_AWK_ENOMEM;
-					return -1;
-				}
-	
-				ase_awk_refupval (run, no);
-				if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ERRNO, no) == -1)
-				{
-					ase_awk_refdownval (run, no);
-					return -1;
-				}
-	
-				ase_awk_refdownval (run, no);
-				goto skip_write;
+				ase_awk_setrunerror (
+					run, ASE_AWK_EIONAME, nde->line,
+					ASE_T("destination name containing a null character in printf"));
+				return -1;
 			}
 		}
 	}
@@ -2753,6 +2713,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	if (v == ASE_NULL) 
 	{
 		if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+		ase_awk_setrunerror (run, run->errnum, nde->line, ASE_NULL);
 		return -1;
 	}
 
@@ -2762,10 +2723,12 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		/* the remaining arguments are ignored as the format cannot 
 		 * contain any % characters */
 		n = ase_awk_writeextio_val (run, nde->out_type, dst, v);
-		if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) 
+		if (n < 0 /*&& run->errnum != ASE_AWK_EIOHANDLER*/)
 		{
 			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 			ase_awk_refdownval (run, v);
+			ase_awk_setrunerror (
+				run, run->errnum, nde->line, ASE_NULL);
 			return -1;
 		}
 	}
@@ -2780,6 +2743,8 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		{
 			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 			ase_awk_refdownval (run, v);
+			ase_awk_setrunerror (
+				run, run->errnum, nde->line, ASE_NULL);
 			return -1;
 		}
 	}
@@ -2804,7 +2769,7 @@ static int __formatted_output (
 	if (ptr == ASE_NULL) return -1;
 
 	n = ase_awk_writeextio_str (run, out_type, dst, ptr, len);
-	if (n < 0 && run->errnum != ASE_AWK_EIOHANDLER) return -1;
+	if (n < 0 /*&& run->errnum != ASE_AWK_EIOHANDLER*/) return -1;
 
 	return 0;
 }
@@ -5552,7 +5517,6 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			{
 				/* the input source name contains a null 
 				 * character. make getline return -1 */
-				/* TODO: set ERRNO */
 				ASE_AWK_FREE (run->awk, in);
 				n = -1;
 				goto skip_read;

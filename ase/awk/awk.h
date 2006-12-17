@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.168 2006-12-16 16:12:07 bacon Exp $
+ * $Id: awk.h,v 1.169 2006-12-17 14:56:05 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -319,14 +319,14 @@ enum
 	ASE_AWK_ESCALARTOMAP,      /* cannot change a scalar value to a map */
 	ASE_AWK_EMAPNOTALLOWED,    /* a map is not allowed */
 	ASE_AWK_EVALTYPE,          /* wrong value type */
-	ASE_AWK_EPIPE,             /* pipe operation error */
 	ASE_AWK_ENEXTCALL,         /* next called from BEGIN or END */
 	ASE_AWK_ENEXTFILECALL,     /* nextfile called from BEGIN or END */
 	ASE_AWK_EIOIMPL,           /* wrong user io handler implementation */
 	ASE_AWK_EBFNIMPL,          /* wrong builtin function implementation */
 	ASE_AWK_EBFNFAIL,          /* builtin function handler failed */
 	ASE_AWK_ENOSUCHIO,         /* no such io name found */
-	ASE_AWK_EIOHANDLER,        /* io handler has returned an error */
+	ASE_AWK_EIOHANDLER,        /* i/o callback returned an error */
+	ASE_AWK_EIONAME,           /* invalid i/o name */
 	ASE_AWK_EFMTARG,           /* arguments to format string not sufficient */
 	ASE_AWK_EFMTCONV,          /* recursion detected in format conversion */
 	ASE_AWK_ECONVFMTCHAR,      /* an invalid character found in CONVFMT */
@@ -451,9 +451,12 @@ void* ase_awk_getruncustomdata (ase_awk_run_t* awk);
 
 /* functions to manipulate the run-time error */
 int ase_awk_getrunerrnum (ase_awk_run_t* run);
+int ase_awk_getrunerrlin (ase_awk_run_t* run);
 const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run);
 void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
-void ase_awk_setrunerrmsg (ase_awk_run_t* run, const ase_char_t* msg);
+void ase_awk_setrunerror (
+	ase_awk_run_t* run, int errnum, 
+	ase_size_t errlin, const ase_char_t* msg);
 
 /* functions to manipulate built-in functions */
 void* ase_awk_addbfn (

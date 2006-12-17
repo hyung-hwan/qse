@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.84 2006-11-29 14:52:06 bacon Exp $
+ * $Id: func.c,v 1.85 2006-12-17 14:56:06 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -206,7 +206,6 @@ static int __bfn_close (
 		 * closeextio_read or closeextio_write. */ 
 		if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, name);
 		n = -1;
-		/* TODO: need to set ERRNO??? */
 		goto skip_close;
 	}
 
@@ -219,7 +218,6 @@ static int __bfn_close (
 			if (a0->type != ASE_AWK_VAL_STR) 
 				ASE_AWK_FREE (run->awk, name);
 			n = -1;
-			/* TODO: need to set ERRNO??? */
 			goto skip_close;
 		}
 	}	
@@ -313,7 +311,7 @@ static int __bfn_fflush (
 		}
 
 		/* the target name contains a null character.
-		 * make fflush return -1 and set ERRNO accordingly */
+		 * make fflush return -1 */
 		ptr = str0; end = str0 + len0;
 		while (ptr < end)
 		{

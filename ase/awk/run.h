@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.29 2006-12-04 06:04:07 bacon Exp $
+ * $Id: run.h,v 1.30 2006-12-17 14:56:07 bacon Exp $
  */
 
 #ifndef _ASE_AWK_RUN_H_
@@ -85,7 +85,6 @@ enum ase_awk_global_id_t
 	ASE_AWK_GLOBAL_ARGV,
 	ASE_AWK_GLOBAL_CONVFMT,
 	ASE_AWK_GLOBAL_ENVIRON,
-	ASE_AWK_GLOBAL_ERRNO,
 	ASE_AWK_GLOBAL_FILENAME,
 	ASE_AWK_GLOBAL_FNR,
 	ASE_AWK_GLOBAL_FS,
