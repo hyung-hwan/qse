@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.93 2006-12-17 14:56:06 bacon Exp $
+ * $Id: awk_i.h,v 1.94 2006-12-19 14:20:30 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -135,7 +135,8 @@ struct ase_awk_t
 		ase_awk_tab_t params;
 		ase_size_t nlocals_max;
 
-		ase_awk_nde_t* (*parse_block) (ase_awk_t*,ase_bool_t);
+		ase_awk_nde_t* (*parse_block) (
+			ase_awk_t*,ase_size_t,ase_bool_t);
 	} parse;
 
 	/* source code management */
@@ -207,6 +208,8 @@ struct ase_awk_t
 
 	/* housekeeping */
 	int errnum;
+	ase_size_t errlin;
+	ase_char_t errmsg[256];
 };
 
 struct ase_awk_chain_t

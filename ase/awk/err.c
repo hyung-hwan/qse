@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.61 2006-12-17 14:56:06 bacon Exp $
+ * $Id: err.c,v 1.62 2006-12-19 14:20:30 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -7,6 +7,28 @@
 int ase_awk_geterrnum (ase_awk_t* awk)
 {
 	return awk->errnum;
+}
+
+ase_size_t ase_awk_geterrlin (ase_awk_t* awk)
+{
+	return awk->errlin;
+}
+
+const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk)
+{
+	if (awk->errmsg[0] == ASE_T('\0')) 
+		return ase_awk_geterrstr (awk->errnum);
+	return awk->errmsg;
+}
+
+void ase_awk_seterror (
+	ase_awk_t* awk, int errnum, 
+	ase_size_t errlin, const ase_char_t* msg)
+{
+	awk->errnum = errnum;
+	awk->errlin = errlin;
+	if (msg == ASE_NULL) awk->errmsg[0] = ASE_T('\0');
+	else ase_awk_strxcpy (awk->errmsg, ASE_COUNTOF(awk->errmsg), msg);
 }
 
 const ase_char_t* ase_awk_geterrstr (int errnum)

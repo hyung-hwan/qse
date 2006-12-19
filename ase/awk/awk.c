@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.101 2006-12-16 16:12:07 bacon Exp $ 
+ * $Id: awk.c,v 1.102 2006-12-19 14:20:29 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -114,6 +114,7 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum)
 
 	awk->option = 0;
 	awk->errnum = ASE_AWK_ENOERR;
+	awk->errlin = 0;
 
 	awk->parse.nlocals_max = 0;
 
@@ -258,11 +259,6 @@ int ase_awk_getopt (ase_awk_t* awk)
 void ase_awk_setopt (ase_awk_t* awk, int opt)
 {
 	awk->option = opt;
-}
-
-ase_size_t ase_awk_getsrcline (ase_awk_t* awk)
-{
-	return awk->token.line;
 }
 
 void ase_awk_setmaxrundepth (ase_awk_t* awk, int types, ase_size_t depth)
