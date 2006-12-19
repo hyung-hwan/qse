@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.304 2006-12-17 14:56:06 bacon Exp $
+ * $Id: run.c,v 1.305 2006-12-19 14:20:30 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -547,7 +547,7 @@ int ase_awk_getrunerrnum (ase_awk_run_t* run)
 	return run->errnum;
 }
 
-int ase_awk_getrunerrlin (ase_awk_run_t* run)
+ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run)
 {
 	return run->errlin;
 }
@@ -588,7 +588,7 @@ int ase_awk_run (ase_awk_t* awk,
 	int n, errnum;
 
 	/* clear the awk error code */
-	awk->errnum = ASE_AWK_ENOERR;
+	ase_awk_seterror (awk, ASE_AWK_ENOERR, 0, ASE_NULL);
 
 	/* check if the code has ever been parsed */
 	if (awk->tree.nglobals == 0 && 
@@ -598,7 +598,7 @@ int ase_awk_run (ase_awk_t* awk,
 	    ase_awk_map_getsize(&awk->tree.afns) == 0)
 	{
 		/* if not, deny the run */
-		awk->errnum = ASE_AWK_ENOPER;
+		ase_awk_seterror (awk, ASE_AWK_ENOPER, 0, ASE_NULL);
 		return -1;
 	}
 	
@@ -608,7 +608,7 @@ int ase_awk_run (ase_awk_t* awk,
 	{
 		/* if it fails, the failure is reported thru 
 		 * the awk object */
-		awk->errnum = ASE_AWK_ENOMEM;
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -623,9 +623,9 @@ int ase_awk_run (ase_awk_t* awk,
 	{
 		/* if it fails, the failure is still reported thru 
 		 * the awk object */
-		awk->errnum = errnum;
-		__del_run (awk, run);
+		ase_awk_seterror (awk, errnum, 0, ASE_NULL);
 
+		__del_run (awk, run);
 		ASE_AWK_FREE (awk, run);
 		return -1;
 	}
@@ -645,8 +645,16 @@ int ase_awk_run (ase_awk_t* awk,
 	{
 		/* if no callback is specified, awk's error number 
 		 * is updated with the run's error number */
-		awk->errnum = (runcbs == ASE_NULL)? 
-			run->errnum: ASE_AWK_ERUNTIME;
+		if (runcbs == ASE_NULL)
+		{
+			ase_awk_seterror (
+				awk, run->errnum, run->errlin, ASE_NULL);
+		}
+		else
+		{
+			ase_awk_seterror (
+				awk, ASE_AWK_ERUNTIME, 0, ASE_NULL);
+		}
 	}
 
 	/* the run loop ended. execute the end callback if it exists */
@@ -2122,7 +2130,7 @@ static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 	if (rv->type != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_refdownval (run, rv);
-		PANIC_I (run, ASE_AWK_ENOTINDEXABLE);
+		PANIC_I (run, ASE_AWK_ENOIDX);
 	}
 	map = ((ase_awk_val_map_t*)rv)->map;
 
@@ -2199,26 +2207,42 @@ static int __run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde)
 	/* the parser checks if next has been called in the begin/end
 	 * block or whereever inappropriate. so the runtime doesn't 
 	 * check that explicitly */
-
-	if  (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.begin ||
-	     run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.end)
+	if  (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.begin)
 	{
-		PANIC_I (run, ASE_AWK_ENEXTCALL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENEXTCALL, nde->line, 
+			ASE_T("next called from the BEGIN block"));
+		return -1;
+	}
+	else if (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.end)
+	{
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENEXTCALL, nde->line, 
+			ASE_T("next called from the END block"));
+		return -1;
 	}
 
 	run->exit_level = EXIT_NEXT;
 	return 0;
 }
 
-static int __run_nextinfile (ase_awk_run_t* run)
+static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 {
 	int n;
 
 	/* normal nextfile statement */
-	if  (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.begin ||
-	     run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.end)
+	if  (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.begin)
 	{
-		run->errnum = ASE_AWK_ENEXTFILECALL;
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENEXTCALL, nde->line, 
+			ASE_T("nextfile called from the BEGIN block"));
+		return -1;
+	}
+	else if (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.end)
+	{
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENEXTCALL, nde->line, 
+			ASE_T("nextfile called from the END block"));
 		return -1;
 	}
 
@@ -2227,6 +2251,8 @@ static int __run_nextinfile (ase_awk_run_t* run)
 	{
 		if (run->errnum == ASE_AWK_EIOHANDLER)
 			run->errnum = ASE_AWK_ECONINNEXT;
+		ase_awk_setrunerror (
+			run, run->errnum, nde->line, ASE_NULL);
 		return -1;
 	}
 
@@ -2237,14 +2263,19 @@ static int __run_nextinfile (ase_awk_run_t* run)
 		return 0;
 	}
 
-	if (__update_fnr (run, 0) == -1) return -1;
+	if (__update_fnr (run, 0) == -1) 
+	{
+		ase_awk_setrunerror (
+			run, run->errnum, nde->line, ASE_NULL);
+		return -1;
+	}
 
 	run->exit_level = EXIT_NEXT;
 	return 0;
 
 }
 
-static int __run_nextoutfile (ase_awk_run_t* run)
+static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 {
 	int n;
 
@@ -2253,6 +2284,8 @@ static int __run_nextoutfile (ase_awk_run_t* run)
 	{
 		if (run->errnum == ASE_AWK_EIOHANDLER)
 			run->errnum = ASE_AWK_ECONOUTNEXT;
+		ase_awk_setrunerror (
+			run, run->errnum, nde->line, ASE_NULL);
 		return -1;
 	}
 
@@ -2269,7 +2302,9 @@ static int __run_nextoutfile (ase_awk_run_t* run)
 
 static int __run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 {
-	return (nde->out)? __run_nextoutfile (run): __run_nextinfile (run);
+	return (nde->out)? 
+		__run_nextoutfile (run, nde): 
+		__run_nextinfile (run, nde);
 }
 
 static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
@@ -2300,7 +2335,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			tmp = ase_awk_makemapval (run);
 			if (tmp == ASE_NULL) 
 			{
-				run->errnum = ASE_AWK_ENOMEM;
+				ase_awk_setrunerror (run, 
+					ASE_AWK_ENOMEM, nde->line, ASE_NULL);
 				return -1;
 			}
 
@@ -2309,7 +2345,9 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			{
 				ase_awk_refupval (run, tmp);
 				ase_awk_refdownval (run, tmp);
-				run->errnum = ASE_AWK_ENOMEM;
+
+				ase_awk_setrunerror (run, 
+					ASE_AWK_ENOMEM, var->line, ASE_NULL);
 				return -1;
 			}
 
@@ -2327,7 +2365,14 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
-				run->errnum = ASE_AWK_ENOTDELETABLE;
+				ase_char_t msg[ASE_COUNTOF(run->errmsg)];
+				run->awk->sysfns.sprintf (
+					msg, ASE_COUNTOF(msg), 
+					ASE_T("%.*s not deletable"), 
+					var->id.name_len, var->id.name);
+				ase_awk_setrunerror (run, 
+					ASE_AWK_ENODEL, 
+					var->line, msg);
 				return -1;
 			}
 
@@ -2341,7 +2386,12 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				ASE_AWK_ASSERT (run->awk, var->idx != ASE_NULL);
 
 				idx = __eval_expression (run, var->idx);
-				if (idx == ASE_NULL) return -1;
+				if (idx == ASE_NULL) 
+				{
+					ase_awk_setrunerror (run, 
+						run->errnum, var->line, ASE_NULL);
+					return -1;
+				}
 
 				ase_awk_refupval (run, idx);
 				key = ase_awk_valtostr (
@@ -2349,7 +2399,12 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 					ASE_NULL, &key_len);
 				ase_awk_refdownval (run, idx);
 
-				if (key == ASE_NULL) return -1;
+				if (key == ASE_NULL) 
+				{
+					ase_awk_setrunerror (run, 
+						run->errnum, var->line, ASE_NULL);
+					return -1;
+				}
 
 				ase_awk_map_remove (map, key, key_len);
 				ASE_AWK_FREE (run->awk, key);
@@ -2389,7 +2444,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			tmp = ase_awk_makemapval (run);
 			if (tmp == ASE_NULL) 
 			{
-				run->errnum = ASE_AWK_ENOMEM;
+				ase_awk_setrunerror (run, 
+					ASE_AWK_ENOMEM, nde->line, ASE_NULL);
 				return -1;
 			}
 
@@ -2403,6 +2459,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				{
 					ase_awk_refupval (run, tmp);
 					ase_awk_refdownval (run, tmp);
+					ase_awk_setrunerror (run, 
+						run->errnum, var->line, ASE_NULL);
 					return -1;
 				}
 			}
@@ -2424,7 +2482,14 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
-				run->errnum = ASE_AWK_ENOTDELETABLE;
+				ase_char_t msg[ASE_COUNTOF(run->errmsg)];
+				run->awk->sysfns.sprintf (
+					msg, ASE_COUNTOF(msg), 
+					ASE_T("%.*s not deletable"), 
+					var->id.name_len, var->id.name);
+				ase_awk_setrunerror (run, 
+					ASE_AWK_ENODEL, 
+					var->line, msg);
 				return -1;
 			}
 
@@ -2440,7 +2505,12 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				ASE_AWK_ASSERT (run->awk, var->idx != ASE_NULL);
 
 				idx = __eval_expression (run, var->idx);
-				if (idx == ASE_NULL) return -1;
+				if (idx == ASE_NULL) 
+				{
+					ase_awk_setrunerror (run, 
+						run->errnum, var->line, ASE_NULL);
+					return -1;
+				}
 
 				ase_awk_refupval (run, idx);
 				key = ase_awk_valtostr (
@@ -2448,7 +2518,12 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 					ASE_NULL, &key_len);
 				ase_awk_refdownval (run, idx);
 
-				if (key == ASE_NULL) return -1;
+				if (key == ASE_NULL)
+				{
+					ase_awk_setrunerror (run, 
+						run->errnum, var->line, ASE_NULL);
+					return -1;
+				}
 
 				ase_awk_map_remove (map, key, key_len);
 				ASE_AWK_FREE (run->awk, key);
@@ -2462,9 +2537,9 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 	else
 	{
 		ASE_AWK_ASSERTX (run->awk, 
-			!"should never happen - wrong variable type for delete",
+			!"should never happen - wrong target for delete",
 			"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
-		run->errnum = ASE_AWK_EINTERNAL;
+		ase_awk_setrunerror (run, ASE_AWK_EINTERNAL, var->line, "delete statement called with a wrong target");
 		return -1;
 	}
 
@@ -2941,7 +3016,7 @@ static ase_awk_val_t* __do_assignment (
 	if (val->type == ASE_AWK_VAL_MAP)
 	{
 		/* a map cannot be assigned to a variable */
-		PANIC (run, ASE_AWK_ENOTASSIGNABLE);
+		PANIC (run, ASE_AWK_ENOASS);
 	}
 
 	if (var->type == ASE_AWK_NDE_NAMED ||
@@ -3123,7 +3198,7 @@ static ase_awk_val_t* __do_assignment_map (
 	}
 	else if (map->type != ASE_AWK_VAL_MAP)
 	{
-		PANIC (run, ASE_AWK_ENOTINDEXABLE);
+		PANIC (run, ASE_AWK_ENOIDX);
 	}
 
 	str = __idxnde_to_str (run, var->idx, &len);
@@ -5265,7 +5340,7 @@ static ase_awk_val_t** __get_reference_indexed (
 	}
 	else if ((*val)->type != ASE_AWK_VAL_MAP) 
 	{
-		PANIC (run, ASE_AWK_ENOTINDEXABLE);
+		PANIC (run, ASE_AWK_ENOIDX);
 	}
 
 	ASE_AWK_ASSERT (run->awk, nde->idx != ASE_NULL);
@@ -5387,7 +5462,7 @@ static ase_awk_val_t* __eval_indexed (
 	}
 	else if ((*val)->type != ASE_AWK_VAL_MAP) 
 	{
-	        PANIC (run, ASE_AWK_ENOTINDEXABLE);
+	        PANIC (run, ASE_AWK_ENOIDX);
 	}
 
 	ASE_AWK_ASSERT (run->awk, nde->idx != ASE_NULL);

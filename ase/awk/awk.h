@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.169 2006-12-17 14:56:05 bacon Exp $
+ * $Id: awk.h,v 1.170 2006-12-19 14:20:30 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -309,9 +309,9 @@ enum
 	ASE_AWK_EOPERAND,          /* invalid operand */
 	ASE_AWK_EPOSIDX,           /* wrong position index */
 	ASE_AWK_ENOSUCHFN,         /* no such function */
-	ASE_AWK_ENOTASSIGNABLE,    /* value not assignable */
-	ASE_AWK_ENOTINDEXABLE,     /* not indexable variable */
-	ASE_AWK_ENOTDELETABLE,     /* not deletable variable */
+	ASE_AWK_ENOASS,            /* value not assignable */
+	ASE_AWK_ENOIDX,            /* variable not indexable */
+	ASE_AWK_ENODEL,            /* variable not deletable */
 	ASE_AWK_ENOTREFERENCEABLE, /* not referenceable value */
 	ASE_AWK_EIDXVALASSMAP,     /* indexed value cannot be assigned a map */
 	ASE_AWK_EPOSVALASSMAP,     /* a positional cannot be assigned a map */
@@ -402,7 +402,11 @@ int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 
 int ase_awk_geterrnum (ase_awk_t* awk);
-ase_size_t ase_awk_getsrcline (ase_awk_t* awk);
+ase_size_t ase_awk_geterrlin (ase_awk_t* awk);
+const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk);
+void ase_awk_seterror (
+	ase_awk_t* run, int errnum, 
+	ase_size_t errlin, const ase_char_t* msg);
 
 int ase_awk_getopt (ase_awk_t* awk);
 void ase_awk_setopt (ase_awk_t* awk, int opt);
@@ -451,7 +455,7 @@ void* ase_awk_getruncustomdata (ase_awk_run_t* awk);
 
 /* functions to manipulate the run-time error */
 int ase_awk_getrunerrnum (ase_awk_run_t* run);
-int ase_awk_getrunerrlin (ase_awk_run_t* run);
+ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run);
 const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run);
 void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
 void ase_awk_setrunerror (
