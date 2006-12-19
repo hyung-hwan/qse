@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.225 2006-12-19 14:20:30 bacon Exp $
+ * $Id: parse.c,v 1.226 2006-12-19 14:49:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -3362,8 +3362,6 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk, ase_size_t line, int type)
 	ase_awk_nde_t* args = ASE_NULL; 
 	ase_awk_nde_t* out = ASE_NULL;
 	int out_type;
-
-	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_PRINT);
 
 	if (!MATCH(awk,TOKEN_SEMICOLON) &&
 	    !MATCH(awk,TOKEN_GT) &&

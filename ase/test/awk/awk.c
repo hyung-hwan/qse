@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.144 2006-12-19 14:26:27 bacon Exp $
+ * $Id: awk.c,v 1.145 2006-12-19 14:49:24 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -153,11 +153,11 @@ static FILE* awk_fopen (const ase_char_t* path, const ase_char_t* mode)
 	char mode_mb[32];
 	size_t n;
 
-	n = wcstombs (path, path_mb, ASE_COUNTOF(path_mb))
+	n = wcstombs (path_mb, path, ASE_COUNTOF(path_mb));
 	if (n == -1) return NULL;
 	if (n == ASE_COUNTOF(path_mb)) path_mb[ASE_COUNTOF(path_mb)-1] = '\0';
 
-	n = wcstombs (mode, mode_mb, ASE_COUNTOF(mode_mb))
+	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
 	if (n == -1) return NULL;
 	if (n == ASE_COUNTOF(mode_mb)) path_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
 
@@ -179,14 +179,13 @@ static FILE* awk_popen (const ase_char_t* cmd, const ase_char_t* mode)
 	char mode_mb[32];
 	size_t n;
 
-	n = wcstombs (cmd, cmd_mb, ASE_COUNTOF(cmd_mb))
+	n = wcstombs (cmd_mb, cmd, ASE_COUNTOF(cmd_mb));
 	if (n == -1) return NULL;
 	if (n == ASE_COUNTOF(cmd_mb)) cmd_mb[ASE_COUNTOF(cmd_mb)-1] = '\0';
 
-	n = wcstombs (mode, mode_mb, ASE_COUNTOF(mode_mb))
+	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
 	if (n == -1) return NULL;
 	if (n == ASE_COUNTOF(mode_mb)) cmd_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
-
 	return popen (cmd_mb, mode_mb);
 #endif
 }
