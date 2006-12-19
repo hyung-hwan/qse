@@ -4,7 +4,7 @@ function call_next ()
 }
 
 BEGIN {
-	//call_next ();
+	#call_next ();
 }
 
 END {
