@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.143 2006-12-17 14:56:07 bacon Exp $
+ * $Id: awk.c,v 1.144 2006-12-19 14:26:27 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -874,7 +874,7 @@ static int __main (int argc, ase_char_t* argv[])
 		int errnum = ase_awk_geterrnum(awk);
 		awk_printf (
 			ASE_T("ERROR: cannot parse program - line %u [%d] %s\n"), 
-			(unsigned int)ase_awk_getsrcline(awk), 
+			(unsigned int)ase_awk_geterrlin(awk), 
 			errnum, ase_awk_geterrstr(errnum));
 		ase_awk_close (awk);
 		return -1;
