@@ -1,4 +1,4 @@
 END {
-	print __global10,"employees";
+	print NR,"employees";
 }
 6 employees

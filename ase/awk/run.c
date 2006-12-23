@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.305 2006-12-19 14:20:30 bacon Exp $
+ * $Id: run.c,v 1.306 2006-12-23 06:33:47 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1660,7 +1660,7 @@ static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	if (run->depth.max.block > 0 &&
 	    run->depth.cur.block >= run->depth.max.block)
 	{
-		run->errnum = ASE_AWK_ERECURSION;
+		run->errnum = ASE_AWK_ERECUR;
 		return -1;;
 	}
 

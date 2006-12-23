@@ -1,10 +1,10 @@
 {
-	line[__global10] = $0;
+	line[NR] = $0;
 }
 
 END {
-	i = __global10;
-	for (i = __global10; (i > 0); i = (i - 1))
+	i = NR;
+	for (i = NR; (i > 0); i = (i - 1))
 		print line[i];
 }
 Susie	4.25	18

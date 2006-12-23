@@ -1,4 +1,4 @@
-(__global9 != 3) {
+(NF != 3) {
 	print $0,"number of fields is not equal to 3";
 }
 
