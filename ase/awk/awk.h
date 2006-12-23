@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.170 2006-12-19 14:20:30 bacon Exp $
+ * $Id: awk.h,v 1.171 2006-12-23 05:44:17 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -236,16 +236,16 @@ enum
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_ERUNNING,       /* there are running instances */
 	ASE_AWK_ETOOMANYRUNS,   /* too many running instances */
-	ASE_AWK_ERECURSION,     /* recursion too deep */
+	ASE_AWK_ERECUR,         /* recursion too deep */
 	ASE_AWK_ESYSFNS,        /* system functions not proper */
 
-	ASE_AWK_ESRCINOPEN,
-	ASE_AWK_ESRCINCLOSE,
-	ASE_AWK_ESRCINREAD, 
+	ASE_AWK_ESINOP,
+	ASE_AWK_ESINCL,
+	ASE_AWK_ESINRD, 
 
-	ASE_AWK_ESRCOUTOPEN,
-	ASE_AWK_ESRCOUTCLOSE,
-	ASE_AWK_ESRCOUTWRITE,
+	ASE_AWK_ESOUTOP,
+	ASE_AWK_ESOUTCL,
+	ASE_AWK_ESOUTWR,
 
 	ASE_AWK_ECONINOPEN,
 	ASE_AWK_ECONINCLOSE,
@@ -404,9 +404,14 @@ int ase_awk_clear (ase_awk_t* awk);
 int ase_awk_geterrnum (ase_awk_t* awk);
 ase_size_t ase_awk_geterrlin (ase_awk_t* awk);
 const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk);
+
+void ase_awk_geterror (
+	ase_awk_t* awk, int* errnum, 
+	ase_size_t* errlin, const ase_char_t** errmsg);
+
 void ase_awk_seterror (
 	ase_awk_t* run, int errnum, 
-	ase_size_t errlin, const ase_char_t* msg);
+	ase_size_t errlin, const ase_char_t* errmsg);
 
 int ase_awk_getopt (ase_awk_t* awk);
 void ase_awk_setopt (ase_awk_t* awk, int opt);

@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.62 2006-12-19 14:20:30 bacon Exp $
+ * $Id: err.c,v 1.63 2006-12-23 05:44:17 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -21,14 +21,24 @@ const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk)
 	return awk->errmsg;
 }
 
+
+void ase_awk_geterror (
+	ase_awk_t* awk, int* errnum, 
+	ase_size_t* errlin, const ase_char_t** errmsg)
+{
+	if (errnum != ASE_NULL) *errnum = awk->errnum;
+	if (errlin != ASE_NULL) *errlin = awk->errlin;
+	if (errmsg != ASE_NULL) *errmsg = awk->errmsg;
+}
+
 void ase_awk_seterror (
 	ase_awk_t* awk, int errnum, 
-	ase_size_t errlin, const ase_char_t* msg)
+	ase_size_t errlin, const ase_char_t* errmsg)
 {
 	awk->errnum = errnum;
 	awk->errlin = errlin;
-	if (msg == ASE_NULL) awk->errmsg[0] = ASE_T('\0');
-	else ase_awk_strxcpy (awk->errmsg, ASE_COUNTOF(awk->errmsg), msg);
+	if (errmsg == ASE_NULL) awk->errmsg[0] = ASE_T('\0');
+	else ase_awk_strxcpy (awk->errmsg, ASE_COUNTOF(awk->errmsg), errmsg);
 }
 
 const ase_char_t* ase_awk_geterrstr (int errnum)
