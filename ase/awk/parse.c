@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.226 2006-12-19 14:49:24 bacon Exp $
+ * $Id: parse.c,v 1.227 2006-12-23 05:44:17 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -379,7 +379,9 @@ static int __parse (ase_awk_t* awk)
 	{
 		/* cannot open the source file.
 		 * it doesn't even have to call CLOSE */
-		awk->errnum = ASE_AWK_ESRCINOPEN;
+		ase_awk_seterror (
+			awk, ASE_AWK_ESINOP, 0, 
+			ASE_T("cannot open the source input"));
 		return -1;
 	}
 
@@ -441,7 +443,9 @@ exit_parse:
 		{
 			/* this is to keep the earlier error above
 			 * that might be more critical than this */
-			awk->errnum = ASE_AWK_ESRCINCLOSE;
+			ase_awk_seterror (
+				awk, ASE_AWK_ESINCL, 0, 
+				ASE_T("cannot close the source input"));
 			n = -1;
 		}
 	}
@@ -1058,7 +1062,9 @@ static ase_awk_nde_t* __parse_block_dc (
 
 	if (awk->parse.depth.cur.block >= awk->parse.depth.max.block)
 	{
-		awk->errnum = ASE_AWK_ERECURSION;
+		ase_awk_seterror (
+			awk, ASE_AWK_ERECUR, awk->token.prev.line, 
+			ASE_T("block nested too deeply"));
 		return ASE_NULL;
 	}
 
@@ -1411,7 +1417,7 @@ static ase_awk_nde_t* __parse_expression (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		awk->errnum = ASE_AWK_ERECURSION;
+		awk->errnum = ASE_AWK_ERECUR;
 		return ASE_NULL;
 	}
 
@@ -1969,7 +1975,7 @@ static ase_awk_nde_t* __parse_unary (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		awk->errnum = ASE_AWK_ERECURSION;
+		awk->errnum = ASE_AWK_ERECUR;
 		return ASE_NULL;
 	}
 	awk->parse.depth.cur.expr++;
@@ -2024,7 +2030,7 @@ static ase_awk_nde_t* __parse_unary_exp (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		awk->errnum = ASE_AWK_ERECURSION;
+		awk->errnum = ASE_AWK_ERECUR;
 		return ASE_NULL;
 	}
 	awk->parse.depth.cur.expr++;
@@ -4254,7 +4260,9 @@ static int __get_char (ase_awk_t* awk)
 			awk->src.shared.buf, ASE_COUNTOF(awk->src.shared.buf));
 		if (n <= -1)
 		{
-			awk->errnum = ASE_AWK_ESRCINREAD;
+			ase_awk_seterror (
+				awk, ASE_AWK_ESINRD, 0, 
+				ASE_T("cannot read the source input"));
 			return -1;
 		}
 
@@ -4456,7 +4464,7 @@ static int __deparse (ase_awk_t* awk)
 		ASE_AWK_IO_OPEN, awk->src.ios.custom_data, ASE_NULL, 0);
 	if (op <= -1)
 	{
-		awk->errnum = ASE_AWK_ESRCOUTOPEN;
+		awk->errnum = ASE_AWK_ESOUTOP;
 		return -1;
 	}
 
@@ -4486,7 +4494,7 @@ static int __deparse (ase_awk_t* awk)
 
 		ASE_AWK_ASSERT (awk, awk->tree.nglobals > 0);
 		if (ase_awk_putsrcstr (awk, ASE_T("global ")) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 
 		for (i = awk->tree.nbglobals; i < awk->tree.nglobals - 1; i++) 
 		{
@@ -4495,17 +4503,17 @@ static int __deparse (ase_awk_t* awk)
 				10, ASE_T("__global"), tmp, ASE_COUNTOF(tmp));
 			ASE_AWK_ASSERT (awk, len != (ase_size_t)-1);
 			if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
-				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 			*/
 			if (ase_awk_putsrcstrx (awk, 
 				awk->parse.globals.buf[i].name, 
 				awk->parse.globals.buf[i].name_len) == -1)
 			{
-				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 			}
 
 			if (ase_awk_putsrcstr (awk, ASE_T(", ")) == -1)
-				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		}
 
 		/*
@@ -4513,17 +4521,17 @@ static int __deparse (ase_awk_t* awk)
 			10, ASE_T("__global"), tmp, ASE_COUNTOF(tmp));
 		ASE_AWK_ASSERT (awk, len != (ase_size_t)-1);
 		if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		*/
 		if (ase_awk_putsrcstrx (awk, 
 			awk->parse.globals.buf[i].name, 
 			awk->parse.globals.buf[i].name_len) == -1)
 		{
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		}
 
 		if (ase_awk_putsrcstr (awk, ASE_T(";\n\n")) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 	}
 
 	df.awk = awk;
@@ -4532,19 +4540,19 @@ static int __deparse (ase_awk_t* awk)
 
 	if (ase_awk_map_walk (&awk->tree.afns, __deparse_func, &df) == -1) 
 	{
-		EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+		EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 	}
 
 	if (awk->tree.begin != ASE_NULL) 
 	{
 		if (ase_awk_putsrcstr (awk, ASE_T("BEGIN ")) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 
 		if (ase_awk_prnpt (awk, awk->tree.begin) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 
 		if (__put_char (awk, ASE_T('\n')) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 	}
 
 	chain = awk->tree.chain;
@@ -4553,28 +4561,28 @@ static int __deparse (ase_awk_t* awk)
 		if (chain->pattern != ASE_NULL) 
 		{
 			if (ase_awk_prnptnpt (awk, chain->pattern) == -1)
-				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		}
 
 		if (chain->action == ASE_NULL) 
 		{
 			/* blockless pattern */
 			if (__put_char (awk, ASE_T('\n')) == -1)
-				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		}
 		else 
 		{
 			if (chain->pattern != ASE_NULL)
 			{
 				if (__put_char (awk, ASE_T(' ')) == -1)
-					EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+					EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 			}
 			if (ase_awk_prnpt (awk, chain->action) == -1)
-				EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		}
 
 		if (__put_char (awk, ASE_T('\n')) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 
 		chain = chain->next;	
 	}
@@ -4582,12 +4590,12 @@ static int __deparse (ase_awk_t* awk)
 	if (awk->tree.end != ASE_NULL) 
 	{
 		if (ase_awk_putsrcstr (awk, ASE_T("END ")) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		if (ase_awk_prnpt (awk, awk->tree.end) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 	}
 
-	if (__flush (awk) == -1) EXIT_DEPARSE (ASE_AWK_ESRCOUTWRITE);
+	if (__flush (awk) == -1) EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 
 exit_deparse:
 	if (awk->src.ios.out (
@@ -4595,7 +4603,7 @@ exit_deparse:
 	{
 		if (n == 0)
 		{
-			awk->errnum = ASE_AWK_ESRCOUTCLOSE;
+			awk->errnum = ASE_AWK_ESOUTWR;
 			n = -1;
 		}
 	}
