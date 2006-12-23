@@ -3,9 +3,9 @@
 }
 
 END {
-	print __global10,"employees";
+	print NR,"employees";
 	print "total pay is",pay;
-	print "average pay is",(pay / __global10);
+	print "average pay is",(pay / NR);
 }
 6 employees
 total pay is 337.5

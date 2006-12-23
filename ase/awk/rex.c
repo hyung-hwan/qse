@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.52 2006-12-13 14:16:12 bacon Exp $
+ * $Id: rex.c,v 1.53 2006-12-23 06:33:47 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -410,7 +410,7 @@ static int __build_pattern (__builder_t* builder)
 
 	if (builder->depth.max > 0 && builder->depth.cur >= builder->depth.max)
 	{
-		builder->errnum = ASE_AWK_ERECURSION;
+		builder->errnum = ASE_AWK_ERECUR;
 		return -1;
 	}
 
@@ -1076,7 +1076,7 @@ static const ase_byte_t* __match_branch_body (
 
 	if (matcher->depth.max > 0 && matcher->depth.cur >= matcher->depth.max)
 	{
-		matcher->errnum = ASE_AWK_ERECURSION;
+		matcher->errnum = ASE_AWK_ERECUR;
 		return ASE_NULL;
 	}
 

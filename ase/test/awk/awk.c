@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.145 2006-12-19 14:49:24 bacon Exp $
+ * $Id: awk.c,v 1.146 2006-12-23 06:33:47 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -186,6 +186,7 @@ static FILE* awk_popen (const ase_char_t* cmd, const ase_char_t* mode)
 	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
 	if (n == -1) return NULL;
 	if (n == ASE_COUNTOF(mode_mb)) cmd_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
+
 	return popen (cmd_mb, mode_mb);
 #endif
 }
@@ -289,6 +290,7 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_CLOSE:
 		{
+			fflush ((FILE*)epa->handle);
 			awk_dprintf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;

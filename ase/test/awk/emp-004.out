@@ -1,5 +1,5 @@
 {
-	print __global10,$0;
+	print NR,$0;
 }
 
 1 Beth	4.00	0

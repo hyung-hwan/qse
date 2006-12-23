@@ -1,5 +1,5 @@
 {
-	print __global9,$1,$__global9;
+	print NF,$1,$NF;
 }
 
 3 Beth 0

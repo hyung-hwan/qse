@@ -1,9 +1,9 @@
 {
-	line[__global10] = $0;
+	line[NR] = $0;
 }
 
 END {
-	i = __global10;
+	i = NR;
 	while ((i > 0))
 	{
 		print line[i];

@@ -31,8 +31,8 @@ run_script_for_test()
 	echo ">> RUNNING $script"
 	./awk "$script" "$data" > "$output.$pid"
 
-	#diff -y "$output" "$output.$pid" 
-	diff "$output" "$output.$pid" 
+	diff -y "$output" "$output.$pid" 
+	#diff "$output" "$output.$pid" 
 	if [ $? -ne 0 ]
 	then
 		rm -f "$output.$pid"
@@ -55,7 +55,7 @@ run_test()
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
-			break
+			return 1
 		fi
 	done
 
@@ -67,9 +67,11 @@ run_test()
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
-			break
+			return 1
 		fi
 	done
+
+	return 0
 }
 
 #--------#
