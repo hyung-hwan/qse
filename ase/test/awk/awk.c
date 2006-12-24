@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.146 2006-12-23 06:33:47 bacon Exp $
+ * $Id: awk.c,v 1.147 2006-12-24 15:14:09 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -10,6 +10,8 @@
 #include <math.h>
 #include <limits.h>
 #include <assert.h>
+#include <errno.h>
+#include <stdlib.h>
 
 #if defined(_WIN32)
 	#include <windows.h>
@@ -18,18 +20,20 @@
 	#pragma warning (disable: 4296)
 #elif defined(ASE_CHAR_IS_MCHAR)
 	#include <ctype.h>
-	#include <stdlib.h>
 	#include <locale.h>
 #else
 	#include <wchar.h>
 	#include <wctype.h>
 	#include <locale.h>
 
+	#include "printf.c"
+/*
 	#include <xp/bas/stdio.h>
 	#include <xp/bas/stdlib.h>
 	#include <xp/bas/string.h>
 	#include <xp/bas/memory.h>
 	#include <xp/bas/sysapi.h>
+*/
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
@@ -281,6 +285,7 @@ static ase_ssize_t process_extio_pipe (
 			else if (epa->mode == ASE_AWK_EXTIO_PIPE_WRITE)
 				mode = ASE_T("w");
 			else return -1; /* TODO: any way to set the error number? */
+
 			awk_dprintf (ASE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);
 			handle = awk_popen (epa->name, mode);
 			if (handle == NULL) return -1;
@@ -290,7 +295,6 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_CLOSE:
 		{
-			fflush ((FILE*)epa->handle);
 			awk_dprintf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
@@ -299,8 +303,7 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_READ:
 		{
-			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
-				return 0;
+			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) return 0;
 			return ase_awk_strlen(data);
 		}
 
@@ -310,7 +313,9 @@ static ase_ssize_t process_extio_pipe (
 			/* TODO: how to return error or 0 */
 			for (i = 0; i < size; i++)
 			{
-				awk_fputc (data[i], (FILE*)epa->handle);
+				int n;
+				n = awk_fputc (data[i], (FILE*)epa->handle);
+				//if (n == -1) wprintf (L"errno = %d, %d\n", errno, EINVAL);
 			}
 			return size;
 		}
