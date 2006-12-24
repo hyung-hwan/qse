@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.171 2006-12-23 05:44:17 bacon Exp $
+ * $Id: awk.h,v 1.172 2006-12-24 17:21:24 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -463,6 +463,10 @@ int ase_awk_getrunerrnum (ase_awk_run_t* run);
 ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run);
 const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run);
 void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
+
+void ase_awk_getrunerror (
+	ase_awk_run_t* run, int* errnum, 
+	ase_size_t* errlin, const ase_char_t** errmsg);
 void ase_awk_setrunerror (
 	ase_awk_run_t* run, int errnum, 
 	ase_size_t errlin, const ase_char_t* msg);

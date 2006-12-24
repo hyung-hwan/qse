@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.100 2006-12-16 16:14:40 bacon Exp $
+ * $Id: val.c,v 1.101 2006-12-24 17:21:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -777,7 +777,7 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 				(long long)((ase_awk_val_int_t*)val)->val);
 		#elif ASE_SIZEOF___INT64 > 0
 			__DPRINTF (ASE_T("%I64d"), 
-				(__int64)((ase_awk_nde_int_t*)val)->val);
+				(__int64)((ase_awk_val_int_t*)val)->val);
 		#elif ASE_SIZEOF_LONG > 0
 			__DPRINTF (ASE_T("%ld"), 
 				(long)((ase_awk_val_int_t*)val)->val);
