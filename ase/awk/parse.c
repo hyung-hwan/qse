@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.227 2006-12-23 05:44:17 bacon Exp $
+ * $Id: parse.c,v 1.228 2006-12-24 17:20:48 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1395,8 +1395,8 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 	{
 		if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
 		ase_awk_seterror (
-			awk, ASE_AWK_ESEMICOLON, 
-			awk->token.prev.line, ASE_NULL);
+			awk, ASE_AWK_ESEMICOLON, awk->token.prev.line, 
+			ASE_T("statement not terminated with a semicolon"));
 		return ASE_NULL;
 	}
 
@@ -1417,7 +1417,9 @@ static ase_awk_nde_t* __parse_expression (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		awk->errnum = ASE_AWK_ERECUR;
+		ase_awk_seterror (
+			awk, ASE_AWK_ERECUR, line, 
+			ASE_T("expression nested too deeply"));
 		return ASE_NULL;
 	}
 
@@ -1975,7 +1977,9 @@ static ase_awk_nde_t* __parse_unary (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		awk->errnum = ASE_AWK_ERECUR;
+		ase_awk_seterror (
+			awk, ASE_AWK_ERECUR, awk->token.line,
+			ASE_T("expression nested too deeply"));
 		return ASE_NULL;
 	}
 	awk->parse.depth.cur.expr++;
@@ -2030,7 +2034,9 @@ static ase_awk_nde_t* __parse_unary_exp (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		awk->errnum = ASE_AWK_ERECUR;
+		ase_awk_seterror (
+			awk, ASE_AWK_ERECUR, awk->token.line,
+			ASE_T("expression nested too deeply"));
 		return ASE_NULL;
 	}
 	awk->parse.depth.cur.expr++;
@@ -2447,7 +2453,9 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 	}
 
 	/* valid expression introducer is expected */
-	awk->errnum = ASE_AWK_EEXPRESSION;
+	ase_awk_seterror (
+		awk, ASE_AWK_EEXPRESSION, line, 
+		ASE_T("invalid start of an expression"));
 	return ASE_NULL;
 }
 
@@ -2465,7 +2473,7 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		ASE_AWK_STR_LEN(&awk->token.name));
 	if (name_dup == ASE_NULL) 
 	{
-		awk->errnum = ASE_AWK_ENOMEM;
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, line, ASE_NULL);
 		return ASE_NULL;
 	}
 	name_len = ASE_AWK_STR_LEN(&awk->token.name);
@@ -2487,7 +2495,9 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		{
 			/* built-in function should be in the form 
 		 	 * of the function call */
-			awk->errnum = ASE_AWK_ELPAREN;
+			ase_awk_seterror (
+				awk, ASE_AWK_ELPAREN, line,
+				ASE_T("function name without a left parenthesis"));
 			return ASE_NULL;
 		}
 
@@ -2522,7 +2532,7 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		if (nde == ASE_NULL) 
 		{
 			ASE_AWK_FREE (awk, name_dup);
-			awk->errnum = ASE_AWK_ENOMEM;
+			ase_awk_seterror (awk, ASE_AWK_ENOMEM, line, ASE_NULL);
 			return ASE_NULL;
 		}
 
@@ -2590,11 +2600,16 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return (ase_awk_nde_t*)nde;
 		}
 
+		awk->sysfns.sprintf (
+			awk->errmsg, ASE_COUNTOF(awk->errmsg),
+			ASE_T("undefined identifier '%.*s'"), 
+			name_len, name_dup);
+
 		/* undefined variable */
 		ASE_AWK_FREE (awk, name_dup);
 		ASE_AWK_FREE (awk, nde);
 
-		awk->errnum = ASE_AWK_EUNDEF;
+		ase_awk_seterror (awk, ASE_AWK_EUNDEF, line, awk->errmsg);
 		return ASE_NULL;
 	}
 }
@@ -2656,7 +2671,7 @@ static ase_awk_nde_t* __parse_hashidx (
 	if (nde == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, idx);
-		awk->errnum = ASE_AWK_ENOMEM;
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, line, ASE_NULL);
 		return ASE_NULL;
 	}
 
@@ -2725,7 +2740,10 @@ static ase_awk_nde_t* __parse_hashidx (
 	ase_awk_clrpt (awk, idx);
 	ASE_AWK_FREE (awk, nde);
 
-	awk->errnum = ASE_AWK_EUNDEF;
+	awk->sysfns.sprintf (
+		awk->errmsg, ASE_COUNTOF(awk->errmsg),
+		ASE_T("undefined identifier '%.*s'"), name_len, name);
+	ase_awk_seterror (awk, ASE_AWK_EUNDEF, line, awk->errmsg);
 	return ASE_NULL;
 }
 
@@ -3489,7 +3507,7 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk, ase_size_t line, int type)
 		if (args != ASE_NULL) ase_awk_clrpt (awk, args);
 		if (out != ASE_NULL) ase_awk_clrpt (awk, out);
 
-		awk->errnum = ASE_AWK_ENOMEM;
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, line, ASE_NULL);
 		return ASE_NULL;
 	}
 
@@ -3500,7 +3518,9 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk, ase_size_t line, int type)
 	if (type == ASE_AWK_NDE_PRINTF && args == ASE_NULL)
 	{
 		if (out != ASE_NULL) ase_awk_clrpt (awk, out);
-		awk->errnum = ASE_AWK_EPRINTFARG;
+		ase_awk_seterror (
+			awk, ASE_AWK_EPRINTFARG, line, 
+			ASE_T("printf not followed by any arguments"));
 		return ASE_NULL;
 	}
 
@@ -3569,9 +3589,11 @@ static int __get_token (ase_awk_t* awk)
 			if (__unget_char (awk, c) == -1) return -1;
 			if (__get_number (awk) == -1) return -1;
 		}
-		else
+		else 
 		{
-			awk->errnum = ASE_AWK_ELXCHR;
+			ase_awk_seterror (
+				awk, ASE_AWK_ELXCHR, awk->token.line,
+				ASE_T("floating point not followed by any valid digits"));
 			return -1;
 		}
 	}
@@ -3957,7 +3979,11 @@ static int __get_token (ase_awk_t* awk)
 	}
 	else 
 	{
-		awk->errnum = ASE_AWK_ELXCHR;
+		awk->sysfns.sprintf (
+			awk->errmsg, ASE_COUNTOF(awk->errmsg),
+			ASE_T("invalid character '%c'"), c);
+		ase_awk_seterror (
+			awk, ASE_AWK_ELXCHR, awk->token.line, awk->errmsg);
 		return -1;
 	}
 

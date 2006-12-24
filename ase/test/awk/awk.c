@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.148 2006-12-24 16:07:13 bacon Exp $
+ * $Id: awk.c,v 1.149 2006-12-24 17:21:24 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -783,7 +783,7 @@ static int __main (int argc, ase_char_t* argv[])
 #endif
 	const ase_char_t* mfn = ASE_NULL;
 
-	opt = ASE_AWK_IMPLICIT | 
+	opt = /*ASE_AWK_IMPLICIT | */
 	      ASE_AWK_EXPLICIT | 
 	      ASE_AWK_UNIQUEAFN | 
 	      ASE_AWK_HASHSIGN | 
@@ -874,7 +874,7 @@ static int __main (int argc, ase_char_t* argv[])
 		HeapDestroy (sysfns_data.heap);
 #endif
 		awk_printf (
-			ASE_T("ERROR: cannot parse awk [%d] %s\n"), 
+			ASE_T("ERROR: cannot open awk [%d] %s\n"), 
 			errnum, ase_awk_geterrstr(errnum));
 		return -1;
 	}
@@ -897,7 +897,7 @@ static int __main (int argc, ase_char_t* argv[])
 		awk_printf (
 			ASE_T("ERROR: cannot parse program - line %u [%d] %s\n"), 
 			(unsigned int)ase_awk_geterrlin(awk), 
-			errnum, ase_awk_geterrstr(errnum));
+			errnum, ase_awk_geterrmsg(awk));
 		ase_awk_close (awk);
 		return -1;
 	}

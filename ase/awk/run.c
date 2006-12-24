@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.307 2006-12-24 15:14:08 bacon Exp $
+ * $Id: run.c,v 1.308 2006-12-24 17:21:04 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -567,14 +567,26 @@ void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum)
 	run->errmsg[0] = ASE_T('\0');
 }
 
+void ase_awk_getrunerror (
+	ase_awk_run_t* run, int* errnum, 
+	ase_size_t* errlin, const ase_char_t** errmsg)
+{
+	if (errnum != ASE_NULL) *errnum = run->errnum;
+	if (errlin != ASE_NULL) *errlin = run->errlin;
+	if (errmsg != ASE_NULL) *errmsg = run->errmsg;
+}
+
 void ase_awk_setrunerror (
 	ase_awk_run_t* run, int errnum, 
-	ase_size_t errlin, const ase_char_t* msg)
+	ase_size_t errlin, const ase_char_t* errmsg)
 {
 	run->errnum = errnum;
 	run->errlin = errlin;
-	if (msg == ASE_NULL) run->errmsg[0] = ASE_T('\0');
-	else ase_awk_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), msg);
+	if (errmsg == ASE_NULL) run->errmsg[0] = ASE_T('\0');
+	else if (errmsg != run->errmsg)
+	{
+		ase_awk_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), errmsg);
+	}
 }
 
 int ase_awk_run (ase_awk_t* awk, 
@@ -2367,14 +2379,13 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
-				ase_char_t msg[ASE_COUNTOF(run->errmsg)];
 				run->awk->sysfns.sprintf (
-					msg, ASE_COUNTOF(msg), 
-					ASE_T("%.*s not deletable"), 
+					run->errmsg, ASE_COUNTOF(run->errmsg), 
+					ASE_T("'%.*s' not deletable"), 
 					var->id.name_len, var->id.name);
-				ase_awk_setrunerror (run, 
-					ASE_AWK_ENODEL, 
-					var->line, msg);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENODEL, var->line, 
+					run->errmsg);
 				return -1;
 			}
 
@@ -2484,14 +2495,13 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
-				ase_char_t msg[ASE_COUNTOF(run->errmsg)];
 				run->awk->sysfns.sprintf (
-					msg, ASE_COUNTOF(msg), 
-					ASE_T("%.*s not deletable"), 
+					run->errmsg, ASE_COUNTOF(run->errmsg), 
+					ASE_T("'%.*s' not deletable"), 
 					var->id.name_len, var->id.name);
-				ase_awk_setrunerror (run, 
-					ASE_AWK_ENODEL, 
-					var->line, msg);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENODEL, var->line, 
+					run->errmsg);
 				return -1;
 			}
 
