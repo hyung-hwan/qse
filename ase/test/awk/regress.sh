@@ -55,7 +55,13 @@ run_test()
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
-			return 1
+
+			echo "Do you want to abort? [y/n]"
+			read ans
+			if [ "$ans" = "y" -o "$ans" = "Y" ]
+			then
+				return 1
+			fi
 		fi
 	done
 
@@ -67,7 +73,13 @@ run_test()
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
-			return 1
+
+			echo "Do you want to abort? [y/n]"
+			read ans
+			if [ "$ans" = "y" -o "$ans" = "Y" ]
+			then
+				return 1
+			fi
 		fi
 	done
 
