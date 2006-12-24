@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.147 2006-12-24 15:14:09 bacon Exp $
+ * $Id: awk.c,v 1.148 2006-12-24 16:07:13 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -26,14 +26,11 @@
 	#include <wctype.h>
 	#include <locale.h>
 
-	#include "printf.c"
-/*
 	#include <xp/bas/stdio.h>
 	#include <xp/bas/stdlib.h>
 	#include <xp/bas/string.h>
 	#include <xp/bas/memory.h>
 	#include <xp/bas/sysapi.h>
-*/
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
@@ -197,14 +194,17 @@ static FILE* awk_popen (const ase_char_t* cmd, const ase_char_t* mode)
 
 #if defined(_WIN32)
 	#define awk_fgets _fgetts
+	#define awk_fgetc _fgettc
 	#define awk_fputs _fputts
 	#define awk_fputc _fputtc
 #elif defined(ASE_CHAR_IS_MCHAR)
 	#define awk_fgets fgets
+	#define awk_fgetc fgetc
 	#define awk_fputs fputs
 	#define awk_fputc fputc
 #else
 	#define awk_fgets fgetws
+	#define awk_fgetc fgetwc
 	#define awk_fputs fputws
 	#define awk_fputc fputwc
 #endif
@@ -231,11 +231,7 @@ static ase_ssize_t process_source (
 	else if (cmd == ASE_AWK_IO_READ)
 	{
 		if (size <= 0) return -1;
-	#ifdef ASE_CHAR_IS_MCHAR
-		c = fgetc ((FILE*)src_io->input_handle);
-	#else
-		c = fgetwc ((FILE*)src_io->input_handle);
-	#endif
+		c = awk_fgetc ((FILE*)src_io->input_handle);
 		if (c == ASE_CHAR_EOF) return 0;
 		*data = c;
 		return 1;
@@ -250,17 +246,17 @@ static ase_ssize_t dump_source (
 	/*struct src_io* src_io = (struct src_io*)arg;*/
 
 	if (cmd == ASE_AWK_IO_OPEN) return 1;
-	else if (cmd == ASE_AWK_IO_CLOSE) return 0;
+	else if (cmd == ASE_AWK_IO_CLOSE) 
+	{
+		fflush (stdout);
+		return 0;
+	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
 		ase_size_t i;
 		for (i = 0; i < size; i++)
 		{
-		#ifdef ASE_CHAR_IS_MCHAR
-			fputc (data[i], stdout);
-		#else
-			fputwc (data[i], stdout);
-		#endif
+			if (awk_fputc (data[i], stdout) == ASE_CHAR_EOF) return -1;
 		}
 		return size;
 	}
@@ -309,14 +305,23 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_WRITE:
 		{
+			int n;
+/*
 			ase_size_t i;
-			/* TODO: how to return error or 0 */
 			for (i = 0; i < size; i++)
 			{
-				int n;
-				n = awk_fputc (data[i], (FILE*)epa->handle);
-				//if (n == -1) wprintf (L"errno = %d, %d\n", errno, EINVAL);
+				if (awk_fputc (data[i], (FILE*)epa->handle) == ASE_CHAR_EOF) return -1;
 			}
+*/
+		#if defined(ASE_CHAR_IS_MCHAR)
+			n = fprintf (epa->handle, "%.*s", size, data);
+		#elif defined(_WIN32)
+			n = fwprintf (epa->handle, "%.*s", size, data);
+		#else
+			n = fprintf (epa->handle, "%.*ls", size, data);
+		#endif
+			if (n < 0) return -1;
+
 			return size;
 		}
 
@@ -380,12 +385,25 @@ static ase_ssize_t process_extio_file (
 
 		case ASE_AWK_IO_WRITE:
 		{
+			/*
 			ase_size_t i;
-			/* TODO: how to return error or 0 */
 			for (i = 0; i < size; i++)
 			{
-				awk_fputc (data[i], (FILE*)epa->handle);
+				if (awk_fputc (data[i], (FILE*)epa->handle) == ASE_CHAR_EOF) return -1;
 			}
+			*/
+
+			int n;
+		#if defined(ASE_CHAR_IS_MCHAR)
+			n = fprintf (epa->handle, "%.*s", size, data);
+		#elif defined(_WIN32)
+			n = fwprintf (epa->handle, "%.*s", size, data);
+		#else
+			n = fprintf (epa->handle, "%.*ls", size, data);
+		#endif
+			if (n < 0) return -1;
+		
+
 			return size;
 		}
 
@@ -491,13 +509,11 @@ static ase_ssize_t process_extio_console (
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
 		ase_size_t i;
-		/* TODO: how to return error or 0 */
 		for (i = 0; i < size; i++)
 		{
-			awk_fputc (data[i], (FILE*)epa->handle);
+			if (awk_fputc (data[i], (FILE*)epa->handle) == ASE_CHAR_EOF) return -1;
 		}
 
-		/*MessageBox (NULL, data, data, MB_OK);*/
 		return size;
 	}
 	else if (cmd == ASE_AWK_IO_FLUSH)
