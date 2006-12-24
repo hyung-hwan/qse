@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.306 2006-12-23 06:33:47 bacon Exp $
+ * $Id: run.c,v 1.307 2006-12-24 15:14:08 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -657,6 +657,9 @@ int ase_awk_run (ase_awk_t* awk,
 		}
 	}
 
+	/* uninitialize the run object */
+	__deinit_run (run);
+
 	/* the run loop ended. execute the end callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_end != ASE_NULL) 
 	{
@@ -669,8 +672,7 @@ int ase_awk_run (ase_awk_t* awk,
 		n = 0;
 	}
 
-	/* uninitialize the run object */
-	__deinit_run (run);
+	/* unregister the run object */
 	__del_run (awk, run);
 
 	ASE_AWK_FREE (awk, run);
@@ -2539,7 +2541,9 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 		ASE_AWK_ASSERTX (run->awk, 
 			!"should never happen - wrong target for delete",
 			"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
-		ase_awk_setrunerror (run, ASE_AWK_EINTERNAL, var->line, "delete statement called with a wrong target");
+		ase_awk_setrunerror (
+			run, ASE_AWK_EINTERNAL, var->line, 
+			ASE_T("delete statement called with a wrong target"));
 		return -1;
 	}
 
