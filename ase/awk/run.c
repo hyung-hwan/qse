@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.308 2006-12-24 17:21:04 bacon Exp $
+ * $Id: run.c,v 1.309 2006-12-25 12:00:32 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -4914,13 +4914,13 @@ static ase_awk_val_t* __eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	/* built-in function */
 	if (call->nargs < call->what.bfn.arg.min)
 	{
-		run->errnum = ASE_AWK_ETOOFEWARGS;
+		run->errnum = ASE_AWK_EARGTF;
 		return ASE_NULL;
 	}
 
 	if (call->nargs > call->what.bfn.arg.max)
 	{
-		run->errnum = ASE_AWK_ETOOMANYARGS;
+		run->errnum = ASE_AWK_EARGTM;
 		return ASE_NULL;
 	}
 
@@ -4948,7 +4948,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	{
 		/* TODO: is this correct? what if i want to 
 		 *       allow arbitarary numbers of arguments? */
-		run->errnum = ASE_AWK_ETOOMANYARGS;
+		run->errnum = ASE_AWK_EARGTM;
 		return ASE_NULL;
 	}
 

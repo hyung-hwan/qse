@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.149 2006-12-24 17:21:24 bacon Exp $
+ * $Id: awk.c,v 1.150 2006-12-25 12:01:01 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -313,10 +313,10 @@ static ase_ssize_t process_extio_pipe (
 				if (awk_fputc (data[i], (FILE*)epa->handle) == ASE_CHAR_EOF) return -1;
 			}
 */
-		#if defined(ASE_CHAR_IS_MCHAR)
+		#if defined(_WIN32)
+			n = _ftprintf (epa->handle, ASE_T("%.*s"), size, data);
+		#elif defined(ASE_CHAR_IS_MCHAR)
 			n = fprintf (epa->handle, "%.*s", size, data);
-		#elif defined(_WIN32)
-			n = fwprintf (epa->handle, "%.*s", size, data);
 		#else
 			n = fprintf (epa->handle, "%.*ls", size, data);
 		#endif
@@ -394,10 +394,10 @@ static ase_ssize_t process_extio_file (
 			*/
 
 			int n;
-		#if defined(ASE_CHAR_IS_MCHAR)
+		#if defined(_WIN32)
+			n = _ftprintf (epa->handle, ASE_T("%.*s"), size, data);
+		#elif defined(ASE_CHAR_IS_MCHAR)
 			n = fprintf (epa->handle, "%.*s", size, data);
-		#elif defined(_WIN32)
-			n = fwprintf (epa->handle, "%.*s", size, data);
 		#else
 			n = fprintf (epa->handle, "%.*ls", size, data);
 		#endif
@@ -792,7 +792,7 @@ static int __main (int argc, ase_char_t* argv[])
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 
 	      /*ASE_AWK_COPROC |*/
-	      ASE_AWK_BLOCKLESS | 
+	      //ASE_AWK_BLOCKLESS | 
 	      ASE_AWK_STRINDEXONE | 
 	      ASE_AWK_STRIPSPACES | 
 	      ASE_AWK_NEXTOFILE;
