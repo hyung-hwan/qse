@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.65 2006-12-25 12:01:01 bacon Exp $
+ * $Id: err.c,v 1.66 2006-12-25 13:45:43 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -120,9 +120,10 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("built-in function redefined"),
 		ASE_T("function redefined"),
 		ASE_T("global variable redefined"),
+		ASE_T("parameter redefined"),
 		ASE_T("duplicate parameter name"),
-		ASE_T("duplicate variable name"),
-		ASE_T("duplicate name"),
+		ASE_T("duplicate global variable name"),
+		ASE_T("duplicate local variable name"),
 		ASE_T("undefined identifier"),
 		ASE_T("l-value required"),
 		ASE_T("too many global variables"),

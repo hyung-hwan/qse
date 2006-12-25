@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.173 2006-12-25 12:01:01 bacon Exp $
+ * $Id: awk.h,v 1.174 2006-12-25 13:45:43 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -285,9 +285,10 @@ enum
 	ASE_AWK_EBFNRED,        /* builtin function redefined */
 	ASE_AWK_EAFNRED,        /* function redefined */
 	ASE_AWK_EGBLRED,        /* global variable redefined */
+	ASE_AWK_EPARRED,        /* parameter redefined */
 	ASE_AWK_EDUPPAR,        /* duplicate parameter name */
-	ASE_AWK_EDUPVAR,        /* duplicate variable name */
-	ASE_AWK_EDUPNAM,        /* duplicate name - function, variable, etc */
+	ASE_AWK_EDUPGBL,        /* duplicate global variable name */
+	ASE_AWK_EDUPLCL,        /* duplicate local variable name */
 	ASE_AWK_EUNDEF,         /* undefined identifier */
 	ASE_AWK_ELVALUE,        /* l-value required */
 	ASE_AWK_EGBLTM,         /* too many global variables */
