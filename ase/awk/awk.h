@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.172 2006-12-24 17:21:24 bacon Exp $
+ * $Id: awk.h,v 1.173 2006-12-25 12:01:01 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -261,7 +261,7 @@ enum
 	ASE_AWK_ELXUNG,         /* lexer failed to unget a character */
 
 	ASE_AWK_EENDSRC,        /* unexpected end of source */
-	ASE_AWK_EENDCOMMENT,    /* unexpected end of a comment */
+	ASE_AWK_EENDCMT,        /* unexpected end of a comment */
 	ASE_AWK_EENDSTR,        /* unexpected end of a string */
 	ASE_AWK_EENDREX,        /* unexpected end of a regular expression */
 	ASE_AWK_ELBRACE,        /* left brace expected */
@@ -269,33 +269,30 @@ enum
 	ASE_AWK_ERPAREN,        /* right parenthesis expected */
 	ASE_AWK_ERBRACK,        /* right bracket expected */
 	ASE_AWK_ECOMMA,         /* comma expected */
-	ASE_AWK_ESEMICOLON,     /* semicolon expected */
+	ASE_AWK_ESCOLON,        /* semicolon expected */
 	ASE_AWK_ECOLON,         /* colon expected */
 	ASE_AWK_EIN,            /* keyword 'in' is expected */
 	ASE_AWK_ENOTVAR,        /* not a variable name after 'in' */
-	ASE_AWK_EEXPRESSION,    /* expression expected */
+	ASE_AWK_EEXPRES,        /* expression expected */
 
 	ASE_AWK_EWHILE,         /* keyword 'while' is expected */
-	ASE_AWK_EASSIGNMENT,    /* assignment statement expected */
+	ASE_AWK_EASSIGN,        /* assignment statement expected */
 	ASE_AWK_EIDENT,         /* identifier expected */
-	ASE_AWK_EBEGINBLOCK,    /* BEGIN requires an action block */
-	ASE_AWK_EENDBLOCK,      /* END requires an action block */
-	ASE_AWK_EDUPBEGIN,      /* duplicate BEGIN */
+	ASE_AWK_EBLKBEG,        /* BEGIN requires an action block */
+	ASE_AWK_EBLKEND,        /* END requires an action block */
+	ASE_AWK_EDUPBEG,        /* duplicate BEGIN */
 	ASE_AWK_EDUPEND,        /* duplicate END */
-	ASE_AWK_EFNREDEFBFN,    /* function redefines a builtin function */
-	ASE_AWK_EFNREDEFAFN,    /* function redefines an existing function */
-	ASE_AWK_EFNREDEFGLOBAL, /* function redefines a global variable */
-	ASE_AWK_EPARREDEFAFN,   /* parameter redefines the function name */
-	ASE_AWK_EDUPPARAM,      /* duplicate parameter name */
+	ASE_AWK_EBFNRED,        /* builtin function redefined */
+	ASE_AWK_EAFNRED,        /* function redefined */
+	ASE_AWK_EGBLRED,        /* global variable redefined */
+	ASE_AWK_EDUPPAR,        /* duplicate parameter name */
 	ASE_AWK_EDUPVAR,        /* duplicate variable name */
-	ASE_AWK_EDUPNAME,       /* duplicate name - function, variable, etc */
+	ASE_AWK_EDUPNAM,        /* duplicate name - function, variable, etc */
 	ASE_AWK_EUNDEF,         /* undefined identifier */
 	ASE_AWK_ELVALUE,        /* l-value required */
-	ASE_AWK_ETOOFEWARGS,    /* too few arguments */
-	ASE_AWK_ETOOMANYARGS,   /* too many arguments */
-	ASE_AWK_ETOOMANYGLOBALS, /* too many global variables */
-	ASE_AWK_ETOOMANYLOCALS, /* too many local variables */
-	ASE_AWK_ETOOMANYPARAMS, /* too many parameters */
+	ASE_AWK_EGBLTM,         /* too many global variables */
+	ASE_AWK_ELCLTM,         /* too many local variables */
+	ASE_AWK_EPARTM,         /* too many parameters */
 	ASE_AWK_EBREAK,         /* break outside a loop */
 	ASE_AWK_ECONTINUE,      /* continue outside a loop */
 	ASE_AWK_ENEXT,          /* next illegal in BEGIN or END block */
@@ -308,6 +305,8 @@ enum
 	ASE_AWK_EDIVBYZERO,        /* divide by zero */
 	ASE_AWK_EOPERAND,          /* invalid operand */
 	ASE_AWK_EPOSIDX,           /* wrong position index */
+	ASE_AWK_EARGTF,            /* too few arguments */
+	ASE_AWK_EARGTM,            /* too many arguments */
 	ASE_AWK_ENOSUCHFN,         /* no such function */
 	ASE_AWK_ENOASS,            /* value not assignable */
 	ASE_AWK_ENOIDX,            /* variable not indexable */

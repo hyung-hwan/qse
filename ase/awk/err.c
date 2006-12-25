@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.64 2006-12-24 17:21:24 bacon Exp $
+ * $Id: err.c,v 1.65 2006-12-25 12:01:01 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -117,17 +117,14 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("END requires an action block"),
 		ASE_T("duplicate BEGIN"),
 		ASE_T("duplicate END"),
-		ASE_T("the function name redefines a built-in function"),
-		ASE_T("a function cannot be redefined with the same name"),
-		ASE_T("the function name redefines a global variable"),
-		ASE_T("a parameter name cannot be the same as the name of the owning function"),
+		ASE_T("built-in function redefined"),
+		ASE_T("function redefined"),
+		ASE_T("global variable redefined"),
 		ASE_T("duplicate parameter name"),
 		ASE_T("duplicate variable name"),
 		ASE_T("duplicate name"),
 		ASE_T("undefined identifier"),
 		ASE_T("l-value required"),
-		ASE_T("too few arguments"),
-		ASE_T("too many arguments"),
 		ASE_T("too many global variables"),
 		ASE_T("too many local variables"),
 		ASE_T("too many parameters"),
@@ -142,6 +139,8 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("divide by zero"),
 		ASE_T("invalid operand"),
 		ASE_T("wrong position index"),
+		ASE_T("too few arguments"),
+		ASE_T("too many arguments"),
 		ASE_T("no such function"),
 		ASE_T("value not assignable"),
 		ASE_T("variable not indexable"),

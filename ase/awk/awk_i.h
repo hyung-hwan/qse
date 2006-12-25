@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.94 2006-12-19 14:20:30 bacon Exp $
+ * $Id: awk_i.h,v 1.95 2006-12-25 12:01:01 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -148,6 +148,8 @@ struct ase_awk_t
 		{
 			ase_cint_t curc;
 			ase_cint_t ungotc[5];
+			ase_cint_t ungotc_line[5];
+			ase_cint_t ungotc_column[5];
 			ase_size_t ungotc_count;
 
 			ase_size_t line;
