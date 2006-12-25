@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.229 2006-12-25 12:00:08 bacon Exp $
+ * $Id: parse.c,v 1.230 2006-12-25 13:45:07 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -130,7 +130,8 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk);
 static ase_awk_t* __collect_globals (ase_awk_t* awk);
 static ase_awk_t* __add_builtin_globals (ase_awk_t* awk);
 static ase_awk_t* __add_global (
-	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, int force);
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
+	ase_size_t line, int force);
 static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals);
 
 static ase_awk_nde_t* __parse_function (ase_awk_t* awk);
@@ -1263,11 +1264,11 @@ static ase_awk_t* __add_builtin_globals (ase_awk_t* awk)
 			 * to the global variable table with an empty name.
 			 * this is to prevent the run-time from looking up
 			 * the variable */
-			tmp =__add_global (awk, ASE_T(""), 0, 1);
+			tmp =__add_global (awk, ASE_T(""), 0, 0, 1);
 		}
 		else 
 		{
-			tmp =__add_global (awk, p->name, p->name_len, 0);
+			tmp =__add_global (awk, p->name, p->name_len, 0, 0);
 		}
 		if (tmp == ASE_NULL) return ASE_NULL;
 
@@ -1279,17 +1280,36 @@ static ase_awk_t* __add_builtin_globals (ase_awk_t* awk)
 }
 
 static ase_awk_t* __add_global (
-	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, int force)
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
+	ase_size_t line, int force)
 {
 	if (!force)
 	{
 		if (awk->option & ASE_AWK_UNIQUEAFN) 
 		{
+			/* check if it conflict with a builtin function name */
+			if (ase_awk_getbfn (awk, name, len) != ASE_NULL)
+			{
+				awk->sysfns.sprintf (
+					awk->errmsg, ASE_COUNTOF(awk->errmsg),
+					ASE_T("built-in function '%.*s' redefined"),
+					len, name);
+
+				ase_awk_seterror (awk, ASE_AWK_EBFNRED, line, awk->errmsg);
+				return ASE_NULL;
+			}
+
 			/* check if it conflict with a function name */
 			if (ase_awk_map_get (
 				&awk->tree.afns, name, len) != ASE_NULL) 
 			{
-				PANIC (awk, ASE_AWK_EDUPNAM);
+				awk->sysfns.sprintf (
+					awk->errmsg, ASE_COUNTOF(awk->errmsg),
+					ASE_T("function '%.*s' redefined"),
+					len, name);
+
+				ase_awk_seterror (awk, ASE_AWK_EAFNRED, line, awk->errmsg);
+				return ASE_NULL;
 			}
 		}
 
@@ -1297,18 +1317,26 @@ static ase_awk_t* __add_global (
 		if (ase_awk_tab_find (
 			&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
 		{ 
-			PANIC (awk, ASE_AWK_EDUPVAR);
+			awk->sysfns.sprintf (
+				awk->errmsg, ASE_COUNTOF(awk->errmsg),
+				ASE_T("duplicate global variable '%.*s'"),
+				len, name);
+
+			ase_awk_seterror (awk, ASE_AWK_EDUPGBL, line, awk->errmsg);
+			return ASE_NULL;
 		}
 	}
 
 	if (ase_awk_tab_getsize(&awk->parse.globals) >= ASE_AWK_MAX_GLOBALS)
 	{
-		PANIC (awk, ASE_AWK_EGBLTM);
+		ase_awk_seterror (awk, ASE_AWK_EGBLTM, line, ASE_NULL);
+		return ASE_NULL;
 	}
 
 	if (ase_awk_tab_add (&awk->parse.globals, name, len) == (ase_size_t)-1) 
 	{
-		PANIC (awk, ASE_AWK_ENOMEM);
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, line, ASE_NULL);
+		return ASE_NULL;
 	}
 
 	return awk;
@@ -1320,13 +1348,33 @@ static ase_awk_t* __collect_globals (ase_awk_t* awk)
 	{
 		if (!MATCH(awk,TOKEN_IDENT)) 
 		{
-			PANIC (awk, ASE_AWK_EIDENT);
+			if (MATCH(awk,TOKEN_EOF))
+			{
+				ase_awk_seterror (
+					awk, ASE_AWK_EENDSRC, awk->token.prev.line, 
+					ASE_NULL);
+				return ASE_NULL;
+			}
+			else
+			{
+				awk->sysfns.sprintf (
+					awk->errmsg, ASE_COUNTOF(awk->errmsg),
+					ASE_T("'%.*s' not a valid variable name"),
+					ASE_AWK_STR_LEN(&awk->token.name),
+					ASE_AWK_STR_BUF(&awk->token.name));
+
+				ase_awk_seterror (
+					awk, ASE_AWK_EIDENT, awk->token.line, 
+					awk->errmsg);
+				return ASE_NULL;
+			}
 		}
 
 		if (__add_global (
 			awk,
 			ASE_AWK_STR_BUF(&awk->token.name),
 			ASE_AWK_STR_LEN(&awk->token.name),
+			awk->token.line,
 			0) == ASE_NULL) return ASE_NULL;
 
 		if (__get_token(awk) == -1) return ASE_NULL;
@@ -1335,7 +1383,19 @@ static ase_awk_t* __collect_globals (ase_awk_t* awk)
 
 		if (!MATCH(awk,TOKEN_COMMA)) 
 		{
-			PANIC (awk, ASE_AWK_ECOMMA);
+			if (MATCH(awk,TOKEN_EOF))
+			{
+				ase_awk_seterror (
+					awk, ASE_AWK_EENDSRC, awk->token.prev.line,
+					ASE_NULL);
+			}
+			else
+			{
+				ase_awk_seterror (
+					awk, ASE_AWK_ECOMMA, awk->token.line, 
+					ASE_T("global variable list not separated by a comma"));
+			}
+			return ASE_NULL;
 		}
 
 		if (__get_token(awk) == -1) return ASE_NULL;
@@ -1356,7 +1416,26 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 	{
 		if (!MATCH(awk,TOKEN_IDENT)) 
 		{
-			PANIC (awk, ASE_AWK_EIDENT);
+			if (MATCH(awk,TOKEN_EOF))
+			{
+				ase_awk_seterror (
+					awk, ASE_AWK_EENDSRC, awk->token.prev.line, 
+					ASE_NULL);
+				return ASE_NULL;
+			}
+			else
+			{
+				awk->sysfns.sprintf (
+					awk->errmsg, ASE_COUNTOF(awk->errmsg),
+					ASE_T("'%.*s' not a valid variable name"),
+					ASE_AWK_STR_LEN(&awk->token.name),
+					ASE_AWK_STR_BUF(&awk->token.name));
+
+				ase_awk_seterror (
+					awk, ASE_AWK_EIDENT, awk->token.line, 
+					awk->errmsg);
+				return ASE_NULL;
+			}
 		}
 
 		local = ASE_AWK_STR_BUF(&awk->token.name);
@@ -1366,11 +1445,33 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 
 		if (awk->option & ASE_AWK_UNIQUEAFN) 
 		{
+			/* check if it conflict with a builtin function name */
+			if (ase_awk_getbfn (awk, local, local_len) != ASE_NULL)
+			{
+				awk->sysfns.sprintf (
+					awk->errmsg, ASE_COUNTOF(awk->errmsg),
+					ASE_T("built-in function '%.*s' redefined"),
+					local_len, local);
+
+				ase_awk_seterror (
+					awk, ASE_AWK_EBFNRED, awk->token.line, 
+					awk->errmsg);
+				return ASE_NULL;
+			}
+
 			/* check if it conflict with a function name */
 			if (ase_awk_map_get (
 				&awk->tree.afns, local, local_len) != ASE_NULL) 
 			{
-				PANIC (awk, ASE_AWK_EDUPNAM);
+				awk->sysfns.sprintf (
+					awk->errmsg, ASE_COUNTOF(awk->errmsg),
+					ASE_T("function '%.*s' redefined"),
+					local_len, local);
+
+				ase_awk_seterror (
+					awk, ASE_AWK_EAFNRED, awk->token.line,
+					awk->errmsg);
+				return ASE_NULL;
 			}
 		}
 
@@ -1378,7 +1479,15 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 		if (ase_awk_tab_find (&awk->parse.params,
 			0, local, local_len) != (ase_size_t)-1) 
 		{
-			PANIC (awk, ASE_AWK_EDUPNAM);
+			awk->sysfns.sprintf (
+				awk->errmsg, ASE_COUNTOF(awk->errmsg),
+				ASE_T("parameter '%.*s' redefined"),
+				local_len, local);
+
+			ase_awk_seterror (
+				awk, ASE_AWK_EPARRED, awk->token.line,
+				awk->errmsg);
+			return ASE_NULL;
 		}
 
 		/* check if it conflicts with other local variable names */
@@ -1386,25 +1495,51 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			((awk->option & ASE_AWK_SHADING)? nlocals: 0),
 			local, local_len) != (ase_size_t)-1)
 		{
-			PANIC (awk, ASE_AWK_EDUPVAR);	
+			awk->sysfns.sprintf (
+				awk->errmsg, ASE_COUNTOF(awk->errmsg),
+				ASE_T("duplicate local variable '%.*s'"),
+				local_len, local);
+
+			ase_awk_seterror (
+				awk, ASE_AWK_EDUPLCL, awk->token.line, awk->errmsg);
+			return ASE_NULL;
 		}
 
 		if (ase_awk_tab_getsize(&awk->parse.locals) >= ASE_AWK_MAX_LOCALS)
 		{
-			PANIC (awk, ASE_AWK_ELCLTM);
+			ase_awk_seterror (
+				awk, ASE_AWK_ELCLTM, awk->token.line, ASE_NULL);
+			return ASE_NULL;
 		}
 
 		if (ase_awk_tab_add (
 			&awk->parse.locals, local, local_len) == (ase_size_t)-1) 
 		{
-			PANIC (awk, ASE_AWK_ENOMEM);
+			ase_awk_seterror (
+				awk, ASE_AWK_ENOMEM, awk->token.line, ASE_NULL);
+			return ASE_NULL;
 		}
 
 		if (__get_token(awk) == -1) return ASE_NULL;
 
 		if (MATCH(awk,TOKEN_SEMICOLON)) break;
 
-		if (!MATCH(awk,TOKEN_COMMA)) PANIC (awk, ASE_AWK_ECOMMA);
+		if (!MATCH(awk,TOKEN_COMMA))
+		{
+			if (MATCH(awk,TOKEN_EOF))
+			{
+				ase_awk_seterror (
+					awk, ASE_AWK_EENDSRC, awk->token.prev.line,
+					ASE_NULL);
+			}
+			else
+			{
+				ase_awk_seterror (
+					awk, ASE_AWK_ECOMMA, awk->token.line, 
+					ASE_T("local variable list not separated by a comma"));
+			}
+			return ASE_NULL;
+		}
 
 		if (__get_token(awk) == -1) return ASE_NULL;
 	}
@@ -2664,17 +2799,23 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 	{
 		ase_awk_nde_t* nde;
 
-		ASE_AWK_FREE (awk, name_dup);
 		if (!MATCH(awk,TOKEN_LPAREN))
 		{
 			/* built-in function should be in the form 
 		 	 * of the function call */
-			ase_awk_seterror (
-				awk, ASE_AWK_ELPAREN, line,
-				ASE_T("function name without a left parenthesis"));
+
+			awk->sysfns.sprintf (
+				awk->errmsg, ASE_COUNTOF(awk->errmsg),
+				ASE_T("function name '%.*s' without a left parenthesis"),
+				name_len, name_dup);
+
+			ASE_AWK_FREE (awk, name_dup);
+
+			ase_awk_seterror (awk, ASE_AWK_ELPAREN, line, awk->errmsg);
 			return ASE_NULL;
 		}
 
+		ASE_AWK_FREE (awk, name_dup);
 		nde = __parse_fncall (awk, ASE_NULL, 0, bfn, line);
 		return (ase_awk_nde_t*)nde;
 	}
