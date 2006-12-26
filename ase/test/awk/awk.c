@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.150 2006-12-25 12:01:01 bacon Exp $
+ * $Id: awk.c,v 1.151 2006-12-26 10:25:19 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -40,6 +40,10 @@
 
 #if defined(__linux) && defined(_DEBUG)
 #include <mcheck.h>
+#endif
+
+#ifndef PATH_MAX
+#define PATH_MAX 2048
 #endif
 
 struct src_io
@@ -150,6 +154,7 @@ static FILE* awk_fopen (const ase_char_t* path, const ase_char_t* mode)
 #elif defined(ASE_CHAR_IS_MCHAR)
 	return fopen (path, mode);
 #else
+
 	char path_mb[PATH_MAX + 1];
 	char mode_mb[32];
 	size_t n;
@@ -783,7 +788,7 @@ static int __main (int argc, ase_char_t* argv[])
 #endif
 	const ase_char_t* mfn = ASE_NULL;
 
-	opt = /*ASE_AWK_IMPLICIT | */
+	opt = ASE_AWK_IMPLICIT | 
 	      ASE_AWK_EXPLICIT | 
 	      ASE_AWK_UNIQUEAFN | 
 	      ASE_AWK_HASHSIGN | 
@@ -792,7 +797,7 @@ static int __main (int argc, ase_char_t* argv[])
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 
 	      /*ASE_AWK_COPROC |*/
-	      //ASE_AWK_BLOCKLESS | 
+	      ASE_AWK_BLOCKLESS | 
 	      ASE_AWK_STRINDEXONE | 
 	      ASE_AWK_STRIPSPACES | 
 	      ASE_AWK_NEXTOFILE;
