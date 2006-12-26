@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.309 2006-12-25 12:00:32 bacon Exp $
+ * $Id: run.c,v 1.310 2006-12-26 10:05:12 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -582,6 +582,7 @@ void ase_awk_setrunerror (
 {
 	run->errnum = errnum;
 	run->errlin = errlin;
+
 	if (errmsg == ASE_NULL) run->errmsg[0] = ASE_T('\0');
 	else if (errmsg != run->errmsg)
 	{
@@ -660,7 +661,7 @@ int ase_awk_run (ase_awk_t* awk,
 		if (runcbs == ASE_NULL)
 		{
 			ase_awk_seterror (
-				awk, run->errnum, run->errlin, ASE_NULL);
+				awk, run->errnum, run->errlin, run->errmsg);
 		}
 		else
 		{
@@ -1937,7 +1938,6 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 		 * expression of the while statement */
 		ASE_AWK_ASSERT (run->awk, nde->test->next == ASE_NULL);
 
-		/* TODO: handle run-time abortion... */
 		while (1)
 		{
 			test = __eval_expression (run, nde->test);
@@ -1979,7 +1979,6 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 		 * expression of the while statement */
 		ASE_AWK_ASSERT (run->awk, nde->test->next == ASE_NULL);
 
-		/* TODO: handle run-time abortion... */
 		do
 		{
 			if (__run_statement(run,nde->body) == -1) return -1;
@@ -2401,8 +2400,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				idx = __eval_expression (run, var->idx);
 				if (idx == ASE_NULL) 
 				{
-					ase_awk_setrunerror (run, 
-						run->errnum, var->line, ASE_NULL);
+					//ase_awk_setrunerror (run, 
+					//	run->errnum, var->line, ASE_NULL);
 					return -1;
 				}
 
@@ -2519,8 +2518,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				idx = __eval_expression (run, var->idx);
 				if (idx == ASE_NULL) 
 				{
-					ase_awk_setrunerror (run, 
-						run->errnum, var->line, ASE_NULL);
+					//ase_awk_setrunerror (run, 
+					//	run->errnum, var->line, ASE_NULL);
 					return -1;
 				}
 
@@ -2583,8 +2582,8 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		v = __eval_expression (run, nde->out);
 		if (v == ASE_NULL) 
 		{
-			ase_awk_setrunerror (
-				run, run->errnum, nde->line, ASE_NULL);
+			//ase_awk_setrunerror (
+			//	run, run->errnum, nde->line, ASE_NULL);
 			return -1;
 		}
 
@@ -2681,8 +2680,8 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			if (v == ASE_NULL) 
 			{
 				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-				ase_awk_setrunerror (
-					run, run->errnum, nde->line, ASE_NULL);
+				//ase_awk_setrunerror (
+				//	run, run->errnum, nde->line, ASE_NULL);
 				return -1;
 			}
 			ase_awk_refupval (run, v);
@@ -2740,8 +2739,8 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		v = __eval_expression (run, nde->out);
 		if (v == ASE_NULL)
 		{
-			ase_awk_setrunerror (
-				run, run->errnum, nde->line, ASE_NULL);
+			//ase_awk_setrunerror (
+			//	run, run->errnum, nde->line, ASE_NULL);
 			return -1;
 		}
 
@@ -2802,7 +2801,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	if (v == ASE_NULL) 
 	{
 		if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-		ase_awk_setrunerror (run, run->errnum, nde->line, ASE_NULL);
+		//ase_awk_setrunerror (run, run->errnum, nde->line, ASE_NULL);
 		return -1;
 	}
 
@@ -3527,8 +3526,12 @@ static ase_awk_val_t* __eval_binop_in (
 	}
 
 	/* need an array */
-	/* TODO: change the error code to make it clearer */
-	PANIC (run, ASE_AWK_EOPERAND); 
+	ASE_AWK_FREE (run->awk, str);
+	ase_awk_refdownval (run, rv);
+
+	ase_awk_setrunerror (
+		run, ASE_AWK_EOPERAND, right->line, 
+		ASE_T("right-hand side of the 'in' operator not nil or an array"));
 	return ASE_NULL;
 }
 
