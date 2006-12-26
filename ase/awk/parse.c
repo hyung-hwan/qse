@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.231 2006-12-25 14:11:53 bacon Exp $
+ * $Id: parse.c,v 1.232 2006-12-26 10:04:58 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -321,8 +321,26 @@ static struct __bvent __bvtab[] =
 
 #define MATCH(awk,token_type) ((awk)->token.type == (token_type))
 
-#define PANIC(awk,code) \
-	do { (awk)->errnum = (code); return ASE_NULL; } while (0)
+#define SET_ERROR_0(awk,code,msg) \
+	do { \
+		if (MATCH(awk,TOKEN_EOF)) \
+		{ \
+			ase_awk_seterror ( \
+				awk, ASE_AWK_EENDSRC,  \
+				(awk)->token.prev.line, ASE_NULL); \
+		} \
+		else \
+		{ \
+			awk->sysfns.sprintf ( \
+				(awk)->errmsg, ASE_COUNTOF((awk)->errmsg), \
+				msg, \
+				ASE_AWK_STR_LEN(&(awk)->token.name), \
+				ASE_AWK_STR_BUF(&(awk)->token.name)); \
+			ase_awk_seterror ( \
+				awk, code, (awk)->token.line,  \
+				(awk)->errmsg); \
+		} \
+	} while (0)
 
 void ase_awk_setmaxparsedepth (ase_awk_t* awk, int types, ase_size_t depth)
 {
@@ -902,19 +920,8 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 				ASE_AWK_FREE (awk, name_dup);
 				ase_awk_tab_clear (&awk->parse.params);
 
-				if (MATCH(awk,TOKEN_EOF))
-				{
-					ase_awk_seterror (
-						awk, ASE_AWK_EENDSRC, awk->token.prev.line,
-						ASE_NULL);
-				}
-				else
-				{
-					ase_awk_seterror (
-						awk, ASE_AWK_ECOMMA, awk->token.line, 
-						ASE_T("parameter list not separated by a comma"));
-				}
-
+				SET_ERROR_0 (awk, ASE_AWK_ECOMMA,
+					ASE_T("comma expected in place of '%.*s'"));
 				return ASE_NULL;
 			}
 
@@ -1384,18 +1391,8 @@ static ase_awk_t* __collect_globals (ase_awk_t* awk)
 
 		if (!MATCH(awk,TOKEN_COMMA)) 
 		{
-			if (MATCH(awk,TOKEN_EOF))
-			{
-				ase_awk_seterror (
-					awk, ASE_AWK_EENDSRC, awk->token.prev.line,
-					ASE_NULL);
-			}
-			else
-			{
-				ase_awk_seterror (
-					awk, ASE_AWK_ECOMMA, awk->token.line, 
-					ASE_T("global variable list not separated by a comma"));
-			}
+			SET_ERROR_0 (awk, ASE_AWK_ECOMMA,
+				ASE_T("comma expected in place of '%.*s'"));
 			return ASE_NULL;
 		}
 
@@ -1527,18 +1524,8 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 
 		if (!MATCH(awk,TOKEN_COMMA))
 		{
-			if (MATCH(awk,TOKEN_EOF))
-			{
-				ase_awk_seterror (
-					awk, ASE_AWK_EENDSRC, awk->token.prev.line,
-					ASE_NULL);
-			}
-			else
-			{
-				ase_awk_seterror (
-					awk, ASE_AWK_ECOMMA, awk->token.line, 
-					ASE_T("local variable list not separated by a comma"));
-			}
+			SET_ERROR_0 (awk, ASE_AWK_ECOMMA,
+				ASE_T("comma expected in place of '%.*s'"));
 			return ASE_NULL;
 		}
 
@@ -1708,9 +1695,9 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 	if (!MATCH(awk,TOKEN_SEMICOLON)) 
 	{
 		if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
-		ase_awk_seterror (
-			awk, ASE_AWK_ESCOLON, awk->token.prev.line, 
-			ASE_T("statement not terminated with a semicolon"));
+
+		SET_ERROR_0 (awk, ASE_AWK_ESCOLON,
+			ASE_T("semicolon expected in place of '%.*s'"));
 		return ASE_NULL;
 	}
 
@@ -1981,6 +1968,7 @@ static ase_awk_nde_t* __parse_in (ase_awk_t* awk, ase_size_t line)
 
 	ase_awk_nde_exp_t* nde;
 	ase_awk_nde_t* left, * right;
+	ase_size_t line2;
 
 	left = __parse_regex_match (awk, line);
 	if (left == ASE_NULL) return ASE_NULL;
@@ -1995,7 +1983,9 @@ static ase_awk_nde_t* __parse_in (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL; 
 		}
 
-		right = __parse_regex_match (awk, awk->token.line);
+		line2 = awk->token.line;
+
+		right = __parse_regex_match (awk, line2);
 		if (right == ASE_NULL) 
 		{
 			ase_awk_clrpt (awk, left);
@@ -2006,7 +1996,11 @@ static ase_awk_nde_t* __parse_in (ase_awk_t* awk, ase_size_t line)
 		{
 			ase_awk_clrpt (awk, right);
 			ase_awk_clrpt (awk, left);
-			PANIC (awk, ASE_AWK_ENOTVAR);
+
+			ase_awk_seterror (
+				awk, ASE_AWK_ENOTVAR, line2, 
+				ASE_T("right-hand side of the 'in' operator not a normal variable"));
+			return ASE_NULL;
 		}
 
 		nde = (ase_awk_nde_exp_t*) ASE_AWK_MALLOC (
@@ -2141,7 +2135,12 @@ static ase_awk_nde_t* __parse_bitwise_or_with_extio (ase_awk_t* awk, ase_size_t 
 			if (in_type == ASE_AWK_IN_COPROC)
 			{
 				ase_awk_clrpt (awk, left);
-				PANIC (awk, ASE_AWK_EGETLINE);
+
+				/* TODO: support coprocess */
+				ase_awk_seterror (
+					awk, ASE_AWK_EGETLINE, line,
+					ASE_T("coprocess not supported by getline"));
+				return ASE_NULL;
 			}
 
 			right = __parse_bitwise_xor (awk, awk->token.line);
@@ -2426,6 +2425,7 @@ static ase_awk_nde_t* __parse_increment (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_t* left;
 	int type, opcode, opcode1, opcode2;
 
+	/* check for prefix increment operator */
 	opcode1 = MATCH(awk,TOKEN_PLUSPLUS)? ASE_AWK_INCOP_PLUS:
 	          MATCH(awk,TOKEN_MINUSMINUS)? ASE_AWK_INCOP_MINUS: -1;
 
@@ -2437,25 +2437,35 @@ static ase_awk_nde_t* __parse_increment (ase_awk_t* awk, ase_size_t line)
 	left = __parse_primary (awk, line);
 	if (left == ASE_NULL) return ASE_NULL;
 
+	/* check for postfix increment operator */
 	opcode2 = MATCH(awk,TOKEN_PLUSPLUS)? ASE_AWK_INCOP_PLUS:
 	          MATCH(awk,TOKEN_MINUSMINUS)? ASE_AWK_INCOP_MINUS: -1;
 
 	if (opcode1 != -1 && opcode2 != -1)
 	{
+		/* both prefix and postfix increment operator. 
+		 * not allowed */
 		ase_awk_clrpt (awk, left);
-		PANIC (awk, ASE_AWK_ELVALUE);
+
+		ase_awk_seterror (
+			awk, ASE_AWK_ELVALUE, line, 
+			ASE_T("both prefix and postfix increment/decrement operator present"));
+		return ASE_NULL;
 	}
 	else if (opcode1 == -1 && opcode2 == -1)
 	{
+		/* no increment operators */
 		return left;
 	}
 	else if (opcode1 != -1) 
 	{
+		/* prefix increment operator */
 		type = ASE_AWK_NDE_EXP_INCPRE;
 		opcode = opcode1;
 	}
 	else if (opcode2 != -1) 
 	{
+		/* postfix increment operator */
 		type = ASE_AWK_NDE_EXP_INCPST;
 		opcode = opcode2;
 
@@ -2595,7 +2605,9 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 		if (nde->buf == ASE_NULL) 
 		{
 			ASE_AWK_FREE (awk, nde);
-			PANIC (awk, ASE_AWK_ENOMEM);
+			ase_awk_seterror (
+				awk, ASE_AWK_ENOMEM, line, ASE_NULL);
+			return ASE_NULL;
 		}
 
 		if (__get_token(awk) == -1) 
@@ -2640,7 +2652,9 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 		if (nde->buf == ASE_NULL)
 		{
 			ASE_AWK_FREE (awk, nde);
-			PANIC (awk, ASE_AWK_ENOMEM);
+			ase_awk_seterror (
+				awk, ASE_AWK_ENOMEM, line, ASE_NULL);
+			return ASE_NULL;
 		}
 
 		nde->code = ase_awk_buildrex (awk,
@@ -2651,7 +2665,10 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 		{
 			ASE_AWK_FREE (awk, nde->buf);
 			ASE_AWK_FREE (awk, nde);
-			PANIC (awk, errnum);
+
+			ase_awk_seterror (
+				awk, errnum, line, ASE_NULL);
+			return ASE_NULL;
 		}
 
 		if (__get_token(awk) == -1) 
@@ -2734,7 +2751,10 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 		if (!MATCH(awk,TOKEN_RPAREN)) 
 		{
 			ase_awk_clrpt (awk, nde);
-			PANIC (awk, ASE_AWK_ERPAREN);
+
+			SET_ERROR_0 (awk, ASE_AWK_ERPAREN,
+					ASE_T("right parenthesis expected in place of '%.*s'"));
+			return ASE_NULL;
 		}
 
 		if (__get_token(awk) == -1) 
@@ -2758,7 +2778,10 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 				if (!MATCH(awk,TOKEN_IN))
 				{
 					ase_awk_clrpt (awk, nde);
-					PANIC (awk, ASE_AWK_EIN);
+
+					SET_ERROR_0 (awk, ASE_AWK_EIN,
+						ASE_T("'in' expected in place of '%.*s'"));
+					return ASE_NULL;
 				}
 			}
 
@@ -3053,7 +3076,10 @@ static ase_awk_nde_t* __parse_hashidx (
 	if (!MATCH(awk,TOKEN_RBRACK)) 
 	{
 		ase_awk_clrpt (awk, idx);
-		PANIC (awk, ASE_AWK_ERBRACK);
+
+		SET_ERROR_0 (awk, ASE_AWK_ERBRACK, 
+			ASE_T("right bracket expected in place of '%.*s'"));
+		return ASE_NULL;
 	}
 
 	if (__get_token(awk) == -1) 
@@ -3194,7 +3220,10 @@ static ase_awk_nde_t* __parse_fncall (
 			if (!MATCH(awk,TOKEN_COMMA)) 
 			{
 				if (head != ASE_NULL) ase_awk_clrpt (awk, head);
-				PANIC (awk, ASE_AWK_ECOMMA);	
+
+				SET_ERROR_0 (awk, ASE_AWK_ECOMMA,
+					ASE_T("comma expected in place of '%.*s'"));
+				return ASE_NULL;
 			}
 
 			if (__get_token(awk) == -1) 
@@ -3255,7 +3284,14 @@ static ase_awk_nde_t* __parse_if (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_t* else_part;
 	ase_awk_nde_if_t* nde;
 
-	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, ASE_AWK_ELPAREN);
+	if (!MATCH(awk,TOKEN_LPAREN)) 
+	{
+		SET_ERROR_0 (
+			awk, ASE_AWK_ELPAREN, 
+			ASE_T("left parenthesis expected in place of '%.*s'"));
+		return ASE_NULL;
+
+	}
 	if (__get_token(awk) == -1) return ASE_NULL;
 
 	test = __parse_expression (awk, awk->token.line);
@@ -3264,7 +3300,11 @@ static ase_awk_nde_t* __parse_if (ase_awk_t* awk, ase_size_t line)
 	if (!MATCH(awk,TOKEN_RPAREN)) 
 	{
 		ase_awk_clrpt (awk, test);
-		PANIC (awk, ASE_AWK_ERPAREN);
+
+		SET_ERROR_0 (
+			awk, ASE_AWK_ERPAREN, 
+			ASE_T("right parenthesis expected in place of '%.*s'"));
+		return ASE_NULL;
 	}
 
 	if (__get_token(awk) == -1) 
@@ -3327,7 +3367,13 @@ static ase_awk_nde_t* __parse_while (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_t* test, * body;
 	ase_awk_nde_while_t* nde;
 
-	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, ASE_AWK_ELPAREN);
+	if (!MATCH(awk,TOKEN_LPAREN)) 
+	{
+		SET_ERROR_0 (
+			awk, ASE_AWK_ELPAREN, 
+			ASE_T("left parenthesis expected in place of '%.*s'"));
+		return ASE_NULL;
+	}
 	if (__get_token(awk) == -1) return ASE_NULL;
 
 	test = __parse_expression (awk, awk->token.line);
@@ -3336,7 +3382,10 @@ static ase_awk_nde_t* __parse_while (ase_awk_t* awk, ase_size_t line)
 	if (!MATCH(awk,TOKEN_RPAREN)) 
 	{
 		ase_awk_clrpt (awk, test);
-		PANIC (awk, ASE_AWK_ERPAREN);
+		SET_ERROR_0 (
+			awk, ASE_AWK_ERPAREN, 
+			ASE_T("right parenthesis expected in place of '%.*s'"));
+		return ASE_NULL;
 	}
 
 	if (__get_token(awk) == -1) 
@@ -3379,7 +3428,13 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_for_t* nde; 
 	ase_awk_nde_foreach_t* nde2;
 
-	if (!MATCH(awk,TOKEN_LPAREN)) PANIC (awk, ASE_AWK_ELPAREN);
+	if (!MATCH(awk,TOKEN_LPAREN))
+	{
+		SET_ERROR_0 (
+			awk, ASE_AWK_ELPAREN, 
+			ASE_T("left parenthesis expected in place of '%.*s'"));
+		return ASE_NULL;
+	}
 	if (__get_token(awk) == -1) return ASE_NULL;
 		
 	if (MATCH(awk,TOKEN_SEMICOLON)) init = ASE_NULL;
@@ -3402,7 +3457,10 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 			if (!MATCH(awk,TOKEN_RPAREN))
 			{
 				ase_awk_clrpt (awk, init);
-				PANIC (awk, ASE_AWK_ERPAREN);
+				SET_ERROR_0 (
+					awk, ASE_AWK_ERPAREN, 
+					ASE_T("right parenthesis expected in place of '%.*s'"));
+				return ASE_NULL;
 			}
 
 			if (__get_token(awk) == -1) 
@@ -3442,9 +3500,9 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 		if (!MATCH(awk,TOKEN_SEMICOLON)) 
 		{
 			ase_awk_clrpt (awk, init);
-			ase_awk_seterror (
-				awk, ASE_AWK_ESCOLON, 
-				awk->token.prev.line, ASE_NULL);
+
+			SET_ERROR_0 (awk, ASE_AWK_ESCOLON,
+				ASE_T("semicolon expected in place of '%.*s'"));
 			return ASE_NULL;
 		}
 	}
@@ -3469,9 +3527,9 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 		{
 			ase_awk_clrpt (awk, init);
 			ase_awk_clrpt (awk, test);
-			ase_awk_seterror (
-				awk, ASE_AWK_ESCOLON, 
-				awk->token.prev.line, ASE_NULL);
+
+			SET_ERROR_0 (awk, ASE_AWK_ESCOLON,
+				ASE_T("semicolon expected in place of '%.*s'"));
 			return ASE_NULL;
 		}
 	}
@@ -3499,7 +3557,11 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 			ase_awk_clrpt (awk, init);
 			ase_awk_clrpt (awk, test);
 			ase_awk_clrpt (awk, incr);
-			PANIC (awk, ASE_AWK_ERPAREN);
+
+			SET_ERROR_0 (
+				awk, ASE_AWK_ERPAREN, 
+				ASE_T("right parenthesis expected in place of '%.*s'"));
+			return ASE_NULL;
 		}
 	}
 
@@ -3558,7 +3620,11 @@ static ase_awk_nde_t* __parse_dowhile (ase_awk_t* awk, ase_size_t line)
 	if (!MATCH(awk,TOKEN_WHILE)) 
 	{
 		ase_awk_clrpt (awk, body);
-		PANIC (awk, ASE_AWK_EWHILE);
+
+		SET_ERROR_0 (
+			awk, ASE_AWK_EWHILE, 
+			ASE_T("'while' expected in place of '%.*s'"));
+		return ASE_NULL;
 	}
 
 	if (__get_token(awk) == -1) 
@@ -3570,7 +3636,11 @@ static ase_awk_nde_t* __parse_dowhile (ase_awk_t* awk, ase_size_t line)
 	if (!MATCH(awk,TOKEN_LPAREN)) 
 	{
 		ase_awk_clrpt (awk, body);
-		PANIC (awk, ASE_AWK_ELPAREN);
+
+		SET_ERROR_0 (
+			awk, ASE_AWK_ELPAREN, 
+			ASE_T("left parenthesis expected in place of '%.*s'"));
+		return ASE_NULL;
 	}
 
 	if (__get_token(awk) == -1) 
@@ -3590,7 +3660,11 @@ static ase_awk_nde_t* __parse_dowhile (ase_awk_t* awk, ase_size_t line)
 	{
 		ase_awk_clrpt (awk, body);
 		ase_awk_clrpt (awk, test);
-		PANIC (awk, ASE_AWK_ERPAREN);
+
+		SET_ERROR_0 (
+			awk, ASE_AWK_ERPAREN, 
+			ASE_T("right parenthesis expected in place of '%.*s'"));
+		return ASE_NULL;
 	}
 
 	if (__get_token(awk) == -1) 
@@ -3626,7 +3700,13 @@ static ase_awk_nde_t* __parse_break (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_break_t* nde;
 
 	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_BREAK);
-	if (awk->parse.depth.cur.loop <= 0) PANIC (awk, ASE_AWK_EBREAK);
+	if (awk->parse.depth.cur.loop <= 0) 
+	{
+		ase_awk_seterror (
+			awk, ASE_AWK_EBREAK, line, 
+			ASE_T("break statement outside a loop"));
+		return ASE_NULL;
+	}
 
 	nde = (ase_awk_nde_break_t*) 
 		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_break_t));
@@ -3649,7 +3729,13 @@ static ase_awk_nde_t* __parse_continue (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_continue_t* nde;
 
 	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_CONTINUE);
-	if (awk->parse.depth.cur.loop <= 0) PANIC (awk, ASE_AWK_ECONTINUE);
+	if (awk->parse.depth.cur.loop <= 0) 
+	{
+		ase_awk_seterror (
+			awk, ASE_AWK_ECONTINUE, line, 
+			ASE_T("continue statement outside a loop"));
+		return ASE_NULL;
+	}
 
 	nde = (ase_awk_nde_continue_t*) 
 		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_continue_t));
@@ -3751,10 +3837,19 @@ static ase_awk_nde_t* __parse_next (ase_awk_t* awk, ase_size_t line)
 
 	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_NEXT);
 
-	if (awk->parse.id.block == PARSE_BEGIN_BLOCK ||
-	    awk->parse.id.block == PARSE_END_BLOCK)
+	if (awk->parse.id.block == PARSE_BEGIN_BLOCK)
 	{
-		PANIC (awk, ASE_AWK_ENEXT);
+		ase_awk_seterror (
+			awk, ASE_AWK_ENEXT, line, 
+			ASE_T("next statement in BEGIN block"));
+		return ASE_NULL;
+	}
+	if (awk->parse.id.block == PARSE_END_BLOCK)
+	{
+		ase_awk_seterror (
+			awk, ASE_AWK_ENEXT, line, 
+			ASE_T("next statement in END block"));
+		return ASE_NULL;
 	}
 
 	nde = (ase_awk_nde_next_t*) 
@@ -3776,10 +3871,19 @@ static ase_awk_nde_t* __parse_nextfile (ase_awk_t* awk, ase_size_t line, int out
 {
 	ase_awk_nde_nextfile_t* nde;
 
-	if (awk->parse.id.block == PARSE_BEGIN_BLOCK ||
-	    awk->parse.id.block == PARSE_END_BLOCK)
+	if (awk->parse.id.block == PARSE_BEGIN_BLOCK)
 	{
-		PANIC (awk, ASE_AWK_ENEXTFILE);
+		ase_awk_seterror (
+			awk, ASE_AWK_ENEXTFILE, line, 
+			ASE_T("nextfile statement in BEGIN block"));
+		return ASE_NULL;
+	}
+	if (awk->parse.id.block == PARSE_END_BLOCK)
+	{
+		ase_awk_seterror (
+			awk, ASE_AWK_ENEXTFILE, line, 
+			ASE_T("nextfile statement in END block"));
+		return ASE_NULL;
 	}
 
 	nde = (ase_awk_nde_nextfile_t*) 
@@ -3805,7 +3909,13 @@ static ase_awk_nde_t* __parse_delete (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_t* var;
 
 	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_DELETE);
-	if (!MATCH(awk,TOKEN_IDENT)) PANIC (awk, ASE_AWK_EIDENT);
+	if (!MATCH(awk,TOKEN_IDENT)) 
+	{
+		SET_ERROR_0 (
+			awk, ASE_AWK_EIDENT, 
+			ASE_T("identifier expected in place of '%.*s'"));
+		return ASE_NULL;
+	}
 
 	var = __parse_primary_ident (awk, awk->token.line);
 	if (var == ASE_NULL) return ASE_NULL;
@@ -3814,7 +3924,10 @@ static ase_awk_nde_t* __parse_delete (ase_awk_t* awk, ase_size_t line)
 	{
 		/* a normal identifier is expected */
 		ase_awk_clrpt (awk, var);
-		PANIC (awk, ASE_AWK_EIDENT);
+
+		ase_awk_seterror (awk, ASE_AWK_EIDENT, line,
+			ASE_T("'delete' not followed by a normal variable"));
+		return ASE_NULL;
 	}
 
 	nde = (ase_awk_nde_delete_t*) ASE_AWK_MALLOC (
