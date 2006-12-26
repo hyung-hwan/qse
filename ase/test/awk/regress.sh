@@ -31,8 +31,8 @@ run_script_for_test()
 	echo ">> RUNNING $script"
 	./awk "$script" "$data" > "$output.$pid"
 
-	diff -y "$output" "$output.$pid" 
-	#diff "$output" "$output.$pid" 
+	#diff -y "$output" "$output.$pid" 
+	diff "$output" "$output.$pid" 
 	if [ $? -ne 0 ]
 	then
 		rm -f "$output.$pid"
