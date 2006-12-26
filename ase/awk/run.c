@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.310 2006-12-26 10:05:12 bacon Exp $
+ * $Id: run.c,v 1.311 2006-12-26 13:27:02 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2953,7 +2953,7 @@ static ase_awk_val_t* __eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	/* __eval_binop_in evaluates the ASE_AWK_NDE_GRP specially.
 	 * so this function should never be reached. */
 	ASE_AWK_ASSERT (run->awk, !"should never happen - NDE_GRP only for in");
-	PANIC (run, ASE_AWK_EINTERNAL);
+	ase_awk_setrunerror (run, ASE_AWK_EINTERNAL, nde->line, ASE_NULL);
 	return ASE_NULL;
 }
 
