@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.232 2006-12-26 10:04:58 bacon Exp $
+ * $Id: parse.c,v 1.233 2006-12-26 13:26:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1696,8 +1696,18 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 	{
 		if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
 
-		SET_ERROR_0 (awk, ASE_AWK_ESCOLON,
-			ASE_T("semicolon expected in place of '%.*s'"));
+		if (MATCH(awk,TOKEN_EOF))
+		{
+			ase_awk_seterror (
+				awk, ASE_AWK_EENDSRC, 
+				awk->token.prev.line, ASE_NULL);
+		}
+		else
+		{
+			ase_awk_seterror (
+				awk, ASE_AWK_ESCOLON, awk->token.prev.line, 
+				ASE_T("statement not terminated with a semicolon"));
+		}
 		return ASE_NULL;
 	}
 
