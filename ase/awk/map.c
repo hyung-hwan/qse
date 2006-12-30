@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.33 2006-12-11 08:44:52 bacon Exp $
+ * $Id: map.c,v 1.34 2006-12-30 08:54:43 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -21,6 +21,10 @@ ase_awk_map_t* ase_awk_map_open (
 	ase_awk_map_t* map, void* owner, ase_size_t capa, 
 	void(*freeval)(void*,void*), ase_awk_t* awk)
 {
+	ASE_AWK_ASSERTX (awk, capa > 0,
+		"the capacity of a map should be greater than 0");
+
+
 	if (map == ASE_NULL) 
 	{
 		map = (ase_awk_map_t*) ASE_AWK_MALLOC (

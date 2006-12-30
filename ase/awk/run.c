@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.311 2006-12-26 13:27:02 bacon Exp $
+ * $Id: run.c,v 1.312 2006-12-30 08:54:22 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -49,6 +49,10 @@ enum exit_level_t
 	((idx) >= 0 && \
 	 (idx) < ASE_TYPE_MAX(ase_long_t) && \
 	 (idx) < ASE_TYPE_MAX(ase_size_t))
+
+static int __set_global (
+	ase_awk_run_t* run, ase_size_t idx, 
+	ase_awk_nde_var_t* var, ase_awk_val_t* val);
 
 static void __add_run (ase_awk_t* awk, ase_awk_run_t* run);
 static void __del_run (ase_awk_t* awk, ase_awk_run_t* run);
@@ -236,21 +240,46 @@ ase_awk_val_t* ase_awk_getglobal (ase_awk_run_t* run, ase_size_t idx)
 
 int ase_awk_setglobal (ase_awk_run_t* run, ase_size_t idx, ase_awk_val_t* val)
 {
-	ase_awk_val_t* old = STACK_GLOBAL (run, idx);
+	return __set_global (run, idx, ASE_NULL, val);
+}
+
+static int __set_global (
+	ase_awk_run_t* run, ase_size_t idx, 
+	ase_awk_nde_var_t* var, ase_awk_val_t* val)
+{
+	ase_awk_val_t* old;
+       
+	old = STACK_GLOBAL (run, idx);
 	if (old->type == ASE_AWK_VAL_MAP)
 	{	
 		/* once a variable becomes an array,
 		 * it cannot be changed to a scalar variable */
-		PANIC_I (run, ASE_AWK_EMAPTOSCALAR);
+
+		if (var != ASE_NULL)
+		{
+			run->awk->sysfns.sprintf (
+				run->errmsg, ASE_COUNTOF(run->errmsg),
+				ASE_T("array '%.*s' not assignable with a scalar"),
+				var->id.name_len, var->id.name);
+			ase_awk_setrunerror (
+				run, ASE_AWK_EMAPTOSCALAR, var->line, run->errmsg);
+		}
+		else
+		{
+			ase_awk_setrunerror (run, ASE_AWK_EMAPTOSCALAR, 0, 
+				ASE_T("array not assignable with a scalar"));
+		}
+		return -1;
 	}
 
-/* TODO: is this correct?? */
+	/* builtin variables except ARGV cannot be assigned an array */
 	if (val->type == ASE_AWK_VAL_MAP &&
 	    (idx >= ASE_AWK_GLOBAL_ARGC && idx <= ASE_AWK_GLOBAL_SUBSEP) &&
 	    idx != ASE_AWK_GLOBAL_ARGV)
 	{
 		/* TODO: better error code */
-		PANIC_I (run, ASE_AWK_ESCALARTOMAP);
+		run->errnum = ASE_AWK_ESCALARTOMAP;
+		return -1;
 	}
 
 	if (idx == ASE_AWK_GLOBAL_CONVFMT)
@@ -1544,7 +1573,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 		if (n == -1) 
 		{
 			if (run->errnum == ASE_AWK_EIOHANDLER)
-				PANIC_I (run, ASE_AWK_ECONINCLOSE);
+				PANIC_I (run, ASE_AWK_ECINCL);
 			else return -1;
 		}
 */
@@ -1709,7 +1738,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 			ase_awk_refdownval (run, run->inrec.d0);
 
 			if (run->errnum == ASE_AWK_EIOHANDLER)
-				PANIC_I (run, ASE_AWK_ECONOUTDATA);
+				PANIC_I (run, ASE_AWK_ECOUTDT);
 			else return -1;
 		}
 
@@ -1721,7 +1750,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 			ase_awk_refdownval (run, run->inrec.d0);
 
 			if (run->errnum == ASE_AWK_EIOHANDLER)
-				PANIC_I (run, ASE_AWK_ECONOUTDATA);
+				PANIC_I (run, ASE_AWK_ECOUTDT);
 			else return -1;
 		}
 
@@ -2101,7 +2130,12 @@ static int __walk_foreach (ase_awk_pair_t* pair, void* arg)
 
 	str = (ase_awk_val_t*) ase_awk_makestrval (
 		w->run, pair->key, ase_awk_strlen(pair->key));
-	if (str == ASE_NULL) PANIC_I (w->run, ASE_AWK_ENOMEM);
+	if (str == ASE_NULL) 
+	{
+		ase_awk_setrunerror (
+			w->run, ASE_AWK_ENOMEM, w->var->line, ASE_NULL);
+		return -1;
+	}
 
 	ase_awk_refupval (w->run, str);
 	if (__do_assignment (w->run, w->var, str) == ASE_NULL)
@@ -2129,8 +2163,9 @@ static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 	struct __foreach_walker_t walker;
 
 	test = (ase_awk_nde_exp_t*)nde->test;
-	ASE_AWK_ASSERT (run->awk, test->type == ASE_AWK_NDE_EXP_BIN && 
-	           test->opcode == ASE_AWK_BINOP_IN);
+	ASE_AWK_ASSERT (run->awk, 
+		test->type == ASE_AWK_NDE_EXP_BIN && 
+		test->opcode == ASE_AWK_BINOP_IN);
 
 	/* chained expressions should not be allowed 
 	 * by the parser first of all */
@@ -2143,7 +2178,11 @@ static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 	if (rv->type != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_refdownval (run, rv);
-		PANIC_I (run, ASE_AWK_ENOIDX);
+
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOTMAP, test->right->line, 
+			ASE_T("right-hand side of the 'in' operator not an array"));
+		return -1;
 	}
 	map = ((ase_awk_val_map_t*)rv)->map;
 
@@ -2263,7 +2302,7 @@ static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 	if (n == -1)
 	{
 		if (run->errnum == ASE_AWK_EIOHANDLER)
-			run->errnum = ASE_AWK_ECONINNEXT;
+			run->errnum = ASE_AWK_ECINNX;
 		ase_awk_setrunerror (
 			run, run->errnum, nde->line, ASE_NULL);
 		return -1;
@@ -2296,7 +2335,7 @@ static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 	if (n == -1)
 	{
 		if (run->errnum == ASE_AWK_EIOHANDLER)
-			run->errnum = ASE_AWK_ECONOUTNEXT;
+			run->errnum = ASE_AWK_ECOUTNX;
 		ase_awk_setrunerror (
 			run, run->errnum, nde->line, ASE_NULL);
 		return -1;
@@ -2383,7 +2422,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 					ASE_T("'%.*s' not deletable"), 
 					var->id.name_len, var->id.name);
 				ase_awk_setrunerror (
-					run, ASE_AWK_ENODEL, var->line, 
+					run, ASE_AWK_ENOTDEL, var->line, 
 					run->errmsg);
 				return -1;
 			}
@@ -2499,7 +2538,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 					ASE_T("'%.*s' not deletable"), 
 					var->id.name_len, var->id.name);
 				ase_awk_setrunerror (
-					run, ASE_AWK_ENODEL, var->line, 
+					run, ASE_AWK_ENOTDEL, var->line, 
 					run->errmsg);
 				return -1;
 			}
@@ -2551,7 +2590,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			!"should never happen - wrong target for delete",
 			"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
 		ase_awk_setrunerror (
-			run, ASE_AWK_EINTERNAL, var->line, 
+			run, ASE_AWK_EINTERN, var->line, 
 			ASE_T("delete statement called with a wrong target"));
 		return -1;
 	}
@@ -2953,7 +2992,7 @@ static ase_awk_val_t* __eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	/* __eval_binop_in evaluates the ASE_AWK_NDE_GRP specially.
 	 * so this function should never be reached. */
 	ASE_AWK_ASSERT (run->awk, !"should never happen - NDE_GRP only for in");
-	ase_awk_setrunerror (run, ASE_AWK_EINTERNAL, nde->line, ASE_NULL);
+	ase_awk_setrunerror (run, ASE_AWK_EINTERN, nde->line, ASE_NULL);
 	return ASE_NULL;
 }
 
@@ -3029,7 +3068,9 @@ static ase_awk_val_t* __do_assignment (
 	if (val->type == ASE_AWK_VAL_MAP)
 	{
 		/* a map cannot be assigned to a variable */
-		PANIC (run, ASE_AWK_ENOASS);
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOTASS, var->line, ASE_NULL);
+		return ASE_NULL;
 	}
 
 	if (var->type == ASE_AWK_NDE_NAMED ||
@@ -3052,8 +3093,11 @@ static ase_awk_val_t* __do_assignment (
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, !"should never happen - invalid variable type");
-		PANIC (run, ASE_AWK_EINTERNAL);
+		ASE_AWK_ASSERT (run->awk, 
+			!"should never happen - invalid variable type");
+		ase_awk_setrunerror (
+			run, ASE_AWK_EINTERN, var->line, ASE_NULL);
+		return ASE_NULL;
 	}
 
 	return ret;
@@ -3082,19 +3126,32 @@ static ase_awk_val_t* __do_assignment_scalar (
 		{
 			/* once a variable becomes an array,
 			 * it cannot be changed to a scalar variable */
-			PANIC (run, ASE_AWK_EMAPTOSCALAR);
+			run->awk->sysfns.sprintf (
+				run->errmsg, ASE_COUNTOF(run->errmsg),
+				ASE_T("array '%.*s' not assignable with a scalar"),
+				var->id.name_len, var->id.name);
+			ase_awk_setrunerror (
+				run, ASE_AWK_EMAPTOSCALAR, var->line, run->errmsg);
+			return ASE_NULL;
 		}
 
 		n = ase_awk_map_putx (&run->named, 
 			var->id.name, var->id.name_len, val, ASE_NULL);
-		if (n < 0) PANIC (run, ASE_AWK_ENOMEM);
+		if (n < 0) 
+		{
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, var->line, run->errmsg);
+			return ASE_NULL;
+		}
 
 		ase_awk_refupval (run, val);
 	}
 	else if (var->type == ASE_AWK_NDE_GLOBAL) 
 	{
-		if (ase_awk_setglobal (
-			run, var->id.idxa, val) == -1) return ASE_NULL;
+		if (__set_global (run, var->id.idxa, var, val) == -1) 
+		{
+			return ASE_NULL;
+		}
 	}
 	else if (var->type == ASE_AWK_NDE_LOCAL) 
 	{
@@ -3103,7 +3160,13 @@ static ase_awk_val_t* __do_assignment_scalar (
 		{	
 			/* once the variable becomes an array,
 			 * it cannot be changed to a scalar variable */
-			PANIC (run, ASE_AWK_EMAPTOSCALAR);
+			run->awk->sysfns.sprintf (
+				run->errmsg, ASE_COUNTOF(run->errmsg),
+				ASE_T("array '%.*s' not assignable with a scalar"),
+				var->id.name_len, var->id.name);
+			ase_awk_setrunerror (
+				run, ASE_AWK_EMAPTOSCALAR, var->line, run->errmsg);
+			return ASE_NULL;
 		}
 
 		ase_awk_refdownval (run, old);
@@ -3117,7 +3180,13 @@ static ase_awk_val_t* __do_assignment_scalar (
 		{	
 			/* once the variable becomes an array,
 			 * it cannot be changed to a scalar variable */
-			PANIC (run, ASE_AWK_EMAPTOSCALAR);
+			run->awk->sysfns.sprintf (
+				run->errmsg, ASE_COUNTOF(run->errmsg),
+				ASE_T("array '%.*s' not assignable with a scalar"),
+				var->id.name_len, var->id.name);
+			ase_awk_setrunerror (
+				run, ASE_AWK_EMAPTOSCALAR, var->line, run->errmsg);
+			return ASE_NULL;
 		}
 
 		ase_awk_refdownval (run, old);
@@ -3167,7 +3236,12 @@ static ase_awk_val_t* __do_assignment_map (
 		ase_awk_val_t* tmp;
 
 		tmp = ase_awk_makemapval (run);
-		if (tmp == ASE_NULL) PANIC (run, ASE_AWK_ENOMEM);
+		if (tmp == ASE_NULL) 
+		{
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, var->line, ASE_NULL);
+			return ASE_NULL;
+		}
 
 		if (var->type == ASE_AWK_NDE_NAMEDIDX)
 		{
@@ -3179,7 +3253,10 @@ static ase_awk_val_t* __do_assignment_map (
 			{
 				ase_awk_refupval (run, tmp);
 				ase_awk_refdownval (run, tmp);
-				PANIC (run, ASE_AWK_ENOMEM);		
+
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, var->line, ASE_NULL);
+				return ASE_NULL;
 			}
 
 			ase_awk_refupval (run, tmp);
@@ -3211,7 +3288,10 @@ static ase_awk_val_t* __do_assignment_map (
 	}
 	else if (map->type != ASE_AWK_VAL_MAP)
 	{
-		PANIC (run, ASE_AWK_ENOIDX);
+		/* variable assigned is not a map */
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOTIDX, var->line, ASE_NULL);
+		return ASE_NULL;
 	}
 
 	str = __idxnde_to_str (run, var->idx, &len);
@@ -3474,8 +3554,9 @@ static ase_awk_val_t* __eval_binop_in (
 	    right->type != ASE_AWK_NDE_NAMED)
 	{
 		/* the compiler should have handled this case */
-		ASE_AWK_ASSERT (run->awk, !"should never happen - in needs a plain variable");
-		PANIC (run, ASE_AWK_EINTERNAL);
+		ASE_AWK_ASSERT (run->awk, 
+			!"should never happen - in needs a plain variable");
+		PANIC (run, ASE_AWK_EINTERN);
 		return ASE_NULL;
 	}
 
@@ -4658,9 +4739,10 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, !"should never happen - invalid opcode");
+		ASE_AWK_ASSERT (run->awk, 
+			!"should never happen - invalid opcode");
 		ase_awk_refdownval (run, left);
-		PANIC (run, ASE_AWK_EINTERNAL);
+		PANIC (run, ASE_AWK_EINTERN);
 	}
 
 	if (__do_assignment (run, exp->left, res) == ASE_NULL)
@@ -4874,9 +4956,10 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, !"should never happen - invalid opcode");
+		ASE_AWK_ASSERT (run->awk, 
+			!"should never happen - invalid opcode");
 		ase_awk_refdownval (run, left);
-		PANIC (run, ASE_AWK_EINTERNAL);
+		PANIC (run, ASE_AWK_EINTERN);
 	}
 
 	if (__do_assignment (run, exp->left, res2) == ASE_NULL)
@@ -5331,7 +5414,7 @@ static int __get_reference (
 		return 0;
 	}
 
-	run->errnum = ASE_AWK_ENOTREFERENCEABLE;
+	run->errnum = ASE_AWK_ENOTREF;
 	return -1;
 }
 
@@ -5357,7 +5440,7 @@ static ase_awk_val_t** __get_reference_indexed (
 	}
 	else if ((*val)->type != ASE_AWK_VAL_MAP) 
 	{
-		PANIC (run, ASE_AWK_ENOIDX);
+		PANIC (run, ASE_AWK_ENOTMAP);
 	}
 
 	ASE_AWK_ASSERT (run->awk, nde->idx != ASE_NULL);
@@ -5479,7 +5562,7 @@ static ase_awk_val_t* __eval_indexed (
 	}
 	else if ((*val)->type != ASE_AWK_VAL_MAP) 
 	{
-	        PANIC (run, ASE_AWK_ENOIDX);
+	        PANIC (run, ASE_AWK_ENOTMAP);
 	}
 
 	ASE_AWK_ASSERT (run->awk, nde->idx != ASE_NULL);
@@ -5744,7 +5827,7 @@ static int __read_record (ase_awk_run_t* run)
 		ase_awk_clrrec (run, ase_false);
 		run->errnum = 
 			(errnum == ASE_AWK_EIOHANDLER)? 
-			ASE_AWK_ECONINDATA: errnum;
+			ASE_AWK_ECINDT: errnum;
 		return -1;
 	}
 /*
@@ -5891,7 +5974,9 @@ static ase_char_t* __idxnde_to_str (
 		if (ase_awk_str_open (
 			&idxstr, DEF_BUF_CAPA, run->awk) == ASE_NULL) 
 		{
-			PANIC (run, ASE_AWK_ENOMEM);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+			return ASE_NULL;
 		}
 
 		while (nde != ASE_NULL)
@@ -5912,7 +5997,9 @@ static ase_char_t* __idxnde_to_str (
 			{
 				ase_awk_refdownval (run, idx);
 				ase_awk_str_close (&idxstr);
-				PANIC (run, ASE_AWK_ENOMEM);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+				return ASE_NULL;
 			}
 
 			if (ase_awk_valtostr (

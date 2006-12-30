@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.233 2006-12-26 13:26:24 bacon Exp $
+ * $Id: parse.c,v 1.234 2006-12-30 08:54:01 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2009,7 +2009,7 @@ static ase_awk_nde_t* __parse_in (ase_awk_t* awk, ase_size_t line)
 
 			ase_awk_seterror (
 				awk, ASE_AWK_ENOTVAR, line2, 
-				ASE_T("right-hand side of the 'in' operator not a normal variable"));
+				ASE_T("right-hand side of the 'in' operator not a variable"));
 			return ASE_NULL;
 		}
 

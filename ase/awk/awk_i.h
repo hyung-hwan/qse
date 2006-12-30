@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.95 2006-12-25 12:01:01 bacon Exp $
+ * $Id: awk_i.h,v 1.96 2006-12-30 08:54:43 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -332,6 +332,8 @@ struct ase_awk_run_t
 			ase_size_t expr;
 		} max;
 	} depth;
+
+	ase_size_t runlin; /* line no. of the node being executed currently */
 
 	int errnum;
 	ase_size_t errlin;

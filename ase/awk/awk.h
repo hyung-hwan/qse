@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.174 2006-12-25 13:45:43 bacon Exp $
+ * $Id: awk.h,v 1.175 2006-12-30 08:54:43 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -247,15 +247,15 @@ enum
 	ASE_AWK_ESOUTCL,
 	ASE_AWK_ESOUTWR,
 
-	ASE_AWK_ECONINOPEN,
-	ASE_AWK_ECONINCLOSE,
-	ASE_AWK_ECONINNEXT,
-	ASE_AWK_ECONINDATA, 
+	ASE_AWK_ECINOP,
+	ASE_AWK_ECINCL,
+	ASE_AWK_ECINNX,
+	ASE_AWK_ECINDT, 
 
-	ASE_AWK_ECONOUTOPEN,
-	ASE_AWK_ECONOUTCLOSE,
-	ASE_AWK_ECONOUTNEXT,
-	ASE_AWK_ECONOUTDATA,
+	ASE_AWK_ECOUTOP,
+	ASE_AWK_ECOUTCL,
+	ASE_AWK_ECOUTNX,
+	ASE_AWK_ECOUTDT,
 
 	ASE_AWK_ELXCHR,         /* lexer came accross an wrong character */
 	ASE_AWK_ELXUNG,         /* lexer failed to unget a character */
@@ -302,17 +302,18 @@ enum
 	ASE_AWK_EPRINTFARG,     /* printf must have one or more arguments */
 
 	/* run time error */
-	ASE_AWK_EINTERNAL,         /* internal error */
+	ASE_AWK_EINTERN,           /* internal error */
 	ASE_AWK_EDIVBYZERO,        /* divide by zero */
 	ASE_AWK_EOPERAND,          /* invalid operand */
 	ASE_AWK_EPOSIDX,           /* wrong position index */
 	ASE_AWK_EARGTF,            /* too few arguments */
 	ASE_AWK_EARGTM,            /* too many arguments */
 	ASE_AWK_ENOSUCHFN,         /* no such function */
-	ASE_AWK_ENOASS,            /* value not assignable */
-	ASE_AWK_ENOIDX,            /* variable not indexable */
-	ASE_AWK_ENODEL,            /* variable not deletable */
-	ASE_AWK_ENOTREFERENCEABLE, /* not referenceable value */
+	ASE_AWK_ENOTIDX,           /* variable not indexable */
+	ASE_AWK_ENOTDEL,           /* variable not deletable */
+	ASE_AWK_ENOTMAP,           /* value not a map */
+	ASE_AWK_ENOTREF,           /* value not referenceable */
+	ASE_AWK_ENOTASS,           /* value not assignable */
 	ASE_AWK_EIDXVALASSMAP,     /* indexed value cannot be assigned a map */
 	ASE_AWK_EPOSVALASSMAP,     /* a positional cannot be assigned a map */
 	ASE_AWK_EMAPTOSCALAR,      /* cannot change a map to a scalar value */
