@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.67 2006-12-17 14:56:06 bacon Exp $
+ * $Id: extio.c,v 1.68 2006-12-30 08:54:43 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -615,7 +615,7 @@ int ase_awk_nextextio_read (
 		/* something is totally wrong */
 		ASE_AWK_ASSERT (run->awk, 
 			!"should never happen - cannot find the relevant extio entry");
-		run->errnum = ASE_AWK_EINTERNAL;
+		run->errnum = ASE_AWK_EINTERN;
 		return -1;
 	}
 
@@ -694,7 +694,7 @@ int ase_awk_nextextio_write (
 		ASE_AWK_ASSERT (run->awk, 
 			!"should never happen - cannot find the relevant extio entry");
 
-		run->errnum = ASE_AWK_EINTERNAL;
+		run->errnum = ASE_AWK_EINTERN;
 		return -1;
 	}
 

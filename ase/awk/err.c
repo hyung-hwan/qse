@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.66 2006-12-25 13:45:43 bacon Exp $
+ * $Id: err.c,v 1.67 2006-12-30 08:54:43 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -143,10 +143,11 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("too few arguments"),
 		ASE_T("too many arguments"),
 		ASE_T("no such function"),
-		ASE_T("value not assignable"),
 		ASE_T("variable not indexable"),
 		ASE_T("variable not deletable"),
+		ASE_T("value not a map"),
 		ASE_T("value not referenceable"),
+		ASE_T("value not assignable"),
 		ASE_T("an indexed value cannot be assigned a map"),
 		ASE_T("a positional value cannot be assigned a map"),
 		ASE_T("cannot change a map to a scalar value"),
