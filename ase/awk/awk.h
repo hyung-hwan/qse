@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.175 2006-12-30 08:54:43 bacon Exp $
+ * $Id: awk.h,v 1.176 2007-01-01 15:07:25 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -303,7 +303,7 @@ enum
 
 	/* run time error */
 	ASE_AWK_EINTERN,           /* internal error */
-	ASE_AWK_EDIVBYZERO,        /* divide by zero */
+	ASE_AWK_EDIVBY0,           /* divide by zero */
 	ASE_AWK_EOPERAND,          /* invalid operand */
 	ASE_AWK_EPOSIDX,           /* wrong position index */
 	ASE_AWK_EARGTF,            /* too few arguments */
