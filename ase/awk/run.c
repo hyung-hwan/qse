@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.314 2007-01-01 15:06:52 bacon Exp $
+ * $Id: run.c,v 1.315 2007-01-01 15:10:37 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -2945,7 +2945,7 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			{
 				ase_awk_refdownval (run, v);
 
-				ase_Awk_setrunerror (run, errnum, nde->line, ASE_NULL);
+				ase_awk_setrunerror (run, errnum, nde->line, ASE_NULL);
 				return ASE_NULL;
 			}
 		}
@@ -2955,7 +2955,7 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		v = ase_awk_makeintval (run, (n != 0));
 		if (v == ASE_NULL) 
 		{
-			ase_Awk_setrunerror (run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
 			return ASE_NULL;
 		}
 	}
