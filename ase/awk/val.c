@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.101 2006-12-24 17:21:24 bacon Exp $
+ * $Id: val.c,v 1.102 2007-01-02 12:25:18 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -470,7 +470,7 @@ ase_char_t* ase_awk_valtostr (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr\n"), 
 		v->type);
 
-	run->errnum = ASE_AWK_EVALTYPE;
+	ase_awk_setrunerror (run, ASE_AWK_EVALTYPE, 0, ASE_NULL);
 	return ASE_NULL;
 }
 
@@ -484,7 +484,7 @@ static ase_char_t* __str_to_str (
 		tmp = ase_awk_strxdup (run->awk, str, str_len);
 		if (tmp == ASE_NULL) 
 		{
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return ASE_NULL;
 		}
 
@@ -499,7 +499,7 @@ static ase_char_t* __str_to_str (
 		n = ase_awk_str_ncat (buf, str, str_len);
 		if (n == (ase_size_t)-1)
 		{
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return ASE_NULL;
 		}
 
@@ -526,7 +526,8 @@ static ase_char_t* __val_int_to_str (
 				run->awk, 2 * ASE_SIZEOF(ase_char_t));
 			if (tmp == ASE_NULL)
 			{
-				run->errnum = ASE_AWK_ENOMEM;
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return ASE_NULL;
 			}
 
@@ -540,7 +541,8 @@ static ase_char_t* __val_int_to_str (
 			if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_awk_str_clear (buf);
 			if (ase_awk_str_cat (buf, ASE_T("0")) == (ase_size_t)-1)
 			{
-				run->errnum = ASE_AWK_ENOMEM;
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return ASE_NULL;
 			}
 
@@ -559,7 +561,7 @@ static ase_char_t* __val_int_to_str (
 			run->awk, (l + 1) * ASE_SIZEOF(ase_char_t));
 		if (tmp == ASE_NULL)
 		{
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return ASE_NULL;
 		}
 
@@ -577,7 +579,7 @@ static ase_char_t* __val_int_to_str (
 		if (ase_awk_str_nccat (
 			buf, ASE_T(' '), l) == (ase_size_t)-1)
 		{
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return ASE_NULL;
 		}
 	}
@@ -623,14 +625,14 @@ static ase_char_t* __val_real_to_str (
 
 	if (ase_awk_str_open (&out, 256, run->awk) == ASE_NULL)
 	{
-		run->errnum = ASE_AWK_ENOMEM;
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 		return ASE_NULL;
 	}
 
 	if (ase_awk_str_open (&fbu, 256, run->awk) == ASE_NULL)
 	{
 		ase_awk_str_close (&out);
-		run->errnum = ASE_AWK_ENOMEM;
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 		return ASE_NULL;
 	}
 
@@ -657,7 +659,7 @@ static ase_char_t* __val_real_to_str (
 		{
 			ase_awk_str_close (&fbu);
 			ase_awk_str_close (&out);
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return ASE_NULL;
 		}
 
@@ -725,7 +727,7 @@ int ase_awk_valtonum (
 		v->type);
 #endif
 
-	run->errnum = ASE_AWK_EVALTYPE;
+	ase_awk_setrunerror (run, ASE_AWK_EVALTYPE, 0, ASE_NULL);
 	return -1; /* error */
 }
 

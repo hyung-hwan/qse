@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.68 2006-12-30 08:54:43 bacon Exp $
+ * $Id: extio.c,v 1.69 2007-01-02 12:25:18 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -100,7 +100,7 @@ int ase_awk_readextio (
 	if (handler == ASE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = ASE_AWK_EIOIMPL; /* TODO: change the error code */
+		ase_awk_setrunerror (run, ASE_AWK_EIOUSER, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -117,7 +117,7 @@ int ase_awk_readextio (
 			run->awk, ASE_SIZEOF(ase_awk_extio_t));
 		if (p == ASE_NULL)
 		{
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -125,7 +125,7 @@ int ase_awk_readextio (
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -147,7 +147,7 @@ int ase_awk_readextio (
 		{
 			ASE_AWK_FREE (run->awk, p->name);
 			ASE_AWK_FREE (run->awk, p);
-			run->errnum = ASE_AWK_EIOHANDLER;
+			ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -218,12 +218,11 @@ int ase_awk_readextio (
 				break;
 			}
 
-			n = handler (ASE_AWK_IO_READ, p, 
-				p->in.buf, ASE_COUNTOF(p->in.buf));
+			n = handler (ASE_AWK_IO_READ, p, p->in.buf, ASE_COUNTOF(p->in.buf));
 			if (n <= -1) 
 			{
 				/* handler error. getline should return -1 */
-				run->errnum = ASE_AWK_EIOHANDLER;
+				ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 				ret = -1;
 				break;
 			}
@@ -309,7 +308,7 @@ int ase_awk_readextio (
 
 		if (ase_awk_str_ccat (buf, c) == (ase_size_t)-1)
 		{
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			ret = -1;
 			break;
 		}
@@ -343,7 +342,7 @@ int ase_awk_readextio (
 			nr = ase_awk_makeintval (run, lv + 1);
 			if (nr == ASE_NULL) 
 			{
-				run->errnum = ASE_AWK_ENOMEM;
+				ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				ret = -1;
 			}
 			else 
@@ -409,7 +408,7 @@ int ase_awk_writeextio_str (
 	if (handler == ASE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = ASE_AWK_EIOIMPL; /* TODO: change the error code */
+		ase_awk_setrunerror (run, ASE_AWK_EIOUSER, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -438,7 +437,7 @@ int ase_awk_writeextio_str (
 			run->awk, ASE_SIZEOF(ase_awk_extio_t));
 		if (p == ASE_NULL)
 		{
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -446,7 +445,7 @@ int ase_awk_writeextio_str (
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);
-			run->errnum = ASE_AWK_ENOMEM;
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -465,7 +464,7 @@ int ase_awk_writeextio_str (
 		{
 			ASE_AWK_FREE (run->awk, p->name);
 			ASE_AWK_FREE (run->awk, p);
-			run->errnum = ASE_AWK_EIOHANDLER;
+			ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -504,7 +503,7 @@ int ase_awk_writeextio_str (
 
 		if (n <= -1) 
 		{
-			run->errnum = ASE_AWK_EIOHANDLER;
+			ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -545,7 +544,7 @@ int ase_awk_flushextio (
 	if (handler == ASE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = ASE_AWK_EIOIMPL; /* TODO: change the error code */
+		ase_awk_setrunerror (run, ASE_AWK_EIOUSER, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -559,7 +558,7 @@ int ase_awk_flushextio (
 
 			if (n <= -1) 
 			{
-				run->errnum = ASE_AWK_EIOHANDLER;
+				ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 				return -1;
 			}
 
@@ -572,7 +571,7 @@ int ase_awk_flushextio (
 	if (ok) return 0;
 
 	/* there is no corresponding extio for name */
-	run->errnum = ASE_AWK_ENOSUCHIO;
+	ase_awk_setrunerror (run, ASE_AWK_EIONONE, 0, ASE_NULL);
 	return -1;
 }
 
@@ -599,7 +598,7 @@ int ase_awk_nextextio_read (
 	if (handler == ASE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = ASE_AWK_EIOIMPL; /* TODO: change the error code */
+		ase_awk_setrunerror (run, ASE_AWK_EIOUSER, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -615,7 +614,7 @@ int ase_awk_nextextio_read (
 		/* something is totally wrong */
 		ASE_AWK_ASSERT (run->awk, 
 			!"should never happen - cannot find the relevant extio entry");
-		run->errnum = ASE_AWK_EINTERN;
+		ase_awk_setrunerror (run, ASE_AWK_EINTERN, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -628,8 +627,7 @@ int ase_awk_nextextio_read (
 	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
 	if (n <= -1)
 	{
-		/* TODO: is this errnum correct? */
-		run->errnum = ASE_AWK_EIOHANDLER;
+		ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -677,7 +675,7 @@ int ase_awk_nextextio_write (
 	if (handler == ASE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = ASE_AWK_EIOIMPL; /* TODO: change the error code */
+		ase_awk_setrunerror (run, ASE_AWK_EIOUSER, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -694,7 +692,7 @@ int ase_awk_nextextio_write (
 		ASE_AWK_ASSERT (run->awk, 
 			!"should never happen - cannot find the relevant extio entry");
 
-		run->errnum = ASE_AWK_EINTERN;
+		ase_awk_setrunerror (run, ASE_AWK_EINTERN, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -707,8 +705,20 @@ int ase_awk_nextextio_write (
 	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
 	if (n <= -1)
 	{
-		/* TODO: is this errnum correct? */
-		run->errnum = ASE_AWK_EIOHANDLER;
+		ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
+		return -1;
+	}
+
+	if (p->out.eos) 
+	{
+		/* no more streams. */
+		return 0;
+	}
+
+	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
+	if (n <= -1)
+	{
+		ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -752,7 +762,7 @@ int ase_awk_closeextio_read (
 	if (handler == ASE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = ASE_AWK_EIOIMPL; /* TODO: change the error code */
+		ase_awk_setrunerror (run, ASE_AWK_EIOUSER, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -769,7 +779,7 @@ int ase_awk_closeextio_read (
 				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					run->errnum = ASE_AWK_EIOHANDLER;
+					ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 					return -1;
 				}
 			}
@@ -787,7 +797,7 @@ int ase_awk_closeextio_read (
 	}
 
 	/* this is not a run-time error */
-	run->errnum = ASE_AWK_EIOHANDLER;
+	ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 	return -1;
 }
 
@@ -814,7 +824,7 @@ int ase_awk_closeextio_write (
 	if (handler == ASE_NULL)
 	{
 		/* no io handler provided */
-		run->errnum = ASE_AWK_EIOIMPL; /* TODO: change the error code */
+		ase_awk_setrunerror (run, ASE_AWK_EIOUSER, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -831,7 +841,7 @@ int ase_awk_closeextio_write (
 				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					run->errnum = ASE_AWK_EIOHANDLER;
+					ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 					return -1;
 				}
 			}
@@ -849,7 +859,7 @@ int ase_awk_closeextio_write (
 	}
 
 	/* this is not a run-time error */
-	run->errnum = ASE_AWK_EIOHANDLER;
+	ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 	return -1;
 }
 
@@ -871,7 +881,7 @@ int ase_awk_closeextio (ase_awk_run_t* run, const ase_char_t* name)
 				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					run->errnum = ASE_AWK_EIOHANDLER;
+					ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 					return -1;
 				}
 			}
@@ -889,7 +899,7 @@ int ase_awk_closeextio (ase_awk_run_t* run, const ase_char_t* name)
 	}
 
 	/* this is not a run-time error */
-	run->errnum = ASE_AWK_EIOHANDLER;
+	ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL);
 	return -1;
 }
 

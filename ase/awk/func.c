@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.85 2006-12-17 14:56:06 bacon Exp $
+ * $Id: func.c,v 1.86 2007-01-02 12:25:18 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -51,14 +51,14 @@ void* ase_awk_addbfn (
 
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 	{
-		awk->errnum = ASE_AWK_EEXIST;
+		ase_awk_seterror (awk, ASE_AWK_EEXIST, 0, ASE_NULL);
 		return ASE_NULL;
 	}
 
 	p = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_bfn_t));
 	if (p == ASE_NULL) 
 	{
-		awk->errnum = ASE_AWK_ENOMEM;
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL);
 		return ASE_NULL;
 	}
 
@@ -66,7 +66,7 @@ void* ase_awk_addbfn (
 	if (p->name.ptr == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, p);
-		awk->errnum = ASE_AWK_ENOMEM;
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL);
 		return ASE_NULL;
 	}
 
@@ -82,7 +82,7 @@ void* ase_awk_addbfn (
 		{
 			ASE_AWK_FREE (awk, p->name.ptr);
 			ASE_AWK_FREE (awk, p);
-			awk->errnum = ASE_AWK_ENOMEM;
+			ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return ASE_NULL;
 		}
 	}
@@ -117,7 +117,7 @@ int ase_awk_delbfn (ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 		pp = p;
 	}
 
-	awk->errnum = ASE_AWK_ENOENT;
+	ase_awk_seterror (awk, ASE_AWK_ENOENT, 0, ASE_NULL);
 	return -1;
 }
 
@@ -223,7 +223,7 @@ static int __bfn_close (
 	}	
 
 	n = ase_awk_closeextio (run, name);
-	if (n == -1 && run->errnum != ASE_AWK_EIOHANDLER)
+	if (n == -1 && run->errnum != ASE_AWK_EIOIMPL)
 	{
 		if (a0->type != ASE_AWK_VAL_STR) 
 			ASE_AWK_FREE (run->awk, name);
@@ -254,8 +254,8 @@ static int __flush_extio (
 		n2 = ase_awk_flushextio (run, extio, name);
 		if (n2 == -1)
 		{
-			if (run->errnum == ASE_AWK_EIOHANDLER) n = -1;
-			else if (run->errnum == ASE_AWK_ENOSUCHIO) 
+			if (run->errnum == ASE_AWK_EIOIMPL) n = -1;
+			else if (run->errnum == ASE_AWK_EIONONE) 
 			{
 				if (n != 0) n = -2;
 			}
@@ -284,13 +284,13 @@ static int __bfn_fflush (
 		/* flush the console output */
 		n = ase_awk_flushextio (run, ASE_AWK_OUT_CONSOLE, ASE_T(""));
 		if (n == -1 && 
-		    run->errnum != ASE_AWK_EIOHANDLER && 
-		    run->errnum != ASE_AWK_ENOSUCHIO)
+		    run->errnum != ASE_AWK_EIOIMPL && 
+		    run->errnum != ASE_AWK_EIONONE)
 		{
 			return -1;
 		}
 
-		/* fflush() should return -1 on EIOHANDLER and ENOSUCHIO */
+		/* fflush() should return -1 on EIOIMPL and EIONONE */
 	}
 	else
 	{
