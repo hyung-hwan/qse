@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.43 2006-12-19 14:20:30 bacon Exp $
+ * $Id: jni.c,v 1.44 2007-01-02 12:25:18 bacon Exp $
  */
 
 #include <stdio.h>
@@ -1013,7 +1013,7 @@ static int __handle_bfn (
 		 * so clear it to prevent it from being thrown */
 		if ((*env)->ExceptionOccurred (env))
 			(*env)->ExceptionClear (env);
-		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
+		ase_awk_setrunerrnum (run, ASE_AWK_EBFNUSER);
 		return -1;
 	}
 
@@ -1074,10 +1074,10 @@ static int __handle_bfn (
 (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, args);
-		ase_awk_setrunerrnum (run, ASE_AWK_EBFNFAIL);
+		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
 
 		// TODO:
-		//ase_awk_setrunerror (run, ASE_AWK_EBFNFAIL, "EXCEPTION:....");
+		//ase_awk_setrunerror (run, ASE_AWK_EBFNIMPL, "EXCEPTION:....");
 		return -1;
 	}
 
@@ -1195,7 +1195,7 @@ static int __handle_bfn (
 	else
 	{
 		(*env)->DeleteLocalRef (env, ret);
-		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
+		ase_awk_setrunerrnum (run, ASE_AWK_EBFNUSER);
 		return -1;
 	}
 

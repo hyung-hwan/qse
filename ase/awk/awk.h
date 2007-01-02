@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.176 2007-01-01 15:07:25 bacon Exp $
+ * $Id: awk.h,v 1.177 2007-01-02 12:25:18 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -308,7 +308,7 @@ enum
 	ASE_AWK_EPOSIDX,           /* wrong position index */
 	ASE_AWK_EARGTF,            /* too few arguments */
 	ASE_AWK_EARGTM,            /* too many arguments */
-	ASE_AWK_ENOSUCHFN,         /* no such function */
+	ASE_AWK_EFNNONE,           /* no such function */
 	ASE_AWK_ENOTIDX,           /* variable not indexable */
 	ASE_AWK_ENOTDEL,           /* variable not deletable */
 	ASE_AWK_ENOTMAP,           /* value not a map */
@@ -322,14 +322,14 @@ enum
 	ASE_AWK_EVALTYPE,          /* wrong value type */
 	ASE_AWK_ENEXTCALL,         /* next called from BEGIN or END */
 	ASE_AWK_ENEXTFILECALL,     /* nextfile called from BEGIN or END */
-	ASE_AWK_EIOIMPL,           /* wrong user io handler implementation */
-	ASE_AWK_EBFNIMPL,          /* wrong builtin function implementation */
-	ASE_AWK_EBFNFAIL,          /* builtin function handler failed */
-	ASE_AWK_ENOSUCHIO,         /* no such io name found */
-	ASE_AWK_EIOHANDLER,        /* i/o callback returned an error */
+	ASE_AWK_EBFNUSER,          /* wrong builtin function implementation */
+	ASE_AWK_EBFNIMPL,          /* builtin function handler failed */
+	ASE_AWK_EIOUSER,           /* wrong user io handler implementation */
+	ASE_AWK_EIONONE,           /* no such io name found */
+	ASE_AWK_EIOIMPL,           /* i/o callback returned an error */
 	ASE_AWK_EIONAME,           /* invalid i/o name */
 	ASE_AWK_EFMTARG,           /* arguments to format string not sufficient */
-	ASE_AWK_EFMTCONV,          /* recursion detected in format conversion */
+	ASE_AWK_EFMTCNV,           /* recursion detected in format conversion */
 	ASE_AWK_ECONVFMTCHAR,      /* an invalid character found in CONVFMT */
 	ASE_AWK_EOFMTCHAR,         /* an invalid character found in OFMT */
 
