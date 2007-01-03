@@ -104,14 +104,15 @@ Private Sub Execute_Click()
     SourceOut.Text = ""
     
     Set Awk = New ASELib.Awk
-    'Awk.Option = Awk.Option Or ASELib.AWK_SHADING Or ASELib.AWK_IDIV
     
     If Awk.Parse() = -1 Then
-        MsgBox "PARSE ERROR OCCURRED!!!"
+        MsgBox "ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
+    Else
+        If Awk.Run() = -1 Then
+            MsgBox "ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
+        End If
     End If
-    If Awk.Run() = -1 Then
-        MsgBox "RUN ERROR OCCURRED!!!"
-    End If
+    
     Set Awk = Nothing
     
 End Sub
@@ -135,28 +136,13 @@ Function Awk_ReadSource(ByVal buf As ASELib.Buffer) As Long
 End Function
 
 Function Awk_WriteSource(ByVal buf As ASELib.Buffer) As Long
-    Dim value As String, value2 As String, c As String
-    Dim i As Integer, l As Integer
+    Dim value As String
+    Dim l As Integer
     
     value = buf.value
-    If value = vbLf Then
-        SourceOut.Text = SourceOut.Text + vbCrLf
-        Awk_WriteSource = 1
-    Else
-        l = Len(value)
-        For i = 1 To l
-            c = Mid(value, i, 1)
-            If c = vbLf Then
-                value2 = value2 + vbCrLf
-            Else
-                value2 = value2 + c
-            End If
-        Next i
-        
-        SourceOut.Text = SourceOut.Text + value2
-        Awk_WriteSource = l
-    End If
-    
+    l = Len(value)
+    SourceOut.Text = SourceOut.Text + value
+    Awk_WriteSource = Len(value)
 End Function
 
 Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
@@ -271,28 +257,13 @@ Function Awk_WriteExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buff
 End Function
 
 Function ReadExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
-    Dim value As String, value2 As String
-    Dim l As Integer, i As Integer
+    Dim value As String
 
     If Not extio.Handle.EOF Then
         value = ConsoleIn.Text
-        l = Len(value)
-        
-        For i = 1 To l - 1
-            If Mid(value, i, 2) = vbCrLf Then
-                value2 = value2 + vbLf
-                i = i + 1
-            Else
-                value2 = value2 + Mid(value, i, 1)
-            End If
-        Next
-        If i = l Then
-            value2 = value2 + Mid(value, i, 1)
-        End If
-        
         extio.Handle.EOF = True
-        buf.value = value2
-        ReadExtioConsole = Len(value2)
+        buf.value = value
+        ReadExtioConsole = Len(value)
     Else
         ReadExtioConsole = 0
     End If
@@ -333,13 +304,8 @@ Function WriteExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.B
     '    buf.value = "abdkjsdfsafas"
     'Next i
     
-    If value = vbLf Then
-        ConsoleOut.Text = ConsoleOut.Text + vbCrLf
-        WriteExtioConsole = 1
-    Else
-        ConsoleOut.Text = ConsoleOut.Text + value
-        WriteExtioConsole = Len(value)
-    End If
+    ConsoleOut.Text = ConsoleOut.Text + value
+    WriteExtioConsole = Len(value)
 End Function
 
 Function WriteExtioFile(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long

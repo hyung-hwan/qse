@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.4 2006-12-11 14:58:25 bacon Exp $
+ * $Id: Awk.h,v 1.5 2007-01-03 09:51:52 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -29,8 +29,11 @@ class CAwk :
 
 {
 public:
-	int option;
 	ase_awk_t* handle;
+	int        option;
+	int        errnum;
+	ase_size_t errlin;
+	ase_char_t errmsg[256];
 
 	IBuffer* read_src_buf;
 	IBuffer* write_src_buf;
@@ -65,6 +68,19 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
+	STDMETHOD(get_ShiftOperators)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_ShiftOperators)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_VariableShading)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_VariableShading)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_UniqueFunction)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_UniqueFunction)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_ExplicitVariable)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_ExplicitVariable)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_ImplicitVariable)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_ImplicitVariable)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_ErrorMessage)(/*[out, retval]*/ BSTR *pVal);
+	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
+	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_Option)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(put_Option)(/*[in]*/ int newVal);
 	HRESULT __stdcall Parse (int* ret);
