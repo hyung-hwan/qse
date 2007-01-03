@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.317 2007-01-03 03:18:58 bacon Exp $
+ * $Id: run.c,v 1.318 2007-01-03 04:16:15 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -31,6 +31,7 @@ enum exit_level_t
 #define DEFAULT_OFMT ASE_T("%.6g")
 #define DEFAULT_OFS ASE_T(" ")
 #define DEFAULT_ORS ASE_T("\n")
+#define DEFAULT_ORS_CRLF ASE_T("\r\n")
 #define DEFAULT_SUBSEP ASE_T("\034")
 
 /* the index of a positional variable should be a positive interger
@@ -964,7 +965,8 @@ static void __deinit_run (ase_awk_run_t* run)
 	}
 
 	if (run->global.ors.ptr != ASE_NULL && 
-	    run->global.ors.ptr != DEFAULT_ORS)
+	    run->global.ors.ptr != DEFAULT_ORS &&
+	    run->global.ors.ptr != DEFAULT_ORS_CRLF)
 	{
 		ASE_AWK_FREE (run->awk, run->global.ors.ptr);
 		run->global.ors.ptr = ASE_NULL;
@@ -1173,7 +1175,7 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 		const ase_char_t* str;
 	};
        
-	static struct __gtab_t gtab[] =
+	struct __gtab_t gtab[] =
 	{
 		{ ASE_AWK_GLOBAL_CONVFMT,   DEFAULT_CONVFMT },
 		{ ASE_AWK_GLOBAL_FILENAME,  ASE_NULL },
@@ -1186,6 +1188,12 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 
 	ase_awk_val_t* tmp;
 	ase_size_t i, j;
+
+	if (run->awk->option & ASE_AWK_CRLF)
+	{
+		/* ugly */
+		gtab[5].str = DEFAULT_ORS_CRLF;
+	}
 
 	for (i = 0; i < ASE_COUNTOF(gtab); i++)
 	{

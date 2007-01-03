@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.234 2006-12-30 08:54:01 bacon Exp $
+ * $Id: parse.c,v 1.235 2007-01-03 04:16:14 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -4537,7 +4537,6 @@ static int __get_token (ase_awk_t* awk)
 	}
 	else if (c == ASE_T(';'))
 	{
-	/* TODO: more check on the newline terminator... */
 		SET_TOKEN_TYPE (awk, TOKEN_SEMICOLON);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR (awk);
@@ -5142,8 +5141,20 @@ static int __deparse (ase_awk_t* awk)
 			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		}
 
-		if (ase_awk_putsrcstr (awk, ASE_T(";\n\n")) == -1)
-			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
+		if (awk->option & ASE_AWK_CRLF)
+		{
+			if (ase_awk_putsrcstr (awk, ASE_T(";\r\n\r\n")) == -1)
+			{
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
+			}
+		}
+		else
+		{
+			if (ase_awk_putsrcstr (awk, ASE_T(";\n\n")) == -1)
+			{
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
+			}
+		}
 	}
 
 	df.awk = awk;
@@ -5163,6 +5174,12 @@ static int __deparse (ase_awk_t* awk)
 		if (ase_awk_prnpt (awk, awk->tree.begin) == -1)
 			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 
+		if (awk->option & ASE_AWK_CRLF)
+		{
+			if (__put_char (awk, ASE_T('\r')) == -1)
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
+		}
+
 		if (__put_char (awk, ASE_T('\n')) == -1)
 			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 	}
@@ -5179,6 +5196,12 @@ static int __deparse (ase_awk_t* awk)
 		if (chain->action == ASE_NULL) 
 		{
 			/* blockless pattern */
+			if (awk->option & ASE_AWK_CRLF)
+			{
+				if (__put_char (awk, ASE_T('\r')) == -1)
+					EXIT_DEPARSE (ASE_AWK_ESOUTWR);
+			}
+
 			if (__put_char (awk, ASE_T('\n')) == -1)
 				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		}
@@ -5190,6 +5213,12 @@ static int __deparse (ase_awk_t* awk)
 					EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 			}
 			if (ase_awk_prnpt (awk, chain->action) == -1)
+				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
+		}
+
+		if (awk->option & ASE_AWK_CRLF)
+		{
+			if (__put_char (awk, ASE_T('\r')) == -1)
 				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		}
 
@@ -5248,10 +5277,19 @@ static int __deparse_func (ase_awk_pair_t* pair, void* arg)
 		if (ase_awk_putsrcstr (df->awk, ASE_T(", ")) == -1) return -1;
 	}
 
-	if (ase_awk_putsrcstr (df->awk, ASE_T(")\n")) == -1) return -1;
+	if (ase_awk_putsrcstr (df->awk, ASE_T(")")) == -1) return -1;
+	if (df->awk->option & ASE_AWK_CRLF)
+	{
+		if (__put_char (df->awk, ASE_T('\r')) == -1) return -1;
+	}
+	if (__put_char (df->awk, ASE_T('\n')) == -1) return -1;
 
 	if (ase_awk_prnpt (df->awk, afn->body) == -1) return -1;
-	if (ase_awk_putsrcstr (df->awk, ASE_T("\n")) == -1) return -1;
+	if (df->awk->option & ASE_AWK_CRLF)
+	{
+		if (__put_char (df->awk, ASE_T('\r')) == -1) return -1;
+	}
+	if (__put_char (df->awk, ASE_T('\n')) == -1) return -1;
 
 	return 0;
 }
