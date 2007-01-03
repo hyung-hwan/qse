@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.69 2007-01-02 12:25:18 bacon Exp $
+ * $Id: extio.c,v 1.70 2007-01-03 04:16:14 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -83,6 +83,7 @@ int ase_awk_readextio (
 	ase_char_t* rs_ptr;
 	ase_size_t rs_len;
 	ase_size_t line_len = 0;
+	ase_char_t c = ASE_T('\0'), pc;
 
 	ASE_AWK_ASSERT (run->awk,
 		in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
@@ -206,8 +207,6 @@ int ase_awk_readextio (
 	/* call the io handler */
 	while (1)
 	{
-		ase_char_t c;
-
 		if (p->in.pos >= p->in.len)
 		{
 			ase_ssize_t n;
@@ -238,18 +237,34 @@ int ase_awk_readextio (
 			p->in.pos = 0;
 		}
 
+		pc = c;
 		c = p->in.buf[p->in.pos++];
 
 		if (rs_ptr == ASE_NULL)
 		{
 			/* separate by a new line */
-			/* TODO: handle different line terminator like \r\n */
-			if (c == ASE_T('\n')) break;
+			if (c == ASE_T('\n')) 
+			{
+				if (pc == ASE_T('\r') && 
+				    ASE_AWK_STR_LEN(buf) > 0) 
+				{
+					ASE_AWK_STR_LEN(buf) -= 1;
+				}
+				break;
+			}
 		}
 		else if (rs_len == 0)
 		{
 			/* separate by a blank line */
-			/* TODO: handle different line terminator like \r\n */
+			if (c == ASE_T('\n'))
+			{
+				if (pc == ASE_T('\r') && 
+				    ASE_AWK_STR_LEN(buf) > 0) 
+				{
+					ASE_AWK_STR_LEN(buf) -= 1;
+				}
+			}
+
 			if (line_len == 0 && c == ASE_T('\n'))
 			{
 				if (ASE_AWK_STR_LEN(buf) <= 0) 
@@ -264,9 +279,7 @@ int ase_awk_readextio (
 				/* when a blank line is encountered,
 				 * it needs to snip off the line 
 				 * terminator of the previous line */
-				/* TODO: handle different line terminator like \r\n */
 				ASE_AWK_STR_LEN(buf) -= 1;
-
 				break;
 			}
 		}
@@ -281,7 +294,6 @@ int ase_awk_readextio (
 
 			ASE_AWK_ASSERT (run->awk, run->global.rs != ASE_NULL);
 
-			/* TODO: safematchrex */
 			n = ase_awk_matchrex (
 				run->awk, run->global.rs, 
 				((run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
@@ -920,8 +932,7 @@ void ase_awk_clearextio (ase_awk_run_t* run)
 			n = handler (ASE_AWK_IO_CLOSE, run->extio.chain, ASE_NULL, 0);
 			if (n <= -1)
 			{
-				/* TODO: 
-				 * some warning actions need to be taken */
+				/* TODO: some warnings needs to be shown */
 			}
 		}
 

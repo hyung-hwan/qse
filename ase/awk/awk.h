@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.177 2007-01-02 12:25:18 bacon Exp $
+ * $Id: awk.h,v 1.178 2007-01-03 04:16:14 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -208,7 +208,10 @@ enum
 	ASE_AWK_STRIPSPACES = (1 << 12),
 
 	/* enable the nextoutfile keyword */
-	ASE_AWK_NEXTOFILE   = (1 << 13)
+	ASE_AWK_NEXTOFILE   = (1 << 13),
+
+	/* cr + lf by default */
+	ASE_AWK_CRLF        = (1 << 14)
 };
 
 /* error code */
