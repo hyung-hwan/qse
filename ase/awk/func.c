@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.86 2007-01-02 12:25:18 bacon Exp $
+ * $Id: func.c,v 1.87 2007-01-03 03:18:58 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -871,7 +871,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	ase_char_t* a0_ptr_free = ASE_NULL;
 	ase_char_t* a1_ptr_free = ASE_NULL;
 	ase_char_t* a2_ptr_free = ASE_NULL;
-	void* rex;
+	void* rex = ASE_NULL;
 	int opt, n;
 	const ase_char_t* cur_ptr, * mat_ptr;
 	ase_size_t cur_len, mat_len, i, m;
