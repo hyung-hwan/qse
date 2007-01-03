@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.235 2007-01-03 04:16:14 bacon Exp $
+ * $Id: parse.c,v 1.236 2007-01-03 09:51:51 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -719,7 +719,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		return ASE_NULL;
 	}
 
-	if (awk->option & ASE_AWK_UNIQUEAFN) 
+	if (awk->option & ASE_AWK_UNIQUEFN) 
 	{
 		/* check if it coincides to be a global variable name */
 		ase_size_t g;
@@ -831,7 +831,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 			param = ASE_AWK_STR_BUF(&awk->token.name);
 			param_len = ASE_AWK_STR_LEN(&awk->token.name);
 
-			if (awk->option & ASE_AWK_UNIQUEAFN) 
+			if (awk->option & ASE_AWK_UNIQUEFN) 
 			{
 				/* check if a parameter conflicts with a function */
 				if (ase_awk_strxncmp (name_dup, name_len, param, param_len) == 0 ||
@@ -1293,7 +1293,7 @@ static ase_awk_t* __add_global (
 {
 	if (!force)
 	{
-		if (awk->option & ASE_AWK_UNIQUEAFN) 
+		if (awk->option & ASE_AWK_UNIQUEFN) 
 		{
 			/* check if it conflict with a builtin function name */
 			if (ase_awk_getbfn (awk, name, len) != ASE_NULL)
@@ -1441,7 +1441,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 
 		/* NOTE: it is not checked againt globals names */
 
-		if (awk->option & ASE_AWK_UNIQUEAFN) 
+		if (awk->option & ASE_AWK_UNIQUEFN) 
 		{
 			/* check if it conflict with a builtin function name */
 			if (ase_awk_getbfn (awk, local, local_len) != ASE_NULL)

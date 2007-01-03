@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.9 2006-12-15 06:47:07 bacon Exp $
+ * $Id: Awk.cpp,v 1.10 2007-01-03 09:51:52 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -28,8 +28,13 @@ STDMETHODIMP CAwk::InterfaceSupportsErrorInfo(REFIID riid)
 	return S_FALSE;
 }
 
-CAwk::CAwk (): handle(NULL), 
-	read_src_buf(NULL), write_src_buf(NULL),
+CAwk::CAwk (): 
+	handle(NULL), 
+	option(0),
+	errnum(0), 
+	errlin(0),
+	read_src_buf(NULL), 
+	write_src_buf(NULL),
 	write_extio_buf(NULL)
 {
 #ifdef _DEBUG
@@ -41,7 +46,7 @@ CAwk::CAwk (): handle(NULL),
 	/* TODO: what is the best default option? */
 	option = ASE_AWK_IMPLICIT | 
 	      ASE_AWK_EXPLICIT | 
-	      ASE_AWK_UNIQUEAFN | 
+	      ASE_AWK_UNIQUEFN | 
 	      ASE_AWK_HASHSIGN | 
 	      ASE_AWK_IDIV |
 	      ASE_AWK_SHADING | 
@@ -50,7 +55,10 @@ CAwk::CAwk (): handle(NULL),
 	      ASE_AWK_BLOCKLESS | 
 	      ASE_AWK_STRINDEXONE | 
 	      ASE_AWK_STRIPSPACES | 
-	      ASE_AWK_NEXTOFILE;
+	      ASE_AWK_NEXTOFILE |
+	      ASE_AWK_CRLF;
+
+	errmsg[0] = _T('\0');
 }
 
 CAwk::~CAwk ()
@@ -83,27 +91,32 @@ CAwk::~CAwk ()
 	}
 }
 
-static void* __awk_malloc (ase_size_t n, void* custom_data)
+static void* awk_malloc (ase_size_t n, void* custom_data)
 {
 	return malloc (n);
 }
 
-static void* __awk_realloc (void* ptr, ase_size_t n, void* custom_data)
+static void* awk_realloc (void* ptr, ase_size_t n, void* custom_data)
 {
 	return realloc (ptr, n);
 }
 
-static void __awk_free (void* ptr, void* custom_data)
+static void awk_free (void* ptr, void* custom_data)
 {
 	free (ptr);
 }
 
-static ase_real_t __awk_pow (ase_real_t x, ase_real_t y)
+static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
 }
 
-static int __awk_sprintf (
+static void awk_abort (void* custom_data)
+{
+	abort ();
+}
+
+static int awk_sprintf (
 	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
 {
 	int n;
@@ -127,7 +140,7 @@ static int __awk_sprintf (
 	return n;
 }
 
-static void __awk_aprintf (const ase_char_t* fmt, ...)
+static void awk_aprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 #ifdef _WIN32
@@ -155,7 +168,7 @@ static void __awk_aprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static void __awk_dprintf (const ase_char_t* fmt, ...)
+static void awk_dprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
@@ -287,9 +300,9 @@ HRESULT CAwk::Parse (int* ret)
 		ase_awk_sysfns_t sysfns;
 
 		memset (&sysfns, 0, sizeof(sysfns));
-		sysfns.malloc = __awk_malloc;
-		sysfns.realloc = __awk_realloc;
-		sysfns.free = __awk_free;
+		sysfns.malloc = awk_malloc;
+		sysfns.realloc = awk_realloc;
+		sysfns.free = awk_free;
 
 		sysfns.is_upper  = iswupper;
 		sysfns.is_lower  = iswlower;
@@ -307,15 +320,20 @@ HRESULT CAwk::Parse (int* ret)
 
 		sysfns.memcpy = memcpy;
 		sysfns.memset = memset;
-		sysfns.pow = __awk_pow;
-		sysfns.sprintf = __awk_sprintf;
-		sysfns.aprintf = __awk_aprintf;
-		sysfns.dprintf = __awk_dprintf;
-		sysfns.abort = abort;
+		sysfns.pow = awk_pow;
+		sysfns.sprintf = awk_sprintf;
+		sysfns.aprintf = awk_aprintf;
+		sysfns.dprintf = awk_dprintf;
+		sysfns.abort = awk_abort;
 
-		handle = ase_awk_open (&sysfns);
+		handle = ase_awk_open (&sysfns, &errnum);
 		if (handle == NULL)
 		{
+			errlin = 0;
+			ase_awk_strxcpy (
+				errmsg, ASE_COUNTOF(errmsg), 
+				ase_awk_geterrstr(errnum));
+
 			*ret = -1;
 			return S_OK;
 		}
@@ -331,6 +349,11 @@ HRESULT CAwk::Parse (int* ret)
 	
 	if (ase_awk_parse (handle, &srcios) == -1)
 	{
+		const ase_char_t* msg;
+
+		ase_awk_geterror (handle, &errnum, &errlin, &msg);
+		ase_awk_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
+
 		*ret = -1;
 		return S_OK;
 	}
@@ -511,8 +534,11 @@ HRESULT CAwk::Run (int* ret)
 
 	if (ase_awk_run (handle, NULL, &runios, NULL, NULL, this) == -1)
 	{
-		int err = ase_awk_geterrnum (handle);
-MessageBox (NULL, ase_awk_geterrstr(err), ase_awk_geterrstr(err), MB_OK);
+		const ase_char_t* msg;
+
+		ase_awk_geterror (handle, &errnum, &errlin, &msg);
+		ase_awk_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
+
 		*ret = -1;
 		return S_OK;
 	}
@@ -530,5 +556,100 @@ STDMETHODIMP CAwk::get_Option (int *pVal)
 STDMETHODIMP CAwk::put_Option (int newVal)
 {
 	newVal = option;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_ErrorCode(int *pVal)
+{
+	*pVal = errnum;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_ErrorLine(int *pVal)
+{
+	*pVal = errlin;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_ErrorMessage(BSTR *pVal)
+{
+	BSTR tmp = SysAllocStringLen (errmsg, _tcslen(errmsg));
+	if (tmp == NULL) return E_OUTOFMEMORY;
+	*pVal = tmp;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_ImplicitVariable(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_IMPLICIT) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_ImplicitVariable(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_IMPLICIT;
+	else option = option | ~ASE_AWK_IMPLICIT;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_ExplicitVariable(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_EXPLICIT) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_ExplicitVariable(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_EXPLICIT;
+	else option = option | ~ASE_AWK_EXPLICIT;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_UniqueFunction(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_UNIQUEFN) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_UniqueFunction(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_UNIQUEFN;
+	else option = option | ~ASE_AWK_UNIQUEFN;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_VariableShading(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_SHADING) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_VariableShading(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_SHADING;
+	else option = option | ~ASE_AWK_SHADING;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_ShiftOperators(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_SHIFT) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_ShiftOperators(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_SHIFT;
+	else option = option | ~ASE_AWK_SHIFT;
+	if (handle != NULL) ase_awk_setopt (handle, option);
 	return S_OK;
 }

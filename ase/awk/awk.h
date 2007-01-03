@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.178 2007-01-03 04:16:14 bacon Exp $
+ * $Id: awk.h,v 1.179 2007-01-03 09:51:50 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -159,7 +159,7 @@ enum
 	ASE_AWK_EXPLICIT    = (1 << 1), 
 
 	/* a function name should not coincide to be a variable name */
-	ASE_AWK_UNIQUEAFN   = (1 << 2),
+	ASE_AWK_UNIQUEFN    = (1 << 2),
 
 	/* allow variable shading */
 	ASE_AWK_SHADING     = (1 << 3), 

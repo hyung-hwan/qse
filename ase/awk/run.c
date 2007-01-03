@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.318 2007-01-03 04:16:15 bacon Exp $
+ * $Id: run.c,v 1.319 2007-01-03 09:51:52 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -598,7 +598,13 @@ void ase_awk_getrunerror (
 {
 	if (errnum != ASE_NULL) *errnum = run->errnum;
 	if (errlin != ASE_NULL) *errlin = run->errlin;
-	if (errmsg != ASE_NULL) *errmsg = run->errmsg;
+	if (errmsg != ASE_NULL) 
+	{
+		if (run->errmsg[0] == ASE_T('\0'))
+			*errmsg = ase_awk_geterrstr (run->errnum);
+		else
+			*errmsg = run->errmsg;
+	}
 }
 
 void ase_awk_setrunerror (
