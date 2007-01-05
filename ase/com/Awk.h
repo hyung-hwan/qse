@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.5 2007-01-03 09:51:52 bacon Exp $
+ * $Id: Awk.h,v 1.6 2007-01-05 06:29:46 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -81,8 +81,6 @@ public:
 	STDMETHOD(get_ErrorMessage)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(get_Option)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(put_Option)(/*[in]*/ int newVal);
 	HRESULT __stdcall Parse (int* ret);
 	HRESULT __stdcall Run (int* ret);
 };
