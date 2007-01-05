@@ -107,6 +107,8 @@ Private Sub Execute_Click()
     
     Awk.ExplicitVariable = True
     Awk.ImplicitVariable = False
+    Awk.UseCrlf = True
+    Awk.IdivOperator = True
     
     If Awk.Parse() = -1 Then
         MsgBox "ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage

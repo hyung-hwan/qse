@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.236 2007-01-03 09:51:51 bacon Exp $
+ * $Id: parse.c,v 1.237 2007-01-05 13:38:59 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -4921,7 +4921,7 @@ static int __skip_comment (ase_awk_t* awk)
 	ase_cint_t c = awk->src.lex.curc;
 	ase_size_t line, column;
 
-	if ((awk->option & ASE_AWK_HASHSIGN) && c == ASE_T('#'))
+	if (c == ASE_T('#'))
 	{
 		do 
 		{ 

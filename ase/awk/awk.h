@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.179 2007-01-03 09:51:50 bacon Exp $
+ * $Id: awk.h,v 1.180 2007-01-05 13:38:58 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -170,27 +170,24 @@ enum
 	/* enable the idiv operator (double slashes) */
 	ASE_AWK_IDIV        = (1 << 5), 
 
-	/* support comments by a hash sign */
-	ASE_AWK_HASHSIGN    = (1 << 6), 
-
 	/* support string concatenation in tokenization.
 	 * this option can change the behavior of a certain construct.
 	 * getline < "abc" ".def" is treated as if it is getline < "abc.def" 
 	 * when this option is on. If this option is off, the same expression
 	 * is treated as if it is (getline < "abc") ".def". */
-	ASE_AWK_STRCONCAT   = (1 << 7), 
+	ASE_AWK_STRCONCAT   = (1 << 6), 
 
 	/* support getline and print */
-	ASE_AWK_EXTIO       = (1 << 8), 
+	ASE_AWK_EXTIO       = (1 << 7), 
 
 	/* support co-process */
-	ASE_AWK_COPROC      = (1 << 9),
+	ASE_AWK_COPROC      = (1 << 8),
 
 	/* support blockless patterns */
-	ASE_AWK_BLOCKLESS   = (1 << 10), 
+	ASE_AWK_BLOCKLESS   = (1 << 9), 
 
 	/* use 1 as the start index for string operations */
-	ASE_AWK_STRINDEXONE = (1 << 11),
+	ASE_AWK_STRIDXONE   = (1 << 10),
 
 	/* strip off leading and trailing spaces when splitting a record
 	 * into fields with a regular expression.
@@ -205,13 +202,13 @@ enum
 	 * The program splits " a b c " into [a], [b], [c] when this
 	 * option is on while into [], [a], [b], [c], [] when it is off.
 	 */
-	ASE_AWK_STRIPSPACES = (1 << 12),
+	ASE_AWK_STRIPSPACES = (1 << 11),
 
 	/* enable the nextoutfile keyword */
-	ASE_AWK_NEXTOFILE   = (1 << 13),
+	ASE_AWK_NEXTOFILE   = (1 << 12),
 
 	/* cr + lf by default */
-	ASE_AWK_CRLF        = (1 << 14)
+	ASE_AWK_CRLF        = (1 << 13)
 };
 
 /* error code */
