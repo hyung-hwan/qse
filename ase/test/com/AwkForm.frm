@@ -105,6 +105,9 @@ Private Sub Execute_Click()
     
     Set Awk = New ASELib.Awk
     
+    Awk.ExplicitVariable = True
+    Awk.ImplicitVariable = False
+    
     If Awk.Parse() = -1 Then
         MsgBox "ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
     Else
@@ -294,16 +297,8 @@ End Function
     
 Function WriteExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
     Dim value As String
-    'Dim value2 As String
-    'Dim i As Long
         
     value = buf.value
-    
-    'For i = 0 To 5000000
-    '    value2 = "abc"
-    '    buf.value = "abdkjsdfsafas"
-    'Next i
-    
     ConsoleOut.Text = ConsoleOut.Text + value
     WriteExtioConsole = Len(value)
 End Function

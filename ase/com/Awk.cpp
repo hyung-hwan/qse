@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.10 2007-01-03 09:51:52 bacon Exp $
+ * $Id: Awk.cpp,v 1.11 2007-01-05 06:29:46 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -547,18 +547,6 @@ HRESULT CAwk::Run (int* ret)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_Option (int *pVal)
-{
-	*pVal = option;
-	return S_OK;
-}
-
-STDMETHODIMP CAwk::put_Option (int newVal)
-{
-	newVal = option;
-	return S_OK;
-}
-
 STDMETHODIMP CAwk::get_ErrorCode(int *pVal)
 {
 	*pVal = errnum;
@@ -589,7 +577,7 @@ STDMETHODIMP CAwk::get_ImplicitVariable(BOOL *pVal)
 STDMETHODIMP CAwk::put_ImplicitVariable(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_IMPLICIT;
-	else option = option | ~ASE_AWK_IMPLICIT;
+	else option = option & ~ASE_AWK_IMPLICIT;
 	if (handle != NULL) ase_awk_setopt (handle, option);
 	return S_OK;
 }
@@ -604,7 +592,7 @@ STDMETHODIMP CAwk::get_ExplicitVariable(BOOL *pVal)
 STDMETHODIMP CAwk::put_ExplicitVariable(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_EXPLICIT;
-	else option = option | ~ASE_AWK_EXPLICIT;
+	else option = option & ~ASE_AWK_EXPLICIT;
 	if (handle != NULL) ase_awk_setopt (handle, option);
 	return S_OK;
 }
@@ -619,7 +607,7 @@ STDMETHODIMP CAwk::get_UniqueFunction(BOOL *pVal)
 STDMETHODIMP CAwk::put_UniqueFunction(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_UNIQUEFN;
-	else option = option | ~ASE_AWK_UNIQUEFN;
+	else option = option & ~ASE_AWK_UNIQUEFN;
 	if (handle != NULL) ase_awk_setopt (handle, option);
 	return S_OK;
 }
@@ -634,7 +622,7 @@ STDMETHODIMP CAwk::get_VariableShading(BOOL *pVal)
 STDMETHODIMP CAwk::put_VariableShading(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_SHADING;
-	else option = option | ~ASE_AWK_SHADING;
+	else option = option & ~ASE_AWK_SHADING;
 	if (handle != NULL) ase_awk_setopt (handle, option);
 	return S_OK;
 }
@@ -649,7 +637,7 @@ STDMETHODIMP CAwk::get_ShiftOperators(BOOL *pVal)
 STDMETHODIMP CAwk::put_ShiftOperators(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_SHIFT;
-	else option = option | ~ASE_AWK_SHIFT;
+	else option = option & ~ASE_AWK_SHIFT;
 	if (handle != NULL) ase_awk_setopt (handle, option);
 	return S_OK;
 }
