@@ -1,5 +1,5 @@
 /*
- * $Id: ase.idl,v 1.5 2007-01-05 06:29:46 bacon Exp $
+ * $Id: ase.idl,v 1.6 2007-01-05 13:39:37 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -30,16 +30,71 @@ interface IAwk : IDispatch
 	[propget, id(5), helpstring("property ErrorMessage")] 
 	HRESULT ErrorMessage([out, retval] BSTR *pVal);
 
-	[propget, id(6), helpstring("property ImplicitVariable")] HRESULT ImplicitVariable([out, retval] BOOL *pVal);
-	[propput, id(6), helpstring("property ImplicitVariable")] HRESULT ImplicitVariable([in] BOOL newVal);
-	[propget, id(7), helpstring("property ExplicitVariable")] HRESULT ExplicitVariable([out, retval] BOOL *pVal);
-	[propput, id(7), helpstring("property ExplicitVariable")] HRESULT ExplicitVariable([in] BOOL newVal);
-	[propget, id(8), helpstring("property UniqueFunction")] HRESULT UniqueFunction([out, retval] BOOL *pVal);
-	[propput, id(8), helpstring("property UniqueFunction")] HRESULT UniqueFunction([in] BOOL newVal);
-	[propget, id(9), helpstring("property VariableShading")] HRESULT VariableShading([out, retval] BOOL *pVal);
-	[propput, id(9), helpstring("property VariableShading")] HRESULT VariableShading([in] BOOL newVal);
-	[propget, id(10), helpstring("property ShiftOperators")] HRESULT ShiftOperators([out, retval] BOOL *pVal);
-	[propput, id(10), helpstring("property ShiftOperators")] HRESULT ShiftOperators([in] BOOL newVal);
+	[propget, id(6), helpstring("property ImplicitVariable")] 
+	HRESULT ImplicitVariable([out, retval] BOOL *pVal);
+	[propput, id(6), helpstring("property ImplicitVariable")] 
+	HRESULT ImplicitVariable([in] BOOL newVal);
+
+	[propget, id(7), helpstring("property ExplicitVariable")]
+	HRESULT ExplicitVariable([out, retval] BOOL *pVal);
+	[propput, id(7), helpstring("property ExplicitVariable")] 
+	HRESULT ExplicitVariable([in] BOOL newVal);
+
+	[propget, id(8), helpstring("property UniqueFunction")] 
+	HRESULT UniqueFunction([out, retval] BOOL *pVal);
+
+	[propput, id(8), helpstring("property UniqueFunction")]
+	HRESULT UniqueFunction([in] BOOL newVal);
+
+	[propget, id(9), helpstring("property VariableShading")] 
+	HRESULT VariableShading([out, retval] BOOL *pVal);
+	[propput, id(9), helpstring("property VariableShading")]
+	HRESULT VariableShading([in] BOOL newVal);
+
+	[propget, id(10), helpstring("property ShiftOperators")]
+	HRESULT ShiftOperators([out, retval] BOOL *pVal);
+	[propput, id(10), helpstring("property ShiftOperators")] 
+	HRESULT ShiftOperators([in] BOOL newVal);
+
+	[propget, id(11), helpstring("property IdivOperator")]
+	HRESULT IdivOperator([out, retval] BOOL *pVal);
+	[propput, id(11), helpstring("property IdivOperator")]
+	HRESULT IdivOperator([in] BOOL newVal);
+
+	[propget, id(12), helpstring("property ConcatString")]
+	HRESULT ConcatString([out, retval] BOOL *pVal);
+	[propput, id(12), helpstring("property ConcatString")]
+	HRESULT ConcatString([in] BOOL newVal);
+
+	[propget, id(13), helpstring("property SupportExtio")]
+	HRESULT SupportExtio([out, retval] BOOL *pVal);
+	[propput, id(13), helpstring("property SupportExtio")]
+	HRESULT SupportExtio([in] BOOL newVal);
+
+	[propget, id(14), helpstring("property SupportBlockless")]
+	HRESULT SupportBlockless([out, retval] BOOL *pVal);
+	[propput, id(14), helpstring("property SupportBlockless")]
+	HRESULT SupportBlockless([in] BOOL newVal);
+
+	[propget, id(15), helpstring("property StringIndexOne")]
+	HRESULT StringIndexOne([out, retval] BOOL *pVal);
+	[propput, id(15), helpstring("property StringIndexOne")]
+	HRESULT StringIndexOne([in] BOOL newVal);
+
+	[propget, id(16), helpstring("property StripSpaces")]
+	HRESULT StripSpaces([out, retval] BOOL *pVal);
+	[propput, id(16), helpstring("property StripSpaces")]
+	HRESULT StripSpaces([in] BOOL newVal);
+
+	[propget, id(17), helpstring("property Nextofile")]
+	HRESULT Nextofile([out, retval] BOOL *pVal);
+	[propput, id(17), helpstring("property Nextofile")]
+	HRESULT Nextofile([in] BOOL newVal);
+
+	[propget, id(18), helpstring("property UseCrlf")]
+	HRESULT UseCrlf([out, retval] BOOL *pVal);
+	[propput, id(18), helpstring("property UseCrlf")]
+	HRESULT UseCrlf([in] BOOL newVal);
 };
 
 /* ASELib */

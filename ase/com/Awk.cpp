@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.11 2007-01-05 06:29:46 bacon Exp $
+ * $Id: Awk.cpp,v 1.12 2007-01-05 13:39:37 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -47,13 +47,12 @@ CAwk::CAwk ():
 	option = ASE_AWK_IMPLICIT | 
 	      ASE_AWK_EXPLICIT | 
 	      ASE_AWK_UNIQUEFN | 
-	      ASE_AWK_HASHSIGN | 
 	      ASE_AWK_IDIV |
 	      ASE_AWK_SHADING | 
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 
 	      ASE_AWK_BLOCKLESS | 
-	      ASE_AWK_STRINDEXONE | 
+	      ASE_AWK_STRIDXONE | 
 	      ASE_AWK_STRIPSPACES | 
 	      ASE_AWK_NEXTOFILE |
 	      ASE_AWK_CRLF;
@@ -641,3 +640,124 @@ STDMETHODIMP CAwk::put_ShiftOperators(BOOL newVal)
 	if (handle != NULL) ase_awk_setopt (handle, option);
 	return S_OK;
 }
+
+STDMETHODIMP CAwk::get_IdivOperator(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_IDIV) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_IdivOperator(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_IDIV;
+	else option = option & ~ASE_AWK_IDIV;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_ConcatString(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_STRCONCAT) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_ConcatString(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_STRCONCAT;
+	else option = option & ~ASE_AWK_STRCONCAT;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_SupportExtio(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_EXTIO) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_SupportExtio(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_EXTIO;
+	else option = option & ~ASE_AWK_EXTIO;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_SupportBlockless(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_BLOCKLESS) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_SupportBlockless(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_BLOCKLESS;
+	else option = option & ~ASE_AWK_BLOCKLESS;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_StringIndexOne(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_STRIDXONE) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_StringIndexOne(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_STRIDXONE;
+	else option = option & ~ASE_AWK_STRIDXONE;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_StripSpaces(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_STRIPSPACES) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_StripSpaces(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_STRIPSPACES;
+	else option = option & ~ASE_AWK_STRIPSPACES;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_Nextofile(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_NEXTOFILE) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_Nextofile(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_NEXTOFILE;
+	else option = option & ~ASE_AWK_NEXTOFILE;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_UseCrlf(BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getopt (handle);
+	*pVal = (option & ASE_AWK_CRLF) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_UseCrlf(BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_CRLF;
+	else option = option & ~ASE_AWK_CRLF;
+	if (handle != NULL) ase_awk_setopt (handle, option);
+	return S_OK;
+}
+

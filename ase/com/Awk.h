@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.6 2007-01-05 06:29:46 bacon Exp $
+ * $Id: Awk.h,v 1.7 2007-01-05 13:39:37 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -68,6 +68,22 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
+	STDMETHOD(get_UseCrlf)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_UseCrlf)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_Nextofile)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_Nextofile)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_StripSpaces)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_StripSpaces)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_StringIndexOne)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_StringIndexOne)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_SupportBlockless)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_SupportBlockless)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_SupportExtio)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_SupportExtio)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_ConcatString)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_ConcatString)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_IdivOperator)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_IdivOperator)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_ShiftOperators)(/*[out, retval]*/ BOOL *pVal);
 	STDMETHOD(put_ShiftOperators)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_VariableShading)(/*[out, retval]*/ BOOL *pVal);
