@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.102 2006-12-19 14:20:29 bacon Exp $ 
+ * $Id: awk.c,v 1.103 2007-01-06 15:45:50 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -147,10 +147,12 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum)
 	awk->parse.depth.cur.loop = 0;
 	awk->parse.depth.cur.expr = 0;
 
-	ase_awk_setmaxparsedepth (awk, ASE_AWK_DEPTH_BLOCK, 0);
-	ase_awk_setmaxparsedepth (awk, ASE_AWK_DEPTH_EXPR, 0);
-	ase_awk_setmaxrundepth (awk, ASE_AWK_DEPTH_BLOCK, 0);
-	ase_awk_setmaxrundepth (awk, ASE_AWK_DEPTH_EXPR, 0);
+	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_BLOCK_PARSE, 0);
+	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_BLOCK_RUN, 0);
+	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_EXPR_PARSE, 0);
+	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_EXPR_RUN, 0);
+	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_BUILD, 0);
+	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_MATCH, 0);
 
 	awk->run.count = 0;
 	awk->run.ptr = ASE_NULL;
@@ -259,18 +261,5 @@ int ase_awk_getopt (ase_awk_t* awk)
 void ase_awk_setopt (ase_awk_t* awk, int opt)
 {
 	awk->option = opt;
-}
-
-void ase_awk_setmaxrundepth (ase_awk_t* awk, int types, ase_size_t depth)
-{
-	if (types & ASE_AWK_DEPTH_BLOCK)
-	{
-		awk->run.depth.max.block = depth;
-	}
-
-	if (types & ASE_AWK_DEPTH_EXPR)
-	{
-		awk->run.depth.max.expr = depth;
-	}
 }
 

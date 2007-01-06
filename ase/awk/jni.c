@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.46 2007-01-05 13:38:59 bacon Exp $
+ * $Id: jni.c,v 1.47 2007-01-06 15:45:50 bacon Exp $
  */
 
 #include <stdio.h>
@@ -317,8 +317,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 
 	depth = __java_get_max_depth (env, obj, "getMaxParseDepth");
 	if (depth < 0) depth = 0;
-	ase_awk_setmaxparsedepth (awk, 
-		ASE_AWK_DEPTH_BLOCK | ASE_AWK_DEPTH_EXPR, depth);
+
+	ase_awk_setmaxdepth (
+		awk, 
+		ASE_AWK_DEPTH_BLOCK_PARSE | 
+		ASE_AWK_DEPTH_EXPR_PARSE, 
+		depth);
 
 	if (ase_awk_parse (awk, &srcios) == -1)
 	{
