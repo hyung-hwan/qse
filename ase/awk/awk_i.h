@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.96 2006-12-30 08:54:43 bacon Exp $
+ * $Id: awk_i.h,v 1.97 2007-01-06 15:45:50 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -197,16 +197,22 @@ struct ase_awk_t
 			struct
 			{
 				ase_size_t block;
-				ase_size_t expr; 
-			} cur;
-
-			struct
-			{
-				ase_size_t block;
 				ase_size_t expr;
 			} max;
 		} depth;
 	} run;
+
+	struct
+	{
+		struct
+		{
+			struct
+			{
+				ase_size_t build;
+				ase_size_t match;
+			} max;
+		} depth;
+	} rex;
 
 	/* housekeeping */
 	int errnum;

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.12 2007-01-05 13:39:37 bacon Exp $
+ * $Id: Awk.cpp,v 1.13 2007-01-06 15:45:50 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -30,9 +30,6 @@ STDMETHODIMP CAwk::InterfaceSupportsErrorInfo(REFIID riid)
 
 CAwk::CAwk (): 
 	handle(NULL), 
-	option(0),
-	errnum(0), 
-	errlin(0),
 	read_src_buf(NULL), 
 	write_src_buf(NULL),
 	write_extio_buf(NULL)
@@ -44,19 +41,23 @@ CAwk::CAwk ():
 #endif
 
 	/* TODO: what is the best default option? */
-	option = ASE_AWK_IMPLICIT | 
-	      ASE_AWK_EXPLICIT | 
-	      ASE_AWK_UNIQUEFN | 
-	      ASE_AWK_IDIV |
-	      ASE_AWK_SHADING | 
-	      ASE_AWK_SHIFT | 
-	      ASE_AWK_EXTIO | 
-	      ASE_AWK_BLOCKLESS | 
-	      ASE_AWK_STRIDXONE | 
-	      ASE_AWK_STRIPSPACES | 
-	      ASE_AWK_NEXTOFILE |
-	      ASE_AWK_CRLF;
+	option = 
+		ASE_AWK_IMPLICIT | 
+		ASE_AWK_EXPLICIT | 
+		ASE_AWK_UNIQUEFN | 
+		ASE_AWK_IDIV |
+		ASE_AWK_SHADING | 
+		ASE_AWK_SHIFT | 
+		ASE_AWK_EXTIO | 
+		ASE_AWK_BLOCKLESS | 
+		ASE_AWK_STRIDXONE | 
+		ASE_AWK_STRIPSPACES | 
+		ASE_AWK_NEXTOFILE |
+		ASE_AWK_CRLF;
+	memset (&max_depth, 0, sizeof(max_depth));
 
+	errnum    = 0;
+	errlin    = 0;
 	errmsg[0] = _T('\0');
 }
 
@@ -761,3 +762,110 @@ STDMETHODIMP CAwk::put_UseCrlf(BOOL newVal)
 	return S_OK;
 }
 
+STDMETHODIMP CAwk::get_MaxDepthForBlockParse(int *pVal)
+{
+	// TODO: Add your implementation code here
+
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_MaxDepthForBlockParse(int newVal)
+{
+	max_depth.block.parse = newVal;
+	if (handle != NULL) 
+	{
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_BLOCK_PARSE, max_depth.block.parse);
+	}
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_MaxDepthForBlockRun(int *pVal)
+{
+	// TODO: Add your implementation code here
+
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_MaxDepthForBlockRun(int newVal)
+{
+	max_depth.block.run = newVal;
+	if (handle != NULL) 
+	{
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_BLOCK_RUN, max_depth.block.run);
+	}
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_MaxDepthForExpressionParse(int *pVal)
+{
+	// TODO: Add your implementation code here
+
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_MaxDepthForExpressionParse(int newVal)
+{
+	max_depth.expr.parse = newVal;
+	if (handle != NULL) 
+	{
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_EXPR_PARSE, max_depth.expr.parse);
+	}
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_MaxDepthForExpressionRun(int *pVal)
+{
+	// TODO: Add your implementation code here
+
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_MaxDepthForExpressionRun(int newVal)
+{
+	max_depth.expr.run = newVal;
+	if (handle != NULL) 
+	{
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_EXPR_RUN, max_depth.expr.run);
+	}
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_MaxDepthForRexBuild(int *pVal)
+{
+	// TODO: Add your implementation code here
+
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_MaxDepthForRexBuild(int newVal)
+{
+	max_depth.rex.build = newVal;
+	if (handle != NULL) 
+	{
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_REX_BUILD, max_depth.rex.build);
+	}
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_MaxDepthForRexMatch(int *pVal)
+{
+	// TODO: Add your implementation code here
+
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_MaxDepthForRexMatch(int newVal)
+{
+	max_depth.rex.match = newVal;
+	if (handle != NULL) 
+	{
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
+	}
+	return S_OK;
+}

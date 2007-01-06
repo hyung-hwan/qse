@@ -110,6 +110,9 @@ Private Sub Execute_Click()
     Awk.UseCrlf = True
     Awk.IdivOperator = True
     
+    ' TODO: debug it....
+    Awk.MaxDepthForBlockParse = 3
+    
     If Awk.Parse() = -1 Then
         MsgBox "ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
     Else

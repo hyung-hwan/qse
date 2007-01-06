@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.237 2007-01-05 13:38:59 bacon Exp $
+ * $Id: parse.c,v 1.238 2007-01-06 15:45:14 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -342,9 +342,9 @@ static struct __bvent __bvtab[] =
 		} \
 	} while (0)
 
-void ase_awk_setmaxparsedepth (ase_awk_t* awk, int types, ase_size_t depth)
+void ase_awk_setmaxdepth (ase_awk_t* awk, int types, ase_size_t depth)
 {
-	if (types & ASE_AWK_DEPTH_BLOCK)
+	if (types & ASE_AWK_DEPTH_BLOCK_PARSE)
 	{
 		awk->parse.depth.max.block = depth;
 		if (depth <= 0)
@@ -353,9 +353,29 @@ void ase_awk_setmaxparsedepth (ase_awk_t* awk, int types, ase_size_t depth)
 			awk->parse.parse_block = __parse_block_dc;
 	}
 
-	if (types & ASE_AWK_DEPTH_EXPR)
+	if (types & ASE_AWK_DEPTH_EXPR_PARSE)
 	{
 		awk->parse.depth.max.expr = depth;
+	}
+
+	if (types & ASE_AWK_DEPTH_BLOCK_RUN)
+	{
+		awk->run.depth.max.block = depth;
+	}
+
+	if (types & ASE_AWK_DEPTH_EXPR_RUN)
+	{
+		awk->run.depth.max.expr = depth;
+	}
+
+	if (types & ASE_AWK_DEPTH_REX_BUILD)
+	{
+		awk->rex.depth.max.build = depth;
+	}
+
+	if (types & ASE_AWK_DEPTH_REX_MATCH)
+	{
+		awk->rex.depth.max.match = depth;
 	}
 }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.53 2006-12-23 06:33:47 bacon Exp $
+ * $Id: rex.c,v 1.54 2007-01-06 15:45:50 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -283,9 +283,7 @@ void* ase_awk_buildrex (
 	builder.ptn.curc.type = CT_EOF;
 	builder.ptn.curc.value = ASE_T('\0');
 
-	/* IMPLEMENT THIS PROPERLY. */
-	/*builder.depth.max = awk->rex.depth.max;*/
-	builder.depth.max = 0;
+	builder.depth.max = awk->rex.depth.max.build;
 	builder.depth.cur = 0;
 
 	if (__next_char (&builder, LEVEL_TOP) == -1) 
@@ -328,9 +326,7 @@ int ase_awk_matchrex (
 	matcher.match.str.ptr = str;
 	matcher.match.str.end = str + len;
 
-/* TODO: implement the maximum depth 
-	matcher.depth.max = awk->max_depth; */
-	matcher.depth.max = 0;
+	matcher.depth.max = awk->rex.depth.max.match;
 	matcher.depth.cur = 0;
 	matcher.ignorecase = (option & ASE_AWK_REX_IGNORECASE)? 1: 0;
 
