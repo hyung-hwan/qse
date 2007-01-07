@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.238 2007-01-06 15:45:14 bacon Exp $
+ * $Id: parse.c,v 1.239 2007-01-07 07:26:16 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -341,6 +341,16 @@ static struct __bvent __bvtab[] =
 				(awk)->errmsg); \
 		} \
 	} while (0)
+
+ase_size_t ase_awk_getmaxdepth (ase_awk_t* awk, int type)
+{
+	return (type == ASE_AWK_DEPTH_BLOCK_PARSE)? awk->parse.depth.max.block:
+	       (type == ASE_AWK_DEPTH_BLOCK_RUN)? awk->run.depth.max.block:
+	       (type == ASE_AWK_DEPTH_EXPR_PARSE)? awk->parse.depth.max.expr:
+	       (type == ASE_AWK_DEPTH_EXPR_RUN)? awk->run.depth.max.expr:
+	       (type == ASE_AWK_DEPTH_REX_BUILD)? awk->rex.depth.max.build:
+	       (type == ASE_AWK_DEPTH_REX_MATCH)? awk->rex.depth.max.match: 0;
+}
 
 void ase_awk_setmaxdepth (ase_awk_t* awk, int types, ase_size_t depth)
 {

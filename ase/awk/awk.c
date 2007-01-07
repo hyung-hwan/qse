@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.103 2007-01-06 15:45:50 bacon Exp $ 
+ * $Id: awk.c,v 1.104 2007-01-07 07:30:39 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -253,12 +253,12 @@ int ase_awk_clear (ase_awk_t* awk)
 	return 0;
 }
 
-int ase_awk_getopt (ase_awk_t* awk)
+int ase_awk_getoption (ase_awk_t* awk)
 {
 	return awk->option;
 }
 
-void ase_awk_setopt (ase_awk_t* awk, int opt)
+void ase_awk_setoption (ase_awk_t* awk, int opt)
 {
 	awk->option = opt;
 }

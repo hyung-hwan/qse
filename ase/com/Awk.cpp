@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.13 2007-01-06 15:45:50 bacon Exp $
+ * $Id: Awk.cpp,v 1.14 2007-01-07 07:30:40 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -338,7 +338,20 @@ HRESULT CAwk::Parse (int* ret)
 			return S_OK;
 		}
 
-		ase_awk_setopt (handle, option);
+		ase_awk_setoption (handle, option);
+
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_BLOCK_PARSE, max_depth.block.parse);
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_BLOCK_RUN, max_depth.block.run);
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_EXPR_PARSE, max_depth.expr.parse);
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_EXPR_RUN, max_depth.expr.run);
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_REX_BUILD, max_depth.rex.build);
+		ase_awk_setmaxdepth (handle, 
+			ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
 	}
 
 	ase_awk_srcios_t srcios;
@@ -569,7 +582,7 @@ STDMETHODIMP CAwk::get_ErrorMessage(BSTR *pVal)
 
 STDMETHODIMP CAwk::get_ImplicitVariable(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_IMPLICIT) == 1;
 	return S_OK;
 }
@@ -578,13 +591,13 @@ STDMETHODIMP CAwk::put_ImplicitVariable(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_IMPLICIT;
 	else option = option & ~ASE_AWK_IMPLICIT;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_ExplicitVariable(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_EXPLICIT) == 1;
 	return S_OK;
 }
@@ -593,13 +606,13 @@ STDMETHODIMP CAwk::put_ExplicitVariable(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_EXPLICIT;
 	else option = option & ~ASE_AWK_EXPLICIT;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_UniqueFunction(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_UNIQUEFN) == 1;
 	return S_OK;
 }
@@ -608,13 +621,13 @@ STDMETHODIMP CAwk::put_UniqueFunction(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_UNIQUEFN;
 	else option = option & ~ASE_AWK_UNIQUEFN;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_VariableShading(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_SHADING) == 1;
 	return S_OK;
 }
@@ -623,13 +636,13 @@ STDMETHODIMP CAwk::put_VariableShading(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_SHADING;
 	else option = option & ~ASE_AWK_SHADING;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_ShiftOperators(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_SHIFT) == 1;
 	return S_OK;
 }
@@ -638,13 +651,13 @@ STDMETHODIMP CAwk::put_ShiftOperators(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_SHIFT;
 	else option = option & ~ASE_AWK_SHIFT;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_IdivOperator(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_IDIV) == 1;
 	return S_OK;
 }
@@ -653,13 +666,13 @@ STDMETHODIMP CAwk::put_IdivOperator(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_IDIV;
 	else option = option & ~ASE_AWK_IDIV;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_ConcatString(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_STRCONCAT) == 1;
 	return S_OK;
 }
@@ -668,13 +681,13 @@ STDMETHODIMP CAwk::put_ConcatString(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_STRCONCAT;
 	else option = option & ~ASE_AWK_STRCONCAT;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_SupportExtio(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_EXTIO) == 1;
 	return S_OK;
 }
@@ -683,13 +696,13 @@ STDMETHODIMP CAwk::put_SupportExtio(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_EXTIO;
 	else option = option & ~ASE_AWK_EXTIO;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_SupportBlockless(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_BLOCKLESS) == 1;
 	return S_OK;
 }
@@ -698,13 +711,13 @@ STDMETHODIMP CAwk::put_SupportBlockless(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_BLOCKLESS;
 	else option = option & ~ASE_AWK_BLOCKLESS;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_StringIndexOne(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_STRIDXONE) == 1;
 	return S_OK;
 }
@@ -713,13 +726,13 @@ STDMETHODIMP CAwk::put_StringIndexOne(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_STRIDXONE;
 	else option = option & ~ASE_AWK_STRIDXONE;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_StripSpaces(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_STRIPSPACES) == 1;
 	return S_OK;
 }
@@ -728,13 +741,13 @@ STDMETHODIMP CAwk::put_StripSpaces(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_STRIPSPACES;
 	else option = option & ~ASE_AWK_STRIPSPACES;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_Nextofile(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_NEXTOFILE) == 1;
 	return S_OK;
 }
@@ -743,13 +756,13 @@ STDMETHODIMP CAwk::put_Nextofile(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_NEXTOFILE;
 	else option = option & ~ASE_AWK_NEXTOFILE;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_UseCrlf(BOOL *pVal)
 {
-	if (handle != NULL) option = ase_awk_getopt (handle);
+	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_CRLF) == 1;
 	return S_OK;
 }
@@ -758,14 +771,18 @@ STDMETHODIMP CAwk::put_UseCrlf(BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_CRLF;
 	else option = option & ~ASE_AWK_CRLF;
-	if (handle != NULL) ase_awk_setopt (handle, option);
+	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::get_MaxDepthForBlockParse(int *pVal)
 {
-	// TODO: Add your implementation code here
-
+	if (handle != NULL) 
+	{
+		max_depth.block.parse = 
+			ase_awk_getmaxdepth (handle, ASE_AWK_DEPTH_BLOCK_PARSE);
+	}
+	*pVal = max_depth.block.parse;
 	return S_OK;
 }
 
@@ -782,8 +799,12 @@ STDMETHODIMP CAwk::put_MaxDepthForBlockParse(int newVal)
 
 STDMETHODIMP CAwk::get_MaxDepthForBlockRun(int *pVal)
 {
-	// TODO: Add your implementation code here
-
+	if (handle != NULL) 
+	{
+		max_depth.block.run = 
+			ase_awk_getmaxdepth (handle, ASE_AWK_DEPTH_BLOCK_RUN);
+	}
+	*pVal = max_depth.block.run;
 	return S_OK;
 }
 
@@ -800,8 +821,12 @@ STDMETHODIMP CAwk::put_MaxDepthForBlockRun(int newVal)
 
 STDMETHODIMP CAwk::get_MaxDepthForExpressionParse(int *pVal)
 {
-	// TODO: Add your implementation code here
-
+	if (handle != NULL) 
+	{
+		max_depth.expr.parse = 
+			ase_awk_getmaxdepth (handle, ASE_AWK_DEPTH_EXPR_PARSE);
+	}
+	*pVal = max_depth.expr.parse;
 	return S_OK;
 }
 
@@ -818,8 +843,12 @@ STDMETHODIMP CAwk::put_MaxDepthForExpressionParse(int newVal)
 
 STDMETHODIMP CAwk::get_MaxDepthForExpressionRun(int *pVal)
 {
-	// TODO: Add your implementation code here
-
+	if (handle != NULL) 
+	{
+		max_depth.expr.run = 
+			ase_awk_getmaxdepth (handle, ASE_AWK_DEPTH_EXPR_RUN);
+	}
+	*pVal = max_depth.expr.run;
 	return S_OK;
 }
 
@@ -836,8 +865,12 @@ STDMETHODIMP CAwk::put_MaxDepthForExpressionRun(int newVal)
 
 STDMETHODIMP CAwk::get_MaxDepthForRexBuild(int *pVal)
 {
-	// TODO: Add your implementation code here
-
+	if (handle != NULL) 
+	{
+		max_depth.rex.build = 
+			ase_awk_getmaxdepth (handle, ASE_AWK_DEPTH_REX_BUILD);
+	}
+	*pVal = max_depth.rex.build;
 	return S_OK;
 }
 
@@ -854,8 +887,12 @@ STDMETHODIMP CAwk::put_MaxDepthForRexBuild(int newVal)
 
 STDMETHODIMP CAwk::get_MaxDepthForRexMatch(int *pVal)
 {
-	// TODO: Add your implementation code here
-
+	if (handle != NULL) 
+	{
+		max_depth.rex.match = 
+			ase_awk_getmaxdepth (handle, ASE_AWK_DEPTH_REX_MATCH);
+	}
+	*pVal = max_depth.rex.match;
 	return S_OK;
 }
 

@@ -1,14 +1,24 @@
 VERSION 5.00
 Begin VB.Form AwkForm 
    Caption         =   "ASE COM AWK"
-   ClientHeight    =   7770
+   ClientHeight    =   7635
    ClientLeft      =   60
    ClientTop       =   345
    ClientWidth     =   10335
    LinkTopic       =   "AwkForm"
-   ScaleHeight     =   7770
+   ScaleHeight     =   7635
    ScaleWidth      =   10335
    StartUpPosition =   3  'Windows Default
+   Begin VB.ComboBox EntryFunction 
+      Height          =   315
+      ItemData        =   "AwkForm.frx":0000
+      Left            =   1320
+      List            =   "AwkForm.frx":000A
+      TabIndex        =   9
+      Text            =   "None"
+      Top             =   120
+      Width           =   3495
+   End
    Begin VB.TextBox ConsoleIn 
       BeginProperty Font 
          Name            =   "Courier New"
@@ -22,8 +32,9 @@ Begin VB.Form AwkForm
       Height          =   2895
       Left            =   120
       MultiLine       =   -1  'True
-      TabIndex        =   4
-      Top             =   3600
+      ScrollBars      =   3  'Both
+      TabIndex        =   2
+      Top             =   3960
       Width           =   5055
    End
    Begin VB.TextBox SourceIn 
@@ -39,8 +50,9 @@ Begin VB.Form AwkForm
       Height          =   2775
       Left            =   120
       MultiLine       =   -1  'True
-      TabIndex        =   3
-      Top             =   480
+      ScrollBars      =   3  'Both
+      TabIndex        =   0
+      Top             =   840
       Width           =   5055
    End
    Begin VB.TextBox SourceOut 
@@ -55,17 +67,19 @@ Begin VB.Form AwkForm
       EndProperty
       Height          =   2775
       Left            =   5280
+      Locked          =   -1  'True
       MultiLine       =   -1  'True
-      TabIndex        =   2
-      Top             =   480
+      ScrollBars      =   3  'Both
+      TabIndex        =   1
+      Top             =   840
       Width           =   4935
    End
    Begin VB.CommandButton Execute 
       Caption         =   "Execute"
       Height          =   375
-      Left            =   7080
-      TabIndex        =   1
-      Top             =   6840
+      Left            =   9000
+      TabIndex        =   5
+      Top             =   7080
       Width           =   1215
    End
    Begin VB.TextBox ConsoleOut 
@@ -81,9 +95,50 @@ Begin VB.Form AwkForm
       Height          =   2895
       Left            =   5280
       MultiLine       =   -1  'True
-      TabIndex        =   0
-      Top             =   3600
+      ScrollBars      =   3  'Both
+      TabIndex        =   3
+      Top             =   3960
       Width           =   4935
+   End
+   Begin VB.Label Label5 
+      Caption         =   "Entry Function:"
+      Height          =   255
+      Left            =   120
+      TabIndex        =   10
+      Top             =   120
+      Width           =   1455
+   End
+   Begin VB.Label Label4 
+      Caption         =   "Console Out"
+      Height          =   255
+      Left            =   5280
+      TabIndex        =   8
+      Top             =   3720
+      Width           =   3735
+   End
+   Begin VB.Label Label3 
+      Caption         =   "Console In"
+      Height          =   255
+      Left            =   120
+      TabIndex        =   7
+      Top             =   3720
+      Width           =   3735
+   End
+   Begin VB.Label Label2 
+      Caption         =   "Deparsed Source Code"
+      Height          =   255
+      Left            =   5280
+      TabIndex        =   6
+      Top             =   600
+      Width           =   3735
+   End
+   Begin VB.Label Label1 
+      Caption         =   "Source Code"
+      Height          =   255
+      Left            =   120
+      TabIndex        =   4
+      Top             =   600
+      Width           =   2415
    End
 End
 Attribute VB_Name = "AwkForm"
@@ -106,18 +161,23 @@ Private Sub Execute_Click()
     Set Awk = New ASELib.Awk
     
     Awk.ExplicitVariable = True
-    Awk.ImplicitVariable = False
+    Awk.ImplicitVariable = True
     Awk.UseCrlf = True
     Awk.IdivOperator = True
+    Awk.ShiftOperators = True
     
-    ' TODO: debug it....
-    Awk.MaxDepthForBlockParse = 3
+    Awk.MaxDepthForBlockParse = 20
+    Awk.MaxDepthForBlockRun = 30
+    Awk.MaxDepthForExpressionParse = 20
+    Awk.MaxDepthForExpressionRun = 30
+    'Awk.MaxDepthForRexBuild = 10
+    'Awk.MaxDepthForRexMatch = 10
     
     If Awk.Parse() = -1 Then
-        MsgBox "ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
+        MsgBox "PARSE ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
     Else
         If Awk.Run() = -1 Then
-            MsgBox "ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
+            MsgBox "RUN ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
         End If
     End If
     
@@ -326,30 +386,9 @@ ErrorTrap:
 End Function
 
 Private Sub Form_Load()
-    'Dim x As ASELib.AwkExtio
-    'Dim i As Long
-    
-    SourceIn.Text = "BEGIN { print 123.12; print 995; print 5432.1; }"
+    SourceIn.Text = ""
     SourceOut.Text = ""
     ConsoleIn.Text = ""
     ConsoleOut.Text = ""
-    
-    'Set x = New ASELib.AwkExtio
-    'For i = 0 To 50000
-    '    x.Handle = New AwkExtioConsole
-    'Next i
-    'Set x = Nothing
-    
-    'i = FreeFile
-    'On Error GoTo ErrorHandler
-    'Open "c:/projects/ase/ase.xdg" For Input As #i
-    'On Error GoTo 0
-    'MsgBox Input(LOF(i), i)
-    'Close #i
-    'Exit Sub
-    
-'ErrorHandler:
-'    MsgBox "fuck"
-'    Exit Sub
 End Sub
 
