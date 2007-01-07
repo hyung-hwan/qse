@@ -1,5 +1,5 @@
 /*
- * $Id: ase.idl,v 1.7 2007-01-06 15:45:50 bacon Exp $
+ * $Id: ase.idl,v 1.8 2007-01-07 07:30:40 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -137,24 +137,6 @@ library ASELib
 {
 	importlib("stdole32.tlb");
 	importlib("stdole2.tlb");
-
-	[helpstring("Awk options")]
-	typedef [v1_enum] enum AwkOption
-	{
-		AWK_IMPLICIT    = (1 << 0),
-		AWK_EXPLICIT    = (1 << 1), 
-		AWK_UNIQUEAFN   = (1 << 2),
-		AWK_SHADING     = (1 << 3), 
-		AWK_SHIFT       = (1 << 4), 
-		AWK_IDIV        = (1 << 5), 
-		AWK_HASHSIGN    = (1 << 6), 
-		AWK_STRCONCAT   = (1 << 7), 
-		AWK_EXTIO       = (1 << 8), 
-		AWK_BLOCKLESS   = (1 << 9), 
-		AWK_STRINDEXONE = (1 << 10),
-		AWK_STRIPSPACES = (1 << 11),
-		AWK_NEXTOFILE   = (1 << 12)
-	} AwkOption;
 
 	[helpstring("AwkExtio tpe")]
 	typedef [v1_enum] enum AwkExtioType
