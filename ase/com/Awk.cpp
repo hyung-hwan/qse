@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.14 2007-01-07 07:30:40 bacon Exp $
+ * $Id: Awk.cpp,v 1.15 2007-01-10 14:30:43 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -29,17 +29,12 @@ STDMETHODIMP CAwk::InterfaceSupportsErrorInfo(REFIID riid)
 }
 
 CAwk::CAwk (): 
-	handle(NULL), 
-	read_src_buf(NULL), 
-	write_src_buf(NULL),
-	write_extio_buf(NULL)
+	handle (NULL), 
+	read_src_buf (NULL), 
+	write_src_buf (NULL),
+	write_extio_buf (NULL),
+	entry_point (NULL)
 {
-#ifdef _DEBUG
-	TCHAR x[128];
-	_sntprintf (x, 128, _T("CAwk::CAwk %p"), this);
-	MessageBox (NULL, x, x, MB_OK);
-#endif
-
 	/* TODO: what is the best default option? */
 	option = 
 		ASE_AWK_IMPLICIT | 
@@ -58,31 +53,16 @@ CAwk::CAwk ():
 
 	errnum    = 0;
 	errlin    = 0;
-	errmsg[0] = _T('\0');
+	errmsg[0] = ASE_T('\0');
 }
 
 CAwk::~CAwk ()
 {
-#ifdef _DEBUG
-	TCHAR x[128];
-	_sntprintf (x, 128, _T("CAwk::~CAwk %p"), this);
-	MessageBox (NULL, x, x, MB_OK);
-#endif
+	if (entry_point != NULL) SysFreeString (entry_point);
 
-	if (write_extio_buf != NULL)
-	{
-		write_extio_buf->Release ();
-	}
-
-	if (write_src_buf != NULL)
-	{
-		write_src_buf->Release ();
-	}
-
-	if (read_src_buf != NULL)
-	{
-		read_src_buf->Release ();
-	}
+	if (write_extio_buf != NULL) write_extio_buf->Release ();
+	if (write_src_buf != NULL) write_src_buf->Release ();
+	if (read_src_buf != NULL) read_src_buf->Release ();
 
 	if (handle != NULL) 
 	{
@@ -204,11 +184,7 @@ static ase_ssize_t __read_source (
 			HRESULT hr = CoCreateInstance (
 				CLSID_Buffer, NULL, CLSCTX_ALL, 
 				IID_IBuffer, (void**)&awk->read_src_buf);
-			if (FAILED(hr))
-			{	
-MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
-				return -1;
-			}
+			if (FAILED(hr)) return -1;
 
 			awk->read_src_pos = 0;
 			awk->read_src_len = 0;
@@ -275,15 +251,11 @@ static ase_ssize_t __write_source (
 			hr = CoCreateInstance (
 				CLSID_Buffer, NULL, CLSCTX_ALL, 
 				IID_IBuffer, (void**)&awk->write_src_buf);
-			if (FAILED(hr))
-			{	
-MessageBox (NULL, _T("COCREATEINSTANCE FAILED"), _T("FUCK"), MB_OK);
-				return -1;
-			}
+			if (FAILED(hr)) return -1;
 		}
 
 		CBuffer* tmp = (CBuffer*)awk->write_src_buf;
-		if (tmp->PutValue (data, count) == FALSE) return -1; /* TODO: better error handling */
+		if (tmp->PutValue (data, count) == FALSE) return -1; 
 
 		INT n = awk->Fire_WriteSource (awk->write_src_buf);
 		if (n > (INT)count) return -1; 
@@ -390,7 +362,7 @@ static ase_ssize_t __process_extio (
 		HRESULT hr = CoCreateInstance (
 			CLSID_AwkExtio, NULL, CLSCTX_ALL, 
 			IID_IAwkExtio, (void**)&extio);
-		if (FAILED(hr)) return -1; /* TODO: better error handling.. */
+		if (FAILED(hr)) return -1; 
 
 		hr = CoCreateInstance (
 			CLSID_Buffer, NULL, CLSCTX_ALL,
@@ -406,7 +378,7 @@ static ase_ssize_t __process_extio (
 		{
 			read_buf->Release ();
 			extio->Release ();
-			return -1; /* TODO: better error handling */
+			return -1; 
 		}
 		extio2->type = epa->type & 0xFF;
 		extio2->mode = epa->mode;
@@ -506,7 +478,7 @@ static ase_ssize_t __process_extio (
 		}
 
 		CBuffer* tmp = (CBuffer*)awk->write_extio_buf;
-		if (tmp->PutValue (data, size) == FALSE) return -1; /* TODO: better error handling */
+		if (tmp->PutValue (data, size) == FALSE) return -1;
 
 		INT n = awk->Fire_WriteExtio (extio, awk->write_extio_buf);
 		if (n > (INT)size) return -1; 
@@ -530,10 +502,14 @@ static ase_ssize_t __process_extio (
 
 HRESULT CAwk::Run (int* ret)
 {
+	const ase_char_t* entry = NULL;
+
 	if (handle == NULL)
 	{
-		/* TODO: better error handling... */
-		/* call parse first... */
+		errnum = ASE_AWK_EINTERN;
+		errlin = 0;
+		_tcscpy (errmsg, _T("parse not called yet"));
+
 		*ret = -1;
 		return S_OK;
 	}
@@ -545,7 +521,10 @@ HRESULT CAwk::Run (int* ret)
 	runios.console = __process_extio;
 	runios.custom_data = this;
 
-	if (ase_awk_run (handle, NULL, &runios, NULL, NULL, this) == -1)
+	if (entry_point != NULL && 
+	    SysStringLen(entry_point) > 0) entry = entry_point;
+
+	if (ase_awk_run (handle, entry, &runios, NULL, NULL, this) == -1)
 	{
 		const ase_char_t* msg;
 
@@ -819,7 +798,7 @@ STDMETHODIMP CAwk::put_MaxDepthForBlockRun(int newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_MaxDepthForExpressionParse(int *pVal)
+STDMETHODIMP CAwk::get_MaxDepthForExprParse(int *pVal)
 {
 	if (handle != NULL) 
 	{
@@ -830,7 +809,7 @@ STDMETHODIMP CAwk::get_MaxDepthForExpressionParse(int *pVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_MaxDepthForExpressionParse(int newVal)
+STDMETHODIMP CAwk::put_MaxDepthForExprParse(int newVal)
 {
 	max_depth.expr.parse = newVal;
 	if (handle != NULL) 
@@ -841,7 +820,7 @@ STDMETHODIMP CAwk::put_MaxDepthForExpressionParse(int newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_MaxDepthForExpressionRun(int *pVal)
+STDMETHODIMP CAwk::get_MaxDepthForExprRun(int *pVal)
 {
 	if (handle != NULL) 
 	{
@@ -852,7 +831,7 @@ STDMETHODIMP CAwk::get_MaxDepthForExpressionRun(int *pVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_MaxDepthForExpressionRun(int newVal)
+STDMETHODIMP CAwk::put_MaxDepthForExprRun(int newVal)
 {
 	max_depth.expr.run = newVal;
 	if (handle != NULL) 
@@ -904,5 +883,32 @@ STDMETHODIMP CAwk::put_MaxDepthForRexMatch(int newVal)
 		ase_awk_setmaxdepth (handle, 
 			ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
 	}
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_EntryPoint(BSTR *pVal)
+{
+	if (entry_point == NULL) *pVal = NULL;
+	else
+	{
+		BSTR tmp = SysAllocStringLen (
+			entry_point, SysStringLen(entry_point));
+		if (tmp == NULL) return E_OUTOFMEMORY;
+		*pVal = tmp;
+	}
+
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_EntryPoint(BSTR newVal)
+{
+	if (entry_point != NULL) SysFreeString (entry_point);
+	if (newVal == NULL) entry_point = newVal;
+	else 
+	{
+		entry_point = SysAllocStringLen (newVal, SysStringLen(newVal));
+		if (entry_point == NULL) return E_OUTOFMEMORY;
+	}
+
 	return S_OK;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.8 2007-01-06 15:45:50 bacon Exp $
+ * $Id: Awk.h,v 1.9 2007-01-10 14:30:44 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -53,12 +53,15 @@ public:
 			int match;
 		} rex;
 	} max_depth;
+
 	IBuffer* read_src_buf;
 	IBuffer* write_src_buf;
 	ase_size_t read_src_pos;
 	ase_size_t read_src_len;
 
 	IBuffer* write_extio_buf;
+
+	BSTR entry_point;
 public:
 	CAwk();
 	~CAwk ();
@@ -86,14 +89,16 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
+	STDMETHOD(get_EntryPoint)(/*[out, retval]*/ BSTR *pVal);
+	STDMETHOD(put_EntryPoint)(/*[in]*/ BSTR newVal);
 	STDMETHOD(get_MaxDepthForRexMatch)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(put_MaxDepthForRexMatch)(/*[in]*/ int newVal);
 	STDMETHOD(get_MaxDepthForRexBuild)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(put_MaxDepthForRexBuild)(/*[in]*/ int newVal);
-	STDMETHOD(get_MaxDepthForExpressionRun)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(put_MaxDepthForExpressionRun)(/*[in]*/ int newVal);
-	STDMETHOD(get_MaxDepthForExpressionParse)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(put_MaxDepthForExpressionParse)(/*[in]*/ int newVal);
+	STDMETHOD(get_MaxDepthForExprRun)(/*[out, retval]*/ int *pVal);
+	STDMETHOD(put_MaxDepthForExprRun)(/*[in]*/ int newVal);
+	STDMETHOD(get_MaxDepthForExprParse)(/*[out, retval]*/ int *pVal);
+	STDMETHOD(put_MaxDepthForExprParse)(/*[in]*/ int newVal);
 	STDMETHOD(get_MaxDepthForBlockRun)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(put_MaxDepthForBlockRun)(/*[in]*/ int newVal);
 	STDMETHOD(get_MaxDepthForBlockParse)(/*[out, retval]*/ int *pVal);

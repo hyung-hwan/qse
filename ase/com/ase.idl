@@ -1,5 +1,5 @@
 /*
- * $Id: ase.idl,v 1.8 2007-01-07 07:30:40 bacon Exp $
+ * $Id: ase.idl,v 1.9 2007-01-10 14:30:44 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -106,15 +106,15 @@ interface IAwk : IDispatch
 	[propput, id(20), helpstring("property MaxDepthForBlockRun")]
 	HRESULT MaxDepthForBlockRun([in] int newVal);
 
-	[propget, id(21), helpstring("property MaxDepthForExpressionParse")]
-	HRESULT MaxDepthForExpressionParse([out, retval] int *pVal);
-	[propput, id(21), helpstring("property MaxDepthForExpressionParse")]
-	HRESULT MaxDepthForExpressionParse([in] int newVal);
+	[propget, id(21), helpstring("property MaxDepthForExprParse")]
+	HRESULT MaxDepthForExprParse([out, retval] int *pVal);
+	[propput, id(21), helpstring("property MaxDepthForExprParse")]
+	HRESULT MaxDepthForExprParse([in] int newVal);
 
-	[propget, id(22), helpstring("property MaxDepthForExpressionRun")]
-	HRESULT MaxDepthForExpressionRun([out, retval] int *pVal);
-	[propput, id(22), helpstring("property MaxDepthForExpressionRun")]
-	HRESULT MaxDepthForExpressionRun([in] int newVal);
+	[propget, id(22), helpstring("property MaxDepthForExprRun")]
+	HRESULT MaxDepthForExprRun([out, retval] int *pVal);
+	[propput, id(22), helpstring("property MaxDepthForExprRun")]
+	HRESULT MaxDepthForExprRun([in] int newVal);
 
 	[propget, id(23), helpstring("property MaxDepthForRexBuild")]
 	HRESULT MaxDepthForRexBuild([out, retval] int *pVal);
@@ -125,6 +125,8 @@ interface IAwk : IDispatch
 	HRESULT MaxDepthForRexMatch([out, retval] int *pVal);
 	[propput, id(24), helpstring("property MaxDepthForRexMatch")]
 	HRESULT MaxDepthForRexMatch([in] int newVal);
+		[propget, id(25), helpstring("property EntryPoint")] HRESULT EntryPoint([out, retval] BSTR *pVal);
+		[propput, id(25), helpstring("property EntryPoint")] HRESULT EntryPoint([in] BSTR newVal);
 };
 
 /* ASELib */
