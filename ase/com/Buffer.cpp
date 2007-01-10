@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.cpp,v 1.4 2006-12-10 16:13:50 bacon Exp $
+ * $Id: Buffer.cpp,v 1.5 2007-01-10 14:30:44 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -7,21 +7,11 @@
 
 CBuffer::CBuffer ()
 {
-#ifdef _DEBUG
-	TCHAR x[128];
-	_sntprintf (x, 128, _T("CBuffer::CBuffer %p"), this);
-	MessageBox (NULL, x, x, MB_OK);
-#endif
 	str = NULL;
 }
 
 CBuffer::~CBuffer ()
 {
-#ifdef _DEBUG
-	TCHAR x[128];
-	_sntprintf (x, 128, _T("CBuffer::~CBuffer %p"), this);
-	MessageBox (NULL, x, x, MB_OK);
-#endif
 	if (str != NULL) SysFreeString (str);
 }
 
