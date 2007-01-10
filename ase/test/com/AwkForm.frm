@@ -9,13 +9,12 @@ Begin VB.Form AwkForm
    ScaleHeight     =   7635
    ScaleWidth      =   10335
    StartUpPosition =   3  'Windows Default
-   Begin VB.ComboBox EntryFunction 
+   Begin VB.ComboBox EntryPoint 
       Height          =   315
       ItemData        =   "AwkForm.frx":0000
-      Left            =   1320
-      List            =   "AwkForm.frx":000A
+      Left            =   1080
+      List            =   "AwkForm.frx":0007
       TabIndex        =   9
-      Text            =   "None"
       Top             =   120
       Width           =   3495
    End
@@ -101,7 +100,7 @@ Begin VB.Form AwkForm
       Width           =   4935
    End
    Begin VB.Label Label5 
-      Caption         =   "Entry Function:"
+      Caption         =   "Entry Point:"
       Height          =   255
       Left            =   120
       TabIndex        =   10
@@ -168,14 +167,15 @@ Private Sub Execute_Click()
     
     Awk.MaxDepthForBlockParse = 20
     Awk.MaxDepthForBlockRun = 30
-    Awk.MaxDepthForExpressionParse = 20
-    Awk.MaxDepthForExpressionRun = 30
+    Awk.MaxDepthForExprParse = 20
+    Awk.MaxDepthForExprRun = 30
     'Awk.MaxDepthForRexBuild = 10
     'Awk.MaxDepthForRexMatch = 10
     
     If Awk.Parse() = -1 Then
         MsgBox "PARSE ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
     Else
+        Awk.EntryPoint = Trim(EntryPoint.Text)
         If Awk.Run() = -1 Then
             MsgBox "RUN ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
         End If

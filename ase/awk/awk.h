@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.182 2007-01-07 07:30:39 bacon Exp $
+ * $Id: awk.h,v 1.183 2007-01-10 14:33:35 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -228,14 +228,13 @@ enum
 	ASE_AWK_EAGAIN,         /* resource temporarily unavailable */
 	ASE_AWK_EEXIST,         /* file or data exists */
 	ASE_AWK_EFTBIG,         /* file or data too big */
-	ASE_AWK_EINTER,         /* operation interrupted */
 	ASE_AWK_ETBUSY,         /* system too busy */
 	ASE_AWK_EISDIR,         /* is a directory */
 	ASE_AWK_EIOERR,         /* i/o error */
 
+	ASE_AWK_EINTERN,        /* internal error */
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_ERUNNING,       /* there are running instances */
-	ASE_AWK_ETOOMANYRUNS,   /* too many running instances */
 	ASE_AWK_ERECUR,         /* recursion too deep */
 	ASE_AWK_ESYSFNS,        /* system functions not proper */
 
@@ -302,7 +301,6 @@ enum
 	ASE_AWK_EPRINTFARG,     /* printf must have one or more arguments */
 
 	/* run time error */
-	ASE_AWK_EINTERN,           /* internal error */
 	ASE_AWK_EDIVBY0,           /* divide by zero */
 	ASE_AWK_EOPERAND,          /* invalid operand */
 	ASE_AWK_EPOSIDX,           /* wrong position index */
