@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.69 2007-01-03 09:51:51 bacon Exp $
+ * $Id: err.c,v 1.70 2007-01-10 14:33:36 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -69,14 +69,13 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("resource temporarily unavailable"),
 		ASE_T("file or data exists"),
 		ASE_T("file or data too big"),
-		ASE_T("operation interrupted"),
 		ASE_T("system too busy"),
 		ASE_T("is a directory"),
 		ASE_T("i/o error"),
 		
+		ASE_T("internal error that should never have happened"),
 		ASE_T("general run-time error"),
 		ASE_T("one or more running instances"),
-		ASE_T("too many running instances"),
 		ASE_T("recursion too deep"),
 		ASE_T("system functions not provided or not proper"),
 
@@ -142,7 +141,6 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("getline expected"),
 		ASE_T("printf requires one or more arguments"),
 
-		ASE_T("internal error that should never have happened"),
 		ASE_T("divide by zero"),
 		ASE_T("invalid operand"),
 		ASE_T("wrong position index"),

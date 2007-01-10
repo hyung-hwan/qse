@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.319 2007-01-03 09:51:52 bacon Exp $
+ * $Id: run.c,v 1.320 2007-01-10 14:33:00 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1310,6 +1310,7 @@ static int __run_main (
 		ase_awk_nde_call_t nde;
 
 		nde.type = ASE_AWK_NDE_AFN;
+		nde.line = 0;
 		nde.next = ASE_NULL;
 		nde.what.afn.name.ptr = (ase_char_t*)main;
 		nde.what.afn.name.len = ase_awk_strlen(main);
@@ -5237,8 +5238,14 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		call->what.afn.name.ptr, call->what.afn.name.len);
 	if (pair == ASE_NULL) 
 	{
+		run->awk->sysfns.sprintf (
+			run->errmsg, ASE_COUNTOF(run->errmsg),
+			ASE_T("function '%.*s' not found"),
+			call->what.afn.name.len,
+			call->what.afn.name.ptr);
+
 		ase_awk_setrunerror (
-			run, ASE_AWK_EFNNONE, nde->line, ASE_NULL);
+			run, ASE_AWK_EFNNONE, nde->line, run->errmsg);
 		return ASE_NULL;
 	}
 
