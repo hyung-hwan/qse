@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.9 2007-01-10 14:30:44 bacon Exp $
+ * $Id: Awk.h,v 1.10 2007-01-11 03:55:35 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -62,6 +62,7 @@ public:
 	IBuffer* write_extio_buf;
 
 	BSTR entry_point;
+	BOOL debug;
 public:
 	CAwk();
 	~CAwk ();
@@ -89,6 +90,8 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
+	STDMETHOD(get_Debug)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_Debug)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_EntryPoint)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(put_EntryPoint)(/*[in]*/ BSTR newVal);
 	STDMETHOD(get_MaxDepthForRexMatch)(/*[out, retval]*/ int *pVal);

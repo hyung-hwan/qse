@@ -172,6 +172,8 @@ Private Sub Execute_Click()
     'Awk.MaxDepthForRexBuild = 10
     'Awk.MaxDepthForRexMatch = 10
     
+    Awk.Debug = True
+    
     If Awk.Parse() = -1 Then
         MsgBox "PARSE ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
     Else
