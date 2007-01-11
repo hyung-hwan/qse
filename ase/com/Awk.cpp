@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.15 2007-01-10 14:30:43 bacon Exp $
+ * $Id: Awk.cpp,v 1.16 2007-01-11 03:55:35 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -12,6 +12,9 @@
 #include <math.h>
 #include <wctype.h>
 #include <stdio.h>
+
+#define DBGOUT(x) do { if (debug) OutputDebugString (x); } while(0)
+#define DBGOUT2(awk,x) do { if (awk->debug) OutputDebugString (x); } while(0)
 
 STDMETHODIMP CAwk::InterfaceSupportsErrorInfo(REFIID riid)
 {
@@ -33,7 +36,8 @@ CAwk::CAwk ():
 	read_src_buf (NULL), 
 	write_src_buf (NULL),
 	write_extio_buf (NULL),
-	entry_point (NULL)
+	entry_point (NULL),
+	debug (FALSE)
 {
 	/* TODO: what is the best default option? */
 	option = 
@@ -68,6 +72,7 @@ CAwk::~CAwk ()
 	{
 		ase_awk_close (handle);
 		handle = NULL;
+		DBGOUT (_T("closed awk"));
 	}
 }
 
@@ -103,19 +108,12 @@ static int awk_sprintf (
 	va_list ap;
 
 	va_start (ap, fmt);
-#if defined(_WIN32)
 	n = _vsntprintf (buf, len, fmt, ap);
 	if (n < 0 || (ase_size_t)n >= len)
 	{
 		if (len > 0) buf[len-1] = ASE_T('\0');
 		n = -1;
 	}
-#elif defined(__MSDOS__)
-	/* TODO: check buffer overflow */
-	n = vsprintf (buf, fmt, ap);
-#else
-	n = xp_vsprintf (buf, len, fmt, ap);
-#endif
 	va_end (ap);
 	return n;
 }
@@ -123,13 +121,10 @@ static int awk_sprintf (
 static void awk_aprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
-#ifdef _WIN32
 	int n;
 	ase_char_t buf[1024];
-#endif
 
 	va_start (ap, fmt);
-#if defined(_WIN32)
 	n = _vsntprintf (buf, ASE_COUNTOF(buf), fmt, ap);
 	if (n < 0) buf[ASE_COUNTOF(buf)-1] = ASE_T('\0');
 
@@ -140,11 +135,6 @@ static void awk_aprintf (const ase_char_t* fmt, ...)
 	MessageBox (NULL, buf, 
 		ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK|MB_ICONERROR);
 	#endif
-#elif defined(__MSDOS__)
-	vprintf (fmt, ap);
-#else
-	xp_vprintf (fmt, ap);
-#endif
 	va_end (ap);
 }
 
@@ -152,15 +142,7 @@ static void awk_dprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
-
-#if defined(_WIN32)
 	_vftprintf (stderr, fmt, ap);
-#elif defined(__MSDOS__)
-	vfprintf (stderr, fmt, ap);
-#else
-	xp_vfprintf (stderr, fmt, ap);
-#endif
-
 	va_end (ap);
 }
 
@@ -184,7 +166,11 @@ static ase_ssize_t __read_source (
 			HRESULT hr = CoCreateInstance (
 				CLSID_Buffer, NULL, CLSCTX_ALL, 
 				IID_IBuffer, (void**)&awk->read_src_buf);
-			if (FAILED(hr)) return -1;
+			if (FAILED(hr)) 
+			{
+				DBGOUT2 (awk, _T("cannot create source input buffer"));
+				return -1;
+			}
 
 			awk->read_src_pos = 0;
 			awk->read_src_len = 0;
@@ -251,11 +237,19 @@ static ase_ssize_t __write_source (
 			hr = CoCreateInstance (
 				CLSID_Buffer, NULL, CLSCTX_ALL, 
 				IID_IBuffer, (void**)&awk->write_src_buf);
-			if (FAILED(hr)) return -1;
+			if (FAILED(hr)) 
+			{
+				DBGOUT2 (awk, _T("cannot create source output buffer"));
+				return -1;
+			}
 		}
 
 		CBuffer* tmp = (CBuffer*)awk->write_src_buf;
-		if (tmp->PutValue (data, count) == FALSE) return -1; 
+		if (tmp->PutValue (data, count) == FALSE) 
+		{
+			DBGOUT2 (awk, _T("cannot set source output buffer"));
+			return -1; 
+		}
 
 		INT n = awk->Fire_WriteSource (awk->write_src_buf);
 		if (n > (INT)count) return -1; 
@@ -307,8 +301,11 @@ HRESULT CAwk::Parse (int* ret)
 				ase_awk_geterrstr(errnum));
 
 			*ret = -1;
+
+			DBGOUT (_T("cannot open awk"));
 			return S_OK;
 		}
+		else DBGOUT (_T("opened awk successfully"));
 
 		ase_awk_setoption (handle, option);
 
@@ -339,9 +336,12 @@ HRESULT CAwk::Parse (int* ret)
 		ase_awk_geterror (handle, &errnum, &errlin, &msg);
 		ase_awk_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
 
+		DBGOUT (_T("cannot parse the source code"));
+
 		*ret = -1;
 		return S_OK;
 	}
+	else DBGOUT (_T("parsed the source code successfully"));
 
 	*ret = 0;
 	return S_OK;
@@ -362,13 +362,18 @@ static ase_ssize_t __process_extio (
 		HRESULT hr = CoCreateInstance (
 			CLSID_AwkExtio, NULL, CLSCTX_ALL, 
 			IID_IAwkExtio, (void**)&extio);
-		if (FAILED(hr)) return -1; 
+		if (FAILED(hr)) 
+		{
+			DBGOUT2 (awk, _T("cannot create extio"));
+			return -1; 
+		}
 
 		hr = CoCreateInstance (
 			CLSID_Buffer, NULL, CLSCTX_ALL,
 			IID_IBuffer, (void**)&read_buf);
 		if (FAILED(hr)) 
 		{
+			DBGOUT2 (awk, _T("cannot create extio input buffer"));
 			extio->Release ();
 			return -1;
 		}
@@ -378,6 +383,7 @@ static ase_ssize_t __process_extio (
 		{
 			read_buf->Release ();
 			extio->Release ();
+			DBGOUT2 (awk, _T("cannot set the name of the extio input buffer"));
 			return -1; 
 		}
 		extio2->type = epa->type & 0xFF;
@@ -474,7 +480,11 @@ static ase_ssize_t __process_extio (
 			hr = CoCreateInstance (
 				CLSID_Buffer, NULL, CLSCTX_ALL, 
 				IID_IBuffer, (void**)&awk->write_extio_buf);
-			if (FAILED(hr)) return -1;
+			if (FAILED(hr)) 
+			{
+				DBGOUT2 (awk, _T("cannot create extio output buffer"));
+				return -1;
+			}
 		}
 
 		CBuffer* tmp = (CBuffer*)awk->write_extio_buf;
@@ -531,9 +541,11 @@ HRESULT CAwk::Run (int* ret)
 		ase_awk_geterror (handle, &errnum, &errlin, &msg);
 		ase_awk_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
 
+		DBGOUT (_T("cannot run the program"));
 		*ret = -1;
 		return S_OK;
 	}
+	else DBGOUT (_T("run the program successfully"));
 
 	*ret = 0;
 	return S_OK;
@@ -910,5 +922,17 @@ STDMETHODIMP CAwk::put_EntryPoint(BSTR newVal)
 		if (entry_point == NULL) return E_OUTOFMEMORY;
 	}
 
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_Debug(BOOL *pVal)
+{
+	*pVal = debug;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_Debug(BOOL newVal)
+{
+	debug = newVal;
 	return S_OK;
 }
