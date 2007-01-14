@@ -238,19 +238,19 @@ Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
         If extio.mode = ASELib.AWK_EXTIO_FILE_READ Then
             extio.Handle = FreeFile
             On Error GoTo ErrorTrap
-            Open extio.Name For Input As #extio.Handle
+            Open extio.name For Input As #extio.Handle
             On Error GoTo 0
             Awk_OpenExtio = 1
         ElseIf extio.mode = ASELib.AWK_EXTIO_FILE_WRITE Then
             extio.Handle = FreeFile
             On Error GoTo ErrorTrap
-            Open extio.Name For Output As #extio.Handle
+            Open extio.name For Output As #extio.Handle
             On Error GoTo 0
             Awk_OpenExtio = 1
         ElseIf extio.mode = ASELib.AWK_EXTIO_FILE_APPEND Then
             extio.Handle = FreeFile
             On Error GoTo ErrorTrap
-            Open extio.Name For Append As #extio.Handle
+            Open extio.name For Append As #extio.Handle
             On Error GoTo 0
             Awk_OpenExtio = 1
         End If
@@ -385,6 +385,22 @@ Function WriteExtioFile(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buff
     
 ErrorTrap:
     Exit Function
+End Function
+
+Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) As Long
+
+    Dim i As Integer
+    Dim xxx As String
+
+    MsgBox name
+    
+    For i = LBound(args) To UBound(args)
+        xxx = xxx & "," & args(i)
+    Next i
+    
+    MsgBox xxx
+
+    Awk_HandleBuiltinFunction = 0
 End Function
 
 Private Sub Form_Load()

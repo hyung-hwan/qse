@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.16 2007-01-11 03:55:35 bacon Exp $
+ * $Id: Awk.cpp,v 1.17 2007-01-14 15:06:58 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -128,13 +128,7 @@ static void awk_aprintf (const ase_char_t* fmt, ...)
 	n = _vsntprintf (buf, ASE_COUNTOF(buf), fmt, ap);
 	if (n < 0) buf[ASE_COUNTOF(buf)-1] = ASE_T('\0');
 
-	#if defined(_MSC_VER) && (_MSC_VER<1400)
-	MessageBox (NULL, buf, 
-		ASE_T("Assertion Failure"), MB_OK|MB_ICONERROR);
-	#else
-	MessageBox (NULL, buf, 
-		ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK|MB_ICONERROR);
-	#endif
+	MessageBox (NULL, buf, ASE_T("Assertion Failure"), MB_OK|MB_ICONERROR);
 	va_end (ap);
 }
 
@@ -259,6 +253,101 @@ static ase_ssize_t __write_source (
 	return -1;
 }
 
+static int __handle_bfn (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	CAwk* awk = (CAwk*)ase_awk_getruncustomdata (run);
+	long nargs = (long)ase_awk_getnargs (run);
+	ase_awk_val_t* v;
+
+	SAFEARRAY* aa;
+	SAFEARRAYBOUND bound[1];
+
+	bound[0].lLbound = 0;
+	bound[0].cElements = nargs;
+
+	aa = SafeArrayCreate (VT_VARIANT, ASE_COUNTOF(bound), bound);
+	if (aa == NULL)
+	{
+		ase_char_t buf[128];
+		_sntprintf (buf, ASE_COUNTOF(buf), 
+			_T("out of memory in create argument array for %.*s\n"),
+			fnl, fnm);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		return -1;
+	}
+
+	for (long i = 0; i < nargs; i++)
+	{
+		VARIANT arg;
+
+		VariantInit (&arg);
+
+		v = ase_awk_getarg (run, i);
+
+		if (v->type == ASE_AWK_VAL_INT)
+		{
+			//arg.vt = VT_I8;
+			//arg.llVal = ((ase_awk_val_int_t*)v)->val;
+			arg.vt = VT_I4;
+			arg.lVal = (LONG)((ase_awk_val_int_t*)v)->val;
+		}
+		else if (v->type == ASE_AWK_VAL_REAL)
+		{
+			arg.vt = VT_R8;
+			arg.dblVal = ((ase_awk_val_real_t*)v)->val;
+		}
+		else if (v->type == ASE_AWK_VAL_STR)
+		{
+			BSTR tmp = SysAllocStringLen (
+				((ase_awk_val_str_t*)v)->buf,
+				((ase_awk_val_str_t*)v)->len);
+
+			if (arg.bstrVal == NULL)
+			{
+				VariantClear (&arg);
+				SafeArrayDestroy (aa);
+				return -1;
+			}
+
+			arg.vt = VT_BSTR;
+			arg.bstrVal = tmp;
+		}
+		else if (v->type == ASE_AWK_VAL_NIL)
+		{
+			arg.vt = VT_EMPTY;
+		}
+
+		HRESULT hr = SafeArrayPutElement (aa, &i, &arg);
+		if (hr != S_OK)
+		{
+			VariantClear (&arg);
+			SafeArrayDestroy (aa);			
+
+			/* TODO: handle error properly */
+			return -1;
+		}
+
+		VariantClear (&arg);
+	}
+
+	BSTR name = SysAllocStringLen (fnm, fnl);
+	if (name == NULL) 
+	{
+		/* TODO: handle error properly */
+		SafeArrayDestroy (aa);
+		return -1;
+	}
+
+	INT n = awk->Fire_HandleBuiltinFunction (name, aa);
+
+	/* name and aa are destroyed in HandleBuiltinFunction */
+	//SafeArrayDestroy (aa);
+	//SysFreeString (name);
+
+	return 0;
+}
+
 HRESULT CAwk::Parse (int* ret)
 {
  	if (handle == NULL)
@@ -322,6 +411,15 @@ HRESULT CAwk::Parse (int* ret)
 		ase_awk_setmaxdepth (handle, 
 			ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
 	}
+
+ase_awk_addbfn (handle, _T("abc"), 3, 0, 5, 5, ASE_NULL, __handle_bfn);
+/*
+	for (each buitlin function name... )
+	{
+		ase_awk_addbfn (handle, 
+			ptr, len, 0, min_args, max_args, __handle_bfn);
+	}
+*/
 
 	ase_awk_srcios_t srcios;
 
@@ -548,6 +646,12 @@ HRESULT CAwk::Run (int* ret)
 	else DBGOUT (_T("run the program successfully"));
 
 	*ret = 0;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::AddBuiltinFunction(BSTR name)
+{
+	/* TODO: remember names */
 	return S_OK;
 }
 

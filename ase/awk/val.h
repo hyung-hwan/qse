@@ -1,13 +1,16 @@
 /*
- * $Id: val.h,v 1.57 2006-12-16 14:43:51 bacon Exp $
+ * $Id: val.h,v 1.58 2007-01-14 15:07:22 bacon Exp $
  */
 
 #ifndef _ASE_AWK_VAL_H_
 #define _ASE_AWK_VAL_H_
 
 #ifndef _ASE_AWK_AWK_H_
-#error Never include this file directly. Include <ase/awk/awk.h> instead
+#error Include <ase/awk/awk.h> first
 #endif
+
+#include <ase/awk/str.h>
+#include <ase/awk/map.h>
 
 enum ase_awk_val_type_t
 {
@@ -62,6 +65,17 @@ typedef struct ase_awk_val_ref_t  ase_awk_val_ref_t;
 	unsigned int type: 3; \
 	unsigned int ref: 29
 #endif
+
+#ifndef ASE_AWK_NDE_INT_DEFINED
+#define ASE_AWK_NDE_INT_DEFINED
+typedef struct ase_awk_nde_int_t       ase_awk_nde_int_t;
+#endif
+
+#ifndef ASE_AWK_NDE_REAL_DEFINED
+#define ASE_AWK_NDE_REAL_DEFINED
+typedef struct ase_awk_nde_real_t      ase_awk_nde_real_t;
+#endif
+
 
 struct ase_awk_val_t
 {
@@ -126,7 +140,7 @@ struct ase_awk_val_ref_t
 
 	int id;
 	/* if id is ASE_AWK_VAL_REF_POS, adr holds an index of the 
-	 * positionalvariable. Otherwise, adr points to the value 
+	 * positional variable. Otherwise, adr points to the value 
 	 * directly. */
 	ase_awk_val_t** adr;
 };
