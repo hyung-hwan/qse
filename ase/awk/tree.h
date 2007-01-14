@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.84 2006-12-16 14:43:51 bacon Exp $
+ * $Id: tree.h,v 1.85 2007-01-14 15:07:21 bacon Exp $
  */
 
 #ifndef _ASE_AWK_TREE_H_
@@ -89,18 +89,25 @@ enum ase_awk_out_type_t
 };
 
 /* afn (awk function defined with the keyword function) */
-typedef struct ase_awk_afn_t ase_awk_afn_t;
-
-typedef struct ase_awk_nde_t ase_awk_nde_t;
-
+typedef struct ase_awk_afn_t           ase_awk_afn_t;
+typedef struct ase_awk_nde_t           ase_awk_nde_t;
 typedef struct ase_awk_nde_blk_t       ase_awk_nde_blk_t;
 typedef struct ase_awk_nde_grp_t       ase_awk_nde_grp_t;
 typedef struct ase_awk_nde_ass_t       ase_awk_nde_ass_t;
 typedef struct ase_awk_nde_exp_t       ase_awk_nde_exp_t;
 typedef struct ase_awk_nde_cnd_t       ase_awk_nde_cnd_t;
 typedef struct ase_awk_nde_pos_t       ase_awk_nde_pos_t;
+
+#ifndef ASE_AWK_NDE_INT_DEFINED
+#define ASE_AWK_NDE_INT_DEFINED
 typedef struct ase_awk_nde_int_t       ase_awk_nde_int_t;
+#endif
+
+#ifndef ASE_AWK_NDE_REAL_DEFINED
+#define ASE_AWK_NDE_REAL_DEFINED
 typedef struct ase_awk_nde_real_t      ase_awk_nde_real_t;
+#endif
+
 typedef struct ase_awk_nde_str_t       ase_awk_nde_str_t;
 typedef struct ase_awk_nde_rex_t       ase_awk_nde_rex_t;
 typedef struct ase_awk_nde_var_t       ase_awk_nde_var_t;

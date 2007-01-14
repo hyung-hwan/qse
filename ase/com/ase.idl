@@ -1,5 +1,5 @@
 /*
- * $Id: ase.idl,v 1.11 2007-01-11 03:55:35 bacon Exp $
+ * $Id: ase.idl,v 1.12 2007-01-14 15:06:58 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -21,119 +21,121 @@ interface IAwk : IDispatch
 	[id(2), helpstring("method Run")] 
 	HRESULT Run([out, retval] int* ret);
 
-	[propget, id(3), helpstring("property ErrorCode")] 
+	[id(3), helpstring("method AddBuiltinFunction")] 
+	HRESULT AddBuiltinFunction(BSTR name);
+
+	[propget, id(4), helpstring("property ErrorCode")] 
 	HRESULT ErrorCode([out, retval] int *pVal);
 
-	[propget, id(4), helpstring("property ErrorLine")] 
+	[propget, id(5), helpstring("property ErrorLine")] 
 	HRESULT ErrorLine([out, retval] int *pVal);
 
-	[propget, id(5), helpstring("property ErrorMessage")] 
+	[propget, id(6), helpstring("property ErrorMessage")] 
 	HRESULT ErrorMessage([out, retval] BSTR *pVal);
 
-	[propget, id(6), helpstring("property ImplicitVariable")] 
+	[propget, id(7), helpstring("property ImplicitVariable")] 
 	HRESULT ImplicitVariable([out, retval] BOOL *pVal);
-	[propput, id(6), helpstring("property ImplicitVariable")] 
+	[propput, id(7), helpstring("property ImplicitVariable")] 
 	HRESULT ImplicitVariable([in] BOOL newVal);
 
-	[propget, id(7), helpstring("property ExplicitVariable")]
+	[propget, id(8), helpstring("property ExplicitVariable")]
 	HRESULT ExplicitVariable([out, retval] BOOL *pVal);
-	[propput, id(7), helpstring("property ExplicitVariable")] 
+	[propput, id(8), helpstring("property ExplicitVariable")] 
 	HRESULT ExplicitVariable([in] BOOL newVal);
 
-	[propget, id(8), helpstring("property UniqueFunction")] 
+	[propget, id(9), helpstring("property UniqueFunction")] 
 	HRESULT UniqueFunction([out, retval] BOOL *pVal);
-
-	[propput, id(8), helpstring("property UniqueFunction")]
+	[propput, id(9), helpstring("property UniqueFunction")]
 	HRESULT UniqueFunction([in] BOOL newVal);
 
-	[propget, id(9), helpstring("property VariableShading")] 
+	[propget, id(10), helpstring("property VariableShading")] 
 	HRESULT VariableShading([out, retval] BOOL *pVal);
-	[propput, id(9), helpstring("property VariableShading")]
+	[propput, id(10), helpstring("property VariableShading")]
 	HRESULT VariableShading([in] BOOL newVal);
 
-	[propget, id(10), helpstring("property ShiftOperators")]
+	[propget, id(11), helpstring("property ShiftOperators")]
 	HRESULT ShiftOperators([out, retval] BOOL *pVal);
-	[propput, id(10), helpstring("property ShiftOperators")] 
+	[propput, id(11), helpstring("property ShiftOperators")] 
 	HRESULT ShiftOperators([in] BOOL newVal);
 
-	[propget, id(11), helpstring("property IdivOperator")]
+	[propget, id(12), helpstring("property IdivOperator")]
 	HRESULT IdivOperator([out, retval] BOOL *pVal);
-	[propput, id(11), helpstring("property IdivOperator")]
+	[propput, id(12), helpstring("property IdivOperator")]
 	HRESULT IdivOperator([in] BOOL newVal);
 
-	[propget, id(12), helpstring("property ConcatString")]
+	[propget, id(13), helpstring("property ConcatString")]
 	HRESULT ConcatString([out, retval] BOOL *pVal);
-	[propput, id(12), helpstring("property ConcatString")]
+	[propput, id(13), helpstring("property ConcatString")]
 	HRESULT ConcatString([in] BOOL newVal);
 
-	[propget, id(13), helpstring("property SupportExtio")]
+	[propget, id(14), helpstring("property SupportExtio")]
 	HRESULT SupportExtio([out, retval] BOOL *pVal);
-	[propput, id(13), helpstring("property SupportExtio")]
+	[propput, id(14), helpstring("property SupportExtio")]
 	HRESULT SupportExtio([in] BOOL newVal);
 
-	[propget, id(14), helpstring("property SupportBlockless")]
+	[propget, id(15), helpstring("property SupportBlockless")]
 	HRESULT SupportBlockless([out, retval] BOOL *pVal);
-	[propput, id(14), helpstring("property SupportBlockless")]
+	[propput, id(15), helpstring("property SupportBlockless")]
 	HRESULT SupportBlockless([in] BOOL newVal);
 
-	[propget, id(15), helpstring("property StringIndexOne")]
+	[propget, id(16), helpstring("property StringIndexOne")]
 	HRESULT StringIndexOne([out, retval] BOOL *pVal);
-	[propput, id(15), helpstring("property StringIndexOne")]
+	[propput, id(16), helpstring("property StringIndexOne")]
 	HRESULT StringIndexOne([in] BOOL newVal);
 
-	[propget, id(16), helpstring("property StripSpaces")]
+	[propget, id(17), helpstring("property StripSpaces")]
 	HRESULT StripSpaces([out, retval] BOOL *pVal);
-	[propput, id(16), helpstring("property StripSpaces")]
+	[propput, id(17), helpstring("property StripSpaces")]
 	HRESULT StripSpaces([in] BOOL newVal);
 
-	[propget, id(17), helpstring("property Nextofile")]
+	[propget, id(18), helpstring("property Nextofile")]
 	HRESULT Nextofile([out, retval] BOOL *pVal);
-	[propput, id(17), helpstring("property Nextofile")]
+	[propput, id(18), helpstring("property Nextofile")]
 	HRESULT Nextofile([in] BOOL newVal);
 
-	[propget, id(18), helpstring("property UseCrlf")]
+	[propget, id(19), helpstring("property UseCrlf")]
 	HRESULT UseCrlf([out, retval] BOOL *pVal);
-	[propput, id(18), helpstring("property UseCrlf")]
+	[propput, id(19), helpstring("property UseCrlf")]
 	HRESULT UseCrlf([in] BOOL newVal);
 
-	[propget, id(19), helpstring("property MaxDepthForBlockParse")]
+	[propget, id(20), helpstring("property MaxDepthForBlockParse")]
 	HRESULT MaxDepthForBlockParse([out, retval] int *pVal);
-	[propput, id(19), helpstring("property MaxDepthForBlockParse")]
+	[propput, id(20), helpstring("property MaxDepthForBlockParse")]
 	HRESULT MaxDepthForBlockParse([in] int newVal);
 
-	[propget, id(20), helpstring("property MaxDepthForBlockRun")]
+	[propget, id(21), helpstring("property MaxDepthForBlockRun")]
 	HRESULT MaxDepthForBlockRun([out, retval] int *pVal);
-	[propput, id(20), helpstring("property MaxDepthForBlockRun")]
+	[propput, id(21), helpstring("property MaxDepthForBlockRun")]
 	HRESULT MaxDepthForBlockRun([in] int newVal);
 
-	[propget, id(21), helpstring("property MaxDepthForExprParse")]
+	[propget, id(22), helpstring("property MaxDepthForExprParse")]
 	HRESULT MaxDepthForExprParse([out, retval] int *pVal);
-	[propput, id(21), helpstring("property MaxDepthForExprParse")]
+	[propput, id(22), helpstring("property MaxDepthForExprParse")]
 	HRESULT MaxDepthForExprParse([in] int newVal);
 
-	[propget, id(22), helpstring("property MaxDepthForExprRun")]
+	[propget, id(23), helpstring("property MaxDepthForExprRun")]
 	HRESULT MaxDepthForExprRun([out, retval] int *pVal);
-	[propput, id(22), helpstring("property MaxDepthForExprRun")]
+	[propput, id(23), helpstring("property MaxDepthForExprRun")]
 	HRESULT MaxDepthForExprRun([in] int newVal);
 
-	[propget, id(23), helpstring("property MaxDepthForRexBuild")]
+	[propget, id(24), helpstring("property MaxDepthForRexBuild")]
 	HRESULT MaxDepthForRexBuild([out, retval] int *pVal);
-	[propput, id(23), helpstring("property MaxDepthForRexBuild")]
+	[propput, id(24), helpstring("property MaxDepthForRexBuild")]
 	HRESULT MaxDepthForRexBuild([in] int newVal);
 
-	[propget, id(24), helpstring("property MaxDepthForRexMatch")]
+	[propget, id(25), helpstring("property MaxDepthForRexMatch")]
 	HRESULT MaxDepthForRexMatch([out, retval] int *pVal);
-	[propput, id(24), helpstring("property MaxDepthForRexMatch")]
+	[propput, id(25), helpstring("property MaxDepthForRexMatch")]
 	HRESULT MaxDepthForRexMatch([in] int newVal);
 
-	[propget, id(25), helpstring("property EntryPoint")]
+	[propget, id(26), helpstring("property EntryPoint")]
 	HRESULT EntryPoint([out, retval] BSTR *pVal);
-	[propput, id(25), helpstring("property EntryPoint")]
+	[propput, id(26), helpstring("property EntryPoint")]
 	HRESULT EntryPoint([in] BSTR newVal);
 
-	[propget, id(26), helpstring("property Debug")]
+	[propget, id(27), helpstring("property Debug")]
 	HRESULT Debug([out, retval] BOOL *pVal);
-	[propput, id(26), helpstring("property Debug")]
+	[propput, id(27), helpstring("property Debug")]
 	HRESULT Debug([in] BOOL newVal);
 };
 
@@ -255,6 +257,9 @@ library ASELib
 
 		[id(10), helpstring("method NextExtio")]
 		int NextExtio([in] IAwkExtio* extio);
+
+		[id(11), helpstring("method HandleBuiltinFunction")]
+		int HandleBuiltinFunction([in] BSTR name, [in] VARIANT argarray);
 	};
 
 	/* Awk */

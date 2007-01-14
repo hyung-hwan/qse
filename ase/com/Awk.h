@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.10 2007-01-11 03:55:35 bacon Exp $
+ * $Id: Awk.h,v 1.11 2007-01-14 15:06:58 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -13,6 +13,7 @@
 #include "ase.h"
 #include "awk_cp.h"
 #include <ase/awk/awk.h>
+#include <ase/awk/val.h>
 
 /////////////////////////////////////////////////////////////////////////////
 // CAwk
@@ -135,6 +136,7 @@ public:
 	STDMETHOD(get_ErrorMessage)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
+	STDMETHOD(AddBuiltinFunction)(BSTR name);
 	HRESULT __stdcall Parse (int* ret);
 	HRESULT __stdcall Run (int* ret);
 };

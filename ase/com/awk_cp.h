@@ -1,5 +1,5 @@
 /*
- * $Id: awk_cp.h,v 1.5 2006-12-11 14:58:25 bacon Exp $
+ * $Id: awk_cp.h,v 1.6 2007-01-14 15:06:58 bacon Exp $
  */
 
 #ifndef _AWK_CP_H_
@@ -503,6 +503,69 @@ public:
 
 		return -1;
 	}
+
+
+	INT Fire_HandleBuiltinFunction (BSTR name, SAFEARRAY* argarray)
+	{
+		T* pT = static_cast<T*>(this);
+		int i, nconns = m_vec.GetSize();
+		CComVariant ret;
+		VARIANT args[2];
+
+		VariantInit (&args[0]);
+		VariantInit (&args[1]);
+
+		args[1].vt = VT_BSTR;
+		args[1].bstrVal = name;
+
+		args[0].vt = VT_ARRAY | VT_VARIANT;
+		args[0].parray = argarray;
+		
+		for (i = 0; i < nconns; i++)
+		{
+			pT->Lock();
+			CComPtr<IUnknown> sp = m_vec.GetAt(i);
+			pT->Unlock();
+
+			IDispatch* pDispatch = 
+				reinterpret_cast<IDispatch*>(sp.p);
+			if (pDispatch == NULL) continue;
+
+			VariantClear (&ret);
+
+			DISPPARAMS disp = { args, NULL, 2, 0 };
+			HRESULT hr = pDispatch->Invoke (
+				0xB, IID_NULL, LOCALE_USER_DEFAULT, 
+				DISPATCH_METHOD, &disp, &ret, NULL, NULL);
+			if (FAILED(hr)) continue;
+
+			if (ret.vt == VT_EMPTY)
+			{
+				/* probably, the handler has not been implemeted*/
+				continue;
+			}
+
+			hr = ret.ChangeType (VT_I4);
+			if (FAILED(hr))
+			{
+				/* TODO: set the error code properly... */
+				/* invalid value returned... */
+				VariantClear (&args[1]);
+				VariantClear (&args[0]);
+				return -1;
+			}
+
+			VariantClear (&args[1]);
+			VariantClear (&args[0]);
+			return ret.lVal;
+		}
+
+		/* TODO; clear name and aa */
+		VariantClear (&args[1]);
+		VariantClear (&args[0]);
+		return -1;
+	}
+
 
 };
 
