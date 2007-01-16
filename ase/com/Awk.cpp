@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.17 2007-01-14 15:06:58 bacon Exp $
+ * $Id: Awk.cpp,v 1.18 2007-01-16 06:09:07 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -37,7 +37,8 @@ CAwk::CAwk ():
 	write_src_buf (NULL),
 	write_extio_buf (NULL),
 	entry_point (NULL),
-	debug (FALSE)
+	debug (FALSE),
+	use_longlong (FALSE)
 {
 	/* TODO: what is the best default option? */
 	option = 
@@ -271,7 +272,7 @@ static int __handle_bfn (
 	{
 		ase_char_t buf[128];
 		_sntprintf (buf, ASE_COUNTOF(buf), 
-			_T("out of memory in create argument array for %.*s\n"),
+			_T("out of memory in creating argument array for '%.*s'\n"),
 			fnl, fnm);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
@@ -287,10 +288,16 @@ static int __handle_bfn (
 
 		if (v->type == ASE_AWK_VAL_INT)
 		{
-			//arg.vt = VT_I8;
-			//arg.llVal = ((ase_awk_val_int_t*)v)->val;
-			arg.vt = VT_I4;
-			arg.lVal = (LONG)((ase_awk_val_int_t*)v)->val;
+			if (awk->use_longlong)
+			{
+				arg.vt = VT_I8;
+				arg.llVal = ((ase_awk_val_int_t*)v)->val;
+			}
+			else
+			{
+				arg.vt = VT_I4;
+				arg.lVal = (LONG)((ase_awk_val_int_t*)v)->val;
+			}
 		}
 		else if (v->type == ASE_AWK_VAL_REAL)
 		{
@@ -307,6 +314,12 @@ static int __handle_bfn (
 			{
 				VariantClear (&arg);
 				SafeArrayDestroy (aa);
+
+				ase_char_t buf[128];
+				_sntprintf (buf, ASE_COUNTOF(buf), 
+					_T("out of memory in handling '%.*s'\n"),
+					fnl, fnm);
+				ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 				return -1;
 			}
 
@@ -324,7 +337,11 @@ static int __handle_bfn (
 			VariantClear (&arg);
 			SafeArrayDestroy (aa);			
 
-			/* TODO: handle error properly */
+			ase_char_t buf[128];
+			_sntprintf (buf, ASE_COUNTOF(buf), 
+				_T("out of memory in handling '%.*s'\n"),
+				fnl, fnm);
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 			return -1;
 		}
 
@@ -334,17 +351,52 @@ static int __handle_bfn (
 	BSTR name = SysAllocStringLen (fnm, fnl);
 	if (name == NULL) 
 	{
-		/* TODO: handle error properly */
 		SafeArrayDestroy (aa);
+
+		ase_char_t buf[128];
+		_sntprintf (buf, ASE_COUNTOF(buf), 
+			_T("out of memory in handling '%.*s'\n"),
+			fnl, fnm);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+					
 		return -1;
 	}
 
-	INT n = awk->Fire_HandleBuiltinFunction (name, aa);
+	ase_awk_val_t* ret;
+	int n = awk->Fire_HandleBuiltinFunction (run, name, aa, &ret);
+	if (n == 1)
+	{
+		ase_char_t buf[128];
+		_sntprintf (buf, ASE_COUNTOF(buf), 
+			_T("out of memory in handling '%.*s'\n"),
+			fnl, fnm);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		return -1;
+	}
+	else if (n == 2)
+	{
+		ase_char_t buf[128];
+		_sntprintf (buf, ASE_COUNTOF(buf), 
+			_T("no handler for '%.*s'\n"),
+			fnl, fnm);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		return -1;
+	}
+	else if (n == 3)
+	{
+		ase_char_t buf[128];
+		_sntprintf (buf, ASE_COUNTOF(buf), 
+			_T("return value not supported for '%.*s'\n"),
+			fnl, fnm);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		return -1;
+	}
 
 	/* name and aa are destroyed in HandleBuiltinFunction */
 	//SafeArrayDestroy (aa);
 	//SysFreeString (name);
 
+	ase_awk_setretval (run, ret);
 	return 0;
 }
 
@@ -412,7 +464,10 @@ HRESULT CAwk::Parse (int* ret)
 			ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
 	}
 
-ase_awk_addbfn (handle, _T("abc"), 3, 0, 5, 5, ASE_NULL, __handle_bfn);
+ase_awk_addbfn (handle, _T("sin"), 3, 0, 1, 1, ASE_NULL, __handle_bfn);
+ase_awk_addbfn (handle, _T("cos"), 3, 0, 1, 1, ASE_NULL, __handle_bfn);
+ase_awk_addbfn (handle, _T("tan"), 3, 0, 1, 1, ASE_NULL, __handle_bfn);
+
 /*
 	for (each buitlin function name... )
 	{
@@ -1038,5 +1093,17 @@ STDMETHODIMP CAwk::get_Debug(BOOL *pVal)
 STDMETHODIMP CAwk::put_Debug(BOOL newVal)
 {
 	debug = newVal;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_UseLongLong(BOOL *pVal)
+{
+	*pVal = use_longlong;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_UseLongLong(BOOL newVal)
+{
+	use_longlong = newVal;
 	return S_OK;
 }

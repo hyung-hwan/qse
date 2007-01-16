@@ -172,6 +172,8 @@ Private Sub Execute_Click()
     'Awk.MaxDepthForRexBuild = 10
     'Awk.MaxDepthForRexMatch = 10
     
+    Awk.UseLongLong = False
+    
     Awk.Debug = True
     
     If Awk.Parse() = -1 Then
@@ -387,20 +389,26 @@ ErrorTrap:
     Exit Function
 End Function
 
-Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) As Long
+Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) As Variant
 
-    Dim i As Integer
-    Dim xxx As String
-
-    MsgBox name
+    If name = "sin" Then
+        Awk_HandleBuiltinFunction = Sin(args(0))
+    ElseIf name = "cos" Then
+        Awk_HandleBuiltinFunction = Cos(args(0))
+    ElseIf name = "tan" Then
+        Awk_HandleBuiltinFunction = Tan(args(0))
+    End If
     
-    For i = LBound(args) To UBound(args)
-        xxx = xxx & "," & args(i)
-    Next i
-    
-    MsgBox xxx
+    'Dim i As Integer
+    'Dim xxx As String
 
-    Awk_HandleBuiltinFunction = 0
+    'MsgBox name
+    
+    'For i = LBound(args) To UBound(args)
+    '    xxx = xxx & "," & args(i)
+    'Next i
+    
+    'MsgBox xxx
 End Function
 
 Private Sub Form_Load()

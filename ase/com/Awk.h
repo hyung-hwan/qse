@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.11 2007-01-14 15:06:58 bacon Exp $
+ * $Id: Awk.h,v 1.12 2007-01-16 06:09:07 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -11,9 +11,9 @@
 
 #include "resource.h" 
 #include "ase.h"
-#include "awk_cp.h"
 #include <ase/awk/awk.h>
 #include <ase/awk/val.h>
+#include "awk_cp.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CAwk
@@ -64,6 +64,7 @@ public:
 
 	BSTR entry_point;
 	BOOL debug;
+	BOOL use_longlong;
 public:
 	CAwk();
 	~CAwk ();
@@ -91,6 +92,8 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
+	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_UseLongLong)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_Debug)(/*[out, retval]*/ BOOL *pVal);
 	STDMETHOD(put_Debug)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_EntryPoint)(/*[out, retval]*/ BSTR *pVal);
