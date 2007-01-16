@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.102 2007-01-02 12:25:18 bacon Exp $
+ * $Id: val.c,v 1.103 2007-01-16 14:20:42 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -16,12 +16,9 @@ static ase_char_t* __val_real_to_str (
 
 static ase_awk_val_nil_t __awk_nil = { ASE_AWK_VAL_NIL, 0 };
 static ase_awk_val_str_t __awk_zls = { ASE_AWK_VAL_STR, 0, ASE_T(""), 0 };
-/* TODO: consider different line ending schemes */
-static ase_awk_val_str_t __awk_nl = { ASE_AWK_VAL_STR, 0, ASE_T("\n"), 1 };
 
 ase_awk_val_t* ase_awk_val_nil = (ase_awk_val_t*)&__awk_nil;
 ase_awk_val_t* ase_awk_val_zls = (ase_awk_val_t*)&__awk_zls; 
-ase_awk_val_t* ase_awk_val_nl = (ase_awk_val_t*)&__awk_nl;
 
 static ase_awk_val_int_t __awk_int[] =
 {
@@ -266,7 +263,6 @@ ase_bool_t ase_awk_isbuiltinval (ase_awk_val_t* val)
 	return val == ASE_NULL || 
 	       val == ase_awk_val_nil || 
 	       val == ase_awk_val_zls || 
-	       val == ase_awk_val_nl || 
 	       val == ase_awk_val_zero || 
 	       val == ase_awk_val_one || 
 	       (val >= (ase_awk_val_t*)&__awk_int[0] &&
