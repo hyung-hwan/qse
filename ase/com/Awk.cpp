@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.18 2007-01-16 06:09:07 bacon Exp $
+ * $Id: Awk.cpp,v 1.19 2007-01-16 14:20:42 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -36,6 +36,7 @@ CAwk::CAwk ():
 	read_src_buf (NULL), 
 	write_src_buf (NULL),
 	write_extio_buf (NULL),
+	bfn_list (NULL),
 	entry_point (NULL),
 	debug (FALSE),
 	use_longlong (FALSE)
@@ -63,6 +64,14 @@ CAwk::CAwk ():
 
 CAwk::~CAwk ()
 {
+	while (bfn_list != NULL)
+	{
+		bfn_t* next = bfn_list->next;
+		free (bfn_list->name.ptr);
+		free (bfn_list);
+		bfn_list = next;
+	}
+
 	if (entry_point != NULL) SysFreeString (entry_point);
 
 	if (write_extio_buf != NULL) write_extio_buf->Release ();
@@ -464,17 +473,24 @@ HRESULT CAwk::Parse (int* ret)
 			ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
 	}
 
-ase_awk_addbfn (handle, _T("sin"), 3, 0, 1, 1, ASE_NULL, __handle_bfn);
-ase_awk_addbfn (handle, _T("cos"), 3, 0, 1, 1, ASE_NULL, __handle_bfn);
-ase_awk_addbfn (handle, _T("tan"), 3, 0, 1, 1, ASE_NULL, __handle_bfn);
-
-/*
-	for (each buitlin function name... )
+	for (bfn_t* bfn = bfn_list; bfn != NULL; bfn = bfn->next)
 	{
-		ase_awk_addbfn (handle, 
-			ptr, len, 0, min_args, max_args, __handle_bfn);
+		if (ase_awk_addbfn (
+			handle, bfn->name.ptr, bfn->name.len, 0, 
+			bfn->min_args, bfn->max_args, NULL, 
+			__handle_bfn) == NULL)
+		{
+			const ase_char_t* msg;
+
+			DBGOUT (_T("cannot add the builtin function"));
+
+			ase_awk_geterror (handle, &errnum, &errlin, &msg);
+			ase_awk_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
+
+			*ret = -1;
+			return S_OK;
+		}
 	}
-*/
 
 	ase_awk_srcios_t srcios;
 
@@ -704,9 +720,46 @@ HRESULT CAwk::Run (int* ret)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::AddBuiltinFunction(BSTR name)
+
+STDMETHODIMP CAwk::AddBuiltinFunction (
+	BSTR name, int min_args, int max_args, int* ret)
 {
-	/* TODO: remember names */
+	bfn_t* bfn = (bfn_t*)malloc (sizeof(bfn_t));
+	if (bfn == NULL) 
+	{
+		errnum = ASE_AWK_ENOMEM;
+		errlin = 0;
+		ase_awk_strxcpy (
+			errmsg, ASE_COUNTOF(errmsg), 
+			ase_awk_geterrstr(errnum));
+
+		*ret = -1;
+		return S_OK;
+	}
+
+	bfn->name.len = SysStringLen(name);
+	bfn->name.ptr = (TCHAR*)malloc (bfn->name.len * sizeof(TCHAR));
+	if (bfn->name.ptr == NULL) 
+	{
+		free (bfn);
+
+		errnum = ASE_AWK_ENOMEM;
+		errlin = 0;
+		ase_awk_strxcpy (
+			errmsg, ASE_COUNTOF(errmsg), 
+			ase_awk_geterrstr(errnum));
+
+		*ret = -1;
+		return S_OK;
+	}
+	memcpy (bfn->name.ptr, name, sizeof(TCHAR) * bfn->name.len);
+
+	bfn->min_args = min_args;
+	bfn->max_args = max_args;
+	bfn->next = bfn_list;
+	bfn_list = bfn;
+
+	*ret = 0;
 	return S_OK;
 }
 

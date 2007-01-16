@@ -124,7 +124,7 @@ Begin VB.Form AwkForm
       Width           =   3735
    End
    Begin VB.Label Label2 
-      Caption         =   "Deparsed Source Code"
+      Caption         =   "Source Out"
       Height          =   255
       Left            =   5280
       TabIndex        =   6
@@ -132,7 +132,7 @@ Begin VB.Form AwkForm
       Width           =   3735
    End
    Begin VB.Label Label1 
-      Caption         =   "Source Code"
+      Caption         =   "Source In"
       Height          =   255
       Left            =   120
       TabIndex        =   4
@@ -175,6 +175,14 @@ Private Sub Execute_Click()
     Awk.UseLongLong = False
     
     Awk.Debug = True
+    
+    If Awk.AddBuiltinFunction("sin", 1, 1) = -1 Then
+        MsgBox "Cannot add builtin function - " + Awk.ErrorMessage
+        Exit Sub
+    End If
+    Call Awk.AddBuiltinFunction("cos", 1, 1)
+    Call Awk.AddBuiltinFunction("tan", 1, 1)
+    Call Awk.AddBuiltinFunction("trim", 1, 1)
     
     If Awk.Parse() = -1 Then
         MsgBox "PARSE ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
@@ -397,6 +405,8 @@ Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) 
         Awk_HandleBuiltinFunction = Cos(args(0))
     ElseIf name = "tan" Then
         Awk_HandleBuiltinFunction = Tan(args(0))
+    ElseIf name = "trim" Then
+        Awk_HandleBuiltinFunction = Trim(args(0))
     End If
     
     'Dim i As Integer

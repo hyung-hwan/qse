@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.12 2007-01-16 06:09:07 bacon Exp $
+ * $Id: Awk.h,v 1.13 2007-01-16 14:20:43 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -62,6 +62,18 @@ public:
 
 	IBuffer* write_extio_buf;
 
+	struct bfn_t
+	{
+		struct
+		{
+			TCHAR* ptr;
+			size_t len;
+		} name;
+		size_t min_args;
+		size_t max_args;
+		struct bfn_t* next;
+	} * bfn_list;
+
 	BSTR entry_point;
 	BOOL debug;
 	BOOL use_longlong;
@@ -92,7 +104,6 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
-	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ BOOL *pVal);
 	STDMETHOD(put_UseLongLong)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_Debug)(/*[out, retval]*/ BOOL *pVal);
 	STDMETHOD(put_Debug)(/*[in]*/ BOOL newVal);
@@ -139,7 +150,8 @@ public:
 	STDMETHOD(get_ErrorMessage)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(AddBuiltinFunction)(BSTR name);
+	STDMETHOD(AddBuiltinFunction)(/*[in]*/ BSTR name, /*[in]*/ int min_args, /*[in]*/ int max_args, /*[out, retval]*/ int* ret);
+	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ BOOL *pVal);
 	HRESULT __stdcall Parse (int* ret);
 	HRESULT __stdcall Run (int* ret);
 };
