@@ -1,5 +1,5 @@
 /*
- * $Id: awk_cp.h,v 1.6 2007-01-14 15:06:58 bacon Exp $
+ * $Id: awk_cp.h,v 1.7 2007-01-16 06:09:07 bacon Exp $
  */
 
 #ifndef _AWK_CP_H_
@@ -504,13 +504,14 @@ public:
 		return -1;
 	}
 
-
-	INT Fire_HandleBuiltinFunction (BSTR name, SAFEARRAY* argarray)
+	int Fire_HandleBuiltinFunction (
+		ase_awk_run_t* run, BSTR name, SAFEARRAY* argarray, ase_awk_val_t** retv)
 	{
 		T* pT = static_cast<T*>(this);
 		int i, nconns = m_vec.GetSize();
 		CComVariant ret;
 		VARIANT args[2];
+		ase_awk_val_t* v;
 
 		VariantInit (&args[0]);
 		VariantInit (&args[1]);
@@ -545,25 +546,48 @@ public:
 				continue;
 			}
 
-			hr = ret.ChangeType (VT_I4);
-			if (FAILED(hr))
-			{
-				/* TODO: set the error code properly... */
-				/* invalid value returned... */
-				VariantClear (&args[1]);
-				VariantClear (&args[0]);
-				return -1;
-			}
-
 			VariantClear (&args[1]);
 			VariantClear (&args[0]);
-			return ret.lVal;
+
+			if (ret.vt == VT_I1)
+				v = ase_awk_makeintval (run, ret.cVal);
+			else if (ret.vt == VT_I2)
+				v = ase_awk_makeintval (run, ret.iVal);
+			else if (ret.vt == VT_I4)
+				v = ase_awk_makeintval (run, ret.lVal);
+			else if (ret.vt == VT_I8)
+				v = ase_awk_makeintval (run, ret.llVal);
+			else if (ret.vt == VT_UI1)
+				v = ase_awk_makeintval (run, ret.bVal);
+			else if (ret.vt == VT_UI2)
+				v = ase_awk_makeintval (run, ret.uiVal);
+			else if (ret.vt == VT_UI4)
+				v = ase_awk_makeintval (run, ret.ulVal);
+			else if (ret.vt == VT_UI8)
+				v = ase_awk_makeintval (run, ret.ullVal);
+			else if (ret.vt == VT_INT)
+				v = ase_awk_makeintval (run, ret.intVal);
+			else if (ret.vt == VT_UINT)
+				v = ase_awk_makeintval (run, ret.uintVal);
+			else if (ret.vt == VT_BOOL)
+				v = ase_awk_makeintval (run, ((ret.boolVal == 0)? 0: 1));
+			else if (ret.vt == VT_R4)
+				v = ase_awk_makerealval (run, ret.fltVal);
+			else if (ret.vt == VT_R8)
+				v = ase_awk_makerealval (run, ret.dblVal);
+			else if (ret.vt == VT_BSTR)
+				v = ase_awk_makestrval (run, ret.bstrVal, SysStringLen(ret.bstrVal));
+			else return 3; /* wrong return value */
+			
+			if (v == ASE_NULL) return 1; /* out of memory */
+
+			*retv = v;
+			return 0; /* success */
 		}
 
-		/* TODO; clear name and aa */
 		VariantClear (&args[1]);
 		VariantClear (&args[0]);
-		return -1;
+		return 2; /* no proper handler */
 	}
 
 
