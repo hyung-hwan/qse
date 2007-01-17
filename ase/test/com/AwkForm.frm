@@ -173,14 +173,16 @@ Private Sub Execute_Click()
     'Awk.MaxDepthForRexMatch = 10
     
     Awk.UseLongLong = False
-    
     Awk.Debug = True
     
     If Awk.AddBuiltinFunction("sin", 1, 1) = -1 Then
         MsgBox "Cannot add builtin function - " + Awk.ErrorMessage
         Exit Sub
     End If
-    Call Awk.AddBuiltinFunction("cos", 1, 1)
+    If Awk.AddBuiltinFunction("cos", 1, 1) = -1 Then
+        MsgBox "Cannot add builtin function - " + Awk.ErrorMessage
+        Exit Sub
+    End If
     Call Awk.AddBuiltinFunction("tan", 1, 1)
     Call Awk.AddBuiltinFunction("trim", 1, 1)
     
@@ -266,7 +268,9 @@ Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
         End If
         
     Case ASELib.AWK_EXTIO_PIPE
+        Awk_OpenExtio = -1
     Case ASELib.AWK_EXTIO_COPROC
+        Awk_OpenExtio = -1
     End Select
     
     Exit Function
@@ -293,7 +297,9 @@ Function Awk_CloseExtio(ByVal extio As ASELib.AwkExtio) As Long
             Awk_CloseExtio = 0
         End If
     Case ASELib.AWK_EXTIO_PIPE
+        Awk_CloseExtio = -1
     Case ASELib.AWK_EXTIO_COPROC
+        Awk_CloseExtio = -1
     End Select
     
 End Function
@@ -313,7 +319,9 @@ Function Awk_ReadExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffe
         End If
         
     Case ASELib.AWK_EXTIO_PIPE
+        Awk_ReadExtio = -1
     Case ASELib.AWK_EXTIO_COPROC
+        Awk_ReadExtio = -1
     End Select
     
 End Function
@@ -332,7 +340,9 @@ Function Awk_WriteExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buff
             Awk_WriteExtio = WriteExtioFile(extio, buf)
         End If
     Case ASELib.AWK_EXTIO_PIPE
+        Awk_WriteExtio = -1
     Case ASELib.AWK_EXTIO_COPROC
+        Awk_WriteExtio = -1
     End Select
 End Function
 

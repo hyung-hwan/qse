@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.19 2007-01-16 14:20:42 bacon Exp $
+ * $Id: Awk.cpp,v 1.20 2007-01-17 03:45:59 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -473,6 +473,8 @@ HRESULT CAwk::Parse (int* ret)
 			ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
 	}
 
+	ase_awk_clrbfn (handle);
+
 	for (bfn_t* bfn = bfn_list; bfn != NULL; bfn = bfn->next)
 	{
 		if (ase_awk_addbfn (
@@ -724,7 +726,28 @@ HRESULT CAwk::Run (int* ret)
 STDMETHODIMP CAwk::AddBuiltinFunction (
 	BSTR name, int min_args, int max_args, int* ret)
 {
-	bfn_t* bfn = (bfn_t*)malloc (sizeof(bfn_t));
+	bfn_t* bfn;
+	size_t name_len = SysStringLen(name);
+
+	for (bfn = bfn_list; bfn != NULL; bfn = bfn->next)
+	{
+		if (ase_awk_strxncmp (
+			bfn->name.ptr, bfn->name.len,
+			name, name_len) == 0)
+		{
+			errnum = ASE_AWK_EEXIST;
+			errlin = 0;
+			_sntprintf (
+				errmsg, ASE_COUNTOF(errmsg), 
+				_T("'%.*s' added already\n"), 
+				bfn->name.len, bfn->name.ptr);
+
+			*ret = -1;
+			return S_OK;
+		}
+	}
+
+	bfn = (bfn_t*)malloc (sizeof(bfn_t));
 	if (bfn == NULL) 
 	{
 		errnum = ASE_AWK_ENOMEM;
@@ -737,7 +760,7 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 		return S_OK;
 	}
 
-	bfn->name.len = SysStringLen(name);
+	bfn->name.len = name_len;
 	bfn->name.ptr = (TCHAR*)malloc (bfn->name.len * sizeof(TCHAR));
 	if (bfn->name.ptr == NULL) 
 	{
