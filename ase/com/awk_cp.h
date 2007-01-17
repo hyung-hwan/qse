@@ -1,5 +1,5 @@
 /*
- * $Id: awk_cp.h,v 1.7 2007-01-16 06:09:07 bacon Exp $
+ * $Id: awk_cp.h,v 1.8 2007-01-17 14:09:49 bacon Exp $
  */
 
 #ifndef _AWK_CP_H_
@@ -577,6 +577,9 @@ public:
 				v = ase_awk_makerealval (run, ret.dblVal);
 			else if (ret.vt == VT_BSTR)
 				v = ase_awk_makestrval (run, ret.bstrVal, SysStringLen(ret.bstrVal));
+			else if (ret.vt == VT_NULL)
+
+				v = ase_awk_val_nil;
 			else return 3; /* wrong return value */
 			
 			if (v == ASE_NULL) return 1; /* out of memory */

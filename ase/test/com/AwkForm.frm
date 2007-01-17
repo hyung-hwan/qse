@@ -185,6 +185,7 @@ Private Sub Execute_Click()
     End If
     Call Awk.AddBuiltinFunction("tan", 1, 1)
     Call Awk.AddBuiltinFunction("trim", 1, 1)
+    'Call Awk.DeleteBuiltinFunction("tan")
     
     If Awk.Parse() = -1 Then
         MsgBox "PARSE ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
@@ -410,11 +411,29 @@ End Function
 Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) As Variant
 
     If name = "sin" Then
-        Awk_HandleBuiltinFunction = Sin(args(0))
+        If TypeName(args(0)) = "Long" Or TypeName(args(0)) = "Double" Then
+            Awk_HandleBuiltinFunction = Sin(args(0))
+        ElseIf TypeName(args(0)) = "String" Then
+            Awk_HandleBuiltinFunction = Sin(Val(args(0)))
+        ElseIf TypeName(args(0)) = "Null" Then
+            Awk_HandleBuiltinFunction = Sin(0)
+        End If
     ElseIf name = "cos" Then
-        Awk_HandleBuiltinFunction = Cos(args(0))
+        If TypeName(args(0)) = "Long" Or TypeName(args(0)) = "Double" Then
+            Awk_HandleBuiltinFunction = Cos(args(0))
+        ElseIf TypeName(args(0)) = "String" Then
+            Awk_HandleBuiltinFunction = Cos(Val(args(0)))
+        ElseIf TypeName(args(0)) = "Null" Then
+            Awk_HandleBuiltinFunction = Cos(0)
+        End If
     ElseIf name = "tan" Then
-        Awk_HandleBuiltinFunction = Tan(args(0))
+        If TypeName(args(0)) = "Long" Or TypeName(args(0)) = "Double" Then
+            Awk_HandleBuiltinFunction = Tan(args(0))
+        ElseIf TypeName(args(0)) = "String" Then
+            Awk_HandleBuiltinFunction = Tan(Val(args(0)))
+        ElseIf TypeName(args(0)) = "Null" Then
+            Awk_HandleBuiltinFunction = Tan(0)
+        End If
     ElseIf name = "trim" Then
         Awk_HandleBuiltinFunction = Trim(args(0))
     End If

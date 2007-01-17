@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.13 2007-01-16 14:20:43 bacon Exp $
+ * $Id: Awk.h,v 1.14 2007-01-17 14:09:49 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -150,10 +150,11 @@ public:
 	STDMETHOD(get_ErrorMessage)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
+	STDMETHOD(DeleteBuiltinFunction)(/*[in]*/ BSTR name, /*[out, retval]*/ int* ret);
 	STDMETHOD(AddBuiltinFunction)(/*[in]*/ BSTR name, /*[in]*/ int min_args, /*[in]*/ int max_args, /*[out, retval]*/ int* ret);
 	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ BOOL *pVal);
-	HRESULT __stdcall Parse (int* ret);
-	HRESULT __stdcall Run (int* ret);
+	HRESULT __stdcall Parse (/*[out, retval]*/ int* ret);
+	HRESULT __stdcall Run (/*[out, retval]*/ int* ret);
 };
 
 #endif

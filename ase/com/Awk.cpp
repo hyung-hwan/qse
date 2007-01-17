@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.20 2007-01-17 03:45:59 bacon Exp $
+ * $Id: Awk.cpp,v 1.21 2007-01-17 14:09:49 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -337,7 +337,7 @@ static int __handle_bfn (
 		}
 		else if (v->type == ASE_AWK_VAL_NIL)
 		{
-			arg.vt = VT_EMPTY;
+			arg.vt = VT_NULL;
 		}
 
 		HRESULT hr = SafeArrayPutElement (aa, &i, &arg);
@@ -722,7 +722,6 @@ HRESULT CAwk::Run (int* ret)
 	return S_OK;
 }
 
-
 STDMETHODIMP CAwk::AddBuiltinFunction (
 	BSTR name, int min_args, int max_args, int* ret)
 {
@@ -783,6 +782,42 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 	bfn_list = bfn;
 
 	*ret = 0;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::DeleteBuiltinFunction (BSTR name, int* ret)
+{
+	size_t name_len = SysStringLen(name);
+	bfn_t* bfn, * next, * prev = NULL;
+
+	for (bfn = bfn_list; bfn != NULL; bfn = next)
+	{
+		next = bfn->next;
+
+		if (ase_awk_strxncmp (
+			bfn->name.ptr, bfn->name.len,
+			name, name_len) == 0)
+		{
+			free (bfn->name.ptr);
+			free (bfn);
+
+			if (prev == NULL) bfn_list = next;
+			else prev->next = next;
+
+			*ret = 0;
+			return S_OK;
+		}
+
+		prev = bfn;
+	}
+
+	errnum = ASE_AWK_ENOENT;
+	errlin = 0;
+	ase_awk_strxcpy (
+		errmsg, ASE_COUNTOF(errmsg), 
+		ase_awk_geterrstr(errnum));
+
+	*ret = -1;
 	return S_OK;
 }
 
