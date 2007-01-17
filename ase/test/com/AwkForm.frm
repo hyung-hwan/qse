@@ -184,6 +184,7 @@ Private Sub Execute_Click()
         Exit Sub
     End If
     Call Awk.AddBuiltinFunction("tan", 1, 1)
+    Call Awk.AddBuiltinFunction("sqr", 1, 1)
     Call Awk.AddBuiltinFunction("trim", 1, 1)
     'Call Awk.DeleteBuiltinFunction("tan")
     
@@ -411,12 +412,12 @@ End Function
 Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) As Variant
 
     If name = "sin" Then
-        If TypeName(args(0)) = "Long" Or TypeName(args(0)) = "Double" Then
-            Awk_HandleBuiltinFunction = Sin(args(0))
-        ElseIf TypeName(args(0)) = "String" Then
-            Awk_HandleBuiltinFunction = Sin(Val(args(0)))
-        ElseIf TypeName(args(0)) = "Null" Then
+        If IsNull(args(0)) Then
             Awk_HandleBuiltinFunction = Sin(0)
+        ElseIf IsNumeric(args(0)) Then
+            Awk_HandleBuiltinFunction = Sin(args(0))
+        Else
+            Awk_HandleBuiltinFunction = Sin(Val(args(0)))
         End If
     ElseIf name = "cos" Then
         If TypeName(args(0)) = "Long" Or TypeName(args(0)) = "Double" Then
@@ -433,6 +434,14 @@ Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) 
             Awk_HandleBuiltinFunction = Tan(Val(args(0)))
         ElseIf TypeName(args(0)) = "Null" Then
             Awk_HandleBuiltinFunction = Tan(0)
+        End If
+    ElseIf name = "sqr" Then
+        If IsNull(args(0)) Then
+            Awk_HandleBuiltinFunction = Sqr(0)
+        ElseIf IsNumeric(args(0)) Then
+            Awk_HandleBuiltinFunction = Sqr(args(0))
+        Else
+            Awk_HandleBuiltinFunction = Sqr(Val(args(0)))
         End If
     ElseIf name = "trim" Then
         Awk_HandleBuiltinFunction = Trim(args(0))
