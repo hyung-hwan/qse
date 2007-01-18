@@ -1,11 +1,12 @@
 /*
- * $Id: Awk.java,v 1.16 2007-01-18 13:49:27 bacon Exp $
+ * $Id: Awk.java,v 1.17 2007-01-18 14:34:17 bacon Exp $
  */
 
 package ase.awk;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.net.URL;
 
 public abstract class Awk
 {
@@ -23,8 +24,10 @@ public abstract class Awk
 		{
 			public Object run ()
 			{
-				String dll = ase.awk.Awk.class.getResource("aseawk.dll").getFile();
-				System.load (dll);
+				URL url = ase.awk.Awk.class.getResource("aseawk.dll");
+				if (url == null) url = ase.awk.Awk.class.getResource("libaseawk.so");
+				
+				if (url != null) System.load (url.getFile());
 				//System.load ("c://projects//ase/awk/aseawk.dll");
 				//System.loadLibrary ("aseawk");
 				return null;
