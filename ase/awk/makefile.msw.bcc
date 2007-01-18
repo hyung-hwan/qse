@@ -10,16 +10,16 @@ JNI_OBJS = $(JNI_SRCS:.c=.obj)
 JAVA_OBJS = $(JAVA_SRCS:.java=.class)
 
 JNI_INCPATH = \
-	-I"$(JAVA_HOME)\include" \
-	-I"$(JAVA_HOME\include\win32" 
-BDS_LIBPATH = -L"c:\program files\borland\bds\4.0\lib"
+	-I"$(JAVA_HOME)/include" \
+	-I"$(JAVA_HOME)/include/win32"
+BDS_LIBPATH = -L"c:/program files/borland/bds/4.0/lib"
 
 CC = bcc32
 LD = ilink32
 AR = tlib
 JAVAC = javac
 
-CFLAGS_COMMON = -O2 -WM -WU -RT- -w -q -I../.. $(JNI_INCPATH) 
+CFLAGS_COMMON = -O2 -WM -WU -RT- -w -q -I../.. $(JNI_INCPATH)
 CFLAGS_RELEASE = $(CFLAGS_COMMON) -DNDEBUG
 CFLAGS_DEBUG = $(CFLAGS_COMMON) -D_DEBUG #-DDEBUG_REX
 CFLAGS = $(CFLAGS_DEBUG)
