@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.15 2006-12-02 16:26:03 bacon Exp $
+ * $Id: Awk.java,v 1.16 2007-01-18 13:49:27 bacon Exp $
  */
 
 package ase.awk;
@@ -15,6 +15,9 @@ public abstract class Awk
 
 	static
 	{
+		/*
+		System.getProperty("os.name"));   os.arch / os.version;
+		*/
 		//System.load ("c://projects//ase/awk/aseawk.dll");
 		AccessController.doPrivileged (new PrivilegedAction ()
 		{
