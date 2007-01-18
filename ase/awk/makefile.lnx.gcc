@@ -1,4 +1,4 @@
-OUT = libaseawk.a
+OUT = libaseawk
 
 C_SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
@@ -9,25 +9,31 @@ C_OBJS = $(C_SRCS:.c=.o)
 JNI_OBJS = $(JNI_SRCS:.c=.o)
 JAVA_OBJS = $(JAVA_SRCS:.java=.class)
 
-CC = @CC@
+JNI_INCPATH= \
+	-I"$(JAVA_HOME)/include" \
+	-I"$(JAVA_HOME)/include/linux"
+
+CC = gcc
 AR = ar
-RANLIB = @RANLIB@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM)
-LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
+LD = ld
+RANLIB = ranlib
+CFLAGS = -Wall -O2 -D_REENTRANT -D_THREAD_SAFE -fPIC -I../.. $(JNI_INCPATH)
+LDFLAGS = 
+LIBS = 
 
 JAVAC = javac
 JAVACFLAGS = -classpath ../..
 
-all: lib
+all: lib jni
 
 lib: $(C_OBJS)
-	$(AR) cr $(OUT) $(OBJS)
+	$(AR) cr $(OUT).a $(C_OBJS)
 
 jni: lib $(JNI_OBJS) $(JAVA_OBJS)
+	$(LD) -fPIC -shared -soname $(OUT).so -o $(OUT).so -L . -l aseawk jni.o
 
 clean:
-	rm -rf $(OBJS) $(OUT) *.o
+	rm -rf $(C_OBJS) $(JNI_OBJS) $(JAVA_OBJS) $(OUT).a $(OUT).so *.o
 
 .SUFFIXES: .c .o .java .class
 .c.o:
