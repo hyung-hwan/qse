@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.17 2007-01-18 14:34:17 bacon Exp $
+ * $Id: Awk.java,v 1.18 2007-01-19 03:23:47 bacon Exp $
  */
 
 package ase.awk;
@@ -20,12 +20,17 @@ public abstract class Awk
 		System.getProperty("os.name"));   os.arch / os.version;
 		*/
 		//System.load ("c://projects//ase/awk/aseawk.dll");
+		URL url = ase.awk.Awk.class.getResource("aseawk.dll");
+		if (url == null) url = ase.awk.Awk.class.getResource("libaseawk_jni.so");
+		if (url != null) System.load (url.getFile());
+
+		/*
 		AccessController.doPrivileged (new PrivilegedAction ()
 		{
 			public Object run ()
 			{
 				URL url = ase.awk.Awk.class.getResource("aseawk.dll");
-				if (url == null) url = ase.awk.Awk.class.getResource("libaseawk.so");
+				if (url == null) url = ase.awk.Awk.class.getResource("libaseawk_jni.so");
 				
 				if (url != null) System.load (url.getFile());
 				//System.load ("c://projects//ase/awk/aseawk.dll");
@@ -33,6 +38,7 @@ public abstract class Awk
 				return null;
 			}
 		});
+		*/
 	}
 
 	private long handle;

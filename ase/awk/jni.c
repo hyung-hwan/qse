@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.48 2007-01-07 07:30:40 bacon Exp $
+ * $Id: jni.c,v 1.49 2007-01-19 03:23:47 bacon Exp $
  */
 
 #include <stdio.h>
@@ -12,6 +12,8 @@
 #include <math.h>
 #include <ase/awk/jni.h>
 #include <ase/awk/awk_i.h>
+
+#include "../etc/printf.c"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -125,7 +127,7 @@ static int __awk_sprintf (
 	/* TODO: check buffer overflow */
 	n = vsprintf (buf, fmt, ap);
 #else
-	n = xp_vsprintf (buf, len, fmt, ap);
+	n = ase_vsprintf (buf, len, fmt, ap);
 #endif
 	va_end (ap);
 	return n;
@@ -154,7 +156,7 @@ static void __awk_aprintf (const ase_char_t* fmt, ...)
 #elif defined(__MSDOS__)
 	vprintf (fmt, ap);
 #else
-	xp_vprintf (fmt, ap);
+	ase_vprintf (fmt, ap);
 #endif
 	va_end (ap);
 }
@@ -169,7 +171,7 @@ static void __awk_dprintf (const ase_char_t* fmt, ...)
 #elif defined(__MSDOS__)
 	vfprintf (stderr, fmt, ap);
 #else
-	xp_vfprintf (stderr, fmt, ap);
+	ase_vfprintf (stderr, fmt, ap);
 #endif
 
 	va_end (ap);
