@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.183 2007-01-10 14:33:35 bacon Exp $
+ * $Id: awk.h,v 1.184 2007-01-21 13:21:14 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -412,6 +412,8 @@ const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk);
 void ase_awk_geterror (
 	ase_awk_t* awk, int* errnum, 
 	ase_size_t* errlin, const ase_char_t** errmsg);
+
+void ase_awk_seterrnum (ase_awk_t* awk, int errnum);
 
 void ase_awk_seterror (
 	ase_awk_t* run, int errnum, 

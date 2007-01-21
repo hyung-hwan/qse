@@ -1,11 +1,24 @@
 /*
- * $Id: printf.c,v 1.2 2007-01-19 03:23:47 bacon Exp $
+ * $Id: printf.c,v 1.3 2007-01-21 13:21:14 bacon Exp $
  */
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <wchar.h>
 #include <stdlib.h>
+
+#include <ctype.h>
+#include <wctype.h>
+
+#if defined(ASE_CHAR_IS_MCHAR)
+	#define ase_tolower(x) tolower(x)
+	#define ase_isdigit(x) isdigit(x)
+#elif defined(ASE_CHAR_IS_WCHAR)
+	#define ase_tolower(x) towlower(x)
+	#define ase_isdigit(x) iswdigit(x)
+#else
+	#error define ASE_CHAR_IS_MCHAR or ASE_CHAR_IS_WCHAR
+#endif
 
 static ase_char_t* __adjust_format (const ase_char_t* format);
 

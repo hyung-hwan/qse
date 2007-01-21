@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.9 2006-12-03 06:53:25 bacon Exp $
+ * $Id: StdAwk.java,v 1.10 2007-01-21 13:21:13 bacon Exp $
  */
 
 package ase.awk;
@@ -142,7 +142,7 @@ public abstract class StdAwk extends Awk
 	/* == console interface == */
 	protected int openConsole (Extio extio)
 	{
-		System.err.println ("[open_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
+		//System.err.println ("[open_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
 
 		int mode = extio.getMode ();
 
@@ -182,7 +182,7 @@ public abstract class StdAwk extends Awk
 
 	protected int closeConsole (Extio extio)
 	{
-		System.err.println ("[close_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
+		//System.err.println ("[close_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
 
 		int mode = extio.getMode ();
 
@@ -247,6 +247,8 @@ public abstract class StdAwk extends Awk
 	protected int writeConsole (Extio extio, char[] buf, int len) 
 	{
 		int mode = extio.getMode ();
+
+		//System.err.println ("[writeConsole called name: " + extio.getName() + " mode: " + extio.getMode());
 
 		if (mode == Extio.MODE_CONSOLE_WRITE)
 		{

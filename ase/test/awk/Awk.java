@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.18 2006-12-02 16:26:29 bacon Exp $
+ * $Id: Awk.java,v 1.19 2007-01-21 13:21:14 bacon Exp $
  */
 
 package ase.test.awk;
@@ -52,11 +52,16 @@ public class Awk extends ase.awk.StdAwk
 
 	protected String[] getOutputConsoleNames ()
 	{
+		String[] cout = new String[1];
+		cout[0] = "";
+		return cout;
+/*
 		String[] cout = new String[3];
 		cout[0] = "c4.txt";
 		cout[1] = "c5.txt";
 		cout[2] = "";
 		return cout;
+*/
 	}
 
 	protected String[] getSourceNames ()
