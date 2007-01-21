@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.70 2007-01-10 14:33:36 bacon Exp $
+ * $Id: err.c,v 1.71 2007-01-21 13:21:14 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -35,6 +35,13 @@ void ase_awk_geterror (
 		else
 			*errmsg = awk->errmsg;
 	}
+}
+
+void ase_awk_seterrnum (ase_awk_t* awk, int errnum)
+{
+	awk->errnum = errnum;
+	awk->errlin = 0;
+	awk->errmsg[0] = ASE_T('\0');
 }
 
 void ase_awk_seterror (
