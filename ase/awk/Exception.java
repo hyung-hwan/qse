@@ -1,5 +1,5 @@
 /*
- * $Id: Exception.java,v 1.1 2006-10-24 06:00:36 bacon Exp $
+ * $Id: Exception.java,v 1.2 2007-01-21 13:31:30 bacon Exp $
  */
 
 package ase.awk;
@@ -15,4 +15,5 @@ public class Exception extends java.lang.Exception
 	{
 		super (msg);
 	}
+
 }
