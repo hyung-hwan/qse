@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.10 2007-01-21 13:21:13 bacon Exp $
+ * $Id: StdAwk.java,v 1.11 2007-01-23 14:23:18 bacon Exp $
  */
 
 package ase.awk;
@@ -8,12 +8,14 @@ import java.io.*;
 
 public abstract class StdAwk extends Awk
 {
-	private InputStreamReader src_in   = null;
-	private OutputStreamWriter src_out = null;
+	private Reader src_in  = null;
+	private Writer src_out = null;
 
 	private String[] sin  = null;
 	private int sin_no    = 0;
-	private String sout   = null;
+
+	private String[] sout = null;
+	private int sout_no = 0;
 
 	private String[] cin  = null;
 	private int cin_no    = 0;
@@ -22,6 +24,17 @@ public abstract class StdAwk extends Awk
 
 	private long seed;
 	private java.util.Random random;
+
+	private static Reader stdin = null;
+	private static Writer stdout = null;
+
+	static
+	{
+		stdin = new BufferedReader (
+			new InputStreamReader (System.in));
+		stdout = new BufferedWriter ( 
+			new OutputStreamWriter (System.out));
+	}
 
 	public StdAwk () throws Exception
 	{
@@ -34,36 +47,37 @@ public abstract class StdAwk extends Awk
 	/* == major methods == */
 	public void parse () throws Exception
 	{
-		sin = getSourceNames (); sin_no = 0;
-		sout = getDeparsedSourceName ();
+		sin = sourceInputNames (); sin_no = 0;
+		sout = sourceOutputNames (); sout_no = 0;
 		super.parse ();
 	}
 
 	public void run () throws Exception
 	{
-		cin = getInputConsoleNames (); cin_no = 0;
-		cout = getOutputConsoleNames (); cout_no = 0;
+		cin = consoleInputNames (); cin_no = 0;
+		cout = consoleOutputNames (); cout_no = 0;
 		super.run ();
 	}
 
 	/* == source code names == */
-	protected abstract String[] getSourceNames ();
-	protected String getDeparsedSourceName () { return null; }
+	protected abstract String[] sourceInputNames ();
+	protected String[] sourceOutputNames () { return null; }
 
 	/* == console names == */
-	protected abstract String[] getInputConsoleNames ();
-	protected abstract String[] getOutputConsoleNames ();
+	protected abstract String[] consoleInputNames ();
+	protected abstract String[] consoleOutputNames ();
 
 	/* == source code == */
 	protected int openSource (int mode)
 	{
 		if (mode == SOURCE_READ)
 		{
-			InputStreamReader isr;
+			Reader isr;
 			sin_no = 0;
 
-			if (sin_no >= sin.length) return 0;
-			isr = get_input_stream (sin[sin_no]);
+			if (sin == null || sin_no >= sin.length) return 0;
+
+			isr = get_stream_reader (sin[sin_no]);
 			if (isr == null) return -1;
 
 			src_in = isr;
@@ -72,11 +86,20 @@ public abstract class StdAwk extends Awk
 		}
 		else if (mode == SOURCE_WRITE)
 		{
-			OutputStreamWriter osw;
+			Writer osw;
+			sout_no = 0;
+
+			// when sout is null, the source output is treated
+			// as if the operation has been successful with 
+			// the writeSource and closeSource method.
 			if (sout == null) return 1;
-			osw = get_output_stream (sout);
+			if (sout_no >= sin.length) return 0;
+
+			osw = get_stream_writer (sout[sout_no]);
 			if (osw == null) return -1;
+
 			src_out = osw;
+			sout_no++;
 			return 1;
 		}
 
@@ -87,15 +110,22 @@ public abstract class StdAwk extends Awk
 	{
 		if (mode == SOURCE_READ)
 		{
-			try { src_in.close (); }
-			catch (IOException e) { return -1; }
+			if (src_in != StdAwk.stdin)
+			{
+				try { src_in.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 		else if (mode == SOURCE_WRITE)
 		{
 			if (src_out == null) return 0;
-			try { src_out.close (); }
-			catch (IOException e) { return -1; }
+
+			if (src_out != StdAwk.stdout) 
+			{
+				try { src_out.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 
@@ -108,14 +138,17 @@ public abstract class StdAwk extends Awk
 			int n = src_in.read (buf, 0, len); 
 			while (n == -1)
 			{
-				InputStreamReader isr;
-				if (sin_no >= sin.length) return 0;
+				Reader isr;
+				if (sin == null || sin_no >= sin.length) return 0;
 
-				isr = get_input_stream (sin[sin_no]);
+				isr = get_stream_reader (sin[sin_no]);
 				if (isr == null) return -1;
 
-				try { src_in.close (); }
-				catch (IOException ec) { /* ignore */ }
+				if (src_in != StdAwk.stdin)
+				{
+					try { src_in.close (); }
+					catch (IOException ec) { /* ignore */ }
+				}
 
 				src_in = isr;
 				sin_no++;
@@ -134,8 +167,13 @@ public abstract class StdAwk extends Awk
 	protected int writeSource (char[] buf, int len)
 	{
 		if (src_out == null) return len;
+
+		// only the first file is used at the moment.
+		// this is because the write message doesn't indicate 
+		// the end of the output stream.
 		try { src_out.write (buf, 0, len); }
 		catch (IOException e) { return -1; }
+
 		return len;
 	}
 
@@ -148,30 +186,33 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_CONSOLE_READ)
 		{
-			InputStreamReader isr;
+			/*InputStream*/Reader isr;
 			cin_no = 0;
 
-			if (cin_no >= cin.length) return 0;
-			isr = get_input_stream (cin[cin_no]);
+			if (cin == null || cin_no >= cin.length) return 0;
+			isr = get_stream_reader (cin[cin_no]);
 			if (isr == null) return -1;
 
 			extio.setHandle (isr);
-			setInputConsoleName (extio, cin[cin_no]);
+
+			try { setConsoleInputName (extio, cin[cin_no]); }
+			catch (Exception e) { return -1; }
 
 			cin_no++;
 			return 1;
 		}
 		else if (mode == Extio.MODE_CONSOLE_WRITE)
 		{
-			OutputStreamWriter osw;
+			Writer osw;
 			cout_no = 0;
 		       
-			if (cout_no >= cout.length) return 0;
-			osw = get_output_stream (cout[cout_no]);
+			if (cout == null || cout_no >= cout.length) return 0;
+			osw = get_stream_writer (cout[cout_no]);
 			if (osw == null) return -1;
 
 			extio.setHandle (osw);
-			setOutputConsoleName (extio, cout[cout_no]);
+			try { setConsoleOutputName (extio, cout[cout_no]); }
+			catch (Exception e) { return -1; }
 
 			cout_no++;
 			return 1;
@@ -188,18 +229,26 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_CONSOLE_READ)
 		{
-			InputStreamReader isr = (InputStreamReader)extio.getHandle ();
-			try { isr.close (); }
-			catch (IOException e) { return -1; }
+			Reader isr = (Reader)extio.getHandle ();
+
+			if (isr != StdAwk.stdin)
+			{
+				try { isr.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 		else if (mode == Extio.MODE_CONSOLE_WRITE)
 		{
-			OutputStreamWriter osw = (OutputStreamWriter)extio.getHandle ();
+			Writer osw = (Writer)extio.getHandle ();
 			/* TODO: selective close the stream...
 			 * system.out should not be closed??? */
-			try { osw.close (); }
-			catch (IOException e) { return -1; }
+
+			if (osw != StdAwk.stdout)
+			{
+				try { osw.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 
@@ -212,26 +261,31 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_CONSOLE_READ)
 		{
-			InputStreamReader isr, tmp;
+			Reader isr, tmp;
 			int n;
 		       
-			isr = (InputStreamReader)extio.getHandle ();
+			isr = (Reader)extio.getHandle ();
 
 			try { n = isr.read (buf, 0, len); }
 			catch  (IOException e) { return -1; }
 
 			while (n == -1)
 			{
-				if (cin_no >= cin.length) return 0;
-				tmp = get_input_stream (cin[cin_no]);
+				if (cin == null || cin_no >= cin.length) return 0;
+				tmp = get_stream_reader (cin[cin_no]);
 				if (tmp == null) return -1;
 
-				try { isr.close (); }
-				catch (IOException e) { /* ignore */ }
+				if (isr != StdAwk.stdin) 
+				{
+					try { isr.close (); }
+					catch (IOException e) { /* ignore */ }
+				}
 
 				extio.setHandle (tmp);
-				setInputConsoleName (extio, cin[cin_no]);
-				isr = (InputStreamReader)extio.getHandle ();
+				try { setConsoleInputName (extio, cin[cin_no]); }
+				catch (Exception e) { return -1; }
+
+				isr = (Reader)extio.getHandle ();
 				cin_no++;
 
 				try { n = isr.read (buf, 0, len); }
@@ -252,11 +306,12 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_CONSOLE_WRITE)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle ();
-			// as the write operation below doesn't indicate 
-			// if it has reached the end, console can't be
-			// switched here unlike read_console.
+			Writer osw;
+
+			osw = (Writer)extio.getHandle ();
+			// as the write operation below doesn't 
+			// indicate if it has reached the end, console 
+			// can't be switched here unlike in read_console
 			try { osw.write (buf, 0, len); osw.flush (); }
 			catch (IOException e) { return -1; }
 
@@ -272,10 +327,13 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_CONSOLE_WRITE)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle ();
+			Writer osw;
+
+			osw = (Writer)extio.getHandle ();
+
 			try { osw.flush (); }
 			catch (IOException e) { return -1; }
+
 			return 0;
 		}
 
@@ -288,40 +346,46 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_CONSOLE_READ)
 		{
-			InputStreamReader isr, tmp;
+			Reader isr, tmp;
 
-			isr = (InputStreamReader)extio.getHandle ();
+			isr = (Reader)extio.getHandle ();
 
-			if (cin_no >= cin.length) return 0;
-			tmp = get_input_stream (cin[cin_no]);
+			if (cin == null || cin_no >= cin.length) return 0;
+			tmp = get_stream_reader (cin[cin_no]);
 			if (tmp == null) return -1;
 
-			try { isr.close (); }
-			catch (IOException e) { /* ignore */ }
+			if (isr != StdAwk.stdin)
+			{
+				try { isr.close (); }
+				catch (IOException e) { /* ignore */ }
+			}
 
 			extio.setHandle (tmp);
-			setInputConsoleName (extio, cin[cin_no]);
+			try { setConsoleInputName (extio, cin[cin_no]); }
+			catch (Exception e) { return -1; }
 
 			cin_no++;
 			return 1;
 		}
 		else if (mode == Extio.MODE_CONSOLE_WRITE)
 		{
-			OutputStreamWriter osw, tmp;
+			Writer osw, tmp;
 
-			osw = (OutputStreamWriter)extio.getHandle ();
+			osw = (Writer)extio.getHandle ();
 
-			if (cout_no >= cout.length) return 0;
-			tmp = get_output_stream (cout[cout_no]);
+			if (cout == null || cout_no >= cout.length) return 0;
+			tmp = get_stream_writer (cout[cout_no]);
 			if (tmp == null) return -1;
 
-			/* TODO: selectively close the stream...
-			 * system.out should not be closed??? */
-			try { osw.close (); }
-			catch (IOException e) { /* ignore */ }
+			if (osw != StdAwk.stdout)
+			{
+				try { osw.close (); }
+				catch (IOException e) { /* ignore */ }
+			}
 
 			extio.setHandle (tmp);
-			setOutputConsoleName (extio, cout[cout_no]);
+			try { setConsoleOutputName (extio, cout[cout_no]); }
+			catch (Exception e) { return -1;}
 
 			cout_no++;
 			return 1;
@@ -330,39 +394,54 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	private InputStreamReader get_input_stream (String name)
+	private Reader get_stream_reader (String name)
 	{
-		InputStreamReader isr;
+		Reader isr;
 
 		if (name == null || name.length() == 0)
 		{
-			isr = new InputStreamReader (System.in);
+			//FileInputStream fis;
+			//fis = new FileInputStream (FileDescriptor.in);
+			//isr = new BufferedReader (new InputStreamReader (fis));
+
+			//isr = new BufferedReader (
+			//	new InputStreamReader (System.in));
+			
+			isr = StdAwk.stdin;
 		}
 		else
 		{
 			FileInputStream fis;
 			try { fis = new FileInputStream (name); }
 			catch (IOException e) { return null; }
-			isr = new InputStreamReader (fis);
+			isr = new BufferedReader(new InputStreamReader (fis));
 		}
 
 		return isr;
 	}
 
-	private OutputStreamWriter get_output_stream (String name)
+	private Writer get_stream_writer (String name)
 	{
-		OutputStreamWriter osw;
+		Writer osw;
 
 		if (name == null || name.length() == 0)
 		{
-			osw = new OutputStreamWriter (System.out);
+
+			//FileOutputStream fos;
+			//fos = new FileOutputStream (FileDescriptor.out); 
+			//osw = new BufferedWriter (new OutputStreamWriter (fos));
+
+			//osw = new BufferedWriter(
+			//	new OutputStreamWriter (System.out));
+			
+			osw = StdAwk.stdout;
 		}
 		else
 		{
 			FileOutputStream fos;
 			try { fos = new FileOutputStream (name); }
 			catch (IOException e) { return null; }
-			osw = new OutputStreamWriter (fos);
+			osw = new BufferedWriter (new OutputStreamWriter (fos));
 		}
 
 		return osw;
@@ -376,36 +455,36 @@ public abstract class StdAwk extends Awk
 		if (mode == Extio.MODE_FILE_READ)
 		{
 			FileInputStream fis;
-			InputStreamReader isr;
+			Reader isr;
 
 			try { fis = new FileInputStream (extio.getName()); }
 			catch (IOException e) { return -1; }
 
-			isr = new InputStreamReader (fis); 
+			isr = new BufferedReader (new InputStreamReader (fis)); 
 			extio.setHandle (isr);
 			return 1;
 		}
 		else if (mode == Extio.MODE_FILE_WRITE)
 		{
 			FileOutputStream fos;
-			OutputStreamWriter osw;
+			Writer osw;
 
 			try { fos = new FileOutputStream (extio.getName()); }
 			catch (IOException e) { return -1; }
 
-			osw = new OutputStreamWriter (fos);
+			osw = new BufferedWriter (new OutputStreamWriter (fos));
 			extio.setHandle (osw);
 			return 1;
 		}
 		else if (mode == Extio.MODE_FILE_APPEND)
 		{
 			FileOutputStream fos;
-			OutputStreamWriter osw;
+			Writer osw;
 
 			try { fos = new FileOutputStream (extio.getName(), true); }
 			catch (IOException e) { return -1; }
 
-			osw = new OutputStreamWriter (fos); 
+			osw = new BufferedWriter (new OutputStreamWriter (fos));
 			extio.setHandle (osw);
 			return 1;
 		}
@@ -419,26 +498,35 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_FILE_READ)
 		{
-			InputStreamReader isr;
-			isr = (InputStreamReader)extio.getHandle();
-			try { isr.close (); }
-			catch (IOException e) { return -1; }
+			Reader isr;
+			isr = (Reader)extio.getHandle();
+			if (isr != StdAwk.stdin)
+			{
+				try { isr.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 		else if (mode == Extio.MODE_FILE_WRITE)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle();
-			try { osw.close (); }
-			catch (IOException e) { return -1; }
+			Writer osw;
+			osw = (Writer)extio.getHandle();
+			if (osw != StdAwk.stdout)
+			{
+				try { osw.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 		else if (mode == Extio.MODE_FILE_APPEND)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle();
-			try { osw.close (); }
-			catch (IOException e) { return -1; }
+			Writer osw;
+			osw = (Writer)extio.getHandle();
+			if (osw != StdAwk.stdout)
+			{
+				try { osw.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 		
@@ -451,8 +539,8 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_FILE_READ)
 		{
-			InputStreamReader isr;
-			isr = (InputStreamReader)extio.getHandle();
+			Reader isr;
+			isr = (Reader)extio.getHandle();
 
 			try 
 			{
@@ -473,8 +561,8 @@ public abstract class StdAwk extends Awk
 		if (mode == Extio.MODE_FILE_WRITE ||
 		    mode == Extio.MODE_FILE_APPEND)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle();
+			Writer osw;
+			osw = (Writer)extio.getHandle();
 			try { osw.write (buf, 0, len); }
 			catch (IOException e) { len = -1; }
 			return len;
@@ -490,8 +578,8 @@ public abstract class StdAwk extends Awk
 		if (mode == Extio.MODE_FILE_WRITE ||
 		    mode == Extio.MODE_FILE_APPEND)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle ();
+			Writer osw;
+			osw = (Writer)extio.getHandle ();
 			try { osw.flush (); }
 			catch (IOException e) { return -1; }
 			return 0;
@@ -509,24 +597,24 @@ public abstract class StdAwk extends Awk
 		{
 
 			Process proc;
-			InputStreamReader isr;
+			Reader isr;
 		       
 			try { proc = popen (extio.getName()); }
 			catch (IOException e) { return -1; }
 
-			isr = new InputStreamReader (proc.getInputStream()); 
+			isr = new BufferedReader (new InputStreamReader (proc.getInputStream())); 
 			extio.setHandle (isr);
 			return 1;
 		}
 		else if (mode == Extio.MODE_PIPE_WRITE)
 		{
 			Process proc;
-			OutputStreamWriter osw;
+			Writer osw;
 
 			try { proc = popen (extio.getName()); }
 			catch (IOException e) { return -1; }
 
-			osw = new OutputStreamWriter (proc.getOutputStream());
+			osw = new BufferedWriter (new OutputStreamWriter (proc.getOutputStream()));
 			extio.setHandle (osw);
 			return 1;
 		}
@@ -540,18 +628,24 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_PIPE_READ)
 		{
-			InputStreamReader isr;
-			isr = (InputStreamReader)extio.getHandle();
-			try { isr.close (); }
-			catch (IOException e) { return -1; }
+			Reader isr;
+			isr = (Reader)extio.getHandle();
+			if (isr != StdAwk.stdin)
+			{
+				try { isr.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 		else if (mode == Extio.MODE_PIPE_WRITE)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle();
-			try { osw.close (); }
-			catch (IOException e) { return -1; }
+			Writer osw;
+			osw = (Writer)extio.getHandle();
+			if (osw != StdAwk.stdout)
+			{
+				try { osw.close (); }
+				catch (IOException e) { return -1; }
+			}
 			return 0;
 		}
 		
@@ -564,8 +658,8 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_PIPE_READ)
 		{
-			InputStreamReader isr;
-			isr = (InputStreamReader)extio.getHandle();
+			Reader isr;
+			isr = (Reader)extio.getHandle();
 
 			try 
 			{
@@ -585,8 +679,8 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_PIPE_WRITE)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle();
+			Writer osw;
+			osw = (Writer)extio.getHandle();
 			try { osw.write (buf, 0, len); }
 			catch (IOException e) { len = -1; }
 			return len;
@@ -601,8 +695,8 @@ public abstract class StdAwk extends Awk
 
 		if (mode == Extio.MODE_PIPE_WRITE)
 		{
-			OutputStreamWriter osw;
-			osw = (OutputStreamWriter)extio.getHandle ();
+			Writer osw;
+			osw = (Writer)extio.getHandle ();
 			try { osw.flush (); }
 			catch (IOException e) { return -1; }
 			return 0;

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.19 2007-01-21 13:21:14 bacon Exp $
+ * $Id: Awk.java,v 1.20 2007-01-23 14:23:18 bacon Exp $
  */
 
 package ase.test.awk;
@@ -13,6 +13,8 @@ public class Awk extends ase.awk.StdAwk
 		addBuiltinFunction ("sin", 1, 1); 
 		addBuiltinFunction ("cos", 1, 1); 
 		addBuiltinFunction ("tan", 1, 1); 
+		addBuiltinFunction ("srand", 0, 1); 
+		addBuiltinFunction ("rand", 0, 0); 
 
 		addBuiltinFunction ("system", 1, 1); 
 
@@ -41,7 +43,7 @@ public class Awk extends ase.awk.StdAwk
 		//return new Short ((short)1001);
 	}
 
-	protected String[] getInputConsoleNames ()
+	protected String[] consoleInputNames ()
 	{
 		String[] cin = new String[3];
 		cin[0] = "c1.txt";
@@ -50,7 +52,7 @@ public class Awk extends ase.awk.StdAwk
 		return cin;
 	}	
 
-	protected String[] getOutputConsoleNames ()
+	protected String[] consoleOutputNames ()
 	{
 		String[] cout = new String[1];
 		cout[0] = "";
@@ -64,28 +66,19 @@ public class Awk extends ase.awk.StdAwk
 */
 	}
 
-	protected String[] getSourceNames ()
+	protected String[] sourceInputNames ()
 	{
-		String[] cout = new String[1];
-		cout[0] = "t.awk";
-		return cout;
+		String[] sin = new String[1];
+		sin[0] = "t.awk";
+		return sin;
 	}
 
 	/*
-	protected String getDeparsedSourceName ()
+	protected String sourceOutputName ()
 	{
 		return "";
 	}
 	*/
-	protected int getMaxParseDepth ()
-	{
-		return 50;
-	}
-
-	protected int getMaxRunDepth ()
-	{
-		return 50;
-	}
 
 	public static void main (String[] args)
 	{
@@ -94,17 +87,33 @@ public class Awk extends ase.awk.StdAwk
 		try
 		{
 			awk = new Awk ();
+			awk.setMaxDepth (Awk.DEPTH_BLOCK_PARSE, 30);
+
 			awk.parse ();
 			awk.run ();
 		}
 		catch (ase.awk.Exception e)
 		{
-			System.out.println ("ase.awk.Exception - " + e.getMessage());
+			if (e.getLine() == 0)
+			{
+				System.out.println ("ase.awk.Exception - " + e.getMessage());
+			}
+			else
+			{
+				System.out.println (
+					"ase.awk.Exception at line " +
+					e.getLine() + " - " + e.getMessage());
+			}
 		}
 		finally
 		{
-			if (awk != null) awk.close ();
+			if (awk != null) 
+			{
+				awk.close ();
+				awk = null;
+			}
 		}
+		System.out.println ("==== end of awk ====");
 	}
 
 }
