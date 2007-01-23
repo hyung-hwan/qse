@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.151 2006-12-26 10:25:19 bacon Exp $
+ * $Id: awk.c,v 1.152 2007-01-23 14:23:18 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -790,15 +790,14 @@ static int __main (int argc, ase_char_t* argv[])
 
 	opt = ASE_AWK_IMPLICIT | 
 	      ASE_AWK_EXPLICIT | 
-	      ASE_AWK_UNIQUEAFN | 
-	      ASE_AWK_HASHSIGN | 
+	      ASE_AWK_UNIQUEFN | 
 	      ASE_AWK_IDIV |
 	      ASE_AWK_SHADING | 
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 
 	      /*ASE_AWK_COPROC |*/
 	      ASE_AWK_BLOCKLESS | 
-	      ASE_AWK_STRINDEXONE | 
+	      ASE_AWK_STRIDXONE | 
 	      ASE_AWK_STRIPSPACES | 
 	      ASE_AWK_NEXTOFILE;
 
@@ -884,17 +883,17 @@ static int __main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	ase_awk_setopt (awk, opt);
+	ase_awk_setoption (awk, opt);
 
 	srcios.in = process_source;
 	srcios.out = dump_source;
 	srcios.custom_data = &src_io;
 
 
-	ase_awk_setmaxparsedepth (
-		awk, ASE_AWK_DEPTH_BLOCK | ASE_AWK_DEPTH_EXPR, 20);
-	ase_awk_setmaxrundepth (
-		awk, ASE_AWK_DEPTH_BLOCK | ASE_AWK_DEPTH_EXPR, 50);
+	ase_awk_setmaxdepth (
+		awk, ASE_AWK_DEPTH_BLOCK_PARSE | ASE_AWK_DEPTH_EXPR_PARSE, 20);
+	ase_awk_setmaxdepth (
+		awk, ASE_AWK_DEPTH_BLOCK_RUN | ASE_AWK_DEPTH_EXPR_RUN, 50);
 
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{

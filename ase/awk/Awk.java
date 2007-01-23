@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.18 2007-01-19 03:23:47 bacon Exp $
+ * $Id: Awk.java,v 1.19 2007-01-23 14:23:17 bacon Exp $
  */
 
 package ase.awk;
@@ -13,6 +13,14 @@ public abstract class Awk
 	// mode for open_source & close_source 
 	public static final int SOURCE_READ = 1;
 	public static final int SOURCE_WRITE = 2;
+
+	// depth id
+	public static final int DEPTH_BLOCK_PARSE = (1 << 0);
+	public static final int DEPTH_BLOCK_RUN   = (1 << 1);
+	public static final int DEPTH_EXPR_PARSE  = (1 << 2);
+	public static final int DEPTH_EXPR_RUN    = (1 << 3);
+	public static final int DEPTH_REX_BUILD   = (1 << 4);
+	public static final int DEPTH_REX_MATCH   = (1 << 5);
 
 	static
 	{
@@ -60,8 +68,11 @@ public abstract class Awk
 	public  native void parse () throws Exception;
 	public  native void run () throws Exception;
 
-	private native int addbfn (String name, int min_args, int max_args);
-	private native int delbfn (String name);
+	private native int getmaxdepth (int id);
+	private native int setmaxdepth (int id, int depth);
+
+	private native void addbfn (String name, int min_args, int max_args) throws Exception;
+	private native void delbfn (String name) throws Exception;
 
 	private native int setfilename (long runid, String name);
 	private native int setofilename (long runid, String name);
@@ -73,23 +84,15 @@ public abstract class Awk
 	public void addBuiltinFunction (
 		String name, int min_args, int max_args) throws Exception
 	{
-		if (addbfn (name, min_args, max_args) == -1)
-		{
-			throw new Exception (
-				"cannot add the built-in function - " + name);
-		}
+		addbfn (name, min_args, max_args);
 	}
 
 	public void deleteBuiltinFunction (String name) throws Exception
 	{
-		if (delbfn (name) == -1) 
-		{
-			throw new Exception (
-				"cannot delete the built-in function - " + name);
-		}
+		delbfn (name);
 	}
 
-	public long builtinFunctionArgumentToLong (long runid, Object obj)
+	protected long builtinFunctionArgumentToLong (long runid, Object obj)
 	{
 		long n;
 
@@ -125,7 +128,7 @@ public abstract class Awk
 		return n;
 	}
 
-	public double builtinFunctionArgumentToDouble (long runid, Object obj)
+	protected double builtinFunctionArgumentToDouble (long runid, Object obj)
 	{
 		double n;
 
@@ -161,7 +164,7 @@ public abstract class Awk
 		return n;
 	}
 
-	public String builtinFunctionArgumentToString (long runid, Object obj)
+	protected String builtinFunctionArgumentToString (long runid, Object obj)
 	{
 		String str;
 
@@ -173,30 +176,34 @@ public abstract class Awk
 	}
 
 	/* == console name setters == */
-	public void setInputConsoleName (Extio extio, String name) //throws Exception
+	protected void setConsoleInputName (Extio extio, String name) throws Exception
 	{
-		/* TODO: setconsolename is not safe. for example, it can 
+		/* TODO: setfilename is not safe. for example, it can 
 		 * crash the program if runid is invalid. so this wrapper
 		 * needs to do some sanity check. */
-		//if (setconsolename (runid, name) == -1)
-		//	throw new Exception ("cannot set the consle name");
-		setfilename (extio.getRunId(), name);
+		if (setfilename (extio.getRunId(), name) == -1)
+		{
+			throw new Exception ("cannot set console input name");
+		}
 	}
 
-	public void setOutputConsoleName (Extio extio, String name)
+	protected void setConsoleOutputName (Extio extio, String name) throws Exception
 	{
-		// TODO:
-		setofilename (extio.getRunId(), name);
+		if (setofilename (extio.getRunId(), name) == -1)
+		{
+			throw new Exception ("cannot set console output name");
+		}
 	}
 
-	/* == recursion depth limiting == */
-	protected int getMaxParseDepth ()
+	/* == depth limiting == */
+	public int getMaxDepth (int id)
 	{
-		return 0;
+		return getmaxdepth (id);
 	}
-	protected int getMaxRunDepth ()
+
+	public void setMaxDepth (int ids, int depth)
 	{
-		return 0;
+		setmaxdepth (ids, depth);
 	}
 
 	/* == source code management == */

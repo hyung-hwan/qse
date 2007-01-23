@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.320 2007-01-10 14:33:00 bacon Exp $
+ * $Id: run.c,v 1.321 2007-01-23 14:23:18 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -5238,11 +5238,30 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		call->what.afn.name.ptr, call->what.afn.name.len);
 	if (pair == ASE_NULL) 
 	{
-		run->awk->sysfns.sprintf (
-			run->errmsg, ASE_COUNTOF(run->errmsg),
-			ASE_T("function '%.*s' not found"),
-			call->what.afn.name.len,
-			call->what.afn.name.ptr);
+		ase_char_t* fmt = ASE_T("function '%.*s' not found");
+		ase_char_t* fmt2 = ASE_T("function '%.*s..' not found");
+		ase_size_t len = ase_awk_strlen(fmt);
+		ase_size_t len2 = ase_awk_strlen(fmt2);
+
+		if (len2 < ASE_COUNTOF(run->errmsg) &&
+		    call->what.afn.name.len > ASE_COUNTOF(run->errmsg)-len2)
+		{
+			run->awk->sysfns.sprintf (
+				run->errmsg, 
+				ASE_COUNTOF(run->errmsg),
+				fmt2,
+				ASE_COUNTOF(run->errmsg)-len2,
+				call->what.afn.name.ptr);
+		}
+		else
+		{
+			run->awk->sysfns.sprintf (
+				run->errmsg, 
+				ASE_COUNTOF(run->errmsg),
+				fmt,
+				call->what.afn.name.len,
+				call->what.afn.name.ptr);
+		}
 
 		ase_awk_setrunerror (
 			run, ASE_AWK_EFNNONE, nde->line, run->errmsg);
