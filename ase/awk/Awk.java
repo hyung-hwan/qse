@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.20 2007-01-24 11:54:15 bacon Exp $
+ * $Id: Awk.java,v 1.21 2007-01-24 14:21:29 bacon Exp $
  */
 
 package ase.awk;
@@ -57,8 +57,9 @@ public abstract class Awk
 	}
 
 	/* == just in case == */
-	protected void finalize ()
+	protected void finalize () throws Throwable
 	{
+		super.finalize ();
 		if (handle != 0) close ();
 	}
 
@@ -69,7 +70,7 @@ public abstract class Awk
 	public  native void run () throws Exception;
 
 	private native int getmaxdepth (int id);
-	private native int setmaxdepth (int id, int depth);
+	private native void setmaxdepth (int id, int depth);
 
 	private native void addbfn (
 		String name, int min_args, int max_args) throws Exception;
@@ -80,7 +81,8 @@ public abstract class Awk
 	private native void setofilename (
 		long runid, String name) throws Exception;
 
-	private native Object strtonum (long runid, String str);
+	private native Object strtonum (
+		long runid, String str) throws Exception;
 	private native String valtostr (long runid, Object obj);
 
 	/* == builtin functions == */
@@ -95,7 +97,8 @@ public abstract class Awk
 		delbfn (name);
 	}
 
-	protected long builtinFunctionArgumentToLong (long runid, Object obj)
+	protected long builtinFunctionArgumentToLong (
+		long runid, Object obj) throws Exception
 	{
 		long n;
 
@@ -131,7 +134,8 @@ public abstract class Awk
 		return n;
 	}
 
-	protected double builtinFunctionArgumentToDouble (long runid, Object obj)
+	protected double builtinFunctionArgumentToDouble (
+		long runid, Object obj) throws Exception
 	{
 		double n;
 
@@ -167,7 +171,8 @@ public abstract class Awk
 		return n;
 	}
 
-	protected String builtinFunctionArgumentToString (long runid, Object obj)
+	protected String builtinFunctionArgumentToString (
+		long runid, Object obj) throws Exception
 	{
 		String str;
 
@@ -179,7 +184,8 @@ public abstract class Awk
 	}
 
 	/* == console name setters == */
-	protected void setConsoleInputName (Extio extio, String name) throws Exception
+	protected void setConsoleInputName (
+		Extio extio, String name) throws Exception
 	{
 		/* TODO: setfilename is not safe. for example, it can 
 		 * crash the program if runid is invalid. so this wrapper
@@ -187,7 +193,8 @@ public abstract class Awk
 		setfilename (extio.getRunId(), name);
 	}
 
-	protected void setConsoleOutputName (Extio extio, String name) throws Exception
+	protected void setConsoleOutputName (
+		Extio extio, String name) throws Exception
 	{
 		setofilename (extio.getRunId(), name);
 	}

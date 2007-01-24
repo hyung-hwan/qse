@@ -62,8 +62,8 @@ public class Extio
 		return this.handle;
 	}
 
-	protected void finalize ()
+	protected void finalize () throws Throwable
 	{
-		System.out.println ("Extio being finalized....");
+		super.finalize ();
 	}
 };

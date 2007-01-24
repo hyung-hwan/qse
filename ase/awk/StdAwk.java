@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.11 2007-01-23 14:23:18 bacon Exp $
+ * $Id: StdAwk.java,v 1.12 2007-01-24 14:21:29 bacon Exp $
  */
 
 package ase.awk;
@@ -707,44 +707,44 @@ public abstract class StdAwk extends Awk
 
 
 	/* == arithmetic built-in functions */
-	public Object sin (long runid, Object[] args) 
+	public Object sin (long runid, Object[] args)  throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.sin(x));
 	}
 
-	public Object cos (long runid, Object[] args)
+	public Object cos (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.cos(x));
 	}
 
-	public Object tan (long runid, Object[] args)
+	public Object tan (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.tan(x));
 	}
 
-	public Object atan2 (long runid, Object[] args)
+	public Object atan2 (long runid, Object[] args) throws Exception
 	{
 		double y = builtinFunctionArgumentToDouble (runid, args[0]);
 		double x = builtinFunctionArgumentToDouble (runid, args[1]);
 		return new Double (Math.atan2(y,x));
 	}
 
-	public Object log (long runid, Object[] args)
+	public Object log (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.log(x));
 	}
 
-	public Object exp (long runid, Object[] args)
+	public Object exp (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.exp(x));
 	}
 
-	public Object sqrt (long runid, Object[] args)
+	public Object sqrt (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.sqrt(x));
@@ -755,7 +755,7 @@ public abstract class StdAwk extends Awk
 		return new Double (random.nextDouble ());
 	}
 
-	public Object srand (long runid, Object[] args)
+	public Object srand (long runid, Object[] args) throws Exception
 	{
 		long prev_seed = seed;
 
@@ -768,7 +768,7 @@ public abstract class StdAwk extends Awk
 	}
 
 	/* miscellaneous built-in functions */
-	public Object system (long runid, Object[] args)
+	public Object system (long runid, Object[] args) throws Exception
 	{
 		String str = builtinFunctionArgumentToString (runid, args[0]);
 		Process proc = null;

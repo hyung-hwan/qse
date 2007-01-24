@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.52 2007-01-24 11:54:16 bacon Exp $
+ * $Id: jni.c,v 1.53 2007-01-24 14:21:29 bacon Exp $
  */
 
 #include <stdio.h>
@@ -13,7 +13,6 @@
 #include <ase/awk/jni.h>
 #include <ase/awk/awk.h>
 #include <ase/awk/val.h>
-//#include <ase/awk/awk_i.h>
 
 #include "../etc/printf.c"
 
@@ -204,10 +203,13 @@ static void throw_exception (
 		{
 			(*env)->DeleteLocalRef (env, except_class);
 
-			except_class = (*env)->FindClass (env, CLASS_OUTOFMEMORYERROR);
+			except_class = (*env)->FindClass (
+				env, CLASS_OUTOFMEMORYERROR);
 			if (except_class == NULL) return;
 
-			(*env)->ThrowNew (env, except_class, "out of memory");
+			(*env)->ThrowNew (
+				env, except_class, 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM));
 			(*env)->DeleteLocalRef (env, except_class);
 			return;
 		}
@@ -291,11 +293,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	(*env)->DeleteLocalRef (env, class);
 	if (handle == NULL) 
 	{
-		throw_exception (
-			env,
-			ASE_T("no handle field found"), 
-			ASE_AWK_EINTERN, 
-			0);
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
 		return;
 	}
 
@@ -318,7 +318,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj)
 	(*env)->DeleteLocalRef (env, class);
 	if (handle == NULL) 
 	{	
-		/* internal error. no handle field */
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
 		return;
 	}
 
@@ -345,11 +347,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 	(*env)->DeleteLocalRef (env, class);
 	if (handle == NULL) 
 	{
-		throw_exception (
-			env, 
-			ASE_T("no handle field found"), 
-			ASE_AWK_EINTERN, 
-			0); 
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
 		return;
 	}
 
@@ -397,11 +397,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 	(*env)->DeleteLocalRef (env, class);
 	if (handle == 0) 
 	{
-		throw_exception (
-			env, 
-			ASE_T("no handle field found"), 
-			ASE_AWK_EINTERN, 
-			0); 
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
 		return;
 	}
 
@@ -627,8 +625,7 @@ static ase_ssize_t __java_write_source (
 	thrown = (*env)->ExceptionOccurred (env);
 	if (thrown)
 	{
-/* TODO: remove the following line */	
-(*env)->ExceptionDescribe (env);
+		if (awk->debug) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -863,7 +860,6 @@ static ase_ssize_t __java_flush_extio (
 {
 	jclass class; 
 	jmethodID mid;
-	jthrowable thrown;
 	jint ret;
 	
 	class = (*env)->GetObjectClass(env, obj);
@@ -875,10 +871,9 @@ static ase_ssize_t __java_flush_extio (
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle);
-	thrown = (*env)->ExceptionOccurred (env);
-	if (thrown)
+	if ((*env)->ExceptionOccurred (env))
 	{
-(*env)->ExceptionDescribe (env);
+		if (awk->debug) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -891,7 +886,6 @@ static ase_ssize_t __java_next_extio (
 {
 	jclass class; 
 	jmethodID mid;
-	jthrowable thrown;
 	jint ret;
 	
 	class = (*env)->GetObjectClass(env, obj);
@@ -903,10 +897,9 @@ static ase_ssize_t __java_next_extio (
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle);
-	thrown = (*env)->ExceptionOccurred (env);
-	if (thrown)
+	if ((*env)->ExceptionOccurred (env))
 	{
-(*env)->ExceptionDescribe (env);
+		if (awk->debug) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -1055,9 +1048,7 @@ static int __handle_bfn (
 
 	if (name == NULL)
 	{
-		if ((*env)->ExceptionOccurred (env))
-			(*env)->ExceptionClear (env);
-
+		(*env)->ExceptionClear (env);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, msg_nomem);
 		return -1;
 	}
@@ -1080,8 +1071,7 @@ static int __handle_bfn (
 	{
 		/* if the method is not found, the exception is thrown.
 		 * so clear it to prevent it from being thrown */
-		if ((*env)->ExceptionOccurred (env))
-			(*env)->ExceptionClear (env);
+		(*env)->ExceptionClear (env);
 		ase_awk_setrunerrnum (run, ASE_AWK_EBFNUSER);
 		return -1;
 	}
@@ -1168,6 +1158,8 @@ static int __handle_bfn (
 	ret = (*env)->CallObjectMethod (env, obj, method, (jlong)run, args);
 	if ((*env)->ExceptionOccurred (env))
 	{
+		if (awk->debug) (*env)->ExceptionDescribe (env);
+
 		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, args);
 		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
@@ -1332,11 +1324,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 	(*env)->DeleteLocalRef (env, class);
 	if (handle == NULL) 
 	{
-		throw_exception (
-			env, 
-			ASE_T("no handle field found"), 
-			ASE_AWK_EINTERN,
-			0);
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
 		return;
 	}
 
@@ -1346,8 +1336,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
 	if (ptr == NULL)
 	{
-		if ((*env)->ExceptionOccurred (env)) (*env)->ExceptionClear (env);
-		throw_exception (env, ASE_T("out of memory"), ASE_AWK_ENOMEM, 0);
+		(*env)->ExceptionClear (env);
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
 		return;
 	}
 
@@ -1359,7 +1353,11 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
-			throw_exception (env, ASE_T("out of memory"), ASE_AWK_ENOMEM, 0);
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM, 
+				0);
 			return;
 		}
 
@@ -1403,11 +1401,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delbfn (
 	(*env)->DeleteLocalRef (env, class);
 	if (handle == NULL) 
 	{
-		throw_exception (
-			env, 
-			ASE_T("no handle field found"), 
-			ASE_AWK_EINTERN,
-			0);
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
 		return;
 	}
 
@@ -1417,8 +1413,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delbfn (
 	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
 	if (ptr == NULL)
 	{
-		if ((*env)->ExceptionOccurred (env)) (*env)->ExceptionClear (env);
-		throw_exception (env, ASE_T("out of memory"), ASE_AWK_ENOMEM, 0);
+		(*env)->ExceptionClear (env);
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM,
+			0);
 		return;
 	}
 
@@ -1430,7 +1430,11 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delbfn (
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
-			throw_exception (env, ASE_T("out of memory"), ASE_AWK_ENOMEM, 0);
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM,
+				0);
 			return;
 		}
 
@@ -1481,7 +1485,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setmaxdepth (
 	class = (*env)->GetObjectClass(env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL) return; /* should never happen */
+	if (handle == NULL)
+	{
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
+		return;
+	}
 
 	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
 	ase_awk_setmaxdepth (awk, ids, depth);
@@ -1499,10 +1509,11 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
 	if (ptr == NULL) 
 	{
+		(*env)->ExceptionClear (env);
 		throw_exception (
 			env, 
-			ASE_T("out of memory"), 
-			ASE_AWK_ENOMEM, 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM,
 			0);
 		return;
 	}
@@ -1518,7 +1529,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 
 			throw_exception (
 				env, 
-				ASE_T("out of memory"), 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 			return;
@@ -1557,9 +1568,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
 	if (ptr == NULL)
 	{
+		(*env)->ExceptionClear (env);
 		throw_exception (
 			env, 
-			ASE_T("out of memory"), 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM, 
 			0);
 		return;
@@ -1576,7 +1588,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 
 			throw_exception (
 				env, 
-				ASE_T("out of memory"), 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 			return;
@@ -1616,7 +1628,16 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 
 	len = (*env)->GetStringLength (env, str);
 	ptr = (*env)->GetStringChars (env, str, JNI_FALSE);
-	if (ptr == NULL) return NULL;
+	if (ptr == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
+		return NULL;
+	}
 
 	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
@@ -1626,8 +1647,12 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, str, ptr);
-			ase_awk_setrunerrnum ((ase_awk_run_t*)runid, ASE_AWK_ENOMEM);
-			return -1;
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM, 
+				0);
+			return NULL;
 		}
 
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
