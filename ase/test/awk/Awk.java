@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.20 2007-01-23 14:23:18 bacon Exp $
+ * $Id: Awk.java,v 1.21 2007-01-24 14:21:30 bacon Exp $
  */
 
 package ase.test.awk;
@@ -26,7 +26,7 @@ public class Awk extends ase.awk.StdAwk
 
 	public Object xxx (long runid, Object[] args)
 	{
-		System.out.println ("<<BFN_SIN>>");
+		System.out.println ("<<BFN_XXX>>");
 		for (int i = 0; i < args.length; i++)
 		{
 			System.out.print ("ARG #" + i);
