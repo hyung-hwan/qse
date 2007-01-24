@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.51 2007-01-23 14:23:18 bacon Exp $
+ * $Id: jni.c,v 1.52 2007-01-24 11:54:16 bacon Exp $
  */
 
 #include <stdio.h>
@@ -1487,7 +1487,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setmaxdepth (
 	ase_awk_setmaxdepth (awk, ids, depth);
 }
 
-JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (
+JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 	JNIEnv* env, jobject obj, jlong runid, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)runid;
@@ -1497,7 +1497,15 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (
 
 	len = (*env)->GetStringLength (env, name);
 	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
-	if (ptr == NULL) return -1;
+	if (ptr == NULL) 
+	{
+		throw_exception (
+			env, 
+			ASE_T("out of memory"), 
+			ASE_AWK_ENOMEM, 
+			0);
+		return;
+	}
 
 	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
@@ -1507,8 +1515,13 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-			return -1;
+
+			throw_exception (
+				env, 
+				ASE_T("out of memory"), 
+				ASE_AWK_ENOMEM, 
+				0);
+			return;
 		}
 
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
@@ -1521,10 +1534,18 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setfilename (
 	}
 
 	(*env)->ReleaseStringChars (env, name, ptr);
-	return n;
+
+	if (n == -1)
+	{
+		throw_exception (
+			env, 
+			ase_awk_getrunerrmsg(run),
+			ase_awk_getrunerrnum(run),
+			ase_awk_getrunerrlin(run));
+	}
 }
 
-JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
+JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 	JNIEnv* env, jobject obj, jlong runid, jstring name)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)runid;
@@ -1534,7 +1555,15 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
 
 	len = (*env)->GetStringLength (env, name);
 	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
-	if (ptr == NULL) return -1;
+	if (ptr == NULL)
+	{
+		throw_exception (
+			env, 
+			ASE_T("out of memory"), 
+			ASE_AWK_ENOMEM, 
+			0);
+		return;
+	}
 
 	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
@@ -1544,8 +1573,13 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-			return -1;
+
+			throw_exception (
+				env, 
+				ASE_T("out of memory"), 
+				ASE_AWK_ENOMEM, 
+				0);
+			return;
 		}
 
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
@@ -1558,7 +1592,15 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_setofilename (
 	}
 
 	(*env)->ReleaseStringChars (env, name, ptr);
-	return n;
+
+	if (n == -1)
+	{
+		throw_exception (
+			env, 
+			ase_awk_getrunerrmsg(run),
+			ase_awk_getrunerrnum(run),
+			ase_awk_getrunerrlin(run));
+	}
 }
 
 JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (

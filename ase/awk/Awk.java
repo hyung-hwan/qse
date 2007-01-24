@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.19 2007-01-23 14:23:17 bacon Exp $
+ * $Id: Awk.java,v 1.20 2007-01-24 11:54:15 bacon Exp $
  */
 
 package ase.awk;
@@ -71,11 +71,14 @@ public abstract class Awk
 	private native int getmaxdepth (int id);
 	private native int setmaxdepth (int id, int depth);
 
-	private native void addbfn (String name, int min_args, int max_args) throws Exception;
+	private native void addbfn (
+		String name, int min_args, int max_args) throws Exception;
 	private native void delbfn (String name) throws Exception;
 
-	private native int setfilename (long runid, String name);
-	private native int setofilename (long runid, String name);
+	private native void setfilename (
+		long runid, String name) throws Exception;
+	private native void setofilename (
+		long runid, String name) throws Exception;
 
 	private native Object strtonum (long runid, String str);
 	private native String valtostr (long runid, Object obj);
@@ -181,18 +184,12 @@ public abstract class Awk
 		/* TODO: setfilename is not safe. for example, it can 
 		 * crash the program if runid is invalid. so this wrapper
 		 * needs to do some sanity check. */
-		if (setfilename (extio.getRunId(), name) == -1)
-		{
-			throw new Exception ("cannot set console input name");
-		}
+		setfilename (extio.getRunId(), name);
 	}
 
 	protected void setConsoleOutputName (Extio extio, String name) throws Exception
 	{
-		if (setofilename (extio.getRunId(), name) == -1)
-		{
-			throw new Exception ("cannot set console output name");
-		}
+		setofilename (extio.getRunId(), name);
 	}
 
 	/* == depth limiting == */
