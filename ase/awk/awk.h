@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.184 2007-01-21 13:21:14 bacon Exp $
+ * $Id: awk.h,v 1.185 2007-01-25 14:10:03 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -187,7 +187,7 @@ enum
 	ASE_AWK_BLOCKLESS   = (1 << 9), 
 
 	/* use 1 as the start index for string operations */
-	ASE_AWK_STRIDXONE   = (1 << 10),
+	ASE_AWK_STRBASEONE  = (1 << 10),
 
 	/* strip off leading and trailing spaces when splitting a record
 	 * into fields with a regular expression.
@@ -401,10 +401,12 @@ enum
 extern "C" {
 #endif
 
-ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum);
+ase_awk_t* ase_awk_open (
+	const ase_awk_sysfns_t* sysfns, void* custom_data, int* errnum);
 int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 
+void* ase_awk_getcustomdata (ase_awk_t* awk);
 int ase_awk_geterrnum (ase_awk_t* awk);
 ase_size_t ase_awk_geterrlin (ase_awk_t* awk);
 const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk);

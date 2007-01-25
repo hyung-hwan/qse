@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.14 2007-01-17 14:09:49 bacon Exp $
+ * $Id: Awk.h,v 1.15 2007-01-25 14:14:56 bacon Exp $
  */
 
 #ifndef _ASE_COM_AWK_H_
@@ -127,8 +127,8 @@ public:
 	STDMETHOD(put_Nextofile)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_StripSpaces)(/*[out, retval]*/ BOOL *pVal);
 	STDMETHOD(put_StripSpaces)(/*[in]*/ BOOL newVal);
-	STDMETHOD(get_StringIndexOne)(/*[out, retval]*/ BOOL *pVal);
-	STDMETHOD(put_StringIndexOne)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_StringBaseOne)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_StringBaseOne)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_SupportBlockless)(/*[out, retval]*/ BOOL *pVal);
 	STDMETHOD(put_SupportBlockless)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_SupportExtio)(/*[out, retval]*/ BOOL *pVal);

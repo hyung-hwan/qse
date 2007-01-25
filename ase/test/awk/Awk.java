@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.21 2007-01-24 14:21:30 bacon Exp $
+ * $Id: Awk.java,v 1.22 2007-01-25 14:14:56 bacon Exp $
  */
 
 package ase.test.awk;
@@ -88,6 +88,11 @@ public class Awk extends ase.awk.StdAwk
 		{
 			awk = new Awk ();
 			awk.setMaxDepth (Awk.DEPTH_BLOCK_PARSE, 30);
+			awk.setDebug (true);
+			//awk.setDebug (false);
+
+			//awk.setOption (awk.getOption() | OPTION_STRBASEONE);
+			System.out.println ("[" + awk.getOption() + "]");
 
 			awk.parse ();
 			awk.run ();

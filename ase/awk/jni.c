@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.53 2007-01-24 14:21:29 bacon Exp $
+ * $Id: jni.c,v 1.54 2007-01-25 14:10:03 bacon Exp $
  */
 
 #include <stdio.h>
@@ -49,9 +49,15 @@ static ase_ssize_t __write_source (
 static ase_ssize_t __process_extio (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
+typedef struct awk_data_t   awk_data_t;
 typedef struct srcio_data_t srcio_data_t;
 typedef struct runio_data_t runio_data_t;
 typedef struct run_data_t   run_data_t;
+
+struct awk_data_t
+{
+	int debug;
+};
 
 struct srcio_data_t
 {
@@ -242,12 +248,19 @@ static void throw_exception (
 	(*env)->DeleteLocalRef (env, except_obj);
 }
 
+static jboolean is_debug (ase_awk_t* awk)
+{
+	awk_data_t* awk_data = (awk_data_t*)ase_awk_getcustomdata (awk);
+	return awk_data->debug? JNI_TRUE: JNI_FALSE;
+}
+
 JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 {
 	jclass class; 
 	jfieldID handle;
 	ase_awk_t* awk;
 	ase_awk_sysfns_t sysfns;
+	awk_data_t* awk_data;
 	int opt, errnum;
 	
 	memset (&sysfns, 0, sizeof(sysfns));
@@ -277,9 +290,23 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	sysfns.dprintf = awk_dprintf;
 	sysfns.abort   = awk_abort;
 
-	awk = ase_awk_open (&sysfns, &errnum);
+	awk_data = (awk_data_t*)malloc (sizeof(awk_data_t));
+	if (awk_data == NULL)
+	{
+		throw_exception (
+			env,
+			ase_awk_geterrstr(errnum), 
+			errnum, 
+			0);
+		return;
+	}
+
+	memset (awk_data, 0, sizeof(awk_data_t));
+
+	awk = ase_awk_open (&sysfns, awk_data, &errnum);
 	if (awk == NULL)
 	{
+		free (sysfns.custom_data);
 		throw_exception (
 			env,
 			ase_awk_geterrstr(errnum), 
@@ -296,6 +323,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 		/* internal error. no handle field 
 		 * NoSuchFieldError, ExceptionInitializerError, 
 		 * OutOfMemoryError might occur */
+
+		ase_awk_close (awk);
+		free (awk_data);
 		return;
 	}
 
@@ -328,8 +358,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj)
 	if (awk != NULL) 
 	{
 		/* the handle is not NULL. close it */
+		void* tmp = ase_awk_getcustomdata (awk);
 		ase_awk_close (awk);
 		(*env)->SetLongField (env, obj, handle, (jlong)0);
+		free (tmp);
 	}
 }
 
@@ -503,22 +535,33 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 static ase_ssize_t __java_open_source (JNIEnv* env, jobject obj, int mode)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
-	jthrowable thrown;
 	jint ret;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, "openSource", "(I)I");
 	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
+
 	if (mid == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, mode);
-	thrown = (*env)->ExceptionOccurred (env);
-	if (thrown)
+	if ((*env)->ExceptionOccurred (env))
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -529,22 +572,33 @@ static ase_ssize_t __java_open_source (JNIEnv* env, jobject obj, int mode)
 static ase_ssize_t __java_close_source (JNIEnv* env, jobject obj, int mode)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
-	jthrowable thrown;
 	jint ret;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, "closeSource", "(I)I");
 	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
+
 	if (mid == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, mode);
-	thrown = (*env)->ExceptionOccurred (env);
-	if (thrown)
+	if ((*env)->ExceptionOccurred (env))
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -556,30 +610,43 @@ static ase_ssize_t __java_read_source (
 	JNIEnv* env, jobject obj, ase_char_t* buf, ase_size_t size)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
 	jcharArray array;
 	jchar* tmp;
 	jint ret, i;
-	jthrowable thrown;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, "readSource", "([CI)I");
 	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
+
 	if (mid == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	array = (*env)->NewCharArray (env, size);
 	if (array == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, array, size);
-	thrown = (*env)->ExceptionOccurred (env);
-	if (thrown)
+	if ((*env)->ExceptionOccurred (env))
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -596,24 +663,37 @@ static ase_ssize_t __java_write_source (
 	JNIEnv* env, jobject obj, ase_char_t* buf, ase_size_t size)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
 	jcharArray array;
 	jchar* tmp;
 	jint ret;
-	jthrowable thrown;
 	ase_size_t i;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, "writeSource", "([CI)I");
 	(*env)->DeleteLocalRef (env, class);
-	if (mid == NULL) 
+	if (handle == NULL) 
 	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
+
+	if (mid == NULL)
+	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	array = (*env)->NewCharArray (env, size);
 	if (array == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
@@ -622,10 +702,9 @@ static ase_ssize_t __java_write_source (
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
 	ret = (*env)->CallIntMethod (env, obj, mid, array, size);
-	thrown = (*env)->ExceptionOccurred (env);
-	if (thrown)
+	if ((*env)->ExceptionOccurred (env))
 	{
-		if (awk->debug) (*env)->ExceptionDescribe (env);
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -638,31 +717,51 @@ static ase_ssize_t __java_open_extio (
 	JNIEnv* env, jobject obj, char* meth, ase_awk_extio_t* extio)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
 	jclass extio_class;
 	jmethodID extio_cons;
 	jobject extio_object;
 	jstring extio_name;
 	jint ret;
+	ase_awk_t* awk;
 	
+	/* get the method - meth */
+	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	mid = (*env)->GetMethodID (env, class, meth, "(Lase/awk/Extio;)I");
+	(*env)->DeleteLocalRef (env, class);
+
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
+
+	if (mid == NULL) 
+	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+
+	/* look for extio class */
 	extio_class = (*env)->FindClass (env, CLASS_EXTIO);
-	if (extio_class == NULL) return -1;
+	if (extio_class == NULL) 
+	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
 
 	/* get the constructor */
 	extio_cons = (*env)->GetMethodID (
 		env, extio_class, "<init>", "(Ljava/lang/String;IIJ)V");
 	if (extio_cons == NULL) 
 	{
-		(*env)->DeleteLocalRef (env, extio_class);
-		return -1;
-	}
-
-	/* get the method - meth */
-	class = (*env)->GetObjectClass(env, obj);
-	mid = (*env)->GetMethodID (env, class, meth, "(Lase/awk/Extio;)I");
-	(*env)->DeleteLocalRef (env, class);
-	if (mid == NULL) 
-	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, extio_class);
 		return -1;
 	}
@@ -690,6 +789,8 @@ static ase_ssize_t __java_open_extio (
 
 	if (extio_name == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, extio_class);
 		return -1;
 	}
@@ -701,6 +802,8 @@ static ase_ssize_t __java_open_extio (
 	(*env)->DeleteLocalRef (env, extio_class);
 	if (extio_object == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, extio_name);
 		return -1;
 	}
@@ -712,6 +815,7 @@ static ase_ssize_t __java_open_extio (
 	if ((*env)->ExceptionOccurred(env))
 	{
 		/* clear the exception */
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -722,10 +826,12 @@ static ase_ssize_t __java_open_extio (
 		 * ret ==  0 opened the stream and reached its end 
 		 * ret ==  1 opened the stream. */
 		extio->handle = (*env)->NewGlobalRef (env, extio_object);
-		/* TODO: close it...
+		/*
 		if (extio->handle == NULL) 
 		{
-			close it again...
+			// TODO: close the stream ...  
+			if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+			(*env)->ExceptionClear (env);
 			ret = -1;
 		}
 		*/
@@ -739,20 +845,33 @@ static ase_ssize_t __java_close_extio (
 	JNIEnv* env, jobject obj, char* meth, ase_awk_extio_t* extio)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
 	jint ret;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, meth, "(Lase/awk/Extio;)I");
 	(*env)->DeleteLocalRef (env, class);
+
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
 	if (mid == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle);
 	if ((*env)->ExceptionOccurred (env))
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -773,30 +892,44 @@ static ase_ssize_t __java_read_extio (
 	ase_awk_extio_t* extio, ase_char_t* buf, ase_size_t size)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
 	jcharArray array;
 	jchar* tmp;
 	jint ret, i;
-	jthrowable thrown;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, meth, "(Lase/awk/Extio;[CI)I");
 	(*env)->DeleteLocalRef (env, class);
+
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
+
 	if (mid == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	array = (*env)->NewCharArray (env, size);
 	if (array == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle, array, size);
-	thrown = (*env)->ExceptionOccurred (env);
-	if (thrown)
+	if ((*env)->ExceptionOccurred (env))
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -817,24 +950,37 @@ static ase_ssize_t __java_write_extio (
 	ase_awk_extio_t* extio, ase_char_t* data, ase_size_t size)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
 	jcharArray array;
 	jchar* tmp;
 	jint ret;
 	ase_size_t i;
-	jthrowable thrown;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, meth, "(Lase/awk/Extio;[CI)I");
 	(*env)->DeleteLocalRef (env, class);
+
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
 	if (mid == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	array = (*env)->NewCharArray (env, size);
 	if (array == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
@@ -843,9 +989,9 @@ static ase_ssize_t __java_write_extio (
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
 	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle, array, size);
-	thrown = (*env)->ExceptionOccurred (env);
-	if (thrown)
+	if ((*env)->ExceptionOccurred (env))
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -859,21 +1005,32 @@ static ase_ssize_t __java_flush_extio (
 	JNIEnv* env, jobject obj, char* meth, ase_awk_extio_t* extio)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
 	jint ret;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, meth, "(Lase/awk/Extio;)I");
 	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
 	if (mid == NULL) 
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle);
 	if ((*env)->ExceptionOccurred (env))
 	{
-		if (awk->debug) (*env)->ExceptionDescribe (env);
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -885,21 +1042,31 @@ static ase_ssize_t __java_next_extio (
 	JNIEnv* env, jobject obj, char* meth, ase_awk_extio_t* extio)
 {
 	jclass class; 
+	jfieldID handle;
 	jmethodID mid;
 	jint ret;
+	ase_awk_t* awk;
 	
 	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
 	mid = (*env)->GetMethodID (env, class, meth, "(Lase/awk/Extio;)I");
 	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL) 
+	{
+		(*env)->ExceptionClear (env);
+		return -1;
+	}
+	awk = (ase_awk_t*)(*env)->GetLongField (env, obj, handle);
 	if (mid == NULL) 
 	{
+		(*env)->ExceptionClear (env);
 		return -1;
 	}
 
 	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle);
 	if ((*env)->ExceptionOccurred (env))
 	{
-		if (awk->debug) (*env)->ExceptionDescribe (env);
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ret = -1;
 	}
@@ -1017,9 +1184,11 @@ static int __handle_bfn (
 	jobject arg, ret;
 	ase_awk_val_t* v;
 	ase_char_t msg_nomem[MSG_SIZE];
+	ase_awk_t* awk;
 
 	run_data = ase_awk_getruncustomdata (run);
 	nargs = ase_awk_getnargs (run);
+	awk = ase_awk_getrunawk (run);
 
 	env = run_data->env;
 	obj = run_data->obj;
@@ -1032,7 +1201,7 @@ static int __handle_bfn (
 	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
-		jchar* tmp = (jchar*)malloc (ASE_SIZEOF(jchar)*fnl);
+		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*fnl);
 		if (tmp == NULL)
 		{
 			ase_awk_setrunerror (
@@ -1048,6 +1217,7 @@ static int __handle_bfn (
 
 	if (name == NULL)
 	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, msg_nomem);
 		return -1;
@@ -1070,7 +1240,8 @@ static int __handle_bfn (
 	if (method == NULL) 
 	{
 		/* if the method is not found, the exception is thrown.
-		 * so clear it to prevent it from being thrown */
+		 * clear it to prevent it from being thrown */
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ase_awk_setrunerrnum (run, ASE_AWK_EBFNUSER);
 		return -1;
@@ -1080,9 +1251,8 @@ static int __handle_bfn (
 		env, nargs, run_data->object_class, NULL);
 	if (args == NULL)
 	{
-		if ((*env)->ExceptionOccurred (env))
-			(*env)->ExceptionClear (env);
-
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, msg_nomem);
 		return -1;
 	}
@@ -1145,7 +1315,11 @@ static int __handle_bfn (
 		if (v->type != ASE_AWK_VAL_NIL && arg == NULL)
 		{
 			if ((*env)->ExceptionOccurred (env))
+			{
+				if (is_debug(awk)) 
+					(*env)->ExceptionDescribe (env);
 				(*env)->ExceptionClear (env);
+			}
 			(*env)->DeleteLocalRef (env, args);
 			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, msg_nomem);
 			return -1;
@@ -1158,7 +1332,8 @@ static int __handle_bfn (
 	ret = (*env)->CallObjectMethod (env, obj, method, (jlong)run, args);
 	if ((*env)->ExceptionOccurred (env))
 	{
-		if (awk->debug) (*env)->ExceptionDescribe (env);
+		if (is_debug(ase_awk_getrunawk(run))) 
+			(*env)->ExceptionDescribe (env);
 
 		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, args);
@@ -1337,6 +1512,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 	if (ptr == NULL)
 	{
 		(*env)->ExceptionClear (env);
+
 		throw_exception (
 			env, 
 			ase_awk_geterrstr(ASE_AWK_ENOMEM),
@@ -1495,6 +1671,94 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setmaxdepth (
 
 	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
 	ase_awk_setmaxdepth (awk, ids, depth);
+}
+
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_getoption (
+	JNIEnv* env, jobject obj)
+{
+	jclass class; 
+	jfieldID handle;
+	ase_awk_t* awk;
+
+	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL)
+	{
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
+		return 0;
+	}
+
+	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	return ase_awk_getoption (awk);
+}
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_setoption (
+	JNIEnv* env, jobject obj, jint options)
+{
+	jclass class; 
+	jfieldID handle;
+	ase_awk_t* awk;
+
+	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL)
+	{
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
+		return;
+	}
+
+	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	ase_awk_setoption (awk, (int)options);
+}
+
+JNIEXPORT jboolean JNICALL Java_ase_awk_Awk_getdebug (
+	JNIEnv* env, jobject obj)
+{
+	jclass class; 
+	jfieldID handle;
+	ase_awk_t* awk;
+
+	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL)
+	{
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
+		return JNI_FALSE;
+	}
+
+	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	return ((awk_data_t*)ase_awk_getcustomdata(awk))->debug? JNI_TRUE: JNI_FALSE;
+}
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
+	JNIEnv* env, jobject obj, jboolean debug)
+{	
+	jclass class; 
+	jfieldID handle;
+	ase_awk_t* awk;
+
+	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL)
+	{
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
+		return;
+	}
+
+	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	((awk_data_t*)ase_awk_getcustomdata(awk))->debug = debug;
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
@@ -1680,5 +1944,13 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 	}
 
 	return ret;
+}
+
+
+JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
+	JNIEnv* env, jobject obj, jlong runid)
+{
+	// TODO: ... 
+	return NULL;
 }
 

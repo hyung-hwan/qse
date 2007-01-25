@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.12 2007-01-24 14:21:29 bacon Exp $
+ * $Id: StdAwk.java,v 1.13 2007-01-25 14:10:03 bacon Exp $
  */
 
 package ase.awk;
@@ -800,7 +800,6 @@ public abstract class StdAwk extends Awk
 
 		return new Long (n);	
 	}
-
 
 	/* == utility functions == */
 	private Process popen (String command) throws IOException

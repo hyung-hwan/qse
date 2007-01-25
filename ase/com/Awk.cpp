@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.21 2007-01-17 14:09:49 bacon Exp $
+ * $Id: Awk.cpp,v 1.22 2007-01-25 14:14:55 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -51,7 +51,7 @@ CAwk::CAwk ():
 		ASE_AWK_SHIFT | 
 		ASE_AWK_EXTIO | 
 		ASE_AWK_BLOCKLESS | 
-		ASE_AWK_STRIDXONE | 
+		ASE_AWK_STRBASEONE | 
 		ASE_AWK_STRIPSPACES | 
 		ASE_AWK_NEXTOFILE |
 		ASE_AWK_CRLF;
@@ -442,7 +442,7 @@ HRESULT CAwk::Parse (int* ret)
 		sysfns.dprintf = awk_dprintf;
 		sysfns.abort = awk_abort;
 
-		handle = ase_awk_open (&sysfns, &errnum);
+		handle = ase_awk_open (&sysfns, NULL, &errnum);
 		if (handle == NULL)
 		{
 			errlin = 0;
@@ -976,17 +976,17 @@ STDMETHODIMP CAwk::put_SupportBlockless(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_StringIndexOne(BOOL *pVal)
+STDMETHODIMP CAwk::get_StringBaseOne(BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
-	*pVal = (option & ASE_AWK_STRIDXONE) == 1;
+	*pVal = (option & ASE_AWK_STRBASEONE) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_StringIndexOne(BOOL newVal)
+STDMETHODIMP CAwk::put_StringBaseOne(BOOL newVal)
 {
-	if (newVal) option = option | ASE_AWK_STRIDXONE;
-	else option = option & ~ASE_AWK_STRIDXONE;
+	if (newVal) option = option | ASE_AWK_STRBASEONE;
+	else option = option & ~ASE_AWK_STRBASEONE;
 	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }

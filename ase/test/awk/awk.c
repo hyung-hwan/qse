@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.152 2007-01-23 14:23:18 bacon Exp $
+ * $Id: awk.c,v 1.153 2007-01-25 14:14:56 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -797,7 +797,7 @@ static int __main (int argc, ase_char_t* argv[])
 	      ASE_AWK_EXTIO | 
 	      /*ASE_AWK_COPROC |*/
 	      ASE_AWK_BLOCKLESS | 
-	      ASE_AWK_STRIDXONE | 
+	      ASE_AWK_STRBASEONE | 
 	      ASE_AWK_STRIPSPACES | 
 	      ASE_AWK_NEXTOFILE;
 
@@ -872,7 +872,7 @@ static int __main (int argc, ase_char_t* argv[])
 	sysfns.custom_data = &sysfns_data;
 #endif
 
-	if ((awk = ase_awk_open(&sysfns, &errnum)) == ASE_NULL) 
+	if ((awk = ase_awk_open(&sysfns, ASE_NULL, &errnum)) == ASE_NULL) 
 	{
 #ifdef _WIN32
 		HeapDestroy (sysfns_data.heap);
