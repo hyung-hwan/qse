@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.16 2007-01-24 11:54:16 bacon Exp $
+ * $Id: jni.h,v 1.17 2007-01-25 14:10:03 bacon Exp $
  */
 
 #ifndef _ASE_AWK_JNI_H_
@@ -26,12 +26,25 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_getmaxdepth (
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setmaxdepth (
 	JNIEnv* env, jobject obj, jint ids, jint depth);
 
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_getoption (
+	JNIEnv* env, jobject obj);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_setoption (
+	JNIEnv* env, jobject obj, jint options);
+
+JNIEXPORT jboolean JNICALL Java_ase_awk_Awk_getdebug (
+	JNIEnv* env, jobject obj);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
+	JNIEnv* env, jobject obj, jboolean debug);
+
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 	JNIEnv* env, jobject obj, jlong runid, jstring name);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 	JNIEnv* env, jobject obj, jlong runid, jstring name);
+
 JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 	JNIEnv* env, jobject obj, jlong runid, jstring str);
+JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
+	JNIEnv* env, jobject obj, jlong runid);
 
 #ifdef __cplusplus
 }

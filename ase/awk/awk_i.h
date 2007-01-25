@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.97 2007-01-06 15:45:50 bacon Exp $
+ * $Id: awk_i.h,v 1.98 2007-01-25 14:10:03 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWKI_H_
@@ -97,6 +97,7 @@ struct ase_awk_tree_t
 struct ase_awk_t
 {
 	ase_awk_sysfns_t sysfns;
+	void* custom_data;
 
 	/* options */
 	int option;

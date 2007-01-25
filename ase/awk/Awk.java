@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.21 2007-01-24 14:21:29 bacon Exp $
+ * $Id: Awk.java,v 1.22 2007-01-25 14:10:02 bacon Exp $
  */
 
 package ase.awk;
@@ -21,6 +21,22 @@ public abstract class Awk
 	public static final int DEPTH_EXPR_RUN    = (1 << 3);
 	public static final int DEPTH_REX_BUILD   = (1 << 4);
 	public static final int DEPTH_REX_MATCH   = (1 << 5);
+
+	// options
+	public static final int OPTION_IMPLICIT    = (1 << 0);
+	public static final int OPTION_EXPLICIT    = (1 << 1);
+	public static final int OPTION_UNIQUEFN    = (1 << 2);
+	public static final int OPTION_SHADING     = (1 << 3);
+	public static final int OPTION_SHIFT       = (1 << 4);
+	public static final int OPTION_IDIV        = (1 << 5);
+	public static final int OPTION_STRCONCAT   = (1 << 6);
+	public static final int OPTION_EXTIO       = (1 << 7);
+	public static final int OPTION_COPROC      = (1 << 8);
+	public static final int OPTION_BLOCKLESS   = (1 << 9);
+	public static final int OPTION_STRBASEONE  = (1 << 10);
+	public static final int OPTION_STRIPSPACES = (1 << 11);
+	public static final int OPTION_NEXTOFILE   = (1 << 12);
+	public static final int OPTION_CRLF        = (1 << 13);
 
 	static
 	{
@@ -53,6 +69,8 @@ public abstract class Awk
 
 	public Awk () throws Exception
 	{
+		this.handle = 0;
+
 		open ();
 	}
 
@@ -72,6 +90,12 @@ public abstract class Awk
 	private native int getmaxdepth (int id);
 	private native void setmaxdepth (int id, int depth);
 
+	private native int getoption ();
+	private native void setoption (int opt);
+
+	private native boolean getdebug ();
+	private native void setdebug (boolean debug);
+
 	private native void addbfn (
 		String name, int min_args, int max_args) throws Exception;
 	private native void delbfn (String name) throws Exception;
@@ -83,7 +107,8 @@ public abstract class Awk
 
 	private native Object strtonum (
 		long runid, String str) throws Exception;
-	private native String valtostr (long runid, Object obj);
+	private native String valtostr (
+		long runid, Object obj) throws Exception;
 
 	/* == builtin functions == */
 	public void addBuiltinFunction (
@@ -208,6 +233,28 @@ public abstract class Awk
 	public void setMaxDepth (int ids, int depth)
 	{
 		setmaxdepth (ids, depth);
+	}
+	
+	/* == option == */
+	public int getOption ()
+	{
+		return getoption ();
+	}
+
+	public void setOption (int opt)
+	{
+		setoption (opt);
+	}
+
+	/* == debug == */
+	public boolean getDebug ()
+	{
+		return getdebug ();
+	}
+
+	public void setDebug (boolean debug)
+	{
+		setdebug (debug);
 	}
 
 	/* == source code management == */

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.104 2007-01-07 07:30:39 bacon Exp $ 
+ * $Id: awk.c,v 1.105 2007-01-25 14:10:03 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -11,7 +11,8 @@
 
 static void __free_afn (void* awk, void* afn);
 
-ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum)
+ase_awk_t* ase_awk_open (
+	const ase_awk_sysfns_t* sysfns, void* custom_data, int* errnum)
 {
 	ase_awk_t* awk;
 
@@ -157,6 +158,7 @@ ase_awk_t* ase_awk_open (const ase_awk_sysfns_t* sysfns, int* errnum)
 	awk->run.count = 0;
 	awk->run.ptr = ASE_NULL;
 
+	awk->custom_data = custom_data;
 	return awk;
 }
 
@@ -263,3 +265,7 @@ void ase_awk_setoption (ase_awk_t* awk, int opt)
 	awk->option = opt;
 }
 
+void* ase_awk_getcustomdata (ase_awk_t* awk)
+{
+	return awk->custom_data;
+}

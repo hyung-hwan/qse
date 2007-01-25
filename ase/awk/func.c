@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.90 2007-01-17 03:45:59 bacon Exp $
+ * $Id: func.c,v 1.91 2007-01-25 14:10:03 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -411,7 +411,7 @@ static int __bfn_index (
 	ptr = ase_awk_strxnstr (str0, len0, str1, len1);
 	idx = (ptr == ASE_NULL)? -1: (ase_long_t)(ptr - str0);
 
-	if (ase_awk_getoption(run->awk) & ASE_AWK_STRIDXONE) idx = idx + 1;
+	if (ase_awk_getoption(run->awk) & ASE_AWK_STRBASEONE) idx = idx + 1;
 
 	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str0);
 	if (a1->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str1);
@@ -513,7 +513,7 @@ static int __bfn_substr (
 		if (n == 1) lcount = (ase_long_t)rcount;
 	}
 
-	if (ase_awk_getoption(run->awk) & ASE_AWK_STRIDXONE) lindex = lindex - 1;
+	if (ase_awk_getoption(run->awk) & ASE_AWK_STRBASEONE) lindex = lindex - 1;
 	if (lindex >= len) lindex = len;
 	else if (lindex < 0) lindex = 0;
 
@@ -687,7 +687,7 @@ static int __bfn_split (
 	ase_awk_refupval (run, *a1_ref);
 
 	p = str; str_left = str_len; 
-	sta = (ase_awk_getoption(run->awk) & ASE_AWK_STRIDXONE)? 1: 0;
+	sta = (ase_awk_getoption(run->awk) & ASE_AWK_STRBASEONE)? 1: 0;
 	num = sta;
 
 	while (p != ASE_NULL)
@@ -1243,7 +1243,7 @@ static int __bfn_match (
 	if (n == -1) return -1;
 
 	idx = (n == 0)? -1: (ase_long_t)(mat_ptr - str0);
-	if (ase_awk_getoption(run->awk) & ASE_AWK_STRIDXONE) idx = idx + 1;
+	if (ase_awk_getoption(run->awk) & ASE_AWK_STRBASEONE) idx = idx + 1;
 
 	a0 = ase_awk_makeintval (run, idx);
 	if (a0 == ASE_NULL)
