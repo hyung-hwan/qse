@@ -1,5 +1,5 @@
 /*
- * $Id: printf.c,v 1.4 2007-01-26 16:08:55 bacon Exp $
+ * $Id: printf.c,v 1.5 2007-01-26 16:15:54 bacon Exp $
  */
 
 #include <stdarg.h>
@@ -28,7 +28,6 @@
 		#error define ASE_CHAR_IS_MCHAR or ASE_CHAR_IS_WCHAR
 	#endif
 
-#endif
 
 static ase_char_t* __adjust_format (const ase_char_t* format);
 
@@ -289,3 +288,4 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 	return buf.ptr;
 }
 
+#endif
