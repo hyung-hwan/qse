@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.153 2007-01-25 14:14:56 bacon Exp $
+ * $Id: awk.c,v 1.154 2007-01-26 15:50:47 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -25,12 +25,8 @@
 	#include <wchar.h>
 	#include <wctype.h>
 	#include <locale.h>
-
-	#include <xp/bas/stdio.h>
-	#include <xp/bas/stdlib.h>
-	#include <xp/bas/string.h>
-	#include <xp/bas/memory.h>
-	#include <xp/bas/sysapi.h>
+	#include "../../etc/printf.c"
+	#include "../../etc/main.c"
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
@@ -82,7 +78,7 @@ static int awk_sprintf (
 #elif defined(ASE_CHAR_IS_MCHAR)
 	n = vsnprintf (buf, len, fmt, ap);
 #else
-	n = xp_vsprintf (buf, len, fmt, ap);
+	n = ase_vsprintf (buf, len, fmt, ap);
 #endif
 	va_end (ap);
 	return n;
@@ -111,7 +107,7 @@ static void awk_aprintf (const ase_char_t* fmt, ...)
 #elif defined(ASE_CHAR_IS_MCHAR)
 	vprintf (fmt, ap);
 #else
-	xp_vprintf (fmt, ap);
+	ase_vprintf (fmt, ap);
 #endif
 	va_end (ap);
 }
@@ -126,7 +122,7 @@ static void awk_dprintf (const ase_char_t* fmt, ...)
 #elif defined(ASE_CHAR_IS_MCHAR)
 	vfprintf (stderr, fmt, ap);
 #else
-	xp_vfprintf (stderr, fmt, ap);
+	ase_vfprintf (stderr, fmt, ap);
 #endif
 
 	va_end (ap);
@@ -142,7 +138,7 @@ static void awk_printf (const ase_char_t* fmt, ...)
 #elif defined(ASE_CHAR_IS_MCHAR)
 	vprintf (fmt, ap);
 #else
-	xp_vprintf (fmt, ap);
+	ase_vprintf (fmt, ap);
 #endif
 	va_end (ap);
 }
@@ -1116,7 +1112,7 @@ int _tmain (int argc, ase_char_t* argv[])
 #elif defined(__MSDOS__) || defined(ASE_CHAR_IS_MCHAR)
 int main (int argc, ase_char_t* argv[])
 #else
-int xp_main (int argc, ase_char_t* argv[])
+int ase_main (int argc, ase_char_t* argv[])
 #endif
 {
 	int n;
@@ -1140,10 +1136,6 @@ int xp_main (int argc, ase_char_t* argv[])
 	{
 		_tprintf (_T("Running application in a debugger by is_debugger_present2...\n"));
 	}
-#endif
-
-#if defined(__unix)
-	setlocale (LC_ALL, "");
 #endif
 
 	n = __main (argc, argv);
