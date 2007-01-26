@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.1 2006-12-17 12:33:31 bacon Exp $
+ * $Id: main.c,v 1.2 2007-01-26 15:50:47 bacon Exp $
  */
 
 #include <ase/types.h>
@@ -59,13 +59,8 @@ int main (int argc, char* argv[]/*, char** envp*/)
 		if (n == len) v[i][len] = ASE_T('\0');
 	}
 
-	for (i = 0; i < argc; i++)
-	{
-		printf ("[%ls]\n", v[i]);
-	}
-
 	/* TODO: envp... */
-	//ret = _tmain (argc, v, NULL);
+	ret = ase_main (argc, v, NULL);
 
 exit_main:
 	for (i = 0; i < argc; i++) 
