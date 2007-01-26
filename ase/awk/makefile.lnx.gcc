@@ -30,10 +30,10 @@ lib: $(C_OBJS)
 	$(AR) cr lib$(OUT).a $(C_OBJS)
 
 jni: lib $(JNI_OBJS) $(JAVA_OBJS)
-	$(CC) -shared -o lib$(OUT)_jni.so $(JNI_OBJS) -lm -L. -l$(OUT)
+	$(CC) -shared -o $(OUT)_jni.so $(JNI_OBJS) -lm -L. -l$(OUT)
 
-#$(CC) -fPIC -shared -static-libgcc -o lib$(OUT)_jni.so -L. -laseawk -lm libaseawk.a jni.o
-#$(LD) -fPIC -shared -soname lib$(OUT).so -o lib$(OUT).so -L . -l aseawk jni.o
+#$(CC) -fPIC -shared -static-libgcc -o $(OUT)_jni.so -L. -laseawk -lm libaseawk.a jni.o
+#$(LD) -fPIC -shared -soname lib$(OUT).so -o $(OUT)_jni.so -L . -l aseawk jni.o
 
 clean:
 	rm -rf $(C_OBJS) $(JNI_OBJS) $(JAVA_OBJS) lib$(OUT).a lib$(OUT).so *.o

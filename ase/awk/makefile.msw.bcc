@@ -40,10 +40,10 @@ lib: $(C_OBJS)
 !
 
 jni: lib $(JNI_OBJS) $(JAVA_OBJS)
-	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT).dll,,$(JNI_LIBS),jni.def,
+	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT)_jni.dll,,$(JNI_LIBS),jni.def,
 
 clean:
-	-del $(OBJS) $(OUT).lib $(OUT).dll *.obj *.class
+	-del $(OBJS) $(OUT).lib $(OUT)_jni.dll *.obj *.class
 
 .SUFFIXES: .c .obj .java .class
 .c.obj:

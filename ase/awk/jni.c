@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.54 2007-01-25 14:10:03 bacon Exp $
+ * $Id: jni.c,v 1.55 2007-01-26 15:27:00 bacon Exp $
  */
 
 #include <stdio.h>
@@ -213,9 +213,7 @@ static void throw_exception (
 				env, CLASS_OUTOFMEMORYERROR);
 			if (except_class == NULL) return;
 
-			(*env)->ThrowNew (
-				env, except_class, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM));
+			(*env)->ThrowNew (env, except_class, "out of memory");
 			(*env)->DeleteLocalRef (env, except_class);
 			return;
 		}
@@ -226,7 +224,8 @@ static void throw_exception (
 	}
 	else
 	{
-		except_msg = (*env)->NewString (env, msg, ase_awk_strlen(msg));
+		except_msg = (*env)->NewString (
+			env, (jchar*)msg, ase_awk_strlen(msg));
 	}
 
 	if (except_msg == NULL)
@@ -784,7 +783,8 @@ static ase_ssize_t __java_open_extio (
 	else
 	{
 		extio_name = (*env)->NewString (
-			env, extio->name, ase_awk_strlen(extio->name));
+			env, (jchar*)extio->name, 
+			ase_awk_strlen(extio->name));
 	}
 
 	if (extio_name == NULL) 
@@ -1173,7 +1173,6 @@ static int __handle_bfn (
 {
 	jclass class; 
 	jmethodID method;
-	jthrowable thrown;
 	jstring name;
 	const char* name_utf;
 	run_data_t* run_data;
@@ -1213,7 +1212,7 @@ static int __handle_bfn (
 		name = (*env)->NewString (env, tmp, fnl);
 		free (tmp);
 	}
-	else name = (*env)->NewString (env, fnm, fnl);
+	else name = (*env)->NewString (env, (jchar*)fnm, fnl);
 
 	if (name == NULL)
 	{
@@ -1307,7 +1306,7 @@ static int __handle_bfn (
 			else
 			{
 				arg = (*env)->NewString (env, 
-					((ase_awk_val_str_t*)v)->buf, 
+					(jchar*)((ase_awk_val_str_t*)v)->buf, 
 					((ase_awk_val_str_t*)v)->len);
 			}
 		}
@@ -1920,12 +1919,15 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 		}
 
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
-		n = ase_awk_strtonum ((ase_awk_run_t*)runid, tmp, len, &lv, &rv);
+		n = ase_awk_strtonum (
+			(ase_awk_run_t*)runid, tmp, len, &lv, &rv);
 		free (tmp);
 	}
 	else
 	{
-		n = ase_awk_strtonum ((ase_awk_run_t*)runid, ptr, len, &lv, &rv);
+		n = ase_awk_strtonum ( 
+			(ase_awk_run_t*)runid, 
+			(ase_char_t*)ptr, len, &lv, &rv);
 	}
 	(*env)->ReleaseStringChars (env, str, ptr);
 

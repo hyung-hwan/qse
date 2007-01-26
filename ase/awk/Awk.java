@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.22 2007-01-25 14:10:02 bacon Exp $
+ * $Id: Awk.java,v 1.23 2007-01-26 15:27:00 bacon Exp $
  */
 
 package ase.awk;
@@ -44,8 +44,8 @@ public abstract class Awk
 		System.getProperty("os.name"));   os.arch / os.version;
 		*/
 		//System.load ("c://projects//ase/awk/aseawk.dll");
-		URL url = ase.awk.Awk.class.getResource("aseawk.dll");
-		if (url == null) url = ase.awk.Awk.class.getResource("libaseawk_jni.so");
+		URL url = ase.awk.Awk.class.getResource("aseawk_jni.dll");
+		if (url == null) url = ase.awk.Awk.class.getResource("aseawk_jni.so");
 		if (url != null) System.load (url.getFile());
 
 		/*
