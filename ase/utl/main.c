@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.2 2007-01-26 15:50:47 bacon Exp $
+ * $Id: main.c,v 1.3 2007-01-26 16:08:54 bacon Exp $
  */
 
 #include <ase/types.h>
@@ -11,6 +11,12 @@
 #include <locale.h>
 
 #if defined(ASE_CHAR_IS_WCHAR) && defined(__unix)
+
+#ifdef __cplusplus
+extern "C" { int ase_main (...); }
+#else
+extern int ase_main ();
+#endif
 
 int main (int argc, char* argv[]/*, char** envp*/)
 {
