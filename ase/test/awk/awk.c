@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.154 2007-01-26 15:50:47 bacon Exp $
+ * $Id: awk.c,v 1.155 2007-01-26 16:08:55 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -315,11 +315,9 @@ static ase_ssize_t process_extio_pipe (
 			}
 */
 		#if defined(_WIN32)
-			n = _ftprintf (epa->handle, ASE_T("%.*s"), size, data);
-		#elif defined(ASE_CHAR_IS_MCHAR)
-			n = fprintf (epa->handle, "%.*s", size, data);
+			n = _ftprintf ((FILE*)epa->handle, ASE_T("%.*s"), size, data);
 		#else
-			n = fprintf (epa->handle, "%.*ls", size, data);
+			n = ase_fprintf ((FILE*)epa->handle, ASE_T("%.*s"), size, data);
 		#endif
 			if (n < 0) return -1;
 
@@ -397,10 +395,8 @@ static ase_ssize_t process_extio_file (
 			int n;
 		#if defined(_WIN32)
 			n = _ftprintf (epa->handle, ASE_T("%.*s"), size, data);
-		#elif defined(ASE_CHAR_IS_MCHAR)
-			n = fprintf (epa->handle, "%.*s", size, data);
 		#else
-			n = fprintf (epa->handle, "%.*ls", size, data);
+			n = ase_fprintf ((FILE*)epa->handle, ASE_T("%.*s"), size, data);
 		#endif
 			if (n < 0) return -1;
 		
@@ -456,7 +452,7 @@ static ase_ssize_t process_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
-		while (awk_fgets (data, size, epa->handle) == ASE_NULL)
+		while (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL)
 		{
 			/* it has reached the end of the current file.
 			 * open the next file if available */
@@ -469,7 +465,11 @@ static ase_ssize_t process_extio_console (
 				if (epa->handle != ASE_NULL &&
 				    epa->handle != stdin &&
 				    epa->handle != stdout &&
-				    epa->handle != stderr) fclose (epa->handle);
+				    epa->handle != stderr) 
+				{
+					fclose ((FILE*)epa->handle);
+				}
+
 				epa->handle = ASE_NULL;
 				*/
 
@@ -481,7 +481,10 @@ static ase_ssize_t process_extio_console (
 				if (epa->handle != ASE_NULL &&
 				    epa->handle != stdin &&
 				    epa->handle != stdout &&
-				    epa->handle != stderr) fclose (epa->handle);
+				    epa->handle != stderr) 
+				{
+					fclose ((FILE*)epa->handle);
+				}
 				epa->handle = stdin;
 			}
 			else
@@ -496,7 +499,10 @@ static ase_ssize_t process_extio_console (
 				if (epa->handle != ASE_NULL &&
 				    epa->handle != stdin &&
 				    epa->handle != stdout &&
-				    epa->handle != stderr) fclose (epa->handle);
+				    epa->handle != stderr) 
+				{
+					fclose ((FILE*)epa->handle);
+				}
 
 				awk_dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
 				epa->handle = fp;
@@ -600,7 +606,7 @@ static int close_extio_console (ase_awk_extio_t* epa)
 	    epa->handle != stdout && 
 	    epa->handle != stderr)
 	{
-		fclose (epa->handle);
+		fclose ((FILE*)epa->handle);
 	}
 
 	/* TODO: CloseConsole in GUI APPLICATION */
@@ -610,7 +616,7 @@ static int close_extio_console (ase_awk_extio_t* epa)
 static int next_extio_console (ase_awk_extio_t* epa)
 {
 	int n;
-	FILE* fp = epa->handle;
+	FILE* fp = (FILE*)epa->handle;
 
 	awk_dprintf (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
 
@@ -835,19 +841,19 @@ static int __main (int argc, ase_char_t* argv[])
 	sysfns.memcpy  = memcpy;
 	sysfns.memset  = memset;
 
-	sysfns.is_upper  = awk_isupper;
-	sysfns.is_lower  = awk_islower;
-	sysfns.is_alpha  = awk_isalpha;
-	sysfns.is_digit  = awk_isdigit;
-	sysfns.is_xdigit = awk_isxdigit;
-	sysfns.is_alnum  = awk_isalnum;
-	sysfns.is_space  = awk_isspace;
-	sysfns.is_print  = awk_isprint;
-	sysfns.is_graph  = awk_isgraph;
-	sysfns.is_cntrl  = awk_iscntrl;
-	sysfns.is_punct  = awk_ispunct;
-	sysfns.to_upper  = awk_toupper;
-	sysfns.to_lower  = awk_tolower;
+	sysfns.is_upper  = (ase_awk_isctype_t)awk_isupper;
+	sysfns.is_lower  = (ase_awk_isctype_t)awk_islower;
+	sysfns.is_alpha  = (ase_awk_isctype_t)awk_isalpha;
+	sysfns.is_digit  = (ase_awk_isctype_t)awk_isdigit;
+	sysfns.is_xdigit = (ase_awk_isctype_t)awk_isxdigit;
+	sysfns.is_alnum  = (ase_awk_isctype_t)awk_isalnum;
+	sysfns.is_space  = (ase_awk_isctype_t)awk_isspace;
+	sysfns.is_print  = (ase_awk_isctype_t)awk_isprint;
+	sysfns.is_graph  = (ase_awk_isctype_t)awk_isgraph;
+	sysfns.is_cntrl  = (ase_awk_isctype_t)awk_iscntrl;
+	sysfns.is_punct  = (ase_awk_isctype_t)awk_ispunct;
+	sysfns.to_upper  = (ase_awk_toctype_t)awk_toupper;
+	sysfns.to_lower  = (ase_awk_toctype_t)awk_tolower;
 
 	sysfns.pow     = awk_pow;
 	sysfns.sprintf = awk_sprintf;
