@@ -30,12 +30,12 @@ lib: $(C_OBJS)
 
 jni: lib $(JNI_OBJS) $(JAVA_OBJS) 
 	$(LD) /dll /def:jni.def /subsystem:windows /version:0.1 /release @<<
-/nologo /out:$(OUT).dll $(JNI_OBJS) /implib:tmp.lib user32.lib $(OUT).lib
+/nologo /out:$(OUT)_jni.dll $(JNI_OBJS) /implib:tmp.lib user32.lib $(OUT).lib
 <<
 	del tmp.lib tmp.exp
 
 clean:
-	del $(OBJS) $(OUT).lib $(OUT).dll *.obj *.class
+	del $(OBJS) $(OUT).lib $(OUT)_jni.dll *.obj *.class
 
 .SUFFIXES: .c .obj .java .class
 .c.obj:
