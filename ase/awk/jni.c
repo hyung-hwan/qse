@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.56 2007-01-26 16:15:54 bacon Exp $
+ * $Id: jni.c,v 1.57 2007-01-27 02:55:55 bacon Exp $
  */
 
 #include <stdio.h>
@@ -129,16 +129,7 @@ static int awk_sprintf (
 	va_list ap;
 
 	va_start (ap, fmt);
-#if defined(_WIN32)
-	n = _vsntprintf (buf, len, fmt, ap);
-	if (n < 0 || (ase_size_t)n >= len)
-	{
-		if (len > 0) buf[len-1] = ASE_T('\0');
-		n = -1;
-	}
-#else
 	n = ase_vsprintf (buf, len, fmt, ap);
-#endif
 	va_end (ap);
 	return n;
 }
