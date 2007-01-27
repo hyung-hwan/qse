@@ -1,5 +1,5 @@
 /*
- * $Id: printf.c,v 1.5 2007-01-26 16:15:54 bacon Exp $
+ * $Id: printf.c,v 1.6 2007-01-27 02:55:55 bacon Exp $
  */
 
 #include <stdarg.h>
@@ -16,6 +16,33 @@
 	#define ase_vprintf  _vtprintf
 	#define ase_fprintf  _ftprintf
 	#define ase_vfprintf _vftprintf
+
+
+int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list ap)
+{
+	int n;
+
+	n = _vsntprintf (buf, size, fmt, ap);
+	if (n < 0 || (size_t)n >= size)
+	{
+		if (size > 0) buf[size-1] = ASE_T('\0');
+		n = -1;
+	}
+
+	return n;
+}
+
+int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+
+	va_start (ap, fmt);
+	n = ase_vsprintf (buf, size, fmt, ap);
+	va_end (ap);
+	return n;
+}
+
 #else
 
 	#if defined(ASE_CHAR_IS_MCHAR)
