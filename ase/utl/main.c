@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.5 2007-01-28 11:28:26 bacon Exp $
+ * $Id: main.c,v 1.6 2007-01-28 11:33:23 bacon Exp $
  */
 
 #include <ase/types.h>
