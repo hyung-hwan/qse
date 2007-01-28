@@ -51,7 +51,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "lsp"=.\lsp\lsp.dsp - Package Owner=<4>
+Project: "lsp.lib"=.\lsp\lsp.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.155 2007-01-26 16:08:55 bacon Exp $
+ * $Id: awk.c,v 1.156 2007-01-28 11:28:27 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -25,9 +25,10 @@
 	#include <wchar.h>
 	#include <wctype.h>
 	#include <locale.h>
-	#include "../../etc/printf.c"
-	#include "../../etc/main.c"
 #endif
+
+#include "../../etc/printf.c"
+#include "../../etc/main.c"
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
@@ -65,21 +66,7 @@ static int awk_sprintf (
 	va_list ap;
 
 	va_start (ap, fmt);
-#if defined(_WIN32)
-	n = _vsntprintf (buf, len, fmt, ap);
-	if (n < 0 || (ase_size_t)n >= len)
-	{
-		if (len > 0) buf[len-1] = ASE_T('\0');
-		n = -1;
-	}
-#elif defined(__MSDOS__)
-	/* TODO: check buffer overflow */
-	n = vsprintf (buf, fmt, ap);
-#elif defined(ASE_CHAR_IS_MCHAR)
-	n = vsnprintf (buf, len, fmt, ap);
-#else
 	n = ase_vsprintf (buf, len, fmt, ap);
-#endif
 	va_end (ap);
 	return n;
 }
@@ -104,8 +91,6 @@ static void awk_aprintf (const ase_char_t* fmt, ...)
 	MessageBox (NULL, buf, 
 		ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK|MB_ICONERROR);
 	#endif
-#elif defined(ASE_CHAR_IS_MCHAR)
-	vprintf (fmt, ap);
 #else
 	ase_vprintf (fmt, ap);
 #endif
@@ -116,15 +101,7 @@ static void awk_dprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
-
-#if defined(_WIN32)
-	_vftprintf (stderr, fmt, ap);
-#elif defined(ASE_CHAR_IS_MCHAR)
-	vfprintf (stderr, fmt, ap);
-#else
 	ase_vfprintf (stderr, fmt, ap);
-#endif
-
 	va_end (ap);
 }
 
@@ -132,14 +109,7 @@ static void awk_printf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
-
-#if defined(_WIN32)
-	_vtprintf (fmt, ap);
-#elif defined(ASE_CHAR_IS_MCHAR)
-	vprintf (fmt, ap);
-#else
 	ase_vprintf (fmt, ap);
-#endif
 	va_end (ap);
 }
 
@@ -171,9 +141,6 @@ static FILE* awk_popen (const ase_char_t* cmd, const ase_char_t* mode)
 {
 #if defined(_WIN32)
 	return _tpopen (cmd, mode);
-#elif defined(__MSDOS__)
-	/* TODO: support this */
-	return NULL;
 #elif defined(ASE_CHAR_IS_MCHAR)
 	return popen (cmd, mode);
 #else
@@ -949,177 +916,7 @@ static int __main (int argc, ase_char_t* argv[])
 	return 0;
 }
 
-#ifdef _WIN32
-/*
-NTSYSAPI PTEB NTAPI NtCurrentTeb();
-Function NtCurrentTeb returns address of TEB (Thread Environment Block) for calling thread. 
-NtCurrentTeb isn't typical NT CALL realised via INT 2E, becouse TEB is accessable at address fs:[0018h].
-Microsoft declare NtCurrentTeb as __cdecl, but ntdll.dll export it as __stdcall (it don't have metter, becouse function don't have any parameters), so you cannot use ntdll.dll export. In this case the better way is write NtCurrentTeb manually, declaring it as __cdecl. 
-
-typedef UCHAR BOOLEAN;
-
-typedef struct _TEB {
-
-  NT_TIB                  Tib;
-  PVOID                   EnvironmentPointer;
-  CLIENT_ID               Cid;
-  PVOID                   ActiveRpcInfo;
-  PVOID                   ThreadLocalStoragePointer;
-  PPEB                    Peb;
-  ULONG                   LastErrorValue;
-  ULONG                   CountOfOwnedCriticalSections;
-  PVOID                   CsrClientThread;
-  PVOID                   Win32ThreadInfo;
-  ULONG                   Win32ClientInfo[0x1F];
-  PVOID                   WOW32Reserved;
-  ULONG                   CurrentLocale;
-  ULONG                   FpSoftwareStatusRegister;
-  PVOID                   SystemReserved1[0x36];
-  PVOID                   Spare1;
-  ULONG                   ExceptionCode;
-  ULONG                   SpareBytes1[0x28];
-  PVOID                   SystemReserved2[0xA];
-  ULONG                   GdiRgn;
-  ULONG                   GdiPen;
-  ULONG                   GdiBrush;
-  CLIENT_ID               RealClientId;
-  PVOID                   GdiCachedProcessHandle;
-  ULONG                   GdiClientPID;
-  ULONG                   GdiClientTID;
-  PVOID                   GdiThreadLocaleInfo;
-  PVOID                   UserReserved[5];
-  PVOID                   GlDispatchTable[0x118];
-  ULONG                   GlReserved1[0x1A];
-  PVOID                   GlReserved2;
-  PVOID                   GlSectionInfo;
-  PVOID                   GlSection;
-  PVOID                   GlTable;
-  PVOID                   GlCurrentRC;
-  PVOID                   GlContext;
-  NTSTATUS                LastStatusValue;
-  UNICODE_STRING          StaticUnicodeString;
-  WCHAR                   StaticUnicodeBuffer[0x105];
-  PVOID                   DeallocationStack;
-  PVOID                   TlsSlots[0x40];
-  LIST_ENTRY              TlsLinks;
-  PVOID                   Vdm;
-  PVOID                   ReservedForNtRpc;
-  PVOID                   DbgSsReserved[0x2];
-  ULONG                   HardErrorDisabled;
-  PVOID                   Instrumentation[0x10];
-  PVOID                   WinSockData;
-  ULONG                   GdiBatchCount;
-  ULONG                   Spare2;
-  ULONG                   Spare3;
-  ULONG                   Spare4;
-  PVOID                   ReservedForOle;
-  ULONG                   WaitingOnLoaderLock;
-  PVOID                   StackCommit;
-  PVOID                   StackCommitMax;
-  PVOID                   StackReserved;
-
-} TEB, *PTEB;
-
-typedef struct _PEB {
-  BOOLEAN                 InheritedAddressSpace;
-  BOOLEAN                 ReadImageFileExecOptions;
-  BOOLEAN                 BeingDebugged;
-  BOOLEAN                 Spare;
-  HANDLE                  Mutant;
-  PVOID                   ImageBaseAddress;
-  PPEB_LDR_DATA           LoaderData;
-  PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
-  PVOID                   SubSystemData;
-  PVOID                   ProcessHeap;
-  PVOID                   FastPebLock;
-  PPEBLOCKROUTINE         FastPebLockRoutine;
-  PPEBLOCKROUTINE         FastPebUnlockRoutine;
-  ULONG                   EnvironmentUpdateCount;
-  PPVOID                  KernelCallbackTable;
-  PVOID                   EventLogSection;
-  PVOID                   EventLog;
-  PPEB_FREE_BLOCK         FreeList;
-  ULONG                   TlsExpansionCounter;
-  PVOID                   TlsBitmap;
-  ULONG                   TlsBitmapBits[0x2];
-  PVOID                   ReadOnlySharedMemoryBase;
-  PVOID                   ReadOnlySharedMemoryHeap;
-  PPVOID                  ReadOnlyStaticServerData;
-  PVOID                   AnsiCodePageData;
-  PVOID                   OemCodePageData;
-  PVOID                   UnicodeCaseTableData;
-  ULONG                   NumberOfProcessors;
-  ULONG                   NtGlobalFlag;
-  BYTE                    Spare2[0x4];
-  LARGE_INTEGER           CriticalSectionTimeout;
-  ULONG                   HeapSegmentReserve;
-  ULONG                   HeapSegmentCommit;
-  ULONG                   HeapDeCommitTotalFreeThreshold;
-  ULONG                   HeapDeCommitFreeBlockThreshold;
-  ULONG                   NumberOfHeaps;
-  ULONG                   MaximumNumberOfHeaps;
-  PPVOID                  *ProcessHeaps;
-  PVOID                   GdiSharedHandleTable;
-  PVOID                   ProcessStarterHelper;
-  PVOID                   GdiDCAttributeList;
-  PVOID                   LoaderLock;
-  ULONG                   OSMajorVersion;
-  ULONG                   OSMinorVersion;
-  ULONG                   OSBuildNumber;
-  ULONG                   OSPlatformId;
-  ULONG                   ImageSubSystem;
-  ULONG                   ImageSubSystemMajorVersion;
-  ULONG                   ImageSubSystemMinorVersion;
-  ULONG                   GdiHandleBuffer[0x22];
-  ULONG                   PostProcessInitRoutine;
-  ULONG                   TlsExpansionBitmap;
-  BYTE                    TlsExpansionBitmapBits[0x80];
-  ULONG                   SessionId;
-
-} PEB, *PPEB;
-
-
-*/
-void* /*__declspec(naked)*/ get_current_teb (void)
-{
-	_asm
-	{
-		mov eax, fs:[0x18]
-	}
-}
-
-void* get_current_peb (void)
-{
-	void* teb = get_current_teb ();
-	return *(void**)((char*)teb + 0x30);
-}
-
-int is_debugger_present (void)
-{
-	void *peb = get_current_peb ();
-	return *((char*)peb+0x02);
-}
-
-
-int /*__declspec(naked)*/ is_debugger_present2 (void)
-{
-	_asm
-	{
-		mov eax, fs:[0x18]
-		mov ebx, [eax+0x30]
-		xor eax, eax
-		mov al, byte ptr[ebx+0x02]
-	}
-}
-#endif
-
-#if defined(_WIN32)
-int _tmain (int argc, ase_char_t* argv[])
-#elif defined(__MSDOS__) || defined(ASE_CHAR_IS_MCHAR)
-int main (int argc, ase_char_t* argv[])
-#else
 int ase_main (int argc, ase_char_t* argv[])
-#endif
 {
 	int n;
 #if defined(__linux) && defined(_DEBUG)
@@ -1128,21 +925,6 @@ int ase_main (int argc, ase_char_t* argv[])
 /*#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif*/
-
-#if defined(_WIN32)
-	if (IsDebuggerPresent ())
-	{
-		_tprintf (_T("Running application in a debugger....\n"));
-	}
-	if (is_debugger_present ())
-	{
-		_tprintf (_T("Running application in a debugger by is_debugger_present...\n"));
-	}
-	if (is_debugger_present2 ())
-	{
-		_tprintf (_T("Running application in a debugger by is_debugger_present2...\n"));
-	}
-#endif
 
 	n = __main (argc, argv);
 
