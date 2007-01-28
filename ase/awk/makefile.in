@@ -1,38 +1,25 @@
-OUT = libaseawk.a
+OUT = aseawk
 
 C_SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
-JNI_SRCS = jni.c
-JAVA_SRCS = Exception.java Extio.java Awk.java StdAwk.java
-
 C_OBJS = $(C_SRCS:.c=.o)
-JNI_OBJS = $(JNI_SRCS:.c=.o)
-JAVA_OBJS = $(JAVA_SRCS:.java=.class)
 
 CC = @CC@
 AR = ar
 RANLIB = @RANLIB@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM)
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 
-JAVAC = javac
-JAVACFLAGS = -classpath ../..
-
-all: lib
+all: lib 
 
 lib: $(C_OBJS)
-	$(AR) cr $(OUT) $(OBJS)
-
-jni: lib $(JNI_OBJS) $(JAVA_OBJS)
+	$(AR) cr lib$(OUT).a $(C_OBJS)
 
 clean:
-	rm -rf $(OBJS) $(OUT) *.o
+	rm -rf $(OBJS) lib$(OUT).a *.o
 
-.SUFFIXES: .c .o .java .class
+.SUFFIXES: .c .o
 .c.o:
 	$(CC) $(CFLAGS) -c $<
-
-.java.class:
-	$(JAVAC) $(JAVACFLAGS) $<
 
