@@ -1,5 +1,5 @@
 /*
- * $Id: printf.c,v 1.7 2007-01-28 11:28:27 bacon Exp $
+ * $Id: printf.c,v 1.8 2007-01-28 11:33:23 bacon Exp $
  */
 
 #include <stdarg.h>
