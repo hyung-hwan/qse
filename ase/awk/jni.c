@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.57 2007-01-27 02:55:55 bacon Exp $
+ * $Id: jni.c,v 1.58 2007-01-28 11:12:29 bacon Exp $
  */
 
 #include <stdio.h>
@@ -1930,9 +1930,163 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 
 
 JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
-	JNIEnv* env, jobject obj, jlong runid)
+	JNIEnv* env, jobject obj, jlong runid, jobject val)
 {
-	// TODO: ... 
-	return NULL;
+	ase_awk_run_t* run = (ase_awk_run_t*)runid;
+	run_data_t* run_data;
+	jstring ret;
+	ase_awk_val_t* v;
+	ase_char_t* str;
+	ase_size_t len;
+	ase_awk_t* awk;
+
+	awk = ase_awk_getrunawk (run);
+
+	if (val == NULL) 
+	{
+		ret = (*env)->NewString (env, NULL, 0);
+
+		if (ret == NULL)
+		{
+			(*env)->ExceptionClear (env);
+
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM, 
+				0);
+		}
+		return ret;
+	}
+
+	run_data = ase_awk_getruncustomdata (run);
+
+	if ((*env)->IsInstanceOf (env, val, run_data->string_class))
+	{
+		const jchar* ptr;
+
+		len = (*env)->GetStringLength (env, val);
+		ptr = (*env)->GetStringChars (env, val, JNI_FALSE);
+		if (ptr == NULL) 
+		{
+			(*env)->ExceptionClear (env);
+
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM, 
+				0);
+
+			return NULL;
+		}
+
+		ret = (*env)->NewString (env, ptr, len);
+		(*env)->ReleaseStringChars (env, ret, ptr);
+		return ret;
+	}
+
+	if ((*env)->IsInstanceOf (env, val, run_data->integer_class))
+	{
+		jint jv;
+		jv = (*env)->CallIntMethod (
+			env, val, run_data->integer_value);
+		v = ase_awk_makeintval (run, jv);
+	}
+	else if ((*env)->IsInstanceOf (env, val, run_data->long_class))
+	{
+		jlong jv = (*env)->CallLongMethod (
+			env, val, run_data->long_value);
+		v = ase_awk_makeintval (run, jv);
+	}
+	else if ((*env)->IsInstanceOf (env, val, run_data->short_class))
+	{
+		jshort jv = (*env)->CallShortMethod (
+			env, val, run_data->short_value);
+		v = ase_awk_makeintval (run, jv);
+	}
+	else if ((*env)->IsInstanceOf (env, val, run_data->float_class))
+	{
+		jfloat jv = (*env)->CallFloatMethod (
+			env, val, run_data->float_value);
+		v = ase_awk_makerealval (run, jv);
+	}
+	else if ((*env)->IsInstanceOf (env, val, run_data->double_class))
+	{
+		jdouble jv = (*env)->CallDoubleMethod (
+			env, val, run_data->double_value);
+		v = ase_awk_makerealval (run, jv);
+	}
+	else
+	{
+		throw_exception (
+			env,
+			ase_awk_geterrstr(ASE_AWK_EVALTYPE), 
+			ASE_AWK_EVALTYPE,
+			0);
+		return NULL;
+	}
+
+	if (v == NULL)
+	{
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
+		return NULL;
+	}
+
+	ase_awk_refupval (run, v);
+	str = ase_awk_valtostr (run, v, ASE_AWK_VALTOSTR_CLEAR, NULL, &len);	
+	ase_awk_refdownval (run, v);
+
+	if (str == NULL)
+	{
+
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
+		return NULL;
+	}
+
+	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	{
+		ase_size_t i;
+		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*len);
+		if (tmp == NULL)
+		{
+			ase_awk_free (awk, str);
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM, 
+				0);
+			return NULL;
+		}
+
+		for (i = 0; i < len; i++) tmp[i] = (jchar)str[i];
+		ret = (*env)->NewString (env, tmp, len);
+		free (tmp);
+	}
+	else
+	{
+		ret = (*env)->NewString (env, str, len);
+	}
+
+	ase_awk_free (awk, str);
+	if (ret == NULL)
+	{
+		(*env)->ExceptionClear (env);
+
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
+	}
+
+	return ret;
 }
 

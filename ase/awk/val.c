@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.103 2007-01-16 14:20:42 bacon Exp $
+ * $Id: val.c,v 1.104 2007-01-28 11:12:30 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -461,10 +461,11 @@ ase_char_t* ase_awk_valtostr (
 			run, vs->buf, vs->len, opt, buf, len);
 	}
 
-/* TODO: process more value types */
+#ifdef _DEBUG
 	run->awk->sysfns.dprintf (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr\n"), 
 		v->type);
+#endif
 
 	ase_awk_setrunerror (run, ASE_AWK_EVALTYPE, 0, ASE_NULL);
 	return ASE_NULL;
