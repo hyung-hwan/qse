@@ -10,8 +10,8 @@ JNI_OBJS = $(JNI_SRCS:.c=.obj)
 JAVA_OBJS = $(JAVA_SRCS:.java=.class)
 
 JNI_INC = \
-	/I"C:\Program Files\Java\jdk1.5.0_09\include" \
-	/I"C:\Program Files\Java\jdk1.5.0_09\include\win32" 
+	/I"$(JAVA_HOME)/include" \
+	/I"$(JAVA_HOME)/include\win32" 
 
 CC = cl
 LD = link
