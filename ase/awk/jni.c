@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.58 2007-01-28 11:12:29 bacon Exp $
+ * $Id: jni.c,v 1.59 2007-01-28 11:28:26 bacon Exp $
  */
 
 #include <stdio.h>
@@ -269,13 +269,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	sysfns.dprintf = awk_dprintf;
 	sysfns.abort   = awk_abort;
 
-	awk_data = (awk_data_t*)malloc (sizeof(awk_data_t));
+	awk_data = (awk_data_t*) malloc (sizeof(awk_data_t));
 	if (awk_data == NULL)
 	{
 		throw_exception (
 			env,
-			ase_awk_geterrstr(errnum), 
-			errnum, 
+			ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+			ASE_AWK_ENOMEM, 
 			0);
 		return;
 	}

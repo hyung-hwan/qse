@@ -1,5 +1,5 @@
 /*
- * $Id: printf.c,v 1.6 2007-01-27 02:55:55 bacon Exp $
+ * $Id: printf.c,v 1.7 2007-01-28 11:28:27 bacon Exp $
  */
 
 #include <stdarg.h>
@@ -11,12 +11,12 @@
 #include <wctype.h>
 
 #if defined(_WIN32)
-	#include <tchar.h>
-	#define ase_printf   _tprintf
-	#define ase_vprintf  _vtprintf
-	#define ase_fprintf  _ftprintf
-	#define ase_vfprintf _vftprintf
 
+#include <tchar.h>
+#define ase_printf   _tprintf
+#define ase_vprintf  _vtprintf
+#define ase_fprintf  _ftprintf
+#define ase_vfprintf _vftprintf
 
 int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list ap)
 {
@@ -45,49 +45,17 @@ int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
 
 #else
 
-	#if defined(ASE_CHAR_IS_MCHAR)
-		#define ase_tolower(x) tolower(x)
-		#define ase_isdigit(x) isdigit(x)
-	#elif defined(ASE_CHAR_IS_WCHAR)
-		#define ase_tolower(x) towlower(x)
-		#define ase_isdigit(x) iswdigit(x)
-	#else
-		#error define ASE_CHAR_IS_MCHAR or ASE_CHAR_IS_WCHAR
-	#endif
-
+#if defined(ASE_CHAR_IS_MCHAR)
+	#define ase_tolower(x) tolower(x)
+	#define ase_isdigit(x) isdigit(x)
+#elif defined(ASE_CHAR_IS_WCHAR)
+	#define ase_tolower(x) towlower(x)
+	#define ase_isdigit(x) iswdigit(x)
+#else
+	#error define ASE_CHAR_IS_MCHAR or ASE_CHAR_IS_WCHAR
+#endif
 
 static ase_char_t* __adjust_format (const ase_char_t* format);
-
-int ase_vprintf (const ase_char_t* fmt, va_list ap);
-int ase_vfprintf (FILE *stream, const ase_char_t* fmt, va_list ap);
-int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list ap);
-
-int ase_printf (const ase_char_t* fmt, ...)
-{
-	int n;
-	va_list ap;
-
-	va_start (ap, fmt);
-	n = ase_vprintf (fmt, ap);
-	va_end (ap);
-	return n;
-}
-
-int ase_fprintf (FILE* file, const ase_char_t* fmt, ...)
-{
-	int n;
-	va_list ap;
-
-	va_start (ap, fmt);
-	n = ase_vfprintf (file, fmt, ap);
-	va_end (ap);
-	return n;
-}
-
-int ase_vprintf (const ase_char_t* fmt, va_list ap)
-{
-	return ase_vfprintf (stdout, fmt, ap);
-}
 
 int ase_vfprintf (FILE *stream, const ase_char_t* fmt, va_list ap)
 {
@@ -104,13 +72,29 @@ int ase_vfprintf (FILE *stream, const ase_char_t* fmt, va_list ap)
 	return n;
 }
 
-int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
+int ase_vprintf (const ase_char_t* fmt, va_list ap)
+{
+	return ase_vfprintf (stdout, fmt, ap);
+}
+
+int ase_fprintf (FILE* file, const ase_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
 
 	va_start (ap, fmt);
-	n = ase_vsprintf (buf, size, fmt, ap);
+	n = ase_vfprintf (file, fmt, ap);
+	va_end (ap);
+	return n;
+}
+
+int ase_printf (const ase_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+
+	va_start (ap, fmt);
+	n = ase_vprintf (fmt, ap);
 	va_end (ap);
 	return n;
 }
@@ -135,6 +119,17 @@ int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list a
 	}
 
 	free (nf);
+	return n;
+}
+
+int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+
+	va_start (ap, fmt);
+	n = ase_vsprintf (buf, size, fmt, ap);
+	va_end (ap);
 	return n;
 }
 

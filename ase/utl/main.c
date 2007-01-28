@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.4 2007-01-26 16:10:32 bacon Exp $
+ * $Id: main.c,v 1.5 2007-01-28 11:28:26 bacon Exp $
  */
 
 #include <ase/types.h>
@@ -15,7 +15,11 @@
 #include <tchar.h>
 #define ase_main _tmain
 
-#elif defined(ASE_CHAR_IS_WCHAR) && defined(__unix)
+#elif defined(ASE_CHAR_IS_MCHAR)
+
+#define ase_main main
+
+#else /* ASE_CHAR_IS_WCHAR */
 
 #ifdef __cplusplus
 extern "C" { int ase_main (...); }
