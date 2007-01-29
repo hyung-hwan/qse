@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.6 2007-01-28 11:33:23 bacon Exp $
+ * $Id: main.c,v 1.7 2007-01-29 02:47:19 bacon Exp $
  */
 
 #include <ase/types.h>
@@ -17,7 +17,17 @@
 
 #elif defined(ASE_CHAR_IS_MCHAR)
 
-#define ase_main main
+#ifdef __cplusplus
+extern "C" { int ase_main (...); }
+#else
+extern int ase_main ();
+#endif
+
+int main (int argc, char* argv[], char** envp)
+{
+	setlocale (LC_ALL, "");
+	return ase_main (argc, argv, envp);
+}
 
 #else /* ASE_CHAR_IS_WCHAR */
 
