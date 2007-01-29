@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 aseawk.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /out:"../release/win32/vs60/aseawk_jni.dll" /implib:"release/win32/vs60/aseawk.lib" /libpath:"$(OutDir)"
+# ADD LINK32 aseawk.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /out:"../release/win32/vs60/aseawk_jni.dll" /implib:"release/win32/vs60/aseawk_jni.lib" /libpath:"$(OutDir)"
 
 !ELSEIF  "$(CFG)" == "awk.jni - Win32 Debug"
 
@@ -81,7 +81,30 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 aseawk.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /out:"../debug/win32/vs60/aseawk_jni.dll" /implib:"debug/win32/vs60/aseawk.lib" /pdbtype:sept /libpath:"$(OutDir)"
+# ADD LINK32 aseawk.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /out:"../debug/win32/vs60/aseawk_jni.dll" /implib:"debug/win32/vs60/aseawk_jni.lib" /pdbtype:sept /libpath:"$(OutDir)"
+# Begin Custom Build
+InputPath=\projects\ase\debug\win32\vs60\aseawk_jni.dll
+SOURCE="$(InputPath)"
+
+BuildCmds= \
+	/progra~1/java/jdk1.5.0_09/bin/javac -classpath ../.. Awk.java \
+	/progra~1/java/jdk1.5.0_09/bin/javac -classpath ../.. StdAwk.java \
+	/progra~1/java/jdk1.5.0_09/bin/javac -classpath ../.. Extio.java \
+	/progra~1/java/jdk1.5.0_09/bin/javac -classpath ../.. Exception.java \
+	
+
+"Awk.class" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+
+"StdAwk.class" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+
+"Extio.class" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+
+"Exception.class" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+# End Custom Build
 
 !ENDIF 
 
@@ -109,5 +132,21 @@ SOURCE=.\jni.h
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # End Group
+# Begin Source File
+
+SOURCE=.\Awk.java
+# End Source File
+# Begin Source File
+
+SOURCE=.\Exception.java
+# End Source File
+# Begin Source File
+
+SOURCE=.\Extio.java
+# End Source File
+# Begin Source File
+
+SOURCE=.\StdAwk.java
+# End Source File
 # End Target
 # End Project
