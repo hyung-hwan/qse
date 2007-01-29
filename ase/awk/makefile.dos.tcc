@@ -10,7 +10,7 @@ OUT = aseawk.lib
 
 CC = tcc
 AR = tlib
-CFLAGS = -1 -O -mh -w -f87 -G -g0 -I..\.. -D_DEBUG
+CFLAGS = -1 -O -mh -w -f87 -G -g0 -I..\.. 
 
 all: $(OBJS)
 	-del $(OUT)
