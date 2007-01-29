@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.64 2007-01-29 04:31:02 bacon Exp $
+ * $Id: types.h,v 1.65 2007-01-29 06:40:29 bacon Exp $
  */
 
 #ifndef _ASE_TYPES_H_
@@ -9,7 +9,7 @@
 	#include <ase/conf_msw.h>
 #elif defined(vms) || defined(__vms)
 	#include <ase/conf_vms.h>
-#elif defined(__unix__) || defined(__unix) || defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__unix__) || defined(__unix) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || (defined(__APPLE__) && defined(__MACH__))
 	#if !defined(__unix__)
 		#define __unix__
 	#endif
@@ -168,10 +168,13 @@ typedef int  ase_mcint_t;
 	#if defined(vms) || defined(__vms)
 		typedef unsigned int ase_wchar_t;
 		typedef int ase_wcint_t;
-	#elif defined(__FreeBSD__) || defined(__NetBSD__)
+	#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
 	#elif (defined(sun) || defined(__sun)) && defined(_LP64)
+		typedef int ase_wchar_t;
+		typedef int ase_wcint_t;
+	#elif defined(__APPLE__) && defined(__MACH__)
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
 	#elif ASE_SIZEOF_LONG == 4
