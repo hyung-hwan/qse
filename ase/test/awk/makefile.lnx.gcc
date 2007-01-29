@@ -2,7 +2,7 @@ SRCS = awk.c
 OBJS = $(SRCS:.c=.o)
 
 CC = gcc
-CFLAGS = -g -O2 -D_REENTRANT -D_THREAD_SAFE -I../../..
+CFLAGS = -O2 -Wall -D_REENTRANT -D_THREAD_SAFE -fPIC -fno-omit-frame-pointer -fno-strict-aliasing -I../../..
 LDFLAGS =  -L../../awk
 LIBS =  -laseawk -lm
 
