@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.158 2007-01-29 02:47:20 bacon Exp $
+ * $Id: awk.c,v 1.159 2007-01-29 02:56:15 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -273,15 +273,17 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_WRITE:
 		{
-			/*
-			ase_size_t i;
-			for (i = 0; i < size; i++)
-			{
-				if (awk_fputc (data[i], (FILE*)epa->handle) == ASE_CHAR_EOF) return -1;
-			}
-			*/
+		#if defined(ASE_CHAR_IS_WCHAR) && defined(__linux)
+			/* fwprintf seems to return an error with the file
+			 * pointer opened by popen, as of this writing. 
+			 * anyway, hopefully the following replacement 
+			 * will work all the way. */
+			int n = fprintf (
+				(FILE*)epa->handle, "%.*ls", size, data);
+		#else
 			int n = ase_fprintf (
 				(FILE*)epa->handle, ASE_T("%.*s"), size, data);
+		#endif
 			if (n < 0) return -1;
 
 			return size;
