@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.157 2007-01-28 12:45:14 bacon Exp $
+ * $Id: awk.c,v 1.158 2007-01-29 02:47:20 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -273,7 +273,6 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_WRITE:
 		{
-			int n;
 			/*
 			ase_size_t i;
 			for (i = 0; i < size; i++)
@@ -281,11 +280,8 @@ static ase_ssize_t process_extio_pipe (
 				if (awk_fputc (data[i], (FILE*)epa->handle) == ASE_CHAR_EOF) return -1;
 			}
 			*/
-		#if defined(_WIN32)
-			n = _ftprintf ((FILE*)epa->handle, ASE_T("%.*s"), size, data);
-		#else
-			n = ase_fprintf ((FILE*)epa->handle, ASE_T("%.*s"), size, data);
-		#endif
+			int n = ase_fprintf (
+				(FILE*)epa->handle, ASE_T("%.*s"), size, data);
 			if (n < 0) return -1;
 
 			return size;
@@ -359,14 +355,9 @@ static ase_ssize_t process_extio_file (
 			}
 			*/
 
-			int n;
-		#if defined(_WIN32)
-			n = _ftprintf (epa->handle, ASE_T("%.*s"), size, data);
-		#else
-			n = ase_fprintf ((FILE*)epa->handle, ASE_T("%.*s"), size, data);
-		#endif
+			int n = ase_fprintf (
+				(FILE*)epa->handle, ASE_T("%.*s"), size, data);
 			if (n < 0) return -1;
-		
 
 			return size;
 		}
@@ -925,18 +916,6 @@ int ase_main (int argc, ase_char_t* argv[])
 /*#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif*/
-
-{
-setlocale (LC_ALL, NULL);
-FILE* fp = popen ("cat", "w");
-if (fp != NULL)
-{
-	wprintf (L"askdjflsajfldsakjfdsalkjflsakjfdsalkjfdsalkjfdsalkjfsalkjfdsafdsafdsaf\n");
-	fwprintf (fp, L"askdjflsajfldsakjfdsalkjflsakjfdsalkjfdsalkjfdsalkjfsalkjfdsafdsafdsaf\n");
-	fclose (fp);
-}
-return -1;
-}
 
 	n = __main (argc, argv);
 
