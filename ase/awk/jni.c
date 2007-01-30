@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.59 2007-01-28 11:28:26 bacon Exp $
+ * $Id: jni.c,v 1.60 2007-01-30 10:55:27 bacon Exp $
  */
 
 #include <stdio.h>
@@ -1108,14 +1108,17 @@ static ase_ssize_t __process_extio (
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
 
+printf ("__process_extio...\n");
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
+printf ("__process_extio open...\n");
 		return __java_open_extio (
 			runio_data->env, runio_data->obj, 
 			"openExtio", epa);
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
+printf ("__process_extio close...\n");
 		return __java_close_extio (
 			runio_data->env, runio_data->obj, 
 			"closeExtio", epa);
@@ -1128,6 +1131,7 @@ static ase_ssize_t __process_extio (
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
+printf ("__process_extio write...\n");
 		return __java_write_extio (
 			runio_data->env, runio_data->obj, 
 			"writeExtio", epa, data, size);
@@ -2072,7 +2076,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 	}
 	else
 	{
-		ret = (*env)->NewString (env, str, len);
+		ret = (*env)->NewString (env, (jchar*)str, len);
 	}
 
 	ase_awk_free (awk, str);

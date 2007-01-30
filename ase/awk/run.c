@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.321 2007-01-23 14:23:18 bacon Exp $
+ * $Id: run.c,v 1.322 2007-01-30 10:55:27 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -1713,8 +1713,6 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		/* blockless pattern - execute print $0*/
 		ase_awk_refupval (run, run->inrec.d0);
 
-		/*n = ase_awk_writeextio_val (run, 
-			ASE_AWK_OUT_CONSOLE, ASE_T(""), run->inrec.d0);*/
 		n = ase_awk_writeextio_str (run, 
 			ASE_AWK_OUT_CONSOLE, ASE_T(""),
 			ASE_AWK_STR_BUF(&run->inrec.line),
