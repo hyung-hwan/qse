@@ -1,11 +1,15 @@
 /*
- * $Id: jni.h,v 1.18 2007-01-28 11:12:30 bacon Exp $
+ * $Id: jni.h,v 1.19 2007-01-30 10:55:27 bacon Exp $
  */
 
 #ifndef _ASE_AWK_JNI_H_
 #define _ASE_AWK_JNI_H_
 
+#if defined(__APPLE__) && defined(__MACH__)
+#include <JavaVM/jni.h>
+#else
 #include <jni.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
