@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.13 2007-01-25 14:10:03 bacon Exp $
+ * $Id: StdAwk.java,v 1.14 2007-01-30 11:24:40 bacon Exp $
  */
 
 package ase.awk;
@@ -180,7 +180,7 @@ public abstract class StdAwk extends Awk
 	/* == console interface == */
 	protected int openConsole (Extio extio)
 	{
-		//System.err.println ("[open_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
+		System.err.println ("[open_console called.... name: " + extio.getName() + " mode: " + extio.getMode());
 
 		int mode = extio.getMode ();
 
@@ -210,11 +210,13 @@ public abstract class StdAwk extends Awk
 			osw = get_stream_writer (cout[cout_no]);
 			if (osw == null) return -1;
 
+System.out.println ("setting console output name ....");
 			extio.setHandle (osw);
 			try { setConsoleOutputName (extio, cout[cout_no]); }
 			catch (Exception e) { return -1; }
 
 			cout_no++;
+System.out.println ("open ok....");
 			return 1;
 		}
 

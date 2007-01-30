@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.23 2007-01-29 04:39:22 bacon Exp $
+ * $Id: Awk.java,v 1.24 2007-01-30 11:24:40 bacon Exp $
  */
 
 package ase.test.awk;
@@ -95,6 +95,7 @@ public class Awk extends ase.awk.StdAwk
 			System.out.println ("Option: [" + awk.getOption() + "]");
 
 			awk.parse ();
+			System.out.println ("about to run the program");
 			awk.run ();
 		}
 		catch (ase.awk.Exception e)

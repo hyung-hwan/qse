@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.60 2007-01-30 10:55:27 bacon Exp $
+ * $Id: jni.c,v 1.61 2007-01-30 11:24:40 bacon Exp $
  */
 
 #include <stdio.h>
@@ -1108,17 +1108,14 @@ static ase_ssize_t __process_extio (
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
 
-printf ("__process_extio...\n");
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
-printf ("__process_extio open...\n");
 		return __java_open_extio (
 			runio_data->env, runio_data->obj, 
 			"openExtio", epa);
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
-printf ("__process_extio close...\n");
 		return __java_close_extio (
 			runio_data->env, runio_data->obj, 
 			"closeExtio", epa);
@@ -1131,7 +1128,6 @@ printf ("__process_extio close...\n");
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
-printf ("__process_extio write...\n");
 		return __java_write_extio (
 			runio_data->env, runio_data->obj, 
 			"writeExtio", epa, data, size);
@@ -1811,6 +1807,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 	jsize len;
 	jint n;
 
+printf ("setofilename....\n");
 	len = (*env)->GetStringLength (env, name);
 	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
 	if (ptr == NULL)
@@ -1824,11 +1821,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 		return;
 	}
 
+printf ("setofilename 11111....\n");
 	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		ase_char_t* tmp = (ase_char_t*)
-			malloc (ASE_SIZEOF(ase_char_t)*len);
+			malloc (ASE_SIZEOF(ase_char_t)*(len+1));
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
@@ -1841,8 +1839,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 			return;
 		}
 
+printf ("setofilename 22222....%d\n", len);
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+		tmp[len] = ASE_T('\0');
+printf ("setofilename 333333....[%ls], %d\n", tmp, len);
 		n = ase_awk_setofilename (run, tmp, len);
+printf ("setofilename 444444....\n");
 		free (tmp);
 	}
 	else
