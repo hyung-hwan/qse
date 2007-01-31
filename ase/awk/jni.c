@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.61 2007-01-30 11:24:40 bacon Exp $
+ * $Id: jni.c,v 1.62 2007-01-31 08:23:59 bacon Exp $
  */
 
 #include <stdio.h>
@@ -157,6 +157,7 @@ static void throw_exception (
 	jmethodID except_cons;
 	jstring except_msg;
 	jthrowable except_obj;
+	ase_size_t len;
 
 	except_class = (*env)->FindClass (env, CLASS_EXCEPTION);
 	if (except_class == NULL) 
@@ -181,9 +182,10 @@ static void throw_exception (
 		return;
 	}
 
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	len = ase_awk_strlen(msg);
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i, len = ase_awk_strlen(msg);
+		ase_size_t i;
 		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*len);
 		if (tmp == NULL)
 		{
@@ -204,8 +206,7 @@ static void throw_exception (
 	}
 	else
 	{
-		except_msg = (*env)->NewString (
-			env, (jchar*)msg, ase_awk_strlen(msg));
+		except_msg = (*env)->NewString (env, (jchar*)msg, len);
 	}
 
 	if (except_msg == NULL)
@@ -704,6 +705,7 @@ static ase_ssize_t __java_open_extio (
 	jstring extio_name;
 	jint ret;
 	ase_awk_t* awk;
+	ase_size_t len;
 	
 	/* get the method - meth */
 	class = (*env)->GetObjectClass(env, obj);
@@ -746,9 +748,10 @@ static ase_ssize_t __java_open_extio (
 	}
 
 	/* construct the name */
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	len = ase_awk_strlen(extio->name);
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i, len = ase_awk_strlen(extio->name);
+		ase_size_t i;
 		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*len);
 		if (tmp == NULL)
 		{
@@ -762,9 +765,7 @@ static ase_ssize_t __java_open_extio (
 	}
 	else
 	{
-		extio_name = (*env)->NewString (
-			env, (jchar*)extio->name, 
-			ase_awk_strlen(extio->name));
+		extio_name = (*env)->NewString (env, (jchar*)extio->name, len);
 	}
 
 	if (extio_name == NULL) 
@@ -778,7 +779,7 @@ static ase_ssize_t __java_open_extio (
 	/* construct the extio object */
 	extio_object = (*env)->NewObject (
 		env, extio_class, extio_cons, 
-		extio_name, extio->type & 0xFF, extio->mode, extio->run);
+		extio_name, extio->type & 0xFF, extio->mode, (jlong)extio->run);
 	(*env)->DeleteLocalRef (env, extio_class);
 	if (extio_object == NULL) 
 	{
@@ -1177,7 +1178,7 @@ static int __handle_bfn (
 		ASE_T("out of memory in handling %.*s"),
 		fnl, fnm);
 
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	if (fnl > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*fnl);
@@ -1192,7 +1193,10 @@ static int __handle_bfn (
 		name = (*env)->NewString (env, tmp, fnl);
 		free (tmp);
 	}
-	else name = (*env)->NewString (env, (jchar*)fnm, fnl);
+	else 
+	{
+		name = (*env)->NewString (env, (jchar*)fnm, fnl);
+	}
 
 	if (name == NULL)
 	{
@@ -1262,12 +1266,13 @@ static int __handle_bfn (
 		}
 		else if (v->type == ASE_AWK_VAL_STR)
 		{
+			ase_size_t len = ((ase_awk_val_str_t*)v)->len;
+
 			if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 			{
 				ase_size_t i;
 			
-				jchar* tmp = (jchar*) malloc (
-					((ase_awk_val_str_t*)v)->len * ASE_SIZEOF(jchar));
+				jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*len);
 				if (tmp == NULL)
 				{
 					(*env)->DeleteLocalRef (env, args);
@@ -1275,19 +1280,17 @@ static int __handle_bfn (
 					return -1;
 				}
 
-				for (i = 0; i < ((ase_awk_val_str_t*)v)->len; i++)
+				for (i = 0; i < len; i++)
 					tmp[i] = (jchar)((ase_awk_val_str_t*)v)->buf[i];
 
-				arg = (*env)->NewString (
-					env, tmp, ((ase_awk_val_str_t*)v)->len);
+				arg = (*env)->NewString (env, tmp, len);
 				
 				free (tmp);
 			}
 			else
 			{
-				arg = (*env)->NewString (env, 
-					(jchar*)((ase_awk_val_str_t*)v)->buf, 
-					((ase_awk_val_str_t*)v)->len);
+				arg = (*env)->NewString (
+					env, (jchar*)((ase_awk_val_str_t*)v)->buf, len);
 			}
 		}
 
@@ -1418,7 +1421,7 @@ static int __handle_bfn (
 			return -1;
 		}
 
-		if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+		if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 		{
 			ase_size_t i;
 			ase_char_t* tmp = (ase_char_t*)
@@ -1500,7 +1503,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 		return;
 	}
 
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		ase_char_t* tmp = (ase_char_t*)
@@ -1577,7 +1580,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delbfn (
 		return;
 	}
 
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		ase_char_t* tmp = (ase_char_t*)
@@ -1761,7 +1764,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 		return;
 	}
 
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		ase_char_t* tmp = (ase_char_t*)
@@ -1807,7 +1810,6 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 	jsize len;
 	jint n;
 
-printf ("setofilename....\n");
 	len = (*env)->GetStringLength (env, name);
 	ptr = (*env)->GetStringChars (env, name, JNI_FALSE);
 	if (ptr == NULL)
@@ -1821,12 +1823,11 @@ printf ("setofilename....\n");
 		return;
 	}
 
-printf ("setofilename 11111....\n");
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		ase_char_t* tmp = (ase_char_t*)
-			malloc (ASE_SIZEOF(ase_char_t)*(len+1));
+			malloc (ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
@@ -1839,12 +1840,8 @@ printf ("setofilename 11111....\n");
 			return;
 		}
 
-printf ("setofilename 22222....%d\n", len);
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
-		tmp[len] = ASE_T('\0');
-printf ("setofilename 333333....[%ls], %d\n", tmp, len);
 		n = ase_awk_setofilename (run, tmp, len);
-printf ("setofilename 444444....\n");
 		free (tmp);
 	}
 	else
@@ -1888,7 +1885,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 		return NULL;
 	}
 
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		ase_char_t* tmp = (ase_char_t*)
@@ -2057,7 +2054,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 		return NULL;
 	}
 
-	if (ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*len);
