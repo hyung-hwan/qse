@@ -1,12 +1,8 @@
 /*
- * $Id: Awk.java,v 1.23 2007-01-26 15:27:00 bacon Exp $
+ * $Id: Awk.java,v 1.24 2007-01-31 09:31:02 bacon Exp $
  */
 
 package ase.awk;
-
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.net.URL;
 
 public abstract class Awk
 {
@@ -38,33 +34,6 @@ public abstract class Awk
 	public static final int OPTION_NEXTOFILE   = (1 << 12);
 	public static final int OPTION_CRLF        = (1 << 13);
 
-	static
-	{
-		/*
-		System.getProperty("os.name"));   os.arch / os.version;
-		*/
-		//System.load ("c://projects//ase/awk/aseawk.dll");
-		URL url = ase.awk.Awk.class.getResource("aseawk_jni.dll");
-		if (url == null) url = ase.awk.Awk.class.getResource("aseawk_jni.so");
-		if (url != null) System.load (url.getFile());
-
-		/*
-		AccessController.doPrivileged (new PrivilegedAction ()
-		{
-			public Object run ()
-			{
-				URL url = ase.awk.Awk.class.getResource("aseawk.dll");
-				if (url == null) url = ase.awk.Awk.class.getResource("libaseawk_jni.so");
-				
-				if (url != null) System.load (url.getFile());
-				//System.load ("c://projects//ase/awk/aseawk.dll");
-				//System.loadLibrary ("aseawk");
-				return null;
-			}
-		});
-		*/
-	}
-
 	private long handle;
 
 	public Awk () throws Exception
@@ -85,7 +54,7 @@ public abstract class Awk
 	private native void open () throws Exception;
 	public  native void close ();
 	public  native void parse () throws Exception;
-	public  native void run () throws Exception;
+	public  native void run (String main) throws Exception;
 
 	private native int getmaxdepth (int id);
 	private native void setmaxdepth (int id, int depth);
@@ -109,6 +78,12 @@ public abstract class Awk
 		long runid, String str) throws Exception;
 	private native String valtostr (
 		long runid, Object obj) throws Exception;
+
+	/* == simpler run method == */
+	public void run () throws Exception
+	{
+		run (null);
+	}
 
 	/* == builtin functions == */
 	public void addBuiltinFunction (

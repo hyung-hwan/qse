@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.15 2007-01-31 08:23:59 bacon Exp $
+ * $Id: StdAwk.java,v 1.16 2007-01-31 09:31:03 bacon Exp $
  */
 
 package ase.awk;
@@ -52,11 +52,16 @@ public abstract class StdAwk extends Awk
 		super.parse ();
 	}
 
-	public void run () throws Exception
+	public void run (String main) throws Exception
 	{
 		cin = consoleInputNames (); cin_no = 0;
 		cout = consoleOutputNames (); cout_no = 0;
-		super.run ();
+		super.run (main);
+	}
+
+	public void run () throws Exception
+	{
+		run (null);
 	}
 
 	/* == source code names == */
@@ -207,6 +212,7 @@ public abstract class StdAwk extends Awk
 			cout_no = 0;
 		       
 			if (cout == null || cout_no >= cout.length) return 0;
+
 			osw = get_stream_writer (cout[cout_no]);
 			if (osw == null) return -1;
 
