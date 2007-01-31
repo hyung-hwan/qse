@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.62 2007-01-31 08:23:59 bacon Exp $
+ * $Id: jni.c,v 1.63 2007-01-31 09:31:03 bacon Exp $
  */
 
 #include <stdio.h>
@@ -386,7 +386,17 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 	}
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
+#define DELETE_CLASS_REFS(env, run_data) \
+	do { \
+		(*env)->DeleteLocalRef (env, run_data.integer_class); \
+		(*env)->DeleteLocalRef (env, run_data.long_class); \
+		(*env)->DeleteLocalRef (env, run_data.float_class); \
+		(*env)->DeleteLocalRef (env, run_data.double_class); \
+		(*env)->DeleteLocalRef (env, run_data.string_class); \
+		(*env)->DeleteLocalRef (env, run_data.object_class); \
+	} while (0)
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring mfn)
 {
 	jclass class;
 	jfieldID handle;
@@ -395,14 +405,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 	ase_awk_runios_t runios;
 	runio_data_t runio_data;
 	run_data_t run_data;
+	ase_char_t* mmm;
 
-	static int depth_ids[] =
-	{
-		ASE_AWK_DEPTH_BLOCK_PARSE,
-		ASE_AWK_DEPTH_EXPR_PARSE,
-		ASE_AWK_DEPTH_REX_BUILD,
-		ASE_AWK_DEPTH_REX_MATCH
-	};
+	ase_size_t len;
+	jchar* ptr;
 
 	class = (*env)->GetObjectClass (env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
@@ -485,31 +491,88 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj)
 	runios.console = __process_extio;
 	runios.custom_data = &runio_data;
 
-	if (ase_awk_run (awk, 
-		ASE_NULL, &runios, ASE_NULL, ASE_NULL, &run_data) == -1)
+	if (mfn == NULL) 
 	{
+		mmm = NULL;
+		ptr = NULL;
+	}
+	else
+	{
+		len = (*env)->GetStringLength (env, mfn);
+
+		if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+		{
+			ase_size_t i;
+
+			ptr = (*env)->GetStringChars (env, mfn, JNI_FALSE);
+			if (ptr == NULL)
+			{
+				(*env)->ExceptionClear (env);
+				DELETE_CLASS_REFS (env, run_data);
+				throw_exception (
+					env, 
+					ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+					ASE_AWK_ENOMEM,
+					0);
+				return;
+			}
+
+			mmm = (ase_char_t*) malloc (ASE_SIZEOF(ase_char_t)*(len+1));
+			if (mmm == ASE_NULL)
+			{
+				(*env)->ReleaseStringChars (env, mfn, ptr);
+				DELETE_CLASS_REFS (env, run_data);
+				throw_exception (
+					env, 
+					ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+					ASE_AWK_ENOMEM,
+					0);
+				return;
+			}
+
+			for (i =  0; i < len; i++) 
+			{
+				mmm[i] = (ase_char_t)ptr[i];
+				if (mmm[i] == ASE_T('\0'))
+				{
+					free (mmm);
+					(*env)->ReleaseStringChars (env, mfn, ptr);
+					DELETE_CLASS_REFS (env, run_data);
+					throw_exception (
+						env, 
+						ASE_T("main function name not valid"),
+						ASE_AWK_EINVAL,
+						0);
+					return;
+				}
+			}
+			mmm[len] = ASE_T('\0');
+		}
+		else 
+		{
+			mmm = (ase_char_t*)mfn;
+			ptr = NULL;
+		}
+	}
+
+	if (ase_awk_run (awk, 
+		mmm, &runios, ASE_NULL, ASE_NULL, &run_data) == -1)
+	{
+		if (mmm != NULL && mmm != mfn) free (mmm);
+		if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
+		DELETE_CLASS_REFS (env, run_data);
+
 		throw_exception (
 			env, 
 			ase_awk_geterrmsg(awk), 
 			ase_awk_geterrnum(awk), 
 			ase_awk_geterrlin(awk));
-
-		(*env)->DeleteLocalRef (env, run_data.integer_class);
-		(*env)->DeleteLocalRef (env, run_data.long_class);
-		(*env)->DeleteLocalRef (env, run_data.float_class);
-		(*env)->DeleteLocalRef (env, run_data.double_class);
-		(*env)->DeleteLocalRef (env, run_data.string_class);
-		(*env)->DeleteLocalRef (env, run_data.object_class);
 		return;
 	}
 
-	(*env)->DeleteLocalRef (env, run_data.integer_class);
-	(*env)->DeleteLocalRef (env, run_data.long_class);
-	(*env)->DeleteLocalRef (env, run_data.short_class);
-	(*env)->DeleteLocalRef (env, run_data.float_class);
-	(*env)->DeleteLocalRef (env, run_data.double_class);
-	(*env)->DeleteLocalRef (env, run_data.string_class);
-	(*env)->DeleteLocalRef (env, run_data.object_class);
+	if (mmm != NULL && mmm != mfn) free (mmm);
+	if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
+	DELETE_CLASS_REFS (env, run_data);
 }
 
 static ase_ssize_t __java_open_source (JNIEnv* env, jobject obj, int mode)

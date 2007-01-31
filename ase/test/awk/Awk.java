@@ -1,8 +1,10 @@
 /*
- * $Id: Awk.java,v 1.24 2007-01-30 11:24:40 bacon Exp $
+ * $Id: Awk.java,v 1.25 2007-01-31 09:31:29 bacon Exp $
  */
 
 package ase.test.awk;
+
+import java.net.URL;
 
 public class Awk extends ase.awk.StdAwk
 {
@@ -84,6 +86,10 @@ public class Awk extends ase.awk.StdAwk
 	{
 		Awk awk = null;
 
+		URL url = ase.awk.Awk.class.getResource ("aseawk_jni.dll");
+		if (url == null) url = ase.awk.Awk.class.getResource ("aseawk_jni.so");
+		if (url != null) System.load (url.getFile());
+
 		try
 		{
 			awk = new Awk ();
@@ -95,8 +101,7 @@ public class Awk extends ase.awk.StdAwk
 			System.out.println ("Option: [" + awk.getOption() + "]");
 
 			awk.parse ();
-			System.out.println ("about to run the program");
-			awk.run ();
+			awk.run ("main");
 		}
 		catch (ase.awk.Exception e)
 		{
