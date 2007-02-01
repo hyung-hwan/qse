@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.63 2007-01-31 09:31:03 bacon Exp $
+ * $Id: jni.c,v 1.64 2007-02-01 07:23:59 bacon Exp $
  */
 
 #include <stdio.h>
@@ -396,7 +396,34 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 		(*env)->DeleteLocalRef (env, run_data.object_class); \
 	} while (0)
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring mfn)
+static ase_char_t* java_strxdup (jchar* str, jint len)
+{
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	{
+		ase_char_t* tmp;
+		ase_size_t i;
+
+		tmp = (ase_char_t*) malloc ((len+1) * ASE_SIZEOF(ase_char_t));
+		if (tmp == ASE_NULL) return ASE_NULL;
+
+		for (i = 0; i < (ase_size_t)len; i++) tmp[i] = (ase_char_t)str[i];
+		tmp[i] = ASE_T('\0');
+
+		return tmp;
+	}
+	else
+	{
+		ase_char_t* tmp;
+
+		tmp = (ase_char_t*) malloc ((len+1) * ASE_SIZEOF(ase_char_t));
+		if (tmp == ASE_NULL) return ASE_NULL;
+
+		ase_awk_strncpy (tmp, (ase_char_t*)str, (ase_size_t)len);
+		return tmp;
+	}
+}
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring mfn, jobjectArray args)
 {
 	jclass class;
 	jfieldID handle;
@@ -407,8 +434,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	run_data_t run_data;
 	ase_char_t* mmm;
 
-	ase_size_t len;
+	ase_size_t len, i;
 	jchar* ptr;
+
+	ase_awk_runarg_t* runarg = NULL;
 
 	class = (*env)->GetObjectClass (env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
@@ -498,6 +527,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	}
 	else
 	{
+		/* process the main entry point */
+
 		len = (*env)->GetStringLength (env, mfn);
 
 		if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
@@ -555,9 +586,99 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 		}
 	}
 
-	if (ase_awk_run (awk, 
-		mmm, &runios, ASE_NULL, ASE_NULL, &run_data) == -1)
+
+	if (args != NULL)
 	{
+		/* compose arguments */
+
+		len = (*env)->GetArrayLength (env, args);
+
+		runarg = malloc (sizeof(ase_awk_runarg_t) * (len+1));
+		if (runarg == NULL)
+		{
+			if (mmm != NULL && mmm != mfn) free (mmm);
+			if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
+			DELETE_CLASS_REFS (env, run_data);
+
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+				ASE_AWK_ENOMEM,
+				0);
+
+			return;
+		}
+
+		for (i = 0; i < len; i++)
+		{
+			jchar* tmp;
+			jstring obj = (jstring)(*env)->GetObjectArrayElement (env, args, i);
+
+			runarg[i].len = (*env)->GetStringLength (env, obj);	
+			tmp = (*env)->GetStringChars (env, obj, JNI_FALSE);
+			if (tmp == NULL)
+			{
+				ase_size_t j;
+
+				for (j = 0; j < i; j++) free (runarg[j].ptr);
+				free (runarg);
+
+				(*env)->DeleteLocalRef (env, obj);
+
+				if (mmm != NULL && mmm != mfn) free (mmm);
+				if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
+				DELETE_CLASS_REFS (env, run_data);
+
+				throw_exception (
+					env, 
+					ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+					ASE_AWK_ENOMEM,
+					0);
+
+				return;
+			}
+
+			runarg[i].ptr = java_strxdup (tmp, runarg[i].len);
+			if (runarg[i].ptr == NULL)
+			{
+				ase_size_t j;
+
+				for (j = 0; j < i; j++) free (runarg[j].ptr);
+				free (runarg);
+
+				(*env)->ReleaseStringChars (env, obj, tmp);
+				(*env)->DeleteLocalRef (env, obj);
+
+				if (mmm != NULL && mmm != mfn) free (mmm);
+				if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
+				DELETE_CLASS_REFS (env, run_data);
+
+				throw_exception (
+					env, 
+					ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+					ASE_AWK_ENOMEM,
+					0);
+
+				return;
+			}
+			
+			(*env)->ReleaseStringChars (env, obj, tmp);
+			(*env)->DeleteLocalRef (env, obj);
+		}
+
+		runarg[i].ptr = NULL;
+		runarg[i].len = 0;
+	}
+
+	if (ase_awk_run (awk, 
+		mmm, &runios, ASE_NULL, runarg, &run_data) == -1)
+	{
+		if (runarg != NULL)
+		{
+			for (i = 0; i < len; i++) free (runarg[i].ptr);
+			free (runarg);
+		}
+
 		if (mmm != NULL && mmm != mfn) free (mmm);
 		if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
 		DELETE_CLASS_REFS (env, run_data);
@@ -568,6 +689,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 			ase_awk_geterrnum(awk), 
 			ase_awk_geterrlin(awk));
 		return;
+	}
+
+	if (runarg != NULL)
+	{
+		for (i = 0; i < len; i++) free (runarg[i].ptr);
+		free (runarg);
 	}
 
 	if (mmm != NULL && mmm != mfn) free (mmm);

@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.20 2007-01-31 09:31:03 bacon Exp $
+ * $Id: jni.h,v 1.21 2007-02-01 07:23:59 bacon Exp $
  */
 
 #ifndef _ASE_AWK_JNI_H_
@@ -18,7 +18,8 @@ extern "C" {
 JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj);
-JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring mfn);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_run (
+	JNIEnv* env, jobject obj, jstring mfn, jobjectArray args);
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 	JNIEnv* env, jobject obj, jstring name, jint min_args, jint max_args);
