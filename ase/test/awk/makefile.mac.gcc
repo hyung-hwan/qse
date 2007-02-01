@@ -15,7 +15,7 @@ java:
 	javac -classpath ../../.. Awk.java AwkApplet.java
 
 jrun:
-	java -Xms1m -Xmx2m -classpath ../../.. ase.test.awk.Awk
+	java -classpath ../../.. ase.test.awk.Awk
 
 clean:
 	rm -rf *.o *.class awk 
