@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.24 2007-01-31 09:31:02 bacon Exp $
+ * $Id: Awk.java,v 1.25 2007-02-01 07:23:59 bacon Exp $
  */
 
 package ase.awk;
@@ -54,7 +54,7 @@ public abstract class Awk
 	private native void open () throws Exception;
 	public  native void close ();
 	public  native void parse () throws Exception;
-	public  native void run (String main) throws Exception;
+	public  native void run (String main, String[] args) throws Exception;
 
 	private native int getmaxdepth (int id);
 	private native void setmaxdepth (int id, int depth);
@@ -79,10 +79,20 @@ public abstract class Awk
 	private native String valtostr (
 		long runid, Object obj) throws Exception;
 
-	/* == simpler run method == */
+	/* == simpler run methods == */
+	public void run (String main) throws Exception
+	{
+		run (main, null);
+	}
+
+	public void run (String[] args) throws Exception
+	{
+		run (null, args);
+	}
+
 	public void run () throws Exception
 	{
-		run (null);
+		run (null, null);
 	}
 
 	/* == builtin functions == */

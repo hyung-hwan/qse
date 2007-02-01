@@ -17,7 +17,7 @@ CC = gcc
 AR = ar
 LD = ld
 RANLIB = ranlib
-CFLAGS = -Wall -O2 -D_REENTRANT -D_THREAD_SAFE -fPIC -fno-omit-frame-pointer -fno-strict-aliasing -I../.. $(JNI_INCPATH)
+CFLAGS = -Wall -O2 -D_REENTRANT -D_THREAD_SAFE -fPIC -I../.. $(JNI_INCPATH)
 LDFLAGS = 
 LIBS = 
 
