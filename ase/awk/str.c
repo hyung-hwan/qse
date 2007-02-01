@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.14 2006-12-13 14:16:12 bacon Exp $
+ * $Id: str.c,v 1.15 2007-02-01 08:38:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -109,7 +109,7 @@ ase_size_t ase_awk_str_ncat (
 		/* double the capa if necessary for concatenation */
 		if (capa < str->capa * 2) capa = str->capa * 2;
 
-		if (str->awk->sysfns.realloc != ASE_NULL)
+		if (str->awk->prmfns.realloc != ASE_NULL)
 		{
 			tmp = (ase_char_t*) ASE_AWK_REALLOC (
 				str->awk, str->buf, 

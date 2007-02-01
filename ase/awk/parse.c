@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.239 2007-01-07 07:26:16 bacon Exp $
+ * $Id: parse.c,v 1.240 2007-02-01 08:38:23 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -331,7 +331,7 @@ static struct __bvent __bvtab[] =
 		} \
 		else \
 		{ \
-			awk->sysfns.sprintf ( \
+			awk->prmfns.sprintf ( \
 				(awk)->errmsg, ASE_COUNTOF((awk)->errmsg), \
 				msg, \
 				ASE_AWK_STR_LEN(&(awk)->token.name), \
@@ -703,7 +703,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		}
 		else
 		{
-			awk->sysfns.sprintf (
+			awk->prmfns.sprintf (
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("'%.*s' not a valid function name"), 
 				ASE_AWK_STR_LEN(&awk->token.name),
@@ -722,7 +722,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	/* check if it is a builtin function */
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 	{
-		awk->sysfns.sprintf (
+		awk->prmfns.sprintf (
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("built-in function '%.*s' redefined"), 
 			name_len, name);
@@ -737,7 +737,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	if (ase_awk_map_get(&awk->tree.afns, name, name_len) != ASE_NULL) 
 	{
 		/* the function is defined previously */
-		awk->sysfns.sprintf (
+		awk->prmfns.sprintf (
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("function '%.*s' redefined"), 
 			name_len, name);
@@ -757,7 +757,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		g = ase_awk_tab_find (&awk->parse.globals, 0, name, name_len);
 		if (g != (ase_size_t)-1) 
 		{
-			awk->sysfns.sprintf (
+			awk->prmfns.sprintf (
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("global variable '%.*s' redefined"), 
 				name_len, name);
@@ -844,7 +844,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 				}
 				else
 				{
-					awk->sysfns.sprintf (
+					awk->prmfns.sprintf (
 						awk->errmsg, ASE_COUNTOF(awk->errmsg),
 						ASE_T("'%.*s' not a valid parameter name"), 
 						ASE_AWK_STR_LEN(&awk->token.name),
@@ -870,7 +870,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 					ASE_AWK_FREE (awk, name_dup);
 					ase_awk_tab_clear (&awk->parse.params);
 					
-					awk->sysfns.sprintf (
+					awk->prmfns.sprintf (
 						awk->errmsg, ASE_COUNTOF(awk->errmsg),
 						ASE_T("conflicting parameter '%.*s' with the function"), 
 						param_len, param);
@@ -897,7 +897,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 				ASE_AWK_FREE (awk, name_dup);
 				ase_awk_tab_clear (&awk->parse.params);
 
-				awk->sysfns.sprintf (
+				awk->prmfns.sprintf (
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("duplicate parameter '%.*s'"),
 					param_len, param);
@@ -985,7 +985,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		}
 		else
 		{
-			awk->sysfns.sprintf (
+			awk->prmfns.sprintf (
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("'%.*s' not a valid start of the function body"), 
 				ASE_AWK_STR_LEN(&awk->token.name),
@@ -1328,7 +1328,7 @@ static ase_awk_t* __add_global (
 			/* check if it conflict with a builtin function name */
 			if (ase_awk_getbfn (awk, name, len) != ASE_NULL)
 			{
-				awk->sysfns.sprintf (
+				awk->prmfns.sprintf (
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("built-in function '%.*s' redefined"),
 					len, name);
@@ -1341,7 +1341,7 @@ static ase_awk_t* __add_global (
 			if (ase_awk_map_get (
 				&awk->tree.afns, name, len) != ASE_NULL) 
 			{
-				awk->sysfns.sprintf (
+				awk->prmfns.sprintf (
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("function '%.*s' redefined"),
 					len, name);
@@ -1355,7 +1355,7 @@ static ase_awk_t* __add_global (
 		if (ase_awk_tab_find (
 			&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
 		{ 
-			awk->sysfns.sprintf (
+			awk->prmfns.sprintf (
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("duplicate global variable '%.*s'"),
 				len, name);
@@ -1395,7 +1395,7 @@ static ase_awk_t* __collect_globals (ase_awk_t* awk)
 			}
 			else
 			{
-				awk->sysfns.sprintf (
+				awk->prmfns.sprintf (
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("'%.*s' not a valid variable name"),
 					ASE_AWK_STR_LEN(&awk->token.name),
@@ -1453,7 +1453,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			}
 			else
 			{
-				awk->sysfns.sprintf (
+				awk->prmfns.sprintf (
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("'%.*s' not a valid variable name"),
 					ASE_AWK_STR_LEN(&awk->token.name),
@@ -1476,7 +1476,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			/* check if it conflict with a builtin function name */
 			if (ase_awk_getbfn (awk, local, local_len) != ASE_NULL)
 			{
-				awk->sysfns.sprintf (
+				awk->prmfns.sprintf (
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("built-in function '%.*s' redefined"),
 					local_len, local);
@@ -1491,7 +1491,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			if (ase_awk_map_get (
 				&awk->tree.afns, local, local_len) != ASE_NULL) 
 			{
-				awk->sysfns.sprintf (
+				awk->prmfns.sprintf (
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("function '%.*s' redefined"),
 					local_len, local);
@@ -1507,7 +1507,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 		if (ase_awk_tab_find (&awk->parse.params,
 			0, local, local_len) != (ase_size_t)-1) 
 		{
-			awk->sysfns.sprintf (
+			awk->prmfns.sprintf (
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("parameter '%.*s' redefined"),
 				local_len, local);
@@ -1523,7 +1523,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			((awk->option & ASE_AWK_SHADING)? nlocals: 0),
 			local, local_len) != (ase_size_t)-1)
 		{
-			awk->sysfns.sprintf (
+			awk->prmfns.sprintf (
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("duplicate local variable '%.*s'"),
 				local_len, local);
@@ -2948,7 +2948,7 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			/* built-in function should be in the form 
 		 	 * of the function call */
 
-			awk->sysfns.sprintf (
+			awk->prmfns.sprintf (
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("function name '%.*s' without a left parenthesis"),
 				name_len, name_dup);
@@ -3059,7 +3059,7 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return (ase_awk_nde_t*)nde;
 		}
 
-		awk->sysfns.sprintf (
+		awk->prmfns.sprintf (
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("undefined identifier '%.*s'"), 
 			name_len, name_dup);
@@ -3202,7 +3202,7 @@ static ase_awk_nde_t* __parse_hashidx (
 	ase_awk_clrpt (awk, idx);
 	ASE_AWK_FREE (awk, nde);
 
-	awk->sysfns.sprintf (
+	awk->prmfns.sprintf (
 		awk->errmsg, ASE_COUNTOF(awk->errmsg),
 		ASE_T("undefined identifier '%.*s'"), name_len, name);
 	ase_awk_seterror (awk, ASE_AWK_EUNDEF, line, awk->errmsg);
@@ -4585,7 +4585,7 @@ static int __get_token (ase_awk_t* awk)
 	}
 	else 
 	{
-		awk->sysfns.sprintf (
+		awk->prmfns.sprintf (
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("invalid character '%c'"), c);
 		ase_awk_seterror (

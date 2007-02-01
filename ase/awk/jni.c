@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.64 2007-02-01 07:23:59 bacon Exp $
+ * $Id: jni.c,v 1.65 2007-02-01 08:38:22 bacon Exp $
  */
 
 #include <stdio.h>
@@ -239,36 +239,36 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	jclass class; 
 	jfieldID handle;
 	ase_awk_t* awk;
-	ase_awk_sysfns_t sysfns;
+	ase_awk_prmfns_t prmfns;
 	awk_data_t* awk_data;
 	int opt, errnum;
 	
-	memset (&sysfns, 0, sizeof(sysfns));
-	sysfns.malloc = awk_malloc;
-	sysfns.realloc = awk_realloc;
-	sysfns.free = awk_free;
+	memset (&prmfns, 0, sizeof(prmfns));
+	prmfns.malloc = awk_malloc;
+	prmfns.realloc = awk_realloc;
+	prmfns.free = awk_free;
 
-	sysfns.is_upper  = iswupper;
-	sysfns.is_lower  = iswlower;
-	sysfns.is_alpha  = iswalpha;
-	sysfns.is_digit  = iswdigit;
-	sysfns.is_xdigit = iswxdigit;
-	sysfns.is_alnum  = iswalnum;
-	sysfns.is_space  = iswspace;
-	sysfns.is_print  = iswprint;
-	sysfns.is_graph  = iswgraph;
-	sysfns.is_cntrl  = iswcntrl;
-	sysfns.is_punct  = iswpunct;
-	sysfns.to_upper  = towupper;
-	sysfns.to_lower  = towlower;
+	prmfns.is_upper  = iswupper;
+	prmfns.is_lower  = iswlower;
+	prmfns.is_alpha  = iswalpha;
+	prmfns.is_digit  = iswdigit;
+	prmfns.is_xdigit = iswxdigit;
+	prmfns.is_alnum  = iswalnum;
+	prmfns.is_space  = iswspace;
+	prmfns.is_print  = iswprint;
+	prmfns.is_graph  = iswgraph;
+	prmfns.is_cntrl  = iswcntrl;
+	prmfns.is_punct  = iswpunct;
+	prmfns.to_upper  = towupper;
+	prmfns.to_lower  = towlower;
 
-	sysfns.memcpy  = memcpy;
-	sysfns.memset  = memset;
-	sysfns.pow     = awk_pow;
-	sysfns.sprintf = awk_sprintf;
-	sysfns.aprintf = awk_aprintf;
-	sysfns.dprintf = awk_dprintf;
-	sysfns.abort   = awk_abort;
+	prmfns.memcpy  = memcpy;
+	prmfns.memset  = memset;
+	prmfns.pow     = awk_pow;
+	prmfns.sprintf = awk_sprintf;
+	prmfns.aprintf = awk_aprintf;
+	prmfns.dprintf = awk_dprintf;
+	prmfns.abort   = awk_abort;
 
 	awk_data = (awk_data_t*) malloc (sizeof(awk_data_t));
 	if (awk_data == NULL)
@@ -283,10 +283,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	memset (awk_data, 0, sizeof(awk_data_t));
 
-	awk = ase_awk_open (&sysfns, awk_data, &errnum);
+	awk = ase_awk_open (&prmfns, awk_data, &errnum);
 	if (awk == NULL)
 	{
-		free (sysfns.custom_data);
+		free (prmfns.custom_data);
 		throw_exception (
 			env,
 			ase_awk_geterrstr(errnum), 

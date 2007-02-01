@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.185 2007-01-25 14:10:03 bacon Exp $
+ * $Id: awk.h,v 1.186 2007-02-01 08:38:22 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_H_
@@ -13,7 +13,7 @@ typedef struct ase_awk_run_t ase_awk_run_t;
 typedef struct ase_awk_val_t ase_awk_val_t;
 typedef struct ase_awk_extio_t ase_awk_extio_t;
 
-typedef struct ase_awk_sysfns_t ase_awk_sysfns_t;
+typedef struct ase_awk_prmfns_t ase_awk_prmfns_t;
 typedef struct ase_awk_srcios_t ase_awk_srcios_t;
 typedef struct ase_awk_runios_t ase_awk_runios_t;
 typedef struct ase_awk_runcbs_t ase_awk_runcbs_t;
@@ -68,7 +68,7 @@ struct ase_awk_extio_t
 	ase_awk_extio_t* next;
 };
 
-struct ase_awk_sysfns_t
+struct ase_awk_prmfns_t
 {
 	/* memory allocation/deallocation */
 	ase_awk_malloc_t  malloc;      /* required */
@@ -402,7 +402,7 @@ extern "C" {
 #endif
 
 ase_awk_t* ase_awk_open (
-	const ase_awk_sysfns_t* sysfns, void* custom_data, int* errnum);
+	const ase_awk_prmfns_t* prmfns, void* custom_data, int* errnum);
 int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 

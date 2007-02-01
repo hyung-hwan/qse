@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.12 2007-01-02 12:25:18 bacon Exp $
+ * $Id: rec.c,v 1.13 2007-02-01 08:38:23 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -303,7 +303,7 @@ static int __recomp_record_fields (
 		 * number of fields that the current record can hold,
 		 * the field spaces are resized */
 
-		if (run->awk->sysfns.realloc != ASE_NULL)
+		if (run->awk->prmfns.realloc != ASE_NULL)
 		{
 			tmp = ASE_AWK_REALLOC (
 				run->awk, run->inrec.flds, 

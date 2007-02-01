@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.322 2007-01-30 10:55:27 bacon Exp $
+ * $Id: run.c,v 1.323 2007-02-01 08:38:23 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -212,9 +212,9 @@ typedef ase_awk_val_t* (*eval_expr_t) (ase_awk_run_t* run, ase_awk_nde_t* nde);
 static int __printval (ase_awk_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
-	run->awk->sysfns.dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
+	run->awk->prmfns.dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
 	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
-	run->awk->sysfns.dprintf (ASE_T("\n"));
+	run->awk->prmfns.dprintf (ASE_T("\n"));
 	return 0;
 }
 #endif
@@ -253,7 +253,7 @@ static int __set_global (
 
 		if (var != ASE_NULL)
 		{
-			run->awk->sysfns.sprintf (
+			run->awk->prmfns.sprintf (
 				run->errmsg, ASE_COUNTOF(run->errmsg),
 				ASE_T("map '%.*s' not assignable with a scalar"),
 				var->id.name_len, var->id.name);
@@ -1382,9 +1382,9 @@ static int __run_main (
 		else
 		{
 #ifdef _DEBUG
-			run->awk->sysfns.dprintf (ASE_T("[RETURN] - "));
+			run->awk->prmfns.dprintf (ASE_T("[RETURN] - "));
 			ase_awk_dprintval (run, v);
-			run->awk->sysfns.dprintf (ASE_T("\n"));
+			run->awk->prmfns.dprintf (ASE_T("\n"));
 #endif
 			/* destroy the return value if necessary */
 			ase_awk_refupval (run, v);
@@ -1501,9 +1501,9 @@ static int __run_main (
 		v = STACK_RETVAL(run);
 
 #ifdef _DEBUG
-		run->awk->sysfns.dprintf (ASE_T("[RETURN] - "));
+		run->awk->prmfns.dprintf (ASE_T("[RETURN] - "));
 		ase_awk_dprintval (run, v);
-		run->awk->sysfns.dprintf (ASE_T("\n"));
+		run->awk->prmfns.dprintf (ASE_T("\n"));
 #endif
 
 		/* the life of the global return value is over here
@@ -1530,9 +1530,9 @@ static int __run_main (
 	run->exit_level = EXIT_NONE;
 
 #ifdef _DEBUG
-	run->awk->sysfns.dprintf (ASE_T("[VARIABLES]\n"));
+	run->awk->prmfns.dprintf (ASE_T("[VARIABLES]\n"));
 	ase_awk_map_walk (&run->named, __printval, run);
-	run->awk->sysfns.dprintf (ASE_T("[END VARIABLES]\n"));
+	run->awk->prmfns.dprintf (ASE_T("[END VARIABLES]\n"));
 #endif
 
 	return n;
@@ -1753,7 +1753,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	p = nde->body;
 	nlocals = nde->nlocals;
 
-/*run->awk->sysfns.dprintf (ASE_T("securing space for local variables nlocals = %d\n"), (int)nlocals);*/
+/*run->awk->prmfns.dprintf (ASE_T("securing space for local variables nlocals = %d\n"), (int)nlocals);*/
 	saved_stack_top = run->stack_top;
 
 	/* secure space for local variables */
@@ -1770,10 +1770,10 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		/* refupval is not required for ase_awk_val_nil */
 	}
 
-/*run->awk->sysfns.dprintf (ASE_T("executing block statements\n"));*/
+/*run->awk->prmfns.dprintf (ASE_T("executing block statements\n"));*/
 	while (p != ASE_NULL && run->exit_level == EXIT_NONE) 
 	{
-/*run->awk->sysfns.dprintf (ASE_T("running a statement\n"));*/
+/*run->awk->prmfns.dprintf (ASE_T("running a statement\n"));*/
 		if (__run_statement(run,p) == -1) 
 		{
 			n = -1;
@@ -1782,7 +1782,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		p = p->next;
 	}
 
-/*run->awk->sysfns.dprintf (ASE_T("popping off local variables\n"));*/
+/*run->awk->prmfns.dprintf (ASE_T("popping off local variables\n"));*/
 	/* pop off local variables */
 	nlocals = nde->nlocals;
 	while (nlocals > 0)
@@ -2207,14 +2207,14 @@ static int __run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde)
 		 * by the parser first of all */
 		ASE_AWK_ASSERT (run->awk, nde->val->next == ASE_NULL); 
 
-/*run->awk->sysfns.dprintf (ASE_T("returning....\n"));*/
+/*run->awk->prmfns.dprintf (ASE_T("returning....\n"));*/
 		val = __eval_expression (run, nde->val);
 		if (val == ASE_NULL) return -1;
 
 		ase_awk_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
 		ase_awk_refupval (run, val); /* see __eval_call for the trick */
-/*run->awk->sysfns.dprintf (ASE_T("set return value....\n"));*/
+/*run->awk->prmfns.dprintf (ASE_T("set return value....\n"));*/
 	}
 	
 	run->exit_level = EXIT_FUNCTION;
@@ -2409,7 +2409,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
-				run->awk->sysfns.sprintf (
+				run->awk->prmfns.sprintf (
 					run->errmsg, ASE_COUNTOF(run->errmsg), 
 					ASE_T("'%.*s' not deletable"), 
 					var->id.name_len, var->id.name);
@@ -2520,7 +2520,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
-				run->awk->sysfns.sprintf (
+				run->awk->prmfns.sprintf (
 					run->errmsg, ASE_COUNTOF(run->errmsg), 
 					ASE_T("'%.*s' not deletable"), 
 					var->id.name_len, var->id.name);
@@ -3101,7 +3101,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 		{
 			/* once a variable becomes a map,
 			 * it cannot be changed to a scalar variable */
-			run->awk->sysfns.sprintf (
+			run->awk->prmfns.sprintf (
 				run->errmsg, ASE_COUNTOF(run->errmsg),
 				ASE_T("map '%.*s' not assignable with a scalar"),
 				var->id.name_len, var->id.name);
@@ -3135,7 +3135,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 		{	
 			/* once the variable becomes a map,
 			 * it cannot be changed to a scalar variable */
-			run->awk->sysfns.sprintf (
+			run->awk->prmfns.sprintf (
 				run->errmsg, ASE_COUNTOF(run->errmsg),
 				ASE_T("map '%.*s' not assignable with a scalar"),
 				var->id.name_len, var->id.name);
@@ -3155,7 +3155,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 		{	
 			/* once the variable becomes a map,
 			 * it cannot be changed to a scalar variable */
-			run->awk->sysfns.sprintf (
+			run->awk->prmfns.sprintf (
 				run->errmsg, ASE_COUNTOF(run->errmsg),
 				ASE_T("map '%.*s' not assignable with a scalar"),
 				var->id.name_len, var->id.name);
@@ -3273,7 +3273,7 @@ static ase_awk_val_t* __do_assignment_map (
 	str = __idxnde_to_str (run, var->idx, &len);
 	if (str == ASE_NULL) return ASE_NULL;
 
-/*run->awk->sysfns.dprintf (ASE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int)map->ref, (int)map->type);*/
+/*run->awk->prmfns.dprintf (ASE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int)map->ref, (int)map->type);*/
 	n = ase_awk_map_putx (map->map, str, len, val, ASE_NULL);
 	if (n < 0)
 	{
@@ -4361,7 +4361,7 @@ static ase_awk_val_t* __eval_binop_exp (
 	ase_real_t r1, r2;
 	ase_awk_val_t* res;
 
-	ASE_AWK_ASSERTX (run->awk, run->awk->sysfns.pow != ASE_NULL,
+	ASE_AWK_ASSERTX (run->awk, run->awk->prmfns.pow != ASE_NULL,
 		"the pow function should be provided when the awk object is created to make the exponentiation work properly.");
 
 	n1 = ase_awk_valtonum (run, left, &l1, &r1);
@@ -4422,14 +4422,14 @@ static ase_awk_val_t* __eval_binop_exp (
 	{
 		/* left - int, right - real */
 		res = ase_awk_makerealval (run, 
-			run->awk->sysfns.pow((ase_real_t)l1,(ase_real_t)r2));
+			run->awk->prmfns.pow((ase_real_t)l1,(ase_real_t)r2));
 	}
 	else
 	{
 		/* left - real, right - real */
 		ASE_AWK_ASSERT (run->awk, n3 == 3);
 		res = ase_awk_makerealval (run,
-			run->awk->sysfns.pow((ase_real_t)r1,(ase_real_t)r2));
+			run->awk->prmfns.pow((ase_real_t)r1,(ase_real_t)r2));
 	}
 
 	if (res == ASE_NULL) 
@@ -5244,7 +5244,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		if (len2 < ASE_COUNTOF(run->errmsg) &&
 		    call->what.afn.name.len > ASE_COUNTOF(run->errmsg)-len2)
 		{
-			run->awk->sysfns.sprintf (
+			run->awk->prmfns.sprintf (
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg),
 				fmt2,
@@ -5253,7 +5253,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		}
 		else
 		{
-			run->awk->sysfns.sprintf (
+			run->awk->prmfns.sprintf (
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg),
 				fmt,
@@ -5358,7 +5358,7 @@ static ase_awk_val_t* __eval_call (
 
 	saved_stack_top = run->stack_top;
 
-/*run->awk->sysfns.dprintf (ASE_T("setting up function stack frame stack_top = %ld stack_base = %ld\n"), run->stack_top, run->stack_base); */
+/*run->awk->prmfns.dprintf (ASE_T("setting up function stack frame stack_top = %ld stack_base = %ld\n"), run->stack_top, run->stack_base); */
 	if (__raw_push(run,(void*)run->stack_base) == -1) 
 	{
 		ase_awk_setrunerror (
@@ -5483,7 +5483,7 @@ static ase_awk_val_t* __eval_call (
 	run->stack_base = saved_stack_top;
 	STACK_NARGS(run) = (void*)nargs;
 	
-/*run->awk->sysfns.dprintf (ASE_T("running function body\n")); */
+/*run->awk->prmfns.dprintf (ASE_T("running function body\n")); */
 
 	if (afn != ASE_NULL)
 	{
@@ -5509,16 +5509,16 @@ static ase_awk_val_t* __eval_call (
 		}
 	}
 
-/*run->awk->sysfns.dprintf (ASE_T("block run complete\n")); */
+/*run->awk->prmfns.dprintf (ASE_T("block run complete\n")); */
 
 	/* refdown args in the run.stack */
 	nargs = (ase_size_t)STACK_NARGS(run);
-/*run->awk->sysfns.dprintf (ASE_T("block run complete nargs = %d\n"), (int)nargs); */
+/*run->awk->prmfns.dprintf (ASE_T("block run complete nargs = %d\n"), (int)nargs); */
 	for (i = 0; i < nargs; i++)
 	{
 		ase_awk_refdownval (run, STACK_ARG(run,i));
 	}
-/*run->awk->sysfns.dprintf (ASE_T("got return value\n")); */
+/*run->awk->prmfns.dprintf (ASE_T("got return value\n")); */
 
 	/* this trick has been mentioned in __run_return.
 	 * adjust the reference count of the return value.
@@ -5533,7 +5533,7 @@ static ase_awk_val_t* __eval_call (
 
 	if (run->exit_level == EXIT_FUNCTION) run->exit_level = EXIT_NONE;
 
-/*run->awk->sysfns.dprintf (ASE_T("returning from function stack_top=%ld, stack_base=%ld\n"), run->stack_top, run->stack_base); */
+/*run->awk->prmfns.dprintf (ASE_T("returning from function stack_top=%ld, stack_base=%ld\n"), run->stack_top, run->stack_base); */
 	return (n == -1)? ASE_NULL: v;
 }
 
@@ -6102,7 +6102,7 @@ static int __raw_push (ase_awk_run_t* run, void* val)
 	       
 		n = run->stack_limit + STACK_INCREMENT;
 
-		if (run->awk->sysfns.realloc != ASE_NULL)
+		if (run->awk->prmfns.realloc != ASE_NULL)
 		{
 			tmp = (void**) ASE_AWK_REALLOC (
 				run->awk, run->stack, n * ASE_SIZEOF(void*)); 
@@ -6154,7 +6154,7 @@ static int __read_record (ase_awk_run_t* run)
 		return -1;
 	}
 /*
-run->awk->sysfns.dprintf (ASE_T("len = %d str=[%s]\n"), 
+run->awk->prmfns.dprintf (ASE_T("len = %d str=[%s]\n"), 
 		(int)ASE_AWK_STR_LEN(&run->inrec.line),
 		ASE_AWK_STR_BUF(&run->inrec.line));
 */
@@ -6472,7 +6472,7 @@ ase_char_t* ase_awk_format (
 
 			do
 			{
-				n = run->awk->sysfns.sprintf (
+				n = run->awk->prmfns.sprintf (
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
@@ -6575,7 +6575,7 @@ ase_char_t* ase_awk_format (
 
 			do
 			{
-				n = run->awk->sysfns.sprintf (
+				n = run->awk->prmfns.sprintf (
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
@@ -6695,7 +6695,7 @@ ase_char_t* ase_awk_format (
 
 			do
 			{
-				n = run->awk->sysfns.sprintf (
+				n = run->awk->prmfns.sprintf (
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_AWK_STR_BUF(fbu),
@@ -6782,7 +6782,7 @@ ase_char_t* ase_awk_format (
 
 			do
 			{
-				n = run->awk->sysfns.sprintf (
+				n = run->awk->prmfns.sprintf (
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_AWK_STR_BUF(fbu),

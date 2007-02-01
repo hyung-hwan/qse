@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.105 2007-01-25 14:10:03 bacon Exp $ 
+ * $Id: awk.c,v 1.106 2007-02-01 08:38:22 bacon Exp $ 
  */
 
 #if defined(__BORLANDC__)
@@ -12,31 +12,31 @@
 static void __free_afn (void* awk, void* afn);
 
 ase_awk_t* ase_awk_open (
-	const ase_awk_sysfns_t* sysfns, void* custom_data, int* errnum)
+	const ase_awk_prmfns_t* prmfns, void* custom_data, int* errnum)
 {
 	ase_awk_t* awk;
 
-	if (sysfns            == ASE_NULL ||
-	    sysfns->malloc    == ASE_NULL || 
-	    sysfns->free      == ASE_NULL ||
-	    sysfns->is_upper  == ASE_NULL ||
-	    sysfns->is_lower  == ASE_NULL ||
-	    sysfns->is_alpha  == ASE_NULL ||
-	    sysfns->is_digit  == ASE_NULL ||
-	    sysfns->is_xdigit == ASE_NULL ||
-	    sysfns->is_alnum  == ASE_NULL ||
-	    sysfns->is_space  == ASE_NULL ||
-	    sysfns->is_print  == ASE_NULL ||
-	    sysfns->is_graph  == ASE_NULL ||
-	    sysfns->is_cntrl  == ASE_NULL ||
-	    sysfns->is_punct  == ASE_NULL ||
-	    sysfns->to_upper  == ASE_NULL ||
-	    sysfns->to_lower  == ASE_NULL ||
-	    sysfns->pow       == ASE_NULL ||
-	    sysfns->sprintf   == ASE_NULL || 
-	    sysfns->aprintf   == ASE_NULL || 
-	    sysfns->dprintf   == ASE_NULL || 
-	    sysfns->abort     == ASE_NULL) 
+	if (prmfns            == ASE_NULL ||
+	    prmfns->malloc    == ASE_NULL || 
+	    prmfns->free      == ASE_NULL ||
+	    prmfns->is_upper  == ASE_NULL ||
+	    prmfns->is_lower  == ASE_NULL ||
+	    prmfns->is_alpha  == ASE_NULL ||
+	    prmfns->is_digit  == ASE_NULL ||
+	    prmfns->is_xdigit == ASE_NULL ||
+	    prmfns->is_alnum  == ASE_NULL ||
+	    prmfns->is_space  == ASE_NULL ||
+	    prmfns->is_print  == ASE_NULL ||
+	    prmfns->is_graph  == ASE_NULL ||
+	    prmfns->is_cntrl  == ASE_NULL ||
+	    prmfns->is_punct  == ASE_NULL ||
+	    prmfns->to_upper  == ASE_NULL ||
+	    prmfns->to_lower  == ASE_NULL ||
+	    prmfns->pow       == ASE_NULL ||
+	    prmfns->sprintf   == ASE_NULL || 
+	    prmfns->aprintf   == ASE_NULL || 
+	    prmfns->dprintf   == ASE_NULL || 
+	    prmfns->abort     == ASE_NULL) 
 	{
 		*errnum = ASE_AWK_ESYSFNS;
 		return ASE_NULL;
@@ -45,8 +45,8 @@ ase_awk_t* ase_awk_open (
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	awk = (ase_awk_t*) malloc (ASE_SIZEOF(ase_awk_t));
 #else
-	awk = (ase_awk_t*) sysfns->malloc (
-		ASE_SIZEOF(ase_awk_t), sysfns->custom_data);
+	awk = (ase_awk_t*) prmfns->malloc (
+		ASE_SIZEOF(ase_awk_t), prmfns->custom_data);
 #endif
 	if (awk == ASE_NULL) 
 	{
@@ -58,13 +58,13 @@ ase_awk_t* ase_awk_open (
 	 * fully initialized yet */
 	ase_awk_memset (awk, 0, ASE_SIZEOF(ase_awk_t));
 
-	if (sysfns->memcpy == ASE_NULL)
+	if (prmfns->memcpy == ASE_NULL)
 	{
-		ase_awk_memcpy (&awk->sysfns, sysfns, ASE_SIZEOF(awk->sysfns));
-		awk->sysfns.memcpy = ase_awk_memcpy;
+		ase_awk_memcpy (&awk->prmfns, prmfns, ASE_SIZEOF(awk->prmfns));
+		awk->prmfns.memcpy = ase_awk_memcpy;
 	}
-	else sysfns->memcpy (&awk->sysfns, sysfns, ASE_SIZEOF(awk->sysfns));
-	if (sysfns->memset == ASE_NULL) awk->sysfns.memset = ase_awk_memset;
+	else prmfns->memcpy (&awk->prmfns, prmfns, ASE_SIZEOF(awk->prmfns));
+	if (prmfns->memset == ASE_NULL) awk->prmfns.memset = ase_awk_memset;
 
 	if (ase_awk_str_open (&awk->token.name, 128, awk) == ASE_NULL) 
 	{

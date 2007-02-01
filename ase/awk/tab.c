@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.27 2006-12-13 14:16:12 bacon Exp $
+ * $Id: tab.c,v 1.28 2007-02-01 08:38:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -58,7 +58,7 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 
 	if (capa > 0) 
 	{
-		if (tab->awk->sysfns.realloc != ASE_NULL)
+		if (tab->awk->prmfns.realloc != ASE_NULL)
 		{
 			tmp = ASE_AWK_REALLOC (tab->awk, 
 				tab->buf, ASE_SIZEOF(*tab->buf) * capa);

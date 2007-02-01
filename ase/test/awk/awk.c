@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.159 2007-01-29 02:56:15 bacon Exp $
+ * $Id: awk.c,v 1.160 2007-02-01 08:38:24 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -650,8 +650,8 @@ static void on_run_end (
 }
 
 #ifdef _WIN32
-typedef struct sysfns_data_t sysfns_data_t;
-struct sysfns_data_t
+typedef struct prmfns_data_t prmfns_data_t;
+struct prmfns_data_t
 {
 	HANDLE heap;
 };
@@ -660,7 +660,7 @@ struct sysfns_data_t
 static void* awk_malloc (ase_size_t n, void* custom_data)
 {
 #ifdef _WIN32
-	return HeapAlloc (((sysfns_data_t*)custom_data)->heap, 0, n);
+	return HeapAlloc (((prmfns_data_t*)custom_data)->heap, 0, n);
 #else
 	return malloc (n);
 #endif
@@ -671,9 +671,9 @@ static void* awk_realloc (void* ptr, ase_size_t n, void* custom_data)
 #ifdef _WIN32
 	/* HeapReAlloc behaves differently from realloc */
 	if (ptr == NULL)
-		return HeapAlloc (((sysfns_data_t*)custom_data)->heap, 0, n);
+		return HeapAlloc (((prmfns_data_t*)custom_data)->heap, 0, n);
 	else
-		return HeapReAlloc (((sysfns_data_t*)custom_data)->heap, 0, ptr, n);
+		return HeapReAlloc (((prmfns_data_t*)custom_data)->heap, 0, ptr, n);
 #else
 	return realloc (ptr, n);
 #endif
@@ -682,7 +682,7 @@ static void* awk_realloc (void* ptr, ase_size_t n, void* custom_data)
 static void awk_free (void* ptr, void* custom_data)
 {
 #ifdef _WIN32
-	HeapFree (((sysfns_data_t*)custom_data)->heap, 0, ptr);
+	HeapFree (((prmfns_data_t*)custom_data)->heap, 0, ptr);
 #else
 	free (ptr);
 #endif
@@ -742,11 +742,11 @@ static int __main (int argc, ase_char_t* argv[])
 	ase_awk_runcbs_t runcbs;
 	ase_awk_runios_t runios;
 	ase_awk_runarg_t runarg[10];
-	ase_awk_sysfns_t sysfns;
+	ase_awk_prmfns_t prmfns;
 	struct src_io src_io = { NULL, NULL };
 	int opt, i, file_count = 0, errnum;
 #ifdef _WIN32
-	sysfns_data_t sysfns_data;
+	prmfns_data_t prmfns_data;
 #endif
 	const ase_char_t* mfn = ASE_NULL;
 
@@ -793,51 +793,51 @@ static int __main (int argc, ase_char_t* argv[])
 		}
 	}
 
-	memset (&sysfns, 0, ASE_SIZEOF(sysfns));
+	memset (&prmfns, 0, ASE_SIZEOF(prmfns));
 
-	sysfns.malloc  = awk_malloc;
-	sysfns.realloc = awk_realloc;
-	sysfns.free    = awk_free;
-	sysfns.memcpy  = memcpy;
-	sysfns.memset  = memset;
+	prmfns.malloc  = awk_malloc;
+	prmfns.realloc = awk_realloc;
+	prmfns.free    = awk_free;
+	prmfns.memcpy  = memcpy;
+	prmfns.memset  = memset;
 
-	sysfns.is_upper  = (ase_awk_isctype_t)awk_isupper;
-	sysfns.is_lower  = (ase_awk_isctype_t)awk_islower;
-	sysfns.is_alpha  = (ase_awk_isctype_t)awk_isalpha;
-	sysfns.is_digit  = (ase_awk_isctype_t)awk_isdigit;
-	sysfns.is_xdigit = (ase_awk_isctype_t)awk_isxdigit;
-	sysfns.is_alnum  = (ase_awk_isctype_t)awk_isalnum;
-	sysfns.is_space  = (ase_awk_isctype_t)awk_isspace;
-	sysfns.is_print  = (ase_awk_isctype_t)awk_isprint;
-	sysfns.is_graph  = (ase_awk_isctype_t)awk_isgraph;
-	sysfns.is_cntrl  = (ase_awk_isctype_t)awk_iscntrl;
-	sysfns.is_punct  = (ase_awk_isctype_t)awk_ispunct;
-	sysfns.to_upper  = (ase_awk_toctype_t)awk_toupper;
-	sysfns.to_lower  = (ase_awk_toctype_t)awk_tolower;
+	prmfns.is_upper  = (ase_awk_isctype_t)awk_isupper;
+	prmfns.is_lower  = (ase_awk_isctype_t)awk_islower;
+	prmfns.is_alpha  = (ase_awk_isctype_t)awk_isalpha;
+	prmfns.is_digit  = (ase_awk_isctype_t)awk_isdigit;
+	prmfns.is_xdigit = (ase_awk_isctype_t)awk_isxdigit;
+	prmfns.is_alnum  = (ase_awk_isctype_t)awk_isalnum;
+	prmfns.is_space  = (ase_awk_isctype_t)awk_isspace;
+	prmfns.is_print  = (ase_awk_isctype_t)awk_isprint;
+	prmfns.is_graph  = (ase_awk_isctype_t)awk_isgraph;
+	prmfns.is_cntrl  = (ase_awk_isctype_t)awk_iscntrl;
+	prmfns.is_punct  = (ase_awk_isctype_t)awk_ispunct;
+	prmfns.to_upper  = (ase_awk_toctype_t)awk_toupper;
+	prmfns.to_lower  = (ase_awk_toctype_t)awk_tolower;
 
-	sysfns.pow     = awk_pow;
-	sysfns.sprintf = awk_sprintf;
-	sysfns.aprintf = awk_aprintf;
-	sysfns.dprintf = awk_dprintf;
-	sysfns.abort   = awk_abort;
-	sysfns.lock    = NULL;
-	sysfns.unlock  = NULL;
+	prmfns.pow     = awk_pow;
+	prmfns.sprintf = awk_sprintf;
+	prmfns.aprintf = awk_aprintf;
+	prmfns.dprintf = awk_dprintf;
+	prmfns.abort   = awk_abort;
+	prmfns.lock    = NULL;
+	prmfns.unlock  = NULL;
 
 #ifdef _WIN32
-	sysfns_data.heap = HeapCreate (0, 1000000, 1000000);
-	if (sysfns_data.heap == NULL)
+	prmfns_data.heap = HeapCreate (0, 1000000, 1000000);
+	if (prmfns_data.heap == NULL)
 	{
 		awk_printf (ASE_T("Error: cannot create an awk heap\n"));
 		return -1;
 	}
 
-	sysfns.custom_data = &sysfns_data;
+	prmfns.custom_data = &prmfns_data;
 #endif
 
-	if ((awk = ase_awk_open(&sysfns, ASE_NULL, &errnum)) == ASE_NULL) 
+	if ((awk = ase_awk_open(&prmfns, ASE_NULL, &errnum)) == ASE_NULL) 
 	{
 #ifdef _WIN32
-		HeapDestroy (sysfns_data.heap);
+		HeapDestroy (prmfns_data.heap);
 #endif
 		awk_printf (
 			ASE_T("ERROR: cannot open awk [%d] %s\n"), 
@@ -904,7 +904,7 @@ static int __main (int argc, ase_char_t* argv[])
 
 	ase_awk_close (awk);
 #ifdef _WIN32
-	HeapDestroy (sysfns_data.heap);
+	HeapDestroy (prmfns_data.heap);
 #endif
 	return 0;
 }
