@@ -25,5 +25,3 @@ func.obj depends_on func.c
 misc.obj depends_on misc.c
 extio.obj depends_on extio.c
 rex.obj depends_on rex.c
-
-
