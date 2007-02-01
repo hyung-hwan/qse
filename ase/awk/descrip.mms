@@ -4,7 +4,7 @@
 
 objects = awk.obj,err.obj,tree.obj,str.obj,tab.obj,map.obj,parse.obj,run.obj,rec.obj,val.obj,func.obj,misc.obj,extio.obj,rex.obj
 
-CFLAGS = /pointer_size=long /include="../.." /define=XP_AWK_STAND_ALONE
+CFLAGS = /pointer_size=long /include="../.."
 LIBRFLAGS = 
 
 aseawk.olb : $(objects)

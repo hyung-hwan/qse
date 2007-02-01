@@ -1,9 +1,6 @@
 #include <ase/lsp/lsp.h>
-#include <xp/bas/stdio.h>
-#include <xp/bas/ctype.h>
-#include <xp/bas/stdcli.h>
-#include <xp/bas/locale.h>
-#include <xp/bas/sio.h>
+#include "../etc/printf.h"
+#include "../etc/main.h"
 
 #ifdef _WIN32
 #include <tchar.h>
@@ -170,44 +167,63 @@ static void __lsp_free (void* ptr, void* custom_data)
 #endif
 }
 
-static int __aprintf (const xp_char_t* fmt, ...)
+static void lsp_abort (void* custom_data)
+{
+	abort ();
+}
+
+static int lsp_sprintf (
+	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
-#ifdef _WIN32
-	xp_char_t buf[1024];
-#endif
 
 	va_start (ap, fmt);
-#ifdef _WIN32
-	n = xp_vsprintf (buf, xp_countof(buf), fmt, ap);
-#if defined(_MSC_VER) && (_MSC_VER>=1400)
-	MessageBox (NULL, buf, ASE_T("\uD655\uC778\uC2E4\uD328 Assertion Failure"), MB_OK | MB_ICONERROR);
-#else
-	MessageBox (NULL, buf, ASE_T("Assertion Failure"), MB_OK | MB_ICONERROR);
-#endif
-
-#else
-	n = xp_vprintf (fmt, ap);
-#endif
+	n = ase_vsprintf (buf, len, fmt, ap);
 	va_end (ap);
 	return n;
 }
 
-static int __dprintf (const ase_char_t* fmt, ...)
+static void lsp_aprintf (const ase_char_t* fmt, ...)
 {
-	int n;
 	va_list ap;
-	va_start (ap, fmt);
-
 #ifdef _WIN32
-	n = _vftprintf (stderr, fmt, ap);
-#else
-	n = xp_vfprintf (stderr, fmt, ap);
+	int n;
+	ase_char_t buf[1024];
 #endif
 
+	va_start (ap, fmt);
+#if defined(_WIN32)
+	n = _vsntprintf (buf, ASE_COUNTOF(buf), fmt, ap);
+	if (n < 0) buf[ASE_COUNTOF(buf)-1] = ASE_T('\0');
+
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
+	MessageBox (NULL, buf, 
+		ASE_T("Assertion Failure"), MB_OK|MB_ICONERROR);
+	#else
+	MessageBox (NULL, buf, 
+		ASE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK|MB_ICONERROR);
+	#endif
+#else
+	ase_vprintf (fmt, ap);
+#endif
 	va_end (ap);
-	return n;
+}
+
+static void lsp_dprintf (const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	va_start (ap, fmt);
+	ase_vfprintf (stderr, fmt, ap);
+	va_end (ap);
+}
+
+static void lsp_printf (const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	va_start (ap, fmt);
+	ase_vprintf (fmt, ap);
+	va_end (ap);
 }
 
 int __main (int argc, xp_char_t* argv[])
@@ -280,15 +296,15 @@ int __main (int argc, xp_char_t* argv[])
 	syscas.memcpy = memcpy;
 	syscas.memset = memset;
 	syscas.sprintf = xp_sprintf;
-	syscas.aprintf = __aprintf;
-	syscas.dprintf = __dprintf;
-	syscas.abort = abort;
+	syscas.aprintf = lsp_aprintf;
+	syscas.dprintf = lsp_dprintf;
+	syscas.abort = lsp_abort;
 
 #ifdef _WIN32
 	syscas_data.heap = HeapCreate (0, 1000000, 1000000);
 	if (syscas_data.heap == NULL)
 	{
-		xp_printf (ASE_T("Error: cannot create an awk heap\n"));
+		xp_printf (ASE_T("Error: cannot create an lsp heap\n"));
 		return -1;
 	}
 
