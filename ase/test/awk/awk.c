@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.160 2007-02-01 08:38:24 bacon Exp $
+ * $Id: awk.c,v 1.161 2007-02-01 09:19:15 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -126,11 +126,11 @@ static FILE* awk_fopen (const ase_char_t* path, const ase_char_t* mode)
 	size_t n;
 
 	n = wcstombs (path_mb, path, ASE_COUNTOF(path_mb));
-	if (n == -1) return NULL;
+	if (n == (size_t)-1) return NULL;
 	if (n == ASE_COUNTOF(path_mb)) path_mb[ASE_COUNTOF(path_mb)-1] = '\0';
 
 	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
-	if (n == -1) return NULL;
+	if (n == (size_t)-1) return NULL;
 	if (n == ASE_COUNTOF(mode_mb)) path_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
 
 	return fopen (path_mb, mode_mb);
@@ -149,11 +149,11 @@ static FILE* awk_popen (const ase_char_t* cmd, const ase_char_t* mode)
 	size_t n;
 
 	n = wcstombs (cmd_mb, cmd, ASE_COUNTOF(cmd_mb));
-	if (n == -1) return NULL;
+	if (n == (size_t)-1) return NULL;
 	if (n == ASE_COUNTOF(cmd_mb)) cmd_mb[ASE_COUNTOF(cmd_mb)-1] = '\0';
 
 	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
-	if (n == -1) return NULL;
+	if (n == (size_t)-1) return NULL;
 	if (n == ASE_COUNTOF(mode_mb)) cmd_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
 
 	return popen (cmd_mb, mode_mb);
@@ -688,6 +688,16 @@ static void awk_free (void* ptr, void* custom_data)
 #endif
 }
 
+static void* awk_memcpy  (void* dst, const void* src, ase_size_t n)
+{
+	return memcpy (dst, src, n);
+}
+
+static void* awk_memset (void* dst, int val, ase_size_t n)
+{
+	return memset (dst, val, n);
+}
+
 #if defined(ASE_CHAR_IS_MCHAR) 
 	#if (__TURBOC__<=513) /* turboc 2.01 or earlier */
 		static int awk_isupper (int c) { return isupper (c); }
@@ -798,8 +808,8 @@ static int __main (int argc, ase_char_t* argv[])
 	prmfns.malloc  = awk_malloc;
 	prmfns.realloc = awk_realloc;
 	prmfns.free    = awk_free;
-	prmfns.memcpy  = memcpy;
-	prmfns.memset  = memset;
+	prmfns.memcpy  = awk_memcpy;
+	prmfns.memset  = awk_memset;
 
 	prmfns.is_upper  = (ase_awk_isctype_t)awk_isupper;
 	prmfns.is_lower  = (ase_awk_isctype_t)awk_islower;
