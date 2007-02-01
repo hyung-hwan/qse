@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.104 2007-01-28 11:12:30 bacon Exp $
+ * $Id: val.c,v 1.105 2007-02-01 08:38:24 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -339,9 +339,9 @@ void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 
 /*
-run->awk->sysfns.dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
+run->awk->prmfns.dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
 ase_awk_dprintval (run, val);
-run->awk->sysfns.dprintf (ASE_T("\n"));
+run->awk->prmfns.dprintf (ASE_T("\n"));
 */
 
 	val->ref++;
@@ -352,9 +352,9 @@ void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 
 /*
-run->awk->sysfns.dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
+run->awk->prmfns.dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
 ase_awk_dprintval (run, val);
-run->awk->sysfns.dprintf (ASE_T("\n"));
+run->awk->prmfns.dprintf (ASE_T("\n"));
 */
 
 	ASE_AWK_ASSERTX (run->awk, val->ref > 0, 
@@ -462,7 +462,7 @@ ase_char_t* ase_awk_valtostr (
 	}
 
 #ifdef _DEBUG
-	run->awk->sysfns.dprintf (
+	run->awk->prmfns.dprintf (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr\n"), 
 		v->type);
 #endif
@@ -719,7 +719,7 @@ int ase_awk_valtonum (
 	}
 
 #ifdef _DEBUG
-	run->awk->sysfns.dprintf (
+	run->awk->prmfns.dprintf (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum\n"), 
 		v->type);
 #endif
@@ -748,7 +748,7 @@ int ase_awk_strtonum (
 
 }
 
-#define __DPRINTF run->awk->sysfns.dprintf
+#define __DPRINTF run->awk->prmfns.dprintf
 
 static int __print_pair (ase_awk_pair_t* pair, void* arg)
 {

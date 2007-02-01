@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.91 2007-01-25 14:10:03 bacon Exp $
+ * $Id: func.c,v 1.92 2007-02-01 08:38:22 bacon Exp $
  */
 
 #include <ase/awk/awk_i.h>
@@ -51,7 +51,7 @@ void* ase_awk_addbfn (
 
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 	{
-		awk->sysfns.sprintf (
+		awk->prmfns.sprintf (
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("'%.*s' added already"), name_len, name);
 		ase_awk_seterror (awk, ASE_AWK_EEXIST, 0, awk->errmsg);
