@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.19 2006-11-29 03:19:48 bacon Exp $
+ * $Id: lsp.c,v 1.20 2007-02-01 08:49:51 bacon Exp $
  */
 
 #if defined(__BORLANDC__)
@@ -12,41 +12,41 @@
 static int __add_builtin_prims (ase_lsp_t* lsp);
 
 ase_lsp_t* ase_lsp_open (
-	const ase_lsp_syscas_t* syscas, 
+	const ase_lsp_prmfns_t* prmfns, 
 	ase_size_t mem_ubound, ase_size_t mem_ubound_inc)
 {
 	ase_lsp_t* lsp;
 
-	if (syscas == ASE_NULL) return ASE_NULL;
+	if (prmfns == ASE_NULL) return ASE_NULL;
 
-	if (syscas->malloc == ASE_NULL || 
-	    syscas->realloc == ASE_NULL || 
-	    syscas->free == ASE_NULL) return ASE_NULL;
+	if (prmfns->malloc == ASE_NULL || 
+	    prmfns->realloc == ASE_NULL || 
+	    prmfns->free == ASE_NULL) return ASE_NULL;
 
-	if (syscas->is_upper  == ASE_NULL ||
-	    syscas->is_lower  == ASE_NULL ||
-	    syscas->is_alpha  == ASE_NULL ||
-	    syscas->is_digit  == ASE_NULL ||
-	    syscas->is_xdigit == ASE_NULL ||
-	    syscas->is_alnum  == ASE_NULL ||
-	    syscas->is_space  == ASE_NULL ||
-	    syscas->is_print  == ASE_NULL ||
-	    syscas->is_graph  == ASE_NULL ||
-	    syscas->is_cntrl  == ASE_NULL ||
-	    syscas->is_punct  == ASE_NULL ||
-	    syscas->to_upper  == ASE_NULL ||
-	    syscas->to_lower  == ASE_NULL) return ASE_NULL;
+	if (prmfns->is_upper  == ASE_NULL ||
+	    prmfns->is_lower  == ASE_NULL ||
+	    prmfns->is_alpha  == ASE_NULL ||
+	    prmfns->is_digit  == ASE_NULL ||
+	    prmfns->is_xdigit == ASE_NULL ||
+	    prmfns->is_alnum  == ASE_NULL ||
+	    prmfns->is_space  == ASE_NULL ||
+	    prmfns->is_print  == ASE_NULL ||
+	    prmfns->is_graph  == ASE_NULL ||
+	    prmfns->is_cntrl  == ASE_NULL ||
+	    prmfns->is_punct  == ASE_NULL ||
+	    prmfns->to_upper  == ASE_NULL ||
+	    prmfns->to_lower  == ASE_NULL) return ASE_NULL;
 
-	if (syscas->sprintf == ASE_NULL || 
-	    syscas->aprintf == ASE_NULL || 
-	    syscas->dprintf == ASE_NULL || 
-	    syscas->abort == ASE_NULL) return ASE_NULL;
+	if (prmfns->sprintf == ASE_NULL || 
+	    prmfns->aprintf == ASE_NULL || 
+	    prmfns->dprintf == ASE_NULL || 
+	    prmfns->abort == ASE_NULL) return ASE_NULL;
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	lsp = (ase_lsp_t*) malloc (ASE_SIZEOF(ase_lsp_t));
 #else
-	lsp = (ase_lsp_t*) syscas->malloc (
-		ASE_SIZEOF(ase_lsp_t), syscas->custom_data);
+	lsp = (ase_lsp_t*) prmfns->malloc (
+		ASE_SIZEOF(ase_lsp_t), prmfns->custom_data);
 #endif
 	if (lsp == ASE_NULL) return ASE_NULL;
 
@@ -54,13 +54,13 @@ ase_lsp_t* ase_lsp_open (
 	 * fully initialized yet */
 	ase_lsp_memset (lsp, 0, ASE_SIZEOF(ase_lsp_t));
 
-	if (syscas->memcpy == ASE_NULL)
+	if (prmfns->memcpy == ASE_NULL)
 	{
-		ase_lsp_memcpy (&lsp->syscas, syscas, ASE_SIZEOF(lsp->syscas));
-		lsp->syscas.memcpy = ase_lsp_memcpy;
+		ase_lsp_memcpy (&lsp->prmfns, prmfns, ASE_SIZEOF(lsp->prmfns));
+		lsp->prmfns.memcpy = ase_lsp_memcpy;
 	}
-	else syscas->memcpy (&lsp->syscas, syscas, ASE_SIZEOF(lsp->syscas));
-	if (syscas->memset == ASE_NULL) lsp->syscas.memset = ase_lsp_memset;
+	else prmfns->memcpy (&lsp->prmfns, prmfns, ASE_SIZEOF(lsp->prmfns));
+	if (prmfns->memset == ASE_NULL) lsp->prmfns.memset = ase_lsp_memset;
 
 	if (ase_lsp_name_open(&lsp->token.name, 0, lsp) == ASE_NULL) 
 	{

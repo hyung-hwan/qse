@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h,v 1.5 2006-11-29 03:19:49 bacon Exp $
+ * $Id: lsp_i.h,v 1.6 2007-02-01 08:49:52 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSPI_H_
@@ -26,33 +26,33 @@
 	#define ASE_LSP_FREE(lsp,ptr) free (ptr)
 #else
 	#define ASE_LSP_MALLOC(lsp,size) \
-		(lsp)->syscas.malloc (size, (lsp)->syscas.custom_data)
+		(lsp)->prmfns.malloc (size, (lsp)->prmfns.custom_data)
 	#define ASE_LSP_REALLOC(lsp,ptr,size) \
-		(lsp)->syscas.realloc (ptr, size, (lsp)->syscas.custom_data)
+		(lsp)->prmfns.realloc (ptr, size, (lsp)->prmfns.custom_data)
 	#define ASE_LSP_FREE(lsp,ptr) \
-		(lsp)->syscas.free (ptr, (lsp)->syscas.custom_data)
+		(lsp)->prmfns.free (ptr, (lsp)->prmfns.custom_data)
 #endif
 
-#define ASE_LSP_ISUPPER(lsp,c)  (lsp)->syscas.is_upper(c)
-#define ASE_LSP_ISLOWER(lsp,c)  (lsp)->syscas.is_lower(c)
-#define ASE_LSP_ISALPHA(lsp,c)  (lsp)->syscas.is_alpha(c)
-#define ASE_LSP_ISDIGIT(lsp,c)  (lsp)->syscas.is_digit(c)
-#define ASE_LSP_ISXDIGIT(lsp,c) (lsp)->syscas.is_xdigit(c)
-#define ASE_LSP_ISALNUM(lsp,c)  (lsp)->syscas.is_alnum(c)
-#define ASE_LSP_ISSPACE(lsp,c)  (lsp)->syscas.is_space(c)
-#define ASE_LSP_ISPRINT(lsp,c)  (lsp)->syscas.is_print(c)
-#define ASE_LSP_ISGRAPH(lsp,c)  (lsp)->syscas.is_graph(c)
-#define ASE_LSP_ISCNTRL(lsp,c)  (lsp)->syscas.is_cntrl(c)
-#define ASE_LSP_ISPUNCT(lsp,c)  (lsp)->syscas.is_punct(c)
-#define ASE_LSP_TOUPPER(lsp,c)  (lsp)->syscas.to_upper(c)
-#define ASE_LSP_TOLOWER(lsp,c)  (lsp)->syscas.to_lower(c)
+#define ASE_LSP_ISUPPER(lsp,c)  (lsp)->prmfns.is_upper(c)
+#define ASE_LSP_ISLOWER(lsp,c)  (lsp)->prmfns.is_lower(c)
+#define ASE_LSP_ISALPHA(lsp,c)  (lsp)->prmfns.is_alpha(c)
+#define ASE_LSP_ISDIGIT(lsp,c)  (lsp)->prmfns.is_digit(c)
+#define ASE_LSP_ISXDIGIT(lsp,c) (lsp)->prmfns.is_xdigit(c)
+#define ASE_LSP_ISALNUM(lsp,c)  (lsp)->prmfns.is_alnum(c)
+#define ASE_LSP_ISSPACE(lsp,c)  (lsp)->prmfns.is_space(c)
+#define ASE_LSP_ISPRINT(lsp,c)  (lsp)->prmfns.is_print(c)
+#define ASE_LSP_ISGRAPH(lsp,c)  (lsp)->prmfns.is_graph(c)
+#define ASE_LSP_ISCNTRL(lsp,c)  (lsp)->prmfns.is_cntrl(c)
+#define ASE_LSP_ISPUNCT(lsp,c)  (lsp)->prmfns.is_punct(c)
+#define ASE_LSP_TOUPPER(lsp,c)  (lsp)->prmfns.to_upper(c)
+#define ASE_LSP_TOLOWER(lsp,c)  (lsp)->prmfns.to_lower(c)
 
-#define ASE_LSP_MEMCPY(lsp,dst,src,len) (lsp)->syscas.memcpy (dst, src, len)
-#define ASE_LSP_MEMSET(lsp,dst,val,len) (lsp)->syscas.memset (dst, val, len)
+#define ASE_LSP_MEMCPY(lsp,dst,src,len) (lsp)->prmfns.memcpy (dst, src, len)
+#define ASE_LSP_MEMSET(lsp,dst,val,len) (lsp)->prmfns.memset (dst, val, len)
 
 struct ase_lsp_t 
 {
-	ase_lsp_syscas_t syscas;
+	ase_lsp_prmfns_t prmfns;
 
 	/* error number */
 	int errnum;

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.33 2006-10-30 14:31:37 bacon Exp $
+ * $Id: lsp.h,v 1.34 2007-02-01 08:49:51 bacon Exp $
  */
 
 #ifndef _ASE_LSP_LSP_H_
@@ -10,41 +10,57 @@
 
 typedef struct ase_lsp_t ase_lsp_t;
 typedef struct ase_lsp_obj_t ase_lsp_obj_t;
-typedef struct ase_lsp_syscas_t ase_lsp_syscas_t;
+typedef struct ase_lsp_prmfns_t ase_lsp_prmfns_t;
 
 typedef ase_ssize_t (*ase_lsp_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
-struct ase_lsp_syscas_t
+typedef void* (*ase_lsp_malloc_t)  (ase_size_t n, void* custom_data); 
+typedef void* (*ase_lsp_realloc_t) (void* ptr, ase_size_t n, void* custom_data);
+typedef void  (*ase_lsp_free_t)    (void* ptr, void* custom_data); 
+typedef void* (*ase_lsp_memcpy_t)  (void* dst, const void* src, ase_size_t n);
+typedef void* (*ase_lsp_memset_t)  (void* dst, int val, ase_size_t n);
+
+typedef ase_bool_t (*ase_lsp_isctype_t) (ase_cint_t c);
+typedef ase_cint_t (*ase_lsp_toctype_t) (ase_cint_t c);
+typedef ase_real_t (*ase_lsp_pow_t) (ase_real_t x, ase_real_t y);
+
+typedef int (*ase_lsp_sprintf_t) (
+	ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...);
+typedef void (*ase_lsp_aprintf_t) (const ase_char_t* fmt, ...); 
+typedef void (*ase_lsp_dprintf_t) (const ase_char_t* fmt, ...); 
+typedef void (*ase_lsp_abort_t) (void* custom_data);
+
+struct ase_lsp_prmfns_t
 {
 	/* memory */
-	void* (*malloc) (ase_size_t n, void* custom_data);
-	void* (*realloc) (void* ptr, ase_size_t n, void* custom_data);
-	void  (*free) (void* ptr, void* custom_data);
+	ase_lsp_malloc_t  malloc;
+	ase_lsp_realloc_t realloc;
+	ase_lsp_free_t    free;
+
+	ase_lsp_memcpy_t  memcpy;
+	ase_lsp_memset_t  memset;
 
 	/* character class */
-	ase_bool_t (*is_upper)  (ase_cint_t c);
-	ase_bool_t (*is_lower)  (ase_cint_t c);
-	ase_bool_t (*is_alpha)  (ase_cint_t c);
-	ase_bool_t (*is_digit)  (ase_cint_t c);
-	ase_bool_t (*is_xdigit) (ase_cint_t c);
-	ase_bool_t (*is_alnum)  (ase_cint_t c);
-	ase_bool_t (*is_space)  (ase_cint_t c);
-	ase_bool_t (*is_print)  (ase_cint_t c);
-	ase_bool_t (*is_graph)  (ase_cint_t c);
-	ase_bool_t (*is_cntrl)  (ase_cint_t c);
-	ase_bool_t (*is_punct)  (ase_cint_t c);
-	ase_cint_t (*to_upper)  (ase_cint_t c);
-	ase_cint_t (*to_lower)  (ase_cint_t c);
+	ase_lsp_isctype_t is_upper;
+	ase_lsp_isctype_t is_lower;
+	ase_lsp_isctype_t is_alpha;
+	ase_lsp_isctype_t is_digit;
+	ase_lsp_isctype_t is_xdigit;
+	ase_lsp_isctype_t is_alnum;
+	ase_lsp_isctype_t is_space;
+	ase_lsp_isctype_t is_print;
+	ase_lsp_isctype_t is_graph;
+	ase_lsp_isctype_t is_cntrl;
+	ase_lsp_isctype_t is_punct;
+	ase_lsp_toctype_t to_upper;
+	ase_lsp_toctype_t to_lower;
 
 	/* utilities */
-	void* (*memcpy)  (void* dst, const void* src, ase_size_t n);
-	void* (*memset)  (void* dst, int val, ase_size_t n);
-
-	int (*sprintf) (ase_char_t* buf, ase_size_t size, ase_char_t* fmt, ...);
-	int (*aprintf) (ase_char_t* fmt, ...);
-	int (*dprintf) (ase_char_t* fmt, ...);
-	void (*abort) (void);
+	ase_lsp_sprintf_t sprintf;
+	ase_lsp_aprintf_t aprintf;
+	ase_lsp_dprintf_t dprintf;
+	ase_lsp_abort_t abort;
 
 	void* custom_data;
 };
@@ -109,7 +125,7 @@ extern "C" {
 #endif
 
 ase_lsp_t* ase_lsp_open (
-	const ase_lsp_syscas_t* syscas,
+	const ase_lsp_prmfns_t* prmfns,
 	ase_size_t mem_ubound, ase_size_t mem_ubound_inc);
 
 void ase_lsp_close (ase_lsp_t* lsp);

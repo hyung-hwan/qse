@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.6 2006-11-29 02:54:17 bacon Exp $
+ * $Id: misc.c,v 1.7 2007-02-01 08:49:52 bacon Exp $
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -756,16 +756,16 @@ int ase_lsp_assertfail (ase_lsp_t* lsp,
 {
 	if (desc == ASE_NULL)
 	{
-		lsp->syscas.aprintf (
+		lsp->prmfns.aprintf (
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n"),
 			file, line, expr);
 	}
 	else
 	{
-		lsp->syscas.aprintf (
+		lsp->prmfns.aprintf (
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n\nDESCRIPTION:\n%s\n"),
 			file, line, expr, desc);
 	}
-	lsp->syscas.abort ();
+	lsp->prmfns.abort (lsp);
 	return 0;
 }
