@@ -1,6 +1,5 @@
 == Introduction ==
-ASE is a collection of scriping engines for various programming languages.
-It has been written in the hopt that it will be useful for programmers.
+ASE is a collection of scriping engines for various programming languages. It has been written in the hopt that it will be useful for programmers.
 
 
 == Source ==
