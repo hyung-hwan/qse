@@ -1,5 +1,7 @@
 /*
- * $Id: types.h,v 1.65 2007-01-29 06:40:29 bacon Exp $
+ * $Id: types.h,v 1.66 2007-02-03 10:52:36 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_TYPES_H_

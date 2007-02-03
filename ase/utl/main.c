@@ -1,5 +1,7 @@
 /*
- * $Id: main.c,v 1.7 2007-01-29 02:47:19 bacon Exp $
+ * $Id: main.c,v 1.8 2007-02-03 10:52:36 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/types.h>

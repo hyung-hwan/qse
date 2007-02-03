@@ -1,5 +1,7 @@
 /*
- * $Id: Awk.cpp,v 1.23 2007-02-01 08:38:24 bacon Exp $
+ * $Id: Awk.cpp,v 1.24 2007-02-03 10:52:11 bacon Exp $
+ *
+ * {License}
  */
 
 #include "stdafx.h"

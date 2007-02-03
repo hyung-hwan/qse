@@ -1,5 +1,7 @@
 /*
- * $Id: ase.cpp,v 1.1 2006-12-09 11:50:08 bacon Exp $
+ * $Id: ase.cpp,v 1.2 2007-02-03 10:52:12 bacon Exp $
+ *
+ * {License}
  */
 
 // Note: Proxy/Stub Information

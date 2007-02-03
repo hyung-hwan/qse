@@ -1,5 +1,7 @@
 /*
- * $Id: conf_vms.h,v 1.7 2006-10-24 04:30:13 bacon Exp $
+ * $Id: conf_vms.h,v 1.8 2007-02-03 10:52:36 bacon Exp $
+ *
+ * {License}
  */
 
 /* TODO: please complete the itanium portion */

@@ -1,5 +1,7 @@
 /*
- * $Id: env.h,v 1.10 2006-10-26 08:17:37 bacon Exp $
+ * $Id: env.h,v 1.11 2007-02-03 10:51:52 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_LSP_ENV_H_

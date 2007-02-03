@@ -1,5 +1,7 @@
 /*
- * $Id: name.h,v 1.8 2006-11-02 10:12:01 bacon Exp $
+ * $Id: name.h,v 1.9 2007-02-03 10:51:52 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_LSP_NAME_H_

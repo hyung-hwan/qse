@@ -1,5 +1,7 @@
 /*
- * $Id: prim.c,v 1.18 2006-11-02 11:10:12 bacon Exp $
+ * $Id: prim.c,v 1.19 2007-02-03 10:51:53 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -33,33 +35,51 @@ static int __add_prim (ase_lsp_mem_t* mem,
 	ase_lsp_lockobj (mem->lsp, n);
 
 	p = ase_lsp_makeprim (mem, pimpl, min_args, max_args);
-	if (p == ASE_NULL) return -1;
+	if (p == ASE_NULL) 
+	{
+		ase_lsp_unlockobj (mem->lsp, n);
+		return -1;
+	}
 
+	ase_lsp_lockobj (mem->lsp, p);
+
+	if (ase_lsp_setfunc(mem, n, p) == ASE_NULL) 
+	{
+		ase_lsp_unlockobj (mem->lsp, p);
+		ase_lsp_unlockobj (mem->lsp, n);
+		return -1;
+	}
+
+	ase_lsp_unlockobj (mem->lsp, p);
 	ase_lsp_unlockobj (mem->lsp, n);
-
-	if (ase_lsp_setfunc(mem, n, p) == ASE_NULL) return -1;
-
 	return 0;
 }
 
 ase_lsp_obj_t* ase_lsp_prim_exit (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
-	lsp->errnum = ASE_LSP_ERR_EXIT;
+	lsp->errnum = ASE_LSP_EEXIT;
 	return ASE_NULL;
 }
 
 ase_lsp_obj_t* ase_lsp_prim_eval (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* tmp;
+	ase_lsp_obj_t* tmp1, * tmp2;
 
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
-	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-	if (tmp == ASE_NULL) return ASE_NULL;
+	tmp1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
+	if (tmp1 == ASE_NULL) return ASE_NULL;
 
-	tmp = ase_lsp_eval (lsp, tmp);
-	if (tmp == ASE_NULL) return ASE_NULL;
+	ase_lsp_lockobj (mem->lsp, tmp1);
 
+	tmp2 = ase_lsp_eval (lsp, tmp1);
+	if (tmp2 == ASE_NULL) 
+	{
+		ase_lsp_unlockobj (mem->lsp, tmp1);
+		return ASE_NULL;
+	}
+
+	ase_lsp_unlockobj (mem->lsp, tmp1);
 	return tmp;
 }
 

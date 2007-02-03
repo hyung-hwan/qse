@@ -1,5 +1,7 @@
 /*
- * $Id: mem.c,v 1.25 2006-11-29 02:54:17 bacon Exp $
+ * $Id: mem.c,v 1.26 2007-02-03 10:51:52 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -90,6 +92,7 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 {
 	ase_lsp_obj_t* obj;
 	
+/* TODO: remove the following line... */
 ase_lsp_collectgarbage(mem);
 	if (mem->count >= mem->ubound) ase_lsp_collectgarbage (mem);
 	if (mem->count >= mem->ubound) 

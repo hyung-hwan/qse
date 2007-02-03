@@ -1,5 +1,7 @@
 /*
- * $Id: print.c,v 1.20 2007-02-01 08:49:52 bacon Exp $
+ * $Id: print.c,v 1.21 2007-02-03 10:51:53 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/lsp/lsp_i.h>

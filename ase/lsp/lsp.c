@@ -1,5 +1,7 @@
 /*
- * $Id: lsp.c,v 1.20 2007-02-01 08:49:51 bacon Exp $
+ * $Id: lsp.c,v 1.21 2007-02-03 10:51:52 bacon Exp $
+ *
+ * {License}
  */
 
 #if defined(__BORLANDC__)

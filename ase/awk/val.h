@@ -1,5 +1,7 @@
 /*
- * $Id: val.h,v 1.59 2007-01-16 14:20:42 bacon Exp $
+ * $Id: val.h,v 1.60 2007-02-03 10:47:42 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_VAL_H_
