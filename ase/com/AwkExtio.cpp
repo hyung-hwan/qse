@@ -1,5 +1,7 @@
 /*
- * $Id: AwkExtio.cpp,v 1.8 2007-01-10 14:30:44 bacon Exp $
+ * $Id: AwkExtio.cpp,v 1.9 2007-02-03 10:52:12 bacon Exp $
+ *
+ * {License}
  */
 
 #include "stdafx.h"

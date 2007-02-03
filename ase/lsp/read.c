@@ -1,5 +1,7 @@
 /*
- * $Id: read.c,v 1.29 2006-11-02 10:12:01 bacon Exp $
+ * $Id: read.c,v 1.30 2007-02-03 10:51:53 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -77,7 +79,7 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 	switch (TOKEN_TYPE(lsp)) 
 	{
 		case TOKEN_END:
-			lsp->errnum = ASE_LSP_ERR_END;
+			lsp->errnum = ASE_LSP_EEND;
 			return ASE_NULL;
 
 		case TOKEN_LPAREN:
@@ -128,7 +130,7 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 			return obj;
 	}
 
-	lsp->errnum = ASE_LSP_ERR_SYNTAX;
+	lsp->errnum = ASE_LSP_ESYNTAX;
 	return ASE_NULL;
 }
 
@@ -141,7 +143,8 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 	{
 		if (TOKEN_TYPE(lsp) == TOKEN_END) 
 		{
-			lsp->errnum = ASE_LSP_ERR_SYNTAX; /* unexpected end of input */
+			/* unexpected end of input */
+			lsp->errnum = ASE_LSP_ESYNTAX;
 			return ASE_NULL;
 		}
 
@@ -149,7 +152,8 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 		{
 			if (prev == ASE_NULL) 
 			{
-				lsp->errnum = ASE_LSP_ERR_SYNTAX; /* unexpected dot */
+				/* unexpected dot */
+				lsp->errnum = ASE_LSP_ESYNTAX; 
 				return ASE_NULL;
 			}
 
@@ -157,10 +161,10 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 			obj = read_obj (lsp);
 			if (obj == ASE_NULL) 
 			{
-				if (lsp->errnum == ASE_LSP_ERR_END) 
+				if (lsp->errnum == ASE_LSP_EEND) 
 				{
 					/* unexpected end of input */
-					lsp->errnum = ASE_LSP_ERR_SYNTAX; 
+					lsp->errnum = ASE_LSP_ESYNTAX; 
 				}
 				return ASE_NULL;
 			}
@@ -169,7 +173,8 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 			NEXT_TOKEN (lsp);
 			if (TOKEN_TYPE(lsp) != TOKEN_RPAREN) 
 			{
-				lsp->errnum = ASE_LSP_ERR_SYNTAX; /* ) expected */
+				/* ) expected */
+				lsp->errnum = ASE_LSP_ESYNTAX; 
 				return ASE_NULL;
 			}
 
@@ -179,10 +184,10 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 		obj = read_obj (lsp);
 		if (obj == ASE_NULL) 
 		{
-			if (lsp->errnum == ASE_LSP_ERR_END)
+			if (lsp->errnum == ASE_LSP_EEND)
 			{	
 				/* unexpected end of input */
-				lsp->errnum = ASE_LSP_ERR_SYNTAX;
+				lsp->errnum = ASE_LSP_ESYNTAX;
 			}
 			return ASE_NULL;
 		}
@@ -215,10 +220,10 @@ static ase_lsp_obj_t* read_quote (ase_lsp_t* lsp)
 	tmp = read_obj (lsp);
 	if (tmp == ASE_NULL) 
 	{
-		if (lsp->errnum == ASE_LSP_ERR_END) 
+		if (lsp->errnum == ASE_LSP_EEND) 
 		{
-			// unexpected end of input
-			lsp->errnum = ASE_LSP_ERR_SYNTAX;
+			/* unexpected end of input */
+			lsp->errnum = ASE_LSP_ESYNTAX;
 		}
 		return ASE_NULL;
 	}
@@ -273,10 +278,10 @@ static int read_token (ase_lsp_t* lsp)
 
 	while (1)
 	{
-		// skip white spaces
+		/* skip white spaces */
 		while (ASE_LSP_ISSPACE(lsp, lsp->curc)) NEXT_CHAR (lsp);
 
-		// skip the comments here
+		/* skip the comments here */
 		if (lsp->curc == ASE_T(';')) 
 		{
 			do 
@@ -355,7 +360,7 @@ static int read_token (ase_lsp_t* lsp)
 	}
 
 	TOKEN_TYPE(lsp) = TOKEN_INVALID;
-	NEXT_CHAR (lsp); // consume
+	NEXT_CHAR (lsp); /* consume */
 	return 0;
 }
 
@@ -522,7 +527,7 @@ static int read_string (ase_lsp_t* lsp)
 			return 0;
 		}
 
-		// TODO: 
+		/* TODO:  */
 		if (escaped == 3) 
 		{
 			/* \xNN */

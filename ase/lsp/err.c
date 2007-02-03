@@ -1,5 +1,7 @@
 /*
- * $Id: err.c,v 1.8 2006-11-29 02:54:17 bacon Exp $
+ * $Id: err.c,v 1.9 2007-02-03 10:51:52 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/lsp/lsp_i.h>

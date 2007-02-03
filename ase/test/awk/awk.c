@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.161 2007-02-01 09:19:15 bacon Exp $
+ * $Id: awk.c,v 1.162 2007-02-03 10:52:36 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -115,7 +115,7 @@ static void awk_printf (const ase_char_t* fmt, ...)
 
 static FILE* awk_fopen (const ase_char_t* path, const ase_char_t* mode)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	return _tfopen (path, mode);
 #elif defined(ASE_CHAR_IS_MCHAR)
 	return fopen (path, mode);
@@ -745,13 +745,17 @@ static void* awk_memset (void* dst, int val, ase_size_t n)
 	#define awk_tolower  towlower
 #endif
 
+static void print_usage (const ase_char_t* argv0)
+{
+	awk_printf (ASE_T("Usage: %s [-m] [-d] [-a argument]* -f source-file [data-file]*\n"), argv0);
+}
+
 static int __main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
 	ase_awk_srcios_t srcios;
 	ase_awk_runcbs_t runcbs;
 	ase_awk_runios_t runios;
-	ase_awk_runarg_t runarg[10];
 	ase_awk_prmfns_t prmfns;
 	struct src_io src_io = { NULL, NULL };
 	int opt, i, file_count = 0, errnum;
@@ -759,6 +763,10 @@ static int __main (int argc, ase_char_t* argv[])
 	prmfns_data_t prmfns_data;
 #endif
 	const ase_char_t* mfn = ASE_NULL;
+	int mode = 0;
+	int runarg_count = 0;
+	ase_awk_runarg_t runarg[128];
+	int deparse = 0;
 
 	opt = ASE_AWK_IMPLICIT | 
 	      ASE_AWK_EXPLICIT | 
@@ -775,32 +783,94 @@ static int __main (int argc, ase_char_t* argv[])
 
 	if (argc <= 1)
 	{
-		awk_printf (ASE_T("Usage: %s [-m] source_file [data_file ...]\n"), argv[0]);
+		print_usage (argv[0]);
 		return -1;
 	}
 
 	for (i = 1; i < argc; i++)
 	{
-		if (ase_awk_strcmp(argv[i], ASE_T("-m")) == 0)
+		if (mode == 0)
 		{
-			mfn = ASE_T("main");
+			if (ase_awk_strcmp(argv[i], ASE_T("-m")) == 0)
+			{
+				mfn = ASE_T("main");
+			}
+			else if (ase_awk_strcmp(argv[i], ASE_T("-d")) == 0)
+			{
+				deparse = 1;
+			}
+			else if (ase_awk_strcmp(argv[i], ASE_T("-f")) == 0)
+			{
+				/* specify source file */
+				mode = 1;
+			}
+			else if (ase_awk_strcmp(argv[i], ASE_T("-a")) == 0)
+			{
+				/* specify arguments */
+				mode = 2;
+			}
+			else if (argv[i][0] == ASE_T('-'))
+			{
+				print_usage (argv[0]);
+				return -1;
+			}
+			else if (file_count < ASE_COUNTOF(infiles)-1)
+			{
+				infiles[file_count] = argv[i];
+				file_count++;
+			}
+			else
+			{
+				print_usage (argv[0]);
+				return -1;
+			}
 		}
-		else if (file_count == 0)
+		else if (mode == 1) /* source mode */
 		{
+			if (argv[i][0] == ASE_T('-'))
+			{
+				print_usage (argv[0]);
+				return -1;
+			}
+
+			if (src_io.input_file != NULL) 
+			{
+				print_usage (argv[0]);
+				return -1;
+			}
+
 			src_io.input_file = argv[i];
-			file_count++;
+			mode = 0;
 		}
-		else if (file_count >= 1 && file_count < ASE_COUNTOF(infiles)-1)
+		else if (mode == 2) /* argument mode */
 		{
-			infiles[file_count-1] = argv[i];
-			infiles[file_count] = ASE_NULL;
-			file_count++;
+			if (argv[i][0] == ASE_T('-'))
+			{
+				print_usage (argv[0]);
+				return -1;
+			}
+
+			if (runarg_count >= ASE_COUNTOF(runarg)-1)
+			{
+				print_usage (argv[0]);
+				return -1;
+			}
+
+			runarg[runarg_count].ptr = argv[i];
+			runarg[runarg_count].len = ase_awk_strlen(argv[i]);
+			runarg_count++;
+			mode = 0;
 		}
-		else
-		{
-			awk_printf (ASE_T("Usage: %s [-m] [-f source_file] [data_file ...]\n"), argv[0]);
-			return -1;
-		}
+	}
+
+	infiles[file_count] = ASE_NULL;
+	runarg[runarg_count].ptr = NULL;
+	runarg[runarg_count].len = 0;
+
+	if (mode != 0 || src_io.input_file == NULL)
+	{
+		print_usage (argv[0]);
+		return -1;
 	}
 
 	memset (&prmfns, 0, ASE_SIZEOF(prmfns));
@@ -858,9 +928,8 @@ static int __main (int argc, ase_char_t* argv[])
 	ase_awk_setoption (awk, opt);
 
 	srcios.in = process_source;
-	srcios.out = dump_source;
+	srcios.out = deparse? dump_source: NULL;
 	srcios.custom_data = &src_io;
-
 
 	ase_awk_setmaxdepth (
 		awk, ASE_AWK_DEPTH_BLOCK_PARSE | ASE_AWK_DEPTH_EXPR_PARSE, 20);
@@ -892,15 +961,6 @@ static int __main (int argc, ase_char_t* argv[])
 	runcbs.on_start = on_run_start;
 	runcbs.on_end = on_run_end;
 	runcbs.custom_data = ASE_NULL;
-
-	runarg[0].ptr = ASE_T("argument 0");
-	runarg[0].len = ase_awk_strlen(runarg[0].ptr);
-	runarg[1].ptr = ASE_T("argumetn 1");
-	runarg[1].len = ase_awk_strlen(runarg[1].ptr);
-	runarg[2].ptr = ASE_T("argumetn 2");
-	runarg[2].len = ase_awk_strlen(runarg[2].ptr);
-	runarg[3].ptr = ASE_NULL;
-	runarg[3].len = 0;
 
 	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg, ASE_NULL) == -1)
 	{

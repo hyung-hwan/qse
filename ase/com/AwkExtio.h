@@ -1,5 +1,7 @@
 /*
- * $Id: AwkExtio.h,v 1.8 2006-12-15 06:47:08 bacon Exp $
+ * $Id: AwkExtio.h,v 1.9 2007-02-03 10:52:12 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_COM_AWKEXTIO_H_

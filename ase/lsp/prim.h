@@ -1,5 +1,7 @@
 /*
- * $Id: prim.h,v 1.13 2006-11-02 11:10:12 bacon Exp $
+ * $Id: prim.h,v 1.14 2007-02-03 10:51:53 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_LSP_PRIM_H_

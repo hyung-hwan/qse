@@ -1,5 +1,7 @@
 /*
- * $Id: prim_math.c,v 1.15 2006-10-30 11:26:57 bacon Exp $
+ * $Id: prim_math.c,v 1.16 2007-02-03 10:51:53 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -257,7 +259,7 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 				{
 					if (ASE_LSP_IVAL(tmp) == 0) 
 					{
-						lsp->errnum = ASE_LSP_EDIVBYZERO;
+						lsp->errnum = ASE_LSP_EDIVBY0;
 						return ASE_NULL;
 					}
 					ival = ival / ASE_LSP_IVAL(tmp);
@@ -332,7 +334,7 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			{
 				if (ASE_LSP_IVAL(tmp) == 0) 
 				{
-					lsp->errnum = ASE_LSP_EDIVBYZERO;
+					lsp->errnum = ASE_LSP_EDIVBY0;
 					return ASE_NULL;
 				}
 				ival = ival % ASE_LSP_IVAL(tmp);
@@ -349,7 +351,7 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 				ase_long_t tmpi = (ase_long_t)ASE_LSP_RVAL(tmp);
 				if (tmpi == 0) 
 				{
-					lsp->errnum = ASE_LSP_EDIVBYZERO;
+					lsp->errnum = ASE_LSP_EDIVBY0;
 					return ASE_NULL;
 				}
 				ival = ival % tmpi;

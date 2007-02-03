@@ -1,8 +1,10 @@
+.title ASE
+
 == Introduction ==
-ASE is a collection of scriping engines for various programming languages. It has been written in the hopt that it will be useful for programmers.
 
+ASE is a library implementing various programming languages for embedding purpose.  
 
-== Source ==
+=== Source ===
 
 ase - the root directory of the ase project
 ase/awk - AWK module
@@ -13,9 +15,3 @@ ase/test/lsp -
 ase/test/com -
 ase/etc -
 ase/doc -
-
-== License ==
-The toolkit is distributed under the ASE general license.
-
-== Author ==
-Chung, Hyung-Hwan, the sole author of ASE, is ...

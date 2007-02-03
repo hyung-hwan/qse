@@ -1,5 +1,7 @@
 /*
- * $Id: macros.h,v 1.44 2006-11-29 03:18:18 bacon Exp $
+ * $Id: macros.h,v 1.45 2007-02-03 10:52:36 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_MACROS_H_

@@ -1,5 +1,7 @@
 /*
- * $Id: stdafx.cpp,v 1.2 2006-12-09 12:01:26 bacon Exp $
+ * $Id: stdafx.cpp,v 1.3 2007-02-03 10:52:12 bacon Exp $
+ *
+ * {License}
  */
 
 // stdafx.cpp : source file that includes just the standard includes

@@ -1,5 +1,7 @@
 /*
- * $Id: printf.c,v 1.8 2007-01-28 11:33:23 bacon Exp $
+ * $Id: printf.c,v 1.9 2007-02-03 10:52:36 bacon Exp $
+ *
+ * {License}
  */
 
 #include <stdarg.h>

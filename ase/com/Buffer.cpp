@@ -1,5 +1,7 @@
 /*
- * $Id: Buffer.cpp,v 1.5 2007-01-10 14:30:44 bacon Exp $
+ * $Id: Buffer.cpp,v 1.6 2007-02-03 10:52:12 bacon Exp $
+ *
+ * {License}
  */
 
 #include "stdafx.h"

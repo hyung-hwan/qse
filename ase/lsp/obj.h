@@ -1,5 +1,7 @@
 /*
- * $Id: obj.h,v 1.15 2006-11-02 10:12:01 bacon Exp $
+ * $Id: obj.h,v 1.16 2007-02-03 10:51:53 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_LSP_OBJ_H_

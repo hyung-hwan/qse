@@ -1,5 +1,7 @@
 /*
- * $Id: Buffer.h,v 1.4 2006-12-10 16:13:50 bacon Exp $
+ * $Id: Buffer.h,v 1.5 2007-02-03 10:52:12 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_COM_BUFFER_H_

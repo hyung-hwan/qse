@@ -1,5 +1,7 @@
 /*
- * $Id: eval.c,v 1.23 2006-11-02 11:10:12 bacon Exp $
+ * $Id: eval.c,v 1.24 2007-02-03 10:51:52 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/lsp/lsp_i.h>
@@ -41,7 +43,7 @@ static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 		/*
 		if (obj == lsp->mem->lambda || obj == lsp->mem->macro) {
 			printf ("lambda or macro can't be used as a normal symbol\n");
-			lsp->errnum = ASE_LSP_ERR_BAD_SYMBOL;
+			lsp->errnum = ASE_LSP_EBADSYM;
 			return ASE_NULL;
 		}
 		*/
@@ -84,7 +86,7 @@ static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macr
 
 	if (body == lsp->mem->nil) 
 	{
-		lsp->errnum = ASE_LSP_ERR_EMPTY_BODY;
+		lsp->errnum = ASE_LSP_EEMPBDY;
 		return ASE_NULL;
 	}
 
