@@ -1,5 +1,7 @@
 /*
- * $Id: str.c,v 1.15 2007-02-01 08:38:24 bacon Exp $
+ * $Id: str.c,v 1.16 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/awk/awk_i.h>

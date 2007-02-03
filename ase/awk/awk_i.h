@@ -1,5 +1,7 @@
 /*
- * $Id: awk_i.h,v 1.99 2007-02-01 08:38:22 bacon Exp $
+ * $Id: awk_i.h,v 1.100 2007-02-03 10:47:40 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_AWKI_H_

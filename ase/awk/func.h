@@ -1,5 +1,7 @@
 /*
- * $Id: func.h,v 1.17 2006-11-28 04:30:21 bacon Exp $
+ * $Id: func.h,v 1.18 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_FUNC_H_

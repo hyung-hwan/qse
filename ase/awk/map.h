@@ -1,5 +1,7 @@
 /*
- * $Id: map.h,v 1.18 2006-12-11 08:44:52 bacon Exp $
+ * $Id: map.h,v 1.19 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_MAP_H_

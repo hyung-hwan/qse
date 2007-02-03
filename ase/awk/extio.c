@@ -1,5 +1,7 @@
 /*
- * $Id: extio.c,v 1.70 2007-01-03 04:16:14 bacon Exp $
+ * $Id: extio.c,v 1.71 2007-02-03 10:47:40 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/awk/awk_i.h>

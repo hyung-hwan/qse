@@ -1,5 +1,7 @@
 /*
- * $Id: Awk.java,v 1.25 2007-02-01 07:23:59 bacon Exp $
+ * $Id: Awk.java,v 1.26 2007-02-03 10:47:40 bacon Exp $
+ *
+ * {License}
  */
 
 package ase.awk;

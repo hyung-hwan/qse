@@ -1,5 +1,7 @@
 /*
- * $Id: str.h,v 1.4 2006-10-24 04:10:12 bacon Exp $
+ * $Id: str.h,v 1.5 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_STR_H_

@@ -1,5 +1,7 @@
 /*
- * $Id: map.c,v 1.34 2006-12-30 08:54:43 bacon Exp $
+ * $Id: map.c,v 1.35 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/awk/awk_i.h>

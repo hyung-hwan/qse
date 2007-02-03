@@ -1,5 +1,7 @@
 /*
- * $Id: Exception.java,v 1.3 2007-01-23 14:23:18 bacon Exp $
+ * $Id: Exception.java,v 1.4 2007-02-03 10:47:40 bacon Exp $
+ *
+ * {License}
  */
 
 package ase.awk;

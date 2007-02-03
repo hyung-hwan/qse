@@ -1,5 +1,7 @@
 /*
- * $Id: err.c,v 1.71 2007-01-21 13:21:14 bacon Exp $
+ * $Id: err.c,v 1.72 2007-02-03 10:47:40 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/awk/awk_i.h>

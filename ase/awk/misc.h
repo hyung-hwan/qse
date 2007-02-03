@@ -1,5 +1,7 @@
 /*
- * $Id: misc.h,v 1.10 2006-11-13 15:08:54 bacon Exp $
+ * $Id: misc.h,v 1.11 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_MISC_H_
