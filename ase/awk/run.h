@@ -1,5 +1,7 @@
 /*
- * $Id: run.h,v 1.30 2006-12-17 14:56:07 bacon Exp $
+ * $Id: run.h,v 1.31 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_RUN_H_

@@ -1,5 +1,7 @@
 /*
- * $Id: parse.h,v 1.3 2006-10-24 04:10:12 bacon Exp $
+ * $Id: parse.h,v 1.4 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_PARSE_H_

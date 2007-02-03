@@ -1,5 +1,7 @@
 /*
- * $Id: tab.h,v 1.14 2006-10-24 04:10:12 bacon Exp $
+ * $Id: tab.h,v 1.15 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_TAB_H_

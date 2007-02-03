@@ -1,5 +1,7 @@
 /*
- * $Id: func.c,v 1.92 2007-02-01 08:38:22 bacon Exp $
+ * $Id: func.c,v 1.93 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/awk/awk_i.h>

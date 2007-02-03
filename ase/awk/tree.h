@@ -1,5 +1,7 @@
 /*
- * $Id: tree.h,v 1.85 2007-01-14 15:07:21 bacon Exp $
+ * $Id: tree.h,v 1.86 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_TREE_H_

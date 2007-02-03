@@ -1,5 +1,7 @@
 /*
- * $Id: rec.c,v 1.13 2007-02-01 08:38:23 bacon Exp $
+ * $Id: rec.c,v 1.14 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/awk/awk_i.h>

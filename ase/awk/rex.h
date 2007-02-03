@@ -1,6 +1,8 @@
 /*
- * $Id: rex.h,v 1.25 2006-12-02 16:26:03 bacon Exp $
- **/
+ * $Id: rex.h,v 1.26 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
+ */
 
 #ifndef _ASE_AWK_REX_H_
 #define _ASE_AWK_REX_H_

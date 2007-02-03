@@ -1,5 +1,7 @@
 /*
- * $Id: jni.h,v 1.21 2007-02-01 07:23:59 bacon Exp $
+ * $Id: jni.h,v 1.22 2007-02-03 10:47:41 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_JNI_H_
