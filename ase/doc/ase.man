@@ -15,3 +15,9 @@ ase/test/lsp -
 ase/test/com -
 ase/etc -
 ase/doc -
+
+{{{
+hello
+mr monkey...
+#include <stdio.h>
+}}}
