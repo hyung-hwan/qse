@@ -39,7 +39,8 @@ finalize ()
 			base="$1"; cur="$2"; dir="$3";
 		elif [ -f "$full" ]
 		then
-			target="$base/ase"
+			root="$base/ase-$VER"
+			target="$root/ase"
 			mkdir -p "$target/$cur"
 
 			case "$full" in
@@ -55,24 +56,18 @@ finalize ()
 	done
 }
 
-
-#if [ $# -ne 2 ]
-#then
-#	echo "Usage: $0"
-#	exit 1
-#fi
-
 if [ ! -f ../CVS/Tag ]
 then
 	echo "Error: ../CVS/Tag not found"
 	exit 1;
 fi
 
-VER=`cat ../CVS/Tag | cut -c2-`
-echo $VER
+VER=`cat ../CVS/Tag | cut -c6- | tr '[A-Z]' '[a-z]' | sed 's/_/./g`
 
 cwd=`pwd`
 cd ".."
 base=`pwd`
+
 finalize "$base" "" ""
+
 exit 0
