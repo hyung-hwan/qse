@@ -56,11 +56,20 @@ finalize ()
 }
 
 
-if [ $# -ne 2 ]
+#if [ $# -ne 2 ]
+#then
+#	echo "Usage: $0"
+#	exit 1
+#fi
+
+if [ ! -f ../CVS/Tag ]
 then
-	echo "Usage: $0"
-	exit 1
+	echo "Error: ../CVS/Tag not found"
+	exit 1;
 fi
+
+VER=`cat ../CVS/Tag | cut -c2-`
+echo $VER
 
 cwd=`pwd`
 cd ".."
