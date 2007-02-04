@@ -6,16 +6,29 @@ ASE is a library implementing various programming languages for embedding purpos
 
 === Source ===
 
-ase - the root directory of the ase project
-ase/awk - AWK module
-ase/lsp - lisp module
-ase/com - COM interface source code for ASE modules
-ase/test/awk - 
-ase/test/lsp -
-ase/test/com -
-ase/etc -
-ase/doc -
+[[[
+* ase - the root directory of the ase project
+* ase/awk - AWK module
+* ase/lsp - lisp module
+* ase/com - COM interface source code for ASE modules
+* ase/test/awk - 
+* ase/test/lsp -
+* ase/test/com -
+* ase/etc -
+* ase/doc -
+]]]
 
+[[[
+* ase - the root directory of the ase project
+* ase/awk - AWK module
+* ase/lsp - lisp module
+* ase/com - COM interface source code for ASE modules
+* ase/test/awk - 
+* ase/test/lsp -
+* ase/test/com -
+* ase/etc -
+* ase/doc -
+]]]
 {{{
 #if defined(__BORLANDC__)
 #pragma hdrstop
@@ -31,5 +44,4 @@ ase_awk_t* ase_awk_open (
 {
         ase_awk_t* awk;
 }
-
 }}}
