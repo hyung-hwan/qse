@@ -175,7 +175,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 	{
 		if (/^]]]$/)
 		{
-			# )))
+			# ]]]
 			print "</li>";
 			print "</ul>";
 			mode = 0;

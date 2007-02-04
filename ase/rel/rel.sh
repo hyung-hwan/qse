@@ -38,8 +38,7 @@ finalize ()
 			base="$1"; cur="$2"; dir="$3";
 		elif [ -f "$full" ]
 		then
-			# TODO: read version from CVS.
-			target="$base/ase-0.1.0"
+			target="$base/ase"
 			mkdir -p "$target/$cur"
 
 			case "$full" in
