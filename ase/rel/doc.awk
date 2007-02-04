@@ -1,5 +1,5 @@
 /*
- * $Id: doc.awk,v 1.8 2007-02-04 13:00:37 bacon Exp $
+ * $Id: doc.awk,v 1.9 2007-02-04 14:24:10 bacon Exp $
  *
  * {License}
  */
@@ -51,7 +51,11 @@ BEGIN {
 header && /^\.[[:alpha:]]+[[:space:]]/ {
 	if ($1 == ".title")
 	{
-		print "<title>" $2 "</title>";
+		local i;
+
+		printf "<title>";
+		for (i = 2; i <= NF; i++) printf "%s ", $i;
+		print "</title>";
 	}
 }
 
