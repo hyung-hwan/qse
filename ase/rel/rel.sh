@@ -2,13 +2,13 @@
 
 finalize ()
 {
-	base="$1"; cur="$2"; dir="$3";
+	cur="$1"; dir="$2";
 
 	if [ "$dir" = "" ]
 	then
-		cd "$base"
+		cd "$BASE"
 	else
-		cd "$base/$dir"
+		cd "$BASE/$dir"
 	fi
 
 	for i in *
@@ -20,10 +20,10 @@ finalize ()
 		if [ "$cur" = "" ] 
 		then
 			file="$i"
-			full="$base/$i"
+			full="$BASE/$i"
 		else
 			file="$cur/$i"
-			full="$base/$cur/$i"
+			full="$BASE/$cur/$i"
 		fi
 
 		if [ -d "$full" ]
@@ -35,23 +35,23 @@ finalize ()
 				new="$dir/$i"
 			fi
 
-			finalize "$base" "$file" "$new"
-			base="$1"; cur="$2"; dir="$3";
+			finalize "$file" "$new"
+			cur="$1"; dir="$2";
 		elif [ -f "$full" ]
 		then
-			root="$base/ase-$VER"
+			root="$BASE/ase-$VER"
 			target="$root/ase"
 			mkdir -p "$target/$cur"
 
 			case "$full" in
 			*.h|*.c|*.cc|*.cpp|*.java|*.awk|*.in)
-				"$HOME/awk" -f "$base/rel/lic.awk" -a "$target/$file" "$full"
+				"$HOME/awk" -f "$BASE/rel/lic.awk" -a "$target/$file" "$full"
 				;;
 			*)
 				cp -f "$full" "$target/$file"
 				;;
 			esac
-			#echo "$full,$base,$file: $base/xxx/$file [OK]" 
+			#echo "$full,$BASE,$file: $BASE/xxx/$file [OK]" 
 		fi
 	done
 }
@@ -59,15 +59,16 @@ finalize ()
 if [ ! -f ../CVS/Tag ]
 then
 	echo "Error: ../CVS/Tag not found"
-	exit 1;
+	#exit 1;
 fi
 
 VER=`cat ../CVS/Tag | cut -c6- | tr '[A-Z]' '[a-z]' | sed 's/_/./g`
+VER="0.1.0"
 
 cwd=`pwd`
 cd ".."
-base=`pwd`
+BASE=`pwd`
 
-finalize "$base" "" ""
+finalize "" ""
 
 exit 0
