@@ -15,6 +15,7 @@ finalize ()
 	do
 		if [ "$i" = "*" ]; then continue; fi
 		if [ "$i" = "CVS" ]; then continue; fi
+		if [ "$i" = "stx" ]; then continue; fi
 
 		if [ "$cur" = "" ] 
 		then
@@ -54,6 +55,12 @@ finalize ()
 	done
 }
 
+
+if [ $# -ne 2 ]
+then
+	echo "Usage: $0"
+	exit 1
+fi
 
 cwd=`pwd`
 cd ".."
