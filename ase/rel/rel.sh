@@ -66,19 +66,24 @@ finalize ()
 	done
 }
 
-if [ ! -f ../CVS/Tag ]
-then
-	echo "Error: ../CVS/Tag not found"
-	exit 1;
-fi
+
+############################
+# BEGINNING OF THE PROGRAM #
+############################
 
 AWK="$HOME/awk"
 
-VERSION=`cat ../CVS/Tag | cut -c6- | tr '[A-Z]' '[a-z]' | sed 's/_/./g`
-
-cwd=`pwd`
+CURDIR=`pwd`
 cd ".."
 BASE=`pwd`
+
+if [ ! -f "$BASE/CVS/Tag" ]
+then
+	echo "Error: $BASE/CVS/Tag not found"
+	exit 1;
+fi
+VERSION=`cat "$BASE/CVS/Tag" | cut -c6- | tr '[A-Z]' '[a-z]' | sed 's/_/./g`
+
 DEPLOY_ROOT="$BASE/web.out"
 SOURCE_ROOT="$DEPLOY_ROOT/ase-$VERSION"
 
@@ -94,4 +99,5 @@ tar -cvf "ase-$VERSION.tar" "ase-$VERSION"
 gzip "ase-$VERSION.tar"
 rm -rf "ase-$VERSION"
 
+cd "$CURDIR"
 exit 0
