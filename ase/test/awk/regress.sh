@@ -6,7 +6,7 @@ run_script_for_init()
 	data="$2"
 	output=`echo $script | sed 's/\.awk$/.out/g'`
 
-	./awk "$script" "$data" > "$output"
+	./awk -d -f "$script" "$data" > "$output"
 }
 
 run_init()
@@ -29,7 +29,7 @@ run_script_for_test()
 	output=`echo $script | sed 's/\.awk$/.out/g'`
 
 	echo ">> RUNNING $script"
-	./awk -f "$script" "$data" > "$output.$pid"
+	./awk -d -f "$script" "$data" > "$output.$pid"
 
 	#diff -y "$output" "$output.$pid" 
 	diff "$output" "$output.$pid" 
