@@ -17,7 +17,19 @@ ase/etc -
 ase/doc -
 
 {{{
-hello
-mr monkey...
-#include <stdio.h>
+#if defined(__BORLANDC__)
+#pragma hdrstop
+#define Library
+#endif
+
+#include <ase/awk/awk_i.h>
+
+static void __free_afn (void* awk, void* afn);
+
+ase_awk_t* ase_awk_open (
+        const ase_awk_prmfns_t* prmfns, void* custom_data, int* errnum)
+{
+        ase_awk_t* awk;
+}
+
 }}}
