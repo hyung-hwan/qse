@@ -1,3 +1,9 @@
+/*
+ * $Id: doc.awk,v 1.8 2007-02-04 13:00:37 bacon Exp $
+ *
+ * {License}
+ */
+
 global header, mode;
 global empty_line_count;
 global para_started;
