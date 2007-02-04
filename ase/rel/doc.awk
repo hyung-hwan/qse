@@ -1,6 +1,7 @@
 global header, mode;
 global empty_line_count;
 global para_started;
+global list_count;
 
 BEGIN {
 	header = 1;
@@ -15,6 +16,7 @@ BEGIN {
 
 	print "</html>";
 	print "</head>";
+	print "<link href='doc.css' rel='stylesheet' type='text/css' />";
 }
 
 header && /^\.[[:alpha:]]+[[:space:]]/ {
@@ -96,8 +98,19 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					print "</p>";
 					para_started = 0;
 				}
-				print "<pre>";
+				print "<pre class='code'>";
 				mode = 1;
+			}
+			else if (/\[\[\[/)
+			{
+				if (para_started)
+				{
+					print "</p>";
+					para_started = 0;
+				}
+				print "<ul>";
+				mode = 2;
+				list_count = 0;
 			}
 			else
 			{
@@ -123,6 +136,31 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 			# }}}
 			print "</pre>";
 			mode = 0;
+		}
+		else
+		{
+			gsub ("<", "\\&lt;");
+			gsub (">", "\\&gt;");
+			print $0;
+		}
+	}
+	else if (mode == 2)
+	{
+		if (/^]]]$/)
+		{
+			# )))
+			print "</li>";
+			print "</ul>";
+			mode = 0;
+		}
+		else if (/^\* [^[:space:]]+/)
+		{
+			gsub ("<", "\\&lt;");
+			gsub (">", "\\&gt;");
+			if (list_count > 0) print "</li>";
+			print "<li>";
+			print substr ($0, 3, length($0)-2);
+			list_count++;
 		}
 		else
 		{

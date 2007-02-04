@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.57 2007-02-04 04:40:33 bacon Exp $
+ * $Id: rex.c,v 1.58 2007-02-04 05:34:36 bacon Exp $
  *
  * {License}
  */
@@ -531,6 +531,17 @@ static int __build_atom (__builder_t* builder)
 	struct __code_t tmp;
 
 	if (builder->ptn.curc.type == CT_EOF) return 0;
+
+	if (builder->ptn.curc.type == CT_SPECIAL &&
+	    builder->ptn.curc.value == ASE_T(')'))
+	{
+		/* due to the character reader, the right parenthesis
+		 * is returned as a special character at the top level.
+		 * however, it doesn't have to be special if not following
+		 * the left parenthesis. so the coversion is performed
+		 * here. i believe, this approach is fairly ugly */
+		builder->ptn.curc.type = CT_NORMAL;
+	}
 
 	if (builder->ptn.curc.type == CT_SPECIAL)
 	{
