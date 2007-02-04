@@ -3,16 +3,29 @@ global header, mode;
 BEGIN {
 	header = 1;
 	mode = 0;
+
+	output=ARGV[0];
+	gsub (/\.man/, ".html", output);
+
+	print "OUTPUT TO: " output;
+
+	print "</html>";
+	print "</head>";
 }
 
 header && /^\.[[:alpha:]]+[[:space:]]/ {
 	if ($1 == ".title")
 	{
-		print "TITLE: " $2;
+		print "<title>" $2 "</title>";
 	}
 }
 
-header && !/^\.[[:alpha:]]+[[:space:]]/ { header = 0; }
+header && !/^\.[[:alpha:]]+[[:space:]]/ { 
+
+	header = 0; 
+	print "</head>";
+	print "<body>";
+}
 
 !header {
 	local text;
@@ -38,6 +51,13 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ { header = 0; }
 		{
 			print "<br>";
 		}
+		else
+		{
+			gsub ("<", "\\&lt;");
+			gsub (">", "\\&gt;");
+			print $0;
+			print "<br>";
+		}
 	}
 	else if (mode == 1)
 	{
@@ -53,4 +73,9 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ { header = 0; }
 			print $0;
 		}
 	}
+}
+
+END {
+	print "</body>";
+	print "</html>";
 }

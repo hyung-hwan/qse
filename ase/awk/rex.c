@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.56 2007-02-03 10:47:41 bacon Exp $
+ * $Id: rex.c,v 1.57 2007-02-04 04:40:33 bacon Exp $
  *
  * {License}
  */
@@ -333,10 +333,11 @@ int ase_awk_matchrex (
 	matcher.ignorecase = (option & ASE_AWK_REX_IGNORECASE)? 1: 0;
 
 	mat.matched = ase_false;
-/* TODO: should it allow an offset here??? */
+	/* TODO: should it allow an offset here??? */
 	mat.match_ptr = str + offset;
 
-	while (mat.match_ptr < matcher.match.str.end)
+	/*while (mat.match_ptr < matcher.match.str.end)*/
+	while (mat.match_ptr <= matcher.match.str.end)
 	{
 		if (__match_pattern (&matcher, code, &mat) == ASE_NULL) 
 		{
