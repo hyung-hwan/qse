@@ -24,4 +24,4 @@ ase-0.1.0.tar.gz
 
 == Licensing ==
 
-ASE is distributed under a {BSD license,license.txt} and is free for all uses.
+ASE is distributed under a {BSD license,license.html} and is free for all uses.
