@@ -45,13 +45,21 @@ finalize ()
 
 			case "$full" in
 			*.h|*.c|*.cc|*.cpp|*.java|*.awk|*.in)
-				"$HOME/awk" -f "$BASE/rel/lic.awk" -a "$target/$file" "$full"
+				"$AWK" -f "$BASE/rel/lic.awk" -a "$target/$file" "$full"
+				;;
+			*.man)
+				tmp=`echo $i | sed 's/.man$/.html/'`
+				"$AWK" -f "$BASE/rel/doc.awk" "$full" > "$root/$tmp"
+				cp -f "$full" "$target/$file"
+				;;
+			*.css)
+				cp -f "$full" "$target/$file"
+				cp -f "$full" "$root/$file"
 				;;
 			*)
 				cp -f "$full" "$target/$file"
 				;;
 			esac
-			#echo "$full,$BASE,$file: $BASE/xxx/$file [OK]" 
 		fi
 	done
 }
@@ -61,6 +69,8 @@ then
 	echo "Error: ../CVS/Tag not found"
 	#exit 1;
 fi
+
+AWK="$HOME/awk"
 
 VER=`cat ../CVS/Tag | cut -c6- | tr '[A-Z]' '[a-z]' | sed 's/_/./g`
 VER="0.1.0"
