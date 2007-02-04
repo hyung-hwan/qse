@@ -44,10 +44,7 @@ finalize ()
 
 			case "$full" in
 			*.h|*.c|*.cc|*.cpp|*.java|*.awk|*.in)
-				"~/awk" -f "$base/rel/lic.awk" -a "$target/$file" "$full"
-				;;
-			#*.man)
-				#"~/awk" -f "$base/rel/doc.awk -a "$target" "$full"
+				"$HOME/awk" -f "$base/rel/lic.awk" -a "$target/$file" "$full"
 				;;
 			*)
 				cp -f "$full" "$target/$file"
