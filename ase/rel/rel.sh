@@ -45,7 +45,7 @@ finalize ()
 			*.h|*.c|*.cc|*.cpp|*.java|*.awk|*.in)
 				"$base/test/awk/awk" -f "$base/rel/lic.awk" -a "$target/$file" "$full"
 				;;
-			*.man)
+			#*.man)
 				#"$base/test/awk/awk" -f "$base/rel/doc.awk -a "$target" "$full"
 				;;
 			*)

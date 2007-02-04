@@ -1,47 +1,27 @@
 .title ASE
 
-== Introduction ==
+= ASE =
 
-ASE is a library implementing various programming languages for embedding purpose.  
+ASE is a programming library implementing various programming languages for embedding purposes. The library is developed in the C programming language and provides the JNI binding to JAVA and the COM interface.
 
-=== Source ===
+== Download ==
 
+Download the library source code from the following links.
+
+ase-0.1.0.tar.gz
 [[[
-* ase - the root directory of the ase project
-* ase/awk - AWK module
-* ase/lsp - lisp module
-* ase/com - COM interface source code for ASE modules
-* ase/test/awk - 
-* ase/test/lsp -
-* ase/test/com -
-* ase/etc -
-* ase/doc -
+* {Link 1,ase-0.1.0.tar.gz}
+* {Link 2,http://my.dreamwiz.com/bacon/ase-0.1.0.tar.gz}
 ]]]
 
+== Documentation ==
+
 [[[
-* ase - the root directory of the ase project
-* ase/awk - AWK module
-* ase/lsp - lisp module
-* ase/com - COM interface source code for ASE modules
-* ase/test/awk - 
-* ase/test/lsp -
-* ase/test/com -
-* ase/etc -
-* ase/doc -
+* {Quickstart,quickstart.html}
+* {User guide,userguide.html}
+* {Frequently Asked Questions,faq.html}
 ]]]
-{{{
-#if defined(__BORLANDC__)
-#pragma hdrstop
-#define Library
-#endif
 
-#include <ase/awk/awk_i.h>
+== Licensing ==
 
-static void __free_afn (void* awk, void* afn);
-
-ase_awk_t* ase_awk_open (
-        const ase_awk_prmfns_t* prmfns, void* custom_data, int* errnum)
-{
-        ase_awk_t* awk;
-}
-}}}
+ASE is distributed under a {BSD license,license.txt} and is free for all uses.

@@ -3,6 +3,29 @@ global empty_line_count;
 global para_started;
 global list_count;
 
+func print_text (full)
+{
+	local fra1, fra2, link, idx, t1, t2;
+
+	gsub ("<", "\\&lt;", full);
+	gsub (">", "\\&gt;", full);
+
+	while (match (full, /\{[^{},]+,[^{},]+\}/) > 0)
+	{
+		fra1 = substr (full, 1, RSTART-1);
+		link = substr (full, RSTART, RLENGTH);
+		fra2 = substr (full, RSTART+RLENGTH, length(full)-RLENGTH);
+
+		idx = index(link, ",");
+		t1 = substr (link, 2, idx-2);
+		t2 = substr (link, idx+1, length(link)-idx-1);
+
+		full = sprintf ("%s<a href='%s'>%s</a>%s", fra1, t2, t1, fra2);
+	}
+
+	print full;
+}
+
 BEGIN {
 	header = 1;
 	mode = 0;
@@ -120,9 +143,13 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					para_started = 1;
 				}
 					
+				/*
 				gsub ("<", "\\&lt;");
 				gsub (">", "\\&gt;");
 				print $0;
+				*/
+
+				print_text ($0);
 				print "<br>";
 			}
 
@@ -159,14 +186,13 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 			gsub (">", "\\&gt;");
 			if (list_count > 0) print "</li>";
 			print "<li>";
-			print substr ($0, 3, length($0)-2);
+
+			print_text (substr ($0, 3, length($0)-2));
 			list_count++;
 		}
 		else
 		{
-			gsub ("<", "\\&lt;");
-			gsub (">", "\\&gt;");
-			print $0;
+			print_text ($0);
 		}
 	}
 }
