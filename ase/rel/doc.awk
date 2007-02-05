@@ -1,5 +1,5 @@
 /*
- * $Id: doc.awk,v 1.9 2007-02-04 14:24:10 bacon Exp $
+ * $Id: doc.awk,v 1.10 2007-02-05 14:35:10 bacon Exp $
  *
  * {License}
  */
@@ -38,13 +38,13 @@ BEGIN {
 	empty_line_count = 0;
 	para_started = 0;
 
-	output=ARGV[0];
-	gsub (/\.man/, ".html", output);
-
+	#output=ARGV[0];
+	#gsub (/\.man/, ".html", output);
 	#print "OUTPUT TO: " output;
 
 	print "</html>";
 	print "</head>";
+	print "<meta http-equiv='content-type' content='text/html; charset=UTF-8'>";
 	print "<link href='doc.css' rel='stylesheet' type='text/css' />";
 }
 

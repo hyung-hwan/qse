@@ -17,11 +17,11 @@ ase-0.1.0.tar.gz
 == Documentation ==
 
 [[[
-* {Quickstart,quickstart.html}
-* {User guide,userguide.html}
-* {Frequently Asked Questions,faq.html}
+* {Quickstart,quickstart-en.html}
+* {User guide,userguide-en.html}
+* {Frequently Asked Questions,faq-en.html}
 ]]]
 
 == Licensing ==
 
-ASE is distributed under a {BSD license,license-en.html} and is free for all uses.
+ASE is distributed under a {BSD license,license.html} and is free for all uses.

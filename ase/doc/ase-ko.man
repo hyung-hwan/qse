@@ -2,26 +2,26 @@
 
 = ASE =
 
-ASE is a programming library implementing various programming languages for embedding purposes. The library is developed in the C programming language and provides the JNI binding to JAVA and the COM interface.
+ASE는 임베딩을 목적으로 여러가지 프로그래밍언어를 구현하는 라이브러리이다. C언어로 개발되며 자바 JNI인터페이스와 COM인터페이스를 제공한다.
 
 == Download ==
 
-Download the library source code from the following links.
+다음 링크에서 소스코드를 받을수 있다.
 
 ase-0.1.0.tar.gz
 [[[
-* {Link 1,ase-0.1.0.tar.gz}
-* {Link 2,http://my.dreamwiz.com/bacon/ase-0.1.0.tar.gz}
+* {링크 1,ase-0.1.0.tar.gz}
+* {링크 2,http://my.dreamwiz.com/bacon/ase-0.1.0.tar.gz}
 ]]]
 
 == Documentation ==
 
 [[[
-* {Quickstart,quickstart.html}
-* {User guide,userguide.html}
-* {Frequently Asked Questions,faq.html}
+* {초간단가이드,quickstart-ko.html}
+* {사용자가이드,userguide-ko.html}
+* {자주받는질문,faq-ko.html}
 ]]]
 
 == Licensing ==
 
-ASE is distributed under a {BSD license,license.html} and is free for all uses.
+ASE는 {BSD 라이센스,license.html}하에 무료로 배포된다. 단 {라이센스,license.html}는 번역상에 발생할수 있는 문제를 최소화하기 위해 영문으로만 제공된다.
