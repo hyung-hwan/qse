@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.26 2007-02-03 10:51:52 bacon Exp $
+ * $Id: mem.c,v 1.27 2007-02-06 10:57:00 bacon Exp $
  *
  * {License}
  */
@@ -281,10 +281,11 @@ static void __mark_objs_in_use (ase_lsp_mem_t* mem)
 
 	/* mark objects in the interim frames */
 	frame = mem->brooding_frame;
-	while (frame != ASE_NULL) {
-
+	while (frame != ASE_NULL) 
+	{
 		assoc = frame->assoc;
-		while (assoc != ASE_NULL) {
+		while (assoc != ASE_NULL) 
+		{
 			__mark_obj (mem->lsp, assoc->name);
 
 			if (assoc->value != ASE_NULL) 
