@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.19 2007-02-03 10:51:53 bacon Exp $
+ * $Id: prim.c,v 1.20 2007-02-06 10:57:01 bacon Exp $
  *
  * {License}
  */
@@ -70,17 +70,17 @@ ase_lsp_obj_t* ase_lsp_prim_eval (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	tmp1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp1 == ASE_NULL) return ASE_NULL;
 
-	ase_lsp_lockobj (mem->lsp, tmp1);
+	ase_lsp_lockobj (lsp, tmp1);
 
 	tmp2 = ase_lsp_eval (lsp, tmp1);
 	if (tmp2 == ASE_NULL) 
 	{
-		ase_lsp_unlockobj (mem->lsp, tmp1);
+		ase_lsp_unlockobj (lsp, tmp1);
 		return ASE_NULL;
 	}
 
-	ase_lsp_unlockobj (mem->lsp, tmp1);
-	return tmp;
+	ase_lsp_unlockobj (lsp, tmp1);
+	return tmp2;
 }
 
 ase_lsp_obj_t* ase_lsp_prim_gc (ase_lsp_t* lsp, ase_lsp_obj_t* args)
