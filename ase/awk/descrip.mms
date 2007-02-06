@@ -4,7 +4,8 @@
 
 objects = awk.obj,err.obj,tree.obj,str.obj,tab.obj,map.obj,parse.obj,run.obj,rec.obj,val.obj,func.obj,misc.obj,extio.obj,rex.obj
 
-CFLAGS = /pointer_size=long /include="../.."
+CFLAGS = /include="../.."
+#CFLAGS = /pointer_size=long /include="../.."
 LIBRFLAGS = 
 
 aseawk.olb : $(objects)

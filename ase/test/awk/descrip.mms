@@ -4,7 +4,8 @@
 
 objects = awk.obj
 
-CFLAGS = /pointer_size=long /include="../../.."
+CFLAGS = /include="../../.."
+#CFLAGS = /pointer_size=long /include="../../.."
 
 awk.exe : $(objects)
 	link $(objects),[-.-.awk]aseawk/library
