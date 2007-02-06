@@ -3,3 +3,12 @@
 = ASE Quck Start Guide =
 
 This quick start guide is provided to ....
+
+=== OpenVMS ===
+
+set default [.ase.awk]
+mms
+set default [-.-.test.awk]
+mms
+awk :== $DISK$GEIN_SYS:[USERS.BACON.ASE.TEST.AWK]awk.exe
+awk -f hello.awk

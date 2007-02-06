@@ -1,6 +1,6 @@
 #include <ase/lsp/lsp.h>
-#include "../etc/printf.h"
-#include "../etc/main.h"
+#include "../../etc/printf.c"
+#include "../../etc/main.c"
 
 #ifdef _WIN32
 #include <tchar.h>
@@ -19,53 +19,54 @@
 #include <mcheck.h>
 #endif
 
-
-static xp_ssize_t get_input (int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static ase_ssize_t get_input (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-	xp_ssize_t n;
+	ase_ssize_t n;
 
 	switch (cmd) 
 	{
-	case ASE_LSP_IO_OPEN:
-	case ASE_LSP_IO_CLOSE:
-		return 0;
+		case ASE_LSP_IO_OPEN:
+		case ASE_LSP_IO_CLOSE:
+			return 0;
 
-	case ASE_LSP_IO_READ:
-		if (size < 0) return -1;
-		n = xp_sio_getc (xp_sio_in, data);
-		if (n == 0) return 0;
-		if (n != 1) return -1;
-		return n;
+		case ASE_LSP_IO_READ:
+		{
+			if (size < 0) return -1;
+			n = xp_sio_getc (xp_sio_in, data);
+			if (n == 0) return 0;
+			if (n != 1) return -1;
+			return n;
+		}
 	}
 
 	return -1;
 }
 
-static xp_ssize_t put_output (int cmd, void* arg, xp_char_t* data, xp_size_t size)
+static ase_ssize_t put_output (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 
 	switch (cmd) 
 	{
-	case ASE_LSP_IO_OPEN:
-	case ASE_LSP_IO_CLOSE:
-		return 0;
+		case ASE_LSP_IO_OPEN:
+		case ASE_LSP_IO_CLOSE:
+			return 0;
 
-	case ASE_LSP_IO_WRITE:
-		return xp_sio_putsx (xp_sio_out, data, size);
+		case ASE_LSP_IO_WRITE:
+			return xp_sio_putsx (xp_sio_out, data, size);
 	}
 
 	return -1;
 }
 
 
-int to_int (const xp_char_t* str)
+int to_int (const ase_char_t* str)
 {
 	int r = 0;
 
-	while (*str != XP_CHAR('\0')) 
+	while (*str != ASE_T('\0')) 
 	{
 		if (!xp_isdigit(*str))	break;
-		r = r * 10 + (*str - XP_CHAR('0'));
+		r = r * 10 + (*str - ASE_T('0'));
 		str++;
 	}
 
@@ -76,55 +77,55 @@ int to_int (const xp_char_t* str)
 
 int handle_cli_error (
 	const xp_cli_t* cli, int code, 
-	const xp_char_t* name, const xp_char_t* value)
+	const ase_char_t* name, const ase_char_t* value)
 {
-	xp_printf (XP_T("usage: %s /memory=nnn /increment=nnn\n"), cli->verb);
+	xp_printf (ASE_T("usage: %s /memory=nnn /increment=nnn\n"), cli->verb);
 
-	if (code == XP_CLI_ERROR_INVALID_OPTNAME) {
-		xp_printf (XP_T("unknown option - %s\n"), name);
+	if (code == ASE_CLI_ERROR_INVALID_OPTNAME) {
+		xp_printf (ASE_T("unknown option - %s\n"), name);
 	}
-	else if (code == XP_CLI_ERROR_MISSING_OPTNAME) {
-		xp_printf (XP_T("missing option - %s\n"), name);
+	else if (code == ASE_CLI_ERROR_MISSING_OPTNAME) {
+		xp_printf (ASE_T("missing option - %s\n"), name);
 	}
-	else if (code == XP_CLI_ERROR_REDUNDANT_OPTVAL) {
-		xp_printf (XP_T("redundant value %s for %s\n"), value, name);
+	else if (code == ASE_CLI_ERROR_REDUNDANT_OPTVAL) {
+		xp_printf (ASE_T("redundant value %s for %s\n"), value, name);
 	}
-	else if (code == XP_CLI_ERROR_MISSING_OPTVAL) {
-		xp_printf (XP_T("missing value for %s\n"), name);
+	else if (code == ASE_CLI_ERROR_MISSING_OPTVAL) {
+		xp_printf (ASE_T("missing value for %s\n"), name);
 	}
-	else if (code == XP_CLI_ERROR_MEMORY) {
-		xp_printf (XP_T("memory error in processing %s\n"), name);
+	else if (code == ASE_CLI_ERROR_MEMORY) {
+		xp_printf (ASE_T("memory error in processing %s\n"), name);
 	}
 	else {
-		xp_printf (XP_T("error code: %d\n"), code);
+		xp_printf (ASE_T("error code: %d\n"), code);
 	}
 
 	return -1;
 }
 
-xp_cli_t* parse_cli (int argc, xp_char_t* argv[])
+xp_cli_t* parse_cli (int argc, ase_char_t* argv[])
 {
-	static const xp_char_t* optsta[] =
+	static const ase_char_t* optsta[] =
 	{
-		XP_T("/"), XP_T("--"), XP_NULL
+		ASE_T("/"), ASE_T("--"), ASE_NULL
 	};
 
 	static xp_cliopt_t opts[] =
 	{
-		{ XP_T("memory"), XP_CLI_OPTNAME | XP_CLI_OPTVAL },
-		{ XP_T("increment"), XP_CLI_OPTNAME | XP_CLI_OPTVAL },
-		{ XP_NULL, 0 }
+		{ ASE_T("memory"), ASE_CLI_OPTNAME | ASE_CLI_OPTVAL },
+		{ ASE_T("increment"), ASE_CLI_OPTNAME | ASE_CLI_OPTVAL },
+		{ ASE_NULL, 0 }
 	};
 
 	static xp_cli_t cli =
 	{
 		handle_cli_error,
 		optsta,
-		XP_T("="),
+		ASE_T("="),
 		opts
 	};
 
-	if (xp_parsecli (argc, argv, &cli) == -1) return XP_NULL;
+	if (xp_parsecli (argc, argv, &cli) == -1) return ASE_NULL;
 	return &cli;
 }
 
@@ -136,7 +137,7 @@ struct syscas_data_t
 };
 #endif
 
-static void* __lsp_malloc (xp_size_t n, void* custom_data)
+static void* __lsp_malloc (ase_size_t n, void* custom_data)
 {
 #ifdef _WIN32
 	return HeapAlloc (((syscas_data_t*)custom_data)->heap, 0, n);
@@ -145,7 +146,7 @@ static void* __lsp_malloc (xp_size_t n, void* custom_data)
 #endif
 }
 
-static void* __lsp_realloc (void* ptr, xp_size_t n, void* custom_data)
+static void* __lsp_realloc (void* ptr, ase_size_t n, void* custom_data)
 {
 #ifdef _WIN32
 	/* HeapReAlloc behaves differently from realloc */
@@ -226,7 +227,7 @@ static void lsp_printf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-int __main (int argc, xp_char_t* argv[])
+int __main (int argc, ase_char_t* argv[])
 {
 	ase_lsp_t* lsp;
 	ase_lsp_obj_t* obj;
@@ -241,20 +242,20 @@ int __main (int argc, xp_char_t* argv[])
 	/*
 	if (xp_setlocale () == -1) {
 		xp_fprintf (xp_stderr,
-			XP_T("error: cannot set locale\n"));
+			ASE_T("error: cannot set locale\n"));
 		return -1;
 	}
 	*/
 
-	if ((cli = parse_cli (argc, argv)) == XP_NULL) return -1;
-	mem = to_int(xp_getclioptval(cli, XP_T("memory")));
-	inc = to_int(xp_getclioptval(cli, XP_T("increment")));
+	if ((cli = parse_cli (argc, argv)) == ASE_NULL) return -1;
+	mem = to_int(xp_getclioptval(cli, ASE_T("memory")));
+	inc = to_int(xp_getclioptval(cli, ASE_T("increment")));
 	xp_clearcli (cli);
 
 	if (mem <= 0) 
 	{
 		xp_fprintf (xp_stderr,
-			XP_T("error: invalid memory size given\n"));
+			ASE_T("error: invalid memory size given\n"));
 		return -1;
 	}
 
@@ -264,7 +265,7 @@ int __main (int argc, xp_char_t* argv[])
 	syscas.realloc = __lsp_realloc;
 	syscas.free = __lsp_free;
 
-#ifdef ASE_CHAR_IS_MCHAR
+#ifdef ASE_T_IS_MCHAR
 	syscas.is_upper  = isupper;
 	syscas.is_lower  = islower;
 	syscas.is_alpha  = isalpha;
@@ -314,62 +315,62 @@ int __main (int argc, xp_char_t* argv[])
 
 
 	lsp = ase_lsp_open (&syscas, mem, inc);
-	if (lsp == XP_NULL) 
+	if (lsp == ASE_NULL) 
 	{
 #ifdef _WIN32
 		HeapDestroy (syscas_data.heap);
 #endif
 		xp_fprintf (xp_stderr, 
-			XP_T("error: cannot create a lsp instance\n"));
+			ASE_T("error: cannot create a lsp instance\n"));
 		return -1;
 	}
 
-	xp_printf (XP_T("LSP 0.0001\n"));
+	xp_printf (ASE_T("LSP 0.0001\n"));
 
-	ase_lsp_attach_input (lsp, get_input, XP_NULL);
-	ase_lsp_attach_output (lsp, put_output, XP_NULL);
+	ase_lsp_attach_input (lsp, get_input, ASE_NULL);
+	ase_lsp_attach_output (lsp, put_output, ASE_NULL);
 
 	while (1)
 	{
-		xp_sio_puts (xp_sio_out, XP_T("["));
+		xp_sio_puts (xp_sio_out, ASE_T("["));
 		xp_sio_puts (xp_sio_out, argv[0]);
-		xp_sio_puts (xp_sio_out, XP_T("]"));
+		xp_sio_puts (xp_sio_out, ASE_T("]"));
 		xp_sio_flush (xp_sio_out);
 
 		obj = ase_lsp_read (lsp);
-		if (obj == XP_NULL) 
+		if (obj == ASE_NULL) 
 		{
 			int errnum = ase_lsp_geterrnum(lsp);
-			const xp_char_t* errstr;
+			const ase_char_t* errstr;
 
 			if (errnum != ASE_LSP_ERR_END && 
 			    errnum != ASE_LSP_ERR_EXIT) 
 			{
 				errstr = ase_lsp_geterrstr(errnum);
 				xp_fprintf (xp_stderr, 
-					XP_T("error in read: [%d] %s\n"), errnum, errstr);
+					ASE_T("error in read: [%d] %s\n"), errnum, errstr);
 			}
 
 			if (errnum < ASE_LSP_ERR_SYNTAX) break;
 			continue;
 		}
 
-		if ((obj = ase_lsp_eval (lsp, obj)) != XP_NULL) 
+		if ((obj = ase_lsp_eval (lsp, obj)) != ASE_NULL) 
 		{
 			ase_lsp_print (lsp, obj);
-			xp_sio_puts (xp_sio_out, XP_T("\n"));
+			xp_sio_puts (xp_sio_out, ASE_T("\n"));
 		}
 		else 
 		{
 			int errnum;
-			const xp_char_t* errstr;
+			const ase_char_t* errstr;
 
 			errnum = ase_lsp_geterrnum(lsp);
 			if (errnum == ASE_LSP_ERR_EXIT) break;
 
 			errstr = ase_lsp_geterrstr(errnum);
 			xp_fprintf (xp_stderr, 
-				XP_T("error in eval: [%d] %s\n"), errnum, errstr);
+				ASE_T("error in eval: [%d] %s\n"), errnum, errstr);
 		}
 	}
 
@@ -381,7 +382,7 @@ int __main (int argc, xp_char_t* argv[])
 	return 0;
 }
 
-int xp_main (int argc, xp_char_t* argv[])
+int xp_main (int argc, ase_char_t* argv[])
 {
 	int n;
 
