@@ -16,10 +16,11 @@ awk -f hello.awk
 === HP-UX ===
 
 HP ANSI C 
+HP-UX B.11.23 9000/800 
+HP-UX B.11.23 ia64      
+
 for 64bit
 CC=cc CFLAGS="-O2 +DD64" LDFLAGS="+DD64" ./configure
 
 for 32bit
 CC=cc CFLAGS="-O2 +DD32" LDFLAGS="+DD32" ./configure
-
-
