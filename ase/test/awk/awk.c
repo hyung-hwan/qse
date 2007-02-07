@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.162 2007-02-03 10:52:36 bacon Exp $
+ * $Id: awk.c,v 1.163 2007-02-07 05:43:37 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -181,7 +181,7 @@ static ase_ssize_t process_source (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	struct src_io* src_io = (struct src_io*)arg;
-	ase_char_t c;
+	ase_cint_t c;
 
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
@@ -201,7 +201,7 @@ static ase_ssize_t process_source (
 		if (size <= 0) return -1;
 		c = awk_fgetc ((FILE*)src_io->input_handle);
 		if (c == ASE_CHAR_EOF) return 0;
-		*data = c;
+		*data = (ase_char_t)c;
 		return 1;
 	}
 
@@ -750,7 +750,7 @@ static void print_usage (const ase_char_t* argv0)
 	awk_printf (ASE_T("Usage: %s [-m] [-d] [-a argument]* -f source-file [data-file]*\n"), argv0);
 }
 
-static int __main (int argc, ase_char_t* argv[])
+static int awk_main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
 	ase_awk_srcios_t srcios;
@@ -989,7 +989,7 @@ int ase_main (int argc, ase_char_t* argv[])
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif*/
 
-	n = __main (argc, argv);
+	n = awk_main (argc, argv);
 
 #if defined(__linux) && defined(_DEBUG)
 	muntrace ();
