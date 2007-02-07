@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.94 2007-02-07 07:17:02 bacon Exp $
+ * $Id: func.c,v 1.95 2007-02-07 14:08:07 bacon Exp $
  *
  * {License}
  */
@@ -20,18 +20,7 @@ static int __bfn_match   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 static int __bfn_sprintf (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 
 #undef MAX
-#if defined(__HP_cc)
-	#if ASE_SIZEOF_VOID_P == 4
-		#define MAX 0xFFFFFFFFlu
-	#elif ASE_SIZEOF_VOID_P == 8
-		#define MAX 0xFFFFFFFFFFFFFFFFllu
-	#else
-		#define MAX ASE_TYPE_MAX(ase_size_t)
-	#endif
-#else
-	#define MAX ASE_TYPE_MAX(ase_size_t)
-#endif
-
+#define MAX ASE_TYPE_UNSIGNED_MAX(ase_size_t)
 
 static ase_awk_bfn_t __sys_bfn[] = 
 {

@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.45 2007-02-03 10:52:36 bacon Exp $
+ * $Id: macros.h,v 1.46 2007-02-07 14:04:34 bacon Exp $
  *
  * {License}
  */
@@ -24,18 +24,29 @@
 
 #define ASE_TYPE_IS_SIGNED(type) (((type)0) > ((type)-1))
 #define ASE_TYPE_IS_UNSIGNED(type) (((type)0) < ((type)-1))
+
+#define ASE_TYPE_SIGNED_MAX(type) \
+	((type)~((type)1 << (ASE_SIZEOF(type) * 8 - 1)))
+#define ASE_TYPE_UNSIGNED_MAX(type) ((type)(~(type)0))
+
+#define ASE_TYPE_SIGNED_MIN(type) \
+	((type)((type)1 << (ASE_SIZEOF(type) * 8 - 1)))
+#define ASE_TYPE_UNSIGNED_MIN(type) ((type)0)
+
 #define ASE_TYPE_MAX(type) \
-	((ASE_TYPE_IS_SIGNED(type)? (type)~((type)1 << (ASE_SIZEOF(type) * 8 - 1)): (type)(~(type)0)))
+	((ASE_TYPE_IS_SIGNED(type)? ASE_TYPE_SIGNED_MAX(type): ASE_TYPE_UNSIGNED_MAX(type)))
 #define ASE_TYPE_MIN(type) \
-	((ASE_TYPE_IS_SIGNED(type)? (type)((type)1 << (ASE_SIZEOF(type) * 8 - 1)): (type)0))
+	((ASE_TYPE_IS_SIGNED(type)? ASE_TYPE_SIGNED_MIN(type): ASE_TYPE_UNSIGNED_MIN(type)))
 
 #define ASE_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
+
 #define ASE_SWAP(x,y,original_type,casting_type) \
 	do { \
 		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
 		y = (original_type)((casting_type)(y) ^ (casting_type)(x)); \
 		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
 	} while (0)
+
 #define ASE_ABS(x) ((x) < 0? -(x): (x))
 
 #define ASE_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__;
