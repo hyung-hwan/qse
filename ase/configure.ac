@@ -1,10 +1,10 @@
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.74 $])
+AC_REVISION([$Revision: 1.75 $])
 AC_CONFIG_HEADER([conf_unx.h])
 
 # Checks for programs.
-AC_PROG_CXX
+#AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_RANLIB
 
