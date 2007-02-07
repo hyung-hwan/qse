@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h,v 1.7 2007-02-03 10:52:35 bacon Exp $
+ * $Id: conf_msw.h,v 1.8 2007-02-07 14:51:44 bacon Exp $
  *
  * {License}
  */
@@ -25,11 +25,11 @@ _M_X64 x64 platform
 #define ASE_SIZEOF_SHORT 2
 #define ASE_SIZEOF_INT 4
 
-#ifdef _WIN64
+/*#ifdef _WIN64
 	#define ASE_SIZEOF_LONG 8
-#else
+#else*/
 	#define ASE_SIZEOF_LONG 4
-#endif
+/*#endif*/
 
 #ifdef __POCC__ 
 	/* pelles c with no microsoft extension */

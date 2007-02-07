@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.100 2007-02-03 10:47:40 bacon Exp $
+ * $Id: awk_i.h,v 1.101 2007-02-07 14:51:44 bacon Exp $
  *
  * {License}
  */
@@ -151,8 +151,8 @@ struct ase_awk_t
 		{
 			ase_cint_t curc;
 			ase_cint_t ungotc[5];
-			ase_cint_t ungotc_line[5];
-			ase_cint_t ungotc_column[5];
+			ase_size_t ungotc_line[5];
+			ase_size_t ungotc_column[5];
 			ase_size_t ungotc_count;
 
 			ase_size_t line;

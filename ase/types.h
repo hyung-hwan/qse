@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.67 2007-02-07 06:56:55 bacon Exp $
+ * $Id: types.h,v 1.68 2007-02-07 14:51:44 bacon Exp $
  *
  * {License}
  */
@@ -44,6 +44,12 @@ typedef int ase_tri_t;
 #elif ASE_SIZEOF_VOID_P == ASE_SIZEOF_LONG_LONG
 	typedef long long ase_int_t;
 	typedef unsigned long long ase_uint_t;
+#elif ASE_SIZEOF_VOID_P == ASE_SIZEOF___INT32
+	typedef __int32 ase_int_t;
+	typedef unsigned __int32 ase_uint_t;
+#elif ASE_SIZEOF_VOID_P == ASE_SIZEOF___INT64
+	typedef __int64 ase_int_t;
+	typedef unsigned __int64 ase_uint_t;
 #else
 	#error unsupported pointer size
 #endif

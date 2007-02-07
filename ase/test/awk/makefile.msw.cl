@@ -3,7 +3,19 @@ CFLAGS = /nologo /MT /W3 /GR- -I..\..\.. -D_WIN32_WINNT=0x0400
 LDFLAGS = /libpath:..\..\awk
 LIBS = aseawk.lib kernel32.lib user32.lib
 
-all: awk #rex2 rex3
+!if !defined(CPU) || "$(CPU)" == ""
+CPU = $(PROCESSOR_ARCHITECTURE)
+!endif # CPU
+
+!if "$(CPU)" == ""
+CPU = i386
+!endif
+
+!if "$(CPU)" == "IA64"
+LIBS = $(LIBS) bufferoverflowu.lib
+!endif
+
+all: awk
 
 awk: awk.obj
 	link /nologo /out:$@.exe $(LDFLAGS) $(LIBS) awk.obj
