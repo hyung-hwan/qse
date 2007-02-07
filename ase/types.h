@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.66 2007-02-03 10:52:36 bacon Exp $
+ * $Id: types.h,v 1.67 2007-02-07 06:56:55 bacon Exp $
  *
  * {License}
  */
@@ -20,7 +20,7 @@
 	#endif
 	#include <ase/conf_unx.h>
 #else
-	#error unsupport operating system
+	#error unsupported operating system
 #endif
 
 /* boolean type */
@@ -45,7 +45,7 @@ typedef int ase_tri_t;
 	typedef long long ase_int_t;
 	typedef unsigned long long ase_uint_t;
 #else
-	#error Unsupported pointer size
+	#error unsupported pointer size
 #endif
 
 
@@ -178,6 +178,9 @@ typedef int  ase_mcint_t;
 		typedef int ase_wcint_t;
 	#elif defined(__APPLE__) && defined(__MACH__)
 		typedef int ase_wchar_t;
+		typedef int ase_wcint_t;
+	#elif defined(hpux) || defined(__hpux)
+		typedef unsigned int ase_wchar_t;
 		typedef int ase_wcint_t;
 	#elif ASE_SIZEOF_LONG == 4
 		typedef long ase_wchar_t;
