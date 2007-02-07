@@ -12,3 +12,14 @@ set default [-.-.test.awk]
 mms
 awk :== $DISK$GEIN_SYS:[USERS.BACON.ASE.TEST.AWK]awk.exe
 awk -f hello.awk
+
+=== HP-UX ===
+
+HP ANSI C 
+for 64bit
+CC=cc CFLAGS="-O2 +DD64" LDFLAGS="+DD64" ./configure
+
+for 32bit
+CC=cc CFLAGS="-O2 +DD32" LDFLAGS="+DD32" ./configure
+
+
