@@ -1,5 +1,5 @@
 /*
- * $Id: printf.c,v 1.9 2007-02-03 10:52:36 bacon Exp $
+ * $Id: printf.c,v 1.10 2007-02-07 05:43:37 bacon Exp $
  *
  * {License}
  */
@@ -309,6 +309,7 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 	}
 
 	buf.ptr[buf.len] = ASE_T('\0');
+
 	return buf.ptr;
 }
 

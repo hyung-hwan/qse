@@ -1,10 +1,10 @@
 /*
- * $Id: conf_vms.h,v 1.8 2007-02-03 10:52:36 bacon Exp $
+ * $Id: conf_vms.h,v 1.9 2007-02-07 05:43:37 bacon Exp $
  *
  * {License}
  */
 
-/* TODO: please complete the itanium portion */
+/* TODO: please complete the ia64 portion */
 
 /* both vax and alpha are in the little endian. */
 #define ASE_ENDIAN_LITTLE 
@@ -18,7 +18,7 @@
 	#define ASE_SIZEOF_LONG_LONG 0
 #elif defined(alpha) || defined(__alpha)
 	#define ASE_SIZEOF_LONG_LONG 8
-#elif defined(itanium) || defined(__itanium)
+#elif defined(ia64) || defined(__ia64)
 	#define ASE_SIZEOF_LONG_LONG 8
 #else
 	#define ASE_SIZEOF_LONG_LONG 0
@@ -32,7 +32,7 @@
 	#define ASE_SIZEOF___INT64 0
 #elif defined(alpha) || defined(__alpha)
 	#define ASE_SIZEOF___INT64 8
-#elif defined(itanium) || defined(__itanium)
+#elif defined(ia64) || defined(__ia64)
 	#define ASE_SIZEOF___INT64 8
 #else
 	#define ASE_SIZEOF___INT64 0
@@ -44,17 +44,31 @@
 #if defined(vax) || defined(__vax)
 	#define ASE_SIZEOF_VOID_P 4
 #elif defined(alpha) || defined(__alpha)
-	/*#pragma pointer_size 32
-	#define ASE_SIZEOF_VOID_P 4*/
-	#pragma pointer_size 64
-	#define ASE_SIZEOF_VOID_P 8
-#elif defined(itanium) || defined(__itanium)
-	/*#pragma pointer_size 32
-	#define ASE_SIZEOF_VOID_P 4*/
-	#pragma pointer_size 64
-	#define ASE_SIZEOF_VOID_P 8
+	#if __INITIAL_POINTER_SIZE==64
+		#pragma pointer_size 64
+		#define ASE_SIZEOF_VOID_P 8
+	#elif __INITIAL_POINTER_SIZE==32
+		#pragma pointer_size 32
+		#define ASE_SIZEOF_VOID_P 4
+	#elif __INITIAL_POINTER_SIZE==0
+		#define ASE_SIZEOF_VOID_P 4
+	#else
+		#error "unsupported initial pointer size"
+	#endif
+#elif defined(ia64) || defined(__ia64)
+	#if __INITIAL_POINTER_SIZE==64
+		#pragma pointer_size 64
+		#define ASE_SIZEOF_VOID_P 8
+	#elif __INITIAL_POINTER_SIZE==32 
+		#pragma pointer_size 32
+		#define ASE_SIZEOF_VOID_P 4
+	#elif __INITIAL_POINTER_SIZE==0
+		#define ASE_SIZEOF_VOID_P 4
+	#else
+		#error "unsupported initial pointer size"
+	#endif
 #else
-	#define ASE_SIZEOF_VOID_P 0
+	#error "unsupported architecture"
 #endif
 
 #define ASE_SIZEOF_FLOAT 4
@@ -64,7 +78,7 @@
 	#define ASE_SIZEOF_LONG_DOUBLE 8
 #elif defined(alpha) || defined(__alpha)
 	#define ASE_SIZEOF_LONG_DOUBLE 16
-#elif defined(itanium) || defined(__itanium)
+#elif defined(ia64) || defined(__ia64)
 	#define ASE_SIZEOF_LONG_DOUBLE 16
 #else
 	#define ASE_SIZEOF_LONG_DOUBLE 0
