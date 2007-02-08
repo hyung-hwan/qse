@@ -6,9 +6,9 @@ CFLAGS = -O2 -Wall -D_REENTRANT -D_THREAD_SAFE -fPIC -I../../..
 LDFLAGS =  -L../../awk
 LIBS =  -laseawk -lm
 
-all: awk
+all: aseawk
 
-awk: $(OBJS)
+aseawk: $(OBJS)
 	$(CC) -o $@ awk.o $(LDFLAGS) $(LIBS)
 
 java:
@@ -18,7 +18,7 @@ jrun:
 	java -Xms1m -Xmx2m -classpath ../../.. ase.test.awk.Awk
 
 clean:
-	rm -rf *.o *.class awk 
+	rm -rf *.o *.class aseawk 
 
 .SUFFIXES: .c .o
 .c.o:

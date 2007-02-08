@@ -5,29 +5,20 @@ LIBS = aseawk.lib kernel32.lib user32.lib
 
 !if !defined(CPU) || "$(CPU)" == ""
 CPU = $(PROCESSOR_ARCHITECTURE)
-!endif # CPU
+!endif 
 
 !if "$(CPU)" == ""
 CPU = i386
 !endif
 
-!if "$(CPU)" == "IA64"
+!if "$(CPU)" == "IA64" || "$(CPU)" == "AMD64"
 LIBS = $(LIBS) bufferoverflowu.lib
 !endif
 
-all: awk
+all: aseawk
 
-awk: awk.obj
+aseawk: awk.obj
 	link /nologo /out:$@.exe $(LDFLAGS) $(LIBS) awk.obj
-
-rex: rex.obj
-	link /nologo /out:rex.exe $(LDFLAGS) $(LIBS) rex.obj
-
-rex2: rex2.obj
-	link /nologo /out:rex2.exe $(LDFLAGS) $(LIBS) rex2.obj
-
-rex3: rex3.obj
-	link /nologo /out:rex3.exe $(LDFLAGS) $(LIBS) rex3.obj
 
 java: 
 	javac -classpath ../../.. Awk.java
@@ -36,7 +27,7 @@ jrun:
 	java -classpath ../../.. ase.test.awk.Awk
 
 clean:
-	del $(OBJS) *.obj awk.exe rex.exe
+	del $(OBJS) *.obj aseawk.exe 
 
 .SUFFIXES: .c .obj
 .c.obj:

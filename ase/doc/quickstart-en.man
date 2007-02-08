@@ -24,3 +24,9 @@ CC=cc CFLAGS="-O2 +DD64" LDFLAGS="+DD64" ./configure
 
 for 32bit
 CC=cc CFLAGS="-O2 +DD32" LDFLAGS="+DD32" ./configure
+
+=== SCO OpenServer ===
+
+cc
+
+CC=cc CFLAGS="-Xc -a ansi -O2" ./configure

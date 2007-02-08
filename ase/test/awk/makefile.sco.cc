@@ -1,15 +1,15 @@
 CC = cc
-CFLAGS = -Xc -a ansi -O2 -I../../.. -D__STAND_ALONE
+CFLAGS = -Xc -a ansi -O2 -I../../.. 
 LDFLAGS = -L../../bas -L../../awk
 LIBS = -lxpawk -lm
 
-all: awk
+all: aseawk
 
-awk: awk.o
+aseawk: awk.o
 	$(CC) -o awk awk.o $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -f *.o awk
+	rm -f *.o aseawk
 
 .SUFFIXES: .c .o
 .c.o:
