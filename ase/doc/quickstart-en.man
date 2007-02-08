@@ -10,8 +10,8 @@ set default [.ase.awk]
 mms
 set default [-.-.test.awk]
 mms
-awk :== $DISK$GEIN_SYS:[USERS.BACON.ASE.TEST.AWK]awk.exe
-awk -f hello.awk
+aseawk :== $DISK$GEIN_SYS:[USERS.BACON.ASE.TEST.AWK]aseawk.exe
+aseawk -f hello.awk
 
 === HP-UX ===
 
@@ -27,6 +27,7 @@ CC=cc CFLAGS="-O2 +DD32" LDFLAGS="+DD32" ./configure
 
 === SCO OpenServer ===
 
-cc
+SCO OpenServer Release 5.0.7 (SCO_SV 3.2 5.0.7)
 
+cc
 CC=cc CFLAGS="-Xc -a ansi -O2" ./configure
