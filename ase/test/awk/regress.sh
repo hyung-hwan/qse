@@ -6,7 +6,7 @@ run_script_for_init()
 	data="$2"
 	output=`echo $script | sed 's/\.awk$/.out/g'`
 
-	./awk -d -f "$script" "$data" > "$output"
+	./aseawk -d -f "$script" "$data" > "$output"
 }
 
 run_init()
@@ -29,7 +29,7 @@ run_script_for_test()
 	output=`echo $script | sed 's/\.awk$/.out/g'`
 
 	echo ">> RUNNING $script"
-	./awk -d -f "$script" "$data" > "$output.$pid"
+	./aseawk -d -f "$script" "$data" > "$output.$pid"
 
 	#diff -y "$output" "$output.$pid" 
 	diff "$output" "$output.$pid" 
@@ -90,7 +90,7 @@ run_test()
 #  main  #
 #--------#
 
-if [ ! -x ./awk ]
+if [ ! -x ./aseawk ]
 then
 	echo "Error: cannot locate a relevant awk interpreter"
 	exit 1;
