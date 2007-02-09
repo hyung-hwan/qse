@@ -99,6 +99,7 @@ finalize "" ""
 cd "$ASETGT"
 tar -cvf "ase-$ASEVER.tar" "ase-$ASEVER"
 gzip "ase-$ASEVER.tar"
+mv "ase-$ASEVER.tar.gz" "ase-$ASEVER.tgz"
 rm -rf "ase-$ASEVER"
 
 cd "$CURDIR"
