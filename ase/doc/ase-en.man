@@ -4,7 +4,7 @@
 
 ASE is a programming library implementing various programming languages for embedding purposes. The library is developed in the C programming language and provides the JNI binding to JAVA and the COM interface.
 
-(This page has been created for the test purpose prior to proper release and the contents can be changed anytime without prior notice.
+(Warning: This page has been created for the test purpose prior to proper release and the contents can be changed anytime without prior notice.)
 
 == Download ==
 
