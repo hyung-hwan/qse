@@ -50,13 +50,13 @@ finalize ()
 			*.man)
 				html=`echo $i | sed 's/.man$/.html/'`
 				"$ASEAWK" -f "$BASE/rel/doc.awk" "$full" > "$SOURCE_ROOT/html/$html"
-				"$ASEAWK" -f "$BASE/rel/doc.awk" "$full" > "$DEPLOY_ROOT/$html"
+				"$ASEAWK" -f "$BASE/rel/doc.awk" "$full" > "$ASETGT/$html"
 				cp -f "$full" "$target/$file"
 				;;
 			*.css)
 				cp -f "$full" "$target/$file"
 				cp -f "$full" "$SOURCE_ROOT/html/$i"
-				cp -f "$full" "$DEPLOY_ROOT/$i"
+				cp -f "$full" "$ASETGT/$i"
 				;;
 			*)
 				cp -f "$full" "$target/$file"
@@ -71,32 +71,33 @@ finalize ()
 # BEGINNING OF THE PROGRAM #
 ############################
 
-if [ $# -ne 2 ]
+if [ $# -ne 3 ]
 then
-	echo "Usage: $0 awk version"
+	echo "Usage: $0 awk version target"
 	echo "where awk := full path to aseawk"
 	echo "      version := any string"            
+	echo "      target := full path to the target directory"
 	exit 1
 fi
 
 ASEAWK="$1"
 ASEVER="$2"
+ASETGT="$3"
 
 CURDIR=`pwd`
 cd ".."
 BASE=`pwd`
 
-DEPLOY_ROOT="$BASE/web.out"
-SOURCE_ROOT="$DEPLOY_ROOT/ase-$ASEVER"
+SOURCE_ROOT="$ASETGT/ase-$ASEVER"
 
-rm -rf "$DEPLOY_ROOT"
-mkdir -p "$DEPLOY_ROOT"
+rm -rf "$ASETGT"
+mkdir -p "$ASETGT"
 mkdir -p "$SOURCE_ROOT"
 mkdir -p "$SOURCE_ROOT/html"
 
 finalize "" ""
 
-cd "$DEPLOY_ROOT"
+cd "$ASETGT"
 tar -cvf "ase-$ASEVER.tar" "ase-$ASEVER"
 gzip "ase-$ASEVER.tar"
 rm -rf "ase-$ASEVER"
