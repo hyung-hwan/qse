@@ -45,12 +45,12 @@ finalize ()
 
 			case "$i" in
 			*.h|*.c|*.cc|*.cpp|*.java|*.awk|*.in)
-				"$AWK" -f "$BASE/rel/lic.awk" -a "$target/$file" "$full"
+				"$ASEAWK" -f "$BASE/rel/lic.awk" -a "$target/$file" "$full"
 				;;
 			*.man)
 				html=`echo $i | sed 's/.man$/.html/'`
-				"$AWK" -f "$BASE/rel/doc.awk" "$full" > "$SOURCE_ROOT/html/$html"
-				"$AWK" -f "$BASE/rel/doc.awk" "$full" > "$DEPLOY_ROOT/$html"
+				"$ASEAWK" -f "$BASE/rel/doc.awk" "$full" > "$SOURCE_ROOT/html/$html"
+				"$ASEAWK" -f "$BASE/rel/doc.awk" "$full" > "$DEPLOY_ROOT/$html"
 				cp -f "$full" "$target/$file"
 				;;
 			*.css)
@@ -71,21 +71,23 @@ finalize ()
 # BEGINNING OF THE PROGRAM #
 ############################
 
-AWK="$HOME/awk"
+if [ $# -ne 2 ]
+then
+	echo "Usage: $0 awk version"
+	echo "where awk := full path to aseawk"
+	echo "      version := any string"            
+	exit 1
+fi
+
+ASEAWK="$1"
+ASEVER="$2"
 
 CURDIR=`pwd`
 cd ".."
 BASE=`pwd`
 
-if [ ! -f "$BASE/CVS/Tag" ]
-then
-	echo "Error: $BASE/CVS/Tag not found"
-	exit 1;
-fi
-VERSION=`cat "$BASE/CVS/Tag" | cut -c6- | tr '[A-Z]' '[a-z]' | sed 's/_/./g`
-
 DEPLOY_ROOT="$BASE/web.out"
-SOURCE_ROOT="$DEPLOY_ROOT/ase-$VERSION"
+SOURCE_ROOT="$DEPLOY_ROOT/ase-$ASEVER"
 
 rm -rf "$DEPLOY_ROOT"
 mkdir -p "$DEPLOY_ROOT"
@@ -95,9 +97,9 @@ mkdir -p "$SOURCE_ROOT/html"
 finalize "" ""
 
 cd "$DEPLOY_ROOT"
-tar -cvf "ase-$VERSION.tar" "ase-$VERSION"
-gzip "ase-$VERSION.tar"
-rm -rf "ase-$VERSION"
+tar -cvf "ase-$ASEVER.tar" "ase-$ASEVER"
+gzip "ase-$ASEVER.tar"
+rm -rf "ase-$ASEVER"
 
 cd "$CURDIR"
 exit 0
