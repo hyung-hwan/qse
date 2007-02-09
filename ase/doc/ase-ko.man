@@ -8,10 +8,10 @@ ASE는 임베딩을 목적으로 여러가지 프로그래밍언어를 구현하
 
 다음 링크에서 소스코드를 받을수 있다.
 
-ase-0.1.0.tar.gz
+ase-0.1.0.tgz
 [[[
-* {링크 1,ase-0.1.0.tar.gz}
-* {링크 2,http://my.dreamwiz.com/bacon/ase-0.1.0.tar.gz}
+* {링크 1,ase-0.1.0.tgz}
+* {링크 2,http://my.dreamwiz.com/bacon/ase-0.1.0.tgz}
 ]]]
 
 == Documentation ==

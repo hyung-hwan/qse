@@ -8,10 +8,10 @@ ASE is a programming library implementing various programming languages for embe
 
 Download the library source code from the following links.
 
-ase-0.1.0.tar.gz
+ase-0.1.0.tgz
 [[[
-* {Link 1,ase-0.1.0.tar.gz}
-* {Link 2,http://my.dreamwiz.com/bacon/ase-0.1.0.tar.gz}
+* {Link 1,ase-0.1.0.tgz}
+* {Link 2,http://my.dreamwiz.com/bacon/ase-0.1.0.tgz}
 ]]]
 
 == Documentation ==
