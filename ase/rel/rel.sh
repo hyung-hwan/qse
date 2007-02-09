@@ -16,7 +16,6 @@ finalize ()
 		if [ "$i" = "*" ]; then continue; fi
 		if [ "$i" = "CVS" ]; then continue; fi
 		if [ "$i" = "stx" ]; then continue; fi
-		if [ "$i" = "web.out" ]; then continue; fi
 
 		if [ "$cur" = "" ] 
 		then
