@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.163 2007-02-07 05:43:37 bacon Exp $
+ * $Id: awk.c,v 1.164 2007-02-10 13:52:41 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -267,7 +267,11 @@ static ase_ssize_t process_extio_pipe (
 
 		case ASE_AWK_IO_READ:
 		{
-			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) return 0;
+			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
+			{
+				if (ferror((FILE*)epa->handle)) return -1;
+				return 0;
+			}
 			return ase_awk_strlen(data);
 		}
 
@@ -343,7 +347,10 @@ static ase_ssize_t process_extio_file (
 		case ASE_AWK_IO_READ:
 		{
 			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
+			{
+				if (ferror((FILE*)epa->handle)) return -1;
 				return 0;
+			}
 			return ase_awk_strlen(data);
 		}
 
@@ -414,6 +421,8 @@ static ase_ssize_t process_extio_console (
 	{
 		while (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL)
 		{
+			if (ferror((FILE*)epa->handle)) return -1;
+
 			/* it has reached the end of the current file.
 			 * open the next file if available */
 			if (infiles[infile_no] == ASE_NULL) 

@@ -1,5 +1,5 @@
 /*
- * $Id: prim_compar.c,v 1.11 2007-02-03 10:51:53 bacon Exp $
+ * $Id: prim_compar.c,v 1.12 2007-02-10 13:52:23 bacon Exp $
  *
  * {License}
  */
@@ -14,16 +14,20 @@
 \
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args)); \
 	if (p1 == ASE_NULL) return ASE_NULL; \
-	ase_lsp_lockobj (lsp, p1); \
+	if (ase_lsp_pushtmp (lsp, p1) == ASE_NULL) return ASE_NULL; \
 \
 	p2 = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(args))); \
 	if (p2 == ASE_NULL) \
 	{ \
-		ase_lsp_unlockobj (lsp, p1); \
+		ase_lsp_poptmp (lsp); \
 		return ASE_NULL; \
 	} \
 \
-	ase_lsp_lockobj (lsp, p2); \
+	if (ase_lsp_pushtmp (lsp, p2) == ASE_NULL) \
+	{ \
+		ase_lsp_poptmp (lsp); \
+		return ASE_NULL; \
+	} \
 \
 	if (ASE_LSP_TYPE(p1) == ASE_LSP_OBJ_INT) \
 	{ \
@@ -37,8 +41,8 @@
 		} \
 		else \
 		{ \
-			ase_lsp_unlockobj (lsp, p1); \
-			ase_lsp_unlockobj (lsp, p2); \
+			ase_lsp_poptmp (lsp); \
+			ase_lsp_poptmp (lsp); \
 			lsp->errnum = ASE_LSP_EVALBAD; \
 			return ASE_NULL; \
 		} \
@@ -55,8 +59,8 @@
 		} \
 		else \
 		{ \
-			ase_lsp_unlockobj (lsp, p1); \
-			ase_lsp_unlockobj (lsp, p2); \
+			ase_lsp_poptmp (lsp); \
+			ase_lsp_poptmp (lsp); \
 			lsp->errnum = ASE_LSP_EVALBAD; \
 			return ASE_NULL; \
 		} \
@@ -71,8 +75,8 @@
 		} \
 		else  \
 		{ \
-			ase_lsp_unlockobj (lsp, p1); \
-			ase_lsp_unlockobj (lsp, p2); \
+			ase_lsp_poptmp (lsp); \
+			ase_lsp_poptmp (lsp); \
 			lsp->errnum = ASE_LSP_EVALBAD; \
 			return ASE_NULL; \
 		} \
@@ -87,22 +91,22 @@
 		} \
 		else \
 		{ \
-			ase_lsp_unlockobj (lsp, p1); \
-			ase_lsp_unlockobj (lsp, p2); \
+			ase_lsp_poptmp (lsp); \
+			ase_lsp_poptmp (lsp); \
 			lsp->errnum = ASE_LSP_EVALBAD; \
 			return ASE_NULL; \
 		} \
 	} \
 	else \
 	{ \
-		ase_lsp_unlockobj (lsp, p1); \
-		ase_lsp_unlockobj (lsp, p2); \
+		ase_lsp_poptmp (lsp); \
+		ase_lsp_poptmp (lsp); \
 		lsp->errnum = ASE_LSP_EVALBAD; \
 		return ASE_NULL; \
 	} \
 \
-	ase_lsp_unlockobj (lsp, p1); \
-	ase_lsp_unlockobj (lsp, p2); \
+	ase_lsp_poptmp (lsp); \
+	ase_lsp_poptmp (lsp); \
 	return (res)? lsp->mem->t: lsp->mem->nil; \
 }
 

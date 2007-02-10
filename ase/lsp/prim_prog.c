@@ -1,5 +1,5 @@
 /*
- * $Id: prim_prog.c,v 1.7 2007-02-03 10:51:53 bacon Exp $
+ * $Id: prim_prog.c,v 1.8 2007-02-10 13:52:23 bacon Exp $
  *
  * {License}
  */
@@ -9,7 +9,6 @@
 ase_lsp_obj_t* ase_lsp_prim_prog1 (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	/* (prog1 1 2 3) returns 1 */
-
 	ase_lsp_obj_t* res = ASE_NULL, * tmp;
 
 	/*while (args != lsp->mem->nil) {*/
@@ -21,12 +20,15 @@ ase_lsp_obj_t* ase_lsp_prim_prog1 (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (res == ASE_NULL) 
 		{
 			res = tmp;
-			ase_lsp_lockobj (lsp, res);
+			if (ase_lsp_pushtmp (lsp, res) == ASE_NULL)
+			{
+				return ASE_NULL;
+			}
 		}
 		args = ASE_LSP_CDR(args);
 	}
 
-	if (res != ASE_NULL) ase_lsp_unlockobj (lsp, res);
+	if (res != ASE_NULL) ase_lsp_poptmp (lsp);
 	return res;
 }
 

@@ -3,6 +3,7 @@
 #include "../../etc/main.c"
 
 #ifdef _WIN32
+#include <windows.h>
 #include <tchar.h>
 #endif
 
@@ -19,7 +20,25 @@
 #include <mcheck.h>
 #endif
 
-static ase_ssize_t get_input (int cmd, void* arg, ase_char_t* data, ase_size_t size)
+#if defined(_WIN32)
+	#define awk_fgets _fgetts
+	#define awk_fgetc _fgettc
+	#define awk_fputs _fputts
+	#define awk_fputc _fputtc
+#elif defined(ASE_CHAR_IS_MCHAR)
+	#define awk_fgets fgets
+	#define awk_fgetc fgetc
+	#define awk_fputs fputs
+	#define awk_fputc fputc
+#else
+	#define awk_fgets fgetws
+	#define awk_fgetc fgetwc
+	#define awk_fputs fputws
+	#define awk_fputc fputwc
+#endif
+
+static ase_ssize_t get_input (
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_ssize_t n;
 
@@ -31,20 +50,37 @@ static ase_ssize_t get_input (int cmd, void* arg, ase_char_t* data, ase_size_t s
 
 		case ASE_LSP_IO_READ:
 		{
-			if (size < 0) return -1;
-			n = xp_sio_getc (xp_sio_in, data);
-			if (n == 0) return 0;
-			if (n != 1) return -1;
-			return n;
+			/*
+			if (awk_fgets (data, size, stdin) == ASE_NULL) 
+			{
+				if (ferror(stdin)) return -1;
+				return 0;
+			}
+			return ase_lsp_strlen(data);
+			*/
+
+			ase_cint_t c;
+
+			if (size <= 0) return -1;
+			c = awk_fgetc (stdin);
+
+			if (c == ASE_CHAR_EOF) 
+			{
+				if (ferror(stdin)) return -1;
+				return 0;
+			}
+
+			data[0] = c;
+			return 1;
 		}
 	}
 
 	return -1;
 }
 
-static ase_ssize_t put_output (int cmd, void* arg, ase_char_t* data, ase_size_t size)
+static ase_ssize_t put_output (
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-
 	switch (cmd) 
 	{
 		case ASE_LSP_IO_OPEN:
@@ -52,86 +88,21 @@ static ase_ssize_t put_output (int cmd, void* arg, ase_char_t* data, ase_size_t 
 			return 0;
 
 		case ASE_LSP_IO_WRITE:
-			return xp_sio_putsx (xp_sio_out, data, size);
+		{
+			int n = ase_fprintf (
+				stdout, ASE_T("%.*s"), size, data);
+			if (n < 0) return -1;
+
+			return size;
+		}
 	}
 
 	return -1;
-}
-
-
-int to_int (const ase_char_t* str)
-{
-	int r = 0;
-
-	while (*str != ASE_T('\0')) 
-	{
-		if (!xp_isdigit(*str))	break;
-		r = r * 10 + (*str - ASE_T('0'));
-		str++;
-	}
-
-	return r;
-}
-
-#include <locale.h>
-
-int handle_cli_error (
-	const xp_cli_t* cli, int code, 
-	const ase_char_t* name, const ase_char_t* value)
-{
-	xp_printf (ASE_T("usage: %s /memory=nnn /increment=nnn\n"), cli->verb);
-
-	if (code == ASE_CLI_ERROR_INVALID_OPTNAME) {
-		xp_printf (ASE_T("unknown option - %s\n"), name);
-	}
-	else if (code == ASE_CLI_ERROR_MISSING_OPTNAME) {
-		xp_printf (ASE_T("missing option - %s\n"), name);
-	}
-	else if (code == ASE_CLI_ERROR_REDUNDANT_OPTVAL) {
-		xp_printf (ASE_T("redundant value %s for %s\n"), value, name);
-	}
-	else if (code == ASE_CLI_ERROR_MISSING_OPTVAL) {
-		xp_printf (ASE_T("missing value for %s\n"), name);
-	}
-	else if (code == ASE_CLI_ERROR_MEMORY) {
-		xp_printf (ASE_T("memory error in processing %s\n"), name);
-	}
-	else {
-		xp_printf (ASE_T("error code: %d\n"), code);
-	}
-
-	return -1;
-}
-
-xp_cli_t* parse_cli (int argc, ase_char_t* argv[])
-{
-	static const ase_char_t* optsta[] =
-	{
-		ASE_T("/"), ASE_T("--"), ASE_NULL
-	};
-
-	static xp_cliopt_t opts[] =
-	{
-		{ ASE_T("memory"), ASE_CLI_OPTNAME | ASE_CLI_OPTVAL },
-		{ ASE_T("increment"), ASE_CLI_OPTNAME | ASE_CLI_OPTVAL },
-		{ ASE_NULL, 0 }
-	};
-
-	static xp_cli_t cli =
-	{
-		handle_cli_error,
-		optsta,
-		ASE_T("="),
-		opts
-	};
-
-	if (xp_parsecli (argc, argv, &cli) == -1) return ASE_NULL;
-	return &cli;
 }
 
 #ifdef _WIN32
-typedef struct syscas_data_t syscas_data_t;
-struct syscas_data_t
+typedef struct prmfns_data_t prmfns_data_t;
+struct prmfns_data_t
 {
 	HANDLE heap;
 };
@@ -140,7 +111,7 @@ struct syscas_data_t
 static void* __lsp_malloc (ase_size_t n, void* custom_data)
 {
 #ifdef _WIN32
-	return HeapAlloc (((syscas_data_t*)custom_data)->heap, 0, n);
+	return HeapAlloc (((prmfns_data_t*)custom_data)->heap, 0, n);
 #else
 	return malloc (n);
 #endif
@@ -151,9 +122,9 @@ static void* __lsp_realloc (void* ptr, ase_size_t n, void* custom_data)
 #ifdef _WIN32
 	/* HeapReAlloc behaves differently from realloc */
 	if (ptr == NULL)
-		return HeapAlloc (((syscas_data_t*)custom_data)->heap, 0, n);
+		return HeapAlloc (((prmfns_data_t*)custom_data)->heap, 0, n);
 	else
-		return HeapReAlloc (((syscas_data_t*)custom_data)->heap, 0, ptr, n);
+		return HeapReAlloc (((prmfns_data_t*)custom_data)->heap, 0, ptr, n);
 #else
 	return realloc (ptr, n);
 #endif
@@ -162,7 +133,7 @@ static void* __lsp_realloc (void* ptr, ase_size_t n, void* custom_data)
 static void __lsp_free (void* ptr, void* custom_data)
 {
 #ifdef _WIN32
-	HeapFree (((syscas_data_t*)custom_data)->heap, 0, ptr);
+	HeapFree (((prmfns_data_t*)custom_data)->heap, 0, ptr);
 #else
 	free (ptr);
 #endif
@@ -227,115 +198,96 @@ static void lsp_printf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-int __main (int argc, ase_char_t* argv[])
+int lsp_main (int argc, ase_char_t* argv[])
 {
 	ase_lsp_t* lsp;
 	ase_lsp_obj_t* obj;
-	xp_cli_t* cli;
 	int mem, inc;
-	ase_lsp_syscas_t syscas;
+	ase_lsp_prmfns_t prmfns;
 #ifdef _WIN32
-	syscas_data_t syscas_data;
+	prmfns_data_t prmfns_data;
 #endif
 
-
-	/*
-	if (xp_setlocale () == -1) {
-		xp_fprintf (xp_stderr,
-			ASE_T("error: cannot set locale\n"));
-		return -1;
-	}
-	*/
-
-	if ((cli = parse_cli (argc, argv)) == ASE_NULL) return -1;
-	mem = to_int(xp_getclioptval(cli, ASE_T("memory")));
-	inc = to_int(xp_getclioptval(cli, ASE_T("increment")));
-	xp_clearcli (cli);
+	mem = 1000;
+	inc = 1000;
 
 	if (mem <= 0) 
 	{
-		xp_fprintf (xp_stderr,
-			ASE_T("error: invalid memory size given\n"));
+		ase_printf (ASE_T("error: invalid memory size given\n"));
 		return -1;
 	}
 
+	memset (&prmfns, 0, sizeof(prmfns));
+	prmfns.malloc = __lsp_malloc;
+	prmfns.realloc = __lsp_realloc;
+	prmfns.free = __lsp_free;
 
-	memset (&syscas, 0, sizeof(syscas));
-	syscas.malloc = __lsp_malloc;
-	syscas.realloc = __lsp_realloc;
-	syscas.free = __lsp_free;
-
-#ifdef ASE_T_IS_MCHAR
-	syscas.is_upper  = isupper;
-	syscas.is_lower  = islower;
-	syscas.is_alpha  = isalpha;
-	syscas.is_digit  = isdigit;
-	syscas.is_xdigit = isxdigit;
-	syscas.is_alnum  = isalnum;
-	syscas.is_space  = isspace;
-	syscas.is_print  = isprint;
-	syscas.is_graph  = isgraph;
-	syscas.is_cntrl  = iscntrl;
-	syscas.is_punct  = ispunct;
-	syscas.to_upper  = toupper;
-	syscas.to_lower  = tolower;
+#ifdef ASE_CHAR_IS_MCHAR
+	prmfns.is_upper  = isupper;
+	prmfns.is_lower  = islower;
+	prmfns.is_alpha  = isalpha;
+	prmfns.is_digit  = isdigit;
+	prmfns.is_xdigit = isxdigit;
+	prmfns.is_alnum  = isalnum;
+	prmfns.is_space  = isspace;
+	prmfns.is_print  = isprint;
+	prmfns.is_graph  = isgraph;
+	prmfns.is_cntrl  = iscntrl;
+	prmfns.is_punct  = ispunct;
+	prmfns.to_upper  = toupper;
+	prmfns.to_lower  = tolower;
 #else
-	syscas.is_upper  = iswupper;
-	syscas.is_lower  = iswlower;
-	syscas.is_alpha  = iswalpha;
-	syscas.is_digit  = iswdigit;
-	syscas.is_xdigit = iswxdigit;
-	syscas.is_alnum  = iswalnum;
-	syscas.is_space  = iswspace;
-	syscas.is_print  = iswprint;
-	syscas.is_graph  = iswgraph;
-	syscas.is_cntrl  = iswcntrl;
-	syscas.is_punct  = iswpunct;
-	syscas.to_upper  = towupper;
-	syscas.to_lower  = towlower;
+	prmfns.is_upper  = iswupper;
+	prmfns.is_lower  = iswlower;
+	prmfns.is_alpha  = iswalpha;
+	prmfns.is_digit  = iswdigit;
+	prmfns.is_xdigit = iswxdigit;
+	prmfns.is_alnum  = iswalnum;
+	prmfns.is_space  = iswspace;
+	prmfns.is_print  = iswprint;
+	prmfns.is_graph  = iswgraph;
+	prmfns.is_cntrl  = iswcntrl;
+	prmfns.is_punct  = iswpunct;
+	prmfns.to_upper  = towupper;
+	prmfns.to_lower  = towlower;
 #endif
-	syscas.memcpy = memcpy;
-	syscas.memset = memset;
-	syscas.sprintf = xp_sprintf;
-	syscas.aprintf = lsp_aprintf;
-	syscas.dprintf = lsp_dprintf;
-	syscas.abort = lsp_abort;
+	prmfns.memcpy = memcpy;
+	prmfns.memset = memset;
+	prmfns.sprintf = lsp_sprintf;
+	prmfns.aprintf = lsp_aprintf;
+	prmfns.dprintf = lsp_dprintf;
+	prmfns.abort = lsp_abort;
 
 #ifdef _WIN32
-	syscas_data.heap = HeapCreate (0, 1000000, 1000000);
-	if (syscas_data.heap == NULL)
+	prmfns_data.heap = HeapCreate (0, 1000000, 1000000);
+	if (prmfns_data.heap == NULL)
 	{
-		xp_printf (ASE_T("Error: cannot create an lsp heap\n"));
+		ase_printf (ASE_T("Error: cannot create an lsp heap\n"));
 		return -1;
 	}
 
-	syscas.custom_data = &syscas_data;
+	prmfns.custom_data = &prmfns_data;
 #endif
 
-
-
-	lsp = ase_lsp_open (&syscas, mem, inc);
+	lsp = ase_lsp_open (&prmfns, mem, inc);
 	if (lsp == ASE_NULL) 
 	{
 #ifdef _WIN32
-		HeapDestroy (syscas_data.heap);
+		HeapDestroy (prmfns_data.heap);
 #endif
-		xp_fprintf (xp_stderr, 
-			ASE_T("error: cannot create a lsp instance\n"));
+		ase_printf (ASE_T("error: cannot create a lsp instance\n"));
 		return -1;
 	}
 
-	xp_printf (ASE_T("LSP 0.0001\n"));
+	ase_printf (ASE_T("LSP 0.0001\n"));
 
 	ase_lsp_attach_input (lsp, get_input, ASE_NULL);
 	ase_lsp_attach_output (lsp, put_output, ASE_NULL);
 
 	while (1)
 	{
-		xp_sio_puts (xp_sio_out, ASE_T("["));
-		xp_sio_puts (xp_sio_out, argv[0]);
-		xp_sio_puts (xp_sio_out, ASE_T("]"));
-		xp_sio_flush (xp_sio_out);
+		ase_printf (ASE_T("lsp> "));
+		fflush (stdout);
 
 		obj = ase_lsp_read (lsp);
 		if (obj == ASE_NULL) 
@@ -343,22 +295,23 @@ int __main (int argc, ase_char_t* argv[])
 			int errnum = ase_lsp_geterrnum(lsp);
 			const ase_char_t* errstr;
 
-			if (errnum != ASE_LSP_ERR_END && 
-			    errnum != ASE_LSP_ERR_EXIT) 
+			if (errnum != ASE_LSP_EEND && 
+			    errnum != ASE_LSP_EEXIT) 
 			{
 				errstr = ase_lsp_geterrstr(errnum);
-				xp_fprintf (xp_stderr, 
-					ASE_T("error in read: [%d] %s\n"), errnum, errstr);
+				ase_printf (
+					ASE_T("error in read: [%d] %s\n"), 
+					errnum, errstr);
 			}
 
-			if (errnum < ASE_LSP_ERR_SYNTAX) break;
+			if (errnum < ASE_LSP_ESYNTAX) break;
 			continue;
 		}
 
 		if ((obj = ase_lsp_eval (lsp, obj)) != ASE_NULL) 
 		{
 			ase_lsp_print (lsp, obj);
-			xp_sio_puts (xp_sio_out, ASE_T("\n"));
+			ase_printf (ASE_T("\n"));
 		}
 		else 
 		{
@@ -366,23 +319,24 @@ int __main (int argc, ase_char_t* argv[])
 			const ase_char_t* errstr;
 
 			errnum = ase_lsp_geterrnum(lsp);
-			if (errnum == ASE_LSP_ERR_EXIT) break;
+			if (errnum == ASE_LSP_EEXIT) break;
 
 			errstr = ase_lsp_geterrstr(errnum);
-			xp_fprintf (xp_stderr, 
-				ASE_T("error in eval: [%d] %s\n"), errnum, errstr);
+			ase_printf (
+				ASE_T("error in eval: [%d] %s\n"),
+				errnum, errstr);
 		}
 	}
 
 	ase_lsp_close (lsp);
 
 #ifdef _WIN32
-	HeapDestroy (syscas_data.heap);
+	HeapDestroy (prmfns_data.heap);
 #endif
 	return 0;
 }
 
-int xp_main (int argc, ase_char_t* argv[])
+int ase_main (int argc, ase_char_t* argv[])
 {
 	int n;
 
@@ -390,7 +344,7 @@ int xp_main (int argc, ase_char_t* argv[])
 	mtrace ();
 #endif
 
-	n = __main (argc, argv);
+	n = lsp_main (argc, argv);
 
 #if defined(__linux) && defined(_DEBUG)
 	muntrace ();

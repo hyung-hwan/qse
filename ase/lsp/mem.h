@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.17 2007-02-03 10:51:52 bacon Exp $
+ * $Id: mem.h,v 1.18 2007-02-10 13:52:23 bacon Exp $
  *
  * {License}
  */
@@ -38,6 +38,10 @@ struct ase_lsp_mem_t
 	ase_lsp_frame_t* root_frame;
 	/* pointer to an interim frame not yet added to "frame" */
 	ase_lsp_frame_t* brooding_frame; 
+
+	/* links for temporary objects */
+	ase_lsp_tlink_t* tlink;
+	ase_size_t tlink_count;
 };
 
 #ifdef __cplusplus
@@ -51,7 +55,7 @@ void ase_lsp_closemem (ase_lsp_mem_t* mem);
 ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size);
 void ase_lsp_dispose  (ase_lsp_mem_t* mem, ase_lsp_obj_t* prev, ase_lsp_obj_t* obj);
 void ase_lsp_dispose_all (ase_lsp_mem_t* mem);
-void ase_lsp_collectgarbage (ase_lsp_mem_t* mem);
+void ase_lsp_gc (ase_lsp_mem_t* mem);
 
 void ase_lsp_lockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj);

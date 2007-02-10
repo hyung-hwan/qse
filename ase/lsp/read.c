@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.30 2007-02-03 10:51:53 bacon Exp $
+ * $Id: read.c,v 1.31 2007-02-10 13:52:23 bacon Exp $
  *
  * {License}
  */
@@ -44,6 +44,12 @@
 
 #define NEXT_CHAR(lsp) \
 	do { if (read_char(lsp) == -1) return -1;} while (0)
+
+#define NEXT_CHAR_TO(lsp,c) \
+	do { \
+		if (read_char(lsp) == -1) return -1;\
+		c = (lsp)->curc; \
+	} while (0)
 
 #define NEXT_TOKEN(lsp) \
 	do { if (read_token(lsp) == -1) return ASE_NULL; } while (0)
@@ -355,7 +361,6 @@ static int read_token (ase_lsp_t* lsp)
 	}
 	else if (lsp->curc == ASE_T('\"')) 
 	{
-		NEXT_CHAR (lsp);
 		return read_string (lsp);
 	}
 
@@ -367,7 +372,7 @@ static int read_token (ase_lsp_t* lsp)
 static int read_number (ase_lsp_t* lsp, int negative)
 {
 	ase_long_t ival = 0;
-	ase_real_t rval = 0.;
+	ase_real_t rval = .0;
 
 	do 
 	{
@@ -375,7 +380,7 @@ static int read_number (ase_lsp_t* lsp, int negative)
 		TOKEN_ADD_CHAR (lsp, lsp->curc);
 		NEXT_CHAR (lsp);
 	} 
-	while (ASE_LSP_ISDIGIT(lsp,lsp->curc));
+	while (ASE_LSP_ISDIGIT(lsp, lsp->curc));
 
 /* TODO: extend parsing floating point number  */
 	if (lsp->curc == ASE_T('.')) 
@@ -396,7 +401,8 @@ static int read_number (ase_lsp_t* lsp, int negative)
 		TOKEN_TYPE(lsp) = TOKEN_REAL;
 		if (negative) rval *= -1;
 	}
-	else {
+	else 
+	{
 		TOKEN_IVAL(lsp) = ival;
 		TOKEN_TYPE(lsp) = TOKEN_INT;
 		if (negative) ival *= -1;
@@ -404,103 +410,6 @@ static int read_number (ase_lsp_t* lsp, int negative)
 
 	return 0;
 }
-
-#if 0
-static int __read_number (ase_lsp_t* lsp, int negative)
-{
-	ase_cint_t c;
-
-	ASE_LSP_ASSERT (lsp, ASE_LSP_STR_LEN(&lsp->token.name) == 0);
-	SET_TOKEN_TYPE (lsp, TOKEN_INT);
-
-	c = lsp->src.lex.curc;
-
-	if (c == ASE_T('0'))
-	{
-		ADD_TOKEN_CHAR (lsp, c);
-		GET_CHAR_TO (lsp, c);
-
-		if (c == ASE_T('x') || c == ASE_T('X'))
-		{
-			/* hexadecimal number */
-			do 
-			{
-				ADD_TOKEN_CHAR (lsp, c);
-				GET_CHAR_TO (lsp, c);
-			} 
-			while (ASE_LSP_ISXDIGIT (lsp, c));
-
-			return 0;
-		}
-		else if (c == ASE_T('b') || c == ASE_T('B'))
-		{
-			/* binary number */
-			do
-			{
-				ADD_TOKEN_CHAR (lsp, c);
-				GET_CHAR_TO (lsp, c);
-			} 
-			while (c == ASE_T('0') || c == ASE_T('1'));
-
-			return 0;
-		}
-		else if (c != '.')
-		{
-			/* octal number */
-			while (c >= ASE_T('0') && c <= ASE_T('7'))
-			{
-				ADD_TOKEN_CHAR (lsp, c);
-				GET_CHAR_TO (lsp, c);
-			}
-
-			return 0;
-		}
-	}
-
-	while (ASE_LSP_ISDIGIT (lsp, c)) 
-	{
-		ADD_TOKEN_CHAR (lsp, c);
-		GET_CHAR_TO (lsp, c);
-	} 
-
-	if (c == ASE_T('.'))
-	{
-		/* floating-point number */
-		SET_TOKEN_TYPE (lsp, TOKEN_REAL);
-
-		ADD_TOKEN_CHAR (lsp, c);
-		GET_CHAR_TO (lsp, c);
-
-		while (ASE_LSP_ISDIGIT (lsp, c))
-		{
-			ADD_TOKEN_CHAR (lsp, c);
-			GET_CHAR_TO (lsp, c);
-		}
-	}
-
-	if (c == ASE_T('E') || c == ASE_T('e'))
-	{
-		SET_TOKEN_TYPE (lsp, TOKEN_REAL);
-
-		ADD_TOKEN_CHAR (lsp, c);
-		GET_CHAR_TO (lsp, c);
-
-		if (c == ASE_T('+') || c == ASE_T('-'))
-		{
-			ADD_TOKEN_CHAR (lsp, c);
-			GET_CHAR_TO (lsp, c);
-		}
-
-		while (ASE_LSP_ISDIGIT (lsp, c))
-		{
-			ADD_TOKEN_CHAR (lsp, c);
-			GET_CHAR_TO (lsp, c);
-		}
-	}
-
-	return 0;
-}
-#endif
 
 static int read_ident (ase_lsp_t* lsp)
 {
@@ -516,72 +425,152 @@ static int read_ident (ase_lsp_t* lsp)
 
 static int read_string (ase_lsp_t* lsp)
 {
+	ase_cint_t c;
 	int escaped = 0;
-	ase_cint_t code = 0;
+	int digit_count = 0;
+	ase_cint_t c_acc = 0;
 
-	do 
+	while (1)
 	{
-		if (lsp->curc == ASE_CHAR_EOF) 
+		NEXT_CHAR_TO (lsp, c);
+
+		if (c == ASE_CHAR_EOF)
 		{
-			TOKEN_TYPE(lsp) = TOKEN_UNTERM_STRING;
-			return 0;
+			/*ase_lsp_seterror (
+				lsp, ASE_LSP_EENDSTR, lsp->token.line,
+				ASE_T("string not closed with a quote"));*/
+			lsp->errnum = ASE_LSP_EENDSTR;
+			return -1;
 		}
 
-		/* TODO:  */
-		if (escaped == 3) 
+		if (escaped == 3)
 		{
-			/* \xNN */
-		}
-		else if (escaped == 2) 
-		{
-			/* \000 */
-		}
-		else if (escaped == 1) 
-		{
-			/* backslash + character */
-			if (lsp->curc == ASE_T('a')) 
-				lsp->curc = ASE_T('\a');
-			else if (lsp->curc == ASE_T('b')) 
-				lsp->curc = ASE_T('\b');
-			else if (lsp->curc == ASE_T('f')) 
-				lsp->curc = ASE_T('\f');
-			else if (lsp->curc == ASE_T('n')) 
-				lsp->curc = ASE_T('\n');
-			else if (lsp->curc == ASE_T('r')) 
-				lsp->curc = ASE_T('\r');
-			else if (lsp->curc == ASE_T('t')) 
-				lsp->curc = ASE_T('\t');
-			else if (lsp->curc == ASE_T('v')) 
-				lsp->curc = ASE_T('\v');
-			else if (lsp->curc == ASE_T('0')) 
+			if (c >= ASE_T('0') && c <= ASE_T('7'))
 			{
-				escaped = 2;
-				code = 0;
-				NEXT_CHAR (lsp);
+				c_acc = c_acc * 8 + c - ASE_T('0');
+				digit_count++;
+				if (digit_count >= escaped) 
+				{
+					TOKEN_ADD_CHAR (lsp, c_acc);
+					escaped = 0;
+				}
 				continue;
 			}
-			else if (lsp->curc == ASE_T('x')) 
+			else
 			{
-				escaped = 3;
-				code = 0;
-				NEXT_CHAR (lsp);
-				continue;
+				TOKEN_ADD_CHAR (lsp, c_acc);
+				escaped = 0;
 			}
 		}
-		else if (lsp->curc == ASE_T('\\')) 
+		else if (escaped == 2 || escaped == 4 || escaped == 8)
+		{
+			if (c >= ASE_T('0') && c <= ASE_T('9'))
+			{
+				c_acc = c_acc * 16 + c - ASE_T('0');
+				digit_count++;
+				if (digit_count >= escaped) 
+				{
+					TOKEN_ADD_CHAR (lsp, c_acc);
+					escaped = 0;
+				}
+				continue;
+			}
+			else if (c >= ASE_T('A') && c <= ASE_T('F'))
+			{
+				c_acc = c_acc * 16 + c - ASE_T('A') + 10;
+				digit_count++;
+				if (digit_count >= escaped) 
+				{
+					TOKEN_ADD_CHAR (lsp, c_acc);
+					escaped = 0;
+				}
+				continue;
+			}
+			else if (c >= ASE_T('a') && c <= ASE_T('f'))
+			{
+				c_acc = c_acc * 16 + c - ASE_T('a') + 10;
+				digit_count++;
+				if (digit_count >= escaped) 
+				{
+					TOKEN_ADD_CHAR (lsp, c_acc);
+					escaped = 0;
+				}
+				continue;
+			}
+			else
+			{
+				ase_char_t rc;
+
+				rc = (escaped == 2)? ASE_T('x'):
+				     (escaped == 4)? ASE_T('u'): ASE_T('U');
+
+				if (digit_count == 0) TOKEN_ADD_CHAR (lsp, rc);
+				else TOKEN_ADD_CHAR (lsp, c_acc);
+
+				escaped = 0;
+			}
+		}
+
+		if (escaped == 0 && c == ASE_T('\"'))
+		{
+			/* terminating quote */
+			/*NEXT_CHAR_TO (lsp, c);*/
+			NEXT_CHAR (lsp);
+			break;
+		}
+
+		if (escaped == 0 && c == ASE_T('\\'))
 		{
 			escaped = 1;
-			NEXT_CHAR (lsp);
 			continue;
 		}
 
-		TOKEN_ADD_CHAR (lsp, lsp->curc);
-		NEXT_CHAR (lsp);
-	} 
-	while (lsp->curc != ASE_T('\"'));
+		if (escaped == 1)
+		{
+			if (c == ASE_T('n')) c = ASE_T('\n');
+			else if (c == ASE_T('r')) c = ASE_T('\r');
+			else if (c == ASE_T('t')) c = ASE_T('\t');
+			else if (c == ASE_T('f')) c = ASE_T('\f');
+			else if (c == ASE_T('b')) c = ASE_T('\b');
+			else if (c == ASE_T('v')) c = ASE_T('\v');
+			else if (c == ASE_T('a')) c = ASE_T('\a');
+			else if (c >= ASE_T('0') && c <= ASE_T('7')) 
+			{
+				escaped = 3;
+				digit_count = 1;
+				c_acc = c - ASE_T('0');
+				continue;
+			}
+			else if (c == ASE_T('x')) 
+			{
+				escaped = 2;
+				digit_count = 0;
+				c_acc = 0;
+				continue;
+			}
+		#ifdef ASE_CHAR_IS_WCHAR
+			else if (c == ASE_T('u') && ASE_SIZEOF(ase_char_t) >= 2) 
+			{
+				escaped = 4;
+				digit_count = 0;
+				c_acc = 0;
+				continue;
+			}
+			else if (c == ASE_T('U') && ASE_SIZEOF(ase_char_t) >= 4) 
+			{
+				escaped = 8;
+				digit_count = 0;
+				c_acc = 0;
+				continue;
+			}
+		#endif
+
+			escaped = 0;
+		}
+
+		TOKEN_ADD_CHAR (lsp, c);
+	}
 
 	TOKEN_TYPE(lsp) = TOKEN_STRING;
-	NEXT_CHAR (lsp);
-
 	return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: env.h,v 1.11 2007-02-03 10:51:52 bacon Exp $
+ * $Id: env.h,v 1.12 2007-02-10 13:52:22 bacon Exp $
  *
  * {License}
  */
@@ -13,11 +13,11 @@
 
 typedef struct ase_lsp_assoc_t ase_lsp_assoc_t;
 typedef struct ase_lsp_frame_t ase_lsp_frame_t;
+typedef struct ase_lsp_tlink_t ase_lsp_tlink_t;
 
 struct ase_lsp_assoc_t
 {
-	ase_lsp_obj_t* name; /* ase_lsp_obj_symbol_t */
-	/*ase_lsp_obj_t* value;*/
+	ase_lsp_obj_t* name;  /* ase_lsp_obj_sym_t */
 	ase_lsp_obj_t* value; /* value as a variable */
 	ase_lsp_obj_t* func;  /* function definition */
 
@@ -30,6 +30,12 @@ struct ase_lsp_frame_t
 	ase_lsp_frame_t* link;
 };
 
+struct ase_lsp_tlink_t
+{
+	ase_lsp_obj_t*   obj;
+	ase_lsp_tlink_t* link;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,12 +46,15 @@ void ase_lsp_freeframe (ase_lsp_t* lsp, ase_lsp_frame_t* frame);
 ase_lsp_assoc_t* ase_lsp_lookupinframe (
 	ase_lsp_t* lsp, ase_lsp_frame_t* frame, ase_lsp_obj_t* name);
 
-ase_lsp_assoc_t* ase_lsp_insertvalueintoframe (
+ase_lsp_assoc_t* ase_lsp_insvalueintoframe (
 	ase_lsp_t* lsp, ase_lsp_frame_t* frame, 
 	ase_lsp_obj_t* name, ase_lsp_obj_t* value);
-ase_lsp_assoc_t* ase_lsp_insertfuncintoframe (
+ase_lsp_assoc_t* ase_lsp_insfuncintoframe (
 	ase_lsp_t* lsp, ase_lsp_frame_t* frame, 
 	ase_lsp_obj_t* name, ase_lsp_obj_t* func);
+
+ase_lsp_tlink_t* ase_lsp_pushtmp (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
+void ase_lsp_poptmp (ase_lsp_t* lsp);
 
 #ifdef __cplusplus
 }
