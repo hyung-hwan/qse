@@ -1,5 +1,5 @@
 /*
- * $Id: prim_let.c,v 1.10 2007-02-03 10:51:53 bacon Exp $
+ * $Id: prim_let.c,v 1.11 2007-02-10 13:52:23 bacon Exp $
  *
  * {License}
  */
@@ -14,14 +14,10 @@ static ase_lsp_obj_t* __prim_let (
 	ase_lsp_obj_t* body;
 	ase_lsp_obj_t* value;
 
-	// create a new frame
+	/* create a new frameq */
 	frame = ase_lsp_newframe (lsp);
-	if (frame == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
-	//frame->link = lsp->mem->frame;
+	if (frame == ASE_NULL) return ASE_NULL;
+	/*frame->link = lsp->mem->frame;*/
 
 	if (sequential) 
 	{
@@ -36,7 +32,7 @@ static ase_lsp_obj_t* __prim_let (
 
 	assoc = ASE_LSP_CAR(args);
 
-	//while (assoc != lsp->mem->nil) {
+	/*while (assoc != lsp->mem->nil) {*/
 	while (ASE_LSP_TYPE(assoc) == ASE_LSP_OBJ_CONS) 
 	{
 		ase_lsp_obj_t* ass = ASE_LSP_CAR(assoc);
@@ -47,7 +43,7 @@ static ase_lsp_obj_t* __prim_let (
 
 			if (ASE_LSP_TYPE(n) != ASE_LSP_OBJ_SYM) 
 			{
-				lsp->errnum = ASE_LSP_EARGBAD; // must be a symbol
+				lsp->errnum = ASE_LSP_EARGBAD; 
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				ase_lsp_freeframe (lsp, frame);
@@ -75,15 +71,14 @@ static ase_lsp_obj_t* __prim_let (
 
 			if (ase_lsp_lookupinframe (lsp, frame, n) != ASE_NULL) 
 			{
-				lsp->errnum = ASE_LSP_ERR_DUP_FORMAL;
+				lsp->errnum = ASE_LSP_EDUPFML;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				ase_lsp_freeframe (lsp, frame);
 				return ASE_NULL;
 			}
-			if (ase_lsp_insertvalueintoframe (lsp, frame, n, v) == ASE_NULL) 
+			if (ase_lsp_insvalueintoframe (lsp, frame, n, v) == ASE_NULL) 
 			{
-				lsp->errnum = ASE_LSP_ENOMEM;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				ase_lsp_freeframe (lsp, frame);
@@ -94,15 +89,14 @@ static ase_lsp_obj_t* __prim_let (
 		{
 			if (ase_lsp_lookupinframe (lsp, frame, ass) != ASE_NULL)
 			{
-				lsp->errnum = ASE_LSP_ERR_DUP_FORMAL;
+				lsp->errnum = ASE_LSP_EDUPFML;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				ase_lsp_freeframe (lsp, frame);
 				return ASE_NULL;
 			}
-			if (ase_lsp_insertvalueintoframe (lsp, frame, ass, lsp->mem->nil) == ASE_NULL) 
+			if (ase_lsp_insvalueintoframe (lsp, frame, ass, lsp->mem->nil) == ASE_NULL) 
 			{
-				lsp->errnum = ASE_LSP_ENOMEM;
 				if (sequential) lsp->mem->frame = frame->link;
 				else lsp->mem->brooding_frame = frame->link;
 				ase_lsp_freeframe (lsp, frame);

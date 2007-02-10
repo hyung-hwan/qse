@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.16 2007-02-03 10:51:53 bacon Exp $
+ * $Id: prim_math.c,v 1.17 2007-02-10 13:52:23 bacon Exp $
  *
  * {License}
  */
@@ -20,11 +20,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
 	{
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
-		if (tmp == ASE_NULL) 
-		{
-			/*lsp->errnum = ASE_LSP_EVALBAD; */
-			return ASE_NULL;
-		}
+		if (tmp == ASE_NULL) return ASE_NULL;
 
 		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) 
 		{
@@ -74,11 +70,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	tmp = (realnum)?
 		ase_lsp_makerealobj (lsp->mem, rval):
 		ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (tmp == ASE_NULL) return ASE_NULL;
 
 	return tmp;
 }
@@ -148,11 +140,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	tmp = (realnum)?
 		ase_lsp_makerealobj (lsp->mem, rval):
 		ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (tmp == ASE_NULL) return ASE_NULL;
 
 	return tmp;
 }
@@ -221,11 +209,7 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	tmp = (realnum)?
 		ase_lsp_makerealobj (lsp->mem, rval):
 		ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (tmp == ASE_NULL) return ASE_NULL;
 
 	return tmp;
 }
@@ -301,11 +285,7 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	tmp = (realnum)?
 		ase_lsp_makerealobj (lsp->mem, rval):
 		ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (tmp == ASE_NULL) return ASE_NULL;
 
 	return tmp;
 }
@@ -370,11 +350,7 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
 
 	tmp = ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (tmp == ASE_NULL) return ASE_NULL;
 
 	return tmp;
 }

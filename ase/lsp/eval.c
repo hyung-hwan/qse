@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.24 2007-02-03 10:51:52 bacon Exp $
+ * $Id: eval.c,v 1.25 2007-02-10 13:52:23 bacon Exp $
  *
  * {License}
  */
@@ -105,11 +105,7 @@ static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macr
 	func = (is_macro)?
 		ase_lsp_makemacro (lsp->mem, formal, body):
 		ase_lsp_makefunc (lsp->mem, formal, body);
-	if (func == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (func == ASE_NULL) return ASE_NULL;
 
 	return func;
 }
@@ -231,14 +227,10 @@ static ase_lsp_obj_t* apply (
 
 	/* make a new frame. */
 	frame = ase_lsp_newframe (lsp);
-	if (frame == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (frame == ASE_NULL) return ASE_NULL;
 
 	/* attach it to the brooding frame list to 
-	 * prevent them from begin garbage-collected. */
+	 * prevent them from being garbage-collected. */
 	frame->link = mem->brooding_frame;
 	mem->brooding_frame = frame;
 
@@ -269,16 +261,15 @@ static ase_lsp_obj_t* apply (
 		if (ase_lsp_lookupinframe (
 			lsp, frame, ASE_LSP_CAR(formal)) != ASE_NULL) 
 		{
-			lsp->errnum = ASE_LSP_ERR_DUP_FORMAL;
+			lsp->errnum = ASE_LSP_EDUPFML;
 			mem->brooding_frame = frame->link;
 			ase_lsp_freeframe (lsp, frame);
 			return ASE_NULL;
 		}
 
-		if (ase_lsp_insertvalueintoframe (
+		if (ase_lsp_insvalueintoframe (
 			lsp, frame, ASE_LSP_CAR(formal), value) == ASE_NULL) 
 		{
-			lsp->errnum = ASE_LSP_ENOMEM;
 			mem->brooding_frame = frame->link;
 			ase_lsp_freeframe (lsp, frame);
 			return ASE_NULL;

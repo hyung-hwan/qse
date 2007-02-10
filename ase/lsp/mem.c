@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.27 2007-02-06 10:57:00 bacon Exp $
+ * $Id: mem.c,v 1.28 2007-02-10 13:52:23 bacon Exp $
  *
  * {License}
  */
@@ -28,6 +28,8 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	}
 	mem->root_frame     = mem->frame;
 	mem->brooding_frame = ASE_NULL;
+	mem->tlink          = ASE_NULL;
+	mem->tlink_count    = 0;
 
 	/* initialize object allocation list */
 	mem->ubound     = ubound;
@@ -93,8 +95,8 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 	ase_lsp_obj_t* obj;
 	
 /* TODO: remove the following line... */
-ase_lsp_collectgarbage(mem);
-	if (mem->count >= mem->ubound) ase_lsp_collectgarbage (mem);
+ase_lsp_gc (mem);
+	if (mem->count >= mem->ubound) ase_lsp_gc (mem);
 	if (mem->count >= mem->ubound) 
 	{
 		mem->ubound += mem->ubound_inc;
@@ -104,10 +106,14 @@ ase_lsp_collectgarbage(mem);
 	obj = (ase_lsp_obj_t*) ASE_LSP_MALLOC (mem->lsp, size);
 	if (obj == ASE_NULL) 
 	{
-		ase_lsp_collectgarbage (mem);
+		ase_lsp_gc (mem);
 
 		obj = (ase_lsp_obj_t*) ASE_LSP_MALLOC (mem->lsp, size);
-		if (obj == ASE_NULL) return ASE_NULL;
+		if (obj == ASE_NULL) 
+		{
+			mem->lsp->errnum = ASE_LSP_ENOMEM;
+			return ASE_NULL;
+		}
 	}
 
 	ASE_LSP_TYPE(obj) = type;
@@ -249,6 +255,7 @@ static void __mark_objs_in_use (ase_lsp_mem_t* mem)
 {
 	ase_lsp_frame_t* frame;
 	ase_lsp_assoc_t* assoc;
+	ase_lsp_tlink_t* tlink;
 	/*ase_lsp_arr_t* arr;*/
 	/*ase_size_t       i;*/
 
@@ -302,6 +309,12 @@ static void __mark_objs_in_use (ase_lsp_mem_t* mem)
 	/* ase_dprint0 (ASE_T("marking the read object\n"));*/
 	if (mem->read != ASE_NULL) __mark_obj (mem->lsp, mem->read);
 
+	/* ase_dprint0 (ASE_T("marking the temporary objects\n"));*/
+	for (tlink = mem->tlink; tlink != ASE_NULL; tlink = tlink->link)
+	{
+		__mark_obj (mem->lsp, tlink->obj);
+	}
+
 #if 0
 	ase_dprint0 (ASE_T("marking builtin objects\n"));
 #endif
@@ -337,9 +350,13 @@ static void __sweep_unmarked_objs (ase_lsp_mem_t* mem)
 			{
 				/* dispose of unused objects */
 if (i == ASE_LSP_OBJ_INT)
-xp_printf (ASE_T("disposing....%d [%d]\n"), i, ASE_LSP_IVAL(obj));
+wprintf (ASE_T("disposing....%d [%d]\n"), i, (int)ASE_LSP_IVAL(obj));
+if (i == ASE_LSP_OBJ_REAL)
+wprintf (ASE_T("disposing....%d [%Lf]\n"), i, (double)ASE_LSP_RVAL(obj));
+else if (i == ASE_LSP_OBJ_SYM)
+wprintf (ASE_T("disposing....%d [%s]\n"), i, ASE_LSP_SYMPTR(obj));
 else
-xp_printf (ASE_T("disposing....%d\n"), i);
+wprintf (ASE_T("disposing....%d\n"), i);
 				ase_lsp_dispose (mem, prev, obj);
 			}
 			else 
@@ -354,7 +371,7 @@ xp_printf (ASE_T("disposing....%d\n"), i);
 	}
 }
 
-void ase_lsp_collectgarbage (ase_lsp_mem_t* mem)
+void ase_lsp_gc (ase_lsp_mem_t* mem)
 {
 	__mark_objs_in_use (mem);
 	__sweep_unmarked_objs (mem);
@@ -450,7 +467,8 @@ ase_lsp_obj_t* ase_lsp_makecons (
 {
 	ase_lsp_obj_t* obj;
 
-	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_CONS, ASE_SIZEOF(ase_lsp_obj_cons_t));
+	obj = ase_lsp_alloc (mem,
+		ASE_LSP_OBJ_CONS, ASE_SIZEOF(ase_lsp_obj_cons_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	ASE_LSP_CAR(obj) = car;
@@ -464,7 +482,8 @@ ase_lsp_obj_t* ase_lsp_makefunc (
 {
 	ase_lsp_obj_t* obj;
 
-	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_FUNC, ASE_SIZEOF(ase_lsp_obj_func_t));
+	obj = ase_lsp_alloc (mem,
+		ASE_LSP_OBJ_FUNC, ASE_SIZEOF(ase_lsp_obj_func_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	ASE_LSP_FFORMAL(obj) = formal;
@@ -530,7 +549,7 @@ ase_lsp_assoc_t* ase_lsp_setvalue (
 	assoc = ase_lsp_lookup (mem, name);
 	if (assoc == ASE_NULL)
 	{
-		assoc = ase_lsp_insertvalueintoframe (
+		assoc = ase_lsp_insvalueintoframe (
 			mem->lsp, mem->root_frame, name, value);
 		if (assoc == ASE_NULL) return ASE_NULL;
 	}
@@ -547,7 +566,7 @@ ase_lsp_assoc_t* ase_lsp_setfunc (
 	assoc = ase_lsp_lookup (mem, name);
 	if (assoc == ASE_NULL) 
 	{
-		assoc = ase_lsp_insertfuncintoframe (
+		assoc = ase_lsp_insfuncintoframe (
 			mem->lsp, mem->root_frame, name, func);
 		if (assoc == ASE_NULL) return ASE_NULL;
 	}
