@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.19 2007-02-03 10:47:41 bacon Exp $
+ * $Id: map.h,v 1.20 2007-02-11 14:07:28 bacon Exp $
  *
  * {License}
  */
@@ -8,10 +8,10 @@
 #define _ASE_AWK_MAP_H_
 
 #ifndef _ASE_AWK_AWK_H_
-#error Never include this file directly. Include <ase/awk/awk.h> instead
+#error Include <ase/awk/awk.h> first
 #endif
 
-typedef struct ase_awk_map_t ase_awk_map_t;
+/*typedef struct ase_awk_map_t ase_awk_map_t;*/
 typedef struct ase_awk_pair_t ase_awk_pair_t;
 
 struct ase_awk_pair_t

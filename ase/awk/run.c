@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.325 2007-02-03 10:50:39 bacon Exp $
+ * $Id: run.c,v 1.326 2007-02-11 14:07:28 bacon Exp $
  *
  * {License}
  */
@@ -64,8 +64,10 @@ static int __build_runarg (
 static void __cleanup_globals (ase_awk_run_t* run);
 static int __set_globals_to_default (ase_awk_run_t* run);
 
-static int __run_main (
-	ase_awk_run_t* run, const ase_char_t* main, ase_awk_runarg_t* runarg);
+static int run_main (
+	ase_awk_run_t* run, const ase_char_t* main, 
+	ase_awk_runcbs_t* runcbs, ase_awk_runarg_t* runarg);
+
 static int __run_pattern_blocks  (ase_awk_run_t* run);
 static int __run_pattern_block_chain (
 	ase_awk_run_t* run, ase_awk_chain_t* chain);
@@ -209,17 +211,6 @@ static ase_char_t* __idxnde_to_str (
 typedef ase_awk_val_t* (*binop_func_t) (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
 typedef ase_awk_val_t* (*eval_expr_t) (ase_awk_run_t* run, ase_awk_nde_t* nde);
-
-#ifdef _DEBUG
-static int __printval (ase_awk_pair_t* pair, void* arg)
-{
-	ase_awk_run_t* run = (ase_awk_run_t*)arg;
-	run->awk->prmfns.dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
-	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
-	run->awk->prmfns.dprintf (ASE_T("\n"));
-	return 0;
-}
-#endif
 
 ase_size_t ase_awk_getnargs (ase_awk_run_t* run)
 {
@@ -569,6 +560,11 @@ void* ase_awk_getruncustomdata (ase_awk_run_t* run)
 	return run->custom_data;
 }
 
+ase_awk_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* awk)
+{
+	return &awk->named;
+}
+
 int ase_awk_getrunerrnum (ase_awk_run_t* run)
 {
 	return run->errnum;
@@ -683,10 +679,12 @@ int ase_awk_run (ase_awk_t* awk,
 
 	/* execute the start callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_start != ASE_NULL) 
-		runcbs->on_start (awk, run, runcbs->custom_data);
+	{
+		runcbs->on_start (run, runcbs->custom_data);
+	}
 
 	/* enter the main run loop */
-	n = __run_main (run, main, runarg);
+	n = run_main (run, main, runcbs, runarg);
 	if (n == -1) 
 	{
 		/* if no callback is specified, awk's error number 
@@ -703,13 +701,11 @@ int ase_awk_run (ase_awk_t* awk,
 		}
 	}
 
-	/* uninitialize the run object */
-	__deinit_run (run);
 
 	/* the run loop ended. execute the end callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_end != ASE_NULL) 
 	{
-		runcbs->on_end (awk, run, 
+		runcbs->on_end (run, 
 			((n == -1)? run->errnum: ASE_AWK_ENOERR), 
 			runcbs->custom_data);
 
@@ -717,6 +713,9 @@ int ase_awk_run (ase_awk_t* awk,
 		 * after the start callbacks has been triggered */
 		n = 0;
 	}
+
+	/* uninitialize the run object */
+	__deinit_run (run);
 
 	/* unregister the run object */
 	__del_run (awk, run);
@@ -729,6 +728,12 @@ int ase_awk_stop (ase_awk_t* awk, ase_awk_run_t* run)
 {
 	ase_awk_run_t* r;
 	int n = 0;
+
+	if (ase_awk_getrunawk(run) != awk)
+	{
+		awk->errnum = ASE_AWK_EINVAL;
+		return -1;
+	}
 
 	ASE_AWK_LOCK (awk);
 
@@ -1242,8 +1247,9 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __run_main (
-	ase_awk_run_t* run, const ase_char_t* main, ase_awk_runarg_t* runarg)
+static int run_main (
+	ase_awk_run_t* run, const ase_char_t* main, 
+	ase_awk_runcbs_t* runcbs, ase_awk_runarg_t* runarg)
 {
 	ase_size_t nglobals, nargs, nrunargs, i;
 	ase_size_t saved_stack_top;
@@ -1383,13 +1389,13 @@ static int __run_main (
 		if (v == ASE_NULL) n = -1;
 		else
 		{
-#ifdef _DEBUG
-			run->awk->prmfns.dprintf (ASE_T("[RETURN] - "));
-			ase_awk_dprintval (run, v);
-			run->awk->prmfns.dprintf (ASE_T("\n"));
-#endif
-			/* destroy the return value if necessary */
 			ase_awk_refupval (run, v);
+
+			if (runcbs != ASE_NULL && runcbs->on_return != ASE_NULL)
+			{
+				runcbs->on_return (run, v, runcbs->custom_data);
+			}
+
 			ase_awk_refdownval (run, v);
 		}
 
@@ -1502,15 +1508,13 @@ static int __run_main (
 
 		v = STACK_RETVAL(run);
 
-#ifdef _DEBUG
-		run->awk->prmfns.dprintf (ASE_T("[RETURN] - "));
-		ase_awk_dprintval (run, v);
-		run->awk->prmfns.dprintf (ASE_T("\n"));
-#endif
+		if (runcbs != ASE_NULL && runcbs->on_return != ASE_NULL)
+		{
+			runcbs->on_return (run, v, runcbs->custom_data);
+		}
 
 		/* the life of the global return value is over here
 		 * unlike the return value of each function */
-		/*ase_awk_refdownval_nofree (awk, v);*/
 		ase_awk_refdownval (run, v);
 
 		run->stack_top = 
@@ -1530,12 +1534,6 @@ static int __run_main (
 
 	/* just reset the exit level */
 	run->exit_level = EXIT_NONE;
-
-#ifdef _DEBUG
-	run->awk->prmfns.dprintf (ASE_T("[VARIABLES]\n"));
-	ase_awk_map_walk (&run->named, __printval, run);
-	run->awk->prmfns.dprintf (ASE_T("[END VARIABLES]\n"));
-#endif
 
 	return n;
 }
