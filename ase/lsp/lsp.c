@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.22 2007-02-11 07:36:54 bacon Exp $
+ * $Id: lsp.c,v 1.23 2007-02-11 08:30:18 bacon Exp $
  *
  * {License}
  */
@@ -110,9 +110,9 @@ void ase_lsp_close (ase_lsp_t* lsp)
 	ASE_LSP_FREE (lsp, lsp);
 }
 
-int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
+int ase_lsp_attinput (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
 {
-	if (ase_lsp_detach_input(lsp) == -1) return -1;
+	if (ase_lsp_detinput(lsp) == -1) return -1;
 
 	ASE_LSP_ASSERT (lsp, lsp->input_func == ASE_NULL);
 
@@ -128,7 +128,7 @@ int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
 	return 0;
 }
 
-int ase_lsp_detach_input (ase_lsp_t* lsp)
+int ase_lsp_detinput (ase_lsp_t* lsp)
 {
 	if (lsp->input_func != ASE_NULL) 
 	{
@@ -146,9 +146,9 @@ int ase_lsp_detach_input (ase_lsp_t* lsp)
 	return 0;
 }
 
-int ase_lsp_attach_output (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg)
+int ase_lsp_attoutput (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg)
 {
-	if (ase_lsp_detach_output(lsp) == -1) return -1;
+	if (ase_lsp_detoutput(lsp) == -1) return -1;
 
 	ASE_LSP_ASSERT (lsp, lsp->output_func == ASE_NULL);
 
@@ -162,7 +162,7 @@ int ase_lsp_attach_output (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg)
 	return 0;
 }
 
-int ase_lsp_detach_output (ase_lsp_t* lsp)
+int ase_lsp_detoutput (ase_lsp_t* lsp)
 {
 	if (lsp->output_func != ASE_NULL) 
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.37 2007-02-11 07:36:55 bacon Exp $
+ * $Id: lsp.h,v 1.38 2007-02-11 08:30:18 bacon Exp $
  *
  * {License}
  */
@@ -141,11 +141,11 @@ void ase_lsp_seterror (
 	ase_lsp_t* lsp, int errnum, 
 	const ase_char_t** errarg, ase_size_t argcnt);
 
-int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg);
-int ase_lsp_detach_input (ase_lsp_t* lsp);
+int ase_lsp_attinput (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg);
+int ase_lsp_detinput (ase_lsp_t* lsp);
 
-int ase_lsp_attach_output (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg);
-int ase_lsp_detach_output (ase_lsp_t* lsp);
+int ase_lsp_attoutput (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg);
+int ase_lsp_detoutput (ase_lsp_t* lsp);
 
 ase_lsp_obj_t* ase_lsp_read (ase_lsp_t* lsp);
 ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
