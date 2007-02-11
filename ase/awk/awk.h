@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.187 2007-02-03 10:47:40 bacon Exp $
+ * $Id: awk.h,v 1.188 2007-02-11 04:44:39 bacon Exp $
  *
  * {License}
  */
@@ -337,6 +337,7 @@ enum
 	ASE_AWK_EREXRPAREN,       /* a right parenthesis is expected */
 	ASE_AWK_EREXRBRACKET,     /* a right bracket is expected */
 	ASE_AWK_EREXRBRACE,       /* a right brace is expected */
+	ASE_AWK_EREXUNBALPAR,     /* unbalanced parenthesis */
 	ASE_AWK_EREXCOLON,        /* a colon is expected */
 	ASE_AWK_EREXCRANGE,       /* invalid character range */
 	ASE_AWK_EREXCCLASS,       /* invalid character class */

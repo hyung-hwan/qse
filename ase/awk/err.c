@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.72 2007-02-03 10:47:40 bacon Exp $
+ * $Id: err.c,v 1.73 2007-02-11 04:44:39 bacon Exp $
  *
  * {License}
  */
@@ -183,6 +183,7 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("a right parenthesis expected in the regular expression"),
 		ASE_T("a right bracket expected in the regular expression"),
 		ASE_T("a right brace expected in the regular expression"),
+		ASE_T("unbalanced parenthesis"),
 		ASE_T("a colon expected in the regular expression"),
 		ASE_T("invalid character range in the regular expression"),
 		ASE_T("invalid character class in the regular expression"),

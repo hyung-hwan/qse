@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.59 2007-02-04 07:56:37 bacon Exp $
+ * $Id: rex.c,v 1.60 2007-02-11 04:44:39 bacon Exp $
  *
  * {License}
  */
@@ -304,7 +304,19 @@ void* ase_awk_buildrex (
 
 	if (builder.ptn.curc.type != CT_EOF)
 	{
-		if (errnum != ASE_NULL) *errnum = ASE_AWK_EREXGARBAGE;
+		if (errnum != ASE_NULL) 
+		{
+			if (builder.ptn.curc.type ==  CT_SPECIAL &&
+			    builder.ptn.curc.value == ASE_T(')'))
+			{
+				*errnum = ASE_AWK_EREXUNBALPAR;
+			}
+			else
+			{
+				*errnum = ASE_AWK_EREXGARBAGE;
+			}
+		}
+
 		ASE_AWK_FREE (builder.awk, builder.code.buf);
 		return ASE_NULL;
 	}
@@ -466,12 +478,10 @@ static int __build_pattern0 (__builder_t* builder)
 			break;
 		}
 
-		/*CODEAT(builder,pos_nb,ase_size_t) += 1;*/
 		SET_CODE (builder, pos_nb, ase_size_t, 
 			GET_CODE (builder, pos_nb, ase_size_t) + 1);
 	}
 
-	/*CODEAT(builder,pos_el,ase_size_t) = builder->code.size - old_size;*/
 	SET_CODE (builder, pos_el, ase_size_t, builder->code.size - old_size);
 	return 1;
 }
@@ -515,12 +525,10 @@ static int __build_branch (__builder_t* builder)
 		/* n == 0  no bound character. just continue */
 		/* n == 1  bound has been applied by build_occurrences */
 
-		/*CODEAT(builder,pos_na,ase_size_t) += 1;*/
 		SET_CODE (builder, pos_na, ase_size_t,
 			GET_CODE (builder, pos_na, ase_size_t) + 1);
 	}
 
-	/*CODEAT(builder,pos_bl,ase_size_t) = builder->code.size - old_size;*/
 	SET_CODE (builder, pos_bl, ase_size_t, builder->code.size - old_size);
 	return (builder->code.size == old_size)? 0: 1;
 }
@@ -582,7 +590,8 @@ static int __build_atom (__builder_t* builder)
 		{
 			struct __code_t* cmd;
 
-			cmd = (struct __code_t*)&builder->code.buf[builder->code.size];
+			cmd = (struct __code_t*)
+				&builder->code.buf[builder->code.size];
 
 			tmp.cmd = CMD_CHARSET;
 			tmp.negate = 0;
@@ -612,7 +621,8 @@ static int __build_atom (__builder_t* builder)
 	}
 	else 
 	{
-		ASE_AWK_ASSERT (builder->awk, builder->ptn.curc.type == CT_NORMAL);
+		ASE_AWK_ASSERT (builder->awk, 
+			builder->ptn.curc.type == CT_NORMAL);
 
 		tmp.cmd = CMD_ORD_CHAR;
 		tmp.negate = 0;
@@ -620,7 +630,9 @@ static int __build_atom (__builder_t* builder)
 		tmp.ubound = 1;
 		ADD_CODE (builder, &tmp, ASE_SIZEOF(tmp));
 
-		ADD_CODE (builder, &builder->ptn.curc.value, ASE_SIZEOF(builder->ptn.curc.value));
+		ADD_CODE (builder, 
+			&builder->ptn.curc.value, 
+			ASE_SIZEOF(builder->ptn.curc.value));
 		NEXT_CHAR (builder, LEVEL_TOP);
 
 		return 1;
@@ -729,7 +741,6 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 			GET_CODE (builder, pos_csc, ase_size_t) + 1);
 	}
 
-	/*CODEAT(builder,pos_csl,ase_size_t) = builder->code.size - old_size;*/
 	SET_CODE (builder, pos_csl, ase_size_t, builder->code.size - old_size);
 
 	return 1;
@@ -1257,8 +1268,7 @@ static const ase_byte_t* __match_ord_char (
 	if (matcher->ignorecase) cc = ASE_AWK_TOUPPER(matcher->awk, cc);
 
 	/* merge the same consecutive codes 
-	 * for example, a{1,10}a{0,10} is shortened to a{1,20} 
-	 */
+	 * for example, a{1,10}a{0,10} is shortened to a{1,20} */
 	if (matcher->ignorecase) 
 	{
 		while (p < mat->branch_end &&
@@ -1303,7 +1313,7 @@ static const ase_byte_t* __match_ord_char (
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 #ifdef DEBUG_REX
 			matcher->awk->prmfns.dprintf (
-				ASE_T("__match_ord_char: <ignorecase> %c %c\n"), 
+				ASE_T("__match_ord_char: <ignorecase> %c %c\n"),
 				cc, mat->match_ptr[si]);
 #endif
 			if (cc != ASE_AWK_TOUPPER (matcher->awk, mat->match_ptr[si])) break;
