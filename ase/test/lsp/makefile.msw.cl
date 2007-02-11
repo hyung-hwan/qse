@@ -3,10 +3,10 @@ CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\..
 LDFLAGS = /libpath:..\..\lsp
 LIBS = aselsp.lib user32.lib
 
-all: lsp
+all: aselsp
 
-lsp: lsp.obj
-	link /nologo /out:lsp.exe $(LDFLAGS) $(LIBS) lsp.obj
+aselsp: lsp.obj
+	link /nologo /out:$@.exe $(LDFLAGS) $(LIBS) lsp.obj
 
 clean:
 	del $(OBJS) *.obj lsp.exe

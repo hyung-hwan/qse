@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.68 2007-02-07 14:51:44 bacon Exp $
+ * $Id: types.h,v 1.69 2007-02-11 09:18:32 bacon Exp $
  *
  * {License}
  */
@@ -229,5 +229,13 @@ typedef int  ase_mcint_t;
 		#define _UNICODE
 	#endif
 #endif
+
+typedef struct ase_cstr_t ase_cstr_t;
+
+struct ase_cstr_t
+{
+	ase_char_t* ptr;
+	ase_size_t  len;
+};
 
 #endif
