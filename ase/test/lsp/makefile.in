@@ -1,16 +1,20 @@
 SRCS = lsp.c
-OUTS = $(SRCS:.c=.x)
+OBJS = $(SRCS:.c=.o)
 
 CC = @CC@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/lsp
-LIBS = @LIBS@ -laselsp
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. 
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/lsp 
+LIBS = @LIBS@ -laselsp -lm
 
-all: $(OUTS)
+all: aselsp
+
+aselsp: $(OBJS)
+	$(CC) -o $@ lsp.o $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -rf $(OUTS) *.o
+	rm -rf *.o aselsp
 
-.SUFFIXES: .c .x
-.c.x:
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+

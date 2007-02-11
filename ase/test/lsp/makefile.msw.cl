@@ -1,7 +1,7 @@
 CC = cl
-CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\.. -I$(XPKIT)
-LDFLAGS = /libpath:..\..\lsp /libpath:$(XPKIT)\xp\bas
-LIBS = aselsp.lib xpbas.lib user32.lib
+CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\.. 
+LDFLAGS = /libpath:..\..\lsp
+LIBS = aselsp.lib user32.lib
 
 all: lsp
 
