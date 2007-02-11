@@ -11,7 +11,7 @@ ASELSP is an implementation of a lisp-like language for embedding purposes.
 * ase_lsp_obj_t
 ]]]
 
-=== Functions ==
+== Functions ==
 
 [[[
 * ase_lsp_open
