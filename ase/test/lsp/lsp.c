@@ -279,10 +279,10 @@ int lsp_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	ase_printf (ASE_T("LSP 0.0001\n"));
+	ase_printf (ASE_T("ASELSP 0.0001\n"));
 
-	ase_lsp_attach_input (lsp, get_input, ASE_NULL);
-	ase_lsp_attach_output (lsp, put_output, ASE_NULL);
+	ase_lsp_attinput (lsp, get_input, ASE_NULL);
+	ase_lsp_attoutput (lsp, put_output, ASE_NULL);
 
 	while (1)
 	{
@@ -292,19 +292,21 @@ int lsp_main (int argc, ase_char_t* argv[])
 		obj = ase_lsp_read (lsp);
 		if (obj == ASE_NULL) 
 		{
-			int errnum = ase_lsp_geterrnum(lsp);
-			const ase_char_t* errstr;
+			int errnum;
+			const ase_char_t* errmsg;
+
+			ase_lsp_geterror (lsp, &errnum, &errmsg);
 
 			if (errnum != ASE_LSP_EEND && 
 			    errnum != ASE_LSP_EEXIT) 
 			{
-				errstr = ase_lsp_geterrstr(errnum);
 				ase_printf (
 					ASE_T("error in read: [%d] %s\n"), 
-					errnum, errstr);
+					errnum, errmsg);
 			}
 
-			if (errnum < ASE_LSP_ESYNTAX) break;
+			/* TODO: change the following check */
+			if (errnum < ASE_LSP_ESYNTAX) break; 
 			continue;
 		}
 
@@ -316,15 +318,14 @@ int lsp_main (int argc, ase_char_t* argv[])
 		else 
 		{
 			int errnum;
-			const ase_char_t* errstr;
+			const ase_char_t* errmsg;
 
-			errnum = ase_lsp_geterrnum(lsp);
+			ase_lsp_geterror (lsp, &errnum, &errmsg);
 			if (errnum == ASE_LSP_EEXIT) break;
 
-			errstr = ase_lsp_geterrstr(errnum);
 			ase_printf (
-				ASE_T("error in eval: [%d] %s\n"),
-				errnum, errstr);
+				ASE_T("error in eval: [%d] %s\n"), 
+				errnum, errmsg);
 		}
 	}
 
