@@ -5,10 +5,10 @@ LDFLAGS = -L..\..\lsp -L"c:\program files\borland\bds\4.0\lib"
 LIBS = import32.lib cw32mt.lib aselsp.lib 
 STARTUP = c0x32w.obj
 
-all: lsp 
+all: aselsp 
 
-lsp: lsp.obj
-	$(LD) $(LDFLAGS) $(STARTUP) lsp.obj,lsp.exe,,$(LIBS),,
+aselsp: lsp.obj
+	$(LD) $(LDFLAGS) $(STARTUP) lsp.obj,$@.exe,,$(LIBS),,
 
 clean:
 	del $(OBJS) *.obj $(OUT)
