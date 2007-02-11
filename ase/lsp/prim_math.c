@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.17 2007-02-10 13:52:23 bacon Exp $
+ * $Id: prim_math.c,v 1.18 2007-02-11 07:36:55 bacon Exp $
  *
  * {License}
  */
@@ -57,7 +57,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_EVALBAD;	
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -127,7 +127,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_EVALBAD;	
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -196,7 +196,7 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_EVALBAD;	
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -243,7 +243,7 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 				{
 					if (ASE_LSP_IVAL(tmp) == 0) 
 					{
-						lsp->errnum = ASE_LSP_EDIVBY0;
+						ase_lsp_seterror (lsp, ASE_LSP_EDIVBY0, ASE_NULL, 0);
 						return ASE_NULL;
 					}
 					ival = ival / ASE_LSP_IVAL(tmp);
@@ -272,7 +272,7 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_EVALBAD;	
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -314,7 +314,7 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			{
 				if (ASE_LSP_IVAL(tmp) == 0) 
 				{
-					lsp->errnum = ASE_LSP_EDIVBY0;
+					ase_lsp_seterror (lsp, ASE_LSP_EDIVBY0, ASE_NULL, 0);
 					return ASE_NULL;
 				}
 				ival = ival % ASE_LSP_IVAL(tmp);
@@ -331,7 +331,7 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 				ase_long_t tmpi = (ase_long_t)ASE_LSP_RVAL(tmp);
 				if (tmpi == 0) 
 				{
-					lsp->errnum = ASE_LSP_EDIVBY0;
+					ase_lsp_seterror (lsp, ASE_LSP_EDIVBY0, ASE_NULL, 0);
 					return ASE_NULL;
 				}
 				ival = ival % tmpi;
@@ -339,7 +339,7 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		}
 		else 
 		{
-			lsp->errnum = ASE_LSP_EVALBAD;	
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 

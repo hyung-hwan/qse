@@ -1,17 +1,12 @@
 /*
- * $Id: err.c,v 1.10 2007-02-10 13:52:23 bacon Exp $
+ * $Id: err.c,v 1.11 2007-02-11 07:36:54 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/lsp/lsp_i.h>
 
-int ase_lsp_geterrnum (ase_lsp_t* lsp)
-{
-	return lsp->errnum;
-}
-
-const ase_char_t* ase_lsp_geterrstr (int errnum)
+static const ase_char_t* __geterrstr (int errnum)
 {
 	static const ase_char_t* __errstr[] = 
 	{
@@ -25,14 +20,15 @@ const ase_char_t* ase_lsp_geterrstr (int errnum)
 		ASE_T("output not attached"),
 		ASE_T("output"),
 		ASE_T("syntax"),
+		ASE_T("right parenthesis expected"),
 		ASE_T("bad arguments"),
 		ASE_T("too few arguments"),
 		ASE_T("too many arguments"),
-		ASE_T("undefined function"),
+		ASE_T("undefined function '%s'"),
 		ASE_T("bad function"),
 		ASE_T("duplicate formal"),
 		ASE_T("bad symbol"),
-		ASE_T("undefined symbol"),
+		ASE_T("undefined symbol '%s'"),
 		ASE_T("empty body"),
 		ASE_T("bad value"),
 		ASE_T("divide by zero")
@@ -45,3 +41,84 @@ const ase_char_t* ase_lsp_geterrstr (int errnum)
 
 	return ASE_T("unknown error");
 }
+
+void ase_lsp_geterror (
+	ase_lsp_t* lsp, int* errnum, const ase_char_t** errmsg)
+{
+	if (errnum != ASE_NULL) *errnum = lsp->errnum;
+	if (errmsg != ASE_NULL) *errmsg = lsp->errmsg;
+}
+
+void ase_lsp_seterror (
+	ase_lsp_t* lsp, int errnum,
+	const ase_char_t** errarg, ase_size_t argcnt)
+{
+	const ase_char_t* errfmt;
+
+	ASE_LSP_ASSERT (lsp, argcnt <= 5);
+
+	lsp->errnum = errnum;
+       	errfmt = __geterrstr (errnum);
+
+	switch (argcnt)
+	{
+		case 0:
+			lsp->prmfns.sprintf (
+				lsp->errmsg, 
+				ASE_COUNTOF(lsp->errmsg), 
+				errfmt);
+			return;
+
+		case 1:
+			lsp->prmfns.sprintf (
+				lsp->errmsg, 
+				ASE_COUNTOF(lsp->errmsg), 
+				errfmt,
+				errarg[0]);
+			return;
+
+		case 2:
+			lsp->prmfns.sprintf (
+				lsp->errmsg, 
+				ASE_COUNTOF(lsp->errmsg), 
+				errfmt,
+				errarg[0],
+				errarg[1]);
+			return;
+
+		case 3:
+			lsp->prmfns.sprintf (
+				lsp->errmsg, 
+				ASE_COUNTOF(lsp->errmsg), 
+				errfmt,
+				errarg[0],
+				errarg[1],
+				errarg[2]);
+			return;
+
+		case 4:
+			lsp->prmfns.sprintf (
+				lsp->errmsg, 
+				ASE_COUNTOF(lsp->errmsg), 
+				errfmt,
+				errarg[0],
+				errarg[1],
+				errarg[2],
+				errarg[3]);
+			return;
+
+		case 5:
+			lsp->prmfns.sprintf (
+				lsp->errmsg, 
+				ASE_COUNTOF(lsp->errmsg), 
+				errfmt,
+				errarg[0],
+				errarg[1],
+				errarg[2],
+				errarg[3],
+				errarg[4]);
+			return;
+	}
+}
+
+

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.36 2007-02-10 13:52:23 bacon Exp $
+ * $Id: lsp.h,v 1.37 2007-02-11 07:36:55 bacon Exp $
  *
  * {License}
  */
@@ -91,22 +91,23 @@ enum
 	ASE_LSP_EEXIT,
 	ASE_LSP_EEND,
 	ASE_LSP_EENDSTR,
-	ASE_LSP_ERR_INPUT_NOT_ATTACHED,
-	ASE_LSP_ERR_INPUT,
-	ASE_LSP_ERR_OUTPUT_NOT_ATTACHED,
-	ASE_LSP_ERR_OUTPUT,
+	ASE_LSP_ENOINP,
+	ASE_LSP_EINPUT,
+	ASE_LSP_ENOOUTP,
+	ASE_LSP_EOUTPUT,
+
 	ASE_LSP_ESYNTAX,
+	ASE_LSP_ERPAREN,
 	ASE_LSP_EARGBAD,
 	ASE_LSP_EARGFEW,
 	ASE_LSP_EARGMANY,
-	ASE_LSP_ERR_UNDEF_FUNC,
-	ASE_LSP_ERR_BAD_FUNC,
+	ASE_LSP_EUNDEFFN,
+	ASE_LSP_EBADFN,
 	ASE_LSP_EDUPFML,
 	ASE_LSP_EBADSYM,
-	ASE_LSP_ERR_UNDEF_SYMBOL,
+	ASE_LSP_EUNDEFSYM,
 	ASE_LSP_EEMPBDY,
 	ASE_LSP_EVALBAD,
-
 	ASE_LSP_EDIVBY0
 };
 
@@ -133,7 +134,12 @@ ase_lsp_t* ase_lsp_open (
 
 void ase_lsp_close (ase_lsp_t* lsp);
 
-int ase_lsp_geterrnum (ase_lsp_t* lsp);
+void ase_lsp_geterror (
+	ase_lsp_t* lsp, int* errnum, const ase_char_t** errmsg);
+
+void ase_lsp_seterror (
+	ase_lsp_t* lsp, int errnum, 
+	const ase_char_t** errarg, ase_size_t argcnt);
 
 int ase_lsp_attach_input (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg);
 int ase_lsp_detach_input (ase_lsp_t* lsp);
@@ -183,7 +189,6 @@ int ase_lsp_assertfail (ase_lsp_t* lsp,
 	const ase_char_t* expr, const ase_char_t* desc,
 	const ase_char_t* file, int line);
 
-const ase_char_t* ase_lsp_geterrstr (int errnum);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.21 2007-02-10 13:52:23 bacon Exp $
+ * $Id: prim.c,v 1.22 2007-02-11 07:36:55 bacon Exp $
  *
  * {License}
  */
@@ -109,7 +109,7 @@ ase_lsp_obj_t* ase_lsp_prim_cond (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	{
 		if (ASE_LSP_TYPE(ASE_LSP_CAR(args)) != ASE_LSP_OBJ_CONS) 
 		{
-			lsp->errnum = ASE_LSP_EARGBAD;
+			ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -150,7 +150,7 @@ ase_lsp_obj_t* ase_lsp_prim_cond (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 				if (!f) ase_lsp_poptmp (lsp); /* ret */
 				ase_lsp_poptmp (lsp); /* tmp */
 
-				lsp->errnum = ASE_LSP_EARGBAD;
+				ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -222,7 +222,7 @@ ase_lsp_obj_t* ase_lsp_prim_if (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			if (!f) ase_lsp_poptmp (lsp); /* ret */
 			ase_lsp_poptmp (lsp); /* tmp */
 
-			lsp->errnum = ASE_LSP_EARGBAD;
+			ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -266,7 +266,8 @@ ase_lsp_obj_t* ase_lsp_prim_while (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		if (tmp != lsp->mem->nil) 
 		{
 			ase_lsp_poptmp (lsp); /* tmp */
-			lsp->errnum = ASE_LSP_EARGBAD;
+
+			ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -292,7 +293,7 @@ ase_lsp_obj_t* ase_lsp_prim_car (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) 
 	{
-		lsp->errnum = ASE_LSP_EARGBAD;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -315,7 +316,7 @@ ase_lsp_obj_t* ase_lsp_prim_cdr (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) 
 	{
-		lsp->errnum = ASE_LSP_EARGBAD;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -384,7 +385,8 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
 	{
 		ase_lsp_poptmp (lsp); /* p1 */
-		lsp->errnum = ASE_LSP_EARGBAD;
+
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -429,7 +431,7 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		p1 = ASE_LSP_CAR(p);
 		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
 		{
-			lsp->errnum = ASE_LSP_EARGBAD;
+			ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -483,7 +485,7 @@ ase_lsp_obj_t* ase_lsp_prim_defun (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	name = ASE_LSP_CAR(args);
 	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYM) 
 	{
-		lsp->errnum = ASE_LSP_EARGBAD;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -515,7 +517,7 @@ ase_lsp_obj_t* ase_lsp_prim_demac (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	name = ASE_LSP_CAR(args);
 	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYM) 
 	{
-		lsp->errnum = ASE_LSP_EARGBAD;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
