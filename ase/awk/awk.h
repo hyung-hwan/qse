@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.188 2007-02-11 04:44:39 bacon Exp $
+ * $Id: awk.h,v 1.189 2007-02-11 14:07:28 bacon Exp $
  *
  * {License}
  */
@@ -13,6 +13,7 @@
 typedef struct ase_awk_t ase_awk_t;
 typedef struct ase_awk_run_t ase_awk_run_t;
 typedef struct ase_awk_val_t ase_awk_val_t;
+typedef struct ase_awk_map_t ase_awk_map_t;
 typedef struct ase_awk_extio_t ase_awk_extio_t;
 
 typedef struct ase_awk_prmfns_t ase_awk_prmfns_t;
@@ -128,9 +129,14 @@ struct ase_awk_runios_t
 struct ase_awk_runcbs_t
 {
 	void (*on_start) (
-		ase_awk_t* awk, ase_awk_run_t* run, void* custom_data);
+		ase_awk_run_t* run, void* custom_data);
+
+	void (*on_return) (
+		ase_awk_run_t* run, ase_awk_val_t* ret, void* custom_data);
+
 	void (*on_end) (
-		ase_awk_t* awk, ase_awk_run_t* run, int errnum, void* custom_data);
+		ase_awk_run_t* run, int errnum, void* custom_data);
+
 	void* custom_data;
 };
 
@@ -468,6 +474,7 @@ int ase_awk_setofilename (
 
 ase_awk_t* ase_awk_getrunawk (ase_awk_run_t* awk);
 void* ase_awk_getruncustomdata (ase_awk_run_t* awk);
+ase_awk_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* awk);
 
 /* functions to manipulate the run-time error */
 int ase_awk_getrunerrnum (ase_awk_run_t* run);

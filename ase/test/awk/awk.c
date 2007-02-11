@@ -1,8 +1,10 @@
 /*
- * $Id: awk.c,v 1.164 2007-02-10 13:52:41 bacon Exp $
+ * $Id: awk.c,v 1.165 2007-02-11 14:08:08 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
+#include <ase/awk/val.h>
+#include <ase/awk/map.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -609,52 +611,69 @@ ase_awk_t* app_awk = NULL;
 ase_awk_run_t* app_run = NULL;
 
 #ifdef _WIN32
-static BOOL WINAPI __stop_run (DWORD ctrl_type)
+static BOOL WINAPI stop_run (DWORD ctrl_type)
 {
 	if (ctrl_type == CTRL_C_EVENT ||
 	    ctrl_type == CTRL_CLOSE_EVENT)
 	{
-		ase_awk_stop (app_awk, app_run);
+		ase_awk_stop (ase_awk_getrunawk(app_run), app_run);
 		return TRUE;
 	}
 
 	return FALSE;
 }
 #else
-static void __stop_run (int sig)
+static void stop_run (int sig)
 {
 	signal  (SIGINT, SIG_IGN);
-	ase_awk_stop (app_awk, app_run);
-	/*ase_awk_stoprun (awk, handle);*/
-	/*ase_awk_stopallruns (awk); */
-	signal  (SIGINT, __stop_run);
+	ase_awk_stop (ase_awk_getrunawk(app_run), app_run);
+	/*ase_awk_stopall (app_awk); */
+	/*ase_awk_stopall (ase_awk_getrunawk(app_run)); */
+	signal  (SIGINT, stop_run);
 }
 #endif
 
-static void on_run_start (
-	ase_awk_t* awk, ase_awk_run_t* run, void* custom_data)
+static void on_run_start (ase_awk_run_t* run, void* custom_data)
 {
-	app_awk = awk;	
 	app_run = run;
-
-	awk_dprintf (ASE_T("AWK ABOUT TO START...\n"));
+	awk_dprintf (ASE_T("[AWK ABOUT TO START]\n"));
 }
 
-static void on_run_end (
-	ase_awk_t* awk, ase_awk_run_t* run, 
-	int errnum, void* custom_data)
+static int __printval (ase_awk_pair_t* pair, void* arg)
+{
+	ase_awk_run_t* run = (ase_awk_run_t*)arg;
+	awk_dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
+	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
+	awk_dprintf (ASE_T("\n"));
+	return 0;
+}
+
+static void on_run_return (
+	ase_awk_run_t* run, ase_awk_val_t* ret, void* custom_data)
+{
+	app_run = run;
+
+	awk_dprintf (ASE_T("[RETURN] - "));
+	ase_awk_dprintval (run, ret);
+	awk_dprintf (ASE_T("\n"));
+
+	awk_dprintf (ASE_T("[NAMED VARIABLES]\n"));
+	ase_awk_map_walk (ase_awk_getrunnamedvarmap(run), __printval, run);
+	awk_dprintf (ASE_T("[END NAMED VARIABLES]\n"));
+}
+
+static void on_run_end (ase_awk_run_t* run, int errnum, void* custom_data)
 {
 	if (errnum != ASE_AWK_ENOERR)
 	{
-		awk_dprintf (ASE_T("AWK ENDED WITH AN ERROR\n"));
+		awk_dprintf (ASE_T("[AWK ENDED WITH AN ERROR] - "));
 		awk_dprintf (ASE_T("CODE [%d] LINE [%u] %s\n"),
 			errnum, 
 			(unsigned int)ase_awk_getrunerrlin(run),
 			ase_awk_getrunerrmsg(run));
 	}
-	else awk_dprintf (ASE_T("AWK ENDED SUCCESSFULLY\n"));
+	else awk_dprintf (ASE_T("[AWK ENDED SUCCESSFULLY]\n"));
 
-	app_awk = NULL;	
 	app_run = NULL;
 }
 
@@ -934,6 +953,8 @@ static int awk_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
+	app_awk = awk;
+
 	ase_awk_setoption (awk, opt);
 
 	srcios.in = process_source;
@@ -957,9 +978,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 	}
 
 #ifdef _WIN32
-	SetConsoleCtrlHandler (__stop_run, TRUE);
+	SetConsoleCtrlHandler (stop_run, TRUE);
 #else
-	signal (SIGINT, __stop_run);
+	signal (SIGINT, stop_run);
 #endif
 
 	runios.pipe = process_extio_pipe;
@@ -968,6 +989,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	runios.console = process_extio_console;
 
 	runcbs.on_start = on_run_start;
+	runcbs.on_return = on_run_return;
 	runcbs.on_end = on_run_end;
 	runcbs.custom_data = ASE_NULL;
 
