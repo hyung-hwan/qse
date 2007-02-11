@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.21 2007-02-03 10:51:53 bacon Exp $
+ * $Id: print.c,v 1.22 2007-02-11 07:36:55 bacon Exp $
  *
  * {License}
  */
@@ -9,7 +9,7 @@
 #define OUTPUT_STR(lsp,str) \
 	do { \
 		if (lsp->output_func(ASE_LSP_IO_WRITE, lsp->output_arg, (ase_char_t*)str, ase_lsp_strlen(str)) == -1) { \
-			lsp->errnum = ASE_LSP_ERR_OUTPUT; \
+			ase_lsp_seterror (lsp, ASE_LSP_EOUTPUT, ASE_NULL, 0); \
 			return -1; \
 		} \
 	} while (0)
@@ -17,7 +17,7 @@
 #define OUTPUT_STRX(lsp,str,len) \
 	do { \
 		if (lsp->output_func(ASE_LSP_IO_WRITE, lsp->output_arg, (ase_char_t*)str, len) == -1) { \
-			lsp->errnum = ASE_LSP_ERR_OUTPUT; \
+			ase_lsp_seterror (lsp, ASE_LSP_EOUTPUT, ASE_NULL, 0); \
 			return -1; \
 		} \
 	} while (0)
@@ -28,7 +28,7 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 
 	if (lsp->output_func == ASE_NULL) 
 	{
-		lsp->errnum = ASE_LSP_ERR_OUTPUT_NOT_ATTACHED;
+		ase_lsp_seterror (lsp, ASE_LSP_ENOOUTP, ASE_NULL, 0);
 		return -1;
 	}
 

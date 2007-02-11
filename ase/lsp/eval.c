@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.25 2007-02-10 13:52:23 bacon Exp $
+ * $Id: eval.c,v 1.26 2007-02-11 07:36:54 bacon Exp $
  *
  * {License}
  */
@@ -7,7 +7,7 @@
 #include <ase/lsp/lsp_i.h>
 
 static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
-static ase_lsp_obj_t* make_func (
+static ase_lsp_obj_t* makefn (
 	ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macro);
 static ase_lsp_obj_t* eval_cons (
 	ase_lsp_t* lsp, ase_lsp_obj_t* cons);
@@ -18,20 +18,6 @@ static ase_lsp_obj_t* apply_to_prim (
 
 ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ase_lsp_obj_t* ret;
-
-	//push_to_eval_stack (obj); 
-
-	ret = __eval (lsp, obj);
-	//pop ();
-
-	return ret;
-}
-
-static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
-{
-	lsp->errnum = ASE_LSP_ENOERR;
-
 	if (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
 	{
 		return eval_cons (lsp, obj);
@@ -42,8 +28,14 @@ static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 
 		/*
 		if (obj == lsp->mem->lambda || obj == lsp->mem->macro) {
+			ase_char_t* arg[1];
+
+			arg[0] = ASE_LSP_SYMPTR(obj);
+
 			printf ("lambda or macro can't be used as a normal symbol\n");
-			lsp->errnum = ASE_LSP_EBADSYM;
+			ase_lsp_seterror (
+				lsp, ASE_LSP_EBADSYM, 
+				arg, ASE_COUNTOF(arg));
 			return ASE_NULL;
 		}
 		*/
@@ -53,7 +45,13 @@ static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 		{
 			if (lsp->opt_undef_symbol) 
 			{
-				lsp->errnum = ASE_LSP_ERR_UNDEF_SYMBOL;
+				ase_char_t* arg[1];
+
+				arg[0] = ASE_LSP_SYMPTR(obj);
+
+				ase_lsp_seterror (
+					lsp, ASE_LSP_EUNDEFSYM, 
+					arg, ASE_COUNTOF(arg));
 				return ASE_NULL;
 			}
 			return lsp->mem->nil;
@@ -65,19 +63,19 @@ static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 	return obj;
 }
 
-static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macro)
+static ase_lsp_obj_t* makefn (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macro)
 {
 	ase_lsp_obj_t* func, * formal, * body, * p;
 
 	if (cdr == lsp->mem->nil) 
 	{
-		lsp->errnum = ASE_LSP_EARGFEW;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGFEW, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
 	if (ASE_LSP_TYPE(cdr) != ASE_LSP_OBJ_CONS) 
 	{
-		lsp->errnum = ASE_LSP_EARGBAD;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -86,7 +84,7 @@ static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macr
 
 	if (body == lsp->mem->nil) 
 	{
-		lsp->errnum = ASE_LSP_EEMPBDY;
+		ase_lsp_seterror (lsp, ASE_LSP_EEMPBDY, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -98,7 +96,7 @@ static ase_lsp_obj_t* make_func (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macr
 	if (p != lsp->mem->nil) 
 	{
 		/* like in (lambda (x) (+ x 10) . 4) */
-		lsp->errnum = ASE_LSP_EARGBAD;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -122,12 +120,12 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 	if (car == lsp->mem->lambda) 
 	{
 		/* (lambda (x) (+ x 20)) */
-		return make_func (lsp, cdr, 0);
+		return makefn (lsp, cdr, 0);
 	}
 	else if (car == lsp->mem->macro) 
 	{
 		/* (macro (x) (+ x 20)) */
-		return make_func (lsp, cdr, 1);
+		return makefn (lsp, cdr, 1);
 	}
 	else if (ASE_LSP_TYPE(car) == ASE_LSP_OBJ_SYM) 
 	{
@@ -140,7 +138,13 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 			if (func == ASE_NULL) 
 			{
 				/* the symbol's function definition is void */
-				lsp->errnum = ASE_LSP_ERR_UNDEF_FUNC;
+				ase_char_t* arg[1];
+
+				arg[0] = ASE_LSP_SYMPTR(car);
+				ase_lsp_seterror (
+					lsp, ASE_LSP_EUNDEFFN, 
+					arg, ASE_COUNTOF(arg));
+
 				return ASE_NULL;
 			}
 
@@ -156,15 +160,25 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 			}
 			else 
 			{
-//TODO: emit the name for debugging
-				lsp->errnum = ASE_LSP_ERR_UNDEF_FUNC;
+				ase_char_t* arg[1];
+
+				arg[0] = ASE_LSP_SYMPTR(car);
+				ase_lsp_seterror (
+					lsp, ASE_LSP_EUNDEFFN, 
+					arg, ASE_COUNTOF(arg));
+
 				return ASE_NULL;
 			}
 		}
-		else {
-			//TODO: better error handling.
-//TODO: emit the name for debugging
-			lsp->errnum = ASE_LSP_ERR_UNDEF_FUNC;
+		else 
+		{
+			ase_char_t* arg[1];
+
+			arg[0] = ASE_LSP_SYMPTR(car);
+			ase_lsp_seterror (
+				lsp, ASE_LSP_EUNDEFFN, 
+				arg, ASE_COUNTOF(arg));
+
 			return ASE_NULL;
 		}
 	}
@@ -179,20 +193,19 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 		 * ((lambda (x) (+ x 10)) 50) */
 		if (ASE_LSP_CAR(car) == lsp->mem->lambda) 
 		{
-			ase_lsp_obj_t* func = make_func (lsp, ASE_LSP_CDR(car), 0);
+			ase_lsp_obj_t* func = makefn (lsp, ASE_LSP_CDR(car), 0);
 			if (func == ASE_NULL) return ASE_NULL;
 			return apply (lsp, func, cdr);
 		}
 		else if (ASE_LSP_CAR(car) == lsp->mem->macro) 
 		{
-			ase_lsp_obj_t* func = make_func (lsp, ASE_LSP_CDR(car), 1);
+			ase_lsp_obj_t* func = makefn (lsp, ASE_LSP_CDR(car), 1);
 			if (func == ASE_NULL) return ASE_NULL;
 			return apply (lsp, func, cdr);
 		}
 	}
 
-//TODO: emit the name for debugging
-	lsp->errnum = ASE_LSP_ERR_BAD_FUNC;
+	ase_lsp_seterror (lsp, ASE_LSP_EBADFN, ASE_NULL, 0);
 	return ASE_NULL;
 }
 
@@ -239,9 +252,10 @@ static ase_lsp_obj_t* apply (
 	{
 		if (actual == mem->nil) 
 		{
-			lsp->errnum = ASE_LSP_EARGFEW;
 			mem->brooding_frame = frame->link;
 			ase_lsp_freeframe (lsp, frame);
+
+			ase_lsp_seterror (lsp, ASE_LSP_EARGFEW, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -261,9 +275,10 @@ static ase_lsp_obj_t* apply (
 		if (ase_lsp_lookupinframe (
 			lsp, frame, ASE_LSP_CAR(formal)) != ASE_NULL) 
 		{
-			lsp->errnum = ASE_LSP_EDUPFML;
 			mem->brooding_frame = frame->link;
 			ase_lsp_freeframe (lsp, frame);
+
+			ase_lsp_seterror (lsp, ASE_LSP_EDUPFML, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -281,16 +296,18 @@ static ase_lsp_obj_t* apply (
 
 	if (ASE_LSP_TYPE(actual) == ASE_LSP_OBJ_CONS) 
 	{
-		lsp->errnum = ASE_LSP_EARGMANY;
 		mem->brooding_frame = frame->link;
 		ase_lsp_freeframe (lsp, frame);
+
+		ase_lsp_seterror (lsp, ASE_LSP_EARGMANY, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	else if (actual != mem->nil) 
 	{
-		lsp->errnum = ASE_LSP_EARGBAD;
 		mem->brooding_frame = frame->link;
 		ase_lsp_freeframe (lsp, frame);
+
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -345,19 +362,19 @@ static ase_lsp_obj_t* apply_to_prim (
 	}	
 	if (obj != lsp->mem->nil) 
 	{
-		lsp->errnum = ASE_LSP_EARGBAD;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
 	if (count < ASE_LSP_PMINARGS(func))
 	{
-		lsp->errnum = ASE_LSP_EARGFEW;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGFEW, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
 	if (count > ASE_LSP_PMAXARGS(func))
 	{
-		lsp->errnum = ASE_LSP_EARGMANY;
+		ase_lsp_seterror (lsp, ASE_LSP_EARGMANY, ASE_NULL, 0);
 		return ASE_NULL;
 	} 
 

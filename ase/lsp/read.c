@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.31 2007-02-10 13:52:23 bacon Exp $
+ * $Id: read.c,v 1.32 2007-02-11 07:36:55 bacon Exp $
  *
  * {License}
  */
@@ -18,17 +18,19 @@
 #define TOKEN_TYPE(lsp)  (lsp)->token.type
 #define TOKEN_IVAL(lsp)  (lsp)->token.ival
 #define TOKEN_RVAL(lsp)  (lsp)->token.rval
-#define TOKEN_SVAL(lsp)  (lsp)->token.name.buf
+#define TOKEN_SPTR(lsp)  (lsp)->token.name.buf
 #define TOKEN_SLEN(lsp)  (lsp)->token.name.size
 
-#define TOKEN_ADD_CHAR(lsp,ch) do { \
-	if (ase_lsp_name_addc(&(lsp)->token.name, ch) == -1) { \
-		lsp->errnum = ASE_LSP_ENOMEM; \
-		return -1; \
-	} \
-} while (0)
+#define TOKEN_ADD_CHAR(lsp,ch) \
+	do { \
+		if (ase_lsp_name_addc(&(lsp)->token.name, ch) == -1) { \
+			ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0); \
+			return -1; \
+		} \
+	} while (0)
 
-#define TOKEN_COMPARE(lsp,str) ase_lsp_name_compare (&(lsp)->token.name, str)
+#define TOKEN_COMPARE(lsp,str) \
+	ase_lsp_name_compare (&(lsp)->token.name, str)
 		
 #define TOKEN_END            0
 #define TOKEN_INT            1
@@ -69,7 +71,6 @@ ase_lsp_obj_t* ase_lsp_read (ase_lsp_t* lsp)
 	if (lsp->curc == ASE_CHAR_EOF && 
 	    read_char(lsp) == -1) return ASE_NULL;
 
-	lsp->errnum = ASE_LSP_ENOERR;
 	NEXT_TOKEN (lsp);
 
 	lsp->mem->read = read_obj (lsp);
@@ -85,7 +86,7 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 	switch (TOKEN_TYPE(lsp)) 
 	{
 		case TOKEN_END:
-			lsp->errnum = ASE_LSP_EEND;
+			ase_lsp_seterror (lsp, ASE_LSP_EEND, ASE_NULL, 0);
 			return ASE_NULL;
 
 		case TOKEN_LPAREN:
@@ -98,26 +99,28 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 
 		case TOKEN_INT:
 			obj = ase_lsp_makeintobj (lsp->mem, TOKEN_IVAL(lsp));
-			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+			if (obj == ASE_NULL) return ASE_NULL;
 			ase_lsp_lockobj (lsp, obj);
 			return obj;
 
 		case TOKEN_REAL:
 			obj = ase_lsp_makerealobj (lsp->mem, TOKEN_RVAL(lsp));
-			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+			if (obj == ASE_NULL) return ASE_NULL;
 			ase_lsp_lockobj (lsp, obj);
 			return obj;
 
 		case TOKEN_STRING:
 			obj = ase_lsp_makestr (
-				lsp->mem, TOKEN_SVAL(lsp), TOKEN_SLEN(lsp));
-			if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+				lsp->mem, TOKEN_SPTR(lsp), TOKEN_SLEN(lsp));
+			if (obj == ASE_NULL) return ASE_NULL;
 			ase_lsp_lockobj (lsp, obj);
 			return obj;
 
 		case TOKEN_IDENT:
 			ASE_LSP_ASSERT (lsp,
-				lsp->mem->nil != ASE_NULL && lsp->mem->t != ASE_NULL); 
+				lsp->mem->nil != ASE_NULL && 
+				lsp->mem->t != ASE_NULL); 
+
 			if (TOKEN_COMPARE(lsp,ASE_T("nil")) == 0) 
 			{
 				obj = lsp->mem->nil;
@@ -129,14 +132,17 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 			else 
 			{
 				obj = ase_lsp_makesym (
-					lsp->mem, TOKEN_SVAL(lsp), TOKEN_SLEN(lsp));
-				if (obj == ASE_NULL) lsp->errnum = ASE_LSP_ENOMEM;
+					lsp->mem, 
+					TOKEN_SPTR(lsp), 
+					TOKEN_SLEN(lsp));
+				if (obj == ASE_NULL) return ASE_NULL;
+				ase_lsp_lockobj (lsp, obj);
 			}
-			ase_lsp_lockobj (lsp, obj);
+
 			return obj;
 	}
 
-	lsp->errnum = ASE_LSP_ESYNTAX;
+	ase_lsp_seterror (lsp, ASE_LSP_ESYNTAX, ASE_NULL, 0);
 	return ASE_NULL;
 }
 
@@ -150,7 +156,7 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 		if (TOKEN_TYPE(lsp) == TOKEN_END) 
 		{
 			/* unexpected end of input */
-			lsp->errnum = ASE_LSP_ESYNTAX;
+			ase_lsp_seterror (lsp, ASE_LSP_ESYNTAX, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -159,7 +165,7 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 			if (prev == ASE_NULL) 
 			{
 				/* unexpected dot */
-				lsp->errnum = ASE_LSP_ESYNTAX; 
+				ase_lsp_seterror (lsp, ASE_LSP_ESYNTAX, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -170,7 +176,7 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 				if (lsp->errnum == ASE_LSP_EEND) 
 				{
 					/* unexpected end of input */
-					lsp->errnum = ASE_LSP_ESYNTAX; 
+					ase_lsp_seterror (lsp, ASE_LSP_ESYNTAX, ASE_NULL, 0);
 				}
 				return ASE_NULL;
 			}
@@ -180,7 +186,7 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 			if (TOKEN_TYPE(lsp) != TOKEN_RPAREN) 
 			{
 				/* ) expected */
-				lsp->errnum = ASE_LSP_ESYNTAX; 
+				ase_lsp_seterror (lsp, ASE_LSP_ERPAREN, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -193,18 +199,14 @@ static ase_lsp_obj_t* read_list (ase_lsp_t* lsp)
 			if (lsp->errnum == ASE_LSP_EEND)
 			{	
 				/* unexpected end of input */
-				lsp->errnum = ASE_LSP_ESYNTAX;
+				ase_lsp_seterror (lsp, ASE_LSP_ESYNTAX, ASE_NULL, 0);
 			}
 			return ASE_NULL;
 		}
 
 		p = (ase_lsp_obj_cons_t*)ase_lsp_makecons (
 			lsp->mem, lsp->mem->nil, lsp->mem->nil);
-		if (p == ASE_NULL) 
-		{
-			lsp->errnum = ASE_LSP_ENOMEM;
-			return ASE_NULL;
-		}
+		if (p == ASE_NULL) return ASE_NULL;
 		ase_lsp_lockobj (lsp, (ase_lsp_obj_t*)p);
 
 		if (first == ASE_NULL) first = p;
@@ -229,25 +231,17 @@ static ase_lsp_obj_t* read_quote (ase_lsp_t* lsp)
 		if (lsp->errnum == ASE_LSP_EEND) 
 		{
 			/* unexpected end of input */
-			lsp->errnum = ASE_LSP_ESYNTAX;
+			ase_lsp_seterror (lsp, ASE_LSP_ESYNTAX, ASE_NULL, 0);
 		}
 		return ASE_NULL;
 	}
 
 	cons = ase_lsp_makecons (lsp->mem, tmp, lsp->mem->nil);
-	if (cons == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (cons == ASE_NULL) return ASE_NULL;
 	ase_lsp_lockobj (lsp, cons);
 
 	cons = ase_lsp_makecons (lsp->mem, lsp->mem->quote, cons);
-	if (cons == ASE_NULL) 
-	{
-		lsp->errnum = ASE_LSP_ENOMEM;
-		return ASE_NULL;
-	}
+	if (cons == ASE_NULL) return ASE_NULL;
 	ase_lsp_lockobj (lsp, cons); 
 
 	return cons;
@@ -260,14 +254,14 @@ static int read_char (ase_lsp_t* lsp)
 
 	if (lsp->input_func == ASE_NULL) 
 	{
-		lsp->errnum = ASE_LSP_ERR_INPUT_NOT_ATTACHED;
+		ase_lsp_seterror (lsp, ASE_LSP_ENOINP, ASE_NULL, 0);
 		return -1;
 	}
 
 	n = lsp->input_func(ASE_LSP_IO_READ, lsp->input_arg, &c, 1);
 	if (n == -1) 
 	{
-		lsp->errnum = ASE_LSP_ERR_INPUT;
+		ase_lsp_seterror (lsp, ASE_LSP_EINPUT, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -436,10 +430,7 @@ static int read_string (ase_lsp_t* lsp)
 
 		if (c == ASE_CHAR_EOF)
 		{
-			/*ase_lsp_seterror (
-				lsp, ASE_LSP_EENDSTR, lsp->token.line,
-				ASE_T("string not closed with a quote"));*/
-			lsp->errnum = ASE_LSP_EENDSTR;
+			ase_lsp_seterror (lsp, ASE_LSP_EENDSTR, ASE_NULL, 0);
 			return -1;
 		}
 

@@ -1,12 +1,12 @@
 /*
- * $Id: env.c,v 1.15 2007-02-10 13:52:22 bacon Exp $
+ * $Id: env.c,v 1.16 2007-02-11 07:36:54 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/lsp/lsp_i.h>
 
-// TODO: make the frame hash accessible....
+/* TODO: make the frame hash accessible */
 
 static ase_lsp_assoc_t* __new_assoc (
 	ase_lsp_t* lsp, ase_lsp_obj_t* name, 
@@ -18,7 +18,7 @@ static ase_lsp_assoc_t* __new_assoc (
 		ASE_LSP_MALLOC (lsp, sizeof(ase_lsp_assoc_t));
 	if (assoc == ASE_NULL) 
 	{
-		lsp->errnum = ASE_LSP_ENOMEM;
+		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -38,7 +38,7 @@ ase_lsp_frame_t* ase_lsp_newframe (ase_lsp_t* lsp)
 		ASE_LSP_MALLOC (lsp, sizeof(ase_lsp_frame_t));
 	if (frame == ASE_NULL) 
 	{
-		lsp->errnum = ASE_LSP_ENOMEM;
+		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -52,7 +52,7 @@ void ase_lsp_freeframe (ase_lsp_t* lsp, ase_lsp_frame_t* frame)
 {
 	ase_lsp_assoc_t* assoc, * link;
 
-	// destroy the associations
+	/* destroy the associations */
 	assoc = frame->assoc;
 	while (assoc != ASE_NULL) 
 	{
@@ -120,7 +120,7 @@ ase_lsp_tlink_t* ase_lsp_pushtmp (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 		ASE_LSP_MALLOC (lsp, sizeof(ase_lsp_tlink_t));
 	if (tlink == ASE_NULL) 
 	{
-		lsp->errnum = ASE_LSP_ENOMEM;
+		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 

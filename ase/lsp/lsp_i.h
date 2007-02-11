@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h,v 1.7 2007-02-03 10:51:52 bacon Exp $
+ * $Id: lsp_i.h,v 1.8 2007-02-11 07:36:55 bacon Exp $
  *
  * {License}
  */
@@ -56,8 +56,11 @@ struct ase_lsp_t
 {
 	ase_lsp_prmfns_t prmfns;
 
-	/* error number */
+	/* error */
 	int errnum;
+	ase_char_t errmsg[256];
+
+	/* options */
 	int opt_undef_symbol;
 
 	/* for read */

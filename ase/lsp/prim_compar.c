@@ -1,5 +1,5 @@
 /*
- * $Id: prim_compar.c,v 1.12 2007-02-10 13:52:23 bacon Exp $
+ * $Id: prim_compar.c,v 1.13 2007-02-11 07:36:55 bacon Exp $
  *
  * {License}
  */
@@ -43,7 +43,7 @@
 		{ \
 			ase_lsp_poptmp (lsp); \
 			ase_lsp_poptmp (lsp); \
-			lsp->errnum = ASE_LSP_EVALBAD; \
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0); \
 			return ASE_NULL; \
 		} \
 	} \
@@ -61,7 +61,7 @@
 		{ \
 			ase_lsp_poptmp (lsp); \
 			ase_lsp_poptmp (lsp); \
-			lsp->errnum = ASE_LSP_EVALBAD; \
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0); \
 			return ASE_NULL; \
 		} \
 	} \
@@ -77,7 +77,7 @@
 		{ \
 			ase_lsp_poptmp (lsp); \
 			ase_lsp_poptmp (lsp); \
-			lsp->errnum = ASE_LSP_EVALBAD; \
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0); \
 			return ASE_NULL; \
 		} \
 	} \
@@ -93,7 +93,7 @@
 		{ \
 			ase_lsp_poptmp (lsp); \
 			ase_lsp_poptmp (lsp); \
-			lsp->errnum = ASE_LSP_EVALBAD; \
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0); \
 			return ASE_NULL; \
 		} \
 	} \
@@ -101,7 +101,7 @@
 	{ \
 		ase_lsp_poptmp (lsp); \
 		ase_lsp_poptmp (lsp); \
-		lsp->errnum = ASE_LSP_EVALBAD; \
+		ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0); \
 		return ASE_NULL; \
 	} \
 \

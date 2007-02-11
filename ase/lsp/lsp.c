@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.21 2007-02-03 10:51:52 bacon Exp $
+ * $Id: lsp.c,v 1.22 2007-02-11 07:36:54 bacon Exp $
  *
  * {License}
  */
@@ -71,6 +71,7 @@ ase_lsp_t* ase_lsp_open (
 	}
 
 	lsp->errnum = ASE_LSP_ENOERR;
+	lsp->errmsg[0] = ASE_T('\0');
 	lsp->opt_undef_symbol = 1;
 	/*lsp->opt_undef_symbol = 0;*/
 

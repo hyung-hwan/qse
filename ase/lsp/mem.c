@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.28 2007-02-10 13:52:23 bacon Exp $
+ * $Id: mem.c,v 1.29 2007-02-11 07:36:55 bacon Exp $
  *
  * {License}
  */
@@ -111,7 +111,7 @@ ase_lsp_gc (mem);
 		obj = (ase_lsp_obj_t*) ASE_LSP_MALLOC (mem->lsp, size);
 		if (obj == ASE_NULL) 
 		{
-			mem->lsp->errnum = ASE_LSP_ENOMEM;
+			ase_lsp_seterror (mem->lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 	}
