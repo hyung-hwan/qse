@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.326 2007-02-11 14:07:28 bacon Exp $
+ * $Id: run.c,v 1.327 2007-02-12 03:10:48 bacon Exp $
  *
  * {License}
  */
@@ -1507,14 +1507,14 @@ static int run_main (
 		}
 
 		v = STACK_RETVAL(run);
-
-		if (runcbs != ASE_NULL && runcbs->on_return != ASE_NULL)
+		if (n == 0)
 		{
-			runcbs->on_return (run, v, runcbs->custom_data);
+			if (runcbs != ASE_NULL && runcbs->on_return != ASE_NULL)
+			{
+				runcbs->on_return (run, v, runcbs->custom_data);
+			}
 		}
-
-		/* the life of the global return value is over here
-		 * unlike the return value of each function */
+		/* end the life of the global return value */
 		ase_awk_refdownval (run, v);
 
 		run->stack_top = 
@@ -1532,7 +1532,7 @@ static int run_main (
 		__raw_pop (run);
 	}
 
-	/* just reset the exit level */
+	/* reset the exit level */
 	run->exit_level = EXIT_NONE;
 
 	return n;
