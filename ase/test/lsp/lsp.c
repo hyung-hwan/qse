@@ -21,27 +21,25 @@
 #endif
 
 #if defined(_WIN32)
-	#define awk_fgets _fgetts
-	#define awk_fgetc _fgettc
-	#define awk_fputs _fputts
-	#define awk_fputc _fputtc
+	#define lsp_fgets _fgetts
+	#define lsp_fgetc _fgettc
+	#define lsp_fputs _fputts
+	#define lsp_fputc _fputtc
 #elif defined(ASE_CHAR_IS_MCHAR)
-	#define awk_fgets fgets
-	#define awk_fgetc fgetc
-	#define awk_fputs fputs
-	#define awk_fputc fputc
+	#define lsp_fgets fgets
+	#define lsp_fgetc fgetc
+	#define lsp_fputs fputs
+	#define lsp_fputc fputc
 #else
-	#define awk_fgets fgetws
-	#define awk_fgetc fgetwc
-	#define awk_fputs fputws
-	#define awk_fputc fputwc
+	#define lsp_fgets fgetws
+	#define lsp_fgetc fgetwc
+	#define lsp_fputs fputws
+	#define lsp_fputc fputwc
 #endif
 
 static ase_ssize_t get_input (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-	ase_ssize_t n;
-
 	switch (cmd) 
 	{
 		case ASE_LSP_IO_OPEN:
@@ -51,7 +49,7 @@ static ase_ssize_t get_input (
 		case ASE_LSP_IO_READ:
 		{
 			/*
-			if (awk_fgets (data, size, stdin) == ASE_NULL) 
+			if (lsp_fgets (data, size, stdin) == ASE_NULL) 
 			{
 				if (ferror(stdin)) return -1;
 				return 0;
@@ -62,7 +60,7 @@ static ase_ssize_t get_input (
 			ase_cint_t c;
 
 			if (size <= 0) return -1;
-			c = awk_fgetc (stdin);
+			c = lsp_fgetc (stdin);
 
 			if (c == ASE_CHAR_EOF) 
 			{
@@ -139,6 +137,63 @@ static void __lsp_free (void* ptr, void* custom_data)
 #endif
 }
 
+static void* lsp_memcpy  (void* dst, const void* src, ase_size_t n)
+{
+	return memcpy (dst, src, n);
+}
+
+static void* lsp_memset (void* dst, int val, ase_size_t n)
+{
+	return memset (dst, val, n);
+}
+
+#if defined(ASE_CHAR_IS_MCHAR) 
+	#if (__TURBOC__<=513) /* turboc 2.01 or earlier */
+		static int lsp_isupper (int c) { return isupper (c); }
+		static int lsp_islower (int c) { return islower (c); }
+		static int lsp_isalpha (int c) { return isalpha (c); }
+		static int lsp_isdigit (int c) { return isdigit (c); }
+		static int lsp_isxdigit (int c) { return isxdigit (c); }
+		static int lsp_isalnum (int c) { return isalnum (c); }
+		static int lsp_isspace (int c) { return isspace (c); }
+		static int lsp_isprint (int c) { return isprint (c); }
+		static int lsp_isgraph (int c) { return isgraph (c); }
+		static int lsp_iscntrl (int c) { return iscntrl (c); }
+		static int lsp_ispunct (int c) { return ispunct (c); }
+		static int lsp_toupper (int c) { return toupper (c); }
+		static int lsp_tolower (int c) { return tolower (c); }
+	#else
+		#define lsp_isupper  isupper
+		#define lsp_islower  islower
+		#define lsp_isalpha  isalpha
+		#define lsp_isdigit  isdigit
+		#define lsp_isxdigit isxdigit
+		#define lsp_isalnum  isalnum
+		#define lsp_isspace  isspace
+		#define lsp_isprint  isprint
+		#define lsp_isgraph  isgraph
+		#define lsp_iscntrl  iscntrl
+		#define lsp_ispunct  ispunct
+		#define lsp_toupper  tolower
+		#define lsp_tolower  tolower
+	#endif
+#else
+	#define lsp_isupper  iswupper
+	#define lsp_islower  iswlower
+	#define lsp_isalpha  iswalpha
+	#define lsp_isdigit  iswdigit
+	#define lsp_isxdigit iswxdigit
+	#define lsp_isalnum  iswalnum
+	#define lsp_isspace  iswspace
+	#define lsp_isprint  iswprint
+	#define lsp_isgraph  iswgraph
+	#define lsp_iscntrl  iswcntrl
+	#define lsp_ispunct  iswpunct
+
+	#define lsp_toupper  towlower
+	#define lsp_tolower  towlower
+#endif
+
 static void lsp_abort (void* custom_data)
 {
 	abort ();
@@ -190,14 +245,6 @@ static void lsp_dprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static void lsp_printf (const ase_char_t* fmt, ...)
-{
-	va_list ap;
-	va_start (ap, fmt);
-	ase_vprintf (fmt, ap);
-	va_end (ap);
-}
-
 int lsp_main (int argc, ase_char_t* argv[])
 {
 	ase_lsp_t* lsp;
@@ -222,37 +269,22 @@ int lsp_main (int argc, ase_char_t* argv[])
 	prmfns.realloc = __lsp_realloc;
 	prmfns.free = __lsp_free;
 
-#ifdef ASE_CHAR_IS_MCHAR
-	prmfns.is_upper  = isupper;
-	prmfns.is_lower  = islower;
-	prmfns.is_alpha  = isalpha;
-	prmfns.is_digit  = isdigit;
-	prmfns.is_xdigit = isxdigit;
-	prmfns.is_alnum  = isalnum;
-	prmfns.is_space  = isspace;
-	prmfns.is_print  = isprint;
-	prmfns.is_graph  = isgraph;
-	prmfns.is_cntrl  = iscntrl;
-	prmfns.is_punct  = ispunct;
-	prmfns.to_upper  = toupper;
-	prmfns.to_lower  = tolower;
-#else
-	prmfns.is_upper  = iswupper;
-	prmfns.is_lower  = iswlower;
-	prmfns.is_alpha  = iswalpha;
-	prmfns.is_digit  = iswdigit;
-	prmfns.is_xdigit = iswxdigit;
-	prmfns.is_alnum  = iswalnum;
-	prmfns.is_space  = iswspace;
-	prmfns.is_print  = iswprint;
-	prmfns.is_graph  = iswgraph;
-	prmfns.is_cntrl  = iswcntrl;
-	prmfns.is_punct  = iswpunct;
-	prmfns.to_upper  = towupper;
-	prmfns.to_lower  = towlower;
-#endif
-	prmfns.memcpy = memcpy;
-	prmfns.memset = memset;
+	prmfns.is_upper  = (ase_lsp_isctype_t)lsp_isupper;
+	prmfns.is_lower  = (ase_lsp_isctype_t)lsp_islower;
+	prmfns.is_alpha  = (ase_lsp_isctype_t)lsp_isalpha;
+	prmfns.is_digit  = (ase_lsp_isctype_t)lsp_isdigit;
+	prmfns.is_xdigit = (ase_lsp_isctype_t)lsp_isxdigit;
+	prmfns.is_alnum  = (ase_lsp_isctype_t)lsp_isalnum;
+	prmfns.is_space  = (ase_lsp_isctype_t)lsp_isspace;
+	prmfns.is_print  = (ase_lsp_isctype_t)lsp_isprint;
+	prmfns.is_graph  = (ase_lsp_isctype_t)lsp_isgraph;
+	prmfns.is_cntrl  = (ase_lsp_isctype_t)lsp_iscntrl;
+	prmfns.is_punct  = (ase_lsp_isctype_t)lsp_ispunct;
+	prmfns.to_upper  = (ase_lsp_toctype_t)lsp_toupper;
+	prmfns.to_lower  = (ase_lsp_toctype_t)lsp_tolower;
+
+	prmfns.memcpy = lsp_memcpy;
+	prmfns.memset = lsp_memset;
 	prmfns.sprintf = lsp_sprintf;
 	prmfns.aprintf = lsp_aprintf;
 	prmfns.dprintf = lsp_dprintf;
@@ -286,7 +318,7 @@ int lsp_main (int argc, ase_char_t* argv[])
 
 	while (1)
 	{
-		ase_printf (ASE_T("lsp> "));
+		ase_printf (ASE_T("ASELSP $ "));
 		fflush (stdout);
 
 		obj = ase_lsp_read (lsp);
