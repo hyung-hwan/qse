@@ -1,10 +1,17 @@
 /*
- * $Id: prim_let.c,v 1.12 2007-02-11 07:36:55 bacon Exp $
+ * $Id: prim_let.c,v 1.13 2007-02-13 06:00:20 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/lsp/lsp_i.h>
+
+/* 
+ * (let ((variable value)
+ *       (variable value)
+ *       ...)
+ *      body...)
+ */
 
 static ase_lsp_obj_t* __prim_let (
 	ase_lsp_t* lsp, ase_lsp_obj_t* args, int sequential)

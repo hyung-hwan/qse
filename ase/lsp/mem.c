@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.29 2007-02-11 07:36:55 bacon Exp $
+ * $Id: mem.c,v 1.30 2007-02-13 06:00:20 bacon Exp $
  *
  * {License}
  */
@@ -350,13 +350,15 @@ static void __sweep_unmarked_objs (ase_lsp_mem_t* mem)
 			{
 				/* dispose of unused objects */
 if (i == ASE_LSP_OBJ_INT)
-wprintf (ASE_T("disposing....%d [%d]\n"), i, (int)ASE_LSP_IVAL(obj));
+ase_printf (ASE_T("disposing....%d [%d]\n"), i, (int)ASE_LSP_IVAL(obj));
 if (i == ASE_LSP_OBJ_REAL)
-wprintf (ASE_T("disposing....%d [%Lf]\n"), i, (double)ASE_LSP_RVAL(obj));
+ase_printf (ASE_T("disposing....%d [%Lf]\n"), i, (double)ASE_LSP_RVAL(obj));
 else if (i == ASE_LSP_OBJ_SYM)
-wprintf (ASE_T("disposing....%d [%s]\n"), i, ASE_LSP_SYMPTR(obj));
+ase_printf (ASE_T("disposing....%d [%s]\n"), i, ASE_LSP_SYMPTR(obj));
+else if (i == ASE_LSP_OBJ_STR)
+ase_printf (ASE_T("disposing....%d [%s]\n"), i, ASE_LSP_STRPTR(obj));
 else
-wprintf (ASE_T("disposing....%d\n"), i);
+ase_printf (ASE_T("disposing....%d\n"), i);
 				ase_lsp_dispose (mem, prev, obj);
 			}
 			else 

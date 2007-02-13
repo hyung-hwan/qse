@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.18 2007-02-11 07:36:55 bacon Exp $
+ * $Id: prim_math.c,v 1.19 2007-02-13 06:00:20 bacon Exp $
  *
  * {License}
  */
@@ -16,7 +16,6 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
-	/*while (body != lsp->mem->nil) */
 	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
 	{
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
@@ -85,7 +84,6 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
-	/*while (body != lsp->mem->nil) */
 	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
 	{
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
@@ -155,7 +153,6 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
-	/*while (body != lsp->mem->nil) */
 	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
 	{
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
@@ -224,7 +221,6 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
-	/*while (body != lsp->mem->nil)*/
 	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
 	{
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
@@ -298,7 +294,6 @@ ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
-	//while (body != lsp->mem->nil) {
 	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
 	{
 		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
