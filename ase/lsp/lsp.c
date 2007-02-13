@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.23 2007-02-11 08:30:18 bacon Exp $
+ * $Id: lsp.c,v 1.24 2007-02-13 06:00:20 bacon Exp $
  *
  * {License}
  */
@@ -186,27 +186,29 @@ static int __add_builtin_prims (ase_lsp_t* lsp)
 	if (ase_lsp_addprim(mem,name,name_len,pimpl,min_args,max_args) == -1) return -1;
 #define MAX_ARGS ASE_TYPE_MAX(ase_size_t)
 
-	ADD_PRIM (lsp, ASE_T("exit"),  4, ase_lsp_prim_exit,  0, 0);
-	ADD_PRIM (lsp, ASE_T("eval"),  4, ase_lsp_prim_eval,  1, 1);
-	ADD_PRIM (lsp, ASE_T("prog1"), 5, ase_lsp_prim_prog1, 1, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("progn"), 5, ase_lsp_prim_progn, 1, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("gc"),    2, ase_lsp_prim_gc,    0, 0);
+	ADD_PRIM (lsp, ASE_T("exit"),   4, ase_lsp_prim_exit,   0, 0);
+	ADD_PRIM (lsp, ASE_T("eval"),   4, ase_lsp_prim_eval,   1, 1);
+	ADD_PRIM (lsp, ASE_T("prog1"),  5, ase_lsp_prim_prog1,  1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("progn"),  5, ase_lsp_prim_progn,  1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("gc"),     2, ase_lsp_prim_gc,     0, 0);
 
-	ADD_PRIM (lsp, ASE_T("cond"),  4, ase_lsp_prim_cond,  0, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("if"),    2, ase_lsp_prim_if,    2, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("while"), 5, ase_lsp_prim_while, 1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("cond"),   4, ase_lsp_prim_cond,   0, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("if"),     2, ase_lsp_prim_if,     2, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("while"),  5, ase_lsp_prim_while,  1, MAX_ARGS);
 
-	ADD_PRIM (lsp, ASE_T("car"),   3, ase_lsp_prim_car,   1, 1);
-	ADD_PRIM (lsp, ASE_T("cdr"),   3, ase_lsp_prim_cdr,   1, 1);
-	ADD_PRIM (lsp, ASE_T("cons"),  4, ase_lsp_prim_cons,  2, 2);
-	ADD_PRIM (lsp, ASE_T("set"),   3, ase_lsp_prim_set,   2, 2);
-	ADD_PRIM (lsp, ASE_T("setq"),  4, ase_lsp_prim_setq,  1, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("quote"), 5, ase_lsp_prim_quote, 1, 1);
-	ADD_PRIM (lsp, ASE_T("defun"), 5, ase_lsp_prim_defun, 3, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("demac"), 5, ase_lsp_prim_demac, 3, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("let"),   3, ase_lsp_prim_let,   1, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("let*"),  4, ase_lsp_prim_letx,  1, MAX_ARGS);
-	ADD_PRIM (lsp, ASE_T("or"),    2, ase_lsp_prim_or,    2, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("car"),    3, ase_lsp_prim_car,    1, 1);
+	ADD_PRIM (lsp, ASE_T("cdr"),    3, ase_lsp_prim_cdr,    1, 1);
+	ADD_PRIM (lsp, ASE_T("cons"),   4, ase_lsp_prim_cons,   2, 2);
+	ADD_PRIM (lsp, ASE_T("length"), 6, ase_lsp_prim_length, 1, 1);
+
+	ADD_PRIM (lsp, ASE_T("set"),    3, ase_lsp_prim_set,    2, 2);
+	ADD_PRIM (lsp, ASE_T("setq"),   4, ase_lsp_prim_setq,   1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("quote"),  5, ase_lsp_prim_quote,  1, 1);
+	ADD_PRIM (lsp, ASE_T("defun"),  5, ase_lsp_prim_defun,  3, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("demac"),  5, ase_lsp_prim_demac,  3, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("let"),    3, ase_lsp_prim_let,    1, MAX_ARGS);
+	ADD_PRIM (lsp, ASE_T("let*"),   4, ase_lsp_prim_letx,   1, MAX_ARGS);
+	/*ADD_PRIM (lsp, ASE_T("or"),     2, ase_lsp_prim_or,     2, MAX_ARGS);*/
 
 	ADD_PRIM (lsp, ASE_T("="),     1, ase_lsp_prim_eq,    2, 2);
 	ADD_PRIM (lsp, ASE_T("/="),    2, ase_lsp_prim_ne,    2, 2);

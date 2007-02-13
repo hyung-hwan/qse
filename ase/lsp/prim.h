@@ -1,5 +1,5 @@
 /*
- * $Id: prim.h,v 1.14 2007-02-03 10:51:53 bacon Exp $
+ * $Id: prim.h,v 1.15 2007-02-13 06:00:20 bacon Exp $
  *
  * {License}
  */
@@ -15,26 +15,28 @@
 extern "C" {
 #endif
 
-ase_lsp_obj_t* ase_lsp_prim_exit  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_eval  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_prog1 (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_progn (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_gc    (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_cond  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_if    (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_while (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_exit   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_eval   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_prog1  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_progn  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_gc     (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_cond   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_if     (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_while  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 
-ase_lsp_obj_t* ase_lsp_prim_car   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_cdr   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_cons  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_set   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_setq  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_quote (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_defun (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_demac (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_let   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_letx  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
-ase_lsp_obj_t* ase_lsp_prim_or    (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_car    (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_cdr    (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_cons   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_length (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+
+ase_lsp_obj_t* ase_lsp_prim_set    (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_setq   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_quote  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_defun  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_demac  (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_let    (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_letx   (ase_lsp_t* lsp, ase_lsp_obj_t* args);
+ase_lsp_obj_t* ase_lsp_prim_or     (ase_lsp_t* lsp, ase_lsp_obj_t* args);
 
 /*---------------------
        prim_compar.c 

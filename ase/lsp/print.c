@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.22 2007-02-11 07:36:55 bacon Exp $
+ * $Id: print.c,v 1.23 2007-02-13 06:00:20 bacon Exp $
  *
  * {License}
  */
@@ -71,7 +71,10 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 			break;
 
 		case ASE_LSP_OBJ_STR:
+			OUTPUT_STR (lsp, ASE_T("\""));
+			/* TODO: deescaping */
 			OUTPUT_STRX (lsp, ASE_LSP_STRPTR(obj), ASE_LSP_STRLEN(obj));
+			OUTPUT_STR (lsp, ASE_T("\""));
 			break;
 
 		case ASE_LSP_OBJ_CONS:

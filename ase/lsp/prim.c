@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.22 2007-02-11 07:36:55 bacon Exp $
+ * $Id: prim.c,v 1.23 2007-02-13 06:00:20 bacon Exp $
  *
  * {License}
  */
@@ -363,6 +363,66 @@ ase_lsp_obj_t* ase_lsp_prim_cons (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_poptmp (lsp); /* cdr */
 	ase_lsp_poptmp (lsp); /* car */
 	return cons;
+}
+
+ase_lsp_obj_t* ase_lsp_prim_length (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+{
+	ase_lsp_obj_t* body, * tmp;
+	ase_long_t len = 0;
+
+	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+
+	body = args;
+	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
+	{
+		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
+		if (tmp == ASE_NULL) return ASE_NULL;
+
+		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_NIL) 
+		{
+			len = 0;
+		}
+		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_STR)
+		{
+			len = ASE_LSP_STRLEN(tmp);
+		}
+		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_SYM)
+		{
+			len = ASE_LSP_SYMLEN(tmp);
+		}
+		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) 
+		{
+			len = 0;
+			do 
+			{
+				len++;
+				tmp = ASE_LSP_CDR(tmp);
+			} 
+			while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS);
+
+			/* TODO: more flexible without the check below?
+			 *       both of the following expression evalute
+			 *       to 3 without it.
+			 *          (length '(9 9 9 . 9))
+			 *          (length '(9 9 9))
+			 */
+			if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_NIL)
+			{
+				ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
+				return ASE_NULL;
+			}
+		}
+		else 
+		{
+			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
+			return ASE_NULL;
+		}
+
+		body = ASE_LSP_CDR(body);
+	}
+
+	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
+	return ase_lsp_makeintobj (lsp->mem, len);
 }
 
 ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
