@@ -1,12 +1,10 @@
 /*
- * $Id: conf_vms.h,v 1.9 2007-02-07 05:43:37 bacon Exp $
+ * $Id: conf_vms.h,v 1.10 2007-02-13 06:16:18 bacon Exp $
  *
  * {License}
  */
 
-/* TODO: please complete the ia64 portion */
-
-/* both vax and alpha are in the little endian. */
+/* all of vax, alpha, ia64 are in the little endian. */
 #define ASE_ENDIAN_LITTLE 
 
 #define ASE_SIZEOF_CHAR 1
