@@ -1,0 +1,13 @@
+.title ASEAWK
+
+== ASEAWK ==
+ASE provides an embeddable interpreter of a dialect of the AWK programming language. The language implemented is slightly different from {the version developed by Brian W. Kernighan, http://cm.bell-labs.com/cm/cs/awkbook/index.html} and has been adjusted to the author's preference.
+
+=== User Guide ===
+
+The embedding of the interpreter is best described in the same source code available in the distribution.
+
+[[[
+* {Reference Manual,awk-ref-en.html}
+]]]
+
