@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.107 2007-02-03 10:51:14 bacon Exp $
+ * $Id: val.c,v 1.108 2007-02-17 15:26:58 bacon Exp $
  *
  * {License}
  */
@@ -786,7 +786,7 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 			__DPRINTF (ASE_T("%d"), 
 				(int)((ase_awk_val_int_t*)val)->val);
 		#else
-			#error unsupported integer size
+			#error unsupported size
 		#endif
 			break;
 

@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.26 2007-02-11 07:36:54 bacon Exp $
+ * $Id: eval.c,v 1.27 2007-02-17 15:27:19 bacon Exp $
  *
  * {License}
  */
@@ -45,7 +45,7 @@ ase_lsp_obj_t* ase_lsp_eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 		{
 			if (lsp->opt_undef_symbol) 
 			{
-				ase_char_t* arg[1];
+				const ase_char_t* arg[1];
 
 				arg[0] = ASE_LSP_SYMPTR(obj);
 
@@ -138,7 +138,7 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 			if (func == ASE_NULL) 
 			{
 				/* the symbol's function definition is void */
-				ase_char_t* arg[1];
+				const ase_char_t* arg[1];
 
 				arg[0] = ASE_LSP_SYMPTR(car);
 				ase_lsp_seterror (
@@ -160,7 +160,7 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 			}
 			else 
 			{
-				ase_char_t* arg[1];
+				const ase_char_t* arg[1];
 
 				arg[0] = ASE_LSP_SYMPTR(car);
 				ase_lsp_seterror (
@@ -172,7 +172,7 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 		}
 		else 
 		{
-			ase_char_t* arg[1];
+			const ase_char_t* arg[1];
 
 			arg[0] = ASE_LSP_SYMPTR(car);
 			ase_lsp_seterror (

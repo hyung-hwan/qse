@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.23 2007-02-13 06:00:20 bacon Exp $
+ * $Id: print.c,v 1.24 2007-02-17 15:27:19 bacon Exp $
  *
  * {License}
  */
@@ -43,18 +43,24 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 			break;
 
 		case ASE_LSP_OBJ_INT:
-		#if defined(__BORLANDC__) || defined(_MSC_VER)
-			lsp->prmfns.sprintf (
-				buf, ASE_COUNTOF(buf), 
-				ASE_T("%I64d"), (__int64)ASE_LSP_IVAL(obj));
-		#elif defined(vax) || defined(__vax) || defined(_SCO_DS)
-			lsp->prmfns.sprintf (
-				buf, ASE_COUNTOF(buf), 
-				ASE_T("%ld"), (long)ASE_LSP_IVAL(obj));
-		#else
+		#if ASE_SIZEOF_LONG_LONG > 0
 			lsp->prmfns.sprintf (
 				buf, ASE_COUNTOF(buf), 
 				ASE_T("%lld"), (long long)ASE_LSP_IVAL(obj));
+		#elif ASE_SIZEOF___INT64 > 0
+			lsp->prmfns.sprintf (
+				buf, ASE_COUNTOF(buf), 
+				ASE_T("%I64d"), (__int64)ASE_LSP_IVAL(obj));
+		#elif ASE_SIZEOF_LONG > 0
+			lsp->prmfns.sprintf (
+				buf, ASE_COUNTOF(buf), 
+				ASE_T("%ld"), (long)ASE_LSP_IVAL(obj));
+		#elif ASE_SIZEOF_INT > 0
+			lsp->prmfns.sprintf (
+				buf, ASE_COUNTOF(buf), 
+				ASE_T("%d"), (int)ASE_LSP_IVAL(obj));
+		#else
+			#error unsupported size		
 		#endif
 			OUTPUT_STR (lsp, buf);
 			break;

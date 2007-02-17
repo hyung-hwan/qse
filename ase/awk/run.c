@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.327 2007-02-12 03:10:48 bacon Exp $
+ * $Id: run.c,v 1.328 2007-02-17 15:26:58 bacon Exp $
  *
  * {License}
  */
@@ -6483,6 +6483,8 @@ ase_char_t* ase_awk_format (
 					ASE_T("%ld"), (long)width
 				#elif ASE_SIZEOF_INT > 0
 					ASE_T("%d"), (int)width
+				#else
+					#error unsupported size	
 				#endif
 					);
 				if (n == -1)
