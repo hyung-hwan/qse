@@ -1,5 +1,5 @@
 /*
- * $Id: doc.awk,v 1.10 2007-02-05 14:35:10 bacon Exp $
+ * $Id: doc.awk,v 1.11 2007-02-17 14:22:03 bacon Exp $
  *
  * {License}
  */
@@ -121,7 +121,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					para_started = 0;
 				}
 				text=substr($0, 5, length($0)-8);
-				print "<h34" text "</h4>";
+				print "<h4>" text "</h4>";
 			}
 			else if (/^\{\{\{$/)
 			{
