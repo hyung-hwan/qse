@@ -5,8 +5,62 @@ ASE provides an embeddable interpreter of a dialect of the AWK programming langu
 
 === User Guide ===
 
-The embedding of the interpreter is best described in the same source code available in the distribution.
+Embedding the interpreter needs one or more header files to be included. 
 
+[[[
+* ase/awk/awk.h - exports most of the data types and functions for basic embedding. 
+]]]
+
+Two more header files can be included depending on the need.
+[[[
+* ase/awk/val.h - exports data types and functions to manipulate the AWK values.
+* ase/awk/map.h - exports data types and functions to access the named variable holder.
+]]]
+
+
+=== ABC ===
+
+An awk object is created with ase_awk_open. The function requires a set of system primitive functions to be passed.
+
+The object created with ase_awk_open should be destroyed with ase_awk_close when no longer needed.
+
+{{{
+	ase_awk_t* awk;
+
+	awk = ase_awk_open ();
+
+	if (ase_awk_parse (awk) == -1)
+	{
+		/* parse error */
+	}
+	else
+	{
+		if (ase_awk_run (awk) == -1)
+		{
+			/* run-time error */
+		}
+	}
+
+	ase_awk_close (awk);
+}}}
+
+=== Primitive Functions ===
+
+ase_awk_open requires a set of primitive functions to be passed. This set include pointers to the system primitive functions for system dependent operation such as memory allocation, string formatting, etc.
+
+=== Source IO Handler ===
+
+ase_awk_srcio_t
+
+The source code is read in with the source input handler provided. 
+The optional source output handler writes the generated source code.
+
+=== External IO Handler ===
+
+ase_awk_extio_t
+External IO handlers should be provided to support the AWK's built-in IO facilities.
+
+=== Reference Manual ===
 [[[
 * {Reference Manual,awk-ref-en.html}
 ]]]
