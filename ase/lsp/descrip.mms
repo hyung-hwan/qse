@@ -8,7 +8,8 @@ CFLAGS = /include="../.."
 #CFLAGS = /pointer_size=long /include="../.."
 
 aselsp.olb : $(objects)
-	$(LIBR)/create $(MMS$TARGET) $(objects)
+	$(LIBR)/create $(MMS$TARGET) *.obj
+#	$(LIBR)/create $(MMS$TARGET) $(objects)
 
 lsp.obj depends_on lsp.c
 name.obj depends_on name.c
