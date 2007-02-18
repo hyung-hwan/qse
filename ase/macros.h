@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.46 2007-02-07 14:04:34 bacon Exp $
+ * $Id: macros.h,v 1.47 2007-02-18 15:09:19 bacon Exp $
  *
  * {License}
  */
@@ -86,6 +86,14 @@
 	#define ASE_C(ch)  ASE_WC(ch)
 	#define ASE_S(str) ASE_WS(str)
 	#define ASE_T(txt) ASE_WT(txt)
+#endif
+
+#if defined(__GNUC__)
+	#define ASE_BEGIN_PACKED_STRUCT(x) struct x {
+	#define ASE_END_PACKED_STRUCT() } __attribute__((packed))
+#else
+	#define ASE_BEGIN_PAcKED_STRUCT(x) struct x {
+	#define AES_END_PACKED_STRUCT() }
 #endif
 
 #endif
