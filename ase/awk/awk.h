@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.189 2007-02-11 14:07:28 bacon Exp $
+ * $Id: awk.h,v 1.190 2007-02-18 11:12:18 bacon Exp $
  *
  * {License}
  */
@@ -160,10 +160,11 @@ enum
 /* various options */
 enum 
 { 
-	/* allow undeclared variables */
+	/* allow undeclared variables and implicit concatenation */
 	ASE_AWK_IMPLICIT    = (1 << 0),
 
-	/* allow explicit variable declarations */
+	/* allow explicit variable declaration and the concatenation
+	 * operator, a period. */
 	ASE_AWK_EXPLICIT    = (1 << 1), 
 
 	/* a function name should not coincide to be a variable name */

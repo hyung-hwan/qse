@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.241 2007-02-03 10:47:41 bacon Exp $
+ * $Id: parse.c,v 1.242 2007-02-18 11:12:18 bacon Exp $
  *
  * {License}
  */
@@ -2286,12 +2286,22 @@ static ase_awk_nde_t* __parse_concat (ase_awk_t* awk, ase_size_t line)
 	left = __parse_additive (awk, line);
 	if (left == ASE_NULL) return ASE_NULL;
 
-	/* TODO: write a better code to do this.... 
-	 *       first of all, is the following check sufficient? */
-	while (MATCH(awk,TOKEN_LPAREN) || 
-	       MATCH(awk,TOKEN_DOLLAR) ||
-	       awk->token.type >= TOKEN_GETLINE)
+	while (1)
 	{
+		if (MATCH(awk,TOKEN_PERIOD))
+		{
+			if ((awk->option & ASE_AWK_EXPLICIT) == 0) break;	
+			if (__get_token(awk) == -1) return ASE_NULL;
+		}
+		else if (MATCH(awk,TOKEN_LPAREN) ||
+	                 MATCH(awk,TOKEN_DOLLAR) ||
+	                 awk->token.type >= TOKEN_GETLINE)
+		{
+			/* TODO: is the check above sufficient? */
+			if ((awk->option & ASE_AWK_IMPLICIT) == 0) break;
+		}
+		else break;
+
 		right = __parse_additive (awk, awk->token.line);
 		if (right == ASE_NULL) 
 		{
@@ -4195,16 +4205,25 @@ static int __get_token (ase_awk_t* awk)
 
 		if (ASE_AWK_ISDIGIT (awk, c))
 		{
+			awk->src.lex.curc = ASE_T('.');
 			if (__unget_char (awk, c) == -1) return -1;
 			if (__get_number (awk) == -1) return -1;
+
 		}
-		else 
+		else /*if (ASE_AWK_ISSPACE (awk, c) || c == ASE_CHAR_EOF)*/
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_PERIOD);
+			ADD_TOKEN_CHAR (awk, ASE_T('.'));
+		}
+		/*
+		else
 		{
 			ase_awk_seterror (
 				awk, ASE_AWK_ELXCHR, awk->token.line,
 				ASE_T("floating point not followed by any valid digits"));
 			return -1;
 		}
+		*/
 	}
 	else if (ASE_AWK_ISALPHA (awk, c) || c == ASE_T('_')) 
 	{
@@ -4558,12 +4577,6 @@ static int __get_token (ase_awk_t* awk)
 	else if (c == ASE_T(',')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_COMMA);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T('.'))
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_PERIOD);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR (awk);
 	}

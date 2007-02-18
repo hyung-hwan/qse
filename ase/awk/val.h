@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.60 2007-02-03 10:47:42 bacon Exp $
+ * $Id: val.h,v 1.61 2007-02-18 11:12:18 bacon Exp $
  *
  * {License}
  */
@@ -70,12 +70,12 @@ typedef struct ase_awk_val_ref_t  ase_awk_val_ref_t;
 
 #ifndef ASE_AWK_NDE_INT_DEFINED
 #define ASE_AWK_NDE_INT_DEFINED
-typedef struct ase_awk_nde_int_t       ase_awk_nde_int_t;
+typedef struct ase_awk_nde_int_t ase_awk_nde_int_t;
 #endif
 
 #ifndef ASE_AWK_NDE_REAL_DEFINED
 #define ASE_AWK_NDE_REAL_DEFINED
-typedef struct ase_awk_nde_real_t      ase_awk_nde_real_t;
+typedef struct ase_awk_nde_real_t ase_awk_nde_real_t;
 #endif
 
 
