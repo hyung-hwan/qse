@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.64 2007-02-18 16:21:10 bacon Exp $
+ * $Id: rex.c,v 1.65 2007-02-18 16:45:18 bacon Exp $
  *
  * {License}
  */
@@ -55,17 +55,15 @@ typedef struct __match_t __match_t;
 
 #include <ase/pack.h>
 
-struct __code_t
-{
+ASE_BEGIN_PACKED_STRUCT (__code_t)
 	/*ase_byte_t cmd;*/
 	short cmd;
 	short negate; /* only for CMD_CHARSET */
 	ase_size_t lbound;
 	ase_size_t ubound;
-};
+ASE_END_PACKED_STRUCT ()
 
-struct __builder_t
-{
+ASE_BEGIN_PACKED_STRUCT (__builder_t)
 	ase_awk_t* awk;
 
 	struct
@@ -94,10 +92,9 @@ struct __builder_t
 	} depth;
 
 	int errnum;
-};
+ASE_END_PACKED_STRUCT ()
 
-struct __matcher_t
-{
+ASE_BEGIN_PACKED_STRUCT (__matcher_t)
 	ase_awk_t* awk;
 
 	struct
@@ -117,10 +114,9 @@ struct __matcher_t
 
 	int ignorecase;
 	int errnum;
-};
+ASE_END_PACKED_STRUCT ()
 
-struct __match_t
-{
+ASE_BEGIN_PACKED_STRUCT (__match_t)
 	const ase_char_t* match_ptr;
 
 	ase_bool_t matched;
@@ -128,9 +124,9 @@ struct __match_t
 
 	const ase_byte_t* branch;
 	const ase_byte_t* branch_end;
-};
+ASE_END_PACKED_STRUCT ()
 
-#include <ase/pack.h>
+#include <ase/unpack.h>
 
 typedef const ase_byte_t* (*atom_matcher_t) (
 	__matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
