@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.60 2007-02-11 04:44:39 bacon Exp $
+ * $Id: rex.c,v 1.61 2007-02-18 12:08:05 bacon Exp $
  *
  * {License}
  */
@@ -1769,12 +1769,12 @@ static const ase_byte_t* __print_pattern (const ase_byte_t* p)
 	el = *(ase_size_t*)p; p += ASE_SIZEOF(el);
 
 #ifdef DEBUG_REX
-xp_printf (ASE_T("__print_pattern: NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
+ase_printf (ASE_T("__print_pattern: NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
 #endif
 
 	for (i = 0; i < nb; i++)
 	{
-		if (i != 0) xp_printf (ASE_T("|"));
+		if (i != 0) ase_printf (ASE_T("|"));
 		p = __print_branch (p);
 	}
 
@@ -1788,7 +1788,7 @@ static const ase_byte_t* __print_branch (const ase_byte_t* p)
 	na = *(ase_size_t*)p; p += ASE_SIZEOF(na);
 	bl = *(ase_size_t*)p; p += ASE_SIZEOF(bl);
 #ifdef DEBUG_REX
-xp_printf (ASE_T("__print_branch: NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
+ase_printf (ASE_T("__print_branch: NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
 #endif
 
 	for (i = 0; i < na; i++)
@@ -1805,23 +1805,23 @@ static const ase_byte_t* __print_atom (const ase_byte_t* p)
 
 	if (cp->cmd == CMD_BOL)
 	{
-		xp_printf (ASE_T("^"));
+		ase_printf (ASE_T("^"));
 		p += ASE_SIZEOF(*cp);
 	}
 	else if (cp->cmd == CMD_EOL)
 	{
-		xp_printf (ASE_T("$"));
+		ase_printf (ASE_T("$"));
 		p += ASE_SIZEOF(*cp);
 	}
 	else if (cp->cmd == CMD_ANY_CHAR) 
 	{
-		xp_printf (ASE_T("."));
+		ase_printf (ASE_T("."));
 		p += ASE_SIZEOF(*cp);
 	}
 	else if (cp->cmd == CMD_ORD_CHAR) 
 	{
 		p += ASE_SIZEOF(*cp);
-		xp_printf (ASE_T("%c"), *(ase_char_t*)p);
+		ase_printf (ASE_T("%c"), *(ase_char_t*)p);
 		p += ASE_SIZEOF(ase_char_t);
 	}
 	else if (cp->cmd == CMD_CHARSET)
@@ -1829,8 +1829,8 @@ static const ase_byte_t* __print_atom (const ase_byte_t* p)
 		ase_size_t csc, csl, i;
 
 		p += ASE_SIZEOF(*cp);
-		xp_printf (ASE_T("["));
-		if (cp->negate) xp_printf (ASE_T("^"));
+		ase_printf (ASE_T("["));
+		if (cp->negate) ase_printf (ASE_T("^"));
 
 		csc = *(ase_size_t*)p; p += ASE_SIZEOF(csc);
 		csl = *(ase_size_t*)p; p += ASE_SIZEOF(csl);
@@ -1845,51 +1845,51 @@ static const ase_byte_t* __print_atom (const ase_byte_t* p)
 			if (c0 == CHARSET_ONE)
 			{
 				c1 = *(ase_char_t*)p;
-				xp_printf (ASE_T("%c"), c1);
+				ase_printf (ASE_T("%c"), c1);
 			}
 			else if (c0 == CHARSET_RANGE)
 			{
 				c1 = *(ase_char_t*)p;
 				p += ASE_SIZEOF(c1);
 				c2 = *(ase_char_t*)p;
-				xp_printf (ASE_T("%c-%c"), c1, c2);
+				ase_printf (ASE_T("%c-%c"), c1, c2);
 			}
 			else if (c0 == CHARSET_CLASS)
 			{
 				c1 = *(ase_char_t*)p;
-				xp_printf (ASE_T("[:%s:]"), __char_class[c1].name);
+				ase_printf (ASE_T("[:%s:]"), __char_class[c1].name);
 			}
 			else
 			{
-				xp_printf (ASE_T("should never happen - invalid charset code\n"));
+				ase_printf (ASE_T("should never happen - invalid charset code\n"));
 			}
 
 			p += ASE_SIZEOF(c1);
 		}
 
-		xp_printf (ASE_T("]"));
+		ase_printf (ASE_T("]"));
 	}
 	else if (cp->cmd == CMD_GROUP)
 	{
 		p += ASE_SIZEOF(*cp);
-		xp_printf (ASE_T("("));
+		ase_printf (ASE_T("("));
 		p = __print_pattern (p);
-		xp_printf (ASE_T(")"));
+		ase_printf (ASE_T(")"));
 	}
 	else 
 	{
-		xp_printf (ASE_T("should never happen - invalid atom code\n"));
+		ase_printf (ASE_T("should never happen - invalid atom code\n"));
 	}
 
 	if (cp->lbound == 0 && cp->ubound == BOUND_MAX)
-		xp_printf (ASE_T("*"));
+		ase_printf (ASE_T("*"));
 	else if (cp->lbound == 1 && cp->ubound == BOUND_MAX)
-		xp_printf (ASE_T("+"));
+		ase_printf (ASE_T("+"));
 	else if (cp->lbound == 0 && cp->ubound == 1)
-		xp_printf (ASE_T("?"));
+		ase_printf (ASE_T("?"));
 	else if (cp->lbound != 1 || cp->ubound != 1)
 	{
-		xp_printf (ASE_T("{%lu,%lu}"), 
+		ase_printf (ASE_T("{%lu,%lu}"), 
 			(unsigned long)cp->lbound, (unsigned long)cp->ubound);
 	}
 

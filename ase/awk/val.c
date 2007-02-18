@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.108 2007-02-17 15:26:58 bacon Exp $
+ * $Id: val.c,v 1.109 2007-02-18 12:08:05 bacon Exp $
  *
  * {License}
  */
@@ -78,7 +78,7 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 	val->val = v;
 	val->nde = ASE_NULL;
 
-/*xp_printf (ASE_T("makeintval => %p\n"), val);*/
+/*ase_printf (ASE_T("makeintval => %p\n"), val);*/
 	return (ase_awk_val_t*)val;
 }
 
@@ -102,7 +102,7 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 	val->val = v;
 	val->nde = ASE_NULL;
 
-/*xp_printf (ASE_T("makerealval => %p\n"), val);*/
+/*ase_printf (ASE_T("makerealval => %p\n"), val);*/
 	return (ase_awk_val_t*)val;
 }
 
@@ -130,7 +130,7 @@ ase_awk_val_t* ase_awk_makestrval (
 		return ASE_NULL;
 	}
 
-/*xp_printf (ASE_T("makestrval => %p\n"), val);*/
+/*ase_printf (ASE_T("makestrval => %p\n"), val);*/
 	return (ase_awk_val_t*)val;
 }
 
@@ -171,7 +171,7 @@ ase_awk_val_t* ase_awk_makestrval2 (
 		return ASE_NULL;
 	}
 
-/*xp_printf (ASE_T("makestrval2 => %p\n"), val);*/
+/*ase_printf (ASE_T("makestrval2 => %p\n"), val);*/
 	return (ase_awk_val_t*)val;
 }
 
@@ -209,9 +209,9 @@ ase_awk_val_t* ase_awk_makerexval (
 static void __free_map_val (void* run, void* v)
 {
 /*
-xp_printf (ASE_T("refdown in map free..."));
+ase_printf (ASE_T("refdown in map free..."));
 ase_awk_dprintval (v);
-xp_printf (ASE_T("\n"));
+ase_printf (ASE_T("\n"));
 */
 	ase_awk_refdownval (run, v);
 }
@@ -275,9 +275,9 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 {
 	if (ase_awk_isbuiltinval(val)) return;
 
-/*xp_printf (ASE_T("freeing [cache=%d] ... "), cache);
+/*ase_printf (ASE_T("freeing [cache=%d] ... "), cache);
 ase_awk_dprintval (val);
-xp_printf (ASE_T("\n"));*/
+ase_printf (ASE_T("\n"));*/
 	if (val->type == ASE_AWK_VAL_NIL)
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -366,9 +366,9 @@ run->awk->prmfns.dprintf (ASE_T("\n"));
 	if (val->ref <= 0) 
 	{
 /*
-xp_printf (ASE_T("**FREEING ["));
+ase_printf (ASE_T("**FREEING ["));
 ase_awk_dprintval (val);
-xp_printf (ASE_T("]\n"));
+ase_printf (ASE_T("]\n"));
 */
 		ase_awk_freeval(run, val, ase_true);
 	}
