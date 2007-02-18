@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.47 2007-02-18 15:09:19 bacon Exp $
+ * $Id: macros.h,v 1.48 2007-02-18 15:51:07 bacon Exp $
  *
  * {License}
  */
@@ -90,10 +90,13 @@
 
 #if defined(__GNUC__)
 	#define ASE_BEGIN_PACKED_STRUCT(x) struct x {
-	#define ASE_END_PACKED_STRUCT() } __attribute__((packed))
+	#define ASE_END_PACKED_STRUCT() } __attribute__((packed));
+#elif defined(__HP_aCC) || defined(__HP_cc)
+	#define ASE_BEGIN_PACKED_STRUCT(x) struct x {
+	#define ASE_END_PACKED_STRUCT() } __attribute__((packed));
 #else
-	#define ASE_BEGIN_PAcKED_STRUCT(x) struct x {
-	#define AES_END_PACKED_STRUCT() }
+	#define ASE_BEGIN_PACKED_STRUCT(x) struct x {
+	#define ASE_END_PACKED_STRUCT() };
 #endif
 
 #endif
