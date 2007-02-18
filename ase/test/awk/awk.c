@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.165 2007-02-11 14:08:08 bacon Exp $
+ * $Id: awk.c,v 1.166 2007-02-18 11:21:19 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -796,7 +796,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	ase_awk_runarg_t runarg[128];
 	int deparse = 0;
 
-	opt = ASE_AWK_IMPLICIT | 
+	opt = ASE_AWK_IMPLICIT |
 	      ASE_AWK_EXPLICIT | 
 	      ASE_AWK_UNIQUEFN | 
 	      ASE_AWK_IDIV |

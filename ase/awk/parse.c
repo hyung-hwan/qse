@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.242 2007-02-18 11:12:18 bacon Exp $
+ * $Id: parse.c,v 1.243 2007-02-18 11:21:34 bacon Exp $
  *
  * {License}
  */
@@ -4203,7 +4203,8 @@ static int __get_token (ase_awk_t* awk)
 		if (__get_char (awk) == -1) return -1;
 		c = awk->src.lex.curc;
 
-		if (ASE_AWK_ISDIGIT (awk, c))
+		if ((awk->option & ASE_AWK_EXPLICIT) == 0 && 
+		    ASE_AWK_ISDIGIT (awk, c))
 		{
 			awk->src.lex.curc = ASE_T('.');
 			if (__unget_char (awk, c) == -1) return -1;
