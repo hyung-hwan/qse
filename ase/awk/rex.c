@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.61 2007-02-18 12:08:05 bacon Exp $
+ * $Id: rex.c,v 1.62 2007-02-18 13:07:00 bacon Exp $
  *
  * {License}
  */
@@ -60,7 +60,7 @@ struct __code_t
 	short negate; /* only for CMD_CHARSET */
 	ase_size_t lbound;
 	ase_size_t ubound;
-};
+} __attribute__((packed));
 
 struct __builder_t
 {
@@ -92,7 +92,7 @@ struct __builder_t
 	} depth;
 
 	int errnum;
-};
+} __attribute__((packed));
 
 struct __matcher_t
 {
@@ -115,7 +115,7 @@ struct __matcher_t
 
 	int ignorecase;
 	int errnum;
-};
+} __attribute__((packed));
 
 struct __match_t
 {
@@ -126,7 +126,7 @@ struct __match_t
 
 	const ase_byte_t* branch;
 	const ase_byte_t* branch_end;
-};
+} __attribute__((packed));
 
 typedef const ase_byte_t* (*atom_matcher_t) (
 	__matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
