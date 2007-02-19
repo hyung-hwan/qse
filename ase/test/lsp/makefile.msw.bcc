@@ -1,7 +1,7 @@
 CC = bcc32
 LD = ilink32
 CFLAGS = -I..\..\.. -I$(XPKIT)
-LDFLAGS = -L..\..\lsp -L"c:\program files\borland\bds\4.0\lib" 
+LDFLAGS = -L..\..\lsp
 LIBS = import32.lib cw32mt.lib aselsp.lib 
 STARTUP = c0x32w.obj
 
