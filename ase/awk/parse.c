@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.243 2007-02-18 11:21:34 bacon Exp $
+ * $Id: parse.c,v 1.244 2007-02-19 15:44:46 bacon Exp $
  *
  * {License}
  */
@@ -647,7 +647,10 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk)
 			{
 				if (__get_token (awk) == -1) 
 				{
-					ase_awk_clrpt (awk, ptn);
+					/* ptn has been added to the chain. 
+					 * it doesn't have to be cleared here
+					 * as ase_awk_clear does it */
+					/*ase_awk_clrpt (awk, ptn);*/
 					return ASE_NULL;
 				}	
 			}
