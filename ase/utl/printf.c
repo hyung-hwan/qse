@@ -1,5 +1,5 @@
 /*
- * $Id: printf.c,v 1.10 2007-02-07 05:43:37 bacon Exp $
+ * $Id: printf.c,v 1.11 2007-02-19 06:13:03 bacon Exp $
  *
  * {License}
  */
@@ -172,7 +172,11 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 
 	buf.len = 0;
 	buf.cap = 256;
+#if (defined(vms) || defined(__vms)) && (ASE_SIZEOF_VOID_P >= 8)
+	buf.ptr = (ase_char_t*) _malloc32 (sizeof(ase_char_t)*(buf.cap+1));
+#else
 	buf.ptr = (ase_char_t*) malloc (sizeof(ase_char_t)*(buf.cap+1));
+#endif
 	if (buf.ptr == NULL) return NULL;
 
 	while (*fp != ASE_T('\0')) 

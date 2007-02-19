@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.8 2007-02-03 10:52:36 bacon Exp $
+ * $Id: main.c,v 1.9 2007-02-19 06:13:03 bacon Exp $
  *
  * {License}
  */
@@ -68,8 +68,11 @@ int main (int argc, char* argv[]/*, char** envp*/)
 			p += x; rem -= x; len++;
 		}
 
-		v[i] = (ase_char_t*) malloc (
-			(len + 1) * ASE_SIZEOF(ase_char_t));
+	#if (defined(vms) || defined(__vms)) && (ASE_SIZEOF_VOID_P >= 8)
+		v[i] = (ase_char_t*) _malloc32 ((len+1)*ASE_SIZEOF(ase_char_t));
+	#else
+		v[i] = (ase_char_t*) malloc ((len+1)*ASE_SIZEOF(ase_char_t));
+	#endif
 		if (v[i] == NULL) 
 		{
 			ret = -1;
