@@ -12,7 +12,6 @@ JAVA_OBJS = $(JAVA_SRCS:.java=.class)
 JNI_INCPATH = \
 	-I"$(JAVA_HOME)/include" \
 	-I"$(JAVA_HOME)/include/win32"
-BDS_LIBPATH = -L"c:/program files/borland/bds/4.0/lib"
 
 CC = bcc32
 LD = ilink32
@@ -26,7 +25,7 @@ CFLAGS = $(CFLAGS_DEBUG)
 #CFLAGS = $(CFLAGS_RELEASE)
 JAVACFLAGS = -classpath ../..
 
-LDFLAGS = -Tpd -ap -Gn -c -q $(BDS_LIBPATH)
+LDFLAGS = -Tpd -ap -Gn -c -q 
 STARTUP = c0d32w.obj
 LIBS = import32.lib cw32mt.lib 
 JNI_LIBS = $(LIBS) $(OUT).lib

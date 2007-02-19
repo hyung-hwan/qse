@@ -10,7 +10,7 @@
 CC = bcc32
 LD = ilink32
 CFLAGS = -O2 -WM -WU -RT- -w -I..\..\.. 
-LDFLAGS = -ap -Tpe -Gn -c -L..\..\awk -L"c:\program files\borland\bds\4.0\lib"
+LDFLAGS = -ap -Tpe -Gn -c -L..\..\awk
 LIBS = import32.lib cw32mt.lib aseawk.lib
 STARTUP = c0x32w.obj
 
