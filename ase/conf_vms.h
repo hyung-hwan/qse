@@ -1,11 +1,16 @@
 /*
- * $Id: conf_vms.h,v 1.10 2007-02-13 06:16:18 bacon Exp $
+ * $Id: conf_vms.h,v 1.11 2007-02-19 04:44:13 bacon Exp $
  *
  * {License}
  */
 
 /* all of vax, alpha, ia64 are in the little endian. */
 #define ASE_ENDIAN_LITTLE 
+
+/*
+ * Refer to the chapter 3 of the following URL for the data sizes.
+ * http://h71000.www7.hp.com/commercial/c/docs/6180profile.html
+ */
 
 #define ASE_SIZEOF_CHAR 1
 #define ASE_SIZEOF_SHORT 2
