@@ -1,5 +1,5 @@
 /*
- * $Id: doc.awk,v 1.11 2007-02-17 14:22:03 bacon Exp $
+ * $Id: doc.awk,v 1.12 2007-02-20 05:40:11 bacon Exp $
  *
  * {License}
  */
@@ -145,6 +145,17 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 				mode = 2;
 				list_count = 0;
 			}
+			else if (/\(\(\(/)
+			{
+				if (para_started)
+				{
+					print "</p>";
+					para_started = 0;
+				}
+				print "<ol>";
+				mode = 3;
+				list_count = 0;
+			}
 			else
 			{
 				if (!para_started > 0) 
@@ -188,6 +199,30 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 			# ]]]
 			print "</li>";
 			print "</ul>";
+			mode = 0;
+		}
+		else if (/^\* [^[:space:]]+/)
+		{
+			gsub ("<", "\\&lt;");
+			gsub (">", "\\&gt;");
+			if (list_count > 0) print "</li>";
+			print "<li>";
+
+			print_text (substr ($0, 3, length($0)-2));
+			list_count++;
+		}
+		else
+		{
+			print_text ($0);
+		}
+	}
+	else if (mode == 3)
+	{
+		if (/^\)\)\)$/)
+		{
+			# )))
+			print "</li>";
+			print "</ol>";
 			mode = 0;
 		}
 		else if (/^\* [^[:space:]]+/)

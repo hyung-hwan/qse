@@ -1,48 +1,46 @@
 .title ASEAWK
 
 == ASEAWK ==
-ASE provides an embeddable interpreter of a dialect of the AWK programming language. The language implemented is slightly different from {the version developed by Brian W. Kernighan, http://cm.bell-labs.com/cm/cs/awkbook/index.html} and has been adjusted to the author's preference.
+ASE provides an embeddable processor of a dialect of the AWK programming language. The language implemented is slightly different from {the version developed by Brian W. Kernighan, http://cm.bell-labs.com/cm/cs/awkbook/index.html} and has been adjusted to the author's preference.
 
-=== User Guide ===
-
-Embedding the interpreter needs one or more header files to be included. 
+Embedding a processor requires the following basic steps.
 
 [[[
-* ase/awk/awk.h - exports most of the data types and functions for basic embedding. 
+* Create a processor instance
+* Parse an AWK script
+* Run the script parsed
+* Destroy the instance
 ]]]
 
-Two more header files can be included depending on the need.
-[[[
-* ase/awk/val.h - exports data types and functions to manipulate the AWK values.
-* ase/awk/map.h - exports data types and functions to access the named variable holder.
-]]]
-
-
-=== ABC ===
-
-An awk object is created with ase_awk_open. The function requires a set of system primitive functions to be passed.
-
-The object created with ase_awk_open should be destroyed with ase_awk_close when no longer needed.
+The following code fragment illustrates the basic steps.
 
 {{{
-	ase_awk_t* awk;
+1) #include <ase/awk/awk.h>
 
-	awk = ase_awk_open ();
-
-	if (ase_awk_parse (awk) == -1)
-	{
-		/* parse error */
-	}
-	else
-	{
-		if (ase_awk_run (awk) == -1)
-		{
-			/* run-time error */
-		}
-	}
-
-	ase_awk_close (awk);
+2) ase_awk_t* awk;
+3) awk = ase_awk_open (...);
+4) if (ase_awk_parse (awk, ...) == -1)
+   {
+        /* parse error */
+   }
+   else
+   {
+5)     if (ase_awk_run (awk, ...) == -1)
+       {
+           /* run-time error */
+       }
+   }
+6)  ase_awk_close (awk);
 }}}
+
+(((
+* Most of the functions and data types needed are defined in the header file <ase/awk/awk.h>. 
+* ase_awk_t represents the processor.
+* ase_awk_open creates the processor instance.
+* ase_awk_parse parses an AWK script.
+* ase_awk_run executes the script parsed.
+* ase_awk_close destroys the processor instance.
+)))
 
 === Primitive Functions ===
 
