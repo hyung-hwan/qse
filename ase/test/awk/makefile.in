@@ -3,8 +3,8 @@ OBJS = $(SRCS:.c=.o)
 
 CC = @CC@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. 
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/awk 
-LIBS = @LIBS@ -laseawk -lm
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/awk -L@abs_top_builddir@/utl 
+LIBS = @LIBS@ -laseawk -laseutl -lm
 
 all: aseawk
 

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.169 2007-02-20 14:15:18 bacon Exp $
+ * $Id: awk.c,v 1.170 2007-02-20 14:23:18 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -39,10 +39,6 @@
 
 #if defined(__linux) && defined(_DEBUG)
 #include <mcheck.h>
-#endif
-
-#ifndef PATH_MAX
-#define PATH_MAX 2048
 #endif
 
 struct awk_src_io
