@@ -1,4 +1,4 @@
-OUT = aseetc
+OUT = aseutl
 
 C_SRCS = main.c stdio.c
 C_OBJS = $(C_SRCS:.c=.obj)

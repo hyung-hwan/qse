@@ -1,11 +1,15 @@
 /*
- * $Id: awk.c,v 1.168 2007-02-20 14:09:44 bacon Exp $
+ * $Id: awk.c,v 1.169 2007-02-20 14:15:18 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
 #include <ase/awk/val.h>
 #include <ase/awk/map.h>
-#include <stdio.h>
+
+#include <ase/utl/ctype.h>
+#include <ase/utl/stdio.h>
+#include <ase/utl/main.h>
+
 #include <string.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -27,10 +31,6 @@
 	#include <wctype.h>
 	#include <locale.h>
 #endif
-
-#include "../../etc/printf.c"
-#include "../../etc/main.c"
-#include "../../etc/ctype.h"
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC

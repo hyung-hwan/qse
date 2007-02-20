@@ -1,11 +1,11 @@
 /*
- * $Id: stdio.c,v 1.1 2007-02-20 14:04:22 bacon Exp $
+ * $Id: stdio.c,v 1.2 2007-02-20 14:15:18 bacon Exp $
  *
  * {License}
  */
 
-#include <ase/etc/stdio.h>
-#include <ase/etc/ctype.h>
+#include <ase/utl/stdio.h>
+#include <ase/utl/ctype.h>
 
 #include <wchar.h>
 #include <stdlib.h>
