@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.166 2007-02-18 11:21:19 bacon Exp $
+ * $Id: awk.c,v 1.167 2007-02-20 12:44:28 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -11,7 +11,6 @@
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
-#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -45,7 +44,7 @@
 #define PATH_MAX 2048
 #endif
 
-struct src_io
+struct awk_src_io
 {
 	const ase_char_t* input_file;
 	FILE* input_handle;
@@ -165,24 +164,18 @@ static FILE* awk_popen (const ase_char_t* cmd, const ase_char_t* mode)
 #if defined(_WIN32)
 	#define awk_fgets _fgetts
 	#define awk_fgetc _fgettc
-	#define awk_fputs _fputts
-	#define awk_fputc _fputtc
 #elif defined(ASE_CHAR_IS_MCHAR)
 	#define awk_fgets fgets
 	#define awk_fgetc fgetc
-	#define awk_fputs fputs
-	#define awk_fputc fputc
 #else
 	#define awk_fgets fgetws
 	#define awk_fgetc fgetwc
-	#define awk_fputs fputws
-	#define awk_fputc fputwc
 #endif
 
-static ase_ssize_t process_source (
+static ase_ssize_t awk_srcio_in (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-	struct src_io* src_io = (struct src_io*)arg;
+	struct awk_src_io* src_io = (struct awk_src_io*)arg;
 	ase_cint_t c;
 
 	if (cmd == ASE_AWK_IO_OPEN)
@@ -210,10 +203,10 @@ static ase_ssize_t process_source (
 	return -1;
 }
 
-static ase_ssize_t dump_source (
+static ase_ssize_t awk_srcio_out (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-	/*struct src_io* src_io = (struct src_io*)arg;*/
+	/*struct awk_src_io* src_io = (struct awk_src_io*)arg;*/
 
 	if (cmd == ASE_AWK_IO_OPEN) return 1;
 	else if (cmd == ASE_AWK_IO_CLOSE) 
@@ -223,18 +216,16 @@ static ase_ssize_t dump_source (
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
-		ase_size_t i;
-		for (i = 0; i < size; i++)
-		{
-			if (awk_fputc (data[i], stdout) == ASE_CHAR_EOF) return -1;
-		}
+		int n = ase_fprintf (stdout, ASE_T("%.*s"), size, data);
+		if (n < 0) return -1;
+
 		return size;
 	}
 
 	return -1;
 }
 
-static ase_ssize_t process_extio_pipe (
+static ase_ssize_t awk_extio_pipe (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
@@ -310,7 +301,7 @@ static ase_ssize_t process_extio_pipe (
 	return -1;
 }
 
-static ase_ssize_t process_extio_file (
+static ase_ssize_t awk_extio_file (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
@@ -358,14 +349,6 @@ static ase_ssize_t process_extio_file (
 
 		case ASE_AWK_IO_WRITE:
 		{
-			/*
-			ase_size_t i;
-			for (i = 0; i < size; i++)
-			{
-				if (awk_fputc (data[i], (FILE*)epa->handle) == ASE_CHAR_EOF) return -1;
-			}
-			*/
-
 			int n = ase_fprintf (
 				(FILE*)epa->handle, ASE_T("%.*s"), size, data);
 			if (n < 0) return -1;
@@ -394,19 +377,13 @@ static int close_extio_console (ase_awk_extio_t* epa);
 static int next_extio_console (ase_awk_extio_t* epa);
 
 static ase_size_t infile_no = 0;
-static const ase_char_t* infiles[10000] =
+static const ase_char_t* infiles[1000] =
 {
-	/*
-	ASE_T("c1.txt"),
-	ASE_T("c2.txt"),
-	ASE_T("c3.txt"),
-	*/
 	ASE_T(""),
 	ASE_NULL
 };
 
-
-static ase_ssize_t process_extio_console (
+static ase_ssize_t awk_extio_console (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
@@ -486,11 +463,9 @@ static ase_ssize_t process_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
-		ase_size_t i;
-		for (i = 0; i < size; i++)
-		{
-			if (awk_fputc (data[i], (FILE*)epa->handle) == ASE_CHAR_EOF) return -1;
-		}
+		int n = ase_fprintf (
+			(FILE*)epa->handle, ASE_T("%.*s"), size, data);
+		if (n < 0) return -1;
 
 		return size;
 	}
@@ -510,9 +485,6 @@ static ase_ssize_t process_extio_console (
 static int open_extio_console (ase_awk_extio_t* epa)
 {
 	/* TODO: OpenConsole in GUI APPLICATION */
-
-	/* epa->name is always empty for console */
-	assert (epa->name[0] == ASE_T('\0'));
 
 	awk_dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
 
@@ -785,7 +757,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	ase_awk_runcbs_t runcbs;
 	ase_awk_runios_t runios;
 	ase_awk_prmfns_t prmfns;
-	struct src_io src_io = { NULL, NULL };
+	struct awk_src_io src_io = { NULL, NULL };
 	int opt, i, file_count = 0, errnum;
 #ifdef _WIN32
 	prmfns_data_t prmfns_data;
@@ -957,8 +929,8 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	ase_awk_setoption (awk, opt);
 
-	srcios.in = process_source;
-	srcios.out = deparse? dump_source: NULL;
+	srcios.in = awk_srcio_in;
+	srcios.out = deparse? awk_srcio_out: NULL;
 	srcios.custom_data = &src_io;
 
 	ase_awk_setmaxdepth (
@@ -983,10 +955,10 @@ static int awk_main (int argc, ase_char_t* argv[])
 	signal (SIGINT, stop_run);
 #endif
 
-	runios.pipe = process_extio_pipe;
+	runios.pipe = awk_extio_pipe;
 	runios.coproc = ASE_NULL;
-	runios.file = process_extio_file;
-	runios.console = process_extio_console;
+	runios.file = awk_extio_file;
+	runios.console = awk_extio_console;
 
 	runcbs.on_start = on_run_start;
 	runcbs.on_return = on_run_return;
