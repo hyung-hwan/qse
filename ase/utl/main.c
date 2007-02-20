@@ -1,29 +1,17 @@
 /*
- * $Id: main.c,v 1.9 2007-02-19 06:13:03 bacon Exp $
+ * $Id: main.c,v 1.10 2007-02-20 14:04:21 bacon Exp $
  *
  * {License}
  */
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/etc/main.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 #include <locale.h>
 
-#if defined(_WIN32)
-
-#include <tchar.h>
-#define ase_main _tmain
-
-#elif defined(ASE_CHAR_IS_MCHAR)
-
-#ifdef __cplusplus
-extern "C" { int ase_main (...); }
-#else
-extern int ase_main ();
-#endif
+#if !defined(_WIN32) && defined(ASE_CHAR_IS_MCHAR)
 
 int main (int argc, char* argv[], char** envp)
 {
@@ -31,7 +19,7 @@ int main (int argc, char* argv[], char** envp)
 	return ase_main (argc, argv, envp);
 }
 
-#else /* ASE_CHAR_IS_WCHAR */
+#elif !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
 
 #ifdef __cplusplus
 extern "C" { int ase_main (...); }

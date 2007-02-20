@@ -1,0 +1,32 @@
+OUT = aseetc
+
+C_SRCS = main.c stdio.c
+C_OBJS = $(C_SRCS:.c=.obj)
+
+CC = bcc32
+LD = ilink32
+AR = tlib
+
+CFLAGS_COMMON = -O2 -WM -WU -RT- -w -q -I../.. 
+CFLAGS = $(CFLAGS_COMMON) -DNDEBUG
+
+LDFLAGS = -Tpd -ap -Gn -c -q 
+STARTUP = c0d32w.obj
+LIBS = import32.lib cw32mt.lib 
+JNI_LIBS = $(LIBS) $(OUT).lib
+
+all: lib 
+
+lib: $(C_OBJS)
+	$(AR) $(OUT).lib @&&!
++-$(**: = &^
++-)
+!
+
+clean:
+	-del $(OBJS) $(OUT).lib *.obj
+
+.SUFFIXES: .c .obj 
+.c.obj:
+	$(CC) $(CFLAGS) -c $<
+
