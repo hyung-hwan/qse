@@ -8,6 +8,6 @@ CFLAGS = /include="../../.."
 #CFLAGS = /pointer_size=long /include="../../.."
 
 aseawk.exe : $(objects)
-	link /executable=aseawk.exe $(objects),[-.-.awk]aseawk/library
+	link /executable=aseawk.exe $(objects),[-.-.awk]aseawk/library,[-.-.utl]aseutl/library
 
 awk.obj depends_on awk.c

@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.11 2007-02-20 14:15:18 bacon Exp $
+ * $Id: main.c,v 1.12 2007-02-20 15:07:59 bacon Exp $
  *
  * {License}
  */
@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <wchar.h>
 #include <locale.h>
 
 #if !defined(_WIN32) && defined(ASE_CHAR_IS_MCHAR)
@@ -21,11 +20,7 @@ int main (int argc, char* argv[], char** envp)
 
 #elif !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
 
-#ifdef __cplusplus
-extern "C" { int ase_main (...); }
-#else
-extern int ase_main ();
-#endif
+#include <wchar.h>
 
 int main (int argc, char* argv[]/*, char** envp*/)
 {

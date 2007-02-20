@@ -2,7 +2,7 @@
 # OpenVMS MMS/MMK
 #
 
-objects = main.c ctype.c stdio.c
+objects = main.obj,ctype.obj,stdio.obj
 
 CFLAGS = /include="../.."
 #CFLAGS = /pointer_size=long /include="../.."
