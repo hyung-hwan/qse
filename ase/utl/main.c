@@ -1,10 +1,10 @@
 /*
- * $Id: main.c,v 1.10 2007-02-20 14:04:21 bacon Exp $
+ * $Id: main.c,v 1.11 2007-02-20 14:15:18 bacon Exp $
  *
  * {License}
  */
 
-#include <ase/etc/main.h>
+#include <ase/utl/main.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
