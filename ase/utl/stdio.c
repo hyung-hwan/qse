@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c,v 1.2 2007-02-20 14:15:18 bacon Exp $
+ * $Id: stdio.c,v 1.3 2007-02-20 14:23:18 bacon Exp $
  *
  * {License}
  */
@@ -9,6 +9,11 @@
 
 #include <wchar.h>
 #include <stdlib.h>
+#include <limits.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 2048
+#endif
 
 #if defined(_WIN32)
 
