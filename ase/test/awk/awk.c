@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.167 2007-02-20 12:44:28 bacon Exp $
+ * $Id: awk.c,v 1.168 2007-02-20 14:09:44 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -30,6 +30,7 @@
 
 #include "../../etc/printf.c"
 #include "../../etc/main.c"
+#include "../../etc/ctype.h"
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
@@ -58,18 +59,6 @@ static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
 static void awk_abort (void* custom_data)
 {
 	abort ();
-}
-
-static int awk_sprintf (
-	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
-{
-	int n;
-	va_list ap;
-
-	va_start (ap, fmt);
-	n = ase_vsprintf (buf, len, fmt, ap);
-	va_end (ap);
-	return n;
 }
 
 static void awk_aprintf (const ase_char_t* fmt, ...)
@@ -106,61 +95,6 @@ static void awk_dprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static void awk_printf (const ase_char_t* fmt, ...)
-{
-	va_list ap;
-	va_start (ap, fmt);
-	ase_vprintf (fmt, ap);
-	va_end (ap);
-}
-
-static FILE* awk_fopen (const ase_char_t* path, const ase_char_t* mode)
-{
-#if defined(_WIN32)
-	return _tfopen (path, mode);
-#elif defined(ASE_CHAR_IS_MCHAR)
-	return fopen (path, mode);
-#else
-
-	char path_mb[PATH_MAX + 1];
-	char mode_mb[32];
-	size_t n;
-
-	n = wcstombs (path_mb, path, ASE_COUNTOF(path_mb));
-	if (n == (size_t)-1) return NULL;
-	if (n == ASE_COUNTOF(path_mb)) path_mb[ASE_COUNTOF(path_mb)-1] = '\0';
-
-	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
-	if (n == (size_t)-1) return NULL;
-	if (n == ASE_COUNTOF(mode_mb)) path_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
-
-	return fopen (path_mb, mode_mb);
-#endif
-}
-
-static FILE* awk_popen (const ase_char_t* cmd, const ase_char_t* mode)
-{
-#if defined(_WIN32)
-	return _tpopen (cmd, mode);
-#elif defined(ASE_CHAR_IS_MCHAR)
-	return popen (cmd, mode);
-#else
-	char cmd_mb[PATH_MAX + 1];
-	char mode_mb[32];
-	size_t n;
-
-	n = wcstombs (cmd_mb, cmd, ASE_COUNTOF(cmd_mb));
-	if (n == (size_t)-1) return NULL;
-	if (n == ASE_COUNTOF(cmd_mb)) cmd_mb[ASE_COUNTOF(cmd_mb)-1] = '\0';
-
-	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
-	if (n == (size_t)-1) return NULL;
-	if (n == ASE_COUNTOF(mode_mb)) cmd_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
-
-	return popen (cmd_mb, mode_mb);
-#endif
-}
-
 #if defined(_WIN32)
 	#define awk_fgets _fgetts
 	#define awk_fgetc _fgettc
@@ -181,7 +115,7 @@ static ase_ssize_t awk_srcio_in (
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
 		if (src_io->input_file == ASE_NULL) return 0;
-		src_io->input_handle = awk_fopen (src_io->input_file, ASE_T("r"));
+		src_io->input_handle = ase_fopen (src_io->input_file, ASE_T("r"));
 		if (src_io->input_handle == NULL) return -1;
 		return 1;
 	}
@@ -244,7 +178,7 @@ static ase_ssize_t awk_extio_pipe (
 			else return -1; /* TODO: any way to set the error number? */
 
 			awk_dprintf (ASE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);
-			handle = awk_popen (epa->name, mode);
+			handle = ase_popen (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
 			return 1;
@@ -322,7 +256,7 @@ static ase_ssize_t awk_extio_file (
 			else return -1; /* TODO: any way to set the error number? */
 
 			awk_dprintf (ASE_T("opening %s of type %d (file)\n"), epa->name, epa->type);
-			handle = awk_fopen (epa->name, mode);
+			handle = ase_fopen (epa->name, mode);
 			if (handle == NULL) return -1;
 
 			epa->handle = (void*)handle;
@@ -437,7 +371,7 @@ static ase_ssize_t awk_extio_console (
 			}
 			else
 			{
-				FILE* fp = awk_fopen (infiles[infile_no], ASE_T("r"));
+				FILE* fp = ase_fopen (infiles[infile_no], ASE_T("r"));
 				if (fp == ASE_NULL)
 				{
 					awk_dprintf (ASE_T("failed to open the next console of type %x - fopen failure\n"), epa->type);
@@ -506,7 +440,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 		{
 			/* a temporary variable fp is used here not to change 
 			 * any fields of epa when the open operation fails */
-			FILE* fp = awk_fopen (infiles[infile_no], ASE_T("r"));
+			FILE* fp = ase_fopen (infiles[infile_no], ASE_T("r"));
 			if (fp == ASE_NULL)
 			{
 				awk_dprintf (ASE_T("cannot open console of type %x - fopen failure\n"), epa->type);
@@ -698,56 +632,9 @@ static void* awk_memset (void* dst, int val, ase_size_t n)
 	return memset (dst, val, n);
 }
 
-#if defined(ASE_CHAR_IS_MCHAR) 
-	#if (__TURBOC__<=513) /* turboc 2.01 or earlier */
-		static int awk_isupper (int c) { return isupper (c); }
-		static int awk_islower (int c) { return islower (c); }
-		static int awk_isalpha (int c) { return isalpha (c); }
-		static int awk_isdigit (int c) { return isdigit (c); }
-		static int awk_isxdigit (int c) { return isxdigit (c); }
-		static int awk_isalnum (int c) { return isalnum (c); }
-		static int awk_isspace (int c) { return isspace (c); }
-		static int awk_isprint (int c) { return isprint (c); }
-		static int awk_isgraph (int c) { return isgraph (c); }
-		static int awk_iscntrl (int c) { return iscntrl (c); }
-		static int awk_ispunct (int c) { return ispunct (c); }
-		static int awk_toupper (int c) { return toupper (c); }
-		static int awk_tolower (int c) { return tolower (c); }
-	#else
-		#define awk_isupper  isupper
-		#define awk_islower  islower
-		#define awk_isalpha  isalpha
-		#define awk_isdigit  isdigit
-		#define awk_isxdigit isxdigit
-		#define awk_isalnum  isalnum
-		#define awk_isspace  isspace
-		#define awk_isprint  isprint
-		#define awk_isgraph  isgraph
-		#define awk_iscntrl  iscntrl
-		#define awk_ispunct  ispunct
-		#define awk_toupper  tolower
-		#define awk_tolower  tolower
-	#endif
-#else
-	#define awk_isupper  iswupper
-	#define awk_islower  iswlower
-	#define awk_isalpha  iswalpha
-	#define awk_isdigit  iswdigit
-	#define awk_isxdigit iswxdigit
-	#define awk_isalnum  iswalnum
-	#define awk_isspace  iswspace
-	#define awk_isprint  iswprint
-	#define awk_isgraph  iswgraph
-	#define awk_iscntrl  iswcntrl
-	#define awk_ispunct  iswpunct
-
-	#define awk_toupper  towlower
-	#define awk_tolower  towlower
-#endif
-
 static void print_usage (const ase_char_t* argv0)
 {
-	awk_printf (ASE_T("Usage: %s [-m] [-d] [-a argument]* -f source-file [data-file]*\n"), argv0);
+	ase_printf (ASE_T("Usage: %s [-m] [-d] [-a argument]* -f source-file [data-file]*\n"), argv0);
 }
 
 static int awk_main (int argc, ase_char_t* argv[])
@@ -881,22 +768,22 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns.memcpy  = awk_memcpy;
 	prmfns.memset  = awk_memset;
 
-	prmfns.is_upper  = (ase_awk_isctype_t)awk_isupper;
-	prmfns.is_lower  = (ase_awk_isctype_t)awk_islower;
-	prmfns.is_alpha  = (ase_awk_isctype_t)awk_isalpha;
-	prmfns.is_digit  = (ase_awk_isctype_t)awk_isdigit;
-	prmfns.is_xdigit = (ase_awk_isctype_t)awk_isxdigit;
-	prmfns.is_alnum  = (ase_awk_isctype_t)awk_isalnum;
-	prmfns.is_space  = (ase_awk_isctype_t)awk_isspace;
-	prmfns.is_print  = (ase_awk_isctype_t)awk_isprint;
-	prmfns.is_graph  = (ase_awk_isctype_t)awk_isgraph;
-	prmfns.is_cntrl  = (ase_awk_isctype_t)awk_iscntrl;
-	prmfns.is_punct  = (ase_awk_isctype_t)awk_ispunct;
-	prmfns.to_upper  = (ase_awk_toctype_t)awk_toupper;
-	prmfns.to_lower  = (ase_awk_toctype_t)awk_tolower;
+	prmfns.is_upper  = (ase_awk_isctype_t)ase_isupper;
+	prmfns.is_lower  = (ase_awk_isctype_t)ase_islower;
+	prmfns.is_alpha  = (ase_awk_isctype_t)ase_isalpha;
+	prmfns.is_digit  = (ase_awk_isctype_t)ase_isdigit;
+	prmfns.is_xdigit = (ase_awk_isctype_t)ase_isxdigit;
+	prmfns.is_alnum  = (ase_awk_isctype_t)ase_isalnum;
+	prmfns.is_space  = (ase_awk_isctype_t)ase_isspace;
+	prmfns.is_print  = (ase_awk_isctype_t)ase_isprint;
+	prmfns.is_graph  = (ase_awk_isctype_t)ase_isgraph;
+	prmfns.is_cntrl  = (ase_awk_isctype_t)ase_iscntrl;
+	prmfns.is_punct  = (ase_awk_isctype_t)ase_ispunct;
+	prmfns.to_upper  = (ase_awk_toctype_t)ase_toupper;
+	prmfns.to_lower  = (ase_awk_toctype_t)ase_tolower;
 
 	prmfns.pow     = awk_pow;
-	prmfns.sprintf = awk_sprintf;
+	prmfns.sprintf = ase_sprintf;
 	prmfns.aprintf = awk_aprintf;
 	prmfns.dprintf = awk_dprintf;
 	prmfns.abort   = awk_abort;
@@ -907,7 +794,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns_data.heap = HeapCreate (0, 1000000, 1000000);
 	if (prmfns_data.heap == NULL)
 	{
-		awk_printf (ASE_T("Error: cannot create an awk heap\n"));
+		ase_printf (ASE_T("Error: cannot create an awk heap\n"));
 		return -1;
 	}
 
@@ -919,7 +806,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 #ifdef _WIN32
 		HeapDestroy (prmfns_data.heap);
 #endif
-		awk_printf (
+		ase_printf (
 			ASE_T("ERROR: cannot open awk [%d] %s\n"), 
 			errnum, ase_awk_geterrstr(errnum));
 		return -1;
@@ -941,7 +828,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{
 		int errnum = ase_awk_geterrnum(awk);
-		awk_printf (
+		ase_printf (
 			ASE_T("ERROR: cannot parse program - line %u [%d] %s\n"), 
 			(unsigned int)ase_awk_geterrlin(awk), 
 			errnum, ase_awk_geterrmsg(awk));
@@ -968,7 +855,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg, ASE_NULL) == -1)
 	{
 		int errnum = ase_awk_geterrnum(awk);
-		awk_printf (
+		ase_printf (
 			ASE_T("error: cannot run program - [%d] %s\n"), 
 			errnum, ase_awk_geterrstr(errnum));
 		ase_awk_close (awk);
@@ -1007,4 +894,3 @@ int ase_main (int argc, ase_char_t* argv[])
 
 	return n;
 }
-

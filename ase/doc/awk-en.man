@@ -35,7 +35,7 @@ The following code fragment illustrates the basic steps.
 
 (((
 * Most of the functions and data types needed are defined in the header file <ase/awk/awk.h>. 
-* ase_awk_t represents the processor.
+* ase_awk_t represents the processor. However, the internal representation is not exposed.
 * ase_awk_open creates the processor instance.
 * ase_awk_parse parses an AWK script.
 * ase_awk_run executes the script parsed.
