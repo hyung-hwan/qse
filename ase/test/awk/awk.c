@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.170 2007-02-20 14:23:18 bacon Exp $
+ * $Id: awk.c,v 1.171 2007-02-20 14:45:48 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -14,8 +14,6 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <math.h>
-#include <limits.h>
-#include <errno.h>
 #include <stdlib.h>
 
 #if defined(_WIN32)

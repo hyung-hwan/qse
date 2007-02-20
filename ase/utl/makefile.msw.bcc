@@ -1,6 +1,6 @@
 OUT = aseutl
 
-C_SRCS = main.c stdio.c
+C_SRCS = main.c ctype.c stdio.c
 C_OBJS = $(C_SRCS:.c=.obj)
 
 CC = bcc32
