@@ -6,7 +6,7 @@ OBJS = $(SRCS:.c=.obj)
 
 CC = cl
 LD = link
-CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. -DSSE_CHAR_IS_WCHAR
+CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. 
 
 all: lib
 

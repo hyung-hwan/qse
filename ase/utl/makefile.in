@@ -14,7 +14,7 @@ all: lib
 
 lib: $(C_OBJS)
 	$(AR) cr lib$(OUT).a $(C_OBJS)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib libaseawk.a; fi
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
 
 clean:
 	rm -rf $(OBJS) lib$(OUT).a *.o

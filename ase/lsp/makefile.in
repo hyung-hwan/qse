@@ -1,20 +1,26 @@
-SRCS = lsp.c name.c mem.c env.c err.c read.c eval.c print.c misc.c \
+OUT = aselsp
+
+C_SRCS = lsp.c name.c mem.c env.c err.c read.c eval.c print.c misc.c \
 	prim.c prim_prog.c prim_let.c prim_compar.c prim_math.c
-OBJS = $(SRCS:.c=.o)
-OUT = libaselsp.a
+C_OBJS = $(C_SRCS:.c=.o)
 
 CC = @CC@
 AR = ar
+RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 
-all: $(OBJS)
-	$(AR) cr $(OUT) $(OBJS)
+all: lib 
+
+lib: $(C_OBJS)
+	$(AR) cr lib$(OUT).a $(C_OBJS)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
 
 clean:
-	rm -rf $(OBJS) $(OUT) *.o
+	rm -rf $(OBJS) lib$(OUT).a *.o
 
 .SUFFIXES: .c .o
 .c.o:
 	$(CC) $(CFLAGS) -c $<
+

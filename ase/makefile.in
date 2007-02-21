@@ -1,4 +1,4 @@
-SUBDIRS=awk lsp
+SUBDIRS=awk lsp utl
 
 all:
 	@for i in $(SUBDIRS); \

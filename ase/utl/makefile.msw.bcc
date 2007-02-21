@@ -7,8 +7,7 @@ CC = bcc32
 LD = ilink32
 AR = tlib
 
-CFLAGS_COMMON = -O2 -WM -WU -RT- -w -q -I../.. 
-CFLAGS = $(CFLAGS_COMMON) -DNDEBUG
+CFLAGS = -O2 -WM -WU -RT- -w -q -I../.. -DNDEBUG
 
 LDFLAGS = -Tpd -ap -Gn -c -q 
 STARTUP = c0d32w.obj
