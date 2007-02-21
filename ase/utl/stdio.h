@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h,v 1.1 2007-02-20 14:04:22 bacon Exp $
+ * $Id: stdio.h,v 1.2 2007-02-21 04:09:28 bacon Exp $
  */
 
 #ifndef _ASE_STDIO_H_
@@ -19,14 +19,14 @@
 	#define ase_fprintf  _ftprintf
 	#define ase_vfprintf _vftprintf
 
-	#define awk_fgets _fgetts
-	#define awk_fgetc _fgettc
+	#define ase_fgets _fgetts
+	#define ase_fgetc _fgettc
 #elif defined(ASE_CHAR_IS_MCHAR)
-	#define awk_fgets fgets
-	#define awk_fgetc fgetc
+	#define ase_fgets fgets
+	#define ase_fgetc fgetc
 #else
-	#define awk_fgets fgetws
-	#define awk_fgetc fgetwc
+	#define ase_fgets fgetws
+	#define ase_fgetc fgetwc
 #endif
 
 #ifdef __cplusplus

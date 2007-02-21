@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.173 2007-02-21 03:49:49 bacon Exp $
+ * $Id: awk.c,v 1.174 2007-02-21 04:09:28 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -96,17 +96,6 @@ static void awk_dprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-#if defined(_WIN32)
-	#define awk_fgets _fgetts
-	#define awk_fgetc _fgettc
-#elif defined(ASE_CHAR_IS_MCHAR)
-	#define awk_fgets fgets
-	#define awk_fgetc fgetc
-#else
-	#define awk_fgets fgetws
-	#define awk_fgetc fgetwc
-#endif
-
 static ase_ssize_t awk_srcio_in (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
@@ -129,7 +118,7 @@ static ase_ssize_t awk_srcio_in (
 	else if (cmd == ASE_AWK_IO_READ)
 	{
 		if (size <= 0) return -1;
-		c = awk_fgetc ((FILE*)src_io->input_handle);
+		c = ase_fgetc ((FILE*)src_io->input_handle);
 		if (c == ASE_CHAR_EOF) return 0;
 		*data = (ase_char_t)c;
 		return 1;
@@ -195,7 +184,7 @@ static ase_ssize_t awk_extio_pipe (
 
 		case ASE_AWK_IO_READ:
 		{
-			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
+			if (ase_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
 			{
 				if (ferror((FILE*)epa->handle)) return -1;
 				return 0;
@@ -274,7 +263,7 @@ static ase_ssize_t awk_extio_file (
 
 		case ASE_AWK_IO_READ:
 		{
-			if (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
+			if (ase_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
 			{
 				if (ferror((FILE*)epa->handle)) return -1;
 				return 0;
@@ -333,7 +322,7 @@ static ase_ssize_t awk_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
-		while (awk_fgets (data, size, (FILE*)epa->handle) == ASE_NULL)
+		while (ase_fgets (data, size, (FILE*)epa->handle) == ASE_NULL)
 		{
 			if (ferror((FILE*)epa->handle)) return -1;
 

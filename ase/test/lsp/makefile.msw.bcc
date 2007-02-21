@@ -1,8 +1,8 @@
 CC = bcc32
 LD = ilink32
-CFLAGS = -I..\..\.. -I$(XPKIT)
-LDFLAGS = -L..\..\lsp
-LIBS = import32.lib cw32mt.lib aselsp.lib 
+CFLAGS = -I..\..\.. 
+LDFLAGS = -L..\..\lsp -L..\..\utl
+LIBS = import32.lib cw32mt.lib aselsp.lib aseutl.lib
 STARTUP = c0x32w.obj
 
 all: aselsp 
