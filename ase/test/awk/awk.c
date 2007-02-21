@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.171 2007-02-20 14:45:48 bacon Exp $
+ * $Id: awk.c,v 1.172 2007-02-21 03:49:01 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -44,6 +44,13 @@ struct awk_src_io
 	const ase_char_t* input_file;
 	FILE* input_handle;
 };
+
+#if defined(vms) || defined(__vms)
+/* it seems that the main function should be placed in the main object file
+ * in OpenVMS. otherwise, the first function in the main object file seems
+ * to become the main function resulting in the failed program start-up */
+#include <ase/utl/main.c>
+#endif
 
 static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
 {
