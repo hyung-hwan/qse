@@ -1,5 +1,5 @@
 /*
- * $Id: str.h,v 1.1 2007-02-22 14:32:08 bacon Exp $
+ * $Id: str.h,v 1.2 2007-02-22 14:46:43 bacon Exp $
  *
  * {License}
  */
@@ -23,6 +23,7 @@ struct ase_str_t
 	ase_char_t* buf;
 	ase_size_t  size;
 	ase_size_t  capa;
+	ase_mmgr_t* mmgr;
 	ase_bool_t  __dynamic;
 };
 
@@ -30,7 +31,7 @@ struct ase_str_t
 extern "C" {
 #endif
 
-ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_t* awk);
+ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr);
 void ase_str_close (ase_str_t* str);
 void ase_str_clear (ase_str_t* str);
 

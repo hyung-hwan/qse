@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.49 2007-02-18 16:45:45 bacon Exp $
+ * $Id: macros.h,v 1.50 2007-02-22 14:46:42 bacon Exp $
  *
  * {License}
  */
@@ -95,5 +95,26 @@
 	#define ASE_BEGIN_PACKED_STRUCT(x) struct x {
 	#define ASE_END_PACKED_STRUCT() };
 #endif
+
+
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
+	#define _CRTDBG_MAP_ALLOC
+	#include <crtdbg.h>
+
+	#define ASE_MALLOC(mmgr,size) malloc (size)
+	#define ASE_REALLOC(mmgr,ptr,size) realloc (ptr, size)
+	#define ASE_FREE(mmgr,ptr) free (ptr)
+#else
+	#define ASE_MALLOC(mmgr,size) \
+		(mmgr)->malloc (size, (mmgr)->custom_data)
+	#define ASE_REALLOC(mmgr,ptr,size) \
+		(mmgr)->realloc (ptr, size, (mmgr)->custom_data)
+	#define ASE_FREE(mmgr,ptr) \
+		(mmgr)->free (ptr, (mmgr)->custom_data)
+#endif
+
+#define ASE_MEMCPY(mmgr,dst,src,len) (mmgr)->memcpy (dst, src, len)
+#define ASE_MEMSET(mmgr,dst,val,len) (mmgr)->memset (dst, val, len)
+
 
 #endif

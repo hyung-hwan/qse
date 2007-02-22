@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.69 2007-02-11 09:18:32 bacon Exp $
+ * $Id: types.h,v 1.70 2007-02-22 14:46:42 bacon Exp $
  *
  * {License}
  */
@@ -230,7 +230,25 @@ typedef int  ase_mcint_t;
 	#endif
 #endif
 
+typedef void* (*ase_malloc_t)  (ase_size_t n, void* custom_data); 
+typedef void* (*ase_realloc_t) (void* ptr, ase_size_t n, void* custom_data);
+typedef void  (*ase_free_t)    (void* ptr, void* custom_data);
+typedef void* (*ase_memcpy_t)  (void* dst, const void* src, ase_size_t n);
+typedef void* (*ase_memset_t)  (void* dst, int val, ase_size_t n);
+
+
+typedef struct ase_mmgr_t ase_mmgr_t;
 typedef struct ase_cstr_t ase_cstr_t;
+
+struct ase_mmgr_t
+{
+	void*         custom_data;
+	ase_malloc_t  malloc;
+	ase_realloc_t realloc;
+	ase_free_t    free;
+	ase_memcpy_t  memcpy;
+	ase_memset_t  memset;
+};
 
 struct ase_cstr_t
 {
