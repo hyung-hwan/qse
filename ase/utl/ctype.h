@@ -2,8 +2,8 @@
  * $id$
  */
 
-#ifndef _ASE_CTYPE_H_
-#define _ASE_CTYPE_H_
+#ifndef _ASE_UTL_CTYPE_H_
+#define _ASE_UTL_CTYPE_H_
 
 #include <ase/types.h>
 #include <ase/macros.h>
