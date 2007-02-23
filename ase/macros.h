@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.50 2007-02-22 14:46:42 bacon Exp $
+ * $Id: macros.h,v 1.51 2007-02-23 06:43:30 bacon Exp $
  *
  * {License}
  */
@@ -96,25 +96,35 @@
 	#define ASE_END_PACKED_STRUCT() };
 #endif
 
-
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	#define _CRTDBG_MAP_ALLOC
 	#include <crtdbg.h>
 
-	#define ASE_MALLOC(mmgr,size) malloc (size)
+	#define ASE_MALLOC(mmgr,size)      malloc  (size)
 	#define ASE_REALLOC(mmgr,ptr,size) realloc (ptr, size)
-	#define ASE_FREE(mmgr,ptr) free (ptr)
+	#define ASE_FREE(mmgr,ptr)         free    (ptr)
 #else
-	#define ASE_MALLOC(mmgr,size) \
-		(mmgr)->malloc (size, (mmgr)->custom_data)
-	#define ASE_REALLOC(mmgr,ptr,size) \
-		(mmgr)->realloc (ptr, size, (mmgr)->custom_data)
-	#define ASE_FREE(mmgr,ptr) \
-		(mmgr)->free (ptr, (mmgr)->custom_data)
+	#define ASE_MALLOC(mmgr,size)      (mmgr)->malloc  (mmgr, size)
+	#define ASE_REALLOC(mmgr,ptr,size) (mmgr)->realloc (mmgr, ptr, size)
+	#define ASE_FREE(mmgr,ptr)         (mmgr)->free    (mmgr, ptr)
 #endif
 
-#define ASE_MEMCPY(mmgr,dst,src,len) (mmgr)->memcpy (dst, src, len)
-#define ASE_MEMSET(mmgr,dst,val,len) (mmgr)->memset (dst, val, len)
+#define ASE_MEMCPY(mmgr,dst,src,len) (mmgr)->memcpy (mmgr, dst, src, len)
+#define ASE_MEMSET(mmgr,dst,val,len) (mmgr)->memset (mmgr, dst, val, len)
+#define ASE_MEMCMP(mmgr,m1,m2,len)   (mmgr)->memcmp (mmgr, m1,  m2, len)
 
+#define ASE_ISUPPER(ccls,c)  (ccls)->is_upper  (ccls, c)
+#define ASE_ISLOWER(ccls,c)  (ccls)->is_lower  (ccls, c)
+#define ASE_ISALPHA(ccls,c)  (ccls)->is_alpha  (ccls, c)
+#define ASE_ISDIGIT(ccls,c)  (ccls)->is_digit  (ccls, c)
+#define ASE_ISXDIGIT(ccls,c) (ccls)->is_xdigit (ccls, c)
+#define ASE_ISALNUM(ccls,c)  (ccls)->is_alnum  (ccls, c)
+#define ASE_ISSPACE(ccls,c)  (ccls)->is_space  (ccls, c)
+#define ASE_ISPRINT(ccls,c)  (ccls)->is_print  (ccls, c)
+#define ASE_ISGRAPH(ccls,c)  (ccls)->is_graph  (ccls, c)
+#define ASE_ISCNTRL(ccls,c)  (ccls)->is_cntrl  (ccls, c)
+#define ASE_ISPUNCT(ccls,c)  (ccls)->is_punct  (ccls, c)
+#define ASE_TOUPPER(ccls,c)  (ccls)->to_upper  (ccls, c)
+#define ASE_TOLOWER(ccls,c)  (ccls)->to_lower  (ccls, c)
 
 #endif

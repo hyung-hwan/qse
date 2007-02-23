@@ -1,10 +1,191 @@
 /*
- * $Id: str.c,v 1.3 2007-02-23 06:31:06 bacon Exp $
+ * $Id: str.c,v 1.4 2007-02-23 06:43:30 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/cmn/str.h>
+
+ase_size_t ase_strlen (const ase_char_t* str)
+{
+	const ase_char_t* p = str;
+	while (*p != ASE_T('\0')) p++;
+	return p - str;
+}
+
+ase_size_t ase_strcpy (ase_char_t* buf, const ase_char_t* str)
+{
+	ase_char_t* org = buf;
+	while ((*buf++ = *str++) != ASE_T('\0'));
+	return buf - org - 1;
+}
+
+ase_size_t ase_strxcpy (
+	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str)
+{
+	ase_char_t* p, * p2;
+
+	p = buf; p2 = buf + bsz - 1;
+
+	while (p < p2) 
+	{
+		if (*str == ASE_T('\0')) break;
+		*p++ = *str++;
+	}
+
+	if (bsz > 0) *p = ASE_T('\0');
+	return p - buf;
+}
+
+ase_size_t ase_strncpy (
+	ase_char_t* buf, const ase_char_t* str, ase_size_t len)
+{
+	const ase_char_t* end = str + len;
+	while (str < end) *buf++ = *str++;
+	*buf = ASE_T('\0');
+	return len;
+}
+
+int ase_strcmp (const ase_char_t* s1, const ase_char_t* s2)
+{
+	while (*s1 == *s2) 
+	{
+		if (*s1 == ASE_C('\0')) return 0;
+		s1++, s2++;
+	}
+
+	return (*s1 > *s2)? 1: -1;
+}
+
+int ase_strxncmp (
+	const ase_char_t* s1, ase_size_t len1, 
+	const ase_char_t* s2, ase_size_t len2)
+{
+	ase_char_t c1, c2;
+	const ase_char_t* end1 = s1 + len1;
+	const ase_char_t* end2 = s2 + len2;
+
+	while (s1 < end1)
+	{
+		c1 = *s1;
+		if (s2 < end2) 
+		{
+			c2 = *s2;
+			if (c1 > c2) return 1;
+			if (c1 < c2) return -1;
+		}
+		else return 1;
+		s1++; s2++;
+	}
+
+	return (s2 < end2)? -1: 0;
+}
+
+int ase_strcasecmp (
+	const ase_char_t* s1, const ase_char_t* s2, ase_ccls_t* ccls)
+{
+	while (ASE_TOUPPER(ccls,*s1) == ASE_TOUPPER(ccls,*s2)) 
+	{
+		if (*s1 == ASE_C('\0')) return 0;
+		s1++, s2++;
+	}
+
+	return (ASE_TOUPPER(ccls,*s1) > ASE_TOUPPER(ccls,*s2))? 1: -1;
+}
+
+int ase_strxncasecmp (
+	const ase_char_t* s1, ase_size_t len1, 
+	const ase_char_t* s2, ase_size_t len2, ase_ccls_t* ccls)
+{
+	ase_char_t c1, c2;
+	const ase_char_t* end1 = s1 + len1;
+	const ase_char_t* end2 = s2 + len2;
+
+	while (s1 < end1)
+	{
+		c1 = ASE_TOUPPER (ccls, *s1); 
+		if (s2 < end2) 
+		{
+			c2 = ASE_TOUPPER (ccls, *s2);
+			if (c1 > c2) return 1;
+			if (c1 < c2) return -1;
+		}
+		else return 1;
+		s1++; s2++;
+	}
+
+	return (s2 < end2)? -1: 0;
+}
+
+ase_char_t* ase_strdup (const ase_char_t* str, ase_mmgr_t* mmgr)
+{
+	ase_char_t* tmp;
+
+	tmp = (ase_char_t*) ASE_MALLOC (
+		mmgr, (ase_strlen(str)+1)*ASE_SIZEOF(ase_char_t));
+	if (tmp == ASE_NULL) return ASE_NULL;
+
+	ase_strcpy (tmp, str);
+	return tmp;
+}
+
+ase_char_t* ase_strxdup (
+	const ase_char_t* str, ase_size_t len, ase_mmgr_t* mmgr)
+{
+	ase_char_t* tmp;
+
+	tmp = (ase_char_t*) ASE_MALLOC (
+		mmgr, (len+1)*ASE_SIZEOF(ase_char_t));
+	if (tmp == ASE_NULL) return ASE_NULL;
+
+	ase_strncpy (tmp, str, len);
+	return tmp;
+}
+
+ase_char_t* ase_strxdup2 (
+	const ase_char_t* str1, ase_size_t len1,
+	const ase_char_t* str2, ase_size_t len2, ase_mmgr_t* mmgr)
+{
+	ase_char_t* tmp;
+
+	tmp = (ase_char_t*) ASE_MALLOC (
+		mmgr, (len1+len2+1) * ASE_SIZEOF(ase_char_t));
+	if (tmp == ASE_NULL) return ASE_NULL;
+
+	ase_strncpy (tmp, str1, len1);
+	ase_strncpy (tmp + len1, str2, len2);
+	return tmp;
+}
+
+ase_char_t* ase_strxnstr (
+	const ase_char_t* str, ase_size_t strsz, 
+	const ase_char_t* sub, ase_size_t subsz)
+{
+	const ase_char_t* end, * subp;
+
+	if (subsz == 0) return (ase_char_t*)str;
+	if (strsz < subsz) return ASE_NULL;
+	
+	end = str + strsz - subsz;
+	subp = sub + subsz;
+
+	while (str <= end) 
+	{
+		const ase_char_t* x = str;
+		const ase_char_t* y = sub;
+
+		while (ase_true) 
+		{
+			if (y >= subp) return (ase_char_t*)str;
+			if (*x != *y) break;
+			x++; y++;
+		}	
+
+		str++;
+	}
+		
+	return ASE_NULL;
+}
 
 ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr)
 {
