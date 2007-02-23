@@ -1,6 +1,6 @@
 OUT = aseawk
 
-C_SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
+C_SRCS = awk.c err.c tree.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
 JNI_SRCS = jni.c
 JAVA_SRCS = Exception.java Extio.java Awk.java StdAwk.java
@@ -28,7 +28,9 @@ JAVACFLAGS = -classpath ../..
 LDFLAGS = -Tpd -ap -Gn -c -q 
 STARTUP = c0d32w.obj
 LIBS = import32.lib cw32mt.lib 
-JNI_LIBS = $(LIBS) $(OUT).lib
+
+JNI_LDFLAGS = $(LDFLAGS) -L..\cmn -L..\utl
+JNI_LIBS = $(LIBS) $(OUT).lib asecmn.lib aseutl.lib
 
 all: lib jni
 
@@ -39,7 +41,7 @@ lib: $(C_OBJS)
 !
 
 jni: lib $(JNI_OBJS) $(JAVA_OBJS)
-	$(LD) $(LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT)_jni.dll,,$(JNI_LIBS),jni.def,
+	$(LD) $(JNI_LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT)_jni.dll,,$(JNI_LIBS),jni.def,
 
 clean:
 	-del $(OBJS) $(OUT).lib $(OUT)_jni.dll *.obj *.class

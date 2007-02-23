@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.176 2007-02-23 08:21:35 bacon Exp $
+ * $Id: awk.c,v 1.177 2007-02-23 08:54:03 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -610,16 +610,6 @@ static void awk_free (ase_mmgr_t* mmgr, void* ptr)
 #else
 	free (ptr);
 #endif
-}
-
-static void* awk_memcpy  (void* dst, const void* src, ase_size_t n)
-{
-	return memcpy (dst, src, n);
-}
-
-static void* awk_memset (void* dst, int val, ase_size_t n)
-{
-	return memset (dst, val, n);
 }
 
 static void print_usage (const ase_char_t* argv0)
