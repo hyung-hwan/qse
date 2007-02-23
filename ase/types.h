@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.70 2007-02-22 14:46:42 bacon Exp $
+ * $Id: types.h,v 1.71 2007-02-23 06:43:30 bacon Exp $
  *
  * {License}
  */
@@ -230,30 +230,54 @@ typedef int  ase_mcint_t;
 	#endif
 #endif
 
-typedef void* (*ase_malloc_t)  (ase_size_t n, void* custom_data); 
-typedef void* (*ase_realloc_t) (void* ptr, ase_size_t n, void* custom_data);
-typedef void  (*ase_free_t)    (void* ptr, void* custom_data);
-typedef void* (*ase_memcpy_t)  (void* dst, const void* src, ase_size_t n);
-typedef void* (*ase_memset_t)  (void* dst, int val, ase_size_t n);
-
-
-typedef struct ase_mmgr_t ase_mmgr_t;
 typedef struct ase_cstr_t ase_cstr_t;
+typedef struct ase_mmgr_t ase_mmgr_t;
+typedef struct ase_ccls_t ase_ccls_t;
 
-struct ase_mmgr_t
-{
-	void*         custom_data;
-	ase_malloc_t  malloc;
-	ase_realloc_t realloc;
-	ase_free_t    free;
-	ase_memcpy_t  memcpy;
-	ase_memset_t  memset;
-};
+typedef void* (*ase_malloc_t)  (ase_mmgr_t* mmgr, ase_size_t n);
+typedef void* (*ase_realloc_t) (ase_mmgr_t* mmgr, void* ptr, ase_size_t n);
+typedef void  (*ase_free_t)    (ase_mmgr_t* mmgr, void* ptr);
+
+typedef void* (*ase_memcpy_t)  (ase_mmgr_t* mmgr, void* dst, const void* src, ase_size_t n);
+typedef void* (*ase_memset_t)  (ase_mmgr_t* mmgr, void* dst, int val, ase_size_t n);
+typedef void* (*ase_memcmp_t)  (ase_mmgr_t* mmgr, const void* m1, const void* m2, ase_size_t n);
+
+typedef ase_bool_t (*ase_isccls_t) (ase_ccls_t* ccls, ase_cint_t c);
+typedef ase_cint_t (*ase_toccls_t) (ase_ccls_t* ccls, ase_cint_t c);
 
 struct ase_cstr_t
 {
 	ase_char_t* ptr;
 	ase_size_t  len;
+};
+
+struct ase_mmgr_t
+{
+	ase_malloc_t  malloc;
+	ase_realloc_t realloc;
+	ase_free_t    free;
+	ase_memcpy_t  memcpy;
+	ase_memset_t  memset;
+	ase_memcmp_t  memcmp;
+	void*         custom_data;
+};
+
+struct ase_ccls_t
+{
+	ase_isccls_t is_upper;
+	ase_isccls_t is_lower;
+	ase_isccls_t is_alpha;
+	ase_isccls_t is_digit;
+	ase_isccls_t is_xdigit;
+	ase_isccls_t is_alnum;
+	ase_isccls_t is_space;
+	ase_isccls_t is_print;
+	ase_isccls_t is_graph;
+	ase_isccls_t is_cntrl;
+	ase_isccls_t is_punct;
+	ase_toccls_t to_upper;
+	ase_toccls_t to_lower;
+	void*        custom_data;
 };
 
 #endif

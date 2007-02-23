@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.76 $])
+AC_REVISION([$Revision: 1.77 $])
 AC_CONFIG_HEADER([conf_unx.h])
 
 # Checks for programs.
@@ -76,5 +76,5 @@ then
 	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
 
-AC_CONFIG_FILES([makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile])
+AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile])
 AC_OUTPUT
