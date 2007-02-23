@@ -1,6 +1,6 @@
 OUT = asecmn
 
-C_SRCS = str.c
+C_SRCS = mem.c str.c
 C_OBJS = $(C_SRCS:.c=.o)
 
 CC = @CC@
