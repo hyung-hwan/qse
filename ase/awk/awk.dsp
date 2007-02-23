@@ -1,4 +1,4 @@
-# Microsoft Developer Studio Project File - Name="awk" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="awk.lib" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
@@ -135,10 +135,6 @@ SOURCE=.\run.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\str.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\tab.c
 # End Source File
 # Begin Source File
@@ -184,10 +180,6 @@ SOURCE=.\rex.h
 # Begin Source File
 
 SOURCE=.\run.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\str.h
 # End Source File
 # Begin Source File
 
