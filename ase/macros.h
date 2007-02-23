@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.52 2007-02-23 08:17:48 bacon Exp $
+ * $Id: macros.h,v 1.53 2007-02-23 15:18:35 bacon Exp $
  *
  * {License}
  */
@@ -96,18 +96,9 @@
 	#define ASE_END_PACKED_STRUCT() };
 #endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	#define _CRTDBG_MAP_ALLOC
-	#include <crtdbg.h>
-
-	#define ASE_MALLOC(mmgr,size)      malloc  (size)
-	#define ASE_REALLOC(mmgr,ptr,size) realloc (ptr, size)
-	#define ASE_FREE(mmgr,ptr)         free    (ptr)
-#else
-	#define ASE_MALLOC(mmgr,size)      (mmgr)->malloc  (mmgr, size)
-	#define ASE_REALLOC(mmgr,ptr,size) (mmgr)->realloc (mmgr, ptr, size)
-	#define ASE_FREE(mmgr,ptr)         (mmgr)->free    (mmgr, ptr)
-#endif
+#define ASE_MALLOC(mmgr,size)      (mmgr)->malloc  (mmgr, size)
+#define ASE_REALLOC(mmgr,ptr,size) (mmgr)->realloc (mmgr, ptr, size)
+#define ASE_FREE(mmgr,ptr)         (mmgr)->free    (mmgr, ptr)
 
 #define ASE_ISUPPER(ccls,c)  (ccls)->is_upper  (ccls, c)
 #define ASE_ISLOWER(ccls,c)  (ccls)->is_lower  (ccls, c)
