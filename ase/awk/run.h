@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.32 2007-02-03 10:51:13 bacon Exp $
+ * $Id: run.h,v 1.33 2007-02-23 08:17:50 bacon Exp $
  *
  * {License}
  */
@@ -108,7 +108,7 @@ extern "C" {
 #endif
 
 ase_char_t* ase_awk_format (
-	ase_awk_run_t* run, ase_awk_str_t* out, ase_awk_str_t* fbu,
+	ase_awk_run_t* run, ase_str_t* out, ase_str_t* fbu,
 	const ase_char_t* fmt, ase_size_t fmt_len, 
 	ase_size_t nargs_on_stack, ase_awk_nde_t* args, ase_size_t* len);
 

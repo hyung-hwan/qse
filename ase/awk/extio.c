@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.71 2007-02-03 10:47:40 bacon Exp $
+ * $Id: extio.c,v 1.72 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -76,7 +76,7 @@ static int __out_mask_map[] =
 
 int ase_awk_readextio (
 	ase_awk_run_t* run, int in_type,
-	const ase_char_t* name, ase_awk_str_t* buf)
+	const ase_char_t* name, ase_str_t* buf)
 {
 	ase_awk_extio_t* p = run->extio.chain;
 	ase_awk_io_t handler;
@@ -110,7 +110,7 @@ int ase_awk_readextio (
 	while (p != ASE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_awk_strcmp (p->name,name) == 0) break;
+		    ase_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -124,7 +124,7 @@ int ase_awk_readextio (
 			return -1;
 		}
 
-		p->name = ase_awk_strdup (run->awk, name);
+		p->name = ase_strdup (name, &run->awk->prmfns.mmgr);
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);
@@ -177,7 +177,7 @@ int ase_awk_readextio (
 	}
 
 	/* ready to read a line */
-	ase_awk_str_clear (buf);
+	ase_str_clear (buf);
 
 	/* get the record separator */
 	rs = ase_awk_getglobal (run, ASE_AWK_GLOBAL_RS);
@@ -215,7 +215,7 @@ int ase_awk_readextio (
 
 			if (p->in.eof)
 			{
-				if (ASE_AWK_STR_LEN(buf) == 0) ret = 0;
+				if (ASE_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
@@ -231,7 +231,7 @@ int ase_awk_readextio (
 			if (n == 0) 
 			{
 				p->in.eof = ase_true;
-				if (ASE_AWK_STR_LEN(buf) == 0) ret = 0;
+				if (ASE_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
@@ -248,9 +248,9 @@ int ase_awk_readextio (
 			if (c == ASE_T('\n')) 
 			{
 				if (pc == ASE_T('\r') && 
-				    ASE_AWK_STR_LEN(buf) > 0) 
+				    ASE_STR_LEN(buf) > 0) 
 				{
-					ASE_AWK_STR_LEN(buf) -= 1;
+					ASE_STR_LEN(buf) -= 1;
 				}
 				break;
 			}
@@ -261,15 +261,15 @@ int ase_awk_readextio (
 			if (c == ASE_T('\n'))
 			{
 				if (pc == ASE_T('\r') && 
-				    ASE_AWK_STR_LEN(buf) > 0) 
+				    ASE_STR_LEN(buf) > 0) 
 				{
-					ASE_AWK_STR_LEN(buf) -= 1;
+					ASE_STR_LEN(buf) -= 1;
 				}
 			}
 
 			if (line_len == 0 && c == ASE_T('\n'))
 			{
-				if (ASE_AWK_STR_LEN(buf) <= 0) 
+				if (ASE_STR_LEN(buf) <= 0) 
 				{
 					/* if the record is empty when a blank 
 					 * line is encountered, the line 
@@ -281,7 +281,7 @@ int ase_awk_readextio (
 				/* when a blank line is encountered,
 				 * it needs to snip off the line 
 				 * terminator of the previous line */
-				ASE_AWK_STR_LEN(buf) -= 1;
+				ASE_STR_LEN(buf) -= 1;
 				break;
 			}
 		}
@@ -299,7 +299,7 @@ int ase_awk_readextio (
 			n = ase_awk_matchrex (
 				run->awk, run->global.rs, 
 				((run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
-				ASE_AWK_STR_BUF(buf), ASE_AWK_STR_LEN(buf), 
+				ASE_STR_BUF(buf), ASE_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)
 			{
@@ -312,15 +312,15 @@ int ase_awk_readextio (
 				/* the match should be found at the end of
 				 * the current buffer */
 				ASE_AWK_ASSERT (run->awk,
-					ASE_AWK_STR_BUF(buf) + ASE_AWK_STR_LEN(buf) ==
+					ASE_STR_BUF(buf) + ASE_STR_LEN(buf) ==
 					match_ptr + match_len);
 
-				ASE_AWK_STR_LEN(buf) -= match_len;
+				ASE_STR_LEN(buf) -= match_len;
 				break;
 			}
 		}
 
-		if (ase_awk_str_ccat (buf, c) == (ase_size_t)-1)
+		if (ase_str_ccat (buf, c) == (ase_size_t)-1)
 		{
 			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			ret = -1;
@@ -440,7 +440,7 @@ int ase_awk_writeextio_str (
 		 *    print "1111" > "1.tmp"
 		 */
 		if (p->type == (extio_type | extio_mask) && 
-		    ase_awk_strcmp (p->name, name) == 0) break;
+		    ase_strcmp (p->name, name) == 0) break;
 		p = p->next;
 	}
 
@@ -455,7 +455,7 @@ int ase_awk_writeextio_str (
 			return -1;
 		}
 
-		p->name = ase_awk_strdup (run->awk, name);
+		p->name = ase_strdup (name, &run->awk->prmfns.mmgr);
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);
@@ -566,7 +566,7 @@ int ase_awk_flushextio (
 	while (p != ASE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) && 
-		    (name == ASE_NULL || ase_awk_strcmp (p->name, name) == 0)) 
+		    (name == ASE_NULL || ase_strcmp (p->name, name) == 0)) 
 		{
 			n = handler (ASE_AWK_IO_FLUSH, p, ASE_NULL, 0);
 
@@ -619,7 +619,7 @@ int ase_awk_nextextio_read (
 	while (p != ASE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_awk_strcmp (p->name,name) == 0) break;
+		    ase_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -696,7 +696,7 @@ int ase_awk_nextextio_write (
 	while (p != ASE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_awk_strcmp (p->name,name) == 0) break;
+		    ase_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
@@ -783,7 +783,7 @@ int ase_awk_closeextio_read (
 	while (p != ASE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_awk_strcmp (p->name, name) == 0) 
+		    ase_strcmp (p->name, name) == 0) 
 		{
 			ase_awk_io_t handler;
 		       
@@ -845,7 +845,7 @@ int ase_awk_closeextio_write (
 	while (p != ASE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_awk_strcmp (p->name, name) == 0) 
+		    ase_strcmp (p->name, name) == 0) 
 		{
 			ase_awk_io_t handler;
 		       
@@ -885,7 +885,7 @@ int ase_awk_closeextio (ase_awk_run_t* run, const ase_char_t* name)
 	{
 		 /* it handles the first that matches the given name
 		  * regardless of the extio type */
-		if (ase_awk_strcmp (p->name, name) == 0) 
+		if (ase_strcmp (p->name, name) == 0) 
 		{
 			ase_awk_io_t handler;
 		       

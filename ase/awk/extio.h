@@ -1,5 +1,5 @@
 /*
- * $Id: extio.h,v 1.17 2007-02-03 10:47:40 bacon Exp $
+ * $Id: extio.h,v 1.18 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -17,7 +17,7 @@ extern "C"
 
 int ase_awk_readextio (
 	ase_awk_run_t* run, int in_type, 
-	const ase_char_t* name, ase_awk_str_t* buf);
+	const ase_char_t* name, ase_str_t* buf);
 
 int ase_awk_writeextio_val (
 	ase_awk_run_t* run, int out_type, 

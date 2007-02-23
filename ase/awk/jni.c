@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.66 2007-02-03 10:47:41 bacon Exp $
+ * $Id: jni.c,v 1.67 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -184,7 +184,7 @@ static void throw_exception (
 		return;
 	}
 
-	len = ase_awk_strlen(msg);
+	len = ase_strlen(msg);
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
@@ -940,7 +940,7 @@ static ase_ssize_t __java_open_extio (
 	}
 
 	/* construct the name */
-	len = ase_awk_strlen(extio->name);
+	len = ase_strlen(extio->name);
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;

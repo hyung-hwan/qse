@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.30 2007-02-03 10:51:14 bacon Exp $
+ * $Id: tab.c,v 1.31 2007-02-23 08:17:51 bacon Exp $
  *
  * {License}
  */
@@ -60,7 +60,7 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 
 	if (capa > 0) 
 	{
-		if (tab->awk->prmfns.realloc != ASE_NULL)
+		if (tab->awk->prmfns.mmgr.realloc != ASE_NULL)
 		{
 			tmp = ASE_AWK_REALLOC (tab->awk, 
 				tab->buf, ASE_SIZEOF(*tab->buf) * capa);
@@ -75,8 +75,8 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 			{
 				ase_size_t x;
 				x = (capa > tab->capa)? tab->capa: capa;
-				ASE_AWK_MEMCPY (
-					tab->awk, tmp, tab->buf, 
+				ase_memcpy (
+					tmp, tab->buf, 
 					ASE_SIZEOF(*tab->buf) * x);
 				ASE_AWK_FREE (tab->awk, tab->buf);
 			}
@@ -116,7 +116,7 @@ ase_size_t ase_awk_tab_insert (
 	ase_size_t i;
 	ase_char_t* str_dup;
 
-	str_dup = ase_awk_strxdup (tab->awk, str, len);
+	str_dup = ase_strxdup (str, len, &tab->awk->prmfns.mmgr);
 	if (str_dup == ASE_NULL) return (ase_size_t)-1;
 
 	if (index >= tab->capa) 
@@ -194,7 +194,7 @@ ase_size_t ase_awk_tab_find (
 
 	for (i = index; i < tab->size; i++) 
 	{
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}
@@ -212,7 +212,7 @@ ase_size_t ase_awk_tab_rfind (
 
 	for (i = index + 1; i-- > 0; ) 
 	{
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}
@@ -230,7 +230,7 @@ ase_size_t ase_awk_tab_rrfind (
 
 	for (i = tab->size - index; i-- > 0; ) 
 	{
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			tab->buf[i].name, tab->buf[i].name_len, 
 			str, len) == 0) return i;
 	}

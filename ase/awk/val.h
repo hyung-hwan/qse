@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.61 2007-02-18 11:12:18 bacon Exp $
+ * $Id: val.h,v 1.62 2007-02-23 08:17:51 bacon Exp $
  *
  * {License}
  */
@@ -11,7 +11,7 @@
 #error Include <ase/awk/awk.h> first
 #endif
 
-#include <ase/awk/str.h>
+#include <ase/cmn/str.h>
 #include <ase/awk/map.h>
 
 enum ase_awk_val_type_t
@@ -189,7 +189,7 @@ ase_bool_t ase_awk_valtobool (
 
 ase_char_t* ase_awk_valtostr (
 	ase_awk_run_t* run, ase_awk_val_t* val, 
-	int opt, ase_awk_str_t* buf, ase_size_t* len);
+	int opt, ase_str_t* buf, ase_size_t* len);
 
 int ase_awk_valtonum (
 	ase_awk_run_t* run, ase_awk_val_t* v, ase_long_t* l, ase_real_t* r);

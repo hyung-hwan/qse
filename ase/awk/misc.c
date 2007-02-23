@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.50 2007-02-03 10:47:41 bacon Exp $
+ * $Id: misc.c,v 1.51 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -14,35 +14,6 @@ void* ase_awk_malloc (ase_awk_t* awk, ase_size_t size)
 void ase_awk_free (ase_awk_t* awk, void* ptr)
 {
 	ASE_AWK_FREE (awk, ptr);
-}
-
-void* ase_awk_memcpy (void* dst, const void* src, ase_size_t n)
-{
-	void* p = dst;
-	void* e = (ase_byte_t*)dst + n;
-
-	while (dst < e) 
-	{
-		*(ase_byte_t*)dst = *(ase_byte_t*)src;
-		dst = (ase_byte_t*)dst + 1;
-		src = (ase_byte_t*)src + 1;
-	}
-
-	return p;
-}
-
-void* ase_awk_memset (void* dst, int val, ase_size_t n)
-{
-	void* p = dst;
-	void* e = (ase_byte_t*)p + n;
-
-	while (p < e) 
-	{
-		*(ase_byte_t*)p = (ase_byte_t)val;
-		p = (ase_byte_t*)p + 1;
-	}
-
-	return dst;
 }
 
 ase_long_t ase_awk_strxtolong (
@@ -547,7 +518,7 @@ ase_size_t ase_awk_longtostr (
 	ase_size_t len, ret, i;
 	ase_size_t prefix_len;
 
-	prefix_len = (prefix != ASE_NULL)? ase_awk_strlen(prefix): 0;
+	prefix_len = (prefix != ASE_NULL)? ase_strlen(prefix): 0;
 
 	t = value;
 	if (t == 0)
@@ -617,182 +588,13 @@ ase_size_t ase_awk_longtostr (
 	return ret;
 }
 
-ase_char_t* ase_awk_strdup (ase_awk_t* awk, const ase_char_t* str)
-{
-	ase_char_t* tmp;
-
-	tmp = (ase_char_t*) ASE_AWK_MALLOC (
-		awk, (ase_awk_strlen(str) + 1) * ASE_SIZEOF(ase_char_t));
-	if (tmp == ASE_NULL) return ASE_NULL;
-
-	ase_awk_strcpy (tmp, str);
-	return tmp;
-}
-
-ase_char_t* ase_awk_strxdup (
-	ase_awk_t* awk, const ase_char_t* str, ase_size_t len)
-{
-	ase_char_t* tmp;
-
-	tmp = (ase_char_t*) ASE_AWK_MALLOC (
-		awk, (len + 1) * ASE_SIZEOF(ase_char_t));
-	if (tmp == ASE_NULL) return ASE_NULL;
-
-	ase_awk_strncpy (tmp, str, len);
-	return tmp;
-}
-
-ase_char_t* ase_awk_strxdup2 (
-	ase_awk_t* awk,
-	const ase_char_t* str1, ase_size_t len1,
-	const ase_char_t* str2, ase_size_t len2)
-{
-	ase_char_t* tmp;
-
-	tmp = (ase_char_t*) ASE_AWK_MALLOC (
-		awk, (len1 + len2 + 1) * ASE_SIZEOF(ase_char_t));
-	if (tmp == ASE_NULL) return ASE_NULL;
-
-	ase_awk_strncpy (tmp, str1, len1);
-	ase_awk_strncpy (tmp + len1, str2, len2);
-	return tmp;
-}
-
-ase_size_t ase_awk_strlen (const ase_char_t* str)
-{
-	const ase_char_t* p = str;
-	while (*p != ASE_T('\0')) p++;
-	return p - str;
-}
-
-ase_size_t ase_awk_strcpy (ase_char_t* buf, const ase_char_t* str)
-{
-	ase_char_t* org = buf;
-	while ((*buf++ = *str++) != ASE_T('\0'));
-	return buf - org - 1;
-}
-
-ase_size_t ase_awk_strxcpy (
-	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str)
-{
-	ase_char_t* p, * p2;
-
-	p = buf; p2 = buf + bsz - 1;
-
-	while (p < p2) 
-	{
-		if (*str == ASE_T('\0')) break;
-		*p++ = *str++;
-	}
-
-	if (bsz > 0) *p = ASE_T('\0');
-	return p - buf;
-}
-
-ase_size_t ase_awk_strncpy (
-	ase_char_t* buf, const ase_char_t* str, ase_size_t len)
-{
-	const ase_char_t* end = str + len;
-	while (str < end) *buf++ = *str++;
-	*buf = ASE_T('\0');
-	return len;
-}
-
-int ase_awk_strcmp (const ase_char_t* s1, const ase_char_t* s2)
-{
-	while (*s1 == *s2) 
-	{
-		if (*s1 == ASE_C('\0')) return 0;
-		s1++, s2++;
-	}
-
-	return (*s1 > *s2)? 1: -1;
-}
-
-int ase_awk_strxncmp (
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2)
-{
-	ase_char_t c1, c2;
-	const ase_char_t* end1 = s1 + len1;
-	const ase_char_t* end2 = s2 + len2;
-
-	while (s1 < end1)
-	{
-		c1 = *s1;
-		if (s2 < end2) 
-		{
-			c2 = *s2;
-			if (c1 > c2) return 1;
-			if (c1 < c2) return -1;
-		}
-		else return 1;
-		s1++; s2++;
-	}
-
-	return (s2 < end2)? -1: 0;
-}
-
-int ase_awk_strxncasecmp (
-	ase_awk_t* awk,
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2)
-{
-	ase_char_t c1, c2;
-	const ase_char_t* end1 = s1 + len1;
-	const ase_char_t* end2 = s2 + len2;
-
-	while (s1 < end1)
-	{
-		c1 = ASE_AWK_TOUPPER (awk, *s1); 
-		if (s2 < end2) 
-		{
-			c2 = ASE_AWK_TOUPPER (awk, *s2);
-			if (c1 > c2) return 1;
-			if (c1 < c2) return -1;
-		}
-		else return 1;
-		s1++; s2++;
-	}
-
-	return (s2 < end2)? -1: 0;
-}
-
-ase_char_t* ase_awk_strxnstr (
-	const ase_char_t* str, ase_size_t strsz, 
-	const ase_char_t* sub, ase_size_t subsz)
-{
-	const ase_char_t* end, * subp;
-
-	if (subsz == 0) return (ase_char_t*)str;
-	if (strsz < subsz) return ASE_NULL;
-	
-	end = str + strsz - subsz;
-	subp = sub + subsz;
-
-	while (str <= end) {
-		const ase_char_t* x = str;
-		const ase_char_t* y = sub;
-
-		while (ase_true) {
-			if (y >= subp) return (ase_char_t*)str;
-			if (*x != *y) break;
-			x++; y++;
-		}	
-
-		str++;
-	}
-		
-	return ASE_NULL;
-}
-
 ase_char_t* ase_awk_strtok (
 	ase_awk_run_t* run, const ase_char_t* s, 
 	const ase_char_t* delim, ase_char_t** tok, ase_size_t* tok_len)
 {
 	return ase_awk_strxntok (
-		run, s, ase_awk_strlen(s), 
-		delim, ase_awk_strlen(delim), tok, tok_len);
+		run, s, ase_strlen(s), 
+		delim, ase_strlen(delim), tok, tok_len);
 }
 
 ase_char_t* ase_awk_strxtok (
@@ -801,7 +603,7 @@ ase_char_t* ase_awk_strxtok (
 {
 	return ase_awk_strxntok (
 		run, s, len, 
-		delim, ase_awk_strlen(delim), tok, tok_len);
+		delim, ase_strlen(delim), tok, tok_len);
 }
 
 ase_char_t* ase_awk_strntok (
@@ -810,7 +612,7 @@ ase_char_t* ase_awk_strntok (
 	ase_char_t** tok, ase_size_t* tok_len)
 {
 	return ase_awk_strxntok (
-		run, s, ase_awk_strlen(s), 
+		run, s, ase_strlen(s), 
 		delim, delim_len, tok, tok_len);
 }
 
@@ -1107,18 +909,18 @@ int ase_awk_assertfail (ase_awk_t* awk,
 {
 	if (desc == ASE_NULL)
 	{
-		awk->prmfns.aprintf (
+		awk->prmfns.misc.aprintf (
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n"),
 			file, line, expr);
 	}
 	else
 	{
-		awk->prmfns.aprintf (
+		awk->prmfns.misc.aprintf (
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n\nDESCRIPTION:\n%s\n"),
 			file, line, expr, desc);
 
 	}
-	awk->prmfns.abort (awk->prmfns.custom_data);
+	awk->prmfns.misc.abort (awk->prmfns.misc.custom_data);
 	return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.109 2007-02-18 12:08:05 bacon Exp $
+ * $Id: val.c,v 1.110 2007-02-23 08:17:51 bacon Exp $
  *
  * {License}
  */
@@ -8,13 +8,13 @@
 
 static ase_char_t* __str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
-	int opt, ase_awk_str_t* buf, ase_size_t* len);
+	int opt, ase_str_t* buf, ase_size_t* len);
 static ase_char_t* __val_int_to_str (
 	ase_awk_run_t* run, ase_awk_val_int_t* v,
-	int opt, ase_awk_str_t* buf, ase_size_t* len);
+	int opt, ase_str_t* buf, ase_size_t* len);
 static ase_char_t* __val_real_to_str (
 	ase_awk_run_t* run, ase_awk_val_real_t* v,
-	int opt, ase_awk_str_t* buf, ase_size_t* len);
+	int opt, ase_str_t* buf, ase_size_t* len);
 
 static ase_awk_val_nil_t __awk_nil = { ASE_AWK_VAL_NIL, 0 };
 static ase_awk_val_str_t __awk_zls = { ASE_AWK_VAL_STR, 0, ASE_T(""), 0 };
@@ -108,7 +108,7 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 
 ase_awk_val_t* ase_awk_makestrval0 (ase_awk_run_t* run, const ase_char_t* str)
 {
-	return ase_awk_makestrval (run, str, ase_awk_strlen(str));
+	return ase_awk_makestrval (run, str, ase_strlen(str));
 }
 
 ase_awk_val_t* ase_awk_makestrval (
@@ -123,7 +123,7 @@ ase_awk_val_t* ase_awk_makestrval (
 	val->type = ASE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len;
-	val->buf = ase_awk_strxdup (run->awk, str, len);
+	val->buf = ase_strxdup (str, len, &run->awk->prmfns.mmgr);
 	if (val->buf == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -164,7 +164,7 @@ ase_awk_val_t* ase_awk_makestrval2 (
 	val->type = ASE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len1 + len2;
-	val->buf = ase_awk_strxdup2 (run->awk, str1, len1, str2, len2);
+	val->buf = ase_strxdup2 (str1, len1, str2, len2, &run->awk->prmfns.mmgr);
 	if (val->buf == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -187,7 +187,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	val->type = ASE_AWK_VAL_REX;
 	val->ref = 0;
 	val->len = len;
-	val->buf = ase_awk_strxdup (run->awk, buf, len);
+	val->buf = ase_strxdup (buf, len, &run->awk->prmfns.mmgr);
 	if (val->buf == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -202,7 +202,7 @@ ase_awk_val_t* ase_awk_makerexval (
 		return ASE_NULL;
 	}
 
-	ASE_AWK_MEMCPY (run->awk, val->code, code, ASE_AWK_REX_LEN(code));
+	ase_memcpy (val->code, code, ASE_AWK_REX_LEN(code));
 	return (ase_awk_val_t*)val;
 }
 
@@ -341,9 +341,9 @@ void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 
 /*
-run->awk->prmfns.dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
+run->awk->prmfns.misc.dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
 ase_awk_dprintval (run, val);
-run->awk->prmfns.dprintf (ASE_T("\n"));
+run->awk->prmfns.misc.dprintf (ASE_T("\n"));
 */
 
 	val->ref++;
@@ -354,9 +354,9 @@ void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 
 /*
-run->awk->prmfns.dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
+run->awk->prmfns.misc.dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
 ase_awk_dprintval (run, val);
-run->awk->prmfns.dprintf (ASE_T("\n"));
+run->awk->prmfns.misc.dprintf (ASE_T("\n"));
 */
 
 	ASE_AWK_ASSERTX (run->awk, val->ref > 0, 
@@ -413,7 +413,7 @@ ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
 
 ase_char_t* ase_awk_valtostr (
 	ase_awk_run_t* run, ase_awk_val_t* v,
-	int opt, ase_awk_str_t* buf, ase_size_t* len)
+	int opt, ase_str_t* buf, ase_size_t* len)
 {
 	if (v->type == ASE_AWK_VAL_NIL)
 	{
@@ -464,7 +464,7 @@ ase_char_t* ase_awk_valtostr (
 	}
 
 #ifdef _DEBUG
-	run->awk->prmfns.dprintf (
+	run->awk->prmfns.misc.dprintf (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr\n"), 
 		v->type);
 #endif
@@ -475,12 +475,12 @@ ase_char_t* ase_awk_valtostr (
 
 static ase_char_t* __str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
-	int opt, ase_awk_str_t* buf, ase_size_t* len)
+	int opt, ase_str_t* buf, ase_size_t* len)
 {
 	if (buf == ASE_NULL)
 	{
 		ase_char_t* tmp;
-		tmp = ase_awk_strxdup (run->awk, str, str_len);
+		tmp = ase_strxdup (str, str_len, &run->awk->prmfns.mmgr);
 		if (tmp == ASE_NULL) 
 		{
 			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
@@ -494,22 +494,22 @@ static ase_char_t* __str_to_str (
 	{
 		ase_size_t n;
 
-		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_awk_str_clear (buf);
-		n = ase_awk_str_ncat (buf, str, str_len);
+		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
+		n = ase_str_ncat (buf, str, str_len);
 		if (n == (ase_size_t)-1)
 		{
 			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return ASE_NULL;
 		}
 
-		if (len != ASE_NULL) *len = ASE_AWK_STR_LEN(buf);
-		return ASE_AWK_STR_BUF(buf);
+		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
+		return ASE_STR_BUF(buf);
 	}
 }
 
 static ase_char_t* __val_int_to_str (
 	ase_awk_run_t* run, ase_awk_val_int_t* v,
-	int opt, ase_awk_str_t* buf, ase_size_t* len)
+	int opt, ase_str_t* buf, ase_size_t* len)
 {
 	ase_char_t* tmp;
 	ase_long_t t;
@@ -537,16 +537,16 @@ static ase_char_t* __val_int_to_str (
 		}
 		else
 		{
-			if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_awk_str_clear (buf);
-			if (ase_awk_str_cat (buf, ASE_T("0")) == (ase_size_t)-1)
+			if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
+			if (ase_str_cat (buf, ASE_T("0")) == (ase_size_t)-1)
 			{
 				ase_awk_setrunerror (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return ASE_NULL;
 			}
 
-			if (len != ASE_NULL) *len = ASE_AWK_STR_LEN(buf);
-			return ASE_AWK_STR_BUF(buf);
+			if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
+			return ASE_STR_BUF(buf);
 		}
 	}
 
@@ -570,12 +570,12 @@ static ase_char_t* __val_int_to_str (
 	else
 	{
 		/* clear the buffer */
-		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_awk_str_clear (buf);
+		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
 
-		tmp = ASE_AWK_STR_BUF(buf) + ASE_AWK_STR_LEN(buf);
+		tmp = ASE_STR_BUF(buf) + ASE_STR_LEN(buf);
 
 		/* extend the buffer */
-		if (ase_awk_str_nccat (
+		if (ase_str_nccat (
 			buf, ASE_T(' '), l) == (ase_size_t)-1)
 		{
 			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
@@ -596,8 +596,8 @@ static ase_char_t* __val_int_to_str (
 
 	if (buf != ASE_NULL) 
 	{
-		tmp = ASE_AWK_STR_BUF(buf);
-		if (len != ASE_NULL) *len = ASE_AWK_STR_LEN(buf);
+		tmp = ASE_STR_BUF(buf);
+		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
 	}
 
 	return tmp;
@@ -605,11 +605,11 @@ static ase_char_t* __val_int_to_str (
 
 static ase_char_t* __val_real_to_str (
 	ase_awk_run_t* run, ase_awk_val_real_t* v,
-	int opt, ase_awk_str_t* buf, ase_size_t* len)
+	int opt, ase_str_t* buf, ase_size_t* len)
 {
 	ase_char_t* tmp;
 	ase_size_t tmp_len;
-	ase_awk_str_t out, fbu;
+	ase_str_t out, fbu;
 
 	if (opt & ASE_AWK_VALTOSTR_PRINT)
 	{
@@ -622,15 +622,15 @@ static ase_char_t* __val_real_to_str (
 		tmp_len = run->global.convfmt.len;
 	}
 
-	if (ase_awk_str_open (&out, 256, run->awk) == ASE_NULL)
+	if (ase_str_open (&out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 		return ASE_NULL;
 	}
 
-	if (ase_awk_str_open (&fbu, 256, run->awk) == ASE_NULL)
+	if (ase_str_open (&fbu, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
-		ase_awk_str_close (&out);
+		ase_str_close (&out);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 		return ASE_NULL;
 	}
@@ -639,34 +639,34 @@ static ase_char_t* __val_real_to_str (
 		(ase_size_t)-1, (ase_awk_nde_t*)v, &tmp_len);
 	if (tmp == ASE_NULL) 
 	{
-		ase_awk_str_close (&fbu);
-		ase_awk_str_close (&out);
+		ase_str_close (&fbu);
+		ase_str_close (&out);
 		return ASE_NULL;
 	}
 
 	if (buf == ASE_NULL) 
 	{
-		ase_awk_str_close (&fbu);
-		ase_awk_str_forfeit (&out);
+		ase_str_close (&fbu);
+		ase_str_forfeit (&out);
 		if (len != ASE_NULL) *len = tmp_len;
 	}
 	else
 	{
-		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_awk_str_clear (buf);
+		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
 
-		if (ase_awk_str_ncat (buf, tmp, tmp_len) == (ase_size_t)-1)
+		if (ase_str_ncat (buf, tmp, tmp_len) == (ase_size_t)-1)
 		{
-			ase_awk_str_close (&fbu);
-			ase_awk_str_close (&out);
+			ase_str_close (&fbu);
+			ase_str_close (&out);
 			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return ASE_NULL;
 		}
 
-		tmp = ASE_AWK_STR_BUF(buf);
-		if (len != ASE_NULL) *len = ASE_AWK_STR_LEN(buf);
+		tmp = ASE_STR_BUF(buf);
+		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
 
-		ase_awk_str_close (&fbu);
-		ase_awk_str_close (&out);
+		ase_str_close (&fbu);
+		ase_str_close (&out);
 	}
 
 	return tmp;
@@ -721,7 +721,7 @@ int ase_awk_valtonum (
 	}
 
 #ifdef _DEBUG
-	run->awk->prmfns.dprintf (
+	run->awk->prmfns.misc.dprintf (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum\n"), 
 		v->type);
 #endif
@@ -750,7 +750,7 @@ int ase_awk_strtonum (
 
 }
 
-#define __DPRINTF run->awk->prmfns.dprintf
+#define __DPRINTF run->awk->prmfns.misc.dprintf
 
 static int __print_pair (ase_awk_pair_t* pair, void* arg)
 {

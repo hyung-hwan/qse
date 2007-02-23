@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.95 2007-02-07 14:08:07 bacon Exp $
+ * $Id: func.c,v 1.96 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -53,7 +53,7 @@ void* ase_awk_addbfn (
 
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 	{
-		awk->prmfns.sprintf (
+		awk->prmfns.misc.sprintf (
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("'%.*s' added already"), name_len, name);
 		ase_awk_seterror (awk, ASE_AWK_EEXIST, 0, awk->errmsg);
@@ -67,7 +67,7 @@ void* ase_awk_addbfn (
 		return ASE_NULL;
 	}
 
-	p->name.ptr = ase_awk_strxdup (awk, name, name_len);  
+	p->name.ptr = ase_strxdup (name, name_len, &awk->prmfns.mmgr);  
 	if (p->name.ptr == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, p);
@@ -82,7 +82,7 @@ void* ase_awk_addbfn (
 	if (arg_spec == ASE_NULL) p->arg.spec = ASE_NULL;
 	else
 	{
-		p->arg.spec = ase_awk_strdup (awk, arg_spec);
+		p->arg.spec = ase_strdup (arg_spec, &awk->prmfns.mmgr);
 		if (p->arg.spec == ASE_NULL)
 		{
 			ASE_AWK_FREE (awk, p->name.ptr);
@@ -105,7 +105,7 @@ int ase_awk_delbfn (ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 
 	for (p = awk->bfn.user; p != ASE_NULL; p = p->next)
 	{
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			p->name.ptr, p->name.len, name, name_len) == 0)
 		{
 			if (pp == ASE_NULL)
@@ -154,7 +154,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			p->name.ptr, p->name.len, name, len) == 0) return p;
 	}
 
@@ -163,7 +163,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			p->name.ptr, p->name.len, name, len) == 0) return p;
 	}
 
@@ -410,7 +410,7 @@ static int __bfn_index (
 		}
 	}
 
-	ptr = ase_awk_strxnstr (str0, len0, str1, len1);
+	ptr = ase_strxnstr (str0, len0, str1, len1);
 	idx = (ptr == ASE_NULL)? -1: (ase_long_t)(ptr - str0);
 
 	if (ase_awk_getoption(run->awk) & ASE_AWK_STRBASEONE) idx = idx + 1;
@@ -880,7 +880,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	int opt, n;
 	const ase_char_t* cur_ptr, * mat_ptr;
 	ase_size_t cur_len, mat_len, i, m;
-	ase_awk_str_t new;
+	ase_str_t new;
 	ase_long_t sub_count;
 
 	nargs = ase_awk_getnargs (run);
@@ -944,8 +944,8 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	if (a2 == ASE_NULL)
 	{
 		/* is this correct? any needs to use inrec.d0? */
-		a2_ptr = ASE_AWK_STR_BUF(&run->inrec.line);
-		a2_len = ASE_AWK_STR_LEN(&run->inrec.line);
+		a2_ptr = ASE_STR_BUF(&run->inrec.line);
+		a2_len = ASE_STR_LEN(&run->inrec.line);
 	}
 	else if (((ase_awk_val_ref_t*)a2)->id == ASE_AWK_VAL_REF_POS)
 	{
@@ -954,8 +954,8 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		idx = (ase_size_t)((ase_awk_val_ref_t*)a2)->adr;
 		if (idx == 0)
 		{
-			a2_ptr = ASE_AWK_STR_BUF(&run->inrec.line);
-			a2_len = ASE_AWK_STR_LEN(&run->inrec.line);
+			a2_ptr = ASE_STR_BUF(&run->inrec.line);
+			a2_len = ASE_STR_LEN(&run->inrec.line);
 		}
 		else if (idx <= run->inrec.nflds)
 		{
@@ -998,7 +998,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		}
 	}
 
-	if (ase_awk_str_open (&new, a2_len, run->awk) == ASE_NULL)
+	if (ase_str_open (&new, a2_len, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
 		FREE_A_PTRS (run->awk);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -1010,7 +1010,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		rex = ase_awk_buildrex (run->awk, a0_ptr, a0_len, &run->errnum);
 		if (rex == ASE_NULL)
 		{
-			ase_awk_str_close (&new);
+			ase_str_close (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
@@ -1034,7 +1034,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		if (n == -1)
 		{
 			FREE_A0_REX (run->awk, rex);
-			ase_awk_str_close (&new);
+			ase_str_close (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
@@ -1042,22 +1042,22 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		if (n == 0) 
 		{ 
 			/* no more match found */
-			if (ase_awk_str_ncat (
+			if (ase_str_ncat (
 				&new, cur_ptr, cur_len) == (ase_size_t)-1)
 			{
 				FREE_A0_REX (run->awk, rex);
-				ase_awk_str_close (&new);
+				ase_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
 			break;
 		}
 
-		if (ase_awk_str_ncat (
+		if (ase_str_ncat (
 			&new, cur_ptr, mat_ptr - cur_ptr) == (ase_size_t)-1)
 		{
 			FREE_A0_REX (run->awk, rex);
-			ase_awk_str_close (&new);
+			ase_str_close (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
@@ -1068,22 +1068,22 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 			    a1_ptr[i] == ASE_T('\\') && 
 			    a1_ptr[i+1] == ASE_T('&'))
 			{
-				m = ase_awk_str_ccat (&new, ASE_T('&'));
+				m = ase_str_ccat (&new, ASE_T('&'));
 				i++;
 			}
 			else if (a1_ptr[i] == ASE_T('&'))
 			{
-				m = ase_awk_str_ncat (&new, mat_ptr, mat_len);
+				m = ase_str_ncat (&new, mat_ptr, mat_len);
 			}
 			else 
 			{
-				m = ase_awk_str_ccat (&new, a1_ptr[i]);
+				m = ase_str_ccat (&new, a1_ptr[i]);
 			}
 
 			if (m == (ase_size_t)-1)
 			{
 				FREE_A0_REX (run->awk, rex);
-				ase_awk_str_close (&new);
+				ase_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1101,9 +1101,9 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		if (a2 == ASE_NULL)
 		{
 			if (ase_awk_setrec (run, 0,
-				ASE_AWK_STR_BUF(&new), ASE_AWK_STR_LEN(&new)) == -1)
+				ASE_STR_BUF(&new), ASE_STR_LEN(&new)) == -1)
 			{
-				ase_awk_str_close (&new);
+				ase_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1114,11 +1114,11 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 
 			n = ase_awk_setrec (
 				run, (ase_size_t)((ase_awk_val_ref_t*)a2)->adr,
-				ASE_AWK_STR_BUF(&new), ASE_AWK_STR_LEN(&new));
+				ASE_STR_BUF(&new), ASE_STR_LEN(&new));
 
 			if (n == -1)
 			{
-				ase_awk_str_close (&new);
+				ase_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1126,10 +1126,10 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		else
 		{
 			v = ase_awk_makestrval (run,
-				ASE_AWK_STR_BUF(&new), ASE_AWK_STR_LEN(&new));
+				ASE_STR_BUF(&new), ASE_STR_LEN(&new));
 			if (v == ASE_NULL)
 			{
-				ase_awk_str_close (&new);
+				ase_str_close (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1140,7 +1140,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		}
 	}
 
-	ase_awk_str_close (&new);
+	ase_str_close (&new);
 	FREE_A_PTRS (run->awk);
 
 #undef FREE_A0_REX
@@ -1295,19 +1295,19 @@ static int __bfn_sprintf (
 	ase_awk_val_t* a0;
 	ase_char_t* str0, * ptr;
 	ase_size_t len0, len;
-	ase_awk_str_t out, fbu;
+	ase_str_t out, fbu;
 
 	nargs = ase_awk_getnargs (run);
 	ASE_AWK_ASSERT (run->awk, nargs > 0);
 
-	if (ase_awk_str_open (&out, 256, run->awk) == ASE_NULL)
+	if (ase_str_open (&out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
-	if (ase_awk_str_open (&fbu, 256, run->awk) == ASE_NULL)
+	if (ase_str_open (&fbu, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
-		ase_awk_str_close (&out);
+		ase_str_close (&out);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
@@ -1324,8 +1324,8 @@ static int __bfn_sprintf (
 			run, a0, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len0);
 		if (str0 == ASE_NULL) 
 		{
-			ase_awk_str_close (&fbu);
-			ase_awk_str_close (&out);
+			ase_str_close (&fbu);
+			ase_str_close (&out);
 			return -1;
 		}
 	}
@@ -1335,22 +1335,22 @@ static int __bfn_sprintf (
 	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str0);
 	if (ptr == ASE_NULL) 
 	{
-		ase_awk_str_close (&fbu);
-		ase_awk_str_close (&out);
+		ase_str_close (&fbu);
+		ase_str_close (&out);
 		return -1;
 	}
 	
 	a0 = ase_awk_makestrval_nodup (run, ptr, len);
 	if (a0 == ASE_NULL) 
 	{
-		ase_awk_str_close (&fbu);
-		ase_awk_str_close (&out);
+		ase_str_close (&fbu);
+		ase_str_close (&out);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
 
-	ase_awk_str_close (&fbu);
-	ase_awk_str_forfeit (&out);
+	ase_str_close (&fbu);
+	ase_str_forfeit (&out);
 	ase_awk_setretval (run, a0);
 	return 0;
 }

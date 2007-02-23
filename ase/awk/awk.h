@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.190 2007-02-18 11:12:18 bacon Exp $
+ * $Id: awk.h,v 1.191 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -22,14 +22,6 @@ typedef struct ase_awk_runios_t ase_awk_runios_t;
 typedef struct ase_awk_runcbs_t ase_awk_runcbs_t;
 typedef struct ase_awk_runarg_t ase_awk_runarg_t;
 
-typedef void* (*ase_awk_malloc_t)  (ase_size_t n, void* custom_data); 
-typedef void* (*ase_awk_realloc_t) (void* ptr, ase_size_t n, void* custom_data);
-typedef void  (*ase_awk_free_t)    (void* ptr, void* custom_data); 
-typedef void* (*ase_awk_memcpy_t)  (void* dst, const void* src, ase_size_t n);
-typedef void* (*ase_awk_memset_t)  (void* dst, int val, ase_size_t n);
-
-typedef ase_bool_t (*ase_awk_isctype_t) (ase_cint_t c);
-typedef ase_cint_t (*ase_awk_toctype_t) (ase_cint_t c);
 typedef ase_real_t (*ase_awk_pow_t) (ase_real_t x, ase_real_t y);
 
 typedef int (*ase_awk_sprintf_t) (
@@ -73,41 +65,25 @@ struct ase_awk_extio_t
 
 struct ase_awk_prmfns_t
 {
-	/* memory allocation/deallocation */
-	ase_awk_malloc_t  malloc;      /* required */
-	ase_awk_realloc_t realloc;     /* optional */
-	ase_awk_free_t    free;        /* required */
-	ase_awk_memcpy_t  memcpy;      /* optional */
-	ase_awk_memset_t  memset;      /* optional */
+	ase_mmgr_t mmgr;
+	ase_ccls_t ccls;
 
-	/* character classes */
-	ase_awk_isctype_t is_upper;    /* required */
-	ase_awk_isctype_t is_lower;    /* required */
-	ase_awk_isctype_t is_alpha;    /* required */
-	ase_awk_isctype_t is_digit;    /* required */
-	ase_awk_isctype_t is_xdigit;   /* required */
-	ase_awk_isctype_t is_alnum;    /* required */
-	ase_awk_isctype_t is_space;    /* required */
-	ase_awk_isctype_t is_print;    /* required */
-	ase_awk_isctype_t is_graph;    /* required */
-	ase_awk_isctype_t is_cntrl;    /* required */
-	ase_awk_isctype_t is_punct;    /* required */
-	ase_awk_toctype_t to_upper;    /* required */
-	ase_awk_toctype_t to_lower;    /* required */
+	struct
+	{
+		/* utilities */
+		ase_awk_pow_t     pow;         /* required */
+		ase_awk_sprintf_t sprintf;     /* required */
+		ase_awk_aprintf_t aprintf;     /* required in the debug mode */
+		ase_awk_dprintf_t dprintf;     /* required in the debug mode */
+		ase_awk_abort_t   abort;       /* required in the debug mode */
 
-	/* utilities */
-	ase_awk_pow_t     pow;         /* required */
-	ase_awk_sprintf_t sprintf;     /* required */
-	ase_awk_aprintf_t aprintf;     /* required in the debug mode */
-	ase_awk_dprintf_t dprintf;     /* required in the debug mode */
-	ase_awk_abort_t   abort;       /* required in the debug mode */
+		/* thread lock */
+		ase_awk_lock_t    lock;        /* required if multi-threaded */
+		ase_awk_lock_t    unlock;      /* required if multi-threaded */
 
-	/* thread lock */
-	ase_awk_lock_t    lock;        /* required if multi-threaded */
-	ase_awk_lock_t    unlock;      /* required if multi-threaded */
-
-	/* user-defined data passed to selected system functions */
-	void*             custom_data; /* optional */
+		/* user-defined data passed to selected system functions */
+		void*             custom_data; /* optional */
+	} misc;
 };
 
 struct ase_awk_srcios_t
@@ -520,37 +496,6 @@ ase_real_t ase_awk_strxtoreal (
 ase_size_t ase_awk_longtostr (
 	ase_long_t value, int radix, const ase_char_t* prefix,
 	ase_char_t* buf, ase_size_t size);
-
-/* string functions exported by awk.h */
-ase_char_t* ase_awk_strdup (
-	ase_awk_t* awk, const ase_char_t* str);
-ase_char_t* ase_awk_strxdup (
-	ase_awk_t* awk, const ase_char_t* str, ase_size_t len);
-ase_char_t* ase_awk_strxdup2 (
-	ase_awk_t* awk,
-	const ase_char_t* str1, ase_size_t len1,
-	const ase_char_t* str2, ase_size_t len2);
-
-ase_size_t ase_awk_strlen (const ase_char_t* str);
-ase_size_t ase_awk_strcpy (ase_char_t* buf, const ase_char_t* str);
-ase_size_t ase_awk_strxcpy (
-	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str);
-ase_size_t ase_awk_strncpy (
-	ase_char_t* buf, const ase_char_t* str, ase_size_t len);
-int ase_awk_strcmp (const ase_char_t* s1, const ase_char_t* s2);
-
-int ase_awk_strxncmp (
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2);
-
-int ase_awk_strxncasecmp (
-	ase_awk_t* awk,
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2);
-
-ase_char_t* ase_awk_strxnstr (
-	const ase_char_t* str, ase_size_t strsz, 
-	const ase_char_t* sub, ase_size_t subsz);
 
 /* abort function for assertion. use ASE_AWK_ASSERT instead */
 int ase_awk_assertfail (ase_awk_t* awk, 

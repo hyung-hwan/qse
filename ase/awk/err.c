@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.73 2007-02-11 04:44:39 bacon Exp $
+ * $Id: err.c,v 1.74 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -55,7 +55,7 @@ void ase_awk_seterror (
 	if (errmsg == ASE_NULL) awk->errmsg[0] = ASE_T('\0');
 	else if (awk->errmsg != errmsg)
 	{
-		ase_awk_strxcpy (
+		ase_strxcpy (
 			awk->errmsg, ASE_COUNTOF(awk->errmsg), errmsg);
 	}
 }
