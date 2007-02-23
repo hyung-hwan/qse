@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.2 2007-02-22 14:46:43 bacon Exp $
+ * $Id: str.c,v 1.3 2007-02-23 06:31:06 bacon Exp $
  *
  * {License}
  */
@@ -124,12 +124,12 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 		else
 		{
 			tmp = (ase_char_t*) ASE_MALLOC (
-				str->mmgr, ASE_SIZEOF(ase_char_t) * (capa + 1));
+				str->mmgr, ASE_SIZEOF(ase_char_t)*(capa+1));
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 			if (str->buf != ASE_NULL)
 			{
 				ASE_MEMCPY (str->mmgr, tmp, str->buf, 
-					ASE_SIZEOF(ase_char_t) * (str->capa + 1));
+					ASE_SIZEOF(ase_char_t)*(str->capa+1));
 				ASE_FREE (str->mmgr, str->buf);
 			}
 		}

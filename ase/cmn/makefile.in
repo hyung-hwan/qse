@@ -1,0 +1,25 @@
+OUT = asecmn
+
+C_SRCS = str.c
+C_OBJS = $(C_SRCS:.c=.o)
+
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+
+all: lib 
+
+lib: $(C_OBJS)
+	$(AR) cr lib$(OUT).a $(C_OBJS)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
+
+clean:
+	rm -rf $(OBJS) lib$(OUT).a *.o
+
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
