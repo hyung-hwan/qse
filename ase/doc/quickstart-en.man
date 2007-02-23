@@ -31,3 +31,12 @@ SCO OpenServer Release 5.0.7 (SCO_SV 3.2 5.0.7)
 
 cc
 CC=cc CFLAGS="-Xc -a ansi -O2" ./configure
+
+=== Solaris ===
+
+64 bit gcc
+
+CC=gcc CFLAGS="-Wall -O2 -m64" LDFLAGS="-m64" ./configure
+
+32 bit gcc
+CC=gcc CFLAGS="-Wall -O2" ./configure
