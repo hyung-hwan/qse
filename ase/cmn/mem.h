@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.1 2007-02-23 07:13:58 bacon Exp $
+ * $Id: mem.h,v 1.2 2007-02-23 08:17:51 bacon Exp $
  *
  * {License}
  */
@@ -16,7 +16,7 @@ extern "C" {
 
 void* ase_memcpy (void* dst, const void* src, ase_size_t n);
 void* ase_memset (void* dst, int val, ase_size_t n);
-int ase_memcmp (const void* s1, const void* s2, ase_size_t n);
+int   ase_memcmp (const void* s1, const void* s2, ase_size_t n);
 
 #ifdef __cplusplus
 }

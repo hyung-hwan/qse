@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.174 2007-02-21 04:09:28 bacon Exp $
+ * $Id: awk.c,v 1.175 2007-02-23 08:17:51 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -189,7 +189,7 @@ static ase_ssize_t awk_extio_pipe (
 				if (ferror((FILE*)epa->handle)) return -1;
 				return 0;
 			}
-			return ase_awk_strlen(data);
+			return ase_strlen(data);
 		}
 
 		case ASE_AWK_IO_WRITE:
@@ -268,7 +268,7 @@ static ase_ssize_t awk_extio_file (
 				if (ferror((FILE*)epa->handle)) return -1;
 				return 0;
 			}
-			return ase_awk_strlen(data);
+			return ase_strlen(data);
 		}
 
 		case ASE_AWK_IO_WRITE:
@@ -383,7 +383,7 @@ static ase_ssize_t awk_extio_console (
 			infile_no++;	
 		}
 
-		return ase_awk_strlen(data);
+		return ase_strlen(data);
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
@@ -440,7 +440,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 			awk_dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
 			if (ase_awk_setfilename (
 				epa->run, infiles[infile_no], 
-				ase_awk_strlen(infiles[infile_no])) == -1)
+				ase_strlen(infiles[infile_no])) == -1)
 			{
 				fclose (fp);
 				return -1;
@@ -581,32 +581,32 @@ struct prmfns_data_t
 };
 #endif
 
-static void* awk_malloc (ase_size_t n, void* custom_data)
+static void* awk_malloc (ase_mmgr_t* mmgr, ase_size_t n)
 {
 #ifdef _WIN32
-	return HeapAlloc (((prmfns_data_t*)custom_data)->heap, 0, n);
+	return HeapAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, n);
 #else
 	return malloc (n);
 #endif
 }
 
-static void* awk_realloc (void* ptr, ase_size_t n, void* custom_data)
+static void* awk_realloc (ase_mmgr_t* mmgr, void* ptr, ase_size_t n)
 {
 #ifdef _WIN32
 	/* HeapReAlloc behaves differently from realloc */
 	if (ptr == NULL)
-		return HeapAlloc (((prmfns_data_t*)custom_data)->heap, 0, n);
+		return HeapAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, n);
 	else
-		return HeapReAlloc (((prmfns_data_t*)custom_data)->heap, 0, ptr, n);
+		return HeapReAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, ptr, n);
 #else
 	return realloc (ptr, n);
 #endif
 }
 
-static void awk_free (void* ptr, void* custom_data)
+static void awk_free (ase_mmgr_t* mmgr, void* ptr)
 {
 #ifdef _WIN32
-	HeapFree (((prmfns_data_t*)custom_data)->heap, 0, ptr);
+	HeapFree (((prmfns_data_t*)mmgr->custom_data)->heap, 0, ptr);
 #else
 	free (ptr);
 #endif
@@ -668,20 +668,20 @@ static int awk_main (int argc, ase_char_t* argv[])
 	{
 		if (mode == 0)
 		{
-			if (ase_awk_strcmp(argv[i], ASE_T("-m")) == 0)
+			if (ase_strcmp(argv[i], ASE_T("-m")) == 0)
 			{
 				mfn = ASE_T("main");
 			}
-			else if (ase_awk_strcmp(argv[i], ASE_T("-d")) == 0)
+			else if (ase_strcmp(argv[i], ASE_T("-d")) == 0)
 			{
 				deparse = 1;
 			}
-			else if (ase_awk_strcmp(argv[i], ASE_T("-f")) == 0)
+			else if (ase_strcmp(argv[i], ASE_T("-f")) == 0)
 			{
 				/* specify source file */
 				mode = 1;
 			}
-			else if (ase_awk_strcmp(argv[i], ASE_T("-a")) == 0)
+			else if (ase_strcmp(argv[i], ASE_T("-a")) == 0)
 			{
 				/* specify arguments */
 				mode = 2;
@@ -734,7 +734,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 			}
 
 			runarg[runarg_count].ptr = argv[i];
-			runarg[runarg_count].len = ase_awk_strlen(argv[i]);
+			runarg[runarg_count].len = ase_strlen(argv[i]);
 			runarg_count++;
 			mode = 0;
 		}
@@ -752,33 +752,31 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	memset (&prmfns, 0, ASE_SIZEOF(prmfns));
 
-	prmfns.malloc  = awk_malloc;
-	prmfns.realloc = awk_realloc;
-	prmfns.free    = awk_free;
-	prmfns.memcpy  = awk_memcpy;
-	prmfns.memset  = awk_memset;
+	prmfns.mmgr.malloc  = awk_malloc;
+	prmfns.mmgr.realloc = awk_realloc;
+	prmfns.mmgr.free    = awk_free;
 
-	prmfns.is_upper  = (ase_awk_isctype_t)ase_isupper;
-	prmfns.is_lower  = (ase_awk_isctype_t)ase_islower;
-	prmfns.is_alpha  = (ase_awk_isctype_t)ase_isalpha;
-	prmfns.is_digit  = (ase_awk_isctype_t)ase_isdigit;
-	prmfns.is_xdigit = (ase_awk_isctype_t)ase_isxdigit;
-	prmfns.is_alnum  = (ase_awk_isctype_t)ase_isalnum;
-	prmfns.is_space  = (ase_awk_isctype_t)ase_isspace;
-	prmfns.is_print  = (ase_awk_isctype_t)ase_isprint;
-	prmfns.is_graph  = (ase_awk_isctype_t)ase_isgraph;
-	prmfns.is_cntrl  = (ase_awk_isctype_t)ase_iscntrl;
-	prmfns.is_punct  = (ase_awk_isctype_t)ase_ispunct;
-	prmfns.to_upper  = (ase_awk_toctype_t)ase_toupper;
-	prmfns.to_lower  = (ase_awk_toctype_t)ase_tolower;
+	prmfns.ccls.is_upper  = ase_isupper;
+	prmfns.ccls.is_lower  = ase_islower;
+	prmfns.ccls.is_alpha  = ase_isalpha;
+	prmfns.ccls.is_digit  = ase_isdigit;
+	prmfns.ccls.is_xdigit = ase_isxdigit;
+	prmfns.ccls.is_alnum  = ase_isalnum;
+	prmfns.ccls.is_space  = ase_isspace;
+	prmfns.ccls.is_print  = ase_isprint;
+	prmfns.ccls.is_graph  = ase_isgraph;
+	prmfns.ccls.is_cntrl  = ase_iscntrl;
+	prmfns.ccls.is_punct  = ase_ispunct;
+	prmfns.ccls.to_upper  = ase_toupper;
+	prmfns.ccls.to_lower  = ase_tolower;
 
-	prmfns.pow     = awk_pow;
-	prmfns.sprintf = ase_sprintf;
-	prmfns.aprintf = awk_aprintf;
-	prmfns.dprintf = awk_dprintf;
-	prmfns.abort   = awk_abort;
-	prmfns.lock    = NULL;
-	prmfns.unlock  = NULL;
+	prmfns.misc.pow     = awk_pow;
+	prmfns.misc.sprintf = ase_sprintf;
+	prmfns.misc.aprintf = awk_aprintf;
+	prmfns.misc.dprintf = awk_dprintf;
+	prmfns.misc.abort   = awk_abort;
+	prmfns.misc.lock    = NULL;
+	prmfns.misc.unlock  = NULL;
 
 #ifdef _WIN32
 	prmfns_data.heap = HeapCreate (0, 1000000, 1000000);
@@ -788,7 +786,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	prmfns.custom_data = &prmfns_data;
+	prmfns.mmgr.custom_data = &prmfns_data;
 #endif
 
 	if ((awk = ase_awk_open(&prmfns, ASE_NULL, &errnum)) == ASE_NULL) 

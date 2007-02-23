@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.71 2007-02-23 06:43:30 bacon Exp $
+ * $Id: types.h,v 1.72 2007-02-23 08:17:48 bacon Exp $
  *
  * {License}
  */
@@ -238,10 +238,6 @@ typedef void* (*ase_malloc_t)  (ase_mmgr_t* mmgr, ase_size_t n);
 typedef void* (*ase_realloc_t) (ase_mmgr_t* mmgr, void* ptr, ase_size_t n);
 typedef void  (*ase_free_t)    (ase_mmgr_t* mmgr, void* ptr);
 
-typedef void* (*ase_memcpy_t)  (ase_mmgr_t* mmgr, void* dst, const void* src, ase_size_t n);
-typedef void* (*ase_memset_t)  (ase_mmgr_t* mmgr, void* dst, int val, ase_size_t n);
-typedef void* (*ase_memcmp_t)  (ase_mmgr_t* mmgr, const void* m1, const void* m2, ase_size_t n);
-
 typedef ase_bool_t (*ase_isccls_t) (ase_ccls_t* ccls, ase_cint_t c);
 typedef ase_cint_t (*ase_toccls_t) (ase_ccls_t* ccls, ase_cint_t c);
 
@@ -256,9 +252,6 @@ struct ase_mmgr_t
 	ase_malloc_t  malloc;
 	ase_realloc_t realloc;
 	ase_free_t    free;
-	ase_memcpy_t  memcpy;
-	ase_memset_t  memset;
-	ase_memcmp_t  memcmp;
 	void*         custom_data;
 };
 

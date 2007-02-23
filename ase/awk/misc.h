@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h,v 1.11 2007-02-03 10:47:41 bacon Exp $
+ * $Id: misc.h,v 1.12 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -14,9 +14,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void* ase_awk_memcpy (void* dst, const void* src, ase_size_t n);
-void* ase_awk_memset (void* dst, int val, ase_size_t n);
 
 ase_char_t* ase_awk_strtok (
 	ase_awk_run_t* run, const ase_char_t* s, 

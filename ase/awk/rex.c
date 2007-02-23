@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.65 2007-02-18 16:45:18 bacon Exp $
+ * $Id: rex.c,v 1.66 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -163,15 +163,13 @@ static int __add_code (__builder_t* rex, void* data, ase_size_t len);
 static ase_size_t __get_code (__builder_t* builder, ase_size_t pos)
 {
 	ase_size_t code;
-	ASE_AWK_MEMCPY (builder->awk, 
-		&code, &builder->code.buf[pos], ASE_SIZEOF(code));
+	ase_memcpy (&code, &builder->code.buf[pos], ASE_SIZEOF(code));
 	return code;
 }
 
 static void __set_code (__builder_t* builder, ase_size_t pos, ase_size_t code)
 {
-	ASE_AWK_MEMCPY (builder->awk, 
-		&builder->code.buf[pos], &code, ASE_SIZEOF(code));
+	ase_memcpy (&builder->code.buf[pos], &code, ASE_SIZEOF(code));
 }
 
 #endif
@@ -970,7 +968,7 @@ static int __add_code (__builder_t* builder, void* data, ase_size_t len)
 		if (capa == 0) capa = DEF_CODE_CAPA;
 		while (len > capa - builder->code.size) { capa = capa * 2; }
 
-		if (builder->awk->prmfns.realloc != ASE_NULL)
+		if (builder->awk->prmfns.mmgr.realloc != ASE_NULL)
 		{
 			tmp = (ase_byte_t*) ASE_AWK_REALLOC (
 				builder->awk, builder->code.buf, capa);
@@ -991,8 +989,7 @@ static int __add_code (__builder_t* builder, void* data, ase_size_t len)
 
 			if (builder->code.buf != ASE_NULL)
 			{
-				ASE_AWK_MEMCPY (builder->awk, tmp, 
-					builder->code.buf, builder->code.capa);
+				ase_memcpy (tmp, builder->code.buf, builder->code.capa);
 				ASE_AWK_FREE (builder->awk, builder->code.buf);
 			}
 		}
@@ -1001,8 +998,7 @@ static int __add_code (__builder_t* builder, void* data, ase_size_t len)
 		builder->code.capa = capa;
 	}
 
-	ASE_AWK_MEMCPY (builder->awk, 
-		&builder->code.buf[builder->code.size], data, len);
+	ase_memcpy (&builder->code.buf[builder->code.size], data, len);
 	builder->code.size += len;
 
 	return 0;

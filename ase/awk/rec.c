@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.14 2007-02-03 10:47:41 bacon Exp $
+ * $Id: rec.c,v 1.15 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -20,8 +20,8 @@ int ase_awk_setrec (
 
 	if (idx == 0)
 	{
-		if (str == ASE_AWK_STR_BUF(&run->inrec.line) &&
-		    len == ASE_AWK_STR_LEN(&run->inrec.line))
+		if (str == ASE_STR_BUF(&run->inrec.line) &&
+		    len == ASE_STR_LEN(&run->inrec.line))
 		{
 			if (ase_awk_clrrec (run, ase_true) == -1) return -1;
 		}
@@ -29,7 +29,7 @@ int ase_awk_setrec (
 		{
 			if (ase_awk_clrrec (run, ase_false) == -1) return -1;
 
-			if (ase_awk_str_ncpy (&run->inrec.line, str, len) == (ase_size_t)-1)
+			if (ase_str_ncpy (&run->inrec.line, str, len) == (ase_size_t)-1)
 			{
 				ase_awk_clrrec (run, ase_false);
 				ase_awk_setrunerror (
@@ -72,8 +72,8 @@ int ase_awk_setrec (
 	
 		/* recompose $0 */
 		v = ase_awk_makestrval (run,
-			ASE_AWK_STR_BUF(&run->inrec.line), 
-			ASE_AWK_STR_LEN(&run->inrec.line));
+			ASE_STR_BUF(&run->inrec.line), 
+			ASE_STR_LEN(&run->inrec.line));
 		if (v == ASE_NULL)
 		{
 			ase_awk_clrrec (run, ase_false);
@@ -124,8 +124,8 @@ static int __split_record (ase_awk_run_t* run)
 	}
 
 	/* scan the input record to count the fields */
-	p = ASE_AWK_STR_BUF(&run->inrec.line);
-	len = ASE_AWK_STR_LEN(&run->inrec.line);
+	p = ASE_STR_BUF(&run->inrec.line);
+	len = ASE_STR_LEN(&run->inrec.line);
 
 	nflds = 0;
 	while (p != ASE_NULL)
@@ -160,8 +160,8 @@ static int __split_record (ase_awk_run_t* run)
 			(tok != ASE_NULL && tok_len > 0) || tok_len == 0);
 
 		nflds++;
-		len = ASE_AWK_STR_LEN(&run->inrec.line) - 
-			(p - ASE_AWK_STR_BUF(&run->inrec.line));
+		len = ASE_STR_LEN(&run->inrec.line) - 
+			(p - ASE_STR_BUF(&run->inrec.line));
 	}
 
 	/* allocate space */
@@ -183,8 +183,8 @@ static int __split_record (ase_awk_run_t* run)
 	}
 
 	/* scan again and split it */
-	p = ASE_AWK_STR_BUF(&run->inrec.line);
-	len = ASE_AWK_STR_LEN(&run->inrec.line);
+	p = ASE_STR_BUF(&run->inrec.line);
+	len = ASE_STR_LEN(&run->inrec.line);
 
 	while (p != ASE_NULL)
 	{
@@ -224,8 +224,8 @@ static int __split_record (ase_awk_run_t* run)
 		ase_awk_refupval (run, run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
 
-		len = ASE_AWK_STR_LEN(&run->inrec.line) - 
-			(p - ASE_AWK_STR_BUF(&run->inrec.line));
+		len = ASE_STR_LEN(&run->inrec.line) - 
+			(p - ASE_STR_BUF(&run->inrec.line));
 	}
 
 	if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
@@ -278,7 +278,7 @@ int ase_awk_clrrec (ase_awk_run_t* run, ase_bool_t skip_inrec_line)
 	}
 
 	ASE_AWK_ASSERT (run->awk, run->inrec.nflds == 0);
-	if (!skip_inrec_line) ase_awk_str_clear (&run->inrec.line);
+	if (!skip_inrec_line) ase_str_clear (&run->inrec.line);
 
 	return n;
 }
@@ -305,7 +305,7 @@ static int __recomp_record_fields (
 		 * number of fields that the current record can hold,
 		 * the field spaces are resized */
 
-		if (run->awk->prmfns.realloc != ASE_NULL)
+		if (run->awk->prmfns.mmgr.realloc != ASE_NULL)
 		{
 			tmp = ASE_AWK_REALLOC (
 				run->awk, run->inrec.flds, 
@@ -329,8 +329,8 @@ static int __recomp_record_fields (
 			}
 			if (run->inrec.flds != ASE_NULL)
 			{
-				ASE_AWK_MEMCPY (run->awk, tmp, run->inrec.flds, 
-					ASE_SIZEOF(*run->inrec.flds) * run->inrec.maxflds);
+				ase_memcpy (tmp, run->inrec.flds, 
+					ASE_SIZEOF(*run->inrec.flds)*run->inrec.maxflds);
 				ASE_AWK_FREE (run->awk, run->inrec.flds);
 			}
 		}
@@ -341,13 +341,13 @@ static int __recomp_record_fields (
 
 	lv = lv - 1; /* adjust the value to 0-based index */
 
-	ase_awk_str_clear (&run->inrec.line);
+	ase_str_clear (&run->inrec.line);
 
 	for (i = 0; i < max; i++)
 	{
 		if (i > 0)
 		{
-			if (ase_awk_str_ncat (
+			if (ase_str_ncat (
 				&run->inrec.line, 
 				run->global.ofs.ptr, 
 				run->global.ofs.len) == (ase_size_t)-1) 
@@ -363,11 +363,11 @@ static int __recomp_record_fields (
 			ase_awk_val_t* tmp;
 
 			run->inrec.flds[i].ptr = 
-				ASE_AWK_STR_BUF(&run->inrec.line) +
-				ASE_AWK_STR_LEN(&run->inrec.line);
+				ASE_STR_BUF(&run->inrec.line) +
+				ASE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = len;
 
-			if (ase_awk_str_ncat (
+			if (ase_str_ncat (
 				&run->inrec.line, str, len) == (ase_size_t)-1)
 			{
 				ase_awk_setrunerror (
@@ -393,11 +393,11 @@ static int __recomp_record_fields (
 		else if (i >= nflds)
 		{
 			run->inrec.flds[i].ptr = 
-				ASE_AWK_STR_BUF(&run->inrec.line) +
-				ASE_AWK_STR_LEN(&run->inrec.line);
+				ASE_STR_BUF(&run->inrec.line) +
+				ASE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = 0;
 
-			if (ase_awk_str_cat (
+			if (ase_str_cat (
 				&run->inrec.line, ASE_T("")) == (ase_size_t)-1)
 			{
 				ase_awk_setrunerror (
@@ -420,11 +420,11 @@ static int __recomp_record_fields (
 			tmp = (ase_awk_val_str_t*)run->inrec.flds[i].val;
 
 			run->inrec.flds[i].ptr = 
-				ASE_AWK_STR_BUF(&run->inrec.line) +
-				ASE_AWK_STR_LEN(&run->inrec.line);
+				ASE_STR_BUF(&run->inrec.line) +
+				ASE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = tmp->len;
 
-			if (ase_awk_str_ncat (&run->inrec.line, 
+			if (ase_str_ncat (&run->inrec.line, 
 				tmp->buf, tmp->len) == (ase_size_t)-1)
 			{
 				ase_awk_setrunerror (

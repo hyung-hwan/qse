@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.35 2007-02-03 10:47:41 bacon Exp $
+ * $Id: map.c,v 1.36 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -80,9 +80,6 @@ void ase_awk_map_clear (ase_awk_map_t* map)
 
 		map->buck[i] = ASE_NULL;
 	}
-
-	ASE_AWK_ASSERTX (map->awk, map->size == 0, 
-		"the map should not contain any pairs of a key and a value after it has been cleared");
 }
 
 ase_size_t ase_awk_map_getsize (ase_awk_map_t* map)
@@ -102,7 +99,7 @@ ase_awk_pair_t* ase_awk_map_get (
 	while (pair != ASE_NULL) 
 	{
 
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			pair->key, pair->key_len, 
 			key, key_len) == 0) return pair;
 
@@ -135,7 +132,7 @@ int ase_awk_map_putx (
 
 	while (pair != ASE_NULL) 
 	{
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			if (px != ASE_NULL)
@@ -155,7 +152,7 @@ int ase_awk_map_putx (
 	/*pair->key = key;*/ 
 
 	/* duplicate the key if it is new */
-	pair->key = ase_awk_strxdup (map->awk, key, key_len);
+	pair->key = ase_strxdup (key, key_len, &map->awk->prmfns.mmgr);
 	if (pair->key == ASE_NULL)
 	{
 		ASE_AWK_FREE (map->awk, pair);
@@ -183,7 +180,7 @@ ase_awk_pair_t* ase_awk_map_set (
 
 	while (pair != ASE_NULL) 
 	{
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			return ase_awk_map_setpair (map, pair, val);
@@ -233,7 +230,7 @@ int ase_awk_map_remove (ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len)
 
 	while (pair != ASE_NULL) 
 	{
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			pair->key, pair->key_len, key, key_len) == 0) 
 		{
 			if (prev == ASE_NULL) 

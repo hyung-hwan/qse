@@ -1,10 +1,11 @@
 /*
- * $Id: str.c,v 1.4 2007-02-23 06:43:30 bacon Exp $
+ * $Id: str.c,v 1.5 2007-02-23 08:17:51 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/cmn/str.h>
+#include <ase/cmn/mem.h>
 
 ase_size_t ase_strlen (const ase_char_t* str)
 {
@@ -309,7 +310,7 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 			if (str->buf != ASE_NULL)
 			{
-				ASE_MEMCPY (str->mmgr, tmp, str->buf, 
+				ase_memcpy (tmp, str->buf, 
 					ASE_SIZEOF(ase_char_t)*(str->capa+1));
 				ASE_FREE (str->mmgr, str->buf);
 			}

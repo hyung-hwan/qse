@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.101 2007-02-07 14:51:44 bacon Exp $
+ * $Id: awk_i.h,v 1.102 2007-02-23 08:17:49 bacon Exp $
  *
  * {License}
  */
@@ -7,11 +7,13 @@
 #ifndef _ASE_AWK_AWKI_H_
 #define _ASE_AWK_AWKI_H_
 
+#include <ase/cmn/mem.h>
+#include <ase/cmn/str.h>
+
 typedef struct ase_awk_chain_t ase_awk_chain_t;
 typedef struct ase_awk_tree_t ase_awk_tree_t;
 
 #include <ase/awk/awk.h>
-#include <ase/awk/str.h>
 #include <ase/awk/rex.h>
 #include <ase/awk/map.h>
 #include <ase/awk/tree.h>
@@ -38,50 +40,36 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_MAX_LOCALS  9999
 #define ASE_AWK_MAX_PARAMS  9999
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	#define _CRTDBG_MAP_ALLOC
-	#include <crtdbg.h>
+#define ASE_AWK_MALLOC(awk,size)      ASE_MALLOC(&(awk)->prmfns.mmgr,size)
+#define ASE_AWK_REALLOC(awk,ptr,size) ASE_REALLOC(&(awk)->prmfns.mmgr,ptr,size)
+#define ASE_AWK_FREE(awk,ptr)         ASE_FREE(&(awk)->prmfns.mmgr,ptr)
 
-	#define ASE_AWK_MALLOC(awk,size) malloc (size)
-	#define ASE_AWK_REALLOC(awk,ptr,size) realloc (ptr, size)
-	#define ASE_AWK_FREE(awk,ptr) free (ptr)
-#else
-	#define ASE_AWK_MALLOC(awk,size) \
-		(awk)->prmfns.malloc (size, (awk)->prmfns.custom_data)
-	#define ASE_AWK_REALLOC(awk,ptr,size) \
-		(awk)->prmfns.realloc (ptr, size, (awk)->prmfns.custom_data)
-	#define ASE_AWK_FREE(awk,ptr) \
-		(awk)->prmfns.free (ptr, (awk)->prmfns.custom_data)
-#endif
+#define ASE_AWK_ISUPPER(awk,c)  ASE_ISUPPER(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISLOWER(awk,c)  ASE_ISLOWER(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISALPHA(awk,c)  ASE_ISALPHA(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISDIGIT(awk,c)  ASE_ISDIGIT(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISXDIGIT(awk,c) ASE_ISXDIGIT(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISALNUM(awk,c)  ASE_ISALNUM(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISSPACE(awk,c)  ASE_ISSPACE(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISPRINT(awk,c)  ASE_ISPRINT(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISGRAPH(awk,c)  ASE_ISGRAPH(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISCNTRL(awk,c)  ASE_ISCNTRL(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISPUNCT(awk,c)  ASE_ISPUNCT(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_TOUPPER(awk,c)  ASE_TOUPPER(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_TOLOWER(awk,c)  ASE_TOLOWER(&(awk)->prmfns.ccls,c)
 
 #define ASE_AWK_LOCK(awk) \
 	do { \
-		if ((awk)->prmfns.lock != ASE_NULL) \
-			(awk)->prmfns.lock ((awk)->prmfns.custom_data); \
+		if ((awk)->prmfns.misc.lock != ASE_NULL) \
+			(awk)->prmfns.misc.lock ((awk)->prmfns.misc.custom_data); \
 	} while (0) 
 
 #define ASE_AWK_UNLOCK(awk) \
 	do { \
-		if ((awk)->prmfns.unlock != ASE_NULL) \
-			(awk)->prmfns.unlock ((awk)->prmfns.custom_data); \
+		if ((awk)->prmfns.misc.unlock != ASE_NULL) \
+			(awk)->prmfns.misc.unlock ((awk)->prmfns.misc.custom_data); \
 	} while (0) 
 
-#define ASE_AWK_ISUPPER(awk,c)  (awk)->prmfns.is_upper(c)
-#define ASE_AWK_ISLOWER(awk,c)  (awk)->prmfns.is_lower(c)
-#define ASE_AWK_ISALPHA(awk,c)  (awk)->prmfns.is_alpha(c)
-#define ASE_AWK_ISDIGIT(awk,c)  (awk)->prmfns.is_digit(c)
-#define ASE_AWK_ISXDIGIT(awk,c) (awk)->prmfns.is_xdigit(c)
-#define ASE_AWK_ISALNUM(awk,c)  (awk)->prmfns.is_alnum(c)
-#define ASE_AWK_ISSPACE(awk,c)  (awk)->prmfns.is_space(c)
-#define ASE_AWK_ISPRINT(awk,c)  (awk)->prmfns.is_print(c)
-#define ASE_AWK_ISGRAPH(awk,c)  (awk)->prmfns.is_graph(c)
-#define ASE_AWK_ISCNTRL(awk,c)  (awk)->prmfns.is_cntrl(c)
-#define ASE_AWK_ISPUNCT(awk,c)  (awk)->prmfns.is_punct(c)
-#define ASE_AWK_TOUPPER(awk,c)  (awk)->prmfns.to_upper(c)
-#define ASE_AWK_TOLOWER(awk,c)  (awk)->prmfns.to_lower(c)
-
-#define ASE_AWK_MEMCPY(awk,dst,src,len) (awk)->prmfns.memcpy (dst, src, len)
-#define ASE_AWK_MEMSET(awk,dst,val,len) (awk)->prmfns.memset (dst, val, len)
 
 struct ase_awk_tree_t
 {
@@ -178,7 +166,7 @@ struct ase_awk_t
 		} prev;
 
 		int           type;
-		ase_awk_str_t name;
+		ase_str_t name;
 		ase_size_t    line;
 		ase_size_t    column;
 	} token;
@@ -258,7 +246,7 @@ struct ase_awk_run_t
 		ase_size_t buf_len;
 		ase_bool_t eof;
 
-		ase_awk_str_t line;
+		ase_str_t line;
 		ase_awk_val_t* d0; /* $0 */
 
 		ase_size_t maxflds;
@@ -316,8 +304,8 @@ struct ase_awk_run_t
 
 	struct
 	{
-		ase_awk_str_t fmt;
-		ase_awk_str_t out;
+		ase_str_t fmt;
+		ase_str_t out;
 
 		struct
 		{
