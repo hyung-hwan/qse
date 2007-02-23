@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.67 2007-02-23 08:17:49 bacon Exp $
+ * $Id: jni.c,v 1.68 2007-02-23 08:28:39 bacon Exp $
  *
  * {License}
  */
@@ -16,15 +16,12 @@
 #include <ase/awk/awk.h>
 #include <ase/awk/val.h>
 
-#include "../etc/printf.c"
+#include <ase/utl/stdio.h>
+#include <ase/utl/ctype.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #include <tchar.h>
-#endif
-
-#ifdef _MSC_VER
-#define snprintf _snprintf
 #endif
 
 #ifndef ASE_CHAR_IS_WCHAR
@@ -99,17 +96,17 @@ struct run_data_t
 	jmethodID double_value;
 };
 
-static void* awk_malloc (ase_size_t n, void* custom_data)
+static void* awk_malloc (ase_mmgr_t* mmgr, ase_size_t n)
 {
 	return malloc (n);
 }
 
-static void* awk_realloc (void* ptr, ase_size_t n, void* custom_data)
+static void* awk_realloc (ase_mmgr_t* mmgr, void* ptr, ase_size_t n)
 {
 	return realloc (ptr, n);
 }
 
-static void awk_free (void* ptr, void* custom_data)
+static void awk_free (ase_mmgr_t* mmgr, void* ptr)
 {
 	free (ptr);
 }
@@ -122,26 +119,6 @@ static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
 static void awk_abort (void* custom_data)
 {
         abort ();
-}
-
-static int awk_sprintf (
-	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
-{
-	int n;
-	va_list ap;
-
-	va_start (ap, fmt);
-	n = ase_vsprintf (buf, len, fmt, ap);
-	va_end (ap);
-	return n;
-}
-
-static void awk_aprintf (const ase_char_t* fmt, ...)
-{
-	va_list ap;
-	va_start (ap, fmt);
-	ase_vprintf (fmt, ap);
-	va_end (ap);
 }
 
 static void awk_dprintf (const ase_char_t* fmt, ...)
@@ -246,31 +223,33 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	int opt, errnum;
 	
 	memset (&prmfns, 0, sizeof(prmfns));
-	prmfns.malloc = awk_malloc;
-	prmfns.realloc = awk_realloc;
-	prmfns.free = awk_free;
 
-	prmfns.is_upper  = iswupper;
-	prmfns.is_lower  = iswlower;
-	prmfns.is_alpha  = iswalpha;
-	prmfns.is_digit  = iswdigit;
-	prmfns.is_xdigit = iswxdigit;
-	prmfns.is_alnum  = iswalnum;
-	prmfns.is_space  = iswspace;
-	prmfns.is_print  = iswprint;
-	prmfns.is_graph  = iswgraph;
-	prmfns.is_cntrl  = iswcntrl;
-	prmfns.is_punct  = iswpunct;
-	prmfns.to_upper  = towupper;
-	prmfns.to_lower  = towlower;
+	prmfns.mmgr.malloc = awk_malloc;
+	prmfns.mmgr.realloc = awk_realloc;
+	prmfns.mmgr.free = awk_free;
+	prmfns.mmgr.custom_data = NULL;
 
-	prmfns.memcpy  = memcpy;
-	prmfns.memset  = memset;
-	prmfns.pow     = awk_pow;
-	prmfns.sprintf = awk_sprintf;
-	prmfns.aprintf = awk_aprintf;
-	prmfns.dprintf = awk_dprintf;
-	prmfns.abort   = awk_abort;
+	prmfns.ccls.is_upper  = ase_isupper;
+	prmfns.ccls.is_lower  = ase_islower;
+	prmfns.ccls.is_alpha  = ase_isalpha;
+	prmfns.ccls.is_digit  = ase_isdigit;
+	prmfns.ccls.is_xdigit = ase_isxdigit;
+	prmfns.ccls.is_alnum  = ase_isalnum;
+	prmfns.ccls.is_space  = ase_isspace;
+	prmfns.ccls.is_print  = ase_isprint;
+	prmfns.ccls.is_graph  = ase_isgraph;
+	prmfns.ccls.is_cntrl  = ase_iscntrl;
+	prmfns.ccls.is_punct  = ase_ispunct;
+	prmfns.ccls.to_upper  = ase_toupper;
+	prmfns.ccls.to_lower  = ase_tolower;
+	prmfns.ccls.custom_data = NULL;
+
+	prmfns.misc.pow     = awk_pow;
+	prmfns.misc.sprintf = ase_sprintf;
+	prmfns.misc.aprintf = ase_printf;
+	prmfns.misc.dprintf = awk_dprintf;
+	prmfns.misc.abort   = awk_abort;
+	prmfns.misc.custom_data = NULL;
 
 	awk_data = (awk_data_t*) malloc (sizeof(awk_data_t));
 	if (awk_data == NULL)
@@ -1365,7 +1344,7 @@ static int __handle_bfn (
 	env = run_data->env;
 	obj = run_data->obj;
 
-	awk_sprintf (
+	ase_sprintf (
 		msg_nomem, ASE_COUNTOF(msg_nomem),
 		ASE_T("out of memory in handling %.*s"),
 		fnl, fnm);

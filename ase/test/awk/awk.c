@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.175 2007-02-23 08:17:51 bacon Exp $
+ * $Id: awk.c,v 1.176 2007-02-23 08:21:35 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -755,29 +755,6 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns.mmgr.malloc  = awk_malloc;
 	prmfns.mmgr.realloc = awk_realloc;
 	prmfns.mmgr.free    = awk_free;
-
-	prmfns.ccls.is_upper  = ase_isupper;
-	prmfns.ccls.is_lower  = ase_islower;
-	prmfns.ccls.is_alpha  = ase_isalpha;
-	prmfns.ccls.is_digit  = ase_isdigit;
-	prmfns.ccls.is_xdigit = ase_isxdigit;
-	prmfns.ccls.is_alnum  = ase_isalnum;
-	prmfns.ccls.is_space  = ase_isspace;
-	prmfns.ccls.is_print  = ase_isprint;
-	prmfns.ccls.is_graph  = ase_isgraph;
-	prmfns.ccls.is_cntrl  = ase_iscntrl;
-	prmfns.ccls.is_punct  = ase_ispunct;
-	prmfns.ccls.to_upper  = ase_toupper;
-	prmfns.ccls.to_lower  = ase_tolower;
-
-	prmfns.misc.pow     = awk_pow;
-	prmfns.misc.sprintf = ase_sprintf;
-	prmfns.misc.aprintf = awk_aprintf;
-	prmfns.misc.dprintf = awk_dprintf;
-	prmfns.misc.abort   = awk_abort;
-	prmfns.misc.lock    = NULL;
-	prmfns.misc.unlock  = NULL;
-
 #ifdef _WIN32
 	prmfns_data.heap = HeapCreate (0, 1000000, 1000000);
 	if (prmfns_data.heap == NULL)
@@ -787,7 +764,33 @@ static int awk_main (int argc, ase_char_t* argv[])
 	}
 
 	prmfns.mmgr.custom_data = &prmfns_data;
+#else
+	prmfns.mmgr.custom_data = NULL;
 #endif
+
+	prmfns.ccls.is_upper    = ase_isupper;
+	prmfns.ccls.is_lower    = ase_islower;
+	prmfns.ccls.is_alpha    = ase_isalpha;
+	prmfns.ccls.is_digit    = ase_isdigit;
+	prmfns.ccls.is_xdigit   = ase_isxdigit;
+	prmfns.ccls.is_alnum    = ase_isalnum;
+	prmfns.ccls.is_space    = ase_isspace;
+	prmfns.ccls.is_print    = ase_isprint;
+	prmfns.ccls.is_graph    = ase_isgraph;
+	prmfns.ccls.is_cntrl    = ase_iscntrl;
+	prmfns.ccls.is_punct    = ase_ispunct;
+	prmfns.ccls.to_upper    = ase_toupper;
+	prmfns.ccls.to_lower    = ase_tolower;
+	prmfns.ccls.custom_data = NULL;
+
+	prmfns.misc.pow         = awk_pow;
+	prmfns.misc.sprintf     = ase_sprintf;
+	prmfns.misc.aprintf     = awk_aprintf;
+	prmfns.misc.dprintf     = awk_dprintf;
+	prmfns.misc.abort       = awk_abort;
+	prmfns.misc.lock        = NULL;
+	prmfns.misc.unlock      = NULL;
+	prmfns.misc.custom_data = NULL;
 
 	if ((awk = ase_awk_open(&prmfns, ASE_NULL, &errnum)) == ASE_NULL) 
 	{

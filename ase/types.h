@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.72 2007-02-23 08:17:48 bacon Exp $
+ * $Id: types.h,v 1.73 2007-02-23 08:22:35 bacon Exp $
  *
  * {License}
  */
@@ -230,7 +230,6 @@ typedef int  ase_mcint_t;
 	#endif
 #endif
 
-typedef struct ase_cstr_t ase_cstr_t;
 typedef struct ase_mmgr_t ase_mmgr_t;
 typedef struct ase_ccls_t ase_ccls_t;
 
@@ -240,12 +239,6 @@ typedef void  (*ase_free_t)    (ase_mmgr_t* mmgr, void* ptr);
 
 typedef ase_bool_t (*ase_isccls_t) (ase_ccls_t* ccls, ase_cint_t c);
 typedef ase_cint_t (*ase_toccls_t) (ase_ccls_t* ccls, ase_cint_t c);
-
-struct ase_cstr_t
-{
-	ase_char_t* ptr;
-	ase_size_t  len;
-};
 
 struct ase_mmgr_t
 {
