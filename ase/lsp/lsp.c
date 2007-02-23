@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.24 2007-02-13 06:00:20 bacon Exp $
+ * $Id: lsp.c,v 1.25 2007-02-23 10:53:38 bacon Exp $
  *
  * {License}
  */
@@ -21,48 +21,41 @@ ase_lsp_t* ase_lsp_open (
 
 	if (prmfns == ASE_NULL) return ASE_NULL;
 
-	if (prmfns->malloc == ASE_NULL || 
-	    prmfns->realloc == ASE_NULL || 
-	    prmfns->free == ASE_NULL) return ASE_NULL;
+	if (prmfns->mmgr.malloc == ASE_NULL || 
+	    prmfns->mmgr.realloc == ASE_NULL || 
+	    prmfns->mmgr.free == ASE_NULL) return ASE_NULL;
 
-	if (prmfns->is_upper  == ASE_NULL ||
-	    prmfns->is_lower  == ASE_NULL ||
-	    prmfns->is_alpha  == ASE_NULL ||
-	    prmfns->is_digit  == ASE_NULL ||
-	    prmfns->is_xdigit == ASE_NULL ||
-	    prmfns->is_alnum  == ASE_NULL ||
-	    prmfns->is_space  == ASE_NULL ||
-	    prmfns->is_print  == ASE_NULL ||
-	    prmfns->is_graph  == ASE_NULL ||
-	    prmfns->is_cntrl  == ASE_NULL ||
-	    prmfns->is_punct  == ASE_NULL ||
-	    prmfns->to_upper  == ASE_NULL ||
-	    prmfns->to_lower  == ASE_NULL) return ASE_NULL;
+	if (prmfns->ccls.is_upper  == ASE_NULL ||
+	    prmfns->ccls.is_lower  == ASE_NULL ||
+	    prmfns->ccls.is_alpha  == ASE_NULL ||
+	    prmfns->ccls.is_digit  == ASE_NULL ||
+	    prmfns->ccls.is_xdigit == ASE_NULL ||
+	    prmfns->ccls.is_alnum  == ASE_NULL ||
+	    prmfns->ccls.is_space  == ASE_NULL ||
+	    prmfns->ccls.is_print  == ASE_NULL ||
+	    prmfns->ccls.is_graph  == ASE_NULL ||
+	    prmfns->ccls.is_cntrl  == ASE_NULL ||
+	    prmfns->ccls.is_punct  == ASE_NULL ||
+	    prmfns->ccls.to_upper  == ASE_NULL ||
+	    prmfns->ccls.to_lower  == ASE_NULL) return ASE_NULL;
 
-	if (prmfns->sprintf == ASE_NULL || 
-	    prmfns->aprintf == ASE_NULL || 
-	    prmfns->dprintf == ASE_NULL || 
-	    prmfns->abort == ASE_NULL) return ASE_NULL;
+	if (prmfns->misc.sprintf == ASE_NULL || 
+	    prmfns->misc.aprintf == ASE_NULL || 
+	    prmfns->misc.dprintf == ASE_NULL || 
+	    prmfns->misc.abort == ASE_NULL) return ASE_NULL;
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	lsp = (ase_lsp_t*) malloc (ASE_SIZEOF(ase_lsp_t));
 #else
-	lsp = (ase_lsp_t*) prmfns->malloc (
-		ASE_SIZEOF(ase_lsp_t), prmfns->custom_data);
+	lsp = (ase_lsp_t*) prmfns->mmgr.malloc (
+		&prmfns->mmgr, ASE_SIZEOF(ase_lsp_t));
 #endif
 	if (lsp == ASE_NULL) return ASE_NULL;
 
 	/* it uses the built-in ase_lsp_memset because lsp is not 
 	 * fully initialized yet */
-	ase_lsp_memset (lsp, 0, ASE_SIZEOF(ase_lsp_t));
-
-	if (prmfns->memcpy == ASE_NULL)
-	{
-		ase_lsp_memcpy (&lsp->prmfns, prmfns, ASE_SIZEOF(lsp->prmfns));
-		lsp->prmfns.memcpy = ase_lsp_memcpy;
-	}
-	else prmfns->memcpy (&lsp->prmfns, prmfns, ASE_SIZEOF(lsp->prmfns));
-	if (prmfns->memset == ASE_NULL) lsp->prmfns.memset = ase_lsp_memset;
+	ase_memset (lsp, 0, ASE_SIZEOF(ase_lsp_t));
+	ase_memcpy (&lsp->prmfns, prmfns, ASE_SIZEOF(lsp->prmfns));
 
 	if (ase_lsp_name_open(&lsp->token.name, 0, lsp) == ASE_NULL) 
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.11 2007-02-11 07:36:54 bacon Exp $
+ * $Id: err.c,v 1.12 2007-02-23 10:53:38 bacon Exp $
  *
  * {License}
  */
@@ -63,14 +63,14 @@ void ase_lsp_seterror (
 	switch (argcnt)
 	{
 		case 0:
-			lsp->prmfns.sprintf (
+			lsp->prmfns.misc.sprintf (
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt);
 			return;
 
 		case 1:
-			lsp->prmfns.sprintf (
+			lsp->prmfns.misc.sprintf (
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -78,7 +78,7 @@ void ase_lsp_seterror (
 			return;
 
 		case 2:
-			lsp->prmfns.sprintf (
+			lsp->prmfns.misc.sprintf (
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -87,7 +87,7 @@ void ase_lsp_seterror (
 			return;
 
 		case 3:
-			lsp->prmfns.sprintf (
+			lsp->prmfns.misc.sprintf (
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -97,7 +97,7 @@ void ase_lsp_seterror (
 			return;
 
 		case 4:
-			lsp->prmfns.sprintf (
+			lsp->prmfns.misc.sprintf (
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -108,7 +108,7 @@ void ase_lsp_seterror (
 			return;
 
 		case 5:
-			lsp->prmfns.sprintf (
+			lsp->prmfns.misc.sprintf (
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,

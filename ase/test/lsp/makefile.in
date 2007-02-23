@@ -3,8 +3,8 @@ OBJS = $(SRCS:.c=.o)
 
 CC = @CC@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. 
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/lsp -L@abs_top_builddir@/utl 
-LIBS = @LIBS@ -laselsp -laseutl -lm
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/cmn -L@abs_top_builddir@/lsp -L@abs_top_builddir@/utl 
+LIBS = @LIBS@ -laseutl -laselsp -lasecmn -lm
 
 all: aselsp
 

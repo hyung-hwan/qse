@@ -1,5 +1,5 @@
 /*
- * $Id: prim_compar.c,v 1.13 2007-02-11 07:36:55 bacon Exp $
+ * $Id: prim_compar.c,v 1.14 2007-02-23 10:53:39 bacon Exp $
  *
  * {License}
  */
@@ -69,7 +69,7 @@
 	{ \
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_SYM) \
 		{ \
-			res = ase_lsp_strxncmp ( \
+			res = ase_strxncmp ( \
 				ASE_LSP_SYMPTR(p1), ASE_LSP_SYMLEN(p1), \
 				ASE_LSP_SYMPTR(p2), ASE_LSP_SYMLEN(p2)) op 0; \
 		} \
@@ -85,7 +85,7 @@
 	{ \
 		if (ASE_LSP_TYPE(p2) == ASE_LSP_OBJ_STR) \
 		{ \
-			res = ase_lsp_strxncmp ( \
+			res = ase_strxncmp ( \
 				ASE_LSP_STRPTR(p1), ASE_LSP_STRLEN(p1),	\
 				ASE_LSP_STRPTR(p2), ASE_LSP_STRLEN(p2)) op 0; \
 		} \

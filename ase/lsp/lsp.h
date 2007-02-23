@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.38 2007-02-11 08:30:18 bacon Exp $
+ * $Id: lsp.h,v 1.39 2007-02-23 10:53:38 bacon Exp $
  *
  * {License}
  */
@@ -17,14 +17,6 @@ typedef struct ase_lsp_prmfns_t ase_lsp_prmfns_t;
 typedef ase_ssize_t (*ase_lsp_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
-typedef void* (*ase_lsp_malloc_t)  (ase_size_t n, void* custom_data); 
-typedef void* (*ase_lsp_realloc_t) (void* ptr, ase_size_t n, void* custom_data);
-typedef void  (*ase_lsp_free_t)    (void* ptr, void* custom_data); 
-typedef void* (*ase_lsp_memcpy_t)  (void* dst, const void* src, ase_size_t n);
-typedef void* (*ase_lsp_memset_t)  (void* dst, int val, ase_size_t n);
-
-typedef ase_bool_t (*ase_lsp_isctype_t) (ase_cint_t c);
-typedef ase_cint_t (*ase_lsp_toctype_t) (ase_cint_t c);
 typedef ase_real_t (*ase_lsp_pow_t) (ase_real_t x, ase_real_t y);
 
 typedef int (*ase_lsp_sprintf_t) (
@@ -35,36 +27,19 @@ typedef void (*ase_lsp_abort_t) (void* custom_data);
 
 struct ase_lsp_prmfns_t
 {
-	/* memory */
-	ase_lsp_malloc_t  malloc;
-	ase_lsp_realloc_t realloc;
-	ase_lsp_free_t    free;
-
-	ase_lsp_memcpy_t  memcpy;
-	ase_lsp_memset_t  memset;
-
-	/* character class */
-	ase_lsp_isctype_t is_upper;
-	ase_lsp_isctype_t is_lower;
-	ase_lsp_isctype_t is_alpha;
-	ase_lsp_isctype_t is_digit;
-	ase_lsp_isctype_t is_xdigit;
-	ase_lsp_isctype_t is_alnum;
-	ase_lsp_isctype_t is_space;
-	ase_lsp_isctype_t is_print;
-	ase_lsp_isctype_t is_graph;
-	ase_lsp_isctype_t is_cntrl;
-	ase_lsp_isctype_t is_punct;
-	ase_lsp_toctype_t to_upper;
-	ase_lsp_toctype_t to_lower;
+	ase_mmgr_t mmgr;
+	ase_ccls_t ccls;
 
 	/* utilities */
-	ase_lsp_sprintf_t sprintf;
-	ase_lsp_aprintf_t aprintf;
-	ase_lsp_dprintf_t dprintf;
-	ase_lsp_abort_t abort;
+	struct
+	{
+		ase_lsp_sprintf_t sprintf;
+		ase_lsp_aprintf_t aprintf;
+		ase_lsp_dprintf_t dprintf;
+		ase_lsp_abort_t abort;
+		void* custom_data;
+	} misc;
 
-	void* custom_data;
 };
 
 /* io function commands */
@@ -155,34 +130,6 @@ int ase_lsp_addprim (
 	ase_lsp_t* lsp, const ase_char_t* name, ase_size_t name_len, 
 	ase_lsp_prim_t prim, ase_size_t min_args, ase_size_t max_args);
 int ase_lsp_removeprim (ase_lsp_t* lsp, const ase_char_t* name);
-
-/* string functions exported by lsp.h */
-ase_char_t* ase_lsp_strdup (ase_lsp_t* lsp, const ase_char_t* str);
-ase_char_t* ase_lsp_strxdup (
-	ase_lsp_t* lsp, const ase_char_t* str, ase_size_t len);
-ase_char_t* ase_lsp_strxdup2 (
-	ase_lsp_t* lsp,
-	const ase_char_t* str1, ase_size_t len1,
-	const ase_char_t* str2, ase_size_t len2);
-
-ase_size_t ase_lsp_strlen (const ase_char_t* str);
-ase_size_t ase_lsp_strcpy (ase_char_t* buf, const ase_char_t* str);
-ase_size_t ase_lsp_strncpy (ase_char_t* buf, const ase_char_t* str, ase_size_t len);
-int ase_lsp_strcmp (const ase_char_t* s1, const ase_char_t* s2);
-
-int ase_lsp_strxncmp (
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2);
-
-int ase_lsp_strxncasecmp (
-	ase_lsp_t* lsp,
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2);
-
-ase_char_t* ase_lsp_strxnstr (
-	const ase_char_t* str, ase_size_t strsz, 
-	const ase_char_t* sub, ase_size_t subsz);
-
 
 /* abort function for assertion. use ASE_LSP_ASSERT instead */
 int ase_lsp_assertfail (ase_lsp_t* lsp,
