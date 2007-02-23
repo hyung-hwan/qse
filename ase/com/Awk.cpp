@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.24 2007-02-03 10:52:11 bacon Exp $
+ * $Id: Awk.cpp,v 1.25 2007-02-23 15:34:26 bacon Exp $
  *
  * {License}
  */
@@ -14,6 +14,10 @@
 #include <math.h>
 #include <wctype.h>
 #include <stdio.h>
+
+#include <ase/cmn/str.h>
+#include <ase/utl/stdio.h>
+#include <ase/utl/ctype.h>
 
 #define DBGOUT(x) do { if (debug) OutputDebugString (x); } while(0)
 #define DBGOUT2(awk,x) do { if (awk->debug) OutputDebugString (x); } while(0)
@@ -88,17 +92,17 @@ CAwk::~CAwk ()
 	}
 }
 
-static void* awk_malloc (ase_size_t n, void* custom_data)
+static void* awk_malloc (ase_mmgr_t* mmgr, ase_size_t n)
 {
 	return malloc (n);
 }
 
-static void* awk_realloc (void* ptr, ase_size_t n, void* custom_data)
+static void* awk_realloc (ase_mmgr_t* mmgr, void* ptr, ase_size_t n)
 {
 	return realloc (ptr, n);
 }
 
-static void awk_free (void* ptr, void* custom_data)
+static void awk_free (ase_mmgr_t* mmgr, void* ptr)
 {
 	free (ptr);
 }
@@ -111,23 +115,6 @@ static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
 static void awk_abort (void* custom_data)
 {
 	abort ();
-}
-
-static int awk_sprintf (
-	ase_char_t* buf, ase_size_t len, const ase_char_t* fmt, ...)
-{
-	int n;
-	va_list ap;
-
-	va_start (ap, fmt);
-	n = _vsntprintf (buf, len, fmt, ap);
-	if (n < 0 || (ase_size_t)n >= len)
-	{
-		if (len > 0) buf[len-1] = ASE_T('\0');
-		n = -1;
-	}
-	va_end (ap);
-	return n;
 }
 
 static void awk_aprintf (const ase_char_t* fmt, ...)
@@ -418,37 +405,36 @@ HRESULT CAwk::Parse (int* ret)
 		ase_awk_prmfns_t prmfns;
 
 		memset (&prmfns, 0, sizeof(prmfns));
-		prmfns.malloc = awk_malloc;
-		prmfns.realloc = awk_realloc;
-		prmfns.free = awk_free;
 
-		prmfns.is_upper  = iswupper;
-		prmfns.is_lower  = iswlower;
-		prmfns.is_alpha  = iswalpha;
-		prmfns.is_digit  = iswdigit;
-		prmfns.is_xdigit = iswxdigit;
-		prmfns.is_alnum  = iswalnum;
-		prmfns.is_space  = iswspace;
-		prmfns.is_print  = iswprint;
-		prmfns.is_graph  = iswgraph;
-		prmfns.is_cntrl  = iswcntrl;
-		prmfns.is_punct  = iswpunct;
-		prmfns.to_upper  = towupper;
-		prmfns.to_lower  = towlower;
+		prmfns.mmgr.malloc = awk_malloc;
+		prmfns.mmgr.realloc = awk_realloc;
+		prmfns.mmgr.free = awk_free;
 
-		prmfns.memcpy = memcpy;
-		prmfns.memset = memset;
-		prmfns.pow = awk_pow;
-		prmfns.sprintf = awk_sprintf;
-		prmfns.aprintf = awk_aprintf;
-		prmfns.dprintf = awk_dprintf;
-		prmfns.abort = awk_abort;
+		prmfns.ccls.is_upper  = ase_isupper;
+		prmfns.ccls.is_lower  = ase_islower;
+		prmfns.ccls.is_alpha  = ase_isalpha;
+		prmfns.ccls.is_digit  = ase_isdigit;
+		prmfns.ccls.is_xdigit = ase_isxdigit;
+		prmfns.ccls.is_alnum  = ase_isalnum;
+		prmfns.ccls.is_space  = ase_isspace;
+		prmfns.ccls.is_print  = ase_isprint;
+		prmfns.ccls.is_graph  = ase_isgraph;
+		prmfns.ccls.is_cntrl  = ase_iscntrl;
+		prmfns.ccls.is_punct  = ase_ispunct;
+		prmfns.ccls.to_upper  = ase_toupper;
+		prmfns.ccls.to_lower  = ase_tolower;
+
+		prmfns.misc.pow = awk_pow;
+		prmfns.misc.sprintf = ase_sprintf;
+		prmfns.misc.aprintf = awk_aprintf;
+		prmfns.misc.dprintf = awk_dprintf;
+		prmfns.misc.abort = awk_abort;
 
 		handle = ase_awk_open (&prmfns, NULL, &errnum);
 		if (handle == NULL)
 		{
 			errlin = 0;
-			ase_awk_strxcpy (
+			ase_strxcpy (
 				errmsg, ASE_COUNTOF(errmsg), 
 				ase_awk_geterrstr(errnum));
 
@@ -489,7 +475,7 @@ HRESULT CAwk::Parse (int* ret)
 			DBGOUT (_T("cannot add the builtin function"));
 
 			ase_awk_geterror (handle, &errnum, &errlin, &msg);
-			ase_awk_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
+			ase_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
 
 			*ret = -1;
 			return S_OK;
@@ -507,7 +493,7 @@ HRESULT CAwk::Parse (int* ret)
 		const ase_char_t* msg;
 
 		ase_awk_geterror (handle, &errnum, &errlin, &msg);
-		ase_awk_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
+		ase_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
 
 		DBGOUT (_T("cannot parse the source code"));
 
@@ -712,7 +698,7 @@ HRESULT CAwk::Run (int* ret)
 		const ase_char_t* msg;
 
 		ase_awk_geterror (handle, &errnum, &errlin, &msg);
-		ase_awk_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
+		ase_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
 
 		DBGOUT (_T("cannot run the program"));
 		*ret = -1;
@@ -732,7 +718,7 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 
 	for (bfn = bfn_list; bfn != NULL; bfn = bfn->next)
 	{
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			bfn->name.ptr, bfn->name.len,
 			name, name_len) == 0)
 		{
@@ -753,7 +739,7 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 	{
 		errnum = ASE_AWK_ENOMEM;
 		errlin = 0;
-		ase_awk_strxcpy (
+		ase_strxcpy (
 			errmsg, ASE_COUNTOF(errmsg), 
 			ase_awk_geterrstr(errnum));
 
@@ -769,7 +755,7 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 
 		errnum = ASE_AWK_ENOMEM;
 		errlin = 0;
-		ase_awk_strxcpy (
+		ase_strxcpy (
 			errmsg, ASE_COUNTOF(errmsg), 
 			ase_awk_geterrstr(errnum));
 
@@ -796,7 +782,7 @@ STDMETHODIMP CAwk::DeleteBuiltinFunction (BSTR name, int* ret)
 	{
 		next = bfn->next;
 
-		if (ase_awk_strxncmp (
+		if (ase_strxncmp (
 			bfn->name.ptr, bfn->name.len,
 			name, name_len) == 0)
 		{
@@ -815,7 +801,7 @@ STDMETHODIMP CAwk::DeleteBuiltinFunction (BSTR name, int* ret)
 
 	errnum = ASE_AWK_ENOENT;
 	errlin = 0;
-	ase_awk_strxcpy (
+	ase_strxcpy (
 		errmsg, ASE_COUNTOF(errmsg), 
 		ase_awk_geterrstr(errnum));
 
