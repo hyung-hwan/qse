@@ -10,8 +10,8 @@
 CC = bcc32
 LD = ilink32
 CFLAGS = -O2 -WM -WU -RT- -w -I..\..\.. 
-LDFLAGS = -ap -Tpe -Gn -c -L..\..\awk -L..\..\utl
-LIBS = import32.lib cw32mt.lib aseawk.lib aseutl.lib
+LDFLAGS = -ap -Tpe -Gn -c -L..\..\awk -L..\..\cmn -L..\..\utl
+LIBS = import32.lib cw32mt.lib aseawk.lib asecmn.lib aseutl.lib
 STARTUP = c0x32w.obj
 
 all: aseawk 

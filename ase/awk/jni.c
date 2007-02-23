@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.68 2007-02-23 08:28:39 bacon Exp $
+ * $Id: jni.c,v 1.69 2007-02-23 08:53:35 bacon Exp $
  *
  * {License}
  */
@@ -267,7 +267,6 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	awk = ase_awk_open (&prmfns, awk_data, &errnum);
 	if (awk == NULL)
 	{
-		free (prmfns.custom_data);
 		throw_exception (
 			env,
 			ase_awk_geterrstr(errnum), 
@@ -399,7 +398,7 @@ static ase_char_t* java_strxdup (jchar* str, jint len)
 		tmp = (ase_char_t*) malloc ((len+1) * ASE_SIZEOF(ase_char_t));
 		if (tmp == ASE_NULL) return ASE_NULL;
 
-		ase_awk_strncpy (tmp, (ase_char_t*)str, (ase_size_t)len);
+		ase_strncpy (tmp, (ase_char_t*)str, (ase_size_t)len);
 		return tmp;
 	}
 }
@@ -512,7 +511,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 
 		len = (*env)->GetStringLength (env, mfn);
 
-		if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+		if (len > 0)
 		{
 			ase_size_t i;
 
@@ -562,11 +561,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 		}
 		else 
 		{
-			mmm = (ase_char_t*)mfn;
+			mmm = NULL;
 			ptr = NULL;
 		}
 	}
-
 
 	if (args != NULL)
 	{
@@ -577,7 +575,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 		runarg = malloc (sizeof(ase_awk_runarg_t) * (len+1));
 		if (runarg == NULL)
 		{
-			if (mmm != NULL && mmm != mfn) free (mmm);
+			if (mmm != NULL) free (mmm);
 			if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
 			DELETE_CLASS_REFS (env, run_data);
 
@@ -606,7 +604,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 
 				(*env)->DeleteLocalRef (env, obj);
 
-				if (mmm != NULL && mmm != mfn) free (mmm);
+				if (mmm != NULL && mmm) free (mmm);
 				if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
 				DELETE_CLASS_REFS (env, run_data);
 
@@ -630,7 +628,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 				(*env)->ReleaseStringChars (env, obj, tmp);
 				(*env)->DeleteLocalRef (env, obj);
 
-				if (mmm != NULL && mmm != mfn) free (mmm);
+				if (mmm != NULL) free (mmm);
 				if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
 				DELETE_CLASS_REFS (env, run_data);
 
@@ -660,7 +658,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 			free (runarg);
 		}
 
-		if (mmm != NULL && mmm != mfn) free (mmm);
+		if (mmm != NULL) free (mmm);
 		if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
 		DELETE_CLASS_REFS (env, run_data);
 
@@ -678,7 +676,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 		free (runarg);
 	}
 
-	if (mmm != NULL && mmm != mfn) free (mmm);
+	if (mmm != NULL) free (mmm);
 	if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
 	DELETE_CLASS_REFS (env, run_data);
 }
