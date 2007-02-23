@@ -1,11 +1,14 @@
 /*
- * $Id: lsp_i.h,v 1.8 2007-02-11 07:36:55 bacon Exp $
+ * $Id: lsp_i.h,v 1.9 2007-02-23 10:53:38 bacon Exp $
  *
  * {License}
  */
 
 #ifndef _ASE_LSP_LSPI_H_
 #define _ASE_LSP_LSPI_H_
+
+#include <ase/cmn/mem.h>
+#include <ase/cmn/str.h>
 
 #include <ase/lsp/lsp.h>
 #include <ase/lsp/env.h>
@@ -19,38 +22,24 @@
 #pragma warning (disable: 4996)
 #endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	#define _CRTDBG_MAP_ALLOC
-	#include <crtdbg.h>
 
-	#define ASE_LSP_MALLOC(lsp,size) malloc (size)
-	#define ASE_LSP_REALLOC(lsp,ptr,size) realloc (ptr, size)
-	#define ASE_LSP_FREE(lsp,ptr) free (ptr)
-#else
-	#define ASE_LSP_MALLOC(lsp,size) \
-		(lsp)->prmfns.malloc (size, (lsp)->prmfns.custom_data)
-	#define ASE_LSP_REALLOC(lsp,ptr,size) \
-		(lsp)->prmfns.realloc (ptr, size, (lsp)->prmfns.custom_data)
-	#define ASE_LSP_FREE(lsp,ptr) \
-		(lsp)->prmfns.free (ptr, (lsp)->prmfns.custom_data)
-#endif
+#define ASE_LSP_MALLOC(lsp,size)      ASE_MALLOC(&(lsp)->prmfns.mmgr,size)
+#define ASE_LSP_REALLOC(lsp,ptr,size) ASE_REALLOC(&(lsp)->prmfns.mmgr,ptr,size)
+#define ASE_LSP_FREE(lsp,ptr)         ASE_FREE(&(lsp)->prmfns.mmgr,ptr)
 
-#define ASE_LSP_ISUPPER(lsp,c)  (lsp)->prmfns.is_upper(c)
-#define ASE_LSP_ISLOWER(lsp,c)  (lsp)->prmfns.is_lower(c)
-#define ASE_LSP_ISALPHA(lsp,c)  (lsp)->prmfns.is_alpha(c)
-#define ASE_LSP_ISDIGIT(lsp,c)  (lsp)->prmfns.is_digit(c)
-#define ASE_LSP_ISXDIGIT(lsp,c) (lsp)->prmfns.is_xdigit(c)
-#define ASE_LSP_ISALNUM(lsp,c)  (lsp)->prmfns.is_alnum(c)
-#define ASE_LSP_ISSPACE(lsp,c)  (lsp)->prmfns.is_space(c)
-#define ASE_LSP_ISPRINT(lsp,c)  (lsp)->prmfns.is_print(c)
-#define ASE_LSP_ISGRAPH(lsp,c)  (lsp)->prmfns.is_graph(c)
-#define ASE_LSP_ISCNTRL(lsp,c)  (lsp)->prmfns.is_cntrl(c)
-#define ASE_LSP_ISPUNCT(lsp,c)  (lsp)->prmfns.is_punct(c)
-#define ASE_LSP_TOUPPER(lsp,c)  (lsp)->prmfns.to_upper(c)
-#define ASE_LSP_TOLOWER(lsp,c)  (lsp)->prmfns.to_lower(c)
-
-#define ASE_LSP_MEMCPY(lsp,dst,src,len) (lsp)->prmfns.memcpy (dst, src, len)
-#define ASE_LSP_MEMSET(lsp,dst,val,len) (lsp)->prmfns.memset (dst, val, len)
+#define ASE_LSP_ISUPPER(lsp,c)  ASE_ISUPPER(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISLOWER(lsp,c)  ASE_ISLOWER(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISALPHA(lsp,c)  ASE_ISALPHA(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISDIGIT(lsp,c)  ASE_ISDIGIT(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISXDIGIT(lsp,c) ASE_ISXDIGIT(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISALNUM(lsp,c)  ASE_ISALNUM(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISSPACE(lsp,c)  ASE_ISSPACE(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISPRINT(lsp,c)  ASE_ISPRINT(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISGRAPH(lsp,c)  ASE_ISGRAPH(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISCNTRL(lsp,c)  ASE_ISCNTRL(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_ISPUNCT(lsp,c)  ASE_ISPUNCT(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_TOUPPER(lsp,c)  ASE_TOUPPER(&(lsp)->prmfns.ccls,c)
+#define ASE_LSP_TOLOWER(lsp,c)  ASE_TOLOWER(&(lsp)->prmfns.ccls,c)
 
 struct ase_lsp_t 
 {

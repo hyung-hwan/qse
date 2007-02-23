@@ -1,5 +1,5 @@
 /*
- * $Id: name.c,v 1.14 2007-02-03 10:51:52 bacon Exp $
+ * $Id: name.c,v 1.15 2007-02-23 10:53:39 bacon Exp $
  *
  * {License}
  */
@@ -71,8 +71,7 @@ int ase_lsp_name_addc (ase_lsp_name_t* name, ase_cint_t c)
 				if (space == ASE_NULL) return -1;
 
 				/* don't need to copy up to the terminating null */
-				ASE_LSP_MEMCPY (name->lsp, space, name->buf, 
-					name->capa*ASE_SIZEOF(ase_char_t));
+				ase_memcpy (space, name->buf, name->capa*ASE_SIZEOF(ase_char_t));
 			}
 			else 
 			{

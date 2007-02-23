@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h,v 1.3 2007-02-22 14:32:08 bacon Exp $
+ * $Id: stdio.h,v 1.4 2007-02-23 10:53:39 bacon Exp $
  */
 
 #ifndef _ASE_UTL_STDIO_H_
@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <wchar.h>
 
 #if defined(_WIN32)
 	#include <tchar.h>

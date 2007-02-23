@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.67 2007-02-23 10:33:20 bacon Exp $
+ * $Id: rex.c,v 1.68 2007-02-23 10:57:09 bacon Exp $
  *
  * {License}
  */
@@ -139,13 +139,13 @@ typedef const ase_byte_t* (*atom_matcher_t) (
 #define ADD_CODE(rex,data,len) \
 	do { if (__add_code(rex,data,len) == -1) return -1; } while (0)
 
-/* #if defined(__sparc) || defined(__sparc__)
+#if defined(__sparc) || defined(__sparc__)
 	#define GET_CODE(rex,pos,type) __get_code(rex,pos)
 	#define SET_CODE(rex,pos,type,code) __set_code(rex,pos,code)
-#else */
+#else
 	#define GET_CODE(rex,pos,type) (*((type*)&(rex)->code.buf[pos]))
 	#define SET_CODE(rex,pos,type,code) (GET_CODE(rex,pos,type) = (code))
-/* #endif */
+#endif
 
 static int __build_pattern (__builder_t* rex);
 static int __build_pattern0 (__builder_t* rex);

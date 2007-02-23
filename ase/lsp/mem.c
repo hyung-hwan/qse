@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.30 2007-02-13 06:00:20 bacon Exp $
+ * $Id: mem.c,v 1.31 2007-02-23 10:53:38 bacon Exp $
  *
  * {License}
  */
@@ -16,7 +16,7 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	mem = (ase_lsp_mem_t*) ASE_LSP_MALLOC (lsp, ASE_SIZEOF(ase_lsp_mem_t));	
 	if (mem == ASE_NULL) return ASE_NULL;
 
-	ASE_LSP_MEMSET (lsp, mem, 0, ASE_SIZEOF(ase_lsp_mem_t));
+	ase_memset (mem, 0, ASE_SIZEOF(ase_lsp_mem_t));
 	mem->lsp = lsp;
 
 	/* create a new root environment frame */
@@ -431,9 +431,10 @@ ase_lsp_obj_t* ase_lsp_makesym (
 	while (obj != ASE_NULL) 
 	{
 		// if there is a symbol with the same name, it is just used.
-		if (ase_lsp_strxncmp (
+		if (ase_strxncmp (
 			ASE_LSP_SYMPTR(obj), 
-			ASE_LSP_SYMLEN(obj), str, len) == 0) return obj;
+			ASE_LSP_SYMLEN(obj), 
+			str, len) == 0) return obj;
 		obj = ASE_LSP_LINK(obj);
 	}
 
@@ -443,7 +444,7 @@ ase_lsp_obj_t* ase_lsp_makesym (
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	// fill in the symbol buffer
-	ase_lsp_strncpy (ASE_LSP_SYMPTR(obj), str, len);
+	ase_strncpy (ASE_LSP_SYMPTR(obj), str, len);
 
 	return obj;
 }
@@ -459,7 +460,7 @@ ase_lsp_obj_t* ase_lsp_makestr (
 	if (obj == ASE_NULL) return ASE_NULL;
 
 	// fill in the string buffer
-	ase_lsp_strncpy (ASE_LSP_STRPTR(obj), str, len);
+	ase_strncpy (ASE_LSP_STRPTR(obj), str, len);
 
 	return obj;
 }
