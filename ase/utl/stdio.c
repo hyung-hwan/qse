@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c,v 1.4 2007-02-23 10:33:20 bacon Exp $
+ * $Id: stdio.c,v 1.5 2007-02-24 14:45:00 bacon Exp $
  *
  * {License}
  */
@@ -209,7 +209,7 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 		}
 		else 
 		{
-			while (ase_isdigit(ASE_NULL, ch)) 
+			while (ase_isdigit(ch)) 
 			{
 				ADDC (buf, ch);
 				ch = *fp++;
@@ -229,7 +229,7 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 			}
 			else 
 			{
-				while (ase_isdigit(ASE_NULL, ch)) 
+				while (ase_isdigit(ch)) 
 				{
 					ADDC (buf, ch);
 					ch = *fp++;
@@ -267,7 +267,7 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 	#ifdef ASE_CHAR_IS_MCHAR
 			ADDC (buf, 'l');
 	#endif
-			ADDC (buf, ase_tolower(ASE_NULL, ch));
+			ADDC (buf, ase_tolower(ch));
 #endif
 		}
 		else if (ch == ASE_T('d') || ch == ASE_T('i') || 
