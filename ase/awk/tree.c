@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.103 2007-02-23 08:17:51 bacon Exp $
+ * $Id: tree.c,v 1.104 2007-02-24 14:31:44 bacon Exp $
  *
  * {License}
  */
@@ -261,10 +261,12 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				ase_char_t tmp[256];
 			#if (ASE_SIZEOF_LONG_DOUBLE != 0)
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					tmp, ASE_COUNTOF(tmp), ASE_T("%Lf"), 
 					(long double)((ase_awk_nde_real_t*)nde)->val);
 			#elif (ASE_SIZEOF_DOUBLE != 0)
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					tmp, ASE_COUNTOF(tmp), ASE_T("%f"), 
 					(double)((ase_awk_nde_real_t*)nde)->val);
 			#else

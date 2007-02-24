@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.51 2007-02-23 08:17:49 bacon Exp $
+ * $Id: misc.c,v 1.52 2007-02-24 14:31:44 bacon Exp $
  *
  * {License}
  */
@@ -910,12 +910,14 @@ int ase_awk_assertfail (ase_awk_t* awk,
 	if (desc == ASE_NULL)
 	{
 		awk->prmfns.misc.aprintf (
+			awk->prmfns.misc.custom_data,
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n"),
 			file, line, expr);
 	}
 	else
 	{
 		awk->prmfns.misc.aprintf (
+			awk->prmfns.misc.custom_data,
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n\nDESCRIPTION:\n%s\n"),
 			file, line, expr, desc);
 

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.39 2007-02-23 10:53:38 bacon Exp $
+ * $Id: lsp.h,v 1.40 2007-02-24 14:32:11 bacon Exp $
  *
  * {License}
  */
@@ -17,13 +17,14 @@ typedef struct ase_lsp_prmfns_t ase_lsp_prmfns_t;
 typedef ase_ssize_t (*ase_lsp_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
-typedef ase_real_t (*ase_lsp_pow_t) (ase_real_t x, ase_real_t y);
-
+typedef ase_real_t (*ase_lsp_pow_t) (
+	void* custom, ase_real_t x, ase_real_t y);
 typedef int (*ase_lsp_sprintf_t) (
-	ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...);
-typedef void (*ase_lsp_aprintf_t) (const ase_char_t* fmt, ...); 
-typedef void (*ase_lsp_dprintf_t) (const ase_char_t* fmt, ...); 
-typedef void (*ase_lsp_abort_t) (void* custom_data);
+	void* custom, ase_char_t* buf, ase_size_t size, 
+	const ase_char_t* fmt, ...);
+typedef void (*ase_lsp_aprintf_t) (void* custom, const ase_char_t* fmt, ...); 
+typedef void (*ase_lsp_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
+typedef void (*ase_lsp_abort_t) (void* custom);
 
 struct ase_lsp_prmfns_t
 {
@@ -39,7 +40,6 @@ struct ase_lsp_prmfns_t
 		ase_lsp_abort_t abort;
 		void* custom_data;
 	} misc;
-
 };
 
 /* io function commands */

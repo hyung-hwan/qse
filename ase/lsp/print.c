@@ -1,5 +1,5 @@
 /*
- * $Id: print.c,v 1.25 2007-02-23 10:53:39 bacon Exp $
+ * $Id: print.c,v 1.26 2007-02-24 14:32:11 bacon Exp $
  *
  * {License}
  */
@@ -45,18 +45,22 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 		case ASE_LSP_OBJ_INT:
 		#if ASE_SIZEOF_LONG_LONG > 0
 			lsp->prmfns.misc.sprintf (
+				lsp->prmfns.misc.custom_data,
 				buf, ASE_COUNTOF(buf), 
 				ASE_T("%lld"), (long long)ASE_LSP_IVAL(obj));
 		#elif ASE_SIZEOF___INT64 > 0
 			lsp->prmfns.misc.sprintf (
+				lsp->prmfns.misc.custom_data,
 				buf, ASE_COUNTOF(buf), 
 				ASE_T("%I64d"), (__int64)ASE_LSP_IVAL(obj));
 		#elif ASE_SIZEOF_LONG > 0
 			lsp->prmfns.misc.sprintf (
+				lsp->prmfns.misc.custom_data,
 				buf, ASE_COUNTOF(buf), 
 				ASE_T("%ld"), (long)ASE_LSP_IVAL(obj));
 		#elif ASE_SIZEOF_INT > 0
 			lsp->prmfns.misc.sprintf (
+				lsp->prmfns.misc.custom_data,
 				buf, ASE_COUNTOF(buf), 
 				ASE_T("%d"), (int)ASE_LSP_IVAL(obj));
 		#else
@@ -66,7 +70,9 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 			break;
 
 		case ASE_LSP_OBJ_REAL:
-			lsp->prmfns.misc.sprintf (buf, ASE_COUNTOF(buf), 
+			lsp->prmfns.misc.sprintf (
+				lsp->prmfns.misc.custom_data,
+				buf, ASE_COUNTOF(buf), 
 				ASE_T("%Lf"), (long double)ASE_LSP_RVAL(obj));
 
 			OUTPUT_STR (lsp, buf);
@@ -128,7 +134,9 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 			break;
 
 		default:
-			lsp->prmfns.misc.sprintf (buf, ASE_COUNTOF(buf),
+			lsp->prmfns.misc.sprintf (
+				lsp->prmfns.misc.custom_data,
+				buf, ASE_COUNTOF(buf),
 				ASE_T("unknown object type: %d"), ASE_LSP_TYPE(obj)); 
 			OUTPUT_STR (lsp, buf);
 	}

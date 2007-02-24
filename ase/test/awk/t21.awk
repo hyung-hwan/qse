@@ -2,7 +2,7 @@ BEGIN { exit 10; }
 
 {
 	print $0;
-	//print close ("");
+	#print close ("");
 }
 
 END { print "== END OF PROGRAM =="; }

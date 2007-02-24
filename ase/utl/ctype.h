@@ -12,20 +12,20 @@
 extern "C" {
 #endif
 
-ase_bool_t ase_isupper  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_islower  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_isalpha  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_isdigit  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_isxdigit (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_isalnum  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_isspace  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_isprint  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_isgraph  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_iscntrl  (ase_ccls_t* ccls, ase_cint_t c);
-ase_bool_t ase_ispunct  (ase_ccls_t* ccls, ase_cint_t c);
+ase_bool_t ase_isupper  (ase_cint_t c);
+ase_bool_t ase_islower  (ase_cint_t c);
+ase_bool_t ase_isalpha  (ase_cint_t c);
+ase_bool_t ase_isdigit  (ase_cint_t c);
+ase_bool_t ase_isxdigit (ase_cint_t c);
+ase_bool_t ase_isalnum  (ase_cint_t c);
+ase_bool_t ase_isspace  (ase_cint_t c);
+ase_bool_t ase_isprint  (ase_cint_t c);
+ase_bool_t ase_isgraph  (ase_cint_t c);
+ase_bool_t ase_iscntrl  (ase_cint_t c);
+ase_bool_t ase_ispunct  (ase_cint_t c);
 
-ase_cint_t ase_toupper  (ase_ccls_t* ccls, ase_cint_t c);
-ase_cint_t ase_tolower  (ase_ccls_t* ccls, ase_cint_t c);
+ase_cint_t ase_toupper  (ase_cint_t c);
+ase_cint_t ase_tolower  (ase_cint_t c);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.245 2007-02-23 08:17:49 bacon Exp $
+ * $Id: parse.c,v 1.246 2007-02-24 14:31:44 bacon Exp $
  *
  * {License}
  */
@@ -333,7 +333,8 @@ static struct __bvent __bvtab[] =
 		} \
 		else \
 		{ \
-			awk->prmfns.misc.sprintf ( \
+			(awk)->prmfns.misc.sprintf ( \
+				(awk)->prmfns.misc.custom_data, \
 				(awk)->errmsg, ASE_COUNTOF((awk)->errmsg), \
 				msg, \
 				ASE_STR_LEN(&(awk)->token.name), \
@@ -709,6 +710,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		else
 		{
 			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("'%.*s' not a valid function name"), 
 				ASE_STR_LEN(&awk->token.name),
@@ -728,6 +730,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 	{
 		awk->prmfns.misc.sprintf (
+			awk->prmfns.misc.custom_data,
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("built-in function '%.*s' redefined"), 
 			name_len, name);
@@ -743,6 +746,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	{
 		/* the function is defined previously */
 		awk->prmfns.misc.sprintf (
+			awk->prmfns.misc.custom_data,
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("function '%.*s' redefined"), 
 			name_len, name);
@@ -763,6 +767,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		if (g != (ase_size_t)-1) 
 		{
 			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("global variable '%.*s' redefined"), 
 				name_len, name);
@@ -850,6 +855,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 				else
 				{
 					awk->prmfns.misc.sprintf (
+						awk->prmfns.misc.custom_data,
 						awk->errmsg, ASE_COUNTOF(awk->errmsg),
 						ASE_T("'%.*s' not a valid parameter name"), 
 						ASE_STR_LEN(&awk->token.name),
@@ -876,6 +882,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 					ase_awk_tab_clear (&awk->parse.params);
 					
 					awk->prmfns.misc.sprintf (
+						awk->prmfns.misc.custom_data,
 						awk->errmsg, ASE_COUNTOF(awk->errmsg),
 						ASE_T("conflicting parameter '%.*s' with the function"), 
 						param_len, param);
@@ -903,6 +910,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 				ase_awk_tab_clear (&awk->parse.params);
 
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("duplicate parameter '%.*s'"),
 					param_len, param);
@@ -991,6 +999,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		else
 		{
 			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("'%.*s' not a valid start of the function body"), 
 				ASE_STR_LEN(&awk->token.name),
@@ -1334,6 +1343,7 @@ static ase_awk_t* __add_global (
 			if (ase_awk_getbfn (awk, name, len) != ASE_NULL)
 			{
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("built-in function '%.*s' redefined"),
 					len, name);
@@ -1347,6 +1357,7 @@ static ase_awk_t* __add_global (
 				&awk->tree.afns, name, len) != ASE_NULL) 
 			{
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("function '%.*s' redefined"),
 					len, name);
@@ -1361,6 +1372,7 @@ static ase_awk_t* __add_global (
 			&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
 		{ 
 			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("duplicate global variable '%.*s'"),
 				len, name);
@@ -1401,6 +1413,7 @@ static ase_awk_t* __collect_globals (ase_awk_t* awk)
 			else
 			{
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("'%.*s' not a valid variable name"),
 					ASE_STR_LEN(&awk->token.name),
@@ -1459,6 +1472,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			else
 			{
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("'%.*s' not a valid variable name"),
 					ASE_STR_LEN(&awk->token.name),
@@ -1482,6 +1496,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			if (ase_awk_getbfn (awk, local, local_len) != ASE_NULL)
 			{
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("built-in function '%.*s' redefined"),
 					local_len, local);
@@ -1497,6 +1512,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 				&awk->tree.afns, local, local_len) != ASE_NULL) 
 			{
 				awk->prmfns.misc.sprintf (
+					awk->prmfns.misc.custom_data,
 					awk->errmsg, ASE_COUNTOF(awk->errmsg),
 					ASE_T("function '%.*s' redefined"),
 					local_len, local);
@@ -1513,6 +1529,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			0, local, local_len) != (ase_size_t)-1) 
 		{
 			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("parameter '%.*s' redefined"),
 				local_len, local);
@@ -1529,6 +1546,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			local, local_len) != (ase_size_t)-1)
 		{
 			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("duplicate local variable '%.*s'"),
 				local_len, local);
@@ -2969,6 +2987,7 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		 	 * of the function call */
 
 			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
 				awk->errmsg, ASE_COUNTOF(awk->errmsg),
 				ASE_T("function name '%.*s' without a left parenthesis"),
 				name_len, name_dup);
@@ -3080,6 +3099,7 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		}
 
 		awk->prmfns.misc.sprintf (
+			awk->prmfns.misc.custom_data,
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("undefined identifier '%.*s'"), 
 			name_len, name_dup);
@@ -3223,6 +3243,7 @@ static ase_awk_nde_t* __parse_hashidx (
 	ASE_AWK_FREE (awk, nde);
 
 	awk->prmfns.misc.sprintf (
+		awk->prmfns.misc.custom_data,
 		awk->errmsg, ASE_COUNTOF(awk->errmsg),
 		ASE_T("undefined identifier '%.*s'"), name_len, name);
 	ase_awk_seterror (awk, ASE_AWK_EUNDEF, line, awk->errmsg);
@@ -4610,6 +4631,7 @@ static int __get_token (ase_awk_t* awk)
 	else 
 	{
 		awk->prmfns.misc.sprintf (
+			awk->prmfns.misc.custom_data,
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
 			ASE_T("invalid character '%c'"), c);
 		ase_awk_seterror (

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.177 2007-02-23 08:54:03 bacon Exp $
+ * $Id: awk.c,v 1.178 2007-02-24 14:32:44 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -22,11 +22,9 @@
 	#pragma warning (disable: 4996)
 	#pragma warning (disable: 4296)
 #elif defined(ASE_CHAR_IS_MCHAR)
-	#include <ctype.h>
 	#include <locale.h>
 #else
 	#include <wchar.h>
-	#include <wctype.h>
 	#include <locale.h>
 #endif
 
@@ -52,17 +50,97 @@ struct awk_src_io
 #include <ase/utl/main.c>
 #endif
 
-static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
+static ase_bool_t custom_awk_isupper (void* custom, ase_cint_t c)  
+{ 
+	return ase_isupper (c); 
+}
+
+static ase_bool_t custom_awk_islower (void* custom, ase_cint_t c)  
+{ 
+	return ase_islower (c); 
+}
+
+static ase_bool_t custom_awk_isalpha (void* custom, ase_cint_t c)  
+{ 
+	return ase_isalpha (c); 
+}
+
+static ase_bool_t custom_awk_isdigit (void* custom, ase_cint_t c)  
+{ 
+	return ase_isdigit (c); 
+}
+
+static ase_bool_t custom_awk_isxdigit (void* custom, ase_cint_t c) 
+{ 
+	return ase_isxdigit (c); 
+}
+
+static ase_bool_t custom_awk_isalnum (void* custom, ase_cint_t c)
+{ 
+	return ase_isalnum (c); 
+}
+
+static ase_bool_t custom_awk_isspace (void* custom, ase_cint_t c)
+{ 
+	return ase_isspace (c); 
+}
+
+static ase_bool_t custom_awk_isprint (void* custom, ase_cint_t c)
+{ 
+	return ase_isprint (c); 
+}
+
+static ase_bool_t custom_awk_isgraph (void* custom, ase_cint_t c)
+{
+	return ase_isgraph (c); 
+}
+
+static ase_bool_t custom_awk_iscntrl (void* custom, ase_cint_t c)
+{
+	return ase_iscntrl (c);
+}
+
+static ase_bool_t custom_awk_ispunct (void* custom, ase_cint_t c)
+{
+	return ase_ispunct (c);
+}
+
+static ase_cint_t custom_awk_toupper (void* custom, ase_cint_t c)
+{
+	return ase_toupper (c);
+}
+
+static ase_cint_t custom_awk_tolower (void* custom, ase_cint_t c)
+{
+	return ase_tolower (c);
+}
+
+static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
 }
 
-static void awk_abort (void* custom_data)
+static void custom_awk_abort (void* custom)
 {
 	abort ();
+
 }
 
-static void awk_aprintf (const ase_char_t* fmt, ...)
+static int custom_awk_sprintf (
+	void* custom, ase_char_t* buf, ase_size_t size, 
+	const ase_char_t* fmt, ...)
+{
+	int n;
+
+	va_list ap;
+	va_start (ap, fmt);
+	n = ase_vsprintf (buf, size, fmt, ap);
+	va_end (ap);
+
+	return n;
+}
+
+static void custom_awk_aprintf (void* custom, const ase_char_t* fmt, ...)
 {
 	va_list ap;
 #ifdef _WIN32
@@ -88,7 +166,15 @@ static void awk_aprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static void awk_dprintf (const ase_char_t* fmt, ...)
+static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	va_start (ap, fmt);
+	ase_vfprintf (stderr, fmt, ap);
+	va_end (ap);
+}
+
+static void dprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
@@ -167,7 +253,7 @@ static ase_ssize_t awk_extio_pipe (
 				mode = ASE_T("w");
 			else return -1; /* TODO: any way to set the error number? */
 
-			awk_dprintf (ASE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);
+			dprintf (ASE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);
 			handle = ase_popen (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
@@ -176,7 +262,7 @@ static ase_ssize_t awk_extio_pipe (
 
 		case ASE_AWK_IO_CLOSE:
 		{
-			awk_dprintf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
+			dprintf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -245,7 +331,7 @@ static ase_ssize_t awk_extio_file (
 				mode = ASE_T("a");
 			else return -1; /* TODO: any way to set the error number? */
 
-			awk_dprintf (ASE_T("opening %s of type %d (file)\n"), epa->name, epa->type);
+			dprintf (ASE_T("opening %s of type %d (file)\n"), epa->name, epa->type);
 			handle = ase_fopen (epa->name, mode);
 			if (handle == NULL) return -1;
 
@@ -255,7 +341,7 @@ static ase_ssize_t awk_extio_file (
 
 		case ASE_AWK_IO_CLOSE:
 		{
-			awk_dprintf (ASE_T("closing %s of type %d (file)\n"), epa->name, epa->type);
+			dprintf (ASE_T("closing %s of type %d (file)\n"), epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -364,7 +450,7 @@ static ase_ssize_t awk_extio_console (
 				FILE* fp = ase_fopen (infiles[infile_no], ASE_T("r"));
 				if (fp == ASE_NULL)
 				{
-					awk_dprintf (ASE_T("failed to open the next console of type %x - fopen failure\n"), epa->type);
+					dprintf (ASE_T("failed to open the next console of type %x - fopen failure\n"), epa->type);
 					return -1;
 				}
 
@@ -376,7 +462,7 @@ static ase_ssize_t awk_extio_console (
 					fclose ((FILE*)epa->handle);
 				}
 
-				awk_dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
+				dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
 				epa->handle = fp;
 			}
 
@@ -410,20 +496,20 @@ static int open_extio_console (ase_awk_extio_t* epa)
 {
 	/* TODO: OpenConsole in GUI APPLICATION */
 
-	awk_dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
+	dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
 
 	if (epa->mode == ASE_AWK_EXTIO_CONSOLE_READ)
 	{
 		if (infiles[infile_no] == ASE_NULL)
 		{
 			/* no more input file */
-			awk_dprintf (ASE_T("console - no more file\n"));;
+			dprintf (ASE_T("console - no more file\n"));;
 			return 0;
 		}
 
 		if (infiles[infile_no][0] == ASE_T('\0'))
 		{
-			awk_dprintf (ASE_T("    console(r) - <standard input>\n"));
+			dprintf (ASE_T("    console(r) - <standard input>\n"));
 			epa->handle = stdin;
 		}
 		else
@@ -433,11 +519,11 @@ static int open_extio_console (ase_awk_extio_t* epa)
 			FILE* fp = ase_fopen (infiles[infile_no], ASE_T("r"));
 			if (fp == ASE_NULL)
 			{
-				awk_dprintf (ASE_T("cannot open console of type %x - fopen failure\n"), epa->type);
+				dprintf (ASE_T("cannot open console of type %x - fopen failure\n"), epa->type);
 				return -1;
 			}
 
-			awk_dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
+			dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
 			if (ase_awk_setfilename (
 				epa->run, infiles[infile_no], 
 				ase_strlen(infiles[infile_no])) == -1)
@@ -454,7 +540,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 	}
 	else if (epa->mode == ASE_AWK_EXTIO_CONSOLE_WRITE)
 	{
-		awk_dprintf (ASE_T("    console(w) - <standard output>\n"));
+		dprintf (ASE_T("    console(w) - <standard output>\n"));
 		/* TODO: does output console has a name??? */
 		/*ase_awk_setconsolename (ASE_T(""));*/
 		epa->handle = stdout;
@@ -466,7 +552,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 
 static int close_extio_console (ase_awk_extio_t* epa)
 {
-	awk_dprintf (ASE_T("closing console of type %x\n"), epa->type);
+	dprintf (ASE_T("closing console of type %x\n"), epa->type);
 
 	if (epa->handle != ASE_NULL &&
 	    epa->handle != stdin && 
@@ -485,7 +571,7 @@ static int next_extio_console (ase_awk_extio_t* epa)
 	int n;
 	FILE* fp = (FILE*)epa->handle;
 
-	awk_dprintf (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
+	dprintf (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
 
 	n = open_extio_console(epa);
 	if (n == -1) return -1;
@@ -529,46 +615,46 @@ static void stop_run (int sig)
 }
 #endif
 
-static void on_run_start (ase_awk_run_t* run, void* custom_data)
+static void on_run_start (ase_awk_run_t* run, void* custom)
 {
 	app_run = run;
-	awk_dprintf (ASE_T("[AWK ABOUT TO START]\n"));
+	dprintf (ASE_T("[AWK ABOUT TO START]\n"));
 }
 
 static int __printval (ase_awk_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
-	awk_dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
+	dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
 	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
-	awk_dprintf (ASE_T("\n"));
+	dprintf (ASE_T("\n"));
 	return 0;
 }
 
 static void on_run_return (
-	ase_awk_run_t* run, ase_awk_val_t* ret, void* custom_data)
+	ase_awk_run_t* run, ase_awk_val_t* ret, void* custom)
 {
 	app_run = run;
 
-	awk_dprintf (ASE_T("[RETURN] - "));
+	dprintf (ASE_T("[RETURN] - "));
 	ase_awk_dprintval (run, ret);
-	awk_dprintf (ASE_T("\n"));
+	dprintf (ASE_T("\n"));
 
-	awk_dprintf (ASE_T("[NAMED VARIABLES]\n"));
+	dprintf (ASE_T("[NAMED VARIABLES]\n"));
 	ase_awk_map_walk (ase_awk_getrunnamedvarmap(run), __printval, run);
-	awk_dprintf (ASE_T("[END NAMED VARIABLES]\n"));
+	dprintf (ASE_T("[END NAMED VARIABLES]\n"));
 }
 
 static void on_run_end (ase_awk_run_t* run, int errnum, void* custom_data)
 {
 	if (errnum != ASE_AWK_ENOERR)
 	{
-		awk_dprintf (ASE_T("[AWK ENDED WITH AN ERROR] - "));
-		awk_dprintf (ASE_T("CODE [%d] LINE [%u] %s\n"),
+		dprintf (ASE_T("[AWK ENDED WITH AN ERROR] - "));
+		dprintf (ASE_T("CODE [%d] LINE [%u] %s\n"),
 			errnum, 
 			(unsigned int)ase_awk_getrunerrlin(run),
 			ase_awk_getrunerrmsg(run));
 	}
-	else awk_dprintf (ASE_T("[AWK ENDED SUCCESSFULLY]\n"));
+	else dprintf (ASE_T("[AWK ENDED SUCCESSFULLY]\n"));
 
 	app_run = NULL;
 }
@@ -581,32 +667,32 @@ struct prmfns_data_t
 };
 #endif
 
-static void* awk_malloc (ase_mmgr_t* mmgr, ase_size_t n)
+static void* custom_awk_malloc (void* custom, ase_size_t n)
 {
 #ifdef _WIN32
-	return HeapAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, n);
+	return HeapAlloc (((prmfns_data_t*)custom)->heap, 0, n);
 #else
 	return malloc (n);
 #endif
 }
 
-static void* awk_realloc (ase_mmgr_t* mmgr, void* ptr, ase_size_t n)
+static void* custom_awk_realloc (void* custom, void* ptr, ase_size_t n)
 {
 #ifdef _WIN32
 	/* HeapReAlloc behaves differently from realloc */
 	if (ptr == NULL)
-		return HeapAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, n);
+		return HeapAlloc (((prmfns_data_t*)custom)->heap, 0, n);
 	else
-		return HeapReAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, ptr, n);
+		return HeapReAlloc (((prmfns_data_t*)custom)->heap, 0, ptr, n);
 #else
 	return realloc (ptr, n);
 #endif
 }
 
-static void awk_free (ase_mmgr_t* mmgr, void* ptr)
+static void custom_awk_free (void* custom, void* ptr)
 {
 #ifdef _WIN32
-	HeapFree (((prmfns_data_t*)mmgr->custom_data)->heap, 0, ptr);
+	HeapFree (((prmfns_data_t*)custom)->heap, 0, ptr);
 #else
 	free (ptr);
 #endif
@@ -742,9 +828,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	memset (&prmfns, 0, ASE_SIZEOF(prmfns));
 
-	prmfns.mmgr.malloc  = awk_malloc;
-	prmfns.mmgr.realloc = awk_realloc;
-	prmfns.mmgr.free    = awk_free;
+	prmfns.mmgr.malloc  = custom_awk_malloc;
+	prmfns.mmgr.realloc = custom_awk_realloc;
+	prmfns.mmgr.free    = custom_awk_free;
 #ifdef _WIN32
 	prmfns_data.heap = HeapCreate (0, 1000000, 1000000);
 	if (prmfns_data.heap == NULL)
@@ -758,26 +844,26 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns.mmgr.custom_data = NULL;
 #endif
 
-	prmfns.ccls.is_upper    = ase_isupper;
-	prmfns.ccls.is_lower    = ase_islower;
-	prmfns.ccls.is_alpha    = ase_isalpha;
-	prmfns.ccls.is_digit    = ase_isdigit;
-	prmfns.ccls.is_xdigit   = ase_isxdigit;
-	prmfns.ccls.is_alnum    = ase_isalnum;
-	prmfns.ccls.is_space    = ase_isspace;
-	prmfns.ccls.is_print    = ase_isprint;
-	prmfns.ccls.is_graph    = ase_isgraph;
-	prmfns.ccls.is_cntrl    = ase_iscntrl;
-	prmfns.ccls.is_punct    = ase_ispunct;
-	prmfns.ccls.to_upper    = ase_toupper;
-	prmfns.ccls.to_lower    = ase_tolower;
+	prmfns.ccls.is_upper    = custom_awk_isupper;
+	prmfns.ccls.is_lower    = custom_awk_islower;
+	prmfns.ccls.is_alpha    = custom_awk_isalpha;
+	prmfns.ccls.is_digit    = custom_awk_isdigit;
+	prmfns.ccls.is_xdigit   = custom_awk_isxdigit;
+	prmfns.ccls.is_alnum    = custom_awk_isalnum;
+	prmfns.ccls.is_space    = custom_awk_isspace;
+	prmfns.ccls.is_print    = custom_awk_isprint;
+	prmfns.ccls.is_graph    = custom_awk_isgraph;
+	prmfns.ccls.is_cntrl    = custom_awk_iscntrl;
+	prmfns.ccls.is_punct    = custom_awk_ispunct;
+	prmfns.ccls.to_upper    = custom_awk_toupper;
+	prmfns.ccls.to_lower    = custom_awk_tolower;
 	prmfns.ccls.custom_data = NULL;
 
-	prmfns.misc.pow         = awk_pow;
-	prmfns.misc.sprintf     = ase_sprintf;
-	prmfns.misc.aprintf     = awk_aprintf;
-	prmfns.misc.dprintf     = awk_dprintf;
-	prmfns.misc.abort       = awk_abort;
+	prmfns.misc.pow         = custom_awk_pow;
+	prmfns.misc.abort       = custom_awk_abort;
+	prmfns.misc.sprintf     = custom_awk_sprintf;
+	prmfns.misc.aprintf     = custom_awk_aprintf;
+	prmfns.misc.dprintf     = custom_awk_dprintf;
 	prmfns.misc.lock        = NULL;
 	prmfns.misc.unlock      = NULL;
 	prmfns.misc.custom_data = NULL;

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.191 2007-02-23 08:17:49 bacon Exp $
+ * $Id: awk.h,v 1.192 2007-02-24 14:31:43 bacon Exp $
  *
  * {License}
  */
@@ -22,14 +22,14 @@ typedef struct ase_awk_runios_t ase_awk_runios_t;
 typedef struct ase_awk_runcbs_t ase_awk_runcbs_t;
 typedef struct ase_awk_runarg_t ase_awk_runarg_t;
 
-typedef ase_real_t (*ase_awk_pow_t) (ase_real_t x, ase_real_t y);
-
+typedef ase_real_t (*ase_awk_pow_t) (void* custom, ase_real_t x, ase_real_t y);
 typedef int (*ase_awk_sprintf_t) (
-	ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...);
-typedef void (*ase_awk_aprintf_t) (const ase_char_t* fmt, ...); 
-typedef void (*ase_awk_dprintf_t) (const ase_char_t* fmt, ...); 
-typedef void (*ase_awk_abort_t)   (void* custom_data);
-typedef void (*ase_awk_lock_t)    (void* custom_data);
+	void* custom, ase_char_t* buf, ase_size_t size, 
+	const ase_char_t* fmt, ...);
+typedef void (*ase_awk_aprintf_t) (void* custom, const ase_char_t* fmt, ...); 
+typedef void (*ase_awk_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
+typedef void (*ase_awk_abort_t)   (void* custom);
+typedef void (*ase_awk_lock_t)    (void* custom);
 
 typedef ase_ssize_t (*ase_awk_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
@@ -81,7 +81,7 @@ struct ase_awk_prmfns_t
 		ase_awk_lock_t    lock;        /* required if multi-threaded */
 		ase_awk_lock_t    unlock;      /* required if multi-threaded */
 
-		/* user-defined data passed to selected system functions */
+		/* user-defined data passed to the functions above */
 		void*             custom_data; /* optional */
 	} misc;
 };

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.25 2007-02-23 15:34:26 bacon Exp $
+ * $Id: Awk.cpp,v 1.26 2007-02-24 14:32:44 bacon Exp $
  *
  * {License}
  */
@@ -92,32 +92,112 @@ CAwk::~CAwk ()
 	}
 }
 
-static void* awk_malloc (ase_mmgr_t* mmgr, ase_size_t n)
+static void* custom_awk_malloc (void* custom, ase_size_t n)
 {
 	return malloc (n);
 }
 
-static void* awk_realloc (ase_mmgr_t* mmgr, void* ptr, ase_size_t n)
+static void* custom_awk_realloc (void* custom, void* ptr, ase_size_t n)
 {
 	return realloc (ptr, n);
 }
 
-static void awk_free (ase_mmgr_t* mmgr, void* ptr)
+static void custom_awk_free (void* custom, void* ptr)
 {
 	free (ptr);
 }
 
-static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
+ase_bool_t custom_awk_isupper (void* custom, ase_cint_t c)  
+{ 
+	return ase_isupper (c); 
+}
+
+ase_bool_t custom_awk_islower (void* custom, ase_cint_t c)  
+{ 
+	return ase_islower (c); 
+}
+
+ase_bool_t custom_awk_isalpha (void* custom, ase_cint_t c)  
+{ 
+	return ase_isalpha (c); 
+}
+
+ase_bool_t custom_awk_isdigit (void* custom, ase_cint_t c)  
+{ 
+	return ase_isdigit (c); 
+}
+
+ase_bool_t custom_awk_isxdigit (void* custom, ase_cint_t c) 
+{ 
+	return ase_isxdigit (c); 
+}
+
+ase_bool_t custom_awk_isalnum (void* custom, ase_cint_t c)
+{ 
+	return ase_isalnum (c); 
+}
+
+ase_bool_t custom_awk_isspace (void* custom, ase_cint_t c)
+{ 
+	return ase_isspace (c); 
+}
+
+ase_bool_t custom_awk_isprint (void* custom, ase_cint_t c)
+{ 
+	return ase_isprint (c); 
+}
+
+ase_bool_t custom_awk_isgraph (void* custom, ase_cint_t c)
+{
+	return ase_isgraph (c); 
+}
+
+ase_bool_t custom_awk_iscntrl (void* custom, ase_cint_t c)
+{
+	return ase_iscntrl (c);
+}
+
+ase_bool_t custom_awk_ispunct (void* custom, ase_cint_t c)
+{
+	return ase_ispunct (c);
+}
+
+ase_cint_t custom_awk_toupper (void* custom, ase_cint_t c)
+{
+	return ase_toupper (c);
+}
+
+ase_cint_t custom_awk_tolower (void* custom, ase_cint_t c)
+{
+	return ase_tolower (c);
+}
+
+static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
 }
 
-static void awk_abort (void* custom_data)
+static void custom_awk_abort (void* custom)
 {
 	abort ();
+
 }
 
-static void awk_aprintf (const ase_char_t* fmt, ...)
+static int custom_awk_sprintf (
+	void* custom, ase_char_t* buf, ase_size_t size, 
+	const ase_char_t* fmt, ...)
+{
+	int n;
+
+	va_list ap;
+	va_start (ap, fmt);
+	n = ase_vsprintf (buf, size, fmt, ap);
+	va_end (ap);
+
+	return n;
+}
+
+static void custom_awk_aprintf (void* custom, const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	int n;
@@ -131,7 +211,7 @@ static void awk_aprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static void awk_dprintf (const ase_char_t* fmt, ...)
+static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
@@ -406,29 +486,29 @@ HRESULT CAwk::Parse (int* ret)
 
 		memset (&prmfns, 0, sizeof(prmfns));
 
-		prmfns.mmgr.malloc = awk_malloc;
-		prmfns.mmgr.realloc = awk_realloc;
-		prmfns.mmgr.free = awk_free;
+		prmfns.mmgr.malloc = custom_awk_malloc;
+		prmfns.mmgr.realloc = custom_awk_realloc;
+		prmfns.mmgr.free = custom_awk_free;
 
-		prmfns.ccls.is_upper  = ase_isupper;
-		prmfns.ccls.is_lower  = ase_islower;
-		prmfns.ccls.is_alpha  = ase_isalpha;
-		prmfns.ccls.is_digit  = ase_isdigit;
-		prmfns.ccls.is_xdigit = ase_isxdigit;
-		prmfns.ccls.is_alnum  = ase_isalnum;
-		prmfns.ccls.is_space  = ase_isspace;
-		prmfns.ccls.is_print  = ase_isprint;
-		prmfns.ccls.is_graph  = ase_isgraph;
-		prmfns.ccls.is_cntrl  = ase_iscntrl;
-		prmfns.ccls.is_punct  = ase_ispunct;
-		prmfns.ccls.to_upper  = ase_toupper;
-		prmfns.ccls.to_lower  = ase_tolower;
+		prmfns.ccls.is_upper  = custom_awk_isupper;
+		prmfns.ccls.is_lower  = custom_awk_islower;
+		prmfns.ccls.is_alpha  = custom_awk_isalpha;
+		prmfns.ccls.is_digit  = custom_awk_isdigit;
+		prmfns.ccls.is_xdigit = custom_awk_isxdigit;
+		prmfns.ccls.is_alnum  = custom_awk_isalnum;
+		prmfns.ccls.is_space  = custom_awk_isspace;
+		prmfns.ccls.is_print  = custom_awk_isprint;
+		prmfns.ccls.is_graph  = custom_awk_isgraph;
+		prmfns.ccls.is_cntrl  = custom_awk_iscntrl;
+		prmfns.ccls.is_punct  = custom_awk_ispunct;
+		prmfns.ccls.to_upper  = custom_awk_toupper;
+		prmfns.ccls.to_lower  = custom_awk_tolower;
 
-		prmfns.misc.pow = awk_pow;
-		prmfns.misc.sprintf = ase_sprintf;
-		prmfns.misc.aprintf = awk_aprintf;
-		prmfns.misc.dprintf = awk_dprintf;
-		prmfns.misc.abort = awk_abort;
+		prmfns.misc.pow     = custom_awk_pow;
+		prmfns.misc.sprintf = custom_awk_sprintf;
+		prmfns.misc.aprintf = custom_awk_aprintf;
+		prmfns.misc.dprintf = custom_awk_dprintf;
+		prmfns.misc.abort   = custom_awk_abort;
 
 		handle = ase_awk_open (&prmfns, NULL, &errnum);
 		if (handle == NULL)
