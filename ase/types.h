@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.73 2007-02-23 08:22:35 bacon Exp $
+ * $Id: types.h,v 1.74 2007-02-24 14:32:44 bacon Exp $
  *
  * {License}
  */
@@ -233,12 +233,12 @@ typedef int  ase_mcint_t;
 typedef struct ase_mmgr_t ase_mmgr_t;
 typedef struct ase_ccls_t ase_ccls_t;
 
-typedef void* (*ase_malloc_t)  (ase_mmgr_t* mmgr, ase_size_t n);
-typedef void* (*ase_realloc_t) (ase_mmgr_t* mmgr, void* ptr, ase_size_t n);
-typedef void  (*ase_free_t)    (ase_mmgr_t* mmgr, void* ptr);
+typedef void* (*ase_malloc_t)  (void* custom, ase_size_t n);
+typedef void* (*ase_realloc_t) (void* custom, void* ptr, ase_size_t n);
+typedef void  (*ase_free_t)    (void* custom, void* ptr);
 
-typedef ase_bool_t (*ase_isccls_t) (ase_ccls_t* ccls, ase_cint_t c);
-typedef ase_cint_t (*ase_toccls_t) (ase_ccls_t* ccls, ase_cint_t c);
+typedef ase_bool_t (*ase_isccls_t) (void* custom, ase_cint_t c);
+typedef ase_cint_t (*ase_toccls_t) (void* custom, ase_cint_t c);
 
 struct ase_mmgr_t
 {

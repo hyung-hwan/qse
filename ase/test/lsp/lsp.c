@@ -97,43 +97,123 @@ struct prmfns_data_t
 };
 #endif
 
-static void* lsp_malloc (ase_mmgr_t* mmgr, ase_size_t n)
+static void* custom_lsp_malloc (void* custom, ase_size_t n)
 {
 #ifdef _WIN32
-	return HeapAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, n);
+	return HeapAlloc (((prmfns_data_t*)custom)->heap, 0, n);
 #else
 	return malloc (n);
 #endif
 }
 
-static void* lsp_realloc (ase_mmgr_t* mmgr, void* ptr, ase_size_t n)
+static void* custom_lsp_realloc (void* custom, void* ptr, ase_size_t n)
 {
 #ifdef _WIN32
 	/* HeapReAlloc behaves differently from realloc */
 	if (ptr == NULL)
-		return HeapAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, n);
+		return HeapAlloc (((prmfns_data_t*)custom)->heap, 0, n);
 	else
-		return HeapReAlloc (((prmfns_data_t*)mmgr->custom_data)->heap, 0, ptr, n);
+		return HeapReAlloc (((prmfns_data_t*)custom)->heap, 0, ptr, n);
 #else
 	return realloc (ptr, n);
 #endif
 }
 
-static void lsp_free (ase_mmgr_t* mmgr, void* ptr)
+static void custom_lsp_free (void* custom, void* ptr)
 {
 #ifdef _WIN32
-	HeapFree (((prmfns_data_t*)mmgr->custom_data)->heap, 0, ptr);
+	HeapFree (((prmfns_data_t*)custom)->heap, 0, ptr);
 #else
 	free (ptr);
 #endif
 }
 
-static void lsp_abort (void* custom_data)
-{
-	abort ();
+static ase_bool_t custom_lsp_isupper (void* custom, ase_cint_t c)  
+{ 
+	return ase_isupper (c); 
 }
 
-static void lsp_aprintf (const ase_char_t* fmt, ...)
+static ase_bool_t custom_lsp_islower (void* custom, ase_cint_t c)  
+{ 
+	return ase_islower (c); 
+}
+
+static ase_bool_t custom_lsp_isalpha (void* custom, ase_cint_t c)  
+{ 
+	return ase_isalpha (c); 
+}
+
+static ase_bool_t custom_lsp_isdigit (void* custom, ase_cint_t c)  
+{ 
+	return ase_isdigit (c); 
+}
+
+static ase_bool_t custom_lsp_isxdigit (void* custom, ase_cint_t c) 
+{ 
+	return ase_isxdigit (c); 
+}
+
+static ase_bool_t custom_lsp_isalnum (void* custom, ase_cint_t c)
+{ 
+	return ase_isalnum (c); 
+}
+
+static ase_bool_t custom_lsp_isspace (void* custom, ase_cint_t c)
+{ 
+	return ase_isspace (c); 
+}
+
+static ase_bool_t custom_lsp_isprint (void* custom, ase_cint_t c)
+{ 
+	return ase_isprint (c); 
+}
+
+static ase_bool_t custom_lsp_isgraph (void* custom, ase_cint_t c)
+{
+	return ase_isgraph (c); 
+}
+
+static ase_bool_t custom_lsp_iscntrl (void* custom, ase_cint_t c)
+{
+	return ase_iscntrl (c);
+}
+
+static ase_bool_t custom_lsp_ispunct (void* custom, ase_cint_t c)
+{
+	return ase_ispunct (c);
+}
+
+static ase_cint_t custom_lsp_toupper (void* custom, ase_cint_t c)
+{
+	return ase_toupper (c);
+}
+
+static ase_cint_t custom_lsp_tolower (void* custom, ase_cint_t c)
+{
+	return ase_tolower (c);
+}
+
+static void custom_lsp_abort (void* custom)
+{
+	abort ();
+
+}
+
+static int custom_lsp_sprintf (
+	void* custom, ase_char_t* buf, ase_size_t size, 
+	const ase_char_t* fmt, ...)
+{
+	int n;
+
+	va_list ap;
+	va_start (ap, fmt);
+	n = ase_vsprintf (buf, size, fmt, ap);
+	va_end (ap);
+
+	return n;
+}
+
+static void custom_lsp_aprintf (void* custom, const ase_char_t* fmt, ...)
 {
 	va_list ap;
 #ifdef _WIN32
@@ -159,13 +239,14 @@ static void lsp_aprintf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static void lsp_dprintf (const ase_char_t* fmt, ...)
+static void custom_lsp_dprintf (void* custom, const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
 	ase_vfprintf (stderr, fmt, ap);
 	va_end (ap);
 }
+
 
 int lsp_main (int argc, ase_char_t* argv[])
 {
@@ -188,9 +269,9 @@ int lsp_main (int argc, ase_char_t* argv[])
 
 	memset (&prmfns, 0, sizeof(prmfns));
 
-	prmfns.mmgr.malloc  = lsp_malloc;
-	prmfns.mmgr.realloc = lsp_realloc;
-	prmfns.mmgr.free    = lsp_free;
+	prmfns.mmgr.malloc  = custom_lsp_malloc;
+	prmfns.mmgr.realloc = custom_lsp_realloc;
+	prmfns.mmgr.free    = custom_lsp_free;
 #ifdef _WIN32
 	prmfns_data.heap = HeapCreate (0, 1000000, 1000000);
 	if (prmfns_data.heap == NULL)
@@ -204,25 +285,26 @@ int lsp_main (int argc, ase_char_t* argv[])
 	prmfns.mmgr.custom_data = ASE_NULL;
 #endif
 
-	prmfns.ccls.is_upper  = ase_isupper;
-	prmfns.ccls.is_lower  = ase_islower;
-	prmfns.ccls.is_alpha  = ase_isalpha;
-	prmfns.ccls.is_digit  = ase_isdigit;
-	prmfns.ccls.is_xdigit = ase_isxdigit;
-	prmfns.ccls.is_alnum  = ase_isalnum;
-	prmfns.ccls.is_space  = ase_isspace;
-	prmfns.ccls.is_print  = ase_isprint;
-	prmfns.ccls.is_graph  = ase_isgraph;
-	prmfns.ccls.is_cntrl  = ase_iscntrl;
-	prmfns.ccls.is_punct  = ase_ispunct;
-	prmfns.ccls.to_upper  = ase_toupper;
-	prmfns.ccls.to_lower  = ase_tolower;
+	prmfns.ccls.is_upper  = custom_lsp_isupper;
+	prmfns.ccls.is_lower  = custom_lsp_islower;
+	prmfns.ccls.is_alpha  = custom_lsp_isalpha;
+	prmfns.ccls.is_digit  = custom_lsp_isdigit;
+	prmfns.ccls.is_xdigit = custom_lsp_isxdigit;
+	prmfns.ccls.is_alnum  = custom_lsp_isalnum;
+	prmfns.ccls.is_space  = custom_lsp_isspace;
+	prmfns.ccls.is_print  = custom_lsp_isprint;
+	prmfns.ccls.is_graph  = custom_lsp_isgraph;
+	prmfns.ccls.is_cntrl  = custom_lsp_iscntrl;
+	prmfns.ccls.is_punct  = custom_lsp_ispunct;
+	prmfns.ccls.to_upper  = custom_lsp_toupper;
+	prmfns.ccls.to_lower  = custom_lsp_tolower;
 	prmfns.ccls.custom_data  = ASE_NULL;
 
-	prmfns.misc.sprintf = ase_sprintf;
-	prmfns.misc.aprintf = lsp_aprintf;
-	prmfns.misc.dprintf = lsp_dprintf;
-	prmfns.misc.abort   = lsp_abort;
+	prmfns.misc.sprintf = custom_lsp_sprintf;
+	prmfns.misc.aprintf = custom_lsp_aprintf;
+	prmfns.misc.dprintf = custom_lsp_dprintf;
+	prmfns.misc.abort   = custom_lsp_abort;
+	prmfns.misc.custom_data = ASE_NULL;
 
 	lsp = ase_lsp_open (&prmfns, mem, inc);
 	if (lsp == ASE_NULL) 

@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.9 2007-02-23 10:53:39 bacon Exp $
+ * $Id: misc.c,v 1.10 2007-02-24 14:32:11 bacon Exp $
  *
  * {License}
  */
@@ -580,12 +580,14 @@ int ase_lsp_assertfail (ase_lsp_t* lsp,
 	if (desc == ASE_NULL)
 	{
 		lsp->prmfns.misc.aprintf (
+			lsp->prmfns.misc.custom_data,
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n"),
 			file, line, expr);
 	}
 	else
 	{
 		lsp->prmfns.misc.aprintf (
+			lsp->prmfns.misc.custom_data,
 			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n\nDESCRIPTION:\n%s\n"),
 			file, line, expr, desc);
 	}

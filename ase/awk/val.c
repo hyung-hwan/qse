@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.110 2007-02-23 08:17:51 bacon Exp $
+ * $Id: val.c,v 1.111 2007-02-24 14:31:44 bacon Exp $
  *
  * {License}
  */
@@ -341,9 +341,13 @@ void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 
 /*
-run->awk->prmfns.misc.dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
+run->awk->prmfns.misc.dprintf (
+	run->awk->prmfns.misc.custom_data,
+	ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
 ase_awk_dprintval (run, val);
-run->awk->prmfns.misc.dprintf (ASE_T("\n"));
+run->awk->prmfns.misc.dprintf (
+	run->awk->prmfns.misc.custom_data,
+	ASE_T("\n"));
 */
 
 	val->ref++;
@@ -354,9 +358,13 @@ void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 	if (ase_awk_isbuiltinval(val)) return;
 
 /*
-run->awk->prmfns.misc.dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
+run->awk->prmfns.misc.dprintf (
+	run->awk->prmfns.misc.custom_data,
+	ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
 ase_awk_dprintval (run, val);
-run->awk->prmfns.misc.dprintf (ASE_T("\n"));
+run->awk->prmfns.misc.dprintf (
+	run->awk->prmfns.misc.custom_data,
+	ASE_T("\n"));
 */
 
 	ASE_AWK_ASSERTX (run->awk, val->ref > 0, 
@@ -465,6 +473,7 @@ ase_char_t* ase_awk_valtostr (
 
 #ifdef _DEBUG
 	run->awk->prmfns.misc.dprintf (
+		run->awk->prmfns.misc.custom_data,
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr\n"), 
 		v->type);
 #endif
@@ -722,6 +731,7 @@ int ase_awk_valtonum (
 
 #ifdef _DEBUG
 	run->awk->prmfns.misc.dprintf (
+		run->awk->prmfns.misc.custom_data,
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum\n"), 
 		v->type);
 #endif
@@ -751,14 +761,15 @@ int ase_awk_strtonum (
 }
 
 #define __DPRINTF run->awk->prmfns.misc.dprintf
+#define __DCUSTOM run->awk->prmfns.misc.custom_data
 
 static int __print_pair (ase_awk_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
 
-	__DPRINTF (ASE_T(" %s=>"), pair->key);	
+	__DPRINTF (__DCUSTOM, ASE_T(" %s=>"), pair->key);	
 	ase_awk_dprintval ((ase_awk_run_t*)arg, pair->val);
-	__DPRINTF (ASE_T(" "));
+	__DPRINTF (__DCUSTOM, ASE_T(" "));
 	return 0;
 }
 
@@ -769,21 +780,21 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 	switch (val->type)
 	{
 		case ASE_AWK_VAL_NIL:
-			__DPRINTF (ASE_T("nil"));
+			__DPRINTF (__DCUSTOM, ASE_T("nil"));
 		       	break;
 
 		case ASE_AWK_VAL_INT:
 		#if ASE_SIZEOF_LONG_LONG > 0
-			__DPRINTF (ASE_T("%lld"), 
+			__DPRINTF (__DCUSTOM, ASE_T("%lld"), 
 				(long long)((ase_awk_val_int_t*)val)->val);
 		#elif ASE_SIZEOF___INT64 > 0
-			__DPRINTF (ASE_T("%I64d"), 
+			__DPRINTF (__DCUSTOM, ASE_T("%I64d"), 
 				(__int64)((ase_awk_val_int_t*)val)->val);
 		#elif ASE_SIZEOF_LONG > 0
-			__DPRINTF (ASE_T("%ld"), 
+			__DPRINTF (__DCUSTOM, ASE_T("%ld"), 
 				(long)((ase_awk_val_int_t*)val)->val);
 		#elif ASE_SIZEOF_INT > 0
-			__DPRINTF (ASE_T("%d"), 
+			__DPRINTF (__DCUSTOM, ASE_T("%d"), 
 				(int)((ase_awk_val_int_t*)val)->val);
 		#else
 			#error unsupported size
@@ -791,31 +802,31 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 			break;
 
 		case ASE_AWK_VAL_REAL:
-			__DPRINTF (ASE_T("%Lf"), 
+			__DPRINTF (__DCUSTOM, ASE_T("%Lf"), 
 				(long double)((ase_awk_val_real_t*)val)->val);
 			break;
 
 		case ASE_AWK_VAL_STR:
-			__DPRINTF (ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
+			__DPRINTF (__DCUSTOM, ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
 			break;
 
 		case ASE_AWK_VAL_REX:
-			__DPRINTF (ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
+			__DPRINTF (__DCUSTOM, ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
 			break;
 
 		case ASE_AWK_VAL_MAP:
-			__DPRINTF (ASE_T("MAP["));
+			__DPRINTF (__DCUSTOM, ASE_T("MAP["));
 			ase_awk_map_walk (((ase_awk_val_map_t*)val)->map, __print_pair, run);
-			__DPRINTF (ASE_T("]"));
+			__DPRINTF (__DCUSTOM, ASE_T("]"));
 			break;
 	
 		case ASE_AWK_VAL_REF:
-			__DPRINTF (ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
+			__DPRINTF (__DCUSTOM, ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
 			ase_awk_dprintval (run, *((ase_awk_val_ref_t*)val)->adr);
-			__DPRINTF (ASE_T("]"));
+			__DPRINTF (__DCUSTOM, ASE_T("]"));
 			break;
 
 		default:
-			__DPRINTF (ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
+			__DPRINTF (__DCUSTOM, ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }

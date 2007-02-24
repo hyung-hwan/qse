@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.69 2007-02-23 08:53:35 bacon Exp $
+ * $Id: jni.c,v 1.70 2007-02-24 14:31:44 bacon Exp $
  *
  * {License}
  */
@@ -96,32 +96,54 @@ struct run_data_t
 	jmethodID double_value;
 };
 
-static void* awk_malloc (ase_mmgr_t* mmgr, ase_size_t n)
+static void* awk_malloc (void* custom, ase_size_t n)
 {
 	return malloc (n);
 }
 
-static void* awk_realloc (ase_mmgr_t* mmgr, void* ptr, ase_size_t n)
+static void* awk_realloc (void* custom, void* ptr, ase_size_t n)
 {
 	return realloc (ptr, n);
 }
 
-static void awk_free (ase_mmgr_t* mmgr, void* ptr)
+static void awk_free (void* custom, void* ptr)
 {
 	free (ptr);
 }
 
-static ase_real_t awk_pow (ase_real_t x, ase_real_t y)
+static ase_real_t awk_pow (void* custom, ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
 }
 
-static void awk_abort (void* custom_data)
+static void awk_abort (void* custom)
 {
         abort ();
 }
 
-static void awk_dprintf (const ase_char_t* fmt, ...)
+static int awk_sprintf (
+	void* custom, ase_char_t* buf, ase_size_t size, 
+	const ase_char_t* fmt, ...)
+{
+	int n;
+
+	va_list ap;
+	va_start (ap, fmt);
+	n = ase_vsprintf (buf, size, fmt, ap);
+	va_end (ap);
+
+	return n;
+}
+
+static void awk_printf (void* custom, const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	va_start (ap, fmt);
+	ase_vfprintf (stdout, fmt, ap);
+	va_end (ap);
+}
+
+static void awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
@@ -245,8 +267,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	prmfns.ccls.custom_data = NULL;
 
 	prmfns.misc.pow     = awk_pow;
-	prmfns.misc.sprintf = ase_sprintf;
-	prmfns.misc.aprintf = ase_printf;
+	prmfns.misc.sprintf = awk_sprintf;
+	prmfns.misc.aprintf = awk_printf;
 	prmfns.misc.dprintf = awk_dprintf;
 	prmfns.misc.abort   = awk_abort;
 	prmfns.misc.custom_data = NULL;

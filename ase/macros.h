@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.53 2007-02-23 15:18:35 bacon Exp $
+ * $Id: macros.h,v 1.54 2007-02-24 14:32:44 bacon Exp $
  *
  * {License}
  */
@@ -96,22 +96,22 @@
 	#define ASE_END_PACKED_STRUCT() };
 #endif
 
-#define ASE_MALLOC(mmgr,size)      (mmgr)->malloc  (mmgr, size)
-#define ASE_REALLOC(mmgr,ptr,size) (mmgr)->realloc (mmgr, ptr, size)
-#define ASE_FREE(mmgr,ptr)         (mmgr)->free    (mmgr, ptr)
+#define ASE_MALLOC(mmgr,size)      (mmgr)->malloc((mmgr)->custom_data, size)
+#define ASE_REALLOC(mmgr,ptr,size) (mmgr)->realloc((mmgr)->custom_data, ptr, size)
+#define ASE_FREE(mmgr,ptr)         (mmgr)->free((mmgr)->custom_data, ptr)
 
-#define ASE_ISUPPER(ccls,c)  (ccls)->is_upper  (ccls, c)
-#define ASE_ISLOWER(ccls,c)  (ccls)->is_lower  (ccls, c)
-#define ASE_ISALPHA(ccls,c)  (ccls)->is_alpha  (ccls, c)
-#define ASE_ISDIGIT(ccls,c)  (ccls)->is_digit  (ccls, c)
-#define ASE_ISXDIGIT(ccls,c) (ccls)->is_xdigit (ccls, c)
-#define ASE_ISALNUM(ccls,c)  (ccls)->is_alnum  (ccls, c)
-#define ASE_ISSPACE(ccls,c)  (ccls)->is_space  (ccls, c)
-#define ASE_ISPRINT(ccls,c)  (ccls)->is_print  (ccls, c)
-#define ASE_ISGRAPH(ccls,c)  (ccls)->is_graph  (ccls, c)
-#define ASE_ISCNTRL(ccls,c)  (ccls)->is_cntrl  (ccls, c)
-#define ASE_ISPUNCT(ccls,c)  (ccls)->is_punct  (ccls, c)
-#define ASE_TOUPPER(ccls,c)  (ccls)->to_upper  (ccls, c)
-#define ASE_TOLOWER(ccls,c)  (ccls)->to_lower  (ccls, c)
+#define ASE_ISUPPER(ccls,c)  (ccls)->is_upper((ccls)->custom_data,c)
+#define ASE_ISLOWER(ccls,c)  (ccls)->is_lower((ccls)->custom_data,c)
+#define ASE_ISALPHA(ccls,c)  (ccls)->is_alpha((ccls)->custom_data,c)
+#define ASE_ISDIGIT(ccls,c)  (ccls)->is_digit((ccls)->custom_data,c)
+#define ASE_ISXDIGIT(ccls,c) (ccls)->is_xdigit((ccls)->custom_data,c)
+#define ASE_ISALNUM(ccls,c)  (ccls)->is_alnum((ccls)->custom_data,c)
+#define ASE_ISSPACE(ccls,c)  (ccls)->is_space((ccls)->custom_data,c)
+#define ASE_ISPRINT(ccls,c)  (ccls)->is_print((ccls)->custom_data,c)
+#define ASE_ISGRAPH(ccls,c)  (ccls)->is_graph((ccls)->custom_data,c)
+#define ASE_ISCNTRL(ccls,c)  (ccls)->is_cntrl((ccls)->custom_data,c)
+#define ASE_ISPUNCT(ccls,c)  (ccls)->is_punct((ccls)->custom_data,c)
+#define ASE_TOUPPER(ccls,c)  (ccls)->to_upper((ccls)->custom_data,c)
+#define ASE_TOLOWER(ccls,c)  (ccls)->to_lower((ccls)->custom_data,c)
 
 #endif

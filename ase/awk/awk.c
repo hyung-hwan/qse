@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.109 2007-02-23 08:17:48 bacon Exp $ 
+ * $Id: awk.c,v 1.110 2007-02-24 14:31:43 bacon Exp $ 
  *
  * {License}
  */
@@ -48,7 +48,7 @@ ase_awk_t* ase_awk_open (
 	awk = (ase_awk_t*) malloc (ASE_SIZEOF(ase_awk_t));
 #else
 	awk = (ase_awk_t*) prmfns->mmgr.malloc (
-		&prmfns->mmgr, ASE_SIZEOF(ase_awk_t));
+		prmfns->mmgr.custom_data, ASE_SIZEOF(ase_awk_t));
 #endif
 	if (awk == ASE_NULL) 
 	{

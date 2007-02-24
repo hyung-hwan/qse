@@ -1,7 +1,7 @@
 CC = cl
 CFLAGS = /nologo /MT /W3 /GR- -I..\..\.. -D_WIN32_WINNT=0x0400 
-LDFLAGS = /libpath:..\..\awk /libpath:..\..\utl
-LIBS = aseawk.lib aseutl.lib kernel32.lib user32.lib
+LDFLAGS = /libpath:..\..\cmn /libpath:..\..\awk /libpath:..\..\utl
+LIBS = asecmn.lib aseawk.lib aseutl.lib kernel32.lib user32.lib
 
 !if !defined(CPU) || "$(CPU)" == ""
 CPU = $(PROCESSOR_ARCHITECTURE)

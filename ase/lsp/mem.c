@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.31 2007-02-23 10:53:38 bacon Exp $
+ * $Id: mem.c,v 1.32 2007-02-24 14:32:11 bacon Exp $
  *
  * {License}
  */
@@ -96,6 +96,7 @@ ase_lsp_obj_t* ase_lsp_alloc (ase_lsp_mem_t* mem, int type, ase_size_t size)
 	
 /* TODO: remove the following line... */
 ase_lsp_gc (mem);
+
 	if (mem->count >= mem->ubound) ase_lsp_gc (mem);
 	if (mem->count >= mem->ubound) 
 	{
@@ -326,6 +327,7 @@ static void __mark_objs_in_use (ase_lsp_mem_t* mem)
 	if (mem->macro  != ASE_NULL) __mark_obj (mem->lsp, mem->macro);
 }
 
+#include <ase/utl/stdio.h>
 static void __sweep_unmarked_objs (ase_lsp_mem_t* mem)
 {
 	ase_lsp_obj_t* obj, * prev, * next;

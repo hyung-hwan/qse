@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.25 2007-02-23 10:53:38 bacon Exp $
+ * $Id: lsp.c,v 1.26 2007-02-24 14:32:11 bacon Exp $
  *
  * {License}
  */
@@ -48,7 +48,7 @@ ase_lsp_t* ase_lsp_open (
 	lsp = (ase_lsp_t*) malloc (ASE_SIZEOF(ase_lsp_t));
 #else
 	lsp = (ase_lsp_t*) prmfns->mmgr.malloc (
-		&prmfns->mmgr, ASE_SIZEOF(ase_lsp_t));
+		prmfns->mmgr.custom_data, ASE_SIZEOF(ase_lsp_t));
 #endif
 	if (lsp == ASE_NULL) return ASE_NULL;
 

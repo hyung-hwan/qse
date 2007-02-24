@@ -3,8 +3,8 @@ OBJS = $(SRCS:.c=.o)
 
 CC = gcc
 CFLAGS = -O2 -Wall -D_REENTRANT -D_THREAD_SAFE -fPIC -I../../..
-LDFLAGS =  -L../../awk
-LIBS =  -laseawk -lm
+LDFLAGS =  -L../../cmn -L../../awk -L../../utl
+LIBS =  -lasecmn -laseawk -laseutl -lm
 
 all: aseawk
 

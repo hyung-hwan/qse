@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.329 2007-02-23 08:17:50 bacon Exp $
+ * $Id: run.c,v 1.330 2007-02-24 14:31:44 bacon Exp $
  *
  * {License}
  */
@@ -247,6 +247,7 @@ static int __set_global (
 		if (var != ASE_NULL)
 		{
 			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
 				run->errmsg, ASE_COUNTOF(run->errmsg),
 				ASE_T("map '%.*s' not assignable with a scalar"),
 				var->id.name_len, var->id.name);
@@ -700,7 +701,6 @@ int ase_awk_run (ase_awk_t* awk,
 				awk, ASE_AWK_ERUNTIME, 0, ASE_NULL);
 		}
 	}
-
 
 	/* the run loop ended. execute the end callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_end != ASE_NULL) 
@@ -1776,7 +1776,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	while (p != ASE_NULL && run->exit_level == EXIT_NONE) 
 	{
 /*run->awk->prmfns.dprintf (ASE_T("running a statement\n"));*/
-		if (__run_statement(run,p) == -1) 
+		if (__run_statement (run, p) == -1) 
 		{
 			n = -1;
 			break;
@@ -1909,9 +1909,10 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		default:
 		{
 			ase_awk_val_t* v;
-			v = __eval_expression(run,nde);
+			v = __eval_expression (run, nde);
 			if (v == ASE_NULL) return -1;
 
+			/* destroy the value if not referenced */
 			ase_awk_refupval (run, v);
 			ase_awk_refdownval (run, v);
 
@@ -2412,6 +2413,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
 				run->awk->prmfns.misc.sprintf (
+					run->awk->prmfns.misc.custom_data,
 					run->errmsg, ASE_COUNTOF(run->errmsg), 
 					ASE_T("'%.*s' not deletable"), 
 					var->id.name_len, var->id.name);
@@ -2523,6 +2525,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
 				run->awk->prmfns.misc.sprintf (
+					run->awk->prmfns.misc.custom_data,
 					run->errmsg, ASE_COUNTOF(run->errmsg), 
 					ASE_T("'%.*s' not deletable"), 
 					var->id.name_len, var->id.name);
@@ -3104,6 +3107,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 			/* once a variable becomes a map,
 			 * it cannot be changed to a scalar variable */
 			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
 				run->errmsg, ASE_COUNTOF(run->errmsg),
 				ASE_T("map '%.*s' not assignable with a scalar"),
 				var->id.name_len, var->id.name);
@@ -3138,6 +3142,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 			/* once the variable becomes a map,
 			 * it cannot be changed to a scalar variable */
 			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
 				run->errmsg, ASE_COUNTOF(run->errmsg),
 				ASE_T("map '%.*s' not assignable with a scalar"),
 				var->id.name_len, var->id.name);
@@ -3158,6 +3163,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 			/* once the variable becomes a map,
 			 * it cannot be changed to a scalar variable */
 			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
 				run->errmsg, ASE_COUNTOF(run->errmsg),
 				ASE_T("map '%.*s' not assignable with a scalar"),
 				var->id.name_len, var->id.name);
@@ -4427,14 +4433,18 @@ static ase_awk_val_t* __eval_binop_exp (
 	{
 		/* left - int, right - real */
 		res = ase_awk_makerealval (run, 
-			run->awk->prmfns.misc.pow((ase_real_t)l1,(ase_real_t)r2));
+			run->awk->prmfns.misc.pow (
+				run->awk->prmfns.misc.custom_data, 
+				(ase_real_t)l1,(ase_real_t)r2));
 	}
 	else
 	{
 		/* left - real, right - real */
 		ASE_AWK_ASSERT (run->awk, n3 == 3);
 		res = ase_awk_makerealval (run,
-			run->awk->prmfns.misc.pow((ase_real_t)r1,(ase_real_t)r2));
+			run->awk->prmfns.misc.pow(
+				run->awk->prmfns.misc.custom_data, 
+				(ase_real_t)r1,(ase_real_t)r2));
 	}
 
 	if (res == ASE_NULL) 
@@ -5250,6 +5260,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		    call->what.afn.name.len > ASE_COUNTOF(run->errmsg)-len2)
 		{
 			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg),
 				fmt2,
@@ -5259,6 +5270,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		else
 		{
 			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg),
 				fmt,
@@ -6483,6 +6495,7 @@ ase_char_t* ase_awk_format (
 			do
 			{
 				n = run->awk->prmfns.misc.sprintf (
+					run->awk->prmfns.misc.custom_data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
@@ -6588,6 +6601,7 @@ ase_char_t* ase_awk_format (
 			do
 			{
 				n = run->awk->prmfns.misc.sprintf (
+					run->awk->prmfns.misc.custom_data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
@@ -6708,6 +6722,7 @@ ase_char_t* ase_awk_format (
 			do
 			{
 				n = run->awk->prmfns.misc.sprintf (
+					run->awk->prmfns.misc.custom_data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_STR_BUF(fbu),
@@ -6795,6 +6810,7 @@ ase_char_t* ase_awk_format (
 			do
 			{
 				n = run->awk->prmfns.misc.sprintf (
+					run->awk->prmfns.misc.custom_data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_STR_BUF(fbu),
