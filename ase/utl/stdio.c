@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c,v 1.5 2007-02-24 14:45:00 bacon Exp $
+ * $Id: stdio.c,v 1.6 2007-02-28 09:57:12 bacon Exp $
  *
  * {License}
  */
@@ -305,6 +305,17 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 }
 
 #endif
+
+int ase_dprintf (const ase_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+
+	va_start (ap, fmt);
+	n = ase_vfprintf (stderr, fmt, ap);
+	va_end (ap);
+	return n;
+}
 
 FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
 {

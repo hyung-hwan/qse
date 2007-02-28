@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h,v 1.4 2007-02-23 10:53:39 bacon Exp $
+ * $Id: stdio.h,v 1.5 2007-02-28 09:57:13 bacon Exp $
  */
 
 #ifndef _ASE_UTL_STDIO_H_
@@ -44,6 +44,7 @@ int ase_fprintf (FILE* file, const ase_char_t* fmt, ...);
 int ase_printf (const ase_char_t* fmt, ...);
 #endif
 
+int ase_dprintf (const ase_char_t* fmt, ...);
 FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode);
 FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode);
 
