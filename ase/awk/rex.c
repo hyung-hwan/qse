@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.72 2007-02-28 11:23:57 bacon Exp $
+ * $Id: rex.c,v 1.73 2007-02-28 14:46:08 bacon Exp $
  *
  * {License}
  */
@@ -55,7 +55,8 @@ enum
 
 typedef struct builder_t builder_t;
 typedef struct matcher_t matcher_t;
-typedef struct __match_t __match_t;
+typedef struct match_t match_t;
+typedef struct cshdr_t cshdr_t;
 
 #include <ase/pack.h>
 
@@ -120,7 +121,7 @@ ASE_BEGIN_PACKED_STRUCT (matcher_t)
 	int errnum;
 ASE_END_PACKED_STRUCT ()
 
-ASE_BEGIN_PACKED_STRUCT (__match_t)
+ASE_BEGIN_PACKED_STRUCT (match_t)
 	const ase_char_t* match_ptr;
 
 	ase_bool_t matched;
@@ -130,10 +131,15 @@ ASE_BEGIN_PACKED_STRUCT (__match_t)
 	const ase_byte_t* branch_end;
 ASE_END_PACKED_STRUCT ()
 
+ASE_BEGIN_PACKED_STRUCT (cshdr_t)
+	ase_size_t csc;
+	ase_size_t csl;
+ASE_END_PACKED_STRUCT ()
+
 #include <ase/unpack.h>
 
 typedef const ase_byte_t* (*atom_matcher_t) (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 
 #define NCHARS_REMAINING(rex) ((rex)->ptn.end - (rex)->ptn.curp)
 	
@@ -187,31 +193,31 @@ static ase_bool_t __begin_with (
 	const ase_char_t* str, ase_size_t len, const ase_char_t* what);
 
 static const ase_byte_t* __match_pattern (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_branch (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_branch_body (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_branch_body0 (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_atom (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_bol (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_eol (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_any_char (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_ord_char (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_charset (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 static const ase_byte_t* __match_group (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat);
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat);
 
 static const ase_byte_t* __match_occurrences (
 	matcher_t* matcher, ase_size_t si, const ase_byte_t* p,
-	ase_size_t lbound, ase_size_t ubound, __match_t* mat);
+	ase_size_t lbound, ase_size_t ubound, match_t* mat);
 
 static ase_bool_t __test_charset (
 	matcher_t* matcher, const ase_byte_t* p, ase_size_t csc, ase_char_t c);
@@ -335,7 +341,7 @@ int ase_awk_matchrex (
 	const ase_char_t** match_ptr, ase_size_t* match_len, int* errnum)
 {
 	matcher_t matcher;
-	__match_t mat;
+	match_t mat;
 	ase_size_t offset = 0;
 	/*const ase_char_t* match_ptr_zero = ASE_NULL;*/
 
@@ -1037,10 +1043,10 @@ static ase_bool_t __begin_with (
 }
 
 static const ase_byte_t* __match_pattern (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p;
-	__match_t mat2;
+	match_t mat2;
 	ase_size_t nb, el, i;
 
 	p = base;
@@ -1086,7 +1092,7 @@ static const ase_byte_t* __match_pattern (
 }
 
 static const ase_byte_t* __match_branch (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	/*
 	 * branch body (base+sizeof(NA)+sizeof(BL)---+
@@ -1103,7 +1109,7 @@ static const ase_byte_t* __match_branch (
 }
 
 static const ase_byte_t* __match_branch_body (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* n;
 
@@ -1121,10 +1127,10 @@ static const ase_byte_t* __match_branch_body (
 }
 
 static const ase_byte_t* __match_branch_body0 (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p;
-/*	__match_t mat2;*/
+/*	match_t mat2;*/
 	ase_size_t match_len = 0;
 
 	mat->matched = ase_false;
@@ -1170,7 +1176,7 @@ static const ase_byte_t* __match_branch_body0 (
 }
 
 static const ase_byte_t* __match_atom (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	static atom_matcher_t matchers[] =
 	{
@@ -1190,7 +1196,7 @@ static const ase_byte_t* __match_atom (
 }
 
 static const ase_byte_t* __match_bol (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
 	const struct code_t* cp;
@@ -1206,7 +1212,7 @@ static const ase_byte_t* __match_bol (
 }
 
 static const ase_byte_t* __match_eol (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
 	const struct code_t* cp;
@@ -1222,7 +1228,7 @@ static const ase_byte_t* __match_eol (
 }
 
 static const ase_byte_t* __match_any_char (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
 	const struct code_t* cp;
@@ -1274,7 +1280,7 @@ static const ase_byte_t* __match_any_char (
 }
 
 static const ase_byte_t* __match_ord_char (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
 	const struct code_t* cp;
@@ -1373,7 +1379,7 @@ static const ase_byte_t* __match_ord_char (
 }
 
 static const ase_byte_t* __match_charset (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
 	const struct code_t* cp;
@@ -1381,12 +1387,20 @@ static const ase_byte_t* __match_charset (
 	ase_bool_t n;
 	ase_char_t c;
 
+	cshdr_t* cshdr;
+
 	cp = (const struct code_t*)p; p += ASE_SIZEOF(*cp);
 	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_CHARSET);
 
 	lbound = cp->lbound;
 	ubound = cp->ubound;
 
+cshdr = (cshdr_t*)p;
+csc = cshdr->csc;
+csl = cshdr->csl;
+p += ASE_SIZEOF(*cshdr);
+
+/*
 #if defined(__i386) || defined(__i386__)
 	csc = *(ase_size_t*)p;
 #else
@@ -1400,6 +1414,7 @@ static const ase_byte_t* __match_charset (
 	ase_memcpy (&csl, p, ASE_SIZEOF(csl));
 #endif
 	p += ASE_SIZEOF(csl);
+*/
 
 #ifdef DEBUG_REX
 	ase_dprintf (
@@ -1440,11 +1455,11 @@ static const ase_byte_t* __match_charset (
 }
 
 static const ase_byte_t* __match_group (
-	matcher_t* matcher, const ase_byte_t* base, __match_t* mat)
+	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
 	const struct code_t* cp;
-	__match_t mat2;
+	match_t mat2;
 	ase_size_t si = 0, grp_len_static[16], * grp_len;
 
 	cp = (const struct code_t*)p; p += ASE_SIZEOF(*cp);
@@ -1574,7 +1589,7 @@ static const ase_byte_t* __match_group (
 
 static const ase_byte_t* __match_occurrences (
 	matcher_t* matcher, ase_size_t si, const ase_byte_t* p,
-	ase_size_t lbound, ase_size_t ubound, __match_t* mat)
+	ase_size_t lbound, ase_size_t ubound, match_t* mat)
 {
 	ASE_AWK_ASSERT (matcher->awk, si >= lbound && si <= ubound);
 	/* the match has been found */
@@ -1633,7 +1648,7 @@ static const ase_byte_t* __match_occurrences (
 
 		do
 		{
-			__match_t mat2;
+			match_t mat2;
 			const ase_byte_t* tmp;
 
 			mat2.match_ptr = &mat->match_ptr[si];
