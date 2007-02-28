@@ -1,10 +1,14 @@
 /*
- * $Id: rex.c,v 1.68 2007-02-23 10:57:09 bacon Exp $
+ * $Id: rex.c,v 1.69 2007-02-28 11:00:32 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/awk/awk_i.h>
+
+#ifdef DEBUG_REX
+#include <ase/utl/stdio.h>
+#endif
 
 enum
 {
@@ -220,11 +224,9 @@ static ase_bool_t __cc_isspace (ase_awk_t* awk, ase_char_t c);
 static ase_bool_t __cc_isupper (ase_awk_t* awk, ase_char_t c);
 static ase_bool_t __cc_isxdigit (ase_awk_t* awk, ase_char_t c);
 
-#ifdef DEBUG_REX
-static const ase_byte_t* __print_pattern (const ase_byte_t* p);
-static const ase_byte_t* __print_branch (const ase_byte_t* p);
-static const ase_byte_t* __print_atom (const ase_byte_t* p);
-#endif
+static const ase_byte_t* __print_pattern (ase_awk_t* awk, const ase_byte_t* p);
+static const ase_byte_t* __print_branch (ase_awk_t* awk, const ase_byte_t* p);
+static const ase_byte_t* __print_atom (ase_awk_t* awk, const ase_byte_t* p);
 
 struct __char_class_t
 {
@@ -402,8 +404,19 @@ ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code)
 
 	ASE_AWK_ASSERT (awk, p != ASE_NULL);
 
-	nb = *(ase_size_t*)p; p += ASE_SIZEOF(nb);
-	el = *(ase_size_t*)p; p += ASE_SIZEOF(el);
+#if defined(__sparc) || defined(__sparc__)
+	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
+#else
+	nb = *(ase_size_t*)p; 
+#endif
+	p += ASE_SIZEOF(nb);
+
+#if defined(__sparc) || defined(__sparc__)
+	ase_memcpy (&el, p, ASE_SIZEOF(el));
+#else
+	el = *(ase_size_t*)p; 
+#endif
+	p += ASE_SIZEOF(el);
 
 	/* an empty regular expression look like:
 	 *  | expression                     | 
@@ -727,7 +740,7 @@ static int __build_charset (__builder_t* builder, struct __code_t* cmd)
 		{
 			/* invalid range */
 		#ifdef DEBUG_REX
-			builder->awk->prmfns.dprintf (
+			ase_dprintf (
 				ASE_T("__build_charset: invalid character set range\n"));
 		#endif
 			builder->errnum = ASE_AWK_EREXCRANGE;
@@ -759,8 +772,7 @@ static int __build_cclass (__builder_t* builder, ase_char_t* cc)
 	{
 		/* wrong class name */
 	#ifdef DEBUG_REX
-		builder->awk->prmfns.dprintf (
-			ASE_T("__build_cclass: wrong class name\n"));
+		ase_dprintf (ASE_T("__build_cclass: wrong class name\n"));
 	#endif
 		builder->errnum = ASE_AWK_EREXCCLASS;
 		return -1;
@@ -772,9 +784,8 @@ static int __build_cclass (__builder_t* builder, ase_char_t* cc)
 	if (builder->ptn.curc.type != CT_NORMAL ||
 	    builder->ptn.curc.value != ASE_T(':'))
 	{
-	#ifdef BUILD_REX
-		builder->awk->prmfns.dprintf (
-			ASE_T("__build_cclass: a colon(:) expected\n"));
+	#ifdef DEBUG_REX
+		ase_dprintf (ASE_T("__build_cclass: a colon(:) expected\n"));
 	#endif
 		builder->errnum = ASE_AWK_EREXCOLON;
 		return -1;
@@ -787,8 +798,7 @@ static int __build_cclass (__builder_t* builder, ase_char_t* cc)
 	    builder->ptn.curc.value != ASE_T(']'))
 	{
 	#ifdef DEBUG_REX
-		builder->awk->prmfns.dprintf (
-			ASE_T("__build_cclass: ] expected\n"));
+		ase_dprintf (ASE_T("__build_cclass: ] expected\n"));
 	#endif
 		builder->errnum = ASE_AWK_EREXRBRACKET;	
 		return -1;
@@ -1029,14 +1039,26 @@ static const ase_byte_t* __match_pattern (
 	ase_size_t nb, el, i;
 
 	p = base;
-	nb = *(ase_size_t*)p; p += ASE_SIZEOF(nb);
-	el = *(ase_size_t*)p; p += ASE_SIZEOF(el);
+#if defined(__sparc) || defined(__sparc__)
+	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
+#else
+	nb = *(ase_size_t*)p; 
+#endif
+	p += ASE_SIZEOF(nb);
 
-#ifdef BUILD_REX
-	matcher->awk->prmfns.dprintf (
+#if defined(__sparc) || defined(__sparc__)
+	ase_memcpy (&el, p, ASE_SIZEOF(el));
+#else
+	el = *(ase_size_t*)p; 
+#endif
+	p += ASE_SIZEOF(el);
+
+#ifdef DEBUG_REX
+	ase_dprintf (
 		ASE_T("__match_pattern: NB = %u, EL = %u\n"), 
 		(unsigned)nb, (unsigned)el);
 #endif
+
 	mat->matched = ase_false;
 	mat->match_len = 0;
 
@@ -1220,8 +1242,8 @@ static const ase_byte_t* __match_any_char (
 		p += ASE_SIZEOF(*cp);
 	}
 
-#ifdef BUILD_REX
-	matcher->awk->prmfns.dprintf (
+#ifdef DEBUG_REX
+	ase_dprintf (
 		ASE_T("__match_any_char: lbound = %u, ubound = %u\n"), 
 		(unsigned int)lbound, (unsigned int)ubound);
 #endif
@@ -1233,8 +1255,8 @@ static const ase_byte_t* __match_any_char (
 		si++;
 	}
 
-#ifdef BUILD_REX
-	matcher->awk->prmfns.dprintf (
+#ifdef DEBUG_REX
+	ase_dprintf (
 		ASE_T("__match_any_char: max si = %u\n"), (unsigned)si);
 #endif
 
@@ -1292,8 +1314,8 @@ static const ase_byte_t* __match_ord_char (
 		}
 	}
 	
-#ifdef BUILD_REX
-	matcher->awk->prmfns.dprintf (
+#ifdef DEBUG_REX
+	ase_dprintf (
 		ASE_T("__match_ord_char: cc = %c, lbound = %u, ubound = %u\n"), 
 		cc, (unsigned int)lbound, (unsigned int)ubound);
 #endif
@@ -1308,7 +1330,7 @@ static const ase_byte_t* __match_ord_char (
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 #ifdef DEBUG_REX
-			matcher->awk->prmfns.dprintf (
+			ase_dprintf (
 				ASE_T("__match_ord_char: <ignorecase> %c %c\n"),
 				cc, mat->match_ptr[si]);
 #endif
@@ -1322,7 +1344,7 @@ static const ase_byte_t* __match_ord_char (
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 #ifdef DEBUG_REX
-			matcher->awk->prmfns.dprintf (
+			ase_dprintf (
 				ASE_T("__match_ord_char: %c %c\n"), 
 				cc, mat->match_ptr[si]);
 #endif
@@ -1332,7 +1354,7 @@ static const ase_byte_t* __match_ord_char (
 	}
 
 #ifdef DEBUG_REX
-	matcher->awk->prmfns.dprintf (
+	ase_dprintf (
 		ASE_T("__match_ord_char: max occurrences=%u, lbound=%u, ubound=%u\n"), 
 		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
 #endif
@@ -1360,11 +1382,22 @@ static const ase_byte_t* __match_charset (
 	lbound = cp->lbound;
 	ubound = cp->ubound;
 
-	csc = *(ase_size_t*)p; p += ASE_SIZEOF(csc);
-	csl = *(ase_size_t*)p; p += ASE_SIZEOF(csl);
+#if defined(__sparc) || defined(__sparc__)
+	ase_memcpy (&csc, p, ASE_SIZEOF(csc));
+#else
+	csc = *(ase_size_t*)p;
+#endif
+	p += ASE_SIZEOF(csc);
 
-#ifdef BUILD_REX
-	matcher->awk->prmfns.dprintf (
+#if defined(__sparc) || defined(__sparc__)
+	ase_memcpy (&csl, p, ASE_SIZEOF(csl));
+#else
+	csl = *(ase_size_t*)p; 
+#endif
+	p += ASE_SIZEOF(csl);
+
+#ifdef DEBUG_REX
+	ase_dprintf (
 		ASE_T("__match_charset: lbound = %u, ubound = %u\n"), 
 		(unsigned int)lbound, (unsigned int)ubound);
 #endif
@@ -1389,7 +1422,7 @@ static const ase_byte_t* __match_charset (
 	p = p + csl - (ASE_SIZEOF(csc) + ASE_SIZEOF(csl));
 
 #ifdef DEBUG_REX
-	matcher->awk->prmfns.dprintf (
+	ase_dprintf (
 		ASE_T("__match_charset: max occurrences=%u, lbound=%u, ubound=%u\n"), 
 		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
 #endif
@@ -1502,7 +1535,7 @@ static const ase_byte_t* __match_group (
 				mat2.branch_end = mat->branch_end;
 	
 			#ifdef DEBUG_REX
-				matcher->awk->prmfns.dprintf (
+				ase_dprintf (
 					ASE_T("__match_group: GROUP si=%d [%s]\n"),
 					(unsigned)si, mat->match_ptr);
 			#endif
@@ -1603,7 +1636,7 @@ static const ase_byte_t* __match_occurrences (
 			mat2.branch_end = mat->branch_end;
 
 		#ifdef DEBUG_REX
-			matcher->awk->prmfns.dprintf (
+			ase_dprintf (
 				ASE_T("__match occurrences: si=%u [%s]\n"), 
 				(unsigned)si, mat->match_ptr);
 		#endif
@@ -1643,7 +1676,7 @@ static ase_bool_t __test_charset (
 			if (matcher->ignorecase) 
 				c1 = ASE_AWK_TOUPPER(matcher->awk, c1);
 		#ifdef DEBUG_REX
-			matcher->awk->prmfns.dprintf (
+			ase_dprintf (
 				ASE_T("__match_charset: <one> %c %c\n"), c, c1);
 		#endif
 			if (c == c1) return ase_true;
@@ -1660,7 +1693,7 @@ static ase_bool_t __test_charset (
 				c2 = ASE_AWK_TOUPPER(matcher->awk, c2);
 			}
 		#ifdef DEBUG_REX
-			matcher->awk->prmfns.dprintf (
+			ase_dprintf (
 				ASE_T("__match_charset: <range> %c %c-%c\n"), c, c1, c2);
 		#endif
 			if (c >= c1 && c <= c2) return ase_true;
@@ -1669,7 +1702,7 @@ static ase_bool_t __test_charset (
 		{
 			c1 = *(const ase_char_t*)p;
 		#ifdef DEBUG_REX
-			matcher->awk->prmfns.dprintf (
+			ase_dprintf (
 				ASE_T("__match_charset: <class> %c %s\n"), 
 				c, __char_class[c1].name);
 		#endif
@@ -1749,75 +1782,80 @@ static ase_bool_t __cc_isxdigit (ase_awk_t* awk, ase_char_t c)
 	return ASE_AWK_ISXDIGIT (awk, c);
 }
 
-#ifdef DEBUG_REX
+#define DPRINTF awk->prmfns.misc.dprintf
+#define DCUSTOM awk->prmfns.misc.custom_data
 
-void ase_awk_printrex (ase_awk_t* awk, void* rex)
+void ase_awk_dprintrex (ase_awk_t* awk, void* rex)
 {
-	__print_pattern (rex);
-	awk->prmfns.dprintf (ASE_T("\n"));
+	__print_pattern (awk, rex);
+	DPRINTF (DCUSTOM, awk->prmfns.misc.custom_data, ASE_T("\n"));
 }
 
-static const ase_byte_t* __print_pattern (const ase_byte_t* p)
+static const ase_byte_t* __print_pattern (ase_awk_t* awk, const ase_byte_t* p)
 {
 	ase_size_t nb, el, i;
 
-	nb = *(ase_size_t*)p; p += ASE_SIZEOF(nb);
-	el = *(ase_size_t*)p; p += ASE_SIZEOF(el);
-
-#ifdef DEBUG_REX
-ase_printf (ASE_T("__print_pattern: NB = %u, EL = %u\n"), (unsigned int)nb, (unsigned int)el);
+#if defined(__sparc) || defined(__sparc__)
+	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
+#else
+	nb = *(ase_size_t*)p; 
 #endif
+	p += ASE_SIZEOF(nb);
+
+#if defined(__sparc) || defined(__sparc__)
+	ase_memcpy (&el, p, ASE_SIZEOF(el));
+#else
+	el = *(ase_size_t*)p; 
+#endif
+	p += ASE_SIZEOF(el);
 
 	for (i = 0; i < nb; i++)
 	{
-		if (i != 0) ase_printf (ASE_T("|"));
-		p = __print_branch (p);
+		if (i != 0) DPRINTF (DCUSTOM, ASE_T("|"));
+		p = __print_branch (awk, p);
 	}
 
 	return p;
 }
 
-static const ase_byte_t* __print_branch (const ase_byte_t* p)
+static const ase_byte_t* __print_branch (ase_awk_t* awk, const ase_byte_t* p)
 {
 	ase_size_t na, bl, i;
 
 	na = *(ase_size_t*)p; p += ASE_SIZEOF(na);
 	bl = *(ase_size_t*)p; p += ASE_SIZEOF(bl);
-#ifdef DEBUG_REX
-ase_printf (ASE_T("__print_branch: NA = %u, BL = %u\n"), (unsigned int) na, (unsigned int)bl);
-#endif
 
 	for (i = 0; i < na; i++)
 	{
-		p = __print_atom (p);
+		p = __print_atom (awk, p);
 	}
 
 	return p;
 }
 
-static const ase_byte_t* __print_atom (const ase_byte_t* p)
+static const ase_byte_t* __print_atom (ase_awk_t* awk, const ase_byte_t* p)
 {
 	const struct __code_t* cp = (const struct __code_t*)p;
 
 	if (cp->cmd == CMD_BOL)
 	{
-		ase_printf (ASE_T("^"));
+		DPRINTF (DCUSTOM, ASE_T("^"));
 		p += ASE_SIZEOF(*cp);
 	}
 	else if (cp->cmd == CMD_EOL)
 	{
-		ase_printf (ASE_T("$"));
+		DPRINTF (DCUSTOM, ASE_T("$"));
 		p += ASE_SIZEOF(*cp);
 	}
 	else if (cp->cmd == CMD_ANY_CHAR) 
 	{
-		ase_printf (ASE_T("."));
+		DPRINTF (DCUSTOM, ASE_T("."));
 		p += ASE_SIZEOF(*cp);
 	}
 	else if (cp->cmd == CMD_ORD_CHAR) 
 	{
 		p += ASE_SIZEOF(*cp);
-		ase_printf (ASE_T("%c"), *(ase_char_t*)p);
+		DPRINTF (DCUSTOM, ASE_T("%c"), *(ase_char_t*)p);
 		p += ASE_SIZEOF(ase_char_t);
 	}
 	else if (cp->cmd == CMD_CHARSET)
@@ -1825,11 +1863,22 @@ static const ase_byte_t* __print_atom (const ase_byte_t* p)
 		ase_size_t csc, csl, i;
 
 		p += ASE_SIZEOF(*cp);
-		ase_printf (ASE_T("["));
-		if (cp->negate) ase_printf (ASE_T("^"));
+		DPRINTF (DCUSTOM, ASE_T("["));
+		if (cp->negate) DPRINTF (DCUSTOM, ASE_T("^"));
 
-		csc = *(ase_size_t*)p; p += ASE_SIZEOF(csc);
-		csl = *(ase_size_t*)p; p += ASE_SIZEOF(csl);
+#if defined(__sparc) || defined(__sparc__)
+		ase_memcpy (&csc, p, ASE_SIZEOF(csc));
+#else
+		csc = *(ase_size_t*)p;
+#endif
+		p += ASE_SIZEOF(csc);
+
+#if defined(__sparc) || defined(__sparc__)
+		ase_memcpy (&csl, p, ASE_SIZEOF(csl));
+#else
+		csl = *(ase_size_t*)p; 
+#endif
+		p += ASE_SIZEOF(csl);
 
 		for (i = 0; i < csc; i++)
 		{
@@ -1841,55 +1890,54 @@ static const ase_byte_t* __print_atom (const ase_byte_t* p)
 			if (c0 == CHARSET_ONE)
 			{
 				c1 = *(ase_char_t*)p;
-				ase_printf (ASE_T("%c"), c1);
+				DPRINTF (DCUSTOM, ASE_T("%c"), c1);
 			}
 			else if (c0 == CHARSET_RANGE)
 			{
 				c1 = *(ase_char_t*)p;
 				p += ASE_SIZEOF(c1);
 				c2 = *(ase_char_t*)p;
-				ase_printf (ASE_T("%c-%c"), c1, c2);
+				DPRINTF (DCUSTOM, ASE_T("%c-%c"), c1, c2);
 			}
 			else if (c0 == CHARSET_CLASS)
 			{
 				c1 = *(ase_char_t*)p;
-				ase_printf (ASE_T("[:%s:]"), __char_class[c1].name);
+				DPRINTF (DCUSTOM, ASE_T("[:%s:]"), __char_class[c1].name);
 			}
 			else
 			{
-				ase_printf (ASE_T("should never happen - invalid charset code\n"));
+				DPRINTF (DCUSTOM, ASE_T("should never happen - invalid charset code\n"));
 			}
 
 			p += ASE_SIZEOF(c1);
 		}
 
-		ase_printf (ASE_T("]"));
+		DPRINTF (DCUSTOM, ASE_T("]"));
 	}
 	else if (cp->cmd == CMD_GROUP)
 	{
 		p += ASE_SIZEOF(*cp);
-		ase_printf (ASE_T("("));
-		p = __print_pattern (p);
-		ase_printf (ASE_T(")"));
+		DPRINTF (DCUSTOM, ASE_T("("));
+		p = __print_pattern (awk, p);
+		DPRINTF (DCUSTOM, ASE_T(")"));
 	}
 	else 
 	{
-		ase_printf (ASE_T("should never happen - invalid atom code\n"));
+		DPRINTF (DCUSTOM, ASE_T("should never happen - invalid atom code\n"));
 	}
 
 	if (cp->lbound == 0 && cp->ubound == BOUND_MAX)
-		ase_printf (ASE_T("*"));
+		DPRINTF (DCUSTOM, ASE_T("*"));
 	else if (cp->lbound == 1 && cp->ubound == BOUND_MAX)
-		ase_printf (ASE_T("+"));
+		DPRINTF (DCUSTOM, ASE_T("+"));
 	else if (cp->lbound == 0 && cp->ubound == 1)
-		ase_printf (ASE_T("?"));
+		DPRINTF (DCUSTOM, ASE_T("?"));
 	else if (cp->lbound != 1 || cp->ubound != 1)
 	{
-		ase_printf (ASE_T("{%lu,%lu}"), 
+		DPRINTF (DCUSTOM, ASE_T("{%lu,%lu}"), 
 			(unsigned long)cp->lbound, (unsigned long)cp->ubound);
 	}
 
 	return p;
 }
 
-#endif
