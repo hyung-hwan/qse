@@ -1,10 +1,15 @@
 /*
- * $Id: val.c,v 1.111 2007-02-24 14:31:44 bacon Exp $
+ * $Id: val.c,v 1.112 2007-02-28 11:00:33 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/awk/awk_i.h>
+
+#ifdef DEBUG_VAL
+#include <ase/utl/stdio.h>
+#endif
+
 
 static ase_char_t* __str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
@@ -78,7 +83,9 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 	val->val = v;
 	val->nde = ASE_NULL;
 
-/*ase_printf (ASE_T("makeintval => %p\n"), val);*/
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("makeintval => %p\n"), val);
+#endif
 	return (ase_awk_val_t*)val;
 }
 
@@ -102,7 +109,9 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 	val->val = v;
 	val->nde = ASE_NULL;
 
-/*ase_printf (ASE_T("makerealval => %p\n"), val);*/
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("makerealval => %p\n"), val);
+#endif
 	return (ase_awk_val_t*)val;
 }
 
@@ -130,7 +139,9 @@ ase_awk_val_t* ase_awk_makestrval (
 		return ASE_NULL;
 	}
 
-/*ase_printf (ASE_T("makestrval => %p\n"), val);*/
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("makestrval => %p\n"), val);
+#endif
 	return (ase_awk_val_t*)val;
 }
 
@@ -171,7 +182,9 @@ ase_awk_val_t* ase_awk_makestrval2 (
 		return ASE_NULL;
 	}
 
-/*ase_printf (ASE_T("makestrval2 => %p\n"), val);*/
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("makestrval2 => %p\n"), val);
+#endif
 	return (ase_awk_val_t*)val;
 }
 
@@ -208,11 +221,12 @@ ase_awk_val_t* ase_awk_makerexval (
 
 static void __free_map_val (void* run, void* v)
 {
-/*
-ase_printf (ASE_T("refdown in map free..."));
-ase_awk_dprintval (v);
-ase_printf (ASE_T("\n"));
-*/
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("refdown in map free..."));
+	ase_awk_dprintval (run, v);
+	ase_dprintf (ASE_T("\n"));
+#endif
+
 	ase_awk_refdownval (run, v);
 }
 
@@ -275,9 +289,12 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 {
 	if (ase_awk_isbuiltinval(val)) return;
 
-/*ase_printf (ASE_T("freeing [cache=%d] ... "), cache);
-ase_awk_dprintval (val);
-ase_printf (ASE_T("\n"));*/
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("freeing [cache=%d] ... "), cache);
+	ase_awk_dprintval (run, val);
+	ase_dprintf (ASE_T("\n"));
+#endif
+
 	if (val->type == ASE_AWK_VAL_NIL)
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -340,15 +357,11 @@ void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val)
 {
 	if (ase_awk_isbuiltinval(val)) return;
 
-/*
-run->awk->prmfns.misc.dprintf (
-	run->awk->prmfns.misc.custom_data,
-	ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
-ase_awk_dprintval (run, val);
-run->awk->prmfns.misc.dprintf (
-	run->awk->prmfns.misc.custom_data,
-	ASE_T("\n"));
-*/
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
+	ase_awk_dprintval (run, val);
+	ase_dprintf (ASE_T("\n"));
+#endif
 
 	val->ref++;
 }
@@ -357,15 +370,11 @@ void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 {
 	if (ase_awk_isbuiltinval(val)) return;
 
-/*
-run->awk->prmfns.misc.dprintf (
-	run->awk->prmfns.misc.custom_data,
-	ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
-ase_awk_dprintval (run, val);
-run->awk->prmfns.misc.dprintf (
-	run->awk->prmfns.misc.custom_data,
-	ASE_T("\n"));
-*/
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
+	ase_awk_dprintval (run, val);
+	ase_dprintf (ASE_T("\n"));
+#endif
 
 	ASE_AWK_ASSERTX (run->awk, val->ref > 0, 
 		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
@@ -373,11 +382,6 @@ run->awk->prmfns.misc.dprintf (
 	val->ref--;
 	if (val->ref <= 0) 
 	{
-/*
-ase_printf (ASE_T("**FREEING ["));
-ase_awk_dprintval (val);
-ase_printf (ASE_T("]\n"));
-*/
 		ase_awk_freeval(run, val, ase_true);
 	}
 }
@@ -471,9 +475,8 @@ ase_char_t* ase_awk_valtostr (
 			run, vs->buf, vs->len, opt, buf, len);
 	}
 
-#ifdef _DEBUG
-	run->awk->prmfns.misc.dprintf (
-		run->awk->prmfns.misc.custom_data,
+#ifdef DEBUG_VAL
+	ase_dprintf (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr\n"), 
 		v->type);
 #endif
@@ -729,9 +732,8 @@ int ase_awk_valtonum (
 #endif
 	}
 
-#ifdef _DEBUG
-	run->awk->prmfns.misc.dprintf (
-		run->awk->prmfns.misc.custom_data,
+#ifdef DEBUG_VAL
+	ase_dprintf (
 		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum\n"), 
 		v->type);
 #endif

@@ -1,10 +1,14 @@
 /*
- * $Id: run.c,v 1.330 2007-02-24 14:31:44 bacon Exp $
+ * $Id: run.c,v 1.331 2007-02-28 11:00:33 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/awk/awk_i.h>
+
+#ifdef DEBUG_RUN
+#include <ase/utl/stdio.h>
+#endif
 
 #define CMP_ERROR -99
 #define DEF_BUF_CAPA 256
@@ -1755,7 +1759,12 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	p = nde->body;
 	nlocals = nde->nlocals;
 
-/*run->awk->prmfns.dprintf (ASE_T("securing space for local variables nlocals = %d\n"), (int)nlocals);*/
+#ifdef DEBUG_RUN
+	ase_dprintf (
+		ASE_T("securing space for local variables nlocals = %d\n"), 
+		(int)nlocals);
+#endif
+
 	saved_stack_top = run->stack_top;
 
 	/* secure space for local variables */
@@ -1772,10 +1781,17 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		/* refupval is not required for ase_awk_val_nil */
 	}
 
-/*run->awk->prmfns.dprintf (ASE_T("executing block statements\n"));*/
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("executing block statements\n"));
+#endif
+
 	while (p != ASE_NULL && run->exit_level == EXIT_NONE) 
 	{
-/*run->awk->prmfns.dprintf (ASE_T("running a statement\n"));*/
+#ifdef DEBUG_RUN
+		ase_dprintf (ASE_T("running a statement of type %d at line %d\n"), 
+			(int)p->type, (int)p->line);
+#endif
+
 		if (__run_statement (run, p) == -1) 
 		{
 			n = -1;
@@ -1784,8 +1800,10 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		p = p->next;
 	}
 
-/*run->awk->prmfns.dprintf (ASE_T("popping off local variables\n"));*/
 	/* pop off local variables */
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("popping off local variables\n"));
+#endif
 	nlocals = nde->nlocals;
 	while (nlocals > 0)
 	{
@@ -2210,14 +2228,12 @@ static int __run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde)
 		 * by the parser first of all */
 		ASE_AWK_ASSERT (run->awk, nde->val->next == ASE_NULL); 
 
-/*run->awk->prmfns.dprintf (ASE_T("returning....\n"));*/
 		val = __eval_expression (run, nde->val);
 		if (val == ASE_NULL) return -1;
 
 		ase_awk_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
 		ase_awk_refupval (run, val); /* see __eval_call for the trick */
-/*run->awk->prmfns.dprintf (ASE_T("set return value....\n"));*/
 	}
 	
 	run->exit_level = EXIT_FUNCTION;
@@ -3281,7 +3297,11 @@ static ase_awk_val_t* __do_assignment_map (
 	str = __idxnde_to_str (run, var->idx, &len);
 	if (str == ASE_NULL) return ASE_NULL;
 
-/*run->awk->prmfns.dprintf (ASE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), str, (int)map->ref, (int)map->type);*/
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), 
+		str, (int)map->ref, (int)map->type);
+#endif
+
 	n = ase_awk_map_putx (map->map, str, len, val, ASE_NULL);
 	if (n < 0)
 	{
@@ -5300,8 +5320,9 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 
 /* run->stack_base has not been set for this  
- * stack frame. so STACK_ARG cannot be used */ 
-/*ase_awk_refdownval (run, STACK_ARG(run,nargs));*/ 
+ * stack frame. so the STACK_ARG macro cannot be used as in 
+ * ase_awk_refdownval (run, STACK_ARG(run,nargs));*/ 
+
 #define UNWIND_RUN_STACK(run,nargs) \
 	do { \
 		while ((nargs) > 0) \
@@ -5375,7 +5396,10 @@ static ase_awk_val_t* __eval_call (
 
 	saved_stack_top = run->stack_top;
 
-/*run->awk->prmfns.dprintf (ASE_T("setting up function stack frame stack_top = %ld stack_base = %ld\n"), run->stack_top, run->stack_base); */
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("setting up function stack frame top=%ld base=%ld\n"), 
+		(long)run->stack_top, (long)run->stack_base);
+#endif
 	if (__raw_push(run,(void*)run->stack_base) == -1) 
 	{
 		ase_awk_setrunerror (
@@ -5500,7 +5524,9 @@ static ase_awk_val_t* __eval_call (
 	run->stack_base = saved_stack_top;
 	STACK_NARGS(run) = (void*)nargs;
 	
-/*run->awk->prmfns.dprintf (ASE_T("running function body\n")); */
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("running function body\n"));
+#endif
 
 	if (afn != ASE_NULL)
 	{
@@ -5526,16 +5552,19 @@ static ase_awk_val_t* __eval_call (
 		}
 	}
 
-/*run->awk->prmfns.dprintf (ASE_T("block run complete\n")); */
-
 	/* refdown args in the run.stack */
 	nargs = (ase_size_t)STACK_NARGS(run);
-/*run->awk->prmfns.dprintf (ASE_T("block run complete nargs = %d\n"), (int)nargs); */
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("block run complete nargs = %d\n"), (int)nargs); 
+#endif
 	for (i = 0; i < nargs; i++)
 	{
 		ase_awk_refdownval (run, STACK_ARG(run,i));
 	}
-/*run->awk->prmfns.dprintf (ASE_T("got return value\n")); */
+
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("got return value\n"));
+#endif
 
 	/* this trick has been mentioned in __run_return.
 	 * adjust the reference count of the return value.
@@ -5550,7 +5579,10 @@ static ase_awk_val_t* __eval_call (
 
 	if (run->exit_level == EXIT_FUNCTION) run->exit_level = EXIT_NONE;
 
-/*run->awk->prmfns.dprintf (ASE_T("returning from function stack_top=%ld, stack_base=%ld\n"), run->stack_top, run->stack_base); */
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("returning from function top=%ld, base=%ld\n"),
+		(long)run->stack_top, (long)run->stack_base); 
+#endif
 	return (n == -1)? ASE_NULL: v;
 }
 
@@ -6171,11 +6203,12 @@ static int __read_record (ase_awk_run_t* run)
 		ase_awk_setrunerror (run, saved, 0, ASE_NULL);
 		return -1;
 	}
-/*
-run->awk->prmfns.dprintf (ASE_T("len = %d str=[%s]\n"), 
-		(int)ASE_STR_LEN(&run->inrec.line),
-		ASE_STR_BUF(&run->inrec.line));
-*/
+#ifdef DEBUG_RUN
+	ase_dprintf (ASE_T("record len = %d str=[%.*s]\n"), 
+			(int)ASE_STR_LEN(&run->inrec.line),
+			(int)ASE_STR_LEN(&run->inrec.line),
+			ASE_STR_BUF(&run->inrec.line));
+#endif
 	if (n == 0) 
 	{
 		ASE_AWK_ASSERT (run->awk, ASE_STR_LEN(&run->inrec.line) == 0);
