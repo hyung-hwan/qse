@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.70 2007-02-28 11:04:16 bacon Exp $
+ * $Id: rex.c,v 1.71 2007-02-28 11:19:03 bacon Exp $
  *
  * {License}
  */
@@ -143,12 +143,12 @@ typedef const ase_byte_t* (*atom_matcher_t) (
 #define ADD_CODE(rex,data,len) \
 	do { if (__add_code(rex,data,len) == -1) return -1; } while (0)
 
-#if defined(__sparc) || defined(__sparc__)
-	#define GET_CODE(rex,pos,type) __get_code(rex,pos)
-	#define SET_CODE(rex,pos,type,code) __set_code(rex,pos,code)
-#else
+#if defined(__i386) || defined(__i386__)
 	#define GET_CODE(rex,pos,type) (*((type*)&(rex)->code.buf[pos]))
 	#define SET_CODE(rex,pos,type,code) (GET_CODE(rex,pos,type) = (code))
+#else
+	#define GET_CODE(rex,pos,type) __get_code(rex,pos)
+	#define SET_CODE(rex,pos,type,code) __set_code(rex,pos,code)
 #endif
 
 static int __build_pattern (builder_t* rex);
@@ -162,7 +162,7 @@ static int __build_range (builder_t* rex, struct code_t* cmd);
 static int __next_char (builder_t* rex, int level);
 static int __add_code (builder_t* rex, void* data, ase_size_t len);
 
-#if defined(__sparc) || defined(__sparc__)
+#if !defined(__i386) && !defined(__i386__)
 
 static ase_size_t __get_code (builder_t* builder, ase_size_t pos)
 {
@@ -404,17 +404,17 @@ ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code)
 
 	ASE_AWK_ASSERT (awk, p != ASE_NULL);
 
-#if defined(__sparc) || defined(__sparc__)
-	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
-#else
+#if defined(__i386) || defined(__i386__)
 	nb = *(ase_size_t*)p; 
+#else
+	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
 #endif
 	p += ASE_SIZEOF(nb);
 
-#if defined(__sparc) || defined(__sparc__)
-	ase_memcpy (&el, p, ASE_SIZEOF(el));
-#else
+#if defined(__i386) || defined(__i386__)
 	el = *(ase_size_t*)p; 
+#else
+	ase_memcpy (&el, p, ASE_SIZEOF(el));
 #endif
 	p += ASE_SIZEOF(el);
 
@@ -1039,17 +1039,17 @@ static const ase_byte_t* __match_pattern (
 	ase_size_t nb, el, i;
 
 	p = base;
-#if defined(__sparc) || defined(__sparc__)
-	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
-#else
+#if defined(__i386) || defined(__i386__)
 	nb = *(ase_size_t*)p; 
+#else
+	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
 #endif
 	p += ASE_SIZEOF(nb);
 
-#if defined(__sparc) || defined(__sparc__)
-	ase_memcpy (&el, p, ASE_SIZEOF(el));
-#else
+#if defined(__i386) || defined(__i386__)
 	el = *(ase_size_t*)p; 
+#else
+	ase_memcpy (&el, p, ASE_SIZEOF(el));
 #endif
 	p += ASE_SIZEOF(el);
 
@@ -1382,17 +1382,17 @@ static const ase_byte_t* __match_charset (
 	lbound = cp->lbound;
 	ubound = cp->ubound;
 
-#if defined(__sparc) || defined(__sparc__)
-	ase_memcpy (&csc, p, ASE_SIZEOF(csc));
-#else
+#if defined(__i386) || defined(__i386__)
 	csc = *(ase_size_t*)p;
+#else
+	ase_memcpy (&csc, p, ASE_SIZEOF(csc));
 #endif
 	p += ASE_SIZEOF(csc);
 
-#if defined(__sparc) || defined(__sparc__)
-	ase_memcpy (&csl, p, ASE_SIZEOF(csl));
-#else
+#if defined(__i386) || defined(__i386__)
 	csl = *(ase_size_t*)p; 
+#else
+	ase_memcpy (&csl, p, ASE_SIZEOF(csl));
 #endif
 	p += ASE_SIZEOF(csl);
 
@@ -1795,17 +1795,17 @@ static const ase_byte_t* __print_pattern (ase_awk_t* awk, const ase_byte_t* p)
 {
 	ase_size_t nb, el, i;
 
-#if defined(__sparc) || defined(__sparc__)
-	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
-#else
+#if defined(__i386) || defined(__i386__)
 	nb = *(ase_size_t*)p; 
+#else
+	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
 #endif
 	p += ASE_SIZEOF(nb);
 
-#if defined(__sparc) || defined(__sparc__)
-	ase_memcpy (&el, p, ASE_SIZEOF(el));
-#else
+#if defined(__i386) || defined(__i386__)
 	el = *(ase_size_t*)p; 
+#else
+	ase_memcpy (&el, p, ASE_SIZEOF(el));
 #endif
 	p += ASE_SIZEOF(el);
 
@@ -1866,17 +1866,17 @@ static const ase_byte_t* __print_atom (ase_awk_t* awk, const ase_byte_t* p)
 		DPRINTF (DCUSTOM, ASE_T("["));
 		if (cp->negate) DPRINTF (DCUSTOM, ASE_T("^"));
 
-#if defined(__sparc) || defined(__sparc__)
-		ase_memcpy (&csc, p, ASE_SIZEOF(csc));
-#else
+#if defined(__i386) || defined(__i386__)
 		csc = *(ase_size_t*)p;
+#else
+		ase_memcpy (&csc, p, ASE_SIZEOF(csc));
 #endif
 		p += ASE_SIZEOF(csc);
 
-#if defined(__sparc) || defined(__sparc__)
-		ase_memcpy (&csl, p, ASE_SIZEOF(csl));
-#else
+#if defined(__i386) || defined(__i386__)
 		csl = *(ase_size_t*)p; 
+#else
+		ase_memcpy (&csl, p, ASE_SIZEOF(csl));
 #endif
 		p += ASE_SIZEOF(csl);
 
