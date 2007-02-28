@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.71 2007-02-28 11:19:03 bacon Exp $
+ * $Id: rex.c,v 1.72 2007-02-28 11:23:57 bacon Exp $
  *
  * {License}
  */
@@ -143,7 +143,12 @@ typedef const ase_byte_t* (*atom_matcher_t) (
 #define ADD_CODE(rex,data,len) \
 	do { if (__add_code(rex,data,len) == -1) return -1; } while (0)
 
-#if defined(__i386) || defined(__i386__)
+#if defined(__i386)||defined(__i386__)||defined(_M_IX86)||defined(__INTEL__)||defined(_X86_)||defined(__I86__)||defined(__THW_INTEL__)
+
+	#if !defined(__i386)
+		#define __i386
+	#endif
+
 	#define GET_CODE(rex,pos,type) (*((type*)&(rex)->code.buf[pos]))
 	#define SET_CODE(rex,pos,type,code) (GET_CODE(rex,pos,type) = (code))
 #else
