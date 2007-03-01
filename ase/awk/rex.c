@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.73 2007-02-28 14:46:08 bacon Exp $
+ * $Id: rex.c,v 1.74 2007-03-01 04:31:27 bacon Exp $
  *
  * {License}
  */
@@ -56,19 +56,12 @@ enum
 typedef struct builder_t builder_t;
 typedef struct matcher_t matcher_t;
 typedef struct match_t match_t;
+
+typedef struct code_t code_t;
 typedef struct cshdr_t cshdr_t;
 
-#include <ase/pack.h>
-
-ASE_BEGIN_PACKED_STRUCT (code_t)
-	/*ase_byte_t cmd;*/
-	short cmd;
-	short negate; /* only for CMD_CHARSET */
-	ase_size_t lbound;
-	ase_size_t ubound;
-ASE_END_PACKED_STRUCT ()
-
-ASE_BEGIN_PACKED_STRUCT (builder_t)
+struct builder_t
+{
 	ase_awk_t* awk;
 
 	struct
@@ -97,9 +90,10 @@ ASE_BEGIN_PACKED_STRUCT (builder_t)
 	} depth;
 
 	int errnum;
-ASE_END_PACKED_STRUCT ()
+};
 
-ASE_BEGIN_PACKED_STRUCT (matcher_t)
+struct matcher_t
+{
 	ase_awk_t* awk;
 
 	struct
@@ -119,9 +113,10 @@ ASE_BEGIN_PACKED_STRUCT (matcher_t)
 
 	int ignorecase;
 	int errnum;
-ASE_END_PACKED_STRUCT ()
+};
 
-ASE_BEGIN_PACKED_STRUCT (match_t)
+struct match_t
+{
 	const ase_char_t* match_ptr;
 
 	ase_bool_t matched;
@@ -129,11 +124,21 @@ ASE_BEGIN_PACKED_STRUCT (match_t)
 
 	const ase_byte_t* branch;
 	const ase_byte_t* branch_end;
+};
+
+#include <ase/pack.h>
+
+ASE_BEGIN_PACKED_STRUCT (code_t)
+	/*ase_byte_t cmd;*/
+	short cmd;
+	short negate; /* only for CMD_CHARSET */
+	ase_size_t lbound;
+	ase_size_t ubound;
 ASE_END_PACKED_STRUCT ()
 
 ASE_BEGIN_PACKED_STRUCT (cshdr_t)
-	ase_size_t csc;
-	ase_size_t csl;
+	ase_size_t csc; /* count */
+	ase_size_t csl; /* length */
 ASE_END_PACKED_STRUCT ()
 
 #include <ase/unpack.h>
@@ -166,10 +171,10 @@ static int __build_pattern (builder_t* rex);
 static int __build_pattern0 (builder_t* rex);
 static int __build_branch (builder_t* rex);
 static int __build_atom (builder_t* rex);
-static int __build_charset (builder_t* rex, struct code_t* cmd);
-static int __build_occurrences (builder_t* rex, struct code_t* cmd);
+static int __build_charset (builder_t* rex, code_t* cmd);
+static int __build_occurrences (builder_t* rex, code_t* cmd);
 static int __build_cclass (builder_t* rex, ase_char_t* cc);
-static int __build_range (builder_t* rex, struct code_t* cmd);
+static int __build_range (builder_t* rex, code_t* cmd);
 static int __next_char (builder_t* rex, int level);
 static int __add_code (builder_t* rex, void* data, ase_size_t len);
 
@@ -514,7 +519,7 @@ static int __build_branch (builder_t* builder)
 	ase_size_t zero = 0;
 	ase_size_t old_size;
 	ase_size_t pos_na, pos_bl;
-	struct code_t* cmd;
+	code_t* cmd;
 
 	old_size = builder->code.size;
 
@@ -526,7 +531,7 @@ static int __build_branch (builder_t* builder)
 
 	while (1)
 	{
-		cmd = (struct code_t*)&builder->code.buf[builder->code.size];
+		cmd = (code_t*)&builder->code.buf[builder->code.size];
 
 		n = __build_atom (builder);
 		if (n == -1) 
@@ -558,7 +563,7 @@ static int __build_branch (builder_t* builder)
 static int __build_atom (builder_t* builder)
 {
 	int n;
-	struct code_t tmp;
+	code_t tmp;
 
 	if (builder->ptn.curc.type == CT_EOF) return 0;
 
@@ -610,10 +615,9 @@ static int __build_atom (builder_t* builder)
 		}
 		else if (builder->ptn.curc.value == ASE_T('['))
 		{
-			struct code_t* cmd;
+			code_t* cmd;
 
-			cmd = (struct code_t*)
-				&builder->code.buf[builder->code.size];
+			cmd = (code_t*)&builder->code.buf[builder->code.size];
 
 			tmp.cmd = CMD_CHARSET;
 			tmp.negate = 0;
@@ -661,7 +665,7 @@ static int __build_atom (builder_t* builder)
 	}
 }
 
-static int __build_charset (builder_t* builder, struct code_t* cmd)
+static int __build_charset (builder_t* builder, code_t* cmd)
 {
 	ase_size_t zero = 0;
 	ase_size_t old_size;
@@ -821,7 +825,7 @@ static int __build_cclass (builder_t* builder, ase_char_t* cc)
 	return 1;
 }
 
-static int __build_occurrences (builder_t* builder, struct code_t* cmd)
+static int __build_occurrences (builder_t* builder, code_t* cmd)
 {
 	if (builder->ptn.curc.type != CT_SPECIAL) return 0;
 
@@ -872,7 +876,7 @@ static int __build_occurrences (builder_t* builder, struct code_t* cmd)
 	return 0;
 }
 
-static int __build_range (builder_t* builder, struct code_t* cmd)
+static int __build_range (builder_t* builder, code_t* cmd)
 {
 	ase_size_t bound;
 
@@ -1189,19 +1193,19 @@ static const ase_byte_t* __match_atom (
 	};
        
 	ASE_AWK_ASSERT (matcher->awk, 
-		((struct code_t*)base)->cmd >= 0 && 
-		((struct code_t*)base)->cmd < ASE_COUNTOF(matchers));
+		((code_t*)base)->cmd >= 0 && 
+		((code_t*)base)->cmd < ASE_COUNTOF(matchers));
 
-	return matchers[((struct code_t*)base)->cmd] (matcher, base, mat);
+	return matchers[((code_t*)base)->cmd] (matcher, base, mat);
 }
 
 static const ase_byte_t* __match_bol (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
-	const struct code_t* cp;
+	const code_t* cp;
 
-	cp = (const struct code_t*)p; p += ASE_SIZEOF(*cp);
+	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
 	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_BOL);
 
 	mat->matched = (mat->match_ptr == matcher->match.str.ptr ||
@@ -1215,9 +1219,9 @@ static const ase_byte_t* __match_eol (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
-	const struct code_t* cp;
+	const code_t* cp;
 
-	cp = (const struct code_t*)p; p += ASE_SIZEOF(*cp);
+	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
 	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_EOL);
 
 	mat->matched = (mat->match_ptr == matcher->match.str.end ||
@@ -1231,10 +1235,10 @@ static const ase_byte_t* __match_any_char (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
-	const struct code_t* cp;
+	const code_t* cp;
 	ase_size_t si = 0, lbound, ubound;
 
-	cp = (const struct code_t*)p; p += ASE_SIZEOF(*cp);
+	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
 	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_ANY_CHAR);
 
 	lbound = cp->lbound;
@@ -1245,10 +1249,10 @@ static const ase_byte_t* __match_any_char (
 
 	/* merge the same consecutive codes */
 	while (p < mat->branch_end &&
-	       cp->cmd == ((const struct code_t*)p)->cmd)
+	       cp->cmd == ((const code_t*)p)->cmd)
 	{
-		lbound += ((const struct code_t*)p)->lbound;
-		ubound += ((const struct code_t*)p)->ubound;
+		lbound += ((const code_t*)p)->lbound;
+		ubound += ((const code_t*)p)->ubound;
 
 		p += ASE_SIZEOF(*cp);
 	}
@@ -1283,11 +1287,11 @@ static const ase_byte_t* __match_ord_char (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
-	const struct code_t* cp;
+	const code_t* cp;
 	ase_size_t si = 0, lbound, ubound;
 	ase_char_t cc;
 
-	cp = (const struct code_t*)p; p += ASE_SIZEOF(*cp);
+	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
 	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_ORD_CHAR);
 
 	lbound = cp->lbound; 
@@ -1301,12 +1305,12 @@ static const ase_byte_t* __match_ord_char (
 	if (matcher->ignorecase) 
 	{
 		while (p < mat->branch_end &&
-		       cp->cmd == ((const struct code_t*)p)->cmd)
+		       cp->cmd == ((const code_t*)p)->cmd)
 		{
 			if (ASE_AWK_TOUPPER (matcher->awk, *(ase_char_t*)(p+ASE_SIZEOF(*cp))) != cc) break;
 
-			lbound += ((const struct code_t*)p)->lbound;
-			ubound += ((const struct code_t*)p)->ubound;
+			lbound += ((const code_t*)p)->lbound;
+			ubound += ((const code_t*)p)->ubound;
 
 			p += ASE_SIZEOF(*cp) + ASE_SIZEOF(cc);
 		}
@@ -1314,12 +1318,12 @@ static const ase_byte_t* __match_ord_char (
 	else
 	{
 		while (p < mat->branch_end &&
-		       cp->cmd == ((const struct code_t*)p)->cmd)
+		       cp->cmd == ((const code_t*)p)->cmd)
 		{
 			if (*(ase_char_t*)(p+ASE_SIZEOF(*cp)) != cc) break;
 
-			lbound += ((const struct code_t*)p)->lbound;
-			ubound += ((const struct code_t*)p)->ubound;
+			lbound += ((const code_t*)p)->lbound;
+			ubound += ((const code_t*)p)->ubound;
 
 			p += ASE_SIZEOF(*cp) + ASE_SIZEOF(cc);
 		}
@@ -1382,73 +1386,52 @@ static const ase_byte_t* __match_charset (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
-	const struct code_t* cp;
-	ase_size_t si = 0, lbound, ubound, csc, csl;
+	ase_size_t si = 0;
 	ase_bool_t n;
 	ase_char_t c;
 
+	code_t* cp;
 	cshdr_t* cshdr;
 
-	cp = (const struct code_t*)p; p += ASE_SIZEOF(*cp);
+	cp = (code_t*)p; p += ASE_SIZEOF(*cp);
 	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_CHARSET);
 
-	lbound = cp->lbound;
-	ubound = cp->ubound;
-
-cshdr = (cshdr_t*)p;
-csc = cshdr->csc;
-csl = cshdr->csl;
-p += ASE_SIZEOF(*cshdr);
-
-/*
-#if defined(__i386) || defined(__i386__)
-	csc = *(ase_size_t*)p;
-#else
-	ase_memcpy (&csc, p, ASE_SIZEOF(csc));
-#endif
-	p += ASE_SIZEOF(csc);
-
-#if defined(__i386) || defined(__i386__)
-	csl = *(ase_size_t*)p; 
-#else
-	ase_memcpy (&csl, p, ASE_SIZEOF(csl));
-#endif
-	p += ASE_SIZEOF(csl);
-*/
+	cshdr = (cshdr_t*)p; p += ASE_SIZEOF(*cshdr);
 
 #ifdef DEBUG_REX
 	ase_dprintf (
 		ASE_T("__match_charset: lbound = %u, ubound = %u\n"), 
-		(unsigned int)lbound, (unsigned int)ubound);
+		(unsigned int)cp->lbound, (unsigned int)cp->ubound);
 #endif
 
 	mat->matched = ase_false;
 	mat->match_len = 0;
 
-	while (si < ubound)
+	while (si < cp->ubound)
 	{
 		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 
 		c = mat->match_ptr[si];
 		if (matcher->ignorecase) c = ASE_AWK_TOUPPER(matcher->awk, c);
 
-		n = __test_charset (matcher, p, csc, c);
+		n = __test_charset (matcher, p, cshdr->csc, c);
 		if (cp->negate) n = !n;
 		if (!n) break;
 
 		si++;
 	}
 
-	p = p + csl - (ASE_SIZEOF(csc) + ASE_SIZEOF(csl));
+	p = p + cshdr->csl - ASE_SIZEOF(*cshdr);
 
 #ifdef DEBUG_REX
 	ase_dprintf (
 		ASE_T("__match_charset: max occurrences=%u, lbound=%u, ubound=%u\n"), 
-		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
+		(unsigned)si, (unsigned)cp->lbound, (unsigned)cp->ubound);
 #endif
-	if (si >= lbound && si <= ubound)
+
+	if (si >= cp->lbound && si <= cp->ubound)
 	{
-		p = __match_occurrences (matcher, si, p, lbound, ubound, mat);
+		p = __match_occurrences (matcher, si, p, cp->lbound, cp->ubound, mat);
 	}
 
 	return p;
@@ -1458,11 +1441,11 @@ static const ase_byte_t* __match_group (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
 	const ase_byte_t* p = base;
-	const struct code_t* cp;
+	const code_t* cp;
 	match_t mat2;
 	ase_size_t si = 0, grp_len_static[16], * grp_len;
 
-	cp = (const struct code_t*)p; p += ASE_SIZEOF(*cp);
+	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
 	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_GROUP);
 
 	mat->matched = ase_false;
@@ -1855,7 +1838,7 @@ static const ase_byte_t* __print_branch (ase_awk_t* awk, const ase_byte_t* p)
 
 static const ase_byte_t* __print_atom (ase_awk_t* awk, const ase_byte_t* p)
 {
-	const struct code_t* cp = (const struct code_t*)p;
+	const code_t* cp = (const code_t*)p;
 
 	if (cp->cmd == CMD_BOL)
 	{
@@ -1880,27 +1863,16 @@ static const ase_byte_t* __print_atom (ase_awk_t* awk, const ase_byte_t* p)
 	}
 	else if (cp->cmd == CMD_CHARSET)
 	{
-		ase_size_t csc, csl, i;
+		ase_size_t i;
+		cshdr_t* cshdr;
 
 		p += ASE_SIZEOF(*cp);
 		DPRINTF (DCUSTOM, ASE_T("["));
 		if (cp->negate) DPRINTF (DCUSTOM, ASE_T("^"));
 
-#if defined(__i386) || defined(__i386__)
-		csc = *(ase_size_t*)p;
-#else
-		ase_memcpy (&csc, p, ASE_SIZEOF(csc));
-#endif
-		p += ASE_SIZEOF(csc);
+		cshdr = (cshdr_t*)p; p += ASE_SIZEOF(*cshdr);
 
-#if defined(__i386) || defined(__i386__)
-		csl = *(ase_size_t*)p; 
-#else
-		ase_memcpy (&csl, p, ASE_SIZEOF(csl));
-#endif
-		p += ASE_SIZEOF(csl);
-
-		for (i = 0; i < csc; i++)
+		for (i = 0; i < cshdr->csc; i++)
 		{
 			ase_char_t c0, c1, c2;
 
