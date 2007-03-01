@@ -1,5 +1,5 @@
 /*
- * $Id: unpack.h,v 1.5 2007-02-23 10:33:20 bacon Exp $
+ * $Id: unpack.h,v 1.6 2007-03-01 07:44:58 bacon Exp $
  *
  * {License}
  */
@@ -12,4 +12,6 @@
 	#pragma pack(pop)
 #elif defined(__DECC)
 	#pragma pack(pop)
+#else
+	#pragma pack()
 #endif
