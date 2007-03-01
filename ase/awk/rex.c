@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.74 2007-03-01 04:31:27 bacon Exp $
+ * $Id: rex.c,v 1.75 2007-03-01 07:43:54 bacon Exp $
  *
  * {License}
  */
@@ -58,6 +58,8 @@ typedef struct matcher_t matcher_t;
 typedef struct match_t match_t;
 
 typedef struct code_t code_t;
+typedef struct rhdr_t rhdr_t;
+typedef struct bhdr_t bhdr_t;
 typedef struct cshdr_t cshdr_t;
 
 struct builder_t
@@ -136,6 +138,19 @@ ASE_BEGIN_PACKED_STRUCT (code_t)
 	ase_size_t ubound;
 ASE_END_PACKED_STRUCT ()
 
+/* compiled regular expression header */
+ASE_BEGIN_PACKED_STRUCT (rhdr_t)
+	ase_size_t nb;  /* number of branches */
+	ase_size_t el;  /* expression length in bytes */
+ASE_END_PACKED_STRUCT ()
+
+/* branch header */
+ASE_BEGIN_PACKED_STRUCT (bhdr_t)
+	ase_size_t na;  /* number of atoms */
+	ase_size_t bl;  /* branch length in bytes */
+ASE_END_PACKED_STRUCT ()
+
+/* character set header */
 ASE_BEGIN_PACKED_STRUCT (cshdr_t)
 	ase_size_t csc; /* count */
 	ase_size_t csl; /* length */
@@ -154,19 +169,6 @@ typedef const ase_byte_t* (*atom_matcher_t) (
 #define ADD_CODE(rex,data,len) \
 	do { if (__add_code(rex,data,len) == -1) return -1; } while (0)
 
-#if defined(__i386)||defined(__i386__)||defined(_M_IX86)||defined(__INTEL__)||defined(_X86_)||defined(__I86__)||defined(__THW_INTEL__)
-
-	#if !defined(__i386)
-		#define __i386
-	#endif
-
-	#define GET_CODE(rex,pos,type) (*((type*)&(rex)->code.buf[pos]))
-	#define SET_CODE(rex,pos,type,code) (GET_CODE(rex,pos,type) = (code))
-#else
-	#define GET_CODE(rex,pos,type) __get_code(rex,pos)
-	#define SET_CODE(rex,pos,type,code) __set_code(rex,pos,code)
-#endif
-
 static int __build_pattern (builder_t* rex);
 static int __build_pattern0 (builder_t* rex);
 static int __build_branch (builder_t* rex);
@@ -177,22 +179,6 @@ static int __build_cclass (builder_t* rex, ase_char_t* cc);
 static int __build_range (builder_t* rex, code_t* cmd);
 static int __next_char (builder_t* rex, int level);
 static int __add_code (builder_t* rex, void* data, ase_size_t len);
-
-#if !defined(__i386) && !defined(__i386__)
-
-static ase_size_t __get_code (builder_t* builder, ase_size_t pos)
-{
-	ase_size_t code;
-	ase_memcpy (&code, &builder->code.buf[pos], ASE_SIZEOF(code));
-	return code;
-}
-
-static void __set_code (builder_t* builder, ase_size_t pos, ase_size_t code)
-{
-	ase_memcpy (&builder->code.buf[pos], &code, ASE_SIZEOF(code));
-}
-
-#endif
 
 static ase_bool_t __begin_with (
 	const ase_char_t* str, ase_size_t len, const ase_char_t* what);
@@ -415,31 +401,16 @@ void ase_awk_freerex (ase_awk_t* awk, void* code)
 
 ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code)
 {
-	const ase_byte_t* p = code;
-	ase_size_t nb, el;
-
-	ASE_AWK_ASSERT (awk, p != ASE_NULL);
-
-#if defined(__i386) || defined(__i386__)
-	nb = *(ase_size_t*)p; 
-#else
-	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
-#endif
-	p += ASE_SIZEOF(nb);
-
-#if defined(__i386) || defined(__i386__)
-	el = *(ase_size_t*)p; 
-#else
-	ase_memcpy (&el, p, ASE_SIZEOF(el));
-#endif
-	p += ASE_SIZEOF(el);
+	rhdr_t* rhdr = (rhdr_t*) code;
+	ASE_AWK_ASSERT (awk, rhdr != ASE_NULL);
 
 	/* an empty regular expression look like:
 	 *  | expression                     | 
 	 *  | header         | branch        |
 	 *  |                | branch header |
 	 *  | NB(1) | EL(16) | NA(1) | BL(8) | */
-	return (nb == 1 && el == ASE_SIZEOF(ase_size_t)*4)? ase_true: ase_false;
+	return (rhdr->nb == 1 && 
+	        rhdr->el == ASE_SIZEOF(ase_size_t)*4)? ase_true: ase_false;
 }
 
 static int __build_pattern (builder_t* builder)
@@ -464,8 +435,8 @@ static int __build_pattern0 (builder_t* builder)
 	ase_size_t zero = 0;
 	ase_size_t old_size;
 	ase_size_t pos_nb, pos_el;
+	rhdr_t* rhdr;
 	int n;
-
 
 	old_size = builder->code.size;
 
@@ -485,9 +456,8 @@ static int __build_pattern0 (builder_t* builder)
 		return 0;
 	}
 
-	/*CODEAT(builder,pos_nb,ase_size_t) += 1;*/
-	SET_CODE (builder, pos_nb, ase_size_t,
-		GET_CODE (builder, pos_nb, ase_size_t) + 1);
+	rhdr = (rhdr_t*)&builder->code.buf[pos_nb];
+	rhdr->nb++;
 
 	/* handle subsequent branches if any */
 	while (builder->ptn.curc.type == CT_SPECIAL && 
@@ -505,11 +475,13 @@ static int __build_pattern0 (builder_t* builder)
 			break;
 		}
 
-		SET_CODE (builder, pos_nb, ase_size_t, 
-			GET_CODE (builder, pos_nb, ase_size_t) + 1);
+		rhdr = (rhdr_t*)&builder->code.buf[pos_nb];
+		rhdr->nb++;
 	}
 
-	SET_CODE (builder, pos_el, ase_size_t, builder->code.size - old_size);
+	rhdr = (rhdr_t*)&builder->code.buf[pos_nb];
+	rhdr->el = builder->code.size - old_size;
+
 	return 1;
 }
 
@@ -520,6 +492,7 @@ static int __build_branch (builder_t* builder)
 	ase_size_t old_size;
 	ase_size_t pos_na, pos_bl;
 	code_t* cmd;
+	bhdr_t* bhdr;
 
 	old_size = builder->code.size;
 
@@ -552,11 +525,13 @@ static int __build_branch (builder_t* builder)
 		/* n == 0  no bound character. just continue */
 		/* n == 1  bound has been applied by build_occurrences */
 
-		SET_CODE (builder, pos_na, ase_size_t,
-			GET_CODE (builder, pos_na, ase_size_t) + 1);
+		bhdr = (bhdr_t*)&builder->code.buf[pos_na];
+		bhdr->na++;
 	}
 
-	SET_CODE (builder, pos_bl, ase_size_t, builder->code.size - old_size);
+	bhdr = (bhdr_t*)&builder->code.buf[pos_na];
+	bhdr->bl = builder->code.size - old_size;
+
 	return (builder->code.size == old_size)? 0: 1;
 }
 
@@ -670,6 +645,7 @@ static int __build_charset (builder_t* builder, code_t* cmd)
 	ase_size_t zero = 0;
 	ase_size_t old_size;
 	ase_size_t pos_csc, pos_csl;
+	cshdr_t* cshdr;
 
 	old_size = builder->code.size;
 
@@ -762,12 +738,12 @@ static int __build_charset (builder_t* builder, code_t* cmd)
 			return -1;
 		}
 
-		/*CODEAT(builder,pos_csc,ase_size_t) += 1;*/
-		SET_CODE (builder, pos_csc, ase_size_t,
-			GET_CODE (builder, pos_csc, ase_size_t) + 1);
+		cshdr = (cshdr_t*)&builder->code.buf[pos_csc];
+		cshdr->csc++;
 	}
 
-	SET_CODE (builder, pos_csl, ase_size_t, builder->code.size - old_size);
+	cshdr = (cshdr_t*)&builder->code.buf[pos_csc];
+	cshdr->csl = builder->code.size - old_size;
 
 	return 1;
 }
@@ -1049,35 +1025,24 @@ static ase_bool_t __begin_with (
 static const ase_byte_t* __match_pattern (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
-	const ase_byte_t* p;
 	match_t mat2;
-	ase_size_t nb, el, i;
+	ase_size_t i;
+	const ase_byte_t* p;
+	rhdr_t* rhdr;
 
 	p = base;
-#if defined(__i386) || defined(__i386__)
-	nb = *(ase_size_t*)p; 
-#else
-	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
-#endif
-	p += ASE_SIZEOF(nb);
-
-#if defined(__i386) || defined(__i386__)
-	el = *(ase_size_t*)p; 
-#else
-	ase_memcpy (&el, p, ASE_SIZEOF(el));
-#endif
-	p += ASE_SIZEOF(el);
+	rhdr = (rhdr_t*) p; p += ASE_SIZEOF(*rhdr);
 
 #ifdef DEBUG_REX
 	ase_dprintf (
 		ASE_T("__match_pattern: NB = %u, EL = %u\n"), 
-		(unsigned)nb, (unsigned)el);
+		(unsigned int)rhdr->nb, (unsigned int)rhdr->el);
 #endif
 
 	mat->matched = ase_false;
 	mat->match_len = 0;
 
-	for (i = 0; i < nb; i++)
+	for (i = 0; i < rhdr->nb; i++)
 	{
 		mat2.match_ptr = mat->match_ptr;
 
@@ -1092,24 +1057,23 @@ static const ase_byte_t* __match_pattern (
 		}
 	}
 
-	return base + el;
+	return base + rhdr->el;
 }
 
 static const ase_byte_t* __match_branch (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat)
 {
-	/*
-	 * branch body (base+sizeof(NA)+sizeof(BL)---+
-	 * BL=base+sizeof(NA) ---------+             |
-	 * base=NA ------+             |             |
-	 *               |             |             |
+	/* branch body  base+sizeof(NA)+sizeof(BL)-----+
+	 * BL base+sizeof(NA) ----------+              |
+	 * base NA ------+              |              |
+	 *               |              |              |
 	 *               |NA(ase_size_t)|BL(ase_size_t)|ATOMS.........|
 	 */
 	mat->branch = base;
-	mat->branch_end = base + *((ase_size_t*)(base+ASE_SIZEOF(ase_size_t)));
+	mat->branch_end = base + ((bhdr_t*)base)->bl;
 
 	return __match_branch_body (
-		matcher, base+ASE_SIZEOF(ase_size_t)*2, mat);
+		matcher, (const ase_byte_t*)((bhdr_t*)base+1), mat);
 }
 
 static const ase_byte_t* __match_branch_body (
@@ -1796,23 +1760,12 @@ void ase_awk_dprintrex (ase_awk_t* awk, void* rex)
 
 static const ase_byte_t* __print_pattern (ase_awk_t* awk, const ase_byte_t* p)
 {
-	ase_size_t nb, el, i;
+	ase_size_t i;
+	rhdr_t* rhdr;
 
-#if defined(__i386) || defined(__i386__)
-	nb = *(ase_size_t*)p; 
-#else
-	ase_memcpy (&nb, p, ASE_SIZEOF(nb));
-#endif
-	p += ASE_SIZEOF(nb);
+	rhdr = (rhdr_t*)p; p += ASE_SIZEOF(*rhdr);
 
-#if defined(__i386) || defined(__i386__)
-	el = *(ase_size_t*)p; 
-#else
-	ase_memcpy (&el, p, ASE_SIZEOF(el));
-#endif
-	p += ASE_SIZEOF(el);
-
-	for (i = 0; i < nb; i++)
+	for (i = 0; i < rhdr->nb; i++)
 	{
 		if (i != 0) DPRINTF (DCUSTOM, ASE_T("|"));
 		p = __print_branch (awk, p);
