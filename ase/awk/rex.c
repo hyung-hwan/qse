@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.75 2007-03-01 07:43:54 bacon Exp $
+ * $Id: rex.c,v 1.76 2007-03-01 07:48:51 bacon Exp $
  *
  * {License}
  */
@@ -434,7 +434,7 @@ static int __build_pattern0 (builder_t* builder)
 {
 	ase_size_t zero = 0;
 	ase_size_t old_size;
-	ase_size_t pos_nb, pos_el;
+	ase_size_t pos_nb;
 	rhdr_t* rhdr;
 	int n;
 
@@ -443,8 +443,6 @@ static int __build_pattern0 (builder_t* builder)
 	/* secure space for header and set the header fields to zero */
 	pos_nb = builder->code.size;
 	ADD_CODE (builder, &zero, ASE_SIZEOF(zero));
-
-	pos_el = builder->code.size;
 	ADD_CODE (builder, &zero, ASE_SIZEOF(zero));
 
 	/* handle the first branch */
@@ -490,7 +488,7 @@ static int __build_branch (builder_t* builder)
 	int n;
 	ase_size_t zero = 0;
 	ase_size_t old_size;
-	ase_size_t pos_na, pos_bl;
+	ase_size_t pos_na;
 	code_t* cmd;
 	bhdr_t* bhdr;
 
@@ -498,8 +496,6 @@ static int __build_branch (builder_t* builder)
 
 	pos_na = builder->code.size;
 	ADD_CODE (builder, &zero, ASE_SIZEOF(zero));
-
-	pos_bl = builder->code.size;
 	ADD_CODE (builder, &zero, ASE_SIZEOF(zero));
 
 	while (1)
@@ -644,15 +640,13 @@ static int __build_charset (builder_t* builder, code_t* cmd)
 {
 	ase_size_t zero = 0;
 	ase_size_t old_size;
-	ase_size_t pos_csc, pos_csl;
+	ase_size_t pos_csc;
 	cshdr_t* cshdr;
 
 	old_size = builder->code.size;
 
 	pos_csc = builder->code.size;
 	ADD_CODE (builder, &zero, ASE_SIZEOF(zero));
-
-	pos_csl = builder->code.size;
 	ADD_CODE (builder, &zero, ASE_SIZEOF(zero));
 
 	if (builder->ptn.curc.type == CT_NORMAL &&

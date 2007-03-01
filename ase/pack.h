@@ -1,5 +1,5 @@
 /*
- * $Id: pack.h,v 1.5 2007-02-23 10:33:20 bacon Exp $
+ * $Id: pack.h,v 1.6 2007-03-01 07:44:58 bacon Exp $
  *
  * {License}
  */
@@ -12,4 +12,6 @@
 	#pragma pack(push,1)
 #elif defined(__DECC)
 	#pragma pack(push,1)
+#else
+	#pragma pack(1)
 #endif
