@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.178 2007-02-24 14:32:44 bacon Exp $
+ * $Id: awk.c,v 1.179 2007-03-01 14:40:13 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -21,20 +21,15 @@
 	#include <tchar.h>
 	#pragma warning (disable: 4996)
 	#pragma warning (disable: 4296)
-#elif defined(ASE_CHAR_IS_MCHAR)
-	#include <locale.h>
-#else
-	#include <wchar.h>
-	#include <locale.h>
+#endif
+
+#if defined(__linux) && defined(_DEBUG)
+#include <mcheck.h>
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
-#endif
-
-#if defined(__linux) && defined(_DEBUG)
-#include <mcheck.h>
 #endif
 
 struct awk_src_io
@@ -43,6 +38,13 @@ struct awk_src_io
 	FILE* input_handle;
 };
 
+#if defined(_WIN32)
+struct mmgr_data_t
+{
+	HANDLE heap;
+};
+#endif
+
 #if defined(vms) || defined(__vms)
 /* it seems that the main function should be placed in the main object file
  * in OpenVMS. otherwise, the first function in the main object file seems
@@ -50,6 +52,47 @@ struct awk_src_io
 #include <ase/utl/main.c>
 #endif
 
+static void dprintf (const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	va_start (ap, fmt);
+	ase_vfprintf (stderr, fmt, ap);
+	va_end (ap);
+}
+
+/* custom memory management function */
+static void* custom_awk_malloc (void* custom, ase_size_t n)
+{
+#ifdef _WIN32
+	return HeapAlloc (((struct mmgr_data_t*)custom)->heap, 0, n);
+#else
+	return malloc (n);
+#endif
+}
+
+static void* custom_awk_realloc (void* custom, void* ptr, ase_size_t n)
+{
+#ifdef _WIN32
+	/* HeapReAlloc behaves differently from realloc */
+	if (ptr == NULL)
+		return HeapAlloc (((struct mmgr_data_t*)custom)->heap, 0, n);
+	else
+		return HeapReAlloc (((struct mmgr_data_t*)custom)->heap, 0, ptr, n);
+#else
+	return realloc (ptr, n);
+#endif
+}
+
+static void custom_awk_free (void* custom, void* ptr)
+{
+#ifdef _WIN32
+	HeapFree (((struct mmgr_data_t*)custom)->heap, 0, ptr);
+#else
+	free (ptr);
+#endif
+}
+
+/* custom character class functions */
 static ase_bool_t custom_awk_isupper (void* custom, ase_cint_t c)  
 { 
 	return ase_isupper (c); 
@@ -115,6 +158,9 @@ static ase_cint_t custom_awk_tolower (void* custom, ase_cint_t c)
 	return ase_tolower (c);
 }
 
+
+/* custom miscellaneous functions */
+
 static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
@@ -123,7 +169,6 @@ static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
 static void custom_awk_abort (void* custom)
 {
 	abort ();
-
 }
 
 static int custom_awk_sprintf (
@@ -174,13 +219,6 @@ static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static void dprintf (const ase_char_t* fmt, ...)
-{
-	va_list ap;
-	va_start (ap, fmt);
-	ase_vfprintf (stderr, fmt, ap);
-	va_end (ap);
-}
 
 static ase_ssize_t awk_srcio_in (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
@@ -621,7 +659,7 @@ static void on_run_start (ase_awk_run_t* run, void* custom)
 	dprintf (ASE_T("[AWK ABOUT TO START]\n"));
 }
 
-static int __printval (ase_awk_pair_t* pair, void* arg)
+static int print_awk_value (ase_awk_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
 	dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
@@ -640,7 +678,7 @@ static void on_run_return (
 	dprintf (ASE_T("\n"));
 
 	dprintf (ASE_T("[NAMED VARIABLES]\n"));
-	ase_awk_map_walk (ase_awk_getrunnamedvarmap(run), __printval, run);
+	ase_awk_map_walk (ase_awk_getrunnamedvarmap(run), print_awk_value, run);
 	dprintf (ASE_T("[END NAMED VARIABLES]\n"));
 }
 
@@ -659,45 +697,6 @@ static void on_run_end (ase_awk_run_t* run, int errnum, void* custom_data)
 	app_run = NULL;
 }
 
-#ifdef _WIN32
-typedef struct prmfns_data_t prmfns_data_t;
-struct prmfns_data_t
-{
-	HANDLE heap;
-};
-#endif
-
-static void* custom_awk_malloc (void* custom, ase_size_t n)
-{
-#ifdef _WIN32
-	return HeapAlloc (((prmfns_data_t*)custom)->heap, 0, n);
-#else
-	return malloc (n);
-#endif
-}
-
-static void* custom_awk_realloc (void* custom, void* ptr, ase_size_t n)
-{
-#ifdef _WIN32
-	/* HeapReAlloc behaves differently from realloc */
-	if (ptr == NULL)
-		return HeapAlloc (((prmfns_data_t*)custom)->heap, 0, n);
-	else
-		return HeapReAlloc (((prmfns_data_t*)custom)->heap, 0, ptr, n);
-#else
-	return realloc (ptr, n);
-#endif
-}
-
-static void custom_awk_free (void* custom, void* ptr)
-{
-#ifdef _WIN32
-	HeapFree (((prmfns_data_t*)custom)->heap, 0, ptr);
-#else
-	free (ptr);
-#endif
-}
-
 static void print_usage (const ase_char_t* argv0)
 {
 	ase_printf (ASE_T("Usage: %s [-m] [-d] [-a argument]* -f source-file [data-file]*\n"), argv0);
@@ -713,7 +712,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	struct awk_src_io src_io = { NULL, NULL };
 	int opt, i, file_count = 0, errnum;
 #ifdef _WIN32
-	prmfns_data_t prmfns_data;
+	struct mmgr_data_t mmgr_data;
 #endif
 	const ase_char_t* mfn = ASE_NULL;
 	int mode = 0;
@@ -728,7 +727,6 @@ static int awk_main (int argc, ase_char_t* argv[])
 	      ASE_AWK_SHADING | 
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 
-	      /*ASE_AWK_COPROC |*/
 	      ASE_AWK_BLOCKLESS | 
 	      ASE_AWK_STRBASEONE | 
 	      ASE_AWK_STRIPSPACES | 
@@ -832,14 +830,14 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns.mmgr.realloc = custom_awk_realloc;
 	prmfns.mmgr.free    = custom_awk_free;
 #ifdef _WIN32
-	prmfns_data.heap = HeapCreate (0, 1000000, 1000000);
-	if (prmfns_data.heap == NULL)
+	mmgr_data.heap = HeapCreate (0, 1000000, 1000000);
+	if (mmgr_data.heap == NULL)
 	{
 		ase_printf (ASE_T("Error: cannot create an awk heap\n"));
 		return -1;
 	}
 
-	prmfns.mmgr.custom_data = &prmfns_data;
+	prmfns.mmgr.custom_data = &mmgr_data;
 #else
 	prmfns.mmgr.custom_data = NULL;
 #endif
@@ -871,7 +869,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	if ((awk = ase_awk_open(&prmfns, ASE_NULL, &errnum)) == ASE_NULL) 
 	{
 #ifdef _WIN32
-		HeapDestroy (prmfns_data.heap);
+		HeapDestroy (mmgr_data.heap);
 #endif
 		ase_printf (
 			ASE_T("ERROR: cannot open awk [%d] %s\n"), 
@@ -910,7 +908,6 @@ static int awk_main (int argc, ase_char_t* argv[])
 #endif
 
 	runios.pipe = awk_extio_pipe;
-	runios.coproc = ASE_NULL;
 	runios.file = awk_extio_file;
 	runios.console = awk_extio_console;
 
@@ -931,7 +928,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	ase_awk_close (awk);
 #ifdef _WIN32
-	HeapDestroy (prmfns_data.heap);
+	HeapDestroy (mmgr_data.heap);
 #endif
 	return 0;
 }
@@ -939,12 +936,15 @@ static int awk_main (int argc, ase_char_t* argv[])
 int ase_main (int argc, ase_char_t* argv[])
 {
 	int n;
+
 #if defined(__linux) && defined(_DEBUG)
 	mtrace ();
 #endif
-/*#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
+/*
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
-#endif*/
+#endif
+*/
 
 	n = awk_main (argc, argv);
 
