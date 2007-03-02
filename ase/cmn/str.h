@@ -1,5 +1,5 @@
 /*
- * $Id: str.h,v 1.3 2007-02-23 06:43:30 bacon Exp $
+ * $Id: str.h,v 1.4 2007-03-02 11:41:55 bacon Exp $
  *
  * {License}
  */
@@ -33,9 +33,17 @@ extern "C" {
 
 ase_size_t ase_strlen (const ase_char_t* str);
 
-ase_size_t ase_strcpy (ase_char_t* buf, const ase_char_t* str);
-ase_size_t ase_strxcpy (ase_char_t* buf, ase_size_t bsz, const ase_char_t* str);
-ase_size_t ase_strncpy (ase_char_t* buf, const ase_char_t* str, ase_size_t len);
+ase_size_t ase_strcpy (
+	ase_char_t* buf, const ase_char_t* str);
+ase_size_t ase_strxcpy (
+	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str);
+ase_size_t ase_strncpy (
+	ase_char_t* buf, const ase_char_t* str, ase_size_t len);
+ase_size_t ase_strxncpy (
+    ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len);
+
+ase_size_t ase_strxncat (
+    ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len);
 
 int ase_strcmp (const ase_char_t* s1, const ase_char_t* s2);
 int ase_strxncmp (

@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.75 2007-03-02 11:14:33 bacon Exp $
+ * $Id: err.c,v 1.76 2007-03-02 11:41:55 bacon Exp $
  *
  * {License}
  */
@@ -196,6 +196,7 @@ void ase_awk_seterror (
 	const ase_cstr_t* errarg, ase_size_t argcnt)
 {
 	const ase_char_t* errfmt;
+	ase_size_t fmtlen;
 
 	ASE_AWK_ASSERT (awk, argcnt <= 5);
 
@@ -203,6 +204,7 @@ void ase_awk_seterror (
 	awk->errlin = errlin;
 
 	errfmt = __geterrstr (errnum);
+	fmtlen = ase_strlen(errfmt);
 
 	switch (argcnt)
 	{
@@ -215,13 +217,33 @@ void ase_awk_seterror (
 			return;
 
 		case 1:
+		{
+			ase_char_t tmp[ASE_COUNTOF(awk->errmsg)];
+			ase_size_t len, tl;
+
+			if (fmtlen < ASE_COUNTOF(awk->errmsg) &&
+			    errarg[0].len + fmtlen >= ASE_COUNTOF(awk->errmsg))
+			{
+				len = ASE_COUNTOF(awk->errmsg) - fmtlen - 3 - 1;
+				tl = ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
+				tmp[tl] = ASE_T('.');
+				tmp[tl+1] = ASE_T('.');
+				tmp[tl+2] = ASE_T('.');
+				len += 3;
+			}
+			else 
+			{
+				len = errarg[0].len;
+				ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
+			}
+
 			awk->prmfns.misc.sprintf (
 				awk->prmfns.misc.custom_data,
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
-				errfmt,
-				errarg[0].len, errarg[0].ptr);
+				errfmt, len, tmp);
 			return;
+		}
 
 		case 2:
 			awk->prmfns.misc.sprintf (
@@ -331,6 +353,7 @@ void ase_awk_setrunerror (
 	const ase_cstr_t* errarg, ase_size_t argcnt)
 {
 	const ase_char_t* errfmt;
+	ase_size_t fmtlen;
 
 	ASE_AWK_ASSERT (run->awk, argcnt <= 5);
 
@@ -338,6 +361,7 @@ void ase_awk_setrunerror (
 	run->errlin = errlin;
 
 	errfmt = __geterrstr (errnum);
+	fmtlen = ase_strlen (errfmt);
 
 	switch (argcnt)
 	{
@@ -350,13 +374,33 @@ void ase_awk_setrunerror (
 			return;
 
 		case 1:
+		{
+			ase_char_t tmp[ASE_COUNTOF(run->errmsg)];
+			ase_size_t len, tl;
+
+			if (fmtlen < ASE_COUNTOF(run->errmsg) &&
+			    errarg[0].len + fmtlen >= ASE_COUNTOF(run->errmsg))
+			{
+				len = ASE_COUNTOF(run->errmsg) - fmtlen - 3 - 1;
+				tl = ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
+				tmp[tl] = ASE_T('.');
+				tmp[tl+1] = ASE_T('.');
+				tmp[tl+2] = ASE_T('.');
+				len += 3;
+			}
+			else 
+			{
+				len = errarg[0].len;
+				ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
+			}
+
 			run->awk->prmfns.misc.sprintf (
 				run->awk->prmfns.misc.custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg), 
-				errfmt,
-				errarg[0].len, errarg[0].ptr);
+				errfmt, len, tmp);
 			return;
+		}
 
 		case 2:
 			run->awk->prmfns.misc.sprintf (
