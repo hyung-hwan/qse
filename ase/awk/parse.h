@@ -1,5 +1,5 @@
 /*
- * $Id: parse.h,v 1.4 2007-02-03 10:47:41 bacon Exp $
+ * $Id: parse.h,v 1.5 2007-03-02 11:14:34 bacon Exp $
  *
  * {License}
  */
@@ -18,6 +18,9 @@ extern "C" {
 int ase_awk_putsrcstr (ase_awk_t* awk, const ase_char_t* str);
 int ase_awk_putsrcstrx (
 	ase_awk_t* awk, const ase_char_t* str, ase_size_t len);
+
+const ase_char_t* ase_awk_getglobalname (
+	ase_awk_t* awk, ase_size_t idx, ase_size_t* len);
 
 #ifdef __cplusplus
 }

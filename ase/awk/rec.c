@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.15 2007-02-23 08:17:49 bacon Exp $
+ * $Id: rec.c,v 1.16 2007-03-02 11:14:34 bacon Exp $
  *
  * {License}
  */
@@ -32,7 +32,7 @@ int ase_awk_setrec (
 			if (ase_str_ncpy (&run->inrec.line, str, len) == (ase_size_t)-1)
 			{
 				ase_awk_clrrec (run, ase_false);
-				ase_awk_setrunerror (
+				ase_awk_setrunerror_old (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return -1;
 			}
@@ -42,7 +42,7 @@ int ase_awk_setrec (
 		if (v == ASE_NULL)
 		{
 			ase_awk_clrrec (run, ase_false);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -56,7 +56,7 @@ int ase_awk_setrec (
 		{
 			errnum = run->errnum;
 			ase_awk_clrrec (run, ase_false);
-			ase_awk_setrunerror (run, errnum, 0, ASE_NULL);
+			ase_awk_setrunerror_old (run, errnum, 0, ASE_NULL);
 			return -1;
 		}
 	}
@@ -66,7 +66,7 @@ int ase_awk_setrec (
 		{
 			errnum = run->errnum;
 			ase_awk_clrrec (run, ase_false);
-			ase_awk_setrunerror (run, errnum, 0, ASE_NULL);
+			ase_awk_setrunerror_old (run, errnum, 0, ASE_NULL);
 			return -1;
 		}
 	
@@ -77,7 +77,7 @@ int ase_awk_setrec (
 		if (v == ASE_NULL)
 		{
 			ase_awk_clrrec (run, ase_false);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -143,7 +143,7 @@ static int __split_record (ase_awk_run_t* run)
 			{
 				if (fs_free != ASE_NULL) 
 					ASE_AWK_FREE (run->awk, fs_free);
-				ase_awk_setrunerror (run, errnum, 0, ASE_NULL);
+				ase_awk_setrunerror_old (run, errnum, 0, ASE_NULL);
 				return -1;
 			}
 		}
@@ -172,7 +172,7 @@ static int __split_record (ase_awk_run_t* run)
 		if (tmp == ASE_NULL) 
 		{
 			if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -201,7 +201,7 @@ static int __split_record (ase_awk_run_t* run)
 			{
 				if (fs_free != ASE_NULL) 
 					ASE_AWK_FREE (run->awk, fs_free);
-				ase_awk_setrunerror (run, errnum, 0, ASE_NULL);
+				ase_awk_setrunerror_old (run, errnum, 0, ASE_NULL);
 				return -1;
 			}
 		}
@@ -217,7 +217,7 @@ static int __split_record (ase_awk_run_t* run)
 		if (run->inrec.flds[run->inrec.nflds].val == ASE_NULL)
 		{
 			if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 
@@ -234,7 +234,7 @@ static int __split_record (ase_awk_run_t* run)
 	v = ase_awk_makeintval (run, (ase_long_t)nflds);
 	if (v == ASE_NULL) 
 	{
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 		return -1;
 	}
 
@@ -312,7 +312,7 @@ static int __recomp_record_fields (
 				ASE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == ASE_NULL) 
 			{
-				ase_awk_setrunerror (
+				ase_awk_setrunerror_old (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return -1;
 			}
@@ -323,7 +323,7 @@ static int __recomp_record_fields (
 				run->awk, ASE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == ASE_NULL)
 			{
-				ase_awk_setrunerror (
+				ase_awk_setrunerror_old (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return -1;
 			}
@@ -352,7 +352,7 @@ static int __recomp_record_fields (
 				run->global.ofs.ptr, 
 				run->global.ofs.len) == (ase_size_t)-1) 
 			{
-				ase_awk_setrunerror (
+				ase_awk_setrunerror_old (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return -1;
 			}
@@ -370,7 +370,7 @@ static int __recomp_record_fields (
 			if (ase_str_ncat (
 				&run->inrec.line, str, len) == (ase_size_t)-1)
 			{
-				ase_awk_setrunerror (
+				ase_awk_setrunerror_old (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return -1;
 			}
@@ -378,7 +378,7 @@ static int __recomp_record_fields (
 			tmp = ase_awk_makestrval (run, str,len);
 			if (tmp == ASE_NULL) 
 			{
-				ase_awk_setrunerror (
+				ase_awk_setrunerror_old (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return -1;
 			}
@@ -400,7 +400,7 @@ static int __recomp_record_fields (
 			if (ase_str_cat (
 				&run->inrec.line, ASE_T("")) == (ase_size_t)-1)
 			{
-				ase_awk_setrunerror (
+				ase_awk_setrunerror_old (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return -1;
 			}
@@ -427,7 +427,7 @@ static int __recomp_record_fields (
 			if (ase_str_ncat (&run->inrec.line, 
 				tmp->buf, tmp->len) == (ase_size_t)-1)
 			{
-				ase_awk_setrunerror (
+				ase_awk_setrunerror_old (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 				return -1;
 			}
@@ -441,7 +441,7 @@ static int __recomp_record_fields (
 		v = ase_awk_makeintval (run, (ase_long_t)max);
 		if (v == ASE_NULL) 
 		{
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
 			return -1;
 		}
 

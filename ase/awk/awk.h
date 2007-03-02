@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.193 2007-03-02 10:06:17 bacon Exp $
+ * $Id: awk.h,v 1.194 2007-03-02 11:14:33 bacon Exp $
  *
  * {License}
  */
@@ -29,7 +29,6 @@ typedef int (*ase_awk_sprintf_t) (
 typedef void (*ase_awk_aprintf_t) (void* custom, const ase_char_t* fmt, ...); 
 typedef void (*ase_awk_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
 typedef void (*ase_awk_abort_t)   (void* custom);
-typedef void (*ase_awk_lock_t)    (void* custom);
 
 typedef ase_ssize_t (*ase_awk_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
@@ -76,10 +75,6 @@ struct ase_awk_prmfns_t
 		ase_awk_aprintf_t aprintf;     /* required in the debug mode */
 		ase_awk_dprintf_t dprintf;     /* required in the debug mode */
 		ase_awk_abort_t   abort;       /* required in the debug mode */
-
-		/* thread lock */
-		ase_awk_lock_t    lock;        /* required if multi-threaded */
-		ase_awk_lock_t    unlock;      /* required if multi-threaded */
 
 		/* user-defined data passed to the functions above */
 		void*             custom_data; /* optional */
@@ -404,6 +399,10 @@ void ase_awk_geterror (
 void ase_awk_seterrnum (ase_awk_t* awk, int errnum);
 
 void ase_awk_seterror (
+	ase_awk_t* awk, int errnum, ase_size_t errlin, 
+	const ase_cstr_t* errarg, ase_size_t argcnt);
+
+void ase_awk_seterror_old (
 	ase_awk_t* run, int errnum, 
 	ase_size_t errlin, const ase_char_t* errmsg);
 
@@ -434,7 +433,7 @@ int ase_awk_run (
 	ase_awk_runios_t* runios, ase_awk_runcbs_t* runcbs, 
 	ase_awk_runarg_t* runarg, void* custom_data);
 
-int ase_awk_stop (ase_awk_t* awk, ase_awk_run_t* run);
+int ase_awk_stop (ase_awk_run_t* run);
 
 /* functions to access internal stack structure */
 ase_size_t ase_awk_getnargs (ase_awk_run_t* run);
@@ -461,7 +460,12 @@ void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
 void ase_awk_getrunerror (
 	ase_awk_run_t* run, int* errnum, 
 	ase_size_t* errlin, const ase_char_t** errmsg);
+
 void ase_awk_setrunerror (
+	ase_awk_run_t* run, int errnum, ase_size_t errlin, 
+	const ase_cstr_t* errarg, ase_size_t argcnt);
+
+void ase_awk_setrunerror_old (
 	ase_awk_run_t* run, int errnum, 
 	ase_size_t errlin, const ase_char_t* msg);
 

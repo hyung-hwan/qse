@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.179 2007-03-01 14:40:13 bacon Exp $
+ * $Id: awk.c,v 1.180 2007-03-02 11:14:35 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -646,9 +646,7 @@ static BOOL WINAPI stop_run (DWORD ctrl_type)
 static void stop_run (int sig)
 {
 	signal  (SIGINT, SIG_IGN);
-	ase_awk_stop (ase_awk_getrunawk(app_run), app_run);
-	/*ase_awk_stopall (app_awk); */
-	/*ase_awk_stopall (ase_awk_getrunawk(app_run)); */
+	ase_awk_stop (app_run);
 	signal  (SIGINT, stop_run);
 }
 #endif
@@ -862,8 +860,6 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns.misc.sprintf     = custom_awk_sprintf;
 	prmfns.misc.aprintf     = custom_awk_aprintf;
 	prmfns.misc.dprintf     = custom_awk_dprintf;
-	prmfns.misc.lock        = NULL;
-	prmfns.misc.unlock      = NULL;
 	prmfns.misc.custom_data = NULL;
 
 	if ((awk = ase_awk_open(&prmfns, ASE_NULL, &errnum)) == ASE_NULL) 

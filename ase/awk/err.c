@@ -1,66 +1,12 @@
 /*
- * $Id: err.c,v 1.74 2007-02-23 08:17:49 bacon Exp $
+ * $Id: err.c,v 1.75 2007-03-02 11:14:33 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/awk/awk_i.h>
 
-int ase_awk_geterrnum (ase_awk_t* awk)
-{
-	return awk->errnum;
-}
-
-ase_size_t ase_awk_geterrlin (ase_awk_t* awk)
-{
-	return awk->errlin;
-}
-
-const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk)
-{
-	if (awk->errmsg[0] == ASE_T('\0')) 
-		return ase_awk_geterrstr (awk->errnum);
-	return awk->errmsg;
-}
-
-
-void ase_awk_geterror (
-	ase_awk_t* awk, int* errnum, 
-	ase_size_t* errlin, const ase_char_t** errmsg)
-{
-	if (errnum != ASE_NULL) *errnum = awk->errnum;
-	if (errlin != ASE_NULL) *errlin = awk->errlin;
-	if (errmsg != ASE_NULL) 
-	{
-		if (awk->errmsg[0] == ASE_T('\0'))
-			*errmsg = ase_awk_geterrstr (awk->errnum);
-		else
-			*errmsg = awk->errmsg;
-	}
-}
-
-void ase_awk_seterrnum (ase_awk_t* awk, int errnum)
-{
-	awk->errnum = errnum;
-	awk->errlin = 0;
-	awk->errmsg[0] = ASE_T('\0');
-}
-
-void ase_awk_seterror (
-	ase_awk_t* awk, int errnum, 
-	ase_size_t errlin, const ase_char_t* errmsg)
-{
-	awk->errnum = errnum;
-	awk->errlin = errlin;
-	if (errmsg == ASE_NULL) awk->errmsg[0] = ASE_T('\0');
-	else if (awk->errmsg != errmsg)
-	{
-		ase_strxcpy (
-			awk->errmsg, ASE_COUNTOF(awk->errmsg), errmsg);
-	}
-}
-
-const ase_char_t* ase_awk_geterrstr (int errnum)
+static const ase_char_t* __geterrstr (int errnum)
 {
 	static const ase_char_t* __errstr[] =
  	{
@@ -157,13 +103,13 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 		ASE_T("too many arguments"),
 		ASE_T("no such function"),
 		ASE_T("variable not indexable"),
-		ASE_T("variable not deletable"),
+		ASE_T("variable '%.*s' not deletable"),
 		ASE_T("value not a map"),
 		ASE_T("value not referenceable"),
 		ASE_T("value not assignable"),
 		ASE_T("an indexed value cannot be assigned a map"),
 		ASE_T("a positional value cannot be assigned a map"),
-		ASE_T("cannot change a map to a scalar value"),
+		ASE_T("map '%.*s' not assignable with a scalar"),
 		ASE_T("cannot change a scalar value to a map"),
 		ASE_T("a map is not allowed"),
 		ASE_T("wrong value type"),
@@ -200,3 +146,276 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 	return ASE_T("unknown error");
 }
 
+const ase_char_t* ase_awk_geterrstr (int errnum)
+{
+	return __geterrstr (errnum);
+}
+
+
+int ase_awk_geterrnum (ase_awk_t* awk)
+{
+	return awk->errnum;
+}
+
+ase_size_t ase_awk_geterrlin (ase_awk_t* awk)
+{
+	return awk->errlin;
+}
+
+const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk)
+{
+	if (awk->errmsg[0] == ASE_T('\0')) 
+		return ase_awk_geterrstr (awk->errnum);
+	return awk->errmsg;
+}
+
+void ase_awk_geterror (
+	ase_awk_t* awk, int* errnum, 
+	ase_size_t* errlin, const ase_char_t** errmsg)
+{
+	if (errnum != ASE_NULL) *errnum = awk->errnum;
+	if (errlin != ASE_NULL) *errlin = awk->errlin;
+	if (errmsg != ASE_NULL) 
+	{
+		if (awk->errmsg[0] == ASE_T('\0'))
+			*errmsg = ase_awk_geterrstr (awk->errnum);
+		else
+			*errmsg = awk->errmsg;
+	}
+}
+
+void ase_awk_seterrnum (ase_awk_t* awk, int errnum)
+{
+	awk->errnum = errnum;
+	awk->errlin = 0;
+	awk->errmsg[0] = ASE_T('\0');
+}
+
+void ase_awk_seterror (
+	ase_awk_t* awk, int errnum, ase_size_t errlin,
+	const ase_cstr_t* errarg, ase_size_t argcnt)
+{
+	const ase_char_t* errfmt;
+
+	ASE_AWK_ASSERT (awk, argcnt <= 5);
+
+	awk->errnum = errnum;
+	awk->errlin = errlin;
+
+	errfmt = __geterrstr (errnum);
+
+	switch (argcnt)
+	{
+		case 0:
+			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
+				awk->errmsg, 
+				ASE_COUNTOF(awk->errmsg), 
+				errfmt);
+			return;
+
+		case 1:
+			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
+				awk->errmsg, 
+				ASE_COUNTOF(awk->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr);
+			return;
+
+		case 2:
+			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
+				awk->errmsg, 
+				ASE_COUNTOF(awk->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr,
+				errarg[1].len, errarg[1].ptr);
+			return;
+
+		case 3:
+			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
+				awk->errmsg, 
+				ASE_COUNTOF(awk->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr,
+				errarg[1].len, errarg[1].ptr,
+				errarg[2].len, errarg[2].ptr);
+			return;
+
+		case 4:
+			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
+				awk->errmsg, 
+				ASE_COUNTOF(awk->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr,
+				errarg[1].len, errarg[1].ptr,
+				errarg[2].len, errarg[2].ptr,
+				errarg[3].len, errarg[3].ptr);
+			return;
+
+		case 5:
+			awk->prmfns.misc.sprintf (
+				awk->prmfns.misc.custom_data,
+				awk->errmsg, 
+				ASE_COUNTOF(awk->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr,
+				errarg[1].len, errarg[1].ptr,
+				errarg[2].len, errarg[2].ptr,
+				errarg[3].len, errarg[3].ptr,
+				errarg[4].len, errarg[4].ptr);
+			return;
+	}
+}
+
+void ase_awk_seterror_old (
+	ase_awk_t* awk, int errnum, 
+	ase_size_t errlin, const ase_char_t* errmsg)
+{
+	awk->errnum = errnum;
+	awk->errlin = errlin;
+	if (errmsg == ASE_NULL) awk->errmsg[0] = ASE_T('\0');
+	else if (awk->errmsg != errmsg)
+	{
+		ase_strxcpy (
+			awk->errmsg, ASE_COUNTOF(awk->errmsg), errmsg);
+	}
+}
+
+
+int ase_awk_getrunerrnum (ase_awk_run_t* run)
+{
+	return run->errnum;
+}
+
+ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run)
+{
+	return run->errlin;
+}
+
+const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run)
+{
+	if (run->errmsg[0] == ASE_T('\0')) 
+		return ase_awk_geterrstr (run->errnum);
+
+	return run->errmsg;
+}
+
+void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum)
+{
+	run->errnum = errnum;
+	run->errlin = 0;
+	run->errmsg[0] = ASE_T('\0');
+}
+
+void ase_awk_getrunerror (
+	ase_awk_run_t* run, int* errnum, 
+	ase_size_t* errlin, const ase_char_t** errmsg)
+{
+	if (errnum != ASE_NULL) *errnum = run->errnum;
+	if (errlin != ASE_NULL) *errlin = run->errlin;
+	if (errmsg != ASE_NULL) 
+	{
+		if (run->errmsg[0] == ASE_T('\0'))
+			*errmsg = ase_awk_geterrstr (run->errnum);
+		else
+			*errmsg = run->errmsg;
+	}
+}
+
+void ase_awk_setrunerror (
+	ase_awk_run_t* run, int errnum, ase_size_t errlin,
+	const ase_cstr_t* errarg, ase_size_t argcnt)
+{
+	const ase_char_t* errfmt;
+
+	ASE_AWK_ASSERT (run->awk, argcnt <= 5);
+
+	run->errnum = errnum;
+	run->errlin = errlin;
+
+	errfmt = __geterrstr (errnum);
+
+	switch (argcnt)
+	{
+		case 0:
+			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
+				run->errmsg, 
+				ASE_COUNTOF(run->errmsg), 
+				errfmt);
+			return;
+
+		case 1:
+			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
+				run->errmsg, 
+				ASE_COUNTOF(run->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr);
+			return;
+
+		case 2:
+			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
+				run->errmsg, 
+				ASE_COUNTOF(run->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr,
+				errarg[1].len, errarg[1].ptr);
+			return;
+
+		case 3:
+			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
+				run->errmsg, 
+				ASE_COUNTOF(run->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr,
+				errarg[1].len, errarg[1].ptr,
+				errarg[2].len, errarg[2].ptr);
+			return;
+
+		case 4:
+			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
+				run->errmsg, 
+				ASE_COUNTOF(run->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr,
+				errarg[1].len, errarg[1].ptr,
+				errarg[2].len, errarg[2].ptr,
+				errarg[3].len, errarg[3].ptr);
+			return;
+
+		case 5:
+			run->awk->prmfns.misc.sprintf (
+				run->awk->prmfns.misc.custom_data,
+				run->errmsg, 
+				ASE_COUNTOF(run->errmsg), 
+				errfmt,
+				errarg[0].len, errarg[0].ptr,
+				errarg[1].len, errarg[1].ptr,
+				errarg[2].len, errarg[2].ptr,
+				errarg[3].len, errarg[3].ptr,
+				errarg[4].len, errarg[4].ptr);
+			return;
+	}
+}
+
+void ase_awk_setrunerror_old (
+	ase_awk_run_t* run, int errnum, 
+	ase_size_t errlin, const ase_char_t* errmsg)
+{
+	run->errnum = errnum;
+	run->errlin = errlin;
+
+	if (errmsg == ASE_NULL) run->errmsg[0] = ASE_T('\0');
+	else if (errmsg != run->errmsg)
+	{
+		ase_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), errmsg);
+	}
+}

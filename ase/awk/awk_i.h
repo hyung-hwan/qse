@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.105 2007-03-02 10:12:40 bacon Exp $
+ * $Id: awk_i.h,v 1.106 2007-03-02 11:14:33 bacon Exp $
  *
  * {License}
  */
@@ -28,12 +28,6 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
 #pragma warning (disable: 4296)
-#endif
-
-/* TODO: remove this */
-#ifdef _WIN32
-#include <tchar.h>
-#define xp_printf _tprintf
 #endif
 
 #define ASE_AWK_MAX_GLOBALS 9999
@@ -66,19 +60,6 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_ISPUNCT(awk,c)  ASE_ISPUNCT(&(awk)->prmfns.ccls,c)
 #define ASE_AWK_TOUPPER(awk,c)  ASE_TOUPPER(&(awk)->prmfns.ccls,c)
 #define ASE_AWK_TOLOWER(awk,c)  ASE_TOLOWER(&(awk)->prmfns.ccls,c)
-
-#define ASE_AWK_LOCK(awk) \
-	do { \
-		if ((awk)->prmfns.misc.lock != ASE_NULL) \
-			(awk)->prmfns.misc.lock ((awk)->prmfns.misc.custom_data); \
-	} while (0) 
-
-#define ASE_AWK_UNLOCK(awk) \
-	do { \
-		if ((awk)->prmfns.misc.unlock != ASE_NULL) \
-			(awk)->prmfns.misc.unlock ((awk)->prmfns.misc.custom_data); \
-	} while (0) 
-
 
 struct ase_awk_tree_t
 {
