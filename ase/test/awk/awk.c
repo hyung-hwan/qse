@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.180 2007-03-02 11:14:35 bacon Exp $
+ * $Id: awk.c,v 1.181 2007-03-02 14:42:04 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -636,7 +636,7 @@ static BOOL WINAPI stop_run (DWORD ctrl_type)
 	if (ctrl_type == CTRL_C_EVENT ||
 	    ctrl_type == CTRL_CLOSE_EVENT)
 	{
-		ase_awk_stop (ase_awk_getrunawk(app_run), app_run);
+		ase_awk_stop (app_run);
 		return TRUE;
 	}
 
@@ -666,11 +666,15 @@ static int print_awk_value (ase_awk_pair_t* pair, void* arg)
 	return 0;
 }
 
+static void on_run_statement (
+	ase_awk_run_t* run, ase_size_t line, void* custom)
+{
+	dprintf (L"running %d\n", (int)line);
+}
+
 static void on_run_return (
 	ase_awk_run_t* run, ase_awk_val_t* ret, void* custom)
 {
-	app_run = run;
-
 	dprintf (ASE_T("[RETURN] - "));
 	ase_awk_dprintval (run, ret);
 	dprintf (ASE_T("\n"));
@@ -908,6 +912,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	runios.console = awk_extio_console;
 
 	runcbs.on_start = on_run_start;
+	runcbs.on_statement = on_run_statement;
 	runcbs.on_return = on_run_return;
 	runcbs.on_end = on_run_end;
 	runcbs.custom_data = ASE_NULL;

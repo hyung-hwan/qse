@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.195 2007-03-02 11:47:52 bacon Exp $
+ * $Id: awk.h,v 1.196 2007-03-02 14:41:30 bacon Exp $
  *
  * {License}
  */
@@ -101,6 +101,9 @@ struct ase_awk_runcbs_t
 {
 	void (*on_start) (
 		ase_awk_run_t* run, void* custom_data);
+
+	void (*on_statement) (
+		ase_awk_run_t* run, ase_size_t line, void* custom_data);
 
 	void (*on_return) (
 		ase_awk_run_t* run, ase_awk_val_t* ret, void* custom_data);
