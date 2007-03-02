@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.332 2007-03-02 10:06:17 bacon Exp $
+ * $Id: run.c,v 1.333 2007-03-02 10:12:41 bacon Exp $
  *
  * {License}
  */
@@ -54,11 +54,6 @@ enum exit_level_t
 static int __set_global (
 	ase_awk_run_t* run, ase_size_t idx, 
 	ase_awk_nde_var_t* var, ase_awk_val_t* val);
-
-/*
-static void __add_run (ase_awk_t* awk, ase_awk_run_t* run);
-static void __del_run (ase_awk_t* awk, ase_awk_run_t* run);
-*/
 
 static int __init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
@@ -664,9 +659,6 @@ int ase_awk_run (ase_awk_t* awk,
 	/* clear the run object space */
 	ase_memset (run, 0, ASE_SIZEOF(ase_awk_run_t));
 
-	/* add the run object to the awk object */
-	/*__add_run (awk, run);*/
-
 	/* initialize the run object */
 	if (__init_run (run, awk, runios, custom_data, &errnum) == -1) 
 	{
@@ -780,49 +772,11 @@ static void __free_namedval (void* run, void* val)
 	ase_awk_refdownval ((ase_awk_run_t*)run, val);
 }
 
-/*
-static void __add_run (ase_awk_t* awk, ase_awk_run_t* run)
-{
-	ASE_AWK_LOCK (awk);
-
-	run->awk = awk;
-	run->prev = ASE_NULL;
-	run->next = awk->run.ptr;
-	if (run->next != ASE_NULL) run->next->prev = run;
-	awk->run.ptr = run;
-	awk->run.count++;
-
-	ASE_AWK_UNLOCK (awk);
-}
-
-static void __del_run (ase_awk_t* awk, ase_awk_run_t* run)
-{
-	ASE_AWK_LOCK (awk);
-
-	ASE_AWK_ASSERT (run->awk, awk->run.ptr != ASE_NULL);
-
-	if (run->prev == ASE_NULL)
-	{
-		awk->run.ptr = run->next;
-		if (run->next != ASE_NULL) run->next->prev = ASE_NULL;
-	}
-	else
-	{
-		run->prev->next = run->next;
-		if (run->next != ASE_NULL) run->next->prev = run->prev;
-	}
-
-	run->awk = ASE_NULL;
-	awk->run.count--;
-
-	ASE_AWK_UNLOCK (awk);
-}
-*/
-
 static int __init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
 	ase_awk_runios_t* runios, void* custom_data, int* errnum)
 {
+	run->awk = awk;
 	run->custom_data = custom_data;
 
 	run->stack = ASE_NULL;

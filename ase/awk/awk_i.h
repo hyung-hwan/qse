@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.104 2007-03-02 10:06:17 bacon Exp $
+ * $Id: awk_i.h,v 1.105 2007-03-02 10:12:40 bacon Exp $
  *
  * {License}
  */
@@ -189,11 +189,6 @@ struct ase_awk_t
 
 	struct
 	{
-		/*
-		ase_size_t count;
-		ase_awk_run_t* ptr;
-		*/
-
 		struct
 		{
 			struct
