@@ -21,7 +21,7 @@ JAVAC = javac
 CFLAGS = /nologo /O2 /MT /W3 /GR- -I../.. $(JNI_INC) 
 JAVACFLAGS = -classpath ../.. -Xlint:unchecked
 
-all: lib jni
+all: lib 
 
 lib: $(C_OBJS)
 	$(LD) /lib @<<

@@ -32,7 +32,7 @@ LIBS = import32.lib cw32mt.lib
 JNI_LDFLAGS = $(LDFLAGS) -L..\cmn -L..\utl
 JNI_LIBS = $(LIBS) $(OUT).lib asecmn.lib aseutl.lib
 
-all: lib jni
+all: lib 
 
 lib: $(C_OBJS)
 	$(AR) $(OUT).lib @&&!

@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.106 2007-03-02 11:14:33 bacon Exp $
+ * $Id: awk_i.h,v 1.107 2007-03-02 14:41:30 bacon Exp $
  *
  * {License}
  */
@@ -317,17 +317,14 @@ struct ase_awk_run_t
 		} max;
 	} depth;
 
-	ase_size_t runlin; /* line no. of the node being executed currently */
-
 	int errnum;
 	ase_size_t errlin;
 	ase_char_t errmsg[256];
 
 	void* custom_data;
-	ase_awk_t* awk;
 
-	ase_awk_run_t* prev;
-	ase_awk_run_t* next;
+	ase_awk_t* awk;
+	ase_awk_runcbs_t* cbs;
 };
 
 #endif

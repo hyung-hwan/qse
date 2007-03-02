@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.335 2007-03-02 11:47:52 bacon Exp $
+ * $Id: run.c,v 1.336 2007-03-02 14:41:30 bacon Exp $
  *
  * {License}
  */
@@ -67,7 +67,7 @@ static int __set_globals_to_default (ase_awk_run_t* run);
 
 static int run_main (
 	ase_awk_run_t* run, const ase_char_t* main, 
-	ase_awk_runcbs_t* runcbs, ase_awk_runarg_t* runarg);
+	ase_awk_runarg_t* runarg);
 
 static int __run_pattern_blocks  (ase_awk_run_t* run);
 static int __run_pattern_block_chain (
@@ -628,6 +628,8 @@ int ase_awk_run (ase_awk_t* awk,
 	run->errlin    = 0;
 	run->errmsg[0] = ASE_T('\0');
 
+	run->cbs = runcbs;
+
 	/* execute the start callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_start != ASE_NULL) 
 	{
@@ -635,7 +637,7 @@ int ase_awk_run (ase_awk_t* awk,
 	}
 
 	/* enter the main run loop */
-	n = run_main (run, main, runcbs, runarg);
+	n = run_main (run, main, runarg);
 	if (n == -1) 
 	{
 		/* if no callback is specified, awk's error number 
@@ -1119,7 +1121,7 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 
 static int run_main (
 	ase_awk_run_t* run, const ase_char_t* main, 
-	ase_awk_runcbs_t* runcbs, ase_awk_runarg_t* runarg)
+	ase_awk_runarg_t* runarg)
 {
 	ase_size_t nglobals, nargs, nrunargs, i;
 	ase_size_t saved_stack_top;
@@ -1262,9 +1264,9 @@ static int run_main (
 		{
 			ase_awk_refupval (run, v);
 
-			if (runcbs != ASE_NULL && runcbs->on_return != ASE_NULL)
+			if (run->cbs != ASE_NULL && run->cbs->on_return != ASE_NULL)
 			{
-				runcbs->on_return (run, v, runcbs->custom_data);
+				run->cbs->on_return (run, v, run->cbs->custom_data);
 			}
 
 			ase_awk_refdownval (run, v);
@@ -1380,9 +1382,9 @@ static int run_main (
 		v = STACK_RETVAL(run);
 		if (n == 0)
 		{
-			if (runcbs != ASE_NULL && runcbs->on_return != ASE_NULL)
+			if (run->cbs != ASE_NULL && run->cbs->on_return != ASE_NULL)
 			{
-				runcbs->on_return (run, v, runcbs->custom_data);
+				run->cbs->on_return (run, v, run->cbs->custom_data);
 			}
 		}
 		/* end the life of the global return value */
@@ -1652,11 +1654,6 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 
 	while (p != ASE_NULL && run->exit_level == EXIT_NONE) 
 	{
-#ifdef DEBUG_RUN
-		ase_dprintf (ASE_T("running a statement of type %d at line %d\n"), 
-			(int)p->type, (int)p->line);
-#endif
-
 		if (__run_statement (run, p) == -1) 
 		{
 			n = -1;
@@ -1682,6 +1679,11 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 
 static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
+	if (run->cbs != ASE_NULL && run->cbs->on_statement != ASE_NULL)
+	{
+		run->cbs->on_statement (run, nde->line, run->custom_data);
+	}
+
 	switch (nde->type) 
 	{
 		case ASE_AWK_NDE_NULL:
