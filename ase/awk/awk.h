@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.192 2007-02-24 14:31:43 bacon Exp $
+ * $Id: awk.h,v 1.193 2007-03-02 10:06:17 bacon Exp $
  *
  * {License}
  */
@@ -435,7 +435,6 @@ int ase_awk_run (
 	ase_awk_runarg_t* runarg, void* custom_data);
 
 int ase_awk_stop (ase_awk_t* awk, ase_awk_run_t* run);
-void ase_awk_stopall (ase_awk_t* awk);
 
 /* functions to access internal stack structure */
 ase_size_t ase_awk_getnargs (ase_awk_run_t* run);

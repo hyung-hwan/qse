@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.110 2007-02-24 14:31:43 bacon Exp $ 
+ * $Id: awk.c,v 1.111 2007-03-02 10:06:17 bacon Exp $ 
  *
  * {License}
  */
@@ -151,8 +151,10 @@ ase_awk_t* ase_awk_open (
 	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_BUILD, 0);
 	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_MATCH, 0);
 
+	/*
 	awk->run.count = 0;
 	awk->run.ptr = ASE_NULL;
+	*/
 
 	awk->custom_data = custom_data;
 	return awk;
@@ -174,7 +176,9 @@ int ase_awk_close (ase_awk_t* awk)
 	if (ase_awk_clear (awk) == -1) return -1;
 	ase_awk_clrbfn (awk);
 
+	/*
 	ASE_AWK_ASSERT (awk, awk->run.count == 0 && awk->run.ptr == ASE_NULL);
+	*/
 
 	ase_awk_map_close (&awk->tree.afns);
 	ase_awk_tab_close (&awk->parse.globals);
@@ -191,11 +195,13 @@ int ase_awk_close (ase_awk_t* awk)
 int ase_awk_clear (ase_awk_t* awk)
 {
 	/* you should stop all running instances beforehand */
+	/*
 	if (awk->run.ptr != ASE_NULL)
 	{
 		awk->errnum = ASE_AWK_ERUNNING;
 		return -1;
 	}
+	*/
 
 	ase_memset (&awk->src.ios, 0, ASE_SIZEOF(awk->src.ios));
 	awk->src.lex.curc = ASE_CHAR_EOF;
