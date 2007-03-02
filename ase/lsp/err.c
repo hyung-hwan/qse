@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.13 2007-02-24 14:32:10 bacon Exp $
+ * $Id: err.c,v 1.14 2007-03-02 11:14:35 bacon Exp $
  *
  * {License}
  */
@@ -58,7 +58,7 @@ void ase_lsp_seterror (
 	ASE_LSP_ASSERT (lsp, argcnt <= 5);
 
 	lsp->errnum = errnum;
-       	errfmt = __geterrstr (errnum);
+	errfmt = __geterrstr (errnum);
 
 	switch (argcnt)
 	{
