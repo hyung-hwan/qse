@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.5 2007-02-23 08:17:51 bacon Exp $
+ * $Id: str.c,v 1.6 2007-03-02 11:41:55 bacon Exp $
  *
  * {License}
  */
@@ -45,6 +45,44 @@ ase_size_t ase_strncpy (
 	while (str < end) *buf++ = *str++;
 	*buf = ASE_T('\0');
 	return len;
+}
+
+ase_size_t ase_strxncpy (
+	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len)
+{
+	ase_size_t n;
+
+	if (bsz <= 0) return 0;
+	if ((n = bsz - 1) > len) n = len;
+	ase_memcpy (buf, str, n * ASE_SIZEOF(ase_char_t));
+	buf[n] = ASE_T('\0');
+
+	return n;
+}
+
+ase_size_t ase_strxncat (
+	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len)
+{
+	ase_char_t* p, * p2;
+	const ase_char_t* end;
+	ase_size_t blen;
+
+	blen = ase_strlen(buf);
+	if (blen >= bsz) return blen; /* something wrong */
+
+	p = buf + blen;
+	p2 = buf + bsz - 1;
+
+	end = str + len;
+
+	while (p < p2) 
+	{
+		if (str >= end) break;
+		*p++ = *str++;
+	}
+
+	if (bsz > 0) *p = ASE_T('\0');
+	return p - buf;
 }
 
 int ase_strcmp (const ase_char_t* s1, const ase_char_t* s2)
