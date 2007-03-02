@@ -3,16 +3,7 @@
 == ASEAWK ==
 ASE provides an embeddable processor of a dialect of the AWK programming language. The language implemented is slightly different from {the version developed by Brian W. Kernighan, http://cm.bell-labs.com/cm/cs/awkbook/index.html} and has been adjusted to the author's preference.
 
-Embedding a processor requires the following basic steps.
-
-[[[
-* Create a processor instance
-* Parse an AWK script
-* Run the script parsed
-* Destroy the instance
-]]]
-
-The following code fragment illustrates the basic steps.
+The following code fragment illustrates the basic steps of embedding the processor.
 
 {{{
 1) #include <ase/awk/awk.h>
@@ -42,9 +33,59 @@ The following code fragment illustrates the basic steps.
 * ase_awk_close destroys the processor instance.
 )))
 
-=== Primitive Functions ===
+A set of primitive functions should be provided by the caller to create an instance of the processor as the library aims to be system indepenent. 
 
-ase_awk_open requires that a set of primitive functions be provided by its caller. This set include pointers to the system primitive functions for system dependent operation such as memory allocation, string formatting, etc.
+{{{
+typedef void* (*ase_malloc_t)  (void* custom, ase_size_t n);
+typedef void* (*ase_realloc_t) (void* custom, void* ptr, ase_size_t n);
+typedef void  (*ase_free_t)    (void* custom, void* ptr);
+
+typedef ase_bool_t (*ase_isccls_t) (void* custom, ase_cint_t c);
+typedef ase_cint_t (*ase_toccls_t) (void* custom, ase_cint_t c);
+
+struct ase_mmgr_t
+{
+	ase_malloc_t  malloc;
+	ase_realloc_t realloc;
+	ase_free_t    free;
+	void*         custom_data;
+};
+
+struct ase_ccls_t
+{
+	ase_isccls_t is_upper;
+	ase_isccls_t is_lower;
+	ase_isccls_t is_alpha;
+	ase_isccls_t is_digit;
+	ase_isccls_t is_xdigit;
+	ase_isccls_t is_alnum;
+	ase_isccls_t is_space;
+	ase_isccls_t is_print;
+	ase_isccls_t is_graph;
+	ase_isccls_t is_cntrl;
+	ase_isccls_t is_punct;
+	ase_toccls_t to_upper;
+	ase_toccls_t to_lower;
+	void*        custom_data;
+};
+
+struct ase_awk_prmfns_t
+{
+	ase_mmgr_t mmgr;
+	ase_ccls_t ccls;
+
+	struct
+	{
+		ase_awk_pow_t     pow;
+		ase_awk_sprintf_t sprintf;
+		ase_awk_aprintf_t aprintf;
+		ase_awk_dprintf_t dprintf;
+		ase_awk_abort_t   abort;
+		void*             custom_data;
+	} misc;
+};
+
+The primitive functions handle memory allocation, charater classes, and 
 
 === Source IO Handler ===
 

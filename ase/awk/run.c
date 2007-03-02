@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.331 2007-02-28 11:00:33 bacon Exp $
+ * $Id: run.c,v 1.332 2007-03-02 10:06:17 bacon Exp $
  *
  * {License}
  */
@@ -55,8 +55,10 @@ static int __set_global (
 	ase_awk_run_t* run, ase_size_t idx, 
 	ase_awk_nde_var_t* var, ase_awk_val_t* val);
 
+/*
 static void __add_run (ase_awk_t* awk, ase_awk_run_t* run);
 static void __del_run (ase_awk_t* awk, ase_awk_run_t* run);
+*/
 
 static int __init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
@@ -663,7 +665,7 @@ int ase_awk_run (ase_awk_t* awk,
 	ase_memset (run, 0, ASE_SIZEOF(ase_awk_run_t));
 
 	/* add the run object to the awk object */
-	__add_run (awk, run);
+	/*__add_run (awk, run);*/
 
 	/* initialize the run object */
 	if (__init_run (run, awk, runios, custom_data, &errnum) == -1) 
@@ -672,7 +674,7 @@ int ase_awk_run (ase_awk_t* awk,
 		 * the awk object */
 		ase_awk_seterror (awk, errnum, 0, ASE_NULL);
 
-		__del_run (awk, run);
+		/*__del_run (awk, run);*/
 		ASE_AWK_FREE (awk, run);
 		return -1;
 	}
@@ -722,7 +724,7 @@ int ase_awk_run (ase_awk_t* awk,
 	__deinit_run (run);
 
 	/* unregister the run object */
-	__del_run (awk, run);
+	/*__del_run (awk, run);*/
 
 	ASE_AWK_FREE (awk, run);
 	return n;
@@ -730,8 +732,10 @@ int ase_awk_run (ase_awk_t* awk,
 
 int ase_awk_stop (ase_awk_t* awk, ase_awk_run_t* run)
 {
+	/*
 	ase_awk_run_t* r;
 	int n = 0;
+	*/
 
 	if (ase_awk_getrunawk(run) != awk)
 	{
@@ -739,6 +743,11 @@ int ase_awk_stop (ase_awk_t* awk, ase_awk_run_t* run)
 		return -1;
 	}
 
+
+	run->exit_level = EXIT_ABORT;
+	return 0;
+
+#if 0
 	ASE_AWK_LOCK (awk);
 
 	/* check if the run handle given is valid */
@@ -763,20 +772,7 @@ int ase_awk_stop (ase_awk_t* awk, ase_awk_run_t* run)
 	ASE_AWK_UNLOCK (awk);
 
 	return n;
-}
-
-void ase_awk_stopall (ase_awk_t* awk)
-{
-	ase_awk_run_t* r;
-
-	ASE_AWK_LOCK (awk);
-
-	for (r = awk->run.ptr; r != ASE_NULL; r = r->next)
-	{
-		r->exit_level = EXIT_ABORT;
-	}
-
-	ASE_AWK_UNLOCK (awk);
+#endif
 }
 
 static void __free_namedval (void* run, void* val)
@@ -784,6 +780,7 @@ static void __free_namedval (void* run, void* val)
 	ase_awk_refdownval ((ase_awk_run_t*)run, val);
 }
 
+/*
 static void __add_run (ase_awk_t* awk, ase_awk_run_t* run)
 {
 	ASE_AWK_LOCK (awk);
@@ -820,6 +817,7 @@ static void __del_run (ase_awk_t* awk, ase_awk_run_t* run)
 
 	ASE_AWK_UNLOCK (awk);
 }
+*/
 
 static int __init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
