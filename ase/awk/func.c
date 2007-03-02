@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.97 2007-02-24 14:31:44 bacon Exp $
+ * $Id: func.c,v 1.98 2007-03-02 10:12:40 bacon Exp $
  *
  * {License}
  */
@@ -56,7 +56,7 @@ void* ase_awk_addbfn (
 		awk->prmfns.misc.sprintf (
 			awk->prmfns.misc.custom_data,
 			awk->errmsg, ASE_COUNTOF(awk->errmsg),
-			ASE_T("'%.*s' added already"), name_len, name);
+			ASE_T("'%.*s' added already"), (int)name_len, name);
 		ase_awk_seterror (awk, ASE_AWK_EEXIST, 0, awk->errmsg);
 		return ASE_NULL;
 	}

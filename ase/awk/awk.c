@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.111 2007-03-02 10:06:17 bacon Exp $ 
+ * $Id: awk.c,v 1.112 2007-03-02 10:12:40 bacon Exp $ 
  *
  * {License}
  */
@@ -151,11 +151,6 @@ ase_awk_t* ase_awk_open (
 	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_BUILD, 0);
 	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_MATCH, 0);
 
-	/*
-	awk->run.count = 0;
-	awk->run.ptr = ASE_NULL;
-	*/
-
 	awk->custom_data = custom_data;
 	return awk;
 }
@@ -175,10 +170,6 @@ int ase_awk_close (ase_awk_t* awk)
 {
 	if (ase_awk_clear (awk) == -1) return -1;
 	ase_awk_clrbfn (awk);
-
-	/*
-	ASE_AWK_ASSERT (awk, awk->run.count == 0 && awk->run.ptr == ASE_NULL);
-	*/
 
 	ase_awk_map_close (&awk->tree.afns);
 	ase_awk_tab_close (&awk->parse.globals);
