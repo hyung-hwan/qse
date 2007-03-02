@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.76 2007-03-02 11:41:55 bacon Exp $
+ * $Id: err.c,v 1.77 2007-03-02 11:47:52 bacon Exp $
  *
  * {License}
  */
@@ -101,7 +101,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("wrong position index"),
 		ASE_T("too few arguments"),
 		ASE_T("too many arguments"),
-		ASE_T("no such function"),
+		ASE_T("function '%.*s' not found"),
 		ASE_T("variable not indexable"),
 		ASE_T("variable '%.*s' not deletable"),
 		ASE_T("value not a map"),

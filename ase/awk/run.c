@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.334 2007-03-02 11:14:34 bacon Exp $
+ * $Id: run.c,v 1.335 2007-03-02 11:47:52 bacon Exp $
  *
  * {License}
  */
@@ -5133,35 +5133,13 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		call->what.afn.name.ptr, call->what.afn.name.len);
 	if (pair == ASE_NULL) 
 	{
-		ase_char_t* fmt = ASE_T("function '%.*s' not found");
-		ase_char_t* fmt2 = ASE_T("function '%.*s..' not found");
-		ase_size_t len = ase_strlen(fmt);
-		ase_size_t len2 = ase_strlen(fmt2);
+		ase_cstr_t errarg;
 
-		if (len2 < ASE_COUNTOF(run->errmsg) &&
-		    call->what.afn.name.len > ASE_COUNTOF(run->errmsg)-len2)
-		{
-			run->awk->prmfns.misc.sprintf (
-				run->awk->prmfns.misc.custom_data,
-				run->errmsg, 
-				ASE_COUNTOF(run->errmsg),
-				fmt2,
-				ASE_COUNTOF(run->errmsg)-len2,
-				call->what.afn.name.ptr);
-		}
-		else
-		{
-			run->awk->prmfns.misc.sprintf (
-				run->awk->prmfns.misc.custom_data,
-				run->errmsg, 
-				ASE_COUNTOF(run->errmsg),
-				fmt,
-				call->what.afn.name.len,
-				call->what.afn.name.ptr);
-		}
+		errarg.ptr = call->what.afn.name.ptr;
+		errarg.len = call->what.afn.name.len,
 
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_EFNNONE, nde->line, run->errmsg);
+		ase_awk_setrunerror (run, 
+			ASE_AWK_EFNNONE, nde->line, &errarg, 1);
 		return ASE_NULL;
 	}
 

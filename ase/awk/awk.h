@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.194 2007-03-02 11:14:33 bacon Exp $
+ * $Id: awk.h,v 1.195 2007-03-02 11:47:52 bacon Exp $
  *
  * {License}
  */
@@ -200,7 +200,7 @@ enum
 	ASE_AWK_ENOMEM,         /* out of memory */
 	ASE_AWK_ENOSUP,         /* not supported */
 	ASE_AWK_ENOPER,         /* operation not allowed */
-	ASE_AWK_ENODEV,         /* no such device */
+	ASE_AWK_ENODEV,         /* function '%.*s' not found */
 	ASE_AWK_ENOSPC,         /* no space left on device */
 	ASE_AWK_ENOENT,         /* no such file, directory, or data */
 	ASE_AWK_EMFILE,         /* too many open files */
