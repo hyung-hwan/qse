@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.337 2007-03-03 13:22:01 bacon Exp $
+ * $Id: run.c,v 1.338 2007-03-03 14:44:31 bacon Exp $
  *
  * {License}
  */
@@ -57,7 +57,7 @@ static int __set_global (
 
 static int __init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
-	ase_awk_runios_t* runios, void* custom_data, int* errnum);
+	ase_awk_runios_t* runios, void* custom_data);
 static void __deinit_run (ase_awk_run_t* run);
 
 static int __build_runarg (
@@ -264,7 +264,7 @@ static int __set_global (
 			errarg.ptr = ase_awk_getglobalname (
 				run->awk, idx, &errarg.len);
 			ase_awk_setrunerror (run, 
-				ASE_AWK_EMAPTOSCALAR, var->line, &errarg, 1);
+				ASE_AWK_EMAPTOSCALAR, 0, &errarg, 1);
 		}
 		return -1;
 	}
@@ -376,7 +376,12 @@ static int __set_global (
 
 		if (lv < run->inrec.nflds)
 		{
-			if (__shorten_record (run, (ase_size_t)lv) == -1) return -1;
+			if (__shorten_record (run, (ase_size_t)lv) == -1)
+			{
+				/* adjust the error line */
+				if (var != ASE_NULL) run->errlin = var->line;
+				return -1;
+			}
 		}
 	}
 	else if (idx == ASE_AWK_GLOBAL_OFMT)
@@ -614,13 +619,8 @@ int ase_awk_run (ase_awk_t* awk,
 	ase_memset (run, 0, ASE_SIZEOF(ase_awk_run_t));
 
 	/* initialize the run object */
-	if (__init_run (run, awk, runios, custom_data, &errnum) == -1) 
+	if (__init_run (run, awk, runios, custom_data) == -1) 
 	{
-		/* if it fails, the failure is still reported thru 
-		 * the awk object */
-		ase_awk_seterror_old (awk, errnum, 0, ASE_NULL);
-
-		/*__del_run (awk, run);*/
 		ASE_AWK_FREE (awk, run);
 		return -1;
 	}
@@ -671,9 +671,6 @@ int ase_awk_run (ase_awk_t* awk,
 	/* uninitialize the run object */
 	__deinit_run (run);
 
-	/* unregister the run object */
-	/*__del_run (awk, run);*/
-
 	ASE_AWK_FREE (awk, run);
 	return n;
 }
@@ -691,7 +688,7 @@ static void __free_namedval (void* run, void* val)
 
 static int __init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
-	ase_awk_runios_t* runios, void* custom_data, int* errnum)
+	ase_awk_runios_t* runios, void* custom_data)
 {
 	run->awk = awk;
 	run->custom_data = custom_data;
@@ -721,7 +718,7 @@ static int __init_run (
 		&run->inrec.line, 
 		DEF_BUF_CAPA, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
-		*errnum = ASE_AWK_ENOMEM; 
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -729,7 +726,7 @@ static int __init_run (
 		&run->format.out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
 		ase_str_close (&run->inrec.line);
-		*errnum = ASE_AWK_ENOMEM;
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -738,7 +735,7 @@ static int __init_run (
 	{
 		ase_str_close (&run->format.out);
 		ase_str_close (&run->inrec.line);
-		*errnum = ASE_AWK_ENOMEM;
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -748,7 +745,7 @@ static int __init_run (
 		ase_str_close (&run->format.fmt);
 		ase_str_close (&run->format.out);
 		ase_str_close (&run->inrec.line);
-		*errnum = ASE_AWK_ENOMEM; 
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -760,11 +757,11 @@ static int __init_run (
 		ase_str_close (&run->format.fmt);
 		ase_str_close (&run->format.out);
 		ase_str_close (&run->inrec.line);
-		*errnum = ASE_AWK_ENOMEM; 
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 	run->format.tmp.len = 4096;
-	run->format.tmp.inc = 40960;
+	run->format.tmp.inc = 4096*2;
 
 	if (run->awk->tree.chain_size > 0)
 	{
@@ -777,7 +774,7 @@ static int __init_run (
 			ase_str_close (&run->format.fmt);
 			ase_str_close (&run->format.out);
 			ase_str_close (&run->inrec.line);
-			*errnum = ASE_AWK_ENOMEM; 
+			ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -814,7 +811,7 @@ static void __deinit_run (ase_awk_run_t* run)
 	if (run->pattern_range_state != ASE_NULL)
 		ASE_AWK_FREE (run->awk, run->pattern_range_state);
 
-	/* close all pending eio's */
+	/* close all pending extio's */
 	/* TODO: what if this operation fails? */
 	ase_awk_clearextio (run);
 	ASE_AWK_ASSERT (run->awk, run->extio.chain == ASE_NULL);
@@ -1424,6 +1421,19 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 {
 	int n;
 
+#define ADJUST_ERROR_LINE(run) \
+	if (run->awk->tree.chain != ASE_NULL) \
+	{ \
+		if (run->awk->tree.chain->pattern != ASE_NULL) \
+			run->errlin = run->awk->tree.chain->pattern->line; \
+		else if (run->awk->tree.chain->action != ASE_NULL) \
+			run->errlin = run->awk->tree.chain->action->line; \
+	} \
+	else if (run->awk->tree.end != ASE_NULL) \
+	{ \
+		run->errlin = run->awk->tree.end->line; \
+	} 
+
 	run->inrec.buf_pos = 0;
 	run->inrec.buf_len = 0;
 	run->inrec.eof = ase_false;
@@ -1435,10 +1445,18 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 		run->exit_level = EXIT_NONE;
 
 		n = __read_record (run);
-		if (n == -1) return -1; /* error */
+		if (n == -1) 
+		{
+			ADJUST_ERROR_LINE (run);
+			return -1; /* error */
+		}
 		if (n == 0) break; /* end of input */
 
-		__update_fnr (run, run->global.fnr + 1);
+		if (__update_fnr (run, run->global.fnr+1) == -1) 
+		{
+			ADJUST_ERROR_LINE (run);
+			return -1;
+		}
 
 		if (run->awk->tree.chain != ASE_NULL)
 		{
@@ -1447,6 +1465,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 		}
 	}
 
+#undef ADJUST_ERROR_LINE
 	return 0;
 }
 
@@ -2022,8 +2041,8 @@ static int __walk_foreach (ase_awk_pair_t* pair, void* arg)
 		w->run, pair->key, ase_strlen(pair->key));
 	if (str == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (
-			w->run, ASE_AWK_ENOMEM, w->var->line, ASE_NULL);
+		ase_awk_setrunerror (
+			w->run, ASE_AWK_ENOMEM, w->var->line, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -2190,10 +2209,17 @@ static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 	if (n == -1)
 	{
 		if (run->errnum == ASE_AWK_EIOIMPL)
-			run->errnum = ASE_AWK_ECINNX;
+		{
+			/* replace the error by ECINNX */
+			ase_awk_setrunerror (
+				run, ASE_AWK_ECINNX, nde->line, ASE_NULL, 0);
+		}
+		else
+		{
+			/* adjust the error line */
+			run->errlin = nde->line;
+		}
 
-		ase_awk_setrunerror_old (
-			run, run->errnum, nde->line, ASE_NULL);
 		return -1;
 	}
 
@@ -2206,8 +2232,7 @@ static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 
 	if (__update_fnr (run, 0) == -1) 
 	{
-		ase_awk_setrunerror_old (
-			run, run->errnum, nde->line, ASE_NULL);
+		run->errlin = nde->line;
 		return -1;
 	}
 
@@ -2224,10 +2249,15 @@ static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 	if (n == -1)
 	{
 		if (run->errnum == ASE_AWK_EIOIMPL)
-			run->errnum = ASE_AWK_ECOUTNX;
+		{
+			ase_awk_setrunerror (
+				run, ASE_AWK_ECOUTNX, nde->line, ASE_NULL, 0);
+		}
+		else
+		{
+			run->errlin = nde->line;
+		}
 
-		ase_awk_setrunerror_old (
-			run, run->errnum, nde->line, ASE_NULL);
 		return -1;
 	}
 
@@ -2277,8 +2307,9 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			tmp = ase_awk_makemapval (run);
 			if (tmp == ASE_NULL) 
 			{
-				ase_awk_setrunerror_old (run, 
-					ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, nde->line,
+					ASE_NULL, 0);
 				return -1;
 			}
 
@@ -2288,8 +2319,9 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				ase_awk_refupval (run, tmp);
 				ase_awk_refdownval (run, tmp);
 
-				ase_awk_setrunerror_old (run, 
-					ASE_AWK_ENOMEM, var->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, var->line,
+					ASE_NULL, 0);
 				return -1;
 			}
 
@@ -2379,8 +2411,9 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			tmp = ase_awk_makemapval (run);
 			if (tmp == ASE_NULL) 
 			{
-				ase_awk_setrunerror_old (run, 
-					ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, nde->line,
+					ASE_NULL, 0);
 				return -1;
 			}
 
@@ -2804,7 +2837,12 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			{
 				ase_awk_refdownval (run, v);
 
-				ase_awk_setrunerror_old (run, errnum, nde->line, ASE_NULL);
+				/* matchrex should never set the error number
+				 * whose message contains a formatting 
+				 * character. otherwise, the following way of
+				 * setting the error information may not work */
+				ase_awk_setrunerror (
+					run, errnum, nde->line, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 		}
@@ -2814,7 +2852,8 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		v = ase_awk_makeintval (run, (n != 0));
 		if (v == ASE_NULL) 
 		{
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 	}
@@ -3182,7 +3221,7 @@ static ase_awk_val_t* __do_assignment_map (
 	if (n < 0)
 	{
 		ASE_AWK_FREE (run->awk, str);
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, var->line, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, var->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3355,7 +3394,7 @@ static ase_awk_val_t* __eval_binop_lor (
 		ase_awk_valtobool(run left) || ase_awk_valtobool(run,right));
 	if (res == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, left->line, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, left->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3404,7 +3443,7 @@ static ase_awk_val_t* __eval_binop_land (
 		ase_awk_valtobool(run,left) && ase_awk_valtobool(run,right));
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, left->line, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, left->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3492,17 +3531,6 @@ static ase_awk_val_t* __eval_binop_in (
 		ase_awk_map_t* map;
 
 		map = ((ase_awk_val_map_t*)rv)->map;
-
-		/*r = (ase_long_t)(ase_awk_map_get (map, str, len) != ASE_NULL);
-		res = ase_awk_makeintval (run, r);
-		if (res == ASE_NULL) 
-		{
-			ASE_AWK_FREE (run->awk, str);
-			ase_awk_refdownval (run, rv);
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, right->line, ASE_NULL);
-			return ASE_NULL;
-		}*/
 		res = (ase_awk_map_get (map, str, len) == ASE_NULL)? 
 			ase_awk_val_zero: ase_awk_val_one;
 
@@ -3534,7 +3562,7 @@ static ase_awk_val_t* __eval_binop_bor (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3547,7 +3575,7 @@ static ase_awk_val_t* __eval_binop_bor (
 
 	if (res == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -3566,7 +3594,7 @@ static ase_awk_val_t* __eval_binop_bxor (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3579,7 +3607,7 @@ static ase_awk_val_t* __eval_binop_bxor (
 
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -3598,7 +3626,7 @@ static ase_awk_val_t* __eval_binop_band (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3611,7 +3639,7 @@ static ase_awk_val_t* __eval_binop_band (
 
 	if (res == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -3864,7 +3892,7 @@ static int __cmp_val (
 	if (left->type == ASE_AWK_VAL_MAP || right->type == ASE_AWK_VAL_MAP)
 	{
 		/* a map can't be compared againt other values */
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return CMP_ERROR; 
 	}
 
@@ -3939,7 +3967,7 @@ static ase_awk_val_t* __eval_binop_lshift (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3951,13 +3979,13 @@ static ase_awk_val_t* __eval_binop_lshift (
 	}
 	else
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -3976,7 +4004,7 @@ static ase_awk_val_t* __eval_binop_rshift (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3988,13 +4016,13 @@ static ase_awk_val_t* __eval_binop_rshift (
 	}
 	else
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
 	if (res == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -4013,7 +4041,7 @@ static ase_awk_val_t* __eval_binop_plus (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	/*
@@ -4032,7 +4060,7 @@ static ase_awk_val_t* __eval_binop_plus (
 
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -4051,7 +4079,7 @@ static ase_awk_val_t* __eval_binop_minus (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4064,7 +4092,7 @@ static ase_awk_val_t* __eval_binop_minus (
 
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -4083,7 +4111,7 @@ static ase_awk_val_t* __eval_binop_mul (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4096,7 +4124,7 @@ static ase_awk_val_t* __eval_binop_mul (
 
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -4115,7 +4143,7 @@ static ase_awk_val_t* __eval_binop_div (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4158,7 +4186,7 @@ static ase_awk_val_t* __eval_binop_div (
 
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -4177,7 +4205,7 @@ static ase_awk_val_t* __eval_binop_idiv (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4212,7 +4240,7 @@ static ase_awk_val_t* __eval_binop_idiv (
 
 	if (res == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -4231,7 +4259,7 @@ static ase_awk_val_t* __eval_binop_mod (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4240,7 +4268,7 @@ static ase_awk_val_t* __eval_binop_mod (
 	{
 		if  (l2 == 0) 
 		{
-			ase_awk_setrunerror_old (run, ASE_AWK_EDIVBY0, 0, ASE_NULL);
+			ase_awk_setrunerror (run, ASE_AWK_EDIVBY0, 0, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 		res = ase_awk_makeintval (
@@ -4248,13 +4276,13 @@ static ase_awk_val_t* __eval_binop_mod (
 	}
 	else 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	return res;
@@ -4276,7 +4304,7 @@ static ase_awk_val_t* __eval_binop_exp (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_EOPERAND, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_EOPERAND, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4345,7 +4373,7 @@ static ase_awk_val_t* __eval_binop_exp (
 
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4377,7 +4405,7 @@ static ase_awk_val_t* __eval_binop_concat (
 		ASE_AWK_FREE (run->awk, strl);
 		ASE_AWK_FREE (run->awk, strr);
 
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4679,8 +4707,8 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	if (exp->left->type < ASE_AWK_NDE_NAMED ||
 	    exp->left->type > ASE_AWK_NDE_ARGIDX)
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_EOPERAND, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_EOPERAND, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4726,8 +4754,8 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			if (n == -1)
 			{
 				ase_awk_refdownval (run, left);
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_EOPERAND, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_EOPERAND, nde->line, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -4786,8 +4814,8 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			if (n == -1)
 			{
 				ase_awk_refdownval (run, left);
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_EOPERAND, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_EOPERAND, nde->line, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -4847,8 +4875,8 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	if (exp->left->type < ASE_AWK_NDE_NAMED ||
 	    exp->left->type > ASE_AWK_NDE_ARGIDX)
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_EOPERAND, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_EOPERAND, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -4914,8 +4942,8 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			if (n == -1)
 			{
 				ase_awk_refdownval (run, left);
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_EOPERAND, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_EOPERAND, nde->line, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -4925,8 +4953,8 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 				if (res == ASE_NULL)
 				{
 					ase_awk_refdownval (run, left);
-					ase_awk_setrunerror_old (
-						run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+					ase_awk_setrunerror (
+						run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 					return ASE_NULL;
 				}
 
@@ -5005,8 +5033,8 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			{
 				ase_awk_refdownval (run, left);
 				ase_awk_freeval (run, res, ase_true);
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 		}
@@ -5020,8 +5048,8 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			if (n == -1)
 			{
 				ase_awk_refdownval (run, left);
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_EOPERAND, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_EOPERAND, nde->line, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -5031,8 +5059,8 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 				if (res == ASE_NULL)
 				{
 					ase_awk_refdownval (run, left);
-					ase_awk_setrunerror_old (
-						run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+					ase_awk_setrunerror (
+						run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 					return ASE_NULL;
 				}
 
@@ -5645,8 +5673,8 @@ static ase_awk_val_t* __eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	val = ase_awk_makeintval (run, ((ase_awk_nde_int_t*)nde)->val);
 	if (val == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	((ase_awk_val_int_t*)val)->nde = (ase_awk_nde_int_t*)nde; 
@@ -5661,8 +5689,8 @@ static ase_awk_val_t* __eval_real (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	val = ase_awk_makerealval (run, ((ase_awk_nde_real_t*)nde)->val);
 	if (val == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	((ase_awk_val_real_t*)val)->nde = (ase_awk_nde_real_t*)nde;
@@ -5679,8 +5707,8 @@ static ase_awk_val_t* __eval_str (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		((ase_awk_nde_str_t*)nde)->len);
 	if (val == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -5697,8 +5725,8 @@ static ase_awk_val_t* __eval_rex (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		((ase_awk_nde_rex_t*)nde)->code);
 	if (val == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -5747,8 +5775,8 @@ static ase_awk_val_t* __eval_indexed (
 		tmp = ase_awk_makemapval (run);
 		if (tmp == ASE_NULL)
 		{
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -5786,8 +5814,8 @@ static ase_awk_val_t* __eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			tgt->id.name, tgt->id.name_len, ase_awk_val_nil);
 		if (pair == ASE_NULL) 
 		{
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -5918,8 +5946,8 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	if (ase_str_open (&buf, DEF_BUF_CAPA, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
 		if (in != ASE_NULL) ASE_AWK_FREE (run->awk, in);
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -5931,8 +5959,8 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		if (run->errnum != ASE_AWK_EIOIMPL)
 		{
 			ase_str_close (&buf);
-			ase_awk_setrunerror_old (
-				run, run->errnum, nde->line, ASE_NULL);
+			/* adjust the line number */
+			run->errlin = nde->line;
 			return ASE_NULL;
 		}
 
@@ -5965,8 +5993,9 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			ase_str_close (&buf);
 			if (v == ASE_NULL)
 			{
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, nde->line,
+					ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -5988,8 +6017,8 @@ skip_read:
 	res = ase_awk_makeintval (run, n);
 	if (res == ASE_NULL) 
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -6104,7 +6133,8 @@ static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 		else
 		{
 			ofs = ase_awk_valtostr (
-				run, v, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &ofs_len);
+				run, v, ASE_AWK_VALTOSTR_CLEAR, 
+				ASE_NULL, &ofs_len);
 			if (ofs == ASE_NULL) return -1;
 
 			ofs_free = ofs;
@@ -6112,22 +6142,22 @@ static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 	}
 
 	if (ase_str_open (
-		&tmp, 
-		ASE_STR_LEN(&run->inrec.line), 
+		&tmp, ASE_STR_LEN(&run->inrec.line), 
 		&run->awk->prmfns.mmgr) == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
 	for (i = 0; i < nflds; i++)
 	{
-		if (i > 0 && ase_str_ncat (&tmp, ofs, ofs_len) == (ase_size_t)-1)
+		if (i > 0 && ase_str_ncat(&tmp,ofs,ofs_len) == (ase_size_t)-1)
 		{
 			if (ofs_free != ASE_NULL) 
 				ASE_AWK_FREE (run->awk, ofs_free);
 			if (nflds > 1) ase_awk_refdownval (run, v);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -6138,7 +6168,9 @@ static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 			if (ofs_free != ASE_NULL) 
 				ASE_AWK_FREE (run->awk, ofs_free);
 			if (nflds > 1) ase_awk_refdownval (run, v);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 	}
@@ -6150,7 +6182,7 @@ static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 		run, ASE_STR_BUF(&tmp), ASE_STR_LEN(&tmp));
 	if (v == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -6208,8 +6240,8 @@ static ase_char_t* __idxnde_to_str (
 			DEF_BUF_CAPA, 
 			&run->awk->prmfns.mmgr) == ASE_NULL) 
 		{
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -6231,8 +6263,11 @@ static ase_char_t* __idxnde_to_str (
 			{
 				ase_awk_refdownval (run, idx);
 				ase_str_close (&idxstr);
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_ENOMEM, nde->line, ASE_NULL);
+
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, nde->line, 
+					ASE_NULL, 0);
+
 				return ASE_NULL;
 			}
 
@@ -6241,8 +6276,6 @@ static ase_char_t* __idxnde_to_str (
 			{
 				ase_awk_refdownval (run, idx);
 				ase_str_close (&idxstr);
-				ase_awk_setrunerror_old (
-					run, run->errnum, nde->line, ASE_NULL);
 				return ASE_NULL;
 			}
 
@@ -6271,7 +6304,7 @@ ase_char_t* ase_awk_format (
 	do { \
 		if (ase_str_ccat (out, (c)) == -1) \
 		{ \
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL); \
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0); \
 			return ASE_NULL; \
 		} \
 	} while (0)
@@ -6280,7 +6313,7 @@ ase_char_t* ase_awk_format (
 	do { \
 		if (ase_str_ccat (fbu, (c)) == -1) \
 		{ \
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL); \
+			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0); \
 			return ASE_NULL; \
 		} \
 	} while (0)
@@ -6402,7 +6435,9 @@ ase_char_t* ase_awk_format (
 					GROW (&run->format.tmp);
 					if (run->format.tmp.ptr == ASE_NULL)
 					{
-						ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+						ase_awk_setrunerror (
+							run, ASE_AWK_ENOMEM, 0,
+							ASE_NULL, 0);
 						return ASE_NULL;
 					}
 
@@ -6506,7 +6541,9 @@ ase_char_t* ase_awk_format (
 					GROW (&run->format.tmp);
 					if (run->format.tmp.ptr == ASE_NULL)
 					{
-						ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+						ase_awk_setrunerror (
+							run, ASE_AWK_ENOMEM, 0,
+							ASE_NULL, 0);
 						return ASE_NULL;
 					}
 
@@ -6629,7 +6666,9 @@ ase_char_t* ase_awk_format (
 					GROW (&run->format.tmp);
 					if (run->format.tmp.ptr == ASE_NULL)
 					{
-						ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+						ase_awk_setrunerror (
+							run, ASE_AWK_ENOMEM, 0, 
+							ASE_NULL, 0);
 						return ASE_NULL;
 					}
 
