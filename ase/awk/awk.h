@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.196 2007-03-02 14:41:30 bacon Exp $
+ * $Id: awk.h,v 1.197 2007-03-03 13:22:00 bacon Exp $
  *
  * {License}
  */
@@ -218,7 +218,8 @@ enum
 	ASE_AWK_EINTERN,        /* internal error */
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_ERUNNING,       /* there are running instances */
-	ASE_AWK_ERECUR,         /* recursion too deep */
+	ASE_AWK_EBLKNST,        /* blocke nested too deeply */
+	ASE_AWK_EEXPRNST,       /* expression nested too deeply */
 	ASE_AWK_ESYSFNS,        /* system functions not proper */
 
 	ASE_AWK_ESINOP,
@@ -315,6 +316,7 @@ enum
 	ASE_AWK_EOFMTCHAR,         /* an invalid character found in OFMT */
 
 	/* regular expression error */
+	ASE_AWK_EREXRECUR,        /* recursion too deep */
 	ASE_AWK_EREXRPAREN,       /* a right parenthesis is expected */
 	ASE_AWK_EREXRBRACKET,     /* a right bracket is expected */
 	ASE_AWK_EREXRBRACE,       /* a right brace is expected */

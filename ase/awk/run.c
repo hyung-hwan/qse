@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.336 2007-03-02 14:41:30 bacon Exp $
+ * $Id: run.c,v 1.337 2007-03-03 13:22:01 bacon Exp $
  *
  * {License}
  */
@@ -518,7 +518,8 @@ int ase_awk_setfilename (
 		tmp = ase_awk_makestrval (run, name, len);
 		if (tmp == ASE_NULL)
 		{
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 	}
@@ -544,7 +545,8 @@ int ase_awk_setofilename (
 			tmp = ase_awk_makestrval (run, name, len);
 			if (tmp == ASE_NULL)
 			{
-				ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 				return -1;
 			}
 		}
@@ -604,7 +606,7 @@ int ase_awk_run (ase_awk_t* awk,
 	{
 		/* if it fails, the failure is reported thru 
 		 * the awk object */
-		ase_awk_seterror_old (awk, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -716,20 +718,23 @@ static int __init_run (
 	run->inrec.maxflds = 0;
 	run->inrec.d0 = ase_awk_val_nil;
 	if (ase_str_open (
-		&run->inrec.line, DEF_BUF_CAPA, &run->awk->prmfns.mmgr) == ASE_NULL)
+		&run->inrec.line, 
+		DEF_BUF_CAPA, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
 		*errnum = ASE_AWK_ENOMEM; 
 		return -1;
 	}
 
-	if (ase_str_open (&run->format.out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (
+		&run->format.out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
 		ase_str_close (&run->inrec.line);
 		*errnum = ASE_AWK_ENOMEM;
 		return -1;
 	}
 
-	if (ase_str_open (&run->format.fmt, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (
+		&run->format.fmt, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{
 		ase_str_close (&run->format.out);
 		ase_str_close (&run->inrec.line);
@@ -933,7 +938,7 @@ static int __build_runarg (
 	v_argv = ase_awk_makemapval (run);
 	if (v_argv == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 	ase_awk_refupval (run, v_argv);
@@ -947,7 +952,8 @@ static int __build_runarg (
 			if (v_tmp == ASE_NULL)
 			{
 				ase_awk_refdownval (run, v_argv);
-				ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 				return -1;
 			}
 
@@ -971,7 +977,8 @@ static int __build_runarg (
 				 * map will be freeed when v_argv is freed */
 				ase_awk_refdownval (run, v_argv);
 
-				ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 				return -1;
 			}
 		}
@@ -981,7 +988,7 @@ static int __build_runarg (
 	if (v_argc == ASE_NULL)
 	{
 		ase_awk_refdownval (run, v_argv);
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -1036,7 +1043,7 @@ static int __update_fnr (ase_awk_run_t* run, ase_size_t fnr)
 	tmp = ase_awk_makeintval (run, fnr);
 	if (tmp == ASE_NULL)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -1091,7 +1098,8 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 			tmp = ase_awk_makestrval0 (run, gtab[i].str);
 			if (tmp == ASE_NULL)
 			{
-				ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 				return -1;
 			}
 		}
@@ -1145,7 +1153,8 @@ static int run_main (
 			 * the successful __raw_push. it is ok because
 			 * the values pushed so far are all ase_awk_val_nil */
 			run->stack_top = saved_stack_top;
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 	}	
@@ -1221,8 +1230,8 @@ static int run_main (
 					__cleanup_globals (run);
 					run->stack_top = saved_stack_top;
 
-					ase_awk_setrunerror_old (
-						run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+					ase_awk_setrunerror (
+						run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 					return -1;
 				}
 
@@ -1244,8 +1253,8 @@ static int run_main (
 					__cleanup_globals (run);
 					run->stack_top = saved_stack_top;
 
-					ase_awk_setrunerror_old (
-						run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+					ase_awk_setrunerror (
+						run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 					return -1;
 				}
 
@@ -1288,8 +1297,8 @@ static int run_main (
 			__cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -1299,8 +1308,8 @@ static int run_main (
 			__cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 	
@@ -1311,8 +1320,8 @@ static int run_main (
 			__cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 	
@@ -1323,8 +1332,8 @@ static int run_main (
 			__cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 	
@@ -1563,7 +1572,8 @@ static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	if (run->depth.max.block > 0 &&
 	    run->depth.cur.block >= run->depth.max.block)
 	{
-		ase_awk_setrunerror_old (run, ASE_AWK_ERECUR, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_EBLKNST, nde->line, ASE_NULL, 0);
 		return -1;;
 	}
 
@@ -1596,8 +1606,9 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 
 			if (run->errnum == ASE_AWK_EIOIMPL)
 			{
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_ECOUTDT, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ECOUTDT, nde->line, 
+					ASE_NULL, 0);
 			}
 			return -1;
 		}
@@ -1611,8 +1622,9 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 
 			if (run->errnum == ASE_AWK_EIOIMPL)
 			{
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_ECOUTDT, nde->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ECOUTDT, nde->line,
+					ASE_NULL, 0);
 			}
 			return -1;
 		}
@@ -6696,7 +6708,8 @@ ase_char_t* ase_awk_format (
 					GROW (&run->format.tmp);
 					if (run->format.tmp.ptr == ASE_NULL)
 					{
-						ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+						ase_awk_setrunerror (
+							run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 						return ASE_NULL;
 					}
 
@@ -6790,7 +6803,8 @@ ase_char_t* ase_awk_format (
 					if (ase_str_ccat (out, ASE_T(' ')) == -1) 
 					{ 
 						ase_awk_refdownval (run, v);
-						ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+						ase_awk_setrunerror (
+							run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 						return ASE_NULL; 
 					} 
 					width--;
@@ -6802,7 +6816,8 @@ ase_char_t* ase_awk_format (
 				if (ase_str_ccat (out, ch) == -1) 
 				{ 
 					ase_awk_refdownval (run, v);
-					ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+					ase_awk_setrunerror (
+						run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 					return ASE_NULL; 
 				} 
 			}
@@ -6814,7 +6829,8 @@ ase_char_t* ase_awk_format (
 					if (ase_str_ccat (out, ASE_T(' ')) == -1) 
 					{ 
 						ase_awk_refdownval (run, v);
-						ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+						ase_awk_setrunerror (
+							run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 						return ASE_NULL; 
 					} 
 					width--;
@@ -6899,7 +6915,8 @@ ase_char_t* ase_awk_format (
 						if (str_free != ASE_NULL) 
 							ASE_AWK_FREE (run->awk, str_free);
 						ase_awk_refdownval (run, v);
-						ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+						ase_awk_setrunerror (
+							run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 						return ASE_NULL; 
 					} 
 					width--;
@@ -6913,7 +6930,8 @@ ase_char_t* ase_awk_format (
 					if (str_free != ASE_NULL) 
 						ASE_AWK_FREE (run->awk, str_free);
 					ase_awk_refdownval (run, v);
-					ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+					ase_awk_setrunerror (
+						run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 					return ASE_NULL; 
 				} 
 			}
@@ -6927,7 +6945,8 @@ ase_char_t* ase_awk_format (
 					if (ase_str_ccat (out, ASE_T(' ')) == -1) 
 					{ 
 						ase_awk_refdownval (run, v);
-						ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+						ase_awk_setrunerror (
+							run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 						return ASE_NULL; 
 					} 
 					width--;
