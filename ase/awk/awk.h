@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.197 2007-03-03 13:22:00 bacon Exp $
+ * $Id: awk.h,v 1.198 2007-03-03 14:44:31 bacon Exp $
  *
  * {License}
  */
@@ -400,8 +400,6 @@ const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk);
 void ase_awk_geterror (
 	ase_awk_t* awk, int* errnum, 
 	ase_size_t* errlin, const ase_char_t** errmsg);
-
-void ase_awk_seterrnum (ase_awk_t* awk, int errnum);
 
 void ase_awk_seterror (
 	ase_awk_t* awk, int errnum, ase_size_t errlin, 

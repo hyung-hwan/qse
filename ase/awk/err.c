@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.78 2007-03-03 13:22:00 bacon Exp $
+ * $Id: err.c,v 1.79 2007-03-03 14:44:31 bacon Exp $
  *
  * {License}
  */
@@ -184,13 +184,6 @@ void ase_awk_geterror (
 		else
 			*errmsg = awk->errmsg;
 	}
-}
-
-void ase_awk_seterrnum (ase_awk_t* awk, int errnum)
-{
-	awk->errnum = errnum;
-	awk->errlin = 0;
-	awk->errmsg[0] = ASE_T('\0');
 }
 
 void ase_awk_seterror (
