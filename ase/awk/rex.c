@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.76 2007-03-01 07:48:51 bacon Exp $
+ * $Id: rex.c,v 1.77 2007-03-03 13:22:01 bacon Exp $
  *
  * {License}
  */
@@ -213,18 +213,18 @@ static const ase_byte_t* __match_occurrences (
 static ase_bool_t __test_charset (
 	matcher_t* matcher, const ase_byte_t* p, ase_size_t csc, ase_char_t c);
 
-static ase_bool_t __cc_isalnum (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_isalpha (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_isblank (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_iscntrl (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_isdigit (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_isgraph (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_islower (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_isprint (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_ispunct (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_isspace (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_isupper (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t __cc_isxdigit (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isalnum (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isalpha (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isblank (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_iscntrl (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isdigit (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isgraph (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_islower (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isprint (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_ispunct (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isspace (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isupper (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isxdigit (ase_awk_t* awk, ase_char_t c);
 
 static const ase_byte_t* __print_pattern (ase_awk_t* awk, const ase_byte_t* p);
 static const ase_byte_t* __print_branch (ase_awk_t* awk, const ase_byte_t* p);
@@ -239,26 +239,26 @@ struct __char_class_t
 
 static struct __char_class_t __char_class[] =
 {
-	{ ASE_T("alnum"),  5, __cc_isalnum },
-	{ ASE_T("alpha"),  5, __cc_isalpha },
-	{ ASE_T("blank"),  5, __cc_isblank },
-	{ ASE_T("cntrl"),  5, __cc_iscntrl },
-	{ ASE_T("digit"),  5, __cc_isdigit },
-	{ ASE_T("graph"),  5, __cc_isgraph },
-	{ ASE_T("lower"),  5, __cc_islower },
-	{ ASE_T("print"),  5, __cc_isprint },
-	{ ASE_T("punct"),  5, __cc_ispunct },
-	{ ASE_T("space"),  5, __cc_isspace },
-	{ ASE_T("upper"),  5, __cc_isupper },
-	{ ASE_T("xdigit"), 6, __cc_isxdigit },
+	{ ASE_T("alnum"),  5, cc_isalnum },
+	{ ASE_T("alpha"),  5, cc_isalpha },
+	{ ASE_T("blank"),  5, cc_isblank },
+	{ ASE_T("cntrl"),  5, cc_iscntrl },
+	{ ASE_T("digit"),  5, cc_isdigit },
+	{ ASE_T("graph"),  5, cc_isgraph },
+	{ ASE_T("lower"),  5, cc_islower },
+	{ ASE_T("print"),  5, cc_isprint },
+	{ ASE_T("punct"),  5, cc_ispunct },
+	{ ASE_T("space"),  5, cc_isspace },
+	{ ASE_T("upper"),  5, cc_isupper },
+	{ ASE_T("xdigit"), 6, cc_isxdigit },
 
 	/*
-	{ ASE_T("arabic"),   6, __cc_isarabic },
-	{ ASE_T("chinese"),  7, __cc_ischinese },
-	{ ASE_T("english"),  7, __cc_isenglish },
-	{ ASE_T("japanese"), 8, __cc_isjapanese },
-	{ ASE_T("korean"),   6, __cc_iskorean }, 
-	{ ASE_T("thai"),     4, __cc_isthai }, 
+	{ ASE_T("arabic"),   6, cc_isarabic },
+	{ ASE_T("chinese"),  7, cc_ischinese },
+	{ ASE_T("english"),  7, cc_isenglish },
+	{ ASE_T("japanese"), 8, cc_isjapanese },
+	{ ASE_T("korean"),   6, cc_iskorean }, 
+	{ ASE_T("thai"),     4, cc_isthai }, 
 	*/
 
 	{ ASE_NULL,        0, ASE_NULL }
@@ -419,7 +419,7 @@ static int __build_pattern (builder_t* builder)
 
 	if (builder->depth.max > 0 && builder->depth.cur >= builder->depth.max)
 	{
-		builder->errnum = ASE_AWK_ERECUR;
+		builder->errnum = ASE_AWK_EREXRECUR;
 		return -1;
 	}
 
@@ -1077,7 +1077,7 @@ static const ase_byte_t* __match_branch_body (
 
 	if (matcher->depth.max > 0 && matcher->depth.cur >= matcher->depth.max)
 	{
-		matcher->errnum = ASE_AWK_ERECUR;
+		matcher->errnum = ASE_AWK_EREXRECUR;
 		return ASE_NULL;
 	}
 
@@ -1683,62 +1683,62 @@ static ase_bool_t __test_charset (
 	return ase_false;
 }
 
-static ase_bool_t __cc_isalnum (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isalnum (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISALNUM (awk, c);
 }
 
-static ase_bool_t __cc_isalpha (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isalpha (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISALPHA (awk, c);
 }
 
-static ase_bool_t __cc_isblank (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isblank (ase_awk_t* awk, ase_char_t c)
 {
 	return c == ASE_T(' ') || c == ASE_T('\t');
 }
 
-static ase_bool_t __cc_iscntrl (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_iscntrl (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISCNTRL (awk, c);
 }
 
-static ase_bool_t __cc_isdigit (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isdigit (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISDIGIT (awk, c);
 }
 
-static ase_bool_t __cc_isgraph (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isgraph (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISGRAPH (awk, c);
 }
 
-static ase_bool_t __cc_islower (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_islower (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISLOWER (awk, c);
 }
 
-static ase_bool_t __cc_isprint (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isprint (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISPRINT (awk, c);
 }
 
-static ase_bool_t __cc_ispunct (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_ispunct (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISPUNCT (awk, c);
 }
 
-static ase_bool_t __cc_isspace (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isspace (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISSPACE (awk, c);
 }
 
-static ase_bool_t __cc_isupper (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isupper (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISUPPER (awk, c);
 }
 
-static ase_bool_t __cc_isxdigit (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isxdigit (ase_awk_t* awk, ase_char_t c)
 {
 	return ASE_AWK_ISXDIGIT (awk, c);
 }
@@ -1770,12 +1770,12 @@ static const ase_byte_t* __print_pattern (ase_awk_t* awk, const ase_byte_t* p)
 
 static const ase_byte_t* __print_branch (ase_awk_t* awk, const ase_byte_t* p)
 {
-	ase_size_t na, bl, i;
+	ase_size_t i;
+	bhdr_t* bhdr;
+       
+	bhdr = (bhdr_t*)p; p += ASE_SIZEOF(*bhdr);
 
-	na = *(ase_size_t*)p; p += ASE_SIZEOF(na);
-	bl = *(ase_size_t*)p; p += ASE_SIZEOF(bl);
-
-	for (i = 0; i < na; i++)
+	for (i = 0; i < bhdr->na; i++)
 	{
 		p = __print_atom (awk, p);
 	}

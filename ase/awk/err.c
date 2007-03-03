@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.77 2007-03-02 11:47:52 bacon Exp $
+ * $Id: err.c,v 1.78 2007-03-03 13:22:00 bacon Exp $
  *
  * {License}
  */
@@ -31,7 +31,8 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("internal error that should never have happened"),
 		ASE_T("general run-time error"),
 		ASE_T("one or more running instances"),
-		ASE_T("recursion too deep"),
+		ASE_T("block nested too deeply"),
+		ASE_T("expressio nested too deeply"),
 		ASE_T("system functions not provided or not proper"),
 
 		ASE_T("cannot open source input"),
@@ -126,6 +127,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("invalid character in CONVFMT"),
 		ASE_T("invalid character in OFMT"),
 
+		ASE_T("recursion too deep in the regular expression"),
 		ASE_T("a right parenthesis expected in the regular expression"),
 		ASE_T("a right bracket expected in the regular expression"),
 		ASE_T("a right brace expected in the regular expression"),

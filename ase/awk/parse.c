@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.247 2007-03-02 11:14:34 bacon Exp $
+ * $Id: parse.c,v 1.248 2007-03-03 13:22:00 bacon Exp $
  *
  * {License}
  */
@@ -1297,9 +1297,9 @@ static ase_awk_nde_t* __parse_block_dc (
 
 	if (awk->parse.depth.cur.block >= awk->parse.depth.max.block)
 	{
-		ase_awk_seterror_old (
-			awk, ASE_AWK_ERECUR, awk->token.prev.line, 
-			ASE_T("block nested too deeply"));
+		ase_awk_seterror (
+			awk, ASE_AWK_EBLKNST, 
+			awk->token.prev.line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -1790,9 +1790,9 @@ static ase_awk_nde_t* __parse_expression (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		ase_awk_seterror_old (
-			awk, ASE_AWK_ERECUR, line, 
-			ASE_T("expression nested too deeply"));
+		ase_awk_seterror (
+			awk, ASE_AWK_EEXPRNST, line, 
+			ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -2410,9 +2410,9 @@ static ase_awk_nde_t* __parse_unary (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		ase_awk_seterror_old (
-			awk, ASE_AWK_ERECUR, awk->token.line,
-			ASE_T("expression nested too deeply"));
+		ase_awk_seterror (
+			awk, ASE_AWK_EEXPRNST, awk->token.line,
+			ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	awk->parse.depth.cur.expr++;
@@ -2470,9 +2470,9 @@ static ase_awk_nde_t* __parse_unary_exp (ase_awk_t* awk, ase_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		ase_awk_seterror_old (
-			awk, ASE_AWK_ERECUR, awk->token.line,
-			ASE_T("expression nested too deeply"));
+		ase_awk_seterror (
+			awk, ASE_AWK_EEXPRNST, awk->token.line,
+			ASE_NULL, 0);
 		return ASE_NULL;
 	}
 	awk->parse.depth.cur.expr++;
