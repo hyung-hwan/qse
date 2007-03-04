@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.81 2007-03-04 06:45:43 bacon Exp $
+ * $Id: err.c,v 1.82 2007-03-04 06:56:16 bacon Exp $
  *
  * {License}
  */
@@ -154,6 +154,13 @@ const ase_char_t* ase_awk_geterrstr (int errnum)
 	return __geterrstr (errnum);
 }
 
+ase_char_t* ase_awk_seterrstr (
+	ase_awk_t* awk, int errnum, const ase_char_t* errstr)
+{
+	ase_char_t* dup = ase_strdup (errstr, awk);
+	if (dup == ASE_NULL) return ASE_NULL;
+	awk->errstr[errnum] = dup;
+}
 
 int ase_awk_geterrnum (ase_awk_t* awk)
 {
@@ -362,6 +369,8 @@ void ase_awk_setrunerror (
 	switch (argcnt)
 	{
 		case 0:
+			/* TODO: convert % to %% if the original % is not
+			 *       the first % of the %% sequence */
 			run->awk->prmfns.misc.sprintf (
 				run->awk->prmfns.misc.custom_data,
 				run->errmsg, 
