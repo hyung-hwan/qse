@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.80 2007-03-04 06:26:45 bacon Exp $
+ * $Id: err.c,v 1.81 2007-03-04 06:45:43 bacon Exp $
  *
  * {License}
  */
@@ -53,7 +53,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("cannot switch to next console for write"),
 		ASE_T("cannot write to console"),
 
-		ASE_T("invalid character"),
+		ASE_T("invalid character '%.*s'"),
 		ASE_T("cannot unget character"),
 
 		ASE_T("unexpected end of source"),
