@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.82 2007-03-04 06:56:16 bacon Exp $
+ * $Id: err.c,v 1.83 2007-03-04 14:55:55 bacon Exp $
  *
  * {License}
  */
@@ -149,17 +149,29 @@ static const ase_char_t* __geterrstr (int errnum)
 	return ASE_T("unknown error");
 }
 
-const ase_char_t* ase_awk_geterrstr (int errnum)
+const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num)
 {
-	return __geterrstr (errnum);
+	if (awk != ASE_NULL && 
+	    awk->errstr[num] != ASE_NULL) return awk->errstr[num];
+	return __geterrstr (num);
 }
 
-ase_char_t* ase_awk_seterrstr (
-	ase_awk_t* awk, int errnum, const ase_char_t* errstr)
+int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str)
 {
-	ase_char_t* dup = ase_strdup (errstr, awk);
-	if (dup == ASE_NULL) return ASE_NULL;
-	awk->errstr[errnum] = dup;
+	ase_char_t* dup;
+       
+	if (str == ASE_NULL) dup = ASE_NULL;
+	else
+	{
+		dup = ase_strdup (str, &awk->prmfns.mmgr);
+		if (dup == ASE_NULL) return -1;
+	}
+
+	if (awk->errstr[num] != ASE_NULL) 
+		ASE_AWK_FREE (awk, awk->errstr[num]);
+
+	else awk->errstr[num] = dup;
+	return 0;
 }
 
 int ase_awk_geterrnum (ase_awk_t* awk)
@@ -175,7 +187,7 @@ ase_size_t ase_awk_geterrlin (ase_awk_t* awk)
 const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk)
 {
 	if (awk->errmsg[0] == ASE_T('\0')) 
-		return ase_awk_geterrstr (awk->errnum);
+		return ase_awk_geterrstr (awk, awk->errnum);
 	return awk->errmsg;
 }
 
@@ -188,7 +200,7 @@ void ase_awk_geterror (
 	if (errmsg != ASE_NULL) 
 	{
 		if (awk->errmsg[0] == ASE_T('\0'))
-			*errmsg = ase_awk_geterrstr (awk->errnum);
+			*errmsg = ase_awk_geterrstr (awk, awk->errnum);
 		else
 			*errmsg = awk->errmsg;
 	}
@@ -206,7 +218,7 @@ void ase_awk_seterror (
 	awk->errnum = errnum;
 	awk->errlin = errlin;
 
-	errfmt = __geterrstr (errnum);
+	errfmt = ase_awk_geterrstr (awk, errnum);
 	fmtlen = ase_strlen(errfmt);
 
 	switch (argcnt)
@@ -324,7 +336,7 @@ ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run)
 const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run)
 {
 	if (run->errmsg[0] == ASE_T('\0')) 
-		return ase_awk_geterrstr (run->errnum);
+		return ase_awk_geterrstr (run->awk, run->errnum);
 
 	return run->errmsg;
 }
@@ -345,7 +357,7 @@ void ase_awk_getrunerror (
 	if (errmsg != ASE_NULL) 
 	{
 		if (run->errmsg[0] == ASE_T('\0'))
-			*errmsg = ase_awk_geterrstr (run->errnum);
+			*errmsg = ase_awk_geterrstr (run->awk, run->errnum);
 		else
 			*errmsg = run->errmsg;
 	}
@@ -363,7 +375,7 @@ void ase_awk_setrunerror (
 	run->errnum = errnum;
 	run->errlin = errlin;
 
-	errfmt = __geterrstr (errnum);
+	errfmt = ase_awk_geterrstr (run->awk, errnum);
 	fmtlen = ase_strlen (errfmt);
 
 	switch (argcnt)

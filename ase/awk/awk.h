@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.199 2007-03-04 06:26:45 bacon Exp $
+ * $Id: awk.h,v 1.200 2007-03-04 14:55:55 bacon Exp $
  *
  * {License}
  */
@@ -327,7 +327,10 @@ enum
 	ASE_AWK_EREXCCLASS,       /* invalid character class */
 	ASE_AWK_EREXBRANGE,       /* invalid boundary range */
 	ASE_AWK_EREXEND,          /* unexpected end of the pattern */
-	ASE_AWK_EREXGARBAGE       /* garbage after the pattern */
+	ASE_AWK_EREXGARBAGE,      /* garbage after the pattern */
+
+	/* the number of error numbers, internal use only */
+	ASE_AWK_NUMERRNUM 
 };
 
 /* depth types */
@@ -394,6 +397,10 @@ int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 
 void* ase_awk_getcustomdata (ase_awk_t* awk);
+
+const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num);
+int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str);
+
 int ase_awk_geterrnum (ase_awk_t* awk);
 ase_size_t ase_awk_geterrlin (ase_awk_t* awk);
 const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk);
@@ -509,8 +516,6 @@ int ase_awk_assertfail (ase_awk_t* awk,
 	const ase_char_t* expr, const ase_char_t* desc, 
 	const ase_char_t* file, int line);
 
-/* utility functions to convert an error number ot a string */
-const ase_char_t* ase_awk_geterrstr (int errnum);
 
 #ifdef __cplusplus
 }

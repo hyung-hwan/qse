@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.113 2007-03-04 06:26:45 bacon Exp $ 
+ * $Id: awk.c,v 1.114 2007-03-04 14:55:55 bacon Exp $ 
  *
  * {License}
  */
@@ -168,6 +168,8 @@ static void __free_afn (void* owner, void* afn)
 
 int ase_awk_close (ase_awk_t* awk)
 {
+	ase_size_t i;
+
 	if (ase_awk_clear (awk) == -1) return -1;
 	ase_awk_clrbfn (awk);
 
@@ -177,6 +179,15 @@ int ase_awk_close (ase_awk_t* awk)
 	ase_awk_tab_close (&awk->parse.params);
 	ase_str_close (&awk->token.name);
 
+	for (i = 0; i < ASE_COUNTOF(awk->errstr); i++)
+	{
+		if (awk->errstr[i] != ASE_NULL)
+		{
+			ASE_AWK_FREE (awk, awk->errstr[i]);
+			awk->errstr[i] = ASE_NULL;
+		}
+	}
+
 	/* ASE_AWK_ALLOC, ASE_AWK_FREE, etc can not be used 
 	 * from the next line onwards */
 	ASE_AWK_FREE (awk, awk);
@@ -185,15 +196,6 @@ int ase_awk_close (ase_awk_t* awk)
 
 int ase_awk_clear (ase_awk_t* awk)
 {
-	/* you should stop all running instances beforehand */
-	/*
-	if (awk->run.ptr != ASE_NULL)
-	{
-		awk->errnum = ASE_AWK_ERUNNING;
-		return -1;
-	}
-	*/
-
 	ase_memset (&awk->src.ios, 0, ASE_SIZEOF(awk->src.ios));
 	awk->src.lex.curc = ASE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
