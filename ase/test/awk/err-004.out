@@ -1,0 +1,5 @@
+BEGIN {
+	delete ARGC;
+}
+
+RUN ERROR: CODE [85] LINE [2] variable 'ARGC' not deletable

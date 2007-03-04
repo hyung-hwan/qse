@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.181 2007-03-02 14:42:04 bacon Exp $
+ * $Id: awk.c,v 1.182 2007-03-04 06:39:13 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -688,8 +688,8 @@ static void on_run_end (ase_awk_run_t* run, int errnum, void* custom_data)
 {
 	if (errnum != ASE_AWK_ENOERR)
 	{
-		dprintf (ASE_T("[AWK ENDED WITH AN ERROR] - "));
-		dprintf (ASE_T("CODE [%d] LINE [%u] %s\n"),
+		dprintf (ASE_T("[AWK ENDED WITH AN ERROR]\n"));
+		ase_printf (ASE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"),
 			errnum, 
 			(unsigned int)ase_awk_getrunerrlin(run),
 			ase_awk_getrunerrmsg(run));
@@ -892,11 +892,11 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{
-		int errnum = ase_awk_geterrnum(awk);
 		ase_printf (
-			ASE_T("ERROR: cannot parse program - line %u [%d] %s\n"), 
+			ASE_T("PARSE ERROR: CODE [%d] LINE [%u] %s\n"), 
+			ase_awk_geterrnum(awk),
 			(unsigned int)ase_awk_geterrlin(awk), 
-			errnum, ase_awk_geterrmsg(awk));
+			ase_awk_geterrmsg(awk));
 		ase_awk_close (awk);
 		return -1;
 	}
