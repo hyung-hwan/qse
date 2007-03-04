@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.183 2007-03-04 15:04:40 bacon Exp $
+ * $Id: awk.c,v 1.184 2007-03-04 15:12:13 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -880,6 +880,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 	app_awk = awk;
 
 	ase_awk_setoption (awk, opt);
+
+ase_awk_seterrstr (awk, ASE_AWK_EGBLRED, ASE_T("\uC804\uC5ED\uBCC0\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
+ase_awk_seterrstr (awk, ASE_AWK_EAFNRED, ASE_T("\uD568\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
 
 	srcios.in = awk_srcio_in;
 	srcios.out = deparse? awk_srcio_out: NULL;
