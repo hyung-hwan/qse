@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.110 2007-03-04 14:55:55 bacon Exp $
+ * $Id: awk_i.h,v 1.111 2007-03-04 15:04:40 bacon Exp $
  *
  * {License}
  */
@@ -195,7 +195,7 @@ struct ase_awk_t
 
 	struct
 	{
-		ase_char_t* fmt[1024];
+		ase_char_t fmt[1024];
 	} tmp;
 
 	/* housekeeping */

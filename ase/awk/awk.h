@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.200 2007-03-04 14:55:55 bacon Exp $
+ * $Id: awk.h,v 1.201 2007-03-04 15:04:40 bacon Exp $
  *
  * {License}
  */
@@ -217,10 +217,9 @@ enum
 
 	ASE_AWK_EINTERN,        /* internal error */
 	ASE_AWK_ERUNTIME,       /* run-time error */
-	ASE_AWK_ERUNNING,       /* there are running instances */
 	ASE_AWK_EBLKNST,        /* blocke nested too deeply */
 	ASE_AWK_EEXPRNST,       /* expression nested too deeply */
-	ASE_AWK_ESYSFNS,        /* system functions not proper */
+	ASE_AWK_EPRMFNS,        /* system functions not proper */
 
 	ASE_AWK_ESINOP,
 	ASE_AWK_ESINCL,
