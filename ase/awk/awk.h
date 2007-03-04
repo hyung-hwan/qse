@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.198 2007-03-03 14:44:31 bacon Exp $
+ * $Id: awk.h,v 1.199 2007-03-04 06:26:45 bacon Exp $
  *
  * {License}
  */
@@ -261,6 +261,7 @@ enum
 	ASE_AWK_EWHILE,         /* keyword 'while' is expected */
 	ASE_AWK_EASSIGN,        /* assignment statement expected */
 	ASE_AWK_EIDENT,         /* identifier expected */
+	ASE_AWK_EFNNAME,        /* invalid function name */
 	ASE_AWK_EBLKBEG,        /* BEGIN requires an action block */
 	ASE_AWK_EBLKEND,        /* END requires an action block */
 	ASE_AWK_EDUPBEG,        /* duplicate BEGIN */
