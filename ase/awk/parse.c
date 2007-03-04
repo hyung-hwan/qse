@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.249 2007-03-04 06:26:45 bacon Exp $
+ * $Id: parse.c,v 1.250 2007-03-04 06:45:43 bacon Exp $
  *
  * {License}
  */
@@ -4649,12 +4649,14 @@ static int __get_token (ase_awk_t* awk)
 	}
 	else 
 	{
-		awk->prmfns.misc.sprintf (
-			awk->prmfns.misc.custom_data,
-			awk->errmsg, ASE_COUNTOF(awk->errmsg),
-			ASE_T("invalid character '%c'"), c);
-		ase_awk_seterror_old (
-			awk, ASE_AWK_ELXCHR, awk->token.line, awk->errmsg);
+		ase_cstr_t errarg;
+		ase_char_t cc = (ase_char_t)c;
+
+		errarg.ptr = &cc;
+		errarg.len = 1;
+
+		ase_awk_seterror (
+			awk, ASE_AWK_ELXCHR, awk->token.line, &errarg, 1);
 		return -1;
 	}
 
