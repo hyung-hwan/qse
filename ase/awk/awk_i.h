@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.108 2007-03-03 14:44:31 bacon Exp $
+ * $Id: awk_i.h,v 1.109 2007-03-04 06:26:45 bacon Exp $
  *
  * {License}
  */
@@ -65,6 +65,7 @@ struct ase_awk_tree_t
 {
 	ase_size_t nglobals; /* total number of globals */
 	ase_size_t nbglobals; /* number of builtin globals */
+	ase_cstr_t cur_afn;
 	ase_awk_map_t afns; /* awk function map */
 	ase_awk_nde_t* begin;
 	ase_awk_nde_t* end;
@@ -191,6 +192,11 @@ struct ase_awk_t
 			} max;
 		} depth;
 	} rex;
+
+	struct
+	{
+		ase_char_t* fmt[1024];
+	} tmp;
 
 	/* housekeeping */
 	int errnum;

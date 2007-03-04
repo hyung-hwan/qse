@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.338 2007-03-03 14:44:31 bacon Exp $
+ * $Id: run.c,v 1.339 2007-03-04 06:26:45 bacon Exp $
  *
  * {License}
  */
@@ -2344,7 +2344,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				errarg.ptr = var->id.name; 
 				errarg.len = var->id.name_len;
 				ase_awk_setrunerror (
-					run, ASE_AWK_ENOTDEL, var->line, &errarg, 1);
+					run, ASE_AWK_ENOTDEL, var->line,
+					&errarg, 1);
 				return -1;
 			}
 

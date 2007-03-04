@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.79 2007-03-03 14:44:31 bacon Exp $
+ * $Id: err.c,v 1.80 2007-03-04 06:26:45 bacon Exp $
  *
  * {License}
  */
@@ -74,17 +74,18 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("keyword 'while' expected"),
 		ASE_T("assignment statement expected"),
 		ASE_T("identifier expected"),
+		ASE_T("'%.*s' not a valid function name"),
 		ASE_T("BEGIN requires an action block"),
 		ASE_T("END requires an action block"),
 		ASE_T("duplicate BEGIN"),
 		ASE_T("duplicate END"),
-		ASE_T("built-in function redefined"),
-		ASE_T("function redefined"),
-		ASE_T("global variable redefined"),
-		ASE_T("parameter redefined"),
-		ASE_T("duplicate parameter name"),
-		ASE_T("duplicate global variable name"),
-		ASE_T("duplicate local variable name"),
+		ASE_T("built-in function '%.*s' redefined"),
+		ASE_T("function '%.*s' redefined"),
+		ASE_T("global variable '%.*s' redefined"),
+		ASE_T("parameter '%.*s' redefined"),
+		ASE_T("duplicate parameter name '%.*s'"),
+		ASE_T("duplicate global variable '%.*s'"),
+		ASE_T("duplicate local variable '%.*s'"),
 		ASE_T("undefined identifier"),
 		ASE_T("l-value required"),
 		ASE_T("too many global variables"),

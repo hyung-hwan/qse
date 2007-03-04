@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.112 2007-03-02 10:12:40 bacon Exp $ 
+ * $Id: awk.c,v 1.113 2007-03-04 06:26:45 bacon Exp $ 
  *
  * {License}
  */
@@ -215,6 +215,8 @@ int ase_awk_clear (ase_awk_t* awk)
 	awk->tree.ok = 0;
 	awk->tree.nbglobals = 0;
 	awk->tree.nglobals = 0;	
+	awk->tree.cur_afn.ptr = ASE_NULL;
+	awk->tree.cur_afn.len = 0;
 	ase_awk_map_clear (&awk->tree.afns);
 
 	if (awk->tree.begin != ASE_NULL) 
