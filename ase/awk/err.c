@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.83 2007-03-04 14:55:55 bacon Exp $
+ * $Id: err.c,v 1.84 2007-03-04 15:04:40 bacon Exp $
  *
  * {License}
  */
@@ -30,7 +30,6 @@ static const ase_char_t* __geterrstr (int errnum)
 		
 		ASE_T("internal error that should never have happened"),
 		ASE_T("general run-time error"),
-		ASE_T("one or more running instances"),
 		ASE_T("block nested too deeply"),
 		ASE_T("expressio nested too deeply"),
 		ASE_T("system functions not provided or not proper"),

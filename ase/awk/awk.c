@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.114 2007-03-04 14:55:55 bacon Exp $ 
+ * $Id: awk.c,v 1.115 2007-03-04 15:04:40 bacon Exp $ 
  *
  * {License}
  */
@@ -40,7 +40,7 @@ ase_awk_t* ase_awk_open (
 	    prmfns->misc.dprintf   == ASE_NULL || 
 	    prmfns->misc.abort     == ASE_NULL) 
 	{
-		*errnum = ASE_AWK_ESYSFNS;
+		*errnum = ASE_AWK_EPRMFNS;
 		return ASE_NULL;
 	}
 

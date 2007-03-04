@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.182 2007-03-04 06:39:13 bacon Exp $
+ * $Id: awk.c,v 1.183 2007-03-04 15:04:40 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -873,7 +873,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 #endif
 		ase_printf (
 			ASE_T("ERROR: cannot open awk [%d] %s\n"), 
-			errnum, ase_awk_geterrstr(errnum));
+			errnum, ase_awk_geterrstr(ASE_NULL, errnum));
 		return -1;
 	}
 
@@ -919,10 +919,12 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg, ASE_NULL) == -1)
 	{
-		int errnum = ase_awk_geterrnum(awk);
 		ase_printf (
-			ASE_T("error: cannot run program - [%d] %s\n"), 
-			errnum, ase_awk_geterrstr(errnum));
+			ASE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"), 
+			ase_awk_geterrnum(awk),
+			(unsigned int)ase_awk_geterrlin(awk), 
+			ase_awk_geterrmsg(awk));
+
 		ase_awk_close (awk);
 		return -1;
 	}
