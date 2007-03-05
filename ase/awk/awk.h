@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.201 2007-03-04 15:04:40 bacon Exp $
+ * $Id: awk.h,v 1.202 2007-03-05 14:58:36 bacon Exp $
  *
  * {License}
  */
@@ -253,6 +253,7 @@ enum
 	ASE_AWK_ECOMMA,         /* comma expected */
 	ASE_AWK_ESCOLON,        /* semicolon expected */
 	ASE_AWK_ECOLON,         /* colon expected */
+	ASE_AWK_ESTMEND,        /* statement not ending with a semicolon */
 	ASE_AWK_EIN,            /* keyword 'in' is expected */
 	ASE_AWK_ENOTVAR,        /* not a variable name after 'in' */
 	ASE_AWK_EEXPRES,        /* expression expected */
@@ -260,7 +261,7 @@ enum
 	ASE_AWK_EWHILE,         /* keyword 'while' is expected */
 	ASE_AWK_EASSIGN,        /* assignment statement expected */
 	ASE_AWK_EIDENT,         /* identifier expected */
-	ASE_AWK_EFNNAME,        /* invalid function name */
+	ASE_AWK_EFNNAME,        /* not a valid function name */
 	ASE_AWK_EBLKBEG,        /* BEGIN requires an action block */
 	ASE_AWK_EBLKEND,        /* END requires an action block */
 	ASE_AWK_EDUPBEG,        /* duplicate BEGIN */
