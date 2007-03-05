@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.250 2007-03-04 06:45:43 bacon Exp $
+ * $Id: parse.c,v 1.251 2007-03-05 14:58:36 bacon Exp $
  *
  * {License}
  */
@@ -125,9 +125,6 @@ struct __binmap_t
 	int token;
 	int binop;
 };
-
-#define PTR_EOF ASE_T("<EOF>")
-#define LEN_EOF 5
 
 static int __parse (ase_awk_t* awk);
 
@@ -320,13 +317,34 @@ static global_t gtab[] =
 
 #define ADD_TOKEN_CHAR(awk,c) \
 	do { \
-		if (ase_str_ccat(&(awk)->token.name,(c)) == (ase_size_t)-1) { \
-			ase_awk_seterror_old (awk, ASE_AWK_ENOMEM, (awk)->token.line, ASE_NULL); \
+		if (ase_str_ccat(&(awk)->token.name,(c)) == (ase_size_t)-1) \
+		{ \
+			ase_awk_seterror (awk, ASE_AWK_ENOMEM, (awk)->token.line, ASE_NULL, 0); \
 			return -1; \
 		} \
 	} while (0)
 
 #define MATCH(awk,token_type) ((awk)->token.type == (token_type))
+
+#define SET_ERROR_TOKEN(awk,code) \
+	do { \
+		ase_cstr_t errarg; \
+		errarg.len = ASE_STR_LEN(&(awk)->token.name); \
+		errarg.ptr = ASE_STR_BUF(&(awk)->token.name); \
+		if (MATCH(awk,TOKEN_EOF)) \
+			ase_awk_seterror (awk, code, (awk)->token.prev.line, &errarg, 1); \
+		else \
+			ase_awk_seterror (awk, code, (awk)->token.line, &errarg, 1); \
+	} while (0)
+
+#define SET_ERROR_TOKEN_LINE(awk,code,line) \
+	do { \
+		ase_cstr_t errarg; \
+		errarg.len = ASE_STR_LEN(&(awk)->token.name); \
+		errarg.ptr = ASE_STR_BUF(&(awk)->token.name); \
+		ase_awk_seterror (awk, code, line, &errarg, 1); \
+	} while (0)
+				
 
 #define SET_ERROR_0(awk,code,msg) \
 	do { \
@@ -713,21 +731,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	if (!MATCH(awk,TOKEN_IDENT)) 
 	{
 		/* cannot find a valid identifier for a function name */
-		ase_cstr_t errarg;
-
-		if (MATCH(awk,TOKEN_EOF))
-		{
-			errarg.ptr = PTR_EOF;
-			errarg.len = LEN_EOF;
-		}
-		else
-		{
-			errarg.ptr = ASE_STR_BUF(&awk->token.name);	
-			errarg.len = ASE_STR_LEN(&awk->token.name);	
-		}
-
-		ase_awk_seterror (
-			awk, ASE_AWK_EFNNAME, awk->token.line, &errarg, 1);
+		SET_ERROR_TOKEN (awk, ASE_AWK_EFNNAME);
 		return ASE_NULL;
 	}
 
@@ -964,8 +968,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 				ASE_AWK_FREE (awk, name_dup);
 				ase_awk_tab_clear (&awk->parse.params);
 
-				SET_ERROR_0 (awk, ASE_AWK_ECOMMA,
-					ASE_T("comma expected in place of '%.*s'"));
+				SET_ERROR_TOKEN (awk, ASE_AWK_ECOMMA);
 				return ASE_NULL;
 			}
 
@@ -1454,8 +1457,7 @@ static ase_awk_t* __collect_globals (ase_awk_t* awk)
 
 		if (!MATCH(awk,TOKEN_COMMA)) 
 		{
-			SET_ERROR_0 (awk, ASE_AWK_ECOMMA,
-				ASE_T("comma expected in place of '%.*s'"));
+			SET_ERROR_TOKEN (awk, ASE_AWK_ECOMMA);
 			return ASE_NULL;
 		}
 
@@ -1596,8 +1598,7 @@ static ase_awk_t* __collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 
 		if (!MATCH(awk,TOKEN_COMMA))
 		{
-			SET_ERROR_0 (awk, ASE_AWK_ECOMMA,
-				ASE_T("comma expected in place of '%.*s'"));
+			SET_ERROR_TOKEN (awk, ASE_AWK_ECOMMA);
 			return ASE_NULL;
 		}
 
@@ -1768,18 +1769,8 @@ static ase_awk_nde_t* __parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 	{
 		if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
 
-		if (MATCH(awk,TOKEN_EOF))
-		{
-			ase_awk_seterror_old (
-				awk, ASE_AWK_EENDSRC, 
-				awk->token.prev.line, ASE_NULL);
-		}
-		else
-		{
-			ase_awk_seterror_old (
-				awk, ASE_AWK_ESCOLON, awk->token.prev.line, 
-				ASE_T("statement not terminated with a semicolon"));
-		}
+		ase_awk_seterror (
+			awk, ASE_AWK_ESTMEND, awk->token.prev.line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -2849,8 +2840,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 		{
 			ase_awk_clrpt (awk, nde);
 
-			SET_ERROR_0 (awk, ASE_AWK_ERPAREN,
-					ASE_T("right parenthesis expected in place of '%.*s'"));
+			SET_ERROR_TOKEN (awk, ASE_AWK_ERPAREN);
 			return ASE_NULL;
 		}
 
@@ -3321,8 +3311,7 @@ static ase_awk_nde_t* __parse_fncall (
 			{
 				if (head != ASE_NULL) ase_awk_clrpt (awk, head);
 
-				SET_ERROR_0 (awk, ASE_AWK_ECOMMA,
-					ASE_T("comma expected in place of '%.*s'"));
+				SET_ERROR_TOKEN (awk, ASE_AWK_ECOMMA);
 				return ASE_NULL;
 			}
 
@@ -3401,9 +3390,7 @@ static ase_awk_nde_t* __parse_if (ase_awk_t* awk, ase_size_t line)
 	{
 		ase_awk_clrpt (awk, test);
 
-		SET_ERROR_0 (
-			awk, ASE_AWK_ERPAREN, 
-			ASE_T("right parenthesis expected in place of '%.*s'"));
+		SET_ERROR_TOKEN (awk, ASE_AWK_ERPAREN);
 		return ASE_NULL;
 	}
 
@@ -3482,9 +3469,8 @@ static ase_awk_nde_t* __parse_while (ase_awk_t* awk, ase_size_t line)
 	if (!MATCH(awk,TOKEN_RPAREN)) 
 	{
 		ase_awk_clrpt (awk, test);
-		SET_ERROR_0 (
-			awk, ASE_AWK_ERPAREN, 
-			ASE_T("right parenthesis expected in place of '%.*s'"));
+
+		SET_ERROR_TOKEN (awk, ASE_AWK_ERPAREN);
 		return ASE_NULL;
 	}
 
@@ -3557,9 +3543,7 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 			if (!MATCH(awk,TOKEN_RPAREN))
 			{
 				ase_awk_clrpt (awk, init);
-				SET_ERROR_0 (
-					awk, ASE_AWK_ERPAREN, 
-					ASE_T("right parenthesis expected in place of '%.*s'"));
+				SET_ERROR_TOKEN (awk, ASE_AWK_ERPAREN);
 				return ASE_NULL;
 			}
 
@@ -3601,8 +3585,7 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 		{
 			ase_awk_clrpt (awk, init);
 
-			SET_ERROR_0 (awk, ASE_AWK_ESCOLON,
-				ASE_T("semicolon expected in place of '%.*s'"));
+			SET_ERROR_TOKEN (awk, ASE_AWK_ESCOLON);
 			return ASE_NULL;
 		}
 	}
@@ -3628,8 +3611,7 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 			ase_awk_clrpt (awk, init);
 			ase_awk_clrpt (awk, test);
 
-			SET_ERROR_0 (awk, ASE_AWK_ESCOLON,
-				ASE_T("semicolon expected in place of '%.*s'"));
+			SET_ERROR_TOKEN (awk, ASE_AWK_ESCOLON);
 			return ASE_NULL;
 		}
 	}
@@ -3658,9 +3640,7 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 			ase_awk_clrpt (awk, test);
 			ase_awk_clrpt (awk, incr);
 
-			SET_ERROR_0 (
-				awk, ASE_AWK_ERPAREN, 
-				ASE_T("right parenthesis expected in place of '%.*s'"));
+			SET_ERROR_TOKEN (awk, ASE_AWK_ERPAREN);
 			return ASE_NULL;
 		}
 	}
@@ -4240,6 +4220,12 @@ static int __get_token (ase_awk_t* awk)
 
 	if (c == ASE_CHAR_EOF) 
 	{
+		ADD_TOKEN_CHAR (awk, ASE_T('<'));
+		ADD_TOKEN_CHAR (awk, ASE_T('E'));
+		ADD_TOKEN_CHAR (awk, ASE_T('O'));
+		ADD_TOKEN_CHAR (awk, ASE_T('F'));
+		ADD_TOKEN_CHAR (awk, ASE_T('>'));
+
 		SET_TOKEN_TYPE (awk, TOKEN_EOF);
 	}	
 	else if (ASE_AWK_ISDIGIT (awk, c)/*|| c == ASE_T('.')*/)
