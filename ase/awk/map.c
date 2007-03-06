@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.36 2007-02-23 08:17:49 bacon Exp $
+ * $Id: map.c,v 1.37 2007-03-06 14:51:52 bacon Exp $
  *
  * {License}
  */
@@ -23,9 +23,7 @@ ase_awk_map_t* ase_awk_map_open (
 	ase_awk_map_t* map, void* owner, ase_size_t capa, 
 	void(*freeval)(void*,void*), ase_awk_t* awk)
 {
-	ASE_AWK_ASSERTX (awk, capa > 0,
-		"the capacity of a map should be greater than 0");
-
+	ASE_ASSERTX (capa > 0, "the initial capacity should be greater than 0");
 
 	if (map == ASE_NULL) 
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.99 2007-03-02 11:14:33 bacon Exp $
+ * $Id: func.c,v 1.100 2007-03-06 14:51:52 bacon Exp $
  *
  * {License}
  */
@@ -182,11 +182,11 @@ static int __bfn_close (
 	ase_size_t len;
        
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 1);
+	ASE_ASSERT (nargs == 1);
 /* TODO: support close (xxx, "to"/"from") like gawk */
 
 	a0 = ase_awk_getarg (run, 0);
-	ASE_AWK_ASSERT (run->awk, a0 != ASE_NULL);
+	ASE_ASSERT (a0 != ASE_NULL);
 
 	if (a0->type == ASE_AWK_VAL_STR)
 	{
@@ -283,7 +283,7 @@ static int __bfn_fflush (
 	int n;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 0 || nargs == 1);
+	ASE_ASSERT (nargs == 0 || nargs == 1);
 
 	if (nargs == 0)
 	{
@@ -377,7 +377,7 @@ static int __bfn_index (
 	ase_long_t idx;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 2);
+	ASE_ASSERT (nargs == 2);
 	
 	a0 = ase_awk_getarg (run, 0);
 	a1 = ase_awk_getarg (run, 1);
@@ -439,7 +439,7 @@ static int __bfn_length (
 	ase_size_t len;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 1);
+	ASE_ASSERT (nargs == 1);
 	
 	v = ase_awk_getarg (run, 0);
 	if (v->type == ASE_AWK_VAL_STR)
@@ -477,7 +477,7 @@ static int __bfn_substr (
 	int n;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs >= 2 && nargs <= 3);
+	ASE_ASSERT (nargs >= 2 && nargs <= 3);
 
 	a0 = ase_awk_getarg (run, 0);
 	a1 = ase_awk_getarg (run, 1);
@@ -553,13 +553,13 @@ static int __bfn_split (
 	int errnum;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs >= 2 && nargs <= 3);
+	ASE_ASSERT (nargs >= 2 && nargs <= 3);
 
 	a0 = ase_awk_getarg (run, 0);
 	a1 = ase_awk_getarg (run, 1);
 	a2 = (nargs >= 3)? ase_awk_getarg (run, 2): ASE_NULL;
 
-	ASE_AWK_ASSERT (run->awk, a1->type == ASE_AWK_VAL_REF);
+	ASE_ASSERT (a1->type == ASE_AWK_VAL_REF);
 
 	if (((ase_awk_val_ref_t*)a1)->id >= ASE_AWK_VAL_REF_NAMEDIDX &&
 	    ((ase_awk_val_ref_t*)a1)->id <= ASE_AWK_VAL_REF_ARGIDX)
@@ -723,7 +723,7 @@ static int __bfn_split (
 			break; 
 		}	
 
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			(tok != ASE_NULL && tok_len > 0) || tok_len == 0);
 
 		/* create the field string */
@@ -743,7 +743,7 @@ static int __bfn_split (
 		/* put it into the map */
 		key_len = ase_awk_longtostr (
 			num, 10, ASE_NULL, key, ASE_COUNTOF(key));
-		ASE_AWK_ASSERT (run->awk, key_len != (ase_size_t)-1);
+		ASE_ASSERT (key_len != (ase_size_t)-1);
 
 		/* don't forget to update the reference count when you 
 		 * handle the assignment-like situation.  anyway, it is 
@@ -797,7 +797,7 @@ static int __bfn_tolower (
 	ase_awk_val_t* a0, * r;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 1);
+	ASE_ASSERT (nargs == 1);
 
 	a0 = ase_awk_getarg (run, 0);
 
@@ -837,7 +837,7 @@ static int __bfn_toupper (
 	ase_awk_val_t* a0, * r;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 1);
+	ASE_ASSERT (nargs == 1);
 
 	a0 = ase_awk_getarg (run, 0);
 
@@ -885,13 +885,13 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	ase_long_t sub_count;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs >= 2 && nargs <= 3);
+	ASE_ASSERT (nargs >= 2 && nargs <= 3);
 
 	a0 = ase_awk_getarg (run, 0);
 	a1 = ase_awk_getarg (run, 1);
 	a2 = (nargs >= 3)? ase_awk_getarg (run, 2): ASE_NULL;
 
-	ASE_AWK_ASSERT (run->awk, a2 == ASE_NULL || a2->type == ASE_AWK_VAL_REF);
+	ASE_ASSERT (a2 == ASE_NULL || a2->type == ASE_AWK_VAL_REF);
 
 #define FREE_A_PTRS(awk) \
 	do { \
@@ -1184,7 +1184,7 @@ static int __bfn_match (
 	ase_size_t mat_len;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs == 2);
+	ASE_ASSERT (nargs == 2);
 	
 	a0 = ase_awk_getarg (run, 0);
 	a1 = ase_awk_getarg (run, 1);
@@ -1299,7 +1299,7 @@ static int __bfn_sprintf (
 	ase_str_t out, fbu;
 
 	nargs = ase_awk_getnargs (run);
-	ASE_AWK_ASSERT (run->awk, nargs > 0);
+	ASE_ASSERT (nargs > 0);
 
 	if (ase_str_open (&out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
 	{

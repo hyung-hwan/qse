@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.52 2007-02-24 14:31:44 bacon Exp $
+ * $Id: misc.c,v 1.53 2007-03-06 14:51:52 bacon Exp $
  *
  * {License}
  */
@@ -26,7 +26,7 @@ ase_long_t ase_awk_strxtolong (
 	ase_size_t rem;
 	int digit, negative = 0;
 
-	ASE_AWK_ASSERT (awk, base < 37); 
+	ASE_ASSERT (base < 37); 
 
 	p = str; 
 	end = str + len;
@@ -838,7 +838,7 @@ ase_char_t* ase_awk_strxntokbyrex (
 			return ASE_NULL; 
 		}
 
-		ASE_AWK_ASSERT (run->awk, n == 1);
+		ASE_ASSERT (n == 1);
 
 		if (match_len == 0)
 		{
@@ -901,28 +901,5 @@ exit_loop:
 		return (match_ptr+match_len > s+len)? 
 			ASE_NULL: (match_ptr+match_len);
 	}
-}
-
-int ase_awk_assertfail (ase_awk_t* awk, 
-	const ase_char_t* expr, const ase_char_t* desc, 
-	const ase_char_t* file, int line)
-{
-	if (desc == ASE_NULL)
-	{
-		awk->prmfns.misc.aprintf (
-			awk->prmfns.misc.custom_data,
-			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n"),
-			file, line, expr);
-	}
-	else
-	{
-		awk->prmfns.misc.aprintf (
-			awk->prmfns.misc.custom_data,
-			ASE_T("ASSERTION FAILURE AT FILE %s LINE %d\n%s\n\nDESCRIPTION:\n%s\n"),
-			file, line, expr, desc);
-
-	}
-	awk->prmfns.misc.abort (awk->prmfns.misc.custom_data);
-	return 0;
 }
 

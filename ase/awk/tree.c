@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.105 2007-03-04 06:26:45 bacon Exp $
+ * $Id: tree.c,v 1.106 2007-03-06 14:51:53 bacon Exp $
  *
  * {License}
  */
@@ -154,7 +154,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			PUT_SRCSTR (awk, ASE_T(" "));
 			PRINT_EXPRESSION (awk, px->right);
 
-			ASE_AWK_ASSERT (awk, px->right->next == ASE_NULL);
+			ASE_ASSERT (px->right->next == ASE_NULL);
 			break;
 		}
 
@@ -164,7 +164,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 			PUT_SRCSTR (awk, ASE_T("("));
 			PRINT_EXPRESSION (awk, px->left);
-			ASE_AWK_ASSERT (awk, px->left->next == ASE_NULL);
+			ASE_ASSERT (px->left->next == ASE_NULL);
 
 			PUT_SRCSTR (awk, ASE_T(" "));
 			PUT_SRCSTR (awk, __binop_str[px->opcode]);
@@ -175,7 +175,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			PRINT_EXPRESSION (awk, px->right);
 			if (px->right->type == ASE_AWK_NDE_ASS) 
 				PUT_SRCSTR (awk, ASE_T(")"));
-			ASE_AWK_ASSERT (awk, px->right->next == ASE_NULL); 
+			ASE_ASSERT (px->right->next == ASE_NULL); 
 			PUT_SRCSTR (awk, ASE_T(")"));
 			break;
 		}
@@ -183,7 +183,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		case ASE_AWK_NDE_EXP_UNR:
 		{
 			ase_awk_nde_exp_t* px = (ase_awk_nde_exp_t*)nde;
-			ASE_AWK_ASSERT (awk, px->right == ASE_NULL);
+			ASE_ASSERT (px->right == ASE_NULL);
 
 			PUT_SRCSTR (awk, ASE_T("("));
 			PUT_SRCSTR (awk, __unrop_str[px->opcode]);
@@ -197,7 +197,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		case ASE_AWK_NDE_EXP_INCPRE:
 		{
 			ase_awk_nde_exp_t* px = (ase_awk_nde_exp_t*)nde;
-			ASE_AWK_ASSERT (awk, px->right == ASE_NULL);
+			ASE_ASSERT (px->right == ASE_NULL);
 
 			PUT_SRCSTR (awk, __incop_str[px->opcode]);
 			PUT_SRCSTR (awk, ASE_T("("));
@@ -209,7 +209,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		case ASE_AWK_NDE_EXP_INCPST:
 		{
 			ase_awk_nde_exp_t* px = (ase_awk_nde_exp_t*)nde;
-			ASE_AWK_ASSERT (awk, px->right == ASE_NULL);
+			ASE_ASSERT (px->right == ASE_NULL);
 
 			PUT_SRCSTR (awk, ASE_T("("));
 			PRINT_EXPRESSION (awk, px->left);
@@ -327,7 +327,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 			ase_size_t n;
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
-			ASE_AWK_ASSERT (awk, px->id.idxa != (ase_size_t)-1);
+			ASE_ASSERT (px->id.idxa != (ase_size_t)-1);
 
 			n = ase_awk_longtostr (
 				px->id.idxa, 10, ASE_NULL, tmp, ASE_COUNTOF(tmp));
@@ -335,7 +335,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			PUT_SRCSTR (awk, ASE_T("__param"));
 			PUT_SRCSTRX (awk, tmp, n);
 
-			ASE_AWK_ASSERT (awk, px->idx == ASE_NULL);
+			ASE_ASSERT (px->idx == ASE_NULL);
 			break;
 		}
 
@@ -343,8 +343,8 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		{
 			ase_size_t n;
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
-			ASE_AWK_ASSERT (awk, px->id.idxa != (ase_size_t)-1);
-			ASE_AWK_ASSERT (awk, px->idx != ASE_NULL);
+			ASE_ASSERT (px->id.idxa != (ase_size_t)-1);
+			ASE_ASSERT (px->idx != ASE_NULL);
 
 			PUT_SRCSTR (awk, ASE_T("__param"));
 			n = ase_awk_longtostr (
@@ -360,8 +360,8 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		case ASE_AWK_NDE_NAMED:
 		{
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
-			ASE_AWK_ASSERT (awk, px->id.idxa == (ase_size_t)-1);
-			ASE_AWK_ASSERT (awk, px->idx == ASE_NULL);
+			ASE_ASSERT (px->id.idxa == (ase_size_t)-1);
+			ASE_ASSERT (px->idx == ASE_NULL);
 
 			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			break;
@@ -370,8 +370,8 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		case ASE_AWK_NDE_NAMEDIDX:
 		{
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
-			ASE_AWK_ASSERT (awk, px->id.idxa == (ase_size_t)-1);
-			ASE_AWK_ASSERT (awk, px->idx != ASE_NULL);
+			ASE_ASSERT (px->id.idxa == (ase_size_t)-1);
+			ASE_ASSERT (px->idx != ASE_NULL);
 
 			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			PUT_SRCSTR (awk, ASE_T("["));
@@ -401,7 +401,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			{
 				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			}
-			ASE_AWK_ASSERT (awk, px->idx == ASE_NULL);
+			ASE_ASSERT (px->idx == ASE_NULL);
 			break;
 		}
 
@@ -428,7 +428,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 				PUT_SRCSTR (awk, ASE_T("["));
 			}
-			ASE_AWK_ASSERT (awk, px->idx != ASE_NULL);
+			ASE_ASSERT (px->idx != ASE_NULL);
 			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, ASE_T("]"));
 			break;
@@ -451,7 +451,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			{
 				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 			}
-			ASE_AWK_ASSERT (awk, px->idx == ASE_NULL);
+			ASE_ASSERT (px->idx == ASE_NULL);
 			break;
 		}
 
@@ -474,7 +474,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 				PUT_SRCSTR (awk, ASE_T("["));
 			}
-			ASE_AWK_ASSERT (awk, px->idx != ASE_NULL);
+			ASE_ASSERT (px->idx != ASE_NULL);
 			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, ASE_T("]"));
 			break;
@@ -631,7 +631,7 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				PUT_SRCSTR (awk, ASE_T(")"));
 				PUT_NEWLINE (awk);
 
-				ASE_AWK_ASSERT (awk, px->then_part != ASE_NULL);
+				ASE_ASSERT (px->then_part != ASE_NULL);
 				if (px->then_part->type == ASE_AWK_NDE_BLK)
 					PRINT_STATEMENTS (awk, px->then_part, depth);
 				else
@@ -774,7 +774,7 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				else 
 				{
 					PUT_SRCSTR (awk, ASE_T("return "));
-					ASE_AWK_ASSERT (awk, ((ase_awk_nde_return_t*)p)->val->next == ASE_NULL);
+					ASE_ASSERT (((ase_awk_nde_return_t*)p)->val->next == ASE_NULL);
 
 					PRINT_EXPRESSION (awk, ((ase_awk_nde_return_t*)p)->val);
 					PUT_SRCSTR (awk, ASE_T(";"));
@@ -796,7 +796,7 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				else 
 				{
 					PUT_SRCSTR (awk, ASE_T("exit "));
-					ASE_AWK_ASSERT (awk, px->val->next == ASE_NULL);
+					ASE_ASSERT (px->val->next == ASE_NULL);
 					PRINT_EXPRESSION (awk, px->val);
 					PUT_SRCSTR (awk, ASE_T(";"));
 					PUT_NEWLINE (awk);
@@ -1037,8 +1037,8 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			case ASE_AWK_NDE_EXP_BIN:
 			{
 				ase_awk_nde_exp_t* px = (ase_awk_nde_exp_t*)p;
-				ASE_AWK_ASSERT (awk, px->left->next == ASE_NULL);
-				ASE_AWK_ASSERT (awk, px->right->next == ASE_NULL);
+				ASE_ASSERT (px->left->next == ASE_NULL);
+				ASE_ASSERT (px->right->next == ASE_NULL);
 
 				ase_awk_clrpt (awk, px->left);
 				ase_awk_clrpt (awk, px->right);
@@ -1051,7 +1051,7 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			case ASE_AWK_NDE_EXP_INCPST:
 			{
 				ase_awk_nde_exp_t* px = (ase_awk_nde_exp_t*)p;
-				ASE_AWK_ASSERT (awk, px->right == ASE_NULL);
+				ASE_ASSERT (px->right == ASE_NULL);
 				ase_awk_clrpt (awk, px->left);
 				ASE_AWK_FREE (awk, p);
 				break;
@@ -1103,7 +1103,7 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			case ASE_AWK_NDE_ARG:
 			{
 				ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)p;
-				ASE_AWK_ASSERT (awk, px->idx == ASE_NULL);
+				ASE_ASSERT (px->idx == ASE_NULL);
 				if (px->id.name != ASE_NULL)
 					ASE_AWK_FREE (awk, px->id.name);
 				ASE_AWK_FREE (awk, p);
@@ -1116,7 +1116,7 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			case ASE_AWK_NDE_ARGIDX:
 			{
 				ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)p;
-				ASE_AWK_ASSERT (awk, px->idx != ASE_NULL);
+				ASE_ASSERT (px->idx != ASE_NULL);
 				ase_awk_clrpt (awk, px->idx);
 				if (px->id.name != ASE_NULL)
 					ASE_AWK_FREE (awk, px->id.name);
@@ -1163,7 +1163,7 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 
 			default:
 			{
-				ASE_AWK_ASSERT (awk, !"should never happen - invalid node type");
+				ASE_ASSERT (!"should never happen - invalid node type");
 				ASE_AWK_FREE (awk, p);
 				break;
 			}

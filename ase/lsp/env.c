@@ -1,5 +1,5 @@
 /*
- * $Id: env.c,v 1.16 2007-02-11 07:36:54 bacon Exp $
+ * $Id: env.c,v 1.17 2007-03-06 14:58:00 bacon Exp $
  *
  * {License}
  */
@@ -69,7 +69,7 @@ ase_lsp_assoc_t* ase_lsp_lookupinframe (
 {
 	ase_lsp_assoc_t* assoc;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	ASE_ASSERT (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = frame->assoc;
 	while (assoc != ASE_NULL) 
@@ -86,7 +86,7 @@ ase_lsp_assoc_t* ase_lsp_insvalueintoframe (
 {
 	ase_lsp_assoc_t* assoc;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	ASE_ASSERT (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = __new_assoc (lsp, name, value, ASE_NULL);
 	if (assoc == ASE_NULL) return ASE_NULL;
@@ -102,7 +102,7 @@ ase_lsp_assoc_t* ase_lsp_insfuncintoframe (
 {
 	ase_lsp_assoc_t* assoc;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	ASE_ASSERT (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	assoc = __new_assoc (lsp, name, ASE_NULL, func);
 	if (assoc == ASE_NULL) return ASE_NULL;
@@ -136,7 +136,7 @@ void ase_lsp_poptmp (ase_lsp_t* lsp)
 {
 	ase_lsp_tlink_t* top;
 
-	ASE_LSP_ASSERT (lsp, lsp->mem->tlink != ASE_NULL);
+	ASE_ASSERT (lsp->mem->tlink != ASE_NULL);
 
 	top = lsp->mem->tlink;
 	lsp->mem->tlink = top->link;

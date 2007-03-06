@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.71 2007-03-02 11:14:34 bacon Exp $
+ * $Id: jni.c,v 1.72 2007-03-06 14:51:52 bacon Exp $
  *
  * {License}
  */
@@ -116,11 +116,6 @@ static ase_real_t awk_pow (void* custom, ase_real_t x, ase_real_t y)
 	return pow (x, y);
 }
 
-static void awk_abort (void* custom)
-{
-        abort ();
-}
-
 static int awk_sprintf (
 	void* custom, ase_char_t* buf, ase_size_t size, 
 	const ase_char_t* fmt, ...)
@@ -135,14 +130,6 @@ static int awk_sprintf (
 	return n;
 }
 
-static void awk_printf (void* custom, const ase_char_t* fmt, ...)
-{
-	va_list ap;
-	va_start (ap, fmt);
-	ase_vfprintf (stdout, fmt, ap);
-	va_end (ap);
-}
-
 static void awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 {
 	va_list ap;
@@ -150,6 +137,21 @@ static void awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 	ase_vfprintf (stderr, fmt, ap);
 	va_end (ap);
 }
+
+#ifndef NDEBUG
+void ase_assert_abort (void)
+{
+        abort ();
+}
+
+static void ase_assert_printf (const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	va_start (ap, fmt);
+	ase_vfprintf (stdout, fmt, ap);
+	va_end (ap);
+}
+#endif
 
 static void throw_exception (
 	JNIEnv* env, const ase_char_t* msg, jint code, jint line)
@@ -268,9 +270,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	prmfns.misc.pow     = awk_pow;
 	prmfns.misc.sprintf = awk_sprintf;
-	prmfns.misc.aprintf = awk_printf;
 	prmfns.misc.dprintf = awk_dprintf;
-	prmfns.misc.abort   = awk_abort;
 	prmfns.misc.custom_data = NULL;
 
 	awk_data = (awk_data_t*) malloc (sizeof(awk_data_t));
@@ -466,13 +466,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	run_data.double_class = (*env)->FindClass (env, "java/lang/Double");
 	run_data.object_class = (*env)->FindClass (env, "java/lang/Object");
 
-	ASE_AWK_ASSERT (awk, run_data.string_class != NULL);
-	ASE_AWK_ASSERT (awk, run_data.integer_class != NULL);
-	ASE_AWK_ASSERT (awk, run_data.short_class != NULL);
-	ASE_AWK_ASSERT (awk, run_data.long_class != NULL);
-	ASE_AWK_ASSERT (awk, run_data.float_class != NULL);
-	ASE_AWK_ASSERT (awk, run_data.double_class != NULL);
-	ASE_AWK_ASSERT (awk, run_data.object_class != NULL);
+	ASE_ASSERT (run_data.string_class != NULL);
+	ASE_ASSERT (run_data.integer_class != NULL);
+	ASE_ASSERT (run_data.short_class != NULL);
+	ASE_ASSERT (run_data.long_class != NULL);
+	ASE_ASSERT (run_data.float_class != NULL);
+	ASE_ASSERT (run_data.double_class != NULL);
+	ASE_ASSERT (run_data.object_class != NULL);
 
 	run_data.integer_init = (*env)->GetMethodID (
 		env, run_data.integer_class, "<init>", "(I)V");
@@ -485,11 +485,11 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	run_data.double_init = (*env)->GetMethodID (
 		env, run_data.double_class, "<init>", "(D)V");
 
-	ASE_AWK_ASSERT (awk, run_data.integer_init != NULL);
-	ASE_AWK_ASSERT (awk, run_data.long_init != NULL);
-	ASE_AWK_ASSERT (awk, run_data.short_init != NULL);
-	ASE_AWK_ASSERT (awk, run_data.float_init != NULL);
-	ASE_AWK_ASSERT (awk, run_data.double_init != NULL);
+	ASE_ASSERT (run_data.integer_init != NULL);
+	ASE_ASSERT (run_data.long_init != NULL);
+	ASE_ASSERT (run_data.short_init != NULL);
+	ASE_ASSERT (run_data.float_init != NULL);
+	ASE_ASSERT (run_data.double_init != NULL);
 
 	run_data.integer_value = (*env)->GetMethodID (
 		env, run_data.integer_class, "intValue", "()I");
@@ -502,15 +502,15 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	run_data.double_value = (*env)->GetMethodID (
 		env, run_data.double_class, "doubleValue", "()D");
 	
-	ASE_AWK_ASSERTX (awk, run_data.integer_value != NULL,
+	ASE_ASSERTX (run_data.integer_value != NULL,
 		"The Integer class must has the method - int intValue()");
-	ASE_AWK_ASSERTX (awk, run_data.long_value != NULL,
+	ASE_ASSERTX (run_data.long_value != NULL,
 		"The Long class must has the method - long longValue()");
-	ASE_AWK_ASSERTX (awk, run_data.short_value != NULL,
+	ASE_ASSERTX (run_data.short_value != NULL,
 		"The Short class must has the method - short shortValue()");
-	ASE_AWK_ASSERTX (awk, run_data.float_value != NULL, 
+	ASE_ASSERTX (run_data.float_value != NULL, 
 		"The Float class must has the method - float floatValue()");
-	ASE_AWK_ASSERTX (awk, run_data.double_value != NULL, 
+	ASE_ASSERTX (run_data.double_value != NULL, 
 		"The Double class must has the method - double doubleValue()");
 
 	runio_data.env = env;

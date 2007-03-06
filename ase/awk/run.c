@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.339 2007-03-04 06:26:45 bacon Exp $
+ * $Id: run.c,v 1.340 2007-03-06 14:51:53 bacon Exp $
  *
  * {License}
  */
@@ -198,7 +198,7 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde);
 static int __raw_push (ase_awk_run_t* run, void* val);
 #define __raw_pop(run) \
 	do { \
-		ASE_AWK_ASSERT (run->awk, (run)->stack_top > (run)->stack_base); \
+		ASE_ASSERT ((run)->stack_top > (run)->stack_base); \
 		(run)->stack_top--; \
 	} while (0)
 static void __raw_pop_times (ase_awk_run_t* run, ase_size_t times);
@@ -317,7 +317,7 @@ static int __set_global (
 		{
 			/* due to the expression evaluation rule, the 
 			 * regular expression can not be an assigned value */
-			ASE_AWK_ASSERT (run->awk, val->type != ASE_AWK_VAL_REX);
+			ASE_ASSERT (val->type != ASE_AWK_VAL_REX);
 
 			fs_ptr = ase_awk_valtostr (
 				run, val, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &fs_len);
@@ -450,7 +450,7 @@ static int __set_global (
 		{
 			/* due to the expression evaluation rule, the 
 			 * regular expression can not be an assigned value */
-			ASE_AWK_ASSERT (run->awk, val->type != ASE_AWK_VAL_REX);
+			ASE_ASSERT (val->type != ASE_AWK_VAL_REX);
 
 			rs_ptr = ase_awk_valtostr (
 				run, val, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &rs_len);
@@ -814,7 +814,7 @@ static void __deinit_run (ase_awk_run_t* run)
 	/* close all pending extio's */
 	/* TODO: what if this operation fails? */
 	ase_awk_clearextio (run);
-	ASE_AWK_ASSERT (run->awk, run->extio.chain == ASE_NULL);
+	ASE_ASSERT (run->extio.chain == ASE_NULL);
 
 	if (run->global.rs != ASE_NULL) 
 	{
@@ -889,7 +889,7 @@ static void __deinit_run (ase_awk_run_t* run)
 	/* destroy run stack */
 	if (run->stack != ASE_NULL)
 	{
-		ASE_AWK_ASSERT (run->awk, run->stack_top == 0);
+		ASE_ASSERT (run->stack_top == 0);
 
 		ASE_AWK_FREE (run->awk, run->stack);
 		run->stack = ASE_NULL;
@@ -956,7 +956,7 @@ static int __build_runarg (
 
 			key_len = ase_awk_longtostr (
 				argc, 10, ASE_NULL, key, ASE_COUNTOF(key));
-			ASE_AWK_ASSERT (run->awk, key_len != (ase_size_t)-1);
+			ASE_ASSERT (key_len != (ase_size_t)-1);
 
 			/* increment reference count of v_tmp in advance as if 
 			 * it has successfully been assigned into ARGV. */
@@ -991,7 +991,7 @@ static int __build_runarg (
 
 	ase_awk_refupval (run, v_argc);
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		STACK_GLOBAL(run,ASE_AWK_GLOBAL_ARGC) == ase_awk_val_nil);
 
 	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_ARGC, v_argc) == -1) 
@@ -1103,7 +1103,7 @@ static int __set_globals_to_default (ase_awk_run_t* run)
 		
 		ase_awk_refupval (run, tmp);
 
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			STACK_GLOBAL(run,gtab[i].idx) == ase_awk_val_nil);
 
 		if (ase_awk_setglobal (run, gtab[i].idx, tmp) == -1)
@@ -1133,7 +1133,7 @@ static int run_main (
 	ase_awk_val_t* v;
 	int n;
 
-	ASE_AWK_ASSERT (run->awk, run->stack_base == 0 && run->stack_top == 0);
+	ASE_ASSERT (run->stack_base == 0 && run->stack_top == 0);
 
 	/* secure space for global variables */
 	saved_stack_top = run->stack_top;
@@ -1261,7 +1261,7 @@ static int run_main (
 				nde.nargs++;
 			}
 
-			ASE_AWK_ASSERT (run->awk, nrunargs == nde.nargs);
+			ASE_ASSERT (nrunargs == nde.nargs);
 		}
 
 		v = __eval_afn (run, (ase_awk_nde_t*)&nde);
@@ -1348,7 +1348,7 @@ static int run_main (
 			ase_awk_nde_blk_t* blk;
 
 			blk = (ase_awk_nde_blk_t*)run->awk->tree.begin;
-			ASE_AWK_ASSERT (run->awk, blk->type == ASE_AWK_NDE_BLK);
+			ASE_ASSERT (blk->type == ASE_AWK_NDE_BLK);
 
 			run->active_block = blk;
 			run->exit_level = EXIT_NONE;
@@ -1370,7 +1370,7 @@ static int run_main (
 			ase_awk_nde_blk_t* blk;
 
 			blk = (ase_awk_nde_blk_t*)run->awk->tree.end;
-			ASE_AWK_ASSERT (run->awk, blk->type == ASE_AWK_NDE_BLK);
+			ASE_ASSERT (blk->type == ASE_AWK_NDE_BLK);
 
 			run->active_block = blk;
 			run->exit_level = EXIT_NONE;
@@ -1379,7 +1379,7 @@ static int run_main (
 
 		/* restore stack */
 		nargs = (ase_size_t)STACK_NARGS(run);
-		ASE_AWK_ASSERT (run->awk, nargs == 0);
+		ASE_ASSERT (nargs == 0);
 		for (i = 0; i < nargs; i++)
 		{
 			ase_awk_refdownval (run, STACK_ARG(run,i));
@@ -1533,8 +1533,8 @@ static int __run_pattern_block (
 		else
 		{
 			/* pattern, pattern { ... } */
-			ASE_AWK_ASSERT (run->awk, ptn->next->next == ASE_NULL);
-			ASE_AWK_ASSERT (run->awk, run->pattern_range_state != ASE_NULL);
+			ASE_ASSERT (ptn->next->next == ASE_NULL);
+			ASE_ASSERT (run->pattern_range_state != ASE_NULL);
 
 			if (run->pattern_range_state[block_no] == 0)
 			{
@@ -1652,7 +1652,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		return 0;
 	}
 
-	ASE_AWK_ASSERT (run->awk, nde->type == ASE_AWK_NDE_BLK);
+	ASE_ASSERT (nde->type == ASE_AWK_NDE_BLK);
 
 	p = nde->body;
 	nlocals = nde->nlocals;
@@ -1847,7 +1847,7 @@ static int __run_if (ase_awk_run_t* run, ase_awk_nde_if_t* nde)
 	/* the test expression for the if statement cannot have 
 	 * chained expressions. this should not be allowed by the
 	 * parser first of all */
-	ASE_AWK_ASSERT (run->awk, nde->test->next == ASE_NULL);
+	ASE_ASSERT (nde->test->next == ASE_NULL);
 
 	test = __eval_expression (run, nde->test);
 	if (test == ASE_NULL) return -1;
@@ -1874,7 +1874,7 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 	{
 		/* no chained expressions are allowed for the test 
 		 * expression of the while statement */
-		ASE_AWK_ASSERT (run->awk, nde->test->next == ASE_NULL);
+		ASE_ASSERT (nde->test->next == ASE_NULL);
 
 		while (1)
 		{
@@ -1915,7 +1915,7 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 	{
 		/* no chained expressions are allowed for the test 
 		 * expression of the while statement */
-		ASE_AWK_ASSERT (run->awk, nde->test->next == ASE_NULL);
+		ASE_ASSERT (nde->test->next == ASE_NULL);
 
 		do
 		{
@@ -1957,7 +1957,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 
 	if (nde->init != ASE_NULL)
 	{
-		ASE_AWK_ASSERT (run->awk, nde->init->next == ASE_NULL);
+		ASE_ASSERT (nde->init->next == ASE_NULL);
 		val = __eval_expression(run,nde->init);
 		if (val == ASE_NULL) return -1;
 
@@ -1973,7 +1973,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 
 			/* no chained expressions for the test expression of
 			 * the for statement are allowed */
-			ASE_AWK_ASSERT (run->awk, nde->test->next == ASE_NULL);
+			ASE_ASSERT (nde->test->next == ASE_NULL);
 
 			test = __eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
@@ -2013,7 +2013,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 
 		if (nde->incr != ASE_NULL)
 		{
-			ASE_AWK_ASSERT (run->awk, nde->incr->next == ASE_NULL);
+			ASE_ASSERT (nde->incr->next == ASE_NULL);
 			val = __eval_expression(run,nde->incr);
 			if (val == ASE_NULL) return -1;
 
@@ -2072,13 +2072,13 @@ static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 	struct __foreach_walker_t walker;
 
 	test = (ase_awk_nde_exp_t*)nde->test;
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		test->type == ASE_AWK_NDE_EXP_BIN && 
 		test->opcode == ASE_AWK_BINOP_IN);
 
 	/* chained expressions should not be allowed 
 	 * by the parser first of all */
-	ASE_AWK_ASSERT (run->awk, test->right->next == ASE_NULL); 
+	ASE_ASSERT (test->right->next == ASE_NULL); 
 
 	rv = __eval_expression (run, test->right);
 	if (rv == ASE_NULL) return -1;
@@ -2124,7 +2124,7 @@ static int __run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde)
 
 		/* chained expressions should not be allowed 
 		 * by the parser first of all */
-		ASE_AWK_ASSERT (run->awk, nde->val->next == ASE_NULL); 
+		ASE_ASSERT (nde->val->next == ASE_NULL); 
 
 		val = __eval_expression (run, nde->val);
 		if (val == ASE_NULL) return -1;
@@ -2146,7 +2146,7 @@ static int __run_exit (ase_awk_run_t* run, ase_awk_nde_exit_t* nde)
 
 		/* chained expressions should not be allowed 
 		 * by the parser first of all */
-		ASE_AWK_ASSERT (run->awk, nde->val->next == ASE_NULL); 
+		ASE_ASSERT (nde->val->next == ASE_NULL); 
 
 		val = __eval_expression (run, nde->val);
 		if (val == ASE_NULL) return -1;
@@ -2290,7 +2290,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 	{
 		ase_awk_pair_t* pair;
 
-		ASE_AWK_ASSERTX (run->awk, 
+		ASE_ASSERTX (
 			(var->type == ASE_AWK_NDE_NAMED && var->idx == ASE_NULL) ||
 			(var->type == ASE_AWK_NDE_NAMEDIDX && var->idx != ASE_NULL),
 			"if a named variable has an index part and a named indexed variable doesn't have an index part, the program is definitely wrong");
@@ -2335,7 +2335,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			ase_awk_map_t* map;
 
 			val = (ase_awk_val_t*)pair->val;
-			ASE_AWK_ASSERT (run->awk, val != ASE_NULL);
+			ASE_ASSERT (val != ASE_NULL);
 
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
@@ -2356,7 +2356,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				ase_size_t key_len;
 				ase_awk_val_t* idx;
 
-				ASE_AWK_ASSERT (run->awk, var->idx != ASE_NULL);
+				ASE_ASSERT (var->idx != ASE_NULL);
 
 				idx = __eval_expression (run, var->idx);
 				if (idx == ASE_NULL) return -1;
@@ -2400,7 +2400,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			val = STACK_LOCAL (run,var->id.idxa);
 		else val = STACK_ARG (run,var->id.idxa);
 
-		ASE_AWK_ASSERT (run->awk, val != ASE_NULL);
+		ASE_ASSERT (val != ASE_NULL);
 
 		if (val->type == ASE_AWK_VAL_NIL)
 		{
@@ -2470,7 +2470,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				ase_size_t key_len;
 				ase_awk_val_t* idx;
 
-				ASE_AWK_ASSERT (run->awk, var->idx != ASE_NULL);
+				ASE_ASSERT (var->idx != ASE_NULL);
 
 				idx = __eval_expression (run, var->idx);
 				if (idx == ASE_NULL) return -1;
@@ -2499,7 +2499,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 	}
 	else
 	{
-		ASE_AWK_ASSERTX (run->awk, 
+		ASE_ASSERTX (
 			!"should never happen - wrong target for delete",
 			"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
 		ase_awk_setrunerror_old (
@@ -2518,7 +2518,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	ase_awk_val_t* v;
 	int n;
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		(nde->out_type == ASE_AWK_OUT_PIPE && nde->out != ASE_NULL) ||
 		(nde->out_type == ASE_AWK_OUT_COPROC && nde->out != ASE_NULL) ||
 		(nde->out_type == ASE_AWK_OUT_FILE && nde->out != ASE_NULL) ||
@@ -2601,7 +2601,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (nde->args->type == ASE_AWK_NDE_GRP)
 		{
 			/* parenthesized print */
-			ASE_AWK_ASSERT (run->awk, nde->args->next == ASE_NULL);
+			ASE_ASSERT (nde->args->next == ASE_NULL);
 			head = ((ase_awk_nde_grp_t*)nde->args)->body;
 		}
 		else head = nde->args;
@@ -2670,7 +2670,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	ase_awk_nde_t* head;
 	int n;
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		(nde->out_type == ASE_AWK_OUT_PIPE && nde->out != ASE_NULL) ||
 		(nde->out_type == ASE_AWK_OUT_COPROC && nde->out != ASE_NULL) ||
 		(nde->out_type == ASE_AWK_OUT_FILE && nde->out != ASE_NULL) ||
@@ -2723,18 +2723,18 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 
 	dst = (out == ASE_NULL)? ASE_T(""): out;
 
-	ASE_AWK_ASSERTX (run->awk, nde->args != ASE_NULL, 
+	ASE_ASSERTX (nde->args != ASE_NULL, 
 		"a valid printf statement should have at least one argument. the parser must ensure this.");
 
 	if (nde->args->type == ASE_AWK_NDE_GRP)
 	{
 		/* parenthesized print */
-		ASE_AWK_ASSERT (run->awk, nde->args->next == ASE_NULL);
+		ASE_ASSERT (nde->args->next == ASE_NULL);
 		head = ((ase_awk_nde_grp_t*)nde->args)->body;
 	}
 	else head = nde->args;
 
-	ASE_AWK_ASSERTX (run->awk, head != ASE_NULL,
+	ASE_ASSERTX (head != ASE_NULL,
 		"a valid printf statement should have at least one argument. the parser must ensure this.");
 
 	v = __eval_expression (run, head);
@@ -2822,7 +2822,7 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		}
 		else
 		{
-			ASE_AWK_ASSERTX (run->awk, 
+			ASE_ASSERTX (
 				run->inrec.d0->type == ASE_AWK_VAL_STR,
 				"the internal value representing $0 should always be of the string type once it has been set/updated. it is nil initially.");
 
@@ -2893,7 +2893,7 @@ static ase_awk_val_t* __eval_expression0 (ase_awk_run_t* run, ase_awk_nde_t* nde
 		__eval_getline
 	};
 
-	ASE_AWK_ASSERT (run->awk, nde->type >= ASE_AWK_NDE_GRP &&
+	ASE_ASSERT (nde->type >= ASE_AWK_NDE_GRP &&
 		(nde->type - ASE_AWK_NDE_GRP) < ASE_COUNTOF(__eval_func));
 
 	return __eval_func[nde->type-ASE_AWK_NDE_GRP] (run, nde);
@@ -2903,7 +2903,7 @@ static ase_awk_val_t* __eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	/* __eval_binop_in evaluates the ASE_AWK_NDE_GRP specially.
 	 * so this function should never be reached. */
-	ASE_AWK_ASSERT (run->awk, !"should never happen - NDE_GRP only for in");
+	ASE_ASSERT (!"should never happen - NDE_GRP only for in");
 	ase_awk_setrunerror_old (run, ASE_AWK_EINTERN, nde->line, ASE_NULL);
 	return ASE_NULL;
 }
@@ -2913,10 +2913,10 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_val_t* val, * ret;
 	ase_awk_nde_ass_t* ass = (ase_awk_nde_ass_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, ass->left != ASE_NULL);
-	ASE_AWK_ASSERT (run->awk, ass->right != ASE_NULL);
+	ASE_ASSERT (ass->left != ASE_NULL);
+	ASE_ASSERT (ass->right != ASE_NULL);
 
-	ASE_AWK_ASSERT (run->awk, ass->right->next == ASE_NULL);
+	ASE_ASSERT (ass->right->next == ASE_NULL);
 	val = __eval_expression (run, ass->right);
 	if (val == ASE_NULL) return ASE_NULL;
 
@@ -2937,7 +2937,7 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			__eval_binop_exp
 		};
 
-		ASE_AWK_ASSERT (run->awk, ass->left->next == ASE_NULL);
+		ASE_ASSERT (ass->left->next == ASE_NULL);
 		val2 = __eval_expression (run, ass->left);
 		if (val2 == ASE_NULL)
 		{
@@ -2947,9 +2947,9 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 		ase_awk_refupval (run, val2);
 
-		ASE_AWK_ASSERT (run->awk, ass->opcode >= 0);
-		ASE_AWK_ASSERT (run->awk, ass->opcode < ASE_COUNTOF(__binop_func));
-		ASE_AWK_ASSERT (run->awk, __binop_func[ass->opcode] != ASE_NULL);
+		ASE_ASSERT (ass->opcode >= 0);
+		ASE_ASSERT (ass->opcode < ASE_COUNTOF(__binop_func));
+		ASE_ASSERT (__binop_func[ass->opcode] != ASE_NULL);
 
 		tmp = __binop_func[ass->opcode] (run, val2, val);
 		if (tmp == ASE_NULL)
@@ -3005,7 +3005,7 @@ static ase_awk_val_t* __do_assignment (
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			!"should never happen - invalid variable type");
 		ase_awk_setrunerror_old (
 			run, ASE_AWK_EINTERN, var->line, ASE_NULL);
@@ -3018,13 +3018,13 @@ static ase_awk_val_t* __do_assignment (
 static ase_awk_val_t* __do_assignment_scalar (
 	ase_awk_run_t* run, ase_awk_nde_var_t* var, ase_awk_val_t* val)
 {
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		(var->type == ASE_AWK_NDE_NAMED ||
 		 var->type == ASE_AWK_NDE_GLOBAL ||
 		 var->type == ASE_AWK_NDE_LOCAL ||
 		 var->type == ASE_AWK_NDE_ARG) && var->idx == ASE_NULL);
 
-	ASE_AWK_ASSERT (run->awk, val->type != ASE_AWK_VAL_MAP);
+	ASE_ASSERT (val->type != ASE_AWK_VAL_MAP);
 
 	if (var->type == ASE_AWK_NDE_NAMED) 
 	{
@@ -3120,12 +3120,12 @@ static ase_awk_val_t* __do_assignment_map (
 	ase_size_t len;
 	int n;
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		(var->type == ASE_AWK_NDE_NAMEDIDX ||
 		 var->type == ASE_AWK_NDE_GLOBALIDX ||
 		 var->type == ASE_AWK_NDE_LOCALIDX ||
 		 var->type == ASE_AWK_NDE_ARGIDX) && var->idx != ASE_NULL);
-	ASE_AWK_ASSERT (run->awk, val->type != ASE_AWK_VAL_MAP);
+	ASE_ASSERT (val->type != ASE_AWK_VAL_MAP);
 
 	if (var->type == ASE_AWK_NDE_NAMEDIDX)
 	{
@@ -3327,7 +3327,7 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 	ase_awk_val_t* left, * right, * res;
 
-	ASE_AWK_ASSERT (run->awk, exp->type == ASE_AWK_NDE_EXP_BIN);
+	ASE_ASSERT (exp->type == ASE_AWK_NDE_EXP_BIN);
 
 	if (exp->opcode == ASE_AWK_BINOP_LAND)
 	{
@@ -3352,13 +3352,13 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, exp->left->next == ASE_NULL);
+		ASE_ASSERT (exp->left->next == ASE_NULL);
 		left = __eval_expression (run, exp->left);
 		if (left == ASE_NULL) return ASE_NULL;
 
 		ase_awk_refupval (run, left);
 
-		ASE_AWK_ASSERT (run->awk, exp->right->next == ASE_NULL);
+		ASE_ASSERT (exp->right->next == ASE_NULL);
 		right = __eval_expression (run, exp->right);
 		if (right == ASE_NULL) 
 		{
@@ -3368,9 +3368,9 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 		ase_awk_refupval (run, right);
 
-		ASE_AWK_ASSERT (run->awk, exp->opcode >= 0 && 
+		ASE_ASSERT (exp->opcode >= 0 && 
 			exp->opcode < ASE_COUNTOF(__binop_func));
-		ASE_AWK_ASSERT (run->awk, __binop_func[exp->opcode] != ASE_NULL);
+		ASE_ASSERT (__binop_func[exp->opcode] != ASE_NULL);
 
 		res = __binop_func[exp->opcode] (run, left, right);
 		if (res == ASE_NULL)
@@ -3405,7 +3405,7 @@ static ase_awk_val_t* __eval_binop_lor (
 	/* short-circuit evaluation required special treatment */
 	ase_awk_val_t* lv, * rv, * res;
 
-	ASE_AWK_ASSERT (run->awk, left->next == ASE_NULL);
+	ASE_ASSERT (left->next == ASE_NULL);
 	lv = __eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
 
@@ -3416,7 +3416,7 @@ static ase_awk_val_t* __eval_binop_lor (
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, right->next == ASE_NULL);
+		ASE_ASSERT (right->next == ASE_NULL);
 		rv = __eval_expression (run, right);
 		if (rv == ASE_NULL)
 		{
@@ -3454,7 +3454,7 @@ static ase_awk_val_t* __eval_binop_land (
 	/* short-circuit evaluation required special treatment */
 	ase_awk_val_t* lv, * rv, * res;
 
-	ASE_AWK_ASSERT (run->awk, left->next == ASE_NULL);
+	ASE_ASSERT (left->next == ASE_NULL);
 	lv = __eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
 
@@ -3465,7 +3465,7 @@ static ase_awk_val_t* __eval_binop_land (
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, right->next == ASE_NULL);
+		ASE_ASSERT (right->next == ASE_NULL);
 		rv = __eval_expression (run, right);
 		if (rv == ASE_NULL)
 		{
@@ -3496,7 +3496,7 @@ static ase_awk_val_t* __eval_binop_in (
 	    right->type != ASE_AWK_NDE_NAMED)
 	{
 		/* the compiler should have handled this case */
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			!"should never happen - in needs a plain variable");
 
 		ase_awk_setrunerror_old (run, ASE_AWK_EINTERN, right->line, ASE_NULL);
@@ -3510,7 +3510,7 @@ static ase_awk_val_t* __eval_binop_in (
 	if (str == ASE_NULL) return ASE_NULL;
 
 	/* evaluate the right-hand side of the operator */
-	ASE_AWK_ASSERT (run->awk, right->next == ASE_NULL);
+	ASE_ASSERT (right->next == ASE_NULL);
 	rv = __eval_expression (run, right);
 	if (rv == ASE_NULL) 
 	{
@@ -3568,7 +3568,7 @@ static ase_awk_val_t* __eval_binop_bor (
 	}
 
 	n3 = n1 + (n2 << 1);
-	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	ASE_ASSERT (n3 >= 0 && n3 <= 3);
 	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1|(ase_long_t)l2):
 	      (n3 == 1)? ase_awk_makeintval(run,(ase_long_t)r1|(ase_long_t)l2):
 	      (n3 == 2)? ase_awk_makeintval(run,(ase_long_t)l1|(ase_long_t)r2):
@@ -3600,7 +3600,7 @@ static ase_awk_val_t* __eval_binop_bxor (
 	}
 
 	n3 = n1 + (n2 << 1);
-	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	ASE_ASSERT (n3 >= 0 && n3 <= 3);
 	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1^(ase_long_t)l2):
 	      (n3 == 1)? ase_awk_makeintval(run,(ase_long_t)r1^(ase_long_t)l2):
 	      (n3 == 2)? ase_awk_makeintval(run,(ase_long_t)l1^(ase_long_t)r2):
@@ -3632,7 +3632,7 @@ static ase_awk_val_t* __eval_binop_band (
 	}
 
 	n3 = n1 + (n2 << 1);
-	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	ASE_ASSERT (n3 >= 0 && n3 <= 3);
 	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1&(ase_long_t)l2):
 	      (n3 == 1)? ase_awk_makeintval(run,(ase_long_t)r1&(ase_long_t)l2):
 	      (n3 == 2)? ase_awk_makeintval(run,(ase_long_t)l1&(ase_long_t)r2):
@@ -3897,10 +3897,10 @@ static int __cmp_val (
 		return CMP_ERROR; 
 	}
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		left->type >= ASE_AWK_VAL_NIL &&
 		left->type <= ASE_AWK_VAL_STR);
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		right->type >= ASE_AWK_VAL_NIL &&
 		right->type <= ASE_AWK_VAL_STR);
 
@@ -4053,7 +4053,7 @@ static ase_awk_val_t* __eval_binop_plus (
 	1   1   = 3
 	*/
 	n3 = n1 + (n2 << 1);
-	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	ASE_ASSERT (n3 >= 0 && n3 <= 3);
 	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1+(ase_long_t)l2):
 	      (n3 == 1)? ase_awk_makerealval(run,(ase_real_t)r1+(ase_real_t)l2):
 	      (n3 == 2)? ase_awk_makerealval(run,(ase_real_t)l1+(ase_real_t)r2):
@@ -4085,7 +4085,7 @@ static ase_awk_val_t* __eval_binop_minus (
 	}
 
 	n3 = n1 + (n2 << 1);
-	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	ASE_ASSERT (n3 >= 0 && n3 <= 3);
 	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1-(ase_long_t)l2):
 	      (n3 == 1)? ase_awk_makerealval(run,(ase_real_t)r1-(ase_real_t)l2):
 	      (n3 == 2)? ase_awk_makerealval(run,(ase_real_t)l1-(ase_real_t)r2):
@@ -4117,7 +4117,7 @@ static ase_awk_val_t* __eval_binop_mul (
 	}
 
 	n3 = n1 + (n2 << 1);
-	ASE_AWK_ASSERT (run->awk, n3 >= 0 && n3 <= 3);
+	ASE_ASSERT (n3 >= 0 && n3 <= 3);
 	res = (n3 == 0)? ase_awk_makeintval(run,(ase_long_t)l1*(ase_long_t)l2):
 	      (n3 == 1)? ase_awk_makerealval(run,(ase_real_t)r1*(ase_real_t)l2):
 	      (n3 == 2)? ase_awk_makerealval(run,(ase_real_t)l1*(ase_real_t)r2):
@@ -4180,7 +4180,7 @@ static ase_awk_val_t* __eval_binop_div (
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, n3 == 3);
+		ASE_ASSERT (n3 == 3);
 		res = ase_awk_makerealval (
 			run, (ase_real_t)r1 / (ase_real_t)r2);
 	}
@@ -4233,7 +4233,7 @@ static ase_awk_val_t* __eval_binop_idiv (
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, n3 == 3);
+		ASE_ASSERT (n3 == 3);
 
 		quo = (ase_real_t)r1 / (ase_real_t)r2;
 		res = ase_awk_makeintval (run, (ase_long_t)quo);
@@ -4297,7 +4297,7 @@ static ase_awk_val_t* __eval_binop_exp (
 	ase_real_t r1, r2;
 	ase_awk_val_t* res;
 
-	ASE_AWK_ASSERTX (run->awk, run->awk->prmfns.misc.pow != ASE_NULL,
+	ASE_ASSERTX (run->awk->prmfns.misc.pow != ASE_NULL,
 		"the pow function should be provided when the awk object is created to make the exponentiation work properly.");
 
 	n1 = ase_awk_valtonum (run, left, &l1, &r1);
@@ -4365,7 +4365,7 @@ static ase_awk_val_t* __eval_binop_exp (
 	else
 	{
 		/* left - real, right - real */
-		ASE_AWK_ASSERT (run->awk, n3 == 3);
+		ASE_ASSERT (n3 == 3);
 		res = ase_awk_makerealval (run,
 			run->awk->prmfns.misc.pow(
 				run->awk->prmfns.misc.custom_data, 
@@ -4421,8 +4421,8 @@ static ase_awk_val_t* __eval_binop_ma (
 {
 	ase_awk_val_t* lv, * rv, * res;
 
-	ASE_AWK_ASSERT (run->awk, left->next == ASE_NULL);
-	ASE_AWK_ASSERT (run->awk, right->next == ASE_NULL);
+	ASE_ASSERT (left->next == ASE_NULL);
+	ASE_ASSERT (right->next == ASE_NULL);
 
 	lv = __eval_expression (run, left);
 	if (lv == ASE_NULL) 
@@ -4455,8 +4455,8 @@ static ase_awk_val_t* __eval_binop_nm (
 {
 	ase_awk_val_t* lv, * rv, * res;
 
-	ASE_AWK_ASSERT (run->awk, left->next == ASE_NULL);
-	ASE_AWK_ASSERT (run->awk, right->next == ASE_NULL);
+	ASE_ASSERT (left->next == ASE_NULL);
+	ASE_ASSERT (right->next == ASE_NULL);
 
 	lv = __eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
@@ -4606,17 +4606,17 @@ static ase_awk_val_t* __eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_long_t l;
 	ase_real_t r;
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		exp->type == ASE_AWK_NDE_EXP_UNR);
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		exp->left != ASE_NULL && exp->right == ASE_NULL);
-	ASE_AWK_ASSERT (run->awk,
+	ASE_ASSERT (
 		exp->opcode == ASE_AWK_UNROP_PLUS ||
 		exp->opcode == ASE_AWK_UNROP_MINUS ||
 		exp->opcode == ASE_AWK_UNROP_NOT ||
 		exp->opcode == ASE_AWK_UNROP_BNOT);
 
-	ASE_AWK_ASSERT (run->awk, exp->left->next == ASE_NULL);
+	ASE_ASSERT (exp->left->next == ASE_NULL);
 	left = __eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
@@ -4697,9 +4697,9 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_val_t* left, * res;
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		exp->type == ASE_AWK_NDE_EXP_INCPRE);
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		exp->left != ASE_NULL && exp->right == ASE_NULL);
 
 	/* this way of checking if the l-value is assignable is
@@ -4713,7 +4713,7 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 
-	ASE_AWK_ASSERT (run->awk, exp->left->next == ASE_NULL);
+	ASE_ASSERT (exp->left->next == ASE_NULL);
 	left = __eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
@@ -4766,7 +4766,7 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			}
 			else /* if (n == 1) */
 			{
-				ASE_AWK_ASSERT (run->awk, n == 1);
+				ASE_ASSERT (n == 1);
 				res = ase_awk_makerealval (run, v2 + 1.0);
 			}
 
@@ -4826,7 +4826,7 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			}
 			else /* if (n == 1) */
 			{
-				ASE_AWK_ASSERT (run->awk, n == 1);
+				ASE_ASSERT (n == 1);
 				res = ase_awk_makerealval (run, v2 - 1.0);
 			}
 
@@ -4841,7 +4841,7 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			!"should never happen - invalid opcode");
 		ase_awk_refdownval (run, left);
 
@@ -4865,9 +4865,9 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_val_t* left, * res, * res2;
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		exp->type == ASE_AWK_NDE_EXP_INCPST);
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		exp->left != ASE_NULL && exp->right == ASE_NULL);
 
 	/* this way of checking if the l-value is assignable is
@@ -4881,7 +4881,7 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 
-	ASE_AWK_ASSERT (run->awk, exp->left->next == ASE_NULL);
+	ASE_ASSERT (exp->left->next == ASE_NULL);
 	left = __eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
@@ -4971,7 +4971,7 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			}
 			else /* if (n == 1) */
 			{
-				ASE_AWK_ASSERT (run->awk, n == 1);
+				ASE_ASSERT (n == 1);
 				res = ase_awk_makerealval (run, v2);
 				if (res == ASE_NULL)
 				{
@@ -5077,7 +5077,7 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			}
 			else /* if (n == 1) */
 			{
-				ASE_AWK_ASSERT (run->awk, n == 1);
+				ASE_ASSERT (n == 1);
 				res = ase_awk_makerealval (run, v2);
 				if (res == ASE_NULL)
 				{
@@ -5102,7 +5102,7 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	}
 	else
 	{
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			!"should never happen - invalid opcode");
 		ase_awk_refdownval (run, left);
 
@@ -5126,14 +5126,14 @@ static ase_awk_val_t* __eval_cnd (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_val_t* tv, * v;
 	ase_awk_nde_cnd_t* cnd = (ase_awk_nde_cnd_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, cnd->test->next == ASE_NULL);
+	ASE_ASSERT (cnd->test->next == ASE_NULL);
 
 	tv = __eval_expression (run, cnd->test);
 	if (tv == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, tv);
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		cnd->left->next == ASE_NULL && 
 		cnd->right->next == ASE_NULL);
 	v = (ase_awk_valtobool (run, tv))?
@@ -5187,7 +5187,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	}
 
 	afn = (ase_awk_afn_t*)pair->val;
-	ASE_AWK_ASSERT (run->awk, afn != ASE_NULL);
+	ASE_ASSERT (afn != ASE_NULL);
 
 	if (call->nargs > afn->nargs)
 	{
@@ -5272,9 +5272,9 @@ static ase_awk_val_t* __eval_call (
 	 * ---------------------
 	 */
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		ASE_SIZEOF(void*) >= ASE_SIZEOF(run->stack_top));
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		ASE_SIZEOF(void*) >= ASE_SIZEOF(run->stack_base));
 
 	saved_stack_top = run->stack_top;
@@ -5325,7 +5325,7 @@ static ase_awk_val_t* __eval_call (
 	*/
 	for (p = call->args, nargs = 0; p != ASE_NULL; p = p->next, nargs++)
 	{
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			bfn_arg_spec == ASE_NULL ||
 			(bfn_arg_spec != ASE_NULL && 
 			 ase_strlen(bfn_arg_spec) > nargs));
@@ -5383,7 +5383,7 @@ static ase_awk_val_t* __eval_call (
 		/*nargs++; p = p->next;*/
 	}
 
-	ASE_AWK_ASSERT (run->awk, nargs == call->nargs);
+	ASE_ASSERT (nargs == call->nargs);
 
 	if (afn != ASE_NULL)
 	{
@@ -5414,7 +5414,7 @@ static ase_awk_val_t* __eval_call (
 	if (afn != ASE_NULL)
 	{
 		/* normal awk function */
-		ASE_AWK_ASSERT (run->awk, afn->body->type == ASE_AWK_NDE_BLK);
+		ASE_ASSERT (afn->body->type == ASE_AWK_NDE_BLK);
 		n = __run_block(run,(ase_awk_nde_blk_t*)afn->body);
 	}
 	else
@@ -5422,7 +5422,7 @@ static ase_awk_val_t* __eval_call (
 		n = 0;
 
 		/* built-in function */
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			call->nargs >= call->what.bfn.arg.min &&
 			call->nargs <= call->what.bfn.arg.max);
 
@@ -5616,7 +5616,7 @@ static ase_awk_val_t** __get_reference_indexed (
 	ase_char_t* str;
 	ase_size_t len;
 
-	ASE_AWK_ASSERT (run->awk, val != ASE_NULL);
+	ASE_ASSERT (val != ASE_NULL);
 
 	if ((*val)->type == ASE_AWK_VAL_NIL)
 	{
@@ -5641,7 +5641,7 @@ static ase_awk_val_t** __get_reference_indexed (
 		return ASE_NULL;
 	}
 
-	ASE_AWK_ASSERT (run->awk, nde->idx != ASE_NULL);
+	ASE_ASSERT (nde->idx != ASE_NULL);
 
 	str = __idxnde_to_str (run, nde->idx, &len);
 	if (str == ASE_NULL) return ASE_NULL;
@@ -5767,7 +5767,7 @@ static ase_awk_val_t* __eval_indexed (
 	ase_char_t* str;
 	ase_size_t len;
 
-	ASE_AWK_ASSERT (run->awk, val != ASE_NULL);
+	ASE_ASSERT (val != ASE_NULL);
 
 	if ((*val)->type == ASE_AWK_VAL_NIL)
 	{
@@ -5792,7 +5792,7 @@ static ase_awk_val_t* __eval_indexed (
 		return ASE_NULL;
 	}
 
-	ASE_AWK_ASSERT (run->awk, nde->idx != ASE_NULL);
+	ASE_ASSERT (nde->idx != ASE_NULL);
 
 	str = __idxnde_to_str (run, nde->idx, &len);
 	if (str == ASE_NULL) return ASE_NULL;
@@ -5891,7 +5891,7 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 	p = (ase_awk_nde_getline_t*)nde;
 
-	ASE_AWK_ASSERT (run->awk, 
+	ASE_ASSERT (
 		(p->in_type == ASE_AWK_IN_PIPE && p->in != ASE_NULL) ||
 		(p->in_type == ASE_AWK_IN_COPROC && p->in != ASE_NULL) ||
 		(p->in_type == ASE_AWK_IN_FILE && p->in != ASE_NULL) ||
@@ -6095,7 +6095,7 @@ static int __read_record (ase_awk_run_t* run)
 #endif
 	if (n == 0) 
 	{
-		ASE_AWK_ASSERT (run->awk, ASE_STR_LEN(&run->inrec.line) == 0);
+		ASE_ASSERT (ASE_STR_LEN(&run->inrec.line) == 0);
 		return 0;
 	}
 
@@ -6113,7 +6113,7 @@ static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 	ase_size_t ofs_len, i;
 	ase_str_t tmp;
 
-	ASE_AWK_ASSERT (run->awk, nflds <= run->inrec.nflds);
+	ASE_ASSERT (nflds <= run->inrec.nflds);
 
 	if (nflds > 1)
 	{
@@ -6209,7 +6209,7 @@ static ase_char_t* __idxnde_to_str (
 	ase_char_t* str;
 	ase_awk_val_t* idx;
 
-	ASE_AWK_ASSERT (run->awk, nde != ASE_NULL);
+	ASE_ASSERT (nde != ASE_NULL);
 
 	if (nde->next == ASE_NULL)
 	{
@@ -6332,7 +6332,7 @@ ase_char_t* ase_awk_format (
 		if ((buf)->ptr == ASE_NULL) (buf)->len = 0; \
 	} while (0) 
 
-	ASE_AWK_ASSERTX (run->awk, run->format.tmp.ptr != ASE_NULL,
+	ASE_ASSERTX (run->format.tmp.ptr != ASE_NULL,
 		"run->format.tmp.ptr should have been assigned a pointer to a block of memory before this function has been called");
 
 	if (nargs_on_stack == (ase_size_t)-1) 

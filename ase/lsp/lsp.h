@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.41 2007-03-06 14:16:53 bacon Exp $
+ * $Id: lsp.h,v 1.42 2007-03-06 14:58:00 bacon Exp $
  *
  * {License}
  */
@@ -22,9 +22,7 @@ typedef ase_real_t (*ase_lsp_pow_t) (
 typedef int (*ase_lsp_sprintf_t) (
 	void* custom, ase_char_t* buf, ase_size_t size, 
 	const ase_char_t* fmt, ...);
-typedef void (*ase_lsp_aprintf_t) (void* custom, const ase_char_t* fmt, ...); 
 typedef void (*ase_lsp_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
-typedef void (*ase_lsp_abort_t) (void* custom);
 
 struct ase_lsp_prmfns_t
 {
@@ -35,9 +33,7 @@ struct ase_lsp_prmfns_t
 	struct
 	{
 		ase_lsp_sprintf_t sprintf;
-		ase_lsp_aprintf_t aprintf;
 		ase_lsp_dprintf_t dprintf;
-		ase_lsp_abort_t abort;
 		void* custom_data;
 	} misc;
 };
@@ -87,17 +83,6 @@ enum
 };
 
 typedef ase_lsp_obj_t* (*ase_lsp_prim_t) (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
-
-/* assertion statement */
-#ifdef NDEBUG
-	#define ASE_LSP_ASSERT(lsp,expr) ((void)0)
-	#define ASE_LSP_ASSERTX(lsp,expr,desc) ((void)0)
-#else
-	#define ASE_LSP_ASSERT(lsp,expr) (void)((expr) || \
-		(ase_lsp_assertfail (lsp, ASE_T(#expr), ASE_NULL, ASE_T(__FILE__), __LINE__), 0))
-	#define ASE_LSP_ASSERTX(lsp,expr,desc) (void)((expr) || \
-		(ase_lsp_assertfail (lsp, ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
-#endif
 
 #ifdef __cplusplus
 extern "C" {

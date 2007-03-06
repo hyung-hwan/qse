@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.203 2007-03-06 14:16:52 bacon Exp $
+ * $Id: awk.h,v 1.204 2007-03-06 14:51:51 bacon Exp $
  *
  * {License}
  */
@@ -26,9 +26,7 @@ typedef ase_real_t (*ase_awk_pow_t) (void* custom, ase_real_t x, ase_real_t y);
 typedef int (*ase_awk_sprintf_t) (
 	void* custom, ase_char_t* buf, ase_size_t size, 
 	const ase_char_t* fmt, ...);
-typedef void (*ase_awk_aprintf_t) (void* custom, const ase_char_t* fmt, ...); 
 typedef void (*ase_awk_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
-typedef void (*ase_awk_abort_t)   (void* custom);
 
 typedef ase_ssize_t (*ase_awk_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
@@ -72,9 +70,7 @@ struct ase_awk_prmfns_t
 		/* utilities */
 		ase_awk_pow_t     pow;         /* required */
 		ase_awk_sprintf_t sprintf;     /* required */
-		ase_awk_aprintf_t aprintf;     /* required in the debug mode */
 		ase_awk_dprintf_t dprintf;     /* required in the debug mode */
-		ase_awk_abort_t   abort;       /* required in the debug mode */
 
 		/* user-defined data passed to the functions above */
 		void*             custom_data; /* optional */
@@ -376,17 +372,6 @@ enum
 	ASE_AWK_EXTIO_CONSOLE_WRITE  = 1
 };
 
-/* assertion statement */
-#ifdef NDEBUG
-	#define ASE_AWK_ASSERT(awk,expr) ((void)0)
-	#define ASE_AWK_ASSERTX(awk,expr,desc) ((void)0)
-#else
-	#define ASE_AWK_ASSERT(awk,expr) (void)((expr) || \
-		(ase_awk_assertfail (awk, ASE_T(#expr), ASE_NULL, ASE_T(__FILE__), __LINE__), 0))
-	#define ASE_AWK_ASSERTX(awk,expr,desc) (void)((expr) || \
-		(ase_awk_assertfail (awk, ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -510,12 +495,6 @@ ase_real_t ase_awk_strxtoreal (
 ase_size_t ase_awk_longtostr (
 	ase_long_t value, int radix, const ase_char_t* prefix,
 	ase_char_t* buf, ase_size_t size);
-
-/* abort function for assertion. use ASE_AWK_ASSERT instead */
-int ase_awk_assertfail (ase_awk_t* awk, 
-	const ase_char_t* expr, const ase_char_t* desc, 
-	const ase_char_t* file, int line);
-
 
 #ifdef __cplusplus
 }

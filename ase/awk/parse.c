@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.252 2007-03-06 13:19:28 bacon Exp $
+ * $Id: parse.c,v 1.253 2007-03-06 14:51:52 bacon Exp $
  *
  * {License}
  */
@@ -426,19 +426,19 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 {
 	int n;
 
-	ASE_AWK_ASSERTX (awk, 
+	ASE_ASSERTX (
 		srcios != ASE_NULL && srcios->in != ASE_NULL,
 		"the source code input stream must be provided at least");
-	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
-	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.expr == 0);
+	ASE_ASSERT (awk->parse.depth.cur.loop == 0);
+	ASE_ASSERT (awk->parse.depth.cur.expr == 0);
 
 	ase_awk_clear (awk);
 	ase_memcpy (&awk->src.ios, srcios, ASE_SIZEOF(awk->src.ios));
 
 	n = __parse (awk);
 
-	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
-	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.expr == 0);
+	ASE_ASSERT (awk->parse.depth.cur.loop == 0);
+	ASE_ASSERT (awk->parse.depth.cur.expr == 0);
 
 	return n;
 }
@@ -447,7 +447,7 @@ static int __parse (ase_awk_t* awk)
 {
 	int n = 0, op;
 
-	ASE_AWK_ASSERT (awk, awk->src.ios.in != ASE_NULL);
+	ASE_ASSERT (awk->src.ios.in != ASE_NULL);
 
 	op = awk->src.ios.in (
 		ASE_AWK_IO_OPEN, awk->src.ios.custom_data, ASE_NULL, 0);
@@ -539,7 +539,7 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk)
 	function name (parameter-list) { statement }
 	*/
 
-	ASE_AWK_ASSERT (awk, awk->parse.depth.cur.loop == 0);
+	ASE_ASSERT (awk->parse.depth.cur.loop == 0);
 
 	if ((awk->option & ASE_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) 
 	{
@@ -642,7 +642,7 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk)
 		ptn = __parse_expression (awk, awk->token.line);
 		if (ptn == ASE_NULL) return ASE_NULL;
 
-		ASE_AWK_ASSERT (awk, ptn->next == ASE_NULL);
+		ASE_ASSERT (ptn->next == ASE_NULL);
 
 		if (MATCH(awk,TOKEN_COMMA))
 		{
@@ -724,7 +724,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	int n;
 
 	/* eat up the keyword 'function' and get the next token */
-	ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_FUNCTION));
+	ASE_ASSERT (MATCH(awk,TOKEN_FUNCTION));
 	if (__get_token(awk) == -1) return ASE_NULL;  
 
 	/* match a function name */
@@ -821,7 +821,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	}
 
 	/* make sure that parameter table is empty */
-	ASE_AWK_ASSERT (awk, ase_awk_tab_getsize(&awk->parse.params) == 0);
+	ASE_ASSERT (ase_awk_tab_getsize(&awk->parse.params) == 0);
 
 	/* read parameter list */
 	if (MATCH(awk,TOKEN_RPAREN)) 
@@ -1076,7 +1076,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 	}
 
 	/* duplicate functions should have been detected previously */
-	ASE_AWK_ASSERT (awk, n != 0); 
+	ASE_ASSERT (n != 0); 
 
 	afn->name = pair->key; /* do some trick to save a string.  */
 	afn->name_len = pair->key_len;
@@ -1089,7 +1089,7 @@ static ase_awk_nde_t* __parse_begin (ase_awk_t* awk)
 {
 	ase_awk_nde_t* nde;
 
-	ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_LBRACE));
+	ASE_ASSERT (MATCH(awk,TOKEN_LBRACE));
 
 	if (__get_token(awk) == -1) return ASE_NULL; 
 	nde = awk->parse.parse_block (awk, awk->token.prev.line, ase_true);
@@ -1103,7 +1103,7 @@ static ase_awk_nde_t* __parse_end (ase_awk_t* awk)
 {
 	ase_awk_nde_t* nde;
 
-	ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_LBRACE));
+	ASE_ASSERT (MATCH(awk,TOKEN_LBRACE));
 
 	if (__get_token(awk) == -1) return ASE_NULL; 
 	nde = awk->parse.parse_block (awk, awk->token.prev.line, ase_true);
@@ -1123,7 +1123,7 @@ static ase_awk_chain_t* __parse_pattern_block (
 	if (blockless) nde = ASE_NULL;
 	else
 	{
-		ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_LBRACE));
+		ASE_ASSERT (MATCH(awk,TOKEN_LBRACE));
 		if (__get_token(awk) == -1) return ASE_NULL; 
 		nde = awk->parse.parse_block (awk, line, ase_true);
 		if (nde == ASE_NULL) return ASE_NULL;
@@ -1296,7 +1296,7 @@ static ase_awk_nde_t* __parse_block_dc (
 {
 	ase_awk_nde_t* nde;
 		
-	ASE_AWK_ASSERT (awk, awk->parse.depth.max.block > 0);
+	ASE_ASSERT (awk->parse.depth.max.block > 0);
 
 	if (awk->parse.depth.cur.block >= awk->parse.depth.max.block)
 	{
@@ -1818,7 +1818,7 @@ static ase_awk_nde_t* __parse_expression0 (ase_awk_t* awk, ase_size_t line)
 		return x;
 	}
 
-	ASE_AWK_ASSERT (awk, x->next == ASE_NULL);
+	ASE_ASSERT (x->next == ASE_NULL);
 	if (!__is_var(x) && x->type != ASE_AWK_NDE_POS) 
 	{
 		ase_awk_clrpt (awk, x);
@@ -2599,7 +2599,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 		}
 		nde->len = ASE_STR_LEN(&awk->token.name);
 
-		ASE_AWK_ASSERT (awk, 
+		ASE_ASSERT (
 			ASE_STR_LEN(&awk->token.name) ==
 			ase_strlen(ASE_STR_BUF(&awk->token.name)));
 
@@ -2642,7 +2642,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 		}
 		nde->len = ASE_STR_LEN(&awk->token.name);
 
-		ASE_AWK_ASSERT (awk, 
+		ASE_ASSERT (
 			ASE_STR_LEN(&awk->token.name) ==
 			ase_strlen(ASE_STR_BUF(&awk->token.name)));
 
@@ -2704,7 +2704,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 
 		ase_str_clear (&awk->token.name);
 		if (__get_rexstr (awk) == -1) return ASE_NULL;
-		ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_REX));
+		ASE_ASSERT (MATCH(awk,TOKEN_REX));
 
 		nde = (ase_awk_nde_rex_t*) ASE_AWK_MALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_rex_t));
@@ -2797,7 +2797,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 
 		/* parse subsequent expressions separated by a comma, if any */
 		last = nde;
-		ASE_AWK_ASSERT (awk, last->next == ASE_NULL);
+		ASE_ASSERT (last->next == ASE_NULL);
 
 		while (MATCH(awk,TOKEN_COMMA))
 		{
@@ -2816,7 +2816,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 				return ASE_NULL;
 			}
 
-			ASE_AWK_ASSERT (awk, tmp->next == ASE_NULL);
+			ASE_ASSERT (tmp->next == ASE_NULL);
 			last->next = tmp;
 			last = tmp;
 		} 
@@ -2951,7 +2951,7 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 	ase_size_t name_len;
 	ase_awk_bfn_t* bfn;
 
-	ASE_AWK_ASSERT (awk, MATCH(awk,TOKEN_IDENT));
+	ASE_ASSERT (MATCH(awk,TOKEN_IDENT));
 
 	name_dup = ase_strxdup (
 		ASE_STR_BUF(&awk->token.name),
@@ -3128,7 +3128,7 @@ static ase_awk_nde_t* __parse_hashidx (
 
 		if (idx == ASE_NULL)
 		{
-			ASE_AWK_ASSERT (awk, last == ASE_NULL);
+			ASE_ASSERT (last == ASE_NULL);
 			idx = tmp; last = tmp;
 		}
 		else
@@ -3139,7 +3139,7 @@ static ase_awk_nde_t* __parse_hashidx (
 	}
 	while (MATCH(awk,TOKEN_COMMA));
 
-	ASE_AWK_ASSERT (awk, idx != ASE_NULL);
+	ASE_ASSERT (idx != ASE_NULL);
 
 	if (!MATCH(awk,TOKEN_RBRACK)) 
 	{
@@ -3664,7 +3664,7 @@ static ase_awk_nde_t* __parse_dowhile (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_t* test, * body;
 	ase_awk_nde_while_t* nde;
 
-	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_DO);
+	ASE_ASSERT (awk->token.prev.type == TOKEN_DO);
 
 	body = __parse_statement (awk, awk->token.line);
 	if (body == ASE_NULL) return ASE_NULL;
@@ -3749,7 +3749,7 @@ static ase_awk_nde_t* __parse_break (ase_awk_t* awk, ase_size_t line)
 {
 	ase_awk_nde_break_t* nde;
 
-	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_BREAK);
+	ASE_ASSERT (awk->token.prev.type == TOKEN_BREAK);
 	if (awk->parse.depth.cur.loop <= 0) 
 	{
 		ase_awk_seterror_old (
@@ -3778,7 +3778,7 @@ static ase_awk_nde_t* __parse_continue (ase_awk_t* awk, ase_size_t line)
 {
 	ase_awk_nde_continue_t* nde;
 
-	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_CONTINUE);
+	ASE_ASSERT (awk->token.prev.type == TOKEN_CONTINUE);
 	if (awk->parse.depth.cur.loop <= 0) 
 	{
 		ase_awk_seterror_old (
@@ -3808,7 +3808,7 @@ static ase_awk_nde_t* __parse_return (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_return_t* nde;
 	ase_awk_nde_t* val;
 
-	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_RETURN);
+	ASE_ASSERT (awk->token.prev.type == TOKEN_RETURN);
 
 	nde = (ase_awk_nde_return_t*) ASE_AWK_MALLOC (
 		awk, ASE_SIZEOF(ase_awk_nde_return_t));
@@ -3847,7 +3847,7 @@ static ase_awk_nde_t* __parse_exit (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_exit_t* nde;
 	ase_awk_nde_t* val;
 
-	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_EXIT);
+	ASE_ASSERT (awk->token.prev.type == TOKEN_EXIT);
 
 	nde = (ase_awk_nde_exit_t*) 
 		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_exit_t));
@@ -3885,7 +3885,7 @@ static ase_awk_nde_t* __parse_next (ase_awk_t* awk, ase_size_t line)
 {
 	ase_awk_nde_next_t* nde;
 
-	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_NEXT);
+	ASE_ASSERT (awk->token.prev.type == TOKEN_NEXT);
 
 	if (awk->parse.id.block == PARSE_BEGIN_BLOCK)
 	{
@@ -3958,7 +3958,7 @@ static ase_awk_nde_t* __parse_delete (ase_awk_t* awk, ase_size_t line)
 	ase_awk_nde_delete_t* nde;
 	ase_awk_nde_t* var;
 
-	ASE_AWK_ASSERT (awk, awk->token.prev.type == TOKEN_DELETE);
+	ASE_ASSERT (awk->token.prev.type == TOKEN_DELETE);
 	if (!MATCH(awk,TOKEN_IDENT)) 
 	{
 		SET_ERROR_0 (
@@ -4128,7 +4128,7 @@ static ase_awk_nde_t* __parse_print (ase_awk_t* awk, ase_size_t line, int type)
 		return ASE_NULL;
 	}
 
-	ASE_AWK_ASSERTX (awk, 
+	ASE_ASSERTX (
 		type == ASE_AWK_NDE_PRINT || type == ASE_AWK_NDE_PRINTF, 
 		"the node type should be either ASE_AWK_NDE_PRINT or ASE_AWK_NDE_PRINTF");
 
@@ -4623,7 +4623,7 @@ static int __get_number (ase_awk_t* awk)
 {
 	ase_cint_t c;
 
-	ASE_AWK_ASSERT (awk, ASE_STR_LEN(&awk->token.name) == 0);
+	ASE_ASSERT (ASE_STR_LEN(&awk->token.name) == 0);
 	SET_TOKEN_TYPE (awk, TOKEN_INT);
 
 	c = awk->src.lex.curc;
@@ -5113,7 +5113,7 @@ static int __deparse (ase_awk_t* awk)
 	struct __deparse_func_t df;
 	int n = 0, op;
 
-	ASE_AWK_ASSERT (awk, awk->src.ios.out != ASE_NULL);
+	ASE_ASSERT (awk->src.ios.out != ASE_NULL);
 
 	awk->src.shared.buf_len = 0;
 	awk->src.shared.buf_pos = 0;
@@ -5156,7 +5156,7 @@ static int __deparse (ase_awk_t* awk)
 	{
 		ase_size_t i/*, len*/;
 
-		ASE_AWK_ASSERT (awk, awk->tree.nglobals > 0);
+		ASE_ASSERT (awk->tree.nglobals > 0);
 		if (ase_awk_putsrcstr (awk, ASE_T("global ")) == -1)
 			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 
@@ -5165,7 +5165,7 @@ static int __deparse (ase_awk_t* awk)
 			/*
 			len = ase_awk_longtostr ((ase_long_t)i, 
 				10, ASE_T("__global"), tmp, ASE_COUNTOF(tmp));
-			ASE_AWK_ASSERT (awk, len != (ase_size_t)-1);
+			ASE_ASSERT (len != (ase_size_t)-1);
 			if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
 				EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 			*/
@@ -5183,7 +5183,7 @@ static int __deparse (ase_awk_t* awk)
 		/*
 		len = ase_awk_longtostr ((ase_long_t)i, 
 			10, ASE_T("__global"), tmp, ASE_COUNTOF(tmp));
-		ASE_AWK_ASSERT (awk, len != (ase_size_t)-1);
+		ASE_ASSERT (len != (ase_size_t)-1);
 		if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
 			EXIT_DEPARSE (ASE_AWK_ESOUTWR);
 		*/
@@ -5313,8 +5313,7 @@ static int __deparse_func (ase_awk_pair_t* pair, void* arg)
 	ase_awk_afn_t* afn = (ase_awk_afn_t*)pair->val;
 	ase_size_t i, n;
 
-	ASE_AWK_ASSERT (df->awk, ase_strxncmp (
-		pair->key, pair->key_len, afn->name, afn->name_len) == 0);
+	ASE_ASSERT (ase_strxncmp (pair->key, pair->key_len, afn->name, afn->name_len) == 0);
 
 	if (ase_awk_putsrcstr (df->awk, ASE_T("function ")) == -1) return -1;
 	if (ase_awk_putsrcstr (df->awk, afn->name) == -1) return -1;
@@ -5324,7 +5323,7 @@ static int __deparse_func (ase_awk_pair_t* pair, void* arg)
 	{
 		n = ase_awk_longtostr (i++, 10, 
 			ASE_T("__param"), df->tmp, df->tmp_len);
-		ASE_AWK_ASSERT (df->awk, n != (ase_size_t)-1);
+		ASE_ASSERT (n != (ase_size_t)-1);
 		if (ase_awk_putsrcstrx (df->awk, df->tmp, n) == -1) return -1;
 		if (i >= afn->nargs) break;
 		if (ase_awk_putsrcstr (df->awk, ASE_T(", ")) == -1) return -1;
@@ -5361,7 +5360,7 @@ static int __flush (ase_awk_t* awk)
 {
 	ase_ssize_t n;
 
-	ASE_AWK_ASSERT (awk, awk->src.ios.out != ASE_NULL);
+	ASE_ASSERT (awk->src.ios.out != ASE_NULL);
 
 	while (awk->src.shared.buf_pos < awk->src.shared.buf_len)
 	{

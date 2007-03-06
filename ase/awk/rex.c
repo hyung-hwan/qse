@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.78 2007-03-06 14:16:52 bacon Exp $
+ * $Id: rex.c,v 1.79 2007-03-06 14:51:53 bacon Exp $
  *
  * {License}
  */
@@ -395,14 +395,14 @@ int ase_awk_matchrex (
 
 void ase_awk_freerex (ase_awk_t* awk, void* code)
 {
-	ASE_AWK_ASSERT (awk, code != ASE_NULL);
+	ASE_ASSERT (code != ASE_NULL);
 	ASE_AWK_FREE (awk, code);
 }
 
 ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code)
 {
 	rhdr_t* rhdr = (rhdr_t*) code;
-	ASE_AWK_ASSERT (awk, rhdr != ASE_NULL);
+	ASE_ASSERT (rhdr != ASE_NULL);
 
 	/* an empty regular expression look like:
 	 *  | expression                     | 
@@ -601,7 +601,7 @@ static int __build_atom (builder_t* builder)
 			n = __build_charset (builder, cmd);
 			if (n == -1) return -1;
 
-			ASE_AWK_ASSERT (builder->awk, n != 0);
+			ASE_ASSERT (n != 0);
 
 			if (builder->ptn.curc.type != CT_SPECIAL ||
 			    builder->ptn.curc.value != ASE_T(']'))
@@ -618,8 +618,7 @@ static int __build_atom (builder_t* builder)
 	}
 	else 
 	{
-		ASE_AWK_ASSERT (builder->awk, 
-			builder->ptn.curc.type == CT_NORMAL);
+		ASE_ASSERT (builder->ptn.curc.type == CT_NORMAL);
 
 		tmp.cmd = CMD_ORD_CHAR;
 		tmp.negate = 0;
@@ -1150,7 +1149,7 @@ static const ase_byte_t* __match_atom (
 		__match_group
 	};
        
-	ASE_AWK_ASSERT (matcher->awk, 
+	ASE_ASSERT (
 		((code_t*)base)->cmd >= 0 && 
 		((code_t*)base)->cmd < ASE_COUNTOF(matchers));
 
@@ -1164,7 +1163,7 @@ static const ase_byte_t* __match_bol (
 	const code_t* cp;
 
 	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
-	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_BOL);
+	ASE_ASSERT (cp->cmd == CMD_BOL);
 
 	mat->matched = (mat->match_ptr == matcher->match.str.ptr ||
 	               (cp->lbound == cp->ubound && cp->lbound == 0));
@@ -1180,7 +1179,7 @@ static const ase_byte_t* __match_eol (
 	const code_t* cp;
 
 	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
-	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_EOL);
+	ASE_ASSERT (cp->cmd == CMD_EOL);
 
 	mat->matched = (mat->match_ptr == matcher->match.str.end ||
 	               (cp->lbound == cp->ubound && cp->lbound == 0));
@@ -1197,7 +1196,7 @@ static const ase_byte_t* __match_any_char (
 	ase_size_t si = 0, lbound, ubound;
 
 	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
-	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_ANY_CHAR);
+	ASE_ASSERT (cp->cmd == CMD_ANY_CHAR);
 
 	lbound = cp->lbound;
 	ubound = cp->ubound;
@@ -1250,7 +1249,7 @@ static const ase_byte_t* __match_ord_char (
 	ase_char_t cc;
 
 	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
-	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_ORD_CHAR);
+	ASE_ASSERT (cp->cmd == CMD_ORD_CHAR);
 
 	lbound = cp->lbound; 
 	ubound = cp->ubound;
@@ -1352,7 +1351,7 @@ static const ase_byte_t* __match_charset (
 	cshdr_t* cshdr;
 
 	cp = (code_t*)p; p += ASE_SIZEOF(*cp);
-	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_CHARSET);
+	ASE_ASSERT (cp->cmd == CMD_CHARSET);
 
 	cshdr = (cshdr_t*)p; p += ASE_SIZEOF(*cshdr);
 
@@ -1404,7 +1403,7 @@ static const ase_byte_t* __match_group (
 	ase_size_t si = 0, grp_len_static[16], * grp_len;
 
 	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
-	ASE_AWK_ASSERT (matcher->awk, cp->cmd == CMD_GROUP);
+	ASE_ASSERT (cp->cmd == CMD_GROUP);
 
 	mat->matched = ase_false;
 	mat->match_len = 0;
@@ -1485,7 +1484,7 @@ static const ase_byte_t* __match_group (
 		}
 		else 
 		{
-			ASE_AWK_ASSERT (matcher->awk, cp->ubound > cp->lbound);
+			ASE_ASSERT (cp->ubound > cp->lbound);
 
 			do
 			{
@@ -1532,7 +1531,7 @@ static const ase_byte_t* __match_occurrences (
 	matcher_t* matcher, ase_size_t si, const ase_byte_t* p,
 	ase_size_t lbound, ase_size_t ubound, match_t* mat)
 {
-	ASE_AWK_ASSERT (matcher->awk, si >= lbound && si <= ubound);
+	ASE_ASSERT (si >= lbound && si <= ubound);
 	/* the match has been found */
 
 	if (lbound == ubound || p >= mat->branch_end)
@@ -1585,7 +1584,7 @@ static const ase_byte_t* __match_occurrences (
 		 * lbound in the implementation below, though)
 		 */
 
-		ASE_AWK_ASSERT (matcher->awk, ubound > lbound);
+		ASE_ASSERT (ubound > lbound);
 
 		do
 		{
@@ -1672,8 +1671,7 @@ static ase_bool_t __test_charset (
 		}
 		else
 		{
-			ASE_AWK_ASSERT (matcher->awk,
-				!"should never happen - invalid charset code");
+			ASE_ASSERT (!"should never happen - invalid charset code");
 			break;
 		}
 

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.26 2007-02-24 14:32:11 bacon Exp $
+ * $Id: lsp.c,v 1.27 2007-03-06 14:58:00 bacon Exp $
  *
  * {License}
  */
@@ -40,9 +40,7 @@ ase_lsp_t* ase_lsp_open (
 	    prmfns->ccls.to_lower  == ASE_NULL) return ASE_NULL;
 
 	if (prmfns->misc.sprintf == ASE_NULL || 
-	    prmfns->misc.aprintf == ASE_NULL || 
-	    prmfns->misc.dprintf == ASE_NULL || 
-	    prmfns->misc.abort == ASE_NULL) return ASE_NULL;
+	    prmfns->misc.dprintf == ASE_NULL) return ASE_NULL;
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	lsp = (ase_lsp_t*) malloc (ASE_SIZEOF(ase_lsp_t));
