@@ -1,11 +1,13 @@
 /*
- * $Id: misc.c,v 1.1 2007-03-06 14:29:27 bacon Exp $
+ * $Id: misc.c,v 1.2 2007-03-06 15:01:50 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/cmn/types.h>
 #include <ase/cmn/macros.h>
+
+#ifndef NDEBUG
 
 int ase_assert_failed (
 	const ase_char_t* expr, const ase_char_t* desc, 
@@ -28,4 +30,6 @@ int ase_assert_failed (
 	ase_assert_abort ();
 	return 0;
 }
+
+#endif
 
