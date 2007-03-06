@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.115 2007-03-04 15:04:40 bacon Exp $ 
+ * $Id: awk.c,v 1.116 2007-03-06 14:51:51 bacon Exp $ 
  *
  * {License}
  */
@@ -36,9 +36,7 @@ ase_awk_t* ase_awk_open (
 	    prmfns->ccls.to_lower  == ASE_NULL ||
 	    prmfns->misc.pow       == ASE_NULL ||
 	    prmfns->misc.sprintf   == ASE_NULL || 
-	    prmfns->misc.aprintf   == ASE_NULL || 
-	    prmfns->misc.dprintf   == ASE_NULL || 
-	    prmfns->misc.abort     == ASE_NULL) 
+	    prmfns->misc.dprintf   == ASE_NULL)
 	{
 		*errnum = ASE_AWK_EPRMFNS;
 		return ASE_NULL;
@@ -223,14 +221,14 @@ int ase_awk_clear (ase_awk_t* awk)
 
 	if (awk->tree.begin != ASE_NULL) 
 	{
-		ASE_AWK_ASSERT (awk, awk->tree.begin->next == ASE_NULL);
+		ASE_ASSERT (awk->tree.begin->next == ASE_NULL);
 		ase_awk_clrpt (awk, awk->tree.begin);
 		awk->tree.begin = ASE_NULL;
 	}
 
 	if (awk->tree.end != ASE_NULL) 
 	{
-		ASE_AWK_ASSERT (awk, awk->tree.end->next == ASE_NULL);
+		ASE_ASSERT (awk->tree.end->next == ASE_NULL);
 		ase_awk_clrpt (awk, awk->tree.end);
 		awk->tree.end = ASE_NULL;
 	}
