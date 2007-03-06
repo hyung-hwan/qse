@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.1 2007-03-06 14:16:52 bacon Exp $
+ * $Id: macros.h,v 1.2 2007-03-06 14:29:04 bacon Exp $
  *
  * {License}
  */
@@ -56,11 +56,11 @@
 
 #define ASE_REPEAT(n,blk) \
 	do { \
-		ase_size_t __ase_repeat_x1 = (ase_size_t)(n); \
-		ase_size_t __ase_repeat_x2 = __ase_repeat_x1 >> 4; \
-		__ase_repeat_x1 &= 15; \
-		while (__ase_repeat_x1-- > 0) { blk; } \
-		while (__ase_repeat_x2-- > 0) { \
+		ase_size_t __ase_repeat_x1__ = (ase_size_t)(n); \
+		ase_size_t __ase_repeat_x2__ = __ase_repeat_x1__ >> 4; \
+		__ase_repeat_x1__ &= 15; \
+		while (__ase_repeat_x1__-- > 0) { blk; } \
+		while (__ase_repeat_x2__-- > 0) { \
 			blk; blk; blk; blk; blk; blk; blk; blk; \
 			blk; blk; blk; blk; blk; blk; blk; blk; \
 		} \
@@ -94,6 +94,28 @@
 #else
 	#define ASE_BEGIN_PACKED_STRUCT(x) struct x {
 	#define ASE_END_PACKED_STRUCT() };
+#endif
+
+#ifdef NDEBUG
+	#define ASE_ASSERT(awk,expr) ((void)0)
+	#define ASE_ASSERTX(awk,expr,desc) ((void)0)
+#else
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
+		void ase_assert_abort (void);
+		void ase_assert_printf (const ase_char_t* fmt, ...);
+		int ase_assert_failed (
+        		const ase_char_t* expr, const ase_char_t* desc,
+        		const ase_char_t* file, ase_size_t line);
+	#ifdef __cplusplus
+	}
+	#endif
+
+	#define ASE_ASSERT(awk,expr) (void)((expr) || \
+		(ase_assert_failed (ASE_T(#expr), ASE_NULL, ASE_T(__FILE__), __LINE__), 0))
+	#define ASE_ASSERTX(awk,expr,desc) (void)((expr) || \
+		(ase_assert_failed (ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
 #endif
 
 #define ASE_MALLOC(mmgr,size)      (mmgr)->malloc((mmgr)->custom_data, size)
