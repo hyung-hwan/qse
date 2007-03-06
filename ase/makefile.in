@@ -1,4 +1,4 @@
-SUBDIRS=cmn utl awk lsp
+SUBDIRS=cmn awk lsp utl
 
 all:
 	@for i in $(SUBDIRS); \

@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h,v 1.2 2007-02-23 08:17:51 bacon Exp $
+ * $Id: mem.h,v 1.3 2007-03-06 14:16:52 bacon Exp $
  *
  * {License}
  */
@@ -7,8 +7,8 @@
 #ifndef _ASE_CMN_MEM_H_
 #define _ASE_CMN_MEM_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 #ifdef __cplusplus
 extern "C" {

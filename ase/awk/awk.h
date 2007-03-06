@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.202 2007-03-05 14:58:36 bacon Exp $
+ * $Id: awk.h,v 1.203 2007-03-06 14:16:52 bacon Exp $
  *
  * {License}
  */
@@ -7,8 +7,8 @@
 #ifndef _ASE_AWK_AWK_H_
 #define _ASE_AWK_AWK_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 typedef struct ase_awk_t ase_awk_t;
 typedef struct ase_awk_run_t ase_awk_run_t;

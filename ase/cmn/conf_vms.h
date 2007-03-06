@@ -1,5 +1,5 @@
 /*
- * $Id: conf_vms.h,v 1.11 2007-02-19 04:44:13 bacon Exp $
+ * $Id: conf_vms.h,v 1.1 2007-03-06 14:16:52 bacon Exp $
  *
  * {License}
  */

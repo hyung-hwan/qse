@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.40 2007-02-24 14:32:11 bacon Exp $
+ * $Id: lsp.h,v 1.41 2007-03-06 14:16:53 bacon Exp $
  *
  * {License}
  */
@@ -7,8 +7,8 @@
 #ifndef _ASE_LSP_LSP_H_
 #define _ASE_LSP_LSP_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 typedef struct ase_lsp_t ase_lsp_t;
 typedef struct ase_lsp_obj_t ase_lsp_obj_t;

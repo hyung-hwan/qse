@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.75 2007-03-02 11:14:33 bacon Exp $
+ * $Id: types.h,v 1.1 2007-03-06 14:16:53 bacon Exp $
  *
  * {License}
  */
@@ -8,9 +8,9 @@
 #define _ASE_TYPES_H_
 
 #if defined(_WIN32)
-	#include <ase/conf_msw.h>
+	#include <ase/cmn/conf_msw.h>
 #elif defined(vms) || defined(__vms)
-	#include <ase/conf_vms.h>
+	#include <ase/cmn/conf_vms.h>
 #elif defined(__unix__) || defined(__unix) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || (defined(__APPLE__) && defined(__MACH__))
 	#if !defined(__unix__)
 		#define __unix__
@@ -18,7 +18,7 @@
 	#if !defined(__unix)
 		#define __unix
 	#endif
-	#include <ase/conf_unx.h>
+	#include <ase/cmn/conf_unx.h>
 #else
 	#error unsupported operating system
 #endif

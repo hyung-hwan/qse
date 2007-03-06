@@ -1,7 +1,7 @@
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.77 $])
-AC_CONFIG_HEADER([conf_unx.h])
+AC_REVISION([$Revision: 1.78 $])
+AC_CONFIG_HEADER([cmn/conf_unx.h])
 
 # Checks for programs.
 #AC_PROG_CXX

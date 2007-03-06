@@ -5,8 +5,8 @@
 #ifndef _ASE_UTL_CTYPE_H_
 #define _ASE_UTL_CTYPE_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 #ifdef __cplusplus
 extern "C" {
