@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.86 2007-03-06 13:19:28 bacon Exp $
+ * $Id: err.c,v 1.87 2007-03-06 14:51:51 bacon Exp $
  *
  * {License}
  */
@@ -213,7 +213,7 @@ void ase_awk_seterror (
 	const ase_char_t* errfmt;
 	ase_size_t fmtlen;
 
-	ASE_AWK_ASSERT (awk, argcnt <= 5);
+	ASE_ASSERT (argcnt <= 5);
 
 	awk->errnum = errnum;
 	awk->errlin = errlin;
@@ -370,7 +370,7 @@ void ase_awk_setrunerror (
 	const ase_char_t* errfmt;
 	ase_size_t fmtlen;
 
-	ASE_AWK_ASSERT (run->awk, argcnt <= 5);
+	ASE_ASSERT (argcnt <= 5);
 
 	run->errnum = errnum;
 	run->errlin = errlin;

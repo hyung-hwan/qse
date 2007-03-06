@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.73 2007-03-02 11:14:33 bacon Exp $
+ * $Id: extio.c,v 1.74 2007-03-06 14:51:52 bacon Exp $
  *
  * {License}
  */
@@ -87,12 +87,9 @@ int ase_awk_readextio (
 	ase_size_t line_len = 0;
 	ase_char_t c = ASE_T('\0'), pc;
 
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = __in_type_map[in_type];
@@ -294,7 +291,7 @@ int ase_awk_readextio (
 			const ase_char_t* match_ptr;
 			ase_size_t match_len;
 
-			ASE_AWK_ASSERT (run->awk, run->global.rs != ASE_NULL);
+			ASE_ASSERT (run->global.rs != ASE_NULL);
 
 			n = ase_awk_matchrex (
 				run->awk, run->global.rs, 
@@ -311,7 +308,7 @@ int ase_awk_readextio (
 			{
 				/* the match should be found at the end of
 				 * the current buffer */
-				ASE_AWK_ASSERT (run->awk,
+				ASE_ASSERT (
 					ASE_STR_BUF(buf) + ASE_STR_LEN(buf) ==
 					match_ptr + match_len);
 
@@ -406,12 +403,9 @@ int ase_awk_writeextio_str (
 	ase_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
 
-	ASE_AWK_ASSERT (run->awk, 
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];
@@ -542,12 +536,9 @@ int ase_awk_flushextio (
 	int extio_type, /*extio_mode,*/ extio_mask, n;
 	ase_bool_t ok = ase_false;
 
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];
@@ -596,12 +587,9 @@ int ase_awk_nextextio_read (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask, n;
 
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = __in_type_map[in_type];
@@ -626,7 +614,7 @@ int ase_awk_nextextio_read (
 	if (p == ASE_NULL)
 	{
 		/* something is totally wrong */
-		ASE_AWK_ASSERT (run->awk, 
+		ASE_ASSERT (
 			!"should never happen - cannot find the relevant extio entry");
 		ase_awk_setrunerror_old (run, ASE_AWK_EINTERN, 0, ASE_NULL);
 		return -1;
@@ -673,12 +661,9 @@ int ase_awk_nextextio_write (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask, n;
 
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];
@@ -703,8 +688,7 @@ int ase_awk_nextextio_write (
 	if (p == ASE_NULL)
 	{
 		/* something is totally wrong */
-		ASE_AWK_ASSERT (run->awk, 
-			!"should never happen - cannot find the relevant extio entry");
+		ASE_ASSERT (!"should never happen - cannot find the relevant extio entry");
 
 		ase_awk_setrunerror_old (run, ASE_AWK_EINTERN, 0, ASE_NULL);
 		return -1;
@@ -760,12 +744,9 @@ int ase_awk_closeextio_read (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask;
 
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
-	ASE_AWK_ASSERT (run->awk,
-		in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = __in_type_map[in_type];
@@ -822,12 +803,9 @@ int ase_awk_closeextio_write (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask;
 
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
-	ASE_AWK_ASSERT (run->awk,
-		out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = __out_type_map[out_type];

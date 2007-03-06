@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.16 2007-03-02 11:14:34 bacon Exp $
+ * $Id: rec.c,v 1.17 2007-03-06 14:51:53 bacon Exp $
  *
  * {License}
  */
@@ -46,7 +46,7 @@ int ase_awk_setrec (
 			return -1;
 		}
 
-		ASE_AWK_ASSERT (run->awk, run->inrec.d0->type == ASE_AWK_VAL_NIL);
+		ASE_ASSERT (run->inrec.d0->type == ASE_AWK_VAL_NIL);
 		/* d0 should be cleared before the next line is reached
 		 * as it doesn't call ase_awk_refdownval on run->inrec.d0 */
 		run->inrec.d0 = v;
@@ -99,7 +99,7 @@ static int __split_record (ase_awk_run_t* run)
 	int errnum;
        
 	/* inrec should be cleared before __split_record is called */
-	ASE_AWK_ASSERT (run->awk, run->inrec.nflds == 0);
+	ASE_ASSERT (run->inrec.nflds == 0);
 
 	/* get FS */
 	fs = ase_awk_getglobal (run, ASE_AWK_GLOBAL_FS);
@@ -156,8 +156,7 @@ static int __split_record (ase_awk_run_t* run)
 			return 0;
 		}
 
-		ASE_AWK_ASSERT (run->awk,
-			(tok != ASE_NULL && tok_len > 0) || tok_len == 0);
+		ASE_ASSERT ((tok != ASE_NULL && tok_len > 0) || tok_len == 0);
 
 		nflds++;
 		len = ASE_STR_LEN(&run->inrec.line) - 
@@ -206,8 +205,7 @@ static int __split_record (ase_awk_run_t* run)
 			}
 		}
 
-		ASE_AWK_ASSERT (run->awk,
-			(tok != ASE_NULL && tok_len > 0) || tok_len == 0);
+		ASE_ASSERT ((tok != ASE_NULL && tok_len > 0) || tok_len == 0);
 
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
@@ -240,7 +238,7 @@ static int __split_record (ase_awk_run_t* run)
 
 	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NF, v) == -1) return -1;
 
-	ASE_AWK_ASSERT (run->awk, nflds == run->inrec.nflds);
+	ASE_ASSERT (nflds == run->inrec.nflds);
 	return 0;
 }
 
@@ -257,12 +255,11 @@ int ase_awk_clrrec (ase_awk_run_t* run, ase_bool_t skip_inrec_line)
 
 	if (run->inrec.nflds > 0)
 	{
-		ASE_AWK_ASSERT (run->awk, run->inrec.flds != ASE_NULL);
+		ASE_ASSERT (run->inrec.flds != ASE_NULL);
 
 		for (i = 0; i < run->inrec.nflds; i++) 
 		{
-			ASE_AWK_ASSERT (run->awk,
-				run->inrec.flds[i].val != ASE_NULL);
+			ASE_ASSERT (run->inrec.flds[i].val != ASE_NULL);
 			ase_awk_refdownval (run, run->inrec.flds[i].val);
 		}
 		run->inrec.nflds = 0;
@@ -277,7 +274,7 @@ int ase_awk_clrrec (ase_awk_run_t* run, ase_bool_t skip_inrec_line)
 		}
 	}
 
-	ASE_AWK_ASSERT (run->awk, run->inrec.nflds == 0);
+	ASE_ASSERT (run->inrec.nflds == 0);
 	if (!skip_inrec_line) ase_str_clear (&run->inrec.line);
 
 	return n;
@@ -293,7 +290,7 @@ static int __recomp_record_fields (
 	/* recomposes the record and the fields when $N has been assigned 
 	 * a new value and recomputes NF accordingly */
 
-	ASE_AWK_ASSERT (run->awk, lv > 0);
+	ASE_ASSERT (lv > 0);
 	max = (lv > run->inrec.nflds)? lv: run->inrec.nflds;
 
 	nflds = run->inrec.nflds;
@@ -427,21 +424,23 @@ static int __recomp_record_fields (
 			if (ase_str_ncat (&run->inrec.line, 
 				tmp->buf, tmp->len) == (ase_size_t)-1)
 			{
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 				return -1;
 			}
 		}
 	}
 
 	v = ase_awk_getglobal (run, ASE_AWK_GLOBAL_NF);
-	ASE_AWK_ASSERT (run->awk, v->type == ASE_AWK_VAL_INT);
+	ASE_ASSERT (v->type == ASE_AWK_VAL_INT);
+
 	if (((ase_awk_val_int_t*)v)->val != max)
 	{
 		v = ase_awk_makeintval (run, (ase_long_t)max);
 		if (v == ASE_NULL) 
 		{
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 

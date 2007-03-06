@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.2 2007-03-06 14:29:04 bacon Exp $
+ * $Id: macros.h,v 1.3 2007-03-06 14:54:49 bacon Exp $
  *
  * {License}
  */
@@ -97,8 +97,8 @@
 #endif
 
 #ifdef NDEBUG
-	#define ASE_ASSERT(awk,expr) ((void)0)
-	#define ASE_ASSERTX(awk,expr,desc) ((void)0)
+	#define ASE_ASSERT(expr) ((void)0)
+	#define ASE_ASSERTX(expr,desc) ((void)0)
 #else
 	#ifdef __cplusplus
 	extern "C" {
@@ -112,9 +112,9 @@
 	}
 	#endif
 
-	#define ASE_ASSERT(awk,expr) (void)((expr) || \
+	#define ASE_ASSERT(expr) (void)((expr) || \
 		(ase_assert_failed (ASE_T(#expr), ASE_NULL, ASE_T(__FILE__), __LINE__), 0))
-	#define ASE_ASSERTX(awk,expr,desc) (void)((expr) || \
+	#define ASE_ASSERTX(expr,desc) (void)((expr) || \
 		(ase_assert_failed (ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
 #endif
 

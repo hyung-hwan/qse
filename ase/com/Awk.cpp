@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.26 2007-02-24 14:32:44 bacon Exp $
+ * $Id: Awk.cpp,v 1.27 2007-03-06 14:54:49 bacon Exp $
  *
  * {License}
  */
@@ -92,6 +92,27 @@ CAwk::~CAwk ()
 	}
 }
 
+#ifndef NDEBUG
+void ase_assert_dprintf (void)
+{
+	abort ();
+}
+
+void ase_assert_dprintf (const ase_char_t* fmt, ...)
+{
+	va_list ap;
+	int n;
+	ase_char_t buf[1024];
+
+	va_start (ap, fmt);
+	n = _vsntprintf (buf, ASE_COUNTOF(buf), fmt, ap);
+	if (n < 0) buf[ASE_COUNTOF(buf)-1] = ASE_T('\0');
+
+	MessageBox (NULL, buf, ASE_T("Assertion Failure"), MB_OK|MB_ICONERROR);
+	va_end (ap);
+}
+#endif
+
 static void* custom_awk_malloc (void* custom, ase_size_t n)
 {
 	return malloc (n);
@@ -177,11 +198,6 @@ static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
 	return pow (x, y);
 }
 
-static void custom_awk_abort (void* custom)
-{
-	abort ();
-
-}
 
 static int custom_awk_sprintf (
 	void* custom, ase_char_t* buf, ase_size_t size, 
@@ -195,20 +211,6 @@ static int custom_awk_sprintf (
 	va_end (ap);
 
 	return n;
-}
-
-static void custom_awk_aprintf (void* custom, const ase_char_t* fmt, ...)
-{
-	va_list ap;
-	int n;
-	ase_char_t buf[1024];
-
-	va_start (ap, fmt);
-	n = _vsntprintf (buf, ASE_COUNTOF(buf), fmt, ap);
-	if (n < 0) buf[ASE_COUNTOF(buf)-1] = ASE_T('\0');
-
-	MessageBox (NULL, buf, ASE_T("Assertion Failure"), MB_OK|MB_ICONERROR);
-	va_end (ap);
 }
 
 static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
@@ -261,8 +263,7 @@ static ase_ssize_t __read_source (
 			awk->read_src_len = n;
 		}
 
-		ASE_AWK_ASSERT (awk->handle, 
-			awk->read_src_pos < awk->read_src_len);
+		ASE_ASSERT (awk->read_src_pos < awk->read_src_len);
 
 		BSTR str = tmp->str;
 		INT left = awk->read_src_len - awk->read_src_pos;
@@ -652,7 +653,7 @@ static ase_ssize_t __process_extio (
 		extio = (IAwkExtio*)epa->handle;
 		extio2 = (CAwkExtio*)extio;
 
-		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+		ASE_ASSERT (extio != NULL);
 
 		INT n = awk->Fire_CloseExtio (extio);
 		if (n >= 0)
@@ -672,7 +673,7 @@ static ase_ssize_t __process_extio (
 		extio = (IAwkExtio*)epa->handle;
 		extio2 = (CAwkExtio*)extio;
 
-		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+		ASE_ASSERT (extio != NULL);
 
 		CBuffer* tmp = (CBuffer*)extio2->read_buf;
 		if (extio2->read_buf_pos >= extio2->read_buf_len)
@@ -685,8 +686,7 @@ static ase_ssize_t __process_extio (
 			extio2->read_buf_len = n;
 		}
 
-		ASE_AWK_ASSERT (awk->handle, 
-			extio2->read_buf_pos < extio2->read_buf_len);
+		ASE_ASSERT (extio2->read_buf_pos < extio2->read_buf_len);
 
 		BSTR str = tmp->str;
 		INT left = extio2->read_buf_len - extio2->read_buf_pos;
@@ -712,7 +712,7 @@ static ase_ssize_t __process_extio (
 	{
 		HRESULT hr;
 		IAwkExtio* extio = (IAwkExtio*)epa->handle;
-		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+		ASE_ASSERT (extio != NULL);
 
 		if (awk->write_extio_buf == NULL)
 		{
@@ -736,13 +736,13 @@ static ase_ssize_t __process_extio (
 	else if (cmd == ASE_AWK_IO_FLUSH)
 	{
 		IAwkExtio* extio = (IAwkExtio*)epa->handle;
-		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+		ASE_ASSERT (extio != NULL);
 		return awk->Fire_FlushExtio (extio);
 	}
 	else if (cmd == ASE_AWK_IO_NEXT)
 	{
 		IAwkExtio* extio = (IAwkExtio*)epa->handle;
-		ASE_AWK_ASSERT (ase_awk_getrunawk(epa->run), extio != NULL);
+		ASE_ASSERT (extio != NULL);
 		return awk->Fire_NextExtio (extio);
 	}
 
