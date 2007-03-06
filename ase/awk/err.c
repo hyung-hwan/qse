@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.85 2007-03-05 14:58:36 bacon Exp $
+ * $Id: err.c,v 1.86 2007-03-06 13:19:28 bacon Exp $
  *
  * {License}
  */
@@ -60,14 +60,14 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("unexpected end of a string"),
 		ASE_T("unexpected end of a regular expression"),
 		ASE_T("a left brace expected"),
-		ASE_T("a left parenthesis expected"),
+		ASE_T("a left parenthesis expected in place of '%.*s'"),
 		ASE_T("a right parenthesis expected in place of '%.*s'"),
-		ASE_T("a right bracket expected"),
+		ASE_T("a right bracket expected in place of '%.*s'"),
 		ASE_T("a comma expected in place of '%.*s'"),
 		ASE_T("a semicolon expected in place of '%.*s'"),
-		ASE_T("a colon expected"),
+		ASE_T("a colon expected in place of '%.*s'"),
 		ASE_T("statement not ending with a semicolon"),
-		ASE_T("keyword 'in' expected"),
+		ASE_T("keyword 'in' expected in place of '%.*s'"),
 		ASE_T("not a variable after 'in'"),
 		ASE_T("expression expected"),
 

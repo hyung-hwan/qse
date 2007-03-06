@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.251 2007-03-05 14:58:36 bacon Exp $
+ * $Id: parse.c,v 1.252 2007-03-06 13:19:28 bacon Exp $
  *
  * {License}
  */
@@ -809,9 +809,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		/* a function name is not followed by a left parenthesis */
 		ASE_AWK_FREE (awk, name_dup);
 
-		ase_awk_seterror_old (
-			awk, ASE_AWK_ELPAREN, awk->token.line,
-			ASE_T("function name not followed by a left parenthesis"));
+		SET_ERROR_TOKEN (awk, ASE_AWK_ELPAREN);
 		return ASE_NULL;
 	}	
 
@@ -1888,18 +1886,7 @@ static ase_awk_nde_t* __parse_basic_expr (ase_awk_t* awk, ase_size_t line)
 
 		if (!MATCH(awk,TOKEN_COLON)) 
 		{
-			if (MATCH(awk,TOKEN_EOF))
-			{
-				ase_awk_seterror_old (
-					awk, ASE_AWK_EENDSRC, 
-					awk->token.prev.line, ASE_NULL);
-			}
-			else
-			{
-				ase_awk_seterror_old (
-					awk, ASE_AWK_ECOLON, 
-					awk->token.line, ASE_NULL);
-			}
+			SET_ERROR_TOKEN (awk, ASE_AWK_ECOLON);
 			return ASE_NULL;
 		}
 		if (__get_token(awk) == -1) return ASE_NULL;
@@ -2866,8 +2853,7 @@ static ase_awk_nde_t* __parse_primary (ase_awk_t* awk, ase_size_t line)
 				{
 					ase_awk_clrpt (awk, nde);
 
-					SET_ERROR_0 (awk, ASE_AWK_EIN,
-						ASE_T("'in' expected in place of '%.*s'"));
+					SET_ERROR_TOKEN (awk, ASE_AWK_EIN);
 					return ASE_NULL;
 				}
 			}
@@ -2994,16 +2980,9 @@ static ase_awk_nde_t* __parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		{
 			/* built-in function should be in the form 
 		 	 * of the function call */
-
-			awk->prmfns.misc.sprintf (
-				awk->prmfns.misc.custom_data,
-				awk->errmsg, ASE_COUNTOF(awk->errmsg),
-				ASE_T("function name '%.*s' without a left parenthesis"),
-				name_len, name_dup);
-
 			ASE_AWK_FREE (awk, name_dup);
 
-			ase_awk_seterror_old (awk, ASE_AWK_ELPAREN, line, awk->errmsg);
+			SET_ERROR_TOKEN (awk, ASE_AWK_ELPAREN);
 			return ASE_NULL;
 		}
 
@@ -3166,8 +3145,7 @@ static ase_awk_nde_t* __parse_hashidx (
 	{
 		ase_awk_clrpt (awk, idx);
 
-		SET_ERROR_0 (awk, ASE_AWK_ERBRACK, 
-			ASE_T("right bracket expected in place of '%.*s'"));
+		SET_ERROR_TOKEN (awk, ASE_AWK_ERBRACK);
 		return ASE_NULL;
 	}
 
@@ -3375,9 +3353,7 @@ static ase_awk_nde_t* __parse_if (ase_awk_t* awk, ase_size_t line)
 
 	if (!MATCH(awk,TOKEN_LPAREN)) 
 	{
-		SET_ERROR_0 (
-			awk, ASE_AWK_ELPAREN, 
-			ASE_T("left parenthesis expected in place of '%.*s'"));
+		SET_ERROR_TOKEN (awk, ASE_AWK_ELPAREN);
 		return ASE_NULL;
 
 	}
@@ -3456,9 +3432,7 @@ static ase_awk_nde_t* __parse_while (ase_awk_t* awk, ase_size_t line)
 
 	if (!MATCH(awk,TOKEN_LPAREN)) 
 	{
-		SET_ERROR_0 (
-			awk, ASE_AWK_ELPAREN, 
-			ASE_T("left parenthesis expected in place of '%.*s'"));
+		SET_ERROR_TOKEN (awk, ASE_AWK_ELPAREN);
 		return ASE_NULL;
 	}
 	if (__get_token(awk) == -1) return ASE_NULL;
@@ -3516,9 +3490,7 @@ static ase_awk_nde_t* __parse_for (ase_awk_t* awk, ase_size_t line)
 
 	if (!MATCH(awk,TOKEN_LPAREN))
 	{
-		SET_ERROR_0 (
-			awk, ASE_AWK_ELPAREN, 
-			ASE_T("left parenthesis expected in place of '%.*s'"));
+		SET_ERROR_TOKEN (awk, ASE_AWK_ELPAREN);
 		return ASE_NULL;
 	}
 	if (__get_token(awk) == -1) return ASE_NULL;
@@ -3717,9 +3689,7 @@ static ase_awk_nde_t* __parse_dowhile (ase_awk_t* awk, ase_size_t line)
 	{
 		ase_awk_clrpt (awk, body);
 
-		SET_ERROR_0 (
-			awk, ASE_AWK_ELPAREN, 
-			ASE_T("left parenthesis expected in place of '%.*s'"));
+		SET_ERROR_TOKEN (awk, ASE_AWK_ELPAREN);
 		return ASE_NULL;
 	}
 
