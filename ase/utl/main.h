@@ -1,12 +1,12 @@
 /*
- * $Id: main.h,v 1.2 2007-02-22 14:32:08 bacon Exp $
+ * $Id: main.h,v 1.3 2007-03-06 14:16:53 bacon Exp $
  */
 
 #ifndef _ASE_UTL_MAIN_H_
 #define _ASE_UTL_MAIN_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 #if defined(_WIN32)
 

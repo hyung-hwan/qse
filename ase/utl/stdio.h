@@ -1,12 +1,12 @@
 /*
- * $Id: stdio.h,v 1.5 2007-02-28 09:57:13 bacon Exp $
+ * $Id: stdio.h,v 1.6 2007-03-06 14:16:53 bacon Exp $
  */
 
 #ifndef _ASE_UTL_STDIO_H_
 #define _ASE_UTL_STDIO_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 #include <stdio.h>
 #include <stdarg.h>

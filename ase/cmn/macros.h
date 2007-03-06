@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.54 2007-02-24 14:32:44 bacon Exp $
+ * $Id: macros.h,v 1.1 2007-03-06 14:16:52 bacon Exp $
  *
  * {License}
  */
@@ -7,7 +7,7 @@
 #ifndef _ASE_MACROS_H_
 #define _ASE_MACROS_H_
 
-#include <ase/types.h>
+#include <ase/cmn/types.h>
 
 #ifdef __cplusplus
 	/*#define ASE_NULL ((ase_uint_t)0)*/

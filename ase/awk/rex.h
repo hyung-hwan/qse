@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h,v 1.27 2007-02-28 11:00:32 bacon Exp $
+ * $Id: rex.h,v 1.28 2007-03-06 14:16:52 bacon Exp $
  *
  * {License}
  */
@@ -7,9 +7,9 @@
 #ifndef _ASE_AWK_REX_H_
 #define _ASE_AWK_REX_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
-
+#ifndef _ASE_AWK_AWK_H_
+#error Never include this file directly. Include <ase/awk/awk.h> instead
+#endif
 
 /*
  * Regular Esseression Syntax

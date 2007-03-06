@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.77 2007-03-03 13:22:01 bacon Exp $
+ * $Id: rex.c,v 1.78 2007-03-06 14:16:52 bacon Exp $
  *
  * {License}
  */
@@ -128,7 +128,7 @@ struct match_t
 	const ase_byte_t* branch_end;
 };
 
-#include <ase/pack.h>
+#include <ase/cmn/pack.h>
 
 ASE_BEGIN_PACKED_STRUCT (code_t)
 	/*ase_byte_t cmd;*/
@@ -156,7 +156,7 @@ ASE_BEGIN_PACKED_STRUCT (cshdr_t)
 	ase_size_t csl; /* length */
 ASE_END_PACKED_STRUCT ()
 
-#include <ase/unpack.h>
+#include <ase/cmn/unpack.h>
 
 typedef const ase_byte_t* (*atom_matcher_t) (
 	matcher_t* matcher, const ase_byte_t* base, match_t* mat);

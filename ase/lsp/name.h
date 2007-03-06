@@ -1,5 +1,5 @@
 /*
- * $Id: name.h,v 1.9 2007-02-03 10:51:52 bacon Exp $
+ * $Id: name.h,v 1.10 2007-03-06 14:16:53 bacon Exp $
  *
  * {License}
  */
@@ -7,8 +7,8 @@
 #ifndef _ASE_LSP_NAME_H_
 #define _ASE_LSP_NAME_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 struct ase_lsp_name_t 
 {
