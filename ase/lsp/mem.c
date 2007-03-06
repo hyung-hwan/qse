@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.32 2007-02-24 14:32:11 bacon Exp $
+ * $Id: mem.c,v 1.33 2007-03-06 14:58:00 bacon Exp $
  *
  * {License}
  */
@@ -138,8 +138,8 @@ ase_lsp_gc (mem);
 void ase_lsp_dispose (
 	ase_lsp_mem_t* mem, ase_lsp_obj_t* prev, ase_lsp_obj_t* obj)
 {
-	ASE_LSP_ASSERT (mem->lsp, obj != ASE_NULL);
-	ASE_LSP_ASSERT (mem->lsp, mem->count > 0);
+	ASE_ASSERT (obj != ASE_NULL);
+	ASE_ASSERT (mem->count > 0);
 
 	/* TODO: push the object to the free list for more 
 	 *       efficient memory management */
@@ -176,7 +176,7 @@ void ase_lsp_dispose_all (ase_lsp_mem_t* mem)
 
 static void __mark_obj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ASE_LSP_ASSERT (lsp, obj != ASE_NULL);
+	ASE_ASSERT (obj != ASE_NULL);
 
 	// TODO:....
 	// can it be recursive?
@@ -206,18 +206,18 @@ static void __mark_obj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
  */
 void ase_lsp_lockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
+	ASE_ASSERTX (obj != ASE_NULL,
 		"an object pointer should not be ASE_NULL");
 	if (ASE_LSP_PERM(obj) == 0) ASE_LSP_LOCK(obj)++;
 }
 
 void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
+	ASE_ASSERTX (obj != ASE_NULL,
 		"an object pointer should not be ASE_NULL");
 
 	if (ASE_LSP_PERM(obj) != 0) return;
-	ASE_LSP_ASSERTX (lsp, ASE_LSP_LOCK(obj) > 0,
+	ASE_ASSERTX (ASE_LSP_LOCK(obj) > 0,
 		"the lock count should be greater than zero to be unlocked");
 
 	ASE_LSP_LOCK(obj)--;
@@ -225,12 +225,12 @@ void ase_lsp_unlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 
 void ase_lsp_deepunlockobj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
-	ASE_LSP_ASSERTX (lsp, obj != ASE_NULL,
+	ASE_ASSERTX (obj != ASE_NULL,
 		"an object pointer should not be ASE_NULL");
 
 	if (ASE_LSP_PERM(obj) == 0) 
 	{
-		ASE_LSP_ASSERTX (lsp, ASE_LSP_LOCK(obj) > 0,
+		ASE_ASSERTX (ASE_LSP_LOCK(obj) > 0,
 			"the lock count should be greater than zero to be unlocked");
 		ASE_LSP_LOCK(obj)--;
 	}
@@ -532,7 +532,7 @@ ase_lsp_assoc_t* ase_lsp_lookup (ase_lsp_mem_t* mem, ase_lsp_obj_t* name)
 	ase_lsp_frame_t* frame;
 	ase_lsp_assoc_t* assoc;
 
-	ASE_LSP_ASSERT (mem->lsp, ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	ASE_ASSERT (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
 
 	frame = mem->frame;
 
@@ -584,7 +584,7 @@ ase_size_t ase_lsp_conslen (ase_lsp_mem_t* mem, ase_lsp_obj_t* obj)
 {
 	ase_size_t count;
 
-	ASE_LSP_ASSERT (mem->lsp, 
+	ASE_ASSERT (
 		obj == mem->nil || ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS);
 
 	count = 0;

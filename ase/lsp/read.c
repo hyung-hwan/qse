@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.32 2007-02-11 07:36:55 bacon Exp $
+ * $Id: read.c,v 1.33 2007-03-06 14:58:00 bacon Exp $
  *
  * {License}
  */
@@ -117,7 +117,7 @@ static ase_lsp_obj_t* read_obj (ase_lsp_t* lsp)
 			return obj;
 
 		case TOKEN_IDENT:
-			ASE_LSP_ASSERT (lsp,
+			ASE_ASSERT (
 				lsp->mem->nil != ASE_NULL && 
 				lsp->mem->t != ASE_NULL); 
 
@@ -272,7 +272,7 @@ static int read_char (ase_lsp_t* lsp)
 
 static int read_token (ase_lsp_t* lsp)
 {
-	ASE_LSP_ASSERT (lsp, lsp->input_func != ASE_NULL);
+	ASE_ASSERT (lsp->input_func != ASE_NULL);
 
 	TOKEN_CLEAR (lsp);
 

@@ -301,9 +301,7 @@ int lsp_main (int argc, ase_char_t* argv[])
 	prmfns.ccls.custom_data  = ASE_NULL;
 
 	prmfns.misc.sprintf = custom_lsp_sprintf;
-	prmfns.misc.aprintf = custom_lsp_aprintf;
 	prmfns.misc.dprintf = custom_lsp_dprintf;
-	prmfns.misc.abort   = custom_lsp_abort;
 	prmfns.misc.custom_data = ASE_NULL;
 
 	lsp = ase_lsp_open (&prmfns, mem, inc);

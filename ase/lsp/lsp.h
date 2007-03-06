@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.h,v 1.42 2007-03-06 14:58:00 bacon Exp $
+ * $Id: lsp.h,v 1.43 2007-03-06 14:59:59 bacon Exp $
  *
  * {License}
  */
@@ -115,12 +115,6 @@ int ase_lsp_addprim (
 	ase_lsp_t* lsp, const ase_char_t* name, ase_size_t name_len, 
 	ase_lsp_prim_t prim, ase_size_t min_args, ase_size_t max_args);
 int ase_lsp_removeprim (ase_lsp_t* lsp, const ase_char_t* name);
-
-/* abort function for assertion. use ASE_LSP_ASSERT instead */
-int ase_lsp_assertfail (ase_lsp_t* lsp,
-	const ase_char_t* expr, const ase_char_t* desc,
-	const ase_char_t* file, int line);
-
 
 #ifdef __cplusplus
 }
