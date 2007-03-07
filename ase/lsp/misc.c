@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.11 2007-03-06 14:58:00 bacon Exp $
+ * $Id: misc.c,v 1.12 2007-03-07 12:14:29 bacon Exp $
  *
  * {License}
  */
@@ -16,7 +16,7 @@ ase_long_t ase_lsp_strxtolong (
 	ase_size_t rem;
 	int digit, negative = 0;
 
-	ASE_LSP_ASSERT (lsp, base < 37); 
+	ASE_ASSERT (base < 37); 
 
 	p = str; 
 	end = str + len;

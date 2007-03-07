@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.27 2007-03-06 14:58:00 bacon Exp $
+ * $Id: lsp.c,v 1.28 2007-03-07 12:14:29 bacon Exp $
  *
  * {License}
  */
@@ -105,7 +105,7 @@ int ase_lsp_attinput (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
 {
 	if (ase_lsp_detinput(lsp) == -1) return -1;
 
-	ASE_LSP_ASSERT (lsp, lsp->input_func == ASE_NULL);
+	ASE_ASSERT (lsp->input_func == ASE_NULL);
 
 	if (input(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) 
 	{
@@ -141,7 +141,7 @@ int ase_lsp_attoutput (ase_lsp_t* lsp, ase_lsp_io_t output, void* arg)
 {
 	if (ase_lsp_detoutput(lsp) == -1) return -1;
 
-	ASE_LSP_ASSERT (lsp, lsp->output_func == ASE_NULL);
+	ASE_ASSERT (lsp->output_func == ASE_NULL);
 
 	if (output(ASE_LSP_IO_OPEN, arg, ASE_NULL, 0) == -1) 
 	{

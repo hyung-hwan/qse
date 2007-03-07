@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.23 2007-02-13 06:00:20 bacon Exp $
+ * $Id: prim.c,v 1.24 2007-03-07 12:14:29 bacon Exp $
  *
  * {License}
  */
@@ -69,7 +69,7 @@ ase_lsp_obj_t* ase_lsp_prim_eval (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* tmp1, * tmp2;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	tmp1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp1 == ASE_NULL) return ASE_NULL;
@@ -170,7 +170,7 @@ ase_lsp_obj_t* ase_lsp_prim_if (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* tmp;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 	
 	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp == ASE_NULL) return ASE_NULL;
@@ -241,7 +241,7 @@ ase_lsp_obj_t* ase_lsp_prim_while (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	ase_lsp_obj_t* tmp;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	while (1)
 	{
@@ -285,7 +285,7 @@ ase_lsp_obj_t* ase_lsp_prim_car (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	ase_lsp_obj_t* tmp;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp == ASE_NULL) return ASE_NULL;
@@ -308,7 +308,7 @@ ase_lsp_obj_t* ase_lsp_prim_cdr (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	ase_lsp_obj_t* tmp;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (tmp == ASE_NULL) return ASE_NULL;
@@ -332,7 +332,7 @@ ase_lsp_obj_t* ase_lsp_prim_cons (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	ase_lsp_obj_t* car, * cdr, * cons;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	car = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (car == ASE_NULL) return ASE_NULL;
@@ -370,7 +370,7 @@ ase_lsp_obj_t* ase_lsp_prim_length (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* body, * tmp;
 	ase_long_t len = 0;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	body = args;
 	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
@@ -421,7 +421,7 @@ ase_lsp_obj_t* ase_lsp_prim_length (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		body = ASE_LSP_CDR(body);
 	}
 
-	ASE_LSP_ASSERT (lsp, body == lsp->mem->nil);
+	ASE_ASSERT (body == lsp->mem->nil);
 	return ase_lsp_makeintobj (lsp->mem, len);
 }
 
@@ -435,7 +435,7 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	ase_lsp_obj_t* p1, * p2;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
 	if (p1 == ASE_NULL) return ASE_NULL;
@@ -486,7 +486,7 @@ ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 
 	while (p != lsp->mem->nil) 
 	{
-		ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(p) == ASE_LSP_OBJ_CONS);
+		ASE_ASSERT (ASE_LSP_TYPE(p) == ASE_LSP_OBJ_CONS);
 
 		p1 = ASE_LSP_CAR(p);
 		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
@@ -525,7 +525,7 @@ ase_lsp_obj_t* ase_lsp_prim_quote (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	 * (quote (10 20 30 50))
 	 */
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 	return ASE_LSP_CAR(args);
 }
 

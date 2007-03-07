@@ -1,5 +1,5 @@
 /*
- * $Id: name.c,v 1.15 2007-02-23 10:53:39 bacon Exp $
+ * $Id: name.c,v 1.16 2007-03-07 12:14:29 bacon Exp $
  *
  * {License}
  */
@@ -47,7 +47,7 @@ void ase_lsp_name_close (ase_lsp_name_t* name)
 {
 	if (name->capa >= ASE_COUNTOF(name->static_buf)) 
 	{
-		ASE_LSP_ASSERT (name->lsp, name->buf != name->static_buf);
+		ASE_ASSERT (name->buf != name->static_buf);
 		ASE_LSP_FREE (name->lsp, name->buf);
 	}
 	if (name->__dynamic) ASE_LSP_FREE (name->lsp, name);
