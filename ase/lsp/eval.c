@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.27 2007-02-17 15:27:19 bacon Exp $
+ * $Id: eval.c,v 1.28 2007-03-07 12:14:28 bacon Exp $
  *
  * {License}
  */
@@ -112,7 +112,7 @@ static ase_lsp_obj_t* eval_cons (ase_lsp_t* lsp, ase_lsp_obj_t* cons)
 {
 	ase_lsp_obj_t* car, * cdr;
    
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(cons) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(cons) == ASE_LSP_OBJ_CONS);
 
 	car = ASE_LSP_CAR(cons);
 	cdr = ASE_LSP_CDR(cons);
@@ -218,12 +218,10 @@ static ase_lsp_obj_t* apply (
 	ase_lsp_obj_t* value;
 	ase_lsp_mem_t* mem;
 
-	ASE_LSP_ASSERT (lsp,
-		ASE_LSP_TYPE(func) == ASE_LSP_OBJ_FUNC ||
-		ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO);
+	ASE_ASSERT (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_FUNC ||
+	            ASE_LSP_TYPE(func) == ASE_LSP_OBJ_MACRO);
 
-	ASE_LSP_ASSERT (lsp,
-		ASE_LSP_TYPE(ASE_LSP_CDR(func)) == ASE_LSP_OBJ_CONS);
+	ASE_ASSERT (ASE_LSP_TYPE(ASE_LSP_CDR(func)) == ASE_LSP_OBJ_CONS);
 
 	mem = lsp->mem;
 
@@ -352,7 +350,7 @@ static ase_lsp_obj_t* apply_to_prim (
 	ase_lsp_obj_t* obj;
 	ase_size_t count = 0;
 
-	ASE_LSP_ASSERT (lsp, ASE_LSP_TYPE(func) == ASE_LSP_OBJ_PRIM);
+	ASE_ASSERT (ASE_LSP_TYPE(func) == ASE_LSP_OBJ_PRIM);
 
 	obj = actual;
 	while (ASE_LSP_TYPE(obj) == ASE_LSP_OBJ_CONS) 
