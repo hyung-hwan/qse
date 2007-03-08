@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.253 2007-03-06 14:51:52 bacon Exp $
+ * $Id: parse.c,v 1.254 2007-03-08 14:31:34 bacon Exp $
  *
  * {License}
  */
@@ -573,17 +573,15 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk)
 		{
 			/* when the blockless pattern is supported
 	   		 * BEGIN and { should be located on the same line */
-			ase_awk_seterror_old (
+			ase_awk_seterror (
 				awk, ASE_AWK_EBLKBEG, awk->token.prev.line, 
-				ASE_T("BEGIN not followed by a left bracket on the same line"));
+				ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
 		if (!MATCH(awk,TOKEN_LBRACE)) 
 		{
-			ase_awk_seterror_old (
-				awk, ASE_AWK_ELBRACE, awk->token.prev.line, 
-				ASE_T("BEGIN not followed by a left bracket"));
+			SET_ERROR_TOKEN (awk, ASE_AWK_ELBRACE);
 			return ASE_NULL;
 		}
 
@@ -600,17 +598,15 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk)
 		{
 			/* when the blockless pattern is supported
 	   		 * END and { should be located on the same line */
-			ase_awk_seterror_old (
+			ase_awk_seterror (
 				awk, ASE_AWK_EBLKEND, awk->token.prev.line, 
-				ASE_T("END not followed by a left bracket on the same line"));
+				ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
 		if (!MATCH(awk,TOKEN_LBRACE)) 
 		{
-			ase_awk_seterror_old (
-				awk, ASE_AWK_ELBRACE, awk->token.prev.line, 
-				ASE_T("END not followed by a left bracket"));
+			SET_ERROR_TOKEN (awk, ASE_AWK_ELBRACE);
 			return ASE_NULL;
 		}
 
@@ -692,10 +688,7 @@ static ase_awk_t* __parse_progunit (ase_awk_t* awk)
 			if (!MATCH(awk,TOKEN_LBRACE))
 			{
 				ase_awk_clrpt (awk, ptn);
-				ase_awk_seterror_old (
-					awk, ASE_AWK_ELBRACE, 
-					(MATCH(awk,TOKEN_EOF)? awk->token.prev.line: awk->token.line),
-					ASE_T("not a valid start of a block")); 
+				SET_ERROR_TOKEN (awk, ASE_AWK_ELBRACE);
 				return ASE_NULL;
 			}
 
@@ -992,26 +985,7 @@ static ase_awk_nde_t* __parse_function (ase_awk_t* awk)
 		ASE_AWK_FREE (awk, name_dup);
 		ase_awk_tab_clear (&awk->parse.params);
 
-		if (MATCH(awk,TOKEN_EOF))
-		{
-			ase_awk_seterror_old (
-				awk, ASE_AWK_EENDSRC, awk->token.prev.line,
-				ASE_NULL);
-		}
-		else
-		{
-			awk->prmfns.misc.sprintf (
-				awk->prmfns.misc.custom_data,
-				awk->errmsg, ASE_COUNTOF(awk->errmsg),
-				ASE_T("'%.*s' not a valid start of the function body"), 
-				ASE_STR_LEN(&awk->token.name),
-				ASE_STR_BUF(&awk->token.name));
-
-			ase_awk_seterror_old (
-				awk, ASE_AWK_ELBRACE, awk->token.line, 
-				awk->errmsg);
-		}
-
+		SET_ERROR_TOKEN (awk, ASE_AWK_ELBRACE);
 		return ASE_NULL;
 	}
 	if (__get_token(awk) == -1) 

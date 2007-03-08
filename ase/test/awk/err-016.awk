@@ -1,0 +1,5 @@
+
+BEGIN
+{
+	print "hello world";
+}
