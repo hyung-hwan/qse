@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.87 2007-03-06 14:51:51 bacon Exp $
+ * $Id: err.c,v 1.88 2007-03-08 14:31:34 bacon Exp $
  *
  * {License}
  */
@@ -59,7 +59,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("unexpected end of a comment"),
 		ASE_T("unexpected end of a string"),
 		ASE_T("unexpected end of a regular expression"),
-		ASE_T("a left brace expected"),
+		ASE_T("a left brace expected n place of '%.*s'"),
 		ASE_T("a left parenthesis expected in place of '%.*s'"),
 		ASE_T("a right parenthesis expected in place of '%.*s'"),
 		ASE_T("a right bracket expected in place of '%.*s'"),
@@ -75,8 +75,8 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("assignment statement expected"),
 		ASE_T("identifier expected"),
 		ASE_T("'%.*s' not a valid function name"),
-		ASE_T("BEGIN requires an action block"),
-		ASE_T("END requires an action block"),
+		ASE_T("BEGIN not followed by a left bracket on the same line"),
+		ASE_T("END not followed by a left bracket on the same line"),
 		ASE_T("duplicate BEGIN"),
 		ASE_T("duplicate END"),
 		ASE_T("built-in function '%.*s' redefined"),
