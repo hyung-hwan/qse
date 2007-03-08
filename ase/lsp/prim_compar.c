@@ -1,5 +1,5 @@
 /*
- * $Id: prim_compar.c,v 1.15 2007-03-07 12:14:29 bacon Exp $
+ * $Id: prim_compar.c,v 1.16 2007-03-08 13:58:52 bacon Exp $
  *
  * {License}
  */
@@ -10,7 +10,7 @@
 { \
 	ase_lsp_obj_t* p1, * p2; \
 	int res; \
-	ASE_ASSERT (lsp, ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS); \
+	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS); \
 \
 	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args)); \
 	if (p1 == ASE_NULL) return ASE_NULL; \
