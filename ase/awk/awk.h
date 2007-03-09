@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.204 2007-03-06 14:51:51 bacon Exp $
+ * $Id: awk.h,v 1.205 2007-03-09 14:19:55 bacon Exp $
  *
  * {License}
  */
@@ -215,7 +215,6 @@ enum
 	ASE_AWK_ERUNTIME,       /* run-time error */
 	ASE_AWK_EBLKNST,        /* blocke nested too deeply */
 	ASE_AWK_EEXPRNST,       /* expression nested too deeply */
-	ASE_AWK_EPRMFNS,        /* system functions not proper */
 
 	ASE_AWK_ESINOP,
 	ASE_AWK_ESINCL,
@@ -376,8 +375,7 @@ enum
 extern "C" {
 #endif
 
-ase_awk_t* ase_awk_open (
-	const ase_awk_prmfns_t* prmfns, void* custom_data, int* errnum);
+ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data);
 int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 

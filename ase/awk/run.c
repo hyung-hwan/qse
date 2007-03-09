@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.340 2007-03-06 14:51:53 bacon Exp $
+ * $Id: run.c,v 1.341 2007-03-09 14:19:55 bacon Exp $
  *
  * {License}
  */
@@ -588,10 +588,10 @@ int ase_awk_run (ase_awk_t* awk,
 	void* custom_data)
 {
 	ase_awk_run_t* run;
-	int n, errnum;
+	int n;
 
 	/* clear the awk error code */
-	ase_awk_seterror_old (awk, ASE_AWK_ENOERR, 0, ASE_NULL);
+	ase_awk_seterror (awk, ASE_AWK_ENOERR, 0, ASE_NULL, 0);
 
 	/* check if the code has ever been parsed */
 	if (awk->tree.nglobals == 0 && 
