@@ -6,7 +6,7 @@ C_OBJS = $(C_SRCS:.c=.obj)
 CC = cl
 LD = link
 
-CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. -DNDEBUG
+CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. 
 
 all: lib 
 

@@ -1,6 +1,6 @@
 OUT = aseawk
 
-C_SRCS = awk.c err.c tree.c str.c tab.c map.c parse.c \
+C_SRCS = awk.c err.c tree.c tab.c map.c parse.c \
 	run.c rec.c val.c func.c misc.c extio.c rex.c
 JNI_SRCS = jni.c
 JAVA_SRCS = Exception.java Extio.java Awk.java StdAwk.java

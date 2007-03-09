@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.116 2007-03-06 14:51:51 bacon Exp $ 
+ * $Id: awk.c,v 1.117 2007-03-09 14:19:54 bacon Exp $ 
  *
  * {License}
  */
@@ -13,34 +13,30 @@
 
 static void __free_afn (void* awk, void* afn);
 
-ase_awk_t* ase_awk_open (
-	const ase_awk_prmfns_t* prmfns, void* custom_data, int* errnum)
+ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 {
 	ase_awk_t* awk;
 
-	if (prmfns                 == ASE_NULL ||
-	    prmfns->mmgr.malloc    == ASE_NULL || 
-	    prmfns->mmgr.free      == ASE_NULL ||
-	    prmfns->ccls.is_upper  == ASE_NULL ||
-	    prmfns->ccls.is_lower  == ASE_NULL ||
-	    prmfns->ccls.is_alpha  == ASE_NULL ||
-	    prmfns->ccls.is_digit  == ASE_NULL ||
-	    prmfns->ccls.is_xdigit == ASE_NULL ||
-	    prmfns->ccls.is_alnum  == ASE_NULL ||
-	    prmfns->ccls.is_space  == ASE_NULL ||
-	    prmfns->ccls.is_print  == ASE_NULL ||
-	    prmfns->ccls.is_graph  == ASE_NULL ||
-	    prmfns->ccls.is_cntrl  == ASE_NULL ||
-	    prmfns->ccls.is_punct  == ASE_NULL ||
-	    prmfns->ccls.to_upper  == ASE_NULL ||
-	    prmfns->ccls.to_lower  == ASE_NULL ||
-	    prmfns->misc.pow       == ASE_NULL ||
-	    prmfns->misc.sprintf   == ASE_NULL || 
-	    prmfns->misc.dprintf   == ASE_NULL)
-	{
-		*errnum = ASE_AWK_EPRMFNS;
-		return ASE_NULL;
-	}
+	ASE_ASSERT (
+		prmfns                 != ASE_NULL &&
+		prmfns->mmgr.malloc    != ASE_NULL &&
+		prmfns->mmgr.free      != ASE_NULL &&
+		prmfns->ccls.is_upper  != ASE_NULL &&
+		prmfns->ccls.is_lower  != ASE_NULL &&
+		prmfns->ccls.is_alpha  != ASE_NULL &&
+		prmfns->ccls.is_digit  != ASE_NULL &&
+		prmfns->ccls.is_xdigit != ASE_NULL &&
+		prmfns->ccls.is_alnum  != ASE_NULL &&
+		prmfns->ccls.is_space  != ASE_NULL &&
+		prmfns->ccls.is_print  != ASE_NULL &&
+		prmfns->ccls.is_graph  != ASE_NULL &&
+		prmfns->ccls.is_cntrl  != ASE_NULL &&
+		prmfns->ccls.is_punct  != ASE_NULL &&
+		prmfns->ccls.to_upper  != ASE_NULL &&
+		prmfns->ccls.to_lower  != ASE_NULL &&
+		prmfns->misc.pow       != ASE_NULL &&
+		prmfns->misc.sprintf   != ASE_NULL &&
+		prmfns->misc.dprintf   != ASE_NULL);
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	awk = (ase_awk_t*) malloc (ASE_SIZEOF(ase_awk_t));
@@ -48,11 +44,7 @@ ase_awk_t* ase_awk_open (
 	awk = (ase_awk_t*) prmfns->mmgr.malloc (
 		prmfns->mmgr.custom_data, ASE_SIZEOF(ase_awk_t));
 #endif
-	if (awk == ASE_NULL) 
-	{
-		*errnum = ASE_AWK_ENOMEM;
-		return ASE_NULL;
-	}
+	if (awk == ASE_NULL) return ASE_NULL;
 
 	/* it uses the built-in ase_awk_memset because awk is not 
 	 * fully initialized yet */
@@ -63,7 +55,6 @@ ase_awk_t* ase_awk_open (
 		&awk->token.name, 128, &awk->prmfns.mmgr) == ASE_NULL) 
 	{
 		ASE_AWK_FREE (awk, awk);
-		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 
@@ -73,7 +64,6 @@ ase_awk_t* ase_awk_open (
 	{
 		ase_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
-		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 
@@ -82,7 +72,6 @@ ase_awk_t* ase_awk_open (
 		ase_str_close (&awk->token.name);
 		ase_awk_map_close (&awk->tree.afns);
 		ASE_AWK_FREE (awk, awk);
-		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 
@@ -92,7 +81,6 @@ ase_awk_t* ase_awk_open (
 		ase_awk_map_close (&awk->tree.afns);
 		ase_awk_tab_close (&awk->parse.globals);
 		ASE_AWK_FREE (awk, awk);
-		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 
@@ -103,7 +91,6 @@ ase_awk_t* ase_awk_open (
 		ase_awk_tab_close (&awk->parse.globals);
 		ase_awk_tab_close (&awk->parse.locals);
 		ASE_AWK_FREE (awk, awk);
-		*errnum = ASE_AWK_ENOMEM;
 		return ASE_NULL;	
 	}
 

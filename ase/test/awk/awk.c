@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.185 2007-03-06 14:51:04 bacon Exp $
+ * $Id: awk.c,v 1.186 2007-03-09 14:19:55 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -868,14 +868,12 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns.misc.dprintf     = custom_awk_dprintf;
 	prmfns.misc.custom_data = NULL;
 
-	if ((awk = ase_awk_open(&prmfns, ASE_NULL, &errnum)) == ASE_NULL) 
+	if ((awk = ase_awk_open(&prmfns, ASE_NULL)) == ASE_NULL) 
 	{
 #ifdef _WIN32
 		HeapDestroy (mmgr_data.heap);
 #endif
-		ase_printf (
-			ASE_T("ERROR: cannot open awk [%d] %s\n"), 
-			errnum, ase_awk_geterrstr(ASE_NULL, errnum));
+		ase_printf (ASE_T("ERROR: cannot open awk\n"));
 		return -1;
 	}
 
