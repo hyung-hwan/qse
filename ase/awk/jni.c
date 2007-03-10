@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.73 2007-03-10 15:32:54 bacon Exp $
+ * $Id: jni.c,v 1.74 2007-03-10 15:42:00 bacon Exp $
  *
  * {License}
  */
@@ -111,6 +111,72 @@ static void awk_free (void* custom, void* ptr)
 	free (ptr);
 }
 
+/* custom character class functions */
+static ase_bool_t awk_isupper (void* custom, ase_cint_t c)  
+{ 
+	return ase_isupper (c); 
+}
+
+static ase_bool_t awk_islower (void* custom, ase_cint_t c)  
+{ 
+	return ase_islower (c); 
+}
+
+static ase_bool_t awk_isalpha (void* custom, ase_cint_t c)  
+{ 
+	return ase_isalpha (c); 
+}
+
+static ase_bool_t awk_isdigit (void* custom, ase_cint_t c)  
+{ 
+	return ase_isdigit (c); 
+}
+
+static ase_bool_t awk_isxdigit (void* custom, ase_cint_t c) 
+{ 
+	return ase_isxdigit (c); 
+}
+
+static ase_bool_t awk_isalnum (void* custom, ase_cint_t c)
+{ 
+	return ase_isalnum (c); 
+}
+
+static ase_bool_t awk_isspace (void* custom, ase_cint_t c)
+{ 
+	return ase_isspace (c); 
+}
+
+static ase_bool_t awk_isprint (void* custom, ase_cint_t c)
+{ 
+	return ase_isprint (c); 
+}
+
+static ase_bool_t awk_isgraph (void* custom, ase_cint_t c)
+{
+	return ase_isgraph (c); 
+}
+
+static ase_bool_t awk_iscntrl (void* custom, ase_cint_t c)
+{
+	return ase_iscntrl (c);
+}
+
+static ase_bool_t awk_ispunct (void* custom, ase_cint_t c)
+{
+	return ase_ispunct (c);
+}
+
+static ase_cint_t awk_toupper (void* custom, ase_cint_t c)
+{
+	return ase_toupper (c);
+}
+
+static ase_cint_t awk_tolower (void* custom, ase_cint_t c)
+{
+	return ase_tolower (c);
+}
+
 static ase_real_t awk_pow (void* custom, ase_real_t x, ase_real_t y)
 {
 	return pow (x, y);
@@ -144,7 +210,7 @@ void ase_assert_abort (void)
         abort ();
 }
 
-static void ase_assert_printf (const ase_char_t* fmt, ...)
+void ase_assert_printf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
@@ -253,19 +319,19 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	prmfns.mmgr.free = awk_free;
 	prmfns.mmgr.custom_data = NULL;
 
-	prmfns.ccls.is_upper  = ase_isupper;
-	prmfns.ccls.is_lower  = ase_islower;
-	prmfns.ccls.is_alpha  = ase_isalpha;
-	prmfns.ccls.is_digit  = ase_isdigit;
-	prmfns.ccls.is_xdigit = ase_isxdigit;
-	prmfns.ccls.is_alnum  = ase_isalnum;
-	prmfns.ccls.is_space  = ase_isspace;
-	prmfns.ccls.is_print  = ase_isprint;
-	prmfns.ccls.is_graph  = ase_isgraph;
-	prmfns.ccls.is_cntrl  = ase_iscntrl;
-	prmfns.ccls.is_punct  = ase_ispunct;
-	prmfns.ccls.to_upper  = ase_toupper;
-	prmfns.ccls.to_lower  = ase_tolower;
+	prmfns.ccls.is_upper  = awk_isupper;
+	prmfns.ccls.is_lower  = awk_islower;
+	prmfns.ccls.is_alpha  = awk_isalpha;
+	prmfns.ccls.is_digit  = awk_isdigit;
+	prmfns.ccls.is_xdigit = awk_isxdigit;
+	prmfns.ccls.is_alnum  = awk_isalnum;
+	prmfns.ccls.is_space  = awk_isspace;
+	prmfns.ccls.is_print  = awk_isprint;
+	prmfns.ccls.is_graph  = awk_isgraph;
+	prmfns.ccls.is_cntrl  = awk_iscntrl;
+	prmfns.ccls.is_punct  = awk_ispunct;
+	prmfns.ccls.to_upper  = awk_toupper;
+	prmfns.ccls.to_lower  = awk_tolower;
 	prmfns.ccls.custom_data = NULL;
 
 	prmfns.misc.pow     = awk_pow;
@@ -278,7 +344,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	{
 		throw_exception (
 			env,
-			ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
 			ASE_AWK_ENOMEM, 
 			0);
 		return;
@@ -291,7 +357,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	{
 		throw_exception (
 			env,
-			ase_awk_geterrstr(errnum), 
+			ase_awk_geterrstr(ASE_NULL, errnum), 
 			errnum, 
 			0);
 		return;
@@ -544,7 +610,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 				DELETE_CLASS_REFS (env, run_data);
 				throw_exception (
 					env, 
-					ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+					ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
 					ASE_AWK_ENOMEM,
 					0);
 				return;
@@ -557,7 +623,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 				DELETE_CLASS_REFS (env, run_data);
 				throw_exception (
 					env, 
-					ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+					ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
 					ASE_AWK_ENOMEM,
 					0);
 				return;
@@ -603,7 +669,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
 				ASE_AWK_ENOMEM,
 				0);
 
@@ -632,7 +698,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 
 				throw_exception (
 					env, 
-					ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+					ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
 					ASE_AWK_ENOMEM,
 					0);
 
@@ -656,7 +722,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 
 				throw_exception (
 					env, 
-					ase_awk_geterrstr(ASE_AWK_ENOMEM), 
+					ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
 					ASE_AWK_ENOMEM,
 					0);
 
@@ -1681,7 +1747,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 
 		throw_exception (
 			env, 
-			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM, 
 			0);
 		return;
@@ -1697,7 +1763,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 			(*env)->ReleaseStringChars (env, name, ptr);
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 			return;
@@ -1758,7 +1824,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delbfn (
 		(*env)->ExceptionClear (env);
 		throw_exception (
 			env, 
-			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM,
 			0);
 		return;
@@ -1774,7 +1840,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delbfn (
 			(*env)->ReleaseStringChars (env, name, ptr);
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM,
 				0);
 			return;
@@ -1942,7 +2008,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 		(*env)->ExceptionClear (env);
 		throw_exception (
 			env, 
-			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM,
 			0);
 		return;
@@ -1959,7 +2025,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 			return;
@@ -2001,7 +2067,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 		(*env)->ExceptionClear (env);
 		throw_exception (
 			env, 
-			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM, 
 			0);
 		return;
@@ -2018,7 +2084,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 			return;
@@ -2063,7 +2129,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 		(*env)->ExceptionClear (env);
 		throw_exception (
 			env, 
-			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM, 
 			0);
 		return NULL;
@@ -2079,7 +2145,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 			(*env)->ReleaseStringChars (env, str, ptr);
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 			return NULL;
@@ -2139,7 +2205,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 		}
@@ -2160,7 +2226,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 
@@ -2207,7 +2273,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 	{
 		throw_exception (
 			env,
-			ase_awk_geterrstr(ASE_AWK_EVALTYPE), 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_EVALTYPE), 
 			ASE_AWK_EVALTYPE,
 			0);
 		return NULL;
@@ -2217,7 +2283,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 	{
 		throw_exception (
 			env, 
-			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM, 
 			0);
 		return NULL;
@@ -2232,7 +2298,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 
 		throw_exception (
 			env, 
-			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM, 
 			0);
 		return NULL;
@@ -2247,7 +2313,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 			ase_awk_free (awk, str);
 			throw_exception (
 				env, 
-				ase_awk_geterrstr(ASE_AWK_ENOMEM),
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 				ASE_AWK_ENOMEM, 
 				0);
 			return NULL;
@@ -2269,7 +2335,7 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 
 		throw_exception (
 			env, 
-			ase_awk_geterrstr(ASE_AWK_ENOMEM),
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM, 
 			0);
 	}
