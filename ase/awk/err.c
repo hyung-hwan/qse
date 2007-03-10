@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.93 2007-03-10 15:29:54 bacon Exp $
+ * $Id: err.c,v 1.94 2007-03-10 15:32:54 bacon Exp $
  *
  * {License}
  */
@@ -467,19 +467,5 @@ void ase_awk_setrunerror (
 				errarg[3].len, errarg[3].ptr,
 				errarg[4].len, errarg[4].ptr);
 			return;
-	}
-}
-
-void ase_awk_setrunerror_old (
-	ase_awk_run_t* run, int errnum, 
-	ase_size_t errlin, const ase_char_t* errmsg)
-{
-	run->errnum = errnum;
-	run->errlin = errlin;
-
-	if (errmsg == ASE_NULL) run->errmsg[0] = ASE_T('\0');
-	else if (errmsg != run->errmsg)
-	{
-		ase_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), errmsg);
 	}
 }
