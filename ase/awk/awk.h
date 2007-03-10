@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.206 2007-03-10 11:58:34 bacon Exp $
+ * $Id: awk.h,v 1.207 2007-03-10 15:02:30 bacon Exp $
  *
  * {License}
  */
@@ -305,14 +305,18 @@ enum
 	ASE_AWK_ESCALARTOMAP,      /* cannot change a scalar value to a map */
 	ASE_AWK_EMAPNOTALLOWED,    /* a map is not allowed */
 	ASE_AWK_EVALTYPE,          /* wrong value type */
-	ASE_AWK_ENEXTCALL,         /* next called from BEGIN or END */
-	ASE_AWK_ENEXTFILECALL,     /* nextfile called from BEGIN or END */
+	ASE_AWK_ERDELETE,          /* delete called with a wrong target */
+	ASE_AWK_ERNEXTBEG,         /* next called from BEGIN */
+	ASE_AWK_ERNEXTEND,         /* next called from END */
+	ASE_AWK_ERNEXTFBEG,        /* nextfile called from BEGIN */
+	ASE_AWK_ERNEXTFEND,        /* nextfile called from END */
 	ASE_AWK_EBFNUSER,          /* wrong builtin function implementation */
 	ASE_AWK_EBFNIMPL,          /* builtin function handler failed */
 	ASE_AWK_EIOUSER,           /* wrong user io handler implementation */
 	ASE_AWK_EIONONE,           /* no such io name found */
 	ASE_AWK_EIOIMPL,           /* i/o callback returned an error */
-	ASE_AWK_EIONAME,           /* invalid i/o name */
+	ASE_AWK_EIONMEM,           /* i/o name empty */
+	ASE_AWK_EIONMNL,           /* i/o name contains '\0' */
 	ASE_AWK_EFMTARG,           /* arguments to format string not sufficient */
 	ASE_AWK_EFMTCNV,           /* recursion detected in format conversion */
 	ASE_AWK_ECONVFMTCHAR,      /* an invalid character found in CONVFMT */
