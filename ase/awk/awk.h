@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.207 2007-03-10 15:02:30 bacon Exp $
+ * $Id: awk.h,v 1.208 2007-03-10 15:22:53 bacon Exp $
  *
  * {License}
  */
@@ -227,12 +227,12 @@ enum
 	ASE_AWK_ECINOP,
 	ASE_AWK_ECINCL,
 	ASE_AWK_ECINNX,
-	ASE_AWK_ECINDT, 
+	ASE_AWK_ECINRD, 
 
 	ASE_AWK_ECOUTOP,
 	ASE_AWK_ECOUTCL,
 	ASE_AWK_ECOUTNX,
-	ASE_AWK_ECOUTDT,
+	ASE_AWK_ECOUTWR,
 
 	ASE_AWK_ELXCHR,         /* lexer came accross an wrong character */
 	ASE_AWK_ELXUNG,         /* lexer failed to unget a character */
@@ -297,6 +297,8 @@ enum
 	ASE_AWK_ENOTIDX,           /* variable not indexable */
 	ASE_AWK_ENOTDEL,           /* variable not deletable */
 	ASE_AWK_ENOTMAP,           /* value not a map */
+	ASE_AWK_ENOTMAPIN,         /* right-hand side of 'in' not a map */
+	ASE_AWK_ENOTMAPNILIN,      /* right-hand side of 'in' not a map nor nil */
 	ASE_AWK_ENOTREF,           /* value not referenceable */
 	ASE_AWK_ENOTASS,           /* value not assignable */
 	ASE_AWK_EIDXVALASSMAP,     /* indexed value cannot be assigned a map */
@@ -319,8 +321,8 @@ enum
 	ASE_AWK_EIONMNL,           /* i/o name contains '\0' */
 	ASE_AWK_EFMTARG,           /* arguments to format string not sufficient */
 	ASE_AWK_EFMTCNV,           /* recursion detected in format conversion */
-	ASE_AWK_ECONVFMTCHAR,      /* an invalid character found in CONVFMT */
-	ASE_AWK_EOFMTCHAR,         /* an invalid character found in OFMT */
+	ASE_AWK_ECONVFMTCHR,       /* an invalid character found in CONVFMT */
+	ASE_AWK_EOFMTCHR,          /* an invalid character found in OFMT */
 
 	/* regular expression error */
 	ASE_AWK_EREXRECUR,        /* recursion too deep */

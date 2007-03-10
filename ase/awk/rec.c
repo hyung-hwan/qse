@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.18 2007-03-10 15:02:31 bacon Exp $
+ * $Id: rec.c,v 1.19 2007-03-10 15:22:54 bacon Exp $
  *
  * {License}
  */
@@ -16,7 +16,6 @@ int ase_awk_setrec (
 	const ase_char_t* str, ase_size_t len)
 {
 	ase_awk_val_t* v;
-	int errnum;
 
 	if (idx == 0)
 	{
@@ -42,7 +41,8 @@ int ase_awk_setrec (
 		if (v == ASE_NULL)
 		{
 			ase_awk_clrrec (run, ase_false);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
