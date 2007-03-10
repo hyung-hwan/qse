@@ -30,7 +30,7 @@ lib: $(C_OBJS)
 
 jni: lib $(JNI_OBJS) $(JAVA_OBJS) 
 	$(LD) /dll /def:jni.def /subsystem:windows /version:0.1 /release @<<
-/nologo /out:$(OUT)_jni.dll $(JNI_OBJS) /implib:tmp.lib user32.lib $(OUT).lib
+/nologo /out:$(OUT)_jni.dll $(JNI_OBJS) /libpath:../cmn /libpath:../utl /implib:tmp.lib user32.lib $(OUT).lib asecmn.lib aseutl.lib
 <<
 	del tmp.lib tmp.exp
 
