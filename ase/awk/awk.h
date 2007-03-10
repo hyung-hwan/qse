@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.205 2007-03-09 14:19:55 bacon Exp $
+ * $Id: awk.h,v 1.206 2007-03-10 11:58:34 bacon Exp $
  *
  * {License}
  */
@@ -201,10 +201,10 @@ enum
 	ASE_AWK_ENOPER,         /* operation not allowed */
 	ASE_AWK_ENODEV,         /* function '%.*s' not found */
 	ASE_AWK_ENOSPC,         /* no space left on device */
-	ASE_AWK_ENOENT,         /* no such file, directory, or data */
 	ASE_AWK_EMFILE,         /* too many open files */
 	ASE_AWK_EMLINK,         /* too many links */
 	ASE_AWK_EAGAIN,         /* resource temporarily unavailable */
+	ASE_AWK_ENOENT,         /* file or data not existing */
 	ASE_AWK_EEXIST,         /* file or data exists */
 	ASE_AWK_EFTBIG,         /* file or data too big */
 	ASE_AWK_ETBUSY,         /* system too busy */
@@ -238,8 +238,8 @@ enum
 	ASE_AWK_ELXUNG,         /* lexer failed to unget a character */
 
 	ASE_AWK_EENDSRC,        /* unexpected end of source */
-	ASE_AWK_EENDCMT,        /* unexpected end of a comment */
-	ASE_AWK_EENDSTR,        /* unexpected end of a string */
+	ASE_AWK_EENDCMT,        /* a comment not closed properly */
+	ASE_AWK_EENDSTR,        /* a string not closed with a quote */
 	ASE_AWK_EENDREX,        /* unexpected end of a regular expression */
 	ASE_AWK_ELBRACE,        /* left brace expected */
 	ASE_AWK_ELPAREN,        /* left parenthesis expected */
@@ -268,17 +268,24 @@ enum
 	ASE_AWK_EDUPPAR,        /* duplicate parameter name */
 	ASE_AWK_EDUPGBL,        /* duplicate global variable name */
 	ASE_AWK_EDUPLCL,        /* duplicate local variable name */
+	ASE_AWK_EBADPAR,        /* not a valid parameter name */
+	ASE_AWK_EBADVAR,        /* not a valid variable name */
 	ASE_AWK_EUNDEF,         /* undefined identifier */
 	ASE_AWK_ELVALUE,        /* l-value required */
 	ASE_AWK_EGBLTM,         /* too many global variables */
 	ASE_AWK_ELCLTM,         /* too many local variables */
 	ASE_AWK_EPARTM,         /* too many parameters */
+	ASE_AWK_EDELETE,        /* delete not followed by a variable */
 	ASE_AWK_EBREAK,         /* break outside a loop */
 	ASE_AWK_ECONTINUE,      /* continue outside a loop */
-	ASE_AWK_ENEXT,          /* next illegal in BEGIN or END block */
-	ASE_AWK_ENEXTFILE,      /* nextfile illegal in BEGIN or END block */
-	ASE_AWK_EGETLINE,       /* getline expected */
-	ASE_AWK_EPRINTFARG,     /* printf must have one or more arguments */
+	ASE_AWK_ENEXTBEG,       /* next illegal in BEGIN block */
+	ASE_AWK_ENEXTEND,       /* next illegal in END block */
+	ASE_AWK_ENEXTFBEG,      /* nextfile illegal in BEGIN block */
+	ASE_AWK_ENEXTFEND,      /* nextfile illegal in END block */
+	ASE_AWK_EPRINTFARG,     /* printf not followed by any arguments */
+	ASE_AWK_EPREPST,        /* both prefix and postfix increment/decrement 
+	                           operator present */
+	ASE_AWK_EGLNCPS,        /* coprocess not supported by getline */
 
 	/* run time error */
 	ASE_AWK_EDIVBY0,           /* divide by zero */
@@ -395,10 +402,6 @@ void ase_awk_geterror (
 void ase_awk_seterror (
 	ase_awk_t* awk, int errnum, ase_size_t errlin, 
 	const ase_cstr_t* errarg, ase_size_t argcnt);
-
-void ase_awk_seterror_old (
-	ase_awk_t* run, int errnum, 
-	ase_size_t errlin, const ase_char_t* errmsg);
 
 int ase_awk_getoption (ase_awk_t* awk);
 void ase_awk_setoption (ase_awk_t* awk, int opt);

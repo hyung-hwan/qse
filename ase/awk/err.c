@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.89 2007-03-09 14:19:55 bacon Exp $
+ * $Id: err.c,v 1.90 2007-03-10 11:58:35 bacon Exp $
  *
  * {License}
  */
@@ -18,11 +18,11 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("operation not allowed"),
 		ASE_T("no such device"),
 		ASE_T("no space left on device"),
-		ASE_T("no such file, directory, or data"),
 		ASE_T("too many open files"),
 		ASE_T("too many links"),
 		ASE_T("resource temporarily unavailable"),
-		ASE_T("file or data exists"),
+		ASE_T("'%.*s' not existing"),
+		ASE_T("'%.*s' already exists"),
 		ASE_T("file or data too big"),
 		ASE_T("system too busy"),
 		ASE_T("is a directory"),
@@ -55,8 +55,8 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("cannot unget character"),
 
 		ASE_T("unexpected end of source"),
-		ASE_T("unexpected end of a comment"),
-		ASE_T("unexpected end of a string"),
+		ASE_T("a comment not closed properly"),
+		ASE_T("a string not closed with a quote"),
 		ASE_T("unexpected end of a regular expression"),
 		ASE_T("a left brace expected n place of '%.*s'"),
 		ASE_T("a left parenthesis expected in place of '%.*s'"),
@@ -67,12 +67,12 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("a colon expected in place of '%.*s'"),
 		ASE_T("statement not ending with a semicolon"),
 		ASE_T("keyword 'in' expected in place of '%.*s'"),
-		ASE_T("not a variable after 'in'"),
-		ASE_T("expression expected"),
+		ASE_T("right-hand side of the 'in' operator not a variable"),
+		ASE_T("invalid expression"),
 
-		ASE_T("keyword 'while' expected"),
-		ASE_T("assignment statement expected"),
-		ASE_T("identifier expected"),
+		ASE_T("keyword 'while' expected in place of '%.*s'"),
+		ASE_T("invalid assignment statement"),
+		ASE_T("an identifier expected in place of '%.*s'"),
 		ASE_T("'%.*s' not a valid function name"),
 		ASE_T("BEGIN not followed by a left bracket on the same line"),
 		ASE_T("END not followed by a left bracket on the same line"),
@@ -85,17 +85,23 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("duplicate parameter name '%.*s'"),
 		ASE_T("duplicate global variable '%.*s'"),
 		ASE_T("duplicate local variable '%.*s'"),
-		ASE_T("undefined identifier"),
+		ASE_T("'%.*s' not a valid parameter name"),
+		ASE_T("'%.*s' not a valid variable name"),
+		ASE_T("undefined identifier '%.*s'"),
 		ASE_T("l-value required"),
 		ASE_T("too many global variables"),
 		ASE_T("too many local variables"),
 		ASE_T("too many parameters"),
-		ASE_T("break outside a loop"),
-		ASE_T("continue outside a loop"),
-		ASE_T("next illegal in BEGIN or END block"),
-		ASE_T("nextfile illegal in BEGIN or END block"),
-		ASE_T("getline expected"),
-		ASE_T("printf requires one or more arguments"),
+		ASE_T("delete statement not followed by a normal variable"),
+		ASE_T("break statement outside a loop"),
+		ASE_T("continue statement outside a loop"),
+		ASE_T("next statement illegal in the BEGIN block"),
+		ASE_T("next statement illegal in the END block"),
+		ASE_T("nextfile statement illegal in the BEGIN block"),
+		ASE_T("nextfile statement illegal in the END block"),
+		ASE_T("printf not followed by any arguments"),
+		ASE_T("both prefix and postfix increment/decrement operator present"),
+		ASE_T("coprocess not supported by getline"),
 
 		ASE_T("divide by zero"),
 		ASE_T("invalid operand"),
@@ -113,7 +119,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("map '%.*s' not assignable with a scalar"),
 		ASE_T("cannot change a scalar value to a map"),
 		ASE_T("a map is not allowed"),
-		ASE_T("wrong value type"),
+		ASE_T("invalid value type"),
 		ASE_T("next cannot be called from the BEGIN or END block"),
 		ASE_T("nextfile cannot be called from the BEGIN or END block"),
 		ASE_T("wrong implementation of built-in function handler"),
@@ -131,7 +137,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("a right parenthesis expected in the regular expression"),
 		ASE_T("a right bracket expected in the regular expression"),
 		ASE_T("a right brace expected in the regular expression"),
-		ASE_T("unbalanced parenthesis"),
+		ASE_T("unbalanced parenthesis in the regular expression"),
 		ASE_T("a colon expected in the regular expression"),
 		ASE_T("invalid character range in the regular expression"),
 		ASE_T("invalid character class in the regular expression"),
@@ -306,21 +312,6 @@ void ase_awk_seterror (
 			return;
 	}
 }
-
-void ase_awk_seterror_old (
-	ase_awk_t* awk, int errnum, 
-	ase_size_t errlin, const ase_char_t* errmsg)
-{
-	awk->errnum = errnum;
-	awk->errlin = errlin;
-	if (errmsg == ASE_NULL) awk->errmsg[0] = ASE_T('\0');
-	else if (awk->errmsg != errmsg)
-	{
-		ase_strxcpy (
-			awk->errmsg, ASE_COUNTOF(awk->errmsg), errmsg);
-	}
-}
-
 
 int ase_awk_getrunerrnum (ase_awk_run_t* run)
 {

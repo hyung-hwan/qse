@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.186 2007-03-09 14:19:55 bacon Exp $
+ * $Id: awk.c,v 1.187 2007-03-10 11:59:04 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -716,7 +716,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	ase_awk_runios_t runios;
 	ase_awk_prmfns_t prmfns;
 	struct awk_src_io src_io = { NULL, NULL };
-	int opt, i, file_count = 0, errnum;
+	int opt, i, file_count = 0;
 #ifdef _WIN32
 	struct mmgr_data_t mmgr_data;
 #endif
