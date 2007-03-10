@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.72 2007-03-06 14:51:52 bacon Exp $
+ * $Id: jni.c,v 1.73 2007-03-10 15:32:54 bacon Exp $
  *
  * {License}
  */
@@ -1354,7 +1354,6 @@ static int __handle_bfn (
 	jobjectArray args;
 	jobject arg, ret;
 	ase_awk_val_t* v;
-	ase_char_t msg_nomem[MSG_SIZE];
 	ase_awk_t* awk;
 
 	run_data = ase_awk_getruncustomdata (run);
@@ -1364,19 +1363,13 @@ static int __handle_bfn (
 	env = run_data->env;
 	obj = run_data->obj;
 
-	ase_sprintf (
-		msg_nomem, ASE_COUNTOF(msg_nomem),
-		ASE_T("out of memory in handling %.*s"),
-		fnl, fnm);
-
 	if (fnl > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*fnl);
 		if (tmp == NULL)
 		{
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1393,14 +1386,14 @@ static int __handle_bfn (
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
 	name_utf = (*env)->GetStringUTFChars (env, name, JNI_FALSE);
 	if (name_utf == NULL)
 	{
 		(*env)->DeleteLocalRef (env, name);
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1427,7 +1420,7 @@ static int __handle_bfn (
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
-		ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1467,7 +1460,7 @@ static int __handle_bfn (
 				if (tmp == NULL)
 				{
 					(*env)->DeleteLocalRef (env, args);
-					ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+					ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 					return -1;
 				}
 
@@ -1494,7 +1487,7 @@ static int __handle_bfn (
 				(*env)->ExceptionClear (env);
 			}
 			(*env)->DeleteLocalRef (env, args);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1529,7 +1522,7 @@ static int __handle_bfn (
 		if (v == NULL)
 		{
 			(*env)->DeleteLocalRef (env, ret);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1545,7 +1538,7 @@ static int __handle_bfn (
 		if (v == NULL)
 		{
 			(*env)->DeleteLocalRef (env, ret);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1561,7 +1554,7 @@ static int __handle_bfn (
 		if (v == NULL)
 		{
 			(*env)->DeleteLocalRef (env, ret);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1576,7 +1569,7 @@ static int __handle_bfn (
 		if (v == NULL)
 		{
 			(*env)->DeleteLocalRef (env, ret);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1591,7 +1584,7 @@ static int __handle_bfn (
 		if (v == NULL)
 		{
 			(*env)->DeleteLocalRef (env, ret);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1608,7 +1601,7 @@ static int __handle_bfn (
 		if (ptr == NULL)
 		{
 			(*env)->DeleteLocalRef (env, ret);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1621,7 +1614,7 @@ static int __handle_bfn (
 			{
 				(*env)->ReleaseStringChars (env, ret, ptr);
 				(*env)->DeleteLocalRef (env, ret);
-				ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+				ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 				return -1;
 			}
 
@@ -1638,7 +1631,7 @@ static int __handle_bfn (
 		{
 			(*env)->ReleaseStringChars (env, ret, ptr);
 			(*env)->DeleteLocalRef (env, ret);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, msg_nomem);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 

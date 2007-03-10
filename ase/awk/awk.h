@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.209 2007-03-10 15:29:54 bacon Exp $
+ * $Id: awk.h,v 1.210 2007-03-10 15:32:54 bacon Exp $
  *
  * {License}
  */
@@ -468,10 +468,6 @@ void ase_awk_getrunerror (
 void ase_awk_setrunerror (
 	ase_awk_run_t* run, int errnum, ase_size_t errlin, 
 	const ase_cstr_t* errarg, ase_size_t argcnt);
-
-void ase_awk_setrunerror_old (
-	ase_awk_run_t* run, int errnum, 
-	ase_size_t errlin, const ase_char_t* msg);
 
 /* functions to manipulate built-in functions */
 void* ase_awk_addbfn (
