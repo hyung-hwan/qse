@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.91 2007-03-10 15:02:30 bacon Exp $
+ * $Id: err.c,v 1.92 2007-03-10 15:22:53 bacon Exp $
  *
  * {License}
  */
@@ -66,7 +66,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("a semicolon expected in place of '%.*s'"),
 		ASE_T("a colon expected in place of '%.*s'"),
 		ASE_T("statement not ending with a semicolon"),
-		ASE_T("keyword 'in' expected in place of '%.*s'"),
+		ASE_T("'in' expected in place of '%.*s'"),
 		ASE_T("right-hand side of the 'in' operator not a variable"),
 		ASE_T("invalid expression"),
 
@@ -112,6 +112,8 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("variable not indexable"),
 		ASE_T("variable '%.*s' not deletable"),
 		ASE_T("value not a map"),
+		ASE_T("right-hand side of the 'in' operator not a map"),
+		ASE_T("right-hand side of the 'in' operator not a map nor nil"),
 		ASE_T("value not referenceable"),
 		ASE_T("value not assignable"),
 		ASE_T("an indexed value cannot be assigned a map"),
