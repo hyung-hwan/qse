@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.74 2007-03-06 14:51:52 bacon Exp $
+ * $Id: extio.c,v 1.75 2007-03-10 11:58:35 bacon Exp $
  *
  * {License}
  */
@@ -117,7 +117,8 @@ int ase_awk_readextio (
 			run->awk, ASE_SIZEOF(ase_awk_extio_t));
 		if (p == ASE_NULL)
 		{
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -125,7 +126,8 @@ int ase_awk_readextio (
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -319,7 +321,8 @@ int ase_awk_readextio (
 
 		if (ase_str_ccat (buf, c) == (ase_size_t)-1)
 		{
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			ret = -1;
 			break;
 		}
@@ -353,7 +356,8 @@ int ase_awk_readextio (
 			nr = ase_awk_makeintval (run, lv + 1);
 			if (nr == ASE_NULL) 
 			{
-				ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 				ret = -1;
 			}
 			else 
@@ -445,7 +449,8 @@ int ase_awk_writeextio_str (
 			run->awk, ASE_SIZEOF(ase_awk_extio_t));
 		if (p == ASE_NULL)
 		{
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -453,7 +458,8 @@ int ase_awk_writeextio_str (
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);
-			ase_awk_setrunerror_old (run, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 

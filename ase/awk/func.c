@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.100 2007-03-06 14:51:52 bacon Exp $
+ * $Id: func.c,v 1.101 2007-03-10 11:58:35 bacon Exp $
  *
  * {License}
  */
@@ -53,18 +53,19 @@ void* ase_awk_addbfn (
 
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 	{
-		awk->prmfns.misc.sprintf (
-			awk->prmfns.misc.custom_data,
-			awk->errmsg, ASE_COUNTOF(awk->errmsg),
-			ASE_T("'%.*s' added already"), name_len, name);
-		ase_awk_seterror_old (awk, ASE_AWK_EEXIST, 0, awk->errmsg);
+		ase_cstr_t errarg;
+
+		errarg.ptr = name;
+		errarg.len = name_len;
+
+		ase_awk_seterror (awk, ASE_AWK_EEXIST, 0, &errarg, 1);
 		return ASE_NULL;
 	}
 
 	p = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_bfn_t));
 	if (p == ASE_NULL) 
 	{
-		ase_awk_seterror_old (awk, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -72,7 +73,7 @@ void* ase_awk_addbfn (
 	if (p->name.ptr == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, p);
-		ase_awk_seterror_old (awk, ASE_AWK_ENOMEM, 0, ASE_NULL);
+		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -88,7 +89,7 @@ void* ase_awk_addbfn (
 		{
 			ASE_AWK_FREE (awk, p->name.ptr);
 			ASE_AWK_FREE (awk, p);
-			ase_awk_seterror_old (awk, ASE_AWK_ENOMEM, 0, ASE_NULL);
+			ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 	}
@@ -103,6 +104,7 @@ void* ase_awk_addbfn (
 int ase_awk_delbfn (ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 {
 	ase_awk_bfn_t* p, * pp = ASE_NULL;
+	ase_cstr_t errarg;
 
 	for (p = awk->bfn.user; p != ASE_NULL; p = p->next)
 	{
@@ -123,7 +125,10 @@ int ase_awk_delbfn (ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 		pp = p;
 	}
 
-	ase_awk_seterror_old (awk, ASE_AWK_ENOENT, 0, ASE_NULL);
+	errarg.ptr = name;
+	errarg.len = name_len;
+
+	ase_awk_seterror (awk, ASE_AWK_ENOENT, 0, &errarg, 1);
 	return -1;
 }
 
