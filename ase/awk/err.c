@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.90 2007-03-10 11:58:35 bacon Exp $
+ * $Id: err.c,v 1.91 2007-03-10 15:02:30 bacon Exp $
  *
  * {License}
  */
@@ -120,14 +120,18 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("cannot change a scalar value to a map"),
 		ASE_T("a map is not allowed"),
 		ASE_T("invalid value type"),
-		ASE_T("next cannot be called from the BEGIN or END block"),
-		ASE_T("nextfile cannot be called from the BEGIN or END block"),
+		ASE_T("delete statement called with a wrong target"),
+		ASE_T("next statement called from the BEGIN block"),
+		ASE_T("next statement called from the END block"),
+		ASE_T("nextfile statement called from the BEGIN block"),
+		ASE_T("nextfile statement called from the END block"),
 		ASE_T("wrong implementation of built-in function handler"),
 		ASE_T("built-in function handler returned an error"),
 		ASE_T("wrong implementation of user-defined io handler"),
 		ASE_T("no such io name found"),
 		ASE_T("i/o handler returned an error"),
-		ASE_T("invalid i/o name"),
+		ASE_T("i/o name empty"),
+		ASE_T("i/o name containing a null character"),
 		ASE_T("not sufficient arguments to formatting sequence"),
 		ASE_T("recursion detected in format conversion"),
 		ASE_T("invalid character in CONVFMT"),

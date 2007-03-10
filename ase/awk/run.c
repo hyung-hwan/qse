@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.342 2007-03-10 11:58:35 bacon Exp $
+ * $Id: run.c,v 1.343 2007-03-10 15:02:31 bacon Exp $
  *
  * {License}
  */
@@ -2171,16 +2171,14 @@ static int __run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde)
 	 * check that explicitly */
 	if  (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.begin)
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENEXTCALL, nde->line, 
-			ASE_T("next called from the BEGIN block"));
+		ase_awk_setrunerror (
+			run, ASE_AWK_ERNEXTBEG, nde->line, ASE_NULL, 0);
 		return -1;
 	}
 	else if (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.end)
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENEXTCALL, nde->line, 
-			ASE_T("next called from the END block"));
+		ase_awk_setrunerror (
+			run, ASE_AWK_ERNEXTEND, nde->line, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -2195,16 +2193,14 @@ static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 	/* normal nextfile statement */
 	if  (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.begin)
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENEXTCALL, nde->line, 
-			ASE_T("nextfile called from the BEGIN block"));
+		ase_awk_setrunerror (
+			run, ASE_AWK_ERNEXTFBEG, nde->line, ASE_NULL, 0);
 		return -1;
 	}
 	else if (run->active_block == (ase_awk_nde_blk_t*)run->awk->tree.end)
 	{
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_ENEXTCALL, nde->line, 
-			ASE_T("nextfile called from the END block"));
+		ase_awk_setrunerror (
+			run, ASE_AWK_ERNEXTFEND, nde->line, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -2372,8 +2368,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 				if (key == ASE_NULL) 
 				{
-					ase_awk_setrunerror_old (run, 
-						run->errnum, var->line, ASE_NULL);
+					/* change the error line */
+					run->errlin = var->line;
 					return -1;
 				}
 
@@ -2431,8 +2427,8 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				{
 					ase_awk_refupval (run, tmp);
 					ase_awk_refdownval (run, tmp);
-					ase_awk_setrunerror_old (run, 
-						run->errnum, var->line, ASE_NULL);
+
+					run->errlin = var->line;
 					return -1;
 				}
 			}
@@ -2486,8 +2482,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 				if (key == ASE_NULL)
 				{
-					ase_awk_setrunerror_old (run, 
-						run->errnum, var->line, ASE_NULL);
+					run->errlin = var->line;
 					return -1;
 				}
 
@@ -2505,9 +2500,9 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 		ASE_ASSERTX (
 			!"should never happen - wrong target for delete",
 			"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_EINTERN, var->line, 
-			ASE_T("delete statement called with a wrong target"));
+
+		ase_awk_setrunerror (
+			run, ASE_AWK_ERDELETE, var->line, ASE_NULL, 0);
 		return -1;
 	}
 
@@ -2543,8 +2538,9 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (out == ASE_NULL) 
 		{
 			ase_awk_refdownval (run, v);
-			ase_awk_setrunerror_old (
-				run, run->errnum, nde->line, ASE_NULL);
+
+			/* change the error line */
+			run->errlin = nde->line;
 			return -1;
 		}
 		ase_awk_refdownval (run, v);
@@ -2553,9 +2549,8 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		{
 			/* the destination name is empty */
 			ASE_AWK_FREE (run->awk, out);
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_EIONAME, nde->line,
-				ASE_T("destination name empty in print"));
+			ase_awk_setrunerror (
+				run, ASE_AWK_EIONMEM, nde->line, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -2567,9 +2562,9 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			{
 				/* if so, it skips writing */
 				ASE_AWK_FREE (run->awk, out);
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_EIONAME, nde->line,
-					ASE_T("destination name containing a null character in print"));
+				ase_awk_setrunerror (
+					run, ASE_AWK_EIONMNL, nde->line,
+					ASE_NULL, 0);
 				return -1;
 			}
 		}
@@ -2590,8 +2585,8 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (n <= -1 /*&& run->errnum != ASE_AWK_EIOIMPL*/)
 		{
 			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-			ase_awk_setrunerror_old (
-				run, run->errnum, nde->line, ASE_NULL);
+			/* change the error line */
+			run->errlin = nde->line;
 			return -1;
 		}
 	}
@@ -2620,8 +2615,8 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 				if (n <= -1 /*&& run->errnum != ASE_AWK_EIOIMPL*/) 
 				{
 					if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-					ase_awk_setrunerror_old (
-						run, run->errnum, nde->line, ASE_NULL);
+					/* change the error line */
+					run->errlin = nde->line;
 					return -1;
 				}
 			}
@@ -2639,8 +2634,8 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			{
 				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 				ase_awk_refdownval (run, v);
-				ase_awk_setrunerror_old (
-					run, run->errnum, nde->line, ASE_NULL);
+				/* change the error line */
+				run->errlin = nde->line;
 				return -1;
 			}
 
@@ -2655,7 +2650,9 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	if (n <= -1 /*&& run->errnum != ASE_AWK_EIOIMPL*/)
 	{
 		if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-		ase_awk_setrunerror_old (run, run->errnum, nde->line, ASE_NULL);
+
+		/* change the error line */
+		run->errlin = nde->line;
 		return -1;
 	}
 
@@ -2693,8 +2690,9 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		if (out == ASE_NULL) 
 		{
 			ase_awk_refdownval (run, v);
-			ase_awk_setrunerror_old (
-				run, run->errnum, nde->line, ASE_NULL);
+
+			/* change the error line */
+			run->errlin = nde->line;
 			return -1;
 		}
 		ase_awk_refdownval (run, v);
@@ -2703,9 +2701,8 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		{
 			/* the output destination name is empty. */
 			ASE_AWK_FREE (run->awk, out);
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_EIONAME, nde->line,
-				ASE_T("destination name empty in printf"));
+			ase_awk_setrunerror (
+				run, ASE_AWK_EIONMEM, nde->line, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -2716,9 +2713,9 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 				/* the output destination name contains a null 
 				 * character. */
 				ASE_AWK_FREE (run->awk, out);
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_EIONAME, nde->line,
-					ASE_T("destination name containing a null character in printf"));
+				ase_awk_setrunerror (
+					run, ASE_AWK_EIONMNL, nde->line,
+					ASE_NULL, 0);
 				return -1;
 			}
 		}
@@ -2757,8 +2754,9 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		{
 			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 			ase_awk_refdownval (run, v);
-			ase_awk_setrunerror_old (
-				run, run->errnum, nde->line, ASE_NULL);
+
+			/* change the error line */
+			run->errlin = nde->line;
 			return -1;
 		}
 	}
@@ -2773,8 +2771,9 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		{
 			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 			ase_awk_refdownval (run, v);
-			ase_awk_setrunerror_old (
-				run, run->errnum, nde->line, ASE_NULL);
+
+			/* change the error line */
+			run->errlin = nde->line;
 			return -1;
 		}
 	}
@@ -2907,7 +2906,7 @@ static ase_awk_val_t* __eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	/* __eval_binop_in evaluates the ASE_AWK_NDE_GRP specially.
 	 * so this function should never be reached. */
 	ASE_ASSERT (!"should never happen - NDE_GRP only for in");
-	ase_awk_setrunerror_old (run, ASE_AWK_EINTERN, nde->line, ASE_NULL);
+	ase_awk_setrunerror (run, ASE_AWK_EINTERN, nde->line, ASE_NULL, 0);
 	return ASE_NULL;
 }
 
@@ -3010,8 +3009,8 @@ static ase_awk_val_t* __do_assignment (
 	{
 		ASE_ASSERT (
 			!"should never happen - invalid variable type");
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_EINTERN, var->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_EINTERN, var->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -3055,8 +3054,8 @@ static ase_awk_val_t* __do_assignment_scalar (
 			var->id.name, var->id.name_len, val, ASE_NULL);
 		if (n < 0) 
 		{
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, var->line, run->errmsg);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, var->line, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -3156,8 +3155,8 @@ static ase_awk_val_t* __do_assignment_map (
 		tmp = ase_awk_makemapval (run);
 		if (tmp == ASE_NULL) 
 		{
-			ase_awk_setrunerror_old (
-				run, ASE_AWK_ENOMEM, var->line, ASE_NULL);
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, var->line, ASE_NULL, 0);
 			return ASE_NULL;
 		}
 
@@ -3172,8 +3171,8 @@ static ase_awk_val_t* __do_assignment_map (
 				ase_awk_refupval (run, tmp);
 				ase_awk_refdownval (run, tmp);
 
-				ase_awk_setrunerror_old (
-					run, ASE_AWK_ENOMEM, var->line, ASE_NULL);
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, var->line, ASE_NULL, 0);
 				return ASE_NULL;
 			}
 
@@ -3185,7 +3184,9 @@ static ase_awk_val_t* __do_assignment_map (
 			if (ase_awk_setglobal (run, var->id.idxa, tmp) == -1)
 			{
 				ase_awk_refdownval (run, tmp);
-				ase_awk_setrunerror_old (run, run->errnum, var->line, ASE_NULL);
+
+				/* change error line */
+				run->errlin = var->line;
 				return ASE_NULL;
 			}
 			ase_awk_refdownval (run, tmp);
@@ -3275,8 +3276,8 @@ static ase_awk_val_t* __do_assignment_pos (
 			run, val, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
 		if (str == ASE_NULL)
 		{
-			ase_awk_setrunerror_old (
-				run, run->errnum, pos->line, ASE_NULL);
+			/* change error line */
+			run->errlin = pos->line;
 			return ASE_NULL;
 		}
 	}
@@ -4860,8 +4861,8 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			!"should never happen - invalid opcode");
 		ase_awk_refdownval (run, left);
 
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_EINTERN, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_EINTERN, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -5139,8 +5140,8 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			!"should never happen - invalid opcode");
 		ase_awk_refdownval (run, left);
 
-		ase_awk_setrunerror_old (
-			run, ASE_AWK_EINTERN, nde->line, ASE_NULL);
+		ase_awk_setrunerror (
+			run, ASE_AWK_EINTERN, nde->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
@@ -6260,8 +6261,8 @@ static ase_char_t* __idxnde_to_str (
 		if (str == ASE_NULL) 
 		{
 			ase_awk_refdownval (run, idx);
-			ase_awk_setrunerror_old (
-				run, run->errnum, nde->line, ASE_NULL);
+			/* change error line */
+			run->errlin = nde->line;
 			return ASE_NULL;
 		}
 
