@@ -4,7 +4,7 @@ BEGIN {
 	for (i = -10; i < 10; i++) 
 	{
 		if (i == 5) exit; 
-		//if (i == 5) break;
+		#if (i == 5) break;
 	}
 
 
