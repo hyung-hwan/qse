@@ -78,9 +78,7 @@ struct ase_awk_prmfns_t
 	{
 		ase_awk_pow_t     pow;
 		ase_awk_sprintf_t sprintf;
-		ase_awk_aprintf_t aprintf;
 		ase_awk_dprintf_t dprintf;
-		ase_awk_abort_t   abort;
 		void*             custom_data;
 	} misc;
 };
