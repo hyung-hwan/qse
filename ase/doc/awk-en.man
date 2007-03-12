@@ -33,7 +33,45 @@ The following code fragment illustrates the basic steps of embedding the process
 * ase_awk_close destroys the processor instance.
 )))
 
-A set of primitive functions should be provided by the caller to create an instance of the processor as the library aims to be system indepenent. 
+A set of primitive functions is needed to create an instance of the AWK processor. A primitive function is a user-defined function to help the library perform system-dependent operations such as memory allocation, character class handling, etc. 
+
+{{{
+
+struct ase_awk_prmfns_t
+{
+	ase_mmgr_t mmgr;
+	ase_ccls_t ccls;
+
+	struct
+	{
+		ase_awk_pow_t     pow;
+		ase_awk_sprintf_t sprintf;
+		ase_awk_dprintf_t dprintf;
+		void*             custom_data;
+	} misc;
+};
+}}}
+
+A caller of ase_awk_open should fill in most of the fields of a ase_awk_prmfns_t structure and pass it to the function. The functions in the miscellanesous group labeled "misc" is defined as follows:
+
+{{{
+/* returns the value of x raised to the power of y */
+typedef ase_real_t (*ase_awk_pow_t) (void* custom, ase_real_t x, ase_real_t y);
+
+/* similar to snprintf of the standard C library. */
+typedef int (*ase_awk_sprintf_t) (
+	void* custom, ase_char_t* buf, ase_size_t size, 
+	const ase_char_t* fmt, ...);
+
+/* similar to printf of the standard C library. called by a few uncommonly 
+ * used output functions usually for debugging purpose */
+typedef void (*ase_awk_dprintf_t) (
+	void* custom, const ase_char_t* fmt, ...); 
+}}}
+
+The fourth field of the group is passed to its member functions as the first argument on invocation. The sprintf implementation should ensure that the resuliting string is null-terminated and %s and %c are accepted for the ase_char_t* and ase_char_t respectively regardless its compilation mode. 
+
+The memory manager group labeled "mmgr" and the character class group labled "ccls" are defined as follows:
 
 {{{
 typedef void* (*ase_malloc_t)  (void* custom, ase_size_t n);
@@ -68,22 +106,11 @@ struct ase_ccls_t
 	ase_toccls_t to_lower;
 	void*        custom_data;
 };
+}}}
 
-struct ase_awk_prmfns_t
-{
-	ase_mmgr_t mmgr;
-	ase_ccls_t ccls;
+The functions in these groups perform the memory operations and character class related operations respectively. They follow the style of the memory allocation functions and character class handling functions of the standard C library except that they accept a pointer to the user-defined data as its first argument, thus providing more flexibility. The pointer to the user-defined data is specified into the "custom_data" field of each group. The realloc field, however, can be ASE_NULL, in which case the functions pointed by the free and the malloc field replace the role of the function pointed by the realloc field. 
 
-	struct
-	{
-		ase_awk_pow_t     pow;
-		ase_awk_sprintf_t sprintf;
-		ase_awk_dprintf_t dprintf;
-		void*             custom_data;
-	} misc;
-};
-
-The primitive functions handle memory allocation, charater classes, and 
+Refer to the sample implementation ase/test/awk/awk.c for more information about primitive functions.
 
 === Source IO Handler ===
 
