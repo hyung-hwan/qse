@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.188 2007-03-12 11:37:39 bacon Exp $
+ * $Id: awk.c,v 1.189 2007-03-12 15:24:19 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -630,7 +630,6 @@ static int next_extio_console (ase_awk_extio_t* epa)
 
 	return n;
 }
-
 
 ase_awk_t* app_awk = NULL;
 ase_awk_run_t* app_run = NULL;

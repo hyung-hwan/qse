@@ -3,6 +3,7 @@
 == ASEAWK ==
 ASE provides an embeddable processor of a dialect of the AWK programming language. The language implemented is slightly different from {the version developed by Brian W. Kernighan, http://cm.bell-labs.com/cm/cs/awkbook/index.html} and has been adjusted to the author's preference.
 
+=== Overview ===
 The following code fragment illustrates the basic steps of embedding the processor.
 
 {{{
@@ -25,14 +26,17 @@ The following code fragment illustrates the basic steps of embedding the process
 }}}
 
 (((
-* Most of the functions and data types needed are defined in the header file <ase/awk/awk.h>. 
-* ase_awk_t represents the processor. However, the internal representation is not exposed.
-* ase_awk_open creates the processor instance.
-* ase_awk_parse parses an AWK script.
-* ase_awk_run executes the script parsed.
-* ase_awk_close destroys the processor instance.
+* Most of the functions and data types needed are defined in the header file ##ase/awk/awk.h##. 
+* ##ase_awk_t## represents the processor. However, the internal representation is not exposed.
+* ##ase_awk_open## creates the processor instance.
+* ##ase_awk_parse## parses an AWK script.
+* ##ase_awk_run## executes the script parsed.
+* ##ase_awk_close## destroys the processor instance.
 )))
 
+An embedding example is available in ##ase/test/awk/awk.c##. Refer to the sample code along with this document for more information.
+
+=== Primitive Functions ===
 A set of primitive functions is needed to create an instance of the AWK processor. A primitive function is a user-defined function to help the library perform system-dependent operations such as memory allocation, character class handling, etc. 
 
 {{{
@@ -52,7 +56,7 @@ struct ase_awk_prmfns_t
 };
 }}}
 
-A caller of ase_awk_open should fill in most of the fields of a ase_awk_prmfns_t structure and pass it to the function. The functions in the miscellanesous group labeled "misc" is defined as follows:
+A caller of ##ase_awk_open## should fill in most of the fields of a ##ase_awk_prmfns_t## structure and pass the structure to it. The function pointers in the miscellaneous group labeled [misc] is defined as follows:
 
 {{{
 /* returns the value of x raised to the power of y */
@@ -69,9 +73,9 @@ typedef void (*ase_awk_dprintf_t) (
 	void* custom, const ase_char_t* fmt, ...); 
 }}}
 
-The fourth field of the group is passed to its member functions as the first argument on invocation. The sprintf implementation should ensure that the resuliting string is null-terminated and %s and %c are accepted for the ase_char_t* and ase_char_t respectively regardless its compilation mode. 
+The fourth field of the group is passed to its member functions as the first argument on invocation. The function pointed by the ##sprintf## field should ensure that the resuliting string is null-terminated and ##%s## and ##%c## are accepted for the ##ase_char_t*## and ##ase_char_t## type respectively regardless the character mode.
 
-The memory manager group labeled "mmgr" and the character class group labled "ccls" are defined as follows:
+The memory manager group labeled [mmgr] and the character class group labled [ccls] are defined as follows:
 
 {{{
 typedef void* (*ase_malloc_t)  (void* custom, ase_size_t n);
@@ -108,9 +112,8 @@ struct ase_ccls_t
 };
 }}}
 
-The functions in these groups perform the memory operations and character class related operations respectively. They follow the style of the memory allocation functions and character class handling functions of the standard C library except that they accept a pointer to the user-defined data as its first argument, thus providing more flexibility. The pointer to the user-defined data is specified into the "custom_data" field of each group. The realloc field, however, can be ASE_NULL, in which case the functions pointed by the free and the malloc field replace the role of the function pointed by the realloc field. 
+The functions in these groups perform the memory operations and character class related operations respectively. They follow the style of the memory allocation functions and character class handling functions of the standard C library except that they accept a pointer to the user-defined data as the first argument, thus providing more flexibility. The pointer to the user-defined data is specified into the ##custom_data## field of each group. The ##realloc## field, however, can be ##ASE_NULL##, in which case the functions pointed by the free and the malloc field replace the role of the function pointed by the ##realloc## field. 
 
-Refer to the sample implementation ase/test/awk/awk.c for more information about primitive functions.
 
 === Source IO Handler ===
 
