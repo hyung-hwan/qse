@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.187 2007-03-10 11:59:04 bacon Exp $
+ * $Id: awk.c,v 1.188 2007-03-12 11:37:39 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -19,6 +19,7 @@
 #if defined(_WIN32)
 	#include <windows.h>
 	#include <tchar.h>
+	#include <process.h>
 	#pragma warning (disable: 4996)
 	#pragma warning (disable: 4296)
 #endif
@@ -673,7 +674,7 @@ static int print_awk_value (ase_awk_pair_t* pair, void* arg)
 static void on_run_statement (
 	ase_awk_run_t* run, ase_size_t line, void* custom)
 {
-	dprintf (L"running %d\n", (int)line);
+	//dprintf (L"running %d\n", (int)line);
 }
 
 static void on_run_return (
@@ -708,12 +709,62 @@ static void print_usage (const ase_char_t* argv0)
 	ase_printf (ASE_T("Usage: %s [-m] [-d] [-a argument]* -f source-file [data-file]*\n"), argv0);
 }
 
+static int run_awk (ase_awk_t* awk, 
+	const ase_char_t* mfn, ase_awk_runarg_t* runarg)
+{
+	ase_awk_runcbs_t runcbs;
+	ase_awk_runios_t runios;
+
+	runios.pipe = awk_extio_pipe;
+	runios.file = awk_extio_file;
+	runios.console = awk_extio_console;
+	runios.custom_data = ASE_NULL;
+
+	runcbs.on_start = on_run_start;
+	runcbs.on_statement = on_run_statement;
+	runcbs.on_return = on_run_return;
+	runcbs.on_end = on_run_end;
+	runcbs.custom_data = ASE_NULL;
+
+	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg, ASE_NULL) == -1)
+	{
+		ase_printf (
+			ASE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"), 
+			ase_awk_geterrnum(awk),
+			(unsigned int)ase_awk_geterrlin(awk), 
+			ase_awk_geterrmsg(awk));
+
+		return -1;
+	}
+
+	return 0;
+}
+
+#if defined(_WIN32) && defined(TEST_THREAD)
+typedef struct thr_arg_t thr_arg_t;
+struct thr_arg_t
+{
+	ase_awk_t* awk;
+	const ase_char_t* mfn;
+	ase_awk_runarg_t* runarg;
+};
+
+static unsigned int __stdcall run_awk_thr (void* arg)
+{
+	int n;
+	thr_arg_t* x = (thr_arg_t*)arg;
+
+	n = run_awk (x->awk, x->mfn, x->runarg);
+
+	_endthreadex (n);
+	return  0;
+}
+#endif
+
 static int awk_main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
 	ase_awk_srcios_t srcios;
-	ase_awk_runcbs_t runcbs;
-	ase_awk_runios_t runios;
 	ase_awk_prmfns_t prmfns;
 	struct awk_src_io src_io = { NULL, NULL };
 	int opt, i, file_count = 0;
@@ -881,8 +932,10 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	ase_awk_setoption (awk, opt);
 
-ase_awk_seterrstr (awk, ASE_AWK_EGBLRED, ASE_T("\uC804\uC5ED\uBCC0\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
-ase_awk_seterrstr (awk, ASE_AWK_EAFNRED, ASE_T("\uD568\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
+	/*
+	ase_awk_seterrstr (awk, ASE_AWK_EGBLRED, ASE_T("\uC804\uC5ED\uBCC0\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
+	ase_awk_seterrstr (awk, ASE_AWK_EAFNRED, ASE_T("\uD568\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
+	*/
 
 	srcios.in = awk_srcio_in;
 	srcios.out = deparse? awk_srcio_out: NULL;
@@ -910,27 +963,38 @@ ase_awk_seterrstr (awk, ASE_AWK_EAFNRED, ASE_T("\uD568\uC218 \'%.*s\'\uAC00 \uC7
 	signal (SIGINT, stop_run);
 #endif
 
-	runios.pipe = awk_extio_pipe;
-	runios.file = awk_extio_file;
-	runios.console = awk_extio_console;
-
-	runcbs.on_start = on_run_start;
-	runcbs.on_statement = on_run_statement;
-	runcbs.on_return = on_run_return;
-	runcbs.on_end = on_run_end;
-	runcbs.custom_data = ASE_NULL;
-
-	if (ase_awk_run (awk, mfn, &runios, &runcbs, runarg, ASE_NULL) == -1)
+#if defined(_WIN32) && defined(TEST_THREAD)
 	{
-		ase_printf (
-			ASE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"), 
-			ase_awk_geterrnum(awk),
-			(unsigned int)ase_awk_geterrlin(awk), 
-			ase_awk_geterrmsg(awk));
+		unsigned int tid;
+		HANDLE thr[5];
+		thr_arg_t arg;
+		int y;
 
+		arg.awk = awk;
+		arg.mfn = mfn;
+		arg.runarg = runarg;
+
+		for (y = 0; y < ASE_COUNTOF(thr); y++)
+		{
+			thr[y] = (HANDLE)_beginthreadex (NULL, 0, run_awk_thr, &arg, 0, &tid);
+			if (thr[y] == (HANDLE)0) 
+			{
+				ase_printf (ASE_T("ERROR: cannot create a thread %d\n"), y);
+			}
+		}
+
+		for (y = 0; y < ASE_COUNTOF(thr); y++)
+		{
+			if (thr[y]) WaitForSingleObject (thr[y], INFINITE);
+		}
+	}
+#else
+	if (run_awk (awk, mfn, runarg) == -1)
+	{
 		ase_awk_close (awk);
 		return -1;
 	}
+#endif
 
 	ase_awk_close (awk);
 #ifdef _WIN32
