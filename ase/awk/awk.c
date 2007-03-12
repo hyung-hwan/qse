@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.117 2007-03-09 14:19:54 bacon Exp $ 
+ * $Id: awk.c,v 1.118 2007-03-12 12:55:57 bacon Exp $ 
  *
  * {License}
  */
@@ -17,26 +17,28 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 {
 	ase_awk_t* awk;
 
-	ASE_ASSERT (
-		prmfns                 != ASE_NULL &&
-		prmfns->mmgr.malloc    != ASE_NULL &&
-		prmfns->mmgr.free      != ASE_NULL &&
-		prmfns->ccls.is_upper  != ASE_NULL &&
-		prmfns->ccls.is_lower  != ASE_NULL &&
-		prmfns->ccls.is_alpha  != ASE_NULL &&
-		prmfns->ccls.is_digit  != ASE_NULL &&
-		prmfns->ccls.is_xdigit != ASE_NULL &&
-		prmfns->ccls.is_alnum  != ASE_NULL &&
-		prmfns->ccls.is_space  != ASE_NULL &&
-		prmfns->ccls.is_print  != ASE_NULL &&
-		prmfns->ccls.is_graph  != ASE_NULL &&
-		prmfns->ccls.is_cntrl  != ASE_NULL &&
-		prmfns->ccls.is_punct  != ASE_NULL &&
-		prmfns->ccls.to_upper  != ASE_NULL &&
-		prmfns->ccls.to_lower  != ASE_NULL &&
-		prmfns->misc.pow       != ASE_NULL &&
-		prmfns->misc.sprintf   != ASE_NULL &&
-		prmfns->misc.dprintf   != ASE_NULL);
+	ASE_ASSERT (prmfns != ASE_NULL);
+
+	ASE_ASSERT (prmfns->mmgr.malloc != ASE_NULL &&
+	            prmfns->mmgr.free   != ASE_NULL);
+
+	ASE_ASSERT (prmfns->ccls.is_upper  != ASE_NULL &&
+	            prmfns->ccls.is_lower  != ASE_NULL &&
+	            prmfns->ccls.is_alpha  != ASE_NULL &&
+	            prmfns->ccls.is_digit  != ASE_NULL &&
+	            prmfns->ccls.is_xdigit != ASE_NULL &&
+	            prmfns->ccls.is_alnum  != ASE_NULL &&
+	            prmfns->ccls.is_space  != ASE_NULL &&
+	            prmfns->ccls.is_print  != ASE_NULL &&
+	            prmfns->ccls.is_graph  != ASE_NULL &&
+	            prmfns->ccls.is_cntrl  != ASE_NULL &&
+	            prmfns->ccls.is_punct  != ASE_NULL &&
+	            prmfns->ccls.to_upper  != ASE_NULL &&
+	            prmfns->ccls.to_lower  != ASE_NULL);
+	
+	ASE_ASSERT (prmfns->misc.pow     != ASE_NULL &&
+	            prmfns->misc.sprintf != ASE_NULL &&
+	            prmfns->misc.dprintf != ASE_NULL);
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	awk = (ase_awk_t*) malloc (ASE_SIZEOF(ase_awk_t));

@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.106 2007-03-06 14:51:53 bacon Exp $
+ * $Id: tree.c,v 1.107 2007-03-12 12:53:12 bacon Exp $
  *
  * {License}
  */
@@ -305,6 +305,8 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 					PUT_SRCSTR (awk, ASE_T("\\v"));
 				else if (ptr[i] == ASE_T('\a'))
 					PUT_SRCSTR (awk, ASE_T("\\a"));
+				else if (ptr[i] == ASE_T('\0'))
+					PUT_SRCSTR (awk, ASE_T("\\0"));
 				else
 					PUT_SRCSTRX (awk, &ptr[i], 1);
 			}
