@@ -20,7 +20,7 @@ ase-0.1.0.tgz
 
 [[[
 * {초간단가이드,quickstart-ko.html}
-* {사용자가이드,userguide-ko.html}
+* {사용자가이드,awk-en.html}
 * {자주받는질문,faq-ko.html}
 ]]]
 

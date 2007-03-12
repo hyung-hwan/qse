@@ -20,7 +20,7 @@ ase-0.1.0.tgz
 
 [[[
 * {Quickstart,quickstart-en.html}
-* {User guide,userguide-en.html}
+* {Embedder's guide,awk-en.html}
 * {Frequently Asked Questions,faq-en.html}
 ]]]
 
