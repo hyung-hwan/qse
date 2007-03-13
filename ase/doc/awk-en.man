@@ -37,9 +37,10 @@ The following code fragment illustrates the basic steps of embedding the process
 An embedding example is available in ##ase/test/awk/awk.c##. Refer to the sample code along with this document for more information.
 
 === Primitive Functions ===
-A set of primitive functions is needed to create an instance of the AWK processor. A primitive function is a user-defined function to help the library perform system-dependent operations such as memory allocation, character class handling, etc. 
+A set of primitive functions is needed to create an instance of the AWK processor. A primitive function is a user-defined function to help the library perform system-dependent operations such as memory allocation, character class handling.
 
 {{{
+typedef struct ase_awk_prmfns_t ase_awk_prmfns_t;
 
 struct ase_awk_prmfns_t
 {
@@ -117,17 +118,108 @@ The functions in these groups perform the memory operations and character class 
 
 === Source IO Handler ===
 
-ase_awk_srcio_t
+The source code is handled by a source input handler provided by the user. The optional source code output handler can be provided to have the internal parse tree converted back to the source code.
 
-The source code is read in with the source input handler provided. The optional source output handler writes the generated source code.
+The source code handler is defined as follows:
+
+{{{
+typedef ase_ssize_t (*ase_awk_io_t) (
+	int cmd, void* custom, ase_char_t* data, ase_size_t count);
+
+typedef struct ase_awk_srcios_t ase_awk_srcios_t;
+
+struct ase_awk_srcios_t
+{
+	ase_awk_io_t in; /* source input */
+	ase_awk_io_t out; /* source output */
+	void* custom_data;
+};
+}}}
+
+The ##in## field of the ase_awk_srcios_t is mandatory and shoul be filled in. The ##out##field can be set to ASE_NULL or can point to a source output handling function. The ##custom_data## field is passed to the source handlers as the second argument.
+
+The first parameter ##cmd## of the source input handler is one of the following values:
+{{{
+enum
+{
+        ASE_AWK_IO_OPEN   = 0,
+        ASE_AWK_IO_CLOSE  = 1,
+        ASE_AWK_IO_READ   = 2
+};
+}}}
+
+The first parameter ##cmd## of the source output handler is one of the following values:
+
+{{{
+enum
+{
+        ASE_AWK_IO_OPEN   = 0,
+        ASE_AWK_IO_CLOSE  = 1,
+        ASE_AWK_IO_WRITE  = 3
+};
+}}}
+
+The third parameter ##data## and the fourth field ##count## are used if the ##cmd## field is either ASE_AWK_IO_READ or ASE_AWK_IO_WRITE.
+
+{{{
+static ase_ssize_t awk_srcio_in (
+        int cmd, void* arg, ase_char_t* data, ase_size_t size)
+{
+        struct awk_src_io* src_io = (struct awk_src_io*)arg;
+        ase_cint_t c;
+
+        if (cmd == ASE_AWK_IO_OPEN)
+        {
+                if (src_io->input_file == ASE_NULL) return 0;
+                src_io->input_handle = ase_fopen (src_io->input_file, ASE_T("r"));
+                if (src_io->input_handle == NULL) return -1;
+                return 1;
+        }
+        else if (cmd == ASE_AWK_IO_CLOSE)
+        {
+                if (src_io->input_file == ASE_NULL) return 0;
+                fclose ((FILE*)src_io->input_handle);
+                return 0;
+        }
+        else if (cmd == ASE_AWK_IO_READ)
+        {
+                if (size <= 0) return -1;
+                c = ase_fgetc ((FILE*)src_io->input_handle);
+                if (c == ASE_CHAR_EOF) return 0;
+                *data = (ase_char_t)c;
+                return 1;
+        }
+
+        return -1;
+}
+}}}
+
+{{{
+static ase_ssize_t awk_srcio_out (
+        int cmd, void* arg, ase_char_t* data, ase_size_t size)
+{
+        /*struct awk_src_io* src_io = (struct awk_src_io*)arg;*/
+
+        if (cmd == ASE_AWK_IO_OPEN) return 1;
+        else if (cmd == ASE_AWK_IO_CLOSE)
+        {
+                fflush (stdout);
+                return 0;
+        }
+        else if (cmd == ASE_AWK_IO_WRITE)
+        {
+                int n = ase_fprintf (stdout, ASE_T("%.*s"), size, data);
+                if (n < 0) return -1;
+
+                return size;
+        }
+
+        return -1;
+}
+}}}
 
 === External IO Handler ===
 
-ase_awk_extio_t
 External IO handlers should be provided to support the AWK's built-in IO facilities.
 
-=== Reference Manual ===
-[[[
-* {Reference Manual,awk-ref-en.html}
-]]]
 
