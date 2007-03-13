@@ -136,63 +136,67 @@ struct ase_awk_srcios_t
 };
 }}}
 
-The ##in## field of the ase_awk_srcios_t is mandatory and should be filled in. The ##out## field can be set to ASE_NULL or can point to a source output handling function. The ##custom_data## field is passed to the source handlers as the second argument. The first parameter ##cmd## of the source input handler is one of ##ASE_AWK_IO_OPEN##, ##ASE_AWK_IO_CLOSE##, ##ASE_AWK_IO_READ##. The first parameter ##cmd## of the source output handler is one of ##ASE_AWK_IO_OPEN##, ##ASE_AWK_IO_CLOSE##, ##ASE_AWK_IO_WRITE##. The third parameter ##data## and the fourth parameter ##count## are used if the first parameter ##cmd## is either ##ASE_AWK_IO_READ## or ##ASE_AWK_IO_WRITE##.
+The ##in## field of the ase_awk_srcios_t is mandatory and should be filled in. The ##out## field can be set to ##ASE_NULL## or can point to a source output handling function. The ##custom_data## field is passed to the source handlers as the second argument. The first parameter ##cmd## of the source input handler is one of ##ASE_AWK_IO_OPEN##, ##ASE_AWK_IO_CLOSE##, ##ASE_AWK_IO_READ##. The first parameter ##cmd## of the source output handler is one of ##ASE_AWK_IO_OPEN##, ##ASE_AWK_IO_CLOSE##, ##ASE_AWK_IO_WRITE##. The third parameter ##data## and the fourth parameter ##count## are the pointer to the buffer to read data into and its size if the first parameter ##cmd## is ##ASE_AWK_IO_READ## while they are the pointer to the data and its size if ##cmd## is ##ASE_AWK_IO_WRITE##.
 
+The source handler should return a negative value for an error and zero or a positive value otherwise. However, there is a subtle difference in the meaning of the return value depending on the value of the first parameter ##cmd##.
+
+When ##cmd## is ##ASE_AWK_IO_OPEN##, the return value of -1 and 1 indicates the failure and the success respectively. In addition, the return value of 0 indicates that the operation is successful but has reached the end of the stream. The library calls the handler with ##ASE_AWK_IO_CLOSE## for deinitialization if the return value is 0 or 1. When ##cmd## is ##ASE_AWK_IO_CLOSE##, the return value of -1 and 0 indicate the failure and the success respectively. When ##cmd## is ##ASE_AWK_IO_READ## or ##ASE_AWK_IO_WRITE##, the return value of -1 indicates the failure, 0 the end of the stream, and other positive values the number of characters read or written.
+
+The typical source handler will look as follows:
 {{{
-static ase_ssize_t awk_srcio_in (
-        int cmd, void* arg, ase_char_t* data, ase_size_t size)
+ase_ssize_t awk_srcio_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-        struct awk_src_io* src_io = (struct awk_src_io*)arg;
-        ase_cint_t c;
-
         if (cmd == ASE_AWK_IO_OPEN)
         {
-                if (src_io->input_file == ASE_NULL) return 0;
-                src_io->input_handle = ase_fopen (src_io->input_file, ASE_T("r"));
-                if (src_io->input_handle == NULL) return -1;
+		/* open the stream */
                 return 1;
         }
         else if (cmd == ASE_AWK_IO_CLOSE)
         {
-                if (src_io->input_file == ASE_NULL) return 0;
-                fclose ((FILE*)src_io->input_handle);
+		/* close the stream */
                 return 0;
         }
         else if (cmd == ASE_AWK_IO_READ)
         {
-                if (size <= 0) return -1;
-                c = ase_fgetc ((FILE*)src_io->input_handle);
-                if (c == ASE_CHAR_EOF) return 0;
-                *data = (ase_char_t)c;
-                return 1;
+		/* read the stream */
+		return the number of characters read;
+        }
+
+        return -1;
+}
+
+ase_ssize_t awk_srcio_out (int cmd, void* arg, ase_char_t* data, ase_size_t size)
+{
+        if (cmd == ASE_AWK_IO_OPEN) 
+	{
+		/* open the stream */
+		return 1;
+	}
+        else if (cmd == ASE_AWK_IO_CLOSE)
+        {
+		/* close the stream after flushing it */
+                return 0;
+        }
+        else if (cmd == ASE_AWK_IO_WRITE)
+        {
+		/* write the stream */
+		return the number of characters written;
         }
 
         return -1;
 }
 }}}
 
+Once you have the source handler ready, you can fill in the fields of a ##ase_awk_srcios_t## structure and pass it to the call of ##ase_awk_parse##.
+
 {{{
-static ase_ssize_t awk_srcio_out (
-        int cmd, void* arg, ase_char_t* data, ase_size_t size)
-{
-        /*struct awk_src_io* src_io = (struct awk_src_io*)arg;*/
+	ase_awk_srcios_t srcios;
 
-        if (cmd == ASE_AWK_IO_OPEN) return 1;
-        else if (cmd == ASE_AWK_IO_CLOSE)
-        {
-                fflush (stdout);
-                return 0;
-        }
-        else if (cmd == ASE_AWK_IO_WRITE)
-        {
-                int n = ase_fprintf (stdout, ASE_T("%.*s"), size, data);
-                if (n < 0) return -1;
+	srcios.in = awk_srcio_in;
+	srcios.out = awk_srcio_out;
+	srcios.custom_data = point to the extra information necessary; 
 
-                return size;
-        }
-
-        return -1;
-}
+	ase_awk_parse (awk, &srcios);
 }}}
 
 === External IO Handler ===
