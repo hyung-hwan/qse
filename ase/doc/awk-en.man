@@ -136,30 +136,7 @@ struct ase_awk_srcios_t
 };
 }}}
 
-The ##in## field of the ase_awk_srcios_t is mandatory and shoul be filled in. The ##out##field can be set to ASE_NULL or can point to a source output handling function. The ##custom_data## field is passed to the source handlers as the second argument.
-
-The first parameter ##cmd## of the source input handler is one of the following values:
-{{{
-enum
-{
-        ASE_AWK_IO_OPEN   = 0,
-        ASE_AWK_IO_CLOSE  = 1,
-        ASE_AWK_IO_READ   = 2
-};
-}}}
-
-The first parameter ##cmd## of the source output handler is one of the following values:
-
-{{{
-enum
-{
-        ASE_AWK_IO_OPEN   = 0,
-        ASE_AWK_IO_CLOSE  = 1,
-        ASE_AWK_IO_WRITE  = 3
-};
-}}}
-
-The third parameter ##data## and the fourth field ##count## are used if the ##cmd## field is either ASE_AWK_IO_READ or ASE_AWK_IO_WRITE.
+The ##in## field of the ase_awk_srcios_t is mandatory and should be filled in. The ##out## field can be set to ASE_NULL or can point to a source output handling function. The ##custom_data## field is passed to the source handlers as the second argument. The first parameter ##cmd## of the source input handler is one of ##ASE_AWK_IO_OPEN##, ##ASE_AWK_IO_CLOSE##, ##ASE_AWK_IO_READ##. The first parameter ##cmd## of the source output handler is one of ##ASE_AWK_IO_OPEN##, ##ASE_AWK_IO_CLOSE##, ##ASE_AWK_IO_WRITE##. The third parameter ##data## and the fourth parameter ##count## are used if the first parameter ##cmd## is either ##ASE_AWK_IO_READ## or ##ASE_AWK_IO_WRITE##.
 
 {{{
 static ase_ssize_t awk_srcio_in (
