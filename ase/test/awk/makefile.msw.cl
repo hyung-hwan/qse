@@ -20,6 +20,9 @@ all: aseawk
 aseawk: awk.obj
 	link /nologo /out:$@.exe $(LDFLAGS) $(LIBS) awk.obj
 
+mini: mini.obj
+	link /nologo /out:$@.exe $(LDFLAGS) $(LIBS) mini.obj
+
 java: 
 	javac -classpath ../../.. Awk.java
 
@@ -27,7 +30,7 @@ jrun:
 	java -classpath ../../.. ase.test.awk.Awk
 
 clean:
-	del $(OBJS) *.obj aseawk.exe 
+	del $(OBJS) *.obj aseawk.exe mini.exe
 
 .SUFFIXES: .c .obj
 .c.obj:
