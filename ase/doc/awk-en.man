@@ -44,16 +44,16 @@ typedef struct ase_awk_prmfns_t ase_awk_prmfns_t;
 
 struct ase_awk_prmfns_t
 {
-	ase_mmgr_t mmgr;
-	ase_ccls_t ccls;
+    ase_mmgr_t mmgr;
+    ase_ccls_t ccls;
 
-	struct
-	{
-		ase_awk_pow_t     pow;
-		ase_awk_sprintf_t sprintf;
-		ase_awk_dprintf_t dprintf;
-		void*             custom_data;
-	} misc;
+    struct
+    {
+        ase_awk_pow_t     pow;
+        ase_awk_sprintf_t sprintf;
+        ase_awk_dprintf_t dprintf;
+        void*             custom_data;
+    } misc;
 };
 }}}
 
@@ -64,14 +64,11 @@ A caller of ##ase_awk_open## should fill in most of the fields of a ##ase_awk_pr
 typedef ase_real_t (*ase_awk_pow_t) (void* custom, ase_real_t x, ase_real_t y);
 
 /* similar to snprintf of the standard C library. */
-typedef int (*ase_awk_sprintf_t) (
-	void* custom, ase_char_t* buf, ase_size_t size, 
-	const ase_char_t* fmt, ...);
+typedef int (*ase_awk_sprintf_t) (void* custom, ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...);
 
 /* similar to printf of the standard C library. called by a few uncommonly 
  * used output functions usually for debugging purpose */
-typedef void (*ase_awk_dprintf_t) (
-	void* custom, const ase_char_t* fmt, ...); 
+typedef void (*ase_awk_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
 }}}
 
 The fourth field of the group is passed to its member functions as the first argument on invocation. The function pointed by the ##sprintf## field should ensure that the resuliting string is null-terminated and ##%s## and ##%c## are accepted for the ##ase_char_t*## and ##ase_char_t## type respectively regardless the character mode.
@@ -115,7 +112,6 @@ struct ase_ccls_t
 
 The functions in these groups perform the memory operations and character class related operations respectively. They follow the style of the memory allocation functions and character class handling functions of the standard C library except that they accept a pointer to the user-defined data as the first argument, thus providing more flexibility. The pointer to the user-defined data is specified into the ##custom_data## field of each group. The ##realloc## field, however, can be ##ASE_NULL##, in which case the functions pointed by the free and the malloc field replace the role of the function pointed by the ##realloc## field. 
 
-
 === Source IO Handler ===
 
 The source code is handled by a source input handler provided by the user. The optional source code output handler can be provided to have the internal parse tree converted back to the source code.
@@ -123,16 +119,15 @@ The source code is handled by a source input handler provided by the user. The o
 The source code handler is defined as follows:
 
 {{{
-typedef ase_ssize_t (*ase_awk_io_t) (
-	int cmd, void* custom, ase_char_t* data, ase_size_t count);
+typedef ase_ssize_t (*ase_awk_io_t) (int cmd, void* custom, ase_char_t* data, ase_size_t count);
 
 typedef struct ase_awk_srcios_t ase_awk_srcios_t;
 
 struct ase_awk_srcios_t
 {
-	ase_awk_io_t in; /* source input */
-	ase_awk_io_t out; /* source output */
-	void* custom_data;
+    ase_awk_io_t in; /* source input */
+    ase_awk_io_t out; /* source output */
+    void*        custom_data;
 };
 }}}
 
@@ -146,61 +141,62 @@ The typical source handler will look as follows:
 {{{
 ase_ssize_t awk_srcio_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-        if (cmd == ASE_AWK_IO_OPEN)
-        {
-		/* open the stream */
-                return 1;
-        }
-        else if (cmd == ASE_AWK_IO_CLOSE)
-        {
-		/* close the stream */
-                return 0;
-        }
-        else if (cmd == ASE_AWK_IO_READ)
-        {
-		/* read the stream */
-		return the number of characters read;
-        }
+    if (cmd == ASE_AWK_IO_OPEN)
+    {
+        /* open the stream */
+        return 1;
+    }
+    else if (cmd == ASE_AWK_IO_CLOSE)
+    {
+        /* close the stream */
+        return 0;
+    }
+    else if (cmd == ASE_AWK_IO_READ)
+    {
+        /* read the stream */
+        return the number of characters read;
+    }
 
-        return -1;
+    return -1;
 }
 
 ase_ssize_t awk_srcio_out (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-        if (cmd == ASE_AWK_IO_OPEN) 
-	{
-		/* open the stream */
-		return 1;
-	}
-        else if (cmd == ASE_AWK_IO_CLOSE)
-        {
-		/* close the stream after flushing it */
-                return 0;
-        }
-        else if (cmd == ASE_AWK_IO_WRITE)
-        {
-		/* write the stream */
-		return the number of characters written;
-        }
+    if (cmd == ASE_AWK_IO_OPEN) 
+    {
+    /* open the stream */
+        return 1;
+    }
+    else if (cmd == ASE_AWK_IO_CLOSE)
+    {
+        /* close the stream after flushing it */
+        return 0;
+    }
+    else if (cmd == ASE_AWK_IO_WRITE)
+    {
+        /* write the stream */
+        return the number of characters written;
+    }
 
-        return -1;
+    return -1;
 }
 }}}
 
 Once you have the source handler ready, you can fill in the fields of a ##ase_awk_srcios_t## structure and pass it to the call of ##ase_awk_parse##.
 
 {{{
-	ase_awk_srcios_t srcios;
+ase_awk_srcios_t srcios;
 
-	srcios.in = awk_srcio_in;
-	srcios.out = awk_srcio_out;
-	srcios.custom_data = point to the extra information necessary; 
+srcios.in = awk_srcio_in;
+srcios.out = awk_srcio_out;
+srcios.custom_data = point to the extra information necessary; 
 
-	ase_awk_parse (awk, &srcios);
+if (ase_awk_parse (awk, &srcios) == -1)
+{
+	/* handle error */
+}
 }}}
 
 === External IO Handler ===
 
 External IO handlers should be provided to support the AWK's built-in IO facilities.
-
-
