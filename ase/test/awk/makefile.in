@@ -1,5 +1,3 @@
-SRCS = awk.c
-OBJS = $(SRCS:.c=.o)
 
 CC = @CC@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. 
@@ -8,10 +6,10 @@ LIBS = @LIBS@ -laseawk -lasecmn -laseutl -lm
 
 all: aseawk mini
 
-aseawk: $(OBJS)
+aseawk: awk.o
 	$(CC) -o $@ awk.o $(LDFLAGS) $(LIBS)
 
-mini: $(OBJS)
+mini: mini.o
 	$(CC) -o $@ mini.o $(LDFLAGS) $(LIBS)
 
 clean:
