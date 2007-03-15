@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.33 2007-03-06 14:58:00 bacon Exp $
+ * $Id: mem.c,v 1.34 2007-03-15 14:19:23 bacon Exp $
  *
  * {License}
  */
@@ -178,8 +178,7 @@ static void __mark_obj (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 {
 	ASE_ASSERT (obj != ASE_NULL);
 
-	// TODO:....
-	// can it be recursive?
+	/* TODO: can it be recursive? */
 	if (ASE_LSP_MARK(obj) != 0) return;
 
 	ASE_LSP_MARK(obj) = 1;
@@ -428,11 +427,11 @@ ase_lsp_obj_t* ase_lsp_makesym (
 {
 	ase_lsp_obj_t* obj;
 
-	// look for a sysmbol with the given name
+	/* look for a sysmbol with the given name */
 	obj = mem->used[ASE_LSP_OBJ_SYM];
 	while (obj != ASE_NULL) 
 	{
-		// if there is a symbol with the same name, it is just used.
+		/* if there is a symbol with the same name, it is just used. */
 		if (ase_strxncmp (
 			ASE_LSP_SYMPTR(obj), 
 			ASE_LSP_SYMLEN(obj), 
@@ -440,12 +439,12 @@ ase_lsp_obj_t* ase_lsp_makesym (
 		obj = ASE_LSP_LINK(obj);
 	}
 
-	// no such symbol found. create a new one 
+	/* no such symbol found. create a new one */
 	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_SYM,
 		ASE_SIZEOF(ase_lsp_obj_sym_t)+(len + 1)*ASE_SIZEOF(ase_char_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
-	// fill in the symbol buffer
+	/* fill in the symbol buffer */
 	ase_strncpy (ASE_LSP_SYMPTR(obj), str, len);
 
 	return obj;
@@ -456,12 +455,12 @@ ase_lsp_obj_t* ase_lsp_makestr (
 {
 	ase_lsp_obj_t* obj;
 
-	// allocate memory for the string
+	/* allocate memory for the string */
 	obj = ase_lsp_alloc (mem, ASE_LSP_OBJ_STR,
 		ASE_SIZEOF(ase_lsp_obj_str_t)+(len + 1)*ASE_SIZEOF(ase_char_t));
 	if (obj == ASE_NULL) return ASE_NULL;
 
-	// fill in the string buffer
+	/* fill in the string buffer */
 	ase_strncpy (ASE_LSP_STRPTR(obj), str, len);
 
 	return obj;

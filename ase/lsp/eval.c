@@ -1,5 +1,5 @@
 /*
- * $Id: eval.c,v 1.28 2007-03-07 12:14:28 bacon Exp $
+ * $Id: eval.c,v 1.29 2007-03-15 14:19:23 bacon Exp $
  *
  * {License}
  */
@@ -88,7 +88,7 @@ static ase_lsp_obj_t* makefn (ase_lsp_t* lsp, ase_lsp_obj_t* cdr, int is_macro)
 		return ASE_NULL;
 	}
 
-// TODO: more lambda expression syntax checks required???.
+/* TODO: more lambda expression syntax checks required???. */
 
 	/* check if the lambda express has non-nil value 
 	 * at the terminating cdr */

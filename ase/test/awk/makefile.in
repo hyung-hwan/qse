@@ -6,13 +6,16 @@ CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/cmn -L@abs_top_builddir@/awk -L@abs_top_builddir@/utl 
 LIBS = @LIBS@ -laseawk -lasecmn -laseutl -lm
 
-all: aseawk
+all: aseawk mini
 
 aseawk: $(OBJS)
 	$(CC) -o $@ awk.o $(LDFLAGS) $(LIBS)
 
+mini: $(OBJS)
+	$(CC) -o $@ mini.o $(LDFLAGS) $(LIBS)
+
 clean:
-	rm -rf *.o aseawk
+	rm -rf *.o aseawk mini
 
 .SUFFIXES: .c .o
 .c.o:
