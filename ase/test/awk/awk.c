@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.189 2007-03-12 15:24:19 bacon Exp $
+ * $Id: awk.c,v 1.190 2007-03-15 14:19:23 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -673,7 +673,7 @@ static int print_awk_value (ase_awk_pair_t* pair, void* arg)
 static void on_run_statement (
 	ase_awk_run_t* run, ase_size_t line, void* custom)
 {
-	//dprintf (L"running %d\n", (int)line);
+	/*dprintf (L"running %d\n", (int)line);*/
 }
 
 static void on_run_return (

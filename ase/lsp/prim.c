@@ -1,5 +1,5 @@
 /*
- * $Id: prim.c,v 1.24 2007-03-07 12:14:29 bacon Exp $
+ * $Id: prim.c,v 1.25 2007-03-15 14:19:23 bacon Exp $
  *
  * {License}
  */
@@ -19,7 +19,7 @@ int ase_lsp_addprim (
 
 int ase_lsp_removeprim (ase_lsp_t* lsp, const ase_char_t* name)
 {
-	// TODO:
+	/* TODO: */
 	return -1;
 }
 

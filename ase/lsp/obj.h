@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.17 2007-02-17 15:27:19 bacon Exp $
+ * $Id: obj.h,v 1.18 2007-03-15 14:19:23 bacon Exp $
  *
  * {License}
  */
@@ -25,7 +25,7 @@ enum
 	ASE_LSP_OBJ_MACRO,
 	ASE_LSP_OBJ_PRIM,
 
-	ASE_LSP_TYPE_COUNT // the number of lsp object types
+	ASE_LSP_TYPE_COUNT /* the number of lsp object types */
 };
 
 typedef struct ase_lsp_objhdr_t     ase_lsp_objhdr_t;
