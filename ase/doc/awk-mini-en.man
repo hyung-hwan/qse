@@ -1,23 +1,16 @@
 .title Annotated ASEAWK Embedding Sample
 
-== Annotate ASEAWK Embedding Sample ==
+== Annotated ASEAWK Embedding Sample ==
 
-This document annotates a simple embedding sample. Locate the ase_main function to begin exploring the sample. The non-annotated source is available from ##ase/test/awk/mini.c## as well.
+This document annotates a simple embedding sample code [[ase/test/awk/mini.c]]. Locate the [[ase_main]] function to begin exploring the sample.
 
-== mini.c ==
+=== mini.c ===
 
 {{{
-
-/* most of the data types and functions are defined ase/awk/awk.h */
 #include <ase/awk/awk.h>
-
-/* ase_strXXX and ase_str_XXX functions are defined in ase/str/str.h */
 #include <ase/cmn/str.h>
-
-/* ase_memXXX functions are defined in ase/cmn/mem.h */
 #include <ase/cmn/mem.h>
 
-/* the following three headers files export 
 #include <ase/utl/ctype.h>
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
@@ -25,7 +18,11 @@ This document annotates a simple embedding sample. Locate the ase_main function 
 #include <stdarg.h>
 #include <math.h>
 #include <stdlib.h>
+}}}
 
+Most of the data types and functions needed to embed a AWK processor is defined in [[ase/awk/awk.h]]. Other headers files are included as this sample code uses functions from them.
+
+{{{
 struct awk_src_io
 {
 	const ase_char_t* file;
@@ -55,99 +52,43 @@ void ase_assert_printf (const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 #endif
+}}}
 
+The library requires [[ase_assert_abort]] and [[ase_assert_printf]] to be defined to support the assertion statements [[ASE_ASSERT]] and [[ASE_ASSERTX]] defined in [[ase/cmn/macros.h]] when [[NDEBUG]] is not defined. [[ASE_ASSERT]] behaves the same as the standard [[assert]] statement while an additional textual description can be passed to [[ASE_ASSERTX]]. They are all usuable in the caller program as well.
 
-/* custom memory management function */
-static void* custom_awk_malloc (void* custom, ase_size_t n)
+{{{
+void* awk_malloc  (void* custom, ase_size_t n)            { return malloc (n); }
+void* awk_realloc (void* custom, void* ptr, ase_size_t n) { return realloc (ptr, n); }
+void  awk_free    (void* custom, void* ptr)               { free (ptr); }
+}}}
+
+The memory management functions are required by the library. They need to form a part of the [[ase_awk_prmfns_t]] structure and be passed to [[ase_awk_open]]. Each function looks after the counterpart in the standard C library except that the first parameter to each function is a pointer to a custom data provided by the caller. 
+
+{{{
+ase_bool_t awk_isupper  (void* custom, ase_cint_t c) { return ase_isupper (c); }
+ase_bool_t awk_islower  (void* custom, ase_cint_t c) { return ase_islower (c); }
+ase_bool_t awk_isalpha  (void* custom, ase_cint_t c) { return ase_isalpha (c); }
+ase_bool_t awk_isdigit  (void* custom, ase_cint_t c) { return ase_isdigit (c); }
+ase_bool_t awk_isxdigit (void* custom, ase_cint_t c) { return ase_isxdigit (c); }
+ase_bool_t awk_isalnum  (void* custom, ase_cint_t c) { return ase_isalnum (c); }
+ase_bool_t awk_isspace  (void* custom, ase_cint_t c) { return ase_isspace (c); }
+ase_bool_t awk_isprint  (void* custom, ase_cint_t c) { return ase_isprint (c); }
+ase_bool_t awk_isgraph  (void* custom, ase_cint_t c) { return ase_isgraph (c); }
+ase_bool_t awk_iscntrl  (void* custom, ase_cint_t c) { return ase_iscntrl (c); }
+ase_bool_t awk_ispunct  (void* custom, ase_cint_t c) { return ase_ispunct (c); }
+ase_cint_t awk_toupper  (void* custom, ase_cint_t c) { return ase_toupper (c); }
+ase_cint_t awk_tolower  (void* custom, ase_cint_t c) { return ase_tolower (c); }
+}}}
+
+The character class handling functions must be provided by the caller. Like the memory management functions, they form a part of the [[ase_awk_prmfns_t]] structure and passwd to [[ase_awk_open]].
+
+{{{
+ase_real_t awk_pow (void* custom, ase_real_t x, ase_real_t y) 
 {
-	return malloc (n);
+	return pow (x, y); 
 }
 
-static void* custom_awk_realloc (void* custom, void* ptr, ase_size_t n)
-{
-	return realloc (ptr, n);
-}
-
-static void custom_awk_free (void* custom, void* ptr)
-{
-	free (ptr);
-}
-
-/* custom character class functions */
-static ase_bool_t custom_awk_isupper (void* custom, ase_cint_t c)  
-{ 
-	return ase_isupper (c); 
-}
-
-static ase_bool_t custom_awk_islower (void* custom, ase_cint_t c)  
-{ 
-	return ase_islower (c); 
-}
-
-static ase_bool_t custom_awk_isalpha (void* custom, ase_cint_t c)  
-{ 
-	return ase_isalpha (c); 
-}
-
-static ase_bool_t custom_awk_isdigit (void* custom, ase_cint_t c)  
-{ 
-	return ase_isdigit (c); 
-}
-
-static ase_bool_t custom_awk_isxdigit (void* custom, ase_cint_t c) 
-{ 
-	return ase_isxdigit (c); 
-}
-
-static ase_bool_t custom_awk_isalnum (void* custom, ase_cint_t c)
-{ 
-	return ase_isalnum (c); 
-}
-
-static ase_bool_t custom_awk_isspace (void* custom, ase_cint_t c)
-{ 
-	return ase_isspace (c); 
-}
-
-static ase_bool_t custom_awk_isprint (void* custom, ase_cint_t c)
-{ 
-	return ase_isprint (c); 
-}
-
-static ase_bool_t custom_awk_isgraph (void* custom, ase_cint_t c)
-{
-	return ase_isgraph (c); 
-}
-
-static ase_bool_t custom_awk_iscntrl (void* custom, ase_cint_t c)
-{
-	return ase_iscntrl (c);
-}
-
-static ase_bool_t custom_awk_ispunct (void* custom, ase_cint_t c)
-{
-	return ase_ispunct (c);
-}
-
-static ase_cint_t custom_awk_toupper (void* custom, ase_cint_t c)
-{
-	return ase_toupper (c);
-}
-
-static ase_cint_t custom_awk_tolower (void* custom, ase_cint_t c)
-{
-	return ase_tolower (c);
-}
-
-/* custom miscellaneous functions */
-static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
-{
-	return pow (x, y);
-}
-
-static int custom_awk_sprintf (
-	void* custom, ase_char_t* buf, ase_size_t size, 
-	const ase_char_t* fmt, ...)
+int awk_sprintf (void* custom, ase_char_t* buf, ase_size_t size, const ase_char_t* fmt, ...)
 {
 	int n;
 
@@ -159,17 +100,19 @@ static int custom_awk_sprintf (
 	return n;
 }
 
-static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
+void awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
 	ase_vfprintf (stderr, fmt, ap);
 	va_end (ap);
 }
+}}}
 
-/* source input handler */
-static ase_ssize_t awk_srcio_in (
-	int cmd, void* arg, ase_char_t* data, ase_size_t size)
+The [[awk_pow]] function returns the value of the second parameter [[x]] raised to the third parameter [[y]]. The [[awk_sprintf]] function is similar to the standard [[snprintf]] to the standard [[snprintf]]. It should make sure that the buffer [[buf]] is null-terminated if the size [[size]] is greater than 0. Refer to [[ase_sprintf]] in [[ase/utl/stdio.h]] for details. The [[awk_dprintf]] fucntion is similar to [[fprintf(stderr,...)]] is called when the text output is performed for debugging purpose.
+
+{{{
+ase_ssize_t awk_srcio_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	struct awk_src_io* src_io = (struct awk_src_io*)arg;
 	ase_cint_t c;
@@ -198,10 +141,13 @@ static ase_ssize_t awk_srcio_in (
 
 	return -1;
 }
+}}}
 
+The source code is read in by the source code input handler as specified in the [[in]] field of the [[ase_awk_srcios_t]] structure passed to the [[ase_awk_parse]] function. This sample, however, doesn't use the source output handler which is used to show the internal parse tree. 
+
+{{{
 /* external i/o handler for pipe */
-static ase_ssize_t awk_extio_pipe (
-	int cmd, void* arg, ase_char_t* data, ase_size_t size)
+ase_ssize_t awk_extio_pipe (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 
@@ -275,8 +221,7 @@ static ase_ssize_t awk_extio_pipe (
 }
 
 /* external i/o handler for file */
-static ase_ssize_t awk_extio_file (
-	int cmd, void* arg, ase_char_t* data, ase_size_t size)
+ase_ssize_t awk_extio_file (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 
@@ -345,8 +290,7 @@ static ase_ssize_t awk_extio_file (
 }
 
 /* external i/o handler for console */
-static ase_ssize_t awk_extio_console (
-	int cmd, void* arg, ase_char_t* data, ase_size_t size)
+ase_ssize_t awk_extio_console (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 
@@ -411,7 +355,11 @@ static ase_ssize_t awk_extio_console (
 
 	return -1;
 }
+}}}
 
+External Input-Output Handler.
+
+{{{
 int ase_main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
@@ -433,29 +381,29 @@ int ase_main (int argc, ase_char_t* argv[])
 
 	ase_memset (&prmfns, 0, ASE_SIZEOF(prmfns));
 
-	prmfns.mmgr.malloc      = custom_awk_malloc;
-	prmfns.mmgr.realloc     = custom_awk_realloc;
-	prmfns.mmgr.free        = custom_awk_free;
+	prmfns.mmgr.malloc      = awk_malloc;
+	prmfns.mmgr.realloc     = awk_realloc;
+	prmfns.mmgr.free        = awk_free;
 	prmfns.mmgr.custom_data = ASE_NULL;
 
-	prmfns.ccls.is_upper    = custom_awk_isupper;
-	prmfns.ccls.is_lower    = custom_awk_islower;
-	prmfns.ccls.is_alpha    = custom_awk_isalpha;
-	prmfns.ccls.is_digit    = custom_awk_isdigit;
-	prmfns.ccls.is_xdigit   = custom_awk_isxdigit;
-	prmfns.ccls.is_alnum    = custom_awk_isalnum;
-	prmfns.ccls.is_space    = custom_awk_isspace;
-	prmfns.ccls.is_print    = custom_awk_isprint;
-	prmfns.ccls.is_graph    = custom_awk_isgraph;
-	prmfns.ccls.is_cntrl    = custom_awk_iscntrl;
-	prmfns.ccls.is_punct    = custom_awk_ispunct;
-	prmfns.ccls.to_upper    = custom_awk_toupper;
-	prmfns.ccls.to_lower    = custom_awk_tolower;
+	prmfns.ccls.is_upper    = awk_isupper;
+	prmfns.ccls.is_lower    = awk_islower;
+	prmfns.ccls.is_alpha    = awk_isalpha;
+	prmfns.ccls.is_digit    = awk_isdigit;
+	prmfns.ccls.is_xdigit   = awk_isxdigit;
+	prmfns.ccls.is_alnum    = awk_isalnum;
+	prmfns.ccls.is_space    = awk_isspace;
+	prmfns.ccls.is_print    = awk_isprint;
+	prmfns.ccls.is_graph    = awk_isgraph;
+	prmfns.ccls.is_cntrl    = awk_iscntrl;
+	prmfns.ccls.is_punct    = awk_ispunct;
+	prmfns.ccls.to_upper    = awk_toupper;
+	prmfns.ccls.to_lower    = awk_tolower;
 	prmfns.ccls.custom_data = ASE_NULL;
 
-	prmfns.misc.pow         = custom_awk_pow;
-	prmfns.misc.sprintf     = custom_awk_sprintf;
-	prmfns.misc.dprintf     = custom_awk_dprintf;
+	prmfns.misc.pow         = awk_pow;
+	prmfns.misc.sprintf     = awk_sprintf;
+	prmfns.misc.dprintf     = awk_dprintf;
 	prmfns.misc.custom_data = ASE_NULL;
 
 	if ((awk = ase_awk_open(&prmfns, ASE_NULL)) == ASE_NULL) 
@@ -505,5 +453,6 @@ int ase_main (int argc, ase_char_t* argv[])
 	ase_awk_close (awk);
 	return 0;
 }
-
 }}}
+
+The main function.

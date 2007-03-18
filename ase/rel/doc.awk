@@ -1,5 +1,5 @@
 /*
- * $Id: doc.awk,v 1.13 2007-03-12 15:24:18 bacon Exp $
+ * $Id: doc.awk,v 1.14 2007-03-18 15:20:00 bacon Exp $
  *
  * {License}
  */
@@ -29,10 +29,10 @@ func print_text (full)
 		full = sprintf ("%s<a href='%s'>%s</a>%s", fra1, t2, t1, fra2);
 	}
 
-	while (match (full, /\[[^\[\][:space:]]+\]/) > 0)
+	while (match (full, /\[\[[^\[\][:space:]]+\]\]/) > 0)
 	{
 		fra1 = substr (full, 1, RSTART-1);
-		link = substr (full, RSTART+1, RLENGTH-2);
+		link = substr (full, RSTART+2, RLENGTH-4);
 		fra2 = substr (full, RSTART+RLENGTH, length(full)-RLENGTH);
 
 		full = sprintf ("%s<i>%s</i>%s", fra1, link, fra2);
