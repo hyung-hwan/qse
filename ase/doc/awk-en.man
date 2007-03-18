@@ -34,7 +34,7 @@ The following code fragment illustrates the basic steps of embedding the process
 * ##ase_awk_close## destroys the processor instance.
 )))
 
-An embedding example is available in ##ase/test/awk/awk.c##. Refer to the sample code along with this document for more information.
+More detailed description is available {here,awk-mini-en.html}. You may refer to other sample files such as [[ase/test/awk/awk.c]] and [[ase/awk/jni.c]].
 
 === Primitive Functions ===
 A set of primitive functions is needed to create an instance of the AWK processor. A primitive function is a user-defined function to help the library perform system-dependent operations such as memory allocation, character class handling.
