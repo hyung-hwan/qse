@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.210 2007-03-10 15:32:54 bacon Exp $
+ * $Id: awk.h,v 1.211 2007-03-19 15:25:50 bacon Exp $
  *
  * {License}
  */
@@ -210,6 +210,11 @@ enum
 	ASE_AWK_ETBUSY,         /* system too busy */
 	ASE_AWK_EISDIR,         /* is a directory */
 	ASE_AWK_EIOERR,         /* i/o error */
+
+	ASE_AWK_EOPEN,          /* cannot open */
+	ASE_AWK_EREAD,          /* cannot read */
+	ASE_AWK_EWRITE,         /* cannot write */
+	ASE_AWK_ECLOSE,         /* cannot close */
 
 	ASE_AWK_EINTERN,        /* internal error */
 	ASE_AWK_ERUNTIME,       /* run-time error */

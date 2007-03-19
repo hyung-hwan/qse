@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.345 2007-03-19 03:33:53 bacon Exp $
+ * $Id: run.c,v 1.346 2007-03-19 15:25:51 bacon Exp $
  *
  * {License}
  */
@@ -1648,6 +1648,12 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 					run, ASE_AWK_ECOUTWR, nde->line,
 					ASE_NULL, 0);
 			}
+			else
+			{
+				/* adjust the error line */
+				run->errlin = nde->line;
+			}
+
 			return -1;
 		}
 
@@ -2253,6 +2259,7 @@ static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 		}
 		else
 		{
+			/* adjust the error line */
 			run->errlin = nde->line;
 		}
 
@@ -2585,8 +2592,10 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			ASE_STR_LEN(&run->inrec.line));
 		if (n <= -1 /*&& run->errnum != ASE_AWK_EIOIMPL*/)
 		{
-			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-			/* change the error line */
+			if (out != ASE_NULL) 
+				ASE_AWK_FREE (run->awk, out);
+
+			/* adjust the error line */
 			run->errlin = nde->line;
 			return -1;
 		}
@@ -2615,8 +2624,10 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 					run->global.ofs.len);
 				if (n <= -1 /*&& run->errnum != ASE_AWK_EIOIMPL*/) 
 				{
-					if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
-					/* change the error line */
+					if (out != ASE_NULL)
+						ASE_AWK_FREE (run->awk, out);
+
+					/* adjust the error line */
 					run->errlin = nde->line;
 					return -1;
 				}
@@ -2625,7 +2636,8 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			v = __eval_expression (run, np);
 			if (v == ASE_NULL) 
 			{
-				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+				if (out != ASE_NULL)
+					ASE_AWK_FREE (run->awk, out);
 				return -1;
 			}
 			ase_awk_refupval (run, v);
@@ -2633,9 +2645,11 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			n = ase_awk_writeextio_val (run, nde->out_type, dst, v);
 			if (n <= -1 /*&& run->errnum != ASE_AWK_EIOIMPL*/) 
 			{
-				if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
+				if (out != ASE_NULL) 
+					ASE_AWK_FREE (run->awk, out);
+
 				ase_awk_refdownval (run, v);
-				/* change the error line */
+				/* adjust the error line */
 				run->errlin = nde->line;
 				return -1;
 			}
@@ -6136,15 +6150,23 @@ static int __read_record (ase_awk_run_t* run)
 		run, ASE_AWK_IN_CONSOLE, ASE_T(""), &run->inrec.line);
 	if (n <= -1) 
 	{
+		/* save the error number first as the error number can
+		 * be changed by ase_awk_clrrec if it fails */
+/*
 		int saved = run->errnum;
+*/
+
 		ase_awk_clrrec (run, ase_false);
+/*
 		if (saved == ASE_AWK_EIOIMPL) 
 		{
 			ase_awk_setrunerror (
 				run, ASE_AWK_ECINRD, 0, ASE_NULL, 0);
 		}
+*/
 		return -1;
 	}
+
 #ifdef DEBUG_RUN
 	ase_dprintf (ASE_T("record len = %d str=[%.*s]\n"), 
 			(int)ASE_STR_LEN(&run->inrec.line),

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.190 2007-03-15 14:19:23 bacon Exp $
+ * $Id: awk.c,v 1.191 2007-03-19 15:25:51 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -460,20 +460,6 @@ static ase_ssize_t awk_extio_console (
 			if (infiles[infile_no] == ASE_NULL) 
 			{
 				/* no more input console */
-
-				/* is this correct??? */
-				/*
-				if (epa->handle != ASE_NULL &&
-				    epa->handle != stdin &&
-				    epa->handle != stdout &&
-				    epa->handle != stderr) 
-				{
-					fclose ((FILE*)epa->handle);
-				}
-
-				epa->handle = ASE_NULL;
-				*/
-
 				return 0;
 			}
 
@@ -484,8 +470,19 @@ static ase_ssize_t awk_extio_console (
 				    epa->handle != stdout &&
 				    epa->handle != stderr) 
 				{
-					fclose ((FILE*)epa->handle);
+					/* TODO: ................................ */
+					if (fclose ((FILE*)epa->handle) == EOF)
+					{
+						ase_cstr_t errarg;
+
+						errarg.ptr = ASE_T("consolXXXe");
+						errarg.len = 7;
+
+						ase_awk_setrunerror (epa->run, ASE_AWK_ECLOSE, 0, &errarg, 1);
+						return -1;
+					}
 				}
+
 				epa->handle = stdin;
 			}
 			else
@@ -493,7 +490,20 @@ static ase_ssize_t awk_extio_console (
 				FILE* fp = ase_fopen (infiles[infile_no], ASE_T("r"));
 				if (fp == ASE_NULL)
 				{
-					dprintf (ASE_T("failed to open the next console of type %x - fopen failure\n"), epa->type);
+					ase_cstr_t errarg;
+
+					errarg.ptr = infiles[infile_no];
+					errarg.len = ase_strlen(infiles[infile_no]);
+
+					ase_awk_setrunerror (epa->run, ASE_AWK_EOPEN, 0, &errarg, 1);
+					return -1;
+				}
+
+				if (ase_awk_setfilename (
+					epa->run, infiles[infile_no], 
+					ase_strlen(infiles[infile_no])) == -1)
+				{
+					fclose (fp);
 					return -1;
 				}
 
@@ -502,7 +512,19 @@ static ase_ssize_t awk_extio_console (
 				    epa->handle != stdout &&
 				    epa->handle != stderr) 
 				{
-					fclose ((FILE*)epa->handle);
+					/* TODO: ................................ */
+					if (fclose ((FILE*)epa->handle) == EOF)
+					{
+						ase_cstr_t errarg;
+
+						errarg.ptr = ASE_T("console");
+						errarg.len = 7;
+
+						ase_awk_setrunerror (epa->run, ASE_AWK_ECLOSE, 0, &errarg, 1);
+
+						fclose (fp);
+						return -1;
+					}
 				}
 
 				dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
@@ -562,7 +584,12 @@ static int open_extio_console (ase_awk_extio_t* epa)
 			FILE* fp = ase_fopen (infiles[infile_no], ASE_T("r"));
 			if (fp == ASE_NULL)
 			{
-				dprintf (ASE_T("cannot open console of type %x - fopen failure\n"), epa->type);
+				ase_cstr_t errarg;
+
+				errarg.ptr = infiles[infile_no];
+				errarg.len = ase_strlen(infiles[infile_no]);
+
+				ase_awk_setrunerror (epa->run, ASE_AWK_EOPEN, 0, &errarg, 1);
 				return -1;
 			}
 
@@ -584,8 +611,12 @@ static int open_extio_console (ase_awk_extio_t* epa)
 	else if (epa->mode == ASE_AWK_EXTIO_CONSOLE_WRITE)
 	{
 		dprintf (ASE_T("    console(w) - <standard output>\n"));
-		/* TODO: does output console has a name??? */
-		/*ase_awk_setconsolename (ASE_T(""));*/
+
+		if (ase_awk_setofilename (epa->run, ASE_T(""), 0) == -1)
+		{
+			return -1;
+		}
+
 		epa->handle = stdout;
 		return 1;
 	}
@@ -602,10 +633,18 @@ static int close_extio_console (ase_awk_extio_t* epa)
 	    epa->handle != stdout && 
 	    epa->handle != stderr)
 	{
-		fclose ((FILE*)epa->handle);
+		if (fclose ((FILE*)epa->handle) == EOF)
+		{
+			ase_cstr_t errarg;
+
+			errarg.ptr = epa->name;
+			errarg.len = ase_strlen(epa->name);
+
+			ase_awk_setrunerror (epa->run, ASE_AWK_ECLOSE, 0, &errarg, 1);
+			return -1;
+		}
 	}
 
-	/* TODO: CloseConsole in GUI APPLICATION */
 	return 0;
 }
 
