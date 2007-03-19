@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.74 2007-03-10 15:42:00 bacon Exp $
+ * $Id: jni.c,v 1.75 2007-03-19 03:33:53 bacon Exp $
  *
  * {License}
  */
@@ -1569,6 +1569,7 @@ static int __handle_bfn (
 
 		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, args);
+
 		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
 		return -1;
 	}
