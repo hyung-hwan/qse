@@ -1,10 +1,10 @@
 .title Annotated ASEAWK Embedding Sample
 
-== Annotated ASEAWK Embedding Sample ==
+= Annotated ASEAWK Embedding Sample =
 
 This document annotates a simple embedding sample code [[ase/test/awk/mini.c]]. Locate the [[ase_main]] function to begin exploring the sample.
 
-=== mini.c ===
+== mini.c ==
 
 {{{
 #include <ase/awk/awk.h>

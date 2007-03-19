@@ -1,10 +1,10 @@
 .title ASE Quick Start Guide
 
-== ASE Quck Start Guide ==
+= ASE Quck Start Guide =
 
 The first step in using this library is to build it as the pre-compiled binary is not available at this moment. This document shows how to build the core library on various operating systems.
 
-=== Unix/Linux ===
+== Unix/Linux ==
 
 You may run the [[configure]] script on most of the Unix-like operation systems to set up the build environment and then run the [[make]] utility at the top-level directory.
 
@@ -30,7 +30,7 @@ CC=gcc CFLAGS="-Wall -O2 -m64" LDFLAGS="-m64" ./configure # 64-bit
 CC=gcc CFLAGS="-Wall -O2" ./configure # 32-bit
 }}}
 
-=== OpenVMS ===
+== OpenVMS ==
 
 You may use the [[mms]] command or the [[mmk]] command to build the library. No counterpart for the [[configure]] script is provided. As not top-level build script is provided, you have to run the command in each directory that you want to build the library in.
 
@@ -56,13 +56,13 @@ aseawk :== $DISK$GEIN_SYS:[USERS.BACON.ASE.TEST.AWK]aseawk.exe
 aseawk -f hello.awk
 }}}
 
-=== MS-Windows ===
+== MS-Windows ==
 
 You may use the Visual Studio 6 or later to use the provided project file. Otherwise open the command-line build environment and use the [[make]] utility.
 
 A set of make scripts is provided to support the Microsoft build environement and the Borland build environment. The script for the Miscrosoft build environment is named [[makefile.msw.cl]] while it is [[makefile.msw.bcc]] for the Borland counterpart.
 
-If you are building the AWK library and the test program, this might be what you have to do.
+If you are building the AWK library and the test program, this is probably what you have to do.
 
 {{{
 cd ase\cmn
@@ -74,3 +74,9 @@ nmake /f makefile.msw.cl
 cd ..\test\awk
 nmake /f makefile.msw.cl
 }}}
+
+However, The COM module can only be built within the Visual Studio environment. After having built the COM module, you may open [[ase/test/com/ase.vbp]] for testing.
+
+== JNI Interface ==
+
+Some make scripts contain the target to build the JNI interface for Java. The Java class files can be built with the standard [[javac]] command.

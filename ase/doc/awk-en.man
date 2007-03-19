@@ -1,9 +1,9 @@
 .title ASEAWK
 
-== ASEAWK ==
+= ASEAWK =
 ASE provides an embeddable processor of a dialect of the AWK programming language. The language implemented is slightly different from {the version developed by Brian W. Kernighan, http://cm.bell-labs.com/cm/cs/awkbook/index.html} and has been adjusted to the author's preference.
 
-=== Overview ===
+== Overview ==
 The following code fragment illustrates the basic steps of embedding the processor.
 
 {{{
@@ -36,7 +36,7 @@ The following code fragment illustrates the basic steps of embedding the process
 
 More detailed description is available {here,awk-mini-en.html}. You may refer to other sample files such as [[ase/test/awk/awk.c]] and [[ase/awk/jni.c]].
 
-=== Primitive Functions ===
+== Primitive Functions ==
 A set of primitive functions is needed to create an instance of the AWK processor. A primitive function is a user-defined function to help the library perform system-dependent operations such as memory allocation, character class handling.
 
 {{{
@@ -112,7 +112,7 @@ struct ase_ccls_t
 
 The functions in these groups perform the memory operations and character class related operations respectively. They follow the style of the memory allocation functions and character class handling functions of the standard C library except that they accept a pointer to the user-defined data as the first argument, thus providing more flexibility. The pointer to the user-defined data is specified into the [[custom_data]] field of each group. The [[realloc]] field, however, can be [[ASE_NULL]], in which case the functions pointed by the free and the malloc field replace the role of the function pointed by the [[realloc]] field. 
 
-=== Source IO Handler ===
+== Source IO Handler ==
 
 The source code is handled by a source input handler provided by the user. The optional source code output handler can be provided to have the internal parse tree converted back to the source code.
 
@@ -197,6 +197,6 @@ if (ase_awk_parse (awk, &srcios) == -1)
 }
 }}}
 
-=== External IO Handler ===
+== External IO Handler ==
 
 External IO handlers should be provided to support the AWK's built-in IO facilities.
