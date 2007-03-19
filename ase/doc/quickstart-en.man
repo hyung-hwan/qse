@@ -1,20 +1,24 @@
 .title ASE Quick Start Guide
 
-= ASE Quck Start Guide =
+== ASE Quck Start Guide ==
 
-This quick start guide is provided to ....
+The first step in using this library is to build it as the pre-compiled binary is not available at this moment. 
 
-=== OpenVMS ===
 
-set default [.ase.awk]
-mms
-set default [-.-.test.awk]
-mms
-aseawk :== $DISK$GEIN_SYS:[USERS.BACON.ASE.TEST.AWK]aseawk.exe
-aseawk -f hello.awk
+== Unix/Linux ==
 
-=== HP-UX ===
+You may run the [[configure]] script on most of the Unix-like operation systems to set up the build environment and then run the [[make]] utility.
 
+{{{
+$ ./configure
+$ make 
+}}}
+
+However, if you have preference for a particular compiler and the flags, you may explicitly specify them when you run the [[configure]] script.
+
+Here are presented a few such examples.
+
+{{{
 HP ANSI C 
 HP-UX B.11.23 9000/800 
 HP-UX B.11.23 ia64      
@@ -25,14 +29,11 @@ CC=cc CFLAGS="-O2 +DD64" LDFLAGS="+DD64" ./configure
 for 32bit
 CC=cc CFLAGS="-O2 +DD32" LDFLAGS="+DD32" ./configure
 
-=== SCO OpenServer ===
-
 SCO OpenServer Release 5.0.7 (SCO_SV 3.2 5.0.7)
 
-cc
 CC=cc CFLAGS="-Xc -a ansi -O2" ./configure
 
-=== Solaris ===
+Solaris
 
 64 bit gcc
 
@@ -40,3 +41,15 @@ CC=gcc CFLAGS="-Wall -O2 -m64" LDFLAGS="-m64" ./configure
 
 32 bit gcc
 CC=gcc CFLAGS="-Wall -O2" ./configure
+}}}
+
+
+== OpenVMS ==
+
+set default [.ase.awk]
+mms
+set default [-.-.test.awk]
+mms
+aseawk :== $DISK$GEIN_SYS:[USERS.BACON.ASE.TEST.AWK]aseawk.exe
+aseawk -f hello.awk
+
