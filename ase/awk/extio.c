@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.76 2007-03-10 15:02:30 bacon Exp $
+ * $Id: extio.c,v 1.77 2007-03-19 15:25:50 bacon Exp $
  *
  * {License}
  */
@@ -144,13 +144,21 @@ int ase_awk_readextio (
 		p->in.eof = ase_false;
 		p->in.eos = ase_false;
 
+run->errnum = ASE_AWK_ENOERR;
+
 		n = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
 		if (n <= -1)
 		{
 			ASE_AWK_FREE (run->awk, p->name);
 			ASE_AWK_FREE (run->awk, p);
+
+if (run->errnum == ASE_AWK_ENOERR)
+{
+	/* if the error number has not been set by the user */
 			ase_awk_setrunerror (
 				run, ASE_AWK_EIOIMPL, 0, ASE_NULL, 0);
+}
+
 			return -1;
 		}
 
@@ -219,12 +227,16 @@ int ase_awk_readextio (
 				break;
 			}
 
+run->errnum = ASE_AWK_ENOERR;
 			n = handler (ASE_AWK_IO_READ, p, p->in.buf, ASE_COUNTOF(p->in.buf));
 			if (n <= -1) 
 			{
 				/* handler error. getline should return -1 */
+if (run->errnum == ASE_AWK_ENOERR)
+{
 				ase_awk_setrunerror (
 					run, ASE_AWK_EIOIMPL, 0, ASE_NULL, 0);
+}
 				ret = -1;
 				break;
 			}

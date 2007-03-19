@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.94 2007-03-10 15:32:54 bacon Exp $
+ * $Id: err.c,v 1.95 2007-03-19 15:25:50 bacon Exp $
  *
  * {License}
  */
@@ -27,6 +27,11 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("system too busy"),
 		ASE_T("is a directory"),
 		ASE_T("i/o error"),
+
+		ASE_T("cannot open '%.*s'"),
+		ASE_T("cannot read '%.*s'"),
+		ASE_T("cannot write '%.*s'"),
+		ASE_T("cannot close '%.*s'"),
 		
 		ASE_T("internal error that should never have happened"),
 		ASE_T("general run-time error"),
