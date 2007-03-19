@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.344 2007-03-10 15:22:54 bacon Exp $
+ * $Id: run.c,v 1.345 2007-03-19 03:33:53 bacon Exp $
  *
  * {License}
  */
@@ -5354,10 +5354,6 @@ static ase_awk_val_t* __eval_call (
 		return ASE_NULL;
 	}
 
-	/*
-	nargs = 0; p = call->args;
-	while (p != ASE_NULL)
-	*/
 	for (p = call->args, nargs = 0; p != ASE_NULL; p = p->next, nargs++)
 	{
 		ASE_ASSERT (
@@ -5464,10 +5460,32 @@ static ase_awk_val_t* __eval_call (
 
 		if (call->what.bfn.handler != ASE_NULL)
 		{
+			run->errnum = ASE_AWK_ENOERR;
+
 			n = call->what.bfn.handler (
 				run,
 				call->what.bfn.name.ptr, 
 				call->what.bfn.name.len);
+
+			if (n <= -1)
+			{
+				if (run->errnum == ASE_AWK_ENOERR)
+				{
+					/* the handler has not set the error.
+					 * fix it */ 
+					ase_awk_setrunerror (
+						run, ASE_AWK_EBFNIMPL, 
+						nde->line, ASE_NULL, 0);
+				}
+				else
+				{
+					/* adjust the error line */
+					run->errlin = nde->line;	
+				}
+
+				/* correct the return code just in case */
+				if (n < -1) n = -1;
+			}
 		}
 	}
 

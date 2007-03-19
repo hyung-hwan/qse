@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.2 2007-03-06 15:01:50 bacon Exp $
+ * $Id: misc.c,v 1.3 2007-03-19 03:33:54 bacon Exp $
  *
  * {License}
  */
@@ -8,7 +8,6 @@
 #include <ase/cmn/macros.h>
 
 #ifndef NDEBUG
-
 int ase_assert_failed (
 	const ase_char_t* expr, const ase_char_t* desc, 
 	const ase_char_t* file, ase_size_t line)

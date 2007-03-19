@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.27 2007-03-06 14:54:49 bacon Exp $
+ * $Id: Awk.cpp,v 1.28 2007-03-19 03:33:54 bacon Exp $
  *
  * {License}
  */
@@ -351,7 +351,7 @@ static int __handle_bfn (
 	{
 		ase_char_t buf[128];
 		_sntprintf (buf, ASE_COUNTOF(buf), 
-			_T("out of memory in creating argument array for '%.*s'\n"),
+			_T("out of memory in creating argument array for '%.*s'"),
 			fnl, fnm);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
@@ -396,7 +396,7 @@ static int __handle_bfn (
 
 				ase_char_t buf[128];
 				_sntprintf (buf, ASE_COUNTOF(buf), 
-					_T("out of memory in handling '%.*s'\n"),
+					_T("out of memory in handling '%.*s'"),
 					fnl, fnm);
 				ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 				return -1;
@@ -418,7 +418,7 @@ static int __handle_bfn (
 
 			ase_char_t buf[128];
 			_sntprintf (buf, ASE_COUNTOF(buf), 
-				_T("out of memory in handling '%.*s'\n"),
+				_T("out of memory in handling '%.*s'"),
 				fnl, fnm);
 			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 			return -1;
@@ -434,7 +434,7 @@ static int __handle_bfn (
 
 		ase_char_t buf[128];
 		_sntprintf (buf, ASE_COUNTOF(buf), 
-			_T("out of memory in handling '%.*s'\n"),
+			_T("out of memory in handling '%.*s'"),
 			fnl, fnm);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 					
@@ -447,7 +447,7 @@ static int __handle_bfn (
 	{
 		ase_char_t buf[128];
 		_sntprintf (buf, ASE_COUNTOF(buf), 
-			_T("out of memory in handling '%.*s'\n"),
+			_T("out of memory in handling '%.*s'"),
 			fnl, fnm);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
@@ -456,7 +456,7 @@ static int __handle_bfn (
 	{
 		ase_char_t buf[128];
 		_sntprintf (buf, ASE_COUNTOF(buf), 
-			_T("no handler for '%.*s'\n"),
+			_T("no handler for '%.*s'"),
 			fnl, fnm);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
@@ -465,7 +465,7 @@ static int __handle_bfn (
 	{
 		ase_char_t buf[128];
 		_sntprintf (buf, ASE_COUNTOF(buf), 
-			_T("return value not supported for '%.*s'\n"),
+			_T("return value not supported for '%.*s'"),
 			fnl, fnm);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
@@ -507,17 +507,15 @@ HRESULT CAwk::Parse (int* ret)
 
 		prmfns.misc.pow     = custom_awk_pow;
 		prmfns.misc.sprintf = custom_awk_sprintf;
-		prmfns.misc.aprintf = custom_awk_aprintf;
 		prmfns.misc.dprintf = custom_awk_dprintf;
-		prmfns.misc.abort   = custom_awk_abort;
 
-		handle = ase_awk_open (&prmfns, NULL, &errnum);
+		handle = ase_awk_open (&prmfns, NULL);
 		if (handle == NULL)
 		{
 			errlin = 0;
 			ase_strxcpy (
 				errmsg, ASE_COUNTOF(errmsg), 
-				ase_awk_geterrstr(errnum));
+				ase_awk_geterrstr(NULL, ASE_AWK_ENOMEM));
 
 			*ret = -1;
 
@@ -806,7 +804,7 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 			errlin = 0;
 			_sntprintf (
 				errmsg, ASE_COUNTOF(errmsg), 
-				_T("'%.*s' added already\n"), 
+				_T("'%.*s' added already"), 
 				bfn->name.len, bfn->name.ptr);
 
 			*ret = -1;
@@ -821,7 +819,7 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 		errlin = 0;
 		ase_strxcpy (
 			errmsg, ASE_COUNTOF(errmsg), 
-			ase_awk_geterrstr(errnum));
+			ase_awk_geterrstr(NULL, errnum));
 
 		*ret = -1;
 		return S_OK;
@@ -837,7 +835,7 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 		errlin = 0;
 		ase_strxcpy (
 			errmsg, ASE_COUNTOF(errmsg), 
-			ase_awk_geterrstr(errnum));
+			ase_awk_geterrstr(NULL, errnum));
 
 		*ret = -1;
 		return S_OK;
@@ -883,7 +881,7 @@ STDMETHODIMP CAwk::DeleteBuiltinFunction (BSTR name, int* ret)
 	errlin = 0;
 	ase_strxcpy (
 		errmsg, ASE_COUNTOF(errmsg), 
-		ase_awk_geterrstr(errnum));
+		ase_awk_geterrstr(NULL, errnum));
 
 	*ret = -1;
 	return S_OK;
