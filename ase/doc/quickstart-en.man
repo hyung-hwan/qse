@@ -1,6 +1,6 @@
 .title ASE Quick Start Guide
 
-= ASE Quck Start Guide =
+= ASE Quick Start Guide =
 
 The first step in using this library is to build it as the pre-compiled binary is not available at this moment. This document shows how to build the core library on various operating systems.
 

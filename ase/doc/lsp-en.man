@@ -1,5 +1,5 @@
 
-== ASELSP ==
+= ASELSP =
 
 ASELSP is an implementation of a lisp-like language for embedding purposes.
 
