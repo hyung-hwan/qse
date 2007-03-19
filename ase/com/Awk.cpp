@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.28 2007-03-19 03:33:54 bacon Exp $
+ * $Id: Awk.cpp,v 1.29 2007-03-19 05:39:44 bacon Exp $
  *
  * {License}
  */
@@ -93,12 +93,12 @@ CAwk::~CAwk ()
 }
 
 #ifndef NDEBUG
-void ase_assert_dprintf (void)
+void ase_assert_abort (void)
 {
 	abort ();
 }
 
-void ase_assert_dprintf (const ase_char_t* fmt, ...)
+void ase_assert_printf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	int n;
@@ -353,7 +353,7 @@ static int __handle_bfn (
 		_sntprintf (buf, ASE_COUNTOF(buf), 
 			_T("out of memory in creating argument array for '%.*s'"),
 			fnl, fnm);
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		//TODO: ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
 	}
 
@@ -398,7 +398,7 @@ static int __handle_bfn (
 				_sntprintf (buf, ASE_COUNTOF(buf), 
 					_T("out of memory in handling '%.*s'"),
 					fnl, fnm);
-				ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+				//TODO: ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 				return -1;
 			}
 
@@ -420,7 +420,7 @@ static int __handle_bfn (
 			_sntprintf (buf, ASE_COUNTOF(buf), 
 				_T("out of memory in handling '%.*s'"),
 				fnl, fnm);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+			//TODO: ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 			return -1;
 		}
 
@@ -436,7 +436,7 @@ static int __handle_bfn (
 		_sntprintf (buf, ASE_COUNTOF(buf), 
 			_T("out of memory in handling '%.*s'"),
 			fnl, fnm);
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		//TODO: ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 					
 		return -1;
 	}
@@ -449,7 +449,7 @@ static int __handle_bfn (
 		_sntprintf (buf, ASE_COUNTOF(buf), 
 			_T("out of memory in handling '%.*s'"),
 			fnl, fnm);
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		//TODO: ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
 	}
 	else if (n == 2)
@@ -458,7 +458,7 @@ static int __handle_bfn (
 		_sntprintf (buf, ASE_COUNTOF(buf), 
 			_T("no handler for '%.*s'"),
 			fnl, fnm);
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		//TODO: ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
 	}
 	else if (n == 3)
@@ -467,7 +467,7 @@ static int __handle_bfn (
 		_sntprintf (buf, ASE_COUNTOF(buf), 
 			_T("return value not supported for '%.*s'"),
 			fnl, fnm);
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
+		//TODO: ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, buf);
 		return -1;
 	}
 
