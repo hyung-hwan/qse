@@ -20,8 +20,8 @@ ase-0.1.0.tgz
 
 [[[
 * {Quickstart,quickstart-en.html}
-* {AWK Embedder guide,awk-en.html}
-* {LISP Embedder guide,lsp-en.html}
+* {AWK Embedder's guide,awk-en.html}
+* {LISP Embedder's guide,lsp-en.html}
 * {Frequently Asked Questions,faq-en.html}
 ]]]
 
