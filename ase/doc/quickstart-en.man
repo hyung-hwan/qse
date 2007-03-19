@@ -32,7 +32,7 @@ CC=gcc CFLAGS="-Wall -O2" ./configure # 32-bit
 
 === OpenVMS ===
 
-You may use the [[mms] command or the [[mmk]] command to build the library. No counterpart for the [[configure]] script is provided. As not top-level build script is provided, you have to run the command in each directory that you want to build the library in.
+You may use the [[mms]] command or the [[mmk]] command to build the library. No counterpart for the [[configure]] script is provided. As not top-level build script is provided, you have to run the command in each directory that you want to build the library in.
 
 Let's build the AWK library and its test program, for instance.
 

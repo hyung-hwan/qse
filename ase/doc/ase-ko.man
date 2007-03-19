@@ -13,7 +13,7 @@ ASE는 임베딩을 목적으로 여러가지 프로그래밍언어를 구현하
 ase-0.1.0.tgz
 [[[
 * {링크 1,ase-0.1.0.tgz}
-* {링크 2,http://my.dreamwiz.com/bacon/ase-0.1.0.tgz}
+* 링크 2
 ]]]
 
 == Documentation ==
