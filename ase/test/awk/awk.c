@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.191 2007-03-19 15:25:51 bacon Exp $
+ * $Id: awk.c,v 1.192 2007-03-20 10:44:45 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -376,7 +376,17 @@ static ase_ssize_t awk_extio_file (
 
 			dprintf (ASE_T("opening %s of type %d (file)\n"), epa->name, epa->type);
 			handle = ase_fopen (epa->name, mode);
-			if (handle == NULL) return -1;
+			if (handle == NULL) 
+			{
+				ase_cstr_t errarg;
+
+				errarg.ptr = epa->name;
+				errarg.len = ase_strlen(epa->name);
+
+
+				ase_awk_setrunerror (epa->run, ASE_AWK_EOPEN, 0, &errarg, 1);
+				return -1;
+			}
 
 			epa->handle = (void*)handle;
 			return 1;

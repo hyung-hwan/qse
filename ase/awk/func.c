@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.101 2007-03-10 11:58:35 bacon Exp $
+ * $Id: func.c,v 1.102 2007-03-20 10:44:44 bacon Exp $
  *
  * {License}
  */
@@ -234,17 +234,19 @@ static int __bfn_close (
 	}	
 
 	n = ase_awk_closeextio (run, name);
-	if (n == -1 && run->errnum != ASE_AWK_EIOIMPL)
+	/*
+	if (n == -1 && run->errnum != ASE_AWK_EIONONE)
 	{
 		if (a0->type != ASE_AWK_VAL_STR) 
 			ASE_AWK_FREE (run->awk, name);
 		return -1;
 	}
+	*/
 
 	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, name);
 
 skip_close:
-	v = ase_awk_makeintval (run, n);
+	v = ase_awk_makeintval (run, (ase_long_t)n);
 	if (v == ASE_NULL)
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -265,12 +267,19 @@ static int __flush_extio (
 		n2 = ase_awk_flushextio (run, extio, name);
 		if (n2 == -1)
 		{
+			/*
 			if (run->errnum == ASE_AWK_EIOIMPL) n = -1;
 			else if (run->errnum == ASE_AWK_EIONONE) 
 			{
 				if (n != 0) n = -2;
 			}
 			else n = -99; 
+			*/	
+			if (run->errnum == ASE_AWK_EIONONE) 
+			{
+				if (n != 0) n = -2;
+			}
+			else n = -1;
 		}
 		else if (n != -1) n = 0;
 	}
@@ -292,16 +301,9 @@ static int __bfn_fflush (
 
 	if (nargs == 0)
 	{
-		/* flush the console output */
+		/* flush the console output.
+		 * fflush() should return -1 on errors */
 		n = ase_awk_flushextio (run, ASE_AWK_OUT_CONSOLE, ASE_T(""));
-		if (n == -1 && 
-		    run->errnum != ASE_AWK_EIOIMPL && 
-		    run->errnum != ASE_AWK_EIONONE)
-		{
-			return -1;
-		}
-
-		/* fflush() should return -1 on EIOIMPL and EIONONE */
 	}
 	else
 	{
@@ -341,15 +343,15 @@ static int __bfn_fflush (
 		n = __flush_extio (
 			run, ASE_AWK_EXTIO_FILE, 
 			((len0 == 0)? ASE_NULL: str0), 1);
-		if (n == -99) return -1;
+		/*if (n == -99) return -1;*/
 		n = __flush_extio (
 			run, ASE_AWK_EXTIO_PIPE,
 			((len0 == 0)? ASE_NULL: str0), n);
-		if (n == -99) return -1;
+		/*if (n == -99) return -1;*/
 		n = __flush_extio (
 			run, ASE_AWK_EXTIO_COPROC,
 			((len0 == 0)? ASE_NULL: str0), n);
-		if (n == -99) return -1;
+		/*if (n == -99) return -1;*/
 
 		/* if n remains 1, no ip handlers have been defined for
 		 * file, pipe, and coproc. so make fflush return -1. 

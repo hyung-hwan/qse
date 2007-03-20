@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.211 2007-03-19 15:25:50 bacon Exp $
+ * $Id: awk.h,v 1.212 2007-03-20 10:44:44 bacon Exp $
  *
  * {License}
  */
@@ -228,16 +228,6 @@ enum
 	ASE_AWK_ESOUTOP,
 	ASE_AWK_ESOUTCL,
 	ASE_AWK_ESOUTWR,
-
-	ASE_AWK_ECINOP,
-	ASE_AWK_ECINCL,
-	ASE_AWK_ECINNX,
-	ASE_AWK_ECINRD, 
-
-	ASE_AWK_ECOUTOP,
-	ASE_AWK_ECOUTCL,
-	ASE_AWK_ECOUTNX,
-	ASE_AWK_ECOUTWR,
 
 	ASE_AWK_ELXCHR,         /* lexer came accross an wrong character */
 	ASE_AWK_ELXUNG,         /* lexer failed to unget a character */
