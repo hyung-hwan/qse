@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.95 2007-03-19 15:25:50 bacon Exp $
+ * $Id: err.c,v 1.96 2007-03-20 10:44:44 bacon Exp $
  *
  * {License}
  */
@@ -45,16 +45,6 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("cannot open source output"),
 		ASE_T("cannot close source output"),
 		ASE_T("cannot write source output"),
-
-		ASE_T("cannot open console for read"),
-		ASE_T("cannot close console for read"),
-		ASE_T("cannot switch to next console for read"),
-		ASE_T("cannot read from console"),
-
-		ASE_T("cannot open console for write"),
-		ASE_T("cannot close console for write"),
-		ASE_T("cannot switch to next console for write"),
-		ASE_T("cannot write to console"),
 
 		ASE_T("invalid character '%.*s'"),
 		ASE_T("cannot unget character"),

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.346 2007-03-19 15:25:51 bacon Exp $
+ * $Id: run.c,v 1.347 2007-03-20 10:44:44 bacon Exp $
  *
  * {License}
  */
@@ -1626,12 +1626,9 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		{
 			ase_awk_refdownval (run, run->inrec.d0);
 
-			if (run->errnum == ASE_AWK_EIOIMPL)
-			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ECOUTWR, nde->line, 
-					ASE_NULL, 0);
-			}
+			/* adjust the error line */
+			run->errlin = nde->line;
+
 			return -1;
 		}
 
@@ -1642,17 +1639,8 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 		{
 			ase_awk_refdownval (run, run->inrec.d0);
 
-			if (run->errnum == ASE_AWK_EIOIMPL)
-			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ECOUTWR, nde->line,
-					ASE_NULL, 0);
-			}
-			else
-			{
-				/* adjust the error line */
-				run->errlin = nde->line;
-			}
+			/* adjust the error line */
+			run->errlin = nde->line;
 
 			return -1;
 		}
@@ -2212,18 +2200,8 @@ static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 	n = ase_awk_nextextio_read (run, ASE_AWK_IN_CONSOLE, ASE_T(""));
 	if (n == -1)
 	{
-		if (run->errnum == ASE_AWK_EIOIMPL)
-		{
-			/* replace the error by ECINNX */
-			ase_awk_setrunerror (
-				run, ASE_AWK_ECINNX, nde->line, ASE_NULL, 0);
-		}
-		else
-		{
-			/* adjust the error line */
-			run->errlin = nde->line;
-		}
-
+		/* adjust the error line */
+		run->errlin = nde->line;
 		return -1;
 	}
 
@@ -2252,17 +2230,8 @@ static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 	n = ase_awk_nextextio_write (run, ASE_AWK_OUT_CONSOLE, ASE_T(""));
 	if (n == -1)
 	{
-		if (run->errnum == ASE_AWK_EIOIMPL)
-		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ECOUTNX, nde->line, ASE_NULL, 0);
-		}
-		else
-		{
-			/* adjust the error line */
-			run->errlin = nde->line;
-		}
-
+		/* adjust the error line */
+		run->errlin = nde->line;
 		return -1;
 	}
 
@@ -2787,7 +2756,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 			if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
 			ase_awk_refdownval (run, v);
 
-			/* change the error line */
+			/* adjust the error line */
 			run->errlin = nde->line;
 			return -1;
 		}
@@ -2835,7 +2804,8 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			/* the record has never been read. 
 			 * probably, this functions has been triggered
 			 * by the statements in the BEGIN block */
-			n = ase_awk_isemptyrex (run->awk, ((ase_awk_val_rex_t*)v)->code)? 1: 0;
+			n = ase_awk_isemptyrex (
+				run->awk, ((ase_awk_val_rex_t*)v)->code)? 1: 0;
 		}
 		else
 		{
@@ -6026,16 +5996,7 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 	if (n <= -1) 
 	{
-		if (run->errnum != ASE_AWK_EIOIMPL)
-		{
-			ase_str_close (&buf);
-			/* adjust the line number */
-			run->errlin = nde->line;
-			return ASE_NULL;
-		}
-
-		/* if run->errnum == ASE_AWK_EIOIMPL, 
-		 * make getline return -1 */
+		/* make getline return -1 */
 		n = -1;
 	}
 
@@ -6150,20 +6111,7 @@ static int __read_record (ase_awk_run_t* run)
 		run, ASE_AWK_IN_CONSOLE, ASE_T(""), &run->inrec.line);
 	if (n <= -1) 
 	{
-		/* save the error number first as the error number can
-		 * be changed by ase_awk_clrrec if it fails */
-/*
-		int saved = run->errnum;
-*/
-
 		ase_awk_clrrec (run, ase_false);
-/*
-		if (saved == ASE_AWK_EIOIMPL) 
-		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ECINRD, 0, ASE_NULL, 0);
-		}
-*/
 		return -1;
 	}
 
