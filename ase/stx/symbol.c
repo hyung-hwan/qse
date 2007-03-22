@@ -1,30 +1,30 @@
 /*
- * $Id: symbol.c,v 1.21 2005-08-11 09:57:54 bacon Exp $
+ * $Id: symbol.c,v 1.22 2007-03-22 11:19:28 bacon Exp $
  */
 
-#include <xp/stx/symbol.h>
-#include <xp/stx/object.h>
-#include <xp/stx/misc.h>
+#include <ase/stx/symbol.h>
+#include <ase/stx/object.h>
+#include <ase/stx/misc.h>
 
-static void __grow_symtab (xp_stx_t* stx)
+static void __grow_symtab (ase_stx_t* stx)
 {
-	xp_word_t capa, ncapa, i, j;
-	xp_word_t* nspace;
+	ase_word_t capa, ncapa, i, j;
+	ase_word_t* nspace;
 
 	capa = stx->symtab.capacity;
 	ncapa = capa << 1;
 
-	nspace = (xp_word_t*)xp_malloc(xp_sizeof(xp_word_t) * ncapa);
-	if (nspace == XP_NULL) {
+	nspace = (ase_word_t*)ase_malloc(ase_sizeof(ase_word_t) * ncapa);
+	if (nspace == ASE_NULL) {
 		/* TODO: handle memory error */
 	}
 
 	for (i = 0; i < capa; i++) {
-		xp_word_t x = stx->symtab.datum[i];
+		ase_word_t x = stx->symtab.datum[i];
 		if (x == stx->nil) continue;
 
-		j = xp_stx_strxhash (
-			XP_STX_DATA(stx,x), XP_STX_SIZE(stx,x)) % ncapa;
+		j = ase_stx_strxhash (
+			ASE_STX_DATA(stx,x), ASE_STX_SIZE(stx,x)) % ncapa;
 
 		while (1) {
 			if (nspace[j] == stx->nil) {
@@ -36,19 +36,19 @@ static void __grow_symtab (xp_stx_t* stx)
 	}
 
 	stx->symtab.capacity = ncapa;	
-	xp_free (stx->symtab.datum);
+	ase_free (stx->symtab.datum);
 	stx->symtab.datum = nspace;
 }
 
-xp_word_t xp_stx_new_symbol (xp_stx_t* stx, const xp_char_t* name)
+ase_word_t ase_stx_new_symbol (ase_stx_t* stx, const ase_char_t* name)
 {
-	return xp_stx_new_symbolx (stx, name, xp_strlen(name));
+	return ase_stx_new_symbolx (stx, name, ase_strlen(name));
 }
 
-xp_word_t xp_stx_new_symbolx (
-	xp_stx_t* stx, const xp_char_t* name, xp_word_t len)
+ase_word_t ase_stx_new_symbolx (
+	ase_stx_t* stx, const ase_char_t* name, ase_word_t len)
 {
-	xp_word_t capa, hash, index, size, x;
+	ase_word_t capa, hash, index, size, x;
 
 	capa = stx->symtab.capacity;
 	size = stx->symtab.size;
@@ -58,22 +58,22 @@ xp_word_t xp_stx_new_symbolx (
 		capa = stx->symtab.capacity;
 	}
 
-	hash = xp_stx_strxhash(name,len);
+	hash = ase_stx_strxhash(name,len);
 	index = hash % stx->symtab.capacity;
 
 	while (1) {
 		x = stx->symtab.datum[index];
 		if (x == stx->nil) {
 			/* insert a new item into an empty slot */
-			x = xp_stx_alloc_char_objectx (stx, name, len);
-			XP_STX_CLASS(stx,x) = stx->class_symbol;
+			x = ase_stx_alloc_char_objectx (stx, name, len);
+			ASE_STX_CLASS(stx,x) = stx->class_symbol;
 			stx->symtab.datum[index] = x;
 			stx->symtab.size++;
 			break;
 		}
 
-		if (xp_strxncmp(name, len, 
-			XP_STX_DATA(stx,x), XP_STX_SIZE(stx,x)) == 0) break;
+		if (ase_strxncmp(name, len, 
+			ASE_STX_DATA(stx,x), ASE_STX_SIZE(stx,x)) == 0) break;
 
 		index = (index % stx->symtab.capacity) + 1;
 	}
@@ -81,10 +81,10 @@ xp_word_t xp_stx_new_symbolx (
 	return x;
 }
 
-void xp_stx_traverse_symbol_table (
-	xp_stx_t* stx, void (*func) (xp_stx_t*,xp_word_t,void*), void* data)
+void ase_stx_traverse_symbol_table (
+	ase_stx_t* stx, void (*func) (ase_stx_t*,ase_word_t,void*), void* data)
 {
-	xp_word_t index, x;
+	ase_word_t index, x;
 
 	for (index = 0; index < stx->symtab.capacity; index++) {
 		x = stx->symtab.datum[index];

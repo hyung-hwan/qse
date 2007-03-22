@@ -1,77 +1,77 @@
 /*
- * $Id: token.c,v 1.10 2005-12-05 15:11:29 bacon Exp $
+ * $Id: token.c,v 1.11 2007-03-22 11:19:28 bacon Exp $
  */
 
-#include <xp/stx/token.h>
-#include <xp/stx/misc.h>
+#include <ase/stx/token.h>
+#include <ase/stx/misc.h>
 
-xp_stx_token_t* xp_stx_token_open (
-	xp_stx_token_t* token, xp_word_t capacity)
+ase_stx_token_t* ase_stx_token_open (
+	ase_stx_token_t* token, ase_word_t capacity)
 {
-	if (token == XP_NULL) {
-		token = (xp_stx_token_t*)
-			xp_malloc (xp_sizeof(xp_stx_token_t));
-		if (token == XP_NULL) return XP_NULL;
-		token->__dynamic = xp_true;
+	if (token == ASE_NULL) {
+		token = (ase_stx_token_t*)
+			ase_malloc (ase_sizeof(ase_stx_token_t));
+		if (token == ASE_NULL) return ASE_NULL;
+		token->__dynamic = ase_true;
 	}
-	else token->__dynamic = xp_false;
+	else token->__dynamic = ase_false;
 	
-	if (xp_stx_name_open(&token->name, capacity) == XP_NULL) {
-		if (token->__dynamic) xp_free (token);
-		return XP_NULL;
+	if (ase_stx_name_open(&token->name, capacity) == ASE_NULL) {
+		if (token->__dynamic) ase_free (token);
+		return ASE_NULL;
 	}
 
 	/*
 	token->ivalue    = 0;
 	token->fvalue    = .0;
 	*/
-	token->type      = XP_STX_TOKEN_END;
+	token->type      = ASE_STX_TOKEN_END;
 	return token;
 }
 
-void xp_stx_token_close (xp_stx_token_t* token)
+void ase_stx_token_close (ase_stx_token_t* token)
 {
-	xp_stx_name_close (&token->name);
-	if (token->__dynamic) xp_free (token);
+	ase_stx_name_close (&token->name);
+	if (token->__dynamic) ase_free (token);
 }
 
-int xp_stx_token_addc (xp_stx_token_t* token, xp_cint_t c)
+int ase_stx_token_addc (ase_stx_token_t* token, ase_cint_t c)
 {
-	return xp_stx_name_addc (&token->name, c);
+	return ase_stx_name_addc (&token->name, c);
 }
 
-int xp_stx_token_adds (xp_stx_token_t* token, const xp_char_t* s)
+int ase_stx_token_adds (ase_stx_token_t* token, const ase_char_t* s)
 {
-	return xp_stx_name_adds (&token->name, s);
+	return ase_stx_name_adds (&token->name, s);
 }
 
-void xp_stx_token_clear (xp_stx_token_t* token)
+void ase_stx_token_clear (ase_stx_token_t* token)
 {
 	/*
 	token->ivalue = 0;
 	token->fvalue = .0;
 	*/
 
-	token->type = XP_STX_TOKEN_END;
-	xp_stx_name_clear (&token->name);
+	token->type = ASE_STX_TOKEN_END;
+	ase_stx_name_clear (&token->name);
 }
 
-xp_char_t* xp_stx_token_yield (xp_stx_token_t* token, xp_word_t capacity)
+ase_char_t* ase_stx_token_yield (ase_stx_token_t* token, ase_word_t capacity)
 {
-	xp_char_t* p;
+	ase_char_t* p;
 
-	p = xp_stx_name_yield (&token->name, capacity);
-	if (p == XP_NULL) return XP_NULL;
+	p = ase_stx_name_yield (&token->name, capacity);
+	if (p == ASE_NULL) return ASE_NULL;
 
 	/*
 	token->ivalue = 0;
 	token->fvalue = .0;
 	*/
-	token->type = XP_STX_TOKEN_END;
+	token->type = ASE_STX_TOKEN_END;
 	return p;
 }
 
-int xp_stx_token_compare_name (xp_stx_token_t* token, const xp_char_t* str)
+int ase_stx_token_compare_name (ase_stx_token_t* token, const ase_char_t* str)
 {
-	return xp_stx_name_compare (&token->name, str);
+	return ase_stx_name_compare (&token->name, str);
 }
