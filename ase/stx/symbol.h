@@ -1,37 +1,37 @@
 /*
- * $Id: symbol.h,v 1.8 2005-07-17 15:55:01 bacon Exp $
+ * $Id: symbol.h,v 1.9 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_SYMBOL_H_
-#define _XP_STX_SYMBOL_H_
+#ifndef _ASE_STX_SYMBOL_H_
+#define _ASE_STX_SYMBOL_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
-#define XP_STX_SYMLINK_SIZE   2
-#define XP_STX_SYMLINK_LINK   0
-#define XP_STX_SYMLINK_SYMBOL 1
+#define ASE_STX_SYMLINK_SIZE   2
+#define ASE_STX_SYMLINK_LINK   0
+#define ASE_STX_SYMLINK_SYMBOL 1
 
-struct xp_stx_symlink_t
+struct ase_stx_symlink_t
 {
-	xp_stx_objhdr_t header;
-	xp_word_t link;
-	xp_word_t symbol;
+	ase_stx_objhdr_t header;
+	ase_word_t link;
+	ase_word_t symbol;
 };
 
-typedef struct xp_stx_symlink_t xp_stx_symlink_t;
+typedef struct ase_stx_symlink_t ase_stx_symlink_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_word_t xp_stx_new_symbol_link (xp_stx_t* stx, xp_word_t sym);
+ase_word_t ase_stx_new_symbol_link (ase_stx_t* stx, ase_word_t sym);
 
-xp_word_t xp_stx_new_symbol (
-	xp_stx_t* stx, const xp_char_t* name);
-xp_word_t xp_stx_new_symbolx (
-	xp_stx_t* stx, const xp_char_t* name, xp_word_t len);
-void xp_stx_traverse_symbol_table (
-        xp_stx_t* stx, void (*func) (xp_stx_t*,xp_word_t,void*), void* data);
+ase_word_t ase_stx_new_symbol (
+	ase_stx_t* stx, const ase_char_t* name);
+ase_word_t ase_stx_new_symbolx (
+	ase_stx_t* stx, const ase_char_t* name, ase_word_t len);
+void ase_stx_traverse_symbol_table (
+        ase_stx_t* stx, void (*func) (ase_stx_t*,ase_word_t,void*), void* data);
 
 #ifdef __cplusplus
 }

@@ -1,63 +1,63 @@
 /*
- * $Id: token.h,v 1.18 2005-12-05 15:11:29 bacon Exp $
+ * $Id: token.h,v 1.19 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_TOKEN_H_
-#define _XP_STX_TOKEN_H_
+#ifndef _ASE_STX_TOKEN_H_
+#define _ASE_STX_TOKEN_H_
 
-#include <xp/stx/stx.h>
-#include <xp/stx/name.h>
+#include <ase/stx/stx.h>
+#include <ase/stx/name.h>
 
 enum
 {
-	XP_STX_TOKEN_END,
-	XP_STX_TOKEN_CHARLIT,
-	XP_STX_TOKEN_STRLIT,
-	XP_STX_TOKEN_SYMLIT,
-	XP_STX_TOKEN_NUMLIT,
-	XP_STX_TOKEN_IDENT,
-	XP_STX_TOKEN_BINARY,
-	XP_STX_TOKEN_KEYWORD,
-	XP_STX_TOKEN_PRIMITIVE,
-	XP_STX_TOKEN_ASSIGN,
-	XP_STX_TOKEN_COLON,
-	XP_STX_TOKEN_RETURN,
-	XP_STX_TOKEN_LBRACKET,
-	XP_STX_TOKEN_RBRACKET,
-	XP_STX_TOKEN_LPAREN,
-	XP_STX_TOKEN_RPAREN,
-	XP_STX_TOKEN_APAREN,
-	XP_STX_TOKEN_PERIOD,
-	XP_STX_TOKEN_SEMICOLON
+	ASE_STX_TOKEN_END,
+	ASE_STX_TOKEN_CHARLIT,
+	ASE_STX_TOKEN_STRLIT,
+	ASE_STX_TOKEN_SYMLIT,
+	ASE_STX_TOKEN_NUMLIT,
+	ASE_STX_TOKEN_IDENT,
+	ASE_STX_TOKEN_BINARY,
+	ASE_STX_TOKEN_KEYWORD,
+	ASE_STX_TOKEN_PRIMITIVE,
+	ASE_STX_TOKEN_ASSIGN,
+	ASE_STX_TOKEN_COLON,
+	ASE_STX_TOKEN_RETURN,
+	ASE_STX_TOKEN_LBRACKET,
+	ASE_STX_TOKEN_RBRACKET,
+	ASE_STX_TOKEN_LPAREN,
+	ASE_STX_TOKEN_RPAREN,
+	ASE_STX_TOKEN_APAREN,
+	ASE_STX_TOKEN_PERIOD,
+	ASE_STX_TOKEN_SEMICOLON
 };
 
-struct xp_stx_token_t 
+struct ase_stx_token_t 
 {
 	int type;
 
 	/*
-	xp_stx_int_t   ivalue;
-	xp_stx_real_t  fvalue;
+	ase_stx_int_t   ivalue;
+	ase_stx_real_t  fvalue;
 	*/
-	xp_stx_name_t name;
-	xp_bool_t __dynamic;
+	ase_stx_name_t name;
+	ase_bool_t __dynamic;
 };
 
-typedef struct xp_stx_token_t xp_stx_token_t;
+typedef struct ase_stx_token_t ase_stx_token_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_stx_token_t* xp_stx_token_open (
-	xp_stx_token_t* token, xp_word_t capacity);
-void xp_stx_token_close (xp_stx_token_t* token);
+ase_stx_token_t* ase_stx_token_open (
+	ase_stx_token_t* token, ase_word_t capacity);
+void ase_stx_token_close (ase_stx_token_t* token);
 
-int xp_stx_token_addc (xp_stx_token_t* token, xp_cint_t c);
-int xp_stx_token_adds (xp_stx_token_t* token, const xp_char_t* s);
-void xp_stx_token_clear (xp_stx_token_t* token);
-xp_char_t* xp_stx_token_yield (xp_stx_token_t* token, xp_word_t capacity);
-int xp_stx_token_compare_name (xp_stx_token_t* token, const xp_char_t* str);
+int ase_stx_token_addc (ase_stx_token_t* token, ase_cint_t c);
+int ase_stx_token_adds (ase_stx_token_t* token, const ase_char_t* s);
+void ase_stx_token_clear (ase_stx_token_t* token);
+ase_char_t* ase_stx_token_yield (ase_stx_token_t* token, ase_word_t capacity);
+int ase_stx_token_compare_name (ase_stx_token_t* token, const ase_char_t* str);
 
 #ifdef __cplusplus
 }

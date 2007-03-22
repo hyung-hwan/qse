@@ -1,22 +1,28 @@
-SRCS = stx.c memory.c object.c symbol.c class.c array.c \
+OUT = asestx
+
+C_SRCS = stx.c memory.c object.c symbol.c class.c array.c \
 	dict.c misc.c context.c name.c token.c parser.c bootstrp.c \
 	bytecode.c interp.c
-OBJS = $(SRCS:.c=.o)
-OUT = libxpstx.a
+
+C_OBJS = $(C_SRCS:.c=.o)
 
 CC = @CC@
+AR = ar
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 
-all: $(OBJS)
-	ar cr $(OUT) $(OBJS)
-	ranlib $(OUT)
+all: lib 
+
+lib: $(C_OBJS)
+	$(AR) cr lib$(OUT).a $(C_OBJS)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
 
 clean:
-	rm -rf $(OBJS) $(OUT) *.o
+	rm -rf $(OBJS) lib$(OUT).a *.o
 
 .SUFFIXES: .c .o
 .c.o:
 	$(CC) $(CFLAGS) -c $<
+

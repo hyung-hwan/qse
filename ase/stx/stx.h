@@ -1,12 +1,12 @@
 /*
- * $Id: stx.h,v 1.46 2007-03-22 11:19:28 bacon Exp $
+ * $Id: stx.h,v 1.47 2007-03-22 11:21:59 bacon Exp $
  */
 
 #ifndef _ASE_STX_STX_H_
 #define _ASE_STX_STX_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 typedef struct ase_stx_objhdr_t ase_stx_objhdr_t;
 typedef struct ase_stx_object_t ase_stx_object_t;
