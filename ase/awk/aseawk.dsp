@@ -1,24 +1,24 @@
-# Microsoft Developer Studio Project File - Name="awk.lib" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="aseawk" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
-CFG=awk.lib - Win32 Release
+CFG=aseawk - Win32 Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "awk.mak".
+!MESSAGE NMAKE /f "aseawk.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "awk.mak" CFG="awk.lib - Win32 Release"
+!MESSAGE NMAKE /f "aseawk.mak" CFG="aseawk - Win32 Release"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "awk.lib - Win32 Release" (based on "Win32 (x86) Static Library")
-!MESSAGE "awk.lib - Win32 Debug" (based on "Win32 (x86) Static Library")
+!MESSAGE "aseawk - Win32 Release" (based on "Win32 (x86) Static Library")
+!MESSAGE "aseawk - Win32 Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -28,7 +28,7 @@ CFG=awk.lib - Win32 Release
 CPP=cl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "awk.lib - Win32 Release"
+!IF  "$(CFG)" == "aseawk - Win32 Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -56,7 +56,7 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo /out:"../release/win32/vs60/aseawk.lib"
 
-!ELSEIF  "$(CFG)" == "awk.lib - Win32 Debug"
+!ELSEIF  "$(CFG)" == "aseawk - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -88,8 +88,8 @@ LIB32=link.exe -lib
 
 # Begin Target
 
-# Name "awk.lib - Win32 Release"
-# Name "awk.lib - Win32 Debug"
+# Name "aseawk - Win32 Release"
+# Name "aseawk - Win32 Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
