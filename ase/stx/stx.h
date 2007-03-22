@@ -1,160 +1,160 @@
 /*
- * $Id: stx.h,v 1.45 2005-12-05 15:11:29 bacon Exp $
+ * $Id: stx.h,v 1.46 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_STX_H_
-#define _XP_STX_STX_H_
+#ifndef _ASE_STX_STX_H_
+#define _ASE_STX_STX_H_
 
-#include <xp/types.h>
-#include <xp/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
-typedef struct xp_stx_objhdr_t xp_stx_objhdr_t;
-typedef struct xp_stx_object_t xp_stx_object_t;
-typedef struct xp_stx_word_object_t xp_stx_word_object_t;
-typedef struct xp_stx_byte_object_t xp_stx_byte_object_t;
-typedef struct xp_stx_char_object_t xp_stx_char_object_t;
-typedef struct xp_stx_memory_t xp_stx_memory_t;
-typedef struct xp_stx_symtab_t xp_stx_symtab_t;
-typedef struct xp_stx_t xp_stx_t;
+typedef struct ase_stx_objhdr_t ase_stx_objhdr_t;
+typedef struct ase_stx_object_t ase_stx_object_t;
+typedef struct ase_stx_word_object_t ase_stx_word_object_t;
+typedef struct ase_stx_byte_object_t ase_stx_byte_object_t;
+typedef struct ase_stx_char_object_t ase_stx_char_object_t;
+typedef struct ase_stx_memory_t ase_stx_memory_t;
+typedef struct ase_stx_symtab_t ase_stx_symtab_t;
+typedef struct ase_stx_t ase_stx_t;
 
 /* common object structure */
-struct xp_stx_objhdr_t
+struct ase_stx_objhdr_t
 {
 	/* access - type: 2; size: rest;
 	 * type - word indexed: 00 byte indexed: 01 char indexed: 10
 	 */
-	xp_word_t access; 
-	xp_word_t class;
+	ase_word_t access; 
+	ase_word_t class;
 };
 
-struct xp_stx_object_t
+struct ase_stx_object_t
 {
-	xp_stx_objhdr_t header;
+	ase_stx_objhdr_t header;
 };
 
-struct xp_stx_word_object_t
+struct ase_stx_word_object_t
 {
-	xp_stx_objhdr_t header;
-	xp_word_t data[1];
+	ase_stx_objhdr_t header;
+	ase_word_t data[1];
 };
 
-struct xp_stx_byte_object_t
+struct ase_stx_byte_object_t
 {
-	xp_stx_objhdr_t header;
-	xp_byte_t data[1];
+	ase_stx_objhdr_t header;
+	ase_byte_t data[1];
 };
 
-struct xp_stx_char_object_t
+struct ase_stx_char_object_t
 {
-	xp_stx_objhdr_t header;
-	xp_char_t data[1];
+	ase_stx_objhdr_t header;
+	ase_char_t data[1];
 };
 
 
-struct xp_stx_memory_t
+struct ase_stx_memory_t
 {
-	xp_word_t capacity;
-	xp_stx_object_t** slots;
-	xp_stx_object_t** free;
-	xp_bool_t __dynamic;
+	ase_word_t capacity;
+	ase_stx_object_t** slots;
+	ase_stx_object_t** free;
+	ase_bool_t __dynamic;
 };
 
-struct xp_stx_symtab_t
+struct ase_stx_symtab_t
 {
-	xp_word_t* datum;
-	xp_word_t  size;
-	xp_word_t  capacity;
+	ase_word_t* datum;
+	ase_word_t  size;
+	ase_word_t  capacity;
 };
 
-struct xp_stx_t
+struct ase_stx_t
 {
-	xp_stx_memory_t memory;
-	xp_stx_symtab_t symtab;
+	ase_stx_memory_t memory;
+	ase_stx_symtab_t symtab;
 
-	xp_word_t nil;
-	xp_word_t true;
-	xp_word_t false;
+	ase_word_t nil;
+	ase_word_t true;
+	ase_word_t false;
 
-	xp_word_t smalltalk;
+	ase_word_t smalltalk;
 
-	xp_word_t class_symbol;
-	xp_word_t class_metaclass;
-	xp_word_t class_association;
+	ase_word_t class_symbol;
+	ase_word_t class_metaclass;
+	ase_word_t class_association;
 
-	xp_word_t class_object;
-	xp_word_t class_class;
-	xp_word_t class_array;
-	xp_word_t class_bytearray;
-	xp_word_t class_string;
-	xp_word_t class_character;
-	xp_word_t class_context;
-	xp_word_t class_system_dictionary;
-	xp_word_t class_method;
-	xp_word_t class_smallinteger;
+	ase_word_t class_object;
+	ase_word_t class_class;
+	ase_word_t class_array;
+	ase_word_t class_bytearray;
+	ase_word_t class_string;
+	ase_word_t class_character;
+	ase_word_t class_context;
+	ase_word_t class_system_dictionary;
+	ase_word_t class_method;
+	ase_word_t class_smallinteger;
 
-	xp_bool_t __dynamic;
-	xp_bool_t __wantabort; /* TODO: make it a function pointer */
+	ase_bool_t __dynamic;
+	ase_bool_t __wantabort; /* TODO: make it a function pointer */
 };
 
-#define XP_STX_IS_SMALLINT(x)   (((x) & 0x01) == 0x01)
-#define XP_STX_TO_SMALLINT(x)   (((x) << 1) | 0x01)
-#define XP_STX_FROM_SMALLINT(x) ((x) >> 1)
+#define ASE_STX_IS_SMALLINT(x)   (((x) & 0x01) == 0x01)
+#define ASE_STX_TO_SMALLINT(x)   (((x) << 1) | 0x01)
+#define ASE_STX_FROM_SMALLINT(x) ((x) >> 1)
 
-#define XP_STX_IS_OINDEX(x)     (((x) & 0x01) == 0x00)
-#define XP_STX_TO_OINDEX(x)     (((x) << 1) | 0x00)
-#define XP_STX_FROM_OINDEX(x)   ((x) >> 1)
+#define ASE_STX_IS_OINDEX(x)     (((x) & 0x01) == 0x00)
+#define ASE_STX_TO_OINDEX(x)     (((x) << 1) | 0x00)
+#define ASE_STX_FROM_OINDEX(x)   ((x) >> 1)
 
-#define XP_STX_NIL   XP_STX_TO_OINDEX(0)
-#define XP_STX_TRUE  XP_STX_TO_OINDEX(1)
-#define XP_STX_FALSE XP_STX_TO_OINDEX(2)
+#define ASE_STX_NIL   ASE_STX_TO_OINDEX(0)
+#define ASE_STX_TRUE  ASE_STX_TO_OINDEX(1)
+#define ASE_STX_FALSE ASE_STX_TO_OINDEX(2)
 
-#define XP_STX_OBJECT(stx,idx) (((stx)->memory).slots[XP_STX_FROM_OINDEX(idx)])
-#define XP_STX_CLASS(stx,idx)  (XP_STX_OBJECT(stx,(idx))->header.class)
-#define XP_STX_ACCESS(stx,idx) (XP_STX_OBJECT(stx,(idx))->header.access)
-#define XP_STX_DATA(stx,idx)   ((void*)(XP_STX_OBJECT(stx,idx) + 1))
+#define ASE_STX_OBJECT(stx,idx) (((stx)->memory).slots[ASE_STX_FROM_OINDEX(idx)])
+#define ASE_STX_CLASS(stx,idx)  (ASE_STX_OBJECT(stx,(idx))->header.class)
+#define ASE_STX_ACCESS(stx,idx) (ASE_STX_OBJECT(stx,(idx))->header.access)
+#define ASE_STX_DATA(stx,idx)   ((void*)(ASE_STX_OBJECT(stx,idx) + 1))
 
-#define XP_STX_TYPE(stx,idx) (XP_STX_ACCESS(stx,idx) & 0x03)
-#define XP_STX_SIZE(stx,idx) (XP_STX_ACCESS(stx,idx) >> 0x02)
+#define ASE_STX_TYPE(stx,idx) (ASE_STX_ACCESS(stx,idx) & 0x03)
+#define ASE_STX_SIZE(stx,idx) (ASE_STX_ACCESS(stx,idx) >> 0x02)
 
-#define XP_STX_WORD_INDEXED  (0x00)
-#define XP_STX_BYTE_INDEXED  (0x01)
-#define XP_STX_CHAR_INDEXED  (0x02)
+#define ASE_STX_WORD_INDEXED  (0x00)
+#define ASE_STX_BYTE_INDEXED  (0x01)
+#define ASE_STX_CHAR_INDEXED  (0x02)
 
-#define XP_STX_IS_WORD_OBJECT(stx,idx) \
-	(XP_STX_TYPE(stx,idx) == XP_STX_WORD_INDEXED)
-#define XP_STX_IS_BYTE_OBJECT(stx,idx) \
-	(XP_STX_TYPE(stx,idx) == XP_STX_BYTE_INDEXED)
-#define XP_STX_IS_CHAR_OBJECT(stx,idx) \
-	(XP_STX_TYPE(stx,idx) == XP_STX_CHAR_INDEXED)
+#define ASE_STX_IS_WORD_OBJECT(stx,idx) \
+	(ASE_STX_TYPE(stx,idx) == ASE_STX_WORD_INDEXED)
+#define ASE_STX_IS_BYTE_OBJECT(stx,idx) \
+	(ASE_STX_TYPE(stx,idx) == ASE_STX_BYTE_INDEXED)
+#define ASE_STX_IS_CHAR_OBJECT(stx,idx) \
+	(ASE_STX_TYPE(stx,idx) == ASE_STX_CHAR_INDEXED)
 
-#define XP_STX_WORD_OBJECT(stx,idx) \
-	((xp_stx_word_object_t*)XP_STX_OBJECT(stx,idx))
-#define XP_STX_BYTE_OBJECT(stx,idx) \
-	((xp_stx_byte_object_t*)XP_STX_OBJECT(stx,idx))
-#define XP_STX_CHAR_OBJECT(stx,idx) \
-	((xp_stx_char_object_t*)XP_STX_OBJECT(stx,idx))
+#define ASE_STX_WORD_OBJECT(stx,idx) \
+	((ase_stx_word_object_t*)ASE_STX_OBJECT(stx,idx))
+#define ASE_STX_BYTE_OBJECT(stx,idx) \
+	((ase_stx_byte_object_t*)ASE_STX_OBJECT(stx,idx))
+#define ASE_STX_CHAR_OBJECT(stx,idx) \
+	((ase_stx_char_object_t*)ASE_STX_OBJECT(stx,idx))
 
 /*
-#define XP_STX_WORD_AT(stx,idx,n) \
-	(((xp_word_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
-#define XP_STX_BYTE_AT(stx,idx,n) \
-	(((xp_byte_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
-#define XP_STX_CHAR_AT(stx,idx,n) \
-	(((xp_char_t*)(XP_STX_OBJECT(stx,idx) + 1))[n])
+#define ASE_STX_WORD_AT(stx,idx,n) \
+	(((ase_word_t*)(ASE_STX_OBJECT(stx,idx) + 1))[n])
+#define ASE_STX_BYTE_AT(stx,idx,n) \
+	(((ase_byte_t*)(ASE_STX_OBJECT(stx,idx) + 1))[n])
+#define ASE_STX_CHAR_AT(stx,idx,n) \
+	(((ase_char_t*)(ASE_STX_OBJECT(stx,idx) + 1))[n])
 */
-#define XP_STX_WORD_AT(stx,idx,n) \
-	(XP_STX_WORD_OBJECT(stx,idx)->data[n])
-#define XP_STX_BYTE_AT(stx,idx,n) \
-	(XP_STX_BYTE_OBJECT(stx,idx)->data[n])
-#define XP_STX_CHAR_AT(stx,idx,n) \
-	(XP_STX_CHAR_OBJECT(stx,idx)->data[n])
+#define ASE_STX_WORD_AT(stx,idx,n) \
+	(ASE_STX_WORD_OBJECT(stx,idx)->data[n])
+#define ASE_STX_BYTE_AT(stx,idx,n) \
+	(ASE_STX_BYTE_OBJECT(stx,idx)->data[n])
+#define ASE_STX_CHAR_AT(stx,idx,n) \
+	(ASE_STX_CHAR_OBJECT(stx,idx)->data[n])
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_word_t capacity);
-void xp_stx_close (xp_stx_t* stx);
+ase_stx_t* ase_stx_open (ase_stx_t* stx, ase_word_t capacity);
+void ase_stx_close (ase_stx_t* stx);
 
 #ifdef __cplusplus
 }

@@ -1,70 +1,70 @@
 /*
- * $Id: stx.c,v 1.40 2005-12-05 15:11:29 bacon Exp $
+ * $Id: stx.c,v 1.41 2007-03-22 11:19:28 bacon Exp $
  */
 
-#include <xp/stx/stx.h>
-#include <xp/stx/memory.h>
-#include <xp/stx/misc.h>
+#include <ase/stx/stx.h>
+#include <ase/stx/memory.h>
+#include <ase/stx/misc.h>
 
-xp_stx_t* xp_stx_open (xp_stx_t* stx, xp_word_t capacity)
+ase_stx_t* ase_stx_open (ase_stx_t* stx, ase_word_t capacity)
 {
-	xp_word_t i;
+	ase_word_t i;
 
-	if (stx == XP_NULL) {
-		stx = (xp_stx_t*)xp_malloc (xp_sizeof(stx));
-		if (stx == XP_NULL) return XP_NULL;
-		stx->__dynamic = xp_true;
+	if (stx == ASE_NULL) {
+		stx = (ase_stx_t*)ase_malloc (ase_sizeof(stx));
+		if (stx == ASE_NULL) return ASE_NULL;
+		stx->__dynamic = ase_true;
 	}
-	else stx->__dynamic = xp_false;
+	else stx->__dynamic = ase_false;
 
-	if (xp_stx_memory_open (&stx->memory, capacity) == XP_NULL) {
-		if (stx->__dynamic) xp_free (stx);
-		return XP_NULL;
+	if (ase_stx_memory_open (&stx->memory, capacity) == ASE_NULL) {
+		if (stx->__dynamic) ase_free (stx);
+		return ASE_NULL;
 	}
 
 	stx->symtab.size = 0;
 	stx->symtab.capacity = 128; /* TODO: symbol table size */
-	stx->symtab.datum = (xp_word_t*)xp_malloc (
-		xp_sizeof(xp_word_t) * stx->symtab.capacity);
-	if (stx->symtab.datum == XP_NULL) {
-		xp_stx_memory_close (&stx->memory);
-		if (stx->__dynamic) xp_free (stx);
-		return XP_NULL;
+	stx->symtab.datum = (ase_word_t*)ase_malloc (
+		ase_sizeof(ase_word_t) * stx->symtab.capacity);
+	if (stx->symtab.datum == ASE_NULL) {
+		ase_stx_memory_close (&stx->memory);
+		if (stx->__dynamic) ase_free (stx);
+		return ASE_NULL;
 	}
 
-	stx->nil = XP_STX_NIL;
-	stx->true = XP_STX_TRUE;
-	stx->false = XP_STX_FALSE;
+	stx->nil = ASE_STX_NIL;
+	stx->true = ASE_STX_TRUE;
+	stx->false = ASE_STX_FALSE;
 
-	stx->smalltalk = XP_STX_NIL;
+	stx->smalltalk = ASE_STX_NIL;
 
-	stx->class_symbol = XP_STX_NIL;
-	stx->class_metaclass = XP_STX_NIL;
-	stx->class_association = XP_STX_NIL;
+	stx->class_symbol = ASE_STX_NIL;
+	stx->class_metaclass = ASE_STX_NIL;
+	stx->class_association = ASE_STX_NIL;
 
-	stx->class_object = XP_STX_NIL;
-	stx->class_class = XP_STX_NIL;
-	stx->class_array = XP_STX_NIL;
-	stx->class_bytearray = XP_STX_NIL;
-	stx->class_string = XP_STX_NIL;
-	stx->class_character = XP_STX_NIL;
-	stx->class_context = XP_STX_NIL;
-	stx->class_system_dictionary = XP_STX_NIL;
-	stx->class_method = XP_STX_NIL;
-	stx->class_smallinteger = XP_STX_NIL;
+	stx->class_object = ASE_STX_NIL;
+	stx->class_class = ASE_STX_NIL;
+	stx->class_array = ASE_STX_NIL;
+	stx->class_bytearray = ASE_STX_NIL;
+	stx->class_string = ASE_STX_NIL;
+	stx->class_character = ASE_STX_NIL;
+	stx->class_context = ASE_STX_NIL;
+	stx->class_system_dictionary = ASE_STX_NIL;
+	stx->class_method = ASE_STX_NIL;
+	stx->class_smallinteger = ASE_STX_NIL;
 
 	for (i = 0; i < stx->symtab.capacity; i++) {
 		stx->symtab.datum[i] = stx->nil;
 	}
 	
-	stx->__wantabort = xp_false;
+	stx->__wantabort = ase_false;
 	return stx;
 }
 
-void xp_stx_close (xp_stx_t* stx)
+void ase_stx_close (ase_stx_t* stx)
 {
-	xp_free (stx->symtab.datum);
-	xp_stx_memory_close (&stx->memory);
-	if (stx->__dynamic) xp_free (stx);
+	ase_free (stx->symtab.datum);
+	ase_stx_memory_close (&stx->memory);
+	if (stx->__dynamic) ase_free (stx);
 }
 

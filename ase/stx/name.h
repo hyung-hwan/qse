@@ -1,36 +1,36 @@
 /*
- * $Id: name.h,v 1.4 2005-12-05 15:11:29 bacon Exp $
+ * $Id: name.h,v 1.5 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_NAME_H_
-#define _XP_STX_NAME_H_
+#ifndef _ASE_STX_NAME_H_
+#define _ASE_STX_NAME_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
-struct xp_stx_name_t 
+struct ase_stx_name_t 
 {
-	xp_word_t   capacity;
-	xp_word_t   size;
-	xp_char_t*  buffer;
-	xp_char_t   static_buffer[128];
-	xp_bool_t __dynamic;
+	ase_word_t   capacity;
+	ase_word_t   size;
+	ase_char_t*  buffer;
+	ase_char_t   static_buffer[128];
+	ase_bool_t __dynamic;
 };
 
-typedef struct xp_stx_name_t xp_stx_name_t;
+typedef struct ase_stx_name_t ase_stx_name_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_stx_name_t* xp_stx_name_open (
-	xp_stx_name_t* name, xp_word_t capacity);
-void xp_stx_name_close (xp_stx_name_t* name);
+ase_stx_name_t* ase_stx_name_open (
+	ase_stx_name_t* name, ase_word_t capacity);
+void ase_stx_name_close (ase_stx_name_t* name);
 
-int xp_stx_name_addc (xp_stx_name_t* name, xp_cint_t c);
-int xp_stx_name_adds (xp_stx_name_t* name, const xp_char_t* s);
-void xp_stx_name_clear (xp_stx_name_t* name);
-xp_char_t* xp_stx_name_yield (xp_stx_name_t* name, xp_word_t capacity);
-int xp_stx_name_compare  (xp_stx_name_t* name, const xp_char_t* str);
+int ase_stx_name_addc (ase_stx_name_t* name, ase_cint_t c);
+int ase_stx_name_adds (ase_stx_name_t* name, const ase_char_t* s);
+void ase_stx_name_clear (ase_stx_name_t* name);
+ase_char_t* ase_stx_name_yield (ase_stx_name_t* name, ase_word_t capacity);
+int ase_stx_name_compare  (ase_stx_name_t* name, const ase_char_t* str);
 
 #ifdef __cplusplus
 }

@@ -1,14 +1,14 @@
 /*
- * $Id: interp.c,v 1.19 2005-10-02 15:45:09 bacon Exp $
+ * $Id: interp.c,v 1.20 2007-03-22 11:19:28 bacon Exp $
  */
 
-#include <xp/stx/interp.h>
-#include <xp/stx/method.h>
-#include <xp/stx/object.h>
-#include <xp/stx/array.h>
-#include <xp/stx/class.h>
-#include <xp/bas/assert.h>
-#include <xp/bas/memory.h>
+#include <ase/stx/interp.h>
+#include <ase/stx/method.h>
+#include <ase/stx/object.h>
+#include <ase/stx/array.h>
+#include <ase/stx/class.h>
+#include <ase/bas/assert.h>
+#include <ase/bas/memory.h>
 
 /*
 activation record
@@ -37,46 +37,46 @@ receiver
 
 struct process_t
 {
-	xp_word_t* stack;
-	xp_word_t  stack_size;
-	xp_word_t  stack_base;
-	xp_word_t  stack_top;
+	ase_word_t* stack;
+	ase_word_t  stack_size;
+	ase_word_t  stack_base;
+	ase_word_t  stack_top;
 
-	xp_word_t  receiver;
-	xp_word_t  method;
-	xp_word_t  pc;
+	ase_word_t  receiver;
+	ase_word_t  method;
+	ase_word_t  pc;
 
 	/* cached information about the method above */
-	xp_word_t* literals;
-	xp_byte_t* bytecodes;
-	xp_word_t  bytecode_size;
-	xp_size_t  argcount;
-	xp_size_t  tmpcount;
+	ase_word_t* literals;
+	ase_byte_t* bytecodes;
+	ase_word_t  bytecode_size;
+	ase_size_t  argcount;
+	ase_size_t  tmpcount;
 };
 
 typedef struct process_t process_t;
 
-static int __run_process (xp_stx_t* stx, process_t* proc);
-static int __push_to_stack (xp_stx_t* stx, 
-	process_t* proc, xp_word_t what, xp_word_t index);
-static int __store_from_stack (xp_stx_t* stx, 
-	process_t* proc, xp_word_t what, xp_word_t index);
-static int __send_message (xp_stx_t* stx, process_t* proc, 
-	xp_word_t nargs, xp_word_t selector, xp_bool_t to_super);
-static int __return_from_message (xp_stx_t* stx, process_t* proc);
-static int __dispatch_primitive (xp_stx_t* stx, process_t* proc, xp_word_t no);
+static int __run_process (ase_stx_t* stx, process_t* proc);
+static int __push_to_stack (ase_stx_t* stx, 
+	process_t* proc, ase_word_t what, ase_word_t index);
+static int __store_from_stack (ase_stx_t* stx, 
+	process_t* proc, ase_word_t what, ase_word_t index);
+static int __send_message (ase_stx_t* stx, process_t* proc, 
+	ase_word_t nargs, ase_word_t selector, ase_bool_t to_super);
+static int __return_from_message (ase_stx_t* stx, process_t* proc);
+static int __dispatch_primitive (ase_stx_t* stx, process_t* proc, ase_word_t no);
 
-int xp_stx_interp (xp_stx_t* stx, xp_word_t receiver, xp_word_t method)
+int ase_stx_interp (ase_stx_t* stx, ase_word_t receiver, ase_word_t method)
 {
 	process_t proc;
-	xp_stx_method_t* mthobj;
-	xp_word_t i;
+	ase_stx_method_t* mthobj;
+	ase_word_t i;
 	int n;
 
 	// TODO: size of process stack.
-	proc.stack = (xp_word_t*)xp_malloc (10000 * xp_sizeof(xp_word_t));
-	if (proc.stack == XP_NULL) {
-xp_printf (XP_TEXT("out of memory in xp_stx_interp\n"));
+	proc.stack = (ase_word_t*)ase_malloc (10000 * ase_sizeof(ase_word_t));
+	if (proc.stack == ASE_NULL) {
+ase_printf (ASE_T("out of memory in ase_stx_interp\n"));
 		return -1;
 	}
 	
@@ -84,15 +84,15 @@ xp_printf (XP_TEXT("out of memory in xp_stx_interp\n"));
 	proc.stack_base = 0;
 	proc.stack_top = 0;
 	
-	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx,method);
-	xp_assert (mthobj != XP_NULL);
+	mthobj = (ase_stx_method_t*)ASE_STX_OBJECT(stx,method);
+	ase_assert (mthobj != ASE_NULL);
 
 	proc.literals = mthobj->literals;
-	proc.bytecodes = XP_STX_DATA(stx, mthobj->bytecodes);
-	proc.bytecode_size = XP_STX_SIZE(stx, mthobj->bytecodes);
+	proc.bytecodes = ASE_STX_DATA(stx, mthobj->bytecodes);
+	proc.bytecode_size = ASE_STX_SIZE(stx, mthobj->bytecodes);
 	/* TODO: disable the method with arguments for start-up */
-	proc.argcount = XP_STX_FROM_SMALLINT(mthobj->argcount); 
-	proc.tmpcount = XP_STX_FROM_SMALLINT(mthobj->tmpcount);
+	proc.argcount = ASE_STX_FROM_SMALLINT(mthobj->argcount); 
+	proc.tmpcount = ASE_STX_FROM_SMALLINT(mthobj->tmpcount);
 
 	proc.receiver = receiver;
 	proc.method = method;
@@ -121,11 +121,11 @@ xp_printf (XP_TEXT("out of memory in xp_stx_interp\n"));
 
 	n = __run_process (stx, &proc);
 
-	xp_free (proc.stack);
+	ase_free (proc.stack);
 	return n;
 }
 
-static int __run_process (xp_stx_t* stx, process_t* proc)
+static int __run_process (ase_stx_t* stx, process_t* proc)
 {
 	int code, next, next2;
 
@@ -133,7 +133,7 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 		code = proc->bytecodes[proc->pc++];
 
 #ifdef DEBUG
-		xp_printf (XP_TEXT("code = 0x%x\n"), code);
+		ase_printf (ASE_T("code = 0x%x\n"), code);
 #endif
 
 		if (code >= 0x00 && code <= 0x3F) {
@@ -176,27 +176,27 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 			/* send message to self */
 			next = proc->bytecodes[proc->pc++];
 			if (__send_message (stx, proc, next >> 5, 
-				proc->literals[next & 0x1F], xp_false) == -1) break;
+				proc->literals[next & 0x1F], ase_false) == -1) break;
 		}	
 		else if (code == 0x71) {
 			/* send message to super */
 			next = proc->bytecodes[proc->pc++];
 			if (__send_message (stx, proc, next >> 5, 
-				proc->literals[next & 0x1F], xp_true) == -1) break;
+				proc->literals[next & 0x1F], ase_true) == -1) break;
 		}
 		else if (code == 0x72) {
 			/* send message to self extended */
 			next = proc->bytecodes[proc->pc++];
 			next2 = proc->bytecodes[proc->pc++];
 			if (__send_message (stx, proc, next >> 5, 
-				proc->literals[next2], xp_false) == -1) break;
+				proc->literals[next2], ase_false) == -1) break;
 		}
 		else if (code == 0x73) {
 			/* send message to super extended */
 			next = proc->bytecodes[proc->pc++];
 			next2 = proc->bytecodes[proc->pc++];
 			if (__send_message (stx, proc, next >> 5, 
-				proc->literals[next2], xp_true) == -1) break;
+				proc->literals[next2], ase_true) == -1) break;
 		}
 
 		/* more code .... */
@@ -218,7 +218,7 @@ static int __run_process (xp_stx_t* stx, process_t* proc)
 		}
 
 		else {
-xp_printf (XP_TEXT("INVALID OPCODE...........\n"));
+ase_printf (ASE_T("INVALID OPCODE...........\n"));
 break;
 		}
 	}
@@ -226,13 +226,13 @@ break;
 	return 0;
 }
 
-static int __push_to_stack (xp_stx_t* stx, 
-	process_t* proc, xp_word_t what, xp_word_t index)
+static int __push_to_stack (ase_stx_t* stx, 
+	process_t* proc, ase_word_t what, ase_word_t index)
 {
 	switch (what) {
 	case 0: /* receiver variable */
 		proc->stack[proc->stack_top++] = 
-			XP_STX_WORD_AT(stx, proc->stack[proc->stack_base], index);
+			ASE_STX_WORD_AT(stx, proc->stack[proc->stack_base], index);
 		break;
 	case 1: /* temporary variable */
 		proc->stack[proc->stack_top++] = 
@@ -248,12 +248,12 @@ static int __push_to_stack (xp_stx_t* stx,
 	return 0;
 }
 
-static int __store_from_stack (xp_stx_t* stx, 
-	process_t* proc, xp_word_t what, xp_word_t index)
+static int __store_from_stack (ase_stx_t* stx, 
+	process_t* proc, ase_word_t what, ase_word_t index)
 {
 	switch (what) {
 	case 4: /* receiver variable */
-		XP_STX_WORD_AT(stx,proc->stack[proc->stack_base],index) = proc->stack[--proc->stack_top];
+		ASE_STX_WORD_AT(stx,proc->stack[proc->stack_base],index) = proc->stack[--proc->stack_top];
 		break; 
 	case 5: /* temporary location */
 		proc->stack[proc->stack_base + 1 + index] = proc->stack[--proc->stack_top];
@@ -263,29 +263,29 @@ static int __store_from_stack (xp_stx_t* stx,
 	return 0;
 }
 
-static int __send_message (xp_stx_t* stx, process_t* proc, 
-	xp_word_t nargs, xp_word_t selector, xp_bool_t to_super)
+static int __send_message (ase_stx_t* stx, process_t* proc, 
+	ase_word_t nargs, ase_word_t selector, ase_bool_t to_super)
 {
-	xp_word_t receiver, method; 
-	xp_word_t i, tmpcount, argcount;
-	xp_stx_method_t* mthobj;
+	ase_word_t receiver, method; 
+	ase_word_t i, tmpcount, argcount;
+	ase_stx_method_t* mthobj;
 
-	xp_assert (XP_STX_CLASS(stx,selector) == stx->class_symbol);
+	ase_assert (ASE_STX_CLASS(stx,selector) == stx->class_symbol);
 
 	receiver = proc->stack[proc->stack_top - nargs - 1];
-	method = xp_stx_lookup_method (
-		stx, XP_STX_CLASS(stx,receiver), 
-		XP_STX_DATA(stx,selector), to_super);
+	method = ase_stx_lookup_method (
+		stx, ASE_STX_CLASS(stx,receiver), 
+		ASE_STX_DATA(stx,selector), to_super);
 	if (method == stx->nil) {
-xp_printf (XP_TEXT("cannot find the method....\n"));
+ase_printf (ASE_T("cannot find the method....\n"));
 		return -1;	
 	}
 
-	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx,method);
+	mthobj = (ase_stx_method_t*)ASE_STX_OBJECT(stx,method);
 
-	argcount = XP_STX_FROM_SMALLINT(mthobj->argcount);
-	tmpcount = XP_STX_FROM_SMALLINT(mthobj->tmpcount);
-	xp_assert (argcount == nargs);
+	argcount = ASE_STX_FROM_SMALLINT(mthobj->argcount);
+	tmpcount = ASE_STX_FROM_SMALLINT(mthobj->tmpcount);
+	ase_assert (argcount == nargs);
 
 	/* secure space for temporaries */
 	for (i = 0; i < tmpcount; i++) {
@@ -300,25 +300,25 @@ xp_printf (XP_TEXT("cannot find the method....\n"));
 	proc->stack[proc->stack_top++] = proc->stack_base;
 
 	proc->stack_base = proc->stack_top - 3 - tmpcount - argcount - 1;
-	xp_assert (proc->stack_base > 0);
+	ase_assert (proc->stack_base > 0);
 
 	proc->receiver = receiver;
 	proc->method = method;
 	proc->pc = 0;
 
 	proc->literals = mthobj->literals;
-	proc->bytecodes = XP_STX_DATA(stx, mthobj->bytecodes);
-	proc->bytecode_size = XP_STX_SIZE(stx, mthobj->bytecodes);
+	proc->bytecodes = ASE_STX_DATA(stx, mthobj->bytecodes);
+	proc->bytecode_size = ASE_STX_SIZE(stx, mthobj->bytecodes);
 	proc->argcount = argcount;
 	proc->tmpcount = tmpcount;
 
 	return 0;
 }
 
-static int __return_from_message (xp_stx_t* stx, process_t* proc)
+static int __return_from_message (ase_stx_t* stx, process_t* proc)
 {
-	xp_word_t method, pc, stack_base;
-	xp_stx_method_t* mthobj;
+	ase_word_t method, pc, stack_base;
+	ase_stx_method_t* mthobj;
 
 	if (proc->stack_base == 0) {
 		/* return from the startup method */
@@ -329,8 +329,8 @@ static int __return_from_message (xp_stx_t* stx, process_t* proc)
 	method = proc->stack[proc->stack_base + 1 + proc->tmpcount + proc->argcount + 1];
 	pc = proc->stack[proc->stack_base + 1 + proc->tmpcount + proc->argcount];
 
-	mthobj = (xp_stx_method_t*)XP_STX_OBJECT(stx,method);
-	xp_assert (mthobj != XP_NULL);
+	mthobj = (ase_stx_method_t*)ASE_STX_OBJECT(stx,method);
+	ase_assert (mthobj != ASE_NULL);
 	
 	/* return value is located on top of the previous stack */
 	proc->stack[proc->stack_base - 1] = proc->stack[proc->stack_top - 1];
@@ -344,35 +344,35 @@ static int __return_from_message (xp_stx_t* stx, process_t* proc)
 	proc->pc = pc;
 
 	proc->literals = mthobj->literals;
-	proc->bytecodes = XP_STX_DATA(stx, mthobj->bytecodes);
-	proc->bytecode_size = XP_STX_SIZE(stx, mthobj->bytecodes);
-	proc->argcount = XP_STX_FROM_SMALLINT(mthobj->argcount); 
-	proc->tmpcount = XP_STX_FROM_SMALLINT(mthobj->tmpcount);
+	proc->bytecodes = ASE_STX_DATA(stx, mthobj->bytecodes);
+	proc->bytecode_size = ASE_STX_SIZE(stx, mthobj->bytecodes);
+	proc->argcount = ASE_STX_FROM_SMALLINT(mthobj->argcount); 
+	proc->tmpcount = ASE_STX_FROM_SMALLINT(mthobj->tmpcount);
 
 	return 0;
 }
 
 
-static int __dispatch_primitive (xp_stx_t* stx, process_t* proc, xp_word_t no)
+static int __dispatch_primitive (ase_stx_t* stx, process_t* proc, ase_word_t no)
 {
 	switch (no) {
 	case 0:
-		xp_printf (XP_TEXT("[[  hello stx smalltalk  ]]\n"));
+		ase_printf (ASE_T("[[  hello stx smalltalk  ]]\n"));
 		break;
 	case 1:
-		xp_printf (XP_TEXT("<<  AMAZING STX SMALLTALK WORLD  >>\n"));
+		ase_printf (ASE_T("<<  AMAZING STX SMALLTALK WORLD  >>\n"));
 		break;
 	case 2:
-		xp_printf (XP_TEXT("<<  FUNKY STX SMALLTALK  >> %d\n"), 
-			XP_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]));
+		ase_printf (ASE_T("<<  FUNKY STX SMALLTALK  >> %d\n"), 
+			ASE_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]));
 		break;
 	case 3:
-		xp_printf (XP_TEXT("<<  HIGH STX SMALLTALK  >> %d, %d\n"), 
-			XP_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]),
-			XP_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 2]));
+		ase_printf (ASE_T("<<  HIGH STX SMALLTALK  >> %d, %d\n"), 
+			ASE_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]),
+			ASE_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 2]));
 		break;
 	case 20:
-		xp_printf (XP_TEXT("<< PRIMITIVE 20 >>\n"));
+		ase_printf (ASE_T("<< PRIMITIVE 20 >>\n"));
 		break;
 	}
 	

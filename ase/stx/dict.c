@@ -1,67 +1,67 @@
 /*
- * $Id: dict.c,v 1.10 2005-08-11 10:18:35 bacon Exp $
+ * $Id: dict.c,v 1.11 2007-03-22 11:19:28 bacon Exp $
  */
 
-#include <xp/stx/dict.h>
-#include <xp/stx/object.h>
-#include <xp/stx/misc.h>
+#include <ase/stx/dict.h>
+#include <ase/stx/object.h>
+#include <ase/stx/misc.h>
 
 /* NOTE:
  * The code here implements SystemDictionary whose key is always a symbol.
  * Dictionary, on the contrary, can accept any object as a key.
  */
 
-xp_word_t __new_association (
-	xp_stx_t* stx, xp_word_t key, xp_word_t value)
+ase_word_t __new_association (
+	ase_stx_t* stx, ase_word_t key, ase_word_t value)
 {
-	xp_word_t x;
+	ase_word_t x;
 #ifdef __GNUC__
-	xp_word_t data[2] = { key, value };
+	ase_word_t data[2] = { key, value };
 #else
-	xp_word_t data[2];
+	ase_word_t data[2];
 	data[0] = key;
 	data[1] = value;
 #endif
-	x = xp_stx_alloc_word_object (
-		stx, data, XP_STX_ASSOCIATION_SIZE, XP_NULL, 0);
-	XP_STX_CLASS(stx,x) = stx->class_association;
+	x = ase_stx_alloc_word_object (
+		stx, data, ASE_STX_ASSOCIATION_SIZE, ASE_NULL, 0);
+	ASE_STX_CLASS(stx,x) = stx->class_association;
 	return x;
 }
 
-static xp_word_t __dict_find_slot (
-	xp_stx_t* stx, xp_word_t dict, xp_word_t key)
+static ase_word_t __dict_find_slot (
+	ase_stx_t* stx, ase_word_t dict, ase_word_t key)
 {
-	xp_word_t size, hash, index, assoc, symbol;
-	xp_stx_word_object_t* dict_obj;
+	ase_word_t size, hash, index, assoc, symbol;
+	ase_stx_word_object_t* dict_obj;
 
-	xp_assert (!XP_STX_IS_SMALLINT(dict) &&
-	           XP_STX_IS_WORD_OBJECT(stx, dict));
-	xp_assert (dict == stx->smalltalk || 
-	           xp_stx_classof(stx,dict) == stx->class_system_dictionary);
-	xp_assert (xp_stx_classof(stx,key) == stx->class_symbol);
+	ase_assert (!ASE_STX_IS_SMALLINT(dict) &&
+	           ASE_STX_IS_WORD_OBJECT(stx, dict));
+	ase_assert (dict == stx->smalltalk || 
+	           ase_stx_classof(stx,dict) == stx->class_system_dictionary);
+	ase_assert (ase_stx_classof(stx,key) == stx->class_symbol);
 
-	size = XP_STX_SIZE(stx,dict);
-	hash = xp_stx_hash_object(stx, key); 
+	size = ASE_STX_SIZE(stx,dict);
+	hash = ase_stx_hash_object(stx, key); 
 
 	/* consider tally, the only instance variable of a system dictionary */
 	index = hash % (size - 1) + 1;
 
-	dict_obj = XP_STX_WORD_OBJECT(stx,dict);
+	dict_obj = ASE_STX_WORD_OBJECT(stx,dict);
 
 	while (1) {
 		assoc = dict_obj->data[index];
 		if (assoc == stx->nil) break;
 
-		symbol = XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_KEY);
-		xp_assert (xp_stx_classof(stx,symbol) == stx->class_symbol);
+		symbol = ASE_STX_WORD_AT(stx,assoc,ASE_STX_ASSOCIATION_KEY);
+		ase_assert (ase_stx_classof(stx,symbol) == stx->class_symbol);
 
 		/* NOTE:
 		 * shallow comparison is enough for identity check 
 		 * because a symbol can just be a key of a system dictionary
 		 */
-		if (xp_strxncmp(
-			XP_STX_DATA(stx,key), XP_STX_SIZE(stx,key),
-			XP_STX_DATA(stx,symbol), XP_STX_SIZE(stx,symbol)) == 0) break;
+		if (ase_strxncmp(
+			ASE_STX_DATA(stx,key), ASE_STX_SIZE(stx,key),
+			ASE_STX_DATA(stx,symbol), ASE_STX_SIZE(stx,symbol)) == 0) break;
 
 		/* consider tally here too */	
 		index = index % (size - 1) + 1;
@@ -70,119 +70,119 @@ static xp_word_t __dict_find_slot (
 	return index;
 }
 
-static void __grow_dict (xp_stx_t* stx, xp_word_t dict)
+static void __grow_dict (ase_stx_t* stx, ase_word_t dict)
 {
-	xp_word_t new, size, index, assoc;
+	ase_word_t new, size, index, assoc;
 	
 	/* WARNING:
 	 * if this assertion fails, adjust the initial size of the 
 	 * system dictionary. i don't want this function to be called
 	 * during the bootstrapping.
 	 */
-	xp_assert (stx->class_system_dictionary != stx->nil);
-	xp_assert (xp_stx_classof(stx,dict) == stx->class_system_dictionary);
+	ase_assert (stx->class_system_dictionary != stx->nil);
+	ase_assert (ase_stx_classof(stx,dict) == stx->class_system_dictionary);
 
-	size = XP_STX_SIZE(stx,dict);
-	new = xp_stx_instantiate (stx, 
-		XP_STX_CLASS(stx,dict), XP_NULL, XP_NULL, (size - 1) * 2); 
-	XP_STX_WORD_AT(stx,new,0) = XP_STX_TO_SMALLINT(0);		
+	size = ASE_STX_SIZE(stx,dict);
+	new = ase_stx_instantiate (stx, 
+		ASE_STX_CLASS(stx,dict), ASE_NULL, ASE_NULL, (size - 1) * 2); 
+	ASE_STX_WORD_AT(stx,new,0) = ASE_STX_TO_SMALLINT(0);		
 
 	for (index = 1; index < size; index++) {
-		assoc = XP_STX_WORD_AT(stx,dict,index);
+		assoc = ASE_STX_WORD_AT(stx,dict,index);
 		if (assoc == stx->nil) continue;
 
-		xp_stx_dict_put (stx, new, 
-			XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_KEY),
-			XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_VALUE));
+		ase_stx_dict_put (stx, new, 
+			ASE_STX_WORD_AT(stx,assoc,ASE_STX_ASSOCIATION_KEY),
+			ASE_STX_WORD_AT(stx,assoc,ASE_STX_ASSOCIATION_VALUE));
 	}
 	
 	/* TODO: explore if dict can be immediately destroyed. */
 
-	xp_assert (xp_sizeof(xp_stx_object_t*) == xp_sizeof(xp_uint_t));
-	XP_SWAP (XP_STX_OBJECT(stx,dict),
-	         XP_STX_OBJECT(stx,new),
-	         xp_stx_object_t*, xp_uint_t);
+	ase_assert (ase_sizeof(ase_stx_object_t*) == ase_sizeof(ase_uint_t));
+	ASE_SWAP (ASE_STX_OBJECT(stx,dict),
+	         ASE_STX_OBJECT(stx,new),
+	         ase_stx_object_t*, ase_uint_t);
 }
 
-xp_word_t xp_stx_dict_lookup (
-	xp_stx_t* stx, xp_word_t dict, const xp_char_t* key)
+ase_word_t ase_stx_dict_lookup (
+	ase_stx_t* stx, ase_word_t dict, const ase_char_t* key)
 {
-	xp_word_t size, hash, index, assoc, symbol;
-	xp_stx_word_object_t* dict_obj;
+	ase_word_t size, hash, index, assoc, symbol;
+	ase_stx_word_object_t* dict_obj;
 
-	xp_assert (!XP_STX_IS_SMALLINT(dict) &&
-	           XP_STX_IS_WORD_OBJECT(stx, dict));
-	xp_assert (dict == stx->smalltalk || 
-	           xp_stx_classof(stx,dict) == stx->class_system_dictionary);
+	ase_assert (!ASE_STX_IS_SMALLINT(dict) &&
+	           ASE_STX_IS_WORD_OBJECT(stx, dict));
+	ase_assert (dict == stx->smalltalk || 
+	           ase_stx_classof(stx,dict) == stx->class_system_dictionary);
 
-	size = XP_STX_SIZE(stx,dict);
-	hash = xp_stx_hash(key, xp_strlen(key) * xp_sizeof(xp_char_t));
+	size = ASE_STX_SIZE(stx,dict);
+	hash = ase_stx_hash(key, ase_strlen(key) * ase_sizeof(ase_char_t));
 
 	/* consider tally, the only instance variable of a system dictionary */
 	index = hash % (size - 1) + 1;
 
-	dict_obj = XP_STX_WORD_OBJECT(stx,dict);
+	dict_obj = ASE_STX_WORD_OBJECT(stx,dict);
 
 	while (1) {
 		assoc = dict_obj->data[index];
 		if (assoc == stx->nil) break;
 
-		symbol = XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_KEY);
-		xp_assert (xp_stx_classof(stx,symbol) == stx->class_symbol);
+		symbol = ASE_STX_WORD_AT(stx,assoc,ASE_STX_ASSOCIATION_KEY);
+		ase_assert (ase_stx_classof(stx,symbol) == stx->class_symbol);
 
-		if (xp_strxcmp (XP_STX_DATA(stx,symbol),
-			XP_STX_SIZE(stx,symbol), key) == 0) break;
+		if (ase_strxcmp (ASE_STX_DATA(stx,symbol),
+			ASE_STX_SIZE(stx,symbol), key) == 0) break;
 
 		/* consider tally here too */	
 		index = index % (size - 1) + 1;
 	}
 
-	return XP_STX_WORD_AT(stx,dict,index);
+	return ASE_STX_WORD_AT(stx,dict,index);
 }
 
-xp_word_t xp_stx_dict_get (xp_stx_t* stx, xp_word_t dict, xp_word_t key)
+ase_word_t ase_stx_dict_get (ase_stx_t* stx, ase_word_t dict, ase_word_t key)
 {
-	return XP_STX_WORD_AT(stx,dict,__dict_find_slot(stx, dict, key));
+	return ASE_STX_WORD_AT(stx,dict,__dict_find_slot(stx, dict, key));
 }
 
-xp_word_t xp_stx_dict_put (
-	xp_stx_t* stx, xp_word_t dict, xp_word_t key, xp_word_t value)
+ase_word_t ase_stx_dict_put (
+	ase_stx_t* stx, ase_word_t dict, ase_word_t key, ase_word_t value)
 {
-	xp_word_t slot, capa, tally, assoc;
+	ase_word_t slot, capa, tally, assoc;
 
 	/* the dictionary must have at least one slot excluding tally */
-	xp_assert (XP_STX_SIZE(stx,dict) > 1);
+	ase_assert (ASE_STX_SIZE(stx,dict) > 1);
 
-	capa = XP_STX_SIZE(stx,dict) - 1;
-	tally = XP_STX_FROM_SMALLINT(XP_STX_WORD_AT(stx,dict,0));
+	capa = ASE_STX_SIZE(stx,dict) - 1;
+	tally = ASE_STX_FROM_SMALLINT(ASE_STX_WORD_AT(stx,dict,0));
 	if (capa <= tally + 1) {
 		__grow_dict (stx, dict);
 		/* refresh tally */
-		tally = XP_STX_FROM_SMALLINT(XP_STX_WORD_AT(stx,dict,0));
+		tally = ASE_STX_FROM_SMALLINT(ASE_STX_WORD_AT(stx,dict,0));
 	}
 
 	slot = __dict_find_slot (stx, dict, key);
 
-	assoc = XP_STX_WORD_AT(stx,dict,slot);
+	assoc = ASE_STX_WORD_AT(stx,dict,slot);
 	if (assoc == stx->nil) {
-		XP_STX_WORD_AT(stx,dict,slot) = 
+		ASE_STX_WORD_AT(stx,dict,slot) = 
 			__new_association (stx, key, value);
-		XP_STX_WORD_AT(stx,dict,0) = XP_STX_TO_SMALLINT(tally + 1);
+		ASE_STX_WORD_AT(stx,dict,0) = ASE_STX_TO_SMALLINT(tally + 1);
 	}
-	else XP_STX_WORD_AT(stx,assoc,XP_STX_ASSOCIATION_VALUE) = value;
+	else ASE_STX_WORD_AT(stx,assoc,ASE_STX_ASSOCIATION_VALUE) = value;
 
-	return XP_STX_WORD_AT(stx,dict,slot);
+	return ASE_STX_WORD_AT(stx,dict,slot);
 }
 
-void xp_stx_dict_traverse (
-	xp_stx_t* stx, xp_word_t dict, 
-	void (*func) (xp_stx_t*,xp_word_t,void*), void* data)
+void ase_stx_dict_traverse (
+	ase_stx_t* stx, ase_word_t dict, 
+	void (*func) (ase_stx_t*,ase_word_t,void*), void* data)
 {
-	xp_word_t index, assoc;
-	xp_word_t size = XP_STX_SIZE(stx,dict);
+	ase_word_t index, assoc;
+	ase_word_t size = ASE_STX_SIZE(stx,dict);
 	
 	for (index = 1; index < size; index++) {
-		assoc = XP_STX_WORD_AT(stx,dict,index);
+		assoc = ASE_STX_WORD_AT(stx,dict,index);
 		if (assoc == stx->nil) continue;
 		func (stx, assoc, data);
 	}

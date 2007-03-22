@@ -1,11 +1,11 @@
 /*
- * $Id: bytecode.h,v 1.12 2005-10-02 15:45:09 bacon Exp $
+ * $Id: bytecode.h,v 1.13 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_BYTECODE_H_
-#define _XP_STX_BYTECODE_H_
+#ifndef _ASE_STX_BYTECODE_H_
+#define _ASE_STX_BYTECODE_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
 #define PUSH_RECEIVER_VARIABLE            0x00
 #define PUSH_TEMPORARY_LOCATION           0x10
@@ -47,7 +47,7 @@
 extern "C" {
 #endif
 
-int xp_stx_decode (xp_stx_t* stx, xp_word_t class_idx);
+int ase_stx_decode (ase_stx_t* stx, ase_word_t class_idx);
 
 #ifdef __cplusplus
 }

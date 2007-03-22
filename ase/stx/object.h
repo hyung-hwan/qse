@@ -1,36 +1,36 @@
 /*
- * $Id: object.h,v 1.30 2005-08-18 15:28:18 bacon Exp $
+ * $Id: object.h,v 1.31 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_OBJECT_H_
-#define _XP_STX_OBJECT_H_
+#ifndef _ASE_STX_OBJECT_H_
+#define _ASE_STX_OBJECT_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_word_t xp_stx_alloc_word_object (
-	xp_stx_t* stx, const xp_word_t* data, xp_word_t nfields,
-	const xp_word_t* variable_data, xp_word_t variable_nfields);
+ase_word_t ase_stx_alloc_word_object (
+	ase_stx_t* stx, const ase_word_t* data, ase_word_t nfields,
+	const ase_word_t* variable_data, ase_word_t variable_nfields);
 
-xp_word_t xp_stx_alloc_byte_object (
-	xp_stx_t* stx, const xp_byte_t* data, xp_word_t n);
+ase_word_t ase_stx_alloc_byte_object (
+	ase_stx_t* stx, const ase_byte_t* data, ase_word_t n);
 
-xp_word_t xp_stx_alloc_char_object (
-	xp_stx_t* stx, const xp_char_t* str);
-xp_word_t xp_stx_alloc_char_objectx (
-	xp_stx_t* stx, const xp_char_t* str, xp_word_t n);
-xp_word_t xp_stx_allocn_char_object (xp_stx_t* stx, ...);
+ase_word_t ase_stx_alloc_char_object (
+	ase_stx_t* stx, const ase_char_t* str);
+ase_word_t ase_stx_alloc_char_objectx (
+	ase_stx_t* stx, const ase_char_t* str, ase_word_t n);
+ase_word_t ase_stx_allocn_char_object (ase_stx_t* stx, ...);
 
-xp_word_t xp_stx_hash_object (xp_stx_t* stx, xp_word_t object);
+ase_word_t ase_stx_hash_object (ase_stx_t* stx, ase_word_t object);
 
-xp_word_t xp_stx_instantiate (
-	xp_stx_t* stx, xp_word_t class_index, const void* data,
-	const void* variable_data, xp_word_t variable_nfields);
-xp_word_t xp_stx_classof (xp_stx_t* stx, xp_word_t obj);
-xp_word_t xp_stx_sizeof (xp_stx_t* stx, xp_word_t obj);
+ase_word_t ase_stx_instantiate (
+	ase_stx_t* stx, ase_word_t class_index, const void* data,
+	const void* variable_data, ase_word_t variable_nfields);
+ase_word_t ase_stx_classof (ase_stx_t* stx, ase_word_t obj);
+ase_word_t ase_stx_sizeof (ase_stx_t* stx, ase_word_t obj);
 
 
 #ifdef __cplusplus

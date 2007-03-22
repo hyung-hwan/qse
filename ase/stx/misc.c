@@ -1,29 +1,29 @@
 /*
- * $Id: misc.c,v 1.7 2005-07-05 11:15:51 bacon Exp $
+ * $Id: misc.c,v 1.8 2007-03-22 11:19:28 bacon Exp $
  */
 
-#include <xp/stx/misc.h>
+#include <ase/stx/misc.h>
 
-xp_word_t xp_stx_hash (const void* data, xp_word_t len)
+ase_word_t ase_stx_hash (const void* data, ase_word_t len)
 {
-	xp_word_t h = 0;
-	xp_byte_t* bp, * be;
+	ase_word_t h = 0;
+	ase_byte_t* bp, * be;
 
-	bp = (xp_byte_t*)data; be = bp + len;
+	bp = (ase_byte_t*)data; be = bp + len;
 	while (bp < be) h = h * 31 + *bp++;
 
 	return h;
 }
 
-xp_word_t xp_stx_strhash (const xp_char_t* str)
+ase_word_t ase_stx_strhash (const ase_char_t* str)
 {
-	xp_word_t h = 0;
-	xp_byte_t* bp, * be;
-	const xp_char_t* p = str;
+	ase_word_t h = 0;
+	ase_byte_t* bp, * be;
+	const ase_char_t* p = str;
 
-	while (*p != XP_CHAR('\0')) {
-		bp = (xp_byte_t*)p;
-		be = bp + xp_sizeof(xp_char_t);
+	while (*p != ASE_T('\0')) {
+		bp = (ase_byte_t*)p;
+		be = bp + ase_sizeof(ase_char_t);
 		while (bp < be) h = h * 31 + *bp++;
 		p++;
 	}
@@ -31,15 +31,15 @@ xp_word_t xp_stx_strhash (const xp_char_t* str)
 	return h;
 }
 
-xp_word_t xp_stx_strxhash (const xp_char_t* str, xp_word_t len)
+ase_word_t ase_stx_strxhash (const ase_char_t* str, ase_word_t len)
 {
-	xp_word_t h = 0;
-	xp_byte_t* bp, * be;
-	const xp_char_t* p = str, * end = str + len;
+	ase_word_t h = 0;
+	ase_byte_t* bp, * be;
+	const ase_char_t* p = str, * end = str + len;
 
 	while (p < end) {
-		bp = (xp_byte_t*)p;
-		be = bp + xp_sizeof(xp_char_t);
+		bp = (ase_byte_t*)p;
+		be = bp + ase_sizeof(ase_char_t);
 		while (bp < be) h = h * 31 + *bp++;
 		p++;
 	}
@@ -47,17 +47,17 @@ xp_word_t xp_stx_strxhash (const xp_char_t* str, xp_word_t len)
 	return h;
 }
 
-xp_char_t* xp_stx_strword (
-	const xp_char_t* str, const xp_char_t* word, xp_word_t* word_index)
+ase_char_t* ase_stx_strword (
+	const ase_char_t* str, const ase_char_t* word, ase_word_t* word_index)
 {
-	xp_char_t* p = (xp_char_t*)str;
-	xp_char_t* tok;
-	xp_size_t len;
-	xp_word_t index = 0;
+	ase_char_t* p = (ase_char_t*)str;
+	ase_char_t* tok;
+	ase_size_t len;
+	ase_word_t index = 0;
 
-	while (p != XP_NULL) {
-		p = xp_strtok (p, XP_TEXT(""), &tok, &len);
-		if (xp_strxcmp (tok, len, word) == 0) {
+	while (p != ASE_NULL) {
+		p = ase_strtok (p, ASE_T(""), &tok, &len);
+		if (ase_strxcmp (tok, len, word) == 0) {
 			*word_index = index;
 			return tok;
 		}
@@ -66,5 +66,5 @@ xp_char_t* xp_stx_strword (
 	}
 
 	*word_index = index;
-	return XP_NULL;
+	return ASE_NULL;
 }

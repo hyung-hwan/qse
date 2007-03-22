@@ -1,18 +1,18 @@
 /*
- * $Id: method.h,v 1.8 2005-09-13 11:15:41 bacon Exp $
+ * $Id: method.h,v 1.9 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_METHOD_H_
-#define _XP_STX_METHOD_H_
+#ifndef _ASE_STX_METHOD_H_
+#define _ASE_STX_METHOD_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
-#define XP_STX_METHOD_SIZE           5
-#define XP_STX_METHOD_TEXT           0
-#define XP_STX_METHOD_SELECTOR       1
-#define XP_STX_METHOD_BYTECODES      2
-#define XP_STX_METHOD_TMPCOUNT       3
-#define XP_STX_METHOD_ARGCOUNT       4
+#define ASE_STX_METHOD_SIZE           5
+#define ASE_STX_METHOD_TEXT           0
+#define ASE_STX_METHOD_SELECTOR       1
+#define ASE_STX_METHOD_BYTECODES      2
+#define ASE_STX_METHOD_TMPCOUNT       3
+#define ASE_STX_METHOD_ARGCOUNT       4
 
 
 /* dolphin smalltalk's flags representation
@@ -26,18 +26,18 @@
 									Block flag	SmallInteger flag"
 */
 
-struct xp_stx_method_t
+struct ase_stx_method_t
 {
-	xp_stx_objhdr_t header;
-	xp_word_t text;
-	xp_word_t selector; /* is this necessary? */
-	xp_word_t bytecodes;
-	xp_word_t tmpcount;
-	xp_word_t argcount;
-	xp_word_t literals[1];
+	ase_stx_objhdr_t header;
+	ase_word_t text;
+	ase_word_t selector; /* is this necessary? */
+	ase_word_t bytecodes;
+	ase_word_t tmpcount;
+	ase_word_t argcount;
+	ase_word_t literals[1];
 };
 
-typedef struct xp_stx_method_t xp_stx_method_t;
+typedef struct ase_stx_method_t ase_stx_method_t;
 
 #ifdef __cplusplus
 extern "C"  {

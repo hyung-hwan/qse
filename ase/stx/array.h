@@ -1,17 +1,17 @@
 /*
- * $Id: array.h,v 1.3 2005-08-18 15:28:18 bacon Exp $
+ * $Id: array.h,v 1.4 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_ARRAY_H_
-#define _XP_STX_ARRAY_H_
+#ifndef _ASE_STX_ARRAY_H_
+#define _ASE_STX_ARRAY_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_word_t xp_stx_new_array (xp_stx_t* stx, xp_word_t size);
+ase_word_t ase_stx_new_array (ase_stx_t* stx, ase_word_t size);
 
 #ifdef __cplusplus
 }
