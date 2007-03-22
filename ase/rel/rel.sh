@@ -57,6 +57,9 @@ finalize ()
 				cp -f "$full" "$SOURCE_ROOT/html/$i"
 				cp -f "$full" "$ASETGT/$i"
 				;;
+			*.dsp|*.dsw)
+				"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
+				;;
 			*)
 				cp -f "$full" "$target/$file"
 				;;
