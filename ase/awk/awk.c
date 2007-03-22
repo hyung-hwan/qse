@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.118 2007-03-12 12:55:57 bacon Exp $ 
+ * $Id: awk.c,v 1.119 2007-03-22 10:31:23 bacon Exp $ 
  *
  * {License}
  */
@@ -11,7 +11,7 @@
 
 #include <ase/awk/awk_i.h>
 
-static void __free_afn (void* awk, void* afn);
+static void free_afn (void* awk, void* afn);
 
 ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 {
@@ -62,7 +62,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 
 	/* TODO: initial map size?? */
 	if (ase_awk_map_open (
-		&awk->tree.afns, awk, 256, __free_afn, awk) == ASE_NULL) 
+		&awk->tree.afns, awk, 256, free_afn, awk) == ASE_NULL) 
 	{
 		ase_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
@@ -142,7 +142,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	return awk;
 }
 
-static void __free_afn (void* owner, void* afn)
+static void free_afn (void* owner, void* afn)
 {
 	ase_awk_afn_t* f = (ase_awk_afn_t*)afn;
 

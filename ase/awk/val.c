@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.115 2007-03-10 11:58:35 bacon Exp $
+ * $Id: val.c,v 1.116 2007-03-22 10:31:24 bacon Exp $
  *
  * {License}
  */
@@ -11,23 +11,23 @@
 #endif
 
 
-static ase_char_t* __str_to_str (
+static ase_char_t* str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
 	int opt, ase_str_t* buf, ase_size_t* len);
-static ase_char_t* __val_int_to_str (
+static ase_char_t* val_int_to_str (
 	ase_awk_run_t* run, ase_awk_val_int_t* v,
 	int opt, ase_str_t* buf, ase_size_t* len);
-static ase_char_t* __val_real_to_str (
+static ase_char_t* val_real_to_str (
 	ase_awk_run_t* run, ase_awk_val_real_t* v,
 	int opt, ase_str_t* buf, ase_size_t* len);
 
-static ase_awk_val_nil_t __awk_nil = { ASE_AWK_VAL_NIL, 0 };
-static ase_awk_val_str_t __awk_zls = { ASE_AWK_VAL_STR, 0, ASE_T(""), 0 };
+static ase_awk_val_nil_t awk_nil = { ASE_AWK_VAL_NIL, 0 };
+static ase_awk_val_str_t awk_zls = { ASE_AWK_VAL_STR, 0, ASE_T(""), 0 };
 
-ase_awk_val_t* ase_awk_val_nil = (ase_awk_val_t*)&__awk_nil;
-ase_awk_val_t* ase_awk_val_zls = (ase_awk_val_t*)&__awk_zls; 
+ase_awk_val_t* ase_awk_val_nil = (ase_awk_val_t*)&awk_nil;
+ase_awk_val_t* ase_awk_val_zls = (ase_awk_val_t*)&awk_zls; 
 
-static ase_awk_val_int_t __awk_int[] =
+static ase_awk_val_int_t awk_int[] =
 {
 	{ ASE_AWK_VAL_INT, 0, -1, ASE_NULL },
 	{ ASE_AWK_VAL_INT, 0,  0, ASE_NULL },
@@ -53,18 +53,18 @@ static ase_awk_val_int_t __awk_int[] =
 	{ ASE_AWK_VAL_INT, 0, 20, ASE_NULL }
 };
 
-ase_awk_val_t* ase_awk_val_negone = (ase_awk_val_t*)&__awk_int[0];
-ase_awk_val_t* ase_awk_val_zero = (ase_awk_val_t*)&__awk_int[1];
-ase_awk_val_t* ase_awk_val_one = (ase_awk_val_t*)&__awk_int[2];
+ase_awk_val_t* ase_awk_val_negone = (ase_awk_val_t*)&awk_int[0];
+ase_awk_val_t* ase_awk_val_zero = (ase_awk_val_t*)&awk_int[1];
+ase_awk_val_t* ase_awk_val_one = (ase_awk_val_t*)&awk_int[2];
 
 ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 {
 	ase_awk_val_int_t* val;
 
-	if (v >= __awk_int[0].val && 
-	    v <= __awk_int[ASE_COUNTOF(__awk_int)-1].val)
+	if (v >= awk_int[0].val && 
+	    v <= awk_int[ASE_COUNTOF(awk_int)-1].val)
 	{
-		return (ase_awk_val_t*)&__awk_int[v-__awk_int[0].val];
+		return (ase_awk_val_t*)&awk_int[v-awk_int[0].val];
 	}
 
 	if (run->icache_count > 0)
@@ -219,7 +219,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	return (ase_awk_val_t*)val;
 }
 
-static void __free_map_val (void* run, void* v)
+static void free_map_val (void* run, void* v)
 {
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("refdown in map free..."));
@@ -241,7 +241,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 	val->type = ASE_AWK_VAL_MAP;
 	val->ref = 0;
 	val->map = ase_awk_map_open (
-		ASE_NULL, run, 256, __free_map_val, run->awk);
+		ASE_NULL, run, 256, free_map_val, run->awk);
 	if (val->map == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -281,8 +281,8 @@ ase_bool_t ase_awk_isbuiltinval (ase_awk_val_t* val)
 	       val == ase_awk_val_zls || 
 	       val == ase_awk_val_zero || 
 	       val == ase_awk_val_one || 
-	       (val >= (ase_awk_val_t*)&__awk_int[0] &&
-	        val <= (ase_awk_val_t*)&__awk_int[ASE_COUNTOF(__awk_int)-1]);
+	       (val >= (ase_awk_val_t*)&awk_int[0] &&
+	        val <= (ase_awk_val_t*)&awk_int[ASE_COUNTOF(awk_int)-1]);
 }
 
 void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
@@ -429,7 +429,7 @@ ase_char_t* ase_awk_valtostr (
 {
 	if (v->type == ASE_AWK_VAL_NIL)
 	{
-		return __str_to_str (run, ASE_T(""), 0, opt, buf, len);
+		return str_to_str (run, ASE_T(""), 0, opt, buf, len);
 	}
 
 	if (v->type == ASE_AWK_VAL_INT)
@@ -439,14 +439,14 @@ ase_char_t* ase_awk_valtostr (
 		/*
 		if (vi->nde != ASE_NULL && vi->nde->str != ASE_NULL)
 		{
-			return __str_to_str (
+			return str_to_str (
 				run, vi->nde->str, vi->nde->len, 
 				opt, buf, len);
 		}
 		else
 		{
 			*/
-			return __val_int_to_str (run, vi, opt, buf, len);
+			return val_int_to_str (run, vi, opt, buf, len);
 		/*}*/
 	}
 
@@ -457,13 +457,13 @@ ase_char_t* ase_awk_valtostr (
 		/*
 		if (vr->nde != ASE_NULL && vr->nde->str != ASE_NULL)
 		{
-			return __str_to_str (
+			return str_to_str (
 				run, vr->nde->str, vr->nde->len, 
 				opt, buf, len);
 		}
 		else
 		{*/
-			return __val_real_to_str (run, vr, opt, buf, len);
+			return val_real_to_str (run, vr, opt, buf, len);
 		/*}*/
 	}
 
@@ -471,7 +471,7 @@ ase_char_t* ase_awk_valtostr (
 	{
 		ase_awk_val_str_t* vs = (ase_awk_val_str_t*)v;
 
-		return __str_to_str (
+		return str_to_str (
 			run, vs->buf, vs->len, opt, buf, len);
 	}
 
@@ -485,7 +485,7 @@ ase_char_t* ase_awk_valtostr (
 	return ASE_NULL;
 }
 
-static ase_char_t* __str_to_str (
+static ase_char_t* str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
 	int opt, ase_str_t* buf, ase_size_t* len)
 {
@@ -521,7 +521,7 @@ static ase_char_t* __str_to_str (
 	}
 }
 
-static ase_char_t* __val_int_to_str (
+static ase_char_t* val_int_to_str (
 	ase_awk_run_t* run, ase_awk_val_int_t* v,
 	int opt, ase_str_t* buf, ase_size_t* len)
 {
@@ -619,7 +619,7 @@ static ase_char_t* __val_int_to_str (
 	return tmp;
 }
 
-static ase_char_t* __val_real_to_str (
+static ase_char_t* val_real_to_str (
 	ase_awk_run_t* run, ase_awk_val_real_t* v,
 	int opt, ase_str_t* buf, ase_size_t* len)
 {
@@ -767,16 +767,16 @@ int ase_awk_strtonum (
 
 }
 
-#define __DPRINTF run->awk->prmfns.misc.dprintf
-#define __DCUSTOM run->awk->prmfns.misc.custom_data
+#define DPRINTF run->awk->prmfns.misc.dprintf
+#define DCUSTOM run->awk->prmfns.misc.custom_data
 
-static int __print_pair (ase_awk_pair_t* pair, void* arg)
+static int print_pair (ase_awk_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
 
-	__DPRINTF (__DCUSTOM, ASE_T(" %s=>"), pair->key);	
+	DPRINTF (DCUSTOM, ASE_T(" %s=>"), pair->key);	
 	ase_awk_dprintval ((ase_awk_run_t*)arg, pair->val);
-	__DPRINTF (__DCUSTOM, ASE_T(" "));
+	DPRINTF (DCUSTOM, ASE_T(" "));
 	return 0;
 }
 
@@ -787,21 +787,21 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 	switch (val->type)
 	{
 		case ASE_AWK_VAL_NIL:
-			__DPRINTF (__DCUSTOM, ASE_T("nil"));
+			DPRINTF (DCUSTOM, ASE_T("nil"));
 		       	break;
 
 		case ASE_AWK_VAL_INT:
 		#if ASE_SIZEOF_LONG_LONG > 0
-			__DPRINTF (__DCUSTOM, ASE_T("%lld"), 
+			DPRINTF (DCUSTOM, ASE_T("%lld"), 
 				(long long)((ase_awk_val_int_t*)val)->val);
 		#elif ASE_SIZEOF___INT64 > 0
-			__DPRINTF (__DCUSTOM, ASE_T("%I64d"), 
+			DPRINTF (DCUSTOM, ASE_T("%I64d"), 
 				(__int64)((ase_awk_val_int_t*)val)->val);
 		#elif ASE_SIZEOF_LONG > 0
-			__DPRINTF (__DCUSTOM, ASE_T("%ld"), 
+			DPRINTF (DCUSTOM, ASE_T("%ld"), 
 				(long)((ase_awk_val_int_t*)val)->val);
 		#elif ASE_SIZEOF_INT > 0
-			__DPRINTF (__DCUSTOM, ASE_T("%d"), 
+			DPRINTF (DCUSTOM, ASE_T("%d"), 
 				(int)((ase_awk_val_int_t*)val)->val);
 		#else
 			#error unsupported size
@@ -809,31 +809,31 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 			break;
 
 		case ASE_AWK_VAL_REAL:
-			__DPRINTF (__DCUSTOM, ASE_T("%Lf"), 
+			DPRINTF (DCUSTOM, ASE_T("%Lf"), 
 				(long double)((ase_awk_val_real_t*)val)->val);
 			break;
 
 		case ASE_AWK_VAL_STR:
-			__DPRINTF (__DCUSTOM, ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
+			DPRINTF (DCUSTOM, ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
 			break;
 
 		case ASE_AWK_VAL_REX:
-			__DPRINTF (__DCUSTOM, ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
+			DPRINTF (DCUSTOM, ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
 			break;
 
 		case ASE_AWK_VAL_MAP:
-			__DPRINTF (__DCUSTOM, ASE_T("MAP["));
-			ase_awk_map_walk (((ase_awk_val_map_t*)val)->map, __print_pair, run);
-			__DPRINTF (__DCUSTOM, ASE_T("]"));
+			DPRINTF (DCUSTOM, ASE_T("MAP["));
+			ase_awk_map_walk (((ase_awk_val_map_t*)val)->map, print_pair, run);
+			DPRINTF (DCUSTOM, ASE_T("]"));
 			break;
 	
 		case ASE_AWK_VAL_REF:
-			__DPRINTF (__DCUSTOM, ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
+			DPRINTF (DCUSTOM, ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
 			ase_awk_dprintval (run, *((ase_awk_val_ref_t*)val)->adr);
-			__DPRINTF (__DCUSTOM, ASE_T("]"));
+			DPRINTF (DCUSTOM, ASE_T("]"));
 			break;
 
 		default:
-			__DPRINTF (__DCUSTOM, ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
+			DPRINTF (DCUSTOM, ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }
