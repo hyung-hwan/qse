@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.257 2007-03-22 10:26:04 bacon Exp $
+ * $Id: parse.c,v 1.258 2007-03-22 10:50:13 bacon Exp $
  *
  * {License}
  */
@@ -335,6 +335,13 @@ static global_t gtab[] =
 			ase_awk_seterror (awk, code, (awk)->token.line, &errarg, 1); \
 	} while (0)
 
+#define SETERRARG(awk,code,line,arg,leng) \
+	do { \
+		ase_cstr_t errarg; \
+		errarg.len = (leng); \
+		errarg.ptr = (arg); \
+		ase_awk_seterror ((awk), (code), (line), &errarg, 1); \
+	} while (0)
 
 ase_size_t ase_awk_getmaxdepth (ase_awk_t* awk, int type)
 {
@@ -696,28 +703,16 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	/* check if it is a builtin function */
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 	{
-		ase_cstr_t errarg;
-
-		errarg.ptr = name;
-		errarg.len = name_len;
-	
-		ase_awk_seterror (
-			awk, ASE_AWK_EBFNRED, awk->token.line, &errarg, 1);
-
+		SETERRARG (awk, ASE_AWK_EBFNRED, awk->token.line, name, name_len);
 		return ASE_NULL;
 	}
 
 	if (ase_awk_map_get(&awk->tree.afns, name, name_len) != ASE_NULL) 
 	{
 		/* the function is defined previously */
-		ase_cstr_t errarg;
-
-		errarg.ptr = name;
-		errarg.len = name_len;
-	
-		ase_awk_seterror (
-			awk, ASE_AWK_EAFNRED, awk->token.line, &errarg, 1);
-
+		SETERRARG (
+			awk, ASE_AWK_EAFNRED, awk->token.line, 
+			name, name_len);
 		return ASE_NULL;
 	}
 
@@ -729,14 +724,9 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		g = ase_awk_tab_find (&awk->parse.globals, 0, name, name_len);
 		if (g != (ase_size_t)-1) 
 		{
-			ase_cstr_t errarg;
-
-			errarg.ptr = name;
-			errarg.len = name_len;
-	
-			ase_awk_seterror (
+			SETERRARG (
 				awk, ASE_AWK_EGBLRED, awk->token.line, 
-				&errarg, 1);
+				name, name_len);
 
 			return ASE_NULL;
 		}
@@ -811,17 +801,12 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 				if (ase_strxncmp (name_dup, name_len, param, param_len) == 0 ||
 				    ase_awk_map_get (&awk->tree.afns, param, param_len) != ASE_NULL) 
 				{
-					ase_cstr_t errarg;
-					
 					ASE_AWK_FREE (awk, name_dup);
 					ase_awk_tab_clear (&awk->parse.params);
 					
-					errarg.ptr = param;
-					errarg.len = param_len;
-
-					ase_awk_seterror (
+					SETERRARG (
 						awk, ASE_AWK_EAFNRED, awk->token.line,
-						&errarg, 1);
+						param, param_len);
 
 					return ASE_NULL;
 				}
@@ -838,17 +823,12 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 				&awk->parse.params, 
 				0, param, param_len) != (ase_size_t)-1) 
 			{
-				ase_cstr_t errarg;
-
 				ASE_AWK_FREE (awk, name_dup);
 				ase_awk_tab_clear (&awk->parse.params);
 
-				errarg.ptr = param;
-				errarg.len = param_len;
-
-				ase_awk_seterror (
+				SETERRARG (
 					awk, ASE_AWK_EDUPPAR, awk->token.line,
-					&errarg, 1);
+					param, param_len);
 
 				return ASE_NULL;
 			}
@@ -1252,14 +1232,9 @@ static ase_awk_t* add_global (
 			/* check if it conflict with a builtin function name */
 			if (ase_awk_getbfn (awk, name, len) != ASE_NULL)
 			{
-				ase_cstr_t errarg;
-
-				errarg.ptr = name;
-				errarg.len = len;
-	
-				ase_awk_seterror (
+				SETERRARG (
 					awk, ASE_AWK_EBFNRED, awk->token.line,
-					&errarg, 1);
+					name, len);
 
 				return ASE_NULL;
 			}
@@ -1268,13 +1243,9 @@ static ase_awk_t* add_global (
 			if (ase_awk_map_get (
 				&awk->tree.afns, name, len) != ASE_NULL) 
 			{
-				ase_cstr_t errarg;
-
-				errarg.ptr = name;
-				errarg.len = len;
-	
-				ase_awk_seterror (
-					awk, ASE_AWK_EAFNRED, line, &errarg, 1);
+				SETERRARG (
+					awk, ASE_AWK_EAFNRED, line, 
+					name, len);
 
 				return ASE_NULL;
 			}
@@ -1284,14 +1255,7 @@ static ase_awk_t* add_global (
 		if (ase_awk_tab_find (
 			&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
 		{ 
-			ase_cstr_t errarg;
-
-			errarg.ptr = name;
-			errarg.len = len;
-
-			ase_awk_seterror (
-				awk, ASE_AWK_EDUPGBL, line, &errarg, 1);
-
+			SETERRARG (awk, ASE_AWK_EDUPGBL, line, name, len);
 			return ASE_NULL;
 		}
 	}
@@ -1370,15 +1334,9 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			/* check if it conflict with a builtin function name */
 			if (ase_awk_getbfn (awk, local, local_len) != ASE_NULL)
 			{
-				ase_cstr_t errarg;
-
-				errarg.ptr = local;
-				errarg.len = local_len;
-	
-				ase_awk_seterror (
+				SETERRARG (
 					awk, ASE_AWK_EBFNRED, awk->token.line,
-					&errarg, 1);
-
+					local, local_len);
 				return ASE_NULL;
 			}
 
@@ -1389,15 +1347,9 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			    ase_awk_map_get (
 			    	&awk->tree.afns, local, local_len) != ASE_NULL) 
 			{
-				ase_cstr_t errarg;
-
-				errarg.ptr = local;
-				errarg.len = local_len;
-	
-				ase_awk_seterror (
+				SETERRARG (
 					awk, ASE_AWK_EAFNRED, awk->token.line,
-					&errarg, 1);
-
+					local, local_len);
 				return ASE_NULL;
 			}
 		}
@@ -1406,15 +1358,9 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 		if (ase_awk_tab_find (&awk->parse.params,
 			0, local, local_len) != (ase_size_t)-1) 
 		{
-			ase_cstr_t errarg;
-
-			errarg.ptr = local;
-			errarg.len = local_len;
-	
-			ase_awk_seterror (
+			SETERRARG (
 				awk, ASE_AWK_EPARRED, awk->token.line,
-				&errarg, 1);
-
+				local, local_len);
 			return ASE_NULL;
 		}
 
@@ -1423,14 +1369,9 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			((awk->option & ASE_AWK_SHADING)? nlocals: 0),
 			local, local_len) != (ase_size_t)-1)
 		{
-			ase_cstr_t errarg;
-
-			errarg.ptr = local;
-			errarg.len = local_len;
-
-			ase_awk_seterror (
+			SETERRARG (
 				awk, ASE_AWK_EDUPLCL, awk->token.line, 
-				&errarg, 1);
+				local, local_len);
 
 			return ASE_NULL;
 		}
@@ -2770,7 +2711,6 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 	ase_char_t* name_dup;
 	ase_size_t name_len;
 	ase_awk_bfn_t* bfn;
-	ase_cstr_t errarg;
 
 	ASE_ASSERT (MATCH(awk,TOKEN_IDENT));
 
@@ -2907,9 +2847,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return (ase_awk_nde_t*)nde;
 		}
 
-		errarg.ptr = name_dup;
-		errarg.len = name_len;
-		ase_awk_seterror (awk, ASE_AWK_EUNDEF, line, &errarg, 1);
+		SETERRARG (awk, ASE_AWK_EUNDEF, line, name_dup, name_len);
 
 		/* undefined variable */
 		ASE_AWK_FREE (awk, name_dup);
@@ -2925,7 +2863,6 @@ static ase_awk_nde_t* parse_hashidx (
 	ase_awk_nde_t* idx, * tmp, * last;
 	ase_awk_nde_var_t* nde;
 	ase_size_t idxa;
-	ase_cstr_t errarg;
 
 	idx = ASE_NULL;
 	last = ASE_NULL;
@@ -3048,10 +2985,7 @@ static ase_awk_nde_t* parse_hashidx (
 	ase_awk_clrpt (awk, idx);
 	ASE_AWK_FREE (awk, nde);
 
-	errarg.ptr = name;
-	errarg.len = name_len;
-
-	ase_awk_seterror (awk, ASE_AWK_EUNDEF, line, &errarg, 1);
+	SETERRARG (awk, ASE_AWK_EUNDEF, line, name, name_len);
 	return ASE_NULL;
 }
 
@@ -4388,14 +4322,8 @@ static int get_token (ase_awk_t* awk)
 	}
 	else 
 	{
-		ase_cstr_t errarg;
 		ase_char_t cc = (ase_char_t)c;
-
-		errarg.ptr = &cc;
-		errarg.len = 1;
-
-		ase_awk_seterror (
-			awk, ASE_AWK_ELXCHR, awk->token.line, &errarg, 1);
+		SETERRARG (awk, ASE_AWK_ELXCHR, awk->token.line, &cc, 1);
 		return -1;
 	}
 
