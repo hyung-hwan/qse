@@ -1,12 +1,12 @@
 /*
- * $Id: tree.c,v 1.107 2007-03-12 12:53:12 bacon Exp $
+ * $Id: tree.c,v 1.108 2007-03-22 10:26:04 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/awk/awk_i.h>
 
-static const ase_char_t* __assop_str[] =
+static const ase_char_t* assop_str[] =
 {
 	ASE_T("="),
 	ASE_T("+="),
@@ -18,7 +18,7 @@ static const ase_char_t* __assop_str[] =
 	ASE_T("**=")
 };
 
-static const ase_char_t* __binop_str[] =
+static const ase_char_t* binop_str[] =
 {
 	ASE_T("||"),
 	ASE_T("&&"),
@@ -51,7 +51,7 @@ static const ase_char_t* __binop_str[] =
 	ASE_T("!~")
 };
 
-static const ase_char_t* __unrop_str[] =
+static const ase_char_t* unrop_str[] =
 {
 	ASE_T("+"),
 	ASE_T("-"),
@@ -59,7 +59,7 @@ static const ase_char_t* __unrop_str[] =
 	ASE_T("~")
 };
 
-static const ase_char_t* __incop_str[] =
+static const ase_char_t* incop_str[] =
 {
 	ASE_T("++"),
 	ASE_T("--"),
@@ -67,7 +67,7 @@ static const ase_char_t* __incop_str[] =
 	ASE_T("--")
 };
 
-static const ase_char_t* __getline_inop_str[] =
+static const ase_char_t* getline_inop_str[] =
 {
 	ASE_T("|"),
 	ASE_T("|&"),
@@ -75,7 +75,7 @@ static const ase_char_t* __getline_inop_str[] =
 	ASE_T("")
 };
 
-static const ase_char_t* __print_outop_str[] =
+static const ase_char_t* print_outop_str[] =
 {
 	ASE_T("|"),
 	ASE_T("|&"),
@@ -97,23 +97,23 @@ static const ase_char_t* __print_outop_str[] =
 	do { if (ase_awk_putsrcstrx (awk, str, len) == -1) return -1; } while (0)
 
 #define PRINT_TABS(awk,depth) \
-	do { if (__print_tabs(awk,depth) == -1) return -1; } while (0)
+	do { if (print_tabs(awk,depth) == -1) return -1; } while (0)
 
 #define PRINT_EXPRESSION(awk,nde) \
-	do { if (__print_expression(awk,nde) == -1) return -1; } while (0)
+	do { if (print_expression(awk,nde) == -1) return -1; } while (0)
 
 #define PRINT_EXPRESSION_LIST(awk,nde) \
-	do { if (__print_expression_list(awk,nde) == -1) return -1; } while (0)
+	do { if (print_expression_list(awk,nde) == -1) return -1; } while (0)
 
 #define PRINT_STATEMENTS(awk,nde,depth) \
-	do { if (__print_statements(awk,nde,depth) == -1) return -1; } while (0)
+	do { if (print_statements(awk,nde,depth) == -1) return -1; } while (0)
 
-static int __print_tabs (ase_awk_t* awk, int depth);
-static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde);
-static int __print_expression_list (ase_awk_t* awk, ase_awk_nde_t* tree);
-static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth);
+static int print_tabs (ase_awk_t* awk, int depth);
+static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde);
+static int print_expression_list (ase_awk_t* awk, ase_awk_nde_t* tree);
+static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth);
 
-static int __print_tabs (ase_awk_t* awk, int depth)
+static int print_tabs (ase_awk_t* awk, int depth)
 {
 	while (depth > 0) 
 	{
@@ -124,7 +124,7 @@ static int __print_tabs (ase_awk_t* awk, int depth)
 	return 0;
 }
 
-static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
+static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 {
 	switch (nde->type) 
 	{
@@ -150,7 +150,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, ASE_T(" "));
-			PUT_SRCSTR (awk, __assop_str[px->opcode]);
+			PUT_SRCSTR (awk, assop_str[px->opcode]);
 			PUT_SRCSTR (awk, ASE_T(" "));
 			PRINT_EXPRESSION (awk, px->right);
 
@@ -167,7 +167,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ASE_ASSERT (px->left->next == ASE_NULL);
 
 			PUT_SRCSTR (awk, ASE_T(" "));
-			PUT_SRCSTR (awk, __binop_str[px->opcode]);
+			PUT_SRCSTR (awk, binop_str[px->opcode]);
 			PUT_SRCSTR (awk, ASE_T(" "));
 
 			if (px->right->type == ASE_AWK_NDE_ASS) 
@@ -186,7 +186,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ASE_ASSERT (px->right == ASE_NULL);
 
 			PUT_SRCSTR (awk, ASE_T("("));
-			PUT_SRCSTR (awk, __unrop_str[px->opcode]);
+			PUT_SRCSTR (awk, unrop_str[px->opcode]);
 			PUT_SRCSTR (awk, ASE_T("("));
 			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, ASE_T(")"));
@@ -199,7 +199,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ase_awk_nde_exp_t* px = (ase_awk_nde_exp_t*)nde;
 			ASE_ASSERT (px->right == ASE_NULL);
 
-			PUT_SRCSTR (awk, __incop_str[px->opcode]);
+			PUT_SRCSTR (awk, incop_str[px->opcode]);
 			PUT_SRCSTR (awk, ASE_T("("));
 			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, ASE_T(")"));
@@ -214,7 +214,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			PUT_SRCSTR (awk, ASE_T("("));
 			PRINT_EXPRESSION (awk, px->left);
 			PUT_SRCSTR (awk, ASE_T(")"));
-			PUT_SRCSTR (awk, __incop_str[px->opcode]);
+			PUT_SRCSTR (awk, incop_str[px->opcode]);
 			break;
 		}
 
@@ -520,7 +520,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			{
 				PRINT_EXPRESSION (awk, px->in);
 				PUT_SRCSTR (awk, ASE_T(" "));
-				PUT_SRCSTR (awk, __getline_inop_str[px->in_type]);
+				PUT_SRCSTR (awk, getline_inop_str[px->in_type]);
 				PUT_SRCSTR (awk, ASE_T(" "));
 			}
 
@@ -535,7 +535,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			    px->in_type == ASE_AWK_IN_FILE)
 			{
 				PUT_SRCSTR (awk, ASE_T(" "));
-				PUT_SRCSTR (awk, __getline_inop_str[px->in_type]);
+				PUT_SRCSTR (awk, getline_inop_str[px->in_type]);
 				PUT_SRCSTR (awk, ASE_T(" "));
 				PRINT_EXPRESSION (awk, px->in);
 			}	  
@@ -551,7 +551,7 @@ static int __print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 	return 0;
 }
 
-static int __print_expression_list (ase_awk_t* awk, ase_awk_nde_t* tree)
+static int print_expression_list (ase_awk_t* awk, ase_awk_nde_t* tree)
 {
 	ase_awk_nde_t* p = tree;
 
@@ -565,7 +565,7 @@ static int __print_expression_list (ase_awk_t* awk, ase_awk_nde_t* tree)
 	return 0;
 }
 
-static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
+static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 {
 	ase_awk_nde_t* p = tree;
 	ase_size_t i;
@@ -850,7 +850,7 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				if (px->out != ASE_NULL)
 				{
 					PUT_SRCSTR (awk, ASE_T(" "));
-					PUT_SRCSTR (awk, __print_outop_str[px->out_type]);
+					PUT_SRCSTR (awk, print_outop_str[px->out_type]);
 					PUT_SRCSTR (awk, ASE_T(" "));
 					PRINT_EXPRESSION (awk, px->out);
 				}
@@ -877,7 +877,7 @@ static int __print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 
 int ase_awk_prnpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 {
-	return __print_statements (awk, tree, 0);
+	return print_statements (awk, tree, 0);
 }
 
 int ase_awk_prnptnpt (ase_awk_t* awk, ase_awk_nde_t* tree)
@@ -886,7 +886,7 @@ int ase_awk_prnptnpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 
 	while (nde != ASE_NULL)
 	{
-		if (__print_expression (awk, nde) == -1) return -1;
+		if (print_expression (awk, nde) == -1) return -1;
 		if (nde->next == ASE_NULL) break;
 
 		PUT_SRCSTR (awk, ASE_T(","));
