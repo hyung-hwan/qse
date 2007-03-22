@@ -57,7 +57,10 @@ finalize ()
 				cp -f "$full" "$SOURCE_ROOT/html/$i"
 				cp -f "$full" "$ASETGT/$i"
 				;;
-			*.dsp|*.dsw)
+			*.dsp|*.dsw|*.sln|*.vcproj)
+				"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
+				;;
+			descrip.mms)
 				"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
 				;;
 			*.frx)
@@ -77,22 +80,35 @@ finalize ()
 }
 
 
+print_usage ()
+{
+	echo "Usage: $0 awk version target archiver"
+	echo "where awk := full path to aseawk"
+	echo "      version := any string"            
+	echo "      target := full path to the target directory"
+	echo "      archiver := gzip | zip"
+}
+
 ############################
 # BEGINNING OF THE PROGRAM #
 ############################
 
-if [ $# -ne 3 ]
+if [ $# -ne 4 ]
 then
-	echo "Usage: $0 awk version target"
-	echo "where awk := full path to aseawk"
-	echo "      version := any string"            
-	echo "      target := full path to the target directory"
+	print_usage "$0"
+	exit 1
+fi
+
+if [ "$4" != "gzip" -a "$4" != "zip" ]
+then
+	print_usage "$0"
 	exit 1
 fi
 
 ASEAWK="$1"
 ASEVER="$2"
 ASETGT="$3"
+ASEARC="$4"
 
 CURDIR=`pwd`
 cd ".."
@@ -108,9 +124,20 @@ mkdir -p "$SOURCE_ROOT/html"
 finalize "" ""
 
 cd "$ASETGT"
-tar -cvf "ase-$ASEVER.tar" "ase-$ASEVER"
-gzip "ase-$ASEVER.tar"
-mv "ase-$ASEVER.tar.gz" "ase-$ASEVER.tgz"
+
+if [ "$ASEARC" = "gzip" ]
+then
+	tar -cvf "ase-$ASEVER.tar" "ase-$ASEVER"
+	gzip "ase-$ASEVER.tar"
+	mv "ase-$ASEVER.tar.gz" "ase-$ASEVER.tgz"
+elif [ "$ASEARC" = "zip" ]
+then
+	ls -l
+	echo zip -r "ase-$ASEVER" "ase-$ASEVER"
+	zip -r ase "ase-$ASEVER"
+	mv -f ase.zip "ase-$ASEVER.zip"
+fi
+
 rm -rf "ase-$ASEVER"
 
 cd "$CURDIR"
