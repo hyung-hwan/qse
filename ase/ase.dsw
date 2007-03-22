@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "cmn.lib"=.\cmn\cmn.dsp - Package Owner=<4>
+Project: "asecmn"=.\cmn\asecmn.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -15,7 +15,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "utl.lib"=.\utl\utl.dsp - Package Owner=<4>
+Project: "aseutl"=.\utl\aseutl.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -27,7 +27,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "awk.lib"=.\awk\awk.dsp - Package Owner=<4>
+Project: "aseawk"=.\awk\aseawk.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -39,7 +39,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "awk.jni"=.\awk\jni.dsp - Package Owner=<4>
+Project: "aseawk_jni"=.\awk\aseawk_jni.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -51,7 +51,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "ase.com"=.\com\ase.dsp - Package Owner=<4>
+Project: "asecom"=.\com\asecom.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -63,7 +63,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "awk.test"=.\test\awk\awk.dsp - Package Owner=<4>
+Project: "asetestawk"=.\test\awk\asetestawk.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -75,7 +75,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "lsp.lib"=.\lsp\lsp.dsp - Package Owner=<4>
+Project: "aselsp"=.\lsp\aselsp.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -87,7 +87,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "lsp.test"=.\test\lsp\lsp.dsp - Package Owner=<4>
+Project: "asetestlsp"=.\test\lsp\asetestlsp.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

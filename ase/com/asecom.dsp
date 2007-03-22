@@ -1,24 +1,24 @@
-# Microsoft Developer Studio Project File - Name="ase.com" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="asecom" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
 
-CFG=ase.com - Win32 Debug
+CFG=asecom - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "ase.mak".
+!MESSAGE NMAKE /f "asecom.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "ase.mak" CFG="ase.com - Win32 Debug"
+!MESSAGE NMAKE /f "asecom.mak" CFG="asecom - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "ase.com - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "ase.com - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "asecom - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "asecom - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE 
 
 # Begin Project
@@ -29,7 +29,7 @@ CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "ase.com - Win32 Debug"
+!IF  "$(CFG)" == "asecom - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -72,7 +72,7 @@ SOURCE="$(InputPath)"
 	
 # End Custom Build
 
-!ELSEIF  "$(CFG)" == "ase.com - Win32 Release"
+!ELSEIF  "$(CFG)" == "asecom - Win32 Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -119,8 +119,8 @@ SOURCE="$(InputPath)"
 
 # Begin Target
 
-# Name "ase.com - Win32 Debug"
-# Name "ase.com - Win32 Release"
+# Name "asecom - Win32 Debug"
+# Name "asecom - Win32 Release"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
