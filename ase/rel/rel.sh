@@ -61,7 +61,12 @@ finalize ()
 				"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
 				;;
 			*)
-				cp -f "$full" "$target/$file"
+				if [ "$dir" = "test/com" ]
+				then
+					"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
+				else
+					cp -f "$full" "$target/$file"
+				fi
 				;;
 			esac
 		fi
