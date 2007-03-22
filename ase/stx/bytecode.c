@@ -1,178 +1,178 @@
 /*
- * $Id: bytecode.c,v 1.16 2005-10-02 15:45:09 bacon Exp $
+ * $Id: bytecode.c,v 1.17 2007-03-22 11:19:28 bacon Exp $
  */
-#include <xp/stx/bytecode.h>
-#include <xp/stx/class.h>
-#include <xp/stx/method.h>
-#include <xp/stx/dict.h>
+#include <ase/stx/bytecode.h>
+#include <ase/stx/class.h>
+#include <ase/stx/method.h>
+#include <ase/stx/dict.h>
 
-static void __decode1 (xp_stx_t* stx, xp_word_t idx, void* data);
-static int __decode2 (xp_stx_t* stx, 
-	xp_stx_class_t* class_obj, xp_stx_method_t* method_obj);
+static void __decode1 (ase_stx_t* stx, ase_word_t idx, void* data);
+static int __decode2 (ase_stx_t* stx, 
+	ase_stx_class_t* class_obj, ase_stx_method_t* method_obj);
 
-int xp_stx_decode (xp_stx_t* stx, xp_word_t class)
+int ase_stx_decode (ase_stx_t* stx, ase_word_t class)
 {
-	xp_stx_class_t* class_obj;
+	ase_stx_class_t* class_obj;
 
-	class_obj = (xp_stx_class_t*)XP_STX_OBJECT(stx, class);
+	class_obj = (ase_stx_class_t*)ASE_STX_OBJECT(stx, class);
 	if (class_obj->methods == stx->nil) return 0;
 
 /* TODO */
-	xp_stx_dict_traverse (stx, class_obj->methods, __decode1, class_obj);
+	ase_stx_dict_traverse (stx, class_obj->methods, __decode1, class_obj);
 	return 0;
 }
 
-#include <xp/bas/stdio.h>
-static void __dump_object (xp_stx_t* stx, xp_word_t obj)
+#include <ase/bas/stdio.h>
+static void __dump_object (ase_stx_t* stx, ase_word_t obj)
 {
-	if (XP_STX_IS_SMALLINT(obj)) {
-		xp_printf (XP_TEXT("%d"), XP_STX_FROM_SMALLINT(obj));
+	if (ASE_STX_IS_SMALLINT(obj)) {
+		ase_printf (ASE_T("%d"), ASE_STX_FROM_SMALLINT(obj));
 	}	
-	else if (XP_STX_CLASS(stx,obj) == stx->class_character) {
-		xp_printf (XP_TEXT("$%c"), XP_STX_WORD_AT(stx,obj,0));
+	else if (ASE_STX_CLASS(stx,obj) == stx->class_character) {
+		ase_printf (ASE_T("$%c"), ASE_STX_WORD_AT(stx,obj,0));
 	}
-	else if (XP_STX_CLASS(stx,obj) == stx->class_string) {
-		xp_printf (XP_TEXT("'%s'"), XP_STX_DATA(stx,obj));
+	else if (ASE_STX_CLASS(stx,obj) == stx->class_string) {
+		ase_printf (ASE_T("'%s'"), ASE_STX_DATA(stx,obj));
 	}
-	else if (XP_STX_CLASS(stx,obj) == stx->class_symbol) {
-		xp_printf (XP_TEXT("#%s"), XP_STX_DATA(stx,obj));
+	else if (ASE_STX_CLASS(stx,obj) == stx->class_symbol) {
+		ase_printf (ASE_T("#%s"), ASE_STX_DATA(stx,obj));
 	}
-	else if (XP_STX_IS_CHAR_OBJECT(stx, obj)) {
-		xp_printf (XP_TEXT("unknow char object [%s]"), XP_STX_DATA(stx,obj));
+	else if (ASE_STX_IS_CHAR_OBJECT(stx, obj)) {
+		ase_printf (ASE_T("unknow char object [%s]"), ASE_STX_DATA(stx,obj));
 	}
-	else if (XP_STX_IS_BYTE_OBJECT(stx, obj)) {
-		xp_printf (XP_TEXT("unknown byte object"), XP_STX_DATA(stx,obj));
+	else if (ASE_STX_IS_BYTE_OBJECT(stx, obj)) {
+		ase_printf (ASE_T("unknown byte object"), ASE_STX_DATA(stx,obj));
 	}
-	else if (XP_STX_IS_WORD_OBJECT(stx, obj)) {
-		xp_printf (XP_TEXT("unknown word object"), XP_STX_DATA(stx,obj));
+	else if (ASE_STX_IS_WORD_OBJECT(stx, obj)) {
+		ase_printf (ASE_T("unknown word object"), ASE_STX_DATA(stx,obj));
 	}
 	else {
-		xp_printf (XP_TEXT("invalid object type"));
+		ase_printf (ASE_T("invalid object type"));
 	}
 }
 
-static void __decode1 (xp_stx_t* stx, xp_word_t idx, void* data)
+static void __decode1 (ase_stx_t* stx, ase_word_t idx, void* data)
 {
-	xp_stx_method_t* method_obj;
-	xp_stx_class_t* class_obj;
-	xp_word_t key = XP_STX_WORD_AT(stx,idx,XP_STX_ASSOCIATION_KEY);
-	xp_word_t value = XP_STX_WORD_AT(stx,idx,XP_STX_ASSOCIATION_VALUE);
-	xp_word_t* literals;
-	xp_word_t literal_count, i;
+	ase_stx_method_t* method_obj;
+	ase_stx_class_t* class_obj;
+	ase_word_t key = ASE_STX_WORD_AT(stx,idx,ASE_STX_ASSOCIATION_KEY);
+	ase_word_t value = ASE_STX_WORD_AT(stx,idx,ASE_STX_ASSOCIATION_VALUE);
+	ase_word_t* literals;
+	ase_word_t literal_count, i;
 
-	xp_word_t method_class;
-	xp_stx_class_t* method_class_obj;
+	ase_word_t method_class;
+	ase_stx_class_t* method_class_obj;
 
-	class_obj = (xp_stx_class_t*)data;
+	class_obj = (ase_stx_class_t*)data;
 
-	xp_printf (XP_TEXT("* Method: %s\n"), XP_STX_DATA(stx, key));
-	method_obj = (xp_stx_method_t*)XP_STX_OBJECT(stx, value);
+	ase_printf (ASE_T("* Method: %s\n"), ASE_STX_DATA(stx, key));
+	method_obj = (ase_stx_method_t*)ASE_STX_OBJECT(stx, value);
 
 	literals = method_obj->literals;
 	/*
-	literal_count = XP_STX_SIZE(stx, value) - 
-		(XP_STX_FROM_SMALLINT(class_obj->spec) >> XP_STX_SPEC_INDEXABLE_BITS);
+	literal_count = ASE_STX_SIZE(stx, value) - 
+		(ASE_STX_FROM_SMALLINT(class_obj->spec) >> ASE_STX_SPEC_INDEXABLE_BITS);
 	*/
-	method_class = XP_STX_CLASS(stx,value);
-	method_class_obj = XP_STX_OBJECT(stx, method_class);
-	literal_count = XP_STX_SIZE(stx,value) - 
-		(XP_STX_FROM_SMALLINT(method_class_obj->spec) >> XP_STX_SPEC_INDEXABLE_BITS);
+	method_class = ASE_STX_CLASS(stx,value);
+	method_class_obj = ASE_STX_OBJECT(stx, method_class);
+	literal_count = ASE_STX_SIZE(stx,value) - 
+		(ASE_STX_FROM_SMALLINT(method_class_obj->spec) >> ASE_STX_SPEC_INDEXABLE_BITS);
 
-	xp_printf (XP_TEXT("* Literal Count: %d, Temporary Count: %d, Argument Count: %d\n"),
+	ase_printf (ASE_T("* Literal Count: %d, Temporary Count: %d, Argument Count: %d\n"),
 		literal_count, 
-		XP_STX_FROM_SMALLINT(method_obj->tmpcount), 
-		XP_STX_FROM_SMALLINT(method_obj->argcount));
+		ASE_STX_FROM_SMALLINT(method_obj->tmpcount), 
+		ASE_STX_FROM_SMALLINT(method_obj->argcount));
 	for (i = 0; i < literal_count; i++) {
-		xp_printf (XP_TEXT("%d. ["), i);
+		ase_printf (ASE_T("%d. ["), i);
 		__dump_object (stx, literals[i]);
-		xp_printf (XP_TEXT("]\n"));
+		ase_printf (ASE_T("]\n"));
 	}
 	__decode2 (stx, data, method_obj);
 }
 
-static int __decode2 (xp_stx_t* stx, 
-	xp_stx_class_t* class_obj, xp_stx_method_t* method_obj)
+static int __decode2 (ase_stx_t* stx, 
+	ase_stx_class_t* class_obj, ase_stx_method_t* method_obj)
 {
-	xp_stx_byte_object_t* bytecodes;
-	xp_word_t bytecode_size, pc = 0;
+	ase_stx_byte_object_t* bytecodes;
+	ase_word_t bytecode_size, pc = 0;
 	int code, next, next2;
 
-	static const xp_char_t* stack_opcode_names[] = 
+	static const ase_char_t* stack_opcode_names[] = 
 	{
-		XP_TEXT("push_receiver_variable"),	
-		XP_TEXT("push_temporary_location"),	
-		XP_TEXT("push_literal_constant"),	
-		XP_TEXT("push_literal_variable"),	
-		XP_TEXT("store_receiver_variable"),	
-		XP_TEXT("store_temporary_location")
+		ASE_T("push_receiver_variable"),	
+		ASE_T("push_temporary_location"),	
+		ASE_T("push_literal_constant"),	
+		ASE_T("push_literal_variable"),	
+		ASE_T("store_receiver_variable"),	
+		ASE_T("store_temporary_location")
 	};
 
-	static const xp_char_t* send_opcode_names[] = 
+	static const ase_char_t* send_opcode_names[] = 
 	{
-		XP_TEXT("send_to_self"),
-		XP_TEXT("send_to_super")
+		ASE_T("send_to_self"),
+		ASE_T("send_to_super")
 	};
 
-	static const xp_char_t* stack_special_opcode_names[] =
+	static const ase_char_t* stack_special_opcode_names[] =
 	{
-		XP_TEXT("pop_stack_top"),
-		XP_TEXT("duplicate_pop_stack_top"),
-		XP_TEXT("push_active_context"),
-		XP_TEXT("push_nil"),
-		XP_TEXT("push_true"),
-		XP_TEXT("push_false"),
-		XP_TEXT("push_receiver")
+		ASE_T("pop_stack_top"),
+		ASE_T("duplicate_pop_stack_top"),
+		ASE_T("push_active_context"),
+		ASE_T("push_nil"),
+		ASE_T("push_true"),
+		ASE_T("push_false"),
+		ASE_T("push_receiver")
 	};
 
-	static const xp_char_t* return_opcode_names[] = 
+	static const ase_char_t* return_opcode_names[] = 
 	{
-		XP_TEXT("return_receiver"),
-		XP_TEXT("return_true"),
-		XP_TEXT("return_false"),
-		XP_TEXT("return_nil"),
-		XP_TEXT("return_from_message"),
-		XP_TEXT("return_from_block")
+		ASE_T("return_receiver"),
+		ASE_T("return_true"),
+		ASE_T("return_false"),
+		ASE_T("return_nil"),
+		ASE_T("return_from_message"),
+		ASE_T("return_from_block")
 	};
 
-	bytecodes = XP_STX_BYTE_OBJECT(stx, method_obj->bytecodes);
-	bytecode_size = XP_STX_SIZE(stx, method_obj->bytecodes);
+	bytecodes = ASE_STX_BYTE_OBJECT(stx, method_obj->bytecodes);
+	bytecode_size = ASE_STX_SIZE(stx, method_obj->bytecodes);
 
 	while (pc < bytecode_size) {
 		code = bytecodes->data[pc++];
 
 		if (code >= 0x00 && code <= 0x5F) {
 			/* stack */
-			xp_printf (XP_TEXT("%s %d\n"), 
+			ase_printf (ASE_T("%s %d\n"), 
 				stack_opcode_names[code >> 4], code & 0x0F);
 		}
 		else if (code >= 0x60 && code <= 0x65) {
 			/* stack extended */
 			next = bytecodes->data[pc++];
-			xp_printf (XP_TEXT("%s %d\n"), 
+			ase_printf (ASE_T("%s %d\n"), 
 				stack_opcode_names[code & 0x0F], next);
 		}
 		else if (code >= 0x67 && code <= 0x6D) {
 			/* stack special */
-			xp_printf (XP_TEXT("%s\n"),
+			ase_printf (ASE_T("%s\n"),
 				stack_special_opcode_names[code - 0x67]);
 		}
 
 		else if (code >= 0x70 && code <=  0x71 ) {
 			/* send message */
 			next = bytecodes->data[pc++];
-			xp_printf (XP_TEXT("%s nargs(%d) selector(%d)\n"),
+			ase_printf (ASE_T("%s nargs(%d) selector(%d)\n"),
 				send_opcode_names[code - 0x70], next >> 5, next & 0x1F);
 		}
 		else if (code >= 0x72 && code <=  0x73 ) {
 			/* send message extended */
 			next = bytecodes->data[pc++];
 			next2 = bytecodes->data[pc++];
-			xp_printf (XP_TEXT("%s %d %d\n"),
+			ase_printf (ASE_T("%s %d %d\n"),
 				send_opcode_names[code - 0x72],  next, next2);
 				
 		}
 		else if (code >= 0x78 && code <= 0x7D) {
-			xp_printf (XP_TEXT("%s\n"),
+			ase_printf (ASE_T("%s\n"),
 				return_opcode_names[code - 0x78]);
 		}
 		else if (code >= 0x80 && code <= 0x8F) {
@@ -181,11 +181,11 @@ static int __decode2 (xp_stx_t* stx,
 		else if (code >= 0xF0 && code <= 0xFF) {
 			// primitive
 			next = bytecodes->data[pc++];
-			xp_printf (XP_TEXT("do_primitive %d\n"), ((code & 0x0F) << 8) | next);
+			ase_printf (ASE_T("do_primitive %d\n"), ((code & 0x0F) << 8) | next);
 	
 		}
 		else {
-			xp_printf (XP_TEXT("unknown byte code 0x%x\n"), code);
+			ase_printf (ASE_T("unknown byte code 0x%x\n"), code);
 		}
 	}
 

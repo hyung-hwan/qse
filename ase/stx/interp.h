@@ -1,17 +1,17 @@
 /*
- * $Id: interp.h,v 1.6 2005-09-13 11:15:41 bacon Exp $
+ * $Id: interp.h,v 1.7 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_INTERP_H_
-#define _XP_STX_INTERP_H_
+#ifndef _ASE_STX_INTERP_H_
+#define _ASE_STX_INTERP_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int xp_stx_interp (xp_stx_t* stx, xp_word_t receiver, xp_word_t method);
+int ase_stx_interp (ase_stx_t* stx, ase_word_t receiver, ase_word_t method);
 
 #ifdef __cplusplus
 }

@@ -1,122 +1,122 @@
 /*
- * $Id: parser.c,v 1.80 2006-01-30 16:44:03 bacon Exp $
+ * $Id: parser.c,v 1.81 2007-03-22 11:19:28 bacon Exp $
  */
 
-#include <xp/stx/parser.h>
-#include <xp/stx/object.h>
-#include <xp/stx/class.h>
-#include <xp/stx/method.h>
-#include <xp/stx/symbol.h>
-#include <xp/stx/bytecode.h>
-#include <xp/stx/dict.h>
-#include <xp/stx/misc.h>
+#include <ase/stx/parser.h>
+#include <ase/stx/object.h>
+#include <ase/stx/class.h>
+#include <ase/stx/method.h>
+#include <ase/stx/symbol.h>
+#include <ase/stx/bytecode.h>
+#include <ase/stx/dict.h>
+#include <ase/stx/misc.h>
 
 static int __parse_method (
-	xp_stx_parser_t* parser, 
-	xp_word_t method_class, void* input);
-static int __finish_method (xp_stx_parser_t* parser);
+	ase_stx_parser_t* parser, 
+	ase_word_t method_class, void* input);
+static int __finish_method (ase_stx_parser_t* parser);
 
-static int __parse_message_pattern (xp_stx_parser_t* parser);
-static int __parse_unary_pattern (xp_stx_parser_t* parser);
-static int __parse_binary_pattern (xp_stx_parser_t* parser);
-static int __parse_keyword_pattern (xp_stx_parser_t* parser);
+static int __parse_message_pattern (ase_stx_parser_t* parser);
+static int __parse_unary_pattern (ase_stx_parser_t* parser);
+static int __parse_binary_pattern (ase_stx_parser_t* parser);
+static int __parse_keyword_pattern (ase_stx_parser_t* parser);
 
-static int __parse_temporaries (xp_stx_parser_t* parser);
-static int __parse_primitive (xp_stx_parser_t* parser);
-static int __parse_statements (xp_stx_parser_t* parser);
-static int __parse_block_statements (xp_stx_parser_t* parser);
-static int __parse_statement (xp_stx_parser_t* parser);
-static int __parse_expression (xp_stx_parser_t* parser);
+static int __parse_temporaries (ase_stx_parser_t* parser);
+static int __parse_primitive (ase_stx_parser_t* parser);
+static int __parse_statements (ase_stx_parser_t* parser);
+static int __parse_block_statements (ase_stx_parser_t* parser);
+static int __parse_statement (ase_stx_parser_t* parser);
+static int __parse_expression (ase_stx_parser_t* parser);
 
 static int __parse_assignment (
-	xp_stx_parser_t* parser, const xp_char_t* target);
+	ase_stx_parser_t* parser, const ase_char_t* target);
 static int __parse_basic_expression (
-	xp_stx_parser_t* parser, const xp_char_t* ident);
+	ase_stx_parser_t* parser, const ase_char_t* ident);
 static int __parse_primary (
-	xp_stx_parser_t* parser, const xp_char_t* ident, xp_bool_t* is_super);
+	ase_stx_parser_t* parser, const ase_char_t* ident, ase_bool_t* is_super);
 static int __parse_primary_ident (
-	xp_stx_parser_t* parser, const xp_char_t* ident, xp_bool_t* is_super);
+	ase_stx_parser_t* parser, const ase_char_t* ident, ase_bool_t* is_super);
 
-static int __parse_block_constructor (xp_stx_parser_t* parser);
+static int __parse_block_constructor (ase_stx_parser_t* parser);
 static int __parse_message_continuation (
-	xp_stx_parser_t* parser, xp_bool_t is_super);
+	ase_stx_parser_t* parser, ase_bool_t is_super);
 static int __parse_keyword_message (
-	xp_stx_parser_t* parser, xp_bool_t is_super);
+	ase_stx_parser_t* parser, ase_bool_t is_super);
 static int __parse_binary_message (
-	xp_stx_parser_t* parser, xp_bool_t is_super);
+	ase_stx_parser_t* parser, ase_bool_t is_super);
 static int __parse_unary_message (
-	xp_stx_parser_t* parser, xp_bool_t is_super);
+	ase_stx_parser_t* parser, ase_bool_t is_super);
 
-static int __get_token (xp_stx_parser_t* parser);
-static int __get_ident (xp_stx_parser_t* parser);
-static int __get_numlit (xp_stx_parser_t* parser, xp_bool_t negated);
-static int __get_charlit (xp_stx_parser_t* parser);
-static int __get_strlit (xp_stx_parser_t* parser);
-static int __get_binary (xp_stx_parser_t* parser);
-static int __skip_spaces (xp_stx_parser_t* parser);
-static int __skip_comment (xp_stx_parser_t* parser);
-static int __get_char (xp_stx_parser_t* parser);
-static int __unget_char (xp_stx_parser_t* parser, xp_cint_t c);
-static int __open_input (xp_stx_parser_t* parser, void* input);
-static int __close_input (xp_stx_parser_t* parser);
+static int __get_token (ase_stx_parser_t* parser);
+static int __get_ident (ase_stx_parser_t* parser);
+static int __get_numlit (ase_stx_parser_t* parser, ase_bool_t negated);
+static int __get_charlit (ase_stx_parser_t* parser);
+static int __get_strlit (ase_stx_parser_t* parser);
+static int __get_binary (ase_stx_parser_t* parser);
+static int __skip_spaces (ase_stx_parser_t* parser);
+static int __skip_comment (ase_stx_parser_t* parser);
+static int __get_char (ase_stx_parser_t* parser);
+static int __unget_char (ase_stx_parser_t* parser, ase_cint_t c);
+static int __open_input (ase_stx_parser_t* parser, void* input);
+static int __close_input (ase_stx_parser_t* parser);
 
-xp_stx_parser_t* xp_stx_parser_open (xp_stx_parser_t* parser, xp_stx_t* stx)
+ase_stx_parser_t* ase_stx_parser_open (ase_stx_parser_t* parser, ase_stx_t* stx)
 {
-	if (parser == XP_NULL) {
-		parser = (xp_stx_parser_t*)
-			xp_malloc (xp_sizeof(xp_stx_parser_t));		
-		if (parser == XP_NULL) return XP_NULL;
-		parser->__dynamic = xp_true;
+	if (parser == ASE_NULL) {
+		parser = (ase_stx_parser_t*)
+			ase_malloc (ase_sizeof(ase_stx_parser_t));		
+		if (parser == ASE_NULL) return ASE_NULL;
+		parser->__dynamic = ase_true;
 	}
-	else parser->__dynamic = xp_false;
+	else parser->__dynamic = ase_false;
 
-	if (xp_stx_name_open (&parser->method_name, 0) == XP_NULL) {
-		if (parser->__dynamic) xp_free (parser);
-		return XP_NULL;
-	}
-
-	if (xp_stx_token_open (&parser->token, 0) == XP_NULL) {
-		xp_stx_name_close (&parser->method_name);
-		if (parser->__dynamic) xp_free (parser);
-		return XP_NULL;
+	if (ase_stx_name_open (&parser->method_name, 0) == ASE_NULL) {
+		if (parser->__dynamic) ase_free (parser);
+		return ASE_NULL;
 	}
 
-	if (xp_arr_open (
+	if (ase_stx_token_open (&parser->token, 0) == ASE_NULL) {
+		ase_stx_name_close (&parser->method_name);
+		if (parser->__dynamic) ase_free (parser);
+		return ASE_NULL;
+	}
+
+	if (ase_arr_open (
 		&parser->bytecode, 256, 
-		xp_sizeof(xp_byte_t), XP_NULL) == XP_NULL) {
-		xp_stx_name_close (&parser->method_name);
-		xp_stx_token_close (&parser->token);
-		if (parser->__dynamic) xp_free (parser);
-		return XP_NULL;
+		ase_sizeof(ase_byte_t), ASE_NULL) == ASE_NULL) {
+		ase_stx_name_close (&parser->method_name);
+		ase_stx_token_close (&parser->token);
+		if (parser->__dynamic) ase_free (parser);
+		return ASE_NULL;
 	}
 
 	parser->stx = stx;
-	parser->error_code = XP_STX_PARSER_ERROR_NONE;
+	parser->error_code = ASE_STX_PARSER_ERROR_NONE;
 
 	parser->temporary_count = 0;
 	parser->argument_count = 0;
 	parser->literal_count = 0;
 
-	parser->curc = XP_CHAR_EOF;
+	parser->curc = ASE_T_EOF;
 	parser->ungotc_count = 0;
 
-	parser->input_owner = XP_NULL;
-	parser->input_func = XP_NULL;
+	parser->input_owner = ASE_NULL;
+	parser->input_func = ASE_NULL;
 	return parser;
 }
 
-void xp_stx_parser_close (xp_stx_parser_t* parser)
+void ase_stx_parser_close (ase_stx_parser_t* parser)
 {
 	while (parser->temporary_count > 0) {
-		xp_free (parser->temporaries[--parser->temporary_count]);
+		ase_free (parser->temporaries[--parser->temporary_count]);
 	}
 	parser->argument_count = 0;
 
-	xp_arr_close (&parser->bytecode);
-	xp_stx_name_close (&parser->method_name);
-	xp_stx_token_close (&parser->token);
+	ase_arr_close (&parser->bytecode);
+	ase_stx_name_close (&parser->method_name);
+	ase_stx_token_close (&parser->token);
 
-	if (parser->__dynamic) xp_free (parser);
+	if (parser->__dynamic) ase_free (parser);
 }
 
 #define GET_CHAR(parser) \
@@ -127,92 +127,92 @@ void xp_stx_parser_close (xp_stx_parser_t* parser)
 	do { if (__get_token(parser) == -1) return -1; } while (0)
 #define ADD_TOKEN_CHAR(parser,c) \
 	do {  \
-		if (xp_stx_token_addc (&(parser)->token, c) == -1) { \
-			(parser)->error_code = XP_STX_PARSER_ERROR_MEMORY; \
+		if (ase_stx_token_addc (&(parser)->token, c) == -1) { \
+			(parser)->error_code = ASE_STX_PARSER_ERROR_MEMORY; \
 			return -1; \
 		} \
 	} while (0)
 	
-const xp_char_t* xp_stx_parser_error_string (xp_stx_parser_t* parser)
+const ase_char_t* ase_stx_parser_error_string (ase_stx_parser_t* parser)
 {
-	static const xp_char_t* msg[] =
+	static const ase_char_t* msg[] =
 	{
-		XP_TEXT("no error"),
+		ASE_T("no error"),
 
-		XP_TEXT("input fucntion not ready"),
-		XP_TEXT("input function error"),
-		XP_TEXT("out of memory"),
+		ASE_T("input fucntion not ready"),
+		ASE_T("input function error"),
+		ASE_T("out of memory"),
 
-		XP_TEXT("invalid character"),
-		XP_TEXT("incomplete character literal"),
-		XP_TEXT("incomplete string literal"),
-		XP_TEXT("incomplete literal"),
+		ASE_T("invalid character"),
+		ASE_T("incomplete character literal"),
+		ASE_T("incomplete string literal"),
+		ASE_T("incomplete literal"),
 
-		XP_TEXT("message selector"),
-		XP_TEXT("invalid argument name"),
-		XP_TEXT("too many arguments"),
+		ASE_T("message selector"),
+		ASE_T("invalid argument name"),
+		ASE_T("too many arguments"),
 
-		XP_TEXT("invalid primitive type"),
-		XP_TEXT("primitive number expected"),
-		XP_TEXT("primitive number out of range"),
-		XP_TEXT("primitive not closed"),
+		ASE_T("invalid primitive type"),
+		ASE_T("primitive number expected"),
+		ASE_T("primitive number out of range"),
+		ASE_T("primitive not closed"),
 
-		XP_TEXT("temporary list not closed"),
-		XP_TEXT("too many temporaries"),
-		XP_TEXT("cannot redefine pseudo variable"),
-		XP_TEXT("invalid primary/expression-start"),
+		ASE_T("temporary list not closed"),
+		ASE_T("too many temporaries"),
+		ASE_T("cannot redefine pseudo variable"),
+		ASE_T("invalid primary/expression-start"),
 
-		XP_TEXT("no period at end of statement"),
-		XP_TEXT("no closing parenthesis"),
-		XP_TEXT("block argument name missing"),
-		XP_TEXT("block argument list not closed"),
-		XP_TEXT("block not closed"),
+		ASE_T("no period at end of statement"),
+		ASE_T("no closing parenthesis"),
+		ASE_T("block argument name missing"),
+		ASE_T("block argument list not closed"),
+		ASE_T("block not closed"),
 
-		XP_TEXT("undeclared name"),
-		XP_TEXT("too many literals")
+		ASE_T("undeclared name"),
+		ASE_T("too many literals")
 	};
 
 	if (parser->error_code >= 0 && 
-	    parser->error_code < xp_countof(msg)) return msg[parser->error_code];
+	    parser->error_code < ase_countof(msg)) return msg[parser->error_code];
 
-	return XP_TEXT("unknown error");
+	return ASE_T("unknown error");
 }
 
-static INLINE xp_bool_t __is_pseudo_variable (const xp_stx_token_t* token)
+static INLINE ase_bool_t __is_pseudo_variable (const ase_stx_token_t* token)
 {
-	return token->type == XP_STX_TOKEN_IDENT &&
-		(xp_strcmp(token->name.buffer, XP_TEXT("self")) == 0 ||
-		 xp_strcmp(token->name.buffer, XP_TEXT("super")) == 0 ||
-		 xp_strcmp(token->name.buffer, XP_TEXT("nil")) == 0 ||
-		 xp_strcmp(token->name.buffer, XP_TEXT("true")) == 0 ||
-		 xp_strcmp(token->name.buffer, XP_TEXT("false")) == 0);
+	return token->type == ASE_STX_TOKEN_IDENT &&
+		(ase_strcmp(token->name.buffer, ASE_T("self")) == 0 ||
+		 ase_strcmp(token->name.buffer, ASE_T("super")) == 0 ||
+		 ase_strcmp(token->name.buffer, ASE_T("nil")) == 0 ||
+		 ase_strcmp(token->name.buffer, ASE_T("true")) == 0 ||
+		 ase_strcmp(token->name.buffer, ASE_T("false")) == 0);
 }
 
-static INLINE xp_bool_t __is_vbar_token (const xp_stx_token_t* token)
-{
-	return 
-		token->type == XP_STX_TOKEN_BINARY &&
-		token->name.size == 1 &&
-		token->name.buffer[0] == XP_CHAR('|');
-}
-
-static INLINE xp_bool_t __is_primitive_opener (const xp_stx_token_t* token)
+static INLINE ase_bool_t __is_vbar_token (const ase_stx_token_t* token)
 {
 	return 
-		token->type == XP_STX_TOKEN_BINARY &&
+		token->type == ASE_STX_TOKEN_BINARY &&
 		token->name.size == 1 &&
-		token->name.buffer[0] == XP_CHAR('<');
+		token->name.buffer[0] == ASE_T('|');
 }
 
-static INLINE xp_bool_t __is_primitive_closer (const xp_stx_token_t* token)
+static INLINE ase_bool_t __is_primitive_opener (const ase_stx_token_t* token)
 {
 	return 
-		token->type == XP_STX_TOKEN_BINARY &&
+		token->type == ASE_STX_TOKEN_BINARY &&
 		token->name.size == 1 &&
-		token->name.buffer[0] == XP_CHAR('>');
+		token->name.buffer[0] == ASE_T('<');
 }
 
-static INLINE xp_bool_t __is_binary_char (xp_cint_t c)
+static INLINE ase_bool_t __is_primitive_closer (const ase_stx_token_t* token)
+{
+	return 
+		token->type == ASE_STX_TOKEN_BINARY &&
+		token->name.size == 1 &&
+		token->name.buffer[0] == ASE_T('>');
+}
+
+static INLINE ase_bool_t __is_binary_char (ase_cint_t c)
 {
 	/*
 	 * binaryCharacter ::=
@@ -222,22 +222,22 @@ static INLINE xp_bool_t __is_binary_char (xp_cint_t c)
 	 */
 
 	return
-		c == XP_CHAR('!') || c == XP_CHAR('%') ||
-		c == XP_CHAR('&') || c == XP_CHAR('*') ||
-		c == XP_CHAR('+') || c == XP_CHAR(',') ||
-		c == XP_CHAR('/') || c == XP_CHAR('<') ||
-		c == XP_CHAR('=') || c == XP_CHAR('>') ||
-		c == XP_CHAR('?') || c == XP_CHAR('@') ||
-		c == XP_CHAR('\\') || c == XP_CHAR('|') ||
-		c == XP_CHAR('~') || c == XP_CHAR('-');
+		c == ASE_T('!') || c == ASE_T('%') ||
+		c == ASE_T('&') || c == ASE_T('*') ||
+		c == ASE_T('+') || c == ASE_T(',') ||
+		c == ASE_T('/') || c == ASE_T('<') ||
+		c == ASE_T('=') || c == ASE_T('>') ||
+		c == ASE_T('?') || c == ASE_T('@') ||
+		c == ASE_T('\\') || c == ASE_T('|') ||
+		c == ASE_T('~') || c == ASE_T('-');
 }
 
-static INLINE xp_bool_t __is_closing_char (xp_cint_t c)
+static INLINE ase_bool_t __is_closing_char (ase_cint_t c)
 {
 	return 
-		c == XP_CHAR('.') || c == XP_CHAR(']') ||
-		c == XP_CHAR(')') || c == XP_CHAR(';') ||
-		c == XP_CHAR('\"') || c == XP_CHAR('\'');
+		c == ASE_T('.') || c == ASE_T(']') ||
+		c == ASE_T(')') || c == ASE_T(';') ||
+		c == ASE_T('\"') || c == ASE_T('\'');
 }
 
 #define EMIT_CODE_TEST(parser,high,low) \
@@ -304,16 +304,16 @@ static INLINE xp_bool_t __is_closing_char (xp_cint_t c)
 	do { if (__emit_do_primitive(parser,no) == -1) return -1; } while(0)
 
 static INLINE int __emit_code_test (
-	xp_stx_parser_t* parser, const xp_char_t* high, const xp_char_t* low)
+	ase_stx_parser_t* parser, const ase_char_t* high, const ase_char_t* low)
 {
-	xp_printf (XP_TEXT("CODE: %s %s\n"), high, low);
+	ase_printf (ASE_T("CODE: %s %s\n"), high, low);
 	return 0;
 }
 
-static INLINE int __emit_code (xp_stx_parser_t* parser, xp_byte_t code)
+static INLINE int __emit_code (ase_stx_parser_t* parser, ase_byte_t code)
 {
-	if (xp_arr_adddatum(&parser->bytecode, &code) == XP_NULL) {
-		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+	if (ase_arr_adddatum(&parser->bytecode, &code) == ASE_NULL) {
+		parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
 
@@ -321,9 +321,9 @@ static INLINE int __emit_code (xp_stx_parser_t* parser, xp_byte_t code)
 }
 
 static INLINE int __emit_stack_positional (
-	xp_stx_parser_t* parser, int opcode, int pos)
+	ase_stx_parser_t* parser, int opcode, int pos)
 {
-	xp_assert (pos >= 0x0 && pos <= 0xFF);
+	ase_assert (pos >= 0x0 && pos <= 0xFF);
 
 	if (pos <= 0x0F) {
 		EMIT_CODE (parser, (opcode & 0xF0) | (pos & 0x0F));
@@ -337,10 +337,10 @@ static INLINE int __emit_stack_positional (
 }
 
 static INLINE int __emit_send_to_self (
-	xp_stx_parser_t* parser, int nargs, int selector)
+	ase_stx_parser_t* parser, int nargs, int selector)
 {
-	xp_assert (nargs >= 0x00 && nargs <= 0xFF);
-	xp_assert (selector >= 0x00 && selector <= 0xFF);
+	ase_assert (nargs >= 0x00 && nargs <= 0xFF);
+	ase_assert (selector >= 0x00 && selector <= 0xFF);
 
 	if (nargs <= 0x08 && selector <= 0x1F) {
 		EMIT_CODE (parser, SEND_TO_SELF);
@@ -356,10 +356,10 @@ static INLINE int __emit_send_to_self (
 }
 
 static INLINE int __emit_send_to_super (
-	xp_stx_parser_t* parser, int nargs, int selector)
+	ase_stx_parser_t* parser, int nargs, int selector)
 {
-	xp_assert (nargs >= 0x00 && nargs <= 0xFF);
-	xp_assert (selector >= 0x00 && selector <= 0xFF);
+	ase_assert (nargs >= 0x00 && nargs <= 0xFF);
+	ase_assert (selector >= 0x00 && selector <= 0xFF);
 
 	if (nargs <= 0x08 && selector <= 0x1F) {
 		EMIT_CODE (parser, SEND_TO_SUPER);
@@ -374,9 +374,9 @@ static INLINE int __emit_send_to_super (
 	return 0;
 }
 
-static INLINE int __emit_do_primitive (xp_stx_parser_t* parser, int no)
+static INLINE int __emit_do_primitive (ase_stx_parser_t* parser, int no)
 {
-	xp_assert (no >= 0x0 && no <= 0xFFF);
+	ase_assert (no >= 0x0 && no <= 0xFFF);
 
 	EMIT_CODE (parser, DO_PRIMITIVE | ((no >> 8) & 0x0F));
 	EMIT_CODE (parser, no & 0xFF);
@@ -384,9 +384,9 @@ static INLINE int __emit_do_primitive (xp_stx_parser_t* parser, int no)
 	return 0;
 }
 
-static int __add_literal (xp_stx_parser_t* parser, xp_word_t literal)
+static int __add_literal (ase_stx_parser_t* parser, ase_word_t literal)
 {
-	xp_word_t i;
+	ase_word_t i;
 
 	for (i = 0; i < parser->literal_count; i++) {
 		/* 
@@ -397,8 +397,8 @@ static int __add_literal (xp_stx_parser_t* parser, xp_word_t literal)
 		if (parser->literals[i] == literal) return i;
 	}
 
-	if (parser->literal_count >= xp_countof(parser->literals)) {
-		parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_LITERALS;
+	if (parser->literal_count >= ase_countof(parser->literals)) {
+		parser->error_code = ASE_STX_PARSER_ERROR_TOO_MANY_LITERALS;
 		return -1;
 	}
 
@@ -406,59 +406,59 @@ static int __add_literal (xp_stx_parser_t* parser, xp_word_t literal)
 	return parser->literal_count - 1;
 }
 
-static int __add_character_literal (xp_stx_parser_t* parser, xp_char_t ch)
+static int __add_character_literal (ase_stx_parser_t* parser, ase_char_t ch)
 {
-	xp_word_t i, c, literal;
-	xp_stx_t* stx = parser->stx;
+	ase_word_t i, c, literal;
+	ase_stx_t* stx = parser->stx;
 
 	for (i = 0; i < parser->literal_count; i++) {
-		c = XP_STX_IS_SMALLINT(parser->literals[i])? 
-			stx->class_smallinteger: XP_STX_CLASS (stx, parser->literals[i]);
+		c = ASE_STX_IS_SMALLINT(parser->literals[i])? 
+			stx->class_smallinteger: ASE_STX_CLASS (stx, parser->literals[i]);
 		if (c != stx->class_character) continue;
 
-		if (ch == XP_STX_CHAR_AT(stx,parser->literals[i],0)) return i;
+		if (ch == ASE_STX_CHAR_AT(stx,parser->literals[i],0)) return i;
 	}
 
-	literal = xp_stx_instantiate (
-		stx, stx->class_character, &ch, XP_NULL, 0);
+	literal = ase_stx_instantiate (
+		stx, stx->class_character, &ch, ASE_NULL, 0);
 	return __add_literal (parser, literal);
 }
 
 static int __add_string_literal (
-	xp_stx_parser_t* parser, const xp_char_t* str, xp_word_t size)
+	ase_stx_parser_t* parser, const ase_char_t* str, ase_word_t size)
 {
-	xp_word_t i, c, literal;
-	xp_stx_t* stx = parser->stx;
+	ase_word_t i, c, literal;
+	ase_stx_t* stx = parser->stx;
 
 	for (i = 0; i < parser->literal_count; i++) {
-		c = XP_STX_IS_SMALLINT(parser->literals[i])? 
-			stx->class_smallinteger: XP_STX_CLASS (stx, parser->literals[i]);
+		c = ASE_STX_IS_SMALLINT(parser->literals[i])? 
+			stx->class_smallinteger: ASE_STX_CLASS (stx, parser->literals[i]);
 		if (c != stx->class_string) continue;
 
-		if (xp_strxncmp (str, size, 
-			XP_STX_DATA(stx,parser->literals[i]), 
-			XP_STX_SIZE(stx,parser->literals[i])) == 0) return i;
+		if (ase_strxncmp (str, size, 
+			ASE_STX_DATA(stx,parser->literals[i]), 
+			ASE_STX_SIZE(stx,parser->literals[i])) == 0) return i;
 	}
 
-	literal = xp_stx_instantiate (
-		stx, stx->class_string, XP_NULL, str, size);
+	literal = ase_stx_instantiate (
+		stx, stx->class_string, ASE_NULL, str, size);
 	return __add_literal (parser, literal);
 }
 
 static int __add_symbol_literal (
-	xp_stx_parser_t* parser, const xp_char_t* str, xp_word_t size)
+	ase_stx_parser_t* parser, const ase_char_t* str, ase_word_t size)
 {
-	xp_stx_t* stx = parser->stx;
-	return __add_literal (parser, xp_stx_new_symbolx(stx, str, size));
+	ase_stx_t* stx = parser->stx;
+	return __add_literal (parser, ase_stx_new_symbolx(stx, str, size));
 }
 
-int xp_stx_parser_parse_method (
-	xp_stx_parser_t* parser, xp_word_t method_class, void* input)
+int ase_stx_parser_parse_method (
+	ase_stx_parser_t* parser, ase_word_t method_class, void* input)
 {
 	int n;
 
-	if (parser->input_func == XP_NULL) { 
-		parser->error_code = XP_STX_PARSER_ERROR_INPUT_FUNC;
+	if (parser->input_func == ASE_NULL) { 
+		parser->error_code = ASE_STX_PARSER_ERROR_INPUT_FUNC;
 		return -1;
 	}
 
@@ -471,7 +471,7 @@ int xp_stx_parser_parse_method (
 }
 
 static int __parse_method (
-	xp_stx_parser_t* parser, xp_word_t method_class, void* input)
+	ase_stx_parser_t* parser, ase_word_t method_class, void* input)
 {
 	/*
 	 * <method definition> ::= 
@@ -481,11 +481,11 @@ static int __parse_method (
 	GET_CHAR (parser);
 	GET_TOKEN (parser);
 
-	xp_stx_name_clear (&parser->method_name);
-	xp_arr_clear (&parser->bytecode);
+	ase_stx_name_clear (&parser->method_name);
+	ase_arr_clear (&parser->bytecode);
 
 	while (parser->temporary_count > 0) {
-		xp_free (parser->temporaries[--parser->temporary_count]);
+		ase_free (parser->temporaries[--parser->temporary_count]);
 	}
 	parser->argument_count = 0;
 	parser->literal_count = 0;
@@ -499,53 +499,53 @@ static int __parse_method (
 	return 0;
 }
 
-static int __finish_method (xp_stx_parser_t* parser)
+static int __finish_method (ase_stx_parser_t* parser)
 {
-	xp_stx_t* stx = parser->stx;
-	xp_stx_class_t* class_obj;
-	xp_stx_method_t* method_obj;
-	xp_word_t method, selector;
+	ase_stx_t* stx = parser->stx;
+	ase_stx_class_t* class_obj;
+	ase_stx_method_t* method_obj;
+	ase_word_t method, selector;
 
-	xp_assert (parser->bytecode.size != 0);
+	ase_assert (parser->bytecode.size != 0);
 
-	class_obj = (xp_stx_class_t*)
-		XP_STX_OBJECT(stx, parser->method_class);
+	class_obj = (ase_stx_class_t*)
+		ASE_STX_OBJECT(stx, parser->method_class);
 
 	if (class_obj->methods == stx->nil) {
 		/* TODO: reconfigure method dictionary size */
-		class_obj->methods = xp_stx_instantiate (
+		class_obj->methods = ase_stx_instantiate (
 			stx, stx->class_system_dictionary, 
-			XP_NULL, XP_NULL, 64);
+			ASE_NULL, ASE_NULL, 64);
 	}
-	xp_assert (class_obj->methods != stx->nil);
+	ase_assert (class_obj->methods != stx->nil);
 
-	selector = xp_stx_new_symbolx (
+	selector = ase_stx_new_symbolx (
 		stx, parser->method_name.buffer, parser->method_name.size);
 
-	method = xp_stx_instantiate(stx, stx->class_method, 
-		XP_NULL, parser->literals, parser->literal_count);
-	method_obj = (xp_stx_method_t*)XP_STX_OBJECT(stx, method);
+	method = ase_stx_instantiate(stx, stx->class_method, 
+		ASE_NULL, parser->literals, parser->literal_count);
+	method_obj = (ase_stx_method_t*)ASE_STX_OBJECT(stx, method);
 
 	/* TODO: text saving must be optional */
-	/*method_obj->text = xp_stx_instantiate (
-		stx, stx->class_string, XP_NULL, 
-		parser->text, xp_strlen(parser->text));
+	/*method_obj->text = ase_stx_instantiate (
+		stx, stx->class_string, ASE_NULL, 
+		parser->text, ase_strlen(parser->text));
 	*/
 	method_obj->selector = selector;
-	method_obj->bytecodes = xp_stx_instantiate (
-		stx, stx->class_bytearray, XP_NULL, 
+	method_obj->bytecodes = ase_stx_instantiate (
+		stx, stx->class_bytearray, ASE_NULL, 
 		parser->bytecode.buf, parser->bytecode.size);
 
 	/* TODO: better way to store argument count & temporary count */
 	method_obj->tmpcount = 
-		XP_STX_TO_SMALLINT(parser->temporary_count - parser->argument_count);
-	method_obj->argcount = XP_STX_TO_SMALLINT(parser->argument_count);
+		ASE_STX_TO_SMALLINT(parser->temporary_count - parser->argument_count);
+	method_obj->argcount = ASE_STX_TO_SMALLINT(parser->argument_count);
 
-	xp_stx_dict_put (stx, class_obj->methods, selector, method);
+	ase_stx_dict_put (stx, class_obj->methods, selector, method);
 	return 0;
 }
 
-static int __parse_message_pattern (xp_stx_parser_t* parser)
+static int __parse_message_pattern (ase_stx_parser_t* parser)
 {
 	/* 
 	 * <message pattern> ::= 
@@ -556,17 +556,17 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 	 */
 	int n;
 
-	if (parser->token.type == XP_STX_TOKEN_IDENT) { 
+	if (parser->token.type == ASE_STX_TOKEN_IDENT) { 
 		n = __parse_unary_pattern (parser);
 	}
-	else if (parser->token.type == XP_STX_TOKEN_BINARY) { 
+	else if (parser->token.type == ASE_STX_TOKEN_BINARY) { 
 		n = __parse_binary_pattern (parser);
 	}
-	else if (parser->token.type == XP_STX_TOKEN_KEYWORD) { 
+	else if (parser->token.type == ASE_STX_TOKEN_KEYWORD) { 
 		n = __parse_keyword_pattern (parser);
 	}
 	else {
-		parser->error_code = XP_STX_PARSER_ERROR_MESSAGE_SELECTOR;
+		parser->error_code = ASE_STX_PARSER_ERROR_MESSAGE_SELECTOR;
 		n = -1;
 	}
 
@@ -574,13 +574,13 @@ static int __parse_message_pattern (xp_stx_parser_t* parser)
 	return n;
 }
 
-static int __parse_unary_pattern (xp_stx_parser_t* parser)
+static int __parse_unary_pattern (ase_stx_parser_t* parser)
 {
 	/* TODO: check if the method name exists */
 
-	if (xp_stx_name_adds(
+	if (ase_stx_name_adds(
 		&parser->method_name, parser->token.name.buffer) == -1) {
-		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+		parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
 
@@ -588,32 +588,32 @@ static int __parse_unary_pattern (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_binary_pattern (xp_stx_parser_t* parser)
+static int __parse_binary_pattern (ase_stx_parser_t* parser)
 {
 	/* TODO: check if the method name exists */
 
-	if (xp_stx_name_adds(
+	if (ase_stx_name_adds(
 		&parser->method_name, parser->token.name.buffer) == -1) {
-		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+		parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
 
 	GET_TOKEN (parser);
-	if (parser->token.type != XP_STX_TOKEN_IDENT) {
-		parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT_NAME;
+	if (parser->token.type != ASE_STX_TOKEN_IDENT) {
+		parser->error_code = ASE_STX_PARSER_ERROR_ARGUMENT_NAME;
 		return -1;
 	}
 
-	if (parser->argument_count >= xp_countof(parser->temporaries)) {
-		parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
+	if (parser->argument_count >= ase_countof(parser->temporaries)) {
+		parser->error_code = ASE_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
 		return -1;
 	}
 
 	/* TODO: check for duplicate entries...in instvars */
 	parser->temporaries[parser->argument_count] = 
-		xp_stx_token_yield (&parser->token, 0);
-	if (parser->temporaries[parser->argument_count] == XP_NULL) {
-		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+		ase_stx_token_yield (&parser->token, 0);
+	if (parser->temporaries[parser->argument_count] == ASE_NULL) {
+		parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
 	parser->argument_count++;
@@ -622,35 +622,35 @@ static int __parse_binary_pattern (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_keyword_pattern (xp_stx_parser_t* parser)
+static int __parse_keyword_pattern (ase_stx_parser_t* parser)
 {
 	do {
-		if (xp_stx_name_adds(
+		if (ase_stx_name_adds(
 			&parser->method_name, parser->token.name.buffer) == -1) {
-			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+			parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
 
 		GET_TOKEN (parser);
-		if (parser->token.type != XP_STX_TOKEN_IDENT) {
-			parser->error_code = XP_STX_PARSER_ERROR_ARGUMENT_NAME;
+		if (parser->token.type != ASE_STX_TOKEN_IDENT) {
+			parser->error_code = ASE_STX_PARSER_ERROR_ARGUMENT_NAME;
 			return -1;
 		}
 
 		if (__is_pseudo_variable(&parser->token)) {
-			parser->error_code = XP_STX_PARSER_ERROR_PSEUDO_VARIABLE;
+			parser->error_code = ASE_STX_PARSER_ERROR_PSEUDO_VARIABLE;
 			return -1;
 		}
 
-		if (parser->argument_count >= xp_countof(parser->temporaries)) {
-			parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
+		if (parser->argument_count >= ase_countof(parser->temporaries)) {
+			parser->error_code = ASE_STX_PARSER_ERROR_TOO_MANY_ARGUMENTS;
 			return -1;
 		}
 
 		parser->temporaries[parser->argument_count] = 
-			xp_stx_token_yield (&parser->token, 0);
-		if (parser->temporaries[parser->argument_count] == XP_NULL) {
-			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+			ase_stx_token_yield (&parser->token, 0);
+		if (parser->temporaries[parser->argument_count] == ASE_NULL) {
+			parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
 
@@ -658,16 +658,16 @@ static int __parse_keyword_pattern (xp_stx_parser_t* parser)
 		parser->argument_count++;
 
 		GET_TOKEN (parser);
-	} while (parser->token.type == XP_STX_TOKEN_KEYWORD);
+	} while (parser->token.type == ASE_STX_TOKEN_KEYWORD);
 
 	/* TODO: check if the method name exists */
 	/* if it exists, collapse arguments */
-xp_printf (XP_TEXT("METHOD NAME ==> [%s]\n"), parser->method_name.buffer);
+ase_printf (ASE_T("METHOD NAME ==> [%s]\n"), parser->method_name.buffer);
 
 	return 0;
 }
 
-static int __parse_temporaries (xp_stx_parser_t* parser)
+static int __parse_temporaries (ase_stx_parser_t* parser)
 {
 	/* 
 	 * <temporaries> ::= '|' <temporary variable list> '|'
@@ -677,21 +677,21 @@ static int __parse_temporaries (xp_stx_parser_t* parser)
 	if (!__is_vbar_token(&parser->token)) return 0;
 
 	GET_TOKEN (parser);
-	while (parser->token.type == XP_STX_TOKEN_IDENT) {
-		if (parser->temporary_count >= xp_countof(parser->temporaries)) {
-			parser->error_code = XP_STX_PARSER_ERROR_TOO_MANY_TEMPORARIES;
+	while (parser->token.type == ASE_STX_TOKEN_IDENT) {
+		if (parser->temporary_count >= ase_countof(parser->temporaries)) {
+			parser->error_code = ASE_STX_PARSER_ERROR_TOO_MANY_TEMPORARIES;
 			return -1;
 		}
 
 		if (__is_pseudo_variable(&parser->token)) {
-			parser->error_code = XP_STX_PARSER_ERROR_PSEUDO_VARIABLE;
+			parser->error_code = ASE_STX_PARSER_ERROR_PSEUDO_VARIABLE;
 			return -1;
 		}
 
 		parser->temporaries[parser->temporary_count] = 
-			xp_stx_token_yield (&parser->token, 0);
-		if (parser->temporaries[parser->temporary_count] == XP_NULL) {
-			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+			ase_stx_token_yield (&parser->token, 0);
+		if (parser->temporaries[parser->temporary_count] == ASE_NULL) {
+			parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
 
@@ -701,7 +701,7 @@ static int __parse_temporaries (xp_stx_parser_t* parser)
 		GET_TOKEN (parser);
 	}
 	if (!__is_vbar_token(&parser->token)) {
-		parser->error_code = XP_STX_PARSER_ERROR_TEMPORARIES_NOT_CLOSED;
+		parser->error_code = ASE_STX_PARSER_ERROR_TEMPORARIES_NOT_CLOSED;
 		return -1;
 	}
 
@@ -709,7 +709,7 @@ static int __parse_temporaries (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_primitive (xp_stx_parser_t* parser)
+static int __parse_primitive (ase_stx_parser_t* parser)
 {
 	/* 
 	 * <primitive> ::= '<' 'primitive:' number '>'
@@ -720,27 +720,27 @@ static int __parse_primitive (xp_stx_parser_t* parser)
 	if (!__is_primitive_opener(&parser->token)) return 0;
 	GET_TOKEN (parser);
 
-	if (parser->token.type != XP_STX_TOKEN_KEYWORD ||
-	    xp_strcmp (parser->token.name.buffer, XP_TEXT("primitive:")) != 0) {
-		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_KEYWORD;
+	if (parser->token.type != ASE_STX_TOKEN_KEYWORD ||
+	    ase_strcmp (parser->token.name.buffer, ASE_T("primitive:")) != 0) {
+		parser->error_code = ASE_STX_PARSER_ERROR_PRIMITIVE_KEYWORD;
 		return -1;
 	}
 
 	GET_TOKEN (parser); /* TODO: only integer */
-	if (parser->token.type != XP_STX_TOKEN_NUMLIT) {
-		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NUMBER;
+	if (parser->token.type != ASE_STX_TOKEN_NUMLIT) {
+		parser->error_code = ASE_STX_PARSER_ERROR_PRIMITIVE_NUMBER;
 		return -1;
 	}
 
 /*TODO: more checks the validity of the primitive number */
-	if (!xp_stristype(parser->token.name.buffer, xp_isdigit)) {
-		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NUMBER;
+	if (!ase_stristype(parser->token.name.buffer, ase_isdigit)) {
+		parser->error_code = ASE_STX_PARSER_ERROR_PRIMITIVE_NUMBER;
 		return -1;
 	}
 
-	XP_STRTOI (prim_no, parser->token.name.buffer, XP_NULL, 10);
+	ASE_STRTOI (prim_no, parser->token.name.buffer, ASE_NULL, 10);
 	if (prim_no < 0 || prim_no > 0xFF) {
-		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NUMBER_RANGE;
+		parser->error_code = ASE_STX_PARSER_ERROR_PRIMITIVE_NUMBER_RANGE;
 		return -1;
 	}
 
@@ -748,7 +748,7 @@ static int __parse_primitive (xp_stx_parser_t* parser)
 
 	GET_TOKEN (parser);
 	if (!__is_primitive_closer(&parser->token)) {
-		parser->error_code = XP_STX_PARSER_ERROR_PRIMITIVE_NOT_CLOSED;
+		parser->error_code = ASE_STX_PARSER_ERROR_PRIMITIVE_NOT_CLOSED;
 		return -1;
 	}
 
@@ -756,7 +756,7 @@ static int __parse_primitive (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_statements (xp_stx_parser_t* parser)
+static int __parse_statements (ase_stx_parser_t* parser)
 {
 	/*
 	 * <statements> ::= (ORIGINAL->maybe wrong)
@@ -766,16 +766,16 @@ static int __parse_statements (xp_stx_parser_t* parser)
 	 * 	<statement> ['. [<statements>]]
 	 */
 
-	while (parser->token.type != XP_STX_TOKEN_END) {
+	while (parser->token.type != ASE_STX_TOKEN_END) {
 		if (__parse_statement (parser) == -1) return -1;
 
-		if (parser->token.type == XP_STX_TOKEN_PERIOD) {
+		if (parser->token.type == ASE_STX_TOKEN_PERIOD) {
 			GET_TOKEN (parser);
 			continue;
 		}
 
-		if (parser->token.type != XP_STX_TOKEN_END) {
-			parser->error_code = XP_STX_PARSER_ERROR_NO_PERIOD;
+		if (parser->token.type != ASE_STX_TOKEN_END) {
+			parser->error_code = ASE_STX_PARSER_ERROR_NO_PERIOD;
 			return -1;
 		}
 	}
@@ -784,20 +784,20 @@ static int __parse_statements (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_block_statements (xp_stx_parser_t* parser)
+static int __parse_block_statements (ase_stx_parser_t* parser)
 {
-	while (parser->token.type != XP_STX_TOKEN_RBRACKET && 
-	       parser->token.type != XP_STX_TOKEN_END) {
+	while (parser->token.type != ASE_STX_TOKEN_RBRACKET && 
+	       parser->token.type != ASE_STX_TOKEN_END) {
 
 		if (__parse_statement(parser) == -1) return -1;
-		if (parser->token.type != XP_STX_TOKEN_PERIOD) break;
+		if (parser->token.type != ASE_STX_TOKEN_PERIOD) break;
 		GET_TOKEN (parser);
 	}
 
 	return 0;
 }
 
-static int __parse_statement (xp_stx_parser_t* parser)
+static int __parse_statement (ase_stx_parser_t* parser)
 {
 	/* 
 	 * <statement> ::= <return statement> | <expression>
@@ -805,7 +805,7 @@ static int __parse_statement (xp_stx_parser_t* parser)
 	 * returnOperator ::= '^'
 	 */
 
-	if (parser->token.type == XP_STX_TOKEN_RETURN) {
+	if (parser->token.type == ASE_STX_TOKEN_RETURN) {
 		GET_TOKEN (parser);
 		if (__parse_expression(parser) == -1) return -1;
 		EMIT_RETURN_FROM_MESSAGE (parser);
@@ -817,7 +817,7 @@ static int __parse_statement (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __parse_expression (xp_stx_parser_t* parser)
+static int __parse_expression (ase_stx_parser_t* parser)
 {
 	/*
 	 * <expression> ::= <assignment> | <basic expression>
@@ -826,86 +826,86 @@ static int __parse_expression (xp_stx_parser_t* parser)
 	 * <assignment target> ::= identifier
 	 * assignmentOperator ::=  ':='
 	 */
-	xp_stx_t* stx = parser->stx;
+	ase_stx_t* stx = parser->stx;
 
-	if (parser->token.type == XP_STX_TOKEN_IDENT) {
-		xp_char_t* ident = xp_stx_token_yield (&parser->token, 0);
-		if (ident == XP_NULL) {
-			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+	if (parser->token.type == ASE_STX_TOKEN_IDENT) {
+		ase_char_t* ident = ase_stx_token_yield (&parser->token, 0);
+		if (ident == ASE_NULL) {
+			parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
 
 		GET_TOKEN (parser);
-		if (parser->token.type == XP_STX_TOKEN_ASSIGN) {
+		if (parser->token.type == ASE_STX_TOKEN_ASSIGN) {
 			GET_TOKEN (parser);
 			if (__parse_assignment(parser, ident) == -1) {
-				xp_free (ident);
+				ase_free (ident);
 				return -1;
 			}
 		}
 		else {
 			if (__parse_basic_expression(parser, ident) == -1) {
-				xp_free (ident);
+				ase_free (ident);
 				return -1;
 			}
 		}
 
-		xp_free (ident);
+		ase_free (ident);
 	}
 	else {
-		if (__parse_basic_expression(parser, XP_NULL) == -1) return -1;
+		if (__parse_basic_expression(parser, ASE_NULL) == -1) return -1;
 	}
 
 	return 0;
 }
 
 static int __parse_basic_expression (
-	xp_stx_parser_t* parser, const xp_char_t* ident)
+	ase_stx_parser_t* parser, const ase_char_t* ident)
 {
 	/*
 	 * <basic expression> ::= <primary> [<messages> <cascaded messages>]
 	 */
-	xp_bool_t is_super;
+	ase_bool_t is_super;
 
 	if (__parse_primary(parser, ident, &is_super) == -1) return -1;
-	if (parser->token.type != XP_STX_TOKEN_END &&
-	    parser->token.type != XP_STX_TOKEN_PERIOD) {
+	if (parser->token.type != ASE_STX_TOKEN_END &&
+	    parser->token.type != ASE_STX_TOKEN_PERIOD) {
 		if (__parse_message_continuation(parser, is_super) == -1) return -1;
 	}
 	return 0;
 }
 
 static int __parse_assignment (
-	xp_stx_parser_t* parser, const xp_char_t* target)
+	ase_stx_parser_t* parser, const ase_char_t* target)
 {
 	/*
 	 * <assignment> ::= <assignment target> assignmentOperator <expression>
 	 */
 
-	xp_word_t i;
-	xp_stx_t* stx = parser->stx;
+	ase_word_t i;
+	ase_stx_t* stx = parser->stx;
 
 	for (i = parser->argument_count; i < parser->temporary_count; i++) {
-		if (xp_strcmp (target, parser->temporaries[i]) == 0) {
+		if (ase_strcmp (target, parser->temporaries[i]) == 0) {
 			if (__parse_expression(parser) == -1) return -1;
 			EMIT_STORE_TEMPORARY_LOCATION (parser, i);
 			return 0;
 		}
 	}
 
-	if (xp_stx_get_instance_variable_index (
+	if (ase_stx_get_instance_variable_index (
 		stx, parser->method_class, target, &i) == 0) {
 		if (__parse_expression(parser) == -1) return -1;
 		EMIT_STORE_RECEIVER_VARIABLE (parser, i);
 		return 0;
 	}
 
-	if (xp_stx_lookup_class_variable (
+	if (ase_stx_lookup_class_variable (
 		stx, parser->method_class, target) != stx->nil) {
 		if (__parse_expression(parser) == -1) return -1;
 
 		/* TODO */
-		EMIT_CODE_TEST (parser, XP_TEXT("ASSIGN_CLASSVAR #"), target);
+		EMIT_CODE_TEST (parser, ASE_T("ASSIGN_CLASSVAR #"), target);
 		//EMIT_STORE_CLASS_VARIABLE (parser, target);
 		return 0;
 	}
@@ -914,12 +914,12 @@ static int __parse_assignment (
 
 	/* TODO: IMPLEMENT GLOBLAS, but i don't like this idea */
 
-	parser->error_code = XP_STX_PARSER_ERROR_UNDECLARED_NAME;
+	parser->error_code = ASE_STX_PARSER_ERROR_UNDECLARED_NAME;
 	return -1;
 }
 
 static int __parse_primary (
-	xp_stx_parser_t* parser, const xp_char_t* ident, xp_bool_t* is_super)
+	ase_stx_parser_t* parser, const ase_char_t* ident, ase_bool_t* is_super)
 {
 	/*
 	 * <primary> ::=
@@ -927,68 +927,68 @@ static int __parse_primary (
 	 * 	<block constructor> | ( '('<expression>')' )
 	 */
 
-	xp_stx_t* stx = parser->stx;
+	ase_stx_t* stx = parser->stx;
 
-	if (ident == XP_NULL) {
+	if (ident == ASE_NULL) {
 		int pos;
-		xp_word_t literal;
+		ase_word_t literal;
 
-		*is_super = xp_false;
+		*is_super = ase_false;
 
-		if (parser->token.type == XP_STX_TOKEN_IDENT) {
+		if (parser->token.type == ASE_STX_TOKEN_IDENT) {
 			if (__parse_primary_ident(parser, 
 				parser->token.name.buffer, is_super) == -1) return -1;
 			GET_TOKEN (parser);
 		}
-		else if (parser->token.type == XP_STX_TOKEN_CHARLIT) {
+		else if (parser->token.type == ASE_STX_TOKEN_CHARLIT) {
 			pos = __add_character_literal(
 				parser, parser->token.name.buffer[0]);
 			if (pos == -1) return -1;
 			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
-		else if (parser->token.type == XP_STX_TOKEN_STRLIT) {
+		else if (parser->token.type == ASE_STX_TOKEN_STRLIT) {
 			pos = __add_string_literal (parser,
 				parser->token.name.buffer, parser->token.name.size);
 			if (pos == -1) return -1;
 			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
-		else if (parser->token.type == XP_STX_TOKEN_NUMLIT) {
+		else if (parser->token.type == ASE_STX_TOKEN_NUMLIT) {
 			/* TODO: other types of numbers, negative numbers, etc */
-			xp_word_t tmp;
-			XP_STRTOI (tmp, parser->token.name.buffer, XP_NULL, 10);
-			literal = XP_STX_TO_SMALLINT(tmp);
+			ase_word_t tmp;
+			ASE_STRTOI (tmp, parser->token.name.buffer, ASE_NULL, 10);
+			literal = ASE_STX_TO_SMALLINT(tmp);
 			pos = __add_literal(parser, literal);
 			if (pos == -1) return -1;
 			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
-		else if (parser->token.type == XP_STX_TOKEN_SYMLIT) {
+		else if (parser->token.type == ASE_STX_TOKEN_SYMLIT) {
 			pos = __add_symbol_literal (parser,
 				parser->token.name.buffer, parser->token.name.size);
 			if (pos == -1) return -1;
 			EMIT_PUSH_LITERAL_CONSTANT (parser, pos);
 			GET_TOKEN (parser);
 		}
-		else if (parser->token.type == XP_STX_TOKEN_LBRACKET) {
+		else if (parser->token.type == ASE_STX_TOKEN_LBRACKET) {
 			GET_TOKEN (parser);
 			if (__parse_block_constructor(parser) == -1) return -1;
 		}
-		else if (parser->token.type == XP_STX_TOKEN_APAREN) {
+		else if (parser->token.type == ASE_STX_TOKEN_APAREN) {
 			/* TODO: array literal */
 		}
-		else if (parser->token.type == XP_STX_TOKEN_LPAREN) {
+		else if (parser->token.type == ASE_STX_TOKEN_LPAREN) {
 			GET_TOKEN (parser);
 			if (__parse_expression(parser) == -1) return -1;
-			if (parser->token.type != XP_STX_TOKEN_RPAREN) {
-				parser->error_code = XP_STX_PARSER_ERROR_NO_RPAREN;
+			if (parser->token.type != ASE_STX_TOKEN_RPAREN) {
+				parser->error_code = ASE_STX_PARSER_ERROR_NO_RPAREN;
 				return -1;
 			}
 			GET_TOKEN (parser);
 		}
 		else {
-			parser->error_code = XP_STX_PARSER_ERROR_PRIMARY;
+			parser->error_code = ASE_STX_PARSER_ERROR_PRIMARY;
 			return -1;
 		}
 	}
@@ -1001,31 +1001,31 @@ static int __parse_primary (
 }
 
 static int __parse_primary_ident (
-	xp_stx_parser_t* parser, const xp_char_t* ident, xp_bool_t* is_super)
+	ase_stx_parser_t* parser, const ase_char_t* ident, ase_bool_t* is_super)
 {
-	xp_word_t i;
-	xp_stx_t* stx = parser->stx;
+	ase_word_t i;
+	ase_stx_t* stx = parser->stx;
 
-	*is_super = xp_false;
+	*is_super = ase_false;
 
-	if (xp_strcmp(ident, XP_TEXT("self")) == 0) {
+	if (ase_strcmp(ident, ASE_T("self")) == 0) {
 		EMIT_CODE (parser, PUSH_RECEIVER);
 		return 0;
 	}
-	else if (xp_strcmp(ident, XP_TEXT("super")) == 0) {
-		*is_super = xp_true;
+	else if (ase_strcmp(ident, ASE_T("super")) == 0) {
+		*is_super = ase_true;
 		EMIT_CODE (parser, PUSH_RECEIVER);
 		return 0;
 	}
-	else if (xp_strcmp(ident, XP_TEXT("nil")) == 0) {
+	else if (ase_strcmp(ident, ASE_T("nil")) == 0) {
 		EMIT_CODE (parser, PUSH_NIL);
 		return 0;
 	}
-	else if (xp_strcmp(ident, XP_TEXT("true")) == 0) {
+	else if (ase_strcmp(ident, ASE_T("true")) == 0) {
 		EMIT_CODE (parser, PUSH_TRUE);
 		return 0;
 	}
-	else if (xp_strcmp(ident, XP_TEXT("false")) == 0) {
+	else if (ase_strcmp(ident, ASE_T("false")) == 0) {
 		EMIT_CODE (parser, PUSH_FALSE);
 		return 0;
 	}
@@ -1033,13 +1033,13 @@ static int __parse_primary_ident (
 	/* Refer to __parse_assignment for identifier lookup */
 
 	for (i = 0; i < parser->temporary_count; i++) {
-		if (xp_strcmp(ident, parser->temporaries[i]) == 0) {
+		if (ase_strcmp(ident, parser->temporaries[i]) == 0) {
 			EMIT_PUSH_TEMPORARY_LOCATION (parser, i);
 			return 0;
 		}
 	}
 
-	if (xp_stx_get_instance_variable_index (
+	if (ase_stx_get_instance_variable_index (
 		stx, parser->method_class, ident, &i) == 0) {
 		EMIT_PUSH_RECEIVER_VARIABLE (parser, i);
 		return 0;
@@ -1050,7 +1050,7 @@ static int __parse_primary_ident (
 	/* 2. Use a primitive method after pushing the name as a symbol */
 	/* 3. Implement a vm instruction to do it */
 /*
-	if (xp_stx_lookup_class_variable (
+	if (ase_stx_lookup_class_variable (
 		stx, parser->method_class, ident) != stx->nil) {
 		//EMIT_LOOKUP_CLASS_VARIABLE (parser, ident);
 		return 0;
@@ -1061,11 +1061,11 @@ static int __parse_primary_ident (
 
 	/* TODO: IMPLEMENT GLOBLAS, but i don't like this idea */
 
-	parser->error_code = XP_STX_PARSER_ERROR_UNDECLARED_NAME;
+	parser->error_code = ASE_STX_PARSER_ERROR_UNDECLARED_NAME;
 	return -1;
 }
 
-static int __parse_block_constructor (xp_stx_parser_t* parser)
+static int __parse_block_constructor (ase_stx_parser_t* parser)
 {
 	/*
 	 * <block constructor> ::= '[' <block body> ']'
@@ -1074,21 +1074,21 @@ static int __parse_block_constructor (xp_stx_parser_t* parser)
 	 * <block argument> ::= ':'  identifier
 	 */
 
-	if (parser->token.type == XP_STX_TOKEN_COLON) {
+	if (parser->token.type == ASE_STX_TOKEN_COLON) {
 		do {
 			GET_TOKEN (parser);
 
-			if (parser->token.type != XP_STX_TOKEN_IDENT) {
-				parser->error_code = XP_STX_PARSER_ERROR_BLOCK_ARGUMENT_NAME;
+			if (parser->token.type != ASE_STX_TOKEN_IDENT) {
+				parser->error_code = ASE_STX_PARSER_ERROR_BLOCK_ARGUMENT_NAME;
 				return -1;
 			}
 
 			/* TODO : store block arguments */
 			GET_TOKEN (parser);
-		} while (parser->token.type == XP_STX_TOKEN_COLON);
+		} while (parser->token.type == ASE_STX_TOKEN_COLON);
 			
 		if (!__is_vbar_token(&parser->token)) {
-			parser->error_code = XP_STX_PARSER_ERROR_BLOCK_ARGUMENT_LIST;
+			parser->error_code = ASE_STX_PARSER_ERROR_BLOCK_ARGUMENT_LIST;
 			return -1;
 		}
 
@@ -1099,8 +1099,8 @@ static int __parse_block_constructor (xp_stx_parser_t* parser)
 	if (__parse_temporaries(parser) == -1) return -1;
 	if (__parse_block_statements(parser) == -1) return -1;
 
-	if (parser->token.type != XP_STX_TOKEN_RBRACKET) {
-		parser->error_code = XP_STX_PARSER_ERROR_BLOCK_NOT_CLOSED;
+	if (parser->token.type != ASE_STX_TOKEN_RBRACKET) {
+		parser->error_code = ASE_STX_PARSER_ERROR_BLOCK_NOT_CLOSED;
 		return -1;
 	}
 
@@ -1112,7 +1112,7 @@ static int __parse_block_constructor (xp_stx_parser_t* parser)
 }
 
 static int __parse_message_continuation (
-	xp_stx_parser_t* parser, xp_bool_t is_super)
+	ase_stx_parser_t* parser, ase_bool_t is_super)
 {
 	/*
 	 * <messages> ::=
@@ -1123,62 +1123,62 @@ static int __parse_message_continuation (
 	 */
 	if (__parse_keyword_message(parser, is_super) == -1) return -1;
 
-	while (parser->token.type == XP_STX_TOKEN_SEMICOLON) {
-		EMIT_CODE_TEST (parser, XP_TEXT("DoSpecial(DUP_RECEIVER(CASCADE))"), XP_TEXT(""));
+	while (parser->token.type == ASE_STX_TOKEN_SEMICOLON) {
+		EMIT_CODE_TEST (parser, ASE_T("DoSpecial(DUP_RECEIVER(CASCADE))"), ASE_T(""));
 		GET_TOKEN (parser);
 
-		if (__parse_keyword_message(parser, xp_false) == -1) return -1;
-		EMIT_CODE_TEST (parser, XP_TEXT("DoSpecial(POP_TOP)"), XP_TEXT(""));
+		if (__parse_keyword_message(parser, ase_false) == -1) return -1;
+		EMIT_CODE_TEST (parser, ASE_T("DoSpecial(POP_TOP)"), ASE_T(""));
 	}
 
 	return 0;
 }
 
-static int __parse_keyword_message (xp_stx_parser_t* parser, xp_bool_t is_super)
+static int __parse_keyword_message (ase_stx_parser_t* parser, ase_bool_t is_super)
 {
 	/*
 	 * <keyword message> ::= (keyword <keyword argument> )+
 	 * <keyword argument> ::= <primary> <unary message>* <binary message>*
 	 */
 
-	xp_stx_name_t name;
-	xp_word_t pos;
-	xp_bool_t is_super2;
+	ase_stx_name_t name;
+	ase_word_t pos;
+	ase_bool_t is_super2;
 	int nargs = 0, n;
 
 	if (__parse_binary_message (parser, is_super) == -1) return -1;
-	if (parser->token.type != XP_STX_TOKEN_KEYWORD) return 0;
+	if (parser->token.type != ASE_STX_TOKEN_KEYWORD) return 0;
 
-	if (xp_stx_name_open(&name, 0) == XP_NULL) {
-		parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+	if (ase_stx_name_open(&name, 0) == ASE_NULL) {
+		parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 		return -1;
 	}
 	
 	do {
-		if (xp_stx_name_adds(&name, parser->token.name.buffer) == -1) {
-			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
-			xp_stx_name_close (&name);
+		if (ase_stx_name_adds(&name, parser->token.name.buffer) == -1) {
+			parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
+			ase_stx_name_close (&name);
 			return -1;
 		}
 
 		GET_TOKEN (parser);
-		if (__parse_primary(parser, XP_NULL, &is_super2) == -1) {
-			xp_stx_name_close (&name);
+		if (__parse_primary(parser, ASE_NULL, &is_super2) == -1) {
+			ase_stx_name_close (&name);
 			return -1;
 		}
 
 		if (__parse_binary_message(parser, is_super2) == -1) {
-			xp_stx_name_close (&name);
+			ase_stx_name_close (&name);
 			return -1;
 		}
 
 		nargs++;
 		/* TODO: check if it has too many arguments.. */
-	} while (parser->token.type == XP_STX_TOKEN_KEYWORD);
+	} while (parser->token.type == ASE_STX_TOKEN_KEYWORD);
 
 	pos = __add_symbol_literal (parser, name.buffer, name.size);
 	if (pos == -1) {
-		xp_stx_name_close (&name);
+		ase_stx_name_close (&name);
 		return -1;
 	}
 
@@ -1186,47 +1186,47 @@ static int __parse_keyword_message (xp_stx_parser_t* parser, xp_bool_t is_super)
 		__emit_send_to_super(parser,nargs,pos):
 		__emit_send_to_self(parser,nargs,pos);
 	if (n == -1) {
-		xp_stx_name_close (&name);
+		ase_stx_name_close (&name);
 		return -1;
 	}
 
-	xp_stx_name_close (&name);
+	ase_stx_name_close (&name);
 	return 0;
 }
 
-static int __parse_binary_message (xp_stx_parser_t* parser, xp_bool_t is_super)
+static int __parse_binary_message (ase_stx_parser_t* parser, ase_bool_t is_super)
 {
 	/*
 	 * <binary message> ::= binarySelector <binary argument>
 	 * <binary argument> ::= <primary> <unary message>*
 	 */
-	xp_word_t pos;
-	xp_bool_t is_super2;
+	ase_word_t pos;
+	ase_bool_t is_super2;
 	int n;
 
 	if (__parse_unary_message (parser, is_super) == -1) return -1;
 
-	while (parser->token.type == XP_STX_TOKEN_BINARY) {
-		xp_char_t* op = xp_stx_token_yield (&parser->token, 0);
-		if (op == XP_NULL) {
-			parser->error_code = XP_STX_PARSER_ERROR_MEMORY;
+	while (parser->token.type == ASE_STX_TOKEN_BINARY) {
+		ase_char_t* op = ase_stx_token_yield (&parser->token, 0);
+		if (op == ASE_NULL) {
+			parser->error_code = ASE_STX_PARSER_ERROR_MEMORY;
 			return -1;
 		}
 
 		GET_TOKEN (parser);
-		if (__parse_primary(parser, XP_NULL, &is_super2) == -1) {
-			xp_free (op);
+		if (__parse_primary(parser, ASE_NULL, &is_super2) == -1) {
+			ase_free (op);
 			return -1;
 		}
 
 		if (__parse_unary_message(parser, is_super2) == -1) {
-			xp_free (op);
+			ase_free (op);
 			return -1;
 		}
 
-		pos = __add_symbol_literal (parser, op, xp_strlen(op));
+		pos = __add_symbol_literal (parser, op, ase_strlen(op));
 		if (pos == -1) {
-			xp_free (op);
+			ase_free (op);
 			return -1;
 		}
 
@@ -1234,24 +1234,24 @@ static int __parse_binary_message (xp_stx_parser_t* parser, xp_bool_t is_super)
 			__emit_send_to_super(parser,2,pos):
 			__emit_send_to_self(parser,2,pos);
 		if (n == -1) {
-			xp_free (op);
+			ase_free (op);
 			return -1;
 		}
 
-		xp_free (op);
+		ase_free (op);
 	}
 
 	return 0;
 }
 
-static int __parse_unary_message (xp_stx_parser_t* parser, xp_bool_t is_super)
+static int __parse_unary_message (ase_stx_parser_t* parser, ase_bool_t is_super)
 {
 	/* <unary message> ::= unarySelector */
 
-	xp_word_t pos;
+	ase_word_t pos;
 	int n;
 
-	while (parser->token.type == XP_STX_TOKEN_IDENT) {
+	while (parser->token.type == ASE_STX_TOKEN_IDENT) {
 		pos = __add_symbol_literal (parser,
 			parser->token.name.buffer, parser->token.name.size);
 		if (pos == -1) return -1;
@@ -1267,13 +1267,13 @@ static int __parse_unary_message (xp_stx_parser_t* parser, xp_bool_t is_super)
 	return 0;
 }
 
-static int __get_token (xp_stx_parser_t* parser)
+static int __get_token (ase_stx_parser_t* parser)
 {
-	xp_cint_t c;
+	ase_cint_t c;
 
 	do {
 		if (__skip_spaces(parser) == -1) return -1;
-		if (parser->curc == XP_CHAR('"')) {
+		if (parser->curc == ASE_T('"')) {
 			GET_CHAR (parser);
 			if (__skip_comment(parser) == -1) return -1;
 		}
@@ -1281,102 +1281,102 @@ static int __get_token (xp_stx_parser_t* parser)
 	} while (1);
 
 	c = parser->curc;
-	xp_stx_token_clear (&parser->token);
+	ase_stx_token_clear (&parser->token);
 
-	if (c == XP_CHAR_EOF) {
-		parser->token.type = XP_STX_TOKEN_END;
+	if (c == ASE_T_EOF) {
+		parser->token.type = ASE_STX_TOKEN_END;
 	}
-	else if (xp_isalpha(c)) {
+	else if (ase_isalpha(c)) {
 		if (__get_ident(parser) == -1) return -1;
 	}
-	else if (xp_isdigit(c)) {
-		if (__get_numlit(parser, xp_false) == -1) return -1;
+	else if (ase_isdigit(c)) {
+		if (__get_numlit(parser, ase_false) == -1) return -1;
 	}
-	else if (c == XP_CHAR('$')) {
+	else if (c == ASE_T('$')) {
 		GET_CHAR (parser);
 		if (__get_charlit(parser) == -1) return -1;
 	}
-	else if (c == XP_CHAR('\'')) {
+	else if (c == ASE_T('\'')) {
 		GET_CHAR (parser);
 		if (__get_strlit(parser) == -1) return -1;
 	}
-	else if (c == XP_CHAR(':')) {
-		parser->token.type = XP_STX_TOKEN_COLON;
+	else if (c == ASE_T(':')) {
+		parser->token.type = ASE_STX_TOKEN_COLON;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 
 		c = parser->curc;
-		if (c == XP_CHAR('=')) {
-			parser->token.type = XP_STX_TOKEN_ASSIGN;
+		if (c == ASE_T('=')) {
+			parser->token.type = ASE_STX_TOKEN_ASSIGN;
 			ADD_TOKEN_CHAR(parser, c);
 			GET_CHAR (parser);
 		}
 	}
-	else if (c == XP_CHAR('^')) {
-		parser->token.type = XP_STX_TOKEN_RETURN;
+	else if (c == ASE_T('^')) {
+		parser->token.type = ASE_STX_TOKEN_RETURN;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_CHAR('[')) {
-		parser->token.type = XP_STX_TOKEN_LBRACKET;
+	else if (c == ASE_T('[')) {
+		parser->token.type = ASE_STX_TOKEN_LBRACKET;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_CHAR(']')) {
-		parser->token.type = XP_STX_TOKEN_RBRACKET;
+	else if (c == ASE_T(']')) {
+		parser->token.type = ASE_STX_TOKEN_RBRACKET;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_CHAR('(')) {
-		parser->token.type = XP_STX_TOKEN_LPAREN;
+	else if (c == ASE_T('(')) {
+		parser->token.type = ASE_STX_TOKEN_LPAREN;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_CHAR(')')) {
-		parser->token.type = XP_STX_TOKEN_RPAREN;
+	else if (c == ASE_T(')')) {
+		parser->token.type = ASE_STX_TOKEN_RPAREN;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_CHAR('#')) {
+	else if (c == ASE_T('#')) {
 		/*ADD_TOKEN_CHAR(parser, c);*/
 		GET_CHAR (parser);
 
 		c = parser->curc;
-		if (c == XP_CHAR_EOF) {
-			parser->error_code = XP_STX_PARSER_ERROR_LITERAL;
+		if (c == ASE_T_EOF) {
+			parser->error_code = ASE_STX_PARSER_ERROR_LITERAL;
 			return -1;
 		}
-		else if (c == XP_CHAR('(')) {
+		else if (c == ASE_T('(')) {
 			ADD_TOKEN_CHAR(parser, c);
-			parser->token.type = XP_STX_TOKEN_APAREN;
+			parser->token.type = ASE_STX_TOKEN_APAREN;
 			GET_CHAR (parser);
 		}
-		else if (c == XP_CHAR('\'')) {
+		else if (c == ASE_T('\'')) {
 			GET_CHAR (parser);
 			if (__get_strlit(parser) == -1) return -1;
-			parser->token.type = XP_STX_TOKEN_SYMLIT;
+			parser->token.type = ASE_STX_TOKEN_SYMLIT;
 		}
-		else if (!__is_closing_char(c) && !xp_isspace(c)) {
+		else if (!__is_closing_char(c) && !ase_isspace(c)) {
 			do {
 				ADD_TOKEN_CHAR(parser, c);
 				GET_CHAR (parser);
 				c = parser->curc;
-			} while (!__is_closing_char(c) && !xp_isspace(c));
+			} while (!__is_closing_char(c) && !ase_isspace(c));
 
-			parser->token.type = XP_STX_TOKEN_SYMLIT;
+			parser->token.type = ASE_STX_TOKEN_SYMLIT;
 		}
 		else {
-			parser->error_code = XP_STX_PARSER_ERROR_LITERAL;
+			parser->error_code = ASE_STX_PARSER_ERROR_LITERAL;
 			return -1;
 		}
 	}
-	else if (c == XP_CHAR('.')) {
-		parser->token.type = XP_STX_TOKEN_PERIOD;
+	else if (c == ASE_T('.')) {
+		parser->token.type = ASE_STX_TOKEN_PERIOD;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
-	else if (c == XP_CHAR(';')) {
-		parser->token.type = XP_STX_TOKEN_SEMICOLON;
+	else if (c == ASE_T(';')) {
+		parser->token.type = ASE_STX_TOKEN_SEMICOLON;
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 	}
@@ -1384,40 +1384,40 @@ static int __get_token (xp_stx_parser_t* parser)
 		if (__get_binary(parser) == -1) return -1;
 	}
 	else {
-		parser->error_code = XP_STX_PARSER_ERROR_CHAR;
+		parser->error_code = ASE_STX_PARSER_ERROR_CHAR;
 		return -1;
 	}
 
-//xp_printf (XP_TEXT("TOKEN: %s\n"), parser->token.name.buffer);
+//ase_printf (ASE_T("TOKEN: %s\n"), parser->token.name.buffer);
 	return 0;
 }
 
-static int __get_ident (xp_stx_parser_t* parser)
+static int __get_ident (ase_stx_parser_t* parser)
 {
 	/*
 	 * identifier ::= letter (letter | digit)*
 	 * keyword ::= identifier ':'
 	 */
 
-	xp_cint_t c = parser->curc;
-	parser->token.type = XP_STX_TOKEN_IDENT;
+	ase_cint_t c = parser->curc;
+	parser->token.type = ASE_STX_TOKEN_IDENT;
 
 	do {
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 		c = parser->curc;
-	} while (xp_isalnum(c));
+	} while (ase_isalnum(c));
 
-	if (c == XP_CHAR(':')) {
+	if (c == ASE_T(':')) {
 		ADD_TOKEN_CHAR (parser, c);
-		parser->token.type = XP_STX_TOKEN_KEYWORD;
+		parser->token.type = ASE_STX_TOKEN_KEYWORD;
 		GET_CHAR (parser);
 	}
 
 	return 0;
 }
 
-static int __get_numlit (xp_stx_parser_t* parser, xp_bool_t negated)
+static int __get_numlit (ase_stx_parser_t* parser, ase_bool_t negated)
 {
 	/* 
 	 * <number literal> ::= ['-'] <number>
@@ -1437,39 +1437,39 @@ static int __get_numlit (xp_stx_parser_t* parser, xp_bool_t negated)
 	 * fractionalDigits ::= decimalInteger
 	 */
 
-	xp_cint_t c = parser->curc;
-	parser->token.type = XP_STX_TOKEN_NUMLIT;
+	ase_cint_t c = parser->curc;
+	parser->token.type = ASE_STX_TOKEN_NUMLIT;
 
 	do {
 		ADD_TOKEN_CHAR(parser, c);
 		GET_CHAR (parser);
 		c = parser->curc;
-	} while (xp_isalnum(c));
+	} while (ase_isalnum(c));
 
 	/* TODO; more */
 	return 0;
 }
 
-static int __get_charlit (xp_stx_parser_t* parser)
+static int __get_charlit (ase_stx_parser_t* parser)
 {
 	/* 
 	 * character_literal ::= '$' character
 	 * character ::= "Any character in the implementation-defined character set"
 	 */
 
-	xp_cint_t c = parser->curc; /* even a new-line or white space would be taken */
-	if (c == XP_CHAR_EOF) {
-		parser->error_code = XP_STX_PARSER_ERROR_CHARLIT;
+	ase_cint_t c = parser->curc; /* even a new-line or white space would be taken */
+	if (c == ASE_T_EOF) {
+		parser->error_code = ASE_STX_PARSER_ERROR_CHARLIT;
 		return -1;
 	}	
 
-	parser->token.type = XP_STX_TOKEN_CHARLIT;
+	parser->token.type = ASE_STX_TOKEN_CHARLIT;
 	ADD_TOKEN_CHAR(parser, c);
 	GET_CHAR (parser);
 	return 0;
 }
 
-static int __get_strlit (xp_stx_parser_t* parser)
+static int __get_strlit (ase_stx_parser_t* parser)
 {
 	/* 
 	 * string_literal ::= stringDelimiter stringBody stringDelimiter
@@ -1479,8 +1479,8 @@ static int __get_strlit (xp_stx_parser_t* parser)
 
 	/* TODO: C-like string */
 
-	xp_cint_t c = parser->curc;
-	parser->token.type = XP_STX_TOKEN_STRLIT;
+	ase_cint_t c = parser->curc;
+	parser->token.type = ASE_STX_TOKEN_STRLIT;
 
 	do {
 		do {
@@ -1488,32 +1488,32 @@ static int __get_strlit (xp_stx_parser_t* parser)
 			GET_CHAR (parser);
 			c = parser->curc;
 
-			if (c == XP_CHAR_EOF) {
-				parser->error_code = XP_STX_PARSER_ERROR_STRLIT;
+			if (c == ASE_T_EOF) {
+				parser->error_code = ASE_STX_PARSER_ERROR_STRLIT;
 				return -1;
 			}
-		} while (c != XP_CHAR('\''));
+		} while (c != ASE_T('\''));
 
 		GET_CHAR (parser);
 		c = parser->curc;
-	} while (c == XP_CHAR('\''));
+	} while (c == ASE_T('\''));
 
 	return 0;
 }
 
-static int __get_binary (xp_stx_parser_t* parser)
+static int __get_binary (ase_stx_parser_t* parser)
 {
 	/* 
 	 * binarySelector ::= binaryCharacter+
 	 */
 
-	xp_cint_t c = parser->curc;
+	ase_cint_t c = parser->curc;
 	ADD_TOKEN_CHAR (parser, c);
 
-	if (c == XP_CHAR('-')) {
+	if (c == ASE_T('-')) {
 		GET_CHAR (parser);
 		c = parser->curc;
-		if (xp_isdigit(c)) return __get_numlit(parser,xp_true);
+		if (ase_isdigit(c)) return __get_numlit(parser,ase_true);
 	}
 	else {
 		GET_CHAR (parser);
@@ -1536,35 +1536,35 @@ static int __get_binary (xp_stx_parser_t* parser)
 	}
 	*/
 
-	parser->token.type = XP_STX_TOKEN_BINARY;
+	parser->token.type = ASE_STX_TOKEN_BINARY;
 	return 0;
 }
 
-static int __skip_spaces (xp_stx_parser_t* parser)
+static int __skip_spaces (ase_stx_parser_t* parser)
 {
-	while (xp_isspace(parser->curc)) GET_CHAR (parser);
+	while (ase_isspace(parser->curc)) GET_CHAR (parser);
 	return 0;
 }
 
-static int __skip_comment (xp_stx_parser_t* parser)
+static int __skip_comment (ase_stx_parser_t* parser)
 {
-	while (parser->curc != XP_CHAR('"')) GET_CHAR (parser);
+	while (parser->curc != ASE_T('"')) GET_CHAR (parser);
 	GET_CHAR (parser);
 	return 0;
 }
 
-static int __get_char (xp_stx_parser_t* parser)
+static int __get_char (ase_stx_parser_t* parser)
 {
-	xp_cint_t c;
+	ase_cint_t c;
 
 	if (parser->ungotc_count > 0) {
 		parser->curc = parser->ungotc[parser->ungotc_count--];
 	}
 	else {
 		if (parser->input_func (
-			XP_STX_PARSER_INPUT_CONSUME, 
+			ASE_STX_PARSER_INPUT_CONSUME, 
 			parser->input_owner, (void*)&c) == -1) {
-			parser->error_code = XP_STX_PARSER_ERROR_INPUT;
+			parser->error_code = ASE_STX_PARSER_ERROR_INPUT;
 			return -1;
 		}
 		parser->curc = c;
@@ -1572,34 +1572,34 @@ static int __get_char (xp_stx_parser_t* parser)
 	return 0;
 }
 
-static int __unget_char (xp_stx_parser_t* parser, xp_cint_t c)
+static int __unget_char (ase_stx_parser_t* parser, ase_cint_t c)
 {
-	if (parser->ungotc_count >= xp_countof(parser->ungotc)) return -1;
+	if (parser->ungotc_count >= ase_countof(parser->ungotc)) return -1;
 	parser->ungotc[parser->ungotc_count++] = c;
 	return 0;
 }
 
-static int __open_input (xp_stx_parser_t* parser, void* input)
+static int __open_input (ase_stx_parser_t* parser, void* input)
 {
 	if (parser->input_func(
-		XP_STX_PARSER_INPUT_OPEN, 
+		ASE_STX_PARSER_INPUT_OPEN, 
 		(void*)&parser->input_owner, input) == -1) {
-		parser->error_code = XP_STX_PARSER_ERROR_INPUT;
+		parser->error_code = ASE_STX_PARSER_ERROR_INPUT;
 		return -1;
 	}
 
-	parser->error_code = XP_STX_PARSER_ERROR_NONE;
-	parser->curc = XP_CHAR_EOF;
+	parser->error_code = ASE_STX_PARSER_ERROR_NONE;
+	parser->curc = ASE_T_EOF;
 	parser->ungotc_count = 0;
 	return 0;
 }
 
-static int __close_input (xp_stx_parser_t* parser)
+static int __close_input (ase_stx_parser_t* parser)
 {
 	if (parser->input_func(
-		XP_STX_PARSER_INPUT_CLOSE, 
-		parser->input_owner, XP_NULL) == -1) {
-		parser->error_code = XP_STX_PARSER_ERROR_INPUT;
+		ASE_STX_PARSER_INPUT_CLOSE, 
+		parser->input_owner, ASE_NULL) == -1) {
+		parser->error_code = ASE_STX_PARSER_ERROR_INPUT;
 		return -1;
 	}
 

@@ -1,18 +1,18 @@
 /*
- * $Id: bootstrp.h,v 1.8 2005-08-18 15:28:18 bacon Exp $
+ * $Id: bootstrp.h,v 1.9 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_BOOTSTRP_H_
-#define _XP_STX_BOOTSTRP_H_
+#ifndef _ASE_STX_BOOTSTRP_H_
+#define _ASE_STX_BOOTSTRP_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-xp_word_t xp_stx_new_array (xp_stx_t* stx, xp_word_t size);
-int xp_stx_bootstrap (xp_stx_t* stx);
+ase_word_t ase_stx_new_array (ase_stx_t* stx, ase_word_t size);
+int ase_stx_bootstrap (ase_stx_t* stx);
 
 #ifdef __cplusplus
 }

@@ -1,14 +1,14 @@
 /*
- * $Id: misc.h,v 1.15 2005-08-18 15:28:18 bacon Exp $
+ * $Id: misc.h,v 1.16 2007-03-22 11:19:28 bacon Exp $
  */
 
-#ifndef _XP_STX_MISC_H_
-#define _XP_STX_MISC_H_
+#ifndef _ASE_STX_MISC_H_
+#define _ASE_STX_MISC_H_
 
-#include <xp/stx/stx.h>
+#include <ase/stx/stx.h>
 
 /* TODO: remove this header later */
-#include <xp/bas/stdio.h>
+#include <ase/bas/stdio.h>
 
 #ifdef _DOS
 	#include <stdlib.h>
@@ -18,25 +18,25 @@
 	#include <ctype.h>
 	#include <stdlib.h>
 
-	#define xp_assert   assert
-	#define xp_malloc   malloc
-	#define xp_realloc  realloc
-	#define xp_free     free
-	#define xp_va_list  va_list
-	#define xp_va_start va_start
-	#define xp_va_end   va_end  
-	#define xp_va_arg   va_arg
-	#define xp_isspace  isspace
-	#define xp_isdigit  isdigit
-	#define xp_isalpha  isalpha
-	#define xp_isalnum  isalnum
+	#define ase_assert   assert
+	#define ase_malloc   malloc
+	#define ase_realloc  realloc
+	#define ase_free     free
+	#define ase_va_list  va_list
+	#define ase_va_start va_start
+	#define ase_va_end   va_end  
+	#define ase_va_arg   va_arg
+	#define ase_isspace  isspace
+	#define ase_isdigit  isdigit
+	#define ase_isalpha  isalpha
+	#define ase_isalnum  isalnum
 #else
-	#include <xp/bas/memory.h>
-	#include <xp/bas/assert.h>
-	#include <xp/bas/stdarg.h>
-	#include <xp/bas/ctype.h>
-	#include <xp/bas/string.h>
-	#include <xp/bas/stdlib.h>
+	#include <ase/bas/memory.h>
+	#include <ase/bas/assert.h>
+	#include <ase/bas/stdarg.h>
+	#include <ase/bas/ctype.h>
+	#include <ase/bas/string.h>
+	#include <ase/bas/stdlib.h>
 #endif
 
 #if defined(__BORLANDC__) || defined(_MSC_VER)
@@ -49,12 +49,12 @@
 extern "C" {
 #endif
 
-xp_word_t xp_stx_hash (const void* data, xp_word_t len);
-xp_word_t xp_stx_strhash (const xp_char_t* str);
-xp_word_t xp_stx_strxhash (const xp_char_t* str, xp_word_t len);
+ase_word_t ase_stx_hash (const void* data, ase_word_t len);
+ase_word_t ase_stx_strhash (const ase_char_t* str);
+ase_word_t ase_stx_strxhash (const ase_char_t* str, ase_word_t len);
 
-xp_char_t* xp_stx_strword (
-	const xp_char_t* str, const xp_char_t* word, xp_word_t* word_index);
+ase_char_t* ase_stx_strword (
+	const ase_char_t* str, const ase_char_t* word, ase_word_t* word_index);
 
 #ifdef __cplusplus
 }

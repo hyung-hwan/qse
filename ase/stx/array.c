@@ -1,18 +1,18 @@
 /* 
- * $Id: array.c,v 1.1 2005-08-15 16:03:57 bacon Exp $
+ * $Id: array.c,v 1.2 2007-03-22 11:19:28 bacon Exp $
  */
 
-#include <xp/stx/array.h>
-#include <xp/stx/object.h>
-#include <xp/bas/assert.h>
+#include <ase/stx/array.h>
+#include <ase/stx/object.h>
+#include <ase/bas/assert.h>
 
-xp_word_t xp_stx_new_array (xp_stx_t* stx, xp_word_t size)
+ase_word_t ase_stx_new_array (ase_stx_t* stx, ase_word_t size)
 {
-	xp_word_t x;
+	ase_word_t x;
 
-	xp_assert (stx->class_array != stx->nil);
-	x = xp_stx_alloc_word_object (stx, XP_NULL, 0, XP_NULL, size);
-	XP_STX_CLASS(stx,x) = stx->class_array;
+	ase_assert (stx->class_array != stx->nil);
+	x = ase_stx_alloc_word_object (stx, ASE_NULL, 0, ASE_NULL, size);
+	ASE_STX_CLASS(stx,x) = stx->class_array;
 
 	return x;	
 }
