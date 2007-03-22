@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.37 2007-03-06 14:51:52 bacon Exp $
+ * $Id: map.c,v 1.38 2007-03-22 10:31:24 bacon Exp $
  *
  * {License}
  */
@@ -9,7 +9,7 @@
 /* TODO: improve the entire map routines.
          support automatic bucket resizing and remaping, etc. */
 
-static ase_size_t __hash (const ase_char_t* key, ase_size_t key_len);
+static ase_size_t hash (const ase_char_t* key, ase_size_t key_len);
 
 #define FREE_PAIR(map,pair) \
 	do { \
@@ -91,7 +91,7 @@ ase_awk_pair_t* ase_awk_map_get (
 	ase_awk_pair_t* pair;
 	ase_size_t hc;
 
-	hc = __hash(key,key_len) % map->capa;
+	hc = hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
 	while (pair != ASE_NULL) 
@@ -125,7 +125,7 @@ int ase_awk_map_putx (
 	ase_awk_pair_t* pair;
 	ase_size_t hc;
 
-	hc = __hash(key,key_len) % map->capa;
+	hc = hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
 	while (pair != ASE_NULL) 
@@ -173,7 +173,7 @@ ase_awk_pair_t* ase_awk_map_set (
 	ase_awk_pair_t* pair;
 	ase_size_t hc;
 
-	hc = __hash(key,key_len) % map->capa;
+	hc = hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 
 	while (pair != ASE_NULL) 
@@ -222,7 +222,7 @@ int ase_awk_map_remove (ase_awk_map_t* map, ase_char_t* key, ase_size_t key_len)
 	ase_awk_pair_t* pair, * prev;
 	ase_size_t hc;
 
-	hc = __hash(key,key_len) % map->capa;
+	hc = hash(key,key_len) % map->capa;
 	pair = map->buck[hc];
 	prev = ASE_NULL;
 
@@ -269,7 +269,7 @@ int ase_awk_map_walk (ase_awk_map_t* map,
 	return 0;
 }
 
-static ase_size_t __hash (const ase_char_t* key, ase_size_t key_len)
+static ase_size_t hash (const ase_char_t* key, ase_size_t key_len)
 {
 	ase_size_t n = 0, i;
 	const ase_char_t* end = key + key_len;

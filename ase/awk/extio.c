@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.78 2007-03-20 10:44:44 bacon Exp $
+ * $Id: extio.c,v 1.79 2007-03-22 10:31:24 bacon Exp $
  *
  * {License}
  */
@@ -8,14 +8,14 @@
 
 enum
 {
-	__MASK_READ  = 0x0100,
-	__MASK_WRITE = 0x0200,
-	__MASK_RDWR  = 0x0400,
+	MASK_READ  = 0x0100,
+	MASK_WRITE = 0x0200,
+	MASK_RDWR  = 0x0400,
 
-	__MASK_CLEAR = 0x00FF
+	MASK_CLEAR = 0x00FF
 };
 
-static int __in_type_map[] =
+static int in_type_map[] =
 {
 	/* the order should match the order of the 
 	 * ASE_AWK_IN_XXX values in tree.h */
@@ -25,7 +25,7 @@ static int __in_type_map[] =
 	ASE_AWK_EXTIO_CONSOLE
 };
 
-static int __in_mode_map[] =
+static int in_mode_map[] =
 {
 	/* the order should match the order of the 
 	 * ASE_AWK_IN_XXX values in tree.h */
@@ -35,15 +35,15 @@ static int __in_mode_map[] =
 	ASE_AWK_EXTIO_CONSOLE_READ
 };
 
-static int __in_mask_map[] =
+static int in_mask_map[] =
 {
-	__MASK_READ,
-	__MASK_RDWR,
-	__MASK_READ,
-	__MASK_READ
+	MASK_READ,
+	MASK_RDWR,
+	MASK_READ,
+	MASK_READ
 };
 
-static int __out_type_map[] =
+static int out_type_map[] =
 {
 	/* the order should match the order of the 
 	 * ASE_AWK_OUT_XXX values in tree.h */
@@ -54,7 +54,7 @@ static int __out_type_map[] =
 	ASE_AWK_EXTIO_CONSOLE
 };
 
-static int __out_mode_map[] =
+static int out_mode_map[] =
 {
 	/* the order should match the order of the 
 	 * ASE_AWK_OUT_XXX values in tree.h */
@@ -65,13 +65,13 @@ static int __out_mode_map[] =
 	ASE_AWK_EXTIO_CONSOLE_WRITE
 };
 
-static int __out_mask_map[] =
+static int out_mask_map[] =
 {
-	__MASK_WRITE,
-	__MASK_RDWR,
-	__MASK_WRITE,
-	__MASK_WRITE,
-	__MASK_WRITE
+	MASK_WRITE,
+	MASK_RDWR,
+	MASK_WRITE,
+	MASK_WRITE,
+	MASK_WRITE
 };
 
 int ase_awk_readextio (
@@ -87,14 +87,14 @@ int ase_awk_readextio (
 	ase_size_t line_len = 0;
 	ase_char_t c = ASE_T('\0'), pc;
 
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_type_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mode_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
-	extio_type = __in_type_map[in_type];
-	extio_mode = __in_mode_map[in_type];
-	extio_mask = __in_mask_map[in_type];
+	extio_type = in_type_map[in_type];
+	extio_mode = in_mode_map[in_type];
+	extio_mask = in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
 	if (handler == ASE_NULL)
@@ -424,14 +424,14 @@ int ase_awk_writeextio_str (
 	ase_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, n;
 
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
-	extio_type = __out_type_map[out_type];
-	extio_mode = __out_mode_map[out_type];
-	extio_mask = __out_mask_map[out_type];
+	extio_type = out_type_map[out_type];
+	extio_mode = out_mode_map[out_type];
+	extio_mask = out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
 	if (handler == ASE_NULL)
@@ -565,14 +565,14 @@ int ase_awk_flushextio (
 	int extio_type, /*extio_mode,*/ extio_mask, n;
 	ase_bool_t ok = ase_false;
 
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
-	extio_type = __out_type_map[out_type];
-	/*extio_mode = __out_mode_map[out_type];*/
-	extio_mask = __out_mask_map[out_type];
+	extio_type = out_type_map[out_type];
+	/*extio_mode = out_mode_map[out_type];*/
+	extio_mask = out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
 	if (handler == ASE_NULL)
@@ -618,14 +618,14 @@ int ase_awk_nextextio_read (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask, n;
 
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_type_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mode_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
-	extio_type = __in_type_map[in_type];
-	/*extio_mode = __in_mode_map[in_type];*/
-	extio_mask = __in_mask_map[in_type];
+	extio_type = in_type_map[in_type];
+	/*extio_mode = in_mode_map[in_type];*/
+	extio_mask = in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
 	if (handler == ASE_NULL)
@@ -694,14 +694,14 @@ int ase_awk_nextextio_write (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask, n;
 
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
-	extio_type = __out_type_map[out_type];
-	/*extio_mode = __out_mode_map[out_type];*/
-	extio_mask = __out_mask_map[out_type];
+	extio_type = out_type_map[out_type];
+	/*extio_mode = out_mode_map[out_type];*/
+	extio_mask = out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
 	if (handler == ASE_NULL)
@@ -766,14 +766,14 @@ int ase_awk_closeextio_read (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask;
 
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_type_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mode_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(__in_mask_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_type_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mode_map));
+	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
-	extio_type = __in_type_map[in_type];
-	/*extio_mode = __in_mode_map[in_type];*/
-	extio_mask = __in_mask_map[in_type];
+	extio_type = in_type_map[in_type];
+	/*extio_mode = in_mode_map[in_type];*/
+	extio_mask = in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
 	if (handler == ASE_NULL)
@@ -790,7 +790,7 @@ int ase_awk_closeextio_read (
 		{
 			ase_awk_io_t handler;
 		       
-			handler = run->extio.handler[p->type & __MASK_CLEAR];
+			handler = run->extio.handler[p->type & MASK_CLEAR];
 			if (handler != ASE_NULL)
 			{
 				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
@@ -825,14 +825,14 @@ int ase_awk_closeextio_write (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask;
 
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_type_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mode_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(__out_mask_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
+	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
-	extio_type = __out_type_map[out_type];
-	/*extio_mode = __out_mode_map[out_type];*/
-	extio_mask = __out_mask_map[out_type];
+	extio_type = out_type_map[out_type];
+	/*extio_mode = out_mode_map[out_type];*/
+	extio_mask = out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
 	if (handler == ASE_NULL)
@@ -849,7 +849,7 @@ int ase_awk_closeextio_write (
 		{
 			ase_awk_io_t handler;
 		       
-			handler = run->extio.handler[p->type & __MASK_CLEAR];
+			handler = run->extio.handler[p->type & MASK_CLEAR];
 			if (handler != ASE_NULL)
 			{
 				ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
@@ -889,7 +889,7 @@ int ase_awk_closeextio (ase_awk_run_t* run, const ase_char_t* name)
 		{
 			ase_awk_io_t handler;
 		       
-			handler = run->extio.handler[p->type & __MASK_CLEAR];
+			handler = run->extio.handler[p->type & MASK_CLEAR];
 			if (handler != ASE_NULL)
 			{
 				ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
@@ -928,7 +928,7 @@ void ase_awk_clearextio (ase_awk_run_t* run)
 	while (run->extio.chain != ASE_NULL)
 	{
 		handler = run->extio.handler[
-			run->extio.chain->type & __MASK_CLEAR];
+			run->extio.chain->type & MASK_CLEAR];
 		next = run->extio.chain->next;
 
 		if (handler != ASE_NULL)

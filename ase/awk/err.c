@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.96 2007-03-20 10:44:44 bacon Exp $
+ * $Id: err.c,v 1.97 2007-03-22 10:31:24 bacon Exp $
  *
  * {License}
  */
@@ -8,7 +8,7 @@
 
 static const ase_char_t* __geterrstr (int errnum)
 {
-	static const ase_char_t* __errstr[] =
+	static const ase_char_t* errstr[] =
  	{
 		ASE_T("no error"),
 
@@ -147,9 +147,9 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("garbage after the regular expression")
 	};
 
-	if (errnum >= 0 && errnum < ASE_COUNTOF(__errstr)) 
+	if (errnum >= 0 && errnum < ASE_COUNTOF(errstr)) 
 	{
-		return __errstr[errnum];
+		return errstr[errnum];
 	}
 
 	return ASE_T("unknown error");
