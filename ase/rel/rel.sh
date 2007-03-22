@@ -60,6 +60,9 @@ finalize ()
 			*.dsp|*.dsw)
 				"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
 				;;
+			*.frx)
+				cp -f "$full" "$target/$file"
+				;;
 			*)
 				if [ "$dir" = "test/com" ]
 				then
