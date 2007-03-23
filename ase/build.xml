@@ -3,16 +3,20 @@
 		ASE build file
 	</description>
 
-	<property name="src" location="awk" />
-	<property name="dst" location=".." />
-	<property name="tst" location="test/awk" />
+	<property name="awkdir" location="awk" />
+	<property name="testawkdir" location="test/awk" />
+
+	<property name="destdir" location=".." />
 
 	<target name="compile" description="compile the source code">
-		<javac srcdir="${src}" destdir="${dst}" />
-		<javac srcdir="${tst}" destdir="${dst}" />
+		<javac srcdir="${awkdir}" destdir="${destdir}" />
+		<javac srcdir="${testawkdir}" destdir="${destdir}" />
 	</target>
 
 	<target name="clean" description="clean up">
+		<delete>
+			<fileset dir="." includes="**/*.class" />
+		</delete>
 	</target>
 
 </project>
