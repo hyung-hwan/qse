@@ -1,6 +1,7 @@
 <project name="ase" default="compile" basedir=".">
+
 	<description>
-		ASE build file
+		ANT build script for ASE 
 	</description>
 
 	<property name="awkdir" location="awk" />
