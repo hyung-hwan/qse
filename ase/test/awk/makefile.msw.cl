@@ -25,9 +25,14 @@ mini: mini.obj
 
 java: 
 	javac -classpath ../../.. Awk.java
+	javac -classpath ../../.. AwkApplet.java
 
 jrun:
 	java -classpath ../../.. ase.test.awk.Awk
+
+cert:
+	keytool -genkey -keystore ase.store -alias asecert	
+	keytool -export -keystore ase.store -alias asecert -file ase.cer
 
 clean:
 	del $(OBJS) *.obj aseawk.exe mini.exe

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.27 2007-02-23 08:54:03 bacon Exp $
+ * $Id: Awk.java,v 1.28 2007-03-23 07:45:22 bacon Exp $
  */
 
 package ase.test.awk;
@@ -71,7 +71,7 @@ public class Awk extends ase.awk.StdAwk
 	protected String[] sourceInputNames ()
 	{
 		String[] sin = new String[1];
-		sin[0] = "t.awk";
+		sin[0] = "c:/projects/ase/test/awk/t.awk";
 		return sin;
 	}
 
