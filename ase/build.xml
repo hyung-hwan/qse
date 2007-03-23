@@ -1,0 +1,18 @@
+<project name="ase" default="compile" basedir=".">
+	<description>
+		ASE build file
+	</description>
+
+	<property name="src" location="awk" />
+	<property name="dst" location=".." />
+	<property name="tst" location="test/awk" />
+
+	<target name="compile" description="compile the source code">
+		<javac srcdir="${src}" destdir="${dst}" />
+		<javac srcdir="${tst}" destdir="${dst}" />
+	</target>
+
+	<target name="clean" description="clean up">
+	</target>
+
+</project>
