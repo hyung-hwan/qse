@@ -12,6 +12,8 @@
 	<target name="compile" description="compile the source code">
 		<javac srcdir="${awkdir}" destdir="${destdir}" />
 		<javac srcdir="${testawkdir}" destdir="${destdir}" />
+
+		<jar destfile="aseawk.jar" basedir=".." includes="**/*.class" />
 	</target>
 
 	<target name="clean" description="clean up">
