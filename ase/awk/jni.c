@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.75 2007-03-19 03:33:53 bacon Exp $
+ * $Id: jni.c,v 1.76 2007-03-23 07:45:22 bacon Exp $
  *
  * {License}
  */
@@ -310,7 +310,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	ase_awk_t* awk;
 	ase_awk_prmfns_t prmfns;
 	awk_data_t* awk_data;
-	int opt, errnum;
+	int opt;
 	
 	memset (&prmfns, 0, sizeof(prmfns));
 
@@ -352,13 +352,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	memset (awk_data, 0, sizeof(awk_data_t));
 
-	awk = ase_awk_open (&prmfns, awk_data, &errnum);
+	awk = ase_awk_open (&prmfns, awk_data);
 	if (awk == NULL)
 	{
 		throw_exception (
 			env,
-			ase_awk_geterrstr(ASE_NULL, errnum), 
-			errnum, 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
+			ASE_AWK_ENOMEM,
 			0);
 		return;
 	}
@@ -464,7 +464,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 		(*env)->DeleteLocalRef (env, run_data.object_class); \
 	} while (0)
 
-static ase_char_t* java_strxdup (jchar* str, jint len)
+static ase_char_t* java_strxdup (const jchar* str, jint len)
 {
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
@@ -503,7 +503,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	ase_char_t* mmm;
 
 	ase_size_t len, i;
-	jchar* ptr;
+	const jchar* ptr;
 
 	ase_awk_runarg_t* runarg = NULL;
 
@@ -678,7 +678,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 
 		for (i = 0; i < len; i++)
 		{
-			jchar* tmp;
+			const jchar* tmp;
 			jstring obj = (jstring)(*env)->GetObjectArrayElement (env, args, i);
 
 			runarg[i].len = (*env)->GetStringLength (env, obj);	

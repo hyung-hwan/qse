@@ -1,9 +1,9 @@
-package ase.test.awk;
+//package ase.test.awk;
 
 import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
-
+import java.net.URL;
 
 public class AwkApplet extends Applet
 {
@@ -27,11 +27,27 @@ public class AwkApplet extends Applet
 
 	private void run_awk ()
 	{
-		Awk awk = null;
+		ase.test.awk.Awk awk = null;
 
 		try
 		{
-			awk = new Awk ();
+			/*
+			URL url = ase.awk.Awk.class.getResource ("aseawk_jni.dll");
+			if (url == null) url = ase.awk.Awk.class.getResource ("aseawk_jni.so");
+
+			if (url != null) System.load (url.getFile()); */
+
+			try
+			{
+				System.load ("c:/projects/ase/test/awk/aseawk_jni.dll");
+			}
+			catch (Exception e)
+			{
+				System.err.println ("fuck you");
+			}
+
+
+			awk = new ase.test.awk.Awk ();
 			awk.parse ();
 			awk.run ();
 		}
