@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.6 2007-03-24 15:19:10 bacon Exp $ -->
+<!-- $Id: build.xml,v 1.7 2007-03-24 15:24:31 bacon Exp $ -->
 
 <project name="ase" default="release" basedir=".">
 
@@ -14,12 +14,18 @@
 		<jar jarfile="${destdir}/aseawk.jar"
 		     basedir="${destdir}"
 		     includes="**/*.class" />
+
+		<delete dir="${destdir}" includes="**/*.class" />
+		<delete dir="${destdir}/ase" />
 	</target>
 
 	<target name="debug" depends="init-debug,compile">
 		<jar jarfile="${destdir}/aseawk.jar" 
 		     basedir="${destdir}" 
 		     includes="**/*.class" />
+
+		<delete dir="${destdir}" includes="**/*.class" />
+		<delete dir="${destdir}/ase" />
 	</target>
 
 	<target name="init-release">
