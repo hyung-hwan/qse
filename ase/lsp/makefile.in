@@ -1,26 +1,91 @@
-OUT = aselsp
+#
+# $Id: makefile.in,v 1.15 2007-03-24 04:53:02 bacon Exp $
+#
 
-C_SRCS = lsp.c name.c mem.c env.c err.c read.c eval.c print.c misc.c \
-	prim.c prim_prog.c prim_let.c prim_compar.c prim_math.c
-C_OBJS = $(C_SRCS:.c=.o)
+NAME = aselsp
 
 CC = @CC@
 AR = ar
+MAKE = @MAKE@
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
+MODE = @BUILDMODE@
 
-all: lib 
+OUT_DIR = ../$(MODE)
+OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
-lib: $(C_OBJS)
-	$(AR) cr lib$(OUT).a $(C_OBJS)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
+TMP_DIR = $(MODE)
+
+OBJ_FILES = \
+	$(TMP_DIR)/lsp.o \
+	$(TMP_DIR)/name.o \
+	$(TMP_DIR)/mem.o \
+	$(TMP_DIR)/env.o \
+	$(TMP_DIR)/err.o \
+	$(TMP_DIR)/eval.o \
+	$(TMP_DIR)/read.o \
+	$(TMP_DIR)/print.o \
+	$(TMP_DIR)/misc.o \
+	$(TMP_DIR)/prim.o \
+	$(TMP_DIR)/prim_prog.o \
+	$(TMP_DIR)/prim_let.o \
+	$(TMP_DIR)/prim_compar.o \
+	$(TMP_DIR)/prim_math.o
+
+$(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
+	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+	
+$(TMP_DIR)/lsp.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c lsp.c
+
+$(TMP_DIR)/name.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c name.c
+
+$(TMP_DIR)/mem.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c mem.c
+
+$(TMP_DIR)/env.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c env.c
+
+$(TMP_DIR)/err.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c err.c
+
+$(TMP_DIR)/eval.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c eval.c
+
+$(TMP_DIR)/read.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c read.c
+
+$(TMP_DIR)/print.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c print.c
+
+$(TMP_DIR)/misc.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c misc.c
+
+$(TMP_DIR)/prim.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c prim.c
+
+$(TMP_DIR)/prim_prog.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c prim_prog.c
+
+$(TMP_DIR)/prim_let.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c prim_let.c
+
+$(TMP_DIR)/prim_compar.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c prim_compar.c
+
+$(TMP_DIR)/prim_math.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c prim_math.c
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
 
 clean:
-	rm -rf $(OBJS) lib$(OUT).a *.o
-
-.SUFFIXES: .c .o
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+	rm -rf $(OUT_FILE) $(OBJ_FILES)
 
