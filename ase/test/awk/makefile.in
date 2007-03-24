@@ -1,20 +1,23 @@
+#
+# $Id: makefile.in,v 1.16 2007-03-24 05:02:52 bacon Exp $
+#
 
 CC = @CC@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. 
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/cmn -L@abs_top_builddir@/awk -L@abs_top_builddir@/utl 
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/@BUILDMODE@
 LIBS = @LIBS@ -laseawk -lasecmn -laseutl -lm
+MODE = @BUILDMODE@
 
-all: aseawk mini
+OUT_DIR = ../../$(MODE)
 
-aseawk: awk.o
-	$(CC) -o $@ awk.o $(LDFLAGS) $(LIBS)
+all: $(OUT_DIR)/aseawk $(OUT_DIR)/miniawk
 
-mini: mini.o
-	$(CC) -o $@ mini.o $(LDFLAGS) $(LIBS)
+$(OUT_DIR)/aseawk:
+	$(CC) $(CFLAGS) -o $@ awk.c $(LDFLAGS) $(LIBS)
+
+$(OUT_DIR)/miniawk:
+	$(CC) $(CFLAGS) -o $@ mini.c $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -rf *.o aseawk mini
+	rm -rf $(OUT_DIR)/aseawk $(OUT_DIR)/miniawk
 
-.SUFFIXES: .c .o
-.c.o:
-	$(CC) -c $(CFLAGS) $<
