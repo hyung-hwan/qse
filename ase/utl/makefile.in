@@ -1,25 +1,47 @@
-OUT = aseutl
+#
+# $Id: makefile.in,v 1.4 2007-03-24 04:39:52 bacon Exp $
+#
 
-C_SRCS = main.c ctype.c stdio.c
-C_OBJS = $(C_SRCS:.c=.o)
+NAME = aseutl
 
 CC = @CC@
 AR = ar
+MAKE = @MAKE@
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
+MODE = @BUILDMODE@
 
-all: lib 
+OUT_DIR = ../$(MODE)
+OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
-lib: $(C_OBJS)
-	$(AR) cr lib$(OUT).a $(C_OBJS)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
+TMP_DIR = $(MODE)
+
+OBJ_FILES = \
+	$(TMP_DIR)/main.o \
+	$(TMP_DIR)/ctype.o \
+	$(TMP_DIR)/stdio.o 
+
+$(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
+	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+	
+$(TMP_DIR)/main.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c main.c
+
+$(TMP_DIR)/ctype.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c ctype.c
+
+$(TMP_DIR)/stdio.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c stdio.c
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
 
 clean:
-	rm -rf $(OBJS) lib$(OUT).a *.o
-
-.SUFFIXES: .c .o
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+	rm -rf $(OUT_FILE) $(OBJ_FILES)
 

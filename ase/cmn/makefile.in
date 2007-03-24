@@ -1,7 +1,8 @@
-OUT = asecmn
+#
+# $Id: makefile.in,v 1.5 2007-03-24 04:39:52 bacon Exp $
+#
 
-C_SRCS = mem.c str.c misc.c
-C_OBJS = $(C_SRCS:.c=.o)
+NAME = asecmn
 
 CC = @CC@
 AR = ar
@@ -10,18 +11,37 @@ RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-BUILDMODE = @BUILDMODE@
+MODE = @BUILDMODE@
 
-all: lib 
+OUT_DIR = ../$(MODE)
+OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
-lib: $(C_OBJS)
-	$(AR) cr lib$(OUT).a $(C_OBJS)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
+TMP_DIR = $(MODE)
+
+OBJ_FILES = \
+	$(TMP_DIR)/mem.o \
+	$(TMP_DIR)/str.o \
+	$(TMP_DIR)/misc.o 
+
+$(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
+	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+	
+$(TMP_DIR)/mem.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c mem.c
+
+$(TMP_DIR)/str.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c str.c
+
+$(TMP_DIR)/misc.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c misc.c
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
 
 clean:
-	rm -rf $(OBJS) lib$(OUT).a *.o
-
-.SUFFIXES: .c .o
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+	rm -rf $(OUT_FILE) $(OBJ_FILES)
 
