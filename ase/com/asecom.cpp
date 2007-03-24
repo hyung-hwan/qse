@@ -1,5 +1,5 @@
 /*
- * $Id: ase.cpp,v 1.2 2007-02-03 10:52:12 bacon Exp $
+ * $Id: asecom.cpp,v 1.1 2007-03-24 05:18:32 bacon Exp $
  *
  * {License}
  */
@@ -11,7 +11,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include <initguid.h>
-#include "ase.h"
+#include "asecom.h"
 
 #include "ase_i.c"
 #include "Awk.h"

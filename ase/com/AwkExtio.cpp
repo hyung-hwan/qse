@@ -1,11 +1,11 @@
 /*
- * $Id: AwkExtio.cpp,v 1.9 2007-02-03 10:52:12 bacon Exp $
+ * $Id: AwkExtio.cpp,v 1.10 2007-03-24 05:18:32 bacon Exp $
  *
  * {License}
  */
 
 #include "stdafx.h"
-#include "ase.h"
+#include "asecom.h"
 #include "AwkExtio.h"
 
 #include <stdio.h>

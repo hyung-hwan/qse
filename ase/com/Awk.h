@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.16 2007-02-03 10:52:11 bacon Exp $
+ * $Id: Awk.h,v 1.17 2007-03-24 05:18:32 bacon Exp $
  *
  * {License}
  */
@@ -12,7 +12,7 @@
 #endif
 
 #include "resource.h" 
-#include "ase.h"
+#include "asecom.h"
 #include <ase/awk/awk.h>
 #include <ase/awk/val.h>
 #include "awk_cp.h"

@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.h,v 1.5 2007-02-03 10:52:12 bacon Exp $
+ * $Id: Buffer.h,v 1.6 2007-03-24 05:18:32 bacon Exp $
  *
  * {License}
  */
@@ -8,7 +8,7 @@
 #define _ASE_COM_BUFFER_H_
 
 #include "resource.h"
-#include "ase.h"
+#include "asecom.h"
 
 class ATL_NO_VTABLE CBuffer : 
 	public CComObjectRootEx<CComSingleThreadModel>,

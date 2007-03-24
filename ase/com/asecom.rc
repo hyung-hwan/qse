@@ -40,7 +40,7 @@ END
 
 3 TEXTINCLUDE DISCARDABLE 
 BEGIN
-    "1 TYPELIB ""ase.tlb""\r\n"
+    "1 TYPELIB ""asecom.tlb""\r\n"
     "\0"
 END
 
@@ -75,7 +75,7 @@ BEGIN
             VALUE "FileVersion", "1, 0, 0, 1\0"
             VALUE "InternalName", "ASE\0"
             VALUE "LegalCopyright", "Copyright 2006\0"
-            VALUE "OriginalFilename", "ase.dll\0"
+            VALUE "OriginalFilename", "asecom.dll\0"
             VALUE "ProductName", "ASE Module\0"
             VALUE "ProductVersion", "1, 0, 0, 1\0"
             VALUE "OLESelfRegister", "\0"
@@ -119,7 +119,7 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-1 TYPELIB "ase.tlb"
+1 TYPELIB "asecom.tlb"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
