@@ -71,12 +71,12 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "ASE Module\0"
+            VALUE "FileDescription", "ASE COM Module\0"
             VALUE "FileVersion", "1, 0, 0, 1\0"
             VALUE "InternalName", "ASE\0"
             VALUE "LegalCopyright", "Copyright 2006\0"
             VALUE "OriginalFilename", "asecom.dll\0"
-            VALUE "ProductName", "ASE Module\0"
+            VALUE "ProductName", "ASE COM Module\0"
             VALUE "ProductVersion", "1, 0, 0, 1\0"
             VALUE "OLESelfRegister", "\0"
         END
