@@ -38,8 +38,8 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../debug/win32/vs60"
-# PROP Intermediate_Dir "debug/win32/vs60"
+# PROP Output_Dir "../debug"
+# PROP Intermediate_Dir "debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /GZ /c
@@ -48,15 +48,15 @@ RSC=rc.exe
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo /o"debug/win32/vs60/ase.bsc"
+# ADD BSC32 /nologo /o"debug/ase.bsc"
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /implib:"debug/win32/vs60/ase.lib" /pdbtype:sept /libpath:"$(OutDir)"
+# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /implib:"debug/ase.lib" /pdbtype:sept /libpath:"$(OutDir)"
 # Begin Custom Build - Performing registration
-IntDir=.\debug/win32/vs60
-OutDir=.\../debug/win32/vs60
-TargetPath=\projects\ase\debug\win32\vs60\ase.dll
-InputPath=\projects\ase\debug\win32\vs60\ase.dll
+IntDir=.\debug
+OutDir=.\../debug
+TargetPath=\projects\ase\debug\ase.dll
+InputPath=\projects\ase\debug\ase.dll
 SOURCE="$(InputPath)"
 
 "$(IntDir)\regsvr32.trg" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -81,8 +81,8 @@ SOURCE="$(InputPath)"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "../release/win32/vs60"
-# PROP Intermediate_Dir "release/win32/vs60"
+# PROP Output_Dir "../release"
+# PROP Intermediate_Dir "release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_UNICODE" /D "_ATL_STATIC_REGISTRY" /D "_ATL_MIN_CRT" /Yu"stdafx.h" /FD /c
@@ -91,15 +91,15 @@ SOURCE="$(InputPath)"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo /o"release/win32/vs60/awk.bsc"
+# ADD BSC32 /nologo /o"release/awk.bsc"
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /implib:"release/win32/vs60/ase.lib" /libpath:"$(OutDir)"
+# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /implib:"release/ase.lib" /libpath:"$(OutDir)"
 # Begin Custom Build - Performing registration
-IntDir=.\release/win32/vs60
-OutDir=.\../release/win32/vs60
-TargetPath=\projects\ase\release\win32\vs60\ase.dll
-InputPath=\projects\ase\release\win32\vs60\ase.dll
+IntDir=.\release
+OutDir=.\../release
+TargetPath=\projects\ase\release\ase.dll
+InputPath=\projects\ase\release\ase.dll
 SOURCE="$(InputPath)"
 
 "$(IntDir)\regsvr32.trg" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
