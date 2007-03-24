@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.7 2007-03-24 15:24:31 bacon Exp $ -->
+<!-- $Id: build.xml,v 1.8 2007-03-24 15:49:59 bacon Exp $ -->
 
 <project name="ase" default="release" basedir=".">
 
@@ -15,7 +15,6 @@
 		     basedir="${destdir}"
 		     includes="**/*.class" />
 
-		<delete dir="${destdir}" includes="**/*.class" />
 		<delete dir="${destdir}/ase" />
 	</target>
 
@@ -24,7 +23,6 @@
 		     basedir="${destdir}" 
 		     includes="**/*.class" />
 
-		<delete dir="${destdir}" includes="**/*.class" />
 		<delete dir="${destdir}/ase" />
 	</target>
 

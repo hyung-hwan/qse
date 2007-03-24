@@ -1,4 +1,6 @@
-//package ase.test.awk;
+/*
+ * $Id: AwkApplet.java,v 1.4 2007-03-24 15:49:59 bacon Exp $
+ */
 
 import java.applet.*;
 import java.awt.*;
@@ -27,7 +29,7 @@ public class AwkApplet extends Applet
 
 	private void run_awk ()
 	{
-		ase.test.awk.Awk awk = null;
+		Awk awk = null;
 
 		try
 		{
@@ -47,7 +49,7 @@ public class AwkApplet extends Applet
 			}
 
 
-			awk = new ase.test.awk.Awk ();
+			awk = new Awk ();
 			awk.parse ();
 			awk.run ();
 		}

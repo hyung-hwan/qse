@@ -1,8 +1,6 @@
 /*
- * $Id: Awk.java,v 1.28 2007-03-23 07:45:22 bacon Exp $
+ * $Id: Awk.java,v 1.29 2007-03-24 15:49:59 bacon Exp $
  */
-
-package ase.test.awk;
 
 import java.net.URL;
 
