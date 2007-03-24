@@ -8,12 +8,12 @@ CFG=aesawk_jni - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "aesawk_jni.mak".
+!MESSAGE NMAKE /f "aseawk_jni.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "aesawk_jni.mak" CFG="aesawk_jni - Win32 Debug"
+!MESSAGE NMAKE /f "aseawk_jni.mak" CFG="aesawk_jni - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 asecmn.lib aseawk.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /out:"../release/aseawk_jni.dll" /implib:"release/aseawk_jni.lib" /libpath:"$(OutDir)"
+# ADD LINK32 asecmn.lib aseawk.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /implib:"release/aseawk_jni.lib" /libpath:"$(OutDir)"
 
 !ELSEIF  "$(CFG)" == "aesawk_jni - Win32 Debug"
 
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 asecmn.lib aseawk.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /out:"../debug/aseawk_jni.dll" /implib:"debug/aseawk_jni.lib" /pdbtype:sept /libpath:"$(OutDir)"
+# ADD LINK32 asecmn.lib aseawk.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /implib:"debug/aseawk_jni.lib" /pdbtype:sept /libpath:"$(OutDir)"
 
 !ENDIF 
 
