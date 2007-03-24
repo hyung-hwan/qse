@@ -1,6 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.78 $])
+AC_REVISION([$Revision: 1.79 $])
 AC_CONFIG_HEADER([cmn/conf_unx.h])
 
 # Checks for programs.
@@ -8,7 +8,18 @@ AC_CONFIG_HEADER([cmn/conf_unx.h])
 AC_PROG_CC
 AC_PROG_RANLIB
 
-# Checks for libraries.
+# Overrides the default CFLAGS setting
+if test "$ac_test_CFLAGS" = "set"
+then
+	CFLAGS=$ac_save_CFLAGS
+else
+	if test "$GCC" = "yes"
+	then
+		CFLAGS="-O2"
+	else
+		CFLAGS=
+	fi
+fi
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -57,7 +68,8 @@ AC_DEFINE_UNQUOTED(ASE_SIZEOF_DOUBLE,${ac_cv_sizeof_double})
 AC_DEFINE_UNQUOTED(ASE_SIZEOF_LONG_DOUBLE,${ac_cv_sizeof_long_double})
 AC_DEFINE_UNQUOTED(ASE_SIZEOF_WCHAR_T,${ac_cv_sizeof_wchar_t})
 
-# Checks for library functions.
+# Defines extra options
+
 AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 	[use wchar_t a default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)
@@ -68,6 +80,19 @@ else
 	AC_DEFINE([ASE_CHAR_IS_MCHAR],[],[char is mchar])
 fi
 
+AC_ARG_ENABLE([mode], [AC_HELP_STRING([--enable-debug],
+	[build the library in the debug mode (default. no)])],
+	enable_debug_is=$enableval,enable_debug_is=no)
+if test "$enable_debug_is" = "yes"
+then
+	[CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG"]
+	AC_SUBST(BUILDMODE, "debug")
+else
+	[CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG"]
+	AC_SUBST(BUILDMODE, "release")
+fi
+
+# Configure makefiles
 AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
 	[define _REENTRANT (default. yes)])],
 	enable_reentrant_is=$enableval,enable_reentrant_is=yes)
