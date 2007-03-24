@@ -1,26 +1,87 @@
-OUT = aseawk
+#
+# $Id: makefile.in,v 1.28 2007-03-24 04:45:35 bacon Exp $
+#
 
-C_SRCS = awk.c err.c tree.c tab.c map.c parse.c \
-	run.c rec.c val.c func.c misc.c extio.c rex.c
-C_OBJS = $(C_SRCS:.c=.o)
+NAME = aseawk
 
 CC = @CC@
 AR = ar
+MAKE = @MAKE@
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
+MODE = @BUILDMODE@
 
-all: lib 
+OUT_DIR = ../$(MODE)
+OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
-lib: $(C_OBJS)
-	$(AR) cr lib$(OUT).a $(C_OBJS)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
+TMP_DIR = $(MODE)
+
+OBJ_FILES = \
+	$(TMP_DIR)/awk.o \
+	$(TMP_DIR)/err.o \
+	$(TMP_DIR)/tree.o \
+	$(TMP_DIR)/tab.o \
+	$(TMP_DIR)/map.o \
+	$(TMP_DIR)/parse.o \
+	$(TMP_DIR)/run.o \
+	$(TMP_DIR)/rec.o \
+	$(TMP_DIR)/val.o \
+	$(TMP_DIR)/func.o \
+	$(TMP_DIR)/misc.o \
+	$(TMP_DIR)/extio.o \
+	$(TMP_DIR)/rex.o
+
+$(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
+	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+	
+$(TMP_DIR)/awk.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c awk.c
+
+$(TMP_DIR)/err.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c err.c
+
+$(TMP_DIR)/tree.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c tree.c
+
+$(TMP_DIR)/tab.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c tab.c
+
+$(TMP_DIR)/map.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c map.c
+
+$(TMP_DIR)/parse.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c parse.c
+
+$(TMP_DIR)/run.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c run.c
+
+$(TMP_DIR)/rec.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c rec.c
+
+$(TMP_DIR)/val.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c val.c
+
+$(TMP_DIR)/func.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c func.c
+
+$(TMP_DIR)/misc.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c misc.c
+
+$(TMP_DIR)/extio.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c extio.c
+
+$(TMP_DIR)/rex.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c rex.c
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
 
 clean:
-	rm -rf $(OBJS) lib$(OUT).a *.o
-
-.SUFFIXES: .c .o
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+	rm -rf $(OUT_FILE) $(OBJ_FILES)
 
