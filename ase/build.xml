@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.5 2007-03-24 15:07:55 bacon Exp $ -->
+<!-- $Id: build.xml,v 1.6 2007-03-24 15:19:10 bacon Exp $ -->
 
 <project name="ase" default="release" basedir=".">
 
@@ -38,12 +38,13 @@
 	</target>
 
 	<target name="clean" description="clean up">
-		<delete>
-			<fileset dir="${basedir}/release"
-			         includes="**/*.class,**/*.jar" />
-			<fileset dir="${basedir}/debug"
-			         includes="**/*.class,**/*.jar" />
-		</delete>
+		<delete dir="${basedir}/release"
+		        includes="**/*.class,**/*.jar" />
+		<delete dir="${basedir}/debug"
+		        includes="**/*.class,**/*.jar" />
+
+		<delete dir="${basedir}/release/ase" />
+		<delete dir="${basedir}/debug/ase" />
 	</target>
 
 </project>
