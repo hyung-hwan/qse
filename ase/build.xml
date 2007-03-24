@@ -1,24 +1,48 @@
-<project name="ase" default="compile" basedir=".">
+<!-- $Id: build.xml,v 1.5 2007-03-24 15:07:55 bacon Exp $ -->
+
+<project name="ase" default="release" basedir=".">
 
 	<description>
 		ANT build script for ASE 
 	</description>
 
-	<property name="awkdir" location="awk" />
-	<property name="testawkdir" location="test/awk" />
+	<!--
+	<property name="destdir" location="${basedir}/release" />
+	-->
 
-	<property name="destdir" location=".." />
+	<target name="release" depends="init-release,compile">
+		<jar jarfile="${destdir}/aseawk.jar"
+		     basedir="${destdir}"
+		     includes="**/*.class" />
+	</target>
+
+	<target name="debug" depends="init-debug,compile">
+		<jar jarfile="${destdir}/aseawk.jar" 
+		     basedir="${destdir}" 
+		     includes="**/*.class" />
+	</target>
+
+	<target name="init-release">
+		<property name="destdir" location="${basedir}/release" />
+		<mkdir dir="${destdir}" />
+	</target>
+
+	<target name="init-debug">
+		<property name="destdir" location="${basedir}/debug" />
+		<mkdir dir="${destdir}" />
+	</target>
 
 	<target name="compile" description="compile the source code">
-		<javac srcdir="${awkdir}" destdir="${destdir}" />
-		<javac srcdir="${testawkdir}" destdir="${destdir}" />
-
-		<jar destfile="aseawk.jar" basedir=".." includes="**/*.class" />
+		<javac srcdir="awk" destdir="${destdir}" />
+		<javac srcdir="test/awk" destdir="${destdir}" />
 	</target>
 
 	<target name="clean" description="clean up">
 		<delete>
-			<fileset dir="." includes="**/*.class" />
+			<fileset dir="${basedir}/release"
+			         includes="**/*.class,**/*.jar" />
+			<fileset dir="${basedir}/debug"
+			         includes="**/*.class,**/*.jar" />
 		</delete>
 	</target>
 
