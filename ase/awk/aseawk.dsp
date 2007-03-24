@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo /out:"../release/aseawk.lib"
+# ADD LIB32 /nologo
 
 !ELSEIF  "$(CFG)" == "aseawk - Win32 Debug"
 
@@ -82,7 +82,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo /out:"../debug/aseawk.lib"
+# ADD LIB32 /nologo
 
 !ENDIF 
 
