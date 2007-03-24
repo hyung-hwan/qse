@@ -1,11 +1,11 @@
 /*
- * $Id: Awk.cpp,v 1.29 2007-03-19 05:39:44 bacon Exp $
+ * $Id: Awk.cpp,v 1.30 2007-03-24 05:18:31 bacon Exp $
  *
  * {License}
  */
 
 #include "stdafx.h"
-#include "ase.h"
+#include "asecom.h"
 #include "Awk.h"
 #include "AwkExtio.h"
 #include "Buffer.h"

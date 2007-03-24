@@ -1,5 +1,5 @@
 /*
- * $Id: ase.idl,v 1.16 2007-01-25 14:14:56 bacon Exp $
+ * $Id: asecom.idl,v 1.1 2007-03-24 05:18:32 bacon Exp $
  */
 
 import "oaidl.idl";

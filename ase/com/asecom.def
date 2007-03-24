@@ -1,6 +1,6 @@
 ; ase.def : Declares the module parameters.
 
-LIBRARY      "ase.dll"
+LIBRARY      "asecom.dll"
 
 EXPORTS
 	DllCanUnloadNow     @1 PRIVATE

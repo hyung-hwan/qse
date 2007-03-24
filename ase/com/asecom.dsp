@@ -48,19 +48,19 @@ RSC=rc.exe
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo /o"debug/ase.bsc"
+# ADD BSC32 /nologo /o"debug/asecom.bsc"
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /implib:"debug/ase.lib" /pdbtype:sept /libpath:"$(OutDir)"
+# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /implib:"debug/asecom.lib" /pdbtype:sept /libpath:"$(OutDir)"
 # Begin Custom Build - Performing registration
 IntDir=.\debug
 OutDir=.\../debug
-TargetPath=\projects\ase\debug\ase.dll
-InputPath=\projects\ase\debug\ase.dll
+TargetPath=\projects\ase\debug\asecom.dll
+InputPath=\projects\ase\debug\asecom.dll
 SOURCE="$(InputPath)"
 
 "$(IntDir)\regsvr32.trg" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy .\ase.tlb "$(OUTDIR)\ase.tlb" 
+	copy .\asecom.tlb "$(OUTDIR)\asecom.tlb" 
 	if "%OS%"=="" goto NOTNT 
 	if not "%OS%"=="Windows_NT" goto NOTNT 
 	regsvr32 /s /c "$(TargetPath)" 
@@ -94,16 +94,16 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo /o"release/awk.bsc"
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /implib:"release/ase.lib" /libpath:"$(OutDir)"
+# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /implib:"release/asecom.lib" /libpath:"$(OutDir)"
 # Begin Custom Build - Performing registration
 IntDir=.\release
 OutDir=.\../release
-TargetPath=\projects\ase\release\ase.dll
-InputPath=\projects\ase\release\ase.dll
+TargetPath=\projects\ase\release\asecom.dll
+InputPath=\projects\ase\release\asecom.dll
 SOURCE="$(InputPath)"
 
 "$(IntDir)\regsvr32.trg" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy .\ase.tlb "$(OUTDIR)\ase.tlb" 
+	copy .\asecom.tlb "$(OUTDIR)\asecom.tlb" 
 	if "%OS%"=="" goto NOTNT 
 	if not "%OS%"=="Windows_NT" goto NOTNT 
 	regsvr32 /s /c "$(TargetPath)" 
@@ -126,20 +126,20 @@ SOURCE="$(InputPath)"
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\ase.cpp
+SOURCE=.\asecom.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\ase.def
+SOURCE=.\asecom.def
 # End Source File
 # Begin Source File
 
-SOURCE=.\ase.idl
-# ADD MTL /tlb ".\ase.tlb" /h "ase.h" /iid "ase_i.c" /Oicf
+SOURCE=.\asecom.idl
+# ADD MTL /tlb ".\asecom.tlb" /h "asecom.h" /iid "asecom_i.c" /Oicf
 # End Source File
 # Begin Source File
 
-SOURCE=.\ase.rc
+SOURCE=.\asecom.rc
 # End Source File
 # Begin Source File
 
