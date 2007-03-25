@@ -1,7 +1,15 @@
-SUBDIRS=cmn awk lsp utl
+#
+# $Id: makefile.in,v 1.16 2007-03-25 15:02:54 bacon Exp $
+#
 
-all:
-	@for i in $(SUBDIRS); \
+
+LIBDIRS=cmn awk lsp utl
+MODE=@BUILDMODE@
+
+all: libs incs
+
+incs:
+	@for i in $(LIBDIRS); \
 	do \
 		if [ ! -d $$i ]; \
 		then \
@@ -9,7 +17,25 @@ all:
 			exit 1; \
 		fi; \
 		cd $$i; \
-		if make $@; \
+		if make inc;  \
+		then \
+			echo > /dev/null; \
+		else \
+			exit 1; \
+			fi; \
+		cd ..; \
+	done
+
+libs:
+	@for i in $(LIBDIRS); \
+	do \
+		if [ ! -d $$i ]; \
+		then \
+			echo Error: $$i not a directory; \
+			exit 1; \
+		fi; \
+		cd $$i; \
+		if make lib;  \
 		then \
 			echo > /dev/null; \
 		else \
@@ -19,7 +45,7 @@ all:
 	done
 
 clean:
-	@for i in $(SUBDIRS); \
+	@for i in $(LIBDIRS); \
 	do \
 		if [ ! -d $$i ]; \
 		then \

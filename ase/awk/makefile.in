@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.28 2007-03-24 04:45:35 bacon Exp $
+# $Id: makefile.in,v 1.29 2007-03-25 15:02:54 bacon Exp $
 #
 
 NAME = aseawk
@@ -13,7 +13,7 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
-OUT_DIR = ../$(MODE)
+OUT_DIR = ../$(MODE)/lib
 OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
 TMP_DIR = $(MODE)
@@ -32,6 +32,8 @@ OBJ_FILES = \
 	$(TMP_DIR)/misc.o \
 	$(TMP_DIR)/extio.o \
 	$(TMP_DIR)/rex.o
+
+lib: $(OUT_FILE)
 
 $(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
 	$(AR) cr $(OUT_FILE) $(OBJ_FILES)

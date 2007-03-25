@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.8 2007-03-24 15:49:59 bacon Exp $ -->
+<!-- $Id: build.xml,v 1.9 2007-03-25 15:02:54 bacon Exp $ -->
 
 <project name="ase" default="release" basedir=".">
 
@@ -10,35 +10,52 @@
 	<property name="destdir" location="${basedir}/release" />
 	-->
 
-	<target name="release" depends="init-release,compile">
-		<jar jarfile="${destdir}/aseawk.jar"
-		     basedir="${destdir}"
-		     includes="**/*.class" />
-
-		<delete dir="${destdir}/ase" />
+	<target name="release" depends="init-release,aseawk.jar,aseawk.test">
 	</target>
 
-	<target name="debug" depends="init-debug,compile">
-		<jar jarfile="${destdir}/aseawk.jar" 
-		     basedir="${destdir}" 
-		     includes="**/*.class" />
-
-		<delete dir="${destdir}/ase" />
+	<target name="debug" depends="init-debug,aseawk.jar,aseawk.test">
 	</target>
 
 	<target name="init-release">
 		<property name="destdir" location="${basedir}/release" />
-		<mkdir dir="${destdir}" />
+		<property name="libdir" location="${destdir}/lib" />
+		<property name="bindir" location="${destdir}/bin" />
+		<mkdir dir="${libdir}" />
+		<mkdir dir="${bindir}" />
 	</target>
 
 	<target name="init-debug">
 		<property name="destdir" location="${basedir}/debug" />
-		<mkdir dir="${destdir}" />
+		<property name="libdir" location="${destdir}/lib" />
+		<property name="bindir" location="${destdir}/bin" />
+		<mkdir dir="${libdir}" />
+		<mkdir dir="${bindir}" />
 	</target>
 
-	<target name="compile" description="compile the source code">
-		<javac srcdir="awk" destdir="${destdir}" />
-		<javac srcdir="test/awk" destdir="${destdir}" />
+	<target name="aseawk.jar" description="compile the awk classes">
+		<javac srcdir="awk" destdir="${libdir}" />
+
+		<jar jarfile="${libdir}/aseawk.jar"
+		     basedir="${libdir}"
+		     includes="ase/awk/*.class" />
+
+		<delete dir="${libdir}/ase" />
+	</target>
+
+	<target name="aseawk.test" depends="aseawk.jar" 
+	        description="compile the awk test classes">
+
+		<javac srcdir="test/awk" 
+		       classpath="${libdir}/aseawk.jar" 
+		       destdir="${bindir}" />
+	</target>
+
+	<target name="aseawk.applet" depends="aseawk.jar"
+	        description="compile the awk test applet">
+
+		<javac srcdir="test/awk" 
+		       classpath="${libdir}/aseawk.jar" 
+		       destdir="${bindir}" />
 	</target>
 
 	<target name="clean" description="clean up">
@@ -46,9 +63,6 @@
 		        includes="**/*.class,**/*.jar" />
 		<delete dir="${basedir}/debug"
 		        includes="**/*.class,**/*.jar" />
-
-		<delete dir="${basedir}/release/ase" />
-		<delete dir="${basedir}/debug/ase" />
 	</target>
 
 </project>
