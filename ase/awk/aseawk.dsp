@@ -37,7 +37,7 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "../release"
+# PROP Output_Dir "../release/lib"
 # PROP Intermediate_Dir "release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
@@ -65,7 +65,7 @@ LIB32=link.exe -lib
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../debug"
+# PROP Output_Dir "../debug/lib"
 # PROP Intermediate_Dir "debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
