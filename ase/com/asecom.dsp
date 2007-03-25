@@ -38,7 +38,7 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../debug"
+# PROP Output_Dir "../debug/lib"
 # PROP Intermediate_Dir "debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
@@ -53,11 +53,11 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 aseawk.lib asecmn.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /implib:"debug/asecom.lib" /pdbtype:sept /libpath:"$(OutDir)"
 # Begin Custom Build - Performing registration
-IntDir=.\debug
-OutDir=.\../debug
-TargetPath=\projects\ase\debug\asecom.dll
-InputPath=\projects\ase\debug\asecom.dll
-SOURCE="$(InputPath)"
+IntDir=./debug
+OutDir=./../debug/lib
+#TargetPath=\projects\ase\debug\lib\asecom.dll
+#InputPath=\projects\ase\debug\lib\asecom.dll
+#SOURCE="$(InputPath)"
 
 "$(IntDir)\regsvr32.trg" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	copy .\asecom.tlb "$(OUTDIR)\asecom.tlb" 
@@ -81,7 +81,7 @@ SOURCE="$(InputPath)"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "../release"
+# PROP Output_Dir "../release/lib"
 # PROP Intermediate_Dir "release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
@@ -96,11 +96,11 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
 # ADD LINK32 aseawk.lib asecmn.lib aseutl.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /implib:"release/asecom.lib" /libpath:"$(OutDir)"
 # Begin Custom Build - Performing registration
-IntDir=.\release
-OutDir=.\../release
-TargetPath=\projects\ase\release\asecom.dll
-InputPath=\projects\ase\release\asecom.dll
-SOURCE="$(InputPath)"
+IntDir=./release
+OutDir=./../release/lib
+#TargetPath=\projects\ase\release\lib\asecom.dll
+#InputPath=\projects\ase\release\lib\asecom.dll
+#SOURCE="$(InputPath)"
 
 "$(IntDir)\regsvr32.trg" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	copy .\asecom.tlb "$(OUTDIR)\asecom.tlb" 
