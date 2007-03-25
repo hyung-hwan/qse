@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.4 2007-03-24 04:39:52 bacon Exp $
+# $Id: makefile.in,v 1.5 2007-03-25 15:02:54 bacon Exp $
 #
 
 NAME = aseutl
@@ -13,7 +13,7 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
-OUT_DIR = ../$(MODE)
+OUT_DIR = ../$(MODE)/lib
 OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
 TMP_DIR = $(MODE)
@@ -22,6 +22,8 @@ OBJ_FILES = \
 	$(TMP_DIR)/main.o \
 	$(TMP_DIR)/ctype.o \
 	$(TMP_DIR)/stdio.o 
+
+lib: $(OUT_FILE)
 
 $(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
 	$(AR) cr $(OUT_FILE) $(OBJ_FILES)

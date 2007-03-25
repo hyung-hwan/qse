@@ -1,19 +1,22 @@
 #
-# $Id: makefile.in,v 1.11 2007-03-24 05:02:52 bacon Exp $
+# $Id: makefile.in,v 1.12 2007-03-25 15:02:54 bacon Exp $
 #
 
 CC = @CC@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. 
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/@BUILDMODE@
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/@BUILDMODE@/lib
 LIBS = @LIBS@ -laselsp -lasecmn -laseutl -lm
 MODE = @BUILDMODE@
 
-OUT_DIR = ../../$(MODE)
+OUT_DIR = ../../$(MODE)/bin
 
 all: $(OUT_DIR)/aselsp 
 
-$(OUT_DIR)/aselsp:
+$(OUT_DIR)/aselsp: $(OUT_DIR)
 	$(CC) $(CFLAGS) -o $@ lsp.c $(LDFLAGS) $(LIBS)
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
 
 clean:
 	rm -rf $(OUT_DIR)/aselsp 
