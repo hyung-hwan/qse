@@ -1,12 +1,12 @@
 #
-# $Id: makefile.in,v 1.16 2007-03-25 15:02:54 bacon Exp $
+# $Id: makefile.in,v 1.17 2007-03-25 15:03:25 bacon Exp $
 #
 
 
 LIBDIRS=cmn awk lsp utl
 MODE=@BUILDMODE@
 
-all: libs incs
+all: libs #incs
 
 incs:
 	@for i in $(LIBDIRS); \
