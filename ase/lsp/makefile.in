@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.15 2007-03-24 04:53:02 bacon Exp $
+# $Id: makefile.in,v 1.16 2007-03-25 15:02:54 bacon Exp $
 #
 
 NAME = aselsp
@@ -13,7 +13,7 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
-OUT_DIR = ../$(MODE)
+OUT_DIR = ../$(MODE)/lib
 OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
 TMP_DIR = $(MODE)
@@ -33,6 +33,8 @@ OBJ_FILES = \
 	$(TMP_DIR)/prim_let.o \
 	$(TMP_DIR)/prim_compar.o \
 	$(TMP_DIR)/prim_math.o
+
+lib: $(OUT_FILE)
 
 $(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
 	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
