@@ -1,12 +1,12 @@
 /*
- * $Id: Awk.java,v 1.29 2007-03-24 15:49:59 bacon Exp $
+ * $Id: AseAwk.java,v 1.1 2007-04-02 11:14:01 bacon Exp $
  */
 
 import java.net.URL;
 
-public class Awk extends ase.awk.StdAwk
+public class AseAwk extends ase.awk.StdAwk
 {
-	public Awk () throws ase.awk.Exception
+	public AseAwk () throws ase.awk.Exception
 	{
 		super ();
 
@@ -82,16 +82,35 @@ public class Awk extends ase.awk.StdAwk
 
 	public static void main (String[] args)
 	{
-		Awk awk = null;
+		AseAwk awk = null;
 
+		/*
 		URL url = ase.awk.Awk.class.getResource ("aseawk_jni.dll");
 		if (url == null) url = ase.awk.Awk.class.getResource ("aseawk_jni.so");
 		if (url != null) System.load (url.getFile());
+		*/
+
+		if (args.length != 1)
+		{
+			System.err.println ("Usage: " + AseAwk.class.getName() + " jni");
+			System.err.println ("Where jni := the full path to the jni library");
+			return;
+		}
 
 		try
 		{
-			awk = new Awk ();
-			awk.setMaxDepth (Awk.DEPTH_BLOCK_PARSE, 30);
+			System.load (args[0]);
+		}
+		catch (java.lang.UnsatisfiedLinkError e)
+		{
+			System.err.println ("Error: cannot load the library - " + args[0]);
+			return;
+		}
+
+		try
+		{
+			awk = new AseAwk ();
+			awk.setMaxDepth (AseAwk.DEPTH_BLOCK_PARSE, 30);
 			awk.setDebug (true);
 			//awk.setDebug (false);
 
