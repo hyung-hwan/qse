@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.29 2007-03-25 15:02:54 bacon Exp $
+# $Id: makefile.in,v 1.30 2007-04-04 14:45:52 bacon Exp $
 #
 
 NAME = aseawk
@@ -77,6 +77,9 @@ $(TMP_DIR)/extio.o: $(TMP_DIR)
 
 $(TMP_DIR)/rex.o: $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c rex.c
+
+$(TMP_DIR)/jni.o: $(TMP_DIR)
+	$(CC) $(CFLAGS) -o $@ -c jni.c
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
