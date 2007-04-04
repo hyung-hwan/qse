@@ -17,8 +17,8 @@ CC = cl
 LD = link
 JAVAC = javac
 
-#CFLAGS = /nologo /O2 /MT /W3 /GR- /Za -I../.. $(JNI_INC) 
-CFLAGS = /nologo /O2 /MT /W3 /GR- -I../.. $(JNI_INC) 
+#CFLAGS = /nologo /O2 /MT /W3 /GR- /GS- /Za -I../.. $(JNI_INC) 
+CFLAGS = /nologo /O2 /MT /W3 /GR- /GS- -I../.. $(JNI_INC) 
 JAVACFLAGS = -classpath ../.. -Xlint:unchecked
 
 all: lib 
