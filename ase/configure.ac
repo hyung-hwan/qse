@@ -1,10 +1,10 @@
 #
-# $Id: configure.ac,v 1.81 2007-04-04 14:45:52 bacon Exp $
+# $Id: configure.ac,v 1.82 2007-04-05 10:14:36 bacon Exp $
 # 
 
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.81 $])
+AC_REVISION([$Revision: 1.82 $])
 AC_CONFIG_HEADER([cmn/conf_unx.h])
 
 # Checks for programs.
@@ -106,86 +106,74 @@ then
 	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
 
-#
-# JNI Configuration - http://autoconf-archive.cryp.to/ac_jni_include_dir.html
-#
+# Java & JNI Configuration 
+AC_PATH_PROG(JAVAC_PATH, javac, :)
 
-AC_DEFUN([AC_JNI_INCLUDE_DIR],[
+if test "$JAVAC_PATH" != ":"
+then
+	CUR_JAVAC_PATH="$JAVAC_PATH"
 
-JNI_INCLUDE_DIRS=""
+	while ls -ld "$CUR_JAVAC_PATH" 2>/dev/null | grep " -> " >/dev/null
+	do
+		AC_MSG_CHECKING(symlink for $CUR_JAVAC_PATH)
+		REAL_JAVAC_PATH=`ls -ld "$CUR_JAVAC_PATH" | sed 's/.* -> //'`
 
-#test "x$JAVAC" = x && AC_MSG_ERROR(['\$JAVAC' undefined])
-test "x$JAVAC" = x && JAVAC=javac
-AC_PATH_PROG(_ACJNI_JAVAC, $JAVAC, no)
-test "x$_ACJNI_JAVAC" = xno && AC_MSG_ERROR([$JAVAC could not be found in path])
+		case "$REAL_JAVAC_PATH" in
+		/*) CUR_JAVAC_PATH="$REAL_JAVAC_PATH";;
+		*) CUR_JAVAC_PATH=`echo "X$CUR_JAVAC_PATH" | sed -e 's/^X//' -e 's:[[^/]]*$::'`"$REAL_JAVAC_PATH";;
+		esac
 
-host_os=`uname -s | tr [A-Z] [a-z]`
+		AC_MSG_RESULT($CUR_JAVAC_PATH)
+	done
 
-_ACJNI_FOLLOW_SYMLINKS("$_ACJNI_JAVAC")
-_JTOPDIR=`echo "$_ACJNI_FOLLOWED" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
-case "$host_os" in
-        darwin*)        _JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[[^/]]*$::'`
-                        _JINC="$_JTOPDIR/Headers";;
-        *)              _JINC="$_JTOPDIR/include";;
-esac
-if test -f "$_JINC/jni.h"; then
-        JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JINC"
+	JAVA_DIR="$CUR_JAVAC_PATH"
+
+	while true
+	do
+		JAVA_DIR=`echo "$JAVA_DIR" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
+		if test "$JAVA_DIR" = "" 
+		then
+			break
+		fi
+
+		AC_MSG_CHECKING($JAVA_DIR/include/jni.h)
+		if test -f "$JAVA_DIR/include/jni.h"
+		then
+			AC_MSG_RESULT(yes)
+			JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $JAVA_DIR/include"
+			break;
+		else
+			AC_MSG_RESULT(no)
+		fi
+	done
+
+	for i in $JNI_INCLUDE_DIRS
+	do
+		JNI_MD_H=`find "$i" -name jni_md.h -print`
+		if test "$JNI_MD_H" != "" 
+		then
+			tmp=`echo "$JNI_MD_H" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
+			JNI_MD_INCLUDE_DIRS="$JNI_MD_INCLUDE_DIRS $tmp"
+		fi
+	done
+
+	JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $JNI_MD_INCLUDE_DIRS"
+
+	for i in $JNI_INCLUDE_DIRS
+	do
+		CFLAGS_JNI="$CFLAGS_JNI -I$i"	
+	done
+
+	JNI="jni"
 else
-        _JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[[^/]]*$::'`
-        if test -f "$_JTOPDIR/include/jni.h"; then
-                JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include"
-        else
-                AC_MSG_ERROR([cannot find java include files])
-        fi
+	JAVAC_PATH=""
+	CFLAGS_JNI=""
+	JNI=""
 fi
 
-# get the likely subdirectories for system specific java includes
-case "$host_os" in
-bsdi*)          _JNI_INC_SUBDIRS="bsdos";;
-linux*)         _JNI_INC_SUBDIRS="linux genunix";;
-osf*)           _JNI_INC_SUBDIRS="alpha";;
-solaris*)       _JNI_INC_SUBDIRS="solaris";;
-mingw*)                 _JNI_INC_SUBDIRS="win32";;
-cygwin*)                _JNI_INC_SUBDIRS="win32";;
-*)              _JNI_INC_SUBDIRS="genunix";;
-esac
-
-# add any subdirectories that are present
-for JINCSUBDIR in $_JNI_INC_SUBDIRS
-do
-        if test -d "$_JTOPDIR/include/$JINCSUBDIR"; then
-                JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include/$JINCSUBDIR"
-        fi
-done
-])
-
-# _ACJNI_FOLLOW_SYMLINKS <path>
-# Follows symbolic links on <path>,
-# finally setting variable _ACJNI_FOLLOWED
-# --------------------
-AC_DEFUN([_ACJNI_FOLLOW_SYMLINKS],[
-# find the include directory relative to the javac executable
-_cur="$1"
-while ls -ld "$_cur" 2>/dev/null | grep " -> " >/dev/null; do
-        AC_MSG_CHECKING(symlink for $_cur)
-        _slink=`ls -ld "$_cur" | sed 's/.* -> //'`
-        case "$_slink" in
-        /*) _cur="$_slink";;
-        # 'X' avoids triggering unwanted echo options.
-        *) _cur=`echo "X$_cur" | sed -e 's/^X//' -e 's:[[^/]]*$::'`"$_slink";;
-        esac
-        AC_MSG_RESULT($_cur)
-done
-_ACJNI_FOLLOWED="$_cur"
-])# _ACJNI
-
-AC_JNI_INCLUDE_DIR
-
-for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
-do
-	CFLAGS="$CFLAGS -I$JNI_INCLUDE_DIR"
-done
-
+AC_SUBST(CFLAGS_JNI, $CFLAGS_JNI)
+AC_SUBST(JAVAC, $JAVAC_PATH)
+AC_SUBST(JNI, $JNI)
 
 AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile])
 AC_OUTPUT

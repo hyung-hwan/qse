@@ -1,20 +1,24 @@
 #
-# $Id: makefile.in,v 1.30 2007-04-04 14:45:52 bacon Exp $
+# $Id: makefile.in,v 1.31 2007-04-05 10:14:36 bacon Exp $
 #
 
 NAME = aseawk
 
 CC = @CC@
 AR = ar
-MAKE = @MAKE@
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
+JAVAC = @JAVAC@
+CFLAGS_JNI = @CFLAGS_JNI@
+JNI = @JNI@
+
 OUT_DIR = ../$(MODE)/lib
 OUT_FILE = $(OUT_DIR)/lib$(NAME).a
+OUT_FILE_JNI = $(OUT_DIR)/lib$(NAME)_jni.so
 
 TMP_DIR = $(MODE)
 
@@ -33,11 +37,20 @@ OBJ_FILES = \
 	$(TMP_DIR)/extio.o \
 	$(TMP_DIR)/rex.o
 
-lib: $(OUT_FILE)
+OBJ_FILES_JNI = $(TMP_DIR)/jni.o
+
+lib: build$(JNI)
+
+build: $(OUT_FILE)
+
+buildjni: build $(OUT_FILE_JNI)
 
 $(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
 	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
 	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+
+$(OUT_FILE_JNI): $(OBJ_FILES_JNI) $(OUT_FILE)
+	$(CC) -shared -o $(OUT_FILE_JNI) $(OBJ_FILES_JNI) -lm -L$(OUT_DIR) -l$(NAME)
 	
 $(TMP_DIR)/awk.o: $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c awk.c
@@ -79,7 +92,7 @@ $(TMP_DIR)/rex.o: $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c rex.c
 
 $(TMP_DIR)/jni.o: $(TMP_DIR)
-	$(CC) $(CFLAGS) -o $@ -c jni.c
+	$(CC) $(CFLAGS) $(CFLAGS_JNI) -o $@ -c jni.c
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
