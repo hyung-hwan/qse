@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.31 2007-04-05 10:14:36 bacon Exp $
+# $Id: makefile.in,v 1.32 2007-04-05 10:37:59 bacon Exp $
 #
 
 NAME = aseawk
@@ -13,16 +13,18 @@ LIBS = @LIBS@
 MODE = @BUILDMODE@
 
 JAVAC = @JAVAC@
+JAR = @JAR@
 CFLAGS_JNI = @CFLAGS_JNI@
 JNI = @JNI@
 
 OUT_DIR = ../$(MODE)/lib
-OUT_FILE = $(OUT_DIR)/lib$(NAME).a
+OUT_FILE_LIB = $(OUT_DIR)/lib$(NAME).a
 OUT_FILE_JNI = $(OUT_DIR)/lib$(NAME)_jni.so
+OUT_FILE_JAR = $(OUT_DIR)/$(NAME).jar
 
 TMP_DIR = $(MODE)
 
-OBJ_FILES = \
+OBJ_FILES_LIB = \
 	$(TMP_DIR)/awk.o \
 	$(TMP_DIR)/err.o \
 	$(TMP_DIR)/tree.o \
@@ -37,20 +39,27 @@ OBJ_FILES = \
 	$(TMP_DIR)/extio.o \
 	$(TMP_DIR)/rex.o
 
-OBJ_FILES_JNI = $(TMP_DIR)/jni.o
+OBJ_FILES_JNI = $(TMP_DIR)/jni.o 
+
+OBJ_FILES_JAR = \
+	$(TMP_DIR)/ase/awk/Awk.class \
+	$(TMP_DIR)/ase/awk/StdAwk.class \
+	$(TMP_DIR)/ase/awk/Extio.class \
+	$(TMP_DIR)/ase/awk/Exception.class
 
 lib: build$(JNI)
 
-build: $(OUT_FILE)
+build: $(OUT_FILE_LIB)
 
 buildjni: build $(OUT_FILE_JNI)
 
-$(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
-	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+$(OUT_FILE_LIB): $(OBJ_FILES_LIB) $(OUT_DIR)
+	$(AR) cr $(OUT_FILE_LIB) $(OBJ_FILES_LIB)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE_LIB); fi
 
-$(OUT_FILE_JNI): $(OBJ_FILES_JNI) $(OUT_FILE)
+$(OUT_FILE_JNI): $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OUT_FILE_LIB)
 	$(CC) -shared -o $(OUT_FILE_JNI) $(OBJ_FILES_JNI) -lm -L$(OUT_DIR) -l$(NAME)
+	$(JAR) -cvf $(OUT_FILE_JAR) -C $(TMP_DIR) ase
 	
 $(TMP_DIR)/awk.o: $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c awk.c
@@ -94,6 +103,18 @@ $(TMP_DIR)/rex.o: $(TMP_DIR)
 $(TMP_DIR)/jni.o: $(TMP_DIR)
 	$(CC) $(CFLAGS) $(CFLAGS_JNI) -o $@ -c jni.c
 
+$(TMP_DIR)/ase/awk/Awk.class: $(TMP_DIR)
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Awk.java
+
+$(TMP_DIR)/ase/awk/StdAwk.class: $(TMP_DIR)
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) StdAwk.java
+
+$(TMP_DIR)/ase/awk/Extio.class: $(TMP_DIR)
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Extio.java
+
+$(TMP_DIR)/ase/awk/Exception.class: $(TMP_DIR)
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Exception.java
+
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
 
@@ -101,5 +122,5 @@ $(TMP_DIR):
 	mkdir -p $(TMP_DIR)
 
 clean:
-	rm -rf $(OUT_FILE) $(OBJ_FILES)
+	rm -rf $(OUT_FILE_LIB) $(OUT_FILE_JNI) $(OUT_FILE_JAR) $(OBJ_FILES_LIB) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR)
 

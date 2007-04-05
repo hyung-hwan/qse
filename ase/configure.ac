@@ -1,10 +1,10 @@
 #
-# $Id: configure.ac,v 1.82 2007-04-05 10:14:36 bacon Exp $
+# $Id: configure.ac,v 1.83 2007-04-05 10:37:59 bacon Exp $
 # 
 
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.82 $])
+AC_REVISION([$Revision: 1.83 $])
 AC_CONFIG_HEADER([cmn/conf_unx.h])
 
 # Checks for programs.
@@ -108,6 +108,7 @@ fi
 
 # Java & JNI Configuration 
 AC_PATH_PROG(JAVAC_PATH, javac, :)
+AC_PATH_PROG(JAR_PATH, jar, :)
 
 if test "$JAVAC_PATH" != ":"
 then
@@ -173,6 +174,7 @@ fi
 
 AC_SUBST(CFLAGS_JNI, $CFLAGS_JNI)
 AC_SUBST(JAVAC, $JAVAC_PATH)
+AC_SUBST(JAR, $JAR_PATH)
 AC_SUBST(JNI, $JNI)
 
 AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile])
