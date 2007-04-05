@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.32 2007-04-05 10:37:59 bacon Exp $
+# $Id: makefile.in,v 1.33 2007-04-05 11:37:30 bacon Exp $
 #
 
 NAME = aseawk
@@ -16,6 +16,8 @@ JAVAC = @JAVAC@
 JAR = @JAR@
 CFLAGS_JNI = @CFLAGS_JNI@
 JNI = @JNI@
+
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
 
 OUT_DIR = ../$(MODE)/lib
 OUT_FILE_LIB = $(OUT_DIR)/lib$(NAME).a
