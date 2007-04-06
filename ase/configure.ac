@@ -1,15 +1,19 @@
 #
-# $Id: configure.ac,v 1.86 2007-04-06 10:40:28 bacon Exp $
+# $Id: configure.ac,v 1.87 2007-04-06 14:31:31 bacon Exp $
 # 
 
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.86 $])
+AC_REVISION([$Revision: 1.87 $])
 AC_CONFIG_HEADER([cmn/conf_unx.h])
+AC_CONFIG_AUX_DIR(config)
 
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_RANLIB
+#AC_PROG_RANLIB
+AC_PROG_LIBTOOL
+
+AC_SUBST(LIBTOOL_DEPS)
 
 # Overrides the default CFLAGS setting
 if test "$ac_test_CFLAGS" = "set"
