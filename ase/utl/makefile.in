@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.5 2007-03-25 15:02:54 bacon Exp $
+# $Id: makefile.in,v 1.6 2007-04-06 15:18:31 bacon Exp $
 #
 
 NAME = aseutl
@@ -29,13 +29,13 @@ $(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
 	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
 	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
 	
-$(TMP_DIR)/main.o: $(TMP_DIR)
+$(TMP_DIR)/main.o: main.c $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c main.c
 
-$(TMP_DIR)/ctype.o: $(TMP_DIR)
+$(TMP_DIR)/ctype.o: ctype.c $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c ctype.c
 
-$(TMP_DIR)/stdio.o: $(TMP_DIR)
+$(TMP_DIR)/stdio.o: stdio.c $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c stdio.c
 
 $(OUT_DIR):
