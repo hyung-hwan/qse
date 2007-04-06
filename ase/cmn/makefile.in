@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.6 2007-03-25 15:02:54 bacon Exp $
+# $Id: makefile.in,v 1.7 2007-04-06 15:18:31 bacon Exp $
 #
 
 NAME = asecmn
@@ -29,13 +29,13 @@ $(OUT_FILE): $(OBJ_FILES) $(OUT_DIR)
 	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
 	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
 	
-$(TMP_DIR)/mem.o: $(TMP_DIR)
+$(TMP_DIR)/mem.o: mem.c $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c mem.c
 
-$(TMP_DIR)/str.o: $(TMP_DIR)
+$(TMP_DIR)/str.o: str.c $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c str.c
 
-$(TMP_DIR)/misc.o: $(TMP_DIR)
+$(TMP_DIR)/misc.o: misc.c $(TMP_DIR)
 	$(CC) $(CFLAGS) -o $@ -c misc.c
 
 $(OUT_DIR):
