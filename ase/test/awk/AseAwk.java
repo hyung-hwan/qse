@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwk.java,v 1.1 2007-04-02 11:14:01 bacon Exp $
+ * $Id: AseAwk.java,v 1.2 2007-04-06 15:29:45 bacon Exp $
  */
 
 import java.net.URL;
@@ -69,7 +69,7 @@ public class AseAwk extends ase.awk.StdAwk
 	protected String[] sourceInputNames ()
 	{
 		String[] sin = new String[1];
-		sin[0] = "c:/projects/ase/test/awk/t.awk";
+		sin[0] = "t.awk";
 		return sin;
 	}
 
