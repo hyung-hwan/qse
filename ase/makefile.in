@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.18 2007-04-06 14:31:31 bacon Exp $
+# $Id: makefile.in,v 1.19 2007-04-06 14:39:58 bacon Exp $
 #
 
 
@@ -63,5 +63,3 @@ clean:
 		cd ..; \
 	done
 
-libtool: $(LIBTOOL_DEPS)
-	./config.status --recheck
