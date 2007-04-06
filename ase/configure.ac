@@ -1,18 +1,22 @@
 #
-# $Id: configure.ac,v 1.84 2007-04-05 11:37:30 bacon Exp $
+# $Id: configure.ac,v 1.85 2007-04-06 07:40:42 bacon Exp $
 # 
 
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.84 $])
+AC_REVISION([$Revision: 1.85 $])
 AC_CONFIG_HEADER([cmn/conf_unx.h])
 
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_RANLIB
-AC_PROG_LIBTOOL
+#AC_PROG_LIBTOOL
 
-#AC_PROG_CXX
+echo "############################"
+AC_LANG_C
+echo "############################"
+AC_PROG_MAKE_SET
+
 
 # Overrides the default CFLAGS setting
 if test "$ac_test_CFLAGS" = "set"
@@ -178,7 +182,7 @@ AC_SUBST(JAVAC, $JAVAC_PATH)
 AC_SUBST(JAR, $JAR_PATH)
 AC_SUBST(JNI, $JNI)
 
-AC_SUBST(LIBTOOL_DEPS)
+#AC_SUBST(LIBTOOL_DEPS)
 
 AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile])
 AC_OUTPUT
