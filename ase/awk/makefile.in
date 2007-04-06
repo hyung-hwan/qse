@@ -1,8 +1,10 @@
 #
-# $Id: makefile.in,v 1.33 2007-04-05 11:37:30 bacon Exp $
+# $Id: makefile.in,v 1.34 2007-04-06 14:31:31 bacon Exp $
 #
 
 NAME = aseawk
+
+ABS_TOP_BUILDDIR = @abs_top_builddir@
 
 CC = @CC@
 AR = ar
@@ -16,8 +18,6 @@ JAVAC = @JAVAC@
 JAR = @JAR@
 CFLAGS_JNI = @CFLAGS_JNI@
 JNI = @JNI@
-
-LIBTOOL_DEPS = @LIBTOOL_DEPS@
 
 OUT_DIR = ../$(MODE)/lib
 OUT_FILE_LIB = $(OUT_DIR)/lib$(NAME).a
@@ -41,7 +41,7 @@ OBJ_FILES_LIB = \
 	$(TMP_DIR)/extio.o \
 	$(TMP_DIR)/rex.o
 
-OBJ_FILES_JNI = $(TMP_DIR)/jni.o 
+OBJ_FILES_JNI = $(TMP_DIR)/jni.lo 
 
 OBJ_FILES_JAR = \
 	$(TMP_DIR)/ase/awk/Awk.class \
@@ -60,6 +60,10 @@ $(OUT_FILE_LIB): $(OBJ_FILES_LIB) $(OUT_DIR)
 	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE_LIB); fi
 
 $(OUT_FILE_JNI): $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OUT_FILE_LIB)
+	libtool $(CC) -o $(OUT_FILE_JNI) $(OBJ_FILES_JNI) -lm -L$(OUT_DIR) -l$(NAME)
+	$(JAR) -cvf $(OUT_FILE_JAR) -C $(TMP_DIR) ase
+
+$(OUT_FILE_JNI)XX: $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OUT_FILE_LIB)
 	$(CC) -shared -o $(OUT_FILE_JNI) $(OBJ_FILES_JNI) -lm -L$(OUT_DIR) -l$(NAME)
 	$(JAR) -cvf $(OUT_FILE_JAR) -C $(TMP_DIR) ase
 	
@@ -104,6 +108,9 @@ $(TMP_DIR)/rex.o: $(TMP_DIR)
 
 $(TMP_DIR)/jni.o: $(TMP_DIR)
 	$(CC) $(CFLAGS) $(CFLAGS_JNI) -o $@ -c jni.c
+
+$(TMP_DIR)/jni.lo: $(TMP_DIR)
+	libtool $(CC) -c  jni.c
 
 $(TMP_DIR)/ase/awk/Awk.class: $(TMP_DIR)
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Awk.java
