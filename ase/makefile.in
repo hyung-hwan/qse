@@ -1,10 +1,11 @@
 #
-# $Id: makefile.in,v 1.17 2007-03-25 15:03:25 bacon Exp $
+# $Id: makefile.in,v 1.18 2007-04-06 14:31:31 bacon Exp $
 #
 
 
-LIBDIRS=cmn awk lsp utl
-MODE=@BUILDMODE@
+LIBDIRS = cmn awk lsp utl
+MODE = @BUILDMODE@
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
 
 all: libs #incs
 
@@ -61,3 +62,6 @@ clean:
 			fi; \
 		cd ..; \
 	done
+
+libtool: $(LIBTOOL_DEPS)
+	./config.status --recheck
