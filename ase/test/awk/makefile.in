@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.19 2007-04-10 11:58:08 bacon Exp $
+# $Id: makefile.in,v 1.20 2007-04-10 14:51:09 bacon Exp $
 #
 
 CC = @CC@
@@ -34,6 +34,7 @@ $(OUT_DIR)/aseawk_mini: mini.c $(OUT_DIR)
 $(OUT_DIR)/aseawk.jar: $(TMP_DIR)/AseAwk.class $(TMP_DIR)/AseAwkApplet.class
 	cd $(TMP_DIR); $(JAR) -xvf ../$(LIB_DIR)/aseawk.jar 
 	cd $(TMP_DIR); $(JAR) -Mcvf ../$@ *.class ase
+	rm -rf $(TMP_DIR)/ase
 
 $(TMP_DIR)/AseAwk.class: $(TMP_DIR) AseAwk.java
 	$(JAVAC) -classpath $(TMP_DIR):$(LIB_DIR)/aseawk.jar -d $(TMP_DIR) AseAwk.java
