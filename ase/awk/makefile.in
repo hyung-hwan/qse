@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.39 2007-04-10 07:23:49 bacon Exp $
+# $Id: makefile.in,v 1.40 2007-04-10 07:31:51 bacon Exp $
 #
 
 NAME = aseawk
@@ -66,7 +66,7 @@ $(OUT_FILE_LIB): $(TMP_DIR) $(OBJ_FILES_LIB) $(OUT_DIR)
 	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE_LIB); fi
 
 $(OUT_FILE_JNI): $(TMP_DIR) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OUT_FILE_LIB)
-	$(LIBTOOL_LINK) $(CC) -rpath $(TOP_INSTALLDIR)/lib -o $(OUT_FILE_JNI) $(OBJ_FILES_SO) -lm -L$(OUT_DIR) -l$(NAME) -lasecmn -laseutl
+	$(LIBTOOL_LINK) $(CC) -rpath $(TOP_INSTALLDIR)/lib -version-info 1:0:0 -o $(OUT_FILE_JNI) $(OBJ_FILES_SO) -lm -L$(OUT_DIR) -l$(NAME) -lasecmn -laseutl
 	$(JAR) -cvf $(OUT_FILE_JAR) -C $(TMP_DIR) ase
 
 $(TMP_DIR)/awk.o: awk.c
