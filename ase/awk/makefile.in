@@ -1,9 +1,10 @@
 #
-# $Id: makefile.in,v 1.36 2007-04-06 15:29:45 bacon Exp $
+# $Id: makefile.in,v 1.37 2007-04-10 04:08:34 bacon Exp $
 #
 
 NAME = aseawk
 
+PREFIX = @prefix@
 ABS_TOP_BUILDDIR = @abs_top_builddir@
 
 CC = @CC@
