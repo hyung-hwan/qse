@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.9 2007-03-25 15:02:54 bacon Exp $ -->
+<!-- $Id: build.xml,v 1.10 2007-04-10 15:08:12 bacon Exp $ -->
 
 <project name="ase" default="release" basedir=".">
 
@@ -48,21 +48,25 @@
 		<javac srcdir="test/awk" 
 		       classpath="${libdir}/aseawk.jar" 
 		       destdir="${bindir}" />
-	</target>
 
-	<target name="aseawk.applet" depends="aseawk.jar"
-	        description="compile the awk test applet">
+		<unjar src="${libdir}/aseawk.jar" dest="${bindir}" />
+		<jar jarfile="${bindir}/aseawk.jar" 
+		     basedir="${bindir}"
+		     includes="**/*.class" />
+		<delete>
+			<fileset dir="${bindir}" includes="*.class" />
+		</delete>
+		<delete dir="${bindir}/ase" verbose="true" />
+		<delete dir="${bindir}/META-INF" verbose="true" />
 
-		<javac srcdir="test/awk" 
-		       classpath="${libdir}/aseawk.jar" 
-		       destdir="${bindir}" />
+		<copy file="test/awk/AseAwkApplet.html" todir="${bindir}" />
 	</target>
 
 	<target name="clean" description="clean up">
 		<delete dir="${basedir}/release"
-		        includes="**/*.class,**/*.jar" />
+		        includes="**/*.class,**/*.jar" verbose="true"/>
 		<delete dir="${basedir}/debug"
-		        includes="**/*.class,**/*.jar" />
+		        includes="**/*.class,**/*.jar" verbose="true"/>
 	</target>
 
 </project>
