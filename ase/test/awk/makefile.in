@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.18 2007-04-10 08:01:34 bacon Exp $
+# $Id: makefile.in,v 1.19 2007-04-10 11:58:08 bacon Exp $
 #
 
 CC = @CC@
@@ -13,29 +13,43 @@ JAR = @JAR@
 CFLAGS_JNI = @CFLAGS_JNI@
 JNI = @JNI@
 
+LIB_DIR = ../../$(MODE)/lib
 OUT_DIR = ../../$(MODE)/bin
+TMP_DIR = $(MODE)
+
+ASEAWK_LIB = 
 
 all: build$(JNI)
 
-build: $(OUT_DIR)/aseawk $(OUT_DIR)/aseawk_mini 
+build: $(TMP_DIR) $(OUT_DIR)/aseawk $(OUT_DIR)/aseawk_mini 
 
-buildjni: build $(OUT_DIR)/AseAwk.class $(OUT_DIR)/AseAwkApplet.class
+buildjni: $(TMP_DIR) build $(OUT_DIR)/aseawk.jar $(OUT_DIR)/AseAwkApplet.html 
 
-$(OUT_DIR)/aseawk: $(OUT_DIR)
+$(OUT_DIR)/aseawk: awk.c $(OUT_DIR)
 	$(CC) $(CFLAGS) -o $@ awk.c $(LDFLAGS) $(LIBS)
 
-$(OUT_DIR)/aseawk_mini: $(OUT_DIR)
+$(OUT_DIR)/aseawk_mini: mini.c $(OUT_DIR)
 	$(CC) $(CFLAGS) -o $@ mini.c $(LDFLAGS) $(LIBS)
 
-$(OUT_DIR)/AseAwk.class: $(OUT_DIR)
-	$(JAVAC) -classpath ../../.. -d $(OUT_DIR) AseAwk.java
+$(OUT_DIR)/aseawk.jar: $(TMP_DIR)/AseAwk.class $(TMP_DIR)/AseAwkApplet.class
+	cd $(TMP_DIR); $(JAR) -xvf ../$(LIB_DIR)/aseawk.jar 
+	cd $(TMP_DIR); $(JAR) -Mcvf ../$@ *.class ase
 
-$(OUT_DIR)/AseAwkApplet.class: $(OUT_DIR)
-	$(JAVAC) -classpath ../../.. -d $(OUT_DIR) AseAwkApplet.java
+$(TMP_DIR)/AseAwk.class: $(TMP_DIR) AseAwk.java
+	$(JAVAC) -classpath $(TMP_DIR):$(LIB_DIR)/aseawk.jar -d $(TMP_DIR) AseAwk.java
+
+$(TMP_DIR)/AseAwkApplet.class: $(TMP_DIR) AseAwkApplet.java 
+	$(JAVAC) -classpath $(TMP_DIR):$(LIB_DIR)/aseawk.jar -d $(TMP_DIR) AseAwkApplet.java
+
+$(OUT_DIR)/AseAwkApplet.html: AseAwkApplet.html $(OUT_DIR)
+	cp -pf AseAwkApplet.html $(OUT_DIR)
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
 
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
+
 clean:
-	rm -rf $(OUT_DIR)/aseawk $(OUT_DIR)/aseawk_mini $(OUT_DIR)/AseAwk*.class
+	rm -rf $(OUT_DIR)/aseawk $(OUT_DIR)/aseawk_mini $(OUT_DIR)/aseawk.jar $(OUT_DIR)/AseAwkApplet.html $(TMP_DIR)/*.class
 
