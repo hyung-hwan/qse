@@ -1,5 +1,5 @@
 /*
- * $Id: AwkApplet.java,v 1.4 2007-03-24 15:49:59 bacon Exp $
+ * $Id: AseAwkApplet.java,v 1.1 2007-04-10 08:01:34 bacon Exp $
  */
 
 import java.applet.*;
@@ -7,7 +7,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
 
-public class AwkApplet extends Applet
+public class AseAwkApplet extends Applet
 {
 	public void init () 
 	{
@@ -29,7 +29,7 @@ public class AwkApplet extends Applet
 
 	private void run_awk ()
 	{
-		Awk awk = null;
+		AseAwk awk = null;
 
 		try
 		{
@@ -49,7 +49,7 @@ public class AwkApplet extends Applet
 			}
 
 
-			awk = new Awk ();
+			awk = new AseAwk ();
 			awk.parse ();
 			awk.run ();
 		}
