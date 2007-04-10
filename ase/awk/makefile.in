@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.38 2007-04-10 07:09:55 bacon Exp $
+# $Id: makefile.in,v 1.39 2007-04-10 07:23:49 bacon Exp $
 #
 
 NAME = aseawk
@@ -69,58 +69,58 @@ $(OUT_FILE_JNI): $(TMP_DIR) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OUT_FILE_LIB)
 	$(LIBTOOL_LINK) $(CC) -rpath $(TOP_INSTALLDIR)/lib -o $(OUT_FILE_JNI) $(OBJ_FILES_SO) -lm -L$(OUT_DIR) -l$(NAME) -lasecmn -laseutl
 	$(JAR) -cvf $(OUT_FILE_JAR) -C $(TMP_DIR) ase
 
-$(TMP_DIR)/awk.o: awk.c $(TMP_DIR)
+$(TMP_DIR)/awk.o: awk.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c awk.c
 
-$(TMP_DIR)/err.o: err.c $(TMP_DIR)
+$(TMP_DIR)/err.o: err.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c err.c
 
-$(TMP_DIR)/tree.o: tree.c $(TMP_DIR)
+$(TMP_DIR)/tree.o: tree.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c tree.c
 
-$(TMP_DIR)/tab.o: tab.c $(TMP_DIR)
+$(TMP_DIR)/tab.o: tab.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c tab.c
 
-$(TMP_DIR)/map.o: map.c $(TMP_DIR)
+$(TMP_DIR)/map.o: map.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c map.c
 
-$(TMP_DIR)/parse.o: parse.c $(TMP_DIR)
+$(TMP_DIR)/parse.o: parse.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c parse.c
 
-$(TMP_DIR)/run.o: run.c $(TMP_DIR)
+$(TMP_DIR)/run.o: run.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c run.c
 
-$(TMP_DIR)/rec.o: rec.c $(TMP_DIR)
+$(TMP_DIR)/rec.o: rec.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c rec.c
 
-$(TMP_DIR)/val.o: val.c $(TMP_DIR)
+$(TMP_DIR)/val.o: val.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c val.c
 
-$(TMP_DIR)/func.o: func.c $(TMP_DIR)
+$(TMP_DIR)/func.o: func.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c func.c
 
-$(TMP_DIR)/misc.o: misc.c $(TMP_DIR)
+$(TMP_DIR)/misc.o: misc.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c misc.c
 
-$(TMP_DIR)/extio.o: extio.c $(TMP_DIR)
+$(TMP_DIR)/extio.o: extio.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c extio.c
 
-$(TMP_DIR)/rex.o: rex.c $(TMP_DIR)
+$(TMP_DIR)/rex.o: rex.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c rex.c
 
-$(TMP_DIR)/jni.o: jni.c $(TMP_DIR)
+$(TMP_DIR)/jni.o: jni.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) $(CFLAGS_JNI) -o $@ -c jni.c
 
-$(TMP_DIR)/ase/awk/Awk.class: $(TMP_DIR)
+$(TMP_DIR)/ase/awk/Awk.class:
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Awk.java
 
-$(TMP_DIR)/ase/awk/StdAwk.class: $(TMP_DIR)
+$(TMP_DIR)/ase/awk/StdAwk.class:
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) StdAwk.java
 
-$(TMP_DIR)/ase/awk/Extio.class: $(TMP_DIR)
+$(TMP_DIR)/ase/awk/Extio.class:
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Extio.java
 
-$(TMP_DIR)/ase/awk/Exception.class: $(TMP_DIR)
+$(TMP_DIR)/ase/awk/Exception.class:
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Exception.java
 
 $(OUT_DIR):
