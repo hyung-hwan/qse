@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.17 2007-03-25 15:02:54 bacon Exp $
+# $Id: makefile.in,v 1.18 2007-04-10 08:01:34 bacon Exp $
 #
 
 CC = @CC@
@@ -8,19 +8,34 @@ LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/@BUILDMODE@/lib
 LIBS = @LIBS@ -laseawk -lasecmn -laseutl -lm
 MODE = @BUILDMODE@
 
+JAVAC = @JAVAC@
+JAR = @JAR@
+CFLAGS_JNI = @CFLAGS_JNI@
+JNI = @JNI@
+
 OUT_DIR = ../../$(MODE)/bin
 
-all: $(OUT_DIR)/aseawk $(OUT_DIR)/miniawk
+all: build$(JNI)
+
+build: $(OUT_DIR)/aseawk $(OUT_DIR)/aseawk_mini 
+
+buildjni: build $(OUT_DIR)/AseAwk.class $(OUT_DIR)/AseAwkApplet.class
 
 $(OUT_DIR)/aseawk: $(OUT_DIR)
 	$(CC) $(CFLAGS) -o $@ awk.c $(LDFLAGS) $(LIBS)
 
-$(OUT_DIR)/miniawk: $(OUT_DIR)
+$(OUT_DIR)/aseawk_mini: $(OUT_DIR)
 	$(CC) $(CFLAGS) -o $@ mini.c $(LDFLAGS) $(LIBS)
+
+$(OUT_DIR)/AseAwk.class: $(OUT_DIR)
+	$(JAVAC) -classpath ../../.. -d $(OUT_DIR) AseAwk.java
+
+$(OUT_DIR)/AseAwkApplet.class: $(OUT_DIR)
+	$(JAVAC) -classpath ../../.. -d $(OUT_DIR) AseAwkApplet.java
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
 
 clean:
-	rm -rf $(OUT_DIR)/aseawk $(OUT_DIR)/miniawk
+	rm -rf $(OUT_DIR)/aseawk $(OUT_DIR)/aseawk_mini $(OUT_DIR)/AseAwk*.class
 
