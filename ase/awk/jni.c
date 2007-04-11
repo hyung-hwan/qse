@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.76 2007-03-23 07:45:22 bacon Exp $
+ * $Id: jni.c,v 1.77 2007-04-11 15:21:24 bacon Exp $
  *
  * {License}
  */
@@ -1429,24 +1429,28 @@ static int __handle_bfn (
 	env = run_data->env;
 	obj = run_data->obj;
 
-	if (fnl > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	/*if (fnl > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))*/
 	{
 		ase_size_t i;
-		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*fnl);
+		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*(fnl+4));
 		if (tmp == NULL)
 		{
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
-		for (i = 0; i < fnl; i++) tmp[i] = (jchar)fnm[i];
-		name = (*env)->NewString (env, tmp, fnl);
+		tmp[0] = (jchar*)'b';
+		tmp[1] = (jchar*)'f';
+		tmp[2] = (jchar*)'n';
+		tmp[3] = (jchar*)'_';
+		for (i = 0; i < fnl; i++) tmp[i+4] = (jchar)fnm[i];
+		name = (*env)->NewString (env, tmp, fnl+4);
 		free (tmp);
 	}
-	else 
+	/*else 
 	{
 		name = (*env)->NewString (env, (jchar*)fnm, fnl);
-	}
+	}*/
 
 	if (name == NULL)
 	{
