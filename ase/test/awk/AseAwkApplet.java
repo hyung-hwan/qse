@@ -1,11 +1,12 @@
 /*
- * $Id: AseAwkApplet.java,v 1.2 2007-04-11 09:39:46 bacon Exp $
+ * $Id: AseAwkApplet.java,v 1.3 2007-04-11 10:49:34 bacon Exp $
  */
 
 import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
+import java.io.File;
 
 public class AseAwkApplet extends Applet
 {
@@ -30,7 +31,7 @@ public class AseAwkApplet extends Applet
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				run_awk ();
+				runAwk ();
 			}
 		});
 
@@ -65,30 +66,29 @@ public class AseAwkApplet extends Applet
 		add (topPanel, BorderLayout.NORTH);
 		add (centerPanel, BorderLayout.CENTER);
 		add (runBtn, BorderLayout.SOUTH);
+
+		URL url = this.getClass().getResource ("AseAwk.class");
+		File file = new File (url.getFile());
+		
+		jniLib.setText (file.getParentFile().getParentFile().getParent() + "/lib/.libs/libaseawk_jni.dylib");
 	}
 
 	public void stop () {}
 	public void paint (Graphics g) {}
 
-	private void run_awk ()
+	private void runAwk ()
 	{
 		AseAwk awk = null;
 
 		try
 		{
-			/*
-			URL url = ase.awk.Awk.class.getResource ("aseawk_jni.dll");
-			if (url == null) url = ase.awk.Awk.class.getResource ("aseawk_jni.so");
-
-			if (url != null) System.load (url.getFile()); */
-
 			try
 			{
-				System.load ("c:/projects/ase/test/awk/aseawk_jni.dll");
+				System.load (jniLib.getText());
 			}
 			catch (Exception e)
 			{
-				System.err.println ("fuck you");
+				System.err.println ("xxx fuck you - cannot load library: " + e.getMessage());
 			}
 
 
