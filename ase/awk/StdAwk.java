@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.18 2007-02-03 10:47:40 bacon Exp $
+ * $Id: StdAwk.java,v 1.19 2007-04-11 15:21:23 bacon Exp $
  *
  * {License}
  */
@@ -44,6 +44,23 @@ public abstract class StdAwk extends Awk
 
 		seed = System.currentTimeMillis();
 		random = new java.util.Random (seed);
+
+		addBuiltinFunction ("sin", 1, 1); 
+		addBuiltinFunction ("cos", 1, 1); 
+		addBuiltinFunction ("tan", 1, 1); 
+		addBuiltinFunction ("atan2", 1, 1); 
+		addBuiltinFunction ("log", 1, 1); 
+		addBuiltinFunction ("exp", 1, 1); 
+		addBuiltinFunction ("sqrt", 1, 1); 
+		addBuiltinFunction ("int", 1, 1); 
+
+		addBuiltinFunction ("srand", 0, 1); 
+		addBuiltinFunction ("rand", 0, 0); 
+
+		addBuiltinFunction ("systime", 0, 0);
+		addBuiltinFunction ("strftime", 0, Integer.MAX_VALUE); 
+
+		addBuiltinFunction ("system", 1, 1); 
 	}
 
 	/* == major methods == */
@@ -726,55 +743,61 @@ public abstract class StdAwk extends Awk
 
 
 	/* == arithmetic built-in functions */
-	public Object sin (long runid, Object[] args)  throws Exception
+	public Object bfn_sin (long runid, Object[] args)  throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.sin(x));
 	}
 
-	public Object cos (long runid, Object[] args) throws Exception
+	public Object bfn_cos (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.cos(x));
 	}
 
-	public Object tan (long runid, Object[] args) throws Exception
+	public Object bfn_tan (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.tan(x));
 	}
 
-	public Object atan2 (long runid, Object[] args) throws Exception
+	public Object bfn_atan2 (long runid, Object[] args) throws Exception
 	{
 		double y = builtinFunctionArgumentToDouble (runid, args[0]);
 		double x = builtinFunctionArgumentToDouble (runid, args[1]);
 		return new Double (Math.atan2(y,x));
 	}
 
-	public Object log (long runid, Object[] args) throws Exception
+	public Object bfn_log (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.log(x));
 	}
 
-	public Object exp (long runid, Object[] args) throws Exception
+	public Object bfn_exp (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.exp(x));
 	}
 
-	public Object sqrt (long runid, Object[] args) throws Exception
+	public Object bfn_sqrt (long runid, Object[] args) throws Exception
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.sqrt(x));
 	}
 
-	public Object rand (long runid, Object[] args)
+	public Object bfn_int (long runid, Object[] args) throws Exception
+	{
+		long x = builtinFunctionArgumentToLong (runid, args[0]);
+		return new Long (x);
+	}
+
+	public Object bfn_rand (long runid, Object[] args)
 	{
 		return new Double (random.nextDouble ());
 	}
 
-	public Object srand (long runid, Object[] args) throws Exception
+	public Object bfn_srand (long runid, Object[] args) throws Exception
 	{
 		long prev_seed = seed;
 
@@ -786,8 +809,20 @@ public abstract class StdAwk extends Awk
 		return new Long (prev_seed);
 	}
 
+	public Object bfn_systime (long runid, Object[] args) 
+	{
+		long msec = System.currentTimeMillis ();
+		return new Long (msec / 1000);
+	}
+
+	public Object bfn_strftime (long runid, Object[] args)
+	{
+		// TODO: implement this...
+		return null;
+	}
+
 	/* miscellaneous built-in functions */
-	public Object system (long runid, Object[] args) throws Exception
+	public Object bfn_system (long runid, Object[] args) throws Exception
 	{
 		String str = builtinFunctionArgumentToString (runid, args[0]);
 		Process proc = null;

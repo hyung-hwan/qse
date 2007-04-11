@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwk.java,v 1.2 2007-04-06 15:29:45 bacon Exp $
+ * $Id: AseAwk.java,v 1.3 2007-04-11 15:21:24 bacon Exp $
  */
 
 import java.net.URL;
@@ -9,14 +9,6 @@ public class AseAwk extends ase.awk.StdAwk
 	public AseAwk () throws ase.awk.Exception
 	{
 		super ();
-
-		addBuiltinFunction ("sin", 1, 1); 
-		addBuiltinFunction ("cos", 1, 1); 
-		addBuiltinFunction ("tan", 1, 1); 
-		addBuiltinFunction ("srand", 0, 1); 
-		addBuiltinFunction ("rand", 0, 0); 
-
-		addBuiltinFunction ("system", 1, 1); 
 
 		addBuiltinFunction ("xxx", 1, 10); 
 		//addBuiltinFunction ("xxx", 1, 1); 
