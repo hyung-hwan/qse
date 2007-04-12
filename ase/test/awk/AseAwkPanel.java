@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.3 2007-04-12 11:19:11 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.4 2007-04-12 11:23:49 bacon Exp $
  */
 
 import java.awt.*;
@@ -357,7 +357,12 @@ public class AseAwkPanel extends Panel
 			}
 			catch (UnsatisfiedLinkError e)
 			{
-				showMessage ("Cannot load libraryi - " + e.getMessage());
+				showMessage ("Cannot load library - " + e.getMessage());
+				return;
+			}
+			catch (Exception e)
+			{
+				showMessage ("Cannot load library - " + e.getMessage());
 				return;
 			}
 		}
