@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.10 2007-04-10 15:08:12 bacon Exp $ -->
+<!-- $Id: build.xml,v 1.11 2007-04-12 11:28:14 bacon Exp $ -->
 
 <project name="ase" default="release" basedir=".">
 
@@ -52,7 +52,8 @@
 		<unjar src="${libdir}/aseawk.jar" dest="${bindir}" />
 		<jar jarfile="${bindir}/aseawk.jar" 
 		     basedir="${bindir}"
-		     includes="**/*.class" />
+		     includes="**/*.class" 
+		     manifest="test/awk/manifest" />
 		<delete>
 			<fileset dir="${bindir}" includes="*.class" />
 		</delete>
