@@ -1,38 +1,15 @@
 /*
- * $Id: AseAwk.java,v 1.3 2007-04-11 15:21:24 bacon Exp $
+ * $Id: AseAwk.java,v 1.4 2007-04-12 10:08:07 bacon Exp $
  */
 
-import java.net.URL;
+import java.awt.*;
+import java.awt.event.*;
 
 public class AseAwk extends ase.awk.StdAwk
 {
 	public AseAwk () throws ase.awk.Exception
 	{
 		super ();
-
-		addBuiltinFunction ("xxx", 1, 10); 
-		//addBuiltinFunction ("xxx", 1, 1); 
-		//deleteBuiltinFunction ("sin");
-		//deleteBuiltinFunction ("sin");
-	}
-
-	public Object xxx (long runid, Object[] args)
-	{
-		System.out.println ("<<BFN_XXX>>");
-		for (int i = 0; i < args.length; i++)
-		{
-			System.out.print ("ARG #" + i);
-			System.out.print (": ");
-			if (args[i] == null) System.out.println ("nil");
-			else System.out.println (args[i].toString());
-		}
-		return null;
-		//return new String ("return value");
-		//return new Double (1.234);
-		//return new Float (1.234);
-		//return new Integer (1001);
-		//return new Long (1001);
-		//return new Short ((short)1001);
 	}
 
 	protected String[] consoleInputNames ()
@@ -74,16 +51,36 @@ public class AseAwk extends ase.awk.StdAwk
 
 	public static void main (String[] args)
 	{
-		AseAwk awk = null;
+		// AWT mode 
+		if (args.length == 0)
+		{
+			final Frame frame = new Frame ();
 
-		/*
-		URL url = ase.awk.Awk.class.getResource ("aseawk_jni.dll");
-		if (url == null) url = ase.awk.Awk.class.getResource ("aseawk_jni.so");
-		if (url != null) System.load (url.getFile());
-		*/
+			frame.setLayout (new BorderLayout());
+			frame.setTitle (AseAwk.class.getName());
+			frame.setSize (640, 480);
+			frame.addWindowListener (new WindowListener ()
+			{
+				public void windowActivated (WindowEvent e) {}
+				public void windowClosed (WindowEvent e) {}
+				public void windowClosing (WindowEvent e) { frame.dispose (); }
+				public void windowDeactivated (WindowEvent e) {}
+				public void windowDeiconified (WindowEvent e) {}
+				public void windowIconified (WindowEvent e) {}
+				public void windowOpened (WindowEvent e) {}
+			});
+
+			frame.add (new AseAwkPanel(), BorderLayout.CENTER);
+			frame.setVisible (true);
+			return;
+		}
+
+		// console mode 
+		AseAwk awk = null;
 
 		if (args.length != 1)
 		{
+
 			System.err.println ("Usage: " + AseAwk.class.getName() + " jni");
 			System.err.println ("Where jni := the full path to the jni library");
 			return;
