@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.2 2007-04-12 10:50:05 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.3 2007-04-12 11:19:11 bacon Exp $
  */
 
 import java.awt.*;
@@ -74,7 +74,6 @@ public class AseAwkPanel extends Panel
 		}
 	}
 	
-
 	class Awk extends StdAwk
 	{
 		private AseAwkPanel awkPanel;
@@ -300,19 +299,27 @@ public class AseAwkPanel extends Panel
 		add (centerPanel, BorderLayout.CENTER);
 		add (runBtn, BorderLayout.SOUTH);
 
-		URL url = this.getClass().getResource (this.getClass().getName() + ".class");
+		URL url = this.getClass().getResource (
+			this.getClass().getName() + ".class");
 		File file = new File (url.getFile());
 		
-System.out.println (System.getProperty("os.name"));
-		if (System.getProperty ("os.name").toLowerCase().startsWith ("windows"))
+		String osname = System.getProperty ("os.name").toLowerCase();
+		String aseBase = file.getParentFile().getParentFile().getParent();
+
+		if (osname.startsWith ("windows"))
 		{
-			String path = file.getParentFile().getParentFile().getParent() + "\\lib\\aseawk_jni.dll";
+			String path = aseBase + "\\lib\\aseawk_jni.dll";
 			jniLib.setText (path.substring(6));
+		}
+		else if (osname.startsWith ("mac"))
+		{
+			String path = aseBase + "/lib/.libs/libaseawk_jni.dylib";
+			jniLib.setText (path.substring(5));
 		}
 		else
 		{
-			String path = file.getParentFile().getParentFile().getParent() + "/lib/.libs/libaseawk_jni.dylib";
-			jniLib.setText (path.substring(6));
+			String path = aseBase + "/lib/.libs/libaseawk_jni.so";
+			jniLib.setText (path.substring(5));
 		}
 	}
 
