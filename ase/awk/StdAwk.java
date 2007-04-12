@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.19 2007-04-11 15:21:23 bacon Exp $
+ * $Id: StdAwk.java,v 1.20 2007-04-12 10:50:05 bacon Exp $
  *
  * {License}
  */
@@ -27,9 +27,13 @@ public abstract class StdAwk extends Awk
 	private long seed;
 	private java.util.Random random;
 
-	private static Reader stdin = null;
-	private static Writer stdout = null;
+	private final static Reader stdin = 
+		new BufferedReader (new InputStreamReader (System.in));
 
+	private final static Writer stdout =
+		new BufferedWriter (new OutputStreamWriter (System.out));
+
+	/*
 	static
 	{
 		stdin = new BufferedReader (
@@ -37,6 +41,7 @@ public abstract class StdAwk extends Awk
 		stdout = new BufferedWriter ( 
 			new OutputStreamWriter (System.out));
 	}
+	*/
 
 	public StdAwk () throws Exception
 	{
@@ -95,12 +100,12 @@ public abstract class StdAwk extends Awk
 
 
 	/* == source code names == */
-	protected abstract String[] sourceInputNames ();
+	protected String[] sourceInputNames () { return null; }
 	protected String[] sourceOutputNames () { return null; }
 
 	/* == console names == */
-	protected abstract String[] consoleInputNames ();
-	protected abstract String[] consoleOutputNames ();
+	protected String[] consoleInputNames () { return null; }
+	protected String[] consoleOutputNames () { return null; }
 
 	/* == source code == */
 	protected int openSource (int mode)
@@ -434,17 +439,7 @@ public abstract class StdAwk extends Awk
 	{
 		Reader isr;
 
-		if (name == null || name.length() == 0)
-		{
-			//FileInputStream fis;
-			//fis = new FileInputStream (FileDescriptor.in);
-			//isr = new BufferedReader (new InputStreamReader (fis));
-
-			//isr = new BufferedReader (
-			//	new InputStreamReader (System.in));
-			
-			isr = StdAwk.stdin;
-		}
+		if (name == null || name.length() == 0) isr = StdAwk.stdin;
 		else
 		{
 			FileInputStream fis;
@@ -460,18 +455,7 @@ public abstract class StdAwk extends Awk
 	{
 		Writer osw;
 
-		if (name == null || name.length() == 0)
-		{
-
-			//FileOutputStream fos;
-			//fos = new FileOutputStream (FileDescriptor.out); 
-			//osw = new BufferedWriter (new OutputStreamWriter (fos));
-
-			//osw = new BufferedWriter(
-			//	new OutputStreamWriter (System.out));
-			
-			osw = StdAwk.stdout;
-		}
+		if (name == null || name.length() == 0) osw = StdAwk.stdout;
 		else
 		{
 			FileOutputStream fos;
