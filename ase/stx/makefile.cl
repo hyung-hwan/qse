@@ -6,7 +6,7 @@ OBJS = $(SRCS:.c=.obj)
 OUT = xpstx.lib
 
 CC = cl
-CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0x0400 -I../..
+CFLAGS = /nologo /MT /GX /W3 /GR- -I../..
 
 all: $(OBJS)
 	link -lib @<<
