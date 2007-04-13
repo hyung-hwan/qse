@@ -1,7 +1,7 @@
 CC = cl
-CFLAGS = /nologo /MT /GX /W3 /GR- /D_WIN32_WINNT=0x0400 -I..\..\..
-LDFLAGS = /libpath:..\..\bas /libpath:..\..\stx
-LIBS = xpbas.lib xpstx.lib
+CFLAGS = /nologo /MT /GX /W3 /GR- -I..\..\..
+LDFLAGS = /libpath:..\..\cmn /libpath:..\..\stx
+LIBS = asecmn.lib asestx.lib
 
 all: stx parser
 
