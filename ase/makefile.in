@@ -1,15 +1,15 @@
 #
-# $Id: makefile.in,v 1.20 2007-04-09 02:57:45 bacon Exp $
+# $Id: makefile.in,v 1.21 2007-04-13 08:24:31 bacon Exp $
 #
 
 
-LIBDIRS = cmn utl awk lsp 
+LIBDIRS = cmn utl awk lsp test/awk test/lsp
 MODE = @BUILDMODE@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 
-all: libs #incs
+all: build
 
-incs:
+build:
 	@for i in $(LIBDIRS); \
 	do \
 		if [ ! -d $$i ]; \
@@ -17,32 +17,14 @@ incs:
 			echo Error: $$i not a directory; \
 			exit 1; \
 		fi; \
-		cd $$i; \
-		if make inc;  \
+		saved=`pwd`; cd "$$i"; \
+		if make;  \
 		then \
 			echo > /dev/null; \
 		else \
 			exit 1; \
 			fi; \
-		cd ..; \
-	done
-
-libs:
-	@for i in $(LIBDIRS); \
-	do \
-		if [ ! -d $$i ]; \
-		then \
-			echo Error: $$i not a directory; \
-			exit 1; \
-		fi; \
-		cd $$i; \
-		if make lib;  \
-		then \
-			echo > /dev/null; \
-		else \
-			exit 1; \
-			fi; \
-		cd ..; \
+		cd "$$saved"; \
 	done
 
 clean:
@@ -53,13 +35,12 @@ clean:
 			echo Error: $$i not a directory; \
 			exit 1; \
 		fi; \
-		cd $$i; \
-		if make $@; \
+		saved=`pwd`; cd "$$i"; \
+		if make $@;  \
 		then \
 			echo > /dev/null; \
 		else \
 			exit 1; \
 			fi; \
-		cd ..; \
+		cd "$$saved"; \
 	done
-
