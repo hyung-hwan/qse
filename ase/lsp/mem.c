@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.34 2007-03-15 14:19:23 bacon Exp $
+ * $Id: mem.c,v 1.35 2007-04-13 10:06:25 bacon Exp $
  *
  * {License}
  */
@@ -326,7 +326,7 @@ static void __mark_objs_in_use (ase_lsp_mem_t* mem)
 	if (mem->macro  != ASE_NULL) __mark_obj (mem->lsp, mem->macro);
 }
 
-#include <ase/utl/stdio.h>
+//#include <ase/utl/stdio.h>
 static void __sweep_unmarked_objs (ase_lsp_mem_t* mem)
 {
 	ase_lsp_obj_t* obj, * prev, * next;
