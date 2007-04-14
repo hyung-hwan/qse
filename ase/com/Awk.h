@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.17 2007-03-24 05:18:32 bacon Exp $
+ * $Id: Awk.h,v 1.18 2007-04-14 15:30:14 bacon Exp $
  *
  * {License}
  */
@@ -152,8 +152,8 @@ public:
 	STDMETHOD(get_ErrorMessage)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(DeleteBuiltinFunction)(/*[in]*/ BSTR name, /*[out, retval]*/ int* ret);
-	STDMETHOD(AddBuiltinFunction)(/*[in]*/ BSTR name, /*[in]*/ int min_args, /*[in]*/ int max_args, /*[out, retval]*/ int* ret);
+	STDMETHOD(DeleteFunction)(/*[in]*/ BSTR name, /*[out, retval]*/ int* ret);
+	STDMETHOD(AddFunction)(/*[in]*/ BSTR name, /*[in]*/ int min_args, /*[in]*/ int max_args, /*[out, retval]*/ int* ret);
 	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ BOOL *pVal);
 	HRESULT __stdcall Parse (/*[out, retval]*/ int* ret);
 	HRESULT __stdcall Run (/*[out, retval]*/ int* ret);

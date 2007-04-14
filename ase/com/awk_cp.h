@@ -1,5 +1,5 @@
 /*
- * $Id: awk_cp.h,v 1.9 2007-02-03 10:52:12 bacon Exp $
+ * $Id: awk_cp.h,v 1.10 2007-04-14 15:30:14 bacon Exp $
  *
  * {License}
  */
@@ -506,7 +506,7 @@ public:
 		return -1;
 	}
 
-	int Fire_HandleBuiltinFunction (
+	int Fire_HandleFunction (
 		ase_awk_run_t* run, BSTR name, SAFEARRAY* argarray, ase_awk_val_t** retv)
 	{
 		T* pT = static_cast<T*>(this);
@@ -594,7 +594,6 @@ public:
 		VariantClear (&args[0]);
 		return 2; /* no proper handler */
 	}
-
 
 };
 

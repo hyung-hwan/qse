@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.30 2007-03-24 05:18:31 bacon Exp $
+ * $Id: Awk.cpp,v 1.31 2007-04-14 15:30:14 bacon Exp $
  *
  * {License}
  */
@@ -442,7 +442,7 @@ static int __handle_bfn (
 	}
 
 	ase_awk_val_t* ret;
-	int n = awk->Fire_HandleBuiltinFunction (run, name, aa, &ret);
+	int n = awk->Fire_HandleFunction (run, name, aa, &ret);
 	if (n == 1)
 	{
 		ase_char_t buf[128];
@@ -471,7 +471,7 @@ static int __handle_bfn (
 		return -1;
 	}
 
-	/* name and aa are destroyed in HandleBuiltinFunction */
+	/* name and aa are destroyed in HandleFunction */
 	//SafeArrayDestroy (aa);
 	//SysFreeString (name);
 
@@ -788,7 +788,7 @@ HRESULT CAwk::Run (int* ret)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::AddBuiltinFunction (
+STDMETHODIMP CAwk::AddFunction (
 	BSTR name, int min_args, int max_args, int* ret)
 {
 	bfn_t* bfn;
@@ -851,7 +851,7 @@ STDMETHODIMP CAwk::AddBuiltinFunction (
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::DeleteBuiltinFunction (BSTR name, int* ret)
+STDMETHODIMP CAwk::DeleteFunction (BSTR name, int* ret)
 {
 	size_t name_len = SysStringLen(name);
 	bfn_t* bfn, * next, * prev = NULL;

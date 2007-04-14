@@ -184,7 +184,7 @@ Private Sub Execute_Click()
         Exit Sub
     End If
     Call Awk.AddBuiltinFunction("tan", 1, 1)
-    Call Awk.AddBuiltinFunction("sqr", 1, 1)
+    Call Awk.AddBuiltinFunction("sqrt", 1, 1)
     Call Awk.AddBuiltinFunction("trim", 1, 1)
     'Call Awk.DeleteBuiltinFunction("tan")
     
@@ -201,11 +201,11 @@ Private Sub Execute_Click()
     
 End Sub
 
-Function Awk_OpenSource(ByVal mode As Long) As Long
+Function Awk_OpenSource(ByVal mode As ASELib.AwkSourceMode) As Long
     Awk_OpenSource = 1
 End Function
 
-Function Awk_CloseSource(ByVal mode As Long) As Long
+Function Awk_CloseSource(ByVal mode As ASELib.AwkSourceMode) As Long
     Awk_CloseSource = 0
 End Function
 
@@ -435,7 +435,7 @@ Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) 
         ElseIf TypeName(args(0)) = "Null" Then
             Awk_HandleBuiltinFunction = Tan(0)
         End If
-    ElseIf name = "sqr" Then
+    ElseIf name = "sqrt" Then
         If IsNull(args(0)) Then
             Awk_HandleBuiltinFunction = Sqr(0)
         ElseIf IsNumeric(args(0)) Then
