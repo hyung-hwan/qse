@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.cpp,v 1.10 2007-03-24 05:18:32 bacon Exp $
+ * $Id: AwkExtio.cpp,v 1.11 2007-04-15 13:15:35 bacon Exp $
  *
  * {License}
  */
@@ -43,13 +43,13 @@ BOOL CAwkExtio::PutName (const TCHAR* val)
 	return (name == NULL)? FALSE: TRUE;
 }
 
-STDMETHODIMP CAwkExtio::get_Type(int *pVal)
+STDMETHODIMP CAwkExtio::get_Type(AwkExtioType *pVal)
 {
 	*pVal = type;
 	return S_OK;
 }
 
-STDMETHODIMP CAwkExtio::get_Mode(int *pVal)
+STDMETHODIMP CAwkExtio::get_Mode(AwkExtioMode *pVal)
 {
 	*pVal = mode;
 	return S_OK;
