@@ -175,18 +175,18 @@ Private Sub Execute_Click()
     Awk.UseLongLong = False
     Awk.Debug = True
     
-    If Awk.AddBuiltinFunction("sin", 1, 1) = -1 Then
+    If Awk.AddFunction("sin", 1, 1) = -1 Then
         MsgBox "Cannot add builtin function - " + Awk.ErrorMessage
         Exit Sub
     End If
-    If Awk.AddBuiltinFunction("cos", 1, 1) = -1 Then
+    If Awk.AddFunction("cos", 1, 1) = -1 Then
         MsgBox "Cannot add builtin function - " + Awk.ErrorMessage
         Exit Sub
     End If
-    Call Awk.AddBuiltinFunction("tan", 1, 1)
-    Call Awk.AddBuiltinFunction("sqrt", 1, 1)
-    Call Awk.AddBuiltinFunction("trim", 1, 1)
-    'Call Awk.DeleteBuiltinFunction("tan")
+    Call Awk.AddFunction("tan", 1, 1)
+    Call Awk.AddFunction("sqrt", 1, 1)
+    Call Awk.AddFunction("trim", 1, 1)
+    'Call Awk.DeleteFunction("tan")
     
     If Awk.Parse() = -1 Then
         MsgBox "PARSE ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage

@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.h,v 1.9 2007-02-03 10:52:12 bacon Exp $
+ * $Id: AwkExtio.h,v 1.10 2007-04-15 13:15:35 bacon Exp $
  *
  * {License}
  */
@@ -19,8 +19,8 @@ class ATL_NO_VTABLE CAwkExtio :
 {
 public:
 	BSTR name;
-	int type;
-	int mode;
+	AwkExtioType type;
+	AwkExtioMode mode;
 	VARIANT handle;
 
 	IBuffer* read_buf;
@@ -45,8 +45,8 @@ END_COM_MAP()
 public:
 	STDMETHOD(get_Handle)(/*[out, retval]*/ VARIANT *pVal);
 	STDMETHOD(put_Handle)(/*[in]*/ VARIANT newVal);
-	STDMETHOD(get_Mode)(/*[out, retval]*/ int *pVal);
-	STDMETHOD(get_Type)(/*[out, retval]*/ int *pVal);
+	STDMETHOD(get_Mode)(/*[out, retval]*/ AwkExtioMode *pVal);
+	STDMETHOD(get_Type)(/*[out, retval]*/ AwkExtioType *pVal);
 	STDMETHOD(get_Name)(/*[out, retval]*/ BSTR *pVal);
 };
 

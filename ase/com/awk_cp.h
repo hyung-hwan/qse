@@ -1,5 +1,5 @@
 /*
- * $Id: awk_cp.h,v 1.10 2007-04-14 15:30:14 bacon Exp $
+ * $Id: awk_cp.h,v 1.11 2007-04-15 13:15:35 bacon Exp $
  *
  * {License}
  */
@@ -595,6 +595,43 @@ public:
 		return 2; /* no proper handler */
 	}
 
+	INT Fire_OnClose ()
+	{
+		T* pT = static_cast<T*>(this);
+		int i, nconns = m_vec.GetSize();
+		CComVariant ret;
+		
+		for (i = 0; i < nconns; i++)
+		{
+			pT->Lock();
+			CComPtr<IUnknown> sp = m_vec.GetAt(i);
+			pT->Unlock();
+
+			IDispatch* pDispatch = reinterpret_cast<IDispatch*>(sp.p);
+			if (pDispatch == NULL) continue;
+
+			VariantClear (&ret);
+
+			HRESULT hr = pDispatch->Invoke(
+				0xC, IID_NULL, LOCALE_USER_DEFAULT, 
+				DISPATCH_METHOD, NULL, &ret, NULL, NULL);
+
+			if (FAILED(hr)) continue;
+			if (ret.vt == VT_EMPTY) continue;
+
+			hr = ret.ChangeType (VT_I4);
+			if (FAILED(hr))
+			{
+				/* TODO: set the error code properly... */
+				/* invalid value returned... */
+				return -1;
+			}
+
+			return ret.lVal;
+		}
+
+		return -1;
+	}
 };
 
 #endif

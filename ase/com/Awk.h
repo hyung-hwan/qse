@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.18 2007-04-14 15:30:14 bacon Exp $
+ * $Id: Awk.h,v 1.19 2007-04-15 13:15:35 bacon Exp $
  *
  * {License}
  */
@@ -106,6 +106,7 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
+	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ BOOL *pVal);
 	STDMETHOD(put_UseLongLong)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_Debug)(/*[out, retval]*/ BOOL *pVal);
 	STDMETHOD(put_Debug)(/*[in]*/ BOOL newVal);
@@ -152,9 +153,9 @@ public:
 	STDMETHOD(get_ErrorMessage)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
+
 	STDMETHOD(DeleteFunction)(/*[in]*/ BSTR name, /*[out, retval]*/ int* ret);
 	STDMETHOD(AddFunction)(/*[in]*/ BSTR name, /*[in]*/ int min_args, /*[in]*/ int max_args, /*[out, retval]*/ int* ret);
-	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ BOOL *pVal);
 	HRESULT __stdcall Parse (/*[out, retval]*/ int* ret);
 	HRESULT __stdcall Run (/*[out, retval]*/ int* ret);
 };

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.31 2007-04-14 15:30:14 bacon Exp $
+ * $Id: Awk.cpp,v 1.32 2007-04-15 13:15:35 bacon Exp $
  *
  * {License}
  */
@@ -70,6 +70,7 @@ CAwk::CAwk ():
 
 CAwk::~CAwk ()
 {
+
 	while (bfn_list != NULL)
 	{
 		bfn_t* next = bfn_list->next;
@@ -228,11 +229,11 @@ static ase_ssize_t __read_source (
 
 	if (cmd == ASE_AWK_IO_OPEN) 
 	{
-		return (ase_ssize_t)awk->Fire_OpenSource (0);
+		return (ase_ssize_t)awk->Fire_OpenSource (AWK_SOURCE_READ);
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
-		return (ase_ssize_t)awk->Fire_CloseSource (0);
+		return (ase_ssize_t)awk->Fire_CloseSource (AWK_SOURCE_READ);
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
@@ -296,11 +297,11 @@ static ase_ssize_t __write_source (
 
 	if (cmd == ASE_AWK_IO_OPEN) 
 	{
-		return (ase_ssize_t)awk->Fire_OpenSource (1);
+		return (ase_ssize_t)awk->Fire_OpenSource (AWK_SOURCE_WRITE);
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
-		return (ase_ssize_t)awk->Fire_CloseSource (1);
+		return (ase_ssize_t)awk->Fire_CloseSource (AWK_SOURCE_WRITE);
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
@@ -624,8 +625,8 @@ static ase_ssize_t __process_extio (
 			DBGOUT2 (awk, _T("cannot set the name of the extio input buffer"));
 			return -1; 
 		}
-		extio2->type = epa->type & 0xFF;
-		extio2->mode = epa->mode;
+		extio2->type = (AwkExtioType)(epa->type & 0xFF);
+		extio2->mode = (AwkExtioMode)(epa->mode);
 
 		read_buf->AddRef ();
 		extio2->read_buf = read_buf;
