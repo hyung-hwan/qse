@@ -1,5 +1,5 @@
 /*
- * $Id: asecom.idl,v 1.4 2007-04-15 14:25:35 bacon Exp $
+ * $Id: asecom.idl,v 1.5 2007-04-15 15:26:58 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -22,7 +22,7 @@ interface IAwk : IDispatch
 	HRESULT Run([out,retval] VARIANT_BOOL* ret);
 
 	[id(3), helpstring("method AddFunction")] 
-	HRESULT AddFunction([in] BSTR name, [in] int min_args, [in] int max_args, [out,retval] VARIANT_BOOL* ret);
+	HRESULT AddFunction([in] BSTR name, [in] int minArgs, [in] int maxArgs, [out,retval] VARIANT_BOOL* ret);
 
 	[id(4), helpstring("method DeleteFunction")] 
 	HRESULT DeleteFunction([in] BSTR name, [out,retval] VARIANT_BOOL* ret);
@@ -101,49 +101,54 @@ interface IAwk : IDispatch
 	[propput, id(20), helpstring("property UseCrlf")]
 	HRESULT UseCrlf([in] VARIANT_BOOL newVal);
 
-	[propget, id(21), helpstring("property MaxDepthForBlockParse")]
+	[propget, id(21), helpstring("property ArgsToMain")]
+	HRESULT ArgsToMain([out,retval] VARIANT_BOOL *pVal);
+	[propput, id(21), helpstring("property ArgsToMain")]
+	HRESULT ArgsToMain([in] VARIANT_BOOL newVal);
+
+	[propget, id(22), helpstring("property MaxDepthForBlockParse")]
 	HRESULT MaxDepthForBlockParse([out,retval] int *pVal);
-	[propput, id(21), helpstring("property MaxDepthForBlockParse")]
+	[propput, id(22), helpstring("property MaxDepthForBlockParse")]
 	HRESULT MaxDepthForBlockParse([in] int newVal);
 
-	[propget, id(22), helpstring("property MaxDepthForBlockRun")]
+	[propget, id(23), helpstring("property MaxDepthForBlockRun")]
 	HRESULT MaxDepthForBlockRun([out,retval] int *pVal);
-	[propput, id(22), helpstring("property MaxDepthForBlockRun")]
+	[propput, id(23), helpstring("property MaxDepthForBlockRun")]
 	HRESULT MaxDepthForBlockRun([in] int newVal);
 
-	[propget, id(23), helpstring("property MaxDepthForExprParse")]
+	[propget, id(24), helpstring("property MaxDepthForExprParse")]
 	HRESULT MaxDepthForExprParse([out,retval] int *pVal);
-	[propput, id(23), helpstring("property MaxDepthForExprParse")]
+	[propput, id(24), helpstring("property MaxDepthForExprParse")]
 	HRESULT MaxDepthForExprParse([in] int newVal);
 
-	[propget, id(24), helpstring("property MaxDepthForExprRun")]
+	[propget, id(25), helpstring("property MaxDepthForExprRun")]
 	HRESULT MaxDepthForExprRun([out,retval] int *pVal);
-	[propput, id(24), helpstring("property MaxDepthForExprRun")]
+	[propput, id(25), helpstring("property MaxDepthForExprRun")]
 	HRESULT MaxDepthForExprRun([in] int newVal);
 
-	[propget, id(25), helpstring("property MaxDepthForRexBuild")]
+	[propget, id(26), helpstring("property MaxDepthForRexBuild")]
 	HRESULT MaxDepthForRexBuild([out,retval] int *pVal);
-	[propput, id(25), helpstring("property MaxDepthForRexBuild")]
+	[propput, id(26), helpstring("property MaxDepthForRexBuild")]
 	HRESULT MaxDepthForRexBuild([in] int newVal);
 
-	[propget, id(26), helpstring("property MaxDepthForRexMatch")]
+	[propget, id(27), helpstring("property MaxDepthForRexMatch")]
 	HRESULT MaxDepthForRexMatch([out,retval] int *pVal);
-	[propput, id(26), helpstring("property MaxDepthForRexMatch")]
+	[propput, id(27), helpstring("property MaxDepthForRexMatch")]
 	HRESULT MaxDepthForRexMatch([in] int newVal);
 
-	[propget, id(27), helpstring("property EntryPoint")]
+	[propget, id(28), helpstring("property EntryPoint")]
 	HRESULT EntryPoint([out,retval] BSTR *pVal);
-	[propput, id(27), helpstring("property EntryPoint")]
+	[propput, id(28), helpstring("property EntryPoint")]
 	HRESULT EntryPoint([in] BSTR newVal);
 
-	[propget, id(28), helpstring("property Debug")]
+	[propget, id(29), helpstring("property Debug")]
 	HRESULT Debug([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(28), helpstring("property Debug")]
+	[propput, id(29), helpstring("property Debug")]
 	HRESULT Debug([in] VARIANT_BOOL newVal);
 
-	[propget, id(29), helpstring("property UseLongLong")]
+	[propget, id(30), helpstring("property UseLongLong")]
 	HRESULT UseLongLong([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(29), helpstring("property UseLongLong")]
+	[propput, id(30), helpstring("property UseLongLong")]
 	HRESULT UseLongLong([in] VARIANT_BOOL newVal);
 };
 
