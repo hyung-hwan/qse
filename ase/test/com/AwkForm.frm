@@ -175,11 +175,11 @@ Private Sub Execute_Click()
     Awk.UseLongLong = False
     Awk.Debug = True
     
-    If Awk.AddFunction("sin", 1, 1) = -1 Then
+    If Not Awk.AddFunction("sin", 1, 1) Then
         MsgBox "Cannot add builtin function - " + Awk.ErrorMessage
         Exit Sub
     End If
-    If Awk.AddFunction("cos", 1, 1) = -1 Then
+    If Not Awk.AddFunction("cos", 1, 1) Then
         MsgBox "Cannot add builtin function - " + Awk.ErrorMessage
         Exit Sub
     End If
@@ -188,11 +188,11 @@ Private Sub Execute_Click()
     Call Awk.AddFunction("trim", 1, 1)
     'Call Awk.DeleteFunction("tan")
     
-    If Awk.Parse() = -1 Then
+    If Not Awk.Parse() Then
         MsgBox "PARSE ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
     Else
         Awk.EntryPoint = Trim(EntryPoint.Text)
-        If Awk.Run() = -1 Then
+        If Not Awk.Run() Then
             MsgBox "RUN ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
         End If
     End If

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.32 2007-04-15 13:15:35 bacon Exp $
+ * $Id: Awk.cpp,v 1.33 2007-04-15 14:25:35 bacon Exp $
  *
  * {License}
  */
@@ -480,7 +480,7 @@ static int __handle_bfn (
 	return 0;
 }
 
-HRESULT CAwk::Parse (int* ret)
+HRESULT CAwk::Parse (VARIANT_BOOL* ret)
 {
  	if (handle == NULL)
 	{
@@ -518,7 +518,7 @@ HRESULT CAwk::Parse (int* ret)
 				errmsg, ASE_COUNTOF(errmsg), 
 				ase_awk_geterrstr(NULL, ASE_AWK_ENOMEM));
 
-			*ret = -1;
+			*ret = VARIANT_FALSE;
 
 			DBGOUT (_T("cannot open awk"));
 			return S_OK;
@@ -557,7 +557,7 @@ HRESULT CAwk::Parse (int* ret)
 			ase_awk_geterror (handle, &errnum, &errlin, &msg);
 			ase_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
 
-			*ret = -1;
+			*ret = VARIANT_FALSE;
 			return S_OK;
 		}
 	}
@@ -577,12 +577,12 @@ HRESULT CAwk::Parse (int* ret)
 
 		DBGOUT (_T("cannot parse the source code"));
 
-		*ret = -1;
+		*ret = VARIANT_FALSE;
 		return S_OK;
 	}
 	else DBGOUT (_T("parsed the source code successfully"));
 
-	*ret = 0;
+	*ret = VARIANT_TRUE;
 	return S_OK;
 }
 
@@ -748,7 +748,7 @@ static ase_ssize_t __process_extio (
 	return -1;
 }
 
-HRESULT CAwk::Run (int* ret)
+HRESULT CAwk::Run (VARIANT_BOOL* ret)
 {
 	const ase_char_t* entry = NULL;
 
@@ -758,7 +758,7 @@ HRESULT CAwk::Run (int* ret)
 		errlin = 0;
 		_tcscpy (errmsg, _T("parse not called yet"));
 
-		*ret = -1;
+		*ret = VARIANT_FALSE;
 		return S_OK;
 	}
 
@@ -780,17 +780,17 @@ HRESULT CAwk::Run (int* ret)
 		ase_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
 
 		DBGOUT (_T("cannot run the program"));
-		*ret = -1;
+		*ret = VARIANT_FALSE;
 		return S_OK;
 	}
 	else DBGOUT (_T("run the program successfully"));
 
-	*ret = 0;
+	*ret = VARIANT_TRUE;
 	return S_OK;
 }
 
 STDMETHODIMP CAwk::AddFunction (
-	BSTR name, int min_args, int max_args, int* ret)
+	BSTR name, int min_args, int max_args, VARIANT_BOOL* ret)
 {
 	bfn_t* bfn;
 	size_t name_len = SysStringLen(name);
@@ -808,7 +808,7 @@ STDMETHODIMP CAwk::AddFunction (
 				_T("'%.*s' added already"), 
 				bfn->name.len, bfn->name.ptr);
 
-			*ret = -1;
+			*ret = VARIANT_FALSE;
 			return S_OK;
 		}
 	}
@@ -822,7 +822,7 @@ STDMETHODIMP CAwk::AddFunction (
 			errmsg, ASE_COUNTOF(errmsg), 
 			ase_awk_geterrstr(NULL, errnum));
 
-		*ret = -1;
+		*ret = VARIANT_FALSE;
 		return S_OK;
 	}
 
@@ -838,7 +838,7 @@ STDMETHODIMP CAwk::AddFunction (
 			errmsg, ASE_COUNTOF(errmsg), 
 			ase_awk_geterrstr(NULL, errnum));
 
-		*ret = -1;
+		*ret = VARIANT_FALSE;
 		return S_OK;
 	}
 	memcpy (bfn->name.ptr, name, sizeof(TCHAR) * bfn->name.len);
@@ -848,11 +848,11 @@ STDMETHODIMP CAwk::AddFunction (
 	bfn->next = bfn_list;
 	bfn_list = bfn;
 
-	*ret = 0;
+	*ret = VARIANT_TRUE;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::DeleteFunction (BSTR name, int* ret)
+STDMETHODIMP CAwk::DeleteFunction (BSTR name, VARIANT_BOOL* ret)
 {
 	size_t name_len = SysStringLen(name);
 	bfn_t* bfn, * next, * prev = NULL;
@@ -871,7 +871,7 @@ STDMETHODIMP CAwk::DeleteFunction (BSTR name, int* ret)
 			if (prev == NULL) bfn_list = next;
 			else prev->next = next;
 
-			*ret = 0;
+			*ret = VARIANT_TRUE;
 			return S_OK;
 		}
 
@@ -884,7 +884,7 @@ STDMETHODIMP CAwk::DeleteFunction (BSTR name, int* ret)
 		errmsg, ASE_COUNTOF(errmsg), 
 		ase_awk_geterrstr(NULL, errnum));
 
-	*ret = -1;
+	*ret = VARIANT_FALSE;
 	return S_OK;
 }
 
@@ -908,14 +908,14 @@ STDMETHODIMP CAwk::get_ErrorMessage(BSTR *pVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_ImplicitVariable(BOOL *pVal)
+STDMETHODIMP CAwk::get_ImplicitVariable(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_IMPLICIT) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_ImplicitVariable(BOOL newVal)
+STDMETHODIMP CAwk::put_ImplicitVariable(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_IMPLICIT;
 	else option = option & ~ASE_AWK_IMPLICIT;
@@ -923,14 +923,14 @@ STDMETHODIMP CAwk::put_ImplicitVariable(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_ExplicitVariable(BOOL *pVal)
+STDMETHODIMP CAwk::get_ExplicitVariable(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_EXPLICIT) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_ExplicitVariable(BOOL newVal)
+STDMETHODIMP CAwk::put_ExplicitVariable(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_EXPLICIT;
 	else option = option & ~ASE_AWK_EXPLICIT;
@@ -938,14 +938,14 @@ STDMETHODIMP CAwk::put_ExplicitVariable(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_UniqueFunction(BOOL *pVal)
+STDMETHODIMP CAwk::get_UniqueFunction(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_UNIQUEFN) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_UniqueFunction(BOOL newVal)
+STDMETHODIMP CAwk::put_UniqueFunction(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_UNIQUEFN;
 	else option = option & ~ASE_AWK_UNIQUEFN;
@@ -953,14 +953,14 @@ STDMETHODIMP CAwk::put_UniqueFunction(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_VariableShading(BOOL *pVal)
+STDMETHODIMP CAwk::get_VariableShading(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_SHADING) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_VariableShading(BOOL newVal)
+STDMETHODIMP CAwk::put_VariableShading(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_SHADING;
 	else option = option & ~ASE_AWK_SHADING;
@@ -968,14 +968,14 @@ STDMETHODIMP CAwk::put_VariableShading(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_ShiftOperators(BOOL *pVal)
+STDMETHODIMP CAwk::get_ShiftOperators(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_SHIFT) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_ShiftOperators(BOOL newVal)
+STDMETHODIMP CAwk::put_ShiftOperators(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_SHIFT;
 	else option = option & ~ASE_AWK_SHIFT;
@@ -983,14 +983,14 @@ STDMETHODIMP CAwk::put_ShiftOperators(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_IdivOperator(BOOL *pVal)
+STDMETHODIMP CAwk::get_IdivOperator(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_IDIV) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_IdivOperator(BOOL newVal)
+STDMETHODIMP CAwk::put_IdivOperator(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_IDIV;
 	else option = option & ~ASE_AWK_IDIV;
@@ -998,14 +998,14 @@ STDMETHODIMP CAwk::put_IdivOperator(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_ConcatString(BOOL *pVal)
+STDMETHODIMP CAwk::get_ConcatString(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_STRCONCAT) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_ConcatString(BOOL newVal)
+STDMETHODIMP CAwk::put_ConcatString(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_STRCONCAT;
 	else option = option & ~ASE_AWK_STRCONCAT;
@@ -1013,14 +1013,14 @@ STDMETHODIMP CAwk::put_ConcatString(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_SupportExtio(BOOL *pVal)
+STDMETHODIMP CAwk::get_SupportExtio(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_EXTIO) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_SupportExtio(BOOL newVal)
+STDMETHODIMP CAwk::put_SupportExtio(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_EXTIO;
 	else option = option & ~ASE_AWK_EXTIO;
@@ -1028,14 +1028,14 @@ STDMETHODIMP CAwk::put_SupportExtio(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_SupportBlockless(BOOL *pVal)
+STDMETHODIMP CAwk::get_SupportBlockless(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_BLOCKLESS) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_SupportBlockless(BOOL newVal)
+STDMETHODIMP CAwk::put_SupportBlockless(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_BLOCKLESS;
 	else option = option & ~ASE_AWK_BLOCKLESS;
@@ -1043,14 +1043,14 @@ STDMETHODIMP CAwk::put_SupportBlockless(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_StringBaseOne(BOOL *pVal)
+STDMETHODIMP CAwk::get_StringBaseOne(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_STRBASEONE) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_StringBaseOne(BOOL newVal)
+STDMETHODIMP CAwk::put_StringBaseOne(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_STRBASEONE;
 	else option = option & ~ASE_AWK_STRBASEONE;
@@ -1058,14 +1058,14 @@ STDMETHODIMP CAwk::put_StringBaseOne(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_StripSpaces(BOOL *pVal)
+STDMETHODIMP CAwk::get_StripSpaces(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_STRIPSPACES) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_StripSpaces(BOOL newVal)
+STDMETHODIMP CAwk::put_StripSpaces(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_STRIPSPACES;
 	else option = option & ~ASE_AWK_STRIPSPACES;
@@ -1073,14 +1073,14 @@ STDMETHODIMP CAwk::put_StripSpaces(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_Nextofile(BOOL *pVal)
+STDMETHODIMP CAwk::get_Nextofile(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_NEXTOFILE) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_Nextofile(BOOL newVal)
+STDMETHODIMP CAwk::put_Nextofile(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_NEXTOFILE;
 	else option = option & ~ASE_AWK_NEXTOFILE;
@@ -1088,14 +1088,14 @@ STDMETHODIMP CAwk::put_Nextofile(BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_UseCrlf(BOOL *pVal)
+STDMETHODIMP CAwk::get_UseCrlf(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_CRLF) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_UseCrlf(BOOL newVal)
+STDMETHODIMP CAwk::put_UseCrlf(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_CRLF;
 	else option = option & ~ASE_AWK_CRLF;
@@ -1262,25 +1262,25 @@ STDMETHODIMP CAwk::put_EntryPoint(BSTR newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_Debug(BOOL *pVal)
+STDMETHODIMP CAwk::get_Debug(VARIANT_BOOL *pVal)
 {
 	*pVal = debug;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_Debug(BOOL newVal)
+STDMETHODIMP CAwk::put_Debug(VARIANT_BOOL newVal)
 {
 	debug = newVal;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_UseLongLong(BOOL *pVal)
+STDMETHODIMP CAwk::get_UseLongLong(VARIANT_BOOL *pVal)
 {
 	*pVal = use_longlong;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_UseLongLong(BOOL newVal)
+STDMETHODIMP CAwk::put_UseLongLong(VARIANT_BOOL newVal)
 {
 	use_longlong = newVal;
 	return S_OK;
