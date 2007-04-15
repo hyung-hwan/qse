@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.347 2007-03-20 10:44:44 bacon Exp $
+ * $Id: run.c,v 1.348 2007-04-15 15:26:57 bacon Exp $
  *
  * {License}
  */
@@ -1209,6 +1209,14 @@ static int run_main (
 
 		if (runarg != ASE_NULL)
 		{
+			if (!(run->awk->option & ASE_AWK_ARGSTOMAIN)) 
+			{
+				/* if the option is not set, the arguments 
+				 * arenot passed to the main function as 
+				 * parameters */
+				nrunargs = 0;
+			}
+
 			/* prepare to pass the arguments to the main function */
 			for (i = nrunargs; i > 0; )
 			{

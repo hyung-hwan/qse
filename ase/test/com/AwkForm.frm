@@ -1,6 +1,6 @@
 VERSION 5.00
 Begin VB.Form AwkForm 
-   Caption         =   "ASE COM AWK"
+   Caption         =   "ASE.COM.AWK"
    ClientHeight    =   7635
    ClientLeft      =   60
    ClientTop       =   345

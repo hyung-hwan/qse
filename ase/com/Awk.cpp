@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.33 2007-04-15 14:25:35 bacon Exp $
+ * $Id: Awk.cpp,v 1.34 2007-04-15 15:26:57 bacon Exp $
  *
  * {License}
  */
@@ -790,7 +790,7 @@ HRESULT CAwk::Run (VARIANT_BOOL* ret)
 }
 
 STDMETHODIMP CAwk::AddFunction (
-	BSTR name, int min_args, int max_args, VARIANT_BOOL* ret)
+	BSTR name, int minArgs, int maxArgs, VARIANT_BOOL* ret)
 {
 	bfn_t* bfn;
 	size_t name_len = SysStringLen(name);
@@ -843,8 +843,8 @@ STDMETHODIMP CAwk::AddFunction (
 	}
 	memcpy (bfn->name.ptr, name, sizeof(TCHAR) * bfn->name.len);
 
-	bfn->min_args = min_args;
-	bfn->max_args = max_args;
+	bfn->min_args = minArgs;
+	bfn->max_args = maxArgs;
 	bfn->next = bfn_list;
 	bfn_list = bfn;
 
@@ -1099,6 +1099,21 @@ STDMETHODIMP CAwk::put_UseCrlf(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_CRLF;
 	else option = option & ~ASE_AWK_CRLF;
+	if (handle != NULL) ase_awk_setoption (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_ArgsToMain(VARIANT_BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getoption (handle);
+	*pVal = (option & ASE_AWK_ARGSTOMAIN) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_ArgsToMain(VARIANT_BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_ARGSTOMAIN;
+	else option = option & ~ASE_AWK_ARGSTOMAIN;
 	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }

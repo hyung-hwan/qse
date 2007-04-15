@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.20 2007-04-15 14:25:35 bacon Exp $
+ * $Id: Awk.h,v 1.21 2007-04-15 15:26:58 bacon Exp $
  *
  * {License}
  */
@@ -124,6 +124,8 @@ public:
 	STDMETHOD(put_MaxDepthForBlockRun)(/*[in]*/ int newVal);
 	STDMETHOD(get_MaxDepthForBlockParse)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(put_MaxDepthForBlockParse)(/*[in]*/ int newVal);
+	STDMETHOD(get_ArgsToMain)(/*[out, retval]*/ VARIANT_BOOL *pVal);
+	STDMETHOD(put_ArgsToMain)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_UseCrlf)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_UseCrlf)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_Nextofile)(/*[out, retval]*/ VARIANT_BOOL *pVal);
@@ -154,8 +156,12 @@ public:
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
 
-	STDMETHOD(DeleteFunction)(/*[in]*/ BSTR name, /*[out, retval]*/ VARIANT_BOOL* ret);
-	STDMETHOD(AddFunction)(/*[in]*/ BSTR name, /*[in]*/ int min_args, /*[in]*/ int max_args, /*[out, retval]*/ VARIANT_BOOL* ret);
+	HRESULT __stdcall DeleteFunction (
+		/*[in]*/ BSTR name, /*[out, retval]*/ VARIANT_BOOL* ret);
+	HRESULT __stdcall AddFunction (
+		/*[in]*/ BSTR name, /*[in]*/ int minArgs,
+	       	/*[in]*/ int maxArgs, /*[out, retval]*/ VARIANT_BOOL* ret);
+
 	HRESULT __stdcall Parse (/*[out, retval]*/ VARIANT_BOOL* ret);
 	HRESULT __stdcall Run (/*[out, retval]*/ VARIANT_BOOL* ret);
 };
