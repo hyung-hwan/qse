@@ -1,22 +1,53 @@
 VERSION 5.00
 Begin VB.Form AwkForm 
    Caption         =   "ASE.COM.AWK"
-   ClientHeight    =   7635
+   ClientHeight    =   8100
    ClientLeft      =   60
    ClientTop       =   345
-   ClientWidth     =   10335
+   ClientWidth     =   12900
    LinkTopic       =   "AwkForm"
-   ScaleHeight     =   7635
-   ScaleWidth      =   10335
+   MaxButton       =   0   'False
+   ScaleHeight     =   8100
+   ScaleWidth      =   12900
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton btnClearAll 
+      Caption         =   "Clear All"
+      Height          =   375
+      Left            =   240
+      TabIndex        =   14
+      Top             =   4560
+      Width           =   2295
+   End
+   Begin VB.CommandButton btnAddArgument 
+      Caption         =   "Add"
+      Height          =   375
+      Left            =   1920
+      TabIndex        =   12
+      Top             =   4080
+      Width           =   615
+   End
+   Begin VB.TextBox txtArgument 
+      Height          =   375
+      Left            =   240
+      TabIndex        =   11
+      Top             =   4080
+      Width           =   1575
+   End
+   Begin VB.ListBox lstArguments 
+      Height          =   2595
+      Left            =   240
+      TabIndex        =   10
+      Top             =   1320
+      Width           =   2295
+   End
    Begin VB.ComboBox EntryPoint 
       Height          =   315
       ItemData        =   "AwkForm.frx":0000
-      Left            =   1080
+      Left            =   240
       List            =   "AwkForm.frx":0007
       TabIndex        =   9
-      Top             =   120
-      Width           =   3495
+      Top             =   480
+      Width           =   2295
    End
    Begin VB.TextBox ConsoleIn 
       BeginProperty Font 
@@ -28,12 +59,12 @@ Begin VB.Form AwkForm
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   2895
-      Left            =   120
+      Height          =   3735
+      Left            =   2760
       MultiLine       =   -1  'True
       ScrollBars      =   3  'Both
       TabIndex        =   2
-      Top             =   3960
+      Top             =   4320
       Width           =   5055
    End
    Begin VB.TextBox SourceIn 
@@ -46,12 +77,12 @@ Begin VB.Form AwkForm
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   2775
-      Left            =   120
+      Height          =   3615
+      Left            =   2760
       MultiLine       =   -1  'True
       ScrollBars      =   3  'Both
       TabIndex        =   0
-      Top             =   840
+      Top             =   360
       Width           =   5055
    End
    Begin VB.TextBox SourceOut 
@@ -64,21 +95,21 @@ Begin VB.Form AwkForm
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   2775
-      Left            =   5280
+      Height          =   3615
+      Left            =   7920
       Locked          =   -1  'True
       MultiLine       =   -1  'True
       ScrollBars      =   3  'Both
       TabIndex        =   1
-      Top             =   840
+      Top             =   360
       Width           =   4935
    End
-   Begin VB.CommandButton Execute 
+   Begin VB.CommandButton btnExecute 
       Caption         =   "Execute"
       Height          =   375
-      Left            =   9000
+      Left            =   1440
       TabIndex        =   5
-      Top             =   7080
+      Top             =   7680
       Width           =   1215
    End
    Begin VB.TextBox ConsoleOut 
@@ -91,52 +122,68 @@ Begin VB.Form AwkForm
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   2895
-      Left            =   5280
+      Height          =   3735
+      Left            =   7920
       MultiLine       =   -1  'True
       ScrollBars      =   3  'Both
       TabIndex        =   3
-      Top             =   3960
+      Top             =   4320
       Width           =   4935
    End
-   Begin VB.Label Label5 
-      Caption         =   "Entry Point:"
-      Height          =   255
+   Begin VB.Frame Frame1 
+      Caption         =   "Arguments"
+      Height          =   4335
       Left            =   120
-      TabIndex        =   10
+      TabIndex        =   13
+      Top             =   1080
+      Width           =   2535
+      Begin VB.CheckBox chkPassToEntryPoint 
+         Caption         =   "Pass To Entry Point"
+         Height          =   255
+         Left            =   360
+         TabIndex        =   16
+         Top             =   3960
+         Width           =   1815
+      End
+   End
+   Begin VB.Frame Frame2 
+      Caption         =   "Entry Point"
+      Height          =   855
+      Left            =   120
+      TabIndex        =   15
       Top             =   120
-      Width           =   1455
+      Width           =   2535
    End
    Begin VB.Label Label4 
       Caption         =   "Console Out"
       Height          =   255
-      Left            =   5280
+      Left            =   7920
       TabIndex        =   8
-      Top             =   3720
+      Top             =   4080
       Width           =   3735
    End
    Begin VB.Label Label3 
       Caption         =   "Console In"
       Height          =   255
-      Left            =   120
+      Left            =   2760
       TabIndex        =   7
-      Top             =   3720
+      Top             =   4080
       Width           =   3735
    End
    Begin VB.Label Label2 
       Caption         =   "Source Out"
       Height          =   255
-      Left            =   5280
+      Left            =   7920
       TabIndex        =   6
-      Top             =   600
+      Top             =   120
       Width           =   3735
    End
    Begin VB.Label Label1 
       Caption         =   "Source In"
       Height          =   255
-      Left            =   120
+      Left            =   2760
       TabIndex        =   4
-      Top             =   600
+      Top             =   120
       Width           =   2415
    End
 End
@@ -146,11 +193,27 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
+Option Base 0
 Dim source_first As Boolean
 Public WithEvents Awk As ASELib.Awk
 Attribute Awk.VB_VarHelpID = -1
 
-Private Sub Execute_Click()
+Private Sub btnAddArgument_Click()
+    Dim arg As String
+    
+    arg = txtArgument.Text
+    If Len(arg) > 0 Then
+        lstArguments.AddItem (arg)
+        txtArgument.Text = ""
+        txtArgument.SetFocus
+    End If
+End Sub
+
+Private Sub btnClearAll_Click()
+    lstArguments.Clear
+End Sub
+
+Private Sub btnExecute_Click()
 
     source_first = True
     
@@ -191,8 +254,26 @@ Private Sub Execute_Click()
     If Not Awk.Parse() Then
         MsgBox "PARSE ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
     Else
+        Dim n As Boolean
+        
         Awk.EntryPoint = Trim(EntryPoint.Text)
-        If Not Awk.Run() Then
+        
+        If lstArguments.ListCount = 0 Then
+            n = Awk.Run(Null)
+        Else
+            ReDim Args(lstArguments.ListCount - 1) As String
+            Dim i As Integer
+            
+            Awk.ArgumentsToEntryPoint = chkPassToEntryPoint.value
+        
+            For i = 0 To lstArguments.ListCount - 1
+                Args(i) = lstArguments.List(i)
+            Next i
+            
+            n = Awk.Run(Args)
+        End If
+        
+        If Not n Then
             MsgBox "RUN ERROR [" + Str(Awk.ErrorLine) + "]" + Awk.ErrorMessage
         End If
     End If
@@ -409,42 +490,42 @@ ErrorTrap:
     Exit Function
 End Function
 
-Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) As Variant
+Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal Args As Variant) As Variant
 
     If name = "sin" Then
-        If IsNull(args(0)) Then
+        If IsNull(Args(0)) Then
             Awk_HandleBuiltinFunction = Sin(0)
-        ElseIf IsNumeric(args(0)) Then
-            Awk_HandleBuiltinFunction = Sin(args(0))
+        ElseIf IsNumeric(Args(0)) Then
+            Awk_HandleBuiltinFunction = Sin(Args(0))
         Else
-            Awk_HandleBuiltinFunction = Sin(Val(args(0)))
+            Awk_HandleBuiltinFunction = Sin(Val(Args(0)))
         End If
     ElseIf name = "cos" Then
-        If TypeName(args(0)) = "Long" Or TypeName(args(0)) = "Double" Then
-            Awk_HandleBuiltinFunction = Cos(args(0))
-        ElseIf TypeName(args(0)) = "String" Then
-            Awk_HandleBuiltinFunction = Cos(Val(args(0)))
-        ElseIf TypeName(args(0)) = "Null" Then
+        If TypeName(Args(0)) = "Long" Or TypeName(Args(0)) = "Double" Then
+            Awk_HandleBuiltinFunction = Cos(Args(0))
+        ElseIf TypeName(Args(0)) = "String" Then
+            Awk_HandleBuiltinFunction = Cos(Val(Args(0)))
+        ElseIf TypeName(Args(0)) = "Null" Then
             Awk_HandleBuiltinFunction = Cos(0)
         End If
     ElseIf name = "tan" Then
-        If TypeName(args(0)) = "Long" Or TypeName(args(0)) = "Double" Then
-            Awk_HandleBuiltinFunction = Tan(args(0))
-        ElseIf TypeName(args(0)) = "String" Then
-            Awk_HandleBuiltinFunction = Tan(Val(args(0)))
-        ElseIf TypeName(args(0)) = "Null" Then
+        If TypeName(Args(0)) = "Long" Or TypeName(Args(0)) = "Double" Then
+            Awk_HandleBuiltinFunction = Tan(Args(0))
+        ElseIf TypeName(Args(0)) = "String" Then
+            Awk_HandleBuiltinFunction = Tan(Val(Args(0)))
+        ElseIf TypeName(Args(0)) = "Null" Then
             Awk_HandleBuiltinFunction = Tan(0)
         End If
     ElseIf name = "sqrt" Then
-        If IsNull(args(0)) Then
+        If IsNull(Args(0)) Then
             Awk_HandleBuiltinFunction = Sqr(0)
-        ElseIf IsNumeric(args(0)) Then
-            Awk_HandleBuiltinFunction = Sqr(args(0))
+        ElseIf IsNumeric(Args(0)) Then
+            Awk_HandleBuiltinFunction = Sqr(Args(0))
         Else
-            Awk_HandleBuiltinFunction = Sqr(Val(args(0)))
+            Awk_HandleBuiltinFunction = Sqr(Val(Args(0)))
         End If
     ElseIf name = "trim" Then
-        Awk_HandleBuiltinFunction = Trim(args(0))
+        Awk_HandleBuiltinFunction = Trim(Args(0))
     End If
     
     'Dim i As Integer
@@ -458,6 +539,7 @@ Function Awk_HandleBuiltinFunction(ByVal name As String, ByVal args As Variant) 
     
     'MsgBox xxx
 End Function
+
 
 Private Sub Form_Load()
     SourceIn.Text = ""

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.34 2007-04-15 15:26:57 bacon Exp $
+ * $Id: Awk.cpp,v 1.35 2007-04-21 12:40:44 bacon Exp $
  *
  * {License}
  */
@@ -748,9 +748,11 @@ static ase_ssize_t __process_extio (
 	return -1;
 }
 
-HRESULT CAwk::Run (VARIANT_BOOL* ret)
+HRESULT CAwk::Run (VARIANT argarray, VARIANT_BOOL* ret)
 {
 	const ase_char_t* entry = NULL;
+	ase_awk_runarg_t* runarg;
+	long nrunargs;
 
 	if (handle == NULL)
 	{
@@ -772,7 +774,79 @@ HRESULT CAwk::Run (VARIANT_BOOL* ret)
 	if (entry_point != NULL && 
 	    SysStringLen(entry_point) > 0) entry = entry_point;
 
-	if (ase_awk_run (handle, entry, &runios, NULL, NULL, this) == -1)
+	if (argarray.vt == VT_EMPTY || argarray.vt == VT_NULL) 
+	{
+		/* no run-time argument specified */
+		runarg = NULL;
+	}
+	else if (argarray.vt == (VT_ARRAY|VT_BSTR))
+	{
+		SAFEARRAY* sa = argarray.parray;
+		UINT dim = SafeArrayGetDim (sa);
+		if (dim != 1) 
+		{
+			/* arguments should not be multi-dimensional */
+			errnum = ASE_AWK_EINTERN;
+			errlin = 0;
+			_tcscpy (errmsg, _T("multi-dimensional run-time argument array not allowed"));
+
+			*ret = VARIANT_FALSE;
+			return S_OK;
+		}
+
+		long lbound, ubound;
+		SafeArrayGetLBound (sa, 1, &lbound);
+		SafeArrayGetUBound (sa, 1, &ubound);
+
+		nrunargs = ubound - lbound + 1;
+		runarg = (ase_awk_runarg_t*) malloc (sizeof(*runarg) * (nrunargs+1));
+		if (runarg == NULL)
+		{
+			errnum = ASE_AWK_ENOMEM;
+			errlin = 0;
+			ase_strxcpy (
+				errmsg, ASE_COUNTOF(errmsg), 
+				ase_awk_geterrstr(NULL, errnum));
+
+			*ret = VARIANT_FALSE;
+			return S_OK;
+		}
+
+		for (long i = lbound, j = 0; i <= ubound; i++, j++)
+		{
+			BSTR bstr;
+			HRESULT hr = SafeArrayGetElement (sa, &i, (void**)&bstr);
+			if (FAILED(hr))
+			{
+				errnum = ASE_AWK_EINTERN;
+				errlin = 0;
+				_tcscpy (errmsg, _T("cannot get run-time argument array element")); 
+
+				for (long i = 0; i < j; i++) SysFreeString (runarg[i].ptr);
+				free (runarg);
+
+				*ret = VARIANT_FALSE;
+				return S_OK;
+			}
+
+			runarg[j].ptr = bstr;
+			runarg[j].len = SysStringLen (bstr);
+		}
+
+		runarg[j].ptr = NULL;
+		runarg[j].len = 0;
+	}
+	else
+	{
+		errnum = ASE_AWK_EINTERN;
+		errlin = 0;
+		_tcscpy (errmsg, _T("invalid arguments"));
+
+		*ret = VARIANT_FALSE;
+		return S_OK;
+	}
+
+	if (ase_awk_run (handle, entry, &runios, NULL, runarg, this) == -1)
 	{
 		const ase_char_t* msg;
 
@@ -780,10 +854,24 @@ HRESULT CAwk::Run (VARIANT_BOOL* ret)
 		ase_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
 
 		DBGOUT (_T("cannot run the program"));
+
+		if (runarg != NULL) 
+		{
+			for (long j = 0; j < nrunargs; j++) SysFreeString (runarg[j].ptr);
+			free (runarg);
+		}
+
 		*ret = VARIANT_FALSE;
 		return S_OK;
 	}
 	else DBGOUT (_T("run the program successfully"));
+
+
+	if (runarg != NULL) 
+	{
+		for (long j = 0; j < nrunargs; j++) SysFreeString (runarg[j].ptr);
+		free (runarg);
+	}
 
 	*ret = VARIANT_TRUE;
 	return S_OK;
@@ -1103,14 +1191,14 @@ STDMETHODIMP CAwk::put_UseCrlf(VARIANT_BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_ArgsToMain(VARIANT_BOOL *pVal)
+STDMETHODIMP CAwk::get_ArgumentsToEntryPoint(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_ARGSTOMAIN) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_ArgsToMain(VARIANT_BOOL newVal)
+STDMETHODIMP CAwk::put_ArgumentsToEntryPoint(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_ARGSTOMAIN;
 	else option = option & ~ASE_AWK_ARGSTOMAIN;

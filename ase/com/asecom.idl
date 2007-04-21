@@ -1,5 +1,5 @@
 /*
- * $Id: asecom.idl,v 1.5 2007-04-15 15:26:58 bacon Exp $
+ * $Id: asecom.idl,v 1.6 2007-04-21 12:40:44 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -19,7 +19,7 @@ interface IAwk : IDispatch
 	HRESULT Parse([out,retval] VARIANT_BOOL* ret);
 
 	[id(2), helpstring("method Run")] 
-	HRESULT Run([out,retval] VARIANT_BOOL* ret);
+	HRESULT Run([in] VARIANT argarray, [out,retval] VARIANT_BOOL* ret);
 
 	[id(3), helpstring("method AddFunction")] 
 	HRESULT AddFunction([in] BSTR name, [in] int minArgs, [in] int maxArgs, [out,retval] VARIANT_BOOL* ret);
@@ -101,10 +101,10 @@ interface IAwk : IDispatch
 	[propput, id(20), helpstring("property UseCrlf")]
 	HRESULT UseCrlf([in] VARIANT_BOOL newVal);
 
-	[propget, id(21), helpstring("property ArgsToMain")]
-	HRESULT ArgsToMain([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(21), helpstring("property ArgsToMain")]
-	HRESULT ArgsToMain([in] VARIANT_BOOL newVal);
+	[propget, id(21), helpstring("property ArgumentsToEntryPoint")]
+	HRESULT ArgumentsToEntryPoint([out,retval] VARIANT_BOOL *pVal);
+	[propput, id(21), helpstring("property ArgumentsToEntryPoint")]
+	HRESULT ArgumentsToEntryPoint([in] VARIANT_BOOL newVal);
 
 	[propget, id(22), helpstring("property MaxDepthForBlockParse")]
 	HRESULT MaxDepthForBlockParse([out,retval] int *pVal);
