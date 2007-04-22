@@ -4,7 +4,7 @@
 
 The first step in using this library is to build it. This document shows how to build the core library on various operating systems.
 
-== Source Code Directory Structure ==
+== Source Code Directories ==
 
 The source code is organized in the following directory structure.
 
@@ -42,14 +42,13 @@ Refer to the following table for the output location of generated files.
 
 {{{
 ---------------------------------------------------------------------------
-mode     executable files     library files        temporary files
+mode     executable files     library files        include files
 ---------------------------------------------------------------------------
-release  ${top}/release/bin   ${top}/release/lib   ${top}/${module}/release  
-debug    ${top)/debug/bin     $(top)/debug/lib     ${top}/${module}/debug
+release  ${top}/release/bin   ${top}/release/lib   ${top}/release/inc
+debug    ${top)/debug/bin     $(top)/debug/lib     ${top}/debug/inc
 ---------------------------------------------------------------------------
 
 * ${top} - the top level directory
-* ${module} - each module subdirectory
 }}}
 
 If you have preference for a particular compiler and the flags, you may explicitly specify them when you run the [[configure]] script. Here are presented a few such examples.
