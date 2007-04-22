@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.h,v 1.10 2007-04-15 13:15:35 bacon Exp $
+ * $Id: AwkExtio.h,v 1.11 2007-04-22 07:47:15 bacon Exp $
  *
  * {License}
  */
@@ -15,7 +15,7 @@
 class ATL_NO_VTABLE CAwkExtio : 
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CComCoClass<CAwkExtio, &CLSID_AwkExtio>,
-	public IDispatchImpl<IAwkExtio, &IID_IAwkExtio, &LIBID_ASELib>
+	public IDispatchImpl<IAwkExtio, &IID_IAwkExtio, &LIBID_ASECOM>
 {
 public:
 	BSTR name;
