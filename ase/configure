@@ -18452,6 +18452,18 @@ else
 	fi
 fi
 
+if test "$ac_test_CXXFLAGS" = "set"
+then
+	CXXFLAGS=$ac_save_CXXFLAGS
+else
+	if test "$GCC" = "yes"
+	then
+		CXXFLAGS="-O2"
+	else
+		CXXFLAGS=
+	fi
+fi
+
 # Checks for header files.
 echo "$as_me:$LINENO: checking for ANSI C header files" >&5
 echo $ECHO_N "checking for ANSI C header files... $ECHO_C" >&6
@@ -25710,10 +25722,12 @@ fi;
 if test "$enable_debug_is" = "yes"
 then
 	CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG"
+	CXXFLAGS="$CXXFLAGS -g -D_DEBUG -UNDEBUG"
 	BUILDMODE="debug"
 
 else
 	CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG"
+	CXXFLAGS="$CXXFLAGS -DNDEBUG -U_DEBUG"
 	BUILDMODE="release"
 
 fi
@@ -25729,6 +25743,7 @@ fi;
 if test "$enable_reentrant_is" = "yes"
 then
 	CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"
+	CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"
 fi
 
 # Java & JNI Configuration

@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.22 2007-03-22 11:19:28 bacon Exp $
+ * $Id: symbol.c,v 1.23 2007-04-22 13:55:18 bacon Exp $
  */
 
 #include <ase/stx/symbol.h>
@@ -15,19 +15,23 @@ static void __grow_symtab (ase_stx_t* stx)
 	ncapa = capa << 1;
 
 	nspace = (ase_word_t*)ase_malloc(ase_sizeof(ase_word_t) * ncapa);
-	if (nspace == ASE_NULL) {
+	if (nspace == ASE_NULL) 
+	{
 		/* TODO: handle memory error */
 	}
 
-	for (i = 0; i < capa; i++) {
+	for (i = 0; i < capa; i++) 
+	{
 		ase_word_t x = stx->symtab.datum[i];
 		if (x == stx->nil) continue;
 
 		j = ase_stx_strxhash (
 			ASE_STX_DATA(stx,x), ASE_STX_SIZE(stx,x)) % ncapa;
 
-		while (1) {
-			if (nspace[j] == stx->nil) {
+		while (1) 
+		{
+			if (nspace[j] == stx->nil) 
+			{
 				nspace[j] = x;
 				break;
 			}
@@ -53,7 +57,8 @@ ase_word_t ase_stx_new_symbolx (
 	capa = stx->symtab.capacity;
 	size = stx->symtab.size;
 
-	if (capa <= size + 1) {
+	if (capa <= size + 1) 
+	{
 		__grow_symtab (stx);
 		capa = stx->symtab.capacity;
 	}
@@ -61,9 +66,11 @@ ase_word_t ase_stx_new_symbolx (
 	hash = ase_stx_strxhash(name,len);
 	index = hash % stx->symtab.capacity;
 
-	while (1) {
+	while (1) 
+	{
 		x = stx->symtab.datum[index];
-		if (x == stx->nil) {
+		if (x == stx->nil) 
+		{
 			/* insert a new item into an empty slot */
 			x = ase_stx_alloc_char_objectx (stx, name, len);
 			ASE_STX_CLASS(stx,x) = stx->class_symbol;
@@ -86,7 +93,8 @@ void ase_stx_traverse_symbol_table (
 {
 	ase_word_t index, x;
 
-	for (index = 0; index < stx->symtab.capacity; index++) {
+	for (index = 0; index < stx->symtab.capacity; index++) 
+	{
 		x = stx->symtab.datum[index];
 		if (x != stx->nil) func (stx, x, data);
 	}

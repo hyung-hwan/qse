@@ -1,10 +1,10 @@
 #
-# $Id: configure.ac,v 1.87 2007-04-06 14:31:31 bacon Exp $
+# $Id: configure.ac,v 1.88 2007-04-22 13:51:44 bacon Exp $
 # 
 
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.87 $])
+AC_REVISION([$Revision: 1.88 $])
 AC_CONFIG_HEADER([cmn/conf_unx.h])
 AC_CONFIG_AUX_DIR(config)
 
@@ -25,6 +25,18 @@ else
 		CFLAGS="-O2"
 	else
 		CFLAGS=
+	fi
+fi
+
+if test "$ac_test_CXXFLAGS" = "set"
+then
+	CXXFLAGS=$ac_save_CXXFLAGS
+else
+	if test "$GCC" = "yes"
+	then
+		CXXFLAGS="-O2"
+	else
+		CXXFLAGS=
 	fi
 fi
 
@@ -93,9 +105,11 @@ AC_ARG_ENABLE([mode], [AC_HELP_STRING([--enable-debug],
 if test "$enable_debug_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG"]
+	[CXXFLAGS="$CXXFLAGS -g -D_DEBUG -UNDEBUG"]
 	AC_SUBST(BUILDMODE, "debug")
 else
 	[CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG"]
+	[CXXFLAGS="$CXXFLAGS -DNDEBUG -U_DEBUG"]
 	AC_SUBST(BUILDMODE, "release")
 fi
 
@@ -106,6 +120,7 @@ AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
 if test "$enable_reentrant_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
+	[CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
 
 # Java & JNI Configuration 
