@@ -2,18 +2,54 @@
 
 = ASE Quick Start Guide =
 
-The first step in using this library is to build it as the pre-compiled binary is not available at this moment. This document shows how to build the core library on various operating systems.
+The first step in using this library is to build it. This document shows how to build the core library on various operating systems.
+
+== Source Code Directory Structure ==
+
+{{{
+ase +- cmn  .................... contains common functions and macros.
+    +- utl  .................... contains more general-purpose utillity 
+    |                            functions and macros.
+    +- awk  .................... implementation of the awk processor.
+    +- lsp  .................... implementation of the lisp processor.
+    +- com  .................... COM wrapper of the processors.
+    +- test +- awk  ............ contains test program for the awk processor.
+            +- lsp  ............ contains test programs for the lisp processor.
+            +- com  ............ contains test programs for the COM module.
+}}}
 
 == Unix/Linux ==
 
-You may run the [[configure]] script on most of the Unix-like operation systems to set up the build environment and then run the [[make]] utility at the top-level directory.
+You may run the [[configure]] script on most of the supported operation systems to set up the build environment and then run the [[make]] utility.
 
 {{{
 $ ./configure
 $ make 
 }}}
 
-The [[make]] utility visits each core module directory and build the library there. The [[test]] directory and its subdirectories are not built by default. 
+The [[make]] utility visits each module subdirectory and build binary files. The library files are placed in the [[release/lib]] directory and the executable files in the [[release/bin]] directory.
+
+If you appened the option [[--enable-debug]] to the [[configure]] script, the files would be located in [[debug/lib]] and [[debug/bin]] directory. Besides, it sets up the environment to be more debugging friendly.
+
+{{{
+$ ./configure --enable-debug
+$ make
+}}}
+
+Refer to the following table for the output location of generated files.
+
+{{{
+---------------------------------------------------------------------------
+mode     executable files     library files        temporary files
+---------------------------------------------------------------------------
+release  ${top}/release/bin   ${top}/release/lib   ${top}/${module}/release  
+debug    ${top)/debug/bin     $(top)/debug/lib     ${top}/${module}/debug
+---------------------------------------------------------------------------
+
+* ${top} - the top level directory
+* ${module} - each module subdirectory
+* it may create more subdirectories under each output directory.
+}}}
 
 If you have preference for a particular compiler and the flags, you may explicitly specify them when you run the [[configure]] script. Here are presented a few such examples.
 
@@ -29,6 +65,10 @@ CC=cc CFLAGS="-Xc -a ansi -O2" ./configure
 CC=gcc CFLAGS="-Wall -O2 -m64" LDFLAGS="-m64" ./configure # 64-bit
 CC=gcc CFLAGS="-Wall -O2" ./configure # 32-bit
 }}}
+
+You may specify the C++ compiler with [[CXX]] and its flags in [[CXXFLAGS]].
+
+The JNI library for JAVA is built automatically if required JNI header files are detected by the [[configure]] script. Make sure that the [[javac]] command is included in the [[PATH]] environment variable for this. The JAVA class files are built with the [[javac]] command detected as well. The {ant,http://ant.apache.org} utility from the Apache Software Foundataion can be used to build the java class files.
 
 == OpenVMS ==
 
@@ -58,7 +98,11 @@ aseawk -f hello.awk
 
 == MS-Windows ==
 
-You may use the Visual Studio 6 or later to use the provided project file. Otherwise open the command-line build environment and use the [[make]] utility.
+You may use the Visual Studio 6 or later to open the provided project file. Two projects are 
+
+
+
+Otherwise open the command-line build environment and use the [[make]] utility.
 
 A set of make scripts is provided to support the Microsoft build environement and the Borland build environment. The script for the Miscrosoft build environment is named [[makefile.msw.cl]] while it is [[makefile.msw.bcc]] for the Borland counterpart.
 
@@ -75,8 +119,7 @@ cd ..\test\awk
 nmake /f makefile.msw.cl
 }}}
 
-However, The COM module can only be built within the Visual Studio environment. After having built the COM module, you may open [[ase/test/com/ase.vbp]] for testing.
+However, The COM module can only be built within the Visual Studio environment. After having built the COM module, you may open [[ase/test/com/asetestcom.vbp]] for testing.
 
-== JNI Interface ==
 
-Some make scripts contain the target to build the JNI interface for Java. The Java class files can be built with the standard [[javac]] command.
+
