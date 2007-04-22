@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cs,v 1.2 2007-04-22 08:40:29 bacon Exp $
+ * $Id: Awk.cs,v 1.3 2007-04-22 10:19:14 bacon Exp $
  */
 
 using System;
@@ -30,13 +30,16 @@ namespace ASETestCom
 
 		public delegate object FunctionHandler (object[] args);
 		private System.Collections.Hashtable funcTable;
-	
+
+		char[] consoleInputBuffer = new char[1024];
+
 		public Awk()
 		{
 			this.funcTable = new System.Collections.Hashtable();
 
 			this.awk = new ASECOM.Awk();
 			this.awk.UseLongLong = true;
+			//this.awk.UseCrlf = true;
 			
 			COM.IConnectionPointContainer icpc = 
 				(COM.IConnectionPointContainer)awk;
@@ -341,7 +344,13 @@ namespace ASETestCom
 
 		public virtual int OpenExtio(ASECOM.AwkExtio extio)
 		{
-			if (extio.Mode == ASECOM.AwkExtioMode.AWK_EXTIO_CONSOLE_WRITE)
+			if (extio.Mode == ASECOM.AwkExtioMode.AWK_EXTIO_CONSOLE_READ)
+			{
+				if (this.consoleInputStream == null) return 0;
+				this.consoleInputReader = new StreamReader(this.consoleInputStream);
+				return 1;
+			}
+			else if (extio.Mode == ASECOM.AwkExtioMode.AWK_EXTIO_CONSOLE_WRITE)
 			{
 				if (this.consoleOutputStream == null) return 0;
 				this.consoleOutputWriter = new StreamWriter(this.consoleOutputStream);
@@ -353,7 +362,12 @@ namespace ASETestCom
 
 		public virtual int CloseExtio(ASECOM.AwkExtio extio)
 		{
-			if (extio.Mode == ASECOM.AwkExtioMode.AWK_EXTIO_CONSOLE_WRITE)
+			if (extio.Mode == ASECOM.AwkExtioMode.AWK_EXTIO_CONSOLE_READ)
+			{
+				this.consoleInputReader.Close();
+				return 0;
+			}
+			else if (extio.Mode == ASECOM.AwkExtioMode.AWK_EXTIO_CONSOLE_WRITE)
 			{
 				this.consoleOutputWriter.Close();
 				return 0;
@@ -364,7 +378,15 @@ namespace ASETestCom
 
 		public virtual int ReadExtio(ASECOM.AwkExtio extio, ASECOM.Buffer buf)
 		{
-			throw new Exception("The method or operation is not implemented.");
+			if (extio.Mode == ASECOM.AwkExtioMode.AWK_EXTIO_CONSOLE_READ)
+			{
+				int n = this.consoleInputReader.Read(consoleInputBuffer, 0, consoleInputBuffer.Length);
+				if (n == 0) return 0;
+				buf.Value = new string(consoleInputBuffer, 0, n);
+				return buf.Value.Length;
+			}
+
+			return -1;
 		}
 
 		public virtual int WriteExtio(ASECOM.AwkExtio extio, ASECOM.Buffer buf)
