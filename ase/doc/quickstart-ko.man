@@ -2,7 +2,7 @@
 
 = ASE 시작하기 =
 
-본 문서는 각종 운영체제에서 어떻게 ASE를 빌드하는지를 보여준다.
+본 문서는 ASE를 사용하기위해서 필요한 정보를 제공한다.
 
 == 소스코드 디렉토리 ==
 
@@ -19,7 +19,11 @@ ase +- cmn  .................... 공통 함수와 매크로를 포함한다.
             +- com  ............ COM 래퍼모듈 시험 프로그램
 }}}
 
-== Unix/Linux ==
+== 빌드 ==
+
+각종 운영체제에서 어떻게 ASE를 빌드하는지 보여준다.
+
+=== Unix/Linux ===
 
 [[configure]]스크립트를 실행한후 [[make]]프로그램을 실행한다. 
 
@@ -27,7 +31,7 @@ ase +- cmn  .................... 공통 함수와 매크로를 포함한다.
 $ ./configure
 $ make 
 }}}
-[[configure]]스크립트는 해당 시스템의 정보를 수집하여 빌드환경을 설정을 하고 [[make]]는 각각의 서브다이렉트리를 방문해서 바이너리 파일을 만든다. 라이브러리 파일을 [[release/lib]]에, 실행파일들읜 [[release/bin]]에 만들어 진다.
+[[configure]]스크립트는 해당 시스템의 정보를 수집하여 빌드환경을 설정하고 [[make]]는 각각의 서브다이렉트리를 방문해서 바이너리 파일을 만든다. 라이브러리 파일을 [[release/lib]]에, 실행파일들읜 [[release/bin]]에 만들어 진다.
 
 [[--enable-debug]]를 [[configure]]에 사용한 경우에는, 빌드환경이 디버깅에 적합하도록 만들어진다. [[make]]를 실행하면 결과 파일들은 [[debug/lib]]와 [[debug/bin]]에 만들어 진다.
 
@@ -40,14 +44,13 @@ $ make
 
 {{{
 ---------------------------------------------------------------------------
-모드     실행파일             라이브러리파일       임시파일
+모드     실행파일             라이브러리파일       헤더파일
 ---------------------------------------------------------------------------
-release  ${top}/release/bin   ${top}/release/lib   ${top}/${module}/release  
-debug    ${top)/debug/bin     $(top)/debug/lib     ${top}/${module}/debug
+release  ${top}/release/bin   ${top}/release/lib   ${top}/release/inc
+debug    ${top)/debug/bin     $(top)/debug/lib     ${top}/debug/inc
 ---------------------------------------------------------------------------
 
-* ${top} - the top level directory
-* ${module} - each module subdirectory
+* ${top} - 최상위 디렉토리
 }}}
 
 특정한 컴파일러와 컴파일러 옵션을 사용하고 싶을때는 [[configure]]를 실행할때 이를 명시해야 한다. 다음의 예들을 보라.
@@ -69,11 +72,11 @@ C++컴파일러와 옵션은 [[CXX]]와 [[CXXFLAGS]]을 사용해서 명시하�
 
 JNI헤더파일을 찾을수 있으면 [[configure]]는 JNI라이브러리와 클래스파일들이 만들어 질수 있도록 빌드환경을 설정한다. 이를 위해서 [[javac]]명령어를 [[PATH]]환경변수에 설정된 경로에서 찿고, 이 정보를 이용해서 JNI헤더파일을 찾아낸다. 아파치재단의 {ant,http://ant.apache.org}를 이용하여 자바클래스파일들을 만들수도 있다. 이를 위해서 [[build.xml]]파일이 최상위 디렉토리에 제공된다.
 
-== OpenVMS ==
+=== OpenVMS ===
 
 OpenVMS에서는 [[mms]]나 [[mmk]]명령어를 사용해야 한다. 다만 [[configure]]같은 환경설정 스크립트가 제공되지 않으므로, 필요한 경우 [[descrip.mms]]파일을 직접 편집해야 한다.
 
-Let's build the AWK library and its test program, for instance.
+예를 들어, awk라이브러리와 시험프로그램을 만들려면 필요한 서브디렉토리에서 [[mms]]나 [[mmk]]를 실행하면 된다.
 
 {{{
 set default [.ase.cmn]
@@ -86,7 +89,7 @@ set default [-.test.awk]
 mms
 }}}
 
-For those who are not familar with OpenVMS, here is one of the ways how to run the test program.
+OpenVMS에 익숙하지 않은 사용자라면 다음의 방법으로 만들어진 시험프로그램을 실행해볼수 있다.
 
 {{{
 ; define the foreign command.
@@ -95,23 +98,19 @@ aseawk :== $DISK$GEIN_SYS:[USERS.BACON.ASE.TEST.AWK]aseawk.exe
 aseawk -f hello.awk
 }}}
 
-== MS-Windows ==
+=== MS-Windows ===
 
-You may use the Visual Studio 6 or later to open the project. But you need Visual Studio 2003 or later to build the .NET related projects. Otherwise, open the command-line build environment and use the [[make]] utility.
+윈도우즈에서는 비쥬얼스튜디오6이나 그 이후 버전이 필요하다. 닷넷관련 프로젝트를 빌드하려면 비쥬얼슈트디오2003이나 그 이후 버전이 필요하다.
 
-A set of make scripts is provided to support the Microsoft build environement and the Borland build environment. The script for the Miscrosoft build environment is named [[makefile.msw.cl]] while it is [[makefile.msw.bcc]] for the Borland counterpart.
+== 바이너리파일 ==
 
-If you are building the AWK library and the test program, this is probably what you have to do.
+빌드에 성공하면 다음과 같은 파일들이 만들어 진다.
 
 {{{
-cd ase\cmn
-nmake /f makefile.msw.cl
-cd ..\awk
-nmake /f makefile.msw.cl
-cd ..\utl
-nmake /f makefile.msw.cl
-cd ..\test\awk
-nmake /f makefile.msw.cl
-}}}
+lib +- libaseawk.a
+    +- libaselsp.a
+    +- libasecmn.a 
+    +- libaseutl.a 
 
-However, The COM module can only be built within the Visual Studio environment. After having built the COM module, you may open [[ase/test/com/asetestcom.vbp]] for testing.
+bin
+}}}
