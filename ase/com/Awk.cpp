@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.35 2007-04-21 12:40:44 bacon Exp $
+ * $Id: Awk.cpp,v 1.36 2007-04-22 06:37:09 bacon Exp $
  *
  * {License}
  */
@@ -812,7 +812,8 @@ HRESULT CAwk::Run (VARIANT argarray, VARIANT_BOOL* ret)
 			return S_OK;
 		}
 
-		for (long i = lbound, j = 0; i <= ubound; i++, j++)
+		long i, j;
+		for (i = lbound, j = 0; i <= ubound; i++, j++)
 		{
 			BSTR bstr;
 			HRESULT hr = SafeArrayGetElement (sa, &i, (void**)&bstr);

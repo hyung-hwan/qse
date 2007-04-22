@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -27,18 +27,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#include ""winres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "1 TYPELIB ""asecom.tlb""\r\n"
     "\0"
@@ -47,7 +47,6 @@ END
 #endif    // APSTUDIO_INVOKED
 
 
-#ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
@@ -70,19 +69,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "ASE COM Module\0"
-            VALUE "FileVersion", "1, 0, 0, 0\0"
-            VALUE "InternalName", "ASECOM\0"
-            VALUE "LegalCopyright", "Hyung-Hwan Chung. All rights reserved\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OLESelfRegister", "\0"
-            VALUE "OriginalFilename", "asecom.dll\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "ASE COM Module\0"
-            VALUE "ProductVersion", "1, 0, 0, 0\0"
-            VALUE "SpecialBuild", "\0"
+            VALUE "FileDescription", "ASE.COM"
+            VALUE "FileVersion", "1, 0, 0, 0"
+            VALUE "InternalName", "ASECOM"
+            VALUE "LegalCopyright", "Hyung-Hwan Chung. All rights reserved"
+            VALUE "OriginalFilename", "asecom.dll"
+            VALUE "ProductName", "ASE.COM"
+            VALUE "ProductVersion", "1, 0, 0, 0"
         END
     END
     BLOCK "VarFileInfo"
@@ -91,24 +84,22 @@ BEGIN
     END
 END
 
-#endif    // !_MAC
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // REGISTRY
 //
 
-IDR_AWK                 REGISTRY DISCARDABLE    "Awk.rgs"
-IDR_AWKEXTIO            REGISTRY DISCARDABLE    "AwkExtio.rgs"
-IDR_BUFFER              REGISTRY DISCARDABLE    "Buffer.rgs"
+IDR_AWK                 REGISTRY                "Awk.rgs"
+IDR_AWKEXTIO            REGISTRY                "AwkExtio.rgs"
+IDR_BUFFER              REGISTRY                "Buffer.rgs"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     IDS_PROJNAME            "ASE COM Project"
 END
