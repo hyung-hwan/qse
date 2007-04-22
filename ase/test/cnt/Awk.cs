@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cs,v 1.1 2007-04-22 08:30:33 bacon Exp $
+ * $Id: Awk.cs,v 1.2 2007-04-22 08:40:29 bacon Exp $
  */
 
 using System;
@@ -9,7 +9,7 @@ using System.IO;
 
 using COM = System.Runtime.InteropServices.ComTypes;
 
-namespace ASE
+namespace ASETestCom
 {
 	public class Awk : ASECOM.IAwkEvents
 	{

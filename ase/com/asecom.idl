@@ -1,5 +1,5 @@
 /*
- * $Id: asecom.idl,v 1.7 2007-04-22 07:47:15 bacon Exp $
+ * $Id: asecom.idl,v 1.8 2007-04-22 08:41:51 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -156,7 +156,7 @@ interface IAwk : IDispatch
 [
 	uuid(F9C69806-16A1-4162-998A-876B33C470BF),
 	version(1.0),
-	helpstring("ASE 1.0 Type Library")
+	helpstring("ASECOM 1.0 Type Library")
 ]
 library ASECOM
 {
