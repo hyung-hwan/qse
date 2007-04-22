@@ -1,15 +1,15 @@
 Type=Exe
 Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\WINDOWS\System32\stdole2.tlb#OLE Automation
-Reference=*\G{F9C69806-16A1-4162-998A-876B33C470BF}#1.0#0#..\..\release\lib\asecom.dll#ASE 1.0 Type Library
+Reference=*\G{F9C69806-16A1-4162-998A-876B33C470BF}#1.0#0#..\..\Debug\lib\asecom.dll#ASE 1.0 Type Library
 Form=AwkForm.frm
 Class=AwkExtioConsole; AwkExtioConsole.cls
 IconForm="AwkForm"
 Startup="AwkForm"
 HelpFile=""
-Title="ase"
-ExeName32="ase.exe"
+Title="ASECOM"
+ExeName32="asecom.exe"
 Command32=""
-Name="ASECOMVB6"
+Name="ASETESTCOM"
 HelpContextID="0"
 CompatibleMode="0"
 MajorVer=1
@@ -17,6 +17,7 @@ MinorVer=0
 RevisionVer=0
 AutoIncrementVer=0
 ServerSupportFiles=0
+VersionProductName="ASE.COM"
 CompilationType=0
 OptimizationType=0
 FavorPentiumPro(tm)=0
@@ -32,6 +33,7 @@ Unattended=0
 Retained=0
 ThreadPerObject=0
 MaxNumberOfThreads=1
+DebugStartupOption=0
 
 [MS Transaction Server]
 AutoRefresh=1
