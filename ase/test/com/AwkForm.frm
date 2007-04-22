@@ -1,12 +1,14 @@
 VERSION 5.00
 Begin VB.Form AwkForm 
+   BorderStyle     =   1  'Fixed Single
    Caption         =   "ASE.COM.AWK"
    ClientHeight    =   8100
-   ClientLeft      =   60
-   ClientTop       =   345
+   ClientLeft      =   45
+   ClientTop       =   330
    ClientWidth     =   12900
    LinkTopic       =   "AwkForm"
    MaxButton       =   0   'False
+   MinButton       =   0   'False
    ScaleHeight     =   8100
    ScaleWidth      =   12900
    StartUpPosition =   3  'Windows Default
