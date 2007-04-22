@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.22 2007-04-21 12:40:44 bacon Exp $
+ * $Id: Awk.h,v 1.23 2007-04-22 07:47:15 bacon Exp $
  *
  * {License}
  */
@@ -21,13 +21,13 @@
 // CAwk
 
 class CAwk : 
-	public IDispatchImpl<IAwk, &IID_IAwk, &LIBID_ASELib>, 
+	public IDispatchImpl<IAwk, &IID_IAwk, &LIBID_ASECOM>, 
 	public ISupportErrorInfo,
 	/*public CComObjectRoot,*/
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CComCoClass<CAwk,&CLSID_Awk>,
 	public IConnectionPointContainerImpl<CAwk>,
-	public IProvideClassInfo2Impl<&CLSID_Awk, &DIID_IAwkEvents, &LIBID_ASELib>,
+	public IProvideClassInfo2Impl<&CLSID_Awk, &DIID_IAwkEvents, &LIBID_ASECOM>,
 	public CProxyIAwkEvents< CAwk >
 
 {

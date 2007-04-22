@@ -197,7 +197,7 @@ Attribute VB_Exposed = False
 Option Explicit
 Option Base 0
 Dim source_first As Boolean
-Public WithEvents Awk As ASELib.Awk
+Public WithEvents Awk As ASECOM.Awk
 Attribute Awk.VB_VarHelpID = -1
 
 Private Sub btnAddArgument_Click()
@@ -222,7 +222,7 @@ Private Sub btnExecute_Click()
     ConsoleOut.Text = ""
     SourceOut.Text = ""
     
-    Set Awk = New ASELib.Awk
+    Set Awk = New ASECOM.Awk
     
     Awk.ExplicitVariable = True
     Awk.ImplicitVariable = True
@@ -284,15 +284,15 @@ Private Sub btnExecute_Click()
     
 End Sub
 
-Function Awk_OpenSource(ByVal mode As ASELib.AwkSourceMode) As Long
+Function Awk_OpenSource(ByVal mode As ASECOM.AwkSourceMode) As Long
     Awk_OpenSource = 1
 End Function
 
-Function Awk_CloseSource(ByVal mode As ASELib.AwkSourceMode) As Long
+Function Awk_CloseSource(ByVal mode As ASECOM.AwkSourceMode) As Long
     Awk_CloseSource = 0
 End Function
 
-Function Awk_ReadSource(ByVal buf As ASELib.Buffer) As Long
+Function Awk_ReadSource(ByVal buf As ASECOM.Buffer) As Long
     If source_first Then
         buf.value = SourceIn.Text
         Awk_ReadSource = Len(buf.value)
@@ -302,7 +302,7 @@ Function Awk_ReadSource(ByVal buf As ASELib.Buffer) As Long
     End If
 End Function
 
-Function Awk_WriteSource(ByVal buf As ASELib.Buffer) As Long
+Function Awk_WriteSource(ByVal buf As ASECOM.Buffer) As Long
     Dim value As String
     Dim l As Integer
     
@@ -312,18 +312,18 @@ Function Awk_WriteSource(ByVal buf As ASELib.Buffer) As Long
     Awk_WriteSource = Len(value)
 End Function
 
-Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
+Function Awk_OpenExtio(ByVal extio As ASECOM.AwkExtio) As Long
     Awk_OpenExtio = -1
     
     Select Case extio.Type
-    Case ASELib.AWK_EXTIO_CONSOLE
-        If extio.mode = ASELib.AWK_EXTIO_CONSOLE_READ Then
+    Case ASECOM.AWK_EXTIO_CONSOLE
+        If extio.mode = ASECOM.AWK_EXTIO_CONSOLE_READ Then
             extio.Handle = New AwkExtioConsole
             With extio.Handle
                 .EOF = False
             End With
             Awk_OpenExtio = 1
-        ElseIf extio.mode = ASELib.AWK_EXTIO_CONSOLE_WRITE Then
+        ElseIf extio.mode = ASECOM.AWK_EXTIO_CONSOLE_WRITE Then
             extio.Handle = New AwkExtioConsole
             With extio.Handle
                 .EOF = False
@@ -331,20 +331,20 @@ Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
             Awk_OpenExtio = 1
         End If
         
-    Case ASELib.AWK_EXTIO_FILE
-        If extio.mode = ASELib.AWK_EXTIO_FILE_READ Then
+    Case ASECOM.AWK_EXTIO_FILE
+        If extio.mode = ASECOM.AWK_EXTIO_FILE_READ Then
             extio.Handle = FreeFile
             On Error GoTo ErrorTrap
             Open extio.name For Input As #extio.Handle
             On Error GoTo 0
             Awk_OpenExtio = 1
-        ElseIf extio.mode = ASELib.AWK_EXTIO_FILE_WRITE Then
+        ElseIf extio.mode = ASECOM.AWK_EXTIO_FILE_WRITE Then
             extio.Handle = FreeFile
             On Error GoTo ErrorTrap
             Open extio.name For Output As #extio.Handle
             On Error GoTo 0
             Awk_OpenExtio = 1
-        ElseIf extio.mode = ASELib.AWK_EXTIO_FILE_APPEND Then
+        ElseIf extio.mode = ASECOM.AWK_EXTIO_FILE_APPEND Then
             extio.Handle = FreeFile
             On Error GoTo ErrorTrap
             Open extio.name For Append As #extio.Handle
@@ -352,9 +352,9 @@ Function Awk_OpenExtio(ByVal extio As ASELib.AwkExtio) As Long
             Awk_OpenExtio = 1
         End If
         
-    Case ASELib.AWK_EXTIO_PIPE
+    Case ASECOM.AWK_EXTIO_PIPE
         Awk_OpenExtio = -1
-    Case ASELib.AWK_EXTIO_COPROC
+    Case ASECOM.AWK_EXTIO_COPROC
         Awk_OpenExtio = -1
     End Select
     
@@ -364,74 +364,74 @@ ErrorTrap:
     Exit Function
 End Function
 
-Function Awk_CloseExtio(ByVal extio As ASELib.AwkExtio) As Long
+Function Awk_CloseExtio(ByVal extio As ASECOM.AwkExtio) As Long
     Awk_CloseExtio = -1
     
     Select Case extio.Type
-    Case ASELib.AWK_EXTIO_CONSOLE
-        If extio.mode = ASELib.AWK_EXTIO_CONSOLE_READ Or _
-           extio.mode = ASELib.AWK_EXTIO_CONSOLE_WRITE Then
+    Case ASECOM.AWK_EXTIO_CONSOLE
+        If extio.mode = ASECOM.AWK_EXTIO_CONSOLE_READ Or _
+           extio.mode = ASECOM.AWK_EXTIO_CONSOLE_WRITE Then
             extio.Handle = Nothing
             Awk_CloseExtio = 0
         End If
-    Case ASELib.AWK_EXTIO_FILE
-        If extio.mode = ASELib.AWK_EXTIO_FILE_READ Or _
-           extio.mode = ASELib.AWK_EXTIO_FILE_WRITE Or _
-           extio.mode = ASELib.AWK_EXTIO_FILE_APPEND Then
+    Case ASECOM.AWK_EXTIO_FILE
+        If extio.mode = ASECOM.AWK_EXTIO_FILE_READ Or _
+           extio.mode = ASECOM.AWK_EXTIO_FILE_WRITE Or _
+           extio.mode = ASECOM.AWK_EXTIO_FILE_APPEND Then
             Close #extio.Handle
             Awk_CloseExtio = 0
         End If
-    Case ASELib.AWK_EXTIO_PIPE
+    Case ASECOM.AWK_EXTIO_PIPE
         Awk_CloseExtio = -1
-    Case ASELib.AWK_EXTIO_COPROC
+    Case ASECOM.AWK_EXTIO_COPROC
         Awk_CloseExtio = -1
     End Select
     
 End Function
 
-Function Awk_ReadExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
+Function Awk_ReadExtio(ByVal extio As ASECOM.AwkExtio, ByVal buf As ASECOM.Buffer) As Long
     Awk_ReadExtio = -1
     
     Select Case extio.Type
-    Case ASELib.AWK_EXTIO_CONSOLE
-        If extio.mode = ASELib.AWK_EXTIO_CONSOLE_READ Then
+    Case ASECOM.AWK_EXTIO_CONSOLE
+        If extio.mode = ASECOM.AWK_EXTIO_CONSOLE_READ Then
             Awk_ReadExtio = ReadExtioConsole(extio, buf)
         End If
         
-    Case ASELib.AWK_EXTIO_FILE
-        If extio.mode = ASELib.AWK_EXTIO_FILE_READ Then
+    Case ASECOM.AWK_EXTIO_FILE
+        If extio.mode = ASECOM.AWK_EXTIO_FILE_READ Then
             Awk_ReadExtio = ReadExtioFile(extio, buf)
         End If
         
-    Case ASELib.AWK_EXTIO_PIPE
+    Case ASECOM.AWK_EXTIO_PIPE
         Awk_ReadExtio = -1
-    Case ASELib.AWK_EXTIO_COPROC
+    Case ASECOM.AWK_EXTIO_COPROC
         Awk_ReadExtio = -1
     End Select
     
 End Function
 
-Function Awk_WriteExtio(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
+Function Awk_WriteExtio(ByVal extio As ASECOM.AwkExtio, ByVal buf As ASECOM.Buffer) As Long
     Awk_WriteExtio = -1
     
     Select Case extio.Type
-    Case ASELib.AWK_EXTIO_CONSOLE
-        If extio.mode = ASELib.AWK_EXTIO_CONSOLE_WRITE Then
+    Case ASECOM.AWK_EXTIO_CONSOLE
+        If extio.mode = ASECOM.AWK_EXTIO_CONSOLE_WRITE Then
             Awk_WriteExtio = WriteExtioConsole(extio, buf)
         End If
-    Case ASELib.AWK_EXTIO_FILE
-        If extio.mode = ASELib.AWK_EXTIO_FILE_WRITE Or _
-           extio.mode = ASELib.AWK_EXTIO_FILE_APPEND Then
+    Case ASECOM.AWK_EXTIO_FILE
+        If extio.mode = ASECOM.AWK_EXTIO_FILE_WRITE Or _
+           extio.mode = ASECOM.AWK_EXTIO_FILE_APPEND Then
             Awk_WriteExtio = WriteExtioFile(extio, buf)
         End If
-    Case ASELib.AWK_EXTIO_PIPE
+    Case ASECOM.AWK_EXTIO_PIPE
         Awk_WriteExtio = -1
-    Case ASELib.AWK_EXTIO_COPROC
+    Case ASECOM.AWK_EXTIO_COPROC
         Awk_WriteExtio = -1
     End Select
 End Function
 
-Function ReadExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
+Function ReadExtioConsole(ByVal extio As ASECOM.AwkExtio, ByVal buf As ASECOM.Buffer) As Long
     Dim value As String
 
     If Not extio.Handle.EOF Then
@@ -444,7 +444,7 @@ Function ReadExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Bu
     End If
 End Function
 
-Function ReadExtioFile(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
+Function ReadExtioFile(ByVal extio As ASECOM.AwkExtio, ByVal buf As ASECOM.Buffer) As Long
     Dim value As String
     
     If EOF(extio.Handle) Then
@@ -467,7 +467,7 @@ ErrorTrap:
     Exit Function
 End Function
     
-Function WriteExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
+Function WriteExtioConsole(ByVal extio As ASECOM.AwkExtio, ByVal buf As ASECOM.Buffer) As Long
     Dim value As String
         
     value = buf.value
@@ -475,7 +475,7 @@ Function WriteExtioConsole(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.B
     WriteExtioConsole = Len(value)
 End Function
 
-Function WriteExtioFile(ByVal extio As ASELib.AwkExtio, ByVal buf As ASELib.Buffer) As Long
+Function WriteExtioFile(ByVal extio As ASECOM.AwkExtio, ByVal buf As ASECOM.Buffer) As Long
     Dim value As String
     
     WriteExtioFile = -1

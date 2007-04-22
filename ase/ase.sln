@@ -44,7 +44,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "asecom_net", "com\asecom_ne
 		{963AF7B5-12E6-42B6-8CBE-89136C1A109B} = {963AF7B5-12E6-42B6-8CBE-89136C1A109B}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "asetestcom_net", "asetestcom_net\asetestcom_net.csproj", "{F14B75D8-3ED7-4621-B5B9-E96A80B5D809}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "asetestcom_net", "test\com\asetestcom_net.csproj", "{F14B75D8-3ED7-4621-B5B9-E96A80B5D809}"
 	ProjectSection(ProjectDependencies) = postProject
 		{89660879-3897-4078-A9C3-9C4667233E0A} = {89660879-3897-4078-A9C3-9C4667233E0A}
 	EndProjectSection
