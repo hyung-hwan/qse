@@ -29,7 +29,7 @@ $ make
 }}}
 [[configure]]스크립트는 해당 시스템의 정보를 수집하여 빌드환경을 설정을 하고 [[make]]는 각각의 서브다이렉트리를 방문해서 바이너리 파일을 만든다. 라이브러리 파일을 [[release/lib]]에, 실행파일들읜 [[release/bin]]에 만들어 진다.
 
-[[--enable-debug]를 [[configure]]에 사용한 경우에는, 빌드환경이 디버깅에 적합하도록 만들어진다. [[make]]를 실행하면 결과 파일들은 [[debug/lib]]와 [[debug/bin]]에 만들어 진다.
+[[--enable-debug]]를 [[configure]]에 사용한 경우에는, 빌드환경이 디버깅에 적합하도록 만들어진다. [[make]]를 실행하면 결과 파일들은 [[debug/lib]]와 [[debug/bin]]에 만들어 진다.
 
 {{{
 $ ./configure --enable-debug
@@ -67,11 +67,11 @@ CC=gcc CFLAGS="-Wall -O2" ./configure # 32-bit
 
 C++컴파일러와 옵션은 [[CXX]]와 [[CXXFLAGS]]을 사용해서 명시하면 된다.
 
-The JNI library for JAVA is built automatically if required JNI header files are detected by the [[configure]] script. Make sure that the [[javac]] command is included in the [[PATH]] environment variable for this. The JAVA class files are built with the [[javac]] command detected as well. The {ant,http://ant.apache.org} utility from the Apache Software Foundataion can be used to build the java class files. The [[build.xml]] file is provided at the top-level directory for this.
+JNI헤더파일을 찾을수 있으면 [[configure]]는 JNI라이브러리와 클래스파일들이 만들어 질수 있도록 빌드환경을 설정한다. 이를 위해서 [[javac]]명령어를 [[PATH]]환경변수에 설정된 경로에서 찿고, 이 정보를 이용해서 JNI헤더파일을 찾아낸다. 아파치재단의 {ant,http://ant.apache.org}}를 이용하여 자바클래스파일들을 만들수도 있다. 이를 위해서 [[build.xml]]파일이 최상위 디렉토리에 제공된다.
 
 == OpenVMS ==
 
-You may use the [[mms]] command or the [[mmk]] command to build the library. No counterpart for the [[configure]] script is provided. As not top-level build script is provided, you have to run the command in each directory that you want to build the library in.
+OpenVMS에서는 [[mms]]나 [[mmk]]명령어를 사용해야 한다. 다만 [[configure]]같은 환경설정 스크립트가 제공되지 않으므로, 필요한 경우 [[descrip.mms]]파일을 직접 편집해야 한다.
 
 Let's build the AWK library and its test program, for instance.
 
