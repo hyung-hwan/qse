@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.258 2007-03-22 10:50:13 bacon Exp $
+ * $Id: parse.c,v 1.259 2007-04-24 14:42:24 bacon Exp $
  *
  * {License}
  */
@@ -960,8 +960,8 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	/* duplicate functions should have been detected previously */
 	ASE_ASSERT (n != 0); 
 
-	afn->name = pair->key; /* do some trick to save a string.  */
-	afn->name_len = pair->key_len;
+	afn->name = PAIR_KEYPTR(pair); /* do some trick to save a string.  */
+	afn->name_len = PAIR_KEYLEN(pair);
 	ASE_AWK_FREE (awk, name_dup);
 
 	return body;
@@ -5015,7 +5015,7 @@ static int deparse_func (ase_awk_pair_t* pair, void* arg)
 	ase_awk_afn_t* afn = (ase_awk_afn_t*)pair->val;
 	ase_size_t i, n;
 
-	ASE_ASSERT (ase_strxncmp (pair->key, pair->key_len, afn->name, afn->name_len) == 0);
+	ASE_ASSERT (ase_strxncmp (PAIR_KEYPTR(pair), PAIR_KEYLEN(pair), afn->name, afn->name_len) == 0);
 
 	if (ase_awk_putsrcstr (df->awk, ASE_T("function ")) == -1) return -1;
 	if (ase_awk_putsrcstr (df->awk, afn->name) == -1) return -1;

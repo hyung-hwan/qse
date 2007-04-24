@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.349 2007-04-21 12:40:44 bacon Exp $
+ * $Id: run.c,v 1.350 2007-04-24 14:42:24 bacon Exp $
  *
  * {License}
  */
@@ -2042,7 +2042,7 @@ static int __walk_foreach (ase_awk_pair_t* pair, void* arg)
 	ase_awk_val_t* str;
 
 	str = (ase_awk_val_t*) ase_awk_makestrval (
-		w->run, pair->key, ase_strlen(pair->key));
+		w->run, PAIR_KEYPTR(pair), PAIR_KEYLEN(pair));
 	if (str == ASE_NULL) 
 	{
 		ase_awk_setrunerror (
