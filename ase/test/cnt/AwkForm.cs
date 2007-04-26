@@ -18,7 +18,7 @@ namespace ASETestCom
 
 		private void btnRun_Click(object sender, EventArgs e)
 		{
-			Awk awk = new StdAwk ();
+			ASECNT.Awk awk = new ASECNT.StdAwk ();
 			
 			//System.Text.Encoding.Default
 			awk.SourceInputStream = new MemoryStream (UnicodeEncoding.UTF8.GetBytes(tbxSourceInput.Text));
