@@ -7,7 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 
-namespace ASETestCom
+namespace ASETestCNT
 {
 	public partial class AwkForm : Form
 	{

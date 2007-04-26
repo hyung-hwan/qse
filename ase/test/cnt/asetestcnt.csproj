@@ -7,8 +7,8 @@
     <ProjectGuid>{F14B75D8-3ED7-4621-B5B9-E96A80B5D809}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ASETestCom</RootNamespace>
-    <AssemblyName>asecom</AssemblyName>
+    <RootNamespace>ASETestCNT</RootNamespace>
+    <AssemblyName>asetestcnt</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

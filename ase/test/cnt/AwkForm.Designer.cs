@@ -1,4 +1,4 @@
-namespace ASETestCom
+namespace ASETestCNT
 {
 	partial class AwkForm
 	{
