@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.36 2007-04-22 06:37:09 bacon Exp $
+ * $Id: Awk.cpp,v 1.37 2007-04-26 15:50:17 bacon Exp $
  *
  * {License}
  */
@@ -18,6 +18,10 @@
 #include <ase/cmn/str.h>
 #include <ase/utl/stdio.h>
 #include <ase/utl/ctype.h>
+
+#ifdef _MSC_VER
+#pragma warning (disable: 4996)
+#endif
 
 #define DBGOUT(x) do { if (debug) OutputDebugString (x); } while(0)
 #define DBGOUT2(awk,x) do { if (awk->debug) OutputDebugString (x); } while(0)
