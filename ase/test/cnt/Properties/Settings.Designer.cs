@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ASETestCom.Properties {
+namespace ASETestCNT.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
