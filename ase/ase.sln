@@ -39,7 +39,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asetestlsp", "test\lsp\aset
 		{C3EBBFAE-9D08-4FA2-8B0E-D09BEBF84EDD} = {C3EBBFAE-9D08-4FA2-8B0E-D09BEBF84EDD}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "asetestcnt", "test\com\asetestcnt.csproj", "{F14B75D8-3ED7-4621-B5B9-E96A80B5D809}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "asetestcnt", "test\cnt\asetestcnt.csproj", "{F14B75D8-3ED7-4621-B5B9-E96A80B5D809}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asenet", "net\asenet.vcproj", "{4CBF0E86-D018-49D7-A6B8-0CDA698203F7}"
 EndProject
