@@ -1,5 +1,5 @@
 /*
- * $Id: method.h,v 1.9 2007-03-22 11:19:28 bacon Exp $
+ * $Id: method.h,v 1.1 2007/03/28 14:05:28 bacon Exp $
  */
 
 #ifndef _ASE_STX_METHOD_H_

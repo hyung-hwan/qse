@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.h,v 1.7 2007-04-22 07:47:15 bacon Exp $
+ * $Id: Buffer.h,v 1.1 2007/03/28 14:05:23 bacon Exp $
  *
  * {License}
  */
@@ -13,7 +13,7 @@
 class ATL_NO_VTABLE CBuffer : 
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CComCoClass<CBuffer, &CLSID_Buffer>,
-	public IDispatchImpl<IBuffer, &IID_IBuffer, &LIBID_ASECOM>
+	public IDispatchImpl<IBuffer, &IID_IBuffer, &LIBID_ASELib>
 {
 public:
 	BSTR str;

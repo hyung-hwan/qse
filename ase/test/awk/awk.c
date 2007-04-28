@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.194 2007-04-26 15:34:19 bacon Exp $
+ * $Id: awk.c,v 1.1 2007/03/28 14:05:29 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -713,7 +713,7 @@ static void on_run_start (ase_awk_run_t* run, void* custom)
 static int print_awk_value (ase_awk_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
-	dprintf (ASE_T("%.*s = "), pair->key.len, pair->key.ptr);
+	dprintf (ASE_T("%s = "), (const ase_char_t*)pair->key);
 	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
 	dprintf (ASE_T("\n"));
 	return 0;
@@ -835,8 +835,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	      ASE_AWK_BLOCKLESS | 
 	      ASE_AWK_STRBASEONE | 
 	      ASE_AWK_STRIPSPACES | 
-	      ASE_AWK_NEXTOFILE /*|
-	      ASE_AWK_ARGSTOMAIN*/;
+	      ASE_AWK_NEXTOFILE;
 
 	if (argc <= 1)
 	{

@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by asecom.rc
+// Used by ase.rc
 //
 #define IDS_PROJNAME                    100
 #define IDR_AWK                         101

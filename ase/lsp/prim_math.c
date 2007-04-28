@@ -1,5 +1,5 @@
 /*
- * $Id: prim_math.c,v 1.20 2007-03-08 13:58:52 bacon Exp $
+ * $Id: prim_math.c,v 1.1 2007/03/28 14:05:24 bacon Exp $
  *
  * {License}
  */

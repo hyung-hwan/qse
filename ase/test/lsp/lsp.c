@@ -1,7 +1,3 @@
-/*
- * $Id: lsp.c,v 1.19 2007-04-13 09:42:16 bacon Exp $
- */
-
 #include <ase/lsp/lsp.h>
 
 #include <ase/utl/ctype.h>

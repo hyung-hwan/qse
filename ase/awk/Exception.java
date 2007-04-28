@@ -1,5 +1,5 @@
 /*
- * $Id: Exception.java,v 1.4 2007-02-03 10:47:40 bacon Exp $
+ * $Id: Exception.java,v 1.1 2007/03/28 14:05:12 bacon Exp $
  *
  * {License}
  */

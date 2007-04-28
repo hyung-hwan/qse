@@ -1,0 +1,25 @@
+LIBRARY	"aseawk_jni.dll"
+EXETYPE NT
+
+EXPORTS
+	Java_ase_awk_Awk_open
+	Java_ase_awk_Awk_close
+	Java_ase_awk_Awk_parse
+	Java_ase_awk_Awk_run
+	Java_ase_awk_Awk_stop
+	Java_ase_awk_Awk_getmaxdepth
+	Java_ase_awk_Awk_setmaxdepth
+	Java_ase_awk_Awk_getoption
+	Java_ase_awk_Awk_setoption
+	Java_ase_awk_Awk_getdebug
+	Java_ase_awk_Awk_setdebug
+	Java_ase_awk_Awk_addfunc
+	Java_ase_awk_Awk_delfunc
+	Java_ase_awk_Awk_setfilename
+	Java_ase_awk_Awk_setofilename
+	Java_ase_awk_Awk_strtonum
+	Java_ase_awk_Awk_valtostr
+	Java_ase_awk_Awk_strftime
+	Java_ase_awk_Awk_strfgmtime
+	Java_ase_awk_Awk_system
+

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.23 2007-04-22 07:47:15 bacon Exp $
+ * $Id: Awk.h,v 1.1 2007/03/28 14:05:23 bacon Exp $
  *
  * {License}
  */
@@ -21,13 +21,13 @@
 // CAwk
 
 class CAwk : 
-	public IDispatchImpl<IAwk, &IID_IAwk, &LIBID_ASECOM>, 
+	public IDispatchImpl<IAwk, &IID_IAwk, &LIBID_ASELib>, 
 	public ISupportErrorInfo,
 	/*public CComObjectRoot,*/
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CComCoClass<CAwk,&CLSID_Awk>,
 	public IConnectionPointContainerImpl<CAwk>,
-	public IProvideClassInfo2Impl<&CLSID_Awk, &DIID_IAwkEvents, &LIBID_ASECOM>,
+	public IProvideClassInfo2Impl<&CLSID_Awk, &DIID_IAwkEvents, &LIBID_ASELib>,
 	public CProxyIAwkEvents< CAwk >
 
 {
@@ -77,8 +77,8 @@ public:
 	} * bfn_list;
 
 	BSTR entry_point;
-	VARIANT_BOOL debug;
-	VARIANT_BOOL use_longlong;
+	BOOL debug;
+	BOOL use_longlong;
 public:
 	CAwk();
 	~CAwk ();
@@ -106,10 +106,9 @@ DECLARE_REGISTRY_RESOURCEID(IDR_AWK)
 
 // IAwk
 public:
-	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_UseLongLong)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_Debug)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_Debug)(/*[in]*/ VARIANT_BOOL newVal);
+	STDMETHOD(put_UseLongLong)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_Debug)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_Debug)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_EntryPoint)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(put_EntryPoint)(/*[in]*/ BSTR newVal);
 	STDMETHOD(get_MaxDepthForRexMatch)(/*[out, retval]*/ int *pVal);
@@ -124,48 +123,40 @@ public:
 	STDMETHOD(put_MaxDepthForBlockRun)(/*[in]*/ int newVal);
 	STDMETHOD(get_MaxDepthForBlockParse)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(put_MaxDepthForBlockParse)(/*[in]*/ int newVal);
-	STDMETHOD(get_ArgumentsToEntryPoint)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_ArgumentsToEntryPoint)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_UseCrlf)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_UseCrlf)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_Nextofile)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_Nextofile)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_StripSpaces)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_StripSpaces)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_StringBaseOne)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_StringBaseOne)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_SupportBlockless)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_SupportBlockless)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_SupportExtio)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_SupportExtio)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_ConcatString)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_ConcatString)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_IdivOperator)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_IdivOperator)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_ShiftOperators)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_ShiftOperators)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_VariableShading)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_VariableShading)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_UniqueFunction)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_UniqueFunction)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_ExplicitVariable)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_ExplicitVariable)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_ImplicitVariable)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_ImplicitVariable)(/*[in]*/ VARIANT_BOOL newVal);
+	STDMETHOD(get_UseCrlf)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_UseCrlf)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_Nextofile)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_Nextofile)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_StripSpaces)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_StripSpaces)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_StringBaseOne)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_StringBaseOne)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_SupportBlockless)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_SupportBlockless)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_SupportExtio)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_SupportExtio)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_ConcatString)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_ConcatString)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_IdivOperator)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_IdivOperator)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_ShiftOperators)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_ShiftOperators)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_VariableShading)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_VariableShading)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_UniqueFunction)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_UniqueFunction)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_ExplicitVariable)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_ExplicitVariable)(/*[in]*/ BOOL newVal);
+	STDMETHOD(get_ImplicitVariable)(/*[out, retval]*/ BOOL *pVal);
+	STDMETHOD(put_ImplicitVariable)(/*[in]*/ BOOL newVal);
 	STDMETHOD(get_ErrorMessage)(/*[out, retval]*/ BSTR *pVal);
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
-
-
-	HRESULT __stdcall DeleteFunction (
-		/*[in]*/ BSTR name, /*[out, retval]*/ VARIANT_BOOL* ret);
-	HRESULT __stdcall AddFunction (
-		/*[in]*/ BSTR name, /*[in]*/ int minArgs,
-	       	/*[in]*/ int maxArgs, /*[out, retval]*/ VARIANT_BOOL* ret);
-
-	HRESULT __stdcall Parse (/*[out, retval]*/ VARIANT_BOOL* ret);
-	HRESULT __stdcall Run (
-		/*[in]*/ VARIANT argarray, /*[out, retval]*/ VARIANT_BOOL* ret);
+	STDMETHOD(DeleteBuiltinFunction)(/*[in]*/ BSTR name, /*[out, retval]*/ int* ret);
+	STDMETHOD(AddBuiltinFunction)(/*[in]*/ BSTR name, /*[in]*/ int min_args, /*[in]*/ int max_args, /*[out, retval]*/ int* ret);
+	STDMETHOD(get_UseLongLong)(/*[out, retval]*/ BOOL *pVal);
+	HRESULT __stdcall Parse (/*[out, retval]*/ int* ret);
+	HRESULT __stdcall Run (/*[out, retval]*/ int* ret);
 };
 
 #endif

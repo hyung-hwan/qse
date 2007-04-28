@@ -1,5 +1,5 @@
 /*
- * $Id: doc.awk,v 1.14 2007-03-18 15:20:00 bacon Exp $
+ * $Id: doc.awk,v 1.1 2007/03/28 14:05:25 bacon Exp $
  *
  * {License}
  */

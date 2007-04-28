@@ -1,5 +1,5 @@
 /*
- * $Id: main.h,v 1.3 2007-03-06 14:16:53 bacon Exp $
+ * $Id: main.h,v 1.1 2007/03/28 14:05:30 bacon Exp $
  */
 
 #ifndef _ASE_UTL_MAIN_H_

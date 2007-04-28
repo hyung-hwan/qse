@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkApplet.java,v 1.4 2007-04-12 10:08:08 bacon Exp $
+ * $Id: AseAwkApplet.java,v 1.1 2007/04/30 08:32:41 bacon Exp $
  */
 
 import java.applet.*;

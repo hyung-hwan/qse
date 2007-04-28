@@ -1,5 +1,5 @@
 /*
- * $Id: lic.awk,v 1.2 2007-02-04 12:37:45 bacon Exp $
+ * $Id: lic.awk,v 1.1 2007/03/28 14:05:25 bacon Exp $
  *
  * {License}
  */

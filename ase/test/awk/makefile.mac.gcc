@@ -1,0 +1,26 @@
+SRCS = awk.c
+OBJS = $(SRCS:.c=.o)
+
+CC = gcc
+CFLAGS = -O2 -Wall -D_REENTRANT -D_THREAD_SAFE -I../../..
+LDFLAGS =  -L../../cmn -L../../awk -L../../utl
+LIBS =  -lasecmn -laseawk -laseutl -lm
+
+
+all: aseawk
+
+aseawk: $(OBJS)
+	$(CC) -o $@ awk.o $(LDFLAGS) $(LIBS)
+
+java:
+	javac -classpath ../../.. Awk.java AwkApplet.java
+
+jrun:
+	java -classpath ../../.. ase.test.awk.Awk
+
+clean:
+	rm -rf *.o *.class aseawk 
+
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) -c $(CFLAGS) $<
