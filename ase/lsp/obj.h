@@ -1,5 +1,5 @@
 /*
- * $Id: obj.h,v 1.18 2007-03-15 14:19:23 bacon Exp $
+ * $Id: obj.h,v 1.1 2007/03/28 14:05:24 bacon Exp $
  *
  * {License}
  */

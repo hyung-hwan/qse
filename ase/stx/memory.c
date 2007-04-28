@@ -1,5 +1,5 @@
 /*
- * $Id: memory.c,v 1.14 2007-03-22 11:19:28 bacon Exp $
+ * $Id: memory.c,v 1.1 2007/03/28 14:05:28 bacon Exp $
  */
 
 #include <ase/stx/memory.h>

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.214 2007-04-15 15:26:57 bacon Exp $
+ * $Id: awk.h,v 1.1 2007/03/28 14:05:15 bacon Exp $
  *
  * {License}
  */
@@ -187,10 +187,7 @@ enum
 	ASE_AWK_NEXTOFILE   = (1 << 12),
 
 	/* cr + lf by default */
-	ASE_AWK_CRLF        = (1 << 13),
-
-	/* pass the arguments to the main function */
-	ASE_AWK_ARGSTOMAIN  = (1 << 14)
+	ASE_AWK_CRLF        = (1 << 13)
 };
 
 /* error code */

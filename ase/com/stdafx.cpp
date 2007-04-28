@@ -1,5 +1,5 @@
 /*
- * $Id: stdafx.cpp,v 1.3 2007-02-03 10:52:12 bacon Exp $
+ * $Id: stdafx.cpp,v 1.1 2007/03/28 14:05:23 bacon Exp $
  *
  * {License}
  */

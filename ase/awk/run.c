@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.350 2007-04-24 14:42:24 bacon Exp $
+ * $Id: run.c,v 1.1 2007/03/28 14:05:20 bacon Exp $
  *
  * {License}
  */
@@ -1177,7 +1177,8 @@ static int run_main (
 		return -1;
 	}
 	
-	if (__build_runarg (run, runarg, &nrunargs) == -1)
+	if (runarg == ASE_NULL) nrunargs = 0;
+	else if (__build_runarg (run, runarg, &nrunargs) == -1)
 	{
 		/* it can simply restore the top of the stack this way
 		 * because the values pused onto the stack so far are
@@ -1208,14 +1209,6 @@ static int run_main (
 
 		if (runarg != ASE_NULL)
 		{
-			if (!(run->awk->option & ASE_AWK_ARGSTOMAIN)) 
-			{
-				/* if the option is not set, the arguments 
-				 * are not passed to the main function as 
-				 * parameters */
-				nrunargs = 0;
-			}
-
 			/* prepare to pass the arguments to the main function */
 			for (i = nrunargs; i > 0; )
 			{
@@ -2042,7 +2035,7 @@ static int __walk_foreach (ase_awk_pair_t* pair, void* arg)
 	ase_awk_val_t* str;
 
 	str = (ase_awk_val_t*) ase_awk_makestrval (
-		w->run, PAIR_KEYPTR(pair), PAIR_KEYLEN(pair));
+		w->run, pair->key, ase_strlen(pair->key));
 	if (str == ASE_NULL) 
 	{
 		ase_awk_setrunerror (

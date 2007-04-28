@@ -53,11 +53,11 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 aseawk.lib asecmn.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /implib:"debug/asecom.lib" /pdbtype:sept /libpath:"$(OutDir)"
 # Begin Custom Build - Performing registration
-IntDir=.\debug
-OutDir=.\../debug/lib
-TargetPath=\projects\ase\debug\lib\asecom.dll
-InputPath=\projects\ase\debug\lib\asecom.dll
-SOURCE="$(InputPath)"
+IntDir=./debug
+OutDir=./../debug/lib
+#TargetPath=\projects\ase\debug\lib\asecom.dll
+#InputPath=\projects\ase\debug\lib\asecom.dll
+#SOURCE="$(InputPath)"
 
 "$(IntDir)\regsvr32.trg" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	copy .\asecom.tlb "$(OUTDIR)\asecom.tlb" 
@@ -94,13 +94,13 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo /o"release/awk.bsc"
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /implib:"release/asecom.lib" /libpath:"$(OutDir)"
+# ADD LINK32 aseawk.lib asecmn.lib aseutl.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /implib:"release/asecom.lib" /libpath:"$(OutDir)"
 # Begin Custom Build - Performing registration
-IntDir=.\release
-OutDir=.\../release/lib
-TargetPath=\projects\ase\release\lib\asecom.dll
-InputPath=\projects\ase\release\lib\asecom.dll
-SOURCE="$(InputPath)"
+IntDir=./release
+OutDir=./../release/lib
+#TargetPath=\projects\ase\release\lib\asecom.dll
+#InputPath=\projects\ase\release\lib\asecom.dll
+#SOURCE="$(InputPath)"
 
 "$(IntDir)\regsvr32.trg" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	copy .\asecom.tlb "$(OUTDIR)\asecom.tlb" 
@@ -185,6 +185,10 @@ SOURCE=.\resource.h
 # Begin Source File
 
 SOURCE=.\stdafx.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\xxx.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

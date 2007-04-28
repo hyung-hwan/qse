@@ -1,5 +1,5 @@
 /*
- * $Id: AwkExtio.h,v 1.11 2007-04-22 07:47:15 bacon Exp $
+ * $Id: AwkExtio.h,v 1.1 2007/03/28 14:05:23 bacon Exp $
  *
  * {License}
  */
@@ -15,12 +15,12 @@
 class ATL_NO_VTABLE CAwkExtio : 
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CComCoClass<CAwkExtio, &CLSID_AwkExtio>,
-	public IDispatchImpl<IAwkExtio, &IID_IAwkExtio, &LIBID_ASECOM>
+	public IDispatchImpl<IAwkExtio, &IID_IAwkExtio, &LIBID_ASELib>
 {
 public:
 	BSTR name;
-	AwkExtioType type;
-	AwkExtioMode mode;
+	int type;
+	int mode;
 	VARIANT handle;
 
 	IBuffer* read_buf;
@@ -45,8 +45,8 @@ END_COM_MAP()
 public:
 	STDMETHOD(get_Handle)(/*[out, retval]*/ VARIANT *pVal);
 	STDMETHOD(put_Handle)(/*[in]*/ VARIANT newVal);
-	STDMETHOD(get_Mode)(/*[out, retval]*/ AwkExtioMode *pVal);
-	STDMETHOD(get_Type)(/*[out, retval]*/ AwkExtioType *pVal);
+	STDMETHOD(get_Mode)(/*[out, retval]*/ int *pVal);
+	STDMETHOD(get_Type)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_Name)(/*[out, retval]*/ BSTR *pVal);
 };
 

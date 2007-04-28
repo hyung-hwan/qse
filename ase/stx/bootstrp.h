@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.h,v 1.9 2007-03-22 11:19:28 bacon Exp $
+ * $Id: bootstrp.h,v 1.1 2007/03/28 14:05:25 bacon Exp $
  */
 
 #ifndef _ASE_STX_BOOTSTRP_H_

@@ -1,5 +1,5 @@
 /*
- * $Id: asecom.cpp,v 1.3 2007-04-22 07:47:15 bacon Exp $
+ * $Id: asecom.cpp,v 1.1 2007/03/28 14:05:23 bacon Exp $
  *
  * {License}
  */
@@ -34,7 +34,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
-        _Module.Init(ObjectMap, hInstance, &LIBID_ASECOM);
+        _Module.Init(ObjectMap, hInstance, &LIBID_ASELib);
         DisableThreadLibraryCalls(hInstance);
     }
     else if (dwReason == DLL_PROCESS_DETACH)

@@ -1,5 +1,5 @@
 CC = cl
-CFLAGS = /nologo /MT /W3 /GR- -I..\..\.. 
+CFLAGS = /nologo /MT /W3 /GR- -I..\..\.. -D_WIN32_WINNT=0x0400 
 LDFLAGS = /libpath:..\..\cmn /libpath:..\..\awk /libpath:..\..\utl
 LIBS = asecmn.lib aseawk.lib aseutl.lib kernel32.lib user32.lib
 

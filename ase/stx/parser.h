@@ -1,5 +1,5 @@
 /*
- * $Id: parser.h,v 1.37 2007-03-22 11:19:28 bacon Exp $
+ * $Id: parser.h,v 1.1 2007/03/28 14:05:28 bacon Exp $
  */
 
 #ifndef _ASE_STX_PARSER_H_

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h,v 1.10 2007-02-23 15:22:36 bacon Exp $
+ * $Id: lsp_i.h,v 1.1 2007/03/28 14:05:24 bacon Exp $
  *
  * {License}
  */

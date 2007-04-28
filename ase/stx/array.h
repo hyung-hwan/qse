@@ -1,5 +1,5 @@
 /*
- * $Id: array.h,v 1.4 2007-03-22 11:19:28 bacon Exp $
+ * $Id: array.h,v 1.1 2007/03/28 14:05:25 bacon Exp $
  */
 
 #ifndef _ASE_STX_ARRAY_H_

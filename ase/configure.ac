@@ -1,19 +1,17 @@
 #
-# $Id: configure.ac,v 1.88 2007-04-22 13:51:44 bacon Exp $
+# $Id: configure.ac,v 1.1 2007/03/28 14:05:10 bacon Exp $
 # 
 
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.88 $])
+AC_REVISION([$Revision: 1.1 $])
 AC_CONFIG_HEADER([cmn/conf_unx.h])
-AC_CONFIG_AUX_DIR(config)
 
 # Checks for programs.
 AC_PROG_CC
-#AC_PROG_RANLIB
-AC_PROG_LIBTOOL
+AC_PROG_RANLIB
 
-AC_SUBST(LIBTOOL_DEPS)
+#AC_PROG_CXX
 
 # Overrides the default CFLAGS setting
 if test "$ac_test_CFLAGS" = "set"
@@ -25,18 +23,6 @@ else
 		CFLAGS="-O2"
 	else
 		CFLAGS=
-	fi
-fi
-
-if test "$ac_test_CXXFLAGS" = "set"
-then
-	CXXFLAGS=$ac_save_CXXFLAGS
-else
-	if test "$GCC" = "yes"
-	then
-		CXXFLAGS="-O2"
-	else
-		CXXFLAGS=
 	fi
 fi
 
@@ -105,11 +91,9 @@ AC_ARG_ENABLE([mode], [AC_HELP_STRING([--enable-debug],
 if test "$enable_debug_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG"]
-	[CXXFLAGS="$CXXFLAGS -g -D_DEBUG -UNDEBUG"]
 	AC_SUBST(BUILDMODE, "debug")
 else
 	[CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG"]
-	[CXXFLAGS="$CXXFLAGS -DNDEBUG -U_DEBUG"]
 	AC_SUBST(BUILDMODE, "release")
 fi
 
@@ -120,79 +104,7 @@ AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
 if test "$enable_reentrant_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
-	[CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
-
-# Java & JNI Configuration 
-AC_PATH_PROG(JAVAC_PATH, javac, :)
-AC_PATH_PROG(JAR_PATH, jar, :)
-
-if test "$JAVAC_PATH" != ":"
-then
-	CUR_JAVAC_PATH="$JAVAC_PATH"
-
-	while ls -ld "$CUR_JAVAC_PATH" 2>/dev/null | grep " -> " >/dev/null
-	do
-		AC_MSG_CHECKING(symlink for $CUR_JAVAC_PATH)
-		REAL_JAVAC_PATH=`ls -ld "$CUR_JAVAC_PATH" | sed 's/.* -> //'`
-
-		case "$REAL_JAVAC_PATH" in
-		/*) CUR_JAVAC_PATH="$REAL_JAVAC_PATH";;
-		*) CUR_JAVAC_PATH=`echo "X$CUR_JAVAC_PATH" | sed -e 's/^X//' -e 's:[[^/]]*$::'`"$REAL_JAVAC_PATH";;
-		esac
-
-		AC_MSG_RESULT($CUR_JAVAC_PATH)
-	done
-
-	JAVA_DIR="$CUR_JAVAC_PATH"
-
-	while true
-	do
-		JAVA_DIR=`echo "$JAVA_DIR" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
-		if test "$JAVA_DIR" = "" 
-		then
-			break
-		fi
-
-		AC_MSG_CHECKING($JAVA_DIR/include/jni.h)
-		if test -f "$JAVA_DIR/include/jni.h"
-		then
-			AC_MSG_RESULT(yes)
-			JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $JAVA_DIR/include"
-			break;
-		else
-			AC_MSG_RESULT(no)
-		fi
-	done
-
-	for i in $JNI_INCLUDE_DIRS
-	do
-		JNI_MD_H=`find "$i" -name jni_md.h -print`
-		if test "$JNI_MD_H" != "" 
-		then
-			tmp=`echo "$JNI_MD_H" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
-			JNI_MD_INCLUDE_DIRS="$JNI_MD_INCLUDE_DIRS $tmp"
-		fi
-	done
-
-	JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $JNI_MD_INCLUDE_DIRS"
-
-	for i in $JNI_INCLUDE_DIRS
-	do
-		CFLAGS_JNI="$CFLAGS_JNI -I$i"	
-	done
-
-	JNI="jni"
-else
-	JAVAC_PATH=""
-	CFLAGS_JNI=""
-	JNI=""
-fi
-
-AC_SUBST(CFLAGS_JNI, $CFLAGS_JNI)
-AC_SUBST(JAVAC, $JAVAC_PATH)
-AC_SUBST(JAR, $JAR_PATH)
-AC_SUBST(JNI, $JNI)
 
 AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile])
 AC_OUTPUT

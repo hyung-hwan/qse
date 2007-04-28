@@ -1,5 +1,5 @@
 /*
- * $Id: Buffer.cpp,v 1.6 2007-02-03 10:52:12 bacon Exp $
+ * $Id: Buffer.cpp,v 1.1 2007/03/28 14:05:23 bacon Exp $
  *
  * {License}
  */

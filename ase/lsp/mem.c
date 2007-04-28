@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c,v 1.36 2007-04-14 15:30:14 bacon Exp $
+ * $Id: mem.c,v 1.1 2007/03/28 14:05:24 bacon Exp $
  *
  * {License}
  */
@@ -326,7 +326,7 @@ static void __mark_objs_in_use (ase_lsp_mem_t* mem)
 	if (mem->macro  != ASE_NULL) __mark_obj (mem->lsp, mem->macro);
 }
 
-//#include <ase/utl/stdio.h>
+#include <ase/utl/stdio.h>
 static void __sweep_unmarked_objs (ase_lsp_mem_t* mem)
 {
 	ase_lsp_obj_t* obj, * prev, * next;
@@ -350,7 +350,6 @@ static void __sweep_unmarked_objs (ase_lsp_mem_t* mem)
 			    ASE_LSP_PERM(obj) == 0) 
 			{
 				/* dispose of unused objects */
-/*
 if (i == ASE_LSP_OBJ_INT)
 ase_printf (ASE_T("disposing....%d [%d]\n"), i, (int)ASE_LSP_IVAL(obj));
 if (i == ASE_LSP_OBJ_REAL)
@@ -361,7 +360,6 @@ else if (i == ASE_LSP_OBJ_STR)
 ase_printf (ASE_T("disposing....%d [%s]\n"), i, ASE_LSP_STRPTR(obj));
 else
 ase_printf (ASE_T("disposing....%d\n"), i);
-*/
 				ase_lsp_dispose (mem, prev, obj);
 			}
 			else 

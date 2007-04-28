@@ -1,5 +1,5 @@
 /*
- * $Id: bootstrp.c,v 1.34 2007-03-22 11:19:28 bacon Exp $
+ * $Id: bootstrp.c,v 1.1 2007/03/28 14:05:25 bacon Exp $
  */
 
 #include <ase/stx/bootstrp.h>
