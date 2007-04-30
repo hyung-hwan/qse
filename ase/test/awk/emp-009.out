@@ -1,7 +1,0 @@
-(($2 * $3) > 50) {
-	printf ("$%.2f for %s\n",($2 * $3),$1);
-}
-
-$100.00 for Mark
-$121.00 for Mary
-$76.50 for Susie

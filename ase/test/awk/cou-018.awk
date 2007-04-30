@@ -1,1 +1,0 @@
-/Eurpoe/, /Africa/
