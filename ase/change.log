@@ -1,8 +1,0 @@
-[0.2.0]
-
-* fixed bug (nextofile shown as nextfile in source output)
-* fixed bug (nextofile not allowed in the BEGIN and END block)
-
-[0.1.0]
-
-* initial release

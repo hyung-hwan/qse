@@ -1,5 +1,5 @@
 /*
- * $Id: token.c,v 1.1 2007/03/28 14:05:28 bacon Exp $
+ * $Id: token.c,v 1.1.1.1 2007/03/28 14:05:28 bacon Exp $
  */
 
 #include <ase/stx/token.h>
