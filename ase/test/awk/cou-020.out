@@ -1,9 +1,0 @@
-(FNR <= 5) {
-	print ((FILENAME   ": ")   $0);
-}
-
-cou-en.data: USSR	8649	275	Asia
-cou-en.data: Canada	3852	25	North America
-cou-en.data: China	3705	1032	Asia
-cou-en.data: USA	3615	237	North America
-cou-en.data: Brazil	3286	134	South America

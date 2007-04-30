@@ -1,3 +1,0 @@
-BEGIN {
-	substr = 20;
-}
