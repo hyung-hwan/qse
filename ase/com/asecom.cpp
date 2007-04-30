@@ -1,5 +1,5 @@
 /*
- * $Id: asecom.cpp,v 1.1 2007/03/28 14:05:23 bacon Exp $
+ * $Id: asecom.cpp,v 1.1.1.1 2007/03/28 14:05:23 bacon Exp $
  *
  * {License}
  */

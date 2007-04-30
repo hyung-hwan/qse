@@ -1,5 +1,5 @@
 /* 
- * $Id: array.c,v 1.1 2007/03/28 14:05:25 bacon Exp $
+ * $Id: array.c,v 1.1.1.1 2007/03/28 14:05:25 bacon Exp $
  */
 
 #include <ase/stx/array.h>

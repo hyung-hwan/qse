@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h,v 1.1 2007/03/28 14:05:30 bacon Exp $
+ * $Id: stdio.h,v 1.1.1.1 2007/03/28 14:05:30 bacon Exp $
  */
 
 #ifndef _ASE_UTL_STDIO_H_
