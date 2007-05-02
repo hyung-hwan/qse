@@ -1,0 +1,5 @@
+BEGIN {
+	print abc > "123\0abc";
+}
+
+RUN ERROR: CODE [109] LINE [2] i/o name containing a null character

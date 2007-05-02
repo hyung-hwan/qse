@@ -1,0 +1,93 @@
+#
+# $Id: makefile.in,v 1.3 2007/04/30 06:09:46 bacon Exp $
+#
+
+NAME = aselsp
+
+CC = @CC@
+AR = ar
+MAKE = @MAKE@
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+MODE = @BUILDMODE@
+
+OUT_DIR = ../$(MODE)/lib
+OUT_FILE = $(OUT_DIR)/lib$(NAME).a
+
+TMP_DIR = $(MODE)
+
+OBJ_FILES = \
+	$(TMP_DIR)/lsp.o \
+	$(TMP_DIR)/name.o \
+	$(TMP_DIR)/mem.o \
+	$(TMP_DIR)/env.o \
+	$(TMP_DIR)/err.o \
+	$(TMP_DIR)/eval.o \
+	$(TMP_DIR)/read.o \
+	$(TMP_DIR)/print.o \
+	$(TMP_DIR)/misc.o \
+	$(TMP_DIR)/prim.o \
+	$(TMP_DIR)/prim_prog.o \
+	$(TMP_DIR)/prim_let.o \
+	$(TMP_DIR)/prim_compar.o \
+	$(TMP_DIR)/prim_math.o
+
+lib: $(OUT_FILE)
+
+$(OUT_FILE): $(TMP_DIR) $(OBJ_FILES) $(OUT_DIR)
+	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+	
+$(TMP_DIR)/lsp.o: lsp.c
+	$(CC) $(CFLAGS) -o $@ -c lsp.c
+
+$(TMP_DIR)/name.o: name.c
+	$(CC) $(CFLAGS) -o $@ -c name.c
+
+$(TMP_DIR)/mem.o: mem.c
+	$(CC) $(CFLAGS) -o $@ -c mem.c
+
+$(TMP_DIR)/env.o: env.c
+	$(CC) $(CFLAGS) -o $@ -c env.c
+
+$(TMP_DIR)/err.o: err.c
+	$(CC) $(CFLAGS) -o $@ -c err.c
+
+$(TMP_DIR)/eval.o: eval.c
+	$(CC) $(CFLAGS) -o $@ -c eval.c
+
+$(TMP_DIR)/read.o: read.c
+	$(CC) $(CFLAGS) -o $@ -c read.c
+
+$(TMP_DIR)/print.o: print.c
+	$(CC) $(CFLAGS) -o $@ -c print.c
+
+$(TMP_DIR)/misc.o: misc.c
+	$(CC) $(CFLAGS) -o $@ -c misc.c
+
+$(TMP_DIR)/prim.o: prim.c
+	$(CC) $(CFLAGS) -o $@ -c prim.c
+
+$(TMP_DIR)/prim_prog.o: prim_prog.c
+	$(CC) $(CFLAGS) -o $@ -c prim_prog.c
+
+$(TMP_DIR)/prim_let.o: prim_let.c
+	$(CC) $(CFLAGS) -o $@ -c prim_let.c
+
+$(TMP_DIR)/prim_compar.o: prim_compar.c
+	$(CC) $(CFLAGS) -o $@ -c prim_compar.c
+
+$(TMP_DIR)/prim_math.o: prim_math.c
+	$(CC) $(CFLAGS) -o $@ -c prim_math.c
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
+
+clean:
+	rm -rf $(OUT_FILE) $(OBJ_FILES)
+

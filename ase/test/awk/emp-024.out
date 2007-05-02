@@ -1,0 +1,9 @@
+{
+	nc = ((nc + length ($0)) + 1);
+	nw = (nw + NF);
+}
+
+END {
+	print NR,"lines,",nw,"words,",nc,"characters";
+}
+6 lines, 18 words, 77 characters

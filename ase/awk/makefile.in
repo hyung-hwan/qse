@@ -1,0 +1,152 @@
+#
+# $Id: makefile.in,v 1.3 2007/04/30 05:47:33 bacon Exp $
+#
+
+NAME = aseawk
+
+TOP_BUILDDIR = @abs_top_builddir@
+TOP_INSTALLDIR = @prefix@/ase
+
+CC = @CC@
+CXX = @CXX@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
+CXXFLAGS = @CXXFLAGS@ -I@abs_top_builddir@/..
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+MODE = @BUILDMODE@
+
+JAVAC = @JAVAC@
+JAR = @JAR@
+CFLAGS_JNI = @CFLAGS_JNI@
+JNI = @JNI@
+
+LIBTOOL_COMPILE = ../libtool --mode=compile
+LIBTOOL_LINK = ../libtool --mode=link 
+
+OUT_DIR = ../$(MODE)/lib
+OUT_FILE_LIB = $(OUT_DIR)/lib$(NAME).a
+OUT_FILE_JNI = $(OUT_DIR)/lib$(NAME)_jni.la
+OUT_FILE_LIB_CXX = $(OUT_DIR)/lib$(NAME)++.a
+OUT_FILE_JAR = $(OUT_DIR)/$(NAME).jar
+
+TMP_DIR = $(MODE)
+TMP_DIR_CXX = $(TMP_DIR)/cxx
+
+OBJ_FILES_LIB = \
+	$(TMP_DIR)/awk.o \
+	$(TMP_DIR)/err.o \
+	$(TMP_DIR)/tree.o \
+	$(TMP_DIR)/tab.o \
+	$(TMP_DIR)/map.o \
+	$(TMP_DIR)/parse.o \
+	$(TMP_DIR)/run.o \
+	$(TMP_DIR)/rec.o \
+	$(TMP_DIR)/val.o \
+	$(TMP_DIR)/func.o \
+	$(TMP_DIR)/misc.o \
+	$(TMP_DIR)/extio.o \
+	$(TMP_DIR)/rex.o
+
+OBJ_FILES_JNI = $(TMP_DIR)/jni.o 
+
+OBJ_FILES_LIB_CXX = \
+	$(OBJ_FILES_LIB) \
+	$(TMP_DIR)/cxx/Awk.o
+
+OBJ_FILES_SO = $(OBJ_FILES_LIB:.o=.lo) $(OBJ_FILES_JNI:.o=.lo)
+
+OBJ_FILES_JAR = \
+	$(TMP_DIR)/ase/awk/Awk.class \
+	$(TMP_DIR)/ase/awk/StdAwk.class \
+	$(TMP_DIR)/ase/awk/Extio.class \
+	$(TMP_DIR)/ase/awk/Exception.class
+
+lib: build$(JNI)
+
+build: $(OUT_FILE_LIB) $(OUT_FILE_LIB_CXX)
+
+buildjni: build $(OUT_FILE_JNI)
+
+$(OUT_FILE_LIB): $(TMP_DIR) $(OUT_DIR) $(OBJ_FILES_LIB)
+	$(AR) cr $(OUT_FILE_LIB) $(OBJ_FILES_LIB)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE_LIB); fi
+
+$(OUT_FILE_JNI): $(TMP_DIR) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OUT_FILE_LIB)
+	$(LIBTOOL_LINK) $(CC) -rpath $(TOP_INSTALLDIR)/lib -version-info 1:0:0 -o $(OUT_FILE_JNI) $(OBJ_FILES_SO) -lm -L$(OUT_DIR) -l$(NAME) -lasecmn -laseutl
+	$(JAR) -Mcvf $(OUT_FILE_JAR) -C $(TMP_DIR) ase
+
+$(OUT_FILE_LIB_CXX): $(TMP_DIR_CXX) $(OUT_DIR) $(OBJ_FILES_LIB_CXX)
+	$(AR) cr $(OUT_FILE_LIB_CXX) $(OBJ_FILES_LIB_CXX)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE_LIB_CXX); fi
+
+$(TMP_DIR)/awk.o: awk.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c awk.c
+
+$(TMP_DIR)/err.o: err.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c err.c
+
+$(TMP_DIR)/tree.o: tree.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c tree.c
+
+$(TMP_DIR)/tab.o: tab.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c tab.c
+
+$(TMP_DIR)/map.o: map.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c map.c
+
+$(TMP_DIR)/parse.o: parse.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c parse.c
+
+$(TMP_DIR)/run.o: run.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c run.c
+
+$(TMP_DIR)/rec.o: rec.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c rec.c
+
+$(TMP_DIR)/val.o: val.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c val.c
+
+$(TMP_DIR)/func.o: func.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c func.c
+
+$(TMP_DIR)/misc.o: misc.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c misc.c
+
+$(TMP_DIR)/extio.o: extio.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c extio.c
+
+$(TMP_DIR)/rex.o: rex.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c rex.c
+
+$(TMP_DIR)/jni.o: jni.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) $(CFLAGS_JNI) -o $@ -c jni.c
+
+$(TMP_DIR)/ase/awk/Awk.class:
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Awk.java
+
+$(TMP_DIR)/ase/awk/StdAwk.class:
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) StdAwk.java
+
+$(TMP_DIR)/ase/awk/Extio.class:
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Extio.java
+
+$(TMP_DIR)/ase/awk/Exception.class:
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Exception.java
+
+$(TMP_DIR)/cxx/Awk.o:
+	$(CXX) $(CXXFLAGS) -o $@ -c Awk.cpp
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
+
+$(TMP_DIR_CXX): $(TMP_DIR)
+	mkdir -p $(TMP_DIR)/cxx
+
+clean:
+	rm -rf $(OUT_FILE_LIB) $(OUT_FILE_JNI) $(OUT_FILE_JAR) $(OUT_FILE_LIB_CXX) $(OBJ_FILES_LIB) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OBJ_FILES_LIB_CXX)
+

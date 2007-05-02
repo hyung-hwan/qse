@@ -1,0 +1,4 @@
+END {
+	print NR,"employees";
+}
+6 employees

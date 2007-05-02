@@ -1,0 +1,16 @@
+BEGIN {
+	FS = "	";
+}
+
+{
+	pop[$4] += $3;
+}
+
+END {
+	for (c in pop)
+		printf ("%15s	%6d\n",c,pop[c]) | "sort -t'	' +1rn";
+}
+           Asia	  2173
+  North America	   340
+         Europe	   172
+  South America	   134

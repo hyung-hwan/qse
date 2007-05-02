@@ -1,0 +1,49 @@
+#
+# $Id: makefile.in,v 1.3 2007/04/30 08:32:50 bacon Exp $
+#
+
+NAME = aseutl
+
+CC = @CC@
+AR = ar
+MAKE = @MAKE@
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+MODE = @BUILDMODE@
+
+OUT_DIR = ../$(MODE)/lib
+OUT_FILE = $(OUT_DIR)/lib$(NAME).a
+
+TMP_DIR = $(MODE)
+
+OBJ_FILES = \
+	$(TMP_DIR)/main.o \
+	$(TMP_DIR)/ctype.o \
+	$(TMP_DIR)/stdio.o 
+
+lib: $(OUT_FILE)
+
+$(OUT_FILE): $(TMP_DIR) $(OBJ_FILES) $(OUT_DIR)
+	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+	
+$(TMP_DIR)/main.o: main.c
+	$(CC) $(CFLAGS) -o $@ -c main.c
+
+$(TMP_DIR)/ctype.o: ctype.c
+	$(CC) $(CFLAGS) -o $@ -c ctype.c
+
+$(TMP_DIR)/stdio.o: stdio.c
+	$(CC) $(CFLAGS) -o $@ -c stdio.c
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
+
+clean:
+	rm -rf $(OUT_FILE) $(OBJ_FILES)
+

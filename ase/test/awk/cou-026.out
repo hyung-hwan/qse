@@ -1,0 +1,16 @@
+BEGIN {
+	FS = "	";
+}
+
+{
+	pop[$4] += $3;
+}
+
+END {
+	for (name in pop)
+		print name,pop[name];
+}
+Europe 172
+South America 134
+North America 340
+Asia 2173

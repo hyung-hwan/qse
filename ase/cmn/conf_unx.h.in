@@ -1,0 +1,44 @@
+/*
+ * $Id: conf_unx.h.in,v 1.3 2007/04/30 05:55:36 bacon Exp $
+ *
+ * {License}
+ */
+
+/* Big Endian */
+#undef ASE_ENDIAN_BIG
+
+/* Little Endian */
+#undef ASE_ENDIAN_LITTLE
+
+/* Unknown Endian */
+#undef ASE_ENDIAN_UNKNOWN
+
+/* long long */
+#undef ASE_HAVE_LONG_LONG
+
+/* long double */
+#undef ASE_HAVE_LONG_DOUBLE
+
+/* data type size */
+#define ASE_SIZEOF_CHAR 0
+#define ASE_SIZEOF_SHORT 0
+#define ASE_SIZEOF_INT  0
+#define ASE_SIZEOF_LONG 0
+#define ASE_SIZEOF_LONG_LONG  0
+#define ASE_SIZEOF___INT8 0
+#define ASE_SIZEOF___INT16 0
+#define ASE_SIZEOF___INT32 0
+#define ASE_SIZEOF___INT64 0
+#define ASE_SIZEOF___INT128 0
+#define ASE_SIZEOF_VOID_P  0
+#define ASE_SIZEOF_FLOAT 0
+#define ASE_SIZEOF_DOUBLE 0
+#define ASE_SIZEOF_LONG_DOUBLE 0
+#define ASE_SIZEOF_WCHAR_T 0
+
+/* char is wchar */
+#undef ASE_CHAR_IS_WCHAR
+
+/* char is mchar */
+#undef ASE_CHAR_IS_MCHAR
+
