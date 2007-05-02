@@ -1,0 +1,15 @@
+{
+	print $1,$3;
+}
+
+USSR 275
+Canada 25
+China 1032
+USA 237
+Brazil 134
+India 746
+Mexico 78
+France 55
+Japan 120
+Germany 61
+England 56

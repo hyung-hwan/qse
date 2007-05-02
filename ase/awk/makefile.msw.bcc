@@ -1,0 +1,54 @@
+OUT = aseawk
+
+C_SRCS = awk.c err.c tree.c tab.c map.c parse.c \
+	run.c rec.c val.c func.c misc.c extio.c rex.c
+JNI_SRCS = jni.c
+JAVA_SRCS = Exception.java Extio.java Awk.java StdAwk.java
+
+C_OBJS = $(C_SRCS:.c=.obj)
+JNI_OBJS = $(JNI_SRCS:.c=.obj)
+JAVA_OBJS = $(JAVA_SRCS:.java=.class)
+
+JNI_INCPATH = \
+	-I"$(JAVA_HOME)/include" \
+	-I"$(JAVA_HOME)/include/win32"
+
+CC = bcc32
+LD = ilink32
+AR = tlib
+JAVAC = javac
+
+CFLAGS_COMMON = -O2 -WM -WU -RT- -w -q -I../.. $(JNI_INCPATH)
+CFLAGS_RELEASE = $(CFLAGS_COMMON) -DNDEBUG
+CFLAGS_DEBUG = $(CFLAGS_COMMON) -D_DEBUG #-DDEBUG_REX
+CFLAGS = $(CFLAGS_DEBUG)
+#CFLAGS = $(CFLAGS_RELEASE)
+JAVACFLAGS = -classpath ../..
+
+LDFLAGS = -Tpd -ap -Gn -c -q 
+STARTUP = c0d32w.obj
+LIBS = import32.lib cw32mt.lib 
+
+JNI_LDFLAGS = $(LDFLAGS) -L..\cmn -L..\utl
+JNI_LIBS = $(LIBS) $(OUT).lib asecmn.lib aseutl.lib
+
+all: lib 
+
+lib: $(C_OBJS)
+	$(AR) $(OUT).lib @&&!
++-$(**: = &^
++-)
+!
+
+jni: lib $(JNI_OBJS) $(JAVA_OBJS)
+	$(LD) $(JNI_LDFLAGS) $(STARTUP) $(JNI_OBJS),$(OUT)_jni.dll,,$(JNI_LIBS),jni.def,
+
+clean:
+	-del $(OBJS) $(OUT).lib $(OUT)_jni.dll *.obj *.class
+
+.SUFFIXES: .c .obj .java .class
+.c.obj:
+	$(CC) $(CFLAGS) -c $<
+
+.java.class:
+	$(JAVAC) $(JAVACFLAGS) $<

@@ -1,0 +1,19 @@
+CC = @CC@
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@
+LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/xp/bas -L@abs_top_builddir@/xp/stx
+LIBS = @LIBS@ -lxpstx -lxpbas
+
+all: stx parser
+
+stx: stx.o
+	$(CC) $(LDFLAGS) -o $@.x stx.o $(LIBS)
+
+parser: parser.o
+	$(CC) $(LDFLAGS) -o $@.x parser.o $(LIBS)
+
+clean:
+	rm -rf *.x *.o
+
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) $(CFLAGS) -c $<

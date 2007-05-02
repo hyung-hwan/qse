@@ -1,0 +1,46 @@
+#
+# $Id: makefile.in,v 1.3 2007/04/30 05:51:26 bacon Exp $
+#
+
+
+LIBDIRS = cmn utl awk lsp test/awk test/lsp
+MODE = @BUILDMODE@
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+
+all: build
+
+build:
+	@for i in $(LIBDIRS); \
+	do \
+		if [ ! -d $$i ]; \
+		then \
+			echo Error: $$i not a directory; \
+			exit 1; \
+		fi; \
+		saved=`pwd`; cd "$$i"; \
+		if make;  \
+		then \
+			echo > /dev/null; \
+		else \
+			exit 1; \
+			fi; \
+		cd "$$saved"; \
+	done
+
+clean:
+	@for i in $(LIBDIRS); \
+	do \
+		if [ ! -d $$i ]; \
+		then \
+			echo Error: $$i not a directory; \
+			exit 1; \
+		fi; \
+		saved=`pwd`; cd "$$i"; \
+		if make $@;  \
+		then \
+			echo > /dev/null; \
+		else \
+			exit 1; \
+			fi; \
+		cd "$$saved"; \
+	done

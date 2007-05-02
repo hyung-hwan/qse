@@ -1,0 +1,21 @@
+SRCS = lsp.c name.c mem.c env.c err.c read.c eval.c print.c misc.c \
+	prim.c prim_prog.c prim_let.c prim_compar.c prim_math.c
+OBJS = $(SRCS:.c=.obj)
+OUT = aselsp.lib
+
+CC = bcc32
+CFLAGS = -O2 -WM -w -w-inl -w-sig -w-spa -w-hid -RT- -I../.. 
+
+all: $(OBJS)
+	tlib $(OUT) @&&!
++-$(**: = &^
++-)
+!
+
+clean:
+	-del $(OBJS) $(OUT) *.obj
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) $(CFLAGS) -c $<
+

@@ -1,0 +1,3 @@
+BEGIN {
+	substr = 20;
+}
