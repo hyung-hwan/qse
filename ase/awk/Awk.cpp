@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.5 2007/05/03 15:14:02 bacon Exp $
+ * $Id: Awk.cpp,v 1.6 2007/05/04 10:25:14 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -63,6 +63,11 @@ namespace ASE
 		prmfns.ccls.to_upper    = toUpper;
 		prmfns.ccls.to_lower    = toLower;
 		prmfns.ccls.custom_data = this;
+
+		/*
+		int (Awk::*ptr) (void*, ase_char_t*, ase_size_t, const ase_char_t*, ...) = &Awk::sprintf;
+		(this->*ptr) (ASE_NULL, ASE_NULL, 0, ASE_NULL);
+		*/
 
 		prmfns.misc.pow         = pow;
 		prmfns.misc.sprintf     = sprintf;
@@ -218,11 +223,19 @@ namespace ASE
 	int Awk::sprintf (void* custom, char_t* buf, size_t size,
 	                  const char_t* fmt, ...)
 	{
-		return 0;
+		va_list ap;
+		va_start (ap, fmt);
+		int n = ((Awk*)custom)->vsprintf (buf, size, fmt, ap);
+		va_end (ap);
+		return n;
 	}
 
 	void Awk::dprintf (void* custom, const char_t* fmt, ...)
 	{
+		va_list ap;
+		va_start (ap, fmt);
+		((Awk*)custom)->vdprintf (fmt, ap);
+		va_end (ap);
 	}
 
 }

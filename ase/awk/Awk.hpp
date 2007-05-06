@@ -1,11 +1,12 @@
 /*
- * $Id: Awk.hpp,v 1.4 2007/05/03 15:14:02 bacon Exp $
+ * $Id: Awk.hpp,v 1.5 2007/05/04 10:25:14 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
 #define _ASE_AWK_AWK_HPP_
 
 #include <ase/awk/awk.h>
+#include <stdarg.h>
 
 namespace ASE
 {
@@ -60,6 +61,9 @@ namespace ASE
 		virtual cint_t toLower  (cint_t c) = 0;
 
 		virtual real_t pow (real_t x, real_t y) = 0;
+		virtual int    vsprintf (char_t* buf, size_t size,
+		                         const char_t* fmt, va_list arg) = 0;
+		virtual void   vdprintf (const char_t* fmt, va_list arg) = 0;
 
 		static ssize_t sourceReader (
         		int cmd, void* arg, char_t* data, size_t count);
