@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: parse.c,v 1.4 2007/05/05 16:32:46 bacon Exp $
  *
  * {License}
  */
@@ -707,7 +707,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		return ASE_NULL;
 	}
 
-	if (ase_awk_map_get(&awk->tree.afns, name, name_len) != ASE_NULL) 
+	if (ase_awk_map_get(awk->tree.afns, name, name_len) != ASE_NULL) 
 	{
 		/* the function is defined previously */
 		SETERRARG (
@@ -799,7 +799,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			{
 				/* check if a parameter conflicts with a function */
 				if (ase_strxncmp (name_dup, name_len, param, param_len) == 0 ||
-				    ase_awk_map_get (&awk->tree.afns, param, param_len) != ASE_NULL) 
+				    ase_awk_map_get (awk->tree.afns, param, param_len) != ASE_NULL) 
 				{
 					ASE_AWK_FREE (awk, name_dup);
 					ase_awk_tab_clear (&awk->parse.params);
@@ -946,7 +946,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	afn->nargs = nargs;
 	afn->body = body;
 
-	n = ase_awk_map_putx (&awk->tree.afns, name_dup, name_len, afn, &pair);
+	n = ase_awk_map_putx (awk->tree.afns, name_dup, name_len, afn, &pair);
 	if (n < 0)
 	{
 		ASE_AWK_FREE (awk, name_dup);
@@ -960,8 +960,8 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	/* duplicate functions should have been detected previously */
 	ASE_ASSERT (n != 0); 
 
-	afn->name = PAIR_KEYPTR(pair); /* do some trick to save a string.  */
-	afn->name_len = PAIR_KEYLEN(pair);
+	afn->name = ASE_AWK_PAIR_KEYPTR(pair); /* do some trick to save a string.  */
+	afn->name_len = ASE_AWK_PAIR_KEYLEN(pair);
 	ASE_AWK_FREE (awk, name_dup);
 
 	return body;
@@ -1241,7 +1241,7 @@ static ase_awk_t* add_global (
 
 			/* check if it conflict with a function name */
 			if (ase_awk_map_get (
-				&awk->tree.afns, name, len) != ASE_NULL) 
+				awk->tree.afns, name, len) != ASE_NULL) 
 			{
 				SETERRARG (
 					awk, ASE_AWK_EAFNRED, line, 
@@ -1345,7 +1345,7 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			    	awk->tree.cur_afn.ptr, awk->tree.cur_afn.len, 
 			    	local, local_len) == 0 ||
 			    ase_awk_map_get (
-			    	&awk->tree.afns, local, local_len) != ASE_NULL) 
+			    	awk->tree.afns, local, local_len) != ASE_NULL) 
 			{
 				SETERRARG (
 					awk, ASE_AWK_EAFNRED, awk->token.line,
@@ -4917,7 +4917,7 @@ static int deparse (ase_awk_t* awk)
 	df.tmp = tmp;
 	df.tmp_len = ASE_COUNTOF(tmp);
 
-	if (ase_awk_map_walk (&awk->tree.afns, deparse_func, &df) == -1) 
+	if (ase_awk_map_walk (awk->tree.afns, deparse_func, &df) == -1) 
 	{
 		EXIT_DEPARSE ();
 	}
@@ -5015,7 +5015,7 @@ static int deparse_func (ase_awk_pair_t* pair, void* arg)
 	ase_awk_afn_t* afn = (ase_awk_afn_t*)pair->val;
 	ase_size_t i, n;
 
-	ASE_ASSERT (ase_strxncmp (PAIR_KEYPTR(pair), PAIR_KEYLEN(pair), afn->name, afn->name_len) == 0);
+	ASE_ASSERT (ase_strxncmp (ASE_AWK_PAIR_KEYPTR(pair), ASE_AWK_PAIR_KEYLEN(pair), afn->name, afn->name_len) == 0);
 
 	if (ase_awk_putsrcstr (df->awk, ASE_T("function ")) == -1) return -1;
 	if (ase_awk_putsrcstr (df->awk, afn->name) == -1) return -1;

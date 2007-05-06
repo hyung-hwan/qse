@@ -1,12 +1,77 @@
 /*
- * $Id: Awk.cpp,v 1.6 2007/05/04 10:25:14 bacon Exp $
+ * $Id: Awk.cpp,v 1.8 2007/05/05 16:32:46 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
+#include <ase/cmn/str.h>
+#include <ase/cmn/mem.h>
 
 namespace ASE
 {
-	Awk::Awk (): awk (ASE_NULL)
+
+	Awk::Source::Mode Awk::Source::getMode () const
+	{
+		return this->mode;
+	}
+
+	const void* Awk::Source::getHandle () const
+	{
+		return this->handle;
+	}
+
+	void Awk::Source::setHandle (void* handle)
+	{
+		this->handle = handle;
+	}
+
+	Awk::Extio::Extio (const char_t* name): name(name), handle(ASE_NULL)
+	{
+	}
+
+	const Awk::char_t* Awk::Extio::getName () const
+	{
+		return this->name;
+	}
+
+	const void* Awk::Extio::getHandle () const
+	{
+		return this->handle;
+	}
+
+	void Awk::Extio::setHandle (void* handle)
+	{
+		this->handle = handle;
+	}
+
+	Awk::Pipe::Pipe (char_t* name, Mode mode): Extio(name), mode(mode)
+	{
+	}
+
+	Awk::File::File (char_t* name, Mode mode): Extio(name), mode(mode)
+	{
+	}
+	
+	Awk::Console::Console (char_t* name, Mode mode): Extio(name), mode(mode)
+	{
+	}
+
+	Awk::Pipe::Mode Awk::Pipe::getMode () const
+	{
+		return this->mode;
+	}
+
+	Awk::File::Mode Awk::File::getMode () const
+	{
+		return this->mode;
+	}
+
+	Awk::Console::Mode Awk::Console::getMode () const
+	{
+		return this->mode;
+	}
+
+	Awk::Awk (): awk (ASE_NULL), 
+		sourceIn (Source::READ), sourceOut (Source::WRITE)
 	{
 	}
 
@@ -25,7 +90,7 @@ namespace ASE
 		srcios.out = sourceWriter;
 		srcios.custom_data = this;
 
-		return ase_awk_parse (awk, ASE_NULL);
+		return ase_awk_parse (awk, &srcios);
 	}
 
 	int Awk::run (const char_t* main, const char_t** args)
@@ -36,8 +101,18 @@ namespace ASE
 			return -1;
 		}
 
-		//return ase_awk_run (awk, main);
-		return 0;
+		ase_awk_runios_t runios;
+
+		runios.pipe = pipeHandler;
+		runios.coproc = ASE_NULL;
+		/*
+		runios.file = fileHandler;
+		runios.console = consoleHandler;
+		*/
+		runios.custom_data = this;
+
+		return ase_awk_run (
+			awk, main, &runios, ASE_NULL, ASE_NULL, this);
 	}
 
 	int Awk::open ()
@@ -74,10 +149,19 @@ namespace ASE
 		prmfns.misc.dprintf     = dprintf;
 		prmfns.misc.custom_data = this;
 
-		awk = ase_awk_open (&prmfns, ASE_NULL);
+		awk = ase_awk_open (&prmfns, this);
 		if (awk == ASE_NULL)
 		{
 			// TODO: SET ERROR INFO
+			return -1;
+		}
+
+		functionMap = ase_awk_map_open (this, 512, ASE_NULL, awk);
+		if (functionMap == ASE_NULL)
+		{
+			// TODO: set ERROR INFO -> ENOMEM...
+			ase_awk_close (awk);
+			awk = ASE_NULL;
 			return -1;
 		}
 
@@ -86,6 +170,12 @@ namespace ASE
 
 	void Awk::close ()
 	{
+		if (functionMap != ASE_NULL)
+		{
+			ase_awk_map_close (functionMap);
+			functionMap = ASE_NULL;
+		}
+
 		if (awk != ASE_NULL) 
 		{
 			ase_awk_close (awk);
@@ -93,22 +183,48 @@ namespace ASE
 		}
 	}
 
+	int Awk::dispatchFunction (const char_t* name, size_t len)
+	{
+		ase_awk_pair_t* pair;
+
+		pair = ase_awk_map_get (functionMap, name, len);
+		if (pair == ASE_NULL) return -1;
+
+		//ASE_AWK_PAIR_VAL(pair);	
+		return 0;
+	}
+
+	int Awk::addFunction (
+		const char_t* name, size_t minArgs, size_t maxArgs, 
+		FunctionHandler handler)
+	{
+		void* p = ase_awk_addbfn (awk, name, ase_strlen(name), 
+		                          0, minArgs, maxArgs, ASE_NULL, 
+		                          functionHandler);
+
+		//ase_memcpy (ASE_NULL, &handler, sizeof(handler));
+		return (p == ASE_NULL)? -1: 0;
+	}
+
+	int Awk::deleteFunction (const char_t* name)
+	{
+		// TODO: open if it is not open....
+		return ase_awk_delbfn (awk, name, ase_strlen(name));
+	}
+
 	Awk::ssize_t Awk::sourceReader (
 		int cmd, void* arg, char_t* data, size_t count)
 	{
 		Awk* awk = (Awk*)arg;
 	
-		if (cmd == ASE_AWK_IO_OPEN) 
+		switch (cmd)
 		{
-			return awk->openSource (Awk::SOURCE_READ);
-		}
-		else if (cmd == ASE_AWK_IO_CLOSE)
-		{
-			return awk->closeSource (Awk::SOURCE_READ);
-		}
-		else if (cmd == ASE_AWK_IO_READ)
-		{
-			return awk->readSource (data, count);
+			case ASE_AWK_IO_OPEN:
+				return awk->openSource (awk->sourceIn);
+			case ASE_AWK_IO_CLOSE:
+				return awk->closeSource (awk->sourceIn);
+			case ASE_AWK_IO_READ:
+				return awk->readSource (awk->sourceIn, data, count);
 		}
 	
 		return -1;
@@ -119,22 +235,119 @@ namespace ASE
 	{
 		Awk* awk = (Awk*)arg;
 	
-		if (cmd == ASE_AWK_IO_OPEN) 
+		switch (cmd)
 		{
-			return awk->openSource (Awk::SOURCE_WRITE);
-		}
-		else if (cmd == ASE_AWK_IO_CLOSE)
-		{
-			return awk->closeSource (Awk::SOURCE_WRITE);
-		}
-		else if (cmd == ASE_AWK_IO_WRITE)
-		{
-			return awk->writeSource (data, count);
+			case ASE_AWK_IO_OPEN:
+				return awk->openSource (awk->sourceOut);
+			case ASE_AWK_IO_CLOSE:
+				return awk->closeSource (awk->sourceOut);
+			case ASE_AWK_IO_WRITE:
+				return awk->writeSource (awk->sourceOut, data, count);
 		}
 	
 		return -1;
 	}
-	
+
+	Awk::ssize_t Awk::pipeHandler (
+		int cmd, void* arg, char_t* data, size_t count)
+	{
+		ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
+		Awk* awk = (Awk*)epa->custom_data;
+
+		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_PIPE);
+
+		Pipe pipe (epa->name, (Pipe::Mode)epa->mode);
+
+		switch (cmd)
+		{
+			case ASE_AWK_IO_OPEN:
+				return awk->openPipe (pipe);
+			case ASE_AWK_IO_CLOSE:
+				return awk->closePipe (pipe);
+
+			case ASE_AWK_IO_READ:
+				return awk->readPipe (pipe, data, count);
+			case ASE_AWK_IO_WRITE:
+				return awk->writePipe (pipe, data, count);
+
+			case ASE_AWK_IO_FLUSH:
+				return awk->flushPipe (pipe);
+			case ASE_AWK_IO_NEXT:
+				return awk->nextPipe (pipe);
+		}
+
+		return -1;
+	}
+
+	Awk::ssize_t Awk::fileHandler (
+		int cmd, void* arg, char_t* data, size_t count)
+	{
+		ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
+		Awk* awk = (Awk*)epa->custom_data;
+
+		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_FILE);
+
+		File file (epa->name, (File::Mode)epa->mode);
+
+		switch (cmd)
+		{
+			case ASE_AWK_IO_OPEN:
+				return awk->openFile (file);
+			case ASE_AWK_IO_CLOSE:
+				return awk->closeFile (file);
+
+			case ASE_AWK_IO_READ:
+				return awk->readFile (file, data, count);
+			case ASE_AWK_IO_WRITE:
+				return awk->writeFile (file, data, count);
+
+			case ASE_AWK_IO_FLUSH:
+				return awk->flushFile (file);
+			case ASE_AWK_IO_NEXT:
+				return awk->nextFile (file);
+		}
+
+		return -1;
+	}
+
+	Awk::ssize_t Awk::consoleHandler (
+		int cmd, void* arg, char_t* data, size_t count)
+	{
+		ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
+		Awk* awk = (Awk*)epa->custom_data;
+
+		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_CONSOLE);
+
+		Console console (epa->name, (Console::Mode)epa->mode);
+
+		switch (cmd)
+		{
+			case ASE_AWK_IO_OPEN:
+				return awk->openConsole (console);
+			case ASE_AWK_IO_CLOSE:
+				return awk->closeConsole (console);
+
+			case ASE_AWK_IO_READ:
+				return awk->readConsole (console, data, count);
+			case ASE_AWK_IO_WRITE:
+				return awk->writeConsole (console, data, count);
+
+			case ASE_AWK_IO_FLUSH:
+				return awk->flushConsole (console);
+			case ASE_AWK_IO_NEXT:
+				return awk->nextConsole (console);
+		}
+
+		return -1;
+	}
+
+	int Awk::functionHandler (
+		ase_awk_run_t* run, const char_t* name, size_t len)
+	{
+		Awk* awk = (Awk*) ase_awk_getruncustomdata (run);
+		return awk->dispatchFunction (name, len);
+	}	
+
 	void* Awk::malloc (void* custom, size_t n)
 	{
 		return ((Awk*)custom)->malloc (n);

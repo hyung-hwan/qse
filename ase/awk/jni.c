@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: jni.c,v 1.4 2007/05/05 12:03:35 bacon Exp $
  *
  * {License}
  */
@@ -1366,41 +1366,41 @@ static ase_ssize_t __process_extio (
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
 
-	if (cmd == ASE_AWK_IO_OPEN)
+
+	switch (cmd)
 	{
-		return __java_open_extio (
-			runio_data->env, runio_data->obj, 
-			"openExtio", epa);
-	}
-	else if (cmd == ASE_AWK_IO_CLOSE)
-	{
-		return __java_close_extio (
-			runio_data->env, runio_data->obj, 
-			"closeExtio", epa);
-	}
-	else if (cmd == ASE_AWK_IO_READ)
-	{
-		return __java_read_extio (
-			runio_data->env, runio_data->obj, 
-			"readExtio", epa, data, size);
-	}
-	else if (cmd == ASE_AWK_IO_WRITE)
-	{
-		return __java_write_extio (
-			runio_data->env, runio_data->obj, 
-			"writeExtio", epa, data, size);
-	}
-	else if (cmd == ASE_AWK_IO_FLUSH)
-	{
-		return __java_flush_extio (
-			runio_data->env, runio_data->obj,
-			"flushExtio", epa);
-	}
-	else if (cmd == ASE_AWK_IO_NEXT)
-	{
-		return __java_next_extio (
-			runio_data->env, runio_data->obj, 
-			"nextExtio", epa);
+
+		case ASE_AWK_IO_OPEN:
+			return __java_open_extio (
+				runio_data->env, runio_data->obj, 
+				"openExtio", epa);
+
+		case ASE_AWK_IO_CLOSE:
+			return __java_close_extio (
+				runio_data->env, runio_data->obj, 
+				"closeExtio", epa);
+
+		case ASE_AWK_IO_READ:
+			return __java_read_extio (
+				runio_data->env, runio_data->obj, 
+				"readExtio", epa, data, size);
+
+		case ASE_AWK_IO_WRITE:
+
+			return __java_write_extio (
+				runio_data->env, runio_data->obj, 
+				"writeExtio", epa, data, size);
+
+		case ASE_AWK_IO_FLUSH:
+			return __java_flush_extio (
+				runio_data->env, runio_data->obj,
+				"flushExtio", epa);
+
+		case ASE_AWK_IO_NEXT:
+			return __java_next_extio (
+				runio_data->env, runio_data->obj, 
+				"nextExtio", epa);
+
 	}
 
 	return -1;

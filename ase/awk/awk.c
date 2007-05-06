@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.3 2007/04/30 05:47:33 bacon Exp $ 
+ * $Id: awk.c,v 1.4 2007/05/05 16:32:46 bacon Exp $ 
  *
  * {License}
  */
@@ -61,8 +61,8 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	}
 
 	/* TODO: initial map size?? */
-	if (ase_awk_map_open (
-		&awk->tree.afns, awk, 256, free_afn, awk) == ASE_NULL) 
+	awk->tree.afns = ase_awk_map_open (awk, 256, free_afn, awk);
+	if (awk->tree.afns == ASE_NULL) 
 	{
 		ase_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
@@ -72,7 +72,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	if (ase_awk_tab_open (&awk->parse.globals, awk) == ASE_NULL) 
 	{
 		ase_str_close (&awk->token.name);
-		ase_awk_map_close (&awk->tree.afns);
+		ase_awk_map_close (awk->tree.afns);
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
@@ -80,7 +80,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	if (ase_awk_tab_open (&awk->parse.locals, awk) == ASE_NULL) 
 	{
 		ase_str_close (&awk->token.name);
-		ase_awk_map_close (&awk->tree.afns);
+		ase_awk_map_close (awk->tree.afns);
 		ase_awk_tab_close (&awk->parse.globals);
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
@@ -89,7 +89,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	if (ase_awk_tab_open (&awk->parse.params, awk) == ASE_NULL) 
 	{
 		ase_str_close (&awk->token.name);
-		ase_awk_map_close (&awk->tree.afns);
+		ase_awk_map_close (awk->tree.afns);
 		ase_awk_tab_close (&awk->parse.globals);
 		ase_awk_tab_close (&awk->parse.locals);
 		ASE_AWK_FREE (awk, awk);
@@ -160,7 +160,7 @@ int ase_awk_close (ase_awk_t* awk)
 	if (ase_awk_clear (awk) == -1) return -1;
 	ase_awk_clrbfn (awk);
 
-	ase_awk_map_close (&awk->tree.afns);
+	ase_awk_map_close (awk->tree.afns);
 	ase_awk_tab_close (&awk->parse.globals);
 	ase_awk_tab_close (&awk->parse.locals);
 	ase_awk_tab_close (&awk->parse.params);
@@ -206,7 +206,7 @@ int ase_awk_clear (ase_awk_t* awk)
 	awk->tree.nglobals = 0;	
 	awk->tree.cur_afn.ptr = ASE_NULL;
 	awk->tree.cur_afn.len = 0;
-	ase_awk_map_clear (&awk->tree.afns);
+	ase_awk_map_clear (awk->tree.afns);
 
 	if (awk->tree.begin != ASE_NULL) 
 	{
