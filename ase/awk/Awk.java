@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: Awk.java,v 1.4 2007/05/05 16:32:46 bacon Exp $
  *
  * {License}
  */
@@ -99,13 +99,13 @@ public abstract class Awk
 	}
 
 	/* == builtin functions == */
-	public void addBuiltinFunction (
+	public void addFunction (
 		String name, int min_args, int max_args) throws Exception
 	{
 		addbfn (name, min_args, max_args);
 	}
 
-	public void deleteBuiltinFunction (String name) throws Exception
+	public void deleteFunction (String name) throws Exception
 	{
 		delbfn (name);
 	}

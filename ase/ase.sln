@@ -10,7 +10,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aseawk", "awk\aseawk.vcproj
 		{17621C83-40C9-4305-BAF9-132E250B5FE3} = {17621C83-40C9-4305-BAF9-132E250B5FE3}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aesawk_jni", "awk\aseawk_jni.vcproj", "{23B58791-FD44-4F95-9F77-34E4AF45A296}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aseawk_jni", "awk\aseawk_jni.vcproj", "{23B58791-FD44-4F95-9F77-34E4AF45A296}"
 	ProjectSection(ProjectDependencies) = postProject
 		{5F2E77D5-1485-48D1-9371-987BC55FEE83} = {5F2E77D5-1485-48D1-9371-987BC55FEE83}
 		{17621C83-40C9-4305-BAF9-132E250B5FE3} = {17621C83-40C9-4305-BAF9-132E250B5FE3}
@@ -46,6 +46,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "asecnt", "cnt\asecnt.csproj", "{7F679165-41FB-4E1E-B3F5-23C5EE94166A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{963AF7B5-12E6-42B6-8CBE-89136C1A109B} = {963AF7B5-12E6-42B6-8CBE-89136C1A109B}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aseawk++", "awk\aseawk++.vcproj", "{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5F2E77D5-1485-48D1-9371-987BC55FEE83} = {5F2E77D5-1485-48D1-9371-987BC55FEE83}
 	EndProjectSection
 EndProject
 Global
@@ -168,6 +173,16 @@ Global
 		{7F679165-41FB-4E1E-B3F5-23C5EE94166A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{7F679165-41FB-4E1E-B3F5-23C5EE94166A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{7F679165-41FB-4E1E-B3F5-23C5EE94166A}.Release|Win32.ActiveCfg = Release|Any CPU
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Debug|Win32.Build.0 = Debug|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Release|Any CPU.ActiveCfg = Release|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Release|Win32.ActiveCfg = Release|Win32
+		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

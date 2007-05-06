@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: map.h,v 1.4 2007/05/05 16:32:46 bacon Exp $
  *
  * {License}
  */
@@ -37,17 +37,17 @@ struct ase_awk_map_t
 	ase_bool_t __dynamic;
 };
 
-#define PAIR_KEYPTR(p) ((p)->key.ptr)
-#define PAIR_KEYLEN(p) ((p)->key.len)
-#define PAIR_VAL(p) ((p)->val)
-#define PAIR_LNK(p) ((p)->next)
+#define ASE_AWK_PAIR_KEYPTR(p) ((p)->key.ptr)
+#define ASE_AWK_PAIR_KEYLEN(p) ((p)->key.len)
+#define ASE_AWK_PAIR_VAL(p) ((p)->val)
+#define ASE_AWK_PAIR_LNK(p) ((p)->next)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 ase_awk_map_t* ase_awk_map_open (
-	ase_awk_map_t* map, void* owner, ase_size_t capa, 
+	void* owner, ase_size_t capa, 
 	void(*freeval)(void*,void*), ase_awk_t* awk);
 
 void ase_awk_map_close (ase_awk_map_t* map);

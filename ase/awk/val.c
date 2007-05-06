@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: val.c,v 1.4 2007/05/05 16:32:46 bacon Exp $
  *
  * {License}
  */
@@ -240,8 +240,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 
 	val->type = ASE_AWK_VAL_MAP;
 	val->ref = 0;
-	val->map = ase_awk_map_open (
-		ASE_NULL, run, 256, free_map_val, run->awk);
+	val->map = ase_awk_map_open (run, 256, free_map_val, run->awk);
 	if (val->map == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val);

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: StdAwk.java,v 1.4 2007/05/05 16:32:46 bacon Exp $
  *
  * {License}
  */
@@ -50,22 +50,22 @@ public abstract class StdAwk extends Awk
 		seed = System.currentTimeMillis();
 		random = new java.util.Random (seed);
 
-		addBuiltinFunction ("sin", 1, 1); 
-		addBuiltinFunction ("cos", 1, 1); 
-		addBuiltinFunction ("tan", 1, 1); 
-		addBuiltinFunction ("atan2", 1, 1); 
-		addBuiltinFunction ("log", 1, 1); 
-		addBuiltinFunction ("exp", 1, 1); 
-		addBuiltinFunction ("sqrt", 1, 1); 
-		addBuiltinFunction ("int", 1, 1); 
+		addFunction ("sin", 1, 1); 
+		addFunction ("cos", 1, 1); 
+		addFunction ("tan", 1, 1); 
+		addFunction ("atan2", 1, 1); 
+		addFunction ("log", 1, 1); 
+		addFunction ("exp", 1, 1); 
+		addFunction ("sqrt", 1, 1); 
+		addFunction ("int", 1, 1); 
 
-		addBuiltinFunction ("srand", 0, 1); 
-		addBuiltinFunction ("rand", 0, 0); 
+		addFunction ("srand", 0, 1); 
+		addFunction ("rand", 0, 0); 
 
-		addBuiltinFunction ("systime", 0, 0);
-		addBuiltinFunction ("strftime", 0, Integer.MAX_VALUE); 
+		addFunction ("systime", 0, 0);
+		addFunction ("strftime", 0, Integer.MAX_VALUE); 
 
-		addBuiltinFunction ("system", 1, 1); 
+		addFunction ("system", 1, 1); 
 	}
 
 	/* == major methods == */

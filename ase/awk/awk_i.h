@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: awk_i.h,v 1.4 2007/05/05 16:32:46 bacon Exp $
  *
  * {License}
  */
@@ -66,7 +66,7 @@ struct ase_awk_tree_t
 	ase_size_t nglobals; /* total number of globals */
 	ase_size_t nbglobals; /* number of builtin globals */
 	ase_cstr_t cur_afn;
-	ase_awk_map_t afns; /* awk function map */
+	ase_awk_map_t* afns; /* awk function map */
 	ase_awk_nde_t* begin;
 	ase_awk_nde_t* end;
 	ase_awk_chain_t* chain;
@@ -216,7 +216,7 @@ struct ase_awk_chain_t
 struct ase_awk_run_t
 {
 	int id;
-	ase_awk_map_t named;
+	ase_awk_map_t* named;
 
 	void** stack;
 	ase_size_t stack_top;

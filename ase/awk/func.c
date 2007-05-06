@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: func.c,v 1.4 2007/05/05 16:32:46 bacon Exp $
  *
  * {License}
  */
@@ -50,6 +50,8 @@ void* ase_awk_addbfn (
 	int (*handler)(ase_awk_run_t*,const ase_char_t*,ase_size_t))
 {
 	ase_awk_bfn_t* p;
+
+	/* TODO: make function table hash-accessable */
 
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 	{
