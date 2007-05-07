@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.4 2007/05/02 15:07:33 bacon Exp $
+# $Id: makefile.in,v 1.5 2007/05/06 04:23:44 bacon Exp $
 #
 
 NAME = aseawk
@@ -51,7 +51,9 @@ OBJ_FILES_LIB = \
 
 OBJ_FILES_JNI = $(TMP_DIR)/jni.o 
 
-OBJ_FILES_LIB_CXX = $(TMP_DIR)/cxx/Awk.o
+OBJ_FILES_LIB_CXX = \
+	$(TMP_DIR)/cxx/Awk.o \
+	$(TMP_DIR)/cxx/StdAwk.o
 
 OBJ_FILES_SO = $(OBJ_FILES_LIB:.o=.lo) $(OBJ_FILES_JNI:.o=.lo)
 
@@ -135,6 +137,9 @@ $(TMP_DIR)/ase/awk/Exception.class:
 
 $(TMP_DIR)/cxx/Awk.o: Awk.cpp Awk.hpp
 	$(CXX) $(CXXFLAGS) -o $@ -c Awk.cpp
+
+$(TMP_DIR)/cxx/StdAwk.o: StdAwk.cpp StdAwk.hpp Awk.hpp
+	$(CXX) $(CXXFLAGS) -o $@ -c StdAwk.cpp
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)

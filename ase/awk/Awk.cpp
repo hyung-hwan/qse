@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.8 2007/05/05 16:32:46 bacon Exp $
+ * $Id: Awk.cpp,v 1.9 2007/05/06 06:55:05 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -8,6 +8,10 @@
 
 namespace ASE
 {
+
+	Awk::Source::Source (Mode mode): mode (mode)
+	{
+	}
 
 	Awk::Source::Mode Awk::Source::getMode () const
 	{
@@ -70,7 +74,7 @@ namespace ASE
 		return this->mode;
 	}
 
-	Awk::Awk (): awk (ASE_NULL), 
+	Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
 		sourceIn (Source::READ), sourceOut (Source::WRITE)
 	{
 	}
@@ -82,7 +86,7 @@ namespace ASE
 
 	int Awk::parse ()
 	{
-		if (awk == ASE_NULL && open() == -1) return -1;
+		ASE_ASSERT (awk != ASE_NULL);
 
 		ase_awk_srcios_t srcios;
 
@@ -95,11 +99,7 @@ namespace ASE
 
 	int Awk::run (const char_t* main, const char_t** args)
 	{
-		if (awk == ASE_NULL) 
-		{
-			// TODO: SET ERROR INFO
-			return -1;
-		}
+		ASE_ASSERT (awk != ASE_NULL);
 
 		ase_awk_runios_t runios;
 
@@ -117,6 +117,8 @@ namespace ASE
 
 	int Awk::open ()
 	{
+		ASE_ASSERT (awk == ASE_NULL && functionMap == ASE_NULL);
+
 		ase_awk_prmfns_t prmfns;
 
 		prmfns.mmgr.malloc      = malloc;
@@ -156,7 +158,8 @@ namespace ASE
 			return -1;
 		}
 
-		functionMap = ase_awk_map_open (this, 512, ASE_NULL, awk);
+		functionMap = ase_awk_map_open (
+			this, 512, freeFunctionMapValue, awk);
 		if (functionMap == ASE_NULL)
 		{
 			// TODO: set ERROR INFO -> ENOMEM...
@@ -190,26 +193,63 @@ namespace ASE
 		pair = ase_awk_map_get (functionMap, name, len);
 		if (pair == ASE_NULL) return -1;
 
-		//ASE_AWK_PAIR_VAL(pair);	
-		return 0;
+		FunctionHandler handler;
+	       	handler = *(FunctionHandler*)ASE_AWK_PAIR_VAL(pair);	
+
+		return (this->*handler) ();
 	}
 
 	int Awk::addFunction (
 		const char_t* name, size_t minArgs, size_t maxArgs, 
 		FunctionHandler handler)
 	{
-		void* p = ase_awk_addbfn (awk, name, ase_strlen(name), 
+		ASE_ASSERT (awk != ASE_NULL);
+
+		FunctionHandler* tmp;
+		tmp = (FunctionHandler*)this->malloc (ASE_SIZEOF(handler));
+		if (tmp == ASE_NULL)
+		{
+			// TODO: SET ERROR INFO -> ENOMEM
+			return -1;
+		}
+
+		//ase_memcpy (tmp, &handler, ASE_SIZEOF(handler));
+		*tmp = handler;
+		
+		size_t nameLen = ase_strlen(name);
+
+		void* p = ase_awk_addbfn (awk, name, nameLen,
 		                          0, minArgs, maxArgs, ASE_NULL, 
 		                          functionHandler);
+		if (p == ASE_NULL) 
+		{
+			this->free (tmp);
+			return -1;
+		}
 
-		//ase_memcpy (ASE_NULL, &handler, sizeof(handler));
-		return (p == ASE_NULL)? -1: 0;
+		ase_awk_pair_t* pair;
+		pair = ase_awk_map_put (functionMap, name, nameLen, tmp);
+		if (pair == ASE_NULL)
+		{
+			// TODO: SET ERROR INFO
+			ase_awk_delbfn (awk, name, nameLen);
+			this->free (tmp);
+			return -1;
+		}
+
+		return 0;
 	}
 
 	int Awk::deleteFunction (const char_t* name)
 	{
-		// TODO: open if it is not open....
-		return ase_awk_delbfn (awk, name, ase_strlen(name));
+		ASE_ASSERT (awk != ASE_NULL);
+
+		size_t nameLen = ase_strlen(name);
+
+		int n = ase_awk_delbfn (awk, name, nameLen);
+		if (n == 0) ase_awk_map_remove (functionMap, name, nameLen);
+
+		return n;
 	}
 
 	Awk::ssize_t Awk::sourceReader (
@@ -347,6 +387,12 @@ namespace ASE
 		Awk* awk = (Awk*) ase_awk_getruncustomdata (run);
 		return awk->dispatchFunction (name, len);
 	}	
+
+	void Awk::freeFunctionMapValue (void* owner, void* value)
+	{
+		Awk* awk = (Awk*)owner;
+		awk->free (value);
+	}
 
 	void* Awk::malloc (void* custom, size_t n)
 	{

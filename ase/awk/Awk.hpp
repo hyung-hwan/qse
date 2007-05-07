@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.7 2007/05/05 16:32:46 bacon Exp $
+ * $Id: Awk.hpp,v 1.8 2007/05/06 06:55:05 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -112,20 +112,21 @@ namespace ASE
 		Awk ();
 		virtual ~Awk ();
 		
-		int parse ();
-		int run (const char_t* main, const char_t** args);
-		void close ();
+		virtual int open ();
+		virtual void close ();
 
+		virtual int parse ();
+		virtual int run (const char_t* main = ASE_NULL, 
+		         const char_t** args = ASE_NULL);
 
 		typedef int (Awk::*FunctionHandler) ();
 
-		int addFunction (
+		virtual int addFunction (
 			const char_t* name, size_t minArgs, size_t maxArgs, 
 			FunctionHandler handler);
-		int deleteFunction (const char_t* main);
+		virtual int deleteFunction (const char_t* main);
 
 	protected:
-		int open ();
 
 		virtual int dispatchFunction (const char_t* name, size_t len);
 
@@ -205,6 +206,7 @@ namespace ASE
 
 		static int functionHandler (
 			ase_awk_run_t* run, const char_t* name, size_t len);
+		static void freeFunctionMapValue (void* owner, void* value);
 
 		static void* malloc  (void* custom, size_t n);
 		static void* realloc (void* custom, void* ptr, size_t n);

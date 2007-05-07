@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.2 2007/05/05 16:32:46 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.3 2007/05/06 06:55:05 bacon Exp $
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_
@@ -14,6 +14,8 @@ namespace ASE
 	{
 	public:
 		StdAwk ();
+
+		int open ();
 
 	protected:
 		int sin ();

@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.4 2007/05/05 16:32:46 bacon Exp $
+ * $Id: map.h,v 1.5 2007/05/06 06:55:05 bacon Exp $
  *
  * {License}
  */
@@ -60,14 +60,16 @@ ase_awk_pair_t* ase_awk_map_get (
 	ase_awk_map_t* map, const ase_char_t* keyptr, ase_size_t keylen);
 
 ase_awk_pair_t* ase_awk_map_put (
-	ase_awk_map_t* map, ase_char_t* keyptr, ase_size_t keylen, void* val);
+	ase_awk_map_t* map, const ase_char_t* keyptr, ase_size_t keylen,
+	void* val);
 
 int ase_awk_map_putx (
-	ase_awk_map_t* map, ase_char_t* keyptr, ase_size_t keylen,
+	ase_awk_map_t* map, const ase_char_t* keyptr, ase_size_t keylen,
 	void* val, ase_awk_pair_t** px);
 
 ase_awk_pair_t* ase_awk_map_set (
-	ase_awk_map_t* map, ase_char_t* keyptr, ase_size_t keylen, void* val);
+	ase_awk_map_t* map, const ase_char_t* keyptr, ase_size_t keylen, 
+	void* val);
 
 ase_awk_pair_t* ase_awk_map_getpair (
 	ase_awk_map_t* map, const ase_char_t* keyptr, ase_size_t keylen, 
@@ -77,7 +79,7 @@ ase_awk_pair_t* ase_awk_map_setpair (
 	ase_awk_map_t* map, ase_awk_pair_t* pair, void* val);
 
 int ase_awk_map_remove (
-	ase_awk_map_t* map, ase_char_t* keyptr, ase_size_t keylen);
+	ase_awk_map_t* map, const ase_char_t* keyptr, ase_size_t keylen);
 
 int ase_awk_map_walk (ase_awk_map_t* map, 
 	int (*walker)(ase_awk_pair_t*,void*), void* arg);
