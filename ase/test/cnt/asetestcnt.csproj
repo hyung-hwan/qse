@@ -30,7 +30,7 @@
   <ItemGroup>
     <Reference Include="Interop.ASECOM, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>obj\Release\Interop.ASECOM.dll</HintPath>
+      <HintPath>..\..\cnt\obj\Debug\Interop.ASECOM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.c,v 1.4 2007/05/05 16:32:46 bacon Exp $ 
+ * $Id: awk.c,v 1.5 2007/05/06 10:38:22 bacon Exp $ 
  *
  * {License}
  */
@@ -40,12 +40,9 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	            prmfns->misc.sprintf != ASE_NULL &&
 	            prmfns->misc.dprintf != ASE_NULL);
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	awk = (ase_awk_t*) malloc (ASE_SIZEOF(ase_awk_t));
-#else
-	awk = (ase_awk_t*) prmfns->mmgr.malloc (
-		prmfns->mmgr.custom_data, ASE_SIZEOF(ase_awk_t));
-#endif
+	/* use ASE_MALLOC instead of ASE_AWK_MALLOC because
+	 * the awk object has not been initialized yet */
+	awk = ASE_MALLOC (&prmfns->mmgr, ASE_SIZEOF(ase_awk_t));
 	if (awk == ASE_NULL) return ASE_NULL;
 
 	/* it uses the built-in ase_awk_memset because awk is not 

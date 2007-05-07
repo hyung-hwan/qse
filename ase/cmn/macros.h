@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.3 2007/04/30 05:55:36 bacon Exp $
+ * $Id: macros.h,v 1.5 2007/05/06 10:08:36 bacon Exp $
  *
  * {License}
  */
@@ -118,9 +118,23 @@
 		(ase_assert_failed (ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
 #endif
 
-#define ASE_MALLOC(mmgr,size)      (mmgr)->malloc((mmgr)->custom_data, size)
-#define ASE_REALLOC(mmgr,ptr,size) (mmgr)->realloc((mmgr)->custom_data, ptr, size)
-#define ASE_FREE(mmgr,ptr)         (mmgr)->free((mmgr)->custom_data, ptr)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
+	#include <stdlib.h>
+	#define _CRTDBG_MAP_ALLOC
+	#include <crtdbg.h>
+
+	#define ASE_MALLOC(mmgr,size)      malloc  (size)
+	#define ASE_REALLOC(mmgr,ptr,size) realloc (ptr, size)
+	#define ASE_FREE(mmgr,ptr)         free    (ptr)
+#else
+
+	#define ASE_MALLOC(mmgr,size) \
+		(mmgr)->malloc((mmgr)->custom_data, size)
+	#define ASE_REALLOC(mmgr,ptr,size) \
+		(mmgr)->realloc((mmgr)->custom_data, ptr, size)
+	#define ASE_FREE(mmgr,ptr) \
+		(mmgr)->free((mmgr)->custom_data, ptr)
+#endif
 
 #define ASE_ISUPPER(ccls,c)  (ccls)->is_upper((ccls)->custom_data,c)
 #define ASE_ISLOWER(ccls,c)  (ccls)->is_lower((ccls)->custom_data,c)

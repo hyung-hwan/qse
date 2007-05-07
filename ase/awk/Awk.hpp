@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.8 2007/05/06 06:55:05 bacon Exp $
+ * $Id: Awk.hpp,v 1.10 2007/05/06 10:38:22 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -8,6 +8,16 @@
 #include <ase/awk/awk.h>
 #include <ase/awk/map.h>
 #include <stdarg.h>
+
+#ifdef malloc
+#undef malloc
+#endif
+#ifdef realloc
+#undef realloc
+#endif
+#ifdef free
+#undef free
+#endif
 
 namespace ASE
 {
@@ -107,7 +117,6 @@ namespace ASE
 		private:
 			Mode mode;
 		};
-
 
 		Awk ();
 		virtual ~Awk ();
@@ -231,7 +240,7 @@ namespace ASE
 		                       const char_t* fmt, ...);
 		static void   dprintf (void* custom, const char_t* fmt, ...);
 
-	private:
+	protected:
 		ase_awk_t* awk;
 		ase_awk_map_t* functionMap;
 

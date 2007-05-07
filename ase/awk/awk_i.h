@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.4 2007/05/05 16:32:46 bacon Exp $
+ * $Id: awk_i.h,v 1.5 2007/05/06 10:08:54 bacon Exp $
  *
  * {License}
  */
@@ -34,18 +34,9 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_MAX_LOCALS  9999
 #define ASE_AWK_MAX_PARAMS  9999
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	#define _CRTDBG_MAP_ALLOC
-	#include <crtdbg.h>
-
-	#define ASE_AWK_MALLOC(awk,size)      malloc  (size)
-	#define ASE_AWK_REALLOC(awk,ptr,size) realloc (ptr, size)
-	#define ASE_AWK_FREE(awk,ptr)         free    (ptr)
-#else
-	#define ASE_AWK_MALLOC(awk,size)      ASE_MALLOC(&(awk)->prmfns.mmgr,size)
-	#define ASE_AWK_REALLOC(awk,ptr,size) ASE_REALLOC(&(awk)->prmfns.mmgr,ptr,size)
-	#define ASE_AWK_FREE(awk,ptr)         ASE_FREE(&(awk)->prmfns.mmgr,ptr)
-#endif
+#define ASE_AWK_MALLOC(awk,size)      ASE_MALLOC(&(awk)->prmfns.mmgr,size)
+#define ASE_AWK_REALLOC(awk,ptr,size) ASE_REALLOC(&(awk)->prmfns.mmgr,ptr,size)
+#define ASE_AWK_FREE(awk,ptr)         ASE_FREE(&(awk)->prmfns.mmgr,ptr)
 
 #define ASE_AWK_ISUPPER(awk,c)  ASE_ISUPPER(&(awk)->prmfns.ccls,c)
 #define ASE_AWK_ISLOWER(awk,c)  ASE_ISLOWER(&(awk)->prmfns.ccls,c)

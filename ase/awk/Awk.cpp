@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.9 2007/05/06 06:55:05 bacon Exp $
+ * $Id: Awk.cpp,v 1.11 2007/05/06 10:38:22 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -81,7 +81,6 @@ namespace ASE
 
 	Awk::~Awk ()
 	{
-		close ();
 	}
 
 	int Awk::parse ()
@@ -105,10 +104,8 @@ namespace ASE
 
 		runios.pipe = pipeHandler;
 		runios.coproc = ASE_NULL;
-		/*
 		runios.file = fileHandler;
 		runios.console = consoleHandler;
-		*/
 		runios.custom_data = this;
 
 		return ase_awk_run (

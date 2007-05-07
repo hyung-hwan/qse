@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.5 2007/05/06 06:55:05 bacon Exp $
+ * $Id: map.h,v 1.6 2007/05/06 08:52:18 bacon Exp $
  *
  * {License}
  */
@@ -34,7 +34,6 @@ struct ase_awk_map_t
 	ase_awk_pair_t** buck;
 	void (*freeval) (void*,void*);
 	ase_awk_t* awk;
-	ase_bool_t __dynamic;
 };
 
 #define ASE_AWK_PAIR_KEYPTR(p) ((p)->key.ptr)
