@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.5 2007/05/06 06:55:05 bacon Exp $
+ * $Id: map.c,v 1.6 2007/05/06 08:52:18 bacon Exp $
  *
  * {License}
  */
@@ -36,7 +36,7 @@ ase_awk_map_t* ase_awk_map_open (
 		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_pair_t*) * capa);
 	if (map->buck == ASE_NULL) 
 	{
-		if (map->__dynamic) ASE_AWK_FREE (awk, map);
+		ASE_AWK_FREE (awk, map);
 		return ASE_NULL;	
 	}
 

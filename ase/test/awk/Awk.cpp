@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.2 2007/05/06 06:55:05 bacon Exp $
+ * $Id: Awk.cpp,v 1.5 2007/05/06 10:38:22 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -11,11 +11,19 @@
 
 #include <stdlib.h>
 #include <math.h>
+
+#if defined(_WIN32)
 #include <windows.h>
+#endif
 
 class TestAwk: public ASE::StdAwk
 {
 public:
+	~TestAwk ()
+	{
+		close ();
+	}
+
 	int parse (const char_t* name)
 	{
 		ase_strxcpy (sourceInName, ASE_COUNTOF(sourceInName), name);
@@ -32,6 +40,7 @@ protected:
 			FILE* fp = ase_fopen (sourceInName, ASE_T("r"));
 			if (fp == ASE_NULL) return -1;
 			io.setHandle (fp);
+			return 1;
 		}
 		else if (mode == Source::WRITE)
 		{
@@ -61,7 +70,13 @@ protected:
 
 	ssize_t readSource (Source& io, char_t* buf, size_t count)
 	{
-		return 0;
+		if (count <= 0) return -1;
+
+		// TOOD: read more characters...
+		cint_t c = ase_fgetc ((FILE*)io.getHandle());
+		if (c == ASE_CHAR_EOF) return 0;
+		buf[0] = (ase_char_t)c;
+		return 1;
 	}
 
 	ssize_t writeSource (Source& io, char_t* buf, size_t count)
@@ -95,7 +110,7 @@ protected:
 	}
 	ssize_t writeConsole (Console& io, char_t* buf, size_t len) 
 	{
-		return ase_printf (ASE_T(".%s"), len, buf);
+		return ase_printf (ASE_T("%.*s"), len, buf);
 	}
 	int flushConsole (Console& io) { return 0; }
 	int nextConsole  (Console& io) { return 0; }
@@ -171,7 +186,7 @@ void ase_assert_printf (const ase_char_t* fmt, ...)
 }
 #endif
 
-int ase_main (int argc, ase_char_t* argv[])
+extern "C" int ase_main (int argc, ase_char_t* argv[])
 {
 	TestAwk awk;
 
@@ -182,7 +197,6 @@ int ase_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-return -1;
 	if (awk.parse(ASE_T("t.awk")) == -1)
 	{
 		ase_fprintf (stderr, ASE_T("cannot parse\n"));
@@ -197,6 +211,6 @@ return -1;
 		return -1;
 	}
 
-	awk.close ();
+//	awk.close ();
 	return 0;
 }
