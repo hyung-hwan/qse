@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.5 2007/05/06 10:38:22 bacon Exp $
+ * $Id: Awk.cpp,v 1.6 2007/05/07 09:30:28 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -116,9 +116,9 @@ protected:
 	int nextConsole  (Console& io) { return 0; }
 
 	// primitive operations 
-	void* malloc  (size_t n) { return ::malloc (n); }
-	void* realloc (void* ptr, size_t n) { return ::realloc (ptr, n); }
-	void  free    (void* ptr) { ::free (ptr); }
+	void* allocMem  (size_t n) { return ::malloc (n); }
+	void* reallocMem (void* ptr, size_t n) { return ::realloc (ptr, n); }
+	void  freeMem    (void* ptr) { ::free (ptr); }
 
 	bool_t isUpper  (cint_t c) { return ase_isupper (c); }
 	bool_t isLower  (cint_t c) { return ase_islower (c); }
@@ -186,7 +186,7 @@ void ase_assert_printf (const ase_char_t* fmt, ...)
 }
 #endif
 
-extern "C" int ase_main (int argc, ase_char_t* argv[])
+int awk_main (int argc, ase_char_t* argv[])
 {
 	TestAwk awk;
 
@@ -213,4 +213,28 @@ extern "C" int ase_main (int argc, ase_char_t* argv[])
 
 //	awk.close ();
 	return 0;
+}
+
+extern "C" int ase_main (int argc, ase_char_t* argv[])
+{
+	int n;
+
+#if defined(__linux) && defined(_DEBUG)
+	mtrace ();
+#endif
+
+	n = awk_main (argc, argv);
+
+#if defined(__linux) && defined(_DEBUG)
+	muntrace ();
+#endif
+#if defined(_WIN32) && defined(_DEBUG)
+	#if defined(_MSC_VER)
+	_CrtDumpMemoryLeaks ();
+	#endif
+	_tprintf (_T("Press ENTER to quit\n"));
+	getchar ();
+#endif
+
+	return n;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.10 2007/05/06 10:38:22 bacon Exp $
+ * $Id: Awk.hpp,v 1.12 2007/05/07 09:30:28 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -8,16 +8,6 @@
 #include <ase/awk/awk.h>
 #include <ase/awk/map.h>
 #include <stdarg.h>
-
-#ifdef malloc
-#undef malloc
-#endif
-#ifdef realloc
-#undef realloc
-#endif
-#ifdef free
-#undef free
-#endif
 
 namespace ASE
 {
@@ -30,6 +20,7 @@ namespace ASE
 		typedef ase_cint_t  cint_t;
 		typedef ase_size_t  size_t;
 		typedef ase_ssize_t ssize_t;
+		typedef ase_long_t  long_t;
 		typedef ase_real_t  real_t;
 
 		class Source
@@ -118,6 +109,47 @@ namespace ASE
 			Mode mode;
 		};
 
+		class Value
+		{
+		public:
+		};
+
+		class NilValue: public Value
+		{
+		public:
+			NilValue ();
+
+		protected:
+		};
+
+		class StrValue: public Value
+		{
+		public:
+			StrValue (const char_t* ptr, size_t len);
+
+		protected:
+			char_t* ptr;
+			size_t  len;
+		};
+
+		class RealValue: public Value
+		{
+		public:
+			RealValue (real_t v);
+
+		protected:
+			real_t value;
+		};
+
+		class IntValue: public Value
+		{
+		public:
+			IntValue (long_t v);
+
+		protected:
+			long_t value;
+		};
+
 		Awk ();
 		virtual ~Awk ();
 		
@@ -128,7 +160,7 @@ namespace ASE
 		virtual int run (const char_t* main = ASE_NULL, 
 		         const char_t** args = ASE_NULL);
 
-		typedef int (Awk::*FunctionHandler) ();
+		typedef Value* (Awk::*FunctionHandler) (size_t nargs, Value** args);
 
 		virtual int addFunction (
 			const char_t* name, size_t minArgs, size_t maxArgs, 
@@ -137,7 +169,8 @@ namespace ASE
 
 	protected:
 
-		virtual int dispatchFunction (const char_t* name, size_t len);
+		virtual int dispatchFunction (
+			ase_awk_run_t* run, const char_t* name, size_t len);
 
 		// source code io handlers 
 		virtual int     openSource  (Source& io) = 0;
@@ -177,9 +210,9 @@ namespace ASE
 		*/
 
 		// primitive handlers 
-		virtual void* malloc    (size_t n) = 0;
-		virtual void* realloc   (void* ptr, size_t n) = 0;
-		virtual void  free      (void* ptr) = 0;
+		virtual void* allocMem   (size_t n) = 0;
+		virtual void* reallocMem (void* ptr, size_t n) = 0;
+		virtual void  freeMem    (void* ptr) = 0;
 
 		virtual bool_t isUpper  (cint_t c) = 0;
 		virtual bool_t isLower  (cint_t c) = 0;
@@ -217,9 +250,9 @@ namespace ASE
 			ase_awk_run_t* run, const char_t* name, size_t len);
 		static void freeFunctionMapValue (void* owner, void* value);
 
-		static void* malloc  (void* custom, size_t n);
-		static void* realloc (void* custom, void* ptr, size_t n);
-		static void  free    (void* custom, void* ptr);
+		static void* allocMem   (void* custom, size_t n);
+		static void* reallocMem (void* custom, void* ptr, size_t n);
+		static void  freeMem    (void* custom, void* ptr);
 
 		static bool_t isUpper  (void* custom, cint_t c); 
 		static bool_t isLower  (void* custom, cint_t c); 
