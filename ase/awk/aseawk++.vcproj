@@ -196,6 +196,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\StdAwk.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -203,6 +207,10 @@
 			>
 			<File
 				RelativePath="Awk.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StdAwk.hpp"
 				>
 			</File>
 		</Filter>

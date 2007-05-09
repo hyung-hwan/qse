@@ -1,8 +1,9 @@
 /*
- * $Id: Awk.cpp,v 1.11 2007/05/06 10:38:22 bacon Exp $
+ * $Id: Awk.cpp,v 1.13 2007/05/07 09:30:28 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
+#include <ase/awk/val.h>
 #include <ase/cmn/str.h>
 #include <ase/cmn/mem.h>
 
@@ -118,9 +119,9 @@ namespace ASE
 
 		ase_awk_prmfns_t prmfns;
 
-		prmfns.mmgr.malloc      = malloc;
-		prmfns.mmgr.realloc     = realloc;
-		prmfns.mmgr.free        = free;
+		prmfns.mmgr.malloc      = allocMem;
+		prmfns.mmgr.realloc     = reallocMem;
+		prmfns.mmgr.free        = freeMem;
 		prmfns.mmgr.custom_data = this;
 
 		prmfns.ccls.is_upper    = isUpper;
@@ -137,11 +138,6 @@ namespace ASE
 		prmfns.ccls.to_upper    = toUpper;
 		prmfns.ccls.to_lower    = toLower;
 		prmfns.ccls.custom_data = this;
-
-		/*
-		int (Awk::*ptr) (void*, ase_char_t*, ase_size_t, const ase_char_t*, ...) = &Awk::sprintf;
-		(this->*ptr) (ASE_NULL, ASE_NULL, 0, ASE_NULL);
-		*/
 
 		prmfns.misc.pow         = pow;
 		prmfns.misc.sprintf     = sprintf;
@@ -183,7 +179,8 @@ namespace ASE
 		}
 	}
 
-	int Awk::dispatchFunction (const char_t* name, size_t len)
+	int Awk::dispatchFunction (
+		ase_awk_run_t* run, const char_t* name, size_t len)
 	{
 		ase_awk_pair_t* pair;
 
@@ -193,7 +190,49 @@ namespace ASE
 		FunctionHandler handler;
 	       	handler = *(FunctionHandler*)ASE_AWK_PAIR_VAL(pair);	
 
-		return (this->*handler) ();
+		size_t i, nargs = ase_awk_getnargs(run);
+
+		Value** args = new Value* [nargs];
+
+		for (i = 0; i < nargs; i++)
+		{
+			ase_awk_val_t* v = ase_awk_getarg (run, i);
+			Value* obj = ASE_NULL;
+
+			switch (v->type)
+			{
+				case ASE_AWK_VAL_INT:
+					obj = new IntValue (
+						((ase_awk_val_int_t*)v)->val);			
+					break;
+
+				case ASE_AWK_VAL_REAL:
+					obj = new RealValue (
+						((ase_awk_val_real_t*)v)->val);
+					break;
+
+				case ASE_AWK_VAL_STR:
+					obj = new StrValue (
+						((ase_awk_val_str_t*)v)->buf, 
+						((ase_awk_val_str_t*)v)->len);
+					break;
+
+				case ASE_AWK_VAL_NIL:
+					obj = new NilValue ();
+					break;
+			}
+		}
+
+		Value* ret = (this->*handler) (nargs, args);
+
+		for (i = 0; i < nargs; i++) delete args[i];
+		delete[] args;
+
+		if (ret == ASE_NULL) return -1;
+
+		// TODO: convert the return value to normal value...
+
+		return 0;
 	}
 
 	int Awk::addFunction (
@@ -202,8 +241,8 @@ namespace ASE
 	{
 		ASE_ASSERT (awk != ASE_NULL);
 
-		FunctionHandler* tmp;
-		tmp = (FunctionHandler*)this->malloc (ASE_SIZEOF(handler));
+		FunctionHandler* tmp = (FunctionHandler*) 
+			ase_awk_malloc (awk, ASE_SIZEOF(handler));
 		if (tmp == ASE_NULL)
 		{
 			// TODO: SET ERROR INFO -> ENOMEM
@@ -220,7 +259,7 @@ namespace ASE
 		                          functionHandler);
 		if (p == ASE_NULL) 
 		{
-			this->free (tmp);
+			ase_awk_free (awk, tmp);
 			return -1;
 		}
 
@@ -230,7 +269,7 @@ namespace ASE
 		{
 			// TODO: SET ERROR INFO
 			ase_awk_delbfn (awk, name, nameLen);
-			this->free (tmp);
+			ase_awk_free (awk, tmp);
 			return -1;
 		}
 
@@ -382,28 +421,28 @@ namespace ASE
 		ase_awk_run_t* run, const char_t* name, size_t len)
 	{
 		Awk* awk = (Awk*) ase_awk_getruncustomdata (run);
-		return awk->dispatchFunction (name, len);
+		return awk->dispatchFunction (run, name, len);
 	}	
 
 	void Awk::freeFunctionMapValue (void* owner, void* value)
 	{
 		Awk* awk = (Awk*)owner;
-		awk->free (value);
+		ase_awk_free (awk->awk, value);
 	}
 
-	void* Awk::malloc (void* custom, size_t n)
+	void* Awk::allocMem (void* custom, size_t n)
 	{
-		return ((Awk*)custom)->malloc (n);
+		return ((Awk*)custom)->allocMem (n);
 	}
 
-	void* Awk::realloc (void* custom, void* ptr, size_t n)
+	void* Awk::reallocMem (void* custom, void* ptr, size_t n)
 	{
-		return ((Awk*)custom)->realloc (ptr, n);
+		return ((Awk*)custom)->reallocMem (ptr, n);
 	}
 
-	void Awk::free (void* custom, void* ptr)
+	void Awk::freeMem (void* custom, void* ptr)
 	{
-		((Awk*)custom)->free (ptr);
+		((Awk*)custom)->freeMem (ptr);
 	}
 
 	Awk::bool_t Awk::isUpper (void* custom, cint_t c)  
