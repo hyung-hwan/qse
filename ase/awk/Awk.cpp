@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.13 2007/05/07 09:30:28 bacon Exp $
+ * $Id: Awk.cpp,v 1.14 2007/05/08 15:09:38 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -192,7 +192,7 @@ namespace ASE
 
 		size_t i, nargs = ase_awk_getnargs(run);
 
-		Value** args = new Value* [nargs];
+		Value* args = new Value[nargs];
 
 		for (i = 0; i < nargs; i++)
 		{
@@ -202,30 +202,27 @@ namespace ASE
 			switch (v->type)
 			{
 				case ASE_AWK_VAL_INT:
-					obj = new IntValue (
-						((ase_awk_val_int_t*)v)->val);			
+					args[i].setInt (((ase_awk_val_int_t*)v)->val);
 					break;
 
 				case ASE_AWK_VAL_REAL:
-					obj = new RealValue (
-						((ase_awk_val_real_t*)v)->val);
+					args[i].setReal (((ase_awk_val_real_t*)v)->val);
 					break;
 
 				case ASE_AWK_VAL_STR:
-					obj = new StrValue (
+					args[i].setStr (
 						((ase_awk_val_str_t*)v)->buf, 
 						((ase_awk_val_str_t*)v)->len);
 					break;
 
 				case ASE_AWK_VAL_NIL:
-					obj = new NilValue ();
+					args[i].setNil ();
 					break;
 			}
 		}
 
 		Value* ret = (this->*handler) (nargs, args);
 
-		for (i = 0; i < nargs; i++) delete args[i];
 		delete[] args;
 
 		if (ret == ASE_NULL) return -1;
