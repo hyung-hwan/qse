@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.12 2007/05/07 09:30:28 bacon Exp $
+ * $Id: Awk.hpp,v 1.13 2007/05/08 15:09:38 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -112,42 +112,34 @@ namespace ASE
 		class Value
 		{
 		public:
-		};
+			Value ();
+			Value (long_t l);
+			Value (real_t r);
+			Value (char_t* ptr, size_t len);
+			~Value ();
 
-		class NilValue: public Value
-		{
-		public:
-			NilValue ();
+			void setInt (long_t l);
+			void setReal (real_t r);
+			void setStr (char_t* ptr, size_t len);
 
-		protected:
-		};
-
-		class StrValue: public Value
-		{
-		public:
-			StrValue (const char_t* ptr, size_t len);
-
-		protected:
-			char_t* ptr;
-			size_t  len;
-		};
-
-		class RealValue: public Value
-		{
-		public:
-			RealValue (real_t v);
+			char_t* toStr (size_t* len);
+			long_t  toInt ();
+			real_t  toReal ();
 
 		protected:
-			real_t value;
-		};
+			int type;
 
-		class IntValue: public Value
-		{
-		public:
-			IntValue (long_t v);
+			union
+			{
+				long_t l;
+				real_t r;
 
-		protected:
-			long_t value;
+				struct
+				{
+					char_t* ptr;
+					size_t len;
+				} s;
+			} v;
 		};
 
 		Awk ();
