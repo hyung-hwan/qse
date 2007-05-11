@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: misc.c,v 1.4 2007/05/09 16:07:44 bacon Exp $
  *
  * {License}
  */
@@ -14,6 +14,12 @@ void* ase_awk_malloc (ase_awk_t* awk, ase_size_t size)
 void ase_awk_free (ase_awk_t* awk, void* ptr)
 {
 	ASE_AWK_FREE (awk, ptr);
+}
+
+ase_char_t* ase_awk_strxdup (
+	ase_awk_t* awk, const ase_char_t* ptr, ase_size_t len)
+{
+	return ase_strxdup (ptr, len, &awk->prmfns.mmgr);
 }
 
 ase_long_t ase_awk_strxtolong (

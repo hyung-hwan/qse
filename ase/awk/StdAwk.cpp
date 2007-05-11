@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.5 2007/05/07 09:30:28 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.6 2007/05/09 16:07:44 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -39,17 +39,17 @@ namespace ASE
 		return n;
 	}
 
-	StdAwk::Value* StdAwk::sin (size_t nargs, Value** args)
+	int StdAwk::sin (size_t nargs, const Value* args, Value* ret)
 	{
 		return 0;
 	}
 
-	StdAwk::Value* StdAwk::cos (size_t nargs, Value** args)
+	int StdAwk::cos (size_t nargs, const Value* args, Value* ret)
 	{
 		return 0;
 	}
 
-	StdAwk::Value* StdAwk::tan (size_t nargs, Value** args)
+	int StdAwk::tan (size_t nargs, const Value* args, Value* ret)
 	{
 		return 0;
 	}

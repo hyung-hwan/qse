@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.4 2007/05/07 09:30:28 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.5 2007/05/09 16:07:44 bacon Exp $
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_
@@ -18,9 +18,9 @@ namespace ASE
 		int open ();
 
 	protected:
-		Value* sin (size_t nargs, Value** args);
-		Value* cos (size_t nargs, Value** args);
-		Value* tan (size_t nargs, Value** args);
+		int sin (size_t nargs, const Value* args, Value* ret);
+		int cos (size_t nargs, const Value* args, Value* ret);
+		int tan (size_t nargs, const Value* args, Value* ret);
 	};
 
 }

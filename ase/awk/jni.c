@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.4 2007/05/05 12:03:35 bacon Exp $
+ * $Id: jni.c,v 1.5 2007/05/09 16:07:44 bacon Exp $
  *
  * {License}
  */
@@ -2126,6 +2126,9 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 	ase_real_t rv;
 	jobject ret;
 	run_data_t* run_data;
+	ase_awk_t* awk;
+
+	awk = ase_awk_getrunawk ((ase_awk_run_t*)runid);
 
 	len = (*env)->GetStringLength (env, str);
 	ptr = (*env)->GetStringChars (env, str, JNI_FALSE);
@@ -2157,15 +2160,12 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 		}
 
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
-		n = ase_awk_strtonum (
-			(ase_awk_run_t*)runid, tmp, len, &lv, &rv);
+		n = ase_awk_strtonum (awk, tmp, len, &lv, &rv);
 		free (tmp);
 	}
 	else
 	{
-		n = ase_awk_strtonum ( 
-			(ase_awk_run_t*)runid, 
-			(ase_char_t*)ptr, len, &lv, &rv);
+		n = ase_awk_strtonum (awk, (ase_char_t*)ptr, len, &lv, &rv);
 	}
 	(*env)->ReleaseStringChars (env, str, ptr);
 
