@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: awk.h,v 1.4 2007/05/09 16:07:44 bacon Exp $
  *
  * {License}
  */
@@ -486,6 +486,9 @@ int ase_awk_setrec (ase_awk_run_t* run, ase_size_t idx, const ase_char_t* str, a
 /* utility functions exported by awk.h */
 void* ase_awk_malloc (ase_awk_t* awk, ase_size_t size);
 void ase_awk_free (ase_awk_t* awk, void* ptr);
+
+ase_char_t* ase_awk_strxdup (
+	ase_awk_t* awk, const ase_char_t* ptr, ase_size_t len);
 
 ase_long_t ase_awk_strxtolong (
 	ase_awk_t* awk, const ase_char_t* str, ase_size_t len,

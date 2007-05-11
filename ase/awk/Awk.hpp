@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.13 2007/05/08 15:09:38 bacon Exp $
+ * $Id: Awk.hpp,v 1.15 2007/05/09 16:07:44 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -113,33 +113,38 @@ namespace ASE
 		{
 		public:
 			Value ();
-			Value (long_t l);
-			Value (real_t r);
-			Value (char_t* ptr, size_t len);
 			~Value ();
+
+			bool isNil () const;
+			bool isInt () const;
+			bool isReal () const;
+			bool isStr () const;
 
 			void setInt (long_t l);
 			void setReal (real_t r);
-			void setStr (char_t* ptr, size_t len);
+			const char_t* setStr (
+				ase_awk_t* awk, const char_t* ptr, size_t len);
 
-			char_t* toStr (size_t* len);
-			long_t  toInt ();
-			real_t  toReal ();
+			long_t toInt () const;
+			real_t toReal () const;
+			const char_t* toStr (
+				ase_awk_t* awk, size_t* len) const;
 
 		protected:
-			int type;
+			mutable int type;
 
-			union
+			mutable union
 			{
 				long_t l;
 				real_t r;
+			} num;
 
-				struct
-				{
-					char_t* ptr;
-					size_t len;
-				} s;
-			} v;
+			mutable struct
+			{
+				ase_awk_t* awk;
+				char_t*    ptr;
+				size_t     len;
+			} str;
 		};
 
 		Awk ();
@@ -152,7 +157,8 @@ namespace ASE
 		virtual int run (const char_t* main = ASE_NULL, 
 		         const char_t** args = ASE_NULL);
 
-		typedef Value* (Awk::*FunctionHandler) (size_t nargs, Value** args);
+		typedef int (Awk::*FunctionHandler) (
+			size_t nargs, const Value* args, Value* ret);
 
 		virtual int addFunction (
 			const char_t* name, size_t minArgs, size_t maxArgs, 

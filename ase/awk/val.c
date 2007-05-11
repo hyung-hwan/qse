@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.4 2007/05/05 16:32:46 bacon Exp $
+ * $Id: val.c,v 1.5 2007/05/09 16:07:44 bacon Exp $
  *
  * {License}
  */
@@ -14,11 +14,13 @@
 static ase_char_t* str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
 	int opt, ase_str_t* buf, ase_size_t* len);
-static ase_char_t* val_int_to_str (
-	ase_awk_run_t* run, ase_awk_val_int_t* v,
+
+static ase_char_t* int_to_str (
+	ase_awk_t* awk, ase_long_t v, 
 	int opt, ase_str_t* buf, ase_size_t* len);
-static ase_char_t* val_real_to_str (
-	ase_awk_run_t* run, ase_awk_val_real_t* v,
+
+static ase_char_t* real_to_str (
+	ase_awk_t* awk, ase_real_t v,
 	int opt, ase_str_t* buf, ase_size_t* len);
 
 static ase_awk_val_nil_t awk_nil = { ASE_AWK_VAL_NIL, 0 };
@@ -434,6 +436,7 @@ ase_char_t* ase_awk_valtostr (
 	if (v->type == ASE_AWK_VAL_INT)
 	{
 		ase_awk_val_int_t* vi = (ase_awk_val_int_t*)v;
+		ase_char_t* r;
 
 		/*
 		if (vi->nde != ASE_NULL && vi->nde->str != ASE_NULL)
@@ -445,13 +448,20 @@ ase_char_t* ase_awk_valtostr (
 		else
 		{
 			*/
-			return val_int_to_str (run, vi, opt, buf, len);
+			r = int_to_str (run->awk, vi->val, opt, buf, len);
+			if (r == ASE_NULL)
+			{
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			}
+			return r;
 		/*}*/
 	}
 
 	if (v->type == ASE_AWK_VAL_REAL)
 	{
 		ase_awk_val_real_t* vr = (ase_awk_val_real_t*)v;
+		ase_char_t* r;
 
 		/*
 		if (vr->nde != ASE_NULL && vr->nde->str != ASE_NULL)
@@ -462,7 +472,13 @@ ase_char_t* ase_awk_valtostr (
 		}
 		else
 		{*/
-			return val_real_to_str (run, vr, opt, buf, len);
+			r = real_to_str (run->awk, vr->val, opt, buf, len);
+			if (r == ASE_NULL)
+			{
+				ase_awk_setrunerror (
+					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			}
+			return r;
 		/*}*/
 	}
 
@@ -520,6 +536,7 @@ static ase_char_t* str_to_str (
 	}
 }
 
+#if 0
 static ase_char_t* val_int_to_str (
 	ase_awk_run_t* run, ase_awk_val_int_t* v,
 	int opt, ase_str_t* buf, ase_size_t* len)
@@ -608,6 +625,89 @@ static ase_char_t* val_int_to_str (
 	}
 
 	if (v->val < 0) tmp[--l] = ASE_T('-');
+
+	if (buf != ASE_NULL) 
+	{
+		tmp = ASE_STR_BUF(buf);
+		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
+	}
+
+	return tmp;
+}
+#endif
+
+static ase_char_t* int_to_str (
+	ase_awk_t* awk, ase_long_t v, 
+	int opt, ase_str_t* buf, ase_size_t* len)
+{
+	ase_char_t* tmp;
+	ase_long_t t;
+	ase_size_t l = 0;
+
+	t = v;
+	if (t == 0)
+	{
+		/* handle zero */
+		if (buf == ASE_NULL)
+		{
+			tmp = ASE_AWK_MALLOC (
+				awk, 2 * ASE_SIZEOF(ase_char_t));
+			if (tmp == ASE_NULL) return ASE_NULL;
+
+			tmp[0] = ASE_T('0');
+			tmp[1] = ASE_T('\0');
+			if (len != ASE_NULL) *len = 1;
+			return tmp;
+		}
+		else
+		{
+			if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
+			if (ase_str_cat (buf, ASE_T("0")) == (ase_size_t)-1)
+			{
+				return ASE_NULL;
+			}
+
+			if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
+			return ASE_STR_BUF(buf);
+		}
+	}
+
+	/* non-zero values */
+	if (t < 0) { t = -t; l++; }
+	while (t > 0) { l++; t /= 10; }
+
+	if (buf == ASE_NULL)
+	{
+		tmp = ASE_AWK_MALLOC (awk, (l + 1) * ASE_SIZEOF(ase_char_t));
+		if (tmp == ASE_NULL) return ASE_NULL;
+
+		tmp[l] = ASE_T('\0');
+		if (len != ASE_NULL) *len = l;
+	}
+	else
+	{
+		/* clear the buffer */
+		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
+
+		tmp = ASE_STR_BUF(buf) + ASE_STR_LEN(buf);
+
+		/* extend the buffer */
+		if (ase_str_nccat (buf, ASE_T(' '), l) == (ase_size_t)-1)
+		{
+			return ASE_NULL;
+		}
+	}
+
+	t = v;
+	if (t < 0) t = -t;
+
+	while (t > 0) 
+	{
+		tmp[--l] = (ase_char_t)(t % 10) + ASE_T('0');
+		t /= 10;
+	}
+
+	if (v < 0) tmp[--l] = ASE_T('-');
 
 	if (buf != ASE_NULL) 
 	{
@@ -711,29 +811,9 @@ int ase_awk_valtonum (
 
 	if (v->type == ASE_AWK_VAL_STR)
 	{
-		return ase_awk_strtonum (run, 
+		return ase_awk_strtonum (run->awk, 
 			((ase_awk_val_str_t*)v)->buf, 
 			((ase_awk_val_str_t*)v)->len, l, r);
-
-#if 0
-		const ase_char_t* endptr;
-
-		*l = ase_awk_strxtolong (run->awk, 
-			((ase_awk_val_str_t*)v)->buf, 
-			((ase_awk_val_str_t*)v)->len, 0, &endptr);
-		if (*endptr == ASE_T('.') ||
-		    *endptr == ASE_T('E') ||
-		    *endptr == ASE_T('e'))
-		{
-			*r = ase_awk_strxtoreal (run->awk, 
-				((ase_awk_val_str_t*)v)->buf,
-				((ase_awk_val_str_t*)v)->len, ASE_NULL);
-/* TODO: need to check if it is a valid number using endptr for strxtoreal? */
-			return 1; /* real */
-		}
-/* TODO: do should i handle strings ending with invalid number characters like "123xx" or "dkdkdkd"? */
-		return 0; /* long */
-#endif
 	}
 
 #ifdef DEBUG_VAL
@@ -746,22 +826,37 @@ int ase_awk_valtonum (
 	return -1; /* error */
 }
 
+ase_char_t* ase_awk_inumtostr (
+	ase_awk_t* awk, ase_long_t v, int opt, ase_str_t* buf, ase_size_t* len)
+{
+	return int_to_str (awk, v, 0, ASE_NULL, len);
+}
+
+ase_char_t* ase_awk_rnumtostr (
+	ase_awk_t* awk, ase_real_t v, int opt, ase_str_t* buf, ase_size_t* len)
+{
+	return real_to_str (awk, v, 0, ASE_NULL, len);
+}
+
 int ase_awk_strtonum (
-	ase_awk_run_t* run, const ase_char_t* ptr, ase_size_t len, 
+	ase_awk_t* awk, const ase_char_t* ptr, ase_size_t len, 
 	ase_long_t* l, ase_real_t* r)
 {
 	const ase_char_t* endptr;
 
-	*l = ase_awk_strxtolong (run->awk, ptr, len, 0, &endptr);
+	*l = ase_awk_strxtolong (awk, ptr, len, 0, &endptr);
 	if (*endptr == ASE_T('.') ||
 	    *endptr == ASE_T('E') ||
 	    *endptr == ASE_T('e'))
 	{
-		*r = ase_awk_strxtoreal (run->awk, ptr, len, ASE_NULL);
-/* TODO: need to check if it is a valid number using endptr for strxtoreal? */
+		*r = ase_awk_strxtoreal (awk, ptr, len, ASE_NULL);
+		/* TODO: need to check if it is a valid number using 
+		 *       endptr for strxtoreal? */
 		return 1; /* real */
 	}
-/* TODO: do should i handle strings ending with invalid number characters like "123xx" or "dkdkdkd"? */
+
+	/* TODO: do should i handle strings ending with invalid number 
+	 *       characters like "123xx" or "dkdkdkd"? */
 	return 0; /* long */
 
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.14 2007/05/08 15:09:38 bacon Exp $
+ * $Id: Awk.cpp,v 1.16 2007/05/09 16:07:44 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -73,6 +73,165 @@ namespace ASE
 	Awk::Console::Mode Awk::Console::getMode () const
 	{
 		return this->mode;
+	}
+
+	Awk::Value::Value (): type (ASE_AWK_VAL_NIL)
+	{
+		this->str.awk = ASE_NULL;
+		this->str.ptr = ASE_NULL;
+	}
+
+	Awk::Value::~Value ()
+	{
+		if (this->str.ptr != ASE_NULL)
+		{
+			ASE_ASSERT (this->str.awk != ASE_NULL);
+			ase_awk_free (this->str.awk, this->str.ptr);
+			this->str.ptr = ASE_NULL;
+			this->str.awk = ASE_NULL;
+		}
+	}
+
+	bool Awk::Value::isNil () const
+	{
+		return this->type == ASE_AWK_VAL_NIL;
+	}
+
+	bool Awk::Value::isInt () const
+	{
+		return this->type == ASE_AWK_VAL_INT;
+	}
+
+	bool Awk::Value::isReal () const
+	{
+		return this->type == ASE_AWK_VAL_REAL;
+	}
+
+	bool Awk::Value::isStr () const
+	{
+		return this->type == ASE_AWK_VAL_STR;
+	}
+
+	void Awk::Value::setInt (long_t l)
+	{
+		if (this->type == ASE_AWK_VAL_INT && 
+		    this->num.l == l) return;
+
+		if (this->str.ptr != ASE_NULL)
+		{
+			ASE_ASSERT (this->str.awk != ASE_NULL);
+			ase_awk_free (this->str.awk, this->str.ptr);
+			this->str.ptr = ASE_NULL;
+			this->str.awk = ASE_NULL;
+		}
+
+		this->type = ASE_AWK_VAL_INT;
+		this->num.l = l;
+	}
+
+	void Awk::Value::setReal (real_t r)
+	{
+		if (this->type == ASE_AWK_VAL_REAL &&
+		    this->num.r == r) return;
+
+		if (this->str.ptr != ASE_NULL)
+		{
+			ASE_ASSERT (this->str.awk != ASE_NULL);
+			ase_awk_free (this->str.awk, this->str.ptr);
+			this->str.ptr = ASE_NULL;
+			this->str.awk = ASE_NULL;
+		}
+
+		this->type = ASE_AWK_VAL_REAL;
+		this->num.r = r;
+	}
+
+	const Awk::char_t* Awk::Value::setStr (
+		ase_awk_t* awk, const char_t* ptr, size_t len)
+	{
+		char_t* tmp = ase_awk_strxdup (awk, ptr, len);
+		if (tmp == ASE_NULL) return ASE_NULL;
+
+		if (this->str.ptr != ASE_NULL)
+		{
+			ASE_ASSERT (this->str.awk != ASE_NULL);
+			ase_awk_free (this->str.awk, this->str.ptr);
+			this->str.ptr = ASE_NULL;
+			this->str.awk = ASE_NULL;
+		}
+
+		this->str.awk = awk;
+		this->str.ptr = tmp;
+		this->str.len = len;
+
+		return tmp;
+	}
+
+	Awk::long_t Awk::Value::toInt () const
+	{
+		switch (this->type)
+		{
+			case ASE_AWK_VAL_NIL:
+				return 0;
+
+			case ASE_AWK_VAL_INT:
+				return this->num.l;
+
+			case ASE_AWK_VAL_REAL:
+				return (long_t)this->num.r;
+
+			case ASE_AWK_VAL_STR:
+				return (ase_awk_strtonum (
+					this->str.awk, 
+					this->str.ptr, this->str.len, 
+					&this->num.l, &this->num.r) == 0)?
+					this->num.l: (long_t)this->num.r;
+		}
+
+		return 0;
+	}
+
+	Awk::real_t Awk::Value::toReal () const
+	{
+		switch (this->type)
+		{
+			case ASE_AWK_VAL_NIL:
+				return 0.0;
+
+			case ASE_AWK_VAL_INT:
+				return (real_t)this->num.l;
+
+			case ASE_AWK_VAL_REAL:
+				return this->num.r;
+
+			case ASE_AWK_VAL_STR:
+				return (ase_awk_strtonum (
+					this->str.awk, 
+					this->str.ptr, this->str.len, 
+					&this->num.l, &this->num.r) == 0)?
+					(real_t)this->num.l: this->num.r;
+		}
+
+		return 0.0;
+	}
+
+	const Awk::char_t* Awk::Value::toStr (ase_awk_t* awk, size_t* len) const
+	{
+		switch (this->type)
+		{
+			case ASE_AWK_VAL_NIL:
+				tmp = ase_awk_strxdup(awk, ASE_T(""), 0);
+
+			case ASE_AWK_VAL_INT:
+
+			case ASE_AWK_VAL_REAL:
+
+			case ASE_AWK_VAL_STR:
+				*len = this->str.len;
+				return this->str.ptr;
+		}
+
+		return ASE_NULL;
 	}
 
 	Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
@@ -192,7 +351,7 @@ namespace ASE
 
 		size_t i, nargs = ase_awk_getnargs(run);
 
-		Value* args = new Value[nargs];
+		Value* args = new Value [nargs];
 
 		for (i = 0; i < nargs; i++)
 		{
@@ -210,22 +369,25 @@ namespace ASE
 					break;
 
 				case ASE_AWK_VAL_STR:
-					args[i].setStr (
+					if (args[i].setStr (awk,
 						((ase_awk_val_str_t*)v)->buf, 
-						((ase_awk_val_str_t*)v)->len);
+						((ase_awk_val_str_t*)v)->len) == ASE_NULL)
+					{
+						// TODO: handle error...
+					}
 					break;
 
 				case ASE_AWK_VAL_NIL:
-					args[i].setNil ();
 					break;
 			}
 		}
 
-		Value* ret = (this->*handler) (nargs, args);
+		Value ret;
+		int n = (this->*handler) (nargs, args, &ret);
 
 		delete[] args;
 
-		if (ret == ASE_NULL) return -1;
+		if (n <= -1) return -1;
 
 		// TODO: convert the return value to normal value...
 
