@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.4 2007/05/09 16:07:44 bacon Exp $
+ * $Id: val.h,v 1.5 2007/05/10 16:08:37 bacon Exp $
  *
  * {License}
  */
@@ -194,7 +194,7 @@ ase_char_t* ase_awk_valtostr (
 int ase_awk_valtonum (
 	ase_awk_run_t* run, ase_awk_val_t* v, ase_long_t* l, ase_real_t* r);
 int ase_awk_strtonum (
-	ase_awk_t* awk, const ase_char_t* ptr, ase_size_t len, 
+	ase_awk_run_t* run, const ase_char_t* ptr, ase_size_t len, 
 	ase_long_t* l, ase_real_t* r);
 
 void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val);

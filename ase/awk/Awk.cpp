@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.16 2007/05/09 16:07:44 bacon Exp $
+ * $Id: Awk.cpp,v 1.17 2007/05/10 16:08:37 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -75,41 +75,102 @@ namespace ASE
 		return this->mode;
 	}
 
-	Awk::Value::Value (): type (ASE_AWK_VAL_NIL)
+	Awk::Value::Value (): run (ASE_NULL), val (ASE_NULL)
 	{
-		this->str.awk = ASE_NULL;
 		this->str.ptr = ASE_NULL;
+		this->str.len = 0;
 	}
 
 	Awk::Value::~Value ()
 	{
 		if (this->str.ptr != ASE_NULL)
 		{
-			ASE_ASSERT (this->str.awk != ASE_NULL);
-			ase_awk_free (this->str.awk, this->str.ptr);
+			ASE_ASSERT (this->run != ASE_NULL);
+			ase_awk_free (
+				ase_awk_getrunawk(this->run), this->str.ptr);
 			this->str.ptr = ASE_NULL;
-			this->str.awk = ASE_NULL;
+			this->str.len = 0;
 		}
+
+		if (this->val != ASE_NULL) 
+		{
+			ASE_ASSERT (this->run != ASE_NULL);
+			ase_awk_refdownval (
+				ase_awk_getrunawk(this->run), this->val);
+		}
+	}
+
+	void Awk::Value::init (ase_awk_run_t* run, ase_awk_val_t* val)
+	{
+		/* this method is used internally.
+		 * and should never be called more than once */
+		ASE_ASSERT (this->run == ASE_NULL && this->val == ASE_NULL &&
+		            run != ASE_NULL && val != ASE_NULL);
+
+		this->run = run;
+		this->val = val;
+
+		ase_awk_refupval (this->run, this->val);
 	}
 
 	bool Awk::Value::isNil () const
 	{
-		return this->type == ASE_AWK_VAL_NIL;
+		return val == ASE_NULL || val->type == ASE_AWK_VAL_NIL;
 	}
 
 	bool Awk::Value::isInt () const
 	{
-		return this->type == ASE_AWK_VAL_INT;
+		return val != ASE_NULL && val->type == ASE_AWK_VAL_INT;
 	}
 
 	bool Awk::Value::isReal () const
 	{
-		return this->type == ASE_AWK_VAL_REAL;
+		return val != ASE_NULL && val->type == ASE_AWK_VAL_REAL;
 	}
 
 	bool Awk::Value::isStr () const
 	{
-		return this->type == ASE_AWK_VAL_STR;
+		return val != ASE_NULL && val->type == ASE_AWK_VAL_STR;
+	}
+
+	Awk::long_t Awk::Value::toInt () const
+	{
+		if (this->val == ASE_NULL) return 0;
+
+		long_t l;
+		real_t r;
+
+		n = ase_awk_valtonum (this->run, this->val, &l, &r);
+		if (n == 0) return 1;
+		if (n == 1) return (long_t)r;
+
+		return 0; /* return 0 on error */
+	}
+
+	Awk::real_t Awk::Value::toReal () const
+	{
+		if (this->val == ASE_NULL) return 0;
+
+		long_t l;
+		real_t r;
+
+		n = ase_awk_valtonum (this->run, this->val, &l, &r);
+		if (n == 0) return (real_t)1;
+		if (n == 1) return r;
+
+		return 0.0; /* return 0 on error */
+	}
+
+	const Awk::char_t* Awk::Value::toStr (ase_awk_t* awk, size_t* len) const
+	{
+		if (this->val == ASE_NULL) 
+		{
+			tmp = ase_awk_strxdup(
+				ase_awk_getrunawk(this->run), ASE_T(""), 0);
+		}
+		else
+		{
+		}
 	}
 
 	void Awk::Value::setInt (long_t l)
@@ -167,72 +228,6 @@ namespace ASE
 		return tmp;
 	}
 
-	Awk::long_t Awk::Value::toInt () const
-	{
-		switch (this->type)
-		{
-			case ASE_AWK_VAL_NIL:
-				return 0;
-
-			case ASE_AWK_VAL_INT:
-				return this->num.l;
-
-			case ASE_AWK_VAL_REAL:
-				return (long_t)this->num.r;
-
-			case ASE_AWK_VAL_STR:
-				return (ase_awk_strtonum (
-					this->str.awk, 
-					this->str.ptr, this->str.len, 
-					&this->num.l, &this->num.r) == 0)?
-					this->num.l: (long_t)this->num.r;
-		}
-
-		return 0;
-	}
-
-	Awk::real_t Awk::Value::toReal () const
-	{
-		switch (this->type)
-		{
-			case ASE_AWK_VAL_NIL:
-				return 0.0;
-
-			case ASE_AWK_VAL_INT:
-				return (real_t)this->num.l;
-
-			case ASE_AWK_VAL_REAL:
-				return this->num.r;
-
-			case ASE_AWK_VAL_STR:
-				return (ase_awk_strtonum (
-					this->str.awk, 
-					this->str.ptr, this->str.len, 
-					&this->num.l, &this->num.r) == 0)?
-					(real_t)this->num.l: this->num.r;
-		}
-
-		return 0.0;
-	}
-
-	const Awk::char_t* Awk::Value::toStr (ase_awk_t* awk, size_t* len) const
-	{
-		switch (this->type)
-		{
-			case ASE_AWK_VAL_NIL:
-				tmp = ase_awk_strxdup(awk, ASE_T(""), 0);
-
-			case ASE_AWK_VAL_INT:
-
-			case ASE_AWK_VAL_REAL:
-
-			case ASE_AWK_VAL_STR:
-				*len = this->str.len;
-				return this->str.ptr;
-		}
-
-		return ASE_NULL;
-	}
 
 	Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
 		sourceIn (Source::READ), sourceOut (Source::WRITE)
