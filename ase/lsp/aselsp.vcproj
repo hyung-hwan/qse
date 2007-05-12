@@ -48,10 +48,6 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\release/aselsp.pch"
-				AssemblerListingLocation=".\release/"
-				ObjectFile=".\release/"
-				ProgramDataBaseFileName=".\release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -68,7 +64,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)\aselsp.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -121,10 +116,6 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\debug/aselsp.pch"
-				AssemblerListingLocation=".\debug/"
-				ObjectFile=".\debug/"
-				ProgramDataBaseFileName=".\debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
@@ -142,7 +133,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)\aselsp.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"

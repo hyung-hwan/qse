@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.17 2007/05/10 16:08:37 bacon Exp $
+ * $Id: Awk.cpp,v 1.21 2007/05/11 16:40:20 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -75,13 +75,13 @@ namespace ASE
 		return this->mode;
 	}
 
-	Awk::Value::Value (): run (ASE_NULL), val (ASE_NULL)
+	Awk::Argument::Argument (): run (ASE_NULL), val (ASE_NULL)
 	{
 		this->str.ptr = ASE_NULL;
 		this->str.len = 0;
 	}
 
-	Awk::Value::~Value ()
+	Awk::Argument::~Argument ()
 	{
 		if (this->str.ptr != ASE_NULL)
 		{
@@ -95,139 +95,184 @@ namespace ASE
 		if (this->val != ASE_NULL) 
 		{
 			ASE_ASSERT (this->run != ASE_NULL);
-			ase_awk_refdownval (
-				ase_awk_getrunawk(this->run), this->val);
+			ase_awk_refdownval (this->run, this->val);
 		}
 	}
 
-	void Awk::Value::init (ase_awk_run_t* run, ase_awk_val_t* val)
+	int Awk::Argument::init (ase_awk_run_t* run, ase_awk_val_t* v)
 	{
 		/* this method is used internally.
 		 * and should never be called more than once */
-		ASE_ASSERT (this->run == ASE_NULL && this->val == ASE_NULL &&
-		            run != ASE_NULL && val != ASE_NULL);
+		ASE_ASSERT (this->run == ASE_NULL && this->val == ASE_NULL);
+		ASE_ASSERT (run != ASE_NULL && v != ASE_NULL);
 
+		ase_awk_refupval (run, v);
 		this->run = run;
-		this->val = val;
+		this->val = v;
 
-		ase_awk_refupval (this->run, this->val);
-	}
-
-	bool Awk::Value::isNil () const
-	{
-		return val == ASE_NULL || val->type == ASE_AWK_VAL_NIL;
-	}
-
-	bool Awk::Value::isInt () const
-	{
-		return val != ASE_NULL && val->type == ASE_AWK_VAL_INT;
-	}
-
-	bool Awk::Value::isReal () const
-	{
-		return val != ASE_NULL && val->type == ASE_AWK_VAL_REAL;
-	}
-
-	bool Awk::Value::isStr () const
-	{
-		return val != ASE_NULL && val->type == ASE_AWK_VAL_STR;
-	}
-
-	Awk::long_t Awk::Value::toInt () const
-	{
-		if (this->val == ASE_NULL) return 0;
-
-		long_t l;
-		real_t r;
-
-		n = ase_awk_valtonum (this->run, this->val, &l, &r);
-		if (n == 0) return 1;
-		if (n == 1) return (long_t)r;
-
-		return 0; /* return 0 on error */
-	}
-
-	Awk::real_t Awk::Value::toReal () const
-	{
-		if (this->val == ASE_NULL) return 0;
-
-		long_t l;
-		real_t r;
-
-		n = ase_awk_valtonum (this->run, this->val, &l, &r);
-		if (n == 0) return (real_t)1;
-		if (n == 1) return r;
-
-		return 0.0; /* return 0 on error */
-	}
-
-	const Awk::char_t* Awk::Value::toStr (ase_awk_t* awk, size_t* len) const
-	{
-		if (this->val == ASE_NULL) 
+		if (v->type == ASE_AWK_VAL_STR)
 		{
-			tmp = ase_awk_strxdup(
-				ase_awk_getrunawk(this->run), ASE_T(""), 0);
+			int n = ase_awk_valtonum (
+				run, v, &this->inum, &this->rnum);
+			if (n == 0) 
+			{
+				this->rnum = (ase_real_t)this->inum;
+				return 0;
+			}
+			else if (n == 1) 
+			{
+				this->inum = (ase_long_t)this->rnum;
+				return 0;
+			}
+		}
+		else if (v->type == ASE_AWK_VAL_INT)
+		{
+			this->inum = ((ase_awk_val_int_t*)v)->val;
+			this->rnum = (ase_real_t)((ase_awk_val_int_t*)v)->val;
+
+			this->str.ptr = ase_awk_valtostr (run, v, 0, ASE_NULL, &this->str.len);
+			if (this->str.ptr != ASE_NULL) return 0;
+		}
+		else if (v->type == ASE_AWK_VAL_REAL)
+		{
+			this->inum = (ase_long_t)((ase_awk_val_real_t*)v)->val;
+			this->rnum = ((ase_awk_val_real_t*)v)->val;
+
+			this->str.ptr = ase_awk_valtostr (run, v, 0, ASE_NULL, &this->str.len);
+			if (this->str.ptr != ASE_NULL) return 0;
+		}
+		else if (v->type == ASE_AWK_VAL_NIL)
+		{
+			this->inum = 0;
+			this->rnum = 0.0;
+
+			this->str.ptr = ase_awk_valtostr (run, v, 0, ASE_NULL, &this->str.len);
+			if (this->str.ptr != ASE_NULL) return 0;
+		}
+
+		ase_awk_refdownval (run, v);
+		this->run = ASE_NULL;
+		this->val = ASE_NULL;
+		return -1;
+	}
+
+	Awk::long_t Awk::Argument::toInt () const
+	{
+		ASE_ASSERT (this->run != ASE_NULL && this->val != ASE_NULL);
+		return this->inum;
+	}
+
+	Awk::real_t Awk::Argument::toReal () const
+	{
+		ASE_ASSERT (this->run != ASE_NULL && this->val != ASE_NULL);
+		return this->rnum;
+	}
+
+	const Awk::char_t* Awk::Argument::toStr (size_t* len) const
+	{
+		ASE_ASSERT (this->run != ASE_NULL && this->val != ASE_NULL);
+
+		if (this->str.ptr != ASE_NULL)
+		{
+			*len = this->str.len;
+			return this->str.ptr;
 		}
 		else
 		{
+			ASE_ASSERT (val->type == ASE_AWK_VAL_STR);
+			*len = ((ase_awk_val_str_t*)this->val)->len;
+			return ((ase_awk_val_str_t*)this->val)->buf;
 		}
 	}
 
-	void Awk::Value::setInt (long_t l)
+	Awk::Return::Return (ase_awk_run_t* run): run (run), type (ASE_AWK_VAL_NIL)
 	{
-		if (this->type == ASE_AWK_VAL_INT && 
-		    this->num.l == l) return;
+	}
 
-		if (this->str.ptr != ASE_NULL)
+	Awk::Return::~Return ()
+	{
+		clear ();
+	}
+
+	ase_awk_val_t* Awk::Return::toVal () const
+	{
+		switch (this->type)
 		{
-			ASE_ASSERT (this->str.awk != ASE_NULL);
-			ase_awk_free (this->str.awk, this->str.ptr);
-			this->str.ptr = ASE_NULL;
-			this->str.awk = ASE_NULL;
+			case ASE_AWK_VAL_NIL:
+				return ase_awk_val_nil;
+
+			case ASE_AWK_VAL_INT:
+				return ase_awk_makeintval (this->run, this->v.inum);
+
+			case ASE_AWK_VAL_REAL:
+				return ase_awk_makerealval (this->run, this->v.rnum);
+
+			case ASE_AWK_VAL_STR:
+				return ase_awk_makestrval (
+					this->run, this->v.str.ptr, this->v.str.len);
 		}
+
+		return ASE_NULL;
+	}
+
+	ase_awk_run_t* Awk::Return::getRun () const
+	{
+		return this->run;
+	}
+
+	ase_awk_t* Awk::Return::getAwk () const
+	{
+		return ase_awk_getrunawk (this->run);
+	}
+
+	int Awk::Return::set (long_t v)
+	{
+		clear ();
 
 		this->type = ASE_AWK_VAL_INT;
-		this->num.l = l;
+		this->v.inum = v;
+
+		return 0;
 	}
 
-	void Awk::Value::setReal (real_t r)
+	int Awk::Return::set (real_t v)
 	{
-		if (this->type == ASE_AWK_VAL_REAL &&
-		    this->num.r == r) return;
-
-		if (this->str.ptr != ASE_NULL)
-		{
-			ASE_ASSERT (this->str.awk != ASE_NULL);
-			ase_awk_free (this->str.awk, this->str.ptr);
-			this->str.ptr = ASE_NULL;
-			this->str.awk = ASE_NULL;
-		}
+		clear ();
 
 		this->type = ASE_AWK_VAL_REAL;
-		this->num.r = r;
+		this->v.rnum = v;
+
+		return 0;
 	}
 
-	const Awk::char_t* Awk::Value::setStr (
-		ase_awk_t* awk, const char_t* ptr, size_t len)
+	int Awk::Return::set (char_t* ptr, size_t len)
 	{
+		ase_awk_t* awk = ase_awk_getrunawk(this->run);
 		char_t* tmp = ase_awk_strxdup (awk, ptr, len);
-		if (tmp == ASE_NULL) return ASE_NULL;
+		if (tmp == ASE_NULL) return -1;
 
-		if (this->str.ptr != ASE_NULL)
+		clear ();
+
+		this->type = ASE_AWK_VAL_STR;
+		this->v.str.ptr = tmp;
+		this->v.str.len = len;
+
+		return 0;
+	}
+
+	void Awk::Return::clear ()
+	{
+		if (this->type == ASE_AWK_VAL_STR)
 		{
-			ASE_ASSERT (this->str.awk != ASE_NULL);
-			ase_awk_free (this->str.awk, this->str.ptr);
-			this->str.ptr = ASE_NULL;
-			this->str.awk = ASE_NULL;
+			ASE_ASSERT (this->v.str.ptr != ASE_NULL);
+			ase_awk_t* awk = ase_awk_getrunawk(this->run);
+			ase_awk_free (awk, this->v.str.ptr);
+			this->v.str.ptr = ASE_NULL;
+			this->v.str.len = 0;
 		}
 
-		this->str.awk = awk;
-		this->str.ptr = tmp;
-		this->str.len = len;
-
-		return tmp;
+		this->type = ASE_AWK_VAL_NIL;
 	}
-
 
 	Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
 		sourceIn (Source::READ), sourceOut (Source::WRITE)
@@ -337,55 +382,61 @@ namespace ASE
 		ase_awk_run_t* run, const char_t* name, size_t len)
 	{
 		ase_awk_pair_t* pair;
+		ase_awk_t* awk;
+
+		awk = ase_awk_getrunawk (run);
 
 		pair = ase_awk_map_get (functionMap, name, len);
-		if (pair == ASE_NULL) return -1;
+		if (pair == ASE_NULL) 
+		{
+			// TODO: SET ERROR INFO
+			return -1;
+		}
 
 		FunctionHandler handler;
 	       	handler = *(FunctionHandler*)ASE_AWK_PAIR_VAL(pair);	
 
 		size_t i, nargs = ase_awk_getnargs(run);
 
-		Value* args = new Value [nargs];
+		Argument* args = ASE_NULL;
+		try { args = new Argument [nargs]; } catch (...)  {}
+		if (args == ASE_NULL) 
+		{
+			// TODO: SET ERROR INFO
+			return -1;
+		}
 
 		for (i = 0; i < nargs; i++)
 		{
 			ase_awk_val_t* v = ase_awk_getarg (run, i);
-			Value* obj = ASE_NULL;
-
-			switch (v->type)
+			if (args[i].init (run, v) == -1)
 			{
-				case ASE_AWK_VAL_INT:
-					args[i].setInt (((ase_awk_val_int_t*)v)->val);
-					break;
-
-				case ASE_AWK_VAL_REAL:
-					args[i].setReal (((ase_awk_val_real_t*)v)->val);
-					break;
-
-				case ASE_AWK_VAL_STR:
-					if (args[i].setStr (awk,
-						((ase_awk_val_str_t*)v)->buf, 
-						((ase_awk_val_str_t*)v)->len) == ASE_NULL)
-					{
-						// TODO: handle error...
-					}
-					break;
-
-				case ASE_AWK_VAL_NIL:
-					break;
+				delete[] args;
+				// TODO: SET ERROR INFO
+				return -1;
 			}
 		}
+		
 
-		Value ret;
-		int n = (this->*handler) (nargs, args, &ret);
+		Return ret (run);
+		int n = (this->*handler) (&ret, args, nargs);
 
 		delete[] args;
 
-		if (n <= -1) return -1;
+		if (n <= -1) 
+		{
+			// TODO: SET ERROR INFO
+			return -1;
+		}	
 
-		// TODO: convert the return value to normal value...
+		ase_awk_val_t* r = ret.toVal ();
+		if (r == ASE_NULL) 
+		{
+			// TODO: SET ERROR INFO
+			return -1;
+		}
 
+		ase_awk_setretval (run, r);
 		return 0;
 	}
 

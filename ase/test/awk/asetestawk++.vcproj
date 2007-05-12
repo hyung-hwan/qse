@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="aseutl"
-	ProjectGUID="{C3EBBFAE-9D08-4FA2-8B0E-D09BEBF84EDD}"
-	RootNamespace="aseutl"
+	Name="asetestawk++"
+	ProjectGUID="{3BEA6CFE-C158-4BFB-B5FB-ED85251E3F98}"
+	RootNamespace="asetestawk++"
 	>
 	<Platforms>
 		<Platform
@@ -16,9 +16,9 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\..\release\lib"
-			IntermediateDirectory=".\release"
-			ConfigurationType="4"
+			OutputDirectory=".\..\..\release\bin"
+			IntermediateDirectory=".\release\cpp"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -38,17 +38,20 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				TypeLibraryName=".\../../release/bin/asetestawk++.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../.."
-				PreprocessorDefinitions="NDEBUG;WIN32"
+				AdditionalIncludeDirectories="..\..\.."
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				DisableLanguageExtensions="true"
+				PrecompiledHeaderFile=".\release\cpp\asetestawk++.pch"
+				AssemblerListingLocation=""
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -64,10 +67,20 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				AdditionalDependencies="asecmn.lib aseawk.lib aseawk++.lib aseutl.lib"
+				OutputFile="..\..\release\bin\aseawk++.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\..\release\lib"
+				SubSystem="1"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -75,10 +88,16 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../release/lib/aseutl.bsc"
+				OutputFile=".\../../release/bin/asetestawk++.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -86,9 +105,9 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\..\debug\lib"
-			IntermediateDirectory=".\debug"
-			ConfigurationType="4"
+			OutputDirectory=".\..\..\debug\bin"
+			IntermediateDirectory=".\debug\cpp"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -108,16 +127,20 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				TypeLibraryName=".\../../debug/bin/asetestawk++.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../.."
-				PreprocessorDefinitions="_DEBUG;WIN32"
+				AdditionalIncludeDirectories="..\..\.."
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				DisableLanguageExtensions="true"
+				PrecompiledHeaderFile=".\debug\cpp\asetestawk++.pch"
+				AssemblerListingLocation=""
+				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
@@ -134,10 +157,21 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				AdditionalDependencies="asecmn.lib aseawk.lib aseawk++.lib aseutl.lib"
+				OutputFile="..\..\debug\bin\aseawk++.exe"
+				LinkIncremental="2"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\..\debug\lib"
+				GenerateDebugInformation="true"
+				SubSystem="1"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -145,10 +179,16 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../debug/lib/aseutl.bsc"
+				OutputFile=".\../../debug/bin/asetestawk++.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -163,51 +203,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="ctype.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="main.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="stdio.c"
+				RelativePath="Awk.cpp"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -233,18 +229,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
-			<File
-				RelativePath="ctype.h"
-				>
-			</File>
-			<File
-				RelativePath="main.h"
-				>
-			</File>
-			<File
-				RelativePath="stdio.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

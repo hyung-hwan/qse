@@ -50,10 +50,6 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\release/asetestawk.pch"
-				AssemblerListingLocation=".\release/"
-				ObjectFile=".\release/"
-				ProgramDataBaseFileName=".\release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -75,7 +71,6 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\release\lib"
-				ProgramDatabaseFile=".\../../release/bin/aseawk.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 			/>
@@ -141,10 +136,6 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\debug/asetestawk.pch"
-				AssemblerListingLocation=".\debug/"
-				ObjectFile=".\debug/"
-				ProgramDataBaseFileName=".\debug/"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -169,7 +160,6 @@
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\debug\lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\../../debug/bin/aseawk.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 			/>

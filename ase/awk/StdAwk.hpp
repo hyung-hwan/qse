@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.5 2007/05/09 16:07:44 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.7 2007/05/11 16:25:38 bacon Exp $
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_
@@ -18,9 +18,23 @@ namespace ASE
 		int open ();
 
 	protected:
-		int sin (size_t nargs, const Value* args, Value* ret);
-		int cos (size_t nargs, const Value* args, Value* ret);
-		int tan (size_t nargs, const Value* args, Value* ret);
+		int sin (Return* ret, const Argument* args, size_t nargs);
+		int cos (Return* ret, const Argument* args, size_t nargs);
+		int tan (Return* ret, const Argument* args, size_t nargs);
+		int atan2 (Return* ret, const Argument* args, size_t nargs);
+		int log (Return* ret, const Argument* args, size_t nargs);
+		int exp (Return* ret, const Argument* args, size_t nargs);
+		int sqrt (Return* ret, const Argument* args, size_t nargs);
+		int fnint (Return* ret, const Argument* args, size_t nargs);
+		int rand (Return* ret, const Argument* args, size_t nargs);
+		int srand (Return* ret, const Argument* args, size_t nargs);
+		int systime (Return* ret, const Argument* args, size_t nargs);
+		int strftime (Return* ret, const Argument* args, size_t nargs);
+		int strfgmtime (Return* ret, const Argument* args, size_t nargs);
+		int system (Return* ret, const Argument* args, size_t nargs);
+
+	protected:
+		unsigned int seed; 
 	};
 
 }
