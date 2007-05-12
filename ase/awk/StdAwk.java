@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.4 2007/05/05 16:32:46 bacon Exp $
+ * $Id: StdAwk.java,v 1.5 2007/05/11 16:25:38 bacon Exp $
  *
  * {License}
  */
@@ -63,7 +63,7 @@ public abstract class StdAwk extends Awk
 		addFunction ("rand", 0, 0); 
 
 		addFunction ("systime", 0, 0);
-		addFunction ("strftime", 0, Integer.MAX_VALUE); 
+		addFunction ("strftime", 0, 2);
 
 		addFunction ("system", 1, 1); 
 	}

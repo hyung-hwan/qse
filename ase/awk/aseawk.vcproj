@@ -49,10 +49,6 @@
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				DisableLanguageExtensions="true"
-				PrecompiledHeaderFile=".\release/aseawk.pch"
-				AssemblerListingLocation=".\release/"
-				ObjectFile=".\release/"
-				ProgramDataBaseFileName=".\release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -69,7 +65,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)\aseawk.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -124,10 +119,6 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				DisableLanguageExtensions="true"
-				PrecompiledHeaderFile=".\debug/aseawk.pch"
-				AssemblerListingLocation=".\debug/"
-				ObjectFile=".\debug/"
-				ProgramDataBaseFileName=".\debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
@@ -145,7 +136,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)\aseawk.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool

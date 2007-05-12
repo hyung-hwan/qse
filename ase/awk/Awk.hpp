@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.16 2007/05/10 16:08:37 bacon Exp $
+ * $Id: Awk.hpp,v 1.21 2007/05/11 17:21:01 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -109,40 +109,74 @@ namespace ASE
 			Mode mode;
 		};
 
-		class Value
+		class Argument
 		{
-		public:
-			Value ();
-			~Value ();
+		protected:
+			friend class Awk;
+
+			Argument ();
+			~Argument ();
+
+		private:
+			Argument (const Argument&);
+			Argument& operator= (const Argument&);
 
 		protected:
-			void init (ase_awk_run_t* run, ase_awk_val_t* v);
+			int init (ase_awk_run_t* run, ase_awk_val_t* v);
 
 		public:
-			bool isNil () const;
-			bool isInt () const;
-			bool isReal () const;
-			bool isStr () const;
-
 			long_t toInt () const;
 			real_t toReal () const;
-			const char_t* toStr (
-				ase_awk_t* awk, size_t* len) const;
-
-			void setInt (long_t l);
-			void setReal (real_t r);
-			const char_t* setStr (
-				ase_awk_t* awk, const char_t* ptr, size_t len);
+			const char_t* toStr (size_t* len) const;
 
 		protected:
 			ase_awk_run_t* run;
 			ase_awk_val_t* val;
 
-			mutable struct
+			ase_long_t inum;
+			ase_real_t rnum;
+
+			struct
 			{
 				char_t*        ptr;
 				size_t         len;
 			} str;
+		};
+
+		class Return
+		{
+		protected:
+			friend class Awk;
+
+			Return (ase_awk_run_t* run);
+			~Return ();
+
+			ase_awk_val_t* toVal () const;
+
+		public:
+			ase_awk_run_t* getRun () const;
+			ase_awk_t* getAwk () const;
+
+			int set (long_t v);
+			int set (real_t v); 
+			int set (char_t* ptr, size_t len);
+			void clear ();
+
+		protected:
+			ase_awk_run_t* run;
+			int type;
+
+			union 
+			{
+				ase_long_t inum;
+				ase_real_t rnum;
+
+				struct
+				{
+					char_t*        ptr;
+					size_t         len;
+				} str;
+			} v;
 		};
 
 		Awk ();
@@ -156,7 +190,7 @@ namespace ASE
 		         const char_t** args = ASE_NULL);
 
 		typedef int (Awk::*FunctionHandler) (
-			size_t nargs, const Value* args, Value* ret);
+			Return* ret, const Argument* args, size_t nargs);
 
 		virtual int addFunction (
 			const char_t* name, size_t minArgs, size_t maxArgs, 
