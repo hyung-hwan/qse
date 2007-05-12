@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.15 2007/05/09 16:07:44 bacon Exp $
+ * $Id: Awk.hpp,v 1.16 2007/05/10 16:08:37 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -115,35 +115,33 @@ namespace ASE
 			Value ();
 			~Value ();
 
+		protected:
+			void init (ase_awk_run_t* run, ase_awk_val_t* v);
+
+		public:
 			bool isNil () const;
 			bool isInt () const;
 			bool isReal () const;
 			bool isStr () const;
-
-			void setInt (long_t l);
-			void setReal (real_t r);
-			const char_t* setStr (
-				ase_awk_t* awk, const char_t* ptr, size_t len);
 
 			long_t toInt () const;
 			real_t toReal () const;
 			const char_t* toStr (
 				ase_awk_t* awk, size_t* len) const;
 
-		protected:
-			mutable int type;
+			void setInt (long_t l);
+			void setReal (real_t r);
+			const char_t* setStr (
+				ase_awk_t* awk, const char_t* ptr, size_t len);
 
-			mutable union
-			{
-				long_t l;
-				real_t r;
-			} num;
+		protected:
+			ase_awk_run_t* run;
+			ase_awk_val_t* val;
 
 			mutable struct
 			{
-				ase_awk_t* awk;
-				char_t*    ptr;
-				size_t     len;
+				char_t*        ptr;
+				size_t         len;
 			} str;
 		};
 
