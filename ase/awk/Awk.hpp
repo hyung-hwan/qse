@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.21 2007/05/11 17:21:01 bacon Exp $
+ * $Id: Awk.hpp,v 1.22 2007/05/12 03:53:32 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -128,6 +128,9 @@ namespace ASE
 			long_t toInt () const;
 			real_t toReal () const;
 			const char_t* toStr (size_t* len) const;
+
+			ase_awk_run_t* getRun () const;
+			ase_awk_t* getAwk () const;
 
 		protected:
 			ase_awk_run_t* run;

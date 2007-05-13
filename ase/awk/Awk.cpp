@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.21 2007/05/11 16:40:20 bacon Exp $
+ * $Id: Awk.cpp,v 1.22 2007/05/12 03:53:32 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -101,7 +101,7 @@ namespace ASE
 
 	int Awk::Argument::init (ase_awk_run_t* run, ase_awk_val_t* v)
 	{
-		/* this method is used internally.
+		/* this method is used internally only
 		 * and should never be called more than once */
 		ASE_ASSERT (this->run == ASE_NULL && this->val == ASE_NULL);
 		ASE_ASSERT (run != ASE_NULL && v != ASE_NULL);
@@ -183,6 +183,18 @@ namespace ASE
 			*len = ((ase_awk_val_str_t*)this->val)->len;
 			return ((ase_awk_val_str_t*)this->val)->buf;
 		}
+	}
+
+	ase_awk_run_t* Awk::Argument::getRun () const
+	{
+		ASE_ASSERT (this->run != ASE_NULL);
+		return this->run;
+	}
+
+	ase_awk_t* Awk::Argument::getAwk () const
+	{
+		ASE_ASSERT (this->run != ASE_NULL);
+		return ase_awk_getrunawk (this->run);
 	}
 
 	Awk::Return::Return (ase_awk_run_t* run): run (run), type (ASE_AWK_VAL_NIL)
