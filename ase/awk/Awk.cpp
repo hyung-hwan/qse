@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.22 2007/05/12 03:53:32 bacon Exp $
+ * $Id: Awk.cpp,v 1.23 2007/05/12 17:05:07 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -550,22 +550,31 @@ namespace ASE
 		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_PIPE);
 
 		Pipe pipe (epa->name, (Pipe::Mode)epa->mode);
+		ssize_t n;
 
 		switch (cmd)
 		{
 			case ASE_AWK_IO_OPEN:
-				return awk->openPipe (pipe);
+				n = awk->openPipe (pipe);
+				if (n >= 0) epa->handle = (void*)pipe.getHandle();
+				return n;
+
 			case ASE_AWK_IO_CLOSE:
+				pipe.setHandle (epa->handle);
 				return awk->closePipe (pipe);
 
 			case ASE_AWK_IO_READ:
+				pipe.setHandle (epa->handle);
 				return awk->readPipe (pipe, data, count);
 			case ASE_AWK_IO_WRITE:
+				pipe.setHandle (epa->handle);
 				return awk->writePipe (pipe, data, count);
 
 			case ASE_AWK_IO_FLUSH:
+				pipe.setHandle (epa->handle);
 				return awk->flushPipe (pipe);
 			case ASE_AWK_IO_NEXT:
+				pipe.setHandle (epa->handle);
 				return awk->nextPipe (pipe);
 		}
 
@@ -581,22 +590,31 @@ namespace ASE
 		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_FILE);
 
 		File file (epa->name, (File::Mode)epa->mode);
+		ssize_t n;
 
 		switch (cmd)
 		{
 			case ASE_AWK_IO_OPEN:
-				return awk->openFile (file);
+				n = awk->openFile (file);
+				if (n >= 0) epa->handle = (void*)file.getHandle();
+				return n;
+
 			case ASE_AWK_IO_CLOSE:
+				file.setHandle (epa->handle);
 				return awk->closeFile (file);
 
 			case ASE_AWK_IO_READ:
+				file.setHandle (epa->handle);
 				return awk->readFile (file, data, count);
 			case ASE_AWK_IO_WRITE:
+				file.setHandle (epa->handle);
 				return awk->writeFile (file, data, count);
 
 			case ASE_AWK_IO_FLUSH:
+				file.setHandle (epa->handle);
 				return awk->flushFile (file);
 			case ASE_AWK_IO_NEXT:
+				file.setHandle (epa->handle);
 				return awk->nextFile (file);
 		}
 
@@ -612,22 +630,31 @@ namespace ASE
 		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_CONSOLE);
 
 		Console console (epa->name, (Console::Mode)epa->mode);
+		ssize_t n;
 
 		switch (cmd)
 		{
 			case ASE_AWK_IO_OPEN:
-				return awk->openConsole (console);
+				n = awk->openConsole (console);
+				if (n >= 0) epa->handle = (void*)console.getHandle();
+				return n;
+
 			case ASE_AWK_IO_CLOSE:
+				console.setHandle (epa->handle);
 				return awk->closeConsole (console);
 
 			case ASE_AWK_IO_READ:
+				console.setHandle (epa->handle);
 				return awk->readConsole (console, data, count);
 			case ASE_AWK_IO_WRITE:
+				console.setHandle (epa->handle);
 				return awk->writeConsole (console, data, count);
 
 			case ASE_AWK_IO_FLUSH:
+				console.setHandle (epa->handle);
 				return awk->flushConsole (console);
 			case ASE_AWK_IO_NEXT:
+				console.setHandle (epa->handle);
 				return awk->nextConsole (console);
 		}
 
