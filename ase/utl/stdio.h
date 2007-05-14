@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h,v 1.3 2007/04/30 08:32:51 bacon Exp $
+ * $Id: stdio.h,v 1.4 2007/05/12 17:05:07 bacon Exp $
  */
 
 #ifndef _ASE_UTL_STDIO_H_
@@ -22,12 +22,18 @@
 
 	#define ase_fgets _fgetts
 	#define ase_fgetc _fgettc
+	#define ase_fputs _fputts
+	#define ase_fputc _fputtc
 #elif defined(ASE_CHAR_IS_MCHAR)
 	#define ase_fgets fgets
 	#define ase_fgetc fgetc
+	#define ase_fputs fputs
+	#define ase_fputc fputc
 #else
 	#define ase_fgets fgetws
 	#define ase_fgetc fgetwc
+	#define ase_fputs fputws
+	#define ase_fputc fputwc
 #endif
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.3 2007/04/30 08:32:41 bacon Exp $
+ * $Id: awk.c,v 1.4 2007/05/12 17:05:07 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -412,9 +412,23 @@ static ase_ssize_t awk_extio_file (
 
 		case ASE_AWK_IO_WRITE:
 		{
-			int n = ase_fprintf (
-				(FILE*)epa->handle, ASE_T("%.*s"), size, data);
-			if (n < 0) return -1;
+			FILE* fp = (FILE*)epa->handle;
+			ssize_t left = size;
+
+			while (left > 0)
+			{
+				if (*data == ASE_T('\0')) 
+				{
+					if (ase_fputc (*data, fp) == ASE_CHAR_EOF) return -1;
+					left -= 1; data += 1;
+				}
+				else
+				{
+					int n = ase_fprintf (fp, ASE_T("%.*s"), left, data);
+					if (n < 0) return -1;
+					left -= n; data += n;
+				}
+			}
 
 			return size;
 		}
