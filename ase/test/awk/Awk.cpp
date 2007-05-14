@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.8 2007/05/12 17:05:07 bacon Exp $
+ * $Id: Awk.cpp,v 1.9 2007/05/13 07:05:46 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -86,12 +86,81 @@ protected:
 
 
 	// pipe io handlers 
-	int     openPipe  (Pipe& io) { return -1; }
-	int     closePipe (Pipe& io) { return 0; }
-	ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) { return 0; }
-	ssize_t writePipe (Pipe& io, char_t* buf, size_t len) { return 0; }
-	int     flushPipe (Pipe& io) { return 0; }
-	int     nextPipe  (Pipe& io) { return 0; }
+	int openPipe  (Pipe& io) 
+	{ 
+		Awk::Pipe::Mode mode = io.getMode();
+		FILE* fp = NULL;
+
+		switch (mode)
+		{
+			case Awk::Pipe::READ:
+				fp = ase_popen (io.getName(), ASE_T("r"));
+				break;
+			case Awk::Pipe::WRITE:
+				fp = ase_popen (io.getName(), ASE_T("w"));
+				break;
+		}
+
+		if (fp == NULL) return -1;
+
+		io.setHandle (fp);
+		return 1;
+	}
+
+	int closePipe (Pipe& io) 
+	{
+		fclose ((FILE*)io.getHandle());
+		return 0; 
+	}
+
+	ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) 
+	{ 
+		FILE* fp = (FILE*)io.getHandle();
+		if (ase_fgets (buf, len, fp) == ASE_NULL)
+		{
+			if (ferror(fp)) return -1;
+			return 0;
+		}
+
+		return ase_strlen(buf);
+	}
+
+	ssize_t writePipe (Pipe& io, char_t* buf, size_t len) 
+	{ 
+		FILE* fp = (FILE*)io.getHandle();
+		size_t left = len;
+
+		while (left > 0)
+		{
+			if (*buf == ASE_T('\0')) 
+			{
+				if (ase_fputc (*buf, fp) == ASE_CHAR_EOF) return -1;
+				left -= 1; buf += 1;
+			}
+			else
+			{
+			#if defined(ASE_CHAR_IS_WCHAR) && defined(__linux)
+			/* fwprintf seems to return an error with the file
+			 * pointer opened by popen, as of this writing. 
+			 * anyway, hopefully the following replacement 
+			 * will work all the way. */
+				int n = fprintf (
+					(FILE*)epa->handle, "%.*ls", left, buf);
+			#else
+				int n = ase_fprintf (
+					(FILE*)epa->handle, ASE_T("%.*s"), left, buf);
+			#endif
+
+				if (n < 0) return -1;
+				left -= n; buf += n;
+			}
+		}
+
+		return len;
+	}
+
+	int flushPipe (Pipe& io) { return ::fflush ((FILE*)io.getHandle()); }
+	int nextPipe (Pipe& io) { return -1; }
 
 	// file io handlers 
 	int openFile (File& io) 
@@ -159,15 +228,8 @@ protected:
 		return len;
 	}
 
-	int flushFile (File& io) 
-	{ 
-		return ::fflush ((FILE*)io.getHandle());
-	}
-
-	int nextFile (File& io) 
-	{ 
-		return -1;
-	}
+	int flushFile (File& io) { return ::fflush ((FILE*)io.getHandle()); }
+	int nextFile (File& io) { return -1; }
 
 	// console io handlers 
 	int openConsole  (Console& io) { return 1; }
