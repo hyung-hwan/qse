@@ -1,0 +1,13 @@
+[0.2.0]
+
+* fixed bug (nextofile shown as nextfile in source output)
+* fixed bug (nextofile not allowed in the BEGIN and END block)
+* fixed bug (ASE_MALLOC/ASE_FREE defined wrongly causing test programs
+             to crash in the debug mode when compiled with MSVC/C++.
+
+* added awk c++ classes (awk/Awk.hpp awk/Awk.cpp awk/StdAwk.hpp awk/StdAwk.cpp)
+* added c++ test program (test/awk/Awk.cpp)
+
+[0.1.0]
+
+* initial release

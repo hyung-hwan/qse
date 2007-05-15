@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.23 2007/05/12 17:05:07 bacon Exp $
+ * $Id: Awk.cpp,v 1.27 2007/05/13 14:57:43 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -29,50 +29,82 @@ namespace ASE
 		this->handle = handle;
 	}
 
-	Awk::Extio::Extio (const char_t* name): name(name), handle(ASE_NULL)
+	Awk::Extio::Extio (ase_awk_extio_t* extio): extio (extio)
 	{
 	}
 
 	const Awk::char_t* Awk::Extio::getName () const
 	{
-		return this->name;
+		return extio->name;
 	}
 
 	const void* Awk::Extio::getHandle () const
 	{
-		return this->handle;
+		return extio->handle;
 	}
 
 	void Awk::Extio::setHandle (void* handle)
 	{
-		this->handle = handle;
+		extio->handle = handle;
 	}
 
-	Awk::Pipe::Pipe (char_t* name, Mode mode): Extio(name), mode(mode)
+	ase_awk_run_t* Awk::Extio::getRun () const
+	{
+		return extio->run;
+	}
+
+	ase_awk_t* Awk::Extio::getAwk () const
+	{
+		return ase_awk_getrunawk(extio->run);
+	}
+
+	Awk::Pipe::Pipe (ase_awk_extio_t* extio): Extio(extio)
 	{
 	}
 
-	Awk::File::File (char_t* name, Mode mode): Extio(name), mode(mode)
+	Awk::File::File (ase_awk_extio_t* extio): Extio(extio)
 	{
 	}
 	
-	Awk::Console::Console (char_t* name, Mode mode): Extio(name), mode(mode)
+	Awk::Console::Console (ase_awk_extio_t* extio): Extio(extio), filename(ASE_NULL)
 	{
+	}
+
+	Awk::Console::~Console ()
+	{
+		if (filename != ASE_NULL)
+		{
+			ase_awk_free (ase_awk_getrunawk(extio->run), filename);
+		}
+	}
+
+	int Awk::Console::setFileName (const char_t* name)
+	{
+		if (extio->mode == READ)
+		{
+			return ase_awk_setfilename (
+				extio->run, name, ase_strlen(name));
+		}
+		else
+		{
+			return ase_awk_setofilename (
+				extio->run, name, ase_strlen(name));
+		}
 	}
 
 	Awk::Pipe::Mode Awk::Pipe::getMode () const
 	{
-		return this->mode;
+		return (Mode)extio->mode;
 	}
 
 	Awk::File::Mode Awk::File::getMode () const
 	{
-		return this->mode;
+		return (Mode)extio->mode;
 	}
 
 	Awk::Console::Mode Awk::Console::getMode () const
 	{
-		return this->mode;
+		return (Mode)extio->mode;
 	}
 
 	Awk::Argument::Argument (): run (ASE_NULL), val (ASE_NULL)
@@ -308,11 +340,13 @@ namespace ASE
 		return ase_awk_parse (awk, &srcios);
 	}
 
-	int Awk::run (const char_t* main, const char_t** args)
+	int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	{
 		ASE_ASSERT (awk != ASE_NULL);
 
+		size_t i;
 		ase_awk_runios_t runios;
+		ase_awk_runarg_t* runarg = ASE_NULL;
 
 		runios.pipe = pipeHandler;
 		runios.coproc = ASE_NULL;
@@ -320,8 +354,53 @@ namespace ASE
 		runios.console = consoleHandler;
 		runios.custom_data = this;
 
-		return ase_awk_run (
-			awk, main, &runios, ASE_NULL, ASE_NULL, this);
+		if (nargs > 0)
+		{
+			runarg = (ase_awk_runarg_t*) ase_awk_malloc (
+				awk, ASE_SIZEOF(ase_awk_runarg_t)*(nargs+1));
+
+			if (runarg == ASE_NULL)
+			{
+				// TODO: SET ERROR INFO
+				return -1;
+			}
+
+			for (i = 0; i < nargs; i++)
+			{
+				runarg[i].len = ase_strlen (args[i]);
+				runarg[i].ptr = ase_awk_strxdup (awk, args[i], runarg[i].len);
+				if (runarg[i].ptr == ASE_NULL)
+				{
+					if (i > 0)
+					{
+						for (i-- ; i > 0; i--)
+						{
+							ase_awk_free (awk, runarg[i].ptr);
+						}
+					}
+
+					// TODO: SET ERROR INFO
+					return -1;
+				}
+			}
+
+			runarg[i].ptr = ASE_NULL;
+			runarg[i].len = 0;
+		}
+
+		int n = ase_awk_run (
+			awk, main, &runios, ASE_NULL, runarg, this);
+
+		if (runarg != ASE_NULL) 
+		{
+			for (i--; i > 0; i--)
+			{
+				ase_awk_free (awk, runarg[i].ptr);
+			}
+			ase_awk_free (awk, runarg);
+		}
+
+		return n;
 	}
 
 	int Awk::open ()
@@ -549,32 +628,23 @@ namespace ASE
 
 		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_PIPE);
 
-		Pipe pipe (epa->name, (Pipe::Mode)epa->mode);
-		ssize_t n;
+		Pipe pipe (epa);
 
 		switch (cmd)
 		{
 			case ASE_AWK_IO_OPEN:
-				n = awk->openPipe (pipe);
-				if (n >= 0) epa->handle = (void*)pipe.getHandle();
-				return n;
-
+				return awk->openPipe (pipe);
 			case ASE_AWK_IO_CLOSE:
-				pipe.setHandle (epa->handle);
 				return awk->closePipe (pipe);
 
 			case ASE_AWK_IO_READ:
-				pipe.setHandle (epa->handle);
 				return awk->readPipe (pipe, data, count);
 			case ASE_AWK_IO_WRITE:
-				pipe.setHandle (epa->handle);
 				return awk->writePipe (pipe, data, count);
 
 			case ASE_AWK_IO_FLUSH:
-				pipe.setHandle (epa->handle);
 				return awk->flushPipe (pipe);
 			case ASE_AWK_IO_NEXT:
-				pipe.setHandle (epa->handle);
 				return awk->nextPipe (pipe);
 		}
 
@@ -589,32 +659,23 @@ namespace ASE
 
 		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_FILE);
 
-		File file (epa->name, (File::Mode)epa->mode);
-		ssize_t n;
+		File file (epa);
 
 		switch (cmd)
 		{
 			case ASE_AWK_IO_OPEN:
-				n = awk->openFile (file);
-				if (n >= 0) epa->handle = (void*)file.getHandle();
-				return n;
-
+				return awk->openFile (file);
 			case ASE_AWK_IO_CLOSE:
-				file.setHandle (epa->handle);
 				return awk->closeFile (file);
 
 			case ASE_AWK_IO_READ:
-				file.setHandle (epa->handle);
 				return awk->readFile (file, data, count);
 			case ASE_AWK_IO_WRITE:
-				file.setHandle (epa->handle);
 				return awk->writeFile (file, data, count);
 
 			case ASE_AWK_IO_FLUSH:
-				file.setHandle (epa->handle);
 				return awk->flushFile (file);
 			case ASE_AWK_IO_NEXT:
-				file.setHandle (epa->handle);
 				return awk->nextFile (file);
 		}
 
@@ -629,32 +690,23 @@ namespace ASE
 
 		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_CONSOLE);
 
-		Console console (epa->name, (Console::Mode)epa->mode);
-		ssize_t n;
+		Console console (epa);
 
 		switch (cmd)
 		{
 			case ASE_AWK_IO_OPEN:
-				n = awk->openConsole (console);
-				if (n >= 0) epa->handle = (void*)console.getHandle();
-				return n;
-
+				return awk->openConsole (console);
 			case ASE_AWK_IO_CLOSE:
-				console.setHandle (epa->handle);
 				return awk->closeConsole (console);
 
 			case ASE_AWK_IO_READ:
-				console.setHandle (epa->handle);
 				return awk->readConsole (console, data, count);
 			case ASE_AWK_IO_WRITE:
-				console.setHandle (epa->handle);
 				return awk->writeConsole (console, data, count);
 
 			case ASE_AWK_IO_FLUSH:
-				console.setHandle (epa->handle);
 				return awk->flushConsole (console);
 			case ASE_AWK_IO_NEXT:
-				console.setHandle (epa->handle);
 				return awk->nextConsole (console);
 		}
 

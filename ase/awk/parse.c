@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.4 2007/05/05 16:32:46 bacon Exp $
+ * $Id: parse.c,v 1.5 2007/05/13 14:43:58 bacon Exp $
  *
  * {License}
  */
@@ -3650,12 +3650,12 @@ static ase_awk_nde_t* parse_nextfile (ase_awk_t* awk, ase_size_t line, int out)
 {
 	ase_awk_nde_nextfile_t* nde;
 
-	if (awk->parse.id.block == PARSE_BEGIN_BLOCK)
+	if (!out && awk->parse.id.block == PARSE_BEGIN_BLOCK)
 	{
 		SETERRLIN (awk, ASE_AWK_ENEXTFBEG, line);
 		return ASE_NULL;
 	}
-	if (awk->parse.id.block == PARSE_END_BLOCK)
+	if (!out && awk->parse.id.block == PARSE_END_BLOCK)
 	{
 		SETERRLIN (awk, ASE_AWK_ENEXTFEND, line);
 		return ASE_NULL;

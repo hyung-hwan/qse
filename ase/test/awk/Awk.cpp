@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.9 2007/05/13 07:05:46 bacon Exp $
+ * $Id: Awk.cpp,v 1.11 2007/05/13 14:43:58 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -19,58 +19,92 @@
 class TestAwk: public ASE::StdAwk
 {
 public:
+	TestAwk (): srcInName(ASE_NULL), srcOutName(ASE_NULL), 
+	            numConInFiles(0), numConOutFiles(0)
+	{
+	}
+
 	~TestAwk ()
 	{
 		close ();
 	}
 
-	int parse (const char_t* name)
+	int addConsoleInput (const char_t* file)
 	{
-		ase_strxcpy (sourceInName, ASE_COUNTOF(sourceInName), name);
-		return StdAwk::parse ();
-	}
-
-protected:
-	int openSource (Source& io)
-	{
-		Source::Mode mode = io.getMode();
-
-		if (mode == Source::READ)
+		if (numConInFiles < ASE_COUNTOF(conInFile))
 		{
-			FILE* fp = ase_fopen (sourceInName, ASE_T("r"));
-			if (fp == ASE_NULL) return -1;
-			io.setHandle (fp);
-			return 1;
-		}
-		else if (mode == Source::WRITE)
-		{
+			conInFile[numConInFiles++] = file;
 			return 0;
 		}
 
 		return -1;
+	}
+
+	int addConsoleOutput (const char_t* file)
+	{
+		if (numConOutFiles < ASE_COUNTOF(conOutFile))
+		{
+			conOutFile[numConOutFiles++] = file;
+			return 0;
+		}
+
+		return -1;
+	}
+
+	int parse (const char_t* in, const char_t* out)
+	{
+		srcInName = in;
+		srcOutName = out;
+		return StdAwk::parse ();
+	}
+
+protected:
+
+	int openSource (Source& io)
+	{
+		Source::Mode mode = io.getMode();
+		FILE* fp = ASE_NULL;
+
+		if (mode == Source::READ)
+		{
+			if (srcInName == ASE_NULL) 
+			{
+				io.setHandle (stdin);
+				return 0;
+			}
+
+			if (srcInName[0] == ASE_T('\0')) fp = stdin;
+			else fp = ase_fopen (srcInName, ASE_T("r"));
+		}
+		else if (mode == Source::WRITE)
+		{
+			if (srcOutName == ASE_NULL)
+			{
+				io.setHandle (stdout);
+				return 0;
+			}
+
+			if (srcOutName[0] == ASE_T('\0')) fp = stdout;
+			else fp = ase_fopen (srcOutName, ASE_T("w"));
+		}
+
+		if (fp == ASE_NULL) return -1;
+		io.setHandle (fp);
+		return 1;
 	}
 
 	int closeSource (Source& io)
 	{
 		Source::Mode mode = io.getMode();
-
-		if (mode == Source::READ)
-		{
-			fclose ((FILE*)io.getHandle());
-			io.setHandle (ASE_NULL);
-			return 0;
-		}
-		else if (mode == Source::WRITE)
-		{
-			return 0;
-		}
-
-		return -1;
+		FILE* fp = (FILE*)io.getHandle();
+		if (fp != stdin && fp != stdout && fp != stderr) fclose (fp);
+		io.setHandle (ASE_NULL);
+		return 0;
 	}
 
-	ssize_t readSource (Source& io, char_t* buf, size_t count)
+	ssize_t readSource (Source& io, char_t* buf, size_t len)
 	{
-		if (count <= 0) return -1;
+		if (len <= 0) return -1;
 
 		// TOOD: read more characters...
 		cint_t c = ase_fgetc ((FILE*)io.getHandle());
@@ -79,14 +113,31 @@ protected:
 		return 1;
 	}
 
-	ssize_t writeSource (Source& io, char_t* buf, size_t count)
+	ssize_t writeSource (Source& io, char_t* buf, size_t len)
 	{
-		return 0;
+		FILE* fp = (FILE*)io.getHandle();
+		size_t left = len;
+
+		while (left > 0)
+		{
+			if (*buf == ASE_T('\0')) 
+			{
+				if (ase_fputc (*buf, fp) == ASE_CHAR_EOF) return -1;
+				left -= 1; buf += 1;
+			}
+			else
+			{
+				int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
+				if (n < 0) return -1;
+				left -= n; buf += n;
+			}
+		}
+
+		return len;
 	}
 
-
 	// pipe io handlers 
-	int openPipe  (Pipe& io) 
+	int openPipe (Pipe& io) 
 	{ 
 		Awk::Pipe::Mode mode = io.getMode();
 		FILE* fp = NULL;
@@ -134,7 +185,14 @@ protected:
 		{
 			if (*buf == ASE_T('\0')) 
 			{
-				if (ase_fputc (*buf, fp) == ASE_CHAR_EOF) return -1;
+			#if defined(ASE_CHAR_IS_WCHAR) && defined(__linux)
+				if (fputc ('\0', fp) == EOF)
+			#else
+				if (ase_fputc (*buf, fp) == ASE_CHAR_EOF) 
+			#endif
+				{
+					return -1;
+				}
 				left -= 1; buf += 1;
 			}
 			else
@@ -144,14 +202,21 @@ protected:
 			 * pointer opened by popen, as of this writing. 
 			 * anyway, hopefully the following replacement 
 			 * will work all the way. */
-				int n = fprintf (
-					(FILE*)epa->handle, "%.*ls", left, buf);
+				int n = fprintf (fp, "%.*ls", left, buf);
+				if (n >= 0)
+				{
+					size_t x;
+					for (x = 0; x < left; x++)
+					{
+						if (buf[x] == ASE_T('\0')) break;
+					}
+					n = x;
+				}
 			#else
-				int n = ase_fprintf (
-					(FILE*)epa->handle, ASE_T("%.*s"), left, buf);
+				int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
 			#endif
 
-				if (n < 0) return -1;
+				if (n < 0 || n > left) return -1;
 				left -= n; buf += n;
 			}
 		}
@@ -220,7 +285,7 @@ protected:
 			else
 			{
 				int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
-				if (n < 0) return -1;
+				if (n < 0 || n > left) return -1;
 				left -= n; buf += n;
 			}
 		}
@@ -232,12 +297,75 @@ protected:
 	int nextFile (File& io) { return -1; }
 
 	// console io handlers 
-	int openConsole  (Console& io) { return 1; }
-	int closeConsole (Console& io) { return 0; }
+	int openConsole (Console& io) 
+	{ 
+		Awk::Console::Mode mode = io.getMode();
+		FILE* fp = ASE_NULL;
+		const char_t* fn = ASE_NULL;
 
-	ssize_t readConsole  (Console& io, char_t* buf, size_t len) 
+		switch (mode)
+		{
+			case Awk::Console::READ:
+				if (numConInFiles == 0) fp = stdin;
+				else 
+				{
+					fn = conInFile[0];
+					fp = ase_fopen (fn, ASE_T("r"));
+				}
+				break;
+
+			case Awk::Console::WRITE:
+				if (numConOutFiles == 0) fp = stdout;
+				else 
+				{
+					fn = conOutFile[0];
+					fp = ase_fopen (fn, ASE_T("w"));
+				}
+				break;
+		}
+
+		if (fp == NULL) return -1;
+
+		ConTrack* t = (ConTrack*) ase_awk_malloc (awk, ASE_SIZEOF(ConTrack));
+		if (t == ASE_NULL)
+		{
+			if (fp != stdin && fp != stdout) fclose (fp);
+			return -1;
+		}
+
+		t->handle = fp;
+		t->nextConIdx = 1;
+
+		if (fn != ASE_NULL) 
+		{
+			if (io.setFileName (fn) == -1)
+			{
+				if (fp != stdin && fp != stdout) fclose (fp);
+				ase_awk_free (awk, t);
+				return -1;
+			}
+		}
+
+		io.setHandle (t);
+		return 1;
+	}
+
+	int closeConsole (Console& io) 
+	{ 
+		ConTrack* t = (ConTrack*)io.getHandle();
+		FILE* fp = t->handle;
+
+		if (fp != stdin && fp != stdout && fp != stderr) fclose (fp);
+
+		ase_awk_free (awk, t);
+		return 0;
+	}
+
+	ssize_t readConsole (Console& io, char_t* buf, size_t len) 
 	{
-		FILE* fp = stdin;
+		ConTrack* t = (ConTrack*)io.getHandle();
+		FILE* fp = t->handle;
+
 		if (ase_fgets (buf, len, fp) == ASE_NULL)
 		{
 			if (ferror(fp)) return -1;
@@ -249,7 +377,8 @@ protected:
 
 	ssize_t writeConsole (Console& io, char_t* buf, size_t len) 
 	{
-		FILE* fp = stdout;
+		ConTrack* t = (ConTrack*)io.getHandle();
+		FILE* fp = t->handle;
 		size_t left = len;
 
 		while (left > 0)
@@ -270,11 +399,58 @@ protected:
 		return len;
 	}
 
-	int flushConsole (Console& io) { return ::fflush (stdout); }
-	int nextConsole (Console& io) { return 0; }
+	int flushConsole (Console& io) 
+	{ 
+		ConTrack* t = (ConTrack*)io.getHandle();
+		FILE* fp = t->handle;
+		return ::fflush (fp);
+	}
+
+	int nextConsole (Console& io) 
+	{ 
+		Awk::Console::Mode mode = io.getMode();
+		ConTrack* t = (ConTrack*)io.getHandle();
+		FILE* ofp = t->handle;
+		FILE* nfp = ASE_NULL;
+		const char_t* fn = ASE_NULL;
+
+		switch (mode)
+		{
+			case Awk::Console::READ:
+				if (t->nextConIdx >= numConInFiles) return 0;
+				fn = conInFile[t->nextConIdx];
+				nfp = ase_fopen (fn, ASE_T("r"));
+				break;
+
+			case Awk::Console::WRITE:
+				if (t->nextConIdx >= numConOutFiles) return 0;
+				fn = conOutFile[t->nextConIdx];
+				nfp = ase_fopen (fn, ASE_T("w"));
+				break;
+		}
+
+		if (nfp == ASE_NULL) return -1;
+
+		if (fn != ASE_NULL) 
+		{
+			if (io.setFileName (fn) == -1)
+			{
+				fclose (nfp);
+				return -1;
+			}
+		}
+
+		fclose (ofp);
+
+		t->nextConIdx++;
+		t->handle = nfp;
+
+		return 1;
+	}
+
 
 	// primitive operations 
-	void* allocMem  (size_t n) { return ::malloc (n); }
+	void* allocMem   (size_t n) { return ::malloc (n); }
 	void* reallocMem (void* ptr, size_t n) { return ::realloc (ptr, n); }
 	void  freeMem    (void* ptr) { ::free (ptr); }
 
@@ -308,7 +484,20 @@ protected:
 	}
 
 private:
-	char_t sourceInName[1024+1];
+	const char_t* srcInName;
+	const char_t* srcOutName;
+	
+	struct ConTrack
+	{
+		FILE* handle;
+		size_t nextConIdx;
+	};
+
+	size_t        numConInFiles;
+	const char_t* conInFile[128];
+
+	size_t        numConOutFiles;
+	const char_t* conOutFile[128];
 };
 
 #ifndef NDEBUG
@@ -344,9 +533,126 @@ void ase_assert_printf (const ase_char_t* fmt, ...)
 }
 #endif
 
+static void print_error (const ase_char_t* msg)
+{
+	ase_printf (ASE_T("Error: %s\n"), msg);
+}
+
+static void print_usage (const ase_char_t* argv0)
+{
+	ase_printf (ASE_T("Usage: %s [-m main-function] [-si source-in-file] [-so source-out-file] [-ci console-in-file]* [-co console-out-file]* [-a argument]*\n"), argv0);
+}
+
 int awk_main (int argc, ase_char_t* argv[])
 {
 	TestAwk awk;
+	int mode = 0;
+	const ase_char_t* mainfn = NULL;
+	const ase_char_t* srcin = ASE_T("");
+	const ase_char_t* srcout = NULL;
+	const ase_char_t* args[256];
+	ase_size_t nargs = 0;
+	ase_size_t nsrcins = 0;
+	ase_size_t nsrcouts = 0;
+
+	for (int i = 1; i < argc; i++)
+	{
+		if (mode == 0)
+		{
+			if (ase_strcmp(argv[i], ASE_T("-si")) == 0) mode = 1;
+			else if (ase_strcmp(argv[i], ASE_T("-so")) == 0) mode = 2;
+			else if (ase_strcmp(argv[i], ASE_T("-ci")) == 0) mode = 3;
+			else if (ase_strcmp(argv[i], ASE_T("-co")) == 0) mode = 4;
+			else if (ase_strcmp(argv[i], ASE_T("-a")) == 0) mode = 5;
+			else if (ase_strcmp(argv[i], ASE_T("-m")) == 0) mode = 6;
+			else 
+			{
+				print_usage (argv[0]);
+				return -1;
+			}
+		}
+		else
+		{
+			if (argv[i][0] == ASE_T('-'))
+			{
+				print_usage (argv[0]);
+				return -1;
+			}
+
+			if (mode == 1) // source input 
+			{
+				if (nsrcins != 0) 
+				{
+					print_usage (argv[0]);
+					return -1;
+				}
+	
+				srcin = argv[i];
+				nsrcins++;
+				mode = 0;
+			}
+			else if (mode == 2) // source output 
+			{
+				if (nsrcouts != 0) 
+				{
+					print_usage (argv[0]);
+					return -1;
+				}
+	
+				srcout = argv[i];
+				nsrcouts++;
+				mode = 0;
+			}
+			else if (mode == 3) // console input
+			{
+				if (awk.addConsoleInput (argv[i]) == -1)
+				{
+					print_error (ASE_T("too many console inputs"));
+					return -1;
+				}
+
+				mode = 0;
+			}
+			else if (mode == 4) // console output
+			{
+				if (awk.addConsoleOutput (argv[i]) == -1)
+				{
+					print_error (ASE_T("too many console outputs"));
+					return -1;
+				}
+
+				mode = 0;
+			}
+			else if (mode == 5) // argument mode
+			{
+				if (nargs >= ASE_COUNTOF(args))
+				{
+					print_usage (argv[0]);
+					return -1;
+				}
+
+				args[nargs++] = argv[i];
+				mode = 0;
+			}
+			else if (mode == 6)
+			{
+				if (mainfn != NULL) 
+				{
+					print_usage (argv[0]);
+					return -1;
+				}
+
+				mainfn = argv[i];
+				mode = 0;
+			}
+		}
+	}
+
+	if (mode != 0)
+	{
+		print_usage (argv[0]);
+		return -1;
+	}
 
 	if (awk.open() == -1)
 	{
@@ -354,13 +660,13 @@ int awk_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	if (awk.parse(ASE_T("t.awk")) == -1)
+	if (awk.parse (srcin, srcout) == -1)
 	{
 		ase_fprintf (stderr, ASE_T("cannot parse\n"));
 		return -1;
 	}
 
-	if (awk.run () == -1)
+	if (awk.run (mainfn, args, nargs) == -1)
 	{
 		ase_fprintf (stderr, ASE_T("cannot run\n"));
 		return -1;

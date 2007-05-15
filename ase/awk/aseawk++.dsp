@@ -38,7 +38,7 @@ RSC=rc.exe
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "../release/lib"
-# PROP Intermediate_Dir "release"
+# PROP Intermediate_Dir "release/cpp"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 MTL=midl.exe
@@ -66,7 +66,7 @@ LIB32=link.exe -lib
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "../debug/lib"
-# PROP Intermediate_Dir "debug"
+# PROP Intermediate_Dir "debug/cpp"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 MTL=midl.exe

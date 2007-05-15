@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.4 2007/05/12 17:05:07 bacon Exp $
+ * $Id: awk.c,v 1.6 2007/05/13 14:57:43 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -323,18 +323,48 @@ static ase_ssize_t awk_extio_pipe (
 
 		case ASE_AWK_IO_WRITE:
 		{
-		#if defined(ASE_CHAR_IS_WCHAR) && defined(__linux)
-			/* fwprintf seems to return an error with the file
-			 * pointer opened by popen, as of this writing. 
-			 * anyway, hopefully the following replacement 
-			 * will work all the way. */
-			int n = fprintf (
-				(FILE*)epa->handle, "%.*ls", size, data);
-		#else
-			int n = ase_fprintf (
-				(FILE*)epa->handle, ASE_T("%.*s"), size, data);
-		#endif
-			if (n < 0) return -1;
+			FILE* fp = (FILE*)epa->handle;
+			size_t left = size;
+
+			while (left > 0)
+			{
+				if (*data == ASE_T('\0')) 
+				{
+				#if defined(ASE_CHAR_IS_WCHAR) && defined(__linux)
+					if (fputc ('\0', fp) == EOF)
+				#else
+					if (ase_fputc (*data, fp) == ASE_CHAR_EOF) 
+				#endif
+					{
+						return -1;
+					}
+					left -= 1; data += 1;
+				}
+				else
+				{
+				#if defined(ASE_CHAR_IS_WCHAR) && defined(__linux)
+				/* fwprintf seems to return an error with the file
+				 * pointer opened by popen, as of this writing. 
+				 * anyway, hopefully the following replacement 
+				 * will work all the way. */
+					int n = fprintf (fp, "%.*ls", left, data);
+					if (n >= 0)
+					{
+						size_t x;
+						for (x = 0; x < left; x++)
+						{
+							if (data[x] == ASE_T('\0')) break;
+						}
+						n = x;
+					}
+				#else
+					int n = ase_fprintf (fp, ASE_T("%.*s"), left, data);
+				#endif
+	
+					if (n < 0 || n > left) return -1;
+					left -= n; data += n;
+				}
+			}
 
 			return size;
 		}
@@ -342,7 +372,7 @@ static ase_ssize_t awk_extio_pipe (
 		case ASE_AWK_IO_FLUSH:
 		{
 			if (epa->mode == ASE_AWK_EXTIO_PIPE_READ) return -1;
-			else return 0;
+			return fflush ((FILE*)epa->handle);
 		}
 
 		case ASE_AWK_IO_NEXT:
@@ -413,7 +443,7 @@ static ase_ssize_t awk_extio_file (
 		case ASE_AWK_IO_WRITE:
 		{
 			FILE* fp = (FILE*)epa->handle;
-			ssize_t left = size;
+			ase_ssize_t left = size;
 
 			while (left > 0)
 			{
