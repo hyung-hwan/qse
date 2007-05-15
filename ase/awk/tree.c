@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: tree.c,v 1.4 2007/05/13 14:43:58 bacon Exp $
  *
  * {License}
  */
@@ -817,7 +817,10 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			case ASE_AWK_NDE_NEXTFILE:
 			{
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("nextfile;"));
+				if (((ase_awk_nde_nextfile_t*)p)->out)
+					PUT_SRCSTR (awk, ASE_T("nextofile;"));
+				else
+					PUT_SRCSTR (awk, ASE_T("nextfile;"));
 				PUT_NEWLINE (awk);
 				break;
 			}

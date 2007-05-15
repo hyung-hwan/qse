@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.11 2007/05/11 17:21:01 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.12 2007/05/13 10:49:32 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -39,8 +39,8 @@ namespace ASE
 				ASE_AWK_BLOCKLESS | 
 				ASE_AWK_STRBASEONE | 
 				ASE_AWK_STRIPSPACES | 
-				ASE_AWK_NEXTOFILE /*|
-				ASE_AWK_ARGSTOMAIN*/;
+				ASE_AWK_NEXTOFILE |
+				ASE_AWK_ARGSTOMAIN;
 			ase_awk_setoption (awk, opt);
 
 

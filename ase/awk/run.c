@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.4 2007/05/05 16:32:46 bacon Exp $
+ * $Id: run.c,v 1.5 2007/05/13 14:43:58 bacon Exp $
  *
  * {License}
  */
@@ -2235,6 +2235,8 @@ static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 {
 	int n;
 
+	/* nextofile can be called from BEGIN and END block unlike nextfile */
+
 	n = ase_awk_nextextio_write (run, ASE_AWK_OUT_CONSOLE, ASE_T(""));
 	if (n == -1)
 	{
@@ -2245,8 +2247,9 @@ static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 
 	if (n == 0)
 	{
-		/* TODO: should it terminate the program 
-	 	 *       when there is no more output console? */
+		/* should it terminate the program there is no more 
+		 * output console? no. there will just be no more console 
+		 * output */
 		/*run->exit_level = EXIT_GLOBAL;*/
 		return 0;
 	}

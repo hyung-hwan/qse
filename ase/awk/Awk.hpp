@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.22 2007/05/12 03:53:32 bacon Exp $
+ * $Id: Awk.hpp,v 1.25 2007/05/13 14:43:58 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -46,15 +46,17 @@ namespace ASE
 		class Extio
 		{
 		public:
-			Extio (const char_t* name);
+			Extio (ase_awk_extio_t* extio);
 
 			const char_t* getName() const;
 			const void* getHandle () const;
 			void  setHandle (void* handle);
 
-		private:
-			const char_t* name;
-			void* handle;
+			ase_awk_run_t* getRun () const;
+			ase_awk_t* getAwk () const;
+
+		protected:
+			ase_awk_extio_t* extio;
 		};
 
 		class Pipe: public Extio
@@ -66,12 +68,8 @@ namespace ASE
 				WRITE = ASE_AWK_EXTIO_PIPE_WRITE
 			};
 
-			Pipe (char_t* name, Mode mode);
-
+			Pipe (ase_awk_extio_t* extio);
 			Mode getMode () const;
-
-		private:
-			Mode mode;
 		};
 
 		class File: public Extio
@@ -84,12 +82,8 @@ namespace ASE
 				APPEND = ASE_AWK_EXTIO_FILE_APPEND
 			};
 
-			File (char_t* name, Mode mode);
-
+			File (ase_awk_extio_t* extio);
 			Mode getMode () const;
-
-		private:
-			Mode mode;
 		};
 
 		class Console: public Extio
@@ -101,12 +95,14 @@ namespace ASE
 				WRITE = ASE_AWK_EXTIO_CONSOLE_WRITE
 			};
 
-			Console (char_t* name, Mode mode);
+			Console (ase_awk_extio_t* extio);
+			~Console ();
 
 			Mode getMode () const;
+			int setFileName (const char_t* name);
 
 		private:
-			Mode mode;
+			char_t* filename;
 		};
 
 		class Argument
@@ -190,7 +186,7 @@ namespace ASE
 
 		virtual int parse ();
 		virtual int run (const char_t* main = ASE_NULL, 
-		         const char_t** args = ASE_NULL);
+		         const char_t** args = ASE_NULL, size_t nargs = 0);
 
 		typedef int (Awk::*FunctionHandler) (
 			Return* ret, const Argument* args, size_t nargs);

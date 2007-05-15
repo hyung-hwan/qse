@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h,v 1.3 2007/04/30 06:09:46 bacon Exp $
+ * $Id: lsp_i.h,v 1.4 2007/05/13 15:45:14 bacon Exp $
  *
  * {License}
  */
@@ -22,18 +22,9 @@
 #pragma warning (disable: 4996)
 #endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	#define _CRTDBG_MAP_ALLOC
-	#include <crtdbg.h>
-
-	#define ASE_LSP_MALLOC(lsp,size) malloc (size)
-	#define ASE_LSP_REALLOC(lsp,ptr,size) realloc (ptr, size)
-	#define ASE_LSP_FREE(lsp,ptr) free (ptr)
-#else
-	#define ASE_LSP_MALLOC(lsp,size) ASE_MALLOC(&(lsp)->prmfns.mmgr,size)
-	#define ASE_LSP_REALLOC(lsp,ptr,size) ASE_REALLOC(&(lsp)->prmfns.mmgr,ptr,size)
-	#define ASE_LSP_FREE(lsp,ptr) ASE_FREE(&(lsp)->prmfns.mmgr,ptr)
-#endif
+#define ASE_LSP_MALLOC(lsp,size)      ASE_MALLOC(&(lsp)->prmfns.mmgr,size)
+#define ASE_LSP_REALLOC(lsp,ptr,size) ASE_REALLOC(&(lsp)->prmfns.mmgr,ptr,size)
+#define ASE_LSP_FREE(lsp,ptr)         ASE_FREE(&(lsp)->prmfns.mmgr,ptr)
 
 #define ASE_LSP_ISUPPER(lsp,c)  ASE_ISUPPER(&(lsp)->prmfns.ccls,c)
 #define ASE_LSP_ISLOWER(lsp,c)  ASE_ISLOWER(&(lsp)->prmfns.ccls,c)
