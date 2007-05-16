@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.25 2007/05/13 14:43:58 bacon Exp $
+ * $Id: Awk.hpp,v 1.26 2007/05/14 08:40:13 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -23,6 +23,12 @@ namespace ASE
 		typedef ase_long_t  long_t;
 		typedef ase_real_t  real_t;
 
+		typedef ase_awk_map_t map_t;
+		typedef ase_awk_pair_t pair_t;
+		typedef ase_awk_extio_t extio_t;
+		typedef ase_awk_run_t run_t;
+		typedef ase_awk_t awk_t;
+
 		class Source
 		{
 		public:
@@ -45,36 +51,44 @@ namespace ASE
 
 		class Extio
 		{
-		public:
-			Extio (ase_awk_extio_t* extio);
+		protected:
+			Extio (extio_t* extio);
 
+		public:
 			const char_t* getName() const;
 			const void* getHandle () const;
 			void  setHandle (void* handle);
 
-			ase_awk_run_t* getRun () const;
-			ase_awk_t* getAwk () const;
+			run_t* getRun () const;
+			awk_t* getAwk () const;
 
 		protected:
-			ase_awk_extio_t* extio;
+			extio_t* extio;
 		};
 
 		class Pipe: public Extio
 		{
 		public:
+			friend class Awk;
+
 			enum Mode
 			{
 				READ = ASE_AWK_EXTIO_PIPE_READ,
 				WRITE = ASE_AWK_EXTIO_PIPE_WRITE
 			};
 
-			Pipe (ase_awk_extio_t* extio);
+		protected:
+			Pipe (extio_t* extio);
+
+		public:
 			Mode getMode () const;
 		};
 
 		class File: public Extio
 		{
 		public:
+			friend class Awk;
+
 			enum Mode
 			{
 				READ = ASE_AWK_EXTIO_FILE_READ,
@@ -82,26 +96,33 @@ namespace ASE
 				APPEND = ASE_AWK_EXTIO_FILE_APPEND
 			};
 
-			File (ase_awk_extio_t* extio);
+		protected:
+			File (extio_t* extio);
+
+		public:
 			Mode getMode () const;
 		};
 
 		class Console: public Extio
 		{
 		public:
+			friend class Awk;
+
 			enum Mode
 			{
 				READ = ASE_AWK_EXTIO_CONSOLE_READ,
 				WRITE = ASE_AWK_EXTIO_CONSOLE_WRITE
 			};
 
-			Console (ase_awk_extio_t* extio);
+		protected:
+			Console (extio_t* extio);
 			~Console ();
 
+		public:
 			Mode getMode () const;
 			int setFileName (const char_t* name);
 
-		private:
+		protected:
 			char_t* filename;
 		};
 
@@ -118,18 +139,18 @@ namespace ASE
 			Argument& operator= (const Argument&);
 
 		protected:
-			int init (ase_awk_run_t* run, ase_awk_val_t* v);
+			int init (run_t* run, ase_awk_val_t* v);
 
 		public:
 			long_t toInt () const;
 			real_t toReal () const;
 			const char_t* toStr (size_t* len) const;
 
-			ase_awk_run_t* getRun () const;
-			ase_awk_t* getAwk () const;
+			run_t* getRun () const;
+			awk_t* getAwk () const;
 
 		protected:
-			ase_awk_run_t* run;
+			run_t* run;
 			ase_awk_val_t* val;
 
 			ase_long_t inum;
@@ -147,14 +168,14 @@ namespace ASE
 		protected:
 			friend class Awk;
 
-			Return (ase_awk_run_t* run);
+			Return (run_t* run);
 			~Return ();
 
 			ase_awk_val_t* toVal () const;
 
 		public:
-			ase_awk_run_t* getRun () const;
-			ase_awk_t* getAwk () const;
+			run_t* getRun () const;
+			awk_t* getAwk () const;
 
 			int set (long_t v);
 			int set (real_t v); 
@@ -162,7 +183,7 @@ namespace ASE
 			void clear ();
 
 		protected:
-			ase_awk_run_t* run;
+			run_t* run;
 			int type;
 
 			union 
@@ -176,6 +197,16 @@ namespace ASE
 					size_t         len;
 				} str;
 			} v;
+		};
+
+		class Run
+		{
+		protected:
+			friend class Awk;
+			Run (run_t* run);
+
+		protected:
+			run_t* run;
 		};
 
 		Awk ();
@@ -199,7 +230,7 @@ namespace ASE
 	protected:
 
 		virtual int dispatchFunction (
-			ase_awk_run_t* run, const char_t* name, size_t len);
+			run_t* run, const char_t* name, size_t len);
 
 		// source code io handlers 
 		virtual int     openSource  (Source& io) = 0;
@@ -213,7 +244,6 @@ namespace ASE
 		virtual ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) = 0;
 		virtual ssize_t writePipe (Pipe& io, char_t* buf, size_t len) = 0;
 		virtual int     flushPipe (Pipe& io) = 0;
-		virtual int     nextPipe  (Pipe& io) = 0;
 
 		// file io handlers 
 		virtual int     openFile  (File& io) = 0;
@@ -221,7 +251,6 @@ namespace ASE
 		virtual ssize_t readFile  (File& io, char_t* buf, size_t len) = 0;
 		virtual ssize_t writeFile (File& io, char_t* buf, size_t len) = 0;
 		virtual int     flushFile (File& io) = 0;
-		virtual int     nextFile  (File& io) = 0;
 
 		// console io handlers 
 		virtual int     openConsole  (Console& io) = 0;
@@ -232,11 +261,8 @@ namespace ASE
 		virtual int     nextConsole  (Console& io) = 0;
 
 		// run-time callbacks
-		/*
-		virtual void onStart () {}
-		virtual void onReturn () {}
-		virtual void onStop () {}
-		*/
+		virtual void onRunStart (const Run& run);
+		virtual void onRunEnd (const Run& run, int errnum);
 
 		// primitive handlers 
 		virtual void* allocMem   (size_t n) = 0;
@@ -276,8 +302,11 @@ namespace ASE
         		int cmd, void* arg, char_t* data, size_t count);
 
 		static int functionHandler (
-			ase_awk_run_t* run, const char_t* name, size_t len);
+			run_t* run, const char_t* name, size_t len);
 		static void freeFunctionMapValue (void* owner, void* value);
+
+		static void onRunStart (run_t* run, void* custom);
+		static void onRunEnd (run_t* run, int errnum, void* custom);
 
 		static void* allocMem   (void* custom, size_t n);
 		static void* reallocMem (void* custom, void* ptr, size_t n);
@@ -303,11 +332,15 @@ namespace ASE
 		static void   dprintf (void* custom, const char_t* fmt, ...);
 
 	protected:
-		ase_awk_t* awk;
-		ase_awk_map_t* functionMap;
+		awk_t* awk;
+		map_t* functionMap;
 
 		Source sourceIn;
 		Source sourceOut;
+
+	private:
+		Awk (const Awk&);
+		Awk& operator= (const Awk&);
 	};
 
 }

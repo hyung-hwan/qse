@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.11 2007/05/13 14:43:58 bacon Exp $
+ * $Id: Awk.cpp,v 1.12 2007/05/14 08:40:13 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -59,6 +59,16 @@ public:
 	}
 
 protected:
+
+	void onRunStart (const Run& run)
+	{
+		wprintf (L"*** awk run started ***\n");
+	}
+
+	void onRunEnd (const Run& run, int errnum)
+	{
+		wprintf (L"*** awk run ended ***\n");
+	}
 
 	int openSource (Source& io)
 	{
@@ -225,7 +235,6 @@ protected:
 	}
 
 	int flushPipe (Pipe& io) { return ::fflush ((FILE*)io.getHandle()); }
-	int nextPipe (Pipe& io) { return -1; }
 
 	// file io handlers 
 	int openFile (File& io) 
@@ -294,7 +303,6 @@ protected:
 	}
 
 	int flushFile (File& io) { return ::fflush ((FILE*)io.getHandle()); }
-	int nextFile (File& io) { return -1; }
 
 	// console io handlers 
 	int openConsole (Console& io) 
