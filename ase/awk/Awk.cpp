@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.27 2007/05/13 14:57:43 bacon Exp $
+ * $Id: Awk.cpp,v 1.28 2007/05/14 08:40:13 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -9,6 +9,10 @@
 
 namespace ASE
 {
+
+	//////////////////////////////////////////////////////////////////
+	// Awk::Source
+	//////////////////////////////////////////////////////////////////
 
 	Awk::Source::Source (Mode mode): mode (mode)
 	{
@@ -29,7 +33,11 @@ namespace ASE
 		this->handle = handle;
 	}
 
-	Awk::Extio::Extio (ase_awk_extio_t* extio): extio (extio)
+	//////////////////////////////////////////////////////////////////
+	// Awk::Extio
+	//////////////////////////////////////////////////////////////////
+	
+	Awk::Extio::Extio (extio_t* extio): extio (extio)
 	{
 	}
 
@@ -48,25 +56,47 @@ namespace ASE
 		extio->handle = handle;
 	}
 
-	ase_awk_run_t* Awk::Extio::getRun () const
+	Awk::run_t* Awk::Extio::getRun () const
 	{
 		return extio->run;
 	}
 
-	ase_awk_t* Awk::Extio::getAwk () const
+	Awk::awk_t* Awk::Extio::getAwk () const
 	{
 		return ase_awk_getrunawk(extio->run);
 	}
 
-	Awk::Pipe::Pipe (ase_awk_extio_t* extio): Extio(extio)
+	//////////////////////////////////////////////////////////////////
+	// Awk::Pipe
+	//////////////////////////////////////////////////////////////////
+
+	Awk::Pipe::Pipe (extio_t* extio): Extio(extio)
 	{
 	}
 
-	Awk::File::File (ase_awk_extio_t* extio): Extio(extio)
+	Awk::Pipe::Mode Awk::Pipe::getMode () const
+	{
+		return (Mode)extio->mode;
+	}
+
+	//////////////////////////////////////////////////////////////////
+	// Awk::File
+	//////////////////////////////////////////////////////////////////
+	
+	Awk::File::File (extio_t* extio): Extio(extio)
 	{
 	}
+
+	Awk::File::Mode Awk::File::getMode () const
+	{
+		return (Mode)extio->mode;
+	}
+
+	//////////////////////////////////////////////////////////////////
+	// Awk::Console
+	//////////////////////////////////////////////////////////////////
 	
-	Awk::Console::Console (ase_awk_extio_t* extio): Extio(extio), filename(ASE_NULL)
+	Awk::Console::Console (extio_t* extio): Extio(extio), filename(ASE_NULL)
 	{
 	}
 
@@ -92,20 +122,14 @@ namespace ASE
 		}
 	}
 
-	Awk::Pipe::Mode Awk::Pipe::getMode () const
-	{
-		return (Mode)extio->mode;
-	}
-
-	Awk::File::Mode Awk::File::getMode () const
-	{
-		return (Mode)extio->mode;
-	}
-
 	Awk::Console::Mode Awk::Console::getMode () const
 	{
 		return (Mode)extio->mode;
 	}
+
+	//////////////////////////////////////////////////////////////////
+	// Awk::Argument
+	//////////////////////////////////////////////////////////////////
 
 	Awk::Argument::Argument (): run (ASE_NULL), val (ASE_NULL)
 	{
@@ -131,10 +155,10 @@ namespace ASE
 		}
 	}
 
-	int Awk::Argument::init (ase_awk_run_t* run, ase_awk_val_t* v)
+	int Awk::Argument::init (run_t* run, ase_awk_val_t* v)
 	{
-		/* this method is used internally only
-		 * and should never be called more than once */
+		// this method is used internally only
+		// and should never be called more than once 
 		ASE_ASSERT (this->run == ASE_NULL && this->val == ASE_NULL);
 		ASE_ASSERT (run != ASE_NULL && v != ASE_NULL);
 
@@ -217,19 +241,23 @@ namespace ASE
 		}
 	}
 
-	ase_awk_run_t* Awk::Argument::getRun () const
+	Awk::run_t* Awk::Argument::getRun () const
 	{
 		ASE_ASSERT (this->run != ASE_NULL);
 		return this->run;
 	}
 
-	ase_awk_t* Awk::Argument::getAwk () const
+	Awk::awk_t* Awk::Argument::getAwk () const
 	{
 		ASE_ASSERT (this->run != ASE_NULL);
 		return ase_awk_getrunawk (this->run);
 	}
 
-	Awk::Return::Return (ase_awk_run_t* run): run (run), type (ASE_AWK_VAL_NIL)
+	//////////////////////////////////////////////////////////////////
+	// Awk::Return
+	//////////////////////////////////////////////////////////////////
+
+	Awk::Return::Return (run_t* run): run (run), type (ASE_AWK_VAL_NIL)
 	{
 	}
 
@@ -259,12 +287,12 @@ namespace ASE
 		return ASE_NULL;
 	}
 
-	ase_awk_run_t* Awk::Return::getRun () const
+	Awk::run_t* Awk::Return::getRun () const
 	{
 		return this->run;
 	}
 
-	ase_awk_t* Awk::Return::getAwk () const
+	Awk::awk_t* Awk::Return::getAwk () const
 	{
 		return ase_awk_getrunawk (this->run);
 	}
@@ -291,7 +319,7 @@ namespace ASE
 
 	int Awk::Return::set (char_t* ptr, size_t len)
 	{
-		ase_awk_t* awk = ase_awk_getrunawk(this->run);
+		awk_t* awk = ase_awk_getrunawk(this->run);
 		char_t* tmp = ase_awk_strxdup (awk, ptr, len);
 		if (tmp == ASE_NULL) return -1;
 
@@ -309,7 +337,7 @@ namespace ASE
 		if (this->type == ASE_AWK_VAL_STR)
 		{
 			ASE_ASSERT (this->v.str.ptr != ASE_NULL);
-			ase_awk_t* awk = ase_awk_getrunawk(this->run);
+			awk_t* awk = ase_awk_getrunawk(this->run);
 			ase_awk_free (awk, this->v.str.ptr);
 			this->v.str.ptr = ASE_NULL;
 			this->v.str.len = 0;
@@ -317,6 +345,19 @@ namespace ASE
 
 		this->type = ASE_AWK_VAL_NIL;
 	}
+
+
+	//////////////////////////////////////////////////////////////////
+	// Awk::Run
+	//////////////////////////////////////////////////////////////////
+	
+	Awk::Run::Run (run_t* run): run (run)
+	{
+	}
+
+	//////////////////////////////////////////////////////////////////
+	// Awk
+	//////////////////////////////////////////////////////////////////
 
 	Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
 		sourceIn (Source::READ), sourceOut (Source::WRITE)
@@ -346,13 +387,20 @@ namespace ASE
 
 		size_t i;
 		ase_awk_runios_t runios;
+		ase_awk_runcbs_t runcbs;
 		ase_awk_runarg_t* runarg = ASE_NULL;
 
-		runios.pipe = pipeHandler;
-		runios.coproc = ASE_NULL;
-		runios.file = fileHandler;
-		runios.console = consoleHandler;
+		runios.pipe        = pipeHandler;
+		runios.coproc      = ASE_NULL;
+		runios.file        = fileHandler;
+		runios.console     = consoleHandler;
 		runios.custom_data = this;
+
+		runcbs.on_start     = onRunStart;
+		runcbs.on_end       = onRunEnd;
+		runcbs.on_return    = ASE_NULL;
+		runcbs.on_statement = ASE_NULL;
+		runcbs.custom_data  = this;
 
 		if (nargs > 0)
 		{
@@ -389,7 +437,7 @@ namespace ASE
 		}
 
 		int n = ase_awk_run (
-			awk, main, &runios, ASE_NULL, runarg, this);
+			awk, main, &runios, &runcbs, runarg, this);
 
 		if (runarg != ASE_NULL) 
 		{
@@ -470,10 +518,10 @@ namespace ASE
 	}
 
 	int Awk::dispatchFunction (
-		ase_awk_run_t* run, const char_t* name, size_t len)
+		run_t* run, const char_t* name, size_t len)
 	{
-		ase_awk_pair_t* pair;
-		ase_awk_t* awk;
+		pair_t* pair;
+		awk_t* awk;
 
 		awk = ase_awk_getrunawk (run);
 
@@ -559,8 +607,7 @@ namespace ASE
 			return -1;
 		}
 
-		ase_awk_pair_t* pair;
-		pair = ase_awk_map_put (functionMap, name, nameLen, tmp);
+		pair_t* pair = ase_awk_map_put (functionMap, name, nameLen, tmp);
 		if (pair == ASE_NULL)
 		{
 			// TODO: SET ERROR INFO
@@ -582,6 +629,14 @@ namespace ASE
 		if (n == 0) ase_awk_map_remove (functionMap, name, nameLen);
 
 		return n;
+	}
+
+	void Awk::onRunStart (const Run& run)
+	{
+	}
+
+	void Awk::onRunEnd (const Run& run, int errnum)
+	{
 	}
 
 	Awk::ssize_t Awk::sourceReader (
@@ -623,12 +678,12 @@ namespace ASE
 	Awk::ssize_t Awk::pipeHandler (
 		int cmd, void* arg, char_t* data, size_t count)
 	{
-		ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
-		Awk* awk = (Awk*)epa->custom_data;
+		extio_t* extio = (extio_t*)arg;
+		Awk* awk = (Awk*)extio->custom_data;
 
-		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_PIPE);
+		ASE_ASSERT ((extio->type & 0xFF) == ASE_AWK_EXTIO_PIPE);
 
-		Pipe pipe (epa);
+		Pipe pipe (extio);
 
 		switch (cmd)
 		{
@@ -644,8 +699,9 @@ namespace ASE
 
 			case ASE_AWK_IO_FLUSH:
 				return awk->flushPipe (pipe);
+
 			case ASE_AWK_IO_NEXT:
-				return awk->nextPipe (pipe);
+				return -1;
 		}
 
 		return -1;
@@ -654,12 +710,12 @@ namespace ASE
 	Awk::ssize_t Awk::fileHandler (
 		int cmd, void* arg, char_t* data, size_t count)
 	{
-		ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
-		Awk* awk = (Awk*)epa->custom_data;
+		extio_t* extio = (extio_t*)arg;
+		Awk* awk = (Awk*)extio->custom_data;
 
-		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_FILE);
+		ASE_ASSERT ((extio->type & 0xFF) == ASE_AWK_EXTIO_FILE);
 
-		File file (epa);
+		File file (extio);
 
 		switch (cmd)
 		{
@@ -675,8 +731,9 @@ namespace ASE
 
 			case ASE_AWK_IO_FLUSH:
 				return awk->flushFile (file);
+
 			case ASE_AWK_IO_NEXT:
-				return awk->nextFile (file);
+				return -1;
 		}
 
 		return -1;
@@ -685,12 +742,12 @@ namespace ASE
 	Awk::ssize_t Awk::consoleHandler (
 		int cmd, void* arg, char_t* data, size_t count)
 	{
-		ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
-		Awk* awk = (Awk*)epa->custom_data;
+		extio_t* extio = (extio_t*)arg;
+		Awk* awk = (Awk*)extio->custom_data;
 
-		ASE_ASSERT ((epa->type & 0xFF) == ASE_AWK_EXTIO_CONSOLE);
+		ASE_ASSERT ((extio->type & 0xFF) == ASE_AWK_EXTIO_CONSOLE);
 
-		Console console (epa);
+		Console console (extio);
 
 		switch (cmd)
 		{
@@ -714,7 +771,7 @@ namespace ASE
 	}
 
 	int Awk::functionHandler (
-		ase_awk_run_t* run, const char_t* name, size_t len)
+		run_t* run, const char_t* name, size_t len)
 	{
 		Awk* awk = (Awk*) ase_awk_getruncustomdata (run);
 		return awk->dispatchFunction (run, name, len);
@@ -724,6 +781,18 @@ namespace ASE
 	{
 		Awk* awk = (Awk*)owner;
 		ase_awk_free (awk->awk, value);
+	}
+
+	void Awk::onRunStart (run_t* run, void* custom)
+	{
+		Awk* awk = (Awk*)custom;
+		awk->onRunStart (Run(run));
+	}
+
+	void Awk::onRunEnd (run_t* run, int errnum, void* custom)
+	{
+		Awk* awk = (Awk*)custom;
+		awk->onRunEnd (Run(run), errnum);
 	}
 
 	void* Awk::allocMem (void* custom, size_t n)
