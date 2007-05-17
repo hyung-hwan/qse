@@ -1,11 +1,14 @@
 /*
- * $Id: Awk.cpp,v 1.28 2007/05/14 08:40:13 bacon Exp $
+ * $Id: Awk.cpp,v 1.29 2007/05/16 06:43:32 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
 #include <ase/awk/val.h>
 #include <ase/cmn/str.h>
 #include <ase/cmn/mem.h>
+
+#include <stdio.h>
+#include <tchar.h>
 
 namespace ASE
 {
@@ -155,7 +158,47 @@ namespace ASE
 		}
 	}
 
-	int Awk::Argument::init (run_t* run, ase_awk_val_t* v)
+	void* Awk::Argument::operator new (size_t n, awk_t* awk)
+	{
+		void* ptr = ase_awk_malloc (awk, ASE_SIZEOF(awk) + n);
+		if (ptr == ASE_NULL) return ASE_NULL;
+
+		*(awk_t**)ptr = awk;
+		return (char*)ptr+ASE_SIZEOF(awk);
+	}
+
+	void* Awk::Argument::operator new[] (size_t n, awk_t* awk)
+	{
+		void* ptr = ase_awk_malloc (awk, ASE_SIZEOF(awk) + n);
+		if (ptr == ASE_NULL) return ASE_NULL;
+
+		*(awk_t**)ptr = awk;
+		return (char*)ptr+ASE_SIZEOF(awk);
+	}
+
+	void Awk::Argument::operator delete (void* ptr, awk_t* awk)
+	{
+		ase_awk_free (awk, (char*)ptr-ASE_SIZEOF(awk));
+	}
+
+	void Awk::Argument::operator delete[] (void* ptr, awk_t* awk)
+	{
+		ase_awk_free (awk, (char*)ptr-ASE_SIZEOF(awk));
+	}
+
+	void Awk::Argument::operator delete (void* ptr)
+	{
+		void* p = (char*)ptr-ASE_SIZEOF(awk_t*);
+		ase_awk_free (*(awk_t**)p, p);
+	}
+
+	void Awk::Argument::operator delete[] (void* ptr)
+	{
+		void* p = (char*)ptr-ASE_SIZEOF(awk_t*);
+		ase_awk_free (*(awk_t**)p, p);
+	}
+
+	int Awk::Argument::init (run_t* run, val_t* v)
 	{
 		// this method is used internally only
 		// and should never be called more than once 
@@ -266,7 +309,7 @@ namespace ASE
 		clear ();
 	}
 
-	ase_awk_val_t* Awk::Return::toVal () const
+	Awk::val_t* Awk::Return::toVal () const
 	{
 		switch (this->type)
 		{
@@ -537,8 +580,9 @@ namespace ASE
 
 		size_t i, nargs = ase_awk_getnargs(run);
 
-		Argument* args = ASE_NULL;
-		try { args = new Argument [nargs]; } catch (...)  {}
+		//Argument* args = ASE_NULL;
+		//try { args = new Argument [nargs]; } catch (...)  {}
+		Argument* args = new(awk) Argument[nargs];
 		if (args == ASE_NULL) 
 		{
 			// TODO: SET ERROR INFO
@@ -547,7 +591,7 @@ namespace ASE
 
 		for (i = 0; i < nargs; i++)
 		{
-			ase_awk_val_t* v = ase_awk_getarg (run, i);
+			val_t* v = ase_awk_getarg (run, i);
 			if (args[i].init (run, v) == -1)
 			{
 				delete[] args;
@@ -568,7 +612,7 @@ namespace ASE
 			return -1;
 		}	
 
-		ase_awk_val_t* r = ret.toVal ();
+		val_t* r = ret.toVal ();
 		if (r == ASE_NULL) 
 		{
 			// TODO: SET ERROR INFO
