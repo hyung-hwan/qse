@@ -18,6 +18,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -76,6 +77,10 @@
     <ProjectReference Include="..\..\cnt\asecnt.csproj">
       <Project>{7F679165-41FB-4E1E-B3F5-23C5EE94166A}</Project>
       <Name>asecnt</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\net\asenet.vcproj">
+      <Project>{A63E9DF9-1D47-4D81-834C-1D40406C18C4}</Project>
+      <Name>asenet</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
