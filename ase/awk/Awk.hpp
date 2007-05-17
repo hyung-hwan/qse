@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.26 2007/05/14 08:40:13 bacon Exp $
+ * $Id: Awk.hpp,v 1.27 2007/05/16 06:43:32 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -23,6 +23,7 @@ namespace ASE
 		typedef ase_long_t  long_t;
 		typedef ase_real_t  real_t;
 
+		typedef ase_awk_val_t val_t;
 		typedef ase_awk_map_t map_t;
 		typedef ase_awk_pair_t pair_t;
 		typedef ase_awk_extio_t extio_t;
@@ -134,12 +135,24 @@ namespace ASE
 			Argument ();
 			~Argument ();
 
+			// initialization
+			void* operator new (size_t n, awk_t* awk);
+			void* operator new[] (size_t n, awk_t* awk);
+
+			// deletion when initialization fails
+			void operator delete (void* p, awk_t* awk);
+			void operator delete[] (void* p, awk_t* awk);
+
+			// normal deletion
+			void operator delete (void* p);
+			void operator delete[] (void* p);
+
 		private:
 			Argument (const Argument&);
 			Argument& operator= (const Argument&);
 
 		protected:
-			int init (run_t* run, ase_awk_val_t* v);
+			int init (run_t* run, val_t* v);
 
 		public:
 			long_t toInt () const;
@@ -151,7 +164,7 @@ namespace ASE
 
 		protected:
 			run_t* run;
-			ase_awk_val_t* val;
+			val_t* val;
 
 			ase_long_t inum;
 			ase_real_t rnum;
@@ -171,7 +184,7 @@ namespace ASE
 			Return (run_t* run);
 			~Return ();
 
-			ase_awk_val_t* toVal () const;
+			val_t* toVal () const;
 
 		public:
 			run_t* getRun () const;
