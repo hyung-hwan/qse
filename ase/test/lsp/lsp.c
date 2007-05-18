@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c,v 1.3 2007/04/30 08:32:50 bacon Exp $
+ * $Id: lsp.c,v 1.5 2007/05/16 09:15:14 bacon Exp $
  */
 
 #include <ase/lsp/lsp.h>
@@ -23,13 +23,6 @@
 
 #ifdef __linux
 #include <mcheck.h>
-#endif
-
-#if defined(vms) || defined(__vms)
-/* it seems that the main function should be placed in the main object file
- * in OpenVMS. otherwise, the first function in the main object file seems
- * to become the main function resulting in program start-up failure. */
-#include <ase/utl/main.c>
 #endif
 
 #ifndef NDEBUG
@@ -379,7 +372,7 @@ int lsp_main (int argc, ase_char_t* argv[])
 	return 0;
 }
 
-int ase_main (int argc, ase_char_t* argv[])
+int ase_main (int argc, ase_achar_t* argv[])
 {
 	int n;
 
@@ -387,7 +380,7 @@ int ase_main (int argc, ase_char_t* argv[])
 	mtrace ();
 #endif
 
-	n = lsp_main (argc, argv);
+	n = ase_runmain (argc, argv, lsp_main);
 
 #if defined(__linux) && defined(_DEBUG)
 	muntrace ();

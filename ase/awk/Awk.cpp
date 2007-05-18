@@ -1,14 +1,11 @@
 /*
- * $Id: Awk.cpp,v 1.29 2007/05/16 06:43:32 bacon Exp $
+ * $Id: Awk.cpp,v 1.30 2007/05/16 07:13:32 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
 #include <ase/awk/val.h>
 #include <ase/cmn/str.h>
 #include <ase/cmn/mem.h>
-
-#include <stdio.h>
-#include <tchar.h>
 
 namespace ASE
 {
@@ -158,7 +155,7 @@ namespace ASE
 		}
 	}
 
-	void* Awk::Argument::operator new (size_t n, awk_t* awk)
+	void* Awk::Argument::operator new (size_t n, awk_t* awk) throw ()
 	{
 		void* ptr = ase_awk_malloc (awk, ASE_SIZEOF(awk) + n);
 		if (ptr == ASE_NULL) return ASE_NULL;
@@ -167,7 +164,7 @@ namespace ASE
 		return (char*)ptr+ASE_SIZEOF(awk);
 	}
 
-	void* Awk::Argument::operator new[] (size_t n, awk_t* awk)
+	void* Awk::Argument::operator new[] (size_t n, awk_t* awk) throw ()
 	{
 		void* ptr = ase_awk_malloc (awk, ASE_SIZEOF(awk) + n);
 		if (ptr == ASE_NULL) return ASE_NULL;
