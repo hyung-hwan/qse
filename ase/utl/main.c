@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.3 2007/04/30 08:32:50 bacon Exp $
+ * $Id: main.c,v 1.5 2007/05/16 09:28:33 bacon Exp $
  *
  * {License}
  */
@@ -10,19 +10,18 @@
 #include <string.h>
 #include <locale.h>
 
-#if !defined(_WIN32) && defined(ASE_CHAR_IS_MCHAR)
+#if defined(_WIN32)
 
-int main (int argc, char* argv[], char** envp)
+int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
 {
-	setlocale (LC_ALL, "");
-	return ase_main (argc, argv, envp);
+	return mf (argc, argv);
 }
 
-#elif !defined(_WIN32) && defined(ASE_CHAR_IS_WCHAR)
+#elif defined(ASE_CHAR_IS_WCHAR)
 
 #include <wchar.h>
 
-int main (int argc, char* argv[]/*, char** envp*/)
+int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
 {
 	int i, ret;
 	ase_char_t** v;
@@ -73,7 +72,8 @@ int main (int argc, char* argv[]/*, char** envp*/)
 	}
 
 	/* TODO: envp... */
-	ret = ase_main (argc, v, NULL);
+	//ret = mf (argc, v, NULL);
+	ret = mf (argc, v);
 
 exit_main:
 	for (i = 0; i < argc; i++) 
@@ -86,4 +86,3 @@ exit_main:
 }
 
 #endif
-

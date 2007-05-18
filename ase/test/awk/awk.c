@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.6 2007/05/13 14:57:43 bacon Exp $
+ * $Id: awk.c,v 1.8 2007/05/16 09:15:14 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -44,13 +44,6 @@ struct mmgr_data_t
 {
 	HANDLE heap;
 };
-#endif
-
-#if defined(vms) || defined(__vms)
-/* it seems that the main function should be placed in the main object file
- * in OpenVMS. otherwise, the first function in the main object file seems
- * to become the main function resulting in program start-up failure. */
-#include <ase/utl/main.c>
 #endif
 
 #ifndef NDEBUG
@@ -1096,7 +1089,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	return 0;
 }
 
-int ase_main (int argc, ase_char_t* argv[])
+int ase_main (int argc, ase_achar_t* argv[])
 {
 	int n;
 
@@ -1109,7 +1102,7 @@ int ase_main (int argc, ase_char_t* argv[])
 #endif
 */
 
-	n = awk_main (argc, argv);
+	n = ase_runmain (argc, argv, awk_main);
 
 #if defined(__linux) && defined(_DEBUG)
 	muntrace ();

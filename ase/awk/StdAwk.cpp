@@ -1,8 +1,11 @@
 /*
- * $Id: StdAwk.cpp,v 1.12 2007/05/13 10:49:32 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.14 2007/05/16 14:44:13 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
+#include <ase/cmn/str.h>
+#include <ase/utl/stdio.h>
+#include <ase/utl/ctype.h>
 
 #include <stdlib.h>
 #include <math.h>
@@ -195,4 +198,270 @@ namespace ASE
 		return n;
 	#endif
 	}
+
+	int StdAwk::openPipe (Pipe& io) 
+	{ 
+		Awk::Pipe::Mode mode = io.getMode();
+		FILE* fp = NULL;
+
+		switch (mode)
+		{
+			case Awk::Pipe::READ:
+				fp = ase_popen (io.getName(), ASE_T("r"));
+				break;
+			case Awk::Pipe::WRITE:
+				fp = ase_popen (io.getName(), ASE_T("w"));
+				break;
+		}
+
+		if (fp == NULL) return -1;
+
+		io.setHandle (fp);
+		return 1;
+	}
+
+	int StdAwk::closePipe (Pipe& io) 
+	{
+		fclose ((FILE*)io.getHandle());
+		return 0; 
+	}
+
+	StdAwk::ssize_t StdAwk::readPipe (Pipe& io, char_t* buf, size_t len) 
+	{ 
+		// TODO: change this implementation...
+		FILE* fp = (FILE*)io.getHandle();
+		if (ase_fgets (buf, len, fp) == ASE_NULL)
+		{
+			if (ferror(fp)) return -1;
+			return 0;
+		}
+
+		return ase_strlen(buf);
+	}
+
+	
+	StdAwk::ssize_t StdAwk::writePipe (Pipe& io, char_t* buf, size_t len) 
+	{ 
+		FILE* fp = (FILE*)io.getHandle();
+		size_t left = len;
+
+		while (left > 0)
+		{
+			if (*buf == ASE_T('\0')) 
+			{
+			#if defined(ASE_CHAR_IS_WCHAR) && defined(__linux)
+				if (fputc ('\0', fp) == EOF)
+			#else
+				if (ase_fputc (*buf, fp) == ASE_CHAR_EOF) 
+			#endif
+				{
+					return -1;
+				}
+				left -= 1; buf += 1;
+			}
+			else
+			{
+			#if defined(ASE_CHAR_IS_WCHAR) && defined(__linux)
+			// fwprintf seems to return an error with the file
+			// pointer opened by popen, as of this writing. 
+			// anyway, hopefully the following replacement 
+			// will work all the way.
+				int n = fprintf (fp, "%.*ls", left, buf);
+				if (n >= 0)
+				{
+					size_t x;
+					for (x = 0; x < left; x++)
+					{
+						if (buf[x] == ASE_T('\0')) break;
+					}
+					n = x;
+				}
+			#else
+				int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
+			#endif
+
+				if (n < 0 || n > left) return -1;
+				left -= n; buf += n;
+			}
+		}
+
+		return len;
+	}
+
+	int StdAwk::flushPipe (Pipe& io) 
+	{ 
+		return ::fflush ((FILE*)io.getHandle()); 
+	}
+
+	// file io handlers 
+	int StdAwk::openFile (File& io) 
+	{ 
+		Awk::File::Mode mode = io.getMode();
+		FILE* fp = NULL;
+
+		switch (mode)
+		{
+			case Awk::File::READ:
+				fp = ase_fopen (io.getName(), ASE_T("r"));
+				break;
+			case Awk::File::WRITE:
+				fp = ase_fopen (io.getName(), ASE_T("w"));
+				break;
+			case Awk::File::APPEND:
+				fp = ase_fopen (io.getName(), ASE_T("a"));
+				break;
+		}
+
+		if (fp == NULL) return -1;
+
+		io.setHandle (fp);
+		return 1;
+	}
+
+	int StdAwk::closeFile (File& io) 
+	{ 
+		fclose ((FILE*)io.getHandle());
+		return 0; 
+	}
+
+	StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len) 
+	{
+		// TODO: replace ase_fgets by something else
+		FILE* fp = (FILE*)io.getHandle();
+		if (ase_fgets (buf, len, fp) == ASE_NULL)
+		{
+			if (ferror(fp)) return -1;
+			return 0;
+		}
+
+		return ase_strlen(buf);
+	}
+
+	StdAwk::ssize_t StdAwk::writeFile (File& io, char_t* buf, size_t len)
+	{
+		FILE* fp = (FILE*)io.getHandle();
+		size_t left = len;
+
+		while (left > 0)
+		{
+			if (*buf == ASE_T('\0')) 
+			{
+				if (ase_fputc (*buf, fp) == ASE_CHAR_EOF) return -1;
+				left -= 1; buf += 1;
+			}
+			else
+			{
+				int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
+				if (n < 0 || n > left) return -1;
+				left -= n; buf += n;
+			}
+		}
+
+		return len;
+	}
+
+	int StdAwk::flushFile (File& io) 
+	{ 
+		return ::fflush ((FILE*)io.getHandle()); 
+	}
+
+	// memory allocation primitives
+	void* StdAwk::allocMem (size_t n) 
+	{ 
+		return ::malloc (n); 
+	}
+
+	void* StdAwk::reallocMem (void* ptr, size_t n) 
+	{ 
+		return ::realloc (ptr, n); 
+	}
+
+	void  StdAwk::freeMem (void* ptr) 
+	{ 
+		::free (ptr); 
+	}
+
+	// character class primitives
+	StdAwk::bool_t StdAwk::isUpper (cint_t c)
+	{ 
+		return ase_isupper (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isLower (cint_t c) 
+	{
+		return ase_islower (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isAlpha (cint_t c) 
+	{ 
+		return ase_isalpha (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isDigit (cint_t c) 
+	{
+		return ase_isdigit (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isXdigit (cint_t c)
+	{
+		return ase_isxdigit (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isAlnum (cint_t c) 
+	{
+		return ase_isalnum (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isSpace (cint_t c) 
+	{
+		return ase_isspace (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isPrint (cint_t c) 
+	{
+		return ase_isprint (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isGraph (cint_t c) 
+	{ 
+		return ase_isgraph (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isCntrl (cint_t c) 
+	{ 
+		return ase_iscntrl (c); 
+	}
+
+	StdAwk::bool_t StdAwk::isPunct (cint_t c) 
+	{ 
+		return ase_ispunct (c); 
+	}
+
+	StdAwk::cint_t StdAwk::toUpper (cint_t c) 
+	{ 
+		return ase_toupper (c); 
+	}
+
+	StdAwk::cint_t StdAwk::toLower (cint_t c) 
+	{ 
+		return ase_tolower (c); 
+	}
+
+	// miscellaneous primitive
+	StdAwk::real_t StdAwk::pow (real_t x, real_t y) 
+	{ 
+		return ::pow (x, y); 
+	}
+
+	int StdAwk::vsprintf (
+		char_t* buf, size_t size, const char_t* fmt, va_list arg) 
+	{
+		return ase_vsprintf (buf, size, fmt, arg);
+	}
+
+	void StdAwk::vdprintf (const char_t* fmt, va_list arg) 
+	{
+		ase_vfprintf (stderr, fmt, arg);
+	}
+
 }
