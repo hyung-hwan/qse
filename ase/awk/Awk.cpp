@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.30 2007/05/16 07:13:32 bacon Exp $
+ * $Id: Awk.cpp,v 1.31 2007/05/17 15:02:54 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -400,12 +400,105 @@ namespace ASE
 	//////////////////////////////////////////////////////////////////
 
 	Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
-		sourceIn (Source::READ), sourceOut (Source::WRITE)
+		sourceIn (Source::READ), sourceOut (Source::WRITE),
+		errnum (E_NOERR), errlin (0)
+
 	{
 	}
 
 	Awk::~Awk ()
 	{
+	}
+
+	Awk::ErrorCode Awk::getErrorCode ()
+	{
+		return this->errnum;
+	}
+
+	Awk::size_t Awk::getErrorLine ()
+	{
+		return this->errlin;
+	}
+
+	void Awk::setError (ErrorCode code, size_t line)
+	{
+		this->errnum = code;
+		this->errlin = line;
+	}
+
+	void Awk::clearError ()
+	{
+		this->errnum = E_NOERR;
+		this->errlin = 0;
+	}
+
+	int Awk::open ()
+	{
+		ASE_ASSERT (awk == ASE_NULL && functionMap == ASE_NULL);
+
+		ase_awk_prmfns_t prmfns;
+
+		prmfns.mmgr.malloc      = allocMem;
+		prmfns.mmgr.realloc     = reallocMem;
+		prmfns.mmgr.free        = freeMem;
+		prmfns.mmgr.custom_data = this;
+
+		prmfns.ccls.is_upper    = isUpper;
+		prmfns.ccls.is_lower    = isLower;
+		prmfns.ccls.is_alpha    = isAlpha;
+		prmfns.ccls.is_digit    = isDigit;
+		prmfns.ccls.is_xdigit   = isXdigit;
+		prmfns.ccls.is_alnum    = isAlnum;
+		prmfns.ccls.is_space    = isSpace;
+		prmfns.ccls.is_print    = isPrint;
+		prmfns.ccls.is_graph    = isGraph;
+		prmfns.ccls.is_cntrl    = isCntrl;
+		prmfns.ccls.is_punct    = isPunct;
+		prmfns.ccls.to_upper    = toUpper;
+		prmfns.ccls.to_lower    = toLower;
+		prmfns.ccls.custom_data = this;
+
+		prmfns.misc.pow         = pow;
+		prmfns.misc.sprintf     = sprintf;
+		prmfns.misc.dprintf     = dprintf;
+		prmfns.misc.custom_data = this;
+
+		awk = ase_awk_open (&prmfns, this);
+		if (awk == ASE_NULL)
+		{
+			setError (E_NOMEM);
+			return -1;
+		}
+
+		functionMap = ase_awk_map_open (
+			this, 512, freeFunctionMapValue, awk);
+		if (functionMap == ASE_NULL)
+		{
+			ase_awk_close (awk);
+			awk = ASE_NULL;
+
+			setError (E_NOMEM);
+			return -1;
+		}
+
+		return 0;
+	}
+
+	void Awk::close ()
+	{
+		if (functionMap != ASE_NULL)
+		{
+			ase_awk_map_close (functionMap);
+			functionMap = ASE_NULL;
+		}
+
+		if (awk != ASE_NULL) 
+		{
+			ase_awk_close (awk);
+			awk = ASE_NULL;
+		}
+
+		clearError ();
 	}
 
 	int Awk::parse ()
@@ -489,72 +582,6 @@ namespace ASE
 		}
 
 		return n;
-	}
-
-	int Awk::open ()
-	{
-		ASE_ASSERT (awk == ASE_NULL && functionMap == ASE_NULL);
-
-		ase_awk_prmfns_t prmfns;
-
-		prmfns.mmgr.malloc      = allocMem;
-		prmfns.mmgr.realloc     = reallocMem;
-		prmfns.mmgr.free        = freeMem;
-		prmfns.mmgr.custom_data = this;
-
-		prmfns.ccls.is_upper    = isUpper;
-		prmfns.ccls.is_lower    = isLower;
-		prmfns.ccls.is_alpha    = isAlpha;
-		prmfns.ccls.is_digit    = isDigit;
-		prmfns.ccls.is_xdigit   = isXdigit;
-		prmfns.ccls.is_alnum    = isAlnum;
-		prmfns.ccls.is_space    = isSpace;
-		prmfns.ccls.is_print    = isPrint;
-		prmfns.ccls.is_graph    = isGraph;
-		prmfns.ccls.is_cntrl    = isCntrl;
-		prmfns.ccls.is_punct    = isPunct;
-		prmfns.ccls.to_upper    = toUpper;
-		prmfns.ccls.to_lower    = toLower;
-		prmfns.ccls.custom_data = this;
-
-		prmfns.misc.pow         = pow;
-		prmfns.misc.sprintf     = sprintf;
-		prmfns.misc.dprintf     = dprintf;
-		prmfns.misc.custom_data = this;
-
-		awk = ase_awk_open (&prmfns, this);
-		if (awk == ASE_NULL)
-		{
-			// TODO: SET ERROR INFO
-			return -1;
-		}
-
-		functionMap = ase_awk_map_open (
-			this, 512, freeFunctionMapValue, awk);
-		if (functionMap == ASE_NULL)
-		{
-			// TODO: set ERROR INFO -> ENOMEM...
-			ase_awk_close (awk);
-			awk = ASE_NULL;
-			return -1;
-		}
-
-		return 0;
-	}
-
-	void Awk::close ()
-	{
-		if (functionMap != ASE_NULL)
-		{
-			ase_awk_map_close (functionMap);
-			functionMap = ASE_NULL;
-		}
-
-		if (awk != ASE_NULL) 
-		{
-			ase_awk_close (awk);
-			awk = ASE_NULL;
-		}
 	}
 
 	int Awk::dispatchFunction (
