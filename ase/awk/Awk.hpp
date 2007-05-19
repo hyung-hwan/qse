@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.28 2007/05/16 07:13:32 bacon Exp $
+ * $Id: Awk.hpp,v 1.29 2007/05/17 15:02:54 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -222,9 +222,23 @@ namespace ASE
 			run_t* run;
 		};
 
+		enum ErrorCode
+		{
+			E_NOERR = ASE_AWK_ENOERR,
+			E_NOMEM = ASE_AWK_ENOMEM
+		};
+
 		Awk ();
 		virtual ~Awk ();
 		
+		ErrorCode getErrorCode ();
+		size_t getErrorLine ();
+
+	protected:
+		void setError (ErrorCode code, size_t line = 0);
+		void clearError ();
+
+	public:
 		virtual int open ();
 		virtual void close ();
 
@@ -350,6 +364,9 @@ namespace ASE
 
 		Source sourceIn;
 		Source sourceOut;
+
+		ErrorCode errnum;
+		size_t errlin;
 
 	private:
 		Awk (const Awk&);
