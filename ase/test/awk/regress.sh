@@ -21,6 +21,11 @@ run_init()
 		run_script_for_init "$script" "cou-en.data"
 	done
 
+	for script in adr-???.awk
+	do
+		run_script_for_init "$script" "adr-en.data"
+	done
+
 	for script in err-???.awk
 	do
 		run_script_for_init "$script" "err-en.data"
@@ -73,6 +78,24 @@ run_test()
 	for script in cou-???.awk
 	do
 		run_script_for_test "$script" "cou-en.data"
+		if [ $? -ne 0 ]
+		then
+			echo "###################################"
+			echo "PROBLEM(S) DETECTED IN $script.".
+			echo "###################################"
+
+			echo "Do you want to abort? [y/n]"
+			read ans
+			if [ "$ans" = "y" -o "$ans" = "Y" ]
+			then
+				return 1
+			fi
+		fi
+	done
+
+	for script in adr-???.awk
+	do
+		run_script_for_test "$script" "adr-en.data"
 		if [ $? -ne 0 ]
 		then
 			echo "###################################"

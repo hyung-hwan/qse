@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.14 2007/05/16 14:44:13 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.15 2007/05/18 15:36:02 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -26,44 +26,49 @@ namespace ASE
 		::srand (seed);
 	}
 
+	#define ADD_FUNC(name,min,max,impl) \
+		do { \
+			if (addFunction (name, min, max, \
+				(FunctionHandler)impl) == -1) return -1; \
+		} while (0)
+
 	int StdAwk::open ()
 	{
 		int n = Awk::open ();
-		if (n == 0)
-		{
-			int opt = 
-				ASE_AWK_IMPLICIT |
-				ASE_AWK_EXPLICIT | 
-				ASE_AWK_UNIQUEFN | 
-				ASE_AWK_IDIV |
-				ASE_AWK_SHADING | 
-				ASE_AWK_SHIFT | 
-				ASE_AWK_EXTIO | 
-				ASE_AWK_BLOCKLESS | 
-				ASE_AWK_STRBASEONE | 
-				ASE_AWK_STRIPSPACES | 
-				ASE_AWK_NEXTOFILE |
-				ASE_AWK_ARGSTOMAIN;
-			ase_awk_setoption (awk, opt);
+		if (n == -1) return n;
+
+		int opt = 
+			ASE_AWK_IMPLICIT |
+			ASE_AWK_EXPLICIT | 
+			ASE_AWK_UNIQUEFN | 
+			ASE_AWK_IDIV |
+			ASE_AWK_SHADING | 
+			ASE_AWK_SHIFT | 
+			ASE_AWK_EXTIO | 
+			ASE_AWK_BLOCKLESS | 
+			ASE_AWK_STRBASEONE | 
+			ASE_AWK_STRIPSPACES | 
+			ASE_AWK_NEXTOFILE |
+			ASE_AWK_ARGSTOMAIN;
+		ase_awk_setoption (awk, opt);
 
 
-			addFunction (ASE_T("sin"), 1, 1, (FunctionHandler)&StdAwk::sin);
-			addFunction (ASE_T("cos"), 1, 1, (FunctionHandler)&StdAwk::cos);
-			addFunction (ASE_T("tan"), 1, 1, (FunctionHandler)&StdAwk::tan);
-			addFunction (ASE_T("atan2"), 2, 2, (FunctionHandler)&StdAwk::atan2);
-			addFunction (ASE_T("log"), 1, 1, (FunctionHandler)&StdAwk::log);
-			addFunction (ASE_T("exp"), 1, 1, (FunctionHandler)&StdAwk::exp);
-			addFunction (ASE_T("sqrt"), 1, 1, (FunctionHandler)&StdAwk::sqrt);
-			addFunction (ASE_T("int"), 1, 1, (FunctionHandler)&StdAwk::fnint);
-			addFunction (ASE_T("rand"), 0, 0, (FunctionHandler)&StdAwk::rand);
-			addFunction (ASE_T("srand"), 1, 1, (FunctionHandler)&StdAwk::srand);
-			addFunction (ASE_T("systime"), 0, 0, (FunctionHandler)&StdAwk::systime);
-			addFunction (ASE_T("strftime"), 0, 2, (FunctionHandler)&StdAwk::strftime);
-			addFunction (ASE_T("strfgmtime"), 0, 2, (FunctionHandler)&StdAwk::strfgmtime);
-			addFunction (ASE_T("system"), 1, 1, (FunctionHandler)&StdAwk::system);
-		}
+		ADD_FUNC (ASE_T("sin"),        1, 1, &StdAwk::sin);
+		ADD_FUNC (ASE_T("cos"),        1, 1, &StdAwk::cos);
+		ADD_FUNC (ASE_T("tan"),        1, 1, &StdAwk::tan);
+		ADD_FUNC (ASE_T("atan2"),      2, 2, &StdAwk::atan2);
+		ADD_FUNC (ASE_T("log"),        1, 1, &StdAwk::log);
+		ADD_FUNC (ASE_T("exp"),        1, 1, &StdAwk::exp);
+		ADD_FUNC (ASE_T("sqrt"),       1, 1, &StdAwk::sqrt);
+		ADD_FUNC (ASE_T("int"),        1, 1, &StdAwk::fnint);
+		ADD_FUNC (ASE_T("rand"),       0, 0, &StdAwk::rand);
+		ADD_FUNC (ASE_T("srand"),      1, 1, &StdAwk::srand);
+		ADD_FUNC (ASE_T("systime"),    0, 0, &StdAwk::systime);
+		ADD_FUNC (ASE_T("strftime"),   0, 2, &StdAwk::strftime);
+		ADD_FUNC (ASE_T("strfgmtime"), 0, 2, &StdAwk::strfgmtime);
+		ADD_FUNC (ASE_T("system"),     1, 1, &StdAwk::system);
 
-		return n;
+		return 0;
 	}
 
 	int StdAwk::sin (Return* ret, const Argument* args, size_t nargs)
@@ -228,8 +233,20 @@ namespace ASE
 
 	StdAwk::ssize_t StdAwk::readPipe (Pipe& io, char_t* buf, size_t len) 
 	{ 
-		// TODO: change this implementation...
 		FILE* fp = (FILE*)io.getHandle();
+		ssize_t n = 0;
+
+		while (n < len)
+		{
+			ase_cint_t c = ase_fgetc (fp);
+			if (c == ASE_CHAR_EOF) break;
+
+			buf[n++] = c;
+			if (c == ASE_T('\n')) break;
+		}
+
+		return n;
+		/*
 		if (ase_fgets (buf, len, fp) == ASE_NULL)
 		{
 			if (ferror(fp)) return -1;
@@ -237,6 +254,7 @@ namespace ASE
 		}
 
 		return ase_strlen(buf);
+		*/
 	}
 
 	
@@ -326,8 +344,21 @@ namespace ASE
 
 	StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len) 
 	{
-		// TODO: replace ase_fgets by something else
 		FILE* fp = (FILE*)io.getHandle();
+		ssize_t n = 0;
+
+		while (n < len)
+		{
+			ase_cint_t c = ase_fgetc (fp);
+			if (c == ASE_CHAR_EOF) break;
+
+			buf[n++] = c;
+			if (c == ASE_T('\n')) break;
+		}
+
+		return n;
+
+		/*
 		if (ase_fgets (buf, len, fp) == ASE_NULL)
 		{
 			if (ferror(fp)) return -1;
@@ -335,6 +366,7 @@ namespace ASE
 		}
 
 		return ase_strlen(buf);
+		*/
 	}
 
 	StdAwk::ssize_t StdAwk::writeFile (File& io, char_t* buf, size_t len)
