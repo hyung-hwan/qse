@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: extio.c,v 1.4 2007/05/18 16:19:20 bacon Exp $
  *
  * {License}
  */
@@ -247,7 +247,44 @@ int ase_awk_readextio (
 			if (n == 0) 
 			{
 				p->in.eof = ase_true;
+
 				if (ASE_STR_LEN(buf) == 0) ret = 0;
+				else if (rs_len >= 2)
+				{
+					/* when RS is multiple characters, it needs to check
+					 * for the match at the end of the input stream as
+					 * the buffer has been appened with the last character
+					 * after the previous matchrex has failed */
+
+					const ase_char_t* match_ptr;
+					ase_size_t match_len;
+
+					ASE_ASSERT (run->global.rs != ASE_NULL);
+
+					n = ase_awk_matchrex (
+						run->awk, run->global.rs, 
+						((run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
+						ASE_STR_BUF(buf), ASE_STR_LEN(buf), 
+						&match_ptr, &match_len, &run->errnum);
+					if (n == -1)
+					{
+						ret = -1;
+						break;
+					}
+
+					if (n == 1)
+					{
+						/* the match should be found at the end of
+						 * the current buffer */
+						ASE_ASSERT (
+							ASE_STR_BUF(buf) + ASE_STR_LEN(buf) ==
+							match_ptr + match_len);
+
+						ASE_STR_LEN(buf) -= match_len;
+						break;
+					}
+				}
+
 				break;
 			}
 
@@ -320,6 +357,7 @@ int ase_awk_readextio (
 			if (n == -1)
 			{
 				ret = -1;
+				p->in.pos--; /* unread the character in c */
 				break;
 			}
 
@@ -332,6 +370,7 @@ int ase_awk_readextio (
 					match_ptr + match_len);
 
 				ASE_STR_LEN(buf) -= match_len;
+				p->in.pos--; /* unread the character in c */
 				break;
 			}
 		}
