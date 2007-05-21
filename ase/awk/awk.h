@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.4 2007/05/09 16:07:44 bacon Exp $
+ * $Id: awk.h,v 1.5 2007/05/19 12:13:41 bacon Exp $
  *
  * {License}
  */
@@ -117,7 +117,7 @@ struct ase_awk_runarg_t
 };
 
 /* io function commands */
-enum 
+enum ase_awk_iocmd_t
 {
 	ASE_AWK_IO_OPEN   = 0,
 	ASE_AWK_IO_CLOSE  = 1,
@@ -128,7 +128,7 @@ enum
 };
 
 /* various options */
-enum 
+enum ase_awk_option_t
 { 
 	/* allow undeclared variables and implicit concatenation */
 	ASE_AWK_IMPLICIT    = (1 << 0),
@@ -194,7 +194,7 @@ enum
 };
 
 /* error code */
-enum 
+enum ase_awk_errnum_t
 {
 	ASE_AWK_ENOERR,         /* no error */
 

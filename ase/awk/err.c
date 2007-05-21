@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: err.c,v 1.4 2007/05/19 12:13:41 bacon Exp $
  *
  * {License}
  */
@@ -175,7 +175,6 @@ int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str)
 
 	if (awk->errstr[num] != ASE_NULL) 
 		ASE_AWK_FREE (awk, awk->errstr[num]);
-
 	else awk->errstr[num] = dup;
 	return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.15 2007/05/18 15:36:02 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.17 2007/05/19 16:45:27 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -36,22 +36,6 @@ namespace ASE
 	{
 		int n = Awk::open ();
 		if (n == -1) return n;
-
-		int opt = 
-			ASE_AWK_IMPLICIT |
-			ASE_AWK_EXPLICIT | 
-			ASE_AWK_UNIQUEFN | 
-			ASE_AWK_IDIV |
-			ASE_AWK_SHADING | 
-			ASE_AWK_SHIFT | 
-			ASE_AWK_EXTIO | 
-			ASE_AWK_BLOCKLESS | 
-			ASE_AWK_STRBASEONE | 
-			ASE_AWK_STRIPSPACES | 
-			ASE_AWK_NEXTOFILE |
-			ASE_AWK_ARGSTOMAIN;
-		ase_awk_setoption (awk, opt);
-
 
 		ADD_FUNC (ASE_T("sin"),        1, 1, &StdAwk::sin);
 		ADD_FUNC (ASE_T("cos"),        1, 1, &StdAwk::cos);
@@ -236,7 +220,7 @@ namespace ASE
 		FILE* fp = (FILE*)io.getHandle();
 		ssize_t n = 0;
 
-		while (n < len)
+		while (n < (ssize_t)len)
 		{
 			ase_cint_t c = ase_fgetc (fp);
 			if (c == ASE_CHAR_EOF) break;
@@ -246,17 +230,7 @@ namespace ASE
 		}
 
 		return n;
-		/*
-		if (ase_fgets (buf, len, fp) == ASE_NULL)
-		{
-			if (ferror(fp)) return -1;
-			return 0;
-		}
-
-		return ase_strlen(buf);
-		*/
 	}
-
 	
 	StdAwk::ssize_t StdAwk::writePipe (Pipe& io, char_t* buf, size_t len) 
 	{ 
@@ -298,7 +272,7 @@ namespace ASE
 				int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
 			#endif
 
-				if (n < 0 || n > left) return -1;
+				if (n < 0 || n > (ssize_t)left) return -1;
 				left -= n; buf += n;
 			}
 		}
@@ -347,7 +321,7 @@ namespace ASE
 		FILE* fp = (FILE*)io.getHandle();
 		ssize_t n = 0;
 
-		while (n < len)
+		while (n < (ssize_t)len)
 		{
 			ase_cint_t c = ase_fgetc (fp);
 			if (c == ASE_CHAR_EOF) break;
@@ -357,16 +331,6 @@ namespace ASE
 		}
 
 		return n;
-
-		/*
-		if (ase_fgets (buf, len, fp) == ASE_NULL)
-		{
-			if (ferror(fp)) return -1;
-			return 0;
-		}
-
-		return ase_strlen(buf);
-		*/
 	}
 
 	StdAwk::ssize_t StdAwk::writeFile (File& io, char_t* buf, size_t len)
@@ -384,7 +348,7 @@ namespace ASE
 			else
 			{
 				int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
-				if (n < 0 || n > left) return -1;
+				if (n < 0 || n > (ssize_t)left) return -1;
 				left -= n; buf += n;
 			}
 		}

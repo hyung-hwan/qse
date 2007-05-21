@@ -32,12 +32,12 @@ Actions
 
 Variables
 
-global variables (enabled when awk->opt & XP_AWK_OPT_VARDCL)
+global variables (enabled when awk->opt & ASE_AWK_OPT_VARDCL)
 
 	global x;
 	global x, y;
 
-local variables  (enabled when awk->opt & XP_AWK_OPT_VARDCL)
+local variables  (enabled when awk->opt & ASE_AWK_OPT_VARDCL)
 
 	local x;
 	local x, y;
@@ -47,12 +47,12 @@ function arguments (enabled always)
 	function funca (x, y)
 
 
-local variables in function declaration  (enabled when awk->opt & XP_AWK_OPT_FUNCLOCAL)
+local variables in function declaration  (enabled when awk->opt & ASE_AWK_OPT_FUNCLOCAL)
 
 	function funca (x, y,		v1, v2)
 
 
-variables without any declarations (enabled when awk->opt & XP_AWK_OPT_NAMEDVAR)
+variables without any declarations (enabled when awk->opt & ASE_AWK_OPT_NAMEDVAR)
 
 	x = 10; // x is put into the global hash table.
 
