@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.15 2007/05/16 14:44:13 bacon Exp $
+ * $Id: Awk.cpp,v 1.17 2007/05/19 16:45:27 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -87,12 +87,27 @@ protected:
 
 	void onRunStart (const Run& run)
 	{
-		wprintf (L"*** awk run started ***\n");
+		ase_printf (ASE_T("*** awk run started ***\n"));
 	}
 
-	void onRunEnd (const Run& run, int errnum)
+	void onRunEnd (const Run& run)
 	{
-		wprintf (L"*** awk run ended ***\n");
+		ErrorCode err = run.getErrorCode();
+
+		if (err != E_NOERR)
+		{
+			ase_fprintf (stderr, ASE_T("cannot run: LINE[%d] %s\n"), 
+				run.getErrorLine(), run.getErrorMessage());
+		}
+
+		ase_printf (ASE_T("*** awk run ended ***\n"));
+	}
+
+	void onRunReturn (const Run& run, const Argument& ret)
+	{
+		size_t len;
+		const char_t* ptr = ret.toStr (&len);
+		ase_printf (ASE_T("*** return [%.*s] ***\n"), len, ptr);
 	}
 
 	int openSource (Source& io)
@@ -142,7 +157,7 @@ protected:
 		FILE* fp = (FILE*)io.getHandle();
 		ssize_t n = 0;
 
-		while (n < len)
+		while (n < (ssize_t)len)
 		{
 			ase_cint_t c = ase_fgetc (fp);
 			if (c == ASE_CHAR_EOF) break;
@@ -248,7 +263,7 @@ protected:
 		FILE* fp = t->handle;
 		ssize_t n = 0;
 
-		while (n < len)
+		while (n < (ssize_t)len)
 		{
 			ase_cint_t c = ase_fgetc (fp);
 			if (c == ASE_CHAR_EOF) break;
@@ -546,13 +561,17 @@ int awk_main (int argc, ase_char_t* argv[])
 
 	if (awk.parse (srcin, srcout) == -1)
 	{
-		ase_fprintf (stderr, ASE_T("cannot parse\n"));
+		ase_fprintf (stderr, ASE_T("cannot parse: LINE[%d] %s\n"), 
+			awk.getErrorLine(), awk.getErrorMessage());
 		return -1;
 	}
 
+	awk.enableRunCallback ();
+
 	if (awk.run (mainfn, args, nargs) == -1)
 	{
-		ase_fprintf (stderr, ASE_T("cannot run\n"));
+		ase_fprintf (stderr, ASE_T("cannot run: LINE[%d] %s\n"), 
+			awk.getErrorLine(), awk.getErrorMessage());
 		return -1;
 	}
 

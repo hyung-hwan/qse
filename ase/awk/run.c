@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.5 2007/05/13 14:43:58 bacon Exp $
+ * $Id: run.c,v 1.7 2007/05/19 16:45:27 bacon Exp $
  *
  * {License}
  */
@@ -662,6 +662,12 @@ int ase_awk_run (ase_awk_t* awk,
 	/* the run loop ended. execute the end callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_end != ASE_NULL) 
 	{
+		if (n == 0) 
+		{
+			/* clear error if run is successful just in case */
+			ase_awk_setrunerror (run, ASE_AWK_ENOERR, 0, ASE_NULL, 0);
+		}
+
 		runcbs->on_end (run, 
 			((n == -1)? run->errnum: ASE_AWK_ENOERR), 
 			runcbs->custom_data);

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.31 2007/05/17 15:02:54 bacon Exp $
+ * $Id: Awk.cpp,v 1.35 2007/05/19 16:45:27 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -54,16 +54,6 @@ namespace ASE
 	void Awk::Extio::setHandle (void* handle)
 	{
 		extio->handle = handle;
-	}
-
-	Awk::run_t* Awk::Extio::getRun () const
-	{
-		return extio->run;
-	}
-
-	Awk::awk_t* Awk::Extio::getAwk () const
-	{
-		return ase_awk_getrunawk(extio->run);
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -281,18 +271,6 @@ namespace ASE
 		}
 	}
 
-	Awk::run_t* Awk::Argument::getRun () const
-	{
-		ASE_ASSERT (this->run != ASE_NULL);
-		return this->run;
-	}
-
-	Awk::awk_t* Awk::Argument::getAwk () const
-	{
-		ASE_ASSERT (this->run != ASE_NULL);
-		return ase_awk_getrunawk (this->run);
-	}
-
 	//////////////////////////////////////////////////////////////////
 	// Awk::Return
 	//////////////////////////////////////////////////////////////////
@@ -325,16 +303,6 @@ namespace ASE
 		}
 
 		return ASE_NULL;
-	}
-
-	Awk::run_t* Awk::Return::getRun () const
-	{
-		return this->run;
-	}
-
-	Awk::awk_t* Awk::Return::getAwk () const
-	{
-		return ase_awk_getrunawk (this->run);
 	}
 
 	int Awk::Return::set (long_t v)
@@ -391,8 +359,33 @@ namespace ASE
 	// Awk::Run
 	//////////////////////////////////////////////////////////////////
 	
-	Awk::Run::Run (run_t* run): run (run)
+	Awk::Run::Run (Awk* awk): 
+		awk (awk), run (ASE_NULL), callbackFailed (false)
 	{
+	}
+
+	int Awk::Run::stop ()
+	{
+		ASE_ASSERT (this->run != ASE_NULL);
+		return ase_awk_stop (this->run);
+	}
+
+	Awk::ErrorCode Awk::Run::getErrorCode () const
+	{
+		ASE_ASSERT (this->run != ASE_NULL);
+		return (ErrorCode)ase_awk_getrunerrnum (this->run);
+	}
+	
+	Awk::size_t Awk::Run::getErrorLine () const
+	{
+		ASE_ASSERT (this->run != ASE_NULL);
+		return ase_awk_getrunerrlin (this->run);
+	}
+
+	const Awk::char_t* Awk::Run::getErrorMessage () const
+	{
+		ASE_ASSERT (this->run != ASE_NULL);
+		return ase_awk_getrunerrmsg (this->run);
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -401,35 +394,72 @@ namespace ASE
 
 	Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
 		sourceIn (Source::READ), sourceOut (Source::WRITE),
-		errnum (E_NOERR), errlin (0)
+		errnum (E_NOERR), errlin (0), runCallback (false)
 
 	{
+		this->errmsg[0] = ASE_T('\0');
 	}
 
 	Awk::~Awk ()
 	{
 	}
 
-	Awk::ErrorCode Awk::getErrorCode ()
+	Awk::ErrorCode Awk::getErrorCode () const
 	{
 		return this->errnum;
 	}
 
-	Awk::size_t Awk::getErrorLine ()
+	Awk::size_t Awk::getErrorLine () const
 	{
 		return this->errlin;
 	}
 
-	void Awk::setError (ErrorCode code, size_t line)
+	const Awk::char_t* Awk::getErrorMessage () const
 	{
-		this->errnum = code;
-		this->errlin = line;
+		return this->errmsg;
+	}
+
+	void Awk::setError (
+		ErrorCode code, size_t line, const char_t* arg, size_t len)
+	{
+		if (awk != ASE_NULL)
+		{
+			ase_cstr_t x = { arg, len };
+			ase_awk_seterror (awk, code, line, &x, 1);
+			retrieveError ();
+		}
+		else
+		{
+			this->errnum = code;
+			this->errlin = line;
+
+			const char_t* es = ase_awk_geterrstr (ASE_NULL, code);
+			ase_strxcpy (this->errmsg, ASE_COUNTOF(this->errmsg), es);
+		}
 	}
 
 	void Awk::clearError ()
 	{
 		this->errnum = E_NOERR;
 		this->errlin = 0;
+		this->errmsg[0] = ASE_T('\0');
+	}
+
+	void Awk::retrieveError ()
+	{
+		if (this->awk == ASE_NULL) 
+		{
+			clearError ();
+		}
+		else
+		{
+			int num;
+			const char_t* msg;
+
+			ase_awk_geterror (this->awk, &num, &this->errlin, &msg);
+			this->errnum = (ErrorCode)num;
+			ase_strxcpy (this->errmsg, ASE_COUNTOF(this->errmsg), msg);
+		}
 	}
 
 	int Awk::open ()
@@ -481,6 +511,22 @@ namespace ASE
 			return -1;
 		}
 
+		int opt = 
+			OPT_IMPLICIT |
+			OPT_EXPLICIT | 
+			OPT_UNIQUEFN | 
+			OPT_IDIV |
+			OPT_SHADING | 
+			OPT_SHIFT | 
+			OPT_EXTIO | 
+			OPT_BLOCKLESS | 
+			OPT_STRBASEONE | 
+			OPT_STRIPSPACES | 
+			OPT_NEXTOFILE |
+			OPT_ARGSTOMAIN;
+		ase_awk_setoption (awk, opt);
+	
+		runCallback = false;
 		return 0;
 	}
 
@@ -499,6 +545,19 @@ namespace ASE
 		}
 
 		clearError ();
+		runCallback = false;
+	}
+
+	void Awk::setOption (int opt)
+	{
+		ASE_ASSERT (awk != ASE_NULL);
+		ase_awk_setoption (awk, opt);
+	}
+
+	int Awk::getOption () const
+	{
+		ASE_ASSERT (awk != ASE_NULL);
+		return ase_awk_getoption (awk);
 	}
 
 	int Awk::parse ()
@@ -511,7 +570,9 @@ namespace ASE
 		srcios.out = sourceWriter;
 		srcios.custom_data = this;
 
-		return ase_awk_parse (awk, &srcios);
+		int n = ase_awk_parse (awk, &srcios);
+		if (n == -1) retrieveError ();
+		return n;
 	}
 
 	int Awk::run (const char_t* main, const char_t** args, size_t nargs)
@@ -522,6 +583,7 @@ namespace ASE
 		ase_awk_runios_t runios;
 		ase_awk_runcbs_t runcbs;
 		ase_awk_runarg_t* runarg = ASE_NULL;
+		Run emptyRun (this);
 
 		runios.pipe        = pipeHandler;
 		runios.coproc      = ASE_NULL;
@@ -529,11 +591,14 @@ namespace ASE
 		runios.console     = consoleHandler;
 		runios.custom_data = this;
 
-		runcbs.on_start     = onRunStart;
-		runcbs.on_end       = onRunEnd;
-		runcbs.on_return    = ASE_NULL;
-		runcbs.on_statement = ASE_NULL;
-		runcbs.custom_data  = this;
+		if (runCallback)
+		{
+			runcbs.on_start     = onRunStart;
+			runcbs.on_end       = onRunEnd;
+			runcbs.on_return    = onRunReturn;
+			runcbs.on_statement = onRunStatement;
+			runcbs.custom_data  = &emptyRun;
+		}
 
 		if (nargs > 0)
 		{
@@ -542,7 +607,7 @@ namespace ASE
 
 			if (runarg == ASE_NULL)
 			{
-				// TODO: SET ERROR INFO
+				setError (E_NOMEM);
 				return -1;
 			}
 
@@ -560,7 +625,7 @@ namespace ASE
 						}
 					}
 
-					// TODO: SET ERROR INFO
+					setError (E_NOMEM);
 					return -1;
 				}
 			}
@@ -570,7 +635,10 @@ namespace ASE
 		}
 
 		int n = ase_awk_run (
-			awk, main, &runios, &runcbs, runarg, this);
+			awk, main, &runios, 
+			(runCallback? &runcbs: ASE_NULL), 
+			runarg, this);
+		if (n == -1) retrieveError ();
 
 		if (runarg != ASE_NULL) 
 		{
@@ -593,11 +661,7 @@ namespace ASE
 		awk = ase_awk_getrunawk (run);
 
 		pair = ase_awk_map_get (functionMap, name, len);
-		if (pair == ASE_NULL) 
-		{
-			// TODO: SET ERROR INFO
-			return -1;
-		}
+		if (pair == ASE_NULL) return -1;
 
 		FunctionHandler handler;
 	       	handler = *(FunctionHandler*)ASE_AWK_PAIR_VAL(pair);	
@@ -607,11 +671,7 @@ namespace ASE
 		//Argument* args = ASE_NULL;
 		//try { args = new Argument [nargs]; } catch (...)  {}
 		Argument* args = new(awk) Argument[nargs];
-		if (args == ASE_NULL) 
-		{
-			// TODO: SET ERROR INFO
-			return -1;
-		}
+		if (args == ASE_NULL) return -1;
 
 		for (i = 0; i < nargs; i++)
 		{
@@ -619,29 +679,19 @@ namespace ASE
 			if (args[i].init (run, v) == -1)
 			{
 				delete[] args;
-				// TODO: SET ERROR INFO
 				return -1;
 			}
 		}
 		
-
 		Return ret (run);
 		int n = (this->*handler) (&ret, args, nargs);
 
 		delete[] args;
 
-		if (n <= -1) 
-		{
-			// TODO: SET ERROR INFO
-			return -1;
-		}	
+		if (n <= -1) return -1;
 
 		val_t* r = ret.toVal ();
-		if (r == ASE_NULL) 
-		{
-			// TODO: SET ERROR INFO
-			return -1;
-		}
+		if (r == ASE_NULL) return -1;
 
 		ase_awk_setretval (run, r);
 		return 0;
@@ -657,7 +707,7 @@ namespace ASE
 			ase_awk_malloc (awk, ASE_SIZEOF(handler));
 		if (tmp == ASE_NULL)
 		{
-			// TODO: SET ERROR INFO -> ENOMEM
+			setError (E_NOMEM);
 			return -1;
 		}
 
@@ -672,15 +722,17 @@ namespace ASE
 		if (p == ASE_NULL) 
 		{
 			ase_awk_free (awk, tmp);
+			retrieveError ();
 			return -1;
 		}
 
 		pair_t* pair = ase_awk_map_put (functionMap, name, nameLen, tmp);
 		if (pair == ASE_NULL)
 		{
-			// TODO: SET ERROR INFO
 			ase_awk_delbfn (awk, name, nameLen);
 			ase_awk_free (awk, tmp);
+
+			setError (E_NOMEM);
 			return -1;
 		}
 
@@ -695,15 +747,34 @@ namespace ASE
 
 		int n = ase_awk_delbfn (awk, name, nameLen);
 		if (n == 0) ase_awk_map_remove (functionMap, name, nameLen);
+		else retrieveError ();
 
 		return n;
+	}
+
+	void Awk::enableRunCallback ()
+	{
+		runCallback = true;
+	}
+
+	void Awk::disableRunCallback ()
+	{
+		runCallback = false;
 	}
 
 	void Awk::onRunStart (const Run& run)
 	{
 	}
 
-	void Awk::onRunEnd (const Run& run, int errnum)
+	void Awk::onRunEnd (const Run& run)
+	{
+	}
+
+	void Awk::onRunReturn (const Run& run, const Argument& ret)
+	{
+	}
+
+	void Awk::onRunStatement (const Run& run, size_t line)
 	{
 	}
 
@@ -853,14 +924,48 @@ namespace ASE
 
 	void Awk::onRunStart (run_t* run, void* custom)
 	{
-		Awk* awk = (Awk*)custom;
-		awk->onRunStart (Run(run));
+		Run* r = (Run*)custom;
+		r->run = run;
+
+		r->callbackFailed = false;
+		r->awk->onRunStart (*r);
 	}
 
 	void Awk::onRunEnd (run_t* run, int errnum, void* custom)
 	{
-		Awk* awk = (Awk*)custom;
-		awk->onRunEnd (Run(run), errnum);
+		Run* r = (Run*)custom;
+
+		if (errnum == E_NOERR && r->callbackFailed)
+		{
+			ase_awk_setrunerror (
+				r->run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		}
+
+		r->awk->onRunEnd (*r);
+	}
+
+	void Awk::onRunReturn (run_t* run, val_t* ret, void* custom)
+	{
+		Run* r = (Run*)custom;
+		if (r->callbackFailed) return;
+
+		Argument x;
+		if (x.init (run, ret) == -1)
+		{
+			r->callbackFailed = true;		
+		}
+		else
+		{
+			r->awk->onRunReturn (*r, x);
+		}
+	}
+
+	void Awk::onRunStatement (run_t* run, size_t line, void* custom)
+	{
+		Run* r = (Run*)custom;
+		if (r->callbackFailed) return;
+
+		r->awk->onRunStatement (*r, line);
 	}
 
 	void* Awk::allocMem (void* custom, size_t n)
