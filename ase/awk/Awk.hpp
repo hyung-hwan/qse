@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.33 2007/05/19 16:45:27 bacon Exp $
+ * $Id: Awk.hpp,v 1.34 2007/05/22 16:01:25 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -368,6 +368,9 @@ namespace ASE
 			ErrorCode getErrorCode () const;
 			size_t getErrorLine () const;
 			const char_t* getErrorMessage () const;
+
+			void setMaxBlockDepth (size_t n);
+			void setMaxExpressionDepth (size_t n);
 
 		protected:
 			Awk* awk;
