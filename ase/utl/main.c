@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.5 2007/05/16 09:28:33 bacon Exp $
+ * $Id: main.c,v 1.6 2007/05/20 16:21:09 bacon Exp $
  *
  * {License}
  */
@@ -83,6 +83,13 @@ exit_main:
 	free (v);
 
 	return ret;
+}
+
+#else
+
+int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
+{
+	return mf (argc, argv);
 }
 
 #endif

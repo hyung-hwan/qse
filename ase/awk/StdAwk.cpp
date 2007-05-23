@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.17 2007/05/19 16:45:27 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.19 2007/05/20 16:21:09 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -124,16 +124,16 @@ namespace ASE
 		char_t buf[128]; 
 		struct tm* tm;
 	#ifdef _WIN32
-		tm = localtime (&t);
+		tm = ::localtime (&t);
 	#else
 		struct tm tmb;
-		tm = localtime_r (&t, &tmb);
+		tm = ::localtime_r (&t, &tmb);
 	#endif
 
 	#ifdef ASE_CHAR_IS_MCHAR
-		size_t len = strftime (buf, ASE_COUNTOF(buf), fmt, tm);
+		size_t len = ::strftime (buf, ASE_COUNTOF(buf), fmt, tm);
 	#else
-		size_t len = wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
+		size_t len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
 	#endif
 
 		return ret->set (buf, len);	
@@ -150,16 +150,16 @@ namespace ASE
 		char_t buf[128]; 
 		struct tm* tm;
 	#ifdef _WIN32
-		tm = gmtime (&t);
+		tm = ::gmtime (&t);
 	#else
 		struct tm tmb;
-		tm = gmtime_r (&t, &tmb);
+		tm = ::gmtime_r (&t, &tmb);
 	#endif
 
 	#ifdef ASE_CHAR_IS_MCHAR
-		size_t len = strftime (buf, ASE_COUNTOF(buf), fmt, tm);
+		size_t len = ::strftime (buf, ASE_COUNTOF(buf), fmt, tm);
 	#else
-		size_t len = wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
+		size_t len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
 	#endif
 
 		return ret->set (buf, len);	
@@ -175,7 +175,7 @@ namespace ASE
 	#elif defined(ASE_CHAR_IS_MCHAR)
 		return ret->set ((long_t)::system(ptr));
 	#else
-		char* mbs = (char*)ase_awk_malloc (ret->getAwk(), len*5+1);
+		char* mbs = (char*)ase_awk_malloc (awk, len*5+1);
 		if (mbs == ASE_NULL) return -1;
 
 		::size_t mbl = ::wcstombs (mbs, ptr, len*5);
@@ -183,7 +183,7 @@ namespace ASE
 		mbs[mbl] = '\0';
 		int n =  ret->set ((long_t)::system(mbs));
 
-		ase_awk_free (ret->getAwk(), mbs);
+		ase_awk_free (awk, mbs);
 		return n;
 	#endif
 	}
