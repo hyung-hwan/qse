@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.36 2007/05/22 16:01:25 bacon Exp $
+ * $Id: Awk.cpp,v 1.37 2007/05/23 11:43:24 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -364,16 +364,6 @@ namespace ASE
 	{
 	}
 
-	void Awk::Run::setMaxBlockDepth (size_t n)
-	{
-		ase_awk_setmaxdepth (awk->awk, ASE_AWK_DEPTH_BLOCK_RUN, n);
-	}
-
-	void Awk::Run::setMaxExpressionDepth (size_t n)
-	{
-		ase_awk_setmaxdepth (awk->awk, ASE_AWK_DEPTH_EXPR_RUN, n);
-	}
-
 	int Awk::Run::stop ()
 	{
 		ASE_ASSERT (this->run != ASE_NULL);
@@ -568,6 +558,18 @@ namespace ASE
 	{
 		ASE_ASSERT (awk != ASE_NULL);
 		return ase_awk_getoption (awk);
+	}
+
+	void Awk::setDepth (int id, size_t depth)
+	{
+		ASE_ASSERT (awk != ASE_NULL);
+		ase_awk_setmaxdepth (awk, id, depth);
+	}
+
+	int Awk::getDepth (int id)
+	{
+		ASE_ASSERT (awk != ASE_NULL);
+		return ase_awk_getmaxdepth (awk, id);
 	}
 
 	int Awk::parse ()

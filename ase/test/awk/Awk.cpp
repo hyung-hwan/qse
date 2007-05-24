@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.17 2007/05/19 16:45:27 bacon Exp $
+ * $Id: Awk.cpp,v 1.18 2007/05/23 14:15:16 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -12,6 +12,8 @@
 
 #if defined(_WIN32)
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 
 class TestAwk: public ASE::StdAwk
@@ -34,11 +36,24 @@ public:
 	{
 	#ifdef _WIN32
 		ASE_ASSERT (heap == ASE_NULL);
-		heap = HeapCreate (0, 1000000, 1000000);
+		heap = ::HeapCreate (0, 1000000, 1000000);
 		if (heap == ASE_NULL) return -1;
 	#endif
 
-		return StdAwk::open ();
+		int n = StdAwk::open ();
+
+		if (addFunction (ASE_T("sleep"), 1, 1, 
+			(FunctionHandler)&TestAwk::sleep) == -1)
+		{
+			StdAwk::close ();
+	#ifdef _WIN32
+			HeapDestroy (heap); 
+			heap = ASE_NULL;
+	#endif
+			return -1;
+		}
+
+		return n;
 	}
 
 	void close ()
@@ -52,6 +67,16 @@ public:
 		HeapDestroy (heap); 
 		heap = ASE_NULL;
 	#endif
+	}
+
+	int sleep (Return* ret, const Argument* args, size_t nargs)
+	{
+	#ifdef _WIN32
+		::Sleep (args[0].toInt() * 1000);
+	#else
+		::sleep (args[0].toInt());
+	#endif
+		return 0;
 	}
 
 	int addConsoleInput (const char_t* file)

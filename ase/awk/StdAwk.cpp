@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.19 2007/05/20 16:21:09 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.21 2007/05/23 14:15:16 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -29,7 +29,11 @@ namespace ASE
 	#define ADD_FUNC(name,min,max,impl) \
 		do { \
 			if (addFunction (name, min, max, \
-				(FunctionHandler)impl) == -1) return -1; \
+				(FunctionHandler)impl) == -1)  \
+			{ \
+				Awk::close (); \
+				return -1; \
+			} \
 		} while (0)
 
 	int StdAwk::open ()
