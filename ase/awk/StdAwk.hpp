@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.9 2007/05/16 14:44:13 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.11 2007/05/23 14:15:16 bacon Exp $
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_
@@ -33,7 +33,6 @@ namespace ASE
 		int strftime (Return* ret, const Argument* args, size_t nargs);
 		int strfgmtime (Return* ret, const Argument* args, size_t nargs);
 		int system (Return* ret, const Argument* args, size_t nargs);
-
 
 		// pipe io handlers 
 		int openPipe (Pipe& io);

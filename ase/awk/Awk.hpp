@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.34 2007/05/22 16:01:25 bacon Exp $
+ * $Id: Awk.hpp,v 1.35 2007/05/23 11:43:24 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -369,9 +369,6 @@ namespace ASE
 			size_t getErrorLine () const;
 			const char_t* getErrorMessage () const;
 
-			void setMaxBlockDepth (size_t n);
-			void setMaxExpressionDepth (size_t n);
-
 		protected:
 			Awk* awk;
 			run_t* run;
@@ -398,6 +395,19 @@ namespace ASE
 
 		virtual void setOption (int opt);
 		virtual int  getOption () const;
+
+		enum Depth
+		{
+			DEPTH_BLOCK_PARSE = ASE_AWK_DEPTH_BLOCK_PARSE,
+			DEPTH_BLOCK_RUN   = ASE_AWK_DEPTH_BLOCK_RUN,
+			DEPTH_EXPR_PARSE  = ASE_AWK_DEPTH_EXPR_PARSE,
+			DEPTH_EXPR_RUN    = ASE_AWK_DEPTH_EXPR_RUN,
+			DEPTH_REX_BUILD   = ASE_AWK_DEPTH_REX_BUILD,
+			DEPTH_REX_MATCH   = ASE_AWK_DEPTH_REX_MATCH
+		};
+
+		virtual void setDepth (int id, size_t depth);
+		virtual int  getDepth (int id);
 
 		virtual int parse ();
 		virtual int run (const char_t* main = ASE_NULL, 
