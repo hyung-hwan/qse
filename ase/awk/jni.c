@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.6 2007/05/10 16:08:37 bacon Exp $
+ * $Id: jni.c,v 1.8 2007/05/24 06:53:21 bacon Exp $
  *
  * {License}
  */
@@ -12,6 +12,7 @@
 #include <wchar.h>
 #include <stdarg.h>
 #include <math.h>
+#include <time.h>
 #include <ase/awk/jni.h>
 #include <ase/awk/awk.h>
 #include <ase/awk/val.h>
@@ -2348,3 +2349,166 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
 	return ret;
 }
 
+static jstring JNICALL call_strftime (
+	JNIEnv* env, jobject obj, jstring fmt, struct tm* tm)
+{
+	ase_char_t buf[128]; 
+	ase_size_t len, i;
+	const jchar* ptr;
+	ase_char_t* tmp;
+	jstring ret;
+
+	len = (*env)->GetStringLength (env, fmt);
+	ptr = (*env)->GetStringChars (env, fmt, JNI_FALSE);
+	if (ptr == NULL)
+	{
+		(*env)->ExceptionClear (env);
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
+			ASE_AWK_ENOMEM,
+			0);
+		return NULL;
+	}
+
+	tmp = (jchar*) malloc (ASE_SIZEOF(ase_char_t)*(len+1));
+	if (tmp == NULL)
+	{
+		(*env)->ReleaseStringChars (env, fmt, ptr);
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
+		return NULL;
+	}
+
+	for (i = 0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+	tmp[i] = ASE_T('\0');
+
+	len = wcsftime (buf, ASE_COUNTOF(buf), tmp, tm);
+
+	free (tmp);
+	(*env)->ReleaseStringChars (env, fmt, ptr);
+
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	{
+		tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*len);
+		if (tmp == NULL)
+		{
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM, 
+				0);
+			return NULL;
+		}
+		for (i = 0; i < len; i++) tmp[i] = (jchar)buf[i];
+		ret = (*env)->NewString (env, tmp, len);
+		free (tmp);
+	}
+	else
+	{
+		ret = (*env)->NewString (env, (jchar*)buf, len);
+	}
+
+	if (ret == NULL)
+	{
+		(*env)->ExceptionClear (env);
+
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
+	}
+
+	return ret;
+}
+
+
+JNIEXPORT jstring JNICALL Java_ase_awk_Awk_strftime (
+	JNIEnv* env, jobject obj, jstring fmt, jlong sec)
+{
+	struct tm* tm;
+	time_t t = (time_t)sec;
+
+#ifdef _WIN32
+	tm = localtime (&t);
+#else
+	struct tm tmb;
+	tm = localtime_r (&t, &tmb);
+#endif
+
+	return call_strftime (env, obj, fmt, tm);
+}
+
+JNIEXPORT jstring JNICALL Java_ase_awk_Awk_strfgmtime (
+	JNIEnv* env, jobject obj, jstring fmt, jlong sec)
+{
+	struct tm* tm;
+	time_t t = (time_t)sec;
+
+#ifdef _WIN32
+	tm = gmtime (&t);
+#else
+	struct tm tmb;
+	tm = gmtime_r (&t, &tmb);
+#endif
+
+	return call_strftime (env, obj, fmt, tm);
+}
+
+/*
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
+	JNIEnv* env, jobject obj, jstring cmd)
+{
+	ase_size_t len, i;
+	const jchar* ptr;
+	ase_char_t* tmp;
+	jint ret;
+
+	len = (*env)->GetStringLength (env, fmt);
+	ptr = (*env)->GetStringChars (env, fmt, JNI_FALSE);
+	if (ptr == NULL)
+	{
+		(*env)->ExceptionClear (env);
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
+			ASE_AWK_ENOMEM,
+			0);
+		return NULL;
+	}
+
+	tmp = (jchar*) malloc (ASE_SIZEOF(ase_char_t)*(len+1));
+	if (tmp == NULL)
+	{
+		(*env)->ReleaseStringChars (env, fmt, ptr);
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
+		return NULL;
+	}
+
+	for (i = 0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+	tmp[i] = ASE_T('\0');
+
+#ifdef _WIN32
+	ret = _tsystem(ptr);
+#else
+	char* mbs = (char*)malloc (awk, len*5+1);
+	if (mbs == ASE_NULL) return -1;
+
+	size_t mbl = wcstombs (mbs, ptr, len*5);
+	if (mbl == (size_t)-1) return -1;
+	mbs[mbl] = '\0';
+	ret = system(mbs);
+	free (awk, mbs);
+#endif
+
+	return ret;
+}
+*/

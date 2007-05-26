@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.18 2007/05/23 14:15:16 bacon Exp $
+ * $Id: Awk.cpp,v 1.20 2007/05/24 04:17:42 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -73,10 +73,10 @@ public:
 	{
 	#ifdef _WIN32
 		::Sleep (args[0].toInt() * 1000);
+		return ret->set (0);
 	#else
-		::sleep (args[0].toInt());
+		return ret->set ((long_t)::sleep (args[0].toInt()));
 	#endif
-		return 0;
 	}
 
 	int addConsoleInput (const char_t* file)
@@ -464,7 +464,22 @@ static void print_error (const ase_char_t* msg)
 
 static void print_usage (const ase_char_t* argv0)
 {
-	ase_printf (ASE_T("Usage: %s [-m main-function] [-si source-in-file] [-so source-out-file] [-ci console-in-file]* [-co console-out-file]* [-a argument]*\n"), argv0);
+	const ase_char_t* base;
+	
+	base = ase_strrchr(argv0, ASE_T('/'));
+	if (base == ASE_NULL)
+		base = ase_strrchr(argv0, ASE_T('\\'));
+	if (base == ASE_NULL) base = argv0;
+
+	ase_printf (ASE_T("Usage: %s [-m main] [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]*\n"), base);
+	ase_printf (ASE_T("    -m  main  Specify the main function name\n"));
+	ase_printf (ASE_T("    -si file  Specify the input source file\n"));
+	ase_printf (ASE_T("              The source code is read from stdin when it is not specified\n"));
+	ase_printf (ASE_T("    -so file  Specify the output source file\n"));
+	ase_printf (ASE_T("              The deparsed code is not output when is it not specified\n"));
+	ase_printf (ASE_T("    -ci file  Specify the input console file\n"));
+	ase_printf (ASE_T("    -co file  Specify the output console file\n"));
+	ase_printf (ASE_T("    -a  str   Specify an argument\n"));
 }
 
 int awk_main (int argc, ase_char_t* argv[])

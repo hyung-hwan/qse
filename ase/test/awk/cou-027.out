@@ -9,6 +9,8 @@ BEGIN {
 END {
 	for (c in pop)
 		printf ("%15s	%6d\n",c,pop[c]) | "sort -t'	' +1rn";
+	close ("sort -t'	' +1rn");
+	sleep (1);
 }
            Asia	  2173
   North America	   340

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.4 2007/05/05 16:32:46 bacon Exp $
+ * $Id: Awk.java,v 1.6 2007/05/24 06:53:21 bacon Exp $
  *
  * {License}
  */
@@ -81,6 +81,9 @@ public abstract class Awk
 		long runid, String str) throws Exception;
 	private native String valtostr (
 		long runid, Object obj) throws Exception;
+
+	protected native String strftime (String fmt, long sec);
+	protected native String strfgmtime (String fmt, long sec);
 
 	/* == simpler run methods == */
 	public void run (String main) throws Exception

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.8 2007/05/16 09:15:14 bacon Exp $
+ * $Id: awk.c,v 1.9 2007/05/24 04:04:44 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -846,6 +846,43 @@ static unsigned int __stdcall run_awk_thr (void* arg)
 }
 #endif
 
+static int bfn_sleep (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	ase_size_t nargs;
+	ase_awk_val_t* a0;
+	ase_long_t lv;
+	ase_real_t rv;
+	ase_awk_val_t* r;
+	int n;
+
+	nargs = ase_awk_getnargs (run);
+	ASE_ASSERT (nargs == 1);
+
+	a0 = ase_awk_getarg (run, 0);
+
+	n = ase_awk_valtonum (run, a0, &lv, &rv);
+	if (n == -1) return -1;
+	if (n == 1) lv = (ase_long_t)rv;
+
+#ifdef _WIN32
+	Sleep (lv * 1000);
+	n = 0;
+#else
+	n = sleep (lv);	
+#endif
+
+	r = ase_awk_makeintval (run, n);
+	if (r == ASE_NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	ase_awk_setretval (run, r);
+	return 0;
+}
+
 static int awk_main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
@@ -1016,6 +1053,17 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	app_awk = awk;
 
+	if (ase_awk_addbfn (awk, 
+		ASE_T("sleep"), 5, 0,
+		1, 1, ASE_NULL, bfn_sleep) == ASE_NULL)
+	{
+		ase_awk_close (awk);
+#ifdef _WIN32
+		HeapDestroy (mmgr_data.heap);
+#endif
+		return -1;
+	}
+
 	ase_awk_setoption (awk, opt);
 
 	/*
@@ -1040,6 +1088,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 			(unsigned int)ase_awk_geterrlin(awk), 
 			ase_awk_geterrmsg(awk));
 		ase_awk_close (awk);
+#ifdef _WIN32
+		HeapDestroy (mmgr_data.heap);
+#endif
 		return -1;
 	}
 
@@ -1078,6 +1129,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 	if (run_awk (awk, mfn, runarg) == -1)
 	{
 		ase_awk_close (awk);
+#ifdef _WIN32
+		HeapDestroy (mmgr_data.heap);
+#endif
 		return -1;
 	}
 #endif

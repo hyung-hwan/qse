@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.5 2007/05/11 16:25:38 bacon Exp $
+ * $Id: StdAwk.java,v 1.7 2007/05/24 06:53:21 bacon Exp $
  *
  * {License}
  */
@@ -64,6 +64,7 @@ public abstract class StdAwk extends Awk
 
 		addFunction ("systime", 0, 0);
 		addFunction ("strftime", 0, 2);
+		addFunction ("strfgmtime", 0, 2);
 
 		addFunction ("system", 1, 1); 
 	}
@@ -799,10 +800,18 @@ public abstract class StdAwk extends Awk
 		return new Long (msec / 1000);
 	}
 
-	public Object bfn_strftime (long runid, Object[] args)
+	public Object bfn_strftime (long runid, Object[] args) throws Exception
 	{
-		// TODO: implement this...
-		return null;
+		String fmt = (args.length<1)? "%c": builtinFunctionArgumentToString (runid, args[0]);
+		long t = (args.length<2)? (System.currentTimeMillis()/1000): builtinFunctionArgumentToLong (runid, args[1]);
+		return strftime (fmt, t);
+	}
+
+	public Object bfn_strfgmtime (long runid, Object[] args) throws Exception
+	{
+		String fmt = (args.length<1)? "%c": builtinFunctionArgumentToString (runid, args[0]);
+		long t = (args.length<2)? (System.currentTimeMillis()/1000): builtinFunctionArgumentToLong (runid, args[1]);
+		return strfgmtime (fmt, t);
 	}
 
 	/* miscellaneous built-in functions */
