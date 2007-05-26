@@ -12,6 +12,9 @@
 * added awk c++ classes (awk/Awk.hpp awk/Awk.cpp awk/StdAwk.hpp awk/StdAwk.cpp)
 * added c++ test program (test/awk/Awk.cpp)
 
+* modified the java test program (test/awk/AseAwk.java) to be the same as
+  the c++ test program functionally
+
 * changed the way to invoke the main function (utl/main.h utl/main.c)
 
 [0.1.0]

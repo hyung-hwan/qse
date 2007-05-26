@@ -1,10 +1,12 @@
 /*
- * $Id: Awk.java,v 1.6 2007/05/24 06:53:21 bacon Exp $
+ * $Id: Awk.java,v 1.8 2007/05/25 14:41:48 bacon Exp $
  *
  * {License}
  */
 
 package ase.awk;
+
+import java.io.*;
 
 public abstract class Awk
 {
@@ -36,6 +38,12 @@ public abstract class Awk
 	public static final int OPTION_NEXTOFILE   = (1 << 12);
 	public static final int OPTION_CRLF        = (1 << 13);
 	public static final int OPTION_ARGSTOMAIN  = (1 << 14);
+
+	protected final static Reader stdin = 
+		new BufferedReader (new InputStreamReader (System.in));
+
+	protected final static Writer stdout =
+		new BufferedWriter (new OutputStreamWriter (System.out));
 
 	private long handle;
 
@@ -84,6 +92,7 @@ public abstract class Awk
 
 	protected native String strftime (String fmt, long sec);
 	protected native String strfgmtime (String fmt, long sec);
+	protected native int system (String cmd);
 
 	/* == simpler run methods == */
 	public void run (String main) throws Exception

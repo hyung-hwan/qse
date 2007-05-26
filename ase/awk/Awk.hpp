@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.35 2007/05/23 11:43:24 bacon Exp $
+ * $Id: Awk.hpp,v 1.36 2007/05/25 11:49:42 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -406,8 +406,8 @@ namespace ASE
 			DEPTH_REX_MATCH   = ASE_AWK_DEPTH_REX_MATCH
 		};
 
-		virtual void setDepth (int id, size_t depth);
-		virtual int  getDepth (int id);
+		virtual void setMaxDepth (int ids, size_t depth);
+		virtual int  getMaxDepth (int id);
 
 		virtual int parse ();
 		virtual int run (const char_t* main = ASE_NULL, 

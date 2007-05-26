@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.8 2007/05/24 06:53:21 bacon Exp $
+ * $Id: jni.c,v 1.10 2007/05/25 14:41:48 bacon Exp $
  *
  * {License}
  */
@@ -380,9 +380,19 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 
 	(*env)->SetLongField (env, obj, handle, (jlong)awk);
 
-	opt = ASE_AWK_EXPLICIT | ASE_AWK_UNIQUEFN | ASE_AWK_SHADING |
-		ASE_AWK_IMPLICIT | ASE_AWK_SHIFT | ASE_AWK_IDIV |
-		ASE_AWK_EXTIO | ASE_AWK_BLOCKLESS | ASE_AWK_NEXTOFILE;
+	opt = ASE_AWK_IMPLICIT |
+	      ASE_AWK_EXPLICIT | 
+	      ASE_AWK_UNIQUEFN | 
+	      ASE_AWK_IDIV |
+	      ASE_AWK_SHADING | 
+	      ASE_AWK_SHIFT | 
+	      ASE_AWK_EXTIO | 
+	      ASE_AWK_BLOCKLESS | 
+	      ASE_AWK_STRBASEONE | 
+	      ASE_AWK_STRIPSPACES | 
+	      ASE_AWK_NEXTOFILE |
+	      ASE_AWK_ARGSTOMAIN;
+
 	ase_awk_setoption (awk, opt);
 }
 
@@ -2356,6 +2366,7 @@ static jstring JNICALL call_strftime (
 	ase_size_t len, i;
 	const jchar* ptr;
 	ase_char_t* tmp;
+	jchar* tmp2;
 	jstring ret;
 
 	len = (*env)->GetStringLength (env, fmt);
@@ -2371,7 +2382,7 @@ static jstring JNICALL call_strftime (
 		return NULL;
 	}
 
-	tmp = (jchar*) malloc (ASE_SIZEOF(ase_char_t)*(len+1));
+	tmp = (ase_char_t*) malloc (ASE_SIZEOF(ase_char_t)*(len+1));
 	if (tmp == NULL)
 	{
 		(*env)->ReleaseStringChars (env, fmt, ptr);
@@ -2393,8 +2404,8 @@ static jstring JNICALL call_strftime (
 
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*len);
-		if (tmp == NULL)
+		tmp2 = (jchar*) malloc (ASE_SIZEOF(jchar)*len);
+		if (tmp2 == NULL)
 		{
 			throw_exception (
 				env, 
@@ -2403,9 +2414,9 @@ static jstring JNICALL call_strftime (
 				0);
 			return NULL;
 		}
-		for (i = 0; i < len; i++) tmp[i] = (jchar)buf[i];
-		ret = (*env)->NewString (env, tmp, len);
-		free (tmp);
+		for (i = 0; i < len; i++) tmp2[i] = (jchar)buf[i];
+		ret = (*env)->NewString (env, tmp2, len);
+		free (tmp2);
 	}
 	else
 	{
@@ -2459,7 +2470,6 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Awk_strfgmtime (
 	return call_strftime (env, obj, fmt, tm);
 }
 
-/*
 JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 	JNIEnv* env, jobject obj, jstring cmd)
 {
@@ -2468,8 +2478,8 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 	ase_char_t* tmp;
 	jint ret;
 
-	len = (*env)->GetStringLength (env, fmt);
-	ptr = (*env)->GetStringChars (env, fmt, JNI_FALSE);
+	len = (*env)->GetStringLength (env, cmd);
+	ptr = (*env)->GetStringChars (env, cmd, JNI_FALSE);
 	if (ptr == NULL)
 	{
 		(*env)->ExceptionClear (env);
@@ -2478,37 +2488,36 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM), 
 			ASE_AWK_ENOMEM,
 			0);
-		return NULL;
+		return -1;
 	}
 
-	tmp = (jchar*) malloc (ASE_SIZEOF(ase_char_t)*(len+1));
+	tmp = (ase_char_t*) malloc (ASE_SIZEOF(ase_char_t)*(len+1));
 	if (tmp == NULL)
 	{
-		(*env)->ReleaseStringChars (env, fmt, ptr);
+		(*env)->ReleaseStringChars (env, cmd, ptr);
 		throw_exception (
 			env, 
 			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
 			ASE_AWK_ENOMEM, 
 			0);
-		return NULL;
+		return -1;
 	}
 
 	for (i = 0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
 	tmp[i] = ASE_T('\0');
 
 #ifdef _WIN32
-	ret = _tsystem(ptr);
+	ret = _tsystem(tmp);
 #else
-	char* mbs = (char*)malloc (awk, len*5+1);
+	char* mbs = (char*)malloc (len*5+1);
 	if (mbs == ASE_NULL) return -1;
 
-	size_t mbl = wcstombs (mbs, ptr, len*5);
+	size_t mbl = wcstombs (mbs, tmp, len*5);
 	if (mbl == (size_t)-1) return -1;
 	mbs[mbl] = '\0';
 	ret = system(mbs);
-	free (awk, mbs);
+	free (mbs);
 #endif
 
 	return ret;
 }
-*/

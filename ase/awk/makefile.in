@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.5 2007/05/06 04:23:44 bacon Exp $
+# $Id: makefile.in,v 1.6 2007/05/25 11:49:42 bacon Exp $
 #
 
 NAME = aseawk
@@ -123,16 +123,16 @@ $(TMP_DIR)/rex.o: rex.c
 $(TMP_DIR)/jni.o: jni.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) $(CFLAGS_JNI) -o $@ -c jni.c
 
-$(TMP_DIR)/ase/awk/Awk.class:
+$(TMP_DIR)/ase/awk/Awk.class: Awk.java
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Awk.java
 
-$(TMP_DIR)/ase/awk/StdAwk.class:
+$(TMP_DIR)/ase/awk/StdAwk.class: StdAwk.java
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) StdAwk.java
 
-$(TMP_DIR)/ase/awk/Extio.class:
+$(TMP_DIR)/ase/awk/Extio.class: Extio.java
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Extio.java
 
-$(TMP_DIR)/ase/awk/Exception.class:
+$(TMP_DIR)/ase/awk/Exception.class: Exception.java
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Exception.java
 
 $(TMP_DIR)/cxx/Awk.o: Awk.cpp Awk.hpp
