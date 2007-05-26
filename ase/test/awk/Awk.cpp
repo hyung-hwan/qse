@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.20 2007/05/24 04:17:42 bacon Exp $
+ * $Id: Awk.cpp,v 1.22 2007/05/25 14:41:48 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -172,6 +172,7 @@ protected:
 	{
 		Source::Mode mode = io.getMode();
 		FILE* fp = (FILE*)io.getHandle();
+		if (fp == stdout || fp == stderr) fflush (fp);
 		if (fp != stdin && fp != stdout && fp != stderr) fclose (fp);
 		io.setHandle (ASE_NULL);
 		return 0;
@@ -276,6 +277,7 @@ protected:
 		ConTrack* t = (ConTrack*)io.getHandle();
 		FILE* fp = t->handle;
 
+		if (fp == stdout || fp == stderr) fflush (fp);
 		if (fp != stdin && fp != stdout && fp != stderr) fclose (fp);
 
 		ase_awk_free (awk, t);
@@ -467,9 +469,8 @@ static void print_usage (const ase_char_t* argv0)
 	const ase_char_t* base;
 	
 	base = ase_strrchr(argv0, ASE_T('/'));
-	if (base == ASE_NULL)
-		base = ase_strrchr(argv0, ASE_T('\\'));
-	if (base == ASE_NULL) base = argv0;
+	if (base == ASE_NULL) base = ase_strrchr(argv0, ASE_T('\\'));
+	if (base == ASE_NULL) base = argv0; else base++;
 
 	ase_printf (ASE_T("Usage: %s [-m main] [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]*\n"), base);
 	ase_printf (ASE_T("    -m  main  Specify the main function name\n"));

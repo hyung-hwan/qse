@@ -1,5 +1,5 @@
 /*
- * $Id: str.c,v 1.3 2007/04/30 05:55:36 bacon Exp $
+ * $Id: str.c,v 1.4 2007/05/25 08:08:47 bacon Exp $
  *
  * {License}
  */
@@ -196,6 +196,41 @@ ase_char_t* ase_strxdup2 (
 	return tmp;
 }
 
+ase_char_t* ase_strstr (const ase_char_t* str, const ase_char_t* sub)
+{
+	const ase_char_t* x, * y;
+
+	y = sub;
+	if (*y == ASE_T('\0')) return (ase_char_t*)str;
+
+	while (*str != ASE_T('\0')) 
+	{
+		if (*str != *y) 
+		{
+			str++;
+			continue;
+		}
+
+		x = str;
+		while (1)
+		{
+			if (*y == ASE_T('\0')) return (ase_char_t*)str;
+			if (*x++ != *y++) break;
+		}
+
+		y = sub;
+		str++;
+	}
+
+	return ASE_NULL;
+}
+
+ase_char_t* ase_strxstr (
+	const ase_char_t* str, ase_size_t size, const ase_char_t* sub)
+{
+	return ase_strxnstr (str, size, sub, ase_strlen(sub));
+}
+
 ase_char_t* ase_strxnstr (
 	const ase_char_t* str, ase_size_t strsz, 
 	const ase_char_t* sub, ase_size_t subsz)
@@ -223,6 +258,55 @@ ase_char_t* ase_strxnstr (
 		str++;
 	}
 		
+	return ASE_NULL;
+}
+
+ase_char_t* ase_strchr (const ase_char_t* str, ase_cint_t c)
+{
+	while (*str != ASE_T('\0')) 
+	{
+		if (*str == c) return (ase_char_t*)str;
+		str++;
+	}
+	return ASE_NULL;
+}
+
+ase_char_t* ase_strxchr (const ase_char_t* str, ase_size_t len, ase_cint_t c)
+{
+	const ase_char_t* end = str + len;
+
+	while (str < end) 
+	{
+		if (*str == c) return (ase_char_t*)str;
+		str++;
+	}
+
+	return ASE_NULL;
+}
+
+ase_char_t* ase_strrchr (const ase_char_t* str, ase_cint_t c)
+{
+	const ase_char_t* end = str;
+
+	while (*end != ASE_T('\0')) end++;
+
+	while (end > str) 
+	{
+		if (*--end == c) return (ase_char_t*)end;
+	}
+
+	return ASE_NULL;
+}
+
+ase_char_t* ase_strxrchr (const ase_char_t* str, ase_size_t len, ase_cint_t c)
+{
+	const ase_char_t* end = str + len;
+
+	while (end > str) 
+	{
+		if (*--end == c) return (ase_char_t*)end;
+	}
+
 	return ASE_NULL;
 }
 
@@ -381,5 +465,4 @@ ase_size_t ase_str_nccat (ase_str_t* str, ase_char_t c, ase_size_t len)
 	}
 	return str->size;
 }
-
 

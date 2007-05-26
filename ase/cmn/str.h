@@ -1,5 +1,5 @@
 /*
- * $Id: str.h,v 1.3 2007/04/30 05:55:36 bacon Exp $
+ * $Id: str.h,v 1.4 2007/05/25 08:08:47 bacon Exp $
  *
  * {License}
  */
@@ -62,9 +62,17 @@ ase_char_t* ase_strxdup2 (
 	const ase_char_t* str1, ase_size_t len1,
 	const ase_char_t* str2, ase_size_t len2, ase_mmgr_t* mmgr);
 
+ase_char_t* ase_strstr (const ase_char_t* str, const ase_char_t* sub);
+ase_char_t* ase_strxstr (
+	const ase_char_t* str, ase_size_t size, const ase_char_t* sub);
 ase_char_t* ase_strxnstr (
 	const ase_char_t* str, ase_size_t strsz, 
 	const ase_char_t* sub, ase_size_t subsz);
+
+ase_char_t* ase_strchr (const ase_char_t* str, ase_cint_t c);
+ase_char_t* ase_strxchr (const ase_char_t* str, ase_size_t len, ase_cint_t c);
+ase_char_t* ase_strrchr (const ase_char_t* str, ase_cint_t c);
+ase_char_t* ase_strxrchr (const ase_char_t* str, ase_size_t len, ase_cint_t c);
 
 ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr);
 void ase_str_close (ase_str_t* str);
