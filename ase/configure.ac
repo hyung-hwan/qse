@@ -1,10 +1,10 @@
 #
-# $Id: configure.ac,v 1.3 2007/04/30 05:51:26 bacon Exp $
+# $Id: configure.ac,v 1.4 2007/05/25 07:30:26 bacon Exp $
 # 
 
 AC_PREREQ(2.53)
 AC_INIT([ase], [deb-0.1.0])
-AC_REVISION([$Revision: 1.3 $])
+AC_REVISION([$Revision: 1.4 $])
 AC_CONFIG_HEADER([cmn/conf_unx.h])
 AC_CONFIG_AUX_DIR(config)
 
@@ -144,11 +144,38 @@ then
 		AC_MSG_RESULT($CUR_JAVAC_PATH)
 	done
 
+	# check if the javavm wrapper is in use 
+	case "$REAL_JAVAC_PATH" in
+	*/javavm)
+		JAVA_DIR="$REAL_JAVAC_PATH"
+		while true
+		do
+			JAVA_DIR=`echo "$JAVA_DIR" | sed -e 's/\/\/*/\//g' -e 's/\/[^/]*$//'`
+			if test "$JAVA_DIR" = "" 
+			then
+				break
+			fi
+
+			AC_MSG_CHECKING($JAVA_DIR/etc/javavms)
+			if test -f "$JAVA_DIR/etc/javavms"
+			then
+				AC_MSG_RESULT(yes)
+				# takes the first jvm configured
+				CUR_JAVAC_PATH=`cat $JAVA_DIR/etc/javavms | head -1`
+				AC_MSG_RESULT($CUR_JAVAC_PATH)
+				break;
+			else
+				AC_MSG_RESULT(no)
+			fi
+		done
+		;;
+	esac
+
 	JAVA_DIR="$CUR_JAVAC_PATH"
 
 	while true
 	do
-		JAVA_DIR=`echo "$JAVA_DIR" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
+		JAVA_DIR=`echo "$JAVA_DIR" | sed -e 's/\/\/*/\//g' -e 's/\/[^/]*$//'`
 		if test "$JAVA_DIR" = "" 
 		then
 			break
@@ -170,7 +197,7 @@ then
 		JNI_MD_H=`find "$i" -name jni_md.h -print`
 		if test "$JNI_MD_H" != "" 
 		then
-			tmp=`echo "$JNI_MD_H" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
+			tmp=`echo "$JNI_MD_H" | sed -e 's/\/\/*/\//g' -e 's/\/[^/]*$//'`
 			JNI_MD_INCLUDE_DIRS="$JNI_MD_INCLUDE_DIRS $tmp"
 		fi
 	done
