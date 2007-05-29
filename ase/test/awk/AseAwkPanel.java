@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.1 2007/04/30 08:32:41 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.2 2007/05/26 10:23:52 bacon Exp $
  */
 
 import java.awt.*;
@@ -10,9 +10,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Reader;
+import java.io.Writer;
 
 import ase.awk.StdAwk;
-import ase.awk.Extio;
+import ase.awk.Console;
 
 public class AseAwkPanel extends Panel
 {
@@ -81,9 +83,6 @@ public class AseAwkPanel extends Panel
 		private StringReader srcIn;
 		private StringWriter srcOut;
 
-		private StringReader conIn;
-		private StringWriter conOut;
-	
 		public Awk (AseAwkPanel awkPanel) throws Exception
 		{
 			super ();
@@ -142,18 +141,18 @@ public class AseAwkPanel extends Panel
 			return len;
 		}
 
-		protected int openConsole (Extio extio)
+		protected int openConsole (Console con)
 		{
-			int mode = extio.getMode ();
+			int mode = con.getMode ();
 
-			if (mode == Extio.MODE_CONSOLE_READ)
+			if (mode == Console.MODE_READ)
 			{
-				conIn = new StringReader (awkPanel.getConsoleInput());	
+				con.setHandle (new StringReader (awkPanel.getConsoleInput()));
 				return 1;
 			}
-			else if (mode == Extio.MODE_CONSOLE_WRITE)
+			else if (mode == Console.MODE_WRITE)
 			{
-				conOut = new StringWriter ();
+				con.setHandle (new StringWriter ());
 				return 1;
 			}
 
@@ -161,20 +160,22 @@ public class AseAwkPanel extends Panel
 
 		}
 	
-		protected int closeConsole (Extio extio)
+		protected int closeConsole (Console con)
 		{
-			int mode = extio.getMode ();
+			int mode = con.getMode ();
 
-			if (mode == Extio.MODE_CONSOLE_READ)
+			if (mode == Console.MODE_READ)
 			{
-				conIn.close ();
+				Reader rd = (Reader)con.getHandle();
+				try { rd.close (); }
+				catch (IOException e) { return -1; }
 				return 0;
 			}
-			else if (mode == Extio.MODE_CONSOLE_WRITE)
+			else if (mode == Console.MODE_WRITE)
 			{
-				awkPanel.setConsoleOutput (conOut.toString());
-
-				try { conOut.close (); }
+				Writer wr = (Writer)con.getHandle();
+				awkPanel.setConsoleOutput (wr.toString());
+				try { wr.close (); }
 				catch (IOException e) { return -1; }
 				return 0;
 			}
@@ -182,15 +183,17 @@ public class AseAwkPanel extends Panel
 			return -1;
 		}
 	
-		protected int readConsole (Extio extio, char[] buf, int len)
+		protected int readConsole (Console con, char[] buf, int len)
 		{
-			int mode = extio.getMode ();
+			int mode = con.getMode ();
 
-			if (mode == Extio.MODE_CONSOLE_READ)
+			if (mode == Console.MODE_READ)
 			{
+				Reader rd = (Reader)con.getHandle();
+
 				try 
 				{ 
-					int n = conIn.read (buf, 0, len); 
+					int n = rd.read (buf, 0, len); 
 					if (n == -1) n = 0;
 					return n;
 				}
@@ -200,24 +203,26 @@ public class AseAwkPanel extends Panel
 			return -1;
 		}
 	
-		protected int writeConsole (Extio extio, char[] buf, int len)
+		protected int writeConsole (Console con, char[] buf, int len)
 		{
-			int mode = extio.getMode ();
+			int mode = con.getMode ();
 
-			if (mode == Extio.MODE_CONSOLE_WRITE)
+			if (mode == Console.MODE_WRITE)
 			{
-				conOut.write (buf, 0, len);
+				Writer wr = (Writer)con.getHandle();
+				try { wr.write (buf, 0, len); }
+				catch (IOException e) { return -1; }
 				return len;
 			}
 
 			return -1;
 		}
 
-		protected int flushConsole (Extio extio)
+		protected int flushConsole (Console con)
 		{
-			int mode = extio.getMode ();
+			int mode = con.getMode ();
 
-			if (mode == Extio.MODE_CONSOLE_WRITE)
+			if (mode == Console.MODE_WRITE)
 			{
 				return 0;
 			}
@@ -225,15 +230,17 @@ public class AseAwkPanel extends Panel
 			return -1;
 		}
 
-		protected int nextConsole (Extio extio)
+		protected int nextConsole (Console con)
 		{
-			int mode = extio.getMode ();
+			int mode = con.getMode ();
 
-			if (mode == Extio.MODE_CONSOLE_READ)
+			if (mode == Console.MODE_READ)
 			{
+				return 0;
 			}
-			else if (mode == Extio.MODE_CONSOLE_WRITE)
+			else if (mode == Console.MODE_WRITE)
 			{
+				return 0;
 			}
 
 			return -1;

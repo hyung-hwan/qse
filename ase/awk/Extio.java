@@ -1,27 +1,27 @@
 /*
- * $Id: Extio.java,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: Extio.java,v 1.5 2007/05/26 10:52:48 bacon Exp $
  *
  * {License}
  */
 
 package ase.awk;
 
-public class Extio
+class Extio
 {
-	public static final int TYPE_PIPE = 0;
-	public static final int TYPE_COPROC = 1;
-	public static final int TYPE_FILE = 2;
-	public static final int TYPE_CONSOLE = 3;
+	protected static final int TYPE_PIPE = 0;
+	protected static final int TYPE_COPROC = 1;
+	protected static final int TYPE_FILE = 2;
+	protected static final int TYPE_CONSOLE = 3;
 
-	public static final int MODE_PIPE_READ = 0;
-	public static final int MODE_PIPE_WRITE = 1;
+	protected static final int MODE_PIPE_READ = 0;
+	protected static final int MODE_PIPE_WRITE = 1;
 
-	public static final int MODE_FILE_READ = 0;
-	public static final int MODE_FILE_WRITE = 1;
-	public static final int MODE_FILE_APPEND = 2;
+	protected static final int MODE_FILE_READ = 0;
+	protected static final int MODE_FILE_WRITE = 1;
+	protected static final int MODE_FILE_APPEND = 2;
 
-	public static final int MODE_CONSOLE_READ = 0;
-	public static final int MODE_CONSOLE_WRITE = 1;
+	protected static final int MODE_CONSOLE_READ = 0;
+	protected static final int MODE_CONSOLE_WRITE = 1;
 
 	private String name;
 	private int type;
@@ -66,10 +66,5 @@ public class Extio
 	public Object getHandle ()
 	{
 		return this.handle;
-	}
-
-	protected void finalize () throws Throwable
-	{
-		super.finalize ();
 	}
 };
