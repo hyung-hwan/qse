@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwk.java,v 1.6 2007/05/25 16:55:02 bacon Exp $
+ * $Id: AseAwk.java,v 1.7 2007/05/26 10:23:52 bacon Exp $
  */
 
 import java.awt.*;
@@ -62,7 +62,7 @@ public class AseAwk extends StdAwk
 	{
 		URL url = AseAwk.class.getResource (
 			AseAwk.class.getName() + ".class");
-		File file = new File (url.getFile());
+		java.io.File file = new java.io.File (url.getFile());
 
 		String osname = System.getProperty ("os.name").toLowerCase();
 		String aseBase = file.getParentFile().getParentFile().getParent(
@@ -249,8 +249,6 @@ public class AseAwk extends StdAwk
 	private String srcInName;
 	private String srcOutName;
 
-	private Reader conReader;
-	private Writer conWriter;
 	private LinkedList conInNames;
 	private LinkedList conOutNames;
 	private Iterator conInIter;
@@ -265,9 +263,6 @@ public class AseAwk extends StdAwk
 
 		srcInName = null;
 		srcOutName = null;
-
-		conReader = null;
-		conWriter = null;
 
 		conInNames = new LinkedList ();
 		conOutNames = new LinkedList ();
@@ -446,11 +441,11 @@ public class AseAwk extends StdAwk
 		return len;
 	}
 
-	protected int openConsole (Extio extio)
+	protected int openConsole (Console con)
 	{
-		int mode = extio.getMode ();
+		int mode = con.getMode ();
 
-		if (mode == Extio.MODE_CONSOLE_READ)
+		if (mode == Console.MODE_READ)
 		{
 			Reader rd;
 
@@ -467,10 +462,7 @@ public class AseAwk extends StdAwk
 				}
 				catch (IOException e) { return -1; }
 
-				try
-				{
-					setConsoleInputName (extio, fn);
-				}
+				try { con.setFileName (fn); }
 				catch (ase.awk.Exception e)
 				{
 					try { rd.close(); }
@@ -479,10 +471,10 @@ public class AseAwk extends StdAwk
 				}
 			}
 
-			conReader = rd;
+			con.setHandle (rd);
 			return 1;
 		}
-		else if (mode == Extio.MODE_CONSOLE_WRITE)
+		else if (mode == Console.MODE_WRITE)
 		{
 			Writer wr;
 
@@ -499,10 +491,7 @@ public class AseAwk extends StdAwk
 				}
 				catch (IOException e) { return -1; }
 
-				try
-				{
-					setConsoleOutputName (extio, fn);
-				}
+				try { con.setFileName (fn); }
 				catch (ase.awk.Exception e)
 				{
 					try { wr.close(); }
@@ -511,7 +500,7 @@ public class AseAwk extends StdAwk
 				}
 			}
 
-			conWriter = wr;
+			con.setHandle (wr);
 			return 1;
 		}
 
@@ -519,53 +508,32 @@ public class AseAwk extends StdAwk
 
 	}
 
-	protected int closeConsole (Extio extio)
+	protected int closeConsole (Console con)
 	{
-		int mode = extio.getMode ();
+		int mode = con.getMode ();
 
-		if (mode == Extio.MODE_CONSOLE_READ)
+		if (mode == Console.MODE_READ)
 		{
-			if (conReader != null)
+			Reader rd = (Reader)con.getHandle();
+			if (rd != null && rd != stdin)
 			{
-				if (conReader == stdin)
-				{
-					conReader = null;
-				}
-				else
-				{	
-					try
-					{
-						conReader.close ();
-						conReader = null;
-					}
-					catch (IOException e) { return -1; }
-				}
+				try { rd.close (); }
+				catch (IOException e) { return -1; }
 			}
 
 			return 0;
 		}
-		else if (mode == Extio.MODE_CONSOLE_WRITE)
+		else if (mode == Console.MODE_WRITE)
 		{
-			if (conWriter != null)
+			Writer wr = (Writer)con.getHandle();
+			if (wr != null)
 			{
-				if (conWriter == stdout)
-				{
-					try 
-					{ 
-						conWriter.flush (); 
-						conWriter = null;
-					}
-					catch (IOException e) { return -1; }
+				try 
+				{ 
+					wr.flush (); 
+					if (wr != stdout) wr.close ();
 				}
-				else
-				{
-					try 
-					{ 
-						conWriter.close (); 
-						conWriter = null;
-					}
-					catch (IOException e) { return -1; }
-				}
+				catch (IOException e) { return -1; }
 			}
 
 			return 0;
@@ -574,15 +542,17 @@ public class AseAwk extends StdAwk
 		return -1;
 	}
 
-	protected int readConsole (Extio extio, char[] buf, int len)
+	protected int readConsole (Console con, char[] buf, int len)
 	{
-		int mode = extio.getMode ();
+		int mode = con.getMode ();
 
-		if (mode == Extio.MODE_CONSOLE_READ)
+		if (mode == Console.MODE_READ)
 		{
+			Reader rd = (Reader)con.getHandle();
+
 			try 
 			{ 
-				int n = conReader.read (buf, 0, len); 
+				int n = rd.read (buf, 0, len); 
 				if (n == -1) n = 0;
 				return n;
 			}
@@ -592,16 +562,17 @@ public class AseAwk extends StdAwk
 		return -1;
 	}
 
-	protected int writeConsole (Extio extio, char[] buf, int len)
+	protected int writeConsole (Console con, char[] buf, int len)
 	{
-		int mode = extio.getMode ();
+		int mode = con.getMode ();
 
-		if (mode == Extio.MODE_CONSOLE_WRITE)
+		if (mode == Console.MODE_WRITE)
 		{
+			Writer wr = (Writer)con.getHandle();
 			try 
 			{ 
-				conWriter.write (buf, 0, len); 
-				conWriter.flush ();
+				wr.write (buf, 0, len); 
+				wr.flush ();
 			}
 			catch (IOException e) { return -1; }
 			return len;
@@ -610,13 +581,14 @@ public class AseAwk extends StdAwk
 		return -1;
 	}
 
-	protected int flushConsole (Extio extio)
+	protected int flushConsole (Console con)
 	{
-		int mode = extio.getMode ();
+		int mode = con.getMode ();
 
-		if (mode == Extio.MODE_CONSOLE_WRITE)
+		if (mode == Console.MODE_WRITE)
 		{
-			try { conWriter.flush (); }
+			Writer wr = (Writer)con.getHandle();
+			try { wr.flush (); }
 			catch (IOException e) { return -1; }
 			return 0;
 		}
@@ -624,11 +596,11 @@ public class AseAwk extends StdAwk
 		return -1;
 	}
 
-	protected int nextConsole (Extio extio)
+	protected int nextConsole (Console con)
 	{
-		int mode = extio.getMode ();
+		int mode = con.getMode ();
 
-		if (mode == Extio.MODE_CONSOLE_READ)
+		if (mode == Console.MODE_READ)
 		{
 			if (!conInIter.hasNext()) return 0;
 			String fn = (String)conInIter.next();
@@ -643,10 +615,7 @@ public class AseAwk extends StdAwk
 			}
 			catch (IOException e) { return -1; }
 
-			try
-			{
-				setConsoleInputName (extio, fn);
-			}
+			try { con.setFileName (fn); }
 			catch (ase.awk.Exception e)
 			{
 				try { rd.close(); }
@@ -654,13 +623,22 @@ public class AseAwk extends StdAwk
 				return -1;
 			}
 
-			try { conReader.close (); }
-			catch (IOException e) { return -1; }
+			Reader tmp = (Reader)con.getHandle();
+			if (tmp != stdin)
+			{
+				try { tmp.close (); }
+				catch (IOException e) 
+				{ 
+					try { rd.close (); }
+					catch (IOException e2) {}	
+					return -1; 
+				}
+			}
 			
-			conReader = rd;
+			con.setHandle (rd);
 			return 1;
 		}
-		else if (mode == Extio.MODE_CONSOLE_WRITE)
+		else if (mode == Console.MODE_WRITE)
 		{
 			if (!conOutIter.hasNext()) return 0;
 			String fn = (String)conOutIter.next();
@@ -675,10 +653,7 @@ public class AseAwk extends StdAwk
 			}
 			catch (IOException e) { return -1; }
 
-			try 
-			{
-				setConsoleOutputName (extio, fn);
-			}
+			try { con.setFileName (fn); }
 			catch (ase.awk.Exception e)
 			{
 				try { wr.close(); }
@@ -686,10 +661,19 @@ public class AseAwk extends StdAwk
 				return -1;
 			}
 
-			try { conWriter.close (); }
-			catch (IOException e) { return -1; }
+			Writer tmp = (Writer)con.getHandle();
+			if (tmp != stdout)
+			{
+				try { tmp.close (); }
+				catch (IOException e) 
+				{ 
+					try { wr.close (); }
+					catch (IOException e2) {}	
+					return -1; 
+				}
+			}
 
-			conWriter = wr;
+			con.setHandle (wr);
 			return 1;
 		}
 

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.9 2007/05/25 14:41:48 bacon Exp $
+ * $Id: StdAwk.java,v 1.10 2007/05/26 10:23:52 bacon Exp $
  *
  * {License}
  */
@@ -40,222 +40,251 @@ public abstract class StdAwk extends Awk
 	}
 
 	/* == file interface == */
-	protected int openFile (Extio extio)
+	protected int openFile (File file)
 	{
-		int mode = extio.getMode();
+		int mode = file.getMode();
 
-		if (mode == Extio.MODE_FILE_READ)
+		if (mode == File.MODE_READ)
 		{
 			FileInputStream fis;
-			Reader isr;
 
-			try { fis = new FileInputStream (extio.getName()); }
+			try { fis = new FileInputStream (file.getName()); }
 			catch (IOException e) { return -1; }
 
-			isr = new BufferedReader (new InputStreamReader (fis)); 
-			extio.setHandle (isr);
+			Reader rd = new BufferedReader (
+				new InputStreamReader (fis)); 
+			file.setHandle (rd);
 			return 1;
 		}
-		else if (mode == Extio.MODE_FILE_WRITE)
+		else if (mode == File.MODE_WRITE)
 		{
 			FileOutputStream fos;
-			Writer osw;
 
-			try { fos = new FileOutputStream (extio.getName()); }
+			try { fos = new FileOutputStream (file.getName()); }
 			catch (IOException e) { return -1; }
 
-			osw = new BufferedWriter (new OutputStreamWriter (fos));
-			extio.setHandle (osw);
+			Writer wr = new BufferedWriter (
+				new OutputStreamWriter (fos));
+			file.setHandle (wr);
 			return 1;
 		}
-		else if (mode == Extio.MODE_FILE_APPEND)
+		else if (mode == File.MODE_APPEND)
 		{
 			FileOutputStream fos;
-			Writer osw;
 
-			try { fos = new FileOutputStream (extio.getName(), true); }
+			try { fos = new FileOutputStream (file.getName(), true); }
 			catch (IOException e) { return -1; }
 
-			osw = new BufferedWriter (new OutputStreamWriter (fos));
-			extio.setHandle (osw);
+			Writer wr = new BufferedWriter (
+				new OutputStreamWriter (fos));
+			file.setHandle (wr);
 			return 1;
 		}
 
 		return -1;
 	}
 	
-	protected int closeFile (Extio extio)
+	protected int closeFile (File file)
 	{
-		int mode = extio.getMode();
+		int mode = file.getMode();
 
-		if (mode == Extio.MODE_FILE_READ)
+		if (mode == File.MODE_READ)
 		{
-			Reader isr;
-			isr = (Reader)extio.getHandle();
-			if (isr != null)
-			{
-				try { isr.close (); }
-				catch (IOException e) { return -1; }
-			}
+			Reader isr = (Reader)file.getHandle();
+			try { isr.close (); }
+			catch (IOException e) { return -1; }
 			return 0;
 		}
-		else if (mode == Extio.MODE_FILE_WRITE)
+		else if (mode == File.MODE_WRITE)
 		{
-			Writer osw;
-			osw = (Writer)extio.getHandle();
-			if (osw != null)
-			{
-				try { osw.close (); }
-				catch (IOException e) { return -1; }
-			}
+			Writer osw = (Writer)file.getHandle();
+			try { osw.close (); }
+			catch (IOException e) { return -1; }
 			return 0;
 		}
-		else if (mode == Extio.MODE_FILE_APPEND)
+		else if (mode == File.MODE_APPEND)
 		{
-			Writer osw;
-			osw = (Writer)extio.getHandle();
-			if (osw != null)
-			{
-				try { osw.close (); }
-				catch (IOException e) { return -1; }
-			}
+			Writer osw = (Writer)file.getHandle();
+			try { osw.close (); }
+			catch (IOException e) { return -1; }
 			return 0;
 		}
 		
 		return -1;
 	}
 
-	protected int readFile (Extio extio, char[] buf, int len) 
+	protected int readFile (File file, char[] buf, int len) 
 	{
-		int mode = extio.getMode();
+		int mode = file.getMode();
 
-		if (mode == Extio.MODE_FILE_READ)
+		if (mode == File.MODE_READ)
 		{
-			Reader isr;
-			isr = (Reader)extio.getHandle();
+			Reader rd = (Reader)file.getHandle();
 
 			try 
 			{
-				len = isr.read (buf, 0, len);
-				if (len == -1) len = 0;
+				len = rd.read (buf, 0, len);
+				if (len == -1) return 0;
 			}
-			catch (IOException e) { len = -1; }
+			catch (IOException e) { return -1; }
 			return len; 
 		}
 
 		return -1;
 	}
 
-	protected int writeFile (Extio extio, char[] buf, int len) 
+	protected int writeFile (File file, char[] buf, int len) 
 	{
-		int mode = extio.getMode();
+		int mode = file.getMode();
 
-		if (mode == Extio.MODE_FILE_WRITE ||
-		    mode == Extio.MODE_FILE_APPEND)
+		if (mode == File.MODE_WRITE ||
+		    mode == File.MODE_APPEND)
 		{
-			Writer osw;
-			osw = (Writer)extio.getHandle();
-			try { osw.write (buf, 0, len); }
-			catch (IOException e) { len = -1; }
+			Writer wr = (Writer)file.getHandle();
+			try { wr.write (buf, 0, len); }
+			catch (IOException e) { return -1; }
 			return len;
 		}
 
 		return -1;
 	}
 
-	protected int flushFile (Extio extio)
+	protected int flushFile (File file)
 	{
-		int mode = extio.getMode ();
+		int mode = file.getMode ();
 
-		if (mode == Extio.MODE_FILE_WRITE ||
-		    mode == Extio.MODE_FILE_APPEND)
+		if (mode == File.MODE_WRITE ||
+		    mode == File.MODE_APPEND)
 		{
-			Writer osw;
-			osw = (Writer)extio.getHandle ();
-			try { osw.flush (); }
+			Writer wr = (Writer)file.getHandle ();
+			try { wr.flush (); }
 			catch (IOException e) { return -1; }
 			return 0;
 		}
 
 		return -1;
 	}
+
+	private class RWE
+	{
+		public Writer wr;
+		public Reader rd;
+		public Reader er;
+
+		public RWE (Writer wr, Reader rd, Reader er)
+		{
+			this.wr = wr;
+			this.rd = rd;
+			this.er = er;
+		}
+	};
 
 	/* == pipe interface == */
-	protected int openPipe (Extio extio)
+	protected int openPipe (Pipe pipe)
 	{
-		int mode = extio.getMode();
+		int mode = pipe.getMode();
 
-		if (mode == Extio.MODE_PIPE_READ)
+		if (mode == Pipe.MODE_READ)
 		{
-
 			Process proc;
-			Reader isr;
 		       
-			try { proc = popen (extio.getName()); }
+			try { proc = popen (pipe.getName()); }
 			catch (IOException e) { return -1; }
 
-			isr = new BufferedReader (new InputStreamReader (proc.getInputStream())); 
-			extio.setHandle (isr);
+			Reader rd = new BufferedReader (
+				new InputStreamReader (proc.getInputStream())); 
+
+			pipe.setHandle (rd);
 			return 1;
 		}
-		else if (mode == Extio.MODE_PIPE_WRITE)
+		else if (mode == Pipe.MODE_WRITE)
 		{
 			Process proc;
-			Writer osw;
 
-			try { proc = popen (extio.getName()); }
+			try { proc = popen (pipe.getName()); }
 			catch (IOException e) { return -1; }
 
-			osw = new BufferedWriter (new OutputStreamWriter (proc.getOutputStream()));
-			extio.setHandle (osw);
+			Writer wr = new BufferedWriter (
+				new OutputStreamWriter (proc.getOutputStream()));
+			Reader rd = new BufferedReader (
+				new InputStreamReader (proc.getInputStream()));
+			Reader er = new BufferedReader (
+				new InputStreamReader (proc.getErrorStream()));
+
+			pipe.setHandle (new RWE (wr, rd, er));
 			return 1;
 		}
 
 		return -1;
 	}
 	
-	protected int closePipe (Extio extio)
+	protected int closePipe (Pipe pipe)
 	{
-		int mode = extio.getMode();
+		int mode = pipe.getMode();
 
-		if (mode == Extio.MODE_PIPE_READ)
+		if (mode == Pipe.MODE_READ)
 		{
-			Reader isr;
-			isr = (Reader)extio.getHandle();
-			if (isr != null)
-			{
-				try { isr.close (); }
-				catch (IOException e) { return -1; }
-			}
+			Reader rd = (Reader)pipe.getHandle();
+			try { rd.close (); }
+			catch (IOException e) { return -1; }
 			return 0;
 		}
-		else if (mode == Extio.MODE_PIPE_WRITE)
+		else if (mode == Pipe.MODE_WRITE)
 		{
-			Writer osw;
-			osw = (Writer)extio.getHandle();
-			if (osw != null)
+			//Writer wr = (Writer)pipe.getHandle();
+			RWE rwe = (RWE)pipe.getHandle();
+
+			try { rwe.wr.close (); }
+			catch (IOException e) { return -1; }
+
+			char[] buf = new char[256];
+
+			try 
 			{
-				try { osw.close (); }
-				catch (IOException e) { return -1; }
+				while (true)
+				{
+					int len = rwe.rd.read (buf, 0, buf.length);
+					if (len == -1) break;
+					System.out.print (new String (buf, 0, len));
+				}
+
+				System.out.flush ();
 			}
+			catch (IOException e) {}
+
+			try
+			{
+				while (true)
+				{
+					int len = rwe.er.read (buf, 0, buf.length);
+					if (len == -1) break;
+					System.err.print (new String (buf, 0, len));
+				}
+
+				System.err.flush ();
+			}
+			catch (IOException e) {}
+
+			try { rwe.rd.close (); } catch (IOException e) {}
+			try { rwe.er.close (); } catch (IOException e) {}
+
+			pipe.setHandle (null);
 			return 0;
 		}
 		
 		return -1;
 	}
 
-	protected int readPipe (Extio extio, char[] buf, int len) 
+	protected int readPipe (Pipe pipe, char[] buf, int len) 
 	{
-		int mode = extio.getMode();
+		int mode = pipe.getMode();
 
-		if (mode == Extio.MODE_PIPE_READ)
+		if (mode == Pipe.MODE_READ)
 		{
-			Reader isr;
-			isr = (Reader)extio.getHandle();
-
+			Reader rd = (Reader)pipe.getHandle();
 			try 
 			{
-				len = isr.read (buf, 0, len);
+				len = rd.read (buf, 0, len);
 				if (len == -1) len = 0;
 			}
 			catch (IOException e) { len = -1; }
@@ -265,31 +294,34 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-	protected int writePipe (Extio extio, char[] buf, int len) 
+	protected int writePipe (Pipe pipe, char[] buf, int len) 
 	{
-		int mode = extio.getMode();
+		int mode = pipe.getMode();
 
-		if (mode == Extio.MODE_PIPE_WRITE)
+		if (mode == Pipe.MODE_WRITE)
 		{
-			Writer osw;
-			osw = (Writer)extio.getHandle();
-			try { osw.write (buf, 0, len); }
-			catch (IOException e) { len = -1; }
+			//Writer wr = (Writer)pipe.getHandle ();
+			RWE rw = (RWE)pipe.getHandle();
+			try 
+			{ 
+				rw.wr.write (buf, 0, len); 
+				rw.wr.flush ();
+			}
+			catch (IOException e) { return -1; }
 			return len;
 		}
 
 		return -1;
 	}
 
-	protected int flushPipe (Extio extio)
+	protected int flushPipe (Pipe pipe)
 	{
-		int mode = extio.getMode ();
+		int mode = pipe.getMode ();
 
-		if (mode == Extio.MODE_PIPE_WRITE)
+		if (mode == Pipe.MODE_WRITE)
 		{
-			Writer osw;
-			osw = (Writer)extio.getHandle ();
-			try { osw.flush (); }
+			Writer wr = (Writer)pipe.getHandle ();
+			try { wr.flush (); }
 			catch (IOException e) { return -1; }
 			return 0;
 		}
@@ -390,38 +422,6 @@ public abstract class StdAwk extends Awk
 	{
 		String str = builtinFunctionArgumentToString (runid, args[0]);
 		return system (str);
-
-		/*
-		String str = builtinFunctionArgumentToString (runid, args[0]);
-		Process proc = null;
-		int n = 0;
-
-		str = builtinFunctionArgumentToString (runid, args[0]);
-
-		try { proc = popen (str); }
-		catch (IOException e) { n = -1; }
-
-		if (proc != null)
-		{
-			InputStream is;
-			byte[] buf = new byte[1024];
-
-			is = proc.getInputStream(); 
-
-			// TODO; better error handling... program execution.. io redirection??? 
-			try { while (is.read (buf) != -1) ; } 
-			catch (IOException e) { n = -1; };
-
-			try { n = proc.waitFor (); } 
-			catch (InterruptedException e) 
-			{ 
-				proc.destroy (); 
-				n = -1; 
-			}
-		}
-
-		return new Long (n);	
-		*/
 	}
 
 	/* == utility functions == */
