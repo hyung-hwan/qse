@@ -39,13 +39,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asetestlsp", "test\lsp\aset
 		{42FE7CED-34B7-45C8-92C9-8856E16640D2} = {42FE7CED-34B7-45C8-92C9-8856E16640D2}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "asetestcnt", "test\cnt\asetestcnt.csproj", "{F14B75D8-3ED7-4621-B5B9-E96A80B5D809}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "asecnt", "cnt\asecnt.csproj", "{7F679165-41FB-4E1E-B3F5-23C5EE94166A}"
-	ProjectSection(ProjectDependencies) = postProject
-		{963AF7B5-12E6-42B6-8CBE-89136C1A109B} = {963AF7B5-12E6-42B6-8CBE-89136C1A109B}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aseawk++", "awk\aseawk++.vcproj", "{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}"
 	ProjectSection(ProjectDependencies) = postProject
 		{5F2E77D5-1485-48D1-9371-987BC55FEE83} = {5F2E77D5-1485-48D1-9371-987BC55FEE83}
@@ -56,8 +49,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asetestawk++", "test\awk\as
 		{E7A8B741-4E9D-4ED4-9F77-E7F637A678A5} = {E7A8B741-4E9D-4ED4-9F77-E7F637A678A5}
 		{57F1E1D0-28B6-42BF-BAFB-045AEE2DCF4F} = {57F1E1D0-28B6-42BF-BAFB-045AEE2DCF4F}
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asenet", "net\asenet.vcproj", "{A63E9DF9-1D47-4D81-834C-1D40406C18C4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

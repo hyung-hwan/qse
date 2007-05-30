@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.7 2007/05/19 16:45:27 bacon Exp $
+ * $Id: run.c,v 1.8 2007/05/28 13:53:31 bacon Exp $
  *
  * {License}
  */
@@ -1719,12 +1719,17 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	return n;
 }
 
+#define ON_STATEMENT(run,nde) \
+	if ((run)->cbs != ASE_NULL &&  \
+	    (run)->cbs->on_statement != ASE_NULL) \
+	{ \
+		(run)->cbs->on_statement ( \
+			run, (nde)->line, (run)->custom_data); \
+	} 
+
 static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
-	if (run->cbs != ASE_NULL && run->cbs->on_statement != ASE_NULL)
-	{
-		run->cbs->on_statement (run, nde->line, run->custom_data);
-	}
+	ON_STATEMENT (run, nde);
 
 	switch (nde->type) 
 	{
@@ -1889,6 +1894,8 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 
 		while (1)
 		{
+			ON_STATEMENT (run, nde->test);
+
 			test = __eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
 
@@ -1920,6 +1927,7 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 				run->exit_level = EXIT_NONE;
 			}
 			else if (run->exit_level != EXIT_NONE) break;
+
 		}
 	}
 	else if (nde->type == ASE_AWK_NDE_DOWHILE)
@@ -1942,6 +1950,8 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 				run->exit_level = EXIT_NONE;
 			}
 			else if (run->exit_level != EXIT_NONE) break;
+
+			ON_STATEMENT (run, nde->test);
 
 			test = __eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
@@ -1969,6 +1979,8 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 	if (nde->init != ASE_NULL)
 	{
 		ASE_ASSERT (nde->init->next == ASE_NULL);
+
+		ON_STATEMENT (run, nde->init);
 		val = __eval_expression(run,nde->init);
 		if (val == ASE_NULL) return -1;
 
@@ -1986,6 +1998,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 			 * the for statement are allowed */
 			ASE_ASSERT (nde->test->next == ASE_NULL);
 
+			ON_STATEMENT (run, nde->test);
 			test = __eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
 
@@ -2025,7 +2038,9 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 		if (nde->incr != ASE_NULL)
 		{
 			ASE_ASSERT (nde->incr->next == ASE_NULL);
-			val = __eval_expression(run,nde->incr);
+
+			ON_STATEMENT (run, nde->incr);
+			val = __eval_expression (run, nde->incr);
 			if (val == ASE_NULL) return -1;
 
 			ase_awk_refupval (run, val);

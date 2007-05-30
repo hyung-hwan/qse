@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.36 2007/05/25 11:49:42 bacon Exp $
+ * $Id: Awk.hpp,v 1.38 2007/05/28 13:53:31 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -363,7 +363,7 @@ namespace ASE
 			Run (Awk* awk);
 
 		public:
-			int stop ();
+			int stop () const;
 
 			ErrorCode getErrorCode () const;
 			size_t getErrorLine () const;
@@ -407,7 +407,7 @@ namespace ASE
 		};
 
 		virtual void setMaxDepth (int ids, size_t depth);
-		virtual int  getMaxDepth (int id);
+		virtual int  getMaxDepth (int id) const;
 
 		virtual int parse ();
 		virtual int run (const char_t* main = ASE_NULL, 
