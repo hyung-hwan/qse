@@ -78,10 +78,6 @@
       <Project>{7F679165-41FB-4E1E-B3F5-23C5EE94166A}</Project>
       <Name>asecnt</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\net\asenet.vcproj">
-      <Project>{A63E9DF9-1D47-4D81-834C-1D40406C18C4}</Project>
-      <Name>asenet</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

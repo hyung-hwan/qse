@@ -7,7 +7,7 @@
     <ProjectGuid>{7F679165-41FB-4E1E-B3F5-23C5EE94166A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AESCNT</RootNamespace>
+    <RootNamespace>ASECNT</RootNamespace>
     <AssemblyName>asecnt</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

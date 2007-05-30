@@ -1,15 +1,27 @@
 /*
- * $Id: AseAwk.java,v 1.7 2007/05/26 10:23:52 bacon Exp $
+ * $Id: AseAwk.java,v 1.8 2007/05/28 10:29:57 bacon Exp $
  */
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.Reader;
+import java.io.Writer;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.IOException;
+
 import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.net.URL;
-import ase.awk.*;
+
+import ase.awk.StdAwk;
+import ase.awk.Console;
 
 public class AseAwk extends StdAwk
 {

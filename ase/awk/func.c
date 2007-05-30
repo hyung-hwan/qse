@@ -1,23 +1,23 @@
 /*
- * $Id: func.c,v 1.4 2007/05/05 16:32:46 bacon Exp $
+ * $Id: func.c,v 1.5 2007/05/28 13:54:47 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/awk/awk_i.h>
 
-static int __bfn_close   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_fflush  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_index   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_length  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_substr  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_split   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_tolower (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_toupper (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_gsub    (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_sub     (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_match   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
-static int __bfn_sprintf (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_close   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_fflush  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_index   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_length  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_substr  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_split   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_tolower (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_toupper (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_gsub    (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_sub     (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_match   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+static int bfn_sprintf (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 
 #undef MAX
 #define MAX ASE_TYPE_UNSIGNED_MAX(ase_size_t)
@@ -25,20 +25,20 @@ static int __bfn_sprintf (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 static ase_awk_bfn_t __sys_bfn[] = 
 {
 	/* io functions */
-	{ {ASE_T("close"),   5}, ASE_AWK_EXTIO, {1, 1, ASE_NULL}, __bfn_close},
-	{ {ASE_T("fflush"),  6}, ASE_AWK_EXTIO, {0, 1, ASE_NULL}, __bfn_fflush},
+	{ {ASE_T("close"),   5}, ASE_AWK_EXTIO, {1, 1, ASE_NULL}, bfn_close},
+	{ {ASE_T("fflush"),  6}, ASE_AWK_EXTIO, {0, 1, ASE_NULL}, bfn_fflush},
 
 	/* string functions */
-	{ {ASE_T("index"),   5}, 0,  {2,   2, ASE_NULL},     __bfn_index},
-	{ {ASE_T("substr"),  6}, 0,  {2,   3, ASE_NULL},     __bfn_substr},
-	{ {ASE_T("length"),  6}, 0,  {1,   1, ASE_NULL},     __bfn_length},
-	{ {ASE_T("split"),   5}, 0,  {2,   3, ASE_T("vrv")}, __bfn_split},
-	{ {ASE_T("tolower"), 7}, 0,  {1,   1, ASE_NULL},     __bfn_tolower},
-	{ {ASE_T("toupper"), 7}, 0,  {1,   1, ASE_NULL},     __bfn_toupper},
-	{ {ASE_T("gsub"),    4}, 0,  {2,   3, ASE_T("xvr")}, __bfn_gsub},
-	{ {ASE_T("sub"),     3}, 0,  {2,   3, ASE_T("xvr")}, __bfn_sub},
-	{ {ASE_T("match"),   5}, 0,  {2,   2, ASE_T("vx")},  __bfn_match},
-	{ {ASE_T("sprintf"), 7}, 0,  {1, MAX, ASE_NULL},     __bfn_sprintf},
+	{ {ASE_T("index"),   5}, 0,  {2,   2, ASE_NULL},     bfn_index},
+	{ {ASE_T("substr"),  6}, 0,  {2,   3, ASE_NULL},     bfn_substr},
+	{ {ASE_T("length"),  6}, 0,  {1,   1, ASE_NULL},     bfn_length},
+	{ {ASE_T("split"),   5}, 0,  {2,   3, ASE_T("vrv")}, bfn_split},
+	{ {ASE_T("tolower"), 7}, 0,  {1,   1, ASE_NULL},     bfn_tolower},
+	{ {ASE_T("toupper"), 7}, 0,  {1,   1, ASE_NULL},     bfn_toupper},
+	{ {ASE_T("gsub"),    4}, 0,  {2,   3, ASE_T("xvr")}, bfn_gsub},
+	{ {ASE_T("sub"),     3}, 0,  {2,   3, ASE_T("xvr")}, bfn_sub},
+	{ {ASE_T("match"),   5}, 0,  {2,   2, ASE_T("vx")},  bfn_match},
+	{ {ASE_T("sprintf"), 7}, 0,  {1, MAX, ASE_NULL},     bfn_sprintf},
 
 	{ {ASE_NULL,         0}, 0,  {0,   0, ASE_NULL},     ASE_NULL}
 };
@@ -178,7 +178,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	return ASE_NULL;
 }
 
-static int __bfn_close (
+static int bfn_close (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -289,7 +289,7 @@ static int __flush_extio (
 	return n;
 }
 
-static int __bfn_fflush (
+static int bfn_fflush (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -376,7 +376,7 @@ skip_flush:
 	return 0;
 }
 
-static int __bfn_index (
+static int bfn_index (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -439,7 +439,7 @@ static int __bfn_index (
 	return 0;
 }
 
-static int __bfn_length (
+static int bfn_length (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -474,7 +474,7 @@ static int __bfn_length (
 	return 0;
 }
 
-static int __bfn_substr (
+static int bfn_substr (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -545,7 +545,7 @@ static int __bfn_substr (
 	return 0;
 }
 
-static int __bfn_split (
+static int bfn_split (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -797,7 +797,7 @@ static int __bfn_split (
 	return 0;
 }
 
-static int __bfn_tolower (
+static int bfn_tolower (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -837,7 +837,7 @@ static int __bfn_tolower (
 	return 0;
 }
 
-static int __bfn_toupper (
+static int bfn_toupper (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -1167,19 +1167,19 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	return 0;
 }
 
-static int __bfn_gsub (
+static int bfn_gsub (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	return __substitute (run, 0);
 }
 
-static int __bfn_sub (
+static int bfn_sub (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	return __substitute (run, 1);
 }
 
-static int __bfn_match (
+static int bfn_match (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
@@ -1298,7 +1298,7 @@ static int __bfn_match (
 	return 0;
 }
 
-static int __bfn_sprintf (
+static int bfn_sprintf (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {	
 	ase_size_t nargs;
