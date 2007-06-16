@@ -24,16 +24,16 @@ return the returned value from #main:withArgv and exits.
 
 
 AUTHOR(S)
-	Chung, Hyung-Hwan (bacon@piowave.com) is the sole designer and implementer of stx.
+	Hyung-Hwan Chung (bacon@abiyo.net) is the sole designer and implementer of stx.
 
 BUG REPORTS
-	Report bugs to bacon@piowave.com if you find any bugs. but make sure that it is really a bug before you report it.
+	Report bugs to bacon@abiyo.net if you find any bugs. but make sure that it is really a bug before you report it.
 
 COPYRIGHT
-	Copyright(c) 2005 bacon@piowave.com
+	Copyright(c) 2005 bacon@abiyo.net
 
 SEE ALSO
-	xpkit(7)
+	ase(7)
 
 
 -- stack bytecodes --
