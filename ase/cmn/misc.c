@@ -1,8 +1,13 @@
 /*
- * $Id: misc.c,v 1.3 2007/04/30 05:55:36 bacon Exp $
+ * $Id: misc.c,v 1.4 2007/06/15 15:39:34 bacon Exp $
  *
  * {License}
  */
+
+#if defined(__BORLANDC__)
+#pragma hdrstop
+#define Library
+#endif
 
 #include <ase/cmn/types.h>
 #include <ase/cmn/macros.h>
