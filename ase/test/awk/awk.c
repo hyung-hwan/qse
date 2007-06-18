@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.9 2007/05/24 04:04:44 bacon Exp $
+ * $Id: awk.c,v 1.11 2007/06/17 15:29:29 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -1079,6 +1079,8 @@ static int awk_main (int argc, ase_char_t* argv[])
 		awk, ASE_AWK_DEPTH_BLOCK_PARSE | ASE_AWK_DEPTH_EXPR_PARSE, 20);
 	ase_awk_setmaxdepth (
 		awk, ASE_AWK_DEPTH_BLOCK_RUN | ASE_AWK_DEPTH_EXPR_RUN, 50);
+
+	/*ase_awk_setkeyword (awk, ASE_T("func"), 4, ASE_T("FX"), 2);*/
 
 	if (ase_awk_parse (awk, &srcios) == -1) 
 	{

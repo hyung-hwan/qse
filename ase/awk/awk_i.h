@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.5 2007/05/06 10:08:54 bacon Exp $
+ * $Id: awk_i.h,v 1.6 2007/06/17 09:29:46 bacon Exp $
  *
  * {License}
  */
@@ -74,6 +74,9 @@ struct ase_awk_t
 	/* options */
 	int option;
 
+	/* keyword table */
+	ase_awk_map_t* kwtab;
+
 	/* parse tree */
 	ase_awk_tree_t tree;
 
@@ -147,10 +150,10 @@ struct ase_awk_t
 			ase_size_t column;
 		} prev;
 
-		int           type;
-		ase_str_t name;
-		ase_size_t    line;
-		ase_size_t    column;
+		int        type;
+		ase_str_t  name;
+		ase_size_t line;
+		ase_size_t column;
 	} token;
 
 	/* builtin functions */
