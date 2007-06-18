@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.5 2007/05/19 12:13:41 bacon Exp $
+ * $Id: awk.h,v 1.6 2007/06/17 14:54:10 bacon Exp $
  *
  * {License}
  */
@@ -413,6 +413,10 @@ void ase_awk_setoption (ase_awk_t* awk, int opt);
 
 ase_size_t ase_awk_getmaxdepth (ase_awk_t* awk, int type);
 void ase_awk_setmaxdepth (ase_awk_t* awk, int types, ase_size_t depth);
+
+int ase_awk_setkeyword (ase_awk_t* awk, 
+	const ase_char_t* okw, ase_size_t olen,
+	const ase_char_t* nkw, ase_size_t nlen);
 
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
 

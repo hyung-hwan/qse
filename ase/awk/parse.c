@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.5 2007/05/13 14:43:58 bacon Exp $
+ * $Id: parse.c,v 1.7 2007/06/17 15:29:29 bacon Exp $
  *
  * {License}
  */
@@ -395,6 +395,32 @@ const ase_char_t* ase_awk_getglobalname (
 {
 	*len = gtab[idx].name_len;
 	return gtab[idx].name;
+}
+
+
+int ase_awk_setkeyword (ase_awk_t* awk, 
+	const ase_char_t* okw, ase_size_t olen,
+	const ase_char_t* nkw, ase_size_t nlen)
+{
+	ase_cstr_t* v;
+	ase_awk_pair_t* pair;
+
+	v = (ase_cstr_t*) ASE_AWK_MALLOC (
+		awk, ASE_SIZEOF(ase_cstr_t)+((nlen+1)*ASE_SIZEOF(*nkw)));
+	if (v == ASE_NULL) return -1;
+
+	v->len = nlen;
+	v->ptr = (const ase_char_t*)(v + 1);
+
+	ase_strxncpy (v->ptr, v->len+1, nkw, nlen);
+
+	if (ase_awk_map_put (awk->kwtab, okw, olen, v) == ASE_NULL)
+	{
+		ASE_AWK_FREE (awk, v);
+		return -1;
+	}
+ 
+	return 0;
 }
 
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
@@ -4744,14 +4770,32 @@ static int classify_ident (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
 	kwent_t* kwp;
+	ase_awk_pair_t* pair;
+
 
 	for (kwp = kwtab; kwp->name != ASE_NULL; kwp++) 
 	{
+		const ase_char_t* k;
+		ase_size_t l;
+
 		if (kwp->valid != 0 && 
 		    (awk->option & kwp->valid) == 0) continue;
 
-		if (ase_strxncmp (kwp->name, kwp->name_len, name, len) == 0) 
+		pair = ase_awk_map_get (awk->kwtab, kwp->name, kwp->name_len);
+		if (pair != ASE_NULL)
 		{
+			k = ((ase_cstr_t*)(pair->val))->ptr;
+			l = ((ase_cstr_t*)(pair->val))->len;
+		}
+		else
+		{
+			k = kwp->name;
+			l = kwp->name_len;
+		}
+
+		if (ase_strxncmp (k, l, name, len) == 0) 
+		{
+
 			return kwp->type;
 		}
 	}

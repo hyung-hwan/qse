@@ -1,5 +1,5 @@
-/* 
- * $Id: awk.c,v 1.5 2007/05/06 10:38:22 bacon Exp $ 
+/*
+ * $Id: awk.c,v 1.7 2007/06/17 14:54:10 bacon Exp $ 
  *
  * {License}
  */
@@ -11,6 +11,7 @@
 
 #include <ase/awk/awk_i.h>
 
+static void free_kw (void* awk, void* ptr);
 static void free_afn (void* awk, void* afn);
 
 ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
@@ -57,10 +58,19 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 		return ASE_NULL;	
 	}
 
+	awk->kwtab = ase_awk_map_open (awk, 512, free_kw, awk);
+	if (awk->kwtab == ASE_NULL)
+	{
+		ase_str_close (&awk->token.name);
+		ASE_AWK_FREE (awk, awk);
+		return ASE_NULL;	
+	}
+
 	/* TODO: initial map size?? */
-	awk->tree.afns = ase_awk_map_open (awk, 256, free_afn, awk);
+	awk->tree.afns = ase_awk_map_open (awk, 512, free_afn, awk);
 	if (awk->tree.afns == ASE_NULL) 
 	{
+		ase_awk_map_close (awk->kwtab);
 		ase_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
@@ -68,27 +78,30 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 
 	if (ase_awk_tab_open (&awk->parse.globals, awk) == ASE_NULL) 
 	{
-		ase_str_close (&awk->token.name);
 		ase_awk_map_close (awk->tree.afns);
+		ase_awk_map_close (awk->kwtab);
+		ase_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
 
 	if (ase_awk_tab_open (&awk->parse.locals, awk) == ASE_NULL) 
 	{
-		ase_str_close (&awk->token.name);
-		ase_awk_map_close (awk->tree.afns);
 		ase_awk_tab_close (&awk->parse.globals);
+		ase_awk_map_close (awk->tree.afns);
+		ase_awk_map_close (awk->kwtab);
+		ase_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
 
 	if (ase_awk_tab_open (&awk->parse.params, awk) == ASE_NULL) 
 	{
-		ase_str_close (&awk->token.name);
-		ase_awk_map_close (awk->tree.afns);
-		ase_awk_tab_close (&awk->parse.globals);
 		ase_awk_tab_close (&awk->parse.locals);
+		ase_awk_tab_close (&awk->parse.globals);
+		ase_awk_map_close (awk->tree.afns);
+		ase_awk_map_close (awk->kwtab);
+		ase_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
@@ -136,7 +149,13 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_MATCH, 0);
 
 	awk->custom_data = custom_data;
+
 	return awk;
+}
+
+static void free_kw (void* owner, void* ptr)
+{
+	ASE_AWK_FREE ((ase_awk_t*)owner, ptr);
 }
 
 static void free_afn (void* owner, void* afn)
@@ -157,10 +176,11 @@ int ase_awk_close (ase_awk_t* awk)
 	if (ase_awk_clear (awk) == -1) return -1;
 	ase_awk_clrbfn (awk);
 
-	ase_awk_map_close (awk->tree.afns);
-	ase_awk_tab_close (&awk->parse.globals);
-	ase_awk_tab_close (&awk->parse.locals);
 	ase_awk_tab_close (&awk->parse.params);
+	ase_awk_tab_close (&awk->parse.locals);
+	ase_awk_tab_close (&awk->parse.globals);
+	ase_awk_map_close (awk->tree.afns);
+	ase_awk_map_close (awk->kwtab);
 	ase_str_close (&awk->token.name);
 
 	for (i = 0; i < ASE_COUNTOF(awk->errstr); i++)
