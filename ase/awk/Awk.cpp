@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.40 2007/05/28 13:53:31 bacon Exp $
+ * $Id: Awk.cpp,v 1.41 2007/06/16 13:34:47 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -163,6 +163,7 @@ namespace ASE
 		return (char*)ptr+ASE_SIZEOF(awk);
 	}
 
+#if !defined(__BORLANDC__)
 	void Awk::Argument::operator delete (void* ptr, awk_t* awk)
 	{
 		ase_awk_free (awk, (char*)ptr-ASE_SIZEOF(awk));
@@ -172,6 +173,7 @@ namespace ASE
 	{
 		ase_awk_free (awk, (char*)ptr-ASE_SIZEOF(awk));
 	}
+#endif
 
 	void Awk::Argument::operator delete (void* ptr)
 	{

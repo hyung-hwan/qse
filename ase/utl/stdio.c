@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c,v 1.3 2007/04/30 08:32:50 bacon Exp $
+ * $Id: stdio.c,v 1.4 2007/06/16 13:34:47 bacon Exp $
  *
  * {License}
  */
@@ -261,7 +261,7 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 		}
 		else if (ch == ASE_T('C') || ch == ASE_T('S')) 
 		{
-#ifdef _WIN32
+#if defined(_WIN32)
 			ADDC (buf, ch);
 #else
 	#ifdef ASE_CHAR_IS_MCHAR
