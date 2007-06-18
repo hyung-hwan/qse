@@ -11,9 +11,11 @@
 	<Default.Personality>  <Projects>
       <Projects Name="asecmn.lib">cmn\asecmn.bdsproj</Projects>
       <Projects Name="aseawk.lib">awk\aseawk.bdsproj</Projects>
+      <Projects Name="aseawk++.lib">awk\aseawk++.bdsproj</Projects>
       <Projects Name="aseutl.lib">utl\aseutl.bdsproj</Projects>
       <Projects Name="asetestawk.exe">test\awk\asetestawk.bdsproj</Projects>
-      <Projects Name="Targets">asecmn.lib aseawk.lib aseutl.lib asetestawk.exe</Projects>
+      <Projects Name="asetestawk++.exe">test\awk\asetestawk++.bdsproj</Projects>
+      <Projects Name="Targets">asecmn.lib aseawk.lib aseawk++.lib aseutl.lib asetestawk.exe asetestawk++.exe</Projects>
     </Projects>
     <Dependencies>
       <Dependency GUID="{F0848980-053C-44B1-B7A0-4C834C1EB585}">

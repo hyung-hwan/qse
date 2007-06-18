@@ -10,7 +10,7 @@
 	</PersonalityInfo>
 	<CPlusPlusBuilder.Personality>
 		<Source>
-			<Source Name="MainSource">awk.c</Source>
+			<Source Name="MainSource">Awk.cpp</Source>
 		</Source>
 		<BCBPROJECT>
       <project version="10.0">
@@ -29,7 +29,7 @@
         <property category="build.config.1" name="type" value="Toolset"/>
         <property category="build.config.1" name="win32.win32b.builddir" value="release"/>
         <property category="build.node" name="libraries" value="vcl.lib rtl.lib"/>
-        <property category="build.node" name="name" value="aseawk.lib"/>
+        <property category="build.node" name="name" value="aseawk++.lib"/>
         <property category="build.node" name="packages" value="vclx;vcl;rtl;dbrtl;vcldb;adortl;dbxcds;dbexpress;xmlrtl;vclie;inet;inetdbbde;inetdbxpress;soaprtl;dsnap;bdertl;vcldbx"/>
         <property category="build.node" name="sparelibs" value="rtl.lib vcl.lib"/>
         <property category="build.node" name="use_packages" value="0"/>
@@ -51,7 +51,7 @@
         <property category="win32.Debug_Build.win32b.bcc32" name="option.D.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.Od.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.k.enabled" value="1"/>
-        <property category="win32.Debug_Build.win32b.bcc32" name="option.n.arg.1" value="debug"/>
+        <property category="win32.Debug_Build.win32b.bcc32" name="option.n.arg.1" value="debug\cpp"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.n.arg.merge" value="0"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.n.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.r.enabled" value="1"/>
@@ -85,7 +85,7 @@
         <property category="win32.Release_Build.win32b.bcc32" name="option.D.enabled" value="1"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.O2.enabled" value="1"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.k.enabled" value="0"/>
-        <property category="win32.Release_Build.win32b.bcc32" name="option.n.arg.1" value="release"/>
+        <property category="win32.Release_Build.win32b.bcc32" name="option.n.arg.1" value="release\cpp"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.n.arg.merge" value="0"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.n.enabled" value="1"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.r.enabled" value="1"/>
@@ -112,6 +112,7 @@
           <property category="win32.*.win32b.bcc32" name="option.6.enabled" value="0"/>
           <property category="win32.*.win32b.bcc32" name="option.A.enabled" value="0"/>
           <property category="win32.*.win32b.bcc32" name="option.AK.enabled" value="0"/>
+          <property category="win32.*.win32b.bcc32" name="option.AT.enabled" value="1"/>
           <property category="win32.*.win32b.bcc32" name="option.AU.enabled" value="0"/>
           <property category="win32.*.win32b.bcc32" name="option.H=.arg.1" value="$(BDS)\lib\vcl100.csm"/>
           <property category="win32.*.win32b.bcc32" name="option.H=.arg.merge" value="1"/>
@@ -155,6 +156,7 @@
           <property category="win32.*.win32b.bcc32" name="option.tWC.enabled" value="0"/>
           <property category="win32.*.win32b.bcc32" name="option.tWD.enabled" value="0"/>
           <property category="win32.*.win32b.bcc32" name="option.tWM.enabled" value="1"/>
+          <property category="win32.*.win32b.bcc32" name="option.vG.enabled" value="0"/>
           <property category="win32.*.win32b.bcc32" name="option.w.enabled" value="0"/>
           <property category="win32.*.win32b.dcc32" name="option.I.arg.1" value="C:\projects\ase\awk"/>
           <property category="win32.*.win32b.dcc32" name="option.I.arg.merge" value="1"/>
@@ -194,19 +196,8 @@
         </optionset>
       </project>
       <FILELIST>
-        <FILE FILENAME="awk.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="awk" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="err.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="err" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="extio.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="extio" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="func.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="func" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="map.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="map" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="misc.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="misc" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="parse.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="parse" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="rec.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="rec" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="rex.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="rex" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="run.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="run" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="tab.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="tab" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="tree.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="tree" FORMNAME="" DESIGNCLASS=""/>
-        <FILE FILENAME="val.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="val" FORMNAME="" DESIGNCLASS=""/>
+        <FILE FILENAME="Awk.cpp" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="Awk" FORMNAME="" DESIGNCLASS=""/>
+        <FILE FILENAME="StdAwk.cpp" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="err" FORMNAME="" DESIGNCLASS=""/>
       </FILELIST>
       <IDEOPTIONS>
         <VersionInfo>
@@ -264,11 +255,11 @@
       </IDEOPTIONS>
     </BCBPROJECT>
 		<buildevents>
-			<buildevent file="aseawk.bdsproj">
-				<precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\release\lib
+      <buildevent file="aseawk++.bdsproj">
+        <precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\release\lib
 mkdir $(PROJECTDIR)..\debug\lib
 </precompile>
-			</buildevent>
-		</buildevents>
+      </buildevent>
+    </buildevents>
 	</CPlusPlusBuilder.Personality>
 </BorlandProject>

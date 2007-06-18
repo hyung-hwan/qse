@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.38 2007/05/28 13:53:31 bacon Exp $
+ * $Id: Awk.hpp,v 1.39 2007/06/16 13:34:47 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -136,9 +136,11 @@ namespace ASE
 			void* operator new (size_t n, awk_t* awk) throw ();
 			void* operator new[] (size_t n, awk_t* awk) throw ();
 
+		#if !defined(__BORLANDC__)
 			// deletion when initialization fails
 			void operator delete (void* p, awk_t* awk);
 			void operator delete[] (void* p, awk_t* awk);
+		#endif
 
 			// normal deletion
 			void operator delete (void* p);

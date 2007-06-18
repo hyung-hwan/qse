@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.23 2007/05/26 10:23:52 bacon Exp $
+ * $Id: Awk.cpp,v 1.25 2007/06/16 14:09:48 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -40,12 +40,12 @@ public:
 		if (heap == ASE_NULL) return -1;
 	#endif
 
-		int n = StdAwk::open ();
+		int n = ASE::StdAwk::open ();
 
-		if (addFunction (ASE_T("sleep"), 1, 1, 
+		if (addFunction (ASE_T("sleep"), 1, 1,
 			(FunctionHandler)&TestAwk::sleep) == -1)
 		{
-			StdAwk::close ();
+			ASE::StdAwk::close ();
 	#ifdef _WIN32
 			HeapDestroy (heap); 
 			heap = ASE_NULL;
@@ -58,7 +58,7 @@ public:
 
 	void close ()
 	{
-		StdAwk::close ();
+		ASE::StdAwk::close ();
 
 		numConInFiles = 0;
 		numConOutFiles = 0;
@@ -105,7 +105,7 @@ public:
 	{
 		srcInName = in;
 		srcOutName = out;
-		return StdAwk::parse ();
+		return ASE::StdAwk::parse ();
 	}
 
 protected:
@@ -221,24 +221,24 @@ protected:
 	// console io handlers 
 	int openConsole (Console& io) 
 	{ 
-		Awk::Console::Mode mode = io.getMode();
+		ASE::Awk::Console::Mode mode = io.getMode();
 		FILE* fp = ASE_NULL;
 		const char_t* fn = ASE_NULL;
 
 		switch (mode)
 		{
-			case Awk::Console::READ:
+			case ASE::Awk::Console::READ:
 				if (numConInFiles == 0) fp = stdin;
-				else 
+				else
 				{
 					fn = conInFile[0];
 					fp = ase_fopen (fn, ASE_T("r"));
 				}
 				break;
 
-			case Awk::Console::WRITE:
+			case ASE::Awk::Console::WRITE:
 				if (numConOutFiles == 0) fp = stdout;
-				else 
+				else
 				{
 					fn = conOutFile[0];
 					fp = ase_fopen (fn, ASE_T("w"));
@@ -335,7 +335,7 @@ protected:
 
 	int nextConsole (Console& io) 
 	{ 
-		Awk::Console::Mode mode = io.getMode();
+		ASE::Awk::Console::Mode mode = io.getMode();
 		ConTrack* t = (ConTrack*)io.getHandle();
 		FILE* ofp = t->handle;
 		FILE* nfp = ASE_NULL;
@@ -343,13 +343,13 @@ protected:
 
 		switch (mode)
 		{
-			case Awk::Console::READ:
+			case ASE::Awk::Console::READ:
 				if (t->nextConIdx >= numConInFiles) return 0;
 				fn = conInFile[t->nextConIdx];
 				nfp = ase_fopen (fn, ASE_T("r"));
 				break;
 
-			case Awk::Console::WRITE:
+			case ASE::Awk::Console::WRITE:
 				if (t->nextConIdx >= numConOutFiles) return 0;
 				fn = conOutFile[t->nextConIdx];
 				nfp = ase_fopen (fn, ASE_T("w"));
@@ -358,7 +358,7 @@ protected:
 
 		if (nfp == ASE_NULL) return -1;
 
-		if (fn != ASE_NULL) 
+		if (fn != ASE_NULL)
 		{
 			if (io.setFileName (fn) == -1)
 			{
@@ -619,7 +619,7 @@ int awk_main (int argc, ase_char_t* argv[])
 	return 0;
 }
 
-int ase_main (int argc, ase_achar_t* argv[])
+extern "C" int ase_main (int argc, ase_achar_t* argv[])
 {
 
 	int n;

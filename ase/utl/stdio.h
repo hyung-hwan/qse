@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h,v 1.4 2007/05/12 17:05:07 bacon Exp $
+ * $Id: stdio.h,v 1.5 2007/06/16 13:34:47 bacon Exp $
  */
 
 #ifndef _ASE_UTL_STDIO_H_
@@ -43,7 +43,7 @@ extern "C" {
 int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list ap);
 int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...);
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 int ase_vfprintf (FILE *stream, const ase_char_t* fmt, va_list ap);
 int ase_vprintf (const ase_char_t* fmt, va_list ap);
 int ase_fprintf (FILE* file, const ase_char_t* fmt, ...);
