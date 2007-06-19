@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.41 2007/06/16 13:34:47 bacon Exp $
+ * $Id: Awk.cpp,v 1.42 2007/06/19 03:59:38 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -572,6 +572,19 @@ namespace ASE
 	{
 		ASE_ASSERT (awk != ASE_NULL);
 		return ase_awk_getmaxdepth (awk, id);
+	}
+
+	int Awk::setWord (const ase_char_t* ow, const ase_char_t* nw)
+	{
+		return setWord (ow, ase_strlen(ow), nw, ase_strlen(nw));
+	}
+
+	int Awk::setWord (
+		const ase_char_t* ow, ase_size_t owl,
+		const ase_char_t* nw, ase_size_t nwl)
+	{
+		ASE_ASSERT (awk != ASE_NULL);
+		return ase_awk_setword (awk, ow, owl, nw, nwl);
 	}
 
 	int Awk::parse ()

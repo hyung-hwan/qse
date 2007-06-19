@@ -10,7 +10,7 @@
 	</PersonalityInfo>
 	<CPlusPlusBuilder.Personality>
 		<Source>
-			<Source Name="MainSource">Awk.cpp</Source>
+			<Source Name="MainSource">awk.c</Source>
 		</Source>
 		<BCBPROJECT>
       <project version="10.0">
@@ -28,7 +28,8 @@
         <property category="build.config.1" name="settings.win32b" value="default"/>
         <property category="build.config.1" name="type" value="Toolset"/>
         <property category="build.config.1" name="win32.win32b.builddir" value="release"/>
-        <property category="build.node" name="name" value="asetestawk++.exe"/>
+        <property category="build.node" name="lastconfig" value="Debug_Build"/>
+        <property category="build.node" name="name" value="aseawk.exe"/>
         <property category="build.node" name="packages" value="vclx;vcl;rtl;dbrtl;vcldb;adortl;dbxcds;dbexpress;xmlrtl;vclie;inet;inetdbbde;inetdbxpress;soaprtl;dsnap;bdertl;vcldbx"/>
         <property category="build.node" name="use_packages" value="0"/>
         <property category="build.platform" name="active" value="win32"/>
@@ -46,12 +47,15 @@
         <property category="win32.Debug_Build.win32b.bcc32" name="option.D.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.Od.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.k.enabled" value="1"/>
-        <property category="win32.Debug_Build.win32b.bcc32" name="option.n.arg.1" value="debug\cpp"/>
+        <property category="win32.Debug_Build.win32b.bcc32" name="option.n.arg.1" value="debug"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.n.arg.merge" value="0"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.n.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.r.enabled" value="0"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.v.enabled" value="1"/>
-        <property category="win32.Debug_Build.win32b.bcc32" name="option.vG.enabled" value="1"/>
+        <property category="win32.Debug_Build.win32b.bcc32" name="option.vG.enabled" value="0"/>
+        <property category="win32.Debug_Build.win32b.bcc32" name="option.vG0.enabled" value="0"/>
+        <property category="win32.Debug_Build.win32b.bcc32" name="option.vG2.enabled" value="0"/>
+        <property category="win32.Debug_Build.win32b.bcc32" name="option.vG3.enabled" value="0"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.vi.enabled" value="0"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.y.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.dcc32" name="option.$D.enabled" value="1"/>
@@ -77,7 +81,7 @@
         <property category="win32.Release_Build.win32b.bcc32" name="option.Od.enabled" value="0"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.disablewarns.enabled" value="0"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.k.enabled" value="0"/>
-        <property category="win32.Release_Build.win32b.bcc32" name="option.n.arg.1" value="release\cpp"/>
+        <property category="win32.Release_Build.win32b.bcc32" name="option.n.arg.1" value="release"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.n.arg.merge" value="0"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.n.enabled" value="1"/>
         <property category="win32.Release_Build.win32b.bcc32" name="option.r.enabled" value="1"/>
@@ -172,10 +176,8 @@
           <property category="win32.*.win32b.ilink32" name="param.libfiles.1" value="import32.lib"/>
           <property category="win32.*.win32b.ilink32" name="param.libfiles.2" value="cw32mti.lib"/>
           <property category="win32.*.win32b.ilink32" name="param.libfiles.3" value="aseawk.lib"/>
-          <property category="win32.*.win32b.ilink32" name="param.libfiles.4" value="aseawk++.lib"/>
-          <property category="win32.*.win32b.ilink32" name="param.libfiles.5" value="aseutl.lib"/>
-          <property category="win32.*.win32b.ilink32" name="param.libfiles.6" value="aseutl.lib"/>
-          <property category="win32.*.win32b.ilink32" name="param.libfiles.7" value="asecmn.lib"/>
+          <property category="win32.*.win32b.ilink32" name="param.libfiles.4" value="aseutl.lib"/>
+          <property category="win32.*.win32b.ilink32" name="param.libfiles.5" value="asecmn.lib"/>
           <property category="win32.*.win32b.ilink32" name="param.libfiles.merge" value="1"/>
           <property category="win32.*.win32b.ilink32" name="param.objfiles.1" value="c0x32w.obj"/>
           <property category="win32.*.win32b.ilink32" name="param.objfiles.2" value="$(PACKAGES)"/>
@@ -183,7 +185,7 @@
         </optionset>
       </project>
       <FILELIST>
-        <FILE FILENAME="Awk.cpp" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="Awk" FORMNAME="" DESIGNCLASS=""/>
+        <FILE FILENAME="awk.c" CONTAINERID="CCompiler" LOCALCOMMAND="" UNITNAME="awk" FORMNAME="" DESIGNCLASS=""/>
       </FILELIST>
       <IDEOPTIONS>
         <VersionInfo>
@@ -217,7 +219,7 @@
           <Debugging Name="DebugSourceDirs"></Debugging>
         </Debugging>
         <Parameters>
-          <Parameters Name="RunParams">arg.awk ""</Parameters>
+          <Parameters Name="RunParams">-f arg.awk ""</Parameters>
           <Parameters Name="Launcher"></Parameters>
           <Parameters Name="UseLauncher">True</Parameters>
           <Parameters Name="DebugCWD">C:\projects\ase\test\awk</Parameters>
@@ -251,11 +253,6 @@
     </BCBPROJECT>
 		<buildevents>
       <buildevent file="aseawk.bdsproj">
-        <precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\..\release\win32\bds
-mkdir $(PROJECTDIR)..\..\debug\win32\bds
-</precompile>
-      </buildevent>
-      <buildevent file="asetestawk++.bdsproj">
         <precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\release\bin
 mkdir $(PROJECTDIR)..\debug\bin
 </precompile>

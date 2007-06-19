@@ -28,6 +28,7 @@
         <property category="build.config.1" name="settings.win32b" value="default"/>
         <property category="build.config.1" name="type" value="Toolset"/>
         <property category="build.config.1" name="win32.win32b.builddir" value="release"/>
+        <property category="build.node" name="lastconfig" value="Debug_Build"/>
         <property category="build.node" name="libraries" value="vcl.lib rtl.lib"/>
         <property category="build.node" name="name" value="aseutl.lib"/>
         <property category="build.node" name="packages" value="vclx;vcl;rtl;dbrtl;vcldb;adortl;dbxcds;dbexpress;xmlrtl;vclie;inet;inetdbbde;inetdbxpress;soaprtl;dsnap;bdertl;vcldbx"/>
@@ -63,7 +64,8 @@
         <property category="win32.Debug_Build.win32b.bcc32" name="option.n.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.r.enabled" value="0"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.v.enabled" value="1"/>
-        <property category="win32.Debug_Build.win32b.bcc32" name="option.vG.enabled" value="1"/>
+        <property category="win32.Debug_Build.win32b.bcc32" name="option.vG.enabled" value="0"/>
+        <property category="win32.Debug_Build.win32b.bcc32" name="option.vG0.enabled" value="0"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.vi.enabled" value="0"/>
         <property category="win32.Debug_Build.win32b.bcc32" name="option.y.enabled" value="1"/>
         <property category="win32.Debug_Build.win32b.dcc32" name="option.$D.enabled" value="1"/>
@@ -236,11 +238,11 @@
       </IDEOPTIONS>
     </BCBPROJECT>
 		<buildevents>
-			<buildevent file="aseutl.bdsproj">
-				<precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\release\lib
+      <buildevent file="aseutl.bdsproj">
+        <precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\release\lib
 mkdir $(PROJECTDIR)..\debug\lib
 </precompile>
-			</buildevent>
-		</buildevents>
+      </buildevent>
+    </buildevents>
 	</CPlusPlusBuilder.Personality>
 </BorlandProject>
