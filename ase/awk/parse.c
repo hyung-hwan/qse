@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.7 2007/06/17 15:29:29 bacon Exp $
+ * $Id: parse.c,v 1.8 2007/06/18 14:05:18 bacon Exp $
  *
  * {License}
  */
@@ -398,7 +398,7 @@ const ase_char_t* ase_awk_getglobalname (
 }
 
 
-int ase_awk_setkeyword (ase_awk_t* awk, 
+int ase_awk_setword (ase_awk_t* awk, 
 	const ase_char_t* okw, ase_size_t olen,
 	const ase_char_t* nkw, ase_size_t nlen)
 {
@@ -4771,7 +4771,6 @@ static int classify_ident (
 {
 	kwent_t* kwp;
 	ase_awk_pair_t* pair;
-
 
 	for (kwp = kwtab; kwp->name != ASE_NULL; kwp++) 
 	{

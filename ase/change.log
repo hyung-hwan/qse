@@ -1,6 +1,8 @@
 [0.2.1]
 
 * changed the wrong macro name WIN32 to _WIN32 in utl/stdio.h
+* added ase_awk_setword to enable customization of keywords and
+  implicit function names.
 
 [0.2.0]
 

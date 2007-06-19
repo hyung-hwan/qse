@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.5 2007/05/28 13:54:47 bacon Exp $
+ * $Id: func.c,v 1.7 2007/06/18 14:26:30 bacon Exp $
  *
  * {License}
  */
@@ -156,14 +156,28 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
 	ase_awk_bfn_t* p;
+	ase_awk_pair_t* pair;
+	const ase_char_t* k;
+	ase_size_t l;
 
 	for (p = __sys_bfn; p->name.ptr != ASE_NULL; p++)
 	{
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
-		if (ase_strxncmp (
-			p->name.ptr, p->name.len, name, len) == 0) return p;
+		pair = ase_awk_map_get (awk->kwtab, p->name.ptr, p->name.len);
+		if (pair != ASE_NULL)
+		{
+			k = ((ase_cstr_t*)(pair->val))->ptr;
+			l = ((ase_cstr_t*)(pair->val))->len;
+		}
+		else
+		{
+			k = p->name.ptr;
+			l = p->name.len;
+		}
+
+		if (ase_strxncmp (k, l, name, len) == 0) return p;
 	}
 
 	for (p = awk->bfn.user; p != ASE_NULL; p = p->next)
@@ -171,8 +185,19 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		if (p->valid != 0 && 
 		    (awk->option & p->valid) == 0) continue;
 
-		if (ase_strxncmp (
-			p->name.ptr, p->name.len, name, len) == 0) return p;
+		pair = ase_awk_map_get (awk->kwtab, p->name.ptr, p->name.len);
+		if (pair != ASE_NULL)
+		{
+			k = ((ase_cstr_t*)(pair->val))->ptr;
+			l = ((ase_cstr_t*)(pair->val))->len;
+		}
+		else
+		{
+			k = p->name.ptr;
+			l = p->name.len;
+		}
+
+		if (ase_strxncmp (k, l, name, len) == 0) return p;
 	}
 
 	return ASE_NULL;
