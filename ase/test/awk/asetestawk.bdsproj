@@ -215,7 +215,7 @@
           <Debugging Name="DebugSourceDirs"></Debugging>
         </Debugging>
         <Parameters>
-          <Parameters Name="RunParams">arg.awk ""</Parameters>
+          <Parameters Name="RunParams">-f arg.awk ""</Parameters>
           <Parameters Name="Launcher"></Parameters>
           <Parameters Name="UseLauncher">True</Parameters>
           <Parameters Name="DebugCWD">C:\projects\ase\test\awk</Parameters>
@@ -248,16 +248,16 @@
       </IDEOPTIONS>
     </BCBPROJECT>
 		<buildevents>
-			<buildevent file="aseawk.bdsproj">
-				<precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\..\release\win32\bds
+      <buildevent file="aseawk.bdsproj">
+        <precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\..\release\win32\bds
 mkdir $(PROJECTDIR)..\..\debug\win32\bds
 </precompile>
-			</buildevent>
-			<buildevent file="asetestawk.bdsproj">
-				<precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\release\bin
+      </buildevent>
+      <buildevent file="asetestawk.bdsproj">
+        <precompile mode="0" cancancel="0" capture="-1" showconsole="0">mkdir $(PROJECTDIR)..\release\bin
 mkdir $(PROJECTDIR)..\debug\bin
 </precompile>
-			</buildevent>
-		</buildevents>
+      </buildevent>
+    </buildevents>
 	</CPlusPlusBuilder.Personality>
 </BorlandProject>

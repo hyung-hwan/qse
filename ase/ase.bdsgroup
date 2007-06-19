@@ -17,10 +17,6 @@
       <Projects Name="asetestawk++.exe">test\awk\asetestawk++.bdsproj</Projects>
       <Projects Name="Targets">asecmn.lib aseawk.lib aseawk++.lib aseutl.lib asetestawk.exe asetestawk++.exe</Projects>
     </Projects>
-    <Dependencies>
-      <Dependency GUID="{F0848980-053C-44B1-B7A0-4C834C1EB585}">
-        <Dependency GUID="{ECF01FD9-EC35-4278-B781-5106BC34F70E}"/>
-      </Dependency>
-    </Dependencies>
+    <Dependencies/>
   </Default.Personality>
 </BorlandProject>
