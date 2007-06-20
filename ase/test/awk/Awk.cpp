@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.25 2007/06/16 14:09:48 bacon Exp $
+ * $Id: Awk.cpp,v 1.27 2007/06/20 04:22:21 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -472,7 +472,7 @@ static void print_usage (const ase_char_t* argv0)
 	if (base == ASE_NULL) base = ase_strrchr(argv0, ASE_T('\\'));
 	if (base == ASE_NULL) base = argv0; else base++;
 
-	ase_printf (ASE_T("Usage: %s [-m main] [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]*\n"), base);
+	ase_printf (ASE_T("Usage: %s [-m main] [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]* [-w o:n]* \n"), base);
 	ase_printf (ASE_T("    -m  main  Specify the main function name\n"));
 	ase_printf (ASE_T("    -si file  Specify the input source file\n"));
 	ase_printf (ASE_T("              The source code is read from stdin when it is not specified\n"));
@@ -481,6 +481,9 @@ static void print_usage (const ase_char_t* argv0)
 	ase_printf (ASE_T("    -ci file  Specify the input console file\n"));
 	ase_printf (ASE_T("    -co file  Specify the output console file\n"));
 	ase_printf (ASE_T("    -a  str   Specify an argument\n"));
+	ase_printf (ASE_T("    -w  o:n   Specify an old and new word pair\n"));
+	ase_printf (ASE_T("              o - an original word\n"));
+	ase_printf (ASE_T("              n - the new word to replace the original\n"));
 }
 
 int awk_main (int argc, ase_char_t* argv[])
@@ -495,6 +498,12 @@ int awk_main (int argc, ase_char_t* argv[])
 	ase_size_t nsrcins = 0;
 	ase_size_t nsrcouts = 0;
 
+	if (awk.open() == -1)
+	{
+		ase_fprintf (stderr, ASE_T("cannot open awk\n"));
+		return -1;
+	}
+
 	for (int i = 1; i < argc; i++)
 	{
 		if (mode == 0)
@@ -505,6 +514,7 @@ int awk_main (int argc, ase_char_t* argv[])
 			else if (ase_strcmp(argv[i], ASE_T("-co")) == 0) mode = 4;
 			else if (ase_strcmp(argv[i], ASE_T("-a")) == 0) mode = 5;
 			else if (ase_strcmp(argv[i], ASE_T("-m")) == 0) mode = 6;
+			else if (ase_strcmp(argv[i], ASE_T("-w")) == 0) mode = 7;
 			else 
 			{
 				print_usage (argv[0]);
@@ -574,7 +584,7 @@ int awk_main (int argc, ase_char_t* argv[])
 				args[nargs++] = argv[i];
 				mode = 0;
 			}
-			else if (mode == 6)
+			else if (mode == 6) // entry point
 			{
 				if (mainfn != NULL) 
 				{
@@ -585,25 +595,42 @@ int awk_main (int argc, ase_char_t* argv[])
 				mainfn = argv[i];
 				mode = 0;
 			}
+			else if (mode == 7) // word replacement
+			{
+				const ase_char_t* p;
+				ase_size_t l;
+
+				p = ase_strchr(argv[i], ASE_T(':'));
+				if (p == ASE_NULL)
+				{
+					print_usage (argv[0]);
+					return -1;
+				}
+
+				l = ase_strlen (argv[i]);
+
+				awk.setWord (
+					argv[i], p - argv[i], 
+					p + 1, l - (p - argv[i] + 1));
+
+				mode = 0;
+			}
 		}
 	}
 
 	if (mode != 0)
 	{
 		print_usage (argv[0]);
+		awk.close ();
 		return -1;
 	}
 
-	if (awk.open() == -1)
-	{
-		ase_fprintf (stderr, ASE_T("cannot open awk\n"));
-		return -1;
-	}
 
 	if (awk.parse (srcin, srcout) == -1)
 	{
 		ase_fprintf (stderr, ASE_T("cannot parse: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());
+		awk.close ();
 		return -1;
 	}
 
@@ -613,9 +640,11 @@ int awk_main (int argc, ase_char_t* argv[])
 	{
 		ase_fprintf (stderr, ASE_T("cannot run: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());
+		awk.close ();
 		return -1;
 	}
 
+	awk.close ();
 	return 0;
 }
 
@@ -627,6 +656,10 @@ extern "C" int ase_main (int argc, ase_achar_t* argv[])
 #if defined(__linux) && defined(_DEBUG)
 	mtrace ();
 #endif
+#if defined(_WIN32) && defined(_DEBUG) && defined(_MSC_VER)
+	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
+#endif
+
 
 	n = ase_runmain (argc,argv,awk_main);
 
@@ -634,9 +667,9 @@ extern "C" int ase_main (int argc, ase_achar_t* argv[])
 	muntrace ();
 #endif
 #if defined(_WIN32) && defined(_DEBUG)
-	#if defined(_MSC_VER)
+	/* #if defined(_MSC_VER)
 	_CrtDumpMemoryLeaks ();
-	#endif
+	#endif */
 	_tprintf (_T("Press ENTER to quit\n"));
 	getchar ();
 #endif

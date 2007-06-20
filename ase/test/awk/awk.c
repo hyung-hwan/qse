@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.11 2007/06/17 15:29:29 bacon Exp $
+ * $Id: awk.c,v 1.12 2007/06/20 03:48:02 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -1152,11 +1152,9 @@ int ase_main (int argc, ase_achar_t* argv[])
 #if defined(__linux) && defined(_DEBUG)
 	mtrace ();
 #endif
-/*
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
+#if defined(_WIN32) && defined(_DEBUG) && defined(_MSC_VER)
+	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
 #endif
-*/
 
 	n = ase_runmain (argc, argv, awk_main);
 
@@ -1164,9 +1162,9 @@ int ase_main (int argc, ase_achar_t* argv[])
 	muntrace ();
 #endif
 #if defined(_WIN32) && defined(_DEBUG)
-	#if defined(_MSC_VER)
+	/*#if defined(_MSC_VER)
 	_CrtDumpMemoryLeaks ();
-	#endif
+	#endif*/
 	_tprintf (_T("Press ENTER to quit\n"));
 	getchar ();
 #endif
