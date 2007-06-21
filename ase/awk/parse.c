@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.8 2007/06/18 14:05:18 bacon Exp $
+ * $Id: parse.c,v 1.9 2007/06/20 13:28:15 bacon Exp $
  *
  * {License}
  */
@@ -407,7 +407,11 @@ int ase_awk_setword (ase_awk_t* awk,
 
 	v = (ase_cstr_t*) ASE_AWK_MALLOC (
 		awk, ASE_SIZEOF(ase_cstr_t)+((nlen+1)*ASE_SIZEOF(*nkw)));
-	if (v == ASE_NULL) return -1;
+	if (v == ASE_NULL) 
+	{
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
 
 	v->len = nlen;
 	v->ptr = (const ase_char_t*)(v + 1);
@@ -417,6 +421,7 @@ int ase_awk_setword (ase_awk_t* awk,
 	if (ase_awk_map_put (awk->kwtab, okw, olen, v) == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, v);
+		SETERR (awk, ASE_AWK_ENOMEM);
 		return -1;
 	}
  
