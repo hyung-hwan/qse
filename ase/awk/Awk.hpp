@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.40 2007/06/19 03:59:38 bacon Exp $
+ * $Id: Awk.hpp,v 1.41 2007/06/23 17:17:03 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -411,11 +411,14 @@ namespace ASE
 		virtual void setMaxDepth (int ids, size_t depth);
 		virtual int  getMaxDepth (int id) const;
 
+		virtual int setErrorString (ErrorCode num, const char_t* str);
+
 		virtual int setWord (
-			const ase_char_t* ow, const ase_char_t* nw);
+			const char_t* ow, const char_t* nw);
 		virtual int setWord (
-			const ase_char_t* ow, ase_size_t owl,
-			const ase_char_t* nw, ase_size_t nwl);
+			const char_t* ow, ase_size_t owl,
+			const char_t* nw, ase_size_t nwl);
+
 
 		virtual int parse ();
 		virtual int run (const char_t* main = ASE_NULL, 
