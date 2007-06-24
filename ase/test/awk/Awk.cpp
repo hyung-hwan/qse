@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.27 2007/06/20 04:22:21 bacon Exp $
+ * $Id: Awk.cpp,v 1.28 2007/06/21 13:59:24 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -40,16 +40,25 @@ public:
 		if (heap == ASE_NULL) return -1;
 	#endif
 
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
+		int n = StdAwk::open ();
+	#else
 		int n = ASE::StdAwk::open ();
+	#endif
 
 		if (addFunction (ASE_T("sleep"), 1, 1,
 			(FunctionHandler)&TestAwk::sleep) == -1)
 		{
+		#if defined(_MSC_VER) && (_MSC_VER<1400)
+			StdAwk::close ();
+		#else
 			ASE::StdAwk::close ();
-	#ifdef _WIN32
+		#endif
+
+		#ifdef _WIN32
 			HeapDestroy (heap); 
 			heap = ASE_NULL;
-	#endif
+		#endif
 			return -1;
 		}
 
@@ -58,7 +67,11 @@ public:
 
 	void close ()
 	{
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
+		StdAwk::close ();
+	#else
 		ASE::StdAwk::close ();
+	#endif
 
 		numConInFiles = 0;
 		numConOutFiles = 0;
@@ -105,7 +118,11 @@ public:
 	{
 		srcInName = in;
 		srcOutName = out;
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
+		return StdAwk::parse ();
+	#else
 		return ASE::StdAwk::parse ();
+	#endif
 	}
 
 protected:
@@ -221,13 +238,21 @@ protected:
 	// console io handlers 
 	int openConsole (Console& io) 
 	{ 
-		ASE::Awk::Console::Mode mode = io.getMode();
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
+		StdAwk::Console::Mode mode = io.getMode();
+	#else
+		ASE::StdAwk::Console::Mode mode = io.getMode();
+	#endif
 		FILE* fp = ASE_NULL;
 		const char_t* fn = ASE_NULL;
 
 		switch (mode)
 		{
-			case ASE::Awk::Console::READ:
+		#if defined(_MSC_VER) && (_MSC_VER<1400)
+			case StdAwk::Console::READ:
+		#else
+			case ASE::StdAwk::Console::READ:
+		#endif
 				if (numConInFiles == 0) fp = stdin;
 				else
 				{
@@ -236,7 +261,11 @@ protected:
 				}
 				break;
 
-			case ASE::Awk::Console::WRITE:
+		#if defined(_MSC_VER) && (_MSC_VER<1400)
+			case StdAwk::Console::WRITE:
+		#else
+			case ASE::StdAwk::Console::WRITE:
+		#endif
 				if (numConOutFiles == 0) fp = stdout;
 				else
 				{
@@ -248,7 +277,8 @@ protected:
 
 		if (fp == NULL) return -1;
 
-		ConTrack* t = (ConTrack*) ase_awk_malloc (awk, ASE_SIZEOF(ConTrack));
+		ConTrack* t = (ConTrack*) 
+			ase_awk_malloc (awk, ASE_SIZEOF(ConTrack));
 		if (t == ASE_NULL)
 		{
 			if (fp != stdin && fp != stdout) fclose (fp);
@@ -335,7 +365,11 @@ protected:
 
 	int nextConsole (Console& io) 
 	{ 
-		ASE::Awk::Console::Mode mode = io.getMode();
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
+		StdAwk::Console::Mode mode = io.getMode();
+	#else
+		ASE::StdAwk::Console::Mode mode = io.getMode();
+	#endif
 		ConTrack* t = (ConTrack*)io.getHandle();
 		FILE* ofp = t->handle;
 		FILE* nfp = ASE_NULL;
@@ -343,13 +377,21 @@ protected:
 
 		switch (mode)
 		{
-			case ASE::Awk::Console::READ:
+		#if defined(_MSC_VER) && (_MSC_VER<1400)
+			case StdAwk::Console::READ:
+		#else
+			case ASE::StdAwk::Console::READ:
+		#endif
 				if (t->nextConIdx >= numConInFiles) return 0;
 				fn = conInFile[t->nextConIdx];
 				nfp = ase_fopen (fn, ASE_T("r"));
 				break;
 
-			case ASE::Awk::Console::WRITE:
+		#if defined(_MSC_VER) && (_MSC_VER<1400)
+			case StdAwk::Console::WRITE:
+		#else
+			case ASE::StdAwk::Console::WRITE:
+		#endif
 				if (t->nextConIdx >= numConOutFiles) return 0;
 				fn = conOutFile[t->nextConIdx];
 				nfp = ase_fopen (fn, ASE_T("w"));
