@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwk.java,v 1.8 2007/05/28 10:29:57 bacon Exp $
+ * $Id: AseAwk.java,v 1.9 2007/06/24 11:14:58 bacon Exp $
  */
 
 import java.awt.*;
@@ -53,15 +53,18 @@ public class AseAwk extends StdAwk
 		System.out.print ("Usage: ");
 		System.out.print (AseAwk.class.getName());
 
-		System.out.println (" [-m main] [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]*");
-		System.out.println ("    -m  main  Specify the main function name\n");
-		System.out.println ("    -si file  Specify the input source file\n");
-		System.out.println ("              The source code is read from stdin when it is not specified\n");
-		System.out.println ("    -so file  Specify the output source file\n");
-		System.out.println ("              The deparsed code is not output when is it not specified\n");
-		System.out.println ("    -ci file  Specify the input console file\n");
-		System.out.println ("    -co file  Specify the output console file\n");
-		System.out.println ("    -a  str   Specify an argument\n");
+		System.out.println (" [-m main] [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]* [-w o:n]*");
+		System.out.println ("    -m  main  Specify the main function name");
+		System.out.println ("    -si file  Specify the input source file");
+		System.out.println ("              The source code is read from stdin when it is not specified");
+		System.out.println ("    -so file  Specify the output source file");
+		System.out.println ("              The deparsed code is not output when is it not specified");
+		System.out.println ("    -ci file  Specify the input console file");
+		System.out.println ("    -co file  Specify the output console file");
+		System.out.println ("    -a  str   Specify an argument");
+		System.out.println ("    -w  o:n   Specify an old and new word pair");
+		System.out.println ("              o - an original word");
+		System.out.println ("              n - the new word to replace the original word");
 	}
 
 	private static void print_error (String msg)
@@ -143,6 +146,7 @@ public class AseAwk extends StdAwk
 				else if (arg.equals("-co")) mode = 4;
 				else if (arg.equals("-a")) mode = 5;
 				else if (arg.equals("-m")) mode = 6;
+				else if (arg.equals("-w")) mode = 7;
 				else 
 				{
 					print_usage ();
@@ -205,6 +209,20 @@ public class AseAwk extends StdAwk
 					}
 	
 					mainfn = arg;
+					mode = 0;
+				}
+				else if (mode == 7)
+				{
+					int idx = arg.indexOf(':');
+					if (idx == -1)
+					{
+						print_usage ();
+						return;
+					}
+
+					String ow = arg.substring (0, idx);
+					String nw = arg.substring (idx+1);
+					awk.setWord (ow, nw);
 					mode = 0;
 				}
 			}

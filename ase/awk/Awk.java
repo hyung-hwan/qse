@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.10 2007/05/26 10:52:48 bacon Exp $
+ * $Id: Awk.java,v 1.11 2007/06/24 11:14:58 bacon Exp $
  *
  * {License}
  */
@@ -74,6 +74,8 @@ public abstract class Awk
 
 	private native boolean getdebug ();
 	private native void setdebug (boolean debug);
+
+	private native void setword (String ow, String nw);
 
 	private native void addbfn (
 		String name, int min_args, int max_args) throws Exception;
@@ -254,6 +256,11 @@ public abstract class Awk
 	public void setDebug (boolean debug)
 	{
 		setdebug (debug);
+	}
+
+	public void setWord (String ow, String nw)
+	{
+		setword (ow, nw);
 	}
 
 	/* == source code management == */

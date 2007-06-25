@@ -2,11 +2,14 @@
 
 * added ase_awk_setword to enable customization of keywords and
   intrinsic function names.
-* added setWord method to the awk c++ class.
-* added setErrorString method to the awk c++ class.
+* added setWord method to the awk c++ class (awk/Awk.cpp)
+* added setErrorString method to the awk c++ class (awk/Awk.cpp)
+* added setWord method to the awk java class (awk/Awk.java)
 
 * changed the wrong macro name WIN32 to _WIN32 in utl/stdio.h
 * changed test/awk/Awk.cpp to include an option(-w) to utilize
+  the setWord method.
+* changed test/awk/AseAwk.java to include an option(-w) to utilize
   the setWord method.
 
 [0.2.0]
