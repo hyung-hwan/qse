@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.28 2007/06/21 13:59:24 bacon Exp $
+ * $Id: Awk.cpp,v 1.29 2007/06/25 14:01:28 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -136,7 +136,7 @@ protected:
 	{
 		ErrorCode err = run.getErrorCode();
 
-		if (err != E_NOERR)
+		if (err != ERR_NOERR)
 		{
 			ase_fprintf (stderr, ASE_T("cannot run: LINE[%d] %s\n"), 
 				run.getErrorLine(), run.getErrorMessage());
