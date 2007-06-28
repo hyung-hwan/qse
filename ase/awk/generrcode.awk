@@ -1,7 +1,7 @@
 #
 # generrcode.awk
 #
-# aseawk -f generror.awk awk.h
+# aseawk -f generrcode.awk awk.h
 #
 
 BEGIN { 
@@ -28,6 +28,6 @@ collect && /^[[:space:]]*ASE_AWK_E[[:alnum:]]+/ {
 	split ($1, flds, ",");
 	name=flds[1];
 
-	print tab4 "E_" substr (name,10,length(name)-9) " = " name ",";
+	print tab4 "ERR_" substr (name,10,length(name)-9) " = " name ",";
 }
 

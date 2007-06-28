@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.43 2007/06/23 17:17:03 bacon Exp $
+ * $Id: Awk.cpp,v 1.44 2007/06/25 14:01:10 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -396,7 +396,7 @@ namespace ASE
 
 	Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
 		sourceIn (Source::READ), sourceOut (Source::WRITE),
-		errnum (E_NOERR), errlin (0), runCallback (false)
+		errnum (ERR_NOERR), errlin (0), runCallback (false)
 
 	{
 		this->errmsg[0] = ASE_T('\0');
@@ -442,7 +442,7 @@ namespace ASE
 
 	void Awk::clearError ()
 	{
-		this->errnum = E_NOERR;
+		this->errnum = ERR_NOERR;
 		this->errlin = 0;
 		this->errmsg[0] = ASE_T('\0');
 	}
@@ -498,7 +498,7 @@ namespace ASE
 		awk = ase_awk_open (&prmfns, this);
 		if (awk == ASE_NULL)
 		{
-			setError (E_NOMEM);
+			setError (ERR_NOMEM);
 			return -1;
 		}
 
@@ -509,7 +509,7 @@ namespace ASE
 			ase_awk_close (awk);
 			awk = ASE_NULL;
 
-			setError (E_NOMEM);
+			setError (ERR_NOMEM);
 			return -1;
 		}
 
@@ -640,7 +640,7 @@ namespace ASE
 
 			if (runarg == ASE_NULL)
 			{
-				setError (E_NOMEM);
+				setError (ERR_NOMEM);
 				return -1;
 			}
 
@@ -658,7 +658,7 @@ namespace ASE
 						}
 					}
 
-					setError (E_NOMEM);
+					setError (ERR_NOMEM);
 					return -1;
 				}
 			}
@@ -740,7 +740,7 @@ namespace ASE
 			ase_awk_malloc (awk, ASE_SIZEOF(handler));
 		if (tmp == ASE_NULL)
 		{
-			setError (E_NOMEM);
+			setError (ERR_NOMEM);
 			return -1;
 		}
 
@@ -765,7 +765,7 @@ namespace ASE
 			ase_awk_delbfn (awk, name, nameLen);
 			ase_awk_free (awk, tmp);
 
-			setError (E_NOMEM);
+			setError (ERR_NOMEM);
 			return -1;
 		}
 
@@ -968,7 +968,7 @@ namespace ASE
 	{
 		Run* r = (Run*)custom;
 
-		if (errnum == E_NOERR && r->callbackFailed)
+		if (errnum == ERR_NOERR && r->callbackFailed)
 		{
 			ase_awk_setrunerror (
 				r->run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
