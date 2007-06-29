@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.42 2007/06/25 14:01:10 bacon Exp $
+ * $Id: Awk.hpp,v 1.43 2007/06/28 15:45:57 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -419,6 +419,9 @@ namespace ASE
 			const char_t* ow, ase_size_t owl,
 			const char_t* nw, ase_size_t nwl);
 
+		virtual int unsetWord (const char_t* ow);
+		virtual int unsetWord (const char_t* ow, ase_size_t owl);
+		virtual int unsetAllWords ();
 
 		virtual int parse ();
 		virtual int run (const char_t* main = ASE_NULL, 
