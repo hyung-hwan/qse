@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.3 2007/04/30 06:04:43 bacon Exp $
+ * $Id: Awk.cpp,v 1.4 2007/06/27 15:27:21 bacon Exp $
  *
  * {License}
  */
@@ -528,22 +528,22 @@ HRESULT CAwk::Parse (VARIANT_BOOL* ret)
 			return S_OK;
 		}
 		else DBGOUT (_T("opened awk successfully"));
-
-		ase_awk_setoption (handle, option);
-
-		ase_awk_setmaxdepth (handle, 
-			ASE_AWK_DEPTH_BLOCK_PARSE, max_depth.block.parse);
-		ase_awk_setmaxdepth (handle, 
-			ASE_AWK_DEPTH_BLOCK_RUN, max_depth.block.run);
-		ase_awk_setmaxdepth (handle, 
-			ASE_AWK_DEPTH_EXPR_PARSE, max_depth.expr.parse);
-		ase_awk_setmaxdepth (handle, 
-			ASE_AWK_DEPTH_EXPR_RUN, max_depth.expr.run);
-		ase_awk_setmaxdepth (handle, 
-			ASE_AWK_DEPTH_REX_BUILD, max_depth.rex.build);
-		ase_awk_setmaxdepth (handle, 
-			ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
 	}
+
+	ase_awk_setoption (handle, option);
+
+	ase_awk_setmaxdepth (handle, 
+		ASE_AWK_DEPTH_BLOCK_PARSE, max_depth.block.parse);
+	ase_awk_setmaxdepth (handle, 
+		ASE_AWK_DEPTH_BLOCK_RUN, max_depth.block.run);
+	ase_awk_setmaxdepth (handle, 
+		ASE_AWK_DEPTH_EXPR_PARSE, max_depth.expr.parse);
+	ase_awk_setmaxdepth (handle, 
+		ASE_AWK_DEPTH_EXPR_RUN, max_depth.expr.run);
+	ase_awk_setmaxdepth (handle, 
+		ASE_AWK_DEPTH_REX_BUILD, max_depth.rex.build);
+	ase_awk_setmaxdepth (handle, 
+		ASE_AWK_DEPTH_REX_MATCH, max_depth.rex.match);
 
 	ase_awk_clrbfn (handle);
 
@@ -978,6 +978,17 @@ STDMETHODIMP CAwk::DeleteFunction (BSTR name, VARIANT_BOOL* ret)
 		ase_awk_geterrstr(NULL, errnum));
 
 	*ret = VARIANT_FALSE;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::SetWord (BSTR ow, BSTR nw, VARIANT_BOOL* ret)
+{
+	size_t ow_len = SysStringLen(ow);
+	size_t nw_len = SysStringLen(nw);
+
+// TODO: 
+	*ret = (ase_awk_setword (handle, ow, ow_len, nw, nw_len) == -1)? 
+		VARIANT_FALSE: VARIANT_TRUE;
 	return S_OK;
 }
 

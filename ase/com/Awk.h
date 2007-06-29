@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.3 2007/04/30 06:04:43 bacon Exp $
+ * $Id: Awk.h,v 1.4 2007/06/27 15:27:21 bacon Exp $
  *
  * {License}
  */
@@ -156,6 +156,8 @@ public:
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
 
+	HRESULT __stdcall SetWord (
+		/*[in]*/ BSTR ow, /*[in]*/ BSTR nw, /*[out, retval]*/ VARIANT_BOOL* ret);
 
 	HRESULT __stdcall DeleteFunction (
 		/*[in]*/ BSTR name, /*[out, retval]*/ VARIANT_BOOL* ret);
