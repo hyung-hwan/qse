@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.11 2007/06/24 11:14:58 bacon Exp $
+ * $Id: Awk.java,v 1.12 2007/06/28 15:45:57 bacon Exp $
  *
  * {License}
  */
@@ -261,6 +261,16 @@ public abstract class Awk
 	public void setWord (String ow, String nw)
 	{
 		setword (ow, nw);
+	}
+
+	public void unsetWord (String ow)
+	{
+		setword (ow, null);
+	}
+
+	public void unsetAllWords ()
+	{
+		setword (null, null);
 	}
 
 	/* == source code management == */

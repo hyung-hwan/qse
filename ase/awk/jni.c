@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.11 2007/06/24 11:14:58 bacon Exp $
+ * $Id: jni.c,v 1.12 2007/06/28 15:45:57 bacon Exp $
  *
  * {License}
  */
@@ -2015,8 +2015,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 	jclass class; 
 	jfieldID handle;
 	ase_awk_t* awk;
-	const jchar* op, * np;
-	jsize ol, nl;
+	const jchar* op = NULL, * np = NULL;
+	jsize ol = 0, nl = 0;
 	ase_char_t* ox, * nx;
 	jint r;
 
@@ -2033,31 +2033,38 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 
 	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
 
-	ol = (*env)->GetStringLength (env, ow);
-	op = (*env)->GetStringChars (env, ow, JNI_FALSE);
-	if (op == NULL) 
+	if (ow != NULL)
 	{
-		(*env)->ExceptionClear (env);
-		throw_exception (
-			env, 
-			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
-			ASE_AWK_ENOMEM,
-			0);
-		return;
+		ol = (*env)->GetStringLength (env, ow);
+		op = (*env)->GetStringChars (env, ow, JNI_FALSE);
+		if (op == NULL) 
+		{
+			(*env)->ExceptionClear (env);
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM,
+				0);
+			return;
+		}
 	}
 
-	nl = (*env)->GetStringLength (env, nw);
-	np = (*env)->GetStringChars (env, nw, JNI_FALSE);
-	if (np == NULL) 
+	if (nw != NULL)
 	{
-		(*env)->ReleaseStringChars (env, ow, op);
-		(*env)->ExceptionClear (env);
-		throw_exception (
-			env, 
-			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
-			ASE_AWK_ENOMEM,
-			0);
-		return;
+		nl = (*env)->GetStringLength (env, nw);
+		np = (*env)->GetStringChars (env, nw, JNI_FALSE);
+		if (np == NULL) 
+		{
+			if (ow != NULL) 
+				(*env)->ReleaseStringChars (env, ow, op);
+			(*env)->ExceptionClear (env);
+			throw_exception (
+				env, 
+				ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
+				ASE_AWK_ENOMEM,
+				0);
+			return;
+		}
 	}
 
 	if (ol > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
@@ -2066,8 +2073,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 		ox = (ase_char_t*)malloc (ASE_SIZEOF(ase_char_t)*ol);
 		if (ox == ASE_NULL)
 		{
-			(*env)->ReleaseStringChars (env, nw, np);
-			(*env)->ReleaseStringChars (env, ow, op);
+			if (nw != NULL) (*env)->ReleaseStringChars (env, nw, np);
+			if (ow != NULL) (*env)->ReleaseStringChars (env, ow, op);
 
 			throw_exception (
 				env, 
@@ -2089,8 +2096,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 		{
 			if (ox != (ase_char_t*)op) free (ox);
 
-			(*env)->ReleaseStringChars (env, nw, np);
-			(*env)->ReleaseStringChars (env, ow, op);
+			if (nw != NULL) (*env)->ReleaseStringChars (env, nw, np);
+			if (ow != NULL) (*env)->ReleaseStringChars (env, ow, op);
 
 			throw_exception (
 				env, 
@@ -2109,8 +2116,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 	if (nx != (ase_char_t*)np) free (nx);
 	if (ox != (ase_char_t*)op) free (ox);
 
-	(*env)->ReleaseStringChars (env, nw, np);
-	(*env)->ReleaseStringChars (env, ow, op);
+	if (nw != NULL) (*env)->ReleaseStringChars (env, nw, np);
+	if (ow != NULL) (*env)->ReleaseStringChars (env, ow, op);
 
 	if (r == -1)
 	{

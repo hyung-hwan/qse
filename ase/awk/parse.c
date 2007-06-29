@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.9 2007/06/20 13:28:15 bacon Exp $
+ * $Id: parse.c,v 1.10 2007/06/28 15:45:57 bacon Exp $
  *
  * {License}
  */
@@ -403,8 +403,21 @@ int ase_awk_setword (ase_awk_t* awk,
 	const ase_char_t* nkw, ase_size_t nlen)
 {
 	ase_cstr_t* v;
-	ase_awk_pair_t* pair;
 
+	if (nkw == ASE_NULL || nlen == 0)
+	{
+		if (okw == ASE_NULL || olen == 0)
+		{
+			/* clear the entire table */
+			ase_awk_map_clear (awk->kwtab);
+			return 0;
+		}
+
+		/* delete the word */
+		return ase_awk_map_remove (awk->kwtab, okw, olen);
+	}
+
+	/* set the word */
 	v = (ase_cstr_t*) ASE_AWK_MALLOC (
 		awk, ASE_SIZEOF(ase_cstr_t)+((nlen+1)*ASE_SIZEOF(*nkw)));
 	if (v == ASE_NULL) 
@@ -416,7 +429,7 @@ int ase_awk_setword (ase_awk_t* awk,
 	v->len = nlen;
 	v->ptr = (const ase_char_t*)(v + 1);
 
-	ase_strxncpy (v->ptr, v->len+1, nkw, nlen);
+	ase_strxncpy ((ase_char_t*)v->ptr, v->len+1, nkw, nlen);
 
 	if (ase_awk_map_put (awk->kwtab, okw, olen, v) == ASE_NULL)
 	{
