@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.43 2007/06/28 15:45:57 bacon Exp $
+ * $Id: Awk.hpp,v 1.44 2007/06/29 11:36:45 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -239,6 +239,7 @@ namespace ASE
 			ERR_SOUTCL = ASE_AWK_ESOUTCL,
 			ERR_SOUTWR = ASE_AWK_ESOUTWR,
 			ERR_LXCHR = ASE_AWK_ELXCHR,
+			ERR_LXDIG = ASE_AWK_ELXDIG,
 			ERR_LXUNG = ASE_AWK_ELXUNG,
 			ERR_ENDSRC = ASE_AWK_EENDSRC,
 			ERR_ENDCMT = ASE_AWK_EENDCMT,

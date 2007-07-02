@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.10 2007/06/28 15:45:57 bacon Exp $
+ * $Id: parse.c,v 1.11 2007/06/29 11:36:45 bacon Exp $
  *
  * {License}
  */
@@ -4421,6 +4421,13 @@ static int get_number (ase_awk_t* awk)
 			{
 				ADD_TOKEN_CHAR (awk, c);
 				GET_CHAR_TO (awk, c);
+			}
+
+			if (c == ASE_T('8') || c == ASE_T('9'))
+			{
+				ase_char_t cc = (ase_char_t)c;
+				SETERRARG (awk, ASE_AWK_ELXDIG, awk->token.line, &cc, 1);
+				return -1;
 			}
 
 			return 0;

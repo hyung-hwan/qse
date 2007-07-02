@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.4 2007/06/27 15:27:21 bacon Exp $
+ * $Id: Awk.cpp,v 1.5 2007/06/29 11:24:27 bacon Exp $
  *
  * {License}
  */
@@ -47,6 +47,7 @@ CAwk::CAwk ():
 	write_src_buf (NULL),
 	write_extio_buf (NULL),
 	bfn_list (NULL),
+	word_list (NULL),
 	entry_point (NULL),
 	debug (FALSE),
 	use_longlong (FALSE)
@@ -74,11 +75,16 @@ CAwk::CAwk ():
 
 CAwk::~CAwk ()
 {
+	while (word_list != NULL)
+	{
+		word_t* next = word_list->next;
+		free (word_list);
+		word_list = next;
+	}
 
 	while (bfn_list != NULL)
 	{
 		bfn_t* next = bfn_list->next;
-		free (bfn_list->name.ptr);
 		free (bfn_list);
 		bfn_list = next;
 	}
@@ -566,6 +572,25 @@ HRESULT CAwk::Parse (VARIANT_BOOL* ret)
 		}
 	}
 
+	ase_awk_setword (handle, NULL, 0, NULL, 0);
+	for (word_t* word = word_list; word != NULL; word = word->next)
+	{
+		if (ase_awk_setword (handle, 
+			word->ow.ptr, word->ow.len,
+			word->nw.ptr, word->nw.len) == -1)
+		{
+			const ase_char_t* msg;
+
+			DBGOUT (_T("cannot set the word"));
+
+			ase_awk_geterror (handle, &errnum, &errlin, &msg);
+			ase_strxcpy (errmsg, ASE_COUNTOF(errmsg), msg);
+
+			*ret = VARIANT_FALSE;
+			return S_OK;
+		}
+	}
+
 	ase_awk_srcios_t srcios;
 
 	srcios.in = __read_source;
@@ -906,7 +931,7 @@ STDMETHODIMP CAwk::AddFunction (
 		}
 	}
 
-	bfn = (bfn_t*)malloc (sizeof(bfn_t));
+	bfn = (bfn_t*)malloc (sizeof(bfn_t) + name_len*sizeof(TCHAR));
 	if (bfn == NULL) 
 	{
 		errnum = ASE_AWK_ENOMEM;
@@ -920,20 +945,7 @@ STDMETHODIMP CAwk::AddFunction (
 	}
 
 	bfn->name.len = name_len;
-	bfn->name.ptr = (TCHAR*)malloc (bfn->name.len * sizeof(TCHAR));
-	if (bfn->name.ptr == NULL) 
-	{
-		free (bfn);
-
-		errnum = ASE_AWK_ENOMEM;
-		errlin = 0;
-		ase_strxcpy (
-			errmsg, ASE_COUNTOF(errmsg), 
-			ase_awk_geterrstr(NULL, errnum));
-
-		*ret = VARIANT_FALSE;
-		return S_OK;
-	}
+	bfn->name.ptr = (TCHAR*)(bfn + 1);
 	memcpy (bfn->name.ptr, name, sizeof(TCHAR) * bfn->name.len);
 
 	bfn->min_args = minArgs;
@@ -958,7 +970,6 @@ STDMETHODIMP CAwk::DeleteFunction (BSTR name, VARIANT_BOOL* ret)
 			bfn->name.ptr, bfn->name.len,
 			name, name_len) == 0)
 		{
-			free (bfn->name.ptr);
 			free (bfn);
 
 			if (prev == NULL) bfn_list = next;
@@ -983,12 +994,88 @@ STDMETHODIMP CAwk::DeleteFunction (BSTR name, VARIANT_BOOL* ret)
 
 STDMETHODIMP CAwk::SetWord (BSTR ow, BSTR nw, VARIANT_BOOL* ret)
 {
+	word_t* word;
 	size_t ow_len = SysStringLen(ow);
 	size_t nw_len = SysStringLen(nw);
 
-// TODO: 
-	*ret = (ase_awk_setword (handle, ow, ow_len, nw, nw_len) == -1)? 
-		VARIANT_FALSE: VARIANT_TRUE;
+	for (word = word_list; word != NULL; word = word->next)
+	{
+		if (ase_strxncmp (
+			word->ow.ptr, word->ow.len,
+			ow, ow_len) == 0)
+		{
+			errnum = ASE_AWK_EEXIST;
+			errlin = 0;
+			_sntprintf (
+				errmsg, ASE_COUNTOF(errmsg), 
+				_T("'%.*s' added already"), 
+				word->ow.len, word->ow.ptr);
+
+			*ret = VARIANT_FALSE;
+			return S_OK;
+		}
+	}
+
+	word = (word_t*)malloc (sizeof(word_t)+(ow_len+nw_len)*sizeof(TCHAR));
+	if (word == NULL) 
+	{
+		errnum = ASE_AWK_ENOMEM;
+		errlin = 0;
+		ase_strxcpy (
+			errmsg, ASE_COUNTOF(errmsg), 
+			ase_awk_geterrstr(NULL, errnum));
+
+		*ret = VARIANT_FALSE;
+		return S_OK;
+	}
+
+	word->ow.len = ow_len;
+	word->ow.ptr = (TCHAR*)(word+1);
+	word->nw.len = nw_len;
+	word->nw.ptr = word->ow.ptr + word->ow.len;
+
+	memcpy (word->ow.ptr, ow, sizeof(TCHAR)*word->ow.len);
+	memcpy (word->nw.ptr, nw, sizeof(TCHAR)*word->nw.len);
+
+	word->next = word_list;
+	word_list = word;
+
+	*ret = VARIANT_TRUE;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::UnsetWord (BSTR ow, VARIANT_BOOL* ret)
+{
+	size_t ow_len = SysStringLen(ow);
+	word_t* word, * next, * prev = NULL;
+
+	for (word = word_list; word != NULL; word = next)
+	{
+		next = word->next;
+
+		if (ase_strxncmp (
+			word->ow.ptr, word->ow.len,
+			ow, ow_len) == 0)
+		{
+			free (word);
+
+			if (prev == NULL) word_list = next;
+			else prev->next = next;
+
+			*ret = VARIANT_TRUE;
+			return S_OK;
+		}
+
+		prev = word;
+	}
+
+	errnum = ASE_AWK_ENOENT;
+	errlin = 0;
+	ase_strxcpy (
+		errmsg, ASE_COUNTOF(errmsg), 
+		ase_awk_geterrstr(NULL, errnum));
+
+	*ret = VARIANT_FALSE;
 	return S_OK;
 }
 

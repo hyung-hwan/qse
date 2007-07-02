@@ -5,6 +5,8 @@
 * added setWord/unsetWord method to the awk c++ class (awk/Awk.cpp)
 * added setErrorString method to the awk c++ class (awk/Awk.cpp)
 * added setWord/unsetWord method to the awk java class (awk/Awk.java)
+* added the error code ASE_AWK_ELXDIG to indicate a wrong digit in
+  octal number tokenization. 
 
 * changed the wrong macro name WIN32 to _WIN32 in utl/stdio.h
 * changed test/awk/Awk.cpp to include an option(-w) to utilize

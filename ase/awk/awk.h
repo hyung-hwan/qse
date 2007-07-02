@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.7 2007/06/18 14:05:18 bacon Exp $
+ * $Id: awk.h,v 1.8 2007/06/29 11:36:45 bacon Exp $
  *
  * {License}
  */
@@ -233,6 +233,7 @@ enum ase_awk_errnum_t
 	ASE_AWK_ESOUTWR,
 
 	ASE_AWK_ELXCHR,         /* lexer came accross an wrong character */
+	ASE_AWK_ELXDIG,         /* invalid digit */
 	ASE_AWK_ELXUNG,         /* lexer failed to unget a character */
 
 	ASE_AWK_EENDSRC,        /* unexpected end of source */
