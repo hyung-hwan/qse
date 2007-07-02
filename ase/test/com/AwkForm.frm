@@ -224,6 +224,11 @@ Private Sub btnExecute_Click()
     
     Set Awk = New ASECOM.Awk
     
+    'Awk.SetWord "BEGIN", "xxx"
+    'Awk.SetWord "END", "yyy"
+    'Awk.SetWord "length", "len"
+    'Awk.UnsetWord "END"
+
     Awk.ExplicitVariable = True
     Awk.ImplicitVariable = True
     Awk.UseCrlf = True

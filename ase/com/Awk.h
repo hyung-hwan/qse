@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.4 2007/06/27 15:27:21 bacon Exp $
+ * $Id: Awk.h,v 1.5 2007/06/29 11:24:27 bacon Exp $
  *
  * {License}
  */
@@ -75,6 +75,23 @@ public:
 		size_t max_args;
 		struct bfn_t* next;
 	} * bfn_list;
+
+	struct word_t
+	{
+		struct
+		{
+			TCHAR* ptr;
+			size_t len;
+		} ow;
+
+		struct
+		{
+			TCHAR* ptr;
+			size_t len;
+		} nw;
+
+		struct word_t* next;
+	} * word_list;
 
 	BSTR entry_point;
 	VARIANT_BOOL debug;
@@ -156,6 +173,8 @@ public:
 	STDMETHOD(get_ErrorLine)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(get_ErrorCode)(/*[out, retval]*/ int *pVal);
 
+	HRESULT __stdcall UnsetWord (
+		/*[in]*/ BSTR ow, /*[out, retval]*/ VARIANT_BOOL* ret);
 	HRESULT __stdcall SetWord (
 		/*[in]*/ BSTR ow, /*[in]*/ BSTR nw, /*[out, retval]*/ VARIANT_BOOL* ret);
 

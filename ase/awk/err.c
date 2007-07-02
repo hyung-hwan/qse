@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.4 2007/05/19 12:13:41 bacon Exp $
+ * $Id: err.c,v 1.5 2007/06/29 11:36:45 bacon Exp $
  *
  * {License}
  */
@@ -47,6 +47,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("cannot write source output"),
 
 		ASE_T("invalid character '%.*s'"),
+		ASE_T("invalid digit '%.*s'"),
 		ASE_T("cannot unget character"),
 
 		ASE_T("unexpected end of source"),
