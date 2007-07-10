@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.5 2007/06/29 11:24:27 bacon Exp $
+ * $Id: Awk.cpp,v 1.6 2007/07/02 14:04:20 bacon Exp $
  *
  * {License}
  */
@@ -1076,6 +1076,19 @@ STDMETHODIMP CAwk::UnsetWord (BSTR ow, VARIANT_BOOL* ret)
 		ase_awk_geterrstr(NULL, errnum));
 
 	*ret = VARIANT_FALSE;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::UnsetAllWords (VARIANT_BOOL* ret)
+{
+	while (word_list != NULL)
+	{
+		word_t* next = word_list->next;
+		free (word_list);
+		word_list = next;
+	}
+
+	*ret = VARIANT_TRUE;
 	return S_OK;
 }
 
