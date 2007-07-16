@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.11 2007/05/23 14:15:16 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.12 2007/07/15 16:31:59 bacon Exp $
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_
@@ -19,20 +19,34 @@ namespace ASE
 	protected:
 
 		// builtin functions 
-		int sin (Return* ret, const Argument* args, size_t nargs);
-		int cos (Return* ret, const Argument* args, size_t nargs);
-		int tan (Return* ret, const Argument* args, size_t nargs);
-		int atan2 (Return* ret, const Argument* args, size_t nargs);
-		int log (Return* ret, const Argument* args, size_t nargs);
-		int exp (Return* ret, const Argument* args, size_t nargs);
-		int sqrt (Return* ret, const Argument* args, size_t nargs);
-		int fnint (Return* ret, const Argument* args, size_t nargs);
-		int rand (Return* ret, const Argument* args, size_t nargs);
-		int srand (Return* ret, const Argument* args, size_t nargs);
-		int systime (Return* ret, const Argument* args, size_t nargs);
-		int strftime (Return* ret, const Argument* args, size_t nargs);
-		int strfgmtime (Return* ret, const Argument* args, size_t nargs);
-		int system (Return* ret, const Argument* args, size_t nargs);
+		int sin (Return* ret, const Argument* args, size_t nargs, 
+			const char_t* name, size_t len);
+		int cos (Return* ret, const Argument* args, size_t nargs, 
+			const char_t* name, size_t len);
+		int tan (Return* ret, const Argument* args, size_t nargs, 
+			const char_t* name, size_t len);
+		int atan2 (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int log (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int exp (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int sqrt (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int fnint (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int rand (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int srand (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int systime (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int strftime (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int strfgmtime (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
+		int system (Return* ret, const Argument* args, size_t nargs,
+			const char_t* name, size_t len);
 
 		// pipe io handlers 
 		int openPipe (Pipe& io);

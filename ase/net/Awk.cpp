@@ -1,5 +1,5 @@
 /*
-* $Id: Awk.cpp,v 1.2 2007/07/09 16:07:30 bacon Exp $
+* $Id: Awk.cpp,v 1.3 2007/07/15 16:31:59 bacon Exp $
 */
 
 #include "stdafx.h"
@@ -12,37 +12,57 @@
 
 #include <msclr/auto_gcroot.h>
 
-
 namespace ASE
 {
-
 	class StubAwk: public Awk
 	{
 	public:	
-		StubAwk (NET::Awk^ wrapper): wrapper(wrapper)
+		StubAwk (Net::Awk^ wrapper): wrapper(wrapper)
 		{		
+		}
+
+		int stubFunctionHandler (
+			Return* ret, const Argument* args, size_t nargs, 
+			const char_t* name, size_t len)
+		{
+			System::String^ nm = gcnew System::String (name, 0, len);
+			return wrapper->DispatchFunction (nm);
 		}
 
 		int openSource (Source& io) 
 		{ 
-			NET::Awk::Source^ nio = gcnew NET::Awk::Source ();
+			/*
+			Net::Awk::Source^ nio = gcnew Net::Awk::Source ();
 			int n = wrapper->OpenSource (nio);
-			// TODO: put nio back to io.
 			return n;
+			*/
+			if (io.getMode() == Source::READ)
+			{
+				//wrapper->SourceInputStream->BeginRead ();
+			}
+			else
+			{
+				//wrapper->SourceOutputStream->BeginWrite ();
+			}
+			return 1;
 		}
 
 		int closeSource (Source& io) 
 		{
+			//System::IO::Stream^ stream = io.getHandle();
+			//stream->Close ();
 			return 0;
 		}
 
 		ssize_t readSource (Source& io, char_t* buf, size_t len) 
 		{
+			//System::IO::Stream^ stream = io.getHandle();
 			return 0;
 		}
 
 		ssize_t writeSource (Source& io, char_t* buf, size_t len)
 		{
+			//System::IO::Stream^ stream = io.getHandle();
 			return 0;
 		}
 
@@ -100,10 +120,10 @@ namespace ASE
 		}
 
 	private:
-		msclr::auto_gcroot<NET::Awk^> wrapper;
+		msclr::auto_gcroot<Net::Awk^> wrapper;
 	};
 
-	namespace NET
+	namespace Net
 	{
 
 		Awk::Awk ()
@@ -126,14 +146,25 @@ namespace ASE
 			return awk->run () == 0;
 		}
 
-		bool Awk::AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler)
+		bool Awk::AddFunction (
+			System::String^ name, int minArgs, int maxArgs, 
+			FunctionHandler^ handler)
 		{
-			return false;
+			cli::pin_ptr<const wchar_t> nptr = PtrToStringChars(name);
+			return awk->addFunction (nptr, minArgs, maxArgs, 
+				(ASE::Awk::FunctionHandler)&StubAwk::stubFunctionHandler) == 0;
 		}
 
 		bool Awk::DeleteFunction (System::String^ name)
 		{
-			return false;
+			pin_ptr<const wchar_t> nptr = PtrToStringChars(name);
+			return awk->deleteFunction (nptr) == 0;
+		}
+
+		int Awk::DispatchFunction (System::String^ name)
+		{
+			return 0;
 		}
 	}
 }
+

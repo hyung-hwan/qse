@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.29 2007/06/25 14:01:28 bacon Exp $
+ * $Id: Awk.cpp,v 1.30 2007/07/15 16:31:59 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -82,7 +82,8 @@ public:
 	#endif
 	}
 
-	int sleep (Return* ret, const Argument* args, size_t nargs)
+	int sleep (Return* ret, const Argument* args, size_t nargs, 
+		const char_t* name, size_t len)
 	{
 	#ifdef _WIN32
 		::Sleep (args[0].toInt() * 1000);

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.44 2007/06/29 11:36:45 bacon Exp $
+ * $Id: Awk.hpp,v 1.45 2007/07/15 16:31:59 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -429,7 +429,8 @@ namespace ASE
 		         const char_t** args = ASE_NULL, size_t nargs = 0);
 
 		typedef int (Awk::*FunctionHandler) (
-			Return* ret, const Argument* args, size_t nargs);
+			Return* ret, const Argument* args, size_t nargs, 
+			const char_t* name, size_t len);
 
 		virtual int addFunction (
 			const char_t* name, size_t minArgs, size_t maxArgs, 
