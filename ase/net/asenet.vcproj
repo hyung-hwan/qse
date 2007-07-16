@@ -59,7 +59,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
+				AdditionalDependencies="asecmn.lib aseawk.lib aseawk++.lib aseutl.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -196,6 +196,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\assert.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Awk.cpp"
 				>
 			</File>
@@ -219,6 +223,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\StdAwk.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -239,6 +247,10 @@
 			</File>
 			<File
 				RelativePath=".\Stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StdAwk.hpp"
 				>
 			</File>
 		</Filter>

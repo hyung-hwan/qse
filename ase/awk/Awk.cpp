@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.45 2007/06/28 15:45:57 bacon Exp $
+ * $Id: Awk.cpp,v 1.46 2007/07/15 16:31:59 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -734,7 +734,7 @@ namespace ASE
 		}
 		
 		Return ret (run);
-		int n = (this->*handler) (&ret, args, nargs);
+		int n = (this->*handler) (&ret, args, nargs, name, len);
 
 		delete[] args;
 

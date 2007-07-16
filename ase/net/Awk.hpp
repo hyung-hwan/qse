@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.1 2007/05/15 08:29:30 bacon Exp $
+ * $Id: Awk.hpp,v 1.2 2007/07/15 16:31:59 bacon Exp $
  */
 
 #pragma once
@@ -10,13 +10,12 @@ using namespace System;
 
 namespace ASE
 {
-	namespace NET
+	namespace Net
 	{
 
 		public ref class Awk abstract
 		{
 		public:
-
 			ref class Source
 			{
 			public:
@@ -115,8 +114,39 @@ namespace ASE
 			virtual int ReadSource (Source^ io, ASE::Awk::char_t* buf, ASE::Awk::size_t len) = 0;
 			virtual int WriteSource (Source^ io, ASE::Awk::char_t* buf, ASE::Awk::size_t len) = 0;
 
-		private:
+			property System::IO::Stream^ SourceInputStream
+			{
+				System::IO::Stream^ get () 
+				{ 
+					return this->sourceInputStream; 
+				}
+
+				void set (System::IO::Stream^ stream) 
+				{ 
+					this->sourceInputStream = stream; 
+				}
+			}
+
+			property System::IO::Stream^ SourceOutputStream
+			{
+				System::IO::Stream^ get () 
+				{ 
+					return this->sourceOutputStream; 
+				}
+
+				void set (System::IO::Stream^ stream) 
+				{ 
+					this->sourceOutputStream = stream; 
+				}
+			}
+			
+		protected:
 			ASE::Awk* awk;
+			System::IO::Stream^ sourceInputStream;
+			System::IO::Stream^ sourceOutputStream;
+
+		public protected:
+			int Awk::DispatchFunction (System::String^ name);
 		};
 
 	}

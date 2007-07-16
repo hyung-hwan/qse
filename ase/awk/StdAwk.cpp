@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.21 2007/05/23 14:15:16 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.22 2007/07/15 16:31:59 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -59,52 +59,62 @@ namespace ASE
 		return 0;
 	}
 
-	int StdAwk::sin (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::sin (Return* ret, const Argument* args, size_t nargs, 
+		const char_t* name, size_t len)
 	{
 		return ret->set ((real_t)::sin(args[0].toReal()));
 	}
 
-	int StdAwk::cos (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::cos (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set ((real_t)::cos(args[0].toReal()));
 	}
 
-	int StdAwk::tan (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::tan (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set ((real_t)::tan(args[0].toReal()));
 	}
 
-	int StdAwk::atan2 (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::atan2 (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set ((real_t)::atan2(args[0].toReal(), args[1].toReal()));
 	}
 
-	int StdAwk::log (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::log (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set ((real_t)::log(args[0].toReal()));
 	}
 
-	int StdAwk::exp (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::exp (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set ((real_t)::exp(args[0].toReal()));
 	}
 
-	int StdAwk::sqrt (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::sqrt (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set ((real_t)::sqrt(args[0].toReal()));
 	}
 
-	int StdAwk::fnint (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::fnint (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set (args[0].toInt());
 	}
 
-	int StdAwk::rand (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::rand (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set ((long_t)::rand());
 	}
 
-	int StdAwk::srand (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::srand (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		unsigned int prevSeed = seed;
 		seed = (unsigned int)args[0].toInt();
@@ -112,12 +122,14 @@ namespace ASE
 		return ret->set ((long_t)prevSeed);
 	}
 
-	int StdAwk::systime (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::systime (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		return ret->set ((long_t)::time(NULL));
 	}
 
-	int StdAwk::strftime (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::strftime (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		const char_t* fmt;
 		size_t fln;
@@ -135,15 +147,16 @@ namespace ASE
 	#endif
 
 	#ifdef ASE_CHAR_IS_MCHAR
-		size_t len = ::strftime (buf, ASE_COUNTOF(buf), fmt, tm);
+		size_t l = ::strftime (buf, ASE_COUNTOF(buf), fmt, tm);
 	#else
-		size_t len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
+		size_t l = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
 	#endif
 
-		return ret->set (buf, len);	
+		return ret->set (buf, l);	
 	}
 
-	int StdAwk::strfgmtime (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::strfgmtime (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
 		const char_t* fmt;
 		size_t fln;
@@ -161,28 +174,29 @@ namespace ASE
 	#endif
 
 	#ifdef ASE_CHAR_IS_MCHAR
-		size_t len = ::strftime (buf, ASE_COUNTOF(buf), fmt, tm);
+		size_t l = ::strftime (buf, ASE_COUNTOF(buf), fmt, tm);
 	#else
-		size_t len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
+		size_t l = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
 	#endif
 
-		return ret->set (buf, len);	
+		return ret->set (buf, l);	
 	}
 
-	int StdAwk::system (Return* ret, const Argument* args, size_t nargs)
+	int StdAwk::system (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
 	{
-		size_t len;
-		const char_t* ptr = args[0].toStr(&len);
+		size_t l;
+		const char_t* ptr = args[0].toStr(&l);
 
 	#ifdef _WIN32
 		return ret->set ((long_t)::_tsystem(ptr));
 	#elif defined(ASE_CHAR_IS_MCHAR)
 		return ret->set ((long_t)::system(ptr));
 	#else
-		char* mbs = (char*)ase_awk_malloc (awk, len*5+1);
+		char* mbs = (char*)ase_awk_malloc (awk, l*5+1);
 		if (mbs == ASE_NULL) return -1;
 
-		::size_t mbl = ::wcstombs (mbs, ptr, len*5);
+		::size_t mbl = ::wcstombs (mbs, ptr, l*5);
 		if (mbl == (::size_t)-1) return -1;
 		mbs[mbl] = '\0';
 		int n =  ret->set ((long_t)::system(mbs));
