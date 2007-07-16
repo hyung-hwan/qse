@@ -1,5 +1,5 @@
 /*
-* $Id: Awk.cpp,v 1.1 2007/05/15 08:29:30 bacon Exp $
+* $Id: Awk.cpp,v 1.2 2007/07/09 16:07:30 bacon Exp $
 */
 
 #include "stdafx.h"
@@ -100,7 +100,7 @@ namespace ASE
 		}
 
 	private:
-		msclr::auto_gcroot<NET::Awk^>  wrapper;
+		msclr::auto_gcroot<NET::Awk^> wrapper;
 	};
 
 	namespace NET
