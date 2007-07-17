@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.2 2007/07/15 16:31:59 bacon Exp $
+ * $Id: Awk.hpp,v 1.3 2007/07/16 11:12:12 bacon Exp $
  */
 
 #pragma once
@@ -16,6 +16,7 @@ namespace ASE
 		public ref class Awk abstract
 		{
 		public:
+			/*
 			ref class Source
 			{
 			public:
@@ -33,7 +34,7 @@ namespace ASE
 
 			private:
 				MODE^ mode;
-			};
+			};*/
 
 			ref class Extio
 			{
@@ -101,6 +102,9 @@ namespace ASE
 			Awk ();
 			virtual ~Awk ();
 
+			bool Open ();
+			void Close ();
+
 			bool Parse ();
 			bool Run ();
 
@@ -109,10 +113,6 @@ namespace ASE
 			bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
 			bool DeleteFunction (System::String^ name);
 
-			virtual int OpenSource (Source^ io) = 0;
-			virtual int CloseSource (Source^ io) = 0;
-			virtual int ReadSource (Source^ io, ASE::Awk::char_t* buf, ASE::Awk::size_t len) = 0;
-			virtual int WriteSource (Source^ io, ASE::Awk::char_t* buf, ASE::Awk::size_t len) = 0;
 
 			property System::IO::Stream^ SourceInputStream
 			{
@@ -142,6 +142,7 @@ namespace ASE
 			
 		protected:
 			ASE::Awk* awk;
+
 			System::IO::Stream^ sourceInputStream;
 			System::IO::Stream^ sourceOutputStream;
 

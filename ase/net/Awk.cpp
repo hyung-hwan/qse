@@ -1,6 +1,6 @@
 /*
-* $Id: Awk.cpp,v 1.3 2007/07/15 16:31:59 bacon Exp $
-*/
+ * $Id: Awk.cpp,v 1.5 2007/07/16 11:16:46 bacon Exp $
+ */
 
 #include "stdafx.h"
 #include "Awk.hpp"
@@ -17,6 +17,7 @@ namespace ASE
 	class StubAwk: public Awk
 	{
 	public:	
+
 		StubAwk (Net::Awk^ wrapper): wrapper(wrapper)
 		{		
 		}
@@ -31,39 +32,101 @@ namespace ASE
 
 		int openSource (Source& io) 
 		{ 
-			/*
-			Net::Awk::Source^ nio = gcnew Net::Awk::Source ();
-			int n = wrapper->OpenSource (nio);
-			return n;
-			*/
 			if (io.getMode() == Source::READ)
 			{
-				//wrapper->SourceInputStream->BeginRead ();
+				if (wrapper->SourceInputStream == nullptr)
+				{
+					return -1;
+				}
+
+				if (!wrapper->SourceInputStream->CanRead)
+				{
+					wrapper->SourceInputStream->Close ();
+					return -1;
+				}
+
+				//interior_ptr<System::IO::Stream> p = wrapper->SourceInputStream;
+				//io.setHandle (wrapper->SourceInputStream);
+
+				System::IO::StreamReader^ reader = gcnew System::IO::StreamReader (wrapper->SourceInputStream);
+				System::Runtime::InteropServices::GCHandle*	handle = (System::Runtime::InteropServices::GCHandle*)malloc (sizeof(System::Runtime::InteropServices::GCHandle));
+				if (handle == NULL) 
+				{
+					reader->Close ();
+					return -1;
+				}
+
+				handle->Alloc (reader/*, System::Runtime::InteropServices::GCHandleType::Pinned */);
+				io.setHandle (handle);
 			}
 			else
 			{
-				//wrapper->SourceOutputStream->BeginWrite ();
+				if (wrapper->SourceOutputStream == nullptr)
+				{
+					return -1;
+				}
+
+				if (!wrapper->SourceOutputStream->CanWrite)
+				{
+					wrapper->SourceOutputStream->Close ();
+					return -1;
+				}
+
+				System::IO::StreamWriter^ writer = gcnew System::IO::StreamWriter (wrapper->SourceOutputStream);
+				System::Runtime::InteropServices::GCHandle*	handle = (System::Runtime::InteropServices::GCHandle*)::malloc (sizeof(System::Runtime::InteropServices::GCHandle));
+				if (handle == NULL) 
+				{
+					writer->Close ();
+					return -1;
+				}
+
+				handle->Alloc (writer/*, System::Runtime::InteropServices::GCHandleType::Pinned*/);
+				io.setHandle (handle);
 			}
+
 			return 1;
 		}
 
 		int closeSource (Source& io) 
 		{
-			//System::IO::Stream^ stream = io.getHandle();
-			//stream->Close ();
+			System::Runtime::InteropServices::GCHandle* handle = (System::Runtime::InteropServices::GCHandle*)io.getHandle();
+
+			if (io.getMode() == Source::READ)
+			{
+				System::IO::StreamReader^ reader = (System::IO::StreamReader^)handle->Target;
+				reader->Close ();
+			}
+			else
+			{
+				System::IO::StreamWriter^ writer = (System::IO::StreamWriter^)handle->Target;
+				writer->Close ();
+			}
+			
+			handle->Free ();
+			::free (handle);
 			return 0;
 		}
 
 		ssize_t readSource (Source& io, char_t* buf, size_t len) 
 		{
-			//System::IO::Stream^ stream = io.getHandle();
-			return 0;
+			System::Runtime::InteropServices::GCHandle* handle = (System::Runtime::InteropServices::GCHandle*)io.getHandle();
+			System::IO::StreamReader^ reader = (System::IO::StreamReader^)handle->Target;
+			
+			cli::array<char_t>^ b = gcnew cli::array<char_t>(len);
+			int n = reader->Read (b, 0, len);
+			for (int i = 0; i < n; i++) buf[i] =  b[i];
+			return n;
 		}
 
 		ssize_t writeSource (Source& io, char_t* buf, size_t len)
 		{
-			//System::IO::Stream^ stream = io.getHandle();
-			return 0;
+			System::Runtime::InteropServices::GCHandle* handle = (System::Runtime::InteropServices::GCHandle*)io.getHandle();
+			System::IO::StreamWriter^ writer = (System::IO::StreamWriter^)handle->Target;
+
+			cli::array<char_t>^ b = gcnew cli::array<char_t>(len);
+			for (int i = 0; i < (int)len; i++) buf[i] =  b[i];
+			writer->Write (b, 0, len);
+			return len;
 		}
 
 		int openPipe (Pipe& io) {return 0; }
@@ -129,11 +192,22 @@ namespace ASE
 		Awk::Awk ()
 		{
 			awk = new ASE::StubAwk (this);
+			if (awk->open () == -1)
+			{
+				// TODO:...
+				//throw new AwkException ("cannot open awk");
+			}
 		}
 
 		Awk::~Awk ()
 		{
+			Close ();
 			delete awk;
+		}
+
+		void Awk::Close ()
+		{
+			awk->close ();
 		}
 
 		bool Awk::Parse ()
