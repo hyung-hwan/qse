@@ -1,5 +1,5 @@
 /*
- * $Id: assert.cpp,v 1.1 2007/07/15 16:31:59 bacon Exp $
+ * $Id: assert.cpp,v 1.2 2007/07/16 11:12:12 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -11,6 +11,9 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <tchar.h>
+
+#pragma warning(disable:4996)
+#pragma unmanaged
 
 void ase_assert_abort (void)
 {
