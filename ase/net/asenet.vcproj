@@ -172,14 +172,6 @@
 			RelativePath="System.dll"
 			AssemblyName="System, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
 		/>
-		<AssemblyReference
-			RelativePath="System.Data.dll"
-			AssemblyName="System.Data, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86"
-		/>
-		<AssemblyReference
-			RelativePath="System.XML.dll"
-			AssemblyName="System.Xml, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
-		/>
 	</References>
 	<Files>
 		<Filter
