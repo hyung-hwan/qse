@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.5 2007/07/16 11:16:46 bacon Exp $
+ * $Id: Awk.cpp,v 1.6 2007/07/17 09:46:19 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -11,6 +11,8 @@
 #include <math.h>
 
 #include <msclr/auto_gcroot.h>
+
+using System::Runtime::InteropServices::GCHandle;	
 
 namespace ASE
 {
@@ -45,19 +47,10 @@ namespace ASE
 					return -1;
 				}
 
-				//interior_ptr<System::IO::Stream> p = wrapper->SourceInputStream;
-				//io.setHandle (wrapper->SourceInputStream);
-
 				System::IO::StreamReader^ reader = gcnew System::IO::StreamReader (wrapper->SourceInputStream);
-				System::Runtime::InteropServices::GCHandle*	handle = (System::Runtime::InteropServices::GCHandle*)malloc (sizeof(System::Runtime::InteropServices::GCHandle));
-				if (handle == NULL) 
-				{
-					reader->Close ();
-					return -1;
-				}
-
-				handle->Alloc (reader/*, System::Runtime::InteropServices::GCHandleType::Pinned */);
-				io.setHandle (handle);
+				System::Runtime::InteropServices::GCHandle gh = System::Runtime::InteropServices::GCHandle::Alloc (reader);
+				System::IntPtr^ ip = System::Runtime::InteropServices::GCHandle::ToIntPtr(gh);
+				io.setHandle (ip->ToPointer());
 			}
 			else
 			{
@@ -73,15 +66,9 @@ namespace ASE
 				}
 
 				System::IO::StreamWriter^ writer = gcnew System::IO::StreamWriter (wrapper->SourceOutputStream);
-				System::Runtime::InteropServices::GCHandle*	handle = (System::Runtime::InteropServices::GCHandle*)::malloc (sizeof(System::Runtime::InteropServices::GCHandle));
-				if (handle == NULL) 
-				{
-					writer->Close ();
-					return -1;
-				}
-
-				handle->Alloc (writer/*, System::Runtime::InteropServices::GCHandleType::Pinned*/);
-				io.setHandle (handle);
+				System::Runtime::InteropServices::GCHandle gh = System::Runtime::InteropServices::GCHandle::Alloc (writer);
+				System::IntPtr^ ip = System::Runtime::InteropServices::GCHandle::ToIntPtr(gh);
+				io.setHandle (ip->ToPointer());
 			}
 
 			return 1;
@@ -89,57 +76,129 @@ namespace ASE
 
 		int closeSource (Source& io) 
 		{
-			System::Runtime::InteropServices::GCHandle* handle = (System::Runtime::InteropServices::GCHandle*)io.getHandle();
+			System::IntPtr ip ((void*)io.getHandle());
+			System::Runtime::InteropServices::GCHandle gh = System::Runtime::InteropServices::GCHandle::FromIntPtr (ip);
 
 			if (io.getMode() == Source::READ)
 			{
-				System::IO::StreamReader^ reader = (System::IO::StreamReader^)handle->Target;
+				System::IO::StreamReader^ reader = (System::IO::StreamReader^)gh.Target;
 				reader->Close ();
 			}
 			else
 			{
-				System::IO::StreamWriter^ writer = (System::IO::StreamWriter^)handle->Target;
+				System::IO::StreamWriter^ writer = (System::IO::StreamWriter^)gh.Target;
 				writer->Close ();
 			}
 			
-			handle->Free ();
-			::free (handle);
+			gh.Free ();
 			return 0;
 		}
 
 		ssize_t readSource (Source& io, char_t* buf, size_t len) 
 		{
-			System::Runtime::InteropServices::GCHandle* handle = (System::Runtime::InteropServices::GCHandle*)io.getHandle();
-			System::IO::StreamReader^ reader = (System::IO::StreamReader^)handle->Target;
+			System::IntPtr ip ((void*)io.getHandle());
+			System::Runtime::InteropServices::GCHandle gh = System::Runtime::InteropServices::GCHandle::FromIntPtr (ip);
+
+			System::IO::StreamReader^ reader = (System::IO::StreamReader^)gh.Target;
 			
 			cli::array<char_t>^ b = gcnew cli::array<char_t>(len);
 			int n = reader->Read (b, 0, len);
 			for (int i = 0; i < n; i++) buf[i] =  b[i];
+
 			return n;
 		}
 
 		ssize_t writeSource (Source& io, char_t* buf, size_t len)
 		{
-			System::Runtime::InteropServices::GCHandle* handle = (System::Runtime::InteropServices::GCHandle*)io.getHandle();
-			System::IO::StreamWriter^ writer = (System::IO::StreamWriter^)handle->Target;
+			System::IntPtr ip ((void*)io.getHandle());
+			System::Runtime::InteropServices::GCHandle gh = System::Runtime::InteropServices::GCHandle::FromIntPtr (ip);
+
+			System::IO::StreamWriter^ writer = (System::IO::StreamWriter^)gh.Target;
 
 			cli::array<char_t>^ b = gcnew cli::array<char_t>(len);
-			for (int i = 0; i < (int)len; i++) buf[i] =  b[i];
+			for (int i = 0; i < (int)len; i++) b[i] =  buf[i];
 			writer->Write (b, 0, len);
+
 			return len;
 		}
 
-		int openPipe (Pipe& io) {return 0; }
-		int closePipe (Pipe& io) {return 0; }
-		ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) {return 0; }
-		ssize_t writePipe (Pipe& io, char_t* buf, size_t len) {return 0; }
-		int flushPipe (Pipe& io) {return 0; }
+		int openPipe (Pipe& io) 
+		{
+			ASE::Net::Awk::Pipe^ nio = gcnew ASE::Net::Awk::Pipe ();
+			nio->Mode = (ASE::Net::Awk::Pipe::MODE)io.getMode();
 
-		int openFile (File& io) {return 0; }
-		int closeFile (File& io) {return 0; }
-		ssize_t readFile (File& io, char_t* buf, size_t len) {return 0; }
-		ssize_t writeFile (File& io, char_t* buf, size_t len) {return 0; }
-		int flushFile (File& io) {return 0; }
+			GCHandle gh = GCHandle::Alloc (nio);
+			io.setHandle (GCHandle::ToIntPtr(gh).ToPointer());
+
+			return wrapper->FireOpenPipe (nio);
+		}
+
+		int closePipe (Pipe& io) 
+		{
+			IntPtr ip ((void*)io.getHandle ());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			int n = wrapper->FireClosePipe ((ASE::Net::Awk::Pipe^)gh.Target);
+			gh.Free ();
+			return n;
+		}
+
+		ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) 
+		{
+			return 0; 
+		}
+
+		ssize_t writePipe (Pipe& io, char_t* buf, size_t len) 
+		{
+			return 0; 
+		}
+
+		int flushPipe (Pipe& io) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			return wrapper->FireFlushPipe ((ASE::Net::Awk::Pipe^)gh.Target);
+		}
+
+		int openFile (File& io) 
+		{	
+			ASE::Net::Awk::File^ nio = gcnew ASE::Net::Awk::File ();
+			nio->Mode = (ASE::Net::Awk::File::MODE)io.getMode();
+
+			GCHandle gh = GCHandle::Alloc (nio);
+			io.setHandle (GCHandle::ToIntPtr(gh).ToPointer());
+
+			return wrapper->FireOpenFile (nio);
+		}
+
+		int closeFile (File& io) 
+		{
+			IntPtr ip ((void*)io.getHandle ());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			int n = wrapper->FireCloseFile ((ASE::Net::Awk::File^)gh.Target);
+			gh.Free ();
+			return n;
+		}
+
+		ssize_t readFile (File& io, char_t* buf, size_t len) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			return wrapper->FireReadFile ((ASE::Net::Awk::File^)gh.Target);
+		}
+
+		ssize_t writeFile (File& io, char_t* buf, size_t len) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			return wrapper->FireWriteFile ((ASE::Net::Awk::File^)gh.Target);
+		}
+
+		int flushFile (File& io) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			return wrapper->FireFlushFile ((ASE::Net::Awk::File^)gh.Target);
+		}
 
 		int openConsole (Console& io) {return 0; }
 		int closeConsole (Console& io) {return 0; }
@@ -183,12 +242,11 @@ namespace ASE
 		}
 
 	private:
-		msclr::auto_gcroot<Net::Awk^> wrapper;
+		msclr::auto_gcroot<ASE::Net::Awk^> wrapper;
 	};
 
 	namespace Net
 	{
-
 		Awk::Awk ()
 		{
 			awk = new ASE::StubAwk (this);
@@ -239,6 +297,53 @@ namespace ASE
 		{
 			return 0;
 		}
+
+		int Awk::FireOpenFile (File^ file)
+		{
+			return OpenFileHandler (file);
+		}
+		int Awk::FireCloseFile (File^ file)
+		{
+			return CloseFileHandler (file);
+		}
+		int Awk::FireReadFile (File^ file)
+		{		
+			int n = ReadFileHandler (file);
+			return n;
+		}
+		int Awk::FireWriteFile (File^ file)
+		{
+			int n = WriteFileHandler (file);
+			return n;
+		}
+		int Awk::FireFlushFile (File^ file)
+		{
+			return FlushFileHandler (file);
+		}
+
+		int Awk::FireOpenPipe (Pipe^ pipe)
+		{
+			return OpenPipeHandler (pipe);
+		}
+		int Awk::FireClosePipe (Pipe^ pipe)
+		{
+			return ClosePipeHandler (pipe);
+		}
+		int Awk::FireReadPipe (Pipe^ pipe)
+		{		
+			int n = ReadPipeHandler (pipe);
+			return n;
+		}
+		int Awk::FireWritePipe (Pipe^ pipe)
+		{
+			int n = WritePipeHandler (pipe);
+			return n;
+		}
+		int Awk::FireFlushPipe (Pipe^ pipe)
+		{
+			return FlushPipeHandler (pipe);
+		}
+		
 	}
 }
 
