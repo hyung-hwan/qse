@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.6 2007/07/17 09:46:19 bacon Exp $
+ * $Id: Awk.cpp,v 1.7 2007/07/18 11:12:34 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -100,7 +100,7 @@ namespace ASE
 			System::Runtime::InteropServices::GCHandle gh = System::Runtime::InteropServices::GCHandle::FromIntPtr (ip);
 
 			System::IO::StreamReader^ reader = (System::IO::StreamReader^)gh.Target;
-			
+
 			cli::array<char_t>^ b = gcnew cli::array<char_t>(len);
 			int n = reader->Read (b, 0, len);
 			for (int i = 0; i < n; i++) buf[i] =  b[i];
@@ -144,12 +144,22 @@ namespace ASE
 
 		ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) 
 		{
-			return 0; 
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+
+			cli::array<char_t>^ b = gcnew cli::array<char_t> (len);
+			int n = wrapper->FireReadPipe ((ASE::Net::Awk::Pipe^)gh.Target, b, len);
+			for (int i = 0; i < n; i++) buf[i] = b[i];
+			return n;
 		}
 
 		ssize_t writePipe (Pipe& io, char_t* buf, size_t len) 
 		{
-			return 0; 
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			cli::array<char_t>^ b = gcnew cli::array<char_t> (len);
+			for (int i = 0; i < len; i++) b[i] = buf[i];
+			return wrapper->FireWritePipe ((ASE::Net::Awk::Pipe^)gh.Target, b, len);
 		}
 
 		int flushPipe (Pipe& io) 
@@ -183,14 +193,20 @@ namespace ASE
 		{
 			IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
-			return wrapper->FireReadFile ((ASE::Net::Awk::File^)gh.Target);
+
+			cli::array<char_t>^ b = gcnew cli::array<char_t> (len);
+			int n = wrapper->FireReadFile ((ASE::Net::Awk::File^)gh.Target, b, len);
+			for (int i = 0; i < n; i++) buf[i] = b[i];
+			return n;
 		}
 
 		ssize_t writeFile (File& io, char_t* buf, size_t len) 
 		{
 			IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
-			return wrapper->FireWriteFile ((ASE::Net::Awk::File^)gh.Target);
+			cli::array<char_t>^ b = gcnew cli::array<char_t> (len);
+			for (int i = 0; i < len; i++) b[i] = buf[i];
+			return wrapper->FireWriteFile ((ASE::Net::Awk::File^)gh.Target, b, len);
 		}
 
 		int flushFile (File& io) 
@@ -200,12 +216,58 @@ namespace ASE
 			return wrapper->FireFlushFile ((ASE::Net::Awk::File^)gh.Target);
 		}
 
-		int openConsole (Console& io) {return 0; }
-		int closeConsole (Console& io) {return 0; }
-		ssize_t readConsole (Console& io, char_t* buf, size_t len) {return 0; }
-		ssize_t writeConsole (Console& io, char_t* buf, size_t len) {return 0; }
-		int flushConsole (Console& io) {return 0; }
-		int nextConsole (Console& io) {return 0; }
+		int openConsole (Console& io) 
+		{	
+			ASE::Net::Awk::Console^ nio = gcnew ASE::Net::Awk::Console ();
+			nio->Mode = (ASE::Net::Awk::Console::MODE)io.getMode();
+
+			GCHandle gh = GCHandle::Alloc (nio);
+			io.setHandle (GCHandle::ToIntPtr(gh).ToPointer());
+
+			return wrapper->FireOpenConsole (nio);
+		}
+
+		int closeConsole (Console& io) 
+		{
+			IntPtr ip ((void*)io.getHandle ());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			int n = wrapper->FireCloseConsole ((ASE::Net::Awk::Console^)gh.Target);
+			gh.Free ();
+			return n;
+		}
+
+		ssize_t readConsole (Console& io, char_t* buf, size_t len) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			cli::array<char_t>^ b = gcnew cli::array<char_t> (len);
+			int n = wrapper->FireReadConsole ((ASE::Net::Awk::Console^)gh.Target, b, len);
+			for (int i = 0; i < n; i++) buf[i] = b[i];
+			return n;
+		}
+
+		ssize_t writeConsole (Console& io, char_t* buf, size_t len) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			cli::array<char_t>^ b = gcnew cli::array<char_t> (len);
+			for (int i = 0; i < len; i++) b[i] = buf[i];
+			return wrapper->FireWriteConsole ((ASE::Net::Awk::Console^)gh.Target, b, len);
+		}
+
+		int flushConsole (Console& io) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			return wrapper->FireFlushConsole ((ASE::Net::Awk::Console^)gh.Target);
+		}
+
+		int nextConsole (Console& io) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+			return wrapper->FireNextConsole ((ASE::Net::Awk::Console^)gh.Target);
+		}
 
 		// primitive operations 
 		void* allocMem   (size_t n) { return ::malloc (n); }
@@ -289,7 +351,7 @@ namespace ASE
 
 		bool Awk::DeleteFunction (System::String^ name)
 		{
-			pin_ptr<const wchar_t> nptr = PtrToStringChars(name);
+			cli::pin_ptr<const wchar_t> nptr = PtrToStringChars(name);
 			return awk->deleteFunction (nptr) == 0;
 		}
 
@@ -306,15 +368,13 @@ namespace ASE
 		{
 			return CloseFileHandler (file);
 		}
-		int Awk::FireReadFile (File^ file)
+		int Awk::FireReadFile (File^ file, cli::array<char_t>^ buf, int len)
 		{		
-			int n = ReadFileHandler (file);
-			return n;
+			return ReadFileHandler (file, buf, len);
 		}
-		int Awk::FireWriteFile (File^ file)
+		int Awk::FireWriteFile (File^ file, cli::array<char_t>^ buf, int len)
 		{
-			int n = WriteFileHandler (file);
-			return n;
+			return WriteFileHandler (file, buf, len);
 		}
 		int Awk::FireFlushFile (File^ file)
 		{
@@ -329,21 +389,44 @@ namespace ASE
 		{
 			return ClosePipeHandler (pipe);
 		}
-		int Awk::FireReadPipe (Pipe^ pipe)
+		int Awk::FireReadPipe (Pipe^ pipe, cli::array<char_t>^ buf, int len)
 		{		
-			int n = ReadPipeHandler (pipe);
-			return n;
+			return ReadPipeHandler (pipe, buf, len);
 		}
-		int Awk::FireWritePipe (Pipe^ pipe)
+		int Awk::FireWritePipe (Pipe^ pipe, cli::array<char_t>^ buf, int len)
 		{
-			int n = WritePipeHandler (pipe);
-			return n;
+			return WritePipeHandler (pipe, buf, len);
 		}
 		int Awk::FireFlushPipe (Pipe^ pipe)
 		{
 			return FlushPipeHandler (pipe);
 		}
+
 		
+		int Awk::FireOpenConsole (Console^ console)
+		{
+			return OpenConsoleHandler (console);
+		}
+		int Awk::FireCloseConsole (Console^ console)
+		{
+			return CloseConsoleHandler (console);
+		}
+		int Awk::FireReadConsole (Console^ console, cli::array<char_t>^ buf, int len)
+		{		
+			return ReadConsoleHandler (console, buf, len);
+		}
+		int Awk::FireWriteConsole (Console^ console, cli::array<char_t>^ buf, int len)
+		{
+			return WriteConsoleHandler (console, buf, len);
+		}
+		int Awk::FireFlushConsole (Console^ console)
+		{
+			return FlushConsoleHandler (console);
+		}
+		int Awk::FireNextConsole (Console^ console)
+		{
+			return NextConsoleHandler (console);
+		}
 	}
 }
 
