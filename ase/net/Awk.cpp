@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.7 2007/07/18 11:12:34 bacon Exp $
+ * $Id: Awk.cpp,v 1.8 2007/07/19 14:35:10 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -124,8 +124,9 @@ namespace ASE
 
 		int openPipe (Pipe& io) 
 		{
-			ASE::Net::Awk::Pipe^ nio = gcnew ASE::Net::Awk::Pipe ();
-			nio->Mode = (ASE::Net::Awk::Pipe::MODE)io.getMode();
+			ASE::Net::Awk::Pipe^ nio = gcnew ASE::Net::Awk::Pipe (
+				gcnew System::String (io.getName ()),
+				(ASE::Net::Awk::Pipe::MODE)io.getMode());
 
 			GCHandle gh = GCHandle::Alloc (nio);
 			io.setHandle (GCHandle::ToIntPtr(gh).ToPointer());
@@ -171,8 +172,9 @@ namespace ASE
 
 		int openFile (File& io) 
 		{	
-			ASE::Net::Awk::File^ nio = gcnew ASE::Net::Awk::File ();
-			nio->Mode = (ASE::Net::Awk::File::MODE)io.getMode();
+			ASE::Net::Awk::File^ nio = gcnew ASE::Net::Awk::File (
+				gcnew System::String (io.getName ()),
+				(ASE::Net::Awk::File::MODE)io.getMode());
 
 			GCHandle gh = GCHandle::Alloc (nio);
 			io.setHandle (GCHandle::ToIntPtr(gh).ToPointer());
@@ -218,8 +220,9 @@ namespace ASE
 
 		int openConsole (Console& io) 
 		{	
-			ASE::Net::Awk::Console^ nio = gcnew ASE::Net::Awk::Console ();
-			nio->Mode = (ASE::Net::Awk::Console::MODE)io.getMode();
+			ASE::Net::Awk::Console^ nio = gcnew ASE::Net::Awk::Console (
+				gcnew System::String (io.getName ()),
+				(ASE::Net::Awk::Console::MODE)io.getMode());
 
 			GCHandle gh = GCHandle::Alloc (nio);
 			io.setHandle (GCHandle::ToIntPtr(gh).ToPointer());

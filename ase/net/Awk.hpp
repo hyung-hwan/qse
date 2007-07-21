@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.5 2007/07/18 11:12:34 bacon Exp $
+ * $Id: Awk.hpp,v 1.6 2007/07/19 14:35:10 bacon Exp $
  */
 
 #pragma once
@@ -39,8 +39,9 @@ namespace ASE
 			ref class Extio
 			{
 			public:
-				Extio (): handle (nullptr)
+				Extio (System::String^ name): handle (nullptr)
 				{
+					this->name = name;
 				}
 
 				property Object^ Handle
@@ -49,8 +50,14 @@ namespace ASE
 					void set (Object^ handle) { this->handle = handle; }
 				}
 
+				property System::String^ Name
+				{
+					System::String^ get () { return this->name; }
+				};
+
 			private:
 				Object^ handle;
+				System::String^ name;
 			};
 
 			ref class Pipe: public Extio
@@ -65,8 +72,12 @@ namespace ASE
 				property MODE^ Mode
 				{
 					MODE^ get () { return this->mode; }
-					void set (MODE^ mode) { this->mode = mode; }
 				};
+
+				Pipe (System::String^ name, MODE^ mode): Extio (name)
+				{
+					this->mode = mode;
+				}
 
 			private:
 				MODE^ mode;
@@ -85,8 +96,12 @@ namespace ASE
 				property MODE^ Mode
 				{
 					MODE^ get () { return this->mode; }
-					void set (MODE^ mode) { this->mode = mode; }
 				};
+
+				File (System::String^ name, MODE^ mode): Extio (name)
+				{
+					this->mode = mode;
+				}
 
 			private:
 				MODE^ mode;
@@ -104,8 +119,12 @@ namespace ASE
 				property MODE^ Mode
 				{
 					MODE^ get () { return this->mode; }
-					void set (MODE^ mode) { this->mode = mode; }
 				};
+
+				Console (System::String^ name, MODE^ mode): Extio (name)
+				{
+					this->mode = mode;
+				}
 
 			private:
 				MODE^ mode;
