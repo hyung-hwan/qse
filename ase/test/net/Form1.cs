@@ -8,8 +8,43 @@ using System.Windows.Forms;
 
 namespace asetestnet
 {
+
 	public partial class Form1 : Form
 	{
+
+		public class Awk : ASE.Net.StdAwk
+		{
+			protected override int OpenConsole(ASE.Net.StdAwk.Console console)
+			{
+				return -1;
+			}
+
+			protected override int CloseConsole(ASE.Net.StdAwk.Console console)
+			{
+				return -1;
+			}
+
+			protected override int ReadConsole(ASE.Net.StdAwk.Console console, char[] buf, int len)
+			{
+				return -1;
+			}
+
+			protected override int WriteConsole(ASE.Net.StdAwk.Console console, char[] buf, int len)
+			{
+				return -1;
+			}
+
+			protected override int FlushConsole(ASE.Net.StdAwk.Console console)
+			{
+				return -1;
+			}
+
+			protected override int NextConsole(ASE.Net.StdAwk.Console console)
+			{
+				return -1;
+			}
+		}
+
 		public Form1()
 		{
 			InitializeComponent();
@@ -17,8 +52,8 @@ namespace asetestnet
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			ASE.Net.Awk awk = new ASE.Net.StdAwk();
-
+			ASE.Net.Awk awk = new Awk();
+			
 			/*awk.OpenFileHandler += new ASE.Net.Awk.OpenFile (OpenFile);
 			awk.CloseFileHandler += CloseFile;*/
 

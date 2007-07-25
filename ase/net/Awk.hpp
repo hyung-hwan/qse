@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.6 2007/07/19 14:35:10 bacon Exp $
+ * $Id: Awk.hpp,v 1.7 2007/07/20 09:23:37 bacon Exp $
  */
 
 #pragma once
@@ -172,44 +172,6 @@ namespace ASE
 				}
 			}
 
-			delegate int OpenPipe (Pipe^ pipe);
-			delegate int ClosePipe (Pipe^ pipe);
-			delegate int ReadPipe (Pipe^ pipe, cli::array<char_t>^ buf, int len);
-			delegate int WritePipe (Pipe^ pipe, cli::array<char_t>^ buf, int len);
-			delegate int FlushPipe (Pipe^ pipe);
-
-			delegate int OpenFile (File^ file);
-			delegate int CloseFile (File^ file);
-			delegate int ReadFile (File^ file, cli::array<char_t>^ buf, int len);
-			delegate int WriteFile (File^ file, cli::array<char_t>^ buf, int len);
-			delegate int FlushFile (File^ file);
-
-			delegate int OpenConsole (Console^ console);
-			delegate int CloseConsole (Console^ console);
-			delegate int ReadConsole (Console^ console, cli::array<char_t>^ buf, int len);
-			delegate int WriteConsole (Console^ console, cli::array<char_t>^ buf, int len);
-			delegate int FlushConsole (Console^ console);
-			delegate int NextConsole (Console^ console);
-
-			event OpenPipe^ OpenPipeHandler;
-			event ClosePipe^ ClosePipeHandler;
-			event ReadPipe^ ReadPipeHandler;
-			event WritePipe^ WritePipeHandler;
-			event FlushPipe^ FlushPipeHandler;
-
-			event OpenFile^ OpenFileHandler;
-			event CloseFile^ CloseFileHandler;
-			event ReadFile^ ReadFileHandler;
-			event WriteFile^ WriteFileHandler;
-			event FlushFile^ FlushFileHandler;
-
-			event OpenConsole^ OpenConsoleHandler;
-			event CloseConsole^ CloseConsoleHandler;
-			event ReadConsole^ ReadConsoleHandler;
-			event WriteConsole^ WriteConsoleHandler;
-			event FlushConsole^ FlushConsoleHandler;
-			event NextConsole^ NextConsoleHandler;
-
 		protected:
 			ASE::Awk* awk;
 
@@ -217,26 +179,39 @@ namespace ASE
 			System::IO::Stream^ sourceOutputStream;
 
 		public protected:
+			// File
+			virtual int OpenFile (File^ file) = 0;
+			virtual int CloseFile (File^ file) = 0;
+			virtual int ReadFile (
+				File^ file, cli::array<char_t>^ buf, int len) = 0;
+			virtual int WriteFile (
+				File^ file, cli::array<char_t>^ buf, int len) = 0;
+			virtual int FlushFile (File^ file) = 0;
+
+
+			// Pipe
+			virtual int OpenPipe (Pipe^ pipe) = 0;
+			virtual int ClosePipe (Pipe^ pipe) = 0;
+			virtual int ReadPipe (
+				Pipe^ pipe, cli::array<char_t>^ buf, int len) = 0;
+			virtual int WritePipe (
+				Pipe^ pipe, cli::array<char_t>^ buf, int len) = 0;
+			virtual int FlushPipe (Pipe^ pipe) = 0;
+
+
+			// Console
+			virtual int OpenConsole (Console^ console) = 0;
+			virtual int CloseConsole (Console^ console) = 0;
+			virtual int ReadConsole (
+				Console^ console, cli::array<char_t>^ buf, int len) = 0;
+			virtual int WriteConsole (
+				Console^ console, cli::array<char_t>^ buf, int len) = 0;
+			virtual int FlushConsole (Console^ console) = 0;
+			virtual int NextConsole (Console^ console) = 0;
+
+		public protected:
 			int DispatchFunction (System::String^ name);
 
-			int FireOpenFile (File^ file);
-			int FireCloseFile (File^ file);
-			int FireReadFile (File^ file, cli::array<char_t>^ buf, int len);
-			int FireWriteFile (File^ file, cli::array<char_t>^ buf, int len);
-			int FireFlushFile (File^ file);
-
-			int FireOpenPipe (Pipe^ pipe);
-			int FireClosePipe (Pipe^ pipe);
-			int FireReadPipe (Pipe^ pipe, cli::array<char_t>^ buf, int len);
-			int FireWritePipe (Pipe^ pipe, cli::array<char_t>^ buf, int len);
-			int FireFlushPipe (Pipe^ pipe);
-
-			int FireOpenConsole (Console^ console);
-			int FireCloseConsole (Console^ console);
-			int FireReadConsole (Console^ console, cli::array<char_t>^ buf, int len);
-			int FireWriteConsole (Console^ console, cli::array<char_t>^ buf, int len);
-			int FireFlushConsole (Console^ console);
-			int FireNextConsole (Console^ console);
 		};
 
 	}

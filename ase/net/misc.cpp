@@ -1,8 +1,9 @@
 /*
- * $Id: assert.cpp,v 1.2 2007/07/16 11:12:12 bacon Exp $
+ * $Id: misc.cpp,v 1.1 2007/07/20 09:23:37 bacon Exp $
  */
 
 #include "stdafx.h"
+#include "misc.h"
 
 #ifndef NDEBUG
 
@@ -41,3 +42,14 @@ void ase_assert_printf (const ase_char_t* fmt, ...)
 }
 #endif
 
+char* unicode_to_multibyte (const wchar_t* in, int inlen, int* outlen)
+{
+	int n;
+	n = WideCharToMultiByte (CP_UTF8, 0, in, inlen, NULL, 0, NULL, 0);
+
+	char* ptr = (char*)::malloc (sizeof(char)*n);
+	if (ptr == NULL) return NULL;
+
+	*outlen = WideCharToMultiByte (CP_UTF8, 0, in, inlen, ptr, n, NULL, 0);
+	return ptr;
+}
