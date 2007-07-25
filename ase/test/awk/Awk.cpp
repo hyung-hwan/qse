@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.30 2007/07/15 16:31:59 bacon Exp $
+ * $Id: Awk.cpp,v 1.31 2007/07/20 09:23:37 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -77,8 +77,11 @@ public:
 		numConOutFiles = 0;
 
 	#ifdef _WIN32
-		HeapDestroy (heap); 
-		heap = ASE_NULL;
+		if (heap != ASE_NULL)
+		{
+			HeapDestroy (heap); 
+			heap = ASE_NULL;
+		}
 	#endif
 	}
 

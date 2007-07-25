@@ -105,8 +105,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\..\..\debug\bin"
-			IntermediateDirectory=".\debug\cpp"
+			OutputDirectory="..\..\debug\bin"
+			IntermediateDirectory="debug\cpp"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -137,7 +137,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				PrecompiledHeaderFile=".\debug\cpp\asetestawk++.pch"
 				AssemblerListingLocation=""
 				BrowseInformation="1"

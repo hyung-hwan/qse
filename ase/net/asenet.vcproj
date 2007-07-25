@@ -188,11 +188,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\assert.cpp"
+				RelativePath=".\Awk.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Awk.cpp"
+				RelativePath=".\misc.cpp"
 				>
 			</File>
 			<File
@@ -231,6 +231,10 @@
 			</File>
 			<File
 				RelativePath=".\Awk.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\misc.h"
 				>
 			</File>
 			<File

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.11 2007/06/29 11:36:45 bacon Exp $
+ * $Id: parse.c,v 1.12 2007/07/20 09:23:37 bacon Exp $
  *
  * {License}
  */
@@ -582,6 +582,12 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_BEGIN)) 
 	{
+		if (awk->tree.begin != ASE_NULL)
+		{
+			SETERRLIN (awk, ASE_AWK_EDUPBEG, awk->token.prev.line);
+			return ASE_NULL;
+		}
+
 		awk->parse.id.block = PARSE_BEGIN;
 		if (get_token(awk) == -1) return ASE_NULL; 
 
@@ -605,6 +611,12 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_END)) 
 	{
+		if (awk->tree.end != ASE_NULL)
+		{
+			SETERRLIN (awk, ASE_AWK_EDUPEND, awk->token.prev.line);
+			return ASE_NULL;
+		}
+
 		awk->parse.id.block = PARSE_END;
 		if (get_token(awk) == -1) return ASE_NULL; 
 
