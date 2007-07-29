@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.46 2007/07/15 16:31:59 bacon Exp $
+ * $Id: Awk.cpp,v 1.47 2007/07/25 07:00:09 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -503,7 +503,7 @@ namespace ASE
 		}
 
 		functionMap = ase_awk_map_open (
-			this, 512, freeFunctionMapValue, awk);
+			this, 512, 70, freeFunctionMapValue, awk);
 		if (functionMap == ASE_NULL)
 		{
 			ase_awk_close (awk);

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.8 2007/05/28 13:53:31 bacon Exp $
+ * $Id: run.c,v 1.9 2007/07/25 07:00:09 bacon Exp $
  *
  * {License}
  */
@@ -749,7 +749,7 @@ static int __init_run (
 	}
 
 	run->named = ase_awk_map_open (
-		run, DEF_BUF_CAPA, __free_namedval, run->awk);
+		run, 1024, 70, __free_namedval, run->awk);
 	if (run->named == ASE_NULL)
 	{
 		ase_str_close (&run->format.fmt);
