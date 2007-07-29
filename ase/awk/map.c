@@ -1,15 +1,13 @@
 /*
- * $Id: map.c,v 1.6 2007/05/06 08:52:18 bacon Exp $
+ * $Id: map.c,v 1.9 2007/07/25 09:53:28 bacon Exp $
  *
  * {License}
  */
 
 #include <ase/awk/awk_i.h>
 
-/* TODO: improve the entire map routines.
-         support automatic bucket resizing and remaping, etc. */
-
 static ase_size_t hashkey (const ase_char_t* keyptr, ase_size_t keylen);
+static int rehash (ase_awk_map_t* map);
 
 #define FREE_PAIR(map,pair) \
 	do { \
@@ -20,7 +18,7 @@ static ase_size_t hashkey (const ase_char_t* keyptr, ase_size_t keylen);
 	} while (0)
 
 ase_awk_map_t* ase_awk_map_open (
-	void* owner, ase_size_t capa, 
+	void* owner, ase_size_t capa, unsigned int factor,
 	void(*freeval)(void*,void*), ase_awk_t* awk)
 {
 	ase_awk_map_t* map;
@@ -45,6 +43,9 @@ ase_awk_map_t* ase_awk_map_open (
 	map->size = 0;
 	map->freeval = freeval;
 	while (capa > 0) map->buck[--capa] = ASE_NULL;
+
+	map->factor = factor;
+	map->threshold = ((ase_size_t)map->factor) * map->capa / 100;
 
 	return map;
 }
@@ -93,7 +94,6 @@ ase_awk_pair_t* ase_awk_map_get (
 
 	while (pair != ASE_NULL) 
 	{
-
 		if (ase_strxncmp (
 			ASE_AWK_PAIR_KEYPTR(pair), ASE_AWK_PAIR_KEYLEN(pair), 
 			keyptr, keylen) == 0) return pair;
@@ -140,6 +140,15 @@ int ase_awk_map_putx (
 			return 0; /* value changed for the existing key */
 		}
 		pair = ASE_AWK_PAIR_LNK(pair);
+	}
+
+	if (map->threshold > 0 && 
+	    map->size >= map->threshold)
+	{
+		if (rehash(map) == 0) /* ignore the rehash error */
+		{
+			hc = hashkey(keyptr,keylen) % map->capa;
+		}
 	}
 
 	pair = (ase_awk_pair_t*) ASE_AWK_MALLOC (
@@ -285,4 +294,49 @@ static ase_size_t hashkey (const ase_char_t* keyptr, ase_size_t keylen)
 	}	
 
 	return n;
+}
+
+static int rehash (ase_awk_map_t* map)
+{
+	ase_size_t i, hc, new_capa;
+	ase_awk_pair_t** new_buck;
+
+	new_capa = (map->capa >= 65536)? (map->capa + 65536): (map->capa << 1);
+
+	new_buck = (ase_awk_pair_t**) ASE_AWK_MALLOC (
+		map->awk, ASE_SIZEOF(ase_awk_pair_t*) * new_capa);
+	if (new_buck == ASE_NULL) 
+	{
+		/* once rehash fails, the rehashing is disabled */
+		map->threshold = 0;
+		return -1;
+	}
+
+	for (i = 0; i < new_capa; i++) new_buck[i] = ASE_NULL;
+
+	for (i = 0; i < map->capa; i++)
+	{
+		ase_awk_pair_t* pair = map->buck[i];
+
+		while (pair != ASE_NULL) 
+		{
+			ase_awk_pair_t* next = ASE_AWK_PAIR_LNK(pair);
+
+			hc = hashkey(
+				ASE_AWK_PAIR_KEYPTR(pair),
+				ASE_AWK_PAIR_KEYLEN(pair)) % new_capa;
+
+			ASE_AWK_PAIR_LNK(pair) = new_buck[hc];
+			new_buck[hc] = pair;
+
+			pair = next;
+		}
+	}
+
+	ASE_AWK_FREE (map->awk, map->buck);
+	map->buck = new_buck;
+	map->capa = new_capa;
+	map->threshold = ((ase_size_t)map->factor) * map->capa / 100;
+
+	return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.7 2007/06/17 14:54:10 bacon Exp $ 
+ * $Id: awk.c,v 1.8 2007/07/25 07:00:09 bacon Exp $ 
  *
  * {License}
  */
@@ -58,7 +58,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 		return ASE_NULL;	
 	}
 
-	awk->kwtab = ase_awk_map_open (awk, 512, free_kw, awk);
+	awk->kwtab = ase_awk_map_open (awk, 512, 70, free_kw, awk);
 	if (awk->kwtab == ASE_NULL)
 	{
 		ase_str_close (&awk->token.name);
@@ -67,7 +67,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	}
 
 	/* TODO: initial map size?? */
-	awk->tree.afns = ase_awk_map_open (awk, 512, free_afn, awk);
+	awk->tree.afns = ase_awk_map_open (awk, 512, 70, free_afn, awk);
 	if (awk->tree.afns == ASE_NULL) 
 	{
 		ase_awk_map_close (awk->kwtab);
