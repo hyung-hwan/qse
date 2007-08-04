@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.7 2007/07/20 09:23:37 bacon Exp $
+ * $Id: Awk.hpp,v 1.8 2007/07/29 14:42:33 bacon Exp $
  */
 
 #pragma once
@@ -16,7 +16,6 @@ namespace ASE
 		public ref class Awk abstract
 		{
 		public:
-			/*
 			ref class Source
 			{
 			public:
@@ -26,15 +25,26 @@ namespace ASE
 					WRITE = ASE::Awk::Source::WRITE
 				};
 
+				Source (MODE^ mode): handle (nullptr) 
+				{
+					this->mode = mode;
+				}
+
+				property Object^ Handle
+				{
+					Object^ get () { return this->handle; }
+					void set (Object^ handle) { this->handle = handle; }
+				}
+
 				property MODE^ Mode
 				{
 					MODE^ get () { return this->mode; }
-					void set (MODE^ mode) { this->mode = mode; }
 				};
 
 			private:
 				MODE^ mode;
-			};*/
+				Object^ handle;
+			};
 
 			ref class Extio
 			{
@@ -146,6 +156,7 @@ namespace ASE
 			bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
 			bool DeleteFunction (System::String^ name);
 
+#if 0
 			property System::IO::Stream^ SourceInputStream
 			{
 				System::IO::Stream^ get () 
@@ -171,14 +182,25 @@ namespace ASE
 					this->sourceOutputStream = stream; 
 				}
 			}
+#endif
 
 		protected:
 			ASE::Awk* awk;
 
+#if 0
 			System::IO::Stream^ sourceInputStream;
 			System::IO::Stream^ sourceOutputStream;
+#endif
 
 		public protected:
+			// Source
+			virtual int OpenSource (Source^ source) = 0;
+			virtual int CloseSource (Source^ source) = 0;
+			virtual int ReadSource (
+				Source^ source, cli::array<char_t>^ buf, int len) = 0;
+			virtual int WriteSource (
+				Source^ source, cli::array<char_t>^ buf, int len) = 0;
+			
 			// File
 			virtual int OpenFile (File^ file) = 0;
 			virtual int CloseFile (File^ file) = 0;
@@ -188,7 +210,6 @@ namespace ASE
 				File^ file, cli::array<char_t>^ buf, int len) = 0;
 			virtual int FlushFile (File^ file) = 0;
 
-
 			// Pipe
 			virtual int OpenPipe (Pipe^ pipe) = 0;
 			virtual int ClosePipe (Pipe^ pipe) = 0;
@@ -197,7 +218,6 @@ namespace ASE
 			virtual int WritePipe (
 				Pipe^ pipe, cli::array<char_t>^ buf, int len) = 0;
 			virtual int FlushPipe (Pipe^ pipe) = 0;
-
 
 			// Console
 			virtual int OpenConsole (Console^ console) = 0;
