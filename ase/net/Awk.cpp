@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.9 2007/07/20 09:23:37 bacon Exp $
+ * $Id: Awk.cpp,v 1.10 2007/07/29 14:42:33 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -32,6 +32,7 @@ namespace ASE
 			return wrapper->DispatchFunction (nm);
 		}
 
+#if 0
 		int openSource (Source& io) 
 		{ 
 			if (io.getMode() == Source::READ)
@@ -120,6 +121,75 @@ namespace ASE
 			writer->Write (b, 0, len);
 
 			return len;
+		}
+#endif
+
+		int openSource (Source& io) 
+		{ 
+			ASE::Net::Awk::Source^ nio = gcnew ASE::Net::Awk::Source (
+				(ASE::Net::Awk::Source::MODE)io.getMode());
+
+			GCHandle gh = GCHandle::Alloc (nio);
+			io.setHandle (GCHandle::ToIntPtr(gh).ToPointer());
+
+			try { return wrapper->OpenSource (nio); }
+			catch (...) 
+			{ 
+				gh.Free ();
+				io.setHandle (NULL);
+				return -1; 
+			
+			}
+		}
+
+		int closeSource (Source& io) 
+		{
+			IntPtr ip ((void*)io.getHandle ());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+
+			try
+			{
+				return wrapper->CloseSource (
+					(ASE::Net::Awk::Source^)gh.Target);
+			}
+			catch (...) { return -1; }
+			finally { gh.Free (); }
+		}
+
+		ssize_t readSource (Source& io, char_t* buf, size_t len) 
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+
+			cli::array<char_t>^ b = nullptr;
+			
+			try
+			{
+				b = gcnew cli::array<char_t> (len);
+				int n = wrapper->ReadSource (
+					(ASE::Net::Awk::Source^)gh.Target, b, len);
+				for (int i = 0; i < n; i++) buf[i] = b[i];
+				return n;
+			}
+			catch (...) { return -1; }
+			finally { if (b != nullptr) delete b; }
+		}
+
+		ssize_t writeSource (Source& io, char_t* buf, size_t len)
+		{
+			IntPtr ip ((void*)io.getHandle());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+
+			cli::array<char_t>^ b = nullptr;
+			try
+			{
+				b = gcnew cli::array<char_t> (len);
+				for (int i = 0; i < len; i++) b[i] = buf[i];
+				return wrapper->WriteSource (
+					(ASE::Net::Awk::Source^)gh.Target, b, len);
+			}
+			catch (...) { return -1; }
+			finally { if (b != nullptr) delete b; }
 		}
 
 		int openPipe (Pipe& io) 

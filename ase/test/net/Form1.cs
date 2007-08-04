@@ -14,6 +14,66 @@ namespace asetestnet
 
 		public class Awk : ASE.Net.StdAwk
 		{
+
+			protected override int OpenSource(ASE.Net.StdAwk.Source source)
+			{
+				System.IO.FileMode mode;
+				System.IO.FileAccess access;
+				System.IO.FileStream fs;
+
+				if (source.Mode.Equals(ASE.Net.StdAwk.Source.MODE.READ))
+				{
+					mode = System.IO.FileMode.Open;
+					access = System.IO.FileAccess.Read;
+
+					fs = new System.IO.FileStream ("t.awk", mode, access);
+					source.Handle = new System.IO.StreamReader (fs);
+					return 1;
+				}
+				else if (source.Mode.Equals(ASE.Net.StdAwk.Source.MODE.WRITE))
+				{
+					mode = System.IO.FileMode.Create;
+					access = System.IO.FileAccess.Write;
+
+					fs = new System.IO.FileStream("t.out", mode, access);
+					source.Handle = new System.IO.StreamWriter(fs);
+					return 1;
+				}
+
+				return -1;
+			}
+
+			protected override int CloseSource(ASE.Net.StdAwk.Source source)
+			{
+				if (source.Mode.Equals(ASE.Net.StdAwk.Source.MODE.READ))
+				{
+					System.IO.StreamReader sr = (System.IO.StreamReader)source.Handle;
+					sr.Close ();
+					return 0;
+				}
+				else if (source.Mode.Equals(ASE.Net.StdAwk.Source.MODE.WRITE))
+				{
+					System.IO.StreamWriter sw = (System.IO.StreamWriter)source.Handle;
+					sw.Close ();
+					return 0;
+				}
+
+				return -1;
+			}
+
+			protected override int ReadSource(ASE.Net.StdAwk.Source source, char[] buf, int len)
+			{
+				System.IO.StreamReader sr = (System.IO.StreamReader)source.Handle;
+				return sr.Read (buf, 0, len);
+			}
+
+			protected override int WriteSource(ASE.Net.StdAwk.Source source, char[] buf, int len)
+			{
+				System.IO.StreamWriter sw = (System.IO.StreamWriter)source.Handle;
+				sw.Write(buf, 0, len);
+				return len;
+			}
+
 			protected override int OpenConsole(ASE.Net.StdAwk.Console console)
 			{
 				return -1;
@@ -58,8 +118,8 @@ namespace asetestnet
 			awk.CloseFileHandler += CloseFile;*/
 
 			//awk.Open();
-			awk.SourceInputStream = new System.IO.FileStream("t.awk", System.IO.FileMode.Open, System.IO.FileAccess.Read);
-			awk.SourceOutputStream = new System.IO.FileStream("t.out", System.IO.FileMode.Create, System.IO.FileAccess.Write);
+			//awk.SourceInputStream = new System.IO.FileStream("t.awk", System.IO.FileMode.Open, System.IO.FileAccess.Read);
+			//awk.SourceOutputStream = new System.IO.FileStream("t.out", System.IO.FileMode.Create, System.IO.FileAccess.Write);
 
 			awk.Parse();
 			awk.Run();
