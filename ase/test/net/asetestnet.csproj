@@ -36,17 +36,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Form1.cs">
+    <Compile Include="Awk.cs" />
+    <Compile Include="AwkForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="AwkForm.designer.cs">
+      <DependentUpon>AwkForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AwkFormOrg.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AwkFormOrg.Designer.cs">
+      <DependentUpon>AwkFormOrg.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Form1.resx">
+    <EmbeddedResource Include="AwkForm.resx">
+      <DependentUpon>AwkForm.cs</DependentUpon>
       <SubType>Designer</SubType>
-      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AwkFormOrg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>AwkFormOrg.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
