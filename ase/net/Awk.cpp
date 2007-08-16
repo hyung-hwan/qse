@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.10 2007/07/29 14:42:33 bacon Exp $
+ * $Id: Awk.cpp,v 1.11 2007/08/05 14:52:54 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -31,98 +31,6 @@ namespace ASE
 			System::String^ nm = gcnew System::String (name, 0, len);
 			return wrapper->DispatchFunction (nm);
 		}
-
-#if 0
-		int openSource (Source& io) 
-		{ 
-			if (io.getMode() == Source::READ)
-			{
-				if (wrapper->SourceInputStream == nullptr)
-				{
-					return -1;
-				}
-
-				if (!wrapper->SourceInputStream->CanRead)
-				{
-					wrapper->SourceInputStream->Close ();
-					return -1;
-				}
-
-				System::IO::StreamReader^ reader = gcnew System::IO::StreamReader (wrapper->SourceInputStream);
-				GCHandle gh = GCHandle::Alloc (reader);
-				System::IntPtr^ ip = GCHandle::ToIntPtr(gh);
-				io.setHandle (ip->ToPointer());
-			}
-			else
-			{
-				if (wrapper->SourceOutputStream == nullptr)
-				{
-					return -1;
-				}
-
-				if (!wrapper->SourceOutputStream->CanWrite)
-				{
-					wrapper->SourceOutputStream->Close ();
-					return -1;
-				}
-
-				System::IO::StreamWriter^ writer = gcnew System::IO::StreamWriter (wrapper->SourceOutputStream);
-				GCHandle gh = GCHandle::Alloc (writer);
-				System::IntPtr^ ip = GCHandle::ToIntPtr(gh);
-				io.setHandle (ip->ToPointer());
-			}
-
-			return 1;
-		}
-
-		int closeSource (Source& io) 
-		{
-			System::IntPtr ip ((void*)io.getHandle());
-			GCHandle gh = GCHandle::FromIntPtr (ip);
-
-			if (io.getMode() == Source::READ)
-			{
-				System::IO::StreamReader^ reader = (System::IO::StreamReader^)gh.Target;
-				reader->Close ();
-			}
-			else
-			{
-				System::IO::StreamWriter^ writer = (System::IO::StreamWriter^)gh.Target;
-				writer->Close ();
-			}
-			
-			gh.Free ();
-			return 0;
-		}
-
-		ssize_t readSource (Source& io, char_t* buf, size_t len) 
-		{
-			System::IntPtr ip ((void*)io.getHandle());
-			GCHandle gh = GCHandle::FromIntPtr (ip);
-
-			System::IO::StreamReader^ reader = (System::IO::StreamReader^)gh.Target;
-
-			cli::array<char_t>^ b = gcnew cli::array<char_t>(len);
-			int n = reader->Read (b, 0, len);
-			for (int i = 0; i < n; i++) buf[i] =  b[i];
-
-			return n;
-		}
-
-		ssize_t writeSource (Source& io, char_t* buf, size_t len)
-		{
-			System::IntPtr ip ((void*)io.getHandle());
-			GCHandle gh = GCHandle::FromIntPtr (ip);
-
-			System::IO::StreamWriter^ writer = (System::IO::StreamWriter^)gh.Target;
-
-			cli::array<char_t>^ b = gcnew cli::array<char_t>(len);
-			for (int i = 0; i < (int)len; i++) b[i] =  buf[i];
-			writer->Write (b, 0, len);
-
-			return len;
-		}
-#endif
 
 		int openSource (Source& io) 
 		{ 
@@ -495,6 +403,9 @@ namespace ASE
 				// TODO:...
 				//throw new AwkException ("cannot open awk");
 			}
+
+			//option = awk->getOption ();
+			//Option = Option | OPTION::CRLF;
 		}
 
 		Awk::~Awk ()

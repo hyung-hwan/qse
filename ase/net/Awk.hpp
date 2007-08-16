@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.8 2007/07/29 14:42:33 bacon Exp $
+ * $Id: Awk.hpp,v 1.9 2007/08/05 14:52:54 bacon Exp $
  */
 
 #pragma once
@@ -140,6 +140,27 @@ namespace ASE
 				MODE^ mode;
 			};
 
+
+			[Flags] enum class OPTION: int
+			{
+				NONE = 0,
+				IMPLICIT = ASE::Awk::OPT_IMPLICIT,
+				EXPLICIT = ASE::Awk::OPT_EXPLICIT,
+				UNIQUEFN = ASE::Awk::OPT_UNIQUEFN,
+				SHADING = ASE::Awk::OPT_SHADING,
+				SHIFT = ASE::Awk::OPT_SHIFT,
+				IDIV = ASE::Awk::OPT_IDIV,
+				STRCONCAT = ASE::Awk::OPT_STRCONCAT,
+				EXTIO = ASE::Awk::OPT_EXTIO,
+				COPROC = ASE::Awk::OPT_COPROC,
+				BLOCKLESS = ASE::Awk::OPT_BLOCKLESS,
+				STRBASEONE = ASE::Awk::OPT_STRBASEONE,
+				STRIPSPACES = ASE::Awk::OPT_STRIPSPACES,
+				NEXTOFILE = ASE::Awk::OPT_NEXTOFILE,
+				CRLF = ASE::Awk::OPT_CRLF,
+				ARGSTOMAIN = ASE::Awk::OPT_ARGSTOMAIN
+			};
+
 			typedef ASE::Awk::char_t char_t;
 
 			Awk ();
@@ -156,41 +177,15 @@ namespace ASE
 			bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
 			bool DeleteFunction (System::String^ name);
 
-#if 0
-			property System::IO::Stream^ SourceInputStream
+			property OPTION^ Option
 			{
-				System::IO::Stream^ get () 
-				{ 
-					return this->sourceInputStream; 
-				}
-
-				void set (System::IO::Stream^ stream) 
-				{ 
-					this->sourceInputStream = stream; 
-				}
+				OPTION^ get () { return this->option; }
+				void set (OPTION^ opt) { this->option = opt; }
 			}
-
-			property System::IO::Stream^ SourceOutputStream
-			{
-				System::IO::Stream^ get () 
-				{ 
-					return this->sourceOutputStream; 
-				}
-
-				void set (System::IO::Stream^ stream) 
-				{ 
-					this->sourceOutputStream = stream; 
-				}
-			}
-#endif
 
 		protected:
 			ASE::Awk* awk;
-
-#if 0
-			System::IO::Stream^ sourceInputStream;
-			System::IO::Stream^ sourceOutputStream;
-#endif
+			OPTION^ option;
 
 		public protected:
 			// Source
@@ -231,7 +226,6 @@ namespace ASE
 
 		public protected:
 			int DispatchFunction (System::String^ name);
-
 		};
 
 	}
