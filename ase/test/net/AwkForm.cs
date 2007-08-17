@@ -18,45 +18,48 @@ namespace asetestnet
 
 		private void btnRun_Click(object sender, EventArgs e)
 		{
-
+			//using (Awk awk = new Awk())
+			{
 			Awk awk = new Awk();
+				tbxSourceOutput.Text = "";
+				tbxConsoleOutput.Text = "";
 
-			tbxSourceOutput.Text = "";
-			tbxConsoleOutput.Text = "";
-
-			if (!awk.Parse(tbxSourceInput, tbxSourceOutput))
-			{
-				//MessageBox.Show(awk.ErrorMessage);
-			} 
-			else
-			{
-				
-				/*
-				awk.EntryPoint = cbxEntryPoint.Text;
-				awk.ArgumentsToEntryPoint = chkPassArgumentsToEntryPoint.Checked;*/
-
-				bool n;
-				/*int nargs = lbxArguments.Items.Count;
-				if (nargs > 0)
+				if (!awk.Parse(tbxSourceInput, tbxSourceOutput))
 				{
-					string[] args = new string[nargs];
-					for (int i = 0; i < nargs; i++)
-						args[i] = lbxArguments.Items[i].ToString();
-					n = awk.Run(args);
-				}
-				else*/ n = awk.Run(tbxConsoleInput, tbxConsoleOutput);
-				
-				if (!n)
-				{
+					MessageBox.Show("Parse error");
 					//MessageBox.Show(awk.ErrorMessage);
 				}
-	
+				else
+				{
+
+					/*
+					awk.EntryPoint = cbxEntryPoint.Text;
+					awk.ArgumentsToEntryPoint = chkPassArgumentsToEntryPoint.Checked;*/
+
+					bool n;
+					/*int nargs = lbxArguments.Items.Count;
+					if (nargs > 0)
+					{
+						string[] args = new string[nargs];
+						for (int i = 0; i < nargs; i++)
+							args[i] = lbxArguments.Items[i].ToString();
+						n = awk.Run(args);
+					}
+					else*/
+					n = awk.Run(tbxConsoleInput, tbxConsoleOutput);
+
+					if (!n)
+					{
+						//MessageBox.Show(awk.ErrorMessage);
+						MessageBox.Show("Run Error");
+					}
+
+				}
+
+				awk.Close();
 			}
-
-			//awk.Close();
-			 
+			//awk.Dispose(); 
 		}
-
 	
 		private void btnAddArgument_Click(object sender, EventArgs e)
 		{

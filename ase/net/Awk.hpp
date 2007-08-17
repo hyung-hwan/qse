@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.9 2007/08/05 14:52:54 bacon Exp $
+ * $Id: Awk.hpp,v 1.11 2007/08/15 15:25:06 bacon Exp $
  */
 
 #pragma once
@@ -164,6 +164,7 @@ namespace ASE
 			typedef ASE::Awk::char_t char_t;
 
 			Awk ();
+			!Awk ();
 			virtual ~Awk ();
 
 			//bool Open ();
@@ -177,15 +178,15 @@ namespace ASE
 			bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
 			bool DeleteFunction (System::String^ name);
 
-			property OPTION^ Option
+			property OPTION Option
 			{
-				OPTION^ get () { return this->option; }
-				void set (OPTION^ opt) { this->option = opt; }
+				OPTION get (); //{ return this->option; }
+				void set (OPTION opt); //{ this->option = opt; }
 			}
 
 		protected:
 			ASE::Awk* awk;
-			OPTION^ option;
+			OPTION option;
 
 		public protected:
 			// Source
