@@ -65,6 +65,7 @@ namespace asetestnet
 			// tbxSourceInput
 			// 
 			this.tbxSourceInput.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.tbxSourceInput.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbxSourceInput.Location = new System.Drawing.Point(0, 19);
 			this.tbxSourceInput.Multiline = true;
 			this.tbxSourceInput.Name = "tbxSourceInput";
@@ -136,6 +137,7 @@ namespace asetestnet
 			// tbxSourceOutput
 			// 
 			this.tbxSourceOutput.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.tbxSourceOutput.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbxSourceOutput.Location = new System.Drawing.Point(0, 19);
 			this.tbxSourceOutput.Multiline = true;
 			this.tbxSourceOutput.Name = "tbxSourceOutput";
@@ -169,6 +171,7 @@ namespace asetestnet
 			// tbxConsoleInput
 			// 
 			this.tbxConsoleInput.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.tbxConsoleInput.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbxConsoleInput.Location = new System.Drawing.Point(0, 19);
 			this.tbxConsoleInput.Multiline = true;
 			this.tbxConsoleInput.Name = "tbxConsoleInput";
@@ -201,6 +204,7 @@ namespace asetestnet
 			// tbxConsoleOutput
 			// 
 			this.tbxConsoleOutput.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.tbxConsoleOutput.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbxConsoleOutput.Location = new System.Drawing.Point(0, 19);
 			this.tbxConsoleOutput.Multiline = true;
 			this.tbxConsoleOutput.Name = "tbxConsoleOutput";

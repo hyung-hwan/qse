@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.11 2007/08/05 14:52:54 bacon Exp $
+ * $Id: Awk.cpp,v 1.13 2007/08/15 15:25:06 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -18,10 +18,14 @@ namespace ASE
 {
 	class StubAwk: public Awk
 	{
-	public:	
-
+	public:
 		StubAwk (Net::Awk^ wrapper): wrapper(wrapper)
 		{		
+		}
+
+		~StubAwk ()
+		{
+			wrapper = nullptr;
 		}
 
 		int stubFunctionHandler (
@@ -45,8 +49,7 @@ namespace ASE
 			{ 
 				gh.Free ();
 				io.setHandle (NULL);
-				return -1; 
-			
+				return -1; 	
 			}
 		}
 
@@ -389,8 +392,8 @@ namespace ASE
 			ase_vfprintf (stderr, fmt, arg);
 		}
 
-	private:
-		msclr::auto_gcroot<ASE::Net::Awk^> wrapper;
+	protected:
+		msclr::auto_gcroot<ASE::Net::Awk^> wrapper;		
 	};
 
 	namespace Net
@@ -404,19 +407,53 @@ namespace ASE
 				//throw new AwkException ("cannot open awk");
 			}
 
-			//option = awk->getOption ();
-			//Option = Option | OPTION::CRLF;
+			option = (OPTION)(awk->getOption () | awk->OPT_CRLF);	
+			awk->setOption ((int)option);
 		}
 
 		Awk::~Awk ()
 		{
-			Close ();
-			delete awk;
+System::Diagnostics::Debug::Print ("Awk::~Awk");
+			if (awk != NULL)
+			{
+				awk->close ();
+				ASE::Awk* tmp = awk;
+				awk = NULL;
+				delete tmp;
+			}
+		}
+
+		Awk::!Awk ()
+		{
+System::Diagnostics::Debug::Print ("Awk::!Awk");
+			if (awk != NULL)
+			{
+				awk->close ();
+				ASE::Awk* tmp = awk;
+				awk = NULL;
+				delete tmp; // this causes Awk::~Awk to be called because the destrucotr of StubAwk reference to this with auto_gcroot
+			}
+		}
+
+		Awk::OPTION Awk::Option::get ()
+		{
+			if (awk != NULL) this->option = (OPTION)awk->getOption ();
+			return this->option; 
+		}
+
+		void Awk::Option::set (Awk::OPTION opt)
+		{
+			this->option = opt;
+			if (awk != NULL) awk->setOption ((int)this->option);
 		}
 
 		void Awk::Close ()
 		{
-			awk->close ();
+			System::Diagnostics::Debug::Print ("Awk::Close");
+			if (awk != NULL) 
+			{
+				awk->close ();
+			}
 		}
 
 		bool Awk::Parse ()
