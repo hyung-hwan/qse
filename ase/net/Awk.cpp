@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.13 2007/08/15 15:25:06 bacon Exp $
+ * $Id: Awk.cpp,v 1.14 2007/08/16 15:19:37 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -11,6 +11,7 @@
 #include <math.h>
 
 #include <msclr/auto_gcroot.h>
+#include <msclr/gcroot.h>
 
 using System::Runtime::InteropServices::GCHandle;	
 
@@ -392,8 +393,9 @@ namespace ASE
 			ase_vfprintf (stderr, fmt, arg);
 		}
 
-	protected:
-		msclr::auto_gcroot<ASE::Net::Awk^> wrapper;		
+	public:
+		//msclr::auto_gcroot<ASE::Net::Awk^> wrapper;		
+		gcroot<ASE::Net::Awk^> wrapper;		
 	};
 
 	namespace Net
@@ -414,24 +416,37 @@ namespace ASE
 		Awk::~Awk ()
 		{
 System::Diagnostics::Debug::Print ("Awk::~Awk");
-			if (awk != NULL)
+			/*if (awk != NULL)
 			{
 				awk->close ();
 				ASE::Awk* tmp = awk;
 				awk = NULL;
 				delete tmp;
+			}*/
+			if (awk != NULL)
+			{
+				awk->close ();
+				delete awk;
+				awk = NULL;
 			}
 		}
 
 		Awk::!Awk ()
 		{
 System::Diagnostics::Debug::Print ("Awk::!Awk");
+			/*
 			if (awk != NULL)
 			{
 				awk->close ();
 				ASE::Awk* tmp = awk;
 				awk = NULL;
-				delete tmp; // this causes Awk::~Awk to be called because the destrucotr of StubAwk reference to this with auto_gcroot
+				delete tmp; 
+			}*/
+			if (awk != NULL)
+			{
+				awk->close ();
+				delete awk;
+				awk = NULL;
 			}
 		}
 
@@ -453,6 +468,9 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 			if (awk != NULL) 
 			{
 				awk->close ();
+
+				// TODO: ....
+				((StubAwk*)awk)->wrapper =nullptr;
 			}
 		}
 
