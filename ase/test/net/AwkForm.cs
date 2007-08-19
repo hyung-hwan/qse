@@ -19,8 +19,10 @@ namespace asetestnet
 		private void btnRun_Click(object sender, EventArgs e)
 		{
 			//using (Awk awk = new Awk())
+			for (int i = 0; i < 10000; i++)
 			{
-			Awk awk = new Awk();
+				Awk awk = new Awk();
+
 				tbxSourceOutput.Text = "";
 				tbxConsoleOutput.Text = "";
 
@@ -57,8 +59,9 @@ namespace asetestnet
 				}
 
 				awk.Close();
+				//awk.Dispose(); 
 			}
-			//awk.Dispose(); 
+			
 		}
 	
 		private void btnAddArgument_Click(object sender, EventArgs e)
