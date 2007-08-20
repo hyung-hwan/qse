@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.45 2007/07/15 16:31:59 bacon Exp $
+ * $Id: Awk.hpp,v 1.46 2007/08/18 15:41:46 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -185,7 +185,7 @@ namespace ASE
 		public:
 			int set (long_t v);
 			int set (real_t v); 
-			int set (char_t* ptr, size_t len);
+			int set (const char_t* ptr, size_t len);
 			void clear ();
 
 		protected:
