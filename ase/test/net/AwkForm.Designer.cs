@@ -335,7 +335,7 @@ namespace asetestnet
 			this.Controls.Add(this.panel2);
 			this.Controls.Add(this.statusStrip1);
 			this.Name = "AwkForm";
-			this.Text = "ASE.CNT.AWK";
+			this.Text = "ASE.NET.AWK";
 			this.tableLayoutPanel1.ResumeLayout(false);
 			this.panel1.ResumeLayout(false);
 			this.panel1.PerformLayout();

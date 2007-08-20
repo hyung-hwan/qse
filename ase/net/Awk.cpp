@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.14 2007/08/16 15:19:37 bacon Exp $
+ * $Id: Awk.cpp,v 1.16 2007/08/18 15:42:04 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -17,24 +17,89 @@ using System::Runtime::InteropServices::GCHandle;
 
 namespace ASE
 {
-	class StubAwk: public Awk
+
+	class MojoAwk: protected Awk
 	{
 	public:
-		StubAwk (Net::Awk^ wrapper): wrapper(wrapper)
-		{		
+		MojoAwk (): wrapper(nullptr)
+		{	
 		}
 
-		~StubAwk ()
+		~MojoAwk ()
 		{
-			wrapper = nullptr;
 		}
 
-		int stubFunctionHandler (
+		int open (ASE::Net::Awk^ wrapper)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::open ();
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		void close (ASE::Net::Awk^ wrapper)
+		{
+			this->wrapper = wrapper;
+			Awk::close ();
+			this->wrapper = nullptr;	
+		}
+
+		int getOption (ASE::Net::Awk^ wrapper) const
+		{
+			this->wrapper = wrapper;
+			int n = Awk::getOption ();
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		void setOption (ASE::Net::Awk^ wrapper, int opt)
+		{
+			this->wrapper = wrapper;
+			Awk::setOption (opt);
+			this->wrapper = nullptr;
+		}
+
+		int parse (ASE::Net::Awk^ wrapper)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::parse ();
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		int run (ASE::Net::Awk^ wrapper, const char_t* main = ASE_NULL, 
+		         const char_t** args = ASE_NULL, size_t nargs = 0)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::run (main, args, nargs);
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		int addFunction (
+			ASE::Net::Awk^ wrapper,	const char_t* name,
+			size_t minArgs, size_t maxArgs, FunctionHandler handler)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::addFunction (name, minArgs, maxArgs, handler);
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		int deleteFunction (ASE::Net::Awk^ wrapper, const char_t* main)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::deleteFunction (main);
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		int mojoFunctionHandler (
 			Return* ret, const Argument* args, size_t nargs, 
 			const char_t* name, size_t len)
 		{
-			System::String^ nm = gcnew System::String (name, 0, len);
-			return wrapper->DispatchFunction (nm);
+			
+			return wrapper->DispatchFunction (ret, args, nargs, name, len);
 		}
 
 		int openSource (Source& io) 
@@ -118,8 +183,7 @@ namespace ASE
 			{ 
 				gh.Free ();
 				io.setHandle (NULL);
-				return -1; 
-			
+				return -1; 	
 			}
 		}
 
@@ -393,58 +457,54 @@ namespace ASE
 			ase_vfprintf (stderr, fmt, arg);
 		}
 
-	public:
+	protected:
 		//msclr::auto_gcroot<ASE::Net::Awk^> wrapper;		
-		gcroot<ASE::Net::Awk^> wrapper;		
+		mutable gcroot<ASE::Net::Awk^> wrapper;		
 	};
 
 	namespace Net
 	{
 		Awk::Awk ()
 		{
-			awk = new ASE::StubAwk (this);
-			if (awk->open () == -1)
+			funcs = gcnew System::Collections::Hashtable();
+
+			awk = new ASE::MojoAwk ();
+			if (awk->open (this) == -1)
 			{
 				// TODO:...
 				//throw new AwkException ("cannot open awk");
 			}
 
-			option = (OPTION)(awk->getOption () | awk->OPT_CRLF);	
-			awk->setOption ((int)option);
+			//option = (OPTION)(awk->getOption (this) | MojoAwk::OPT_CRLF);	
+			option = (OPTION)(awk->getOption (this) | ASE::Awk::OPT_CRLF);	
+			awk->setOption (this, (int)option);
 		}
 
 		Awk::~Awk ()
 		{
 System::Diagnostics::Debug::Print ("Awk::~Awk");
-			/*if (awk != NULL)
-			{
-				awk->close ();
-				ASE::Awk* tmp = awk;
-				awk = NULL;
-				delete tmp;
-			}*/
+
 			if (awk != NULL)
 			{
-				awk->close ();
+				awk->close (this);
 				delete awk;
 				awk = NULL;
+			}
+
+			if (funcs != nullptr)
+			{
+				funcs->Clear ();
+				delete funcs;
+				funcs = nullptr;
 			}
 		}
 
 		Awk::!Awk ()
 		{
 System::Diagnostics::Debug::Print ("Awk::!Awk");
-			/*
 			if (awk != NULL)
 			{
-				awk->close ();
-				ASE::Awk* tmp = awk;
-				awk = NULL;
-				delete tmp; 
-			}*/
-			if (awk != NULL)
-			{
-				awk->close ();
+				awk->close (this);
 				delete awk;
 				awk = NULL;
 			}
@@ -452,55 +512,120 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 
 		Awk::OPTION Awk::Option::get ()
 		{
-			if (awk != NULL) this->option = (OPTION)awk->getOption ();
+			if (awk != NULL) this->option = (OPTION)awk->getOption (this);
 			return this->option; 
 		}
 
 		void Awk::Option::set (Awk::OPTION opt)
 		{
 			this->option = opt;
-			if (awk != NULL) awk->setOption ((int)this->option);
+			if (awk != NULL) awk->setOption (this, (int)this->option);
 		}
 
 		void Awk::Close ()
 		{
-			System::Diagnostics::Debug::Print ("Awk::Close");
-			if (awk != NULL) 
-			{
-				awk->close ();
-
-				// TODO: ....
-				((StubAwk*)awk)->wrapper =nullptr;
-			}
+			if (awk != NULL) awk->close (this);
 		}
 
 		bool Awk::Parse ()
 		{
-			return awk->parse () == 0;
+			if (awk == NULL) return false;
+			return awk->parse (this) == 0;	
 		}
 
 		bool Awk::Run ()
 		{
-			return awk->run () == 0;
+			if (awk == NULL) return false;
+			return awk->run (this) == 0;
 		}
 
 		bool Awk::AddFunction (
 			System::String^ name, int minArgs, int maxArgs, 
 			FunctionHandler^ handler)
 		{
-			cli::pin_ptr<const wchar_t> nptr = PtrToStringChars(name);
-			return awk->addFunction (nptr, minArgs, maxArgs, 
-				(ASE::Awk::FunctionHandler)&StubAwk::stubFunctionHandler) == 0;
+			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(name);
+			int n = awk->addFunction (this, nptr, minArgs, maxArgs, 
+				(ASE::Awk::FunctionHandler)&MojoAwk::mojoFunctionHandler);
+			if (n == 0) funcs->Add(name, handler);	
+			return n == 0;
 		}
 
 		bool Awk::DeleteFunction (System::String^ name)
 		{
-			cli::pin_ptr<const wchar_t> nptr = PtrToStringChars(name);
-			return awk->deleteFunction (nptr) == 0;
+			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(name);
+			int n = awk->deleteFunction (this, nptr);
+			if (n == 0) funcs->Remove (name);
+			return n == 0;
 		}
 
-		int Awk::DispatchFunction (System::String^ name)
+		int Awk::DispatchFunction (ASE::Awk::Return* ret, 
+			const ASE::Awk::Argument* args, size_t nargs, 
+			const char_t* name, size_t len)
 		{
+			System::String^ nm = gcnew System::String (name, 0, len);
+
+			FunctionHandler^ fh = (FunctionHandler^)funcs[nm];
+			if (fh == nullptr) return -1;
+			
+			cli::array<Argument^>^ arg_arr = gcnew cli::array<Argument^> (nargs);
+			for (size_t i = 0; i < nargs; i++) arg_arr[i] = gcnew Argument(args[i]);
+			System::Object^ r = fh (nm, arg_arr);
+			if (r == nullptr) return -1;
+
+			System::Type^ type = r->GetType();
+			if (System::String::typeid == type)
+			{
+				System::String^ str = (System::String^)r;
+				cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(str);
+				ret->set (nptr, str->Length);
+			}
+			else if (System::SByte::typeid == type)
+			{
+				ret->set ((ASE::Awk::long_t)(__int8)r);
+			}
+			else if (System::Int16::typeid == type)
+			{
+				ret->set ((ASE::Awk::long_t)(__int16)r);
+			}
+			else if (System::Int32::typeid == type)
+			{
+				ret->set ((ASE::Awk::long_t)(__int32)r);
+			}
+			else if (System::Int64::typeid == type)
+			{
+				ret->set ((ASE::Awk::long_t)(__int64)r);
+			}
+			else if (System::Byte::typeid == type)
+			{
+				ret->set ((ASE::Awk::long_t)(unsigned __int8)r);
+			}
+			else if (System::UInt16::typeid == type)
+			{
+				ret->set ((ASE::Awk::long_t)(unsigned __int16)r);
+			}
+			else if (System::UInt32::typeid == type)
+			{
+				ret->set ((ASE::Awk::long_t)(unsigned __int32)r);
+			}
+			else if (System::UInt64::typeid == type)
+			{
+				ret->set ((ASE::Awk::long_t)(unsigned __int64)r);
+			}
+			else if (System::Single::typeid == type)
+			{
+				ret->set ((ASE::Awk::real_t)(float)r);
+			}
+			else if (System::Double::typeid == type)
+			{
+				ret->set ((ASE::Awk::real_t)(double)r);
+			}	
+			else 
+			{
+				System::String^ str = r->ToString();
+				cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(str);
+				ret->set (nptr, str->Length);
+			}
+
 			return 0;
 		}
 

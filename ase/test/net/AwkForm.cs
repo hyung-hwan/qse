@@ -16,16 +16,22 @@ namespace asetestnet
 			InitializeComponent();
 		}
 
+		object sin(string name, ASE.Net.Awk.Argument[] args)
+		{
+			return System.Math.Sin(args[0].ToReal());
+		}
+
 		private void btnRun_Click(object sender, EventArgs e)
 		{
 			//using (Awk awk = new Awk())
-			for (int i = 0; i < 10000; i++)
+			//for (int i = 0; i < 100; i++)
 			{
 				Awk awk = new Awk();
 
 				tbxSourceOutput.Text = "";
 				tbxConsoleOutput.Text = "";
 
+				awk.AddFunction("sin", 1, 1, sin);
 				if (!awk.Parse(tbxSourceInput, tbxSourceOutput))
 				{
 					MessageBox.Show("Parse error");

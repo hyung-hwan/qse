@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.47 2007/07/25 07:00:09 bacon Exp $
+ * $Id: Awk.cpp,v 1.48 2007/08/18 15:41:46 bacon Exp $
  */
 
 #include <ase/awk/Awk.hpp>
@@ -327,7 +327,7 @@ namespace ASE
 		return 0;
 	}
 
-	int Awk::Return::set (char_t* ptr, size_t len)
+	int Awk::Return::set (const char_t* ptr, size_t len)
 	{
 		awk_t* awk = ase_awk_getrunawk(this->run);
 		char_t* tmp = ase_awk_strxdup (awk, ptr, len);

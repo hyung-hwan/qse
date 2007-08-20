@@ -1,21 +1,81 @@
 /*
- * $Id: Awk.hpp,v 1.11 2007/08/15 15:25:06 bacon Exp $
+ * $Id: Awk.hpp,v 1.13 2007/08/18 15:42:04 bacon Exp $
  */
 
 #pragma once
 
 #include <ase/awk/Awk.hpp>
+#include <vcclr.h>
 
 using namespace System;
 
 namespace ASE
 {
+	class MojoAwk;
+
 	namespace Net
 	{
-
 		public ref class Awk abstract
 		{
 		public:
+			typedef ASE::Awk::long_t long_t;
+			typedef ASE::Awk::real_t real_t;
+			typedef ASE::Awk::char_t char_t;
+			typedef ASE::Awk::size_t size_t;
+
+			ref class Argument
+			{
+			public protected:
+				Argument (const ASE::Awk::Argument& arg)
+				{
+					size_t len;
+					const char_t* s = arg.toStr(&len);
+
+					str = gcnew System::String (s, 0, len);
+					inum = arg.toInt ();
+					rnum = arg.toReal ();
+				}
+
+			public:
+				long_t ToInt ()	{ return inum; }
+				real_t ToReal () { return rnum; }
+				System::String^ ToStr () { return str; }
+
+			protected:
+				long_t inum;
+				real_t rnum;
+				System::String^ str;
+			};
+
+			ref class Return
+			{
+			public protected:
+				Return (ASE::Awk::Return& ret): ret (ret)
+				{
+				}
+
+				property System::Object^ Value
+				{
+					void set (System::String^ v)
+					{
+						cli::pin_ptr<const char_t> nptr = PtrToStringChars(v);
+						ret.set (nptr, v->Length);
+					}
+					void set (System::Single^ v)
+					{
+						ret.set ((real_t)(float)v);
+					}
+					void set (System::Double^ v)
+					{
+						ret.set ((real_t)(double)v);
+					}
+				}
+				
+
+			public:
+				ASE::Awk::Return& ret;
+			};
+
 			ref class Source
 			{
 			public:
@@ -140,7 +200,7 @@ namespace ASE
 				MODE^ mode;
 			};
 
-
+			
 			[Flags] enum class OPTION: int
 			{
 				NONE = 0,
@@ -173,7 +233,7 @@ namespace ASE
 			bool Parse ();
 			bool Run ();
 
-			delegate System::Object^ FunctionHandler (array<System::Object^>^ args);
+			delegate System::Object^ FunctionHandler (System::String^ name, array<Argument^>^ args);
 
 			bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
 			bool DeleteFunction (System::String^ name);
@@ -185,8 +245,9 @@ namespace ASE
 			}
 
 		protected:
-			ASE::Awk* awk;
+			MojoAwk* awk;
 			OPTION option;
+			System::Collections::Hashtable^ funcs;
 
 		public protected:
 			// Source
@@ -226,7 +287,9 @@ namespace ASE
 			virtual int NextConsole (Console^ console) = 0;
 
 		public protected:
-			int DispatchFunction (System::String^ name);
+			int Awk::DispatchFunction (ASE::Awk::Return* ret, 
+				const ASE::Awk::Argument* args, size_t nargs, 
+				const char_t* name, size_t len);
 		};
 
 	}
