@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.16 2007/08/18 15:42:04 bacon Exp $
+ * $Id: Awk.cpp,v 1.17 2007/08/20 14:19:58 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -99,7 +99,7 @@ namespace ASE
 			const char_t* name, size_t len)
 		{
 			
-			return wrapper->DispatchFunction (ret, args, nargs, name, len);
+			return wrapper->DispatchFunction (ret, args, nargs, name, len)? 0: -1;
 		}
 
 		int openSource (Source& io) 
@@ -558,7 +558,7 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 			return n == 0;
 		}
 
-		int Awk::DispatchFunction (ASE::Awk::Return* ret, 
+		bool Awk::DispatchFunction (ASE::Awk::Return* ret, 
 			const ASE::Awk::Argument* args, size_t nargs, 
 			const char_t* name, size_t len)
 		{
@@ -569,64 +569,9 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 			
 			cli::array<Argument^>^ arg_arr = gcnew cli::array<Argument^> (nargs);
 			for (size_t i = 0; i < nargs; i++) arg_arr[i] = gcnew Argument(args[i]);
-			System::Object^ r = fh (nm, arg_arr);
-			if (r == nullptr) return -1;
 
-			System::Type^ type = r->GetType();
-			if (System::String::typeid == type)
-			{
-				System::String^ str = (System::String^)r;
-				cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(str);
-				ret->set (nptr, str->Length);
-			}
-			else if (System::SByte::typeid == type)
-			{
-				ret->set ((ASE::Awk::long_t)(__int8)r);
-			}
-			else if (System::Int16::typeid == type)
-			{
-				ret->set ((ASE::Awk::long_t)(__int16)r);
-			}
-			else if (System::Int32::typeid == type)
-			{
-				ret->set ((ASE::Awk::long_t)(__int32)r);
-			}
-			else if (System::Int64::typeid == type)
-			{
-				ret->set ((ASE::Awk::long_t)(__int64)r);
-			}
-			else if (System::Byte::typeid == type)
-			{
-				ret->set ((ASE::Awk::long_t)(unsigned __int8)r);
-			}
-			else if (System::UInt16::typeid == type)
-			{
-				ret->set ((ASE::Awk::long_t)(unsigned __int16)r);
-			}
-			else if (System::UInt32::typeid == type)
-			{
-				ret->set ((ASE::Awk::long_t)(unsigned __int32)r);
-			}
-			else if (System::UInt64::typeid == type)
-			{
-				ret->set ((ASE::Awk::long_t)(unsigned __int64)r);
-			}
-			else if (System::Single::typeid == type)
-			{
-				ret->set ((ASE::Awk::real_t)(float)r);
-			}
-			else if (System::Double::typeid == type)
-			{
-				ret->set ((ASE::Awk::real_t)(double)r);
-			}	
-			else 
-			{
-				System::String^ str = r->ToString();
-				cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(str);
-				ret->set (nptr, str->Length);
-			}
-
-			return 0;
+			Return^ r = gcnew Return (*ret);
+			return fh(nm, arg_arr, r);
 		}
 
 	}

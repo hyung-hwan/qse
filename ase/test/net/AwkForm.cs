@@ -16,10 +16,12 @@ namespace asetestnet
 			InitializeComponent();
 		}
 
-		object sin(string name, ASE.Net.Awk.Argument[] args)
+		/*bool sin(string name, ASE.Net.Awk.Argument[] args, ASE.Net.Awk.Return ret)
 		{
-			return System.Math.Sin(args[0].ToReal());
-		}
+			//ret.DoubleValue = System.Math.Sin(args[0].RealValue);
+			ret.RealValue = System.Math.Sin(args[0].RealValue);
+			return true;
+		}*/
 
 		private void btnRun_Click(object sender, EventArgs e)
 		{
@@ -31,7 +33,7 @@ namespace asetestnet
 				tbxSourceOutput.Text = "";
 				tbxConsoleOutput.Text = "";
 
-				awk.AddFunction("sin", 1, 1, sin);
+				//awk.AddFunction("sin", 1, 1, sin);
 				if (!awk.Parse(tbxSourceInput, tbxSourceOutput))
 				{
 					MessageBox.Show("Parse error");

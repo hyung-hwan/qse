@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.4 2007/07/20 09:23:37 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.5 2007/08/20 14:19:58 bacon Exp $
  */
 
 #include <ase/net/Awk.hpp>
@@ -14,6 +14,11 @@ namespace ASE
 		public:
 			StdAwk ();
 			~StdAwk ();
+
+		protected:
+			bool Sin (System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Cos (System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Tan (System::String^ name, array<Argument^>^ args, Return^ ret);
 
 		public protected:
 			// File

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.3 2007/07/20 09:23:37 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.5 2007/08/20 14:27:47 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -17,10 +17,32 @@ namespace ASE
 
 		StdAwk::StdAwk ()
 		{
+			// TODO: exception/error handling....
+			AddFunction ("sin", 1, 1, gcnew FunctionHandler (this, &StdAwk::Sin));
+			AddFunction ("cos", 1, 1, gcnew FunctionHandler (this, &StdAwk::Cos));
+			AddFunction ("tan", 1, 1, gcnew FunctionHandler (this, &StdAwk::Tan));
 		}
 
 		StdAwk::~StdAwk ()
 		{
+		}
+
+		bool StdAwk::Sin (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->RealValue = System::Math::Sin (args[0]->RealValue);
+			return true;
+		}
+
+		bool StdAwk::Cos (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->RealValue = System::Math::Cos (args[0]->RealValue);
+			return true;
+		}
+
+		bool StdAwk::Tan (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->RealValue = System::Math::Tan (args[0]->RealValue);
+			return true;
 		}
 
 		int StdAwk::OpenFile (File^ file)
@@ -183,6 +205,7 @@ namespace ASE
 				{
 					if (fputwc (*ptr, fp) == WEOF) 
 					{
+						::free (mbp);
 						return -1;
 					}
 					left -= 1; ptr += 1;
@@ -190,7 +213,11 @@ namespace ASE
 				else
 				{
 					int n = fprintf (fp, "%.*s", left, ptr);
-					if (n < 0 || n > left) return -1;
+					if (n < 0 || n > left) 
+					{
+						::free (mbp);
+						return -1;
+					}
 					left -= n; ptr += n;
 				}
 			}
