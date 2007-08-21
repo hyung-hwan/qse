@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.13 2007/08/18 15:42:04 bacon Exp $
+ * $Id: Awk.hpp,v 1.14 2007/08/20 14:19:58 bacon Exp $
  */
 
 #pragma once
@@ -26,25 +26,33 @@ namespace ASE
 			ref class Argument
 			{
 			public protected:
-				Argument (const ASE::Awk::Argument& arg)
+				Argument (const ASE::Awk::Argument& arg): arg(arg)
 				{
-					size_t len;
-					const char_t* s = arg.toStr(&len);
-
-					str = gcnew System::String (s, 0, len);
-					inum = arg.toInt ();
-					rnum = arg.toReal ();
 				}
 
 			public:
-				long_t ToInt ()	{ return inum; }
-				real_t ToReal () { return rnum; }
-				System::String^ ToStr () { return str; }
+				property long_t LongValue 
+				{
+					long_t get () { return arg.toInt(); }
+				}
+
+				property real_t RealValue
+				{
+					real_t get () { return arg.toReal(); }
+				}
+
+				property System::String^ StringValue
+				{ 
+					System::String^ get ()
+					{
+						size_t len;
+						const char_t* s = arg.toStr(&len);
+						return gcnew System::String (s, 0, len);
+					}
+				}
 
 			protected:
-				long_t inum;
-				real_t rnum;
-				System::String^ str;
+				const ASE::Awk::Argument& arg;
 			};
 
 			ref class Return
@@ -54,23 +62,111 @@ namespace ASE
 				{
 				}
 
-				property System::Object^ Value
+			public:
+				property System::String^ StringValue
 				{
 					void set (System::String^ v)
 					{
 						cli::pin_ptr<const char_t> nptr = PtrToStringChars(v);
 						ret.set (nptr, v->Length);
 					}
+				}
+
+				property long_t LongValue
+				{
+					void set (long_t v)
+					{
+						ret.set (v);
+					}
+				}
+
+				property real_t RealValue
+				{
+					void set (real_t v)
+					{
+						ret.set (v);
+					}
+				}
+
+				property System::Single^ SingleValue
+				{
 					void set (System::Single^ v)
 					{
 						ret.set ((real_t)(float)v);
 					}
+				}
+
+				property System::Double^ DoubleValue
+				{
 					void set (System::Double^ v)
 					{
 						ret.set ((real_t)(double)v);
 					}
 				}
+
+				property System::SByte^ SByteValue
+				{
+					void set (System::SByte^ v)
+					{
+						ret.set ((long_t)(__int8)v);
+					}
+				}
+
+				property System::Int16^ Int16Value
+				{
+					void set (System::Int16^ v)
+					{
+						ret.set ((long_t)(__int16)v);
+					}
+				}
 				
+				property System::Int32^ Int32Value
+				{
+					void set (System::Int32^ v)
+					{
+						ret.set ((long_t)(__int32)v);
+					}
+				}
+
+				property System::Int64^ Int64Value
+				{
+					void set (System::Int64^ v)
+					{
+						ret.set ((long_t)(__int64)v);
+					}
+				}
+
+				property System::Byte^ ByteValue
+				{
+					void set (System::Byte^ v)
+					{
+						ret.set ((long_t)(unsigned __int8)v);
+					}
+				}
+
+				property System::UInt16^ UInt16Value
+				{
+					void set (System::UInt16^ v)
+					{
+						ret.set ((long_t)(unsigned __int16)v);
+					}
+				}
+				
+				property System::UInt32^ UInt32Value
+				{
+					void set (System::UInt32^ v)
+					{
+						ret.set ((long_t)(unsigned __int32)v);
+					}
+				}
+
+				property System::UInt64^ UInt64Value
+				{
+					void set (System::UInt64^ v)
+					{
+						ret.set ((long_t)(unsigned __int64)v);
+					}
+				}
 
 			public:
 				ASE::Awk::Return& ret;
@@ -233,7 +329,7 @@ namespace ASE
 			bool Parse ();
 			bool Run ();
 
-			delegate System::Object^ FunctionHandler (System::String^ name, array<Argument^>^ args);
+			delegate bool FunctionHandler (System::String^ name, array<Argument^>^ args, Return^ ret);
 
 			bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
 			bool DeleteFunction (System::String^ name);
@@ -287,7 +383,7 @@ namespace ASE
 			virtual int NextConsole (Console^ console) = 0;
 
 		public protected:
-			int Awk::DispatchFunction (ASE::Awk::Return* ret, 
+			bool Awk::DispatchFunction (ASE::Awk::Return* ret, 
 				const ASE::Awk::Argument* args, size_t nargs, 
 				const char_t* name, size_t len);
 		};
