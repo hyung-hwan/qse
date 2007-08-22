@@ -8,6 +8,7 @@
 * added the error code ASE_AWK_ELXDIG to indicate a wrong digit in
   octal number tokenization. 
 * added setWord/unsetWord method to the awk com module (com/Awk.cpp)
+* added the .NET interface to the awk interpreter (net/Awk.cpp net/StdAwk.cpp)
 
 * changed the wrong macro name WIN32 to _WIN32 in utl/stdio.h
 * changed test/awk/Awk.cpp to include an option(-w) to utilize

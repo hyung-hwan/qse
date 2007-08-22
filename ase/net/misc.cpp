@@ -1,5 +1,5 @@
 /*
- * $Id: misc.cpp,v 1.1 2007/07/20 09:23:37 bacon Exp $
+ * $Id: misc.cpp,v 1.2 2007/08/21 14:24:37 bacon Exp $
  */
 
 #include "stdafx.h"

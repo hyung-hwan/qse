@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.9 2007/07/25 07:00:09 bacon Exp $
+ * $Id: run.c,v 1.10 2007/08/21 14:24:37 bacon Exp $
  *
  * {License}
  */
@@ -1724,7 +1724,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	    (run)->cbs->on_statement != ASE_NULL) \
 	{ \
 		(run)->cbs->on_statement ( \
-			run, (nde)->line, (run)->custom_data); \
+			run, (nde)->line, (run)->cbs->custom_data); \
 	} 
 
 static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
