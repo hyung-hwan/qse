@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.5 2007/08/20 14:27:47 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.6 2007/08/21 14:24:37 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -136,20 +136,20 @@ namespace ASE
 
 			if (fp == NULL) return -1;
 
-			pipe->Handle = IntPtr ((void*)fp);
+			pipe->Handle = System::IntPtr ((void*)fp);
 			return 1;
 		}
 
 		int StdAwk::ClosePipe (Pipe^ pipe)
 		{
-			IntPtr ip = (IntPtr)pipe->Handle;
+			System::IntPtr ip = (System::IntPtr)pipe->Handle;
 			FILE* fp = (FILE*)ip.ToPointer();
 			return (::_pclose (fp) == EOF)? -1: 0;
 		}
 
 		int StdAwk::ReadPipe (Pipe^ pipe, cli::array<char_t>^ buf, int len)
 		{
-			IntPtr ip = (IntPtr)pipe->Handle;
+			System::IntPtr ip = (System::IntPtr)pipe->Handle;
 			FILE* fp = (FILE*)ip.ToPointer();
 
 			int n = 0;
@@ -168,7 +168,7 @@ namespace ASE
 
 		int StdAwk::WritePipe (Pipe^ pipe, cli::array<char_t>^ buf, int len)
 		{
-			IntPtr ip = (IntPtr)pipe->Handle;
+			System::IntPtr ip = (System::IntPtr)pipe->Handle;
 			FILE* fp = (FILE*)ip.ToPointer();
 			int left;
 
@@ -228,7 +228,7 @@ namespace ASE
 
 		int StdAwk::FlushPipe (Pipe^ pipe)
 		{
-			IntPtr ip = (IntPtr)pipe->Handle;
+			System::IntPtr ip = (System::IntPtr)pipe->Handle;
 			FILE* fp = (FILE*)ip.ToPointer();
 			return (::fflush (fp) == EOF)? -1: 0;
 		}

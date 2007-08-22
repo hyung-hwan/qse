@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.22 2007/07/15 16:31:59 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.23 2007/08/21 14:24:37 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -22,7 +22,7 @@ namespace ASE
 
 	StdAwk::StdAwk ()
 	{
-		seed = ::time(NULL);
+		seed = (unsigned int)::time(NULL);
 		::srand (seed);
 	}
 

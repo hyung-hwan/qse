@@ -1,13 +1,11 @@
 /*
- * $Id: Awk.hpp,v 1.14 2007/08/20 14:19:58 bacon Exp $
+ * $Id: Awk.hpp,v 1.15 2007/08/21 14:24:37 bacon Exp $
  */
 
 #pragma once
 
 #include <ase/awk/Awk.hpp>
 #include <vcclr.h>
-
-using namespace System;
 
 namespace ASE
 {
@@ -22,6 +20,9 @@ namespace ASE
 			typedef ASE::Awk::real_t real_t;
 			typedef ASE::Awk::char_t char_t;
 			typedef ASE::Awk::size_t size_t;
+			typedef ASE::Awk::ssize_t ssize_t;
+			typedef ASE::Awk::cint_t cint_t;
+			typedef ASE::Awk::bool_t bool_t;
 
 			ref class Argument
 			{
@@ -297,7 +298,7 @@ namespace ASE
 			};
 
 			
-			[Flags] enum class OPTION: int
+			[System::Flags] enum class OPTION: int
 			{
 				NONE = 0,
 				IMPLICIT = ASE::Awk::OPT_IMPLICIT,
@@ -317,22 +318,46 @@ namespace ASE
 				ARGSTOMAIN = ASE::Awk::OPT_ARGSTOMAIN
 			};
 
+			enum class DEPTH: int
+			{
+				BLOCK_PARSE = ASE::Awk::DEPTH_BLOCK_PARSE,
+				BLOCK_RUN   = ASE::Awk::DEPTH_BLOCK_RUN,
+				EXPR_PARSE  = ASE::Awk::DEPTH_EXPR_PARSE,
+				EXPR_RUN    = ASE::Awk::DEPTH_EXPR_RUN,
+				REX_BUILD   = ASE::Awk::DEPTH_REX_BUILD,
+				REX_MATCH   = ASE::Awk::DEPTH_REX_MATCH
+			};
+
 			typedef ASE::Awk::char_t char_t;
 
 			Awk ();
 			!Awk ();
 			virtual ~Awk ();
 
-			//bool Open ();
-			void Close ();
+			virtual void Close ();
+			virtual bool Parse ();
+			virtual bool Run ();
 
-			bool Parse ();
-			bool Run ();
+			delegate void RunStartHandler ();
+			delegate void RunEndHandler  ();
+			delegate void RunReturnHandler ();
+			delegate void RunStatementHandler ();
+
+			/*event*/ RunStartHandler^ OnRunStart;
+			/*event*/ RunEndHandler^ OnRunEnd;
+			/*event*/ RunReturnHandler^ OnRunReturn;
+			/*event*/ RunStatementHandler^ OnRunStatement;
 
 			delegate bool FunctionHandler (System::String^ name, array<Argument^>^ args, Return^ ret);
+			virtual bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
+			virtual bool DeleteFunction (System::String^ name);
+			
+			virtual bool SetWord (System::String^ ow, System::String^ nw);
+			virtual bool UnsetWord (System::String^ ow);
+			virtual bool UnsetAllWords ();
 
-			bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
-			bool DeleteFunction (System::String^ name);
+			virtual bool SetMaxDepth (DEPTH id, size_t depth);
+			virtual bool GetMaxDepth (DEPTH id, size_t* depth);
 
 			property OPTION Option
 			{

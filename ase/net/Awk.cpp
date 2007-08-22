@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.17 2007/08/20 14:19:58 bacon Exp $
+ * $Id: Awk.cpp,v 1.18 2007/08/21 14:24:37 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -14,6 +14,8 @@
 #include <msclr/gcroot.h>
 
 using System::Runtime::InteropServices::GCHandle;	
+
+extern "C" void outputxxx (const wchar_t* x);
 
 namespace ASE
 {
@@ -76,6 +78,89 @@ namespace ASE
 			return n;
 		}
 
+		int setWord (ASE::Net::Awk^ wrapper, const char_t* ow, size_t olen, const char_t* nw, size_t nlen)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::setWord (ow, olen, nw, nlen);
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		int unsetWord (ASE::Net::Awk^ wrapper, const char_t* ow, size_t olen)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::unsetWord (ow, olen);
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		int unsetAllWords (ASE::Net::Awk^ wrapper)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::unsetAllWords ();
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		void setMaxDepth (ASE::Net::Awk^ wrapper, int ids, size_t depth)
+		{
+			this->wrapper = wrapper;
+			Awk::setMaxDepth (ids, depth);
+			this->wrapper = nullptr;
+		}
+
+		size_t getMaxDepth (ASE::Net::Awk^ wrapper, int id) const
+		{
+			this->wrapper = wrapper;
+			size_t n = Awk::getMaxDepth (id);
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		void enableRunCallback (ASE::Net::Awk^ wrapper)
+		{
+			this->wrapper = wrapper;
+			Awk::enableRunCallback ();
+			this->wrapper = nullptr;
+		}
+
+		void disableRunCallback (ASE::Net::Awk^ wrapper)
+		{
+			this->wrapper = wrapper;
+			Awk::disableRunCallback ();
+			this->wrapper = nullptr;
+		}
+
+		void onRunStart (const Run& run)
+		{
+			if (wrapper->OnRunStart != nullptr)
+			{
+				wrapper->OnRunStart ();
+			}
+		}
+		void onRunEnd (const Run& run)
+		{
+			if (wrapper->OnRunEnd != nullptr)
+			{
+				wrapper->OnRunEnd ();
+			}
+		}
+		void onRunReturn (const Run& run, const Argument& ret)
+		{
+			if (wrapper->OnRunReturn != nullptr)
+			{
+				wrapper->OnRunReturn ();
+			}
+		}
+
+		void onRunStatement (const Run& run, size_t line)
+		{
+			if (wrapper->OnRunStatement != nullptr)
+			{
+				wrapper->OnRunStatement ();
+			}
+		}
+
 		int addFunction (
 			ASE::Net::Awk^ wrapper,	const char_t* name,
 			size_t minArgs, size_t maxArgs, FunctionHandler handler)
@@ -121,7 +206,7 @@ namespace ASE
 
 		int closeSource (Source& io) 
 		{
-			IntPtr ip ((void*)io.getHandle ());
+			System::IntPtr ip ((void*)io.getHandle ());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			try
@@ -135,7 +220,7 @@ namespace ASE
 
 		ssize_t readSource (Source& io, char_t* buf, size_t len) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			cli::array<char_t>^ b = nullptr;
@@ -154,7 +239,7 @@ namespace ASE
 
 		ssize_t writeSource (Source& io, char_t* buf, size_t len)
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			cli::array<char_t>^ b = nullptr;
@@ -189,7 +274,7 @@ namespace ASE
 
 		int closePipe (Pipe& io) 
 		{
-			IntPtr ip ((void*)io.getHandle ());
+			System::IntPtr ip ((void*)io.getHandle ());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			try
@@ -203,7 +288,7 @@ namespace ASE
 
 		ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			cli::array<char_t>^ b = nullptr;
@@ -222,7 +307,7 @@ namespace ASE
 
 		ssize_t writePipe (Pipe& io, char_t* buf, size_t len) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			cli::array<char_t>^ b = nullptr;
@@ -239,7 +324,7 @@ namespace ASE
 
 		int flushPipe (Pipe& io) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			try
@@ -270,7 +355,7 @@ namespace ASE
 
 		int closeFile (File& io) 
 		{
-			IntPtr ip ((void*)io.getHandle ());
+			System::IntPtr ip ((void*)io.getHandle ());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			try
@@ -284,7 +369,7 @@ namespace ASE
 
 		ssize_t readFile (File& io, char_t* buf, size_t len) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			cli::array<char_t>^ b = nullptr;
@@ -302,7 +387,7 @@ namespace ASE
 
 		ssize_t writeFile (File& io, char_t* buf, size_t len) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			cli::array<char_t>^ b = nullptr;
@@ -319,7 +404,7 @@ namespace ASE
 
 		int flushFile (File& io) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			try
@@ -350,7 +435,7 @@ namespace ASE
 
 		int closeConsole (Console& io) 
 		{
-			IntPtr ip ((void*)io.getHandle ());
+			System::IntPtr ip ((void*)io.getHandle ());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			try
@@ -364,7 +449,7 @@ namespace ASE
 
 		ssize_t readConsole (Console& io, char_t* buf, size_t len) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			cli::array<char_t>^ b = nullptr;
@@ -382,7 +467,7 @@ namespace ASE
 
 		ssize_t writeConsole (Console& io, char_t* buf, size_t len) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			cli::array<char_t>^ b = nullptr;
@@ -399,7 +484,7 @@ namespace ASE
 
 		int flushConsole (Console& io) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			try
@@ -412,7 +497,7 @@ namespace ASE
 
 		int nextConsole (Console& io) 
 		{
-			IntPtr ip ((void*)io.getHandle());
+			System::IntPtr ip ((void*)io.getHandle());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			try
@@ -524,7 +609,19 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 
 		void Awk::Close ()
 		{
-			if (awk != NULL) awk->close (this);
+			if (awk != NULL) 
+			{
+				awk->close (this);
+				delete awk;
+				awk = NULL;
+			}
+
+			if (funcs != nullptr)
+			{
+				funcs->Clear ();
+				delete funcs;
+				funcs = nullptr;
+			}
 		}
 
 		bool Awk::Parse ()
@@ -536,6 +633,13 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 		bool Awk::Run ()
 		{
 			if (awk == NULL) return false;
+
+			if (OnRunStart != nullptr || OnRunEnd != nullptr || 
+				OnRunReturn != nullptr || OnRunStatement != nullptr)
+			{
+				awk->enableRunCallback (this);
+			}
+
 			return awk->run (this) == 0;
 		}
 
@@ -543,6 +647,7 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 			System::String^ name, int minArgs, int maxArgs, 
 			FunctionHandler^ handler)
 		{
+			if (awk == NULL) return false;
 			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(name);
 			int n = awk->addFunction (this, nptr, minArgs, maxArgs, 
 				(ASE::Awk::FunctionHandler)&MojoAwk::mojoFunctionHandler);
@@ -552,6 +657,7 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 
 		bool Awk::DeleteFunction (System::String^ name)
 		{
+			if (awk == NULL) return false;
 			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(name);
 			int n = awk->deleteFunction (this, nptr);
 			if (n == 0) funcs->Remove (name);
@@ -565,13 +671,48 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 			System::String^ nm = gcnew System::String (name, 0, len);
 
 			FunctionHandler^ fh = (FunctionHandler^)funcs[nm];
-			if (fh == nullptr) return -1;
+			if (fh == nullptr) return false;
 			
 			cli::array<Argument^>^ arg_arr = gcnew cli::array<Argument^> (nargs);
 			for (size_t i = 0; i < nargs; i++) arg_arr[i] = gcnew Argument(args[i]);
 
 			Return^ r = gcnew Return (*ret);
 			return fh(nm, arg_arr, r);
+		}
+
+		bool Awk::SetWord (System::String^ ow, System::String^ nw)
+		{
+			if (awk == NULL) return false;
+			cli::pin_ptr<const ASE::Awk::char_t> optr = PtrToStringChars(ow);
+			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(nw);
+			return (awk->setWord (this, optr, ow->Length, nptr, nw->Length) == 0);
+		}
+
+		bool Awk::UnsetWord (System::String^ ow)
+		{
+			if (awk == NULL) return false;
+			cli::pin_ptr<const ASE::Awk::char_t> optr = PtrToStringChars(ow);
+			return (awk->unsetWord (this, optr, ow->Length) == 0);
+		}
+
+		bool Awk::UnsetAllWords ()
+		{
+			if (awk == NULL) return false;
+			return (awk->unsetAllWords (this) == 0);
+		}
+
+		bool Awk::SetMaxDepth (DEPTH id, size_t depth)
+		{
+			if (awk == NULL) return false;
+			awk->setMaxDepth (this, (int)id, depth);
+			return true;
+		}
+
+		bool Awk::GetMaxDepth (DEPTH id, size_t* depth)
+		{
+			if (awk == NULL) return false;
+			*depth = awk->getMaxDepth (this, (int)id);
+			return true;
 		}
 
 	}
