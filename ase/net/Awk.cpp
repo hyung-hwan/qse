@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.18 2007/08/21 14:24:37 bacon Exp $
+ * $Id: Awk.cpp,v 1.21 2007/08/22 13:56:21 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -9,13 +9,12 @@
 #include <ase/utl/stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <tchar.h>
 
 #include <msclr/auto_gcroot.h>
 #include <msclr/gcroot.h>
 
-using System::Runtime::InteropServices::GCHandle;	
-
-extern "C" void outputxxx (const wchar_t* x);
+using System::Runtime::InteropServices::GCHandle;
 
 namespace ASE
 {
@@ -58,6 +57,21 @@ namespace ASE
 		{
 			this->wrapper = wrapper;
 			Awk::setOption (opt);
+			this->wrapper = nullptr;
+		}
+
+		const char_t* getErrorMessage (ASE::Net::Awk^ wrapper) const
+		{
+			this->wrapper = wrapper;
+			const char_t* x = Awk::getErrorMessage();
+			this->wrapper = nullptr;
+			return x;
+		}
+
+		void setError (ASE::Net::Awk^ wrapper)
+		{
+			this->wrapper = wrapper;
+			//Awk::setError (code);
 			this->wrapper = nullptr;
 		}
 
@@ -135,21 +149,32 @@ namespace ASE
 		{
 			if (wrapper->OnRunStart != nullptr)
 			{
-				wrapper->OnRunStart ();
+				wrapper->OnRunStart (wrapper);
 			}
 		}
 		void onRunEnd (const Run& run)
 		{
+			if (run.getErrorCode() != ERR_NOERR)
+			{
+				// TODO: SET THE ERROR CODE TO THIS AWK OBJECT...
+				// TODO: set the error properly when an error is returned through this callback.
+				//       this callback should always be available....
+				ASE::Awk::setError (run.getErrorCode(), run.getErrorLine());
+
+				// TODO: also make Run to return false in this case. Unlike normal c++ awk, this version of awk doesn't support multiple run instances. 
+				// wrapper->runFailureReported = true;
+			}
+
 			if (wrapper->OnRunEnd != nullptr)
 			{
-				wrapper->OnRunEnd ();
+				wrapper->OnRunEnd (wrapper);
 			}
 		}
 		void onRunReturn (const Run& run, const Argument& ret)
 		{
 			if (wrapper->OnRunReturn != nullptr)
 			{
-				wrapper->OnRunReturn ();
+				wrapper->OnRunReturn (wrapper);
 			}
 		}
 
@@ -157,7 +182,7 @@ namespace ASE
 		{
 			if (wrapper->OnRunStatement != nullptr)
 			{
-				wrapper->OnRunStatement ();
+				wrapper->OnRunStatement (wrapper);
 			}
 		}
 
@@ -561,8 +586,10 @@ namespace ASE
 			}
 
 			//option = (OPTION)(awk->getOption (this) | MojoAwk::OPT_CRLF);	
-			option = (OPTION)(awk->getOption (this) | ASE::Awk::OPT_CRLF);	
+			option = (OPTION)(awk->getOption (this) | ASE::Awk::OPT_CRLF);
 			awk->setOption (this, (int)option);
+
+			errorMsg = "";
 		}
 
 		Awk::~Awk ()
@@ -593,6 +620,13 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 				delete awk;
 				awk = NULL;
 			}
+		}
+
+		System::String^ Awk::ErrorMessage::get ()
+		{
+			if (awk != NULL) 
+				this->errorMsg = gcnew System::String(awk->getErrorMessage (this));
+			return this->errorMsg;
 		}
 
 		Awk::OPTION Awk::Option::get ()
@@ -632,6 +666,11 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 
 		bool Awk::Run ()
 		{
+			return Run (nullptr, nullptr);
+		}
+
+		bool Awk::Run (System::String^ entryPoint, cli::array<System::String^>^ args)
+		{
 			if (awk == NULL) return false;
 
 			if (OnRunStart != nullptr || OnRunEnd != nullptr || 
@@ -640,7 +679,94 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 				awk->enableRunCallback (this);
 			}
 
-			return awk->run (this) == 0;
+			if (args == nullptr || args->Length <= 0)
+			{
+				if (entryPoint == nullptr || entryPoint->Length <= 0)
+				{
+					return awk->run (this) == 0;
+				}
+				else
+				{
+					cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(entryPoint);
+					return awk->run (this, nptr) == 0;
+				}
+			}
+			else
+			{
+				int nargs = args->Length;					
+				ASE::Awk::char_t** ptr = ASE_NULL;
+
+				try
+				{
+					bool r = false;
+
+					ptr = (ASE::Awk::char_t**)awk->allocMem (nargs * ASE_SIZEOF(ASE::Awk::char_t*));
+					if (ptr == ASE_NULL)
+					{
+						// TODO: error handling
+						return false;
+					}
+					for (int i = 0; i < nargs; i++) ptr[i] = ASE_NULL;
+					for (int i = 0; i < nargs; i++)
+					{
+						cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars (args[i]);
+						ptr[i] = (ASE::Awk::char_t*)awk->allocMem ((args[i]->Length+1)*ASE_SIZEOF(ASE::Awk::char_t));
+						if (ptr[i] == ASE_NULL)
+						{
+							r = false;
+							goto exit_run;
+						}
+						memcpy (ptr[i], nptr, args[i]->Length*ASE_SIZEOF(ASE::Awk::char_t));
+						ptr[i][args[i]->Length] = ASE_T('\0');
+					}
+
+					if (entryPoint == nullptr || entryPoint->Length <= 0)
+					{
+						r = (awk->run (this, ASE_NULL, (const ASE::Awk::char_t**)ptr, nargs) == 0);
+					}
+					else
+					{
+						cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(entryPoint);
+						r = (awk->run (this, nptr, (const ASE::Awk::char_t**)ptr, nargs) == 0);
+					}
+
+				exit_run:
+					if (ptr != ASE_NULL)
+					{
+						for (int i = 0; i < nargs; i++) 
+						{
+							if (ptr[i] != ASE_NULL) 
+							{
+								awk->freeMem (ptr[i]);
+								ptr[i] = ASE_NULL;
+							}
+						}
+							awk->freeMem (ptr);
+						ptr = ASE_NULL;
+					}
+				
+					return r;
+				}
+				catch (...)
+				{
+					if (ptr != ASE_NULL)
+					{
+						for (int i = 0; i < nargs; i++) 
+						{
+							if (ptr[i] != ASE_NULL) 
+							{
+								awk->freeMem (ptr[i]);
+								ptr[i] = ASE_NULL;
+							}
+						}
+						awk->freeMem (ptr);
+						ptr = ASE_NULL;
+					}
+
+					// TODO: error...
+					return false;
+				}
+			}
 		}
 
 		bool Awk::AddFunction (
@@ -713,6 +839,12 @@ System::Diagnostics::Debug::Print ("Awk::!Awk");
 			if (awk == NULL) return false;
 			*depth = awk->getMaxDepth (this, (int)id);
 			return true;
+		}
+
+		void Awk::SetError ()
+		{
+			if (awk == NULL) return;
+			awk->setError (this);
 		}
 
 	}
