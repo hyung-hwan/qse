@@ -23,11 +23,12 @@ namespace asetestnet
 
 		public bool Run(
 			System.Windows.Forms.TextBox consoleInput,
-			System.Windows.Forms.TextBox consoleOutput)
+			System.Windows.Forms.TextBox consoleOutput,
+			System.String main, System.String[] args)
 		{
 			this.consoleInput = consoleInput;
 			this.consoleOutput = consoleOutput;
-			return base.Run();
+			return base.Run(main, args);
 		}
 
 		protected override int OpenSource(ASE.Net.StdAwk.Source source)
