@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.8 2007/06/29 11:36:45 bacon Exp $
+ * $Id: awk.h,v 1.9 2007/08/24 13:17:59 bacon Exp $
  *
  * {License}
  */
@@ -202,12 +202,12 @@ enum ase_awk_errnum_t
 	ASE_AWK_ENOMEM,         /* out of memory */
 	ASE_AWK_ENOSUP,         /* not supported */
 	ASE_AWK_ENOPER,         /* operation not allowed */
-	ASE_AWK_ENODEV,         /* function '%.*s' not found */
+	ASE_AWK_ENODEV,         /* no such device */
 	ASE_AWK_ENOSPC,         /* no space left on device */
 	ASE_AWK_EMFILE,         /* too many open files */
 	ASE_AWK_EMLINK,         /* too many links */
 	ASE_AWK_EAGAIN,         /* resource temporarily unavailable */
-	ASE_AWK_ENOENT,         /* file or data not existing */
+	ASE_AWK_ENOENT,         /* "'%.*s' not existing */
 	ASE_AWK_EEXIST,         /* file or data exists */
 	ASE_AWK_EFTBIG,         /* file or data too big */
 	ASE_AWK_ETBUSY,         /* system too busy */
@@ -399,7 +399,10 @@ int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str);
 int ase_awk_geterrnum (ase_awk_t* awk);
 ase_size_t ase_awk_geterrlin (ase_awk_t* awk);
 const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk);
+
 void ase_awk_seterrnum (ase_awk_t* awk, int errnum);
+void ase_awk_seterrmsg (ase_awk_t* awk, 
+	int errnum, ase_size_t errlin, const ase_char_t* errmsg);
 
 void ase_awk_geterror (
 	ase_awk_t* awk, int* errnum, 
@@ -463,6 +466,8 @@ int ase_awk_getrunerrnum (ase_awk_run_t* run);
 ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run);
 const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run);
 void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
+void ase_awk_setrunerrmsg (ase_awk_run_t* run, 
+	int errnum, ase_size_t errlin, const ase_char_t* errmsg);
 
 void ase_awk_getrunerror (
 	ase_awk_run_t* run, int* errnum, 

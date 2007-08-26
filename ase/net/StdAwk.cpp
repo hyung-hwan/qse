@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.6 2007/08/21 14:24:37 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.7 2007/08/24 16:02:49 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -7,6 +7,7 @@
 
 #include <ase/net/StdAwk.hpp>
 #include <stdio.h>
+#include <stdlib.h>
 #include <tchar.h>
 #include <vcclr.h>
 

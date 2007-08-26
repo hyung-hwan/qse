@@ -7,8 +7,8 @@
     <ProjectGuid>{7CC01C3D-FC1A-4587-868A-7FC4449B3F8B}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>asetestnet</RootNamespace>
-    <AssemblyName>asetestnet</AssemblyName>
+    <RootNamespace>ase.net</RootNamespace>
+    <AssemblyName>ase.net</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -43,21 +43,11 @@
     <Compile Include="AwkForm.designer.cs">
       <DependentUpon>AwkForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="AwkFormOrg.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="AwkFormOrg.Designer.cs">
-      <DependentUpon>AwkFormOrg.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="AwkForm.resx">
       <DependentUpon>AwkForm.cs</DependentUpon>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="AwkFormOrg.resx">
-      <SubType>Designer</SubType>
-      <DependentUpon>AwkFormOrg.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

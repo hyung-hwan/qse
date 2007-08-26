@@ -1,4 +1,4 @@
-namespace asetestnet
+namespace ase.net
 {
 	partial class AwkForm
 	{

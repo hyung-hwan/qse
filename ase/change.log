@@ -2,6 +2,7 @@
 
 * added ase_awk_setword to enable customization of keywords and
   intrinsic function names.
+* added ase_awk_seterrmsg to set the error message to be any string given
 * added setWord/unsetWord method to the awk c++ class (awk/Awk.cpp)
 * added setErrorString method to the awk c++ class (awk/Awk.cpp)
 * added setWord/unsetWord method to the awk java class (awk/Awk.java)

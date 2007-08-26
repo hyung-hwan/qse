@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.18 2007/08/22 13:56:21 bacon Exp $
+ * $Id: Awk.hpp,v 1.19 2007/08/24 13:17:59 bacon Exp $
  */
 
 #pragma once
@@ -296,8 +296,7 @@ namespace ASE
 			private:
 				MODE^ mode;
 			};
-
-			
+	
 			[System::Flags] enum class OPTION: int
 			{
 				NONE = 0,
@@ -460,7 +459,6 @@ namespace ASE
 			};
 			// end of enum class ERROR
 
-
 			typedef ASE::Awk::char_t char_t;
 
 			Awk ();
@@ -499,19 +497,25 @@ namespace ASE
 				void set (OPTION opt); //{ this->option = opt; }
 			}
 
-			// TODO: Error code, Error line
 			property System::String^ ErrorMessage
 			{
-				System::String^ get ();
+				System::String^ get () { return this->errMsg; }
 			}
 
-			void SetError ();
+			property ERROR ErrorCode
+			{
+				ERROR get () { return this->errCode; }
+			}
+
+			property unsigned int ErrorLine
+			{
+				unsigned int get () { return this->errLine; }
+			}
 
 		protected:
 			MojoAwk* awk;
 			OPTION option;
 			System::Collections::Hashtable^ funcs;
-			System::String^ errorMsg;
 
 		public protected:
 			// Source
@@ -554,6 +558,15 @@ namespace ASE
 			bool Awk::DispatchFunction (ASE::Awk::Return* ret, 
 				const ASE::Awk::Argument* args, size_t nargs, 
 				const char_t* name, size_t len);
+
+		public protected:
+			System::String^ errMsg;
+			unsigned int errLine;
+			ERROR errCode;
+
+			void setError (ERROR num);
+			void retrieveError ();
+			bool runErrorReported; // only used if the run-callback is activated.
 		};
 
 	}
