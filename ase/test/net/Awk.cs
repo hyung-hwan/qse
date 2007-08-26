@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace asetestnet
+namespace ase.net
 {
 	public class Awk : ASE.Net.StdAwk
 	{

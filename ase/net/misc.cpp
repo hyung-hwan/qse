@@ -1,17 +1,17 @@
 /*
- * $Id: misc.cpp,v 1.2 2007/08/21 14:24:37 bacon Exp $
+ * $Id: misc.cpp,v 1.3 2007/08/24 16:02:49 bacon Exp $
  */
 
 #include "stdafx.h"
 #include "misc.h"
+#include <windows.h>
+#include <stdlib.h>
+#include <tchar.h>
 
 #ifndef NDEBUG
 
 #include <ase/cmn/types.h>
 #include <ase/cmn/macros.h>
-#include <windows.h>
-#include <stdlib.h>
-#include <tchar.h>
 
 #pragma warning(disable:4996)
 #pragma unmanaged

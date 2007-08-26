@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.5 2007/06/29 11:36:45 bacon Exp $
+ * $Id: err.c,v 1.6 2007/08/24 13:17:59 bacon Exp $
  *
  * {License}
  */
@@ -219,6 +219,14 @@ void ase_awk_seterrnum (ase_awk_t* awk, int errnum)
 	awk->errmsg[0] = ASE_T('\0');
 }
 
+void ase_awk_seterrmsg (ase_awk_t* awk, 
+	int errnum, ase_size_t errlin, const ase_char_t* errmsg)
+{
+	awk->errnum = errnum;
+	awk->errlin = errlin;
+	ase_strxcpy (awk->errmsg, ASE_COUNTOF(awk->errmsg), errmsg);
+}
+
 void ase_awk_seterror (
 	ase_awk_t* awk, int errnum, ase_size_t errlin,
 	const ase_cstr_t* errarg, ase_size_t argcnt)
@@ -344,6 +352,14 @@ void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum)
 	run->errnum = errnum;
 	run->errlin = 0;
 	run->errmsg[0] = ASE_T('\0');
+}
+
+void ase_awk_setrunerrmsg (ase_awk_run_t* run, 
+	int errnum, ase_size_t errlin, const ase_char_t* errmsg)
+{
+	run->errnum = errnum;
+	run->errlin = errlin;
+	ase_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), errmsg);
 }
 
 void ase_awk_getrunerror (

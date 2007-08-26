@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="asetestawk"
+	Name="aseawk"
 	ProjectGUID="{57F1E1D0-28B6-42BF-BAFB-045AEE2DCF4F}"
-	RootNamespace="asetestawk"
+	RootNamespace="aseawk"
 	>
 	<Platforms>
 		<Platform
@@ -38,7 +38,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\../../release/bin/asetestawk.tlb"
+				TypeLibraryName=".\../../release/bin/aseawk.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -86,7 +86,6 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../../release/bin/asetestawk.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -125,7 +124,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\../../debug/bin/asetestawk.tlb"
+				TypeLibraryName=".\../../debug/bin/aseawk.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -175,7 +174,6 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../../debug/bin/asetestawk.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"

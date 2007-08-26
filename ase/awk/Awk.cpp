@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.49 2007/08/21 14:24:37 bacon Exp $
+ * $Id: Awk.cpp,v 1.51 2007/08/24 15:11:36 bacon Exp $
  */
 
 
@@ -441,6 +441,22 @@ namespace ASE
 		}
 	}
 
+	void Awk::setError (
+		ErrorCode code, size_t line, const char_t* msg)
+	{
+		if (awk != ASE_NULL)
+		{
+			ase_awk_seterrmsg (awk, code, line, msg);
+			retrieveError ();
+		}
+		else
+		{
+			this->errnum = code;
+			this->errlin = line;
+			ase_strxcpy (this->errmsg, ASE_COUNTOF(this->errmsg), msg);
+		}
+	}
+
 	void Awk::clearError ()
 	{
 		this->errnum = ERR_NOERR;
@@ -569,10 +585,16 @@ namespace ASE
 		ase_awk_setmaxdepth (awk, ids, depth);
 	}
 
-	size_t Awk::getMaxDepth (int id) const
+	Awk::size_t Awk::getMaxDepth (int id) const
 	{
 		ASE_ASSERT (awk != ASE_NULL);
 		return ase_awk_getmaxdepth (awk, id);
+	}
+
+	const Awk::char_t* Awk::getErrorString (ErrorCode num) const
+	{
+		ASE_ASSERT (awk != ASE_NULL);
+		return ase_awk_geterrstr (awk, (int)num);
 	}
 
 	int Awk::setErrorString (ErrorCode num, const char_t* str)
