@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.6 2007/07/02 14:04:20 bacon Exp $
+ * $Id: Awk.cpp,v 1.7 2007/08/26 14:33:38 bacon Exp $
  *
  * {License}
  */
@@ -62,7 +62,7 @@ CAwk::CAwk ():
 		ASE_AWK_SHIFT | 
 		ASE_AWK_EXTIO | 
 		ASE_AWK_BLOCKLESS | 
-		ASE_AWK_STRBASEONE | 
+		ASE_AWK_BASEONE | 
 		ASE_AWK_STRIPSPACES | 
 		ASE_AWK_NEXTOFILE |
 		ASE_AWK_CRLF;
@@ -1247,17 +1247,17 @@ STDMETHODIMP CAwk::put_SupportBlockless(VARIANT_BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_StringBaseOne(VARIANT_BOOL *pVal)
+STDMETHODIMP CAwk::get_BaseOne(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
-	*pVal = (option & ASE_AWK_STRBASEONE) == 1;
+	*pVal = (option & ASE_AWK_BASEONE) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_StringBaseOne(VARIANT_BOOL newVal)
+STDMETHODIMP CAwk::put_BaseOne(VARIANT_BOOL newVal)
 {
-	if (newVal) option = option | ASE_AWK_STRBASEONE;
-	else option = option & ~ASE_AWK_STRBASEONE;
+	if (newVal) option = option | ASE_AWK_BASEONE;
+	else option = option & ~ASE_AWK_BASEONE;
 	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }

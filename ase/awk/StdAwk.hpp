@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.12 2007/07/15 16:31:59 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.13 2007/08/26 14:33:38 bacon Exp $
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_
@@ -24,6 +24,8 @@ namespace ASE
 		int cos (Return* ret, const Argument* args, size_t nargs, 
 			const char_t* name, size_t len);
 		int tan (Return* ret, const Argument* args, size_t nargs, 
+			const char_t* name, size_t len);
+		int atan (Return* ret, const Argument* args, size_t nargs,
 			const char_t* name, size_t len);
 		int atan2 (Return* ret, const Argument* args, size_t nargs,
 			const char_t* name, size_t len);

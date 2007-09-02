@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.9 2007/08/24 13:17:59 bacon Exp $
+ * $Id: awk.h,v 1.10 2007/08/26 14:33:38 bacon Exp $
  *
  * {License}
  */
@@ -165,8 +165,8 @@ enum ase_awk_option_t
 	/* support blockless patterns */
 	ASE_AWK_BLOCKLESS   = (1 << 9), 
 
-	/* use 1 as the start index for string operations */
-	ASE_AWK_STRBASEONE  = (1 << 10),
+	/* use 1 as the start index for string operations and ARGV */
+	ASE_AWK_BASEONE     = (1 << 10),
 
 	/* strip off leading and trailing spaces when splitting a record
 	 * into fields with a regular expression.

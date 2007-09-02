@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.51 2007/08/24 15:11:36 bacon Exp $
+ * $Id: Awk.cpp,v 1.52 2007/08/26 14:33:38 bacon Exp $
  */
 
 
@@ -539,7 +539,7 @@ namespace ASE
 			OPT_SHIFT | 
 			OPT_EXTIO | 
 			OPT_BLOCKLESS | 
-			OPT_STRBASEONE | 
+			OPT_BASEONE | 
 			OPT_STRIPSPACES | 
 			OPT_NEXTOFILE |
 			OPT_ARGSTOMAIN;

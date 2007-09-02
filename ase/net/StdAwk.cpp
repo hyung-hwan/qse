@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.7 2007/08/24 16:02:49 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.8 2007/08/26 14:33:38 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -18,10 +18,23 @@ namespace ASE
 
 		StdAwk::StdAwk ()
 		{
+			/*
+			seed = System::DateTime
+			random = gcnew System::Random ();
+			*/
+
 			// TODO: exception/error handling....
 			AddFunction ("sin", 1, 1, gcnew FunctionHandler (this, &StdAwk::Sin));
 			AddFunction ("cos", 1, 1, gcnew FunctionHandler (this, &StdAwk::Cos));
 			AddFunction ("tan", 1, 1, gcnew FunctionHandler (this, &StdAwk::Tan));
+			AddFunction ("atan", 1, 1, gcnew FunctionHandler (this, &StdAwk::Atan));
+			AddFunction ("atan2", 2, 2, gcnew FunctionHandler (this, &StdAwk::Atan2));
+			AddFunction ("log", 1, 1, gcnew FunctionHandler (this, &StdAwk::Log));
+			AddFunction ("exp", 1, 1, gcnew FunctionHandler (this, &StdAwk::Exp));
+			AddFunction ("sqrt", 1, 1, gcnew FunctionHandler (this, &StdAwk::Sqrt));
+			AddFunction ("int", 1, 1, gcnew FunctionHandler (this, &StdAwk::Int));
+			//AddFunction ("rand", 0, 0, gcnew FunctionHandler (this, &StdAwk::Int));
+			//AddFunction ("srand", 1, 1, gcnew FunctionHandler (this, &StdAwk::Int));
 		}
 
 		StdAwk::~StdAwk ()
@@ -45,6 +58,55 @@ namespace ASE
 			ret->RealValue = System::Math::Tan (args[0]->RealValue);
 			return true;
 		}
+
+		bool StdAwk::Atan (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->RealValue = System::Math::Atan (args[0]->RealValue);
+			return true;
+		}
+
+		bool StdAwk::Atan2 (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->RealValue = System::Math::Atan2 (args[0]->RealValue, args[1]->RealValue);
+			return true;
+		}
+
+		bool StdAwk::Log (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->RealValue = System::Math::Log (args[0]->RealValue);
+			return true;
+		}
+
+		bool StdAwk::Exp (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->RealValue = System::Math::Exp (args[0]->RealValue);
+			return true;
+		}
+
+		bool StdAwk::Sqrt (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->RealValue = System::Math::Sqrt (args[0]->RealValue);
+			return true;
+		}
+
+		bool StdAwk::Int (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->LongValue = args[0]->LongValue;
+			return true;
+		}
+
+		/*
+		bool StdAwk::Rand (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->LongValue = random->Next ();			
+			return true;
+		}
+
+		bool StdAwk::Srand (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->LongValue = args[0]->LongValue;
+			return true;
+		}*/
 
 		int StdAwk::OpenFile (File^ file)
 		{

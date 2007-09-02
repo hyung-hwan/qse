@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.23 2007/08/21 14:24:37 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.24 2007/08/26 14:33:38 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -44,6 +44,7 @@ namespace ASE
 		ADD_FUNC (ASE_T("sin"),        1, 1, &StdAwk::sin);
 		ADD_FUNC (ASE_T("cos"),        1, 1, &StdAwk::cos);
 		ADD_FUNC (ASE_T("tan"),        1, 1, &StdAwk::tan);
+		ADD_FUNC (ASE_T("atan"),       1, 1, &StdAwk::atan);
 		ADD_FUNC (ASE_T("atan2"),      2, 2, &StdAwk::atan2);
 		ADD_FUNC (ASE_T("log"),        1, 1, &StdAwk::log);
 		ADD_FUNC (ASE_T("exp"),        1, 1, &StdAwk::exp);
@@ -75,6 +76,12 @@ namespace ASE
 		const char_t* name, size_t len)
 	{
 		return ret->set ((real_t)::tan(args[0].toReal()));
+	}
+
+	int StdAwk::atan (Return* ret, const Argument* args, size_t nargs,
+		const char_t* name, size_t len)
+	{
+		return ret->set ((real_t)::atan(args[0].toReal()));
 	}
 
 	int StdAwk::atan2 (Return* ret, const Argument* args, size_t nargs,
