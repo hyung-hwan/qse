@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.10 2007/08/21 14:24:37 bacon Exp $
+ * $Id: run.c,v 1.11 2007/08/26 14:33:38 bacon Exp $
  *
  * {License}
  */
@@ -964,8 +964,16 @@ static int __build_runarg (
 				return -1;
 			}
 
-			key_len = ase_awk_longtostr (
-				argc, 10, ASE_NULL, key, ASE_COUNTOF(key));
+			if (ase_awk_getoption(run->awk) & ASE_AWK_BASEONE)
+			{
+				key_len = ase_awk_longtostr (argc+1, 
+					10, ASE_NULL, key, ASE_COUNTOF(key));
+			}
+			else
+			{
+				key_len = ase_awk_longtostr (argc, 
+					10, ASE_NULL, key, ASE_COUNTOF(key));
+			}
 			ASE_ASSERT (key_len != (ase_size_t)-1);
 
 			/* increment reference count of v_tmp in advance as if 

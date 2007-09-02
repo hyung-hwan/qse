@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.19 2007/08/24 13:17:59 bacon Exp $
+ * $Id: Awk.hpp,v 1.20 2007/08/26 14:33:38 bacon Exp $
  */
 
 #pragma once
@@ -310,7 +310,7 @@ namespace ASE
 				EXTIO = ASE::Awk::OPT_EXTIO,
 				COPROC = ASE::Awk::OPT_COPROC,
 				BLOCKLESS = ASE::Awk::OPT_BLOCKLESS,
-				STRBASEONE = ASE::Awk::OPT_STRBASEONE,
+				STRBASEONE = ASE::Awk::OPT_BASEONE,
 				STRIPSPACES = ASE::Awk::OPT_STRIPSPACES,
 				NEXTOFILE = ASE::Awk::OPT_NEXTOFILE,
 				CRLF = ASE::Awk::OPT_CRLF,

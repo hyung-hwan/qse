@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.12 2007/06/28 15:45:57 bacon Exp $
+ * $Id: jni.c,v 1.13 2007/08/26 14:33:38 bacon Exp $
  *
  * {License}
  */
@@ -388,7 +388,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 
 	      ASE_AWK_BLOCKLESS | 
-	      ASE_AWK_STRBASEONE | 
+	      ASE_AWK_BASEONE | 
 	      ASE_AWK_STRIPSPACES | 
 	      ASE_AWK_NEXTOFILE |
 	      ASE_AWK_ARGSTOMAIN;

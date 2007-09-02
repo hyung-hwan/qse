@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.6 2007/07/02 14:04:20 bacon Exp $
+ * $Id: Awk.h,v 1.7 2007/08/26 14:33:38 bacon Exp $
  *
  * {License}
  */
@@ -149,8 +149,8 @@ public:
 	STDMETHOD(put_Nextofile)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_StripSpaces)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_StripSpaces)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_StringBaseOne)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_StringBaseOne)(/*[in]*/ VARIANT_BOOL newVal);
+	STDMETHOD(get_BaseOne)(/*[out, retval]*/ VARIANT_BOOL *pVal);
+	STDMETHOD(put_BaseOne)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_SupportBlockless)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_SupportBlockless)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_SupportExtio)(/*[out, retval]*/ VARIANT_BOOL *pVal);

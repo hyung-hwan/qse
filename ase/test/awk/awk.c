@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.12 2007/06/20 03:48:02 bacon Exp $
+ * $Id: awk.c,v 1.13 2007/08/26 14:33:38 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -907,7 +907,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	      ASE_AWK_SHIFT | 
 	      ASE_AWK_EXTIO | 
 	      ASE_AWK_BLOCKLESS | 
-	      ASE_AWK_STRBASEONE | 
+	      ASE_AWK_BASEONE | 
 	      ASE_AWK_STRIPSPACES | 
 	      ASE_AWK_NEXTOFILE /*|
 	      ASE_AWK_ARGSTOMAIN*/;

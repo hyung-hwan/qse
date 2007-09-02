@@ -1,5 +1,5 @@
 /*
- * $Id: asecom.idl,v 1.6 2007/07/02 14:04:20 bacon Exp $
+ * $Id: asecom.idl,v 1.7 2007/08/26 14:33:38 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -90,10 +90,10 @@ interface IAwk : IDispatch
 	[propput, id(19), helpstring("property SupportBlockless")]
 	HRESULT SupportBlockless([in] VARIANT_BOOL newVal);
 
-	[propget, id(20), helpstring("property StringBaseOne")]
-	HRESULT StringBaseOne([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(20), helpstring("property StringBaseOne")]
-	HRESULT StringBaseOne([in] VARIANT_BOOL newVal);
+	[propget, id(20), helpstring("property BaseOne")]
+	HRESULT BaseOne([out,retval] VARIANT_BOOL *pVal);
+	[propput, id(20), helpstring("property BaseOne")]
+	HRESULT BaseOne([in] VARIANT_BOOL newVal);
 
 	[propget, id(21), helpstring("property StripSpaces")]
 	HRESULT StripSpaces([out,retval] VARIANT_BOOL *pVal);

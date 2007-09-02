@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.10 2007/05/26 10:23:52 bacon Exp $
+ * $Id: StdAwk.java,v 1.11 2007/08/26 14:33:38 bacon Exp $
  *
  * {License}
  */
@@ -23,7 +23,8 @@ public abstract class StdAwk extends Awk
 		addFunction ("sin", 1, 1); 
 		addFunction ("cos", 1, 1); 
 		addFunction ("tan", 1, 1); 
-		addFunction ("atan2", 1, 1); 
+		addFunction ("atan", 1, 1); 
+		addFunction ("atan2", 2, 2); 
 		addFunction ("log", 1, 1); 
 		addFunction ("exp", 1, 1); 
 		addFunction ("sqrt", 1, 1); 
@@ -347,6 +348,12 @@ public abstract class StdAwk extends Awk
 	{
 		double x = builtinFunctionArgumentToDouble (runid, args[0]);
 		return new Double (Math.tan(x));
+	}
+
+	public Object bfn_atan (long runid, Object[] args) throws Exception
+	{
+		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		return new Double (Math.atan(x));
 	}
 
 	public Object bfn_atan2 (long runid, Object[] args) throws Exception

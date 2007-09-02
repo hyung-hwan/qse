@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.31 2007/07/20 09:23:37 bacon Exp $
+ * $Id: Awk.cpp,v 1.32 2007/08/26 14:33:38 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -530,6 +530,8 @@ static void print_usage (const ase_char_t* argv0)
 	ase_printf (ASE_T("    -w  o:n   Specify an old and new word pair\n"));
 	ase_printf (ASE_T("              o - an original word\n"));
 	ase_printf (ASE_T("              n - the new word to replace the original\n"));
+	ase_printf (ASE_T("    -ns       Don't strip whitespaces\n"));
+	ase_printf (ASE_T("              The STRIPSPACES option is truned off\n"));
 }
 
 int awk_main (int argc, ase_char_t* argv[])
@@ -561,6 +563,10 @@ int awk_main (int argc, ase_char_t* argv[])
 			else if (ase_strcmp(argv[i], ASE_T("-a")) == 0) mode = 5;
 			else if (ase_strcmp(argv[i], ASE_T("-m")) == 0) mode = 6;
 			else if (ase_strcmp(argv[i], ASE_T("-w")) == 0) mode = 7;
+			else if (ase_strcmp(argv[i], ASE_T("-ns")) == 0) 
+			{
+				awk.setOption (awk.getOption () & ~TestAwk::OPT_STRIPSPACES);
+			}
 			else 
 			{
 				print_usage (argv[0]);
