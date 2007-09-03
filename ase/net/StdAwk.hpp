@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.6 2007/08/26 14:33:38 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.7 2007/09/01 15:43:16 bacon Exp $
  */
 
 #include <ase/net/Awk.hpp>
@@ -16,6 +16,7 @@ namespace ASE
 			~StdAwk ();
 
 		protected:
+			int random_seed;
 			System::Random^ random;
 
 			bool Sin (System::String^ name, array<Argument^>^ args, Return^ ret);
@@ -27,8 +28,11 @@ namespace ASE
 			bool Exp (System::String^ name, array<Argument^>^ args, Return^ ret);
 			bool Sqrt (System::String^ name, array<Argument^>^ args, Return^ ret);
 			bool Int (System::String^ name, array<Argument^>^ args, Return^ ret);
-			//bool Rand (System::String^ name, array<Argument^>^ args, Return^ ret);
-			//bool Srand (System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Rand (System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Srand (System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Systime (System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Strftime (System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Strfgmtime (System::String^ name, array<Argument^>^ args, Return^ ret);
 
 		public protected:
 			// File
