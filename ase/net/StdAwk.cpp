@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.8 2007/08/26 14:33:38 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.9 2007/09/01 15:43:16 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <tchar.h>
 #include <vcclr.h>
+#include <time.h>
 
 namespace ASE
 {
@@ -18,10 +19,8 @@ namespace ASE
 
 		StdAwk::StdAwk ()
 		{
-			/*
-			seed = System::DateTime
-			random = gcnew System::Random ();
-			*/
+			random_seed = (gcnew System::Random)->Next (System::Int32::MinValue, System::Int32::MaxValue);
+			random = gcnew System::Random (random_seed);
 
 			// TODO: exception/error handling....
 			AddFunction ("sin", 1, 1, gcnew FunctionHandler (this, &StdAwk::Sin));
@@ -33,8 +32,11 @@ namespace ASE
 			AddFunction ("exp", 1, 1, gcnew FunctionHandler (this, &StdAwk::Exp));
 			AddFunction ("sqrt", 1, 1, gcnew FunctionHandler (this, &StdAwk::Sqrt));
 			AddFunction ("int", 1, 1, gcnew FunctionHandler (this, &StdAwk::Int));
-			//AddFunction ("rand", 0, 0, gcnew FunctionHandler (this, &StdAwk::Int));
-			//AddFunction ("srand", 1, 1, gcnew FunctionHandler (this, &StdAwk::Int));
+			AddFunction ("rand", 0, 0, gcnew FunctionHandler (this, &StdAwk::Rand));
+			AddFunction ("srand", 1, 1, gcnew FunctionHandler (this, &StdAwk::Srand));
+			AddFunction ("systime", 0, 0, gcnew FunctionHandler (this, &StdAwk::Systime));
+			AddFunction ("strftime", 0, 2, gcnew FunctionHandler (this, &StdAwk::Strftime));
+			AddFunction ("strfgmtime", 0, 2, gcnew FunctionHandler (this, &StdAwk::Strfgmtime));
 		}
 
 		StdAwk::~StdAwk ()
@@ -95,7 +97,6 @@ namespace ASE
 			return true;
 		}
 
-		/*
 		bool StdAwk::Rand (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			ret->LongValue = random->Next ();			
@@ -104,9 +105,75 @@ namespace ASE
 
 		bool StdAwk::Srand (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->LongValue = args[0]->LongValue;
+			int prev_seed = random_seed;
+			random_seed = (int)args[0]->LongValue;
+			random = gcnew System::Random (random_seed);
+			ret->LongValue = prev_seed;
 			return true;
-		}*/
+		}
+
+		bool StdAwk::Systime (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			ret->LongValue = (long_t)::time(NULL);
+			
+			return true;
+		}
+
+		bool StdAwk::Strftime (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			wchar_t buf[128]; 
+			struct tm* tm;
+			size_t len;
+	       
+			if (args->Length < 1) 
+			{
+				const wchar_t* fmt = L"%c";
+				time_t t = (args->Length < 2)? ::time(NULL): (time_t)args[1]->LongValue;
+
+				tm = ::localtime (&t);
+				len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
+			}
+			else
+			{
+				cli::pin_ptr<const ASE::Awk::char_t> fmt = PtrToStringChars(args[0]->StringValue);
+
+				time_t t = (args->Length < 2)? ::time(NULL): (time_t)args[1]->LongValue;
+
+				tm = ::localtime (&t);
+				len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
+			}
+
+			ret->StringValue = gcnew System::String (buf, 0, len);
+			return true;			
+		}
+
+		bool StdAwk::Strfgmtime (System::String^ name, array<Argument^>^ args, Return^ ret)
+		{
+			wchar_t buf[128]; 
+			struct tm* tm;
+			size_t len;
+	       
+			if (args->Length < 1) 
+			{
+				const wchar_t* fmt = L"%c";
+				time_t t = (args->Length < 2)? ::time(NULL): (time_t)args[1]->LongValue;
+
+				tm = ::gmtime (&t);
+				len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
+			}
+			else
+			{
+				cli::pin_ptr<const ASE::Awk::char_t> fmt = PtrToStringChars(args[0]->StringValue);
+
+				time_t t = (args->Length < 2)? ::time(NULL): (time_t)args[1]->LongValue;
+
+				tm = ::gmtime (&t);
+				len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
+			}
+
+			ret->StringValue = gcnew System::String (buf, 0, len);
+			return true;			
+		}
 
 		int StdAwk::OpenFile (File^ file)
 		{
