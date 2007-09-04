@@ -7,7 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 
-namespace ASETestCNT
+namespace ase.com
 {
 	public partial class AwkForm : Form
 	{
@@ -18,7 +18,7 @@ namespace ASETestCNT
 
 		private void btnRun_Click(object sender, EventArgs e)
 		{
-			ASECNT.Awk awk = new ASECNT.StdAwk ();
+			Awk awk = new StdAwk ();
 			
 			//System.Text.Encoding.Default
 			awk.SourceInputStream = new MemoryStream (UnicodeEncoding.UTF8.GetBytes(tbxSourceInput.Text));

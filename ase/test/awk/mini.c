@@ -1,5 +1,5 @@
 /*
- * $Id: mini.c,v 1.3 2007/04/30 08:32:41 bacon Exp $
+ * $Id: mini.c,v 1.4 2007/09/03 05:20:15 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -387,7 +387,7 @@ int ase_main (int argc, ase_char_t* argv[])
 	ase_awk_setoption (awk, 
 		ASE_AWK_IMPLICIT | ASE_AWK_EXPLICIT | ASE_AWK_UNIQUEFN | 
 		ASE_AWK_IDIV | ASE_AWK_SHADING | ASE_AWK_SHIFT | 
-		ASE_AWK_EXTIO | ASE_AWK_BLOCKLESS | ASE_AWK_STRBASEONE | 
+		ASE_AWK_EXTIO | ASE_AWK_BLOCKLESS | ASE_AWK_BASEONE | 
 		ASE_AWK_STRIPSPACES | ASE_AWK_NEXTOFILE);
 
 	srcios.in = awk_srcio_in;
