@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace ASETestCNT
+namespace ase.com
 {
 	static class Program
 	{

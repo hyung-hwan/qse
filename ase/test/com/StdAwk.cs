@@ -1,12 +1,12 @@
 /*
- * $Id: StdAwk.cs,v 1.1 2007/05/01 07:47:12 bacon Exp $
+ * $Id: StdAwk.cs,v 1.1 2007/09/03 03:50:39 bacon Exp $
  */
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ASECNT
+namespace ase.com
 {
 	public class StdAwk: Awk
 	{
