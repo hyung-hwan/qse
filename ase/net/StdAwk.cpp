@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.9 2007/09/01 15:43:16 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.10 2007/09/05 14:42:06 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -214,15 +214,22 @@ namespace ASE
 
 		int StdAwk::CloseFile (File^ file)
 		{
-			if (file->Mode == File::MODE::READ)
+			if (file->Mode->Equals(File::MODE::READ))
 			{
 				System::IO::StreamReader^ sr = (System::IO::StreamReader^)file->Handle;
 				sr->Close ();
 			}
 			else
 			{
+				try{
 				System::IO::StreamWriter^ sw = (System::IO::StreamWriter^)file->Handle;
 				sw->Close ();
+				}
+				catch (...)
+
+				{
+					System::Diagnostics::Debug::Print ("XXXXXX");
+				}
 			}
 			return 0;
 		}

@@ -52,6 +52,7 @@ namespace ase.net
 			this.btnAddArgument = new System.Windows.Forms.Button();
 			this.tbxArgument = new System.Windows.Forms.TextBox();
 			this.lbxArguments = new System.Windows.Forms.ListBox();
+			this.chkStripSpaces = new System.Windows.Forms.CheckBox();
 			this.tableLayoutPanel1.SuspendLayout();
 			this.panel1.SuspendLayout();
 			this.panel3.SuspendLayout();
@@ -77,7 +78,7 @@ namespace ase.net
 			// btnRun
 			// 
 			this.btnRun.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnRun.Location = new System.Drawing.Point(76, 303);
+			this.btnRun.Location = new System.Drawing.Point(78, 327);
 			this.btnRun.Name = "btnRun";
 			this.btnRun.Size = new System.Drawing.Size(75, 23);
 			this.btnRun.TabIndex = 2;
@@ -267,6 +268,7 @@ namespace ase.net
 			// groupBox1
 			// 
 			this.groupBox1.AutoSize = true;
+			this.groupBox1.Controls.Add(this.chkStripSpaces);
 			this.groupBox1.Controls.Add(this.chkPassArgumentsToEntryPoint);
 			this.groupBox1.Controls.Add(this.btnClearAllArguments);
 			this.groupBox1.Controls.Add(this.btnAddArgument);
@@ -274,7 +276,7 @@ namespace ase.net
 			this.groupBox1.Controls.Add(this.lbxArguments);
 			this.groupBox1.Location = new System.Drawing.Point(0, 51);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(154, 247);
+			this.groupBox1.Size = new System.Drawing.Size(154, 270);
 			this.groupBox1.TabIndex = 0;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Arguments";
@@ -325,6 +327,18 @@ namespace ase.net
 			this.lbxArguments.Name = "lbxArguments";
 			this.lbxArguments.Size = new System.Drawing.Size(147, 134);
 			this.lbxArguments.TabIndex = 0;
+			// 
+			// chkStripSpaces
+			// 
+			this.chkStripSpaces.AutoSize = true;
+			this.chkStripSpaces.Checked = true;
+			this.chkStripSpaces.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.chkStripSpaces.Location = new System.Drawing.Point(19, 234);
+			this.chkStripSpaces.Name = "chkStripSpaces";
+			this.chkStripSpaces.Size = new System.Drawing.Size(86, 17);
+			this.chkStripSpaces.TabIndex = 5;
+			this.chkStripSpaces.Text = "Strip Spaces";
+			this.chkStripSpaces.UseVisualStyleBackColor = true;
 			// 
 			// AwkForm
 			// 
@@ -381,5 +395,6 @@ namespace ase.net
 		private System.Windows.Forms.Label label3;
 		private System.Windows.Forms.Panel panel5;
 		private System.Windows.Forms.Label label4;
+		private System.Windows.Forms.CheckBox chkStripSpaces;
 	}
 }
