@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.13 2007/08/26 14:33:38 bacon Exp $
+ * $Id: awk.c,v 1.14 2007/09/05 14:42:06 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -791,7 +791,7 @@ static void on_run_end (ase_awk_run_t* run, int errnum, void* custom_data)
 
 static void print_usage (const ase_char_t* argv0)
 {
-	ase_printf (ASE_T("Usage: %s [-m] [-d] [-a argument]* -f source-file [data-file]*\n"), argv0);
+	ase_printf (ASE_T("Usage: %s [-m] [-d] [-ns] [-a argument]* -f source-file [data-file]*\n"), argv0);
 }
 
 static int run_awk (ase_awk_t* awk, 
@@ -939,6 +939,11 @@ static int awk_main (int argc, ase_char_t* argv[])
 			{
 				/* specify arguments */
 				mode = 2;
+			}
+			else if (ase_strcmp(argv[i], ASE_T("-ns")) == 0)
+			{
+				/* no space stripping */ 
+				opt &= ~ASE_AWK_STRIPSPACES;
 			}
 			else if (argv[i][0] == ASE_T('-'))
 			{
