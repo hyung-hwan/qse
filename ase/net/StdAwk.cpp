@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.10 2007/09/05 14:42:06 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.12 2007/09/06 09:23:34 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -112,6 +112,13 @@ namespace ASE
 			return true;
 		}
 
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER>=1400)
+	#define time_t __time64_t
+	#define time _time64
+	#define localtime _localtime64
+	#define gmtime _gmtime64
+#endif
+
 		bool StdAwk::Systime (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			ret->LongValue = (long_t)::time(NULL);
@@ -221,15 +228,8 @@ namespace ASE
 			}
 			else
 			{
-				try{
 				System::IO::StreamWriter^ sw = (System::IO::StreamWriter^)file->Handle;
 				sw->Close ();
-				}
-				catch (...)
-
-				{
-					System::Diagnostics::Debug::Print ("XXXXXX");
-				}
 			}
 			return 0;
 		}

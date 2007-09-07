@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.22 2007/08/24 13:17:59 bacon Exp $
+ * $Id: Awk.cpp,v 1.23 2007/09/06 08:44:42 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -87,7 +87,15 @@ namespace ASE
 		const char_t* getErrorString (ASE::Net::Awk^ wrapper, ErrorCode num) const
 		{
 			this->wrapper = wrapper;
-			const char_t* x = Awk::getErrorString(num);
+			const char_t* x = Awk::getErrorString (num);
+			this->wrapper = nullptr;
+			return x;
+		}
+
+		int setErrorString (ASE::Net::Awk^ wrapper, ErrorCode num, const char_t* msg)
+		{
+			this->wrapper = wrapper;
+			int x = Awk::setErrorString (num, msg);
 			this->wrapper = nullptr;
 			return x;
 		}
@@ -165,6 +173,7 @@ namespace ASE
 		void onRunStart (const Run& run)
 		{
 			wrapper->runErrorReported = false;
+			wrapper->stopRequested = false;
 
 			if (wrapper->OnRunStart != nullptr)
 			{
@@ -197,6 +206,8 @@ namespace ASE
 
 		void onRunStatement (const Run& run, size_t line)
 		{
+			if (wrapper->stopRequested) run.stop ();
+
 			if (wrapper->OnRunStatement != nullptr)
 			{
 				wrapper->OnRunStatement (wrapper);
@@ -650,6 +661,20 @@ namespace ASE
 			if (awk != NULL) awk->setOption (this, (int)this->option);
 		}
 
+		bool Awk::SetErrorString (Awk::ERROR num, System::String^ msg)
+		{
+			if (awk == NULL) 
+			{
+				setError (ERROR::NOPER);
+				return false;
+			}
+
+			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(msg);
+			bool r = (awk->setErrorString (this, (ASE::Awk::ErrorCode)num, nptr) == 0);
+			if (!r) { retrieveError (); }
+			return r;
+		}
+
 		void Awk::Close ()
 		{
 			if (awk != NULL) 
@@ -687,6 +712,7 @@ namespace ASE
 		bool Awk::Run (System::String^ entryPoint, cli::array<System::String^>^ args)
 		{
 			runErrorReported = false;
+			stopRequested = false;
 
 			if (awk == NULL) 
 			{
@@ -694,11 +720,12 @@ namespace ASE
 				return false;
 			}
 
-			if (OnRunStart != nullptr || OnRunEnd != nullptr || 
-				OnRunReturn != nullptr || OnRunStatement != nullptr)
-			{
+			// callback needs to be enabled to support the Stop method
+			//if (OnRunStart != nullptr || OnRunEnd != nullptr || 
+			//   OnRunReturn != nullptr || OnRunStatement != nullptr)
+			//{
 				awk->enableRunCallback (this);
-			}
+			//}
 
 			if (args == nullptr || args->Length <= 0)
 			{
@@ -799,6 +826,11 @@ namespace ASE
 					return false;
 				}
 			}
+		}
+
+		void Awk::Stop ()
+		{
+			stopRequested = true;
 		}
 
 		bool Awk::AddFunction (

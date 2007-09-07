@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.20 2007/08/26 14:33:38 bacon Exp $
+ * $Id: Awk.hpp,v 1.21 2007/09/06 08:44:42 bacon Exp $
  */
 
 #pragma once
@@ -470,6 +470,11 @@ namespace ASE
 			virtual bool Run ();
 			virtual bool Run (System::String^ entryPoint, cli::array<System::String^>^ args);
 
+			/**
+			 * sets the request to stop the Run method
+			 */
+			virtual void Stop ();
+
 			delegate void RunStartHandler (Awk^ awk);
 			delegate void RunEndHandler  (Awk^ awk);
 			delegate void RunReturnHandler (Awk^ awk);
@@ -491,10 +496,12 @@ namespace ASE
 			virtual bool SetMaxDepth (DEPTH id, size_t depth);
 			virtual bool GetMaxDepth (DEPTH id, size_t* depth);
 
+			virtual bool SetErrorString (ERROR num, System::String^ str);
+			
 			property OPTION Option
 			{
-				OPTION get (); //{ return this->option; }
-				void set (OPTION opt); //{ this->option = opt; }
+				OPTION get ();
+				void set (OPTION opt);
 			}
 
 			property System::String^ ErrorMessage
@@ -567,6 +574,7 @@ namespace ASE
 			void setError (ERROR num);
 			void retrieveError ();
 			bool runErrorReported; // only used if the run-callback is activated.
+			bool stopRequested;
 		};
 
 	}

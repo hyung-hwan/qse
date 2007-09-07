@@ -36,7 +36,7 @@ BEGIN {
 	for (pc = 0; pc >= 0; ) {
 		addr = mem[pc] % 1000;
 		code = int(mem[pc++] / 1000);
-		if      (code == op["get"])  { getline acc; }
+		if      (code == op["get"])  { if (getline acc <= 0) acc = 0; }
 		else if (code == op["put"])  { print acc; }
 		else if (code == op["st"])   { mem[addr] = acc; }
 		else if (code == op["ld"])   { acc = mem[addr]; }
