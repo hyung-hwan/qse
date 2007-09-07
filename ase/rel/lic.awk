@@ -1,11 +1,11 @@
 /*
- * $Id: lic.awk,v 1.3 2007/04/30 08:32:40 bacon Exp $
+ * $Id: lic.awk,v 1.4 2007/09/06 09:05:32 bacon Exp $
  *
  * {License}
  */
 
 NR == 1 { 
-	new_file = ARGV[0];
+	new_file = ARGV[1];
 	printf "" > new_file; /* clear the file */
 }
 

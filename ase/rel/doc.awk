@@ -1,5 +1,5 @@
 /*
- * $Id: doc.awk,v 1.3 2007/04/30 08:32:40 bacon Exp $
+ * $Id: doc.awk,v 1.4 2007/09/06 09:05:32 bacon Exp $
  *
  * {License}
  */
@@ -56,7 +56,7 @@ BEGIN {
 	empty_line_count = 0;
 	para_started = 0;
 
-	#output=ARGV[0];
+	#output=ARGV[1];
 	#gsub (/\.man/, ".html", output);
 	#print "OUTPUT TO: " output;
 

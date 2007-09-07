@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.52 2007/08/26 14:33:38 bacon Exp $
+ * $Id: Awk.cpp,v 1.53 2007/09/06 08:44:42 bacon Exp $
  */
 
 
@@ -55,6 +55,16 @@ namespace ASE
 	void Awk::Extio::setHandle (void* handle)
 	{
 		extio->handle = handle;
+	}
+
+	const Awk::extio_t* Awk::Extio::getRawExtio () const
+	{
+		return extio;
+	}
+
+	const Awk::run_t* Awk::Extio::getRawRun () const
+	{
+		return extio->run;
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -690,14 +700,8 @@ namespace ASE
 				runarg[i].ptr = ase_awk_strxdup (awk, args[i], runarg[i].len);
 				if (runarg[i].ptr == ASE_NULL)
 				{
-					if (i > 0)
-					{
-						for (i-- ; i > 0; i--)
-						{
-							ase_awk_free (awk, runarg[i].ptr);
-						}
-					}
-
+					while (i > 0) ase_awk_free (awk, runarg[--i].ptr);
+					ase_awk_free (awk, runarg);
 					setError (ERR_NOMEM);
 					return -1;
 				}
@@ -706,7 +710,7 @@ namespace ASE
 			runarg[i].ptr = ASE_NULL;
 			runarg[i].len = 0;
 		}
-
+		
 		int n = ase_awk_run (
 			awk, main, &runios, 
 			(runCallback? &runcbs: ASE_NULL), 
@@ -715,10 +719,7 @@ namespace ASE
 
 		if (runarg != ASE_NULL) 
 		{
-			for (i--; i > 0; i--)
-			{
-				ase_awk_free (awk, runarg[i].ptr);
-			}
+			while (i > 0) ase_awk_free (awk, runarg[--i].ptr);
 			ase_awk_free (awk, runarg);
 		}
 

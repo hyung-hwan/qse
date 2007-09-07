@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cs,v 1.1 2007/09/03 03:50:39 bacon Exp $
+ * $Id: Awk.cs,v 1.2 2007/09/06 09:37:42 bacon Exp $
  */
 
 using System;
@@ -142,10 +142,10 @@ namespace ase.com
 			set { awk.SupportBlockless = value; }
 		}
 
-		public bool StringBaseOne
+		public bool BaseOne
 		{
-			get { return awk.StringBaseOne; }
-			set { awk.StringBaseOne = value; }
+			get { return awk.BaseOne; }
+			set { awk.BaseOne = value; }
 		}
 
 		public bool StripSpaces

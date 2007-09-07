@@ -12,6 +12,17 @@ namespace ase.net
 		System.Windows.Forms.TextBox consoleInput;
 		System.Windows.Forms.TextBox consoleOutput;
 
+		System.ComponentModel.ISynchronizeInvoke si;
+
+		public Awk(System.ComponentModel.ISynchronizeInvoke si)
+		{
+			this.si = si;
+			SetSourceOutputHandlers += SetSourceOutput;
+			SetConsoleOutputHandlers += SetConsoleOutput;
+
+			AddFunction("sleep", 1, 1, Sleep);
+		}
+
 		public bool Parse(
 			System.Windows.Forms.TextBox sourceInput, 
 			System.Windows.Forms.TextBox sourceOutput)
@@ -29,6 +40,13 @@ namespace ase.net
 			this.consoleInput = consoleInput;
 			this.consoleOutput = consoleOutput;
 			return base.Run(main, args);
+		}
+
+		protected bool Sleep(string name, Argument[] args, Return ret)
+		{
+			System.Threading.Thread.Sleep((int)(args[0].LongValue*1000));	
+			ret.LongValue = 0;
+			return true;
 		}
 
 		protected override int OpenSource(ASE.Net.StdAwk.Source source)
@@ -63,6 +81,22 @@ namespace ase.net
 			return -1;
 		}
 
+		public delegate void SetSourceOutputHandler(string text);
+		public delegate void SetConsoleOutputHandler(string text);
+
+		public event SetSourceOutputHandler SetSourceOutputHandlers;
+		public event SetConsoleOutputHandler SetConsoleOutputHandlers;
+		
+		private void SetSourceOutput(string text)
+		{
+			sourceOutput.Text = text;
+		}
+
+		private void SetConsoleOutput(string text)
+		{
+			consoleOutput.Text = text;
+		}
+
 		protected override int CloseSource(ASE.Net.StdAwk.Source source)
 		{
 			if (source.Mode.Equals(ASE.Net.StdAwk.Source.MODE.READ))
@@ -75,9 +109,16 @@ namespace ase.net
 			{
 				System.IO.StreamWriter sw = (System.IO.StreamWriter)source.Handle;
 				sw.Flush();
+
 				System.IO.MemoryStream ms = (System.IO.MemoryStream)sw.BaseStream;
-				sourceOutput.Text = UnicodeEncoding.UTF8.GetString(ms.GetBuffer());
 				sw.Close();
+
+				// MSDN: This method(GetBuffer) works when the memory stream is closed.
+				//sourceOutput.Text = UnicodeEncoding.UTF8.GetString(ms.GetBuffer());
+				if (si != null && si.InvokeRequired)
+					si.Invoke(SetSourceOutputHandlers, new object[] { UnicodeEncoding.UTF8.GetString(ms.GetBuffer()) });
+				else SetSourceOutput (UnicodeEncoding.UTF8.GetString(ms.GetBuffer()));
+
 				return 0;
 			}
 
@@ -130,9 +171,16 @@ namespace ase.net
 			{
 				System.IO.StreamWriter sw = (System.IO.StreamWriter)console.Handle;
 				sw.Flush();
+
 				System.IO.MemoryStream ms = (System.IO.MemoryStream)sw.BaseStream;
-				consoleOutput.Text = UnicodeEncoding.UTF8.GetString(ms.GetBuffer());
 				sw.Close();
+				
+				// MSDN: This method(GetBuffer) works when the memory stream is closed.
+				//consoleOutput.Text = UnicodeEncoding.UTF8.GetString(ms.GetBuffer());
+				if (si != null && si.InvokeRequired)
+					si.Invoke(SetConsoleOutputHandlers, new object[] { UnicodeEncoding.UTF8.GetString(ms.GetBuffer()) });
+				else SetConsoleOutput(UnicodeEncoding.UTF8.GetString(ms.GetBuffer()));
+
 				return 0;
 			}
 
@@ -141,7 +189,7 @@ namespace ase.net
 
 		protected override int ReadConsole(ASE.Net.StdAwk.Console console, char[] buf, int len)
 		{
-			System.IO.StreamReader sr = (System.IO.StreamReader)console.Handle;
+			System.IO.StreamReader sr = (System.IO.StreamReader)console.Handle;			
 			return sr.Read(buf, 0, len);
 		}
 
@@ -149,6 +197,7 @@ namespace ase.net
 		{
 			System.IO.StreamWriter sw = (System.IO.StreamWriter)console.Handle;
 			sw.Write(buf, 0, len);
+			sw.Flush();
 			return len;
 		}
 

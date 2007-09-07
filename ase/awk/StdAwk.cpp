@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.24 2007/08/26 14:33:38 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.25 2007/09/06 09:23:34 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -128,6 +128,13 @@ namespace ASE
 		::srand (seed);
 		return ret->set ((long_t)prevSeed);
 	}
+
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER>=1400)
+	#define time_t __time64_t
+	#define time _time64
+	#define localtime _localtime64
+	#define gmtime _gmtime64
+#endif
 
 	int StdAwk::systime (Return* ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len)
