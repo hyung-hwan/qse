@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h,v 1.5 2007/05/06 10:08:36 bacon Exp $
+ * $Id: macros.h,v 1.6 2007/09/07 05:40:16 bacon Exp $
  *
  * {License}
  */
@@ -149,5 +149,13 @@
 #define ASE_ISPUNCT(ccls,c)  (ccls)->is_punct((ccls)->custom_data,c)
 #define ASE_TOUPPER(ccls,c)  (ccls)->to_upper((ccls)->custom_data,c)
 #define ASE_TOLOWER(ccls,c)  (ccls)->to_lower((ccls)->custom_data,c)
+
+
+#ifdef __cplusplus
+	#define ASE_BEGIN_NAMESPACE(x)    namespace x {
+	#define ASE_END_NAMESPACE(x)      }
+	#define ASE_BEGIN_NAMESPACE2(x,y) namespace x { namespace y {
+	#define ASE_END_NAMESPACE2(y,x)   }}
+#endif
 
 #endif
