@@ -1,28 +1,117 @@
-OUT = asestx
+#
+# $Id: makefile.in,v 1.4 2007/09/11 13:42:54 bacon Exp $
+#
 
-C_SRCS = stx.c memory.c object.c symbol.c class.c array.c \
-	dict.c misc.c context.c name.c token.c parser.c bootstrp.c \
-	bytecode.c interp.c
+NAME = asestx
 
-C_OBJS = $(C_SRCS:.c=.o)
+TOP_BUILDDIR = @abs_top_builddir@
+TOP_INSTALLDIR = @prefix@/ase
 
 CC = @CC@
+CXX = @CXX@
 AR = ar
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
+CXXFLAGS = @CXXFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
+MODE = @BUILDMODE@
 
-all: lib 
+JAVAC = @JAVAC@
+JAR = @JAR@
+CFLAGS_JNI = @CFLAGS_JNI@
+JNI = @JNI@
 
-lib: $(C_OBJS)
-	$(AR) cr lib$(OUT).a $(C_OBJS)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib lib$(OUT).a; fi
+LIBTOOL_COMPILE = ../libtool --mode=compile
+LIBTOOL_LINK = ../libtool --mode=link 
+
+OUT_DIR = ../$(MODE)/lib
+OUT_FILE_LIB = $(OUT_DIR)/lib$(NAME).a
+OUT_FILE_JNI = $(OUT_DIR)/lib$(NAME)_jni.la
+OUT_FILE_LIB_CXX = $(OUT_DIR)/lib$(NAME)++.a
+OUT_FILE_JAR = $(OUT_DIR)/$(NAME).jar
+
+TMP_DIR = $(MODE)
+TMP_DIR_CXX = $(TMP_DIR)/cxx
+
+OBJ_FILES_LIB = \
+	$(TMP_DIR)/stx.o \
+	$(TMP_DIR)/memory.o \
+	$(TMP_DIR)/object.o \
+	$(TMP_DIR)/symbol.o \
+	$(TMP_DIR)/class.o \
+	$(TMP_DIR)/array.o \
+	$(TMP_DIR)/dict.o \
+	$(TMP_DIR)/misc.o \
+	$(TMP_DIR)/context.o \
+	$(TMP_DIR)/name.o \
+	$(TMP_DIR)/token.o \
+	$(TMP_DIR)/parser.o \
+	$(TMP_DIR)/bootstrp.o \
+	$(TMP_DIR)/bytecode.o \
+	$(TMP_DIR)/interp.o
+
+OBJ_FILES_SO = $(OBJ_FILES_LIB:.o=.lo) 
+
+lib: build
+
+build: $(OUT_FILE_LIB) 
+
+$(OUT_FILE_LIB): $(TMP_DIR) $(OUT_DIR) $(OBJ_FILES_LIB)
+	$(AR) cr $(OUT_FILE_LIB) $(OBJ_FILES_LIB)
+	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE_LIB); fi
+
+$(TMP_DIR)/stx.o: stx.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c stx.c
+
+$(TMP_DIR)/memory.o: memory.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c memory.c
+
+$(TMP_DIR)/object.o: object.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c object.c
+
+$(TMP_DIR)/symbol.o: symbol.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c symbol.c
+
+$(TMP_DIR)/class.o: class.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c class.c
+
+$(TMP_DIR)/array.o: array.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c array.c
+
+$(TMP_DIR)/dict.o: dict.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c dict.c
+
+$(TMP_DIR)/misc.o: misc.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c misc.c
+
+$(TMP_DIR)/context.o: context.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c context.c
+
+$(TMP_DIR)/name.o: name.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c name.c
+
+$(TMP_DIR)/token.o: token.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c token.c
+
+$(TMP_DIR)/parser.o: parser.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c parser.c
+
+$(TMP_DIR)/bootstrp.o: bootstrp.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c bootstrp.c
+
+$(TMP_DIR)/bytecode.o: bytecode.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c bytecode.c
+
+$(TMP_DIR)/interp.o: interp.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c interp.c
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
 
 clean:
-	rm -rf $(OBJS) lib$(OUT).a *.o
-
-.SUFFIXES: .c .o
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+	rm -rf $(OUT_FILE_LIB) $(OBJ_FILES_LIB) 
 
