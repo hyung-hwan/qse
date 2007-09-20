@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.53 2007/09/07 05:40:16 bacon Exp $
+ * $Id: Awk.hpp,v 1.54 2007/09/18 14:30:41 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -561,13 +561,29 @@ protected:
 
 	/** 
 	 * @name Source code I/O handlers
-	 * A subclass should override the following methods to 
-	 * support the source code input and output.
-	 * The awk interpreter calls the following methods when
-	 * the parse method is invoked.
+	 * A subclass should override the following methods to support the 
+	 * source code input and output. The awk interpreter calls the 
+	 * following methods when the parse method is invoked.
+	 *
+	 * To read the source code, the interpter calls Awk::openSource with 
+	 * an Awk::Source object whose mode is set to Awk::Source::READ. 
+	 * If Awk::openSource returns 1, it calls Awk::readSource with 
+	 * the Awk::Source object subsequently until it returns 0. Finally, 
+	 * it calls Awk::closeSource with the same Awk::Source object. 
+	 * If Awk::openSource returns 0, the interpreter calls Awk::closeSource
+	 * immediately without calling Awk::readSource. If Awk::openSource 
+	 * returns -1, Awk::closeSource is not called. If readSource returns 
+	 * -1, the source code reading is aborted and Awk::closeSource is 
+	 *  called.
+	 *
+	 * The interpter is able to write back the internal parse tree
+	 * if openSource returns 1 when the mode of the Source object 
+	 * is set to Awk::Source::WRITE. Then it calls writeSource until
+	 * it has finished writing the parse tree, and calls closeSource.
+	 *
 	 */
 	/*@{*/
-	/** opens the source stream */
+	/** opens the source stream. */
 	virtual int     openSource  (Source& io) = 0;
 	/** closes the source stream */
 	virtual int     closeSource (Source& io) = 0;

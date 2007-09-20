@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cs,v 1.2 2007/09/06 09:37:42 bacon Exp $
+ * $Id: Awk.cs,v 1.3 2007/09/18 14:30:41 bacon Exp $
  */
 
 using System;
@@ -50,7 +50,7 @@ namespace ase.com
 				icpc.FindConnectionPoint(ref g, out icp);
 				icp.Advise(this, out this.cookie);
 			}
-			catch (System.Runtime.InteropServices.COMException ex)
+			catch (System.Runtime.InteropServices.COMException)
 			{
 				this.cookie = -1;
 				//System.Windows.Forms.MessageBox.Show(ex.Message);
