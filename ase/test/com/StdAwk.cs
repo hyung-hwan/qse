@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cs,v 1.1 2007/09/03 03:50:39 bacon Exp $
+ * $Id: StdAwk.cs,v 1.2 2007/09/18 14:30:41 bacon Exp $
  */
 
 using System;
@@ -37,7 +37,7 @@ namespace ase.com
 
 				/* TODO: atoi */
 				try { t = System.Double.Parse((string)args[0]); }
-				catch (System.Exception e) { t = 0; }
+				catch (System.Exception) { t = 0; }
 
 				return System.Math.Sin(t);
 			}
