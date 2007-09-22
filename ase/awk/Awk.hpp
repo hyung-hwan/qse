@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.54 2007/09/18 14:30:41 bacon Exp $
+ * $Id: Awk.hpp,v 1.55 2007/09/19 11:38:12 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -575,6 +575,8 @@ protected:
 	 * returns -1, Awk::closeSource is not called. If readSource returns 
 	 * -1, the source code reading is aborted and Awk::closeSource is 
 	 *  called.
+	 *
+	 * \image html awk-extio.png
 	 *
 	 * The interpter is able to write back the internal parse tree
 	 * if openSource returns 1 when the mode of the Source object 
