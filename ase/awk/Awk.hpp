@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.55 2007/09/19 11:38:12 bacon Exp $
+ * $Id: Awk.hpp,v 1.56 2007/09/21 15:29:51 bacon Exp $
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -14,87 +14,165 @@ ASE_BEGIN_NAMESPACE(ASE)
 /////////////////////////////////
 
 /** 
- * Provides the awk interpreter engine
+ * Represents the awk interpreter engine
  */
 class Awk
 {
 public:
-	/**
-	 * boolean data type
-	 */
+	/** boolean data type */
 	typedef ase_bool_t  bool_t;
-
-	/**
-	 * data type that can hold any character
-	 */
-
+	/** data type that can hold any character */
 	typedef ase_char_t  char_t;
-
-	/**
-	 * data type that can hold any character or 
-	 * an end-of-file value 
-	 */
+	/** data type that can hold any character or an end-of-file value */
 	typedef ase_cint_t  cint_t;
-
 
 	typedef ase_size_t  size_t;
 	typedef ase_ssize_t ssize_t;
 	typedef ase_long_t  long_t;
 	typedef ase_real_t  real_t;
 
-	/**
-	 * represents an internal awk value
-	 */
+	/** represents an internal awk value */
 	typedef ase_awk_val_t val_t;
-
-	/**
-	 * represents the internal hash table
-	 */
+	/** represents the internal hash table */
 	typedef ase_awk_map_t map_t;
-
-	/**
-	 * represents a key/value pair
-	 */
+	/** represents a key/value pair */
 	typedef ase_awk_pair_t pair_t;
-
-	/**
-	 * represents the external i/o operation
-	 */
+	/** represents the external i/o context */
 	typedef ase_awk_extio_t extio_t;
-
-	/**
-	 * represents the run-time instance of an awk interpreter
-	 */
+	/** represents the run-time context */
 	typedef ase_awk_run_t run_t;
-
-	/**
-	 * reprensts the underlying awk interpreter
-	 */
+	/** reprensts the underlying awk interpreter */
 	typedef ase_awk_t awk_t;
 
 	/**
-	 * The source class 
-	 * @see openSource
+	 * Represents the source code I/O context for Awk::parse.
+	 * An instance of Awk::Source is passed to Awk::openSource, 
+	 * Awk::readSource, Awk::writeSource, Awk::closeSource
+	 * when Awk::parse calls them to read the source code and write the 
+	 * internal parse tree. It indicates the mode of the context and
+	 * provides space for data that may be needed for the I/O operation.
 	 */
 	class Source
 	{
 	public:
-		/**
-		 * Indicates the mode of the source code I/O
-		 */
+		friend class Awk;
+
+		/** Mode of source code I/O. */
 		enum Mode
 		{	
-			READ,   /**< readable I/O */
-			WRITE   /**< writable I/O */
+			READ,   /**< source code read. */
+			WRITE   /**< source code write. */
 		};
 
+	protected:
 		Source (Mode mode);
 
+	public:
+		/**
+		 * Returns the mode of the source code I/O. 
+		 * You may call this method in Awk::openSource and 
+		 * Awk::closeSource to determine the mode as shown in 
+		 * the example below. This method always returns Source::READ 
+		 * and Source::WRITE respectively when called from 
+		 * Awk::readSource and Awk::writeSource.
+		 *
+		 * <pre>
+		 * int openSource (Source& io)
+		 * {
+		 * 	if (io.getMode() == Source::READ)
+		 * 	{
+		 * 		// open for reading 
+		 * 		return 1;
+		 * 	}
+		 * 	else (io.getMode() == Source::WRITE)
+		 * 	{
+		 *		// open for writing
+		 *		return 1;
+		 * 	}
+		 * 	return -1;
+		 * }
+		 *
+		 * int closeSource (Source& io)
+		 * {
+		 * 	if (io.getMode() == Source::READ)
+		 * 	{
+		 * 		// close for reading 
+		 * 		return 0;
+		 * 	}
+		 * 	else (io.getMode() == Source::WRITE)
+		 * 	{
+		 *		// close for writing
+		 *		return 0;
+		 * 	}
+		 * 	return -1;
+		 * }
+		 * </pre>
+		 *
+		 * @return Awk::Source::READ or Awk::Source::WRITE
+		 */
 		Mode getMode() const;
+
+		/**
+		 * Returns the value set with Source::setHandle. 
+		 * ASE_NULL is returned if it has not been set with 
+		 * Source::setHandle. You usually call this method
+		 * from Awk::readSource, Awk::writeSource, and 
+		 * Awk::closeSource to get the value set in Awk::openSource
+		 * as shown in the example below.
+		 *
+		 * <pre>
+		 * int closeSource (Source& io)
+		 * {
+		 * 	if (io.getMode() == Source::READ)
+		 * 	{
+		 * 		fclose ((FILE*)io.getHandle());
+		 * 		return 0;
+		 * 	}
+		 * 	else (io.getMode() == Source::WRITE)
+		 * 	{
+		 * 		fclose ((FILE*)io.getHandle());
+		 * 		return 0;
+		 * 	}
+		 * 	return -1;
+		 * }
+		 * </pre>
+		 *
+		 * @return an arbitrary value of type void* set with 
+		 *         Source::setHandle or ASE_NULL
+		 */
 		const void* getHandle () const;
+
+		/**
+		 * Sets the handle value. Source::getHandle can retrieve
+		 * the value set with Source::setHandle. You usually call 
+		 * this from Awk::openSource as shown in the example below.
+		 *
+		 * <pre>
+		 * int openSource (Source& io)
+		 * {
+		 * 	if (io.getMode() == Source::READ)
+		 * 	{
+		 * 		FILE* fp = fopen ("t.awk", "r");
+		 * 		if (fp == NULL) return -1;
+		 * 		io.setHandle (fp);
+		 * 		return 1;
+		 * 	}
+		 * 	else (io.getMode() == Source::WRITE)
+		 * 	{
+		 * 		FILE* fp = fopen ("t.out", "w");
+		 * 		if (fp == NULL) return -1;
+		 * 		io.setHandle (fp);
+		 *		return 1;
+		 * 	}
+		 * 	return -1;
+		 * }
+		 * </pre>
+		 *
+		 * @param handle an arbitrary value of the type void*
+		 */
 		void  setHandle (void* handle);
 
-	private:
+	protected:
 		Mode  mode;
 		void* handle;
 	};
@@ -113,12 +191,12 @@ public:
 		void  setHandle (void* handle);
 
 		/** 
-		 * returns the underlying extio_t handle
+		 * Returns the underlying extio_t handle
 		 */
 		const extio_t* getRawExtio () const;
 
 		/**
-		 * returns the underlying run_t handle associated 
+		 * Returns the underlying run_t handle associated 
 		 * with the underlying extio_t handle
 		 */
 		const run_t* getRawRun () const;
@@ -445,7 +523,7 @@ public:
 	// end of enum Option
 
 	/**
-	 * Run
+	 * Represents the execution context
 	 */
 	class Run
 	{
@@ -470,8 +548,13 @@ public:
 	Awk ();
 	virtual ~Awk ();
 	
+	/** Returns the error code */
 	ErrorCode getErrorCode () const;
+
+	/** Returns the line of the source code where the error occurred */
 	size_t getErrorLine () const ;
+
+	/** Returns the error message */
 	const char_t* getErrorMessage () const;
 
 protected:
@@ -516,42 +599,51 @@ public:
 	virtual int unsetAllWords ();
 
 	/**
-	 * parses the source code
+	 * Parses the source code.
+	 *
+	 * Awk::parse parses the source and optionally can write the parse tree.
+	 * @return 0 on success, -1 on error
 	 */
 	virtual int parse ();
 
 	/**
-	 * executes the parse tree
+	 * Executes the parse tree.
+	 *
+	 * Awk::run executes the parse tree created by Awk::parse.
+	 * @param main name of an entry point
+	 * @param args pointer to an array of character strings
+	 * @param nargs number of characters strings in the array
+	 * @return 0 on success, -1 on error
 	 */
 	virtual int run (const char_t* main = ASE_NULL, 
 	         const char_t** args = ASE_NULL, size_t nargs = 0);
 
 	/**
-	 * defines the user-defined function 
+	 * Represents a user-defined function 
 	 */
 	typedef int (Awk::*FunctionHandler) (
 		Return* ret, const Argument* args, size_t nargs, 
 		const char_t* name, size_t len);
 
 	/**
-	 * adds a new user-defined function
+	 * Adds a new user-defined function
 	 */
 	virtual int addFunction (
 		const char_t* name, size_t minArgs, size_t maxArgs, 
 		FunctionHandler handler);
 
 	/**
-	 * deletes a user-defined function
+	 * Deletes a user-defined function
 	 */
 	virtual int deleteFunction (const char_t* main);
 
 	/**
-	 * enables the run-time callback
+	 * Enables the run-time callback
 	 */
 	virtual void enableRunCallback ();
 
 	/**
-	 * disables the run-time callback
+	 * Disables the run-time callback
 	 */
 	virtual void disableRunCallback ();
 
@@ -565,33 +657,68 @@ protected:
 	 * source code input and output. The awk interpreter calls the 
 	 * following methods when the parse method is invoked.
 	 *
-	 * To read the source code, the interpter calls Awk::openSource with 
-	 * an Awk::Source object whose mode is set to Awk::Source::READ. 
-	 * If Awk::openSource returns 1, it calls Awk::readSource with 
-	 * the Awk::Source object subsequently until it returns 0. Finally, 
-	 * it calls Awk::closeSource with the same Awk::Source object. 
-	 * If Awk::openSource returns 0, the interpreter calls Awk::closeSource
-	 * immediately without calling Awk::readSource. If Awk::openSource 
-	 * returns -1, Awk::closeSource is not called. If readSource returns 
-	 * -1, the source code reading is aborted and Awk::closeSource is 
-	 *  called.
+	 * To read the source code, Awk::parse calls Awk::openSource, 
+	 * Awk::readSource, and Awk::closeSource as shown in the diagram below.
+	 * Any failures wll cause Awk::parse to return an error.
 	 *
-	 * \image html awk-extio.png
+	 * \image html awk-srcio-read.png
 	 *
-	 * The interpter is able to write back the internal parse tree
-	 * if openSource returns 1 when the mode of the Source object 
-	 * is set to Awk::Source::WRITE. Then it calls writeSource until
-	 * it has finished writing the parse tree, and calls closeSource.
+	 * Awk::parse is able to write back the internal parse tree by
+	 * calling Awk::openSource, Awk::writeSource, and Awk::closeSource
+	 * as shown in the diagram below. Any failures will cause Awk::parse
+	 * to return an error.
 	 *
+	 * \image html awk-srcio-write.png
+	 *
+	 * Awk::parse passes an instance of Awk::Source when invoking these
+	 * methods. You can determine the context of the method by calling
+	 * Awk::Source::getMode and inspecting its return value. You may use
+	 * Awk::Source::getHandle and Awk::Source::setHandle to store and
+	 * retrieve the custom information needed to complete the operation.
 	 */
 	/*@{*/
-	/** opens the source stream. */
-	virtual int     openSource  (Source& io) = 0;
-	/** closes the source stream */
-	virtual int     closeSource (Source& io) = 0;
-	/** reads from the source stream */
+	/** 
+	 * Opens the source code stream. 
+	 * A subclass should override this method. It should return 1 on
+	 * success, -1 on failure, and 0 if the opening operation
+	 * is successful but has reached the end of the stream.
+	 * @param io  I/O context passed from Awk::parse
+	 * @see Awk::Source::getMode, Awk::Source::setHandle
+	 */
+	virtual int openSource  (Source& io) = 0;
+
+	/** 
+	 * Closes the source code stream.
+	 * A subclass should override this method. It should return 0 on
+	 * success and -1 on failure.
+	 * @param io  I/O context passed from Awk::parse
+	 * @see Awk::Source::getMode, Awk::Source::getHandle
+	 */
+	virtual int closeSource (Source& io) = 0;
+
+	/** 
+	 * Reads from the source code stream.
+	 * A subclass should override this method. It should return 0 when
+	 * it has reached the end of the stream and -1 on falure.
+	 * When it has data to return, it should read characters not longer
+	 * than len characters, fill the buffer pointed at by buf with them,
+	 * and return the number of the charaters read.
+	 * @param io  I/O context passed from Awk::parse
+	 * @param buf pointer to a character buffer
+	 * @param len number of characters in the buffer
+	 */
 	virtual ssize_t readSource  (Source& io, char_t* buf, size_t len) = 0;
-	/** writes to the source stream */
+
+	/** 
+	 * Writes to the source code stream.
+	 * A subclass should override this method. It should return 0 when
+	 * it has reachedthe end of the stream and -1 on failure.
+	 * It should write up to len characters from the buffer pointed at
+	 * by buf and return the number of characters written.
+	 * @param io  I/O context passed from Awk::parse
+	 * @param buf pointer to a character buffer
+	 * @param len size of the buffer in characters
+	 */
 	virtual ssize_t writeSource (Source& io, char_t* buf, size_t len) = 0;
 	/*@}*/
 	

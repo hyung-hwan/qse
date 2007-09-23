@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.54 2007/09/07 05:40:16 bacon Exp $
+ * $Id: Awk.cpp,v 1.55 2007/09/21 15:29:51 bacon Exp $
  */
 
 
@@ -16,7 +16,7 @@ ASE_BEGIN_NAMESPACE(ASE)
 // Awk::Source
 //////////////////////////////////////////////////////////////////
 
-Awk::Source::Source (Mode mode): mode (mode)
+Awk::Source::Source (Mode mode): mode (mode), handle (ASE_NULL)
 {
 }
 
