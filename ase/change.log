@@ -1,3 +1,9 @@
+[0.3.1]
+
+* changed the access modifier for the Awk::Source::Source from public
+  to protected.
+* added source code documentation of ase/Awk/Awk.hpp.
+
 [0.3.0]
 
 * added ase_awk_setword to enable customization of keywords and
