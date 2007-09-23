@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.14 2007/09/07 05:40:16 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.15 2007/09/22 14:40:44 bacon Exp $
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_
@@ -11,6 +11,11 @@
 ASE_BEGIN_NAMESPACE(ASE)
 /////////////////////////////////
 
+/**
+ * Provides a more useful AWK interpreter by overriding primitive methods,
+ * the file handler, the pipe handler and implementing common AWK intrinsic 
+ * functions.
+ */
 class StdAwk: public Awk
 {
 public:
@@ -19,7 +24,7 @@ public:
 
 protected:
 
-	// builtin functions 
+	// intrinsic functions 
 	int sin (Return* ret, const Argument* args, size_t nargs, 
 		const char_t* name, size_t len);
 	int cos (Return* ret, const Argument* args, size_t nargs, 
