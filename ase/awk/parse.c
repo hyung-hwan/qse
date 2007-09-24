@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.12 2007/07/20 09:23:37 bacon Exp $
+ * $Id: parse.c,v 1.13 2007/09/23 04:20:22 bacon Exp $
  *
  * {License}
  */
@@ -131,7 +131,7 @@ static int parse (ase_awk_t* awk);
 static ase_awk_t* parse_progunit (ase_awk_t* awk);
 static ase_awk_t* collect_globals (ase_awk_t* awk);
 static ase_awk_t* add_builtin_globals (ase_awk_t* awk);
-static ase_awk_t* add_global (
+static int add_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
 	ase_size_t line, int force);
 static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals);
@@ -1250,7 +1250,7 @@ static ase_awk_nde_t* parse_block_dc (
 static ase_awk_t* add_builtin_globals (ase_awk_t* awk)
 {
 	global_t* p = gtab;
-	ase_awk_t* tmp;
+	int id;
 
 	awk->tree.nbglobals = 0;
 	while (p->name != ASE_NULL)
@@ -1262,13 +1262,13 @@ static ase_awk_t* add_builtin_globals (ase_awk_t* awk)
 			 * to the global variable table with an empty name.
 			 * this is to prevent the run-time from looking up
 			 * the variable */
-			tmp = add_global (awk, ASE_T(""), 0, 0, 1);
+			id = add_global (awk, ASE_T(""), 0, 0, 1);
 		}
 		else 
 		{
-			tmp = add_global (awk, p->name, p->name_len, 0, 0);
+			id = add_global (awk, p->name, p->name_len, 0, 0);
 		}
-		if (tmp == ASE_NULL) return ASE_NULL;
+		if (id == -1) return ASE_NULL;
 
 		awk->tree.nbglobals++;
 		p++;
@@ -1277,10 +1277,12 @@ static ase_awk_t* add_builtin_globals (ase_awk_t* awk)
 	return awk;
 }
 
-static ase_awk_t* add_global (
+static int add_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
 	ase_size_t line, int force)
 {
+	ase_size_t nglobals;
+
 	if (!force)
 	{
 		if (awk->option & ASE_AWK_UNIQUEFN) 
@@ -1291,8 +1293,7 @@ static ase_awk_t* add_global (
 				SETERRARG (
 					awk, ASE_AWK_EBFNRED, awk->token.line,
 					name, len);
-
-				return ASE_NULL;
+				return -1;
 			}
 
 			/* check if it conflict with a function name */
@@ -1302,8 +1303,7 @@ static ase_awk_t* add_global (
 				SETERRARG (
 					awk, ASE_AWK_EAFNRED, line, 
 					name, len);
-
-				return ASE_NULL;
+				return -1;
 			}
 		}
 
@@ -1312,23 +1312,31 @@ static ase_awk_t* add_global (
 			&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
 		{ 
 			SETERRARG (awk, ASE_AWK_EDUPGBL, line, name, len);
-			return ASE_NULL;
+			return -1;
 		}
 	}
 
-	if (ase_awk_tab_getsize(&awk->parse.globals) >= ASE_AWK_MAX_GLOBALS)
+	nglobals = ase_awk_tab_getsize (&awk->parse.globals);
+	if (nglobals >= ASE_AWK_MAX_GLOBALS)
 	{
 		SETERRLIN (awk, ASE_AWK_EGBLTM, line);
-		return ASE_NULL;
+		return -1;
 	}
 
 	if (ase_awk_tab_add (&awk->parse.globals, name, len) == (ase_size_t)-1) 
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
-		return ASE_NULL;
+		return -1;
 	}
 
-	return awk;
+	/* return the id which is the index to the global table. */
+	return (int)nglobals;
+}
+
+int ase_awk_addglobal (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
+{
+	return add_global (awk, name, len, 0, 0);
 }
 
 static ase_awk_t* collect_globals (ase_awk_t* awk)
@@ -1345,8 +1353,7 @@ static ase_awk_t* collect_globals (ase_awk_t* awk)
 			awk,
 			ASE_STR_BUF(&awk->token.name),
 			ASE_STR_LEN(&awk->token.name),
-			awk->token.line,
-			0) == ASE_NULL) return ASE_NULL;
+			awk->token.line, 0) == -1) return ASE_NULL;
 
 		if (get_token(awk) == -1) return ASE_NULL;
 

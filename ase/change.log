@@ -3,6 +3,8 @@
 * changed the access modifier for the Awk::Source::Source from public
   to protected.
 * added source code documentation of ase/Awk/Awk.hpp.
+* added ase_awk_addglobal to support the addition of a user-defined 
+  global variable (awk/parse.c)
 
 [0.3.0]
 
