@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.10 2007/08/26 14:33:38 bacon Exp $
+ * $Id: awk.h,v 1.11 2007/09/23 04:20:22 bacon Exp $
  *
  * {License}
  */
@@ -423,6 +423,16 @@ int ase_awk_setword (ase_awk_t* awk,
 	const ase_char_t* nkw, ase_size_t nlen);
 
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
+
+/* 
+ * Adds an intrinsic global variable. It should be called before a call 
+ * to ase_awk_parse.
+ *
+ * @return 
+ * 	On success, the ID of the global variable added is returned.
+ * 	On failure, -1 is returned.
+ */
+int ase_awk_addglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
 
 /*
  * ase_awk_run return 0 on success and -1 on failure, generally speaking.

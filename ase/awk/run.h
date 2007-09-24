@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: run.h,v 1.4 2007/09/23 04:20:22 bacon Exp $
  *
  * {License}
  */
@@ -79,7 +79,7 @@ enum ase_awk_incop_type_t
 
 enum ase_awk_global_id_t
 {
-	/* this table should match __bvtab in parse.c.
+	/* this table should match gtab in parse.c.
 	 * in addition, ase_awk_setglobal also counts 
 	 * on the order of these values */
 
