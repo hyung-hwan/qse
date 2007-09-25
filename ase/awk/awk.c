@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.8 2007/07/25 07:00:09 bacon Exp $ 
+ * $Id: awk.c,v 1.9 2007/09/23 16:48:55 bacon Exp $ 
  *
  * {License}
  */
@@ -149,6 +149,18 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_MATCH, 0);
 
 	awk->custom_data = custom_data;
+
+	if (ase_awk_initglobals (awk) == -1)
+	{
+		ase_awk_tab_close (&awk->parse.params);
+		ase_awk_tab_close (&awk->parse.locals);
+		ase_awk_tab_close (&awk->parse.globals);
+		ase_awk_map_close (awk->tree.afns);
+		ase_awk_map_close (awk->kwtab);
+		ase_str_close (&awk->token.name);
+		ASE_AWK_FREE (awk, awk);
+		return ASE_NULL;	
+	}
 
 	return awk;
 }

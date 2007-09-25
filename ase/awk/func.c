@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.8 2007/08/26 14:33:38 bacon Exp $
+ * $Id: func.c,v 1.9 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -43,7 +43,7 @@ static ase_awk_bfn_t __sys_bfn[] =
 	{ {ASE_NULL,         0}, 0,  {0,   0, ASE_NULL},     ASE_NULL}
 };
 
-void* ase_awk_addbfn (
+void* ase_awk_addfunc (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len, 
 	int when_valid, ase_size_t min_args, ase_size_t max_args, 
 	const ase_char_t* arg_spec, 
@@ -103,7 +103,8 @@ void* ase_awk_addbfn (
 	return p;
 }
 
-int ase_awk_delbfn (ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
+int ase_awk_delfunc (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 {
 	ase_awk_bfn_t* p, * pp = ASE_NULL;
 	ase_cstr_t errarg;

@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.5 2007/05/10 16:08:37 bacon Exp $
+ * $Id: val.h,v 1.6 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -177,7 +177,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run);
 ase_awk_val_t* ase_awk_makerefval (
 	ase_awk_run_t* run, int id, ase_awk_val_t** adr);
 
-ase_bool_t ase_awk_isbuiltinval (ase_awk_val_t* val);
+ase_bool_t ase_awk_isstaticval (ase_awk_val_t* val);
 
 void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache);
 void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val);

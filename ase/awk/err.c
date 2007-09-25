@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.6 2007/08/24 13:17:59 bacon Exp $
+ * $Id: err.c,v 1.7 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -74,7 +74,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("END not followed by a left bracket on the same line"),
 		ASE_T("duplicate BEGIN"),
 		ASE_T("duplicate END"),
-		ASE_T("built-in function '%.*s' redefined"),
+		ASE_T("intrinsic function '%.*s' redefined"),
 		ASE_T("function '%.*s' redefined"),
 		ASE_T("global variable '%.*s' redefined"),
 		ASE_T("parameter '%.*s' redefined"),
@@ -123,8 +123,8 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("next statement called from the END block"),
 		ASE_T("nextfile statement called from the BEGIN block"),
 		ASE_T("nextfile statement called from the END block"),
-		ASE_T("wrong implementation of built-in function handler"),
-		ASE_T("built-in function handler returned an error"),
+		ASE_T("wrong implementation of intrinsic function handler"),
+		ASE_T("intrinsic function handler returned an error"),
 		ASE_T("wrong implementation of user-defined io handler"),
 		ASE_T("no such io name found"),
 		ASE_T("i/o handler returned an error"),

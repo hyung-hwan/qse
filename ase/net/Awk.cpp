@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.23 2007/09/06 08:44:42 bacon Exp $
+ * $Id: Awk.cpp,v 1.24 2007/09/23 16:48:55 bacon Exp $
  */
 
 #include "stdafx.h"
@@ -214,6 +214,22 @@ namespace ASE
 			}
 		}
 
+		int addGlobal (ASE::Net::Awk^ wrapper, const char_t* name)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::addGlobal (name);
+			this->wrapper = nullptr;
+			return n;
+		}
+
+		int deleteGlobal (ASE::Net::Awk^ wrapper, const char_t* name)
+		{
+			this->wrapper = wrapper;
+			int n = Awk::deleteGlobal (name);
+			this->wrapper = nullptr;
+			return n;
+		}
+
 		int addFunction (
 			ASE::Net::Awk^ wrapper,	const char_t* name,
 			size_t minArgs, size_t maxArgs, FunctionHandler handler)
@@ -233,11 +249,11 @@ namespace ASE
 		}
 
 		int mojoFunctionHandler (
-			Return* ret, const Argument* args, size_t nargs, 
+			Run& run, Return& ret, const Argument* args, size_t nargs, 
 			const char_t* name, size_t len)
 		{
 			
-			return wrapper->DispatchFunction (ret, args, nargs, name, len)? 0: -1;
+			return wrapper->DispatchFunction (run, ret, args, nargs, name, len)? 0: -1;
 		}
 
 		int openSource (Source& io) 
@@ -833,6 +849,40 @@ namespace ASE
 			stopRequested = true;
 		}
 
+		bool Awk::AddGlobal (System::String^ name, [System::Runtime::InteropServices::Out] int% id)
+		{
+			if (awk == NULL) 
+			{
+				setError (ERROR::NOPER);
+				return -1;
+			}
+
+			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(name);
+			int n = awk->addGlobal (this, nptr);
+			if (n == -1) 
+			{
+				retrieveError ();
+				return false;
+			}
+
+			id = n;
+			return true;
+		}
+
+		bool Awk::DeleteGlobal (System::String^ name)
+		{
+			if (awk == NULL) 
+			{
+				setError (ERROR::NOPER);
+				return false;
+			}
+
+			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(name);
+			int n = awk->deleteGlobal (this, nptr);
+			if (n == -1) retrieveError ();
+			return n == 0;
+		}
+
 		bool Awk::AddFunction (
 			System::String^ name, int minArgs, int maxArgs, 
 			FunctionHandler^ handler)
@@ -864,7 +914,8 @@ namespace ASE
 			return n == 0;
 		}
 
-		bool Awk::DispatchFunction (ASE::Awk::Return* ret, 
+		bool Awk::DispatchFunction (
+			ASE::Awk::Run& run, ASE::Awk::Return& ret, 
 			const ASE::Awk::Argument* args, size_t nargs, 
 			const char_t* name, size_t len)
 		{
@@ -878,10 +929,12 @@ namespace ASE
 			}
 			
 			cli::array<Argument^>^ arg_arr = gcnew cli::array<Argument^> (nargs);
-			for (size_t i = 0; i < nargs; i++) arg_arr[i] = gcnew Argument(args[i]);
+			for (size_t i = 0; i < nargs; i++) 
+				arg_arr[i] = gcnew Argument(args[i]);
 
-			Return^ r = gcnew Return (*ret);
-			return fh(nm, arg_arr, r);
+			Return^ r = gcnew Return (ret);
+
+			return fh (nm, arg_arr, r);
 		}
 
 		bool Awk::SetWord (System::String^ ow, System::String^ nw)

@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: tab.c,v 1.4 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -100,9 +100,9 @@ void ase_awk_tab_clear (ase_awk_tab_t* tab)
 
 	for (i = 0; i < tab->size; i++) 
 	{
-		ASE_AWK_FREE (tab->awk, tab->buf[i].name);
-		tab->buf[i].name = ASE_NULL;
-		tab->buf[i].name_len = 0;
+		ASE_AWK_FREE (tab->awk, tab->buf[i].name.ptr);
+		tab->buf[i].name.ptr = ASE_NULL;
+		tab->buf[i].name.len = 0;
 	}
 
 	tab->size = 0;
@@ -114,10 +114,10 @@ ase_size_t ase_awk_tab_insert (
 	const ase_char_t* str, ase_size_t len)
 {
 	ase_size_t i;
-	ase_char_t* str_dup;
+	ase_char_t* dup;
 
-	str_dup = ase_strxdup (str, len, &tab->awk->prmfns.mmgr);
-	if (str_dup == ASE_NULL) return (ase_size_t)-1;
+	dup = ase_strxdup (str, len, &tab->awk->prmfns.mmgr);
+	if (dup == ASE_NULL) return (ase_size_t)-1;
 
 	if (index >= tab->capa) 
 	{
@@ -131,14 +131,14 @@ ase_size_t ase_awk_tab_insert (
 
 		if (ase_awk_tab_setcapa(tab,capa) == ASE_NULL) 
 		{
-			ASE_AWK_FREE (tab->awk, str_dup);
+			ASE_AWK_FREE (tab->awk, dup);
 			return (ase_size_t)-1;
 		}
 	}
 
 	for (i = tab->size; i > index; i--) tab->buf[i] = tab->buf[i-1];
-	tab->buf[index].name = str_dup;
-	tab->buf[index].name_len = len;
+	tab->buf[index].name.ptr = dup;
+	tab->buf[index].name.len = len;
 
 	if (index > tab->size) tab->size = index + 1;
 	else tab->size++;
@@ -160,18 +160,18 @@ ase_size_t ase_awk_tab_remove (
 
 	while (i < k) 
 	{
-		ASE_AWK_FREE (tab->awk, tab->buf[i].name);	
+		ASE_AWK_FREE (tab->awk, tab->buf[i].name.ptr);	
 
 		if (j >= tab->size) 
 		{
-			tab->buf[i].name = ASE_NULL;
-			tab->buf[i].name_len = 0; 
+			tab->buf[i].name.ptr = ASE_NULL;
+			tab->buf[i].name.len = 0; 
 			i++;
 		}
 		else
 		{
-			tab->buf[i].name = tab->buf[j].name;
-			tab->buf[i].name_len = tab->buf[j].name_len;
+			tab->buf[i].name.ptr = tab->buf[j].name.ptr;
+			tab->buf[i].name.len = tab->buf[j].name.len;
 			i++; j++;		
 		}
 	}
@@ -195,7 +195,7 @@ ase_size_t ase_awk_tab_find (
 	for (i = index; i < tab->size; i++) 
 	{
 		if (ase_strxncmp (
-			tab->buf[i].name, tab->buf[i].name_len, 
+			tab->buf[i].name.ptr, tab->buf[i].name.len, 
 			str, len) == 0) return i;
 	}
 
@@ -213,7 +213,7 @@ ase_size_t ase_awk_tab_rfind (
 	for (i = index + 1; i-- > 0; ) 
 	{
 		if (ase_strxncmp (
-			tab->buf[i].name, tab->buf[i].name_len, 
+			tab->buf[i].name.ptr, tab->buf[i].name.len, 
 			str, len) == 0) return i;
 	}
 
@@ -231,7 +231,7 @@ ase_size_t ase_awk_tab_rrfind (
 	for (i = tab->size - index; i-- > 0; ) 
 	{
 		if (ase_strxncmp (
-			tab->buf[i].name, tab->buf[i].name_len, 
+			tab->buf[i].name.ptr, tab->buf[i].name.len, 
 			str, len) == 0) return i;
 	}
 

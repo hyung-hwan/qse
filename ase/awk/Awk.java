@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.13 2007/08/26 14:33:38 bacon Exp $
+ * $Id: Awk.java,v 1.14 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -77,9 +77,9 @@ public abstract class Awk
 
 	private native void setword (String ow, String nw);
 
-	private native void addbfn (
+	private native void addfunc (
 		String name, int min_args, int max_args) throws Exception;
-	private native void delbfn (String name) throws Exception;
+	private native void delfunc (String name) throws Exception;
 
 	native void setfilename (
 		long runid, String name) throws Exception;
@@ -115,12 +115,12 @@ public abstract class Awk
 	public void addFunction (
 		String name, int min_args, int max_args) throws Exception
 	{
-		addbfn (name, min_args, max_args);
+		addfunc (name, min_args, max_args);
 	}
 
 	public void deleteFunction (String name) throws Exception
 	{
-		delbfn (name);
+		delfunc (name);
 	}
 
 	protected long builtinFunctionArgumentToLong (

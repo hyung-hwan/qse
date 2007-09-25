@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.11 2007/08/26 14:33:38 bacon Exp $
+ * $Id: run.c,v 1.12 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -223,14 +223,18 @@ ase_awk_val_t* ase_awk_getarg (ase_awk_run_t* run, ase_size_t idx)
 	return STACK_ARG (run, idx);
 }
 
-ase_awk_val_t* ase_awk_getglobal (ase_awk_run_t* run, ase_size_t idx)
+ase_awk_val_t* ase_awk_getglobal (ase_awk_run_t* run, int id)
 {
-	return STACK_GLOBAL (run, idx);
+	ASE_ASSERTX (id >= 0,
+		"a global variable ID should be equal to or greater than 0");
+	return STACK_GLOBAL (run, id);
 }
 
-int ase_awk_setglobal (ase_awk_run_t* run, ase_size_t idx, ase_awk_val_t* val)
+int ase_awk_setglobal (ase_awk_run_t* run, int id, ase_awk_val_t* val)
 {
-	return __set_global (run, idx, ASE_NULL, val);
+	ASE_ASSERTX (id >= 0, 
+		"a global variable ID should be equal to or greater than 0");
+	return __set_global (run, (ase_size_t)id, ASE_NULL, val);
 }
 
 static int __set_global (
@@ -5207,7 +5211,7 @@ static ase_awk_val_t* __eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_nde_call_t* call = (ase_awk_nde_call_t*)nde;
 
-	/* built-in function */
+	/* intrinsic function */
 	if (call->nargs < call->what.bfn.arg.min)
 	{
 		ase_awk_setrunerror (
@@ -5477,7 +5481,7 @@ static ase_awk_val_t* __eval_call (
 	{
 		n = 0;
 
-		/* built-in function */
+		/* intrinsic function */
 		ASE_ASSERT (
 			call->nargs >= call->what.bfn.arg.min &&
 			call->nargs <= call->what.bfn.arg.max);

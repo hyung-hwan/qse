@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.13 2007/08/26 14:33:38 bacon Exp $
+ * $Id: jni.c,v 1.14 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -1731,7 +1731,7 @@ static int __handle_bfn (
 	return 0;
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
+JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 	JNIEnv* env, jobject obj, jstring name, jint min_args, jint max_args)
 {
 	jclass class; 
@@ -1786,13 +1786,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 		}
 
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
-		n = (ase_awk_addbfn (awk, tmp, len, 0, 
+		n = (ase_awk_addfunc (awk, tmp, len, 0, 
 			min_args, max_args, ASE_NULL, __handle_bfn) == NULL)? -1: 0;
 		free (tmp);
 	}
 	else
 	{
-		n = (ase_awk_addbfn (awk, (ase_char_t*)ptr, len, 0, 
+		n = (ase_awk_addfunc (awk, (ase_char_t*)ptr, len, 0, 
 			min_args, max_args, ASE_NULL, __handle_bfn) == NULL)? -1: 0;
 	}
 
@@ -1809,7 +1809,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addbfn (
 	}
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_delbfn (
+JNIEXPORT void JNICALL Java_ase_awk_Awk_delfunc (
 	JNIEnv* env, jobject obj, jstring name)
 {
 	jclass class; 
@@ -1863,12 +1863,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delbfn (
 		}
 
 		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
-		n = ase_awk_delbfn (awk, tmp, len);
+		n = ase_awk_delfunc (awk, tmp, len);
 		free (tmp);
 	}
 	else
 	{
-		n = ase_awk_delbfn (awk, (ase_char_t*)ptr, len);
+		n = ase_awk_delfunc (awk, (ase_char_t*)ptr, len);
 	}
 
 	(*env)->ReleaseStringChars (env, name, ptr);

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.32 2007/08/26 14:33:38 bacon Exp $
+ * $Id: Awk.cpp,v 1.33 2007/09/23 16:48:55 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -46,8 +46,10 @@ public:
 		int n = ASE::StdAwk::open ();
 	#endif
 
-		if (addFunction (ASE_T("sleep"), 1, 1,
-			(FunctionHandler)&TestAwk::sleep) == -1)
+		idLastSleep = addGlobal (ASE_T("LAST_SLEEP"));
+		if (idLastSleep == -1 ||
+		    addFunction (ASE_T("sleep"), 1, 1,
+		    	(FunctionHandler)&TestAwk::sleep) == -1)
 		{
 		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			StdAwk::close ();
@@ -85,14 +87,16 @@ public:
 	#endif
 	}
 
-	int sleep (Return* ret, const Argument* args, size_t nargs, 
+	int sleep (Run& run, Return& ret, const Argument* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
+		long_t x = args[0].toInt();
+		run.setGlobal (idLastSleep, x);
 	#ifdef _WIN32
-		::Sleep (args[0].toInt() * 1000);
-		return ret->set ((long_t)0);
+		::Sleep (x * 1000);
+		return ret.set ((long_t)0);
 	#else
-		return ret->set ((long_t)::sleep (args[0].toInt()));
+		return ret.set ((long_t)::sleep (x));
 	#endif
 	}
 
@@ -467,6 +471,8 @@ private:
 	size_t        numConOutFiles;
 	const char_t* conOutFile[128];
 
+	int idLastSleep;
+
 #ifdef _WIN32
 	void* heap;
 #endif
@@ -566,6 +572,10 @@ int awk_main (int argc, ase_char_t* argv[])
 			else if (ase_strcmp(argv[i], ASE_T("-ns")) == 0) 
 			{
 				awk.setOption (awk.getOption () & ~TestAwk::OPT_STRIPSPACES);
+			}
+			else if (ase_strcmp(argv[i], ASE_T("-noimplicit")) == 0)
+			{
+				awk.setOption (awk.getOption () & ~TestAwk::OPT_IMPLICIT);
 			}
 			else 
 			{
@@ -711,7 +721,6 @@ extern "C" int ase_main (int argc, ase_achar_t* argv[])
 #if defined(_WIN32) && defined(_DEBUG) && defined(_MSC_VER)
 	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
 #endif
-
 
 	n = ase_runmain (argc,argv,awk_main);
 

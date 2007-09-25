@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.15 2007/09/22 14:40:44 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.16 2007/09/23 16:48:55 bacon Exp $
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_
@@ -25,35 +25,35 @@ public:
 protected:
 
 	// intrinsic functions 
-	int sin (Return* ret, const Argument* args, size_t nargs, 
+	int sin (Run& run, Return& ret, const Argument* args, size_t nargs, 
 		const char_t* name, size_t len);
-	int cos (Return* ret, const Argument* args, size_t nargs, 
+	int cos (Run& run, Return& ret, const Argument* args, size_t nargs, 
 		const char_t* name, size_t len);
-	int tan (Return* ret, const Argument* args, size_t nargs, 
+	int tan (Run& run, Return& ret, const Argument* args, size_t nargs, 
 		const char_t* name, size_t len);
-	int atan (Return* ret, const Argument* args, size_t nargs,
+	int atan (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int atan2 (Return* ret, const Argument* args, size_t nargs,
+	int atan2 (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int log (Return* ret, const Argument* args, size_t nargs,
+	int log (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int exp (Return* ret, const Argument* args, size_t nargs,
+	int exp (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int sqrt (Return* ret, const Argument* args, size_t nargs,
+	int sqrt (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int fnint (Return* ret, const Argument* args, size_t nargs,
+	int fnint (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int rand (Return* ret, const Argument* args, size_t nargs,
+	int rand (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int srand (Return* ret, const Argument* args, size_t nargs,
+	int srand (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int systime (Return* ret, const Argument* args, size_t nargs,
+	int systime (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int strftime (Return* ret, const Argument* args, size_t nargs,
+	int strftime (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int strfgmtime (Return* ret, const Argument* args, size_t nargs,
+	int strfgmtime (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
-	int system (Return* ret, const Argument* args, size_t nargs,
+	int system (Run& run, Return& ret, const Argument* args, size_t nargs,
 		const char_t* name, size_t len);
 
 	// pipe io handlers 

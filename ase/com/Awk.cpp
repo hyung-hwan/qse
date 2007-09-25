@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.7 2007/08/26 14:33:38 bacon Exp $
+ * $Id: Awk.cpp,v 1.8 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -555,7 +555,7 @@ HRESULT CAwk::Parse (VARIANT_BOOL* ret)
 
 	for (bfn_t* bfn = bfn_list; bfn != NULL; bfn = bfn->next)
 	{
-		if (ase_awk_addbfn (
+		if (ase_awk_addfunc (
 			handle, bfn->name.ptr, bfn->name.len, 0, 
 			bfn->min_args, bfn->max_args, NULL, 
 			__handle_bfn) == NULL)
