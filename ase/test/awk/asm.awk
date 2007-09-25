@@ -1,6 +1,6 @@
 #
 # Taken from the book "The AWK Programming Language"
-# aseawk++ -si asm.awk -ns -a asm.s
+# aseawk++ -si asm.awk -nostripspaces -a asm.s
 #
 # ASEAWK should turn on STRIPSPACES & BASEONE to run this program.
 #

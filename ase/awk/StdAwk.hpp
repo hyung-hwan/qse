@@ -1,5 +1,7 @@
 /*
- * $Id: StdAwk.hpp,v 1.16 2007/09/23 16:48:55 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.17 2007/09/24 11:22:22 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_STDAWK_HPP_

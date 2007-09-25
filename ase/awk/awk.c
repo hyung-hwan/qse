@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.9 2007/09/23 16:48:55 bacon Exp $ 
+ * $Id: awk.c,v 1.10 2007/09/24 08:21:25 bacon Exp $ 
  *
  * {License}
  */
@@ -220,7 +220,12 @@ int ase_awk_clear (ase_awk_t* awk)
 	awk->src.shared.buf_pos = 0;
 	awk->src.shared.buf_len = 0;
 
-	ase_awk_tab_clear (&awk->parse.globals);
+	/*ase_awk_tab_clear (&awk->parse.globals);*/
+	ASE_ASSERT (awk->parse.globals.size == awk->tree.nglobals);
+	ase_awk_tab_remove (
+		&awk->parse.globals, awk->tree.nbglobals, 
+		awk->parse.globals.size - awk->tree.nbglobals);
+
 	ase_awk_tab_clear (&awk->parse.locals);
 	ase_awk_tab_clear (&awk->parse.params);
 
@@ -231,8 +236,10 @@ int ase_awk_clear (ase_awk_t* awk)
 
 	/* clear parse trees */	
 	awk->tree.ok = 0;
-	awk->tree.nbglobals = 0;
-	awk->tree.nglobals = 0;	
+	/*awk->tree.nbglobals = 0;
+	awk->tree.nglobals = 0;	 */
+	awk->tree.nglobals = awk->tree.nbglobals;
+
 	awk->tree.cur_afn.ptr = ASE_NULL;
 	awk->tree.cur_afn.len = 0;
 	ase_awk_map_clear (awk->tree.afns);

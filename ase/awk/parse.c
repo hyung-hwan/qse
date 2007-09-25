@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.14 2007/09/23 16:48:55 bacon Exp $
+ * $Id: parse.c,v 1.15 2007/09/24 08:21:25 bacon Exp $
  *
  * {License}
  */
@@ -130,7 +130,7 @@ static int parse (ase_awk_t* awk);
 
 static ase_awk_t* parse_progunit (ase_awk_t* awk);
 static ase_awk_t* collect_globals (ase_awk_t* awk);
-static int adjust_static_globals (ase_awk_t* awk);
+static void adjust_static_globals (ase_awk_t* awk);
 
 static int add_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
@@ -295,8 +295,7 @@ static global_t gtab[] =
 	{ ASE_T("RLENGTH"),      7,  0 },
 	{ ASE_T("RS"),           2,  0 },
 	{ ASE_T("RSTART"),       6,  0 },
-	{ ASE_T("SUBSEP"),       6,  0 },
-	{ ASE_NULL,              0,  0 }
+	{ ASE_T("SUBSEP"),       6,  0 }
 };
 
 #define GET_CHAR(awk) \
@@ -480,11 +479,7 @@ static int parse (ase_awk_t* awk)
 		return -1;
 	}
 
-	if (adjust_static_globals (awk) == -1) 
-	{
-		n = -1;
-		goto exit_parse;
-	}
+	adjust_static_globals (awk);
 
 	/* the user io handler for the source code input returns 0 when
 	 * it doesn't have any files to open. this is the same condition
@@ -519,7 +514,7 @@ static int parse (ase_awk_t* awk)
 		}
 	}
 
-	awk->tree.nglobals = ase_awk_tab_getsize(&awk->parse.globals);
+	ASE_ASSERT (awk->tree.nglobals == ase_awk_tab_getsize(&awk->parse.globals));
 
 	if (awk->src.ios.out != ASE_NULL) 
 	{
@@ -567,12 +562,14 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 
 		if (get_token(awk) == -1) return ASE_NULL;
 
-		nglobals = ase_awk_tab_getsize(&awk->parse.globals);
+		ASE_ASSERT (awk->tree.nglobals == ase_awk_tab_getsize(&awk->parse.globals));
+		nglobals = awk->tree.nglobals;
 		if (collect_globals (awk) == ASE_NULL) 
 		{
 			ase_awk_tab_remove (
 				&awk->parse.globals, nglobals, 
 				ase_awk_tab_getsize(&awk->parse.globals) - nglobals);
+			awk->tree.nglobals = nglobals;
 			return ASE_NULL;
 		}
 	}
@@ -1173,9 +1170,17 @@ static ase_awk_nde_t* parse_block (
 		}
 
 		/* remove unnecessary statements */
-		if (nde->type == ASE_AWK_NDE_NULL ||
-		    (nde->type == ASE_AWK_NDE_BLK && 
-		     ((ase_awk_nde_blk_t*)nde)->body == ASE_NULL)) continue;
+		if (nde->type == ASE_AWK_NDE_NULL) 
+		{
+			ase_awk_clrpt (awk, nde);
+			continue;
+		}
+		if (nde->type == ASE_AWK_NDE_BLK && 
+		    ((ase_awk_nde_blk_t*)nde)->body == ASE_NULL) 
+		{
+			ase_awk_clrpt (awk, nde);
+			continue;
+		}
 			
 		if (curr == ASE_NULL) head = nde;
 		else curr->next = nde;	
@@ -1198,8 +1203,8 @@ static ase_awk_nde_t* parse_block (
 	tmp = ase_awk_tab_getsize(&awk->parse.locals);
 	if (tmp > awk->parse.nlocals_max) awk->parse.nlocals_max = tmp;
 
-	ase_awk_tab_remove (
-		&awk->parse.locals, nlocals, tmp - nlocals);
+	/* remove all locals to move it up to the top level */
+	ase_awk_tab_remove (&awk->parse.locals, nlocals, tmp - nlocals);
 
 	/* adjust the number of locals for a block without any statements */
 	/* if (head == ASE_NULL) tmp = 0; */
@@ -1209,9 +1214,9 @@ static ase_awk_nde_t* parse_block (
 	block->next = ASE_NULL;
 	block->body = head;
 
-/* TODO: not only local variables but also nested blocks, 
-unless it is part of other constructs such as if, can be promoted 
-and merged to top-level block */
+	/* TODO: not only local variables but also nested blocks, 
+	unless it is part of other constructs such as if, can be promoted 
+	and merged to top-level block */
 
 	/* migrate all block-local variables to a top-level block */
 	if (is_top) 
@@ -1250,7 +1255,6 @@ static ase_awk_nde_t* parse_block_dc (
 
 int ase_awk_initglobals (ase_awk_t* awk)
 {	
-	global_t* p = gtab;
 	int id;
 
 	/* ase_awk_initglobals is not generic-purpose. call this from
@@ -1258,61 +1262,46 @@ int ase_awk_initglobals (ase_awk_t* awk)
 	ASE_ASSERT (awk->tree.nbglobals == 0 && awk->tree.nglobals == 0);
 
 	awk->tree.nbglobals = 0;
-	while (p->name != ASE_NULL)
+	awk->tree.nglobals = 0;
+
+	for (id = ASE_AWK_MIN_GLOBAL_ID; id <= ASE_AWK_MAX_GLOBAL_ID; id++)
 	{
-		if (ase_awk_tab_add (
-			&awk->parse.globals, p->name, p->name_len) == (ase_size_t)-1) 
-		{
-			return -1;
-		}
+		ase_size_t g;
+
+		g = ase_awk_tab_add (&awk->parse.globals, 
+			gtab[id].name, gtab[id].name_len);
+		if (g == (ase_size_t)-1) return -1;
+
+		ASE_ASSERT (g == id);
 
 		awk->tree.nbglobals++;
-		p++;
+		awk->tree.nglobals++;
 	}
 
+	ASE_ASSERT (awk->tree.nbglobals == 
+		ASE_AWK_MAX_GLOBAL_ID-ASE_AWK_MIN_GLOBAL_ID+1);
 	return 0;
 }
 
-static int adjust_static_globals (ase_awk_t* awk)
+static void adjust_static_globals (ase_awk_t* awk)
 {
-	/* TODO: */
-	return 0;
-}
-
-#if 0
-static ase_awk_t* add_static_globals (ase_awk_t* awk)
-{
-	global_t* p = gtab;
 	int id;
 
-	awk->tree.nbglobals = 0;
-	while (p->name != ASE_NULL)
+	ASE_ASSERT (awk->tree.nbglobals >=
+		ASE_AWK_MAX_GLOBAL_ID - ASE_AWK_MAX_GLOBAL_ID + 1);
+
+	for (id = ASE_AWK_MIN_GLOBAL_ID; id <= ASE_AWK_MAX_GLOBAL_ID; id++)
 	{
-
-		if (p->valid != 0 && (awk->option & p->valid) == 0)
+		if (gtab[id].valid != 0 && (awk->option & gtab[id].valid) == 0)
 		{
-		#if 0
-			/* an invalid global variable are still added
-			 * to the global variable table with an empty name.
-			 * this is to prevent the run-time from looking up
-			 * the variable */
-			id = add_global (awk, ASE_T(""), 0, 0, 1);
-		#endif
-			id = add_global (awk, p->name, p->name_len, 0, 1);
+			awk->parse.globals.buf[id].name.len = 0;
 		}
-		else 
+		else
 		{
-			id = add_global (awk, p->name, p->name_len, 0, 0);
+			awk->parse.globals.buf[id].name.len = gtab[id].name_len;
 		}
-		if (id == -1) return ASE_NULL;
-
-		awk->tree.nbglobals++;
-		p++;
 	}
-
-	return awk;
 }
-#endif
 
 static int add_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
@@ -1320,39 +1309,35 @@ static int add_global (
 {
 	ase_size_t nglobals;
 
-	/*
-	if (!force)
-	{*/
-		if (awk->option & ASE_AWK_UNIQUEFN) 
+	if (awk->option & ASE_AWK_UNIQUEFN) 
+	{
+		/* check if it conflict with a builtin function name */
+		if (ase_awk_getbfn (awk, name, len) != ASE_NULL)
 		{
-			/* check if it conflict with a builtin function name */
-			if (ase_awk_getbfn (awk, name, len) != ASE_NULL)
-			{
-				SETERRARG (
-					awk, ASE_AWK_EBFNRED, awk->token.line,
-					name, len);
-				return -1;
-			}
-
-			/* check if it conflict with a function name */
-			if (ase_awk_map_get (
-				awk->tree.afns, name, len) != ASE_NULL) 
-			{
-				SETERRARG (
-					awk, ASE_AWK_EAFNRED, line, 
-					name, len);
-				return -1;
-			}
-		}
-
-		/* check if it conflicts with other global variable names */
-		if (ase_awk_tab_find (
-			&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
-		{ 
-			SETERRARG (awk, ASE_AWK_EDUPGBL, line, name, len);
+			SETERRARG (
+				awk, ASE_AWK_EBFNRED, awk->token.line,
+				name, len);
 			return -1;
 		}
-	/*}*/
+
+		/* check if it conflict with a function name */
+		if (ase_awk_map_get (
+			awk->tree.afns, name, len) != ASE_NULL) 
+		{
+			SETERRARG (
+				awk, ASE_AWK_EAFNRED, line, 
+				name, len);
+			return -1;
+		}
+	}
+
+	/* check if it conflicts with other global variable names */
+	if (ase_awk_tab_find (
+		&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
+	{ 
+		SETERRARG (awk, ASE_AWK_EDUPGBL, line, name, len);
+		return -1;
+	}
 
 	nglobals = ase_awk_tab_getsize (&awk->parse.globals);
 	if (nglobals >= ASE_AWK_MAX_GLOBALS)
@@ -1371,6 +1356,9 @@ static int add_global (
 	 * the name length is reset to zero. */
 	if (disabled) awk->parse.globals.buf[nglobals].name.len = 0;
 
+	awk->tree.nglobals = ase_awk_tab_getsize (&awk->parse.globals);
+	ASE_ASSERT (nglobals == awk->tree.nglobals-1);
+
 	/* return the id which is the index to the global table. */
 	return (int)nglobals;
 }
@@ -1378,7 +1366,22 @@ static int add_global (
 int ase_awk_addglobal (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
-	return add_global (awk, name, len, 0, 0);
+	int n;
+
+	if (awk->tree.nglobals > awk->tree.nbglobals) 
+	{
+		/* this function is not allow after ase_awk_parse is called */
+		SETERR (awk, ASE_AWK_ENOPER);
+		return -1;
+	}
+
+	n = add_global (awk, name, len, 0, 0);
+
+	/* update the count of the static globals. 
+	 * the total global count has been updated inside add_global. */
+	if (n >= 0) awk->tree.nbglobals++; 
+
+	return n;
 }
 
 int ase_awk_delglobal (
@@ -1386,19 +1389,29 @@ int ase_awk_delglobal (
 {
 	ase_size_t n;
 	
-	n = ase_awk_tab_find (&awk->parse.globals, 0, name, len);
+#define ASE_AWK_NUM_STATIC_GLOBALS \
+	(ASE_AWK_MAX_GLOBAL_ID-ASE_AWK_MIN_GLOBAL_ID+1)
+
+	if (awk->tree.nglobals > awk->tree.nbglobals) 
+	{
+		/* this function is not allow after ase_awk_parse is called */
+		SETERR (awk, ASE_AWK_ENOPER);
+		return -1;
+	}
+
+	n = ase_awk_tab_find (&awk->parse.globals, 
+		ASE_AWK_NUM_STATIC_GLOBALS, name, len);
 	if (n == (ase_size_t)-1) 
 	{
 		SETERRARG (awk, ASE_AWK_ENOENT, 0, name, len);
 		return -1;
 	}
 
-	/* clear the name to emulate the action. this approach is
-	 * in align with ase_awk_addglobal adding an ineffective global. 
-	 * anyway, this function cannot physically remove the entry
-	 * because the existing global ID's known can all go wrong if
-	 * it does so. the best is not to use this function as a normal
-	 * program has no reason to do so. */
+	/* invalidate the name if deletion is requested.
+	 * this approach does not delete the entry.
+	 * if ase_awk_addglobal is called with the same name
+	 * again, the entry will be appended again. 
+	 * never call this funciton unless it is really required. */
 	awk->parse.globals.buf[n].name.ptr[0] = ASE_T('\0');;
 	awk->parse.globals.buf[n].name.len = 0;
 
@@ -1444,6 +1457,7 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 {
 	ase_char_t* local;
 	ase_size_t local_len;
+	ase_size_t n;
 
 	while (1) 
 	{
@@ -1455,8 +1469,6 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 
 		local = ASE_STR_BUF(&awk->token.name);
 		local_len = ASE_STR_LEN(&awk->token.name);
-
-		/* NOTE: it is not checked againt globals names */
 
 		if (awk->option & ASE_AWK_UNIQUEFN) 
 		{
@@ -1484,8 +1496,8 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 		}
 
 		/* check if it conflicts with a paremeter name */
-		if (ase_awk_tab_find (&awk->parse.params,
-			0, local, local_len) != (ase_size_t)-1) 
+		n = ase_awk_tab_find (&awk->parse.params, 0, local, local_len);
+		if (n != (ase_size_t)-1)
 		{
 			SETERRARG (
 				awk, ASE_AWK_EPARRED, awk->token.line,
@@ -1494,15 +1506,38 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 		}
 
 		/* check if it conflicts with other local variable names */
-		if (ase_awk_tab_find (&awk->parse.locals, 
+		n = ase_awk_tab_find (
+			&awk->parse.locals, 
 			((awk->option & ASE_AWK_SHADING)? nlocals: 0),
-			local, local_len) != (ase_size_t)-1)
+			local, local_len);
+		if (n != (ase_size_t)-1)
 		{
 			SETERRARG (
 				awk, ASE_AWK_EDUPLCL, awk->token.line, 
 				local, local_len);
-
 			return ASE_NULL;
+		}
+
+		/* check if it conflicts with global variable names */
+		n = ase_awk_tab_find (&awk->parse.globals, 0, local, local_len);
+		if (n != (ase_size_t)-1)
+		{
+ 			if (n < awk->tree.nbglobals)
+			{
+				/* conflicting with a static global variable */
+				SETERRARG (
+					awk, ASE_AWK_EDUPLCL, awk->token.line, 
+					local, local_len);
+				return ASE_NULL;
+			}
+			if ((awk->option & ASE_AWK_SHADING) == 0)
+			{
+				/* conflicting with a normal global variable */
+				SETERRARG (
+					awk, ASE_AWK_EDUPLCL, awk->token.line, 
+					local, local_len);
+				return ASE_NULL;
+			}
 		}
 
 		if (ase_awk_tab_getsize(&awk->parse.locals) >= ASE_AWK_MAX_LOCALS)

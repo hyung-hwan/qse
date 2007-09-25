@@ -1,5 +1,7 @@
 /*
- * $Id: StdAwk.cpp,v 1.27 2007/09/23 16:48:55 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.28 2007/09/24 11:22:22 bacon Exp $
+ *
+ * {License}
  */
 
 #include <ase/awk/StdAwk.hpp>

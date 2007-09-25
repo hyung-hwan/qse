@@ -1,5 +1,7 @@
 /*
- * $Id: misc.cpp,v 1.3 2007/08/24 16:02:49 bacon Exp $
+ * $Id: misc.cpp,v 1.4 2007/09/24 11:22:22 bacon Exp $
+ *
+ * {License}
  */
 
 #include "stdafx.h"

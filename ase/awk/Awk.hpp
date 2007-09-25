@@ -1,5 +1,7 @@
 /*
- * $Id: Awk.hpp,v 1.58 2007/09/23 16:48:55 bacon Exp $
+ * $Id: Awk.hpp,v 1.60 2007/09/24 11:22:22 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _ASE_AWK_AWK_HPP_
@@ -283,13 +285,14 @@ public:
 	 */
 	class Argument
 	{
-	protected:
+	public:
 		friend class Awk;
 		friend class Awk::Run;
 
 		Argument ();
 		~Argument ();
 
+	protected:
 		void clear ();
 
 		// initialization

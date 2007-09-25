@@ -1,5 +1,7 @@
 /*
- * $Id: Awk.cpp,v 1.56 2007/09/23 16:48:55 bacon Exp $
+ * $Id: Awk.cpp,v 1.58 2007/09/24 11:22:22 bacon Exp $
+ *
+ * {License}
  */
 
 
@@ -264,19 +266,23 @@ int Awk::Argument::init (run_t* run, val_t* v)
 
 Awk::long_t Awk::Argument::toInt () const
 {
-	ASE_ASSERT (this->run != ASE_NULL && this->val != ASE_NULL);
+	if (this->run == ASE_NULL || this->val == ASE_NULL) return 0;
 	return this->inum;
 }
 
 Awk::real_t Awk::Argument::toReal () const
 {
-	ASE_ASSERT (this->run != ASE_NULL && this->val != ASE_NULL);
+	if (this->run == ASE_NULL || this->val == ASE_NULL) return 0.0;
 	return this->rnum;
 }
 
 const Awk::char_t* Awk::Argument::toStr (size_t* len) const
 {
-	ASE_ASSERT (this->run != ASE_NULL && this->val != ASE_NULL);
+	if (this->run == ASE_NULL || this->val == ASE_NULL) 
+	{
+		*len = 0;
+		return ASE_NULL;
+	}
 
 	if (this->str.ptr != ASE_NULL)
 	{
@@ -476,7 +482,7 @@ int Awk::Run::getGlobal (int id, Argument& global) const
 	ASE_ASSERT (run != ASE_NULL);
 
 	global.clear ();
-	return global.init (run,ase_awk_getglobal (this->run, id));
+	return global.init (run, ase_awk_getglobal(this->run,id));
 }
 
 //////////////////////////////////////////////////////////////////

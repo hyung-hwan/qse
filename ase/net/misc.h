@@ -1,5 +1,7 @@
 /*
- * $Id: misc.h,v 1.1 2007/07/20 09:23:37 bacon Exp $
+ * $Id: misc.h,v 1.2 2007/09/24 11:22:22 bacon Exp $
+ *
+ * {License}
  */
 
 #ifndef _MISC_H_

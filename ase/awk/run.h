@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.5 2007/09/23 16:48:55 bacon Exp $
+ * $Id: run.h,v 1.6 2007/09/24 08:21:25 bacon Exp $
  *
  * {License}
  */
@@ -102,7 +102,11 @@ enum ase_awk_global_id_t
 	ASE_AWK_GLOBAL_RSTART,
 	ASE_AWK_GLOBAL_SUBSEP,
 
-	ASE_AWK_GLOBAL_MAX /* this is not the actual id. used internally */
+	/* these are not not the actual IDs and are used internally only 
+	 * Make sure you update these values properly if you add more 
+	 * ID definitions, however */
+	ASE_AWK_MIN_GLOBAL_ID = ASE_AWK_GLOBAL_ARGC,
+	ASE_AWK_MAX_GLOBAL_ID = ASE_AWK_GLOBAL_SUBSEP
 };
 
 #ifdef __cplusplus

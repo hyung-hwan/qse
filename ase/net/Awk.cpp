@@ -1,5 +1,7 @@
 /*
- * $Id: Awk.cpp,v 1.24 2007/09/23 16:48:55 bacon Exp $
+ * $Id: Awk.cpp,v 1.26 2007/09/24 15:12:16 bacon Exp $
+ *
+ * {License}
  */
 
 #include "stdafx.h"
@@ -854,7 +856,7 @@ namespace ASE
 			if (awk == NULL) 
 			{
 				setError (ERROR::NOPER);
-				return -1;
+				return false;
 			}
 
 			cli::pin_ptr<const ASE::Awk::char_t> nptr = PtrToStringChars(name);
