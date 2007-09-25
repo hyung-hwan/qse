@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.14 2007/09/23 16:48:55 bacon Exp $
+ * $Id: jni.c,v 1.15 2007/09/24 11:15:58 bacon Exp $
  *
  * {License}
  */
@@ -2635,7 +2635,11 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 	if (mbs == ASE_NULL) return -1;
 
 	size_t mbl = wcstombs (mbs, tmp, len*5);
-	if (mbl == (size_t)-1) return -1;
+	if (mbl == (size_t)-1) 
+	{
+		free (mbs);
+		return -1;
+	}
 	mbs[mbl] = '\0';
 	ret = system(mbs);
 	free (mbs);

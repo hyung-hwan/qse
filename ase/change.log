@@ -1,17 +1,22 @@
 [0.3.1]
 
+* added to the awk interpreter the capibility to manipulate global variables 
+    - ase_awk_addglobal, ase_awk_delglobal (awk/parse.c)
+    - Awk::addGlobal, Awk::deleteGlobal (awk/Awk.hpp, awk/Awk.cpp)
+    - Awk::Run::setGlobal, Awk::Run::getGlobal (awk/Awk.hpp, awk/Awk.cpp)
+
+* enhanced Awk::dispatchFunction to set a more accurate error code (awk/Awk.cpp)
+
+* fixed a bug 
+    - memory leak if a null statement or a block with no statements are 
+      present in an AWK program. (awk/parse.c)
+
 * changed the access modifier for the Awk::Source::Source from public
   to protected.
-* started adding the source code documentation of awk/Awk.hpp.
-
-* added to the awk interpreter the capibility to add a global variable.
-    - ase_awk_addglobal (awk/parse.c)
-    - Awk::addGlobal (awk/Awk.cpp)
-
-* enhanced Awk::dispatchFunction to set more specific error code (awk/Awk.cpp)
-
 * renamed ase_awk_addbfn & ase_awk_delbfn to ase_awk_addfunc & ase_awk_delfunc 
   respectively.
+
+* started the source code documentation of awk/Awk.hpp.
 
 [0.3.0]
 

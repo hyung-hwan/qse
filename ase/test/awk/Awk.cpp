@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.33 2007/09/23 16:48:55 bacon Exp $
+ * $Id: Awk.cpp,v 1.34 2007/09/24 08:21:25 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -91,7 +91,15 @@ public:
 		const char_t* name, size_t len)
 	{
 		long_t x = args[0].toInt();
-		run.setGlobal (idLastSleep, x);
+
+		/*Argument arg;
+		if (run.getGlobal(idLastSleep, arg) == 0)
+			ase_printf (ASE_T("GOOD: [%d]\n"), (int)arg.toInt());
+		else { ase_printf (ASE_T("BAD:\n")); }
+		*/
+
+		if (run.setGlobal (idLastSleep, x) == -1) return -1;
+
 	#ifdef _WIN32
 		::Sleep (x * 1000);
 		return ret.set ((long_t)0);
@@ -569,13 +577,21 @@ int awk_main (int argc, ase_char_t* argv[])
 			else if (ase_strcmp(argv[i], ASE_T("-a")) == 0) mode = 5;
 			else if (ase_strcmp(argv[i], ASE_T("-m")) == 0) mode = 6;
 			else if (ase_strcmp(argv[i], ASE_T("-w")) == 0) mode = 7;
-			else if (ase_strcmp(argv[i], ASE_T("-ns")) == 0) 
+			else if (ase_strcmp(argv[i], ASE_T("-nostripspaces")) == 0) 
 			{
 				awk.setOption (awk.getOption () & ~TestAwk::OPT_STRIPSPACES);
 			}
 			else if (ase_strcmp(argv[i], ASE_T("-noimplicit")) == 0)
 			{
 				awk.setOption (awk.getOption () & ~TestAwk::OPT_IMPLICIT);
+			}
+			else if (ase_strcmp(argv[i], ASE_T("-noexplicit")) == 0)
+			{
+				awk.setOption (awk.getOption () & ~TestAwk::OPT_EXPLICIT);
+			}
+			else if (ase_strcmp(argv[i], ASE_T("-noshading")) == 0)
+			{
+				awk.setOption (awk.getOption () & ~TestAwk::OPT_SHADING);
 			}
 			else 
 			{

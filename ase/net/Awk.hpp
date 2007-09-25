@@ -1,5 +1,7 @@
 /*
- * $Id: Awk.hpp,v 1.22 2007/09/23 16:48:55 bacon Exp $
+ * $Id: Awk.hpp,v 1.24 2007/09/24 15:12:16 bacon Exp $
+ *
+ * {License}
  */
 
 #pragma once
@@ -169,8 +171,72 @@ namespace ASE
 					}
 				}
 
-			public:
+			protected:
 				ASE::Awk::Return& ret;
+			};
+
+			ref class Run
+			{
+			public protected:
+				Run (ASE::Awk::Run& run): run (run)
+				{
+				}
+
+			public:
+				bool SetGlobal (int id, long_t v)
+				{
+					return run.setGlobal (id, v) == 0;
+				}
+				bool SetGlobal (int id, System::SByte^ v)
+				{
+					return run.setGlobal (id, (long_t)(__int8)v) == 0;
+				}
+				bool SetGlobal (int id, System::Int16^ v)
+				{
+					return run.setGlobal (id, (long_t)(__int16)v) == 0;
+				}
+				bool SetGlobal (int id, System::Int32^ v)
+				{
+					return run.setGlobal (id, (long_t)(__int32)v) == 0;
+				}
+				bool SetGlobal (int id, System::Int64^ v)
+				{
+					return run.setGlobal (id, (long_t)(__int64)v) == 0;
+				}
+				bool SetGlobal (int id, System::Byte^ v)
+				{
+					return run.setGlobal (id, (long_t)(unsigned __int8)v) == 0;
+				}
+				bool SetGlobal (int id, System::UInt16^ v)
+				{
+					return run.setGlobal (id, (long_t)(unsigned __int16)v) == 0;
+				}
+				bool SetGlobal (int id, System::UInt32^ v)
+				{
+					return run.setGlobal (id, (long_t)(unsigned __int32)v) == 0;
+				}
+				bool SetGlobal (int id, System::UInt64^ v)
+				{
+					return run.setGlobal (id, (long_t)(unsigned __int64)v) == 0;
+				}
+
+				bool SetGlobal (int id, real_t v)
+				{
+					return run.setGlobal (id, v) == 0;
+				}
+				bool SetGlobal (int id, System::Single^ v)
+				{
+					return run.setGlobal (id, (real_t)(float)v) == 0;
+				}
+				bool SetGlobal (int id, System::Double^ v)
+				{
+					return run.setGlobal (id, (real_t)(double)v) == 0;
+				}
+
+				// TODO: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+			protected:
+				ASE::Awk::Run& run;
 			};
 
 			ref class Source
