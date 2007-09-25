@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.11 2007/09/23 04:20:22 bacon Exp $
+ * $Id: awk.h,v 1.12 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -260,7 +260,7 @@ enum ase_awk_errnum_t
 	ASE_AWK_EBLKEND,        /* END requires an action block */
 	ASE_AWK_EDUPBEG,        /* duplicate BEGIN */
 	ASE_AWK_EDUPEND,        /* duplicate END */
-	ASE_AWK_EBFNRED,        /* builtin function redefined */
+	ASE_AWK_EBFNRED,        /* intrinsic function redefined */
 	ASE_AWK_EAFNRED,        /* function redefined */
 	ASE_AWK_EGBLRED,        /* global variable redefined */
 	ASE_AWK_EPARRED,        /* parameter redefined */
@@ -292,7 +292,7 @@ enum ase_awk_errnum_t
 	ASE_AWK_EPOSIDX,           /* wrong position index */
 	ASE_AWK_EARGTF,            /* too few arguments */
 	ASE_AWK_EARGTM,            /* too many arguments */
-	ASE_AWK_EFNNONE,           /* no such function */
+	ASE_AWK_EFNNONE,           /* "function '%.*s' not found" */
 	ASE_AWK_ENOTIDX,           /* variable not indexable */
 	ASE_AWK_ENOTDEL,           /* variable not deletable */
 	ASE_AWK_ENOTMAP,           /* value not a map */
@@ -311,8 +311,8 @@ enum ase_awk_errnum_t
 	ASE_AWK_ERNEXTEND,         /* next called from END */
 	ASE_AWK_ERNEXTFBEG,        /* nextfile called from BEGIN */
 	ASE_AWK_ERNEXTFEND,        /* nextfile called from END */
-	ASE_AWK_EBFNUSER,          /* wrong builtin function implementation */
-	ASE_AWK_EBFNIMPL,          /* builtin function handler failed */
+	ASE_AWK_EBFNUSER,          /* wrong intrinsic function implementation */
+	ASE_AWK_EBFNIMPL,          /* intrinsic function handler failed */
 	ASE_AWK_EIOUSER,           /* wrong user io handler implementation */
 	ASE_AWK_EIONONE,           /* no such io name found */
 	ASE_AWK_EIOIMPL,           /* i/o callback returned an error */
@@ -425,14 +425,23 @@ int ase_awk_setword (ase_awk_t* awk,
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
 
 /* 
- * Adds an intrinsic global variable. It should be called before a call 
- * to ase_awk_parse.
+ * Adds an intrinsic global variable. It should be called in 
+ * add_globals_callback.
  *
  * @return 
  * 	On success, the ID of the global variable added is returned.
  * 	On failure, -1 is returned.
  */
 int ase_awk_addglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
+
+/*
+ * Deletes a instrinsic global variable. 
+ *
+ * @return 
+ * 	On success, 0 is returned.
+ * 	On failure, -1 is returned.
+ */
+int ase_awk_delglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
 
 /*
  * ase_awk_run return 0 on success and -1 on failure, generally speaking.
@@ -458,8 +467,30 @@ int ase_awk_stop (ase_awk_run_t* run);
 /* functions to access internal stack structure */
 ase_size_t ase_awk_getnargs (ase_awk_run_t* run);
 ase_awk_val_t* ase_awk_getarg (ase_awk_run_t* run, ase_size_t idx);
-ase_awk_val_t* ase_awk_getglobal (ase_awk_run_t* run, ase_size_t idx);
-int ase_awk_setglobal (ase_awk_run_t* run, ase_size_t idx, ase_awk_val_t* val);
+
+/**
+ * Gets the value of a global variable.
+ *
+ * @param run A run-time context
+ * @param id The ID to a global variable. 
+ * 	This value correspondsto the predefined global variable IDs or 
+ * 	the value returned by ase_awk_addglobal.
+ * @return
+ * 	The pointer to a value is returned. This function never fails
+ * 	so long as id is valid. Otherwise, you may fall into trouble.
+ */
+ase_awk_val_t* ase_awk_getglobal (ase_awk_run_t* run, int id);
+int ase_awk_setglobal (ase_awk_run_t* run, int id, ase_awk_val_t* val);
+
+/**
+ * Sets the return value of a function from within a function handler.
+ *
+ * @param run A run-time context
+ * @param val A pointer to the value to set.
+ * 	ase_awk_refupval and ase_awk_refdownval are not needed because
+ * 	ase_awk_setretval never fails and it updates the reference count
+ * 	of the value properly.
+ */
 void ase_awk_setretval (ase_awk_run_t* run, ase_awk_val_t* val);
 
 int ase_awk_setfilename (
@@ -487,14 +518,14 @@ void ase_awk_setrunerror (
 	ase_awk_run_t* run, int errnum, ase_size_t errlin, 
 	const ase_cstr_t* errarg, ase_size_t argcnt);
 
-/* functions to manipulate built-in functions */
-void* ase_awk_addbfn (
+/* functions to manipulate intrinsic functions */
+void* ase_awk_addfunc (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len, 
 	int when_valid, ase_size_t min_args, ase_size_t max_args, 
 	const ase_char_t* arg_spec, 
 	int (*handler)(ase_awk_run_t*,const ase_char_t*,ase_size_t));
 
-int ase_awk_delbfn (
+int ase_awk_delfunc (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len);
 
 void ase_awk_clrbfn (ase_awk_t* awk);

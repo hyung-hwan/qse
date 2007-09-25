@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.14 2007/09/05 14:42:06 bacon Exp $
+ * $Id: awk.c,v 1.15 2007/09/23 16:48:55 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -1058,7 +1058,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	app_awk = awk;
 
-	if (ase_awk_addbfn (awk, 
+	if (ase_awk_addfunc (awk, 
 		ASE_T("sleep"), 5, 0,
 		1, 1, ASE_NULL, bfn_sleep) == ASE_NULL)
 	{

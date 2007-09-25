@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.55 2007/09/21 15:29:51 bacon Exp $
+ * $Id: Awk.cpp,v 1.56 2007/09/23 16:48:55 bacon Exp $
  */
 
 
@@ -141,6 +141,11 @@ Awk::Argument::Argument (): run (ASE_NULL), val (ASE_NULL)
 
 Awk::Argument::~Argument ()
 {
+	clear ();
+}
+
+void Awk::Argument::clear ()
+{
 	if (this->str.ptr != ASE_NULL)
 	{
 		ASE_ASSERT (this->run != ASE_NULL);
@@ -154,6 +159,7 @@ Awk::Argument::~Argument ()
 	{
 		ASE_ASSERT (this->run != ASE_NULL);
 		ase_awk_refdownval (this->run, this->val);
+		this->val = ASE_NULL;
 	}
 }
 
@@ -289,7 +295,7 @@ const Awk::char_t* Awk::Argument::toStr (size_t* len) const
 // Awk::Return
 //////////////////////////////////////////////////////////////////
 
-Awk::Return::Return (run_t* run): run (run), type (ASE_AWK_VAL_NIL)
+Awk::Return::Return (awk_t* awk): awk(awk), type (ASE_AWK_VAL_NIL)
 {
 }
 
@@ -298,22 +304,24 @@ Awk::Return::~Return ()
 	clear ();
 }
 
-Awk::val_t* Awk::Return::toVal () const
+Awk::val_t* Awk::Return::toVal (run_t* run) const
 {
+	ASE_ASSERT (run != ASE_NULL);
+
 	switch (this->type)
 	{
 		case ASE_AWK_VAL_NIL:
 			return ase_awk_val_nil;
 
 		case ASE_AWK_VAL_INT:
-			return ase_awk_makeintval (this->run, this->v.inum);
+			return ase_awk_makeintval (run, this->v.inum);
 
 		case ASE_AWK_VAL_REAL:
-			return ase_awk_makerealval (this->run, this->v.rnum);
+			return ase_awk_makerealval (run, this->v.rnum);
 
 		case ASE_AWK_VAL_STR:
 			return ase_awk_makestrval (
-				this->run, this->v.str.ptr, this->v.str.len);
+				run, this->v.str.ptr, this->v.str.len);
 	}
 
 	return ASE_NULL;
@@ -341,7 +349,6 @@ int Awk::Return::set (real_t v)
 
 int Awk::Return::set (const char_t* ptr, size_t len)
 {
-	awk_t* awk = ase_awk_getrunawk(this->run);
 	char_t* tmp = ase_awk_strxdup (awk, ptr, len);
 	if (tmp == ASE_NULL) return -1;
 
@@ -359,7 +366,6 @@ void Awk::Return::clear ()
 	if (this->type == ASE_AWK_VAL_STR)
 	{
 		ASE_ASSERT (this->v.str.ptr != ASE_NULL);
-		awk_t* awk = ase_awk_getrunawk(this->run);
 		ase_awk_free (awk, this->v.str.ptr);
 		this->v.str.ptr = ASE_NULL;
 		this->v.str.len = 0;
@@ -368,13 +374,22 @@ void Awk::Return::clear ()
 	this->type = ASE_AWK_VAL_NIL;
 }
 
-
 //////////////////////////////////////////////////////////////////
 // Awk::Run
 //////////////////////////////////////////////////////////////////
 
 Awk::Run::Run (Awk* awk): 
 	awk (awk), run (ASE_NULL), callbackFailed (false)
+{
+}
+
+Awk::Run::Run (Awk* awk, run_t* run): 
+	awk (awk), run (run), callbackFailed (false)
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+}
+
+Awk::Run::~Run ()
 {
 }
 
@@ -400,6 +415,68 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 {
 	ASE_ASSERT (this->run != ASE_NULL);
 	return ase_awk_getrunerrmsg (this->run);
+}
+
+int Awk::Run::setGlobal (int id, long_t v)
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+
+	ase_awk_val_t* tmp = ase_awk_makeintval (run, v);
+	if (tmp == ASE_NULL)
+	{
+		ase_awk_setrunerror (
+			this->run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		return -1;
+	}
+
+	ase_awk_refupval (run, tmp);
+	int n = ase_awk_setglobal (this->run, id, tmp);
+	ase_awk_refdownval (run, tmp);
+	return n;
+}
+
+int Awk::Run::setGlobal (int id, real_t v)
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+
+	ase_awk_val_t* tmp = ase_awk_makerealval (run, v);
+	if (tmp == ASE_NULL)
+	{
+		ase_awk_setrunerror (
+			this->run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		return -1;
+	}
+
+	ase_awk_refupval (run, tmp);
+	int n = ase_awk_setglobal (this->run, id, tmp);
+	ase_awk_refdownval (run, tmp);
+	return n;
+}
+
+int Awk::Run::setGlobal (int id, const char_t* ptr, size_t len)
+{
+	ASE_ASSERT (run != ASE_NULL);
+
+	ase_awk_val_t* tmp = ase_awk_makestrval (run, ptr, len);
+	if (tmp == ASE_NULL)
+	{
+		ase_awk_setrunerror (
+			this->run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		return -1;
+	}
+
+	ase_awk_refupval (run, tmp);
+	int n = ase_awk_setglobal (this->run, id, tmp);
+	ase_awk_refdownval (run, tmp);
+	return n;
+}
+
+int Awk::Run::getGlobal (int id, Argument& global) const
+{
+	ASE_ASSERT (run != ASE_NULL);
+
+	global.clear ();
+	return global.init (run,ase_awk_getglobal (this->run, id));
 }
 
 //////////////////////////////////////////////////////////////////
@@ -667,7 +744,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	ase_awk_runios_t runios;
 	ase_awk_runcbs_t runcbs;
 	ase_awk_runarg_t* runarg = ASE_NULL;
-	Run emptyRun (this);
+	Run runForCallback (this);
 
 	runios.pipe        = pipeHandler;
 	runios.coproc      = ASE_NULL;
@@ -681,7 +758,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 		runcbs.on_end       = onRunEnd;
 		runcbs.on_return    = onRunReturn;
 		runcbs.on_statement = onRunStatement;
-		runcbs.custom_data  = &emptyRun;
+		runcbs.custom_data  = &runForCallback;
 	}
 
 	if (nargs > 0)
@@ -727,8 +804,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	return n;
 }
 
-int Awk::dispatchFunction (
-	run_t* run, const char_t* name, size_t len)
+int Awk::dispatchFunction (run_t* run, const char_t* name, size_t len)
 {
 	pair_t* pair;
 	awk_t* awk;
@@ -736,7 +812,17 @@ int Awk::dispatchFunction (
 	awk = ase_awk_getrunawk (run);
 
 	pair = ase_awk_map_get (functionMap, name, len);
-	if (pair == ASE_NULL) return -1;
+	if (pair == ASE_NULL) 
+	{
+		ase_cstr_t errarg;
+
+		errarg.ptr = name;
+		errarg.len = len;
+
+		ase_awk_setrunerror (
+			run, ASE_AWK_EFNNONE, 0, &errarg, 1);
+		return -1;
+	}
 
 	FunctionHandler handler;
        	handler = *(FunctionHandler*)ASE_AWK_PAIR_VAL(pair);	
@@ -746,30 +832,66 @@ int Awk::dispatchFunction (
 	//Argument* args = ASE_NULL;
 	//try { args = new Argument [nargs]; } catch (...)  {}
 	Argument* args = new(awk) Argument[nargs];
-	if (args == ASE_NULL) return -1;
+	if (args == ASE_NULL) 
+	{
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		return -1;
+	}
 
 	for (i = 0; i < nargs; i++)
 	{
 		val_t* v = ase_awk_getarg (run, i);
 		if (args[i].init (run, v) == -1)
 		{
+			ase_awk_setrunerror (
+				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			delete[] args;
 			return -1;
 		}
 	}
 	
-	Return ret (run);
-	int n = (this->*handler) (&ret, args, nargs, name, len);
+	Run runForFunction (this, run);
+	Return ret (awk);
+
+	int n = (this->*handler) (runForFunction, ret, args, nargs, name, len);
 
 	delete[] args;
 
-	if (n <= -1) return -1;
+	if (n <= -1) 
+	{
+		/* this is really the handler error. the underlying engine 
+		 * will take care of the error code. */
+		return -1;
+	}
 
-	val_t* r = ret.toVal ();
-	if (r == ASE_NULL) return -1;
+	val_t* r = ret.toVal (run);
+	if (r == ASE_NULL) 
+	{
+		ase_awk_setrunerror (
+			run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		return -1;
+	}
 
 	ase_awk_setretval (run, r);
 	return 0;
+}
+
+int Awk::addGlobal (const char_t* name)
+{
+	ASE_ASSERT (awk != ASE_NULL);
+
+	int n = ase_awk_addglobal (awk, name, ase_strlen(name));
+	if (n == -1) retrieveError ();
+	return n;
+}
+
+int Awk::deleteGlobal (const char_t* name)
+{
+	ASE_ASSERT (awk != ASE_NULL);
+	int n = ase_awk_delglobal (awk, name, ase_strlen(name));
+	if (n == -1) retrieveError ();
+	return n;
 }
 
 int Awk::addFunction (
@@ -791,7 +913,7 @@ int Awk::addFunction (
 	
 	size_t nameLen = ase_strlen(name);
 
-	void* p = ase_awk_addbfn (awk, name, nameLen,
+	void* p = ase_awk_addfunc (awk, name, nameLen,
 	                          0, minArgs, maxArgs, ASE_NULL, 
 	                          functionHandler);
 	if (p == ASE_NULL) 
@@ -804,7 +926,7 @@ int Awk::addFunction (
 	pair_t* pair = ase_awk_map_put (functionMap, name, nameLen, tmp);
 	if (pair == ASE_NULL)
 	{
-		ase_awk_delbfn (awk, name, nameLen);
+		ase_awk_delfunc (awk, name, nameLen);
 		ase_awk_free (awk, tmp);
 
 		setError (ERR_NOMEM);
@@ -820,7 +942,7 @@ int Awk::deleteFunction (const char_t* name)
 
 	size_t nameLen = ase_strlen(name);
 
-	int n = ase_awk_delbfn (awk, name, nameLen);
+	int n = ase_awk_delfunc (awk, name, nameLen);
 	if (n == 0) ase_awk_map_remove (functionMap, name, nameLen);
 	else retrieveError ();
 
@@ -1000,7 +1122,15 @@ void Awk::freeFunctionMapValue (void* owner, void* value)
 void Awk::onRunStart (run_t* run, void* custom)
 {
 	Run* r = (Run*)custom;
-	r->run = run;
+
+	// the actual run_t value for the run-time callback is set here.
+	// r here refers to runForCallback declared in Awk::run and is 
+	// different from a Run instance available from intrinsic function 
+	// handlers (runForFunction in dispatchFunction). however, all methods 
+	// of the Run class will still work as intended in all places once 
+	// r->run is set properly here.
+	// NOTE: I admit this strategy is ugly.
+	r->run = run; 
 
 	r->callbackFailed = false;
 	r->awk->onRunStart (*r);

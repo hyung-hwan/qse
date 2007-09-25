@@ -2,9 +2,16 @@
 
 * changed the access modifier for the Awk::Source::Source from public
   to protected.
-* added source code documentation of ase/Awk/Awk.hpp.
-* added ase_awk_addglobal to support the addition of a user-defined 
-  global variable (awk/parse.c)
+* started adding the source code documentation of awk/Awk.hpp.
+
+* added to the awk interpreter the capibility to add a global variable.
+    - ase_awk_addglobal (awk/parse.c)
+    - Awk::addGlobal (awk/Awk.cpp)
+
+* enhanced Awk::dispatchFunction to set more specific error code (awk/Awk.cpp)
+
+* renamed ase_awk_addbfn & ase_awk_delbfn to ase_awk_addfunc & ase_awk_delfunc 
+  respectively.
 
 [0.3.0]
 

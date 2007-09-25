@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.13 2007/09/23 04:20:22 bacon Exp $
+ * $Id: parse.c,v 1.14 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -130,7 +130,8 @@ static int parse (ase_awk_t* awk);
 
 static ase_awk_t* parse_progunit (ase_awk_t* awk);
 static ase_awk_t* collect_globals (ase_awk_t* awk);
-static ase_awk_t* add_builtin_globals (ase_awk_t* awk);
+static int adjust_static_globals (ase_awk_t* awk);
+
 static int add_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
 	ase_size_t line, int force);
@@ -479,7 +480,7 @@ static int parse (ase_awk_t* awk)
 		return -1;
 	}
 
-	if (add_builtin_globals (awk) == ASE_NULL) 
+	if (adjust_static_globals (awk) == -1) 
 	{
 		n = -1;
 		goto exit_parse;
@@ -1247,7 +1248,39 @@ static ase_awk_nde_t* parse_block_dc (
 	return nde;
 }
 
-static ase_awk_t* add_builtin_globals (ase_awk_t* awk)
+int ase_awk_initglobals (ase_awk_t* awk)
+{	
+	global_t* p = gtab;
+	int id;
+
+	/* ase_awk_initglobals is not generic-purpose. call this from
+	 * ase_awk_open only. */
+	ASE_ASSERT (awk->tree.nbglobals == 0 && awk->tree.nglobals == 0);
+
+	awk->tree.nbglobals = 0;
+	while (p->name != ASE_NULL)
+	{
+		if (ase_awk_tab_add (
+			&awk->parse.globals, p->name, p->name_len) == (ase_size_t)-1) 
+		{
+			return -1;
+		}
+
+		awk->tree.nbglobals++;
+		p++;
+	}
+
+	return 0;
+}
+
+static int adjust_static_globals (ase_awk_t* awk)
+{
+	/* TODO: */
+	return 0;
+}
+
+#if 0
+static ase_awk_t* add_static_globals (ase_awk_t* awk)
 {
 	global_t* p = gtab;
 	int id;
@@ -1258,11 +1291,14 @@ static ase_awk_t* add_builtin_globals (ase_awk_t* awk)
 
 		if (p->valid != 0 && (awk->option & p->valid) == 0)
 		{
+		#if 0
 			/* an invalid global variable are still added
 			 * to the global variable table with an empty name.
 			 * this is to prevent the run-time from looking up
 			 * the variable */
 			id = add_global (awk, ASE_T(""), 0, 0, 1);
+		#endif
+			id = add_global (awk, p->name, p->name_len, 0, 1);
 		}
 		else 
 		{
@@ -1276,15 +1312,17 @@ static ase_awk_t* add_builtin_globals (ase_awk_t* awk)
 
 	return awk;
 }
+#endif
 
 static int add_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
-	ase_size_t line, int force)
+	ase_size_t line, int disabled)
 {
 	ase_size_t nglobals;
 
+	/*
 	if (!force)
-	{
+	{*/
 		if (awk->option & ASE_AWK_UNIQUEFN) 
 		{
 			/* check if it conflict with a builtin function name */
@@ -1314,7 +1352,7 @@ static int add_global (
 			SETERRARG (awk, ASE_AWK_EDUPGBL, line, name, len);
 			return -1;
 		}
-	}
+	/*}*/
 
 	nglobals = ase_awk_tab_getsize (&awk->parse.globals);
 	if (nglobals >= ASE_AWK_MAX_GLOBALS)
@@ -1329,6 +1367,10 @@ static int add_global (
 		return -1;
 	}
 
+	/* the disabled item is inserted normally but 
+	 * the name length is reset to zero. */
+	if (disabled) awk->parse.globals.buf[nglobals].name.len = 0;
+
 	/* return the id which is the index to the global table. */
 	return (int)nglobals;
 }
@@ -1337,6 +1379,30 @@ int ase_awk_addglobal (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
 	return add_global (awk, name, len, 0, 0);
+}
+
+int ase_awk_delglobal (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
+{
+	ase_size_t n;
+	
+	n = ase_awk_tab_find (&awk->parse.globals, 0, name, len);
+	if (n == (ase_size_t)-1) 
+	{
+		SETERRARG (awk, ASE_AWK_ENOENT, 0, name, len);
+		return -1;
+	}
+
+	/* clear the name to emulate the action. this approach is
+	 * in align with ase_awk_addglobal adding an ineffective global. 
+	 * anyway, this function cannot physically remove the entry
+	 * because the existing global ID's known can all go wrong if
+	 * it does so. the best is not to use this function as a normal
+	 * program has no reason to do so. */
+	awk->parse.globals.buf[n].name.ptr[0] = ASE_T('\0');;
+	awk->parse.globals.buf[n].name.len = 0;
+
+	return 0;
 }
 
 static ase_awk_t* collect_globals (ase_awk_t* awk)
@@ -2794,7 +2860,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		return ASE_NULL;			
 	}
 
-	/* check if name_dup is a built-in function name */
+	/* check if name_dup is an intrinsic function name */
 	bfn = ase_awk_getbfn (awk, name_dup, name_len);
 	if (bfn != ASE_NULL)
 	{
@@ -2802,7 +2868,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 
 		if (!MATCH(awk,TOKEN_LPAREN))
 		{
-			/* built-in function should be in the form 
+			/* an intrinsic function should be in the form 
 		 	 * of the function call */
 			ASE_AWK_FREE (awk, name_dup);
 
@@ -4958,8 +5024,8 @@ static int deparse (ase_awk_t* awk)
 			}
 			*/
 			if (ase_awk_putsrcstrx (awk, 
-				awk->parse.globals.buf[i].name, 
-				awk->parse.globals.buf[i].name_len) == -1)
+				awk->parse.globals.buf[i].name.ptr, 
+				awk->parse.globals.buf[i].name.len) == -1)
 			{
 				EXIT_DEPARSE ();
 			}
@@ -4978,8 +5044,8 @@ static int deparse (ase_awk_t* awk)
 		}
 		*/
 		if (ase_awk_putsrcstrx (awk, 
-			awk->parse.globals.buf[i].name, 
-			awk->parse.globals.buf[i].name_len) == -1)
+			awk->parse.globals.buf[i].name.ptr, 
+			awk->parse.globals.buf[i].name.len) == -1)
 		{
 			EXIT_DEPARSE ();
 		}

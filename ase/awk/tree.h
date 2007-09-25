@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: tree.h,v 1.4 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -263,7 +263,7 @@ struct ase_awk_nde_call_t
 			} name;
 		} afn;
 
-		/* minimum information of a built-in function 
+		/* minimum information of a intrinsic function 
 		 * needed during run-time. */
 		struct
 		{

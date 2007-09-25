@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.4 2007/09/23 04:20:22 bacon Exp $
+ * $Id: run.h,v 1.5 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -100,7 +100,9 @@ enum ase_awk_global_id_t
 	ASE_AWK_GLOBAL_RLENGTH,
 	ASE_AWK_GLOBAL_RS,
 	ASE_AWK_GLOBAL_RSTART,
-	ASE_AWK_GLOBAL_SUBSEP
+	ASE_AWK_GLOBAL_SUBSEP,
+
+	ASE_AWK_GLOBAL_MAX /* this is not the actual id. used internally */
 };
 
 #ifdef __cplusplus

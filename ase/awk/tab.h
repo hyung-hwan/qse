@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: tab.h,v 1.4 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -20,8 +20,11 @@ struct ase_awk_tab_t
 {
 	struct
 	{
-		ase_char_t* name;
-		ase_size_t name_len;
+		struct
+		{
+			ase_char_t* ptr;
+			ase_size_t  len;
+		} name;
 	}* buf;
 	ase_size_t size;
 	ase_size_t capa;

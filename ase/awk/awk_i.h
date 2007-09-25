@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.6 2007/06/17 09:29:46 bacon Exp $
+ * $Id: awk_i.h,v 1.7 2007/09/23 16:48:55 bacon Exp $
  *
  * {License}
  */
@@ -55,7 +55,7 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 struct ase_awk_tree_t
 {
 	ase_size_t nglobals; /* total number of globals */
-	ase_size_t nbglobals; /* number of builtin globals */
+	ase_size_t nbglobals; /* number of intrinsic globals */
 	ase_cstr_t cur_afn;
 	ase_awk_map_t* afns; /* awk function map */
 	ase_awk_nde_t* begin;
@@ -156,7 +156,7 @@ struct ase_awk_t
 		ase_size_t column;
 	} token;
 
-	/* builtin functions */
+	/* intrinsic functions */
 	struct
 	{
 		ase_awk_bfn_t* sys;

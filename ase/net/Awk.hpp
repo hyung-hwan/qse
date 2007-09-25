@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.21 2007/09/06 08:44:42 bacon Exp $
+ * $Id: Awk.hpp,v 1.22 2007/09/23 16:48:55 bacon Exp $
  */
 
 #pragma once
@@ -485,10 +485,13 @@ namespace ASE
 			/*event*/ RunReturnHandler^ OnRunReturn;
 			/*event*/ RunStatementHandler^ OnRunStatement;
 
+			virtual bool AddGlobal (System::String^ name, [System::Runtime::InteropServices::Out] int% id);
+			virtual bool DeleteGlobal (System::String^ name);
+
 			delegate bool FunctionHandler (System::String^ name, cli::array<Argument^>^ args, Return^ ret);
 			virtual bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
 			virtual bool DeleteFunction (System::String^ name);
-			
+
 			virtual bool SetWord (System::String^ ow, System::String^ nw);
 			virtual bool UnsetWord (System::String^ ow);
 			virtual bool UnsetAllWords ();
@@ -562,7 +565,8 @@ namespace ASE
 			virtual int NextConsole (Console^ console) = 0;
 
 		public protected:
-			bool Awk::DispatchFunction (ASE::Awk::Return* ret, 
+			bool Awk::DispatchFunction (
+				ASE::Awk::Run& run, ASE::Awk::Return& ret, 
 				const ASE::Awk::Argument* args, size_t nargs, 
 				const char_t* name, size_t len);
 
