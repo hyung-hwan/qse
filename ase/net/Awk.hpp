@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.24 2007/09/24 15:12:16 bacon Exp $
+ * $Id: Awk.hpp,v 1.25 2007/09/25 05:49:55 bacon Exp $
  *
  * {License}
  */
@@ -183,6 +183,12 @@ namespace ASE
 				}
 
 			public:
+				bool SetGlobal (int id, System::String^ v)
+				{
+					cli::pin_ptr<const char_t> nptr = PtrToStringChars(v);
+					return run.setGlobal (id, nptr, v->Length) == 0;
+				}
+
 				bool SetGlobal (int id, long_t v)
 				{
 					return run.setGlobal (id, v) == 0;
@@ -233,7 +239,11 @@ namespace ASE
 					return run.setGlobal (id, (real_t)(double)v) == 0;
 				}
 
-				// TODO: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+				bool GetGlobal (int id, [System::Runtime::InteropServices::Out] Argument^ v)
+				{
+					return run.getGlobal (id, v->placeHolder) == 0;
+				}
 
 			protected:
 				ASE::Awk::Run& run;
