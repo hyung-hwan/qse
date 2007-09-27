@@ -1,9 +1,15 @@
 [0.3.1]
 
 * added to the awk interpreter the capibility to manipulate global variables 
-    - ase_awk_addglobal, ase_awk_delglobal (awk/parse.c)
-    - Awk::addGlobal, Awk::deleteGlobal (awk/Awk.hpp, awk/Awk.cpp)
-    - Awk::Run::setGlobal, Awk::Run::getGlobal (awk/Awk.hpp, awk/Awk.cpp)
+    - added ase_awk_addglobal, ase_awk_delglobal (awk/parse.c)
+    - added Awk::addGlobal, Awk::deleteGlobal (awk/Awk.hpp, awk/Awk.cpp)
+    - added Awk::Run::setGlobal, Awk::Run::getGlobal (awk/Awk.hpp, awk/Awk.cpp)
+    - enhanced ase_awk_getglobalname
+* added an option 
+    - ASE_AWK_RESET (awk/awk.h)
+    - Awk::OPT_RESET  (awk/Awk.hpp)
+    - Awk::OPTION::RESET (net/Awk.hpp)
+    - TODO: add it to com&java
 
 * enhanced Awk::dispatchFunction to set a more accurate error code (awk/Awk.cpp)
 

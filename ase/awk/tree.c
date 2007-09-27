@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.4 2007/05/13 14:43:58 bacon Exp $
+ * $Id: tree.c,v 1.5 2007/09/25 15:27:54 bacon Exp $
  *
  * {License}
  */
@@ -833,6 +833,14 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				break;
 			}
 
+			case ASE_AWK_NDE_RESET:
+			{
+				PRINT_TABS (awk, depth);
+				PUT_SRCSTR (awk, ASE_T("reset "));
+				ase_awk_prnpt (awk, ((ase_awk_nde_reset_t*)p)->var);
+				break;
+			}
+
 			case ASE_AWK_NDE_PRINT:
 			case ASE_AWK_NDE_PRINTF:
 			{
@@ -1007,6 +1015,13 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			case ASE_AWK_NDE_DELETE:
 			{
 				ase_awk_clrpt (awk, ((ase_awk_nde_delete_t*)p)->var);
+				ASE_AWK_FREE (awk, p);
+				break;
+			}
+
+			case ASE_AWK_NDE_RESET:
+			{
+				ase_awk_clrpt (awk, ((ase_awk_nde_reset_t*)p)->var);
 				ASE_AWK_FREE (awk, p);
 				break;
 			}

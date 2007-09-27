@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.34 2007/09/24 08:21:25 bacon Exp $
+ * $Id: Awk.cpp,v 1.35 2007/09/25 15:27:54 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -592,6 +592,10 @@ int awk_main (int argc, ase_char_t* argv[])
 			else if (ase_strcmp(argv[i], ASE_T("-noshading")) == 0)
 			{
 				awk.setOption (awk.getOption () & ~TestAwk::OPT_SHADING);
+			}
+			else if (ase_strcmp(argv[i], ASE_T("-reset")) == 0)
+			{
+				awk.setOption (awk.getOption () | TestAwk::OPT_RESET);
 			}
 			else 
 			{

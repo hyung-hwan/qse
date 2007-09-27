@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.60 2007/09/24 11:22:22 bacon Exp $
+ * $Id: Awk.hpp,v 1.61 2007/09/25 15:27:54 bacon Exp $
  *
  * {License}
  */
@@ -531,7 +531,9 @@ public:
 		 * as the second and the third parameter are passed to 
 		 * the function specified as the first parameter.
 		 */
-		OPT_ARGSTOMAIN = ASE_AWK_ARGSTOMAIN
+		OPT_ARGSTOMAIN = ASE_AWK_ARGSTOMAIN,
+		/** Enables the keyword 'reset' */
+		OPT_RESET = ASE_AWK_RESET
 	};
 	// end of enum Option
 

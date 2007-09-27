@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.25 2007/09/25 05:49:55 bacon Exp $
+ * $Id: Awk.hpp,v 1.26 2007/09/25 15:27:54 bacon Exp $
  *
  * {License}
  */
@@ -390,7 +390,8 @@ namespace ASE
 				STRIPSPACES = ASE::Awk::OPT_STRIPSPACES,
 				NEXTOFILE = ASE::Awk::OPT_NEXTOFILE,
 				CRLF = ASE::Awk::OPT_CRLF,
-				ARGSTOMAIN = ASE::Awk::OPT_ARGSTOMAIN
+				ARGSTOMAIN = ASE::Awk::OPT_ARGSTOMAIN,
+				RESET = ASE::Awk::OPT_RESET
 			};
 
 			enum class DEPTH: int

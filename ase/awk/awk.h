@@ -1,11 +1,14 @@
 /* 
- * $Id: awk.h,v 1.12 2007/09/23 16:48:55 bacon Exp $
+ * $Id: awk.h,v 1.14 2007/09/25 15:27:54 bacon Exp $
  *
  * {License}
  */
 
 #ifndef _ASE_AWK_AWK_H_
 #define _ASE_AWK_AWK_H_
+
+// TODO: REMOVE THIS. MOVE IT SOMEWHRE ELSE OR CHANGE THE SCHEME
+//#define PROHIBIT_MAP_ASSIGNMENT_TO_VARIABLE
 
 #include <ase/cmn/types.h>
 #include <ase/cmn/macros.h>
@@ -190,7 +193,10 @@ enum ase_awk_option_t
 	ASE_AWK_CRLF        = (1 << 13),
 
 	/* pass the arguments to the main function */
-	ASE_AWK_ARGSTOMAIN  = (1 << 14)
+	ASE_AWK_ARGSTOMAIN  = (1 << 14),
+
+	/* enable the non-standard keyworkd reset */
+	ASE_AWK_RESET       = (1 << 15)
 };
 
 /* error code */
@@ -275,6 +281,7 @@ enum ase_awk_errnum_t
 	ASE_AWK_ELCLTM,         /* too many local variables */
 	ASE_AWK_EPARTM,         /* too many parameters */
 	ASE_AWK_EDELETE,        /* delete not followed by a variable */
+	ASE_AWK_ERESET,         /* reset not followed by a variable */
 	ASE_AWK_EBREAK,         /* break outside a loop */
 	ASE_AWK_ECONTINUE,      /* continue outside a loop */
 	ASE_AWK_ENEXTBEG,       /* next illegal in BEGIN block */
@@ -307,6 +314,7 @@ enum ase_awk_errnum_t
 	ASE_AWK_EMAPNOTALLOWED,    /* a map is not allowed */
 	ASE_AWK_EVALTYPE,          /* wrong value type */
 	ASE_AWK_ERDELETE,          /* delete called with a wrong target */
+	ASE_AWK_ERRESET,           /* reset called with a wrong target */
 	ASE_AWK_ERNEXTBEG,         /* next called from BEGIN */
 	ASE_AWK_ERNEXTEND,         /* next called from END */
 	ASE_AWK_ERNEXTFBEG,        /* nextfile called from BEGIN */

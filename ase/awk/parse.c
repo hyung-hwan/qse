@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.15 2007/09/24 08:21:25 bacon Exp $
+ * $Id: parse.c,v 1.18 2007/09/25 15:27:54 bacon Exp $
  *
  * {License}
  */
@@ -85,6 +85,7 @@ enum
 	TOKEN_NEXTINFILE,
 	TOKEN_NEXTOFILE,
 	TOKEN_DELETE,
+	TOKEN_RESET,
 	TOKEN_PRINT,
 	TOKEN_PRINTF,
 
@@ -195,6 +196,7 @@ static ase_awk_nde_t* parse_exit (ase_awk_t* awk, ase_size_t line);
 static ase_awk_nde_t* parse_next (ase_awk_t* awk, ase_size_t line);
 static ase_awk_nde_t* parse_nextfile (ase_awk_t* awk, ase_size_t line, int out);
 static ase_awk_nde_t* parse_delete (ase_awk_t* awk, ase_size_t line);
+static ase_awk_nde_t* parse_reset (ase_awk_t* awk, ase_size_t line);
 static ase_awk_nde_t* parse_print (ase_awk_t* awk, ase_size_t line, int type);
 
 static int get_token (ase_awk_t* awk);
@@ -258,6 +260,7 @@ static kwent_t kwtab[] =
 	{ ASE_T("nextfile"),     8, TOKEN_NEXTFILE,    0 },
 	{ ASE_T("nextofile"),    9, TOKEN_NEXTOFILE,   ASE_AWK_NEXTOFILE },
 	{ ASE_T("delete"),       6, TOKEN_DELETE,      0 },
+	{ ASE_T("reset"),        5, TOKEN_RESET,       ASE_AWK_RESET },
 	{ ASE_T("print"),        5, TOKEN_PRINT,       ASE_AWK_EXTIO },
 	{ ASE_T("printf"),       6, TOKEN_PRINTF,      ASE_AWK_EXTIO },
 
@@ -393,8 +396,15 @@ void ase_awk_setmaxdepth (ase_awk_t* awk, int types, ase_size_t depth)
 const ase_char_t* ase_awk_getglobalname (
 	ase_awk_t* awk, ase_size_t idx, ase_size_t* len)
 {
+	/*
 	*len = gtab[idx].name_len;
 	return gtab[idx].name;
+	*/
+
+	ASE_ASSERT (idx < ase_awk_tab_getsize(&awk->parse.globals));
+
+	*len = awk->parse.globals.buf[idx].name.len;
+	return awk->parse.globals.buf[idx].name.ptr;
 }
 
 
@@ -1368,6 +1378,12 @@ int ase_awk_addglobal (
 {
 	int n;
 
+	if (len <= 0)
+	{
+		SETERR (awk, ASE_AWK_EINVAL);
+		return -1;
+	}
+
 	if (awk->tree.nglobals > awk->tree.nbglobals) 
 	{
 		/* this function is not allow after ase_awk_parse is called */
@@ -1707,6 +1723,11 @@ static ase_awk_nde_t* parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 	{
 		if (get_token(awk) == -1) return ASE_NULL;
 		nde = parse_delete (awk, line);
+	}
+	else if (MATCH(awk,TOKEN_RESET))
+	{
+		if (get_token(awk) == -1) return ASE_NULL;
+		nde = parse_reset (awk, line);
 	}
 	else if (MATCH(awk,TOKEN_PRINT))
 	{
@@ -3873,6 +3894,46 @@ static ase_awk_nde_t* parse_delete (ase_awk_t* awk, ase_size_t line)
 	}
 
 	nde->type = ASE_AWK_NDE_DELETE;
+	nde->line = line;
+	nde->next = ASE_NULL;
+	nde->var = var;
+
+	return (ase_awk_nde_t*)nde;
+}
+
+static ase_awk_nde_t* parse_reset (ase_awk_t* awk, ase_size_t line)
+{
+	ase_awk_nde_reset_t* nde;
+	ase_awk_nde_t* var;
+
+	ASE_ASSERT (awk->token.prev.type == TOKEN_RESET);
+	if (!MATCH(awk,TOKEN_IDENT)) 
+	{
+		SETERRTOK (awk, ASE_AWK_EIDENT);
+		return ASE_NULL;
+	}
+
+	var = parse_primary_ident (awk, awk->token.line);
+	if (var == ASE_NULL) return ASE_NULL;
+
+	/* unlike delete, it must be followed by a plain variable only */
+	if (!is_plain_var (var))
+	{
+		/* a normal identifier is expected */
+		ase_awk_clrpt (awk, var);
+		SETERRLIN (awk, ASE_AWK_ERESET, line);
+		return ASE_NULL;
+	}
+
+	nde = (ase_awk_nde_reset_t*) ASE_AWK_MALLOC (
+		awk, ASE_SIZEOF(ase_awk_nde_reset_t));
+	if (nde == ASE_NULL)
+	{
+		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
+		return ASE_NULL;
+	}
+
+	nde->type = ASE_AWK_NDE_RESET;
 	nde->line = line;
 	nde->next = ASE_NULL;
 	nde->var = var;

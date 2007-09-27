@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.7 2007/09/23 16:48:55 bacon Exp $
+ * $Id: err.c,v 1.8 2007/09/25 15:27:54 bacon Exp $
  *
  * {License}
  */
@@ -89,6 +89,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("too many local variables"),
 		ASE_T("too many parameters"),
 		ASE_T("delete statement not followed by a normal variable"),
+		ASE_T("reset statement not followed by a normal variable"),
 		ASE_T("break statement outside a loop"),
 		ASE_T("continue statement outside a loop"),
 		ASE_T("next statement illegal in the BEGIN block"),
@@ -119,6 +120,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("a map is not allowed"),
 		ASE_T("invalid value type"),
 		ASE_T("delete statement called with a wrong target"),
+		ASE_T("reset statement called with a wrong target"),
 		ASE_T("next statement called from the BEGIN block"),
 		ASE_T("next statement called from the END block"),
 		ASE_T("nextfile statement called from the BEGIN block"),
