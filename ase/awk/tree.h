@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.4 2007/09/23 16:48:55 bacon Exp $
+ * $Id: tree.h,v 1.5 2007/09/25 15:27:54 bacon Exp $
  *
  * {License}
  */
@@ -29,6 +29,7 @@ enum ase_awk_nde_type_t
 	ASE_AWK_NDE_NEXT,
 	ASE_AWK_NDE_NEXTFILE,
 	ASE_AWK_NDE_DELETE,
+	ASE_AWK_NDE_RESET,
 	ASE_AWK_NDE_PRINT,
 	ASE_AWK_NDE_PRINTF,
 
@@ -127,6 +128,7 @@ typedef struct ase_awk_nde_exit_t      ase_awk_nde_exit_t;
 typedef struct ase_awk_nde_next_t      ase_awk_nde_next_t;
 typedef struct ase_awk_nde_nextfile_t  ase_awk_nde_nextfile_t;
 typedef struct ase_awk_nde_delete_t    ase_awk_nde_delete_t;
+typedef struct ase_awk_nde_reset_t     ase_awk_nde_reset_t;
 typedef struct ase_awk_nde_print_t     ase_awk_nde_print_t;
 
 struct ase_awk_afn_t
@@ -373,6 +375,13 @@ struct ase_awk_nde_nextfile_t
 
 /* ASE_AWK_NDE_DELETE */
 struct ase_awk_nde_delete_t
+{
+	ASE_AWK_NDE_HDR;
+	ase_awk_nde_t* var;
+};
+
+/* ASE_AWK_NDE_RESET */
+struct ase_awk_nde_reset_t
 {
 	ASE_AWK_NDE_HDR;
 	ase_awk_nde_t* var;

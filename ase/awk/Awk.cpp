@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.58 2007/09/24 11:22:22 bacon Exp $
+ * $Id: Awk.cpp,v 1.59 2007/09/25 07:17:30 bacon Exp $
  *
  * {License}
  */
@@ -256,6 +256,10 @@ int Awk::Argument::init (run_t* run, val_t* v)
 
 		this->str.ptr = ase_awk_valtostr (run, v, 0, ASE_NULL, &this->str.len);
 		if (this->str.ptr != ASE_NULL) return 0;
+	}
+	else if (v->type == ASE_AWK_VAL_MAP)
+	{
+		// TODO: support this propertly...
 	}
 
 	ase_awk_refdownval (run, v);

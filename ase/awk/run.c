@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.12 2007/09/23 16:48:55 bacon Exp $
+ * $Id: run.c,v 1.15 2007/09/25 15:27:54 bacon Exp $
  *
  * {License}
  */
@@ -51,149 +51,151 @@ enum exit_level_t
 	 (idx) < ASE_TYPE_MAX(ase_long_t) && \
 	 (idx) < ASE_TYPE_MAX(ase_size_t))
 
-static int __set_global (
+static int set_global (
 	ase_awk_run_t* run, ase_size_t idx, 
 	ase_awk_nde_var_t* var, ase_awk_val_t* val);
 
-static int __init_run (
+static int init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
 	ase_awk_runios_t* runios, void* custom_data);
-static void __deinit_run (ase_awk_run_t* run);
+static void deinit_run (ase_awk_run_t* run);
 
-static int __build_runarg (
+static int build_runarg (
 	ase_awk_run_t* run, ase_awk_runarg_t* runarg, ase_size_t* nargs);
-static void __cleanup_globals (ase_awk_run_t* run);
-static int __set_globals_to_default (ase_awk_run_t* run);
+static void cleanup_globals (ase_awk_run_t* run);
+static int set_globals_to_default (ase_awk_run_t* run);
 
 static int run_main (
 	ase_awk_run_t* run, const ase_char_t* main, 
 	ase_awk_runarg_t* runarg);
 
-static int __run_pattern_blocks  (ase_awk_run_t* run);
-static int __run_pattern_block_chain (
+static int run_pattern_blocks  (ase_awk_run_t* run);
+static int run_pattern_block_chain (
 	ase_awk_run_t* run, ase_awk_chain_t* chain);
-static int __run_pattern_block (
+static int run_pattern_block (
 	ase_awk_run_t* run, ase_awk_chain_t* chain, ase_size_t block_no);
-static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde);
-static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde);
-static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static int __run_if (ase_awk_run_t* run, ase_awk_nde_if_t* nde);
-static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde);
-static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde);
-static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde);
-static int __run_break (ase_awk_run_t* run, ase_awk_nde_break_t* nde);
-static int __run_continue (ase_awk_run_t* run, ase_awk_nde_continue_t* nde);
-static int __run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde);
-static int __run_exit (ase_awk_run_t* run, ase_awk_nde_exit_t* nde);
-static int __run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde);
-static int __run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde);
-static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde);
-static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde);
-static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde);
-static int __formatted_output (
+static int run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde);
+static int run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde);
+static int run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static int run_if (ase_awk_run_t* run, ase_awk_nde_if_t* nde);
+static int run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde);
+static int run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde);
+static int run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde);
+static int run_break (ase_awk_run_t* run, ase_awk_nde_break_t* nde);
+static int run_continue (ase_awk_run_t* run, ase_awk_nde_continue_t* nde);
+static int run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde);
+static int run_exit (ase_awk_run_t* run, ase_awk_nde_exit_t* nde);
+static int run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde);
+static int run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde);
+static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde);
+static int run_reset (ase_awk_run_t* run, ase_awk_nde_reset_t* nde);
+static int run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde);
+static int run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde);
+
+static int output_formatted (
 	ase_awk_run_t* run, int out_type, const ase_char_t* dst, 
 	const ase_char_t* fmt, ase_size_t fmt_len, ase_awk_nde_t* args);
 
-static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_expression0 (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_expression0 (ase_awk_run_t* run, ase_awk_nde_t* nde);
 
-static ase_awk_val_t* __eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde);
 
-static ase_awk_val_t* __eval_assignment (
+static ase_awk_val_t* eval_assignment (
 	ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __do_assignment (
+static ase_awk_val_t* do_assignment (
 	ase_awk_run_t* run, ase_awk_nde_t* var, ase_awk_val_t* val);
-static ase_awk_val_t* __do_assignment_scalar (
+static ase_awk_val_t* do_assignment_scalar (
 	ase_awk_run_t* run, ase_awk_nde_var_t* var, ase_awk_val_t* val);
-static ase_awk_val_t* __do_assignment_map (
+static ase_awk_val_t* do_assignment_map (
 	ase_awk_run_t* run, ase_awk_nde_var_t* var, ase_awk_val_t* val);
-static ase_awk_val_t* __do_assignment_pos (
+static ase_awk_val_t* do_assignment_pos (
 	ase_awk_run_t* run, ase_awk_nde_pos_t* pos, ase_awk_val_t* val);
 
-static ase_awk_val_t* __eval_binary (
+static ase_awk_val_t* eval_binary (
 	ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_binop_lor (
+static ase_awk_val_t* eval_binop_lor (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right);
-static ase_awk_val_t* __eval_binop_land (
+static ase_awk_val_t* eval_binop_land (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right);
-static ase_awk_val_t* __eval_binop_in (
+static ase_awk_val_t* eval_binop_in (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right);
-static ase_awk_val_t* __eval_binop_bor (
+static ase_awk_val_t* eval_binop_bor (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_bxor (
+static ase_awk_val_t* eval_binop_bxor (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_band (
+static ase_awk_val_t* eval_binop_band (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_eq (
+static ase_awk_val_t* eval_binop_eq (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_ne (
+static ase_awk_val_t* eval_binop_ne (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_gt (
+static ase_awk_val_t* eval_binop_gt (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_ge (
+static ase_awk_val_t* eval_binop_ge (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_lt (
+static ase_awk_val_t* eval_binop_lt (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_le (
+static ase_awk_val_t* eval_binop_le (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_lshift (
+static ase_awk_val_t* eval_binop_lshift (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_rshift (
+static ase_awk_val_t* eval_binop_rshift (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_plus (
+static ase_awk_val_t* eval_binop_plus (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_minus (
+static ase_awk_val_t* eval_binop_minus (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_mul (
+static ase_awk_val_t* eval_binop_mul (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_div (
+static ase_awk_val_t* eval_binop_div (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_idiv (
+static ase_awk_val_t* eval_binop_idiv (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_mod (
+static ase_awk_val_t* eval_binop_mod (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_exp (
+static ase_awk_val_t* eval_binop_exp (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_concat (
+static ase_awk_val_t* eval_binop_concat (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
-static ase_awk_val_t* __eval_binop_ma (
+static ase_awk_val_t* eval_binop_ma (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right);
-static ase_awk_val_t* __eval_binop_nm (
+static ase_awk_val_t* eval_binop_nm (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right);
-static ase_awk_val_t* __eval_binop_match0 (
+static ase_awk_val_t* eval_binop_match0 (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right,
 	ase_size_t lline, ase_size_t rline, int ret);
 
-static ase_awk_val_t* __eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_cnd (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_cnd (ase_awk_run_t* run, ase_awk_nde_t* nde);
 
-static ase_awk_val_t* __eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_call (
+static ase_awk_val_t* eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_call (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, 
 	const ase_char_t* bfn_arg_spec, ase_awk_afn_t* afn);
 
-static int __get_reference (
+static int get_reference (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_awk_val_t*** ref);
-static ase_awk_val_t** __get_reference_indexed (
+static ase_awk_val_t** get_reference_indexed (
 	ase_awk_run_t* run, ase_awk_nde_var_t* nde, ase_awk_val_t** val);
 
-static ase_awk_val_t* __eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_real (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_str (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_rex (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_named (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_global (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_local (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_arg (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_globalidx (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_localidx (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_argidx (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_pos (ase_awk_run_t* run, ase_awk_nde_t* nde);
-static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_real (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_str (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_rex (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_named (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_global (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_local (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_arg (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_globalidx (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_localidx (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_argidx (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_pos (ase_awk_run_t* run, ase_awk_nde_t* nde);
+static ase_awk_val_t* eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde);
 
 static int __raw_push (ase_awk_run_t* run, void* val);
 #define __raw_pop(run) \
@@ -203,10 +205,10 @@ static int __raw_push (ase_awk_run_t* run, void* val);
 	} while (0)
 static void __raw_pop_times (ase_awk_run_t* run, ase_size_t times);
 
-static int __read_record (ase_awk_run_t* run);
-static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds);
+static int read_record (ase_awk_run_t* run);
+static int shorten_record (ase_awk_run_t* run, ase_size_t nflds);
 
-static ase_char_t* __idxnde_to_str (
+static ase_char_t* idxnde_to_str (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_size_t* len);
 
 typedef ase_awk_val_t* (*binop_func_t) (
@@ -225,19 +227,17 @@ ase_awk_val_t* ase_awk_getarg (ase_awk_run_t* run, ase_size_t idx)
 
 ase_awk_val_t* ase_awk_getglobal (ase_awk_run_t* run, int id)
 {
-	ASE_ASSERTX (id >= 0,
-		"a global variable ID should be equal to or greater than 0");
+	ASE_ASSERT (id >= 0 && id < (int)ase_awk_tab_getsize(&run->awk->parse.globals));
 	return STACK_GLOBAL (run, id);
 }
 
 int ase_awk_setglobal (ase_awk_run_t* run, int id, ase_awk_val_t* val)
 {
-	ASE_ASSERTX (id >= 0, 
-		"a global variable ID should be equal to or greater than 0");
-	return __set_global (run, (ase_size_t)id, ASE_NULL, val);
+	ASE_ASSERT (id >= 0 && id < (int)ase_awk_tab_getsize(&run->awk->parse.globals));
+	return set_global (run, (ase_size_t)id, ASE_NULL, val);
 }
 
-static int __set_global (
+static int set_global (
 	ase_awk_run_t* run, ase_size_t idx, 
 	ase_awk_nde_var_t* var, ase_awk_val_t* val)
 {
@@ -270,6 +270,7 @@ static int __set_global (
 			ase_awk_setrunerror (run, 
 				ASE_AWK_EMAPTOSCALAR, 0, &errarg, 1);
 		}
+
 		return -1;
 	}
 
@@ -380,7 +381,7 @@ static int __set_global (
 
 		if (lv < run->inrec.nflds)
 		{
-			if (__shorten_record (run, (ase_size_t)lv) == -1)
+			if (shorten_record (run, (ase_size_t)lv) == -1)
 			{
 				/* adjust the error line */
 				if (var != ASE_NULL) run->errlin = var->line;
@@ -511,7 +512,7 @@ void ase_awk_setretval (ase_awk_run_t* run, ase_awk_val_t* val)
 {
 	ase_awk_refdownval (run, STACK_RETVAL(run));
 	STACK_RETVAL(run) = val;
-	/* should use the same trick as __run_return_statement */
+	/* should use the same trick as run_return */
 	ase_awk_refupval (run, val); 
 }
 
@@ -623,7 +624,7 @@ int ase_awk_run (ase_awk_t* awk,
 	ase_memset (run, 0, ASE_SIZEOF(ase_awk_run_t));
 
 	/* initialize the run object */
-	if (__init_run (run, awk, runios, custom_data) == -1) 
+	if (init_run (run, awk, runios, custom_data) == -1) 
 	{
 		ASE_AWK_FREE (awk, run);
 		return -1;
@@ -682,7 +683,7 @@ int ase_awk_run (ase_awk_t* awk,
 	}
 
 	/* uninitialize the run object */
-	__deinit_run (run);
+	deinit_run (run);
 
 	ASE_AWK_FREE (awk, run);
 	return n;
@@ -694,12 +695,12 @@ int ase_awk_stop (ase_awk_run_t* run)
 	return 0;
 }
 
-static void __free_namedval (void* run, void* val)
+static void free_namedval (void* run, void* val)
 {
 	ase_awk_refdownval ((ase_awk_run_t*)run, val);
 }
 
-static int __init_run (
+static int init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
 	ase_awk_runios_t* runios, void* custom_data)
 {
@@ -753,7 +754,7 @@ static int __init_run (
 	}
 
 	run->named = ase_awk_map_open (
-		run, 1024, 70, __free_namedval, run->awk);
+		run, 1024, 70, free_namedval, run->awk);
 	if (run->named == ASE_NULL)
 	{
 		ase_str_close (&run->format.fmt);
@@ -820,7 +821,7 @@ static int __init_run (
 	return 0;
 }
 
-static void __deinit_run (ase_awk_run_t* run)
+static void deinit_run (ase_awk_run_t* run)
 {
 	if (run->pattern_range_state != ASE_NULL)
 		ASE_AWK_FREE (run->awk, run->pattern_range_state);
@@ -935,7 +936,7 @@ static void __deinit_run (ase_awk_run_t* run)
 	}
 }
 
-static int __build_runarg (
+static int build_runarg (
 	ase_awk_run_t* run, ase_awk_runarg_t* runarg, ase_size_t* nargs)
 {
 	ase_awk_runarg_t* p;
@@ -1027,9 +1028,9 @@ static int __build_runarg (
 	{
 		/* ARGC is assigned nil when ARGV assignment has failed.
 		 * However, this requires preconditions, as follows:
-		 *  1. __build_runarg should be called in a proper place
+		 *  1. build_runarg should be called in a proper place
 		 *     as it is not a generic-purpose routine.
-		 *  2. ARGC should be nil before __build_runarg is called 
+		 *  2. ARGC should be nil before build_runarg is called 
 		 * If the restoration fails, nothing can salvage it. */
 		ase_awk_setglobal (run, ASE_AWK_GLOBAL_ARGC, ase_awk_val_nil);
 		ase_awk_refdownval (run, v_argc);
@@ -1044,7 +1045,7 @@ static int __build_runarg (
 	return 0;
 }
 
-static void __cleanup_globals (ase_awk_run_t* run)
+static void cleanup_globals (ase_awk_run_t* run)
 {
 	ase_size_t nglobals = run->awk->tree.nglobals;
 	while (nglobals > 0)
@@ -1055,7 +1056,7 @@ static void __cleanup_globals (ase_awk_run_t* run)
 	}
 }
 
-static int __update_fnr (ase_awk_run_t* run, ase_size_t fnr)
+static int update_fnr (ase_awk_run_t* run, ase_size_t fnr)
 {
 	ase_awk_val_t* tmp;
 
@@ -1078,15 +1079,13 @@ static int __update_fnr (ase_awk_run_t* run, ase_size_t fnr)
 	return 0;
 }
 
-static int __set_globals_to_default (ase_awk_run_t* run)
+static int set_globals_to_default (ase_awk_run_t* run)
 {
-	struct __gtab_t
+	struct gtab_t
 	{
 		int idx;
 		const ase_char_t* str;
-	};
-       
-	struct __gtab_t gtab[] =
+	} gtab[] =
 	{
 		{ ASE_AWK_GLOBAL_CONVFMT,   DEFAULT_CONVFMT },
 		{ ASE_AWK_GLOBAL_FILENAME,  ASE_NULL },
@@ -1196,12 +1195,12 @@ static int run_main (
 		return -1;
 	}
 	
-	if (__build_runarg (run, runarg, &nrunargs) == -1)
+	if (build_runarg (run, runarg, &nrunargs) == -1)
 	{
 		/* it can simply restore the top of the stack this way
 		 * because the values pused onto the stack so far are
 		 * all ase_awk_val_nils and ase_awk_val_zeros and 
-		 * __build_runarg doesn't push other values than them
+		 * build_runarg doesn't push other values than them
 		 * when it has failed */
 		run->stack_top = saved_stack_top;
 		return -1;
@@ -1209,8 +1208,8 @@ static int run_main (
 
 	run->exit_level = EXIT_NONE;
 
-	n = __update_fnr (run, 0);
-	if (n == 0) n = __set_globals_to_default (run);
+	n = update_fnr (run, 0);
+	if (n == 0) n = set_globals_to_default (run);
 	if (n == 0 && main != ASE_NULL)
 	{
 		/* run the given function */
@@ -1253,7 +1252,7 @@ static int run_main (
 						ASE_AWK_FREE (run->awk, tmp);
 						tmp = tmp2;
 					}
-					__cleanup_globals (run);
+					cleanup_globals (run);
 					run->stack_top = saved_stack_top;
 
 					ase_awk_setrunerror (
@@ -1276,7 +1275,7 @@ static int run_main (
 						ASE_AWK_FREE (run->awk, tmp);
 						tmp = tmp2;
 					} 
-					__cleanup_globals (run);
+					cleanup_globals (run);
 					run->stack_top = saved_stack_top;
 
 					ase_awk_setrunerror (
@@ -1293,7 +1292,7 @@ static int run_main (
 			ASE_ASSERT (nrunargs == nde.nargs);
 		}
 
-		v = __eval_afn (run, (ase_awk_nde_t*)&nde);
+		v = eval_afn (run, (ase_awk_nde_t*)&nde);
 		if (v == ASE_NULL) n = -1;
 		else
 		{
@@ -1320,7 +1319,7 @@ static int run_main (
 			/* restore the stack top in a cheesy(?) way */
 			run->stack_top = saved_stack_top;
 			/* pops off global variables in a decent way */	
-			__cleanup_globals (run);
+			cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 
 			ase_awk_setrunerror (
@@ -1331,7 +1330,7 @@ static int run_main (
 		if (__raw_push(run,(void*)saved_stack_top) == -1) 
 		{
 			run->stack_top = saved_stack_top;
-			__cleanup_globals (run);
+			cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 
 			ase_awk_setrunerror (
@@ -1343,7 +1342,7 @@ static int run_main (
 		if (__raw_push(run,ase_awk_val_nil) == -1)
 		{
 			run->stack_top = saved_stack_top;
-			__cleanup_globals (run);
+			cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 
 			ase_awk_setrunerror (
@@ -1355,7 +1354,7 @@ static int run_main (
 		if (__raw_push(run,ase_awk_val_nil) == -1)
 		{
 			run->stack_top = saved_stack_top;
-			__cleanup_globals (run);
+			cleanup_globals (run);
 			__raw_pop_times (run, run->awk->tree.nglobals);
 
 			ase_awk_setrunerror (
@@ -1381,7 +1380,7 @@ static int run_main (
 
 			run->active_block = blk;
 			run->exit_level = EXIT_NONE;
-			if (__run_block (run, blk) == -1) n = -1;
+			if (run_block (run, blk) == -1) n = -1;
 		}
 
 		if (n == 0 && 
@@ -1389,7 +1388,7 @@ static int run_main (
 		     run->awk->tree.end != ASE_NULL) && 
 		    run->exit_level != EXIT_ABORT)
 		{
-			if (__run_pattern_blocks (run) == -1) n = -1;
+			if (run_pattern_blocks (run) == -1) n = -1;
 		}
 
 		if (n == 0 && 
@@ -1403,7 +1402,7 @@ static int run_main (
 
 			run->active_block = blk;
 			run->exit_level = EXIT_NONE;
-			if (__run_block (run, blk) == -1) n = -1;
+			if (run_block (run, blk) == -1) n = -1;
 		}
 
 		/* restore stack */
@@ -1446,7 +1445,7 @@ static int run_main (
 	return n;
 }
 
-static int __run_pattern_blocks (ase_awk_run_t* run)
+static int run_pattern_blocks (ase_awk_run_t* run)
 {
 	int n;
 
@@ -1473,7 +1472,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 	{
 		run->exit_level = EXIT_NONE;
 
-		n = __read_record (run);
+		n = read_record (run);
 		if (n == -1) 
 		{
 			ADJUST_ERROR_LINE (run);
@@ -1481,7 +1480,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 		}
 		if (n == 0) break; /* end of input */
 
-		if (__update_fnr (run, run->global.fnr+1) == -1) 
+		if (update_fnr (run, run->global.fnr+1) == -1) 
 		{
 			ADJUST_ERROR_LINE (run);
 			return -1;
@@ -1489,7 +1488,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 
 		if (run->awk->tree.chain != ASE_NULL)
 		{
-			if (__run_pattern_block_chain (
+			if (run_pattern_block_chain (
 				run, run->awk->tree.chain) == -1) return -1;
 		}
 	}
@@ -1498,7 +1497,7 @@ static int __run_pattern_blocks (ase_awk_run_t* run)
 	return 0;
 }
 
-static int __run_pattern_block_chain (ase_awk_run_t* run, ase_awk_chain_t* chain)
+static int run_pattern_block_chain (ase_awk_run_t* run, ase_awk_chain_t* chain)
 {
 	ase_size_t block_no = 0;
 
@@ -1511,7 +1510,7 @@ static int __run_pattern_block_chain (ase_awk_run_t* run, ase_awk_chain_t* chain
 			break;
 		}
 
-		if (__run_pattern_block (run, chain, block_no) == -1) return -1;
+		if (run_pattern_block (run, chain, block_no) == -1) return -1;
 
 		chain = chain->next; 
 		block_no++;
@@ -1520,7 +1519,7 @@ static int __run_pattern_block_chain (ase_awk_run_t* run, ase_awk_chain_t* chain
 	return 0;
 }
 
-static int __run_pattern_block (
+static int run_pattern_block (
 	ase_awk_run_t* run, ase_awk_chain_t* chain, ase_size_t block_no)
 {
 	ase_awk_nde_t* ptn;
@@ -1533,7 +1532,7 @@ static int __run_pattern_block (
 	{
 		/* just execute the block */
 		run->active_block = blk;
-		if (__run_block (run, blk) == -1) return -1;
+		if (run_block (run, blk) == -1) return -1;
 	}
 	else
 	{
@@ -1542,7 +1541,7 @@ static int __run_pattern_block (
 			/* pattern { ... } */
 			ase_awk_val_t* v1;
 
-			v1 = __eval_expression (run, ptn);
+			v1 = eval_expression (run, ptn);
 			if (v1 == ASE_NULL) return -1;
 
 			ase_awk_refupval (run, v1);
@@ -1550,7 +1549,7 @@ static int __run_pattern_block (
 			if (ase_awk_valtobool (run, v1))
 			{
 				run->active_block = blk;
-				if (__run_block (run, blk) == -1) 
+				if (run_block (run, blk) == -1) 
 				{
 					ase_awk_refdownval (run, v1);
 					return -1;
@@ -1569,14 +1568,14 @@ static int __run_pattern_block (
 			{
 				ase_awk_val_t* v1;
 
-				v1 = __eval_expression (run, ptn);
+				v1 = eval_expression (run, ptn);
 				if (v1 == ASE_NULL) return -1;
 				ase_awk_refupval (run, v1);
 
 				if (ase_awk_valtobool (run, v1))
 				{
 					run->active_block = blk;
-					if (__run_block (run, blk) == -1) 
+					if (run_block (run, blk) == -1) 
 					{
 						ase_awk_refdownval (run, v1);
 						return -1;
@@ -1591,12 +1590,12 @@ static int __run_pattern_block (
 			{
 				ase_awk_val_t* v2;
 
-				v2 = __eval_expression (run, ptn->next);
+				v2 = eval_expression (run, ptn->next);
 				if (v2 == ASE_NULL) return -1;
 				ase_awk_refupval (run, v2);
 
 				run->active_block = blk;
-				if (__run_block (run, blk) == -1) 
+				if (run_block (run, blk) == -1) 
 				{
 					ase_awk_refdownval (run, v2);
 					return -1;
@@ -1613,7 +1612,7 @@ static int __run_pattern_block (
 	return 0;
 }
 
-static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
+static int run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 {
 	int n;
 
@@ -1626,13 +1625,13 @@ static int __run_block (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	}
 
 	run->depth.cur.block++;
-	n = __run_block0 (run, nde);
+	n = run_block0 (run, nde);
 	run->depth.cur.block--;
 	
 	return n;
 }
 
-static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
+static int run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 {
 	ase_awk_nde_t* p;
 	ase_size_t nlocals;
@@ -1708,7 +1707,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 
 	while (p != ASE_NULL && run->exit_level == EXIT_NONE) 
 	{
-		if (__run_statement (run, p) == -1) 
+		if (run_statement (run, p) == -1) 
 		{
 			n = -1;
 			break;
@@ -1739,7 +1738,7 @@ static int __run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 			run, (nde)->line, (run)->cbs->custom_data); \
 	} 
 
-static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static int run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ON_STATEMENT (run, nde);
 
@@ -1753,14 +1752,14 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_BLK:
 		{
-			if (__run_block (run, 
+			if (run_block (run, 
 				(ase_awk_nde_blk_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_IF:
 		{
-			if (__run_if (run, 
+			if (run_if (run, 
 				(ase_awk_nde_if_t*)nde) == -1) return -1;	
 			break;
 		}
@@ -1768,84 +1767,92 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		case ASE_AWK_NDE_WHILE:
 		case ASE_AWK_NDE_DOWHILE:
 		{
-			if (__run_while (run, 
+			if (run_while (run, 
 				(ase_awk_nde_while_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_FOR:
 		{
-			if (__run_for (run, 
+			if (run_for (run, 
 				(ase_awk_nde_for_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_FOREACH:
 		{
-			if (__run_foreach (run, 
+			if (run_foreach (run, 
 				(ase_awk_nde_foreach_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_BREAK:
 		{
-			if (__run_break (run, 
+			if (run_break (run, 
 				(ase_awk_nde_break_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_CONTINUE:
 		{
-			if (__run_continue (run, 
+			if (run_continue (run, 
 				(ase_awk_nde_continue_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_RETURN:
 		{
-			if (__run_return (run, 
+			if (run_return (run, 
 				(ase_awk_nde_return_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_EXIT:
 		{
-			if (__run_exit (run, 
+			if (run_exit (run, 
 				(ase_awk_nde_exit_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_NEXT:
 		{
-			if (__run_next (run, 
+			if (run_next (run, 
 				(ase_awk_nde_next_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_NEXTFILE:
 		{
-			if (__run_nextfile (run, 
+			if (run_nextfile (run, 
 				(ase_awk_nde_nextfile_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_DELETE:
 		{
-			if (__run_delete (run, 
+			if (run_delete (run, 
 				(ase_awk_nde_delete_t*)nde) == -1) return -1;
 			break;
 		}
 
+		case ASE_AWK_NDE_RESET:
+		{
+			if (run_reset (run, 
+				(ase_awk_nde_reset_t*)nde) == -1) return -1;
+			break;
+		}
+
+
 		case ASE_AWK_NDE_PRINT:
 		{
-			if (__run_print (run, 
+			if (run_print (run, 
 				(ase_awk_nde_print_t*)nde) == -1) return -1;
 			break;
 		}
 
 		case ASE_AWK_NDE_PRINTF:
 		{
-			if (__run_printf (run, 
+			if (run_printf (run, 
 				(ase_awk_nde_print_t*)nde) == -1) return -1;
 			break;
 		}
@@ -1853,7 +1860,7 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		default:
 		{
 			ase_awk_val_t* v;
-			v = __eval_expression (run, nde);
+			v = eval_expression (run, nde);
 			if (v == ASE_NULL) return -1;
 
 			/* destroy the value if not referenced */
@@ -1867,7 +1874,7 @@ static int __run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return 0;
 }
 
-static int __run_if (ase_awk_run_t* run, ase_awk_nde_if_t* nde)
+static int run_if (ase_awk_run_t* run, ase_awk_nde_if_t* nde)
 {
 	ase_awk_val_t* test;
 	int n = 0;
@@ -1877,24 +1884,24 @@ static int __run_if (ase_awk_run_t* run, ase_awk_nde_if_t* nde)
 	 * parser first of all */
 	ASE_ASSERT (nde->test->next == ASE_NULL);
 
-	test = __eval_expression (run, nde->test);
+	test = eval_expression (run, nde->test);
 	if (test == ASE_NULL) return -1;
 
 	ase_awk_refupval (run, test);
 	if (ase_awk_valtobool (run, test))
 	{
-		n = __run_statement (run, nde->then_part);
+		n = run_statement (run, nde->then_part);
 	}
 	else if (nde->else_part != ASE_NULL)
 	{
-		n = __run_statement (run, nde->else_part);
+		n = run_statement (run, nde->else_part);
 	}
 
 	ase_awk_refdownval (run, test); /* TODO: is this correct?*/
 	return n;
 }
 
-static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
+static int run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 {
 	ase_awk_val_t* test;
 
@@ -1908,14 +1915,14 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 		{
 			ON_STATEMENT (run, nde->test);
 
-			test = __eval_expression (run, nde->test);
+			test = eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
 
 			ase_awk_refupval (run, test);
 
 			if (ase_awk_valtobool (run, test))
 			{
-				if (__run_statement(run,nde->body) == -1)
+				if (run_statement(run,nde->body) == -1)
 				{
 					ase_awk_refdownval (run, test);
 					return -1;
@@ -1950,7 +1957,7 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 
 		do
 		{
-			if (__run_statement(run,nde->body) == -1) return -1;
+			if (run_statement(run,nde->body) == -1) return -1;
 
 			if (run->exit_level == EXIT_BREAK)
 			{	
@@ -1965,7 +1972,7 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 
 			ON_STATEMENT (run, nde->test);
 
-			test = __eval_expression (run, nde->test);
+			test = eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
 
 			ase_awk_refupval (run, test);
@@ -1984,7 +1991,7 @@ static int __run_while (ase_awk_run_t* run, ase_awk_nde_while_t* nde)
 	return 0;
 }
 
-static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
+static int run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 {
 	ase_awk_val_t* val;
 
@@ -1993,7 +2000,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 		ASE_ASSERT (nde->init->next == ASE_NULL);
 
 		ON_STATEMENT (run, nde->init);
-		val = __eval_expression(run,nde->init);
+		val = eval_expression(run,nde->init);
 		if (val == ASE_NULL) return -1;
 
 		ase_awk_refupval (run, val);
@@ -2011,13 +2018,13 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 			ASE_ASSERT (nde->test->next == ASE_NULL);
 
 			ON_STATEMENT (run, nde->test);
-			test = __eval_expression (run, nde->test);
+			test = eval_expression (run, nde->test);
 			if (test == ASE_NULL) return -1;
 
 			ase_awk_refupval (run, test);
 			if (ase_awk_valtobool (run, test))
 			{
-				if (__run_statement(run,nde->body) == -1)
+				if (run_statement(run,nde->body) == -1)
 				{
 					ase_awk_refdownval (run, test);
 					return -1;
@@ -2033,7 +2040,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 		}	
 		else
 		{
-			if (__run_statement(run,nde->body) == -1) return -1;
+			if (run_statement(run,nde->body) == -1) return -1;
 		}
 
 		if (run->exit_level == EXIT_BREAK)
@@ -2052,7 +2059,7 @@ static int __run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 			ASE_ASSERT (nde->incr->next == ASE_NULL);
 
 			ON_STATEMENT (run, nde->incr);
-			val = __eval_expression (run, nde->incr);
+			val = eval_expression (run, nde->incr);
 			if (val == ASE_NULL) return -1;
 
 			ase_awk_refupval (run, val);
@@ -2085,13 +2092,13 @@ static int __walk_foreach (ase_awk_pair_t* pair, void* arg)
 	}
 
 	ase_awk_refupval (w->run, str);
-	if (__do_assignment (w->run, w->var, str) == ASE_NULL)
+	if (do_assignment (w->run, w->var, str) == ASE_NULL)
 	{
 		ase_awk_refdownval (w->run, str);
 		return -1;
 	}
 
-	if (__run_statement (w->run, w->body) == -1)
+	if (run_statement (w->run, w->body) == -1)
 	{
 		ase_awk_refdownval (w->run, str);
 		return -1;
@@ -2101,7 +2108,7 @@ static int __walk_foreach (ase_awk_pair_t* pair, void* arg)
 	return 0;
 }
 
-static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
+static int run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 {
 	int n;
 	ase_awk_nde_exp_t* test;
@@ -2118,7 +2125,7 @@ static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 	 * by the parser first of all */
 	ASE_ASSERT (test->right->next == ASE_NULL); 
 
-	rv = __eval_expression (run, test->right);
+	rv = eval_expression (run, test->right);
 	if (rv == ASE_NULL) return -1;
 
 	ase_awk_refupval (run, rv);
@@ -2141,19 +2148,19 @@ static int __run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 	return n;
 }
 
-static int __run_break (ase_awk_run_t* run, ase_awk_nde_break_t* nde)
+static int run_break (ase_awk_run_t* run, ase_awk_nde_break_t* nde)
 {
 	run->exit_level = EXIT_BREAK;
 	return 0;
 }
 
-static int __run_continue (ase_awk_run_t* run, ase_awk_nde_continue_t* nde)
+static int run_continue (ase_awk_run_t* run, ase_awk_nde_continue_t* nde)
 {
 	run->exit_level = EXIT_CONTINUE;
 	return 0;
 }
 
-static int __run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde)
+static int run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde)
 {
 	if (nde->val != ASE_NULL)
 	{
@@ -2163,19 +2170,32 @@ static int __run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde)
 		 * by the parser first of all */
 		ASE_ASSERT (nde->val->next == ASE_NULL); 
 
-		val = __eval_expression (run, nde->val);
+		val = eval_expression (run, nde->val);
 		if (val == ASE_NULL) return -1;
+
+	#ifdef PROHIBIT_MAP_ASSIGNMENT_TO_VARIABLE
+		if (val->type == ASE_AWK_VAL_MAP)
+		{
+			/* cannot return a map */
+			ase_awk_refupval (run, val);
+			ase_awk_refdownval (run, val);
+
+			ase_awk_setrunerror (run, 
+				ASE_AWK_EMAPNOTALLOWED, nde->line, ASE_NULL, 0);
+			return -1;
+		}
+	#endif
 
 		ase_awk_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
-		ase_awk_refupval (run, val); /* see __eval_call for the trick */
+		ase_awk_refupval (run, val); /* see eval_call for the trick */
 	}
 	
 	run->exit_level = EXIT_FUNCTION;
 	return 0;
 }
 
-static int __run_exit (ase_awk_run_t* run, ase_awk_nde_exit_t* nde)
+static int run_exit (ase_awk_run_t* run, ase_awk_nde_exit_t* nde)
 {
 	if (nde->val != ASE_NULL)
 	{
@@ -2185,7 +2205,7 @@ static int __run_exit (ase_awk_run_t* run, ase_awk_nde_exit_t* nde)
 		 * by the parser first of all */
 		ASE_ASSERT (nde->val->next == ASE_NULL); 
 
-		val = __eval_expression (run, nde->val);
+		val = eval_expression (run, nde->val);
 		if (val == ASE_NULL) return -1;
 
 		ase_awk_refdownval (run, STACK_RETVAL_GLOBAL(run));
@@ -2198,7 +2218,7 @@ static int __run_exit (ase_awk_run_t* run, ase_awk_nde_exit_t* nde)
 	return 0;
 }
 
-static int __run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde)
+static int run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde)
 {
 	/* the parser checks if next has been called in the begin/end
 	 * block or whereever inappropriate. so the runtime doesn't 
@@ -2220,7 +2240,7 @@ static int __run_next (ase_awk_run_t* run, ase_awk_nde_next_t* nde)
 	return 0;
 }
 
-static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
+static int run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 {
 	int n;
 
@@ -2253,7 +2273,7 @@ static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 		return 0;
 	}
 
-	if (__update_fnr (run, 0) == -1) 
+	if (update_fnr (run, 0) == -1) 
 	{
 		run->errlin = nde->line;
 		return -1;
@@ -2264,7 +2284,7 @@ static int __run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 
 }
 
-static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
+static int run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 {
 	int n;
 
@@ -2290,14 +2310,14 @@ static int __run_nextoutfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 	return 0;
 }
 
-static int __run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
+static int run_nextfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 {
 	return (nde->out)? 
-		__run_nextoutfile (run, nde): 
-		__run_nextinfile (run, nde);
+		run_nextoutfile (run, nde): 
+		run_nextinfile (run, nde);
 }
 
-static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
+static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 {
 	ase_awk_nde_var_t* var;
 
@@ -2377,7 +2397,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 				ASE_ASSERT (var->idx != ASE_NULL);
 
-				idx = __eval_expression (run, var->idx);
+				idx = eval_expression (run, var->idx);
 				if (idx == ASE_NULL) return -1;
 
 				ase_awk_refupval (run, idx);
@@ -2425,7 +2445,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 		{
 			ase_awk_val_t* tmp;
 
-			/* value not set for the named variable. 
+			/* value not set.
 			 * create a map and assign it to the variable */
 
 			tmp = ase_awk_makemapval (run);
@@ -2492,7 +2512,7 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 
 				ASE_ASSERT (var->idx != ASE_NULL);
 
-				idx = __eval_expression (run, var->idx);
+				idx = eval_expression (run, var->idx);
 				if (idx == ASE_NULL) return -1;
 
 				ase_awk_refupval (run, idx);
@@ -2530,7 +2550,62 @@ static int __run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 	return 0;
 }
 
-static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
+static int run_reset (ase_awk_run_t* run, ase_awk_nde_reset_t* nde)
+{
+	ase_awk_nde_var_t* var;
+
+	var = (ase_awk_nde_var_t*) nde->var;
+
+	if (var->type == ASE_AWK_NDE_NAMED)
+	{
+		ASE_ASSERTX (
+			var->type == ASE_AWK_NDE_NAMED && var->idx == ASE_NULL,
+			"if a named variable has an index part, something is definitely wrong");
+
+		/* a named variable can be reset if removed from a internal map 
+		   to manage it */
+		ase_awk_map_remove (run->named, var->id.name, var->id.name_len);
+	}
+	else if (var->type == ASE_AWK_NDE_GLOBAL ||
+	         var->type == ASE_AWK_NDE_LOCAL ||
+	         var->type == ASE_AWK_NDE_ARG)
+	{
+		ase_awk_val_t* val;
+
+		if (var->type == ASE_AWK_NDE_GLOBAL)
+			val = STACK_GLOBAL(run,var->id.idxa);
+		else if (var->type == ASE_AWK_NDE_LOCAL)
+			val = STACK_LOCAL(run,var->id.idxa);
+		else val = STACK_ARG(run,var->id.idxa);
+
+		ASE_ASSERT (val != ASE_NULL);
+
+		if (val->type != ASE_AWK_VAL_NIL)
+		{
+			ase_awk_refdownval (run, val);
+			if (var->type == ASE_AWK_NDE_GLOBAL)
+				STACK_GLOBAL(run,var->id.idxa) = ase_awk_val_nil;
+			else if (var->type == ASE_AWK_NDE_LOCAL)
+				STACK_LOCAL(run,var->id.idxa) = ase_awk_val_nil;
+			else
+				STACK_ARG(run,var->id.idxa) = ase_awk_val_nil;
+		}
+	}
+	else
+	{
+		ASE_ASSERTX (
+			!"should never happen - wrong target for reset",
+			"the reset statement can only be called with plain variables");
+
+		ase_awk_setrunerror (
+			run, ASE_AWK_ERRESET, var->line, ASE_NULL, 0);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 {
 	ase_char_t* out = ASE_NULL;
 	const ase_char_t* dst;
@@ -2550,7 +2625,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		ase_size_t len;
 
 		/* if so, resolve the destination name */
-		v = __eval_expression (run, nde->out);
+		v = eval_expression (run, nde->out);
 		if (v == ASE_NULL) return -1;
 
 		ase_awk_refupval (run, v);
@@ -2646,7 +2721,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 				}
 			}
 
-			v = __eval_expression (run, np);
+			v = eval_expression (run, np);
 			if (v == ASE_NULL) 
 			{
 				if (out != ASE_NULL)
@@ -2690,7 +2765,7 @@ static int __run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	return 0;
 }
 
-static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
+static int run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 {
 	ase_char_t* out = ASE_NULL;
 	const ase_char_t* dst;
@@ -2709,7 +2784,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	{
 		ase_size_t len;
 
-		v = __eval_expression (run, nde->out);
+		v = eval_expression (run, nde->out);
 		if (v == ASE_NULL) return -1;
 
 		ase_awk_refupval (run, v);
@@ -2765,7 +2840,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	ASE_ASSERTX (head != ASE_NULL,
 		"a valid printf statement should have at least one argument. the parser must ensure this.");
 
-	v = __eval_expression (run, head);
+	v = eval_expression (run, head);
 	if (v == ASE_NULL) 
 	{
 		if (out != ASE_NULL) ASE_AWK_FREE (run->awk, out);
@@ -2791,7 +2866,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	else
 	{
 		/* perform the formatted output */
-		if (__formatted_output (
+		if (output_formatted (
 			run, nde->out_type, dst,
 			((ase_awk_val_str_t*)v)->buf,
 			((ase_awk_val_str_t*)v)->len,
@@ -2813,7 +2888,7 @@ static int __run_printf (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 	return 0;
 }
 
-static int __formatted_output (
+static int output_formatted (
 	ase_awk_run_t* run, int out_type, const ase_char_t* dst, 
 	const ase_char_t* fmt, ase_size_t fmt_len, ase_awk_nde_t* args)
 {
@@ -2831,12 +2906,12 @@ static int __formatted_output (
 	return 0;
 }
 
-static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* v;
 	int n, errnum;
 
-	v = __eval_expression0 (run, nde);
+	v = eval_expression0 (run, nde);
 	if (v == ASE_NULL) return ASE_NULL;
 
 	if (v->type == ASE_AWK_VAL_REX)
@@ -2893,53 +2968,53 @@ static ase_awk_val_t* __eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return v;
 }
 
-static ase_awk_val_t* __eval_expression0 (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_expression0 (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
-	static eval_expr_t __eval_func[] =
+	static eval_expr_t eval_func[] =
 	{
 		/* the order of functions here should match the order
 		 * of node types declared in tree.h */
-		__eval_group,
-		__eval_assignment,
-		__eval_binary,
-		__eval_unary,
-		__eval_incpre,
-		__eval_incpst,
-		__eval_cnd,
-		__eval_bfn,
-		__eval_afn,
-		__eval_int,
-		__eval_real,
-		__eval_str,
-		__eval_rex,
-		__eval_named,
-		__eval_global,
-		__eval_local,
-		__eval_arg,
-		__eval_namedidx,
-		__eval_globalidx,
-		__eval_localidx,
-		__eval_argidx,
-		__eval_pos,
-		__eval_getline
+		eval_group,
+		eval_assignment,
+		eval_binary,
+		eval_unary,
+		eval_incpre,
+		eval_incpst,
+		eval_cnd,
+		eval_bfn,
+		eval_afn,
+		eval_int,
+		eval_real,
+		eval_str,
+		eval_rex,
+		eval_named,
+		eval_global,
+		eval_local,
+		eval_arg,
+		eval_namedidx,
+		eval_globalidx,
+		eval_localidx,
+		eval_argidx,
+		eval_pos,
+		eval_getline
 	};
 
 	ASE_ASSERT (nde->type >= ASE_AWK_NDE_GRP &&
-		(nde->type - ASE_AWK_NDE_GRP) < ASE_COUNTOF(__eval_func));
+		(nde->type - ASE_AWK_NDE_GRP) < ASE_COUNTOF(eval_func));
 
-	return __eval_func[nde->type-ASE_AWK_NDE_GRP] (run, nde);
+	return eval_func[nde->type-ASE_AWK_NDE_GRP] (run, nde);
 }
 
-static ase_awk_val_t* __eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
-	/* __eval_binop_in evaluates the ASE_AWK_NDE_GRP specially.
+	/* eval_binop_in evaluates the ASE_AWK_NDE_GRP specially.
 	 * so this function should never be reached. */
 	ASE_ASSERT (!"should never happen - NDE_GRP only for in");
 	ase_awk_setrunerror (run, ASE_AWK_EINTERN, nde->line, ASE_NULL, 0);
 	return ASE_NULL;
 }
 
-static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* val, * ret;
 	ase_awk_nde_ass_t* ass = (ase_awk_nde_ass_t*)nde;
@@ -2948,7 +3023,7 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ASE_ASSERT (ass->right != ASE_NULL);
 
 	ASE_ASSERT (ass->right->next == ASE_NULL);
-	val = __eval_expression (run, ass->right);
+	val = eval_expression (run, ass->right);
 	if (val == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, val);
@@ -2959,17 +3034,17 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		static binop_func_t __binop_func[] =
 		{
 			ASE_NULL, /* ASE_AWK_ASSOP_NONE */
-			__eval_binop_plus,
-			__eval_binop_minus,
-			__eval_binop_mul,
-			__eval_binop_div,
-			__eval_binop_idiv,
-			__eval_binop_mod,
-			__eval_binop_exp
+			eval_binop_plus,
+			eval_binop_minus,
+			eval_binop_mul,
+			eval_binop_div,
+			eval_binop_idiv,
+			eval_binop_mod,
+			eval_binop_exp
 		};
 
 		ASE_ASSERT (ass->left->next == ASE_NULL);
-		val2 = __eval_expression (run, ass->left);
+		val2 = eval_expression (run, ass->left);
 		if (val2 == ASE_NULL)
 		{
 			ase_awk_refdownval (run, val);
@@ -2997,56 +3072,71 @@ static ase_awk_val_t* __eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		ase_awk_refupval (run, val);
 	}
 
-	ret = __do_assignment (run, ass->left, val);
+	ret = do_assignment (run, ass->left, val);
 	ase_awk_refdownval (run, val);
 
 	return ret;
 }
 
-static ase_awk_val_t* __do_assignment (
+static ase_awk_val_t* do_assignment (
 	ase_awk_run_t* run, ase_awk_nde_t* var, ase_awk_val_t* val)
 {
 	ase_awk_val_t* ret;
-
-	if (val->type == ASE_AWK_VAL_MAP)
-	{
-		/* a map cannot be assigned to a variable */
-		ase_awk_setrunerror (
-			run, ASE_AWK_ENOTASS, var->line, ASE_NULL, 0);
-		return ASE_NULL;
-	}
+	int errnum;
 
 	if (var->type == ASE_AWK_NDE_NAMED ||
 	    var->type == ASE_AWK_NDE_GLOBAL ||
 	    var->type == ASE_AWK_NDE_LOCAL ||
 	    var->type == ASE_AWK_NDE_ARG) 
 	{
-		ret = __do_assignment_scalar (run, (ase_awk_nde_var_t*)var, val);
+	#ifdef PROHIBIT_MAP_ASSIGNMENT_TO_VARIABLE
+		if (val->type == ASE_AWK_VAL_MAP)
+		{
+			errnum = ASE_AWK_ENOTASS;
+			goto exit_on_error;
+		}
+	#endif
+		ret = do_assignment_scalar (run, (ase_awk_nde_var_t*)var, val);
 	}
 	else if (var->type == ASE_AWK_NDE_NAMEDIDX ||
 	         var->type == ASE_AWK_NDE_GLOBALIDX ||
 	         var->type == ASE_AWK_NDE_LOCALIDX ||
 	         var->type == ASE_AWK_NDE_ARGIDX) 
 	{
-		ret = __do_assignment_map (run, (ase_awk_nde_var_t*)var, val);
+		if (val->type == ASE_AWK_VAL_MAP)
+		{
+			errnum = ASE_AWK_ENOTASS;
+			goto exit_on_error;
+		}
+
+		ret = do_assignment_map (run, (ase_awk_nde_var_t*)var, val);
 	}
 	else if (var->type == ASE_AWK_NDE_POS)
 	{
-		ret = __do_assignment_pos (run, (ase_awk_nde_pos_t*)var, val);
+		if (val->type == ASE_AWK_VAL_MAP)
+		{
+			errnum = ASE_AWK_ENOTASS;
+			goto exit_on_error;
+		}
+	
+
+		ret = do_assignment_pos (run, (ase_awk_nde_pos_t*)var, val);
 	}
 	else
 	{
-		ASE_ASSERT (
-			!"should never happen - invalid variable type");
-		ase_awk_setrunerror (
-			run, ASE_AWK_EINTERN, var->line, ASE_NULL, 0);
-		return ASE_NULL;
+		ASE_ASSERT (!"should never happen - invalid variable type");
+		errnum = ASE_AWK_EINTERN;
+		goto exit_on_error;
 	}
 
 	return ret;
+
+exit_on_error:
+	ase_awk_setrunerror (run, errnum, var->line, ASE_NULL, 0);
+	return ASE_NULL;
 }
 
-static ase_awk_val_t* __do_assignment_scalar (
+static ase_awk_val_t* do_assignment_scalar (
 	ase_awk_run_t* run, ase_awk_nde_var_t* var, ase_awk_val_t* val)
 {
 	ASE_ASSERT (
@@ -3055,7 +3145,9 @@ static ase_awk_val_t* __do_assignment_scalar (
 		 var->type == ASE_AWK_NDE_LOCAL ||
 		 var->type == ASE_AWK_NDE_ARG) && var->idx == ASE_NULL);
 
+	#ifdef PROHIBIT_MAP_ASSIGNMENT_TO_VARIABLE
 	ASE_ASSERT (val->type != ASE_AWK_VAL_MAP);
+	#endif
 
 	if (var->type == ASE_AWK_NDE_NAMED) 
 	{
@@ -3092,7 +3184,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 	}
 	else if (var->type == ASE_AWK_NDE_GLOBAL) 
 	{
-		if (__set_global (run, var->id.idxa, var, val) == -1) 
+		if (set_global (run, var->id.idxa, var, val) == -1) 
 		{
 			return ASE_NULL;
 		}
@@ -3143,7 +3235,7 @@ static ase_awk_val_t* __do_assignment_scalar (
 	return val;
 }
 
-static ase_awk_val_t* __do_assignment_map (
+static ase_awk_val_t* do_assignment_map (
 	ase_awk_run_t* run, ase_awk_nde_var_t* var, ase_awk_val_t* val)
 {
 	ase_awk_val_map_t* map;
@@ -3243,7 +3335,7 @@ static ase_awk_val_t* __do_assignment_map (
 		return ASE_NULL;
 	}
 
-	str = __idxnde_to_str (run, var->idx, &len);
+	str = idxnde_to_str (run, var->idx, &len);
 	if (str == ASE_NULL) return ASE_NULL;
 
 #ifdef DEBUG_RUN
@@ -3264,7 +3356,7 @@ static ase_awk_val_t* __do_assignment_map (
 	return val;
 }
 
-static ase_awk_val_t* __do_assignment_pos (
+static ase_awk_val_t* do_assignment_pos (
 	ase_awk_run_t* run, ase_awk_nde_pos_t* pos, ase_awk_val_t* val)
 {
 	ase_awk_val_t* v;
@@ -3274,7 +3366,7 @@ static ase_awk_val_t* __do_assignment_pos (
 	ase_size_t len;
 	int n;
 
-	v = __eval_expression (run, pos->val);
+	v = eval_expression (run, pos->val);
 	if (v == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, v);
@@ -3320,42 +3412,42 @@ static ase_awk_val_t* __do_assignment_pos (
 	return (lv == 0)? run->inrec.d0: run->inrec.flds[lv-1].val;
 }
 
-static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	static binop_func_t __binop_func[] =
 	{
 		/* the order of the functions should be inline with
 		 * the operator declaration in run.h */
 
-		ASE_NULL, /* __eval_binop_lor */
-		ASE_NULL, /* __eval_binop_land */
-		ASE_NULL, /* __eval_binop_in */
+		ASE_NULL, /* eval_binop_lor */
+		ASE_NULL, /* eval_binop_land */
+		ASE_NULL, /* eval_binop_in */
 
-		__eval_binop_bor,
-		__eval_binop_bxor,
-		__eval_binop_band,
+		eval_binop_bor,
+		eval_binop_bxor,
+		eval_binop_band,
 
-		__eval_binop_eq,
-		__eval_binop_ne,
-		__eval_binop_gt,
-		__eval_binop_ge,
-		__eval_binop_lt,
-		__eval_binop_le,
+		eval_binop_eq,
+		eval_binop_ne,
+		eval_binop_gt,
+		eval_binop_ge,
+		eval_binop_lt,
+		eval_binop_le,
 
-		__eval_binop_lshift,
-		__eval_binop_rshift,
+		eval_binop_lshift,
+		eval_binop_rshift,
 		
-		__eval_binop_plus,
-		__eval_binop_minus,
-		__eval_binop_mul,
-		__eval_binop_div,
-		__eval_binop_idiv,
-		__eval_binop_mod,
-		__eval_binop_exp,
+		eval_binop_plus,
+		eval_binop_minus,
+		eval_binop_mul,
+		eval_binop_div,
+		eval_binop_idiv,
+		eval_binop_mod,
+		eval_binop_exp,
 
-		__eval_binop_concat,
-		ASE_NULL, /* __eval_binop_ma */
-		ASE_NULL  /* __eval_binop_nm */
+		eval_binop_concat,
+		ASE_NULL, /* eval_binop_ma */
+		ASE_NULL  /* eval_binop_nm */
 	};
 
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
@@ -3365,35 +3457,35 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 	if (exp->opcode == ASE_AWK_BINOP_LAND)
 	{
-		res = __eval_binop_land (run, exp->left, exp->right);
+		res = eval_binop_land (run, exp->left, exp->right);
 	}
 	else if (exp->opcode == ASE_AWK_BINOP_LOR)
 	{
-		res = __eval_binop_lor (run, exp->left, exp->right);
+		res = eval_binop_lor (run, exp->left, exp->right);
 	}
 	else if (exp->opcode == ASE_AWK_BINOP_IN)
 	{
 		/* treat the in operator specially */
-		res = __eval_binop_in (run, exp->left, exp->right);
+		res = eval_binop_in (run, exp->left, exp->right);
 	}
 	else if (exp->opcode == ASE_AWK_BINOP_NM)
 	{
-		res = __eval_binop_nm (run, exp->left, exp->right);
+		res = eval_binop_nm (run, exp->left, exp->right);
 	}
 	else if (exp->opcode == ASE_AWK_BINOP_MA)
 	{
-		res = __eval_binop_ma (run, exp->left, exp->right);
+		res = eval_binop_ma (run, exp->left, exp->right);
 	}
 	else
 	{
 		ASE_ASSERT (exp->left->next == ASE_NULL);
-		left = __eval_expression (run, exp->left);
+		left = eval_expression (run, exp->left);
 		if (left == ASE_NULL) return ASE_NULL;
 
 		ase_awk_refupval (run, left);
 
 		ASE_ASSERT (exp->right->next == ASE_NULL);
-		right = __eval_expression (run, exp->right);
+		right = eval_expression (run, exp->right);
 		if (right == ASE_NULL) 
 		{
 			ase_awk_refdownval (run, left);
@@ -3420,7 +3512,7 @@ static ase_awk_val_t* __eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_lor (
+static ase_awk_val_t* eval_binop_lor (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right)
 {
 	/*
@@ -3441,7 +3533,7 @@ static ase_awk_val_t* __eval_binop_lor (
 	ase_awk_val_t* lv, * rv, * res;
 
 	ASE_ASSERT (left->next == ASE_NULL);
-	lv = __eval_expression (run, left);
+	lv = eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, lv);
@@ -3452,7 +3544,7 @@ static ase_awk_val_t* __eval_binop_lor (
 	else
 	{
 		ASE_ASSERT (right->next == ASE_NULL);
-		rv = __eval_expression (run, right);
+		rv = eval_expression (run, right);
 		if (rv == ASE_NULL)
 		{
 			ase_awk_refdownval (run, lv);
@@ -3469,7 +3561,7 @@ static ase_awk_val_t* __eval_binop_lor (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_land (
+static ase_awk_val_t* eval_binop_land (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right)
 {
 	/*
@@ -3490,7 +3582,7 @@ static ase_awk_val_t* __eval_binop_land (
 	ase_awk_val_t* lv, * rv, * res;
 
 	ASE_ASSERT (left->next == ASE_NULL);
-	lv = __eval_expression (run, left);
+	lv = eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, lv);
@@ -3501,7 +3593,7 @@ static ase_awk_val_t* __eval_binop_land (
 	else
 	{
 		ASE_ASSERT (right->next == ASE_NULL);
-		rv = __eval_expression (run, right);
+		rv = eval_expression (run, right);
 		if (rv == ASE_NULL)
 		{
 			ase_awk_refdownval (run, lv);
@@ -3518,7 +3610,7 @@ static ase_awk_val_t* __eval_binop_land (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_in (
+static ase_awk_val_t* eval_binop_in (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right)
 {
 	ase_awk_val_t* rv;
@@ -3541,13 +3633,13 @@ static ase_awk_val_t* __eval_binop_in (
 
 	/* evaluate the left-hand side of the operator */
 	str = (left->type == ASE_AWK_NDE_GRP)?
-		__idxnde_to_str (run, ((ase_awk_nde_grp_t*)left)->body, &len):
-		__idxnde_to_str (run, left, &len);
+		idxnde_to_str (run, ((ase_awk_nde_grp_t*)left)->body, &len):
+		idxnde_to_str (run, left, &len);
 	if (str == ASE_NULL) return ASE_NULL;
 
 	/* evaluate the right-hand side of the operator */
 	ASE_ASSERT (right->next == ASE_NULL);
-	rv = __eval_expression (run, right);
+	rv = eval_expression (run, right);
 	if (rv == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, str);
@@ -3585,7 +3677,7 @@ static ase_awk_val_t* __eval_binop_in (
 	return ASE_NULL;
 }
 
-static ase_awk_val_t* __eval_binop_bor (
+static ase_awk_val_t* eval_binop_bor (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -3617,7 +3709,7 @@ static ase_awk_val_t* __eval_binop_bor (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_bxor (
+static ase_awk_val_t* eval_binop_bxor (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -3649,7 +3741,7 @@ static ase_awk_val_t* __eval_binop_bxor (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_band (
+static ase_awk_val_t* eval_binop_band (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -3942,7 +4034,7 @@ static int __cmp_val (
 	return func[left->type*4+right->type] (run, left, right);
 }
 
-static ase_awk_val_t* __eval_binop_eq (
+static ase_awk_val_t* eval_binop_eq (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
@@ -3950,7 +4042,7 @@ static ase_awk_val_t* __eval_binop_eq (
 	return (n == 0)? ase_awk_val_one: ase_awk_val_zero;
 }
 
-static ase_awk_val_t* __eval_binop_ne (
+static ase_awk_val_t* eval_binop_ne (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
@@ -3958,7 +4050,7 @@ static ase_awk_val_t* __eval_binop_ne (
 	return (n != 0)? ase_awk_val_one: ase_awk_val_zero;
 }
 
-static ase_awk_val_t* __eval_binop_gt (
+static ase_awk_val_t* eval_binop_gt (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
@@ -3966,7 +4058,7 @@ static ase_awk_val_t* __eval_binop_gt (
 	return (n > 0)? ase_awk_val_one: ase_awk_val_zero;
 }
 
-static ase_awk_val_t* __eval_binop_ge (
+static ase_awk_val_t* eval_binop_ge (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
@@ -3974,7 +4066,7 @@ static ase_awk_val_t* __eval_binop_ge (
 	return (n >= 0)? ase_awk_val_one: ase_awk_val_zero;
 }
 
-static ase_awk_val_t* __eval_binop_lt (
+static ase_awk_val_t* eval_binop_lt (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
@@ -3982,7 +4074,7 @@ static ase_awk_val_t* __eval_binop_lt (
 	return (n < 0)? ase_awk_val_one: ase_awk_val_zero;
 }
 
-static ase_awk_val_t* __eval_binop_le (
+static ase_awk_val_t* eval_binop_le (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n = __cmp_val (run, left, right);
@@ -3990,7 +4082,7 @@ static ase_awk_val_t* __eval_binop_le (
 	return (n <= 0)? ase_awk_val_one: ase_awk_val_zero;
 }
 
-static ase_awk_val_t* __eval_binop_lshift (
+static ase_awk_val_t* eval_binop_lshift (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4027,7 +4119,7 @@ static ase_awk_val_t* __eval_binop_lshift (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_rshift (
+static ase_awk_val_t* eval_binop_rshift (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4064,7 +4156,7 @@ static ase_awk_val_t* __eval_binop_rshift (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_plus (
+static ase_awk_val_t* eval_binop_plus (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4102,7 +4194,7 @@ static ase_awk_val_t* __eval_binop_plus (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_minus (
+static ase_awk_val_t* eval_binop_minus (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4134,7 +4226,7 @@ static ase_awk_val_t* __eval_binop_minus (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_mul (
+static ase_awk_val_t* eval_binop_mul (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4166,7 +4258,7 @@ static ase_awk_val_t* __eval_binop_mul (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_div (
+static ase_awk_val_t* eval_binop_div (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4229,7 +4321,7 @@ static ase_awk_val_t* __eval_binop_div (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_idiv (
+static ase_awk_val_t* eval_binop_idiv (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4284,7 +4376,7 @@ static ase_awk_val_t* __eval_binop_idiv (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_mod (
+static ase_awk_val_t* eval_binop_mod (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4326,7 +4418,7 @@ static ase_awk_val_t* __eval_binop_mod (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_exp (
+static ase_awk_val_t* eval_binop_exp (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	int n1, n2, n3;
@@ -4420,7 +4512,7 @@ static ase_awk_val_t* __eval_binop_exp (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_concat (
+static ase_awk_val_t* eval_binop_concat (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right)
 {
 	ase_char_t* strl, * strr;
@@ -4455,7 +4547,7 @@ static ase_awk_val_t* __eval_binop_concat (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_ma (
+static ase_awk_val_t* eval_binop_ma (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right)
 {
 	ase_awk_val_t* lv, * rv, * res;
@@ -4463,7 +4555,7 @@ static ase_awk_val_t* __eval_binop_ma (
 	ASE_ASSERT (left->next == ASE_NULL);
 	ASE_ASSERT (right->next == ASE_NULL);
 
-	lv = __eval_expression (run, left);
+	lv = eval_expression (run, left);
 	if (lv == ASE_NULL) 
 	{
 		return ASE_NULL;
@@ -4471,7 +4563,7 @@ static ase_awk_val_t* __eval_binop_ma (
 
 	ase_awk_refupval (run, lv);
 
-	rv = __eval_expression0 (run, right);
+	rv = eval_expression0 (run, right);
 	if (rv == ASE_NULL)
 	{
 		ase_awk_refdownval (run, lv);
@@ -4480,7 +4572,7 @@ static ase_awk_val_t* __eval_binop_ma (
 
 	ase_awk_refupval (run, rv);
 
-	res = __eval_binop_match0 (
+	res = eval_binop_match0 (
 		run, lv, rv, left->line, right->line, 1);
 
 	ase_awk_refdownval (run, lv);
@@ -4489,7 +4581,7 @@ static ase_awk_val_t* __eval_binop_ma (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_nm (
+static ase_awk_val_t* eval_binop_nm (
 	ase_awk_run_t* run, ase_awk_nde_t* left, ase_awk_nde_t* right)
 {
 	ase_awk_val_t* lv, * rv, * res;
@@ -4497,12 +4589,12 @@ static ase_awk_val_t* __eval_binop_nm (
 	ASE_ASSERT (left->next == ASE_NULL);
 	ASE_ASSERT (right->next == ASE_NULL);
 
-	lv = __eval_expression (run, left);
+	lv = eval_expression (run, left);
 	if (lv == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, lv);
 
-	rv = __eval_expression0 (run, right);
+	rv = eval_expression0 (run, right);
 	if (rv == ASE_NULL)
 	{
 		ase_awk_refdownval (run, lv);
@@ -4511,7 +4603,7 @@ static ase_awk_val_t* __eval_binop_nm (
 
 	ase_awk_refupval (run, rv);
 
-	res = __eval_binop_match0 (
+	res = eval_binop_match0 (
 		run, lv, rv, left->line, right->line, 0);
 
 	ase_awk_refdownval (run, lv);
@@ -4520,7 +4612,7 @@ static ase_awk_val_t* __eval_binop_nm (
 	return res;
 }
 
-static ase_awk_val_t* __eval_binop_match0 (
+static ase_awk_val_t* eval_binop_match0 (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right, 
 	ase_size_t lline, ase_size_t rline, int ret)
 {
@@ -4636,7 +4728,7 @@ static ase_awk_val_t* __eval_binop_match0 (
 	return res;
 }
 
-static ase_awk_val_t* __eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* left, * res = ASE_NULL;
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
@@ -4655,7 +4747,7 @@ static ase_awk_val_t* __eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		exp->opcode == ASE_AWK_UNROP_BNOT);
 
 	ASE_ASSERT (exp->left->next == ASE_NULL);
-	left = __eval_expression (run, exp->left);
+	left = eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, left);
@@ -4730,7 +4822,7 @@ static ase_awk_val_t* __eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return res;
 }
 
-static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* left, * res;
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
@@ -4752,7 +4844,7 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	}
 
 	ASE_ASSERT (exp->left->next == ASE_NULL);
-	left = __eval_expression (run, exp->left);
+	left = eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, left);
@@ -4895,7 +4987,7 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 
-	if (__do_assignment (run, exp->left, res) == ASE_NULL)
+	if (do_assignment (run, exp->left, res) == ASE_NULL)
 	{
 		ase_awk_refdownval (run, left);
 		return ASE_NULL;
@@ -4905,7 +4997,7 @@ static ase_awk_val_t* __eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return res;
 }
 
-static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* left, * res, * res2;
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
@@ -4927,7 +5019,7 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	}
 
 	ASE_ASSERT (exp->left->next == ASE_NULL);
-	left = __eval_expression (run, exp->left);
+	left = eval_expression (run, exp->left);
 	if (left == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, left);
@@ -5174,7 +5266,7 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 
-	if (__do_assignment (run, exp->left, res2) == ASE_NULL)
+	if (do_assignment (run, exp->left, res2) == ASE_NULL)
 	{
 		ase_awk_refdownval (run, left);
 		return ASE_NULL;
@@ -5184,14 +5276,14 @@ static ase_awk_val_t* __eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return res;
 }
 
-static ase_awk_val_t* __eval_cnd (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_cnd (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* tv, * v;
 	ase_awk_nde_cnd_t* cnd = (ase_awk_nde_cnd_t*)nde;
 
 	ASE_ASSERT (cnd->test->next == ASE_NULL);
 
-	tv = __eval_expression (run, cnd->test);
+	tv = eval_expression (run, cnd->test);
 	if (tv == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, tv);
@@ -5200,14 +5292,14 @@ static ase_awk_val_t* __eval_cnd (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		cnd->left->next == ASE_NULL && 
 		cnd->right->next == ASE_NULL);
 	v = (ase_awk_valtobool (run, tv))?
-		__eval_expression (run, cnd->left):
-		__eval_expression (run, cnd->right);
+		eval_expression (run, cnd->left):
+		eval_expression (run, cnd->right);
 
 	ase_awk_refdownval (run, tv);
 	return v;
 }
 
-static ase_awk_val_t* __eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_nde_call_t* call = (ase_awk_nde_call_t*)nde;
 
@@ -5226,10 +5318,10 @@ static ase_awk_val_t* __eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 
-	return __eval_call (run, nde, call->what.bfn.arg.spec, ASE_NULL);
+	return eval_call (run, nde, call->what.bfn.arg.spec, ASE_NULL);
 }
 
-static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_nde_call_t* call = (ase_awk_nde_call_t*)nde;
 	ase_awk_afn_t* afn;
@@ -5261,7 +5353,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 
-	return __eval_call (run, nde, ASE_NULL, afn);
+	return eval_call (run, nde, ASE_NULL, afn);
 }
 
 
@@ -5284,7 +5376,7 @@ static ase_awk_val_t* __eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		__raw_pop (run); /* prev stack back */ \
 	} while (0)
 
-static ase_awk_val_t* __eval_call (
+static ase_awk_val_t* eval_call (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, 
 	const ase_char_t* bfn_arg_spec, ase_awk_afn_t* afn)
 {
@@ -5301,7 +5393,7 @@ static ase_awk_val_t* __eval_call (
 	 * ---------------------
 	 *  ....
 	 * ---------------------
-	 *  local0               local variables are pushed by __run_block
+	 *  local0               local variables are pushed by run_block
 	 * =====================
 	 *  argn                     
 	 * ---------------------
@@ -5394,7 +5486,7 @@ static ase_awk_val_t* __eval_call (
 		{
 			ase_awk_val_t** ref;
 			      
-			if (__get_reference (run, p, &ref) == -1)
+			if (get_reference (run, p, &ref) == -1)
 			{
 				UNWIND_RUN_STACK (run, nargs);
 				return ASE_NULL;
@@ -5410,11 +5502,11 @@ static ase_awk_val_t* __eval_call (
 		{
 			/* a regular expression is passed to 
 			 * the function as it is */
-			v = __eval_expression0 (run, p);
+			v = eval_expression0 (run, p);
 		}
 		else
 		{
-			v = __eval_expression (run, p);
+			v = eval_expression (run, p);
 		}
 		if (v == ASE_NULL)
 		{
@@ -5475,7 +5567,7 @@ static ase_awk_val_t* __eval_call (
 	{
 		/* normal awk function */
 		ASE_ASSERT (afn->body->type == ASE_AWK_NDE_BLK);
-		n = __run_block(run,(ase_awk_nde_blk_t*)afn->body);
+		n = run_block(run,(ase_awk_nde_blk_t*)afn->body);
 	}
 	else
 	{
@@ -5531,11 +5623,11 @@ static ase_awk_val_t* __eval_call (
 	ase_dprintf (ASE_T("got return value\n"));
 #endif
 
-	/* this trick has been mentioned in __run_return.
+	/* this trick has been mentioned in run_return.
 	 * adjust the reference count of the return value.
 	 * the value must not be freed even if the reference count
 	 * is decremented to zero because its reference has been incremented 
-	 * in __run_return regardless of its reference count. */
+	 * in run_return regardless of its reference count. */
 	v = STACK_RETVAL(run);
 	ase_awk_refdownval_nofree (run, v);
 
@@ -5551,13 +5643,13 @@ static ase_awk_val_t* __eval_call (
 	return (n == -1)? ASE_NULL: v;
 }
 
-static int __get_reference (
+static int get_reference (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_awk_val_t*** ref)
 {
 	ase_awk_nde_var_t* tgt = (ase_awk_nde_var_t*)nde;
 	ase_awk_val_t** tmp;
 
-	/* refer to __eval_indexed for application of a similar concept */
+	/* refer to eval_indexed for application of a similar concept */
 
 	if (nde->type == ASE_AWK_NDE_NAMED)
 	{
@@ -5624,7 +5716,7 @@ static int __get_reference (
 			}
 		}
 
-		tmp = __get_reference_indexed (
+		tmp = get_reference_indexed (
 			run, tgt, (ase_awk_val_t**)&pair->val);
 		if (tmp == ASE_NULL) return -1;
 		*ref = tmp;
@@ -5632,7 +5724,7 @@ static int __get_reference (
 
 	if (nde->type == ASE_AWK_NDE_GLOBALIDX)
 	{
-		tmp = __get_reference_indexed (run, tgt, 
+		tmp = get_reference_indexed (run, tgt, 
 			(ase_awk_val_t**)&STACK_GLOBAL(run,tgt->id.idxa));
 		if (tmp == ASE_NULL) return -1;
 		*ref = tmp;
@@ -5640,7 +5732,7 @@ static int __get_reference (
 
 	if (nde->type == ASE_AWK_NDE_LOCALIDX)
 	{
-		tmp = __get_reference_indexed (run, tgt, 
+		tmp = get_reference_indexed (run, tgt, 
 			(ase_awk_val_t**)&STACK_LOCAL(run,tgt->id.idxa));
 		if (tmp == ASE_NULL) return -1;
 		*ref = tmp;
@@ -5648,7 +5740,7 @@ static int __get_reference (
 
 	if (nde->type == ASE_AWK_NDE_ARGIDX)
 	{
-		tmp = __get_reference_indexed (run, tgt, 
+		tmp = get_reference_indexed (run, tgt, 
 			(ase_awk_val_t**)&STACK_ARG(run,tgt->id.idxa));
 		if (tmp == ASE_NULL) return -1;
 		*ref = tmp;
@@ -5663,7 +5755,7 @@ static int __get_reference (
 
 		/* the position number is returned for the positional 
 		 * variable unlike other reference types. */
-		v = __eval_expression (run, ((ase_awk_nde_pos_t*)nde)->val);
+		v = eval_expression (run, ((ase_awk_nde_pos_t*)nde)->val);
 		if (v == ASE_NULL) return -1;
 
 		ase_awk_refupval (run, v);
@@ -5692,7 +5784,7 @@ static int __get_reference (
 	return -1;
 }
 
-static ase_awk_val_t** __get_reference_indexed (
+static ase_awk_val_t** get_reference_indexed (
 	ase_awk_run_t* run, ase_awk_nde_var_t* nde, ase_awk_val_t** val)
 {
 	ase_awk_pair_t* pair;
@@ -5726,7 +5818,7 @@ static ase_awk_val_t** __get_reference_indexed (
 
 	ASE_ASSERT (nde->idx != ASE_NULL);
 
-	str = __idxnde_to_str (run, nde->idx, &len);
+	str = idxnde_to_str (run, nde->idx, &len);
 	if (str == ASE_NULL) return ASE_NULL;
 
 	pair = ase_awk_map_get ((*(ase_awk_val_map_t**)val)->map, str, len);
@@ -5750,7 +5842,7 @@ static ase_awk_val_t** __get_reference_indexed (
 	return (ase_awk_val_t**)&pair->val;
 }
 
-static ase_awk_val_t* __eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* val;
 
@@ -5766,7 +5858,7 @@ static ase_awk_val_t* __eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return val;
 }
 
-static ase_awk_val_t* __eval_real (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_real (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* val;
 
@@ -5782,7 +5874,7 @@ static ase_awk_val_t* __eval_real (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return val;
 }
 
-static ase_awk_val_t* __eval_str (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_str (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* val;
 
@@ -5799,7 +5891,7 @@ static ase_awk_val_t* __eval_str (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return val;
 }
 
-static ase_awk_val_t* __eval_rex (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_rex (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* val;
 
@@ -5817,7 +5909,7 @@ static ase_awk_val_t* __eval_rex (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return val;
 }
 
-static ase_awk_val_t* __eval_named (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_named (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_pair_t* pair;
 		       
@@ -5828,22 +5920,22 @@ static ase_awk_val_t* __eval_named (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return (pair == ASE_NULL)? ase_awk_val_nil: pair->val;
 }
 
-static ase_awk_val_t* __eval_global (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_global (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	return STACK_GLOBAL(run,((ase_awk_nde_var_t*)nde)->id.idxa);
 }
 
-static ase_awk_val_t* __eval_local (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_local (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	return STACK_LOCAL(run,((ase_awk_nde_var_t*)nde)->id.idxa);
 }
 
-static ase_awk_val_t* __eval_arg (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_arg (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	return STACK_ARG(run,((ase_awk_nde_var_t*)nde)->id.idxa);
 }
 
-static ase_awk_val_t* __eval_indexed (
+static ase_awk_val_t* eval_indexed (
 	ase_awk_run_t* run, ase_awk_nde_var_t* nde, ase_awk_val_t** val)
 {
 	ase_awk_pair_t* pair;
@@ -5877,7 +5969,7 @@ static ase_awk_val_t* __eval_indexed (
 
 	ASE_ASSERT (nde->idx != ASE_NULL);
 
-	str = __idxnde_to_str (run, nde->idx, &len);
+	str = idxnde_to_str (run, nde->idx, &len);
 	if (str == ASE_NULL) return ASE_NULL;
 
 	pair = ase_awk_map_get ((*(ase_awk_val_map_t**)val)->map, str, len);
@@ -5886,7 +5978,7 @@ static ase_awk_val_t* __eval_indexed (
 	return (pair == ASE_NULL)? ase_awk_val_nil: (ase_awk_val_t*)pair->val;
 }
 
-static ase_awk_val_t* __eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_nde_var_t* tgt = (ase_awk_nde_var_t*)nde;
 	ase_awk_pair_t* pair;
@@ -5906,28 +5998,28 @@ static ase_awk_val_t* __eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		ase_awk_refupval (run, pair->val); 
 	}
 
-	return __eval_indexed (run, tgt, (ase_awk_val_t**)&pair->val);
+	return eval_indexed (run, tgt, (ase_awk_val_t**)&pair->val);
 }
 
-static ase_awk_val_t* __eval_globalidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_globalidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
-	return __eval_indexed (run, (ase_awk_nde_var_t*)nde, 
+	return eval_indexed (run, (ase_awk_nde_var_t*)nde, 
 		(ase_awk_val_t**)&STACK_GLOBAL(run,((ase_awk_nde_var_t*)nde)->id.idxa));
 }
 
-static ase_awk_val_t* __eval_localidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_localidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
-	return __eval_indexed (run, (ase_awk_nde_var_t*)nde, 
+	return eval_indexed (run, (ase_awk_nde_var_t*)nde, 
 		(ase_awk_val_t**)&STACK_LOCAL(run,((ase_awk_nde_var_t*)nde)->id.idxa));
 }
 
-static ase_awk_val_t* __eval_argidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_argidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
-	return __eval_indexed (run, (ase_awk_nde_var_t*)nde,
+	return eval_indexed (run, (ase_awk_nde_var_t*)nde,
 		(ase_awk_val_t**)&STACK_ARG(run,((ase_awk_nde_var_t*)nde)->id.idxa));
 }
 
-static ase_awk_val_t* __eval_pos (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_pos (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_nde_pos_t* pos = (ase_awk_nde_pos_t*)nde;
 	ase_awk_val_t* v;
@@ -5935,7 +6027,7 @@ static ase_awk_val_t* __eval_pos (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_real_t rv;
 	int n;
 
-	v = __eval_expression (run, pos->val);
+	v = eval_expression (run, pos->val);
 	if (v == ASE_NULL) return ASE_NULL;
 
 	ase_awk_refupval (run, v);
@@ -5963,7 +6055,7 @@ static ase_awk_val_t* __eval_pos (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	return v;
 }
 
-static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_nde_getline_t* p;
 	ase_awk_val_t* v, * res;
@@ -5984,7 +6076,7 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	{
 		ase_size_t len;
 
-		v = __eval_expression (run, p->in);
+		v = eval_expression (run, p->in);
 		if (v == ASE_NULL) return ASE_NULL;
 
 		/* TODO: distinction between v->type == ASE_AWK_VAL_STR 
@@ -6075,7 +6167,7 @@ static ase_awk_val_t* __eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			}
 
 			ase_awk_refupval (run, v);
-			if (__do_assignment(run, p->var, v) == ASE_NULL)
+			if (do_assignment(run, p->var, v) == ASE_NULL)
 			{
 				ase_awk_refdownval (run, v);
 				return ASE_NULL;
@@ -6145,7 +6237,7 @@ static void __raw_pop_times (ase_awk_run_t* run, ase_size_t times)
 	}
 }
 
-static int __read_record (ase_awk_run_t* run)
+static int read_record (ase_awk_run_t* run)
 {
 	ase_ssize_t n;
 
@@ -6178,7 +6270,7 @@ static int __read_record (ase_awk_run_t* run)
 	return 1;
 }
 
-static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
+static int shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 {
 	ase_awk_val_t* v;
 	ase_char_t* ofs_free = ASE_NULL, * ofs;
@@ -6275,7 +6367,7 @@ static int __shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 	return 0;
 }
 
-static ase_char_t* __idxnde_to_str (
+static ase_char_t* idxnde_to_str (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_size_t* len)
 {
 	ase_char_t* str;
@@ -6286,7 +6378,7 @@ static ase_char_t* __idxnde_to_str (
 	if (nde->next == ASE_NULL)
 	{
 		/* single node index */
-		idx = __eval_expression (run, nde);
+		idx = eval_expression (run, nde);
 		if (idx == ASE_NULL) return ASE_NULL;
 
 		ase_awk_refupval (run, idx);
@@ -6320,7 +6412,7 @@ static ase_char_t* __idxnde_to_str (
 
 		while (nde != ASE_NULL)
 		{
-			idx = __eval_expression (run, nde);
+			idx = eval_expression (run, nde);
 			if (idx == ASE_NULL) 
 			{
 				ase_str_close (&idxstr);
@@ -6473,7 +6565,7 @@ ase_char_t* ase_awk_format (
 				}
 				else 
 				{
-					v = __eval_expression (run, args);
+					v = eval_expression (run, args);
 					if (v == ASE_NULL) return ASE_NULL;
 				}
 			}
@@ -6581,7 +6673,7 @@ ase_char_t* ase_awk_format (
 				}
 				else 
 				{
-					v = __eval_expression (run, args);
+					v = eval_expression (run, args);
 					if (v == ASE_NULL) return ASE_NULL;
 				}
 			}
@@ -6704,7 +6796,7 @@ ase_char_t* ase_awk_format (
 				}
 				else 
 				{
-					v = __eval_expression (run, args);
+					v = eval_expression (run, args);
 					if (v == ASE_NULL) return ASE_NULL;
 				}
 			}
@@ -6794,7 +6886,7 @@ ase_char_t* ase_awk_format (
 				}
 				else 
 				{
-					v = __eval_expression (run, args);
+					v = eval_expression (run, args);
 					if (v == ASE_NULL) return ASE_NULL;
 				}
 			}
@@ -6867,7 +6959,7 @@ ase_char_t* ase_awk_format (
 				}
 				else 
 				{
-					v = __eval_expression (run, args);
+					v = eval_expression (run, args);
 					if (v == ASE_NULL) return ASE_NULL;
 				}
 			}
@@ -6980,7 +7072,7 @@ ase_char_t* ase_awk_format (
 				}
 				else 
 				{
-					v = __eval_expression (run, args);
+					v = eval_expression (run, args);
 					if (v == ASE_NULL) return ASE_NULL;
 				}
 			}
