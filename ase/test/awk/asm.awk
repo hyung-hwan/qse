@@ -1,8 +1,8 @@
 #
-# Taken from the book "The AWK Programming Language"
-# aseawk++ -si asm.awk -nostripspaces -a asm.s
+# $Id: asm.awk,v 1.4 2007/09/27 11:33:45 bacon Exp $
 #
-# ASEAWK should turn on STRIPSPACES & BASEONE to run this program.
+# Taken from the book "The AWK Programming Language"
+# aseawk++ -si asm.awk -a asm.s -nostripspaces -baseone
 #
 
 BEGIN {

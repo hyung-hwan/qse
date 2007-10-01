@@ -7,9 +7,16 @@
     - enhanced ase_awk_getglobalname
 * added an option 
     - ASE_AWK_RESET (awk/awk.h)
-    - Awk::OPT_RESET  (awk/Awk.hpp)
+    - Awk::OPT_RESET (awk/Awk.hpp)
     - Awk::OPTION::RESET (net/Awk.hpp)
-    - TODO: add it to com&java
+    - Awk.OPTION_RESET (awk/Awk.java)
+    - TODO: add it to com
+* added an option 
+    - ASE_AWK_MAPTOVAR (awk/awk.h)
+    - Awk::OPT_MAPTOVAR (awk/Awk.hpp)
+    - Awk::OPTION::MAPTOVAR (net/Awk.hpp)
+    - Awk.OPTION_MAPTOVAR (awk/Awk.java)
+    - TODO: add it to com
 
 * enhanced Awk::dispatchFunction to set a more accurate error code (awk/Awk.cpp)
 

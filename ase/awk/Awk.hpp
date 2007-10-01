@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.61 2007/09/25 15:27:54 bacon Exp $
+ * $Id: Awk.hpp,v 1.62 2007/09/27 11:04:10 bacon Exp $
  *
  * {License}
  */
@@ -533,7 +533,9 @@ public:
 		 */
 		OPT_ARGSTOMAIN = ASE_AWK_ARGSTOMAIN,
 		/** Enables the keyword 'reset' */
-		OPT_RESET = ASE_AWK_RESET
+		OPT_RESET = ASE_AWK_RESET,
+		/** Allows the assignment of a map value to a variable */
+		OPT_MAPTOVAR = ASE_AWK_MAPTOVAR
 	};
 	// end of enum Option
 

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.14 2007/09/25 15:27:54 bacon Exp $
+ * $Id: awk.h,v 1.16 2007/09/27 11:30:54 bacon Exp $
  *
  * {License}
  */
@@ -162,7 +162,7 @@ enum ase_awk_option_t
 	/* support getline and print */
 	ASE_AWK_EXTIO       = (1 << 7), 
 
-	/* support co-process */
+	/* support co-process - NOT IMPLEMENTED YET */
 	ASE_AWK_COPROC      = (1 << 8),
 
 	/* support blockless patterns */
@@ -196,7 +196,10 @@ enum ase_awk_option_t
 	ASE_AWK_ARGSTOMAIN  = (1 << 14),
 
 	/* enable the non-standard keyworkd reset */
-	ASE_AWK_RESET       = (1 << 15)
+	ASE_AWK_RESET       = (1 << 15),
+
+	/* allows the assignment of a map value to a variable */
+	ASE_AWK_MAPTOVAR    = (1 << 16)
 };
 
 /* error code */

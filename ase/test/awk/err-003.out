@@ -5,4 +5,4 @@ BEGIN {
 	abc = 10;
 }
 
-RUN ERROR: CODE [95] LINE [5] map 'abc' not assignable with a scalar
+RUN ERROR: CODE [96] LINE [5] map 'abc' not assignable with a scalar

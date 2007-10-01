@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.15 2007/09/25 15:27:54 bacon Exp $
+ * $Id: run.c,v 1.16 2007/09/27 11:04:10 bacon Exp $
  *
  * {License}
  */
@@ -2173,18 +2173,20 @@ static int run_return (ase_awk_run_t* run, ase_awk_nde_return_t* nde)
 		val = eval_expression (run, nde->val);
 		if (val == ASE_NULL) return -1;
 
-	#ifdef PROHIBIT_MAP_ASSIGNMENT_TO_VARIABLE
-		if (val->type == ASE_AWK_VAL_MAP)
+		if ((run->awk->option & ASE_AWK_MAPTOVAR) == 0)
 		{
-			/* cannot return a map */
-			ase_awk_refupval (run, val);
-			ase_awk_refdownval (run, val);
+			if (val->type == ASE_AWK_VAL_MAP)
+			{
+				/* cannot return a map */
+				ase_awk_refupval (run, val);
+				ase_awk_refdownval (run, val);
 
-			ase_awk_setrunerror (run, 
-				ASE_AWK_EMAPNOTALLOWED, nde->line, ASE_NULL, 0);
-			return -1;
+				ase_awk_setrunerror (
+					run, ASE_AWK_EMAPNOTALLOWED, 
+					nde->line, ASE_NULL, 0);
+				return -1;
+			}
 		}
-	#endif
 
 		ase_awk_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
@@ -3089,13 +3091,15 @@ static ase_awk_val_t* do_assignment (
 	    var->type == ASE_AWK_NDE_LOCAL ||
 	    var->type == ASE_AWK_NDE_ARG) 
 	{
-	#ifdef PROHIBIT_MAP_ASSIGNMENT_TO_VARIABLE
-		if (val->type == ASE_AWK_VAL_MAP)
+		if ((run->awk->option & ASE_AWK_MAPTOVAR) == 0)
 		{
-			errnum = ASE_AWK_ENOTASS;
-			goto exit_on_error;
+			if (val->type == ASE_AWK_VAL_MAP)
+			{
+				errnum = ASE_AWK_ENOTASS;
+				goto exit_on_error;
+			}
 		}
-	#endif
+
 		ret = do_assignment_scalar (run, (ase_awk_nde_var_t*)var, val);
 	}
 	else if (var->type == ASE_AWK_NDE_NAMEDIDX ||
@@ -3145,9 +3149,9 @@ static ase_awk_val_t* do_assignment_scalar (
 		 var->type == ASE_AWK_NDE_LOCAL ||
 		 var->type == ASE_AWK_NDE_ARG) && var->idx == ASE_NULL);
 
-	#ifdef PROHIBIT_MAP_ASSIGNMENT_TO_VARIABLE
-	ASE_ASSERT (val->type != ASE_AWK_VAL_MAP);
-	#endif
+	ASE_ASSERT (
+		(run->awk->option & ASE_AWK_MAPTOVAR) ||
+		val->type != ASE_AWK_VAL_MAP);
 
 	if (var->type == ASE_AWK_NDE_NAMED) 
 	{
