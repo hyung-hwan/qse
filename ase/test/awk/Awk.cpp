@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.35 2007/09/25 15:27:54 bacon Exp $
+ * $Id: Awk.cpp,v 1.36 2007/09/27 11:30:20 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -544,8 +544,6 @@ static void print_usage (const ase_char_t* argv0)
 	ase_printf (ASE_T("    -w  o:n   Specify an old and new word pair\n"));
 	ase_printf (ASE_T("              o - an original word\n"));
 	ase_printf (ASE_T("              n - the new word to replace the original\n"));
-	ase_printf (ASE_T("    -ns       Don't strip whitespaces\n"));
-	ase_printf (ASE_T("              The STRIPSPACES option is truned off\n"));
 }
 
 int awk_main (int argc, ase_char_t* argv[])
@@ -559,6 +557,30 @@ int awk_main (int argc, ase_char_t* argv[])
 	ase_size_t nargs = 0;
 	ase_size_t nsrcins = 0;
 	ase_size_t nsrcouts = 0;
+
+	struct
+	{
+		const ase_char_t* name;
+		TestAwk::Option   opt;
+	} otab[] =
+	{
+		{ ASE_T("implicit"),    TestAwk::OPT_IMPLICIT },
+		{ ASE_T("explicit"),    TestAwk::OPT_EXPLICIT },
+		{ ASE_T("uniquefn"),    TestAwk::OPT_UNIQUEFN },
+		{ ASE_T("shading"),     TestAwk::OPT_SHADING },
+		{ ASE_T("shift"),       TestAwk::OPT_SHIFT },
+		{ ASE_T("idiv"),        TestAwk::OPT_IDIV },
+		{ ASE_T("strconcat"),   TestAwk::OPT_STRCONCAT },
+		{ ASE_T("extio"),       TestAwk::OPT_EXTIO },
+		{ ASE_T("blockless"),   TestAwk::OPT_BLOCKLESS },
+		{ ASE_T("baseone"),     TestAwk::OPT_BASEONE },
+		{ ASE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
+		{ ASE_T("nextofile"),   TestAwk::OPT_NEXTOFILE },
+		{ ASE_T("crfl"),        TestAwk::OPT_CRLF },
+		{ ASE_T("argstomain"),  TestAwk::OPT_ARGSTOMAIN },
+		{ ASE_T("reset"),       TestAwk::OPT_RESET },
+		{ ASE_T("maptovar"),    TestAwk::OPT_MAPTOVAR }
+	};
 
 	if (awk.open() == -1)
 	{
@@ -577,30 +599,41 @@ int awk_main (int argc, ase_char_t* argv[])
 			else if (ase_strcmp(argv[i], ASE_T("-a")) == 0) mode = 5;
 			else if (ase_strcmp(argv[i], ASE_T("-m")) == 0) mode = 6;
 			else if (ase_strcmp(argv[i], ASE_T("-w")) == 0) mode = 7;
-			else if (ase_strcmp(argv[i], ASE_T("-nostripspaces")) == 0) 
-			{
-				awk.setOption (awk.getOption () & ~TestAwk::OPT_STRIPSPACES);
-			}
-			else if (ase_strcmp(argv[i], ASE_T("-noimplicit")) == 0)
-			{
-				awk.setOption (awk.getOption () & ~TestAwk::OPT_IMPLICIT);
-			}
-			else if (ase_strcmp(argv[i], ASE_T("-noexplicit")) == 0)
-			{
-				awk.setOption (awk.getOption () & ~TestAwk::OPT_EXPLICIT);
-			}
-			else if (ase_strcmp(argv[i], ASE_T("-noshading")) == 0)
-			{
-				awk.setOption (awk.getOption () & ~TestAwk::OPT_SHADING);
-			}
-			else if (ase_strcmp(argv[i], ASE_T("-reset")) == 0)
-			{
-				awk.setOption (awk.getOption () | TestAwk::OPT_RESET);
-			}
 			else 
 			{
+				if (argv[i][0] == ASE_T('-'))
+				{
+					int j;
+
+					if (argv[i][1] == ASE_T('n') && argv[i][2] == ASE_T('o'))
+					{
+						for (j = 0; j < ASE_COUNTOF(otab); j++)
+						{
+							if (ase_strcmp(&argv[i][3], otab[j].name) == 0)
+							{
+								awk.setOption (awk.getOption() & ~otab[j].opt);
+								goto ok_valid;
+							}
+						}
+					}
+					else
+					{
+						for (j = 0; j < ASE_COUNTOF(otab); j++)
+						{
+							if (ase_strcmp(&argv[i][1], otab[j].name) == 0)
+							{
+								awk.setOption (awk.getOption() | otab[j].opt);
+								goto ok_valid;
+							}
+						}
+					}
+				}
+
 				print_usage (argv[0]);
 				return -1;
+
+			ok_valid:
+				;
 			}
 		}
 		else

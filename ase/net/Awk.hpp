@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.26 2007/09/25 15:27:54 bacon Exp $
+ * $Id: Awk.hpp,v 1.27 2007/09/27 11:04:11 bacon Exp $
  *
  * {License}
  */
@@ -391,7 +391,8 @@ namespace ASE
 				NEXTOFILE = ASE::Awk::OPT_NEXTOFILE,
 				CRLF = ASE::Awk::OPT_CRLF,
 				ARGSTOMAIN = ASE::Awk::OPT_ARGSTOMAIN,
-				RESET = ASE::Awk::OPT_RESET
+				RESET = ASE::Awk::OPT_RESET,
+				MAPTOVAR = ASE::Awk::OPT_MAPTOVAR
 			};
 
 			enum class DEPTH: int

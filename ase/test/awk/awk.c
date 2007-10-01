@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.15 2007/09/23 16:48:55 bacon Exp $
+ * $Id: awk.c,v 1.16 2007/09/27 11:30:20 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -900,17 +900,21 @@ static int awk_main (int argc, ase_char_t* argv[])
 	int deparse = 0;
 
 	opt = ASE_AWK_IMPLICIT |
-	      ASE_AWK_EXPLICIT | 
+	      /*ASE_AWK_EXPLICIT |*/
 	      ASE_AWK_UNIQUEFN | 
-	      ASE_AWK_IDIV |
 	      ASE_AWK_SHADING | 
-	      ASE_AWK_SHIFT | 
+	      /*ASE_AWK_SHIFT |*/
+	      /*ASE_AWK_IDIV |*/
+	      /*ASE_AWK_STRCONCAT |*/
 	      ASE_AWK_EXTIO | 
 	      ASE_AWK_BLOCKLESS | 
-	      ASE_AWK_BASEONE | 
-	      ASE_AWK_STRIPSPACES | 
-	      ASE_AWK_NEXTOFILE /*|
-	      ASE_AWK_ARGSTOMAIN*/;
+	      ASE_AWK_BASEONE /*|*/
+	      /*ASE_AWK_STRIPSPACES |*/
+	      /*ASE_AWK_NEXTOFILE |*/
+	      /*ASE_AWK_CRLF |*/
+	      /*ASE_AWK_ARGSTOMAIN |*/
+	      /*ASE_AWK_RESET*/
+	      /*ASE_AWK_MAPTOVAR*/;
 
 	if (argc <= 1)
 	{

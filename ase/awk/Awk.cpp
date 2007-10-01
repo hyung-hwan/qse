@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.59 2007/09/25 07:17:30 bacon Exp $
+ * $Id: Awk.cpp,v 1.60 2007/09/27 11:30:20 bacon Exp $
  *
  * {License}
  */
@@ -630,17 +630,11 @@ int Awk::open ()
 
 	int opt = 
 		OPT_IMPLICIT |
-		OPT_EXPLICIT | 
 		OPT_UNIQUEFN | 
-		OPT_IDIV |
 		OPT_SHADING | 
-		OPT_SHIFT | 
 		OPT_EXTIO | 
 		OPT_BLOCKLESS | 
-		OPT_BASEONE | 
-		OPT_STRIPSPACES | 
-		OPT_NEXTOFILE |
-		OPT_ARGSTOMAIN;
+		OPT_BASEONE;
 	ase_awk_setoption (awk, opt);
 
 	runCallback = false;
