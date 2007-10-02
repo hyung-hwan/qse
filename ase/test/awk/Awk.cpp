@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.36 2007/09/27 11:30:20 bacon Exp $
+ * $Id: Awk.cpp,v 1.37 2007/09/30 15:12:20 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -45,26 +45,38 @@ public:
 	#else
 		int n = ASE::StdAwk::open ();
 	#endif
-
-		idLastSleep = addGlobal (ASE_T("LAST_SLEEP"));
-		if (idLastSleep == -1 ||
-		    addFunction (ASE_T("sleep"), 1, 1,
-		    	(FunctionHandler)&TestAwk::sleep) == -1)
+		if (n == -1)
 		{
-		#if defined(_MSC_VER) && (_MSC_VER<1400)
-			StdAwk::close ();
-		#else
-			ASE::StdAwk::close ();
-		#endif
-
-		#ifdef _WIN32
 			HeapDestroy (heap); 
 			heap = ASE_NULL;
-		#endif
 			return -1;
 		}
 
-		return n;
+		idLastSleep = addGlobal (ASE_T("LAST_SLEEP"));
+		if (idLastSleep == -1) goto failure;
+
+		if (addFunction (ASE_T("sleep"), 1, 1,
+		    	(FunctionHandler)&TestAwk::sleep) == -1) goto failure;
+
+		if (addFunction (ASE_T("sumintarray"), 1, 1,
+		    	(FunctionHandler)&TestAwk::sumintarray) == -1) goto failure;
+
+		if (addFunction (ASE_T("arrayindices"), 1, 1,
+		    	(FunctionHandler)&TestAwk::arrayindices) == -1) goto failure;
+		return 0;
+
+	failure:
+	#if defined(_MSC_VER) && (_MSC_VER<1400)
+		StdAwk::close ();
+	#else
+		ASE::StdAwk::close ();
+	#endif
+
+	#ifdef _WIN32
+		HeapDestroy (heap); 
+		heap = ASE_NULL;
+	#endif
+		return -1;
 	}
 
 	void close ()
@@ -90,6 +102,12 @@ public:
 	int sleep (Run& run, Return& ret, const Argument* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
+		if (args[0].isIndexed()) 
+		{
+			run.setError (ERR_INVAL);
+			return -1;
+		}
+
 		long_t x = args[0].toInt();
 
 		/*Argument arg;
@@ -101,13 +119,60 @@ public:
 		if (run.setGlobal (idLastSleep, x) == -1) return -1;
 
 	#ifdef _WIN32
-		::Sleep (x * 1000);
+		::Sleep ((DWORD)(x * 1000));
 		return ret.set ((long_t)0);
 	#else
 		return ret.set ((long_t)::sleep (x));
 	#endif
 	}
 
+	int sumintarray (Run& run, Return& ret, const Argument* args, size_t nargs, 
+		const char_t* name, size_t len)
+	{
+		long_t x = 0;
+
+		if (args[0].isIndexed()) 
+		{
+			Argument idx, val;
+
+			int n = args[0].getFirstIndex (idx);
+			while (n > 0)
+			{
+				size_t len;
+				const char_t* ptr = idx.toStr(&len);
+
+				if (args[0].getIndexedAt (ptr, len, val) == -1) return -1;
+				x += val.toInt ();
+
+				n = args[0].getNextIndex (idx);
+			}
+			if (n != 0) return -1;
+		}
+		else x += args[0].toInt();
+
+		return ret.set (x);
+	}
+
+	int arrayindices (Run& run, Return& ret, const Argument* args, size_t nargs, 
+		const char_t* name, size_t len)
+	{
+		if (!args[0].isIndexed()) return 0;
+
+		Argument idx;
+
+		int n = args[0].getFirstIndex (idx);
+		while (n > 0)
+		{
+			size_t len;
+			const char_t* ptr = idx.toStr(&len);
+
+			n = args[0].getNextIndex (idx);
+		}
+		if (n != 0) return -1;
+	
+		return ret.set (L"XXXX", 4);
+	}
+	
 	int addConsoleInput (const char_t* file)
 	{
 		if (numConInFiles < ASE_COUNTOF(conInFile))

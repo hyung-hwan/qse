@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.7 2007/08/26 14:33:38 bacon Exp $
+ * $Id: Awk.h,v 1.8 2007/09/30 15:12:20 bacon Exp $
  *
  * {License}
  */
@@ -141,12 +141,16 @@ public:
 	STDMETHOD(put_MaxDepthForBlockRun)(/*[in]*/ int newVal);
 	STDMETHOD(get_MaxDepthForBlockParse)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(put_MaxDepthForBlockParse)(/*[in]*/ int newVal);
+	STDMETHOD(get_AllowMapToVar)(/*[out, retval]*/ VARIANT_BOOL *pVal);
+	STDMETHOD(put_AllowMapToVar)(/*[in]*/ VARIANT_BOOL newVal);
+	STDMETHOD(get_EnableReset)(/*[out, retval]*/ VARIANT_BOOL *pVal);
+	STDMETHOD(put_EnableReset)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_ArgumentsToEntryPoint)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_ArgumentsToEntryPoint)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_UseCrlf)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_UseCrlf)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_Nextofile)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_Nextofile)(/*[in]*/ VARIANT_BOOL newVal);
+	STDMETHOD(get_EnableNextofile)(/*[out, retval]*/ VARIANT_BOOL *pVal);
+	STDMETHOD(put_EnableNextofile)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_StripSpaces)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_StripSpaces)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_BaseOne)(/*[out, retval]*/ VARIANT_BOOL *pVal);

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.60 2007/09/27 11:30:20 bacon Exp $
+ * $Id: Awk.cpp,v 1.61 2007/09/30 15:12:20 bacon Exp $
  *
  * {License}
  */
@@ -137,6 +137,9 @@ Awk::Console::Mode Awk::Console::getMode () const
 
 Awk::Argument::Argument (): run (ASE_NULL), val (ASE_NULL)
 {
+	this->inum = 0;
+	this->rnum = 0.0;
+
 	this->str.ptr = ASE_NULL;
 	this->str.len = 0;
 }
@@ -148,21 +151,52 @@ Awk::Argument::~Argument ()
 
 void Awk::Argument::clear ()
 {
-	if (this->str.ptr != ASE_NULL)
+	if (this->val == ASE_NULL)
 	{
-		ASE_ASSERT (this->run != ASE_NULL);
-		ase_awk_free (
-			ase_awk_getrunawk(this->run), this->str.ptr);
+		/* case 1. not initialized.
+		 * case 2. initialized with the second init.
+		 * none of the cases creates a new string so the sttring
+		 * that str.ptr is pointing at doesn't have to be freed */
 		this->str.ptr = ASE_NULL;
 		this->str.len = 0;
 	}
-
-	if (this->val != ASE_NULL) 
+	else if (this->val->type == ASE_AWK_VAL_MAP)
 	{
 		ASE_ASSERT (this->run != ASE_NULL);
+
+		/* when the value is a map, str.ptr and str.len are
+		 * used for index iteration in getFirstIndex & getNextIndex */
 		ase_awk_refdownval (this->run, this->val);
 		this->val = ASE_NULL;
 	}
+	else
+	{
+		ASE_ASSERT (this->run != ASE_NULL);
+
+		if (this->str.ptr != ASE_NULL)
+		{
+			if (this->val->type != ASE_AWK_VAL_STR)
+			{
+				ase_awk_free (
+					ase_awk_getrunawk(this->run), 
+					this->str.ptr);
+			}
+
+			this->str.ptr = ASE_NULL;
+			this->str.len = 0;
+		}
+
+		if (this->val != ASE_NULL) 
+		{
+			ase_awk_refdownval (this->run, this->val);
+			this->val = ASE_NULL;
+		}
+
+	}
+
+	this->rnum = 0.0;
+	this->inum = 0;
+	this->run = ASE_NULL;
 }
 
 void* Awk::Argument::operator new (size_t n, awk_t* awk) throw ()
@@ -232,13 +266,17 @@ int Awk::Argument::init (run_t* run, val_t* v)
 			this->inum = (ase_long_t)this->rnum;
 			return 0;
 		}
+
+		this->str.ptr = ((ase_awk_val_str_t*)this->val)->buf;
+		this->str.len = ((ase_awk_val_str_t*)this->val)->len;
 	}
 	else if (v->type == ASE_AWK_VAL_INT)
 	{
 		this->inum = ((ase_awk_val_int_t*)v)->val;
 		this->rnum = (ase_real_t)((ase_awk_val_int_t*)v)->val;
 
-		this->str.ptr = ase_awk_valtostr (run, v, 0, ASE_NULL, &this->str.len);
+		this->str.ptr = ase_awk_valtostr (
+			run, v, 0, ASE_NULL, &this->str.len);
 		if (this->str.ptr != ASE_NULL) return 0;
 	}
 	else if (v->type == ASE_AWK_VAL_REAL)
@@ -246,7 +284,8 @@ int Awk::Argument::init (run_t* run, val_t* v)
 		this->inum = (ase_long_t)((ase_awk_val_real_t*)v)->val;
 		this->rnum = ((ase_awk_val_real_t*)v)->val;
 
-		this->str.ptr = ase_awk_valtostr (run, v, 0, ASE_NULL, &this->str.len);
+		this->str.ptr = ase_awk_valtostr (
+			run, v, 0, ASE_NULL, &this->str.len);
 		if (this->str.ptr != ASE_NULL) return 0;
 	}
 	else if (v->type == ASE_AWK_VAL_NIL)
@@ -254,51 +293,151 @@ int Awk::Argument::init (run_t* run, val_t* v)
 		this->inum = 0;
 		this->rnum = 0.0;
 
-		this->str.ptr = ase_awk_valtostr (run, v, 0, ASE_NULL, &this->str.len);
+		this->str.ptr = ase_awk_valtostr (
+			run, v, 0, ASE_NULL, &this->str.len);
 		if (this->str.ptr != ASE_NULL) return 0;
 	}
 	else if (v->type == ASE_AWK_VAL_MAP)
 	{
-		// TODO: support this propertly...
+		this->inum = 0;
+		this->rnum = 0.0;
+		this->str.ptr = ASE_NULL;
+		this->str.len = 0;
+		return 0;
 	}
 
+	// an error has occurred
 	ase_awk_refdownval (run, v);
 	this->run = ASE_NULL;
 	this->val = ASE_NULL;
 	return -1;
 }
 
+int Awk::Argument::init (run_t* run, const char_t* str, size_t len)
+{
+	ASE_ASSERT (this->run == ASE_NULL && this->val == ASE_NULL);
+
+	this->run = run;
+	this->str.ptr = (char_t*)str;
+	this->str.len = len;
+
+	if (ase_awk_strtonum (run, str, len, &this->inum, &this->rnum) == 0)
+	{
+		this->rnum = (real_t)this->inum;
+	}
+	else
+	{
+		this->inum = (long_t)this->rnum;
+	}
+
+	return 0;
+}
+
+
 Awk::long_t Awk::Argument::toInt () const
 {
-	if (this->run == ASE_NULL || this->val == ASE_NULL) return 0;
 	return this->inum;
 }
 
 Awk::real_t Awk::Argument::toReal () const
 {
-	if (this->run == ASE_NULL || this->val == ASE_NULL) return 0.0;
 	return this->rnum;
 }
 
 const Awk::char_t* Awk::Argument::toStr (size_t* len) const
 {
-	if (this->run == ASE_NULL || this->val == ASE_NULL) 
+
+	if (this->val != ASE_NULL && this->val->type == ASE_AWK_VAL_MAP)
 	{
 		*len = 0;
-		return ASE_NULL;
+		return ASE_T("");
 	}
-
-	if (this->str.ptr != ASE_NULL)
+	else if (this->str.ptr == ASE_NULL)
+	{
+		*len = 0;
+		return ASE_T("");
+	}
+	else
 	{
 		*len = this->str.len;
 		return this->str.ptr;
 	}
-	else
-	{
-		ASE_ASSERT (val->type == ASE_AWK_VAL_STR);
-		*len = ((ase_awk_val_str_t*)this->val)->len;
-		return ((ase_awk_val_str_t*)this->val)->buf;
-	}
+}
+
+bool Awk::Argument::isIndexed () const
+{
+	if (this->val == ASE_NULL) return false;
+	return this->val->type == ASE_AWK_VAL_MAP;
+}
+
+int Awk::Argument::getIndexedAt (const char_t* idxptr, Awk::Argument& val) const
+{
+	return getIndexedAt (idxptr, ase_strlen(idxptr), val);
+}
+
+int Awk::Argument::getIndexedAt (const char_t* idxptr, size_t idxlen, Awk::Argument& val) const
+{
+	val.clear ();
+
+	// not initialized yet. val is just nil. not an error
+	if (this->val == ASE_NULL) return 0;
+	// not a map. val is just nil. not an error 
+	if (this->val->type != ASE_AWK_VAL_MAP) return 0;
+
+	// get the value from the map.
+	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
+	ase_awk_pair_t* pair = ase_awk_map_get (m->map, idxptr, idxlen);
+
+	// the key is not found. it is not an error. val is just nil 
+	if (pair == ASE_NULL) return 0; 
+
+	// if val.init fails, it should return an error 
+	return val.init (this->run, (val_t*)pair->val);
+}
+
+#include <ase/utl/stdio.h>
+int Awk::Argument::getFirstIndex (Awk::Argument& val) const
+{
+	val.clear ();
+
+	if (this->val == ASE_NULL) return -1;
+	if (this->val->type != ASE_AWK_VAL_MAP) return -1;
+
+	ase_size_t buckno;
+	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
+	ase_awk_pair_t* pair = ase_awk_map_getfirstpair (m->map, &buckno);
+	if (pair == ASE_NULL) return 0; // no more key
+
+	if (val.init (this->run, pair->key.ptr, pair->key.len) == -1) return -1;
+
+	// reuse the string field as an interator.
+	this->str.ptr = (char_t*)pair;
+	this->str.len = buckno;
+
+	return 1;
+}
+
+int Awk::Argument::getNextIndex (Awk::Argument& val) const
+{
+	val.clear ();
+
+	if (this->val == ASE_NULL) return -1;
+	if (this->val->type != ASE_AWK_VAL_MAP) return -1;
+
+	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
+
+	ase_awk_pair_t* pair = (ase_awk_pair_t*)this->str.ptr;
+	ase_size_t buckno = this->str.len;
+		
+	pair = ase_awk_map_getnextpair (m->map, pair, &buckno);
+	if (pair == ASE_NULL) return 0;
+
+	if (val.init (this->run, pair->key.ptr, pair->key.len) == -1) return -1;
+
+	// reuse the string field as an interator.
+	this->str.ptr = (char_t*)pair;
+	this->str.len = buckno;
+	return 1;
 }
 
 //////////////////////////////////////////////////////////////////
@@ -427,6 +566,22 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 	return ase_awk_getrunerrmsg (this->run);
 }
 
+void Awk::Run::setError (
+	ErrorCode code, size_t line, const char_t* arg, size_t len)
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+
+	ase_cstr_t x = { arg, len };
+	ase_awk_setrunerror (this->run, code, line, &x, 1);
+}
+
+void Awk::Run::setError (
+	ErrorCode code, size_t line, const char_t* msg)
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+	ase_awk_setrunerrmsg (this->run, code, line, msg);
+}
+
 int Awk::Run::setGlobal (int id, long_t v)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
@@ -434,8 +589,7 @@ int Awk::Run::setGlobal (int id, long_t v)
 	ase_awk_val_t* tmp = ase_awk_makeintval (run, v);
 	if (tmp == ASE_NULL)
 	{
-		ase_awk_setrunerror (
-			this->run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		setError (ERR_NOMEM);
 		return -1;
 	}
 
@@ -452,8 +606,7 @@ int Awk::Run::setGlobal (int id, real_t v)
 	ase_awk_val_t* tmp = ase_awk_makerealval (run, v);
 	if (tmp == ASE_NULL)
 	{
-		ase_awk_setrunerror (
-			this->run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		setError (ERR_NOMEM);
 		return -1;
 	}
 
@@ -470,8 +623,7 @@ int Awk::Run::setGlobal (int id, const char_t* ptr, size_t len)
 	ase_awk_val_t* tmp = ase_awk_makestrval (run, ptr, len);
 	if (tmp == ASE_NULL)
 	{
-		ase_awk_setrunerror (
-			this->run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		setError (ERR_NOMEM);
 		return -1;
 	}
 

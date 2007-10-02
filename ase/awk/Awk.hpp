@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.62 2007/09/27 11:04:10 bacon Exp $
+ * $Id: Awk.hpp,v 1.63 2007/09/30 15:12:20 bacon Exp $
  *
  * {License}
  */
@@ -315,11 +315,20 @@ public:
 
 	protected:
 		int init (run_t* run, val_t* v);
+		int init (run_t* run, const char_t* str, size_t len);
 
 	public:
 		long_t toInt () const;
 		real_t toReal () const;
 		const char_t* toStr (size_t* len) const;
+
+		bool isIndexed () const;
+
+		int getIndexedAt (const char_t* idxptr, Awk::Argument& val) const;
+		int getIndexedAt (const char_t* idxptr, size_t idxlen, Awk::Argument& val) const;
+
+		int getFirstIndex (Awk::Argument& val) const;
+		int getNextIndex (Awk::Argument& val) const;
 
 	protected:
 		run_t* run;
@@ -327,11 +336,10 @@ public:
 
 		ase_long_t inum;
 		ase_real_t rnum;
-
-		struct
+		mutable struct
 		{
-			char_t*        ptr;
-			size_t         len;
+			char_t* ptr;
+			size_t  len;
 		} str;
 	};
 
@@ -346,6 +354,11 @@ public:
 		Return (awk_t* awk);
 		~Return ();
 
+	private:
+		Return (const Return&);
+		Return& operator= (const Return&);
+
+	protected:
 		val_t* toVal (run_t* run) const;
 
 	public:
@@ -354,6 +367,8 @@ public:
 		int set (const char_t* ptr, size_t len);
 
 		void clear ();
+
+		// TODO: Support MAP HERE...
 
 	protected:
 		awk_t* awk;
@@ -555,6 +570,10 @@ public:
 		ErrorCode getErrorCode () const;
 		size_t getErrorLine () const;
 		const char_t* getErrorMessage () const;
+
+		void setError (ErrorCode code, size_t line = 0, 
+			const char_t* arg = ASE_NULL, size_t len = 0);
+		void setError (ErrorCode code, size_t line, const char_t* msg);
 
 		/** 
 		 * Sets the value of a global variable. The global variable

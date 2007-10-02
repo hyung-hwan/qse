@@ -1,5 +1,5 @@
 /*
- * $Id: map.h,v 1.7 2007/07/25 07:00:09 bacon Exp $
+ * $Id: map.h,v 1.8 2007/09/30 15:12:20 bacon Exp $
  *
  * {License}
  */
@@ -23,6 +23,8 @@ struct ase_awk_pair_t
 	} key;
 
 	void* val;
+
+	/* used internally */
 	ase_awk_pair_t* next;
 };
 
@@ -84,6 +86,22 @@ int ase_awk_map_remove (
 
 int ase_awk_map_walk (ase_awk_map_t* map, 
 	int (*walker)(ase_awk_pair_t*,void*), void* arg);
+
+/**
+ * Gets the pointer to the first pair in the map.
+ * @param map [in]
+ * @param buckno [out]
+ */
+ase_awk_pair_t* ase_awk_map_getfirstpair (
+	ase_awk_map_t* map, ase_size_t* buckno);
+/**
+ * Gets the pointer to the next pair in the map.
+ * @param map [in]
+ * @param pair [in]
+ * @param buckno [in out]
+ */
+ase_awk_pair_t* ase_awk_map_getnextpair (
+	ase_awk_map_t* map, ase_awk_pair_t* pair, ase_size_t* buckno);
 
 #ifdef __cplusplus
 }
