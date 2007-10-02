@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cs,v 1.3 2007/09/18 14:30:41 bacon Exp $
+ * $Id: Awk.cs,v 1.4 2007/09/30 15:12:20 bacon Exp $
  */
 
 using System;
@@ -154,16 +154,28 @@ namespace ase.com
 			set { awk.StripSpaces = value; }
 		}
 
-		public bool Nextofile
+		public bool EnableNextofile
 		{
-			get { return awk.Nextofile; }
-			set { awk.Nextofile = value; }
+			get { return awk.EnableNextofile; }
+			set { awk.EnableNextofile = value; }
 		}
 
 		public bool Usecrlf
 		{
 			get { return awk.UseCrlf; }
 			set { awk.UseCrlf = value; }
+		}
+
+		public bool EnableReset
+		{
+			get { return awk.EnableReset; }
+			set { awk.EnableReset = value; }
+		}
+
+		public bool AllowMapToVar
+		{
+			get { return awk.AllowMapToVar; }
+			set { awk.AllowMapToVar = value; }
 		}
 
 		public string EntryPoint

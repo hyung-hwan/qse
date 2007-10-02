@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.8 2007/09/23 16:48:55 bacon Exp $
+ * $Id: Awk.cpp,v 1.9 2007/09/30 15:12:20 bacon Exp $
  *
  * {License}
  */
@@ -1277,14 +1277,14 @@ STDMETHODIMP CAwk::put_StripSpaces(VARIANT_BOOL newVal)
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::get_Nextofile(VARIANT_BOOL *pVal)
+STDMETHODIMP CAwk::get_EnableNextofile(VARIANT_BOOL *pVal)
 {
 	if (handle != NULL) option = ase_awk_getoption (handle);
 	*pVal = (option & ASE_AWK_NEXTOFILE) == 1;
 	return S_OK;
 }
 
-STDMETHODIMP CAwk::put_Nextofile(VARIANT_BOOL newVal)
+STDMETHODIMP CAwk::put_EnableNextofile(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_NEXTOFILE;
 	else option = option & ~ASE_AWK_NEXTOFILE;
@@ -1318,6 +1318,36 @@ STDMETHODIMP CAwk::put_ArgumentsToEntryPoint(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_ARGSTOMAIN;
 	else option = option & ~ASE_AWK_ARGSTOMAIN;
+	if (handle != NULL) ase_awk_setoption (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_EnableReset(VARIANT_BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getoption (handle);
+	*pVal = (option & ASE_AWK_RESET) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_EnableReset(VARIANT_BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_RESET;
+	else option = option & ~ASE_AWK_RESET;
+	if (handle != NULL) ase_awk_setoption (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_AllowMapToVar(VARIANT_BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getoption (handle);
+	*pVal = (option & ASE_AWK_MAPTOVAR) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_AllowMapToVar(VARIANT_BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_MAPTOVAR;
+	else option = option & ~ASE_AWK_MAPTOVAR;
 	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }

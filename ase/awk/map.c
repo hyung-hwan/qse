@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.9 2007/07/25 09:53:28 bacon Exp $
+ * $Id: map.c,v 1.10 2007/09/30 15:12:20 bacon Exp $
  *
  * {License}
  */
@@ -280,6 +280,52 @@ int ase_awk_map_walk (ase_awk_map_t* map,
 
 	return 0;
 }
+
+ase_awk_pair_t* ase_awk_map_getfirstpair (
+	ase_awk_map_t* map, ase_size_t* buckno)
+{
+	ase_size_t i;
+	ase_awk_pair_t* pair;
+
+	for (i = 0; i < map->capa; i++)
+	{
+		pair = map->buck[i];
+		if (pair != ASE_NULL) 
+		{
+			*buckno = i;
+			return pair;
+		}
+	}
+
+	return ASE_NULL;
+}
+
+ase_awk_pair_t* ase_awk_map_getnextpair (
+	ase_awk_map_t* map, ase_awk_pair_t* pair, ase_size_t* buckno)
+{
+	ase_size_t i;
+	ase_awk_pair_t* next;
+
+	next = ASE_AWK_PAIR_LNK(pair);
+	if (next != ASE_NULL) 
+	{
+		/* no change in bucket number */
+		return next;
+	}
+
+	for (i = (*buckno)+1; i < map->capa; i++)
+	{
+		pair = map->buck[i];
+		if (pair != ASE_NULL) 
+		{
+			*buckno = i;
+			return pair;
+		}
+	}
+
+	return ASE_NULL;
+}
+
 
 static ase_size_t hashkey (const ase_char_t* keyptr, ase_size_t keylen)
 {

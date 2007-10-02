@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.16 2007/09/27 11:30:20 bacon Exp $
+ * $Id: awk.c,v 1.17 2007/09/30 15:12:20 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -866,7 +866,7 @@ static int bfn_sleep (
 	if (n == 1) lv = (ase_long_t)rv;
 
 #ifdef _WIN32
-	Sleep (lv * 1000);
+	Sleep ((DWORD)(lv * 1000));
 	n = 0;
 #else
 	n = sleep (lv);	
