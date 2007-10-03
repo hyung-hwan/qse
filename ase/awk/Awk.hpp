@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.65 2007/10/01 15:19:23 bacon Exp $
+ * $Id: Awk.hpp,v 1.66 2007/10/02 15:21:44 bacon Exp $
  *
  * {License}
  */
@@ -324,8 +324,8 @@ public:
 
 		bool isIndexed () const;
 
-		int getIndexedAt (const char_t* idxptr, Awk::Argument& val) const;
-		int getIndexedAt (const char_t* idxptr, size_t idxlen, Awk::Argument& val) const;
+		int getIndexed (const char_t* idxptr, Argument& val) const;
+		int getIndexed (const char_t* idxptr, size_t idxlen, Argument& val) const;
 
 		int getFirstIndex (Awk::Argument& val) const;
 		int getNextIndex (Awk::Argument& val) const;
@@ -367,9 +367,14 @@ public:
 		int set (real_t v); 
 		int set (const char_t* ptr, size_t len);
 
-		int set (const char_t* idx, size_t iln, long_t v);
-		int set (const char_t* idx, size_t iln, real_t v);
-		int set (const char_t* idx, size_t iln, const char_t* str, size_t sln);
+		bool isIndexed () const;
+
+		int setIndexed (const char_t* idx, size_t iln, long_t v);
+		int setIndexed (const char_t* idx, size_t iln, real_t v);
+		int setIndexed (const char_t* idx, size_t iln, const char_t* str, size_t sln);
+		int setIndexed (long_t idx, long_t v);
+		int setIndexed (long_t idx, real_t v);
+		int setIndexed (long_t idx, const char_t* str, size_t sln);
 
 		void clear ();
 

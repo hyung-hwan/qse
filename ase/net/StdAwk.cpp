@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.13 2007/09/24 11:22:22 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.14 2007/10/02 15:21:44 bacon Exp $
  *
  * {License}
  */
@@ -47,20 +47,17 @@ namespace ASE
 
 		bool StdAwk::Sin (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->RealValue = System::Math::Sin (args[0]->RealValue);
-			return true;
+			return ret->Set ((real_t)System::Math::Sin (args[0]->RealValue));
 		}
 
 		bool StdAwk::Cos (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->RealValue = System::Math::Cos (args[0]->RealValue);
-			return true;
+			return ret->Set ((real_t)System::Math::Cos (args[0]->RealValue));
 		}
 
 		bool StdAwk::Tan (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->RealValue = System::Math::Tan (args[0]->RealValue);
-			return true;
+			return ret->Set ((real_t)System::Math::Tan (args[0]->RealValue));
 		}
 
 		bool StdAwk::Atan (System::String^ name, array<Argument^>^ args, Return^ ret)
