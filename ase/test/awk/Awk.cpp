@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.38 2007/10/01 15:19:23 bacon Exp $
+ * $Id: Awk.cpp,v 1.39 2007/10/02 15:21:44 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -141,7 +141,7 @@ public:
 				size_t len;
 				const char_t* ptr = idx.toStr(&len);
 
-				if (args[0].getIndexedAt (ptr, len, val) == -1) return -1;
+				if (args[0].getIndexed(ptr, len, val) == -1) return -1;
 				x += val.toInt ();
 
 				n = args[0].getNextIndex (idx);
@@ -159,7 +159,7 @@ public:
 		if (!args[0].isIndexed()) return 0;
 
 		Argument idx;
-		size_t i;
+		long_t i;
 		char_t buf[128];
 
 		int n = args[0].getFirstIndex (idx);
@@ -167,13 +167,8 @@ public:
 		{
 			size_t len;
 			const char_t* ptr = idx.toStr(&len);
-
 			n = args[0].getNextIndex (idx);
-
-			int blen = ase_sprintf (buf, ASE_COUNTOF(buf), ASE_T("%lu"), (unsigned long)i); 
-			if (blen < 0) return -1;
-
-			if (ret.set (buf, blen, ptr, len) == -1) return -1;
+			if (ret.setIndexed (i, ptr, len) == -1) return -1;
 		}
 		if (n != 0) return -1;
 	

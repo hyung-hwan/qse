@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.27 2007/09/27 11:04:11 bacon Exp $
+ * $Id: Awk.hpp,v 1.28 2007/10/02 15:21:44 bacon Exp $
  *
  * {License}
  */
@@ -66,45 +66,30 @@ namespace ASE
 				}
 
 			public:
-				property System::String^ StringValue
+				bool Set (System::String^ v)
 				{
-					void set (System::String^ v)
-					{
-						cli::pin_ptr<const char_t> nptr = PtrToStringChars(v);
-						ret.set (nptr, v->Length);
-					}
+					cli::pin_ptr<const char_t> nptr = PtrToStringChars(v);
+					return ret.set (nptr, v->Length) == 0;
 				}
 
-				property long_t LongValue
+				bool Set (long_t v)
 				{
-					void set (long_t v)
-					{
-						ret.set (v);
-					}
+					return ret.set (v) == 0;
 				}
 
-				property real_t RealValue
+				bool Set (real_t v)
 				{
-					void set (real_t v)
-					{
-						ret.set (v);
-					}
+					return ret.set (v) == 0;
 				}
 
-				property System::Single^ SingleValue
+				bool Set (System::Single^ v)
 				{
-					void set (System::Single^ v)
-					{
-						ret.set ((real_t)(float)v);
-					}
+					return ret.set ((real_t)(float)v) == 0;
 				}
 
-				property System::Double^ DoubleValue
+				bool set (System::Double^ v)
 				{
-					void set (System::Double^ v)
-					{
-						ret.set ((real_t)(double)v);
-					}
+					return ret.set ((real_t)(double)v) == 0;
 				}
 
 				property System::SByte^ SByteValue
@@ -170,6 +155,87 @@ namespace ASE
 						ret.set ((long_t)(unsigned __int64)v);
 					}
 				}
+
+
+				bool SetIndexed (System::String^ idx, System::String^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					cli::pin_ptr<const char_t> vp = PtrToStringChars(v);
+					return ret.setIndexed (ip, idx->Length, vp, v->Length) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, long_t v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, real_t v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, System::Single^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (real_t)(float)v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, System::Double^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (real_t)(double)v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, System::SByte^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (long_t)(__int8)v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, System::Int16^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (long_t)(__int16)v) == 0;
+				}
+			
+				bool SetIndexed (System::String^ idx, System::Int32^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (long_t)(__int32)v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, System::Int64^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (long_t)(__int64)v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, System::Byte^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (long_t)(unsigned __int8)v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, System::UInt16^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (long_t)(unsigned __int16)v) == 0;
+				}
+			
+				bool SetIndexed (System::String^ idx, System::UInt32^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (long_t)(unsigned __int32)v) == 0;
+				}
+
+				bool SetIndexed (System::String^ idx, System::UInt64^ v)
+				{
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return ret.setIndexed (ip, idx->Length, (long_t)(unsigned __int64)v) == 0;
+				}
+
 
 			protected:
 				ASE::Awk::Return& ret;
@@ -240,10 +306,12 @@ namespace ASE
 				}
 
 
+				/* TODO:...
 				bool GetGlobal (int id, [System::Runtime::InteropServices::Out] Argument^ v)
 				{
 					return run.getGlobal (id, v->placeHolder) == 0;
 				}
+				*/
 
 			protected:
 				ASE::Awk::Run& run;

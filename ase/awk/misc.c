@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.4 2007/05/09 16:07:44 bacon Exp $
+ * $Id: misc.c,v 1.5 2007/10/02 15:21:44 bacon Exp $
  *
  * {License}
  */
@@ -908,4 +908,3 @@ exit_loop:
 			ASE_NULL: (match_ptr+match_len);
 	}
 }
-

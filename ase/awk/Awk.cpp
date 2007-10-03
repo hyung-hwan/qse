@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.63 2007/10/01 15:19:23 bacon Exp $
+ * $Id: Awk.cpp,v 1.64 2007/10/02 15:21:44 bacon Exp $
  *
  * {License}
  */
@@ -370,12 +370,12 @@ bool Awk::Argument::isIndexed () const
 	return this->val->type == ASE_AWK_VAL_MAP;
 }
 
-int Awk::Argument::getIndexedAt (const char_t* idxptr, Awk::Argument& val) const
+int Awk::Argument::getIndexed (const char_t* idxptr, Awk::Argument& val) const
 {
-	return getIndexedAt (idxptr, ase_strlen(idxptr), val);
+	return getIndexed (idxptr, ase_strlen(idxptr), val);
 }
 
-int Awk::Argument::getIndexedAt (const char_t* idxptr, size_t idxlen, Awk::Argument& val) const
+int Awk::Argument::getIndexed (const char_t* idxptr, size_t idxlen, Awk::Argument& val) const
 {
 	val.clear ();
 
@@ -516,7 +516,13 @@ int Awk::Return::set (const char_t* ptr, size_t len)
 	return 0;
 }
 
-int Awk::Return::set (const char_t* idx, size_t iln, long_t v)
+bool Awk::Return::isIndexed () const
+{
+	if (this->val == ASE_NULL) return false;
+	return this->val->type == ASE_AWK_VAL_MAP;
+}
+
+int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
 
@@ -591,7 +597,7 @@ int Awk::Return::set (const char_t* idx, size_t iln, long_t v)
 	return 0;
 }
 
-int Awk::Return::set (const char_t* idx, size_t iln, real_t v)
+int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
 
@@ -666,7 +672,7 @@ int Awk::Return::set (const char_t* idx, size_t iln, real_t v)
 	return 0;
 }
 
-int Awk::Return::set (const char_t* idx, size_t iln, const char_t* str, size_t sln)
+int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, size_t sln)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
 
@@ -739,6 +745,93 @@ int Awk::Return::set (const char_t* idx, size_t iln, const char_t* str, size_t s
 	}
 
 	return 0;
+}
+
+int Awk::Return::setIndexed (long_t idx, long_t v)
+{
+	char_t ri[128];
+
+	Awk* awk = (Awk*)ase_awk_getcustomdata(ase_awk_getrunawk(this->run));
+	int rl = Awk::sprintf (
+		awk, ri, ASE_COUNTOF(ri), 
+	#if ASE_SIZEOF_LONG_LONG > 0
+		ASE_T("%lld"), (long long)idx
+	#elif ASE_SIZEOF___INT64 > 0
+		ASE_T("%I64d"), (__int64)idx
+	#elif ASE_SIZEOF_LONG > 0
+		ASE_T("%ld"), (long)idx
+	#elif ASE_SIZEOF_INT > 0
+		ASE_T("%d"), (int)idx
+	#else
+		#error unsupported size	
+	#endif
+		);
+
+	if (rl < 0)
+	{
+		ase_awk_setrunerror (this->run, ERR_INTERN, 0, ASE_NULL, 0);
+		return -1;
+	}
+
+	return setIndexed (ri, rl, v);
+}
+
+int Awk::Return::setIndexed (long_t idx, real_t v)
+{
+	char_t ri[128];
+
+	Awk* awk = (Awk*)ase_awk_getcustomdata(ase_awk_getrunawk(this->run));
+	int rl = Awk::sprintf (
+		awk, ri, ASE_COUNTOF(ri), 
+	#if ASE_SIZEOF_LONG_LONG > 0
+		ASE_T("%lld"), (long long)idx
+	#elif ASE_SIZEOF___INT64 > 0
+		ASE_T("%I64d"), (__int64)idx
+	#elif ASE_SIZEOF_LONG > 0
+		ASE_T("%ld"), (long)idx
+	#elif ASE_SIZEOF_INT > 0
+		ASE_T("%d"), (int)idx
+	#else
+		#error unsupported size	
+	#endif
+		);
+
+	if (rl < 0)
+	{
+		ase_awk_setrunerror (this->run, ERR_INTERN, 0, ASE_NULL, 0);
+		return -1;
+	}
+
+	return setIndexed (ri, rl, v);
+}
+
+int Awk::Return::setIndexed (long_t idx, const char_t* str, size_t sln)
+{
+	char_t ri[128];
+
+	Awk* awk = (Awk*)ase_awk_getcustomdata(ase_awk_getrunawk(this->run));
+	int rl = Awk::sprintf (
+		awk, ri, ASE_COUNTOF(ri), 
+	#if ASE_SIZEOF_LONG_LONG > 0
+		ASE_T("%lld"), (long long)idx
+	#elif ASE_SIZEOF___INT64 > 0
+		ASE_T("%I64d"), (__int64)idx
+	#elif ASE_SIZEOF_LONG > 0
+		ASE_T("%ld"), (long)idx
+	#elif ASE_SIZEOF_INT > 0
+		ASE_T("%d"), (int)idx
+	#else
+		#error unsupported size	
+	#endif
+		);
+
+	if (rl < 0)
+	{
+		ase_awk_setrunerror (this->run, ERR_INTERN, 0, ASE_NULL, 0);
+		return -1;
+	}
+
+	return setIndexed (ri, rl, str, sln);
 }
 
 void Awk::Return::clear ()
