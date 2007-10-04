@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.28 2007/10/02 15:21:44 bacon Exp $
+ * $Id: Awk.hpp,v 1.29 2007/10/03 09:47:07 bacon Exp $
  *
  * {License}
  */
@@ -28,20 +28,33 @@ namespace ASE
 
 			ref class Argument
 			{
-			public protected:
-				Argument (const ASE::Awk::Argument& arg): arg(arg)
+			public:
+				/*
+				Argument ()
 				{
+					arg = new ASE::Awk::Argument ();
+				}
+
+				~Argument ()
+				{
+					delete arg;
+				}*/
+
+			public protected:
+				Argument (const ASE::Awk::Argument& arg): arg(&arg)
+				{
+
 				}
 
 			public:
 				property long_t LongValue 
 				{
-					long_t get () { return arg.toInt(); }
+					long_t get () { return arg->toInt(); }
 				}
 
 				property real_t RealValue
 				{
-					real_t get () { return arg.toReal(); }
+					real_t get () { return arg->toReal(); }
 				}
 
 				property System::String^ StringValue
@@ -49,13 +62,27 @@ namespace ASE
 					System::String^ get ()
 					{
 						size_t len;
-						const char_t* s = arg.toStr(&len);
+						const char_t* s = arg->toStr(&len);
 						return gcnew System::String (s, 0, len);
 					}
 				}
 
+				bool GetIndexed (System::String^ idx)
+				{
+					ASE::Awk::Argument x;
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					return arg->getIndexed (ip, idx->Length, x) == 0;
+				}
+
+				/*
+				ttt = arg.GetIndexed ("abc");
+				if (ttt == nullptr)
+				{
+				}*/
+
 			protected:
-				const ASE::Awk::Argument& arg;
+				const ASE::Awk::Argument* arg;
+				ASE::Awk::Argument x;
 			};
 
 			ref class Return
@@ -87,75 +114,55 @@ namespace ASE
 					return ret.set ((real_t)(float)v) == 0;
 				}
 
-				bool set (System::Double^ v)
+				bool Set (System::Double^ v)
 				{
 					return ret.set ((real_t)(double)v) == 0;
 				}
 
-				property System::SByte^ SByteValue
+				bool Set (System::SByte^ v)
 				{
-					void set (System::SByte^ v)
-					{
-						ret.set ((long_t)(__int8)v);
-					}
+					return ret.set ((long_t)(__int8)v) == 0;
 				}
 
-				property System::Int16^ Int16Value
+				bool Set (System::Int16^ v)
 				{
-					void set (System::Int16^ v)
-					{
-						ret.set ((long_t)(__int16)v);
-					}
+					return ret.set ((long_t)(__int16)v) == 0;
 				}
 				
-				property System::Int32^ Int32Value
+				bool Set (System::Int32^ v)
 				{
-					void set (System::Int32^ v)
-					{
-						ret.set ((long_t)(__int32)v);
-					}
+					return ret.set ((long_t)(__int32)v) == 0;
 				}
 
-				property System::Int64^ Int64Value
+				bool Set (System::Int64^ v)
 				{
-					void set (System::Int64^ v)
-					{
-						ret.set ((long_t)(__int64)v);
-					}
+					return ret.set ((long_t)(__int64)v) == 0;
 				}
 
-				property System::Byte^ ByteValue
+				bool Set (System::Byte^ v)
 				{
-					void set (System::Byte^ v)
-					{
-						ret.set ((long_t)(unsigned __int8)v);
-					}
+					return ret.set ((long_t)(unsigned __int8)v) == 0;
 				}
 
-				property System::UInt16^ UInt16Value
+				bool Set (System::UInt16^ v)
 				{
-					void set (System::UInt16^ v)
-					{
-						ret.set ((long_t)(unsigned __int16)v);
-					}
+					return ret.set ((long_t)(unsigned __int16)v) == 0;
 				}
 				
-				property System::UInt32^ UInt32Value
+				bool Set (System::UInt32^ v)
 				{
-					void set (System::UInt32^ v)
-					{
-						ret.set ((long_t)(unsigned __int32)v);
-					}
+					return ret.set ((long_t)(unsigned __int32)v) == 0;
 				}
 
-				property System::UInt64^ UInt64Value
+				bool Set (System::UInt64^ v)
 				{
-					void set (System::UInt64^ v)
-					{
-						ret.set ((long_t)(unsigned __int64)v);
-					}
+					return ret.set ((long_t)(unsigned __int64)v) == 0;
 				}
 
+				bool IsIndexed ()
+				{
+					return ret.isIndexed ();
+				}
 
 				bool SetIndexed (System::String^ idx, System::String^ v)
 				{
@@ -235,7 +242,6 @@ namespace ASE
 					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
 					return ret.setIndexed (ip, idx->Length, (long_t)(unsigned __int64)v) == 0;
 				}
-
 
 			protected:
 				ASE::Awk::Return& ret;

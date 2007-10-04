@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.26 2007/09/24 15:12:16 bacon Exp $
+ * $Id: Awk.cpp,v 1.27 2007/10/03 09:47:07 bacon Exp $
  *
  * {License}
  */
@@ -317,7 +317,7 @@ namespace ASE
 			try
 			{
 				b = gcnew cli::array<char_t> (len);
-				for (int i = 0; i < len; i++) b[i] = buf[i];
+				for (size_t i = 0; i < len; i++) b[i] = buf[i];
 				return wrapper->WriteSource (
 					(ASE::Net::Awk::Source^)gh.Target, b, len);
 			}
@@ -385,7 +385,7 @@ namespace ASE
 			try
 			{
 				b = gcnew cli::array<char_t> (len);
-				for (int i = 0; i < len; i++) b[i] = buf[i];
+				for (size_t i = 0; i < len; i++) b[i] = buf[i];
 				return wrapper->WritePipe (
 					(ASE::Net::Awk::Pipe^)gh.Target, b, len);
 			}
@@ -465,7 +465,7 @@ namespace ASE
 			try
 			{
 				b = gcnew cli::array<char_t> (len);
-				for (int i = 0; i < len; i++) b[i] = buf[i];
+				for (size_t i = 0; i < len; i++) b[i] = buf[i];
 				return wrapper->WriteFile (
 					(ASE::Net::Awk::File^)gh.Target, b, len);
 			}
@@ -545,7 +545,7 @@ namespace ASE
 			try
 			{
 				b = gcnew cli::array<char_t> (len);
-				for (int i = 0; i < len; i++) b[i] = buf[i];
+				for (size_t i = 0; i < len; i++) b[i] = buf[i];
 				return wrapper->WriteConsole (
 					(ASE::Net::Awk::Console^)gh.Target, b, len);
 			}
