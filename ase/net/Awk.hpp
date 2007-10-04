@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.29 2007/10/03 09:47:07 bacon Exp $
+ * $Id: Awk.hpp,v 1.30 2007/10/04 04:48:27 bacon Exp $
  *
  * {License}
  */
@@ -28,33 +28,20 @@ namespace ASE
 
 			ref class Argument
 			{
-			public:
-				/*
-				Argument ()
-				{
-					arg = new ASE::Awk::Argument ();
-				}
-
-				~Argument ()
-				{
-					delete arg;
-				}*/
-
 			public protected:
-				Argument (const ASE::Awk::Argument& arg): arg(&arg)
+				Argument (const ASE::Awk::Argument& arg): arg(arg)
 				{
-
 				}
 
 			public:
 				property long_t LongValue 
 				{
-					long_t get () { return arg->toInt(); }
+					long_t get () { return arg.toInt(); }
 				}
 
 				property real_t RealValue
 				{
-					real_t get () { return arg->toReal(); }
+					real_t get () { return arg.toReal(); }
 				}
 
 				property System::String^ StringValue
@@ -62,27 +49,43 @@ namespace ASE
 					System::String^ get ()
 					{
 						size_t len;
-						const char_t* s = arg->toStr(&len);
+						const char_t* s = arg.toStr(&len);
 						return gcnew System::String (s, 0, len);
 					}
 				}
 
-				bool GetIndexed (System::String^ idx)
+				bool GetIndexedLong (System::String^ idx, [System::Runtime::InteropServices::Out] long_t% v)
 				{
 					ASE::Awk::Argument x;
 					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
-					return arg->getIndexed (ip, idx->Length, x) == 0;
+					if (arg.getIndexed (ip, idx->Length, x) == -1) return false;
+					v = x.toInt ();
+					return true;
 				}
 
-				/*
-				ttt = arg.GetIndexed ("abc");
-				if (ttt == nullptr)
+				bool GetIndexedReal (System::String^ idx, [System::Runtime::InteropServices::Out] real_t% v) 
 				{
-				}*/
+					ASE::Awk::Argument x;
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					if (arg.getIndexed (ip, idx->Length, x) == -1) return false;
+					v = x.toReal ();
+					return true;
+				}
+
+				bool GetIndexedString (System::String^ idx, [System::Runtime::InteropServices::Out] System::String^% v) 
+				{
+					ASE::Awk::Argument x;
+					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
+					if (arg.getIndexed (ip, idx->Length, x) == -1) return false;
+
+					size_t len;
+					const char_t* s = arg.toStr(&len);
+					v = gcnew System::String (s, 0, len);
+					return true;
+				}
 
 			protected:
-				const ASE::Awk::Argument* arg;
-				ASE::Awk::Argument x;
+				const ASE::Awk::Argument& arg;
 			};
 
 			ref class Return

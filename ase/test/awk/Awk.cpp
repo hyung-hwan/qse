@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.39 2007/10/02 15:21:44 bacon Exp $
+ * $Id: Awk.cpp,v 1.40 2007/10/04 04:48:27 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -160,7 +160,6 @@ public:
 
 		Argument idx;
 		long_t i;
-		char_t buf[128];
 
 		int n = args[0].getFirstIndex (idx);
 		for (i = 0; n > 0; i++)

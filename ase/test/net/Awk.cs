@@ -44,9 +44,8 @@ namespace ase.net
 
 		protected bool Sleep(string name, Argument[] args, Return ret)
 		{
-			System.Threading.Thread.Sleep((int)(args[0].LongValue*1000));	
-			ret.LongValue = 0;
-			return true;
+			System.Threading.Thread.Sleep((int)(args[0].LongValue*1000));
+			return ret.Set(0);
 		}
 
 		protected override int OpenSource(ASE.Net.StdAwk.Source source)

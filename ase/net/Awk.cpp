@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.27 2007/10/03 09:47:07 bacon Exp $
+ * $Id: Awk.cpp,v 1.28 2007/10/04 04:48:27 bacon Exp $
  *
  * {License}
  */
@@ -13,7 +13,7 @@
 #include <math.h>
 #include <tchar.h>
 
-#include <msclr/auto_gcroot.h>
+//#include <msclr/auto_gcroot.h>
 #include <msclr/gcroot.h>
 
 using System::Runtime::InteropServices::GCHandle;
@@ -921,7 +921,8 @@ namespace ASE
 			const ASE::Awk::Argument* args, size_t nargs, 
 			const char_t* name, size_t len)
 		{
-			System::String^ nm = gcnew System::String (name, 0, len);
+			System::String^ nm = 
+				gcnew System::String (name, 0, len);
 
 			FunctionHandler^ fh = (FunctionHandler^)funcs[nm];
 			if (fh == nullptr) 
@@ -930,13 +931,21 @@ namespace ASE
 				return false;
 			}
 			
-			cli::array<Argument^>^ arg_arr = gcnew cli::array<Argument^> (nargs);
-			for (size_t i = 0; i < nargs; i++) 
-				arg_arr[i] = gcnew Argument(args[i]);
-
 			Return^ r = gcnew Return (ret);
+			cli::array<Argument^>^ a = 
+				gcnew cli::array<Argument^> (nargs);
 
-			return fh (nm, arg_arr, r);
+			size_t i;
+			for (i = 0; i < nargs; i++) 
+				a[i] = gcnew Argument(args[i]);
+
+			bool n = fh (nm, a, r);
+
+			while (i > 0) delete a[--i];
+			delete a;
+			delete r;
+
+			return n;
 		}
 
 		bool Awk::SetWord (System::String^ ow, System::String^ nw)
