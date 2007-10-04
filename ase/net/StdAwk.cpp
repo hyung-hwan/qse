@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.14 2007/10/02 15:21:44 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.15 2007/10/03 09:47:07 bacon Exp $
  *
  * {License}
  */
@@ -13,6 +13,8 @@
 #include <tchar.h>
 #include <vcclr.h>
 #include <time.h>
+
+#pragma warning(disable:4996)
 
 namespace ASE
 {
@@ -62,52 +64,48 @@ namespace ASE
 
 		bool StdAwk::Atan (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->RealValue = System::Math::Atan (args[0]->RealValue);
-			return true;
+			return ret->Set ((real_t)System::Math::Atan (args[0]->RealValue));
 		}
 
 		bool StdAwk::Atan2 (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->RealValue = System::Math::Atan2 (args[0]->RealValue, args[1]->RealValue);
-			return true;
+			return ret->Set ((real_t)System::Math::Atan2 (args[0]->RealValue, args[1]->RealValue));
 		}
 
 		bool StdAwk::Log (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->RealValue = System::Math::Log (args[0]->RealValue);
-			return true;
+			return ret->Set ((real_t)System::Math::Log (args[0]->RealValue));
 		}
 
 		bool StdAwk::Exp (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->RealValue = System::Math::Exp (args[0]->RealValue);
-			return true;
+			return ret->Set ((real_t)System::Math::Exp (args[0]->RealValue));
 		}
 
 		bool StdAwk::Sqrt (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->RealValue = System::Math::Sqrt (args[0]->RealValue);
-			return true;
+			return ret->Set ((real_t)System::Math::Sqrt (args[0]->RealValue));
 		}
 
 		bool StdAwk::Int (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->LongValue = args[0]->LongValue;
-			return true;
+			return ret->Set (args[0]->LongValue);
 		}
 
 		bool StdAwk::Rand (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->LongValue = random->Next ();			
-			return true;
+			return ret->Set ((long_t)random->Next ());
 		}
 
 		bool StdAwk::Srand (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			int prev_seed = random_seed;
-			random_seed = (int)args[0]->LongValue;
-			random = gcnew System::Random (random_seed);
-			ret->LongValue = prev_seed;
+			int seed = (int)args[0]->LongValue;
+			System::Random^ tmp = gcnew System::Random (seed);
+
+			if (!ret->Set((long_t)tmp->Next())) return false;
+
+			this->random_seed = seed;
+			this->random = tmp;
 			return true;
 		}
 
@@ -120,9 +118,7 @@ namespace ASE
 
 		bool StdAwk::Systime (System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
-			ret->LongValue = (long_t)::time(NULL);
-			
-			return true;
+			return ret->Set ((long_t)::time(NULL));
 		}
 
 		bool StdAwk::Strftime (System::String^ name, array<Argument^>^ args, Return^ ret)
@@ -149,8 +145,7 @@ namespace ASE
 				len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
 			}
 
-			ret->StringValue = gcnew System::String (buf, 0, len);
-			return true;			
+			return ret->Set (gcnew System::String (buf, 0, len));
 		}
 
 		bool StdAwk::Strfgmtime (System::String^ name, array<Argument^>^ args, Return^ ret)
@@ -177,8 +172,7 @@ namespace ASE
 				len = ::wcsftime (buf, ASE_COUNTOF(buf), fmt, tm);
 			}
 
-			ret->StringValue = gcnew System::String (buf, 0, len);
-			return true;			
+			return ret->Set (gcnew System::String (buf, 0, len));
 		}
 
 		int StdAwk::OpenFile (File^ file)

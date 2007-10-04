@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.64 2007/10/02 15:21:44 bacon Exp $
+ * $Id: Awk.cpp,v 1.65 2007/10/03 09:47:07 bacon Exp $
  *
  * {License}
  */
@@ -395,7 +395,6 @@ int Awk::Argument::getIndexed (const char_t* idxptr, size_t idxlen, Awk::Argumen
 	return val.init (this->run, (val_t*)pair->val);
 }
 
-#include <ase/utl/stdio.h>
 int Awk::Argument::getFirstIndex (Awk::Argument& val) const
 {
 	val.clear ();
