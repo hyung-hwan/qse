@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.66 2007/10/02 15:21:44 bacon Exp $
+ * $Id: Awk.hpp,v 1.67 2007/10/04 04:48:27 bacon Exp $
  *
  * {License}
  */
@@ -295,6 +295,7 @@ public:
 	protected:
 		void clear ();
 
+	public:
 		// initialization
 		void* operator new (size_t n, awk_t* awk) throw ();
 		void* operator new[] (size_t n, awk_t* awk) throw ();
@@ -326,6 +327,7 @@ public:
 
 		int getIndexed (const char_t* idxptr, Argument& val) const;
 		int getIndexed (const char_t* idxptr, size_t idxlen, Argument& val) const;
+		int getIndexed (long_t idx, Argument& val) const;
 
 		int getFirstIndex (Awk::Argument& val) const;
 		int getNextIndex (Awk::Argument& val) const;

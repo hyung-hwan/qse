@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.65 2007/10/03 09:47:07 bacon Exp $
+ * $Id: Awk.cpp,v 1.66 2007/10/04 04:48:27 bacon Exp $
  *
  * {License}
  */
@@ -375,7 +375,8 @@ int Awk::Argument::getIndexed (const char_t* idxptr, Awk::Argument& val) const
 	return getIndexed (idxptr, ase_strlen(idxptr), val);
 }
 
-int Awk::Argument::getIndexed (const char_t* idxptr, size_t idxlen, Awk::Argument& val) const
+int Awk::Argument::getIndexed (
+	const char_t* idxptr, size_t idxlen, Awk::Argument& val) const
 {
 	val.clear ();
 
@@ -387,6 +388,51 @@ int Awk::Argument::getIndexed (const char_t* idxptr, size_t idxlen, Awk::Argumen
 	// get the value from the map.
 	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
 	ase_awk_pair_t* pair = ase_awk_map_get (m->map, idxptr, idxlen);
+
+	// the key is not found. it is not an error. val is just nil 
+	if (pair == ASE_NULL) return 0; 
+
+	// if val.init fails, it should return an error 
+	return val.init (this->run, (val_t*)pair->val);
+}
+
+int Awk::Argument::getIndexed (long_t idx, Argument& val) const
+{
+	val.clear ();
+
+	// not initialized yet. val is just nil. not an error
+	if (this->val == ASE_NULL) return 0;
+
+	// not a map. val is just nil. not an error 
+	if (this->val->type != ASE_AWK_VAL_MAP) return 0;
+
+	char_t ri[128];
+
+	Awk* awk = (Awk*)ase_awk_getcustomdata(ase_awk_getrunawk(this->run));
+	int rl = Awk::sprintf (
+		awk, ri, ASE_COUNTOF(ri), 
+	#if ASE_SIZEOF_LONG_LONG > 0
+		ASE_T("%lld"), (long long)idx
+	#elif ASE_SIZEOF___INT64 > 0
+		ASE_T("%I64d"), (__int64)idx
+	#elif ASE_SIZEOF_LONG > 0
+		ASE_T("%ld"), (long)idx
+	#elif ASE_SIZEOF_INT > 0
+		ASE_T("%d"), (int)idx
+	#else
+		#error unsupported size	
+	#endif
+		);
+
+	if (rl < 0)
+	{
+		ase_awk_setrunerror (this->run, ERR_INTERN, 0, ASE_NULL, 0);
+		return -1;
+	}
+
+	// get the value from the map.
+	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
+	ase_awk_pair_t* pair = ase_awk_map_get (m->map, ri, rl);
 
 	// the key is not found. it is not an error. val is just nil 
 	if (pair == ASE_NULL) return 0; 
