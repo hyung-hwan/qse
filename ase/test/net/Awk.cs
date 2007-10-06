@@ -35,11 +35,11 @@ namespace ase.net
 		public bool Run(
 			System.Windows.Forms.TextBox consoleInput,
 			System.Windows.Forms.TextBox consoleOutput,
-			System.String main, System.String[] args)
+			string main, string[] args) 
 		{
 			this.consoleInput = consoleInput;
 			this.consoleOutput = consoleOutput;
-			return base.Run(main, args);
+			return base.Run (main, args);
 		}
 
 		protected bool Sleep(string name, Argument[] args, Return ret)
