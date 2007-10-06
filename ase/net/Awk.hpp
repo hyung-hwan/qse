@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.30 2007/10/04 04:48:27 bacon Exp $
+ * $Id: Awk.hpp,v 1.32 2007/10/04 14:26:21 bacon Exp $
  *
  * {License}
  */
@@ -54,7 +54,8 @@ namespace ASE
 					}
 				}
 
-				bool GetIndexedLong (System::String^ idx, [System::Runtime::InteropServices::Out] long_t% v)
+				bool GetIndexedLong (System::String^ idx, 
+					[System::Runtime::InteropServices::Out] long_t% v)
 				{
 					ASE::Awk::Argument x;
 					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
@@ -63,7 +64,8 @@ namespace ASE
 					return true;
 				}
 
-				bool GetIndexedReal (System::String^ idx, [System::Runtime::InteropServices::Out] real_t% v) 
+				bool GetIndexedReal (System::String^ idx,
+					[System::Runtime::InteropServices::Out] real_t% v) 
 				{
 					ASE::Awk::Argument x;
 					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
@@ -72,7 +74,8 @@ namespace ASE
 					return true;
 				}
 
-				bool GetIndexedString (System::String^ idx, [System::Runtime::InteropServices::Out] System::String^% v) 
+				bool GetIndexedString (System::String^ idx,
+					[System::Runtime::InteropServices::Out] System::String^% v) 
 				{
 					ASE::Awk::Argument x;
 					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
@@ -250,14 +253,29 @@ namespace ASE
 				ASE::Awk::Return& ret;
 			};
 
-			ref class Run
+			ref class Context
 			{
 			public protected:
-				Run (ASE::Awk::Run& run): run (run)
+				Context (Awk^ owner, ASE::Awk::Run& run): owner (owner), run (run)
 				{
 				}
 
 			public:
+				property Awk^ Owner
+				{
+						Awk^ get () { return this->owner; }
+				}
+
+				bool Stop ()
+				{
+						return run.stop () == 0;
+				}
+
+				/* TODO:
+				 * GetError
+				 * SetError 
+				 */
+
 				bool SetGlobal (int id, System::String^ v)
 				{
 					cli::pin_ptr<const char_t> nptr = PtrToStringChars(v);
@@ -314,8 +332,7 @@ namespace ASE
 					return run.setGlobal (id, (real_t)(double)v) == 0;
 				}
 
-
-				/* TODO:...
+				/*
 				bool GetGlobal (int id, [System::Runtime::InteropServices::Out] Argument^ v)
 				{
 					return run.getGlobal (id, v->placeHolder) == 0;
@@ -323,6 +340,7 @@ namespace ASE
 				*/
 
 			protected:
+				Awk^ owner;
 				ASE::Awk::Run& run;
 			};
 
@@ -640,11 +658,17 @@ namespace ASE
 			/*event*/ RunReturnHandler^ OnRunReturn;
 			/*event*/ RunStatementHandler^ OnRunStatement;
 
-			virtual bool AddGlobal (System::String^ name, [System::Runtime::InteropServices::Out] int% id);
+			virtual bool AddGlobal (
+				System::String^ name, 
+				[System::Runtime::InteropServices::Out] int% id);
 			virtual bool DeleteGlobal (System::String^ name);
 
-			delegate bool FunctionHandler (System::String^ name, cli::array<Argument^>^ args, Return^ ret);
-			virtual bool AddFunction (System::String^ name, int minArgs, int maxArgs, FunctionHandler^ handler);
+			delegate bool FunctionHandler (
+				System::String^ name, cli::array<Argument^>^ args, Return^ ret);
+
+			virtual bool AddFunction (
+				System::String^ name, int minArgs, 
+				int maxArgs, FunctionHandler^ handler);
 			virtual bool DeleteFunction (System::String^ name);
 
 			virtual bool SetWord (System::String^ ow, System::String^ nw);
