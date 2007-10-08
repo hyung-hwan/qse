@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.32 2007/10/04 14:26:21 bacon Exp $
+ * $Id: Awk.hpp,v 1.33 2007/10/05 15:11:30 bacon Exp $
  *
  * {License}
  */
@@ -263,12 +263,12 @@ namespace ASE
 			public:
 				property Awk^ Owner
 				{
-						Awk^ get () { return this->owner; }
+					Awk^ get () { return this->owner; }
 				}
 
 				bool Stop ()
 				{
-						return run.stop () == 0;
+					return run.stop () == 0;
 				}
 
 				/* TODO:
@@ -643,15 +643,10 @@ namespace ASE
 			virtual bool Run ();
 			virtual bool Run (System::String^ entryPoint, cli::array<System::String^>^ args);
 
-			/**
-			 * sets the request to stop the Run method
-			 */
-			virtual void Stop ();
-
-			delegate void RunStartHandler (Awk^ awk);
-			delegate void RunEndHandler  (Awk^ awk);
-			delegate void RunReturnHandler (Awk^ awk);
-			delegate void RunStatementHandler (Awk^ awk);
+			delegate void RunStartHandler (Context^ ctx);
+			delegate void RunEndHandler  (Context^ ctx);
+			delegate void RunReturnHandler (Context^ ctx);
+			delegate void RunStatementHandler (Context^ ctx);
 
 			/*event*/ RunStartHandler^ OnRunStart;
 			/*event*/ RunEndHandler^ OnRunEnd;
@@ -757,7 +752,6 @@ namespace ASE
 			void setError (ERROR num);
 			void retrieveError ();
 			bool runErrorReported; // only used if the run-callback is activated.
-			bool stopRequested;
 		};
 
 	}
