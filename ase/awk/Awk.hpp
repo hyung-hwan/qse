@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.67 2007/10/04 04:48:27 bacon Exp $
+ * $Id: Awk.hpp,v 1.68 2007/10/05 15:11:30 bacon Exp $
  *
  * {License}
  */
@@ -315,8 +315,8 @@ public:
 		Argument& operator= (const Argument&);
 
 	protected:
-		int init (run_t* run, val_t* v);
-		int init (run_t* run, const char_t* str, size_t len);
+		int init (Run* run, val_t* v);
+		int init (Run* run, const char_t* str, size_t len);
 
 	public:
 		long_t toInt () const;
@@ -333,7 +333,7 @@ public:
 		int getNextIndex (Awk::Argument& val) const;
 
 	protected:
-		run_t* run;
+		Run* run;
 		val_t* val;
 
 		ase_long_t inum;
@@ -352,8 +352,9 @@ public:
 	{
 	protected:
 		friend class Awk;
+		friend class Awk::Run;
 
-		Return (run_t* run);
+		Return (Run* run);
 		~Return ();
 
 	private:
@@ -381,7 +382,7 @@ public:
 		void clear ();
 
 	protected:
-		run_t* run;
+		Run* run;
 		val_t* val;
 	};
 
@@ -557,6 +558,8 @@ public:
 	{
 	protected:
 		friend class Awk;
+		friend class Awk::Argument;
+		friend class Awk::Return;
 
 		Run (Awk* awk);
 		Run (Awk* awk, run_t* run);
@@ -808,8 +811,7 @@ public:
 	virtual void disableRunCallback ();
 
 protected:
-	virtual int dispatchFunction (
-		run_t* run, const char_t* name, size_t len);
+	virtual int dispatchFunction (Run* run, const char_t* name, size_t len);
 
 	/** 
 	 * @name Source code I/O handlers

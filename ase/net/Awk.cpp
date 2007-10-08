@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.28 2007/10/04 04:48:27 bacon Exp $
+ * $Id: Awk.cpp,v 1.29 2007/10/05 15:11:30 bacon Exp $
  *
  * {License}
  */
@@ -175,11 +175,12 @@ namespace ASE
 		void onRunStart (const Run& run)
 		{
 			wrapper->runErrorReported = false;
-			wrapper->stopRequested = false;
 
 			if (wrapper->OnRunStart != nullptr)
 			{
-				wrapper->OnRunStart (wrapper);
+				//wrapper->OnRunStart (wrapper);
+				wrapper->OnRunStart (
+					gcnew Context(wrapper, run));
 			}
 		}
 		void onRunEnd (const Run& run)
@@ -195,14 +196,18 @@ namespace ASE
 
 			if (wrapper->OnRunEnd != nullptr)
 			{
-				wrapper->OnRunEnd (wrapper);
+				//wrapper->OnRunEnd (wrapper);
+				wrapper->OnRunEnd (
+					gcnew Context(wrapper, run));
 			}
 		}
 		void onRunReturn (const Run& run, const Argument& ret)
 		{
 			if (wrapper->OnRunReturn != nullptr)
 			{
-				wrapper->OnRunReturn (wrapper);
+				//wrapper->OnRunReturn (wrapper);
+				wrapper->OnRunReturn (
+					gcnew Context(wrapper, run));
 			}
 		}
 
@@ -212,7 +217,9 @@ namespace ASE
 
 			if (wrapper->OnRunStatement != nullptr)
 			{
-				wrapper->OnRunStatement (wrapper);
+				//wrapper->OnRunStatement (wrapper);
+				wrapper->OnRunStatement (
+					gcnew Context(wrapper, run));
 			}
 		}
 
@@ -738,12 +745,11 @@ namespace ASE
 				return false;
 			}
 
-			// callback needs to be enabled to support the Stop method
-			//if (OnRunStart != nullptr || OnRunEnd != nullptr || 
-			//   OnRunReturn != nullptr || OnRunStatement != nullptr)
-			//{
+			if (OnRunStart != nullptr || OnRunEnd != nullptr || 
+			    OnRunReturn != nullptr || OnRunStatement != nullptr)
+			{
 				awk->enableRunCallback (this);
-			//}
+			}
 
 			if (args == nullptr || args->Length <= 0)
 			{
