@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.40 2007/10/04 04:48:27 bacon Exp $
+ * $Id: Awk.cpp,v 1.41 2007/10/07 15:27:39 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -133,7 +133,7 @@ public:
 
 		if (args[0].isIndexed()) 
 		{
-			Argument idx, val;
+			Argument idx(run), val(run);
 
 			int n = args[0].getFirstIndex (idx);
 			while (n > 0)
@@ -158,7 +158,7 @@ public:
 	{
 		if (!args[0].isIndexed()) return 0;
 
-		Argument idx;
+		Argument idx (run);
 		long_t i;
 
 		int n = args[0].getFirstIndex (idx);

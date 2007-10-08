@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.29 2007/10/05 15:11:30 bacon Exp $
+ * $Id: Awk.cpp,v 1.30 2007/10/07 15:27:39 bacon Exp $
  *
  * {License}
  */
@@ -172,19 +172,28 @@ namespace ASE
 			this->wrapper = nullptr;
 		}
 
-		void onRunStart (const Run& run)
+		void onRunStart (Run& run)
 		{
 			wrapper->runErrorReported = false;
+
+			Net::Awk::Context^ ctx = gcnew Net::Awk::Context (wrapper, run);
+			GCHandle gh = GCHandle::Alloc (ctx);
+			run.setCustom ((void*)GCHandle::ToIntPtr(gh));
 
 			if (wrapper->OnRunStart != nullptr)
 			{
 				//wrapper->OnRunStart (wrapper);
-				wrapper->OnRunStart (
-					gcnew Context(wrapper, run));
+				wrapper->OnRunStart (ctx);
 			}
+
+			// TODO: exception handling when OnRunStart throws an exception.
+			//       may need to destroy gh. or what???
 		}
-		void onRunEnd (const Run& run)
+		void onRunEnd (Run& run)
 		{
+			System::IntPtr ip ((void*)run.getCustom ());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+
 			ErrorCode code = run.getErrorCode();
 			if (code != ERR_NOERR)
 			{
@@ -197,29 +206,35 @@ namespace ASE
 			if (wrapper->OnRunEnd != nullptr)
 			{
 				//wrapper->OnRunEnd (wrapper);
-				wrapper->OnRunEnd (
-					gcnew Context(wrapper, run));
+				wrapper->OnRunEnd ((ASE::Net::Awk::Context^)gh.Target);
 			}
+
+			gh.Free ();
 		}
-		void onRunReturn (const Run& run, const Argument& ret)
+
+		void onRunReturn (Run& run, const Argument& ret)
 		{
 			if (wrapper->OnRunReturn != nullptr)
 			{
+				System::IntPtr ip ((void*)run.getCustom ());
+				GCHandle gh = GCHandle::FromIntPtr (ip);
+
 				//wrapper->OnRunReturn (wrapper);
-				wrapper->OnRunReturn (
-					gcnew Context(wrapper, run));
+				wrapper->OnRunReturn ((ASE::Net::Awk::Context^)gh.Target);
 			}
 		}
 
-		void onRunStatement (const Run& run, size_t line)
+		void onRunStatement (Run& run, size_t line)
 		{
-			if (wrapper->stopRequested) run.stop ();
+			//if (wrapper->stopRequested) run.stop ();
 
 			if (wrapper->OnRunStatement != nullptr)
 			{
+				System::IntPtr ip ((void*)run.getCustom ());
+				GCHandle gh = GCHandle::FromIntPtr (ip);
+		
 				//wrapper->OnRunStatement (wrapper);
-				wrapper->OnRunStatement (
-					gcnew Context(wrapper, run));
+				wrapper->OnRunStatement ((ASE::Net::Awk::Context^)gh.Target);
 			}
 		}
 
@@ -737,7 +752,7 @@ namespace ASE
 		bool Awk::Run (System::String^ entryPoint, cli::array<System::String^>^ args)
 		{
 			runErrorReported = false;
-			stopRequested = false;
+			//stopRequested = false;
 
 			if (awk == NULL) 
 			{
@@ -745,11 +760,11 @@ namespace ASE
 				return false;
 			}
 
-			if (OnRunStart != nullptr || OnRunEnd != nullptr || 
-			    OnRunReturn != nullptr || OnRunStatement != nullptr)
-			{
+			//if (OnRunStart != nullptr || OnRunEnd != nullptr || 
+			//    OnRunReturn != nullptr || OnRunStatement != nullptr)
+			//{
 				awk->enableRunCallback (this);
-			}
+			//}
 
 			if (args == nullptr || args->Length <= 0)
 			{
@@ -854,7 +869,8 @@ namespace ASE
 
 		void Awk::Stop ()
 		{
-			stopRequested = true;
+			//stopRequested = true;
+			// TODO: implement it... 
 		}
 
 		bool Awk::AddGlobal (System::String^ name, [System::Runtime::InteropServices::Out] int% id)

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.33 2007/10/05 15:11:30 bacon Exp $
+ * $Id: Awk.hpp,v 1.34 2007/10/07 15:27:39 bacon Exp $
  *
  * {License}
  */
@@ -54,6 +54,7 @@ namespace ASE
 					}
 				}
 
+				/*
 				bool GetIndexedLong (System::String^ idx, 
 					[System::Runtime::InteropServices::Out] long_t% v)
 				{
@@ -85,7 +86,7 @@ namespace ASE
 					const char_t* s = arg.toStr(&len);
 					v = gcnew System::String (s, 0, len);
 					return true;
-				}
+				}*/
 
 			protected:
 				const ASE::Awk::Argument& arg;
@@ -256,7 +257,7 @@ namespace ASE
 			ref class Context
 			{
 			public protected:
-				Context (Awk^ owner, ASE::Awk::Run& run): owner (owner), run (run)
+				Context (Awk^ owner, const ASE::Awk::Run& run): owner (owner), run ((ASE::Awk::Run&)run)
 				{
 				}
 
@@ -642,6 +643,7 @@ namespace ASE
 			virtual bool Parse ();
 			virtual bool Run ();
 			virtual bool Run (System::String^ entryPoint, cli::array<System::String^>^ args);
+			virtual void Stop ();
 
 			delegate void RunStartHandler (Context^ ctx);
 			delegate void RunEndHandler  (Context^ ctx);
