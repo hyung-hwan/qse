@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.68 2007/10/05 15:11:30 bacon Exp $
+ * $Id: Awk.hpp,v 1.69 2007/10/07 15:27:39 bacon Exp $
  *
  * {License}
  */
@@ -289,10 +289,12 @@ public:
 		friend class Awk;
 		friend class Awk::Run;
 
-		Argument ();
+		Argument (Run& run);
+		Argument (Run* run);
 		~Argument ();
 
 	protected:
+		Argument ();
 		void clear ();
 
 	public:
@@ -315,8 +317,8 @@ public:
 		Argument& operator= (const Argument&);
 
 	protected:
-		int init (Run* run, val_t* v);
-		int init (Run* run, const char_t* str, size_t len);
+		int init (val_t* v);
+		int init (const char_t* str, size_t len);
 
 	public:
 		long_t toInt () const;
@@ -350,10 +352,11 @@ public:
 	 */
 	class Return
 	{
-	protected:
+	public:
 		friend class Awk;
 		friend class Awk::Run;
 
+		Return (Run& run);
 		Return (Run* run);
 		~Return ();
 
@@ -627,6 +630,24 @@ public:
 		 */
 		int setGlobal (int id, const char_t* ptr, size_t len);
 
+
+		/** 
+		 * Sets the value of a global variable. The global variable
+		 * is indicated by the first parameter. 
+		 *
+		 * @param id
+		 * 	The ID to a global variable. This value corresponds
+		 * 	to the predefined global variable IDs or the value
+		 * 	returned by Awk::addGlobal.
+		 * @param global 
+		 * 	The reference to the value holder 
+		 *
+		 * @return
+		 *  	On success, 0 is returned.
+		 *  	On failure, -1 is returned.
+		 */
+		int setGlobal (int id, const Return& global);
+
 		/**
 		 * Gets the value of a global variable.
 		 *
@@ -636,7 +657,7 @@ public:
 		 * 	returned by Awk::addGlobal.
 		 * @param global
 		 * 	The reference to the value holder of a global variable
-		 * 	indicated by id. The parameter is set if thie method
+		 * 	indicated by id. The parameter is set if this method
 		 * 	returns 0.
 		 *
 		 * @return 
@@ -645,11 +666,22 @@ public:
 		 */
 		int getGlobal (int id, Argument& global) const;
 
+
+		/**
+		 * Sets a value into the custom data area 
+		 */
+		void setCustom (void* custom);
+
+		/**
+		 * Gets the value stored in the custom data area
+		 */
+		void* getCustom () const;
+
 	protected:
 		Awk* awk;
 		run_t* run;
-		//mutable Value global;
 		bool callbackFailed;
+		void* custom;
 	};
 
 	/** Constructor */
@@ -921,10 +953,10 @@ protected:
 	/*@}*/
 
 	// run-time callbacks
-	virtual void onRunStart (const Run& run);
-	virtual void onRunEnd (const Run& run);
-	virtual void onRunReturn (const Run& run, const Argument& ret);
-	virtual void onRunStatement (const Run& run, size_t line);
+	virtual void onRunStart (Run& run);
+	virtual void onRunEnd (Run& run);
+	virtual void onRunReturn (Run& run, const Argument& ret);
+	virtual void onRunStatement (Run& run, size_t line);
 	
 	// primitive handlers 
 	virtual void* allocMem   (size_t n) = 0;
