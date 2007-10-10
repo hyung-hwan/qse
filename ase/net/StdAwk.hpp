@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp,v 1.7 2007/09/01 15:43:16 bacon Exp $
+ * $Id: StdAwk.hpp,v 1.8 2007/10/08 09:43:15 bacon Exp $
  */
 
 #include <ase/net/Awk.hpp>
@@ -19,20 +19,20 @@ namespace ASE
 			int random_seed;
 			System::Random^ random;
 
-			bool Sin (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Cos (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Tan (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Atan (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Atan2 (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Log (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Exp (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Sqrt (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Int (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Rand (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Srand (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Systime (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Strftime (System::String^ name, array<Argument^>^ args, Return^ ret);
-			bool Strfgmtime (System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Sin (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Cos (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Tan (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Atan (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Atan2 (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Log (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Exp (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Sqrt (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Int (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Rand (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Srand (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Systime (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Strftime (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
+			bool Strfgmtime (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret);
 
 		public protected:
 			// File

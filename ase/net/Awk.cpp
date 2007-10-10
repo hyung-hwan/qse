@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.30 2007/10/07 15:27:39 bacon Exp $
+ * $Id: Awk.cpp,v 1.31 2007/10/08 09:43:15 bacon Exp $
  *
  * {License}
  */
@@ -276,8 +276,12 @@ namespace ASE
 			Run& run, Return& ret, const Argument* args, size_t nargs, 
 			const char_t* name, size_t len)
 		{
-			
-			return wrapper->DispatchFunction (run, ret, args, nargs, name, len)? 0: -1;
+			System::IntPtr ip ((void*)run.getCustom ());
+			GCHandle gh = GCHandle::FromIntPtr (ip);
+
+			return wrapper->DispatchFunction (
+				(ASE::Net::Awk::Context^)gh.Target, 
+				ret, args, nargs, name, len)? 0: -1;
 		}
 
 		int openSource (Source& io) 
@@ -939,7 +943,7 @@ namespace ASE
 		}
 
 		bool Awk::DispatchFunction (
-			ASE::Awk::Run& run, ASE::Awk::Return& ret, 
+			Context^ ctx, ASE::Awk::Return& ret, 
 			const ASE::Awk::Argument* args, size_t nargs, 
 			const char_t* name, size_t len)
 		{
@@ -949,6 +953,7 @@ namespace ASE
 			FunctionHandler^ fh = (FunctionHandler^)funcs[nm];
 			if (fh == nullptr) 
 			{
+				// TODO: ctx.setError... 
 				setError (ERROR::INVAL);
 				return false;
 			}
@@ -959,9 +964,9 @@ namespace ASE
 
 			size_t i;
 			for (i = 0; i < nargs; i++) 
-				a[i] = gcnew Argument(args[i]);
+				a[i] = gcnew Argument(ctx, args[i]);
 
-			bool n = fh (nm, a, r);
+			bool n = fh (ctx, nm, a, r);
 
 			while (i > 0) delete a[--i];
 			delete a;

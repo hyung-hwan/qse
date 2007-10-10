@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.68 2007/10/07 15:27:39 bacon Exp $
+ * $Id: Awk.cpp,v 1.69 2007/10/08 09:43:15 bacon Exp $
  *
  * {License}
  */
@@ -901,6 +901,16 @@ Awk::Run::~Run ()
 {
 }
 
+Awk::Run::operator Awk* () const 
+{
+	return this->awk;
+}
+
+Awk::Run::operator Awk::run_t* () const 
+{
+	return this->run;
+}
+
 int Awk::Run::stop () const
 {
 	ASE_ASSERT (this->run != ASE_NULL);
@@ -1031,6 +1041,11 @@ Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL),
 
 Awk::~Awk ()
 {
+}
+
+Awk::operator Awk::awk_t* () const
+{
+	return this->awk;
 }
 
 Awk::ErrorCode Awk::getErrorCode () const

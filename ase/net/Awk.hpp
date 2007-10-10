@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.34 2007/10/07 15:27:39 bacon Exp $
+ * $Id: Awk.hpp,v 1.36 2007/10/08 09:50:52 bacon Exp $
  *
  * {License}
  */
@@ -26,22 +26,56 @@ namespace ASE
 			typedef ASE::Awk::cint_t cint_t;
 			typedef ASE::Awk::bool_t bool_t;
 
+			ref class Context;
+
 			ref class Argument
 			{
-			public protected:
-				Argument (const ASE::Awk::Argument& arg): arg(arg)
+			public:
+				Argument (Context^ ctx)
 				{
+					arg = new((ASE::Awk::awk_t*)(ASE::Awk*)ctx->run) ASE::Awk::Argument (ctx->run);
+					if (arg == ASE_NULL)
+					{
+						throw gcnew System::OutOfMemoryException ("cannot create an instance of ASE::Awk::Argument");
+					}
+
+					arg_new = true;
+				}
+
+			public protected:
+				Argument (Context^ ctx, const ASE::Awk::Argument& arg): 
+					ctx(ctx), arg((ASE::Awk::Argument*)&arg), arg_new (false)
+				{
+				}
+
+			public:
+				~Argument ()
+				{
+					if (arg_new && arg != ASE_NULL) 
+					{
+						delete arg;
+						arg = ASE_NULL;
+					}
+				}
+
+				!Argument ()
+				{
+					if (arg_new && arg != ASE_NULL) 
+					{
+						delete arg;
+						arg = ASE_NULL;
+					}
 				}
 
 			public:
 				property long_t LongValue 
 				{
-					long_t get () { return arg.toInt(); }
+					long_t get () { return arg->toInt(); }
 				}
 
 				property real_t RealValue
 				{
-					real_t get () { return arg.toReal(); }
+					real_t get () { return arg->toReal(); }
 				}
 
 				property System::String^ StringValue
@@ -49,47 +83,21 @@ namespace ASE
 					System::String^ get ()
 					{
 						size_t len;
-						const char_t* s = arg.toStr(&len);
+						const char_t* s = arg->toStr(&len);
 						return gcnew System::String (s, 0, len);
 					}
 				}
 
-				/*
-				bool GetIndexedLong (System::String^ idx, 
-					[System::Runtime::InteropServices::Out] long_t% v)
+				bool GetIndexed (System::String^ idx, [System::Runtime::InteropServices::Out] Argument^% v)
 				{
-					ASE::Awk::Argument x;
 					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
-					if (arg.getIndexed (ip, idx->Length, x) == -1) return false;
-					v = x.toInt ();
-					return true;
+					return arg->getIndexed (ip, idx->Length, *v->arg) == 0;
 				}
 
-				bool GetIndexedReal (System::String^ idx,
-					[System::Runtime::InteropServices::Out] real_t% v) 
-				{
-					ASE::Awk::Argument x;
-					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
-					if (arg.getIndexed (ip, idx->Length, x) == -1) return false;
-					v = x.toReal ();
-					return true;
-				}
-
-				bool GetIndexedString (System::String^ idx,
-					[System::Runtime::InteropServices::Out] System::String^% v) 
-				{
-					ASE::Awk::Argument x;
-					cli::pin_ptr<const char_t> ip = PtrToStringChars(idx);
-					if (arg.getIndexed (ip, idx->Length, x) == -1) return false;
-
-					size_t len;
-					const char_t* s = arg.toStr(&len);
-					v = gcnew System::String (s, 0, len);
-					return true;
-				}*/
-
-			protected:
-				const ASE::Awk::Argument& arg;
+			public protected:
+				Context^ ctx;
+				ASE::Awk::Argument* arg;
+				bool arg_new;
 			};
 
 			ref class Return
@@ -100,6 +108,11 @@ namespace ASE
 				}
 
 			public:
+				void Clear ()
+				{
+					ret.clear ();
+				}
+				
 				bool Set (System::String^ v)
 				{
 					cli::pin_ptr<const char_t> nptr = PtrToStringChars(v);
@@ -250,7 +263,7 @@ namespace ASE
 					return ret.setIndexed (ip, idx->Length, (long_t)(unsigned __int64)v) == 0;
 				}
 
-			protected:
+			public protected:
 				ASE::Awk::Return& ret;
 			};
 
@@ -333,14 +346,17 @@ namespace ASE
 					return run.setGlobal (id, (real_t)(double)v) == 0;
 				}
 
-				/*
-				bool GetGlobal (int id, [System::Runtime::InteropServices::Out] Argument^ v)
+				bool SetGlobal (int id, Return^ v)
 				{
-					return run.getGlobal (id, v->placeHolder) == 0;
+					return run.setGlobal (id, v->ret) == 0;
 				}
-				*/
 
-			protected:
+				bool GetGlobal (int id, [System::Runtime::InteropServices::Out] Argument^% v)
+				{
+					return run.getGlobal (id, *v->arg) == 0;
+				}
+
+			public protected:
 				Awk^ owner;
 				ASE::Awk::Run& run;
 			};
@@ -661,7 +677,8 @@ namespace ASE
 			virtual bool DeleteGlobal (System::String^ name);
 
 			delegate bool FunctionHandler (
-				System::String^ name, cli::array<Argument^>^ args, Return^ ret);
+				Context^ ctx, System::String^ name, 
+				cli::array<Argument^>^ args, Return^ ret);
 
 			virtual bool AddFunction (
 				System::String^ name, int minArgs, 
@@ -742,7 +759,7 @@ namespace ASE
 
 		public protected:
 			bool Awk::DispatchFunction (
-				ASE::Awk::Run& run, ASE::Awk::Return& ret, 
+				Context^ ctx, ASE::Awk::Return& ret, 
 				const ASE::Awk::Argument* args, size_t nargs, 
 				const char_t* name, size_t len);
 

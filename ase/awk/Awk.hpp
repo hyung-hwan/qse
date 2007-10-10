@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.69 2007/10/07 15:27:39 bacon Exp $
+ * $Id: Awk.hpp,v 1.70 2007/10/08 09:43:15 bacon Exp $
  *
  * {License}
  */
@@ -569,6 +569,9 @@ public:
 		~Run ();
 
 	public:
+		operator Awk* () const;
+		operator run_t* () const;
+
 		int stop () const;
 
 		ErrorCode getErrorCode () const;
@@ -688,6 +691,9 @@ public:
 	Awk ();
 	/** Destructor */
 	virtual ~Awk ();
+
+	/** Returns the underlying handle */
+	operator awk_t* () const;
 	
 	/** Returns the error code */
 	ErrorCode getErrorCode () const;
