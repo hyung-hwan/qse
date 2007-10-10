@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.16 2007/09/27 11:30:54 bacon Exp $
+ * $Id: awk.h,v 1.17 2007/10/10 03:37:49 bacon Exp $
  *
  * {License}
  */
@@ -199,7 +199,10 @@ enum ase_awk_option_t
 	ASE_AWK_RESET       = (1 << 15),
 
 	/* allows the assignment of a map value to a variable */
-	ASE_AWK_MAPTOVAR    = (1 << 16)
+	ASE_AWK_MAPTOVAR    = (1 << 16),
+
+	/* allows BEGIN, END, pattern-action blocks */
+	ASE_AWK_PABLOCK     = (1 << 17)
 };
 
 /* error code */

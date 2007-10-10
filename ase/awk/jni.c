@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.15 2007/09/24 11:15:58 bacon Exp $
+ * $Id: jni.c,v 1.16 2007/10/10 03:37:49 bacon Exp $
  *
  * {License}
  */
@@ -34,7 +34,14 @@
 #define CLASS_EXTIO            "ase/awk/Extio"
 #define FIELD_HANDLE           "handle"
 
-#define MSG_SIZE 256
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER>=1400)
+	#pragma warning(disable:4996)
+
+	#define time_t __time64_t
+	#define time _time64
+	#define localtime _localtime64
+	#define gmtime _gmtime64
+#endif
 
 enum
 {
@@ -1450,10 +1457,10 @@ static int __handle_bfn (
 			return -1;
 		}
 
-		tmp[0] = (jchar*)'b';
-		tmp[1] = (jchar*)'f';
-		tmp[2] = (jchar*)'n';
-		tmp[3] = (jchar*)'_';
+		tmp[0] = (jchar)'b';
+		tmp[1] = (jchar)'f';
+		tmp[2] = (jchar)'n';
+		tmp[3] = (jchar)'_';
 		for (i = 0; i < fnl; i++) tmp[i+4] = (jchar)fnm[i];
 		name = (*env)->NewString (env, tmp, fnl+4);
 		free (tmp);
@@ -1689,7 +1696,7 @@ static int __handle_bfn (
 
 		if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 		{
-			ase_size_t i;
+			jsize x;
 			ase_char_t* tmp = (ase_char_t*)
 				malloc (ASE_SIZEOF(ase_char_t)*len);
 			if (tmp == ASE_NULL)
@@ -1700,7 +1707,7 @@ static int __handle_bfn (
 				return -1;
 			}
 
-			for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+			for (x =  0; x < len; x++) tmp[x] = (ase_char_t)ptr[x];
 			v = ase_awk_makestrval (run, tmp, len);
 			free (tmp);
 		}
@@ -1771,7 +1778,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i;
+		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			malloc (ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
@@ -1785,7 +1792,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 			return;
 		}
 
-		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+		for (x =  0; x < len; x++) tmp[x] = (ase_char_t)ptr[x];
 		n = (ase_awk_addfunc (awk, tmp, len, 0, 
 			min_args, max_args, ASE_NULL, __handle_bfn) == NULL)? -1: 0;
 		free (tmp);
@@ -1848,7 +1855,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delfunc (
 
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i;
+		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			malloc (ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
@@ -1862,7 +1869,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delfunc (
 			return;
 		}
 
-		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+		for (x =  0; x < len; x++) tmp[x] = (ase_char_t)ptr[x];
 		n = ase_awk_delfunc (awk, tmp, len);
 		free (tmp);
 	}
@@ -2069,7 +2076,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 
 	if (ol > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i;
+		jsize x;
 		ox = (ase_char_t*)malloc (ASE_SIZEOF(ase_char_t)*ol);
 		if (ox == ASE_NULL)
 		{
@@ -2084,13 +2091,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 			return;
 		}
 
-		for (i =  0; i < ol; i++) ox[i] = (ase_char_t)op[i];
+		for (x =  0; x < ol; x++) ox[x] = (ase_char_t)op[x];
 	}
 	else ox = (ase_char_t*)op;
 
 	if (nl > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i;
+		jsize x;
 		nx = (ase_char_t*) malloc (ASE_SIZEOF(ase_char_t)*nl);
 		if (nx == ASE_NULL)
 		{
@@ -2107,7 +2114,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 			return;
 		}
 
-		for (i =  0; i < nl; i++) nx[i] = (ase_char_t)np[i];
+		for (x =  0; x < nl; x++) nx[x] = (ase_char_t)np[x];
 	}
 	else nx = (ase_char_t*)np;
 
@@ -2152,7 +2159,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i;
+		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			malloc (ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
@@ -2167,7 +2174,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 			return;
 		}
 
-		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+		for (x =  0; x < len; x++) tmp[x] = (ase_char_t)ptr[x];
 		n = ase_awk_setfilename (run, tmp, len);
 		free (tmp);
 	}
@@ -2211,7 +2218,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i;
+		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			malloc (ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
@@ -2226,7 +2233,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 			return;
 		}
 
-		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+		for (x =  0; x < len; x++) tmp[x] = (ase_char_t)ptr[x];
 		n = ase_awk_setofilename (run, tmp, len);
 		free (tmp);
 	}
@@ -2273,7 +2280,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		ase_size_t i;
+		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			malloc (ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
@@ -2287,7 +2294,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
 			return NULL;
 		}
 
-		for (i =  0; i < len; i++) tmp[i] = (ase_char_t)ptr[i];
+		for (x =  0; x < len; x++) tmp[x] = (ase_char_t)ptr[x];
 		n = ase_awk_strtonum (
 			(ase_awk_run_t*)runid, tmp, len, &lv, &rv);
 		free (tmp);

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.41 2007/10/07 15:27:39 bacon Exp $
+ * $Id: Awk.cpp,v 1.42 2007/10/10 03:37:49 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -14,6 +14,11 @@
 #include <windows.h>
 #else
 #include <unistd.h>
+#endif
+
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
 #endif
 
 class TestAwk: public ASE::StdAwk

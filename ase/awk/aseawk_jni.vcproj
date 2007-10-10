@@ -17,7 +17,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)\jni"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -54,10 +54,6 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\release/aseawk_jni.pch"
-				AssemblerListingLocation=".\release/"
-				ObjectFile=".\release/"
-				ProgramDataBaseFileName=".\release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -79,9 +75,6 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(OutDir)"
-				ProgramDatabaseFile=".\../release/lib/aseawk_jni.pdb"
-				ImportLibrary="release/aseawk_jni.lib"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -112,7 +105,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)\jni"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -148,10 +141,6 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\debug/aseawk_jni.pch"
-				AssemblerListingLocation=".\debug/"
-				ObjectFile=".\debug/"
-				ProgramDataBaseFileName=".\debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
@@ -175,9 +164,6 @@
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\../debug/lib/aseawk_jni.pdb"
-				ImportLibrary="debug/aseawk_jni.lib"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -208,7 +194,7 @@
 		<Configuration
 			Name="Debug MD|Win32"
 			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)\jni"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -244,10 +230,6 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				PrecompiledHeaderFile=".\debug/aseawk_jni.pch"
-				AssemblerListingLocation=".\debug/"
-				ObjectFile=".\debug/"
-				ProgramDataBaseFileName=".\debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
@@ -271,9 +253,6 @@
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\../debug/lib/aseawk_jni.pdb"
-				ImportLibrary="debug/aseawk_jni.lib"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
