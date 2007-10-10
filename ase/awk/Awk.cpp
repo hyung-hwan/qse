@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.69 2007/10/08 09:43:15 bacon Exp $
+ * $Id: Awk.cpp,v 1.70 2007/10/10 03:37:49 bacon Exp $
  *
  * {License}
  */
@@ -935,16 +935,34 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 	return ase_awk_getrunerrmsg (this->run);
 }
 
-void Awk::Run::setError (
-	ErrorCode code, size_t line, const char_t* arg, size_t len)
+void Awk::Run::setError (ErrorCode code)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
+	ase_awk_setrunerror (this->run, code, 0, ASE_NULL, 0);
+}
 
-	ase_cstr_t x = { arg, len };
+void Awk::Run::setError (ErrorCode code, size_t line)
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+	ase_awk_setrunerror (this->run, code, line, ASE_NULL, 0);
+}
+
+void Awk::Run::setError (ErrorCode code, size_t line, const char_t* arg)
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+	ase_cstr_t x = { arg, ase_strlen(arg) };
 	ase_awk_setrunerror (this->run, code, line, &x, 1);
 }
 
 void Awk::Run::setError (
+	ErrorCode code, size_t line, const char_t* arg, size_t len)
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+	ase_cstr_t x = { arg, len };
+	ase_awk_setrunerror (this->run, code, line, &x, 1);
+}
+
+void Awk::Run::setErrorWithMessage (
 	ErrorCode code, size_t line, const char_t* msg)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
@@ -1063,8 +1081,22 @@ const Awk::char_t* Awk::getErrorMessage () const
 	return this->errmsg;
 }
 
-void Awk::setError (
-	ErrorCode code, size_t line, const char_t* arg, size_t len)
+void Awk::setError (ErrorCode code)
+{
+	setError (code, 0, ASE_NULL, 0);
+}
+
+void Awk::setError (ErrorCode code, size_t line)
+{
+	setError (code, line, ASE_NULL, 0);
+}
+
+void Awk::setError (ErrorCode code, size_t line, const char_t* arg)
+{
+	setError (code, line, arg, ase_strlen(arg));
+}
+
+void Awk::setError (ErrorCode code, size_t line, const char_t* arg, size_t len)
 {
 	if (awk != ASE_NULL)
 	{
@@ -1082,8 +1114,7 @@ void Awk::setError (
 	}
 }
 
-void Awk::setError (
-	ErrorCode code, size_t line, const char_t* msg)
+void Awk::setErrorWithMessage (ErrorCode code, size_t line, const char_t* msg)
 {
 	if (awk != ASE_NULL)
 	{

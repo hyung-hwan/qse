@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.70 2007/10/08 09:43:15 bacon Exp $
+ * $Id: Awk.hpp,v 1.71 2007/10/10 03:37:49 bacon Exp $
  *
  * {License}
  */
@@ -578,9 +578,13 @@ public:
 		size_t getErrorLine () const;
 		const char_t* getErrorMessage () const;
 
-		void setError (ErrorCode code, size_t line = 0, 
-			const char_t* arg = ASE_NULL, size_t len = 0);
-		void setError (ErrorCode code, size_t line, const char_t* msg);
+		void setError (ErrorCode code);
+		void setError (ErrorCode code, size_t line);
+		void setError (ErrorCode code, size_t line, const char_t* arg);
+		void setError (ErrorCode code, size_t line, const char_t* arg, size_t len);
+
+		void setErrorWithMessage (
+			ErrorCode code, size_t line, const char_t* msg);
 
 		/** 
 		 * Sets the value of a global variable. The global variable
@@ -705,9 +709,13 @@ public:
 	const char_t* getErrorMessage () const;
 
 protected:
-	void setError (ErrorCode code, size_t line = 0, 
-		const char_t* arg = ASE_NULL, size_t len = 0);
-	void setError (ErrorCode code, size_t line, const char_t* msg);
+	void setError (ErrorCode code);
+	void setError (ErrorCode code, size_t line);
+	void setError (ErrorCode code, size_t line, const char_t* arg);
+	void setError (ErrorCode code, size_t line, const char_t* arg, size_t len);
+
+	void setErrorWithMessage (
+		ErrorCode code, size_t line, const char_t* msg);
 
 	void clearError ();
 	void retrieveError ();

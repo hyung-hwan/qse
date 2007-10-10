@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.18 2007/09/25 15:27:54 bacon Exp $
+ * $Id: parse.c,v 1.19 2007/10/10 03:37:49 bacon Exp $
  *
  * {License}
  */
@@ -237,8 +237,8 @@ static kwent_t kwtab[] =
 	{ ASE_T("in"),           2, TOKEN_IN,          0 },
 
 	/* top-level block starters */
-	{ ASE_T("BEGIN"),        5, TOKEN_BEGIN,       0 },
-	{ ASE_T("END"),          3, TOKEN_END,         0 },
+	{ ASE_T("BEGIN"),        5, TOKEN_BEGIN,       ASE_AWK_PABLOCK },
+	{ ASE_T("END"),          3, TOKEN_END,         ASE_AWK_PABLOCK },
 	{ ASE_T("function"),     8, TOKEN_FUNCTION,    0 },
 	{ ASE_T("func"),         4, TOKEN_FUNCTION,    0 },
 
@@ -649,6 +649,13 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 	else if (MATCH(awk,TOKEN_LBRACE))
 	{
 		/* patternless block */
+		if ((awk->option & ASE_AWK_PABLOCK) == 0)
+		{
+			/* TODO: SET ERROR */
+			SETERRTOK (awk, ASE_AWK_EFUNC);
+			return ASE_NULL;
+		}
+
 		awk->parse.id.block = PARSE_ACTION_BLOCK;
 		if (parse_pattern_block (
 			awk, ASE_NULL, ase_false) == ASE_NULL) return ASE_NULL;
@@ -665,6 +672,13 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 		pattern, pattern
 		*/
 		ase_awk_nde_t* ptn;
+
+		if ((awk->option & ASE_AWK_PABLOCK) == 0)
+		{
+			/* TODO: SET ERROR */
+			SETERRTOK (awk, ASE_AWK_EFUNC);
+			return ASE_NULL;
+		}
 
 		awk->parse.id.block = PARSE_PATTERN;
 
