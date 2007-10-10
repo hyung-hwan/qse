@@ -42,7 +42,7 @@ namespace ase.net
 			return base.Run (main, args);
 		}
 
-		protected bool Sleep(string name, Argument[] args, Return ret)
+		protected bool Sleep(Context ctx, string name, Argument[] args, Return ret)
 		{
 			System.Threading.Thread.Sleep((int)(args[0].LongValue*1000));
 			return ret.Set(0);

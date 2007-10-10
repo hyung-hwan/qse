@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.15 2007/10/03 09:47:07 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.16 2007/10/08 09:43:15 bacon Exp $
  *
  * {License}
  */
@@ -47,57 +47,57 @@ namespace ASE
 		{
 		}
 
-		bool StdAwk::Sin (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Sin (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((real_t)System::Math::Sin (args[0]->RealValue));
 		}
 
-		bool StdAwk::Cos (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Cos (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((real_t)System::Math::Cos (args[0]->RealValue));
 		}
 
-		bool StdAwk::Tan (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Tan (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((real_t)System::Math::Tan (args[0]->RealValue));
 		}
 
-		bool StdAwk::Atan (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Atan (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((real_t)System::Math::Atan (args[0]->RealValue));
 		}
 
-		bool StdAwk::Atan2 (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Atan2 (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((real_t)System::Math::Atan2 (args[0]->RealValue, args[1]->RealValue));
 		}
 
-		bool StdAwk::Log (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Log (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((real_t)System::Math::Log (args[0]->RealValue));
 		}
 
-		bool StdAwk::Exp (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Exp (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((real_t)System::Math::Exp (args[0]->RealValue));
 		}
 
-		bool StdAwk::Sqrt (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Sqrt (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((real_t)System::Math::Sqrt (args[0]->RealValue));
 		}
 
-		bool StdAwk::Int (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Int (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set (args[0]->LongValue);
 		}
 
-		bool StdAwk::Rand (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Rand (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((long_t)random->Next ());
 		}
 
-		bool StdAwk::Srand (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Srand (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			int seed = (int)args[0]->LongValue;
 			System::Random^ tmp = gcnew System::Random (seed);
@@ -116,12 +116,12 @@ namespace ASE
 	#define gmtime _gmtime64
 #endif
 
-		bool StdAwk::Systime (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Systime (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			return ret->Set ((long_t)::time(NULL));
 		}
 
-		bool StdAwk::Strftime (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Strftime (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			wchar_t buf[128]; 
 			struct tm* tm;
@@ -148,7 +148,7 @@ namespace ASE
 			return ret->Set (gcnew System::String (buf, 0, len));
 		}
 
-		bool StdAwk::Strfgmtime (System::String^ name, array<Argument^>^ args, Return^ ret)
+		bool StdAwk::Strfgmtime (Context^ ctx, System::String^ name, array<Argument^>^ args, Return^ ret)
 		{
 			wchar_t buf[128]; 
 			struct tm* tm;
