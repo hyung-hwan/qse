@@ -45,10 +45,9 @@ namespace ase.net
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.cbxEntryPoint = new System.Windows.Forms.ComboBox();
 			this.panel2 = new System.Windows.Forms.Panel();
+			this.clbOptions = new System.Windows.Forms.CheckedListBox();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
-			this.chkStripSpaces = new System.Windows.Forms.CheckBox();
-			this.chkPassArgumentsToEntryPoint = new System.Windows.Forms.CheckBox();
 			this.btnClearAllArguments = new System.Windows.Forms.Button();
 			this.btnAddArgument = new System.Windows.Forms.Button();
 			this.tbxArgument = new System.Windows.Forms.TextBox();
@@ -78,7 +77,7 @@ namespace ase.net
 			// btnRun
 			// 
 			this.btnRun.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnRun.Location = new System.Drawing.Point(78, 327);
+			this.btnRun.Location = new System.Drawing.Point(78, 484);
 			this.btnRun.Name = "btnRun";
 			this.btnRun.Size = new System.Drawing.Size(75, 23);
 			this.btnRun.TabIndex = 2;
@@ -246,6 +245,7 @@ namespace ase.net
 			// panel2
 			// 
 			this.panel2.AutoScroll = true;
+			this.panel2.Controls.Add(this.clbOptions);
 			this.panel2.Controls.Add(this.btnRun);
 			this.panel2.Controls.Add(this.groupBox2);
 			this.panel2.Controls.Add(this.groupBox1);
@@ -254,6 +254,14 @@ namespace ase.net
 			this.panel2.Name = "panel2";
 			this.panel2.Size = new System.Drawing.Size(157, 510);
 			this.panel2.TabIndex = 5;
+			// 
+			// clbOptions
+			// 
+			this.clbOptions.FormattingEnabled = true;
+			this.clbOptions.Location = new System.Drawing.Point(0, 279);
+			this.clbOptions.Name = "clbOptions";
+			this.clbOptions.Size = new System.Drawing.Size(157, 199);
+			this.clbOptions.TabIndex = 3;
 			// 
 			// groupBox2
 			// 
@@ -268,40 +276,16 @@ namespace ase.net
 			// groupBox1
 			// 
 			this.groupBox1.AutoSize = true;
-			this.groupBox1.Controls.Add(this.chkStripSpaces);
-			this.groupBox1.Controls.Add(this.chkPassArgumentsToEntryPoint);
 			this.groupBox1.Controls.Add(this.btnClearAllArguments);
 			this.groupBox1.Controls.Add(this.btnAddArgument);
 			this.groupBox1.Controls.Add(this.tbxArgument);
 			this.groupBox1.Controls.Add(this.lbxArguments);
 			this.groupBox1.Location = new System.Drawing.Point(0, 51);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(154, 270);
+			this.groupBox1.Size = new System.Drawing.Size(154, 222);
 			this.groupBox1.TabIndex = 0;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Arguments";
-			// 
-			// chkStripSpaces
-			// 
-			this.chkStripSpaces.AutoSize = true;
-			this.chkStripSpaces.Checked = true;
-			this.chkStripSpaces.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.chkStripSpaces.Location = new System.Drawing.Point(19, 234);
-			this.chkStripSpaces.Name = "chkStripSpaces";
-			this.chkStripSpaces.Size = new System.Drawing.Size(86, 17);
-			this.chkStripSpaces.TabIndex = 5;
-			this.chkStripSpaces.Text = "Strip Spaces";
-			this.chkStripSpaces.UseVisualStyleBackColor = true;
-			// 
-			// chkPassArgumentsToEntryPoint
-			// 
-			this.chkPassArgumentsToEntryPoint.AutoSize = true;
-			this.chkPassArgumentsToEntryPoint.Location = new System.Drawing.Point(19, 211);
-			this.chkPassArgumentsToEntryPoint.Name = "chkPassArgumentsToEntryPoint";
-			this.chkPassArgumentsToEntryPoint.Size = new System.Drawing.Size(119, 17);
-			this.chkPassArgumentsToEntryPoint.TabIndex = 4;
-			this.chkPassArgumentsToEntryPoint.Text = "Pass To Entry Point";
-			this.chkPassArgumentsToEntryPoint.UseVisualStyleBackColor = true;
 			// 
 			// btnClearAllArguments
 			// 
@@ -350,6 +334,7 @@ namespace ase.net
 			this.Controls.Add(this.statusStrip1);
 			this.Name = "AwkForm";
 			this.Text = "ASE.NET.AWK";
+			this.Load += new System.EventHandler(this.AwkForm_Load);
 			this.tableLayoutPanel1.ResumeLayout(false);
 			this.panel1.ResumeLayout(false);
 			this.panel1.PerformLayout();
@@ -385,7 +370,6 @@ namespace ase.net
 		private System.Windows.Forms.Button btnAddArgument;
 		private System.Windows.Forms.TextBox tbxArgument;
 		private System.Windows.Forms.ListBox lbxArguments;
-		private System.Windows.Forms.CheckBox chkPassArgumentsToEntryPoint;
 		private System.Windows.Forms.GroupBox groupBox2;
 		private System.Windows.Forms.Panel panel1;
 		private System.Windows.Forms.Label label1;
@@ -395,6 +379,6 @@ namespace ase.net
 		private System.Windows.Forms.Label label3;
 		private System.Windows.Forms.Panel panel5;
 		private System.Windows.Forms.Label label4;
-		private System.Windows.Forms.CheckBox chkStripSpaces;
+		private System.Windows.Forms.CheckedListBox clbOptions;
 	}
 }

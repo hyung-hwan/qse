@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.37 2007/10/10 03:37:49 bacon Exp $
+ * $Id: Awk.hpp,v 1.39 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -39,13 +39,14 @@ public:
 		EXTIO = ASE::Awk::OPT_EXTIO,
 		COPROC = ASE::Awk::OPT_COPROC,
 		BLOCKLESS = ASE::Awk::OPT_BLOCKLESS,
-		STRBASEONE = ASE::Awk::OPT_BASEONE,
+		BASEONE = ASE::Awk::OPT_BASEONE,
 		STRIPSPACES = ASE::Awk::OPT_STRIPSPACES,
 		NEXTOFILE = ASE::Awk::OPT_NEXTOFILE,
 		CRLF = ASE::Awk::OPT_CRLF,
 		ARGSTOMAIN = ASE::Awk::OPT_ARGSTOMAIN,
 		RESET = ASE::Awk::OPT_RESET,
-		MAPTOVAR = ASE::Awk::OPT_MAPTOVAR
+		MAPTOVAR = ASE::Awk::OPT_MAPTOVAR,
+		PABLOCK = ASE::Awk::OPT_PABLOCK
 	};
 
 	enum class DEPTH: int
@@ -109,6 +110,7 @@ public:
 		IN = ASE::Awk::ERR_IN,
 		NOTVAR = ASE::Awk::ERR_NOTVAR,
 		EXPRES = ASE::Awk::ERR_EXPRES,
+		FUNC = ASE::Awk::ERR_FUNC,
 		WHILE = ASE::Awk::ERR_WHILE,
 		ASSIGN = ASE::Awk::ERR_ASSIGN,
 		IDENT = ASE::Awk::ERR_IDENT,
@@ -444,9 +446,14 @@ public:
 			Awk^ get () { return this->owner; }
 		}
 
-		bool Stop ()
+		void Stop ()
 		{
-			return run.stop () == 0;
+			run.stop ();
+		}
+
+		property bool isStop
+		{
+			bool get () { return run.isStop(); }
 		}
 
 		void SetError (ASE::Net::Awk::ERROR num)
@@ -677,7 +684,7 @@ public:
 	virtual bool Parse ();
 	virtual bool Run ();
 	virtual bool Run (System::String^ entryPoint, cli::array<System::String^>^ args);
-	virtual void Stop ();
+	virtual bool Stop ();
 
 	delegate void RunStartHandler (Context^ ctx);
 	delegate void RunEndHandler  (Context^ ctx);
@@ -795,7 +802,6 @@ public protected:
 	void RetrieveError ();
 
 	bool runErrorReported; // only used if the run-callback is activated.
-	bool stopRequested;
 };
 
 //////////////////////////////

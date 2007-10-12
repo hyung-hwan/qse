@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.16 2007/09/27 11:04:10 bacon Exp $
+ * $Id: run.c,v 1.17 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -689,10 +689,14 @@ int ase_awk_run (ase_awk_t* awk,
 	return n;
 }
 
-int ase_awk_stop (ase_awk_run_t* run)
+void ase_awk_stop (ase_awk_run_t* run)
 {
 	run->exit_level = EXIT_ABORT;
-	return 0;
+}
+
+ase_bool_t ase_awk_isstop (ase_awk_run_t* run)
+{
+	return (run->exit_level == EXIT_ABORT || run->awk->stopall);
 }
 
 static void free_namedval (void* run, void* val)
@@ -1705,7 +1709,7 @@ static int run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	ase_dprintf (ASE_T("executing block statements\n"));
 #endif
 
-	while (p != ASE_NULL && run->exit_level == EXIT_NONE) 
+	while (p != ASE_NULL && run->exit_level == EXIT_NONE)
 	{
 		if (run_statement (run, p) == -1) 
 		{
@@ -1731,6 +1735,7 @@ static int run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 }
 
 #define ON_STATEMENT(run,nde) \
+	if ((run)->awk->stopall) (run)->exit_level = EXIT_ABORT; \
 	if ((run)->cbs != ASE_NULL &&  \
 	    (run)->cbs->on_statement != ASE_NULL) \
 	{ \

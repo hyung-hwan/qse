@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.71 2007/10/10 03:37:49 bacon Exp $
+ * $Id: Awk.hpp,v 1.73 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -441,6 +441,7 @@ public:
 		ERR_IN = ASE_AWK_EIN,
 		ERR_NOTVAR = ASE_AWK_ENOTVAR,
 		ERR_EXPRES = ASE_AWK_EEXPRES,
+		ERR_FUNC = ASE_AWK_EFUNC,
 		ERR_WHILE = ASE_AWK_EWHILE,
 		ERR_ASSIGN = ASE_AWK_EASSIGN,
 		ERR_IDENT = ASE_AWK_EIDENT,
@@ -552,7 +553,9 @@ public:
 		/** Enables the keyword 'reset' */
 		OPT_RESET = ASE_AWK_RESET,
 		/** Allows the assignment of a map value to a variable */
-		OPT_MAPTOVAR = ASE_AWK_MAPTOVAR
+		OPT_MAPTOVAR = ASE_AWK_MAPTOVAR,
+		/** Allows BEGIN, END, pattern-action blocks */
+		OPT_PABLOCK = ASE_AWK_PABLOCK
 	};
 	// end of enum Option
 
@@ -572,7 +575,8 @@ public:
 		operator Awk* () const;
 		operator run_t* () const;
 
-		int stop () const;
+		void stop () const;
+		bool isStop () const;
 
 		ErrorCode getErrorCode () const;
 		size_t getErrorLine () const;
@@ -816,6 +820,11 @@ public:
 	 */
 	virtual int run (const char_t* main = ASE_NULL, 
 	         const char_t** args = ASE_NULL, size_t nargs = 0);
+
+	/**
+	 * Requests aborting execution of the parse tree 
+	 */
+	virtual void stop ();
 
 	/**
 	 * Adds a intrinsic global variable. 

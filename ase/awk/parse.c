@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.19 2007/10/10 03:37:49 bacon Exp $
+ * $Id: parse.c,v 1.20 2007/10/10 07:03:56 bacon Exp $
  *
  * {License}
  */
@@ -590,6 +590,12 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_BEGIN)) 
 	{
+		if ((awk->option & ASE_AWK_PABLOCK) == 0)
+		{
+			SETERRTOK (awk, ASE_AWK_EFUNC);
+			return ASE_NULL;
+		}
+
 		if (awk->tree.begin != ASE_NULL)
 		{
 			SETERRLIN (awk, ASE_AWK_EDUPBEG, awk->token.prev.line);
@@ -619,6 +625,12 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 	}
 	else if (MATCH(awk,TOKEN_END)) 
 	{
+		if ((awk->option & ASE_AWK_PABLOCK) == 0)
+		{
+			SETERRTOK (awk, ASE_AWK_EFUNC);
+			return ASE_NULL;
+		}
+
 		if (awk->tree.end != ASE_NULL)
 		{
 			SETERRLIN (awk, ASE_AWK_EDUPEND, awk->token.prev.line);
@@ -651,7 +663,6 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 		/* patternless block */
 		if ((awk->option & ASE_AWK_PABLOCK) == 0)
 		{
-			/* TODO: SET ERROR */
 			SETERRTOK (awk, ASE_AWK_EFUNC);
 			return ASE_NULL;
 		}
@@ -675,7 +686,6 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 
 		if ((awk->option & ASE_AWK_PABLOCK) == 0)
 		{
-			/* TODO: SET ERROR */
 			SETERRTOK (awk, ASE_AWK_EFUNC);
 			return ASE_NULL;
 		}

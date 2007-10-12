@@ -4,19 +4,10 @@
     - added ase_awk_addglobal, ase_awk_delglobal (awk/parse.c)
     - added Awk::addGlobal, Awk::deleteGlobal (awk/Awk.hpp, awk/Awk.cpp)
     - added Awk::Run::setGlobal, Awk::Run::getGlobal (awk/Awk.hpp, awk/Awk.cpp)
+    - added Awk::AddGlobal, Awk::DeleteGlobal (net/Awk.hpp, net/Awk.cpp)
+    - added Awk::Run::SetGlobal, Awk::Run::GetGlobal (net/Awk.hpp, net/Awk.cpp)
     - enhanced ase_awk_getglobalname
-* added an option 
-    - ASE_AWK_RESET (awk/awk.h)
-    - Awk::OPT_RESET (awk/Awk.hpp)
-    - Awk::OPTION::RESET (net/Awk.hpp)
-    - Awk.OPTION_RESET (awk/Awk.java)
-    - Awk::EnableReset (net/asecom.idl, net/Awk.h)
-* added an option 
-    - ASE_AWK_MAPTOVAR (awk/awk.h)
-    - Awk::OPT_MAPTOVAR (awk/Awk.hpp)
-    - Awk::OPTION::MAPTOVAR (net/Awk.hpp)
-    - Awk.OPTION_MAPTOVAR (awk/Awk.java)
-    - Awk::AllowMapToVar (net/asecom.idl, net/Awk.h)
+* added three new options - ASE_AWK_RESET, ASE_AWK_MAPTOVAR, ASE_AWK_PABLOCK
 
 * enhanced Awk::dispatchFunction to set a more accurate error code (awk/Awk.cpp)
 

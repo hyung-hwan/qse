@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.42 2007/10/10 03:37:49 bacon Exp $
+ * $Id: Awk.cpp,v 1.43 2007/10/10 07:03:56 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -650,7 +650,8 @@ int awk_main (int argc, ase_char_t* argv[])
 		{ ASE_T("crfl"),        TestAwk::OPT_CRLF },
 		{ ASE_T("argstomain"),  TestAwk::OPT_ARGSTOMAIN },
 		{ ASE_T("reset"),       TestAwk::OPT_RESET },
-		{ ASE_T("maptovar"),    TestAwk::OPT_MAPTOVAR }
+		{ ASE_T("maptovar"),    TestAwk::OPT_MAPTOVAR },
+		{ ASE_T("pablock"),     TestAwk::OPT_PABLOCK }
 	};
 
 	if (awk.open() == -1)

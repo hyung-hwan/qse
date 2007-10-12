@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.15 2007/09/27 11:04:10 bacon Exp $
+ * $Id: Awk.java,v 1.16 2007/10/10 07:03:56 bacon Exp $
  *
  * {License}
  */
@@ -40,6 +40,7 @@ public abstract class Awk
 	public static final int OPTION_ARGSTOMAIN  = (1 << 14);
 	public static final int OPTION_RESET       = (1 << 15);
 	public static final int OPTION_MAPTOVAR    = (1 << 16);
+	public static final int OPTION_PABLOCK     = (1 << 17);
 
 	protected final static Reader stdin = 
 		new BufferedReader (new InputStreamReader (System.in));

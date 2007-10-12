@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.9 2007/09/30 15:12:20 bacon Exp $
+ * $Id: Awk.cpp,v 1.11 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -55,17 +55,13 @@ CAwk::CAwk ():
 	/* TODO: what is the best default option? */
 	option = 
 		ASE_AWK_IMPLICIT | 
-		ASE_AWK_EXPLICIT | 
 		ASE_AWK_UNIQUEFN | 
-		ASE_AWK_IDIV |
 		ASE_AWK_SHADING | 
-		ASE_AWK_SHIFT | 
 		ASE_AWK_EXTIO | 
 		ASE_AWK_BLOCKLESS | 
 		ASE_AWK_BASEONE | 
-		ASE_AWK_STRIPSPACES | 
-		ASE_AWK_NEXTOFILE |
-		ASE_AWK_CRLF;
+		ASE_AWK_CRLF |
+		ASE_AWK_PABLOCK;
 	memset (&max_depth, 0, sizeof(max_depth));
 
 	errnum    = 0;
@@ -232,7 +228,7 @@ static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
-static ase_ssize_t __read_source (
+static ase_ssize_t read_source (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count)
 {
 	CAwk* awk = (CAwk*)arg;
@@ -300,7 +296,7 @@ static ase_ssize_t __read_source (
 	return -1;
 }
 
-static ase_ssize_t __write_source (
+static ase_ssize_t write_source (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count)
 {
 	CAwk* awk = (CAwk*)arg;
@@ -344,7 +340,7 @@ static ase_ssize_t __write_source (
 	return -1;
 }
 
-static int __handle_bfn (
+static int handle_bfn (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	CAwk* awk = (CAwk*)ase_awk_getruncustomdata (run);
@@ -558,7 +554,7 @@ HRESULT CAwk::Parse (VARIANT_BOOL* ret)
 		if (ase_awk_addfunc (
 			handle, bfn->name.ptr, bfn->name.len, 0, 
 			bfn->min_args, bfn->max_args, NULL, 
-			__handle_bfn) == NULL)
+			handle_bfn) == NULL)
 		{
 			const ase_char_t* msg;
 
@@ -593,8 +589,8 @@ HRESULT CAwk::Parse (VARIANT_BOOL* ret)
 
 	ase_awk_srcios_t srcios;
 
-	srcios.in = __read_source;
-	srcios.out = __write_source;
+	srcios.in = read_source;
+	srcios.out = write_source;
 	srcios.custom_data = this;
 	
 	if (ase_awk_parse (handle, &srcios) == -1)
@@ -615,7 +611,7 @@ HRESULT CAwk::Parse (VARIANT_BOOL* ret)
 	return S_OK;
 }
 
-static ase_ssize_t __process_extio (
+static ase_ssize_t process_extio (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
@@ -796,8 +792,8 @@ HRESULT CAwk::Run (VARIANT argarray, VARIANT_BOOL* ret)
 	ase_awk_runios_t runios;
 	runios.pipe = NULL;
 	runios.coproc = NULL;
-	runios.file = __process_extio;
-	runios.console = __process_extio;
+	runios.file = process_extio;
+	runios.console = process_extio;
 	runios.custom_data = this;
 
 	if (entry_point != NULL && 
@@ -904,6 +900,21 @@ HRESULT CAwk::Run (VARIANT argarray, VARIANT_BOOL* ret)
 	}
 
 	*ret = VARIANT_TRUE;
+	return S_OK;
+}
+
+
+STDMETHODIMP CAwk::AddGlobal (BSTR name, VARIANT_BOOL* ret)
+{
+	// TODO:
+	*ret = VARIANT_FALSE;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::DeleteGlobal (BSTR name, VARIANT_BOOL* ret)
+{
+	// TODO:
+	*ret = VARIANT_FALSE;
 	return S_OK;
 }
 
@@ -1348,6 +1359,21 @@ STDMETHODIMP CAwk::put_AllowMapToVar(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_MAPTOVAR;
 	else option = option & ~ASE_AWK_MAPTOVAR;
+	if (handle != NULL) ase_awk_setoption (handle, option);
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::get_SupportPatternActionBlock(VARIANT_BOOL *pVal)
+{
+	if (handle != NULL) option = ase_awk_getoption (handle);
+	*pVal = (option & ASE_AWK_PABLOCK) == 1;
+	return S_OK;
+}
+
+STDMETHODIMP CAwk::put_SupportPatternActionBlock(VARIANT_BOOL newVal)
+{
+	if (newVal) option = option | ASE_AWK_PABLOCK;
+	else option = option & ~ASE_AWK_PABLOCK;
 	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.7 2007/09/23 16:48:55 bacon Exp $
+ * $Id: awk_i.h,v 1.8 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -196,8 +196,9 @@ struct ase_awk_t
 	int errnum;
 	ase_size_t errlin;
 	ase_char_t errmsg[256];
-
 	ase_char_t* errstr[ASE_AWK_NUMERRNUM];
+
+	ase_bool_t stopall;
 };
 
 struct ase_awk_chain_t

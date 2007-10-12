@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.70 2007/10/10 03:37:49 bacon Exp $
+ * $Id: Awk.cpp,v 1.72 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -911,10 +911,16 @@ Awk::Run::operator Awk::run_t* () const
 	return this->run;
 }
 
-int Awk::Run::stop () const
+void Awk::Run::stop () const
 {
 	ASE_ASSERT (this->run != ASE_NULL);
-	return ase_awk_stop (this->run);
+	ase_awk_stop (this->run);
+}
+
+bool Awk::Run::isStop () const
+{
+	ASE_ASSERT (this->run != ASE_NULL);
+	return ase_awk_isstop (this->run);
 }
 
 Awk::ErrorCode Awk::Run::getErrorCode () const
@@ -1208,7 +1214,8 @@ int Awk::open ()
 		OPT_SHADING | 
 		OPT_EXTIO | 
 		OPT_BLOCKLESS | 
-		OPT_BASEONE;
+		OPT_BASEONE |
+		OPT_PABLOCK;
 	ase_awk_setoption (awk, opt);
 
 	runCallback = false;
@@ -1382,6 +1389,12 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	}
 
 	return n;
+}
+
+void Awk::stop ()
+{
+	ASE_ASSERT (awk != ASE_NULL);
+	ase_awk_stopall (awk);
 }
 
 int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)

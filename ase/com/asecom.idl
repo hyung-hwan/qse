@@ -1,5 +1,5 @@
 /*
- * $Id: asecom.idl,v 1.8 2007/09/30 15:12:20 bacon Exp $
+ * $Id: asecom.idl,v 1.10 2007/10/10 13:22:12 bacon Exp $
  */
 
 import "oaidl.idl";
@@ -21,153 +21,165 @@ interface IAwk : IDispatch
 	[id(2), helpstring("method Run")] 
 	HRESULT Run([in] VARIANT argarray, [out,retval] VARIANT_BOOL* ret);
 
-	[id(3), helpstring("method AddFunction")] 
+	[id(3), helpstring("method AddGlobal")] 
+	HRESULT AddGlobal([in] BSTR name, [out,retval] VARIANT_BOOL* ret);
+
+	[id(4), helpstring("method DeleteGlobal")] 
+	HRESULT DeleteGlobal([in] BSTR name, [out,retval] VARIANT_BOOL* ret);
+
+	[id(5), helpstring("method AddFunction")] 
 	HRESULT AddFunction([in] BSTR name, [in] int minArgs, [in] int maxArgs, [out,retval] VARIANT_BOOL* ret);
 
-	[id(4), helpstring("method DeleteFunction")] 
+	[id(6), helpstring("method DeleteFunction")] 
 	HRESULT DeleteFunction([in] BSTR name, [out,retval] VARIANT_BOOL* ret);
 
-	[id(5), helpstring("method SetWord")]
+
+	[id(7), helpstring("method SetWord")]
 	HRESULT SetWord([in] BSTR ow, [in] BSTR nw, [out,retval] VARIANT_BOOL* ret);
 
-	[id(6), helpstring("method UnsetWord")]
+	[id(8), helpstring("method UnsetWord")]
 	HRESULT UnsetWord([in] BSTR ow, [out,retval] VARIANT_BOOL* ret);
 
-	[id(7), helpstring("method UnsetAllWords")]
+	[id(9), helpstring("method UnsetAllWords")]
 	HRESULT UnsetAllWords([out,retval] VARIANT_BOOL* ret);
 
-	[propget, id(8), helpstring("property ErrorCode")] 
+	[propget, id(10), helpstring("property ErrorCode")] 
 	HRESULT ErrorCode([out,retval] int *pVal);
 
-	[propget, id(9), helpstring("property ErrorLine")] 
+	[propget, id(11), helpstring("property ErrorLine")] 
 	HRESULT ErrorLine([out,retval] int *pVal);
 
-	[propget, id(10), helpstring("property ErrorMessage")] 
+	[propget, id(12), helpstring("property ErrorMessage")] 
 	HRESULT ErrorMessage([out,retval] BSTR *pVal);
 
-	[propget, id(11), helpstring("property ImplicitVariable")] 
+	[propget, id(13), helpstring("property ImplicitVariable")] 
 	HRESULT ImplicitVariable([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(11), helpstring("property ImplicitVariable")] 
+	[propput, id(13), helpstring("property ImplicitVariable")] 
 	HRESULT ImplicitVariable([in] VARIANT_BOOL newVal);
 
-	[propget, id(12), helpstring("property ExplicitVariable")]
+	[propget, id(14), helpstring("property ExplicitVariable")]
 	HRESULT ExplicitVariable([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(12), helpstring("property ExplicitVariable")] 
+	[propput, id(14), helpstring("property ExplicitVariable")] 
 	HRESULT ExplicitVariable([in] VARIANT_BOOL newVal);
 
-	[propget, id(13), helpstring("property UniqueFunction")] 
+	[propget, id(15), helpstring("property UniqueFunction")] 
 	HRESULT UniqueFunction([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(13), helpstring("property UniqueFunction")]
+	[propput, id(15), helpstring("property UniqueFunction")]
 	HRESULT UniqueFunction([in] VARIANT_BOOL newVal);
 
-	[propget, id(14), helpstring("property VariableShading")] 
+	[propget, id(16), helpstring("property VariableShading")] 
 	HRESULT VariableShading([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(14), helpstring("property VariableShading")]
+	[propput, id(16), helpstring("property VariableShading")]
 	HRESULT VariableShading([in] VARIANT_BOOL newVal);
 
-	[propget, id(15), helpstring("property ShiftOperators")]
+	[propget, id(17), helpstring("property ShiftOperators")]
 	HRESULT ShiftOperators([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(15), helpstring("property ShiftOperators")] 
+	[propput, id(17), helpstring("property ShiftOperators")] 
 	HRESULT ShiftOperators([in] VARIANT_BOOL newVal);
 
-	[propget, id(16), helpstring("property IdivOperator")]
+	[propget, id(18), helpstring("property IdivOperator")]
 	HRESULT IdivOperator([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(16), helpstring("property IdivOperator")]
+	[propput, id(18), helpstring("property IdivOperator")]
 	HRESULT IdivOperator([in] VARIANT_BOOL newVal);
 
-	[propget, id(17), helpstring("property ConcatString")]
+	[propget, id(19), helpstring("property ConcatString")]
 	HRESULT ConcatString([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(17), helpstring("property ConcatString")]
+	[propput, id(19), helpstring("property ConcatString")]
 	HRESULT ConcatString([in] VARIANT_BOOL newVal);
 
-	[propget, id(18), helpstring("property SupportExtio")]
+	[propget, id(20), helpstring("property SupportExtio")]
 	HRESULT SupportExtio([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(18), helpstring("property SupportExtio")]
+	[propput, id(20), helpstring("property SupportExtio")]
 	HRESULT SupportExtio([in] VARIANT_BOOL newVal);
 
-	[propget, id(19), helpstring("property SupportBlockless")]
+	[propget, id(21), helpstring("property SupportBlockless")]
 	HRESULT SupportBlockless([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(19), helpstring("property SupportBlockless")]
+	[propput, id(21), helpstring("property SupportBlockless")]
 	HRESULT SupportBlockless([in] VARIANT_BOOL newVal);
 
-	[propget, id(20), helpstring("property BaseOne")]
+	[propget, id(22), helpstring("property BaseOne")]
 	HRESULT BaseOne([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(20), helpstring("property BaseOne")]
+	[propput, id(22), helpstring("property BaseOne")]
 	HRESULT BaseOne([in] VARIANT_BOOL newVal);
 
-	[propget, id(21), helpstring("property StripSpaces")]
+	[propget, id(23), helpstring("property StripSpaces")]
 	HRESULT StripSpaces([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(21), helpstring("property StripSpaces")]
+	[propput, id(23), helpstring("property StripSpaces")]
 	HRESULT StripSpaces([in] VARIANT_BOOL newVal);
 
-	[propget, id(22), helpstring("property EnableNextofile")]
+	[propget, id(24), helpstring("property EnableNextofile")]
 	HRESULT EnableNextofile([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(22), helpstring("property EnableNextofile")]
+	[propput, id(24), helpstring("property EnableNextofile")]
 	HRESULT EnableNextofile([in] VARIANT_BOOL newVal);
 
-	[propget, id(23), helpstring("property UseCrlf")]
+	[propget, id(25), helpstring("property UseCrlf")]
 	HRESULT UseCrlf([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(23), helpstring("property UseCrlf")]
+	[propput, id(25), helpstring("property UseCrlf")]
 	HRESULT UseCrlf([in] VARIANT_BOOL newVal);
 
-	[propget, id(24), helpstring("property ArgumentsToEntryPoint")]
+	[propget, id(26), helpstring("property ArgumentsToEntryPoint")]
 	HRESULT ArgumentsToEntryPoint([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(24), helpstring("property ArgumentsToEntryPoint")]
+	[propput, id(26), helpstring("property ArgumentsToEntryPoint")]
 	HRESULT ArgumentsToEntryPoint([in] VARIANT_BOOL newVal);
 
-	[propget, id(25), helpstring("property EnableReset")]
+	[propget, id(27), helpstring("property EnableReset")]
 	HRESULT EnableReset([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(25), helpstring("property EnableReset")]
+	[propput, id(27), helpstring("property EnableReset")]
 	HRESULT EnableReset([in] VARIANT_BOOL newVal);
 
-	[propget, id(26), helpstring("property AllowMapToVar")]
+	[propget, id(28), helpstring("property AllowMapToVar")]
 	HRESULT AllowMapToVar([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(26), helpstring("property AllowMapToVar")]
+	[propput, id(28), helpstring("property AllowMapToVar")]
 	HRESULT AllowMapToVar([in] VARIANT_BOOL newVal);
 
-	[propget, id(27), helpstring("property MaxDepthForBlockParse")]
+	[propget, id(29), helpstring("property SupportPatternActionBlock")]
+	HRESULT SupportPatternActionBlock([out,retval] VARIANT_BOOL *pVal);
+	[propput, id(29), helpstring("property SupportPatternActioinBlock")]
+	HRESULT SupportPatternActionBlock([in] VARIANT_BOOL newVal);
+
+	[propget, id(30), helpstring("property MaxDepthForBlockParse")]
 	HRESULT MaxDepthForBlockParse([out,retval] int *pVal);
-	[propput, id(27), helpstring("property MaxDepthForBlockParse")]
+	[propput, id(30), helpstring("property MaxDepthForBlockParse")]
 	HRESULT MaxDepthForBlockParse([in] int newVal);
 
-	[propget, id(28), helpstring("property MaxDepthForBlockRun")]
+	[propget, id(31), helpstring("property MaxDepthForBlockRun")]
 	HRESULT MaxDepthForBlockRun([out,retval] int *pVal);
-	[propput, id(28), helpstring("property MaxDepthForBlockRun")]
+	[propput, id(31), helpstring("property MaxDepthForBlockRun")]
 	HRESULT MaxDepthForBlockRun([in] int newVal);
 
-	[propget, id(29), helpstring("property MaxDepthForExprParse")]
+	[propget, id(32), helpstring("property MaxDepthForExprParse")]
 	HRESULT MaxDepthForExprParse([out,retval] int *pVal);
-	[propput, id(29), helpstring("property MaxDepthForExprParse")]
+	[propput, id(32), helpstring("property MaxDepthForExprParse")]
 	HRESULT MaxDepthForExprParse([in] int newVal);
 
-	[propget, id(30), helpstring("property MaxDepthForExprRun")]
+	[propget, id(33), helpstring("property MaxDepthForExprRun")]
 	HRESULT MaxDepthForExprRun([out,retval] int *pVal);
-	[propput, id(30), helpstring("property MaxDepthForExprRun")]
+	[propput, id(33), helpstring("property MaxDepthForExprRun")]
 	HRESULT MaxDepthForExprRun([in] int newVal);
 
-	[propget, id(31), helpstring("property MaxDepthForRexBuild")]
+	[propget, id(34), helpstring("property MaxDepthForRexBuild")]
 	HRESULT MaxDepthForRexBuild([out,retval] int *pVal);
-	[propput, id(31), helpstring("property MaxDepthForRexBuild")]
+	[propput, id(34), helpstring("property MaxDepthForRexBuild")]
 	HRESULT MaxDepthForRexBuild([in] int newVal);
 
-	[propget, id(32), helpstring("property MaxDepthForRexMatch")]
+	[propget, id(35), helpstring("property MaxDepthForRexMatch")]
 	HRESULT MaxDepthForRexMatch([out,retval] int *pVal);
-	[propput, id(32), helpstring("property MaxDepthForRexMatch")]
+	[propput, id(35), helpstring("property MaxDepthForRexMatch")]
 	HRESULT MaxDepthForRexMatch([in] int newVal);
 
-	[propget, id(33), helpstring("property EntryPoint")]
+	[propget, id(36), helpstring("property EntryPoint")]
 	HRESULT EntryPoint([out,retval] BSTR *pVal);
-	[propput, id(33), helpstring("property EntryPoint")]
+	[propput, id(36), helpstring("property EntryPoint")]
 	HRESULT EntryPoint([in] BSTR newVal);
 
-	[propget, id(34), helpstring("property Debug")]
+	[propget, id(37), helpstring("property Debug")]
 	HRESULT Debug([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(34), helpstring("property Debug")]
+	[propput, id(37), helpstring("property Debug")]
 	HRESULT Debug([in] VARIANT_BOOL newVal);
 
-	[propget, id(35), helpstring("property UseLongLong")]
+	[propget, id(38), helpstring("property UseLongLong")]
 	HRESULT UseLongLong([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(35), helpstring("property UseLongLong")]
+	[propput, id(38), helpstring("property UseLongLong")]
 	HRESULT UseLongLong([in] VARIANT_BOOL newVal);
 };
 

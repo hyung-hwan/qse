@@ -10,9 +10,8 @@ ASE is a programming library implementing various programming languages and text
 
 Download the library source code from the following links.
 
-ase-0.3.0.tgz
 [[[
-* {Link 1,ase-0.3.0.tgz}
+* {KLDP.NET,http://kldp.net/frs/?group_id=1050}
 ]]]
 
 == Documentation ==
