@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.17 2007/10/10 03:37:49 bacon Exp $
+ * $Id: awk.h,v 1.19 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -264,6 +264,7 @@ enum ase_awk_errnum_t
 	ASE_AWK_ENOTVAR,        /* not a variable name after 'in' */
 	ASE_AWK_EEXPRES,        /* expression expected */
 
+	ASE_AWK_EFUNC,          /* keyword 'func' is expected */
 	ASE_AWK_EWHILE,         /* keyword 'while' is expected */
 	ASE_AWK_EASSIGN,        /* assignment statement expected */
 	ASE_AWK_EIDENT,         /* identifier expected */
@@ -476,7 +477,11 @@ int ase_awk_run (
 	ase_awk_runios_t* runios, ase_awk_runcbs_t* runcbs, 
 	ase_awk_runarg_t* runarg, void* custom_data);
 
-int ase_awk_stop (ase_awk_run_t* run);
+void ase_awk_stop (ase_awk_run_t* run);
+void ase_awk_stopall (ase_awk_t* awk);
+
+ase_bool_t ase_awk_isstop (ase_awk_run_t* run);
+
 
 /* functions to access internal stack structure */
 ase_size_t ase_awk_getnargs (ase_awk_run_t* run);

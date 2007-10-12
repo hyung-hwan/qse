@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.32 2007/10/10 03:37:49 bacon Exp $
+ * $Id: Awk.cpp,v 1.34 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -34,7 +34,7 @@ public:
 	int open (ASE::Net::Awk^ wrapper)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::open ();
+		int n = ASE::Awk::open ();
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -49,7 +49,7 @@ public:
 	int getOption (ASE::Net::Awk^ wrapper) const
 	{
 		this->wrapper = wrapper;
-		int n = Awk::getOption ();
+		int n = ASE::Awk::getOption ();
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -57,14 +57,14 @@ public:
 	void setOption (ASE::Net::Awk^ wrapper, int opt)
 	{
 		this->wrapper = wrapper;
-		Awk::setOption (opt);
+		ASE::Awk::setOption (opt);
 		this->wrapper = nullptr;
 	}
 
 	size_t getErrorLine (ASE::Net::Awk^ wrapper) const
 	{
 		this->wrapper = wrapper;
-		size_t x = Awk::getErrorLine ();
+		size_t x = ASE::Awk::getErrorLine ();
 		this->wrapper = nullptr;
 		return x;
 	}
@@ -72,7 +72,7 @@ public:
 	ErrorCode getErrorCode (ASE::Net::Awk^ wrapper) const
 	{
 		this->wrapper = wrapper;
-		ASE::Awk::ErrorCode x = Awk::getErrorCode ();
+		ASE::Awk::ErrorCode x = ASE::Awk::getErrorCode ();
 		this->wrapper = nullptr;
 		return x;
 	}
@@ -80,7 +80,7 @@ public:
 	const char_t* getErrorMessage (ASE::Net::Awk^ wrapper) const
 	{
 		this->wrapper = wrapper;
-		const char_t* x = Awk::getErrorMessage();
+		const char_t* x = ASE::Awk::getErrorMessage();
 		this->wrapper = nullptr;
 		return x;
 	}
@@ -88,7 +88,7 @@ public:
 	const char_t* getErrorString (ASE::Net::Awk^ wrapper, ErrorCode num) const
 	{
 		this->wrapper = wrapper;
-		const char_t* x = Awk::getErrorString (num);
+		const char_t* x = ASE::Awk::getErrorString (num);
 		this->wrapper = nullptr;
 		return x;
 	}
@@ -96,35 +96,35 @@ public:
 	void setError (ASE::Net::Awk^ wrapper, ErrorCode num)
 	{
 		this->wrapper = wrapper;
-		Awk::setError (num);
+		ASE::Awk::setError (num);
 		this->wrapper = nullptr;
 	}
 
 	void setError (ASE::Net::Awk^ wrapper, ErrorCode num, size_t line)
 	{
 		this->wrapper = wrapper;
-		Awk::setError (num, line);
+		ASE::Awk::setError (num, line);
 		this->wrapper = nullptr;
 	}
 
 	void setError (ASE::Net::Awk^ wrapper, ErrorCode num, size_t line, const char_t* arg, size_t len)
 	{
 		this->wrapper = wrapper;
-		Awk::setError (num, line, arg, len);
+		ASE::Awk::setError (num, line, arg, len);
 		this->wrapper = nullptr;
 	}
 
 	void setErrorWithMessage (ASE::Net::Awk^ wrapper, ErrorCode num, size_t line, const char_t* msg)
 	{
 		this->wrapper = wrapper;
-		Awk::setErrorWithMessage (num, line, msg);
+		ASE::Awk::setErrorWithMessage (num, line, msg);
 		this->wrapper = nullptr;
 	}
 
 	int setErrorString (ASE::Net::Awk^ wrapper, ErrorCode num, const char_t* msg)
 	{
 		this->wrapper = wrapper;
-		int x = Awk::setErrorString (num, msg);
+		int x = ASE::Awk::setErrorString (num, msg);
 		this->wrapper = nullptr;
 		return x;
 	}
@@ -132,7 +132,7 @@ public:
 	int parse (ASE::Net::Awk^ wrapper)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::parse ();
+		int n = ASE::Awk::parse ();
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -140,16 +140,25 @@ public:
 	int run (ASE::Net::Awk^ wrapper, const char_t* main = ASE_NULL, 
 	         const char_t** args = ASE_NULL, size_t nargs = 0)
 	{
+		// run can't be called more than once because this->wrapper 
+		// can be set to nullptr while another run is under execution.
+		// for the same reason, you can't call other methods except stop
+		// untile run ends.
 		this->wrapper = wrapper;
-		int n = Awk::run (main, args, nargs);
+		int n = ASE::Awk::run (main, args, nargs);
 		this->wrapper = nullptr;
 		return n;
+	}
+
+	void stop (ASE::Net::Awk^ wrapper)
+	{
+		if ((ASE::Net::Awk^)this->wrapper != nullptr) ASE::Awk::stop ();
 	}
 
 	int setWord (ASE::Net::Awk^ wrapper, const char_t* ow, size_t olen, const char_t* nw, size_t nlen)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::setWord (ow, olen, nw, nlen);
+		int n = ASE::Awk::setWord (ow, olen, nw, nlen);
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -157,7 +166,7 @@ public:
 	int unsetWord (ASE::Net::Awk^ wrapper, const char_t* ow, size_t olen)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::unsetWord (ow, olen);
+		int n = ASE::Awk::unsetWord (ow, olen);
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -165,7 +174,7 @@ public:
 	int unsetAllWords (ASE::Net::Awk^ wrapper)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::unsetAllWords ();
+		int n = ASE::Awk::unsetAllWords ();
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -173,14 +182,14 @@ public:
 	void setMaxDepth (ASE::Net::Awk^ wrapper, int ids, size_t depth)
 	{
 		this->wrapper = wrapper;
-		Awk::setMaxDepth (ids, depth);
+		ASE::Awk::setMaxDepth (ids, depth);
 		this->wrapper = nullptr;
 	}
 
 	size_t getMaxDepth (ASE::Net::Awk^ wrapper, int id) const
 	{
 		this->wrapper = wrapper;
-		size_t n = Awk::getMaxDepth (id);
+		size_t n = ASE::Awk::getMaxDepth (id);
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -188,14 +197,14 @@ public:
 	void enableRunCallback (ASE::Net::Awk^ wrapper)
 	{
 		this->wrapper = wrapper;
-		Awk::enableRunCallback ();
+		ASE::Awk::enableRunCallback ();
 		this->wrapper = nullptr;
 	}
 
 	void disableRunCallback (ASE::Net::Awk^ wrapper)
 	{
 		this->wrapper = wrapper;
-		Awk::disableRunCallback ();
+		ASE::Awk::disableRunCallback ();
 		this->wrapper = nullptr;
 	}
 
@@ -210,11 +219,10 @@ public:
 		if (wrapper->OnRunStart != nullptr)
 		{
 			//wrapper->OnRunStart (wrapper);
-			wrapper->OnRunStart (ctx);
+			try { wrapper->OnRunStart (ctx); }
+			catch (...) {}
 		}
 
-		// TODO: exception handling when OnRunStart throws an exception.
-		//       may need to destroy gh. or what???
 	}
 	void onRunEnd (Run& run)
 	{
@@ -233,7 +241,8 @@ public:
 		if (wrapper->OnRunEnd != nullptr)
 		{
 			//wrapper->OnRunEnd (wrapper);
-			wrapper->OnRunEnd ((ASE::Net::Awk::Context^)gh.Target);
+			try { wrapper->OnRunEnd ((ASE::Net::Awk::Context^)gh.Target); }
+			catch (...) {}
 		}
 
 		gh.Free ();
@@ -247,28 +256,28 @@ public:
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 
 			//wrapper->OnRunReturn (wrapper);
-			wrapper->OnRunReturn ((ASE::Net::Awk::Context^)gh.Target);
+			try { wrapper->OnRunReturn ((ASE::Net::Awk::Context^)gh.Target); }
+			catch (...) {}
 		}
 	}
 
 	void onRunStatement (Run& run, size_t line)
 	{
-		if (wrapper->stopRequested) run.stop ();
-
 		if (wrapper->OnRunStatement != nullptr)
 		{
 			System::IntPtr ip ((void*)run.getCustom ());
 			GCHandle gh = GCHandle::FromIntPtr (ip);
 	
 			//wrapper->OnRunStatement (wrapper);
-			wrapper->OnRunStatement ((ASE::Net::Awk::Context^)gh.Target);
+			try { wrapper->OnRunStatement ((ASE::Net::Awk::Context^)gh.Target); } 
+			catch (...) {}
 		}
 	}
 
 	int addGlobal (ASE::Net::Awk^ wrapper, const char_t* name)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::addGlobal (name);
+		int n = ASE::Awk::addGlobal (name);
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -276,7 +285,7 @@ public:
 	int deleteGlobal (ASE::Net::Awk^ wrapper, const char_t* name)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::deleteGlobal (name);
+		int n = ASE::Awk::deleteGlobal (name);
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -286,7 +295,7 @@ public:
 		size_t minArgs, size_t maxArgs, FunctionHandler handler)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::addFunction (name, minArgs, maxArgs, handler);
+		int n = ASE::Awk::addFunction (name, minArgs, maxArgs, handler);
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -294,7 +303,7 @@ public:
 	int deleteFunction (ASE::Net::Awk^ wrapper, const char_t* main)
 	{
 		this->wrapper = wrapper;
-		int n = Awk::deleteFunction (main);
+		int n = ASE::Awk::deleteFunction (main);
 		this->wrapper = nullptr;
 		return n;
 	}
@@ -763,7 +772,7 @@ void Awk::Close ()
 
 bool Awk::Parse ()
 {
-	if (awk != NULL) 
+	if (awk == NULL) 
 	{
 		SetError (ERROR::NOPER);
 		return false;
@@ -781,7 +790,6 @@ bool Awk::Run ()
 bool Awk::Run (System::String^ entryPoint, cli::array<System::String^>^ args)
 {
 	runErrorReported = false;
-	stopRequested = false;
 
 	if (awk == NULL) 
 	{
@@ -896,9 +904,16 @@ bool Awk::Run (System::String^ entryPoint, cli::array<System::String^>^ args)
 	}
 }
 
-void Awk::Stop ()
+bool Awk::Stop ()
 {
-	stopRequested = true;
+	if (awk == NULL) 
+	{
+		SetError (ERROR::NOPER);
+		return false;
+	}
+
+	awk->stop (this);
+	return true;
 }
 
 bool Awk::AddGlobal (System::String^ name, [System::Runtime::InteropServices::Out] int% id)

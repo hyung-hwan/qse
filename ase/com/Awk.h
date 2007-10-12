@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.h,v 1.8 2007/09/30 15:12:20 bacon Exp $
+ * $Id: Awk.h,v 1.10 2007/10/10 13:22:12 bacon Exp $
  *
  * {License}
  */
@@ -141,6 +141,8 @@ public:
 	STDMETHOD(put_MaxDepthForBlockRun)(/*[in]*/ int newVal);
 	STDMETHOD(get_MaxDepthForBlockParse)(/*[out, retval]*/ int *pVal);
 	STDMETHOD(put_MaxDepthForBlockParse)(/*[in]*/ int newVal);
+	STDMETHOD(get_SupportPatternActionBlock)(/*[out, retval]*/ VARIANT_BOOL *pVal);
+	STDMETHOD(put_SupportPatternActionBlock)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_AllowMapToVar)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_AllowMapToVar)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_EnableReset)(/*[out, retval]*/ VARIANT_BOOL *pVal);
@@ -189,6 +191,11 @@ public:
 	HRESULT __stdcall AddFunction (
 		/*[in]*/ BSTR name, /*[in]*/ int minArgs,
 	       	/*[in]*/ int maxArgs, /*[out, retval]*/ VARIANT_BOOL* ret);
+
+	HRESULT __stdcall DeleteGlobal (
+		/*[in]*/ BSTR name, /*[out, retval]*/ VARIANT_BOOL* ret);
+	HRESULT __stdcall AddGlobal (
+		/*[in]*/ BSTR name, /*[out, retval]*/ VARIANT_BOOL* ret);
 
 	HRESULT __stdcall Parse (/*[out, retval]*/ VARIANT_BOOL* ret);
 	HRESULT __stdcall Run (

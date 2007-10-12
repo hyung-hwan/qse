@@ -76,7 +76,7 @@ namespace ase.com
 			// btnRun
 			// 
 			this.btnRun.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnRun.Location = new System.Drawing.Point(76, 303);
+			this.btnRun.Location = new System.Drawing.Point(78, 302);
 			this.btnRun.Name = "btnRun";
 			this.btnRun.Size = new System.Drawing.Size(75, 23);
 			this.btnRun.TabIndex = 2;
@@ -270,7 +270,7 @@ namespace ase.com
 			this.groupBox1.Controls.Add(this.lbxArguments);
 			this.groupBox1.Location = new System.Drawing.Point(0, 51);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(154, 247);
+			this.groupBox1.Size = new System.Drawing.Size(158, 245);
 			this.groupBox1.TabIndex = 0;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Arguments";
@@ -278,11 +278,11 @@ namespace ase.com
 			// chkPassArgumentsToEntryPoint
 			// 
 			this.chkPassArgumentsToEntryPoint.AutoSize = true;
-			this.chkPassArgumentsToEntryPoint.Location = new System.Drawing.Point(19, 211);
+			this.chkPassArgumentsToEntryPoint.Location = new System.Drawing.Point(6, 209);
 			this.chkPassArgumentsToEntryPoint.Name = "chkPassArgumentsToEntryPoint";
-			this.chkPassArgumentsToEntryPoint.Size = new System.Drawing.Size(119, 17);
+			this.chkPassArgumentsToEntryPoint.Size = new System.Drawing.Size(146, 17);
 			this.chkPassArgumentsToEntryPoint.TabIndex = 4;
-			this.chkPassArgumentsToEntryPoint.Text = "Pass To Entry Point";
+			this.chkPassArgumentsToEntryPoint.Text = "Arguments To Entry Point";
 			this.chkPassArgumentsToEntryPoint.UseVisualStyleBackColor = true;
 			// 
 			// btnClearAllArguments
@@ -319,7 +319,7 @@ namespace ase.com
 			this.lbxArguments.FormattingEnabled = true;
 			this.lbxArguments.Location = new System.Drawing.Point(3, 16);
 			this.lbxArguments.Name = "lbxArguments";
-			this.lbxArguments.Size = new System.Drawing.Size(147, 134);
+			this.lbxArguments.Size = new System.Drawing.Size(151, 134);
 			this.lbxArguments.TabIndex = 0;
 			// 
 			// AwkForm

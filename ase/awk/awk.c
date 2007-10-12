@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.10 2007/09/24 08:21:25 bacon Exp $ 
+ * $Id: awk.c,v 1.11 2007/10/10 13:22:12 bacon Exp $ 
  *
  * {License}
  */
@@ -109,6 +109,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	awk->option = 0;
 	awk->errnum = ASE_AWK_ENOERR;
 	awk->errlin = 0;
+	awk->stopall = ase_false;
 
 	awk->parse.nlocals_max = 0;
 
@@ -212,6 +213,8 @@ int ase_awk_close (ase_awk_t* awk)
 
 int ase_awk_clear (ase_awk_t* awk)
 {
+	awk->stopall = ase_false;
+
 	ase_memset (&awk->src.ios, 0, ASE_SIZEOF(awk->src.ios));
 	awk->src.lex.curc = ASE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
@@ -289,4 +292,9 @@ void ase_awk_setoption (ase_awk_t* awk, int opt)
 void* ase_awk_getcustomdata (ase_awk_t* awk)
 {
 	return awk->custom_data;
+}
+
+void ase_awk_stopall (ase_awk_t* awk)
+{
+	awk->stopall = ase_true;
 }
