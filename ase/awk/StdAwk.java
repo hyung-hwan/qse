@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.11 2007/08/26 14:33:38 bacon Exp $
+ * $Id: StdAwk.java,v 1.13 2007/10/12 16:13:34 bacon Exp $
  *
  * {License}
  */
@@ -20,7 +20,7 @@ public abstract class StdAwk extends Awk
 		seed = System.currentTimeMillis();
 		random = new java.util.Random (seed);
 
-		addFunction ("sin", 1, 1); 
+		addFunction ("sin", 1, 1, "sin"); 
 		addFunction ("cos", 1, 1); 
 		addFunction ("tan", 1, 1); 
 		addFunction ("atan", 1, 1); 
@@ -28,7 +28,7 @@ public abstract class StdAwk extends Awk
 		addFunction ("log", 1, 1); 
 		addFunction ("exp", 1, 1); 
 		addFunction ("sqrt", 1, 1); 
-		addFunction ("int", 1, 1); 
+		addFunction ("int", 1, 1, "bfnint"); 
 
 		addFunction ("srand", 0, 1); 
 		addFunction ("rand", 0, 0); 
@@ -330,104 +330,103 @@ public abstract class StdAwk extends Awk
 		return -1;
 	}
 
-
 	/* == arithmetic built-in functions */
-	public Object bfn_sin (long runid, Object[] args)  throws Exception
+	public Object sin (Context ctx, String name, Object[] args) throws Exception
 	{
-		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		double x = builtinFunctionArgumentToDouble (ctx.getId(), args[0]);
 		return new Double (Math.sin(x));
 	}
 
-	public Object bfn_cos (long runid, Object[] args) throws Exception
+	public Object cos (Context ctx, String name, Object[] args) throws Exception
 	{
-		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		double x = builtinFunctionArgumentToDouble (ctx.getId(), args[0]);
 		return new Double (Math.cos(x));
 	}
 
-	public Object bfn_tan (long runid, Object[] args) throws Exception
+	public Object tan (Context ctx, String name, Object[] args) throws Exception
 	{
-		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		double x = builtinFunctionArgumentToDouble (ctx.getId(), args[0]);
 		return new Double (Math.tan(x));
 	}
 
-	public Object bfn_atan (long runid, Object[] args) throws Exception
+	public Object atan (Context ctx, String name, Object[] args) throws Exception
 	{
-		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		double x = builtinFunctionArgumentToDouble (ctx.getId(), args[0]);
 		return new Double (Math.atan(x));
 	}
 
-	public Object bfn_atan2 (long runid, Object[] args) throws Exception
+	public Object atan2 (Context ctx, String name, Object[] args) throws Exception
 	{
-		double y = builtinFunctionArgumentToDouble (runid, args[0]);
-		double x = builtinFunctionArgumentToDouble (runid, args[1]);
+		double y = builtinFunctionArgumentToDouble (ctx.getId(), args[0]);
+		double x = builtinFunctionArgumentToDouble (ctx.getId(), args[1]);
 		return new Double (Math.atan2(y,x));
 	}
 
-	public Object bfn_log (long runid, Object[] args) throws Exception
+	public Object log (Context ctx, String name, Object[] args) throws Exception
 	{
-		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		double x = builtinFunctionArgumentToDouble (ctx.getId(), args[0]);
 		return new Double (Math.log(x));
 	}
 
-	public Object bfn_exp (long runid, Object[] args) throws Exception
+	public Object exp (Context ctx, String name, Object[] args) throws Exception
 	{
-		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		double x = builtinFunctionArgumentToDouble (ctx.getId(), args[0]);
 		return new Double (Math.exp(x));
 	}
 
-	public Object bfn_sqrt (long runid, Object[] args) throws Exception
+	public Object sqrt (Context ctx, String name, Object[] args) throws Exception
 	{
-		double x = builtinFunctionArgumentToDouble (runid, args[0]);
+		double x = builtinFunctionArgumentToDouble (ctx.getId(), args[0]);
 		return new Double (Math.sqrt(x));
 	}
 
-	public Object bfn_int (long runid, Object[] args) throws Exception
+	public Object bfnint (Context ctx, String name, Object[] args) throws Exception
 	{
-		long x = builtinFunctionArgumentToLong (runid, args[0]);
+		long x = builtinFunctionArgumentToLong (ctx.getId(), args[0]);
 		return new Long (x);
 	}
 
-	public Object bfn_rand (long runid, Object[] args)
+	public Object rand (Context ctx, String name, Object[] args)
 	{
 		return new Double (random.nextDouble ());
 	}
 
-	public Object bfn_srand (long runid, Object[] args) throws Exception
+	public Object srand (Context ctx, String name, Object[] args) throws Exception
 	{
 		long prev_seed = seed;
 
 		seed = (args == null || args.length == 0)?
 			System.currentTimeMillis ():
-			builtinFunctionArgumentToLong (runid, args[0]);
+			builtinFunctionArgumentToLong (ctx.getId(), args[0]);
 
 		random.setSeed (seed);
 		return new Long (prev_seed);
 	}
 
-	public Object bfn_systime (long runid, Object[] args) 
+	public Object systime (Context ctx, String name, Object[] args) 
 	{
 		long msec = System.currentTimeMillis ();
 		return new Long (msec / 1000);
 	}
 
-	public Object bfn_strftime (long runid, Object[] args) throws Exception
+	public Object strftime (Context ctx, String name, Object[] args) throws Exception
 	{
-		String fmt = (args.length<1)? "%c": builtinFunctionArgumentToString (runid, args[0]);
-		long t = (args.length<2)? (System.currentTimeMillis()/1000): builtinFunctionArgumentToLong (runid, args[1]);
+		String fmt = (args.length<1)? "%c": builtinFunctionArgumentToString (ctx.getId(), args[0]);
+		long t = (args.length<2)? (System.currentTimeMillis()/1000): builtinFunctionArgumentToLong (ctx.getId(), args[1]);
 		return strftime (fmt, t);
 	}
 
-	public Object bfn_strfgmtime (long runid, Object[] args) throws Exception
+	public Object strfgmtime (Context ctx, String name, Object[] args) throws Exception
 	{
-		String fmt = (args.length<1)? "%c": builtinFunctionArgumentToString (runid, args[0]);
-		long t = (args.length<2)? (System.currentTimeMillis()/1000): builtinFunctionArgumentToLong (runid, args[1]);
+		String fmt = (args.length<1)? "%c": builtinFunctionArgumentToString (ctx.getId(), args[0]);
+		long t = (args.length<2)? (System.currentTimeMillis()/1000): builtinFunctionArgumentToLong (ctx.getId(), args[1]);
 		return strfgmtime (fmt, t);
 	}
 
 	/* miscellaneous built-in functions */
-	public Object bfn_system (long runid, Object[] args) throws Exception
+	public Object system (Context ctx, String name, Object[] args) throws Exception
 	{
-		String str = builtinFunctionArgumentToString (runid, args[0]);
+		String str = builtinFunctionArgumentToString (ctx.getId(), args[0]);
 		return system (str);
 	}
 

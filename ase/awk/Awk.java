@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.16 2007/10/10 07:03:56 bacon Exp $
+ * $Id: Awk.java,v 1.18 2007/10/12 16:13:34 bacon Exp $
  *
  * {License}
  */
@@ -7,9 +7,14 @@
 package ase.awk;
 
 import java.io.*;
+import java.util.HashMap;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 public abstract class Awk
 {
+	private HashMap functionTable;
+
 	// mode for open_source & close_source 
 	public static final int SOURCE_READ = 1;
 	public static final int SOURCE_WRITE = 2;
@@ -53,6 +58,7 @@ public abstract class Awk
 	public Awk () throws Exception
 	{
 		this.handle = 0;
+		this.functionTable = new HashMap ();
 		open ();
 	}
 
@@ -68,6 +74,7 @@ public abstract class Awk
 	public  native void close ();
 	public  native void parse () throws Exception;
 	public  native void run (String main, String[] args) throws Exception;
+	public  native void stop ();
 
 	private native int getmaxdepth (int id);
 	private native void setmaxdepth (int id, int depth);
@@ -115,15 +122,34 @@ public abstract class Awk
 	}
 
 	/* == builtin functions == */
-	public void addFunction (
-		String name, int min_args, int max_args) throws Exception
+	public void addFunction (String name, int min_args, int max_args) throws Exception
 	{
-		addfunc (name, min_args, max_args);
+		addFunction (name, min_args, max_args, "bfn_" + name);
+	}
+
+	public void addFunction (String name, int min_args, int max_args, String method) throws Exception
+	{
+		if (functionTable.containsKey (name))
+		{
+			throw new Exception (
+				"cannot add existing function '" + name + "'", 
+				Exception.EXIST);
+		}
+
+		functionTable.put (name, method);
+		try { addfunc (name, min_args, max_args); }
+		catch (Exception e)
+		{
+			functionTable.remove (name);
+			throw e;
+		}
+
 	}
 
 	public void deleteFunction (String name) throws Exception
 	{
-		delfunc (name);
+		delfunc (name); 
+		functionTable.remove (name);
 	}
 
 	protected long builtinFunctionArgumentToLong (
@@ -274,6 +300,23 @@ public abstract class Awk
 	public void unsetAllWords ()
 	{
 		setword (null, null);
+	}
+
+	/* == intrinsic function handling == */
+	protected Object handleFunction (
+		long run, String name, Object args[]) throws java.lang.Exception
+	{
+		String mn = (String)functionTable.get(name);
+		// name should always be found in this table.
+		// otherwise, there is something wrong with this program. 
+
+		Class c = this.getClass ();
+		Class[] a = { Context.class, String.class, Object[].class };
+
+		// TODO: remove new Context ....
+		Method m = c.getMethod (mn, a);
+		return m.invoke (this, 
+			new Object[] { new Context(run), name, args}) ;
 	}
 
 	/* == source code management == */

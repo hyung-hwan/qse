@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.17 2007/10/10 07:03:56 bacon Exp $
+ * $Id: jni.c,v 1.19 2007/10/12 16:13:34 bacon Exp $
  *
  * {License}
  */
@@ -23,6 +23,11 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <tchar.h>
+#endif
+
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
 #endif
 
 #ifndef ASE_CHAR_IS_WCHAR
@@ -49,11 +54,11 @@ enum
 	SOURCE_WRITE = 2
 };
 
-static ase_ssize_t __read_source (
+static ase_ssize_t read_source (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
-static ase_ssize_t __write_source (
+static ase_ssize_t write_source (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
-static ase_ssize_t __process_extio (
+static ase_ssize_t process_extio (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
 typedef struct awk_data_t   awk_data_t;
@@ -320,6 +325,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	awk_data_t* awk_data;
 	int opt;
 	
+#if defined(_WIN32) && defined(_DEBUG) && defined(_MSC_VER)
+	OutputDebugStringW (L"<<<OPENING AWK>>>\n");
+	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
+#endif
 	memset (&prmfns, 0, sizeof(prmfns));
 
 	prmfns.mmgr.malloc = awk_malloc;
@@ -424,6 +433,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj)
 		(*env)->SetLongField (env, obj, handle, (jlong)0);
 		free (tmp);
 	}
+
+#if defined(_WIN32) && defined(_DEBUG) && defined(_MSC_VER)
+	OutputDebugStringW (L"<<<CLOSING AWK>>>\n");
+	_CrtDumpMemoryLeaks ();
+#endif
+
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
@@ -451,8 +466,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 	srcio_data.env = env;
 	srcio_data.obj = obj;
 
-	srcios.in = __read_source;
-	srcios.out = __write_source;
+	srcios.in = read_source;
+	srcios.out = write_source;
 	srcios.custom_data = &srcio_data;
 
 	if (ase_awk_parse (awk, &srcios) == -1)
@@ -595,10 +610,10 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	runio_data.env = env;
 	runio_data.obj = obj;
 
-	runios.pipe = __process_extio;
+	runios.pipe = process_extio;
 	runios.coproc = ASE_NULL;
-	runios.file = __process_extio;
-	runios.console = __process_extio;
+	runios.file = process_extio;
+	runios.console = process_extio;
 	runios.custom_data = &runio_data;
 
 	if (mfn == NULL) 
@@ -780,6 +795,27 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	if (mmm != NULL) free (mmm);
 	if (ptr != NULL) (*env)->ReleaseStringChars (env, mfn, ptr);
 	DELETE_CLASS_REFS (env, run_data);
+}
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_stop (JNIEnv* env, jobject obj)
+{
+	jclass class; 
+	jfieldID handle;
+	ase_awk_t* awk;
+	
+	class = (*env)->GetObjectClass(env, obj);
+	handle = (*env)->GetFieldID (env, class, FIELD_HANDLE, "J");
+	(*env)->DeleteLocalRef (env, class);
+	if (handle == NULL) 
+	{	
+		/* internal error. no handle field 
+		 * NoSuchFieldError, ExceptionInitializerError, 
+		 * OutOfMemoryError might occur */
+		return;
+	}
+
+	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	if (awk != NULL) ase_awk_stopall (awk);
 }
 
 static ase_ssize_t __java_open_source (JNIEnv* env, jobject obj, int mode)
@@ -1325,7 +1361,7 @@ static ase_ssize_t __java_next_extio (
 	return ret;
 }
 
-static ase_ssize_t __read_source (
+static ase_ssize_t read_source (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count)
 {
 	srcio_data_t* srcio_data = (srcio_data_t*)arg;
@@ -1349,7 +1385,7 @@ static ase_ssize_t __read_source (
 	return -1;
 }
 
-static ase_ssize_t __write_source (
+static ase_ssize_t write_source (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count)
 {
 	srcio_data_t* srcio_data = (srcio_data_t*)arg;
@@ -1373,12 +1409,11 @@ static ase_ssize_t __write_source (
 	return -1;
 }
 
-static ase_ssize_t __process_extio (
+static ase_ssize_t process_extio (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
-
 
 	switch (cmd)
 	{
@@ -1419,7 +1454,7 @@ static ase_ssize_t __process_extio (
 	return -1;
 }
 
-static int __handle_bfn (
+static int handle_bfn (
 	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	jclass class; 
@@ -1442,7 +1477,7 @@ static int __handle_bfn (
 	env = run_data->env;
 	obj = run_data->obj;
 
-	/*if (fnl > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))*/
+	if (fnl > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t i;
 		jchar* tmp = (jchar*) malloc (ASE_SIZEOF(jchar)*(fnl+4));
@@ -1452,18 +1487,21 @@ static int __handle_bfn (
 			return -1;
 		}
 
+		/*
 		tmp[0] = (jchar)'b';
 		tmp[1] = (jchar)'f';
 		tmp[2] = (jchar)'n';
 		tmp[3] = (jchar)'_';
 		for (i = 0; i < fnl; i++) tmp[i+4] = (jchar)fnm[i];
+		*/
+		for (i = 0; i < fnl; i++) tmp[i] = (jchar)fnm[i];
 		name = (*env)->NewString (env, tmp, fnl+4);
 		free (tmp);
 	}
-	/*else 
+	else 
 	{
 		name = (*env)->NewString (env, (jchar*)fnm, fnl);
-	}*/
+	}
 
 	if (name == NULL)
 	{
@@ -1472,6 +1510,8 @@ static int __handle_bfn (
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
+
+	/*
 	name_utf = (*env)->GetStringUTFChars (env, name, JNI_FALSE);
 	if (name_utf == NULL)
 	{
@@ -1484,13 +1524,21 @@ static int __handle_bfn (
 	method = (*env)->GetMethodID (
 		env, class, name_utf, 
 		"(J[Ljava/lang/Object;)Ljava/lang/Object;");
+	*/
+	class = (*env)->GetObjectClass(env, obj);
+	method = (*env)->GetMethodID (
+		env, class, "handleFunction", 
+		"(JLjava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;");
+		//"(J[Ljava/lang/Object;)Ljava/lang/Object;");
+
 	(*env)->DeleteLocalRef (env, class);
-	(*env)->ReleaseStringUTFChars (env, name, name_utf);
-	(*env)->DeleteLocalRef (env, name);
+	/*(*env)->ReleaseStringUTFChars (env, name, name_utf);*/
+	//(*env)->DeleteLocalRef (env, name);
 	if (method == NULL) 
 	{
 		/* if the method is not found, the exception is thrown.
 		 * clear it to prevent it from being thrown */
+		(*env)->DeleteLocalRef (env, name);
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ase_awk_setrunerrnum (run, ASE_AWK_EBFNUSER);
@@ -1501,6 +1549,7 @@ static int __handle_bfn (
 		env, nargs, run_data->object_class, NULL);
 	if (args == NULL)
 	{
+		(*env)->DeleteLocalRef (env, name);
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -1543,6 +1592,7 @@ static int __handle_bfn (
 				if (tmp == NULL)
 				{
 					(*env)->DeleteLocalRef (env, args);
+					(*env)->DeleteLocalRef (env, name);
 					ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 					return -1;
 				}
@@ -1570,6 +1620,7 @@ static int __handle_bfn (
 				(*env)->ExceptionClear (env);
 			}
 			(*env)->DeleteLocalRef (env, args);
+			(*env)->DeleteLocalRef (env, name);
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
@@ -1578,7 +1629,7 @@ static int __handle_bfn (
 		if (arg != NULL) (*env)->DeleteLocalRef (env, arg);
 	}
 
-	ret = (*env)->CallObjectMethod (env, obj, method, (jlong)run, args);
+	ret = (*env)->CallObjectMethod (env, obj, method, (jlong)run, name, args);
 	if ((*env)->ExceptionOccurred (env))
 	{
 		if (is_debug(ase_awk_getrunawk(run))) 
@@ -1586,12 +1637,14 @@ static int __handle_bfn (
 
 		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, args);
+		(*env)->DeleteLocalRef (env, name);
 
 		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
 		return -1;
 	}
 
 	(*env)->DeleteLocalRef (env, args);
+	(*env)->DeleteLocalRef (env, name);
 
 	if (ret == NULL)
 	{
@@ -1789,13 +1842,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 
 		for (x =  0; x < len; x++) tmp[x] = (ase_char_t)ptr[x];
 		n = (ase_awk_addfunc (awk, tmp, len, 0, 
-			min_args, max_args, ASE_NULL, __handle_bfn) == NULL)? -1: 0;
+			min_args, max_args, ASE_NULL, handle_bfn) == NULL)? -1: 0;
 		free (tmp);
 	}
 	else
 	{
 		n = (ase_awk_addfunc (awk, (ase_char_t*)ptr, len, 0, 
-			min_args, max_args, ASE_NULL, __handle_bfn) == NULL)? -1: 0;
+			min_args, max_args, ASE_NULL, handle_bfn) == NULL)? -1: 0;
 	}
 
 
