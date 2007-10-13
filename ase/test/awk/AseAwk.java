@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwk.java,v 1.9 2007/06/24 11:14:58 bacon Exp $
+ * $Id: AseAwk.java,v 1.10 2007/10/12 16:13:34 bacon Exp $
  */
 
 import java.awt.*;
@@ -300,8 +300,7 @@ public class AseAwk extends StdAwk
 		addFunction ("sleep", 1, 1);
 	}
 
-	public Object bfn_sleep (
-		long runid, Object[] args) throws ase.awk.Exception
+	public Object sleep (Context ctx, String name, Object[] args) throws ase.awk.Exception
 	{
 		long x = builtinFunctionArgumentToLong (runid, args[0]);
 		try { Thread.sleep (x * 1000); }
