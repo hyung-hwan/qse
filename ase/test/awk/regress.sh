@@ -1,12 +1,14 @@
 #!/bin/sh
 
+OPTION=-explicit
+
 run_script_for_init()
 {
 	script="$1"
 	data="$2"
 	output=`echo $script | sed 's/\.awk$/.out/g'`
 
-	"$ASEAWK" -d -f "$script" "$data" > "$output"
+	"$ASEAWK" $OPTION -d -f "$script" "$data" > "$output"
 }
 
 run_init()
@@ -39,7 +41,7 @@ run_script_for_test()
 	output=`echo $script | sed 's/\.awk$/.out/g'`
 
 	echo ">> RUNNING $script"
-	"$ASEAWK" -d -f "$script" "$data" > "$output.$pid"
+	"$ASEAWK" $OPTION -d -f "$script" "$data" > "$output.$pid"
 
 	#diff -y "$output" "$output.$pid" 
 	diff "$output" "$output.$pid" 

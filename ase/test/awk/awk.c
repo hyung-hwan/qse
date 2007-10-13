@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.17 2007/09/30 15:12:20 bacon Exp $
+ * $Id: awk.c,v 1.19 2007/10/11 14:39:46 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -789,9 +789,42 @@ static void on_run_end (ase_awk_run_t* run, int errnum, void* custom_data)
 	app_run = NULL;
 }
 
+static struct
+{
+	const ase_char_t* name;
+	int opt;
+} otab[] =
+{
+	{ ASE_T("implicit"),    ASE_AWK_IMPLICIT },
+	{ ASE_T("explicit"),    ASE_AWK_EXPLICIT },
+	{ ASE_T("uniquefn"),    ASE_AWK_UNIQUEFN },
+	{ ASE_T("shading"),     ASE_AWK_SHADING },
+	{ ASE_T("shift"),       ASE_AWK_SHIFT },
+	{ ASE_T("idiv"),        ASE_AWK_IDIV },
+	{ ASE_T("strconcat"),   ASE_AWK_STRCONCAT },
+	{ ASE_T("extio"),       ASE_AWK_EXTIO },
+	{ ASE_T("blockless"),   ASE_AWK_BLOCKLESS },
+	{ ASE_T("baseone"),     ASE_AWK_BASEONE },
+	{ ASE_T("stripspaces"), ASE_AWK_STRIPSPACES },
+	{ ASE_T("nextofile"),   ASE_AWK_NEXTOFILE },
+	{ ASE_T("crfl"),        ASE_AWK_CRLF },
+	{ ASE_T("argstomain"),  ASE_AWK_ARGSTOMAIN },
+	{ ASE_T("reset"),       ASE_AWK_RESET },
+	{ ASE_T("maptovar"),    ASE_AWK_MAPTOVAR },
+	{ ASE_T("pablock"),     ASE_AWK_PABLOCK }
+};
+
 static void print_usage (const ase_char_t* argv0)
 {
-	ase_printf (ASE_T("Usage: %s [-m] [-d] [-ns] [-a argument]* -f source-file [data-file]*\n"), argv0);
+	int j;
+
+	ase_printf (ASE_T("Usage: %s [-m] [-d] [-a argument]* -f source-file [data-file]*\n"), argv0);
+
+	ase_printf (ASE_T("\nYou may specify the following options to change the behavior of the interpreter.\n"));
+	for (j = 0; j < ASE_COUNTOF(otab); j++)
+	{
+		ase_printf (ASE_T("    -%-20s -no%-20s\n"), otab[j].name, otab[j].name);
+	}
 }
 
 static int run_awk (ase_awk_t* awk, 
@@ -900,21 +933,12 @@ static int awk_main (int argc, ase_char_t* argv[])
 	int deparse = 0;
 
 	opt = ASE_AWK_IMPLICIT |
-	      /*ASE_AWK_EXPLICIT |*/
 	      ASE_AWK_UNIQUEFN | 
 	      ASE_AWK_SHADING | 
-	      /*ASE_AWK_SHIFT |*/
-	      /*ASE_AWK_IDIV |*/
-	      /*ASE_AWK_STRCONCAT |*/
 	      ASE_AWK_EXTIO | 
 	      ASE_AWK_BLOCKLESS | 
-	      ASE_AWK_BASEONE /*|*/
-	      /*ASE_AWK_STRIPSPACES |*/
-	      /*ASE_AWK_NEXTOFILE |*/
-	      /*ASE_AWK_CRLF |*/
-	      /*ASE_AWK_ARGSTOMAIN |*/
-	      /*ASE_AWK_RESET*/
-	      /*ASE_AWK_MAPTOVAR*/;
+	      ASE_AWK_BASEONE |
+	      ASE_AWK_PABLOCK;
 
 	if (argc <= 1)
 	{
@@ -944,15 +968,39 @@ static int awk_main (int argc, ase_char_t* argv[])
 				/* specify arguments */
 				mode = 2;
 			}
-			else if (ase_strcmp(argv[i], ASE_T("-ns")) == 0)
-			{
-				/* no space stripping */ 
-				opt &= ~ASE_AWK_STRIPSPACES;
-			}
 			else if (argv[i][0] == ASE_T('-'))
 			{
+				int j;
+
+				if (argv[i][1] == ASE_T('n') && argv[i][2] == ASE_T('o'))
+				{
+					for (j = 0; j < ASE_COUNTOF(otab); j++)
+					{
+						if (ase_strcmp(&argv[i][3], otab[j].name) == 0)
+						{
+							opt &= ~otab[j].opt;
+							goto ok_valid;
+						}
+					}
+				}
+				else
+				{
+					for (j = 0; j < ASE_COUNTOF(otab); j++)
+					{
+						if (ase_strcmp(&argv[i][1], otab[j].name) == 0)
+						{
+							opt |= otab[j].opt;
+							goto ok_valid;
+						}
+					}
+				}
+				
+
 				print_usage (argv[0]);
 				return -1;
+
+			ok_valid:
+				;
 			}
 			else if (file_count < ASE_COUNTOF(infiles)-1)
 			{

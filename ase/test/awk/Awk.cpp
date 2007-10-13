@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.43 2007/10/10 07:03:56 bacon Exp $
+ * $Id: Awk.cpp,v 1.45 2007/10/11 14:39:46 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -52,8 +52,10 @@ public:
 	#endif
 		if (n == -1)
 		{
+	#ifdef _WIN32
 			HeapDestroy (heap); 
 			heap = ASE_NULL;
+	#endif
 			return -1;
 		}
 
@@ -595,9 +597,35 @@ static void print_error (const ase_char_t* msg)
 	ase_printf (ASE_T("Error: %s\n"), msg);
 }
 
+static struct
+{
+	const ase_char_t* name;
+	TestAwk::Option   opt;
+} otab[] =
+{
+	{ ASE_T("implicit"),    TestAwk::OPT_IMPLICIT },
+	{ ASE_T("explicit"),    TestAwk::OPT_EXPLICIT },
+	{ ASE_T("uniquefn"),    TestAwk::OPT_UNIQUEFN },
+	{ ASE_T("shading"),     TestAwk::OPT_SHADING },
+	{ ASE_T("shift"),       TestAwk::OPT_SHIFT },
+	{ ASE_T("idiv"),        TestAwk::OPT_IDIV },
+	{ ASE_T("strconcat"),   TestAwk::OPT_STRCONCAT },
+	{ ASE_T("extio"),       TestAwk::OPT_EXTIO },
+	{ ASE_T("blockless"),   TestAwk::OPT_BLOCKLESS },
+	{ ASE_T("baseone"),     TestAwk::OPT_BASEONE },
+	{ ASE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
+	{ ASE_T("nextofile"),   TestAwk::OPT_NEXTOFILE },
+	{ ASE_T("crfl"),        TestAwk::OPT_CRLF },
+	{ ASE_T("argstomain"),  TestAwk::OPT_ARGSTOMAIN },
+	{ ASE_T("reset"),       TestAwk::OPT_RESET },
+	{ ASE_T("maptovar"),    TestAwk::OPT_MAPTOVAR },
+	{ ASE_T("pablock"),     TestAwk::OPT_PABLOCK }
+};
+
 static void print_usage (const ase_char_t* argv0)
 {
 	const ase_char_t* base;
+	int j;
 	
 	base = ase_strrchr(argv0, ASE_T('/'));
 	if (base == ASE_NULL) base = ase_strrchr(argv0, ASE_T('\\'));
@@ -615,6 +643,13 @@ static void print_usage (const ase_char_t* argv0)
 	ase_printf (ASE_T("    -w  o:n   Specify an old and new word pair\n"));
 	ase_printf (ASE_T("              o - an original word\n"));
 	ase_printf (ASE_T("              n - the new word to replace the original\n"));
+
+
+	ase_printf (ASE_T("\nYou may specify the following options to change the behavior of the interpreter.\n"));
+	for (j = 0; j < ASE_COUNTOF(otab); j++)
+	{
+		ase_printf (ASE_T("    -%-20s -no%-20s\n"), otab[j].name, otab[j].name);
+	}
 }
 
 int awk_main (int argc, ase_char_t* argv[])
@@ -628,31 +663,6 @@ int awk_main (int argc, ase_char_t* argv[])
 	ase_size_t nargs = 0;
 	ase_size_t nsrcins = 0;
 	ase_size_t nsrcouts = 0;
-
-	struct
-	{
-		const ase_char_t* name;
-		TestAwk::Option   opt;
-	} otab[] =
-	{
-		{ ASE_T("implicit"),    TestAwk::OPT_IMPLICIT },
-		{ ASE_T("explicit"),    TestAwk::OPT_EXPLICIT },
-		{ ASE_T("uniquefn"),    TestAwk::OPT_UNIQUEFN },
-		{ ASE_T("shading"),     TestAwk::OPT_SHADING },
-		{ ASE_T("shift"),       TestAwk::OPT_SHIFT },
-		{ ASE_T("idiv"),        TestAwk::OPT_IDIV },
-		{ ASE_T("strconcat"),   TestAwk::OPT_STRCONCAT },
-		{ ASE_T("extio"),       TestAwk::OPT_EXTIO },
-		{ ASE_T("blockless"),   TestAwk::OPT_BLOCKLESS },
-		{ ASE_T("baseone"),     TestAwk::OPT_BASEONE },
-		{ ASE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
-		{ ASE_T("nextofile"),   TestAwk::OPT_NEXTOFILE },
-		{ ASE_T("crfl"),        TestAwk::OPT_CRLF },
-		{ ASE_T("argstomain"),  TestAwk::OPT_ARGSTOMAIN },
-		{ ASE_T("reset"),       TestAwk::OPT_RESET },
-		{ ASE_T("maptovar"),    TestAwk::OPT_MAPTOVAR },
-		{ ASE_T("pablock"),     TestAwk::OPT_PABLOCK }
-	};
 
 	if (awk.open() == -1)
 	{

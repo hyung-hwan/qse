@@ -3,4 +3,4 @@ BEGIN {
 	split ("a  b c",xx);
 }
 
-RUN ERROR: CODE [97] LINE [3] cannot change a scalar value to a map
+RUN ERROR: CODE [98] LINE [3] cannot change a scalar value to a map

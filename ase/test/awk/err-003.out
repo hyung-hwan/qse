@@ -1,8 +1,6 @@
-global abc;
-
 BEGIN {
 	abc[20] = "abc";
 	abc = 10;
 }
 
-RUN ERROR: CODE [96] LINE [5] map 'abc' not assignable with a scalar
+RUN ERROR: CODE [97] LINE [3] map 'abc' not assignable with a scalar
