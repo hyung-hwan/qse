@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.73 2007/10/13 05:08:28 bacon Exp $
+ * $Id: Awk.cpp,v 1.74 2007/10/13 06:28:17 bacon Exp $
  *
  * {License}
  */
@@ -195,7 +195,11 @@ void Awk::Argument::clear ()
 		{
 			if (this->val->type != ASE_AWK_VAL_STR)
 			{
-				awk_t* awk = this->run->awk->awk,
+			#if defined(__DMC__)
+				awk_t* awk = (awk_t*)*(this->run->awk);
+			#else
+				awk_t* awk = this->run->awk->awk;
+			#endif
 				ase_awk_free (awk, this->str.ptr);
 			}
 

@@ -1,5 +1,5 @@
 #
-# $Id: makefile.in,v 1.8 2007/10/13 05:08:28 bacon Exp $
+# $Id: makefile.in,v 1.9 2007/10/13 06:28:17 bacon Exp $
 #
 
 NAME = aseawk
@@ -164,7 +164,7 @@ $(TMP_DIR):
 	mkdir -p $(TMP_DIR)
 
 $(TMP_DIR_CXX): $(TMP_DIR)
-	mkdir -p $(TMP_DIR)/cxx
+	mkdir -p $(TMP_DIR_CXX)
 
 clean:
 	rm -rf $(OUT_FILE_LIB) $(OUT_FILE_JNI) $(OUT_FILE_JAR) $(OUT_FILE_LIB_CXX) $(OBJ_FILES_LIB) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OBJ_FILES_LIB_CXX)
