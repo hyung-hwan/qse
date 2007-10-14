@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.74 2007/10/13 06:28:17 bacon Exp $
+ * $Id: Awk.cpp,v 1.75 2007/10/13 17:25:30 bacon Exp $
  *
  * {License}
  */
@@ -195,11 +195,7 @@ void Awk::Argument::clear ()
 		{
 			if (this->val->type != ASE_AWK_VAL_STR)
 			{
-			#if defined(__DMC__)
-				awk_t* awk = (awk_t*)*(this->run->awk);
-			#else
 				awk_t* awk = this->run->awk->awk;
-			#endif
 				ase_awk_free (awk, this->str.ptr);
 			}
 
@@ -427,7 +423,7 @@ int Awk::Argument::getIndexed (long_t idx, Argument& val) const
 	char_t ri[128];
 
 	int rl = Awk::sprintf (
-		&this->run->awk, ri, ASE_COUNTOF(ri), 
+		this->run->awk, ri, ASE_COUNTOF(ri), 
 	#if ASE_SIZEOF_LONG_LONG > 0
 		ASE_T("%lld"), (long long)idx
 	#elif ASE_SIZEOF___INT64 > 0

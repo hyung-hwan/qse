@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c,v 1.4 2007/06/16 13:34:47 bacon Exp $
+ * $Id: stdio.c,v 1.5 2007/10/13 17:25:30 bacon Exp $
  *
  * {License}
  */
@@ -343,8 +343,13 @@ FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
 
 FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 {
-#if defined(_WIN32)
-	return _tpopen (cmd, mode);
+#if defined(_WIN32) 
+	#if defined(__DMC__)
+		/* TODO: implement this for DMC */
+		return ASE_NULL;
+	#else
+		return _tpopen (cmd, mode);
+	#endif
 #elif defined(ASE_CHAR_IS_MCHAR)
 	return popen (cmd, mode);
 #else
