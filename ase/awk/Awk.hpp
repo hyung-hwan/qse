@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.73 2007/10/10 13:22:12 bacon Exp $
+ * $Id: Awk.hpp,v 1.74 2007/10/13 06:28:17 bacon Exp $
  *
  * {License}
  */
@@ -302,7 +302,7 @@ public:
 		void* operator new (size_t n, awk_t* awk) throw ();
 		void* operator new[] (size_t n, awk_t* awk) throw ();
 
-	#if !defined(__BORLANDC__)
+	#if !defined(__BORLANDC__) 
 		// deletion when initialization fails
 		void operator delete (void* p, awk_t* awk);
 		void operator delete[] (void* p, awk_t* awk);

@@ -11,9 +11,9 @@ LD = link
 AR = lib
 JAVAC = javac
 
-CFLAGS = -mn -I../.. $(JNI_INC) 
-CXXFLAGS = -cpp -mn -I../.. $(JNI_INC) 
-JAVACFLAGS = -classpath ../.. -Xlint:unchecked
+CFLAGS = -mn -I..\.. $(JNI_INC) 
+CXXFLAGS = -Aa -Ab -Ae -mn -I..\.. $(JNI_INC) 
+JAVACFLAGS = -classpath ..\.. -Xlint:unchecked
 
 MODE=debug
 
@@ -24,7 +24,7 @@ OUT_FILE_LIB_CXX = $(OUT_DIR)\$(NAME)pp.lib
 OUT_FILE_JAR = $(OUT_DIR)/$(NAME).jar
 
 TMP_DIR = $(MODE)
-TMP_DIR_CXX = $(TMP_DIR)/cxx
+TMP_DIR_CXX = $(TMP_DIR)\cxx
 
 OBJ_FILES_LIB = \
 	$(TMP_DIR)\awk.obj \
@@ -59,7 +59,7 @@ OBJ_FILES_JAR = \
 
 lib: build$(JNI)
 
-build: $(OUT_FILE_LIB) 
+build: $(OUT_FILE_LIB) $(OUT_FILE_LIB_CXX)
 
 buildjni: build $(OUT_FILE_JNI)
 
@@ -148,7 +148,7 @@ $(TMP_DIR):
 	md $(TMP_DIR)
 
 $(TMP_DIR_CXX): $(TMP_DIR)
-	md $(TMP_DIR)/cxx
+	md $(TMP_DIR_CXX)
 
 clean:
 	rm -rf $(OUT_FILE_LIB) $(OUT_FILE_JNI) $(OUT_FILE_JAR) $(OUT_FILE_LIB_CXX) $(OBJ_FILES_LIB) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OBJ_FILES_LIB_CXX)
