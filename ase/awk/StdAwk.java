@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.13 2007/10/12 16:13:34 bacon Exp $
+ * $Id: StdAwk.java,v 1.14 2007/10/14 05:28:26 bacon Exp $
  *
  * {License}
  */
@@ -20,7 +20,7 @@ public abstract class StdAwk extends Awk
 		seed = System.currentTimeMillis();
 		random = new java.util.Random (seed);
 
-		addFunction ("sin", 1, 1, "sin"); 
+		addFunction ("sin", 1, 1); 
 		addFunction ("cos", 1, 1); 
 		addFunction ("tan", 1, 1); 
 		addFunction ("atan", 1, 1); 
