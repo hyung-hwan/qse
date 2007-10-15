@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.18 2007/10/12 16:13:34 bacon Exp $
+ * $Id: Awk.java,v 1.19 2007/10/14 05:28:26 bacon Exp $
  *
  * {License}
  */
@@ -124,7 +124,7 @@ public abstract class Awk
 	/* == builtin functions == */
 	public void addFunction (String name, int min_args, int max_args) throws Exception
 	{
-		addFunction (name, min_args, max_args, "bfn_" + name);
+		addFunction (name, min_args, max_args, name);
 	}
 
 	public void addFunction (String name, int min_args, int max_args, String method) throws Exception
@@ -143,7 +143,6 @@ public abstract class Awk
 			functionTable.remove (name);
 			throw e;
 		}
-
 	}
 
 	public void deleteFunction (String name) throws Exception
