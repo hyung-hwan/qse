@@ -5,36 +5,21 @@ JNI_INC = \
 	-I"$(JAVA_HOME)\include" \
 	-I"$(JAVA_HOME)\include\win32" 
 
-CC = cl
-CXX = cl
-LD = link
-AR = link 
+CC = dmc
+LD = dmc
+AR = lib
 JAVAC = javac
 JAR = jar
 
-CFLAGS = /nologo /W3 -I..\..
-CXXFLAGS = /nologo /W3 -I..\..
+CFLAGS = -mn -I..\.. -DUNICODE -D_UNICODE #-D_DEBUG
 JAVACFLAGS = -classpath ..\.. -Xlint:unchecked
-
-!IF "$(MODE)" == "debug"
-CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd
-CXXFLAGS = $(CXXFLAGS) -D_DEBUG -DDEBUG /MTd
-!ELSEIF "$(MODE)" == "release"
-CFLAGS = $(CFLAGS) -DNDEBUG /MT /O2
-CXXFLAGS = $(CXXFLAGS) -DNDEBUG /MT /O2
-!ELSE
-CFLAGS = $(CFLAGS) /MT
-CXXFLAGS = $(CXXFLAGS) /MT
-!ENDIF
 
 OUT_DIR = ..\$(MODE)\lib
 OUT_FILE_LIB = $(OUT_DIR)\$(NAME).lib
 OUT_FILE_JNI = $(OUT_DIR)\$(NAME)_jni.dll
-OUT_FILE_LIB_CXX = $(OUT_DIR)\$(NAME)++.lib
 OUT_FILE_JAR = $(OUT_DIR)\$(NAME).jar
 
 TMP_DIR = $(MODE)
-TMP_DIR_CXX = $(TMP_DIR)\cxx
 
 OBJ_FILES_LIB = \
 	$(TMP_DIR)\awk.obj \
@@ -53,10 +38,6 @@ OBJ_FILES_LIB = \
 
 OBJ_FILES_JNI = $(TMP_DIR)\jni.obj 
 
-OBJ_FILES_LIB_CXX = \
-	$(TMP_DIR)\cxx\Awk.obj \
-	$(TMP_DIR)\cxx\StdAwk.obj
-
 OBJ_FILES_JAR = \
 	$(TMP_DIR)\ase\awk\Awk.class \
 	$(TMP_DIR)\ase\awk\StdAwk.class \
@@ -70,79 +51,62 @@ OBJ_FILES_JAR = \
 
 all: lib
 
-lib: $(OUT_FILE_LIB) $(OUT_FILE_LIB_CXX)
+lib: $(OUT_FILE_LIB) 
 
 jnidll: $(OUT_FILE_JNI)
 
 jar: $(OUT_FILE_JAR)
 
 $(OUT_FILE_LIB): $(TMP_DIR) $(OUT_DIR) $(OBJ_FILES_LIB)
-	$(AR) /lib @<<
-/nologo /out:$(OUT_FILE_LIB) $(OBJ_FILES_LIB)
-<<
-
-$(OUT_FILE_LIB_CXX): $(TMP_DIR_CXX) $(OUT_FILE_LIB) $(OBJ_FILES_LIB_CXX)
-	$(AR) /lib @<<
-/nologo /out:$(OUT_FILE_LIB_CXX) $(OBJ_FILES_LIB_CXX)
-<<
+	$(AR) -c $(OUT_FILE_LIB) $(OBJ_FILES_LIB)
 
 $(OUT_FILE_JNI): $(OUT_FILE_LIB) $(OBJ_FILES_JNI)
-	$(LD) /dll /def:jni.def /subsystem:windows /release @<<
-/nologo /out:$(OUT_FILE_JNI) $(OBJ_FILES_JNI) /libpath:../$(MODE)/lib /implib:tmp.lib user32.lib $(OUT_FILE_LIB) asecmn.lib aseutl.lib
-<<
-	del tmp.lib tmp.exp
-
+	$(LD) -WD -o$(OUT_FILE_JNI) $(OBJ_FILES_JNI) $(OUT_FILE_LIB) $(OUT_DIR)\asecmn.lib $(OUT_DIR)\aseutl.lib kernel32.lib jni-dmc.def
 
 $(OUT_FILE_JAR): $(OBJ_FILES_JAR)
 	$(JAR) -Mcvf $(OUT_FILE_JAR) -C $(TMP_DIR) ase
 
 $(TMP_DIR)\awk.obj: awk.c
-	$(CC) $(CFLAGS) /Fo$@ /c awk.c
+	$(CC) $(CFLAGS) -o$@ -c awk.c
 
 $(TMP_DIR)\err.obj: err.c
-	$(CC) $(CFLAGS) /Fo$@ /c err.c
+	$(CC) $(CFLAGS) -o$@ -c err.c
 
 $(TMP_DIR)\tree.obj: tree.c
-	$(CC) $(CFLAGS) /Fo$@ /c tree.c
+	$(CC) $(CFLAGS) -o$@ -c tree.c
 
 $(TMP_DIR)\tab.obj: tab.c
-	$(CC) $(CFLAGS) /Fo$@ /c tab.c
+	$(CC) $(CFLAGS) -o$@ -c tab.c
 
 $(TMP_DIR)\map.obj: map.c
-	$(CC) $(CFLAGS) /Fo$@ /c map.c
+	$(CC) $(CFLAGS) -o$@ -c map.c
 
 $(TMP_DIR)\parse.obj: parse.c
-	$(CC) $(CFLAGS) /Fo$@ /c parse.c
+	$(CC) $(CFLAGS) -o$@ -c parse.c
 
 $(TMP_DIR)\run.obj: run.c
-	$(CC) $(CFLAGS) /Fo$@ /c run.c
+	$(CC) $(CFLAGS) -o$@ -c run.c
 
 $(TMP_DIR)\rec.obj: rec.c
-	$(CC) $(CFLAGS) /Fo$@ /c rec.c
+	$(CC) $(CFLAGS) -o$@ -c rec.c
 
 $(TMP_DIR)\val.obj: val.c
-	$(CC) $(CFLAGS) /Fo$@ /c val.c
+	$(CC) $(CFLAGS) -o$@ -c val.c
 
 $(TMP_DIR)\func.obj: func.c
-	$(CC) $(CFLAGS) /Fo$@ /c func.c
+	$(CC) $(CFLAGS) -o$@ -c func.c
 
 $(TMP_DIR)\misc.obj: misc.c
-	$(CC) $(CFLAGS) /Fo$@ /c misc.c
+	$(CC) $(CFLAGS) -o$@ -c misc.c
 
 $(TMP_DIR)\extio.obj: extio.c
-	$(CC) $(CFLAGS) /Fo$@ /c extio.c
+	$(CC) $(CFLAGS) -o$@ -c extio.c
 
 $(TMP_DIR)\rex.obj: rex.c
-	$(CC) $(CFLAGS) /Fo$@ /c rex.c
+	$(CC) $(CFLAGS) -o$@ -c rex.c
 
 $(TMP_DIR)\jni.obj: jni.c
-	$(CC) $(CFLAGS) $(JNI_INC) /Fo$@ /c jni.c
-
-$(TMP_DIR)\cxx\Awk.obj: Awk.cpp Awk.hpp
-	$(CXX) $(CXXFLAGS) /Fo$@ /c Awk.cpp
-
-$(TMP_DIR)\cxx\StdAwk.obj: StdAwk.cpp StdAwk.hpp Awk.hpp
-	$(CXX) $(CXXFLAGS) /Fo$@ /c StdAwk.cpp
+	$(CC) $(CFLAGS) $(JNI_INC) -o$@ -c jni.c
 
 $(TMP_DIR)\ase\awk\Awk.class: Awk.java
 	$(JAVAC) $(JAVACFLAGS) -d $(TMP_DIR) Awk.java
@@ -172,21 +136,16 @@ $(TMP_DIR)\ase\awk\Exception.class: Exception.java
 	$(JAVAC) $(JAVACFLAGS) -d $(TMP_DIR) Exception.java
 
 $(OUT_DIR):
-	-md $(OUT_DIR)
+	md $(OUT_DIR)
 
 $(TMP_DIR):
-	-md $(TMP_DIR)
-
-$(TMP_DIR_CXX): $(TMP_DIR)
-	-md $(TMP_DIR_CXX)
+	md $(TMP_DIR)
 
 clean:
-	-del $(OUT_FILE_LIB) 
-	-del $(OUT_FILE_JNI) 
-	-del $(OUT_FILE_JAR) 
-	-del $(OUT_FILE_LIB_CXX) 
-	-del $(OBJ_FILES_LIB) 
-	-del $(OBJ_FILES_JNI) 
-	-del $(OBJ_FILES_JAR) 
-	-del $(OBJ_FILES_LIB_CXX)
+	del $(OUT_FILE_LIB) 
+	del $(OUT_FILE_JNI) 
+	del $(OUT_FILE_JAR) 
+	del $(OBJ_FILES_LIB) 
+	del $(OBJ_FILES_JNI) 
+	del $(OBJ_FILES_JAR)
 

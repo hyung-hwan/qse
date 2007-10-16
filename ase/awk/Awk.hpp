@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.74 2007/10/13 06:28:17 bacon Exp $
+ * $Id: Awk.hpp,v 1.76 2007/10/14 16:34:57 bacon Exp $
  *
  * {License}
  */
@@ -279,6 +279,12 @@ public:
 	};
 
 	class Run;
+	class Argument;
+	class Return;
+
+	friend class Run;
+	friend class Argument;
+	friend class Return;
 
 	/**
 	 * Represents an argument to an intrinsic function
@@ -287,7 +293,7 @@ public:
 	{
 	public:
 		friend class Awk;
-		friend class Awk::Run;
+		friend class Run;
 
 		Argument (Run& run);
 		Argument (Run* run);
@@ -331,8 +337,8 @@ public:
 		int getIndexed (const char_t* idxptr, size_t idxlen, Argument& val) const;
 		int getIndexed (long_t idx, Argument& val) const;
 
-		int getFirstIndex (Awk::Argument& val) const;
-		int getNextIndex (Awk::Argument& val) const;
+		int getFirstIndex (Argument& val) const;
+		int getNextIndex (Argument& val) const;
 
 	protected:
 		Run* run;
@@ -354,7 +360,7 @@ public:
 	{
 	public:
 		friend class Awk;
-		friend class Awk::Run;
+		friend class Run;
 
 		Return (Run& run);
 		Return (Run* run);
@@ -564,8 +570,8 @@ public:
 	{
 	protected:
 		friend class Awk;
-		friend class Awk::Argument;
-		friend class Awk::Return;
+		friend class Argument;
+		friend class Return;
 
 		Run (Awk* awk);
 		Run (Awk* awk, run_t* run);
@@ -1066,6 +1072,8 @@ protected:
 private:
 	Awk (const Awk&);
 	Awk& operator= (const Awk&);
+
+	void triggerOnRunStart (Run& run);
 };
 
 /////////////////////////////////
