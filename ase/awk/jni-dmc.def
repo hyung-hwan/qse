@@ -1,4 +1,5 @@
 LIBRARY	"aseawk_jni.dll"
+EXETYPE NT
 
 EXPORTS
 	Java_ase_awk_Awk_open

@@ -1,22 +1,22 @@
 /*
- * $Id: Context.java,v 1.2 2007/10/12 16:13:34 bacon Exp $
+ * $Id: Context.java,v 1.3 2007/10/14 16:34:57 bacon Exp $
  */
 
 package ase.awk;
 
 public class Context
 {
-	private long run;
+	private long handle;
 	private Object custom;
 
-	Context (long run)
+	Context (long handle)
 	{
-		this.run = run;
+		this.handle = handle;
 	}
 
 	public long getId ()
 	{
-		return this.run;
+		return this.handle;
 	}
 
 	public void setCustom (Object custom)

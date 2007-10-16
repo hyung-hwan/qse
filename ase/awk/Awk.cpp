@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.75 2007/10/13 17:25:30 bacon Exp $
+ * $Id: Awk.cpp,v 1.77 2007/10/14 16:34:57 bacon Exp $
  *
  * {License}
  */
@@ -919,7 +919,7 @@ void Awk::Run::stop () const
 bool Awk::Run::isStop () const
 {
 	ASE_ASSERT (this->run != ASE_NULL);
-	return ase_awk_isstop (this->run);
+	return ase_awk_isstop (this->run)? true: false;
 }
 
 Awk::ErrorCode Awk::Run::getErrorCode () const
@@ -1338,15 +1338,16 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	runios.console     = consoleHandler;
 	runios.custom_data = this;
 
+	ase_memset (&runcbs, 0, ASE_SIZEOF(runcbs));
+	runcbs.on_start = onRunStart;
 	if (runCallback)
 	{
-		runcbs.on_start     = onRunStart;
 		runcbs.on_end       = onRunEnd;
 		runcbs.on_return    = onRunReturn;
 		runcbs.on_statement = onRunStatement;
-		runcbs.custom_data  = &runctx;
 	}
-
+	runcbs.custom_data = &runctx;
+	
 	if (nargs > 0)
 	{
 		runarg = (ase_awk_runarg_t*) ase_awk_malloc (
@@ -1375,10 +1376,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 		runarg[i].len = 0;
 	}
 	
-	int n = ase_awk_run (
-		awk, main, &runios, 
-		(runCallback? &runcbs: ASE_NULL), 
-		runarg, &runctx);
+	int n = ase_awk_run (awk, main, &runios, &runcbs, runarg, &runctx);
 	if (n == -1) retrieveError ();
 
 	if (runarg != ASE_NULL) 
@@ -1535,6 +1533,11 @@ void Awk::enableRunCallback ()
 void Awk::disableRunCallback ()
 {
 	runCallback = false;
+}
+
+void Awk::triggerOnRunStart (Run& run)
+{
+	if (runCallback) onRunStart (run);
 }
 
 void Awk::onRunStart (Run& run)
@@ -1711,7 +1714,7 @@ void Awk::onRunStart (run_t* run, void* custom)
 	r->run = run; 
 
 	r->callbackFailed = false;
-	r->awk->onRunStart (*r);
+	r->awk->triggerOnRunStart (*r);
 }
 
 void Awk::onRunEnd (run_t* run, int errnum, void* custom)

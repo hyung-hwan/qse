@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.19 2007/10/14 05:28:26 bacon Exp $
+ * $Id: Awk.java,v 1.20 2007/10/14 16:34:57 bacon Exp $
  *
  * {License}
  */
@@ -121,7 +121,7 @@ public abstract class Awk
 		run (null, null);
 	}
 
-	/* == builtin functions == */
+	/* == intrinsic functions == */
 	public void addFunction (String name, int min_args, int max_args) throws Exception
 	{
 		addFunction (name, min_args, max_args, name);
@@ -150,6 +150,23 @@ public abstract class Awk
 		delfunc (name); 
 		functionTable.remove (name);
 	}
+
+	protected Object handleFunction (
+		long run, String name, Object args[]) throws java.lang.Exception
+	{
+		String mn = (String)functionTable.get(name);
+		// name should always be found in this table.
+		// otherwise, there is something wrong with this program. 
+
+		Class c = this.getClass ();
+		Class[] a = { Context.class, String.class, Object[].class };
+
+		// TODO: remove new Context ....
+		Method m = c.getMethod (mn, a);
+		return m.invoke (this, 
+			new Object[] { new Context(run), name, args}) ;
+	}
+
 
 	protected long builtinFunctionArgumentToLong (
 		long runid, Object obj) throws Exception
@@ -301,23 +318,6 @@ public abstract class Awk
 		setword (null, null);
 	}
 
-	/* == intrinsic function handling == */
-	protected Object handleFunction (
-		long run, String name, Object args[]) throws java.lang.Exception
-	{
-		String mn = (String)functionTable.get(name);
-		// name should always be found in this table.
-		// otherwise, there is something wrong with this program. 
-
-		Class c = this.getClass ();
-		Class[] a = { Context.class, String.class, Object[].class };
-
-		// TODO: remove new Context ....
-		Method m = c.getMethod (mn, a);
-		return m.invoke (this, 
-			new Object[] { new Context(run), name, args}) ;
-	}
-
 	/* == source code management == */
 	protected abstract int openSource (int mode);
 	protected abstract int closeSource (int mode);
@@ -414,7 +414,6 @@ public abstract class Awk
 
 		switch (extio.getType())
 		{
-
 			case Extio.TYPE_CONSOLE: 
 			{
 				return writeConsole (
@@ -494,4 +493,11 @@ public abstract class Awk
 	protected abstract int readPipe (Pipe pipe, char[] buf, int len);
 	protected abstract int writePipe (Pipe pipe, char[] buf, int len); 
 	protected abstract int flushPipe (Pipe pipe);
+
+	/* TODO: ...
+	protected void onRunStart (Context ctx) {}
+	protected void onRunEnd (Context ctx) {}
+	protected void onRunReturn (Context ctx) {}
+	protected void onRunStatement (Context ctx) {}
+	*/
 }
