@@ -1,22 +1,30 @@
 /*
- * $Id: Context.java,v 1.3 2007/10/14 16:34:57 bacon Exp $
+ * $Id: Context.java,v 1.4 2007/10/15 16:10:10 bacon Exp $
  */
 
 package ase.awk;
 
 public class Context
 {
-	private long handle;
+	private Awk awk;
+	private long runid;
 	private Object custom;
 
-	Context (long handle)
+	Context (Awk awk)
 	{
-		this.handle = handle;
+		this.awk = awk;
+		this.runid = 0;
+		this.custom = null;
+	}
+
+	public Awk getAwk ()
+	{
+		return awk;
 	}
 
 	public long getId ()
 	{
-		return this.handle;
+		return this.runid;
 	}
 
 	public void setCustom (Object custom)
@@ -28,4 +36,20 @@ public class Context
 	{
 		return this.custom;
 	}
+
+	public void setConsoleInputName (String name) throws Exception
+	{
+		awk.setfilename (this.runid, name);
+	}
+
+	public void setConsoleOutputName (String name) throws Exception
+	{
+		awk.setofilename (this.runid, name);
+	}
+
+	// TODO:
+	// setGlobal
+	// getGlobal
+	// setError
+	// getError
 }

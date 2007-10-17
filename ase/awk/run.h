@@ -1,5 +1,5 @@
 /*
- * $Id: run.h,v 1.6 2007/09/24 08:21:25 bacon Exp $
+ * $Id: run.h,v 1.7 2007/10/15 16:10:10 bacon Exp $
  *
  * {License}
  */
@@ -75,38 +75,6 @@ enum ase_awk_incop_type_t
 	 * __incop_str in tree.c accordingly. */ 
 	ASE_AWK_INCOP_PLUS,
 	ASE_AWK_INCOP_MINUS
-};
-
-enum ase_awk_global_id_t
-{
-	/* this table should match gtab in parse.c.
-	 * in addition, ase_awk_setglobal also counts 
-	 * on the order of these values */
-
-	ASE_AWK_GLOBAL_ARGC,
-	ASE_AWK_GLOBAL_ARGV,
-	ASE_AWK_GLOBAL_CONVFMT,
-	ASE_AWK_GLOBAL_ENVIRON,
-	ASE_AWK_GLOBAL_FILENAME,
-	ASE_AWK_GLOBAL_FNR,
-	ASE_AWK_GLOBAL_FS,
-	ASE_AWK_GLOBAL_IGNORECASE,
-	ASE_AWK_GLOBAL_NF,
-	ASE_AWK_GLOBAL_NR,
-	ASE_AWK_GLOBAL_OFILENAME,
-	ASE_AWK_GLOBAL_OFMT,
-	ASE_AWK_GLOBAL_OFS,
-	ASE_AWK_GLOBAL_ORS,
-	ASE_AWK_GLOBAL_RLENGTH,
-	ASE_AWK_GLOBAL_RS,
-	ASE_AWK_GLOBAL_RSTART,
-	ASE_AWK_GLOBAL_SUBSEP,
-
-	/* these are not not the actual IDs and are used internally only 
-	 * Make sure you update these values properly if you add more 
-	 * ID definitions, however */
-	ASE_AWK_MIN_GLOBAL_ID = ASE_AWK_GLOBAL_ARGC,
-	ASE_AWK_MAX_GLOBAL_ID = ASE_AWK_GLOBAL_SUBSEP
 };
 
 #ifdef __cplusplus
