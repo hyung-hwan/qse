@@ -1,5 +1,5 @@
 /*
- * $Id: Context.java,v 1.4 2007/10/15 16:10:10 bacon Exp $
+ * $Id: Context.java,v 1.5 2007/10/16 15:30:41 bacon Exp $
  */
 
 package ase.awk;
@@ -45,6 +45,11 @@ public class Context
 	public void setConsoleOutputName (String name) throws Exception
 	{
 		awk.setofilename (this.runid, name);
+	}
+
+	public void stop ()
+	{
+		awk.stoprun (this.runid);
 	}
 
 	// TODO:

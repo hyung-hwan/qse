@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.25 2007/10/15 16:10:10 bacon Exp $
+ * $Id: jni.c,v 1.26 2007/10/16 15:30:41 bacon Exp $
  *
  * {License}
  */
@@ -974,6 +974,11 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_stop (JNIEnv* env, jobject obj)
 
 	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
 	if (awk != NULL) ase_awk_stopall (awk);
+}
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_stoprun (JNIEnv* env, jobject obj, jlong runid)
+{
+	ase_awk_stop ((ase_awk_run_t*)runid);
 }
 
 static ase_ssize_t java_open_source (JNIEnv* env, jobject obj, int mode)

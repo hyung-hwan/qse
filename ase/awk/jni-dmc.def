@@ -7,6 +7,7 @@ EXPORTS
 	Java_ase_awk_Awk_parse
 	Java_ase_awk_Awk_run
 	Java_ase_awk_Awk_stop
+	Java_ase_awk_Awk_stoprun
 	Java_ase_awk_Awk_getmaxdepth
 	Java_ase_awk_Awk_setmaxdepth
 	Java_ase_awk_Awk_getoption
