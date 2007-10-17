@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.20 2007/10/14 16:34:57 bacon Exp $
+ * $Id: Awk.java,v 1.21 2007/10/15 16:10:09 bacon Exp $
  *
  * {License}
  */
@@ -53,11 +53,11 @@ public abstract class Awk
 	protected final static Writer stdout =
 		new BufferedWriter (new OutputStreamWriter (System.out));
 
-	private long handle;
+	private long awkid;
 
 	public Awk () throws Exception
 	{
-		this.handle = 0;
+		this.awkid = 0;
 		this.functionTable = new HashMap ();
 		open ();
 	}
@@ -65,8 +65,9 @@ public abstract class Awk
 	/* == just in case == */
 	protected void finalize () throws Throwable
 	{
-		if (handle != 0) close ();
+		if (this.awkid != 0) close ();
 		super.finalize ();
+		
 	}
 
 	/* == native methods == */
@@ -152,7 +153,7 @@ public abstract class Awk
 	}
 
 	protected Object handleFunction (
-		long run, String name, Object args[]) throws java.lang.Exception
+		Context ctx, String name, Object args[]) throws java.lang.Exception
 	{
 		String mn = (String)functionTable.get(name);
 		// name should always be found in this table.
@@ -161,15 +162,12 @@ public abstract class Awk
 		Class c = this.getClass ();
 		Class[] a = { Context.class, String.class, Object[].class };
 
-		// TODO: remove new Context ....
 		Method m = c.getMethod (mn, a);
-		return m.invoke (this, 
-			new Object[] { new Context(run), name, args}) ;
+		return m.invoke (this, /*new Object[] {*/ ctx, name, args/*}*/) ;
 	}
 
-
 	protected long builtinFunctionArgumentToLong (
-		long runid, Object obj) throws Exception
+		Context ctx, Object obj) throws Exception
 	{
 		long n;
 
@@ -177,7 +175,7 @@ public abstract class Awk
 		else
 		{
 			if (obj instanceof String)
-				obj = strtonum (runid, (String)obj);
+				obj = strtonum (ctx.getId(), (String)obj);
 
 			if (obj instanceof Long)
 			{
@@ -206,7 +204,7 @@ public abstract class Awk
 	}
 
 	protected double builtinFunctionArgumentToDouble (
-		long runid, Object obj) throws Exception
+		Context ctx, Object obj) throws Exception
 	{
 		double n;
 
@@ -214,7 +212,7 @@ public abstract class Awk
 		else
 		{
 			if (obj instanceof String)
-				obj = strtonum (runid, (String)obj);
+				obj = strtonum (ctx.getId(), (String)obj);
 
 			if (obj instanceof Long)
 			{
@@ -243,31 +241,15 @@ public abstract class Awk
 	}
 
 	protected String builtinFunctionArgumentToString (
-		long runid, Object obj) throws Exception
+		Context ctx, Object obj) throws Exception
 	{
 		String str;
 
 		if (obj == null) str = "";
 		else if (obj instanceof String) str = (String)obj;
-		else str = valtostr (runid, obj);
+		else str = valtostr (ctx.getId(), obj);
 
 		return str;
-	}
-
-	/* == console name setters == */
-	protected void setConsoleInputName (
-		Extio extio, String name) throws Exception
-	{
-		/* TODO: setfilename is not safe. for example, it can 
-		 * crash the program if runid is invalid. so this wrapper
-		 * needs to do some sanity check. */
-		setfilename (extio.getRunId(), name);
-	}
-
-	protected void setConsoleOutputName (
-		Extio extio, String name) throws Exception
-	{
-		setofilename (extio.getRunId(), name);
 	}
 
 	/* == depth limiting == */
