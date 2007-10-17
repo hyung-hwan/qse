@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.5 2007/09/23 16:48:55 bacon Exp $
+ * $Id: jni.h,v 1.6 2007/10/16 15:30:41 bacon Exp $
  *
  * {License}
  */
@@ -22,6 +22,9 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_run (
 	JNIEnv* env, jobject obj, jstring mfn, jobjectArray args);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_stop (JNIEnv* env, jobject obj);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_stoprun (
+	JNIEnv* env, jobject obj, jlong runid);
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 	JNIEnv* env, jobject obj, jstring name, jint min_args, jint max_args);

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.21 2007/10/15 16:10:09 bacon Exp $
+ * $Id: Awk.java,v 1.22 2007/10/16 15:30:41 bacon Exp $
  *
  * {License}
  */
@@ -47,11 +47,8 @@ public abstract class Awk
 	public static final int OPTION_MAPTOVAR    = (1 << 16);
 	public static final int OPTION_PABLOCK     = (1 << 17);
 
-	protected final static Reader stdin = 
-		new BufferedReader (new InputStreamReader (System.in));
-
-	protected final static Writer stdout =
-		new BufferedWriter (new OutputStreamWriter (System.out));
+	protected final static Reader stdin = new BufferedReader (new InputStreamReader (System.in));
+	protected final static Writer stdout = new BufferedWriter (new OutputStreamWriter (System.out));
 
 	private long awkid;
 
@@ -67,44 +64,31 @@ public abstract class Awk
 	{
 		if (this.awkid != 0) close ();
 		super.finalize ();
-		
 	}
 
 	/* == native methods == */
-	private native void open () throws Exception;
-	public  native void close ();
-	public  native void parse () throws Exception;
-	public  native void run (String main, String[] args) throws Exception;
-	public  native void stop ();
-
-	private native int getmaxdepth (int id);
-	private native void setmaxdepth (int id, int depth);
-
-	private native int getoption ();
-	private native void setoption (int opt);
-
-	private native boolean getdebug ();
-	private native void setdebug (boolean debug);
-
-	private native void setword (String ow, String nw);
-
-	private native void addfunc (
-		String name, int min_args, int max_args) throws Exception;
-	private native void delfunc (String name) throws Exception;
-
-	native void setfilename (
-		long runid, String name) throws Exception;
-	native void setofilename (
-		long runid, String name) throws Exception;
-
-	private native Object strtonum (
-		long runid, String str) throws Exception;
-	private native String valtostr (
-		long runid, Object obj) throws Exception;
-
-	protected native String strftime (String fmt, long sec);
-	protected native String strfgmtime (String fmt, long sec);
-	protected native int system (String cmd);
+	private   native void    open () throws Exception;
+	public    native void    close ();
+	public    native void    parse () throws Exception;
+	public    native void    run (String main, String[] args) throws Exception;
+	public    native void    stop ();
+	          native void    stoprun (long runid);
+	private   native int     getmaxdepth (int id);
+	private   native void    setmaxdepth (int id, int depth);
+	private   native int     getoption ();
+	private   native void    setoption (int opt);
+	private   native boolean getdebug ();
+	private   native void    setdebug (boolean debug);
+	private   native void    setword (String ow, String nw);
+	private   native void    addfunc (String name, int min_args, int max_args) throws Exception;
+	private   native void    delfunc (String name) throws Exception;
+	          native void    setfilename (long runid, String name) throws Exception;
+	          native void    setofilename (long runid, String name) throws Exception;
+	private   native Object  strtonum (long runid, String str) throws Exception;
+	private   native String  valtostr (long runid, Object obj) throws Exception;
+	protected native String  strftime (String fmt, long sec);
+	protected native String  strfgmtime (String fmt, long sec);
+	protected native int     system (String cmd);
 
 	/* == simpler run methods == */
 	public void run (String main) throws Exception
