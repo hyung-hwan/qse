@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.22 2007/10/16 15:30:41 bacon Exp $
+ * $Id: Awk.java,v 1.23 2007/10/17 14:38:28 bacon Exp $
  *
  * {License}
  */
@@ -72,7 +72,6 @@ public abstract class Awk
 	public    native void    parse () throws Exception;
 	public    native void    run (String main, String[] args) throws Exception;
 	public    native void    stop ();
-	          native void    stoprun (long runid);
 	private   native int     getmaxdepth (int id);
 	private   native void    setmaxdepth (int id, int depth);
 	private   native int     getoption ();

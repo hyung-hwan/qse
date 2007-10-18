@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.8 2007/09/23 16:48:55 bacon Exp $
+ * $Id: val.c,v 1.9 2007/10/17 14:38:28 bacon Exp $
  *
  * {License}
  */
@@ -747,7 +747,6 @@ int ase_awk_strtonum (
 	/* TODO: do should i handle strings ending with invalid number 
 	 *       characters like "123xx" or "dkdkdkd"? */
 	return 0; /* long */
-
 }
 
 #define DPRINTF run->awk->prmfns.misc.dprintf

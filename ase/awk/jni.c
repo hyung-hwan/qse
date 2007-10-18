@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.26 2007/10/16 15:30:41 bacon Exp $
+ * $Id: jni.c,v 1.27 2007/10/17 14:38:28 bacon Exp $
  *
  * {License}
  */
@@ -974,11 +974,6 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_stop (JNIEnv* env, jobject obj)
 
 	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
 	if (awk != NULL) ase_awk_stopall (awk);
-}
-
-JNIEXPORT void JNICALL Java_ase_awk_Awk_stoprun (JNIEnv* env, jobject obj, jlong runid)
-{
-	ase_awk_stop ((ase_awk_run_t*)runid);
 }
 
 static ase_ssize_t java_open_source (JNIEnv* env, jobject obj, int mode)
@@ -2909,5 +2904,57 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 #endif
 
 	ase_awk_free (awk, tmp);
+	return ret;
+}
+
+JNIEXPORT void JNICALL Java_ase_awk_Context_stop (JNIEnv* env, jobject obj, jlong runid)
+{
+	ase_awk_stop ((ase_awk_run_t*)runid);
+}
+
+
+JNIEXPORT jlong JNICALL Java_ase_awk_Argument_getintval (JNIEnv* env, jobject obj, long runid, long valid)
+{
+	int n;
+	ase_long_t lv;
+	ase_real_t rv;
+
+	n = ase_awk_valtonum (
+		(ase_awk_run_t*)runid, (ase_awk_val_t*)valid, &lv, &rv);
+	if (n == 1) lv = (ase_long_t)rv;
+
+	return (jlong)lv; 
+}
+
+JNIEXPORT jdouble JNICALL Java_ase_awk_Argument_getrealval (JNIEnv* env, jobject obj, long runid, long valid)
+{
+	int n;
+	ase_long_t lv;
+	ase_real_t rv;
+
+	n = ase_awk_valtonum (
+		(ase_awk_run_t*)runid, (ase_awk_val_t*)valid, &lv, &rv);
+	if (n == 0) rv = (ase_real_t)lv;
+
+	return (jdouble)rv; 
+}
+
+JNIEXPORT jstring JNICALL Java_ase_awk_Argument_getstrval (JNIEnv* env, jobject obj, long runid, long valid)
+{
+	int n;
+	ase_char_t* str;
+	ase_size_t  len;
+	jstring ret;
+
+	str = ase_awk_valtostr (
+		(ase_awk_run_t*)runid, (ase_awk_val_t*)valid, 
+		ASE_AWK_VALTOSTR_CLEAR, ASE_NULL,&len);
+	if (str == ASE_NULL) return ASE_NULL;
+
+	// TODO: convert string properly....
+	ret = (*env)->NewString (env, (jchar*)str, len);
+	ase_awk_free (ase_awk_getrunawk((ase_awk_run_t*)runid), str);
+
+	// TODO: clear exception if any...
 	return ret;
 }

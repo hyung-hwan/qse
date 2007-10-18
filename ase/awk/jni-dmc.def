@@ -7,7 +7,6 @@ EXPORTS
 	Java_ase_awk_Awk_parse
 	Java_ase_awk_Awk_run
 	Java_ase_awk_Awk_stop
-	Java_ase_awk_Awk_stoprun
 	Java_ase_awk_Awk_getmaxdepth
 	Java_ase_awk_Awk_setmaxdepth
 	Java_ase_awk_Awk_getoption
@@ -23,4 +22,7 @@ EXPORTS
 	Java_ase_awk_Awk_strftime
 	Java_ase_awk_Awk_strfgmtime
 	Java_ase_awk_Awk_system
-
+	Java_ase_awk_Context_stop
+	Java_ase_awk_Argument_getintval
+	Java_ase_awk_Argument_getrealval
+	Java_ase_awk_Argument_getstrval
