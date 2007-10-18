@@ -1,5 +1,5 @@
 /*
- * $Id: Context.java,v 1.5 2007/10/16 15:30:41 bacon Exp $
+ * $Id: Context.java,v 1.6 2007/10/17 14:38:28 bacon Exp $
  */
 
 package ase.awk;
@@ -49,8 +49,10 @@ public class Context
 
 	public void stop ()
 	{
-		awk.stoprun (this.runid);
+		stop (this.runid);
 	}
+
+	protected native void stop (long runid);
 
 	// TODO:
 	// setGlobal
