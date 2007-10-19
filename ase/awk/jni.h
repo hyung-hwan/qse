@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.7 2007/10/17 14:38:28 bacon Exp $
+ * $Id: jni.h,v 1.8 2007/10/18 11:14:48 bacon Exp $
  *
  * {License}
  */
@@ -18,11 +18,11 @@ extern "C" {
 #endif
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj);
-JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj);
-JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj, jlong awkid);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj, jlong awkid);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_run (
-	JNIEnv* env, jobject obj, jstring mfn, jobjectArray args);
-JNIEXPORT void JNICALL Java_ase_awk_Awk_stop (JNIEnv* env, jobject obj);
+	JNIEnv* env, jobject obj, jlong awkid, jstring mfn, jobjectArray args);
+JNIEXPORT void JNICALL Java_ase_awk_Awk_stop (JNIEnv* env, jobject obj, jlong awkid);
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 	JNIEnv* env, jobject obj, jstring name, jint min_args, jint max_args);
@@ -30,22 +30,22 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delfunc (
 	JNIEnv* env, jobject obj, jstring name);
 
 JNIEXPORT jint JNICALL Java_ase_awk_Awk_getmaxdepth (
-	JNIEnv* env, jobject obj, jint id);
+	JNIEnv* env, jobject obj, jlong awkid, jint id);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setmaxdepth (
-	JNIEnv* env, jobject obj, jint ids, jint depth);
+	JNIEnv* env, jobject obj, jlong awkid, jint ids, jint depth);
 
 JNIEXPORT jint JNICALL Java_ase_awk_Awk_getoption (
-	JNIEnv* env, jobject obj);
+	JNIEnv* env, jobject obj, jlong awkid);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setoption (
-	JNIEnv* env, jobject obj, jint options);
+	JNIEnv* env, jobject obj, jlong awkid, jint options);
 
 JNIEXPORT jboolean JNICALL Java_ase_awk_Awk_getdebug (
-	JNIEnv* env, jobject obj);
+	JNIEnv* env, jobject obj, jlong awkid);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
-	JNIEnv* env, jobject obj, jboolean debug);
+	JNIEnv* env, jobject obj, jlong awkid, jboolean debug);
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
-	JNIEnv* env, jobject obj, jstring ow, jstring nw);
+	JNIEnv* env, jobject obj, jlong awkid, jstring ow, jstring nw);
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 	JNIEnv* env, jobject obj, jlong runid, jstring name);

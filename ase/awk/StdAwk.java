@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.15 2007/10/15 16:10:10 bacon Exp $
+ * $Id: StdAwk.java,v 1.16 2007/10/18 14:51:04 bacon Exp $
  *
  * {License}
  */
@@ -333,8 +333,12 @@ public abstract class StdAwk extends Awk
 	/* == arithmetic built-in functions */
 	public Object sin (Context ctx, String name, Object[] args) throws Exception
 	{
+		/*
 		double x = builtinFunctionArgumentToDouble (ctx, args[0]);
 		return new Double (Math.sin(x));
+		*/
+		Argument x = (Argument)args[0];
+		return new Double (Math.sin(x.getIntValue()));
 	}
 
 	public Object cos (Context ctx, String name, Object[] args) throws Exception

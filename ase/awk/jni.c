@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.27 2007/10/17 14:38:28 bacon Exp $
+ * $Id: jni.c,v 1.29 2007/10/18 14:51:04 bacon Exp $
  *
  * {License}
  */
@@ -39,6 +39,7 @@
 #define CLASS_EXCEPTION        "ase/awk/Exception"
 #define CLASS_EXTIO            "ase/awk/Extio"
 #define CLASS_CONTEXT          "ase/awk/Context"
+#define CLASS_ARGUMENT         "ase/awk/Argument"
 #define FIELD_AWKID            "awkid"
 #define FIELD_RUNID            "runid"
 
@@ -102,6 +103,7 @@ struct run_data_t
 	jclass double_class;
 	jclass object_class;
 	jclass context_class;
+	jclass argument_class;
 
 	jmethodID integer_init;
 	jmethodID long_init;
@@ -109,6 +111,7 @@ struct run_data_t
 	jmethodID float_init;
 	jmethodID double_init;
 	jmethodID context_init;
+	jmethodID argument_init;
 
 	jmethodID integer_value;
 	jmethodID long_value;
@@ -488,45 +491,33 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 #endif
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj)
+JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj, jlong awkid)
 {
-	jclass class; 
-	jfieldID awkid;
 	ase_awk_t* awk;
+	awk_data_t* tmp;
 	
+	awk = (ase_awk_t*)awkid;
+ 	/* don't like to throw an exception for close.
+	 * i find doing so very irritating, especially when it 
+	 * should be called in an exception handler */
+	if (awk == NULL) return;
+
 #if defined(_WIN32) && defined(_DEBUG) 
 	OutputDebugStringW (L"<<<CLOSING AWK>>>\n");
 #endif
 
-	class = (*env)->GetObjectClass(env, obj);
-	awkid = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (awkid == NULL) 
-	{	
-		/* internal error. no awkid field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, awkid);
-	if (awk != NULL) 
-	{
-		/* the awkid is not NULL. close it */
-		awk_data_t* tmp = (awk_data_t*)ase_awk_getcustomdata (awk);
+	tmp = (awk_data_t*)ase_awk_getcustomdata (awk);
 #if defined(_WIN32) && defined(__DMC__)
-		HANDLE heap = tmp->heap;
+	HANDLE heap = tmp->heap;
 #endif
-		ase_awk_close (awk);
-		(*env)->SetLongField (env, obj, awkid, (jlong)0);
+	ase_awk_close (awk);
 
 #if defined(_WIN32) && defined(__DMC__)
-		awk_free (heap, tmp);
-		HeapDestroy (heap);
+	awk_free (heap, tmp);
+	HeapDestroy (heap);
 #else
-		awk_free (NULL, tmp);
+	awk_free (NULL, tmp);
 #endif
-	}
 
 #if defined(_WIN32) && defined(_DEBUG) 
 	OutputDebugStringW (L"<<<CLOSED AWK>>>\n");
@@ -534,30 +525,38 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj)
 		_CrtDumpMemoryLeaks ();
 	#endif
 #endif
-
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
-{
-	jclass class;
-	jfieldID handle;
+#define EXCEPTION_ON_NULL_AWK(awk) \
+	if (awk == NULL) \
+	{ \
+		throw_exception ( \
+			env, \
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOPER), \
+			ASE_AWK_ENOPER, \
+			0); \
+		return; \
+	}
 
+#define EXCEPTION_ON_NULL_AWK_RETURNING(awk,ret) \
+	if (awk == NULL) \
+	{ \
+		throw_exception ( \
+			env, \
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOPER), \
+			ASE_AWK_ENOPER, \
+			0); \
+		return ret; \
+	}
+
+JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj, jlong awkid)
+{
 	ase_awk_t* awk;
 	ase_awk_srcios_t srcios;
 	srcio_data_t srcio_data;
 
-	class = (*env)->GetObjectClass (env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL) 
-	{
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	awk = (ase_awk_t*) awkid;
+	EXCEPTION_ON_NULL_AWK (awk);
 
 	srcio_data.env = env;
 	srcio_data.obj = obj;
@@ -587,6 +586,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj)
 		(*env)->DeleteLocalRef (env, run_data.string_class); \
 		(*env)->DeleteLocalRef (env, run_data.object_class); \
 		(*env)->DeleteLocalRef (env, run_data.context_class); \
+		(*env)->DeleteLocalRef (env, run_data.argument_class); \
 		if (run_data.context_object != NULL) \
 			(*env)->DeleteLocalRef (env, run_data.context_object); \
 	} while (0)
@@ -651,35 +651,21 @@ static void on_run_end (ase_awk_run_t* run, int errnum, void* custom)
 	(*env)->SetLongField (env, run_data->context_object, runid, (jlong)0);
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring mfn, jobjectArray args)
+JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awkid, jstring mfn, jobjectArray args)
 {
-	jclass class;
-	jfieldID handle;
-
 	ase_awk_t* awk;
 	ase_awk_runcbs_t runcbs;
 	ase_awk_runios_t runios;
 	runio_data_t runio_data;
 	run_data_t run_data;
 	ase_char_t* mmm;
+	ase_awk_runarg_t* runarg = NULL;
 
 	ase_size_t len, i;
 	const jchar* ptr;
 
-	ase_awk_runarg_t* runarg = NULL;
-
-	class = (*env)->GetObjectClass (env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == 0) 
-	{
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	awk = (ase_awk_t*) awkid;
+	EXCEPTION_ON_NULL_AWK (awk);
 
 	run_data.env = env;
 	run_data.obj = obj;
@@ -693,6 +679,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	run_data.double_class = (*env)->FindClass (env, "java/lang/Double");
 	run_data.object_class = (*env)->FindClass (env, "java/lang/Object");
 	run_data.context_class = (*env)->FindClass (env, CLASS_CONTEXT);
+	run_data.argument_class = (*env)->FindClass (env, CLASS_ARGUMENT);
 
 	ASE_ASSERT (run_data.string_class != NULL);
 	ASE_ASSERT (run_data.integer_class != NULL);
@@ -702,6 +689,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	ASE_ASSERT (run_data.double_class != NULL);
 	ASE_ASSERT (run_data.object_class != NULL);
 	ASE_ASSERT (run_data.context_class != NULL);
+	ASE_ASSERT (run_data.argument_class != NULL);
 
 	run_data.integer_init = (*env)->GetMethodID (
 		env, run_data.integer_class, "<init>", "(I)V");
@@ -715,6 +703,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 		env, run_data.double_class, "<init>", "(D)V");
 	run_data.context_init = (*env)->GetMethodID (
 		env, run_data.context_class, "<init>", "(Lase/awk/Awk;)V");
+	run_data.argument_init = (*env)->GetMethodID (
+		env, run_data.argument_class, "<init>", "(JJ)V");
 
 	ASE_ASSERT (run_data.integer_init != NULL);
 	ASE_ASSERT (run_data.long_init != NULL);
@@ -722,6 +712,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	ASE_ASSERT (run_data.float_init != NULL);
 	ASE_ASSERT (run_data.double_init != NULL);
 	ASE_ASSERT (run_data.context_init != NULL);
+	ASE_ASSERT (run_data.argument_init != NULL);
 
 	run_data.integer_value = (*env)->GetMethodID (
 		env, run_data.integer_class, "intValue", "()I");
@@ -955,25 +946,11 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jstring m
 	DELETE_CLASS_REFS (env, run_data);
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_stop (JNIEnv* env, jobject obj)
+JNIEXPORT void JNICALL Java_ase_awk_Awk_stop (JNIEnv* env, jobject obj, jlong awkid)
 {
-	jclass class; 
-	jfieldID handle;
-	ase_awk_t* awk;
-	
-	class = (*env)->GetObjectClass(env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL) 
-	{	
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
-	if (awk != NULL) ase_awk_stopall (awk);
+	ase_awk_t* awk = (ase_awk_t*)awkid;
+	EXCEPTION_ON_NULL_AWK (awk);
+	ase_awk_stopall (awk);
 }
 
 static ase_ssize_t java_open_source (JNIEnv* env, jobject obj, int mode)
@@ -1718,6 +1695,11 @@ static int handle_bfn (
 	{
 		v = ase_awk_getarg (run, i);
 
+		arg = (*env)->NewObject (env, 
+			run_data->argument_class, 
+			run_data->argument_init, (jlong)run, (jlong)v);
+
+#if 0
 		arg = NULL;
 
 		if (v->type == ASE_AWK_VAL_INT)
@@ -1768,8 +1750,9 @@ static int handle_bfn (
 					env, (jchar*)((ase_awk_val_str_t*)v)->buf, len);
 			}
 		}
+#endif
 
-		if (v->type != ASE_AWK_VAL_NIL && arg == NULL)
+		if (/*v->type != ASE_AWK_VAL_NIL && */arg == NULL)
 		{
 			if ((*env)->ExceptionOccurred (env))
 			{
@@ -2099,155 +2082,60 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delfunc (
 	}
 }
 
-JNIEXPORT jint JNICALL Java_ase_awk_Awk_getmaxdepth (
-	JNIEnv* env, jobject obj, jint id)
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_getmaxdepth (JNIEnv* env, jobject obj, jlong awkid, jint id)
 {
-	jclass class; 
-	jfieldID handle;
-	ase_awk_t* awk;
-
-	class = (*env)->GetObjectClass(env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL) return 0; /* should never happen */
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	ase_awk_t* awk = (ase_awk_t*)awkid;
+	EXCEPTION_ON_NULL_AWK_RETURNING (awk, 0);
 	return (jint)ase_awk_getmaxdepth (awk, id);
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_setmaxdepth (
-	JNIEnv* env, jobject obj, jint ids, jint depth)
+JNIEXPORT void JNICALL Java_ase_awk_Awk_setmaxdepth (JNIEnv* env, jobject obj, jlong awkid, jint ids, jint depth)
 {
-	jclass class; 
-	jfieldID handle;
-	ase_awk_t* awk;
-
-	class = (*env)->GetObjectClass(env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL)
-	{
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	ase_awk_t* awk = (ase_awk_t*)awkid;
+	EXCEPTION_ON_NULL_AWK (awk);
 	ase_awk_setmaxdepth (awk, ids, depth);
 }
 
-JNIEXPORT jint JNICALL Java_ase_awk_Awk_getoption (
-	JNIEnv* env, jobject obj)
+JNIEXPORT jint JNICALL Java_ase_awk_Awk_getoption (JNIEnv* env, jobject obj, jlong awkid)
 {
-	jclass class; 
-	jfieldID handle;
-	ase_awk_t* awk;
-
-	class = (*env)->GetObjectClass(env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL)
-	{
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return 0;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	ase_awk_t* awk = (ase_awk_t*)awkid;
+	EXCEPTION_ON_NULL_AWK_RETURNING (awk, 0);
 	return ase_awk_getoption (awk);
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Awk_setoption (
-	JNIEnv* env, jobject obj, jint options)
+JNIEXPORT void JNICALL Java_ase_awk_Awk_setoption (JNIEnv* env, jobject obj, jlong awkid, jint options)
 {
-	jclass class; 
-	jfieldID handle;
-	ase_awk_t* awk;
-
-	class = (*env)->GetObjectClass(env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL)
-	{
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	ase_awk_t* awk = (ase_awk_t*)awkid;
+	EXCEPTION_ON_NULL_AWK (awk);
 	ase_awk_setoption (awk, (int)options);
 }
 
-JNIEXPORT jboolean JNICALL Java_ase_awk_Awk_getdebug (
-	JNIEnv* env, jobject obj)
+JNIEXPORT jboolean JNICALL Java_ase_awk_Awk_getdebug (JNIEnv* env, jobject obj, jlong awkid)
 {
-	jclass class; 
-	jfieldID handle;
-	ase_awk_t* awk;
-
-	class = (*env)->GetObjectClass(env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL)
-	{
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return JNI_FALSE;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	ase_awk_t* awk = (ase_awk_t*)awkid;
+	EXCEPTION_ON_NULL_AWK_RETURNING (awk, JNI_FALSE);
 	return ((awk_data_t*)ase_awk_getcustomdata(awk))->debug? JNI_TRUE: JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
-	JNIEnv* env, jobject obj, jboolean debug)
+	JNIEnv* env, jobject obj, jlong awkid, jboolean debug)
 {	
-	jclass class; 
-	jfieldID handle;
-	ase_awk_t* awk;
-
-	class = (*env)->GetObjectClass(env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL)
-	{
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	ase_awk_t* awk = (ase_awk_t*)awkid;
+	EXCEPTION_ON_NULL_AWK (awk);
 	((awk_data_t*)ase_awk_getcustomdata(awk))->debug = debug;
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
-	JNIEnv* env, jobject obj, jstring ow, jstring nw)
+	JNIEnv* env, jobject obj, jlong awkid, jstring ow, jstring nw)
 {	
-	jclass class; 
-	jfieldID handle;
 	ase_awk_t* awk;
 	const jchar* op = NULL, * np = NULL;
 	jsize ol = 0, nl = 0;
 	ase_char_t* ox, * nx;
 	jint r;
 
-	class = (*env)->GetObjectClass(env, obj);
-	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
-	(*env)->DeleteLocalRef (env, class);
-	if (handle == NULL)
-	{
-		/* internal error. no handle field 
-		 * NoSuchFieldError, ExceptionInitializerError, 
-		 * OutOfMemoryError might have occurred */
-		return;
-	}
-
-	awk = (ase_awk_t*) (*env)->GetLongField (env, obj, handle);
+	awk = (ase_awk_t*) awkid;
+	EXCEPTION_ON_NULL_AWK (awk);
 
 	if (ow != NULL)
 	{
@@ -2941,20 +2829,51 @@ JNIEXPORT jdouble JNICALL Java_ase_awk_Argument_getrealval (JNIEnv* env, jobject
 
 JNIEXPORT jstring JNICALL Java_ase_awk_Argument_getstrval (JNIEnv* env, jobject obj, long runid, long valid)
 {
-	int n;
+	ase_awk_run_t* run = (ase_awk_run_t*)runid;
+	ase_awk_val_t* val = (ase_awk_val_t*)valid;
+	ase_awk_t* awk = ase_awk_getrunawk (run);
+
 	ase_char_t* str;
 	ase_size_t  len;
-	jstring ret;
+	jstring ret = NULL;
 
 	str = ase_awk_valtostr (
-		(ase_awk_run_t*)runid, (ase_awk_val_t*)valid, 
-		ASE_AWK_VALTOSTR_CLEAR, ASE_NULL,&len);
-	if (str == ASE_NULL) return ASE_NULL;
+		run, val, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
+	if (str == ASE_NULL) goto no_mem;
 
-	// TODO: convert string properly....
-	ret = (*env)->NewString (env, (jchar*)str, len);
-	ase_awk_free (ase_awk_getrunawk((ase_awk_run_t*)runid), str);
+	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
+	{
+		jchar* tmp;
+		ase_size_t i;
+	       
+		tmp = (jchar*) ase_awk_malloc (awk, ASE_SIZEOF(jchar)*len);
+		if (tmp == NULL)
+		{
+			ase_awk_free (awk, str);
+			goto no_mem;
+		}
+		for (i = 0; i < len; i++) tmp[i] = (jchar)str[i];
+		ret = (*env)->NewString (env, tmp, len);
+		ase_awk_free (awk, tmp);
+	}
+	else
+	{
+		ret = (*env)->NewString (env, (jchar*)str, len);
+	}
 
-	// TODO: clear exception if any...
+	ase_awk_free (awk, str);
+
+	if (ret == NULL)
+	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
+no_mem:
+		throw_exception (
+			env, 
+			ase_awk_geterrstr(ASE_NULL, ASE_AWK_ENOMEM),
+			ASE_AWK_ENOMEM, 
+			0);
+	}
+
 	return ret;
 }

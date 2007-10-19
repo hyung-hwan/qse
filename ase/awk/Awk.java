@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.23 2007/10/17 14:38:28 bacon Exp $
+ * $Id: Awk.java,v 1.25 2007/10/18 14:51:04 bacon Exp $
  *
  * {License}
  */
@@ -62,48 +62,74 @@ public abstract class Awk
 	/* == just in case == */
 	protected void finalize () throws Throwable
 	{
-		if (this.awkid != 0) close ();
+		close ();
 		super.finalize ();
 	}
 
-	/* == native methods == */
-	private   native void    open () throws Exception;
-	public    native void    close ();
-	public    native void    parse () throws Exception;
-	public    native void    run (String main, String[] args) throws Exception;
-	public    native void    stop ();
-	private   native int     getmaxdepth (int id);
-	private   native void    setmaxdepth (int id, int depth);
-	private   native int     getoption ();
-	private   native void    setoption (int opt);
-	private   native boolean getdebug ();
-	private   native void    setdebug (boolean debug);
-	private   native void    setword (String ow, String nw);
-	private   native void    addfunc (String name, int min_args, int max_args) throws Exception;
-	private   native void    delfunc (String name) throws Exception;
-	          native void    setfilename (long runid, String name) throws Exception;
-	          native void    setofilename (long runid, String name) throws Exception;
-	private   native Object  strtonum (long runid, String str) throws Exception;
-	private   native String  valtostr (long runid, Object obj) throws Exception;
-	protected native String  strftime (String fmt, long sec);
-	protected native String  strfgmtime (String fmt, long sec);
-	protected native int     system (String cmd);
+	public void close ()
+	{
+		if (this.awkid != 0)
+		{
+			close (this.awkid);
+			this.awkid = 0;
+		}
+	}
 
-	/* == simpler run methods == */
+	public void parse () throws Exception
+	{
+		parse (this.awkid);
+	}
+
+	public void run (String main, String[] args) throws Exception
+	{
+		run (this.awkid, main, args);
+	}
+
 	public void run (String main) throws Exception
 	{
-		run (main, null);
+		run (this.awkid, main, null);
 	}
 
 	public void run (String[] args) throws Exception
 	{
-		run (null, args);
+		run (this.awkid, null, args);
 	}
 
 	public void run () throws Exception
 	{
-		run (null, null);
+		run (this.awkid, null, null);
 	}
+
+	public void stop () throws Exception
+	{
+		stop (this.awkid);
+	}
+
+	/* == native methods == */
+	private   native void    open () throws Exception;
+	protected native void    close (long awkid);
+	protected native void    parse (long awkid) throws Exception;
+	protected native void    run (long awkid, String main, String[] args) throws Exception;
+	protected native void    stop (long awkid) throws Exception;
+	protected native int     getmaxdepth (long awkid, int id) throws Exception;
+	protected native void    setmaxdepth (long awkid, int id, int depth) throws Exception;
+	protected native int     getoption (long awkid) throws Exception;
+	protected native void    setoption (long awkid, int opt) throws Exception;
+	protected native boolean getdebug (long awkid) throws Exception;
+	protected native void    setdebug (long awkid, boolean debug) throws Exception;
+	protected native void    setword (long awkid, String ow, String nw) throws Exception;
+
+
+	protected native void    addfunc (String name, int min_args, int max_args) throws Exception;
+	protected native void    delfunc (String name) throws Exception;
+	          native void    setfilename (long runid, String name) throws Exception;
+	          native void    setofilename (long runid, String name) throws Exception;
+	protected native Object  strtonum (long runid, String str) throws Exception;
+	protected native String  valtostr (long runid, Object obj) throws Exception;
+	protected native String  strftime (String fmt, long sec);
+	protected native String  strfgmtime (String fmt, long sec);
+	protected native int     system (String cmd);
+
 
 	/* == intrinsic functions == */
 	public void addFunction (String name, int min_args, int max_args) throws Exception
@@ -236,51 +262,52 @@ public abstract class Awk
 	}
 
 	/* == depth limiting == */
-	public int getMaxDepth (int id)
+	public int getMaxDepth (int id) throws Exception
 	{
-		return getmaxdepth (id);
+		return getmaxdepth (this.awkid, id);
 	}
 
-	public void setMaxDepth (int ids, int depth)
+	public void setMaxDepth (int ids, int depth) throws Exception
 	{
-		setmaxdepth (ids, depth);
+		setmaxdepth (this.awkid, ids, depth);
 	}
 	
 	/* == option == */
-	public int getOption ()
+	public int getOption () throws Exception
 	{
-		return getoption ();
+		return getoption (this.awkid);
 	}
 
-	public void setOption (int opt)
+	public void setOption (int opt) throws Exception
 	{
-		setoption (opt);
+		setoption (this.awkid, opt);
 	}
 
 	/* == debug == */
-	public boolean getDebug ()
+	public boolean getDebug () throws Exception
 	{
-		return getdebug ();
+		return getdebug (this.awkid);
 	}
 
-	public void setDebug (boolean debug)
+	public void setDebug (boolean debug) throws Exception
 	{
-		setdebug (debug);
+		setdebug (this.awkid, debug);
 	}
 
-	public void setWord (String ow, String nw)
+	/* == word replacement == */
+	public void setWord (String ow, String nw) throws Exception
 	{
-		setword (ow, nw);
+		setword (this.awkid, ow, nw);
 	}
 
-	public void unsetWord (String ow)
+	public void unsetWord (String ow) throws Exception
 	{
-		setword (ow, null);
+		setword (this.awkid, ow, null);
 	}
 
-	public void unsetAllWords ()
+	public void unsetAllWords () throws Exception
 	{
-		setword (null, null);
+		setword (this.awkid, null, null);
 	}
 
 	/* == source code management == */
