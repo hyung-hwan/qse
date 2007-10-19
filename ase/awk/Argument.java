@@ -1,36 +1,38 @@
 /*
- * $Id: Argument.java,v 1.2 2007/10/17 14:38:28 bacon Exp $
+ * $Id: Argument.java,v 1.3 2007/10/18 14:51:04 bacon Exp $
  */
 
 package ase.awk;
 
 public class Argument
 {
-	protected Context ctx;
-	protected long value;
+	protected long runid;
+	protected long valid;
 
-	Argument (Context ctx)
+	Argument (long runid, long valid)
 	{
-		this.ctx = ctx;
+		this.runid = runid;
+		this.valid = valid;
 	}
 
 	long getIntValue ()
 	{
-		return getintval (ctx.getId(), value);
+		return getintval (this.runid, this.valid);
 	}
 
 	double getRealValue ()
 	{
-		return 0.0;
+		return getrealval (this.runid, this.valid);
 	}
 
-	String getStringValue ()
+	String getStringValue () throws Exception
 	{
-		return null;
+		return getstrval (this.runid, this.valid);
 	}
 
 	Argument getIndexed (String idx)
 	{
+		// TODO:..
 		return null;
 	}
 
@@ -41,5 +43,5 @@ public class Argument
 
 	protected native long getintval (long runid, long valid);
 	protected native double getrealval (long runid, long valid);
-	protected native String getstrval (long runid, long valid);
+	protected native String getstrval (long runid, long valid) throws Exception;
 }

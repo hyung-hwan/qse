@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.4 2007/10/15 16:10:10 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.5 2007/10/18 14:51:04 bacon Exp $
  */
 
 import java.awt.*;
@@ -399,10 +399,16 @@ public class AseAwkPanel extends Panel
 
 			awk.parse ();
 			awk.run ();
+
 		}
 		catch (ase.awk.Exception e)
 		{
-			showMessage ("An exception occurred - " + e.getMessage());
+			int line = e.getLine();
+			if (line <= 0)
+				showMessage ("An exception occurred - " + e.getMessage());
+			else
+				showMessage ("An exception occurred - " + e.getMessage() + " at line " + line);
+
 			return;
 		}
 		finally

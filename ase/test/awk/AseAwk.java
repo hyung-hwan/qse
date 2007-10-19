@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwk.java,v 1.12 2007/10/15 16:10:10 bacon Exp $
+ * $Id: AseAwk.java,v 1.13 2007/10/18 14:51:04 bacon Exp $
  */
 
 import java.awt.*;
@@ -223,7 +223,8 @@ public class AseAwk extends StdAwk
 
 					String ow = arg.substring (0, idx);
 					String nw = arg.substring (idx+1);
-					awk.setWord (ow, nw);
+					try { awk.setWord (ow, nw); } 
+					catch (Exception e) {/* don't care */}
 					mode = 0;
 				}
 			}
