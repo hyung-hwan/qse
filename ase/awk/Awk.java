@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.25 2007/10/18 14:51:04 bacon Exp $
+ * $Id: Awk.java,v 1.26 2007/10/19 03:50:32 bacon Exp $
  *
  * {License}
  */
@@ -124,8 +124,6 @@ public abstract class Awk
 	protected native void    delfunc (String name) throws Exception;
 	          native void    setfilename (long runid, String name) throws Exception;
 	          native void    setofilename (long runid, String name) throws Exception;
-	protected native Object  strtonum (long runid, String str) throws Exception;
-	protected native String  valtostr (long runid, Object obj) throws Exception;
 	protected native String  strftime (String fmt, long sec);
 	protected native String  strfgmtime (String fmt, long sec);
 	protected native int     system (String cmd);
@@ -162,103 +160,17 @@ public abstract class Awk
 	}
 
 	protected Object handleFunction (
-		Context ctx, String name, Object args[]) throws java.lang.Exception
+		Context ctx, String name, Argument[] args) throws java.lang.Exception
 	{
 		String mn = (String)functionTable.get(name);
 		// name should always be found in this table.
 		// otherwise, there is something wrong with this program. 
 
 		Class c = this.getClass ();
-		Class[] a = { Context.class, String.class, Object[].class };
+		Class[] a = { Context.class, String.class, Argument[].class };
 
 		Method m = c.getMethod (mn, a);
 		return m.invoke (this, /*new Object[] {*/ ctx, name, args/*}*/) ;
-	}
-
-	protected long builtinFunctionArgumentToLong (
-		Context ctx, Object obj) throws Exception
-	{
-		long n;
-
-		if (obj == null) n = 0;
-		else
-		{
-			if (obj instanceof String)
-				obj = strtonum (ctx.getId(), (String)obj);
-
-			if (obj instanceof Long)
-			{
-				n = ((Long)obj).longValue ();
-			}
-			else if (obj instanceof Double)
-			{
-				n = ((Double)obj).longValue ();
-			}
-			else if (obj instanceof Integer)
-			{
-				n = ((Integer)obj).longValue ();
-			}
-			else if (obj instanceof Short)
-			{
-				n = ((Short)obj).longValue ();
-			}
-			else if (obj instanceof Float)
-			{
-				n = ((Float)obj).longValue ();
-			}
-			else n = 0;
-		}
-
-		return n;
-	}
-
-	protected double builtinFunctionArgumentToDouble (
-		Context ctx, Object obj) throws Exception
-	{
-		double n;
-
-		if (obj == null) n = 0.0;
-		else
-		{
-			if (obj instanceof String)
-				obj = strtonum (ctx.getId(), (String)obj);
-
-			if (obj instanceof Long)
-			{
-				n = ((Long)obj).doubleValue ();
-			}
-			else if (obj instanceof Double)
-			{
-				n = ((Double)obj).doubleValue ();
-			}
-			else if (obj instanceof Integer)
-			{
-				n = ((Integer)obj).doubleValue ();
-			}
-			else if (obj instanceof Short)
-			{
-				n = ((Short)obj).doubleValue ();
-			}
-			else if (obj instanceof Float)
-			{
-				n = ((Float)obj).doubleValue ();
-			}
-			else n = 0.0;
-		}
-
-		return n;
-	}
-
-	protected String builtinFunctionArgumentToString (
-		Context ctx, Object obj) throws Exception
-	{
-		String str;
-
-		if (obj == null) str = "";
-		else if (obj instanceof String) str = (String)obj;
-		else str = valtostr (ctx.getId(), obj);
-
-		return str;
 	}
 
 	/* == depth limiting == */

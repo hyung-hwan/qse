@@ -1,5 +1,5 @@
 /*
- * $Id: Argument.java,v 1.3 2007/10/18 14:51:04 bacon Exp $
+ * $Id: Argument.java,v 1.4 2007/10/19 03:50:32 bacon Exp $
  */
 
 package ase.awk;
@@ -15,28 +15,28 @@ public class Argument
 		this.valid = valid;
 	}
 
-	long getIntValue ()
+	public long getIntValue ()
 	{
 		return getintval (this.runid, this.valid);
 	}
 
-	double getRealValue ()
+	public double getRealValue ()
 	{
 		return getrealval (this.runid, this.valid);
 	}
 
-	String getStringValue () throws Exception
+	public String getStringValue () throws Exception
 	{
 		return getstrval (this.runid, this.valid);
 	}
 
-	Argument getIndexed (String idx)
+	public Argument getIndexed (String idx)
 	{
 		// TODO:..
 		return null;
 	}
 
-	Argument getIndexed (long idx)
+	public Argument getIndexed (long idx)
 	{
 		return getIndexed (Long.toString(idx));
 	}
