@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwk.java,v 1.13 2007/10/18 14:51:04 bacon Exp $
+ * $Id: AseAwk.java,v 1.15 2007/10/19 05:05:20 bacon Exp $
  */
 
 import java.awt.*;
@@ -23,10 +23,10 @@ import java.net.URL;
 import ase.awk.StdAwk;
 import ase.awk.Console;
 import ase.awk.Context;
+import ase.awk.Argument;
 
 public class AseAwk extends StdAwk
 {
-
 	private static void run_in_awt ()
 	{
 		final Frame frame = new Frame ();
@@ -81,8 +81,7 @@ public class AseAwk extends StdAwk
 		java.io.File file = new java.io.File (url.getFile());
 
 		String osname = System.getProperty ("os.name").toLowerCase();
-		String aseBase = file.getParentFile().getParentFile().getParent(
-);
+		String aseBase = file.getParentFile().getParentFile().getParent();
 		String path;
 
 		if (osname.startsWith ("windows"))
@@ -302,10 +301,9 @@ public class AseAwk extends StdAwk
 		addFunction ("sleep", 1, 1);
 	}
 
-	public Object sleep (Context ctx, String name, Object[] args) throws ase.awk.Exception
+	public Object sleep (Context ctx, String name, Argument[] args) throws ase.awk.Exception
 	{
-		long x = builtinFunctionArgumentToLong (ctx, args[0]);
-		try { Thread.sleep (x * 1000); }
+		try { Thread.sleep (args[0].getIntValue() * 1000); }
 		catch (InterruptedException e) {}
 		return new Long(0);
 	}

@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.8 2007/10/18 11:14:48 bacon Exp $
+ * $Id: jni.h,v 1.9 2007/10/19 03:50:33 bacon Exp $
  *
  * {License}
  */
@@ -52,11 +52,6 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 	JNIEnv* env, jobject obj, jlong runid, jstring name);
 
-JNIEXPORT jobject JNICALL Java_ase_awk_Awk_strtonum (
-	JNIEnv* env, jobject obj, jlong runid, jstring str);
-JNIEXPORT jstring JNICALL Java_ase_awk_Awk_valtostr (
-	JNIEnv* env, jobject obj, jlong runid, jobject val);
-
 JNIEXPORT jstring JNICALL Java_ase_awk_Awk_strftime (
 	JNIEnv* env, jobject obj, jstring fmt, jlong sec);
 JNIEXPORT jstring JNICALL Java_ase_awk_Awk_strfgmtime (
@@ -66,9 +61,9 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 
 JNIEXPORT void JNICALL Java_ase_awk_Context_stop (JNIEnv* env, jobject obj, jlong runid);
 
-JNIEXPORT jlong JNICALL Java_ase_awk_Argument_getintval (JNIEnv* env, jobject obj, long runid, long valid);
-JNIEXPORT jdouble JNICALL Java_ase_awk_Argument_getrealval (JNIEnv* env, jobject obj, long runid, long valid);
-JNIEXPORT jstring JNICALL Java_ase_awk_Argument_getstrval (JNIEnv* env, jobject obj, long runid, long valid);
+JNIEXPORT jlong JNICALL Java_ase_awk_Argument_getintval (JNIEnv* env, jobject obj, jlong runid, jlong valid);
+JNIEXPORT jdouble JNICALL Java_ase_awk_Argument_getrealval (JNIEnv* env, jobject obj, jlong runid, jlong valid);
+JNIEXPORT jstring JNICALL Java_ase_awk_Argument_getstrval (JNIEnv* env, jobject obj, jlong runid, jlong valid);
 
 #ifdef __cplusplus
 }
