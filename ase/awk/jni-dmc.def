@@ -24,3 +24,5 @@ EXPORTS
 	Java_ase_awk_Argument_getintval
 	Java_ase_awk_Argument_getrealval
 	Java_ase_awk_Argument_getstrval
+	Java_ase_awk_Argument_isindexed
+	Java_ase_awk_Argument_getindexed

@@ -1,5 +1,5 @@
 /*
- * $Id: Argument.java,v 1.4 2007/10/19 03:50:32 bacon Exp $
+ * $Id: Argument.java,v 1.5 2007/10/19 15:02:33 bacon Exp $
  */
 
 package ase.awk;
@@ -30,13 +30,17 @@ public class Argument
 		return getstrval (this.runid, this.valid);
 	}
 
-	public Argument getIndexed (String idx)
+	public boolean isIndexed ()
 	{
-		// TODO:..
-		return null;
+		return isindexed (this.runid, this.valid);
 	}
 
-	public Argument getIndexed (long idx)
+	public Argument getIndexed (String idx) throws Exception
+	{
+		return getindexed (this.runid, this.valid, idx);
+	}
+
+	public Argument getIndexed (long idx) throws Exception
 	{
 		return getIndexed (Long.toString(idx));
 	}
@@ -44,4 +48,6 @@ public class Argument
 	protected native long getintval (long runid, long valid);
 	protected native double getrealval (long runid, long valid);
 	protected native String getstrval (long runid, long valid) throws Exception;
+	protected native boolean isindexed (long runid, long valid);
+	protected native Argument getindexed (long runid, long valid, String idx) throws Exception;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.77 2007/10/14 16:34:57 bacon Exp $
+ * $Id: Awk.cpp,v 1.78 2007/10/19 15:02:33 bacon Exp $
  *
  * {License}
  */
@@ -274,16 +274,17 @@ int Awk::Argument::init (val_t* v)
 		if (n == 0) 
 		{
 			this->rnum = (ase_real_t)this->inum;
+			this->str.ptr = ((ase_awk_val_str_t*)this->val)->buf;
+			this->str.len = ((ase_awk_val_str_t*)this->val)->len;
 			return 0;
 		}
 		else if (n == 1) 
 		{
 			this->inum = (ase_long_t)this->rnum;
+			this->str.ptr = ((ase_awk_val_str_t*)this->val)->buf;
+			this->str.len = ((ase_awk_val_str_t*)this->val)->len;
 			return 0;
 		}
-
-		this->str.ptr = ((ase_awk_val_str_t*)this->val)->buf;
-		this->str.len = ((ase_awk_val_str_t*)this->val)->len;
 	}
 	else if (v->type == ASE_AWK_VAL_INT)
 	{
