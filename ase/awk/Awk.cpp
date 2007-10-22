@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.78 2007/10/19 15:02:33 bacon Exp $
+ * $Id: Awk.cpp,v 1.79 2007/10/20 15:06:26 bacon Exp $
  *
  * {License}
  */
@@ -178,7 +178,7 @@ void Awk::Argument::clear ()
 		this->str.ptr = ASE_NULL;
 		this->str.len = 0;
 	}
-	else if (this->val->type == ASE_AWK_VAL_MAP)
+	else if (ASE_AWK_VAL_TYPE(this->val) == ASE_AWK_VAL_MAP)
 	{
 		ASE_ASSERT (this->run != ASE_NULL);
 
@@ -193,7 +193,7 @@ void Awk::Argument::clear ()
 
 		if (this->str.ptr != ASE_NULL)
 		{
-			if (this->val->type != ASE_AWK_VAL_STR)
+			if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_STR)
 			{
 				awk_t* awk = this->run->awk->awk;
 				ase_awk_free (awk, this->str.ptr);
@@ -267,7 +267,7 @@ int Awk::Argument::init (val_t* v)
 	ase_awk_refupval (this->run->run, v);
 	this->val = v;
 
-	if (v->type == ASE_AWK_VAL_STR)
+	if (ASE_AWK_VAL_TYPE(v) == ASE_AWK_VAL_STR)
 	{
 		int n = ase_awk_valtonum (
 			this->run->run, v, &this->inum, &this->rnum);
@@ -286,7 +286,7 @@ int Awk::Argument::init (val_t* v)
 			return 0;
 		}
 	}
-	else if (v->type == ASE_AWK_VAL_INT)
+	else if (ASE_AWK_VAL_TYPE(v) == ASE_AWK_VAL_INT)
 	{
 		this->inum = ((ase_awk_val_int_t*)v)->val;
 		this->rnum = (ase_real_t)((ase_awk_val_int_t*)v)->val;
@@ -295,7 +295,7 @@ int Awk::Argument::init (val_t* v)
 			this->run->run, v, 0, ASE_NULL, &this->str.len);
 		if (this->str.ptr != ASE_NULL) return 0;
 	}
-	else if (v->type == ASE_AWK_VAL_REAL)
+	else if (ASE_AWK_VAL_TYPE(v) == ASE_AWK_VAL_REAL)
 	{
 		this->inum = (ase_long_t)((ase_awk_val_real_t*)v)->val;
 		this->rnum = ((ase_awk_val_real_t*)v)->val;
@@ -304,7 +304,7 @@ int Awk::Argument::init (val_t* v)
 			this->run->run, v, 0, ASE_NULL, &this->str.len);
 		if (this->str.ptr != ASE_NULL) return 0;
 	}
-	else if (v->type == ASE_AWK_VAL_NIL)
+	else if (ASE_AWK_VAL_TYPE(v) == ASE_AWK_VAL_NIL)
 	{
 		this->inum = 0;
 		this->rnum = 0.0;
@@ -313,7 +313,7 @@ int Awk::Argument::init (val_t* v)
 			this->run->run, v, 0, ASE_NULL, &this->str.len);
 		if (this->str.ptr != ASE_NULL) return 0;
 	}
-	else if (v->type == ASE_AWK_VAL_MAP)
+	else if (ASE_AWK_VAL_TYPE(v) == ASE_AWK_VAL_MAP)
 	{
 		this->inum = 0;
 		this->rnum = 0.0;
@@ -362,7 +362,8 @@ Awk::real_t Awk::Argument::toReal () const
 const Awk::char_t* Awk::Argument::toStr (size_t* len) const
 {
 
-	if (this->val != ASE_NULL && this->val->type == ASE_AWK_VAL_MAP)
+	if (this->val != ASE_NULL && 
+	    ASE_AWK_VAL_TYPE(this->val) == ASE_AWK_VAL_MAP)
 	{
 		*len = 0;
 		return ASE_T("");
@@ -382,7 +383,7 @@ const Awk::char_t* Awk::Argument::toStr (size_t* len) const
 bool Awk::Argument::isIndexed () const
 {
 	if (this->val == ASE_NULL) return false;
-	return this->val->type == ASE_AWK_VAL_MAP;
+	return ASE_AWK_VAL_TYPE(this->val) == ASE_AWK_VAL_MAP;
 }
 
 int Awk::Argument::getIndexed (const char_t* idxptr, Awk::Argument& val) const
@@ -398,7 +399,7 @@ int Awk::Argument::getIndexed (
 	// not initialized yet. val is just nil. not an error
 	if (this->val == ASE_NULL) return 0;
 	// not a map. val is just nil. not an error 
-	if (this->val->type != ASE_AWK_VAL_MAP) return 0;
+	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP) return 0;
 
 	// get the value from the map.
 	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
@@ -419,7 +420,7 @@ int Awk::Argument::getIndexed (long_t idx, Argument& val) const
 	if (this->val == ASE_NULL) return 0;
 
 	// not a map. val is just nil. not an error 
-	if (this->val->type != ASE_AWK_VAL_MAP) return 0;
+	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP) return 0;
 
 	char_t ri[128];
 
@@ -460,7 +461,7 @@ int Awk::Argument::getFirstIndex (Awk::Argument& val) const
 	val.clear ();
 
 	if (this->val == ASE_NULL) return -1;
-	if (this->val->type != ASE_AWK_VAL_MAP) return -1;
+	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP) return -1;
 
 	ase_size_t buckno;
 	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
@@ -481,7 +482,7 @@ int Awk::Argument::getNextIndex (Awk::Argument& val) const
 	val.clear ();
 
 	if (this->val == ASE_NULL) return -1;
-	if (this->val->type != ASE_AWK_VAL_MAP) return -1;
+	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP) return -1;
 
 	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
 
@@ -582,7 +583,7 @@ int Awk::Return::set (const char_t* ptr, size_t len)
 bool Awk::Return::isIndexed () const
 {
 	if (this->val == ASE_NULL) return false;
-	return this->val->type == ASE_AWK_VAL_MAP;
+	return ASE_AWK_VAL_TYPE(this->val) == ASE_AWK_VAL_MAP;
 }
 
 int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
@@ -597,7 +598,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 		return -1;
 	}
 
-	if (this->val->type != ASE_AWK_VAL_MAP)
+	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_val_t* x = ase_awk_makemapval (this->run->run);
 		if (x == ASE_NULL)
@@ -666,7 +667,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 		return -1;
 	}
 
-	if (this->val->type != ASE_AWK_VAL_MAP)
+	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_val_t* x = ase_awk_makemapval (this->run->run);
 		if (x == ASE_NULL)
@@ -735,7 +736,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, s
 		return -1;
 	}
 
-	if (this->val->type != ASE_AWK_VAL_MAP)
+	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_val_t* x = ase_awk_makemapval (this->run->run);
 		if (x == ASE_NULL)

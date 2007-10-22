@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.6 2007/09/23 16:48:55 bacon Exp $
+ * $Id: val.h,v 1.7 2007/10/20 15:06:26 bacon Exp $
  *
  * {License}
  */
@@ -13,6 +13,7 @@
 
 #include <ase/cmn/str.h>
 #include <ase/awk/map.h>
+
 
 enum ase_awk_val_type_t
 {
@@ -78,6 +79,7 @@ typedef struct ase_awk_nde_int_t ase_awk_nde_int_t;
 typedef struct ase_awk_nde_real_t ase_awk_nde_real_t;
 #endif
 
+#define ASE_AWK_VAL_TYPE(x) ((x)->type)
 
 struct ase_awk_val_t
 {
