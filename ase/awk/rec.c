@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: rec.c,v 1.4 2007/10/21 13:58:47 bacon Exp $
  *
  * {License}
  */
@@ -41,8 +41,6 @@ int ase_awk_setrec (
 		if (v == ASE_NULL)
 		{
 			ase_awk_clrrec (run, ase_false);
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -73,7 +71,6 @@ int ase_awk_setrec (
 		if (v == ASE_NULL)
 		{
 			ase_awk_clrrec (run, ase_false);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -211,7 +208,6 @@ static int __split_record (ase_awk_run_t* run)
 		if (run->inrec.flds[run->inrec.nflds].val == ASE_NULL)
 		{
 			if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -226,11 +222,7 @@ static int __split_record (ase_awk_run_t* run)
 
 	/* set the number of fields */
 	v = ase_awk_makeintval (run, (ase_long_t)nflds);
-	if (v == ASE_NULL) 
-	{
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-		return -1;
-	}
+	if (v == ASE_NULL) return -1;
 
 	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NF, v) == -1) return -1;
 
@@ -369,12 +361,7 @@ static int __recomp_record_fields (
 			}
 
 			tmp = ase_awk_makestrval (run, str,len);
-			if (tmp == ASE_NULL) 
-			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-				return -1;
-			}
+			if (tmp == ASE_NULL) return -1;
 
 			if (i < nflds)
 				ase_awk_refdownval (run, run->inrec.flds[i].val);
@@ -433,12 +420,7 @@ static int __recomp_record_fields (
 	if (((ase_awk_val_int_t*)v)->val != max)
 	{
 		v = ase_awk_makeintval (run, (ase_long_t)max);
-		if (v == ASE_NULL) 
-		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-			return -1;
-		}
+		if (v == ASE_NULL) return -1;
 
 		if (ase_awk_setglobal (
 			run, ASE_AWK_GLOBAL_NF, v) == -1) return -1;

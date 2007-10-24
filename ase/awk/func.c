@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.10 2007/09/25 11:25:48 bacon Exp $
+ * $Id: func.c,v 1.11 2007/10/21 13:58:47 bacon Exp $
  *
  * {License}
  */
@@ -283,7 +283,7 @@ skip_close:
 	v = ase_awk_makeintval (run, (ase_long_t)n);
 	if (v == ASE_NULL)
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -400,7 +400,7 @@ skip_flush:
 	a0 = ase_awk_makeintval (run, (ase_long_t)n);
 	if (a0 == ASE_NULL)
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -463,7 +463,7 @@ static int bfn_index (
 	a0 = ase_awk_makeintval (run, idx);
 	if (a0 == ASE_NULL)
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -498,7 +498,7 @@ static int bfn_length (
 	v = ase_awk_makeintval (run, len);
 	if (v == ASE_NULL)
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -568,7 +568,7 @@ static int bfn_substr (
 	if (r == ASE_NULL)
 	{
 		if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -722,7 +722,7 @@ static int bfn_split (
 			ASE_AWK_FREE (run->awk, fs_free);
 		if (fs_rex_free != ASE_NULL) 
 			ase_awk_freerex (run->awk, fs_rex_free);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -777,7 +777,7 @@ static int bfn_split (
 				ASE_AWK_FREE (run->awk, fs_free);
 			if (fs_rex_free != ASE_NULL)
 				ase_awk_freerex (run->awk, fs_rex_free);
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+			/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 			return -1;
 		}
 
@@ -821,7 +821,7 @@ static int bfn_split (
 	t1 = ase_awk_makeintval (run, num);
 	if (t1 == ASE_NULL)
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -860,7 +860,7 @@ static int bfn_tolower (
 	if (r == ASE_NULL)
 	{
 		if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -900,7 +900,7 @@ static int bfn_toupper (
 	if (r == ASE_NULL)
 	{
 		if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -1173,6 +1173,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 			{
 				ase_str_close (&new);
 				FREE_A_PTRS (run->awk);
+				/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 				return -1;
 			}
 
@@ -1191,7 +1192,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	v = ase_awk_makeintval (run, sub_count);
 	if (v == ASE_NULL)
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -1292,7 +1293,7 @@ static int bfn_match (
 	a0 = ase_awk_makeintval (run, idx);
 	if (a0 == ASE_NULL)
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -1303,7 +1304,7 @@ static int bfn_match (
 	if (a1 == ASE_NULL)
 	{
 		ase_awk_refdownval (run, a0);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -1387,7 +1388,7 @@ static int bfn_sprintf (
 	{
 		ase_str_close (&fbu);
 		ase_str_close (&out);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 

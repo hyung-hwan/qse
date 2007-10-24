@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.20 2007/10/15 16:10:10 bacon Exp $
+ * $Id: awk.h,v 1.21 2007/10/21 07:59:35 bacon Exp $
  *
  * {License}
  */
@@ -209,8 +209,9 @@ enum ase_awk_option_t
 enum ase_awk_errnum_t
 {
 	ASE_AWK_ENOERR,         /* no error */
+	ASE_AWK_ECUSTOM,        /* custom error */
 
-	ASE_AWK_EINVAL,         /* invalid parameter */
+	ASE_AWK_EINVAL,         /* invalid parameter or data */
 	ASE_AWK_ENOMEM,         /* out of memory */
 	ASE_AWK_ENOSUP,         /* not supported */
 	ASE_AWK_ENOPER,         /* operation not allowed */

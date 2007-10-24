@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.4 2007/05/18 16:19:20 bacon Exp $
+ * $Id: extio.c,v 1.5 2007/10/21 13:58:47 bacon Exp $
  *
  * {License}
  */
@@ -412,8 +412,7 @@ int ase_awk_readextio (
 			nr = ase_awk_makeintval (run, lv + 1);
 			if (nr == ASE_NULL) 
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+				/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 				ret = -1;
 			}
 			else 

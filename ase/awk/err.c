@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.9 2007/10/10 07:03:56 bacon Exp $
+ * $Id: err.c,v 1.10 2007/10/21 07:59:35 bacon Exp $
  *
  * {License}
  */
@@ -11,8 +11,9 @@ static const ase_char_t* __geterrstr (int errnum)
 	static const ase_char_t* errstr[] =
  	{
 		ASE_T("no error"),
+		ASE_T("custom error"),
 
-		ASE_T("invalid parameter"),
+		ASE_T("invalid parameter or data"),
 		ASE_T("out of memory"),
 		ASE_T("not supported"),
 		ASE_T("operation not allowed"),

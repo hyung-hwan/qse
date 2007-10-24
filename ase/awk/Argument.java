@@ -1,5 +1,5 @@
 /*
- * $Id: Argument.java,v 1.5 2007/10/19 15:02:33 bacon Exp $
+ * $Id: Argument.java,v 1.6 2007/10/21 13:58:47 bacon Exp $
  */
 
 package ase.awk;
@@ -8,6 +8,11 @@ public class Argument
 {
 	protected long runid;
 	protected long valid;
+
+	/* An instance of the Argument class should not be used
+	 * outside the context where it is availble. When it is
+	 * referenced that way, the getXXX methods may cause
+	 * JVM to crash */
 
 	Argument (long runid, long valid)
 	{

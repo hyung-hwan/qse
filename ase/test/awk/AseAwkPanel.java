@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.6 2007/10/19 03:50:33 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.7 2007/10/21 13:58:47 bacon Exp $
  */
 
 import java.awt.*;
@@ -93,7 +93,7 @@ public class AseAwkPanel extends Panel
 			addFunction ("sleep", 1, 1);
 		}
 	
-		public Object sleep (Context ctx, String name, Argument[] args) throws ase.awk.Exception
+		public Object sleep (Context ctx, String name, Argument[] args)
 		{
 			try { Thread.sleep (args[0].getIntValue() * 1000); }
 			catch (InterruptedException e) {}
@@ -404,10 +404,11 @@ public class AseAwkPanel extends Panel
 		catch (ase.awk.Exception e)
 		{
 			int line = e.getLine();
+			int code = e.getCode();
 			if (line <= 0)
-				showMessage ("An exception occurred - " + e.getMessage());
+				showMessage ("An exception occurred - [" + code + "] " + e.getMessage());
 			else
-				showMessage ("An exception occurred - " + e.getMessage() + " at line " + line);
+				showMessage ("An exception occurred - [" + code + "] " + e.getMessage() + " at line " + line);
 
 			return;
 		}

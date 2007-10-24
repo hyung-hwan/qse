@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.17 2007/10/19 03:50:32 bacon Exp $
+ * $Id: StdAwk.java,v 1.18 2007/10/21 13:58:47 bacon Exp $
  *
  * {License}
  */
@@ -331,49 +331,49 @@ public abstract class StdAwk extends Awk
 	}
 
 	/* == arithmetic built-in functions */
-	public Object sin (Context ctx, String name, Argument[] args) throws Exception
+	public Object sin (Context ctx, String name, Argument[] args) 
 	{
 		return new Double (Math.sin(args[0].getRealValue()));
 	}
 
-	public Object cos (Context ctx, String name, Argument[] args) throws Exception
+	public Object cos (Context ctx, String name, Argument[] args)
 	{
 		return new Double (Math.cos(args[0].getRealValue()));
 	}
 
-	public Object tan (Context ctx, String name, Argument[] args) throws Exception
+	public Object tan (Context ctx, String name, Argument[] args)
 	{
 		return new Double (Math.tan(args[0].getRealValue()));
 	}
 
-	public Object atan (Context ctx, String name, Argument[] args) throws Exception
+	public Object atan (Context ctx, String name, Argument[] args) 
 	{
 		return new Double (Math.atan(args[0].getRealValue()));
 	}
 
-	public Object atan2 (Context ctx, String name, Argument[] args) throws Exception
+	public Object atan2 (Context ctx, String name, Argument[] args) 
 	{
 		double y = args[0].getRealValue();
 		double x = args[1].getRealValue();
 		return new Double (Math.atan2(y,x));
 	}
 
-	public Object log (Context ctx, String name, Argument[] args) throws Exception
+	public Object log (Context ctx, String name, Argument[] args) 
 	{
 		return new Double (Math.log(args[0].getRealValue()));
 	}
 
-	public Object exp (Context ctx, String name, Argument[] args) throws Exception
+	public Object exp (Context ctx, String name, Argument[] args) 
 	{
 		return new Double (Math.exp(args[0].getRealValue()));
 	}
 
-	public Object sqrt (Context ctx, String name, Argument[] args) throws Exception
+	public Object sqrt (Context ctx, String name, Argument[] args) 
 	{
 		return new Double (Math.sqrt(args[0].getRealValue()));
 	}
 
-	public Object bfnint (Context ctx, String name, Argument[] args) throws Exception
+	public Object bfnint (Context ctx, String name, Argument[] args) 
 	{
 		return new Long (args[0].getIntValue());
 	}
@@ -383,7 +383,7 @@ public abstract class StdAwk extends Awk
 		return new Double (random.nextDouble ());
 	}
 
-	public Object srand (Context ctx, String name, Argument[] args) throws Exception
+	public Object srand (Context ctx, String name, Argument[] args) 
 	{
 		long prev_seed = seed;
 
