@@ -16,6 +16,9 @@ CFLAGS = /nologo /W3 -I..\..
 CXXFLAGS = /nologo /W3 -I..\..
 JAVACFLAGS = -classpath ..\.. -Xlint:unchecked
 
+#LDFLAGS = /subsystem:console
+LDFLAGS = /subsystem:windows
+
 !IF "$(MODE)" == "debug"
 CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd
 CXXFLAGS = $(CXXFLAGS) -D_DEBUG -DDEBUG /MTd
@@ -87,7 +90,7 @@ $(OUT_FILE_LIB_CXX): $(TMP_DIR_CXX) $(OUT_FILE_LIB) $(OBJ_FILES_LIB_CXX)
 <<
 
 $(OUT_FILE_JNI): $(OUT_FILE_LIB) $(OBJ_FILES_JNI)
-	$(LD) /dll /def:jni.def /subsystem:windows /release @<<
+	$(LD) /dll /def:jni.def $(LDFLAGS) /release @<<
 /nologo /out:$(OUT_FILE_JNI) $(OBJ_FILES_JNI) /libpath:../$(MODE)/lib /implib:tmp.lib user32.lib $(OUT_FILE_LIB) asecmn.lib aseutl.lib
 <<
 	del tmp.lib tmp.exp

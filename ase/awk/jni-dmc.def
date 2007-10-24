@@ -13,6 +13,7 @@ EXPORTS
 	Java_ase_awk_Awk_setoption
 	Java_ase_awk_Awk_getdebug
 	Java_ase_awk_Awk_setdebug
+	Java_ase_awk_Awk_setword
 	Java_ase_awk_Awk_addfunc
 	Java_ase_awk_Awk_delfunc
 	Java_ase_awk_Awk_setfilename

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.26 2007/10/19 03:50:32 bacon Exp $
+ * $Id: Awk.java,v 1.28 2007/10/21 13:58:47 bacon Exp $
  *
  * {License}
  */
@@ -160,7 +160,7 @@ public abstract class Awk
 	}
 
 	protected Object handleFunction (
-		Context ctx, String name, Argument[] args) throws java.lang.Exception
+		Context ctx, String name, Argument[] args) throws Exception
 	{
 		String mn = (String)functionTable.get(name);
 		// name should always be found in this table.
@@ -169,8 +169,33 @@ public abstract class Awk
 		Class c = this.getClass ();
 		Class[] a = { Context.class, String.class, Argument[].class };
 
-		Method m = c.getMethod (mn, a);
-		return m.invoke (this, /*new Object[] {*/ ctx, name, args/*}*/) ;
+		try
+		{
+			Method m = c.getMethod (mn, a);
+			return m.invoke (this, /*new Object[] {*/ ctx, name, args/*}*/) ;
+		}
+		catch (java.lang.reflect.InvocationTargetException e)
+		{
+			/* the underlying method has throw an exception */
+			Throwable t = e.getCause();
+			if (t == null) 
+			{
+				throw new Exception (null, Exception.BFNIMPL);
+			}
+			else if (t instanceof Exception) 
+			{
+				throw (Exception)t;
+			}
+			else 
+			{
+				throw new Exception (
+					t.getMessage(), Exception.BFNIMPL);
+			}
+		}
+		catch (java.lang.Exception e)
+		{
+			throw new Exception (e.getMessage(), Exception.BFNIMPL);
+		}
 	}
 
 	/* == depth limiting == */

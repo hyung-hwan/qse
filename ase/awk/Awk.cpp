@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.79 2007/10/20 15:06:26 bacon Exp $
+ * $Id: Awk.cpp,v 1.80 2007/10/21 13:58:47 bacon Exp $
  *
  * {License}
  */
@@ -532,11 +532,7 @@ int Awk::Return::set (long_t v)
 	ASE_ASSERT (this->run != ASE_NULL);
 
 	ase_awk_val_t* x = ase_awk_makeintval (this->run->run, v);
-	if (x == ASE_NULL)
-	{
-		this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-		return -1;
-	}
+	if (x == ASE_NULL) return -1;
 
 	ase_awk_refdownval (this->run->run, this->val);
 	this->val = x;
@@ -550,11 +546,7 @@ int Awk::Return::set (real_t v)
 	ASE_ASSERT (this->run != ASE_NULL);
 
 	ase_awk_val_t* x = ase_awk_makerealval (this->run->run, v);
-	if (x == ASE_NULL)
-	{
-		this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-		return -1;
-	}
+	if (x == ASE_NULL) return -1;
 
 	ase_awk_refdownval (this->run->run, this->val);
 	this->val = x;
@@ -568,11 +560,7 @@ int Awk::Return::set (const char_t* ptr, size_t len)
 	ASE_ASSERT (this->run != ASE_NULL);
 
 	ase_awk_val_t* x = ase_awk_makestrval (this->run->run, ptr, len);
-	if (x == ASE_NULL)
-	{
-		this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-		return -1;
-	}
+	if (x == ASE_NULL) return -1;
 
 	ase_awk_refdownval (this->run->run, this->val);
 	this->val = x;
@@ -601,18 +589,14 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_val_t* x = ase_awk_makemapval (this->run->run);
-		if (x == ASE_NULL)
-		{
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-			return -1;
-		}
+		if (x == ASE_NULL) return -1;
+
 		ase_awk_refupval (this->run->run, x);
 
 		ase_awk_val_t* x2 = ase_awk_makeintval (this->run->run, v);
 		if (x2 == ASE_NULL)
 		{
 			ase_awk_refdownval (this->run->run, x);
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -634,11 +618,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 	else
 	{
 		ase_awk_val_t* x2 = ase_awk_makeintval (this->run->run, v);
-		if (x2 == ASE_NULL)
-		{
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-			return -1;
-		}
+		if (x2 == ASE_NULL) return -1;
 
 		ase_awk_refupval (this->run->run, x2);
 
@@ -670,18 +650,14 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_val_t* x = ase_awk_makemapval (this->run->run);
-		if (x == ASE_NULL)
-		{
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-			return -1;
-		}
+		if (x == ASE_NULL) return -1;
+
 		ase_awk_refupval (this->run->run, x);
 
 		ase_awk_val_t* x2 = ase_awk_makerealval (this->run->run, v);
 		if (x2 == ASE_NULL)
 		{
 			ase_awk_refdownval (this->run->run, x);
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -703,11 +679,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 	else
 	{
 		ase_awk_val_t* x2 = ase_awk_makerealval (this->run->run, v);
-		if (x2 == ASE_NULL)
-		{
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-			return -1;
-		}
+		if (x2 == ASE_NULL) return -1;
 
 		ase_awk_refupval (this->run->run, x2);
 
@@ -739,18 +711,14 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, s
 	if (ASE_AWK_VAL_TYPE(this->val) != ASE_AWK_VAL_MAP)
 	{
 		ase_awk_val_t* x = ase_awk_makemapval (this->run->run);
-		if (x == ASE_NULL)
-		{
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-			return -1;
-		}
+		if (x == ASE_NULL) return -1;
+
 		ase_awk_refupval (this->run->run, x);
 
 		ase_awk_val_t* x2 = ase_awk_makestrval (this->run->run, str, sln);
 		if (x2 == ASE_NULL)
 		{
 			ase_awk_refdownval (this->run->run, x);
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
 			return -1;
 		}
 
@@ -772,11 +740,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, s
 	else
 	{
 		ase_awk_val_t* x2 = ase_awk_makestrval (this->run->run, str, sln);
-		if (x2 == ASE_NULL)
-		{
-			this->run->setError (ERR_NOMEM, 0, ASE_NULL, 0);
-			return -1;
-		}
+		if (x2 == ASE_NULL) return -1;
 
 		ase_awk_refupval (this->run->run, x2);
 
@@ -981,11 +945,7 @@ int Awk::Run::setGlobal (int id, long_t v)
 	ASE_ASSERT (this->run != ASE_NULL);
 
 	ase_awk_val_t* tmp = ase_awk_makeintval (run, v);
-	if (tmp == ASE_NULL)
-	{
-		setError (ERR_NOMEM);
-		return -1;
-	}
+	if (tmp == ASE_NULL) return -1;
 
 	ase_awk_refupval (run, tmp);
 	int n = ase_awk_setglobal (this->run, id, tmp);
@@ -998,11 +958,7 @@ int Awk::Run::setGlobal (int id, real_t v)
 	ASE_ASSERT (this->run != ASE_NULL);
 
 	ase_awk_val_t* tmp = ase_awk_makerealval (run, v);
-	if (tmp == ASE_NULL)
-	{
-		setError (ERR_NOMEM);
-		return -1;
-	}
+	if (tmp == ASE_NULL) return -1;
 
 	ase_awk_refupval (run, tmp);
 	int n = ase_awk_setglobal (this->run, id, tmp);
@@ -1015,11 +971,7 @@ int Awk::Run::setGlobal (int id, const char_t* ptr, size_t len)
 	ASE_ASSERT (run != ASE_NULL);
 
 	ase_awk_val_t* tmp = ase_awk_makestrval (run, ptr, len);
-	if (tmp == ASE_NULL)
-	{
-		setError (ERR_NOMEM);
-		return -1;
-	}
+	if (tmp == ASE_NULL) return -1;
 
 	ase_awk_refupval (run, tmp);
 	int n = ase_awk_setglobal (this->run, id, tmp);

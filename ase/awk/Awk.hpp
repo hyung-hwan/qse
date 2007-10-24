@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.77 2007/10/15 16:10:09 bacon Exp $
+ * $Id: Awk.hpp,v 1.78 2007/10/21 07:59:35 bacon Exp $
  *
  * {License}
  */
@@ -400,6 +400,7 @@ public:
 	enum ErrorCode
 	{
 		ERR_NOERR = ASE_AWK_ENOERR,
+		ERR_CUSTOM = ASE_AWK_ECUSTOM,
 		ERR_INVAL = ASE_AWK_EINVAL,
 		ERR_NOMEM = ASE_AWK_ENOMEM,
 		ERR_NOSUP = ASE_AWK_ENOSUP,

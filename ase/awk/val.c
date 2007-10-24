@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.9 2007/10/17 14:38:28 bacon Exp $
+ * $Id: val.c,v 1.10 2007/10/21 13:58:47 bacon Exp $
  *
  * {License}
  */
@@ -77,7 +77,11 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 	{
 		val = (ase_awk_val_int_t*) ASE_AWK_MALLOC (
 			run->awk, ASE_SIZEOF(ase_awk_val_int_t));
-		if (val == ASE_NULL) return ASE_NULL;
+		if (val == ASE_NULL) 
+		{
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+			return ASE_NULL;
+		}
 	}
 
 	val->type = ASE_AWK_VAL_INT;
@@ -103,7 +107,11 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 	{
 		val = (ase_awk_val_real_t*) ASE_AWK_MALLOC (
 			run->awk, ASE_SIZEOF(ase_awk_val_real_t));
-		if (val == ASE_NULL) return ASE_NULL;
+		if (val == ASE_NULL)
+		{
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+			return ASE_NULL;
+		}
 	}
 
 	val->type = ASE_AWK_VAL_REAL;
@@ -129,7 +137,11 @@ ase_awk_val_t* ase_awk_makestrval (
 
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
-	if (val == ASE_NULL) return ASE_NULL;
+	if (val == ASE_NULL) 
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
 
 	val->type = ASE_AWK_VAL_STR;
 	val->ref = 0;
@@ -138,6 +150,7 @@ ase_awk_val_t* ase_awk_makestrval (
 	if (val->buf == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, val);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
 
@@ -154,7 +167,11 @@ ase_awk_val_t* ase_awk_makestrval_nodup (
 
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
-	if (val == ASE_NULL) return ASE_NULL;
+	if (val == ASE_NULL) 
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
 
 	val->type = ASE_AWK_VAL_STR;
 	val->ref = 0;
@@ -172,7 +189,11 @@ ase_awk_val_t* ase_awk_makestrval2 (
 
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
-	if (val == ASE_NULL) return ASE_NULL;
+	if (val == ASE_NULL) 
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
 
 	val->type = ASE_AWK_VAL_STR;
 	val->ref = 0;
@@ -181,6 +202,7 @@ ase_awk_val_t* ase_awk_makestrval2 (
 	if (val->buf == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, val);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
 
@@ -206,6 +228,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	if (val->buf == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, val);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
 
@@ -214,6 +237,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	{
 		ASE_AWK_FREE (run->awk, val->buf);
 		ASE_AWK_FREE (run->awk, val);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
 
@@ -238,7 +262,11 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 
 	val = (ase_awk_val_map_t*) ASE_AWK_MALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_map_t));
-	if (val == ASE_NULL) return ASE_NULL;
+	if (val == ASE_NULL) 
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
 
 	val->type = ASE_AWK_VAL_MAP;
 	val->ref = 0;
@@ -246,6 +274,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 	if (val->map == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
 
@@ -264,7 +293,11 @@ ase_awk_val_t* ase_awk_makerefval (ase_awk_run_t* run, int id, ase_awk_val_t** a
 	{
 		val = (ase_awk_val_ref_t*) ASE_AWK_MALLOC (
 			run->awk, ASE_SIZEOF(ase_awk_val_ref_t));
-		if (val == ASE_NULL) return ASE_NULL;
+		if (val == ASE_NULL)
+		{
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+			return ASE_NULL;
+		}
 	}
 
 	val->type = ASE_AWK_VAL_REF;

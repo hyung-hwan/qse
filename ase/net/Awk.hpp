@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.39 2007/10/10 13:22:12 bacon Exp $
+ * $Id: Awk.hpp,v 1.40 2007/10/21 07:59:35 bacon Exp $
  *
  * {License}
  */
@@ -63,6 +63,7 @@ public:
 	enum class ERROR: int
 	{
 		NOERR = ASE::Awk::ERR_NOERR,
+		CUSTOM = ASE::Awk::ERR_CUSTOM,
 		INVAL = ASE::Awk::ERR_INVAL,
 		NOMEM = ASE::Awk::ERR_NOMEM,
 		NOSUP = ASE::Awk::ERR_NOSUP,
