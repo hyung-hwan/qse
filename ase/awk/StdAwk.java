@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.19 2007/10/23 15:18:47 bacon Exp $
+ * $Id: StdAwk.java,v 1.20 2007/10/24 03:46:51 bacon Exp $
  *
  * {License}
  */
@@ -346,44 +346,44 @@ public abstract class StdAwk extends Awk
 		ret.setRealValue (Math.tan(args[0].getRealValue()));
 	}
 
-	public Object atan (Context ctx, String name, Argument[] args) 
+	public void atan (Context ctx, String name, Return ret, Argument[] args) 
 	{
-		return new Double (Math.atan(args[0].getRealValue()));
+		ret.setRealValue (Math.atan(args[0].getRealValue()));
 	}
 
-	public Object atan2 (Context ctx, String name, Argument[] args) 
+	public void atan2 (Context ctx, String name, Return ret, Argument[] args) 
 	{
 		double y = args[0].getRealValue();
 		double x = args[1].getRealValue();
-		return new Double (Math.atan2(y,x));
+		ret.setRealValue (Math.atan2(y,x));
 	}
 
-	public Object log (Context ctx, String name, Argument[] args) 
+	public void log (Context ctx, String name, Return ret, Argument[] args) 
 	{
-		return new Double (Math.log(args[0].getRealValue()));
+		ret.setRealValue (Math.log(args[0].getRealValue()));
 	}
 
-	public Object exp (Context ctx, String name, Argument[] args) 
+	public void exp (Context ctx, String name, Return ret, Argument[] args) 
 	{
-		return new Double (Math.exp(args[0].getRealValue()));
+		ret.setRealValue (Math.exp(args[0].getRealValue()));
 	}
 
-	public Object sqrt (Context ctx, String name, Argument[] args) 
+	public void sqrt (Context ctx, String name, Return ret, Argument[] args) 
 	{
-		return new Double (Math.sqrt(args[0].getRealValue()));
+		ret.setRealValue (Math.sqrt(args[0].getRealValue()));
 	}
 
-	public Object bfnint (Context ctx, String name, Argument[] args) 
+	public void bfnint (Context ctx, String name, Return ret, Argument[] args) 
 	{
-		return new Long (args[0].getIntValue());
+		ret.setIntValue (args[0].getIntValue());
 	}
 
-	public Object rand (Context ctx, String name, Argument[] args)
+	public void rand (Context ctx, String name, Return ret, Argument[] args)
 	{
-		return new Double (random.nextDouble ());
+		ret.setRealValue (random.nextDouble ());
 	}
 
-	public Object srand (Context ctx, String name, Argument[] args) 
+	public void srand (Context ctx, String name, Return ret, Argument[] args) 
 	{
 		long prev_seed = seed;
 
@@ -392,33 +392,33 @@ public abstract class StdAwk extends Awk
 			args[0].getIntValue();
 
 		random.setSeed (seed);
-		return new Long (prev_seed);
+		ret.setIntValue (prev_seed);
 	}
 
-	public Object systime (Context ctx, String name, Argument[] args) 
+	public void systime (Context ctx, String name, Return ret, Argument[] args) 
 	{
 		long msec = System.currentTimeMillis ();
-		return new Long (msec / 1000);
+		ret.setIntValue (msec / 1000);
 	}
 
-	public Object strftime (Context ctx, String name, Argument[] args) throws Exception
+	public void strftime (Context ctx, String name, Return ret, Argument[] args) throws Exception
 	{
 		String fmt = (args.length<1)? "%c": args[0].getStringValue();
 		long t = (args.length<2)? (System.currentTimeMillis()/1000): args[1].getIntValue();
-		return strftime (fmt, t);
+		ret.setStringValue (strftime (fmt, t));
 	}
 
-	public Object strfgmtime (Context ctx, String name, Argument[] args) throws Exception
+	public void strfgmtime (Context ctx, String name, Return ret, Argument[] args) throws Exception
 	{
 		String fmt = (args.length<1)? "%c": args[0].getStringValue();
 		long t = (args.length<2)? (System.currentTimeMillis()/1000): args[1].getIntValue();
-		return strfgmtime (fmt, t);
+		ret.setStringValue (strfgmtime (fmt, t));
 	}
 
 	/* miscellaneous built-in functions */
-	public Object system (Context ctx, String name, Argument[] args) throws Exception
+	public void system (Context ctx, String name, Return ret, Argument[] args) throws Exception
 	{
-		return system (args[0].getStringValue());
+		ret.setIntValue (system (args[0].getStringValue()));
 	}
 
 	/* == utility functions == */

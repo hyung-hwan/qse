@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwk.java,v 1.15 2007/10/19 05:05:20 bacon Exp $
+ * $Id: AseAwk.java,v 1.16 2007/10/24 03:46:51 bacon Exp $
  */
 
 import java.awt.*;
@@ -24,6 +24,7 @@ import ase.awk.StdAwk;
 import ase.awk.Console;
 import ase.awk.Context;
 import ase.awk.Argument;
+import ase.awk.Return;
 
 public class AseAwk extends StdAwk
 {
@@ -301,11 +302,11 @@ public class AseAwk extends StdAwk
 		addFunction ("sleep", 1, 1);
 	}
 
-	public Object sleep (Context ctx, String name, Argument[] args) throws ase.awk.Exception
+	public void sleep (Context ctx, String name, Return ret, Argument[] args) throws ase.awk.Exception
 	{
 		try { Thread.sleep (args[0].getIntValue() * 1000); }
 		catch (InterruptedException e) {}
-		return new Long(0);
+		ret.setIntValue (0);
 	}
 
 	public void parse () throws ase.awk.Exception

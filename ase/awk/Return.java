@@ -1,5 +1,5 @@
 /*
- * $Id: Return.java,v 1.2 2007/10/21 13:58:47 bacon Exp $
+ * $Id: Return.java,v 1.3 2007/10/24 04:58:35 bacon Exp $
  */
 
 package ase.awk;
@@ -90,6 +90,11 @@ public class Return
 		setindexedstrval (this.runid, this.valid, index, v);
 	}
 
+	public void clear ()
+	{
+		clearval (this.runid, this.valid);
+	}
+
 	protected native void setintval (long runid, long valid, long v);
 	protected native void setrealval (long runid, long valid, double v);
 	protected native void setstrval (long runid, long valid, String v);
@@ -100,4 +105,6 @@ public class Return
 		long runid, long valid, String index, double v);
 	protected native void setindexedstrval (
 		long runid, long valid, String index, String v);
+
+	protected native void clearval (long runid, long valid);
 }

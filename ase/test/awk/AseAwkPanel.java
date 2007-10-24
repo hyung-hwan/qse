@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.7 2007/10/21 13:58:47 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.8 2007/10/24 03:46:51 bacon Exp $
  */
 
 import java.awt.*;
@@ -17,6 +17,7 @@ import ase.awk.StdAwk;
 import ase.awk.Console;
 import ase.awk.Context;
 import ase.awk.Argument;
+import ase.awk.Return;
 
 public class AseAwkPanel extends Panel
 {
@@ -93,11 +94,11 @@ public class AseAwkPanel extends Panel
 			addFunction ("sleep", 1, 1);
 		}
 	
-		public Object sleep (Context ctx, String name, Argument[] args)
+		public void sleep (Context ctx, String name, Return ret, Argument[] args)
 		{
 			try { Thread.sleep (args[0].getIntValue() * 1000); }
 			catch (InterruptedException e) {}
-			return new Long(0);
+			ret.setIntValue (0);
 		}
 
 		protected int openSource (int mode)
