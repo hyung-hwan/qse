@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.12 2007/10/21 15:05:21 bacon Exp $
+ * $Id: jni.h,v 1.13 2007/10/23 15:18:47 bacon Exp $
  *
  * {License}
  */
@@ -68,7 +68,7 @@ JNIEXPORT jboolean JNICALL Java_ase_awk_Argument_isindexed (JNIEnv* env, jobject
 JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject obj, jlong runid, jlong valid, jstring index);
 
 JNIEXPORT void JNICALL Java_ase_awk_Return_setintval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jlong newval);
-JNIEXPORT void JNICALL Java_ase_awk_Return_setrealval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jlong newval);
+JNIEXPORT void JNICALL Java_ase_awk_Return_setrealval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jdouble newval);
 
 #ifdef __cplusplus
 }

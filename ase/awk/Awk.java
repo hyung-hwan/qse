@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.28 2007/10/21 13:58:47 bacon Exp $
+ * $Id: Awk.java,v 1.29 2007/10/23 15:18:47 bacon Exp $
  *
  * {License}
  */
@@ -159,20 +159,20 @@ public abstract class Awk
 		functionTable.remove (name);
 	}
 
-	protected Object handleFunction (
-		Context ctx, String name, Argument[] args) throws Exception
+	protected void handleFunction (
+		Context ctx, String name, Return ret, Argument[] args) throws Exception
 	{
 		String mn = (String)functionTable.get(name);
 		// name should always be found in this table.
 		// otherwise, there is something wrong with this program. 
 
 		Class c = this.getClass ();
-		Class[] a = { Context.class, String.class, Argument[].class };
+		Class[] a = { Context.class, String.class, Return.class, Argument[].class };
 
 		try
 		{
 			Method m = c.getMethod (mn, a);
-			return m.invoke (this, /*new Object[] {*/ ctx, name, args/*}*/) ;
+			m.invoke (this, /*new Object[] {*/ ctx, name, ret, args/*}*/) ;
 		}
 		catch (java.lang.reflect.InvocationTargetException e)
 		{

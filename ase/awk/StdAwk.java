@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.18 2007/10/21 13:58:47 bacon Exp $
+ * $Id: StdAwk.java,v 1.19 2007/10/23 15:18:47 bacon Exp $
  *
  * {License}
  */
@@ -331,19 +331,19 @@ public abstract class StdAwk extends Awk
 	}
 
 	/* == arithmetic built-in functions */
-	public Object sin (Context ctx, String name, Argument[] args) 
+	public void sin (Context ctx, String name, Return ret, Argument[] args) 
 	{
-		return new Double (Math.sin(args[0].getRealValue()));
+		ret.setRealValue (Math.sin(args[0].getRealValue()));
 	}
 
-	public Object cos (Context ctx, String name, Argument[] args)
+	public void cos (Context ctx, String name, Return ret, Argument[] args)
 	{
-		return new Double (Math.cos(args[0].getRealValue()));
+		ret.setRealValue (Math.cos(args[0].getRealValue()));
 	}
 
-	public Object tan (Context ctx, String name, Argument[] args)
+	public void tan (Context ctx, String name, Return ret, Argument[] args)
 	{
-		return new Double (Math.tan(args[0].getRealValue()));
+		ret.setRealValue (Math.tan(args[0].getRealValue()));
 	}
 
 	public Object atan (Context ctx, String name, Argument[] args) 
