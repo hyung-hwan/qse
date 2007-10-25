@@ -1,5 +1,5 @@
 /*
- * $Id: Return.java,v 1.3 2007/10/24 04:58:35 bacon Exp $
+ * $Id: Return.java,v 1.4 2007/10/24 14:17:32 bacon Exp $
  */
 
 package ase.awk;
@@ -18,6 +18,11 @@ public class Return
 	{
 		this.runid = runid;
 		this.valid = valid;
+	}
+
+	public boolean isIndexed ()
+	{
+		return isindexed (this.runid, this.valid);
 	}
 
 	public void setIntValue (long v)
@@ -90,10 +95,48 @@ public class Return
 		setindexedstrval (this.runid, this.valid, index, v);
 	}
 
+	public void setIndexedIntValue (long index, long v)
+	{
+		setindexedintval (this.runid, this.valid, Long.toString(index), v);
+	}
+
+	public void setIndexedIntValue (long index, int v)
+	{
+		setindexedintval (this.runid, this.valid, Long.toString(index), (long)v);
+	}
+
+	public void setIndexedIntValue (long index, short v)
+	{
+		setindexedintval (this.runid, this.valid, Long.toString(index), (long)v);
+	}
+
+	public void setIndexedIntValue (long index, byte v)
+	{
+		setindexedintval (this.runid, this.valid, Long.toString(index), (long)v);
+	}
+
+	public void setIndexedRealValue (long index, double v)
+	{
+		setindexedrealval (this.runid, this.valid, Long.toString(index), v);
+	}
+
+	public void setIndexedRealValue (long index, float v)
+	{
+		setindexedrealval (this.runid, this.valid, Long.toString(index), (double)v);
+	}
+
+	public void setIndexedStringValue (long index, String v)
+	{
+		setindexedstrval (this.runid, this.valid, Long.toString(index), v);
+	}
+
+
 	public void clear ()
 	{
 		clearval (this.runid, this.valid);
 	}
+
+	protected native boolean isindexed (long runid, long valid);
 
 	protected native void setintval (long runid, long valid, long v);
 	protected native void setrealval (long runid, long valid, double v);

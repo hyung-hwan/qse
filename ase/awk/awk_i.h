@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.8 2007/10/10 13:22:12 bacon Exp $
+ * $Id: awk_i.h,v 1.9 2007/10/24 09:57:45 bacon Exp $
  *
  * {License}
  */
@@ -160,7 +160,8 @@ struct ase_awk_t
 	struct
 	{
 		ase_awk_bfn_t* sys;
-		ase_awk_bfn_t* user;
+		/*ase_awk_bfn_t* user;*/
+		ase_awk_map_t* user;
 	} bfn;
 
 	struct
