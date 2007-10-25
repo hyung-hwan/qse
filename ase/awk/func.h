@@ -1,5 +1,5 @@
 /*
- * $Id: func.h,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: func.h,v 1.4 2007/10/24 09:57:45 bacon Exp $
  *
  * {License}
  */
@@ -32,7 +32,7 @@ struct ase_awk_bfn_t
 
 	int (*handler) (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 
-	ase_awk_bfn_t* next;
+	/*ase_awk_bfn_t* next;*/
 };
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.20 2007/10/10 07:03:56 bacon Exp $
+ * $Id: parse.c,v 1.22 2007/10/24 14:17:32 bacon Exp $
  *
  * {License}
  */
@@ -3027,6 +3027,26 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		}
 
 		/* search the global variable list */
+// TODO soemthing for setword
+		//ase_awk_pair_t* pair;
+		//const ase_char_t* k;
+		//ase_size_t l;
+		//check if name_dup and name_len is part of gtab....
+		//if it is so...
+
+		//pair = ase_awk_map_get (awk->kwtab, name_dup, name_len);
+		//if (pair != ASE_NULL)
+		//{
+			/* found in the customized word table */
+		//	k = ((ase_cstr_t*)(pair->val))->ptr;
+		//	l = ((ase_cstr_t*)(pair->val))->len;
+		//}
+		//else
+		//{
+		//	k = name_dup;
+		//	l = name_len;
+		//}
+
 		idxa = ase_awk_tab_rrfind (
 			&awk->parse.globals, 0, name_dup, name_len);
 		if (idxa != (ase_size_t)-1) 
@@ -3163,6 +3183,7 @@ static ase_awk_nde_t* parse_hashidx (
 
 	/* search the global variable list */
 	idxa = ase_awk_tab_rrfind(&awk->parse.globals, 0, name, name_len);
+// TODO soemthing for setword
 	if (idxa != (ase_size_t)-1) 
 	{
 		nde->type = ASE_AWK_NDE_GLOBALIDX;

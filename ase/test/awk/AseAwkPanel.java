@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.8 2007/10/24 03:46:51 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.10 2007/10/24 14:17:32 bacon Exp $
  */
 
 import java.awt.*;
@@ -92,13 +92,24 @@ public class AseAwkPanel extends Panel
 			this.awkPanel = awkPanel;
 
 			addFunction ("sleep", 1, 1);
+			setWord ("sin", "cain");
+			setWord ("length", "len");
+			setWord ("OFMT", "ofmt");
+
+			setOption (getOption() | StdAwk.OPTION_MAPTOVAR);
 		}
 	
 		public void sleep (Context ctx, String name, Return ret, Argument[] args)
 		{
 			try { Thread.sleep (args[0].getIntValue() * 1000); }
 			catch (InterruptedException e) {}
-			ret.setIntValue (0);
+			//ret.setIntValue (0);
+			//
+			ret.setIndexedRealValue (1, 111.23);
+			ret.setIndexedStringValue (2, "kdk2kd");
+			ret.setIndexedStringValue (3, "3dk3kd");
+			ret.setIndexedIntValue (4, 444);
+			ret.setIndexedIntValue (5, 55555);
 		}
 
 		protected int openSource (int mode)

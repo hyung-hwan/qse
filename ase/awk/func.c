@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.11 2007/10/21 13:58:47 bacon Exp $
+ * $Id: func.c,v 1.12 2007/10/24 09:57:45 bacon Exp $
  *
  * {License}
  */
@@ -22,7 +22,7 @@ static int bfn_sprintf (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 #undef MAX
 #define MAX ASE_TYPE_UNSIGNED_MAX(ase_size_t)
 
-static ase_awk_bfn_t __sys_bfn[] = 
+static ase_awk_bfn_t sys_bfn[] = 
 {
 	/* io functions */
 	{ {ASE_T("close"),   5}, ASE_AWK_EXTIO, {1, 1, ASE_NULL}, bfn_close},
@@ -49,9 +49,8 @@ void* ase_awk_addfunc (
 	const ase_char_t* arg_spec, 
 	int (*handler)(ase_awk_run_t*,const ase_char_t*,ase_size_t))
 {
-	ase_awk_bfn_t* p;
-
-	/* TODO: make function table hash-accessable */
+	ase_awk_bfn_t* bfn;
+	ase_size_t spec_len;
 
 	if (name_len <= 0)
 	{
@@ -70,144 +69,108 @@ void* ase_awk_addfunc (
 		return ASE_NULL;
 	}
 
-	p = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_bfn_t));
-	if (p == ASE_NULL) 
+	spec_len = (arg_spec == ASE_NULL)? 0: ase_strlen(arg_spec);
+
+	bfn = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, 
+		ASE_SIZEOF(ase_awk_bfn_t) + 
+		(name_len+1) * ASE_SIZEOF(ase_char_t) +
+		(spec_len+1) * ASE_SIZEOF(ase_char_t));
+	if (bfn == ASE_NULL)
 	{
-		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+		ase_awk_seterrnum (awk, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
 
-	p->name.ptr = ase_strxdup (name, name_len, &awk->prmfns.mmgr);  
-	if (p->name.ptr == ASE_NULL)
-	{
-		ASE_AWK_FREE (awk, p);
-		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-		return ASE_NULL;
-	}
+	bfn->name.ptr = (ase_char_t*)(bfn + 1);
+	bfn->name.len = name_len;
+	ase_strxncpy (bfn->name.ptr, name_len+1, name, name_len);
 
-	p->name.len = name_len;
-	p->valid = when_valid;
-	p->arg.min = min_args;
-	p->arg.max = max_args;
-	if (arg_spec == ASE_NULL) p->arg.spec = ASE_NULL;
+	bfn->valid = when_valid;
+	bfn->arg.min = min_args;
+	bfn->arg.max = max_args;
+
+	if (arg_spec == ASE_NULL) bfn->arg.spec = ASE_NULL;
 	else
 	{
-		p->arg.spec = ase_strdup (arg_spec, &awk->prmfns.mmgr);
-		if (p->arg.spec == ASE_NULL)
-		{
-			ASE_AWK_FREE (awk, p->name.ptr);
-			ASE_AWK_FREE (awk, p);
-			ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-			return ASE_NULL;
-		}
+		bfn->arg.spec = bfn->name.ptr + bfn->name.len + 1;
+		ase_strxcpy (bfn->arg.spec, spec_len+1, arg_spec); 
 	}
-	p->handler = handler;
 
-	p->next = awk->bfn.user;
-	awk->bfn.user = p;
+	bfn->handler = handler;
 
-	return p;
+	if (ase_awk_map_put (awk->bfn.user, name, name_len, bfn) == ASE_NULL)
+	{
+		ASE_AWK_FREE (awk, bfn);
+		ase_awk_seterrnum (awk, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
+
+	return bfn;
 }
 
 int ase_awk_delfunc (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 {
-	ase_awk_bfn_t* p, * pp = ASE_NULL;
-	ase_cstr_t errarg;
-
-	for (p = awk->bfn.user; p != ASE_NULL; p = p->next)
+	if (ase_awk_map_remove (awk->bfn.user, name, name_len) == -1)
 	{
-		if (ase_strxncmp (
-			p->name.ptr, p->name.len, name, name_len) == 0)
-		{
-			if (pp == ASE_NULL)
-				awk->bfn.user = p->next;
-			else pp->next = p->next;
+		ase_cstr_t errarg;
 
-			if (p->arg.spec != ASE_NULL)
-				ASE_AWK_FREE (awk, p->arg.spec);
-			ASE_AWK_FREE (awk, p->name.ptr);
-			ASE_AWK_FREE (awk, p);
-			return 0;
-		}
+		errarg.ptr = name;
+		errarg.len = name_len;
 
-		pp = p;
+		ase_awk_seterror (awk, ASE_AWK_ENOENT, 0, &errarg, 1);
+		return -1;
 	}
 
-	errarg.ptr = name;
-	errarg.len = name_len;
-
-	ase_awk_seterror (awk, ASE_AWK_ENOENT, 0, &errarg, 1);
-	return -1;
+	return 0;
 }
 
 void ase_awk_clrbfn (ase_awk_t* awk)
 {
-	ase_awk_bfn_t* p, * np;
-
-	p = awk->bfn.user;
-	while (p != ASE_NULL)
-	{
-		np = p->next;
-		if (p->arg.spec != ASE_NULL)
-			ASE_AWK_FREE (awk, p->arg.spec);
-		ASE_AWK_FREE (awk, p->name.ptr);
-		ASE_AWK_FREE (awk, p);
-		p = np;
-	}
-
-	awk->bfn.user = ASE_NULL;
+	ase_awk_map_clear (awk->bfn.user);
 }
 
 ase_awk_bfn_t* ase_awk_getbfn (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
-	ase_awk_bfn_t* p;
+	ase_awk_bfn_t* bfn;
 	ase_awk_pair_t* pair;
 	const ase_char_t* k;
 	ase_size_t l;
 
-	for (p = __sys_bfn; p->name.ptr != ASE_NULL; p++)
+	/* search the system function table */
+	for (bfn = sys_bfn; bfn->name.ptr != ASE_NULL; bfn++)
 	{
-		if (p->valid != 0 && 
-		    (awk->option & p->valid) == 0) continue;
+		if (bfn->valid != 0 && 
+		    (awk->option & bfn->valid) == 0) continue;
 
-		pair = ase_awk_map_get (awk->kwtab, p->name.ptr, p->name.len);
+		pair = ase_awk_map_get (
+			awk->kwtab, bfn->name.ptr, bfn->name.len);
 		if (pair != ASE_NULL)
 		{
+			/* found in the customized word table */
 			k = ((ase_cstr_t*)(pair->val))->ptr;
 			l = ((ase_cstr_t*)(pair->val))->len;
 		}
 		else
 		{
-			k = p->name.ptr;
-			l = p->name.len;
+			k = bfn->name.ptr;
+			l = bfn->name.len;
 		}
 
-		if (ase_strxncmp (k, l, name, len) == 0) return p;
+		if (ase_strxncmp (k, l, name, len) == 0) return bfn;
 	}
 
-	for (p = awk->bfn.user; p != ASE_NULL; p = p->next)
-	{
-		if (p->valid != 0 && 
-		    (awk->option & p->valid) == 0) continue;
+	/* no setword related operation for user-defined instrinc function
+	 * as the name can be decided by the user upon addition. */
 
-		pair = ase_awk_map_get (awk->kwtab, p->name.ptr, p->name.len);
-		if (pair != ASE_NULL)
-		{
-			k = ((ase_cstr_t*)(pair->val))->ptr;
-			l = ((ase_cstr_t*)(pair->val))->len;
-		}
-		else
-		{
-			k = p->name.ptr;
-			l = p->name.len;
-		}
+	pair = ase_awk_map_get (awk->bfn.user, name, len);
+	if (pair == ASE_NULL) return ASE_NULL;
 
-		if (ase_strxncmp (k, l, name, len) == 0) return p;
-	}
+	bfn = (ase_awk_bfn_t*)pair->val;
+	if (bfn->valid != 0 && (awk->option & bfn->valid) == 0) return ASE_NULL;
 
-	return ASE_NULL;
+	return bfn;
 }
 
 static int bfn_close (

@@ -26,7 +26,11 @@ EXPORTS
 	Java_ase_awk_Argument_getstrval
 	Java_ase_awk_Argument_isindexed
 	Java_ase_awk_Argument_getindexed
+	Java_ase_awk_Return_isindexed
 	Java_ase_awk_Return_setintval
 	Java_ase_awk_Return_setrealval
 	Java_ase_awk_Return_setstrval
+	Java_ase_awk_Return_setindexedintval
+	Java_ase_awk_Return_setindexedrealval
+	Java_ase_awk_Return_setindexedstrval
 	Java_ase_awk_Return_clearval

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.11 2007/10/10 13:22:12 bacon Exp $ 
+ * $Id: awk.c,v 1.13 2007/10/24 14:17:32 bacon Exp $ 
  *
  * {License}
  */
@@ -13,6 +13,7 @@
 
 static void free_kw (void* awk, void* ptr);
 static void free_afn (void* awk, void* afn);
+static void free_bfn (void* awk, void* afn);
 
 ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 {
@@ -136,7 +137,19 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	awk->src.shared.buf_len = 0;
 
 	awk->bfn.sys = ASE_NULL;
-	awk->bfn.user = ASE_NULL;
+	/*awk->bfn.user = ASE_NULL;*/
+	awk->bfn.user = ase_awk_map_open (awk, 512, 70, free_bfn, awk);
+	if (awk->bfn.user == ASE_NULL)
+	{
+		ase_awk_tab_close (&awk->parse.params);
+		ase_awk_tab_close (&awk->parse.locals);
+		ase_awk_tab_close (&awk->parse.globals);
+		ase_awk_map_close (awk->tree.afns);
+		ase_awk_map_close (awk->kwtab);
+		ase_str_close (&awk->token.name);
+		ASE_AWK_FREE (awk, awk);
+		return ASE_NULL;	
+	}
 
 	awk->parse.depth.cur.block = 0;
 	awk->parse.depth.cur.loop = 0;
@@ -153,6 +166,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 
 	if (ase_awk_initglobals (awk) == -1)
 	{
+		ase_awk_map_close (awk->bfn.user);
 		ase_awk_tab_close (&awk->parse.params);
 		ase_awk_tab_close (&awk->parse.locals);
 		ase_awk_tab_close (&awk->parse.globals);
@@ -182,12 +196,19 @@ static void free_afn (void* owner, void* afn)
 	ASE_AWK_FREE ((ase_awk_t*)owner, f);
 }
 
+static void free_bfn (void* owner, void* bfn)
+{
+	ase_awk_bfn_t* f = (ase_awk_bfn_t*)bfn;
+	ASE_AWK_FREE ((ase_awk_t*)owner, f);
+}
+
 int ase_awk_close (ase_awk_t* awk)
 {
 	ase_size_t i;
 
 	if (ase_awk_clear (awk) == -1) return -1;
-	ase_awk_clrbfn (awk);
+	/*ase_awk_clrbfn (awk);*/
+	ase_awk_map_close (awk->bfn.user);
 
 	ase_awk_tab_close (&awk->parse.params);
 	ase_awk_tab_close (&awk->parse.locals);

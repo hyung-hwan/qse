@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.10 2007/10/21 07:59:35 bacon Exp $
+ * $Id: err.c,v 1.11 2007/10/24 09:57:45 bacon Exp $
  *
  * {License}
  */
@@ -55,7 +55,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("a comment not closed properly"),
 		ASE_T("a string not closed with a quote"),
 		ASE_T("unexpected end of a regular expression"),
-		ASE_T("a left brace expected n place of '%.*s'"),
+		ASE_T("a left brace expected in place of '%.*s'"),
 		ASE_T("a left parenthesis expected in place of '%.*s'"),
 		ASE_T("a right parenthesis expected in place of '%.*s'"),
 		ASE_T("a right bracket expected in place of '%.*s'"),

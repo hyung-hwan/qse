@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.38 2007/10/24 04:58:35 bacon Exp $
+ * $Id: jni.c,v 1.40 2007/10/24 14:17:32 bacon Exp $
  *
  * {License}
  */
@@ -360,7 +360,7 @@ static void throw_exception (
 }
 
 #define THROW_STATIC_EXCEPTION(env,errnum) \
-	throw_exception (env, ase_awk_geterrstr(ASE_ASE_NULL, errnum), errnum, 0)
+	throw_exception (env, ase_awk_geterrstr(ASE_NULL, errnum), errnum, 0)
 
 #define EXCEPTION_ON_ASE_NULL_AWK(env,awk) \
 	if (awk == ASE_NULL) \
@@ -605,7 +605,7 @@ static ase_char_t* java_strxdup (ase_awk_t* awk, const jchar* str, jint len)
 		ase_size_t i;
 
 		tmp = (ase_char_t*) ase_awk_malloc (awk, (len+1) * ASE_SIZEOF(ase_char_t));
-		if (tmp == ASE_ASE_NULL) return ASE_ASE_NULL;
+		if (tmp == ASE_NULL) return ASE_NULL;
 
 		for (i = 0; i < (ase_size_t)len; i++) tmp[i] = (ase_char_t)str[i];
 		tmp[i] = ASE_T('\0');
@@ -617,7 +617,7 @@ static ase_char_t* java_strxdup (ase_awk_t* awk, const jchar* str, jint len)
 		ase_char_t* tmp;
 
 		tmp = (ase_char_t*) ase_awk_malloc (awk, (len+1) * ASE_SIZEOF(ase_char_t));
-		if (tmp == ASE_ASE_NULL) return ASE_ASE_NULL;
+		if (tmp == ASE_NULL) return ASE_NULL;
 
 		ase_strncpy (tmp, (ase_char_t*)str, (ase_size_t)len);
 		return tmp;
@@ -758,7 +758,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awk
 	runio_data.obj = obj;
 
 	runios.pipe = process_extio;
-	runios.coproc = ASE_ASE_NULL;
+	runios.coproc = ASE_NULL;
 	runios.file = process_extio;
 	runios.console = process_extio;
 	runios.custom_data = &runio_data;
@@ -792,7 +792,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awk
 			}
 
 			mmm = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*(len+1));
-			if (mmm == ASE_ASE_NULL)
+			if (mmm == ASE_NULL)
 			{
 				(*env)->ReleaseStringChars (env, mfn, ptr);
 				DELETE_CLASS_REFS (env, run_data);
@@ -1764,7 +1764,7 @@ static int handle_bfn (
 		{
 			jsize x;
 			rptr = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
-			if (rptr == ASE_ASE_NULL)
+			if (rptr == ASE_NULL)
 			{
 				/* ran out of memory in exception handling.
 				 * it is freaking studid. */
@@ -1837,7 +1837,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
-		if (tmp == ASE_ASE_NULL)
+		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
 			THROW_NOMEM_EXCEPTION (env);
@@ -1846,13 +1846,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 
 		for (x =  0; x < len; x++) tmp[x] = (ase_char_t)ptr[x];
 		n = (ase_awk_addfunc (awk, tmp, len, 0, 
-			min_args, max_args, ASE_ASE_NULL, handle_bfn) == ASE_NULL)? -1: 0;
+			min_args, max_args, ASE_NULL, handle_bfn) == ASE_NULL)? -1: 0;
 		ase_awk_free (awk, tmp);
 	}
 	else
 	{
 		n = (ase_awk_addfunc (awk, (ase_char_t*)ptr, len, 0, 
-			min_args, max_args, ASE_ASE_NULL, handle_bfn) == ASE_NULL)? -1: 0;
+			min_args, max_args, ASE_NULL, handle_bfn) == ASE_NULL)? -1: 0;
 	}
 
 
@@ -1898,7 +1898,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delfunc (
 		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
-		if (tmp == ASE_ASE_NULL)
+		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
 			THROW_NOMEM_EXCEPTION (env);
@@ -2003,7 +2003,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 	{
 		jsize x;
 		ox = (ase_char_t*)ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*ol);
-		if (ox == ASE_ASE_NULL)
+		if (ox == ASE_NULL)
 		{
 			if (nw != ASE_NULL) (*env)->ReleaseStringChars (env, nw, np);
 			if (ow != ASE_NULL) (*env)->ReleaseStringChars (env, ow, op);
@@ -2020,7 +2020,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 	{
 		jsize x;
 		nx = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*nl);
-		if (nx == ASE_ASE_NULL)
+		if (nx == ASE_NULL)
 		{
 			if (ox != (ase_char_t*)op) ase_awk_free (awk, ox);
 
@@ -2070,7 +2070,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
-		if (tmp == ASE_ASE_NULL)
+		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
 			THROW_NOMEM_EXCEPTION (env);
@@ -2115,7 +2115,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
 			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
-		if (tmp == ASE_ASE_NULL)
+		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
 			THROW_NOMEM_EXCEPTION (env);
@@ -2296,7 +2296,7 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 	ret = _tsystem(tmp);
 #else
 	char* mbs = (char*)ase_awk_malloc (awk, len*5+1);
-	if (mbs == ASE_ASE_NULL) 
+	if (mbs == ASE_NULL) 
 	{
 		ase_awk_free (awk, tmp);
 		return -1;
@@ -2363,8 +2363,8 @@ JNIEXPORT jstring JNICALL Java_ase_awk_Argument_getstrval (JNIEnv* env, jobject 
 	jstring ret = ASE_NULL;
 
 	str = ase_awk_valtostr (
-		run, val, ASE_AWK_VALTOSTR_CLEAR, ASE_ASE_NULL, &len);
-	if (str == ASE_ASE_NULL) 
+		run, val, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
+	if (str == ASE_NULL) 
 	{
 		THROW_RUN_EXCEPTION (env, run);
 		return ret;
@@ -2426,7 +2426,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 	ase_char_t* rptr;
 	ase_size_t len;
 
-	if (ASE_AWK_VAL_TYPE(val) != ASE_AWK_VAL_MAP) return ASE_ASE_NULL;
+	if (ASE_AWK_VAL_TYPE(val) != ASE_AWK_VAL_MAP) return ASE_NULL;
 
 	len = (*env)->GetStringLength (env, index);
 	ptr = (*env)->GetStringChars (env, index, JNI_FALSE);
@@ -2436,7 +2436,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 	{
 		ase_size_t x;
 		rptr = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
-		if (rptr == ASE_ASE_NULL)
+		if (rptr == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, index, ptr);
 			goto nomem;
@@ -2450,7 +2450,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 	(*env)->ReleaseStringChars (env, index, ptr);
 
 	/* the key is not found. it is not an error. val is just nil */
-	if (pair == ASE_ASE_NULL) return ASE_ASE_NULL;; 
+	if (pair == ASE_NULL) return ASE_NULL;; 
 
 	arg = (*env)->NewObject (env, 
 		run_data->argument_class, 
@@ -2467,7 +2467,15 @@ nomem:
 	}
 
 	THROW_NOMEM_EXCEPTION (env);
-	return ASE_ASE_NULL;
+	return ASE_NULL;
+}
+
+JNIEXPORT jboolean JNICALL Java_ase_awk_Return_isindexed (JNIEnv* env, jobject obj, jlong runid, jlong valid)
+{
+	ase_awk_run_t* run = (ase_awk_run_t*)runid;
+	ase_awk_val_t* val = (ase_awk_val_t*)valid;
+
+	return (val != ASE_NULL && ASE_AWK_VAL_TYPE(val) == ASE_AWK_VAL_MAP)? JNI_TRUE: JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Return_setintval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jlong newval)
@@ -2554,43 +2562,321 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobjec
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)runid;
 	ase_awk_val_t* val = (ase_awk_val_t*)valid;
-	ase_awk_val_t* nv;
 	ase_awk_t* awk;
 	run_data_t* run_data;
+
+	int opt;
+	const jchar* jptr;
+	ase_char_t* aptr;
+	jsize len;
 
 	awk = ase_awk_getrunawk (run);
 	run_data = (run_data_t*)ase_awk_getruncustomdata (run);
 
-	nv = ase_awk_makeintval (run, newval);
-	if (nv == ASE_NULL) 
+	opt = ase_awk_getoption (awk);
+	if ((opt & ASE_AWK_MAPTOVAR) != ASE_AWK_MAPTOVAR)
 	{
+		/* refer to run_return in run.c */
+		ase_awk_setrunerrnum (run, ASE_AWK_EMAPNOTALLOWED);
 		THROW_RUN_EXCEPTION (env, run);
 		return;
 	}
 
-	if (val != ASE_NULL)
+	if (val == ASE_NULL || ASE_AWK_VAL_TYPE(val) != ASE_AWK_VAL_MAP)
 	{
-		if (ASE_AWK_VAL_TYPE(val) != ASE_AWK_VAL_MAP)
+		ase_awk_val_t* x;
+	       	ase_awk_val_t* x2;
+		ase_awk_pair_t* pair;
+	
+		x = ase_awk_makemapval (run);
+		if (x == ASE_NULL) 
 		{
-			map = ase_awk_makemapval (run);
-			if (map == ASE_NULL)
-			{
-				ase_awk_refupval (run, nv);
-				ase_awk_refdownval (run, nv);
-				THROW_RUN_EXCEPTION (env, run);
-				return;
-			}
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x);
+
+		x2 = ase_awk_makeintval (run, newval);
+		if (x2 == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x);
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x2);
+
+		if (get_str(env,awk,index,&jptr,&aptr,&len) == -1)
+		{
+			ase_awk_refdownval (run, x2);
+			ase_awk_refdownval (run, x);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+
+		pair = ase_awk_map_put (
+			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
+		free_str (env, awk, index, jptr, aptr);
+		if (pair == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x2);
+			ase_awk_refdownval (run, x);
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		if (val != ASE_NULL) ase_awk_refdownval (run, val);
+		(*env)->SetLongField (env, obj, run_data->return_valid, (jlong)x);
+	}
+	else
+	{
+		ase_awk_val_t* x2;
+		ase_awk_pair_t* pair;
+
+		x2 = ase_awk_makeintval (run, newval);
+		if (x2 == ASE_NULL) 
+		{
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x2);
+
+		if (get_str(env,awk,index,&jptr,&aptr,&len) == -1)
+		{
+			ase_awk_refdownval (run, x2);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+		pair = ase_awk_map_put (
+			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
+		free_str (env, awk, index, jptr, aptr);
+		if (pair == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x2);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
 		}
 	}
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jstring index, jdouble newval)
+JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedrealval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jstring index, jdouble newval)
 {
+	ase_awk_run_t* run = (ase_awk_run_t*)runid;
+	ase_awk_val_t* val = (ase_awk_val_t*)valid;
+	ase_awk_t* awk;
+	run_data_t* run_data;
 
+	int opt;
+	const jchar* jptr;
+	ase_char_t* aptr;
+	jsize len;
+
+	awk = ase_awk_getrunawk (run);
+	run_data = (run_data_t*)ase_awk_getruncustomdata (run);
+
+	opt = ase_awk_getoption (awk);
+	if ((opt & ASE_AWK_MAPTOVAR) != ASE_AWK_MAPTOVAR)
+	{
+		/* refer to run_return in run.c */
+		ase_awk_setrunerrnum (run, ASE_AWK_EMAPNOTALLOWED);
+		THROW_RUN_EXCEPTION (env, run);
+		return;
+	}
+
+	if (val == ASE_NULL || ASE_AWK_VAL_TYPE(val) != ASE_AWK_VAL_MAP)
+	{
+		ase_awk_val_t* x;
+	       	ase_awk_val_t* x2;
+		ase_awk_pair_t* pair;
+	
+		x = ase_awk_makemapval (run);
+		if (x == ASE_NULL) 
+		{
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x);
+
+		x2 = ase_awk_makerealval (run, newval);
+		if (x2 == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x);
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x2);
+
+		if (get_str(env,awk,index,&jptr,&aptr,&len) == -1)
+		{
+			ase_awk_refdownval (run, x2);
+			ase_awk_refdownval (run, x);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+
+		pair = ase_awk_map_put (
+			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
+		free_str (env, awk, index, jptr, aptr);
+		if (pair == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x2);
+			ase_awk_refdownval (run, x);
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		if (val != ASE_NULL) ase_awk_refdownval (run, val);
+		(*env)->SetLongField (env, obj, run_data->return_valid, (jlong)x);
+	}
+	else
+	{
+		ase_awk_val_t* x2;
+		ase_awk_pair_t* pair;
+
+		x2 = ase_awk_makerealval (run, newval);
+		if (x2 == ASE_NULL) 
+		{
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x2);
+
+		if (get_str(env,awk,index,&jptr,&aptr,&len) == -1)
+		{
+			ase_awk_refdownval (run, x2);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+		pair = ase_awk_map_put (
+			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
+		free_str (env, awk, index, jptr, aptr);
+		if (pair == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x2);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+	}
 }
 
-JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jstring index, jstring newval)
+JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedstrval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jstring index, jstring newval)
 {
+	ase_awk_run_t* run = (ase_awk_run_t*)runid;
+	ase_awk_val_t* val = (ase_awk_val_t*)valid;
+	ase_awk_t* awk;
+	run_data_t* run_data;
+
+	int opt;
+	const jchar* jptr;
+	ase_char_t* aptr;
+	jsize len;
+
+	awk = ase_awk_getrunawk (run);
+	run_data = (run_data_t*)ase_awk_getruncustomdata (run);
+
+	opt = ase_awk_getoption (awk);
+	if ((opt & ASE_AWK_MAPTOVAR) != ASE_AWK_MAPTOVAR)
+	{
+		/* refer to run_return in run.c */
+		ase_awk_setrunerrnum (run, ASE_AWK_EMAPNOTALLOWED);
+		THROW_RUN_EXCEPTION (env, run);
+		return;
+	}
+
+	if (val == ASE_NULL || ASE_AWK_VAL_TYPE(val) != ASE_AWK_VAL_MAP)
+	{
+		ase_awk_val_t* x;
+	       	ase_awk_val_t* x2;
+		ase_awk_pair_t* pair;
+	
+		x = ase_awk_makemapval (run);
+		if (x == ASE_NULL) 
+		{
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x);
+
+		if (get_str(env,awk,newval,&jptr,&aptr,&len) == -1)
+		{
+			ase_awk_refdownval (run, x);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+		x2 = ase_awk_makestrval (run, aptr, len);
+		free_str (env, awk, index, jptr, aptr);
+		if (x2 == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x);
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x2);
+
+		if (get_str(env,awk,index,&jptr,&aptr,&len) == -1)
+		{
+			ase_awk_refdownval (run, x2);
+			ase_awk_refdownval (run, x);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+		pair = ase_awk_map_put (
+			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
+		free_str (env, awk, index, jptr, aptr);
+		if (pair == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x2);
+			ase_awk_refdownval (run, x);
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		if (val != ASE_NULL) ase_awk_refdownval (run, val);
+		(*env)->SetLongField (env, obj, run_data->return_valid, (jlong)x);
+	}
+	else
+	{
+		ase_awk_val_t* x2;
+		ase_awk_pair_t* pair;
+
+		if (get_str(env,awk,newval,&jptr,&aptr,&len) == -1)
+		{
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+		x2 = ase_awk_makestrval (run, aptr, len);
+		free_str (env, awk, index, jptr, aptr);
+		if (x2 == ASE_NULL) 
+		{
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		ase_awk_refupval (run, x2);
+
+		if (get_str(env,awk,index,&jptr,&aptr,&len) == -1)
+		{
+			ase_awk_refdownval (run, x2);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+		pair = ase_awk_map_put (
+			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
+		free_str (env, awk, index, jptr, aptr);
+		if (pair == ASE_NULL)
+		{
+			ase_awk_refdownval (run, x2);
+			THROW_NOMEM_EXCEPTION (env);
+			return;
+		}
+	}
 }
 
 
