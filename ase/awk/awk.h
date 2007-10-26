@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.22 2007/10/24 09:57:45 bacon Exp $
+ * $Id: awk.h,v 1.23 2007/10/25 14:43:17 bacon Exp $
  *
  * {License}
  */
@@ -408,7 +408,6 @@ enum ase_awk_global_id_t
 	ASE_AWK_GLOBAL_ARGC,
 	ASE_AWK_GLOBAL_ARGV,
 	ASE_AWK_GLOBAL_CONVFMT,
-	ASE_AWK_GLOBAL_ENVIRON,
 	ASE_AWK_GLOBAL_FILENAME,
 	ASE_AWK_GLOBAL_FNR,
 	ASE_AWK_GLOBAL_FS,

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.12 2007/10/24 09:57:45 bacon Exp $
+ * $Id: func.c,v 1.13 2007/10/25 14:43:17 bacon Exp $
  *
  * {License}
  */
@@ -142,7 +142,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	for (bfn = sys_bfn; bfn->name.ptr != ASE_NULL; bfn++)
 	{
 		if (bfn->valid != 0 && 
-		    (awk->option & bfn->valid) == 0) continue;
+		    (awk->option & bfn->valid) != bfn->valid) continue;
 
 		pair = ase_awk_map_get (
 			awk->kwtab, bfn->name.ptr, bfn->name.len);

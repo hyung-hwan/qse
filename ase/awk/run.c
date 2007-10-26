@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.18 2007/10/21 13:58:47 bacon Exp $
+ * $Id: run.c,v 1.19 2007/10/25 14:43:17 bacon Exp $
  *
  * {License}
  */
@@ -1624,7 +1624,6 @@ static int run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 
 			/* adjust the error line */
 			run->errlin = nde->line;
-
 			return -1;
 		}
 
@@ -1637,7 +1636,6 @@ static int run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 
 			/* adjust the error line */
 			run->errlin = nde->line;
-
 			return -1;
 		}
 

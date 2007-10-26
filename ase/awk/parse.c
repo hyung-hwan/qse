@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.22 2007/10/24 14:17:32 bacon Exp $
+ * $Id: parse.c,v 1.23 2007/10/25 14:43:17 bacon Exp $
  *
  * {License}
  */
@@ -82,7 +82,6 @@ enum
 	TOKEN_EXIT,
 	TOKEN_NEXT,
 	TOKEN_NEXTFILE,
-	TOKEN_NEXTINFILE,
 	TOKEN_NEXTOFILE,
 	TOKEN_DELETE,
 	TOKEN_RESET,
@@ -256,9 +255,9 @@ static kwent_t kwtab[] =
 	{ ASE_T("continue"),     8, TOKEN_CONTINUE,    0 },
 	{ ASE_T("return"),       6, TOKEN_RETURN,      0 },
 	{ ASE_T("exit"),         4, TOKEN_EXIT,        0 },
-	{ ASE_T("next"),         4, TOKEN_NEXT,        0 },
-	{ ASE_T("nextfile"),     8, TOKEN_NEXTFILE,    0 },
-	{ ASE_T("nextofile"),    9, TOKEN_NEXTOFILE,   ASE_AWK_NEXTOFILE },
+	{ ASE_T("next"),         4, TOKEN_NEXT,        ASE_AWK_PABLOCK },
+	{ ASE_T("nextfile"),     8, TOKEN_NEXTFILE,    ASE_AWK_PABLOCK },
+	{ ASE_T("nextofile"),    9, TOKEN_NEXTOFILE,   ASE_AWK_PABLOCK | ASE_AWK_NEXTOFILE },
 	{ ASE_T("delete"),       6, TOKEN_DELETE,      0 },
 	{ ASE_T("reset"),        5, TOKEN_RESET,       ASE_AWK_RESET },
 	{ ASE_T("print"),        5, TOKEN_PRINT,       ASE_AWK_EXTIO },
@@ -283,18 +282,42 @@ static global_t gtab[] =
 {
 	{ ASE_T("ARGC"),         4,  0 },
 	{ ASE_T("ARGV"),         4,  0 },
+
+	/* output real-to-str conversion format for other cases than 'print' */
 	{ ASE_T("CONVFMT"),      7,  0 },
-	{ ASE_T("ENVIRON"),      7,  0 },
-	{ ASE_T("FILENAME"),     8,  0 },
-	{ ASE_T("FNR"),          3,  0 },
+
+	/* current input file name */
+	{ ASE_T("FILENAME"),     8,  ASE_AWK_PABLOCK },
+
+	/* input record number in current file */
+	{ ASE_T("FNR"),          3,  ASE_AWK_PABLOCK },
+
+	/* input field separator */
 	{ ASE_T("FS"),           2,  0 },
+
+	/* ignore case in string comparison */
 	{ ASE_T("IGNORECASE"),  10,  0 },
+
+	/* number of fields in current input record */
 	{ ASE_T("NF"),           2,  0 },
+
+	/* input record number */
 	{ ASE_T("NR"),           2,  0 },
-	{ ASE_T("OFILENAME"),    9,  ASE_AWK_NEXTOFILE },
-	{ ASE_T("OFMT"),         4,  0 },
-	{ ASE_T("OFS"),          3,  0 },
-	{ ASE_T("ORS"),          3,  0 },
+
+	/* current output file name */
+	{ ASE_T("OFILENAME"),    9,  ASE_AWK_PABLOCK | ASE_AWK_NEXTOFILE },
+
+	/* output real-to-str conversion format for 'print' */
+	{ ASE_T("OFMT"),         4,  ASE_AWK_EXTIO}, 
+
+	/* output field separator for 'print' */
+	{ ASE_T("OFS"),          3,  ASE_AWK_EXTIO },
+
+	/* output record separator. used for 'print' and blockless output 
+	 * ASE_AWK_BLOCKLESS desn't have to be specified becuase
+	 * it requires ASE_AWK_EXTIO to be ON. */
+	{ ASE_T("ORS"),          3,  ASE_AWK_EXTIO },
+
 	{ ASE_T("RLENGTH"),      7,  0 },
 	{ ASE_T("RS"),           2,  0 },
 	{ ASE_T("RSTART"),       6,  0 },
@@ -718,6 +741,7 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 		{
 			/* blockless pattern */
 			ase_bool_t newline = MATCH(awk,TOKEN_NEWLINE);
+			ase_size_t tline = awk->token.prev.line;
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
 			if (parse_pattern_block (
@@ -737,6 +761,15 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 					/*ase_awk_clrpt (awk, ptn);*/
 					return ASE_NULL;
 				}	
+			}
+
+			if ((awk->option & ASE_AWK_EXTIO) != ASE_AWK_EXTIO)
+			{
+				/* blockless pattern requires ASE_AWK_EXTIO
+				 * to be ON because the implicit block is
+				 * "print $0" */
+				SETERRLIN (awk, ASE_AWK_ENOSUP, tline);
+				return ASE_NULL;
 			}
 		}
 		else
@@ -5029,7 +5062,7 @@ static int classify_ident (
 		ase_size_t l;
 
 		if (kwp->valid != 0 && 
-		    (awk->option & kwp->valid) == 0) continue;
+		    (awk->option & kwp->valid) != kwp->valid) continue;
 
 		pair = ase_awk_map_get (awk->kwtab, kwp->name, kwp->name_len);
 		if (pair != ASE_NULL)

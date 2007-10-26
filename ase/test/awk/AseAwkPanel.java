@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.10 2007/10/24 14:17:32 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.11 2007/10/25 14:43:17 bacon Exp $
  */
 
 import java.awt.*;
@@ -97,6 +97,7 @@ public class AseAwkPanel extends Panel
 			setWord ("OFMT", "ofmt");
 
 			setOption (getOption() | StdAwk.OPTION_MAPTOVAR);
+			//setOption (getOption() & ~StdAwk.OPTION_EXTIO);
 		}
 	
 		public void sleep (Context ctx, String name, Return ret, Argument[] args)
