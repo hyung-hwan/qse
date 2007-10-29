@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.40 2007/10/21 07:59:35 bacon Exp $
+ * $Id: Awk.hpp,v 1.41 2007/10/26 12:49:24 bacon Exp $
  *
  * {License}
  */
@@ -442,6 +442,27 @@ public:
 		}
 
 	public:
+		enum class GLOBAL: int
+		{
+			ARGC = ASE::Awk::GBL_ARGC,
+			ARGV = ASE::Awk::GBL_ARGV,
+			CONVFMT = ASE::Awk::GBL_CONVFMT,
+			FILENAME = ASE::Awk::GBL_FILENAME,
+			FNR = ASE::Awk::GBL_FNR,
+			FS = ASE::Awk::GBL_FS,
+			IGNORECASE = ASE::Awk::GBL_IGNORECASE,
+			NF = ASE::Awk::GBL_NF,
+			NR = ASE::Awk::GBL_NR,
+			OFILENAME = ASE::Awk::GBL_OFILENAME,
+			OFMT = ASE::Awk::GBL_OFMT,
+			OFS = ASE::Awk::GBL_OFS,
+			ORS = ASE::Awk::GBL_ORS,
+			RLENGTH = ASE::Awk::GBL_RLENGTH,
+			RS = ASE::Awk::GBL_RS,
+			RSTART = ASE::Awk::GBL_RSTART,
+			SUBSEP = ASE::Awk::GBL_SUBSEP
+		};
+
 		property Awk^ Owner
 		{
 			Awk^ get () { return this->owner; }
@@ -482,70 +503,70 @@ public:
 				(ASE::Awk::ErrorCode)num, line, p);
 		}
 
-		bool SetGlobal (int id, System::String^ v)
+		bool SetGlobal (GLOBAL id, System::String^ v)
 		{
 			cli::pin_ptr<const char_t> nptr = PtrToStringChars(v);
-			return run.setGlobal (id, nptr, v->Length) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, nptr, v->Length) == 0;
 		}
 
-		bool SetGlobal (int id, long_t v)
+		bool SetGlobal (GLOBAL id, long_t v)
 		{
-			return run.setGlobal (id, v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, v) == 0;
 		}
-		bool SetGlobal (int id, System::SByte^ v)
+		bool SetGlobal (GLOBAL id, System::SByte^ v)
 		{
-			return run.setGlobal (id, (long_t)(__int8)v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, (long_t)(__int8)v) == 0;
 		}
-		bool SetGlobal (int id, System::Int16^ v)
+		bool SetGlobal (GLOBAL id, System::Int16^ v)
 		{
-			return run.setGlobal (id, (long_t)(__int16)v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, (long_t)(__int16)v) == 0;
 		}
-		bool SetGlobal (int id, System::Int32^ v)
+		bool SetGlobal (GLOBAL id, System::Int32^ v)
 		{
-			return run.setGlobal (id, (long_t)(__int32)v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, (long_t)(__int32)v) == 0;
 		}
-		bool SetGlobal (int id, System::Int64^ v)
+		bool SetGlobal (GLOBAL id, System::Int64^ v)
 		{
-			return run.setGlobal (id, (long_t)(__int64)v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, (long_t)(__int64)v) == 0;
 		}
-		bool SetGlobal (int id, System::Byte^ v)
+		bool SetGlobal (GLOBAL id, System::Byte^ v)
 		{
-			return run.setGlobal (id, (long_t)(unsigned __int8)v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, (long_t)(unsigned __int8)v) == 0;
 		}
-		bool SetGlobal (int id, System::UInt16^ v)
+		bool SetGlobal (GLOBAL id, System::UInt16^ v)
 		{
-			return run.setGlobal (id, (long_t)(unsigned __int16)v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, (long_t)(unsigned __int16)v) == 0;
 		}
-		bool SetGlobal (int id, System::UInt32^ v)
+		bool SetGlobal (GLOBAL id, System::UInt32^ v)
 		{
-			return run.setGlobal (id, (long_t)(unsigned __int32)v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, (long_t)(unsigned __int32)v) == 0;
 		}
-		bool SetGlobal (int id, System::UInt64^ v)
+		bool SetGlobal (GLOBAL id, System::UInt64^ v)
 		{
-			return run.setGlobal (id, (long_t)(unsigned __int64)v) == 0;
-		}
-
-		bool SetGlobal (int id, real_t v)
-		{
-			return run.setGlobal (id, v) == 0;
-		}
-		bool SetGlobal (int id, System::Single^ v)
-		{
-			return run.setGlobal (id, (real_t)(float)v) == 0;
-		}
-		bool SetGlobal (int id, System::Double^ v)
-		{
-			return run.setGlobal (id, (real_t)(double)v) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, (long_t)(unsigned __int64)v) == 0;
 		}
 
-		bool SetGlobal (int id, Return^ v)
+		bool SetGlobal (GLOBAL id, real_t v)
 		{
-			return run.setGlobal (id, v->ret) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, v) == 0;
+		}
+		bool SetGlobal (GLOBAL id, System::Single^ v)
+		{
+			return run.setGlobal ((ASE::Awk::Global)id, (real_t)(float)v) == 0;
+		}
+		bool SetGlobal (GLOBAL id, System::Double^ v)
+		{
+			return run.setGlobal ((ASE::Awk::Global)id, (real_t)(double)v) == 0;
 		}
 
-		bool GetGlobal (int id, [System::Runtime::InteropServices::Out] Argument^% v)
+		bool SetGlobal (GLOBAL id, Return^ v)
 		{
-			return run.getGlobal (id, *v->arg) == 0;
+			return run.setGlobal ((ASE::Awk::Global)id, v->ret) == 0;
+		}
+
+		bool GetGlobal (GLOBAL id, [System::Runtime::InteropServices::Out] Argument^% v)
+		{
+			return run.getGlobal ((ASE::Awk::Global)id, *v->arg) == 0;
 		}
 
 	public protected:

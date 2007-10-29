@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.23 2007/10/25 14:43:17 bacon Exp $
+ * $Id: parse.c,v 1.24 2007/10/26 12:49:24 bacon Exp $
  *
  * {License}
  */
@@ -298,11 +298,13 @@ static global_t gtab[] =
 	/* ignore case in string comparison */
 	{ ASE_T("IGNORECASE"),  10,  0 },
 
-	/* number of fields in current input record */
+	/* number of fields in current input record 
+	 * NF is also updated if you assign a value to $0. so it is not
+	 * associated with ASE_AWK_PABLOCK */
 	{ ASE_T("NF"),           2,  0 },
 
 	/* input record number */
-	{ ASE_T("NR"),           2,  0 },
+	{ ASE_T("NR"),           2,  ASE_AWK_PABLOCK },
 
 	/* current output file name */
 	{ ASE_T("OFILENAME"),    9,  ASE_AWK_PABLOCK | ASE_AWK_NEXTOFILE },
