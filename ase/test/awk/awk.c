@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.19 2007/10/11 14:39:46 bacon Exp $
+ * $Id: awk.c,v 1.20 2007/10/26 12:49:24 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -550,6 +550,14 @@ static ase_ssize_t awk_extio_console (
 					epa->run, infiles[infile_no], 
 					ase_strlen(infiles[infile_no])) == -1)
 				{
+					fclose (fp);
+					return -1;
+				}
+
+				if (ase_awk_setglobal (
+					epa->run, ASE_AWK_GLOBAL_NR, ase_awk_val_zero) == -1)
+				{
+					/* need to reset NR */
 					fclose (fp);
 					return -1;
 				}

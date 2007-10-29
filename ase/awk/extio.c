@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.6 2007/10/25 14:43:17 bacon Exp $
+ * $Id: extio.c,v 1.7 2007/10/26 12:49:24 bacon Exp $
  *
  * {License}
  */
@@ -74,8 +74,6 @@ static int out_mask_map[] =
 	MASK_WRITE
 };
 
-#include <windows.h>
-#include <tchar.h>
 int ase_awk_readextio (
 	ase_awk_run_t* run, int in_type,
 	const ase_char_t* name, ase_str_t* buf)
@@ -394,8 +392,8 @@ int ase_awk_readextio (
 	    rs->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, rs_ptr);
 	ase_awk_refdownval (run, rs);
 
-	/* increment NR */
-	if (ret != -1 && ret != 0)
+	/* increment NR for console input */
+	if (extio_type == ASE_AWK_EXTIO_CONSOLE && ret != -1 && ret != 0)
 	{
 		ase_awk_val_t* nr;
 		ase_long_t lv;
@@ -411,14 +409,6 @@ int ase_awk_readextio (
 		{
 			if (n == 1) lv = (ase_long_t)rv;
 
-
-// TODO---> WRONG: NR SHOULD BE UPDATED FOR CONSOLE INPUT...
-// { print "NR=" NR; a=getline<"awk.c"; print a; }
-{
-	wchar_t x[100];
-	_sntprintf (x, 100, _T("ddd %d\n"), (int)lv);	
-OutputDebugStringW (x);
-}
 			nr = ase_awk_makeintval (run, lv + 1);
 			if (nr == ASE_NULL) ret = -1;
 			else 
