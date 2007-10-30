@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.9 2007/10/24 09:57:45 bacon Exp $
+ * $Id: awk_i.h,v 1.10 2007/10/28 06:12:37 bacon Exp $
  *
  * {License}
  */
@@ -256,7 +256,9 @@ struct ase_awk_run_t
 		void* rs;
 		void* fs;
 		int ignorecase;
-		ase_size_t fnr;
+
+		ase_long_t nr;
+		ase_long_t fnr;
 
 		struct 
 		{

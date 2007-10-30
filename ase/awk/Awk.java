@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.29 2007/10/23 15:18:47 bacon Exp $
+ * $Id: Awk.java,v 1.30 2007/10/28 15:03:22 bacon Exp $
  *
  * {License}
  */
@@ -38,7 +38,7 @@ public abstract class Awk
 	public static final int OPTION_EXTIO       = (1 << 7);
 	public static final int OPTION_COPROC      = (1 << 8);
 	public static final int OPTION_BLOCKLESS   = (1 << 9);
-	public static final int OPTION_ASEONE      = (1 << 10);
+	public static final int OPTION_BASEONE     = (1 << 10);
 	public static final int OPTION_STRIPSPACES = (1 << 11);
 	public static final int OPTION_NEXTOFILE   = (1 << 12);
 	public static final int OPTION_CRLF        = (1 << 13);

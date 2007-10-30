@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.45 2007/10/11 14:39:46 bacon Exp $
+ * $Id: Awk.cpp,v 1.46 2007/10/28 06:12:37 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -216,12 +216,12 @@ public:
 
 protected:
 
-	void onRunStart (const Run& run)
+	void onRunStart (Run& run)
 	{
 		ase_printf (ASE_T("*** awk run started ***\n"));
 	}
 
-	void onRunEnd (const Run& run)
+	void onRunEnd (Run& run)
 	{
 		ErrorCode err = run.getErrorCode();
 
@@ -234,7 +234,7 @@ protected:
 		ase_printf (ASE_T("*** awk run ended ***\n"));
 	}
 
-	void onRunReturn (const Run& run, const Argument& ret)
+	void onRunReturn (Run& run, const Argument& ret)
 	{
 		size_t len;
 		const char_t* ptr = ret.toStr (&len);
@@ -379,7 +379,7 @@ protected:
 
 		if (fn != ASE_NULL) 
 		{
-			if (io.setFileName (fn) == -1)
+			if (io.setFileName(fn) == -1)
 			{
 				if (fp != stdin && fp != stdout) fclose (fp);
 				ase_awk_free (awk, t);
@@ -412,7 +412,28 @@ protected:
 		while (n < (ssize_t)len)
 		{
 			ase_cint_t c = ase_fgetc (fp);
-			if (c == ASE_CHAR_EOF) break;
+			if (c == ASE_CHAR_EOF) 
+			{
+				if (t->nextConIdx >= numConInFiles) break;
+
+				const char_t* fn = conInFile[t->nextConIdx];
+				FILE* nfp = ase_fopen (fn, ASE_T("r"));
+				if (nfp == ASE_NULL) return -1;
+
+				if (io.setFileName(fn) == -1 || io.setFNR(0) == -1)
+				{
+					fclose (nfp);
+					return -1;
+				}
+
+				fclose (fp);
+				fp = nfp;
+				t->nextConIdx++;
+				t->handle = fp;
+
+				if (n == 0) continue;
+				else break;
+			}
 
 			buf[n++] = c;
 			if (c == ASE_T('\n')) break;

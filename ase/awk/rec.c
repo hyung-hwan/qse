@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c,v 1.4 2007/10/21 13:58:47 bacon Exp $
+ * $Id: rec.c,v 1.5 2007/10/28 06:12:37 bacon Exp $
  *
  * {License}
  */
@@ -224,8 +224,14 @@ static int __split_record (ase_awk_run_t* run)
 	v = ase_awk_makeintval (run, (ase_long_t)nflds);
 	if (v == ASE_NULL) return -1;
 
-	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NF, v) == -1) return -1;
+	ase_awk_refupval (run, v);
+	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NF, v) == -1) 
+	{
+		ase_awk_refdownval (run, v);
+		return -1;
+	}
 
+	ase_awk_refdownval (run, v);
 	ASE_ASSERT (nflds == run->inrec.nflds);
 	return 0;
 }
@@ -422,8 +428,13 @@ static int __recomp_record_fields (
 		v = ase_awk_makeintval (run, (ase_long_t)max);
 		if (v == ASE_NULL) return -1;
 
-		if (ase_awk_setglobal (
-			run, ASE_AWK_GLOBAL_NF, v) == -1) return -1;
+		ase_awk_refupval (run, v);
+		if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NF, v) == -1) 
+		{
+			ase_awk_refdownval (run, v);
+			return -1;
+		}
+		ase_awk_refdownval (run, v);
 	}
 
 	return 0;

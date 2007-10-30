@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.80 2007/10/21 13:58:47 bacon Exp $
+ * $Id: Awk.cpp,v 1.81 2007/10/28 06:12:37 bacon Exp $
  *
  * {License}
  */
@@ -124,6 +124,21 @@ int Awk::Console::setFileName (const char_t* name)
 		return ase_awk_setofilename (
 			extio->run, name, ase_strlen(name));
 	}
+}
+
+int Awk::Console::setFNR (long_t fnr)
+{
+	ase_awk_val_t* tmp;
+	int n;
+
+	tmp = ase_awk_makeintval (extio->run, fnr);
+	if (tmp == ASE_NULL) return -1;
+
+	ase_awk_refupval (extio->run, tmp);
+	n = ase_awk_setglobal (extio->run, ASE_AWK_GLOBAL_FNR, tmp);
+	ase_awk_refdownval (extio->run, tmp);
+
+	return n;
 }
 
 Awk::Console::Mode Awk::Console::getMode () const
@@ -1677,8 +1692,7 @@ void Awk::onRunEnd (run_t* run, int errnum, void* custom)
 
 	if (errnum == ERR_NOERR && r->callbackFailed)
 	{
-		ase_awk_setrunerror (
-			r->run, ERR_NOMEM, 0, ASE_NULL, 0);
+		ase_awk_setrunerrnum (r->run, ERR_NOMEM);
 	}
 
 	r->awk->onRunEnd (*r);

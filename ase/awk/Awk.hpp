@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.79 2007/10/25 14:43:17 bacon Exp $
+ * $Id: Awk.hpp,v 1.80 2007/10/28 06:12:37 bacon Exp $
  *
  * {License}
  */
@@ -273,6 +273,7 @@ public:
 	public:
 		Mode getMode () const;
 		int setFileName (const char_t* name);
+		int setFNR (long_t fnr);
 
 	protected:
 		char_t* filename;
