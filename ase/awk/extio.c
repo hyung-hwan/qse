@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.7 2007/10/26 12:49:24 bacon Exp $
+ * $Id: extio.c,v 1.8 2007/10/28 06:12:37 bacon Exp $
  *
  * {License}
  */
@@ -391,33 +391,6 @@ int ase_awk_readextio (
 	if (rs_ptr != ASE_NULL && 
 	    rs->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, rs_ptr);
 	ase_awk_refdownval (run, rs);
-
-	/* increment NR for console input */
-	if (extio_type == ASE_AWK_EXTIO_CONSOLE && ret != -1 && ret != 0)
-	{
-		ase_awk_val_t* nr;
-		ase_long_t lv;
-		ase_real_t rv;
-
-		nr = ase_awk_getglobal (run, ASE_AWK_GLOBAL_NR);
-		ase_awk_refupval (run, nr);
-		n = ase_awk_valtonum (run, nr, &lv, &rv);
-		ase_awk_refdownval (run, nr);
-
-		if (n == -1) ret = -1;
-		else
-		{
-			if (n == 1) lv = (ase_long_t)rv;
-
-			nr = ase_awk_makeintval (run, lv + 1);
-			if (nr == ASE_NULL) ret = -1;
-			else 
-			{
-				if (ase_awk_setglobal (
-					run, ASE_AWK_GLOBAL_NR, nr) == -1) ret = -1;
-			}
-		}
-	}
 
 	return ret;
 }

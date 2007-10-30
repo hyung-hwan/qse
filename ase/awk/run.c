@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.19 2007/10/25 14:43:17 bacon Exp $
+ * $Id: run.c,v 1.20 2007/10/28 06:12:37 bacon Exp $
  *
  * {License}
  */
@@ -308,6 +308,18 @@ static int set_global (
 		run->global.convfmt.ptr = convfmt_ptr;
 		run->global.convfmt.len = convfmt_len;
 	}
+	else if (idx == ASE_AWK_GLOBAL_FNR)
+	{
+		int n;
+		ase_long_t lv;
+		ase_real_t rv;
+
+		n = ase_awk_valtonum (run, val, &lv, &rv);
+		if (n == -1) return -1;
+		if (n == 1) lv = (ase_long_t)rv;
+
+		run->global.fnr = lv;
+	}
 	else if (idx == ASE_AWK_GLOBAL_FS)
 	{
 		ase_char_t* fs_ptr;
@@ -356,17 +368,17 @@ static int set_global (
 	else if (idx == ASE_AWK_GLOBAL_IGNORECASE)
 	{
 		if ((val->type == ASE_AWK_VAL_INT &&
-		     ((ase_awk_val_int_t*)val)->val == 0) ||
+		     ((ase_awk_val_int_t*)val)->val != 0) ||
 		    (val->type == ASE_AWK_VAL_REAL &&
-		     ((ase_awk_val_real_t*)val)->val == 0.0) ||
+		     ((ase_awk_val_real_t*)val)->val != 0.0) ||
 		    (val->type == ASE_AWK_VAL_STR &&
-		     ((ase_awk_val_str_t*)val)->len == 0))
+		     ((ase_awk_val_str_t*)val)->len != 0))
 		{
-			run->global.ignorecase = 0;
+			run->global.ignorecase = 1;
 		}
 		else
 		{
-			run->global.ignorecase = 1;
+			run->global.ignorecase = 0;
 		}
 	}
 	else if (idx == ASE_AWK_GLOBAL_NF)
@@ -388,6 +400,18 @@ static int set_global (
 				return -1;
 			}
 		}
+	}
+	else if (idx == ASE_AWK_GLOBAL_NR)
+	{
+		int n;
+		ase_long_t lv;
+		ase_real_t rv;
+
+		n = ase_awk_valtonum (run, val, &lv, &rv);
+		if (n == -1) return -1;
+		if (n == 1) lv = (ase_long_t)rv;
+
+		run->global.nr = lv;
 	}
 	else if (idx == ASE_AWK_GLOBAL_OFMT)
 	{
@@ -650,7 +674,7 @@ int ase_awk_run (ase_awk_t* awk,
 		}
 		else
 		{
-			ase_awk_seterror (awk, ASE_AWK_ERUNTIME, 0, ASE_NULL, 0);
+			ase_awk_seterrnum (awk, ASE_AWK_ERUNTIME);
 		}
 	}
 
@@ -1043,22 +1067,45 @@ static void cleanup_globals (ase_awk_run_t* run)
 	}
 }
 
-static int update_fnr (ase_awk_run_t* run, ase_size_t fnr)
+static int update_fnr (ase_awk_run_t* run, ase_long_t fnr, ase_long_t nr)
 {
-	ase_awk_val_t* tmp;
+	ase_awk_val_t* tmp1, * tmp2;
 
-	tmp = ase_awk_makeintval (run, fnr);
-	if (tmp == ASE_NULL) return -1;
+	tmp1 = ase_awk_makeintval (run, fnr);
+	if (tmp1 == ASE_NULL) return -1;
 
-	ase_awk_refupval (run, tmp);
-	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_FNR, tmp) == -1)
+	ase_awk_refupval (run, tmp1);
+
+	if (nr == fnr) tmp2 = tmp1;
+	else
 	{
-		ase_awk_refdownval (run, tmp);
+		tmp2 = ase_awk_makeintval (run, nr);
+		if (tmp2 == ASE_NULL)
+		{
+			ase_awk_refdownval (run, tmp1);
+			return -1;
+		}
+
+		ase_awk_refupval (run, tmp2);
+	}
+
+
+	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_FNR, tmp1) == -1)
+	{
+		if (nr != fnr) ase_awk_refdownval (run, tmp2);
+		ase_awk_refdownval (run, tmp1);
 		return -1;
 	}
 
-	ase_awk_refdownval (run, tmp);
-	run->global.fnr = fnr;
+	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NR, tmp2) == -1)
+	{
+		if (nr != fnr) ase_awk_refdownval (run, tmp2);
+		ase_awk_refdownval (run, tmp1);
+		return -1;
+	}
+
+	if (nr != fnr) ase_awk_refdownval (run, tmp2);
+	ase_awk_refdownval (run, tmp1);
 	return 0;
 }
 
@@ -1154,15 +1201,6 @@ static int run_main (
 		}
 	}	
 
-	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NR, ase_awk_val_zero) == -1)
-	{
-		/* it can simply restore the top of the stack this way
-		 * because the values pused onto the stack so far are
-		 * all ase_awk_val_nils */
-		run->stack_top = saved_stack_top;
-		return -1;
-	}
-
 	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NF, ase_awk_val_zero) == -1)
 	{
 		/* it can simply restore the top of the stack this way
@@ -1185,7 +1223,7 @@ static int run_main (
 
 	run->exit_level = EXIT_NONE;
 
-	n = update_fnr (run, 0);
+	n = update_fnr (run, 0, 0);
 	if (n == 0) n = set_globals_to_default (run);
 	if (n == 0 && main != ASE_NULL)
 	{
@@ -1451,7 +1489,7 @@ static int run_pattern_blocks (ase_awk_run_t* run)
 		}
 		if (n == 0) break; /* end of input */
 
-		if (update_fnr (run, run->global.fnr+1) == -1) 
+		if (update_fnr (run, run->global.fnr+1, run->global.nr+1) == -1) 
 		{
 			ADJUST_ERROR_LINE (run);
 			return -1;
@@ -2245,7 +2283,8 @@ static int run_nextinfile (ase_awk_run_t* run, ase_awk_nde_nextfile_t* nde)
 		return 0;
 	}
 
-	if (update_fnr (run, 0) == -1) 
+	/* FNR resets to 0, NR remains the same */
+	if (update_fnr (run, 0, run->global.nr) == -1) 
 	{
 		run->errlin = nde->line;
 		return -1;
@@ -3158,6 +3197,8 @@ static ase_awk_val_t* do_assignment_scalar (
 	{
 		if (set_global (run, var->id.idxa, var, val) == -1) 
 		{
+			/* adjust error line */
+			run->errlin = var->line;
 			return ASE_NULL;
 		}
 	}

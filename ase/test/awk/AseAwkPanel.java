@@ -1,17 +1,20 @@
 /*
- * $Id: AseAwkPanel.java,v 1.11 2007/10/25 14:43:17 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.13 2007/10/28 15:03:22 bacon Exp $
  */
 
 import java.awt.*;
 import java.awt.event.*;
 
 import java.net.URL;
+import java.net.URLConnection;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.io.InputStream;
+import java.io.FileOutputStream;
 
 import ase.awk.StdAwk;
 import ase.awk.Console;
@@ -95,9 +98,6 @@ public class AseAwkPanel extends Panel
 			setWord ("sin", "cain");
 			setWord ("length", "len");
 			setWord ("OFMT", "ofmt");
-
-			setOption (getOption() | StdAwk.OPTION_MAPTOVAR);
-			//setOption (getOption() & ~StdAwk.OPTION_EXTIO);
 		}
 	
 		public void sleep (Context ctx, String name, Return ret, Argument[] args)
@@ -275,18 +275,102 @@ public class AseAwkPanel extends Panel
 	private TextArea srcOut;
 	private TextArea conIn;
 	private TextArea conOut;
+	private TextField entryPoint;
 	private TextField jniLib;
 
 	private boolean jniLibLoaded = false;
+
+	private class Option
+	{
+		private String name;
+		private int value;
+		private boolean state;
+
+		public Option (String name, int value, boolean state)
+		{
+			this.name = name;
+			this.value = value;
+			this.state = state;
+		}
+
+		public String getName()
+		{
+			return this.name;
+		}
+
+		public int getValue()
+		{
+			return this.value;
+		}
+
+		public boolean getState()
+		{
+			return this.state;
+		}
+
+		public void setState (boolean state)
+		{
+			this.state = state;
+		}
+	}
+
+	protected Option[] options = new Option[]
+	{
+		new Option("IMPLICIT", AseAwk.OPTION_IMPLICIT, true),
+		new Option("EXPLICIT", AseAwk.OPTION_EXPLICIT, false),
+		new Option("UNIQUEFN", AseAwk.OPTION_UNIQUEFN, false),
+		new Option("SHADING", AseAwk.OPTION_SHADING, true),
+		new Option("SHIFT", AseAwk.OPTION_SHIFT, false),
+		new Option("IDIV", AseAwk.OPTION_IDIV, false),
+		new Option("STRCONCAT", AseAwk.OPTION_STRCONCAT, false),
+		new Option("EXTIO", AseAwk.OPTION_EXTIO, true),
+		new Option("BLOCKLESS", AseAwk.OPTION_BLOCKLESS, true),
+		new Option("BASEONE", AseAwk.OPTION_BASEONE, true),
+		new Option("STRIPSPACES", AseAwk.OPTION_STRIPSPACES, false),
+		new Option("NEXTOFILE", AseAwk.OPTION_NEXTOFILE, false),
+		//new Option("CRLF", AseAwk.OPTION_CRLF, false),
+		new Option("ARGSTOMAIN", AseAwk.OPTION_ARGSTOMAIN, false),
+		new Option("RESET", AseAwk.OPTION_RESET, false),
+		new Option("MAPTOVAR", AseAwk.OPTION_MAPTOVAR, false),
+		new Option("PABLOCK", AseAwk.OPTION_PABLOCK, true)
+	};
 
 	public AseAwkPanel () 
 	{
 		jniLib = new TextField ();
 
+		Font font = new Font ("Monospaced", Font.PLAIN, 14);
+
+
 		srcIn = new TextArea ();
 		srcOut = new TextArea ();
 		conIn = new TextArea ();
 		conOut = new TextArea ();
+
+		srcIn.setFont (font);
+		srcOut.setFont (font);
+		conIn.setFont (font);
+		conOut.setFont (font);
+
+		Panel srcInPanel = new Panel();
+		srcInPanel.setLayout (new BorderLayout());
+		srcInPanel.add (new Label("Source Input"), BorderLayout.NORTH);
+		srcInPanel.add (srcIn, BorderLayout.CENTER);
+
+		Panel srcOutPanel = new Panel();
+		srcOutPanel.setLayout (new BorderLayout());
+		srcOutPanel.add (new Label("Source Output"), BorderLayout.NORTH);
+		srcOutPanel.add (srcOut, BorderLayout.CENTER);
+
+		Panel conInPanel = new Panel();
+		conInPanel.setLayout (new BorderLayout());
+		conInPanel.add (new Label("Console Input"), BorderLayout.NORTH);
+		conInPanel.add (conIn, BorderLayout.CENTER);
+
+		Panel conOutPanel = new Panel();
+		conOutPanel.setLayout (new BorderLayout());
+		conOutPanel.add (new Label("Console Output"), BorderLayout.NORTH);
+		conOutPanel.add (conOut, BorderLayout.CENTER);
 
 		Button runBtn = new Button ("Run Awk");
 
@@ -297,6 +381,44 @@ public class AseAwkPanel extends Panel
 				runAwk ();
 			}
 		});
+
+		entryPoint = new TextField();
+
+		Panel entryPanel = new Panel();
+		entryPanel.setLayout (new BorderLayout());
+		entryPanel.add (new Label("Main:"), BorderLayout.WEST);
+		entryPanel.add (entryPoint, BorderLayout.CENTER);
+
+		Panel leftPanel = new Panel();
+		leftPanel.setLayout (new BorderLayout());
+		leftPanel.add (runBtn, BorderLayout.SOUTH);
+
+		Panel optPanel = new Panel();
+		optPanel.setBackground (Color.YELLOW);
+		optPanel.setLayout (new GridLayout(options.length, 1));
+		for (int i = 0; i < options.length; i++)
+		{
+			Checkbox cb = new Checkbox(options[i].getName(), options[i].getState());
+
+			cb.addItemListener (new ItemListener ()
+			{
+				public void itemStateChanged (ItemEvent e)
+				{
+					String name = (String)e.getItem();
+					for (int i = 0; i < options.length; i++)
+					{
+						if (options[i].getName().equals(name))
+						{
+							options[i].setState (e.getStateChange() == ItemEvent.SELECTED);
+						}
+					}
+				}
+			});
+
+			optPanel.add (cb);
+		}
+		leftPanel.add (entryPanel, BorderLayout.NORTH);
+		leftPanel.add (optPanel, BorderLayout.CENTER);
 
 		Panel topPanel = new Panel ();
 		BorderLayout topPanelLayout = new BorderLayout ();
@@ -315,10 +437,10 @@ public class AseAwkPanel extends Panel
 		centerPanelLayout.setHgap (2);
 		centerPanelLayout.setVgap (2);
 
-		centerPanel.add (srcIn);
-		centerPanel.add (srcOut);
-		centerPanel.add (conIn);
-		centerPanel.add (conOut);
+		centerPanel.add (srcInPanel);
+		centerPanel.add (srcOutPanel);
+		centerPanel.add (conInPanel);
+		centerPanel.add (conOutPanel);
 
 		BorderLayout mainLayout = new BorderLayout ();
 		mainLayout.setHgap (2);
@@ -328,29 +450,62 @@ public class AseAwkPanel extends Panel
 		
 		add (topPanel, BorderLayout.NORTH);
 		add (centerPanel, BorderLayout.CENTER);
-		add (runBtn, BorderLayout.SOUTH);
+		add (leftPanel, BorderLayout.WEST);
+
+		////////////////////////////////////////////////////////////
+
+		String osname = System.getProperty ("os.name").toLowerCase();
 
 		URL url = this.getClass().getResource (
 			this.getClass().getName() + ".class");
-		File file = new File (url.getFile());
-		
-		String osname = System.getProperty ("os.name").toLowerCase();
-		String aseBase = file.getParentFile().getParentFile().getParent();
+		String protocol = url.getProtocol ();
+
+		boolean isHttp = url.getPath().startsWith ("http://");
+		File file = new File (isHttp? url.getPath():url.getFile());
+
+		String base = protocol.equals("jar")?
+			file.getParentFile().getParentFile().getParent():
+			file.getParentFile().getParent();
 
 		if (osname.startsWith ("windows"))
 		{
-			String path = aseBase + "\\lib\\aseawk_jni.dll";
-			jniLib.setText (path.substring(6));
+			String path;
+			if (isHttp)
+			{
+				base = "http://" + base.substring(6).replace('\\', '/');
+				String jniUrl = base + "/lib/aseawk_jni.dll";
+
+				String userHome = System.getProperty("user.home");
+				path = userHome + "\\aseawk_jni.dll";
+
+				try
+				{
+					copyNative (jniUrl, path);
+				}
+				catch (IOException e)
+				{
+					showMessage ("Cannot download native library - " + e.getMessage());
+					path = "ERROR - Not Available";
+				}
+			}
+			else 
+			{
+				path = base + "\\lib\\aseawk_jni.dll";
+				if (protocol.equals("jar")) path = path.substring(6);
+			}
+			jniLib.setText (path);
 		}
 		else if (osname.startsWith ("mac"))
 		{
-			String path = aseBase + "/lib/.libs/libaseawk_jni.dylib";
-			jniLib.setText (path.substring(5));
+			String path = base + "/lib/.libs/libaseawk_jni.dylib";
+			if (!isHttp && protocol.equals("jar")) path = path.substring(5);
+			jniLib.setText (path);
 		}
 		else
 		{
-			String path = aseBase + "/lib/.libs/libaseawk_jni.so";
-			jniLib.setText (path.substring(5));
+			String path = base + "/lib/.libs/libaseawk_jni.so";
+			if (!isHttp && protocol.equals("jar")) path = path.substring(5);
+			jniLib.setText (path);
 		}
 	}
 
@@ -398,6 +553,9 @@ public class AseAwkPanel extends Panel
 			}
 		}
 
+		srcOut.setText ("");
+		conOut.setText ("");
+
 		try
 		{
 			try
@@ -410,8 +568,23 @@ public class AseAwkPanel extends Panel
 				return;
 			}
 
+			for (int i = 0; i < options.length; i++)
+			{
+				if (options[i].getState())
+				{
+					awk.setOption (awk.getOption() | options[i].getValue());
+				}
+				else
+				{
+					awk.setOption (awk.getOption() & ~options[i].getValue());
+				}
+			}
+
 			awk.parse ();
-			awk.run ();
+
+			String main = entryPoint.getText().trim();
+			if (main.length() > 0) awk.run (main);
+			else awk.run ();
 
 		}
 		catch (ase.awk.Exception e)
@@ -439,4 +612,42 @@ public class AseAwkPanel extends Panel
 		message.dispose ();
 		tmp.dispose ();
 	}
+
+
+	private void copyNative (String sourceURL, String destFile) throws IOException
+	{
+		InputStream is = null;
+		FileOutputStream fos = null;
+
+		try
+		{
+			URL url = new URL(sourceURL);
+			URLConnection conn = url.openConnection();
+
+			is = url.openStream();
+			fos = new FileOutputStream(destFile);
+
+			int n;
+			byte[] b = new byte[1024];
+			while ((n = is.read(b)) != -1)
+			{
+				fos.write(b, 0, n);
+			}
+		}
+		catch (IOException e) { throw e; }
+		finally
+		{
+			if (is != null) 
+			{
+				try { is.close (); }
+				catch (IOException e) {}
+			}
+			if (fos != null) 
+			{
+				try { fos.close (); }
+				catch (IOException e) {}
+			}
+		}
+  }
+	
 }
