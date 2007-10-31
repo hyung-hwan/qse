@@ -1,5 +1,5 @@
 /*
- * $Id: Return.java,v 1.4 2007/10/24 14:17:32 bacon Exp $
+ * $Id: Return.java,v 1.5 2007/10/29 15:20:13 bacon Exp $
  */
 
 package ase.awk;
@@ -14,6 +14,12 @@ public class Return
 	 * referenced that way, the setXXX methods may cause
 	 * JVM to crash */
 
+	public Return (Context ctx)
+	{
+		this.runid = ctx.getId();
+		this.valid = 0;
+	}
+	
 	Return (long runid, long valid)
 	{
 		this.runid = runid;
