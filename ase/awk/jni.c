@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.40 2007/10/24 14:17:32 bacon Exp $
+ * $Id: jni.c,v 1.41 2007/10/29 15:20:13 bacon Exp $
  *
  * {License}
  */
@@ -1788,9 +1788,11 @@ static int handle_bfn (
 	if (vi != 0)
 	{
 		ase_awk_setretval (run, (ase_awk_val_t*)vi);
+
+		/* invalidate the value field in return object */
 		ase_awk_refdownval (run, (ase_awk_val_t*)vi);
+		(*env)->SetLongField (env, ret, run_data->return_valid, (jlong)0);
 	}
-	(*env)->SetLongField (env, ret, run_data->return_valid, (jlong)0);
 	
 	(*env)->DeleteLocalRef (env, args);
 	(*env)->DeleteLocalRef (env, ret); 
@@ -2323,6 +2325,34 @@ JNIEXPORT void JNICALL Java_ase_awk_Context_stop (JNIEnv* env, jobject obj, jlon
 	ase_awk_stop ((ase_awk_run_t*)runid);
 }
 
+JNIEXPORT void JNICALL Java_ase_awk_Context_setglobal (JNIEnv* env, jobject obj, jlong runid, jint id, jobject ret)
+{
+	ase_awk_run_t* run = (ase_awk_run_t*)runid;
+	run_data_t* run_data;
+	jlong vi;
+
+	run_data = (run_data_t*)ase_awk_getruncustomdata (run);
+
+	vi = (*env)->GetLongField (env, ret, run_data->return_valid);
+	if (vi != 0)
+	{
+		if (ase_awk_setglobal(run, id, (ase_awk_val_t*)vi) == -1)
+		{
+			/* invalidate the value field in the return object 
+			 * even when an exception is thrown. otherwise,
+			 * the value might never be freed. */
+			ase_awk_refdownval (run, (ase_awk_val_t*)vi);
+			(*env)->SetLongField (env, ret, run_data->return_valid, (jlong)0);
+
+			THROW_RUN_EXCEPTION (env, run);
+			return;
+		}
+
+		/* invalidate the value field in the return object */
+		ase_awk_refdownval (run, (ase_awk_val_t*)vi);
+		(*env)->SetLongField (env, ret, run_data->return_valid, (jlong)0);
+	}
+}
 
 JNIEXPORT jlong JNICALL Java_ase_awk_Argument_getintval (JNIEnv* env, jobject obj, jlong runid, jlong valid)
 {
@@ -2878,7 +2908,6 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedstrval (JNIEnv* env, jobjec
 		}
 	}
 }
-
 
 JNIEXPORT void JNICALL Java_ase_awk_Return_clearval (JNIEnv* env, jobject obj, jlong runid, jlong valid)
 {

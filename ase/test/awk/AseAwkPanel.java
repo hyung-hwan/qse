@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.13 2007/10/28 15:03:22 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.14 2007/10/29 15:20:13 bacon Exp $
  */
 
 import java.awt.*;
@@ -100,7 +100,7 @@ public class AseAwkPanel extends Panel
 			setWord ("OFMT", "ofmt");
 		}
 	
-		public void sleep (Context ctx, String name, Return ret, Argument[] args)
+		public void sleep (Context ctx, String name, Return ret, Argument[] args) throws ase.awk.Exception
 		{
 			try { Thread.sleep (args[0].getIntValue() * 1000); }
 			catch (InterruptedException e) {}
@@ -111,6 +111,10 @@ public class AseAwkPanel extends Panel
 			ret.setIndexedStringValue (3, "3dk3kd");
 			ret.setIndexedIntValue (4, 444);
 			ret.setIndexedIntValue (5, 55555);
+
+			Return r = new Return (ctx);
+			r.setStringValue ("[[%.6f]]");
+			ctx.setGlobal (Context.GLOBAL_CONVFMT, ret);
 		}
 
 		protected int openSource (int mode)
