@@ -1,8 +1,10 @@
 /*
- * $Id: Context.java,v 1.7 2007/10/29 15:20:13 bacon Exp $
+ * $Id: Context.java,v 1.8 2007/10/30 15:01:31 bacon Exp $
  */
 
 package ase.awk;
+
+import java.util.Stack;
 
 public class Context
 {
@@ -24,15 +26,34 @@ public class Context
 	public static int GLOBAL_RSTART = 15;
 	public static int GLOBAL_SUBSEP = 16;
 
-	private Awk awk;
-	private long runid;
-	private Object custom;
+	protected Awk awk;
+	protected long runid;
+	protected Object custom;
+	protected Stack returnStack;
 
 	Context (Awk awk)
 	{
 		this.awk = awk;
 		this.runid = 0;
 		this.custom = null;
+		this.returnStack = new Stack ();
+	}
+
+	void clear ()
+	{
+		Return r;
+		while ((r = popReturn()) != null) r.clear ();
+	}
+
+	void pushReturn (Return ret)
+	{
+		returnStack.push (ret);
+	}
+
+	Return popReturn ()
+	{
+		if (returnStack.empty()) return null;
+		return (Return)returnStack.pop ();
 	}
 
 	public Awk getAwk ()

@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.41 2007/10/29 15:20:13 bacon Exp $
+ * $Id: jni.c,v 1.42 2007/10/30 15:01:31 bacon Exp $
  *
  * {License}
  */
@@ -120,6 +120,8 @@ struct run_data_t
 	jmethodID exception_get_code;
 	jmethodID exception_get_line;
 	jmethodID exception_get_message;
+
+	jmethodID context_clear;
 
 	jfieldID return_valid;
 
@@ -725,10 +727,15 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awk
 		env, run_data.exception_class, "getLine", "()I");
 	run_data.exception_get_message = (*env)->GetMethodID (
 		env, run_data.exception_class, "getMessage", "()Ljava/lang/String;");
-	
+
 	ASE_ASSERT (run_data.exception_get_code != ASE_NULL);
 	ASE_ASSERT (run_data.exception_get_line != ASE_NULL);
 	ASE_ASSERT (run_data.exception_get_message != ASE_NULL);
+
+	run_data.context_clear = (*env)->GetMethodID (
+		env, run_data.context_class, "clear", "()V");
+
+	ASE_ASSERT (run_data.context_clear != ASE_NULL);
 
 	run_data.return_valid = (*env)->GetFieldID (
 		env, run_data.return_class, FIELD_VALID, "J");
@@ -1710,11 +1717,19 @@ static int handle_bfn (
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		(*env)->DeleteLocalRef (env, args);
-	
+
+		/* invoke context.clear */
+		(*env)->CallVoidMethod (env, run_data->context_object, run_data->context_clear);
+		if ((*env)->ExceptionCheck(env))
+		{
+			if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+			(*env)->ExceptionClear (env);
+		}
+
 		/* refdown on ret.valid is needed here */
 		vi = (*env)->GetLongField (env, ret, run_data->return_valid);
 		if (vi != 0) ase_awk_refdownval (run, v);
-		(*env)->SetLongField (env, ret, run_data->return_valid,(jlong)0);
+		(*env)->SetLongField (env, ret, run_data->return_valid ,(jlong)0);
 
 		(*env)->DeleteLocalRef (env, ret);
 		(*env)->DeleteLocalRef (env, name);
@@ -1797,6 +1812,16 @@ static int handle_bfn (
 	(*env)->DeleteLocalRef (env, args);
 	(*env)->DeleteLocalRef (env, ret); 
 	(*env)->DeleteLocalRef (env, name);
+
+	(*env)->CallVoidMethod (env, run_data->context_object, run_data->context_clear);
+	if ((*env)->ExceptionCheck(env))
+	{
+/* TODO #1: if exception is thrown in clear, it seems to end with a lot of memory leask. PLEASE CHECK THIS */
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
+		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
+		return -1;
+	}
 
 	return 0;
 }
