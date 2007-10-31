@@ -1,5 +1,5 @@
 /*
- * $Id: Return.java,v 1.5 2007/10/29 15:20:13 bacon Exp $
+ * $Id: Return.java,v 1.6 2007/10/30 15:01:31 bacon Exp $
  */
 
 package ase.awk;
@@ -16,6 +16,7 @@ public class Return
 
 	public Return (Context ctx)
 	{
+		ctx.pushReturn (this);
 		this.runid = ctx.getId();
 		this.valid = 0;
 	}
@@ -135,7 +136,6 @@ public class Return
 	{
 		setindexedstrval (this.runid, this.valid, Long.toString(index), v);
 	}
-
 
 	public void clear ()
 	{
