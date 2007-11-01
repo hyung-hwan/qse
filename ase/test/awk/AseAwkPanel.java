@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.15 2007/10/30 15:01:31 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.16 2007/10/31 13:56:54 bacon Exp $
  */
 
 import java.awt.*;
@@ -107,8 +107,8 @@ public class AseAwkPanel extends Panel
 			//ret.setIntValue (0);
 			//
 			ret.setIndexedRealValue (1, 111.23);
-			ret.setIndexedStringValue (2, "kdk2kd");
-			ret.setIndexedStringValue (3, "3dk3kd");
+			ret.setIndexedStringValue (2, "1111111");
+			ret.setIndexedStringValue (3, "22222222");
 			ret.setIndexedIntValue (4, 444);
 			ret.setIndexedIntValue (5, 55555);
 
@@ -117,7 +117,8 @@ public class AseAwkPanel extends Panel
 			Return r2 = new Return (ctx);
 			r.setStringValue ("[[%.6f]]");
 
-			ctx.setGlobal (Context.GLOBAL_CONVFMT, ret);
+			//ctx.setGlobal (Context.GLOBAL_CONVFMT, ret);
+			ctx.setGlobal (Context.GLOBAL_CONVFMT, r2);
 		}
 
 		protected int openSource (int mode)

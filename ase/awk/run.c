@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.20 2007/10/28 06:12:37 bacon Exp $
+ * $Id: run.c,v 1.21 2007/10/31 13:56:54 bacon Exp $
  *
  * {License}
  */
@@ -5502,13 +5502,25 @@ static ase_awk_val_t* eval_call (
 	ase_dprintf (ASE_T("got return value\n"));
 #endif
 
-	/* this trick has been mentioned in run_return.
-	 * adjust the reference count of the return value.
-	 * the value must not be freed even if the reference count
-	 * is decremented to zero because its reference has been incremented 
-	 * in run_return regardless of its reference count. */
 	v = STACK_RETVAL(run);
-	ase_awk_refdownval_nofree (run, v);
+	if (n == -1)
+	{
+		/* if the earlier operations failed and this function
+		 * has to return a error, the return value is just
+		 * destroyed and replaced by nil */
+		ase_awk_refdownval (run, v);
+		STACK_RETVAL(run) = ase_awk_val_nil;
+	}
+	else
+	{	
+		/* this trick has been mentioned in run_return.
+		 * adjust the reference count of the return value.
+		 * the value must not be freed even if the reference count
+		 * reached zero because its reference has been incremented 
+		 * in run_return or directly by ase_awk_setretval
+		 * regardless of its reference count. */
+		ase_awk_refdownval_nofree (run, v);
+	}
 
 	run->stack_top =  (ase_size_t)run->stack[run->stack_base+1];
 	run->stack_base = (ase_size_t)run->stack[run->stack_base+0];

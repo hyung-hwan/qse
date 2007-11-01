@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.13 2007/10/25 14:43:17 bacon Exp $
+ * $Id: func.c,v 1.14 2007/10/31 13:56:54 bacon Exp $
  *
  * {License}
  */
@@ -254,7 +254,7 @@ skip_close:
 	return 0;
 }
 
-static int __flush_extio (
+static int flush_extio (
 	ase_awk_run_t* run, int extio, const ase_char_t* name, int n)
 {
 	int n2;
@@ -337,15 +337,15 @@ static int bfn_fflush (
 		}
 
 		/* flush the given extio */
-		n = __flush_extio (
+		n = flush_extio (
 			run, ASE_AWK_EXTIO_FILE, 
 			((len0 == 0)? ASE_NULL: str0), 1);
 		/*if (n == -99) return -1;*/
-		n = __flush_extio (
+		n = flush_extio (
 			run, ASE_AWK_EXTIO_PIPE,
 			((len0 == 0)? ASE_NULL: str0), n);
 		/*if (n == -99) return -1;*/
-		n = __flush_extio (
+		n = flush_extio (
 			run, ASE_AWK_EXTIO_COPROC,
 			((len0 == 0)? ASE_NULL: str0), n);
 		/*if (n == -99) return -1;*/

@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.42 2007/10/30 15:01:31 bacon Exp $
+ * $Id: jni.c,v 1.43 2007/10/31 13:56:54 bacon Exp $
  *
  * {License}
  */
@@ -1816,7 +1816,6 @@ static int handle_bfn (
 	(*env)->CallVoidMethod (env, run_data->context_object, run_data->context_clear);
 	if ((*env)->ExceptionCheck(env))
 	{
-/* TODO #1: if exception is thrown in clear, it seems to end with a lot of memory leask. PLEASE CHECK THIS */
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
 		ase_awk_setrunerrnum (run, ASE_AWK_EBFNIMPL);
