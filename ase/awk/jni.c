@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.43 2007/10/31 13:56:54 bacon Exp $
+ * $Id: jni.c,v 1.44 2007/11/01 14:01:00 bacon Exp $
  *
  * {License}
  */
@@ -1678,8 +1678,8 @@ static int handle_bfn (
 		v = ase_awk_getarg (run, i);
 
 		arg = (*env)->NewObject (env, 
-			run_data->argument_class, 
-			run_data->argument_init, (jlong)run, (jlong)v);
+			run_data->argument_class, run_data->argument_init, 
+			(jlong)run, (jlong)v);
 		if (arg == ASE_NULL)
 		{
 			if ((*env)->ExceptionCheck(env))
@@ -2353,29 +2353,54 @@ JNIEXPORT void JNICALL Java_ase_awk_Context_setglobal (JNIEnv* env, jobject obj,
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)runid;
 	run_data_t* run_data;
+	ase_awk_val_t* v;
 	jlong vi;
 
 	run_data = (run_data_t*)ase_awk_getruncustomdata (run);
 
 	vi = (*env)->GetLongField (env, ret, run_data->return_valid);
-	if (vi != 0)
+	v = (vi == 0)? ase_awk_val_nil: (ase_awk_val_t*)vi;
+	/* invalidate the value field in the return object */
+	(*env)->SetLongField (env, ret, run_data->return_valid, (jlong)0);
+
+OutputDebugStringW(L"11111111111111111111\n");
+	if (ase_awk_setglobal(run,id,v) == -1)
 	{
-		if (ase_awk_setglobal(run, id, (ase_awk_val_t*)vi) == -1)
-		{
-			/* invalidate the value field in the return object 
-			 * even when an exception is thrown. otherwise,
-			 * the value might never be freed. */
-			ase_awk_refdownval (run, (ase_awk_val_t*)vi);
-			(*env)->SetLongField (env, ret, run_data->return_valid, (jlong)0);
-
-			THROW_RUN_EXCEPTION (env, run);
-			return;
-		}
-
-		/* invalidate the value field in the return object */
-		ase_awk_refdownval (run, (ase_awk_val_t*)vi);
-		(*env)->SetLongField (env, ret, run_data->return_valid, (jlong)0);
+OutputDebugStringW(L"333333333333333333333\n");
+		if (vi != 0) ase_awk_refdownval (run, v);
+		THROW_RUN_EXCEPTION (env, run);
+		return;
 	}
+
+OutputDebugStringW(L"2222222222222222222222\n");
+	if (vi != 0) ase_awk_refdownval (run, v);
+}
+
+JNIEXPORT jobject JNICALL Java_ase_awk_Context_getglobal (JNIEnv* env, jobject obj, jlong runid, jint id)
+{
+	ase_awk_run_t* run = (ase_awk_run_t*)runid;
+	ase_awk_t* awk;
+	run_data_t* run_data;
+	ase_awk_val_t* g;
+	jobject arg;
+
+	run_data = (run_data_t*)ase_awk_getruncustomdata (run);
+	awk = ase_awk_getrunawk (run);
+
+	g = ase_awk_getglobal(run, id);
+
+	arg = (*env)->NewObject (env, 
+		run_data->argument_class, run_data->argument_init, 
+		(jlong)run, (jlong)g);
+	if (arg == ASE_NULL) 
+	{
+		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
+		(*env)->ExceptionClear (env);
+		THROW_NOMEM_EXCEPTION (env);
+		return ASE_NULL;
+	}
+
+	return arg;
 }
 
 JNIEXPORT jlong JNICALL Java_ase_awk_Argument_getintval (JNIEnv* env, jobject obj, jlong runid, jlong valid)
@@ -2507,8 +2532,8 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 	if (pair == ASE_NULL) return ASE_NULL;; 
 
 	arg = (*env)->NewObject (env, 
-		run_data->argument_class, 
-		run_data->argument_init, (jlong)run, (jlong)pair->val);
+		run_data->argument_class, run_data->argument_init, 
+		(jlong)run, (jlong)pair->val);
 	if (arg == ASE_NULL) goto nomem;
 
 	return arg;

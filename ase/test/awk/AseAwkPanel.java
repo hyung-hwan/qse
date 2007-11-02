@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.16 2007/10/31 13:56:54 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.17 2007/11/01 14:01:00 bacon Exp $
  */
 
 import java.awt.*;
@@ -118,7 +118,11 @@ public class AseAwkPanel extends Panel
 			r.setStringValue ("[[%.6f]]");
 
 			//ctx.setGlobal (Context.GLOBAL_CONVFMT, ret);
+			Argument g = ctx.getGlobal (Context.GLOBAL_CONVFMT);
 			ctx.setGlobal (Context.GLOBAL_CONVFMT, r2);
+			System.out.println (g.getStringValue());
+			g = ctx.getGlobal (Context.GLOBAL_CONVFMT);
+			System.out.println (g.getStringValue());
 		}
 
 		protected int openSource (int mode)
