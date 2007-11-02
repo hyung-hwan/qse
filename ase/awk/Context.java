@@ -1,5 +1,5 @@
 /*
- * $Id: Context.java,v 1.8 2007/10/30 15:01:31 bacon Exp $
+ * $Id: Context.java,v 1.9 2007/11/01 14:01:00 bacon Exp $
  */
 
 package ase.awk;
@@ -98,18 +98,16 @@ public class Context
 		setglobal (this.runid, id, ret);
 	}
 
-	/*
-	public void getGlobal (int id, Argument arg) throws Exception
+	public Argument getGlobal (int id) throws Exception
 	{
+		return getglobal (this.runid, id);
 	}
-	*/
 
 	protected native void stop (long runid);
 	protected native void setglobal (long runid, int id, Return ret);
+	protected native Argument getglobal (long runid, int id);
 
 	// TODO:
-	// setGlobal
-	// getGlobal
 	// setError
 	// getError
 }
