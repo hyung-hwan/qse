@@ -1,5 +1,7 @@
 /*
- * $Id: Pipe.java,v 1.2 2007/05/26 10:52:48 bacon Exp $
+ * $Id: Pipe.java,v 1.3 2007/11/02 05:49:19 bacon Exp $
+ *
+ * {License}
  */
 
 package ase.awk;

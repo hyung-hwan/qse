@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.10 2007/10/21 13:58:47 bacon Exp $
+ * $Id: val.c,v 1.11 2007/11/02 13:08:58 bacon Exp $
  *
  * {License}
  */
@@ -135,6 +135,7 @@ ase_awk_val_t* ase_awk_makestrval (
 {
 	ase_awk_val_str_t* val;
 
+	/*
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
 	if (val == ASE_NULL) 
@@ -153,6 +154,24 @@ ase_awk_val_t* ase_awk_makestrval (
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
+	*/
+
+	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
+		run->awk, 
+		ASE_SIZEOF(ase_awk_val_str_t) + 
+		(len+1)*ASE_SIZEOF(ase_char_t));
+	if (val == ASE_NULL) 
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
+
+	val->type = ASE_AWK_VAL_STR;
+	val->ref = 0;
+	val->len = len;
+	val->buf = (ase_char_t*)(val + 1);
+	/*ase_strxncpy (val->buf, len+1, str, len);*/
+	ase_strncpy (val->buf, str, len);
 
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("makestrval => %p\n"), val);
@@ -187,6 +206,7 @@ ase_awk_val_t* ase_awk_makestrval2 (
 {
 	ase_awk_val_str_t* val;
 
+	/*
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
 	if (val == ASE_NULL) 
@@ -205,6 +225,26 @@ ase_awk_val_t* ase_awk_makestrval2 (
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
+	*/
+
+	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
+		run->awk, 
+		ASE_SIZEOF(ase_awk_val_str_t) +
+		(len1+len2+1)*ASE_SIZEOF(ase_char_t));
+	if (val == ASE_NULL) 
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
+
+	val->type = ASE_AWK_VAL_STR;
+	val->ref = 0;
+	val->len = len1 + len2;
+	val->buf = (ase_char_t*)(val + 1);
+	/*ase_strxncpy (val->buf, len1+1, str1, len1);
+	ase_strxncpy (val->buf[len1], len2+1, str2, len2);*/
+	ase_strncpy (val->buf, str1, len1);
+	ase_strncpy (&val->buf[len1], str2, len2);
 
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("makestrval2 => %p\n"), val);
@@ -355,7 +395,7 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	}
 	else if (val->type == ASE_AWK_VAL_STR)
 	{
-		ASE_AWK_FREE (run->awk, ((ase_awk_val_str_t*)val)->buf);
+		/*ASE_AWK_FREE (run->awk, ((ase_awk_val_str_t*)val)->buf);*/
 		ASE_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == ASE_AWK_VAL_REX)

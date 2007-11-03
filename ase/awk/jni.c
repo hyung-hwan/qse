@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.44 2007/11/01 14:01:00 bacon Exp $
+ * $Id: jni.c,v 1.46 2007/11/02 10:47:51 bacon Exp $
  *
  * {License}
  */
@@ -123,6 +123,7 @@ struct run_data_t
 
 	jmethodID context_clear;
 
+	jfieldID argument_valid;
 	jfieldID return_valid;
 
 	jobject context_object;
@@ -713,7 +714,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awk
 	run_data.context_init = (*env)->GetMethodID (
 		env, run_data.context_class, "<init>", "(Lase/awk/Awk;)V");
 	run_data.argument_init = (*env)->GetMethodID (
-		env, run_data.argument_class, "<init>", "(JJ)V");
+		env, run_data.argument_class, "<init>", "(Lase/awk/Context;JJ)V");
 	run_data.return_init = (*env)->GetMethodID (
 		env, run_data.return_class, "<init>", "(JJ)V");
 
@@ -737,9 +738,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awk
 
 	ASE_ASSERT (run_data.context_clear != ASE_NULL);
 
+	run_data.argument_valid = (*env)->GetFieldID (
+		env, run_data.argument_class, FIELD_VALID, "J");
 	run_data.return_valid = (*env)->GetFieldID (
 		env, run_data.return_class, FIELD_VALID, "J");
-	if (run_data.return_valid == ASE_NULL)
+	if (run_data.argument_valid == ASE_NULL ||
+	    run_data.return_valid == ASE_NULL)
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
 		(*env)->ExceptionClear (env);
@@ -1648,8 +1652,8 @@ static int handle_bfn (
 	}
 
 	ret = (*env)->NewObject (env,
-		run_data->return_class,
-		run_data->return_init, (jlong)run, (jlong)0);
+		run_data->return_class, run_data->return_init, 
+		(jlong)run, (jlong)0);
 	if (ret == ASE_NULL)
 	{
 		(*env)->DeleteLocalRef (env, name);
@@ -1677,9 +1681,16 @@ static int handle_bfn (
 	{
 		v = ase_awk_getarg (run, i);
 
+		/* these arguments are not registered for clearance into 
+		 * the context. so ASE_NULL is passed as the first argument
+		 * to the constructor of the Argument class. It is because
+		 * the reference count of these arguments are still positive
+		 * while this function runs. However, if you ever use an 
+		 * argument outside the current context, it may cause 
+		 * a program failure such as program crash */
 		arg = (*env)->NewObject (env, 
 			run_data->argument_class, run_data->argument_init, 
-			(jlong)run, (jlong)v);
+			ASE_NULL, (jlong)run, (jlong)v);
 		if (arg == ASE_NULL)
 		{
 			if ((*env)->ExceptionCheck(env))
@@ -1728,8 +1739,11 @@ static int handle_bfn (
 
 		/* refdown on ret.valid is needed here */
 		vi = (*env)->GetLongField (env, ret, run_data->return_valid);
-		if (vi != 0) ase_awk_refdownval (run, v);
-		(*env)->SetLongField (env, ret, run_data->return_valid ,(jlong)0);
+		if (vi != 0) 
+		{
+			ase_awk_refdownval (run, (ase_awk_val_t*)vi);
+			(*env)->SetLongField (env, ret, run_data->return_valid ,(jlong)0);
+		}
 
 		(*env)->DeleteLocalRef (env, ret);
 		(*env)->DeleteLocalRef (env, name);
@@ -1813,7 +1827,8 @@ static int handle_bfn (
 	(*env)->DeleteLocalRef (env, ret); 
 	(*env)->DeleteLocalRef (env, name);
 
-	(*env)->CallVoidMethod (env, run_data->context_object, run_data->context_clear);
+	(*env)->CallVoidMethod (env, 
+		run_data->context_object, run_data->context_clear);
 	if ((*env)->ExceptionCheck(env))
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -2363,16 +2378,13 @@ JNIEXPORT void JNICALL Java_ase_awk_Context_setglobal (JNIEnv* env, jobject obj,
 	/* invalidate the value field in the return object */
 	(*env)->SetLongField (env, ret, run_data->return_valid, (jlong)0);
 
-OutputDebugStringW(L"11111111111111111111\n");
 	if (ase_awk_setglobal(run,id,v) == -1)
 	{
-OutputDebugStringW(L"333333333333333333333\n");
 		if (vi != 0) ase_awk_refdownval (run, v);
 		THROW_RUN_EXCEPTION (env, run);
 		return;
 	}
 
-OutputDebugStringW(L"2222222222222222222222\n");
 	if (vi != 0) ase_awk_refdownval (run, v);
 }
 
@@ -2389,9 +2401,12 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Context_getglobal (JNIEnv* env, jobject o
 
 	g = ase_awk_getglobal(run, id);
 
+	ASE_ASSERTX ((*env)->IsSameObject(env,obj,run_data->context_object),
+		"this object(obj) should be the same object as the context object(run_data->context_object)");
+
 	arg = (*env)->NewObject (env, 
 		run_data->argument_class, run_data->argument_init, 
-		(jlong)run, (jlong)g);
+		obj, (jlong)run, (jlong)g);
 	if (arg == ASE_NULL) 
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -2400,6 +2415,11 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Context_getglobal (JNIEnv* env, jobject o
 		return ASE_NULL;
 	}
 
+	/* the reference is incremented. this incremented reference is
+	 * decremented in Argument.clear called from Context.clear.
+	 * Note that the context object (obj) is passed to the contrustor of
+	 * the argument class in the call to NewObject above */
+	ase_awk_refupval (run, g);
 	return arg;
 }
 
@@ -2533,9 +2553,15 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 
 	arg = (*env)->NewObject (env, 
 		run_data->argument_class, run_data->argument_init, 
-		(jlong)run, (jlong)pair->val);
+		run_data->context_object, (jlong)run, (jlong)pair->val);
 	if (arg == ASE_NULL) goto nomem;
 
+	/* the reference is incremented. this incremented reference is
+	 * decremented in Argument.clear called from Context.clear.
+	 * Note that the context object (run_data->context_object) is 
+	 * passed to the contrustor of the argument class in the call 
+	 * to NewObject above */
+	ase_awk_refupval (run, pair->val);
 	return arg;
 
 nomem:
@@ -2548,6 +2574,19 @@ nomem:
 	THROW_NOMEM_EXCEPTION (env);
 	return ASE_NULL;
 }
+
+JNIEXPORT void JNICALL Java_ase_awk_Argument_clearval (JNIEnv* env, jobject obj, jlong runid, jlong valid)
+{
+	ase_awk_run_t* run = (ase_awk_run_t*)runid;
+	ase_awk_val_t* val = (ase_awk_val_t*)valid;
+	run_data_t* run_data;
+
+	run_data = (run_data_t*)ase_awk_getruncustomdata (run);
+
+	if (val != ASE_NULL) ase_awk_refdownval (run, val);
+	(*env)->SetLongField (env, obj, run_data->argument_valid, (jlong)0);
+}
+
 
 JNIEXPORT jboolean JNICALL Java_ase_awk_Return_isindexed (JNIEnv* env, jobject obj, jlong runid, jlong valid)
 {

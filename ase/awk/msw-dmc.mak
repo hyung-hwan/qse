@@ -42,6 +42,9 @@ OBJ_FILES_JAR = \
 	$(TMP_DIR)\ase\awk\Awk.class \
 	$(TMP_DIR)\ase\awk\StdAwk.class \
 	$(TMP_DIR)\ase\awk\Context.class \
+	$(TMP_DIR)\ase\awk\Clearable.class \
+	$(TMP_DIR)\ase\awk\Argument.class \
+	$(TMP_DIR)\ase\awk\Return.class 
 	$(TMP_DIR)\ase\awk\Extio.class \
 	$(TMP_DIR)\ase\awk\IO.class \
 	$(TMP_DIR)\ase\awk\Console.class \
@@ -116,6 +119,15 @@ $(TMP_DIR)\ase\awk\StdAwk.class: StdAwk.java
 
 $(TMP_DIR)\ase\awk\Context.class: Context.java
 	$(JAVAC) $(JAVACFLAGS) -d $(TMP_DIR) Context.java
+
+$(TMP_DIR)\ase\awk\Clearable.class: Clearable.java
+	$(JAVAC) $(JAVACFLAGS) -d $(TMP_DIR) Clearable.java
+
+$(TMP_DIR)\ase\awk\Argument.class: Argument.java
+	$(JAVAC) $(JAVACFLAGS) -d $(TMP_DIR) Argument.java
+
+$(TMP_DIR)\ase\awk\Return.class: Return.java
+	$(JAVAC) $(JAVACFLAGS) -d $(TMP_DIR) Return.java
 
 $(TMP_DIR)\ase\awk\Extio.class: Extio.java
 	$(JAVAC) $(JAVACFLAGS) -d $(TMP_DIR) Extio.java

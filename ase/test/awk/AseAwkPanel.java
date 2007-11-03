@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.17 2007/11/01 14:01:00 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.20 2007/11/02 13:08:58 bacon Exp $
  */
 
 import java.awt.*;
@@ -9,12 +9,15 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.io.File;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.security.MessageDigest;
 
 import ase.awk.StdAwk;
 import ase.awk.Console;
@@ -25,6 +28,7 @@ import ase.awk.Return;
 public class AseAwkPanel extends Panel
 {
 	/* MsgBox taken from http://www.rgagnon.com/javadetails/java-0242.html */
+
 	class MsgBox extends Dialog implements ActionListener 
 	{
 		boolean id = false;
@@ -95,17 +99,23 @@ public class AseAwkPanel extends Panel
 			this.awkPanel = awkPanel;
 
 			addFunction ("sleep", 1, 1);
+			/*
 			setWord ("sin", "cain");
 			setWord ("length", "len");
 			setWord ("OFMT", "ofmt");
+			*/
 		}
 	
 		public void sleep (Context ctx, String name, Return ret, Argument[] args) throws ase.awk.Exception
 		{
-			try { Thread.sleep (args[0].getIntValue() * 1000); }
+			Argument t = args[0];
+			//if (args[0].isIndexed()) t = args[0].getIndexed(0);
+			
+			try { Thread.sleep (t.getIntValue() * 1000); }
 			catch (InterruptedException e) {}
-			//ret.setIntValue (0);
-			//
+
+			ret.setIntValue (0);
+		/*
 			ret.setIndexedRealValue (1, 111.23);
 			ret.setIndexedStringValue (2, "1111111");
 			ret.setIndexedStringValue (3, "22222222");
@@ -115,14 +125,15 @@ public class AseAwkPanel extends Panel
 			Return r = new Return (ctx);
 			r.setStringValue ("[[%.6f]]");
 			Return r2 = new Return (ctx);
-			r.setStringValue ("[[%.6f]]");
+			r2.setStringValue ("[[%.6f]]");
 
 			//ctx.setGlobal (Context.GLOBAL_CONVFMT, ret);
 			Argument g = ctx.getGlobal (Context.GLOBAL_CONVFMT);
 			ctx.setGlobal (Context.GLOBAL_CONVFMT, r2);
-			System.out.println (g.getStringValue());
+	System.out.println (g.getStringValue());
 			g = ctx.getGlobal (Context.GLOBAL_CONVFMT);
-			System.out.println (g.getStringValue());
+		System.out.println (g.getStringValue());
+		*/
 		}
 
 		protected int openSource (int mode)
@@ -289,6 +300,7 @@ public class AseAwkPanel extends Panel
 	private TextArea conOut;
 	private TextField entryPoint;
 	private TextField jniLib;
+	private Label statusLabel;
 
 	private boolean jniLibLoaded = false;
 
@@ -349,10 +361,15 @@ public class AseAwkPanel extends Panel
 
 	public AseAwkPanel () 
 	{
+		prepareUserInterface ();
+		prepareNativeInterface ();
+	}
+
+	private void prepareUserInterface ()
+	{
 		jniLib = new TextField ();
 
 		Font font = new Font ("Monospaced", Font.PLAIN, 14);
-
 
 		srcIn = new TextArea ();
 		srcOut = new TextArea ();
@@ -459,13 +476,17 @@ public class AseAwkPanel extends Panel
 		mainLayout.setVgap (2);
 
 		setLayout (mainLayout);
-		
+		statusLabel = new Label ("Ready");
+		statusLabel.setBackground (Color.GREEN);
+
 		add (topPanel, BorderLayout.NORTH);
 		add (centerPanel, BorderLayout.CENTER);
 		add (leftPanel, BorderLayout.WEST);
+		add (statusLabel, BorderLayout.SOUTH);
+	}
 
-		////////////////////////////////////////////////////////////
-
+	public void prepareNativeInterface ()
+	{
 		String osname = System.getProperty ("os.name").toLowerCase();
 
 		URL url = this.getClass().getResource (
@@ -486,15 +507,16 @@ public class AseAwkPanel extends Panel
 			{
 				base = "http://" + base.substring(6).replace('\\', '/');
 				String jniUrl = base + "/lib/aseawk_jni.dll";
+				String md5Url = jniUrl + ".md5";
 
 				String userHome = System.getProperty("user.home");
 				path = userHome + "\\aseawk_jni.dll";
 
 				try
 				{
-					copyNative (jniUrl, path);
+					downloadNative (md5Url, jniUrl, path);
 				}
-				catch (IOException e)
+				catch (Exception e)
 				{
 					showMessage ("Cannot download native library - " + e.getMessage());
 					path = "ERROR - Not Available";
@@ -592,22 +614,30 @@ public class AseAwkPanel extends Panel
 				}
 			}
 
+			statusLabel.setText ("Parsing...");
 			awk.parse ();
 
 			String main = entryPoint.getText().trim();
+
+			statusLabel.setText ("Running...");
 			if (main.length() > 0) awk.run (main);
 			else awk.run ();
 
+			statusLabel.setText ("Done...");
 		}
 		catch (ase.awk.Exception e)
 		{
+			String msg;
 			int line = e.getLine();
 			int code = e.getCode();
-			if (line <= 0)
-				showMessage ("An exception occurred - [" + code + "] " + e.getMessage());
-			else
-				showMessage ("An exception occurred - [" + code + "] " + e.getMessage() + " at line " + line);
 
+			if (line <= 0)
+				msg = "An exception occurred - [" + code + "] " + e.getMessage();
+			else
+				msg = "An exception occurred - [" + code + "] " + e.getMessage() + " at line " + line;
+
+			statusLabel.setText (msg);
+			showMessage (msg);
 			return;
 		}
 		finally
@@ -626,11 +656,91 @@ public class AseAwkPanel extends Panel
 	}
 
 
-	private void copyNative (String sourceURL, String destFile) throws IOException
+	private String getFileMD5 (String file) throws Exception
+	{
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		FileInputStream fis = null;
+		
+		try
+		{
+			fis = new FileInputStream (file);
+
+			int n;
+			byte[] b = new byte[1024];
+			while ((n = fis.read(b)) != -1)
+			{
+				md.update (b, 0, n);
+			}
+		}
+		catch (FileNotFoundException e) { return ""; }
+		catch (IOException e) { throw e; }
+		finally
+		{
+			if (fis != null) 
+			{
+				try { fis.close (); }
+				catch (IOException e) {}
+				fis = null;
+			}
+		}
+
+		StringBuffer buf = new StringBuffer ();
+		byte[] d = md.digest ();
+		for (int i = 0; i < d.length; i++)
+		{
+			String x = Integer.toHexString((d[i] & 0x00FF));
+			if (x.length() == 1) buf.append ('0');
+			buf.append (x);
+		}
+		return buf.toString();
+	}
+
+	private void downloadNative (String md5URL, String sourceURL, String destFile) throws Exception
 	{
 		InputStream is = null;
 		FileOutputStream fos = null;
+		String sumRemote = null;
 
+		/* download the checksum file */
+		try
+		{
+			URL url = new URL (md5URL);
+			URLConnection conn = url.openConnection ();
+
+			is = url.openStream ();
+
+			int n, total = 0;
+			byte[] b = new byte[32];
+			while ((n = is.read(b, total, 32-total)) != -1)
+			{
+				total += n;
+				if (total >= 32) 
+				{
+					sumRemote = new String (b);
+					break;
+				}
+			}
+		}
+		catch (IOException e) { throw e; }
+		finally 
+		{
+			if (is != null) 
+			{
+				try { is.close (); }
+				catch (IOException e) {}
+				is = null;
+			}
+		}
+
+		if (sumRemote != null)
+		{
+			/* if the checksum matches the checksum of the local file,
+			 * the native library file doesn't have to be downloaded */
+			String sumLocal = getFileMD5 (destFile);
+			if (sumRemote.equalsIgnoreCase(sumLocal)) return;
+		}
+
+		/* download the actual file */
 		try
 		{
 			URL url = new URL(sourceURL);
@@ -653,13 +763,15 @@ public class AseAwkPanel extends Panel
 			{
 				try { is.close (); }
 				catch (IOException e) {}
+				is = null;
 			}
 			if (fos != null) 
 			{
 				try { fos.close (); }
 				catch (IOException e) {}
+				fos = null;
 			}
 		}
-  }
+	}
 	
 }

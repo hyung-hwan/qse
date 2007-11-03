@@ -1,5 +1,7 @@
 /*
- * $Id: Context.java,v 1.9 2007/11/01 14:01:00 bacon Exp $
+ * $Id: Context.java,v 1.10 2007/11/02 05:49:19 bacon Exp $
+ *
+ * {License}
  */
 
 package ase.awk;
@@ -29,31 +31,31 @@ public class Context
 	protected Awk awk;
 	protected long runid;
 	protected Object custom;
-	protected Stack returnStack;
+	protected Stack clearableStack;
 
 	Context (Awk awk)
 	{
 		this.awk = awk;
 		this.runid = 0;
 		this.custom = null;
-		this.returnStack = new Stack ();
+		this.clearableStack = new Stack ();
 	}
 
 	void clear ()
 	{
-		Return r;
-		while ((r = popReturn()) != null) r.clear ();
+		Clearable obj;
+		while ((obj = popClearable()) != null) obj.clear ();
 	}
 
-	void pushReturn (Return ret)
+	void pushClearable (Clearable obj)
 	{
-		returnStack.push (ret);
+		clearableStack.push (obj);
 	}
 
-	Return popReturn ()
+	Clearable popClearable ()
 	{
-		if (returnStack.empty()) return null;
-		return (Return)returnStack.pop ();
+		if (clearableStack.empty()) return null;
+		return (Clearable)clearableStack.pop ();
 	}
 
 	public Awk getAwk ()
