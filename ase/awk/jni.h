@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.15 2007/10/24 14:17:32 bacon Exp $
+ * $Id: jni.h,v 1.16 2007/11/02 05:49:19 bacon Exp $
  *
  * {License}
  */
@@ -60,12 +60,15 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 	JNIEnv* env, jobject obj, jstring cmd);
 
 JNIEXPORT void JNICALL Java_ase_awk_Context_stop (JNIEnv* env, jobject obj, jlong runid);
+JNIEXPORT jobject JNICALL Java_ase_awk_Context_getglobal (JNIEnv* env, jobject obj, jlong runid, jint id);
+JNIEXPORT void JNICALL Java_ase_awk_Context_setglobal (JNIEnv* env, jobject obj, jlong runid, jint id, jobject ret);
 
 JNIEXPORT jlong JNICALL Java_ase_awk_Argument_getintval (JNIEnv* env, jobject obj, jlong runid, jlong valid);
 JNIEXPORT jdouble JNICALL Java_ase_awk_Argument_getrealval (JNIEnv* env, jobject obj, jlong runid, jlong valid);
 JNIEXPORT jstring JNICALL Java_ase_awk_Argument_getstrval (JNIEnv* env, jobject obj, jlong runid, jlong valid);
 JNIEXPORT jboolean JNICALL Java_ase_awk_Argument_isindexed (JNIEnv* env, jobject obj, jlong runid, jlong valid);
 JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject obj, jlong runid, jlong valid, jstring index);
+JNIEXPORT void JNICALL Java_ase_awk_Argument_clearval (JNIEnv* env, jobject obj, jlong runid, jlong valid);
 
 JNIEXPORT jboolean JNICALL Java_ase_awk_Return_isindexed (JNIEnv* env, jobject obj, jlong runid, jlong valid);
 JNIEXPORT void JNICALL Java_ase_awk_Return_setintval (JNIEnv* env, jobject obj, jlong runid, jlong valid, jlong newval);

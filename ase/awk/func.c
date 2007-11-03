@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.14 2007/10/31 13:56:54 bacon Exp $
+ * $Id: func.c,v 1.15 2007/11/02 13:16:48 bacon Exp $
  *
  * {License}
  */
@@ -1346,7 +1346,8 @@ static int bfn_sprintf (
 		return -1;
 	}
 	
-	a0 = ase_awk_makestrval_nodup (run, ptr, len);
+	/*a0 = ase_awk_makestrval_nodup (run, ptr, len);*/
+	a0 = ase_awk_makestrval (run, ptr, len);
 	if (a0 == ASE_NULL) 
 	{
 		ase_str_close (&fbu);
@@ -1356,7 +1357,8 @@ static int bfn_sprintf (
 	}
 
 	ase_str_close (&fbu);
-	ase_str_forfeit (&out);
+	/*ase_str_forfeit (&out);*/
+	ase_str_close (&out);
 	ase_awk_setretval (run, a0);
 	return 0;
 }

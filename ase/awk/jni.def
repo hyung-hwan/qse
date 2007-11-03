@@ -21,11 +21,14 @@ EXPORTS
 	Java_ase_awk_Awk_strfgmtime
 	Java_ase_awk_Awk_system
 	Java_ase_awk_Context_stop
+	Java_ase_awk_Context_getglobal
+	Java_ase_awk_Context_setglobal
 	Java_ase_awk_Argument_getintval
 	Java_ase_awk_Argument_getrealval
 	Java_ase_awk_Argument_getstrval
 	Java_ase_awk_Argument_isindexed
 	Java_ase_awk_Argument_getindexed
+	Java_ase_awk_Argument_clearval
 	Java_ase_awk_Return_isindexed
 	Java_ase_awk_Return_setintval
 	Java_ase_awk_Return_setrealval
