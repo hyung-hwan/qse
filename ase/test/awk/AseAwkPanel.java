@@ -1,9 +1,11 @@
 /*
- * $Id: AseAwkPanel.java,v 1.20 2007/11/02 13:08:58 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.21 2007/11/03 14:35:02 bacon Exp $
  */
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.dnd.*;
+import java.awt.datatransfer.*;
 
 import java.net.URL;
 import java.net.URLConnection;
@@ -17,7 +19,10 @@ import java.io.Writer;
 import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.security.MessageDigest;
+import java.util.List;
+import java.util.Iterator;
 
 import ase.awk.StdAwk;
 import ase.awk.Console;
@@ -25,7 +30,7 @@ import ase.awk.Context;
 import ase.awk.Argument;
 import ase.awk.Return;
 
-public class AseAwkPanel extends Panel
+public class AseAwkPanel extends Panel implements DropTargetListener
 {
 	/* MsgBox taken from http://www.rgagnon.com/javadetails/java-0242.html */
 
@@ -302,6 +307,9 @@ public class AseAwkPanel extends Panel
 	private TextField jniLib;
 	private Label statusLabel;
 
+	private DropTarget srcInDropTarget;
+	private DropTarget conInDropTarget;
+
 	private boolean jniLibLoaded = false;
 
 	private class Option
@@ -483,6 +491,9 @@ public class AseAwkPanel extends Panel
 		add (centerPanel, BorderLayout.CENTER);
 		add (leftPanel, BorderLayout.WEST);
 		add (statusLabel, BorderLayout.SOUTH);
+
+		srcInDropTarget = new DropTarget (srcIn, this);
+		conInDropTarget = new DropTarget (conIn, this);
 	}
 
 	public void prepareNativeInterface ()
@@ -772,6 +783,110 @@ public class AseAwkPanel extends Panel
 				fos = null;
 			}
 		}
+	}
+
+	public void dragEnter(DropTargetDragEvent dtde) { }
+	public void dragExit(DropTargetEvent dte) { }
+	public void dragOver(DropTargetDragEvent dtde) { }
+	public void dropActionChanged(DropTargetDragEvent dtde) { }
+
+	public void drop (DropTargetDropEvent dtde) 
+	{
+		DropTarget dropTarget = dtde.getDropTargetContext().getDropTarget();
+
+		if (dropTarget != srcInDropTarget &&
+		    dropTarget != conInDropTarget)
+		{
+			dtde.rejectDrop ();
+			return;
+		}
+
+		Transferable tr = dtde.getTransferable ();	
+		DataFlavor[] flavors = tr.getTransferDataFlavors();
+		for (int i = 0; i < flavors.length; i++) 
+		{
+  			//System.out.println("Possible flavor: " + flavors[i].getMimeType());
+
+			if (flavors[i].isFlavorJavaFileListType())
+			{
+				TextArea t = (TextArea)dropTarget.getComponent();
+				t.setText ("");
+
+				try
+				{
+					dtde.acceptDrop (DnDConstants.ACTION_COPY_OR_MOVE);
+					List files = (List)tr.getTransferData(flavors[i]);
+					Iterator x = files.iterator ();
+					while (x.hasNext())
+					{
+						File file = (File)x.next ();
+						loadFileTo (file, t);
+					}
+					dtde.dropComplete (true);
+					return;
+    				}
+				catch (UnsupportedFlavorException e) 
+				{ 
+					dtde.rejectDrop ();
+					return;
+				}
+				catch (IOException e)
+				{
+					dtde.rejectDrop ();
+					return;
+				}
+			}			
+			else if (flavors[i].isFlavorSerializedObjectType()) 
+			{
+				TextArea t = (TextArea)dropTarget.getComponent();
+				try
+				{
+					dtde.acceptDrop (DnDConstants.ACTION_COPY_OR_MOVE);
+					Object o = tr.getTransferData(flavors[i]);
+					t.replaceText (o.toString(), t.getSelectionStart(), t.getSelectionEnd());
+					dtde.dropComplete(true);
+					return;
+				}
+				catch (UnsupportedFlavorException e) 
+				{ 
+					dtde.rejectDrop ();
+					return;
+				}
+				catch (IOException e)
+				{
+					dtde.rejectDrop ();
+					return;
+				}
+			}
+		}
+
+	}
+
+	private void loadFileTo (File file, TextArea textArea) throws IOException
+	{
+		FileReader fr = null;
+		StringBuffer fb = new StringBuffer(textArea.getText());
+		
+		try
+		{
+			fr = new FileReader (file);
+
+			int n;
+			char[] b = new char[1024];
+			while ((n = fr.read (b)) != -1) fb.append (b, 0, n);	
+		}
+		catch (IOException e) { throw e; }
+		finally
+		{
+			if (fr != null) 
+			{
+				try { fr.close (); }
+				catch (IOException e) {}
+				fr = null;
+			}
+		}
+
+		textArea.setText (fb.toString());
 	}
 	
 }
