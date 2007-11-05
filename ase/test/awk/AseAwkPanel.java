@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.21 2007/11/03 14:35:02 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.22 2007/11/04 05:01:41 bacon Exp $
  */
 
 import java.awt.*;
@@ -860,6 +860,7 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			}
 		}
 
+		dtde.rejectDrop ();
 	}
 
 	private void loadFileTo (File file, TextArea textArea) throws IOException
