@@ -24,4 +24,4 @@ ASE는 임베딩을 목적으로 여러가지 프로그래밍언어를 구현하
 
 == Licensing ==
 
-ASE는 {BSD 라이센스,license.html}하에 무료로 배포된다. 단 {라이센스,license.html}는 번역상에 발생할수 있는 문제를 최소화하기 위해 영문으로만 제공된다.
+ASE는 {BSD 라이센스,license.html}하에 무료로 배포된다. 

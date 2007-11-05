@@ -11,10 +11,13 @@
 * added three new options - ASE_AWK_RESET, ASE_AWK_MAPTOVAR, ASE_AWK_PABLOCK
 
 * enhanced Awk::dispatchFunction to set a more accurate error code (awk/Awk.cpp)
+* enhanced the JNI binding to integrate most of the changes so far.
 
 * fixed a bug 
     - memory leak if a null statement or a block with no statements are 
       present in an AWK program. (awk/parse.c)
+    - memery leak if a return value is set by an intrinsic function
+      but it ends up with an error. (awk/run.c - eval_call)
 
 * changed the access modifier for the Awk::Source::Source from public
   to protected.

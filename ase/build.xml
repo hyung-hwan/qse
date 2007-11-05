@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.3 2007/04/30 05:51:26 bacon Exp $ -->
+<!-- $Id: build.xml,v 1.4 2007/11/04 04:06:37 bacon Exp $ -->
 
 <project name="ase" default="release" basedir=".">
 
@@ -60,7 +60,7 @@
 		<delete dir="${bindir}/ase" verbose="true" />
 		<delete dir="${bindir}/META-INF" verbose="true" />
 
-		<copy file="test/awk/AseAwkApplet.html" todir="${bindir}" />
+		<copy file="test/awk/AseAwkApplet.html" todir="${destdir}" />
 	</target>
 
 	<target name="clean" description="clean up">
