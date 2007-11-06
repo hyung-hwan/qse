@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.24 2007/10/26 12:49:24 bacon Exp $
+ * $Id: parse.c,v 1.26 2007/11/05 14:59:23 bacon Exp $
  *
  * {License}
  */
@@ -437,38 +437,72 @@ int ase_awk_setword (ase_awk_t* awk,
 	const ase_char_t* okw, ase_size_t olen,
 	const ase_char_t* nkw, ase_size_t nlen)
 {
-	ase_cstr_t* v;
+	ase_cstr_t* vn, * vo;
 
 	if (nkw == ASE_NULL || nlen == 0)
 	{
+		ase_awk_pair_t* p;
+
 		if (okw == ASE_NULL || olen == 0)
 		{
 			/* clear the entire table */
-			ase_awk_map_clear (awk->kwtab);
+			ase_awk_map_clear (awk->wtab);
+			ase_awk_map_clear (awk->rwtab);
 			return 0;
 		}
 
 		/* delete the word */
-		return ase_awk_map_remove (awk->kwtab, okw, olen);
+		p = ase_awk_map_get (awk->wtab, okw, olen);
+		if (p != ASE_NULL)
+		{
+			ase_cstr_t* s = (ase_cstr_t*)p->val;
+			ase_awk_map_remove (awk->rwtab, s->ptr, s->len);
+			ase_awk_map_remove (awk->wtab, okw, olen);
+			return 0;
+		}
+		else 
+		{
+			SETERRARG (awk, ASE_AWK_ENOENT, 0, okw, olen);
+			return -1;
+		}
 	}
 
 	/* set the word */
-	v = (ase_cstr_t*) ASE_AWK_MALLOC (
+	vn = (ase_cstr_t*) ASE_AWK_MALLOC (
 		awk, ASE_SIZEOF(ase_cstr_t)+((nlen+1)*ASE_SIZEOF(*nkw)));
-	if (v == ASE_NULL) 
+	if (vn == ASE_NULL) 
 	{
 		SETERR (awk, ASE_AWK_ENOMEM);
 		return -1;
 	}
+	vn->len = nlen;
+	vn->ptr = (const ase_char_t*)(vn + 1);
+	ase_strncpy ((ase_char_t*)vn->ptr, nkw, nlen);
 
-	v->len = nlen;
-	v->ptr = (const ase_char_t*)(v + 1);
-
-	ase_strxncpy ((ase_char_t*)v->ptr, v->len+1, nkw, nlen);
-
-	if (ase_awk_map_put (awk->kwtab, okw, olen, v) == ASE_NULL)
+	vo = (ase_cstr_t*)ASE_AWK_MALLOC (
+		awk, ASE_SIZEOF(ase_cstr_t)+((olen+1)*ASE_SIZEOF(*okw)));
+	if (vo == ASE_NULL)
 	{
-		ASE_AWK_FREE (awk, v);
+		ASE_AWK_FREE (awk, vn);
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
+	vo->len = olen;
+	vo->ptr = (const ase_char_t*)(vo + 1);
+	ase_strncpy ((ase_char_t*)vo->ptr, okw, olen);
+
+	if (ase_awk_map_put (awk->wtab, okw, olen, vn) == ASE_NULL)
+	{
+		ASE_AWK_FREE (awk, vo);
+		ASE_AWK_FREE (awk, vn);
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	if (ase_awk_map_put (awk->rwtab, nkw, nlen, vo) == ASE_NULL)
+	{
+		ase_awk_map_remove (awk->wtab, okw, olen);
+		ASE_AWK_FREE (awk, vo);
 		SETERR (awk, ASE_AWK_ENOMEM);
 		return -1;
 	}
@@ -844,6 +878,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		/* check if it coincides to be a global variable name */
 		ase_size_t g;
 
+// TODO: setword
 		g = ase_awk_tab_find (&awk->parse.globals, 0, name, name_len);
 		if (g != (ase_size_t)-1) 
 		{
@@ -1048,13 +1083,12 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	}
 
 	/* TODO: study furthur if the parameter names should be saved 
-	 *       for some reasons - might be need for deparsing output */
+	 *       for some reasons - might be needed for deparsing output */
 	nargs = ase_awk_tab_getsize (&awk->parse.params);
 	/* parameter names are not required anymore. clear them */
 	ase_awk_tab_clear (&awk->parse.params);
 
-	afn = (ase_awk_afn_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_afn_t));
+	afn = (ase_awk_afn_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_afn_t));
 	if (afn == ASE_NULL) 
 	{
 		ASE_AWK_FREE (awk, name_dup);
@@ -2950,6 +2984,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 	return ASE_NULL;
 }
 
+#include <windows.h>
 static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 {
 	ase_char_t* name_dup;
@@ -3017,6 +3052,9 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		/* normal variable */
 		ase_awk_nde_var_t* nde;
 		ase_size_t idxa;
+		ase_awk_pair_t* pair;
+		const ase_char_t* k;
+		ase_size_t l;
 
 		nde = (ase_awk_nde_var_t*) ASE_AWK_MALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
@@ -3061,29 +3099,33 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return (ase_awk_nde_t*)nde;
 		}
 
-		/* search the global variable list */
-// TODO soemthing for setword
-		//ase_awk_pair_t* pair;
-		//const ase_char_t* k;
-		//ase_size_t l;
-		//check if name_dup and name_len is part of gtab....
-		//if it is so...
-
-		//pair = ase_awk_map_get (awk->kwtab, name_dup, name_len);
-		//if (pair != ASE_NULL)
-		//{
+		/* check if the word given should be replaced */
+		pair = ase_awk_map_get (awk->rwtab, name_dup, name_len);
+		if (pair != ASE_NULL)
+		{
 			/* found in the customized word table */
-		//	k = ((ase_cstr_t*)(pair->val))->ptr;
-		//	l = ((ase_cstr_t*)(pair->val))->len;
-		//}
-		//else
-		//{
-		//	k = name_dup;
-		//	l = name_len;
-		//}
+			k = ((ase_cstr_t*)(pair->val))->ptr;
+			l = ((ase_cstr_t*)(pair->val))->len;
+		}
+		else 
+		{
+			pair = ase_awk_map_get (awk->wtab, name_dup, name_len);
+			if (pair != ASE_NULL)
+			{
+				/* found in the customized word table */
+				k = ((ase_cstr_t*)(pair->val))->ptr;
+				l = ((ase_cstr_t*)(pair->val))->len;
+			}
+			else
+			{
+				k = name_dup;
+				l = name_len;
+			}
+		}
 
-		idxa = ase_awk_tab_rrfind (
-			&awk->parse.globals, 0, name_dup, name_len);
+
+		/* search the global variable list */
+		idxa = ase_awk_tab_rrfind (&awk->parse.globals, 0, k, l);
 		if (idxa != (ase_size_t)-1) 
 		{
 			nde->type = ASE_AWK_NDE_GLOBAL;
@@ -3127,6 +3169,9 @@ static ase_awk_nde_t* parse_hashidx (
 	ase_awk_nde_t* idx, * tmp, * last;
 	ase_awk_nde_var_t* nde;
 	ase_size_t idxa;
+	ase_awk_pair_t* pair;
+	const ase_char_t* k;
+	ase_size_t l;
 
 	idx = ASE_NULL;
 	last = ASE_NULL;
@@ -3216,9 +3261,22 @@ static ase_awk_nde_t* parse_hashidx (
 		return (ase_awk_nde_t*)nde;
 	}
 
+	/* check if the word given should be replaced */
+	pair = ase_awk_map_get (awk->rwtab, name, name_len);
+	if (pair != ASE_NULL)
+	{
+		/* found in the customized word table */
+		k = ((ase_cstr_t*)(pair->val))->ptr;
+		l = ((ase_cstr_t*)(pair->val))->len;
+	}
+	else
+	{
+		k = name;
+		l = name_len;
+	}
+
 	/* search the global variable list */
-	idxa = ase_awk_tab_rrfind(&awk->parse.globals, 0, name, name_len);
-// TODO soemthing for setword
+	idxa = ase_awk_tab_rrfind(&awk->parse.globals, 0, k, l);
 	if (idxa != (ase_size_t)-1) 
 	{
 		nde->type = ASE_AWK_NDE_GLOBALIDX;
@@ -5066,7 +5124,7 @@ static int classify_ident (
 		if (kwp->valid != 0 && 
 		    (awk->option & kwp->valid) != kwp->valid) continue;
 
-		pair = ase_awk_map_get (awk->kwtab, kwp->name, kwp->name_len);
+		pair = ase_awk_map_get (awk->wtab, kwp->name, kwp->name_len);
 		if (pair != ASE_NULL)
 		{
 			k = ((ase_cstr_t*)(pair->val))->ptr;
@@ -5346,7 +5404,7 @@ static int deparse_func (ase_awk_pair_t* pair, void* arg)
 
 	ASE_ASSERT (ase_strxncmp (ASE_AWK_PAIR_KEYPTR(pair), ASE_AWK_PAIR_KEYLEN(pair), afn->name, afn->name_len) == 0);
 
-	if (ase_awk_putsrcstr (df->awk, ASE_T("function ")) == -1) return -1;
+	if (ase_awk_putsrcstr (df->awk, ASE_T("func ")) == -1) return -1;
 	if (ase_awk_putsrcstr (df->awk, afn->name) == -1) return -1;
 	if (ase_awk_putsrcstr (df->awk, ASE_T(" (")) == -1) return -1;
 
