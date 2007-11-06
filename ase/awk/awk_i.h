@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.10 2007/10/28 06:12:37 bacon Exp $
+ * $Id: awk_i.h,v 1.11 2007/11/05 14:20:47 bacon Exp $
  *
  * {License}
  */
@@ -74,8 +74,10 @@ struct ase_awk_t
 	/* options */
 	int option;
 
-	/* keyword table */
-	ase_awk_map_t* kwtab;
+	/* word table */
+	ase_awk_map_t* wtab;
+	/* reverse word table */
+	ase_awk_map_t* rwtab;
 
 	/* parse tree */
 	ase_awk_tree_t tree;

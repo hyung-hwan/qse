@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.15 2007/11/02 13:16:48 bacon Exp $
+ * $Id: func.c,v 1.17 2007/11/05 14:59:23 bacon Exp $
  *
  * {License}
  */
@@ -145,7 +145,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		    (awk->option & bfn->valid) != bfn->valid) continue;
 
 		pair = ase_awk_map_get (
-			awk->kwtab, bfn->name.ptr, bfn->name.len);
+			awk->wtab, bfn->name.ptr, bfn->name.len);
 		if (pair != ASE_NULL)
 		{
 			/* found in the customized word table */
@@ -161,10 +161,19 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		if (ase_strxncmp (k, l, name, len) == 0) return bfn;
 	}
 
-	/* no setword related operation for user-defined instrinc function
-	 * as the name can be decided by the user upon addition. */
+	pair = ase_awk_map_get (awk->rwtab, name, len);
+	if (pair != ASE_NULL)
+	{
+		k = ((ase_cstr_t*)(pair->val))->ptr;
+		l = ((ase_cstr_t*)(pair->val))->len;
+	}
+	else
+	{
+		k = bfn->name.ptr;
+		l = bfn->name.len;
+	}
 
-	pair = ase_awk_map_get (awk->bfn.user, name, len);
+	pair = ase_awk_map_get (awk->bfn.user, k, l);
 	if (pair == ASE_NULL) return ASE_NULL;
 
 	bfn = (ase_awk_bfn_t*)pair->val;
