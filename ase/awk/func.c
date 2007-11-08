@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.17 2007/11/05 14:59:23 bacon Exp $
+ * $Id: func.c,v 1.18 2007/11/06 09:47:12 bacon Exp $
  *
  * {License}
  */
@@ -169,8 +169,8 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	}
 	else
 	{
-		k = bfn->name.ptr;
-		l = bfn->name.len;
+		k = name;
+		l = len;
 	}
 
 	pair = ase_awk_map_get (awk->bfn.user, k, l);

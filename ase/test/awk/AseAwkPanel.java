@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.23 2007/11/05 14:59:23 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.24 2007/11/06 09:47:12 bacon Exp $
  */
 
 import java.awt.*;
@@ -107,6 +107,7 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			setWord ("sin", "cain");
 			setWord ("length", "len");
 			setWord ("OFMT", "ofmt");
+			setWord ("END", "end");
 		}
 	
 		public void sleep (Context ctx, String name, Return ret, Argument[] args) throws ase.awk.Exception

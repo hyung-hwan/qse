@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.5 2007/09/25 15:27:54 bacon Exp $
+ * $Id: tree.c,v 1.6 2007/11/06 09:47:12 bacon Exp $
  *
  * {License}
  */
@@ -1155,6 +1155,7 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			{
 				ase_awk_nde_call_t* px = (ase_awk_nde_call_t*)p;
 				/* ASE_AWK_FREE (awk, px->what.bfn); */
+				ASE_AWK_FREE (awk, px->what.bfn.name.ptr);
 				ase_awk_clrpt (awk, px->args);
 				ASE_AWK_FREE (awk, p);
 				break;

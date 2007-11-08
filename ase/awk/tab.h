@@ -1,5 +1,5 @@
 /*
- * $Id: tab.h,v 1.4 2007/09/23 16:48:55 bacon Exp $
+ * $Id: tab.h,v 1.5 2007/11/06 09:47:12 bacon Exp $
  *
  * {License}
  */
@@ -64,6 +64,19 @@ ase_size_t ase_awk_tab_rfind (
 ase_size_t ase_awk_tab_rrfind (
 	ase_awk_tab_t* tab, ase_size_t index,
 	const ase_char_t* str, ase_size_t len);
+
+ase_size_t ase_awk_tab_findx (
+	ase_awk_tab_t* tab, ase_size_t index,
+	const ase_char_t* str, ase_size_t len, 
+	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg);
+ase_size_t ase_awk_tab_rfindx (
+	ase_awk_tab_t* tab, ase_size_t index,
+	const ase_char_t* str, ase_size_t len, 
+	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg);
+ase_size_t ase_awk_tab_rrfindx (
+	ase_awk_tab_t* tab, ase_size_t index,
+	const ase_char_t* str, ase_size_t len, 
+	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.26 2007/11/05 14:59:23 bacon Exp $
+ * $Id: parse.c,v 1.27 2007/11/06 09:47:12 bacon Exp $
  *
  * {License}
  */
@@ -132,6 +132,10 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk);
 static ase_awk_t* collect_globals (ase_awk_t* awk);
 static void adjust_static_globals (ase_awk_t* awk);
 
+static ase_size_t get_global (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
+static ase_size_t find_global (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
 static int add_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len, 
 	ase_size_t line, int force);
@@ -876,16 +880,12 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	if (awk->option & ASE_AWK_UNIQUEFN) 
 	{
 		/* check if it coincides to be a global variable name */
-		ase_size_t g;
-
-// TODO: setword
-		g = ase_awk_tab_find (&awk->parse.globals, 0, name, name_len);
+		ase_size_t g = find_global (awk, name, name_len);
 		if (g != (ase_size_t)-1) 
 		{
 			SETERRARG (
 				awk, ASE_AWK_EGBLRED, awk->token.line, 
 				name, name_len);
-
 			return ASE_NULL;
 		}
 	}
@@ -1395,7 +1395,8 @@ static void adjust_static_globals (ase_awk_t* awk)
 
 	for (id = ASE_AWK_MIN_GLOBAL_ID; id <= ASE_AWK_MAX_GLOBAL_ID; id++)
 	{
-		if (gtab[id].valid != 0 && (awk->option & gtab[id].valid) == 0)
+		if (gtab[id].valid != 0 && 
+		    (awk->option & gtab[id].valid) != gtab[id].valid)
 		{
 			awk->parse.globals.buf[id].name.len = 0;
 		}
@@ -1404,6 +1405,45 @@ static void adjust_static_globals (ase_awk_t* awk)
 			awk->parse.globals.buf[id].name.len = gtab[id].name_len;
 		}
 	}
+}
+
+static void trans_global (
+	ase_size_t index, ase_cstr_t* word, void* arg)
+{
+	ase_awk_tab_t* tab = (ase_awk_tab_t*)arg;
+	ase_awk_t* awk = tab->awk;
+
+	/*
+	if (index >= ASE_AWK_MIN_GLOBAL_ID && 
+	    index <= ASE_AWK_MAX_GLOBAL_ID)
+	*/
+	if (index < awk->tree.nbglobals)
+	{
+		ase_awk_pair_t* pair;
+
+		pair = ase_awk_map_get (awk->wtab, word->ptr, word->len);
+		if (pair != ASE_NULL)
+		{
+			word->ptr = ((ase_cstr_t*)(pair->val))->ptr;
+			word->len = ((ase_cstr_t*)(pair->val))->len;
+		}
+	}
+}
+
+static ase_size_t get_global (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
+{
+	return ase_awk_tab_rrfindx (
+		&awk->parse.globals, 0, name, len, 
+		trans_global, &awk->parse.globals);
+}
+
+static ase_size_t find_global (
+	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
+{
+	return ase_awk_tab_findx (
+		&awk->parse.globals, 0, name, len,
+		trans_global, &awk->parse.globals);
 }
 
 static int add_global (
@@ -1435,8 +1475,7 @@ static int add_global (
 	}
 
 	/* check if it conflicts with other global variable names */
-	if (ase_awk_tab_find (
-		&awk->parse.globals, 0, name, len) != (ase_size_t)-1) 
+	if (find_global (awk, name, len) != (ase_size_t)-1)
 	{ 
 		SETERRARG (awk, ASE_AWK_EDUPGBL, line, name, len);
 		return -1;
@@ -1483,7 +1522,6 @@ int ase_awk_addglobal (
 		SETERR (awk, ASE_AWK_ENOPER);
 		return -1;
 	}
-
 	n = add_global (awk, name, len, 0, 0);
 
 	/* update the count of the static globals. 
@@ -1628,7 +1666,7 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 		}
 
 		/* check if it conflicts with global variable names */
-		n = ase_awk_tab_find (&awk->parse.globals, 0, local, local_len);
+		n = find_global (awk, local, local_len);
 		if (n != (ase_size_t)-1)
 		{
  			if (n < awk->tree.nbglobals)
@@ -2984,7 +3022,6 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 	return ASE_NULL;
 }
 
-#include <windows.h>
 static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 {
 	ase_char_t* name_dup;
@@ -3026,8 +3063,8 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 
-		ASE_AWK_FREE (awk, name_dup);
-		nde = parse_fncall (awk, ASE_NULL, 0, bfn, line);
+		nde = parse_fncall (awk, name_dup, name_len, bfn, line);
+		if (nde == ASE_NULL) ASE_AWK_FREE (awk, name_dup);
 		return (ase_awk_nde_t*)nde;
 	}
 
@@ -3052,9 +3089,6 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		/* normal variable */
 		ase_awk_nde_var_t* nde;
 		ase_size_t idxa;
-		ase_awk_pair_t* pair;
-		const ase_char_t* k;
-		ase_size_t l;
 
 		nde = (ase_awk_nde_var_t*) ASE_AWK_MALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
@@ -3099,33 +3133,8 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return (ase_awk_nde_t*)nde;
 		}
 
-		/* check if the word given should be replaced */
-		pair = ase_awk_map_get (awk->rwtab, name_dup, name_len);
-		if (pair != ASE_NULL)
-		{
-			/* found in the customized word table */
-			k = ((ase_cstr_t*)(pair->val))->ptr;
-			l = ((ase_cstr_t*)(pair->val))->len;
-		}
-		else 
-		{
-			pair = ase_awk_map_get (awk->wtab, name_dup, name_len);
-			if (pair != ASE_NULL)
-			{
-				/* found in the customized word table */
-				k = ((ase_cstr_t*)(pair->val))->ptr;
-				l = ((ase_cstr_t*)(pair->val))->len;
-			}
-			else
-			{
-				k = name_dup;
-				l = name_len;
-			}
-		}
-
-
-		/* search the global variable list */
-		idxa = ase_awk_tab_rrfind (&awk->parse.globals, 0, k, l);
+		/* gets the global variable index */
+		idxa = get_global (awk, name_dup, name_len);
 		if (idxa != (ase_size_t)-1) 
 		{
 			nde->type = ASE_AWK_NDE_GLOBAL;
@@ -3142,6 +3151,25 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 
 		if (awk->option & ASE_AWK_IMPLICIT) 
 		{
+			if (awk->option & ASE_AWK_UNIQUEFN)
+			{
+				/* the name should not conflict with a function name */
+				/* check if it is a builtin function */
+				if (ase_awk_getbfn (awk, name_dup, name_len) != ASE_NULL)
+				{
+					SETERRARG (awk, ASE_AWK_EBFNRED, line, name_dup, name_len);
+					goto exit_func;
+				}
+
+				/* check if it is an AWK function */
+				if (ase_awk_map_get(awk->tree.afns, name_dup, name_len) != ASE_NULL) 
+				{
+					/* the function is defined previously */
+					SETERRARG (awk, ASE_AWK_EAFNRED, line, name_dup, name_len);
+					goto exit_func;
+				}
+			}
+
 			nde->type = ASE_AWK_NDE_NAMED;
 			nde->line = line;
 			nde->next = ASE_NULL;
@@ -3153,9 +3181,10 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return (ase_awk_nde_t*)nde;
 		}
 
+		/* undefined variable */
 		SETERRARG (awk, ASE_AWK_EUNDEF, line, name_dup, name_len);
 
-		/* undefined variable */
+	exit_func:
 		ASE_AWK_FREE (awk, name_dup);
 		ASE_AWK_FREE (awk, nde);
 
@@ -3169,9 +3198,6 @@ static ase_awk_nde_t* parse_hashidx (
 	ase_awk_nde_t* idx, * tmp, * last;
 	ase_awk_nde_var_t* nde;
 	ase_size_t idxa;
-	ase_awk_pair_t* pair;
-	const ase_char_t* k;
-	ase_size_t l;
 
 	idx = ASE_NULL;
 	last = ASE_NULL;
@@ -3261,22 +3287,8 @@ static ase_awk_nde_t* parse_hashidx (
 		return (ase_awk_nde_t*)nde;
 	}
 
-	/* check if the word given should be replaced */
-	pair = ase_awk_map_get (awk->rwtab, name, name_len);
-	if (pair != ASE_NULL)
-	{
-		/* found in the customized word table */
-		k = ((ase_cstr_t*)(pair->val))->ptr;
-		l = ((ase_cstr_t*)(pair->val))->len;
-	}
-	else
-	{
-		k = name;
-		l = name_len;
-	}
-
-	/* search the global variable list */
-	idxa = ase_awk_tab_rrfind(&awk->parse.globals, 0, k, l);
+	/* gets the global variable index */
+	idxa = get_global (awk, name, name_len);
 	if (idxa != (ase_size_t)-1) 
 	{
 		nde->type = ASE_AWK_NDE_GLOBALIDX;
@@ -3293,6 +3305,24 @@ static ase_awk_nde_t* parse_hashidx (
 
 	if (awk->option & ASE_AWK_IMPLICIT) 
 	{
+		if (awk->option & ASE_AWK_UNIQUEFN) 
+		{
+			/* check if it is a builtin function */
+			if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
+			{
+				SETERRARG (awk, ASE_AWK_EBFNRED, line, name, name_len);
+				goto exit_func;
+			}
+
+			/* check if it is an AWK function */
+			if (ase_awk_map_get(awk->tree.afns, name, name_len) != ASE_NULL) 
+			{
+				/* the function is defined previously */
+				SETERRARG (awk, ASE_AWK_EAFNRED, line, name, name_len);
+				goto exit_func;
+			}
+		}
+
 		nde->type = ASE_AWK_NDE_NAMEDIDX;
 		nde->line = line;
 		nde->next = ASE_NULL;
@@ -3305,10 +3335,13 @@ static ase_awk_nde_t* parse_hashidx (
 	}
 
 	/* undefined variable */
+	SETERRARG (awk, ASE_AWK_EUNDEF, line, name, name_len);
+
+
+exit_func:
 	ase_awk_clrpt (awk, idx);
 	ASE_AWK_FREE (awk, nde);
 
-	SETERRARG (awk, ASE_AWK_EUNDEF, line, name, name_len);
 	return ASE_NULL;
 }
 
@@ -3394,8 +3427,13 @@ static ase_awk_nde_t* parse_fncall (
 		call->next = ASE_NULL;
 
 		/*call->what.bfn = bfn; */
+		/*
 		call->what.bfn.name.ptr = bfn->name.ptr;
 		call->what.bfn.name.len = bfn->name.len;
+		*/
+		call->what.bfn.name.ptr = name;
+		call->what.bfn.name.len = name_len;
+
 		call->what.bfn.arg.min = bfn->arg.min;
 		call->what.bfn.arg.max = bfn->arg.max;
 		call->what.bfn.arg.spec = bfn->arg.spec;
