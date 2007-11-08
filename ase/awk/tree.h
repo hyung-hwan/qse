@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.5 2007/09/25 15:27:54 bacon Exp $
+ * $Id: tree.h,v 1.6 2007/11/06 09:47:12 bacon Exp $
  *
  * {License}
  */
@@ -271,7 +271,7 @@ struct ase_awk_nde_call_t
 		{
 			struct
 			{
-				const ase_char_t* ptr;
+				ase_char_t* ptr;
 				ase_size_t len;
 			} name;
 

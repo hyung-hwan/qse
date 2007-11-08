@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.11 2007/10/24 09:57:45 bacon Exp $
+ * $Id: err.c,v 1.12 2007/11/06 09:47:12 bacon Exp $
  *
  * {License}
  */
@@ -281,7 +281,7 @@ void ase_awk_seterror (
 				awk->prmfns.misc.custom_data,
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
-				errfmt, len, tmp);
+				errfmt, (int)len, tmp);
 			return;
 		}
 
@@ -291,8 +291,8 @@ void ase_awk_seterror (
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt,
-				errarg[0].len, errarg[0].ptr,
-				errarg[1].len, errarg[1].ptr);
+				(int)errarg[0].len, errarg[0].ptr,
+				(int)errarg[1].len, errarg[1].ptr);
 			return;
 
 		case 3:
@@ -301,9 +301,9 @@ void ase_awk_seterror (
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt,
-				errarg[0].len, errarg[0].ptr,
-				errarg[1].len, errarg[1].ptr,
-				errarg[2].len, errarg[2].ptr);
+				(int)errarg[0].len, errarg[0].ptr,
+				(int)errarg[1].len, errarg[1].ptr,
+				(int)errarg[2].len, errarg[2].ptr);
 			return;
 
 		case 4:
@@ -312,10 +312,10 @@ void ase_awk_seterror (
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt,
-				errarg[0].len, errarg[0].ptr,
-				errarg[1].len, errarg[1].ptr,
-				errarg[2].len, errarg[2].ptr,
-				errarg[3].len, errarg[3].ptr);
+				(int)errarg[0].len, errarg[0].ptr,
+				(int)errarg[1].len, errarg[1].ptr,
+				(int)errarg[2].len, errarg[2].ptr,
+				(int)errarg[3].len, errarg[3].ptr);
 			return;
 
 		case 5:
@@ -324,11 +324,11 @@ void ase_awk_seterror (
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt,
-				errarg[0].len, errarg[0].ptr,
-				errarg[1].len, errarg[1].ptr,
-				errarg[2].len, errarg[2].ptr,
-				errarg[3].len, errarg[3].ptr,
-				errarg[4].len, errarg[4].ptr);
+				(int)errarg[0].len, errarg[0].ptr,
+				(int)errarg[1].len, errarg[1].ptr,
+				(int)errarg[2].len, errarg[2].ptr,
+				(int)errarg[3].len, errarg[3].ptr,
+				(int)errarg[4].len, errarg[4].ptr);
 			return;
 	}
 }

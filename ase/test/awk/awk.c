@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.21 2007/10/28 06:12:37 bacon Exp $
+ * $Id: awk.c,v 1.22 2007/11/06 09:47:12 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -262,8 +262,16 @@ static ase_ssize_t awk_srcio_out (
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
-		int n = ase_fprintf (stdout, ASE_T("%.*s"), size, data);
-		if (n < 0) return -1;
+		while (size > 0)
+		{
+			int n, chunk;
+
+			chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): size;
+			n = ase_fprintf (stdout, ASE_T("%.*s"), (int)chunk, data);
+			if (n < 0) return -1;
+
+			data += n; size -= n;
+		}
 
 		return size;
 	}
@@ -340,21 +348,23 @@ static ase_ssize_t awk_extio_pipe (
 				 * pointer opened by popen, as of this writing. 
 				 * anyway, hopefully the following replacement 
 				 * will work all the way. */
-					int n = fprintf (fp, "%.*ls", left, data);
+					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+					int n = fprintf (fp, "%.*ls", chunk, data);
 					if (n >= 0)
 					{
 						size_t x;
-						for (x = 0; x < left; x++)
+						for (x = 0; x < chunk; x++)
 						{
 							if (data[x] == ASE_T('\0')) break;
 						}
 						n = x;
 					}
 				#else
-					int n = ase_fprintf (fp, ASE_T("%.*s"), left, data);
+					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+					int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, data);
 				#endif
 	
-					if (n < 0 || n > left) return -1;
+					if (n < 0 || n > chunk) return -1;
 					left -= n; data += n;
 				}
 			}
@@ -447,7 +457,8 @@ static ase_ssize_t awk_extio_file (
 				}
 				else
 				{
-					int n = ase_fprintf (fp, ASE_T("%.*s"), left, data);
+					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+					int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, data);
 					if (n < 0) return -1;
 					left -= n; data += n;
 				}
@@ -522,7 +533,7 @@ static ase_ssize_t awk_extio_console (
 					{
 						ase_cstr_t errarg;
 
-						errarg.ptr = ASE_T("consolXXXe");
+						errarg.ptr = ASE_T("console");
 						errarg.len = 7;
 
 						ase_awk_setrunerror (epa->run, ASE_AWK_ECLOSE, 0, &errarg, 1);
@@ -593,9 +604,31 @@ static ase_ssize_t awk_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
+		/*
 		int n = ase_fprintf (
 			(FILE*)epa->handle, ASE_T("%.*s"), size, data);
 		if (n < 0) return -1;
+
+		return size;
+		*/
+		FILE* fp = (FILE*)epa->handle;
+		ase_ssize_t left = size;
+
+		while (left > 0)
+		{
+			if (*data == ASE_T('\0')) 
+			{
+				if (ase_fputc (*data, fp) == ASE_CHAR_EOF) return -1;
+				left -= 1; data += 1;
+			}
+			else
+			{
+				int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+				int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, data);
+				if (n < 0) return -1;
+				left -= n; data += n;
+			}
+		}
 
 		return size;
 	}

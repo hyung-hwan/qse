@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.4 2007/09/23 16:48:55 bacon Exp $
+ * $Id: tab.c,v 1.5 2007/11/06 09:47:12 bacon Exp $
  *
  * {License}
  */
@@ -233,6 +233,73 @@ ase_size_t ase_awk_tab_rrfind (
 		if (ase_strxncmp (
 			tab->buf[i].name.ptr, tab->buf[i].name.len, 
 			str, len) == 0) return i;
+	}
+
+	return (ase_size_t)-1;
+}
+
+ase_size_t ase_awk_tab_findx (
+	ase_awk_tab_t* tab, ase_size_t index, 
+	const ase_char_t* str, ase_size_t len,
+	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg)
+{
+	ase_size_t i;
+
+	for (i = index; i < tab->size; i++) 
+	{
+		ase_cstr_t x;
+
+		x.ptr = tab->buf[i].name.ptr;
+		x.len = tab->buf[i].name.len;
+
+		transform (i, &x, arg);
+		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
+	}
+
+	return (ase_size_t)-1;
+}
+
+ase_size_t ase_awk_tab_rfindx (
+	ase_awk_tab_t* tab, ase_size_t index, 
+	const ase_char_t* str, ase_size_t len,
+	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg)
+{
+	ase_size_t i;
+
+	if (index >= tab->size) return (ase_size_t)-1;
+
+	for (i = index + 1; i-- > 0; ) 
+	{
+		ase_cstr_t x;
+
+		x.ptr = tab->buf[i].name.ptr;
+		x.len = tab->buf[i].name.len;
+
+		transform (i, &x, arg);
+		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
+	}
+
+	return (ase_size_t)-1;
+}
+
+ase_size_t ase_awk_tab_rrfindx (
+	ase_awk_tab_t* tab, ase_size_t index,
+	const ase_char_t* str, ase_size_t len, 
+	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg)
+{
+	ase_size_t i;
+
+	if (index >= tab->size) return (ase_size_t)-1;
+
+	for (i = tab->size - index; i-- > 0; ) 
+	{
+		ase_cstr_t x;
+
+		x.ptr = tab->buf[i].name.ptr;
+		x.len = tab->buf[i].name.len;
+
+		transform (i, &x, arg);
+		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
 	}
 
 	return (ase_size_t)-1;
