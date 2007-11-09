@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.81 2007/10/28 06:12:37 bacon Exp $
+ * $Id: Awk.cpp,v 1.82 2007/11/07 15:32:41 bacon Exp $
  *
  * {License}
  */
@@ -1242,6 +1242,14 @@ int Awk::setErrorString (ErrorCode num, const char_t* str)
 {
 	ASE_ASSERT (awk != ASE_NULL);
 	return ase_awk_seterrstr (awk, (int)num, str);
+}
+
+int Awk::getWord (
+	const char_t* ow, ase_size_t owl,
+	const char_t** nw, ase_size_t* nwl)
+{
+	ASE_ASSERT (awk != ASE_NULL);
+	return ase_awk_getword (awk, ow, owl, nw, nwl);
 }
 
 int Awk::setWord (const char_t* ow, const char_t* nw)

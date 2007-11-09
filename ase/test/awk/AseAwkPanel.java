@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.24 2007/11/06 09:47:12 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.26 2007/11/07 15:32:41 bacon Exp $
  */
 
 import java.awt.*;
@@ -108,6 +108,14 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			setWord ("length", "len");
 			setWord ("OFMT", "ofmt");
 			setWord ("END", "end");
+			setWord ("sleep", "cleep");
+			try{
+			setWord ("end", "END");
+			} catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+					
 		}
 	
 		public void sleep (Context ctx, String name, Return ret, Argument[] args) throws ase.awk.Exception
@@ -115,6 +123,7 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			Argument t = args[0];
 			//if (args[0].isIndexed()) t = args[0].getIndexed(0);
 			
+System.out.println ("Original: " + getWord(name));
 			try { Thread.sleep (t.getIntValue() * 1000); }
 			catch (InterruptedException e) {}
 
@@ -349,7 +358,7 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 	{
 		new Option("IMPLICIT", AseAwk.OPTION_IMPLICIT, true),
 		new Option("EXPLICIT", AseAwk.OPTION_EXPLICIT, false),
-		new Option("UNIQUEFN", AseAwk.OPTION_UNIQUEFN, false),
+		new Option("UNIQUEFN", AseAwk.OPTION_UNIQUEFN, true),
 		new Option("SHADING", AseAwk.OPTION_SHADING, true),
 		new Option("SHIFT", AseAwk.OPTION_SHIFT, false),
 		new Option("IDIV", AseAwk.OPTION_IDIV, false),

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.30 2007/10/28 15:03:22 bacon Exp $
+ * $Id: Awk.java,v 1.31 2007/11/07 15:32:41 bacon Exp $
  *
  * {License}
  */
@@ -117,6 +117,7 @@ public abstract class Awk
 	protected native void    setoption (long awkid, int opt) throws Exception;
 	protected native boolean getdebug (long awkid) throws Exception;
 	protected native void    setdebug (long awkid, boolean debug) throws Exception;
+	protected native String  getword (long awkid, String ow) throws Exception;
 	protected native void    setword (long awkid, String ow, String nw) throws Exception;
 
 
@@ -232,6 +233,11 @@ public abstract class Awk
 	}
 
 	/* == word replacement == */
+	public String getWord (String ow) throws Exception
+	{
+		return getword (this.awkid, ow);
+	}
+
 	public void setWord (String ow, String nw) throws Exception
 	{
 		setword (this.awkid, ow, nw);
