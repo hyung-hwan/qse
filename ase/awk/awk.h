@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.23 2007/10/25 14:43:17 bacon Exp $
+ * $Id: awk.h,v 1.24 2007/11/07 15:32:41 bacon Exp $
  *
  * {License}
  */
@@ -465,8 +465,12 @@ void ase_awk_setoption (ase_awk_t* awk, int opt);
 ase_size_t ase_awk_getmaxdepth (ase_awk_t* awk, int type);
 void ase_awk_setmaxdepth (ase_awk_t* awk, int types, ase_size_t depth);
 
+int ase_awk_getword (ase_awk_t* awk, 
+	const ase_char_t* okw, ase_size_t olen,
+	const ase_char_t** nkw, ase_size_t* nlen);
 /*
- * Enables replacement of a name of a keyword.
+ * Enables replacement of a name of a keyword, intrinsic global variables, 
+ * and intrinsic functions.
  */
 int ase_awk_setword (ase_awk_t* awk, 
 	const ase_char_t* okw, ase_size_t olen,

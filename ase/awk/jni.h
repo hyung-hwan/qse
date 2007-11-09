@@ -1,5 +1,5 @@
 /*
- * $Id: jni.h,v 1.16 2007/11/02 05:49:19 bacon Exp $
+ * $Id: jni.h,v 1.17 2007/11/07 15:32:41 bacon Exp $
  *
  * {License}
  */
@@ -44,6 +44,8 @@ JNIEXPORT jboolean JNICALL Java_ase_awk_Awk_getdebug (
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
 	JNIEnv* env, jobject obj, jlong awkid, jboolean debug);
 
+JNIEXPORT jstring JNICALL Java_ase_awk_Awk_getword (
+	JNIEnv* env, jobject obj, jlong awkid, jstring ow);
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setword (
 	JNIEnv* env, jobject obj, jlong awkid, jstring ow, jstring nw);
 

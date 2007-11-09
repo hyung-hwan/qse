@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.6 2007/11/06 09:47:12 bacon Exp $
+ * $Id: tree.h,v 1.7 2007/11/07 14:40:37 bacon Exp $
  *
  * {License}
  */
@@ -274,6 +274,14 @@ struct ase_awk_nde_call_t
 				ase_char_t* ptr;
 				ase_size_t len;
 			} name;
+
+			/* original name. if ase_awk_setword has been 
+			 * invoked, oname can be different from name */
+			struct
+			{
+				ase_char_t* ptr;
+				ase_size_t len;
+			} oname;
 
 			struct
 			{

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.18 2007/11/06 09:47:12 bacon Exp $
+ * $Id: func.c,v 1.19 2007/11/07 14:40:37 bacon Exp $
  *
  * {License}
  */
@@ -161,17 +161,47 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		if (ase_strxncmp (k, l, name, len) == 0) return bfn;
 	}
 
+	/* NOTE: I suspect this block of code might be very fragile.
+	 *       because I'm trying to support ase_awk_setword in 
+	 *       a very flimsy way here. Would it be better to drop
+	 *       ase_awk_setword totally? */
 	pair = ase_awk_map_get (awk->rwtab, name, len);
 	if (pair != ASE_NULL)
 	{
+		/* the current name is a target name for
+		 * one of the original word. */
 		k = ((ase_cstr_t*)(pair->val))->ptr;
 		l = ((ase_cstr_t*)(pair->val))->len;
 	}
 	else
 	{
-		k = name;
-		l = len;
+		pair = ase_awk_map_get (awk->wtab, name, len);
+		if (pair != ASE_NULL)
+		{
+			k = ((ase_cstr_t*)(pair->val))->ptr;
+			l = ((ase_cstr_t*)(pair->val))->len;
+
+			if (ase_strxncmp (name, len, k, l) != 0)
+			{
+				/* it name is not a target name but has
+				 * a target name different from itself,
+				 * it cannot be a intrinsic function name.
+				 *
+				 * For instance, name is "sin" here after
+				 * ase_awk_setword ("sin", "cain") is called.
+				 * If name were "cain", it would be handled
+				 * in the outmost if block */
+
+				return ASE_NULL;
+			}
+		}
+		else
+		{
+			k = name;
+			l = len;
+		}
 	}
+	/* END NOTE */
 
 	pair = ase_awk_map_get (awk->bfn.user, k, l);
 	if (pair == ASE_NULL) return ASE_NULL;

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.80 2007/10/28 06:12:37 bacon Exp $
+ * $Id: Awk.hpp,v 1.81 2007/11/07 15:32:41 bacon Exp $
  *
  * {License}
  */
@@ -795,6 +795,9 @@ public:
 	virtual const char_t* getErrorString (ErrorCode num) const;
 	virtual int setErrorString (ErrorCode num, const char_t* str);
 
+	virtual int getWord (
+		const char_t* ow, ase_size_t owl,
+		const char_t** nw, ase_size_t* nwl);
 	virtual int setWord (
 		const char_t* ow, const char_t* nw);
 	virtual int setWord (

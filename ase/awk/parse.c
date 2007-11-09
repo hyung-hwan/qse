@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.27 2007/11/06 09:47:12 bacon Exp $
+ * $Id: parse.c,v 1.29 2007/11/07 15:32:41 bacon Exp $
  *
  * {License}
  */
@@ -436,6 +436,20 @@ const ase_char_t* ase_awk_getglobalname (
 	return awk->parse.globals.buf[idx].name.ptr;
 }
 
+int ase_awk_getword (ase_awk_t* awk, 
+	const ase_char_t* okw, ase_size_t olen,
+	const ase_char_t** nkw, ase_size_t* nlen)
+{
+	ase_awk_pair_t* p;
+
+	p = ase_awk_map_get (awk->wtab, okw, olen);
+	if (p == ASE_NULL) return -1;
+
+	*nkw = ((ase_cstr_t*)p->val)->ptr;
+	*nlen = ((ase_cstr_t*)p->val)->len;
+
+	return 0;
+}
 
 int ase_awk_setword (ase_awk_t* awk, 
 	const ase_char_t* okw, ase_size_t olen,
@@ -1375,7 +1389,7 @@ int ase_awk_initglobals (ase_awk_t* awk)
 			gtab[id].name, gtab[id].name_len);
 		if (g == (ase_size_t)-1) return -1;
 
-		ASE_ASSERT (g == id);
+		ASE_ASSERT ((int)g == id);
 
 		awk->tree.nbglobals++;
 		awk->tree.nglobals++;
@@ -3427,17 +3441,21 @@ static ase_awk_nde_t* parse_fncall (
 		call->next = ASE_NULL;
 
 		/*call->what.bfn = bfn; */
-		/*
-		call->what.bfn.name.ptr = bfn->name.ptr;
-		call->what.bfn.name.len = bfn->name.len;
-		*/
 		call->what.bfn.name.ptr = name;
 		call->what.bfn.name.len = name_len;
+
+		/* NOTE: oname is the original as in the bfn table.
+		 *       it would not duplicated here and not freed in
+		 *       ase_awk_clrpt either. so ase_awk_delfunc between
+		 *       ase_awk_parse and ase_awk_run may cause the program 
+		 *       to fail. */
+		call->what.bfn.oname.ptr = bfn->name.ptr;
+		call->what.bfn.oname.len = bfn->name.len;
 
 		call->what.bfn.arg.min = bfn->arg.min;
 		call->what.bfn.arg.max = bfn->arg.max;
 		call->what.bfn.arg.spec = bfn->arg.spec;
-		call->what.bfn.handler  = bfn->handler;
+		call->what.bfn.handler = bfn->handler;
 
 		call->args = head;
 		call->nargs = nargs;

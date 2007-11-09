@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.21 2007/10/31 13:56:54 bacon Exp $
+ * $Id: run.c,v 1.22 2007/11/07 14:40:37 bacon Exp $
  *
  * {License}
  */
@@ -5461,10 +5461,13 @@ static ase_awk_val_t* eval_call (
 		{
 			run->errnum = ASE_AWK_ENOERR;
 
+			/* NOTE: oname is used when the handler is invoked.
+			 *       name might be differnt from oname if 
+			 *       ase_awk_setword has been used */
 			n = call->what.bfn.handler (
 				run,
-				call->what.bfn.name.ptr, 
-				call->what.bfn.name.len);
+				call->what.bfn.oname.ptr, 
+				call->what.bfn.oname.len);
 
 			if (n <= -1)
 			{
