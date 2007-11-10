@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp,v 1.41 2007/10/26 12:49:24 bacon Exp $
+ * $Id: Awk.hpp,v 1.42 2007/11/08 15:08:06 bacon Exp $
  *
  * {License}
  */
@@ -732,6 +732,7 @@ public:
 		int maxArgs, FunctionHandler^ handler);
 	virtual bool DeleteFunction (System::String^ name);
 
+	virtual System::String^ GetWord (System::String^ ow);
 	virtual bool SetWord (System::String^ ow, System::String^ nw);
 	virtual bool UnsetWord (System::String^ ow);
 	virtual bool UnsetAllWords ();
