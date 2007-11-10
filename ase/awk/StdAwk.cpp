@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.28 2007/09/24 11:22:22 bacon Exp $
+ * $Id: StdAwk.cpp,v 1.29 2007/11/08 15:08:06 bacon Exp $
  *
  * {License}
  */
@@ -298,21 +298,23 @@ StdAwk::ssize_t StdAwk::writePipe (Pipe& io, char_t* buf, size_t len)
 		// pointer opened by popen, as of this writing. 
 		// anyway, hopefully the following replacement 
 		// will work all the way.
-			int n = fprintf (fp, "%.*ls", left, buf);
+			int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;	
+			int n = fprintf (fp, "%.*ls", chunk, buf);
 			if (n >= 0)
 			{
 				size_t x;
-				for (x = 0; x < left; x++)
+				for (x = 0; x < chunk; x++)
 				{
 					if (buf[x] == ASE_T('\0')) break;
 				}
 				n = x;
 			}
 		#else
-			int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
+			int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
+			int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, buf);
 		#endif
 
-			if (n < 0 || n > (ssize_t)left) return -1;
+			if (n < 0 || n > chunk) return -1;
 			left -= n; buf += n;
 		}
 	}
@@ -387,8 +389,9 @@ StdAwk::ssize_t StdAwk::writeFile (File& io, char_t* buf, size_t len)
 		}
 		else
 		{
-			int n = ase_fprintf (fp, ASE_T("%.*s"), left, buf);
-			if (n < 0 || n > (ssize_t)left) return -1;
+			int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
+			int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, buf);
+			if (n < 0 || n > chunk) return -1;
 			left -= n; buf += n;
 		}
 	}

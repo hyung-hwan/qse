@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c,v 1.47 2007/11/07 15:32:41 bacon Exp $
+ * $Id: jni.c,v 1.48 2007/11/08 15:08:06 bacon Exp $
  *
  * {License}
  */
@@ -1032,6 +1032,7 @@ static ase_ssize_t java_read_source (
 	jchar* tmp;
 	jint ret, i;
 	ase_awk_t* awk;
+	jsize chunk;
 	
 	class = (*env)->GetObjectClass(env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
@@ -1051,7 +1052,9 @@ static ase_ssize_t java_read_source (
 		return -1;
 	}
 
-	array = (*env)->NewCharArray (env, size);
+	chunk = (size > ASE_TYPE_MAX(jsize))? ASE_TYPE_MAX(jsize): (jsize)size;
+
+	array = (*env)->NewCharArray (env, chunk);
 	if (array == ASE_NULL) 
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -1059,7 +1062,7 @@ static ase_ssize_t java_read_source (
 		return -1;
 	}
 
-	ret = (*env)->CallIntMethod (env, obj, mid, array, size);
+	ret = (*env)->CallIntMethod (env, obj, mid, array, chunk);
 	if ((*env)->ExceptionCheck(env))
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -1086,6 +1089,7 @@ static ase_ssize_t java_write_source (
 	jint ret;
 	ase_size_t i;
 	ase_awk_t* awk;
+	jsize chunk;
 	
 	class = (*env)->GetObjectClass(env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
@@ -1105,7 +1109,11 @@ static ase_ssize_t java_write_source (
 		return -1;
 	}
 
-	array = (*env)->NewCharArray (env, size);
+	/* handle upto 'chunk' characters, let the rest be handled by
+	 * the underlying engine */
+	chunk = (size > ASE_TYPE_MAX(jsize))? ASE_TYPE_MAX(jsize): (jsize)size;
+
+	array = (*env)->NewCharArray (env, chunk);
 	if (array == ASE_NULL) 
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -1114,10 +1122,10 @@ static ase_ssize_t java_write_source (
 	}
 
 	tmp = (*env)->GetCharArrayElements (env, array, 0);
-	for (i = 0; i < size; i++) tmp[i] = (jchar)buf[i]; 
+	for (i = 0; i < chunk; i++) tmp[i] = (jchar)buf[i]; 
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
-	ret = (*env)->CallIntMethod (env, obj, mid, array, size);
+	ret = (*env)->CallIntMethod (env, obj, mid, array, chunk);
 	if ((*env)->ExceptionCheck(env))
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -1293,6 +1301,7 @@ static ase_ssize_t java_read_extio (
 	jchar* tmp;
 	jint ret, i;
 	ase_awk_t* awk;
+	jsize chunk;
 	
 	class = (*env)->GetObjectClass(env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
@@ -1313,7 +1322,10 @@ static ase_ssize_t java_read_extio (
 		return -1;
 	}
 
-	array = (*env)->NewCharArray (env, size);
+	/* shrink the buffer if it exceeds java's capability */
+	chunk = (size > ASE_TYPE_MAX(jsize))? ASE_TYPE_MAX(jsize): (jsize)size;
+
+	array = (*env)->NewCharArray (env, chunk);
 	if (array == ASE_NULL) 
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -1321,7 +1333,7 @@ static ase_ssize_t java_read_extio (
 		return -1;
 	}
 
-	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle, array, size);
+	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle, array, chunk);
 	if ((*env)->ExceptionCheck(env))
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -1352,6 +1364,7 @@ static ase_ssize_t java_write_extio (
 	jint ret;
 	ase_size_t i;
 	ase_awk_t* awk;
+	jsize chunk;
 	
 	class = (*env)->GetObjectClass(env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
@@ -1371,7 +1384,9 @@ static ase_ssize_t java_write_extio (
 		return -1;
 	}
 
-	array = (*env)->NewCharArray (env, size);
+	chunk = (size > ASE_TYPE_MAX(jsize))? ASE_TYPE_MAX(jsize): (jsize)size;
+
+	array = (*env)->NewCharArray (env, chunk);
 	if (array == ASE_NULL) 
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);
@@ -1380,10 +1395,10 @@ static ase_ssize_t java_write_extio (
 	}
 
 	tmp = (*env)->GetCharArrayElements (env, array, 0);
-	for (i = 0; i < size; i++) tmp[i] = (jchar)data[i]; 
+	for (i = 0; i < chunk; i++) tmp[i] = (jchar)data[i]; 
 	(*env)->ReleaseCharArrayElements (env, array, tmp, 0);
 
-	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle, array, size);
+	ret = (*env)->CallIntMethod (env, obj, mid, extio->handle, array, chunk);
 	if ((*env)->ExceptionCheck(env))
 	{
 		if (is_debug(awk)) (*env)->ExceptionDescribe (env);

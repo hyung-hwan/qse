@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.22 2007/11/06 09:47:12 bacon Exp $
+ * $Id: awk.c,v 1.23 2007/11/08 15:08:06 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -262,15 +262,22 @@ static ase_ssize_t awk_srcio_out (
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
-		while (size > 0)
+		ase_size_t left = size;
+
+		while (left > 0)
 		{
-			int n, chunk;
-
-			chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): size;
-			n = ase_fprintf (stdout, ASE_T("%.*s"), (int)chunk, data);
-			if (n < 0) return -1;
-
-			data += n; size -= n;
+			if (*data == ASE_T('\0')) 
+			{
+				if (ase_fputc (*data, stdout) == ASE_CHAR_EOF) return -1;
+				left -= 1; data += 1;
+			}
+			else
+			{
+				int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
+				int n = ase_fprintf (stdout, ASE_T("%.*s"), chunk, data);
+				if (n < 0) return -1;
+				left -= n; data += n;
+			}
 		}
 
 		return size;
@@ -348,7 +355,7 @@ static ase_ssize_t awk_extio_pipe (
 				 * pointer opened by popen, as of this writing. 
 				 * anyway, hopefully the following replacement 
 				 * will work all the way. */
-					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
 					int n = fprintf (fp, "%.*ls", chunk, data);
 					if (n >= 0)
 					{
@@ -360,7 +367,7 @@ static ase_ssize_t awk_extio_pipe (
 						n = x;
 					}
 				#else
-					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
 					int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, data);
 				#endif
 	
@@ -457,7 +464,7 @@ static ase_ssize_t awk_extio_file (
 				}
 				else
 				{
-					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+					int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
 					int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, data);
 					if (n < 0) return -1;
 					left -= n; data += n;
@@ -604,13 +611,6 @@ static ase_ssize_t awk_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
-		/*
-		int n = ase_fprintf (
-			(FILE*)epa->handle, ASE_T("%.*s"), size, data);
-		if (n < 0) return -1;
-
-		return size;
-		*/
 		FILE* fp = (FILE*)epa->handle;
 		ase_ssize_t left = size;
 
@@ -623,7 +623,7 @@ static ase_ssize_t awk_extio_console (
 			}
 			else
 			{
-				int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+				int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
 				int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, data);
 				if (n < 0) return -1;
 				left -= n; data += n;

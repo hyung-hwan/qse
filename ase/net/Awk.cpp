@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.34 2007/10/10 13:22:12 bacon Exp $
+ * $Id: Awk.cpp,v 1.35 2007/11/08 15:08:06 bacon Exp $
  *
  * {License}
  */
@@ -155,19 +155,30 @@ public:
 		if ((ASE::Net::Awk^)this->wrapper != nullptr) ASE::Awk::stop ();
 	}
 
+	int getWord (ASE::Net::Awk^ wrapper, const char_t* ow, size_t olen, const char_t** nw, size_t* nlen)
+	{
+		ASE::Net::Awk^ old = this->wrapper;
+		this->wrapper = wrapper;
+		int n = ASE::Awk::getWord (ow, olen, nw, nlen);
+		this->wrapper = old;
+		return n;
+	}
+
 	int setWord (ASE::Net::Awk^ wrapper, const char_t* ow, size_t olen, const char_t* nw, size_t nlen)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::setWord (ow, olen, nw, nlen);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	int unsetWord (ASE::Net::Awk^ wrapper, const char_t* ow, size_t olen)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::unsetWord (ow, olen);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
@@ -1009,6 +1020,27 @@ bool Awk::DispatchFunction (
 	delete r;
 
 	return n;
+}
+
+System::String^ Awk::GetWord (System::String^ ow)
+{
+	if (awk == NULL) 
+	{
+		SetError (ERROR::NOPER);
+		return nullptr;
+	}
+
+	const char_t* nptr;
+	size_t nlen;
+
+	cli::pin_ptr<const ASE::Awk::char_t> optr = PtrToStringChars(ow);
+	if (awk->getWord (this, optr, ow->Length, &nptr, &nlen) == -1)
+	{
+		RetrieveError ();
+		return nullptr;
+	}
+
+	return gcnew System::String (nptr, 0, nlen);
 }
 
 bool Awk::SetWord (System::String^ ow, System::String^ nw)
