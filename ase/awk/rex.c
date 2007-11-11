@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c,v 1.3 2007/04/30 05:47:33 bacon Exp $
+ * $Id: rex.c,v 1.4 2007/11/09 07:43:42 bacon Exp $
  *
  * {License}
  */
@@ -87,8 +87,8 @@ struct builder_t
 
 	struct
 	{
-		int max;
-		int cur;
+		ase_size_t max;
+		ase_size_t cur;
 	} depth;
 
 	int errnum;
@@ -109,8 +109,8 @@ struct matcher_t
 
 	struct
 	{
-		int max;
-		int cur;
+		ase_size_t max;
+		ase_size_t cur;
 	} depth;
 
 	int ignorecase;
