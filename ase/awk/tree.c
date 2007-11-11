@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c,v 1.6 2007/11/06 09:47:12 bacon Exp $
+ * $Id: tree.c,v 1.7 2007/11/09 15:08:41 bacon Exp $
  *
  * {License}
  */
@@ -524,7 +524,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				PUT_SRCSTR (awk, ASE_T(" "));
 			}
 
-			PUT_SRCSTR (awk, ASE_T("getline"));
+			PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("getline")));
 			if (px->var != ASE_NULL)
 			{
 				PUT_SRCSTR (awk, ASE_T(" "));
@@ -595,7 +595,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				if (px->nlocals > 0) 
 				{
 					PRINT_TABS (awk, depth + 1);
-					PUT_SRCSTR (awk, ASE_T("local "));
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("local")));
+					PUT_SRCSTR (awk, ASE_T(" "));
 
 					for (i = 0; i < px->nlocals - 1; i++) 
 					{
@@ -628,7 +629,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				ase_awk_nde_if_t* px = (ase_awk_nde_if_t*)p;
 
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("if ("));	
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("if")));
+				PUT_SRCSTR (awk, ASE_T(" ("));	
 				PRINT_EXPRESSION (awk, px->test);
 				PUT_SRCSTR (awk, ASE_T(")"));
 				PUT_NEWLINE (awk);
@@ -642,7 +644,7 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				if (px->else_part != ASE_NULL) 
 				{
 					PRINT_TABS (awk, depth);
-					PUT_SRCSTR (awk, ASE_T("else"));
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("else")));
 					PUT_NEWLINE (awk);
 					if (px->else_part->type == ASE_AWK_NDE_BLK)
 						PRINT_STATEMENTS (awk, px->else_part, depth);
@@ -657,7 +659,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				ase_awk_nde_while_t* px = (ase_awk_nde_while_t*)p;
 
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("while ("));	
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("while")));
+				PUT_SRCSTR (awk, ASE_T(" ("));	
 				PRINT_EXPRESSION (awk, px->test);
 				PUT_SRCSTR (awk, ASE_T(")"));
 				PUT_NEWLINE (awk);
@@ -677,7 +680,7 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				ase_awk_nde_while_t* px = (ase_awk_nde_while_t*)p;
 
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("do"));
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("do")));
 				PUT_NEWLINE (awk);
 				if (px->body->type == ASE_AWK_NDE_BLK) 
 				{
@@ -689,7 +692,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				}
 
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("while ("));	
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("while")));
+				PUT_SRCSTR (awk, ASE_T(" ("));	
 				PRINT_EXPRESSION (awk, px->test);
 				PUT_SRCSTR (awk, ASE_T(");"));
 				PUT_NEWLINE (awk);
@@ -701,7 +705,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				ase_awk_nde_for_t* px = (ase_awk_nde_for_t*)p;
 
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("for ("));
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("for")));
+				PUT_SRCSTR (awk, ASE_T(" ("));
 				if (px->init != ASE_NULL) 
 				{
 					PRINT_EXPRESSION (awk, px->init);
@@ -735,7 +740,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				ase_awk_nde_foreach_t* px = (ase_awk_nde_foreach_t*)p;
 
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("for "));
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("for")));
+				PUT_SRCSTR (awk, ASE_T(" "));
 				PRINT_EXPRESSION (awk, px->test);
 				PUT_NEWLINE (awk);
 				if (px->body->type == ASE_AWK_NDE_BLK) 
@@ -752,7 +758,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			case ASE_AWK_NDE_BREAK:
 			{
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("break;"));
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("break")));
+				PUT_SRCSTR (awk, ASE_T(";"));
 				PUT_NEWLINE (awk);
 				break;
 			}
@@ -760,7 +767,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			case ASE_AWK_NDE_CONTINUE:
 			{
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("continue;"));
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("continue")));
+				PUT_SRCSTR (awk, ASE_T(";"));
 				PUT_NEWLINE (awk);
 				break;
 			}
@@ -770,12 +778,14 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				PRINT_TABS (awk, depth);
 				if (((ase_awk_nde_return_t*)p)->val == ASE_NULL) 
 				{
-					PUT_SRCSTR (awk, ASE_T("return;"));
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("return")));
+					PUT_SRCSTR (awk, ASE_T(";"));
 					PUT_NEWLINE (awk);
 				}
 				else 
 				{
-					PUT_SRCSTR (awk, ASE_T("return "));
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("return")));
+					PUT_SRCSTR (awk, ASE_T(" "));
 					ASE_ASSERT (((ase_awk_nde_return_t*)p)->val->next == ASE_NULL);
 
 					PRINT_EXPRESSION (awk, ((ase_awk_nde_return_t*)p)->val);
@@ -792,12 +802,14 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 
 				if (px->val == ASE_NULL) 
 				{
-					PUT_SRCSTR (awk, ASE_T("exit;"));
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("exit")));
+					PUT_SRCSTR (awk, ASE_T(";"));
 					PUT_NEWLINE (awk);
 				}
 				else 
 				{
-					PUT_SRCSTR (awk, ASE_T("exit "));
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("exit")));
+					PUT_SRCSTR (awk, ASE_T(" "));
 					ASE_ASSERT (px->val->next == ASE_NULL);
 					PRINT_EXPRESSION (awk, px->val);
 					PUT_SRCSTR (awk, ASE_T(";"));
@@ -809,7 +821,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			case ASE_AWK_NDE_NEXT:
 			{
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("next;"));
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("next")));
+				PUT_SRCSTR (awk, ASE_T(";"));
 				PUT_NEWLINE (awk);
 				break;
 			}
@@ -818,9 +831,14 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			{
 				PRINT_TABS (awk, depth);
 				if (((ase_awk_nde_nextfile_t*)p)->out)
-					PUT_SRCSTR (awk, ASE_T("nextofile;"));
+				{
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("nextofile")));
+				}
 				else
-					PUT_SRCSTR (awk, ASE_T("nextfile;"));
+				{
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("nextfile")));
+				}
+				PUT_SRCSTR (awk, ASE_T(";"));
 				PUT_NEWLINE (awk);
 				break;
 			}
@@ -828,7 +846,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			case ASE_AWK_NDE_DELETE:
 			{
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("delete "));
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("delete")));
+				PUT_SRCSTR (awk, ASE_T(" "));
 				ase_awk_prnpt (awk, ((ase_awk_nde_delete_t*)p)->var);
 				break;
 			}
@@ -836,7 +855,8 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 			case ASE_AWK_NDE_RESET:
 			{
 				PRINT_TABS (awk, depth);
-				PUT_SRCSTR (awk, ASE_T("reset "));
+				PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("reset")));
+				PUT_SRCSTR (awk, ASE_T(" "));
 				ase_awk_prnpt (awk, ((ase_awk_nde_reset_t*)p)->var);
 				break;
 			}
@@ -849,8 +869,13 @@ static int print_statements (ase_awk_t* awk, ase_awk_nde_t* tree, int depth)
 				PRINT_TABS (awk, depth);
 
 				if (p->type == ASE_AWK_NDE_PRINT) 
-					PUT_SRCSTR (awk, ASE_T("print"));
-				else PUT_SRCSTR (awk, ASE_T("printf"));
+				{
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("print")));
+				}
+				else
+				{
+					PUT_SRCSTR (awk, ase_awk_getkw(awk,ASE_T("printf")));
+				}
 
 				if (px->args != ASE_NULL)
 				{

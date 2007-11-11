@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.22 2007/11/07 14:40:37 bacon Exp $
+ * $Id: run.c,v 1.23 2007/11/09 07:43:42 bacon Exp $
  *
  * {License}
  */
@@ -391,7 +391,7 @@ static int set_global (
 		if (n == -1) return -1;
 		if (n == 1) lv = (ase_long_t)rv;
 
-		if (lv < run->inrec.nflds)
+		if (lv < (ase_long_t)run->inrec.nflds)
 		{
 			if (shorten_record (run, (ase_size_t)lv) == -1)
 			{
@@ -2472,7 +2472,7 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			    var->type == ASE_AWK_NDE_GLOBALIDX)
 			{
 				if (ase_awk_setglobal (
-					run, var->id.idxa, tmp) == -1)
+					run, (int)var->id.idxa, tmp) == -1)
 				{
 					ase_awk_refupval (run, tmp);
 					ase_awk_refdownval (run, tmp);
@@ -3315,7 +3315,7 @@ static ase_awk_val_t* do_assignment_map (
 		else if (var->type == ASE_AWK_NDE_GLOBALIDX)
 		{
 			ase_awk_refupval (run, tmp);
-			if (ase_awk_setglobal (run, var->id.idxa, tmp) == -1)
+			if (ase_awk_setglobal (run, (int)var->id.idxa, tmp) == -1)
 			{
 				ase_awk_refdownval (run, tmp);
 
@@ -5936,7 +5936,7 @@ static ase_awk_val_t* eval_pos (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 	if (lv == 0) v = run->inrec.d0;
-	else if (lv > 0 && lv <= run->inrec.nflds) 
+	else if (lv > 0 && lv <= (ase_long_t)run->inrec.nflds) 
 		v = run->inrec.flds[lv-1].val;
 	else v = ase_awk_val_zls; /*ase_awk_val_nil;*/
 
@@ -6864,7 +6864,7 @@ ase_char_t* ase_awk_format (
 				return ASE_NULL;
 			}
 
-			if (prec == -1 || prec == 0 || prec > ch_len) prec = ch_len;
+			if (prec == -1 || prec == 0 || prec > (ase_long_t)ch_len) prec = (ase_long_t)ch_len;
 			if (prec > width) width = prec;
 
 			if (!minus)
@@ -6910,7 +6910,8 @@ ase_char_t* ase_awk_format (
 		else if (fmt[i] == ASE_T('s')) 
 		{
 			ase_char_t* str, * str_free = ASE_NULL;
-			ase_size_t str_len, k;
+			ase_size_t str_len;
+			ase_long_t k;
 			ase_awk_val_t* v;
 
 			if (args == ASE_NULL)
@@ -6971,7 +6972,7 @@ ase_char_t* ase_awk_format (
 				str_free = str;
 			}
 
-			if (prec == -1 || prec > str_len ) prec = str_len;
+			if (prec == -1 || prec > (ase_long_t)str_len ) prec = (ase_long_t)str_len;
 			if (prec > width) width = prec;
 
 			if (!minus)

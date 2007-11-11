@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.47 2007/11/08 15:08:06 bacon Exp $
+ * $Id: Awk.cpp,v 1.48 2007/11/09 08:09:29 bacon Exp $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -315,7 +315,7 @@ protected:
 			}
 			else
 			{
-				int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+				int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
 				int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, buf);
 				if (n < 0 || n > chunk) return -1;
 				left -= n; buf += n;
@@ -458,7 +458,7 @@ protected:
 			}
 			else
 			{
-				int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): left;
+				int chunk = (left > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)left;
 				int n = ase_fprintf (fp, ASE_T("%.*s"), chunk, buf);
 				if (n < 0 || n > chunk) return -1;
 				left -= n; buf += n;

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.19 2007/11/07 14:40:37 bacon Exp $
+ * $Id: func.c,v 1.20 2007/11/09 07:43:42 bacon Exp $
  *
  * {License}
  */
@@ -560,11 +560,14 @@ static int bfn_substr (
 	}
 
 	if (ase_awk_getoption(run->awk) & ASE_AWK_BASEONE) lindex = lindex - 1;
-	if (lindex >= len) lindex = len;
+	if (lindex >= (ase_long_t)len) lindex = (ase_long_t)len;
 	else if (lindex < 0) lindex = 0;
 
 	if (lcount < 0) lcount = 0;
-	else if (lcount > len - lindex) lcount = len - lindex;
+	else if (lcount > (ase_long_t)len - lindex) 
+	{
+		lcount = (ase_long_t)len - lindex;
+	}
 
 	r = ase_awk_makestrval (run, &str[lindex], (ase_size_t)lcount);
 	if (r == ASE_NULL)

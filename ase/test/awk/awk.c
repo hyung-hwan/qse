@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.23 2007/11/08 15:08:06 bacon Exp $
+ * $Id: awk.c,v 1.25 2007/11/09 08:29:49 bacon Exp $
  */
 
 #include <ase/awk/awk.h>
@@ -321,7 +321,8 @@ static ase_ssize_t awk_extio_pipe (
 
 		case ASE_AWK_IO_READ:
 		{
-			if (ase_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
+			int chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)size;
+			if (ase_fgets (data, chunk, (FILE*)epa->handle) == ASE_NULL) 
 			{
 				if (ferror((FILE*)epa->handle)) return -1;
 				return 0;
@@ -442,7 +443,8 @@ static ase_ssize_t awk_extio_file (
 
 		case ASE_AWK_IO_READ:
 		{
-			if (ase_fgets (data, size, (FILE*)epa->handle) == ASE_NULL) 
+			int chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)size;
+			if (ase_fgets (data, chunk, (FILE*)epa->handle) == ASE_NULL) 
 			{
 				if (ferror((FILE*)epa->handle)) return -1;
 				return 0;
@@ -516,7 +518,9 @@ static ase_ssize_t awk_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
-		while (ase_fgets (data, size, (FILE*)epa->handle) == ASE_NULL)
+		int chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)size;
+
+		while (ase_fgets (data, chunk, (FILE*)epa->handle) == ASE_NULL)
 		{
 			if (ferror((FILE*)epa->handle)) return -1;
 

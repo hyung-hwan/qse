@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.6 2007/05/06 08:08:22 bacon Exp $
+ * $Id: types.h,v 1.7 2007/11/09 07:43:42 bacon Exp $
  *
  * {License}
  */
@@ -163,8 +163,9 @@ typedef ase_uint_t  ase_word_t;
 typedef char ase_mchar_t;
 typedef int  ase_mcint_t;
 
-#if defined(__cplusplus) && !(defined(_MSC_VER)&&(_MSC_VER<=1200))
+#if defined(__cplusplus) && (!defined(_MSC_VER) || (defined(_MSC_VER)&&defined(_NATIVE_WCHAR_T_DEFINED)))
 	/* C++ */
+
 	typedef wchar_t ase_wchar_t;
 	typedef wchar_t ase_wcint_t;
 

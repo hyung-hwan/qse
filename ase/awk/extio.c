@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c,v 1.8 2007/10/28 06:12:37 bacon Exp $
+ * $Id: extio.c,v 1.9 2007/11/09 07:43:42 bacon Exp $
  *
  * {License}
  */
@@ -80,7 +80,8 @@ int ase_awk_readextio (
 {
 	ase_awk_extio_t* p = run->extio.chain;
 	ase_awk_io_t handler;
-	int extio_type, extio_mode, extio_mask, n, ret;
+	int extio_type, extio_mode, extio_mask, ret, n;
+	ase_ssize_t x;
 	ase_awk_val_t* rs;
 	ase_char_t* rs_ptr;
 	ase_size_t rs_len;
@@ -117,8 +118,7 @@ int ase_awk_readextio (
 			run->awk, ASE_SIZEOF(ase_awk_extio_t));
 		if (p == ASE_NULL)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -126,8 +126,7 @@ int ase_awk_readextio (
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -146,8 +145,8 @@ int ase_awk_readextio (
 
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
 
-		n = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
-		if (n <= -1)
+		x = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
+		if (x <= -1)
 		{
 			ASE_AWK_FREE (run->awk, p->name);
 			ASE_AWK_FREE (run->awk, p);
@@ -166,12 +165,12 @@ int ase_awk_readextio (
 		p->next = run->extio.chain;
 		run->extio.chain = p;
 
-		/* usually, n == 0 indicates that it has reached the end 
+		/* usually, x == 0 indicates that it has reached the end 
 		 * of the input. the user io handler can return 0 for the 
 		 * open request if it doesn't have any files to open. One 
 		 * advantage of doing this would be that you can skip the 
 		 * entire pattern-block matching and exeuction. */
-		if (n == 0) 
+		if (x == 0) 
 		{
 			p->in.eos = ase_true;
 			return 0;
@@ -429,7 +428,8 @@ int ase_awk_writeextio_str (
 {
 	ase_awk_extio_t* p = run->extio.chain;
 	ase_awk_io_t handler;
-	int extio_type, extio_mode, extio_mask, n;
+	int extio_type, extio_mode, extio_mask; 
+	ase_ssize_t n;
 
 	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
 	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
@@ -569,7 +569,8 @@ int ase_awk_flushextio (
 {
 	ase_awk_extio_t* p = run->extio.chain;
 	ase_awk_io_t handler;
-	int extio_type, /*extio_mode,*/ extio_mask, n;
+	int extio_type, /*extio_mode,*/ extio_mask;
+	ase_ssize_t n;
 	ase_bool_t ok = ase_false;
 
 	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
@@ -623,7 +624,8 @@ int ase_awk_nextextio_read (
 {
 	ase_awk_extio_t* p = run->extio.chain;
 	ase_awk_io_t handler;
-	int extio_type, /*extio_mode,*/ extio_mask, n;
+	int extio_type, /*extio_mode,*/ extio_mask; 
+	ase_ssize_t n;
 
 	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_type_map));
 	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mode_map));
@@ -679,6 +681,7 @@ int ase_awk_nextextio_read (
 		 * set the eos flags so that the next call to nextextio_read
 		 * will return 0 without executing the handler */
 		p->in.eos = ase_true;
+		return 0;
 	}
 	else 
 	{
@@ -689,9 +692,9 @@ int ase_awk_nextextio_read (
 		/* also the previous input buffer must be reset */
 		p->in.pos = 0;
 		p->in.len = 0;
-	}
 
-	return n;
+		return 1;
+	}
 }
 
 int ase_awk_nextextio_write (
@@ -699,7 +702,8 @@ int ase_awk_nextextio_write (
 {
 	ase_awk_extio_t* p = run->extio.chain;
 	ase_awk_io_t handler;
-	int extio_type, /*extio_mode,*/ extio_mask, n;
+	int extio_type, /*extio_mode,*/ extio_mask; 
+	ase_ssize_t n;
 
 	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
 	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
@@ -755,15 +759,15 @@ int ase_awk_nextextio_write (
 		 * set the eos flags so that the next call to nextextio_write
 		 * will return 0 without executing the handler */
 		p->out.eos = ase_true;
+		return 0;
 	}
 	else 
 	{
 		/* as the next stream has been opened successfully,
 		 * the eof flag should be cleared if set */
 		p->out.eof = ase_false;
+		return 1;
 	}
-
-	return n;
 }
 
 int ase_awk_closeextio_read (
@@ -930,7 +934,7 @@ void ase_awk_clearextio (ase_awk_run_t* run)
 {
 	ase_awk_extio_t* next;
 	ase_awk_io_t handler;
-	int n;
+	ase_ssize_t n;
 
 	while (run->extio.chain != ASE_NULL)
 	{

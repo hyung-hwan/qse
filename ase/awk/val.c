@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.11 2007/11/02 13:08:58 bacon Exp $
+ * $Id: val.c,v 1.13 2007/11/09 15:20:02 bacon Exp $
  *
  * {License}
  */
@@ -135,27 +135,6 @@ ase_awk_val_t* ase_awk_makestrval (
 {
 	ase_awk_val_str_t* val;
 
-	/*
-	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
-		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
-	if (val == ASE_NULL) 
-	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
-	}
-
-	val->type = ASE_AWK_VAL_STR;
-	val->ref = 0;
-	val->len = len;
-	val->buf = ase_strxdup (str, len, &run->awk->prmfns.mmgr);
-	if (val->buf == ASE_NULL) 
-	{
-		ASE_AWK_FREE (run->awk, val);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
-	}
-	*/
-
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, 
 		ASE_SIZEOF(ase_awk_val_str_t) + 
@@ -205,27 +184,6 @@ ase_awk_val_t* ase_awk_makestrval2 (
 	const ase_char_t* str2, ase_size_t len2)
 {
 	ase_awk_val_str_t* val;
-
-	/*
-	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
-		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
-	if (val == ASE_NULL) 
-	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
-	}
-
-	val->type = ASE_AWK_VAL_STR;
-	val->ref = 0;
-	val->len = len1 + len2;
-	val->buf = ase_strxdup2 (str1, len1, str2, len2, &run->awk->prmfns.mmgr);
-	if (val->buf == ASE_NULL) 
-	{
-		ASE_AWK_FREE (run->awk, val);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
-	}
-	*/
 
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, 

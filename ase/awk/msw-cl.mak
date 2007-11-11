@@ -13,7 +13,7 @@ JAVAC = javac
 JAR = jar
 
 CFLAGS = /nologo /W3 -I..\..
-CXXFLAGS = /nologo /W3 -I..\..
+CXXFLAGS = /nologo /W3 -I..\.. 
 JAVACFLAGS = -classpath ..\.. -Xlint:unchecked
 
 #LDFLAGS = /subsystem:console
