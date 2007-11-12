@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.20 2007/10/24 03:46:51 bacon Exp $
+ * $Id: StdAwk.java,v 1.21 2007/11/10 15:30:07 bacon Exp $
  *
  * {License}
  */
@@ -8,6 +8,10 @@ package ase.awk;
 
 import java.io.*;
 
+/**
+ * Extends the core interpreter engine to implement the language closer to 
+ * the standard.
+ */
 public abstract class StdAwk extends Awk
 {
 	private long seed;

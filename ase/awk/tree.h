@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h,v 1.7 2007/11/07 14:40:37 bacon Exp $
+ * $Id: tree.h,v 1.8 2007/11/10 12:49:10 bacon Exp $
  *
  * {License}
  */
@@ -52,7 +52,7 @@ enum ase_awk_nde_type_t
 	ASE_AWK_NDE_REX,
 
 	/* keep this order for the following items otherwise, you may have 
-	 * to change __eval_incpre and __eval_incpst in run.c as well as
+	 * to change eval_incpre and eval_incpst in run.c as well as
 	 * ASE_AWK_VAL_REF_XXX in val.h */
 	ASE_AWK_NDE_NAMED,
 	ASE_AWK_NDE_GLOBAL,

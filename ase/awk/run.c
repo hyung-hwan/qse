@@ -1,5 +1,5 @@
 /*
- * $Id: run.c,v 1.23 2007/11/09 07:43:42 bacon Exp $
+ * $Id: run.c,v 1.25 2007/11/10 15:21:40 bacon Exp $
  *
  * {License}
  */
@@ -1275,9 +1275,8 @@ static int run_main (
 				}
 
 				tmp->type = ASE_AWK_NDE_STR;
-				tmp->buf = ase_strxdup (
-					runarg[i].ptr, runarg[i].len,
-					&run->awk->prmfns.mmgr);
+				tmp->buf = ase_awk_strxdup (run->awk,
+					runarg[i].ptr, runarg[i].len);
 				if (tmp->buf == ASE_NULL)
 				{
 					ASE_AWK_FREE (run->awk, tmp);
@@ -4716,10 +4715,8 @@ static ase_awk_val_t* eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_val_t* left, * res;
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 
-	ASE_ASSERT (
-		exp->type == ASE_AWK_NDE_EXP_INCPRE);
-	ASE_ASSERT (
-		exp->left != ASE_NULL && exp->right == ASE_NULL);
+	ASE_ASSERT (exp->type == ASE_AWK_NDE_EXP_INCPRE);
+	ASE_ASSERT (exp->left != ASE_NULL && exp->right == ASE_NULL);
 
 	/* this way of checking if the l-value is assignable is
 	 * ugly as it is dependent of the values defined in tree.h.
@@ -4892,10 +4889,8 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_val_t* left, * res, * res2;
 	ase_awk_nde_exp_t* exp = (ase_awk_nde_exp_t*)nde;
 
-	ASE_ASSERT (
-		exp->type == ASE_AWK_NDE_EXP_INCPST);
-	ASE_ASSERT (
-		exp->left != ASE_NULL && exp->right == ASE_NULL);
+	ASE_ASSERT (exp->type == ASE_AWK_NDE_EXP_INCPST);
+	ASE_ASSERT (exp->left != ASE_NULL && exp->right == ASE_NULL);
 
 	/* this way of checking if the l-value is assignable is
 	 * ugly as it is dependent of the values defined in tree.h.

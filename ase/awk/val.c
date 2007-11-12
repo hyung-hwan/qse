@@ -1,5 +1,5 @@
 /*
- * $Id: val.c,v 1.13 2007/11/09 15:20:02 bacon Exp $
+ * $Id: val.c,v 1.14 2007/11/10 15:21:40 bacon Exp $
  *
  * {License}
  */
@@ -222,7 +222,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	val->type = ASE_AWK_VAL_REX;
 	val->ref = 0;
 	val->len = len;
-	val->buf = ase_strxdup (buf, len, &run->awk->prmfns.mmgr);
+	val->buf = ase_awk_strxdup (run->awk, buf, len);
 	if (val->buf == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -523,7 +523,7 @@ static ase_char_t* str_to_str (
 	if (buf == ASE_NULL)
 	{
 		ase_char_t* tmp;
-		tmp = ase_strxdup (str, str_len, &run->awk->prmfns.mmgr);
+		tmp = ase_awk_strxdup (run->awk, str, str_len);
 		if (tmp == ASE_NULL) 
 		{
 			ase_awk_setrunerror (

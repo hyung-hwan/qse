@@ -1,5 +1,5 @@
 /*
- * $Id: map.c,v 1.10 2007/09/30 15:12:20 bacon Exp $
+ * $Id: map.c,v 1.11 2007/11/10 15:21:40 bacon Exp $
  *
  * {License}
  */
@@ -156,8 +156,7 @@ int ase_awk_map_putx (
 	if (pair == ASE_NULL) return -1; /* error */
 
 	/* duplicate the key if it is new */
-	ASE_AWK_PAIR_KEYPTR(pair) = ase_strxdup (
-		keyptr, keylen, &map->awk->prmfns.mmgr);
+	ASE_AWK_PAIR_KEYPTR(pair) = ase_awk_strxdup (map->awk, keyptr, keylen);
 	if (ASE_AWK_PAIR_KEYPTR(pair) == ASE_NULL)
 	{
 		ASE_AWK_FREE (map->awk, pair);

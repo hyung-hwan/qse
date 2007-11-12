@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.26 2007/11/07 15:32:41 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.27 2007/11/10 12:56:49 bacon Exp $
  */
 
 import java.awt.*;
@@ -655,8 +655,8 @@ System.out.println ("Original: " + getWord(name));
 			else
 				msg = "An exception occurred - [" + code + "] " + e.getMessage() + " at line " + line;
 
-			statusLabel.setText (msg);
 			showMessage (msg);
+			statusLabel.setText (msg);
 			return;
 		}
 		finally
