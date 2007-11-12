@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.27 2007/11/10 12:56:49 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.28 2007/11/11 06:10:42 bacon Exp $
  */
 
 import java.awt.*;
@@ -104,18 +104,15 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			this.awkPanel = awkPanel;
 
 			addFunction ("sleep", 1, 1);
+
+			/*
 			setWord ("sin", "cain");
 			setWord ("length", "len");
 			setWord ("OFMT", "ofmt");
 			setWord ("END", "end");
 			setWord ("sleep", "cleep");
-			try{
 			setWord ("end", "END");
-			} catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-					
+			*/
 		}
 	
 		public void sleep (Context ctx, String name, Return ret, Argument[] args) throws ase.awk.Exception
@@ -123,7 +120,6 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			Argument t = args[0];
 			//if (args[0].isIndexed()) t = args[0].getIndexed(0);
 			
-System.out.println ("Original: " + getWord(name));
 			try { Thread.sleep (t.getIntValue() * 1000); }
 			catch (InterruptedException e) {}
 
