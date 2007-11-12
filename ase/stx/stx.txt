@@ -1,7 +1,7 @@
-stx(1)  xpkit 
+stx(1)  ase 
 
 NAME
-	stx - xpkit embeddable smalltalk system
+	stx - ase embeddable smalltalk system
 
 SYNOPSIS
 	stx [-f imageFile] MainClass

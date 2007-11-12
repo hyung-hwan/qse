@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.28 2007/11/11 06:10:42 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.31 2007/11/11 15:06:47 bacon Exp $
  */
 
 import java.awt.*;
@@ -352,23 +352,23 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 
 	protected Option[] options = new Option[]
 	{
-		new Option("IMPLICIT", AseAwk.OPTION_IMPLICIT, true),
-		new Option("EXPLICIT", AseAwk.OPTION_EXPLICIT, false),
-		new Option("UNIQUEFN", AseAwk.OPTION_UNIQUEFN, true),
-		new Option("SHADING", AseAwk.OPTION_SHADING, true),
-		new Option("SHIFT", AseAwk.OPTION_SHIFT, false),
-		new Option("IDIV", AseAwk.OPTION_IDIV, false),
-		new Option("STRCONCAT", AseAwk.OPTION_STRCONCAT, false),
-		new Option("EXTIO", AseAwk.OPTION_EXTIO, true),
-		new Option("BLOCKLESS", AseAwk.OPTION_BLOCKLESS, true),
-		new Option("BASEONE", AseAwk.OPTION_BASEONE, true),
-		new Option("STRIPSPACES", AseAwk.OPTION_STRIPSPACES, false),
-		new Option("NEXTOFILE", AseAwk.OPTION_NEXTOFILE, false),
-		//new Option("CRLF", AseAwk.OPTION_CRLF, false),
-		new Option("ARGSTOMAIN", AseAwk.OPTION_ARGSTOMAIN, false),
-		new Option("RESET", AseAwk.OPTION_RESET, false),
-		new Option("MAPTOVAR", AseAwk.OPTION_MAPTOVAR, false),
-		new Option("PABLOCK", AseAwk.OPTION_PABLOCK, true)
+		new Option("IMPLICIT", StdAwk.OPTION_IMPLICIT, true),
+		new Option("EXPLICIT", StdAwk.OPTION_EXPLICIT, false),
+		new Option("UNIQUEFN", StdAwk.OPTION_UNIQUEFN, true),
+		new Option("SHADING", StdAwk.OPTION_SHADING, true),
+		new Option("SHIFT", StdAwk.OPTION_SHIFT, false),
+		new Option("IDIV", StdAwk.OPTION_IDIV, false),
+		new Option("STRCONCAT", StdAwk.OPTION_STRCONCAT, false),
+		new Option("EXTIO", StdAwk.OPTION_EXTIO, true),
+		new Option("BLOCKLESS", StdAwk.OPTION_BLOCKLESS, true),
+		new Option("BASEONE", StdAwk.OPTION_BASEONE, true),
+		new Option("STRIPSPACES", StdAwk.OPTION_STRIPSPACES, false),
+		new Option("NEXTOFILE", StdAwk.OPTION_NEXTOFILE, false),
+		//new Option("CRLF", StdAwk.OPTION_CRLF, false),
+		new Option("ARGSTOMAIN", StdAwk.OPTION_ARGSTOMAIN, false),
+		new Option("RESET", StdAwk.OPTION_RESET, false),
+		new Option("MAPTOVAR", StdAwk.OPTION_MAPTOVAR, false),
+		new Option("PABLOCK", StdAwk.OPTION_PABLOCK, true)
 	};
 
 	public AseAwkPanel () 
@@ -381,7 +381,10 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 	{
 		jniLib = new TextField ();
 
-		Font font = new Font ("Monospaced", Font.PLAIN, 14);
+		String osname = System.getProperty ("os.name").toLowerCase();
+		int fontSize = (osname.startsWith("windows"))? 14: 12;
+
+		Font font = new Font ("Monospaced", Font.PLAIN, fontSize);
 
 		srcIn = new TextArea ();
 		srcOut = new TextArea ();
@@ -488,7 +491,7 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 		mainLayout.setVgap (2);
 
 		setLayout (mainLayout);
-		statusLabel = new Label ("Ready");
+		statusLabel = new Label ("Ready - " + System.getProperty("user.dir"));
 		statusLabel.setBackground (Color.GREEN);
 
 		add (topPanel, BorderLayout.NORTH);
@@ -503,6 +506,12 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 	public void prepareNativeInterface ()
 	{
 		String osname = System.getProperty ("os.name").toLowerCase();
+		String osarch = System.getProperty("os.arch").toLowerCase();
+		String userHome = System.getProperty("user.home");
+
+		if (osname.startsWith("windows")) osname = "win";
+		else if (osname.startsWith("linux")) osname = "linux";
+		else if (osname.startsWith("mac")) osname = "mac";
 
 		URL url = this.getClass().getResource (
 			this.getClass().getName() + ".class");
@@ -515,46 +524,67 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			file.getParentFile().getParentFile().getParent():
 			file.getParentFile().getParent();
 
-		if (osname.startsWith ("windows"))
+		String libBase = "aseawk_jni";
+		if (isHttp) libBase = libBase + "-" + osname + "-" + osarch;
+		String libName = System.mapLibraryName(libBase);
+
+		if (osname.equals("win"))
 		{
-			String path;
+			String jniLocal;
 			if (isHttp)
 			{
 				base = "http://" + base.substring(6).replace('\\', '/');
-				String jniUrl = base + "/lib/aseawk_jni.dll";
+				String jniUrl = base + "/lib/" + libName;
 				String md5Url = jniUrl + ".md5";
 
-				String userHome = System.getProperty("user.home");
-				path = userHome + "\\aseawk_jni.dll";
+				jniLocal = userHome + "\\" + libName;
 
 				try
 				{
-					downloadNative (md5Url, jniUrl, path);
+					downloadNative (md5Url, jniUrl, jniLocal);
 				}
 				catch (Exception e)
 				{
 					showMessage ("Cannot download native library - " + e.getMessage());
-					path = "ERROR - Not Available";
+					jniLocal = "ERROR - Not Available";
 				}
 			}
 			else 
 			{
-				path = base + "\\lib\\aseawk_jni.dll";
-				if (protocol.equals("jar")) path = path.substring(6);
+				jniLocal = base + "\\lib\\" + libName;
+				if (protocol.equals("jar")) jniLocal = jniLocal.substring(6);
 			}
-			jniLib.setText (path);
+
+			jniLib.setText (jniLocal);
 		}
-		else if (osname.startsWith ("mac"))
+		else 
 		{
-			String path = base + "/lib/.libs/libaseawk_jni.dylib";
-			if (!isHttp && protocol.equals("jar")) path = path.substring(5);
-			jniLib.setText (path);
-		}
-		else
-		{
-			String path = base + "/lib/.libs/libaseawk_jni.so";
-			if (!isHttp && protocol.equals("jar")) path = path.substring(5);
-			jniLib.setText (path);
+			String jniLocal;
+			if (isHttp)
+			{
+				base = "http://" + base.substring(6);
+				String jniUrl = base + "/lib/" + libName;
+				String md5Url = jniUrl + ".md5";
+
+				jniLocal = userHome + "/" + libName;
+
+				try
+				{
+					downloadNative (md5Url, jniUrl, jniLocal);
+				}
+				catch (Exception e)
+				{
+					showMessage ("Cannot download native library - " + e.getMessage());
+					jniLocal = "ERROR - Not Available";
+				}
+			}
+			else 
+			{
+				jniLocal = base + "/lib/.libs/" + libName;
+				if (protocol.equals("jar")) jniLocal = jniLocal.substring(5);
+			}
+
+			jniLib.setText (jniLocal);
 		}
 	}
 
