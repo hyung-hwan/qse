@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h,v 1.11 2007/11/05 14:20:47 bacon Exp $
+ * $Id: awk_i.h,v 1.12 2007/11/10 15:00:51 bacon Exp $
  *
  * {License}
  */
@@ -78,6 +78,9 @@ struct ase_awk_t
 	ase_awk_map_t* wtab;
 	/* reverse word table */
 	ase_awk_map_t* rwtab;
+
+	/* regular expression processing routines */
+	ase_awk_rexfns_t* rexfns;
 
 	/* parse tree */
 	ase_awk_tree_t tree;

@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.5 2007/11/06 09:47:12 bacon Exp $
+ * $Id: tab.c,v 1.6 2007/11/10 15:21:40 bacon Exp $
  *
  * {License}
  */
@@ -116,7 +116,7 @@ ase_size_t ase_awk_tab_insert (
 	ase_size_t i;
 	ase_char_t* dup;
 
-	dup = ase_strxdup (str, len, &tab->awk->prmfns.mmgr);
+	dup = ase_awk_strxdup (tab->awk, str, len);
 	if (dup == ASE_NULL) return (ase_size_t)-1;
 
 	if (index >= tab->capa) 

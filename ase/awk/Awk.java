@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.java,v 1.31 2007/11/07 15:32:41 bacon Exp $
+ * $Id: Awk.java,v 1.32 2007/11/10 15:30:07 bacon Exp $
  *
  * {License}
  */
@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * Represents the AWK interpreter engine
+ */
 public abstract class Awk
 {
 	private HashMap functionTable;
@@ -75,31 +78,49 @@ public abstract class Awk
 		}
 	}
 
+	/**
+	 * Parse a source program 
+	 */
 	public void parse () throws Exception
 	{
 		parse (this.awkid);
 	}
 
+	/**
+	 * Executes a parsed program
+	 */
 	public void run (String main, String[] args) throws Exception
 	{
 		run (this.awkid, main, args);
 	}
 
+	/**
+	 * Executes a parsed program
+	 */
 	public void run (String main) throws Exception
 	{
 		run (this.awkid, main, null);
 	}
 
+	/**
+	 * Executes a parsed program
+	 */
 	public void run (String[] args) throws Exception
 	{
 		run (this.awkid, null, args);
 	}
 
+	/**
+	 * Executes a parsed program
+	 */
 	public void run () throws Exception
 	{
 		run (this.awkid, null, null);
 	}
 
+	/**
+	 * Makes a request to stop a running program
+	 */
 	public void stop () throws Exception
 	{
 		stop (this.awkid);

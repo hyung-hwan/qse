@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h,v 1.24 2007/11/07 15:32:41 bacon Exp $
+ * $Id: awk.h,v 1.26 2007/11/10 15:21:40 bacon Exp $
  *
  * {License}
  */
@@ -7,8 +7,13 @@
 #ifndef _ASE_AWK_AWK_H_
 #define _ASE_AWK_AWK_H_
 
-// TODO: REMOVE THIS. MOVE IT SOMEWHRE ELSE OR CHANGE THE SCHEME
-//#define PROHIBIT_MAP_ASSIGNMENT_TO_VARIABLE
+/** 
+ * @file awk.h
+ * @brief Primary header file for the engine
+ *  
+ * This file defines most of the data types and functions required to embed
+ * the interpreter engine.
+ */
 
 #include <ase/cmn/types.h>
 #include <ase/cmn/macros.h>
@@ -24,6 +29,7 @@ typedef struct ase_awk_srcios_t ase_awk_srcios_t;
 typedef struct ase_awk_runios_t ase_awk_runios_t;
 typedef struct ase_awk_runcbs_t ase_awk_runcbs_t;
 typedef struct ase_awk_runarg_t ase_awk_runarg_t;
+typedef struct ase_awk_rexfns_t ase_awk_rexfns_t;
 
 typedef ase_real_t (*ase_awk_pow_t) (void* custom, ase_real_t x, ase_real_t y);
 typedef int (*ase_awk_sprintf_t) (
@@ -117,6 +123,23 @@ struct ase_awk_runarg_t
 {
 	ase_char_t* ptr;
 	ase_size_t len;
+};
+
+struct ase_awk_rexfns_t
+{
+	void* (*build) (
+		ase_awk_t* awk, const ase_char_t* ptn, 
+		ase_size_t len, int* errnum);
+
+	int (*match) (
+		ase_awk_t* awk, void* code, int option,
+		const ase_char_t* str, ase_size_t len, 
+		const ase_char_t** mptr, ase_size_t* mlen, 
+		int* errnum);
+
+	void (*free) (ase_awk_t* awk, void* code);
+
+	ase_bool_t (*isempty) (ase_awk_t* awk, void* code);
 };
 
 /* io function commands */
@@ -468,19 +491,34 @@ void ase_awk_setmaxdepth (ase_awk_t* awk, int types, ase_size_t depth);
 int ase_awk_getword (ase_awk_t* awk, 
 	const ase_char_t* okw, ase_size_t olen,
 	const ase_char_t** nkw, ase_size_t* nlen);
-/*
+/**
  * Enables replacement of a name of a keyword, intrinsic global variables, 
  * and intrinsic functions.
+ *
+ * If nkw is ASE_NULL or nlen is zero and okw is ASE_NULL or olen is zero,
+ * it unsets all word replacements. If nkw is ASE_NULL or nlen is zero,
+ * it unsets the replacement for okw and olen. If all of them are valid,
+ * it sets the word replace for okw and olen to nkw and nlen.
+ *
+ * @return 
+ * 	On success, 0 is returned.
+ * 	On failure, -1 is returned.
  */
 int ase_awk_setword (ase_awk_t* awk, 
 	const ase_char_t* okw, ase_size_t olen,
 	const ase_char_t* nkw, ase_size_t nlen);
 
-int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
+/**
+ * Sets the customized regular processing routine.
+ *
+ * @return 
+ * 	On success, 0 is returned.
+ * 	On failure, -1 is returned.
+ */
+int ase_awk_setrexfns (ase_awk_t* awk, ase_awk_rexfns_t* rexfns);
 
-/* 
- * Adds an intrinsic global variable. It should be called in 
- * add_globals_callback.
+/**
+ * Adds an intrinsic global variable.
  *
  * @return 
  * 	On success, the ID of the global variable added is returned.
@@ -488,7 +526,7 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
  */
 int ase_awk_addglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
 
-/*
+/**
  * Deletes a instrinsic global variable. 
  *
  * @return 
@@ -497,8 +535,19 @@ int ase_awk_addglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
  */
 int ase_awk_delglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
 
-/*
- * ase_awk_run return 0 on success and -1 on failure, generally speaking.
+/**
+ * Parses the source code
+ *
+ * @return 
+ * 	On success, 0 is returned.
+ * 	On failure, -1 is returned.
+ */
+int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
+
+/**
+ * Executes a parsed program.
+ *
+ * ase_awk_run returns 0 on success and -1 on failure, generally speaking.
  *  A runtime context is required for it to start running the program.
  *  Once the runtime context is created, the program starts to run.
  *  The context creation failure is reported by the return value -1 of
@@ -522,8 +571,14 @@ void ase_awk_stopall (ase_awk_t* awk);
 ase_bool_t ase_awk_isstop (ase_awk_run_t* run);
 
 
-/* functions to access internal stack structure */
+/** 
+ * Gets the number of arguments passed to ase_awk_run 
+ */
 ase_size_t ase_awk_getnargs (ase_awk_run_t* run);
+
+/** 
+ * Gets an argument passed to ase_awk_run
+ */
 ase_awk_val_t* ase_awk_getarg (ase_awk_run_t* run, ase_size_t idx);
 
 /**

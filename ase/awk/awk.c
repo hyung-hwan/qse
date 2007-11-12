@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c,v 1.14 2007/11/05 14:20:47 bacon Exp $ 
+ * $Id: awk.c,v 1.15 2007/11/10 15:00:51 bacon Exp $ 
  *
  * {License}
  */
@@ -14,6 +14,15 @@
 static void free_word (void* awk, void* ptr);
 static void free_afn (void* awk, void* afn);
 static void free_bfn (void* awk, void* afn);
+
+#define SETERR(awk,code) ase_awk_seterrnum(awk,code)
+#define SETERRARG(awk,code,line,arg,leng) \
+	do { \
+		ase_cstr_t errarg; \
+		errarg.len = (leng); \
+		errarg.ptr = (arg); \
+		ase_awk_seterror ((awk), (code), (line), &errarg, 1); \
+	} while (0)
 
 ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 {
@@ -334,4 +343,116 @@ void* ase_awk_getcustomdata (ase_awk_t* awk)
 void ase_awk_stopall (ase_awk_t* awk)
 {
 	awk->stopall = ase_true;
+}
+
+int ase_awk_getword (ase_awk_t* awk, 
+	const ase_char_t* okw, ase_size_t olen,
+	const ase_char_t** nkw, ase_size_t* nlen)
+{
+	ase_awk_pair_t* p;
+
+	p = ase_awk_map_get (awk->wtab, okw, olen);
+	if (p == ASE_NULL) return -1;
+
+	*nkw = ((ase_cstr_t*)p->val)->ptr;
+	*nlen = ((ase_cstr_t*)p->val)->len;
+
+	return 0;
+}
+
+int ase_awk_setword (ase_awk_t* awk, 
+	const ase_char_t* okw, ase_size_t olen,
+	const ase_char_t* nkw, ase_size_t nlen)
+{
+	ase_cstr_t* vn, * vo;
+
+	if (nkw == ASE_NULL || nlen == 0)
+	{
+		ase_awk_pair_t* p;
+
+		if (okw == ASE_NULL || olen == 0)
+		{
+			/* clear the entire table */
+			ase_awk_map_clear (awk->wtab);
+			ase_awk_map_clear (awk->rwtab);
+			return 0;
+		}
+
+		/* delete the word */
+		p = ase_awk_map_get (awk->wtab, okw, olen);
+		if (p != ASE_NULL)
+		{
+			ase_cstr_t* s = (ase_cstr_t*)p->val;
+			ase_awk_map_remove (awk->rwtab, s->ptr, s->len);
+			ase_awk_map_remove (awk->wtab, okw, olen);
+			return 0;
+		}
+		else 
+		{
+			SETERRARG (awk, ASE_AWK_ENOENT, 0, okw, olen);
+			return -1;
+		}
+	}
+	else if (okw == ASE_NULL || olen == 0)
+	{
+		SETERR (awk, ASE_AWK_EINVAL);
+		return -1;
+	}
+
+	/* set the word */
+	vn = (ase_cstr_t*) ASE_AWK_MALLOC (
+		awk, ASE_SIZEOF(ase_cstr_t)+((nlen+1)*ASE_SIZEOF(*nkw)));
+	if (vn == ASE_NULL) 
+	{
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
+	vn->len = nlen;
+	vn->ptr = (const ase_char_t*)(vn + 1);
+	ase_strncpy ((ase_char_t*)vn->ptr, nkw, nlen);
+
+	vo = (ase_cstr_t*)ASE_AWK_MALLOC (
+		awk, ASE_SIZEOF(ase_cstr_t)+((olen+1)*ASE_SIZEOF(*okw)));
+	if (vo == ASE_NULL)
+	{
+		ASE_AWK_FREE (awk, vn);
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
+	vo->len = olen;
+	vo->ptr = (const ase_char_t*)(vo + 1);
+	ase_strncpy ((ase_char_t*)vo->ptr, okw, olen);
+
+	if (ase_awk_map_put (awk->wtab, okw, olen, vn) == ASE_NULL)
+	{
+		ASE_AWK_FREE (awk, vo);
+		ASE_AWK_FREE (awk, vn);
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	if (ase_awk_map_put (awk->rwtab, nkw, nlen, vo) == ASE_NULL)
+	{
+		ase_awk_map_remove (awk->wtab, okw, olen);
+		ASE_AWK_FREE (awk, vo);
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
+ 
+	return 0;
+}
+
+int ase_awk_setrexfns (ase_awk_t* awk, ase_awk_rexfns_t* rexfns)
+{
+	if (rexfns->build == ASE_NULL ||
+	    rexfns->match == ASE_NULL ||
+	    rexfns->free == ASE_NULL ||
+	    rexfns->isempty == ASE_NULL)
+	{
+		SETERR (awk, ASE_AWK_EINVAL);
+		return -1;
+	}
+
+	awk->rexfns = rexfns;
+	return 0;
 }
