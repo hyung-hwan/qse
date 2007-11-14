@@ -5,6 +5,14 @@ JNI_INC = \
 	-I"$(JAVA_HOME)\include" \
 	-I"$(JAVA_HOME)\include\win32" 
 
+!if !defined(CPU) || "$(CPU)" == ""
+CPU = $(PROCESSOR_ARCHITECTURE)
+!endif 
+
+!if "$(CPU)" == ""
+CPU = i386
+!endif
+
 CC = cl
 CXX = cl
 LD = link
@@ -18,6 +26,7 @@ JAVACFLAGS = -classpath ..\.. -Xlint:unchecked
 
 #LDFLAGS = /subsystem:console
 LDFLAGS = /subsystem:windows
+LIBS=
 
 !IF "$(MODE)" == "debug"
 CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd
@@ -74,7 +83,22 @@ OBJ_FILES_JAR = \
 	$(TMP_DIR)\ase\awk\Pipe.class \
 	$(TMP_DIR)\ase\awk\Exception.class
 
-all: lib
+LIBS_JNIDLL=user32.lib $(OUT_FILE_LIB) asecmn.lib aseutl.lib
+
+!if "$(CPU)" == "IA64" || "$(CPU)" == "AMD64"
+# comment out the following line if you encounter this link error.
+#    LINK : fatal error LNK1181: cannot open input file 'bufferoverflowu.lib'
+LIBS_JNIDLL = $(LIBS_JNIDLL) bufferoverflowu.lib
+!endif
+
+
+TARGETS = lib
+
+!if "$(JAVA_HOME)" != ""
+TARGETS = $(TARGETS) jnidll jar
+!endif
+
+all: $(TARGETS)
 
 lib: $(OUT_FILE_LIB) $(OUT_FILE_LIB_CXX)
 
@@ -94,7 +118,7 @@ $(OUT_FILE_LIB_CXX): $(TMP_DIR_CXX) $(OUT_FILE_LIB) $(OBJ_FILES_LIB_CXX)
 
 $(OUT_FILE_JNI): $(OUT_FILE_LIB) $(OBJ_FILES_JNI)
 	$(LD) /dll /def:jni.def $(LDFLAGS) /release @<<
-/nologo /out:$(OUT_FILE_JNI) $(OBJ_FILES_JNI) /libpath:../$(MODE)/lib /implib:tmp.lib user32.lib $(OUT_FILE_LIB) asecmn.lib aseutl.lib
+/nologo /out:$(OUT_FILE_JNI) $(OBJ_FILES_JNI) /libpath:../$(MODE)/lib /implib:tmp.lib $(LIBS_JNIDLL)
 <<
 	del tmp.lib tmp.exp
 

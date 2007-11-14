@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.12 2007/11/06 09:47:12 bacon Exp $
+ * $Id: err.c,v 1.13 2007/11/12 07:53:32 bacon Exp $
  *
  * {License}
  */
@@ -410,6 +410,9 @@ void ase_awk_setrunerror (
 
 		case 1:
 		{
+			/* TODO: what if the argument contains a null character? 
+			 *       handle the case more gracefully than now... */
+
 			ase_char_t tmp[ASE_COUNTOF(run->errmsg)];
 			ase_size_t len, tl;
 

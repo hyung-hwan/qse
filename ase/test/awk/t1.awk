@@ -1,4 +1,4 @@
-func sum(i,	k, y)
+function sum(i,	k, y)
 {
 	y = 0;
 	for (k = i; k; k = k - 1)

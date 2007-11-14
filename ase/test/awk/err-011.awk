@@ -1,5 +1,5 @@
 
-func abc (x)
+function abc (x)
 {
 	local x;
 

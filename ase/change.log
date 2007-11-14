@@ -7,7 +7,6 @@
     - added Awk::AddGlobal, Awk::DeleteGlobal (net/Awk.hpp, net/Awk.cpp)
     - added Awk::Run::SetGlobal, Awk::Run::GetGlobal (net/Awk.hpp, net/Awk.cpp)
     - enhanced ase_awk_getglobalname
-    - yet to be added to the COM and JNI bindings.
 * added three new options - ASE_AWK_RESET, ASE_AWK_MAPTOVAR, ASE_AWK_PABLOCK
 
 * enhanced Awk::dispatchFunction to set a more accurate error code (awk/Awk.cpp)
@@ -25,6 +24,7 @@
   respectively.
 
 * started the source code documentation of awk/Awk.hpp.
+* enhanded test programs.
 
 [0.3.0]
 

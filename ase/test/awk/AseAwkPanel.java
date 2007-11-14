@@ -1,5 +1,5 @@
 /*
- * $Id: AseAwkPanel.java,v 1.31 2007/11/11 15:06:47 bacon Exp $
+ * $Id: AseAwkPanel.java,v 1.32 2007/11/12 07:21:52 bacon Exp $
  */
 
 import java.awt.*;
@@ -523,6 +523,8 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 		String base = protocol.equals("jar")?
 			file.getParentFile().getParentFile().getParent():
 			file.getParentFile().getParent();
+
+		/*if (isHttp)*/ base = java.net.URLDecoder.decode (base);
 
 		String libBase = "aseawk_jni";
 		if (isHttp) libBase = libBase + "-" + osname + "-" + osarch;

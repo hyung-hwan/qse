@@ -1,6 +1,6 @@
 #global x, j;
 
-func func1 (x)
+function func1 (x)
 {
 	c = x["abc"];
 	x["abc"] = 123;
