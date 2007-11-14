@@ -1,1 +1,1 @@
-func abc (+) {}
+function abc (+) {}

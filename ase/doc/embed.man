@@ -16,10 +16,6 @@ struct ase_awk_prmfns_t
 	void* (*realloc) (void* ptr, ase_size_t n, void* custom_data);
 	void  (*free) (void* ptr, void* custom_data);
 
-	/* thread lock */
-	ase_awk_lk_t lock;
-	ase_awk_lk_t unlock;
-
 	/* character class */
 	ase_bool_t (*is_upper)  (ase_cint_t c);
 	ase_bool_t (*is_lower)  (ase_cint_t c);

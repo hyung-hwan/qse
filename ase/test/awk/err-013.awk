@@ -1,3 +1,3 @@
-func abc (abc)
+function abc (abc)
 {
 }

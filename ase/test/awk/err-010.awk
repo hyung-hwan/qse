@@ -1,7 +1,7 @@
 
 global abc;
 
-func abc ()
+function abc ()
 {
 	local abc;
 
