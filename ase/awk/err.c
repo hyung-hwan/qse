@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.13 2007/11/12 07:53:32 bacon Exp $
+ * $Id: err.c,v 1.14 2007/11/17 11:25:55 bacon Exp $
  *
  * {License}
  */
@@ -67,7 +67,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("right-hand side of the 'in' operator not a variable"),
 		ASE_T("invalid expression"),
 
-		ASE_T("keyword 'func' expected in place of '%.*s'"),
+		ASE_T("keyword 'function' expected in place of '%.*s'"),
 		ASE_T("keyword 'while' expected in place of '%.*s'"),
 		ASE_T("invalid assignment statement"),
 		ASE_T("an identifier expected in place of '%.*s'"),
