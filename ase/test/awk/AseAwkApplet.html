@@ -22,8 +22,8 @@ function resize()
 		height = window.innerHeight - 20;
 	}
 
-	document.awkApplet.width = width - 250;
-	document.awkApplet.height = height - 80; 
+	document.AseAwkApplet.width = width - 250;
+	document.AseAwkApplet.height = height - 80; 
 	window.scroll (0, 0);
 }
 </script>
@@ -36,8 +36,7 @@ function resize()
 <table cellspacing=3>
 <tr>
 <td valign=top>
-<applet name="awkApplet" code="AseAwkApplet" archive="bin/aseawk.jar" codebase="." width="700" height="550">
-</applet>
+	<script src='AseAwkApplet.js'></script>
 </td>
 <td valign=top>
 <p>
