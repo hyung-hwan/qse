@@ -33,125 +33,140 @@ public:
 
 	int open (ASE::Net::Awk^ wrapper)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::open ();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	void close (ASE::Net::Awk^ wrapper)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		Awk::close ();
-		this->wrapper = nullptr;	
+		this->wrapper = old;
 	}
 
 	int getOption (ASE::Net::Awk^ wrapper) const
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::getOption ();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	void setOption (ASE::Net::Awk^ wrapper, int opt)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		ASE::Awk::setOption (opt);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 	}
 
 	size_t getErrorLine (ASE::Net::Awk^ wrapper) const
 	{
-		this->wrapper = wrapper;
+		ASE::Net::Awk^ old = this->wrapper;
 		size_t x = ASE::Awk::getErrorLine ();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return x;
 	}
 
 	ErrorCode getErrorCode (ASE::Net::Awk^ wrapper) const
 	{
-		this->wrapper = wrapper;
+		ASE::Net::Awk^ old = this->wrapper;
 		ASE::Awk::ErrorCode x = ASE::Awk::getErrorCode ();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return x;
 	}
 
 	const char_t* getErrorMessage (ASE::Net::Awk^ wrapper) const
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		const char_t* x = ASE::Awk::getErrorMessage();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return x;
 	}
 
 	const char_t* getErrorString (ASE::Net::Awk^ wrapper, ErrorCode num) const
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		const char_t* x = ASE::Awk::getErrorString (num);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return x;
 	}
 
 	void setError (ASE::Net::Awk^ wrapper, ErrorCode num)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		ASE::Awk::setError (num);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 	}
 
 	void setError (ASE::Net::Awk^ wrapper, ErrorCode num, size_t line)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		ASE::Awk::setError (num, line);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 	}
 
 	void setError (ASE::Net::Awk^ wrapper, ErrorCode num, size_t line, const char_t* arg, size_t len)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		ASE::Awk::setError (num, line, arg, len);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 	}
 
 	void setErrorWithMessage (ASE::Net::Awk^ wrapper, ErrorCode num, size_t line, const char_t* msg)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		ASE::Awk::setErrorWithMessage (num, line, msg);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 	}
 
 	int setErrorString (ASE::Net::Awk^ wrapper, ErrorCode num, const char_t* msg)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int x = ASE::Awk::setErrorString (num, msg);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return x;
 	}
 
 	int parse (ASE::Net::Awk^ wrapper)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::parse ();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	int run (ASE::Net::Awk^ wrapper, const char_t* main = ASE_NULL, 
 	         const char_t** args = ASE_NULL, size_t nargs = 0)
 	{
-		// run can't be called more than once because this->wrapper 
-		// can be set to nullptr while another run is under execution.
-		// for the same reason, you can't call other methods except stop
-		// untile run ends.
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::run (main, args, nargs);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	void stop (ASE::Net::Awk^ wrapper)
 	{
+		/*
+		ASE::Net::Awk^ old = this->wrapper;
+		this->wrapper = wrapper;
+		ASE::Awk::stop ();
+		this->wrapper = old;
+		*/
 		if ((ASE::Net::Awk^)this->wrapper != nullptr) ASE::Awk::stop ();
 	}
 
@@ -184,39 +199,44 @@ public:
 
 	int unsetAllWords (ASE::Net::Awk^ wrapper)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::unsetAllWords ();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	void setMaxDepth (ASE::Net::Awk^ wrapper, int ids, size_t depth)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		ASE::Awk::setMaxDepth (ids, depth);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 	}
 
 	size_t getMaxDepth (ASE::Net::Awk^ wrapper, int id) const
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		size_t n = ASE::Awk::getMaxDepth (id);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	void enableRunCallback (ASE::Net::Awk^ wrapper)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		ASE::Awk::enableRunCallback ();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 	}
 
 	void disableRunCallback (ASE::Net::Awk^ wrapper)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		ASE::Awk::disableRunCallback ();
-		this->wrapper = nullptr;
+		this->wrapper = old;
 	}
 
 	void onRunStart (Run& run)
@@ -287,17 +307,19 @@ public:
 
 	int addGlobal (ASE::Net::Awk^ wrapper, const char_t* name)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::addGlobal (name);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	int deleteGlobal (ASE::Net::Awk^ wrapper, const char_t* name)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::deleteGlobal (name);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
@@ -305,17 +327,19 @@ public:
 		ASE::Net::Awk^ wrapper,	const char_t* name,
 		size_t minArgs, size_t maxArgs, FunctionHandler handler)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::addFunction (name, minArgs, maxArgs, handler);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
 	int deleteFunction (ASE::Net::Awk^ wrapper, const char_t* main)
 	{
+		ASE::Net::Awk^ old = this->wrapper;
 		this->wrapper = wrapper;
 		int n = ASE::Awk::deleteFunction (main);
-		this->wrapper = nullptr;
+		this->wrapper = old;
 		return n;
 	}
 
