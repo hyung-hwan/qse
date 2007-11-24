@@ -11,15 +11,17 @@ h2 { font-size: 24px; font-style: italic; }
 
 function resize() 
 {
-	if (navigator.appName.indexOf("Microsoft") != -1)
+	var width, height;
+
+	if (navigator.appName.indexOf("Microsoft") == -1)
 	{
-		width = document.body.clientWidth;
-		height = document.body.clientHeight;
+		width = window.innerWidth;
+		height = window.innerHeight;
 	}
 	else
 	{
-		width = window.innerWidth - 20;
-		height = window.innerHeight - 20;
+		width = document.body.clientWidth;
+		height = document.body.clientHeight;
 	}
 
 	document.AseAwkApplet.width = width - 250;
