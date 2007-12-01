@@ -925,5 +925,23 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 
 		textArea.setText (fb.toString());
 	}
+
+	void clear ()
+	{
+		conIn.setText ("");
+		srcIn.setText ("");
+		conOut.setText ("");
+		srcOut.setText ("");
+	}
+
+	void setConsoleInput (String str)
+	{
+		conIn.setText (str);
+	}
+
+	void setSourceInput (String str)
+	{
+		srcIn.setText (str);
+	}
 	
 }

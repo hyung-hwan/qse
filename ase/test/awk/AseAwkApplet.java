@@ -20,4 +20,19 @@ public class AseAwkApplet extends Applet
 
 	public void stop () {}
 	public void paint (Graphics g) {}
+
+	public void setConsoleInput (String str)
+	{
+		awkPanel.setConsoleInput (str);
+	}
+
+	public void setSourceInput (String str)
+	{
+		awkPanel.setSourceInput (str);
+	}
+
+	public void clear ()
+	{
+		awkPanel.clear ();
+	}
 }
