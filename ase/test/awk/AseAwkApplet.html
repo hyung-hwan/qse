@@ -28,6 +28,31 @@ function resize()
 	document.AseAwkApplet.height = height - 80; 
 	window.scroll (0, 0);
 }
+
+function load_sample1()
+{
+	document.AseAwkApplet.clear ();
+
+	document.AseAwkApplet.setSourceInput (
+'# wordfreq.awk --- print list of word frequencies\n' +
+'{\n' +
+'	$0 = tolower($0);    # remove case distinctions\n' +
+'\n' +
+'	# remove punctuation\n' +
+'	gsub(/[^[:alnum:]_[:blank:]]/, " ");\n' +
+'\n' +
+'	for (i = 1; i <= NF; i++) freq[$i]++;\n' +
+'}\n' +
+'\n'  +
+'END {\n' +
+'	for (word in freq)\n' +
+'		print word, freq[word];\n' +
+'}\n');
+
+	document.AseAwkApplet.setConsoleInput (
+'ASE aims to produce a script engine framework to ease the burden of creating a proprietary scripting language.\n' +
+'It allows a hosting application to access various aspects of the embedded script engine and vice versa.');
+}
 </script>
 </head>
 
@@ -42,7 +67,7 @@ function resize()
 </td>
 <td valign=top>
 <p>
-This applet is a test program for JNI binding to the <a href='http://kldp.net/projects/ase/'>ASE</a> AWK interpreter. The AWK language supported is slightly different from the standard in that all statements must end with a semicolon. You may enter a valid AWK program into the source input window and click on the <b>Run Awk</b> button. You may enter arbitrary text into the console input window if the AWK program entered contains an action-pattern block.
+This applet is a test program for JNI binding to the <a href='http://kldp.net/projects/ase/'>ASE</a> AWK interpreter. The AWK language supported is slightly different from the standard in that all statements must end with a semicolon. You may enter a valid AWK program into the source input window and click on the <b>Run Awk</b> button. You can enter arbitrary text into the console input window if the AWK program entered contains an action-pattern block. You may click <a href='#' onClick='load_sample1(); return true;'>here</a> to load a sample program instead.
 </p>
 <p>
 <b>Note</b>: This java applet has been signed with a self-signed certificate. If you allow the program to run, it will download a JNI file into your home directory. Currently, it supports Linux(i386) and Microsoft Windows(x86). If you decide to clean your system later, don't forget to delete the local JNI file downloaded.
