@@ -61,6 +61,7 @@
 		<delete dir="${bindir}/META-INF" verbose="true" />
 
 		<copy file="test/awk/AseAwkApplet.html" todir="${destdir}" />
+		<copy file="test/awk/AseAwkApplet-ko.html" todir="${destdir}" />
 		<copy file="test/awk/AseAwkApplet.js" todir="${destdir}" />
 	</target>
 
