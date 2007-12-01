@@ -1,9 +1,9 @@
 <html>
 <head>
 <meta http-equiv=content-type content="text/html; charset=UTF-8">
-<title>Online AWK Interpreter</title>
+<title>온라인 AWK 인터프리터</title>
 <style>
-body { font-family: tahoma, arial, sans-serif; }
+body { font-family: georgia, tahoma, arial, sans-serif; }
 p { font-size: 13px; }
 h2 { font-size: 24px; font-style: italic; }
 </style>
@@ -51,15 +51,15 @@ function load_sample1()
 '}\n');
 
 	document.AseAwkApplet.setConsoleInput (
-'ASE aims to produce a script engine framework to ease the burden of creating a proprietary scripting language.\n' +
-'It allows a hosting application to access various aspects of the embedded script engine and vice versa.');
+'ASE는 응용프로그램에 스크립팅언어을 쉽게 내장할 수 있도록 하는 스크립팅엔진 프레임웍크 제작을 목표로 한다.\n' +
+'호스팅 프로그램에서 엔진을 제어할 수 있을 뿐만 아니라, 반대로 엔진에서도 호스팅 프로그램을 접근 할 수 있다.\n');
 }
 </script>
 </head>
 
 <body onLoad="resize()" onResize="resize()">
 
-<h2>Online AWK Interpreter</h2>
+<h2>온라인 AWK 인터프리터</h2>
 
 <table cellspacing=3>
 <tr>
@@ -68,10 +68,10 @@ function load_sample1()
 </td>
 <td valign=top>
 <p>
-This applet is a test program for JNI binding to the <a href='http://kldp.net/projects/ase/'>ASE</a> AWK interpreter. The AWK language supported is slightly different from the standard in that all statements must end with a semicolon. You may enter a valid AWK program into the source input window and click on the <b>Run Awk</b> button. You can enter arbitrary text into the console input window if the AWK program entered contains an action-pattern block. You may click <a href='#' onClick='load_sample1(); return true;'>here</a> to load a sample program instead.
+이 애플릿은 <a href='http://kldp.net/projects/ase/'>ASE</a> AWK 인터프리터의 JNI바인딩을 시험하는 프로그램이다. 지원되는 AWK언어는 표준과 약간의 차이가 있는데, 대표적으로 모든 문장은 세미콜론으로 끝을 내야 한다. 소스창에 AWK 프로그램을 입력하고 <b>Run Awk</b>버튼을 누르면 된다. 예제프로그램을 올리고 싶으면 <a href='#' onClick='load_sample1()'>여기</a>를 눌러라.
 </p>
 <p>
-<b>Note</b>: This java applet has been signed with a self-signed certificate. If you allow the program to run, it will download a JNI file into your home directory. Currently, it supports Linux(i386) and Microsoft Windows(x86). If you decide to clean your system later, don't forget to delete the local JNI file downloaded.
+<b>주의</b>: 이 애플릿은 자기서명인증서로 서명이 되었다. 프로그램 실행을 허가하면 사용자의 홈 디렉토리로 JNI파일을 다운로드 한다. 현재는 Linux(i386)와 Microsoft Windows(x86)만 지원을 한다. 불필요한 파일들을 청소하고 싶다면, 다운로드된 JNI파일도 삭제하기 바란다.
 </p>
 <p>
 Copyright (c) 2006-2007, Hyung-Hwan Chung. All rights reserved. 
@@ -82,4 +82,3 @@ Copyright (c) 2006-2007, Hyung-Hwan Chung. All rights reserved.
 
 </body>
 </html>
-
