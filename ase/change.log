@@ -1,3 +1,7 @@
+[0.3.3]
+
+* enhanced the AWK interpreter to allow multiple BEGIN/END blocks.
+
 [0.3.2]
 
 * fixed a build problem for x64 target in MSVC2005
