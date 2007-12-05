@@ -55,7 +55,7 @@ int StdAwk::open ()
 	ADD_FUNC (ASE_T("sqrt"),       1, 1, &StdAwk::sqrt);
 	ADD_FUNC (ASE_T("int"),        1, 1, &StdAwk::fnint);
 	ADD_FUNC (ASE_T("rand"),       0, 0, &StdAwk::rand);
-	ADD_FUNC (ASE_T("srand"),      1, 1, &StdAwk::srand);
+	ADD_FUNC (ASE_T("srand"),      0, 1, &StdAwk::srand);
 	ADD_FUNC (ASE_T("systime"),    0, 0, &StdAwk::systime);
 	ADD_FUNC (ASE_T("strftime"),   0, 2, &StdAwk::strftime);
 	ADD_FUNC (ASE_T("strfgmtime"), 0, 2, &StdAwk::strfgmtime);
@@ -128,7 +128,10 @@ int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	unsigned int prevSeed = seed;
-	seed = (unsigned int)args[0].toInt();
+
+	seed = (nargs == 0)? 
+		(unsigned int)::time(NULL):
+		(unsigned int)args[0].toInt();
 	::srand (seed);
 	return ret.set ((long_t)prevSeed);
 }

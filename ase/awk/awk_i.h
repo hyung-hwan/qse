@@ -58,11 +58,17 @@ struct ase_awk_tree_t
 	ase_size_t nbglobals; /* number of intrinsic globals */
 	ase_cstr_t cur_afn;
 	ase_awk_map_t* afns; /* awk function map */
+
 	ase_awk_nde_t* begin;
+	ase_awk_nde_t* begin_tail;
+
 	ase_awk_nde_t* end;
+	ase_awk_nde_t* end_tail;
+
 	ase_awk_chain_t* chain;
 	ase_awk_chain_t* chain_tail;
 	ase_size_t chain_size; /* number of nodes in the chain */
+
 	int ok;
 };
 
