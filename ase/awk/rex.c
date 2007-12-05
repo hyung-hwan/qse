@@ -893,6 +893,25 @@ what if it is not in the raight format? convert it to ordinary characters?? */
 	return 0;
 }
 
+#define CHECK_END(builder) \
+	do { \
+		if (builder->ptn.curp >= builder->ptn.end) \
+		{ \
+			builder->errnum = ASE_AWK_EREXEND; \
+			return -1; \
+		} \
+	} while(0)
+
+#define IS_HEX(c) \
+	((c >= ASE_T('0') && c <= ASE_T('9')) || \
+	 (c >= ASE_T('A') && c <= ASE_T('F')) || \
+	 (c >= ASE_T('a') && c <= ASE_T('f')))
+
+#define HEX_TO_NUM(c) \
+	((c >= ASE_T('0') && c <= ASE_T('9'))? c-ASE_T('0'):  \
+	 (c >= ASE_T('A') && c <= ASE_T('F'))? c-ASE_T('A')+10: \
+	                                       c-ASE_T('a')+10)
+
 static int next_char (builder_t* builder, int level)
 {
 	if (builder->ptn.curp >= builder->ptn.end)
@@ -909,14 +928,106 @@ static int next_char (builder_t* builder, int level)
 
 	if (builder->ptn.curc.value == ASE_T('\\'))
 	{	       
-		if (builder->ptn.curp >= builder->ptn.end)
-		{
-			builder->errnum = ASE_AWK_EREXEND;
-			return -1;	
-		}
+		ase_char_t c;
 
-		builder->ptn.curc.value = *builder->ptn.curp++;
+		CHECK_END (builder);
+		c = *builder->ptn.curp++;
+
+		if (c == ASE_T('n')) c = ASE_T('\n');
+		else if (c == ASE_T('r')) c = ASE_T('\r');
+		else if (c == ASE_T('t')) c = ASE_T('\t');
+		else if (c == ASE_T('f')) c = ASE_T('\f');
+		else if (c == ASE_T('b')) c = ASE_T('\b');
+		else if (c == ASE_T('v')) c = ASE_T('\v');
+		else if (c == ASE_T('a')) c = ASE_T('\a');
+		else if (c >= ASE_T('0') && c <= ASE_T('7')) 
+		{
+			ase_char_t cx;
+
+			c = c - ASE_T('0');
+
+			CHECK_END (builder);
+			cx = *builder->ptn.curp++;
+			if (cx >= ASE_T('0') && cx <= ASE_T('7'))
+			{
+				c = c * 8 + cx - ASE_T('0');
+
+				CHECK_END (builder);
+				cx = *builder->ptn.curp++;
+				if (cx >= ASE_T('0') && cx <= ASE_T('7'))
+				{
+					c = c * 8 + cx - ASE_T('0');
+				}
+			}
+		}
+		else if (c == ASE_T('x')) 
+		{
+			ase_char_t cx;
+
+			CHECK_END (builder);
+			cx = *builder->ptn.curp++;
+			if (IS_HEX(cx))
+			{
+				c = HEX_TO_NUM(cx);
+
+				CHECK_END (builder);
+				cx = *builder->ptn.curp++;
+				if (IS_HEX(cx))
+				{
+					c = c * 16 + HEX_TO_NUM(cx);
+				}
+			}
+		}
+	#ifdef ASE_CHAR_IS_WCHAR
+		else if (c == ASE_T('u') && ASE_SIZEOF(ase_char_t) >= 2) 
+		{
+			ase_char_t cx;
+
+			CHECK_END (builder);
+			cx = *builder->ptn.curp++;
+			if (IS_HEX(cx))
+			{
+				ase_size_t i;
+
+				c = HEX_TO_NUM(cx);
+
+				for (i = 0; i < 3; i++)
+				{
+					CHECK_END (builder);
+					cx = *builder->ptn.curp++;
+
+					if (!IS_HEX(cx)) break;
+					c = c * 16 + HEX_TO_NUM(cx);
+				}
+			}
+		}
+		else if (c == ASE_T('U') && ASE_SIZEOF(ase_char_t) >= 4) 
+		{
+			ase_char_t cx;
+
+			CHECK_END (builder);
+			cx = *builder->ptn.curp++;
+			if (IS_HEX(cx))
+			{
+				ase_size_t i;
+
+				c = HEX_TO_NUM(cx);
+
+				for (i = 0; i < 7; i++)
+				{
+					CHECK_END (builder);
+					cx = *builder->ptn.curp++;
+
+					if (!IS_HEX(cx)) break;
+					c = c * 16 + HEX_TO_NUM(cx);
+				}
+			}
+		}
+	#endif
+
+		builder->ptn.curc.value = c;
 		builder->ptn.curc.escaped = ase_true;
+
 		return 0;
 	}
 	else
