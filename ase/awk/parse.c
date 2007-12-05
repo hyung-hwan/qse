@@ -593,11 +593,13 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 			return ASE_NULL;
 		}
 
+		/*
 		if (awk->tree.begin != ASE_NULL)
 		{
 			SETERRLIN (awk, ASE_AWK_EDUPBEG, awk->token.prev.line);
 			return ASE_NULL;
 		}
+		*/
 
 		awk->parse.id.block = PARSE_BEGIN;
 		if (get_token(awk) == -1) return ASE_NULL; 
@@ -628,11 +630,13 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 			return ASE_NULL;
 		}
 
+		/*
 		if (awk->tree.end != ASE_NULL)
 		{
 			SETERRLIN (awk, ASE_AWK_EDUPEND, awk->token.prev.line);
 			return ASE_NULL;
 		}
+		*/
 
 		awk->parse.id.block = PARSE_END;
 		if (get_token(awk) == -1) return ASE_NULL; 
@@ -1068,7 +1072,17 @@ static ase_awk_nde_t* parse_begin (ase_awk_t* awk)
 	nde = awk->parse.parse_block (awk, awk->token.prev.line, ase_true);
 	if (nde == ASE_NULL) return ASE_NULL;
 
-	awk->tree.begin = nde;
+	if (awk->tree.begin == ASE_NULL)
+	{
+		awk->tree.begin = nde;
+		awk->tree.begin_tail = nde;
+	}
+	else
+	{
+		awk->tree.begin_tail->next = nde;
+		awk->tree.begin_tail = nde;
+	}
+
 	return nde;
 }
 
@@ -1082,7 +1096,16 @@ static ase_awk_nde_t* parse_end (ase_awk_t* awk)
 	nde = awk->parse.parse_block (awk, awk->token.prev.line, ase_true);
 	if (nde == ASE_NULL) return ASE_NULL;
 
-	awk->tree.end = nde;
+	if (awk->tree.end == ASE_NULL)
+	{
+		awk->tree.end = nde;
+		awk->tree.end_tail = nde;
+	}
+	else
+	{
+		awk->tree.end_tail->next = nde;
+		awk->tree.end_tail = nde;
+	}
 	return nde;
 }
 
@@ -5168,6 +5191,7 @@ struct deparse_func_t
 
 static int deparse (ase_awk_t* awk)
 {
+	ase_awk_nde_t* nde;
 	ase_awk_chain_t* chain;
 	ase_char_t tmp[ASE_SIZEOF(ase_size_t)*8 + 32];
 	struct deparse_func_t df;
@@ -5284,23 +5308,16 @@ static int deparse (ase_awk_t* awk)
 		EXIT_DEPARSE ();
 	}
 
-	if (awk->tree.begin != ASE_NULL) 
+	for (nde = awk->tree.begin; nde != ASE_NULL; nde = nde->next)
 	{
-		if (ase_awk_putsrcstr(awk,ase_awk_getkw(awk,ASE_T("BEGIN"))) == -1)
-		{
-			EXIT_DEPARSE ();
-		}
-		if (ase_awk_putsrcstr (awk, ASE_T(" ")) == -1)
-		{
-			EXIT_DEPARSE ();
-		}
-
-		if (ase_awk_prnpt (awk, awk->tree.begin) == -1) EXIT_DEPARSE ();
+		const ase_char_t* kw = ase_awk_getkw(awk,ASE_T("BEGIN"));
+		if (ase_awk_putsrcstr(awk,kw) == -1) EXIT_DEPARSE ();
+		if (ase_awk_putsrcstr (awk, ASE_T(" ")) == -1) EXIT_DEPARSE ();
+		if (ase_awk_prnpt (awk, nde) == -1) EXIT_DEPARSE ();
 
 		if (awk->option & ASE_AWK_CRLF)
 		{
-			if (put_char (awk, ASE_T('\r')) == -1)
-				EXIT_DEPARSE ();
+			if (put_char (awk, ASE_T('\r')) == -1) EXIT_DEPARSE ();
 		}
 
 		if (put_char (awk, ASE_T('\n')) == -1) EXIT_DEPARSE ();
@@ -5350,14 +5367,19 @@ static int deparse (ase_awk_t* awk)
 		chain = chain->next;	
 	}
 
-	if (awk->tree.end != ASE_NULL) 
+	for (nde = awk->tree.end; nde != ASE_NULL; nde = nde->next)
 	{
-		if (ase_awk_putsrcstr(awk,ase_awk_getkw(awk,ASE_T("END"))) == -1)
-			EXIT_DEPARSE ();
-		if (ase_awk_putsrcstr (awk, ASE_T(" ")) == -1)
-			EXIT_DEPARSE ();
-		if (ase_awk_prnpt (awk, awk->tree.end) == -1)
-			EXIT_DEPARSE ();
+		const ase_char_t* kw = ase_awk_getkw(awk,ASE_T("END"));
+		if (ase_awk_putsrcstr(awk,kw) == -1) EXIT_DEPARSE ();
+		if (ase_awk_putsrcstr (awk, ASE_T(" ")) == -1) EXIT_DEPARSE ();
+		if (ase_awk_prnpt (awk, nde) == -1) EXIT_DEPARSE ();
+		
+		if (awk->option & ASE_AWK_CRLF)
+		{
+			if (put_char (awk, ASE_T('\r')) == -1) EXIT_DEPARSE ();
+		}
+
+		if (put_char (awk, ASE_T('\n')) == -1) EXIT_DEPARSE ();
 	}
 
 	if (flush_out (awk) == -1) EXIT_DEPARSE ();

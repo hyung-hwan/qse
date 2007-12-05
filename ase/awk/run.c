@@ -1322,6 +1322,8 @@ static int run_main (
 	}
 	else if (n == 0)
 	{
+		ase_awk_nde_t* nde;
+
 		/* no main function is specified. 
 		 * run the normal patter blocks including BEGIN and END */
 		saved_stack_top = run->stack_top;
@@ -1377,13 +1379,13 @@ static int run_main (
 		STACK_NARGS(run) = (void*)nargs;
 	
 		/* stack set up properly. ready to exeucte statement blocks */
-		if (n == 0 && 
-		    run->awk->tree.begin != ASE_NULL && 
-		    run->exit_level != EXIT_ABORT)
+		for (nde = run->awk->tree.begin; 
+		     n == 0 && nde != ASE_NULL && run->exit_level != EXIT_ABORT;
+		     nde = nde->next)
 		{
 			ase_awk_nde_blk_t* blk;
 
-			blk = (ase_awk_nde_blk_t*)run->awk->tree.begin;
+			blk = (ase_awk_nde_blk_t*)nde;
 			ASE_ASSERT (blk->type == ASE_AWK_NDE_BLK);
 
 			run->active_block = blk;
@@ -1399,13 +1401,13 @@ static int run_main (
 			if (run_pattern_blocks (run) == -1) n = -1;
 		}
 
-		if (n == 0 && 
-		    run->awk->tree.end != ASE_NULL && 
-		    run->exit_level != EXIT_ABORT) 
+		for (nde = run->awk->tree.end;
+		     n == 0 && nde != ASE_NULL && run->exit_level != EXIT_ABORT;
+		     nde = nde->next) 
 		{
 			ase_awk_nde_blk_t* blk;
 
-			blk = (ase_awk_nde_blk_t*)run->awk->tree.end;
+			blk = (ase_awk_nde_blk_t*)nde;
 			ASE_ASSERT (blk->type == ASE_AWK_NDE_BLK);
 
 			run->active_block = blk;

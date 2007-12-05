@@ -139,7 +139,9 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	awk->tree.nglobals = 0;
 	awk->tree.nbglobals = 0;
 	awk->tree.begin = ASE_NULL;
+	awk->tree.begin_tail = ASE_NULL;
 	awk->tree.end = ASE_NULL;
+	awk->tree.end_tail = ASE_NULL;
 	awk->tree.chain = ASE_NULL;
 	awk->tree.chain_tail = ASE_NULL;
 	awk->tree.chain_size = 0;
@@ -295,16 +297,19 @@ int ase_awk_clear (ase_awk_t* awk)
 
 	if (awk->tree.begin != ASE_NULL) 
 	{
-		ASE_ASSERT (awk->tree.begin->next == ASE_NULL);
+		ase_awk_nde_t* next = awk->tree.begin->next;
+		/*ASE_ASSERT (awk->tree.begin->next == ASE_NULL);*/
 		ase_awk_clrpt (awk, awk->tree.begin);
 		awk->tree.begin = ASE_NULL;
+		awk->tree.begin_tail = ASE_NULL;	
 	}
 
 	if (awk->tree.end != ASE_NULL) 
 	{
-		ASE_ASSERT (awk->tree.end->next == ASE_NULL);
+		/*ASE_ASSERT (awk->tree.end->next == ASE_NULL);*/
 		ase_awk_clrpt (awk, awk->tree.end);
 		awk->tree.end = ASE_NULL;
+		awk->tree.end_tail = ASE_NULL;	
 	}
 
 	while (awk->tree.chain != ASE_NULL) 
