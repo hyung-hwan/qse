@@ -1380,7 +1380,7 @@ static int run_main (
 	
 		/* stack set up properly. ready to exeucte statement blocks */
 		for (nde = run->awk->tree.begin; 
-		     n == 0 && nde != ASE_NULL && run->exit_level != EXIT_ABORT;
+		     n == 0 && nde != ASE_NULL && run->exit_level < EXIT_GLOBAL;
 		     nde = nde->next)
 		{
 			ase_awk_nde_blk_t* blk;
@@ -1396,13 +1396,15 @@ static int run_main (
 		if (n == 0 && 
 		    (run->awk->tree.chain != ASE_NULL ||
 		     run->awk->tree.end != ASE_NULL) && 
-		    run->exit_level != EXIT_ABORT)
+		     run->exit_level < EXIT_GLOBAL)
 		{
 			if (run_pattern_blocks (run) == -1) n = -1;
 		}
 
+		/* the first END block is executed if the program is not
+		 * explicitly aborted with ase_awk_stop */
 		for (nde = run->awk->tree.end;
-		     n == 0 && nde != ASE_NULL && run->exit_level != EXIT_ABORT;
+		     n == 0 && nde != ASE_NULL && run->exit_level < EXIT_ABORT;
 		     nde = nde->next) 
 		{
 			ase_awk_nde_blk_t* blk;
@@ -1413,6 +1415,12 @@ static int run_main (
 			run->active_block = blk;
 			run->exit_level = EXIT_NONE;
 			if (run_block (run, blk) == -1) n = -1;
+			else if (run->exit_level >= EXIT_GLOBAL) 
+			{
+				/* once exit is called inside one of END blocks,
+				 * subsequent END blocks must not be executed */
+				break;
+			}
 		}
 
 		/* restore stack */
@@ -1477,8 +1485,7 @@ static int run_pattern_blocks (ase_awk_run_t* run)
 	run->inrec.eof = ase_false;
 
 	/* run each pattern block */
-	while (run->exit_level != EXIT_GLOBAL &&
-	       run->exit_level != EXIT_ABORT)
+	while (run->exit_level < EXIT_GLOBAL)
 	{
 		run->exit_level = EXIT_NONE;
 
@@ -1511,8 +1518,7 @@ static int run_pattern_block_chain (ase_awk_run_t* run, ase_awk_chain_t* chain)
 {
 	ase_size_t block_no = 0;
 
-	while (run->exit_level != EXIT_GLOBAL &&
-	       run->exit_level != EXIT_ABORT && chain != ASE_NULL)
+	while (run->exit_level < EXIT_GLOBAL && chain != ASE_NULL)
 	{
 		if (run->exit_level == EXIT_NEXT)
 		{
