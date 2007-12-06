@@ -1,6 +1,8 @@
 [0.3.3]
 
 * enhanced the AWK interpreter to allow multiple BEGIN/END blocks.
+* enhanced the parser to handle ("abc" ++ k) as ("abc" . ++k) when
+  ASE_AWK_IMPLICIT is on.
 
 [0.3.2]
 
