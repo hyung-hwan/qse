@@ -10,7 +10,6 @@
 #include <ase/utl/stdio.h>
 #endif
 
-
 static ase_char_t* str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
 	int opt, ase_str_t* buf, ase_size_t* len);
@@ -90,7 +89,7 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 	val->nde = ASE_NULL;
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("makeintval => %p\n"), val);
+	ase_dprintf (ASE_T("makeintval => %ld [%p]\n"), (long)v, val);
 #endif
 	return (ase_awk_val_t*)val;
 }
@@ -120,7 +119,7 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 	val->nde = ASE_NULL;
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("makerealval => %p\n"), val);
+	ase_dprintf (ASE_T("makerealval => %Lf [%p]\n"), (double)v, val);
 #endif
 	return (ase_awk_val_t*)val;
 }
