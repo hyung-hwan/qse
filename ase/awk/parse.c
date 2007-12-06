@@ -2569,6 +2569,8 @@ static ase_awk_nde_t* parse_increment (ase_awk_t* awk, ase_size_t line)
 		 * the primary should be treated specially. 
 		 * for example, "abc" ++  10 => "abc" . ++10
 		 */
+		/* TOOD: probably left->type == ASE_AWK_NDE_POS should 
+		 *       be inclued to handle $i++, $i--. */
 		if (!is_var(left)) return left;
 	}
 
