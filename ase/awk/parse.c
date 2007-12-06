@@ -2366,15 +2366,19 @@ static ase_awk_nde_t* parse_concat (ase_awk_t* awk, ase_size_t line)
 	{
 		if (MATCH(awk,TOKEN_PERIOD))
 		{
-			if ((awk->option & ASE_AWK_EXPLICIT) == 0) break;	
+			if (!(awk->option & ASE_AWK_EXPLICIT)) break;
 			if (get_token(awk) == -1) return ASE_NULL;
 		}
 		else if (MATCH(awk,TOKEN_LPAREN) ||
 	                 MATCH(awk,TOKEN_DOLLAR) ||
-	                 awk->token.type >= TOKEN_GETLINE)
+			 MATCH(awk,TOKEN_PLUS) ||
+			 MATCH(awk,TOKEN_MINUS) ||
+			 MATCH(awk,TOKEN_PLUSPLUS) ||
+			 MATCH(awk,TOKEN_MINUSMINUS) ||
+			 awk->token.type >= TOKEN_GETLINE)
 		{
 			/* TODO: is the check above sufficient? */
-			if ((awk->option & ASE_AWK_IMPLICIT) == 0) break;
+			if (!(awk->option & ASE_AWK_IMPLICIT)) break;
 		}
 		else break;
 
@@ -2557,6 +2561,16 @@ static ase_awk_nde_t* parse_increment (ase_awk_t* awk, ase_size_t line)
 
 	left = parse_primary (awk, line);
 	if (left == ASE_NULL) return ASE_NULL;
+
+	if (awk->option & ASE_AWK_IMPLICIT)
+	{
+		/* concatenation operation by whitepaces are allowed 
+		 * if this option is set. the ++/-- operator following
+		 * the primary should be treated specially. 
+		 * for example, "abc" ++  10 => "abc" . ++10
+		 */
+		if (!is_var(left)) return left;
+	}
 
 	/* check for postfix increment operator */
 	opcode2 = MATCH(awk,TOKEN_PLUSPLUS)? ASE_AWK_INCOP_PLUS:
@@ -5374,12 +5388,14 @@ static int deparse (ase_awk_t* awk)
 		if (ase_awk_putsrcstr (awk, ASE_T(" ")) == -1) EXIT_DEPARSE ();
 		if (ase_awk_prnpt (awk, nde) == -1) EXIT_DEPARSE ();
 		
+		/*
 		if (awk->option & ASE_AWK_CRLF)
 		{
 			if (put_char (awk, ASE_T('\r')) == -1) EXIT_DEPARSE ();
 		}
 
 		if (put_char (awk, ASE_T('\n')) == -1) EXIT_DEPARSE ();
+		*/
 	}
 
 	if (flush_out (awk) == -1) EXIT_DEPARSE ();

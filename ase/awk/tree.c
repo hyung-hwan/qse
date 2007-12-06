@@ -18,37 +18,37 @@ static const ase_char_t* assop_str[] =
 	ASE_T("**=")
 };
 
-static const ase_char_t* binop_str[] =
+static const ase_char_t* binop_str[][2] =
 {
-	ASE_T("||"),
-	ASE_T("&&"),
-	ASE_T("in"),
+	{ ASE_T("||"), ASE_T("||") },
+	{ ASE_T("&&"), ASE_T("&&") },
+	{ ASE_T("in"), ASE_T("in") },
 
-	ASE_T("|"),
-	ASE_T("^"),
-	ASE_T("&"),
+	{ ASE_T("|"),  ASE_T("|") },
+	{ ASE_T("^"),  ASE_T("^") },
+	{ ASE_T("&"),  ASE_T("&") },
 
-	ASE_T("=="),
-	ASE_T("!="),
-	ASE_T(">"),
-	ASE_T(">="),
-	ASE_T("<"),
-	ASE_T("<="),
+	{ ASE_T("=="), ASE_T("==") },
+	{ ASE_T("!="), ASE_T("!=") },
+	{ ASE_T(">"),  ASE_T(">") },
+	{ ASE_T(">="), ASE_T(">=") },
+	{ ASE_T("<"),  ASE_T("<") },
+	{ ASE_T("<="), ASE_T("<=") },
 
-	ASE_T("<<"),
-	ASE_T(">>"),
+	{ ASE_T("<<"), ASE_T("<<") },
+	{ ASE_T(">>"), ASE_T(">>") },
 
-	ASE_T("+"),
-	ASE_T("-"),
-	ASE_T("*"),
-	ASE_T("/"),
-	ASE_T("//"),
-	ASE_T("%"),
-	ASE_T("**"),
+	{ ASE_T("+"),  ASE_T("+") },
+	{ ASE_T("-"),  ASE_T("-") },
+	{ ASE_T("*"),  ASE_T("*") },
+	{ ASE_T("/"),  ASE_T("/") },
+	{ ASE_T("//"), ASE_T("//") },
+	{ ASE_T("%"),  ASE_T("%") },
+	{ ASE_T("**"), ASE_T("**") },
 
-	ASE_T(" "),
-	ASE_T("~"),
-	ASE_T("!~")
+	{ ASE_T(" "),  ASE_T(".") },
+	{ ASE_T("~"),  ASE_T("~") },
+	{ ASE_T("!~"), ASE_T("!~") }
 };
 
 static const ase_char_t* unrop_str[] =
@@ -167,7 +167,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ASE_ASSERT (px->left->next == ASE_NULL);
 
 			PUT_SRCSTR (awk, ASE_T(" "));
-			PUT_SRCSTR (awk, binop_str[px->opcode]);
+			PUT_SRCSTR (awk, binop_str[px->opcode][(awk->option & ASE_AWK_IMPLICIT)? 0: 1]);
 			PUT_SRCSTR (awk, ASE_T(" "));
 
 			if (px->right->type == ASE_AWK_NDE_ASS) 
