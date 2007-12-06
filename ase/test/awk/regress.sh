@@ -1,6 +1,6 @@
 #!/bin/sh
 
-OPTION=-explicit
+OPTION="-explicit -implicit"
 
 run_script_for_init()
 {
