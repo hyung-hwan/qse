@@ -21,6 +21,10 @@
 #include <crtdbg.h>
 #endif
 
+#if defined(__linux) && defined(_DEBUG)
+#include <mcheck.h>
+#endif
+
 class TestAwk: public ASE::StdAwk
 {
 public:

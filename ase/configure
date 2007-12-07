@@ -25712,9 +25712,9 @@ _ACEOF
 
 fi
 
-# Check whether --enable-mode or --disable-mode was given.
-if test "${enable_mode+set}" = set; then
-  enableval="$enable_mode"
+# Check whether --enable-debug or --disable-debug was given.
+if test "${enable_debug+set}" = set; then
+  enableval="$enable_debug"
   enable_debug_is=$enableval
 else
   enable_debug_is=no
