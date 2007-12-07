@@ -804,7 +804,7 @@ static int print_awk_value (ase_awk_pair_t* pair, void* arg)
 static void on_run_statement (
 	ase_awk_run_t* run, ase_size_t line, void* custom)
 {
-	dprintf (L"running %d\n", (int)line);
+	/*dprintf (L"running %d\n", (int)line);*/
 }
 
 static void on_run_return (
@@ -1180,7 +1180,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	ase_awk_setmaxdepth (
 		awk, ASE_AWK_DEPTH_BLOCK_PARSE | ASE_AWK_DEPTH_EXPR_PARSE, 50);
 	ase_awk_setmaxdepth (
-		awk, ASE_AWK_DEPTH_BLOCK_RUN | ASE_AWK_DEPTH_EXPR_RUN, 1000);
+		awk, ASE_AWK_DEPTH_BLOCK_RUN | ASE_AWK_DEPTH_EXPR_RUN, 500);
 
 	/*ase_awk_setkeyword (awk, ASE_T("func"), 4, ASE_T("FX"), 2);*/
 

@@ -14,6 +14,25 @@
 		x[30] = d; 
 	}
 
+* fixed a control-flow bug in the following context.
+        function error() { exit (1); }
+	function getx()
+	{
+		if (x == 2) error();
+		return x++;
+	}
+	function gety() { return y++; }
+        BEGIN {
+		x = 0;
+		y = 0;
+		print getx() + gety(); 
+		print getx() + gety();
+		/* this following line should not have been printed as
+		 * exit() is executed in getx(). */
+		print getx() + gety(); 
+		print getx() + gety();
+        }
+
 [0.3.2]
 
 * fixed a build problem for x64 target in MSVC2005
