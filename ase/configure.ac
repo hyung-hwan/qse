@@ -99,7 +99,7 @@ else
 	AC_DEFINE([ASE_CHAR_IS_MCHAR],[],[char is mchar])
 fi
 
-AC_ARG_ENABLE([mode], [AC_HELP_STRING([--enable-debug],
+AC_ARG_ENABLE([debug], [AC_HELP_STRING([--enable-debug],
 	[build the library in the debug mode (default. no)])],
 	enable_debug_is=$enableval,enable_debug_is=no)
 if test "$enable_debug_is" = "yes"

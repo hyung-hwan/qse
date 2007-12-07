@@ -171,11 +171,16 @@ static ase_awk_val_t* eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde);
 static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde);
 static ase_awk_val_t* eval_cnd (ase_awk_run_t* run, ase_awk_nde_t* nde);
 
+static ase_awk_val_t* eval_afn_intrinsic (
+	ase_awk_run_t* run, ase_awk_nde_t* nde, 
+	void(*errhandler)(void*), void* eharg);
+
 static ase_awk_val_t* eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde);
 static ase_awk_val_t* eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde);
 static ase_awk_val_t* eval_call (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, 
-	const ase_char_t* bfn_arg_spec, ase_awk_afn_t* afn);
+	const ase_char_t* bfn_arg_spec, ase_awk_afn_t* afn,
+	void(*errhandler)(void*), void* eharg);
 
 static int get_reference (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_awk_val_t*** ref);
@@ -661,33 +666,20 @@ int ase_awk_run (ase_awk_t* awk,
 	n = run_main (run, main, runarg);
 	if (n == -1) 
 	{
-		if (run->errnum == ASE_AWK_ENOERR) 
+		/* if no callback is specified, awk's error number 
+		 * is updated with the run's error number */
+		if (runcbs == ASE_NULL)
 		{
-			/* an error is returned with no error number set.
-			 * this feature is used by eval_expression to
-			 * abort the evaluation when exit() is executed 
-			 * during function evaluation */
-			n = 0;
-			run->errlin = 0;
-			run->errmsg[0] = ASE_T('\0');
+			awk->errnum = run->errnum;
+			awk->errlin = run->errlin;
+
+			ase_strxcpy (
+				awk->errmsg, ASE_COUNTOF(awk->errmsg),
+				run->errmsg);
 		}
 		else
 		{
-			/* if no callback is specified, awk's error number 
-			 * is updated with the run's error number */
-			if (runcbs == ASE_NULL)
-			{
-				awk->errnum = run->errnum;
-				awk->errlin = run->errlin;
-
-				ase_strxcpy (
-					awk->errmsg, ASE_COUNTOF(awk->errmsg),
-					run->errmsg);
-			}
-			else
-			{
-				ase_awk_seterrnum (awk, ASE_AWK_ERUNTIME);
-			}
+			ase_awk_seterrnum (awk, ASE_AWK_ERUNTIME);
 		}
 	}
 
@@ -1188,6 +1180,21 @@ static int set_globals_to_default (ase_awk_run_t* run)
 	return 0;
 }
 
+struct capture_retval_data_t
+{
+	ase_awk_run_t* run;
+	ase_awk_val_t* val;	
+};
+
+static void capture_retval_on_exit (void* arg)
+{
+	struct capture_retval_data_t* data;
+
+	data = (struct capture_retval_data_t*)arg;
+	data->val = STACK_RETVAL(data->run);
+	ase_awk_refupval (data->run, data->val);
+}
+
 static int run_main (
 	ase_awk_run_t* run, const ase_char_t* main, 
 	ase_awk_runarg_t* runarg)
@@ -1246,6 +1253,7 @@ static int run_main (
 	if (n == 0 && main != ASE_NULL)
 	{
 		/* run the given function */
+		struct capture_retval_data_t crdata;
 		ase_awk_nde_call_t nde;
 
 		nde.type = ASE_AWK_NDE_AFN;
@@ -1259,6 +1267,7 @@ static int run_main (
 
 		if (runarg != ASE_NULL)
 		{
+
 			if (!(run->awk->option & ASE_AWK_ARGSTOMAIN)) 
 			{
 				/* if the option is not set, the arguments 
@@ -1322,8 +1331,31 @@ static int run_main (
 			ASE_ASSERT (nrunargs == nde.nargs);
 		}
 
-		v = eval_afn (run, (ase_awk_nde_t*)&nde);
-		if (v == ASE_NULL) n = -1;
+		crdata.run = run;
+		crdata.val = ASE_NULL;
+		v = eval_afn_intrinsic (run, (ase_awk_nde_t*)&nde, 
+			capture_retval_on_exit, &crdata);
+		if (v == ASE_NULL) 
+		{
+			if (crdata.val == ASE_NULL) 
+			{
+				ASE_ASSERT (run->errnum != ASE_AWK_ENOERR);
+				n = -1;
+			}
+			else 
+			{
+				if (run->errnum == ASE_AWK_ENOERR)
+				{
+					if (run->cbs != ASE_NULL && run->cbs->on_return != ASE_NULL)
+					{
+						run->cbs->on_return (run, crdata.val, run->cbs->custom_data);
+					}
+				}
+				else n = -1;
+
+				ase_awk_refdownval(run, crdata.val);
+			}
+		}
 		else
 		{
 			ase_awk_refupval (run, v);
@@ -1411,12 +1443,34 @@ static int run_main (
 			if (run_block (run, blk) == -1) n = -1;
 		}
 
+		if (n == -1 && run->errnum == ASE_AWK_ENOERR) 
+		{
+			/* an error is returned with no error number set.
+			 * this feature is used by eval_expression to
+			 * abort the evaluation when exit() is executed 
+			 * during function evaluation */
+			n = 0;
+			run->errlin = 0;
+			run->errmsg[0] = ASE_T('\0');
+		}
+
 		if (n == 0 && 
 		    (run->awk->tree.chain != ASE_NULL ||
 		     run->awk->tree.end != ASE_NULL) && 
 		     run->exit_level < EXIT_GLOBAL)
 		{
 			if (run_pattern_blocks (run) == -1) n = -1;
+		}
+
+		if (n == -1 && run->errnum == ASE_AWK_ENOERR)
+		{
+			/* an error is returned with no error number set.
+			 * this feature is used by eval_expression to
+			 * abort the evaluation when exit() is executed 
+			 * during function evaluation */
+			n = 0;
+			run->errlin = 0;
+			run->errmsg[0] = ASE_T('\0');
 		}
 
 		/* the first END block is executed if the program is not
@@ -1439,6 +1493,17 @@ static int run_main (
 				 * subsequent END blocks must not be executed */
 				break;
 			}
+		}
+
+		if (n == -1 && run->errnum == ASE_AWK_ENOERR)
+		{
+			/* an error is returned with no error number set.
+			 * this feature is used by eval_expression to
+			 * abort the evaluation when exit() is executed 
+			 * during function evaluation */
+			n = 0;
+			run->errlin = 0;
+			run->errmsg[0] = ASE_T('\0');
 		}
 
 		/* restore stack */
@@ -2949,7 +3014,7 @@ static ase_awk_val_t* eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	if (run->exit_level >= EXIT_GLOBAL) 
 	{
 		/* returns ASE_NULL as if an error occurred but
-		 * clears the error number. ase_awk_run will 
+		 * clears the error number. run_main will 
 		 * detect this condition and treat it as a 
 		 * non-error condition.*/
 		run->errnum = ASE_AWK_ENOERR;
@@ -5228,10 +5293,13 @@ static ase_awk_val_t* eval_bfn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 
-	return eval_call (run, nde, call->what.bfn.arg.spec, ASE_NULL);
+	return eval_call (
+		run, nde, call->what.bfn.arg.spec, 
+		ASE_NULL, ASE_NULL, ASE_NULL);
 }
 
-static ase_awk_val_t* eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
+static ase_awk_val_t* eval_afn_intrinsic (
+	ase_awk_run_t* run, ase_awk_nde_t* nde, void(*errhandler)(void*), void* eharg)
 {
 	ase_awk_nde_call_t* call = (ase_awk_nde_call_t*)nde;
 	ase_awk_afn_t* afn;
@@ -5263,9 +5331,13 @@ static ase_awk_val_t* eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		return ASE_NULL;
 	}
 
-	return eval_call (run, nde, ASE_NULL, afn);
+	return eval_call (run, nde, ASE_NULL, afn, errhandler, eharg);
 }
 
+static ase_awk_val_t* eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
+{
+	return eval_afn_intrinsic (run, nde, ASE_NULL, ASE_NULL);
+}
 
 /* run->stack_base has not been set for this  
  * stack frame. so the STACK_ARG macro cannot be used as in 
@@ -5288,7 +5360,8 @@ static ase_awk_val_t* eval_afn (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 static ase_awk_val_t* eval_call (
 	ase_awk_run_t* run, ase_awk_nde_t* nde, 
-	const ase_char_t* bfn_arg_spec, ase_awk_afn_t* afn)
+	const ase_char_t* bfn_arg_spec, ase_awk_afn_t* afn, 
+	void(*errhandler)(void*), void* eharg)
 {
 	ase_awk_nde_call_t* call = (ase_awk_nde_call_t*)nde;
 	ase_size_t saved_stack_top;
@@ -5539,6 +5612,14 @@ static ase_awk_val_t* eval_call (
 	v = STACK_RETVAL(run);
 	if (n == -1)
 	{
+		if (errhandler != ASE_NULL) 
+		{
+			/* capture_retval_on_exit takes advantage of 
+			 * this handler to retrieve the return value
+			 * when exit() is used to terminate the program. */
+			errhandler (eharg);
+		}
+
 		/* if the earlier operations failed and this function
 		 * has to return a error, the return value is just
 		 * destroyed and replaced by nil */
