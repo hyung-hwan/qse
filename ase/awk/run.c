@@ -661,7 +661,7 @@ int ase_awk_run (ase_awk_t* awk,
 	n = run_main (run, main, runarg);
 	if (n == -1) 
 	{
-		if (awk->errnum == ASE_AWK_ENOERR) 
+		if (run->errnum == ASE_AWK_ENOERR) 
 		{
 			/* an error is returned with no error number set.
 			 * this feature is used by eval_expression to
