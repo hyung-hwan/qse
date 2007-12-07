@@ -1166,7 +1166,7 @@ int Awk::open ()
 	}
 
 	functionMap = ase_awk_map_open (
-		this, 512, 70, freeFunctionMapValue, awk);
+		this, 512, 70, freeFunctionMapValue, ASE_NULL, awk);
 	if (functionMap == ASE_NULL)
 	{
 		ase_awk_close (awk);

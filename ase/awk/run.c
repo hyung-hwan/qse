@@ -718,6 +718,11 @@ static void free_namedval (void* run, void* val)
 	ase_awk_refdownval ((ase_awk_run_t*)run, val);
 }
 
+static void same_namedval (void* run, void* val)
+{
+	ase_awk_refdownval_nofree ((ase_awk_run_t*)run, val);
+}
+
 static int init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
 	ase_awk_runios_t* runios, void* custom_data)
@@ -772,7 +777,7 @@ static int init_run (
 	}
 
 	run->named = ase_awk_map_open (
-		run, 1024, 70, free_namedval, run->awk);
+		run, 1024, 70, free_namedval, same_namedval, run->awk);
 	if (run->named == ASE_NULL)
 	{
 		ase_str_close (&run->format.fmt);
@@ -2368,8 +2373,9 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				return -1;
 			}
 
-			if (ase_awk_map_put (run->named, 
-				var->id.name, var->id.name_len, tmp) == ASE_NULL)
+			pair = ase_awk_map_put (run->named, 
+				var->id.name, var->id.name_len, tmp);
+			if (pair == ASE_NULL)
 			{
 				ase_awk_refupval (run, tmp);
 				ase_awk_refdownval (run, tmp);
@@ -2381,7 +2387,7 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			}
 
 			/* as this is the assignment, it needs to update
-			 * the reference count of the target value */
+			 * the reference count of the target value. */
 			ase_awk_refupval (run, tmp);
 		}
 		else
@@ -4491,11 +4497,10 @@ static ase_awk_val_t* eval_binop_ma (
 
 	ase_awk_refupval (run, rv);
 
-	res = eval_binop_match0 (
-		run, lv, rv, left->line, right->line, 1);
+	res = eval_binop_match0 (run, lv, rv, left->line, right->line, 1);
 
-	ase_awk_refdownval (run, lv);
 	ase_awk_refdownval (run, rv);
+	ase_awk_refdownval (run, lv);
 
 	return res;
 }
@@ -4525,8 +4530,8 @@ static ase_awk_val_t* eval_binop_nm (
 	res = eval_binop_match0 (
 		run, lv, rv, left->line, right->line, 0);
 
-	ase_awk_refdownval (run, lv);
 	ase_awk_refdownval (run, rv);
+	ase_awk_refdownval (run, lv);
 
 	return res;
 }

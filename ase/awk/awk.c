@@ -68,7 +68,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 		return ASE_NULL;	
 	}
 
-	awk->wtab = ase_awk_map_open (awk, 512, 70, free_word, awk);
+	awk->wtab = ase_awk_map_open (awk, 512, 70, free_word, ASE_NULL, awk);
 	if (awk->wtab == ASE_NULL)
 	{
 		ase_str_close (&awk->token.name);
@@ -76,7 +76,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 		return ASE_NULL;	
 	}
 
-	awk->rwtab = ase_awk_map_open (awk, 512, 70, free_word, awk);
+	awk->rwtab = ase_awk_map_open (awk, 512, 70, free_word, ASE_NULL, awk);
 	if (awk->rwtab == ASE_NULL)
 	{
 		ase_awk_map_close (awk->wtab);
@@ -86,7 +86,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	}
 
 	/* TODO: initial map size?? */
-	awk->tree.afns = ase_awk_map_open (awk, 512, 70, free_afn, awk);
+	awk->tree.afns = ase_awk_map_open (awk, 512, 70, free_afn, ASE_NULL, awk);
 	if (awk->tree.afns == ASE_NULL) 
 	{
 		ase_awk_map_close (awk->rwtab);
@@ -162,7 +162,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 
 	awk->bfn.sys = ASE_NULL;
 	/*awk->bfn.user = ASE_NULL;*/
-	awk->bfn.user = ase_awk_map_open (awk, 512, 70, free_bfn, awk);
+	awk->bfn.user = ase_awk_map_open (awk, 512, 70, free_bfn, ASE_NULL, awk);
 	if (awk->bfn.user == ASE_NULL)
 	{
 		ase_awk_tab_close (&awk->parse.params);
