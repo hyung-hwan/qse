@@ -661,20 +661,33 @@ int ase_awk_run (ase_awk_t* awk,
 	n = run_main (run, main, runarg);
 	if (n == -1) 
 	{
-		/* if no callback is specified, awk's error number 
-		 * is updated with the run's error number */
-		if (runcbs == ASE_NULL)
+		if (awk->errnum == ASE_AWK_ENOERR) 
 		{
-			awk->errnum = run->errnum;
-			awk->errlin = run->errlin;
-
-			ase_strxcpy (
-				awk->errmsg, ASE_COUNTOF(awk->errmsg),
-				run->errmsg);
+			/* an error is returned with no error number set.
+			 * this feature is used by eval_expression to
+			 * abort the evaluation when exit() is executed 
+			 * during function evaluation */
+			n = 0;
+			run->errlin = 0;
+			run->errmsg[0] = ASE_T('\0');
 		}
 		else
 		{
-			ase_awk_seterrnum (awk, ASE_AWK_ERUNTIME);
+			/* if no callback is specified, awk's error number 
+			 * is updated with the run's error number */
+			if (runcbs == ASE_NULL)
+			{
+				awk->errnum = run->errnum;
+				awk->errlin = run->errlin;
+
+				ase_strxcpy (
+					awk->errmsg, ASE_COUNTOF(awk->errmsg),
+					run->errmsg);
+			}
+			else
+			{
+				ase_awk_seterrnum (awk, ASE_AWK_ERUNTIME);
+			}
 		}
 	}
 
@@ -2932,6 +2945,16 @@ static ase_awk_val_t* eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_val_t* v;
 	int n, errnum;
+
+	if (run->exit_level >= EXIT_GLOBAL) 
+	{
+		/* returns ASE_NULL as if an error occurred but
+		 * clears the error number. ase_awk_run will 
+		 * detect this condition and treat it as a 
+		 * non-error condition.*/
+		run->errnum = ASE_AWK_ENOERR;
+		return ASE_NULL;
+	}
 
 	v = eval_expression0 (run, nde);
 	if (v == ASE_NULL) return ASE_NULL;

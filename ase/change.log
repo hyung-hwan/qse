@@ -4,6 +4,16 @@
 * enhanced the parser to handle ("abc" ++ k) as ("abc" . ++k) when
   ASE_AWK_IMPLICIT is on.
 
+* fixed a memory leak bug in the following context.
+	BEGIN {
+		d = 90;
+		x[30] = d;
+		/* Reference count for d was not properly decremented
+		 * when a map slot is assigned with the same value as 
+		 * the previous value. */
+		x[30] = d; 
+	}
+
 [0.3.2]
 
 * fixed a build problem for x64 target in MSVC2005
