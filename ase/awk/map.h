@@ -37,6 +37,7 @@ struct ase_awk_map_t
 	ase_size_t threshold;
 	ase_awk_pair_t** buck;
 	void (*freeval) (void*,void*);
+	void (*sameval) (void*,void*);
 	ase_awk_t* awk;
 };
 
@@ -51,7 +52,8 @@ extern "C" {
 
 ase_awk_map_t* ase_awk_map_open (
 	void* owner, ase_size_t capa, unsigned int factor,
-	void(*freeval)(void*,void*), ase_awk_t* awk);
+	void(*freeval)(void*,void*), void(*sameval)(void*,void*),
+	ase_awk_t* awk);
 
 void ase_awk_map_close (ase_awk_map_t* map);
 

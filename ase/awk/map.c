@@ -19,7 +19,8 @@ static int rehash (ase_awk_map_t* map);
 
 ase_awk_map_t* ase_awk_map_open (
 	void* owner, ase_size_t capa, unsigned int factor,
-	void(*freeval)(void*,void*), ase_awk_t* awk)
+	void(*freeval)(void*,void*), void(*sameval)(void*,void*), 
+	ase_awk_t* awk)
 {
 	ase_awk_map_t* map;
 
@@ -42,6 +43,7 @@ ase_awk_map_t* ase_awk_map_open (
 	map->capa = capa;
 	map->size = 0;
 	map->freeval = freeval;
+	map->sameval = sameval;
 	while (capa > 0) map->buck[--capa] = ASE_NULL;
 
 	map->factor = factor;
@@ -214,14 +216,28 @@ ase_awk_pair_t* ase_awk_map_setpair (
 	ase_awk_map_t* map, ase_awk_pair_t* pair, void* val)
 {
 	/* use this function with care */
-	if (ASE_AWK_PAIR_VAL(pair) != val) 
+	if (ASE_AWK_PAIR_VAL(pair) == val) 
 	{
+		/* if the old value and the new value are the same,
+		 * it just calls the handler for this condition. 
+		 * No value replacement occurs. */
+		if (map->sameval != ASE_NULL)
+		{
+			map->sameval (map->owner, val);
+		}
+	}
+	else
+	{
+		/* frees the old value */
 		if (map->freeval != ASE_NULL) 
 		{
 			map->freeval (map->owner, ASE_AWK_PAIR_VAL(pair));
 		}
+
+		/* the new value takes the place */
 		ASE_AWK_PAIR_VAL(pair) = val;
 	}
+
 
 	return pair;
 }

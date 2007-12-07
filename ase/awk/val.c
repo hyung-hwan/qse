@@ -242,7 +242,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	return (ase_awk_val_t*)val;
 }
 
-static void free_map_val (void* run, void* v)
+static void free_mapval (void* run, void* v)
 {
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("refdown in map free..."));
@@ -251,6 +251,16 @@ static void free_map_val (void* run, void* v)
 #endif
 
 	ase_awk_refdownval (run, v);
+}
+
+static void same_mapval (void* run, void* v)
+{
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("refdown nofree in map free..."));
+	ase_awk_dprintval (run, v);
+	ase_dprintf (ASE_T("\n"));
+#endif
+	ase_awk_refdownval_nofree (run, v);
 }
 
 ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
@@ -267,7 +277,8 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 
 	val->type = ASE_AWK_VAL_MAP;
 	val->ref = 0;
-	val->map = ase_awk_map_open (run, 256, 70, free_map_val, run->awk);
+	val->map = ase_awk_map_open (
+		run, 256, 70, free_mapval, same_mapval, run->awk);
 	if (val->map == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val);
