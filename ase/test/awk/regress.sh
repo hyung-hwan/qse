@@ -11,8 +11,34 @@ run_script_for_init()
 	"$ASEAWK" $OPTION -d -f "$script" "$data" > "$output"
 }
 
+run_script_for_init_nodata()
+{
+	script="$1"
+	output=`echo $script | sed 's/\.awk$/.out/g'`
+
+	"$ASEAWK" $OPTION -d -f "$script" > "$output"
+}
+
+run_script_for_init_main()
+{
+	script="$1"
+	output=`echo $script | sed 's/\.awk$/.out/g'`
+
+	"$ASEAWK" $OPTION -m main -d -f "$script" > "$output"
+}
+
 run_init()
 {
+	for script in simple-???.awk
+	do
+		run_script_for_init_nodata "$script"
+	done
+
+	for script in main-???.awk
+	do
+		run_script_for_init_main "$script"
+	done
+
 	for script in emp-???.awk
 	do
 		run_script_for_init "$script" "emp-en.data"
@@ -55,9 +81,85 @@ run_script_for_test()
 	return 0
 }
 
+run_script_for_test_nodata()
+{
+	script="$1"
+	output=`echo $script | sed 's/\.awk$/.out/g'`
+
+	echo ">> RUNNING $script"
+	"$ASEAWK" $OPTION -d -f "$script" > "$output.$pid"
+
+	#diff -y "$output" "$output.$pid" 
+	diff "$output" "$output.$pid" 
+	if [ $? -ne 0 ]
+	then
+		rm -f "$output.$pid"
+		return 1
+	fi
+
+	rm -f "$output.$pid"
+	return 0
+}
+
+run_script_for_test_main()
+{
+	script="$1"
+	output=`echo $script | sed 's/\.awk$/.out/g'`
+
+	echo ">> RUNNING $script"
+	"$ASEAWK" $OPTION -m main -d -f "$script" > "$output.$pid"
+
+	#diff -y "$output" "$output.$pid" 
+	diff "$output" "$output.$pid" 
+	if [ $? -ne 0 ]
+	then
+		rm -f "$output.$pid"
+		return 1
+	fi
+
+	rm -f "$output.$pid"
+	return 0
+}
+
 run_test()
 {
 	pid=$$
+
+	for script in simple-???.awk
+	do
+		run_script_for_test_nodata "$script"
+		if [ $? -ne 0 ]
+		then
+			echo "###################################"
+			echo "PROBLEM(S) DETECTED IN $script.".
+			echo "###################################"
+
+			echo "Do you want to abort? [y/n]"
+			read ans
+			if [ "$ans" = "y" -o "$ans" = "Y" ]
+			then
+				return 1
+			fi
+		fi
+	done
+
+	for script in main-???.awk
+	do
+		run_script_for_test_main "$script"
+		if [ $? -ne 0 ]
+		then
+			echo "###################################"
+			echo "PROBLEM(S) DETECTED IN $script.".
+			echo "###################################"
+
+			echo "Do you want to abort? [y/n]"
+			read ans
+			if [ "$ans" = "y" -o "$ans" = "Y" ]
+			then
+				return 1
+			fi
+		fi
+	done
 
 	for script in emp-???.awk
 	do

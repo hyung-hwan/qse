@@ -408,7 +408,11 @@ struct ase_awk_nde_print_t
 extern "C" {
 #endif
 
+/* print the entire tree */
 int ase_awk_prnpt (ase_awk_t* awk, ase_awk_nde_t* tree);
+/* print a single top-level node */
+int ase_awk_prnnde (ase_awk_t* awk, ase_awk_nde_t* node); 
+/* print the pattern part */
 int ase_awk_prnptnpt (ase_awk_t* awk, ase_awk_nde_t* tree);
 
 void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree);

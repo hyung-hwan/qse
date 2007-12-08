@@ -5329,7 +5329,7 @@ static int deparse (ase_awk_t* awk)
 		const ase_char_t* kw = ase_awk_getkw(awk,ASE_T("BEGIN"));
 		if (ase_awk_putsrcstr(awk,kw) == -1) EXIT_DEPARSE ();
 		if (ase_awk_putsrcstr (awk, ASE_T(" ")) == -1) EXIT_DEPARSE ();
-		if (ase_awk_prnpt (awk, nde) == -1) EXIT_DEPARSE ();
+		if (ase_awk_prnnde (awk, nde) == -1) EXIT_DEPARSE ();
 
 		if (awk->option & ASE_AWK_CRLF)
 		{
@@ -5388,7 +5388,7 @@ static int deparse (ase_awk_t* awk)
 		const ase_char_t* kw = ase_awk_getkw(awk,ASE_T("END"));
 		if (ase_awk_putsrcstr(awk,kw) == -1) EXIT_DEPARSE ();
 		if (ase_awk_putsrcstr (awk, ASE_T(" ")) == -1) EXIT_DEPARSE ();
-		if (ase_awk_prnpt (awk, nde) == -1) EXIT_DEPARSE ();
+		if (ase_awk_prnnde (awk, nde) == -1) EXIT_DEPARSE ();
 		
 		/*
 		if (awk->option & ASE_AWK_CRLF)
