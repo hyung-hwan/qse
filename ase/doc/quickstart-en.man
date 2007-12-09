@@ -55,8 +55,8 @@ If you have preference for a particular compiler and the flags, you may explicit
 
 {{{
 # HP-UX B.11.23 with HP ANSI C 
-CC=cc CFLAGS="-O2 +DD64" LDFLAGS="+DD64" ./configure # 64-bit
-CC=cc CFLAGS="-O2 +DD32" LDFLAGS="+DD32" ./configure # 32-bit
+CC=cc CFLAGS="-O2 +DD64 -D_INCLUDE__STDC_A1_SOURCE" LDFLAGS="+DD64" CXX=aCC CXXFLAGS="-O2 +DD64 -D_INCLUDE__STDC_A1_SOURCE" ./configure # 64-bit
+CC=cc CFLAGS="-O2 +DD32 -D_INCLUDE__STDC_A1_SOURCE" LDFLAGS="+DD32" CXX=aCC CXXFLAGS="-O2 +DD32 -D_INCLUDE__STDC_A1_SOURCE" ./configure # 32-bit
 
 # SCO OpenServer Release 5.0.7 (SCO_SV 3.2 5.0.7) with SCO OpenServer Development System
 CC=cc CFLAGS="-Xc -a ansi -O2" ./configure
@@ -72,7 +72,7 @@ The JNI library for JAVA is built automatically if required JNI header files are
 
 == OpenVMS ==
 
-You may use the [[mms]] command or the [[mmk]] command to build the library. No counterpart for the [[configure]] script is provided. As not top-level build script is provided, you have to run the command in each directory that you want to build the library in.
+You may use the [[mms]] command or the [[mmk]] command to build the library. No counterpart for the [[configure]] script is provided. As no top-level build script is provided, you have to run the command in each directory that you want to build the library in.
 
 Let's build the AWK library and its test program, for instance.
 
@@ -100,19 +100,19 @@ aseawk -f hello.awk
 
 You may use the Visual Studio 6 or later to open the project. But you need Visual Studio 2003 or later to build the .NET related projects. Otherwise, open the command-line build environment and use the [[make]] utility.
 
-A set of make scripts is provided to support the Microsoft build environement and the Borland build environment. The script for the Miscrosoft build environment is named [[makefile.msw.cl]] while it is [[makefile.msw.bcc]] for the Borland counterpart.
+A set of make scripts is provided to support the Microsoft build environement and the Borland build environment. The script for the Miscrosoft build environment is named [[msw-cl.mak]] while it is [[msw-bcc.mak]] for the Borland counterpart.
 
 If you are building the AWK library and the test program, this is probably what you have to do.
 
 {{{
 cd ase\cmn
-nmake /f makefile.msw.cl
+nmake /f msw-cl.mak
 cd ..\awk
-nmake /f makefile.msw.cl
+nmake /f msw-cl.mak
 cd ..\utl
-nmake /f makefile.msw.cl
+nmake /f msw-cl.mak
 cd ..\test\awk
-nmake /f makefile.msw.cl
+nmake /f msw-cl.mak
 }}}
 
-However, The COM module can only be built within the Visual Studio environment. After having built the COM module, you may open [[ase/test/com/asetestcom.vbp]] for testing.
+However, The COM module can only be built within the Visual Studio environment. After having built the COM module, you may open [[ase/test/com/asecom.vbp]] for testing.
