@@ -1,9 +1,6 @@
 NAME = aseawk
 MODE = release
 
-JNI_INC = \
-	-I"$(JAVA_HOME)\include" \
-	-I"$(JAVA_HOME)\include\win32" 
 
 !if !defined(CPU) || "$(CPU)" == ""
 CPU = $(PROCESSOR_ARCHITECTURE)
@@ -29,8 +26,8 @@ LDFLAGS = /subsystem:windows
 LIBS=
 
 !IF "$(MODE)" == "debug"
-CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd
-CXXFLAGS = $(CXXFLAGS) -D_DEBUG -DDEBUG /MTd
+CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd /Zi
+CXXFLAGS = $(CXXFLAGS) -D_DEBUG -DDEBUG /MTd /Zi
 !ELSEIF "$(MODE)" == "release"
 CFLAGS = $(CFLAGS) -DNDEBUG /MT /O2
 CXXFLAGS = $(CXXFLAGS) -DNDEBUG /MT /O2
@@ -91,11 +88,10 @@ LIBS_JNIDLL=user32.lib $(OUT_FILE_LIB) asecmn.lib aseutl.lib
 LIBS_JNIDLL = $(LIBS_JNIDLL) bufferoverflowu.lib
 !endif
 
-
 TARGETS = lib
-
 !if "$(JAVA_HOME)" != ""
 TARGETS = $(TARGETS) jnidll jar
+JNI_INC = -I"$(JAVA_HOME)\include" -I"$(JAVA_HOME)\include\win32" 
 !endif
 
 all: $(TARGETS)
