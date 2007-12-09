@@ -8,7 +8,7 @@ AR = link
 CFLAGS = /nologo /W3 -I..\..
 
 !IF "$(MODE)" == "debug"
-CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd
+CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd /Zi
 !ELSEIF "$(MODE)" == "release"
 CFLAGS = $(CFLAGS) -DNDEBUG /MT /O2
 !ELSE

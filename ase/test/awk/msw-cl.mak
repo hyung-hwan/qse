@@ -16,8 +16,8 @@ LIBS = asecmn.lib aseawk.lib aseutl.lib kernel32.lib user32.lib
 LIBS_CXX = $(LIBS) aseawk++.lib
 
 !IF "$(MODE)" == "debug"
-CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd
-CXXFLAGS = $(CXXFLAGS) -D_DEBUG -DDEBUG /MTd
+CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG /MTd /Zi
+CXXFLAGS = $(CXXFLAGS) -D_DEBUG -DDEBUG /MTd /Zi
 !ELSEIF "$(MODE)" == "release"
 CFLAGS = $(CFLAGS) -DNDEBUG /MT /O2
 CXXFLAGS = $(CXXFLAGS) -DNDEBUG /MT /O2
