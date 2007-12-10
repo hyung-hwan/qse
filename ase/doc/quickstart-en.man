@@ -54,7 +54,7 @@ debug    ${top)/debug/bin     $(top)/debug/lib     ${top}/debug/inc
 If you have preference for a particular compiler and the flags, you may explicitly specify them when you run the [[configure]] script. Here are presented a few such examples.
 
 {{{
-# HP-UX B.11.23 with HP ANSI C 
+# HP-UX B.11.23 with HP C/C++ compiler
 CC=cc CFLAGS="-O2 +DD64 -D_INCLUDE__STDC_A1_SOURCE" LDFLAGS="+DD64" CXX=aCC CXXFLAGS="-O2 +DD64 -D_INCLUDE__STDC_A1_SOURCE" ./configure # 64-bit
 CC=cc CFLAGS="-O2 +DD32 -D_INCLUDE__STDC_A1_SOURCE" LDFLAGS="+DD32" CXX=aCC CXXFLAGS="-O2 +DD32 -D_INCLUDE__STDC_A1_SOURCE" ./configure # 32-bit
 
