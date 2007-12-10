@@ -194,7 +194,9 @@ public abstract class Awk
 		try
 		{
 			Method m = c.getMethod (mn, a);
-			m.invoke (this, /*new Object[] {*/ ctx, name, ret, args/*}*/) ;
+			//m.invoke (this, ctx, name, ret, args) ;
+			m.invoke (this, new Object[] {ctx, name, ret, args});
+			
 		}
 		catch (java.lang.reflect.InvocationTargetException e)
 		{
