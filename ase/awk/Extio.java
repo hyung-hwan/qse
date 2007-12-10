@@ -13,6 +13,8 @@ class Extio
 	protected static final int TYPE_FILE = 2;
 	protected static final int TYPE_CONSOLE = 3;
 
+	/* PROBLEMS WITH GCJ 3.4.6 if these fields are protected.
+	 * 
 	protected static final int MODE_PIPE_READ = 0;
 	protected static final int MODE_PIPE_WRITE = 1;
 
@@ -22,6 +24,14 @@ class Extio
 
 	protected static final int MODE_CONSOLE_READ = 0;
 	protected static final int MODE_CONSOLE_WRITE = 1;
+	*/
+	public static final int MODE_PIPE_READ = 0;
+	public static final int MODE_PIPE_WRITE = 1;
+	public static final int MODE_FILE_READ = 0;
+	public static final int MODE_FILE_WRITE = 1;
+	public static final int MODE_FILE_APPEND = 2;
+	public static final int MODE_CONSOLE_READ = 0;
+	public static final int MODE_CONSOLE_WRITE = 1;
 
 	private String name;
 	private int type;

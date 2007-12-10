@@ -79,26 +79,54 @@ public class AseAwk extends StdAwk
 	{
 		URL url = AseAwk.class.getResource (
 			AseAwk.class.getName() + ".class");
-		java.io.File file = new java.io.File (url.getFile());
-
-		String osname = System.getProperty ("os.name").toLowerCase();
-		String aseBase = file.getParentFile().getParentFile().getParent();
-		String path;
-
-		if (osname.startsWith ("windows"))
+		if (url == null)
 		{
-			path = aseBase + "\\lib\\aseawk_jni.dll";
-			return path.substring(6);
-                }
-		else if (osname.startsWith ("mac"))
-		{
-			path = aseBase + "/lib/.libs/libaseawk_jni.dylib";
-			return path.substring(5);
+			// probably it is compiled with gcj
+
+			// TODO: ....
+			String osname = System.getProperty ("os.name").toLowerCase();
+			String aseBase = "..";
+			String path;
+
+			if (osname.startsWith ("windows"))
+			{
+				path = aseBase + "\\lib\\aseawk_jni.dll";
+			}
+			else if (osname.startsWith ("mac"))
+			{
+				path = aseBase + "/lib/.libs/libaseawk_jni.dylib";
+			}
+			else
+			{
+				path = aseBase + "/lib/.libs/libaseawk_jni.so";
+			}
+
+			return path;
 		}
 		else
 		{
-			path = aseBase + "/lib/.libs/libaseawk_jni.so";
-			return path.substring(5);
+			java.io.File file = new java.io.File (url.getFile());
+
+			String osname = System.getProperty ("os.name").toLowerCase();
+			String aseBase = file.getParentFile().getParentFile().getParent();
+
+			String path;
+
+			if (osname.startsWith ("windows"))
+			{
+				path = aseBase + "\\lib\\aseawk_jni.dll";
+				return path.substring(6);
+			}
+			else if (osname.startsWith ("mac"))
+			{
+				path = aseBase + "/lib/.libs/libaseawk_jni.dylib";
+				return path.substring(5);
+			}
+			else
+			{
+				path = aseBase + "/lib/.libs/libaseawk_jni.so";
+				return path.substring(5);
+			}
 		}
 	}
 
@@ -135,10 +163,13 @@ public class AseAwk extends StdAwk
 		String srcout = null;
 		int nsrcins = 0;
 		int nsrcouts = 0;
-		ArrayList<String> params = new ArrayList<String> ();
+		//ArrayList<String> params = new ArrayList<String> ();
+		ArrayList params = new ArrayList ();
 
-		for (String arg: args)
+		//for (String arg: args)
+		for (int i = 0; i < args.length; i++)
 		{
+			String arg = args[i];
 			if (mode == 0)
 			{
 				if (arg.equals("-si")) mode = 1;
@@ -239,7 +270,8 @@ public class AseAwk extends StdAwk
 		try
 		{
 			awk.parse (srcin, srcout);
-			awk.run (mainfn, params.toArray(new String[0]));
+			//awk.run (mainfn, params.toArray(new String[0]));
+			awk.run (mainfn, (String[])params.toArray(new String[0]));
 		}
 		catch (ase.awk.Exception e)
 		{
