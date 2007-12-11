@@ -116,3 +116,21 @@ nmake /f msw-cl.mak
 }}}
 
 However, The COM module can only be built within the Visual Studio environment. After having built the COM module, you may open [[ase/test/com/asecom.vbp]] for testing.
+
+
+== Extra Features ==
+
+unicode
+keyword replacement
+error string customization
+
+== AWK ==
+
+Language Difference
+
+* Statement terminator Semicolon
+* function abc()  function abc ()
+* return in BEGIN or END
+
+
+
