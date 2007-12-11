@@ -505,6 +505,8 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 
 	public void prepareNativeInterface ()
 	{
+		String libBase = "aseawk_jni";
+
 		String osname = System.getProperty ("os.name").toLowerCase();
 		String osarch = System.getProperty("os.arch").toLowerCase();
 		String userHome = System.getProperty("user.home");
@@ -515,6 +517,20 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 
 		URL url = this.getClass().getResource (
 			this.getClass().getName() + ".class");
+		if (url == null)
+		{
+			if (osname.equals("win"))
+			{
+				jniLib.setText(System.getProperty("user.dir") + "\\lib\\" + System.mapLibraryName(libBase));
+			}
+			else
+			{
+				jniLib.setText(System.getProperty("user.dir") + "/lib/.libs/" + System.mapLibraryName(libBase));
+			}
+
+			return;
+		}
+
 		String protocol = url.getProtocol ();
 
 		boolean isHttp = url.getPath().startsWith ("http://");
@@ -526,7 +542,6 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 
 		/*if (isHttp)*/ base = java.net.URLDecoder.decode (base);
 
-		String libBase = "aseawk_jni";
 		if (isHttp) libBase = libBase + "-" + osname + "-" + osarch;
 		String libName = System.mapLibraryName(libBase);
 
