@@ -54,6 +54,8 @@ ase_size_t ase_awk_tab_remove (
 
 ase_size_t ase_awk_tab_add (
 	ase_awk_tab_t* tab, const ase_char_t* str, ase_size_t len);
+ase_size_t ase_awk_tab_adduniq (
+	ase_awk_tab_t* tab, const ase_char_t* str, ase_size_t len);
 
 ase_size_t ase_awk_tab_find (
 	ase_awk_tab_t* tab, ase_size_t index,
