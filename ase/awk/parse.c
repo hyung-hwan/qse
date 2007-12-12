@@ -520,7 +520,8 @@ static int parse (ase_awk_t* awk)
 			}
 		}
 
-		if (awk->option & ASE_AWK_EXPLICIT)
+		if ((awk->option & ASE_AWK_EXPLICIT) &&
+		    !(awk->option & ASE_AWK_IMPLICIT))
 		{
 			ase_size_t sz;
 
