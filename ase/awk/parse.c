@@ -3446,6 +3446,7 @@ static ase_awk_nde_t* parse_fncall (
 		call->nargs = nargs;
 
 		if ((awk->option & ASE_AWK_EXPLICIT) &&
+		    !(awk->option & ASE_AWK_IMPLICIT) &&
 		    ase_awk_tab_adduniq (&awk->parse.afns, name, name_len) == (ase_size_t)-1)
 		{
 			ASE_AWK_FREE (awk, call);
