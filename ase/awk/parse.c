@@ -534,7 +534,9 @@ static int parse (ase_awk_t* awk)
 					awk->parse.afns.buf[sz].name.len) == ASE_NULL)
 				{
 					/* TODO: set proper error number */
-					SETERR (awk, ASE_AWK_EINVAL);	
+					SETERRARG (awk, ASE_AWK_EFNNONE, 0, 
+						awk->parse.afns.buf[sz].name.ptr,
+						awk->parse.afns.buf[sz].name.len);	
 					n = -1;
 					goto exit_parse;	
 				}
