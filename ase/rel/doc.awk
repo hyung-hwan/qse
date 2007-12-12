@@ -9,7 +9,7 @@ global empty_line_count;
 global para_started;
 global list_count;
 
-func print_text (full)
+function print_text (full)
 {
 	local fra1, fra2, link, idx, t1, t2;
 

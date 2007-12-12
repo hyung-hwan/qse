@@ -117,13 +117,24 @@ struct ase_awk_t
 			} max;
 		} depth;
 
+		/* function calls */
+		ase_awk_tab_t afns;
+
+		/* global variables */
 		ase_awk_tab_t globals;
+
+		/* local variables */
 		ase_awk_tab_t locals;
+
+		/* parameters to a function */
 		ase_awk_tab_t params;
+
+		/* maximum number of local variables */
 		ase_size_t nlocals_max;
 
 		ase_awk_nde_t* (*parse_block) (
 			ase_awk_t*,ase_size_t,ase_bool_t);
+
 	} parse;
 
 	/* source code management */
@@ -171,7 +182,6 @@ struct ase_awk_t
 	struct
 	{
 		ase_awk_bfn_t* sys;
-		/*ase_awk_bfn_t* user;*/
 		ase_awk_map_t* user;
 	} bfn;
 

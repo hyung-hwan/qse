@@ -186,6 +186,17 @@ ase_size_t ase_awk_tab_add (
 	return ase_awk_tab_insert (tab, tab->size, str, len);
 }
 
+ase_size_t ase_awk_tab_adduniq (
+	ase_awk_tab_t* tab, const ase_char_t* str, ase_size_t len)
+{
+	ase_size_t i;
+	i = ase_awk_tab_find (tab, 0, str, len);
+	if (i != (ase_size_t)-1) return i; /* found. return the current index */
+
+	/* insert a new entry */
+	return ase_awk_tab_insert (tab, tab->size, str, len);
+}
+
 ase_size_t ase_awk_tab_find (
 	ase_awk_tab_t* tab, ase_size_t index, 
 	const ase_char_t* str, ase_size_t len)

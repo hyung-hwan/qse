@@ -159,8 +159,8 @@ enum ase_awk_option_t
 	/* allow undeclared variables and implicit concatenation */
 	ASE_AWK_IMPLICIT    = (1 << 0),
 
-	/* allow explicit variable declaration and the concatenation
-	 * operator, a period. */
+	/* allow explicit variable declaration, the concatenation
+	 * operator(.), and a parse-time function check. */
 	ASE_AWK_EXPLICIT    = (1 << 1), 
 
 	/* a function name should not coincide to be a variable name */

@@ -44,12 +44,12 @@ finalize ()
 
 			case "$i" in
 			*.h|*.c|*.cc|*.cpp|*.java|*.awk|*.in)
-				"$ASEAWK" -explicit -noimplicit -f "$BASE/rel/lic.awk" -a "$target/$file" "$full"
+				"$ASEAWK" -f "$BASE/rel/lic.awk" -a "$target/$file" "$full"
 				;;
 			*.man)
 				html=`echo $i | sed 's/.man$/.html/'`
 				"$ASEAWK" -explicit -noimplicit -f "$BASE/rel/doc.awk" "$full" > "$SOURCE_ROOT/html/$html"
-				"$ASEAWK" -explicit -f "$BASE/rel/doc.awk" "$full" > "$ASETGT/$html"
+				"$ASEAWK" -explicit -noimplicit -f "$BASE/rel/doc.awk" "$full" > "$ASETGT/$html"
 				cp -f "$full" "$target/$file"
 				;;
 			*.css)
@@ -58,10 +58,10 @@ finalize ()
 				cp -f "$full" "$ASETGT/$i"
 				;;
 			*.dsp|*.dsw|*.sln|*.vcproj|*.csproj|*.bat|*.cmd)
-				"$ASEAWK" -explicit -noimplicit -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
+				"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
 				;;
 			descrip.mms)
-				"$ASEAWK" -explicit -noimplicit -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
+				"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
 				;;
 			*.frx)
 				cp -f "$full" "$target/$file"
@@ -69,7 +69,7 @@ finalize ()
 			*)
 				if [ "$dir" = "test/com" ]
 				then
-					"$ASEAWK" -explicit -noimplicit -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
+					"$ASEAWK" -f "$BASE/rel/unix2dos.awk" "$full" > "$target/$file"	
 				else
 					cp -f "$full" "$target/$file"
 				fi

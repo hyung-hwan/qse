@@ -519,9 +519,30 @@ static int parse (ase_awk_t* awk)
 				goto exit_parse;
 			}
 		}
+
+		if (awk->option & ASE_AWK_EXPLICIT)
+		{
+			ase_size_t sz;
+
+			sz = awk->parse.afns.size;
+			while (sz > 0)
+			{
+				sz--;
+
+				if (ase_awk_map_get (awk->tree.afns, 
+					awk->parse.afns.buf[sz].name.ptr,
+					awk->parse.afns.buf[sz].name.len) == ASE_NULL)
+				{
+					/* TODO: set proper error number */
+					SETERR (awk, ASE_AWK_EINVAL);	
+					n = -1;
+					goto exit_parse;	
+				}
+			}
+		}
 	}
 
-	ASE_ASSERT (awk->tree.nglobals == ase_awk_tab_getsize(&awk->parse.globals));
+	ASE_ASSERT (awk->tree.nglobals == awk->parse.globals.size);
 
 	if (awk->src.ios.out != ASE_NULL) 
 	{
@@ -1421,8 +1442,7 @@ static int add_global (
 		}
 
 		/* check if it conflict with a function name */
-		if (ase_awk_map_get (
-			awk->tree.afns, name, len) != ASE_NULL) 
+		if (ase_awk_map_get (awk->tree.afns, name, len) != ASE_NULL) 
 		{
 			SETERRARG (
 				awk, ASE_AWK_EAFNRED, line, 
@@ -3129,7 +3149,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 				}
 
 				/* check if it is an AWK function */
-				if (ase_awk_map_get(awk->tree.afns, name_dup, name_len) != ASE_NULL) 
+				if (ase_awk_map_get (awk->tree.afns, name_dup, name_len) != ASE_NULL) 
 				{
 					/* the function is defined previously */
 					SETERRARG (awk, ASE_AWK_EAFNRED, line, name_dup, name_len);
@@ -3282,7 +3302,7 @@ static ase_awk_nde_t* parse_hashidx (
 			}
 
 			/* check if it is an AWK function */
-			if (ase_awk_map_get(awk->tree.afns, name, name_len) != ASE_NULL) 
+			if (ase_awk_map_get (awk->tree.afns, name, name_len) != ASE_NULL) 
 			{
 				/* the function is defined previously */
 				SETERRARG (awk, ASE_AWK_EAFNRED, line, name, name_len);
@@ -3422,6 +3442,15 @@ static ase_awk_nde_t* parse_fncall (
 		call->what.afn.name.len = name_len;
 		call->args = head;
 		call->nargs = nargs;
+
+		if ((awk->option & ASE_AWK_EXPLICIT) &&
+		    ase_awk_tab_adduniq (&awk->parse.afns, name, name_len) == (ase_size_t)-1)
+		{
+			ASE_AWK_FREE (awk, call);
+			if (head != ASE_NULL) ase_awk_clrpt (awk, head);
+			SETERRLIN (awk, ASE_AWK_ENOMEM, line);
+			return ASE_NULL;
+		}
 	}
 
 	return (ase_awk_nde_t*)call;
