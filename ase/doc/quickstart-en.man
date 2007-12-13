@@ -135,14 +135,16 @@ Language Difference
 ! REMARKS
 |-
 | Statement terminator Semicolon
+| n/a
+| n/a
 |-
 | function abc() 
 this is very nice hello world...
 | function abc ()
-|                          
+| n/a                          
 |---------------------------------------
 | return in BEGIN or END
+|
+|
 |}}
-
-
 
