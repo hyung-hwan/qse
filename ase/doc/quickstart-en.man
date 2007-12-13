@@ -38,37 +38,50 @@ $ ./configure --enable-debug
 $ make
 }}}
 
-Refer to the following table for the output location of generated files.
+The following table shows the output locations of generated files.
 
-{{{
----------------------------------------------------------------------------
-mode     executable files     library files        include files
----------------------------------------------------------------------------
-release  ${top}/release/bin   ${top}/release/lib   ${top}/release/inc
-debug    ${top)/debug/bin     $(top)/debug/lib     ${top}/debug/inc
----------------------------------------------------------------------------
+{{|
+|-
+! Mode
+! Executable Files
+! Library Files
+! Include Files
+|-
+| release  
+| ${ase}/release/bin
+| ${ase}/release/lib
+| ${ase}/release/inc
+|-
+| debug
+| ${ase)/debug/bin
+| $(ase)/debug/lib
+| ${ase}/debug/inc
+|}}
 
-* ${top} - the top level directory
-}}}
+* ${ase} - the top level directory
 
 If you have preference for a particular compiler and the flags, you may explicitly specify them when you run the [[configure]] script. Here are presented a few such examples.
 
-{{{
-# HP-UX B.11.23 with HP C/C++ compiler
-CC=cc CFLAGS="-O2 +DD64 -D_INCLUDE__STDC_A1_SOURCE" LDFLAGS="+DD64" CXX=aCC CXXFLAGS="-O2 +DD64 -D_INCLUDE__STDC_A1_SOURCE" ./configure # 64-bit
-CC=cc CFLAGS="-O2 +DD32 -D_INCLUDE__STDC_A1_SOURCE" LDFLAGS="+DD32" CXX=aCC CXXFLAGS="-O2 +DD32 -D_INCLUDE__STDC_A1_SOURCE" ./configure # 32-bit
+{{|
+|-
+!
+! 32 Bits
+! 64 Bits
+|-
+| HP-UX B.11.23
+| CC=cc CFLAGS="-O2 +DD32 -D_INCLUDE__STDC_A1_SOURCE" LDFLAGS="+DD32" CXX=aCC CXXFLAGS="-O2 +DD32 -D_INCLUDE__STDC_A1_SOURCE" ./configure
+| CC=cc CFLAGS="-O2 +DD64 -D_INCLUDE__STDC_A1_SOURCE" LDFLAGS="+DD64" CXX=aCC CXXFLAGS="-O2 +DD64 -D_INCLUDE__STDC_A1_SOURCE" ./configure
+|-
+| SCO OpenServer 5.0.7 
+| CC=cc CFLAGS="-Xc -a ansi -O2" ./configure
+|
+|-
+| Solaris 10
+| CC=gcc CFLAGS="-Wall -O2" CXX=g++ CXXFLAGS="-Wall -O2" ./configure
+| CC=gcc CFLAGS="-Wall -O2 -m64" CXX=g++ CXXFLAGS="-Wall -O2 -m64" LDFLAGS="-m64" ./configure 
+|}}
 
-# SCO OpenServer Release 5.0.7 (SCO_SV 3.2 5.0.7) with SCO OpenServer Development System
-CC=cc CFLAGS="-Xc -a ansi -O2" ./configure
-
-# Solaris 10 with GCC
-CC=gcc CFLAGS="-Wall -O2 -m64" LDFLAGS="-m64" ./configure # 64-bit
-CC=gcc CFLAGS="-Wall -O2" ./configure # 32-bit
-}}}
-
-You may specify the C++ compiler with [[CXX]] and its flags in [[CXXFLAGS]].
-
-The JNI library for JAVA is built automatically if required JNI header files are detected by the [[configure]] script. Make sure that the [[javac]] command is included in the [[PATH]] environment variable for this. The JAVA class files are built with the [[javac]] command detected as well. The {ant,http://ant.apache.org} utility from the Apache Software Foundataion can be used to build the java class files. The [[build.xml]] file is provided at the top-level directory for this.
+The JNI library for JAVA is built automatically if required JNI header files are detected by the [[configure]] script. Make sure that the [[javac]] command is included in the [[PATH]] environment variable. The JAVA class files are built with the [[javac]] command detected as well. The {ant,http://ant.apache.org} utility from the Apache Software Foundataion can be used to build the java class files. The [[build.xml]] file is provided at the top-level directory.
 
 == OpenVMS ==
 
@@ -123,6 +136,27 @@ However, The COM module can only be built within the Visual Studio environment. 
 unicode
 keyword replacement
 error string customization
+
+== Languages ==
+
+{{|
+|-
+! Language
+! Status
+! Bindings
+|-
+| AWK
+| Beta-1
+| C,C++,Java,.Net
+|-
+| LISP
+| Experimental
+| C
+|-
+| Javascript
+| Planned
+| C
+|}}
 
 == AWK ==
 
