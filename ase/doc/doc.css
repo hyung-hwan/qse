@@ -58,7 +58,7 @@ table.ase th {
     text-align: center;
 }
 table.ase td {
-    text-align: right;
+    text-align: left;
     border-bottom: 2px solid #FFFFFF;
     padding: 0.1em 0.5em;
     background: #DBE2F1;
