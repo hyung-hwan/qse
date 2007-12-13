@@ -8,6 +8,9 @@ global header, mode;
 global empty_line_count;
 global para_started;
 global list_count;
+global table_row_count;
+global table_row_line_count;
+global table_in_th;
 
 function print_text (full)
 {
@@ -109,7 +112,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					para_started = 0;
 				}
 				text=substr($0, 2, length($0)-2);
-				print "<h1>" text "</h1>";
+				print "<h1>" . text . "</h1>";
 			}
 			else if (/^== [^=]+ ==$/)
 			{
@@ -119,7 +122,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					para_started = 0;
 				}
 				text=substr($0, 3, length($0)-4);
-				print "<h2>" text "</h2>";
+				print "<h2>" . text . "</h2>";
 			}
 			else if (/^=== [^=]+ ===$/)
 			{
@@ -129,7 +132,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					para_started = 0;
 				}
 				text=substr($0, 4, length($0)-6);
-				print "<h3>" text "</h3>";
+				print "<h3>" . text . "</h3>";
 			}
 			else if (/^==== [^=]+ ====$/)
 			{
@@ -139,9 +142,9 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					para_started = 0;
 				}
 				text=substr($0, 5, length($0)-8);
-				print "<h4>" text "</h4>";
+				print "<h4>" . text . "</h4>";
 			}
-			else if (/^\{\{\{$/)
+			else if (/^\{\{\{$/) # {{{
 			{
 				# {{{
 				if (para_started)
@@ -152,7 +155,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 				print "<pre class='code'>";
 				mode = 1;
 			}
-			else if (/\[\[\[/)
+			else if (/^\[\[\[$/) # [[[
 			{
 				if (para_started)
 				{
@@ -163,7 +166,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 				mode = 2;
 				list_count = 0;
 			}
-			else if (/\(\(\(/)
+			else if (/^\(\(\($/) # (((
 			{
 				if (para_started)
 				{
@@ -173,6 +176,18 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 				print "<ol>";
 				mode = 3;
 				list_count = 0;
+			}
+			else if (/^\{\{\|$/) # {{|
+			{
+				if (para_started)
+				{
+					print "</p>";
+					para_started = 0;
+				}
+
+				print "<table border=1>";
+				mode = 4;
+				table_row_count = 0;
 			}
 			else
 			{
@@ -256,6 +271,68 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 		else
 		{
 			print_text ($0);
+		}
+	}
+	else if (mode == 4)
+	{
+		if (/^\|}}$/) # |}}
+		{
+			if (table_row_line_count > 0)
+				print ((table_in_th)? "</th>": "</td>");
+			if (table_row_count > 0)  print "</tr>";
+			print "</table>";
+			mode = 0;
+		}
+		else if (/^\|-+$/) # |-
+		{
+			if (table_row_line_count > 0) 
+				print ((table_in_th)? "</th>": "</td>");
+			if (table_row_count > 0)  print "</tr>";
+			print "<tr>";
+			table_row_count++;
+			table_row_line_count = 0;
+		}
+		else if (table_row_count == 1 && /^![[:space:]]*$/) # !
+		{
+			if (table_row_line_count > 0) 
+				print ((table_in_th)? "</th>": "</td>");
+			print "<th>";
+			print "&nbsp;";
+			table_in_th = 1;
+			table_row_line_count++;
+		}
+		else if (table_row_count == 1 && /^! .+/) # ! text
+		{
+			if (table_row_line_count > 0) 
+				print ((table_in_th)? "</th>": "</td>");
+			print "<th>";
+			print_text (substr ($0, 3, length($0)-2));
+			table_in_th = 1;
+			table_row_line_count++;
+		}
+		else if (/^\|[[:space:]]*$/) # |
+		{
+			if (table_row_line_count > 0) 
+				print ((table_in_th)? "</th>": "</td>");
+			print "<td>";
+			print "&nbsp;";
+			table_in_th = 0;
+			table_row_line_count++;
+		}
+		else if (/^\| .+/) # | text
+		{
+			if (table_row_line_count > 0) 
+				print ((table_in_th)? "</th>": "</td>");
+			print "<td>";
+			print_text (substr ($0, 3, length($0)-2));
+			table_in_th = 0;
+			table_row_line_count++;
+		}
+		else 
+		{
+			print "<br>";
+			print_text ($0);
+			table_row_line_count++;
 		}
 	}
 }
