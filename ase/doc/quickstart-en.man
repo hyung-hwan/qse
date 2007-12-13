@@ -128,9 +128,21 @@ error string customization
 
 Language Difference
 
-* Statement terminator Semicolon
-* function abc()  function abc ()
-* return in BEGIN or END
+{{|
+|-
+! ASE 
+! NAWK
+! REMARKS
+|-
+| Statement terminator Semicolon
+|-
+| function abc() 
+this is very nice hello world...
+| function abc ()
+|                          
+|---------------------------------------
+| return in BEGIN or END
+|}}
 
 
 
