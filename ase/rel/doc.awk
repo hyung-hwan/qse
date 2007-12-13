@@ -152,7 +152,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					print "</p>";
 					para_started = 0;
 				}
-				print "<pre class='code'>";
+				print "<pre class='ase'>";
 				mode = 1;
 			}
 			else if (/^\[\[\[$/) # [[[
@@ -185,7 +185,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 					para_started = 0;
 				}
 
-				print "<table border=1>";
+				print "<table class='ase'>";
 				mode = 4;
 				table_row_count = 0;
 			}
@@ -288,7 +288,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 			if (table_row_line_count > 0) 
 				print ((table_in_th)? "</th>": "</td>");
 			if (table_row_count > 0)  print "</tr>";
-			print "<tr>";
+			print "<tr class='ase'>";
 			table_row_count++;
 			table_row_line_count = 0;
 		}
@@ -296,7 +296,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 		{
 			if (table_row_line_count > 0) 
 				print ((table_in_th)? "</th>": "</td>");
-			print "<th>";
+			print "<th class='ase'>";
 			print "&nbsp;";
 			table_in_th = 1;
 			table_row_line_count++;
@@ -305,7 +305,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 		{
 			if (table_row_line_count > 0) 
 				print ((table_in_th)? "</th>": "</td>");
-			print "<th>";
+			print "<th class='ase'>";
 			print_text (substr ($0, 3, length($0)-2));
 			table_in_th = 1;
 			table_row_line_count++;
@@ -314,7 +314,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 		{
 			if (table_row_line_count > 0) 
 				print ((table_in_th)? "</th>": "</td>");
-			print "<td>";
+			print "<td class='ase'>";
 			print "&nbsp;";
 			table_in_th = 0;
 			table_row_line_count++;
@@ -323,7 +323,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 		{
 			if (table_row_line_count > 0) 
 				print ((table_in_th)? "</th>": "</td>");
-			print "<td>";
+			print "<td class='ase'>";
 			print_text (substr ($0, 3, length($0)-2));
 			table_in_th = 0;
 			table_row_line_count++;
