@@ -47,7 +47,12 @@ if test "$ac_test_CJFLAGS" = "set"
 then
 	CJFLAGS=$ac_save_CJFLAGS
 else
-	CJFLAGS=
+	if test "$CJ" = "gcj"
+	then
+		CJFLAGS="-O2"
+	else
+		CJFLAGS=
+	fi
 fi
 
 # Checks for header files.
@@ -220,19 +225,26 @@ then
 		CFLAGS_JNI="$CFLAGS_JNI -I$i"	
 	done
 
-	JNI="jni"
+	BUILD_JNI="jni"
 else
 	JAVAC_PATH=""
 	CFLAGS_JNI=""
-	JNI=""
+	BUILD_JNI=""
 fi
 
+if test "$CJ" != ""
+then
+	BUILD_CJ="cj"
+else
+	BUILD_CJ=
+fi
 
 AC_SUBST(CFLAGS_JNI, $CFLAGS_JNI)
 AC_SUBST(JAVAC, $JAVAC_PATH)
 AC_SUBST(JAR, $JAR_PATH)
-AC_SUBST(JNI, $JNI)
+AC_SUBST(BUILD_JNI, $BUILD_JNI)
 AC_SUBST(CJFLAGS, $CJFLAGS)
+AC_SUBST(BUILD_CJ, $BUILD_CJ)
 
 AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile])
 AC_OUTPUT

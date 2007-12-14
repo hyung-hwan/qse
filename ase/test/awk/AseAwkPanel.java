@@ -139,7 +139,7 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			//ctx.setGlobal (Context.GLOBAL_CONVFMT, ret);
 			Argument g = ctx.getGlobal (Context.GLOBAL_CONVFMT);
 			ctx.setGlobal (Context.GLOBAL_CONVFMT, r2);
-	System.out.println (g.getStringValue());
+		System.out.println (g.getStringValue());
 			g = ctx.getGlobal (Context.GLOBAL_CONVFMT);
 		System.out.println (g.getStringValue());
 		*/
@@ -448,7 +448,7 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			{
 				public void itemStateChanged (ItemEvent e)
 				{
-					String name = (String)e.getItem();
+					String name = ((Checkbox)e.getItem()).getLabel();
 					for (int i = 0; i < options.length; i++)
 					{
 						if (options[i].getName().equals(name))
@@ -521,11 +521,13 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 		{
 			if (osname.equals("win"))
 			{
-				jniLib.setText(System.getProperty("user.dir") + "\\lib\\" + System.mapLibraryName(libBase));
+				jniLib.setText(System.getProperty("user.dir") + 
+					"\\.\\lib\\" + System.mapLibraryName(libBase));
 			}
 			else
 			{
-				jniLib.setText(System.getProperty("user.dir") + "/lib/.libs/" + System.mapLibraryName(libBase));
+				jniLib.setText(System.getProperty("user.dir") + 
+					"/../lib/.libs/" + System.mapLibraryName(libBase));
 			}
 
 			return;

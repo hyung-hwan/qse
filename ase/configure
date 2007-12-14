@@ -463,7 +463,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CJ ac_ct_CJ LIBTOOL_DEPS BUILDMODE JAVAC_PATH JAR_PATH CFLAGS_JNI JAVAC JAR JNI CJFLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CJ ac_ct_CJ LIBTOOL_DEPS BUILDMODE JAVAC_PATH JAR_PATH CFLAGS_JNI JAVAC JAR BUILD_JNI CJFLAGS BUILD_CJ LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -18549,7 +18549,12 @@ if test "$ac_test_CJFLAGS" = "set"
 then
 	CJFLAGS=$ac_save_CJFLAGS
 else
-	CJFLAGS=
+	if test "$CJ" = "gcj"
+	then
+		CJFLAGS="-O2"
+	else
+		CJFLAGS=
+	fi
 fi
 
 # Checks for header files.
@@ -26007,13 +26012,19 @@ echo "${ECHO_T}no" >&6
 		CFLAGS_JNI="$CFLAGS_JNI -I$i"
 	done
 
-	JNI="jni"
+	BUILD_JNI="jni"
 else
 	JAVAC_PATH=""
 	CFLAGS_JNI=""
-	JNI=""
+	BUILD_JNI=""
 fi
 
+if test "$CJ" != ""
+then
+	BUILD_CJ="cj"
+else
+	BUILD_CJ=
+fi
 
 CFLAGS_JNI=$CFLAGS_JNI
 
@@ -26021,9 +26032,11 @@ JAVAC=$JAVAC_PATH
 
 JAR=$JAR_PATH
 
-JNI=$JNI
+BUILD_JNI=$BUILD_JNI
 
 CJFLAGS=$CJFLAGS
+
+BUILD_CJ=$BUILD_CJ
 
 
                                                                       ac_config_files="$ac_config_files makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile"
@@ -26686,8 +26699,9 @@ s,@JAR_PATH@,$JAR_PATH,;t t
 s,@CFLAGS_JNI@,$CFLAGS_JNI,;t t
 s,@JAVAC@,$JAVAC,;t t
 s,@JAR@,$JAR,;t t
-s,@JNI@,$JNI,;t t
+s,@BUILD_JNI@,$BUILD_JNI,;t t
 s,@CJFLAGS@,$CJFLAGS,;t t
+s,@BUILD_CJ@,$BUILD_CJ,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

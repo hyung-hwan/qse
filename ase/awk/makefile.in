@@ -18,12 +18,13 @@ LIBS = @LIBS@
 MODE = @BUILDMODE@
 
 CJ = @CJ@
-CJFLAGS = @CJFLAGS@ --classpath=@abs_top_builddir@/..
+CJFLAGS = @CJFLAGS@ --classpath=@abs_top_builddir@/.. -fjni 
+BUILD_CJ = @BUILD_CJ@
 
 JAVAC = @JAVAC@
 JAR = @JAR@
 CFLAGS_JNI = @CFLAGS_JNI@
-JNI = @JNI@
+BUILD_JNI = @BUILD_JNI@
 
 LIBTOOL_COMPILE = ../libtool --mode=compile
 LIBTOOL_LINK = ../libtool --mode=link 
@@ -62,7 +63,17 @@ OBJ_FILES_LIB_CXX = \
 
 OBJ_FILES_LIB_CJ = \
 	$(TMP_DIR)/cj/Awk.o \
-	$(TMP_DIR)/cj/StdAwk.o
+	$(TMP_DIR)/cj/StdAwk.o \
+	$(TMP_DIR)/cj/Context.o \
+	$(TMP_DIR)/cj/Extio.o \
+	$(TMP_DIR)/cj/IO.o \
+	$(TMP_DIR)/cj/Console.o \
+	$(TMP_DIR)/cj/File.o \
+	$(TMP_DIR)/cj/Pipe.o \
+	$(TMP_DIR)/cj/Exception.o \
+	$(TMP_DIR)/cj/Return.o \
+	$(TMP_DIR)/cj/Argument.o \
+	$(TMP_DIR)/cj/Clearable.o 
 
 OBJ_FILES_SO = $(OBJ_FILES_LIB:.o=.lo) $(OBJ_FILES_JNI:.o=.lo)
 
@@ -77,13 +88,18 @@ OBJ_FILES_JAR = \
 	$(TMP_DIR)/ase/awk/Pipe.class \
 	$(TMP_DIR)/ase/awk/Exception.class \
 	$(TMP_DIR)/ase/awk/Return.class \
-	$(TMP_DIR)/ase/awk/Argument.class
+	$(TMP_DIR)/ase/awk/Argument.class \
+	$(TMP_DIR)/ase/awk/Clearable.class
 
-lib: build$(JNI)
+lib: build$(BUILD_JNI)$(BUILD_CJ)
 
 build: $(OUT_FILE_LIB) $(OUT_FILE_LIB_CXX)
 
+buildjnicj: buildjni buildcj
+
 buildjni: build $(OUT_FILE_JNI)
+
+buildcj: build $(OUT_FILE_LIB_CJ)
 
 $(OUT_FILE_LIB): $(TMP_DIR) $(OUT_DIR) $(OBJ_FILES_LIB)
 	$(AR) cr $(OUT_FILE_LIB) $(OBJ_FILES_LIB)
@@ -176,6 +192,9 @@ $(TMP_DIR)/ase/awk/Return.class: Return.java
 $(TMP_DIR)/ase/awk/Argument.class: Argument.java
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Argument.java
 
+$(TMP_DIR)/ase/awk/Clearable.class: Clearable.java
+	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Clearable.java
+
 $(TMP_DIR)/cxx/Awk.o: Awk.cpp Awk.hpp
 	$(CXX) $(CXXFLAGS) -o $@ -c Awk.cpp
 
@@ -187,6 +206,36 @@ $(TMP_DIR)/cj/Awk.o: Awk.java
 
 $(TMP_DIR)/cj/StdAwk.o: StdAwk.java
 	$(CJ) $(CJFLAGS) -o $@ -c StdAwk.java
+
+$(TMP_DIR)/cj/Context.o: Context.java
+	$(CJ) $(CJFLAGS) -o $@ -c Context.java
+
+$(TMP_DIR)/cj/Extio.o: Extio.java
+	$(CJ) $(CJFLAGS) -o $@ -c Extio.java
+
+$(TMP_DIR)/cj/IO.o: IO.java
+	$(CJ) $(CJFLAGS) -o $@ -c IO.java
+
+$(TMP_DIR)/cj/Console.o: Console.java
+	$(CJ) $(CJFLAGS) -o $@ -c Console.java
+
+$(TMP_DIR)/cj/File.o: File.java
+	$(CJ) $(CJFLAGS) -o $@ -c File.java
+
+$(TMP_DIR)/cj/Pipe.o: Pipe.java
+	$(CJ) $(CJFLAGS) -o $@ -c Pipe.java
+
+$(TMP_DIR)/cj/Exception.o: Exception.java
+	$(CJ) $(CJFLAGS) -o $@ -c Exception.java
+
+$(TMP_DIR)/cj/Return.o: Return.java
+	$(CJ) $(CJFLAGS) -o $@ -c Return.java
+
+$(TMP_DIR)/cj/Argument.o: Argument.java
+	$(CJ) $(CJFLAGS) -o $@ -c Argument.java
+
+$(TMP_DIR)/cj/Clearable.o: Clearable.java
+	$(CJ) $(CJFLAGS) -o $@ -c Clearable.java
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
@@ -201,5 +250,6 @@ $(TMP_DIR_CJ): $(TMP_DIR)
 	mkdir -p $(TMP_DIR_CJ)
 
 clean:
-	rm -rf $(OUT_FILE_LIB) $(OUT_FILE_JNI) $(OUT_FILE_JAR) $(OUT_FILE_LIB_CXX) $(OBJ_FILES_LIB) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OBJ_FILES_LIB_CXX)
+	rm -rf $(OUT_FILE_LIB) $(OUT_FILE_JNI) $(OUT_FILE_JAR) $(OUT_FILE_LIB_CXX) $(OUT_FILE_LIB_CJ)
+	rm -rf $(OBJ_FILES_LIB) $(OBJ_FILES_JNI) $(OBJ_FILES_JAR) $(OBJ_FILES_LIB_CXX) $(OBJ_FILES_LIB_CJ)
 
