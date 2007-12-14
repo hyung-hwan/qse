@@ -13,6 +13,9 @@ AC_PROG_CC
 #AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 
+# native java compiler
+AC_CHECK_TOOL(CJ, gcj)
+
 AC_SUBST(LIBTOOL_DEPS)
 
 # Overrides the default CFLAGS setting
@@ -38,6 +41,13 @@ else
 	else
 		CXXFLAGS=
 	fi
+fi
+
+if test "$ac_test_CJFLAGS" = "set"
+then
+	CJFLAGS=$ac_save_CJFLAGS
+else
+	CJFLAGS=
 fi
 
 # Checks for header files.
@@ -106,10 +116,12 @@ if test "$enable_debug_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG"]
 	[CXXFLAGS="$CXXFLAGS -g -D_DEBUG -UNDEBUG"]
+	[CJFLAGS="$CJFLAGS -g"]
 	AC_SUBST(BUILDMODE, "debug")
 else
 	[CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG"]
 	[CXXFLAGS="$CXXFLAGS -DNDEBUG -U_DEBUG"]
+	[CJFLAGS="$CJFLAGS"]
 	AC_SUBST(BUILDMODE, "release")
 fi
 
@@ -215,10 +227,12 @@ else
 	JNI=""
 fi
 
+
 AC_SUBST(CFLAGS_JNI, $CFLAGS_JNI)
 AC_SUBST(JAVAC, $JAVAC_PATH)
 AC_SUBST(JAR, $JAR_PATH)
 AC_SUBST(JNI, $JNI)
+AC_SUBST(CJFLAGS, $CJFLAGS)
 
 AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile])
 AC_OUTPUT
