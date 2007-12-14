@@ -8,12 +8,19 @@ CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/@BUILDMODE@/lib
 LIBS = @LIBS@ -laseawk -lasecmn -laseutl -lm
 LIBS_CXX = -laseawk++ ${LIBS} 
+LIBS_CJ = -laseawkja
 MODE = @BUILDMODE@
+
+CJ = @CJ@
+CJFLAGS = @CJFLAGS@ --classpath=@abs_top_builddir@/..:. -fjni
+BUILD_CJ = @BUILD_CJ@
 
 JAVAC = @JAVAC@
 JAR = @JAR@
 CFLAGS_JNI = @CFLAGS_JNI@
-JNI = @JNI@
+BUILD_JNI = @BUILD_JNI@
+
+AR = ar
 
 OUT_DIR= ../../$(MODE)
 OUT_DIR_LIB = $(OUT_DIR)/lib
@@ -22,20 +29,33 @@ TMP_DIR = $(MODE)
 
 ASEAWK_LIB = 
 
-all: build$(JNI)
+all: build$(BUILD_JNI)$(BUILD_CJ)
 
 build: $(TMP_DIR) $(OUT_DIR_BIN) $(OUT_DIR_BIN)/aseawk $(OUT_DIR_BIN)/aseawk_mini $(OUT_DIR_BIN)/aseawk++
 
+buildjnicj: buildjni buildcj
+	
 buildjni: build $(OUT_DIR_BIN)/aseawk.jar $(OUT_DIR)/AseAwkApplet.html $(OUT_DIR)/AseAwkApplet.js 
+
+buildcj: build $(OUT_DIR_BIN)/aseawkja
 
 $(OUT_DIR_BIN)/aseawk: awk.c
 	$(CC) $(CFLAGS) -o $@ awk.c $(LDFLAGS) $(LIBS)
 
-$(OUT_DIR_BIN)/aseawk_mini: mini.c
-	$(CC) $(CFLAGS) -o $@ mini.c $(LDFLAGS) $(LIBS)
-
 $(OUT_DIR_BIN)/aseawk++: Awk.cpp
 	$(CXX) $(CFLAGS) -o $@ Awk.cpp $(LDFLAGS) $(LIBS_CXX)
+
+$(OUT_DIR_BIN)/aseawkja: $(TMP_DIR)/cj AseAwk.java AseAwkPanel.java AseAwkApplet.java
+	$(CJ) $(CJFLAGS) -o $(TMP_DIR)/cj/AseAwk.o -c AseAwk.java 
+	$(CJ) $(CJFLAGS) -o $(TMP_DIR)/cj/AseAwkPanel.o -c AseAwkPanel.java 
+	$(CJ) $(CJFLAGS) -o $(TMP_DIR)/cj/AseAwkApplet.o -c AseAwkApplet.java 
+	mkdir -p $(TMP_DIR)/cj/lib
+	cd $(TMP_DIR)/cj/lib; $(AR) xv @abs_top_builddir@/@BUILDMODE@/lib/libaseawkja.a
+	$(CJ) --main=AseAwk -o $@ $(TMP_DIR)/cj/*.o $(TMP_DIR)/cj/lib/*.o
+	rm -rf $(TMP_DIR)/cj/lib
+	# Linking with the library seems to cause the resulting program
+	# to crash for some JNI operations. Correct me if I'm wrong.
+	#$(CJ) --main=AseAwk -o $@ $(TMP_DIR)/cj/*.o $(LDFLAGS) $(LIBS_CJ)
 
 $(OUT_DIR_BIN)/aseawk.jar: $(TMP_DIR)/AseAwkPanel.class $(TMP_DIR)/AseAwk.class $(TMP_DIR)/AseAwkApplet.class
 	cd $(TMP_DIR); $(JAR) -xvf ../$(OUT_DIR_LIB)/aseawk.jar 
@@ -63,7 +83,10 @@ $(OUT_DIR_BIN):
 $(TMP_DIR):
 	mkdir -p $(TMP_DIR)
 
+$(TMP_DIR)/cj:
+	mkdir -p $(TMP_DIR)/cj
+
 clean:
-	rm -rf $(OUT_DIR_BIN)/aseawk $(OUT_DIR_BIN)/aseawk_mini $(OUT_DIR_BIN)/aseawk++ 
+	rm -rf $(OUT_DIR_BIN)/aseawk $(OUT_DIR_BIN)/aseawk++ $(OUT_DIR_BIN)/aseawkja
 	rm -rf $(OUT_DIR_BIN)/aseawk.jar $(OUT_DIR)/AseAwkApplet.html $(OUT_DIR)/AseAwkApplet.js $(TMP_DIR)/*.class
 
