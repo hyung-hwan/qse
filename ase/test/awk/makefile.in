@@ -31,7 +31,7 @@ ASEAWK_LIB =
 
 all: build$(BUILD_JNI)$(BUILD_CJ)
 
-build: $(TMP_DIR) $(OUT_DIR_BIN) $(OUT_DIR_BIN)/aseawk $(OUT_DIR_BIN)/aseawk_mini $(OUT_DIR_BIN)/aseawk++
+build: $(TMP_DIR) $(OUT_DIR_BIN) $(OUT_DIR_BIN)/aseawk $(OUT_DIR_BIN)/aseawk++
 
 buildjnicj: buildjni buildcj
 	
