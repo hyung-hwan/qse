@@ -463,7 +463,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL LIBTOOL_DEPS BUILDMODE JAVAC_PATH JAR_PATH CFLAGS_JNI JAVAC JAR JNI LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CJ ac_ct_CJ LIBTOOL_DEPS BUILDMODE JAVAC_PATH JAR_PATH CFLAGS_JNI JAVAC JAR JNI CJFLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -18437,6 +18437,87 @@ LIBTOOL='$(SHELL) $(top_builddir)/libtool'
 
 
 
+# native java compiler
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}gcj", so it can be a program name with args.
+set dummy ${ac_tool_prefix}gcj; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_CJ+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$CJ"; then
+  ac_cv_prog_CJ="$CJ" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CJ="${ac_tool_prefix}gcj"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+CJ=$ac_cv_prog_CJ
+if test -n "$CJ"; then
+  echo "$as_me:$LINENO: result: $CJ" >&5
+echo "${ECHO_T}$CJ" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_CJ"; then
+  ac_ct_CJ=$CJ
+  # Extract the first word of "gcj", so it can be a program name with args.
+set dummy gcj; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_CJ+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_CJ"; then
+  ac_cv_prog_ac_ct_CJ="$ac_ct_CJ" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_CJ="gcj"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+ac_ct_CJ=$ac_cv_prog_ac_ct_CJ
+if test -n "$ac_ct_CJ"; then
+  echo "$as_me:$LINENO: result: $ac_ct_CJ" >&5
+echo "${ECHO_T}$ac_ct_CJ" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  CJ=$ac_ct_CJ
+else
+  CJ="$ac_cv_prog_CJ"
+fi
+
+
 
 
 # Overrides the default CFLAGS setting
@@ -18462,6 +18543,13 @@ else
 	else
 		CXXFLAGS=
 	fi
+fi
+
+if test "$ac_test_CJFLAGS" = "set"
+then
+	CJFLAGS=$ac_save_CJFLAGS
+else
+	CJFLAGS=
 fi
 
 # Checks for header files.
@@ -25723,11 +25811,13 @@ if test "$enable_debug_is" = "yes"
 then
 	CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG"
 	CXXFLAGS="$CXXFLAGS -g -D_DEBUG -UNDEBUG"
+	CJFLAGS="$CJFLAGS -g"
 	BUILDMODE="debug"
 
 else
 	CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG"
 	CXXFLAGS="$CXXFLAGS -DNDEBUG -U_DEBUG"
+	CJFLAGS="$CJFLAGS"
 	BUILDMODE="release"
 
 fi
@@ -25924,6 +26014,7 @@ else
 	JNI=""
 fi
 
+
 CFLAGS_JNI=$CFLAGS_JNI
 
 JAVAC=$JAVAC_PATH
@@ -25931,6 +26022,8 @@ JAVAC=$JAVAC_PATH
 JAR=$JAR_PATH
 
 JNI=$JNI
+
+CJFLAGS=$CJFLAGS
 
 
                                                                       ac_config_files="$ac_config_files makefile cmn/makefile awk/makefile lsp/makefile utl/makefile test/awk/makefile test/lsp/makefile"
@@ -26584,6 +26677,8 @@ s,@F77@,$F77,;t t
 s,@FFLAGS@,$FFLAGS,;t t
 s,@ac_ct_F77@,$ac_ct_F77,;t t
 s,@LIBTOOL@,$LIBTOOL,;t t
+s,@CJ@,$CJ,;t t
+s,@ac_ct_CJ@,$ac_ct_CJ,;t t
 s,@LIBTOOL_DEPS@,$LIBTOOL_DEPS,;t t
 s,@BUILDMODE@,$BUILDMODE,;t t
 s,@JAVAC_PATH@,$JAVAC_PATH,;t t
@@ -26592,6 +26687,7 @@ s,@CFLAGS_JNI@,$CFLAGS_JNI,;t t
 s,@JAVAC@,$JAVAC,;t t
 s,@JAR@,$JAR,;t t
 s,@JNI@,$JNI,;t t
+s,@CJFLAGS@,$CJFLAGS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
