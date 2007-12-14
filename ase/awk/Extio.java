@@ -6,7 +6,7 @@
 
 package ase.awk;
 
-class Extio
+public class Extio
 {
 	protected static final int TYPE_PIPE = 0;
 	protected static final int TYPE_COPROC = 1;
