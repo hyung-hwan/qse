@@ -448,7 +448,21 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 			{
 				public void itemStateChanged (ItemEvent e)
 				{
-					String name = ((Checkbox)e.getItem()).getLabel();
+					Object x = e.getItem();
+					String name;
+
+					if (x instanceof Checkbox)
+					{
+						// gcj 
+						name = ((Checkbox)x).getLabel();
+					}
+					else if (x instanceof String)
+					{
+						// standard jdk
+						name = (String)x;
+					}
+					else name = x.toString();
+
 					for (int i = 0; i < options.length; i++)
 					{
 						if (options[i].getName().equals(name))
