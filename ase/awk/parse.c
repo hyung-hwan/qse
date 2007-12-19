@@ -839,6 +839,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		return ASE_NULL;
 	}
 
+	#if 0	
 	if (awk->option & ASE_AWK_UNIQUEFN) 
 	{
 		/* check if it coincides to be a global variable name */
@@ -851,6 +852,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			return ASE_NULL;
 		}
 	}
+	#endif
 
 	/* clone the function name before it is overwritten */
 	name_dup = ase_awk_strxdup (awk, name, name_len);
@@ -915,6 +917,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			param = ASE_STR_BUF(&awk->token.name);
 			param_len = ASE_STR_LEN(&awk->token.name);
 
+			#if 0
 			if (awk->option & ASE_AWK_UNIQUEFN) 
 			{
 				/* check if a parameter conflicts with a function */
@@ -937,6 +940,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 				 *  x in print x is a parameter
 				 */
 			}
+			#endif
 
 			/* check if a parameter conflicts with other parameters */
 			if (ase_awk_tab_find (
@@ -1433,6 +1437,7 @@ static int add_global (
 {
 	ase_size_t nglobals;
 
+	#if 0
 	if (awk->option & ASE_AWK_UNIQUEFN) 
 	{
 		/* check if it conflict with a builtin function name */
@@ -1453,6 +1458,7 @@ static int add_global (
 			return -1;
 		}
 	}
+	#endif
 
 	/* check if it conflicts with other global variable names */
 	if (find_global (awk, name, len) != (ase_size_t)-1)
@@ -1597,8 +1603,11 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 		local = ASE_STR_BUF(&awk->token.name);
 		local_len = ASE_STR_LEN(&awk->token.name);
 
+		#if 0
 		if (awk->option & ASE_AWK_UNIQUEFN) 
 		{
+			ase_bool_t iscur = ase_false;
+
 			/* check if it conflict with a builtin function name */
 			if (ase_awk_getbfn (awk, local, local_len) != ASE_NULL)
 			{
@@ -1609,11 +1618,14 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 			}
 
 			/* check if it conflict with a function name */
-			if (ase_strxncmp (
-			    	awk->tree.cur_afn.ptr, awk->tree.cur_afn.len, 
-			    	local, local_len) == 0 ||
-			    ase_awk_map_get (
-			    	awk->tree.afns, local, local_len) != ASE_NULL) 
+			if (awk->tree.cur_afn.ptr != ASE_NULL)
+			{
+				iscur = (ase_strxncmp (
+					awk->tree.cur_afn.ptr, awk->tree.cur_afn.len, 
+					local, local_len) == 0);
+			}
+
+			if (iscur || ase_awk_map_get (awk->tree.afns, local, local_len) != ASE_NULL) 
 			{
 				SETERRARG (
 					awk, ASE_AWK_EAFNRED, awk->token.line,
@@ -1621,6 +1633,7 @@ static ase_awk_t* collect_locals (ase_awk_t* awk, ase_size_t nlocals)
 				return ASE_NULL;
 			}
 		}
+		#endif
 
 		/* check if it conflicts with a paremeter name */
 		n = ase_awk_tab_find (&awk->parse.params, 0, local, local_len);
@@ -3141,8 +3154,11 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 
 		if (awk->option & ASE_AWK_IMPLICIT) 
 		{
+			#if 0
 			if (awk->option & ASE_AWK_UNIQUEFN)
 			{
+				ase_bool_t iscur;
+
 				/* the name should not conflict with a function name */
 				/* check if it is a builtin function */
 				if (ase_awk_getbfn (awk, name_dup, name_len) != ASE_NULL)
@@ -3152,13 +3168,21 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 				}
 
 				/* check if it is an AWK function */
-				if (ase_awk_map_get (awk->tree.afns, name_dup, name_len) != ASE_NULL) 
+				if (awk->tree.cur_afn.ptr != ASE_NULL)
+				{
+					iscur = (ase_strxncmp (
+						awk->tree.cur_afn.ptr, awk->tree.cur_afn.len, 
+						name_dup, name_len) == 0);
+				}
+
+				if (iscur || ase_awk_map_get (awk->tree.afns, name_dup, name_len) != ASE_NULL) 
 				{
 					/* the function is defined previously */
 					SETERRARG (awk, ASE_AWK_EAFNRED, line, name_dup, name_len);
 					goto exit_func;
 				}
 			}
+			#endif
 
 			nde->type = ASE_AWK_NDE_NAMED;
 			nde->line = line;
@@ -3295,8 +3319,11 @@ static ase_awk_nde_t* parse_hashidx (
 
 	if (awk->option & ASE_AWK_IMPLICIT) 
 	{
+		#if 0
 		if (awk->option & ASE_AWK_UNIQUEFN) 
 		{
+			ase_bool_t iscur = ase_false;
+
 			/* check if it is a builtin function */
 			if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
 			{
@@ -3305,13 +3332,21 @@ static ase_awk_nde_t* parse_hashidx (
 			}
 
 			/* check if it is an AWK function */
-			if (ase_awk_map_get (awk->tree.afns, name, name_len) != ASE_NULL) 
+			if (awk->tree.cur_afn.ptr != ASE_NULL)
+			{
+				iscur = (ase_strxncmp (
+					awk->tree.cur_afn.ptr, awk->tree.cur_afn.len, 
+					name, name_len) == 0);
+			}
+
+			if (iscur || ase_awk_map_get (awk->tree.afns, name, name_len) != ASE_NULL) 
 			{
 				/* the function is defined previously */
 				SETERRARG (awk, ASE_AWK_EAFNRED, line, name, name_len);
 				goto exit_func;
 			}
 		}
+		#endif
 
 		nde->type = ASE_AWK_NDE_NAMEDIDX;
 		nde->line = line;
