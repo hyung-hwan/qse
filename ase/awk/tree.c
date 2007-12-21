@@ -384,20 +384,27 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_GLOBAL:
 		{
-			/*ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
-			ase_size_t n;*/
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 
 			if (px->id.idxa != (ase_size_t)-1) 
 			{
-				/*
-				PUT_SRCSTR (awk, ASE_T("__global"));
-				n = ase_awk_longtostr (
-					px->id.idxa, 10, 
-					ASE_NULL, tmp, ASE_COUNTOF(tmp));
-				PUT_SRCSTRX (awk, tmp, n);
-				*/
-				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+
+				if ((awk->option & ASE_AWK_EXPLICIT) && 
+				    !(awk->option & ASE_AWK_IMPLICIT))
+				{
+					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				}
+				else
+				{
+					ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
+					ase_size_t n;
+
+					PUT_SRCSTR (awk, ASE_T("__global"));
+					n = ase_awk_longtostr (
+						px->id.idxa, 10, 
+						ASE_NULL, tmp, ASE_COUNTOF(tmp));
+					PUT_SRCSTRX (awk, tmp, n);
+				}
 			}
 			else 
 			{
@@ -409,20 +416,26 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 		case ASE_AWK_NDE_GLOBALIDX:
 		{
-			/*ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
-			ase_size_t n;*/
 			ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)nde;
 
 			if (px->id.idxa != (ase_size_t)-1) 
 			{
-				/*
-				PUT_SRCSTR (awk, ASE_T("__global"));
-				n = ase_awk_longtostr (
-					px->id.idxa, 10, 
-					ASE_NULL, tmp, ASE_COUNTOF(tmp));
-				PUT_SRCSTRX (awk, tmp, n);
-				*/
-				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				if ((awk->option & ASE_AWK_EXPLICIT) && 
+				    !(awk->option & ASE_AWK_IMPLICIT))
+				{
+					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				}
+				else
+				{
+					ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
+					ase_size_t n;
+
+					PUT_SRCSTR (awk, ASE_T("__global"));
+					n = ase_awk_longtostr (
+						px->id.idxa, 10, 
+						ASE_NULL, tmp, ASE_COUNTOF(tmp));
+					PUT_SRCSTRX (awk, tmp, n);
+				}
 				PUT_SRCSTR (awk, ASE_T("["));
 			}
 			else 
