@@ -33,6 +33,9 @@
 		print getx() + gety();
         }
 
+* redefined the variable scope
+* removed ASE_AWK_UNIQUEFN and ASE_AWK_SHADING
+
 [0.3.2]
 
 * fixed a build problem for x64 target in MSVC2005
