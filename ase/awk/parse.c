@@ -524,25 +524,28 @@ static int parse (ase_awk_t* awk)
 		if ((awk->option & ASE_AWK_EXPLICIT) &&
 		    !(awk->option & ASE_AWK_IMPLICIT))
 		{
-			ase_size_t sz;
+			ase_awk_pair_t* p;
+			ase_size_t buckno;
 
-			sz = awk->parse.afns.size;
-			while (sz > 0)
+			p = ase_awk_map_getfirstpair (awk->parse.afns, &buckno);
+			while (p != ASE_NULL)
 			{
-				sz--;
-
 				if (ase_awk_map_get (awk->tree.afns, 
-					awk->parse.afns.buf[sz].name.ptr,
-					awk->parse.afns.buf[sz].name.len) == ASE_NULL)
+					p->key.ptr, p->key.len) == ASE_NULL)
 				{
-					/* TODO: set proper error number */
-					SETERRARG (awk, ASE_AWK_EFNNONE, 0, 
-						awk->parse.afns.buf[sz].name.ptr,
-						awk->parse.afns.buf[sz].name.len);	
+					/* TODO: set better error no & line */
+					/* this line number might be truncated as 
+			 		 * sizeof(line) could be > sizeof(void*) */
+					SETERRARG (awk, ASE_AWK_EFNNONE, 
+						(ase_size_t)p->val, 
+						p->key.ptr, p->key.len);
 					n = -1;
 					goto exit_parse;	
 				}
+
+				p = ase_awk_map_getnextpair (awk->parse.afns, p, &buckno);
 			}
+
 		}
 	}
 
@@ -1091,6 +1094,8 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	afn->name_len = ASE_AWK_PAIR_KEYLEN(pair);
 	ASE_AWK_FREE (awk, name_dup);
 
+	/* remove the undefined function call entries from parse.afn table */
+	ase_awk_map_remove (awk->parse.afns, afn->name, name_len);
 	return body;
 }
 
@@ -1465,7 +1470,7 @@ static int add_global (
 
 		/* check if it conflict with a function name 
 		 * caught in the function call table */
-		if (ase_awk_tab_find (&awk->parse.afns, 0, name, len) != (ase_size_t)-1)
+		if (ase_awk_map_get (awk->parse.afns, name, len) != ASE_NULL)
 		{
 			SETERRARG (
 				awk, ASE_AWK_EAFNRED, line, 
@@ -1655,7 +1660,7 @@ static ase_awk_t* collect_locals (
 
 			/* check if it conflict with a function name 
 			 * caught in the function call table */
-			if (ase_awk_tab_find (&awk->parse.afns, 0, local, local_len) != (ase_size_t)-1)
+			if (ase_awk_map_get (awk->parse.afns, local, local_len) != ASE_NULL)
 			{
 				SETERRARG (
 					awk, ASE_AWK_EAFNRED, awk->token.line, 
@@ -1681,7 +1686,7 @@ static ase_awk_t* collect_locals (
 		/* check if it conflicts with other local variable names */
 		n = ase_awk_tab_find (
 			&awk->parse.locals, 
-			((awk->option & ASE_AWK_SHADING)? nlocals: 0),
+			nlocals, /*((awk->option&ASE_AWK_SHADING)? nlocals:0)*/
 			local, local_len);
 		if (n != (ase_size_t)-1)
 		{
@@ -1704,6 +1709,7 @@ static ase_awk_t* collect_locals (
 				return ASE_NULL;
 			}
 
+			#if 0
 			if (!(awk->option & ASE_AWK_SHADING))
 			{
 				/* conflicting with a normal global variable */
@@ -1712,6 +1718,7 @@ static ase_awk_t* collect_locals (
 					local, local_len);
 				return ASE_NULL;
 			}
+			#endif
 		}
 
 		if (ase_awk_tab_getsize(&awk->parse.locals) >= ASE_AWK_MAX_LOCALS)
@@ -3225,7 +3232,13 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 
 		if (awk->option & ASE_AWK_IMPLICIT)
 		{
-			/*TODO: check if it conflicts any named variables collected so far.... XXXX */
+			if (ase_awk_map_get (awk->parse.named, name_dup, name_len) != ASE_NULL)
+			{
+				/* a function call conflicts with a named variable */
+				SETERRARG (awk, ASE_AWK_EVARRED, line, name_dup, name_len);
+				ASE_AWK_FREE (awk, name_dup);
+				return ASE_NULL;
+			}
 		}
 
 		nde = parse_fncall (awk, name_dup, name_len, ASE_NULL, line);
@@ -3277,7 +3290,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 					goto exit_func;
 				}
 
-				if (ase_awk_tab_find (&awk->parse.afns, 0, name_dup, name_len) != (ase_size_t)-1)
+				if (ase_awk_map_get (awk->parse.afns, name_dup, name_len) != ASE_NULL)
 				{
 					/* is it one of the function calls found so far? */
 					SETERRARG (awk, ASE_AWK_EAFNRED, line, name_dup, name_len);
@@ -3295,7 +3308,13 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			nde->id.idxa = (ase_size_t)-1;
 			nde->idx = ASE_NULL;
 
-			/* TODO: add this named variable to the parse.named map... XXXX */
+			/* collect unique instances of a named variables for reference */
+			if (ase_awk_map_put (awk->parse.named,
+				name_dup, name_len, (void*)line) == ASE_NULL)
+			{
+				  SETERRLIN (awk, ASE_AWK_ENOMEM, line);
+				  goto exit_func;
+			}
 
 			return (ase_awk_nde_t*)nde;
 		}
@@ -3452,7 +3471,7 @@ static ase_awk_nde_t* parse_hashidx (
 				goto exit_func;
 			}
 
-			if (ase_awk_tab_find (&awk->parse.afns, 0, name, name_len) != (ase_size_t)-1)
+			if (ase_awk_map_get (awk->parse.afns, name, name_len) != ASE_NULL)
 			{
 				/* is it one of the function calls found so far? */
 				SETERRARG (awk, ASE_AWK_EAFNRED, line, name, name_len);
@@ -3601,8 +3620,11 @@ static ase_awk_nde_t* parse_fncall (
 		    (awk->option & ASE_AWK_UNIQUEFN)*/)
 		{
 		#endif
-			if (ase_awk_tab_adduniq (
-				&awk->parse.afns, name, name_len) == (ase_size_t)-1)
+
+			/* this line number might be truncated as 
+			 * sizeof(line) could be > sizeof(void*) */
+			if (ase_awk_map_put (awk->parse.afns, 
+				name, name_len, (void*)line) == ASE_NULL)
 			{
 				ASE_AWK_FREE (awk, call);
 				if (head != ASE_NULL) ase_awk_clrpt (awk, head);

@@ -632,8 +632,6 @@ static struct
 {
 	{ ASE_T("implicit"),    TestAwk::OPT_IMPLICIT },
 	{ ASE_T("explicit"),    TestAwk::OPT_EXPLICIT },
-	{ ASE_T("uniquefn"),    TestAwk::OPT_UNIQUEFN },
-	{ ASE_T("shading"),     TestAwk::OPT_SHADING },
 	{ ASE_T("shift"),       TestAwk::OPT_SHIFT },
 	{ ASE_T("idiv"),        TestAwk::OPT_IDIV },
 	{ ASE_T("strconcat"),   TestAwk::OPT_STRCONCAT },

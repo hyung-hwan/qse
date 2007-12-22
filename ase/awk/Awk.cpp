@@ -1178,8 +1178,6 @@ int Awk::open ()
 
 	int opt = 
 		OPT_IMPLICIT |
-		OPT_UNIQUEFN | 
-		OPT_SHADING | 
 		OPT_EXTIO | 
 		OPT_BLOCKLESS | 
 		OPT_BASEONE |
