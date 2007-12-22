@@ -354,8 +354,6 @@ public class AseAwkPanel extends Panel implements DropTargetListener
 	{
 		new Option("IMPLICIT", StdAwk.OPTION_IMPLICIT, true),
 		new Option("EXPLICIT", StdAwk.OPTION_EXPLICIT, false),
-		new Option("UNIQUEFN", StdAwk.OPTION_UNIQUEFN, true),
-		new Option("SHADING", StdAwk.OPTION_SHADING, true),
 		new Option("SHIFT", StdAwk.OPTION_SHIFT, false),
 		new Option("IDIV", StdAwk.OPTION_IDIV, false),
 		new Option("STRCONCAT", StdAwk.OPTION_STRCONCAT, false),

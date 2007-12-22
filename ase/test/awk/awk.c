@@ -842,8 +842,6 @@ static struct
 {
 	{ ASE_T("implicit"),    ASE_AWK_IMPLICIT },
 	{ ASE_T("explicit"),    ASE_AWK_EXPLICIT },
-	{ ASE_T("uniquefn"),    ASE_AWK_UNIQUEFN },
-	{ ASE_T("shading"),     ASE_AWK_SHADING },
 	{ ASE_T("shift"),       ASE_AWK_SHIFT },
 	{ ASE_T("idiv"),        ASE_AWK_IDIV },
 	{ ASE_T("strconcat"),   ASE_AWK_STRCONCAT },
@@ -978,8 +976,6 @@ static int awk_main (int argc, ase_char_t* argv[])
 	int deparse = 0;
 
 	opt = ASE_AWK_IMPLICIT |
-	      ASE_AWK_UNIQUEFN | 
-	      ASE_AWK_SHADING | 
 	      ASE_AWK_EXTIO | 
 	      ASE_AWK_BLOCKLESS | 
 	      ASE_AWK_BASEONE |

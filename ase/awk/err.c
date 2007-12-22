@@ -80,6 +80,7 @@ static const ase_char_t* __geterrstr (int errnum)
 		ASE_T("function '%.*s' redefined"),
 		ASE_T("global variable '%.*s' redefined"),
 		ASE_T("parameter '%.*s' redefined"),
+		ASE_T("variable '%.*s' redefined"),
 		ASE_T("duplicate parameter name '%.*s'"),
 		ASE_T("duplicate global variable '%.*s'"),
 		ASE_T("duplicate local variable '%.*s'"),

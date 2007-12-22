@@ -118,7 +118,10 @@ struct ase_awk_t
 		} depth;
 
 		/* function calls */
-		ase_awk_tab_t afns;
+		ase_awk_map_t* afns;
+
+		/* named variables */
+		ase_awk_map_t* named;
 
 		/* global variables */
 		ase_awk_tab_t globals;

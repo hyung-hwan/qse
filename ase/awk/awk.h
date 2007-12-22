@@ -164,10 +164,10 @@ enum ase_awk_option_t
 	ASE_AWK_EXPLICIT    = (1 << 1), 
 
 	/* a function name should not coincide to be a variable name */
-	ASE_AWK_UNIQUEFN    = (1 << 2),
+	/*ASE_AWK_UNIQUEFN    = (1 << 2),*/
 
 	/* allow variable shading */
-	ASE_AWK_SHADING     = (1 << 3), 
+	/*ASE_AWK_SHADING     = (1 << 3),*/
 
 	/* support shift operators */
 	ASE_AWK_SHIFT       = (1 << 4), 
@@ -301,6 +301,7 @@ enum ase_awk_errnum_t
 	ASE_AWK_EAFNRED,        /* function redefined */
 	ASE_AWK_EGBLRED,        /* global variable redefined */
 	ASE_AWK_EPARRED,        /* parameter redefined */
+	ASE_AWK_EVARRED,        /* named variable redefined */
 	ASE_AWK_EDUPPAR,        /* duplicate parameter name */
 	ASE_AWK_EDUPGBL,        /* duplicate global variable name */
 	ASE_AWK_EDUPLCL,        /* duplicate local variable name */

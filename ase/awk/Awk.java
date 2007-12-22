@@ -33,8 +33,6 @@ public abstract class Awk
 	// options
 	public static final int OPTION_IMPLICIT    = (1 << 0);
 	public static final int OPTION_EXPLICIT    = (1 << 1);
-	public static final int OPTION_UNIQUEFN    = (1 << 2);
-	public static final int OPTION_SHADING     = (1 << 3);
 	public static final int OPTION_SHIFT       = (1 << 4);
 	public static final int OPTION_IDIV        = (1 << 5);
 	public static final int OPTION_STRCONCAT   = (1 << 6);
