@@ -62,16 +62,6 @@ interface IAwk : IDispatch
 	[propput, id(14), helpstring("property ExplicitVariable")] 
 	HRESULT ExplicitVariable([in] VARIANT_BOOL newVal);
 
-	[propget, id(15), helpstring("property UniqueFunction")] 
-	HRESULT UniqueFunction([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(15), helpstring("property UniqueFunction")]
-	HRESULT UniqueFunction([in] VARIANT_BOOL newVal);
-
-	[propget, id(16), helpstring("property VariableShading")] 
-	HRESULT VariableShading([out,retval] VARIANT_BOOL *pVal);
-	[propput, id(16), helpstring("property VariableShading")]
-	HRESULT VariableShading([in] VARIANT_BOOL newVal);
-
 	[propget, id(17), helpstring("property ShiftOperators")]
 	HRESULT ShiftOperators([out,retval] VARIANT_BOOL *pVal);
 	[propput, id(17), helpstring("property ShiftOperators")] 

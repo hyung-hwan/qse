@@ -54,9 +54,7 @@ CAwk::CAwk ():
 {
 	/* TODO: what is the best default option? */
 	option = 
-		ASE_AWK_IMPLICIT | 
-		ASE_AWK_UNIQUEFN | 
-		ASE_AWK_SHADING | 
+		ASE_AWK_IMPLICIT |  
 		ASE_AWK_EXTIO | 
 		ASE_AWK_BLOCKLESS | 
 		ASE_AWK_BASEONE | 
@@ -1149,36 +1147,6 @@ STDMETHODIMP CAwk::put_ExplicitVariable(VARIANT_BOOL newVal)
 {
 	if (newVal) option = option | ASE_AWK_EXPLICIT;
 	else option = option & ~ASE_AWK_EXPLICIT;
-	if (handle != NULL) ase_awk_setoption (handle, option);
-	return S_OK;
-}
-
-STDMETHODIMP CAwk::get_UniqueFunction(VARIANT_BOOL *pVal)
-{
-	if (handle != NULL) option = ase_awk_getoption (handle);
-	*pVal = (option & ASE_AWK_UNIQUEFN) == 1;
-	return S_OK;
-}
-
-STDMETHODIMP CAwk::put_UniqueFunction(VARIANT_BOOL newVal)
-{
-	if (newVal) option = option | ASE_AWK_UNIQUEFN;
-	else option = option & ~ASE_AWK_UNIQUEFN;
-	if (handle != NULL) ase_awk_setoption (handle, option);
-	return S_OK;
-}
-
-STDMETHODIMP CAwk::get_VariableShading(VARIANT_BOOL *pVal)
-{
-	if (handle != NULL) option = ase_awk_getoption (handle);
-	*pVal = (option & ASE_AWK_SHADING) == 1;
-	return S_OK;
-}
-
-STDMETHODIMP CAwk::put_VariableShading(VARIANT_BOOL newVal)
-{
-	if (newVal) option = option | ASE_AWK_SHADING;
-	else option = option & ~ASE_AWK_SHADING;
 	if (handle != NULL) ase_awk_setoption (handle, option);
 	return S_OK;
 }
