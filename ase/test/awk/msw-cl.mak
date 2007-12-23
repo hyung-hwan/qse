@@ -72,7 +72,7 @@ jar: $(OUT_FILE_JAR)
 
 
 $(OUT_FILE_BIN): $(TMP_DIR) $(OUT_DIR) $(OBJ_FILES_BIN)
-	$(LD) /nologo /out:$@ $(LDFLAGS) $(LIBS) $(OBJ_FILES_BIN)
+	$(LD) /nologo /out:$@ $(LDFLAGS) $(LIBS) $(OBJ_FILES_BIN) 
 
 $(OUT_FILE_BIN_CXX): $(TMP_DIR_CXX) $(OUT_FILE_BIN) $(OBJ_FILES_BIN_CXX)
 	$(LD) /nologo /out:$@ $(LDFLAGS) $(LIBS_CXX) $(OBJ_FILES_BIN_CXX)
