@@ -100,18 +100,6 @@ namespace ase.com
 			set { awk.ExplicitVariable = value; }
 		}
 
-		public bool UniqueFunction
-		{
-			get { return awk.UniqueFunction; }
-			set { awk.UniqueFunction = value; }
-		}
-
-		public bool VariableShading
-		{
-			get { return awk.VariableShading; }
-			set { awk.VariableShading = value; }
-		}
-
 		public bool ShiftOperators
 		{
 			get { return awk.ShiftOperators; }

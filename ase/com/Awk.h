@@ -167,10 +167,6 @@ public:
 	STDMETHOD(put_IdivOperator)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_ShiftOperators)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_ShiftOperators)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_VariableShading)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_VariableShading)(/*[in]*/ VARIANT_BOOL newVal);
-	STDMETHOD(get_UniqueFunction)(/*[out, retval]*/ VARIANT_BOOL *pVal);
-	STDMETHOD(put_UniqueFunction)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_ExplicitVariable)(/*[out, retval]*/ VARIANT_BOOL *pVal);
 	STDMETHOD(put_ExplicitVariable)(/*[in]*/ VARIANT_BOOL newVal);
 	STDMETHOD(get_ImplicitVariable)(/*[out, retval]*/ VARIANT_BOOL *pVal);
