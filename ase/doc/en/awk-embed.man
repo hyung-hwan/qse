@@ -1,9 +1,16 @@
-.title ASEAWK
+.title Embedding ASEAWK
+.tabstop 6
 
 = ASEAWK =
 ASE provides an embeddable processor of a dialect of the AWK programming language. The language implemented is slightly different from {the version developed by Brian W. Kernighan, http://cm.bell-labs.com/cm/cs/awkbook/index.html} and has been adjusted to the author's preference.
 
 == Overview ==
+To embed the awk interpreter to an application, the developer should provide the following routines.
+
+ * System functions including memory management
+ * Source code I/O functions
+ * I/O functions to interface with the console, files, and pipes.
+
 The following code fragment illustrates the basic steps of embedding the processor.
 
 {{{
@@ -26,15 +33,15 @@ The following code fragment illustrates the basic steps of embedding the process
 }}}
 
 (((
-* Most of the functions and data types needed are defined in the header file [[ase/awk/awk.h]]. 
-* [[ase_awk_t]] represents the processor. However, the internal representation is not exposed.
-* [[ase_awk_open]] creates the processor instance.
-* [[ase_awk_parse]] parses an AWK script.
-* [[ase_awk_run]] executes the script parsed.
-* [[ase_awk_close]] destroys the processor instance.
+* Most of the functions and data types needed are defined in the header file ##=ase/awk/awk.h=##. 
+* ##=ase_awk_t=## represents the processor. However, the internal representation is not exposed.
+* ##=ase_awk_open=## creates the processor instance.
+* ##=ase_awk_parse=## parses an AWK script.
+* ##=ase_awk_run=## executes the script parsed.
+* ##=ase_awk_close=## destroys the processor instance.
 )))
 
-More detailed description is available {here,awk-mini-en.html}. You may refer to other sample files such as [[ase/test/awk/awk.c]] and [[ase/awk/jni.c]].
+More detailed description is available {here,awk-mini-en.html}. You may refer to other sample files such as ##=ase/test/awk/awk.c=## and ##=ase/awk/jni.c=##.
 
 == Primitive Functions ==
 A set of primitive functions is needed to create an instance of the AWK processor. A primitive function is a user-defined function to help the library perform system-dependent operations such as memory allocation, character class handling.
@@ -57,7 +64,7 @@ struct ase_awk_prmfns_t
 };
 }}}
 
-A caller of [[ase_awk_open]] should fill in most of the fields of a [[ase_awk_prmfns_t]] structure and pass the structure to it. The function pointers in the miscellaneous group labeled [misc] is defined as follows:
+A caller of ##=ase_awk_open=## should fill in most of the fields of a ##=ase_awk_prmfns_t=## structure and pass the structure to it. The function pointers in the miscellaneous group labeled [misc] is defined as follows:
 
 {{{
 /* returns the value of x raised to the power of y */
@@ -71,7 +78,7 @@ typedef int (*ase_awk_sprintf_t) (void* custom, ase_char_t* buf, ase_size_t size
 typedef void (*ase_awk_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
 }}}
 
-The fourth field of the group is passed to its member functions as the first argument on invocation. The function pointed by the [[sprintf]] field should ensure that the resuliting string is null-terminated and [[%s]] and [[%c]] are accepted for the [[ase_char_t*]] and [[ase_char_t]] type respectively regardless the character mode.
+The fourth field of the group is passed to its member functions as the first argument on invocation. The function pointed by the ##=sprintf=## field should ensure that the resuliting string is null-terminated and ##=%s=## and ##=%c=## are accepted for the ##=ase_char_t*=## and ##=ase_char_t=## type respectively regardless the character mode.
 
 The memory manager group labeled [mmgr] and the character class group labled [ccls] are defined as follows:
 
@@ -110,7 +117,7 @@ struct ase_ccls_t
 };
 }}}
 
-The functions in these groups perform the memory operations and character class related operations respectively. They follow the style of the memory allocation functions and character class handling functions of the standard C library except that they accept a pointer to the user-defined data as the first argument, thus providing more flexibility. The pointer to the user-defined data is specified into the [[custom_data]] field of each group. The [[realloc]] field, however, can be [[ASE_NULL]], in which case the functions pointed by the free and the malloc field replace the role of the function pointed by the [[realloc]] field. 
+The functions in these groups perform the memory operations and character class related operations respectively. They follow the style of the memory allocation functions and character class handling functions of the standard C library except that they accept a pointer to the user-defined data as the first argument, thus providing more flexibility. The pointer to the user-defined data is specified into the ##=custom_data=## field of each group. The ##=realloc=## field, however, can be ##=ASE_NULL=##, in which case the functions pointed by the free and the malloc field replace the role of the function pointed by the ##=realloc=## field. 
 
 == Source IO Handler ==
 
@@ -131,11 +138,11 @@ struct ase_awk_srcios_t
 };
 }}}
 
-The [[in]] field of the ase_awk_srcios_t is mandatory and should be filled in. The [[out]] field can be set to [[ASE_NULL]] or can point to a source output handling function. The [[custom_data]] field is passed to the source handlers as the second argument. The first parameter [[cmd]] of the source input handler is one of [[ASE_AWK_IO_OPEN]], [[ASE_AWK_IO_CLOSE]], [[ASE_AWK_IO_READ]]. The first parameter [[cmd]] of the source output handler is one of [[ASE_AWK_IO_OPEN]], [[ASE_AWK_IO_CLOSE]], [[ASE_AWK_IO_WRITE]]. The third parameter [[data]] and the fourth parameter [[count]] are the pointer to the buffer to read data into and its size if the first parameter [[cmd]] is [[ASE_AWK_IO_READ]] while they are the pointer to the data and its size if [[cmd]] is [[ASE_AWK_IO_WRITE]].
+The ##=in=## field of the ase_awk_srcios_t is mandatory and should be filled in. The ##=out=## field can be set to ##=ASE_NULL=## or can point to a source output handling function. The ##=custom_data=## field is passed to the source handlers as the second argument. The first parameter ##=cmd=## of the source input handler is one of ##=ASE_AWK_IO_OPEN=##, ##=ASE_AWK_IO_CLOSE=##, ##=ASE_AWK_IO_READ=##. The first parameter ##=cmd=## of the source output handler is one of ##=ASE_AWK_IO_OPEN=##, ##=ASE_AWK_IO_CLOSE=##, ##=ASE_AWK_IO_WRITE=##. The third parameter ##=data=## and the fourth parameter ##=count=## are the pointer to the buffer to read data into and its size if the first parameter ##=cmd=## is ##=ASE_AWK_IO_READ=## while they are the pointer to the data and its size if ##=cmd=## is ##=ASE_AWK_IO_WRITE=##.
 
-The source handler should return a negative value for an error and zero or a positive value otherwise. However, there is a subtle difference in the meaning of the return value depending on the value of the first parameter [[cmd]].
+The source handler should return a negative value for an error and zero or a positive value otherwise. However, there is a subtle difference in the meaning of the return value depending on the value of the first parameter ##=cmd=##.
 
-When [[cmd]] is [[ASE_AWK_IO_OPEN]], the return value of -1 and 1 indicates the failure and the success respectively. In addition, the return value of 0 indicates that the operation is successful but has reached the end of the stream. The library calls the handler with [[ASE_AWK_IO_CLOSE]] for deinitialization if the return value is 0 or 1. When [[cmd]] is [[ASE_AWK_IO_CLOSE]], the return value of -1 and 0 indicate the failure and the success respectively. When [[cmd]] is [[ASE_AWK_IO_READ]] or [[ASE_AWK_IO_WRITE]], the return value of -1 indicates the failure, 0 the end of the stream, and other positive values the number of characters read or written.
+When ##=cmd=## is ##=ASE_AWK_IO_OPEN=##, the return value of -1 and 1 indicates the failure and the success respectively. In addition, the return value of 0 indicates that the operation is successful but has reached the end of the stream. The library calls the handler with ##=ASE_AWK_IO_CLOSE=## for deinitialization if the return value is 0 or 1. When ##=cmd=## is ##=ASE_AWK_IO_CLOSE=##, the return value of -1 and 0 indicate the failure and the success respectively. When ##=cmd=## is ##=ASE_AWK_IO_READ=## or ##=ASE_AWK_IO_WRITE=##, the return value of -1 indicates the failure, 0 the end of the stream, and other positive values the number of characters read or written.
 
 The typical source handler will look as follows:
 {{{
@@ -182,7 +189,7 @@ ase_ssize_t awk_srcio_out (int cmd, void* arg, ase_char_t* data, ase_size_t size
 }
 }}}
 
-Once you have the source handler ready, you can fill in the fields of a [[ase_awk_srcios_t]] structure and pass it to the call of [[ase_awk_parse]].
+Once you have the source handler ready, you can fill in the fields of a ##=ase_awk_srcios_t=## structure and pass it to the call of ##=ase_awk_parse=##.
 
 {{{
 ase_awk_srcios_t srcios;

@@ -41,7 +41,6 @@ $ make
 The following table shows the output locations of generated files.
 
 {{|
-|-
 ! Mode
 ! Executable Files
 ! Library Files
@@ -63,7 +62,6 @@ The following table shows the output locations of generated files.
 If you have preference for a particular compiler and the flags, you may explicitly specify them when you run the [[configure]] script. Here are presented a few such examples.
 
 {{|
-|-
 !
 ! 32 Bits
 ! 64 Bits
@@ -140,7 +138,6 @@ error string customization
 == Languages ==
 
 {{|
-|-
 ! Language
 ! Status
 ! Bindings
@@ -157,28 +154,3 @@ error string customization
 | Planned
 | C
 |}}
-
-== AWK ==
-
-Language Difference
-
-{{|
-|-
-! ASE 
-! NAWK
-! REMARKS
-|-
-| Statement terminator Semicolon
-| n/a
-| n/a
-|-
-| function abc() 
-this is very nice hello world...
-| function abc ()
-| n/a                          
-|---------------------------------------
-| return in BEGIN or END
-|
-|
-|}}
-
