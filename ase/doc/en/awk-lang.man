@@ -195,4 +195,10 @@ BEGIN {
 }
 }}}
 
+== Shift Operators ==
 
+Turning on ASE_AWK_SHIFT enables the use of the shift operator for bit shifting. >> and << are the right and the left shift operator respectively.
+
+{{{
+BEGIN { print (0xFFFF >> 2);  print 0x00FF << 2; }
+}}}
