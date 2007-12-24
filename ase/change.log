@@ -35,6 +35,7 @@
 
 * redefined the variable scope
 * removed ASE_AWK_UNIQUEFN and ASE_AWK_SHADING
+* fixed a bug in handle >> when ASE_AWK_SHIFT is off
 
 [0.3.2]
 
