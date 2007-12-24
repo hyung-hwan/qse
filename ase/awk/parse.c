@@ -2416,7 +2416,8 @@ static ase_awk_nde_t* parse_relational (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_shift);
+	return parse_binary_expr (awk, line, map, 
+		((awk->option & ASE_AWK_SHIFT)? parse_shift: parse_concat));
 }
 
 static ase_awk_nde_t* parse_shift (ase_awk_t* awk, ase_size_t line)
@@ -4611,7 +4612,7 @@ static int get_token (ase_awk_t* awk)
 	{
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR_TO (awk, c);
-		if ((awk->option & ASE_AWK_SHIFT) && c == ASE_T('>')) 
+		if (c == ASE_T('>')) 
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_RSHIFT);
 			ADD_TOKEN_CHAR (awk, c);
