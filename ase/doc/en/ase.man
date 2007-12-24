@@ -1,0 +1,28 @@
+.title ASE
+
+= ASE =
+
+ASE is a programming library implementing various programming languages and text utilities for embedding purposes. The library is developed in the C programming language and provides the JNI binding to JAVA, the COM and .NET interface.
+
+(Warning: This page is only for the test purpose prior to proper release and the contents can be changed anytime without prior notice.)
+
+== Download ==
+
+Download the library source code from the following links.
+
+[[[
+* {Google Code,http://abiyo.googlecode.com/}
+]]]
+
+== Documentation ==
+
+[[[
+* {Quickstart,quickstart.html}
+* {AWK Embedder's guide,awk-embed.html}
+* {LISP Embedder's guide,lsp-embed.html}
+* {Frequently Asked Questions,faq.html}
+]]]
+
+== Licensing ==
+
+ASE is distributed under a {BSD license,license.html} and is free for all uses.

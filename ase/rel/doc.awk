@@ -11,6 +11,7 @@ global list_count;
 global table_row_count;
 global table_row_line_count;
 global table_in_th;
+global tabs;
 
 function print_text (full)
 {
@@ -18,6 +19,7 @@ function print_text (full)
 
 	gsub ("<", "\\&lt;", full);
 	gsub (">", "\\&gt;", full);
+	gsub (/\t/, tabs, full);
 
 	while (match (full, /\{[^{},]+,[^{},]+\}/) > 0)
 	{
@@ -32,22 +34,31 @@ function print_text (full)
 		full = sprintf ("%s<a href='%s'>%s</a>%s", fra1, t2, t1, fra2);
 	}
 
-	while (match (full, /\[\[[^\[\][:space:]]+\]\]/) > 0)
+	while (match (full, /##\/[^\[\][:space:]]+\/##/) > 0)
 	{
 		fra1 = substr (full, 1, RSTART-1);
-		link = substr (full, RSTART+2, RLENGTH-4);
+		link = substr (full, RSTART+3, RLENGTH-6);
 		fra2 = substr (full, RSTART+RLENGTH, length(full)-RLENGTH);
 
 		full = sprintf ("%s<i>%s</i>%s", fra1, link, fra2);
 	}
 
-	while (match (full, /##[^#[:space:]]+##/) > 0)
+	while (match (full, /##=[^#[:space:]]+=##/) > 0)
 	{
 		fra1 = substr (full, 1, RSTART-1);
-		link = substr (full, RSTART+2, RLENGTH-4);
+		link = substr (full, RSTART+3, RLENGTH-6);
 		fra2 = substr (full, RSTART+RLENGTH, length(full)-RLENGTH);
 
 		full = sprintf ("%s<b>%s</b>%s", fra1, link, fra2);
+	}
+
+	while (match (full, /##-[^#[:space:]]+-##/) > 0)
+	{
+		fra1 = substr (full, 1, RSTART-1);
+		link = substr (full, RSTART+3, RLENGTH-6);
+		fra2 = substr (full, RSTART+RLENGTH, length(full)-RLENGTH);
+
+		full = sprintf ("%s<strike>%s</strike>%s", fra1, link, fra2);
 	}
 
 	print full;
@@ -58,6 +69,8 @@ BEGIN {
 	mode = 0;
 	empty_line_count = 0;
 	para_started = 0;
+
+	tabs = "\\&nbsp;\\&nbsp;\\&nbsp;\\&nbsp;\\&nbsp;\\&nbsp;\\&nbsp;\\&nbsp;";
 
 	#output=ARGV[1];
 	#gsub (/\.man/, ".html", output);
@@ -77,6 +90,14 @@ header && /^\.[[:alpha:]]+[[:space:]]/ {
 		printf "<title>";
 		for (i = 2; i <= NF; i++) printf "%s ", $i;
 		print "</title>";
+	}
+	else if ($1 == ".tabstop")
+	{
+		if (NF >= 2) 
+		{
+			local i;
+			for (i = 0; i < $2; i++) tabs = tabs . "\\&nbsp;";
+		}
 	}
 }
 
@@ -188,6 +209,10 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 				print "<table class='ase'>";
 				mode = 4;
 				table_row_count = 0;
+
+				print "<tr class='ase'>";
+				table_row_count++;
+				table_row_line_count = 0;
 			}
 			else
 			{
@@ -324,6 +349,7 @@ header && !/^\.[[:alpha:]]+[[:space:]]/ {
 			if (table_row_line_count > 0) 
 				print ((table_in_th)? "</th>": "</td>");
 			print "<td class='ase'>";
+
 			print_text (substr ($0, 3, length($0)-2));
 			table_in_th = 0;
 			table_row_line_count++;
