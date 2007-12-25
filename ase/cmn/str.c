@@ -41,8 +41,34 @@ ase_size_t ase_strxcpy (
 ase_size_t ase_strncpy (
 	ase_char_t* buf, const ase_char_t* str, ase_size_t len)
 {
+	/*
 	const ase_char_t* end = str + len;
 	while (str < end) *buf++ = *str++;
+	*buf = ASE_T('\0');
+	return len;
+	*/
+
+	if (len > 0)
+	{
+		ase_size_t n = (len-1) >> 3; /* (len-1) / 8 */
+
+		switch (len & 7) /* len % 8 */
+		{
+		repeat:
+			case 0: *buf++ = *str++;
+			case 7: *buf++ = *str++;
+			case 6: *buf++ = *str++;
+			case 5: *buf++ = *str++;
+			case 4: *buf++ = *str++;
+			case 3: *buf++ = *str++;
+			case 2: *buf++ = *str++;
+			case 1: *buf++ = *str++;
+			        if (n <= 0) break;
+			        n--;
+			        goto repeat;
+		}
+	}
+
 	*buf = ASE_T('\0');
 	return len;
 }
