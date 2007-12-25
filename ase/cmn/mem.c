@@ -6,11 +6,69 @@
 
 #include <ase/cmn/mem.h>
 
+/*#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)%sizeof(ase_size_t))*/
+#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)&(sizeof(ase_size_t)-1))
+#define IS_ALIGNED(ptr) (!IS_UNALIGNED(ptr))
+
 void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 {
+	/*
 	void* p = dst;
 	void* e = (ase_byte_t*)dst + n;
 
+	while (dst < e) 
+	{
+		*(ase_byte_t*)dst = *(ase_byte_t*)src;
+		dst = (ase_byte_t*)dst + 1;
+		src = (ase_byte_t*)src + 1;
+	}
+
+	return p;
+	*/
+
+	void* p = dst;
+	void* e = (ase_byte_t*)dst + n;
+
+	ASE_ASSERT (sizeof(ase_size_t) == sizeof(void*));
+
+	if (IS_ALIGNED(dst) && IS_ALIGNED(src))
+	{
+		/* if both src and dst are aligned, 
+		 * blockcopy sizeof(void*) bytes. */
+
+		ase_size_t count = n / sizeof(dst);
+
+		while (count >= 4)
+		{
+			*(void**)dst = *(void**)src;
+			dst = (void**)dst + 1;
+			src = (void**)src + 1;
+
+			*(void**)dst = *(void**)src;
+			dst = (void**)dst + 1;
+			src = (void**)src + 1;
+
+			*(void**)dst = *(void**)src;
+			dst = (void**)dst + 1;
+			src = (void**)src + 1;
+
+			*(void**)dst = *(void**)src;
+			dst = (void**)dst + 1;
+			src = (void**)src + 1;
+
+			count -= 4;
+		}
+
+		while (count > 0)
+		{
+			*(void**)dst = *(void**)src;
+			dst = (void**)dst + 1;
+			src = (void**)src + 1;
+			count--;
+		}
+	}
+
+	/* bytecopy for remainders or unaligned data */
 	while (dst < e) 
 	{
 		*(ase_byte_t*)dst = *(ase_byte_t*)src;
