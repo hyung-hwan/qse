@@ -10,6 +10,10 @@
 #define IS_UNALIGNED(ptr) (((ase_size_t)ptr)&(sizeof(ase_size_t)-1))
 #define IS_ALIGNED(ptr) (!IS_UNALIGNED(ptr))
 
+#define IS_EITHER_UNALIGNED(ptr1,ptr2) \
+	(((ase_size_t)ptr1|(ase_size_t)ptr2)&(sizeof(ase_size_t)-1))
+#define IS_BOTH_ALIGNED(ptr1,ptr2) (!IS_EITHER_UNALIGNED(ptr1,ptr2))
+
 void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 {
 	/*
@@ -31,7 +35,8 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 
 	ASE_ASSERT (sizeof(ase_size_t) == sizeof(void*));
 
-	if (IS_ALIGNED(dst) && IS_ALIGNED(src))
+	/*if (IS_ALIGNED(dst) && IS_ALIGNED(src))*/
+	if (IS_BOTH_ALIGNED(dst,src))
 	{
 		/* if both src and dst are aligned, 
 		 * blockcopy sizeof(void*) bytes. */
