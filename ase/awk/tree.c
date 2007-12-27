@@ -392,6 +392,13 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				if ((awk->option & ASE_AWK_EXPLICIT) && 
 				    !(awk->option & ASE_AWK_IMPLICIT))
 				{
+					/* no implicit(named) variable is allowed.
+					 * use the actual name */
+					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				}
+				else if (px->id.idxa < awk->tree.nbglobals)
+				{
+					/* static global variables */
 					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 				}
 				else
@@ -423,6 +430,13 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				if ((awk->option & ASE_AWK_EXPLICIT) && 
 				    !(awk->option & ASE_AWK_IMPLICIT))
 				{
+					/* no implicit(named) variable is allowed.
+					 * use the actual name */
+					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				}
+				else if (px->id.idxa < awk->tree.nbglobals)
+				{
+					/* static global variables */
 					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
 				}
 				else

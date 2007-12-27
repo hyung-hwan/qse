@@ -37,6 +37,8 @@
 * removed ASE_AWK_UNIQUEFN and ASE_AWK_SHADING
 * fixed a bug in handle >> when ASE_AWK_SHIFT is off
 
+* added ASE_AWK_EVARRED
+
 [0.3.2]
 
 * fixed a build problem for x64 target in MSVC2005

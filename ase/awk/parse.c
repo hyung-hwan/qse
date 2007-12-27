@@ -5479,7 +5479,7 @@ static int deparse (ase_awk_t* awk)
 			if ((awk->option & ASE_AWK_EXPLICIT) && 
 			    !(awk->option & ASE_AWK_IMPLICIT))
 			{
-				/* use the actual name if no name variable 
+				/* use the actual name if no named variable 
 				 * is allowed */
 				if (ase_awk_putsrcstrx (awk, 
 					awk->parse.globals.buf[i].name.ptr, 
