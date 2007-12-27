@@ -39,8 +39,8 @@ BEGIN {
   {
   }
   BEGIN {
-  	local __local0;
-  	__local0 = 20;
+  	local __l0;
+  	__l0 = 20;
   }
 
   Local variable declaration requires ASE_AWK_EXPLICIT, though.
@@ -67,16 +67,16 @@ BEGIN {
 
 | A global variable is visible after it is declared to the remaining part of the program. x inside fn is x named variable while x in BEGIN is a global variable.
 
-  global __global17;
+  global __g17;
   function fn ()
   {
   	x = 20;
   	return x;
   }
   BEGIN {
-  	__global17 = 30;
+  	__g17 = 30;
   	print fn ();
-  	print __global17;
+  	print __g17;
   }
 |-
 | global x;
@@ -96,20 +96,20 @@ BEGIN {
   }
 | A local variable can shade a global variable and a local variable at outer scope. 
 
-  global __global17;
+  global __g17;
 
   BEGIN {
-  	local __local0, __local1;
-  	__global17 = 1;
+  	local __l0, __l1;
+  	__g17 = 1;
   	{
-  		__local0 = 2;
+  		__l0 = 2;
   		{
-  			__local1 = 3;
-  			print __local1;
+  			__l1 = 3;
+  			print __l1;
   		}
-  		print __local0;
+  		print __l0;
   	}
-  	print __global17;
+  	print __g17;
   }
 |}}
 
@@ -138,9 +138,9 @@ A parameter name can shade a enclosing function name. The following table shows 
   }
 | 50 is printed. The parameter f in fn doesn't affect the named variable f in BEGIN. The deparsed output shows this clearly.
 
-  function fn (__param0)
+  function fn (__p0)
   {
-  	__param0 = 20;
+  	__p0 = 20;
   }
   BEGIN {
   	f = 50;

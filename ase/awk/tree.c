@@ -334,7 +334,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			n = ase_awk_longtostr (
 				px->id.idxa, 10, ASE_NULL, tmp, ASE_COUNTOF(tmp));
 
-			PUT_SRCSTR (awk, ASE_T("__param"));
+			PUT_SRCSTR (awk, ASE_T("__p"));
 			PUT_SRCSTRX (awk, tmp, n);
 
 			ASE_ASSERT (px->idx == ASE_NULL);
@@ -348,7 +348,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ASE_ASSERT (px->id.idxa != (ase_size_t)-1);
 			ASE_ASSERT (px->idx != ASE_NULL);
 
-			PUT_SRCSTR (awk, ASE_T("__param"));
+			PUT_SRCSTR (awk, ASE_T("__p"));
 			n = ase_awk_longtostr (
 				px->id.idxa, 10, ASE_NULL,
 				awk->tmp.fmt, ASE_COUNTOF(awk->tmp.fmt));
@@ -406,7 +406,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 					ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 					ase_size_t n;
 
-					PUT_SRCSTR (awk, ASE_T("__global"));
+					PUT_SRCSTR (awk, ASE_T("__g"));
 					n = ase_awk_longtostr (
 						px->id.idxa, 10, 
 						ASE_NULL, tmp, ASE_COUNTOF(tmp));
@@ -444,7 +444,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 					ase_char_t tmp[ASE_SIZEOF(ase_long_t)*8+2]; 
 					ase_size_t n;
 
-					PUT_SRCSTR (awk, ASE_T("__global"));
+					PUT_SRCSTR (awk, ASE_T("__g"));
 					n = ase_awk_longtostr (
 						px->id.idxa, 10, 
 						ASE_NULL, tmp, ASE_COUNTOF(tmp));
@@ -470,7 +470,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 			if (px->id.idxa != (ase_size_t)-1) 
 			{
-				PUT_SRCSTR (awk, ASE_T("__local"));
+				PUT_SRCSTR (awk, ASE_T("__l"));
 				n = ase_awk_longtostr (
 					px->id.idxa, 10, ASE_NULL, 
 					awk->tmp.fmt, ASE_COUNTOF(awk->tmp.fmt));
@@ -491,7 +491,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 
 			if (px->id.idxa != (ase_size_t)-1) 
 			{
-				PUT_SRCSTR (awk, ASE_T("__local"));
+				PUT_SRCSTR (awk, ASE_T("__l"));
 				n = ase_awk_longtostr (
 					px->id.idxa, 10, ASE_NULL, 
 					awk->tmp.fmt, ASE_COUNTOF(awk->tmp.fmt));
@@ -623,7 +623,7 @@ static int print_statement (ase_awk_t* awk, ase_awk_nde_t* p, int depth)
 
 				for (i = 0; i < px->nlocals - 1; i++) 
 				{
-					PUT_SRCSTR (awk, ASE_T("__local"));
+					PUT_SRCSTR (awk, ASE_T("__l"));
 					n = ase_awk_longtostr (
 						i, 10, ASE_NULL, 
 						awk->tmp.fmt, ASE_COUNTOF(awk->tmp.fmt));
@@ -631,7 +631,7 @@ static int print_statement (ase_awk_t* awk, ase_awk_nde_t* p, int depth)
 					PUT_SRCSTR (awk, ASE_T(", "));
 				}
 
-				PUT_SRCSTR (awk, ASE_T("__local"));
+				PUT_SRCSTR (awk, ASE_T("__l"));
 				n = ase_awk_longtostr (
 					i, 10, ASE_NULL, 
 					awk->tmp.fmt, ASE_COUNTOF(awk->tmp.fmt));

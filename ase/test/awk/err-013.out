@@ -1,1 +1,1 @@
-PARSE ERROR: CODE [59] LINE [1] function 'abc' redefined
+PARSE ERROR: CODE [53] LINE [3] 'abc' not a valid function name
