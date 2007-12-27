@@ -5491,7 +5491,7 @@ static int deparse (ase_awk_t* awk)
 			else
 			{
 				len = ase_awk_longtostr ((ase_long_t)i, 
-					10, ASE_T("__global"), tmp, ASE_COUNTOF(tmp));
+					10, ASE_T("__g"), tmp, ASE_COUNTOF(tmp));
 				ASE_ASSERT (len != (ase_size_t)-1);
 				if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
 				{
@@ -5516,7 +5516,7 @@ static int deparse (ase_awk_t* awk)
 		else
 		{
 			len = ase_awk_longtostr ((ase_long_t)i, 
-				10, ASE_T("__global"), tmp, ASE_COUNTOF(tmp));
+				10, ASE_T("__g"), tmp, ASE_COUNTOF(tmp));
 			ASE_ASSERT (len != (ase_size_t)-1);
 			if (ase_awk_putsrcstrx (awk, tmp, len) == -1)
 			{
@@ -5658,7 +5658,7 @@ static int deparse_func (ase_awk_pair_t* pair, void* arg)
 	for (i = 0; i < afn->nargs; ) 
 	{
 		n = ase_awk_longtostr (i++, 10, 
-			ASE_T("__param"), df->tmp, df->tmp_len);
+			ASE_T("__p"), df->tmp, df->tmp_len);
 		ASE_ASSERT (n != (ase_size_t)-1);
 		if (ase_awk_putsrcstrx (df->awk, df->tmp, n) == -1) return -1;
 		if (i >= afn->nargs) break;

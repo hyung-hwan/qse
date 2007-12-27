@@ -2,4 +2,4 @@ BEGIN {
 	delete ARGC;
 }
 
-RUN ERROR: CODE [90] LINE [2] variable 'ARGC' not deletable
+RUN ERROR: CODE [91] LINE [2] variable 'ARGC' not deletable
