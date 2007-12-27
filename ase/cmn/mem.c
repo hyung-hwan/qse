@@ -41,7 +41,15 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 		/* if both src and dst are aligned, 
 		 * blockcopy sizeof(void*) bytes. */
 
+	#if (ASE_SIZEOF_VOID_P==2)
+		ase_size_t count = n >> 1;
+	#elif (ASE_SIZEOF_VOID_P==4)
+		ase_size_t count = n >> 2;
+	#elif (ASE_SIZEOF_VOID_P==8)
+		ase_size_t count = n >> 3;
+	#else
 		ase_size_t count = n / sizeof(dst);
+	#endif
 
 		while (count >= 4)
 		{
