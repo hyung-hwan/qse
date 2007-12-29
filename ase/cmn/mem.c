@@ -108,6 +108,7 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 
 int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 {
+	/*
 	const void* e;
 
 	if (n == 0) return 0;
@@ -120,4 +121,16 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 	}
 
 	return *((ase_byte_t*)s1) - *((ase_byte_t*)s2);
+	*/
+
+	register const ase_byte_t* b1 = (const ase_byte_t*)s1;
+	register const ase_byte_t* b2 = (const ase_byte_t*)s2;
+
+	while (n > 0)
+	{
+		n--;
+		if (*b1++ != *b2++) return *b1 - *b2;
+	}
+
+	return 0;
 }
