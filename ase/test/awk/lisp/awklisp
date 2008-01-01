@@ -4,7 +4,7 @@
 # This program is a modified version of awklisp originally written 
 # by Darius Bacon. The only modification is to append a semicolon
 # onto the end of each statement to cater for the semicolon requirement
-# of ASEAWK.
+# of ASEAWK. The original file of this file has been renamed to awklisp.org.
 #
 
 # --- Representation of Lisp data
