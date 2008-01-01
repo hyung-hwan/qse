@@ -25,6 +25,8 @@
 #include <mcheck.h>
 #endif
 
+static bool verbose = false;
+
 class TestAwk: public ASE::StdAwk
 {
 public:
@@ -222,7 +224,7 @@ protected:
 
 	void onRunStart (Run& run)
 	{
-		ase_printf (ASE_T("*** awk run started ***\n"));
+		if (verbose) ase_printf (ASE_T("*** awk run started ***\n"));
 	}
 
 	void onRunEnd (Run& run)
@@ -235,14 +237,17 @@ protected:
 				run.getErrorLine(), run.getErrorMessage());
 		}
 
-		ase_printf (ASE_T("*** awk run ended ***\n"));
+		if (verbose) ase_printf (ASE_T("*** awk run ended ***\n"));
 	}
 
 	void onRunReturn (Run& run, const Argument& ret)
 	{
-		size_t len;
-		const char_t* ptr = ret.toStr (&len);
-		ase_printf (ASE_T("*** return [%.*s] ***\n"), len, ptr);
+		if (verbose)
+		{
+			size_t len;
+			const char_t* ptr = ret.toStr (&len);
+			ase_printf (ASE_T("*** return [%.*s] ***\n"), (int)len, ptr);
+		}
 	}
 
 	int openSource (Source& io)
@@ -668,6 +673,7 @@ static void print_usage (const ase_char_t* argv0)
 	ase_printf (ASE_T("    -w  o:n   Specify an old and new word pair\n"));
 	ase_printf (ASE_T("              o - an original word\n"));
 	ase_printf (ASE_T("              n - the new word to replace the original\n"));
+	ase_printf (ASE_T("    -v        Print extra messages\n"));
 
 
 	ase_printf (ASE_T("\nYou may specify the following options to change the behavior of the interpreter.\n"));
@@ -706,6 +712,10 @@ int awk_main (int argc, ase_char_t* argv[])
 			else if (ase_strcmp(argv[i], ASE_T("-a")) == 0) mode = 5;
 			else if (ase_strcmp(argv[i], ASE_T("-m")) == 0) mode = 6;
 			else if (ase_strcmp(argv[i], ASE_T("-w")) == 0) mode = 7;
+			else if (ase_strcmp(argv[i], ASE_T("-v")) == 0)
+			{
+				verbose = true;
+			}
 			else 
 			{
 				if (argv[i][0] == ASE_T('-'))
