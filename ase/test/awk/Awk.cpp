@@ -645,7 +645,7 @@ static struct
 	{ ASE_T("baseone"),     TestAwk::OPT_BASEONE },
 	{ ASE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
 	{ ASE_T("nextofile"),   TestAwk::OPT_NEXTOFILE },
-	{ ASE_T("crfl"),        TestAwk::OPT_CRLF },
+	{ ASE_T("crlf"),        TestAwk::OPT_CRLF },
 	{ ASE_T("argstomain"),  TestAwk::OPT_ARGSTOMAIN },
 	{ ASE_T("reset"),       TestAwk::OPT_RESET },
 	{ ASE_T("maptovar"),    TestAwk::OPT_MAPTOVAR },

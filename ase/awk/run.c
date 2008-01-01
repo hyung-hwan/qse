@@ -3011,6 +3011,7 @@ static ase_awk_val_t* eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ase_awk_val_t* v;
 	int n, errnum;
 
+#if 0
 	if (run->exit_level >= EXIT_GLOBAL) 
 	{
 		/* returns ASE_NULL as if an error occurred but
@@ -3020,6 +3021,7 @@ static ase_awk_val_t* eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		run->errnum = ASE_AWK_ENOERR;
 		return ASE_NULL;
 	}
+#endif
 
 	v = eval_expression0 (run, nde);
 	if (v == ASE_NULL) return ASE_NULL;
@@ -3109,10 +3111,28 @@ static ase_awk_val_t* eval_expression0 (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		eval_getline
 	};
 
+	ase_awk_val_t* v;
+
+
 	ASE_ASSERT (nde->type >= ASE_AWK_NDE_GRP &&
 		(nde->type - ASE_AWK_NDE_GRP) < ASE_COUNTOF(eval_func));
 
-	return eval_func[nde->type-ASE_AWK_NDE_GRP] (run, nde);
+	v = eval_func[nde->type-ASE_AWK_NDE_GRP] (run, nde);
+
+	if (v != ASE_NULL && run->exit_level >= EXIT_GLOBAL)
+	{
+		ase_awk_refupval (run, v);	
+		ase_awk_refdownval (run, v);
+
+		/* returns ASE_NULL as if an error occurred but
+		 * clears the error number. run_main will 
+		 * detect this condition and treat it as a 
+		 * non-error condition.*/
+		run->errnum = ASE_AWK_ENOERR;
+		return ASE_NULL;
+	}
+
+	return v;
 }
 
 static ase_awk_val_t* eval_group (ase_awk_run_t* run, ase_awk_nde_t* nde)
