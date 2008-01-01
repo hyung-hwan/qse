@@ -4,7 +4,30 @@
 
 ASE is a programming library implementing various programming languages and text utilities for embedding purposes. The library is developed in the C programming language and provides the JNI binding to JAVA, the COM and .NET interface.
 
-(Warning: This page is only for the test purpose prior to proper release and the contents can be changed anytime without prior notice.)
+{{{
+             _____                    _____                    _____
+            /\    \                  /\    \                  /\    \
+           /::\    \                /::\    \                /::\    \
+          /::::\    \              /::::\    \              /::::\    \
+         /::::::\    \            /::::::\    \            /::::::\    \
+        /:::/\:::\    \          /:::/\:::\    \          /:::/\:::\    \
+       /:::/__\:::\    \        /:::/__\:::\    \        /:::/__\:::\    \
+      /::::\   \:::\    \       \:::\   \:::\    \      /::::\   \:::\    \
+     /::::::\   \:::\    \    ___\:::\   \:::\    \    /::::::\   \:::\    \
+    /:::/\:::\   \:::\    \  /\   \:::\   \:::\    \  /:::/\:::\   \:::\    \
+   /:::/  \:::\   \:::\____\/::\   \:::\   \:::\____\/:::/__\:::\   \:::\____\
+   \::/    \:::\  /:::/    /\:::\   \:::\   \::/    /\:::\   \:::\   \::/    /
+    \/____/ \:::\/:::/    /  \:::\   \:::\   \/____/  \:::\   \:::\   \/____/
+             \::::::/    /    \:::\   \:::\    \       \:::\   \:::\    \
+              \::::/    /      \:::\   \:::\____\       \:::\   \:::\____\
+              /:::/    /        \:::\  /:::/    /        \:::\   \::/    /
+             /:::/    /          \:::\/:::/    /          \:::\   \/____/
+            /:::/    /            \::::::/    /            \:::\    \
+           /:::/    /              \::::/    /              \:::\____\
+           \::/    /                \::/    /                \::/    /
+            \/____/                  \/____/                  \/____/
+
+}}}
 
 == Download ==
 
