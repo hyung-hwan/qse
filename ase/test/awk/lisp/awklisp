@@ -6,6 +6,9 @@
 # onto the end of each statement to cater for the semicolon requirement
 # of ASEAWK. The original file of this file has been renamed to awklisp.org.
 #
+# aseawk++ -si awklisp
+# aseawk++ -si awklisp -ci startup -ci scmhelp.lsp -ci scheme.lsp
+#
 
 # --- Representation of Lisp data
 
