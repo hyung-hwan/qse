@@ -190,8 +190,8 @@ typedef int  ase_mcint_t;
 		typedef unsigned int ase_wchar_t;
 		typedef int ase_wcint_t;
 	#elif ASE_SIZEOF_LONG == 4
-		typedef int ase_wchar_t;
-		typedef int ase_wcint_t;
+		typedef long ase_wchar_t;
+		typedef long ase_wcint_t;
 	#else
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
