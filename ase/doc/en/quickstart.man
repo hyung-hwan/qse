@@ -77,6 +77,9 @@ If you have preference for a particular compiler and the flags, you may explicit
 | Solaris 10
 | CC=gcc CFLAGS="-Wall -O2" CXX=g++ CXXFLAGS="-Wall -O2" ./configure
 | CC=gcc CFLAGS="-Wall -O2 -m64" CXX=g++ CXXFLAGS="-Wall -O2 -m64" LDFLAGS="-m64" ./configure 
+|-
+| OpenWRT mipsel
+| CC=mipsel-linux-uclibc-gcc CXX=mipsel-linux-uclibc-g++ LD=mipsel-linux-uclibc-ld ./configure --host=mips --disable-wchar
 |}}
 
 The JNI library for JAVA is built automatically if required JNI header files are detected by the [[configure]] script. Make sure that the [[javac]] command is included in the [[PATH]] environment variable. The JAVA class files are built with the [[javac]] command detected as well. The {ant,http://ant.apache.org} utility from the Apache Software Foundataion can be used to build the java class files. The [[build.xml]] file is provided at the top-level directory.

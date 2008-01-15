@@ -21,7 +21,7 @@
 #include <crtdbg.h>
 #endif
 
-#ifdef __linux
+#if defined(__linux) && defined(_DEBUG)
 #include <mcheck.h>
 #endif
 
