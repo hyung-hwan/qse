@@ -84,7 +84,7 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 		}
 	}
 	*/
-	ase_awk_val_pool_t* p = run->ipool;
+	ase_awk_val_chunk_t* p = run->ichunk;
 	ase_awk_val_int_t* f = run->ifree;
 
 	if (f = ASE_NULL)
@@ -93,7 +93,7 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 		ase_size_t i;
 
 		p = ASE_AWK_MALLOC (run->awk, 
-			ASE_SIZEOF(ase_awk_val_pool_t)+
+			ASE_SIZEOF(ase_awk_val_chunk_t)+
 			ASE_SIZEOF(ase_awk_val_int_t)*100);
 		if (p == ASE_NULL)
 		{
@@ -102,16 +102,16 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 		}
 
 		x = (ase_awk_val_int_t*)(p + 1);
-		for (i = 0; i < 100-1; i++) f
+		for (i = 0; i < 100-1; i++) 
 			x[i].nde = (ase_awk_nde_int_t*)&x[i+1];
 		x[i].nde = ASE_NULL;
 
 		run->ifree = &f[0];
-		p->next = run->ipool;
+		p->next = run->ichunk;
 	}
 
 	val = run->ifree;
-	p->ifree = (ase_awk_val_int_t*)p->ifree->nde;
+	run->ifree = (ase_awk_val_int_t*)run->ifree->nde;
 
 	val->type = ASE_AWK_VAL_INT;
 	val->ref = 0;
@@ -425,7 +425,9 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 		*/
 		if (cache)
 		{
-			val->nde = (ase_awk_val_nde_t*)run->ifree;
+			
+			((ase_awk_val_int_t*)val)->nde = 
+				(ase_awk_nde_int_t*)run->ifree;
 			run->ifree = val;
 		}
 		else ASE_AWK_FREE (run->awk, val);
