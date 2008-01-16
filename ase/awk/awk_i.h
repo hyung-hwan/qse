@@ -255,6 +255,9 @@ struct ase_awk_run_t
 	/*ase_size_t scache32_count;
 	ase_size_t scache64_count;*/
 
+	ase_awk_val_int_t* ifree;
+	ase_awk_val_chunk_t* ichunk;
+
 	ase_awk_nde_blk_t* active_block;
 	ase_byte_t* pattern_range_state;
 
