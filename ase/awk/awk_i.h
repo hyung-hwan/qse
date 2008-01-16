@@ -244,12 +244,16 @@ struct ase_awk_run_t
 	ase_size_t stack_limit;
 	int exit_level;
 
-	ase_awk_val_int_t* icache[200]; /* TODO: choose the optimal size  */
-	ase_awk_val_real_t* rcache[200]; /* TODO: choose the optimal size  */
-	ase_awk_val_ref_t* fcache[200]; /* TODO: choose the optimal size */
+	ase_awk_val_int_t* icache[128];
+	ase_awk_val_real_t* rcache[128];
+	ase_awk_val_ref_t* fcache[128];
+	ase_awk_val_str_t* scache32[128];
+	ase_awk_val_str_t* scache64[128];
 	ase_size_t icache_count;
 	ase_size_t rcache_count;
 	ase_size_t fcache_count;
+	ase_size_t scache32_count;
+	ase_size_t scache64_count;
 
 	ase_awk_nde_blk_t* active_block;
 	ase_byte_t* pattern_range_state;

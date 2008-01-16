@@ -133,17 +133,38 @@ ase_awk_val_t* ase_awk_makestrval (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t len)
 {
 	ase_awk_val_str_t* val;
+	ase_size_t rlen = len;
 
+	if (rlen <= 32)
+	{
+		if (run->scache32_count > 0)
+		{
+			val = run->scache32[--run->scache32_count];
+			goto init;
+		}
+		rlen = 32;
+	}
+	else if (rlen <= 64)
+	{
+		if (run->scache64_count > 0)
+		{
+			val = run->scache64[--run->scache64_count];
+			goto init;
+		}
+		rlen = 64;
+	}
+	
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, 
 		ASE_SIZEOF(ase_awk_val_str_t) + 
-		(len+1)*ASE_SIZEOF(ase_char_t));
+		(rlen+1)*ASE_SIZEOF(ase_char_t));
 	if (val == ASE_NULL) 
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
 
+init:
 	val->type = ASE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len;
@@ -183,17 +204,38 @@ ase_awk_val_t* ase_awk_makestrval2 (
 	const ase_char_t* str2, ase_size_t len2)
 {
 	ase_awk_val_str_t* val;
+	ase_size_t rlen = len1 + len2;
+
+	if (rlen <= 32)
+	{
+		if (run->scache32_count > 0)
+		{
+			val = run->scache32[--run->scache32_count];
+			goto init;
+		}
+		rlen = 32;
+	}
+	else if (rlen <= 64)
+	{
+		if (run->scache64_count > 0)
+		{
+			val = run->scache64[--run->scache64_count];
+			goto init;
+		}
+		rlen = 64;
+	}
 
 	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
 		run->awk, 
 		ASE_SIZEOF(ase_awk_val_str_t) +
-		(len1+len2+1)*ASE_SIZEOF(ase_char_t));
+		(rlen+1)*ASE_SIZEOF(ase_char_t));
 	if (val == ASE_NULL) 
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
 
+init:
 	val->type = ASE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len1 + len2;
@@ -343,8 +385,7 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	}
 	else if (val->type == ASE_AWK_VAL_INT)
 	{
-		if (cache == ase_true &&
-		    run->icache_count < ASE_COUNTOF(run->icache))
+		if (cache && run->icache_count < ASE_COUNTOF(run->icache))
 		{
 			run->icache[run->icache_count++] = 
 				(ase_awk_val_int_t*)val;	
@@ -353,8 +394,7 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	}
 	else if (val->type == ASE_AWK_VAL_REAL)
 	{
-		if (cache == ase_true &&
-		    run->rcache_count < ASE_COUNTOF(run->rcache))
+		if (cache && run->rcache_count < ASE_COUNTOF(run->rcache))
 		{
 			run->rcache[run->rcache_count++] = 
 				(ase_awk_val_real_t*)val;	
@@ -364,7 +404,22 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	else if (val->type == ASE_AWK_VAL_STR)
 	{
 		/*ASE_AWK_FREE (run->awk, ((ase_awk_val_str_t*)val)->buf);*/
-		ASE_AWK_FREE (run->awk, val);
+		if (cache)
+		{
+			ase_awk_val_str_t* v = (ase_awk_val_str_t*)val;
+			if (v->len <= 32 && 
+			    run->scache32_count<ASE_COUNTOF(run->scache32))
+			{
+				run->scache32[run->scache32_count++] = v;
+			}
+			else if (v->len <= 64 && 
+			         run->scache64_count<ASE_COUNTOF(run->scache64))
+			{
+				run->scache64[run->scache64_count++] = v;
+			}
+			else ASE_AWK_FREE (run->awk, val);
+		}
+		else ASE_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == ASE_AWK_VAL_REX)
 	{
