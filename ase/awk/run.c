@@ -745,8 +745,8 @@ static int init_run (
 	run->icache_count = 0;
 	run->rcache_count = 0;
 	run->fcache_count = 0;
-	run->scache32_count = 0;
-	run->scache64_count = 0;
+	/*run->scache32_count = 0;
+	run->scache64_count = 0;*/
 
 	run->errnum = ASE_AWK_ENOERR;
 	run->errlin = 0;
@@ -965,7 +965,7 @@ static void deinit_run (ase_awk_run_t* run)
 		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
 	}
 
-	while (run->scache32_count > 0)
+	/*while (run->scache32_count > 0)
 	{
 		ase_awk_val_str_t* tmp = run->scache32[--run->scache32_count];
 		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
@@ -975,7 +975,7 @@ static void deinit_run (ase_awk_run_t* run)
 	{
 		ase_awk_val_str_t* tmp = run->scache64[--run->scache64_count];
 		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
-	}
+	}*/
 }
 
 static int build_runarg (
