@@ -84,34 +84,35 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 		}
 	}
 	*/
-	ase_awk_val_chunk_t* p = run->ichunk;
 	ase_awk_val_int_t* f = run->ifree;
 
 	if (f = ASE_NULL)
 	{
+		ase_awk_val_chunk_t* c;
 		ase_awk_val_int_t* x;
 		ase_size_t i;
 
-		p = ASE_AWK_MALLOC (run->awk, 
+		c = ASE_AWK_MALLOC (run->awk, 
 			ASE_SIZEOF(ase_awk_val_chunk_t)+
 			ASE_SIZEOF(ase_awk_val_int_t)*100);
-		if (p == ASE_NULL)
+		if (c == ASE_NULL)
 		{
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return ASE_NULL;
 		}
 
-		x = (ase_awk_val_int_t*)(p + 1);
+		x = (ase_awk_val_int_t*)(c + 1);
 		for (i = 0; i < 100-1; i++) 
 			x[i].nde = (ase_awk_nde_int_t*)&x[i+1];
 		x[i].nde = ASE_NULL;
 
-		run->ifree = &f[0];
-		p->next = run->ichunk;
+		run->ifree = &x[0];
+		c->next = run->ichunk;
+		run->ichunk = c;
 	}
 
 	val = run->ifree;
-	run->ifree = (ase_awk_val_int_t*)run->ifree->nde;
+	run->ifree = (ase_awk_val_int_t*)val->nde;
 
 	val->type = ASE_AWK_VAL_INT;
 	val->ref = 0;
@@ -423,14 +424,9 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 		}
 		else ASE_AWK_FREE (run->awk, val);
 		*/
-		if (cache)
-		{
 			
-			((ase_awk_val_int_t*)val)->nde = 
-				(ase_awk_nde_int_t*)run->ifree;
-			run->ifree = val;
-		}
-		else ASE_AWK_FREE (run->awk, val);
+		((ase_awk_val_int_t*)val)->nde = (ase_awk_nde_int_t*)run->ifree;
+		run->ifree = val;
 	}
 	else if (val->type == ASE_AWK_VAL_REAL)
 	{
