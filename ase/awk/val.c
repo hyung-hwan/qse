@@ -420,20 +420,23 @@ ase_awk_val_t* ase_awk_makerefval (ase_awk_run_t* run, int id, ase_awk_val_t** a
 	return (ase_awk_val_t*)val;
 }
 
+#define IS_STATICVAL(val) \
+	((val) == ASE_NULL || \
+	 (val) == ase_awk_val_nil || \
+	 (val) == ase_awk_val_zls || \
+	 (val) == ase_awk_val_zero || \
+	 (val) == ase_awk_val_one || \
+	 ((val) >= (ase_awk_val_t*)&awk_int[0] && \
+	  (val) <= (ase_awk_val_t*)&awk_int[ASE_COUNTOF(awk_int)-1]))
+
 ase_bool_t ase_awk_isstaticval (ase_awk_val_t* val)
 {
-	return val == ASE_NULL || 
-	       val == ase_awk_val_nil || 
-	       val == ase_awk_val_zls || 
-	       val == ase_awk_val_zero || 
-	       val == ase_awk_val_one || 
-	       (val >= (ase_awk_val_t*)&awk_int[0] &&
-	        val <= (ase_awk_val_t*)&awk_int[ASE_COUNTOF(awk_int)-1]);
+	return IS_STATICVAL(val);
 }
 
 void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 {
-	if (ase_awk_isstaticval(val)) return;
+	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("freeing [cache=%d] ... "), cache);
@@ -522,7 +525,7 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 
 void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val)
 {
-	if (ase_awk_isstaticval(val)) return;
+	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
@@ -535,7 +538,7 @@ void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val)
 
 void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 {
-	if (ase_awk_isstaticval(val)) return;
+	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
@@ -555,7 +558,7 @@ void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 
 void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val)
 {
-	if (ase_awk_isstaticval(val)) return;
+	if (IS_STATICVAL(val)) return;
 
 	ASE_ASSERTX (val->ref > 0,
 		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
