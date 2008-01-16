@@ -301,7 +301,11 @@ protected:
 		while (n < (ssize_t)len)
 		{
 			ase_cint_t c = ase_fgetc (fp);
-			if (c == ASE_CHAR_EOF) break;
+			if (c == ASE_CHAR_EOF) 
+			{
+				if (ase_ferror(fp)) n = -1;
+				break;
+			}
 
 			buf[n++] = c;
 			if (c == ASE_T('\n')) break;
@@ -424,6 +428,7 @@ protected:
 			ase_cint_t c = ase_fgetc (fp);
 			if (c == ASE_CHAR_EOF) 
 			{
+				if (ase_ferror(fp)) return -1;
 				if (t->nextConIdx >= numConInFiles) break;
 
 				const char_t* fn = conInFile[t->nextConIdx];

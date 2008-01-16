@@ -20,21 +20,25 @@
 	#define ase_fprintf  _ftprintf
 	#define ase_vfprintf _vftprintf
 
-	#define ase_fgets _fgetts
-	#define ase_fgetc _fgettc
-	#define ase_fputs _fputts
-	#define ase_fputc _fputtc
+	#define ase_fgets(x,y,s) _fgetts(x,y,s)
+	#define ase_fgetc(x) _fgettc(x)
+	#define ase_fputs(x,s) _fputts(x,s)
+	#define ase_fputc(x,s) _fputtc(x,s)
 #elif defined(ASE_CHAR_IS_MCHAR)
-	#define ase_fgets fgets
-	#define ase_fgetc fgetc
-	#define ase_fputs fputs
-	#define ase_fputc fputc
+	#define ase_fgets(x,y,s) fgets(x,y,s)
+	#define ase_fgetc(x) fgetc(x)
+	#define ase_fputs(x,s) fputs(x,s)
+	#define ase_fputc(x,s) fputc(x,s)
 #else
-	#define ase_fgets fgetws
-	#define ase_fgetc fgetwc
-	#define ase_fputs fputws
-	#define ase_fputc fputwc
+	#define ase_fgets(x,y,s) fgetws(x,y,s)
+	#define ase_fgetc(x) fgetwc(x)
+	#define ase_fputs(x,s) fputws(x,s)
+	#define ase_fputc(x,s) fputwc(x,s)
 #endif
+
+#define ase_feof(s)     feof(s)
+#define ase_ferror(s)   ferror(s)
+#define ase_clearerr(s) clearerr(s)
 
 #ifdef __cplusplus
 extern "C" {
