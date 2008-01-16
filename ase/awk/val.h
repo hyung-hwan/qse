@@ -59,6 +59,9 @@ typedef struct ase_awk_val_rex_t  ase_awk_val_rex_t;
 typedef struct ase_awk_val_map_t  ase_awk_val_map_t;
 typedef struct ase_awk_val_ref_t  ase_awk_val_ref_t;
 
+/* this is not a value. it is just a value holder */
+typedef struct ase_awk_val_chunk_t ase_awk_val_chunk_t;
+
 #if ASE_SIZEOF_INT == 2
 #define ASE_AWK_VAL_HDR \
 	unsigned int type: 3; \
@@ -147,6 +150,11 @@ struct ase_awk_val_ref_t
 	 * positional variable. Otherwise, adr points to the value 
 	 * directly. */
 	ase_awk_val_t** adr;
+};
+
+struct ase_awk_val_chunk_t
+{
+	ase_awk_val_chunk_t* next;
 };
 
 #ifdef __cplusplus
