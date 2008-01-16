@@ -239,11 +239,19 @@ static ase_ssize_t awk_srcio_in (
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
-		if (size <= 0) return -1;
-		c = ase_fgetc ((FILE*)src_io->input_handle);
-		if (c == ASE_CHAR_EOF) return 0;
-		*data = (ase_char_t)c;
-		return 1;
+		ase_ssize_t n = 0;
+		FILE* fp = (FILE*)src_io->input_handle;
+		while (!ase_feof(fp) && n < size)
+		{
+			ase_cint_t c = ase_fgetc (fp);
+			if (c == ASE_CHAR_EOF) 
+			{
+				if (ase_ferror(fp)) n = -1;
+				break;
+			}
+			data[n++] = c;
+		}
+		return n;
 	}
 
 	return -1;
@@ -321,6 +329,7 @@ static ase_ssize_t awk_extio_pipe (
 
 		case ASE_AWK_IO_READ:
 		{
+			/*
 			int chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)size;
 			if (ase_fgets (data, chunk, (FILE*)epa->handle) == ASE_NULL) 
 			{
@@ -328,6 +337,20 @@ static ase_ssize_t awk_extio_pipe (
 				return 0;
 			}
 			return ase_strlen(data);
+			*/
+			ase_ssize_t n = 0;
+			FILE* fp = (FILE*)epa->handle;
+			while (!ase_feof(fp) && n < size)
+			{
+				ase_cint_t c = ase_fgetc (fp);
+				if (c == ASE_CHAR_EOF) 
+				{
+					if (ase_ferror(fp)) n = -1;
+					break;
+				}
+				data[n++] = c;
+			}
+			return n;
 		}
 
 		case ASE_AWK_IO_WRITE:
@@ -443,6 +466,7 @@ static ase_ssize_t awk_extio_file (
 
 		case ASE_AWK_IO_READ:
 		{
+			/*
 			int chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)size;
 			if (ase_fgets (data, chunk, (FILE*)epa->handle) == ASE_NULL) 
 			{
@@ -450,6 +474,20 @@ static ase_ssize_t awk_extio_file (
 				return 0;
 			}
 			return ase_strlen(data);
+			*/
+			ase_ssize_t n = 0;
+			FILE* fp = (FILE*)epa->handle;
+			while (!ase_feof(fp) && n < size)
+			{
+				ase_cint_t c = ase_fgetc (fp);
+				if (c == ASE_CHAR_EOF) 
+				{
+					if (ase_ferror(fp)) n = -1;
+					break;
+				}
+				data[n++] = c;
+			}
+			return n;
 		}
 
 		case ASE_AWK_IO_WRITE:
@@ -503,6 +541,23 @@ static const ase_char_t* infiles[1000] =
 	ASE_NULL
 };
 
+static ase_ssize_t getdata (ase_char_t* data, ase_size_t size, FILE* fp)
+{
+	ase_ssize_t n = 0;
+	while (!ase_feof(fp) && n < size)
+	{
+		ase_cint_t c = ase_fgetc (fp);
+		if (c == ASE_CHAR_EOF) 
+		{
+			if (ase_ferror(fp)) n = -1;
+			break;
+		}
+		data[n++] = c;
+		if (c == ASE_T('\n')) break;
+	}
+	return n;
+}
+
 static ase_ssize_t awk_extio_console (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
@@ -518,12 +573,15 @@ static ase_ssize_t awk_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
-		int chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)size;
+		ase_ssize_t n;
+		/*int chunk = (size > ASE_TYPE_MAX(int))? ASE_TYPE_MAX(int): (int)size;
 
 		while (ase_fgets (data, chunk, (FILE*)epa->handle) == ASE_NULL)
 		{
-			if (ferror((FILE*)epa->handle)) return -1;
+			if (ferror((FILE*)epa->handle)) return -1;*/
 
+		while ((n = getdata(data,size,(FILE*)epa->handle)) == 0)
+		{
 			/* it has reached the end of the current file.
 			 * open the next file if available */
 			if (infiles[infile_no] == ASE_NULL) 
@@ -611,7 +669,8 @@ static ase_ssize_t awk_extio_console (
 			infile_no++;	
 		}
 
-		return ase_strlen(data);
+		/*return ase_strlen(data);*/
+		return n;
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{

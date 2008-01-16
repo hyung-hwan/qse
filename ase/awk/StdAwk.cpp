@@ -266,7 +266,11 @@ StdAwk::ssize_t StdAwk::readPipe (Pipe& io, char_t* buf, size_t len)
 	while (n < (ssize_t)len)
 	{
 		ase_cint_t c = ase_fgetc (fp);
-		if (c == ASE_CHAR_EOF) break;
+		if (c == ASE_CHAR_EOF)
+		{ 
+			if (ase_ferror(fp)) n = -1;
+			break;
+		}
 
 		buf[n++] = c;
 		if (c == ASE_T('\n')) break;
@@ -369,7 +373,11 @@ StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len)
 	while (n < (ssize_t)len)
 	{
 		ase_cint_t c = ase_fgetc (fp);
-		if (c == ASE_CHAR_EOF) break;
+		if (c == ASE_CHAR_EOF)
+		{
+			if (ase_ferror(fp)) n = -1;
+			break;
+		}
 
 		buf[n++] = c;
 		if (c == ASE_T('\n')) break;
