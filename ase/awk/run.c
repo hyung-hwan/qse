@@ -981,7 +981,7 @@ static void deinit_run (ase_awk_run_t* run)
 
 	while (run->ichunk != ASE_NULL)
 	{
-		ase_awk_val_pool_t* next = run->ichunk->next;
+		ase_awk_val_chunk_t* next = run->ichunk->next;
 		ASE_AWK_FREE (run->awk, run->ichunk);
 		run->ichunk = next;
 	}
