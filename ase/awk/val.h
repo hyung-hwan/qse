@@ -48,7 +48,8 @@ enum ase_awk_val_ref_id_t
 enum ase_awk_valtostr_opt_t
 {
 	ASE_AWK_VALTOSTR_CLEAR = (1 << 0),
-	ASE_AWK_VALTOSTR_PRINT = (1 << 1)
+	ASE_AWK_VALTOSTR_FIXED = (1 << 1),/* this overrides CLEAR */
+	ASE_AWK_VALTOSTR_PRINT = (1 << 2)
 };
 
 typedef struct ase_awk_val_nil_t  ase_awk_val_nil_t;
