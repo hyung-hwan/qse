@@ -10,6 +10,8 @@
 #include <ase/utl/stdio.h>
 #endif
 
+#define CHUNKSIZE 100
+
 static ase_char_t* str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
 	int opt, ase_str_t* buf, ase_size_t* len);
@@ -84,9 +86,8 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 		}
 	}
 	*/
-	ase_awk_val_int_t* f = run->ifree;
 
-	if (f = ASE_NULL)
+	if (run->vmgr.ifree == ASE_NULL)
 	{
 		ase_awk_val_chunk_t* c;
 		ase_awk_val_int_t* x;
@@ -94,25 +95,25 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 
 		c = ASE_AWK_MALLOC (run->awk, 
 			ASE_SIZEOF(ase_awk_val_chunk_t)+
-			ASE_SIZEOF(ase_awk_val_int_t)*100);
+			ASE_SIZEOF(ase_awk_val_int_t)*CHUNKSIZE);
 		if (c == ASE_NULL)
 		{
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return ASE_NULL;
 		}
 
+		c->next = run->vmgr.ichunk;
+		run->vmgr.ichunk = c;
+
 		x = (ase_awk_val_int_t*)(c + 1);
-		for (i = 0; i < 100-1; i++) 
+		for (i = 0; i < CHUNKSIZE-1; i++) 
 			x[i].nde = (ase_awk_nde_int_t*)&x[i+1];
 		x[i].nde = ASE_NULL;
 
-		run->ifree = &x[0];
-		c->next = run->ichunk;
-		run->ichunk = c;
+		run->vmgr.ifree = x;
 	}
-
-	val = run->ifree;
-	run->ifree = (ase_awk_val_int_t*)val->nde;
+	val = run->vmgr.ifree;
+	run->vmgr.ifree = (ase_awk_val_int_t*)val->nde;
 
 	val->type = ASE_AWK_VAL_INT;
 	val->ref = 0;
@@ -129,6 +130,7 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 {
 	ase_awk_val_real_t* val;
 
+	/*
 	if (run->rcache_count > 0)
 	{
 		val = run->rcache[--run->rcache_count];
@@ -143,6 +145,35 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 			return ASE_NULL;
 		}
 	}
+	*/
+
+	if (run->vmgr.rfree == ASE_NULL)
+	{
+		ase_awk_val_chunk_t* c;
+		ase_awk_val_real_t* x;
+		ase_size_t i;
+
+		c = ASE_AWK_MALLOC (run->awk, 
+			ASE_SIZEOF(ase_awk_val_chunk_t)+
+			ASE_SIZEOF(ase_awk_val_real_t)*CHUNKSIZE);
+		if (c == ASE_NULL)
+		{
+			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+			return ASE_NULL;
+		}
+
+		c->next = run->vmgr.rchunk;
+		run->vmgr.rchunk = c;
+
+		x = (ase_awk_val_real_t*)(c + 1);
+		for (i = 0; i < CHUNKSIZE-1; i++) 
+			x[i].nde = (ase_awk_nde_real_t*)&x[i+1];
+		x[i].nde = ASE_NULL;
+
+		run->vmgr.rfree = x;
+	}
+	val = run->vmgr.rfree;
+	run->vmgr.rfree = (ase_awk_val_real_t*)val->nde;
 
 	val->type = ASE_AWK_VAL_REAL;
 	val->ref = 0;
@@ -425,17 +456,21 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 		else ASE_AWK_FREE (run->awk, val);
 		*/
 			
-		((ase_awk_val_int_t*)val)->nde = (ase_awk_nde_int_t*)run->ifree;
-		run->ifree = val;
+		((ase_awk_val_int_t*)val)->nde = (ase_awk_nde_int_t*)run->vmgr.ifree;
+		run->vmgr.ifree = (ase_awk_val_int_t*)val;
 	}
 	else if (val->type == ASE_AWK_VAL_REAL)
 	{
+		/*
 		if (cache && run->rcache_count < ASE_COUNTOF(run->rcache))
 		{
 			run->rcache[run->rcache_count++] = 
 				(ase_awk_val_real_t*)val;	
 		}
 		else ASE_AWK_FREE (run->awk, val);
+		*/
+		((ase_awk_val_real_t*)val)->nde = (ase_awk_nde_real_t*)run->vmgr.rfree;
+		run->vmgr.rfree = (ase_awk_val_real_t*)val;
 	}
 	else if (val->type == ASE_AWK_VAL_STR)
 	{
@@ -634,6 +669,21 @@ static ase_char_t* str_to_str (
 		if (len != ASE_NULL) *len = str_len;
 		return tmp;
 	}
+	else if (opt & ASE_AWK_VALTOSTR_FIXED)
+	{
+		ASE_ASSERT (buf != ASE_NULL && len != ASE_NULL);
+
+		if (str_len >= *len)
+		{
+			ase_awk_setrunerror (
+				run, ASE_AWK_EINVAL, 0, ASE_NULL, 0);
+			*len = str_len + 1;
+			return ASE_NULL;
+		}
+
+		*len = ase_strncpy ((ase_char_t*)buf, str, str_len);
+		return (ase_char_t*)buf;
+	}
 	else
 	{
 		ase_size_t n;
@@ -658,7 +708,7 @@ static ase_char_t* val_int_to_str (
 {
 	ase_char_t* tmp;
 	ase_long_t t;
-	ase_size_t l = 0;
+	ase_size_t rlen = 0;
 
 	t = v->val; 
 	if (t == 0)
@@ -680,6 +730,24 @@ static ase_char_t* val_int_to_str (
 			if (len != ASE_NULL) *len = 1;
 			return tmp;
 		}
+		else if (opt & ASE_AWK_VALTOSTR_FIXED)
+		{
+			ASE_ASSERT (buf != ASE_NULL && len != ASE_NULL);
+	
+			if (1 >= *len)
+			{
+				ase_awk_setrunerror (
+					run, ASE_AWK_EINVAL, 0, ASE_NULL, 0);
+				*len = 2; /* buffer size required */
+				return ASE_NULL;
+			}
+
+			tmp = (ase_char_t*)buf;
+			tmp[0] = ASE_T('0');
+			tmp[1] = ASE_T('\0');
+			*len = 1; /* actual length */
+			return tmp;
+		}
 		else
 		{
 			if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
@@ -696,13 +764,13 @@ static ase_char_t* val_int_to_str (
 	}
 
 	/* non-zero values */
-	if (t < 0) { t = -t; l++; }
-	while (t > 0) { l++; t /= 10; }
+	if (t < 0) { t = -t; rlen++; }
+	while (t > 0) { rlen++; t /= 10; }
 
 	if (buf == ASE_NULL)
 	{
 		tmp = ASE_AWK_MALLOC (
-			run->awk, (l + 1) * ASE_SIZEOF(ase_char_t));
+			run->awk, (rlen + 1) * ASE_SIZEOF(ase_char_t));
 		if (tmp == ASE_NULL)
 		{
 			ase_awk_setrunerror (
@@ -710,8 +778,24 @@ static ase_char_t* val_int_to_str (
 			return ASE_NULL;
 		}
 
-		tmp[l] = ASE_T('\0');
-		if (len != ASE_NULL) *len = l;
+		tmp[rlen] = ASE_T('\0');
+		if (len != ASE_NULL) *len = rlen;
+	}
+	else if (opt & ASE_AWK_VALTOSTR_FIXED)
+	{
+		ASE_ASSERT (buf != ASE_NULL && len != ASE_NULL);
+
+		if (rlen >= *len)
+		{
+			ase_awk_setrunerror (
+				run, ASE_AWK_EINVAL, 0, ASE_NULL, 0);
+			*len = rlen + 1; /* buffer size required */
+			return ASE_NULL;
+		}
+
+		tmp = (ase_char_t*)buf;
+		tmp[rlen] = ASE_T('\0');
+		*len = rlen; /* actual length */
 	}
 	else
 	{
@@ -722,7 +806,7 @@ static ase_char_t* val_int_to_str (
 
 		/* extend the buffer */
 		if (ase_str_nccat (
-			buf, ASE_T(' '), l) == (ase_size_t)-1)
+			buf, ASE_T(' '), rlen) == (ase_size_t)-1)
 		{
 			ase_awk_setrunerror (
 				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
@@ -735,13 +819,13 @@ static ase_char_t* val_int_to_str (
 
 	while (t > 0) 
 	{
-		tmp[--l] = (ase_char_t)(t % 10) + ASE_T('0');
+		tmp[--rlen] = (ase_char_t)(t % 10) + ASE_T('0');
 		t /= 10;
 	}
 
-	if (v->val < 0) tmp[--l] = ASE_T('-');
+	if (v->val < 0) tmp[--rlen] = ASE_T('-');
 
-	if (buf != ASE_NULL) 
+	if (buf != ASE_NULL && !(opt & ASE_AWK_VALTOSTR_FIXED))
 	{
 		tmp = ASE_STR_BUF(buf);
 		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
@@ -796,6 +880,27 @@ static ase_char_t* val_real_to_str (
 		ase_str_close (&fbu);
 		ase_str_forfeit (&out);
 		if (len != ASE_NULL) *len = tmp_len;
+	}
+	else if (opt & ASE_AWK_VALTOSTR_FIXED)
+	{
+		ASE_ASSERT (buf != ASE_NULL && len != ASE_NULL);
+
+		if (tmp_len >= *len)
+		{
+			ase_awk_setrunerror (
+				run, ASE_AWK_EINVAL, 0, ASE_NULL, 0);
+			*len = tmp_len + 1; /* buffer size required */
+			ase_str_close (&fbu);
+			ase_str_close (&out);
+			return ASE_NULL;
+		}
+
+		ase_strncpy ((ase_char_t*)buf, tmp, tmp_len);
+		tmp = (ase_char_t*)buf;
+		*len = tmp_len;
+
+		ase_str_close (&fbu);
+		ase_str_close (&out);
 	}
 	else
 	{

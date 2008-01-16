@@ -14,6 +14,8 @@
 #define DEF_BUF_CAPA 256
 #define STACK_INCREMENT 512
 
+#define IDXBUFSIZE 64
+
 #define STACK_AT(run,n) ((run)->stack[(run)->stack_base+(n)])
 #define STACK_NARGS(run) (STACK_AT(run,3))
 #define STACK_ARG(run,n) STACK_AT(run,3+1+(n))
@@ -214,7 +216,7 @@ static int read_record (ase_awk_run_t* run);
 static int shorten_record (ase_awk_run_t* run, ase_size_t nflds);
 
 static ase_char_t* idxnde_to_str (
-	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_size_t* len);
+	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_char_t* buf, ase_size_t* len);
 
 typedef ase_awk_val_t* (*binop_func_t) (
 	ase_awk_run_t* run, ase_awk_val_t* left, ase_awk_val_t* right);
@@ -742,13 +744,13 @@ static int init_run (
 
 	run->exit_level = EXIT_NONE;
 
-	run->icache_count = 0;
-	run->rcache_count = 0;
 	run->fcache_count = 0;
 	/*run->scache32_count = 0;
 	run->scache64_count = 0;*/
-	run->ichunk = ASE_NULL;
-	run->ifree = ASE_NULL;
+	run->vmgr.ichunk = ASE_NULL;
+	run->vmgr.ifree = ASE_NULL;
+	run->vmgr.rchunk = ASE_NULL;
+	run->vmgr.rfree = ASE_NULL;
 
 	run->errnum = ASE_AWK_ENOERR;
 	run->errlin = 0;
@@ -949,18 +951,6 @@ static void deinit_run (ase_awk_run_t* run)
 	ase_awk_map_close (run->named);
 
 	/* destroy values in free list */
-	while (run->icache_count > 0)
-	{
-		ase_awk_val_int_t* tmp = run->icache[--run->icache_count];
-		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
-	}
-
-	while (run->rcache_count > 0)
-	{
-		ase_awk_val_real_t* tmp = run->rcache[--run->rcache_count];
-		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
-	}
-
 	while (run->fcache_count > 0)
 	{
 		ase_awk_val_ref_t* tmp = run->fcache[--run->fcache_count];
@@ -979,11 +969,18 @@ static void deinit_run (ase_awk_run_t* run)
 		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
 	}*/
 
-	while (run->ichunk != ASE_NULL)
+	while (run->vmgr.ichunk != ASE_NULL)
 	{
-		ase_awk_val_chunk_t* next = run->ichunk->next;
-		ASE_AWK_FREE (run->awk, run->ichunk);
-		run->ichunk = next;
+		ase_awk_val_chunk_t* next = run->vmgr.ichunk->next;
+		ASE_AWK_FREE (run->awk, run->vmgr.ichunk);
+		run->vmgr.ichunk = next;
+	}
+
+	while (run->vmgr.rchunk != ASE_NULL)
+	{
+		ase_awk_val_chunk_t* next = run->vmgr.rchunk->next;
+		ASE_AWK_FREE (run->awk, run->vmgr.rchunk);
+		run->vmgr.rchunk = next;
 	}
 }
 
@@ -2516,8 +2513,9 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			if (var->type == ASE_AWK_NDE_NAMEDIDX)
 			{
 				ase_char_t* key;
-				ase_size_t key_len;
+				ase_size_t keylen;
 				ase_awk_val_t* idx;
+				ase_char_t buf[IDXBUFSIZE];
 
 				ASE_ASSERT (var->idx != ASE_NULL);
 
@@ -2525,9 +2523,20 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				if (idx == ASE_NULL) return -1;
 
 				ase_awk_refupval (run, idx);
+
+				/* try with a fixed-size buffer */
+				keylen = ASE_COUNTOF(buf);
 				key = ase_awk_valtostr (
-					run, idx, ASE_AWK_VALTOSTR_CLEAR, 
-					ASE_NULL, &key_len);
+					run, idx, ASE_AWK_VALTOSTR_FIXED, 
+					(ase_str_t*)buf, &keylen);
+				if (key == ASE_NULL)
+				{
+					/* if it doesn't work, switch to dynamic mode */
+					key = ase_awk_valtostr (
+						run, idx, ASE_AWK_VALTOSTR_CLEAR,
+						ASE_NULL, &keylen);
+				}
+
 				ase_awk_refdownval (run, idx);
 
 				if (key == ASE_NULL) 
@@ -2537,8 +2546,8 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 					return -1;
 				}
 
-				ase_awk_map_remove (map, key, key_len);
-				ASE_AWK_FREE (run->awk, key);
+				ase_awk_map_remove (map, key, keylen);
+				if (key != buf) ASE_AWK_FREE (run->awk, key);
 			}
 			else
 			{
@@ -2630,8 +2639,9 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			    var->type == ASE_AWK_NDE_ARGIDX)
 			{
 				ase_char_t* key;
-				ase_size_t key_len;
+				ase_size_t keylen;
 				ase_awk_val_t* idx;
+				ase_char_t buf[IDXBUFSIZE];
 
 				ASE_ASSERT (var->idx != ASE_NULL);
 
@@ -2639,9 +2649,20 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 				if (idx == ASE_NULL) return -1;
 
 				ase_awk_refupval (run, idx);
+
+				/* try with a fixed-size buffer */
+				keylen = ASE_COUNTOF(buf);
 				key = ase_awk_valtostr (
-					run, idx, ASE_AWK_VALTOSTR_CLEAR,
-					ASE_NULL, &key_len);
+					run, idx, ASE_AWK_VALTOSTR_FIXED, 
+					(ase_str_t*)buf, &keylen);
+				if (key == ASE_NULL)
+				{
+					/* if it doesn't work, switch to dynamic mode */
+					key = ase_awk_valtostr (
+						run, idx, ASE_AWK_VALTOSTR_CLEAR,
+						ASE_NULL, &keylen);
+				}
+
 				ase_awk_refdownval (run, idx);
 
 				if (key == ASE_NULL)
@@ -2649,9 +2670,8 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 					run->errlin = var->line;
 					return -1;
 				}
-
-				ase_awk_map_remove (map, key, key_len);
-				ASE_AWK_FREE (run->awk, key);
+				ase_awk_map_remove (map, key, keylen);
+				if (key != buf) ASE_AWK_FREE (run->awk, key);
 			}
 			else
 			{
@@ -3398,6 +3418,7 @@ static ase_awk_val_t* do_assignment_map (
 	ase_awk_val_map_t* map;
 	ase_char_t* str;
 	ase_size_t len;
+	ase_char_t idxbuf[IDXBUFSIZE];
 	int n;
 
 	ASE_ASSERT (
@@ -3492,8 +3513,13 @@ static ase_awk_val_t* do_assignment_map (
 		return ASE_NULL;
 	}
 
-	str = idxnde_to_str (run, var->idx, &len);
-	if (str == ASE_NULL) return ASE_NULL;
+	len = ASE_COUNTOF(idxbuf);
+	str = idxnde_to_str (run, var->idx, idxbuf, &len);
+	if (str == ASE_NULL) 
+	{
+		str = idxnde_to_str (run, var->idx, ASE_NULL, &len);
+		if (str == ASE_NULL) return ASE_NULL;
+	}
 
 #ifdef DEBUG_RUN
 	ase_dprintf (ASE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), 
@@ -3503,12 +3529,12 @@ static ase_awk_val_t* do_assignment_map (
 	n = ase_awk_map_putx (map->map, str, len, val, ASE_NULL);
 	if (n < 0)
 	{
-		ASE_AWK_FREE (run->awk, str);
+		if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, var->line, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
-	ASE_AWK_FREE (run->awk, str);
+	if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 	ase_awk_refupval (run, val);
 	return val;
 }
@@ -3773,6 +3799,7 @@ static ase_awk_val_t* eval_binop_in (
 	ase_awk_val_t* rv;
 	ase_char_t* str;
 	ase_size_t len;
+	ase_char_t idxbuf[IDXBUFSIZE];
 
 	if (right->type != ASE_AWK_NDE_GLOBAL &&
 	    right->type != ASE_AWK_NDE_LOCAL &&
@@ -3789,17 +3816,24 @@ static ase_awk_val_t* eval_binop_in (
 	}
 
 	/* evaluate the left-hand side of the operator */
+	len = ASE_COUNTOF(idxbuf);
 	str = (left->type == ASE_AWK_NDE_GRP)?
-		idxnde_to_str (run, ((ase_awk_nde_grp_t*)left)->body, &len):
-		idxnde_to_str (run, left, &len);
-	if (str == ASE_NULL) return ASE_NULL;
+		idxnde_to_str (run, ((ase_awk_nde_grp_t*)left)->body, idxbuf, &len):
+		idxnde_to_str (run, left, idxbuf, &len);
+	if (str == ASE_NULL)
+	{
+		str = (left->type == ASE_AWK_NDE_GRP)?
+			idxnde_to_str (run, ((ase_awk_nde_grp_t*)left)->body, ASE_NULL, &len):
+			idxnde_to_str (run, left, ASE_NULL, &len);
+		if (str == ASE_NULL) return ASE_NULL;
+	}
 
 	/* evaluate the right-hand side of the operator */
 	ASE_ASSERT (right->next == ASE_NULL);
 	rv = eval_expression (run, right);
 	if (rv == ASE_NULL) 
 	{
-		ASE_AWK_FREE (run->awk, str);
+		if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 		return ASE_NULL;
 	}
 
@@ -3807,7 +3841,7 @@ static ase_awk_val_t* eval_binop_in (
 
 	if (rv->type == ASE_AWK_VAL_NIL)
 	{
-		ASE_AWK_FREE (run->awk, str);
+		if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 		ase_awk_refdownval (run, rv);
 		return ase_awk_val_zero;
 	}
@@ -3820,13 +3854,13 @@ static ase_awk_val_t* eval_binop_in (
 		res = (ase_awk_map_get (map, str, len) == ASE_NULL)? 
 			ase_awk_val_zero: ase_awk_val_one;
 
-		ASE_AWK_FREE (run->awk, str);
+		if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 		ase_awk_refdownval (run, rv);
 		return res;
 	}
 
 	/* need a map */
-	ASE_AWK_FREE (run->awk, str);
+	if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 	ase_awk_refdownval (run, rv);
 
 	ase_awk_setrunerror (run, ASE_AWK_ENOTMAPNILIN, right->line, ASE_NULL, 0);
@@ -5839,6 +5873,7 @@ static ase_awk_val_t** get_reference_indexed (
 	ase_awk_pair_t* pair;
 	ase_char_t* str;
 	ase_size_t len;
+	ase_char_t idxbuf[IDXBUFSIZE];
 
 	ASE_ASSERT (val != ASE_NULL);
 
@@ -5866,8 +5901,13 @@ static ase_awk_val_t** get_reference_indexed (
 
 	ASE_ASSERT (nde->idx != ASE_NULL);
 
-	str = idxnde_to_str (run, nde->idx, &len);
-	if (str == ASE_NULL) return ASE_NULL;
+	len = ASE_COUNTOF(idxbuf);
+	str = idxnde_to_str (run, nde->idx, idxbuf, &len);
+	if (str == ASE_NULL)
+	{
+		str = idxnde_to_str (run, nde->idx, ASE_NULL, &len);
+		if (str == ASE_NULL) return ASE_NULL;
+	}
 
 	pair = ase_awk_map_get ((*(ase_awk_val_map_t**)val)->map, str, len);
 	if (pair == ASE_NULL)
@@ -5877,7 +5917,7 @@ static ase_awk_val_t** get_reference_indexed (
 			str, len, ase_awk_val_nil);
 		if (pair == ASE_NULL)
 		{
-			ASE_AWK_FREE (run->awk, str);
+			if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 			ase_awk_setrunerror (
 				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
 			return ASE_NULL;
@@ -5886,7 +5926,7 @@ static ase_awk_val_t** get_reference_indexed (
 		ase_awk_refupval (run, pair->val);
 	}
 
-	ASE_AWK_FREE (run->awk, str);
+	if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 	return (ase_awk_val_t**)&pair->val;
 }
 
@@ -5985,6 +6025,7 @@ static ase_awk_val_t* eval_indexed (
 	ase_awk_pair_t* pair;
 	ase_char_t* str;
 	ase_size_t len;
+	ase_char_t idxbuf[IDXBUFSIZE];
 
 	ASE_ASSERT (val != ASE_NULL);
 
@@ -6012,11 +6053,16 @@ static ase_awk_val_t* eval_indexed (
 
 	ASE_ASSERT (nde->idx != ASE_NULL);
 
-	str = idxnde_to_str (run, nde->idx, &len);
-	if (str == ASE_NULL) return ASE_NULL;
+	len = ASE_COUNTOF(idxbuf);
+	str = idxnde_to_str (run, nde->idx, idxbuf, &len);
+	if (str == ASE_NULL) 
+	{
+		str = idxnde_to_str (run, nde->idx, ASE_NULL, &len);
+		if (str == ASE_NULL) return ASE_NULL;
+	}
 
 	pair = ase_awk_map_get ((*(ase_awk_val_map_t**)val)->map, str, len);
-	ASE_AWK_FREE (run->awk, str);
+	if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 
 	return (pair == ASE_NULL)? ase_awk_val_nil: (ase_awk_val_t*)pair->val;
 }
@@ -6397,7 +6443,7 @@ static int shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 }
 
 static ase_char_t* idxnde_to_str (
-	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_size_t* len)
+	ase_awk_run_t* run, ase_awk_nde_t* nde, ase_char_t* buf, ase_size_t* len)
 {
 	ase_char_t* str;
 	ase_awk_val_t* idx;
@@ -6412,14 +6458,28 @@ static ase_char_t* idxnde_to_str (
 
 		ase_awk_refupval (run, idx);
 
-		str = ase_awk_valtostr (
-			run, idx, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, len);
-		if (str == ASE_NULL) 
+		str = ASE_NULL;
+
+		if (buf != ASE_NULL)
 		{
-			ase_awk_refdownval (run, idx);
-			/* change error line */
-			run->errlin = nde->line;
-			return ASE_NULL;
+			/* try with a fixed-size buffer */
+			str = ase_awk_valtostr (
+				run, idx, ASE_AWK_VALTOSTR_FIXED, (ase_str_t*)buf, len);
+		}
+
+		if (str == ASE_NULL)
+		{
+			/* if it doen't work, switch to the dynamic mode */
+			str = ase_awk_valtostr (
+				run, idx, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, len);
+
+			if (str == ASE_NULL) 
+			{
+				ase_awk_refdownval (run, idx);
+				/* change error line */
+				run->errlin = nde->line;
+				return ASE_NULL;
+			}
 		}
 
 		ase_awk_refdownval (run, idx);
@@ -6430,8 +6490,7 @@ static ase_char_t* idxnde_to_str (
 		ase_str_t idxstr;
 
 		if (ase_str_open (
-			&idxstr, 
-			DEF_BUF_CAPA, 
+			&idxstr, DEF_BUF_CAPA, 
 			&run->awk->prmfns.mmgr) == ASE_NULL) 
 		{
 			ase_awk_setrunerror (
