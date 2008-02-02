@@ -42,6 +42,8 @@ ase_size_t ase_strncpy (
 ase_size_t ase_strxncpy (
     ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len);
 
+ase_size_t ase_strxcat (
+    ase_char_t* buf, ase_size_t bsz, const ase_char_t* str);
 ase_size_t ase_strxncat (
     ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len);
 
