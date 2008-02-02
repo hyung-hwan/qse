@@ -39,6 +39,7 @@
 #define ase_feof(s)     feof(s)
 #define ase_ferror(s)   ferror(s)
 #define ase_clearerr(s) clearerr(s)
+#define ase_fflush(s)   fflush(s)
 
 #ifdef __cplusplus
 extern "C" {
