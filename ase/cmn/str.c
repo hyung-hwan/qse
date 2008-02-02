@@ -86,6 +86,28 @@ ase_size_t ase_strxncpy (
 	return n;
 }
 
+ase_size_t ase_strxcat (ase_char_t* buf, ase_size_t bsz, const ase_char_t* str)
+{
+	ase_char_t* p, * p2;
+	ase_size_t blen;
+
+	blen = ase_strlen(buf);
+	if (blen >= bsz) return blen; /* something wrong */
+
+	p = buf + blen;
+	p2 = buf + bsz - 1;
+
+	while (p < p2) 
+	{
+		if (*str == ASE_T('\0')) break;
+		*p++ = *str++;
+	}
+
+	if (bsz > 0) *p = ASE_T('\0');
+	return p - buf;
+}
+
+
 ase_size_t ase_strxncat (
 	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len)
 {
