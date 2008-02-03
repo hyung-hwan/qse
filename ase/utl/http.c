@@ -4,6 +4,7 @@
 
 #include <ase/utl/http.h>
 #include <ase/utl/ctype.h>
+#include <ase/cmn/mem.h>
 
 static int is_http_space (ase_char_t c)
 {
