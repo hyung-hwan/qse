@@ -96,6 +96,10 @@ SOURCE=.\ctype.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\http.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\main.c
 # End Source File
 # Begin Source File
@@ -109,6 +113,10 @@ SOURCE=.\stdio.c
 # Begin Source File
 
 SOURCE=.\ctype.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\http.h
 # End Source File
 # Begin Source File
 
