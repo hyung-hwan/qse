@@ -344,6 +344,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\http.c"
+				>
+			</File>
+			<File
 				RelativePath="main.c"
 				>
 				<FileConfiguration
@@ -430,6 +434,10 @@
 			>
 			<File
 				RelativePath="ctype.h"
+				>
+			</File>
+			<File
+				RelativePath=".\http.h"
 				>
 			</File>
 			<File
