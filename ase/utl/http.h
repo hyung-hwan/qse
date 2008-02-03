@@ -50,4 +50,15 @@ struct ase_http_hdr_t
 	} value;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+ase_char_t* ase_parsehttpreq (ase_char_t* buf, ase_http_req_t* req);
+ase_char_t* ase_parsehttphdr (ase_char_t* buf, ase_http_hdr_t* hdr);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

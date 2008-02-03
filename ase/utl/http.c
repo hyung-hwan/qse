@@ -48,7 +48,7 @@ static int digit_to_num (ase_char_t c)
 	return -1;
 }
 
-static ase_char_t* ase_parsehttpreq (ase_char_t* buf, ase_http_req_t* req)
+ase_char_t* ase_parsehttpreq (ase_char_t* buf, ase_http_req_t* req)
 {
 	ase_char_t* p = buf, * x;
 
@@ -139,7 +139,7 @@ ok:
 	return p;
 }
 
-static ase_char_t* ase_parsehttphdr (ase_char_t* buf, ase_http_hdr_t* hdr)
+ase_char_t* ase_parsehttphdr (ase_char_t* buf, ase_http_hdr_t* hdr)
 {
 	ase_char_t* p = buf, * last;
 
