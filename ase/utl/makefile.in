@@ -21,7 +21,8 @@ TMP_DIR = $(MODE)
 OBJ_FILES = \
 	$(TMP_DIR)/main.o \
 	$(TMP_DIR)/ctype.o \
-	$(TMP_DIR)/stdio.o 
+	$(TMP_DIR)/stdio.o \
+	$(TMP_DIR)/http.o \
 
 lib: $(OUT_FILE)
 
@@ -37,6 +38,9 @@ $(TMP_DIR)/ctype.o: ctype.c
 
 $(TMP_DIR)/stdio.o: stdio.c
 	$(CC) $(CFLAGS) -o $@ -c stdio.c
+
+$(TMP_DIR)/http.o: http.c
+	$(CC) $(CFLAGS) -o $@ -c http.c
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
