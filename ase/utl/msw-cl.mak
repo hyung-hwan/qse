@@ -23,7 +23,8 @@ TMP_DIR = $(MODE)
 OBJ_FILES_LIB = \
 	$(TMP_DIR)\main.obj \
 	$(TMP_DIR)\ctype.obj \
-	$(TMP_DIR)\stdio.obj
+	$(TMP_DIR)\stdio.obj \
+	$(TMP_DIR)\http.obj
 
 all: lib
 
@@ -42,6 +43,9 @@ $(TMP_DIR)\ctype.obj: ctype.c
 
 $(TMP_DIR)\stdio.obj: stdio.c
 	$(CC) $(CFLAGS) /Fo$@ /c stdio.c
+
+$(TMP_DIR)\http.obj: http.c
+	$(CC) $(CFLAGS) /Fo$@ /c http.c
 
 $(OUT_DIR):
 	-md $(OUT_DIR)
