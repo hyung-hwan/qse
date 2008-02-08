@@ -1532,7 +1532,7 @@ void Awk::onRunStatement (Run& run, size_t line)
 }
 
 Awk::ssize_t Awk::sourceReader (
-	int cmd, void* arg, char_t* data, size_t count)
+	iocmd_t cmd, void* arg, char_t* data, size_t count)
 {
 	Awk* awk = (Awk*)arg;
 
@@ -1550,7 +1550,7 @@ Awk::ssize_t Awk::sourceReader (
 }
 
 Awk::ssize_t Awk::sourceWriter (
-	int cmd, void* arg, char_t* data, size_t count)
+	iocmd_t cmd, void* arg, char_t* data, size_t count)
 {
 	Awk* awk = (Awk*)arg;
 
@@ -1568,7 +1568,7 @@ Awk::ssize_t Awk::sourceWriter (
 }
 
 Awk::ssize_t Awk::pipeHandler (
-	int cmd, void* arg, char_t* data, size_t count)
+	iocmd_t cmd, void* arg, char_t* data, size_t count)
 {
 	extio_t* extio = (extio_t*)arg;
 	Awk* awk = (Awk*)extio->custom_data;
@@ -1600,7 +1600,7 @@ Awk::ssize_t Awk::pipeHandler (
 }
 
 Awk::ssize_t Awk::fileHandler (
-	int cmd, void* arg, char_t* data, size_t count)
+	iocmd_t cmd, void* arg, char_t* data, size_t count)
 {
 	extio_t* extio = (extio_t*)arg;
 	Awk* awk = (Awk*)extio->custom_data;
@@ -1632,7 +1632,7 @@ Awk::ssize_t Awk::fileHandler (
 }
 
 Awk::ssize_t Awk::consoleHandler (
-	int cmd, void* arg, char_t* data, size_t count)
+	iocmd_t cmd, void* arg, char_t* data, size_t count)
 {
 	extio_t* extio = (extio_t*)arg;
 	Awk* awk = (Awk*)extio->custom_data;
