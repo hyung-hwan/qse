@@ -41,6 +41,8 @@ public:
 	typedef ase_awk_map_t map_t;
 	/** Represents a key/value pair */
 	typedef ase_awk_pair_t pair_t;
+	/** Represents the IO command */
+	typedef ase_awk_iocmd_t iocmd_t;
 	/** Represents the external I/O context */
 	typedef ase_awk_extio_t extio_t;
 	/** Represents the run-time context */
@@ -1038,16 +1040,16 @@ protected:
 
 	// static glue members for various handlers
 	static ssize_t sourceReader (
-        		int cmd, void* arg, char_t* data, size_t count);
+        		iocmd_t cmd, void* arg, char_t* data, size_t count);
 	static ssize_t sourceWriter (
-        		int cmd, void* arg, char_t* data, size_t count);
+        		iocmd_t cmd, void* arg, char_t* data, size_t count);
 
 	static ssize_t pipeHandler (
-        		int cmd, void* arg, char_t* data, size_t count);
+        		iocmd_t cmd, void* arg, char_t* data, size_t count);
 	static ssize_t fileHandler (
-        		int cmd, void* arg, char_t* data, size_t count);
+        		iocmd_t cmd, void* arg, char_t* data, size_t count);
 	static ssize_t consoleHandler (
-        		int cmd, void* arg, char_t* data, size_t count);
+        		iocmd_t cmd, void* arg, char_t* data, size_t count);
 
 	static int functionHandler (
 		run_t* run, const char_t* name, size_t len);

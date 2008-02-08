@@ -59,7 +59,7 @@ OBJ_FILES_JAR = \
 	$(TMP_DIR)\ase\awk\Context.class \
 	$(TMP_DIR)\ase\awk\Clearable.class \
 	$(TMP_DIR)\ase\awk\Argument.class \
-	$(TMP_DIR)\ase\awk\Return.class 
+	$(TMP_DIR)\ase\awk\Return.class \
 	$(TMP_DIR)\ase\awk\Extio.class \
 	$(TMP_DIR)\ase\awk\IO.class \
 	$(TMP_DIR)\ase\awk\Console.class \

@@ -37,8 +37,9 @@ typedef int (*ase_awk_sprintf_t) (
 	const ase_char_t* fmt, ...);
 typedef void (*ase_awk_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
 
+typedef enum ase_awk_iocmd_t ase_awk_iocmd_t;
 typedef ase_ssize_t (*ase_awk_io_t) (
-	int cmd, void* arg, ase_char_t* data, ase_size_t count);
+	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t count);
 
 struct ase_awk_extio_t 
 {

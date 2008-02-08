@@ -61,11 +61,11 @@ enum
 };
 
 static ase_ssize_t read_source (
-	int cmd, void* arg, ase_char_t* data, ase_size_t count);
+	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t count);
 static ase_ssize_t write_source (
-	int cmd, void* arg, ase_char_t* data, ase_size_t count);
+	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t count);
 static ase_ssize_t process_extio (
-	int cmd, void* arg, ase_char_t* data, ase_size_t count);
+	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t count);
 
 static ase_char_t* dup_str (
 	ase_awk_t* awk, const jchar* str, ase_size_t len);
@@ -1453,7 +1453,7 @@ static ase_ssize_t java_next_extio (
 }
 
 static ase_ssize_t read_source (
-	int cmd, void* arg, ase_char_t* data, ase_size_t count)
+	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t count)
 {
 	srcio_data_t* srcio_data = (srcio_data_t*)arg;
 
@@ -1477,7 +1477,7 @@ static ase_ssize_t read_source (
 }
 
 static ase_ssize_t write_source (
-	int cmd, void* arg, ase_char_t* data, ase_size_t count)
+	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t count)
 {
 	srcio_data_t* srcio_data = (srcio_data_t*)arg;
 
@@ -1501,7 +1501,7 @@ static ase_ssize_t write_source (
 }
 
 static ase_ssize_t process_extio (
-	int cmd, void* arg, ase_char_t* data, ase_size_t size)
+	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;

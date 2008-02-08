@@ -7,10 +7,16 @@
 # -Tpe            
 # -Tpd            /dll
 
+!ifndef MODE
+MODE = release
+!endif
+
 CC = bcc32
+CXX = bcc32
 LD = ilink32
-CFLAGS = -O2 -WM -WU -RT- -w -I..\..\.. 
-LDFLAGS = -ap -Tpe -Gn -c -L..\..\awk -L..\..\cmn -L..\..\utl
+CFLAGS = -O2 -WM -WU -RT- -w -q -I..\..\.. 
+CXXFLAGS = -O2 -WM -WU -RT- -w -q -I..\..\.. 
+LDFLAGS = -ap -Tpe -Gn -c -q -L..\..\awk -L..\..\cmn -L..\..\utl
 LIBS = import32.lib cw32mt.lib aseawk.lib asecmn.lib aseutl.lib
 STARTUP = c0x32w.obj
 
