@@ -19,8 +19,6 @@ int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
 
 #elif defined(ASE_CHAR_IS_WCHAR)
 
-#include <wchar.h>
-
 int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
 {
 	int i, ret;

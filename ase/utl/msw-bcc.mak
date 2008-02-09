@@ -8,7 +8,15 @@ CC = bcc32
 LD = ilink32
 AR = tlib 
 
-CFLAGS = -O2 -WM -WU -RT- -w -q -I..\..
+CFLAGS = -WM -WU -RT- -w -q -I..\..
+
+!IF "$(MODE)" == "debug"
+CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG 
+!ELSEIF "$(MODE)" == "release"
+CFLAGS = $(CFLAGS) -DNDEBUG -O2
+!ELSE
+CFLAGS = $(CFLAGS)
+!ENDIF
 
 OUT_DIR = ..\$(MODE)\lib
 OUT_FILE_LIB = $(OUT_DIR)\$(NAME).lib

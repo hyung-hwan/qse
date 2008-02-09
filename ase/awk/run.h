@@ -13,21 +13,27 @@
 
 enum ase_awk_assop_type_t
 {
-	/* if you change this, you have to change __assop_str in tree.c */
+	/* if you change this, you have to change assop_str in tree.c.
+	 * synchronize it with binop_func of eval_assignment in run.c */
 	ASE_AWK_ASSOP_NONE, 
-	ASE_AWK_ASSOP_PLUS,  /* += */
-	ASE_AWK_ASSOP_MINUS, /* -= */
-	ASE_AWK_ASSOP_MUL,   /* *= */
-	ASE_AWK_ASSOP_DIV,   /* /= */
-	ASE_AWK_ASSOP_IDIV,  /* //= */
-	ASE_AWK_ASSOP_MOD,   /* %= */
-	ASE_AWK_ASSOP_EXP    /* **= */
+	ASE_AWK_ASSOP_PLUS,   /* += */
+	ASE_AWK_ASSOP_MINUS,  /* -= */
+	ASE_AWK_ASSOP_MUL,    /* *= */
+	ASE_AWK_ASSOP_DIV,    /* /= */
+	ASE_AWK_ASSOP_IDIV,   /* //= */
+	ASE_AWK_ASSOP_MOD,    /* %= */
+	ASE_AWK_ASSOP_EXP,    /* **= */
+	ASE_AWK_ASSOP_RSHIFT, /* >>= */
+	ASE_AWK_ASSOP_LSHIFT, /* <<= */
+	ASE_AWK_ASSOP_BAND,   /* &= */
+	ASE_AWK_ASSOP_BXOR,   /* ^= */
+	ASE_AWK_ASSOP_BOR     /* |= */
 };
 
 enum  ase_awk_binop_type_t
 {
 	/* if you change this, you have to change 
-	 * __binop_str in tree.c and __binop_func in run.c accordingly. */ 
+	 * binop_str in tree.c and binop_func in run.c accordingly. */ 
 	ASE_AWK_BINOP_LOR,
 	ASE_AWK_BINOP_LAND,
 	ASE_AWK_BINOP_IN,
@@ -65,7 +71,7 @@ enum ase_awk_unrop_type_t
 	 * __unrop_str in tree.c accordingly. */ 
 	ASE_AWK_UNROP_PLUS,
 	ASE_AWK_UNROP_MINUS,
-	ASE_AWK_UNROP_NOT,
+	ASE_AWK_UNROP_LNOT,
 	ASE_AWK_UNROP_BNOT
 };
 

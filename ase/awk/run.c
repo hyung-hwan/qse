@@ -3204,7 +3204,7 @@ static ase_awk_val_t* eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	if (ass->opcode != ASE_AWK_ASSOP_NONE)
 	{
 		ase_awk_val_t* val2, * tmp;
-		static binop_func_t __binop_func[] =
+		static binop_func_t binop_func[] =
 		{
 			ASE_NULL, /* ASE_AWK_ASSOP_NONE */
 			eval_binop_plus,
@@ -3213,7 +3213,12 @@ static ase_awk_val_t* eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			eval_binop_div,
 			eval_binop_idiv,
 			eval_binop_mod,
-			eval_binop_exp
+			eval_binop_exp,
+			eval_binop_rshift,
+			eval_binop_lshift,
+			eval_binop_band,
+			eval_binop_bxor,
+			eval_binop_bor
 		};
 
 		ASE_ASSERT (ass->left->next == ASE_NULL);
@@ -3227,10 +3232,10 @@ static ase_awk_val_t* eval_assignment (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		ase_awk_refupval (run, val2);
 
 		ASE_ASSERT (ass->opcode >= 0);
-		ASE_ASSERT (ass->opcode < ASE_COUNTOF(__binop_func));
-		ASE_ASSERT (__binop_func[ass->opcode] != ASE_NULL);
+		ASE_ASSERT (ass->opcode < ASE_COUNTOF(binop_func));
+		ASE_ASSERT (binop_func[ass->opcode] != ASE_NULL);
 
-		tmp = __binop_func[ass->opcode] (run, val2, val);
+		tmp = binop_func[ass->opcode] (run, val2, val);
 		if (tmp == ASE_NULL)
 		{
 			ase_awk_refdownval (run, val2);
@@ -3597,7 +3602,7 @@ static ase_awk_val_t* do_assignment_pos (
 
 static ase_awk_val_t* eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
-	static binop_func_t __binop_func[] =
+	static binop_func_t binop_func[] =
 	{
 		/* the order of the functions should be inline with
 		 * the operator declaration in run.h */
@@ -3678,10 +3683,10 @@ static ase_awk_val_t* eval_binary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		ase_awk_refupval (run, right);
 
 		ASE_ASSERT (exp->opcode >= 0 && 
-			exp->opcode < ASE_COUNTOF(__binop_func));
-		ASE_ASSERT (__binop_func[exp->opcode] != ASE_NULL);
+			exp->opcode < ASE_COUNTOF(binop_func));
+		ASE_ASSERT (binop_func[exp->opcode] != ASE_NULL);
 
-		res = __binop_func[exp->opcode] (run, left, right);
+		res = binop_func[exp->opcode] (run, left, right);
 		if (res == ASE_NULL)
 		{
 			/* change the error line */
@@ -4832,7 +4837,7 @@ static ase_awk_val_t* eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	ASE_ASSERT (
 		exp->opcode == ASE_AWK_UNROP_PLUS ||
 		exp->opcode == ASE_AWK_UNROP_MINUS ||
-		exp->opcode == ASE_AWK_UNROP_NOT ||
+		exp->opcode == ASE_AWK_UNROP_LNOT ||
 		exp->opcode == ASE_AWK_UNROP_BNOT);
 
 	ASE_ASSERT (exp->left->next == ASE_NULL);
@@ -4849,7 +4854,7 @@ static ase_awk_val_t* eval_unary (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		res = (n == 0)? ase_awk_makeintval (run, -l):
 		                ase_awk_makerealval (run, -r);
 	}
-	else if (exp->opcode == ASE_AWK_UNROP_NOT)
+	else if (exp->opcode == ASE_AWK_UNROP_LNOT)
 	{
 		if (left->type == ASE_AWK_VAL_STR)
 		{

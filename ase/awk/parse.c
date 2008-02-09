@@ -21,6 +21,11 @@ enum
 	TOKEN_IDIV_ASSIGN,
 	TOKEN_MOD_ASSIGN,
 	TOKEN_EXP_ASSIGN,
+	TOKEN_RSHIFT_ASSIGN,
+	TOKEN_LSHIFT_ASSIGN,
+	TOKEN_BAND_ASSIGN,
+	TOKEN_BXOR_ASSIGN,
+	TOKEN_BOR_ASSIGN,
 
 	TOKEN_EQ,
 	TOKEN_NE,
@@ -29,7 +34,7 @@ enum
 	TOKEN_GE,
 	TOKEN_GT,
 	TOKEN_NM,   /* not match */
-	TOKEN_NOT,
+	TOKEN_LNOT, /* logical negation ! */
 	TOKEN_PLUS,
 	TOKEN_PLUSPLUS,
 	TOKEN_MINUS,
@@ -2526,7 +2531,7 @@ static ase_awk_nde_t* parse_unary (ase_awk_t* awk, ase_size_t line)
 
 	opcode = (MATCH(awk,TOKEN_PLUS))?  ASE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOKEN_MINUS))? ASE_AWK_UNROP_MINUS:
-	         (MATCH(awk,TOKEN_NOT))?   ASE_AWK_UNROP_NOT:
+	         (MATCH(awk,TOKEN_LNOT))?  ASE_AWK_UNROP_LNOT:
 	         (MATCH(awk,TOKEN_TILDE))? ASE_AWK_UNROP_BNOT: -1;
 
 	/*if (opcode == -1) return parse_increment (awk);*/
@@ -2584,7 +2589,7 @@ static ase_awk_nde_t* parse_unary_exp (ase_awk_t* awk, ase_size_t line)
 
 	opcode = (MATCH(awk,TOKEN_PLUS))?  ASE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOKEN_MINUS))? ASE_AWK_UNROP_MINUS:
-	         (MATCH(awk,TOKEN_NOT))?   ASE_AWK_UNROP_NOT:
+	         (MATCH(awk,TOKEN_LNOT))?  ASE_AWK_UNROP_LNOT:
 	         (MATCH(awk,TOKEN_TILDE))? ASE_AWK_UNROP_BNOT: -1;
 
 	if (opcode == -1) return parse_increment (awk, line);
@@ -4605,7 +4610,7 @@ static int get_token (ase_awk_t* awk)
 		}
 		else 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_NOT);
+			SET_TOKEN_TYPE (awk, TOKEN_LNOT);
 		}
 	}
 	else if (c == ASE_T('>')) 
@@ -4614,9 +4619,18 @@ static int get_token (ase_awk_t* awk)
 		GET_CHAR_TO (awk, c);
 		if (c == ASE_T('>')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_RSHIFT);
 			ADD_TOKEN_CHAR (awk, c);
-			GET_CHAR (awk);
+			GET_CHAR_TO (awk, c);
+			if ((awk->option & ASE_AWK_SHIFT) && c == ASE_T('='))
+			{
+				SET_TOKEN_TYPE (awk, TOKEN_RSHIFT_ASSIGN);
+				ADD_TOKEN_CHAR (awk, c);
+				GET_CHAR (awk);
+			}
+			else
+			{
+				SET_TOKEN_TYPE (awk, TOKEN_RSHIFT);
+			}
 		}
 		else if (c == ASE_T('=')) 
 		{
@@ -4636,9 +4650,18 @@ static int get_token (ase_awk_t* awk)
 
 		if ((awk->option & ASE_AWK_SHIFT) && c == ASE_T('<')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_LSHIFT);
 			ADD_TOKEN_CHAR (awk, c);
-			GET_CHAR (awk);
+			GET_CHAR_TO (awk, c);
+			if (c == ASE_T('='))
+			{
+				SET_TOKEN_TYPE (awk, TOKEN_LSHIFT_ASSIGN);
+				ADD_TOKEN_CHAR (awk, c);
+				GET_CHAR (awk);
+			}
+			else
+			{
+				SET_TOKEN_TYPE (awk, TOKEN_LSHIFT);
+			}
 		}
 		else if (c == ASE_T('=')) 
 		{
@@ -4667,6 +4690,12 @@ static int get_token (ase_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR (awk);
 		}
+		else if (c == ASE_T('='))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_BOR_ASSIGN);
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR (awk);
+		}
 		else
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_BOR);
@@ -4682,20 +4711,36 @@ static int get_token (ase_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR (awk);
 		}
+		else if (c == ASE_T('='))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_BAND_ASSIGN);
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR (awk);
+		}
 		else
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_BAND);
 		}
 	}
+	else if (c == ASE_T('^'))
+	{
+		ADD_TOKEN_CHAR (awk, c);
+		GET_CHAR_TO (awk, c);
+
+		if (c == ASE_T('='))
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_BXOR_ASSIGN);
+			ADD_TOKEN_CHAR (awk, c);
+			GET_CHAR (awk);
+		}
+		else
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_BXOR);
+		}
+	}
 	else if (c == ASE_T('~'))
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_TILDE);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T('^'))
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_BXOR);
 		ADD_TOKEN_CHAR (awk, c);
 		GET_CHAR (awk);
 	}
@@ -5370,6 +5415,7 @@ static int classify_ident (
 
 static int assign_to_opcode (ase_awk_t* awk)
 {
+	/* synchronize it with ase_awk_assop_type_t in run.h */
 	static int assop[] =
 	{
 		ASE_AWK_ASSOP_NONE,
@@ -5379,11 +5425,16 @@ static int assign_to_opcode (ase_awk_t* awk)
 		ASE_AWK_ASSOP_DIV,
 		ASE_AWK_ASSOP_IDIV,
 		ASE_AWK_ASSOP_MOD,
-		ASE_AWK_ASSOP_EXP
+		ASE_AWK_ASSOP_EXP,
+		ASE_AWK_ASSOP_RSHIFT,
+		ASE_AWK_ASSOP_LSHIFT,
+		ASE_AWK_ASSOP_BAND,
+		ASE_AWK_ASSOP_BXOR,
+		ASE_AWK_ASSOP_BOR
 	};
 
 	if (awk->token.type >= TOKEN_ASSIGN &&
-	    awk->token.type <= TOKEN_EXP_ASSIGN)
+	    awk->token.type <= TOKEN_BOR_ASSIGN)
 	{
 		return assop[awk->token.type - TOKEN_ASSIGN];
 	}

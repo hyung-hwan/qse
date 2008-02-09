@@ -110,7 +110,7 @@ $(TMP_DIR_JAR): $(TMP_DIR)
 
 clean:
 	-del $(OUT_FILE_BIN) 
-	-del $(OUT_FILE_BIN_CXX) 
+	-del $(OUT_FILE_BIN_CXX)
 	-del $(OBJ_FILES_BIN) 
 	-del $(OBJ_FILES_BIN_CXX) 
 	-del $(OUT_FILE_JAR)

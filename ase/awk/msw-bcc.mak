@@ -15,8 +15,21 @@ AR = tlib
 JAVAC = javac
 JAR = jar
 
-CFLAGS = -O2 -WM -WU -RT- -w -q -I..\..
-CXXFLAGS = -O2 -WM -WU -RT- -w -q -I..\..
+
+CFLAGS = -WM -WU -RT- -w -q -I..\..
+CXXFLAGS = -WM -WU -RT- -w -q -I..\..
+
+!IF "$(MODE)" == "debug"
+CFLAGS = $(CFLAGS) -D_DEBUG -DDEBUG 
+CXXFLAGS = $(CXXFLAGS) -D_DEBUG -DDEBUG 
+!ELSEIF "$(MODE)" == "release"
+CFLAGS = $(CFLAGS) -DNDEBUG -O2
+CXXFLAGS = $(CXXFLAGS) -DNDEBUG -O2
+!ELSE
+CFLAGS = $(CFLAGS)
+CXXFLAGS = $(CXXFLAGS)
+!ENDIF
+
 JAVACFLAGS = -classpath ..\.. -Xlint:unchecked
 
 LDFLAGS = -Tpd -ap -Gn -c -q -L..\$(MODE)\lib
@@ -26,7 +39,7 @@ LIBS = import32.lib cw32mt.lib asecmn.lib aseutl.lib $(NAME).lib
 OUT_DIR = ..\$(MODE)\lib
 OUT_FILE_LIB = $(OUT_DIR)\$(NAME).lib
 OUT_FILE_JNI = $(OUT_DIR)\$(NAME)_jni.dll
-OUT_FILE_LIB_CXX = $(OUT_DIR)\$(NAME)++.lib
+OUT_FILE_LIB_CXX = "$(OUT_DIR)\$(NAME)++.lib"
 OUT_FILE_JAR = $(OUT_DIR)\$(NAME).jar
 
 TMP_DIR = $(MODE)
@@ -67,7 +80,13 @@ OBJ_FILES_JAR = \
 	$(TMP_DIR)\ase\awk\Pipe.class \
 	$(TMP_DIR)\ase\awk\Exception.class
 
-all: lib
+TARGETS = lib
+!if "$(JAVA_HOME)" != ""
+TARGETS = $(TARGETS) jnidll jar
+JNI_INC = -I"$(JAVA_HOME)\include" -I"$(JAVA_HOME)\include\win32"
+!endif
+
+all: $(TARGETS)
 
 lib: $(TMP_DIR) $(OUT_DIR) $(OUT_DIR_CXX) $(OUT_FILE_LIB) $(OUT_FILE_LIB_CXX)
 
@@ -82,7 +101,7 @@ $(OUT_FILE_LIB): $(OBJ_FILES_LIB)
 !
 
 $(OUT_FILE_LIB_CXX): $(OBJ_FILES_LIB_CXX)
-	$(AR) "$(OUT_FILE_LIB_CXX)" @&&!
+	$(AR) $(OUT_FILE_LIB_CXX) @&&!
 +-$(**: = &^
 +-)
 !
