@@ -924,20 +924,20 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 void Awk::Run::setError (ErrorCode code)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
-	ase_awk_setrunerror (this->run, code, 0, ASE_NULL, 0);
+	ase_awk_setrunerror (this->run, (errnum_t)code, 0, ASE_NULL, 0);
 }
 
 void Awk::Run::setError (ErrorCode code, size_t line)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
-	ase_awk_setrunerror (this->run, code, line, ASE_NULL, 0);
+	ase_awk_setrunerror (this->run, (errnum_t)code, line, ASE_NULL, 0);
 }
 
 void Awk::Run::setError (ErrorCode code, size_t line, const char_t* arg)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
 	ase_cstr_t x = { arg, ase_strlen(arg) };
-	ase_awk_setrunerror (this->run, code, line, &x, 1);
+	ase_awk_setrunerror (this->run, (errnum_t)code, line, &x, 1);
 }
 
 void Awk::Run::setError (
@@ -945,14 +945,14 @@ void Awk::Run::setError (
 {
 	ASE_ASSERT (this->run != ASE_NULL);
 	ase_cstr_t x = { arg, len };
-	ase_awk_setrunerror (this->run, code, line, &x, 1);
+	ase_awk_setrunerror (this->run, (errnum_t)code, line, &x, 1);
 }
 
 void Awk::Run::setErrorWithMessage (
 	ErrorCode code, size_t line, const char_t* msg)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
-	ase_awk_setrunerrmsg (this->run, code, line, msg);
+	ase_awk_setrunerrmsg (this->run, (errnum_t)code, line, msg);
 }
 
 int Awk::Run::setGlobal (int id, long_t v)
@@ -1023,9 +1023,9 @@ void* Awk::Run::getCustom () const
 // Awk
 //////////////////////////////////////////////////////////////////
 
-Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL), 
-	sourceIn (Source::READ), sourceOut (Source::WRITE),
-	errnum (ERR_NOERR), errlin (0), runCallback (false)
+Awk::Awk (): /*awk (ASE_NULL), functionMap (ASE_NULL), */
+	sourceIn (Source::READ), sourceOut (Source::WRITE)/*,
+	errnum (ERR_NOERR), errlin (0), runCallback (false)*/
 
 {
 	this->errmsg[0] = ASE_T('\0');
@@ -1075,7 +1075,7 @@ void Awk::setError (ErrorCode code, size_t line, const char_t* arg, size_t len)
 	if (awk != ASE_NULL)
 	{
 		ase_cstr_t x = { arg, len };
-		ase_awk_seterror (awk, code, line, &x, 1);
+		ase_awk_seterror (awk, (errnum_t)code, line, &x, 1);
 		retrieveError ();
 	}
 	else
@@ -1092,7 +1092,7 @@ void Awk::setErrorWithMessage (ErrorCode code, size_t line, const char_t* msg)
 {
 	if (awk != ASE_NULL)
 	{
-		ase_awk_seterrmsg (awk, code, line, msg);
+		ase_awk_seterrmsg (awk, (errnum_t)code, line, msg);
 		retrieveError ();
 	}
 	else
@@ -1692,13 +1692,13 @@ void Awk::onRunStart (run_t* run, void* custom)
 	r->awk->triggerOnRunStart (*r);
 }
 
-void Awk::onRunEnd (run_t* run, int errnum, void* custom)
+void Awk::onRunEnd (run_t* run, errnum_t errnum, void* custom)
 {
 	Run* r = (Run*)custom;
 
 	if (errnum == ERR_NOERR && r->callbackFailed)
 	{
-		ase_awk_setrunerrnum (r->run, ERR_NOMEM);
+		ase_awk_setrunerrnum (r->run, (errnum_t)ERR_NOMEM);
 	}
 
 	r->awk->onRunEnd (*r);

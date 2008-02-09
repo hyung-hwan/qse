@@ -41,14 +41,17 @@ public:
 	typedef ase_awk_map_t map_t;
 	/** Represents a key/value pair */
 	typedef ase_awk_pair_t pair_t;
-	/** Represents the IO command */
-	typedef ase_awk_iocmd_t iocmd_t;
 	/** Represents the external I/O context */
 	typedef ase_awk_extio_t extio_t;
 	/** Represents the run-time context */
 	typedef ase_awk_run_t run_t;
 	/** Represents the underlying interpreter */
 	typedef ase_awk_t awk_t;
+
+	/** Represents IO command */
+	typedef ase_awk_iocmd_t iocmd_t;
+	/** Represents the error number */
+	typedef ase_awk_errnum_t errnum_t;
 
 	/**
 	 * Represents the source code I/O context for Awk::parse.
@@ -1056,7 +1059,7 @@ protected:
 	static void freeFunctionMapValue (void* owner, void* value);
 
 	static void onRunStart (run_t* run, void* custom);
-	static void onRunEnd (run_t* run, int errnum, void* custom);
+	static void onRunEnd (run_t* run, errnum_t errnum, void* custom);
 	static void onRunReturn (run_t* run, val_t* ret, void* custom);
 	static void onRunStatement (run_t* run, size_t line, void* custom);
 

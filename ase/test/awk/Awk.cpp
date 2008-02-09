@@ -688,9 +688,10 @@ static void print_usage (const ase_char_t* argv0)
 	}
 }
 
-int awk_main (int argc, ase_char_t* argv[])
+static int awk_main (int argc, ase_char_t* argv[])
 {
 	TestAwk awk;
+
 	int mode = 0;
 	const ase_char_t* mainfn = NULL;
 	const ase_char_t* srcin = ASE_T("");
@@ -887,7 +888,6 @@ int awk_main (int argc, ase_char_t* argv[])
 
 extern "C" int ase_main (int argc, ase_achar_t* argv[])
 {
-
 	int n;
 
 #if defined(__linux) && defined(_DEBUG)

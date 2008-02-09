@@ -41,6 +41,10 @@
 #define ase_clearerr(s) clearerr(s)
 #define ase_fflush(s)   fflush(s)
 
+#define ASE_STDIN stdin
+#define ASE_STDOUT stdout
+#define ASE_STDERR stderr
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -34,10 +34,11 @@
         }
 
 * redefined the variable scope
-* removed ASE_AWK_UNIQUEFN and ASE_AWK_SHADING
-* fixed a bug in handle >> when ASE_AWK_SHIFT is off
+* removed ASE_AWK_UNIQUEFN and ASE_AWK_SHADING by refining the scoping rule
+* fixed a bug in handling >> when ASE_AWK_SHIFT is off
 
 * added ASE_AWK_EVARRED
+* added five operators - <<=, >>=, &=, ^=, |=
 
 [0.3.2]
 

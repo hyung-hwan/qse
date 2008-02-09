@@ -15,7 +15,12 @@ static const ase_char_t* assop_str[] =
 	ASE_T("/="),
 	ASE_T("//="),
 	ASE_T("%="),
-	ASE_T("**=")
+	ASE_T("**="),
+	ASE_T(">>="),
+	ASE_T("<<="),
+	ASE_T("&="),
+	ASE_T("^="),
+	ASE_T("|=")
 };
 
 static const ase_char_t* binop_str[][2] =

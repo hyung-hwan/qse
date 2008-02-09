@@ -110,7 +110,7 @@ struct run_data_t
 	jobject obj;
 
 	ase_size_t errlin;
-	int errnum;
+	ase_awk_errnum_t errnum;
 	ase_char_t errmsg[256];
 
 	jclass exception_class;
