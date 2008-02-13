@@ -3079,22 +3079,44 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 	ase_size_t name_len;
 	ase_awk_bfn_t* bfn;
 	ase_size_t idxa;
+	ase_char_t name_dup_buf[32];
 
 	ASE_ASSERT (MATCH(awk,TOKEN_IDENT));
 
-	name_dup = ase_awk_strxdup (awk,
-		ASE_STR_BUF(&awk->token.name),
-		ASE_STR_LEN(&awk->token.name));
-	if (name_dup == ASE_NULL) 
+	if (ASE_STR_LEN(&awk->token.name) < ASE_COUNTOF(name_dup_buf))
 	{
-		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
-		return ASE_NULL;
+		ase_strxncpy (
+			name_dup_buf, 
+			ASE_COUNTOF(name_dup_buf),
+			ASE_STR_BUF(&awk->token.name),
+			ASE_STR_LEN(&awk->token.name));
+		name_dup = name_dup_buf;
+// TODO: dup on acutal node creationg........
 	}
+	else
+	{
+		name_dup = ase_awk_strxdup (awk,
+			ASE_STR_BUF(&awk->token.name),
+			ASE_STR_LEN(&awk->token.name));
+		if (name_dup == ASE_NULL) 
+		{
+			SETERRLIN (awk, ASE_AWK_ENOMEM, line);
+			return ASE_NULL;
+		}
+	}
+
 	name_len = ASE_STR_LEN(&awk->token.name);
+
+
+#define FREE_DUP_NAME(awk) \
+	do { \
+		if (name_dup != name_dup_buf) \
+			ASE_AWK_FREE (awk, name_dup); \
+	} while (0)
 
 	if (get_token(awk) == -1) 
 	{
-		ASE_AWK_FREE (awk, name_dup);
+		FREE_DUP_NAME(awk);
 		return ASE_NULL;			
 	}
 
@@ -3108,13 +3130,13 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		{
 			/* an intrinsic function should be in the form 
 		 	 * of the function call */
-			ASE_AWK_FREE (awk, name_dup);
+			FREE_DUP_NAME(awk);
 			SETERRTOK (awk, ASE_AWK_ELPAREN);
 			return ASE_NULL;
 		}
 
 		nde = parse_fncall (awk, name_dup, name_len, bfn, line);
-		if (nde == ASE_NULL) ASE_AWK_FREE (awk, name_dup);
+		if (nde == ASE_NULL) FREE_DUP_NAME(awk);
 		return (ase_awk_nde_t*)nde;
 	}
 
@@ -3123,7 +3145,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 	{
 		ase_awk_nde_t* nde;
 		nde = parse_hashidx (awk, name_dup, name_len, line);
-		if (nde == ASE_NULL) ASE_AWK_FREE (awk, name_dup);
+		if (nde == ASE_NULL) FREE_DUP_NAME(awk);
 		return (ase_awk_nde_t*)nde;
 	}
 	else if ((idxa = ase_awk_tab_rrfind (
@@ -3137,7 +3159,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		{
 			/* a local variable is not a function */
 			SETERRARG (awk, ASE_AWK_EFNNAME, line, name_dup, name_len);
-			ASE_AWK_FREE (awk, name_dup);
+			FREE_DUP_NAME (awk);
 			return ASE_NULL;
 		}
 
@@ -3145,7 +3167,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
 		if (nde == ASE_NULL) 
 		{
-			ASE_AWK_FREE (awk, name_dup);
+			FREE_DUP_NAME (awk);
 			SETERRLIN (awk, ASE_AWK_ENOMEM, line);
 			return ASE_NULL;
 		}
@@ -3172,7 +3194,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		{
 			/* a parameter is not a function */
 			SETERRARG (awk, ASE_AWK_EFNNAME, line, name_dup, name_len);
-			ASE_AWK_FREE (awk, name_dup);
+			FREE_DUP_NAME (awk);
 			return ASE_NULL;
 		}
 
@@ -3180,7 +3202,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
 		if (nde == ASE_NULL) 
 		{
-			ASE_AWK_FREE (awk, name_dup);
+			FREE_DUP_NAME (awk);
 			SETERRLIN (awk, ASE_AWK_ENOMEM, line);
 			return ASE_NULL;
 		}
@@ -3207,7 +3229,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		{
 			/* a global variable is not a function */
 			SETERRARG (awk, ASE_AWK_EFNNAME, line, name_dup, name_len);
-			ASE_AWK_FREE (awk, name_dup);
+			FREE_DUP_NAME (awk);
 			return ASE_NULL;
 		}
 
@@ -3215,7 +3237,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
 		if (nde == ASE_NULL) 
 		{
-			ASE_AWK_FREE (awk, name_dup);
+			FREE_DUP_NAME (awk);
 			SETERRLIN (awk, ASE_AWK_ENOMEM, line);
 			return ASE_NULL;
 		}
@@ -3242,13 +3264,16 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			{
 				/* a function call conflicts with a named variable */
 				SETERRARG (awk, ASE_AWK_EVARRED, line, name_dup, name_len);
-				ASE_AWK_FREE (awk, name_dup);
+				FREE_DUP_NAME (awk);
 				return ASE_NULL;
 			}
 		}
 
 		nde = parse_fncall (awk, name_dup, name_len, ASE_NULL, line);
-		if (nde == ASE_NULL) ASE_AWK_FREE (awk, name_dup);
+		if (nde == ASE_NULL)
+		{
+			FREE_DUP_NAME (awk);
+		}
 		return (ase_awk_nde_t*)nde;
 	}	
 	else 
@@ -3260,7 +3285,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
 		if (nde == ASE_NULL) 
 		{
-			ASE_AWK_FREE (awk, name_dup);
+			FREE_DUP_NAME (awk);
 			SETERRLIN (awk, ASE_AWK_ENOMEM, line);
 			return ASE_NULL;
 		}
@@ -3329,11 +3354,13 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		SETERRARG (awk, ASE_AWK_EUNDEF, line, name_dup, name_len);
 
 	exit_func:
-		ASE_AWK_FREE (awk, name_dup);
+		FREE_DUP_NAME (awk);
 		ASE_AWK_FREE (awk, nde);
 
 		return ASE_NULL;
 	}
+
+#undef FREE_DUP_NAME
 }
 
 static ase_awk_nde_t* parse_hashidx (
