@@ -45,7 +45,6 @@ OBJ_FILES_LIB = \
 	$(TMP_DIR)/err.o \
 	$(TMP_DIR)/tree.o \
 	$(TMP_DIR)/tab.o \
-	$(TMP_DIR)/map.o \
 	$(TMP_DIR)/parse.o \
 	$(TMP_DIR)/run.o \
 	$(TMP_DIR)/rec.o \
@@ -128,9 +127,6 @@ $(TMP_DIR)/tree.o: tree.c
 
 $(TMP_DIR)/tab.o: tab.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c tab.c
-
-$(TMP_DIR)/map.o: map.c
-	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c map.c
 
 $(TMP_DIR)/parse.o: parse.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c parse.c

@@ -381,8 +381,8 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 
 	val->type = ASE_AWK_VAL_MAP;
 	val->ref = 0;
-	val->map = ase_awk_map_open (
-		run, 256, 70, free_mapval, same_mapval, run->awk);
+	val->map = ase_map_open (
+		run, 256, 70, free_mapval, same_mapval, &run->awk->prmfns.mmgr);
 	if (val->map == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -503,7 +503,7 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	}
 	else if (val->type == ASE_AWK_VAL_MAP)
 	{
-		ase_awk_map_close (((ase_awk_val_map_t*)val)->map);
+		ase_map_close (((ase_awk_val_map_t*)val)->map);
 		ASE_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == ASE_AWK_VAL_REF)
@@ -991,7 +991,7 @@ int ase_awk_strtonum (
 #define DPRINTF run->awk->prmfns.misc.dprintf
 #define DCUSTOM run->awk->prmfns.misc.custom_data
 
-static int print_pair (ase_awk_pair_t* pair, void* arg)
+static int print_pair (ase_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
 
@@ -1044,7 +1044,7 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 
 		case ASE_AWK_VAL_MAP:
 			DPRINTF (DCUSTOM, ASE_T("MAP["));
-			ase_awk_map_walk (((ase_awk_val_map_t*)val)->map, print_pair, run);
+			ase_map_walk (((ase_awk_val_map_t*)val)->map, print_pair, run);
 			DPRINTF (DCUSTOM, ASE_T("]"));
 			break;
 	

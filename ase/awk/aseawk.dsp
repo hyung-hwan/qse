@@ -111,10 +111,6 @@ SOURCE=.\func.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\map.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\misc.c
 # End Source File
 # Begin Source File
@@ -164,10 +160,6 @@ SOURCE=.\extio.h
 # Begin Source File
 
 SOURCE=.\func.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\map.h
 # End Source File
 # Begin Source File
 

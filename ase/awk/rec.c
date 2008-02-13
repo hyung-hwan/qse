@@ -6,8 +6,8 @@
 
 #include <ase/awk/awk_i.h>
 
-static int __split_record (ase_awk_run_t* run);
-static int __recomp_record_fields (
+static int split_record (ase_awk_run_t* run);
+static int recomp_record_fields (
 	ase_awk_run_t* run, ase_size_t lv, 
 	const ase_char_t* str, ase_size_t len);
 
@@ -50,7 +50,7 @@ int ase_awk_setrec (
 		run->inrec.d0 = v;
 		ase_awk_refupval (run, v);
 
-		if (__split_record (run) == -1) 
+		if (split_record (run) == -1) 
 		{
 			ase_awk_clrrec (run, ase_false);
 			return -1;
@@ -58,7 +58,7 @@ int ase_awk_setrec (
 	}
 	else
 	{
-		if (__recomp_record_fields (run, idx, str, len) == -1)
+		if (recomp_record_fields (run, idx, str, len) == -1)
 		{
 			ase_awk_clrrec (run, ase_false);
 			return -1;
@@ -82,7 +82,7 @@ int ase_awk_setrec (
 	return 0;
 }
 
-static int __split_record (ase_awk_run_t* run)
+static int split_record (ase_awk_run_t* run)
 {
 	ase_char_t* p, * tok;
 	ase_size_t len, tok_len, nflds;
@@ -91,7 +91,7 @@ static int __split_record (ase_awk_run_t* run)
 	ase_size_t fs_len;
 	int errnum;
        
-	/* inrec should be cleared before __split_record is called */
+	/* inrec should be cleared before split_record is called */
 	ASE_ASSERT (run->inrec.nflds == 0);
 
 	/* get FS */
@@ -274,7 +274,7 @@ int ase_awk_clrrec (ase_awk_run_t* run, ase_bool_t skip_inrec_line)
 	return n;
 }
 
-static int __recomp_record_fields (
+static int recomp_record_fields (
 	ase_awk_run_t* run, ase_size_t lv, 
 	const ase_char_t* str, ase_size_t len)
 {

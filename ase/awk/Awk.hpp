@@ -8,7 +8,7 @@
 #define _ASE_AWK_AWK_HPP_
 
 #include <ase/awk/awk.h>
-#include <ase/awk/map.h>
+#include <ase/cmn/map.h>
 #include <stdarg.h>
 
 /////////////////////////////////
@@ -35,12 +35,13 @@ public:
 	typedef ase_long_t  long_t;
 	/** Represents a floating-point number */
 	typedef ase_real_t  real_t;
+	/** Represents the internal hash table */
+	typedef ase_map_t map_t;
+	/** Represents a key/value pair */
+	typedef ase_pair_t pair_t;
+
 	/** Represents an internal awk value */
 	typedef ase_awk_val_t val_t;
-	/** Represents the internal hash table */
-	typedef ase_awk_map_t map_t;
-	/** Represents a key/value pair */
-	typedef ase_awk_pair_t pair_t;
 	/** Represents the external I/O context */
 	typedef ase_awk_extio_t extio_t;
 	/** Represents the run-time context */
