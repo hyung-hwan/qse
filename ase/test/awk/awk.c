@@ -4,7 +4,6 @@
 
 #include <ase/awk/awk.h>
 #include <ase/awk/val.h>
-#include <ase/awk/map.h>
 
 #include <ase/utl/ctype.h>
 #include <ase/utl/stdio.h>
@@ -850,7 +849,7 @@ static void on_run_start (ase_awk_run_t* run, void* custom)
 	dprintf (ASE_T("[AWK ABOUT TO START]\n"));
 }
 
-static int print_awk_value (ase_awk_pair_t* pair, void* arg)
+static int print_awk_value (ase_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
 	dprintf (ASE_T("%.*s = "), pair->key.len, pair->key.ptr);
@@ -873,7 +872,7 @@ static void on_run_return (
 	dprintf (ASE_T("\n"));
 
 	dprintf (ASE_T("[NAMED VARIABLES]\n"));
-	ase_awk_map_walk (ase_awk_getrunnamedvarmap(run), print_awk_value, run);
+	ase_map_walk (ase_awk_getrunnamedvarmap(run), print_awk_value, run);
 	dprintf (ASE_T("[END NAMED VARIABLES]\n"));
 }
 

@@ -418,7 +418,7 @@ int Awk::Argument::getIndexed (
 
 	// get the value from the map.
 	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
-	ase_awk_pair_t* pair = ase_awk_map_get (m->map, idxptr, idxlen);
+	pair_t* pair = ase_map_get (m->map, idxptr, idxlen);
 
 	// the key is not found. it is not an error. val is just nil 
 	if (pair == ASE_NULL) return 0; 
@@ -462,7 +462,7 @@ int Awk::Argument::getIndexed (long_t idx, Argument& val) const
 
 	// get the value from the map.
 	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
-	ase_awk_pair_t* pair = ase_awk_map_get (m->map, ri, rl);
+	pair_t* pair = ase_map_get (m->map, ri, rl);
 
 	// the key is not found. it is not an error. val is just nil 
 	if (pair == ASE_NULL) return 0; 
@@ -480,7 +480,7 @@ int Awk::Argument::getFirstIndex (Awk::Argument& val) const
 
 	ase_size_t buckno;
 	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
-	ase_awk_pair_t* pair = ase_awk_map_getfirstpair (m->map, &buckno);
+	pair_t* pair = ase_map_getfirstpair (m->map, &buckno);
 	if (pair == ASE_NULL) return 0; // no more key
 
 	if (val.init (pair->key.ptr, pair->key.len) == -1) return -1;
@@ -501,10 +501,10 @@ int Awk::Argument::getNextIndex (Awk::Argument& val) const
 
 	ase_awk_val_map_t* m = (ase_awk_val_map_t*)this->val;
 
-	ase_awk_pair_t* pair = (ase_awk_pair_t*)this->str.ptr;
+	pair_t* pair = (pair_t*)this->str.ptr;
 	ase_size_t buckno = this->str.len;
 		
-	pair = ase_awk_map_getnextpair (m->map, pair, &buckno);
+	pair = ase_map_getnextpair (m->map, pair, &buckno);
 	if (pair == ASE_NULL) return 0;
 
 	if (val.init (pair->key.ptr, pair->key.len) == -1) return -1;
@@ -617,7 +617,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 
 		ase_awk_refupval (this->run->run, x2);
 
-		ase_awk_pair_t* pair = ase_awk_map_put (
+		pair_t* pair = ase_map_put (
 			((ase_awk_val_map_t*)x)->map, idx, iln, x2);
 		if (pair == ASE_NULL)
 		{
@@ -637,7 +637,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 
 		ase_awk_refupval (this->run->run, x2);
 
-		ase_awk_pair_t* pair = ase_awk_map_put (
+		pair_t* pair = ase_map_put (
 			((ase_awk_val_map_t*)this->val)->map, idx, iln, x2);
 		if (pair == ASE_NULL)
 		{
@@ -678,7 +678,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 
 		ase_awk_refupval (this->run->run, x2);
 
-		ase_awk_pair_t* pair = ase_awk_map_put (
+		pair_t* pair = ase_map_put (
 			((ase_awk_val_map_t*)x)->map, idx, iln, x2);
 		if (pair == ASE_NULL)
 		{
@@ -698,7 +698,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 
 		ase_awk_refupval (this->run->run, x2);
 
-		ase_awk_pair_t* pair = ase_awk_map_put (
+		pair_t* pair = ase_map_put (
 			((ase_awk_val_map_t*)this->val)->map, idx, iln, x2);
 		if (pair == ASE_NULL)
 		{
@@ -739,7 +739,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, s
 
 		ase_awk_refupval (this->run->run, x2);
 
-		ase_awk_pair_t* pair = ase_awk_map_put (
+		pair_t* pair = ase_map_put (
 			((ase_awk_val_map_t*)x)->map, idx, iln, x2);
 		if (pair == ASE_NULL)
 		{
@@ -759,7 +759,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, s
 
 		ase_awk_refupval (this->run->run, x2);
 
-		ase_awk_pair_t* pair = ase_awk_map_put (
+		pair_t* pair = ase_map_put (
 			((ase_awk_val_map_t*)this->val)->map, idx, iln, x2);
 		if (pair == ASE_NULL)
 		{
@@ -1165,8 +1165,9 @@ int Awk::open ()
 		return -1;
 	}
 
-	functionMap = ase_awk_map_open (
-		this, 512, 70, freeFunctionMapValue, ASE_NULL, awk);
+	functionMap = ase_map_open (
+		this, 512, 70, freeFunctionMapValue, ASE_NULL, 
+		ase_awk_getmmgr(awk));
 	if (functionMap == ASE_NULL)
 	{
 		ase_awk_close (awk);
@@ -1192,7 +1193,7 @@ void Awk::close ()
 {
 	if (functionMap != ASE_NULL)
 	{
-		ase_awk_map_close (functionMap);
+		ase_map_close (functionMap);
 		functionMap = ASE_NULL;
 	}
 
@@ -1376,7 +1377,7 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 
 	//awk = ase_awk_getrunawk (run);
 
-	pair = ase_awk_map_get (functionMap, name, len);
+	pair = ase_map_get (functionMap, name, len);
 	if (pair == ASE_NULL) 
 	{
 		run->setError (ERR_FNNONE, 0, name, len);
@@ -1384,7 +1385,7 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 	}
 
 	FunctionHandler handler;
-       	handler = *(FunctionHandler*)ASE_AWK_PAIR_VAL(pair);	
+       	handler = *(FunctionHandler*)ASE_PAIR_VAL(pair);	
 
 	size_t i, nargs = ase_awk_getnargs(run->run);
 
@@ -1474,7 +1475,7 @@ int Awk::addFunction (
 		return -1;
 	}
 
-	pair_t* pair = ase_awk_map_put (functionMap, name, nameLen, tmp);
+	pair_t* pair = ase_map_put (functionMap, name, nameLen, tmp);
 	if (pair == ASE_NULL)
 	{
 		ase_awk_delfunc (awk, name, nameLen);
@@ -1494,7 +1495,7 @@ int Awk::deleteFunction (const char_t* name)
 	size_t nameLen = ase_strlen(name);
 
 	int n = ase_awk_delfunc (awk, name, nameLen);
-	if (n == 0) ase_awk_map_remove (functionMap, name, nameLen);
+	if (n == 0) ase_map_remove (functionMap, name, nameLen);
 	else retrieveError ();
 
 	return n;

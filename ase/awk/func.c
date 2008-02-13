@@ -98,7 +98,7 @@ void* ase_awk_addfunc (
 
 	bfn->handler = handler;
 
-	if (ase_awk_map_put (awk->bfn.user, name, name_len, bfn) == ASE_NULL)
+	if (ase_map_put (awk->bfn.user, name, name_len, bfn) == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, bfn);
 		ase_awk_seterrnum (awk, ASE_AWK_ENOMEM);
@@ -111,7 +111,7 @@ void* ase_awk_addfunc (
 int ase_awk_delfunc (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 {
-	if (ase_awk_map_remove (awk->bfn.user, name, name_len) == -1)
+	if (ase_map_remove (awk->bfn.user, name, name_len) == -1)
 	{
 		ase_cstr_t errarg;
 
@@ -127,14 +127,14 @@ int ase_awk_delfunc (
 
 void ase_awk_clrbfn (ase_awk_t* awk)
 {
-	ase_awk_map_clear (awk->bfn.user);
+	ase_map_clear (awk->bfn.user);
 }
 
 ase_awk_bfn_t* ase_awk_getbfn (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
 	ase_awk_bfn_t* bfn;
-	ase_awk_pair_t* pair;
+	ase_pair_t* pair;
 	const ase_char_t* k;
 	ase_size_t l;
 
@@ -144,8 +144,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		if (bfn->valid != 0 && 
 		    (awk->option & bfn->valid) != bfn->valid) continue;
 
-		pair = ase_awk_map_get (
-			awk->wtab, bfn->name.ptr, bfn->name.len);
+		pair = ase_map_get (awk->wtab, bfn->name.ptr, bfn->name.len);
 		if (pair != ASE_NULL)
 		{
 			/* found in the customized word table */
@@ -165,7 +164,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	 *       because I'm trying to support ase_awk_setword in 
 	 *       a very flimsy way here. Would it be better to drop
 	 *       ase_awk_setword totally? */
-	pair = ase_awk_map_get (awk->rwtab, name, len);
+	pair = ase_map_get (awk->rwtab, name, len);
 	if (pair != ASE_NULL)
 	{
 		/* the current name is a target name for
@@ -175,7 +174,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	}
 	else
 	{
-		pair = ase_awk_map_get (awk->wtab, name, len);
+		pair = ase_map_get (awk->wtab, name, len);
 		if (pair != ASE_NULL)
 		{
 			k = ((ase_cstr_t*)(pair->val))->ptr;
@@ -203,7 +202,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	}
 	/* END NOTE */
 
-	pair = ase_awk_map_get (awk->bfn.user, k, l);
+	pair = ase_map_get (awk->bfn.user, k, l);
 	if (pair == ASE_NULL) return ASE_NULL;
 
 	bfn = (ase_awk_bfn_t*)pair->val;
@@ -797,7 +796,7 @@ static int bfn_split (
 		 * it is decremented if the assignement fails. */
 		ase_awk_refupval (run, t2);
 
-		if (ase_awk_map_putx (
+		if (ase_map_putx (
 			((ase_awk_val_map_t*)t1)->map, 
 			key, key_len, t2, ASE_NULL) == -1)
 		{

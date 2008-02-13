@@ -23,6 +23,7 @@ TMP_DIR = $(MODE)
 OBJ_FILES_LIB = \
 	$(TMP_DIR)\mem.obj \
 	$(TMP_DIR)\str.obj \
+	$(TMP_DIR)\map.obj \
 	$(TMP_DIR)\misc.obj
 
 all: lib
@@ -39,6 +40,9 @@ $(TMP_DIR)\mem.obj: mem.c
 
 $(TMP_DIR)\str.obj: str.c
 	$(CC) $(CFLAGS) /Fo$@ /c str.c
+
+$(TMP_DIR)\map.obj: map.c
+	$(CC) $(CFLAGS) /Fo$@ /c map.c
 
 $(TMP_DIR)\misc.obj: misc.c
 	$(CC) $(CFLAGS) /Fo$@ /c misc.c

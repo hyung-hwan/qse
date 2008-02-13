@@ -9,13 +9,13 @@
 
 #include <ase/cmn/mem.h>
 #include <ase/cmn/str.h>
+#include <ase/cmn/map.h>
 
 typedef struct ase_awk_chain_t ase_awk_chain_t;
 typedef struct ase_awk_tree_t ase_awk_tree_t;
 
 #include <ase/awk/awk.h>
 #include <ase/awk/rex.h>
-#include <ase/awk/map.h>
 #include <ase/awk/tree.h>
 #include <ase/awk/val.h>
 #include <ase/awk/func.h>
@@ -57,7 +57,7 @@ struct ase_awk_tree_t
 	ase_size_t nglobals; /* total number of globals */
 	ase_size_t nbglobals; /* number of intrinsic globals */
 	ase_cstr_t cur_afn;
-	ase_awk_map_t* afns; /* awk function map */
+	ase_map_t* afns; /* awk function map */
 
 	ase_awk_nde_t* begin;
 	ase_awk_nde_t* begin_tail;
@@ -81,9 +81,9 @@ struct ase_awk_t
 	int option;
 
 	/* word table */
-	ase_awk_map_t* wtab;
+	ase_map_t* wtab;
 	/* reverse word table */
-	ase_awk_map_t* rwtab;
+	ase_map_t* rwtab;
 
 	/* regular expression processing routines */
 	ase_awk_rexfns_t* rexfns;
@@ -118,10 +118,10 @@ struct ase_awk_t
 		} depth;
 
 		/* function calls */
-		ase_awk_map_t* afns;
+		ase_map_t* afns;
 
 		/* named variables */
-		ase_awk_map_t* named;
+		ase_map_t* named;
 
 		/* global variables */
 		ase_awk_tab_t globals;
@@ -185,7 +185,7 @@ struct ase_awk_t
 	struct
 	{
 		ase_awk_bfn_t* sys;
-		ase_awk_map_t* user;
+		ase_map_t* user;
 	} bfn;
 
 	struct
@@ -236,7 +236,7 @@ struct ase_awk_chain_t
 struct ase_awk_run_t
 {
 	int id;
-	ase_awk_map_t* named;
+	ase_map_t* named;
 
 	void** stack;
 	ase_size_t stack_top;

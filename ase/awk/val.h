@@ -12,8 +12,6 @@
 #endif
 
 #include <ase/cmn/str.h>
-#include <ase/awk/map.h>
-
 
 enum ase_awk_val_type_t
 {
@@ -138,7 +136,7 @@ struct ase_awk_val_map_t
 	 *       integers switch to map dynamically once the 
 	 *       non-integral index is seen.
 	 */
-	ase_awk_map_t* map; 
+	ase_map_t* map; 
 };
 
 /* ASE_AWK_VAL_REF */

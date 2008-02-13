@@ -2407,7 +2407,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 	ase_awk_val_t* val = (ase_awk_val_t*)valid;
 	ase_awk_t* awk = ase_awk_getrunawk (run);
 	run_data_t* run_data = (run_data_t*)ase_awk_getruncustomdata (run);
-	ase_awk_pair_t* pair;
+	ase_pair_t* pair;
 	jobject arg;
 
 	const jchar* ptr;
@@ -2433,7 +2433,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 	}
 	else rptr = (ase_char_t*)ptr;
 
-	pair = ase_awk_map_get (((ase_awk_val_map_t*)val)->map, rptr, len);
+	pair = ase_map_get (((ase_awk_val_map_t*)val)->map, rptr, len);
 	if (ptr != rptr) ase_awk_free (awk, rptr);
 	(*env)->ReleaseStringChars (env, index, ptr);
 
@@ -2593,7 +2593,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobjec
 	{
 		ase_awk_val_t* x;
 	       	ase_awk_val_t* x2;
-		ase_awk_pair_t* pair;
+		ase_pair_t* pair;
 	
 		x = ase_awk_makemapval (run);
 		if (x == ASE_NULL) 
@@ -2622,7 +2622,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobjec
 			return;
 		}
 
-		pair = ase_awk_map_put (
+		pair = ase_map_put (
 			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2639,7 +2639,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobjec
 	else
 	{
 		ase_awk_val_t* x2;
-		ase_awk_pair_t* pair;
+		ase_pair_t* pair;
 
 		x2 = ase_awk_makeintval (run, newval);
 		if (x2 == ASE_NULL) 
@@ -2656,7 +2656,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobjec
 			THROW_NOMEM_EXCEPTION (env);
 			return;
 		}
-		pair = ase_awk_map_put (
+		pair = ase_map_put (
 			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2696,7 +2696,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedrealval (JNIEnv* env, jobje
 	{
 		ase_awk_val_t* x;
 	       	ase_awk_val_t* x2;
-		ase_awk_pair_t* pair;
+		ase_pair_t* pair;
 	
 		x = ase_awk_makemapval (run);
 		if (x == ASE_NULL) 
@@ -2725,7 +2725,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedrealval (JNIEnv* env, jobje
 			return;
 		}
 
-		pair = ase_awk_map_put (
+		pair = ase_map_put (
 			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2742,7 +2742,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedrealval (JNIEnv* env, jobje
 	else
 	{
 		ase_awk_val_t* x2;
-		ase_awk_pair_t* pair;
+		ase_pair_t* pair;
 
 		x2 = ase_awk_makerealval (run, newval);
 		if (x2 == ASE_NULL) 
@@ -2759,7 +2759,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedrealval (JNIEnv* env, jobje
 			THROW_NOMEM_EXCEPTION (env);
 			return;
 		}
-		pair = ase_awk_map_put (
+		pair = ase_map_put (
 			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2799,7 +2799,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedstrval (JNIEnv* env, jobjec
 	{
 		ase_awk_val_t* x;
 	       	ase_awk_val_t* x2;
-		ase_awk_pair_t* pair;
+		ase_pair_t* pair;
 	
 		x = ase_awk_makemapval (run);
 		if (x == ASE_NULL) 
@@ -2834,7 +2834,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedstrval (JNIEnv* env, jobjec
 			THROW_NOMEM_EXCEPTION (env);
 			return;
 		}
-		pair = ase_awk_map_put (
+		pair = ase_map_put (
 			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2851,7 +2851,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedstrval (JNIEnv* env, jobjec
 	else
 	{
 		ase_awk_val_t* x2;
-		ase_awk_pair_t* pair;
+		ase_pair_t* pair;
 
 		if (get_str(env,awk,newval,&jptr,&aptr,&len) == -1)
 		{
@@ -2874,7 +2874,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedstrval (JNIEnv* env, jobjec
 			THROW_NOMEM_EXCEPTION (env);
 			return;
 		}
-		pair = ase_awk_map_put (
+		pair = ase_map_put (
 			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)

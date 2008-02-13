@@ -50,7 +50,6 @@ OBJ_FILES_LIB = \
 	$(TMP_DIR)\err.obj \
 	$(TMP_DIR)\tree.obj \
 	$(TMP_DIR)\tab.obj \
-	$(TMP_DIR)\map.obj \
 	$(TMP_DIR)\parse.obj \
 	$(TMP_DIR)\run.obj \
 	$(TMP_DIR)\rec.obj \
@@ -133,9 +132,6 @@ $(TMP_DIR)\tree.obj: tree.c
 
 $(TMP_DIR)\tab.obj: tab.c
 	$(CC) $(CFLAGS) /Fo$@ /c tab.c
-
-$(TMP_DIR)\map.obj: map.c
-	$(CC) $(CFLAGS) /Fo$@ /c map.c
 
 $(TMP_DIR)\parse.obj: parse.c
 	$(CC) $(CFLAGS) /Fo$@ /c parse.c

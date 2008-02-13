@@ -17,11 +17,11 @@
 
 #include <ase/cmn/types.h>
 #include <ase/cmn/macros.h>
+#include <ase/cmn/map.h>
 
 typedef struct ase_awk_t ase_awk_t;
 typedef struct ase_awk_run_t ase_awk_run_t;
 typedef struct ase_awk_val_t ase_awk_val_t;
-typedef struct ase_awk_map_t ase_awk_map_t;
 typedef struct ase_awk_extio_t ase_awk_extio_t;
 
 typedef struct ase_awk_prmfns_t ase_awk_prmfns_t;
@@ -465,6 +465,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data);
 int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 
+ase_mmgr_t* ase_awk_getmmgr (ase_awk_t* awk);
 void* ase_awk_getcustomdata (ase_awk_t* awk);
 
 const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num);
@@ -617,7 +618,7 @@ int ase_awk_setofilename (
 
 ase_awk_t* ase_awk_getrunawk (ase_awk_run_t* awk);
 void* ase_awk_getruncustomdata (ase_awk_run_t* awk);
-ase_awk_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* awk);
+ase_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* awk);
 
 /* functions to manipulate the run-time error */
 int ase_awk_getrunerrnum (ase_awk_run_t* run);
