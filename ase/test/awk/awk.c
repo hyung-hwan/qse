@@ -217,7 +217,7 @@ static int custom_awk_sprintf (
 
 
 static ase_ssize_t awk_srcio_in (
-	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t size)
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	struct awk_src_io* src_io = (struct awk_src_io*)arg;
 	ase_cint_t c;
@@ -256,7 +256,7 @@ static ase_ssize_t awk_srcio_in (
 }
 
 static ase_ssize_t awk_srcio_out (
-	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t size)
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	/*struct awk_src_io* src_io = (struct awk_src_io*)arg;*/
 
@@ -293,7 +293,7 @@ static ase_ssize_t awk_srcio_out (
 }
 
 static ase_ssize_t awk_extio_pipe (
-	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t size)
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 
@@ -417,7 +417,7 @@ static ase_ssize_t awk_extio_pipe (
 }
 
 static ase_ssize_t awk_extio_file (
-	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t size)
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 
@@ -557,7 +557,7 @@ static ase_ssize_t getdata (ase_char_t* data, ase_size_t size, FILE* fp)
 }
 
 static ase_ssize_t awk_extio_console (
-	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t size)
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
 

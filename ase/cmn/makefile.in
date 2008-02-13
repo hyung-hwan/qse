@@ -21,6 +21,7 @@ TMP_DIR = $(MODE)
 OBJ_FILES = \
 	$(TMP_DIR)/mem.o \
 	$(TMP_DIR)/str.o \
+	$(TMP_DIR)/map.o \
 	$(TMP_DIR)/misc.o 
 
 lib: $(OUT_FILE)
@@ -34,6 +35,9 @@ $(TMP_DIR)/mem.o: mem.c
 
 $(TMP_DIR)/str.o: str.c
 	$(CC) $(CFLAGS) -o $@ -c str.c
+
+$(TMP_DIR)/map.o: map.c
+	$(CC) $(CFLAGS) -o $@ -c map.c
 
 $(TMP_DIR)/misc.o: misc.c
 	$(CC) $(CFLAGS) -o $@ -c misc.c
