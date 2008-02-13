@@ -31,9 +31,6 @@ typedef struct ase_awk_runcbs_t ase_awk_runcbs_t;
 typedef struct ase_awk_runarg_t ase_awk_runarg_t;
 typedef struct ase_awk_rexfns_t ase_awk_rexfns_t;
 
-typedef enum ase_awk_iocmd_t ase_awk_iocmd_t;
-typedef enum ase_awk_errnum_t ase_awk_errnum_t;
-
 typedef ase_real_t (*ase_awk_pow_t) (void* custom, ase_real_t x, ase_real_t y);
 typedef int (*ase_awk_sprintf_t) (
 	void* custom, ase_char_t* buf, ase_size_t size, 
@@ -41,7 +38,7 @@ typedef int (*ase_awk_sprintf_t) (
 typedef void (*ase_awk_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
 
 typedef ase_ssize_t (*ase_awk_io_t) (
-	ase_awk_iocmd_t cmd, void* arg, ase_char_t* data, ase_size_t count);
+	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
 struct ase_awk_extio_t 
 {
@@ -117,7 +114,7 @@ struct ase_awk_runcbs_t
 		ase_awk_run_t* run, ase_awk_val_t* ret, void* custom_data);
 
 	void (*on_end) (
-		ase_awk_run_t* run, ase_awk_errnum_t errnum, void* custom_data);
+		ase_awk_run_t* run, int errnum, void* custom_data);
 
 	void* custom_data;
 };
@@ -475,16 +472,16 @@ int ase_awk_geterrnum (ase_awk_t* awk);
 ase_size_t ase_awk_geterrlin (ase_awk_t* awk);
 const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk);
 
-void ase_awk_seterrnum (ase_awk_t* awk, ase_awk_errnum_t errnum);
+void ase_awk_seterrnum (ase_awk_t* awk, int errnum);
 void ase_awk_seterrmsg (ase_awk_t* awk, 
-	ase_awk_errnum_t errnum, ase_size_t errlin, const ase_char_t* errmsg);
+	int errnum, ase_size_t errlin, const ase_char_t* errmsg);
 
 void ase_awk_geterror (
 	ase_awk_t* awk, int* errnum, 
 	ase_size_t* errlin, const ase_char_t** errmsg);
 
 void ase_awk_seterror (
-	ase_awk_t* awk, ase_awk_errnum_t errnum, ase_size_t errlin, 
+	ase_awk_t* awk, int errnum, ase_size_t errlin, 
 	const ase_cstr_t* errarg, ase_size_t argcnt);
 
 int ase_awk_getoption (ase_awk_t* awk);
@@ -624,16 +621,16 @@ ase_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* awk);
 int ase_awk_getrunerrnum (ase_awk_run_t* run);
 ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run);
 const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run);
-void ase_awk_setrunerrnum (ase_awk_run_t* run, ase_awk_errnum_t errnum);
+void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
 void ase_awk_setrunerrmsg (ase_awk_run_t* run, 
-	ase_awk_errnum_t errnum, ase_size_t errlin, const ase_char_t* errmsg);
+	int errnum, ase_size_t errlin, const ase_char_t* errmsg);
 
 void ase_awk_getrunerror (
 	ase_awk_run_t* run, int* errnum, 
 	ase_size_t* errlin, const ase_char_t** errmsg);
 
 void ase_awk_setrunerror (
-	ase_awk_run_t* run, ase_awk_errnum_t errnum, ase_size_t errlin, 
+	ase_awk_run_t* run, int errnum, ase_size_t errlin, 
 	const ase_cstr_t* errarg, ase_size_t argcnt);
 
 /* functions to manipulate intrinsic functions */

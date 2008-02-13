@@ -49,11 +49,6 @@ public:
 	/** Represents the underlying interpreter */
 	typedef ase_awk_t awk_t;
 
-	/** Represents IO command */
-	typedef ase_awk_iocmd_t iocmd_t;
-	/** Represents the error number */
-	typedef ase_awk_errnum_t errnum_t;
-
 	/**
 	 * Represents the source code I/O context for Awk::parse.
 	 * An instance of Awk::Source is passed to Awk::openSource, 
@@ -1044,23 +1039,23 @@ protected:
 
 	// static glue members for various handlers
 	static ssize_t sourceReader (
-        		iocmd_t cmd, void* arg, char_t* data, size_t count);
+		int cmd, void* arg, char_t* data, size_t count);
 	static ssize_t sourceWriter (
-        		iocmd_t cmd, void* arg, char_t* data, size_t count);
+		int cmd, void* arg, char_t* data, size_t count);
 
 	static ssize_t pipeHandler (
-        		iocmd_t cmd, void* arg, char_t* data, size_t count);
+		int cmd, void* arg, char_t* data, size_t count);
 	static ssize_t fileHandler (
-        		iocmd_t cmd, void* arg, char_t* data, size_t count);
+		int cmd, void* arg, char_t* data, size_t count);
 	static ssize_t consoleHandler (
-        		iocmd_t cmd, void* arg, char_t* data, size_t count);
+		int cmd, void* arg, char_t* data, size_t count);
 
 	static int functionHandler (
 		run_t* run, const char_t* name, size_t len);
 	static void freeFunctionMapValue (void* owner, void* value);
 
 	static void onRunStart (run_t* run, void* custom);
-	static void onRunEnd (run_t* run, errnum_t errnum, void* custom);
+	static void onRunEnd (run_t* run, int errnum, void* custom);
 	static void onRunReturn (run_t* run, val_t* ret, void* custom);
 	static void onRunStatement (run_t* run, size_t line, void* custom);
 

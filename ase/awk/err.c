@@ -6,7 +6,7 @@
 
 #include <ase/awk/awk_i.h>
 
-static const ase_char_t* __geterrstr (ase_awk_errnum_t errnum)
+static const ase_char_t* __geterrstr (int errnum)
 {
 	static const ase_char_t* errstr[] =
  	{
@@ -217,7 +217,7 @@ void ase_awk_geterror (
 	}
 }
 
-void ase_awk_seterrnum (ase_awk_t* awk, ase_awk_errnum_t errnum)
+void ase_awk_seterrnum (ase_awk_t* awk, int errnum)
 {
 	awk->errnum = errnum;
 	awk->errlin = 0;
@@ -225,7 +225,7 @@ void ase_awk_seterrnum (ase_awk_t* awk, ase_awk_errnum_t errnum)
 }
 
 void ase_awk_seterrmsg (ase_awk_t* awk, 
-	ase_awk_errnum_t errnum, ase_size_t errlin, const ase_char_t* errmsg)
+	int errnum, ase_size_t errlin, const ase_char_t* errmsg)
 {
 	awk->errnum = errnum;
 	awk->errlin = errlin;
@@ -233,7 +233,7 @@ void ase_awk_seterrmsg (ase_awk_t* awk,
 }
 
 void ase_awk_seterror (
-	ase_awk_t* awk, ase_awk_errnum_t errnum, ase_size_t errlin,
+	ase_awk_t* awk, int errnum, ase_size_t errlin,
 	const ase_cstr_t* errarg, ase_size_t argcnt)
 {
 	const ase_char_t* errfmt;
@@ -352,7 +352,7 @@ const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run)
 	return run->errmsg;
 }
 
-void ase_awk_setrunerrnum (ase_awk_run_t* run, ase_awk_errnum_t errnum)
+void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum)
 {
 	run->errnum = errnum;
 	run->errlin = 0;
@@ -360,7 +360,7 @@ void ase_awk_setrunerrnum (ase_awk_run_t* run, ase_awk_errnum_t errnum)
 }
 
 void ase_awk_setrunerrmsg (ase_awk_run_t* run, 
-	ase_awk_errnum_t errnum, ase_size_t errlin, const ase_char_t* errmsg)
+	int errnum, ase_size_t errlin, const ase_char_t* errmsg)
 {
 	run->errnum = errnum;
 	run->errlin = errlin;
@@ -383,7 +383,7 @@ void ase_awk_getrunerror (
 }
 
 void ase_awk_setrunerror (
-	ase_awk_run_t* run, ase_awk_errnum_t errnum, ase_size_t errlin,
+	ase_awk_run_t* run, int errnum, ase_size_t errlin,
 	const ase_cstr_t* errarg, ase_size_t argcnt)
 {
 	const ase_char_t* errfmt;

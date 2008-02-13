@@ -218,7 +218,7 @@ struct ase_awk_t
 	} tmp;
 
 	/* housekeeping */
-	ase_awk_errnum_t errnum;
+	int errnum;
 	ase_size_t errlin;
 	ase_char_t errmsg[256];
 	ase_char_t* errstr[ASE_AWK_NUMERRNUM];
@@ -355,7 +355,7 @@ struct ase_awk_run_t
 		} max;
 	} depth;
 
-	ase_awk_errnum_t errnum;
+	int errnum;
 	ase_size_t errlin;
 	ase_char_t errmsg[256];
 
