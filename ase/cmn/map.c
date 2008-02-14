@@ -153,16 +153,13 @@ int ase_map_putx (
 		}
 	}
 
-	pair = (ase_pair_t*) ASE_MALLOC (map->mmgr, ASE_SIZEOF(ase_pair_t));
+	pair = (ase_pair_t*) ASE_MALLOC (map->mmgr, 
+		ASE_SIZEOF(ase_pair_t) + ((keylen+1)*ASE_SIZEOF(*keyptr)));
 	if (pair == ASE_NULL) return -1; /* error */
 
 	/* duplicate the key if it is new */
-	ASE_PAIR_KEYPTR(pair) = ase_strxdup (keyptr, keylen, map->mmgr);
-	if (ASE_PAIR_KEYPTR(pair) == ASE_NULL)
-	{
-		ASE_FREE (map->mmgr, pair);
-		return -1; /* error */
-	}
+	ASE_PAIR_KEYPTR(pair) = (ase_char_t*)(pair + 1)
+	ase_strncpy (ASE_PAIR_KEYPTR(pair), keyptr, keylen);
 
 	ASE_PAIR_KEYLEN(pair) = keylen;
 	ASE_PAIR_VAL(pair) = val;
