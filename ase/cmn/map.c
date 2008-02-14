@@ -12,7 +12,6 @@ static int rehash (ase_map_t* map);
 
 #define FREE_PAIR(map,pair) \
 	do { \
-		ASE_FREE ((map)->mmgr, (ase_char_t*)ASE_PAIR_KEYPTR(pair)); \
 		if ((map)->freeval != ASE_NULL) \
 			(map)->freeval ((map)->owner, ASE_PAIR_VAL(pair)); \
 		ASE_FREE ((map)->mmgr, pair); \
