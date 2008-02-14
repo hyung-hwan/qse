@@ -158,7 +158,7 @@ int ase_map_putx (
 	if (pair == ASE_NULL) return -1; /* error */
 
 	/* duplicate the key if it is new */
-	ASE_PAIR_KEYPTR(pair) = (ase_char_t*)(pair + 1)
+	ASE_PAIR_KEYPTR(pair) = (ase_char_t*)(pair + 1);
 	ase_strncpy (ASE_PAIR_KEYPTR(pair), keyptr, keylen);
 
 	ASE_PAIR_KEYLEN(pair) = keylen;
