@@ -28,7 +28,7 @@ lib: $(OUT_FILE)
 
 $(OUT_FILE): $(TMP_DIR) $(OBJ_FILES) $(OUT_DIR)
 	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE); fi
+	if [ ! -z "$(RANLIB)" ]; then $(RANLIB) $(OUT_FILE); fi
 	
 $(TMP_DIR)/mem.o: mem.c
 	$(CC) $(CFLAGS) -o $@ -c mem.c
