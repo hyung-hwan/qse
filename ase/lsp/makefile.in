@@ -5,7 +5,7 @@
 NAME = aselsp
 
 CC = @CC@
-AR = ar
+AR = @AR@
 MAKE = @MAKE@
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..

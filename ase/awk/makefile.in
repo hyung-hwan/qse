@@ -9,7 +9,7 @@ TOP_INSTALLDIR = @prefix@/ase
 
 CC = @CC@
 CXX = @CXX@
-AR = ar
+AR = @AR@
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 CXXFLAGS = @CXXFLAGS@ -I@abs_top_builddir@/..
