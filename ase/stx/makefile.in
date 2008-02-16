@@ -9,7 +9,7 @@ TOP_INSTALLDIR = @prefix@/ase
 
 CC = @CC@
 CXX = @CXX@
-AR = ar
+AR = @AR@
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
 CXXFLAGS = @CXXFLAGS@ -I@abs_top_builddir@/..
@@ -59,7 +59,7 @@ build: $(OUT_FILE_LIB)
 
 $(OUT_FILE_LIB): $(TMP_DIR) $(OUT_DIR) $(OBJ_FILES_LIB)
 	$(AR) cr $(OUT_FILE_LIB) $(OBJ_FILES_LIB)
-	if [ "$(RANLIB)" = "ranlib" ]; then ranlib $(OUT_FILE_LIB); fi
+	if [ ! -z "$(RANLIB)" ]; then $(RANLIB) $(OUT_FILE_LIB); fi
 
 $(TMP_DIR)/stx.o: stx.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c stx.c
