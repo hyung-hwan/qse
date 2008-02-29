@@ -1023,9 +1023,9 @@ void* Awk::Run::getCustom () const
 // Awk
 //////////////////////////////////////////////////////////////////
 
-Awk::Awk (): /*awk (ASE_NULL), functionMap (ASE_NULL), */
-	sourceIn (Source::READ), sourceOut (Source::WRITE)/*,
-	errnum (ERR_NOERR), errlin (0), runCallback (false)*/
+Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL),
+	sourceIn (Source::READ), sourceOut (Source::WRITE),
+	errnum (ERR_NOERR), errlin (0), runCallback (false)
 
 {
 	this->errmsg[0] = ASE_T('\0');

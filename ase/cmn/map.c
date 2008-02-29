@@ -17,6 +17,14 @@ static int rehash (ase_map_t* map);
 		ASE_FREE ((map)->mmgr, pair); \
 	} while (0)
 
+#define RECYCLE_PAIR(map,pair) \
+	do { \
+		if ((map)->freeval != ASE_NULL) \
+			(map)->freeval ((map)->owner, ASE_PAIR_VAL(pair)); \
+		(pair)->next = (map)->fp; \
+		(map)->fp = (pair); \
+	} while (0)
+
 ase_map_t* ase_map_open (
 	void* owner, ase_size_t capa, unsigned int factor,
 	void(*freeval)(void*,void*), void(*sameval)(void*,void*), 
@@ -48,6 +56,7 @@ ase_map_t* ase_map_open (
 	map->factor = factor;
 	map->threshold = ((ase_size_t)map->factor) * map->capa / 100;
 
+	/*map->fp = ASE_NULL;*/
 	return map;
 }
 
@@ -62,6 +71,15 @@ void ase_map_clear (ase_map_t* map)
 {
 	ase_size_t i;
 	ase_pair_t* pair, * next;
+
+	/*
+	while (map->fp != ASE_NULL)
+	{
+		next = ASE_PAIR_LNK(map->fp);
+		ASE_FREE (map->mmgr, map->fp);
+		map->fp = next;
+	}
+	*/
 
 	for (i = 0; i < map->capa; i++) 
 	{
@@ -106,8 +124,7 @@ ase_pair_t* ase_map_get (
 }
 
 ase_pair_t* ase_map_put (
-	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen, 
-	void* val)
+	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen, void* val)
 {
 	int n;
 	ase_pair_t* px;
@@ -121,7 +138,7 @@ int ase_map_putx (
 	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen, 
 	void* val, ase_pair_t** px)
 {
-	ase_pair_t* pair;
+	ase_pair_t* pair, * fp, * fp2;
 	ase_size_t hc;
 
 	hc = hashkey(keyptr,keylen) % map->capa;
@@ -152,9 +169,32 @@ int ase_map_putx (
 		}
 	}
 
-	pair = (ase_pair_t*) ASE_MALLOC (map->mmgr, 
-		ASE_SIZEOF(ase_pair_t) + ((keylen+1)*ASE_SIZEOF(*keyptr)));
-	if (pair == ASE_NULL) return -1; /* error */
+
+	ASE_ASSERT (pair == ASE_NULL);
+
+	/*
+	fp = map->fp; fp2 = ASE_NULL;
+	while (fp != ASE_NULL)
+	{
+		if (fp->key.len == keylen) 
+		{
+			pair = fp;
+			if (fp2 == ASE_NULL) map->fp = fp->next;
+			else fp2->next = fp->next;
+			break;	
+		}
+
+		fp2 = fp;
+		fp = fp->next;
+	}
+
+	if (pair == ASE_NULL)
+	{
+	*/
+		pair = (ase_pair_t*) ASE_MALLOC (map->mmgr, 
+			ASE_SIZEOF(ase_pair_t) + ((keylen+1)*ASE_SIZEOF(*keyptr)));
+		if (pair == ASE_NULL) return -1; /* error */
+	/*}*/
 
 	/* duplicate the key if it is new */
 	ASE_PAIR_KEYPTR(pair) = (ase_char_t*)(pair + 1);
@@ -255,9 +295,11 @@ int ase_map_remove (
 		{
 			if (prev == ASE_NULL) 
 				map->buck[hc] = ASE_PAIR_LNK(pair);
-			else prev->next = ASE_PAIR_LNK(pair);
+			else ASE_PAIR_LNK(prev) = ASE_PAIR_LNK(pair);
 
+			/*RECYCLE_PAIR (map, pair);*/
 			FREE_PAIR (map, pair);
+
 			map->size--;
 
 			return 0;
