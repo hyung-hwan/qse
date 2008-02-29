@@ -47,6 +47,9 @@ struct ase_map_t
 	 * while the map is alive as the contents are 
 	 * not replicated */
 	ase_mmgr_t* mmgr;
+
+	/* list of free pairs */
+	/*ase_pair_t* fp;*/
 };
 
 #define ASE_PAIR_KEYPTR(p) ((p)->key.ptr)
