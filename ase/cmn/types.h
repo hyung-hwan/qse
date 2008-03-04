@@ -1,5 +1,5 @@
 /*
- * $Id: types.h,v 1.7 2007/11/09 07:43:42 bacon Exp $
+ * $Id: types.h 116 2008-03-03 11:15:37Z baconevi $
  *
  * {License}
  */

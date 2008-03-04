@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: http.h 116 2008-03-03 11:15:37Z baconevi $
  */
 
 #ifndef _ASE_UTL_HTTP_H_

@@ -1,5 +1,5 @@
 /*
- * $Id: str.h,v 1.4 2007/05/25 08:08:47 bacon Exp $
+ * $Id: str.h 116 2008-03-03 11:15:37Z baconevi $
  *
  * {License}
  */
