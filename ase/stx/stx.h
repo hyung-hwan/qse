@@ -1,5 +1,5 @@
 /*
- * $Id: stx.h,v 1.3 2007/04/30 08:32:41 bacon Exp $
+ * $Id: stx.h 118 2008-03-03 11:21:33Z baconevi $
  */
 
 #ifndef _ASE_STX_STX_H_

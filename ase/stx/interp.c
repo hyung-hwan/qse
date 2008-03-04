@@ -1,5 +1,5 @@
 /*
- * $Id: interp.c,v 1.3 2007/04/30 08:32:41 bacon Exp $
+ * $Id: interp.c 118 2008-03-03 11:21:33Z baconevi $
  */
 
 #include <ase/stx/interp.h>
