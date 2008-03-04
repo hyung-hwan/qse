@@ -24,6 +24,7 @@ OBJ_FILES_LIB = \
 	$(TMP_DIR)\mem.obj \
 	$(TMP_DIR)\str.obj \
 	$(TMP_DIR)\map.obj \
+	$(TMP_DIR)\rex.obj \
 	$(TMP_DIR)\misc.obj
 
 all: lib
@@ -43,6 +44,9 @@ $(TMP_DIR)\str.obj: str.c
 
 $(TMP_DIR)\map.obj: map.c
 	$(CC) $(CFLAGS) /Fo$@ /c map.c
+
+$(TMP_DIR)\rex.obj: rex.c
+	$(CC) $(CFLAGS) /Fo$@ /c rex.c
 
 $(TMP_DIR)\misc.obj: misc.c
 	$(CC) $(CFLAGS) /Fo$@ /c misc.c

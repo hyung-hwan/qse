@@ -2,7 +2,7 @@
 # OpenVMS MMS/MMK
 #
 
-objects = awk.obj,err.obj,tree.obj,str.obj,tab.obj,map.obj,parse.obj,run.obj,rec.obj,val.obj,func.obj,misc.obj,extio.obj,rex.obj
+objects = awk.obj,err.obj,tree.obj,str.obj,tab.obj,map.obj,parse.obj,run.obj,rec.obj,val.obj,func.obj,misc.obj,extio.obj
 
 CFLAGS = /include="../.."
 #CFLAGS = /pointer_size=long /include="../.."
@@ -25,4 +25,3 @@ val.obj depends_on val.c
 func.obj depends_on func.c
 misc.obj depends_on misc.c
 extio.obj depends_on extio.c
-rex.obj depends_on rex.c

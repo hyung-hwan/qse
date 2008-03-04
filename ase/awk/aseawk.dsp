@@ -123,10 +123,6 @@ SOURCE=.\rec.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\rex.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\run.c
 # End Source File
 # Begin Source File
@@ -164,10 +160,6 @@ SOURCE=.\func.h
 # Begin Source File
 
 SOURCE=.\parse.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\rex.h
 # End Source File
 # Begin Source File
 
