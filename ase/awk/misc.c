@@ -828,9 +828,9 @@ ase_char_t* ase_awk_strxntokbyrex (
 
 	while (len > 0)
 	{
-		n = ase_awk_matchrex (
+		n = ASE_AWK_MATCHREX (
 			run->awk, rex, 
-			((run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
+			((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
 			ptr, left, (const ase_char_t**)&match_ptr, &match_len, 
 			errnum);
 		if (n == -1) return ASE_NULL;
@@ -907,4 +907,46 @@ exit_loop:
 		return (match_ptr+match_len > s+len)? 
 			ASE_NULL: (match_ptr+match_len);
 	}
+}
+
+#define ASE_AWK_REXERRTOERR(err) \
+	((err == ASE_REX_ENOERR)?    ASE_AWK_ENOERR: \
+	 (err == ASE_REX_ENOMEM)?    ASE_AWK_ENOMEM: \
+	 (err == ASE_REX_ERECUR)?    ASE_AWK_EREXRECUR: \
+	 (err == ASE_REX_ERPAREN)?   ASE_AWK_EREXRPAREN: \
+	 (err == ASE_REX_ERBRACKET)? ASE_AWK_EREXRBRACKET: \
+	 (err == ASE_REX_ERBRACE)?   ASE_AWK_EREXRBRACE: \
+	 (err == ASE_REX_EUNBALPAR)? ASE_AWK_EREXUNBALPAR: \
+	 (err == ASE_REX_ECOLON)?    ASE_AWK_EREXCOLON: \
+	 (err == ASE_REX_ECRANGE)?   ASE_AWK_EREXCRANGE: \
+	 (err == ASE_REX_ECCLASS)?   ASE_AWK_EREXCCLASS: \
+	 (err == ASE_REX_EBRANGE)?   ASE_AWK_EREXBRANGE: \
+	 (err == ASE_REX_EEND)?      ASE_AWK_EREXEND: \
+	 (err == ASE_REX_EGARBAGE)?  ASE_AWK_EREXGARBAGE: \
+	                             ASE_AWK_EINTERN)
+
+void* ase_awk_buildrex (
+	ase_awk_t* awk, const ase_char_t* ptn, ase_size_t len, int* errnum)
+{
+	int err;
+	void* p;
+
+	p = ase_buildrex (
+		&awk->prmfns.mmgr, awk->rex.depth.max.build, ptn, len, &err);
+	if (p == ASE_NULL) *errnum = ASE_AWK_REXERRTOERR(err);
+	return p;
+}
+
+int ase_awk_matchrex (
+	ase_awk_t* awk, void* code, int option,
+        const ase_char_t* str, ase_size_t len,
+        const ase_char_t** match_ptr, ase_size_t* match_len, int* errnum)
+{
+	int err, x;
+
+	x = ase_matchrex (
+		&awk->prmfns.mmgr, &awk->prmfns.ccls, awk->rex.depth.max.match,
+		code, option, str, len, match_ptr, match_len, &err);
+	if (x < 0) *errnum = ASE_AWK_REXERRTOERR(err);
+	return x;
 }

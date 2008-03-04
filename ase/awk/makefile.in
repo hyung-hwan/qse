@@ -52,8 +52,7 @@ OBJ_FILES_LIB = \
 	$(TMP_DIR)/val.o \
 	$(TMP_DIR)/func.o \
 	$(TMP_DIR)/misc.o \
-	$(TMP_DIR)/extio.o \
-	$(TMP_DIR)/rex.o
+	$(TMP_DIR)/extio.o
 
 OBJ_FILES_JNI = $(TMP_DIR)/jni.o 
 
@@ -149,9 +148,6 @@ $(TMP_DIR)/misc.o: misc.c
 
 $(TMP_DIR)/extio.o: extio.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c extio.c
-
-$(TMP_DIR)/rex.o: rex.c
-	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c rex.c
 
 $(TMP_DIR)/jni.o: jni.c
 	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) $(CFLAGS_JNI) -o $@ -c jni.c

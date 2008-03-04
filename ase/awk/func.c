@@ -702,7 +702,7 @@ static int bfn_split (
 
 		if (fs_len > 1) 
 		{
-			fs_rex = ase_awk_buildrex (
+			fs_rex = ASE_AWK_BUILDREX (
 				run->awk, fs_ptr, fs_len, &errnum);
 			if (fs_rex == ASE_NULL)
 			{
@@ -725,7 +725,7 @@ static int bfn_split (
 		if (fs_free != ASE_NULL) 
 			ASE_AWK_FREE (run->awk, fs_free);
 		if (fs_rex_free != ASE_NULL) 
-			ase_awk_freerex (run->awk, fs_rex_free);
+			ASE_AWK_FREEREX (run->awk, fs_rex_free);
 		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
@@ -756,7 +756,7 @@ static int bfn_split (
 				if (fs_free != ASE_NULL) 
 					ASE_AWK_FREE (run->awk, fs_free);
 				if (fs_rex_free != ASE_NULL) 
-					ase_awk_freerex (run->awk, fs_rex_free);
+					ASE_AWK_FREEREX (run->awk, fs_rex_free);
 				ase_awk_setrunerrnum (run, errnum);
 				return -1;
 			}
@@ -780,7 +780,7 @@ static int bfn_split (
 			if (fs_free != ASE_NULL)
 				ASE_AWK_FREE (run->awk, fs_free);
 			if (fs_rex_free != ASE_NULL)
-				ase_awk_freerex (run->awk, fs_rex_free);
+				ASE_AWK_FREEREX (run->awk, fs_rex_free);
 			/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 			return -1;
 		}
@@ -807,7 +807,7 @@ static int bfn_split (
 			if (fs_free != ASE_NULL) 
 				ASE_AWK_FREE (run->awk, fs_free);
 			if (fs_rex_free != ASE_NULL)
-				ase_awk_freerex (run->awk, fs_rex_free);
+				ASE_AWK_FREEREX (run->awk, fs_rex_free);
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
@@ -818,7 +818,7 @@ static int bfn_split (
 
 	if (str_free != ASE_NULL) ASE_AWK_FREE (run->awk, str_free);
 	if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
-	if (fs_rex_free != ASE_NULL) ase_awk_freerex (run->awk, fs_rex_free);
+	if (fs_rex_free != ASE_NULL) ASE_AWK_FREEREX (run->awk, fs_rex_free);
 
 	if (sta == 1) num--;
 
@@ -946,7 +946,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	} while (0)
 #define FREE_A0_REX(awk,rex) \
 	do { \
-		if (a0->type != ASE_AWK_VAL_REX) ase_awk_freerex (awk, rex); \
+		if (a0->type != ASE_AWK_VAL_REX) ASE_AWK_FREEREX (awk, rex); \
 	} while (0)
 
 	if (a0->type == ASE_AWK_VAL_REX)
@@ -1053,7 +1053,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 
 	if (a0->type != ASE_AWK_VAL_REX)
 	{
-		rex = ase_awk_buildrex (run->awk, a0_ptr, a0_len, &run->errnum);
+		rex = ASE_AWK_BUILDREX (run->awk, a0_ptr, a0_len, &run->errnum);
 		if (rex == ASE_NULL)
 		{
 			ase_str_close (&new);
@@ -1062,7 +1062,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		}
 	}
 
-	opt = (run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0;
+	opt = (run->global.ignorecase)? ASE_REX_IGNORECASE: 0;
 	cur_ptr = a2_ptr;
 	cur_len = a2_len;
 	sub_count = 0;
@@ -1071,7 +1071,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	{
 		if (max_count == 0 || sub_count < max_count)
 		{
-			n = ase_awk_matchrex (
+			n = ASE_AWK_MATCHREX (
 				run->awk, rex, opt, cur_ptr, cur_len,
 				&mat_ptr, &mat_len, &run->errnum);
 		}
@@ -1270,7 +1270,7 @@ static int bfn_match (
 			}
 		}
 
-		rex = ase_awk_buildrex (run->awk, str1, len1, &run->errnum);
+		rex = ASE_AWK_BUILDREX (run->awk, str1, len1, &run->errnum);
 		if (rex == ASE_NULL)
 		{
 			if (a0->type != ASE_AWK_VAL_STR) 
@@ -1281,13 +1281,13 @@ static int bfn_match (
 		if (a1->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str1);
 	}
 
-	opt = (run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0;
-	n = ase_awk_matchrex (
+	opt = (run->global.ignorecase)? ASE_REX_IGNORECASE: 0;
+	n = ASE_AWK_MATCHREX (
 		run->awk, rex, opt, str0, len0,
 		&mat_ptr, &mat_len, &run->errnum);
 
 	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str0);
-	if (a1->type != ASE_AWK_VAL_REX) ase_awk_freerex (run->awk, rex);
+	if (a1->type != ASE_AWK_VAL_REX) ASE_AWK_FREEREX (run->awk, rex);
 
 	if (n == -1) return -1;
 

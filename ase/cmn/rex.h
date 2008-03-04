@@ -4,12 +4,11 @@
  * {License}
  */
 
-#ifndef _ASE_AWK_REX_H_
-#define _ASE_AWK_REX_H_
+#ifndef _ASE_CMN_REX_H_
+#define _ASE_CMN_REX_H_
 
-#ifndef _ASE_AWK_AWK_H_
-#error Never include this file directly. Include <ase/awk/awk.h> instead
-#endif
+#include <ase/cmn/types.h>
+#include <ase/cmn/macros.h>
 
 /*
  * Regular Esseression Syntax
@@ -39,34 +38,54 @@
  *   ab|xy -> |2|10|4|ORD_CHAR(no bound)|a|ORD_CHAR(no bound)|b|4|ORD_CHAR(no bound)|x|ORD_CHAR(no bound)|y|
  */
 
-#define ASE_AWK_REX_NA(code) (*(ase_size_t*)(code))
+#define ASE_REX_NA(code) (*(ase_size_t*)(code))
 
-#define ASE_AWK_REX_LEN(code) \
+#define ASE_REX_LEN(code) \
 	(*(ase_size_t*)((ase_byte_t*)(code)+ASE_SIZEOF(ase_size_t)))
 
-enum ase_awk_rex_opt_t
+enum ase_rex_option_t
 {
-	ASE_AWK_REX_IGNORECASE = (1 << 0)
+	ASE_REX_IGNORECASE = (1 << 0)
+};
+
+enum ase_rex_errnum_t
+{
+	ASE_REX_ENOERR = 0,
+	ASE_REX_ENOMEM,
+        ASE_REX_ERECUR,        /* recursion too deep */
+        ASE_REX_ERPAREN,       /* a right parenthesis is expected */
+        ASE_REX_ERBRACKET,     /* a right bracket is expected */
+        ASE_REX_ERBRACE,       /* a right brace is expected */
+        ASE_REX_EUNBALPAR,     /* unbalanced parenthesis */
+        ASE_REX_ECOLON,        /* a colon is expected */
+        ASE_REX_ECRANGE,       /* invalid character range */
+        ASE_REX_ECCLASS,       /* invalid character class */
+        ASE_REX_EBRANGE,       /* invalid boundary range */
+        ASE_REX_EEND,          /* unexpected end of the pattern */
+        ASE_REX_EGARBAGE       /* garbage after the pattern */
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void* ase_awk_buildrex (
-	ase_awk_t* awk, const ase_char_t* ptn, 
-	ase_size_t len, int* errnum);
+void* ase_buildrex (
+	ase_mmgr_t* mmgr, ase_size_t depth,
+	const ase_char_t* ptn, ase_size_t len, int* errnum);
 
-int ase_awk_matchrex (
-	ase_awk_t* awk, void* code, int option,
+int ase_matchrex (
+	ase_mmgr_t* mmgr, ase_ccls_t* ccls, ase_size_t depth,
+	void* code, int option,
 	const ase_char_t* str, ase_size_t len, 
 	const ase_char_t** match_ptr, ase_size_t* match_len, int* errnum);
 
-void ase_awk_freerex (ase_awk_t* awk, void* code);
+void ase_freerex (ase_mmgr_t* mmgr, void* code);
 
-ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code);
+ase_bool_t ase_isemptyrex (void* code);
 
-void ase_awk_dprintrex (ase_awk_t* awk, void* rex);
+#if 0
+void ase_dprintrex (ase_rex_t* rex, void* rex);
+#endif
 
 #ifdef __cplusplus
 }

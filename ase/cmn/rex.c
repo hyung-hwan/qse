@@ -4,7 +4,7 @@
  * {License}
  */
 
-#include <ase/awk/awk_i.h>
+#include <ase/cmn/rex.h>
 
 #ifdef DEBUG_REX
 #include <ase/utl/stdio.h>
@@ -64,7 +64,7 @@ typedef struct cshdr_t cshdr_t;
 
 struct builder_t
 {
-	ase_awk_t* awk;
+	ase_mmgr_t* mmgr;
 
 	struct
 	{
@@ -97,7 +97,8 @@ struct builder_t
 
 struct matcher_t
 {
-	ase_awk_t* awk;
+	ase_mmgr_t* mmgr;
+	ase_ccls_t* ccls;
 
 	struct
 	{
@@ -214,28 +215,31 @@ static const ase_byte_t* match_occurrences (
 static ase_bool_t __test_charset (
 	matcher_t* matcher, const ase_byte_t* p, ase_size_t csc, ase_char_t c);
 
-static ase_bool_t cc_isalnum (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_isalpha (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_isblank (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_iscntrl (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_isdigit (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_isgraph (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_islower (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_isprint (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_ispunct (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_isspace (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_isupper (ase_awk_t* awk, ase_char_t c);
-static ase_bool_t cc_isxdigit (ase_awk_t* awk, ase_char_t c);
+static ase_bool_t cc_isalnum (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_isalpha (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_isblank (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_iscntrl (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_isdigit (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_isgraph (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_islower (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_isprint (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_ispunct (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_isspace (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_isupper (ase_ccls_t* ccls, ase_char_t c);
+static ase_bool_t cc_isxdigit (ase_ccls_t* ccls, ase_char_t c);
 
+#if 0
+XXX
 static const ase_byte_t* __print_pattern (ase_awk_t* awk, const ase_byte_t* p);
 static const ase_byte_t* __print_branch (ase_awk_t* awk, const ase_byte_t* p);
 static const ase_byte_t* __print_atom (ase_awk_t* awk, const ase_byte_t* p);
+#endif
 
 struct __char_class_t
 {
 	const ase_char_t* name;
 	ase_size_t name_len;
-	ase_bool_t (*func) (ase_awk_t* awk, ase_char_t c);
+	ase_bool_t (*func) (ase_ccls_t* ccls, ase_char_t c);
 }; 
 
 static struct __char_class_t __char_class[] =
@@ -265,19 +269,20 @@ static struct __char_class_t __char_class[] =
 	{ ASE_NULL,        0, ASE_NULL }
 };
 
-void* ase_awk_buildrex (
-	ase_awk_t* awk, const ase_char_t* ptn, ase_size_t len, int* errnum)
+void* ase_buildrex (
+	ase_mmgr_t* mmgr, ase_size_t depth, 
+	const ase_char_t* ptn, ase_size_t len, int* errnum)
 {
 	builder_t builder;
 
-	builder.awk = awk;
+	builder.mmgr = mmgr;
 	builder.code.capa = DEF_CODE_CAPA;
 	builder.code.size = 0;
 	builder.code.buf = (ase_byte_t*) 
-		ASE_AWK_MALLOC (builder.awk, builder.code.capa);
+		ASE_MALLOC (builder.mmgr, builder.code.capa);
 	if (builder.code.buf == ASE_NULL) 
 	{
-		*errnum = ASE_AWK_ENOMEM;
+		*errnum = ASE_REX_ENOMEM;
 		return ASE_NULL;
 	}
 
@@ -289,20 +294,20 @@ void* ase_awk_buildrex (
 	builder.ptn.curc.value = ASE_T('\0');
 	builder.ptn.curc.escaped = ase_false;
 
-	builder.depth.max = awk->rex.depth.max.build;
+	builder.depth.max = depth;
 	builder.depth.cur = 0;
 
 	if (next_char (&builder, LEVEL_TOP) == -1) 
 	{
 		if (errnum != ASE_NULL) *errnum = builder.errnum;
-		ASE_AWK_FREE (builder.awk, builder.code.buf);
+		ASE_FREE (builder.mmgr, builder.code.buf);
 		return ASE_NULL;
 	}
 
 	if (build_pattern (&builder) == -1) 
 	{
 		if (errnum != ASE_NULL) *errnum = builder.errnum;
-		ASE_AWK_FREE (builder.awk, builder.code.buf);
+		ASE_FREE (builder.mmgr, builder.code.buf);
 		return ASE_NULL;
 	}
 
@@ -313,23 +318,24 @@ void* ase_awk_buildrex (
 			if (builder.ptn.curc.type ==  CT_SPECIAL &&
 			    builder.ptn.curc.value == ASE_T(')'))
 			{
-				*errnum = ASE_AWK_EREXUNBALPAR;
+				*errnum = ASE_REX_EUNBALPAR;
 			}
 			else
 			{
-				*errnum = ASE_AWK_EREXGARBAGE;
+				*errnum = ASE_REX_EGARBAGE;
 			}
 		}
 
-		ASE_AWK_FREE (builder.awk, builder.code.buf);
+		ASE_FREE (builder.mmgr, builder.code.buf);
 		return ASE_NULL;
 	}
 
 	return builder.code.buf;
 }
 
-int ase_awk_matchrex (
-	ase_awk_t* awk, void* code, int option,
+int ase_matchrex (
+	ase_mmgr_t* mmgr, ase_ccls_t* ccls, ase_size_t depth,
+	void* code, int option,
 	const ase_char_t* str, ase_size_t len, 
 	const ase_char_t** match_ptr, ase_size_t* match_len, int* errnum)
 {
@@ -338,15 +344,16 @@ int ase_awk_matchrex (
 	ase_size_t offset = 0;
 	/*const ase_char_t* match_ptr_zero = ASE_NULL;*/
 
-	matcher.awk = awk;
+	matcher.mmgr = mmgr;
+	matcher.ccls = ccls;
 
 	/* store the source string */
 	matcher.match.str.ptr = str;
 	matcher.match.str.end = str + len;
 
-	matcher.depth.max = awk->rex.depth.max.match;
+	matcher.depth.max = depth;
 	matcher.depth.cur = 0;
-	matcher.ignorecase = (option & ASE_AWK_REX_IGNORECASE)? 1: 0;
+	matcher.ignorecase = (option & ASE_REX_IGNORECASE)? 1: 0;
 
 	mat.matched = ase_false;
 	/* TODO: should it allow an offset here??? */
@@ -395,13 +402,13 @@ int ase_awk_matchrex (
 	return (mat.matched)? 1: 0;
 }
 
-void ase_awk_freerex (ase_awk_t* awk, void* code)
+void ase_freerex (ase_mmgr_t* mmgr, void* code)
 {
 	ASE_ASSERT (code != ASE_NULL);
-	ASE_AWK_FREE (awk, code);
+	ASE_FREE (mmgr, code);
 }
 
-ase_bool_t ase_awk_isemptyrex (ase_awk_t* awk, void* code)
+ase_bool_t ase_isemptyrex (void* code)
 {
 	rhdr_t* rhdr = (rhdr_t*) code;
 	ASE_ASSERT (rhdr != ASE_NULL);
@@ -421,7 +428,7 @@ static int build_pattern (builder_t* builder)
 
 	if (builder->depth.max > 0 && builder->depth.cur >= builder->depth.max)
 	{
-		builder->errnum = ASE_AWK_EREXRECUR;
+		builder->errnum = ASE_REX_ERECUR;
 		return -1;
 	}
 
@@ -558,7 +565,7 @@ static int build_atom (builder_t* builder)
 			if (builder->ptn.curc.type != CT_SPECIAL || 
 			    builder->ptn.curc.value != ASE_T(')')) 
 			{
-				builder->errnum = ASE_AWK_EREXRPAREN;
+				builder->errnum = ASE_REX_ERPAREN;
 				return -1;
 			}
 		}
@@ -608,7 +615,7 @@ static int build_atom (builder_t* builder)
 			if (builder->ptn.curc.type != CT_SPECIAL ||
 			    builder->ptn.curc.value != ASE_T(']'))
 			{
-				builder->errnum = ASE_AWK_EREXRBRACKET;
+				builder->errnum = ASE_REX_ERBRACKET;
 				return -1;
 			}
 
@@ -730,7 +737,7 @@ static int build_charset (builder_t* builder, code_t* cmd)
 			ase_dprintf (
 				ASE_T("build_charset: invalid character set range\n"));
 		#endif
-			builder->errnum = ASE_AWK_EREXCRANGE;
+			builder->errnum = ASE_REX_ECRANGE;
 			return -1;
 		}
 
@@ -761,7 +768,7 @@ static int build_cclass (builder_t* builder, ase_char_t* cc)
 	#ifdef DEBUG_REX
 		ase_dprintf (ASE_T("build_cclass: wrong class name\n"));
 	#endif
-		builder->errnum = ASE_AWK_EREXCCLASS;
+		builder->errnum = ASE_REX_ECCLASS;
 		return -1;
 	}
 
@@ -774,7 +781,7 @@ static int build_cclass (builder_t* builder, ase_char_t* cc)
 	#ifdef DEBUG_REX
 		ase_dprintf (ASE_T("build_cclass: a colon(:) expected\n"));
 	#endif
-		builder->errnum = ASE_AWK_EREXCOLON;
+		builder->errnum = ASE_REX_ECOLON;
 		return -1;
 	}
 
@@ -787,7 +794,7 @@ static int build_cclass (builder_t* builder, ase_char_t* cc)
 	#ifdef DEBUG_REX
 		ase_dprintf (ASE_T("build_cclass: ] expected\n"));
 	#endif
-		builder->errnum = ASE_AWK_EREXRBRACKET;	
+		builder->errnum = ASE_REX_ERBRACKET;	
 		return -1;
 	}
 
@@ -836,7 +843,7 @@ static int build_occurrences (builder_t* builder, code_t* cmd)
 			if (builder->ptn.curc.type != CT_SPECIAL || 
 			    builder->ptn.curc.value != ASE_T('}')) 
 			{
-				builder->errnum = ASE_AWK_EREXRBRACE;
+				builder->errnum = ASE_REX_ERBRACE;
 				return -1;
 			}
 
@@ -886,7 +893,7 @@ what if it is not in the raight format? convert it to ordinary characters?? */
 	if (cmd->lbound > cmd->ubound)
 	{
 		/* invalid occurrences range */
-		builder->errnum = ASE_AWK_EREXBRANGE;
+		builder->errnum = ASE_REX_EBRANGE;
 		return -1;
 	}
 
@@ -897,7 +904,7 @@ what if it is not in the raight format? convert it to ordinary characters?? */
 	do { \
 		if (builder->ptn.curp >= builder->ptn.end) \
 		{ \
-			builder->errnum = ASE_AWK_EREXEND; \
+			builder->errnum = ASE_REX_EEND; \
 			return -1; \
 		} \
 	} while(0)
@@ -1079,29 +1086,29 @@ static int add_code (builder_t* builder, void* data, ase_size_t len)
 		if (capa == 0) capa = DEF_CODE_CAPA;
 		while (len > capa - builder->code.size) { capa = capa * 2; }
 
-		if (builder->awk->prmfns.mmgr.realloc != ASE_NULL)
+		if (builder->mmgr->realloc != ASE_NULL)
 		{
-			tmp = (ase_byte_t*) ASE_AWK_REALLOC (
-				builder->awk, builder->code.buf, capa);
+			tmp = (ase_byte_t*) ASE_REALLOC (
+				builder->mmgr, builder->code.buf, capa);
 			if (tmp == ASE_NULL)
 			{
-				builder->errnum = ASE_AWK_ENOMEM;
+				builder->errnum = ASE_REX_ENOMEM;
 				return -1;
 			}
 		}
 		else
 		{
-			tmp = (ase_byte_t*) ASE_AWK_MALLOC (builder->awk, capa);
+			tmp = (ase_byte_t*) ASE_MALLOC (builder->mmgr, capa);
 			if (tmp == ASE_NULL)
 			{
-				builder->errnum = ASE_AWK_ENOMEM;
+				builder->errnum = ASE_REX_ENOMEM;
 				return -1;
 			}
 
 			if (builder->code.buf != ASE_NULL)
 			{
 				ase_memcpy (tmp, builder->code.buf, builder->code.capa);
-				ASE_AWK_FREE (builder->awk, builder->code.buf);
+				ASE_FREE (builder->mmgr, builder->code.buf);
 			}
 		}
 
@@ -1193,7 +1200,7 @@ static const ase_byte_t* match_branch_body (
 
 	if (matcher->depth.max > 0 && matcher->depth.cur >= matcher->depth.max)
 	{
-		matcher->errnum = ASE_AWK_EREXRECUR;
+		matcher->errnum = ASE_REX_ERECUR;
 		return ASE_NULL;
 	}
 
@@ -1372,7 +1379,7 @@ static const ase_byte_t* match_ord_char (
 	ubound = cp->ubound;
 
 	cc = *(ase_char_t*)p; p += ASE_SIZEOF(cc);
-	if (matcher->ignorecase) cc = ASE_AWK_TOUPPER(matcher->awk, cc);
+	if (matcher->ignorecase) cc = ASE_TOUPPER(matcher->ccls, cc);
 
 	/* merge the same consecutive codes 
 	 * for example, a{1,10}a{0,10} is shortened to a{1,20} */
@@ -1381,7 +1388,7 @@ static const ase_byte_t* match_ord_char (
 		while (p < mat->branch_end &&
 		       cp->cmd == ((const code_t*)p)->cmd)
 		{
-			if (ASE_AWK_TOUPPER (matcher->awk, *(ase_char_t*)(p+ASE_SIZEOF(*cp))) != cc) break;
+			if (ASE_TOUPPER (matcher->ccls, *(ase_char_t*)(p+ASE_SIZEOF(*cp))) != cc) break;
 
 			lbound += ((const code_t*)p)->lbound;
 			ubound += ((const code_t*)p)->ubound;
@@ -1423,7 +1430,7 @@ static const ase_byte_t* match_ord_char (
 				ASE_T("match_ord_char: <ignorecase> %c %c\n"),
 				cc, mat->match_ptr[si]);
 #endif
-			if (cc != ASE_AWK_TOUPPER (matcher->awk, mat->match_ptr[si])) break;
+			if (cc != ASE_TOUPPER (matcher->ccls, mat->match_ptr[si])) break;
 			si++;
 		}
 	}
@@ -1486,7 +1493,7 @@ static const ase_byte_t* match_charset (
 		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 
 		c = mat->match_ptr[si];
-		if (matcher->ignorecase) c = ASE_AWK_TOUPPER(matcher->awk, c);
+		if (matcher->ignorecase) c = ASE_TOUPPER(matcher->ccls, c);
 
 		n = __test_charset (matcher, p, cshdr->csc, c);
 		if (cp->negate) n = !n;
@@ -1555,11 +1562,11 @@ static const ase_byte_t* match_group (
 	}
 	else 
 	{
-		grp_len = (ase_size_t*) ASE_AWK_MALLOC (
-			matcher->awk, ASE_SIZEOF(ase_size_t) * cp->ubound);
+		grp_len = (ase_size_t*) ASE_MALLOC (
+			matcher->mmgr, ASE_SIZEOF(ase_size_t) * cp->ubound);
 		if (grp_len == ASE_NULL)
 		{
-			matcher->errnum = ASE_AWK_ENOMEM;
+			matcher->errnum = ASE_REX_ENOMEM;
 			return ASE_NULL;
 		}
 	}
@@ -1574,7 +1581,7 @@ static const ase_byte_t* match_group (
 		if (match_pattern (matcher, p, &mat2) == ASE_NULL) 
 		{
 			if (grp_len != grp_len_static) 
-				ASE_AWK_FREE (matcher->awk, grp_len);
+				ASE_FREE (matcher->mmgr, grp_len);
 			return ASE_NULL;
 		}
 		if (!mat2.matched) break;
@@ -1620,7 +1627,7 @@ static const ase_byte_t* match_group (
 				if (tmp == ASE_NULL)
 				{
 					if (grp_len != grp_len_static) 
-						ASE_AWK_FREE (matcher->awk, grp_len);
+						ASE_FREE (matcher->mmgr, grp_len);
 					return ASE_NULL;
 				}
 
@@ -1640,7 +1647,7 @@ static const ase_byte_t* match_group (
 
 	}
 
-	if (grp_len != grp_len_static) ASE_AWK_FREE (matcher->awk, grp_len);
+	if (grp_len != grp_len_static) ASE_FREE (matcher->mmgr, grp_len);
 	return p;
 }
 
@@ -1751,7 +1758,7 @@ static ase_bool_t __test_charset (
 		{
 			c1 = *(const ase_char_t*)p;
 			if (matcher->ignorecase) 
-				c1 = ASE_AWK_TOUPPER(matcher->awk, c1);
+				c1 = ASE_TOUPPER(matcher->ccls, c1);
 		#ifdef DEBUG_REX
 			ase_dprintf (
 				ASE_T("match_charset: <one> %c %c\n"), c, c1);
@@ -1766,8 +1773,8 @@ static ase_bool_t __test_charset (
 
 			if (matcher->ignorecase) 
 			{
-				c1 = ASE_AWK_TOUPPER(matcher->awk, c1);
-				c2 = ASE_AWK_TOUPPER(matcher->awk, c2);
+				c1 = ASE_TOUPPER(matcher->ccls, c1);
+				c2 = ASE_TOUPPER(matcher->ccls, c2);
 			}
 		#ifdef DEBUG_REX
 			ase_dprintf (
@@ -1784,7 +1791,7 @@ static ase_bool_t __test_charset (
 				c, __char_class[c1].name);
 		#endif
 			if (__char_class[c1].func (
-				matcher->awk, c)) return ase_true;
+				matcher->ccls, c)) return ase_true;
 		}
 		else
 		{
@@ -1798,66 +1805,67 @@ static ase_bool_t __test_charset (
 	return ase_false;
 }
 
-static ase_bool_t cc_isalnum (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isalnum (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISALNUM (awk, c);
+	return ASE_ISALNUM (ccls, c);
 }
 
-static ase_bool_t cc_isalpha (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isalpha (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISALPHA (awk, c);
+	return ASE_ISALPHA (ccls, c);
 }
 
-static ase_bool_t cc_isblank (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isblank (ase_ccls_t* ccls, ase_char_t c)
 {
 	return c == ASE_T(' ') || c == ASE_T('\t');
 }
 
-static ase_bool_t cc_iscntrl (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_iscntrl (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISCNTRL (awk, c);
+	return ASE_ISCNTRL (ccls, c);
 }
 
-static ase_bool_t cc_isdigit (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isdigit (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISDIGIT (awk, c);
+	return ASE_ISDIGIT (ccls, c);
 }
 
-static ase_bool_t cc_isgraph (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isgraph (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISGRAPH (awk, c);
+	return ASE_ISGRAPH (ccls, c);
 }
 
-static ase_bool_t cc_islower (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_islower (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISLOWER (awk, c);
+	return ASE_ISLOWER (ccls, c);
 }
 
-static ase_bool_t cc_isprint (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isprint (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISPRINT (awk, c);
+	return ASE_ISPRINT (ccls, c);
 }
 
-static ase_bool_t cc_ispunct (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_ispunct (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISPUNCT (awk, c);
+	return ASE_ISPUNCT (ccls, c);
 }
 
-static ase_bool_t cc_isspace (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isspace (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISSPACE (awk, c);
+	return ASE_ISSPACE (ccls, c);
 }
 
-static ase_bool_t cc_isupper (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isupper (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISUPPER (awk, c);
+	return ASE_ISUPPER (ccls, c);
 }
 
-static ase_bool_t cc_isxdigit (ase_awk_t* awk, ase_char_t c)
+static ase_bool_t cc_isxdigit (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_AWK_ISXDIGIT (awk, c);
+	return ASE_ISXDIGIT (ccls, c);
 }
 
+#if 0
 #define DPRINTF awk->prmfns.misc.dprintf
 #define DCUSTOM awk->prmfns.misc.custom_data
 
@@ -1995,3 +2003,4 @@ static const ase_byte_t* __print_atom (ase_awk_t* awk, const ase_byte_t* p)
 	return p;
 }
 
+#endif

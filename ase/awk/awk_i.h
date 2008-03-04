@@ -10,12 +10,12 @@
 #include <ase/cmn/mem.h>
 #include <ase/cmn/str.h>
 #include <ase/cmn/map.h>
+#include <ase/cmn/rex.h>
 
 typedef struct ase_awk_chain_t ase_awk_chain_t;
 typedef struct ase_awk_tree_t ase_awk_tree_t;
 
 #include <ase/awk/awk.h>
-#include <ase/awk/rex.h>
 #include <ase/awk/tree.h>
 #include <ase/awk/val.h>
 #include <ase/awk/func.h>
@@ -364,5 +364,13 @@ struct ase_awk_run_t
 	ase_awk_t* awk;
 	ase_awk_runcbs_t* cbs;
 };
+
+
+#define ASE_AWK_FREEREX(awk,code) ase_freerex(&(awk)->prmfns.mmgr,code)
+#define ASE_AWK_ISEMPTYREX(awk,code) ase_isemptyrex(code)
+#define ASE_AWK_BUILDREX(awk,ptn,len,errnum) \
+	ase_awk_buildrex(awk,ptn,len,errnum)
+#define ASE_AWK_MATCHREX(awk,code,option,str,len,match_ptr,match_len,errnum) \
+	ase_awk_matchrex(awk,code,option,str,len,match_ptr,match_len,errnum)
 
 #endif

@@ -354,7 +354,7 @@ static int set_global (
 
 			/* compile the regular expression */
 			/* TODO: use safebuild */
-			rex = ase_awk_buildrex (
+			rex = ASE_AWK_BUILDREX (
 				run->awk, fs_ptr, fs_len, &run->errnum);
 			if (rex == ASE_NULL)
 			{
@@ -365,7 +365,7 @@ static int set_global (
 
 			if (run->global.fs != ASE_NULL) 
 			{
-				ase_awk_freerex (run->awk, run->global.fs);
+				ASE_AWK_FREEREX (run->awk, run->global.fs);
 			}
 			run->global.fs = rex;
 		}
@@ -499,7 +499,7 @@ static int set_global (
 
 			/* compile the regular expression */
 			/* TODO: use safebuild */
-			rex = ase_awk_buildrex (
+			rex = ASE_AWK_BUILDREX (
 				run->awk, rs_ptr, rs_len, &run->errnum);
 			if (rex == ASE_NULL)
 			{
@@ -510,7 +510,7 @@ static int set_global (
 
 			if (run->global.rs != ASE_NULL) 
 			{
-				ase_awk_freerex (run->awk, run->global.rs);
+				ASE_AWK_FREEREX (run->awk, run->global.rs);
 			}
 			run->global.rs = rex;
 		}
@@ -3079,8 +3079,7 @@ static ase_awk_val_t* eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			/* the record has never been read. 
 			 * probably, this functions has been triggered
 			 * by the statements in the BEGIN block */
-			n = ase_awk_isemptyrex (
-				run->awk, ((ase_awk_val_rex_t*)v)->code)? 1: 0;
+			n = ASE_AWK_ISEMPTYREX(run->awk,((ase_awk_val_rex_t*)v)->code)? 1: 0;
 		}
 		else
 		{
@@ -3088,10 +3087,10 @@ static ase_awk_val_t* eval_expression (ase_awk_run_t* run, ase_awk_nde_t* nde)
 				run->inrec.d0->type == ASE_AWK_VAL_STR,
 				"the internal value representing $0 should always be of the string type once it has been set/updated. it is nil initially.");
 
-			n = ase_awk_matchrex (
+			n = ASE_AWK_MATCHREX (
 				((ase_awk_run_t*)run)->awk, 
 				((ase_awk_val_rex_t*)v)->code,
-				((((ase_awk_run_t*)run)->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
+				((((ase_awk_run_t*)run)->global.ignorecase)? ASE_REX_IGNORECASE: 0),
 				((ase_awk_val_str_t*)run->inrec.d0)->buf,
 				((ase_awk_val_str_t*)run->inrec.d0)->len,
 				ASE_NULL, ASE_NULL, &errnum);
@@ -4723,7 +4722,7 @@ static ase_awk_val_t* eval_binop_match0 (
 	}
 	else if (right->type == ASE_AWK_VAL_STR)
 	{
-		rex_code = ase_awk_buildrex ( 
+		rex_code = ASE_AWK_BUILDREX ( 
 			run->awk,
 			((ase_awk_val_str_t*)right)->buf,
 			((ase_awk_val_str_t*)right)->len, &errnum);
@@ -4739,7 +4738,7 @@ static ase_awk_val_t* eval_binop_match0 (
 			run, right, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len);
 		if (str == ASE_NULL) return ASE_NULL;
 
-		rex_code = ase_awk_buildrex (run->awk, str, len, &errnum);
+		rex_code = ASE_AWK_BUILDREX (run->awk, str, len, &errnum);
 		if (rex_code == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, str);
@@ -4753,9 +4752,9 @@ static ase_awk_val_t* eval_binop_match0 (
 
 	if (left->type == ASE_AWK_VAL_STR)
 	{
-		n = ase_awk_matchrex (
+		n = ASE_AWK_MATCHREX (
 			run->awk, rex_code,
-			((run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
+			((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
 			((ase_awk_val_str_t*)left)->buf,
 			((ase_awk_val_str_t*)left)->len,
 			ASE_NULL, ASE_NULL, &errnum);
@@ -4790,9 +4789,9 @@ static ase_awk_val_t* eval_binop_match0 (
 			return ASE_NULL;
 		}
 
-		n = ase_awk_matchrex (
+		n = ASE_AWK_MATCHREX (
 			run->awk, rex_code, 
-			((run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
+			((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
 			str, len, ASE_NULL, ASE_NULL, &errnum);
 		if (n == -1) 
 		{
