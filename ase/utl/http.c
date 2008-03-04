@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: http.c 116 2008-03-03 11:15:37Z baconevi $
  */
 
 #include <ase/utl/http.h>

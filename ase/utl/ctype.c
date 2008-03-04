@@ -1,5 +1,5 @@
 /*
- * $Id: ctype.c,v 1.3 2007/04/30 08:32:50 bacon Exp $
+ * $Id: ctype.c 116 2008-03-03 11:15:37Z baconevi $
  */
 
 #include <ase/utl/ctype.h>

@@ -1,5 +1,5 @@
 /*
- * $Id: main.c,v 1.6 2007/05/20 16:21:09 bacon Exp $
+ * $Id: main.c 116 2008-03-03 11:15:37Z baconevi $
  *
  * {License}
  */

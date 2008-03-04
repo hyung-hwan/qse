@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c,v 1.5 2007/10/13 17:25:30 bacon Exp $
+ * $Id: stdio.c 116 2008-03-03 11:15:37Z baconevi $
  *
  * {License}
  */
