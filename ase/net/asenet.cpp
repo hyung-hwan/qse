@@ -1,5 +1,5 @@
 /*
- * $Id: asenet.cpp,v 1.2 2007/09/24 11:22:22 bacon Exp $
+ * $Id: asenet.cpp 117 2008-03-03 11:20:05Z baconevi $
  *
  * {License}
  */
