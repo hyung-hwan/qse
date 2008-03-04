@@ -11,7 +11,7 @@
 	#include <ase/cmn/conf_msw.h>
 #elif defined(vms) || defined(__vms)
 	#include <ase/cmn/conf_vms.h>
-#elif defined(__unix__) || defined(__unix) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || (defined(__APPLE__) && defined(__MACH__))
+#elif defined(__unix__) || defined(__unix) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || (defined(__APPLE__) && defined(__MACH__)) || defined(__SPU__)
 	#if !defined(__unix__)
 		#define __unix__
 	#endif
