@@ -37,6 +37,15 @@ ase_char_t* ase_awk_strxntokbyrex (
 	ase_awk_run_t* run, const ase_char_t* s, ase_size_t len,
 	void* rex, ase_char_t** tok, ase_size_t* tok_len, int* errnum);
 
+
+void* ase_awk_buildrex (
+	ase_awk_t* awk, const ase_char_t* ptn, ase_size_t len, int* errnum);
+
+int ase_awk_matchrex (
+	ase_awk_t* awk, void* code, int option,
+        const ase_char_t* str, ase_size_t len,
+        const ase_char_t** match_ptr, ase_size_t* match_len, int* errnum);
+
 #ifdef __cplusplus
 }
 #endif

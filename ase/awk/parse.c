@@ -2868,7 +2868,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 
-		nde->code = ase_awk_buildrex (awk,
+		nde->code = ASE_AWK_BUILDREX (awk,
 			ASE_STR_BUF(&awk->token.name), 
 			ASE_STR_LEN(&awk->token.name), 
 			&errnum);

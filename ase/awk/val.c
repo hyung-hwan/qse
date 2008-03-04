@@ -320,7 +320,7 @@ ase_awk_val_t* ase_awk_makerexval (
 
 	val = (ase_awk_val_rex_t*) ASE_AWK_MALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_rex_t) + 
-		(ASE_SIZEOF(*buf)*len+1) + ASE_AWK_REX_LEN(code));
+		(ASE_SIZEOF(*buf)*len+1) + ASE_REX_LEN(code));
 	if (val == ASE_NULL) return ASE_NULL;
 
 	val->type = ASE_AWK_VAL_REX;
@@ -338,7 +338,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	ase_strncpy (val->buf, buf, len);
 
 	/*
-	val->code = ASE_AWK_MALLOC (run->awk, ASE_AWK_REX_LEN(code));
+	val->code = ASE_AWK_MALLOC (run->awk, ASE_REX_LEN(code));
 	if (val->code == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val->buf);
@@ -348,7 +348,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	}
 	*/
 	val->code = val->buf + len + 1;
-	ase_memcpy (val->code, code, ASE_AWK_REX_LEN(code));
+	ase_memcpy (val->code, code, ASE_REX_LEN(code));
 
 	return (ase_awk_val_t*)val;
 }
@@ -506,7 +506,7 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	{
 		/*
 		ASE_AWK_FREE (run->awk, ((ase_awk_val_rex_t*)val)->buf);
-		ase_awk_freerex (run->awk, ((ase_awk_val_rex_t*)val)->code);
+		ASE_AWK_FREEREX (run->awk, ((ase_awk_val_rex_t*)val)->code);
 		*/
 		ASE_AWK_FREE (run->awk, val);
 	}

@@ -260,9 +260,9 @@ int ase_awk_readextio (
 
 					ASE_ASSERT (run->global.rs != ASE_NULL);
 
-					n = ase_awk_matchrex (
+					n = ASE_AWK_MATCHREX (
 						run->awk, run->global.rs, 
-						((run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
+						((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
 						ASE_STR_BUF(buf), ASE_STR_LEN(buf), 
 						&match_ptr, &match_len, &run->errnum);
 					if (n == -1)
@@ -348,9 +348,9 @@ int ase_awk_readextio (
 
 			ASE_ASSERT (run->global.rs != ASE_NULL);
 
-			n = ase_awk_matchrex (
+			n = ASE_AWK_MATCHREX (
 				run->awk, run->global.rs, 
-				((run->global.ignorecase)? ASE_AWK_REX_IGNORECASE: 0),
+				((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
 				ASE_STR_BUF(buf), ASE_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)
