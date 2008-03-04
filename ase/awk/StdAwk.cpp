@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp,v 1.29 2007/11/08 15:08:06 bacon Exp $
+ * $Id: StdAwk.cpp 115 2008-03-03 11:13:15Z baconevi $
  *
  * {License}
  */

@@ -1,5 +1,5 @@
 /*
- * $Id: val.h,v 1.7 2007/10/20 15:06:26 bacon Exp $
+ * $Id: val.h 115 2008-03-03 11:13:15Z baconevi $
  *
  * {License}
  */

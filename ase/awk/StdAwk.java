@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.java,v 1.21 2007/11/10 15:30:07 bacon Exp $
+ * $Id: StdAwk.java 115 2008-03-03 11:13:15Z baconevi $
  *
  * {License}
  */
