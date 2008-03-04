@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c,v 1.6 2007/11/10 15:21:40 bacon Exp $
+ * $Id: tab.c 115 2008-03-03 11:13:15Z baconevi $
  *
  * {License}
  */

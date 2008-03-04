@@ -1,5 +1,5 @@
 /*
- * $Id: Console.java,v 1.3 2007/10/15 16:10:09 bacon Exp $
+ * $Id: Console.java 115 2008-03-03 11:13:15Z baconevi $
  *
  * {License}
  */

@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.5 2007/10/02 15:21:44 bacon Exp $
+ * $Id: misc.c 115 2008-03-03 11:13:15Z baconevi $
  *
  * {License}
  */

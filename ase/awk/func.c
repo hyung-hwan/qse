@@ -1,5 +1,5 @@
 /*
- * $Id: func.c,v 1.20 2007/11/09 07:43:42 bacon Exp $
+ * $Id: func.c 115 2008-03-03 11:13:15Z baconevi $
  *
  * {License}
  */

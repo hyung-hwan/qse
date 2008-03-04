@@ -1,5 +1,5 @@
 /*
- * $Id: err.c,v 1.14 2007/11/17 11:25:55 bacon Exp $
+ * $Id: err.c 115 2008-03-03 11:13:15Z baconevi $
  *
  * {License}
  */
