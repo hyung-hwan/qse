@@ -78,7 +78,7 @@ void ase_assert_printf (const ase_char_t* fmt, ...)
 }
 #endif
 
-static void dprintf (const ase_char_t* fmt, ...)
+static void local_dprintf (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
@@ -310,7 +310,7 @@ static ase_ssize_t awk_extio_pipe (
 				mode = ASE_T("w");
 			else return -1; /* TODO: any way to set the error number? */
 
-			dprintf (ASE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);
+			local_dprintf (ASE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);
 			handle = ase_popen (epa->name, mode);
 			if (handle == NULL) return -1;
 			epa->handle = (void*)handle;
@@ -319,7 +319,7 @@ static ase_ssize_t awk_extio_pipe (
 
 		case ASE_AWK_IO_CLOSE:
 		{
-			dprintf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
+			local_dprintf (ASE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -436,7 +436,7 @@ static ase_ssize_t awk_extio_file (
 				mode = ASE_T("a");
 			else return -1; /* TODO: any way to set the error number? */
 
-			dprintf (ASE_T("opening %s of type %d (file)\n"), epa->name, epa->type);
+			local_dprintf (ASE_T("opening %s of type %d (file)\n"), epa->name, epa->type);
 			handle = ase_fopen (epa->name, mode);
 			if (handle == NULL) 
 			{
@@ -456,7 +456,7 @@ static ase_ssize_t awk_extio_file (
 
 		case ASE_AWK_IO_CLOSE:
 		{
-			dprintf (ASE_T("closing %s of type %d (file)\n"), epa->name, epa->type);
+			local_dprintf (ASE_T("closing %s of type %d (file)\n"), epa->name, epa->type);
 			fclose ((FILE*)epa->handle);
 			epa->handle = NULL;
 			return 0;
@@ -660,7 +660,7 @@ static ase_ssize_t awk_extio_console (
 					}
 				}
 
-				dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
+				local_dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
 				epa->handle = fp;
 			}
 
@@ -710,20 +710,20 @@ static int open_extio_console (ase_awk_extio_t* epa)
 {
 	/* TODO: OpenConsole in GUI APPLICATION */
 
-	dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
+	local_dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
 
 	if (epa->mode == ASE_AWK_EXTIO_CONSOLE_READ)
 	{
 		if (infiles[infile_no] == ASE_NULL)
 		{
 			/* no more input file */
-			dprintf (ASE_T("console - no more file\n"));;
+			local_dprintf (ASE_T("console - no more file\n"));;
 			return 0;
 		}
 
 		if (infiles[infile_no][0] == ASE_T('\0'))
 		{
-			dprintf (ASE_T("    console(r) - <standard input>\n"));
+			local_dprintf (ASE_T("    console(r) - <standard input>\n"));
 			epa->handle = stdin;
 		}
 		else
@@ -742,7 +742,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 				return -1;
 			}
 
-			dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
+			local_dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
 			if (ase_awk_setfilename (
 				epa->run, infiles[infile_no], 
 				ase_strlen(infiles[infile_no])) == -1)
@@ -759,7 +759,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 	}
 	else if (epa->mode == ASE_AWK_EXTIO_CONSOLE_WRITE)
 	{
-		dprintf (ASE_T("    console(w) - <standard output>\n"));
+		local_dprintf (ASE_T("    console(w) - <standard output>\n"));
 
 		if (ase_awk_setofilename (epa->run, ASE_T(""), 0) == -1)
 		{
@@ -775,7 +775,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 
 static int close_extio_console (ase_awk_extio_t* epa)
 {
-	dprintf (ASE_T("closing console of type %x\n"), epa->type);
+	local_dprintf (ASE_T("closing console of type %x\n"), epa->type);
 
 	if (epa->handle != ASE_NULL &&
 	    epa->handle != stdin && 
@@ -802,7 +802,7 @@ static int next_extio_console (ase_awk_extio_t* epa)
 	int n;
 	FILE* fp = (FILE*)epa->handle;
 
-	dprintf (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
+	local_dprintf (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
 
 	n = open_extio_console(epa);
 	if (n == -1) return -1;
@@ -846,47 +846,47 @@ static void stop_run (int sig)
 static void on_run_start (ase_awk_run_t* run, void* custom)
 {
 	app_run = run;
-	dprintf (ASE_T("[AWK ABOUT TO START]\n"));
+	local_dprintf (ASE_T("[AWK ABOUT TO START]\n"));
 }
 
 static int print_awk_value (ase_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
-	dprintf (ASE_T("%.*s = "), pair->key.len, pair->key.ptr);
+	local_dprintf (ASE_T("%.*s = "), pair->key.len, pair->key.ptr);
 	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
-	dprintf (ASE_T("\n"));
+	local_dprintf (ASE_T("\n"));
 	return 0;
 }
 
 static void on_run_statement (
 	ase_awk_run_t* run, ase_size_t line, void* custom)
 {
-	/*dprintf (L"running %d\n", (int)line);*/
+	/*local_dprintf (L"running %d\n", (int)line);*/
 }
 
 static void on_run_return (
 	ase_awk_run_t* run, ase_awk_val_t* ret, void* custom)
 {
-	dprintf (ASE_T("[RETURN] - "));
+	local_dprintf (ASE_T("[RETURN] - "));
 	ase_awk_dprintval (run, ret);
-	dprintf (ASE_T("\n"));
+	local_dprintf (ASE_T("\n"));
 
-	dprintf (ASE_T("[NAMED VARIABLES]\n"));
+	local_dprintf (ASE_T("[NAMED VARIABLES]\n"));
 	ase_map_walk (ase_awk_getrunnamedvarmap(run), print_awk_value, run);
-	dprintf (ASE_T("[END NAMED VARIABLES]\n"));
+	local_dprintf (ASE_T("[END NAMED VARIABLES]\n"));
 }
 
 static void on_run_end (ase_awk_run_t* run, int errnum, void* custom_data)
 {
 	if (errnum != ASE_AWK_ENOERR)
 	{
-		dprintf (ASE_T("[AWK ENDED WITH AN ERROR]\n"));
+		local_dprintf (ASE_T("[AWK ENDED WITH AN ERROR]\n"));
 		ase_printf (ASE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"),
 			errnum, 
 			(unsigned int)ase_awk_getrunerrlin(run),
 			ase_awk_getrunerrmsg(run));
 	}
-	else dprintf (ASE_T("[AWK ENDED SUCCESSFULLY]\n"));
+	else local_dprintf (ASE_T("[AWK ENDED SUCCESSFULLY]\n"));
 
 	app_run = NULL;
 }
