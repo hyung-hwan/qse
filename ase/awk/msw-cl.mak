@@ -56,8 +56,7 @@ OBJ_FILES_LIB = \
 	$(TMP_DIR)\val.obj \
 	$(TMP_DIR)\func.obj \
 	$(TMP_DIR)\misc.obj \
-	$(TMP_DIR)\extio.obj \
-	$(TMP_DIR)\rex.obj
+	$(TMP_DIR)\extio.obj 
 
 OBJ_FILES_JNI = $(TMP_DIR)\jni.obj 
 
@@ -153,9 +152,6 @@ $(TMP_DIR)\misc.obj: misc.c
 
 $(TMP_DIR)\extio.obj: extio.c
 	$(CC) $(CFLAGS) /Fo$@ /c extio.c
-
-$(TMP_DIR)\rex.obj: rex.c
-	$(CC) $(CFLAGS) /Fo$@ /c rex.c
 
 $(TMP_DIR)\jni.obj: jni.c
 	$(CC) $(CFLAGS) $(JNI_INC) /Fo$@ /c jni.c
