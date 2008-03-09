@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: stdio.h 120 2008-03-09 05:58:12Z baconevi $
  */
 
 #ifndef _ASE_UTL_STDIO_H_
@@ -40,6 +40,7 @@
 #define ase_ferror(s)   ferror(s)
 #define ase_clearerr(s) clearerr(s)
 #define ase_fflush(s)   fflush(s)
+#define ase_flcose(s)   fclose(s)
 
 #define ASE_STDIN stdin
 #define ASE_STDOUT stdout
