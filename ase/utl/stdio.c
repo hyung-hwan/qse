@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 122 2008-03-12 11:55:39Z baconevi $
+ * $Id: stdio.c 124 2008-03-12 12:21:33Z baconevi $
  *
  * {License}
  */
@@ -398,6 +398,12 @@ ase_ssize_t ase_getdelim (
 		if (b == ASE_NULL) return -1;
 	}
 
+	if (ase_feof(fp))
+	{
+		len = (ase_size_t)-1;
+		goto exit_task;
+	}
+
 	while (1)
 	{
 		ase_cint_t c = ase_fgetc(fp);
@@ -405,7 +411,7 @@ ase_ssize_t ase_getdelim (
 		{
 			if (ase_ferror(fp)) 
 			{
-				len =  (ase_size_t)-1;
+				len = (ase_size_t)-1;
 				goto exit_task;
 			}
 
