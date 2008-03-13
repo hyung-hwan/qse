@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: stdio.c 122 2008-03-12 11:55:39Z baconevi $
  *
  * {License}
  */
@@ -369,3 +369,73 @@ FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 #endif
 }
 
+ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, FILE *fp)
+{
+	return ase_getdelim (buf, n, ASE_T('\n'), fp);
+}
+
+ase_ssize_t ase_getdelim (
+	ase_char_t **buf, ase_size_t *n, ase_char_t delim, FILE *fp)
+{
+	ase_char_t* b;
+	ase_size_t capa;
+	ase_size_t len = 0;
+
+	ASE_ASSERT (buf != ASE_NULL);
+	ASE_ASSERT (n != ASE_NULL);
+
+	b = *buf;
+	capa = *n;
+
+	if (b == ASE_NULL)
+	{
+		capa = 256;
+#if (defined(vms) || defined(__vms)) && (ASE_SIZEOF_VOID_P >= 8)
+		b = (ase_char_t*) _malloc32 (sizeof(ase_char_t)*(capa+1));
+#else
+		b = (ase_char_t*) malloc (sizeof(ase_char_t)*(capa+1));
+#endif
+		if (b == ASE_NULL) return -1;
+	}
+
+	while (1)
+	{
+		ase_cint_t c = ase_fgetc(fp);
+		if (c == ASE_CHAR_EOF)
+		{
+			if (ase_ferror(fp)) 
+			{
+				len =  (ase_size_t)-1;
+				goto exit_task;
+			}
+
+			break;
+		}
+
+		if (len+1 >= capa)
+		{
+			ase_size_t ncapa = capa + 256;
+			ase_char_t* nb;
+
+			nb = realloc (b, ncapa*sizeof(ase_char_t));
+			if (nb == ASE_NULL)
+			{
+				len =  (ase_size_t)-1;
+				goto exit_task;
+			}
+
+			b = nb;
+			capa = ncapa;
+		}
+
+		b[len++] = c;
+		if (c == delim) break;
+	}
+	b[len] = ASE_T('\0');
+
+exit_task:
+	*buf = b;
+	*n = capa;
+
+	return (ase_ssize_t)len;
+}
