@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 128 2008-03-12 14:00:50Z baconevi $
+ * $Id: stdio.c 130 2008-03-13 05:53:06Z baconevi $
  *
  * {License}
  */
@@ -437,7 +437,7 @@ ase_ssize_t ase_getdelim (
 			nb = realloc (b, ncapa*sizeof(ase_char_t));
 			if (nb == ASE_NULL)
 			{
-				len =  (ase_size_t)-2;
+				len = (ase_size_t)-2;
 				goto exit_task;
 			}
 
