@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 123 2008-03-12 12:06:22Z baconevi $
+ * $Id: Awk.hpp 129 2008-03-13 05:45:36Z baconevi $
  *
  * {License}
  */
@@ -10,10 +10,6 @@
 #include <ase/awk/awk.h>
 #include <ase/cmn/map.h>
 #include <stdarg.h>
-
-#if defined(__SPU__)
-#include <new>
-#endif
 
 /////////////////////////////////
 ASE_BEGIN_NAMESPACE(ASE)
@@ -311,13 +307,8 @@ public:
 
 	public:
 		// initialization
-	#if defined(__SPU__)
-		void* operator new (std::size_t n, awk_t* awk) throw ();
-		void* operator new[] (std::size_t n, awk_t* awk) throw ();
-	#else
 		void* operator new (size_t n, awk_t* awk) throw ();
 		void* operator new[] (size_t n, awk_t* awk) throw ();
-	#endif
 
 	#if !defined(__BORLANDC__) 
 		// deletion when initialization fails

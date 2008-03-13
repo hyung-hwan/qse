@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 119 2008-03-07 03:04:51Z baconevi $
+ * $Id: types.h 129 2008-03-13 05:45:36Z baconevi $
  *
  * {License}
  */
@@ -35,7 +35,10 @@ typedef int ase_tri_t;
 #define ase_dead   -1
 
 /* integer that can hold a pointer */
-#if ASE_SIZEOF_VOID_P == ASE_SIZEOF_INT
+#if defined(__SPU__) && (ASE_SIZEOF_VOID_P == ASE_SIZEOF_LONG)
+	typedef long ase_int_t;
+	typedef unsigned long ase_uint_t;
+#elif ASE_SIZEOF_VOID_P == ASE_SIZEOF_INT
 	typedef int ase_int_t;
 	typedef unsigned int ase_uint_t;
 #elif ASE_SIZEOF_VOID_P == ASE_SIZEOF_LONG
