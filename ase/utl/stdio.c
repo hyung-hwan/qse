@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 124 2008-03-12 12:21:33Z baconevi $
+ * $Id: stdio.c 125 2008-03-12 12:25:11Z baconevi $
  *
  * {License}
  */
@@ -395,7 +395,7 @@ ase_ssize_t ase_getdelim (
 #else
 		b = (ase_char_t*) malloc (sizeof(ase_char_t)*(capa+1));
 #endif
-		if (b == ASE_NULL) return -1;
+		if (b == ASE_NULL) return -2;
 	}
 
 	if (ase_feof(fp))
@@ -410,6 +410,11 @@ ase_ssize_t ase_getdelim (
 		if (c == ASE_CHAR_EOF)
 		{
 			if (ase_ferror(fp)) 
+			{
+				len = (ase_size_t)-2;
+				goto exit_task;
+			}
+			if (len == 0)
 			{
 				len = (ase_size_t)-1;
 				goto exit_task;
@@ -426,7 +431,7 @@ ase_ssize_t ase_getdelim (
 			nb = realloc (b, ncapa*sizeof(ase_char_t));
 			if (nb == ASE_NULL)
 			{
-				len =  (ase_size_t)-1;
+				len =  (ase_size_t)-2;
 				goto exit_task;
 			}
 

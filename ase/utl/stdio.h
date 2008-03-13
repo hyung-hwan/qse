@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h 122 2008-03-12 11:55:39Z baconevi $
+ * $Id: stdio.h 125 2008-03-12 12:25:11Z baconevi $
  */
 
 #ifndef _ASE_UTL_STDIO_H_
@@ -64,6 +64,9 @@ int ase_dprintf (const ase_char_t* fmt, ...);
 FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode);
 FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode);
 
+/**
+ * returns -2 on error, -1 on eof, length of data read on success 
+ */
 ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, FILE *fp);
 ase_ssize_t ase_getdelim (
         ase_char_t **buf, ase_size_t *n, ase_char_t delim, FILE *fp);
