@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 125 2008-03-12 12:25:11Z baconevi $
+ * $Id: stdio.c 126 2008-03-12 13:58:42Z baconevi $
  *
  * {License}
  */
@@ -343,7 +343,11 @@ FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
 
 FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 {
-#if defined(_WIN32) 
+#if defined(__SPU__)
+	/* popen is not available */
+	#warning ase_popen is not implemented for this platform
+	return ASE_NULL;
+#elif defined(_WIN32) 
 	#if defined(__DMC__)
 		/* TODO: implement this for DMC */
 		return ASE_NULL;
