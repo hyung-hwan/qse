@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 123 2008-03-12 12:06:22Z baconevi $
+ * $Id: Awk.cpp 129 2008-03-13 05:45:36Z baconevi $
  *
  * {License}
  */
@@ -230,11 +230,7 @@ void Awk::Argument::clear ()
 	this->inum = 0;
 }
 
-#if defined(__SPU__)
-void* Awk::Argument::operator new (std::size_t n, awk_t* awk) throw ()
-#else
 void* Awk::Argument::operator new (size_t n, awk_t* awk) throw ()
-#endif
 {
 	void* ptr = ase_awk_malloc (awk, ASE_SIZEOF(awk) + n);
 	if (ptr == ASE_NULL) return ASE_NULL;
@@ -243,11 +239,7 @@ void* Awk::Argument::operator new (size_t n, awk_t* awk) throw ()
 	return (char*)ptr+ASE_SIZEOF(awk);
 }
 
-#if defined(__SPU__)
-void* Awk::Argument::operator new[] (std::size_t n, awk_t* awk) throw ()
-#else
 void* Awk::Argument::operator new[] (size_t n, awk_t* awk) throw ()
-#endif
 {
 	void* ptr = ase_awk_malloc (awk, ASE_SIZEOF(awk) + n);
 	if (ptr == ASE_NULL) return ASE_NULL;
