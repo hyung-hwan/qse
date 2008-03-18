@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: str.h 140 2008-03-18 04:08:36Z baconevi $
  *
  * {License}
  */
@@ -26,6 +26,56 @@ struct ase_str_t
 	ase_mmgr_t* mmgr;
 	ase_bool_t  __dynamic;
 };
+
+/* int ase_chartonum (ase_char_t c, int base) */
+#define ASE_CHARTONUM(c,base) \
+	((c>=ASE_T('0') && c<=ASE_T('9'))? ((c-ASE_T('0')<base)? (c-ASE_T('0')): base): \
+	 (c>=ASE_T('A') && c<=ASE_T('Z'))? ((c-ASE_T('A')+10<base)? (c-ASE_T('A')+10): base): \
+	 (c>=ASE_T('a') && c<=ASE_T('z'))? ((c-ASE_T('a')+10<base)? (c-ASE_T('a')+10): base): base)
+
+/* ase_strtonum (const ase_char_t* nptr, ase_char_t** endptr, int base) */
+#define ASE_STRTONUM(value,nptr,endptr,base) \
+{ \
+	int __ston_f = 0, __ston_v; \
+	const ase_char_t* __ston_ptr = nptr; \
+	for (;;) { \
+		ase_char_t __ston_c = *__ston_ptr; \
+		if (__ston_c == ASE_T(' ') || \
+		    __ston_c == ASE_T('\t')) { __ston_ptr++; continue; } \
+		if (__ston_c == ASE_T('-')) { __ston_f++; __ston_ptr++; } \
+		if (__ston_c == ASE_T('+')) { __ston_ptr++; } \
+		break; \
+	} \
+	for (value = 0; (__ston_v = ASE_CHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
+		value = value * base + __ston_v; \
+	} \
+	if (endptr != ASE_NULL) *((const ase_char_t**)endptr) = __ston_ptr; \
+	if (__ston_f > 0) value *= -1; \
+}
+
+/* ase_strxtonum (const ase_char_t* nptr, ase_size_t len, ase_char_char** endptr, int base) */
+#define ASE_STRXTONUM(value,nptr,len,endptr,base) \
+{ \
+	int __ston_f = 0, __ston_v; \
+	const ase_char_t* __ston_ptr = nptr; \
+	const ase_char_t* __ston_end = __ston_ptr + len; \
+	value = 0; \
+	while (__ston_ptr < __ston_end) { \
+		ase_char_t __ston_c = *__ston_ptr; \
+		if (__ston_c == ASE_T(' ') || __ston_c == ASE_T('\t')) { \
+			__ston_ptr++; continue; \
+		} \
+		if (__ston_c == ASE_T('-')) { __ston_f++; __ston_ptr++; } \
+		if (__ston_c == ASE_T('+')) { __ston_ptr++; } \
+		break; \
+	} \
+	for (value = 0; __ston_ptr < __ston_end && \
+	               (__ston_v = ASE_CHARTONUM(*__ston_ptr, base)) != base; __ston_ptr++) { \
+		value = value * base + __ston_v; \
+	} \
+	if (endptr != ASE_NULL) *((const ase_char_t**)endptr) = __ston_ptr; \
+	if (__ston_f > 0) value *= -1; \
+}
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,6 +125,11 @@ ase_char_t* ase_strchr (const ase_char_t* str, ase_cint_t c);
 ase_char_t* ase_strxchr (const ase_char_t* str, ase_size_t len, ase_cint_t c);
 ase_char_t* ase_strrchr (const ase_char_t* str, ase_cint_t c);
 ase_char_t* ase_strxrchr (const ase_char_t* str, ase_size_t len, ase_cint_t c);
+
+ase_int_t ase_strtoint (const ase_char_t* str);
+ase_long_t ase_strtolong (const ase_char_t* str);
+ase_uint_t ase_strtouint (const ase_char_t* str);
+ase_ulong_t ase_strtoulong (const ase_char_t* str);
 
 ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr);
 void ase_str_close (ase_str_t* str);

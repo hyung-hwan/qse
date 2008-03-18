@@ -20,7 +20,9 @@ TMP_DIR = $(MODE)
 
 OBJ_FILES = \
 	$(TMP_DIR)/mem.o \
-	$(TMP_DIR)/str.o \
+	$(TMP_DIR)/str_bas.o \
+	$(TMP_DIR)/str_cnv.o \
+	$(TMP_DIR)/str_dyn.o \
 	$(TMP_DIR)/map.o \
 	$(TMP_DIR)/rex.o \
 	$(TMP_DIR)/misc.o 
@@ -34,8 +36,14 @@ $(OUT_FILE): $(TMP_DIR) $(OBJ_FILES) $(OUT_DIR)
 $(TMP_DIR)/mem.o: mem.c
 	$(CC) $(CFLAGS) -o $@ -c mem.c
 
-$(TMP_DIR)/str.o: str.c
-	$(CC) $(CFLAGS) -o $@ -c str.c
+$(TMP_DIR)/str_bas.o: str_bas.c
+	$(CC) $(CFLAGS) -o $@ -c str_bas.c
+
+$(TMP_DIR)/str_cnv.o: str_cnv.c
+	$(CC) $(CFLAGS) -o $@ -c str_cnv.c
+
+$(TMP_DIR)/str_dyn.o: str_dyn.c
+	$(CC) $(CFLAGS) -o $@ -c str_dyn.c
 
 $(TMP_DIR)/map.o: map.c
 	$(CC) $(CFLAGS) -o $@ -c map.c
