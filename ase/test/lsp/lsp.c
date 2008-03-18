@@ -7,6 +7,8 @@
 #include <ase/utl/ctype.h>
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
+#include <ase/utl/getopt.h>
+#include <ase/cmn/mem.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -247,27 +249,66 @@ static void custom_lsp_dprintf (void* custom, const ase_char_t* fmt, ...)
 	va_end (ap);
 }
 
+static int opt_memsize = 1000;
+static int opt_meminc = 1000;
+
+static void print_usage (const ase_char_t* argv0)
+{
+	ase_fprintf (ASE_STDERR, 
+		ASE_T("Usage: %s [options]\n"), argv0);
+	ase_fprintf (ASE_STDERR, 
+		ASE_T("  -m integer number of memory cells\n"));
+	ase_fprintf (ASE_STDERR, 
+		ASE_T("  -i integer number of memory cell increments\n"));
+}
+
+static int handle_args (int argc, ase_char_t* argv[])
+{
+	ase_opt_t opt;
+	ase_cint_t c;
+
+	ase_memset (&opt, 0, ASE_SIZEOF(opt));
+	opt.str = ASE_T("m:i:");
+
+	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
+	{
+		switch (c)
+		{
+			case ASE_T('m'):
+				opt_memsize = ase_atoi(opt.arg);
+				break;
+
+			case ASE_T('i'):
+				opt_meminc = ase_atoi(opt.arg);
+				break;
+
+			case ASE_T('?'):
+				print_usage (argv[0]);
+				return -1;
+		}
+	}
+
+	if (opt_memsize <= 0)
+	{
+		ase_printf (ASE_T("Error: invalid memory size given\n"));
+		return -1;
+	}
+	return 0;
+}
 
 int lsp_main (int argc, ase_char_t* argv[])
 {
 	ase_lsp_t* lsp;
 	ase_lsp_obj_t* obj;
-	int mem, inc;
 	ase_lsp_prmfns_t prmfns;
 #ifdef _WIN32
 	prmfns_data_t prmfns_data;
 #endif
 
-	mem = 1000;
-	inc = 1000;
 
-	if (mem <= 0) 
-	{
-		ase_printf (ASE_T("error: invalid memory size given\n"));
-		return -1;
-	}
-
-	memset (&prmfns, 0, sizeof(prmfns));
+	if (handle_args (argc, argv) == -1) return -1;
+	
+	ase_memset (&prmfns, 0, ASE_SIZEOF(prmfns));
 
 	prmfns.mmgr.malloc  = custom_lsp_malloc;
 	prmfns.mmgr.realloc = custom_lsp_realloc;
@@ -304,13 +345,13 @@ int lsp_main (int argc, ase_char_t* argv[])
 	prmfns.misc.dprintf = custom_lsp_dprintf;
 	prmfns.misc.custom_data = ASE_NULL;
 
-	lsp = ase_lsp_open (&prmfns, mem, inc);
+	lsp = ase_lsp_open (&prmfns, opt_memsize, opt_meminc);
 	if (lsp == ASE_NULL) 
 	{
 #ifdef _WIN32
 		HeapDestroy (prmfns_data.heap);
 #endif
-		ase_printf (ASE_T("error: cannot create a lsp instance\n"));
+		ase_printf (ASE_T("Error: cannot create a lsp instance\n"));
 		return -1;
 	}
 
