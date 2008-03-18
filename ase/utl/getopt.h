@@ -1,3 +1,8 @@
+/*
+ * $Id: getopt.h 136 2008-03-17 12:23:56Z baconevi $
+ *
+ * {License}
+ */
 
 #ifndef _ASE_UTL_GETOPT_H_
 #define _ASE_UTL_GETOPT_H_
