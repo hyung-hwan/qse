@@ -1,10 +1,11 @@
 /*
- * $Id: getopt.c 137 2008-03-17 12:35:02Z baconevi $
+ * $Id: getopt.c 138 2008-03-17 13:57:46Z baconevi $
  * 
  * {License}
  */
 
 #include <ase/utl/getopt.h>
+#include <ase/cmn/str.h>
 
 /*
  * Copyright (c) 1987-2002 The Regents of the University of California.
@@ -66,7 +67,9 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 {
 	ase_char_t* oli;                        /* option letter list index */
 
-	if (!*place) 
+	if (place == ASE_NULL) place = EMSG;
+
+	if (*place == ASE_T('\0')) 
 	{              
 		/* update scanning pointer */
 		if (optind >= argc || *(place = argv[optind]) != ASE_T('-')) 
@@ -74,7 +77,8 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 			place = EMSG;
 			return ASE_CHAR_EOF;
 		}
-		if (place[1] && *++place == ASE_T('-'))
+
+		if (place[1] != ASE_T('\0') && *++place == ASE_T('-'))
 		{      
 			/* found "--" */
 			++optind;
@@ -83,15 +87,15 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 		}
 	}                                       /* option letter okay? */
 
-	if ((optopt = (int)*place++) == ASE_T(':') ||
-	    !(oli = strchr(optstr, optopt))) 
+	if ((optopt = *place++) == ASE_T(':') ||
+	    (oli = ase_strchr(optstr, optopt)) == ASE_NULL) 
 	{
 		/*
 		 * if the user didn't specify '-' as an option,
 		 * assume it means EOF.
 		 */
 		if (optopt == (int)'-') return ASE_CHAR_EOF;
-		if (!*place) ++optind;
+		if (*place == ASE_T('\0')) ++optind;
 	#if 0
 		if (opterr && *optstr != ASE_T(':'))
 			(void)fprintf(stderr,
@@ -104,13 +108,13 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 	{
 		/* don't need argument */
 		optarg = ASE_NULL;
-		if (!*place) ++optind;
+		if (*place == ASE_T('\0')) ++optind;
 	}
 	else 
 	{                                  
 		/* need an argument */
 
-		if (*place) optarg = place; /* no white space */
+		if (*place != ASE_T('\0')) optarg = place; /* no white space */
 		else if (argc <= ++optind) 
 		{
 			/* no arg */
