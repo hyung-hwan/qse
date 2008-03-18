@@ -1,8 +1,10 @@
 /*
- * $Id: getopt.c 134 2008-03-17 10:30:05Z baconevi $
+ * $Id: getopt.c 135 2008-03-17 10:44:28Z baconevi $
  * 
  * {License}
  */
+
+#include <ase/utl/getopt.h>
 
 /*
  * Copyright (c) 1987-2002 The Regents of the University of California.
@@ -37,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if 0
 /* declarations to provide consistent linkage */
 extern char *optarg;
 extern int optind;
@@ -47,13 +50,18 @@ int     opterr = 1,             /* if error message should be printed */
         optopt,                 /* character checked for validity */
         optreset;               /* reset getopt */
 char    *optarg;                /* argument associated with option */
+#endif
 
 #define BADCH   ASE_T('?')
 #define BADARG  ASE_T(':')
 #define EMSG    ASE_T("")
 
-ase_cint_t ase_getopt (
-	int nargc, ase_char_t* const *nargv, const ase_char_t* ostr)
+#define optstr   opt->str
+#define optarg   opt->arg
+#define optind   opt->ind
+#define optopt   opt->opt
+
+ase_cint_t ase_getopt (int argc, ase_char_t* const *nargv, ase_opt_t* opt)
 {
 	static char *place = EMSG;              /* option letter processing */
 	ase_char_t* oli;                        /* option letter list index */
@@ -62,7 +70,7 @@ ase_cint_t ase_getopt (
 	{              
 		/* update scanning pointer */
 		optreset = 0;
-		if (optind >= nargc || *(place = nargv[optind]) != '-') 
+		if (optind >= argc || *(place = nargv[optind]) != '-') 
 		{
 			place = EMSG;
 			return ASE_CHAR_EOF;
@@ -77,7 +85,7 @@ ase_cint_t ase_getopt (
 	}                                       /* option letter okay? */
 
 	if ((optopt = (int)*place++) == ASE_T(':') ||
-	    !(oli = strchr(ostr, optopt))) 
+	    !(oli = strchr(optstr, optopt))) 
 	{
 		/*
 		 * if the user didn't specify '-' as an option,
@@ -85,7 +93,7 @@ ase_cint_t ase_getopt (
 		 */
 		if (optopt == (int)'-') return ASE_CHAR_EOF;
 		if (!*place) ++optind;
-		if (opterr && *ostr != ASE_T(':'))
+		if (opterr && *optstr != ASE_T(':'))
 			(void)fprintf(stderr,
 				"%s: illegal option -- %c\n", __FILE__, optopt);
 		return ASE_CHAR_BADCH;
@@ -102,11 +110,11 @@ ase_cint_t ase_getopt (
 		/* need an argument */
 
 		if (*place) optarg = place; /* no white space */
-		else if (nargc <= ++optind) 
+		else if (argc <= ++optind) 
 		{
 			/* no arg */
 			place = EMSG;
-			if (*ostr == ASE_T(':')) return BADARG;
+			if (*optstr == ASE_T(':')) return BADARG;
 			if (opterr)
 				(void)fprintf(stderr,
 					"%s: option requires an argument -- %c\n",
