@@ -1,5 +1,7 @@
 /*
- * $Id: stdio.h 125 2008-03-12 12:25:11Z baconevi $
+ * $Id: stdio.h 132 2008-03-17 10:27:02Z baconevi $
+ * 
+ * {License}
  */
 
 #ifndef _ASE_UTL_STDIO_H_

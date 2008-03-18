@@ -1,5 +1,7 @@
 /*
- * $Id: main.h 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: main.h 132 2008-03-17 10:27:02Z baconevi $
+ * 
+ * {License}
  */
 
 #ifndef _ASE_UTL_MAIN_H_
