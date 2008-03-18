@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: getopt.c 133 2008-03-17 10:29:26Z baconevi $
  * 
  * {License}
  */
