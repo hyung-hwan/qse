@@ -23,6 +23,7 @@ OBJ_FILES = \
 	$(TMP_DIR)/ctype.o \
 	$(TMP_DIR)/stdio.o \
 	$(TMP_DIR)/http.o \
+	$(TMP_DIR)/getopt.o 
 
 lib: $(OUT_FILE)
 
@@ -41,6 +42,9 @@ $(TMP_DIR)/stdio.o: stdio.c
 
 $(TMP_DIR)/http.o: http.c
 	$(CC) $(CFLAGS) -o $@ -c http.c
+
+$(TMP_DIR)/getopt.o: getopt.c
+	$(CC) $(CFLAGS) -o $@ -c getopt.c
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)

@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 135 2008-03-17 10:44:28Z baconevi $
+ * $Id: getopt.c 137 2008-03-17 12:35:02Z baconevi $
  * 
  * {License}
  */
@@ -60,17 +60,16 @@ char    *optarg;                /* argument associated with option */
 #define optarg   opt->arg
 #define optind   opt->ind
 #define optopt   opt->opt
+#define place    opt->cur
 
-ase_cint_t ase_getopt (int argc, ase_char_t* const *nargv, ase_opt_t* opt)
+ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 {
-	static char *place = EMSG;              /* option letter processing */
 	ase_char_t* oli;                        /* option letter list index */
 
-	if (optreset || !*place) 
+	if (!*place) 
 	{              
 		/* update scanning pointer */
-		optreset = 0;
-		if (optind >= argc || *(place = nargv[optind]) != '-') 
+		if (optind >= argc || *(place = argv[optind]) != ASE_T('-')) 
 		{
 			place = EMSG;
 			return ASE_CHAR_EOF;
@@ -93,10 +92,12 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const *nargv, ase_opt_t* opt)
 		 */
 		if (optopt == (int)'-') return ASE_CHAR_EOF;
 		if (!*place) ++optind;
+	#if 0
 		if (opterr && *optstr != ASE_T(':'))
 			(void)fprintf(stderr,
 				"%s: illegal option -- %c\n", __FILE__, optopt);
-		return ASE_CHAR_BADCH;
+	#endif
+		return BADCH;
 	}
 
 	if (*++oli != ASE_T(':')) 
@@ -115,16 +116,18 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const *nargv, ase_opt_t* opt)
 			/* no arg */
 			place = EMSG;
 			if (*optstr == ASE_T(':')) return BADARG;
+		#if 0
 			if (opterr)
 				(void)fprintf(stderr,
 					"%s: option requires an argument -- %c\n",
 					__FILE__, optopt);
+		#endif
 			return BADCH;
 		}
 		else
 		{                            
 			/* white space */
-			optarg = nargv[optind];
+			optarg = argv[optind];
 		}
 		place = EMSG;
 		++optind;
