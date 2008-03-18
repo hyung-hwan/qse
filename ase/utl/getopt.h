@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.h 136 2008-03-17 12:23:56Z baconevi $
+ * $Id: getopt.h 137 2008-03-17 12:35:02Z baconevi $
  *
  * {License}
  */
@@ -24,13 +24,16 @@ struct ase_opt_t
 
 	/* input + output */
 	int ind;         /* index into parent argv vector */
+
+	/* internal */
+	ase_char_t* cur;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-ase_cint_t ase_getopt (int argc, ase_char_t* argv[], ase_opt_t* opt);
+ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt);
 
 #ifdef __cplusplus
 }
