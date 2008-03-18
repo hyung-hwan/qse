@@ -1,5 +1,7 @@
 /*
- * $Id: ctype.c 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: ctype.c 132 2008-03-17 10:27:02Z baconevi $
+ *
+ * {License}
  */
 
 #include <ase/utl/ctype.h>
