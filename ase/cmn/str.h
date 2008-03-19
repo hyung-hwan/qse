@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 140 2008-03-18 04:08:36Z baconevi $
+ * $Id: str.h 142 2008-03-18 06:29:25Z baconevi $
  *
  * {License}
  */
@@ -81,6 +81,9 @@ struct ase_str_t
 extern "C" {
 #endif
 
+/* 
+ * basic string functions
+ */
 ase_size_t ase_strlen (const ase_char_t* str);
 
 ase_size_t ase_strcpy (
@@ -126,10 +129,34 @@ ase_char_t* ase_strxchr (const ase_char_t* str, ase_size_t len, ase_cint_t c);
 ase_char_t* ase_strrchr (const ase_char_t* str, ase_cint_t c);
 ase_char_t* ase_strxrchr (const ase_char_t* str, ase_size_t len, ase_cint_t c);
 
+
+/* 
+ * string conversion
+ */
+int ase_strtoi (const ase_char_t* str);
+long ase_strtol (const ase_char_t* str);
+unsigned int ase_strtoui (const ase_char_t* str);
+unsigned long ase_strtoul (const ase_char_t* str);
+
+int ase_strxtoi (const ase_char_t* str, ase_size_t len);
+long ase_strxtol (const ase_char_t* str, ase_size_t len);
+unsigned int ase_strxtoui (const ase_char_t* str, ase_size_t len);
+unsigned long ase_strxtoul (const ase_char_t* str, ase_size_t len);
+
 ase_int_t ase_strtoint (const ase_char_t* str);
 ase_long_t ase_strtolong (const ase_char_t* str);
 ase_uint_t ase_strtouint (const ase_char_t* str);
 ase_ulong_t ase_strtoulong (const ase_char_t* str);
+
+ase_int_t ase_strxtoint (const ase_char_t* str, ase_size_t len);
+ase_long_t ase_strxtolong (const ase_char_t* str, ase_size_t len);
+ase_uint_t ase_strxtouint (const ase_char_t* str, ase_size_t len);
+ase_ulong_t ase_strxtoulong (const ase_char_t* str, ase_size_t len);
+
+
+/* 
+ * dynamic string 
+ */
 
 ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr);
 void ase_str_close (ase_str_t* str);

@@ -8,6 +8,7 @@
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
 #include <ase/utl/getopt.h>
+#include <ase/utl/stdlib.h>
 #include <ase/cmn/mem.h>
 
 #include <string.h>
@@ -283,9 +284,22 @@ static int handle_args (int argc, ase_char_t* argv[])
 				break;
 
 			case ASE_T('?'):
+				ase_fprintf (ASE_STDERR, ASE_T("Error: illegal option - %c\n"), opt.opt);
+				print_usage (argv[0]);
+				return -1;
+
+			case ASE_T(':'):
+				ase_fprintf (ASE_STDERR, ASE_T("Error: missing argument for %c\n"), opt.opt);
 				print_usage (argv[0]);
 				return -1;
 		}
+	}
+
+	if (opt.ind < argc)
+	{
+		ase_printf (ASE_T("Error: redundant argument - %s\n"), argv[opt.ind]);
+		print_usage (argv[0]);
+		return -1;
 	}
 
 	if (opt_memsize <= 0)
@@ -304,7 +318,6 @@ int lsp_main (int argc, ase_char_t* argv[])
 #ifdef _WIN32
 	prmfns_data_t prmfns_data;
 #endif
-
 
 	if (handle_args (argc, argv) == -1) return -1;
 	

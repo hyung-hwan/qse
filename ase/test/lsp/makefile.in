@@ -12,7 +12,7 @@ OUT_DIR = ../../$(MODE)/bin
 
 all: $(OUT_DIR)/aselsp 
 
-$(OUT_DIR)/aselsp: $(OUT_DIR)
+$(OUT_DIR)/aselsp: $(OUT_DIR) lsp.c
 	$(CC) $(CFLAGS) -o $@ lsp.c $(LDFLAGS) $(LIBS)
 
 $(OUT_DIR):
