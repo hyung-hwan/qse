@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h 147 2008-03-18 08:10:23Z baconevi $
+ * $Id: stdio.h 148 2008-03-18 08:26:52Z baconevi $
  * 
  * {License}
  */
@@ -49,6 +49,8 @@
 #define ASE_STDOUT stdout
 #define ASE_STDERR stderr
 
+typedef int (*ase_getdelim_t) (const ase_char_t* ptr,ase_size_t len, void* arg);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -77,9 +79,7 @@ ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, ASE_FILE *fp);
  */
 ase_ssize_t ase_getdelim (
 	ase_char_t **buf, ase_size_t *n, 
-	int (*break_line)(const ase_char_t*,ase_size_t,void*), 
-	void* delim, ASE_FILE *fp);
-
+	ase_getdelim_t fn, void* fnarg, ASE_FILE *fp);
 
 #ifdef __cplusplus
 }
