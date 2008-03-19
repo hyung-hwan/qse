@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 147 2008-03-18 08:10:23Z baconevi $
+ * $Id: stdio.c 148 2008-03-18 08:26:52Z baconevi $
  *
  * {License}
  */
@@ -388,8 +388,7 @@ ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, ASE_FILE *fp)
 
 ase_ssize_t ase_getdelim (
 	ase_char_t **buf, ase_size_t *n, 
-	int (*break_line)(const ase_char_t*,ase_size_t,void*),
-	void* delim, ASE_FILE *fp)
+	ase_getdelim_t fn, void* fnarg, ASE_FILE *fp)
 {
 	ase_char_t* b;
 	ase_size_t capa;
@@ -456,7 +455,7 @@ ase_ssize_t ase_getdelim (
 
 		b[len++] = c;
 
-		x = break_line (b, len, delim);
+		x = fn (b, len, fnarg);
 		if (x < 0)
 		{
 			len = (ase_size_t)-3;
