@@ -101,7 +101,15 @@ SOURCE=.\misc.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\str.c
+SOURCE=.\str_bas.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\str_cnv.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\str_dyn.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

@@ -22,7 +22,9 @@ TMP_DIR = $(MODE)
 
 OBJ_FILES_LIB = \
 	$(TMP_DIR)\mem.obj \
-	$(TMP_DIR)\str.obj \
+	$(TMP_DIR)\str_bas.obj \
+	$(TMP_DIR)\str_cnv.obj \
+	$(TMP_DIR)\str_dyn.obj \
 	$(TMP_DIR)\map.obj \
 	$(TMP_DIR)\rex.obj \
 	$(TMP_DIR)\misc.obj
@@ -39,8 +41,14 @@ $(OUT_FILE_LIB): $(TMP_DIR) $(OUT_DIR) $(OBJ_FILES_LIB)
 $(TMP_DIR)\mem.obj: mem.c
 	$(CC) $(CFLAGS) /Fo$@ /c mem.c
 
-$(TMP_DIR)\str.obj: str.c
-	$(CC) $(CFLAGS) /Fo$@ /c str.c
+$(TMP_DIR)\str_bas.obj: str_bas.c
+	$(CC) $(CFLAGS) /Fo$@ /c str_bas.c
+
+$(TMP_DIR)\str_cnv.obj: str_cnv.c
+	$(CC) $(CFLAGS) /Fo$@ /c str_cnv.c
+
+$(TMP_DIR)\str_dyn.obj: str_dyn.c
+	$(CC) $(CFLAGS) /Fo$@ /c str_dyn.c
 
 $(TMP_DIR)\map.obj: map.c
 	$(CC) $(CFLAGS) /Fo$@ /c map.c
