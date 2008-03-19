@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 130 2008-03-13 05:53:06Z baconevi $
+ * $Id: stdio.c 146 2008-03-18 08:02:12Z baconevi $
  *
  * {License}
  */
@@ -46,7 +46,7 @@ int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
 
 static ase_char_t* __adjust_format (const ase_char_t* format);
 
-int ase_vfprintf (FILE *stream, const ase_char_t* fmt, va_list ap)
+int ase_vfprintf (ASE_FILE *stream, const ase_char_t* fmt, va_list ap)
 {
 	int n;
 	ase_char_t* nf = __adjust_format (fmt);
@@ -66,7 +66,7 @@ int ase_vprintf (const ase_char_t* fmt, va_list ap)
 	return ase_vfprintf (stdout, fmt, ap);
 }
 
-int ase_fprintf (FILE* file, const ase_char_t* fmt, ...)
+int ase_fprintf (ASE_FILE* file, const ase_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
@@ -317,7 +317,7 @@ int ase_dprintf (const ase_char_t* fmt, ...)
 	return n;
 }
 
-FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
+ASE_FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
 {
 #if defined(_WIN32)
 	return _tfopen (path, mode);
@@ -341,7 +341,7 @@ FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
 #endif
 }
 
-FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
+ASE_FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 {
 #if defined(__SPU__)
 	/* popen is not available */
@@ -375,17 +375,26 @@ FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 #endif
 }
 
-ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, FILE *fp)
+static int isnl (ase_char_t* ptr, ase_size_t len, void* delim)
 {
-	return ase_getdelim (buf, n, ASE_T('\n'), fp);
+	return (ptr[len-1] == *(ase_char_t*)delim)? 1: 0;
+}
+
+ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, ASE_FILE *fp)
+{
+	ase_char_t nl = ASE_T('\n');
+	return ase_getdelim (buf, n, isnl, &nl, fp);
 }
 
 ase_ssize_t ase_getdelim (
-	ase_char_t **buf, ase_size_t *n, ase_char_t delim, FILE *fp)
+	ase_char_t **buf, ase_size_t *n, 
+	int (*break_line)(ase_char_t*,ase_size_t,void*),
+	void* delim, ASE_FILE *fp)
 {
 	ase_char_t* b;
 	ase_size_t capa;
 	ase_size_t len = 0;
+	int x;
 
 	ASE_ASSERT (buf != ASE_NULL);
 	ASE_ASSERT (n != ASE_NULL);
@@ -446,7 +455,14 @@ ase_ssize_t ase_getdelim (
 		}
 
 		b[len++] = c;
-		if (c == delim) break;
+
+		x = break_line (b, len, delim);
+		if (x < 0)
+		{
+			len = (ase_size_t)-3;
+			goto exit_task;
+		}
+		if (x > 0) break;
 	}
 	b[len] = ASE_T('\0');
 
