@@ -8,8 +8,8 @@
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
 #include <ase/utl/getopt.h>
-#include <ase/utl/stdlib.h>
 #include <ase/cmn/mem.h>
+#include <ase/cmn/str.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -258,9 +258,11 @@ static void print_usage (const ase_char_t* argv0)
 	ase_fprintf (ASE_STDERR, 
 		ASE_T("Usage: %s [options]\n"), argv0);
 	ase_fprintf (ASE_STDERR, 
-		ASE_T("  -m integer number of memory cells\n"));
+		ASE_T("  -h          print this message\n"));
 	ase_fprintf (ASE_STDERR, 
-		ASE_T("  -i integer number of memory cell increments\n"));
+		ASE_T("  -m integer  number of memory cells\n"));
+	ase_fprintf (ASE_STDERR, 
+		ASE_T("  -i integer  number of memory cell increments\n"));
 }
 
 static int handle_args (int argc, ase_char_t* argv[])
@@ -275,12 +277,16 @@ static int handle_args (int argc, ase_char_t* argv[])
 	{
 		switch (c)
 		{
+			case ASE_T('h'):
+				print_usage (argv[0]);
+				return 0;
+
 			case ASE_T('m'):
-				opt_memsize = ase_atoi(opt.arg);
+				opt_memsize = ase_strtoi(opt.arg);
 				break;
 
 			case ASE_T('i'):
-				opt_meminc = ase_atoi(opt.arg);
+				opt_meminc = ase_strtoi(opt.arg);
 				break;
 
 			case ASE_T('?'):
