@@ -279,7 +279,7 @@ static int handle_args (int argc, ase_char_t* argv[])
 		{
 			case ASE_T('h'):
 				print_usage (argv[0]);
-				return 0;
+				return -1;
 
 			case ASE_T('m'):
 				opt_memsize = ase_strtoi(opt.arg);
