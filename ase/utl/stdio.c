@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 146 2008-03-18 08:02:12Z baconevi $
+ * $Id: stdio.c 147 2008-03-18 08:10:23Z baconevi $
  *
  * {License}
  */
@@ -375,7 +375,7 @@ ASE_FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 #endif
 }
 
-static int isnl (ase_char_t* ptr, ase_size_t len, void* delim)
+static int isnl (const ase_char_t* ptr, ase_size_t len, void* delim)
 {
 	return (ptr[len-1] == *(ase_char_t*)delim)? 1: 0;
 }
@@ -388,7 +388,7 @@ ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, ASE_FILE *fp)
 
 ase_ssize_t ase_getdelim (
 	ase_char_t **buf, ase_size_t *n, 
-	int (*break_line)(ase_char_t*,ase_size_t,void*),
+	int (*break_line)(const ase_char_t*,ase_size_t,void*),
 	void* delim, ASE_FILE *fp)
 {
 	ase_char_t* b;
