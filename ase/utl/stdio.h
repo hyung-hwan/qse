@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h 132 2008-03-17 10:27:02Z baconevi $
+ * $Id: stdio.h 146 2008-03-18 08:02:12Z baconevi $
  * 
  * {License}
  */
@@ -44,6 +44,7 @@
 #define ase_fflush(s)   fflush(s)
 #define ase_fclose(s)   fclose(s)
 
+#define ASE_FILE FILE
 #define ASE_STDIN stdin
 #define ASE_STDOUT stdout
 #define ASE_STDERR stderr
@@ -56,22 +57,29 @@ int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list a
 int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...);
 
 #if !defined(_WIN32)
-int ase_vfprintf (FILE *stream, const ase_char_t* fmt, va_list ap);
+int ase_vfprintf (ASE_FILE *stream, const ase_char_t* fmt, va_list ap);
 int ase_vprintf (const ase_char_t* fmt, va_list ap);
-int ase_fprintf (FILE* file, const ase_char_t* fmt, ...);
+int ase_fprintf (ASE_FILE* file, const ase_char_t* fmt, ...);
 int ase_printf (const ase_char_t* fmt, ...);
 #endif
 
 int ase_dprintf (const ase_char_t* fmt, ...);
-FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode);
-FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode);
+ASE_FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode);
+ASE_FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode);
 
 /**
  * returns -2 on error, -1 on eof, length of data read on success 
  */
-ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, FILE *fp);
+ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, ASE_FILE *fp);
+/**
+ * returns -3 on line breaker error, -2 on error, -1 on eof, 
+ * length of data read on success 
+ */
 ase_ssize_t ase_getdelim (
-        ase_char_t **buf, ase_size_t *n, ase_char_t delim, FILE *fp);
+	ase_char_t **buf, ase_size_t *n, 
+	int (*break_line)(ase_char_t*,ase_size_t,void*), 
+	void* delim, ASE_FILE *fp);
+
 
 #ifdef __cplusplus
 }
