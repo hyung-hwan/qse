@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 141 2008-03-18 04:09:04Z baconevi $
+ * $Id: str_bas.c 149 2008-03-20 09:49:53Z baconevi $
  *
  * {License}
  */
@@ -358,3 +358,103 @@ ase_char_t* ase_strxrchr (const ase_char_t* str, ase_size_t len, ase_cint_t c)
 	return ASE_NULL;
 }
 
+ase_char_t* ase_strbeg (const ase_char_t* str, const ase_char_t* sub)
+{
+	while (*sub != ASE_T('\0'))
+	{
+		if (*str != *sub) return ASE_NULL;
+		str++; sub++;
+	}
+
+	/* returns the pointer to the next character of the match */
+	return (ase_char_t*)str;
+}
+
+ase_char_t* ase_strxbeg (
+	const ase_char_t* str, ase_size_t len, const ase_char_t* sub)
+{
+	const ase_char_t* end = str + len;
+
+	while (*sub != ASE_T('\0'))
+	{
+		if (str >= end || *str != *sub) return ASE_NULL;
+		str++; sub++;
+	}
+
+	/* returns the pointer to the next character of the match */
+	return (ase_char_t*)str;
+}
+
+ase_char_t* ase_strnbeg (
+	const ase_char_t* str, const ase_char_t* sub, ase_size_t len)
+{
+	const ase_char_t* end = sub + len;
+		
+	while (sub < end)
+	{
+		if (*str == ASE_T('\0') || *str != *sub) return ASE_NULL;
+		str++; sub++;
+	}
+
+	/* returns the pointer to the next character of the match */
+	return (ase_char_t*)str;
+}
+
+ase_char_t* ase_strxnbeg (
+	const ase_char_t* str, ase_size_t len1, 
+	const ase_char_t* sub, ase_size_t len2)
+{
+	const ase_char_t* end1, * end2;
+
+	if (len2 > len1) return ASE_NULL;
+
+	end1 = str + len1;
+	end2 = sub + len2;
+
+	while (sub < end2)
+	{
+		if (str >= end1 || *str != *sub) return ASE_NULL;
+		str++; sub++;
+	}
+
+	/* returns the pointer to the next character of the match */
+	return (ase_char_t*)str;
+}
+
+ase_char_t* ase_strend (const ase_char_t* str, const ase_char_t* sub)
+{
+	return ase_strxnend (str, ase_strlen(str), sub, ase_strlen(sub));
+}
+
+ase_char_t* ase_strxend (
+	const ase_char_t* str, ase_size_t len, const ase_char_t* sub)
+{
+	return ase_strxnend (str, len, sub, ase_strlen(sub));
+}
+
+ase_char_t* ase_strnend (
+	const ase_char_t* str, const ase_char_t* sub, ase_size_t len)
+{
+	return ase_strxnend (str, ase_strlen(str), sub, len);
+}
+
+ase_char_t* ase_strxnend (
+	const ase_char_t* str, ase_size_t len1, 
+	const ase_char_t* sub, ase_size_t len2)
+{
+	const ase_char_t* end1, * end2;
+
+	if (len2 > len1) return ASE_NULL;
+
+	end1 = str + len1;
+	end2 = sub + len2;
+
+	while (end2 > sub)
+	{
+		if (end1 <= str) return ASE_NULL;
+		if (*(--end1) != *(--end2)) return ASE_NULL;
+	}
+	
+	/* returns the pointer to the match start */
+	return (ase_char_t*)end1;
+}

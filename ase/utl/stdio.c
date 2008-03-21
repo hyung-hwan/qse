@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 148 2008-03-18 08:26:52Z baconevi $
+ * $Id: stdio.c 149 2008-03-20 09:49:53Z baconevi $
  *
  * {License}
  */
@@ -352,6 +352,9 @@ ASE_FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 #elif defined(_WIN32) 
 	#if defined(__DMC__)
 		/* TODO: implement this for DMC */
+		#warning ############################################
+		#warning ase_popen is NOT SUPPORTED in this platform.
+		#warning #############################################
 		return ASE_NULL;
 	#else
 		return _tpopen (cmd, mode);

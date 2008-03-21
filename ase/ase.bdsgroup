@@ -13,8 +13,8 @@
       <Projects Name="aseawk.lib">awk\aseawk.bdsproj</Projects>
       <Projects Name="aseawk++.lib">awk\aseawk++.bdsproj</Projects>
       <Projects Name="aseutl.lib">utl\aseutl.bdsproj</Projects>
-      <Projects Name="aseawk.exe">test\awk\aseawk.bdsproj</Projects>
-      <Projects Name="aseawk++.exe">test\awk\aseawk++.bdsproj</Projects>
+      <Projects Name="aseawk.exe">cmd\awk\aseawk.bdsproj</Projects>
+      <Projects Name="aseawk++.exe">cmd\awk\aseawk++.bdsproj</Projects>
       <Projects Name="Targets">asecmn.lib aseawk.lib aseawk++.lib aseutl.lib aseawk.exe aseawk++.exe</Projects>
     </Projects>
     <Dependencies/>

@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 142 2008-03-18 06:29:25Z baconevi $
+ * $Id: str.h 149 2008-03-20 09:49:53Z baconevi $
  *
  * {License}
  */
@@ -129,6 +129,25 @@ ase_char_t* ase_strxchr (const ase_char_t* str, ase_size_t len, ase_cint_t c);
 ase_char_t* ase_strrchr (const ase_char_t* str, ase_cint_t c);
 ase_char_t* ase_strxrchr (const ase_char_t* str, ase_size_t len, ase_cint_t c);
 
+/* Checks if a string begins with a substring */
+ase_char_t* ase_strbeg (const ase_char_t* str, const ase_char_t* sub);
+ase_char_t* ase_strxbeg (
+	const ase_char_t* str, ase_size_t len, const ase_char_t* sub);
+ase_char_t* ase_strnbeg (
+	const ase_char_t* str, const ase_char_t* sub, ase_size_t len);
+ase_char_t* ase_strxnbeg (
+	const ase_char_t* str, ase_size_t len1, 
+	const ase_char_t* sub, ase_size_t len2);
+
+/* Checks if a string ends with a substring */
+ase_char_t* ase_strend (const ase_char_t* str, const ase_char_t* sub);
+ase_char_t* ase_strxend (
+	const ase_char_t* str, ase_size_t len, const ase_char_t* sub);
+ase_char_t* ase_strnend (
+	const ase_char_t* str, const ase_char_t* sub, ase_size_t len);
+ase_char_t* ase_strxnend (
+	const ase_char_t* str, ase_size_t len1, 
+	const ase_char_t* sub, ase_size_t len2);
 
 /* 
  * string conversion
@@ -152,7 +171,6 @@ ase_int_t ase_strxtoint (const ase_char_t* str, ase_size_t len);
 ase_long_t ase_strxtolong (const ase_char_t* str, ase_size_t len);
 ase_uint_t ase_strxtouint (const ase_char_t* str, ase_size_t len);
 ase_ulong_t ase_strxtoulong (const ase_char_t* str, ase_size_t len);
-
 
 /* 
  * dynamic string 
