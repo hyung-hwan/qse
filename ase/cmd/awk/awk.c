@@ -1044,6 +1044,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
+
 	for (i = 1; i < argc; i++)
 	{
 		if (mode == 0)

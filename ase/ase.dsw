@@ -75,7 +75,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "asetestawk"=.\test\awk\asetestawk.dsp - Package Owner=<4>
+Project: "asetestawk"=.\cmd\awk\asetestawk.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -87,7 +87,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "asetestawk++"=.\test\awk\asetestawk++.dsp - Package Owner=<4>
+Project: "asetestawk++"=.\cmd\awk\asetestawk++.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -111,7 +111,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "asetestlsp"=.\test\lsp\asetestlsp.dsp - Package Owner=<4>
+Project: "asetestlsp"=.\cmd\lsp\asetestlsp.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

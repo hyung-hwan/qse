@@ -3,7 +3,7 @@
 #
 
 
-LIBDIRS = cmn utl awk lsp test/awk test/lsp
+LIBDIRS = cmn utl awk lsp cmd/awk cmd/lsp
 MODE = @BUILDMODE@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 
