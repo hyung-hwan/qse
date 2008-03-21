@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 129 2008-03-13 05:45:36Z baconevi $
+ * $Id: types.h 151 2008-03-21 04:33:35Z baconevi $
  *
  * {License}
  */
@@ -189,15 +189,17 @@ typedef int  ase_mcint_t;
 	#elif defined(__APPLE__) && defined(__MACH__)
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
-	#elif defined(hpux) || defined(__hpux)
+	#elif defined(hpux) || defined(__hpux) || defined(__hpux__)
 		typedef unsigned int ase_wchar_t;
 		typedef int ase_wcint_t;
 	#elif ASE_SIZEOF_LONG == 4
 		typedef long ase_wchar_t;
 		typedef long ase_wcint_t;
-	#else
+	#elif ASE_SIZEOF_INT == 4
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
+	#else
+		#error no supported data type for wchar_t
 	#endif
 #else
 	#error unsupported size of wchar_t
