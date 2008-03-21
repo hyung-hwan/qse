@@ -3,14 +3,14 @@
 #
 
 
-LIBDIRS = cmn utl awk lsp cmd/awk cmd/lsp
+BLDDIRS = cmn utl awk lsp cmd/awk cmd/lsp
 MODE = @BUILDMODE@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 
 all: build
 
 build:
-	@for i in $(LIBDIRS); \
+	@for i in $(BLDDIRS); \
 	do \
 		if [ ! -d $$i ]; \
 		then \
@@ -28,7 +28,7 @@ build:
 	done
 
 clean:
-	@for i in $(LIBDIRS); \
+	@for i in $(BLDDIRS); \
 	do \
 		if [ ! -d $$i ]; \
 		then \
