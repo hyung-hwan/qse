@@ -8,8 +8,8 @@ BEGIN {
 
 END {
 	for (c in pop)
-		printf ("%15s	%6d\n",c,pop[c]) | "sort -t'	' +1rn";
-	close ("sort -t'	' +1rn");
+		printf ("%15s	%6d\n",c,pop[c]) | "sort -t'	' -k2 -rn";
+	close ("sort -t'	' -k2 -rn");
 	sleep (1);
 }
            Asia	  2173

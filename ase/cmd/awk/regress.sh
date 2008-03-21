@@ -128,73 +128,57 @@ run_test()
 	for script in simple-???.awk
 	do
 		run_script_for_test_nodata "$script"
-		if [ $? -ne 0 ]
-		then
+		[ $? -ne 0 ] && {
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
 
 			echo "Do you want to abort? [y/n]"
 			read ans
-			if [ "$ans" = "y" -o "$ans" = "Y" ]
-			then
-				return 1
-			fi
-		fi
+			[ "$ans" = "y" -o "$ans" = "Y" ] && return 1
+		}
 	done
 
 	for script in main-???.awk
 	do
 		run_script_for_test_main "$script"
-		if [ $? -ne 0 ]
-		then
+		[ $? -ne 0 ] && {
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
 
 			echo "Do you want to abort? [y/n]"
 			read ans
-			if [ "$ans" = "y" -o "$ans" = "Y" ]
-			then
-				return 1
-			fi
-		fi
+			[ "$ans" = "y" -o "$ans" = "Y" ] && return 1
+		}
 	done
 
 	for script in emp-???.awk
 	do
 		run_script_for_test "$script" "emp-en.data"
-		if [ $? -ne 0 ]
-		then
+		[ $? -ne 0 ] && {
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
 
 			echo "Do you want to abort? [y/n]"
 			read ans
-			if [ "$ans" = "y" -o "$ans" = "Y" ]
-			then
-				return 1
-			fi
-		fi
+			[ "$ans" = "y" -o "$ans" = "Y" ] && return 1
+		}
 	done
 
 	for script in cou-???.awk
 	do
 		run_script_for_test "$script" "cou-en.data"
-		if [ $? -ne 0 ]
-		then
+		[ $? -ne 0 ] && {
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".
 			echo "###################################"
 
 			echo "Do you want to abort? [y/n]"
 			read ans
-			if [ "$ans" = "y" -o "$ans" = "Y" ]
-			then
-				return 1
-			fi
-		fi
+			[ "$ans" = "y" -o "$ans" = "Y" ] && return 1
+		}
 	done
 
 	for script in adr-???.awk
@@ -236,6 +220,12 @@ run_test()
 	return 0
 }
 
+print_usage()
+{
+	echo "Usage: $0 init"
+	echo "       $0 test"
+}
+
 #--------#
 #  main  #
 #--------#
@@ -254,12 +244,10 @@ else
 	exit 1;
 fi
 
-if [ $# -ne 1 ]
-then
-	echo "Usage: $0 init"
-	echo "       $0 test"
+[ $# -ne 1 ] && {
+	print_usage "$0"
 	exit 1
-fi
+}
 
 if [ "$1" = "init" ]
 then
@@ -268,8 +256,8 @@ elif [ "$1" = "test" ]
 then
 	run_test
 else
-	echo "Usage: $0 init"
-	echo "       $0 test"
+	print_usage "$0"
 	exit 1
 fi
 
+exit 0
