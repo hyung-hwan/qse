@@ -1,10 +1,11 @@
 /*
- * $Id: rex.c 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: rex.c 154 2008-03-21 13:02:20Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/rex.h>
+#include <ase/cmn/mem.h>
 
 #ifdef DEBUG_REX
 #include <ase/utl/stdio.h>

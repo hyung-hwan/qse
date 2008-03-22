@@ -2,7 +2,7 @@
 # OpenVMS MMS/MMK
 #
 
-objects = mem.obj,str.obj,map.obj,rex.obj,misc.obj
+objects = mem.obj,str_bas.obj,str_cnv.obj,str_dyn.obj,map.obj,rex.obj,misc.obj
 
 CFLAGS = /include="../.."
 #CFLAGS = /pointer_size=long /include="../.."
