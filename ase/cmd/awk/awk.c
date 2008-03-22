@@ -852,7 +852,7 @@ static void on_run_start (ase_awk_run_t* run, void* custom)
 static int print_awk_value (ase_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
-	local_dprintf (ASE_T("%.*s = "), pair->key.len, pair->key.ptr);
+	local_dprintf (ASE_T("%.*s = "), (int)pair->key.len, pair->key.ptr);
 	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
 	local_dprintf (ASE_T("\n"));
 	return 0;
