@@ -1,8 +1,12 @@
 /*
- * $Id: StdAwk.cpp 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: StdAwk.cpp 152 2008-03-21 11:57:29Z baconevi $
  *
  * {License}
  */
+
+#if defined(hpux) || defined(__hpux) || defined(__hpux__)
+	#define _INCLUDE__STDC_A1_SOURCE
+#endif
 
 #include <ase/awk/StdAwk.hpp>
 #include <ase/cmn/str.h>

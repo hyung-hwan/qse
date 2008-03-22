@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: run.c 152 2008-03-21 11:57:29Z baconevi $
  *
  * {License}
  */
@@ -601,9 +601,9 @@ void* ase_awk_getruncustomdata (ase_awk_run_t* run)
 	return run->custom_data;
 }
 
-ase_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* awk)
+ase_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* run)
 {
-	return awk->named;
+	return run->named;
 }
 
 int ase_awk_run (ase_awk_t* awk, 
