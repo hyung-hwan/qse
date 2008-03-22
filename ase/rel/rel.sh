@@ -15,6 +15,7 @@ finalize ()
 	do
 		if [ "$i" = "*" ]; then continue; fi
 		if [ "$i" = "CVS" ]; then continue; fi
+		if [ "$i" = ".svn" ]; then continue; fi
 		if [ "$i" = "stx" ]; then continue; fi
 
 		if [ "$cur" = "" ] 
