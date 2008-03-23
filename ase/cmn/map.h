@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: map.h 158 2008-03-22 13:19:33Z baconevi $
  *
  * {License}
  */
@@ -104,22 +104,20 @@ ase_pair_t* ase_map_getpair (
 	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen, 
 	void** val);
 
-ase_pair_t* ase_map_setpair (
-	ase_map_t* map, ase_pair_t* pair, void* val);
+ase_pair_t* ase_map_setpair (ase_map_t* map, ase_pair_t* pair, void* val);
 
 int ase_map_remove (
 	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen);
 
-int ase_map_walk (ase_map_t* map, 
-	int (*walker)(ase_pair_t*,void*), void* arg);
+int ase_map_walk (ase_map_t* map, int (*walker)(ase_pair_t*,void*), void* arg);
 
 /**
  * Gets the pointer to the first pair in the map.
  * @param map [in]
  * @param buckno [out]
  */
-ase_pair_t* ase_map_getfirstpair (
-	ase_map_t* map, ase_size_t* buckno);
+ase_pair_t* ase_map_getfirstpair (ase_map_t* map, ase_size_t* buckno);
+
 /**
  * Gets the pointer to the next pair in the map.
  * @param map [in]
