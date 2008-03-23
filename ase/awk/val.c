@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: val.c 155 2008-03-22 06:47:27Z baconevi $
  *
  * {License}
  */
@@ -11,6 +11,32 @@
 #endif
 
 #define CHUNKSIZE 100
+
+typedef struct ase_awk_val_ichunk_t ase_awk_val_ichunk_t;
+typedef struct ase_awk_val_rchunk_t ase_awk_val_rchunk_t;
+
+struct ase_awk_val_chunk_t
+{
+        ase_awk_val_chunk_t* next;
+};
+
+struct ase_awk_val_ichunk_t
+{
+	ase_awk_val_chunk_t* next;
+	/* make sure that it has the same fields as 
+	   ase_awk_val_chunk_t up to this point */
+
+	ase_awk_val_int_t slot[CHUNKSIZE];
+};
+
+struct ase_awk_val_rchunk_t
+{
+	ase_awk_val_chunk_t* next;
+	/* make sure that it has the same fields as 
+	   ase_awk_val_chunk_t up to this point */
+
+	ase_awk_val_real_t slot[CHUNKSIZE];
+};
 
 static ase_char_t* str_to_str (
 	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
@@ -89,13 +115,19 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 
 	if (run->vmgr.ifree == ASE_NULL)
 	{
-		ase_awk_val_chunk_t* c;
+		ase_awk_val_ichunk_t* c;
 		ase_awk_val_int_t* x;
 		ase_size_t i;
 
-		c = ASE_AWK_MALLOC (run->awk, 
+		/* use ase_awk_val_ichunk structure to avoid
+		 * any alignment issues on platforms requiring
+		 * aligned memory access - using the code commented out
+		 * will cause a fault on such a platform */
+
+		/* c = ASE_AWK_MALLOC (run->awk, 
 			ASE_SIZEOF(ase_awk_val_chunk_t)+
-			ASE_SIZEOF(ase_awk_val_int_t)*CHUNKSIZE);
+			ASE_SIZEOF(ase_awk_val_int_t)*CHUNKSIZE); */
+		c = ASE_AWK_MALLOC (run->awk, ASE_SIZEOF(ase_awk_val_ichunk_t));
 		if (c == ASE_NULL)
 		{
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -103,15 +135,24 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 		}
 
 		c->next = run->vmgr.ichunk;
-		run->vmgr.ichunk = c;
+		/*run->vmgr.ichunk = c;*/
+		run->vmgr.ichunk = (ase_awk_val_chunk_t*)c;
 
-		x = (ase_awk_val_int_t*)(c + 1);
+		/*x = (ase_awk_val_int_t*)(c + 1);
 		for (i = 0; i < CHUNKSIZE-1; i++) 
 			x[i].nde = (ase_awk_nde_int_t*)&x[i+1];
 		x[i].nde = ASE_NULL;
 
 		run->vmgr.ifree = x;
+		*/
+
+		for (i = 0; i < CHUNKSIZE-1; i++)
+			c->slot[i].nde = (ase_awk_nde_int_t*)&c->slot[i+1];
+		c->slot[i].nde = ASE_NULL;
+
+		run->vmgr.ifree = &c->slot[0];
 	}
+
 	val = run->vmgr.ifree;
 	run->vmgr.ifree = (ase_awk_val_int_t*)val->nde;
 
@@ -149,13 +190,14 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 
 	if (run->vmgr.rfree == ASE_NULL)
 	{
-		ase_awk_val_chunk_t* c;
+		ase_awk_val_rchunk_t* c;
 		ase_awk_val_real_t* x;
 		ase_size_t i;
 
-		c = ASE_AWK_MALLOC (run->awk, 
+		/* c = ASE_AWK_MALLOC (run->awk, 
 			ASE_SIZEOF(ase_awk_val_chunk_t)+
-			ASE_SIZEOF(ase_awk_val_real_t)*CHUNKSIZE);
+			ASE_SIZEOF(ase_awk_val_real_t)*CHUNKSIZE); */
+		c = ASE_AWK_MALLOC (run->awk, ASE_SIZEOF(ase_awk_val_rchunk_t));
 		if (c == ASE_NULL)
 		{
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -163,15 +205,25 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 		}
 
 		c->next = run->vmgr.rchunk;
-		run->vmgr.rchunk = c;
+		/*run->vmgr.rchunk = c;*/
+		run->vmgr.ichunk = (ase_awk_val_chunk_t*)c;
 
+		/*
 		x = (ase_awk_val_real_t*)(c + 1);
 		for (i = 0; i < CHUNKSIZE-1; i++) 
 			x[i].nde = (ase_awk_nde_real_t*)&x[i+1];
 		x[i].nde = ASE_NULL;
 
 		run->vmgr.rfree = x;
+		*/
+
+		for (i = 0; i < CHUNKSIZE-1; i++)
+			c->slot[i].nde = (ase_awk_nde_real_t*)&c->slot[i+1];
+		c->slot[i].nde = ASE_NULL;
+
+		run->vmgr.rfree = &c->slot[0];
 	}
+
 	val = run->vmgr.rfree;
 	run->vmgr.rfree = (ase_awk_val_real_t*)val->nde;
 
@@ -572,6 +624,16 @@ void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val)
 	ASE_ASSERTX (val->ref > 0,
 		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
 	val->ref--;
+}
+
+void ase_awk_freevalchunk (ase_awk_run_t* run, ase_awk_val_chunk_t* chunk)
+{
+	while (chunk != ASE_NULL)
+        {
+		ase_awk_val_chunk_t* next = chunk->next;
+		ASE_AWK_FREE (run->awk, chunk);
+		chunk = next;
+	}
 }
 
 ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
@@ -1067,3 +1129,4 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 			DPRINTF (DCUSTOM, ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }
+

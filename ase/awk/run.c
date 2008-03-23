@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 152 2008-03-21 11:57:29Z baconevi $
+ * $Id: run.c 155 2008-03-22 06:47:27Z baconevi $
  *
  * {License}
  */
@@ -970,19 +970,10 @@ static void deinit_run (ase_awk_run_t* run)
 		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
 	}*/
 
-	while (run->vmgr.ichunk != ASE_NULL)
-	{
-		ase_awk_val_chunk_t* next = run->vmgr.ichunk->next;
-		ASE_AWK_FREE (run->awk, run->vmgr.ichunk);
-		run->vmgr.ichunk = next;
-	}
-
-	while (run->vmgr.rchunk != ASE_NULL)
-	{
-		ase_awk_val_chunk_t* next = run->vmgr.rchunk->next;
-		ASE_AWK_FREE (run->awk, run->vmgr.rchunk);
-		run->vmgr.rchunk = next;
-	}
+	ase_awk_freevalchunk (run, run->vmgr.ichunk);
+	ase_awk_freevalchunk (run, run->vmgr.rchunk);
+	run->vmgr.ichunk = ASE_NULL;
+	run->vmgr.rchunk = ASE_NULL;
 }
 
 static int build_runarg (

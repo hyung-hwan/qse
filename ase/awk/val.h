@@ -1,5 +1,5 @@
 /*
- * $Id: val.h 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: val.h 155 2008-03-22 06:47:27Z baconevi $
  *
  * {License}
  */
@@ -151,11 +151,6 @@ struct ase_awk_val_ref_t
 	ase_awk_val_t** adr;
 };
 
-struct ase_awk_val_chunk_t
-{
-	ase_awk_val_chunk_t* next;
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -189,9 +184,12 @@ ase_awk_val_t* ase_awk_makerefval (
 ase_bool_t ase_awk_isstaticval (ase_awk_val_t* val);
 
 void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache);
+
 void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val);
 void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val);
 void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val);
+
+void ase_awk_freevalchunk (ase_awk_run_t* run, ase_awk_val_chunk_t* chunk);
 
 ase_bool_t ase_awk_valtobool (
 	ase_awk_run_t* run, ase_awk_val_t* val);
