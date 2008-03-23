@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 152 2008-03-21 11:57:29Z baconevi $
+ * $Id: types.h 155 2008-03-22 06:47:27Z baconevi $
  *
  * {License}
  */
@@ -193,7 +193,11 @@ typedef int  ase_mcint_t;
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
 	#elif defined(hpux) || defined(__hpux) || defined(__hpux__)
+		#if defined(__HP_cc) || defined(__HP_aCC)
 		typedef unsigned int ase_wchar_t;
+		#else
+		typedef int ase_wchar_t;
+		#endif
 		typedef int ase_wcint_t;
 	#elif ASE_SIZEOF_LONG == 4
 		typedef long ase_wchar_t;
