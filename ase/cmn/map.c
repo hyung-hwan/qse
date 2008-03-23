@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: map.c 156 2008-03-22 12:09:35Z baconevi $
  *
  * {License}
  */
@@ -17,6 +17,7 @@ static int rehash (ase_map_t* map);
 		ASE_FREE ((map)->mmgr, pair); \
 	} while (0)
 
+/*
 #define RECYCLE_PAIR(map,pair) \
 	do { \
 		if ((map)->freeval != ASE_NULL) \
@@ -24,6 +25,7 @@ static int rehash (ase_map_t* map);
 		(pair)->next = (map)->fp; \
 		(map)->fp = (pair); \
 	} while (0)
+*/
 
 ase_map_t* ase_map_open (
 	void* owner, ase_size_t capa, unsigned int factor,
@@ -247,8 +249,7 @@ ase_pair_t* ase_map_getpair (
 	return pair;
 }
 
-ase_pair_t* ase_map_setpair (
-	ase_map_t* map, ase_pair_t* pair, void* val)
+ase_pair_t* ase_map_setpair (ase_map_t* map, ase_pair_t* pair, void* val)
 {
 	/* use this function with care */
 	if (ASE_PAIR_VAL(pair) == val) 
@@ -312,8 +313,7 @@ int ase_map_remove (
 	return -1;
 }
 
-int ase_map_walk (ase_map_t* map, 
-	int (*walker) (ase_pair_t*,void*), void* arg)
+int ase_map_walk (ase_map_t* map, int (*walker) (ase_pair_t*,void*), void* arg)
 {
 	ase_size_t i;
 	ase_pair_t* pair, * next;
@@ -333,8 +333,7 @@ int ase_map_walk (ase_map_t* map,
 	return 0;
 }
 
-ase_pair_t* ase_map_getfirstpair (
-	ase_map_t* map, ase_size_t* buckno)
+ase_pair_t* ase_map_getfirstpair (ase_map_t* map, ase_size_t* buckno)
 {
 	ase_size_t i;
 	ase_pair_t* pair;
