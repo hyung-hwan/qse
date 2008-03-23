@@ -15,9 +15,9 @@ ase +- cmn  .................... contains common functions and macros.
     +- awk  .................... implementation of the awk processor.
     +- lsp  .................... implementation of the lisp processor.
     +- com  .................... COM wrapper of the processors.
-    +- test +- awk  ............ contains test program for the awk processor.
-            +- lsp  ............ contains test programs for the lisp processor.
-            +- com  ............ contains test programs for the COM module.
+    +- cmd +- awk  ............. contains test programs for the awk processor.
+           +- lsp  ............. contains test programs for the lisp processor.
+           +- com  ............. contains test programs for the COM module.
 }}}
 
 == Unix/Linux ==
