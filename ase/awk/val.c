@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 155 2008-03-22 06:47:27Z baconevi $
+ * $Id: val.c 156 2008-03-22 12:09:35Z baconevi $
  *
  * {License}
  */
@@ -206,7 +206,7 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 
 		c->next = run->vmgr.rchunk;
 		/*run->vmgr.rchunk = c;*/
-		run->vmgr.ichunk = (ase_awk_val_chunk_t*)c;
+		run->vmgr.rchunk = (ase_awk_val_chunk_t*)c;
 
 		/*
 		x = (ase_awk_val_real_t*)(c + 1);
@@ -1066,9 +1066,11 @@ static int print_pair (ase_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
 
-	DPRINTF (DCUSTOM, ASE_T(" %s=>"), pair->key);	
+	DPRINTF (DCUSTOM, ASE_T(" %.*s=>"),
+		(int)ASE_PAIR_KEYLEN(pair), ASE_PAIR_KEYPTR(pair));
 	ase_awk_dprintval ((ase_awk_run_t*)arg, pair->val);
 	DPRINTF (DCUSTOM, ASE_T(" "));
+
 	return 0;
 }
 
