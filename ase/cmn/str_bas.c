@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 149 2008-03-20 09:49:53Z baconevi $
+ * $Id: str_bas.c 159 2008-04-01 08:37:30Z baconevi $
  *
  * {License}
  */
@@ -137,10 +137,19 @@ int ase_strcmp (const ase_char_t* s1, const ase_char_t* s2)
 {
 	while (*s1 == *s2) 
 	{
-		if (*s1 == ASE_C('\0')) return 0;
+		if (*s1 == ASE_T('\0')) return 0;
 		s1++, s2++;
 	}
 
+	return (*s1 > *s2)? 1: -1;
+}
+
+int ase_strxcmp (const ase_char_t* s1, ase_size_t len, const ase_char_t* s2)
+{
+	const ase_char_t* end = s1 + len;
+	while (s1 < end && *s2 != ASE_T('\0') && *s1 == *s2) s1++, s2++;
+	if (s1 == end && *s2 == ASE_T('\0')) return 0;
+	if (*s1 == *s2) return (s1 < end)? 1: -1;
 	return (*s1 > *s2)? 1: -1;
 }
 

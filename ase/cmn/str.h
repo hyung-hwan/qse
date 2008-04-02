@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 149 2008-03-20 09:49:53Z baconevi $
+ * $Id: str.h 159 2008-04-01 08:37:30Z baconevi $
  *
  * {License}
  */
@@ -101,9 +101,11 @@ ase_size_t ase_strxncat (
     ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len);
 
 int ase_strcmp (const ase_char_t* s1, const ase_char_t* s2);
+int ase_strxcmp (const ase_char_t* s1, ase_size_t len1, const ase_char_t* s2);
 int ase_strxncmp (
 	const ase_char_t* s1, ase_size_t len1, 
 	const ase_char_t* s2, ase_size_t len2);
+
 int ase_strcasecmp (
 	const ase_char_t* s1, const ase_char_t* s2, ase_ccls_t* ccls);
 int ase_strxncasecmp (
