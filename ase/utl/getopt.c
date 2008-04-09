@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 142 2008-03-18 06:29:25Z baconevi $
+ * $Id: getopt.c 160 2008-04-08 13:59:49Z baconevi $
  * 
  * {License}
  */
@@ -7,7 +7,10 @@
 #include <ase/utl/getopt.h>
 #include <ase/cmn/str.h>
 
-/*
+/* 
+ * ase_getopt is based on BSD getopt.
+ * --------------------------------------------------------------------------
+ *
  * Copyright (c) 1987-2002 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,6 +37,8 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * --------------------------------------------------------------------------
  */
 
 #include <stdio.h>
@@ -52,7 +57,7 @@
 
 ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 {
-	ase_char_t* oli;                        /* option letter list index */
+	ase_char_t* oli; /* option letter list index */
 
 	if (place == ASE_NULL) 
 	{
