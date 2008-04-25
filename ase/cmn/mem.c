@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 164 2008-04-24 13:21:17Z baconevi $
+ * $Id: mem.c 165 2008-04-24 13:34:17Z baconevi $
  *
  * {License}
  */
@@ -34,11 +34,12 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 		ase_size_t* du = (ase_size_t*)dst;
 		ase_size_t* su = (ase_size_t*)src;
 
-		while (n >= ASE_SIZEOF(ase_size_t))
+		do
 		{
 			*du++ = *su++;
 			n -= ASE_SIZEOF(ase_size_t);
 		}
+		while (n >= ASE_SIZEOF(ase_size_t));
 
 		d = (ase_byte_t*)du;
 		s = (ase_byte_t*)su;
@@ -81,7 +82,7 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 		ase_byte_t* d = (ase_byte_t*)dst;
 
 		do { *d++ = (ase_byte_t)val; } 
-		while (n-- > 0 && ++rem <= ASE_SIZEOF(v16));
+		while (n-- > 0 && ++rem < ASE_SIZEOF(v16));
 
 		vd = (vector unsigned char*)d;
 	}
@@ -110,15 +111,13 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 	if (rem > 0)
 	{
 		d = (ase_byte_t*)dst;
-		do { *d++ = (ase_byte_t)val; 
-printf ("unaligned...\n");
-} 
-		while (n-- > 0 && ++rem <= ASE_SIZEOF(ase_size_t));
+		do { *d++ = (ase_byte_t)val; } 
+		while (n-- > 0 && ++rem < ASE_SIZEOF(ase_size_t));
 	}
 
 	if (n >= ASE_SIZEOF(ase_size_t))
 	{
-		ase_size_t* u = d;
+		ase_size_t* u = (ase_size_t*)d;
 		ase_size_t uv = 0;
 		int i;
 
@@ -128,17 +127,17 @@ printf ("unaligned...\n");
 				uv = (uv << 8) | (ase_byte_t)val;
 		}
 
-		while (n >= ASE_SIZEOF(ase_size_t))
+		ASE_ASSERT (IS_ALIGNED(u));
+		do
 		{
-printf ("block...\n");
 			*u++ = uv;
 			n -= ASE_SIZEOF(ase_size_t);
 		}
+		while (n >= ASE_SIZEOF(ase_size_t));
 
 		d = (ase_byte_t*)u;
 	}
 
-printf ("unaligned %lld...\n", (long long)n);
 	while (n-- > 0) *d++ = (ase_byte_t)val;
 	return dst;
 
@@ -183,12 +182,13 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 		const ase_size_t* u1 = (const ase_size_t*)s1;
 		const ase_size_t* u2 = (const ase_size_t*)s2;
 
-		while (n >= ASE_SIZEOF(ase_size_t))
+		do
 		{
 			if (*u1 != *u2) break;
 			u1++; u2++;
 			n -= ASE_SIZEOF(ase_size_t);
 		}
+		while (n >= ASE_SIZEOF(ase_size_t));
 
 		b1 = (const ase_byte_t*)u1;
 		b2 = (const ase_byte_t*)u2;
