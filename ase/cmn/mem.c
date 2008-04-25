@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 161 2008-04-24 12:19:44Z baconevi $
+ * $Id: mem.c 162 2008-04-24 12:33:26Z baconevi $
  *
  * {License}
  */
@@ -29,8 +29,8 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 
 	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_BOTH_ALIGNED(dst,src))
 	{
-		const ase_ulong_t* du = (const ase_ulong_t*)dst;
-		const ase_ulong_t* su = (const ase_ulong_t*)src;
+		ase_ulong_t* du = (ase_ulong_t*)dst;
+		ase_ulong_t* su = (ase_ulong_t*)src;
 
 		while (n >= ASE_SIZEOF(ase_ulong_t))
 		{
@@ -70,7 +70,7 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 
 	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_ALIGNED(dst))
 	{
-		const ase_ulong_t* u = (const ase_ulong_t*)dst;
+		ase_ulong_t* u = (ase_ulong_t*)dst;
 		ase_ulong_t uv = 0;
 		int i;
 
@@ -88,7 +88,10 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 
 		d = (ase_byte_t*)u;
 	}
-	else d = (ase_byte_t*)dst;
+	else 
+	{
+		d = (ase_byte_t*)dst;
+	}
 
 	while (n-- > 0) *d++ = (ase_byte_t)val;
 	return dst;
@@ -142,15 +145,13 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 
 		while (n >= ASE_SIZEOF(ase_ulong_t))
 		{
-			if (*u1 != *u2)
-			{
-				b1 = (const ase_byte_t*)u1;
-				b2 = (const ase_byte_t*)u2;
-				break;
-			}
+			if (*u1 != *u2) break;
 			u1++; u2++;
 			n -= ASE_SIZEOF(ase_ulong_t);
 		}
+
+		b1 = (const ase_byte_t*)u1;
+		b2 = (const ase_byte_t*)u2;
 	}
 	else
 	{
