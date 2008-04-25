@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: mem.c 161 2008-04-24 12:19:44Z baconevi $
  *
  * {License}
  */
@@ -16,98 +16,88 @@
 
 void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 {
-	/*
-	void* p = dst;
-	void* e = (ase_byte_t*)dst + n;
+#if defined(ASE_BUILD_FOR_SIZE)
+	ase_byte_t* d = (ase_byte_t*)dst;
+	ase_byte_t* s = (ase_byte_t*)src;
+	while (n-- > 0) *d++ = *s++;
+	return dst;
+#elif defined(__SPU__)
+	/* cell spu */
+#else
+	ase_byte_t* d;
+	ase_byte_t* s;
 
-	while (dst < e) 
+	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_BOTH_ALIGNED(dst,src))
 	{
-		*(ase_byte_t*)dst = *(ase_byte_t*)src;
-		dst = (ase_byte_t*)dst + 1;
-		src = (ase_byte_t*)src + 1;
-	}
+		const ase_ulong_t* du = (const ase_ulong_t*)dst;
+		const ase_ulong_t* su = (const ase_ulong_t*)src;
 
-	return p;
-	*/
-
-	void* p = dst;
-	void* e = (ase_byte_t*)dst + n;
-
-	ASE_ASSERT (sizeof(ase_size_t) == sizeof(void*));
-
-	/*if (IS_ALIGNED(dst) && IS_ALIGNED(src))*/
-	if (IS_BOTH_ALIGNED(dst,src))
-	{
-		/* if both src and dst are aligned, 
-		 * blockcopy sizeof(void*) bytes. */
-
-	#if (ASE_SIZEOF_VOID_P==2)
-		ase_size_t count = n >> 1;
-	#elif (ASE_SIZEOF_VOID_P==4)
-		ase_size_t count = n >> 2;
-	#elif (ASE_SIZEOF_VOID_P==8)
-		ase_size_t count = n >> 3;
-	#else
-		ase_size_t count = n / sizeof(dst);
-	#endif
-
-		while (count >= 4)
+		while (n >= ASE_SIZEOF(ase_ulong_t))
 		{
-			*(void**)dst = *(void**)src;
-			dst = (void**)dst + 1;
-			src = (void**)src + 1;
-
-			*(void**)dst = *(void**)src;
-			dst = (void**)dst + 1;
-			src = (void**)src + 1;
-
-			*(void**)dst = *(void**)src;
-			dst = (void**)dst + 1;
-			src = (void**)src + 1;
-
-			*(void**)dst = *(void**)src;
-			dst = (void**)dst + 1;
-			src = (void**)src + 1;
-
-			count -= 4;
+			*du++ = *su++;
+			n -= ASE_SIZEOF(ase_ulong_t);
 		}
 
-		while (count > 0)
-		{
-			*(void**)dst = *(void**)src;
-			dst = (void**)dst + 1;
-			src = (void**)src + 1;
-			count--;
-		}
+		d = (ase_byte_t*)du;
+		s = (ase_byte_t*)su;
 	}
-
-	/* bytecopy for remainders or unaligned data */
-	while (dst < e) 
+	else
 	{
-		*(ase_byte_t*)dst = *(ase_byte_t*)src;
-		dst = (ase_byte_t*)dst + 1;
-		src = (ase_byte_t*)src + 1;
+		d = (ase_byte_t*)dst;
+		s = (ase_byte_t*)src;
 	}
 
-	return p;
+	while (n-- > 0) *d++ = *s++;
+	return dst;
+#endif
 }
 
 void* ase_memset (void* dst, int val, ase_size_t n)
 {
-	void* p = dst;
-	void* e = (ase_byte_t*)p + n;
-
-	while (p < e) 
+#if defined(ASE_BUILD_FOR_SIZE)
+	ase_byte_t* d = (ase_byte_t*)dst;
+	while (n-- > 0) *d++ = (ase_byte_t)val;
+	return dst;
+#elif defined(__SPU__)
+	/* cell spu */
+	if ((ase_size_t)dst & (16-1))
 	{
-		*(ase_byte_t*)p = (ase_byte_t)val;
-		p = (ase_byte_t*)p + 1;
+		/* the leading bytes are not aligned */
 	}
 
+#else
+	ase_byte_t* d;
+
+	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_ALIGNED(dst))
+	{
+		const ase_ulong_t* u = (const ase_ulong_t*)dst;
+		ase_ulong_t uv = 0;
+		int i;
+
+		if (val != 0) 
+		{
+			for (i = 0; i < ASE_SIZEOF(ase_ulong_t); i++)
+				uv = (uv << 8) | (ase_byte_t)val;
+		}
+
+		while (n >= ASE_SIZEOF(ase_ulong_t))
+		{
+			*u++ = uv;
+			n -= ASE_SIZEOF(ase_ulong_t);
+		}
+
+		d = (ase_byte_t*)u;
+	}
+	else d = (ase_byte_t*)dst;
+
+	while (n-- > 0) *d++ = (ase_byte_t)val;
 	return dst;
+#endif
 }
 
 int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 {
+#if defined(ASE_BUILD_FOR_SIZE)
 	/*
 	const void* e;
 
@@ -123,14 +113,57 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 	return *((ase_byte_t*)s1) - *((ase_byte_t*)s2);
 	*/
 
-	register const ase_byte_t* b1 = (const ase_byte_t*)s1;
-	register const ase_byte_t* b2 = (const ase_byte_t*)s2;
+	const ase_byte_t* b1 = (const ase_byte_t*)s1;
+	const ase_byte_t* b2 = (const ase_byte_t*)s2;
 
-	while (n > 0)
+	while (n-- > 0)
 	{
-		n--;
-		if (*b1++ != *b2++) return *b1 - *b2;
+		if (*b1 != *b2) return *b1 - *b2;
+		b1++; b2++;
 	}
 
 	return 0;
+
+#elif defined(__SPU__)
+	/* cell spu */
+	if ((ase_size_t)dst & (16-1))
+	{
+		/* the leading bytes are not aligned */
+	}
+
+#else
+	const ase_byte_t* b1;
+	const ase_byte_t* b2;
+
+	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_BOTH_ALIGNED(s1,s2))
+	{
+		const ase_ulong_t* u1 = (const ase_ulong_t*)s1;
+		const ase_ulong_t* u2 = (const ase_ulong_t*)s2;
+
+		while (n >= ASE_SIZEOF(ase_ulong_t))
+		{
+			if (*u1 != *u2)
+			{
+				b1 = (const ase_byte_t*)u1;
+				b2 = (const ase_byte_t*)u2;
+				break;
+			}
+			u1++; u2++;
+			n -= ASE_SIZEOF(ase_ulong_t);
+		}
+	}
+	else
+	{
+		b1 = (const ase_byte_t*)s1;
+		b2 = (const ase_byte_t*)s2;
+	}
+
+	while (n-- > 0)
+	{
+		if (*b1 != *b2) return *b1 - *b2;
+		b1++; b2++;
+	}
+
+	return 0;
+#endif
 }
