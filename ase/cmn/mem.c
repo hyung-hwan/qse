@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 167 2008-04-24 13:53:17Z baconevi $
+ * $Id: mem.c 168 2008-04-24 14:25:47Z baconevi $
  *
  * {License}
  */
@@ -65,8 +65,12 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 
 #elif defined(__SPU__)
 
-	ase_byte_t* d = (ase_byte_t*)dst;
+	ase_byte_t* d;
 	ase_size_t rem;
+
+	if (n <= 0) return dst;
+
+	d = (ase_byte_t*)dst;
 
 	/* spu SIMD instructions require 16-byte alignment */
 	rem = ((ase_size_t)dst) & (ASE_SIZEOF(vector unsigned char)-1);
@@ -104,8 +108,12 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 	
 #else
 
-	ase_byte_t* d = (ase_byte_t*)dst;
+	ase_byte_t* d;
 	ase_size_t rem;
+
+	if (n <= 0) return dst;
+
+	d = (ase_byte_t*)dst;
 
 	rem = IS_UNALIGNED(dst);
 	if (rem > 0)
