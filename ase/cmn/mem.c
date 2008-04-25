@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 165 2008-04-24 13:34:17Z baconevi $
+ * $Id: mem.c 166 2008-04-24 13:40:41Z baconevi $
  *
  * {License}
  */
@@ -65,41 +65,43 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 
 #elif defined(__SPU__)
 
-	/* a vector of 16 unsigned char cells */
-	vector unsigned char v16;
-	/* a pointer to such a vector */
-	vector unsigned char* vd;
+	ase_byte_t* d = (ase_byte_t*)dst;
 	ase_size_t rem;
 
-	/* fills all 16 unsigned char cells with the same value 
-	 * no need to use shift and bitwise-or owing to splats */
-	v16 = spu_splats((ase_byte_t)val);
-
 	/* spu SIMD instructions require 16-byte alignment */
-	rem = ((ase_size_t)dst) & (ASE_SIZEOF(v16)-1);
+	rem = ((ase_size_t)dst) & (ASE_SIZEOF(vector unsigned char)-1);
 	if (rem > 0)
 	{
 		ase_byte_t* d = (ase_byte_t*)dst;
 
 		do { *d++ = (ase_byte_t)val; } 
-		while (n-- > 0 && ++rem < ASE_SIZEOF(v16));
-
-		vd = (vector unsigned char*)d;
+		while (n-- > 0 && ++rem < ASE_SIZEOF(vector unsigned char));
 	}
 	
 	/* do the vector copy */
-	while (n >= ASE_SIZEOF(v16))
+	if (n >= ASE_SIZEOF(vector unsigned char))
 	{
-		*vd++ = v16;
-		n += ASE_SIZEOF(v16);
+		/* a vector of 16 unsigned char cells */
+		vector unsigned char v16;
+		/* a pointer to such a vector */
+		vector unsigned char* vd = (vector unsigned char*)d;
+
+		/* fills all 16 unsigned char cells with the same value 
+		 * no need to use shift and bitwise-or owing to splats */
+		v16 = spu_splats((ase_byte_t)val);
+
+		do
+		{
+			*vd++ = v16;
+			n += ASE_SIZEOF(vector unsigned char);
+		}
+		while (n >= ASE_SIZEOF(vector unsigned char));
+
+		d = (ase_byte_t*)vd;
 	}
 
-	{
-		/* handle the trailing bytes */
-		ase_byte_t* d = (ase_byte_t*)dst;
-		while (n-- > 0) *d++ = (ase_byte_t)val;
-	}
-
+	/* handle the trailing parts */
+	while (n-- > 0) *d++ = (ase_byte_t)val;
 	return dst;
 	
 #else
