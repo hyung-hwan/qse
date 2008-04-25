@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 163 2008-04-24 13:08:14Z baconevi $
+ * $Id: mem.c 164 2008-04-24 13:21:17Z baconevi $
  *
  * {License}
  */
@@ -29,15 +29,15 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 	ase_byte_t* d;
 	ase_byte_t* s;
 
-	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_BOTH_ALIGNED(dst,src))
+	if (n >= ASE_SIZEOF(ase_size_t) && IS_BOTH_ALIGNED(dst,src))
 	{
-		ase_ulong_t* du = (ase_ulong_t*)dst;
-		ase_ulong_t* su = (ase_ulong_t*)src;
+		ase_size_t* du = (ase_size_t*)dst;
+		ase_size_t* su = (ase_size_t*)src;
 
-		while (n >= ASE_SIZEOF(ase_ulong_t))
+		while (n >= ASE_SIZEOF(ase_size_t))
 		{
 			*du++ = *su++;
-			n -= ASE_SIZEOF(ase_ulong_t);
+			n -= ASE_SIZEOF(ase_size_t);
 		}
 
 		d = (ase_byte_t*)du;
@@ -79,10 +79,9 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 	if (rem > 0)
 	{
 		ase_byte_t* d = (ase_byte_t*)dst;
-		do
-		{
-			*d++ = (ase_byte_t)val;
-		} while (n-- > 0 && ++rem <= ASE_SIZEOF(v16));
+
+		do { *d++ = (ase_byte_t)val; } 
+		while (n-- > 0 && ++rem <= ASE_SIZEOF(v16));
 
 		vd = (vector unsigned char*)d;
 	}
@@ -104,33 +103,42 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 	
 #else
 
-	ase_byte_t* d;
+	ase_byte_t* d = (ase_byte_t*)dst;
+	ase_size_t rem;
 
-	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_ALIGNED(dst))
+	rem = IS_UNALIGNED(dst);
+	if (rem > 0)
 	{
-		ase_ulong_t* u = (ase_ulong_t*)dst;
-		ase_ulong_t uv = 0;
+		d = (ase_byte_t*)dst;
+		do { *d++ = (ase_byte_t)val; 
+printf ("unaligned...\n");
+} 
+		while (n-- > 0 && ++rem <= ASE_SIZEOF(ase_size_t));
+	}
+
+	if (n >= ASE_SIZEOF(ase_size_t))
+	{
+		ase_size_t* u = d;
+		ase_size_t uv = 0;
 		int i;
 
 		if (val != 0) 
 		{
-			for (i = 0; i < ASE_SIZEOF(ase_ulong_t); i++)
+			for (i = 0; i < ASE_SIZEOF(ase_size_t); i++)
 				uv = (uv << 8) | (ase_byte_t)val;
 		}
 
-		while (n >= ASE_SIZEOF(ase_ulong_t))
+		while (n >= ASE_SIZEOF(ase_size_t))
 		{
+printf ("block...\n");
 			*u++ = uv;
-			n -= ASE_SIZEOF(ase_ulong_t);
+			n -= ASE_SIZEOF(ase_size_t);
 		}
 
 		d = (ase_byte_t*)u;
 	}
-	else 
-	{
-		d = (ase_byte_t*)dst;
-	}
 
+printf ("unaligned %lld...\n", (long long)n);
 	while (n-- > 0) *d++ = (ase_byte_t)val;
 	return dst;
 
@@ -170,16 +178,16 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 	const ase_byte_t* b1;
 	const ase_byte_t* b2;
 
-	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_BOTH_ALIGNED(s1,s2))
+	if (n >= ASE_SIZEOF(ase_size_t) && IS_BOTH_ALIGNED(s1,s2))
 	{
-		const ase_ulong_t* u1 = (const ase_ulong_t*)s1;
-		const ase_ulong_t* u2 = (const ase_ulong_t*)s2;
+		const ase_size_t* u1 = (const ase_size_t*)s1;
+		const ase_size_t* u2 = (const ase_size_t*)s2;
 
-		while (n >= ASE_SIZEOF(ase_ulong_t))
+		while (n >= ASE_SIZEOF(ase_size_t))
 		{
 			if (*u1 != *u2) break;
 			u1++; u2++;
-			n -= ASE_SIZEOF(ase_ulong_t);
+			n -= ASE_SIZEOF(ase_size_t);
 		}
 
 		b1 = (const ase_byte_t*)u1;
