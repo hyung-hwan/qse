@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 169 2008-04-25 04:27:37Z baconevi $
+ * $Id: mem.c 170 2008-04-25 04:50:34Z baconevi $
  *
  * {License}
  */
@@ -8,6 +8,7 @@
 
 #if defined(__SPU__)
 #include <spu_intrinsics.h>
+#define SPU_VUC_SIZE ASE_SIZEOF(vector unsigned char)
 #endif
 
 /*#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)%ASE_SIZEOF(ase_size_t))*/
@@ -21,11 +22,45 @@
 void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 {
 #if defined(ASE_BUILD_FOR_SIZE)
+
 	ase_byte_t* d = (ase_byte_t*)dst;
 	ase_byte_t* s = (ase_byte_t*)src;
 	while (n-- > 0) *d++ = *s++;
 	return dst;
+
+#elif defined(__SPU__)
+
+	ase_byte_t* d;
+	ase_byte_t* s;
+
+	if (n >= ASE_SIZEOF(ase_size_t) && 
+	    (((ase_size_t)dst) & (SPU_VUC_SIZE-1)) == 0 &&
+	    (((ase_size_t)src) & (SPU_VUC_SIZE-1)) == 0)
+	{
+		vector unsigned char* du = (vector unsigned char*)dst;
+		vector unsigned char* su = (vector unsigned char*)src;
+
+		do
+		{
+			*du++ = *su++;
+			n -= SPU_VUC_SIZE;
+		}
+		while (n >= SPU_VUC_SIZE);
+
+		d = (ase_byte_t*)du;
+		s = (ase_byte_t*)su;
+	}
+	else
+	{
+		d = (ase_byte_t*)dst;
+		s = (ase_byte_t*)src;
+	}
+
+	while (n-- > 0) *d++ = *s++;
+	return dst;
+
 #else
+
 	ase_byte_t* d;
 	ase_byte_t* s;
 
@@ -52,6 +87,7 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 
 	while (n-- > 0) *d++ = *s++;
 	return dst;
+
 #endif
 }
 
@@ -73,16 +109,16 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 	d = (ase_byte_t*)dst;
 
 	/* spu SIMD instructions require 16-byte alignment */
-	rem = ((ase_size_t)dst) & (ASE_SIZEOF(vector unsigned char)-1);
+	rem = ((ase_size_t)dst) & (SPU_VUC_SIZE-1);
 	if (rem > 0)
 	{
 		/* handle leading unaligned part */
 		do { *d++ = (ase_byte_t)val; } 
-		while (n-- > 0 && ++rem < ASE_SIZEOF(vector unsigned char));
+		while (n-- > 0 && ++rem < SPU_VUC_SIZE);
 	}
 	
 	/* do the vector copy */
-	if (n >= ASE_SIZEOF(vector unsigned char))
+	if (n >= SPU_VUC_SIZE)
 	{
 		/* a vector of 16 unsigned char cells */
 		vector unsigned char v16;
@@ -96,9 +132,9 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 		do
 		{
 			*vd++ = v16;
-			n -= ASE_SIZEOF(vector unsigned char);
+			n -= SPU_VUC_SIZE;
 		}
-		while (n >= ASE_SIZEOF(vector unsigned char));
+		while (n >= SPU_VUC_SIZE);
 
 		d = (ase_byte_t*)vd;
 	}
