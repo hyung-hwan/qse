@@ -1,17 +1,21 @@
 /*
- * $Id: mem.c 162 2008-04-24 12:33:26Z baconevi $
+ * $Id: mem.c 163 2008-04-24 13:08:14Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/mem.h>
 
-/*#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)%sizeof(ase_size_t))*/
-#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)&(sizeof(ase_size_t)-1))
+#if defined(__SPU__)
+#include <spu_intrinsics.h>
+#endif
+
+/*#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)%ASE_SIZEOF(ase_size_t))*/
+#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)&(ASE_SIZEOF(ase_size_t)-1))
 #define IS_ALIGNED(ptr) (!IS_UNALIGNED(ptr))
 
 #define IS_EITHER_UNALIGNED(ptr1,ptr2) \
-	(((ase_size_t)ptr1|(ase_size_t)ptr2)&(sizeof(ase_size_t)-1))
+	(((ase_size_t)ptr1|(ase_size_t)ptr2)&(ASE_SIZEOF(ase_size_t)-1))
 #define IS_BOTH_ALIGNED(ptr1,ptr2) (!IS_EITHER_UNALIGNED(ptr1,ptr2))
 
 void* ase_memcpy (void* dst, const void* src, ase_size_t n)
@@ -21,8 +25,6 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 	ase_byte_t* s = (ase_byte_t*)src;
 	while (n-- > 0) *d++ = *s++;
 	return dst;
-#elif defined(__SPU__)
-	/* cell spu */
 #else
 	ase_byte_t* d;
 	ase_byte_t* s;
@@ -55,17 +57,53 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 void* ase_memset (void* dst, int val, ase_size_t n)
 {
 #if defined(ASE_BUILD_FOR_SIZE)
+
 	ase_byte_t* d = (ase_byte_t*)dst;
 	while (n-- > 0) *d++ = (ase_byte_t)val;
 	return dst;
+
 #elif defined(__SPU__)
-	/* cell spu */
-	if ((ase_size_t)dst & (16-1))
+
+	/* a vector of 16 unsigned char cells */
+	vector unsigned char v16;
+	/* a pointer to such a vector */
+	vector unsigned char* vd;
+	ase_size_t rem;
+
+	/* fills all 16 unsigned char cells with the same value 
+	 * no need to use shift and bitwise-or owing to splats */
+	v16 = spu_splats((ase_byte_t)val);
+
+	/* spu SIMD instructions require 16-byte alignment */
+	rem = ((ase_size_t)dst) & (ASE_SIZEOF(v16)-1);
+	if (rem > 0)
 	{
-		/* the leading bytes are not aligned */
+		ase_byte_t* d = (ase_byte_t*)dst;
+		do
+		{
+			*d++ = (ase_byte_t)val;
+		} while (n-- > 0 && ++rem <= ASE_SIZEOF(v16));
+
+		vd = (vector unsigned char*)d;
+	}
+	
+	/* do the vector copy */
+	while (n >= ASE_SIZEOF(v16))
+	{
+		*vd++ = v16;
+		n += ASE_SIZEOF(v16);
 	}
 
+	{
+		/* handle the trailing bytes */
+		ase_byte_t* d = (ase_byte_t*)dst;
+		while (n-- > 0) *d++ = (ase_byte_t)val;
+	}
+
+	return dst;
+	
 #else
+
 	ase_byte_t* d;
 
 	if (n >= ASE_SIZEOF(ase_ulong_t) && IS_ALIGNED(dst))
@@ -95,6 +133,7 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 
 	while (n-- > 0) *d++ = (ase_byte_t)val;
 	return dst;
+
 #endif
 }
 
@@ -126,13 +165,6 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 	}
 
 	return 0;
-
-#elif defined(__SPU__)
-	/* cell spu */
-	if ((ase_size_t)dst & (16-1))
-	{
-		/* the leading bytes are not aligned */
-	}
 
 #else
 	const ase_byte_t* b1;
