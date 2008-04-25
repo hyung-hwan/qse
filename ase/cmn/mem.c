@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 170 2008-04-25 04:50:34Z baconevi $
+ * $Id: mem.c 171 2008-04-25 04:59:00Z baconevi $
  *
  * {License}
  */
@@ -33,7 +33,7 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 	ase_byte_t* d;
 	ase_byte_t* s;
 
-	if (n >= ASE_SIZEOF(ase_size_t) && 
+	if (n >= SPU_VUC_SIZE &&
 	    (((ase_size_t)dst) & (SPU_VUC_SIZE-1)) == 0 &&
 	    (((ase_size_t)src) & (SPU_VUC_SIZE-1)) == 0)
 	{
