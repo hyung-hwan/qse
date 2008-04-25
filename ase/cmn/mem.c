@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 168 2008-04-24 14:25:47Z baconevi $
+ * $Id: mem.c 169 2008-04-25 04:27:37Z baconevi $
  *
  * {License}
  */
@@ -76,6 +76,7 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 	rem = ((ase_size_t)dst) & (ASE_SIZEOF(vector unsigned char)-1);
 	if (rem > 0)
 	{
+		/* handle leading unaligned part */
 		do { *d++ = (ase_byte_t)val; } 
 		while (n-- > 0 && ++rem < ASE_SIZEOF(vector unsigned char));
 	}
@@ -102,7 +103,7 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 		d = (ase_byte_t*)vd;
 	}
 
-	/* handle the trailing parts */
+	/* handle the trailing part */
 	while (n-- > 0) *d++ = (ase_byte_t)val;
 	return dst;
 	
