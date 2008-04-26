@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 175 2008-04-25 08:57:55Z baconevi $
+ * $Id: mem.c 176 2008-04-25 09:18:57Z baconevi $
  *
  * {License}
  */
@@ -236,14 +236,23 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 			unsigned int cnt;
 			unsigned int pat;
 
+			/* compare 16 chars at one time */
 			tmp = spu_gather(spu_cmpeq(*v1,*v2));
-			pat = spu_extract (tmp, 0) ;
+			/* extract the bit pattern */
+			pat = spu_extract(tmp, 0);
+			/* invert the bit patterns */
 			pat = 0xFFFF & ~pat;
 
+			/* put it back to the vector */
 			tmp = spu_insert (pat, tmp, 0);
+			/* count the leading zeros */
 			cnt = spu_extract(spu_cntlz(tmp),0);
+			/* 32 leading zeros mean that 
+			 * all characters are the same */
 			if (cnt != 32) 
 			{
+				/* otherwise, calculate the 
+				 * unmatching pointer address */
 				b1 = (const ase_byte_t*)v1 + (cnt - 16);
 				b2 = (const ase_byte_t*)v2 + (cnt - 16);
 				break;
