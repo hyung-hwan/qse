@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 176 2008-04-25 09:18:57Z baconevi $
+ * $Id: mem.c 177 2008-04-26 04:58:10Z baconevi $
  *
  * {License}
  */
@@ -89,6 +89,25 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 	return dst;
 
 #endif
+}
+
+void* ase_memmove (void* dst, const void* src, ase_size_t n)
+{
+	const ase_byte_t* sre = (const ase_byte_t*)src + n;
+
+	if (dst <= src || dst >= (const void*)sre) 
+	{
+		ase_byte_t* d = (ase_byte_t*)dst;
+		const ase_byte_t* s = (const ase_byte_t*)src;
+		while (n-- > 0) *d++ = *s++;
+	}
+	else 
+	{
+		ase_byte_t* dse = (ase_byte_t*)dst + n;
+		while (n-- > 0) *--dse = *--sre;
+	}
+
+	return dst;
 }
 
 void* ase_memset (void* dst, int val, ase_size_t n)
@@ -191,20 +210,6 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 {
 #if defined(ASE_BUILD_FOR_SIZE)
-	/*
-	const void* e;
-
-	if (n == 0) return 0;
-
-	e = (const ase_byte_t*)s1 + n - 1;
-	while (s1 < e && *(ase_byte_t*)s1 == *(ase_byte_t*)s2) 
-	{
-		s1 = (ase_byte_t*)s1 + 1;
-		s2 = (ase_byte_t*)s2 + 1;
-	}
-
-	return *((ase_byte_t*)s1) - *((ase_byte_t*)s2);
-	*/
 
 	const ase_byte_t* b1 = (const ase_byte_t*)s1;
 	const ase_byte_t* b2 = (const ase_byte_t*)s2;
@@ -318,4 +323,79 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 
 	return 0;
 #endif
+}
+
+void* ase_memchr (const void* s, int val, ase_size_t n)
+{
+	const ase_byte_t* x = (const ase_byte_t*)s;
+
+	while (n-- > 0)
+	{
+		if (*x == (ase_byte_t)val) return (void*)x;
+		x++;
+	}
+
+	return ASE_NULL;
+}
+
+void* ase_memrchr (const void* s, int val, ase_size_t n)
+{
+	const ase_byte_t* x = (ase_byte_t*)s + n - 1;
+
+	while (n-- > 0)
+	{
+		if (*x == (ase_byte_t)val) return (void*)x;
+		x--;
+	}
+
+	return ASE_NULL;
+}
+
+void* ase_memmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl)
+{
+	if (nl <= hl) 
+	{
+		ase_size_t i;
+		const ase_byte_t* h = (const ase_byte_t*)hs;
+
+		for (i = hl - nl + 1; i > 0; i--)  
+		{
+			if (ase_memcmp(h, nd, nl) == 0) return (void*)h;
+			h++;
+		}
+	}
+
+	return ASE_NULL;
+}
+
+void* ase_memrmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl)
+{
+	if (nl <= hl) 
+	{
+		ase_size_t i;
+		const ase_byte_t* h;
+
+		/* things are slightly more complacated 
+		 * when searching backward */
+		if (nl == 0) 
+		{
+			/* when the needle is empty, it returns
+			 * the pointer to the last byte of the haystack.
+			 * this is because ase_memmem returns the pointer
+			 * to the first byte of the haystack when the
+			 * needle is empty. but I'm not so sure if this
+			 * is really desirable behavior */
+			h = (const ase_byte_t*)hs + hl - 1;
+			return (void*)h;
+		}
+
+		h = (const ase_byte_t*)hs + hl - nl;
+		for (i = hl - nl + 1; i > 0; i--)  
+		{
+			if (ase_memcmp(h, nd, nl) == 0) return (void*)h;
+			h--;
+		}
+	}
+
+	return ASE_NULL;
 }

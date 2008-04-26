@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: mem.h 177 2008-04-26 04:58:10Z baconevi $
  *
  * {License}
  */
@@ -15,8 +15,13 @@ extern "C" {
 #endif
 
 void* ase_memcpy (void* dst, const void* src, ase_size_t n);
+void* ase_memmove (void* dst, const void* src, ase_size_t n);
 void* ase_memset (void* dst, int val, ase_size_t n);
 int   ase_memcmp (const void* s1, const void* s2, ase_size_t n);
+void* ase_memchr (const void* s, int val, ase_size_t n);
+void* ase_memrchr (const void* s, int val, ase_size_t n);
+void* ase_memmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl);
+void* ase_memrmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl);
 
 #ifdef __cplusplus
 }
