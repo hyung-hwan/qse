@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 174 2008-04-25 08:07:58Z baconevi $
+ * $Id: mem.c 175 2008-04-25 08:57:55Z baconevi $
  *
  * {License}
  */
@@ -223,17 +223,26 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 	const ase_byte_t* b2;
 
 	if (n >= SPU_VUC_SIZE &&
-	    (((ase_size_t)dst) & (SPU_VUC_SIZE-1)) == 0 &&
-	    (((ase_size_t)src) & (SPU_VUC_SIZE-1)) == 0)
+	    (((ase_size_t)s1) & (SPU_VUC_SIZE-1)) == 0 &&
+	    (((ase_size_t)s2) & (SPU_VUC_SIZE-1)) == 0)
 	{
-		vector unsigned char* v1 = (vector unsigned char*)dst;
-		vector unsigned char* v2 = (vector unsigned char*)src;
-		vector unsigned char gat;
+		vector unsigned char* v1 = (vector unsigned char*)s1;
+		vector unsigned char* v2 = (vector unsigned char*)s2;
+
+		vector unsigned int tmp;
 
 		do
 		{
-			cnt = spu_cntlz(spu_gather(spu_cmpeq(*v1,*v2)))
-			if (cnt > 16) 
+			unsigned int cnt;
+			unsigned int pat;
+
+			tmp = spu_gather(spu_cmpeq(*v1,*v2));
+			pat = spu_extract (tmp, 0) ;
+			pat = 0xFFFF & ~pat;
+
+			tmp = spu_insert (pat, tmp, 0);
+			cnt = spu_extract(spu_cntlz(tmp),0);
+			if (cnt != 32) 
 			{
 				b1 = (const ase_byte_t*)v1 + (cnt - 16);
 				b2 = (const ase_byte_t*)v2 + (cnt - 16);
@@ -251,7 +260,6 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 			}
 		}
 		while (1);
-
 	}
 	else
 	{
