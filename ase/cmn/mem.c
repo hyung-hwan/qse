@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 171 2008-04-25 04:59:00Z baconevi $
+ * $Id: mem.c 172 2008-04-25 07:01:05Z baconevi $
  *
  * {License}
  */
@@ -208,6 +208,49 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 
 	const ase_byte_t* b1 = (const ase_byte_t*)s1;
 	const ase_byte_t* b2 = (const ase_byte_t*)s2;
+
+	while (n-- > 0)
+	{
+		if (*b1 != *b2) return *b1 - *b2;
+		b1++; b2++;
+	}
+
+	return 0;
+
+#elif defined(__SPU__)
+
+	const ase_byte_t* b1;
+	const ase_byte_t* b2;
+
+	if (n >= SPU_VUC_SIZE &&
+	    (((ase_size_t)dst) & (SPU_VUC_SIZE-1)) == 0 &&
+	    (((ase_size_t)src) & (SPU_VUC_SIZE-1)) == 0)
+	{
+		vector unsigned char* v1 = (vector unsigned char*)dst;
+		vector unsigned char* v2 = (vector unsigned char*)src;
+		vector unsigned char pat;
+
+		do
+		{
+			//pat = spu_comeq (*v1, *v2);
+			//vc = spu_sel (*v1, *v2, pat);
+			/*spu_sub (*v1, *v2);
+			spu_sub (*v2, *v1);*/
+			if (*v1 != *v2) break;
+
+			v1++; v2++;
+			n -= SPU_VUC_SIZE;
+		}
+		while (n >= SPU_UVU_SIZE)
+
+		b1 = (const ase_byte_t*)v1;
+		b2 = (const ase_byte_t*)v2;
+	}
+	else
+	{
+		b1 = (const ase_byte_t*)s1;
+		b2 = (const ase_byte_t*)s2;
+	}
 
 	while (n-- > 0)
 	{
