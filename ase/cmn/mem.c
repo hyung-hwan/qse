@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 173 2008-04-25 08:06:58Z baconevi $
+ * $Id: mem.c 174 2008-04-25 08:07:58Z baconevi $
  *
  * {License}
  */
@@ -232,7 +232,7 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 
 		do
 		{
-			cnt = spu_cntlz(spu_gather (spu_cmpeq(*v1, *v2)))
+			cnt = spu_cntlz(spu_gather(spu_cmpeq(*v1,*v2)))
 			if (cnt > 16) 
 			{
 				b1 = (const ase_byte_t*)v1 + (cnt - 16);
