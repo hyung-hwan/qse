@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 172 2008-04-25 07:01:05Z baconevi $
+ * $Id: mem.c 173 2008-04-25 08:06:58Z baconevi $
  *
  * {License}
  */
@@ -228,23 +228,30 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 	{
 		vector unsigned char* v1 = (vector unsigned char*)dst;
 		vector unsigned char* v2 = (vector unsigned char*)src;
-		vector unsigned char pat;
+		vector unsigned char gat;
 
 		do
 		{
-			//pat = spu_comeq (*v1, *v2);
-			//vc = spu_sel (*v1, *v2, pat);
-			/*spu_sub (*v1, *v2);
-			spu_sub (*v2, *v1);*/
-			if (*v1 != *v2) break;
+			cnt = spu_cntlz(spu_gather (spu_cmpeq(*v1, *v2)))
+			if (cnt > 16) 
+			{
+				b1 = (const ase_byte_t*)v1 + (cnt - 16);
+				b2 = (const ase_byte_t*)v2 + (cnt - 16);
+				break;
+			}
 
 			v1++; v2++;
 			n -= SPU_VUC_SIZE;
-		}
-		while (n >= SPU_UVU_SIZE)
 
-		b1 = (const ase_byte_t*)v1;
-		b2 = (const ase_byte_t*)v2;
+			if (n < SPU_VUC_SIZE)
+			{
+				b1 = (const ase_byte_t*)v1;
+				b2 = (const ase_byte_t*)v2;
+				break;
+			}
+		}
+		while (1);
+
 	}
 	else
 	{
