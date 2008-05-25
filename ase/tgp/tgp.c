@@ -16,7 +16,7 @@ ase_tgp_t* ase_tgp_open (ase_mmgr_t* mmgr)
 {
 	ase_tgp_t* tgp;
 
-	if (mmgr == ASE_NULL) mmgr = ase_get_mmgr ();
+	if (mmgr == ASE_NULL) mmgr = ase_getmmgr ();
 	ASE_ASSERT (mmgr != ASE_NULL);
 
 	tgp = ASE_MALLOC (mmgr, ASE_SIZEOF(*tgp));
