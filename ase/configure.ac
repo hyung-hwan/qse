@@ -248,5 +248,5 @@ AC_SUBST(BUILD_JNI, $BUILD_JNI)
 AC_SUBST(CJFLAGS, $CJFLAGS)
 AC_SUBST(BUILD_CJ, $BUILD_CJ)
 
-AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile utl/makefile cmd/awk/makefile cmd/lsp/makefile])
+AC_CONFIG_FILES([makefile cmn/makefile awk/makefile lsp/makefile tgp/makefile utl/makefile cmd/awk/makefile cmd/lsp/makefile])
 AC_OUTPUT
