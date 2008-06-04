@@ -23,7 +23,8 @@ OBJ_FILES = \
 	$(TMP_DIR)/ctype.o \
 	$(TMP_DIR)/stdio.o \
 	$(TMP_DIR)/http.o \
-	$(TMP_DIR)/getopt.o 
+	$(TMP_DIR)/getopt.o \
+	$(TMP_DIR)/assert.c
 
 lib: $(OUT_FILE)
 
@@ -45,6 +46,9 @@ $(TMP_DIR)/http.o: http.c
 
 $(TMP_DIR)/getopt.o: getopt.c
 	$(CC) $(CFLAGS) -o $@ -c getopt.c
+
+$(TMP_DIR)/assert.o: assert.c
+	$(CC) $(CFLAGS) -o $@ -c assert.c
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)

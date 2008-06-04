@@ -1,5 +1,7 @@
 /*
- * $Id: http.c 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: http.c 186 2008-06-03 09:00:14Z baconevi $
+ * 
+ * {License}
  */
 
 #include <ase/utl/http.h>
