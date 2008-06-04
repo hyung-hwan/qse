@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: macros.h 187 2008-06-03 10:14:46Z baconevi $
  *
  * {License}
  */
@@ -79,10 +79,12 @@
 #define ASE_WT(txt)    (L ## txt)
 
 #if defined(ASE_CHAR_IS_MCHAR)
+	#define ASE_Q(val) ASE_MQ(val)
 	#define ASE_C(ch)  ASE_MC(ch)
 	#define ASE_S(str) ASE_MS(str)
 	#define ASE_T(txt) ASE_MT(txt)
 #else
+	#define ASE_Q(val) ASE_WQ(val)
 	#define ASE_C(ch)  ASE_WC(ch)
 	#define ASE_S(str) ASE_WS(str)
 	#define ASE_T(txt) ASE_WT(txt)
@@ -104,7 +106,8 @@
 	extern "C" {
 	#endif
 		void ase_assert_abort (void);
-		void ase_assert_printf (const ase_char_t* fmt, ...);
+		void ase_assert_puts (const ase_char_t* str);
+		/*void ase_assert_printf (const ase_char_t* fmt, ...);*/
 		int ase_assert_failed (
         		const ase_char_t* expr, const ase_char_t* desc,
         		const ase_char_t* file, ase_size_t line);
