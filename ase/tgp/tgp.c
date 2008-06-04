@@ -41,3 +41,14 @@ int ase_tgp_geterrnum (ase_tgp_t* tgp)
 int ase_tgp_read (ase_tgp_t* tgp)
 {
 }
+
+main ()
+{
+	tgp = ase_tgp_open (ASE_NULL);
+
+	ase_tgp_read (tgp, reader);
+	ase_tgp_exec (tgp, reader);
+
+	ase_tgp_close (tgp);
+}
+
