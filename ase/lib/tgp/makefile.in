@@ -1,0 +1,93 @@
+#
+# $Id: makefile.in,v 1.10 2007/10/15 16:15:42 bacon Exp $
+#
+
+NAME = asetgp
+
+TOP_BUILDDIR = @abs_top_builddir@
+TOP_INSTALLDIR = @prefix@/ase
+
+CC = @CC@
+CXX = @CXX@
+AR = @AR@
+RANLIB = @RANLIB@
+
+CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
+CXXFLAGS = @CXXFLAGS@ -I@abs_top_builddir@/..
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+MODE = @BUILDMODE@
+
+CJ = @CJ@
+CJFLAGS = @CJFLAGS@ --classpath=@abs_top_builddir@/.. -fjni 
+BUILD_CJ = @BUILD_CJ@
+
+JAVAC = @JAVAC@
+JAR = @JAR@
+CFLAGS_JNI = @CFLAGS_JNI@
+BUILD_JNI = @BUILD_JNI@
+
+LIBTOOL_COMPILE = ../libtool --mode=compile
+LIBTOOL_LINK = ../libtool --mode=link 
+
+OUT_DIR = ../$(MODE)/lib
+OUT_FILE_LIB = $(OUT_DIR)/lib$(NAME).a
+
+TMP_DIR = $(MODE)
+
+OBJ_FILES_LIB = \
+	$(TMP_DIR)/tgp.o 
+
+OBJ_FILES_SO = $(OBJ_FILES_LIB:.o=.lo) $(OBJ_FILES_JNI:.o=.lo)
+
+lib: build
+
+build: $(OUT_FILE_LIB) 
+
+$(OUT_FILE_LIB): $(TMP_DIR) $(OUT_DIR) $(OBJ_FILES_LIB)
+	$(AR) cr $(OUT_FILE_LIB) $(OBJ_FILES_LIB)
+	if [ ! -z "$(RANLIB)" ]; then $(RANLIB) $(OUT_FILE_LIB); fi
+
+$(TMP_DIR)/tgp.o: tgp.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c tgp.c
+
+$(TMP_DIR)/err.o: err.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c err.c
+
+$(TMP_DIR)/tree.o: tree.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c tree.c
+
+$(TMP_DIR)/tab.o: tab.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c tab.c
+
+$(TMP_DIR)/parse.o: parse.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c parse.c
+
+$(TMP_DIR)/run.o: run.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c run.c
+
+$(TMP_DIR)/rec.o: rec.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c rec.c
+
+$(TMP_DIR)/val.o: val.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c val.c
+
+$(TMP_DIR)/func.o: func.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c func.c
+
+$(TMP_DIR)/misc.o: misc.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c misc.c
+
+$(TMP_DIR)/extio.o: extio.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c extio.c
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
+
+clean:
+	rm -rf $(OUT_FILE_LIB) 
+	rm -rf $(OBJ_FILES_LIB)
+
