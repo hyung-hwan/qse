@@ -26631,7 +26631,7 @@ CJFLAGS=$CJFLAGS
 BUILD_CJ=$BUILD_CJ
 
 
-ac_config_files="$ac_config_files makefile cmn/makefile awk/makefile lsp/makefile tgp/makefile utl/makefile cmd/awk/makefile cmd/lsp/makefile"
+ac_config_files="$ac_config_files makefile lib/cmn/makefile lib/awk/makefile lib/lsp/makefile lib/tgp/makefile lib/utl/makefile cmd/awk/makefile cmd/lsp/makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -27187,11 +27187,11 @@ do
   case $ac_config_target in
     "cmn/conf_unx.h") CONFIG_HEADERS="$CONFIG_HEADERS cmn/conf_unx.h" ;;
     "makefile") CONFIG_FILES="$CONFIG_FILES makefile" ;;
-    "cmn/makefile") CONFIG_FILES="$CONFIG_FILES cmn/makefile" ;;
-    "awk/makefile") CONFIG_FILES="$CONFIG_FILES awk/makefile" ;;
-    "lsp/makefile") CONFIG_FILES="$CONFIG_FILES lsp/makefile" ;;
-    "tgp/makefile") CONFIG_FILES="$CONFIG_FILES tgp/makefile" ;;
-    "utl/makefile") CONFIG_FILES="$CONFIG_FILES utl/makefile" ;;
+    "lib/cmn/makefile") CONFIG_FILES="$CONFIG_FILES lib/cmn/makefile" ;;
+    "lib/awk/makefile") CONFIG_FILES="$CONFIG_FILES lib/awk/makefile" ;;
+    "lib/lsp/makefile") CONFIG_FILES="$CONFIG_FILES lib/lsp/makefile" ;;
+    "lib/tgp/makefile") CONFIG_FILES="$CONFIG_FILES lib/tgp/makefile" ;;
+    "lib/utl/makefile") CONFIG_FILES="$CONFIG_FILES lib/utl/makefile" ;;
     "cmd/awk/makefile") CONFIG_FILES="$CONFIG_FILES cmd/awk/makefile" ;;
     "cmd/lsp/makefile") CONFIG_FILES="$CONFIG_FILES cmd/lsp/makefile" ;;
 
