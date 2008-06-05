@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 158 2008-03-22 13:19:33Z baconevi $
+ * $Id: map.h 182 2008-06-03 08:17:42Z baconevi $
  *
  * {License}
  */

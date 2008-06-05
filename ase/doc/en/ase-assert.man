@@ -11,5 +11,5 @@ These macros requires linking with libaseutl.a unless you define ase_assert_puts
 
 You may define your own output function for assertion output.
 
-Include: ase/cor/macros.h
+Include: ase/cmn/macros.h
 Link: libaseutl.a
