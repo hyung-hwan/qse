@@ -1,0 +1,15 @@
+.title assert
+
+= Assertion ==
+
+The library provides a couple of macros to replace the standard assert macro.
+ASE_ASSERT and ASE_ASSERTX 
+
+These macros requires linking with libaseutl.a unless you define ase_assert_puts yourself.
+
+= ase_assert_puts =
+
+You may define your own output function for assertion output.
+
+Include: ase/cor/macros.h
+Link: libaseutl.a
