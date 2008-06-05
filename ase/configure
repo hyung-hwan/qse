@@ -1902,7 +1902,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-ac_config_headers="$ac_config_headers cmn/conf_unx.h"
+ac_config_headers="$ac_config_headers inc/ase/cmn/conf_unx.h"
 
 ac_aux_dir=
 for ac_dir in config "$srcdir"/config; do
@@ -27185,7 +27185,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "cmn/conf_unx.h") CONFIG_HEADERS="$CONFIG_HEADERS cmn/conf_unx.h" ;;
+    "inc/ase/cmn/conf_unx.h") CONFIG_HEADERS="$CONFIG_HEADERS inc/ase/cmn/conf_unx.h" ;;
     "makefile") CONFIG_FILES="$CONFIG_FILES makefile" ;;
     "lib/cmn/makefile") CONFIG_FILES="$CONFIG_FILES lib/cmn/makefile" ;;
     "lib/awk/makefile") CONFIG_FILES="$CONFIG_FILES lib/awk/makefile" ;;
