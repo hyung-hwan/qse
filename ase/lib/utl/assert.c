@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: assert.c 194 2008-06-06 13:00:39Z baconevi $
  */
 
 #include <ase/cmn/types.h>

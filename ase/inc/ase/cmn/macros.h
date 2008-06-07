@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 187 2008-06-03 10:14:46Z baconevi $
+ * $Id: macros.h 194 2008-06-06 13:00:39Z baconevi $
  *
  * {License}
  */
