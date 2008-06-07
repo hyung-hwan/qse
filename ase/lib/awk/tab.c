@@ -1,10 +1,10 @@
 /*
- * $Id: tab.c 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: tab.c 192 2008-06-06 10:33:44Z baconevi $
  *
  * {License}
  */
 
-#include <ase/awk/awk_i.h>
+#include "awk_i.h"
 
 ase_awk_tab_t* ase_awk_tab_open (ase_awk_tab_t* tab, ase_awk_t* awk)
 {

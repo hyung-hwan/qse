@@ -1,10 +1,10 @@
 /*
- * $Id: misc.c 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: misc.c 192 2008-06-06 10:33:44Z baconevi $
  *
  * {License}
  */
 
-#include <ase/awk/awk_i.h>
+#include "awk_i.h"
 
 void* ase_awk_malloc (ase_awk_t* awk, ase_size_t size)
 {

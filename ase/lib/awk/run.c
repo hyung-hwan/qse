@@ -1,10 +1,10 @@
 /*
- * $Id: run.c 155 2008-03-22 06:47:27Z baconevi $
+ * $Id: run.c 192 2008-06-06 10:33:44Z baconevi $
  *
  * {License}
  */
 
-#include <ase/awk/awk_i.h>
+#include "awk_i.h"
 
 #ifdef DEBUG_RUN
 #include <ase/utl/stdio.h>

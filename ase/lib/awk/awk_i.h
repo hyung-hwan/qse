@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: awk_i.h 192 2008-06-06 10:33:44Z baconevi $
  *
  * {License}
  */
@@ -16,14 +16,14 @@ typedef struct ase_awk_chain_t ase_awk_chain_t;
 typedef struct ase_awk_tree_t ase_awk_tree_t;
 
 #include <ase/awk/awk.h>
-#include <ase/awk/tree.h>
 #include <ase/awk/val.h>
-#include <ase/awk/func.h>
-#include <ase/awk/tab.h>
-#include <ase/awk/parse.h>
-#include <ase/awk/run.h>
-#include <ase/awk/extio.h>
-#include <ase/awk/misc.h>
+#include "tree.h"
+#include "func.h"
+#include "tab.h"
+#include "parse.h"
+#include "run.h"
+#include "extio.h"
+#include "misc.h"
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
