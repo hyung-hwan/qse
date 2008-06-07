@@ -1,10 +1,10 @@
 /*
- * $Id: val.c 156 2008-03-22 12:09:35Z baconevi $
+ * $Id: val.c 192 2008-06-06 10:33:44Z baconevi $
  *
  * {License}
  */
 
-#include <ase/awk/awk_i.h>
+#include "awk_i.h"
 
 #ifdef DEBUG_VAL
 #include <ase/utl/stdio.h>

@@ -4,7 +4,7 @@
 
 NAME = aseawk
 
-TOP_BUILDDIR = @abs_top_builddir@
+TOP_DIR = @abs_top_builddir@
 TOP_INSTALLDIR = @prefix@/ase
 
 CC = @CC@
@@ -12,14 +12,14 @@ CXX = @CXX@
 AR = @AR@
 RANLIB = @RANLIB@
 
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
-CXXFLAGS = @CXXFLAGS@ -I@abs_top_builddir@/..
+CFLAGS = @CFLAGS@ -I$(TOP_DIR)/inc
+CXXFLAGS = @CXXFLAGS@ -I$(TOP_DIR)/inc
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
 CJ = @CJ@
-CJFLAGS = @CJFLAGS@ --classpath=@abs_top_builddir@/.. -fjni 
+CJFLAGS = @CJFLAGS@ --classpath=$(TOP_DIR)/.. -fjni 
 BUILD_CJ = @BUILD_CJ@
 
 JAVAC = @JAVAC@
@@ -27,10 +27,10 @@ JAR = @JAR@
 CFLAGS_JNI = @CFLAGS_JNI@
 BUILD_JNI = @BUILD_JNI@
 
-LIBTOOL_COMPILE = ../libtool --mode=compile
-LIBTOOL_LINK = ../libtool --mode=link 
+LIBTOOL_COMPILE = $(TOP_DIR)/libtool --mode=compile
+LIBTOOL_LINK = $(TOP_DIR)/libtool --mode=link 
 
-OUT_DIR = ../$(MODE)/lib
+OUT_DIR = $(TOP_DIR)/out/$(MODE)/lib
 OUT_FILE_LIB = $(OUT_DIR)/lib$(NAME).a
 OUT_FILE_JNI = $(OUT_DIR)/lib$(NAME)_jni.la
 OUT_FILE_LIB_CXX = $(OUT_DIR)/lib$(NAME)++.a
@@ -188,10 +188,10 @@ $(TMP_DIR)/ase/awk/Argument.class: Argument.java
 $(TMP_DIR)/ase/awk/Clearable.class: Clearable.java
 	$(JAVAC) -classpath ../.. -d $(TMP_DIR) Clearable.java
 
-$(TMP_DIR)/cxx/Awk.o: Awk.cpp Awk.hpp
+$(TMP_DIR)/cxx/Awk.o: Awk.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c Awk.cpp
 
-$(TMP_DIR)/cxx/StdAwk.o: StdAwk.cpp StdAwk.hpp Awk.hpp
+$(TMP_DIR)/cxx/StdAwk.o: StdAwk.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c StdAwk.cpp
 
 $(TMP_DIR)/cj/Awk.o: Awk.java

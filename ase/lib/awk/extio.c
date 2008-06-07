@@ -1,10 +1,10 @@
 /*
- * $Id: extio.c 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: extio.c 192 2008-06-06 10:33:44Z baconevi $
  *
  * {License}
  */
 
-#include <ase/awk/awk_i.h>
+#include "awk_i.h"
 
 enum
 {

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 115 2008-03-03 11:13:15Z baconevi $ 
+ * $Id: awk.c 192 2008-06-06 10:33:44Z baconevi $ 
  *
  * {License}
  */
@@ -9,7 +9,7 @@
 #define Library
 #endif
 
-#include <ase/awk/awk_i.h>
+#include "awk_i.h"
 
 static void free_word (void* awk, void* ptr);
 static void free_afn (void* awk, void* afn);

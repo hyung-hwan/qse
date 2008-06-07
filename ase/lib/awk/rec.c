@@ -1,10 +1,10 @@
 /*
- * $Id: rec.c 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: rec.c 192 2008-06-06 10:33:44Z baconevi $
  *
  * {License}
  */
 
-#include <ase/awk/awk_i.h>
+#include "awk_i.h"
 
 static int split_record (ase_awk_run_t* run);
 static int recomp_record_fields (

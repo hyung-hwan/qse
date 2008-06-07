@@ -1,10 +1,10 @@
 /*
- * $Id: func.c 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: func.c 192 2008-06-06 10:33:44Z baconevi $
  *
  * {License}
  */
 
-#include <ase/awk/awk_i.h>
+#include "awk_i.h"
 
 static int bfn_close   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 static int bfn_fflush  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
