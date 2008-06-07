@@ -19,7 +19,7 @@ LIBS = @LIBS@
 MODE = @BUILDMODE@
 
 CJ = @CJ@
-CJFLAGS = @CJFLAGS@ --classpath=$(TOP_DIR)/.. -fjni 
+CJFLAGS = @CJFLAGS@ --classpath=$(TOP_DIR)/lib -fjni 
 BUILD_CJ = @BUILD_CJ@
 
 JAVAC = @JAVAC@
