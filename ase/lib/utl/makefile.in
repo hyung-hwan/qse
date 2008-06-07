@@ -4,16 +4,19 @@
 
 NAME = aseutl
 
+TOP_DIR = @abs_top_builddir@
+
 CC = @CC@
 AR = @AR@
 MAKE = @MAKE@
 RANLIB = @RANLIB@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@/..
+CFLAGS = @CFLAGS@ -I$(TOP_DIR)/inc
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
-OUT_DIR = ../$(MODE)/lib
+
+OUT_DIR = $(TOP_DIR)/out/$(MODE)/lib
 OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
 TMP_DIR = $(MODE)

@@ -105,10 +105,7 @@
 	#ifdef __cplusplus
 	extern "C" {
 	#endif
-		void ase_assert_abort (void);
-		void ase_assert_puts (const ase_char_t* str);
-		/*void ase_assert_printf (const ase_char_t* fmt, ...);*/
-		int ase_assert_failed (
+		void ase_assert_failed (
         		const ase_char_t* expr, const ase_char_t* desc,
         		const ase_char_t* file, ase_size_t line);
 	#ifdef __cplusplus
