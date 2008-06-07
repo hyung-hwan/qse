@@ -4,8 +4,8 @@
 
 objects = mem.obj,str_bas.obj,str_cnv.obj,str_dyn.obj,map.obj,rex.obj,misc.obj
 
-CFLAGS = /include="../.."
-#CFLAGS = /pointer_size=long /include="../.."
+CFLAGS = /include="../../inc"
+#CFLAGS = /pointer_size=long /include="../../inc"
 LIBRFLAGS = 
 
 asecmn.olb : $(objects)
