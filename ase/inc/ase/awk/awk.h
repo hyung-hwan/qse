@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h 194 2008-06-06 13:00:39Z baconevi $
+ * $Id: awk.h 196 2008-06-08 14:04:16Z baconevi $
  *
  * {License}
  */
@@ -9,10 +9,10 @@
 
 /** 
  * @file awk.h
- * @brief Primary header file for the engine
+ * @brief Define an AWK interpreter
  *  
  * This file defines most of the data types and functions required to embed
- * the interpreter engine.
+ * a AWK interpreter engine.
  */
 
 #include <ase/cmn/types.h>
