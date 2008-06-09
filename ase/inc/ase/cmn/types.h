@@ -1,11 +1,19 @@
 /*
- * $Id: types.h 194 2008-06-06 13:00:39Z baconevi $
+ * $Id: types.h 196 2008-06-08 14:04:16Z baconevi $
  *
  * {License}
  */
 
-#ifndef _ASE_TYPES_H_
-#define _ASE_TYPES_H_
+#ifndef _ASE_CMN_TYPES_H_
+#define _ASE_CMN_TYPES_H_
+
+/**
+ * @file types.h
+ * @brief Define common data types
+ *
+ * This file defines various data types to enhance portability across
+ * different platforms. 
+ */
 
 #if defined(_WIN32)
 	#include <ase/cmn/conf_msw.h>
@@ -23,18 +31,39 @@
 	#error unsupported operating system
 #endif
 
-/* boolean type */
+/** 
+ * @brief a boolean type 
+ * 
+ * This type defines a boolean type as represented
+ * by #ASE_TRUE and #ASE_FALSE.
+ */
 typedef int ase_bool_t;
-#define ase_true  (0 == 0)
-#define ase_false (0 != 0)
+/** Represents a boolean true value */
+#define ASE_TRUE  (0 == 0)
+/** Represents a boolean false value */
+#define ASE_FALSE (0 != 0)
 
-/* tri-state type */
+
+/** 
+ * @brief a tri-state type 
+ *
+ * This type defines a tri-state type as represented 
+ * by ASE_ALIVE, ASE_ZOMBIE, and ASE_DEAD.
+ */
 typedef int ase_tri_t;
-#define ase_alive   1
-#define ase_zombie  0
-#define ase_dead   -1
+#define ASE_ALIVE   1
+#define ASE_ZOMBIE  0
+#define ASE_DEAD   -1
 
-/* integer that can hold a pointer */
+/** 
+ *  @typedef ase_int_t
+ *  @brief a signed integer type that can hold a pointer
+ */
+/**
+ *  @typedef ase_uint_t
+ *  @brief a unsigned integer type that can hold a pointer 
+ */
+
 #if (defined(hpux) || defined(__hpux) || defined(__hpux__)) && (ASE_SIZEOF_VOID_P == ASE_SIZEOF_LONG)
 	typedef long ase_int_t;
 	typedef unsigned long ase_uint_t;
@@ -61,7 +90,15 @@ typedef int ase_tri_t;
 #endif
 
 
-/* the largest integer supported by the system */
+/**
+ *  @typedef ase_long_t
+ *  @brief the largest signed integer type supported by the system
+ */
+/**
+ *  @typedef ase_ulong_t
+ *  @brief the largest unsigned integer type supported by the system
+ */
+
 #if ASE_SIZEOF_LONG_LONG != 0
 	typedef long long ase_long_t;
 	typedef unsigned long long ase_ulong_t;
@@ -73,7 +110,14 @@ typedef int ase_tri_t;
 	typedef unsigned long ase_ulong_t;
 #endif
 
-/* integers of specific size */
+/**
+ *  @typedef ase_int8_t
+ *  @brief an 8-bit signed integer type
+ */
+/**
+ *  @typedef ase_uint8_t
+ *  @brief an 8-bit unsigned integer type
+ */
 #if ASE_SIZEOF_CHAR == 1
 	typedef char ase_int8_t;
 	typedef unsigned char ase_uint8_t;
@@ -82,6 +126,14 @@ typedef int ase_tri_t;
 	typedef unsigned __int8 ase_uint8_t;
 #endif
 
+/**
+ *  @typedef ase_int16_t
+ *  @brief an 16-bit signed integer type
+ */
+/**
+ *  @typedef ase_uint16_t
+ *  @brief an 16-bit unsigned integer type
+ */
 #if ASE_SIZEOF_SHORT == 2
 	typedef short ase_int16_t;
 	typedef unsigned short ase_uint16_t;
@@ -90,6 +142,14 @@ typedef int ase_tri_t;
 	typedef unsigned __int16 ase_uint16_t;
 #endif
 
+/**
+ *  @typedef ase_int32_t
+ *  @brief an 32-bit signed integer type
+ */
+/**
+ *  @typedef ase_uint32_t
+ *  @brief an 32-bit unsigned integer type
+ */
 #if ASE_SIZEOF_INT == 4
 	typedef int ase_int32_t;
 	typedef unsigned int ase_uint32_t;
@@ -101,6 +161,14 @@ typedef int ase_tri_t;
 	typedef unsigned __int32 ase_uint32_t;
 #endif
 
+/**
+ *  @typedef ase_int64_t
+ *  @brief an 64-bit signed integer type
+ */
+/**
+ *  @typedef ase_uint64_t
+ *  @brief an 64-bit unsigned integer type
+ */
 #if ASE_SIZEOF_INT == 8
 	#define ASE_HAVE_INT64_T
 	#define ASE_HAVE_UINT64_T
@@ -145,10 +213,13 @@ typedef int ase_tri_t;
 	typedef unsigned __int128 ase_uint128_t;
 #endif
 
-/* miscellaneous integral types */
+/** an 8-bit unsigned integer type */
 typedef ase_uint8_t ase_byte_t;
+/** an unsigned integer type that can hold a pointer value */
 typedef ase_uint_t  ase_size_t;
+/** an signed integer type that can hold a pointer value */
 typedef ase_int_t   ase_ssize_t;
+/** an integer type identical to ase_uint_t */
 typedef ase_uint_t  ase_word_t;
 
 /* floating-point number */

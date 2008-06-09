@@ -1,11 +1,19 @@
 /*
- * $Id: macros.h 194 2008-06-06 13:00:39Z baconevi $
+ * $Id: macros.h 196 2008-06-08 14:04:16Z baconevi $
  *
  * {License}
  */
 
-#ifndef _ASE_MACROS_H_
-#define _ASE_MACROS_H_
+#ifndef _ASE_CMN_MACROS_H_
+#define _ASE_CMN_MACROS_H_
+
+/**
+ * @file macros.h
+ * @brief Define common macros
+ *
+ * This file defines various macros for assertion, memory allocation, 
+ * data type manipulation, etc.
+ */
 
 #include <ase/cmn/types.h>
 
@@ -33,6 +41,10 @@
 	((type)((type)1 << (ASE_SIZEOF(type) * 8 - 1)))
 #define ASE_TYPE_UNSIGNED_MIN(type) ((type)0)
 
+/** 
+ * @define ASE_TYPE_MAX(type)
+ * @brief Get the maximum value \a type can hold 
+ */
 #define ASE_TYPE_MAX(type) \
 	((ASE_TYPE_IS_SIGNED(type)? ASE_TYPE_SIGNED_MAX(type): ASE_TYPE_UNSIGNED_MAX(type)))
 #define ASE_TYPE_MIN(type) \
