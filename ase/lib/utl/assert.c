@@ -1,5 +1,5 @@
 /*
- * $Id: assert.c 200 2008-06-09 06:49:17Z baconevi $
+ * $Id: assert.c 201 2008-06-09 06:57:20Z baconevi $
  */
 
 #include <ase/cmn/types.h>
@@ -14,21 +14,16 @@ void ase_assert_failed (
 	const ase_char_t* expr, const ase_char_t* desc, 
 	const ase_char_t* file, ase_size_t line)
 {
-	if (desc == ASE_NULL)
-	{
-		ase_fprintf (
-			ASE_STDERR,
-			ASE_T("ASSERTION FAILURE AT FILE %s LINE %lu\n%s\n"),
-			file, (unsigned long)line, expr);
-	}
-	else
-	{
-		ase_fprintf (
-			ASE_STDERR,
-			ASE_T("ASSERTION FAILURE AT FILE %s LINE %lu\n%s\n\nDESCRIPTION:\n%s\n"),
-			file, (unsigned long)line, expr, desc);
+	ase_fprintf (ASE_STDERR, ASE_T("=[ASSERTION FAILURE]============================================================"));
+	ase_fprintf (ASE_STDERR, ASE_T("FILE %s LINE %lu: %s\n"),
+		file, (unsigned long)line, expr);
 
+	if (desc != ASE_NULL)
+	{
+		ase_fprintf (ASE_STDERR, ASE_T("DESCRIPTION: %s\n"),
+			file, (unsigned long)line, expr, desc);
 	}
+	ase_fprintf (ASE_STDERR, ASE_T("================================================================================"));
 
 	abort ();
 }
