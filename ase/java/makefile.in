@@ -1,0 +1,98 @@
+#
+# $Id: makefile.in,v 1.6 2007/11/11 15:06:47 bacon Exp $
+#
+
+TOP_DIR = @abs_top_builddir@
+CC = @CC@
+CXX = @CXX@
+CFLAGS = @CFLAGS@ -I$(TOP_DIR)/inc
+CXXFLAGS = @CXXFLAGS@ -I$(TOP_DIR)/inc
+LDFLAGS = @LDFLAGS@ -L$(TOP_DIR)/out/@BUILDMODE@/lib
+LIBS = @LIBS@ -laseawk -lasecmn -laseutl -lm
+LIBS_CXX = -laseawk++ ${LIBS} 
+LIBS_CJ = -laseawkja
+MODE = @BUILDMODE@
+
+STRIP = @STRIP@
+
+CJ = @CJ@
+CJFLAGS = @CJFLAGS@ --classpath=$(TOP_DIR)/..:. -fjni
+BUILD_CJ = @BUILD_CJ@
+
+JAVAC = @JAVAC@
+JAR = @JAR@
+CFLAGS_JNI = @CFLAGS_JNI@
+BUILD_JNI = @BUILD_JNI@
+
+AR = ar
+
+OUT_DIR= $(TOP_DIR)/out/$(MODE)
+OUT_DIR_LIB = $(OUT_DIR)/lib
+OUT_DIR_BIN = $(OUT_DIR)/cmd
+TMP_DIR = $(MODE)
+
+ASEAWK_LIB = 
+
+all: build$(BUILD_JNI)$(BUILD_CJ)
+
+build: $(TMP_DIR) $(OUT_DIR_BIN) $(OUT_DIR_BIN)/aseawk $(OUT_DIR_BIN)/aseawk++
+
+buildjnicj: buildjni buildcj
+	
+buildjni: build $(OUT_DIR_BIN)/aseawk.jar $(OUT_DIR)/AseAwkApplet.html $(OUT_DIR)/AseAwkApplet.js 
+
+buildcj: build $(OUT_DIR_BIN)/aseawkja
+
+$(OUT_DIR_BIN)/aseawk: awk.c
+	$(CC) $(CFLAGS) -o $@ awk.c $(LDFLAGS) $(LIBS)
+	$(STRIP) $@
+
+$(OUT_DIR_BIN)/aseawk++: Awk.cpp
+	$(CXX) $(CXXFLAGS) -o $@ Awk.cpp $(LDFLAGS) $(LIBS_CXX)
+	$(STRIP) $@
+
+$(OUT_DIR_BIN)/aseawkja: $(TMP_DIR)/cj AseAwk.java AseAwkPanel.java AseAwkApplet.java
+	$(CJ) $(CJFLAGS) -o $(TMP_DIR)/cj/AseAwk.o -c AseAwk.java 
+	$(CJ) $(CJFLAGS) -o $(TMP_DIR)/cj/AseAwkPanel.o -c AseAwkPanel.java 
+	$(CJ) $(CJFLAGS) -o $(TMP_DIR)/cj/AseAwkApplet.o -c AseAwkApplet.java 
+	mkdir -p $(TMP_DIR)/cj/lib
+	cd $(TMP_DIR)/cj/lib; $(AR) xv @abs_top_builddir@/@BUILDMODE@/lib/libaseawkja.a
+	$(CJ) --main=AseAwk -o $@ $(TMP_DIR)/cj/*.o $(TMP_DIR)/cj/lib/*.o
+	rm -rf $(TMP_DIR)/cj/lib
+	# Linking with the library seems to cause the resulting program
+	# to crash for some JNI operations. Correct me if I'm wrong.
+	#$(CJ) --main=AseAwk -o $@ $(TMP_DIR)/cj/*.o $(LDFLAGS) $(LIBS_CJ)
+
+$(OUT_DIR_BIN)/aseawk.jar: $(TMP_DIR)/AseAwkPanel.class $(TMP_DIR)/AseAwk.class $(TMP_DIR)/AseAwkApplet.class
+	cd $(TMP_DIR); $(JAR) -xvf ../$(OUT_DIR_LIB)/aseawk.jar 
+	cd $(TMP_DIR); $(JAR) -cvfm ../$@ ../manifest *.class ase
+	rm -rf $(TMP_DIR)/ase
+
+$(TMP_DIR)/AseAwkPanel.class: AseAwkPanel.java 
+	$(JAVAC) -classpath $(TMP_DIR):$(OUT_DIR_LIB)/aseawk.jar -d $(TMP_DIR) AseAwkPanel.java
+
+$(TMP_DIR)/AseAwk.class: AseAwk.java
+	$(JAVAC) -classpath $(TMP_DIR):$(OUT_DIR_LIB)/aseawk.jar -d $(TMP_DIR) AseAwk.java
+
+$(TMP_DIR)/AseAwkApplet.class: AseAwkApplet.java 
+	$(JAVAC) -classpath $(TMP_DIR):$(OUT_DIR_LIB)/aseawk.jar -d $(TMP_DIR) AseAwkApplet.java
+
+$(OUT_DIR)/AseAwkApplet.html: AseAwkApplet.html
+	cp -pf AseAwkApplet.html $(OUT_DIR)
+
+$(OUT_DIR)/AseAwkApplet.js: AseAwkApplet.js
+	cp -pf AseAwkApplet.js $(OUT_DIR)
+
+$(OUT_DIR_BIN):
+	mkdir -p $(OUT_DIR_BIN)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
+
+$(TMP_DIR)/cj:
+	mkdir -p $(TMP_DIR)/cj
+
+clean:
+	rm -rf $(OUT_DIR_BIN)/aseawk $(OUT_DIR_BIN)/aseawk++ $(OUT_DIR_BIN)/aseawkja
+	rm -rf $(OUT_DIR_BIN)/aseawk.jar $(OUT_DIR)/AseAwkApplet.html $(OUT_DIR)/AseAwkApplet.js $(TMP_DIR)/*.class
+
