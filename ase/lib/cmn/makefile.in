@@ -6,6 +6,9 @@ NAME = asecmn
 
 TOP_DIR = @abs_top_builddir@
 
+PREFIX = @prefix@
+LIBDIR = $(PREFIX)/lib
+
 CC = @CC@
 AR = @AR@
 MAKE = @MAKE@
@@ -15,8 +18,11 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
+LIBTOOL_COMPILE = $(TOP_DIR)/libtool --mode=compile
+LIBTOOL_LINK = $(TOP_DIR)/libtool --mode=link
+
 OUT_DIR = $(TOP_DIR)/out/$(MODE)/lib
-OUT_FILE = $(OUT_DIR)/lib$(NAME).a
+OUT_FILE = $(OUT_DIR)/lib$(NAME).la
 
 TMP_DIR = $(MODE)
 
@@ -29,32 +35,35 @@ OBJ_FILES = \
 	$(TMP_DIR)/rex.o \
 	$(TMP_DIR)/misc.o 
 
+OBJ_FILES_SO = $(OBJ_FILES:.o=.lo)
+
 lib: $(OUT_FILE)
 
 $(OUT_FILE): $(TMP_DIR) $(OBJ_FILES) $(OUT_DIR)
-	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
-	if [ ! -z "$(RANLIB)" ]; then $(RANLIB) $(OUT_FILE); fi
+	#$(AR) cr $(OUT_FILE) $(OBJ_FILES)
+	$(LIBTOOL_LINK) $(CC) -rpath $(LIBDIR) -version-info 1:0:0 -o $@ $(OBJ_FILES_SO) -L$(OUT_DIR) 
+	#[ -n "$(RANLIB)" ] && $(RANLIB) $(OUT_FILE)
 	
 $(TMP_DIR)/mem.o: mem.c
-	$(CC) $(CFLAGS) -o $@ -c mem.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c mem.c
 
 $(TMP_DIR)/str_bas.o: str_bas.c
-	$(CC) $(CFLAGS) -o $@ -c str_bas.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c str_bas.c
 
 $(TMP_DIR)/str_cnv.o: str_cnv.c
-	$(CC) $(CFLAGS) -o $@ -c str_cnv.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c str_cnv.c
 
 $(TMP_DIR)/str_dyn.o: str_dyn.c
-	$(CC) $(CFLAGS) -o $@ -c str_dyn.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c str_dyn.c
 
 $(TMP_DIR)/map.o: map.c
-	$(CC) $(CFLAGS) -o $@ -c map.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c map.c
 
 $(TMP_DIR)/rex.o: rex.c
-	$(CC) $(CFLAGS) -o $@ -c rex.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c rex.c
 
 $(TMP_DIR)/misc.o: misc.c
-	$(CC) $(CFLAGS) -o $@ -c misc.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c misc.c
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
@@ -63,5 +72,5 @@ $(TMP_DIR):
 	mkdir -p $(TMP_DIR)
 
 clean:
-	rm -rf $(OUT_FILE) $(OBJ_FILES)
+	rm -rf $(OUT_FILE) $(OBJ_FILES) $(OBJ_FILES_SO)
 
