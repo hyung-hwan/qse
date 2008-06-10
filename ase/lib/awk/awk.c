@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 192 2008-06-06 10:33:44Z baconevi $ 
+ * $Id: awk.c 197 2008-06-09 06:24:10Z baconevi $ 
  *
  * {License}
  */
@@ -166,7 +166,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	awk->option = 0;
 	awk->errnum = ASE_AWK_ENOERR;
 	awk->errlin = 0;
-	awk->stopall = ase_false;
+	awk->stopall = ASE_FALSE;
 
 	awk->parse.nlocals_max = 0;
 
@@ -304,7 +304,7 @@ int ase_awk_close (ase_awk_t* awk)
 
 int ase_awk_clear (ase_awk_t* awk)
 {
-	awk->stopall = ase_false;
+	awk->stopall = ASE_FALSE;
 
 	ase_memset (&awk->src.ios, 0, ASE_SIZEOF(awk->src.ios));
 	awk->src.lex.curc = ASE_CHAR_EOF;
@@ -397,7 +397,7 @@ void* ase_awk_getcustomdata (ase_awk_t* awk)
 
 void ase_awk_stopall (ase_awk_t* awk)
 {
-	awk->stopall = ase_true;
+	awk->stopall = ASE_TRUE;
 }
 
 int ase_awk_getword (ase_awk_t* awk, 

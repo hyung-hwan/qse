@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: extio.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -140,8 +140,8 @@ int ase_awk_readextio (
 		p->in.buf[0] = ASE_T('\0');
 		p->in.pos = 0;
 		p->in.len = 0;
-		p->in.eof = ase_false;
-		p->in.eos = ase_false;
+		p->in.eof = ASE_FALSE;
+		p->in.eos = ASE_FALSE;
 
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
 
@@ -172,7 +172,7 @@ int ase_awk_readextio (
 		 * entire pattern-block matching and exeuction. */
 		if (x == 0) 
 		{
-			p->in.eos = ase_true;
+			p->in.eos = ASE_TRUE;
 			return 0;
 		}
 	}
@@ -245,7 +245,7 @@ int ase_awk_readextio (
 
 			if (n == 0) 
 			{
-				p->in.eof = ase_true;
+				p->in.eof = ASE_TRUE;
 
 				if (ASE_STR_LEN(buf) == 0) ret = 0;
 				else if (rs_len >= 2)
@@ -494,8 +494,8 @@ int ase_awk_writeextio_str (
 		p->next = ASE_NULL;
 		p->custom_data = run->extio.custom_data;
 
-		p->out.eof = ase_false;
-		p->out.eos = ase_false;
+		p->out.eof = ASE_FALSE;
+		p->out.eos = ASE_FALSE;
 
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
 		n = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
@@ -521,7 +521,7 @@ int ase_awk_writeextio_str (
 		 * entire pattern-block matching and exeuction. */
 		if (n == 0) 
 		{
-			p->out.eos = ase_true;
+			p->out.eos = ASE_TRUE;
 			return 0;
 		}
 	}
@@ -553,7 +553,7 @@ int ase_awk_writeextio_str (
 
 		if (n == 0) 
 		{
-			p->out.eof = ase_true;
+			p->out.eof = ASE_TRUE;
 			return 0;
 		}
 
@@ -571,7 +571,7 @@ int ase_awk_flushextio (
 	ase_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask;
 	ase_ssize_t n;
-	ase_bool_t ok = ase_false;
+	ase_bool_t ok = ASE_FALSE;
 
 	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
 	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
@@ -606,7 +606,7 @@ int ase_awk_flushextio (
 				return -1;
 			}
 
-			ok = ase_true;
+			ok = ASE_TRUE;
 		}
 
 		p = p->next;
@@ -680,14 +680,14 @@ int ase_awk_nextextio_read (
 		/* the next stream cannot be opened. 
 		 * set the eos flags so that the next call to nextextio_read
 		 * will return 0 without executing the handler */
-		p->in.eos = ase_true;
+		p->in.eos = ASE_TRUE;
 		return 0;
 	}
 	else 
 	{
 		/* as the next stream has been opened successfully,
 		 * the eof flag should be cleared if set */
-		p->in.eof = ase_false;
+		p->in.eof = ASE_FALSE;
 
 		/* also the previous input buffer must be reset */
 		p->in.pos = 0;
@@ -758,14 +758,14 @@ int ase_awk_nextextio_write (
 		/* the next stream cannot be opened. 
 		 * set the eos flags so that the next call to nextextio_write
 		 * will return 0 without executing the handler */
-		p->out.eos = ase_true;
+		p->out.eos = ASE_TRUE;
 		return 0;
 	}
 	else 
 	{
 		/* as the next stream has been opened successfully,
 		 * the eof flag should be cleared if set */
-		p->out.eof = ase_false;
+		p->out.eof = ASE_FALSE;
 		return 1;
 	}
 }

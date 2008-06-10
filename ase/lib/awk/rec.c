@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: rec.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -22,15 +22,15 @@ int ase_awk_setrec (
 		if (str == ASE_STR_BUF(&run->inrec.line) &&
 		    len == ASE_STR_LEN(&run->inrec.line))
 		{
-			if (ase_awk_clrrec (run, ase_true) == -1) return -1;
+			if (ase_awk_clrrec (run, ASE_TRUE) == -1) return -1;
 		}
 		else
 		{
-			if (ase_awk_clrrec (run, ase_false) == -1) return -1;
+			if (ase_awk_clrrec (run, ASE_FALSE) == -1) return -1;
 
 			if (ase_str_ncpy (&run->inrec.line, str, len) == (ase_size_t)-1)
 			{
-				ase_awk_clrrec (run, ase_false);
+				ase_awk_clrrec (run, ASE_FALSE);
 				ase_awk_setrunerror (
 					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 				return -1;
@@ -40,7 +40,7 @@ int ase_awk_setrec (
 		v = ase_awk_makestrval (run, str, len);
 		if (v == ASE_NULL)
 		{
-			ase_awk_clrrec (run, ase_false);
+			ase_awk_clrrec (run, ASE_FALSE);
 			return -1;
 		}
 
@@ -52,7 +52,7 @@ int ase_awk_setrec (
 
 		if (split_record (run) == -1) 
 		{
-			ase_awk_clrrec (run, ase_false);
+			ase_awk_clrrec (run, ASE_FALSE);
 			return -1;
 		}
 	}
@@ -60,7 +60,7 @@ int ase_awk_setrec (
 	{
 		if (recomp_record_fields (run, idx, str, len) == -1)
 		{
-			ase_awk_clrrec (run, ase_false);
+			ase_awk_clrrec (run, ASE_FALSE);
 			return -1;
 		}
 	
@@ -70,7 +70,7 @@ int ase_awk_setrec (
 			ASE_STR_LEN(&run->inrec.line));
 		if (v == ASE_NULL)
 		{
-			ase_awk_clrrec (run, ase_false);
+			ase_awk_clrrec (run, ASE_FALSE);
 			return -1;
 		}
 

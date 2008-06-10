@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: run.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -927,7 +927,7 @@ static void deinit_run (ase_awk_run_t* run)
 	/* destroy input record. ase_awk_clrrec should be called
 	 * before the run stack has been destroyed because it may try
 	 * to change the value to ASE_AWK_GLOBAL_NF. */
-	ase_awk_clrrec (run, ase_false);  
+	ase_awk_clrrec (run, ASE_FALSE);  
 	if (run->inrec.flds != ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, run->inrec.flds);
@@ -955,19 +955,19 @@ static void deinit_run (ase_awk_run_t* run)
 	while (run->fcache_count > 0)
 	{
 		ase_awk_val_ref_t* tmp = run->fcache[--run->fcache_count];
-		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
+		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ASE_FALSE);
 	}
 
 	/*while (run->scache32_count > 0)
 	{
 		ase_awk_val_str_t* tmp = run->scache32[--run->scache32_count];
-		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
+		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ASE_FALSE);
 	}
 
 	while (run->scache64_count > 0)
 	{
 		ase_awk_val_str_t* tmp = run->scache64[--run->scache64_count];
-		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ase_false);
+		ase_awk_freeval (run, (ase_awk_val_t*)tmp, ASE_FALSE);
 	}*/
 
 	ase_awk_freevalchunk (run, run->vmgr.ichunk);
@@ -1577,7 +1577,7 @@ static int run_pattern_blocks (ase_awk_run_t* run)
 
 	run->inrec.buf_pos = 0;
 	run->inrec.buf_len = 0;
-	run->inrec.eof = ase_false;
+	run->inrec.eof = ASE_FALSE;
 
 	/* run each pattern block */
 	while (run->exit_level < EXIT_GLOBAL)
@@ -5101,7 +5101,7 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			if (res2 == ASE_NULL)
 			{
 				ase_awk_refdownval (run, left);
-				ase_awk_freeval (run, res, ase_true);
+				ase_awk_freeval (run, res, ASE_TRUE);
 				/* adjust error line */
 				run->errlin = nde->line;
 				return ASE_NULL;
@@ -5123,7 +5123,7 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			if (res2 == ASE_NULL)
 			{
 				ase_awk_refdownval (run, left);
-				ase_awk_freeval (run, res, ase_true);
+				ase_awk_freeval (run, res, ASE_TRUE);
 				/* adjust error line */
 				run->errlin = nde->line;
 				return ASE_NULL;
@@ -5163,7 +5163,7 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 				if (res2 == ASE_NULL)
 				{
 					ase_awk_refdownval (run, left);
-					ase_awk_freeval (run, res, ase_true);
+					ase_awk_freeval (run, res, ASE_TRUE);
 					/* adjust error line */
 					run->errlin = nde->line;
 					return ASE_NULL;
@@ -5185,7 +5185,7 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 				if (res2 == ASE_NULL)
 				{
 					ase_awk_refdownval (run, left);
-					ase_awk_freeval (run, res, ase_true);
+					ase_awk_freeval (run, res, ASE_TRUE);
 					/* adjust error line */
 					run->errlin = nde->line;
 					return ASE_NULL;
@@ -5211,7 +5211,7 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			if (res2 == ASE_NULL)
 			{
 				ase_awk_refdownval (run, left);
-				ase_awk_freeval (run, res, ase_true);
+				ase_awk_freeval (run, res, ASE_TRUE);
 				/* adjust error line */
 				run->errlin = nde->line;
 				return ASE_NULL;
@@ -5233,7 +5233,7 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			if (res2 == ASE_NULL)
 			{
 				ase_awk_refdownval (run, left);
-				ase_awk_freeval (run, res, ase_true);
+				ase_awk_freeval (run, res, ASE_TRUE);
 				/* adjust error line */
 				run->errlin = nde->line;
 				return ASE_NULL;
@@ -5273,7 +5273,7 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 				if (res2 == ASE_NULL)
 				{
 					ase_awk_refdownval (run, left);
-					ase_awk_freeval (run, res, ase_true);
+					ase_awk_freeval (run, res, ASE_TRUE);
 					/* adjust error line */
 					run->errlin = nde->line;
 					return ASE_NULL;
@@ -5295,7 +5295,7 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 				if (res2 == ASE_NULL)
 				{
 					ase_awk_refdownval (run, left);
-					ase_awk_freeval (run, res, ase_true);
+					ase_awk_freeval (run, res, ASE_TRUE);
 					/* adjust error line */
 					run->errlin = nde->line;
 					return ASE_NULL;
@@ -6318,13 +6318,13 @@ static int read_record (ase_awk_run_t* run)
 {
 	ase_ssize_t n;
 
-	if (ase_awk_clrrec (run, ase_false) == -1) return -1;
+	if (ase_awk_clrrec (run, ASE_FALSE) == -1) return -1;
 
 	n = ase_awk_readextio (
 		run, ASE_AWK_IN_CONSOLE, ASE_T(""), &run->inrec.line);
 	if (n <= -1) 
 	{
-		ase_awk_clrrec (run, ase_false);
+		ase_awk_clrrec (run, ASE_FALSE);
 		return -1;
 	}
 
@@ -6602,7 +6602,7 @@ ase_char_t* ase_awk_format (
 	for (i = 0; i < fmt_len; i++)
 	{
 		ase_long_t width = -1, prec = -1;
-		ase_bool_t minus = ase_false;
+		ase_bool_t minus = ASE_FALSE;
 
 		if (ASE_STR_LEN(fbu) == 0)
 		{
@@ -6616,7 +6616,7 @@ ase_char_t* ase_awk_format (
 		        fmt[i] == ASE_T('0') || fmt[i] == ASE_T('+') ||
 		        fmt[i] == ASE_T('-')))
 		{
-			if (fmt[i] == ASE_T('-')) minus = ase_true;
+			if (fmt[i] == ASE_T('-')) minus = ASE_TRUE;
 			FMT_CHAR (fmt[i]); i++;
 		}
 

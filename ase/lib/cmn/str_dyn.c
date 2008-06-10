@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 141 2008-03-18 04:09:04Z baconevi $
+ * $Id: str_dyn.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -14,9 +14,9 @@ ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr)
 		str = (ase_str_t*) 
 			ASE_MALLOC (mmgr, ASE_SIZEOF(ase_str_t));
 		if (str == ASE_NULL) return ASE_NULL;
-		str->__dynamic = ase_true;
+		str->__dynamic = ASE_TRUE;
 	}
-	else str->__dynamic = ase_false;
+	else str->__dynamic = ASE_FALSE;
 
 	str->mmgr = mmgr;
 	str->buf = (ase_char_t*) ASE_MALLOC (
