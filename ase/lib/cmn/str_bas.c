@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 159 2008-04-01 08:37:30Z baconevi $
+ * $Id: str_bas.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -305,7 +305,7 @@ ase_char_t* ase_strxnstr (
 		const ase_char_t* x = str;
 		const ase_char_t* y = sub;
 
-		while (ase_true) 
+		while (1)
 		{
 			if (y >= subp) return (ase_char_t*)str;
 			if (*x != *y) break;

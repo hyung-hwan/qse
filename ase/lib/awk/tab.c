@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: tab.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -13,9 +13,9 @@ ase_awk_tab_t* ase_awk_tab_open (ase_awk_tab_t* tab, ase_awk_t* awk)
 		tab = (ase_awk_tab_t*) ASE_AWK_MALLOC (
 			awk, ASE_SIZEOF(ase_awk_tab_t));
 		if (tab == ASE_NULL) return ASE_NULL;
-		tab->__dynamic = ase_true;
+		tab->__dynamic = ASE_TRUE;
 	}
-	else tab->__dynamic = ase_false;
+	else tab->__dynamic = ASE_FALSE;
 
 	tab->awk = awk;
 	tab->buf = ASE_NULL;

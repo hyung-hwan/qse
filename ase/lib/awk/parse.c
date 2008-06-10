@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: parse.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -703,7 +703,7 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 
 		awk->parse.id.block = PARSE_ACTION_BLOCK;
 		if (parse_pattern_block (
-			awk, ASE_NULL, ase_false) == ASE_NULL) return ASE_NULL;
+			awk, ASE_NULL, ASE_FALSE) == ASE_NULL) return ASE_NULL;
 	}
 	else
 	{
@@ -756,7 +756,7 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
 			if (parse_pattern_block (
-				awk, ptn, ase_true) == ASE_NULL) 
+				awk, ptn, ASE_TRUE) == ASE_NULL) 
 			{
 				ase_awk_clrpt (awk, ptn);
 				return ASE_NULL;	
@@ -795,7 +795,7 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
 			if (parse_pattern_block (
-				awk, ptn, ase_false) == ASE_NULL) 
+				awk, ptn, ASE_FALSE) == ASE_NULL) 
 			{
 				ase_awk_clrpt (awk, ptn);
 				return ASE_NULL;	
@@ -1047,7 +1047,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	awk->tree.cur_afn.len = name_len;
 
 	/* actual function body */
-	body = awk->parse.parse_block (awk, awk->token.prev.line, ase_true);
+	body = awk->parse.parse_block (awk, awk->token.prev.line, ASE_TRUE);
 
 	/* clear the current function name remembered */
 	awk->tree.cur_afn.ptr = ASE_NULL;
@@ -1111,7 +1111,7 @@ static ase_awk_nde_t* parse_begin (ase_awk_t* awk)
 	ASE_ASSERT (MATCH(awk,TOKEN_LBRACE));
 
 	if (get_token(awk) == -1) return ASE_NULL; 
-	nde = awk->parse.parse_block (awk, awk->token.prev.line, ase_true);
+	nde = awk->parse.parse_block (awk, awk->token.prev.line, ASE_TRUE);
 	if (nde == ASE_NULL) return ASE_NULL;
 
 	if (awk->tree.begin == ASE_NULL)
@@ -1135,7 +1135,7 @@ static ase_awk_nde_t* parse_end (ase_awk_t* awk)
 	ASE_ASSERT (MATCH(awk,TOKEN_LBRACE));
 
 	if (get_token(awk) == -1) return ASE_NULL; 
-	nde = awk->parse.parse_block (awk, awk->token.prev.line, ase_true);
+	nde = awk->parse.parse_block (awk, awk->token.prev.line, ASE_TRUE);
 	if (nde == ASE_NULL) return ASE_NULL;
 
 	if (awk->tree.end == ASE_NULL)
@@ -1163,7 +1163,7 @@ static ase_awk_chain_t* parse_pattern_block (
 	{
 		ASE_ASSERT (MATCH(awk,TOKEN_LBRACE));
 		if (get_token(awk) == -1) return ASE_NULL; 
-		nde = awk->parse.parse_block (awk, line, ase_true);
+		nde = awk->parse.parse_block (awk, line, ASE_TRUE);
 		if (nde == ASE_NULL) return ASE_NULL;
 	}
 
@@ -1633,7 +1633,7 @@ static ase_awk_t* collect_locals (
 		#if 0
 		if (awk->option & ASE_AWK_UNIQUEFN) 
 		{
-			ase_bool_t iscur = ase_false;
+			ase_bool_t iscur = ASE_FALSE;
 		#endif
 
 			/* check if it conflict with a builtin function name 
@@ -1787,7 +1787,7 @@ static ase_awk_nde_t* parse_statement (ase_awk_t* awk, ase_size_t line)
 	{
 		if (get_token(awk) == -1) return ASE_NULL; 
 		nde = awk->parse.parse_block (
-			awk, awk->token.prev.line, ase_false);
+			awk, awk->token.prev.line, ASE_FALSE);
 	}
 	else 
 	{
@@ -2088,14 +2088,14 @@ static ase_awk_nde_t* parse_binary_expr (
 	while (1) 
 	{
 		const binmap_t* p = binmap;
-		ase_bool_t matched = ase_false;
+		ase_bool_t matched = ASE_FALSE;
 
 		while (p->token != TOKEN_EOF)
 		{
 			if (MATCH(awk,p->token)) 
 			{
 				opcode = p->binop;
-				matched = ase_true;
+				matched = ASE_TRUE;
 				break;
 			}
 			p++;
@@ -3271,7 +3271,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			if (awk->option & ASE_AWK_UNIQUEFN)
 			{
 			#endif
-				ase_bool_t iscur = ase_false;
+				ase_bool_t iscur = ASE_FALSE;
 
 				/* the name should not conflict with a function name */
 				/* check if it is a builtin function */
@@ -3453,7 +3453,7 @@ static ase_awk_nde_t* parse_hashidx (
 		if (awk->option & ASE_AWK_UNIQUEFN) 
 		{
 		#endif
-			ase_bool_t iscur = ase_false;
+			ase_bool_t iscur = ASE_FALSE;
 
 			/* check if it is a builtin function */
 			if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
@@ -5072,7 +5072,7 @@ static int get_charstr (ase_awk_t* awk)
 		 * has been called */
 		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
 	}
-	return get_string (awk, ASE_T('\"'), ASE_T('\\'), ase_false);
+	return get_string (awk, ASE_T('\"'), ASE_T('\\'), ASE_FALSE);
 }
 
 static int get_rexstr (ase_awk_t* awk)
@@ -5087,7 +5087,7 @@ static int get_rexstr (ase_awk_t* awk)
 	else 
 	{
 		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
-		return get_string (awk, ASE_T('/'), ASE_T('\\'), ase_true);
+		return get_string (awk, ASE_T('/'), ASE_T('\\'), ASE_TRUE);
 	}
 }
 

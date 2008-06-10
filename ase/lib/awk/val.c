@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: val.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -613,7 +613,7 @@ void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
 	val->ref--;
 	if (val->ref <= 0) 
 	{
-		ase_awk_freeval(run, val, ase_true);
+		ase_awk_freeval(run, val, ASE_TRUE);
 	}
 }
 
@@ -638,12 +638,12 @@ void ase_awk_freevalchunk (ase_awk_run_t* run, ase_awk_val_chunk_t* chunk)
 
 ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
 {
-	if (val == ASE_NULL) return ase_false;
+	if (val == ASE_NULL) return ASE_FALSE;
 
 	switch (val->type)
 	{
 		case ASE_AWK_VAL_NIL:
-			return ase_false;
+			return ASE_FALSE;
 		case ASE_AWK_VAL_INT:
 			return ((ase_awk_val_int_t*)val)->val != 0;
 		case ASE_AWK_VAL_REAL:
@@ -653,15 +653,15 @@ ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
 		case ASE_AWK_VAL_REX: /* TODO: is this correct? */
 			return ((ase_awk_val_rex_t*)val)->len > 0;
 		case ASE_AWK_VAL_MAP:
-			return ase_false; /* TODO: is this correct? */
+			return ASE_FALSE; /* TODO: is this correct? */
 		case ASE_AWK_VAL_REF:
-			return ase_false; /* TODO: is this correct? */
+			return ASE_FALSE; /* TODO: is this correct? */
 	}
 
 	ASE_ASSERTX (
 		!"should never happen - invalid value type",
 		"the type of a value should be one of ASE_AWK_VAL_XXX's defined in val.h");
-	return ase_false;
+	return ASE_FALSE;
 }
 
 ase_char_t* ase_awk_valtostr (

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 154 2008-03-21 13:02:20Z baconevi $
+ * $Id: rex.c 197 2008-06-09 06:24:10Z baconevi $
  *
  * {License}
  */
@@ -293,7 +293,7 @@ void* ase_buildrex (
 
 	builder.ptn.curc.type = CT_EOF;
 	builder.ptn.curc.value = ASE_T('\0');
-	builder.ptn.curc.escaped = ase_false;
+	builder.ptn.curc.escaped = ASE_FALSE;
 
 	builder.depth.max = depth;
 	builder.depth.cur = 0;
@@ -356,7 +356,7 @@ int ase_matchrex (
 	matcher.depth.cur = 0;
 	matcher.ignorecase = (option & ASE_REX_IGNORECASE)? 1: 0;
 
-	mat.matched = ase_false;
+	mat.matched = ASE_FALSE;
 	/* TODO: should it allow an offset here??? */
 	mat.match_ptr = str + offset;
 
@@ -420,7 +420,7 @@ ase_bool_t ase_isemptyrex (void* code)
 	 *  |                | branch header |
 	 *  | NB(1) | EL(16) | NA(1) | BL(8) | */
 	return (rhdr->nb == 1 && 
-	        rhdr->el == ASE_SIZEOF(ase_size_t)*4)? ase_true: ase_false;
+	        rhdr->el == ASE_SIZEOF(ase_size_t)*4)? ASE_TRUE: ASE_FALSE;
 }
 
 static int build_pattern (builder_t* builder)
@@ -684,7 +684,7 @@ static int build_charset (builder_t* builder, code_t* cmd)
 		c2 = c1;
 		if (builder->ptn.curc.type == CT_NORMAL &&
 		    builder->ptn.curc.value == ASE_T('-') && 
-		    builder->ptn.curc.escaped == ase_false)
+		    builder->ptn.curc.escaped == ASE_FALSE)
 		{
 			NEXT_CHAR (builder, LEVEL_CHARSET);
 
@@ -926,13 +926,13 @@ static int next_char (builder_t* builder, int level)
 	{
 		builder->ptn.curc.type = CT_EOF;
 		builder->ptn.curc.value = ASE_T('\0');
-		builder->ptn.curc.escaped = ase_false;
+		builder->ptn.curc.escaped = ASE_FALSE;
 		return 0;
 	}
 
 	builder->ptn.curc.type = CT_NORMAL;
 	builder->ptn.curc.value = *builder->ptn.curp++;
-	builder->ptn.curc.escaped = ase_false;
+	builder->ptn.curc.escaped = ASE_FALSE;
 
 	if (builder->ptn.curc.value == ASE_T('\\'))
 	{	       
@@ -1034,7 +1034,7 @@ static int next_char (builder_t* builder, int level)
 	#endif
 
 		builder->ptn.curc.value = c;
-		builder->ptn.curc.escaped = ase_true;
+		builder->ptn.curc.escaped = ASE_TRUE;
 
 		return 0;
 	}
@@ -1130,14 +1130,14 @@ static ase_bool_t __begin_with (
 
 	while (str < end)
 	{
-		if (*what == ASE_T('\0')) return ase_true;
-		if (*what != *str) return ase_false;
+		if (*what == ASE_T('\0')) return ASE_TRUE;
+		if (*what != *str) return ASE_FALSE;
 
 		str++; what++;
 	}
 
-	if (*what == ASE_T('\0')) return ase_true;
-	return ase_false;
+	if (*what == ASE_T('\0')) return ASE_TRUE;
+	return ASE_FALSE;
 }
 
 static const ase_byte_t* match_pattern (
@@ -1157,7 +1157,7 @@ static const ase_byte_t* match_pattern (
 		(unsigned int)rhdr->nb, (unsigned int)rhdr->el);
 #endif
 
-	mat->matched = ase_false;
+	mat->matched = ASE_FALSE;
 	mat->match_len = 0;
 
 	for (i = 0; i < rhdr->nb; i++)
@@ -1169,7 +1169,7 @@ static const ase_byte_t* match_pattern (
 
 		if (mat2.matched)
 		{
-			mat->matched = ase_true;
+			mat->matched = ASE_TRUE;
 			mat->match_len = mat2.match_len;
 			break;
 		}
@@ -1219,7 +1219,7 @@ static const ase_byte_t* match_branch_body0 (
 /*	match_t mat2;*/
 	ase_size_t match_len = 0;
 
-	mat->matched = ase_false;
+	mat->matched = ASE_FALSE;
 	mat->match_len = 0;
 
 /* TODO: is mat2 necessary here ? */
@@ -1246,11 +1246,11 @@ static const ase_byte_t* match_branch_body0 (
 
 		if (!mat2.matched) 
 		{
-			mat->matched = ase_false;
+			mat->matched = ASE_FALSE;
 			break; /* stop matching */
 		}
 
-		mat->matched = ase_true;
+		mat->matched = ASE_TRUE;
 		mat->match_len += mat2.match_len;
 
 		mat2.match_ptr = &mat2.match_ptr[mat2.match_len];
@@ -1326,7 +1326,7 @@ static const ase_byte_t* match_any_char (
 	lbound = cp->lbound;
 	ubound = cp->ubound;
 
-	mat->matched = ase_false;
+	mat->matched = ASE_FALSE;
 	mat->match_len = 0;
 
 	/* merge the same consecutive codes */
@@ -1417,7 +1417,7 @@ static const ase_byte_t* match_ord_char (
 		cc, (unsigned int)lbound, (unsigned int)ubound);
 #endif
 
-	mat->matched = ase_false;
+	mat->matched = ASE_FALSE;
 	mat->match_len = 0;
 
 	/* find the longest match */
@@ -1486,7 +1486,7 @@ static const ase_byte_t* match_charset (
 		(unsigned int)cp->lbound, (unsigned int)cp->ubound);
 #endif
 
-	mat->matched = ase_false;
+	mat->matched = ASE_FALSE;
 	mat->match_len = 0;
 
 	while (si < cp->ubound)
@@ -1530,7 +1530,7 @@ static const ase_byte_t* match_group (
 	cp = (const code_t*)p; p += ASE_SIZEOF(*cp);
 	ASE_ASSERT (cp->cmd == CMD_GROUP);
 
-	mat->matched = ase_false;
+	mat->matched = ASE_FALSE;
 	mat->match_len = 0;
 	
 	/* 
@@ -1591,7 +1591,7 @@ static const ase_byte_t* match_group (
 
 		mat2.match_ptr += mat2.match_len;
 		mat2.match_len = 0;
-		mat2.matched = ase_false;
+		mat2.matched = ASE_FALSE;
 
 		si++;
 	}
@@ -1604,7 +1604,7 @@ static const ase_byte_t* match_group (
 	{
 		if (cp->lbound == cp->ubound || p >= mat->branch_end)
 		{
-			mat->matched = ase_true;
+			mat->matched = ASE_TRUE;
 			mat->match_len = grp_len[si];
 		}
 		else 
@@ -1634,7 +1634,7 @@ static const ase_byte_t* match_group (
 
 				if (mat2.matched)
 				{
-					mat->matched = ase_true;
+					mat->matched = ASE_TRUE;
 					mat->match_len = grp_len[si] + mat2.match_len;
 					p = tmp;
 					break;
@@ -1664,7 +1664,7 @@ static const ase_byte_t* match_occurrences (
 		/* if the match for fixed occurrences was 
 		 * requested or no atoms remain unchecked in 
 		 * the branch, the match is returned. */
-		mat->matched = ase_true;
+		mat->matched = ASE_TRUE;
 		mat->match_len = si;
 	}
 	else 
@@ -1729,7 +1729,7 @@ static const ase_byte_t* match_occurrences (
 
 			if (mat2.matched)
 			{
-				mat->matched = ase_true;
+				mat->matched = ASE_TRUE;
 				mat->match_len = si + mat2.match_len;
 				p = tmp;
 				break;
@@ -1764,7 +1764,7 @@ static ase_bool_t __test_charset (
 			ase_dprintf (
 				ASE_T("match_charset: <one> %c %c\n"), c, c1);
 		#endif
-			if (c == c1) return ase_true;
+			if (c == c1) return ASE_TRUE;
 		}
 		else if (c0 == CHARSET_RANGE)
 		{
@@ -1781,7 +1781,7 @@ static ase_bool_t __test_charset (
 			ase_dprintf (
 				ASE_T("match_charset: <range> %c %c-%c\n"), c, c1, c2);
 		#endif
-			if (c >= c1 && c <= c2) return ase_true;
+			if (c >= c1 && c <= c2) return ASE_TRUE;
 		}
 		else if (c0 == CHARSET_CLASS)
 		{
@@ -1792,7 +1792,7 @@ static ase_bool_t __test_charset (
 				c, __char_class[c1].name);
 		#endif
 			if (__char_class[c1].func (
-				matcher->ccls, c)) return ase_true;
+				matcher->ccls, c)) return ASE_TRUE;
 		}
 		else
 		{
@@ -1803,7 +1803,7 @@ static ase_bool_t __test_charset (
 		p += ASE_SIZEOF(c1);
 	}
 
-	return ase_false;
+	return ASE_FALSE;
 }
 
 static ase_bool_t cc_isalnum (ase_ccls_t* ccls, ase_char_t c)
