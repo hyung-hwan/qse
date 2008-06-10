@@ -1,4 +1,4 @@
-BLDDIRS = lib cmd
+BLDDIRS = cmn utl awk
 MODE = @BUILDMODE@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 
