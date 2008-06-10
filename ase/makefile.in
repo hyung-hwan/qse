@@ -3,7 +3,7 @@
 #
 
 
-BLDDIRS = cmn utl awk lsp cmd/awk cmd/lsp
+BLDDIRS = lib 
 MODE = @BUILDMODE@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 
