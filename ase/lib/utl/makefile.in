@@ -6,6 +6,9 @@ NAME = aseutl
 
 TOP_DIR = @abs_top_builddir@
 
+PREFIX = @prefix@
+LIBDIR = $(PREFIX)/lib
+
 CC = @CC@
 AR = @AR@
 MAKE = @MAKE@
@@ -15,8 +18,11 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
+LIBTOOL_COMPILE = $(TOP_DIR)/libtool --mode=compile
+LIBTOOL_LINK = $(TOP_DIR)/libtool --mode=link
+
 OUT_DIR = $(TOP_DIR)/out/$(MODE)/lib
-OUT_FILE = $(OUT_DIR)/lib$(NAME).a
+OUT_FILE = $(OUT_DIR)/lib$(NAME).la
 
 TMP_DIR = $(MODE)
 
@@ -28,29 +34,30 @@ OBJ_FILES = \
 	$(TMP_DIR)/getopt.o \
 	$(TMP_DIR)/assert.o
 
+OBJ_FILES_SO = $(OBJ_FILES:.o=.lo)
+
 lib: $(OUT_FILE)
 
 $(OUT_FILE): $(TMP_DIR) $(OBJ_FILES) $(OUT_DIR)
-	$(AR) cr $(OUT_FILE) $(OBJ_FILES)
-	if [ ! -z "$(RANLIB)" ]; then $(RANLIB) $(OUT_FILE); fi
-	
+	$(LIBTOOL_LINK) $(CC) -rpath $(LIBDIR) -version-info 1:0:0 -o $@ $(OBJ_FILES_SO) -L$(OUT_DIR) 
+
 $(TMP_DIR)/main.o: main.c
-	$(CC) $(CFLAGS) -o $@ -c main.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c main.c
 
 $(TMP_DIR)/ctype.o: ctype.c
-	$(CC) $(CFLAGS) -o $@ -c ctype.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c ctype.c
 
 $(TMP_DIR)/stdio.o: stdio.c
-	$(CC) $(CFLAGS) -o $@ -c stdio.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c stdio.c
 
 $(TMP_DIR)/http.o: http.c
-	$(CC) $(CFLAGS) -o $@ -c http.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c http.c
 
 $(TMP_DIR)/getopt.o: getopt.c
-	$(CC) $(CFLAGS) -o $@ -c getopt.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c getopt.c
 
 $(TMP_DIR)/assert.o: assert.c
-	$(CC) $(CFLAGS) -o $@ -c assert.c
+	$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) -o $@ -c assert.c
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
@@ -59,5 +66,5 @@ $(TMP_DIR):
 	mkdir -p $(TMP_DIR)
 
 clean:
-	rm -rf $(OUT_FILE) $(OBJ_FILES)
+	rm -rf $(OUT_FILE) $(OBJ_FILES) $(OBJ_FILES_SO)
 
