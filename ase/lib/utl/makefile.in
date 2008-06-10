@@ -15,7 +15,6 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MODE = @BUILDMODE@
 
-
 OUT_DIR = $(TOP_DIR)/out/$(MODE)/lib
 OUT_FILE = $(OUT_DIR)/lib$(NAME).a
 
@@ -27,7 +26,7 @@ OBJ_FILES = \
 	$(TMP_DIR)/stdio.o \
 	$(TMP_DIR)/http.o \
 	$(TMP_DIR)/getopt.o \
-	$(TMP_DIR)/assert.c
+	$(TMP_DIR)/assert.o
 
 lib: $(OUT_FILE)
 
