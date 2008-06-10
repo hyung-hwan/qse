@@ -2,17 +2,21 @@
 # $Id: makefile.in,v 1.6 2007/11/11 15:06:47 bacon Exp $
 #
 
+TOP_DIR = @abs_top_builddir@
 CC = @CC@
 CXX = @CXX@
-CFLAGS = @CFLAGS@ -I@abs_top_builddir@/.. 
-LDFLAGS = @LDFLAGS@ -L@abs_top_builddir@/@BUILDMODE@/lib
+CFLAGS = @CFLAGS@ -I$(TOP_DIR)/inc
+CXXFLAGS = @CXXFLAGS@ -I$(TOP_DIR)/inc
+LDFLAGS = @LDFLAGS@ -L$(TOP_DIR)/out/@BUILDMODE@/lib
 LIBS = @LIBS@ -laseawk -lasecmn -laseutl -lm
 LIBS_CXX = -laseawk++ ${LIBS} 
 LIBS_CJ = -laseawkja
 MODE = @BUILDMODE@
 
+STRIP = @STRIP@
+
 CJ = @CJ@
-CJFLAGS = @CJFLAGS@ --classpath=@abs_top_builddir@/..:. -fjni
+CJFLAGS = @CJFLAGS@ --classpath=$(TOP_DIR)/..:. -fjni
 BUILD_CJ = @BUILD_CJ@
 
 JAVAC = @JAVAC@
@@ -22,9 +26,9 @@ BUILD_JNI = @BUILD_JNI@
 
 AR = ar
 
-OUT_DIR= ../../$(MODE)
+OUT_DIR= $(TOP_DIR)/out/$(MODE)
 OUT_DIR_LIB = $(OUT_DIR)/lib
-OUT_DIR_BIN = $(OUT_DIR)/bin
+OUT_DIR_BIN = $(OUT_DIR)/cmd
 TMP_DIR = $(MODE)
 
 ASEAWK_LIB = 
@@ -41,9 +45,11 @@ buildcj: build $(OUT_DIR_BIN)/aseawkja
 
 $(OUT_DIR_BIN)/aseawk: awk.c
 	$(CC) $(CFLAGS) -o $@ awk.c $(LDFLAGS) $(LIBS)
+	$(STRIP) $@
 
 $(OUT_DIR_BIN)/aseawk++: Awk.cpp
-	$(CXX) $(CFLAGS) -o $@ Awk.cpp $(LDFLAGS) $(LIBS_CXX)
+	$(CXX) $(CXXFLAGS) -o $@ Awk.cpp $(LDFLAGS) $(LIBS_CXX)
+	$(STRIP) $@
 
 $(OUT_DIR_BIN)/aseawkja: $(TMP_DIR)/cj AseAwk.java AseAwkPanel.java AseAwkApplet.java
 	$(CJ) $(CJFLAGS) -o $(TMP_DIR)/cj/AseAwk.o -c AseAwk.java 
