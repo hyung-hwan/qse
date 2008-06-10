@@ -1,5 +1,5 @@
 /*
- * $Id: assert.c 194 2008-06-06 13:00:39Z baconevi $
+ * $Id: assert.c 200 2008-06-09 06:49:17Z baconevi $
  */
 
 #include <ase/cmn/types.h>
@@ -7,10 +7,10 @@
 
 #ifndef NDEBUG
 
-#include <ase/cmn/stdio.h>
+#include <ase/utl/stdio.h>
 #include <stdlib.h>
 
-int ase_assert_failed (
+void ase_assert_failed (
 	const ase_char_t* expr, const ase_char_t* desc, 
 	const ase_char_t* file, ase_size_t line)
 {
@@ -31,7 +31,6 @@ int ase_assert_failed (
 	}
 
 	abort ();
-	return 0;
 }
 
 #endif
