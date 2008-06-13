@@ -3,8 +3,7 @@
 # 
 
 AC_PREREQ(2.53)
-AC_INIT([ase],[0.5.0])
-AC_REVISION([1.0])
+AC_INIT([ase],[0.5.0],[baconevi@gmail.com])
 AC_CONFIG_HEADER([inc/ase/cmn/conf_unx.h])
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
