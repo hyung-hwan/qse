@@ -1,0 +1,1 @@
+SUBDIRS = cmn utl awk
