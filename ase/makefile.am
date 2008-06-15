@@ -1,1 +1,1 @@
-SUBDIRS=lib cmd
+SUBDIRS=lib
