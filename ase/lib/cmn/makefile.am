@@ -1,0 +1,7 @@
+
+AM_CFLAGS = -I$(top_builddir)/inc
+
+lib_LTLIBRARIES = libasecmn.la
+
+libasecmn_la_SOURCES = map.c mem.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c
+

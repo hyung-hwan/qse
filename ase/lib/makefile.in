@@ -169,7 +169,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = cmn utl awk
+SUBDIRS = cmn awk
 all: all-recursive
 
 .SUFFIXES:
