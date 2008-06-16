@@ -10,3 +10,10 @@ AUTOMAKE_OPTION = foreign
 
 SUBDIRS = lib
 DIST_SUBDIRS = $(SUBDIRS) inc
+
+
+install-data-hook:
+	cd inc && $(MAKE) install
+
+uninstall-hook:
+	cd inc && $(MAKE) uninstall
