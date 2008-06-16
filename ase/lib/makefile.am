@@ -1,1 +1,2 @@
 SUBDIRS = cmn awk
+DIST_SUBDIRS = $(SUBDIRS) 

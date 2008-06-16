@@ -1,1 +1,12 @@
-SUBDIRS=lib
+##############################################################################
+#
+# ASE 
+# Copyright (C) Chung,Hyung-Hwan (bacon@abiyo.net)
+#
+##############################################################################
+
+AUTOMAKE_OPTION = foreign
+# EXTRA_DIST = 
+
+SUBDIRS = lib
+DIST_SUBDIRS = $(SUBDIRS) inc

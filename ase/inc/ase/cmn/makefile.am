@@ -1,0 +1,7 @@
+
+pkginclude_HEADERS = conf_msw.h conf_unx.h conf_vms.h \
+	macros.h map.h mem.h pack.h rex.h str.h types.h unpack.h
+
+pkgincludedir= $(includedir)/ase/cmn
+
+CLEANFILES = *dist

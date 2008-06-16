@@ -1,6 +1,7 @@
 
-AM_CFLAGS = -I$(top_builddir)/inc
-AM_CPPFLAGS = -I$(top_builddir)/inc
+AUTOMAKE_OPTIONS = foreign nostdinc
+
+AM_CPPFLAGS = -I$(top_srcdir)/inc
 
 lib_LTLIBRARIES = libaseawk.la libaseawk++.la
 

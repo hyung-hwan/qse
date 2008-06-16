@@ -264,12 +264,17 @@ AC_SUBST(BUILD_CJ, $BUILD_CJ)
 
 AC_CONFIG_FILES([
 	makefile 
+	inc/makefile
+	inc/ase/makefile
+	inc/ase/cmn/makefile
+	inc/ase/utl/makefile
+	inc/ase/awk/makefile
 	lib/makefile 
 	lib/cmn/makefile 
+	lib/utl/makefile 
 	lib/awk/makefile 
 	lib/lsp/makefile 
 	lib/tgp/makefile 
-	lib/utl/makefile 
 	cmd/makefile 
 	cmd/awk/makefile 
 	cmd/lsp/makefile])
