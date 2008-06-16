@@ -1,0 +1,5 @@
+
+pkginclude_HEADERS = awk.h val.h
+pkgincludedir= $(includedir)/ase/awk
+
+CLEANFILES = *dist
