@@ -1,5 +1,5 @@
 
-AUTOMAKE_OPTIONS = foreign no-dependencies
+AUTOMAKE_OPTIONS = no-dependencies
 
 # EXTRA_DIST = README
 SUBDIRS = ase

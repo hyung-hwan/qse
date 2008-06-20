@@ -62,7 +62,7 @@ am_libaseawk_la_OBJECTS = awk.lo err.lo tree.lo tab.lo parse.lo run.lo \
 	rec.lo val.lo func.lo misc.lo extio.lo
 libaseawk_la_OBJECTS = $(am_libaseawk_la_OBJECTS)
 DEFAULT_INCLUDES = 
-depcomp = $(SHELL) $(top_srcdir)/config/depcomp
+depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -198,7 +198,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-AUTOMAKE_OPTIONS = foreign nostdinc
+AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/inc
 lib_LTLIBRARIES = libaseawk.la libaseawk++.la
 libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c awk_i.h extio.h func.h jni.h misc.h parse.h run.h tab.h tree.h

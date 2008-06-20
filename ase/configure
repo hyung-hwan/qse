@@ -1946,7 +1946,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 ac_config_headers="$ac_config_headers inc/ase/cmn/conf_unx.h"
 
 ac_aux_dir=
-for ac_dir in config "$srcdir"/config; do
+for ac_dir in autoconf "$srcdir"/autoconf; do
   if test -f "$ac_dir/install-sh"; then
     ac_aux_dir=$ac_dir
     ac_install_sh="$ac_aux_dir/install-sh -c"
@@ -1962,8 +1962,8 @@ for ac_dir in config "$srcdir"/config; do
   fi
 done
 if test -z "$ac_aux_dir"; then
-  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in config \"$srcdir\"/config" >&5
-echo "$as_me: error: cannot find install-sh or install.sh in config \"$srcdir\"/config" >&2;}
+  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in autoconf \"$srcdir\"/autoconf" >&5
+echo "$as_me: error: cannot find install-sh or install.sh in autoconf \"$srcdir\"/autoconf" >&2;}
    { (exit 1); exit 1; }; }
 fi
 

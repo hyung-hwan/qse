@@ -1,7 +1,7 @@
 ##############################################################################
 #
 # ASE 
-# Copyright (C) Chung,Hyung-Hwan (bacon@abiyo.net)
+# Copyright (c) Chung,Hyung-Hwan (bacon@abiyo.net)
 #
 ##############################################################################
 
@@ -10,7 +10,6 @@ AUTOMAKE_OPTION = foreign
 
 SUBDIRS = lib
 DIST_SUBDIRS = $(SUBDIRS) inc
-
 
 install-data-hook:
 	cd inc && $(MAKE) install

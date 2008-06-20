@@ -5,7 +5,7 @@
 AC_PREREQ(2.53)
 AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
 AC_CONFIG_HEADER([inc/ase/cmn/conf_unx.h])
-AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_AUX_DIR(autoconf)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Checks for programs.
