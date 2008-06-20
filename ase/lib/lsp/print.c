@@ -1,10 +1,10 @@
 /*
- * $Id: print.c 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: print.c 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
 
-#include <ase/lsp/lsp_i.h>
+#include "lsp_i.h"
 
 #define OUTPUT_STR(lsp,str) \
 	do { \
@@ -116,17 +116,17 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 		case ASE_LSP_OBJ_FUNC:
 			/*OUTPUT_STR (lsp, ASE_T("func"));*/
 			OUTPUT_STR (lsp, ASE_T("(lambda "));
-			if (__print (lsp, ASE_LSP_FFORMAL(obj), ase_true) == -1) return -1;
+			if (__print (lsp, ASE_LSP_FFORMAL(obj), ASE_TRUE) == -1) return -1;
 			OUTPUT_STR (lsp, ASE_T(" "));
-			if (__print (lsp, ASE_LSP_FBODY(obj), ase_false) == -1) return -1;
+			if (__print (lsp, ASE_LSP_FBODY(obj), ASE_FALSE) == -1) return -1;
 			OUTPUT_STR (lsp, ASE_T(")"));
 			break;
 
 		case ASE_LSP_OBJ_MACRO:
 			OUTPUT_STR (lsp, ASE_T("(macro "));
-			if (__print (lsp, ASE_LSP_FFORMAL(obj), ase_true) == -1) return -1;
+			if (__print (lsp, ASE_LSP_FFORMAL(obj), ASE_TRUE) == -1) return -1;
 			OUTPUT_STR (lsp, ASE_T(" "));
-			if (__print (lsp, ASE_LSP_FBODY(obj), ase_false) == -1) return -1;
+			if (__print (lsp, ASE_LSP_FBODY(obj), ASE_FALSE) == -1) return -1;
 			OUTPUT_STR (lsp, ASE_T(")"));
 			break;
 		case ASE_LSP_OBJ_PRIM:
@@ -146,5 +146,5 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 
 int ase_lsp_print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj)
 {
-	return __print (lsp, obj, ase_true);
+	return __print (lsp, obj, ASE_TRUE);
 }

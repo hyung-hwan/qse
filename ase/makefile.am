@@ -8,7 +8,7 @@
 AUTOMAKE_OPTION = foreign
 # EXTRA_DIST = 
 
-SUBDIRS = lib
+SUBDIRS = lib cmd
 DIST_SUBDIRS = $(SUBDIRS) include
 
 install-data-hook:

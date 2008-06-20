@@ -8,3 +8,4 @@ lib_LTLIBRARIES = libaseawk.la libaseawk++.la
 libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c awk_i.h extio.h func.h jni.h misc.h parse.h run.h tab.h tree.h
 
 libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
+#libaesawkcxx_la_LIBADD = -laseawk

@@ -43,7 +43,7 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/inc/ase/cmn/conf_unx.h
+CONFIG_HEADER = $(top_builddir)/include/ase/cmn/conf_unx.h
 CONFIG_CLEAN_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -199,7 +199,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = -I$(top_srcdir)/inc
+AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libaseawk.la libaseawk++.la
 libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c awk_i.h extio.h func.h jni.h misc.h parse.h run.h tab.h tree.h
 libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
@@ -510,6 +510,7 @@ uninstall-am: uninstall-info-am uninstall-libLTLIBRARIES
 	tags uninstall uninstall-am uninstall-info-am \
 	uninstall-libLTLIBRARIES
 
+#libaesawkcxx_la_LIBADD = -laseawk
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

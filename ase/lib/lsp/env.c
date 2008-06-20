@@ -1,10 +1,10 @@
 /*
- * $Id: env.c 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: env.c 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
 
-#include <ase/lsp/lsp_i.h>
+#include "lsp_i.h"
 
 /* TODO: make the frame hash accessible */
 

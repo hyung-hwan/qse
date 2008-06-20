@@ -43,7 +43,7 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/inc/ase/cmn/conf_unx.h
+CONFIG_HEADER = $(top_builddir)/include/ase/cmn/conf_unx.h
 CONFIG_CLEAN_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -58,7 +58,7 @@ libaseutl_la_LIBADD =
 am_libaseutl_la_OBJECTS = assert.lo ctype.lo getopt.lo http.lo main.lo \
 	stdio.lo
 libaseutl_la_OBJECTS = $(am_libaseutl_la_OBJECTS)
-DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/inc/ase/cmn
+DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include/ase/cmn
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -187,7 +187,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-AM_CFLAGS = -I$(top_builddir)/inc
+AM_CFLAGS = -I$(top_builddir)/include
 lib_LTLIBRARIES = libaseutl.la
 libaseutl_la_SOURCES = assert.c ctype.c getopt.c http.c main.c stdio.c
 all: all-am

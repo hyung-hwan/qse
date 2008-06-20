@@ -1,10 +1,10 @@
 /*
- * $Id: read.c 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: read.c 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
 
-#include <ase/lsp/lsp_i.h>
+#include "lsp_i.h"
 
 #define IS_IDENT(c) \
 	((c) == ASE_T('+') || (c) == ASE_T('-') || \
