@@ -58,8 +58,8 @@ libasecmn_la_LIBADD =
 am_libasecmn_la_OBJECTS = map.lo mem.lo misc.lo rex.lo str_bas.lo \
 	str_cnv.lo str_dyn.lo
 libasecmn_la_OBJECTS = $(am_libasecmn_la_OBJECTS)
-DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/inc/ase/cmn
-depcomp = $(SHELL) $(top_srcdir)/config/depcomp
+DEFAULT_INCLUDES = 
+depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -187,6 +187,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+AUTOMAKE_OPTIONS = nostdinc
 AM_CFLAGS = -I$(top_builddir)/inc
 lib_LTLIBRARIES = libasecmn.la
 libasecmn_la_SOURCES = map.c mem.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c

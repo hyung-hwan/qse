@@ -17,7 +17,7 @@
 ##############################################################################
 #
 # ASE 
-# Copyright (C) Chung,Hyung-Hwan (bacon@abiyo.net)
+# Copyright (c) Chung,Hyung-Hwan (bacon@abiyo.net)
 #
 ##############################################################################
 srcdir = @srcdir@
@@ -47,10 +47,9 @@ DIST_COMMON = $(am__configure_deps) $(srcdir)/makefile.am \
 	$(top_srcdir)/cmd/lsp/makefile.in \
 	$(top_srcdir)/cmd/makefile.in $(top_srcdir)/configure \
 	$(top_srcdir)/lib/lsp/makefile.in \
-	$(top_srcdir)/lib/tgp/makefile.in \
-	$(top_srcdir)/lib/utl/makefile.in config/compile \
-	config/config.guess config/config.sub config/depcomp \
-	config/install-sh config/ltmain.sh config/missing
+	$(top_srcdir)/lib/tgp/makefile.in autoconf/compile \
+	autoconf/config.guess autoconf/config.sub autoconf/depcomp \
+	autoconf/install-sh autoconf/ltmain.sh autoconf/missing
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -60,9 +59,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno configure.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/inc/ase/cmn/conf_unx.h
-CONFIG_CLEAN_FILES = lib/utl/makefile lib/lsp/makefile \
-	lib/tgp/makefile cmd/makefile cmd/awk/makefile \
-	cmd/lsp/makefile
+CONFIG_CLEAN_FILES = lib/lsp/makefile lib/tgp/makefile cmd/makefile \
+	cmd/awk/makefile cmd/lsp/makefile
 SOURCES =
 DIST_SOURCES =
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
@@ -237,8 +235,6 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
-lib/utl/makefile: $(top_builddir)/config.status $(top_srcdir)/lib/utl/makefile.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
 lib/lsp/makefile: $(top_builddir)/config.status $(top_srcdir)/lib/lsp/makefile.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 lib/tgp/makefile: $(top_builddir)/config.status $(top_srcdir)/lib/tgp/makefile.in
@@ -395,7 +391,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/cmd $(distdir)/cmd/awk $(distdir)/cmd/lsp $(distdir)/config $(distdir)/lib/lsp $(distdir)/lib/tgp $(distdir)/lib/utl
+	$(mkdir_p) $(distdir)/autoconf $(distdir)/cmd $(distdir)/cmd/awk $(distdir)/cmd/lsp $(distdir)/lib/lsp $(distdir)/lib/tgp
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

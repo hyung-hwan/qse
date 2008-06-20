@@ -1,0 +1,4 @@
+
+AM_CFLAGS = -I$(top_builddir)/inc
+lib_LTLIBRARIES = libaseutl.la
+libaseutl_la_SOURCES = assert.c ctype.c getopt.c http.c main.c stdio.c
