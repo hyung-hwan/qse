@@ -47,9 +47,9 @@ DIST_COMMON = $(am__configure_deps) $(srcdir)/makefile.am \
 	$(top_srcdir)/cmd/lsp/makefile.in \
 	$(top_srcdir)/cmd/makefile.in $(top_srcdir)/configure \
 	$(top_srcdir)/lib/lsp/makefile.in \
-	$(top_srcdir)/lib/tgp/makefile.in autoconf/compile \
-	autoconf/config.guess autoconf/config.sub autoconf/depcomp \
-	autoconf/install-sh autoconf/ltmain.sh autoconf/missing
+	$(top_srcdir)/lib/tgp/makefile.in autoconf/config.guess \
+	autoconf/config.sub autoconf/depcomp autoconf/install-sh \
+	autoconf/ltmain.sh autoconf/missing
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac

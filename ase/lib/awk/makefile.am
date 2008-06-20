@@ -1,7 +1,7 @@
 
 AUTOMAKE_OPTIONS = nostdinc
 
-AM_CPPFLAGS = -I$(top_srcdir)/inc
+AM_CPPFLAGS = -I$(top_srcdir)/include
 
 lib_LTLIBRARIES = libaseawk.la libaseawk++.la
 
