@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: lsp.c 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
@@ -9,7 +9,7 @@
 #define Library
 #endif
 
-#include <ase/lsp/lsp_i.h>
+#include "lsp_i.h"
 
 static int __add_builtin_prims (ase_lsp_t* lsp);
 

@@ -1,17 +1,17 @@
 /*
- * $Id: prim_math.c 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: prim_math.c 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
 
-#include <ase/lsp/lsp_i.h>
+#include "lsp_i.h"
 
 ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {
 	ase_lsp_obj_t* body, * tmp;
 	ase_long_t ival = 0;
 	ase_real_t rval = .0;
-	ase_bool_t realnum = ase_false;
+	ase_bool_t realnum = ASE_FALSE;
 
 	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
@@ -25,7 +25,7 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ase_false);
+				ASE_ASSERT (realnum == ASE_FALSE);
 				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
@@ -40,15 +40,15 @@ ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ase_false);
-				realnum = ase_true;
+				ASE_ASSERT (realnum == ASE_FALSE);
+				realnum = ASE_TRUE;
 				rval = ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					realnum = ase_true;
+					realnum = ASE_TRUE;
 					rval = (ase_real_t)ival;
 				}
 				rval = rval + ASE_LSP_RVAL(tmp);
@@ -79,7 +79,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* body, * tmp;
 	ase_long_t ival = 0;
 	ase_real_t rval = .0;
-	ase_bool_t realnum = ase_false;
+	ase_bool_t realnum = ASE_FALSE;
 
 	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
@@ -94,7 +94,7 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ase_false);
+				ASE_ASSERT (realnum == ASE_FALSE);
 				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
@@ -109,15 +109,15 @@ ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ase_false);
-				realnum = ase_true;
+				ASE_ASSERT (realnum == ASE_FALSE);
+				realnum = ASE_TRUE;
 				rval = ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					realnum = ase_true;
+					realnum = ASE_TRUE;
 					rval = (ase_real_t)ival;
 				}
 				rval = rval - ASE_LSP_RVAL(tmp);
@@ -148,7 +148,7 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* body, * tmp;
 	ase_long_t ival = 0;
 	ase_real_t rval = .0;
-	ase_bool_t realnum = ase_false;
+	ase_bool_t realnum = ASE_FALSE;
 
 	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
@@ -162,7 +162,7 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ase_false);
+				ASE_ASSERT (realnum == ASE_FALSE);
 				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
@@ -177,15 +177,15 @@ ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ase_false);
-				realnum = ase_true;
+				ASE_ASSERT (realnum == ASE_FALSE);
+				realnum = ASE_TRUE;
 				rval = ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					realnum = ase_true;
+					realnum = ASE_TRUE;
 					rval = (ase_real_t)ival;
 				}
 				rval = rval * ASE_LSP_RVAL(tmp);
@@ -216,7 +216,7 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	ase_lsp_obj_t* body, * tmp;
 	ase_long_t ival = 0;
 	ase_real_t rval = .0;
-	ase_bool_t realnum = ase_false;
+	ase_bool_t realnum = ASE_FALSE;
 
 	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
 
@@ -230,7 +230,7 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ase_false);
+				ASE_ASSERT (realnum == ASE_FALSE);
 				ival = ASE_LSP_IVAL(tmp);
 			}
 			else 
@@ -252,15 +252,15 @@ ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ase_false);
-				realnum = ase_true;
+				ASE_ASSERT (realnum == ASE_FALSE);
+				realnum = ASE_TRUE;
 				rval = ASE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					realnum = ase_true;
+					realnum = ASE_TRUE;
 					rval = (ase_real_t)ival;
 				}
 				rval = rval / ASE_LSP_RVAL(tmp);

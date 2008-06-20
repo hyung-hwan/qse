@@ -1943,7 +1943,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-ac_config_headers="$ac_config_headers inc/ase/cmn/conf_unx.h"
+ac_config_headers="$ac_config_headers include/ase/cmn/conf_unx.h"
 
 ac_aux_dir=
 for ac_dir in autoconf "$srcdir"/autoconf; do
@@ -26604,7 +26604,7 @@ CJFLAGS=$CJFLAGS
 BUILD_CJ=$BUILD_CJ
 
 
-ac_config_files="$ac_config_files makefile inc/makefile inc/ase/makefile inc/ase/cmn/makefile inc/ase/utl/makefile inc/ase/awk/makefile lib/makefile lib/cmn/makefile lib/utl/makefile lib/awk/makefile lib/lsp/makefile lib/tgp/makefile cmd/makefile cmd/awk/makefile cmd/lsp/makefile"
+ac_config_files="$ac_config_files makefile include/makefile include/ase/makefile include/ase/cmn/makefile include/ase/awk/makefile include/ase/lsp/makefile include/ase/utl/makefile lib/makefile lib/cmn/makefile lib/awk/makefile lib/lsp/makefile lib/tgp/makefile lib/utl/makefile cmd/makefile cmd/awk/makefile cmd/lsp/makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -27189,20 +27189,21 @@ cat >>$CONFIG_STATUS <<\_ACEOF
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "inc/ase/cmn/conf_unx.h") CONFIG_HEADERS="$CONFIG_HEADERS inc/ase/cmn/conf_unx.h" ;;
+    "include/ase/cmn/conf_unx.h") CONFIG_HEADERS="$CONFIG_HEADERS include/ase/cmn/conf_unx.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "makefile") CONFIG_FILES="$CONFIG_FILES makefile" ;;
-    "inc/makefile") CONFIG_FILES="$CONFIG_FILES inc/makefile" ;;
-    "inc/ase/makefile") CONFIG_FILES="$CONFIG_FILES inc/ase/makefile" ;;
-    "inc/ase/cmn/makefile") CONFIG_FILES="$CONFIG_FILES inc/ase/cmn/makefile" ;;
-    "inc/ase/utl/makefile") CONFIG_FILES="$CONFIG_FILES inc/ase/utl/makefile" ;;
-    "inc/ase/awk/makefile") CONFIG_FILES="$CONFIG_FILES inc/ase/awk/makefile" ;;
+    "include/makefile") CONFIG_FILES="$CONFIG_FILES include/makefile" ;;
+    "include/ase/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/makefile" ;;
+    "include/ase/cmn/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/cmn/makefile" ;;
+    "include/ase/awk/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/awk/makefile" ;;
+    "include/ase/lsp/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/lsp/makefile" ;;
+    "include/ase/utl/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/utl/makefile" ;;
     "lib/makefile") CONFIG_FILES="$CONFIG_FILES lib/makefile" ;;
     "lib/cmn/makefile") CONFIG_FILES="$CONFIG_FILES lib/cmn/makefile" ;;
-    "lib/utl/makefile") CONFIG_FILES="$CONFIG_FILES lib/utl/makefile" ;;
     "lib/awk/makefile") CONFIG_FILES="$CONFIG_FILES lib/awk/makefile" ;;
     "lib/lsp/makefile") CONFIG_FILES="$CONFIG_FILES lib/lsp/makefile" ;;
     "lib/tgp/makefile") CONFIG_FILES="$CONFIG_FILES lib/tgp/makefile" ;;
+    "lib/utl/makefile") CONFIG_FILES="$CONFIG_FILES lib/utl/makefile" ;;
     "cmd/makefile") CONFIG_FILES="$CONFIG_FILES cmd/makefile" ;;
     "cmd/awk/makefile") CONFIG_FILES="$CONFIG_FILES cmd/awk/makefile" ;;
     "cmd/lsp/makefile") CONFIG_FILES="$CONFIG_FILES cmd/lsp/makefile" ;;

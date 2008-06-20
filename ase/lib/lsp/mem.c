@@ -1,10 +1,10 @@
 /*
- * $Id: mem.c 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: mem.c 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
 
-#include <ase/lsp/lsp_i.h>
+#include "lsp_i.h"
 
 ase_lsp_mem_t* ase_lsp_openmem (
 	ase_lsp_t* lsp, ase_size_t ubound, ase_size_t ubound_inc)

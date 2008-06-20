@@ -1,10 +1,10 @@
 /*
- * $Id: name.c 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: name.c 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
 
-#include <ase/lsp/lsp_i.h>
+#include "lsp_i.h"
 
 ase_lsp_name_t* ase_lsp_name_open (
 	ase_lsp_name_t* name, ase_size_t capa, ase_lsp_t* lsp)
@@ -16,9 +16,9 @@ ase_lsp_name_t* ase_lsp_name_open (
 		name = (ase_lsp_name_t*)
 			ASE_LSP_MALLOC (lsp, ASE_SIZEOF(ase_lsp_name_t));
 		if (name == ASE_NULL) return ASE_NULL;
-		name->__dynamic = ase_true;
+		name->__dynamic = ASE_TRUE;
 	}
-	else name->__dynamic = ase_false;
+	else name->__dynamic = ASE_FALSE;
 	
 	if (capa < ASE_COUNTOF(name->static_buf)) 
 	{

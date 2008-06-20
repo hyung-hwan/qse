@@ -42,7 +42,7 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/inc/ase/cmn/conf_unx.h
+CONFIG_HEADER = $(top_builddir)/include/ase/cmn/conf_unx.h
 CONFIG_CLEAN_FILES =
 SOURCES =
 DIST_SOURCES =
@@ -168,7 +168,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = cmn awk utl
+SUBDIRS = cmn awk lsp utl
 DIST_SUBDIRS = $(SUBDIRS) 
 all: all-recursive
 

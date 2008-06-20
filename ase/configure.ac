@@ -4,7 +4,7 @@
 
 AC_PREREQ(2.53)
 AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
-AC_CONFIG_HEADER([inc/ase/cmn/conf_unx.h])
+AC_CONFIG_HEADER([include/ase/cmn/conf_unx.h])
 AC_CONFIG_AUX_DIR(autoconf)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
@@ -264,17 +264,18 @@ AC_SUBST(BUILD_CJ, $BUILD_CJ)
 
 AC_CONFIG_FILES([
 	makefile 
-	inc/makefile
-	inc/ase/makefile
-	inc/ase/cmn/makefile
-	inc/ase/utl/makefile
-	inc/ase/awk/makefile
+	include/makefile
+	include/ase/makefile
+	include/ase/cmn/makefile
+	include/ase/awk/makefile
+	include/ase/lsp/makefile
+	include/ase/utl/makefile
 	lib/makefile 
 	lib/cmn/makefile 
-	lib/utl/makefile 
 	lib/awk/makefile 
 	lib/lsp/makefile 
 	lib/tgp/makefile 
+	lib/utl/makefile 
 	cmd/makefile 
 	cmd/awk/makefile 
 	cmd/lsp/makefile])

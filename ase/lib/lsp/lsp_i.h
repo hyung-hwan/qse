@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: lsp_i.h 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
@@ -11,12 +11,12 @@
 #include <ase/cmn/str.h>
 
 #include <ase/lsp/lsp.h>
-#include <ase/lsp/env.h>
-#include <ase/lsp/obj.h>
-#include <ase/lsp/mem.h>
-#include <ase/lsp/misc.h>
-#include <ase/lsp/prim.h>
-#include <ase/lsp/name.h>
+#include "env.h"
+#include "obj.h"
+#include "mem.h"
+#include "misc.h"
+#include "prim.h"
+#include "name.h"
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)

@@ -1,10 +1,10 @@
 /*
- * $Id: prim_compar.c 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: prim_compar.c 215 2008-06-19 10:27:37Z baconevi $
  *
  * {License}
  */
 
-#include <ase/lsp/lsp_i.h>
+#include "lsp_i.h"
 
 #define PRIM_COMPAR(lsp,args,op)  \
 { \
