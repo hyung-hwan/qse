@@ -57,6 +57,28 @@ else
 	fi
 fi
 
+# Do we need libm for math functions?
+AC_MSG_CHECKING([for libm math function in std libs])
+OCFL="$CFLAGS"
+CFLAGS="-Werror $CFLAGS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+		#include <stdio.h>
+		#include <math.h>
+		]], [[
+		double x;
+		pow(x, x);
+		return 0;
+		]])],[needlibm=no],[needlibm=yes])
+CFLAGS="$OCFL"
+if test "$needlibm" = "yes"; then
+	AC_MSG_RESULT([no])
+	AC_CHECK_LIB([m], [pow], 
+		LIBS="$LIBS -lm",
+		AC_MSG_ERROR([libm is needed and is not available]))
+else
+	AC_MSG_RESULT([yes])
+fi
+
 # Checks for header files.
 AC_HEADER_STDC
 
