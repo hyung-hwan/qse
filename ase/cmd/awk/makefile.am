@@ -1,10 +1,11 @@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-bin_PROGRAMS = aseawk aseawk++
+bin_PROGRAMS = aseawk #aseawk++
 
 aseawk_SOURCES = awk.c
-aseawk___SOURCES = Awk.cpp
+#aseawk___SOURCES = Awk.cpp
 
-aseawk_LDADD = -L../../lib/cmn -L../../lib/awk -L../../lib/utl -laseutl -laseawk -lasecmn
-aseawk___LDADD = -L../../lib/awk -laseawk++ 
+aseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
+aseawk_LDADD = -laseutl -laseawk $(LIBM)
+#aseawk___LDADD = -L../../lib/awk -laseawk++ 
