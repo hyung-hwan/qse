@@ -6,5 +6,5 @@ bin_PROGRAMS = aseawk aseawk++
 aseawk_SOURCES = awk.c
 aseawk___SOURCES = Awk.cpp
 
-aseawk_LDADD = -L../../lib/cmn -L../../lib/awk -L../../lib/utl -laseawk -lasecmn
-aseawk___LDADD = -laseawk++ 
+aseawk_LDADD = -L../../lib/cmn -L../../lib/awk -L../../lib/utl -laseutl -laseawk -lasecmn
+aseawk___LDADD = -L../../lib/awk -laseawk++ 
