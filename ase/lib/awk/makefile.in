@@ -57,7 +57,7 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libaseawk___la_LIBADD =
 am_libaseawk___la_OBJECTS = Awk.lo StdAwk.lo
 libaseawk___la_OBJECTS = $(am_libaseawk___la_OBJECTS)
-libaseawk_la_LIBADD =
+libaseawk_la_DEPENDENCIES =
 am_libaseawk_la_OBJECTS = awk.lo err.lo tree.lo tab.lo parse.lo run.lo \
 	rec.lo val.lo func.lo misc.lo extio.lo
 libaseawk_la_OBJECTS = $(am_libaseawk_la_OBJECTS)
@@ -130,6 +130,7 @@ JAR_PATH = @JAR_PATH@
 JAVAC = @JAVAC@
 JAVAC_PATH = @JAVAC_PATH@
 LDFLAGS = @LDFLAGS@
+LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
@@ -201,7 +202,9 @@ target_alias = @target_alias@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libaseawk.la libaseawk++.la
-libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c awk_i.h extio.h func.h jni.h misc.h parse.h run.h tab.h tree.h
+libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c awk_i.h extio.h func.h misc.h parse.h run.h tab.h tree.h
+libaseawk_la_LDFLAGS = -L../cmn
+libaseawk_la_LIBADD = -lasecmn
 libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
 all: all-am
 
@@ -510,7 +513,7 @@ uninstall-am: uninstall-info-am uninstall-libLTLIBRARIES
 	tags uninstall uninstall-am uninstall-info-am \
 	uninstall-libLTLIBRARIES
 
-#libaesawkcxx_la_LIBADD = -laseawk
+#libaesawk___la_LIBADD = -L. -laseawk
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
