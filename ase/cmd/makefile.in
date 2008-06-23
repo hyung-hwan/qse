@@ -169,7 +169,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = awk 
+SUBDIRS = awk lsp
 DIST_SUBDIRS = $(SUBDIRS) 
 all: all-recursive
 

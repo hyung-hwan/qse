@@ -54,7 +54,7 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libaseawk___la_LIBADD =
+libaseawk___la_DEPENDENCIES =
 am_libaseawk___la_OBJECTS = Awk.lo StdAwk.lo
 libaseawk___la_OBJECTS = $(am_libaseawk___la_OBJECTS)
 libaseawk_la_DEPENDENCIES =
@@ -206,6 +206,8 @@ libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c
 libaseawk_la_LDFLAGS = -L../cmn
 libaseawk_la_LIBADD = -lasecmn
 libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
+libaseawk___la_LDFLAGS = -L. 
+libaseawk___la_LIBADD = -laseawk
 all: all-am
 
 .SUFFIXES:
@@ -513,7 +515,6 @@ uninstall-am: uninstall-info-am uninstall-libLTLIBRARIES
 	tags uninstall uninstall-am uninstall-info-am \
 	uninstall-libLTLIBRARIES
 
-#libaesawk___la_LIBADD = -L. -laseawk
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

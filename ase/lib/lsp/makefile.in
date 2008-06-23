@@ -54,7 +54,7 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libaselsp_la_LIBADD =
+libaselsp_la_DEPENDENCIES =
 am_libaselsp_la_OBJECTS = lsp.lo err.lo env.lo eval.lo mem.lo misc.lo \
 	name.lo prim.lo prim_compar.lo prim_let.lo prim_math.lo \
 	prim_prog.lo print.lo read.lo
@@ -193,6 +193,8 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libaselsp.la 
 libaselsp_la_SOURCES = lsp.c err.c env.c eval.c mem.c mem.h misc.c name.c prim.c prim_compar.c prim.h prim_let.c prim_math.c prim_prog.c print.c read.c lsp_i.h env.h misc.h name.h obj.h 
+libaselsp_la_LDFLAGS = -L../cmn
+libaselsp_la_LIBADD = -lasecmn
 all: all-am
 
 .SUFFIXES:
