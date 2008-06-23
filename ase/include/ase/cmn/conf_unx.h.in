@@ -21,49 +21,58 @@
 /* long long */
 #undef ASE_HAVE_LONG_LONG
 
-/* Description */
+/* author's email address */
+#undef ASE_PKGAUTHOR
+
+/* package name */
+#undef ASE_PKGNAME
+
+/* package version */
+#undef ASE_PKGVERSION
+
+/* sizeof(char) */
 #undef ASE_SIZEOF_CHAR
 
-/* Description */
+/* sizeof(double) */
 #undef ASE_SIZEOF_DOUBLE
 
-/* Description */
+/* sizeof(float) */
 #undef ASE_SIZEOF_FLOAT
 
-/* Description */
+/* sizeof(int) */
 #undef ASE_SIZEOF_INT
 
-/* Description */
+/* sizeof(long) */
 #undef ASE_SIZEOF_LONG
 
-/* Description */
+/* sizeof(long double) */
 #undef ASE_SIZEOF_LONG_DOUBLE
 
-/* Description */
+/* sizeof(long long) */
 #undef ASE_SIZEOF_LONG_LONG
 
-/* Description */
+/* sizeof(short) */
 #undef ASE_SIZEOF_SHORT
 
-/* Description */
+/* sizeof(void*) */
 #undef ASE_SIZEOF_VOID_P
 
-/* Description */
+/* sizeof(wchar_t) */
 #undef ASE_SIZEOF_WCHAR_T
 
-/* Description */
+/* sizeof(__int128) */
 #undef ASE_SIZEOF___INT128
 
-/* Description */
+/* sizeof(__int16) */
 #undef ASE_SIZEOF___INT16
 
-/* Description */
+/* sizeof(__int32) */
 #undef ASE_SIZEOF___INT32
 
-/* Description */
+/* sizeof(__int64) */
 #undef ASE_SIZEOF___INT64
 
-/* Description */
+/* sizeof(__int8) */
 #undef ASE_SIZEOF___INT8
 
 /* Define to 1 if you have the <dlfcn.h> header file. */

@@ -26475,6 +26475,34 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+
+cat >>confdefs.h <<\_ACEOF
+#define ASE_PKGNAME
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define ASE_PKGVERSION
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define ASE_PKGAUTHOR
+_ACEOF
+
+cat >>confdefs.h <<_ACEOF
+#define ASE_PKGNAME "${PACKAGE}"
+_ACEOF
+
+cat >>confdefs.h <<_ACEOF
+#define ASE_PKGVERSION "${VERSION}"
+_ACEOF
+
+cat >>confdefs.h <<_ACEOF
+#define ASE_PKGAUTHOR "${PACKAGE_BUGREPORT}"
+_ACEOF
+
+
 # Defines extra options
 
 # Check whether --enable-wchar was given.
