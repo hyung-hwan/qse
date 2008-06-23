@@ -10,4 +10,5 @@ libaseawk_la_LDFLAGS= -L../cmn
 libaseawk_la_LIBADD= -lasecmn
 
 libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
-#libaesawk___la_LIBADD = -L. -laseawk
+libaseawk___la_LDFLAGS = -L. 
+libaseawk___la_LIBADD = -laseawk
