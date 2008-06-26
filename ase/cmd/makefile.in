@@ -42,7 +42,7 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/include/ase/cmn/conf_unx.h
+CONFIG_HEADER = $(top_builddir)/include/ase/cmn/config.h
 CONFIG_CLEAN_FILES =
 SOURCES =
 DIST_SOURCES =

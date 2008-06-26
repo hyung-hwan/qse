@@ -1,4 +1,4 @@
-/* include/ase/cmn/conf_unx.h.in.  Generated from configure.ac by autoheader.  */
+/* include/ase/cmn/config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* char is mchar */
 #undef ASE_CHAR_IS_MCHAR
@@ -14,12 +14,6 @@
 
 /* Unknown Endian */
 #undef ASE_ENDIAN_UNKNOWN
-
-/* long double */
-#undef ASE_HAVE_LONG_DOUBLE
-
-/* long long */
-#undef ASE_HAVE_LONG_LONG
 
 /* author's email address */
 #undef ASE_PKGAUTHOR

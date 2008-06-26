@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 196 2008-06-08 14:04:16Z baconevi $
+ * $Id: types.h 222 2008-06-26 05:48:54Z baconevi $
  *
  * {License}
  */
@@ -26,7 +26,7 @@
 	#if !defined(__unix)
 		#define __unix
 	#endif
-	#include <ase/cmn/conf_unx.h>
+	#include <ase/cmn/config.h>
 #else
 	#error unsupported operating system
 #endif
