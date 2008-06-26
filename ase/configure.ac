@@ -4,7 +4,7 @@
 
 AC_PREREQ(2.53)
 AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
-AC_CONFIG_HEADER([include/ase/cmn/conf_unx.h])
+AC_CONFIG_HEADER([include/ase/cmn/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
@@ -15,7 +15,7 @@ AC_PROG_LIBTOOL
 AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
 
-# native java compiler
+AC_CHECK_TOOL(GREP, grep)
 AC_CHECK_TOOL(CJ, gcj)
 
 AC_SUBST(LIBTOOL_DEPS)
@@ -86,8 +86,8 @@ AC_C_BIGENDIAN(
 	[AC_DEFINE([ASE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
 
 # Checks for data types
-AC_CHECK_TYPE(long long, [AC_DEFINE([ASE_HAVE_LONG_LONG],[],[long long])])
-AC_CHECK_TYPE(long double, [AC_DEFINE([ASE_HAVE_LONG_DOUBLE],[],[long double])])
+#AC_CHECK_TYPE(long long, [AC_DEFINE([ASE_HAVE_LONG_LONG],[],[long long])])
+#AC_CHECK_TYPE(long double, [AC_DEFINE([ASE_HAVE_LONG_DOUBLE],[],[long double])])
 
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)

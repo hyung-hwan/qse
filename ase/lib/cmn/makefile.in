@@ -43,7 +43,7 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/include/ase/cmn/conf_unx.h
+CONFIG_HEADER = $(top_builddir)/include/ase/cmn/config.h
 CONFIG_CLEAN_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -192,6 +192,7 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CFLAGS = -I$(top_builddir)/include
 lib_LTLIBRARIES = libasecmn.la
 libasecmn_la_SOURCES = map.c mem.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c
+libasecmn_la_LDFLAGS = -release $(VERSION)
 all: all-am
 
 .SUFFIXES:
