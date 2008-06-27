@@ -1,2 +1,2 @@
-SUBDIRS = awk lsp
+SUBDIRS = awk lsp tgp
 DIST_SUBDIRS = $(SUBDIRS) 

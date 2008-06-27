@@ -348,7 +348,7 @@ int lsp_main (int argc, ase_char_t* argv[])
 	while (1)
 	{
 		ase_printf (ASE_T("ASELSP $ "));
-		fflush (stdout);
+		ase_fflush (stdout);
 
 		obj = ase_lsp_read (lsp);
 		if (obj == ASE_NULL) 
