@@ -875,13 +875,13 @@ LIBTOOL_DEPS
 BUILDMODE
 JAVAC_PATH
 JAR_PATH
+LIBM
 CFLAGS_JNI
 JAVAC
 JAR
 BUILD_JNI
 CJFLAGS
 BUILD_CJ
-LIBM
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -26822,6 +26822,8 @@ else
 	BUILD_CJ=
 fi
 
+LIBM=$LIBM
+
 CFLAGS_JNI=$CFLAGS_JNI
 
 JAVAC=$JAVAC_PATH
@@ -26833,8 +26835,6 @@ BUILD_JNI=$BUILD_JNI
 CJFLAGS=$CJFLAGS
 
 BUILD_CJ=$BUILD_CJ
-
-LIBM=$LIBM
 
 
 ac_config_files="$ac_config_files makefile include/makefile include/ase/makefile include/ase/cmn/makefile include/ase/awk/makefile include/ase/lsp/makefile include/ase/utl/makefile lib/makefile lib/cmn/makefile lib/awk/makefile lib/lsp/makefile lib/tgp/makefile lib/utl/makefile cmd/makefile cmd/awk/makefile cmd/lsp/makefile"
@@ -27650,13 +27650,13 @@ LIBTOOL_DEPS!$LIBTOOL_DEPS$ac_delim
 BUILDMODE!$BUILDMODE$ac_delim
 JAVAC_PATH!$JAVAC_PATH$ac_delim
 JAR_PATH!$JAR_PATH$ac_delim
+LIBM!$LIBM$ac_delim
 CFLAGS_JNI!$CFLAGS_JNI$ac_delim
 JAVAC!$JAVAC$ac_delim
 JAR!$JAR$ac_delim
 BUILD_JNI!$BUILD_JNI$ac_delim
 CJFLAGS!$CJFLAGS$ac_delim
 BUILD_CJ!$BUILD_CJ$ac_delim
-LIBM!$LIBM$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
