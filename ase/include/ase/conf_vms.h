@@ -1,5 +1,5 @@
 /*
- * $Id: conf_vms.h 194 2008-06-06 13:00:39Z baconevi $
+ * $Id: conf_vms.h 214 2008-06-19 09:54:58Z baconevi $
  *
  * {License}
  */

@@ -4,7 +4,7 @@
 
 AC_PREREQ(2.53)
 AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
-AC_CONFIG_HEADER([include/ase/cmn/config.h])
+AC_CONFIG_HEADER([include/ase/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
@@ -16,6 +16,7 @@ AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
 
 AC_CHECK_TOOL(GREP, grep)
+AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(CJ, gcj)
 
 AC_SUBST(LIBTOOL_DEPS)

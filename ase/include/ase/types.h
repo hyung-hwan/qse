@@ -4,8 +4,8 @@
  * {License}
  */
 
-#ifndef _ASE_CMN_TYPES_H_
-#define _ASE_CMN_TYPES_H_
+#ifndef _ASE_TYPES_H_
+#define _ASE_TYPES_H_
 
 /**
  * @file types.h
@@ -16,9 +16,9 @@
  */
 
 #if defined(_WIN32)
-	#include <ase/cmn/conf_msw.h>
+	#include <ase/conf_msw.h>
 #elif defined(vms) || defined(__vms)
-	#include <ase/cmn/conf_vms.h>
+	#include <ase/conf_vms.h>
 #elif defined(__unix__) || defined(__unix) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || (defined(__APPLE__) && defined(__MACH__))  || defined(__SPU__)
 	#if !defined(__unix__)
 		#define __unix__
@@ -26,7 +26,7 @@
 	#if !defined(__unix)
 		#define __unix
 	#endif
-	#include <ase/cmn/config.h>
+	#include <ase/config.h>
 #else
 	#error unsupported operating system
 #endif
