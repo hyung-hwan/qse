@@ -26837,7 +26837,7 @@ CJFLAGS=$CJFLAGS
 BUILD_CJ=$BUILD_CJ
 
 
-ac_config_files="$ac_config_files makefile include/makefile include/ase/makefile include/ase/cmn/makefile include/ase/awk/makefile include/ase/lsp/makefile include/ase/utl/makefile lib/makefile lib/cmn/makefile lib/awk/makefile lib/lsp/makefile lib/tgp/makefile lib/utl/makefile cmd/makefile cmd/awk/makefile cmd/lsp/makefile"
+ac_config_files="$ac_config_files makefile include/makefile include/ase/makefile include/ase/cmn/makefile include/ase/awk/makefile include/ase/lsp/makefile include/ase/tgp/makefile include/ase/utl/makefile lib/makefile lib/cmn/makefile lib/awk/makefile lib/lsp/makefile lib/tgp/makefile lib/utl/makefile cmd/makefile cmd/awk/makefile cmd/lsp/makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -27430,6 +27430,7 @@ do
     "include/ase/cmn/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/cmn/makefile" ;;
     "include/ase/awk/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/awk/makefile" ;;
     "include/ase/lsp/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/lsp/makefile" ;;
+    "include/ase/tgp/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/tgp/makefile" ;;
     "include/ase/utl/makefile") CONFIG_FILES="$CONFIG_FILES include/ase/utl/makefile" ;;
     "lib/makefile") CONFIG_FILES="$CONFIG_FILES lib/makefile" ;;
     "lib/cmn/makefile") CONFIG_FILES="$CONFIG_FILES lib/cmn/makefile" ;;

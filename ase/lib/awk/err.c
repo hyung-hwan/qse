@@ -1,10 +1,11 @@
 /*
- * $Id: err.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: err.c 229 2008-06-26 10:46:39Z baconevi $
  *
  * {License}
  */
 
 #include "awk_i.h"
+#include <stdarg.h>
 
 static const ase_char_t* __geterrstr (int errnum)
 {

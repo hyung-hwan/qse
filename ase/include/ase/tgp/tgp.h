@@ -1,8 +1,14 @@
-#ifndef _ASE_TGP_H_
-#define _ASE_TGP_H_
+/*
+ * $Id: tgp.h 229 2008-06-26 10:46:39Z baconevi $
+ *
+ * {License}
+ */
 
-#include <ase/cmn/types.h>
-#include <ase/cmn/macros.h>
+#ifndef _ASE_TGP_TGP_H_
+#define _ASE_TGP_TGP_H_
+
+#include <ase/types.h>
+#include <ase/macros.h>
 
 typedef struct ase_tgp_t ase_tgp_t;
 

@@ -1,0 +1,10 @@
+
+AUTOMAKE_OPTIONS = nostdinc
+
+AM_CPPFLAGS = -I$(top_srcdir)/include
+
+lib_LTLIBRARIES = libasetgp.la 
+
+libasetgp_la_SOURCES = tgp.c 
+libasetgp_la_LDFLAGS = -L../cmn -release $(VERSION)
+libasetgp_la_LIBADD = -lasecmn

@@ -297,6 +297,7 @@ AC_CONFIG_FILES([
 	include/ase/cmn/makefile
 	include/ase/awk/makefile
 	include/ase/lsp/makefile
+	include/ase/tgp/makefile
 	include/ase/utl/makefile
 	lib/makefile 
 	lib/cmn/makefile 
