@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h 214 2008-06-19 09:54:58Z baconevi $
+ * $Id: conf_msw.h 225 2008-06-26 06:48:38Z baconevi $
  *
  * {License}
  */
