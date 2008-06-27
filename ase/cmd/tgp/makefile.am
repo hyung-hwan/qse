@@ -1,0 +1,9 @@
+
+AM_CPPFLAGS = -I$(top_srcdir)/include
+
+bin_PROGRAMS = asetgp 
+
+asetgp_SOURCES = tgp.c
+asetgp_LDFLAGS = -L../../lib/tgp -L../../lib/utl 
+asetgp_LDADD = -laseutl -lasetgp $(LIBM)
+
