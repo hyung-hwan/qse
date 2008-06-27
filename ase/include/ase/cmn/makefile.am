@@ -1,10 +1,7 @@
 
-pkginclude_HEADERS = config.h conf_msw.h conf_vms.h \
-	macros.h map.h mem.h pack.h rex.h str.h types.h unpack.h
+pkginclude_HEADERS = mem.h str.h map.h rex.h 
 
 pkgincludedir= $(includedir)/ase/cmn
 
 CLEANFILES = *dist
 
-install-data-hook:
-	"$(GREP)" -E "#define[ ]+ASE_" "$(pkgincludedir)/config.h" > "/tmp/config.h.$$$$" && mv "/tmp/config.h.$$$$" "$(pkgincludedir)/config.h" || "rm -f /tmp/config.h.$$$$"

@@ -1,5 +1,5 @@
 /*
- * $Id: name.h 117 2008-03-03 11:20:05Z baconevi $
+ * $Id: name.h 223 2008-06-26 06:44:41Z baconevi $
  *
  * {License}
  */
@@ -7,8 +7,8 @@
 #ifndef _ASE_LSP_NAME_H_
 #define _ASE_LSP_NAME_H_
 
-#include <ase/cmn/types.h>
-#include <ase/cmn/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
 struct ase_lsp_name_t 
 {

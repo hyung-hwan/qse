@@ -1,5 +1,5 @@
 /*
- * $Id: http.h 194 2008-06-06 13:00:39Z baconevi $
+ * $Id: http.h 223 2008-06-26 06:44:41Z baconevi $
  *
  * {License}
  */
@@ -7,8 +7,8 @@
 #ifndef _ASE_UTL_HTTP_H_
 #define _ASE_UTL_HTTP_H_
 
-#include <ase/cmn/types.h>
-#include <ase/cmn/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
 /* returns the type of http method */
 typedef struct ase_http_req_t ase_http_req_t;

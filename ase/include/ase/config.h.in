@@ -1,4 +1,4 @@
-/* include/ase/cmn/config.h.in.  Generated from configure.ac by autoheader.  */
+/* include/ase/config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* char is mchar */
 #undef ASE_CHAR_IS_MCHAR

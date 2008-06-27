@@ -7,8 +7,8 @@
 #ifndef _ASE_LSP_LSP_H_
 #define _ASE_LSP_LSP_H_
 
-#include <ase/cmn/types.h>
-#include <ase/cmn/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
 typedef struct ase_lsp_t ase_lsp_t;
 typedef struct ase_lsp_obj_t ase_lsp_obj_t;

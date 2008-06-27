@@ -1,11 +1,11 @@
 /*
- * $Id: macros.h 196 2008-06-08 14:04:16Z baconevi $
+ * $Id: macros.h 214 2008-06-19 09:54:58Z baconevi $
  *
  * {License}
  */
 
-#ifndef _ASE_CMN_MACROS_H_
-#define _ASE_CMN_MACROS_H_
+#ifndef _ASE_MACROS_H_
+#define _ASE_MACROS_H_
 
 /**
  * @file macros.h
@@ -15,7 +15,7 @@
  * data type manipulation, etc.
  */
 
-#include <ase/cmn/types.h>
+#include <ase/types.h>
 
 #ifdef __cplusplus
 	/*#define ASE_NULL ((ase_uint_t)0)*/

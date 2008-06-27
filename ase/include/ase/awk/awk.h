@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h 196 2008-06-08 14:04:16Z baconevi $
+ * $Id: awk.h 223 2008-06-26 06:44:41Z baconevi $
  *
  * {License}
  */
@@ -15,8 +15,8 @@
  * a AWK interpreter engine.
  */
 
-#include <ase/cmn/types.h>
-#include <ase/cmn/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 #include <ase/cmn/map.h>
 
 typedef struct ase_awk_t ase_awk_t;

@@ -1,12 +1,12 @@
 /*
- * $Id: ctype.h 194 2008-06-06 13:00:39Z baconevi $
+ * $Id: ctype.h 223 2008-06-26 06:44:41Z baconevi $
  */
 
 #ifndef _ASE_UTL_CTYPE_H_
 #define _ASE_UTL_CTYPE_H_
 
-#include <ase/cmn/types.h>
-#include <ase/cmn/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
 #ifdef __cplusplus
 extern "C" {

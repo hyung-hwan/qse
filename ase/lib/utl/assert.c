@@ -1,9 +1,9 @@
 /*
- * $Id: assert.c 201 2008-06-09 06:57:20Z baconevi $
+ * $Id: assert.c 223 2008-06-26 06:44:41Z baconevi $
  */
 
-#include <ase/cmn/types.h>
-#include <ase/cmn/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
 #ifndef NDEBUG
 

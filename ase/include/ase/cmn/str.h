@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 194 2008-06-06 13:00:39Z baconevi $
+ * $Id: str.h 223 2008-06-26 06:44:41Z baconevi $
  *
  * {License}
  */
@@ -7,8 +7,8 @@
 #ifndef _ASE_CMN_STR_H_
 #define _ASE_CMN_STR_H_
 
-#include <ase/cmn/types.h>
-#include <ase/cmn/macros.h>
+#include <ase/types.h>
+#include <ase/macros.h>
 
 #define ASE_STR_LEN(x)      ((x)->size)
 #define ASE_STR_SIZE(x)     ((x)->size + 1)
