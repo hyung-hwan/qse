@@ -10,16 +10,8 @@
 #include <ase/utl/getopt.h>
 #include <ase/cmn/mem.h>
 #include <ase/cmn/str.h>
-//#include <ase/utl/helper.h>
 
-/*
-#include <ase/std/io.h>
-#include <ase/std/lib.h>
-#include <ase/std/mem.h>
-#include <ase/std/opt.h>
-*/
-
-
+#include <ase/utl/helper.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -97,21 +89,6 @@ static ase_ssize_t put_output (
 	}
 
 	return -1;
-}
-
-static void* custom_tgp_malloc (void* custom, ase_size_t n)
-{
-	return malloc (n);
-}
-
-static void* custom_tgp_realloc (void* custom, void* ptr, ase_size_t n)
-{
-	return realloc (ptr, n);
-}
-
-static void custom_tgp_free (void* custom, void* ptr)
-{
-	free (ptr);
 }
 
 #endif

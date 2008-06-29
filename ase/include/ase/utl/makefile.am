@@ -1,5 +1,5 @@
 
-pkginclude_HEADERS = ctype.h getopt.h http.h main.h stdio.h
+pkginclude_HEADERS = helper.h ctype.h getopt.h http.h main.h stdio.h
 
 pkgincludedir= $(includedir)/ase/utl
 
