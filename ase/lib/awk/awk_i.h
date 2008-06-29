@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: awk_i.h 232 2008-06-28 09:38:00Z baconevi $
  *
  * {License}
  */
@@ -75,7 +75,7 @@ struct ase_awk_tree_t
 struct ase_awk_t
 {
 	ase_awk_prmfns_t prmfns;
-	void* custom_data;
+	void* assoc_data;
 
 	/* options */
 	int option;

@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h 223 2008-06-26 06:44:41Z baconevi $
+ * $Id: awk.h 232 2008-06-28 09:38:00Z baconevi $
  *
  * {License}
  */
@@ -458,12 +458,22 @@ enum ase_awk_global_id_t
 extern "C" {
 #endif
 
-ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data);
+ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns);
 int ase_awk_close (ase_awk_t* awk);
 int ase_awk_clear (ase_awk_t* awk);
 
+/**
+ *  @function ase_awk_setassocdata
+ *  @brief ssociats the user-specified data with an interpreter
+ */
+void ase_awk_setassocdata (ase_awk_t* awk, void* data);
+/**
+ *  @function ase_awk_getassocdata
+ *  @brief returns the user-specified data associated with an interpreter
+ */
+void* ase_awk_getassocdata (ase_awk_t* awk);
+
 ase_mmgr_t* ase_awk_getmmgr (ase_awk_t* awk);
-void* ase_awk_getcustomdata (ase_awk_t* awk);
 
 const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num);
 int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str);

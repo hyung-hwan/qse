@@ -94,6 +94,17 @@ ase_lsp_t* ase_lsp_open (
 
 void ase_lsp_close (ase_lsp_t* lsp);
 
+/**
+ *  @function ase_lsp_setassocdata
+ *  @brief ssociats the user-specified data with an interpreter
+ */
+void ase_lsp_setassocdata (ase_lsp_t* lsp, void* data);
+/**
+ *  @function ase_lsp_getassocdata
+ *  @brief returns the user-specified data associated with an interpreter
+ */
+void* ase_lsp_getassocdata (ase_lsp_t* lsp);
+
 void ase_lsp_geterror (
 	ase_lsp_t* lsp, int* errnum, const ase_char_t** errmsg);
 

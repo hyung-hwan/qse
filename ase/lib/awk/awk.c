@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 197 2008-06-09 06:24:10Z baconevi $ 
+ * $Id: awk.c 232 2008-06-28 09:38:00Z baconevi $ 
  *
  * {License}
  */
@@ -24,7 +24,7 @@ static void free_bfn (void* awk, void* afn);
 		ase_awk_seterror ((awk), (code), (line), &errarg, 1); \
 	} while (0)
 
-ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
+ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns)
 {
 	ase_awk_t* awk;
 
@@ -224,7 +224,7 @@ ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns, void* custom_data)
 	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_BUILD, 0);
 	ase_awk_setmaxdepth (awk, ASE_AWK_DEPTH_REX_MATCH, 0);
 
-	awk->custom_data = custom_data;
+	awk->assoc_data = ASE_NULL;
 
 	if (ase_awk_initglobals (awk) == -1)
 	{
@@ -375,6 +375,16 @@ int ase_awk_clear (ase_awk_t* awk)
 	return 0;
 }
 
+void ase_awk_setassocdata (ase_awk_t* awk, void* data)
+{
+	awk->assoc_data = data;	
+}
+
+void* ase_awk_getassocdata (ase_awk_t* awk)
+{
+	return awk->assoc_data;
+}
+
 int ase_awk_getoption (ase_awk_t* awk)
 {
 	return awk->option;
@@ -388,11 +398,6 @@ void ase_awk_setoption (ase_awk_t* awk, int opt)
 ase_mmgr_t* ase_awk_getmmgr (ase_awk_t* awk)
 {
 	return &awk->prmfns.mmgr;
-}
-
-void* ase_awk_getcustomdata (ase_awk_t* awk)
-{
-	return awk->custom_data;
 }
 
 void ase_awk_stopall (ase_awk_t* awk)

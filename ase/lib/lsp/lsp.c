@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: lsp.c 232 2008-06-28 09:38:00Z baconevi $
  *
  * {License}
  */
@@ -54,6 +54,7 @@ ase_lsp_t* ase_lsp_open (
 	 * fully initialized yet */
 	ase_memset (lsp, 0, ASE_SIZEOF(ase_lsp_t));
 	ase_memcpy (&lsp->prmfns, prmfns, ASE_SIZEOF(lsp->prmfns));
+	lsp->assoc_data = ASE_NULL;
 
 	if (ase_lsp_name_open(&lsp->token.name, 0, lsp) == ASE_NULL) 
 	{
@@ -99,6 +100,16 @@ void ase_lsp_close (ase_lsp_t* lsp)
 	ase_lsp_closemem (lsp->mem);
 	ase_lsp_name_close (&lsp->token.name);
 	ASE_LSP_FREE (lsp, lsp);
+}
+
+void ase_lsp_setassocdata (ase_lsp_t* lsp, void* data)
+{
+	lsp->assoc_data = data;
+}
+
+void* ase_lsp_getassocdata (ase_lsp_t* lsp)
+{
+	return lsp->assoc_data;
 }
 
 int ase_lsp_attinput (ase_lsp_t* lsp, ase_lsp_io_t input, void* arg)
