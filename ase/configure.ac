@@ -307,5 +307,6 @@ AC_CONFIG_FILES([
 	lib/utl/makefile 
 	cmd/makefile 
 	cmd/awk/makefile 
-	cmd/lsp/makefile])
+	cmd/lsp/makefile
+	cmd/tgp/makefile])
 AC_OUTPUT

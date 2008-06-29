@@ -237,7 +237,7 @@ static int handle_args (int argc, ase_char_t* argv[])
 	ase_cint_t c;
 
 	ase_memset (&opt, 0, ASE_SIZEOF(opt));
-	opt.str = ASE_T("m:i:");
+	opt.str = ASE_T("hm:i:");
 
 	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
 	{
