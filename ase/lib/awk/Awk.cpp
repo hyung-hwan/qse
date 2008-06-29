@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 129 2008-03-13 05:45:36Z baconevi $
+ * $Id: Awk.cpp 232 2008-06-28 09:38:00Z baconevi $
  *
  * {License}
  */
@@ -1158,12 +1158,14 @@ int Awk::open ()
 	prmfns.misc.dprintf     = dprintf;
 	prmfns.misc.custom_data = this;
 
-	awk = ase_awk_open (&prmfns, this);
+	awk = ase_awk_open (&prmfns);
 	if (awk == ASE_NULL)
 	{
 		setError (ERR_NOMEM);
 		return -1;
 	}
+
+	ase_awk_setassocdata (awk, this);
 
 	functionMap = ase_map_open (
 		this, 512, 70, freeFunctionMapValue, ASE_NULL, 

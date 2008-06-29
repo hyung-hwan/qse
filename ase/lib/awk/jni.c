@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: jni.c 232 2008-06-28 09:38:00Z baconevi $
  *
  * {License}
  */
@@ -407,7 +407,7 @@ static void throw_exception (
 
 static jboolean is_debug (ase_awk_t* awk)
 {
-	awk_data_t* awk_data = (awk_data_t*)ase_awk_getcustomdata (awk);
+	awk_data_t* awk_data = (awk_data_t*)ase_awk_getassocdata (awk);
 	return awk_data->debug? JNI_TRUE: JNI_FALSE;
 }
 
@@ -490,7 +490,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	awk_data->heap = heap;
 #endif
 
-	awk = ase_awk_open (&prmfns, awk_data);
+	awk = ase_awk_open (&prmfns);
 	if (awk == ASE_NULL)
 	{
 #if defined(_WIN32) && defined(__DMC__)
@@ -502,6 +502,8 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 		THROW_NOMEM_EXCEPTION (env);
 		return;
 	}
+
+	ase_awk_setassocdata (awk, awk_data);
 
 	class = (*env)->GetObjectClass(env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
@@ -551,7 +553,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj, jlong a
 	OutputDebugStringW (L"<<<CLOSING AWK>>>\n");
 #endif
 
-	tmp = (awk_data_t*)ase_awk_getcustomdata (awk);
+	tmp = (awk_data_t*)ase_awk_getassocdata (awk);
 #if defined(_WIN32) && defined(__DMC__)
 	HANDLE heap = tmp->heap;
 #endif
@@ -1938,7 +1940,7 @@ JNIEXPORT jboolean JNICALL Java_ase_awk_Awk_getdebug (JNIEnv* env, jobject obj, 
 {
 	ase_awk_t* awk = (ase_awk_t*)awkid;
 	EXCEPTION_ON_ASE_NULL_AWK_RETURNING (env, awk, JNI_FALSE);
-	return ((awk_data_t*)ase_awk_getcustomdata(awk))->debug? JNI_TRUE: JNI_FALSE;
+	return ((awk_data_t*)ase_awk_getassocdata(awk))->debug? JNI_TRUE: JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
@@ -1946,7 +1948,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
 {	
 	ase_awk_t* awk = (ase_awk_t*)awkid;
 	EXCEPTION_ON_ASE_NULL_AWK (env, awk);
-	((awk_data_t*)ase_awk_getcustomdata(awk))->debug = debug;
+	((awk_data_t*)ase_awk_getassocdata(awk))->debug = debug;
 }
 
 JNIEXPORT jstring JNICALL Java_ase_awk_Awk_getword (

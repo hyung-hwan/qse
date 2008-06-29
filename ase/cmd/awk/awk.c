@@ -1153,7 +1153,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns.misc.dprintf     = custom_awk_dprintf;
 	prmfns.misc.custom_data = NULL;
 
-	awk = ase_awk_open(&prmfns, ASE_NULL);
+	awk = ase_awk_open(&prmfns);
 	if (awk == ASE_NULL)
 	{
 #ifdef _WIN32

@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: lsp_i.h 232 2008-06-28 09:38:00Z baconevi $
  *
  * {License}
  */
@@ -43,6 +43,8 @@
 struct ase_lsp_t 
 {
 	ase_lsp_prmfns_t prmfns;
+	/* user-specified data */
+	void* assoc_data;
 
 	/* error */
 	int errnum;
