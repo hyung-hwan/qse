@@ -5,5 +5,5 @@ bin_PROGRAMS = asetgp
 
 asetgp_SOURCES = tgp.c
 asetgp_LDFLAGS = -L../../lib/tgp -L../../lib/utl 
-asetgp_LDADD = -laseutl -lasetgp $(LIBM)
+asetgp_LDADD = -laseutl -lasetgp
 

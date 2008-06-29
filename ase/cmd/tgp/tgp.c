@@ -10,6 +10,7 @@
 #include <ase/utl/getopt.h>
 #include <ase/cmn/mem.h>
 #include <ase/cmn/str.h>
+//#include <ase/utl/helper.h>
 
 /*
 #include <ase/std/io.h>
@@ -36,6 +37,7 @@
 #include <mcheck.h>
 #endif
 
+#if 0
 static ase_ssize_t get_input (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
@@ -112,28 +114,7 @@ static void custom_tgp_free (void* custom, void* ptr)
 	free (ptr);
 }
 
-static int custom_tgp_sprintf (
-	void* custom, ase_char_t* buf, ase_size_t size, 
-	const ase_char_t* fmt, ...)
-{
-	int n;
-
-	va_list ap;
-	va_start (ap, fmt);
-	n = ase_vsprintf (buf, size, fmt, ap);
-	va_end (ap);
-
-	return n;
-}
-
-
-static void custom_tgp_dprintf (void* custom, const ase_char_t* fmt, ...)
-{
-	va_list ap;
-	va_start (ap, fmt);
-	ase_vfprintf (stderr, fmt, ap);
-	va_end (ap);
-}
+#endif
 
 static void print_usage (const ase_char_t* argv0)
 {
@@ -141,10 +122,15 @@ static void print_usage (const ase_char_t* argv0)
 		ASE_T("Usage: %s [options]\n"), argv0);
 	ase_fprintf (ASE_STDERR, 
 		ASE_T("  -h          print this message\n"));
-	ase_fprintf (ASE_STDERR, 
-		ASE_T("  -m integer  number of memory cells\n"));
-	ase_fprintf (ASE_STDERR, 
-		ASE_T("  -i integer  number of memory cell increments\n"));
+
+	ase_fprintf (ASE_STDERR,
+		ASE_T("  -u          user id\n"));
+	ase_fprintf (ASE_STDERR,
+		ASE_T("  -g          group id\n"));
+	ase_fprintf (ASE_STDERR,
+		ASE_T("  -r          chroot\n"));
+	ase_fprintf (ASE_STDERR,
+		ASE_T("  -U          enable upload\n"));
 }
 
 static int handle_args (int argc, ase_char_t* argv[])
@@ -153,7 +139,7 @@ static int handle_args (int argc, ase_char_t* argv[])
 	ase_cint_t c;
 
 	ase_memset (&opt, 0, ASE_SIZEOF(opt));
-	opt.str = ASE_T("m:i:");
+	opt.str = ASE_T("hu:g:r:");
 
 	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
 	{
@@ -162,14 +148,6 @@ static int handle_args (int argc, ase_char_t* argv[])
 			case ASE_T('h'):
 				print_usage (argv[0]);
 				return -1;
-
-			case ASE_T('m'):
-				opt_memsize = ase_strtoi(opt.arg);
-				break;
-
-			case ASE_T('i'):
-				opt_meminc = ase_strtoi(opt.arg);
-				break;
 
 			case ASE_T('?'):
 				ase_fprintf (ASE_STDERR, ASE_T("Error: illegal option - %c\n"), opt.opt);
@@ -180,6 +158,19 @@ static int handle_args (int argc, ase_char_t* argv[])
 				ase_fprintf (ASE_STDERR, ASE_T("Error: missing argument for %c\n"), opt.opt);
 				print_usage (argv[0]);
 				return -1;
+
+			case ASE_T('u'):
+				//opt.arg;
+				break;
+			case ASE_T('g'):
+				//opt.arg;
+				break;
+			case ASE_T('r'):
+				//opt.arg;
+				break;
+			case ASE_T('U'):
+				//opt.arg;
+				break;
 		}
 	}
 
@@ -190,11 +181,6 @@ static int handle_args (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	if (opt_memsize <= 0)
-	{
-		ase_printf (ASE_T("Error: invalid memory size given\n"));
-		return -1;
-	}
 	return 0;
 }
 
@@ -212,8 +198,8 @@ int tgp_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	ase_tgp_attinput (tgp, get_input, ASE_NULL);
-	ase_tgp_attoutput (tgp, put_output, ASE_NULL);
+	//ase_tgp_attinput (tgp, get_input, ASE_NULL);
+	//ase_tgp_attoutput (tgp, put_output, ASE_NULL);
 
 	ase_tgp_close (tgp);
 	return 0;
