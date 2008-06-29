@@ -5,7 +5,7 @@
 #include <ase/awk/awk.h>
 #include <ase/awk/val.h>
 
-#include <ase/utl/ctype.h>
+#include <ase/utl/helper.h>
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
 
@@ -1145,27 +1145,16 @@ static int awk_main (int argc, ase_char_t* argv[])
 	prmfns.mmgr.custom_data = NULL;
 #endif
 
-	prmfns.ccls.is_upper    = custom_awk_isupper;
-	prmfns.ccls.is_lower    = custom_awk_islower;
-	prmfns.ccls.is_alpha    = custom_awk_isalpha;
-	prmfns.ccls.is_digit    = custom_awk_isdigit;
-	prmfns.ccls.is_xdigit   = custom_awk_isxdigit;
-	prmfns.ccls.is_alnum    = custom_awk_isalnum;
-	prmfns.ccls.is_space    = custom_awk_isspace;
-	prmfns.ccls.is_print    = custom_awk_isprint;
-	prmfns.ccls.is_graph    = custom_awk_isgraph;
-	prmfns.ccls.is_cntrl    = custom_awk_iscntrl;
-	prmfns.ccls.is_punct    = custom_awk_ispunct;
-	prmfns.ccls.to_upper    = custom_awk_toupper;
-	prmfns.ccls.to_lower    = custom_awk_tolower;
-	prmfns.ccls.custom_data = NULL;
+	/*prmfns.mmgr = *ASE_GETMMGR();*/
+	prmfns.ccls = *ASE_GETCCLS();
 
 	prmfns.misc.pow         = custom_awk_pow;
 	prmfns.misc.sprintf     = custom_awk_sprintf;
 	prmfns.misc.dprintf     = custom_awk_dprintf;
 	prmfns.misc.custom_data = NULL;
 
-	if ((awk = ase_awk_open(&prmfns, ASE_NULL)) == ASE_NULL) 
+	awk = ase_awk_open(&prmfns, ASE_NULL);
+	if (awk == ASE_NULL)
 	{
 #ifdef _WIN32
 		HeapDestroy (mmgr_data.heap);
