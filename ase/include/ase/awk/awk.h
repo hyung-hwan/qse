@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h 232 2008-06-28 09:38:00Z baconevi $
+ * $Id: awk.h 233 2008-06-29 13:41:11Z baconevi $
  *
  * {License}
  */
@@ -464,7 +464,7 @@ int ase_awk_clear (ase_awk_t* awk);
 
 /**
  *  @function ase_awk_setassocdata
- *  @brief ssociats the user-specified data with an interpreter
+ *  @brief associats the user-specified data with an interpreter
  */
 void ase_awk_setassocdata (ase_awk_t* awk, void* data);
 /**

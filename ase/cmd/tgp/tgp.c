@@ -29,74 +29,10 @@
 #include <mcheck.h>
 #endif
 
-#if 0
-static ase_ssize_t get_input (
-	int cmd, void* arg, ase_char_t* data, ase_size_t size)
-{
-	switch (cmd) 
-	{
-		case ASE_TGP_IO_OPEN:
-		case ASE_TGP_IO_CLOSE:
-			return 0;
-
-		case ASE_TGP_IO_READ:
-		{
-			/*
-			if (ase_fgets (data, size, stdin) == ASE_NULL) 
-			{
-				if (ferror(stdin)) return -1;
-				return 0;
-			}
-			return ase_tgp_strlen(data);
-			*/
-
-			ase_cint_t c;
-
-			if (size <= 0) return -1;
-			c = ase_fgetc (stdin);
-
-			if (c == ASE_CHAR_EOF) 
-			{
-				if (ferror(stdin)) return -1;
-				return 0;
-			}
-
-			data[0] = c;
-			return 1;
-		}
-	}
-
-	return -1;
-}
-
-static ase_ssize_t put_output (
-	int cmd, void* arg, ase_char_t* data, ase_size_t size)
-{
-	switch (cmd) 
-	{
-		case ASE_TGP_IO_OPEN:
-		case ASE_TGP_IO_CLOSE:
-			return 0;
-
-		case ASE_TGP_IO_WRITE:
-		{
-			int n = ase_fprintf (
-				stdout, ASE_T("%.*s"), size, data);
-			if (n < 0) return -1;
-
-			return size;
-		}
-	}
-
-	return -1;
-}
-
-#endif
-
 static void print_usage (const ase_char_t* argv0)
 {
 	ase_fprintf (ASE_STDERR, 
-		ASE_T("Usage: %s [options]\n"), argv0);
+		ASE_T("Usage: %s [options] [file]\n"), argv0);
 	ase_fprintf (ASE_STDERR, 
 		ASE_T("  -h          print this message\n"));
 
@@ -161,9 +97,49 @@ static int handle_args (int argc, ase_char_t* argv[])
 	return 0;
 }
 
+struct xin_t
+{
+	const ase_char_t* name;
+	ASE_FILE* fp;
+};
+
+struct xout_t
+{
+	const ase_char_t* name;
+	ASE_FILE* fp;
+};
+
+
+static int io_1 (ase_tgp_t* tgp, int cmd, ase_char_t* buf, int len)
+{
+	xin_t* xin = (xin_t*)arg;
+
+	switch (cmd)
+	{
+		case ASE_IO_OPEN:
+			xin->fp = ase_fopen (ASE_T("abc.tgp"), ASE_T("r"));
+			return (xin->fp == NULL) -1: 0;
+
+		case ASE_IO_CLOSE
+			ase_fclose (xin->fp);
+			return 0;
+
+		case ASE_IO_READ:
+			ase_fgets (xin->fp);
+			return 0;
+	}	
+
+	return -1;
+}
+
+static int io_2 (ase_tgp_t* tgp, int cmd, ase_char_t* buf, int len)
+{
+}
+
 int tgp_main (int argc, ase_char_t* argv[])
 {
 	ase_tgp_t* tgp;
+	int ret = 0;
 
 	if (handle_args (argc, argv) == -1) return -1;
 	
@@ -175,11 +151,22 @@ int tgp_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	//ase_tgp_attinput (tgp, get_input, ASE_NULL);
-	//ase_tgp_attoutput (tgp, put_output, ASE_NULL);
+	ase_tgp_setstdin (tgp, io, xin);
+	ase_tgp_setstdout (tgp, io, ASE_NULL);
+	/*
+	ase_tgp_setexecin (tgp, io, );
+	ase_tgp_setexecout (tgp, io, );
+	*/
+
+	if (ase_tgp_run (tgp) == -1)
+	{
+		ase_fprintf (ASE_STDERR, 
+			ASE_T("Error: cannot run a tgp instance\n"));
+		ret = -1;
+	}
 
 	ase_tgp_close (tgp);
-	return 0;
+	return ret;
 }
 
 int ase_main (int argc, ase_achar_t* argv[])

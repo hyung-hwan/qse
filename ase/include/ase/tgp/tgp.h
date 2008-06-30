@@ -1,5 +1,5 @@
 /*
- * $Id: tgp.h 229 2008-06-26 10:46:39Z baconevi $
+ * $Id: tgp.h 233 2008-06-29 13:41:11Z baconevi $
  *
  * {License}
  */
@@ -29,6 +29,12 @@ extern "C" {
 
 ase_tgp_t* ase_tgp_open (ase_mmgr_t* mmgr);
 void ase_tgp_close (ase_tgp_t* tgp);
+
+void ase_tgp_setassocdata (ase_tgp_t* tgp, void* data);
+void* ase_tgp_getassocdata (ase_tgp_t* tgp);
+
+void ase_tgp_setio (ase_tgp_t* tgp, ase_tgp_io_t* io);
+void ase_tgp_getio (ase_tgp_t* tgp, ase_tgp_io_t* io);
 
 #ifdef __cplusplus
 }

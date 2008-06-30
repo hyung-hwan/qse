@@ -8,7 +8,16 @@
 struct ase_tgp_t
 {
 	ase_mmgr_t mmgr;
+	void* assoc_data;
 	int errnum;
+
+	ase_tgp_io_t* ih;
+	ase_tgp_io_t* oh;
+	ase_tgp_io_t* rh;
+
+	void* ih_arg;
+	void* oh_arg;
+	void* rh_arg;
 
 	struct
 	{
@@ -62,6 +71,16 @@ void ase_tgp_close (ase_tgp_t* tgp)
 	ASE_FREE (&tgp->mmgr, tgp);
 }
 
+void ase_tgp_setassocdata (ase_tgp_t* tgp, void* data)
+{
+	tgp->assoc_data = data;
+}
+
+void* ase_tgp_getassocdata (ase_tgp_t* tgp)
+{
+	return tgp->assoc_data;
+}
+
 int ase_tgp_geterrnum (ase_tgp_t* tgp)
 {
 	return tgp->errnum;
@@ -73,7 +92,7 @@ static int getc (ase_tgp_t* tgp, ase_char_t* c)
 	{
 		ase_ssize_t n;
 
-		n = tgp->read (tgp, tgp->ib.ptr, ASE_COUNTOF(tgp->ib.ptr));
+		n = tgp->ih (tgp->ih.arg, ASE_TGP_IO_READ, tgp->ib.ptr, ASE_COUNTOF(tgp->ib.ptr));
 		if (n < 0) return -1;
 		else if (n == 0) 
 		{
@@ -97,7 +116,8 @@ static int putc (ase_tgp_t* tgp, ase_char_t c)
 	{
 		ase_ssize_t n;
 
-		n = tgp->write (tgp, tgp->ob.ptr, tgp->ob.len);
+		/* TODO: submit on a newline as well */
+		n = tgp->oh (tgp->oh.arg, ASE_TGP_IO_WRITE, tgp->ob.ptr, ASE_COUNTOF(tgp->ob.ptr));
 		if (n < 0) return -1;
 		else if (n == 0) return 0;
 	}
@@ -112,9 +132,11 @@ static int runc (ase_tgp_t* tgp, ase_char_t c)
 	{
 		ase_ssize_t n;
 
-		n = tgp->run (tgp, tgp->rb.ptr, tgp->rb.len);
+		n = tgp->rh (tgp->rh.arg, ASE_TGP_IO_PUT, tgp->rb.ptr, tgp->rb.len);
 		if (n < 0) return -1;
 		else if (n == 0) return 0;
+
+		tgp->rh (tgp->rh.arg, ASE_TGP_IO_GET, tgp->rb.ptr, tgp->rb.len);
 	}
 
 	tgp->rb.ptr[tgp->rb.len++] = c;
@@ -132,6 +154,33 @@ int ase_tgp_run (ase_tgp_t* tgp)
 	tgp->ob.len = 0;
 	tgp->rb.len = 0;
 
+	n = tgp->ih.func (ASE_TGP_IO_OPEN, tgp->ih.arg, ASE_NULL, 0);
+	if (n == -1)
+	{
+		/* error */
+		return -1;
+	}
+	if (n == 0)
+	{
+		/* reached end of input upon opening the file... */
+		tgp->ih.func (ASE_TGP_IO_CLOSE, tgp->ih.arg, ASE_NULL, 0);
+		return 0;
+	}
+
+	n = tgp->oh.func (ASE_TGP_IO_OPEN, tgp->oh.arg, ASE_NULL, 0);
+	if (n == -1)
+	{
+		tgp->ih.func (ASE_TGP_IO_CLOSE, tgp->ih.arg, ASE_NULL, 0);
+		return -1;
+	}
+	if (n == 0)
+	{
+		/* reached end of input upon opening the file... */
+		tgp->oh.func (ASE_TGP_IO_CLOSE, tgp->oh.arg, ASE_NULL, 0);
+		tgp->ih.func (ASE_TGP_IO_CLOSE, tgp->ih.arg, ASE_NULL, 0);
+		return 0;
+	}
+	
 	while (1)
 	{
 		n = getc (tgp, &c);
@@ -198,5 +247,43 @@ int ase_tgp_run (ase_tgp_t* tgp)
 		}
 	}
 	
+	tgp->oh.func (ASE_TGP_IO_CLOSE, tgp->oh.arg, ASE_NULL, 0);
+	tgp->ih.func (ASE_TGP_IO_CLOSE, tgp->ih.arg, ASE_NULL, 0);
 	return 0;
+}
+
+void ase_tgp_attachin (ase_tgp_t* tgp, ase_tgp_io_t* io, void* arg)
+{
+	tgp->ih = io;
+	tgp->ih_arg = arg;
+}
+
+void ase_tgp_detachin (ase_tgp_t* tgp)
+{
+	tgp->ih = ASE_NULL;
+	tgp->ih_arg = ASE_NULL;
+}
+
+void ase_tgp_attachout (ase_tgp_t* tgp, ase_tgp_io_t* io)
+{
+	tgp->oh = io;
+	tgp->oh_arg = arg;
+}
+
+void ase_tgp_detachout (ase_tgp_t* tgp)
+{
+	tgp->oh = ASE_NULL;
+	tgp->oh_arg = ASE_NULL;
+}
+
+void ase_tgp_attachin (ase_tgp_t* tgp, ase_tgp_io_t* io)
+{
+	tgp->rh = io;
+	tgp->rh_arg = arg;
+}
+
+void ase_tgp_detachin (ase_tgp_t* tgp)
+{
+	tgp->rh = ASE_NULL;
+	tgp->rh_arg = ASE_NULL;
 }
