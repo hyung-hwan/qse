@@ -6,5 +6,5 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libasetgp.la 
 
 libasetgp_la_SOURCES = tgp.c 
-libasetgp_la_LDFLAGS = -L../cmn -release $(VERSION)
+libasetgp_la_LDFLAGS = -L../cmn -version-info 1:0:0
 libasetgp_la_LIBADD = -lasecmn
