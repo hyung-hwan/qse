@@ -11,13 +11,23 @@ struct ase_tgp_t
 	void* assoc_data;
 	int errnum;
 
-	ase_tgp_io_t* ih;
-	ase_tgp_io_t* oh;
-	ase_tgp_io_t* rh;
+	struct
+	{
+		ase_tgp_io_t func;
+		void* arg;
+	} ih;
 
-	void* ih_arg;
-	void* oh_arg;
-	void* rh_arg;
+	struct 
+	{
+		ase_tgp_io_t func;
+		void* arg;
+	} oh;
+
+	struct 
+	{
+		ase_tgp_io_t func;
+		void* arg;
+	} rh;
 
 	struct
 	{
@@ -92,7 +102,7 @@ static int getc (ase_tgp_t* tgp, ase_char_t* c)
 	{
 		ase_ssize_t n;
 
-		n = tgp->ih (tgp->ih.arg, ASE_TGP_IO_READ, tgp->ib.ptr, ASE_COUNTOF(tgp->ib.ptr));
+		n = tgp->ih.func (ASE_TGP_IO_READ, tgp->ih.arg, tgp->ib.ptr, ASE_COUNTOF(tgp->ib.ptr));
 		if (n < 0) return -1;
 		else if (n == 0) 
 		{
@@ -117,7 +127,7 @@ static int putc (ase_tgp_t* tgp, ase_char_t c)
 		ase_ssize_t n;
 
 		/* TODO: submit on a newline as well */
-		n = tgp->oh (tgp->oh.arg, ASE_TGP_IO_WRITE, tgp->ob.ptr, ASE_COUNTOF(tgp->ob.ptr));
+		n = tgp->oh.func (ASE_TGP_IO_WRITE, tgp->oh.arg, tgp->ob.ptr, ASE_COUNTOF(tgp->ob.ptr));
 		if (n < 0) return -1;
 		else if (n == 0) return 0;
 	}
@@ -132,11 +142,11 @@ static int runc (ase_tgp_t* tgp, ase_char_t c)
 	{
 		ase_ssize_t n;
 
-		n = tgp->rh (tgp->rh.arg, ASE_TGP_IO_PUT, tgp->rb.ptr, tgp->rb.len);
+		n = tgp->rh.func (ASE_TGP_IO_WRITE, tgp->rh.arg, tgp->rb.ptr, tgp->rb.len);
 		if (n < 0) return -1;
 		else if (n == 0) return 0;
 
-		tgp->rh (tgp->rh.arg, ASE_TGP_IO_GET, tgp->rb.ptr, tgp->rb.len);
+		tgp->rh.func (ASE_TGP_IO_READ, tgp->rh.arg, tgp->rb.ptr, tgp->rb.len);
 	}
 
 	tgp->rb.ptr[tgp->rb.len++] = c;
@@ -252,38 +262,38 @@ int ase_tgp_run (ase_tgp_t* tgp)
 	return 0;
 }
 
-void ase_tgp_attachin (ase_tgp_t* tgp, ase_tgp_io_t* io, void* arg)
+void ase_tgp_attachin (ase_tgp_t* tgp, ase_tgp_io_t io, void* arg)
 {
-	tgp->ih = io;
-	tgp->ih_arg = arg;
+	tgp->ih.func = io;
+	tgp->ih.arg = arg;
 }
 
 void ase_tgp_detachin (ase_tgp_t* tgp)
 {
-	tgp->ih = ASE_NULL;
-	tgp->ih_arg = ASE_NULL;
+	tgp->ih.func = ASE_NULL;
+	tgp->ih.arg = ASE_NULL;
 }
 
-void ase_tgp_attachout (ase_tgp_t* tgp, ase_tgp_io_t* io)
+void ase_tgp_attachout (ase_tgp_t* tgp, ase_tgp_io_t io, void* arg)
 {
-	tgp->oh = io;
-	tgp->oh_arg = arg;
+	tgp->oh.func = io;
+	tgp->oh.arg = arg;
 }
 
 void ase_tgp_detachout (ase_tgp_t* tgp)
 {
-	tgp->oh = ASE_NULL;
-	tgp->oh_arg = ASE_NULL;
+	tgp->oh.func = ASE_NULL;
+	tgp->oh.arg = ASE_NULL;
 }
 
-void ase_tgp_attachin (ase_tgp_t* tgp, ase_tgp_io_t* io)
+void ase_tgp_attachexec (ase_tgp_t* tgp, ase_tgp_io_t io, void* arg)
 {
-	tgp->rh = io;
-	tgp->rh_arg = arg;
+	tgp->rh.func = io;
+	tgp->rh.arg = arg;
 }
 
-void ase_tgp_detachin (ase_tgp_t* tgp)
+void ase_tgp_detachexec (ase_tgp_t* tgp)
 {
-	tgp->rh = ASE_NULL;
-	tgp->rh_arg = ASE_NULL;
+	tgp->rh.func = ASE_NULL;
+	tgp->rh.arg = ASE_NULL;
 }

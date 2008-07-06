@@ -1,5 +1,5 @@
 /*
- * $Id: tgp.h 233 2008-06-29 13:41:11Z baconevi $
+ * $Id: tgp.h 235 2008-07-05 07:25:54Z baconevi $
  *
  * {License}
  */
@@ -32,9 +32,6 @@ void ase_tgp_close (ase_tgp_t* tgp);
 
 void ase_tgp_setassocdata (ase_tgp_t* tgp, void* data);
 void* ase_tgp_getassocdata (ase_tgp_t* tgp);
-
-void ase_tgp_setio (ase_tgp_t* tgp, ase_tgp_io_t* io);
-void ase_tgp_getio (ase_tgp_t* tgp, ase_tgp_io_t* io);
 
 #ifdef __cplusplus
 }
