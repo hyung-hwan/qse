@@ -110,35 +110,63 @@ typedef struct xout_t
 } xout_t;
 
 
-static int io_1 (int cmd, void* arg, ase_char_t* buf, int len)
+static int io_in (int cmd, void* arg, ase_char_t* buf, int len)
 {
 	xin_t* xin = (xin_t*)arg;
 
 	switch (cmd)
 	{
 		case ASE_TGP_IO_OPEN:
-			xin->fp = ase_fopen (ASE_T("abc.tgp"), ASE_T("r"));
+			xin->fp = (xin->name == ASE_NULL)?
+				ASE_STDIN:
+				ase_fopen(xin->name,ASE_T("r"));
+
 			return (xin->fp == NULL)? -1: 0;
 
 		case ASE_TGP_IO_CLOSE:
-			ase_fclose (xin->fp);
+			if (xin->name != ASE_NULL) ase_fclose (xin->fp);
 			return 0;
 
 		case ASE_TGP_IO_READ:
-			//ase_fgets (xin->fp);
-			return 0;
+			if (ase_fgets (buf, len, xin->fp) == ASE_NULL) return 0;
+			return ase_strlen(buf);
 	}	
 
 	return -1;
 }
 
-static int io_2 (ase_tgp_t* tgp, int cmd, ase_char_t* buf, int len)
+static int io_out (int cmd, void* arg, ase_char_t* buf, int len)
 {
+	xout_t* xout = (xout_t*)arg;
+
+	switch (cmd)
+	{
+		case ASE_TGP_IO_OPEN:
+			xout->fp = (xout->name == ASE_NULL)?
+				ASE_STDOUT:
+				ase_fopen(xout->name,ASE_T("r"));
+
+			return (xout->fp == NULL)? -1: 0;
+
+		case ASE_TGP_IO_CLOSE:
+			if (xout->name != ASE_NULL) ase_fclose (xout->fp);
+			return 0;
+
+		case ASE_TGP_IO_WRITE:
+			ase_fprintf (xout->fp, "%.*s", len, buf);
+			return len;
+	}	
+
+	return -1;
 }
 
 int tgp_main (int argc, ase_char_t* argv[])
 {
 	ase_tgp_t* tgp;
+
+	xin_t xin;
+	xout_t xout;
+
 	int ret = 0;
 
 	if (handle_args (argc, argv) == -1) return -1;
@@ -151,8 +179,11 @@ int tgp_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	//ase_tgp_setstdin (tgp, io, xin);
-	//ase_tgp_setstdout (tgp, io, ASE_NULL);
+	xin.name = ASE_T("x.tgp");
+	xout.name = ASE_NULL;
+
+	ase_tgp_attachin (tgp, io_in, &xin);
+	ase_tgp_attachout (tgp, io_out, &xout);
 	/*
 	ase_tgp_setexecin (tgp, io, );
 	ase_tgp_setexecout (tgp, io, );
