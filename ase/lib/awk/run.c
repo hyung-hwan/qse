@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 237 2008-07-09 13:20:08Z baconevi $
+ * $Id: run.c 238 2008-07-09 14:07:47Z baconevi $
  *
  * {License}
  */
@@ -5936,7 +5936,7 @@ static ase_awk_val_t* eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		run->errlin = nde->line;
 		return ASE_NULL;
 	}
-	((ase_awk_val_int_t*)val)->nde = nde; 
+	((ase_awk_val_int_t*)val)->nde = nde;
 
 	return val;
 }

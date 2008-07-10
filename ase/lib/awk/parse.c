@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 197 2008-06-09 06:24:10Z baconevi $
+ * $Id: parse.c 238 2008-07-09 14:07:47Z baconevi $
  *
  * {License}
  */
@@ -1917,20 +1917,25 @@ static ase_awk_nde_t* parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 	if (nde == ASE_NULL) return ASE_NULL;
 
 	/* check if a statement ends with a semicolon */
-	if (!MATCH(awk,TOKEN_SEMICOLON)) 
+	if (MATCH(awk,TOKEN_SEMICOLON)) 
 	{
+		/* eat up the semicolon and read in the next token */
+		if (get_token(awk) == -1) 
+		{
+			if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
+			return ASE_NULL;
+		}
+	}
+	else if (((awk->option & ASE_AWK_EXPLICIT) && !(awk->option & ASE_AWK_IMPLICIT)) ||
+	         (awk->token.prev.line == awk->token.line && !MATCH(awk,TOKEN_RBRACE)))
+	{
+		/* when EXPLICIT, the statement should end with a semicolon.
+		 * otherwise, a new line or a block closer can terminate a statement. */
 		if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
-
 		SETERRLIN (awk, ASE_AWK_ESTMEND, awk->token.prev.line);
 		return ASE_NULL;
 	}
 
-	/* eat up the semicolon and read in the next token */
-	if (get_token(awk) == -1) 
-	{
-		if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
-		return ASE_NULL;
-	}
 
 	return nde;
 }
