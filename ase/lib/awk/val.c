@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 197 2008-06-09 06:24:10Z baconevi $
+ * $Id: val.c 237 2008-07-09 13:20:08Z baconevi $
  *
  * {License}
  */
@@ -580,7 +580,7 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	{
 		ASE_ASSERTX (
 			!"should never happen - invalid value type",
-			"the type of a value should be one of ASE_AWK_VAL_XXX's defined in val.h");
+			"the type of a value should be one of ASE_AWK_VAL_XXX's defined in awk.h");
 	}
 }
 
@@ -660,7 +660,7 @@ ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
 
 	ASE_ASSERTX (
 		!"should never happen - invalid value type",
-		"the type of a value should be one of ASE_AWK_VAL_XXX's defined in val.h");
+		"the type of a value should be one of ASE_AWK_VAL_XXX's defined in awk.h");
 	return ASE_FALSE;
 }
 

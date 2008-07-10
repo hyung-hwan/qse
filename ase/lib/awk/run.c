@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 197 2008-06-09 06:24:10Z baconevi $
+ * $Id: run.c 237 2008-07-09 13:20:08Z baconevi $
  *
  * {License}
  */
@@ -4172,7 +4172,7 @@ static int __cmp_val (
 	static cmp_val_t func[] =
 	{
 		/* this table must be synchronized with 
-		 * the ASE_AWK_VAL_XXX values in val.h */
+		 * the ASE_AWK_VAL_XXX values in awk.h */
 		__cmp_nil_nil,  __cmp_nil_int,  __cmp_nil_real,  __cmp_nil_str,
 		__cmp_int_nil,  __cmp_int_int,  __cmp_int_real,  __cmp_int_str,
 		__cmp_real_nil, __cmp_real_int, __cmp_real_real, __cmp_real_str,
@@ -5936,7 +5936,7 @@ static ase_awk_val_t* eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		run->errlin = nde->line;
 		return ASE_NULL;
 	}
-	((ase_awk_val_int_t*)val)->nde = (ase_awk_nde_int_t*)nde; 
+	((ase_awk_val_int_t*)val)->nde = nde; 
 
 	return val;
 }
@@ -5951,7 +5951,7 @@ static ase_awk_val_t* eval_real (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		run->errlin = nde->line;
 		return ASE_NULL;
 	}
-	((ase_awk_val_real_t*)val)->nde = (ase_awk_nde_real_t*)nde;
+	((ase_awk_val_real_t*)val)->nde = nde;
 
 	return val;
 }

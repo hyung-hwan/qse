@@ -1,12 +1,11 @@
 /*
- * $Id: Awk.cpp 232 2008-06-28 09:38:00Z baconevi $
+ * $Id: Awk.cpp 237 2008-07-09 13:20:08Z baconevi $
  *
  * {License}
  */
 
 
 #include <ase/awk/Awk.hpp>
-#include <ase/awk/val.h>
 #include <ase/cmn/str.h>
 #include <ase/cmn/mem.h>
 
