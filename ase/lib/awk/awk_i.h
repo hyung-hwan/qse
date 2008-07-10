@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h 232 2008-06-28 09:38:00Z baconevi $
+ * $Id: awk_i.h 237 2008-07-09 13:20:08Z baconevi $
  *
  * {License}
  */
@@ -16,7 +16,6 @@ typedef struct ase_awk_chain_t ase_awk_chain_t;
 typedef struct ase_awk_tree_t ase_awk_tree_t;
 
 #include <ase/awk/awk.h>
-#include <ase/awk/val.h>
 #include "tree.h"
 #include "func.h"
 #include "tab.h"

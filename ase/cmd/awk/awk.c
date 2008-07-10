@@ -3,7 +3,6 @@
  */
 
 #include <ase/awk/awk.h>
-#include <ase/awk/val.h>
 
 #include <ase/utl/helper.h>
 #include <ase/utl/stdio.h>
