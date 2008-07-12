@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h 237 2008-07-09 13:20:08Z baconevi $
+ * $Id: awk.h 239 2008-07-11 11:07:17Z baconevi $
  *
  * {License}
  */
@@ -226,7 +226,10 @@ enum ase_awk_option_t
 	ASE_AWK_MAPTOVAR    = (1 << 16),
 
 	/* allows BEGIN, END, pattern-action blocks */
-	ASE_AWK_PABLOCK     = (1 << 17)
+	ASE_AWK_PABLOCK     = (1 << 17),
+
+	/* can terminate a statement with a new line */
+	ASE_AWK_NEWLINE   = (1 << 18)
 };
 
 /* error code */
