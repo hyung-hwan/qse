@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 195 2008-06-06 13:01:55Z baconevi $
+ * $Id: Awk.hpp 240 2008-07-11 14:41:16Z baconevi $
  *
  * {License}
  */
@@ -548,6 +548,7 @@ public:
 		OPT_BLOCKLESS = ASE_AWK_BLOCKLESS,
 		OPT_BASEONE = ASE_AWK_BASEONE,
 		OPT_STRIPSPACES = ASE_AWK_STRIPSPACES,
+
 		/** Support the nextofile statement */
 		OPT_NEXTOFILE = ASE_AWK_NEXTOFILE,
 		/** Use CR+LF instead of LF for line breaking. */
@@ -563,7 +564,9 @@ public:
 		/** Allows the assignment of a map value to a variable */
 		OPT_MAPTOVAR = ASE_AWK_MAPTOVAR,
 		/** Allows BEGIN, END, pattern-action blocks */
-		OPT_PABLOCK = ASE_AWK_PABLOCK
+		OPT_PABLOCK = ASE_AWK_PABLOCK,
+		/** Can terminate a statement with a new line */
+		OPT_NEWLINE = ASE_AWK_NEWLINE
 	};
 	// end of enum Option
 	

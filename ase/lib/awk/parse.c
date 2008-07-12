@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 239 2008-07-11 11:07:17Z baconevi $
+ * $Id: parse.c 240 2008-07-11 14:41:16Z baconevi $
  *
  * {License}
  */
@@ -521,9 +521,17 @@ static int parse (ase_awk_t* awk)
 		while (1) 
 		{
 			if (MATCH(awk,TOKEN_EOF)) break;
-			if (MATCH(awk,TOKEN_NEWLINE)) continue;
+			if (MATCH(awk,TOKEN_NEWLINE)) 
+			{
+				if (get_token(awk) == -1) 
+				{
+					n = -1;
+					goto exit_parse;
+				}
+				continue;
+			}
 
-			if (parse_progunit (awk) == ASE_NULL) 
+			if (parse_progunit(awk) == ASE_NULL) 
 			{
 				n = -1;
 				goto exit_parse;
@@ -592,6 +600,9 @@ exit_parse:
 static ase_awk_t* parse_progunit (ase_awk_t* awk)
 {
 	/*
+	global xxx, xxxx;
+	BEGIN { action }
+	END { action }
 	pattern { action }
 	function name (parameter-list) { statement }
 	*/
@@ -4358,11 +4369,14 @@ static ase_awk_nde_t* parse_print (ase_awk_t* awk, ase_size_t line, int type)
 			
 			while (MATCH(awk,TOKEN_COMMA))
 			{
-				if (get_token(awk) == -1)
-				{
-					ase_awk_clrpt (awk, args);
-					return ASE_NULL;
+				do {
+					if (get_token(awk) == -1)
+					{
+						ase_awk_clrpt (awk, args);
+						return ASE_NULL;
+					}
 				}
+				while (MATCH(awk,TOKEN_NEWLINE));
 
 				args_tail->next = parse_expression (awk, awk->token.line);
 				if (args_tail->next == ASE_NULL)
@@ -4503,6 +4517,18 @@ static int get_token (ase_awk_t* awk)
 	ase_str_clear (&awk->token.name);
 	awk->token.line = awk->src.lex.line;
 	awk->token.column = awk->src.lex.column;
+
+/* TODO: move NEWLINE handling to skip_spaces??? */
+/* TODO: change the following block of code */
+	if (awk->option & ASE_AWK_NEWLINE)
+	{
+		if (line > 0 && awk->token.line != line)
+		{
+			SET_TOKEN_TYPE (awk, TOKEN_NEWLINE);
+			return 0;
+		}
+	}
+/* END TODO */
 
 	if (line != 0 && (awk->option & ASE_AWK_BLOCKLESS) &&
 	    (awk->parse.id.block == PARSE_PATTERN ||
