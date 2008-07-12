@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 240 2008-07-11 14:41:16Z baconevi $
+ * $Id: parse.c 241 2008-07-12 04:52:19Z baconevi $
  *
  * {License}
  */
@@ -382,7 +382,7 @@ static global_t gtab[] =
 
 #define MATCH_TERMINATOR(awk) \
 	(MATCH((awk),TOKEN_SEMICOLON) || \
-	 ((awk->option & ASE_AWK_NEWLINE) && MATCH((awk),TOKEN_NEWLINE)))
+	 ((awk->option & ASE_AWK_NEWLINE) && (MATCH((awk),TOKEN_NEWLINE) || MATCH((awk),TOKEN_RBRACE))))
 
 ase_size_t ase_awk_getmaxdepth (ase_awk_t* awk, int type)
 {
@@ -498,6 +498,8 @@ static int parse (ase_awk_t* awk)
 
 	adjust_static_globals (awk);
 
+#define EXIT_PARSE(v) do { n = (v); goto exit_parse; } while(0)
+
 	/* the user io handler for the source code input returns 0 when
 	 * it doesn't have any files to open. this is the same condition
 	 * as the source code file is empty. so it will perform the parsing
@@ -505,37 +507,19 @@ static int parse (ase_awk_t* awk)
 	if (op > 0)
 	{
 		/* get the first character */
-		if (get_char(awk) == -1) 
-		{
-			n = -1;
-			goto exit_parse;
-		}
-
+		if (get_char(awk) == -1)  EXIT_PARSE(-1);
 		/* get the first token */
-		if (get_token(awk) == -1) 
-		{
-			n = -1;
-			goto exit_parse;
-		}
+		if (get_token(awk) == -1) EXIT_PARSE(-1);
 
 		while (1) 
 		{
+			while (MATCH(awk,TOKEN_NEWLINE)) 
+			{
+				if (get_token(awk) == -1) EXIT_PARSE(-1);
+			}
 			if (MATCH(awk,TOKEN_EOF)) break;
-			if (MATCH(awk,TOKEN_NEWLINE)) 
-			{
-				if (get_token(awk) == -1) 
-				{
-					n = -1;
-					goto exit_parse;
-				}
-				continue;
-			}
 
-			if (parse_progunit(awk) == ASE_NULL) 
-			{
-				n = -1;
-				goto exit_parse;
-			}
+			if (parse_progunit(awk) == ASE_NULL) EXIT_PARSE(-1);
 		}
 
 		if ((awk->option & ASE_AWK_EXPLICIT) &&
@@ -556,8 +540,7 @@ static int parse (ase_awk_t* awk)
 					SETERRARG (awk, ASE_AWK_EFNNONE, 
 						(ase_size_t)p->val, 
 						p->key.ptr, p->key.len);
-					n = -1;
-					goto exit_parse;	
+					EXIT_PARSE(-1);
 				}
 
 				p = ase_map_getnextpair (awk->parse.afns, p, &buckno);
@@ -570,13 +553,10 @@ static int parse (ase_awk_t* awk)
 
 	if (awk->src.ios.out != ASE_NULL) 
 	{
-		if (deparse (awk) == -1) 
-		{
-			n = -1;
-			goto exit_parse;
-		}
+		if (deparse (awk) == -1) EXIT_PARSE(-1);
 	}
 
+#undef EXIT_PARSE
 exit_parse:
 	if (n == 0) CLRERR (awk);
 	if (awk->src.ios.in (
@@ -1252,6 +1232,13 @@ static ase_awk_nde_t* parse_block (
 
 	while (1) 
 	{
+		/* skip new lines within a block */
+		while (MATCH(awk,TOKEN_NEWLINE))
+		{
+			if (get_token(awk) == -1) return ASE_NULL;
+		}
+
+		/* if the EOF is met before the right brace, this is an error */
 		if (MATCH(awk,TOKEN_EOF)) 
 		{
 			ase_awk_tab_remove (
@@ -1263,19 +1250,22 @@ static ase_awk_nde_t* parse_block (
 			return ASE_NULL;
 		}
 
+		/* end the block when the right brace is met */
 		if (MATCH(awk,TOKEN_RBRACE)) 
 		{
 			if (get_token(awk) == -1) 
 			{
 				ase_awk_tab_remove (
 					&awk->parse.locals, nlocals, 
-					ase_awk_tab_getsize(&awk->parse.locals) - nlocals);
+					ase_awk_tab_getsize(&awk->parse.locals)-nlocals);
 				if (head != ASE_NULL) ase_awk_clrpt (awk, head);
 				return ASE_NULL; 
 			}
+
 			break;
 		}
 
+		/* parse an actual statement in a block */
 		nde = parse_statement (awk, awk->token.line);
 		if (nde == ASE_NULL) 
 		{
@@ -1834,6 +1824,7 @@ static ase_awk_nde_t* parse_statement (ase_awk_t* awk, ase_size_t line)
 	return nde;
 }
 
+/* parse a non-block statement */
 static ase_awk_nde_t* parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 {
 	ase_awk_nde_t* nde;
