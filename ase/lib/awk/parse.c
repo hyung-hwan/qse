@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 238 2008-07-09 14:07:47Z baconevi $
+ * $Id: parse.c 239 2008-07-11 11:07:17Z baconevi $
  *
  * {License}
  */
@@ -379,6 +379,10 @@ static global_t gtab[] =
 		errarg.ptr = (arg); \
 		ase_awk_seterror ((awk), (code), (line), &errarg, 1); \
 	} while (0)
+
+#define MATCH_TERMINATOR(awk) \
+	(MATCH((awk),TOKEN_SEMICOLON) || \
+	 ((awk->option & ASE_AWK_NEWLINE) && MATCH((awk),TOKEN_NEWLINE)))
 
 ase_size_t ase_awk_getmaxdepth (ase_awk_t* awk, int type)
 {
@@ -1271,7 +1275,8 @@ static ase_awk_nde_t* parse_block (
 			return ASE_NULL;
 		}
 
-		/* remove unnecessary statements */
+		/* remove unnecessary statements such as adjacent 
+		 * null statements */
 		if (nde->type == ASE_AWK_NDE_NULL) 
 		{
 			ase_awk_clrpt (awk, nde);
@@ -1595,7 +1600,7 @@ static ase_awk_t* collect_globals (ase_awk_t* awk)
 
 		if (get_token(awk) == -1) return ASE_NULL;
 
-		if (MATCH(awk,TOKEN_SEMICOLON)) break;
+		if (MATCH_TERMINATOR(awk)) break;
 
 		if (!MATCH(awk,TOKEN_COMMA)) 
 		{
@@ -1741,7 +1746,7 @@ static ase_awk_t* collect_locals (
 
 		if (get_token(awk) == -1) return ASE_NULL;
 
-		if (MATCH(awk,TOKEN_SEMICOLON)) break;
+		if (MATCH_TERMINATOR(awk)) break;
 
 		if (!MATCH(awk,TOKEN_COMMA))
 		{
@@ -1761,6 +1766,12 @@ static ase_awk_t* collect_locals (
 static ase_awk_nde_t* parse_statement (ase_awk_t* awk, ase_size_t line)
 {
 	ase_awk_nde_t* nde;
+
+	/* skip new lines before a statement */
+	while (MATCH(awk,TOKEN_NEWLINE))
+	{
+		if (get_token(awk) == -1) return ASE_NULL;
+	}
 
 	if (MATCH(awk,TOKEN_SEMICOLON)) 
 	{
@@ -1917,7 +1928,7 @@ static ase_awk_nde_t* parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 	if (nde == ASE_NULL) return ASE_NULL;
 
 	/* check if a statement ends with a semicolon */
-	if (MATCH(awk,TOKEN_SEMICOLON)) 
+	if (MATCH_TERMINATOR(awk)) 
 	{
 		/* eat up the semicolon and read in the next token */
 		if (get_token(awk) == -1) 
@@ -1926,16 +1937,12 @@ static ase_awk_nde_t* parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 	}
-	else if (((awk->option & ASE_AWK_EXPLICIT) && !(awk->option & ASE_AWK_IMPLICIT)) ||
-	         (awk->token.prev.line == awk->token.line && !MATCH(awk,TOKEN_RBRACE)))
+	else
 	{
-		/* when EXPLICIT, the statement should end with a semicolon.
-		 * otherwise, a new line or a block closer can terminate a statement. */
 		if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
 		SETERRLIN (awk, ASE_AWK_ESTMEND, awk->token.prev.line);
 		return ASE_NULL;
 	}
-
 
 	return nde;
 }
@@ -3859,17 +3866,22 @@ static ase_awk_nde_t* parse_for (ase_awk_t* awk, ase_size_t line)
 		if (!MATCH(awk,TOKEN_SEMICOLON)) 
 		{
 			ase_awk_clrpt (awk, init);
-
 			SETERRTOK (awk, ASE_AWK_ESCOLON);
 			return ASE_NULL;
 		}
 	}
 
-	if (get_token(awk) == -1) 
+	do
 	{
-		ase_awk_clrpt (awk, init);
-		return ASE_NULL;
-	}
+		if (get_token(awk) == -1) 
+		{
+			ase_awk_clrpt (awk, init);
+			return ASE_NULL;
+		}
+
+		/* skip new lines after the first semicolon */
+	} 
+	while (MATCH(awk,TOKEN_NEWLINE));
 
 	if (MATCH(awk,TOKEN_SEMICOLON)) test = ASE_NULL;
 	else 
@@ -3891,12 +3903,18 @@ static ase_awk_nde_t* parse_for (ase_awk_t* awk, ase_size_t line)
 		}
 	}
 
-	if (get_token(awk) == -1) 
+	do
 	{
-		ase_awk_clrpt (awk, init);
-		ase_awk_clrpt (awk, test);
-		return ASE_NULL;
+		if (get_token(awk) == -1) 
+		{
+			ase_awk_clrpt (awk, init);
+			ase_awk_clrpt (awk, test);
+			return ASE_NULL;
+		}
+
+		/* skip new lines after the second semicolon */
 	}
+	while (MATCH(awk,TOKEN_NEWLINE));
 	
 	if (MATCH(awk,TOKEN_RPAREN)) incr = ASE_NULL;
 	else 
@@ -4113,7 +4131,7 @@ static ase_awk_nde_t* parse_return (ase_awk_t* awk, ase_size_t line)
 	nde->line = line;
 	nde->next = ASE_NULL;
 
-	if (MATCH(awk,TOKEN_SEMICOLON)) 
+	if (MATCH_TERMINATOR(awk)) 
 	{
 		/* no return value */
 		val = ASE_NULL;
@@ -4151,7 +4169,7 @@ static ase_awk_nde_t* parse_exit (ase_awk_t* awk, ase_size_t line)
 	nde->line = line;
 	nde->next = ASE_NULL;
 
-	if (MATCH(awk,TOKEN_SEMICOLON)) 
+	if (MATCH_TERMINATOR(awk)) 
 	{
 		/* no exit code */
 		val = ASE_NULL;
@@ -4318,7 +4336,7 @@ static ase_awk_nde_t* parse_print (ase_awk_t* awk, ase_size_t line, int type)
 	ase_awk_nde_t* out = ASE_NULL;
 	int out_type;
 
-	if (!MATCH(awk,TOKEN_SEMICOLON) &&
+	if (!MATCH_TERMINATOR(awk) &&
 	    !MATCH(awk,TOKEN_GT) &&
 	    !MATCH(awk,TOKEN_RSHIFT) &&
 	    !MATCH(awk,TOKEN_BOR) &&
