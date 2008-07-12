@@ -877,7 +877,8 @@ static struct
 	{ ASE_T("argstomain"),  ASE_AWK_ARGSTOMAIN },
 	{ ASE_T("reset"),       ASE_AWK_RESET },
 	{ ASE_T("maptovar"),    ASE_AWK_MAPTOVAR },
-	{ ASE_T("pablock"),     ASE_AWK_PABLOCK }
+	{ ASE_T("pablock"),     ASE_AWK_PABLOCK },
+	{ ASE_T("newline"),     ASE_AWK_NEWLINE }
 };
 
 static void print_usage (const ase_char_t* argv0)
