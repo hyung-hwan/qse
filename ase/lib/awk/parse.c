@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 241 2008-07-12 04:52:19Z baconevi $
+ * $Id: parse.c 242 2008-07-13 14:20:48Z baconevi $
  *
  * {License}
  */
@@ -344,6 +344,9 @@ static global_t gtab[] =
 		c = (awk)->src.lex.curc; \
 	} while(0)
 
+#define UNGET_CHAR(awk,c) \
+	do { if (unget_char (awk, c) == -1) return -1; } while(0)
+
 #define SET_TOKEN_TYPE(awk,code) do { (awk)->token.type = (code); } while (0)
 
 #define ADD_TOKEN_CHAR(awk,c) \
@@ -382,7 +385,8 @@ static global_t gtab[] =
 
 #define MATCH_TERMINATOR(awk) \
 	(MATCH((awk),TOKEN_SEMICOLON) || \
-	 ((awk->option & ASE_AWK_NEWLINE) && (MATCH((awk),TOKEN_NEWLINE) || MATCH((awk),TOKEN_RBRACE))))
+	 MATCH((awk),TOKEN_NEWLINE) || \
+	 ((awk->option & ASE_AWK_NEWLINE) && MATCH((awk),TOKEN_RBRACE)))
 
 ase_size_t ase_awk_getmaxdepth (ase_awk_t* awk, int type)
 {
@@ -507,7 +511,7 @@ static int parse (ase_awk_t* awk)
 	if (op > 0)
 	{
 		/* get the first character */
-		if (get_char(awk) == -1)  EXIT_PARSE(-1);
+		if (get_char(awk) == -1) EXIT_PARSE(-1);
 		/* get the first token */
 		if (get_token(awk) == -1) EXIT_PARSE(-1);
 
@@ -1020,6 +1024,20 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		}
 	}
 
+	/* function body can be placed on a different line 
+	 * from a function name and the parameters even if
+	 * ASE_AWK_NEWLINE is set. note TOKEN_NEWLINE is
+	 * available only when the option is set. */
+	while (MATCH(awk,TOKEN_NEWLINE))
+	{
+		if (get_token(awk) == -1) 
+		{
+			ASE_AWK_FREE (awk, name_dup);
+			ase_awk_tab_clear (&awk->parse.params);
+			return ASE_NULL;
+		}
+	}
+
 	/* check if the function body starts with a left brace */
 	if (!MATCH(awk,TOKEN_LBRACE)) 
 	{
@@ -1238,7 +1256,7 @@ static ase_awk_nde_t* parse_block (
 			if (get_token(awk) == -1) return ASE_NULL;
 		}
 
-		/* if the EOF is met before the right brace, this is an error */
+		/* if EOF is met before the right brace, this is an error */
 		if (MATCH(awk,TOKEN_EOF)) 
 		{
 			ase_awk_tab_remove (
@@ -1797,6 +1815,7 @@ static ase_awk_nde_t* parse_statement (ase_awk_t* awk, ase_size_t line)
 	}
 	else if (MATCH(awk,TOKEN_LBRACE)) 
 	{
+		/* a block statemnt { ... } */
 		if (get_token(awk) == -1) return ASE_NULL; 
 		nde = awk->parse.parse_block (
 			awk, awk->token.prev.line, ASE_FALSE);
@@ -1932,8 +1951,10 @@ static ase_awk_nde_t* parse_statement_nb (ase_awk_t* awk, ase_size_t line)
 	/* check if a statement ends with a semicolon */
 	if (MATCH_TERMINATOR(awk)) 
 	{
-		/* eat up the semicolon and read in the next token */
-		if (get_token(awk) == -1) 
+		/* eat up the semicolon or a new line and read in the next token
+		 * when ASE_AWK_NEWLINE is set, a statement may end with }.
+		 * it should not be eaten up here. */
+		if (!MATCH(awk,TOKEN_RBRACE) && get_token(awk) == -1) 
 		{
 			if (nde != ASE_NULL) ase_awk_clrpt (awk, nde);
 			return ASE_NULL;
@@ -4509,18 +4530,7 @@ static int get_token (ase_awk_t* awk)
 	awk->token.line = awk->src.lex.line;
 	awk->token.column = awk->src.lex.column;
 
-/* TODO: move NEWLINE handling to skip_spaces??? */
-/* TODO: change the following block of code */
-	if (awk->option & ASE_AWK_NEWLINE)
-	{
-		if (line > 0 && awk->token.line != line)
-		{
-			SET_TOKEN_TYPE (awk, TOKEN_NEWLINE);
-			return 0;
-		}
-	}
-/* END TODO */
-
+	/* TODO; remove this 
 	if (line != 0 && (awk->option & ASE_AWK_BLOCKLESS) &&
 	    (awk->parse.id.block == PARSE_PATTERN ||
 	     awk->parse.id.block == PARSE_BEGIN ||
@@ -4532,6 +4542,7 @@ static int get_token (ase_awk_t* awk)
 			return 0;
 		}
 	}
+	*/
 
 	c = awk->src.lex.curc;
 
@@ -4545,20 +4556,25 @@ static int get_token (ase_awk_t* awk)
 
 		SET_TOKEN_TYPE (awk, TOKEN_EOF);
 	}	
+	else if (c == ASE_T('\n')) 
+	{
+		ADD_TOKEN_CHAR (awk, ASE_T('\n'));
+		SET_TOKEN_TYPE (awk, TOKEN_NEWLINE);
+		GET_CHAR (awk);
+	}
 	else if (ASE_AWK_ISDIGIT (awk, c)/*|| c == ASE_T('.')*/)
 	{
 		if (get_number (awk) == -1) return -1;
 	}
 	else if (c == ASE_T('.'))
 	{
-		if (get_char (awk) == -1) return -1;
-		c = awk->src.lex.curc;
+		GET_CHAR_TO (awk, c);
 
 		if ((awk->option & ASE_AWK_EXPLICIT) == 0 && 
 		    ASE_AWK_ISDIGIT (awk, c))
 		{
 			awk->src.lex.curc = ASE_T('.');
-			if (unget_char (awk, c) == -1) return -1;
+			UNGET_CHAR (awk, c);	
 			if (get_number (awk) == -1) return -1;
 
 		}
@@ -4924,79 +4940,46 @@ static int get_token (ase_awk_t* awk)
 			SET_TOKEN_TYPE (awk, TOKEN_MOD);
 		}
 	}
-	else if (c == ASE_T('(')) 
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_LPAREN);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T(')')) 
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_RPAREN);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T('{')) 
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_LBRACE);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T('}')) 
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_RBRACE);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T('[')) 
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_LBRACK);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T(']')) 
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_RBRACK);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T('$')) 
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_DOLLAR);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T(',')) 
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_COMMA);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T(';'))
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_SEMICOLON);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T(':'))
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_COLON);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
-	else if (c == ASE_T('?'))
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_QUEST);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
 	else 
 	{
+		int i;
+		static struct 
+		{
+			ase_char_t c;
+			int t;
+		} tab[] =
+		{
+			{ ASE_T('('), TOKEN_LPAREN },
+			{ ASE_T(')'), TOKEN_RPAREN },
+			{ ASE_T('{'), TOKEN_LBRACE },
+			{ ASE_T('}'), TOKEN_RBRACE },
+			{ ASE_T('['), TOKEN_LBRACK },
+			{ ASE_T(']'), TOKEN_RBRACK },
+			{ ASE_T('$'), TOKEN_DOLLAR },
+			{ ASE_T(','), TOKEN_COMMA },
+			{ ASE_T(';'), TOKEN_SEMICOLON },
+			{ ASE_T(':'), TOKEN_COLON },
+			{ ASE_T('?'), TOKEN_QUEST },
+			{ ASE_CHAR_EOF, TOKEN_EOF }
+		};
+
+		for (i = 0; tab[i].c != ASE_CHAR_EOF; i++)
+		{
+			if (c == tab[i].c) 
+			{
+				SET_TOKEN_TYPE (awk, tab[i].t);
+				ADD_TOKEN_CHAR (awk, c);
+				GET_CHAR (awk);
+				goto get_token_ok;
+			}
+		}
+
 		ase_char_t cc = (ase_char_t)c;
 		SETERRARG (awk, ASE_AWK_ELXCHR, awk->token.line, &cc, 1);
 		return -1;
 	}
 
+get_token_ok:
 	return 0;
 }
 
@@ -5349,7 +5332,39 @@ static int unget_char (ase_awk_t* awk, ase_cint_t c)
 static int skip_spaces (ase_awk_t* awk)
 {
 	ase_cint_t c = awk->src.lex.curc;
-	while (ASE_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
+
+	if (awk->option & ASE_AWK_NEWLINE)
+	{
+		do 
+		{
+			while (c != ASE_T('\n') && ASE_AWK_ISSPACE(awk,c))
+				GET_CHAR_TO (awk, c);
+
+			if  (c == ASE_T('\\'))
+			{
+				int cr = 0;
+				GET_CHAR_TO (awk, c);
+				if (c == ASE_T('\r')) 
+				{
+					cr = 1;
+					GET_CHAR_TO (awk, c);
+				}
+				if (c != ASE_T('\n'))
+				{
+					UNGET_CHAR (awk, c);	
+					if (cr) UNGET_CHAR(awk, ASE_T('\r'));
+				}
+			}
+
+			break;
+		}
+		while (1);
+	}
+	else
+	{
+		while (ASE_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
+	}
+
 	return 0;
 }
 
@@ -5409,7 +5424,7 @@ static int skip_comment (ase_awk_t* awk)
 		return 1; /* c-style comment */
 	}
 
-	if (unget_char (awk, c) == -1) return -1; /* error */
+	UNGET_CHAR (awk, c);
 	awk->src.lex.curc = ASE_T('/');
 	awk->src.lex.line = line;
 	awk->src.lex.column = column;
