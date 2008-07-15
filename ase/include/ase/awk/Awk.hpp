@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 240 2008-07-11 14:41:16Z baconevi $
+ * $Id: Awk.hpp 245 2008-07-15 05:56:32Z baconevi $
  *
  * {License}
  */
@@ -545,7 +545,10 @@ public:
 		OPT_STRCONCAT = ASE_AWK_STRCONCAT,
 		OPT_EXTIO = ASE_AWK_EXTIO,
 		OPT_COPROC = ASE_AWK_COPROC,
-		OPT_BLOCKLESS = ASE_AWK_BLOCKLESS,
+
+		/** Can terminate a statement with a new line */
+		OPT_NEWLINE = ASE_AWK_NEWLINE,
+
 		OPT_BASEONE = ASE_AWK_BASEONE,
 		OPT_STRIPSPACES = ASE_AWK_STRIPSPACES,
 
@@ -564,9 +567,7 @@ public:
 		/** Allows the assignment of a map value to a variable */
 		OPT_MAPTOVAR = ASE_AWK_MAPTOVAR,
 		/** Allows BEGIN, END, pattern-action blocks */
-		OPT_PABLOCK = ASE_AWK_PABLOCK,
-		/** Can terminate a statement with a new line */
-		OPT_NEWLINE = ASE_AWK_NEWLINE
+		OPT_PABLOCK = ASE_AWK_PABLOCK
 	};
 	// end of enum Option
 	

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 243 2008-07-14 13:53:31Z baconevi $
+ * $Id: parse.c 245 2008-07-15 05:56:32Z baconevi $
  *
  * {License}
  */
@@ -324,9 +324,7 @@ static global_t gtab[] =
 	/* output field separator for 'print' */
 	{ ASE_T("OFS"),          3,  ASE_AWK_EXTIO },
 
-	/* output record separator. used for 'print' and blockless output 
-	 * ASE_AWK_BLOCKLESS desn't have to be specified becuase
-	 * it requires ASE_AWK_EXTIO to be ON. */
+	/* output record separator. used for 'print' and blockless output */
 	{ ASE_T("ORS"),          3,  ASE_AWK_EXTIO },
 
 	{ ASE_T("RLENGTH"),      7,  0 },
@@ -636,10 +634,9 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 		awk->parse.id.block = PARSE_BEGIN;
 		if (get_token(awk) == -1) return ASE_NULL; 
 
-		if ((awk->option & ASE_AWK_BLOCKLESS) &&
-		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
+		if (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF))
 		{
-			/* when the blockless pattern is supported
+			/* when ASE_AWK_NEWLINE is set,
 	   		 * BEGIN and { should be located on the same line */
 			SETERRLIN (awk, ASE_AWK_EBLKBEG, awk->token.prev.line);
 			return ASE_NULL;
@@ -673,10 +670,9 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 		awk->parse.id.block = PARSE_END;
 		if (get_token(awk) == -1) return ASE_NULL; 
 
-		if ((awk->option & ASE_AWK_BLOCKLESS) &&
-		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
+		if (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF))
 		{
-			/* when the blockless pattern is supported
+			/* when ASE_AWK_NEWLINE is set,
 	   		 * END and { should be located on the same line */
 			SETERRLIN (awk, ASE_AWK_EBLKEND, awk->token.prev.line);
 			return ASE_NULL;
@@ -746,16 +742,14 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 			}
 		}
 
-		if ((awk->option & ASE_AWK_BLOCKLESS) &&
-		    (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF)))
+		if (MATCH(awk,TOKEN_NEWLINE) || MATCH(awk,TOKEN_EOF))
 		{
 			/* blockless pattern */
 			ase_bool_t newline = MATCH(awk,TOKEN_NEWLINE);
 			ase_size_t tline = awk->token.prev.line;
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
-			if (parse_pattern_block (
-				awk, ptn, ASE_TRUE) == ASE_NULL) 
+			if (parse_pattern_block(awk,ptn,ASE_TRUE) == ASE_NULL) 
 			{
 				ase_awk_clrpt (awk, ptn);
 				return ASE_NULL;	
@@ -763,7 +757,7 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 
 			if (newline)
 			{
-				if (get_token (awk) == -1) 
+				if (get_token(awk) == -1) 
 				{
 					/* ptn has been added to the chain. 
 					 * it doesn't have to be cleared here
@@ -1108,7 +1102,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	/* duplicate functions should have been detected previously */
 	ASE_ASSERT (n != 0); 
 
-	afn->name = ASE_PAIR_KEYPTR(pair); /* do some trick to save a string.  */
+	afn->name = ASE_PAIR_KEYPTR(pair); /* do some trick to save a string. */
 	afn->name_len = ASE_PAIR_KEYLEN(pair);
 	ASE_AWK_FREE (awk, name_dup);
 
@@ -4534,20 +4528,6 @@ static int get_token (ase_awk_t* awk)
 	awk->token.line = awk->src.lex.line;
 	awk->token.column = awk->src.lex.column;
 
-	/* TODO; remove this 
-	if (line != 0 && (awk->option & ASE_AWK_BLOCKLESS) &&
-	    (awk->parse.id.block == PARSE_PATTERN ||
-	     awk->parse.id.block == PARSE_BEGIN ||
-	     awk->parse.id.block == PARSE_END))
-	{
-		if (awk->token.line != line)
-		{
-			SET_TOKEN_TYPE (awk, TOKEN_NEWLINE);
-			return 0;
-		}
-	}
-	*/
-
 	c = awk->src.lex.curc;
 
 	if (c == ASE_CHAR_EOF) 
@@ -4979,7 +4959,6 @@ static int get_token (ase_awk_t* awk)
 	}
 
 get_token_ok:
-	wprintf (L"token = [%S]\n", awk->token.name.buf);
 	return 0;
 }
 
@@ -5386,7 +5365,7 @@ static int skip_comment (ase_awk_t* awk)
 		} 
 		while (c != ASE_T('\n') && c != ASE_CHAR_EOF);
 
-		GET_CHAR (awk);
+		if (!(awk->option & ASE_AWK_NEWLINE)) GET_CHAR (awk);
 		return 1; /* comment by # */
 	}
 

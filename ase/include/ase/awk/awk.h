@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h 239 2008-07-11 11:07:17Z baconevi $
+ * $Id: awk.h 245 2008-07-15 05:56:32Z baconevi $
  *
  * {License}
  */
@@ -189,8 +189,8 @@ enum ase_awk_option_t
 	/* support co-process - NOT IMPLEMENTED YET */
 	ASE_AWK_COPROC      = (1 << 8),
 
-	/* support blockless patterns */
-	ASE_AWK_BLOCKLESS   = (1 << 9), 
+	/* can terminate a statement with a new line */
+	ASE_AWK_NEWLINE     = (1 << 9),
 
 	/* use 1 as the start index for string operations and ARGV */
 	ASE_AWK_BASEONE     = (1 << 10),
@@ -226,10 +226,7 @@ enum ase_awk_option_t
 	ASE_AWK_MAPTOVAR    = (1 << 16),
 
 	/* allows BEGIN, END, pattern-action blocks */
-	ASE_AWK_PABLOCK     = (1 << 17),
-
-	/* can terminate a statement with a new line */
-	ASE_AWK_NEWLINE   = (1 << 18)
+	ASE_AWK_PABLOCK     = (1 << 17)
 };
 
 /* error code */

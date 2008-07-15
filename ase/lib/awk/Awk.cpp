@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 237 2008-07-09 13:20:08Z baconevi $
+ * $Id: Awk.cpp 245 2008-07-15 05:56:32Z baconevi $
  *
  * {License}
  */
@@ -1181,7 +1181,7 @@ int Awk::open ()
 	int opt = 
 		OPT_IMPLICIT |
 		OPT_EXTIO | 
-		OPT_BLOCKLESS | 
+		OPT_NEWLINE | 
 		OPT_BASEONE |
 		OPT_PABLOCK;
 	ase_awk_setoption (awk, opt);

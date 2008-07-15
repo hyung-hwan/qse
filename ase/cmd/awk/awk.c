@@ -869,7 +869,7 @@ static struct
 	{ ASE_T("idiv"),        ASE_AWK_IDIV },
 	{ ASE_T("strconcat"),   ASE_AWK_STRCONCAT },
 	{ ASE_T("extio"),       ASE_AWK_EXTIO },
-	{ ASE_T("blockless"),   ASE_AWK_BLOCKLESS },
+	{ ASE_T("newline"),     ASE_AWK_NEWLINE },
 	{ ASE_T("baseone"),     ASE_AWK_BASEONE },
 	{ ASE_T("stripspaces"), ASE_AWK_STRIPSPACES },
 	{ ASE_T("nextofile"),   ASE_AWK_NEXTOFILE },
@@ -877,8 +877,7 @@ static struct
 	{ ASE_T("argstomain"),  ASE_AWK_ARGSTOMAIN },
 	{ ASE_T("reset"),       ASE_AWK_RESET },
 	{ ASE_T("maptovar"),    ASE_AWK_MAPTOVAR },
-	{ ASE_T("pablock"),     ASE_AWK_PABLOCK },
-	{ ASE_T("newline"),     ASE_AWK_NEWLINE }
+	{ ASE_T("pablock"),     ASE_AWK_PABLOCK }
 };
 
 static void print_usage (const ase_char_t* argv0)
@@ -1001,7 +1000,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	opt = ASE_AWK_IMPLICIT |
 	      ASE_AWK_EXTIO | 
-	      ASE_AWK_BLOCKLESS | 
+	      ASE_AWK_NEWLINE | 
 	      ASE_AWK_BASEONE |
 	      ASE_AWK_PABLOCK;
 
