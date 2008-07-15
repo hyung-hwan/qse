@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 242 2008-07-13 14:20:48Z baconevi $
+ * $Id: parse.c 243 2008-07-14 13:53:31Z baconevi $
  *
  * {License}
  */
@@ -163,7 +163,7 @@ static ase_awk_nde_t* parse_expression0 (ase_awk_t* awk, ase_size_t line);
 static ase_awk_nde_t* parse_basic_expr (ase_awk_t* awk, ase_size_t line);
 
 static ase_awk_nde_t* parse_binary_expr (
-	ase_awk_t* awk, ase_size_t line, const binmap_t* binmap,
+	ase_awk_t* awk, ase_size_t line, int skipnl, const binmap_t* binmap,
 	ase_awk_nde_t*(*next_level_func)(ase_awk_t*,ase_size_t));
 
 static ase_awk_nde_t* parse_logical_or (ase_awk_t* awk, ase_size_t line);
@@ -2110,7 +2110,7 @@ static ase_awk_nde_t* parse_basic_expr (ase_awk_t* awk, ase_size_t line)
 }
 
 static ase_awk_nde_t* parse_binary_expr (
-	ase_awk_t* awk, ase_size_t line, const binmap_t* binmap,
+	ase_awk_t* awk, ase_size_t line, int skipnl, const binmap_t* binmap,
 	ase_awk_nde_t*(*next_level_func)(ase_awk_t*,ase_size_t))
 {
 	ase_awk_nde_exp_t* nde;
@@ -2137,11 +2137,15 @@ static ase_awk_nde_t* parse_binary_expr (
 		}
 		if (!matched) break;
 
-		if (get_token(awk) == -1) 
+		do 
 		{
-			ase_awk_clrpt (awk, left);
-			return ASE_NULL; 
+			if (get_token(awk) == -1) 
+			{
+				ase_awk_clrpt (awk, left);
+				return ASE_NULL; 
+			}
 		}
+		while (skipnl && MATCH(awk,TOKEN_NEWLINE));
 
 		right = next_level_func (awk, awk->token.line);
 		if (right == ASE_NULL) 
@@ -2182,7 +2186,7 @@ static ase_awk_nde_t* parse_logical_or (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_logical_and);
+	return parse_binary_expr (awk, line, 1, map, parse_logical_and);
 }
 
 static ase_awk_nde_t* parse_logical_and (ase_awk_t* awk, ase_size_t line)
@@ -2193,7 +2197,7 @@ static ase_awk_nde_t* parse_logical_and (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF,  0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_in);
+	return parse_binary_expr (awk, line, 1, map, parse_in);
 }
 
 static ase_awk_nde_t* parse_in (ase_awk_t* awk, ase_size_t line)
@@ -2205,7 +2209,7 @@ static ase_awk_nde_t* parse_in (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_regex_match);
+	return parse_binary_expr (awk, line, 0, map, parse_regex_match);
 	*/
 
 	ase_awk_nde_exp_t* nde;
@@ -2276,7 +2280,7 @@ static ase_awk_nde_t* parse_regex_match (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF,   0 },
 	};
 
-	return parse_binary_expr (awk, line, map, parse_bitwise_or);
+	return parse_binary_expr (awk, line, 0, map, parse_bitwise_or);
 }
 
 static ase_awk_nde_t* parse_bitwise_or (ase_awk_t* awk, ase_size_t line)
@@ -2294,7 +2298,7 @@ static ase_awk_nde_t* parse_bitwise_or (ase_awk_t* awk, ase_size_t line)
 		};
 
 		return parse_binary_expr (
-			awk, line, map, parse_bitwise_xor);
+			awk, line, 0, map, parse_bitwise_xor);
 	}
 }
 
@@ -2419,7 +2423,7 @@ static ase_awk_nde_t* parse_bitwise_xor (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF,  0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_bitwise_and);
+	return parse_binary_expr (awk, line, 0, map, parse_bitwise_and);
 }
 
 static ase_awk_nde_t* parse_bitwise_and (ase_awk_t* awk, ase_size_t line)
@@ -2430,7 +2434,7 @@ static ase_awk_nde_t* parse_bitwise_and (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF,  0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_equality);
+	return parse_binary_expr (awk, line, 0, map, parse_equality);
 }
 
 static ase_awk_nde_t* parse_equality (ase_awk_t* awk, ase_size_t line)
@@ -2442,7 +2446,7 @@ static ase_awk_nde_t* parse_equality (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_relational);
+	return parse_binary_expr (awk, line, 0, map, parse_relational);
 }
 
 static ase_awk_nde_t* parse_relational (ase_awk_t* awk, ase_size_t line)
@@ -2456,7 +2460,7 @@ static ase_awk_nde_t* parse_relational (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, 
+	return parse_binary_expr (awk, line, 0, map, 
 		((awk->option & ASE_AWK_SHIFT)? parse_shift: parse_concat));
 }
 
@@ -2469,7 +2473,7 @@ static ase_awk_nde_t* parse_shift (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_concat);
+	return parse_binary_expr (awk, line, 0, map, parse_concat);
 }
 
 static ase_awk_nde_t* parse_concat (ase_awk_t* awk, ase_size_t line)
@@ -2540,7 +2544,7 @@ static ase_awk_nde_t* parse_additive (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_multiplicative);
+	return parse_binary_expr (awk, line, 0, map, parse_multiplicative);
 }
 
 static ase_awk_nde_t* parse_multiplicative (ase_awk_t* awk, ase_size_t line)
@@ -2555,7 +2559,7 @@ static ase_awk_nde_t* parse_multiplicative (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_unary);
+	return parse_binary_expr (awk, line, 0, map, parse_unary);
 }
 
 static ase_awk_nde_t* parse_unary (ase_awk_t* awk, ase_size_t line)
@@ -2613,7 +2617,7 @@ static ase_awk_nde_t* parse_exponent (ase_awk_t* awk, ase_size_t line)
 		{ TOKEN_EOF, 0 }
 	};
 
-	return parse_binary_expr (awk, line, map, parse_unary_exp);
+	return parse_binary_expr (awk, line, 0, map, parse_unary_exp);
 }
 
 static ase_awk_nde_t* parse_unary_exp (ase_awk_t* awk, ase_size_t line)
@@ -4794,12 +4798,6 @@ static int get_token (ase_awk_t* awk)
 			SET_TOKEN_TYPE (awk, TOKEN_BXOR);
 		}
 	}
-	else if (c == ASE_T('~'))
-	{
-		SET_TOKEN_TYPE (awk, TOKEN_TILDE);
-		ADD_TOKEN_CHAR (awk, c);
-		GET_CHAR (awk);
-	}
 	else if (c == ASE_T('+')) 
 	{
 		ADD_TOKEN_CHAR (awk, c);
@@ -4949,6 +4947,7 @@ static int get_token (ase_awk_t* awk)
 			int t;
 		} tab[] =
 		{
+			{ ASE_T('~'), TOKEN_TILDE },
 			{ ASE_T('('), TOKEN_LPAREN },
 			{ ASE_T(')'), TOKEN_RPAREN },
 			{ ASE_T('{'), TOKEN_LBRACE },
@@ -4980,6 +4979,7 @@ static int get_token (ase_awk_t* awk)
 	}
 
 get_token_ok:
+	wprintf (L"token = [%S]\n", awk->token.name.buf);
 	return 0;
 }
 
@@ -5349,7 +5349,12 @@ static int skip_spaces (ase_awk_t* awk)
 					cr = 1;
 					GET_CHAR_TO (awk, c);
 				}
-				if (c != ASE_T('\n'))
+				if (c == ASE_T('\n'))
+				{
+					GET_CHAR_TO (awk, c);
+					continue;
+				}
+				else
 				{
 					UNGET_CHAR (awk, c);	
 					if (cr) UNGET_CHAR(awk, ASE_T('\r'));
