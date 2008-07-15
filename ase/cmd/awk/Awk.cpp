@@ -646,7 +646,7 @@ static struct
 	{ ASE_T("idiv"),        TestAwk::OPT_IDIV },
 	{ ASE_T("strconcat"),   TestAwk::OPT_STRCONCAT },
 	{ ASE_T("extio"),       TestAwk::OPT_EXTIO },
-	{ ASE_T("blockless"),   TestAwk::OPT_BLOCKLESS },
+	{ ASE_T("newline"),     TestAwk::OPT_NEWLINE },
 	{ ASE_T("baseone"),     TestAwk::OPT_BASEONE },
 	{ ASE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
 	{ ASE_T("nextofile"),   TestAwk::OPT_NEXTOFILE },
