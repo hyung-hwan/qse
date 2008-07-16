@@ -18,7 +18,7 @@
 /* author's email address */
 #undef ASE_PKGAUTHOR
 
-/* package name */
+/* package_name */
 #undef ASE_PKGNAME
 
 /* package version */

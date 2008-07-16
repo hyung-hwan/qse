@@ -26411,136 +26411,75 @@ _ACEOF
 
 
 
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_CHAR
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_SHORT
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_INT
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_LONG
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_LONG_LONG
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF___INT8
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF___INT16
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF___INT32
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF___INT64
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF___INT128
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_VOID_P
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_FLOAT
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_DOUBLE
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_LONG_DOUBLE
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_SIZEOF_WCHAR_T
-_ACEOF
-
-
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_CHAR ${ac_cv_sizeof_char}
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_SHORT ${ac_cv_sizeof_short}
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_INT ${ac_cv_sizeof_int}
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_LONG ${ac_cv_sizeof_long}
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_LONG_LONG ${ac_cv_sizeof_long_long}
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF___INT8 ${ac_cv_sizeof___int8}
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF___INT16 ${ac_cv_sizeof___int16}
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF___INT32 ${ac_cv_sizeof___int32}
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF___INT64 ${ac_cv_sizeof___int64}
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF___INT128 ${ac_cv_sizeof___int128}
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_VOID_P ${ac_cv_sizeof_void_p}
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_FLOAT ${ac_cv_sizeof_float}
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_DOUBLE ${ac_cv_sizeof_double}
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_LONG_DOUBLE ${ac_cv_sizeof_long_double}
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ASE_SIZEOF_WCHAR_T ${ac_cv_sizeof_wchar_t}
@@ -26548,27 +26487,15 @@ _ACEOF
 
 
 
-cat >>confdefs.h <<\_ACEOF
-#define ASE_PKGNAME
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_PKGVERSION
-_ACEOF
-
-
-cat >>confdefs.h <<\_ACEOF
-#define ASE_PKGAUTHOR
-_ACEOF
-
 cat >>confdefs.h <<_ACEOF
 #define ASE_PKGNAME "${PACKAGE}"
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define ASE_PKGVERSION "${VERSION}"
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ASE_PKGAUTHOR "${PACKAGE_BUGREPORT}"
