@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 238 2008-07-09 14:07:47Z baconevi $
+ * $Id: run.c 246 2008-07-15 07:06:43Z baconevi $
  *
  * {License}
  */
@@ -4896,7 +4896,8 @@ static ase_awk_val_t* eval_incpre (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	 * ugly as it is dependent of the values defined in tree.h.
 	 * but let's keep going this way for the time being. */
 	if (exp->left->type < ASE_AWK_NDE_NAMED ||
-	    exp->left->type > ASE_AWK_NDE_ARGIDX)
+	    /*exp->left->type > ASE_AWK_NDE_ARGIDX) XXX */
+	    exp->left->type > ASE_AWK_NDE_POS)
 	{
 		ase_awk_setrunerror (
 			run, ASE_AWK_EOPERAND, nde->line, ASE_NULL, 0);
@@ -5070,7 +5071,8 @@ static ase_awk_val_t* eval_incpst (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	 * ugly as it is dependent of the values defined in tree.h.
 	 * but let's keep going this way for the time being. */
 	if (exp->left->type < ASE_AWK_NDE_NAMED ||
-	    exp->left->type > ASE_AWK_NDE_ARGIDX)
+	    /*exp->left->type > ASE_AWK_NDE_ARGIDX) XXX */
+	    exp->left->type > ASE_AWK_NDE_POS)
 	{
 		ase_awk_setrunerror (
 			run, ASE_AWK_EOPERAND, nde->line, ASE_NULL, 0);

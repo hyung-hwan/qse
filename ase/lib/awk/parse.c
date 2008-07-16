@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 245 2008-07-15 05:56:32Z baconevi $
+ * $Id: parse.c 246 2008-07-15 07:06:43Z baconevi $
  *
  * {License}
  */
@@ -2685,9 +2685,8 @@ static ase_awk_nde_t* parse_increment (ase_awk_t* awk, ase_size_t line)
 		 * the primary should be treated specially. 
 		 * for example, "abc" ++  10 => "abc" . ++10
 		 */
-		/* TOOD: probably left->type == ASE_AWK_NDE_POS should 
-		 *       be inclued to handle $i++, $i--. */
-		if (!is_var(left)) return left;
+		/*if (!is_var(left)) return left; XXX */
+		if (!is_var(left) && left->type != ASE_AWK_NDE_POS) return left;
 	}
 
 	/* check for postfix increment operator */
@@ -4009,6 +4008,15 @@ static ase_awk_nde_t* parse_dowhile (ase_awk_t* awk, ase_size_t line)
 
 	body = parse_statement (awk, awk->token.line);
 	if (body == ASE_NULL) return ASE_NULL;
+
+	while (MATCH(awk,TOKEN_NEWLINE))
+	{
+		if (get_token(awk) == -1) 
+		{
+			ase_awk_clrpt (awk, body);
+			return ASE_NULL;
+		}
+	}
 
 	if (!MATCH(awk,TOKEN_WHILE)) 
 	{
