@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 246 2008-07-15 07:06:43Z baconevi $
+ * $Id: parse.c 253 2008-07-16 13:45:01Z baconevi $
  *
  * {License}
  */
@@ -4926,6 +4926,59 @@ static int get_token (ase_awk_t* awk)
 			SET_TOKEN_TYPE (awk, TOKEN_MOD);
 		}
 	}
+	/*
+
+		{ ASE_T("=="),  TOKEN_EQ },
+		{ ASE_T("="),   TOKEN_ASSIGN },
+
+		{ ASE_T("!="),  TOKEN_NE },
+		{ ASE_T("!~"),  TOKEN_NM },
+		{ ASE_T("!"),   TOKEN_LNOT },
+
+		{ ASE_T(">>="), TOKEN_RSHIFT_ASSIGN,  ASE_AWK_SHIFT },
+		{ ASE_T(">>"),  TOKEN_RSHIFT,         0 },
+		{ ASE_T(">="),  TOKEN_GE,             0 },
+		{ ASE_T(">"),   TOKEN_GT,             0 },
+
+		{ ASE_T("<<="), TOKEN_LSHIFT_ASSIGN,  ASE_AWK_SHIFT },
+		{ ASE_T("<<"),  TOKEN_LSHIFT,         ASE_AWK_SHIFT },
+		{ ASE_T("<="),  TOKEN_LE,             0 },
+		{ ASE_T("<"),   TOKEN_LT,             0 },
+
+		{ ASE_T("||"),  TOKEN_LOR,            0 },
+		{ ASE_T("|&"),  TOKEN_COPROC,         ASE_AWK_COPROC },
+		{ ASE_T("|="),  TOKEN_BOR_ASSIGN,     0 },
+		{ ASE_T("|"),   TOKEN_BOR,            0 },
+		
+		{ ASE_T("&&"),  TOKEN_LAND,            0 },
+		{ ASE_T("&="),  TOKEN_BAND_ASSIGN,     0 },
+		{ ASE_T("&"),   TOKEN_BAND,            0 },
+
+		{ ASE_T("^="),  TOKEN_BXOR_ASSIGN,     0 },
+		{ ASE_T("^"),   TOKEN_BXOR,            0 },
+
+		{ ASE_T("++"),  TOKEN_PLUSPLUS,        0 },
+		{ ASE_T("+="),  TOKEN_PLUS_ASSIGN,     0 },
+		{ ASE_T("+"),   TOKEN_PLUS,            0 },
+
+		{ ASE_T("--"),  TOKEN_MINUSMINUS,      0 },
+		{ ASE_T("-="),  TOKEN_MINUS_ASSIGN,    0 },
+		{ ASE_T("-"),   TOKEN_MINUS,           0 },
+
+		{ ASE_T("**="), TOKEN_EXP_ASSIGN,      0 },
+		{ ASE_T("**"),  TOKEN_EXP,             0 },
+		{ ASE_T("*="),  TOKEN_MUL_ASSIGN,      0 },
+		{ ASE_T("*"),   TOKEN_MUL,             0 },
+
+		{ ASE_T("//="), TOKEN_IDIV_ASSIGN,     ASE_AWK_IDIV },
+		{ ASE_T("//"),  TOKEN_IDIV_ASSIGN,     ASE_AWK_IDIV },
+		{ ASE_T("/="),  TOKEN_DIV_ASSIGN,      0 },
+		{ ASE_T("/"),   TOKEN_DIV,             0 },
+
+		{ ASE_T("%="),  TOKEN_MOD_ASSIGN,      0 },
+		{ ASE_T("%"),   TOKEN_MOD,             0 },
+
+	*/
 	else 
 	{
 		int i;
