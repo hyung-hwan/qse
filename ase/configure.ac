@@ -12,9 +12,11 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
-HAVE_CXX=yes
-AC_PROG_CXX(,HAVE_CXX=no)
-AM_CONDITIONAL(HAVE_CXX, test "${HAVE_CXX}" = "yes")
+dnl determine C++ compiler
+AC_PROG_CXX
+dnl check if C++ is available
+AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
+AM_CONDITIONAL(HAVE_CXX, test "x${HAVE_CXX}" = "xyes")
 
 AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
