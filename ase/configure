@@ -26766,10 +26766,10 @@ CJFLAGS=$CJFLAGS
 BUILD_CJ=$BUILD_CJ
 
 
+echo "################ ${CXX} ######################"
+
+
 if test -n "${CXX}"; then
-
-
-if true; then
   HAVE_CXX_TRUE=
   HAVE_CXX_FALSE='#'
 else
@@ -26777,18 +26777,6 @@ else
   HAVE_CXX_FALSE=
 fi
 
-else
-
-
-if false; then
-  HAVE_CXX_TRUE=
-  HAVE_CXX_FALSE='#'
-else
-  HAVE_CXX_TRUE='#'
-  HAVE_CXX_FALSE=
-fi
-
-fi
 
 ac_config_files="$ac_config_files makefile include/makefile include/ase/makefile include/ase/cmn/makefile include/ase/awk/makefile include/ase/lsp/makefile include/ase/tgp/makefile include/ase/utl/makefile lib/makefile lib/cmn/makefile lib/awk/makefile lib/lsp/makefile lib/tgp/makefile lib/utl/makefile cmd/makefile cmd/awk/makefile cmd/lsp/makefile cmd/tgp/makefile"
 
@@ -26906,13 +26894,6 @@ if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"am__fastdepCXX\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"am__fastdepCXX\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test -z "${HAVE_CXX_TRUE}" && test -z "${HAVE_CXX_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"HAVE_CXX\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"HAVE_CXX\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi

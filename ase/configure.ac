@@ -271,11 +271,8 @@ AC_SUBST(BUILD_JNI, $BUILD_JNI)
 AC_SUBST(CJFLAGS, $CJFLAGS)
 AC_SUBST(BUILD_CJ, $BUILD_CJ)
 
-if test -n "${CXX}"; then
-	AM_CONDITIONAL(HAVE_CXX,true)
-else
-	AM_CONDITIONAL(HAVE_CXX,false)
-fi
+echo "################ ${CXX} ######################"
+AM_CONDITIONAL(HAVE_CXX, test -n "${CXX}")
 
 AC_CONFIG_FILES([
 	makefile 
