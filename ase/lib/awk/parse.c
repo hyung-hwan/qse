@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 254 2008-07-17 11:03:09Z baconevi $
+ * $Id: parse.c 255 2008-07-18 10:42:24Z baconevi $
  *
  * {License}
  */
@@ -341,11 +341,10 @@ static global_t gtab[] =
 	do { \
 		if (get_char(awk) == -1) return -1; \
 		c = (awk)->src.lex.curc; \
-wprintf (L"GOT CHAR [%c]\n", c); \
 	} while(0)
 
 #define UNGET_CHAR(awk,c) \
-	do { wprintf (L"UNGETTING [%C]\n", c); if (unget_char (awk, c) == -1) return -1; } while(0)
+	do { if (unget_char (awk, c) == -1) return -1; } while(0)
 
 #define SET_TOKEN_TYPE(awk,code) do { (awk)->token.type = (code); } while (0)
 
@@ -5272,8 +5271,10 @@ static int get_symbol (ase_awk_t* awk, ase_cint_t fc)
 		{ ASE_T("=="),  2, TOKEN_EQ,              0 },
 		{ ASE_T("="),   1, TOKEN_ASSIGN,          0 },
 
+/*
 { ASE_T("!@#$%"), 6, 1000, 0 },
 { ASE_T("!^"), 2, 1001, 0 },
+*/
 
 		{ ASE_T("!="),  2, TOKEN_NE,              0 },
 		{ ASE_T("!~"),  2, TOKEN_NM,              0 },
@@ -5348,6 +5349,7 @@ static int get_symbol (ase_awk_t* awk, ase_cint_t fc)
 	for (i = 0; tab[i].s != ASE_NULL; )
 	{
 		const ase_char_t* p = tab[i].s;
+		const ase_char_t* e = p + tab[i].l;
 		ase_cint_t c = fc;
 
 		ASE_ASSERT (tab[i].l > 0);
@@ -5363,7 +5365,7 @@ static int get_symbol (ase_awk_t* awk, ase_cint_t fc)
 			 * of characters read in */
 			while (c == *p)
 			{
-				if (*++p == ASE_T('\0')) // TODO: CHANGE THIS CHECK TO USE LENGTH
+				if (++p >= e) /* reached the end */
 				{
 					/* found a matching entry */
 					GET_CHAR (awk);
