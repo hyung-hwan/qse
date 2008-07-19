@@ -6,16 +6,23 @@ AC_PREREQ(2.59)
 AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
 AC_CONFIG_HEADER([include/ase/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
+
+# Does compilation test using CC and CPP with extension .c for test programs.
+AC_LANG(C)
+
+# Initializes automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
-# Checks for programs.
+# Determine a C compiler to use
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
-dnl determine C++ compiler
+# Determines a C++ compiler to use
 AC_PROG_CXX
-dnl check if C++ is available
+# Determines if a C++ compiler is available
 AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
+# Checks the C++ compiler exists in PATH. 
+# if so, create a conditional HAVE_CXX for automake.
 AM_CONDITIONAL(HAVE_CXX, test "x${HAVE_CXX}" = "xyes")
 
 AC_CHECK_TOOL(RANLIB, ranlib)
