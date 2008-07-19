@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 255 2008-07-18 10:42:24Z baconevi $
+ * $Id: parse.c 256 2008-07-18 12:54:19Z baconevi $
  *
  * {License}
  */
@@ -215,7 +215,6 @@ static int get_rexstr (ase_awk_t* awk);
 static int get_string (
 	ase_awk_t* awk, ase_char_t end_char,
 	ase_char_t esc_char, ase_bool_t keep_esc_char);
-static int get_symbol (ase_awk_t* awk, ase_cint_t fc);
 static int get_char (ase_awk_t* awk);
 static int unget_char (ase_awk_t* awk, ase_cint_t c);
 static int skip_spaces (ase_awk_t* awk);
@@ -4631,7 +4630,6 @@ static int get_token (ase_awk_t* awk)
 		}
 
 	}
-#if 0
 	else if (c == ASE_T('=')) 
 	{
 		ADD_TOKEN_CHAR (awk, c);
@@ -4913,19 +4911,6 @@ static int get_token (ase_awk_t* awk)
 			SET_TOKEN_TYPE (awk, TOKEN_MOD);
 		}
 	}
-#endif
-	else
-	{
-		int n = get_symbol (awk, c);
-		if (n == -1) return -1;
-		if (n == 0)
-		{
-			ase_char_t cc = (ase_char_t)c;
-			SETERRARG (awk, ASE_AWK_ELXCHR, awk->token.line, &cc, 1);
-			return -1;
-		}
-	}
-#if 0
 	else 
 	{
 		int i;
@@ -4965,10 +4950,8 @@ static int get_token (ase_awk_t* awk)
 		SETERRARG (awk, ASE_AWK_ELXCHR, awk->token.line, &cc, 1);
 		return -1;
 	}
-#endif
 
 get_token_ok:
-wprintf (L"TOKEN=[%S]\n", awk->token.name.buf);
 	return 0;
 }
 
@@ -5254,160 +5237,6 @@ static int get_string (
 		ADD_TOKEN_CHAR (awk, c);
 	}
 
-	return 0;
-}
-
-static int get_symbol (ase_awk_t* awk, ase_cint_t fc)
-{
-	int i;
-	static struct 
-	{
-		const ase_char_t* s;
-		unsigned short l; 
-		unsigned short t; 
-		int o;
-	} tab[] =
-	{
-		{ ASE_T("=="),  2, TOKEN_EQ,              0 },
-		{ ASE_T("="),   1, TOKEN_ASSIGN,          0 },
-
-/*
-{ ASE_T("!@#$%"), 6, 1000, 0 },
-{ ASE_T("!^"), 2, 1001, 0 },
-*/
-
-		{ ASE_T("!="),  2, TOKEN_NE,              0 },
-		{ ASE_T("!~"),  2, TOKEN_NM,              0 },
-		{ ASE_T("!"),   1, TOKEN_LNOT,            0 },
-
-		{ ASE_T(">>="), 3, TOKEN_RSHIFT_ASSIGN,   ASE_AWK_SHIFT },
-		{ ASE_T(">>"),  2, TOKEN_RSHIFT,          0 },
-		{ ASE_T(">="),  2, TOKEN_GE,              0 },
-		{ ASE_T(">"),   1, TOKEN_GT,              0 },
-
-		{ ASE_T("<<="), 3, TOKEN_LSHIFT_ASSIGN,   ASE_AWK_SHIFT },
-		{ ASE_T("<<"),  2, TOKEN_LSHIFT,          ASE_AWK_SHIFT },
-		{ ASE_T("<="),  2, TOKEN_LE,              0 },
-		{ ASE_T("<"),   1, TOKEN_LT,              0 },
-
-		{ ASE_T("||"),  2, TOKEN_LOR,             0 },
-		{ ASE_T("|&"),  2, TOKEN_BORAND,          ASE_AWK_COPROC },
-		{ ASE_T("|="),  2, TOKEN_BOR_ASSIGN,      0 },
-		{ ASE_T("|"),   1, TOKEN_BOR,             0 },
-		
-		{ ASE_T("&&"),  2, TOKEN_LAND,            0 },
-		{ ASE_T("&="),  2, TOKEN_BAND_ASSIGN,     0 },
-		{ ASE_T("&"),   1, TOKEN_BAND,            0 },
-
-		{ ASE_T("^="),  2, TOKEN_BXOR_ASSIGN,     0 },
-		{ ASE_T("^"),   1, TOKEN_BXOR,            0 },
-
-		{ ASE_T("++"),  2, TOKEN_PLUSPLUS,        0 },
-		{ ASE_T("+="),  2, TOKEN_PLUS_ASSIGN,     0 },
-		{ ASE_T("+"),   1, TOKEN_PLUS,            0 },
-
-		{ ASE_T("--"),  2, TOKEN_MINUSMINUS,      0 },
-		{ ASE_T("-="),  2, TOKEN_MINUS_ASSIGN,    0 },
-		{ ASE_T("-"),   1, TOKEN_MINUS,           0 },
-
-		{ ASE_T("**="), 3, TOKEN_EXP_ASSIGN,      0 },
-		{ ASE_T("**"),  2, TOKEN_EXP,             0 },
-		{ ASE_T("*="),  2, TOKEN_MUL_ASSIGN,      0 },
-		{ ASE_T("*"),   1, TOKEN_MUL,             0 },
-
-		{ ASE_T("//="), 3, TOKEN_IDIV_ASSIGN,     ASE_AWK_IDIV },
-		{ ASE_T("//"),  2, TOKEN_IDIV_ASSIGN,     ASE_AWK_IDIV },
-		{ ASE_T("/="),  2, TOKEN_DIV_ASSIGN,      0 },
-		{ ASE_T("/"),   1, TOKEN_DIV,             0 },
-
-		{ ASE_T("%="),  2, TOKEN_MOD_ASSIGN,      0 },
-		{ ASE_T("%"),   1, TOKEN_MOD,             0 },
-
-		{ ASE_T("~"),   1, TOKEN_TILDE,           0 },
-		{ ASE_T("("),   1, TOKEN_LPAREN,          0 },
-		{ ASE_T(")"),   1, TOKEN_RPAREN,          0 },
-		{ ASE_T("{"),   1, TOKEN_LBRACE,          0 },
-		{ ASE_T("}"),   1, TOKEN_RBRACE,          0 },
-		{ ASE_T("["),   1, TOKEN_LBRACK,          0 },
-		{ ASE_T("]"),   1, TOKEN_RBRACK,          0 },
-		{ ASE_T("$"),   1, TOKEN_DOLLAR,          0 },
-		{ ASE_T(","),   1, TOKEN_COMMA,           0 },
-		{ ASE_T(";"),   1, TOKEN_SEMICOLON,       0 },
-		{ ASE_T(":"),   1, TOKEN_COLON,           0 },
-		{ ASE_T("?"),   1, TOKEN_QUEST,           0 },
-
-		{ ASE_NULL,     0, TOKEN_EOF,             0 }
-	};
-
-	/*
-	 * INPUT: ABCDEFX
-	 *
-	 * TOKENS:
-	 *	ABCDEFG
-	 *	ABX 
-	 */
-	for (i = 0; tab[i].s != ASE_NULL; )
-	{
-		const ase_char_t* p = tab[i].s;
-		const ase_char_t* e = p + tab[i].l;
-		ase_cint_t c = fc;
-
-		ASE_ASSERT (tab[i].l > 0);
-
-		if (c == *p)
-		{
-			int len, len2;
-			const ase_char_t* p2;
-
-		try_again:
-//wprintf (L"PROCESSING ENTRY AT %d fc = [%c] tab[i].s = [%S] c = [%c] p = [%S]\n", i, fc, tab[i].s, c, p);
-			/* proceed as long as the string matches the stream 
-			 * of characters read in */
-			while (c == *p)
-			{
-				if (++p >= e) /* reached the end */
-				{
-					/* found a matching entry */
-					GET_CHAR (awk);
-					SET_TOKEN_TYPE (awk, tab[i].t);
-					ADD_TOKEN_STR (awk, tab[i].s, tab[i].l);
-					return 1;
-				}
-
-				GET_CHAR_TO (awk, c);
-			} 
-
-			len = p - tab[i++].s /*+ 1*/;
-
-			if (fc != tab[i].s[0]) break;
-			len2 = tab[i].l;
-			ASE_ASSERT (len2 > 0);
-
-			/* unget as many characters as the length 
-			 * difference */
-//wprintf (L"UNGET STAGE 1 len=%d len2=%d\n", len, len2);
-			UNGET_CHAR (awk, c);
-			while (--len > len2) UNGET_CHAR (awk, *--p); 
-
-			/* unget different characters from the back */
-//wprintf (L"UNGET STAGE 2 len=[%d], len2=[%d]\n", len, len2);
-			p2 = &tab[i].s[len2-1];
-			while (len > 0 && *p != *p2) 
-			{
-				UNGET_CHAR (awk, *p); 
-				p--; p2--; len--;
-			}
-//wprintf (L"UNGET OVER\n");
-			/* restore the current character */
-			GET_CHAR_TO (awk, c);
-
-			p = p2;
-			goto try_again;
-		}
-		i++;
-	}
-
-	/* not found */
 	return 0;
 }
 
