@@ -2,10 +2,11 @@
 # $Id: configure.ac,v 1.5 2007/05/25 07:54:15 bacon Exp $
 # 
 
-AC_PREREQ(2.53)
+AC_PREREQ(2.59)
 AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
 AC_CONFIG_HEADER([include/ase/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
+AC_LANG(C)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Checks for programs.
@@ -271,7 +272,7 @@ AC_SUBST(BUILD_JNI, $BUILD_JNI)
 AC_SUBST(CJFLAGS, $CJFLAGS)
 AC_SUBST(BUILD_CJ, $BUILD_CJ)
 
-echo "################ ${CXX} ######################"
+test -n "${CXX}" && HAVE_CXX=yes || HAVE_CXX=no
 AM_CONDITIONAL(HAVE_CXX, test -n "${CXX}")
 
 AC_CONFIG_FILES([
@@ -294,3 +295,14 @@ AC_CONFIG_FILES([
 	cmd/lsp/makefile
 	cmd/tgp/makefile])
 AC_OUTPUT
+
+[
+echo 
+echo "-[SUMMARY]---------------------------------------------------------------"
+echo "Configured for ${host}"
+echo "  Installation directory: ${prefix}"
+echo "  C compiler: ${CC} ${CFLAGS}"
+echo "  C++ compiler: ${CXX} ${CXXFLAGS}"
+echo "  C++ support: ${HAVE_CXX}"
+echo "-------------------------------------------------------------------------"
+]
