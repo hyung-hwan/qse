@@ -3,12 +3,14 @@ AUTOMAKE_OPTIONS = nostdinc
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-lib_LTLIBRARIES = libaseawk.la libaseawk++.la
-
+lib_LTLIBRARIES = libaseawk.la
 libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c awk_i.h extio.h func.h misc.h parse.h run.h tab.h tree.h
 libaseawk_la_LDFLAGS= -L../cmn -version-info 1:0:0
 libaseawk_la_LIBADD= -lasecmn
 
+if HAVE_CXX
+lib_LTLIBRARIES += libaseawk++.la
 libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
 libaseawk___la_LDFLAGS = -L. -version-info 1:0:0
 libaseawk___la_LIBADD = -laseawk
+endif
