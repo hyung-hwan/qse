@@ -36,6 +36,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@HAVE_CXX_TRUE@am__append_1 = libaseawk++.la
 subdir = lib/awk
 DIST_COMMON = $(srcdir)/makefile.am $(srcdir)/makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -55,8 +56,10 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libaseawk___la_DEPENDENCIES =
-am_libaseawk___la_OBJECTS = Awk.lo StdAwk.lo
+am__libaseawk___la_SOURCES_DIST = Awk.cpp StdAwk.cpp
+@HAVE_CXX_TRUE@am_libaseawk___la_OBJECTS = Awk.lo StdAwk.lo
 libaseawk___la_OBJECTS = $(am_libaseawk___la_OBJECTS)
+@HAVE_CXX_TRUE@am_libaseawk___la_rpath = -rpath $(libdir)
 libaseawk_la_DEPENDENCIES =
 am_libaseawk_la_OBJECTS = awk.lo err.lo tree.lo tab.lo parse.lo run.lo \
 	rec.lo val.lo func.lo misc.lo extio.lo
@@ -81,7 +84,8 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libaseawk___la_SOURCES) $(libaseawk_la_SOURCES)
-DIST_SOURCES = $(libaseawk___la_SOURCES) $(libaseawk_la_SOURCES)
+DIST_SOURCES = $(am__libaseawk___la_SOURCES_DIST) \
+	$(libaseawk_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -121,6 +125,8 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 GREP = @GREP@
+HAVE_CXX_FALSE = @HAVE_CXX_FALSE@
+HAVE_CXX_TRUE = @HAVE_CXX_TRUE@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -202,13 +208,13 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/include
-lib_LTLIBRARIES = libaseawk.la libaseawk++.la
+lib_LTLIBRARIES = libaseawk.la $(am__append_1)
 libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c awk_i.h extio.h func.h misc.h parse.h run.h tab.h tree.h
 libaseawk_la_LDFLAGS = -L../cmn -version-info 1:0:0
 libaseawk_la_LIBADD = -lasecmn
-libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
-libaseawk___la_LDFLAGS = -L. -version-info 1:0:0
-libaseawk___la_LIBADD = -laseawk
+@HAVE_CXX_TRUE@libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
+@HAVE_CXX_TRUE@libaseawk___la_LDFLAGS = -L. -version-info 1:0:0
+@HAVE_CXX_TRUE@libaseawk___la_LIBADD = -laseawk
 all: all-am
 
 .SUFFIXES:
@@ -270,7 +276,7 @@ clean-libLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libaseawk++.la: $(libaseawk___la_OBJECTS) $(libaseawk___la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(libdir) $(libaseawk___la_LDFLAGS) $(libaseawk___la_OBJECTS) $(libaseawk___la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_libaseawk___la_rpath) $(libaseawk___la_LDFLAGS) $(libaseawk___la_OBJECTS) $(libaseawk___la_LIBADD) $(LIBS)
 libaseawk.la: $(libaseawk_la_OBJECTS) $(libaseawk_la_DEPENDENCIES) 
 	$(LINK) -rpath $(libdir) $(libaseawk_la_LDFLAGS) $(libaseawk_la_OBJECTS) $(libaseawk_la_LIBADD) $(LIBS)
 
