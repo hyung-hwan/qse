@@ -6,12 +6,15 @@ AC_PREREQ(2.59)
 AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
 AC_CONFIG_HEADER([include/ase/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
-AC_LANG(C)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_LIBTOOL
+
+HAVE_CXX=yes
+AC_PROG_CXX(,HAVE_CXX=no)
+AM_CONDITIONAL(HAVE_CXX, test "${HAVE_CXX}" = "yes")
 
 AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
@@ -271,9 +274,6 @@ AC_SUBST(JAR, $JAR_PATH)
 AC_SUBST(BUILD_JNI, $BUILD_JNI)
 AC_SUBST(CJFLAGS, $CJFLAGS)
 AC_SUBST(BUILD_CJ, $BUILD_CJ)
-
-test -n "${CXX}" && HAVE_CXX=yes || HAVE_CXX=no
-AM_CONDITIONAL(HAVE_CXX, test -n "${CXX}")
 
 AC_CONFIG_FILES([
 	makefile 
