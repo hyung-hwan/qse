@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 246 2008-07-15 07:06:43Z baconevi $
+ * $Id: run.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -15,6 +15,8 @@
 #define STACK_INCREMENT 512
 
 #define IDXBUFSIZE 64
+
+#define MMGR(run) ((run)->awk->mmgr)
 
 #define STACK_AT(run,n) ((run)->stack[(run)->stack_base+(n)])
 #define STACK_NARGS(run) (STACK_AT(run,3))
@@ -763,23 +765,20 @@ static int init_run (
 	run->inrec.maxflds = 0;
 	run->inrec.d0 = ase_awk_val_nil;
 	if (ase_str_open (
-		&run->inrec.line, 
-		DEF_BUF_CAPA, &run->awk->prmfns.mmgr) == ASE_NULL)
+		&run->inrec.line, DEF_BUF_CAPA, MMGR(run)) == ASE_NULL)
 	{
 		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
-	if (ase_str_open (
-		&run->format.out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (&run->format.out, 256, MMGR(run)) == ASE_NULL)
 	{
 		ase_str_close (&run->inrec.line);
 		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
 
-	if (ase_str_open (
-		&run->format.fmt, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (&run->format.fmt, 256, MMGR(run)) == ASE_NULL)
 	{
 		ase_str_close (&run->format.out);
 		ase_str_close (&run->inrec.line);
@@ -788,8 +787,7 @@ static int init_run (
 	}
 
 	run->named = ase_map_open (
-		run, 1024, 70, free_namedval, same_namedval, 
-		&run->awk->prmfns.mmgr);
+		run, 1024, 70, free_namedval, same_namedval, MMGR(run));
 	if (run->named == ASE_NULL)
 	{
 		ase_str_close (&run->format.fmt);
@@ -1314,7 +1312,7 @@ static int run_main (
 				}
 
 				tmp->type = ASE_AWK_NDE_STR;
-				tmp->buf = ase_awk_strxdup (run->awk,
+				tmp->buf = ASE_AWK_STRXDUP (run->awk,
 					runarg[i].ptr, runarg[i].len);
 				if (tmp->buf == ASE_NULL)
 				{
@@ -6206,7 +6204,7 @@ static ase_awk_val_t* eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	dst = (in == ASE_NULL)? ASE_T(""): in;
 
 	/* TODO: optimize the line buffer management */
-	if (ase_str_open (&buf, DEF_BUF_CAPA, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (&buf, DEF_BUF_CAPA, MMGR(run)) == ASE_NULL)
 	{
 		if (in != ASE_NULL) ASE_AWK_FREE (run->awk, in);
 		ase_awk_setrunerror (
@@ -6280,7 +6278,7 @@ static int __raw_push (ase_awk_run_t* run, void* val)
 	       
 		n = run->stack_limit + STACK_INCREMENT;
 
-		if (run->awk->prmfns.mmgr.realloc != ASE_NULL)
+		if (MMGR(run)->realloc != ASE_NULL)
 		{
 			tmp = (void**) ASE_AWK_REALLOC (
 				run->awk, run->stack, n * ASE_SIZEOF(void*)); 
@@ -6386,8 +6384,7 @@ static int shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 	}
 
 	if (ase_str_open (
-		&tmp, ASE_STR_LEN(&run->inrec.line), 
-		&run->awk->prmfns.mmgr) == ASE_NULL)
+		&tmp, ASE_STR_LEN(&run->inrec.line), MMGR(run)) == ASE_NULL)
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
@@ -6487,9 +6484,7 @@ static ase_char_t* idxnde_to_str (
 		/* multidimensional index */
 		ase_str_t idxstr;
 
-		if (ase_str_open (
-			&idxstr, DEF_BUF_CAPA, 
-			&run->awk->prmfns.mmgr) == ASE_NULL) 
+		if (ase_str_open (&idxstr, DEF_BUF_CAPA, MMGR(run)) == ASE_NULL) 
 		{
 			ase_awk_setrunerror (
 				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);

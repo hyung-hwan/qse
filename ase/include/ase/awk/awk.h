@@ -1,7 +1,5 @@
-/* awk.h - functions to embed an AWK interpreter */
-
 /*
- * $Id: awk.h 269 2008-07-19 14:48:47Z baconevi $
+ * $Id: awk.h 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -67,7 +65,6 @@ struct ase_awk_extio_t
 
 struct ase_awk_prmfns_t
 {
-	ase_mmgr_t mmgr;
 	ase_ccls_t ccls;
 
 	struct
@@ -606,11 +603,13 @@ extern ase_awk_val_t* ase_awk_val_one;
  * is valid until it is successfully destroyed using the ase_ase_close() 
  * function.
  *
- * returns the pointer to an ase_awk_t instance on success, ASE_NULL on failure
+ * RETURNS the pointer to an ase_awk_t instance on success, ASE_NULL on failure
  */
 ase_awk_t* ase_awk_open ( 
 	/* memory manager */
-	const ase_mmgr_t* mmgr
+	ase_mmgr_t* mmgr,
+	/* size of extension area to allocate in bytes */
+	unsigned int extension;
 );
 
 /* 
@@ -620,11 +619,47 @@ ase_awk_t* ase_awk_open (
  * when finished being used. The instance passed is not valid any more once 
  * the function returns success.
  *
- * returns 0 on success, -1 on failure 
+ * RETURNS 0 on success, -1 on failure 
  */
 int ase_awk_close (
 	/* the pointer to an ase_awk_t instance */
 	ase_awk_t* awk 
+);
+
+/*
+ * get the pointer to the memory manager in use
+ * RETURNS the pointer to the memory manager set through ase_awk_open()
+ */
+ase_mmgr_t* ase_awk_getmmgr (
+	/* the pointer to an ase_awk_t instance  */
+	ase_awk_t* awk
+);
+
+/*
+ * NAME
+ *  get the pointer to extension area requested upon a call to ase_awk_open()
+ *
+ * DESCRIPTION
+ *  The extension area is allocated in the ase_awk_open() function when it is 
+ *  given a positive extension size. The pointer to the beginning of the area
+ *  can be acquired using the ase_awk_getextension() function and be utilized 
+ *  for various purposes.
+ *
+ * RETURNS the pointer to the extension area 
+ */
+void* ase_awk_getextension (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk
+);
+
+/*
+ * set the character classfier
+ */
+void ase_awk_setccls (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk, 
+	/* the pointer to a character classfiler */
+	ase_ccls_t* ccls
 );
 
 /*
@@ -634,7 +669,7 @@ int ase_awk_close (
  * you may call ase_awk_close instead of destroying and creating a new
  * ase_awk_t instance using ase_awk_close() and ase_awk_open().
  *
- * returns 0 on success, -1 on failure
+ * RETURNS 0 on success, -1 on failure
  */
 int ase_awk_clear (
 	/* the pointer to an ase_awk_t instance */
@@ -661,7 +696,7 @@ void ase_awk_setassocdata (
  * The ase_awk_getassocdata() function is used to retrieve custom data 
  * specified by a user with the ase_awk_setassocdata() function.
  *
- * returns the pointer to the user-specified data through ase_awk_setassocdata
+ * RETURNS the pointer to the user-specified data through ase_awk_setassocdata
  * is returned. ASE_NULL is returned if ase_awk_setassocdata was never called.
  */
 void* ase_awk_getassocdata (
@@ -669,14 +704,6 @@ void* ase_awk_getassocdata (
 	ase_awk_t* awk
 );
 
-/*
- * return the pointer to the memory manager in use
- * returns the pointer to the memory manager set through ase_awk_open
- */
-ase_mmgr_t* ase_awk_getmmgr (
-	/* the pointer to an ase_awk_t instance  */
-	ase_awk_t* awk
-);
 
 const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num);
 int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str);
@@ -716,7 +743,7 @@ int ase_awk_getword (ase_awk_t* awk,
  * it unsets the replacement for okw and olen. If all of them are valid,
  * it sets the word replace for okw and olen to nkw and nlen.
  *
- * returns 0 on success, -1 on failure
+ * RETURNS 0 on success, -1 on failure
  */
 int ase_awk_setword (
 	/* the pointer to an ase_awk_t instance */
@@ -734,7 +761,7 @@ int ase_awk_setword (
 /*
  * set the customized regular processing routine. (TODO:  NOT YET IMPLEMENTED)
  *
- * returns 0 on success, -1 on failure
+ * RETURNS 0 on success, -1 on failure
  */
 int ase_awk_setrexfns (ase_awk_t* awk, ase_awk_rexfns_t* rexfns);
 
@@ -869,11 +896,66 @@ int ase_awk_clrrec (ase_awk_run_t* run, ase_bool_t skip_inrec_line);
 int ase_awk_setrec (ase_awk_run_t* run, ase_size_t idx, const ase_char_t* str, ase_size_t len);
 
 /* utility functions exported by awk.h */
-void* ase_awk_malloc (ase_awk_t* awk, ase_size_t size);
-void ase_awk_free (ase_awk_t* awk, void* ptr);
 
-ase_char_t* ase_awk_strxdup (
-	ase_awk_t* awk, const ase_char_t* ptr, ase_size_t len);
+/*
+ * NAME allocate dynamic memory
+ *
+ * DESCRIPTION
+ *
+ *
+ * RETURNS
+ *   the pointer to the memory area allocated on success, ASE_NULL on failure
+ */
+void* ase_awk_malloc (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk, 
+	/* the size of memory to allocate in bytes */
+	ase_size_t size
+);
+
+/*
+ * NAME free dynamic memory
+ *
+ * DESCRIPTION
+ */
+void ase_awk_free (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk, 
+	/* the pointer to the memory area to free */
+	void* ptr
+);
+
+/*
+ * NAME duplicate a string
+ *
+ * DESCRIPTION
+ *  The ase_awk_strdup() function is used to duplicate a string using
+ *  the memory manager used by the associated ase_awk_t instance.
+ *  The new string should be freed using the ase_awk_free() function.
+ *
+ * RETURNS
+ *  The pointer to a new string which is a duplicate of the string s.
+ */
+ase_char_t* ase_awk_strdup (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk, 
+	/* the pointer to a string */
+	const ase_char_t* s
+);
+
+/*
+ * NAME duplicate a string of a length given
+ *
+ * DESCRIPTION
+ *  The ase_awk_strdup() function is used to duplicate a string whose length
+ *  is as long as l characters using the memory manager used by the associated
+ *  ase_awk_t instance. The new string should be freed using the ase_awk_free()
+ *  function.
+ *
+ * RETURNS
+ *  The pointer to a new string which is a duplicate of the string s.
+ */
+ase_char_t* ase_awk_strxdup (ase_awk_t* awk, const ase_char_t* s, ase_size_t l);
 
 ase_long_t ase_awk_strxtolong (
 	ase_awk_t* awk, const ase_char_t* str, ase_size_t len,

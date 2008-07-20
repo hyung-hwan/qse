@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c 197 2008-06-09 06:24:10Z baconevi $
+ * $Id: tab.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -60,7 +60,7 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 
 	if (capa > 0) 
 	{
-		if (tab->awk->prmfns.mmgr.realloc != ASE_NULL)
+		if (tab->awk->mmgr->realloc != ASE_NULL)
 		{
 			tmp = ASE_AWK_REALLOC (tab->awk, 
 				tab->buf, ASE_SIZEOF(*tab->buf) * capa);
@@ -116,7 +116,7 @@ ase_size_t ase_awk_tab_insert (
 	ase_size_t i;
 	ase_char_t* dup;
 
-	dup = ase_awk_strxdup (tab->awk, str, len);
+	dup = ASE_AWK_STRXDUP (tab->awk, str, len);
 	if (dup == ASE_NULL) return (ase_size_t)-1;
 
 	if (index >= tab->capa) 

@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 237 2008-07-09 13:20:08Z baconevi $
+ * $Id: val.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -379,7 +379,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	val->ref = 0;
 	val->len = len;
 	/*
-	val->buf = ase_awk_strxdup (run->awk, buf, len);
+	val->buf = ASE_AWK_STRXDUP (run->awk, buf, len);
 	if (val->buf == ASE_NULL) 
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -441,7 +441,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 	val->type = ASE_AWK_VAL_MAP;
 	val->ref = 0;
 	val->map = ase_map_open (
-		run, 256, 70, free_mapval, same_mapval, &run->awk->prmfns.mmgr);
+		run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
 	if (val->map == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -732,7 +732,7 @@ static ase_char_t* str_to_str (
 	if (buf == ASE_NULL)
 	{
 		ase_char_t* tmp;
-		tmp = ase_awk_strxdup (run->awk, str, str_len);
+		tmp = ASE_AWK_STRXDUP (run->awk, str, str_len);
 		if (tmp == ASE_NULL) 
 		{
 			ase_awk_setrunerror (
@@ -927,13 +927,13 @@ static ase_char_t* val_real_to_str (
 		tmp_len = run->global.convfmt.len;
 	}
 
-	if (ase_str_open (&out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (&out, 256, run->awk->mmgr) == ASE_NULL)
 	{
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
-	if (ase_str_open (&fbu, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (&fbu, 256, run->awk->mmgr) == ASE_NULL)
 	{
 		ase_str_close (&out);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);

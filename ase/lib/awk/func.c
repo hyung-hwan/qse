@@ -1,5 +1,5 @@
 /*
- * $Id: func.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: func.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -1044,7 +1044,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		}
 	}
 
-	if (ase_str_open (&new, a2_len, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (&new, a2_len, run->awk->mmgr) == ASE_NULL)
 	{
 		FREE_A_PTRS (run->awk);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -1347,12 +1347,12 @@ static int bfn_sprintf (
 	nargs = ase_awk_getnargs (run);
 	ASE_ASSERT (nargs > 0);
 
-	if (ase_str_open (&out, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (&out, 256, run->awk->mmgr) == ASE_NULL)
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
-	if (ase_str_open (&fbu, 256, &run->awk->prmfns.mmgr) == ASE_NULL)
+	if (ase_str_open (&fbu, 256, run->awk->mmgr) == ASE_NULL)
 	{
 		ase_str_close (&out);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
