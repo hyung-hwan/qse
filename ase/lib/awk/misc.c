@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 192 2008-06-06 10:33:44Z baconevi $
+ * $Id: misc.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -16,10 +16,14 @@ void ase_awk_free (ase_awk_t* awk, void* ptr)
 	ASE_AWK_FREE (awk, ptr);
 }
 
-ase_char_t* ase_awk_strxdup (
-	ase_awk_t* awk, const ase_char_t* ptr, ase_size_t len)
+ase_char_t* ase_awk_strdup (ase_awk_t* awk, const ase_char_t* s)
 {
-	return ase_strxdup (ptr, len, &awk->prmfns.mmgr);
+	return ASE_AWK_STRDUP (awk, s);
+}
+
+ase_char_t* ase_awk_strxdup (ase_awk_t* awk, const ase_char_t* s, ase_size_t l)
+{
+	return ASE_AWK_STRXDUP (awk, s, l);
 }
 
 ase_long_t ase_awk_strxtolong (
@@ -932,7 +936,7 @@ void* ase_awk_buildrex (
 	void* p;
 
 	p = ase_buildrex (
-		&awk->prmfns.mmgr, awk->rex.depth.max.build, ptn, len, &err);
+		awk->mmgr, awk->rex.depth.max.build, ptn, len, &err);
 	if (p == ASE_NULL) *errnum = ASE_AWK_REXERRTOERR(err);
 	return p;
 }
@@ -945,7 +949,7 @@ int ase_awk_matchrex (
 	int err, x;
 
 	x = ase_matchrex (
-		&awk->prmfns.mmgr, &awk->prmfns.ccls, awk->rex.depth.max.match,
+		awk->mmgr, &awk->prmfns.ccls, awk->rex.depth.max.match,
 		code, option, str, len, match_ptr, match_len, &err);
 	if (x < 0) *errnum = ASE_AWK_REXERRTOERR(err);
 	return x;

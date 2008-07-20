@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c 197 2008-06-09 06:24:10Z baconevi $
+ * $Id: extio.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -122,7 +122,7 @@ int ase_awk_readextio (
 			return -1;
 		}
 
-		p->name = ase_strdup (name, &run->awk->prmfns.mmgr);
+		p->name = ASE_AWK_STRDUP (run->awk, name);
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);
@@ -478,7 +478,7 @@ int ase_awk_writeextio_str (
 			return -1;
 		}
 
-		p->name = ase_strdup (name, &run->awk->prmfns.mmgr);
+		p->name = ASE_AWK_STRDUP (run->awk, name);
 		if (p->name == ASE_NULL)
 		{
 			ASE_AWK_FREE (run->awk, p);

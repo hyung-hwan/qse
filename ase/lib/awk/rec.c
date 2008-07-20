@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 197 2008-06-09 06:24:10Z baconevi $
+ * $Id: rec.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -296,7 +296,7 @@ static int recomp_record_fields (
 		 * number of fields that the current record can hold,
 		 * the field spaces are resized */
 
-		if (run->awk->prmfns.mmgr.realloc != ASE_NULL)
+		if (run->awk->mmgr->realloc != ASE_NULL)
 		{
 			tmp = ASE_AWK_REALLOC (
 				run->awk, run->inrec.flds, 

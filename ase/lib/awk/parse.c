@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 256 2008-07-18 12:54:19Z baconevi $
+ * $Id: parse.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -868,7 +868,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	#endif
 
 	/* clone the function name before it is overwritten */
-	name_dup = ase_awk_strxdup (awk, name, name_len);
+	name_dup = ASE_AWK_STRXDUP (awk, name, name_len);
 	if (name_dup == ASE_NULL) 
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, awk->token.line);
@@ -2775,7 +2775,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->val = ase_awk_strxtolong (awk, 
 			ASE_STR_BUF(&awk->token.name), 
 			ASE_STR_LEN(&awk->token.name), 0, ASE_NULL);
-		nde->str = ase_awk_strxdup (awk,
+		nde->str = ASE_AWK_STRXDUP (awk,
 			ASE_STR_BUF(&awk->token.name),
 			ASE_STR_LEN(&awk->token.name));
 		if (nde->str == ASE_NULL)
@@ -2816,7 +2816,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->val = ase_awk_strxtoreal (awk, 
 			ASE_STR_BUF(&awk->token.name), 
 			ASE_STR_LEN(&awk->token.name), ASE_NULL);
-		nde->str = ase_awk_strxdup (awk,
+		nde->str = ASE_AWK_STRXDUP (awk,
 			ASE_STR_BUF(&awk->token.name),
 			ASE_STR_LEN(&awk->token.name));
 		if (nde->str == ASE_NULL)
@@ -2855,7 +2855,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->line = line;
 		nde->next = ASE_NULL;
 		nde->len = ASE_STR_LEN(&awk->token.name);
-		nde->buf = ase_awk_strxdup (awk,
+		nde->buf = ASE_AWK_STRXDUP (awk,
 			ASE_STR_BUF(&awk->token.name), nde->len);
 		if (nde->buf == ASE_NULL) 
 		{
@@ -2899,7 +2899,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->next = ASE_NULL;
 
 		nde->len = ASE_STR_LEN(&awk->token.name);
-		nde->buf = ase_awk_strxdup (awk,
+		nde->buf = ASE_AWK_STRXDUP (awk,
 			ASE_STR_BUF(&awk->token.name),
 			ASE_STR_LEN(&awk->token.name));
 		if (nde->buf == ASE_NULL)
@@ -3123,7 +3123,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 
 	ASE_ASSERT (MATCH(awk,TOKEN_IDENT));
 
-	name_dup = ase_awk_strxdup (awk,
+	name_dup = ASE_AWK_STRXDUP (awk,
 		ASE_STR_BUF(&awk->token.name),
 		ASE_STR_LEN(&awk->token.name));
 	if (name_dup == ASE_NULL) 

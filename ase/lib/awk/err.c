@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 229 2008-06-26 10:46:39Z baconevi $
+ * $Id: err.c 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -176,7 +176,7 @@ int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str)
 	if (str == ASE_NULL) dup = ASE_NULL;
 	else
 	{
-		dup = ase_strdup (str, &awk->prmfns.mmgr);
+		dup = ASE_STRDUP(awk, str);
 		if (dup == ASE_NULL) return -1;
 	}
 

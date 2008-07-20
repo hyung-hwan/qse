@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h 237 2008-07-09 13:20:08Z baconevi $
+ * $Id: awk_i.h 270 2008-07-20 05:53:29Z baconevi $
  *
  * {License}
  */
@@ -33,9 +33,9 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_MAX_LOCALS  9999
 #define ASE_AWK_MAX_PARAMS  9999
 
-#define ASE_AWK_MALLOC(awk,size)      ASE_MALLOC(&(awk)->prmfns.mmgr,size)
-#define ASE_AWK_REALLOC(awk,ptr,size) ASE_REALLOC(&(awk)->prmfns.mmgr,ptr,size)
-#define ASE_AWK_FREE(awk,ptr)         ASE_FREE(&(awk)->prmfns.mmgr,ptr)
+#define ASE_AWK_MALLOC(awk,size)      ASE_MALLOC((awk)->mmgr,size)
+#define ASE_AWK_REALLOC(awk,ptr,size) ASE_REALLOC((awk)->mmgr,ptr,size)
+#define ASE_AWK_FREE(awk,ptr)         ASE_FREE((awk)->mmgr,ptr)
 
 #define ASE_AWK_ISUPPER(awk,c)  ASE_ISUPPER(&(awk)->prmfns.ccls,c)
 #define ASE_AWK_ISLOWER(awk,c)  ASE_ISLOWER(&(awk)->prmfns.ccls,c)
@@ -50,6 +50,9 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_ISPUNCT(awk,c)  ASE_ISPUNCT(&(awk)->prmfns.ccls,c)
 #define ASE_AWK_TOUPPER(awk,c)  ASE_TOUPPER(&(awk)->prmfns.ccls,c)
 #define ASE_AWK_TOLOWER(awk,c)  ASE_TOLOWER(&(awk)->prmfns.ccls,c)
+
+#define ASE_AWK_STRDUP(awk,str) (ase_strdup(str,(awk)->mmgr))
+#define ASE_AWK_STRXDUP(awk,str,len) (ase_strxdup(str,len,(awk)->mmgr))
 
 struct ase_awk_tree_t
 {
@@ -73,6 +76,9 @@ struct ase_awk_tree_t
 
 struct ase_awk_t
 {
+	ase_mmgr_t* mmgr;
+	ase_ccls_t* ccls;
+
 	ase_awk_prmfns_t prmfns;
 	void* assoc_data;
 
@@ -365,7 +371,7 @@ struct ase_awk_run_t
 };
 
 
-#define ASE_AWK_FREEREX(awk,code) ase_freerex(&(awk)->prmfns.mmgr,code)
+#define ASE_AWK_FREEREX(awk,code) ase_freerex((awk)->mmgr,code)
 #define ASE_AWK_ISEMPTYREX(awk,code) ase_isemptyrex(code)
 #define ASE_AWK_BUILDREX(awk,ptn,len,errnum) \
 	ase_awk_buildrex(awk,ptn,len,errnum)
