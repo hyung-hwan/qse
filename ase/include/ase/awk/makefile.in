@@ -35,8 +35,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@ENABLE_CXX_TRUE@am__append_1 = Awk.hpp StdAwk.hpp
 subdir = include/ase/awk
-DIST_COMMON = $(pkginclude_HEADERS) $(srcdir)/makefile.am \
+DIST_COMMON = $(am__pkginclude_HEADERS_DIST) $(srcdir)/makefile.am \
 	$(srcdir)/makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -47,6 +48,7 @@ CONFIG_HEADER = $(top_builddir)/include/ase/config.h
 CONFIG_CLEAN_FILES =
 SOURCES =
 DIST_SOURCES =
+am__pkginclude_HEADERS_DIST = awk.h Awk.hpp StdAwk.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -178,7 +180,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-pkginclude_HEADERS = awk.h Awk.hpp StdAwk.hpp
+pkginclude_HEADERS = awk.h $(am__append_1)
 CLEANFILES = *dist
 all: all-am
 
