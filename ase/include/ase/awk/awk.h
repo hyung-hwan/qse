@@ -1,5 +1,5 @@
 /* 
- * $Id: awk.h 245 2008-07-15 05:56:32Z baconevi $
+ * $Id: awk.h 268 2008-07-19 08:03:49Z baconevi $
  *
  * {License}
  */
@@ -9,7 +9,7 @@
 
 /** 
  * @file awk.h
- * @brief Define an AWK interpreter
+ * @brief Defines an AWK interpreter
  *  
  * This file defines most of the data types and functions required to embed
  * a AWK interpreter engine.
@@ -586,36 +586,65 @@ struct ase_awk_val_ref_t
 extern "C" {
 #endif
 
+/** @brief represents the nil value */
 extern ase_awk_val_t* ase_awk_val_nil;
+
+/** @brief represents an empty string  */
 extern ase_awk_val_t* ase_awk_val_zls;
+
+/** @brief represents a numeric value -1 */
 extern ase_awk_val_t* ase_awk_val_negone;
+
+/** @brief represents a numeric value 0 */
 extern ase_awk_val_t* ase_awk_val_zero;
+
+/** @brief represents a numeric value 1 */
 extern ase_awk_val_t* ase_awk_val_one;
 
 /**
- * @brief opens an awk interpreter
+ * @brief creates an instance of ase_awk_t
+ * @param mmgr the pointer to a memory manager
+ * @return a pointer to an ase_awk_t instance on success, ASE_NULL on failure
  */
-ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns);
+/*ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns);*/
+ase_awk_t* ase_awk_open (const ase_mmgr_t* mmgr);
 
 /**
- * @brief opens an awk interpreter
+ * @brief destroys an instance of ase_awk_t
+ * @param awk the pointer to an ase_awk_t instance to destory
+ * @return 0 on success, -1 on failure
  */
 int ase_awk_close (ase_awk_t* awk);
 
 /**
  * @brief clears an awk interpreter
+ * @param awk the pointer to an ase_awk_t instance to clear
+ * @return 0 on success, -1 on failure
  */
 int ase_awk_clear (ase_awk_t* awk);
 
 /**
- *  @brief associats the user-specified data with an interpreter
+ * @brief associates the user-specified data with an interpreter
+ * @param awk the pointer to an ase_awk_t instance 
+ * @param data the pointer to a user-specified data
+ * @return n/a
  */
 void ase_awk_setassocdata (ase_awk_t* awk, void* data);
+
 /**
- *  @brief returns the user-specified data associated with an interpreter
+ * @brief returns the user-specified data associated with an interpreter
+ * @param awk the pointer to an ase_awk_t instance 
+ * @return The pointer to the user-specified data through ase_awk_setassocdata.
+ *         is returned. ASE_NULL is returned if ase_awk_setassocdata is never 
+ *         called.
  */
 void* ase_awk_getassocdata (ase_awk_t* awk);
 
+/**
+ * @brief returns the pointer to the memory manager in use
+ * @param awk the pointer to an ase_awk_t instance 
+ * @return the pointer to the memory manager set through ase_awk_open
+ */
 ase_mmgr_t* ase_awk_getmmgr (ase_awk_t* awk);
 
 const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num);
