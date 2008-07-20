@@ -13,17 +13,16 @@ AC_LANG(C)
 # Initializes automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
-# Determine a C compiler to use
+# Determines a C compiler to use
 AC_PROG_CC
-AC_PROG_LIBTOOL
 
 # Determines a C++ compiler to use
 AC_PROG_CXX
-# Determines if a C++ compiler is available
-AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
 # Checks the C++ compiler exists in PATH. 
-# if so, create a conditional HAVE_CXX for automake.
-AM_CONDITIONAL(HAVE_CXX, test "x${HAVE_CXX}" = "xyes")
+AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
+
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
 
 AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
@@ -31,8 +30,6 @@ AC_CHECK_TOOL(AR, ar)
 AC_CHECK_TOOL(GREP, grep)
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(CJ, gcj)
-
-AC_SUBST(LIBTOOL_DEPS)
 
 # Overrides the default CFLAGS setting
 if test "$ac_test_CFLAGS" = "set"
@@ -71,24 +68,9 @@ else
 	fi
 fi
 
-# Do we need libm for math functions?
-AC_MSG_CHECKING([for libm math function in std libs])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-		#include <stdio.h>
-		#include <math.h>
-		]], [[
-		double x;
-		pow(x, x);
-		return 0;
-		]])],[needlibm=no],[needlibm=yes])
-if test "$needlibm" = "yes"; then
-	AC_MSG_RESULT([no])
-	AC_CHECK_LIB([m], [pow], 
-		LIBM="-lm",
-		AC_MSG_ERROR([libm is needed and is not available]))
-else
-	AC_MSG_RESULT([yes])
-fi
+# Checks for the math library (is -lm needed?)
+AC_CHECK_LIBM
+AC_SUBST(LIBM, $LIBM)
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -99,10 +81,7 @@ AC_C_BIGENDIAN(
 	[AC_DEFINE([ASE_ENDIAN_LITTLE],[],[Little Endian])],
 	[AC_DEFINE([ASE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
 
-# Checks for data types
-#AC_CHECK_TYPE(long long, [AC_DEFINE([ASE_HAVE_LONG_LONG],[],[long long])])
-#AC_CHECK_TYPE(long double, [AC_DEFINE([ASE_HAVE_LONG_DOUBLE],[],[long double])])
-
+# Checks the size of primitive data types
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
@@ -159,13 +138,19 @@ then
 	[CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG"]
 	[CXXFLAGS="$CXXFLAGS -g -D_DEBUG -UNDEBUG"]
 	[CJFLAGS="$CJFLAGS -g"]
-	AC_SUBST(BUILDMODE, "debug")
+	AC_SUBST(BUILD_MODE, "debug")
 else
 	[CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG"]
 	[CXXFLAGS="$CXXFLAGS -DNDEBUG -U_DEBUG"]
 	[CJFLAGS="$CJFLAGS"]
-	AC_SUBST(BUILDMODE, "release")
+	AC_SUBST(BUILD_MODE, "release")
 fi
+
+AC_ARG_ENABLE([cxx], [AC_HELP_STRING([--enable-cxx],
+	[build the library for C++ if a C++ compiler is available (default. yes)])],
+	enable_cxx_is=$enableval,enable_cxx_is=yes) 
+[test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"]
+AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 
 # Configure makefiles
 AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
@@ -276,7 +261,6 @@ else
 	BUILD_CJ=
 fi
 
-AC_SUBST(LIBM, $LIBM)
 AC_SUBST(CFLAGS_JNI, $CFLAGS_JNI)
 AC_SUBST(JAVAC, $JAVAC_PATH)
 AC_SUBST(JAR, $JAR_PATH)
@@ -309,9 +293,11 @@ AC_OUTPUT
 echo 
 echo "-[SUMMARY]---------------------------------------------------------------"
 echo "Configured for ${host}"
+echo "  Build mode : ${BUILD_MODE}"
 echo "  Installation directory: ${prefix}"
 echo "  C compiler: ${CC} ${CFLAGS}"
 echo "  C++ compiler: ${CXX} ${CXXFLAGS}"
-echo "  C++ support: ${HAVE_CXX}"
+echo "  C++ support: ${enable_cxx_is}"
+echo "  Math library: ${LIBM}"
 echo "-------------------------------------------------------------------------"
 ]

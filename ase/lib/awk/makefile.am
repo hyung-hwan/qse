@@ -8,7 +8,7 @@ libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c
 libaseawk_la_LDFLAGS= -L../cmn -version-info 1:0:0
 libaseawk_la_LIBADD= -lasecmn
 
-if HAVE_CXX
+if ENABLE_CXX
 lib_LTLIBRARIES += libaseawk++.la
 libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
 libaseawk___la_LDFLAGS = -L. -version-info 1:0:0
