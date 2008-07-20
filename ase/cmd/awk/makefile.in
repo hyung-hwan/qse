@@ -36,7 +36,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = aseawk$(EXEEXT) aseawk++$(EXEEXT)
+bin_PROGRAMS = aseawk$(EXEEXT) $(am__EXEEXT_1)
+@ENABLE_CXX_TRUE@am__append_1 = aseawk++
 subdir = cmd/awk
 DIST_COMMON = $(srcdir)/makefile.am $(srcdir)/makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -46,6 +47,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/ase/config.h
 CONFIG_CLEAN_FILES =
+@ENABLE_CXX_TRUE@am__EXEEXT_1 = aseawk++$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
@@ -53,9 +55,10 @@ am_aseawk_OBJECTS = awk.$(OBJEXT)
 aseawk_OBJECTS = $(am_aseawk_OBJECTS)
 am__DEPENDENCIES_1 =
 aseawk_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_aseawk___OBJECTS = Awk.$(OBJEXT)
+am__aseawk___SOURCES_DIST = Awk.cpp
+@ENABLE_CXX_TRUE@am_aseawk___OBJECTS = Awk.$(OBJEXT)
 aseawk___OBJECTS = $(am_aseawk___OBJECTS)
-aseawk___DEPENDENCIES = $(am__DEPENDENCIES_1)
+@ENABLE_CXX_TRUE@aseawk___DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include/ase
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -76,7 +79,7 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(aseawk_SOURCES) $(aseawk___SOURCES)
-DIST_SOURCES = $(aseawk_SOURCES) $(aseawk___SOURCES)
+DIST_SOURCES = $(aseawk_SOURCES) $(am__aseawk___SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -202,9 +205,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 aseawk_SOURCES = awk.c
 aseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
 aseawk_LDADD = -laseutl -laseawk $(LIBM)
-aseawk___SOURCES = Awk.cpp
-aseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
-aseawk___LDADD = -laseutl -laseawk++ $(LIBM)
+@ENABLE_CXX_TRUE@aseawk___SOURCES = Awk.cpp
+@ENABLE_CXX_TRUE@aseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
+@ENABLE_CXX_TRUE@aseawk___LDADD = -laseutl -laseawk++ $(LIBM)
 all: all-am
 
 .SUFFIXES:
