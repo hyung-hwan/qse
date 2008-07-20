@@ -1,5 +1,7 @@
-/* 
- * $Id: awk.h 268 2008-07-19 08:03:49Z baconevi $
+/* awk.h - functions to embed an AWK interpreter */
+
+/*
+ * $Id: awk.h 269 2008-07-19 14:48:47Z baconevi $
  *
  * {License}
  */
@@ -7,13 +9,6 @@
 #ifndef _ASE_AWK_AWK_H_
 #define _ASE_AWK_AWK_H_
 
-/** 
- * @file awk.h
- * @brief Defines an AWK interpreter
- *  
- * This file defines most of the data types and functions required to embed
- * a AWK interpreter engine.
- */
 
 #include <ase/types.h>
 #include <ase/macros.h>
@@ -164,11 +159,13 @@ enum ase_awk_option_t
 	 * operator(.), and a parse-time function check. */
 	ASE_AWK_EXPLICIT    = (1 << 1), 
 
+#if 0
 	/* a function name should not coincide to be a variable name */
 	/*ASE_AWK_UNIQUEFN    = (1 << 2),*/
 
 	/* allow variable shading */
 	/*ASE_AWK_SHADING     = (1 << 3),*/
+#endif
 
 	/* support shift operators */
 	ASE_AWK_SHIFT       = (1 << 4), 
@@ -601,51 +598,85 @@ extern ase_awk_val_t* ase_awk_val_zero;
 /** @brief represents a numeric value 1 */
 extern ase_awk_val_t* ase_awk_val_one;
 
-/**
- * @brief creates an instance of ase_awk_t
- * @param mmgr the pointer to a memory manager
- * @return a pointer to an ase_awk_t instance on success, ASE_NULL on failure
+/* 
+ * create an ase_awk_t instance
+ * 
+ * The ase_awk_open() function is used to create a new ase_awk_t instance.
+ * The instance created can be passed to other ase_awk_xxx() functions and
+ * is valid until it is successfully destroyed using the ase_ase_close() 
+ * function.
+ *
+ * returns the pointer to an ase_awk_t instance on success, ASE_NULL on failure
  */
-/*ase_awk_t* ase_awk_open (const ase_awk_prmfns_t* prmfns);*/
-ase_awk_t* ase_awk_open (const ase_mmgr_t* mmgr);
+ase_awk_t* ase_awk_open ( 
+	/* memory manager */
+	const ase_mmgr_t* mmgr
+);
 
-/**
- * @brief destroys an instance of ase_awk_t
- * @param awk the pointer to an ase_awk_t instance to destory
- * @return 0 on success, -1 on failure
+/* 
+ * destroy an ase_awk_instance
+ *
+ * An ase_awk_t instance should be destroyed using the ase_awk_close() function
+ * when finished being used. The instance passed is not valid any more once 
+ * the function returns success.
+ *
+ * returns 0 on success, -1 on failure 
  */
-int ase_awk_close (ase_awk_t* awk);
+int ase_awk_close (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk 
+);
 
-/**
- * @brief clears an awk interpreter
- * @param awk the pointer to an ase_awk_t instance to clear
- * @return 0 on success, -1 on failure
+/*
+ * clear an ase_awk_t instance
+ *
+ * If you want to reuse an ase_awk_t instance that finished being used,
+ * you may call ase_awk_close instead of destroying and creating a new
+ * ase_awk_t instance using ase_awk_close() and ase_awk_open().
+ *
+ * returns 0 on success, -1 on failure
  */
-int ase_awk_clear (ase_awk_t* awk);
+int ase_awk_clear (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk 
+);
 
-/**
- * @brief associates the user-specified data with an interpreter
- * @param awk the pointer to an ase_awk_t instance 
- * @param data the pointer to a user-specified data
- * @return n/a
+/*
+ * associate the user-specified data with an ase_awk_t instance
+ *
+ * The ase_awk_setassocdata() function is used to associate custom data
+ * with an ase_awk_t instance. The associated data can be retrieved with
+ * the ase_awk_getassocdata() function.
  */
-void ase_awk_setassocdata (ase_awk_t* awk, void* data);
+void ase_awk_setassocdata (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk, 
+	/* the pointer to user-specified data */
+	void* data
+);
 
-/**
- * @brief returns the user-specified data associated with an interpreter
- * @param awk the pointer to an ase_awk_t instance 
- * @return The pointer to the user-specified data through ase_awk_setassocdata.
- *         is returned. ASE_NULL is returned if ase_awk_setassocdata is never 
- *         called.
+/*
+ * return the user-specified data associated with an ase_awk_t instance
+ *
+ * The ase_awk_getassocdata() function is used to retrieve custom data 
+ * specified by a user with the ase_awk_setassocdata() function.
+ *
+ * returns the pointer to the user-specified data through ase_awk_setassocdata
+ * is returned. ASE_NULL is returned if ase_awk_setassocdata was never called.
  */
-void* ase_awk_getassocdata (ase_awk_t* awk);
+void* ase_awk_getassocdata (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk
+);
 
-/**
- * @brief returns the pointer to the memory manager in use
- * @param awk the pointer to an ase_awk_t instance 
- * @return the pointer to the memory manager set through ase_awk_open
+/*
+ * return the pointer to the memory manager in use
+ * returns the pointer to the memory manager set through ase_awk_open
  */
-ase_mmgr_t* ase_awk_getmmgr (ase_awk_t* awk);
+ase_mmgr_t* ase_awk_getmmgr (
+	/* the pointer to an ase_awk_t instance  */
+	ase_awk_t* awk
+);
 
 const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num);
 int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str);
@@ -675,8 +706,9 @@ void ase_awk_setmaxdepth (ase_awk_t* awk, int types, ase_size_t depth);
 int ase_awk_getword (ase_awk_t* awk, 
 	const ase_char_t* okw, ase_size_t olen,
 	const ase_char_t** nkw, ase_size_t* nlen);
-/**
- * Enables replacement of a name of a keyword, intrinsic global variables, 
+
+/*
+ * enable replacement of a name of a keyword, intrinsic global variables, 
  * and intrinsic functions.
  *
  * If nkw is ASE_NULL or nlen is zero and okw is ASE_NULL or olen is zero,
@@ -684,20 +716,25 @@ int ase_awk_getword (ase_awk_t* awk,
  * it unsets the replacement for okw and olen. If all of them are valid,
  * it sets the word replace for okw and olen to nkw and nlen.
  *
- * @return 
- * 	On success, 0 is returned.
- * 	On failure, -1 is returned.
+ * returns 0 on success, -1 on failure
  */
-int ase_awk_setword (ase_awk_t* awk, 
-	const ase_char_t* okw, ase_size_t olen,
-	const ase_char_t* nkw, ase_size_t nlen);
+int ase_awk_setword (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk, 
+	/* the pointer to an old keyword */
+	const ase_char_t* okw, 
+	/* the length of the old keyword */
+	ase_size_t olen,
+	/* the pointer to an new keyword */
+	const ase_char_t* nkw, 
+	/* the length of the new keyword */
+	ase_size_t nlen
+);
 
-/**
- * Sets the customized regular processing routine.
+/*
+ * set the customized regular processing routine. (TODO:  NOT YET IMPLEMENTED)
  *
- * @return 
- * 	On success, 0 is returned.
- * 	On failure, -1 is returned.
+ * returns 0 on success, -1 on failure
  */
 int ase_awk_setrexfns (ase_awk_t* awk, ase_awk_rexfns_t* rexfns);
 
