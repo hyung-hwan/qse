@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 271 2008-07-20 12:42:39Z baconevi $
+ * $Id: awk.h 278 2008-07-21 03:49:09Z baconevi $
  *
  * {License}
  */
@@ -603,7 +603,9 @@ ase_awk_t* ase_awk_open (
 	/* memory manager */
 	ase_mmgr_t* mmgr,
 	/* size of extension area to allocate in bytes */
-	unsigned int extension
+	ase_size_t extension,
+	/* memory manager fuser */
+	ase_fuser_t mmgr_fuser
 );
 
 /* 

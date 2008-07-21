@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 276 2008-07-20 13:52:30Z baconevi $ 
+ * $Id: awk.c 278 2008-07-21 03:49:09Z baconevi $ 
  *
  * {License}
  */
@@ -24,7 +24,8 @@ static void free_bfn (void* awk, void* afn);
 		ase_awk_seterror ((awk), (code), (line), &errarg, 1); \
 	} while (0)
 
-ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, unsigned int extension, extension_initializer)
+ase_awk_t* ase_awk_open (
+	ase_mmgr_t* mmgr, ase_size_t extension, ase_fuser_t mmgr_fuser)
 {
 	ase_awk_t* awk;
 
@@ -36,11 +37,8 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, unsigned int extension, extension_ini
 	if (awk == ASE_NULL) return ASE_NULL;
 
 	ase_memset (awk, 0, ASE_SIZEOF(ase_awk_t) + extension);
+	if (mmgr_fuser) mmgr = mmgr_fuser (mmgr, awk + 1, extension);
 	awk->mmgr = mmgr;
-
-// TODO: extension_initializer???????????????????????????????/
-	if (extension_initializer) 
-		extension_initializer (awk, awk + 1, extension);
 
 	if (ase_str_open (&awk->token.name, 128, mmgr) == ASE_NULL) 
 	{

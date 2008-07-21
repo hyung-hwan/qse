@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 225 2008-06-26 06:48:38Z baconevi $
+ * $Id: types.h 278 2008-07-21 03:49:09Z baconevi $
  *
  * {License}
  */
@@ -313,6 +313,10 @@ typedef int  ase_mcint_t;
 		#define _UNICODE
 	#endif
 #endif
+
+/* a fuser should fuse(copy and combine) the orginal data into the given space 
+ * and return the pointer to its new location in the space */
+typedef void* (*ase_fuser_t) (void* org, void* space, ase_size_t size);
 
 typedef struct ase_cstr_t ase_cstr_t;
 typedef struct ase_mmgr_t ase_mmgr_t;
