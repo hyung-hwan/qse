@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 271 2008-07-20 12:42:39Z baconevi $ 
+ * $Id: awk.c 272 2008-07-20 12:49:23Z baconevi $ 
  *
  * {License}
  */
@@ -357,11 +357,29 @@ void* ase_awk_getextension (ase_awk_t* awk)
 
 void ase_awk_setccls (ase_awk_t* awk, ase_ccls_t* ccls)
 {
+	ASE_ASSERT (ccls->is_upper  != ASE_NULL);
+	ASE_ASSERT (ccls->is_lower  != ASE_NULL);
+	ASE_ASSERT (ccls->is_alpha  != ASE_NULL);
+	ASE_ASSERT (ccls->is_digit  != ASE_NULL);
+	ASE_ASSERT (ccls->is_xdigit  != ASE_NULL);
+	ASE_ASSERT (ccls->is_alnum  != ASE_NULL);
+	ASE_ASSERT (ccls->is_space  != ASE_NULL);
+	ASE_ASSERT (ccls->is_print  != ASE_NULL);
+	ASE_ASSERT (ccls->is_graph  != ASE_NULL);
+	ASE_ASSERT (ccls->is_cntrl  != ASE_NULL);
+	ASE_ASSERT (ccls->is_punct  != ASE_NULL);
+	ASE_ASSERT (ccls->to_upper  != ASE_NULL);
+	ASE_ASSERT (ccls->to_lower  != ASE_NULL);
+
 	awk->ccls = ccls;
 }
 
 void ase_awk_setprmfns (ase_awk_t* awk, ase_awk_prmfns_t* prmfns)
 {
+	ASE_ASSERT (prmfns->pow     != ASE_NULL);
+	ASE_ASSERT (prmfns->sprintf != ASE_NULL);
+	ASE_ASSERT (prmfns->dprintf != ASE_NULL);
+
 	awk->prmfns = prmfns;
 }
 
