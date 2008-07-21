@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: awk.h 271 2008-07-20 12:42:39Z baconevi $
  *
  * {License}
  */
@@ -65,18 +65,12 @@ struct ase_awk_extio_t
 
 struct ase_awk_prmfns_t
 {
-	ase_ccls_t ccls;
+	ase_awk_pow_t     pow;         /* required */
+	ase_awk_sprintf_t sprintf;     /* required */
+	ase_awk_dprintf_t dprintf;     /* required in the debug mode */
 
-	struct
-	{
-		/* utilities */
-		ase_awk_pow_t     pow;         /* required */
-		ase_awk_sprintf_t sprintf;     /* required */
-		ase_awk_dprintf_t dprintf;     /* required in the debug mode */
-
-		/* user-defined data passed to the functions above */
-		void*             custom_data; /* optional */
-	} misc;
+	/* user-defined data passed to the functions above */
+	void*             custom_data; /* optional */
 };
 
 struct ase_awk_srcios_t
@@ -609,7 +603,7 @@ ase_awk_t* ase_awk_open (
 	/* memory manager */
 	ase_mmgr_t* mmgr,
 	/* size of extension area to allocate in bytes */
-	unsigned int extension;
+	unsigned int extension
 );
 
 /* 
@@ -663,6 +657,16 @@ void ase_awk_setccls (
 );
 
 /*
+ * set primitive functions
+ */
+void ase_awk_setprmfns (
+	/* the pointer to an ase_awk_t instance */
+	ase_awk_t* awk, 
+	/* the pointer to a primitive function structure */
+	ase_awk_prmfns_t* prmfns
+);
+
+/*
  * clear an ase_awk_t instance
  *
  * If you want to reuse an ase_awk_t instance that finished being used,
@@ -675,35 +679,6 @@ int ase_awk_clear (
 	/* the pointer to an ase_awk_t instance */
 	ase_awk_t* awk 
 );
-
-/*
- * associate the user-specified data with an ase_awk_t instance
- *
- * The ase_awk_setassocdata() function is used to associate custom data
- * with an ase_awk_t instance. The associated data can be retrieved with
- * the ase_awk_getassocdata() function.
- */
-void ase_awk_setassocdata (
-	/* the pointer to an ase_awk_t instance */
-	ase_awk_t* awk, 
-	/* the pointer to user-specified data */
-	void* data
-);
-
-/*
- * return the user-specified data associated with an ase_awk_t instance
- *
- * The ase_awk_getassocdata() function is used to retrieve custom data 
- * specified by a user with the ase_awk_setassocdata() function.
- *
- * RETURNS the pointer to the user-specified data through ase_awk_setassocdata
- * is returned. ASE_NULL is returned if ase_awk_setassocdata was never called.
- */
-void* ase_awk_getassocdata (
-	/* the pointer to an ase_awk_t instance */
-	ase_awk_t* awk
-);
-
 
 const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num);
 int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str);

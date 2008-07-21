@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: err.c 271 2008-07-20 12:42:39Z baconevi $
  *
  * {License}
  */
@@ -176,7 +176,7 @@ int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str)
 	if (str == ASE_NULL) dup = ASE_NULL;
 	else
 	{
-		dup = ASE_STRDUP(awk, str);
+		dup = ASE_AWK_STRDUP (awk, str);
 		if (dup == ASE_NULL) return -1;
 	}
 
@@ -251,8 +251,8 @@ void ase_awk_seterror (
 	switch (argcnt)
 	{
 		case 0:
-			awk->prmfns.misc.sprintf (
-				awk->prmfns.misc.custom_data,
+			awk->prmfns->sprintf (
+				awk->prmfns->custom_data,
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt);
@@ -279,8 +279,8 @@ void ase_awk_seterror (
 				ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
 			}
 
-			awk->prmfns.misc.sprintf (
-				awk->prmfns.misc.custom_data,
+			awk->prmfns->sprintf (
+				awk->prmfns->custom_data,
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt, (int)len, tmp);
@@ -288,8 +288,8 @@ void ase_awk_seterror (
 		}
 
 		case 2:
-			awk->prmfns.misc.sprintf (
-				awk->prmfns.misc.custom_data,
+			awk->prmfns->sprintf (
+				awk->prmfns->custom_data,
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt,
@@ -298,8 +298,8 @@ void ase_awk_seterror (
 			return;
 
 		case 3:
-			awk->prmfns.misc.sprintf (
-				awk->prmfns.misc.custom_data,
+			awk->prmfns->sprintf (
+				awk->prmfns->custom_data,
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt,
@@ -309,8 +309,8 @@ void ase_awk_seterror (
 			return;
 
 		case 4:
-			awk->prmfns.misc.sprintf (
-				awk->prmfns.misc.custom_data,
+			awk->prmfns->sprintf (
+				awk->prmfns->custom_data,
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt,
@@ -321,8 +321,8 @@ void ase_awk_seterror (
 			return;
 
 		case 5:
-			awk->prmfns.misc.sprintf (
-				awk->prmfns.misc.custom_data,
+			awk->prmfns->sprintf (
+				awk->prmfns->custom_data,
 				awk->errmsg, 
 				ASE_COUNTOF(awk->errmsg), 
 				errfmt,
@@ -403,8 +403,8 @@ void ase_awk_setrunerror (
 		case 0:
 			/* TODO: convert % to %% if the original % is not
 			 *       the first % of the %% sequence */
-			run->awk->prmfns.misc.sprintf (
-				run->awk->prmfns.misc.custom_data,
+			run->awk->prmfns->sprintf (
+				run->awk->prmfns->custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg), 
 				errfmt);
@@ -434,8 +434,8 @@ void ase_awk_setrunerror (
 				ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
 			}
 
-			run->awk->prmfns.misc.sprintf (
-				run->awk->prmfns.misc.custom_data,
+			run->awk->prmfns->sprintf (
+				run->awk->prmfns->custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg), 
 				errfmt, len, tmp);
@@ -443,8 +443,8 @@ void ase_awk_setrunerror (
 		}
 
 		case 2:
-			run->awk->prmfns.misc.sprintf (
-				run->awk->prmfns.misc.custom_data,
+			run->awk->prmfns->sprintf (
+				run->awk->prmfns->custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg), 
 				errfmt,
@@ -453,8 +453,8 @@ void ase_awk_setrunerror (
 			return;
 
 		case 3:
-			run->awk->prmfns.misc.sprintf (
-				run->awk->prmfns.misc.custom_data,
+			run->awk->prmfns->sprintf (
+				run->awk->prmfns->custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg), 
 				errfmt,
@@ -464,8 +464,8 @@ void ase_awk_setrunerror (
 			return;
 
 		case 4:
-			run->awk->prmfns.misc.sprintf (
-				run->awk->prmfns.misc.custom_data,
+			run->awk->prmfns->sprintf (
+				run->awk->prmfns->custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg), 
 				errfmt,
@@ -476,8 +476,8 @@ void ase_awk_setrunerror (
 			return;
 
 		case 5:
-			run->awk->prmfns.misc.sprintf (
-				run->awk->prmfns.misc.custom_data,
+			run->awk->prmfns->sprintf (
+				run->awk->prmfns->custom_data,
 				run->errmsg, 
 				ASE_COUNTOF(run->errmsg), 
 				errfmt,

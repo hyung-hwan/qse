@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: awk_i.h 271 2008-07-20 12:42:39Z baconevi $
  *
  * {License}
  */
@@ -37,19 +37,19 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_REALLOC(awk,ptr,size) ASE_REALLOC((awk)->mmgr,ptr,size)
 #define ASE_AWK_FREE(awk,ptr)         ASE_FREE((awk)->mmgr,ptr)
 
-#define ASE_AWK_ISUPPER(awk,c)  ASE_ISUPPER(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISLOWER(awk,c)  ASE_ISLOWER(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISALPHA(awk,c)  ASE_ISALPHA(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISDIGIT(awk,c)  ASE_ISDIGIT(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISXDIGIT(awk,c) ASE_ISXDIGIT(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISALNUM(awk,c)  ASE_ISALNUM(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISSPACE(awk,c)  ASE_ISSPACE(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISPRINT(awk,c)  ASE_ISPRINT(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISGRAPH(awk,c)  ASE_ISGRAPH(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISCNTRL(awk,c)  ASE_ISCNTRL(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_ISPUNCT(awk,c)  ASE_ISPUNCT(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_TOUPPER(awk,c)  ASE_TOUPPER(&(awk)->prmfns.ccls,c)
-#define ASE_AWK_TOLOWER(awk,c)  ASE_TOLOWER(&(awk)->prmfns.ccls,c)
+#define ASE_AWK_ISUPPER(awk,c)  ASE_ISUPPER((awk)->ccls,c)
+#define ASE_AWK_ISLOWER(awk,c)  ASE_ISLOWER((awk)->ccls,c)
+#define ASE_AWK_ISALPHA(awk,c)  ASE_ISALPHA((awk)->ccls,c)
+#define ASE_AWK_ISDIGIT(awk,c)  ASE_ISDIGIT((awk)->ccls,c)
+#define ASE_AWK_ISXDIGIT(awk,c) ASE_ISXDIGIT((awk)->ccls,c)
+#define ASE_AWK_ISALNUM(awk,c)  ASE_ISALNUM((awk)->ccls,c)
+#define ASE_AWK_ISSPACE(awk,c)  ASE_ISSPACE((awk)->ccls,c)
+#define ASE_AWK_ISPRINT(awk,c)  ASE_ISPRINT((awk)->ccls,c)
+#define ASE_AWK_ISGRAPH(awk,c)  ASE_ISGRAPH((awk)->ccls,c)
+#define ASE_AWK_ISCNTRL(awk,c)  ASE_ISCNTRL((awk)->ccls,c)
+#define ASE_AWK_ISPUNCT(awk,c)  ASE_ISPUNCT((awk)->ccls,c)
+#define ASE_AWK_TOUPPER(awk,c)  ASE_TOUPPER((awk)->ccls,c)
+#define ASE_AWK_TOLOWER(awk,c)  ASE_TOLOWER((awk)->ccls,c)
 
 #define ASE_AWK_STRDUP(awk,str) (ase_strdup(str,(awk)->mmgr))
 #define ASE_AWK_STRXDUP(awk,str,len) (ase_strxdup(str,len,(awk)->mmgr))
@@ -78,8 +78,8 @@ struct ase_awk_t
 {
 	ase_mmgr_t* mmgr;
 	ase_ccls_t* ccls;
+	ase_awk_prmfns_t* prmfns;
 
-	ase_awk_prmfns_t prmfns;
 	void* assoc_data;
 
 	/* options */

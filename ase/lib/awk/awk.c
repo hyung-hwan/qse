@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 270 2008-07-20 05:53:29Z baconevi $ 
+ * $Id: awk.c 271 2008-07-20 12:42:39Z baconevi $ 
  *
  * {License}
  */
@@ -24,7 +24,7 @@ static void free_bfn (void* awk, void* afn);
 		ase_awk_seterror ((awk), (code), (line), &errarg, 1); \
 	} while (0)
 
-ase_awk_t* ase_awk_open (const ase_mmgr_t* mmgr, unsigned int extension)
+ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, unsigned int extension)
 {
 	ase_awk_t* awk;
 
@@ -35,9 +35,7 @@ ase_awk_t* ase_awk_open (const ase_mmgr_t* mmgr, unsigned int extension)
 	awk = ASE_MALLOC (mmgr, ASE_SIZEOF(ase_awk_t) + extension);
 	if (awk == ASE_NULL) return ASE_NULL;
 
-	/* it uses the built-in ase_awk_memset because awk is not 
-	 * fully initialized yet */
-	ase_memset (awk, 0, ASE_SIZEOF(ase_awk_t));
+	ase_memset (awk, 0, ASE_SIZEOF(ase_awk_t) + extension);
 	awk->mmgr = mmgr;
 
 	if (ase_str_open (&awk->token.name, 128, mmgr) == ASE_NULL) 
@@ -357,14 +355,14 @@ void* ase_awk_getextension (ase_awk_t* awk)
 	return (void*)(awk + 1);
 }
 
-void ase_awk_setassocdata (ase_awk_t* awk, void* data)
+void ase_awk_setccls (ase_awk_t* awk, ase_ccls_t* ccls)
 {
-	awk->assoc_data = data;	
+	awk->ccls = ccls;
 }
 
-void* ase_awk_getassocdata (ase_awk_t* awk)
+void ase_awk_setprmfns (ase_awk_t* awk, ase_awk_prmfns_t* prmfns)
 {
-	return awk->assoc_data;
+	awk->prmfns = prmfns;
 }
 
 int ase_awk_getoption (ase_awk_t* awk)

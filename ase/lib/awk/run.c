@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: run.c 271 2008-07-20 12:42:39Z baconevi $
  *
  * {License}
  */
@@ -17,6 +17,7 @@
 #define IDXBUFSIZE 64
 
 #define MMGR(run) ((run)->awk->mmgr)
+#define CCLS(run) ((run)->awk->ccls)
 
 #define STACK_AT(run,n) ((run)->stack[(run)->stack_base+(n)])
 #define STACK_NARGS(run) (STACK_AT(run,3))
@@ -617,6 +618,9 @@ int ase_awk_run (ase_awk_t* awk,
 {
 	ase_awk_run_t* run;
 	int n;
+
+        ASE_ASSERTX (awk->ccls != ASE_NULL, "Call ase_setccls() first");
+        ASE_ASSERTX (awk->prmfns != ASE_NULL, "Call ase_setprmfns() first");
 
 	/* clear the awk error code */
 	ase_awk_seterror (awk, ASE_AWK_ENOERR, 0, ASE_NULL, 0);
@@ -4034,7 +4038,7 @@ static int __cmp_int_str (
 			str, len,
 			((ase_awk_val_str_t*)right)->buf, 
 			((ase_awk_val_str_t*)right)->len,
-			&run->awk->prmfns.ccls);
+			CCLS(run));
 	}
 	else
 	{
@@ -4106,7 +4110,7 @@ static int __cmp_real_str (
 			str, len,
 			((ase_awk_val_str_t*)right)->buf, 
 			((ase_awk_val_str_t*)right)->len,
-			&run->awk->prmfns.ccls);
+			CCLS(run));
 	}
 	else
 	{
@@ -4150,8 +4154,7 @@ static int __cmp_str_str (
 	if (run->global.ignorecase)
 	{
 		n = ase_strxncasecmp (
-			ls->buf, ls->len, rs->buf, rs->len, 
-			&run->awk->prmfns.ccls);
+			ls->buf, ls->len, rs->buf, rs->len, CCLS(run));
 	}
 	else
 	{
@@ -4529,7 +4532,7 @@ static ase_awk_val_t* eval_binop_exp (
 	ase_real_t r1, r2;
 	ase_awk_val_t* res;
 
-	ASE_ASSERTX (run->awk->prmfns.misc.pow != ASE_NULL,
+	ASE_ASSERTX (run->awk->prmfns->pow != ASE_NULL,
 		"the pow function should be provided when the awk object is created to make the exponentiation work properly.");
 
 	n1 = ase_awk_valtonum (run, left, &l1, &r1);
@@ -4590,8 +4593,8 @@ static ase_awk_val_t* eval_binop_exp (
 	{
 		/* left - int, right - real */
 		res = ase_awk_makerealval (run, 
-			run->awk->prmfns.misc.pow (
-				run->awk->prmfns.misc.custom_data, 
+			run->awk->prmfns->pow (
+				run->awk->prmfns->custom_data, 
 				(ase_real_t)l1,(ase_real_t)r2));
 	}
 	else
@@ -4599,8 +4602,8 @@ static ase_awk_val_t* eval_binop_exp (
 		/* left - real, right - real */
 		ASE_ASSERT (n3 == 3);
 		res = ase_awk_makerealval (run,
-			run->awk->prmfns.misc.pow(
-				run->awk->prmfns.misc.custom_data, 
+			run->awk->prmfns->pow(
+				run->awk->prmfns->custom_data, 
 				(ase_real_t)r1,(ase_real_t)r2));
 	}
 
@@ -6660,8 +6663,8 @@ ase_char_t* ase_awk_format (
 
 			do
 			{
-				n = run->awk->prmfns.misc.sprintf (
-					run->awk->prmfns.misc.custom_data,
+				n = run->awk->prmfns->sprintf (
+					run->awk->prmfns->custom_data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
@@ -6766,8 +6769,8 @@ ase_char_t* ase_awk_format (
 
 			do
 			{
-				n = run->awk->prmfns.misc.sprintf (
-					run->awk->prmfns.misc.custom_data,
+				n = run->awk->prmfns->sprintf (
+					run->awk->prmfns->custom_data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
@@ -6887,8 +6890,8 @@ ase_char_t* ase_awk_format (
 
 			do
 			{
-				n = run->awk->prmfns.misc.sprintf (
-					run->awk->prmfns.misc.custom_data,
+				n = run->awk->prmfns->sprintf (
+					run->awk->prmfns->custom_data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_STR_BUF(fbu),
@@ -6975,8 +6978,8 @@ ase_char_t* ase_awk_format (
 
 			do
 			{
-				n = run->awk->prmfns.misc.sprintf (
-					run->awk->prmfns.misc.custom_data,
+				n = run->awk->prmfns->sprintf (
+					run->awk->prmfns->custom_data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_STR_BUF(fbu),

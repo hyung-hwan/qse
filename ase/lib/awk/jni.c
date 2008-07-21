@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c 237 2008-07-09 13:20:08Z baconevi $
+ * $Id: jni.c 271 2008-07-20 12:42:39Z baconevi $
  *
  * {License}
  */
@@ -86,9 +86,6 @@ typedef struct run_data_t   run_data_t;
 struct awk_data_t
 {
 	int debug;
-#if defined(_WIN32) && defined(__DMC__)
-	HANDLE heap;
-#endif
 };
 
 struct srcio_data_t
@@ -132,102 +129,6 @@ struct run_data_t
 
 	jobject context_object;
 };
-
-static void* awk_malloc (void* custom, ase_size_t n)
-{
-#if defined(_WIN32) && defined(__DMC__)
-	return HeapAlloc ((HANDLE)custom, 0, n);
-#else
-	return malloc (n);
-#endif
-}
-
-static void* awk_realloc (void* custom, void* ptr, ase_size_t n)
-{
-#if defined(_WIN32) && defined(__DMC__)
-	if (ptr == ASE_NULL)
-		return HeapAlloc ((HANDLE)custom, 0, n);
-	else
-		return HeapReAlloc ((HANDLE)custom, 0, ptr, n);
-#else
-	return realloc (ptr, n);
-#endif
-}
-
-static void awk_free (void* custom, void* ptr)
-{
-#if defined(_WIN32) && defined(__DMC__)
-	HeapFree ((HANDLE)custom, 0, ptr);
-#else
-	free (ptr);
-#endif
-}
-
-/* custom character class functions */
-static ase_bool_t awk_isupper (void* custom, ase_cint_t c)  
-{ 
-	return ase_isupper (c); 
-}
-
-static ase_bool_t awk_islower (void* custom, ase_cint_t c)  
-{ 
-	return ase_islower (c); 
-}
-
-static ase_bool_t awk_isalpha (void* custom, ase_cint_t c)  
-{ 
-	return ase_isalpha (c); 
-}
-
-static ase_bool_t awk_isdigit (void* custom, ase_cint_t c)  
-{ 
-	return ase_isdigit (c); 
-}
-
-static ase_bool_t awk_isxdigit (void* custom, ase_cint_t c) 
-{ 
-	return ase_isxdigit (c); 
-}
-
-static ase_bool_t awk_isalnum (void* custom, ase_cint_t c)
-{ 
-	return ase_isalnum (c); 
-}
-
-static ase_bool_t awk_isspace (void* custom, ase_cint_t c)
-{ 
-	return ase_isspace (c); 
-}
-
-static ase_bool_t awk_isprint (void* custom, ase_cint_t c)
-{ 
-	return ase_isprint (c); 
-}
-
-static ase_bool_t awk_isgraph (void* custom, ase_cint_t c)
-{
-	return ase_isgraph (c); 
-}
-
-static ase_bool_t awk_iscntrl (void* custom, ase_cint_t c)
-{
-	return ase_iscntrl (c);
-}
-
-static ase_bool_t awk_ispunct (void* custom, ase_cint_t c)
-{
-	return ase_ispunct (c);
-}
-
-static ase_cint_t awk_toupper (void* custom, ase_cint_t c)
-{
-	return ase_toupper (c);
-}
-
-static ase_cint_t awk_tolower (void* custom, ase_cint_t c)
-{
-	return ase_tolower (c);
-}
 
 static ase_real_t awk_pow (void* custom, ase_real_t x, ase_real_t y)
 {
@@ -406,7 +307,7 @@ static void throw_exception (
 
 static jboolean is_debug (ase_awk_t* awk)
 {
-	awk_data_t* awk_data = (awk_data_t*)ase_awk_getassocdata (awk);
+	awk_data_t* awk_data = (awk_data_t*)ase_awk_getextension (awk);
 	return awk_data->debug? JNI_TRUE: JNI_FALSE;
 }
 
@@ -418,9 +319,6 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	ase_awk_prmfns_t prmfns;
 	awk_data_t* awk_data;
 	int opt;
-#if defined(_WIN32) && defined(__DMC__)
-	HANDLE heap;
-#endif
 
 #if defined(_WIN32) && defined(_DEBUG) 
 	OutputDebugStringW (L"<<<OPENING AWK>>>\n");
@@ -429,80 +327,22 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	#endif
 #endif
 
-#if defined(_WIN32) && defined(__DMC__)
-	heap = HeapCreate (0, 0, 0);
-	if (heap == ASE_NULL)
-	{
-		THROW_NOMEM_EXCEPTION (env);
-		return;
-	}
-#endif
-	
-	memset (&prmfns, 0, sizeof(prmfns));
-
-	prmfns.mmgr.malloc = awk_malloc;
-	prmfns.mmgr.realloc = awk_realloc;
-	prmfns.mmgr.free = awk_free;
-#if defined(_WIN32) && defined(__DMC__)
-	prmfns.mmgr.custom_data = (void*)heap;
-#else
-	prmfns.mmgr.custom_data = ASE_NULL;
-#endif
-
-	prmfns.ccls.is_upper  = awk_isupper;
-	prmfns.ccls.is_lower  = awk_islower;
-	prmfns.ccls.is_alpha  = awk_isalpha;
-	prmfns.ccls.is_digit  = awk_isdigit;
-	prmfns.ccls.is_xdigit = awk_isxdigit;
-	prmfns.ccls.is_alnum  = awk_isalnum;
-	prmfns.ccls.is_space  = awk_isspace;
-	prmfns.ccls.is_print  = awk_isprint;
-	prmfns.ccls.is_graph  = awk_isgraph;
-	prmfns.ccls.is_cntrl  = awk_iscntrl;
-	prmfns.ccls.is_punct  = awk_ispunct;
-	prmfns.ccls.to_upper  = awk_toupper;
-	prmfns.ccls.to_lower  = awk_tolower;
-	prmfns.ccls.custom_data = ASE_NULL;
-
-	prmfns.misc.pow     = awk_pow;
-	prmfns.misc.sprintf = awk_sprintf;
-	prmfns.misc.dprintf = awk_dprintf;
-	prmfns.misc.custom_data = ASE_NULL;
-
-#if defined(_WIN32) && defined(__DMC__)
-	awk_data = (awk_data_t*) awk_malloc (heap, sizeof(awk_data_t));
-#else
-	awk_data = (awk_data_t*) awk_malloc (ASE_NULL, sizeof(awk_data_t));
-#endif
-	if (awk_data == ASE_NULL)
-	{
-#if defined(_WIN32) && defined(__DMC__)
-		HeapDestroy (heap);
-#endif
-		THROW_NOMEM_EXCEPTION (env);
-		return;
-	}
-
-	memset (awk_data, 0, sizeof(awk_data_t));
-	awk_data->debug = 0;
-#if defined(_WIN32) && defined(__DMC__)
-	awk_data->heap = heap;
-#endif
-
-	awk = ase_awk_open (&prmfns);
+	awk = ase_awk_open (ASE_GETMMGR(), ASE_SIZEOF(awk_data_t));
 	if (awk == ASE_NULL)
 	{
-#if defined(_WIN32) && defined(__DMC__)
-		awk_free (heap, awk_data);
-		HeapDestroy (heap);
-#else
-		awk_free (ASE_NULL, awk_data);
-#endif
 		THROW_NOMEM_EXCEPTION (env);
 		return;
 	}
 
-	ase_awk_setassocdata (awk, awk_data);
+	awk_data = (awk_data_t*) ase_awk_getextension (awk);
+	awk_data->debug = 0;
+	awk_data->prmfns.pow     = awk_pow;
+	awk_data->prmfns.sprintf = awk_sprintf;
+	awk_data->prmfns.dprintf = awk_dprintf;
+	awk_data->prmfns.custom_data = ASE_NULL;
+
+	ase_awk_setccls (awk, ASE_GETCCLS());
+	ase_awk_setprmfns (awk, &awk_data->prmfns);
 
 	class = (*env)->GetObjectClass(env, obj);
 	handle = (*env)->GetFieldID (env, class, FIELD_AWKID, "J");
@@ -552,7 +392,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_close (JNIEnv* env, jobject obj, jlong a
 	OutputDebugStringW (L"<<<CLOSING AWK>>>\n");
 #endif
 
-	tmp = (awk_data_t*)ase_awk_getassocdata (awk);
+	tmp = (awk_data_t*)ase_awk_getextension (awk);
 #if defined(_WIN32) && defined(__DMC__)
 	HANDLE heap = tmp->heap;
 #endif
@@ -1939,7 +1779,7 @@ JNIEXPORT jboolean JNICALL Java_ase_awk_Awk_getdebug (JNIEnv* env, jobject obj, 
 {
 	ase_awk_t* awk = (ase_awk_t*)awkid;
 	EXCEPTION_ON_ASE_NULL_AWK_RETURNING (env, awk, JNI_FALSE);
-	return ((awk_data_t*)ase_awk_getassocdata(awk))->debug? JNI_TRUE: JNI_FALSE;
+	return ((awk_data_t*)ase_awk_getextension(awk))->debug? JNI_TRUE: JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
@@ -1947,7 +1787,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setdebug (
 {	
 	ase_awk_t* awk = (ase_awk_t*)awkid;
 	EXCEPTION_ON_ASE_NULL_AWK (env, awk);
-	((awk_data_t*)ase_awk_getassocdata(awk))->debug = debug;
+	((awk_data_t*)ase_awk_getextension(awk))->debug = debug;
 }
 
 JNIEXPORT jstring JNICALL Java_ase_awk_Awk_getword (

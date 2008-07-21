@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: val.c 271 2008-07-20 12:42:39Z baconevi $
  *
  * {License}
  */
@@ -1059,8 +1059,8 @@ int ase_awk_strtonum (
 	return 0; /* long */
 }
 
-#define DPRINTF run->awk->prmfns.misc.dprintf
-#define DCUSTOM run->awk->prmfns.misc.custom_data
+#define DPRINTF run->awk->prmfns->dprintf
+#define DCUSTOM run->awk->prmfns->custom_data
 
 static int print_pair (ase_pair_t* pair, void* arg)
 {
