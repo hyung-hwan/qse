@@ -26647,14 +26647,14 @@ fi
  "${ac_cv_sizeof_wchar_t}" = "0"  && enable_wchar_is=no
 if test "$enable_wchar_is" = "yes"
 then
-	CHAR_TYPE=wchar_t
+	CHAR_TYPE="wide character"
 
 cat >>confdefs.h <<\_ACEOF
 #define ASE_CHAR_IS_WCHAR
 _ACEOF
 
 else
-	CHAR_TYPE=char
+	CHAR_TYPE="multibyte character"
 
 cat >>confdefs.h <<\_ACEOF
 #define ASE_CHAR_IS_MCHAR

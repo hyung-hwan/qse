@@ -126,10 +126,10 @@ AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 [ "${ac_cv_sizeof_wchar_t}" = "0" ] && enable_wchar_is=no
 if test "$enable_wchar_is" = "yes"
 then
-	CHAR_TYPE=wchar_t
+	CHAR_TYPE="wide character"
 	AC_DEFINE([ASE_CHAR_IS_WCHAR],[],[char is wchar])
 else
-	CHAR_TYPE=char
+	CHAR_TYPE="multibyte character"
 	AC_DEFINE([ASE_CHAR_IS_MCHAR],[],[char is mchar])
 fi
 
