@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: parse.c 271 2008-07-20 12:42:39Z baconevi $
  *
  * {License}
  */
@@ -471,6 +471,9 @@ const ase_char_t* ase_awk_getkw (ase_awk_t* awk, const ase_char_t*  kw)
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 {
 	int n;
+
+	ASE_ASSERTX (awk->ccls != ASE_NULL, "Call ase_setccls() first");
+	ASE_ASSERTX (awk->prmfns != ASE_NULL, "Call ase_setprmfns() first");
 
 	ASE_ASSERTX (
 		srcios != ASE_NULL && srcios->in != ASE_NULL,

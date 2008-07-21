@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: misc.c 271 2008-07-20 12:42:39Z baconevi $
  *
  * {License}
  */
@@ -949,7 +949,7 @@ int ase_awk_matchrex (
 	int err, x;
 
 	x = ase_matchrex (
-		awk->mmgr, &awk->prmfns.ccls, awk->rex.depth.max.match,
+		awk->mmgr, awk->ccls, awk->rex.depth.max.match,
 		code, option, str, len, match_ptr, match_len, &err);
 	if (x < 0) *errnum = ASE_AWK_REXERRTOERR(err);
 	return x;
