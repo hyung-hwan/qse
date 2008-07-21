@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 245 2008-07-15 05:56:32Z baconevi $
+ * $Id: Awk.hpp 279 2008-07-21 05:27:34Z baconevi $
  *
  * {License}
  */
@@ -1104,6 +1104,10 @@ private:
 	Awk& operator= (const Awk&);
 
 	void triggerOnRunStart (Run& run);
+
+	ase_mmgr_t mmgr;
+	ase_ccls_t ccls;
+	ase_awk_prmfns_t prmfns;
 };
 
 /////////////////////////////////

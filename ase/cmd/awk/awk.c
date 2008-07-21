@@ -1031,9 +1031,23 @@ static void handle_args (argc, argv)
 
 typedef struct extension_t
 {
+	ase_mmgr_t mmgr;
 	ase_awk_prmfns_t prmfns;
 } 
 extension_t;
+
+static void* fuser (void* org, void* space)
+{
+	extension_t* ext = (extension_t*)space;
+	ext->mmgr = *(ase_mmgr_t*)org;
+
+	ext->prmfns.pow         = custom_awk_pow;
+	ext->prmfns.sprintf     = custom_awk_sprintf;
+	ext->prmfns.dprintf     = custom_awk_dprintf;
+	ext->prmfns.custom_data = ASE_NULL;
+
+	return &ext->mmgr;
+}
 
 static int awk_main (int argc, ase_char_t* argv[])
 {
@@ -1094,7 +1108,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	mmgr.custom_data = ASE_NULL;
 #endif
 
-	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extension_t));
+	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extension_t), fuser);
 	if (awk == ASE_NULL)
 	{
 #ifdef _WIN32
@@ -1107,15 +1121,8 @@ static int awk_main (int argc, ase_char_t* argv[])
 	app_awk = awk;
 
 	extension = (extension_t*) ase_awk_getextension (awk);
-	//extension->mmgr = mmgr;
-	extension->prmfns.pow         = custom_awk_pow;
-	extension->prmfns.sprintf     = custom_awk_sprintf;
-	extension->prmfns.dprintf     = custom_awk_dprintf;
-	extension->prmfns.custom_data = ASE_NULL;
-
 	ase_awk_setccls (awk, ASE_GETCCLS());
 	ase_awk_setprmfns (awk, &extension->prmfns);
-
 
 	if (ase_awk_addfunc (awk, 
 		ASE_T("sleep"), 5, 0,
