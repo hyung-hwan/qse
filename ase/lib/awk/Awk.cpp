@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 245 2008-07-15 05:56:32Z baconevi $
+ * $Id: Awk.cpp 279 2008-07-21 05:27:34Z baconevi $
  *
  * {License}
  */
@@ -1028,6 +1028,31 @@ Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL),
 
 {
 	this->errmsg[0] = ASE_T('\0');
+
+	mmgr.malloc      = allocMem;
+	mmgr.realloc     = reallocMem;
+	mmgr.free        = freeMem;
+	mmgr.custom_data = this;
+
+	ccls.is_upper    = isUpper;
+	ccls.is_lower    = isLower;
+	ccls.is_alpha    = isAlpha;
+	ccls.is_digit    = isDigit;
+	ccls.is_xdigit   = isXdigit;
+	ccls.is_alnum    = isAlnum;
+	ccls.is_space    = isSpace;
+	ccls.is_print    = isPrint;
+	ccls.is_graph    = isGraph;
+	ccls.is_cntrl    = isCntrl;
+	ccls.is_punct    = isPunct;
+	ccls.to_upper    = toUpper;
+	ccls.to_lower    = toLower;
+	ccls.custom_data = this;
+
+	prmfns.pow         = pow;
+	prmfns.sprintf     = sprintf;
+	prmfns.dprintf     = dprintf;
+	prmfns.custom_data = this;
 }
 
 Awk::~Awk ()
@@ -1130,41 +1155,15 @@ int Awk::open ()
 {
 	ASE_ASSERT (awk == ASE_NULL && functionMap == ASE_NULL);
 
-	ase_awk_prmfns_t prmfns;
-
-	prmfns.mmgr.malloc      = allocMem;
-	prmfns.mmgr.realloc     = reallocMem;
-	prmfns.mmgr.free        = freeMem;
-	prmfns.mmgr.custom_data = this;
-
-	prmfns.ccls.is_upper    = isUpper;
-	prmfns.ccls.is_lower    = isLower;
-	prmfns.ccls.is_alpha    = isAlpha;
-	prmfns.ccls.is_digit    = isDigit;
-	prmfns.ccls.is_xdigit   = isXdigit;
-	prmfns.ccls.is_alnum    = isAlnum;
-	prmfns.ccls.is_space    = isSpace;
-	prmfns.ccls.is_print    = isPrint;
-	prmfns.ccls.is_graph    = isGraph;
-	prmfns.ccls.is_cntrl    = isCntrl;
-	prmfns.ccls.is_punct    = isPunct;
-	prmfns.ccls.to_upper    = toUpper;
-	prmfns.ccls.to_lower    = toLower;
-	prmfns.ccls.custom_data = this;
-
-	prmfns.misc.pow         = pow;
-	prmfns.misc.sprintf     = sprintf;
-	prmfns.misc.dprintf     = dprintf;
-	prmfns.misc.custom_data = this;
-
-	awk = ase_awk_open (&prmfns);
+	awk = ase_awk_open (&mmgr, 0, ASE_NULL);
 	if (awk == ASE_NULL)
 	{
 		setError (ERR_NOMEM);
 		return -1;
 	}
 
-	ase_awk_setassocdata (awk, this);
+	ase_awk_setccls (awk, &ccls);
+	ase_awk_setprmfns (awk, &prmfns);
 
 	functionMap = ase_map_open (
 		this, 512, 70, freeFunctionMapValue, ASE_NULL, 

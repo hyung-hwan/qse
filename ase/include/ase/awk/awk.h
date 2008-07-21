@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 278 2008-07-21 03:49:09Z baconevi $
+ * $Id: awk.h 279 2008-07-21 05:27:34Z baconevi $
  *
  * {License}
  */
@@ -596,6 +596,12 @@ extern ase_awk_val_t* ase_awk_val_one;
  * The instance created can be passed to other ase_awk_xxx() functions and
  * is valid until it is successfully destroyed using the ase_ase_close() 
  * function.
+ *
+ * The mmgr_fuser() function is called if mmgr_fuser is not ASE_NULL. 
+ * It is passed two parameters; the memory manager pointer as passed
+ * into the ase_awk_open() function and the pointer to the extension 
+ * area allocated. It should return the pointer to the location of the 
+ * memory manager fused into the extension area.
  *
  * RETURNS the pointer to an ase_awk_t instance on success, ASE_NULL on failure
  */

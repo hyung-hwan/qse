@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 278 2008-07-21 03:49:09Z baconevi $ 
+ * $Id: awk.c 279 2008-07-21 05:27:34Z baconevi $ 
  *
  * {License}
  */
@@ -37,7 +37,7 @@ ase_awk_t* ase_awk_open (
 	if (awk == ASE_NULL) return ASE_NULL;
 
 	ase_memset (awk, 0, ASE_SIZEOF(ase_awk_t) + extension);
-	if (mmgr_fuser) mmgr = mmgr_fuser (mmgr, awk + 1, extension);
+	if (mmgr_fuser) mmgr = mmgr_fuser (mmgr, awk + 1);
 	awk->mmgr = mmgr;
 
 	if (ase_str_open (&awk->token.name, 128, mmgr) == ASE_NULL) 
