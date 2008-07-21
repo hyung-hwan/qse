@@ -126,10 +126,8 @@ AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 [ "${ac_cv_sizeof_wchar_t}" = "0" ] && enable_wchar_is=no
 if test "$enable_wchar_is" = "yes"
 then
-	CHAR_TYPE="wide character"
 	AC_DEFINE([ASE_CHAR_IS_WCHAR],[],[char is wchar])
 else
-	CHAR_TYPE="multibyte character"
 	AC_DEFINE([ASE_CHAR_IS_MCHAR],[],[char is mchar])
 fi
 
@@ -301,7 +299,7 @@ echo "  Installation directory: ${prefix}"
 echo "  C compiler: ${CC} ${CFLAGS}"
 echo "  C++ compiler: ${CXX} ${CXXFLAGS}"
 echo "  C++ support: ${enable_cxx_is}"
-echo "  Character type: ${CHAR_TYPE}" 
+echo "  Wide character: ${enable_wchar_is}" 
 echo "  Math library: ${LIBM}"
 echo "-------------------------------------------------------------------------"
 ]
