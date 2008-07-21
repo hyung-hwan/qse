@@ -74,6 +74,7 @@ AC_SUBST(LIBM, $LIBM)
 
 # Checks for header files.
 AC_HEADER_STDC
+AC_CHECK_HEADERS([wchar.h wctype.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN(
@@ -92,7 +93,7 @@ AC_CHECK_SIZEOF(__int16)
 AC_CHECK_SIZEOF(__int32)
 AC_CHECK_SIZEOF(__int64)
 AC_CHECK_SIZEOF(__int128)
-AC_CHECK_SIZEOF(void *)
+AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
@@ -118,8 +119,8 @@ AC_DEFINE_UNQUOTED(ASE_PKGNAME,"${PACKAGE}", [package_name])
 AC_DEFINE_UNQUOTED(ASE_PKGVERSION,"${VERSION}", [package version])
 AC_DEFINE_UNQUOTED(ASE_PKGAUTHOR,"${PACKAGE_BUGREPORT}", [author's email address])
 
-# Defines extra options
 
+# Defines extra options
 AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 	[use wchar_t a default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)
