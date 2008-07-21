@@ -26644,14 +26644,17 @@ else
   enable_wchar_is=yes
 fi
 
+ "${ac_cv_sizeof_wchar_t}" = "0"  && enable_wchar_is=no
 if test "$enable_wchar_is" = "yes"
 then
+	CHAR_TYPE=wchar_t
 
 cat >>confdefs.h <<\_ACEOF
 #define ASE_CHAR_IS_WCHAR
 _ACEOF
 
 else
+	CHAR_TYPE=char
 
 cat >>confdefs.h <<\_ACEOF
 #define ASE_CHAR_IS_MCHAR
@@ -28351,6 +28354,7 @@ echo "  Installation directory: ${prefix}"
 echo "  C compiler: ${CC} ${CFLAGS}"
 echo "  C++ compiler: ${CXX} ${CXXFLAGS}"
 echo "  C++ support: ${enable_cxx_is}"
+echo "  Character type: ${CHAR_TYPE}"
 echo "  Math library: ${LIBM}"
 echo "-------------------------------------------------------------------------"
 

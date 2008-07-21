@@ -123,10 +123,13 @@ AC_DEFINE_UNQUOTED(ASE_PKGAUTHOR,"${PACKAGE_BUGREPORT}", [author's email address
 AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 	[use wchar_t a default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)
+[ "${ac_cv_sizeof_wchar_t}" = "0" ] && enable_wchar_is=no
 if test "$enable_wchar_is" = "yes"
 then
+	CHAR_TYPE=wchar_t
 	AC_DEFINE([ASE_CHAR_IS_WCHAR],[],[char is wchar])
 else
+	CHAR_TYPE=char
 	AC_DEFINE([ASE_CHAR_IS_MCHAR],[],[char is mchar])
 fi
 
@@ -298,6 +301,7 @@ echo "  Installation directory: ${prefix}"
 echo "  C compiler: ${CC} ${CFLAGS}"
 echo "  C++ compiler: ${CXX} ${CXXFLAGS}"
 echo "  C++ support: ${enable_cxx_is}"
+echo "  Character type: ${CHAR_TYPE}" 
 echo "  Math library: ${LIBM}"
 echo "-------------------------------------------------------------------------"
 ]
