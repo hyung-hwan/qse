@@ -68,21 +68,21 @@ else
 	fi
 fi
 
-# Checks for the math library (is -lm needed?)
+dnl Checks for the math library (is -lm needed?)
 AC_CHECK_LIBM
 AC_SUBST(LIBM, $LIBM)
 
-# Checks for header files.
+dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([wchar.h wctype.h])
+AC_CHECK_HEADERS([stddef.h wchar.h wctype.h])
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_BIGENDIAN(
-	[AC_DEFINE([ASE_ENDIAN_BIG],[],[Big Endian])],
-	[AC_DEFINE([ASE_ENDIAN_LITTLE],[],[Little Endian])],
-	[AC_DEFINE([ASE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
+AC_CHECK_TYPE([wchar_t], 
+	[AC_DEFINE([HAVE_WCHAR_T_IN_STDDEF_H],
+	           [],[wchar_t is available in stddef.h])],
+	[],
+	[#include <stddef.h>])
 
-# Checks the size of primitive data types
+dnl Checks the size of primitive data types
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
@@ -120,6 +120,10 @@ AC_DEFINE_UNQUOTED(ASE_PKGNAME,"${PACKAGE}", [package_name])
 AC_DEFINE_UNQUOTED(ASE_PKGVERSION,"${VERSION}", [package version])
 AC_DEFINE_UNQUOTED(ASE_PKGAUTHOR,"${PACKAGE_BUGREPORT}", [author's email address])
 
+AC_C_BIGENDIAN(
+	[AC_DEFINE([ASE_ENDIAN_BIG],[],[Big Endian])],
+	[AC_DEFINE([ASE_ENDIAN_LITTLE],[],[Little Endian])],
+	[AC_DEFINE([ASE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
 
 # Defines extra options
 AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
