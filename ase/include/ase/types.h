@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 279 2008-07-21 05:27:34Z baconevi $
+ * $Id: types.h 281 2008-07-21 14:11:04Z baconevi $
  *
  * {License}
  */
@@ -270,6 +270,12 @@ typedef int  ase_mcint_t;
 		typedef int ase_wchar_t;
 		#endif
 		typedef int ase_wcint_t;
+	#elif defined(__linux) && (ASE_SIZEOF_INT == 4)
+		typedef int ase_wchar_t;
+		typedef int ase_wcint_t;
+	#elif defined(__linux) && (ASE_SIZEOF_LONG == 4)
+		typedef long ase_wchar_t;
+		typedef long ase_wcint_t;
 	#elif ASE_SIZEOF_LONG == 4
 		typedef long ase_wchar_t;
 		typedef long ase_wcint_t;
