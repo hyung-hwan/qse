@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 279 2008-07-21 05:27:34Z baconevi $
+ * $Id: awk.h 282 2008-07-22 13:01:49Z baconevi $
  *
  * {License}
  */
@@ -157,6 +157,8 @@ enum ase_awk_option_t
 	/* allow variable shading */
 	/*ASE_AWK_SHADING     = (1 << 3),*/
 #endif
+	/* change ^ from exponentation to bitwise xor */
+	ASE_AWK_BXOR         = (1 << 3),
 
 	/* support shift operators */
 	ASE_AWK_SHIFT       = (1 << 4), 

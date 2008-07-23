@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 271 2008-07-20 12:42:39Z baconevi $
+ * $Id: parse.c 282 2008-07-22 13:01:49Z baconevi $
  *
  * {License}
  */
@@ -4785,13 +4785,15 @@ static int get_token (ase_awk_t* awk)
 
 		if (c == ASE_T('='))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_BXOR_ASSIGN);
+			SET_TOKEN_TYPE (awk, ((awk->option & ASE_AWK_BXOR)? 
+				TOKEN_BXOR_ASSIGN: TOKEN_EXP_ASSIGN));
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR (awk);
 		}
 		else
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_BXOR);
+			SET_TOKEN_TYPE (awk, ((awk->option & ASE_AWK_BXOR)? 
+				TOKEN_BXOR: TOKEN_EXP));
 		}
 	}
 	else if (c == ASE_T('+')) 
