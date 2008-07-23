@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.h 223 2008-06-26 06:44:41Z baconevi $
+ * $Id: getopt.h 284 2008-07-22 14:22:24Z baconevi $
  *
  * {License}
  */
@@ -12,10 +12,19 @@
 
 typedef struct ase_opt_t ase_opt_t;
 
+struct ase_opt_long_t
+{
+	const ase_char_t* name;
+	int has_arg;
+	int* flag;
+	int val;
+};
+
 struct ase_opt_t
 {
 	/* input */
 	const ase_char_t* str;
+	ase_opt_long_t* opt_long;
 
 	/* output */
 	ase_cint_t opt;  /* character checked for validity */
