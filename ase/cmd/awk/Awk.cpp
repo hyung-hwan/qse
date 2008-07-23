@@ -642,9 +642,9 @@ static struct
 {
 	{ ASE_T("implicit"),    TestAwk::OPT_IMPLICIT },
 	{ ASE_T("explicit"),    TestAwk::OPT_EXPLICIT },
+	{ ASE_T("bxor"),        TestAwk::OPT_BXOR },
 	{ ASE_T("shift"),       TestAwk::OPT_SHIFT },
 	{ ASE_T("idiv"),        TestAwk::OPT_IDIV },
-	{ ASE_T("strconcat"),   TestAwk::OPT_STRCONCAT },
 	{ ASE_T("extio"),       TestAwk::OPT_EXTIO },
 	{ ASE_T("newline"),     TestAwk::OPT_NEWLINE },
 	{ ASE_T("baseone"),     TestAwk::OPT_BASEONE },
