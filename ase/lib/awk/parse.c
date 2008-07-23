@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 282 2008-07-22 13:01:49Z baconevi $
+ * $Id: parse.c 283 2008-07-22 13:12:56Z baconevi $
  *
  * {License}
  */
@@ -853,22 +853,15 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		return ASE_NULL;
 	}
 
-	#if 0
-	if (awk->option & ASE_AWK_UNIQUEFN) 
+	/* check if it coincides to be a global variable name */
+	g = find_global (awk, name, name_len);
+	if (g != (ase_size_t)-1) 
 	{
-	#endif
-		/* check if it coincides to be a global variable name */
-		g = find_global (awk, name, name_len);
-		if (g != (ase_size_t)-1) 
-		{
-			SETERRARG (
-				awk, ASE_AWK_EGBLRED, awk->token.line, 
-				name, name_len);
-			return ASE_NULL;
-		}
-	#if 0
+		SETERRARG (
+			awk, ASE_AWK_EGBLRED, awk->token.line, 
+			name, name_len);
+		return ASE_NULL;
 	}
-	#endif
 
 	/* clone the function name before it is overwritten */
 	name_dup = ASE_AWK_STRXDUP (awk, name, name_len);
@@ -933,31 +926,13 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			param = ASE_STR_BUF(&awk->token.name);
 			param_len = ASE_STR_LEN(&awk->token.name);
 
-			#if 0
-			if (awk->option & ASE_AWK_UNIQUEFN) 
-			{
-				/* check if a parameter conflicts with a function 
-				 *  function f (f) { print f; } */
-				if (ase_strxncmp (name_dup, name_len, param, param_len) == 0 ||
-				    ase_map_get (awk->tree.afns, param, param_len) != ASE_NULL) 
-				{
-					ASE_AWK_FREE (awk, name_dup);
-					ase_awk_tab_clear (&awk->parse.params);
-					
-					SETERRARG (
-						awk, ASE_AWK_EAFNRED, awk->token.line,
-						param, param_len);
-
-					return ASE_NULL;
-				}
-
-				/* NOTE: the following is not a conflict
-				 *  global x; 
-				 *  function f (x) { print x; } 
-				 *  x in print x is a parameter
-				 */
-			}
-			#endif
+			/* NOTE: the following is not a conflict. 
+			 *       so the parameter is not checked against
+			 *       global variables.
+			 *  global x; 
+			 *  function f (x) { print x; } 
+			 *  x in print x is a parameter
+			 */
 
 			/* check if a parameter conflicts with other parameters */
 			if (ase_awk_tab_find (
@@ -4614,24 +4589,7 @@ static int get_token (ase_awk_t* awk)
 	else if (c == ASE_T('\"')) 
 	{
 		SET_TOKEN_TYPE (awk, TOKEN_STR);
-
 		if (get_charstr(awk) == -1) return -1;
-
-		while (awk->option & ASE_AWK_STRCONCAT) 
-		{
-			do 
-			{
-				if (skip_spaces(awk) == -1) return -1;
-				if ((n = skip_comment(awk)) == -1) return -1;
-			} 
-			while (n == 1);
-
-			c = awk->src.lex.curc;
-			if (c != ASE_T('\"')) break;
-
-			if (get_charstr(awk) == -1) return -1;
-		}
-
 	}
 	else if (c == ASE_T('=')) 
 	{

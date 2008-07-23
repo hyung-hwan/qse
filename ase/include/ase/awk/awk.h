@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 282 2008-07-22 13:01:49Z baconevi $
+ * $Id: awk.h 283 2008-07-22 13:12:56Z baconevi $
  *
  * {License}
  */
@@ -150,28 +150,14 @@ enum ase_awk_option_t
 	 * operator(.), and a parse-time function check. */
 	ASE_AWK_EXPLICIT    = (1 << 1), 
 
-#if 0
-	/* a function name should not coincide to be a variable name */
-	/*ASE_AWK_UNIQUEFN    = (1 << 2),*/
-
-	/* allow variable shading */
-	/*ASE_AWK_SHADING     = (1 << 3),*/
-#endif
 	/* change ^ from exponentation to bitwise xor */
-	ASE_AWK_BXOR         = (1 << 3),
+	ASE_AWK_BXOR        = (1 << 3),
 
 	/* support shift operators */
 	ASE_AWK_SHIFT       = (1 << 4), 
 
 	/* enable the idiv operator (double slashes) */
 	ASE_AWK_IDIV        = (1 << 5), 
-
-	/* support string concatenation in tokenization.
-	 * this option can change the behavior of a certain construct.
-	 * getline < "abc" ".def" is treated as if it is getline < "abc.def" 
-	 * when this option is on. If this option is off, the same expression
-	 * is treated as if it is (getline < "abc") ".def". */
-	ASE_AWK_STRCONCAT   = (1 << 6), 
 
 	/* support getline and print */
 	ASE_AWK_EXTIO       = (1 << 7), 
@@ -209,7 +195,7 @@ enum ase_awk_option_t
 	/* pass the arguments to the main function */
 	ASE_AWK_ARGSTOMAIN  = (1 << 14),
 
-	/* enable the non-standard keyworkd reset */
+	/* enable the non-standard keyword reset */
 	ASE_AWK_RESET       = (1 << 15),
 
 	/* allows the assignment of a map value to a variable */

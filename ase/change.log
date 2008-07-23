@@ -1,7 +1,9 @@
 [0.3.4]
 
 * enhanced the AWK interpreter to be more compatible to AWK
-  - no more semicolon needed to terminate a statement with ASE_AWK_NEWLINE on
+  - no more semicolon needed to terminate a statement with ASE_AWK_NEWLINE on.
+* removed the ASE_AWK_STRCONCAT option.
+* added the ASE_AWK_BXOR option.
 
 [0.3.3]
 

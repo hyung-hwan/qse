@@ -797,9 +797,9 @@ static struct
 {
 	{ ASE_T("implicit"),    ASE_AWK_IMPLICIT },
 	{ ASE_T("explicit"),    ASE_AWK_EXPLICIT },
+	{ ASE_T("bxor"),        ASE_AWK_BXOR },
 	{ ASE_T("shift"),       ASE_AWK_SHIFT },
 	{ ASE_T("idiv"),        ASE_AWK_IDIV },
-	{ ASE_T("strconcat"),   ASE_AWK_STRCONCAT },
 	{ ASE_T("extio"),       ASE_AWK_EXTIO },
 	{ ASE_T("newline"),     ASE_AWK_NEWLINE },
 	{ ASE_T("baseone"),     ASE_AWK_BASEONE },
