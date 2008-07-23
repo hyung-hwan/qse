@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.h 284 2008-07-22 14:22:24Z baconevi $
+ * $Id: getopt.h 285 2008-07-23 03:59:57Z baconevi $
  *
  * {License}
  */
@@ -24,7 +24,7 @@ struct ase_opt_t
 {
 	/* input */
 	const ase_char_t* str;
-	ase_opt_long_t* opt_long;
+//	ase_opt_long_t* opt_long;
 
 	/* output */
 	ase_cint_t opt;  /* character checked for validity */
