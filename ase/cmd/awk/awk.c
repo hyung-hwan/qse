@@ -1029,6 +1029,78 @@ static void handle_args (argc, argv)
 }
 #endif
 
+#if 0
+static int handle_args (int argc, ase_char_t* argv[])
+{
+	ase_opt_t opt;
+	ase_cint_t c;
+
+	ase_memset (&opt, 0, ASE_SIZEOF(opt));
+	opt.str = ASE_T("hm:i:");
+
+	{ ASE_T("implicit"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("explicit"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("bxor"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("shift"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("idiv"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("extio"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("newline"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("baseone"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("stripspaces"), ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("nextofile"),   ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+	{ ASE_T("crfl"),        ASE_OPT_OPTOINAL, ASE_NULL, 0 },
+	{ ASE_T("argstomain"),  ASE_OPT_OPTOINAL, ASE_NULL, 0 },
+	{ ASE_T("reset"),       ASE_OPT_OPTOINAL, ASE_NULL, 0 },
+	{ ASE_T("maptovar"),    ASE_OPT_OPTOINAL, ASE_NULL, 0 },
+	{ ASE_T("pablock"),     ASE_OPT_OPTOINAL, ASE_NULL, 0 },
+
+	{ ASE_T("help"),        ASE_OPT_NONE,     ASE_NULL,  ASE_T('h')},
+	{ ASE_T("main"),        ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('m')},
+
+	opt.lng = lng;
+
+	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
+	{
+		switch (c)
+		{
+			case ASE_T('h'):
+				print_usage (argv[0]);
+				return -1;
+
+			case ASE_T('m'):
+				opt_memsize = ase_strtoi(opt.arg);
+				break;
+
+			case ASE_T('i'):
+				opt_meminc = ase_strtoi(opt.arg);
+				break;
+
+			case ASE_T('?'):
+				ase_fprintf (ASE_STDERR, ASE_T("Error: illegal option - %c\n"), opt.opt);
+				print_usage (argv[0]);
+				return -1;
+
+			case ASE_T(':'):
+				ase_fprintf (ASE_STDERR, ASE_T("Error: missing argument for %c\n"), opt.opt);
+				print_usage (argv[0]);
+				return -1;
+
+			case 0:
+				break;
+		}
+	}
+
+	if (opt.ind < argc)
+	{
+		ase_printf (ASE_T("Error: redundant argument - %s\n"), argv[opt.ind]);
+		print_usage (argv[0]);
+		return -1;
+	}
+
+	return 0;
+}
+#endif
+
 typedef struct extension_t
 {
 	ase_mmgr_t mmgr;

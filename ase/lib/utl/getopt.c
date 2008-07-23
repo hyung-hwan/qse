@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 160 2008-04-08 13:59:49Z baconevi $
+ * $Id: getopt.c 284 2008-07-22 14:22:24Z baconevi $
  * 
  * {License}
  */
@@ -129,5 +129,3 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 
 	return optopt;  /* dump back option letter */
 }
-
-
