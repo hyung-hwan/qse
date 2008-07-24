@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 285 2008-07-23 03:59:57Z baconevi $
+ * $Id: getopt.c 286 2008-07-23 14:11:17Z baconevi $
  * 
  * {License}
  */
@@ -128,7 +128,7 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 
 /* Code based on Unununium project (http://unununium.org/) */
 
-ase_cint_t ase_getopt_long (int argc, ase_char_t* const* argv, ase_opt_t* opt)
+ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 {
 	static int lastidx,lastofs;
 	ase_char_t* tmp;
@@ -136,10 +136,12 @@ ase_cint_t ase_getopt_long (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 	if (opt->ind == 0) opt->ind = 1;
 
 again:
-	if (opt->ind > argc || !argv[opt->ind] ||
-	    *argv[opt->ind] != ASE_T('-') || argv[opt->ind][1] == AES_T('\0')) return -1;
+	if (opt->ind > argc || !argv[opt->ind] || 
+	    argv[opt->ind][0] != ASE_T('-') || 
+	    argv[opt->ind][1] == AES_T('\0')) return -1;
 
-	if (argv[opt->ind][1] == ASE_T('-') && argv[opt->ind][2]==ASE_T('\0')) 
+	if (argv[opt->ind][1] == ASE_T('-') && 
+	    argv[opt->ind][2] == ASE_T('\0')) 
 	{
 		++opt->ind;
 		return -1;
@@ -147,53 +149,74 @@ again:
 
 	if (argv[opt->ind][1] == ASE_T('-')) 
 	{	
+		/* a long option */
+
 		ase_char_t* arg = argv[opt->ind] + 2;
 		const struct option* o;
 
 		/* TODO: rewrite it.. */
-		char* max=strchr(arg,'=');
-		if (max == ASE_NULL) max = arg + strlen(arg);
+		/*char* max=strchr(arg,'=');
+		if (max == ASE_NULL) max = arg + strlen(arg);*/
+		ase_char_t* max = arg;
+		while (*max != ASE_T('\0') && *max != ASE_T('=')) max++;
 
-		for (o=longopts; o->name; ++o) 
+		//for (o = longopts; o->name != ASE_NULL; o++) 
+		for (o = opt->lopt; o->name != ASE_NULL; o++) 
 		{
-			if (!strncmp (o->name, arg, max - arg)) 
+			//if (!strncmp (o->name, arg, max - arg)) 
+			if (ase_strxcmp (arg, max-arg, o->name) != 0) continue;
+
+			/* match */
+			//if (longindex != ASE_NULL) *longindex =o - longopts;
+			if (longindex != ASE_NULL) opt->lidx = o - opt->lopt;
+			if (o->has_arg > 0) 
 			{
-				/* match */
-				if (longindex) *longindex=o-longopts;
-				if (o->has_arg>0) 
+				if (*max == ASE_T('=')) 
 				{
-					if (*max == '=') opt->arg=max+1;
-					else 
-					{
-						opt->arg=argv[opt->ind+1];
-						if (!opt->arg && o->has_arg==1) 
-						{	/* no argument there */
-							if (*optstring==':') return ':';
-							write(2,"argument required: `",20);
-							write(2,arg,(size_t)(max-arg));
-							write(2,"'.\n",3);
-							++opt->ind;
-							return '?';
-						}
-						++opt->ind;
-					}
+					opt->arg = max + 1;
 				}
-				++opt->ind;
-				if (o->flag)
-					*(o->flag)=o->val;
-				else
-					return o->val;
-				return 0;
+				else 
+				{
+					opt->arg = argv[opt->ind+1];
+					if (!opt->arg && o->has_arg == 1) 
+					{	/* no argument there */
+						if (*opt->str == ASE_T(':')) 
+							return ASE_T(':');
+
+						/*
+						write(2,"argument required: `",20);
+						write(2,arg,(size_t)(max-arg));
+						write(2,"'.\n",3);
+						*/
+						opt->ind++;
+						return ASE_T('?');
+					}
+					opt->ind++;
+				}
 			}
+
+			opt->ind++;
+
+			if (o->flag)
+				*(o->flag)=o->val;
+			else
+				return o->val;
+
+			return 0;
 		}
 
-		if (*optstring==':') return ':';
+		if (*opt->str == ASE_T(':')) return ASE_T(':');
+
+		/*
 		write(2,"invalid option `",16);
 		write(2,arg,(size_t)(max-arg));
 		write(2,"'.\n",3);
-		++opt->ind;
-		return '?';
+		*/
+
+		opt->ind++;
+		return ASE_T('?');
 	}
+
 	if (lastidx!=opt->ind) {
 		lastidx=opt->ind; lastofs=0;
 	}
