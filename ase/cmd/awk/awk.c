@@ -5,6 +5,7 @@
 #include <ase/awk/awk.h>
 
 #include <ase/utl/helper.h>
+#include <ase/utl/getopt.h>
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
 
@@ -1029,36 +1030,39 @@ static void handle_args (argc, argv)
 }
 #endif
 
-#if 0
-static int handle_args (int argc, ase_char_t* argv[])
+static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 {
-	ase_opt_t opt;
 	ase_cint_t c;
+	static ase_opt_lng_t lng[] = 
+	{
+		{ ASE_T("implicit"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("explicit"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("bxor"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("shift"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("idiv"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("extio"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("newline"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("baseone"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("stripspaces"), ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("nextofile"),   ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("crfl"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("argstomain"),  ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("reset"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("maptovar"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("pablock"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
 
-	ase_memset (&opt, 0, ASE_SIZEOF(opt));
-	opt.str = ASE_T("hm:i:");
+		{ ASE_T("help"),        ASE_OPT_NONE,     ASE_NULL,  ASE_T('h')},
+		{ ASE_T("main"),        ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('m')}
+	};
 
-	{ ASE_T("implicit"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("explicit"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("bxor"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("shift"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("idiv"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("extio"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("newline"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("baseone"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("stripspaces"), ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("nextofile"),   ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-	{ ASE_T("crfl"),        ASE_OPT_OPTOINAL, ASE_NULL, 0 },
-	{ ASE_T("argstomain"),  ASE_OPT_OPTOINAL, ASE_NULL, 0 },
-	{ ASE_T("reset"),       ASE_OPT_OPTOINAL, ASE_NULL, 0 },
-	{ ASE_T("maptovar"),    ASE_OPT_OPTOINAL, ASE_NULL, 0 },
-	{ ASE_T("pablock"),     ASE_OPT_OPTOINAL, ASE_NULL, 0 },
+	static ase_opt_t opt = 
+	{
+		ASE_T("hf:m:i:"),
+		lng
+	};
 
-	{ ASE_T("help"),        ASE_OPT_NONE,     ASE_NULL,  ASE_T('h')},
-	{ ASE_T("main"),        ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('m')},
 
-	opt.lng = lng;
-
+ase_printf (ASE_T("111111111111111111\n"));
 	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
 	{
 		switch (c)
@@ -1067,12 +1071,9 @@ static int handle_args (int argc, ase_char_t* argv[])
 				print_usage (argv[0]);
 				return -1;
 
-			case ASE_T('m'):
-				opt_memsize = ase_strtoi(opt.arg);
-				break;
 
-			case ASE_T('i'):
-				opt_meminc = ase_strtoi(opt.arg);
+			case ASE_T('f'):
+				src_io->input_file = opt.arg;
 				break;
 
 			case ASE_T('?'):
@@ -1097,9 +1098,9 @@ static int handle_args (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
+ase_printf (ASE_T("1xx11111111111111111\n"));
 	return 0;
 }
-#endif
 
 typedef struct extension_t
 {
@@ -1140,13 +1141,11 @@ static int awk_main (int argc, ase_char_t* argv[])
 	      ASE_AWK_BASEONE |
 	      ASE_AWK_PABLOCK;
 
-#if 0
-	if (handle_args (argc, argv) == -1)
+	if (handle_args (argc, argv, &src_io) == -1)
 	{
 		print_usage (argv[0]);
 		return -1;
 	}
-#endif
 
 	infiles[file_count] = ASE_NULL;
 	runarg[runarg_count].ptr = NULL;
