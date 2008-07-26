@@ -1052,27 +1052,35 @@ static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 		{ ASE_T("pablock"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
 
 		{ ASE_T("help"),        ASE_OPT_NONE,     ASE_NULL,  ASE_T('h')},
-		{ ASE_T("main"),        ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('m')}
+		{ ASE_T("main"),        ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('m') },
+		{ ASE_T("file"),        ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('f') },
+		{ ASE_T("field-separator"), ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('F') },
+		{ ASE_T("assign"), ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('v') }
+
 	};
 
 	static ase_opt_t opt = 
 	{
-		ASE_T("hf:m:i:"),
+		ASE_T("hm:f:F:v:"),
 		lng
 	};
 
 
-ase_printf (ASE_T("111111111111111111\n"));
 	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
 	{
 		switch (c)
 		{
+			case 0:
+				ase_printf (ASE_T("%d\n"), opt.lngind);
+				break;
+
 			case ASE_T('h'):
 				print_usage (argv[0]);
 				return -1;
 
 
 			case ASE_T('f'):
+				ase_printf  (ASE_T("ffffffffffff\n"));
 				src_io->input_file = opt.arg;
 				break;
 
@@ -1086,9 +1094,18 @@ ase_printf (ASE_T("111111111111111111\n"));
 				print_usage (argv[0]);
 				return -1;
 
-			case 0:
-				break;
+			default:
+				return -1;
 		}
+	}
+
+	if (src_io->input_file == ASE_NULL)
+	{
+		/*  the first is the source code... */	
+	}
+	else
+	{
+		/* the remainings are data file names */		
 	}
 
 	if (opt.ind < argc)
@@ -1098,7 +1115,6 @@ ase_printf (ASE_T("111111111111111111\n"));
 		return -1;
 	}
 
-ase_printf (ASE_T("1xx11111111111111111\n"));
 	return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 287 2008-07-24 14:08:37Z baconevi $
+ * $Id: getopt.c 288 2008-07-25 15:01:27Z baconevi $
  * 
  * {License}
  */
@@ -135,15 +135,16 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 	if (opt->ind == 0) opt->ind = 1;
 
 //again:
-	if (opt->ind > argc || !argv[opt->ind] || 
+	if (opt->ind >= argc /*|| !argv[opt->ind] */|| 
 	    argv[opt->ind][0] != ASE_T('-') || 
-	    argv[opt->ind][1] == ASE_T('\0')) return -1;
+	    argv[opt->ind][1] == ASE_T('\0')) return ASE_CHAR_EOF;
 
 	if (argv[opt->ind][1] == ASE_T('-') && 
 	    argv[opt->ind][2] == ASE_T('\0')) 
 	{
+		/* -- */
 		++opt->ind;
-		return -1;
+		return ASE_CHAR_EOF;
 	}
 
 	// TODO: how to handle when lng is off? is this correct?
