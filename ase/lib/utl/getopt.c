@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 288 2008-07-25 15:01:27Z baconevi $
+ * $Id: getopt.c 289 2008-07-26 15:37:38Z baconevi $
  * 
  * {License}
  */
@@ -126,142 +126,12 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 }
 #endif
 
-/* Code based on Unununium project (http://unununium.org/) */
-
 ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 {
 	ase_char_t* oli; /* option letter list index */
+	int dbldash = 0;
 
-	if (opt->ind == 0) opt->ind = 1;
-
-//again:
-	if (opt->ind >= argc /*|| !argv[opt->ind] */|| 
-	    argv[opt->ind][0] != ASE_T('-') || 
-	    argv[opt->ind][1] == ASE_T('\0')) return ASE_CHAR_EOF;
-
-	if (argv[opt->ind][1] == ASE_T('-') && 
-	    argv[opt->ind][2] == ASE_T('\0')) 
-	{
-		/* -- */
-		++opt->ind;
-		return ASE_CHAR_EOF;
-	}
-
-	// TODO: how to handle when lng is off? is this correct?
-	if (opt->lng != ASE_NULL && argv[opt->ind][1] == ASE_T('-')) 
-	{	
-		/* a long option */
-
-		ase_char_t* arg = argv[opt->ind] + 2;
-		const ase_opt_lng_t* o;
-
-		/* TODO: rewrite it.. */
-		/*char* max=strchr(arg,'=');
-		if (max == ASE_NULL) max = arg + strlen(arg);*/
-		ase_char_t* max = arg;
-		while (*max != ASE_T('\0') && *max != ASE_T('=')) max++;
-
-		//for (o = longopts; o->name != ASE_NULL; o++) 
-		for (o = opt->lng; o->str != ASE_NULL; o++) 
-		{
-			//if (!strncmp (o->name, arg, max - arg)) 
-			if (ase_strxcmp (arg, max-arg, o->str) != 0) continue;
-
-			/* match */
-			opt->lngind = o - opt->lng;
-			if (o->has_arg > 0) 
-			{
-				if (*max == ASE_T('=')) 
-				{
-					opt->arg = max + 1;
-				}
-				else 
-				{
-					opt->arg = argv[opt->ind+1];
-					if (!opt->arg && o->has_arg == 1) 
-					{	/* no argument there */
-						if (*opt->str == ASE_T(':')) 
-							return ASE_T(':');
-
-						/*
-						write(2,"argument required: `",20);
-						write(2,arg,(size_t)(max-arg));
-						write(2,"'.\n",3);
-						*/
-						opt->ind++;
-						return ASE_T('?');
-					}
-					opt->ind++;
-				}
-			}
-
-			opt->ind++;
-
-			if (o->flag) *(o->flag) = o->val;
-			else return o->val;
-
-			return 0;
-		}
-
-		if (*opt->str == ASE_T(':')) return ASE_T(':');
-
-		/*
-		write(2,"invalid option `",16);
-		write(2,arg,(size_t)(max-arg));
-		write(2,"'.\n",3);
-		*/
-
-		opt->ind++;
-		return ASE_T('?');
-	}
-
-#if 0
-	if (lastidx != opt->ind) 
-	{
-		lastidx=opt->ind; lastofs=0;
-	}
-
-	opt->opt=argv[opt->ind][lastofs+1];
-	
-	tmp=ase_strchr(opt->str,opt->opt);
-	if (tmp != ASE_NULL)
-	{
-		if (tmp[0] == ASE_T('\0')) 
-		{	/* apparently, we looked for \0, i.e. end of argument */
-			++opt->ind;
-			goto again;
-		}
-		if (tmp[1] == ASE_T(':')) 
-		{	/* argument expected */
-			if (tmp[2]==':' || argv[opt->ind][lastofs+2]) {	/* "-foo", return "oo" as opt->arg */
-				if (!*(opt->arg=argv[opt->ind]+lastofs+2)) opt->arg=0;
-				goto found;
-			}
-			opt->arg=argv[opt->ind+1];
-			if (!opt->arg) {	/* missing argument */
-				++opt->ind;
-				if (*opt->str==':') return ':';
-				getopterror(1);
-				return ':';
-			}
-			++opt->ind;
-		} 
-		else 
-		{
-			++lastofs;
-			return opt->opt;
-		}
-found:
-		++opt->ind;
-		return optopt;
-	} 
-	else 
-	{	/* not found */
-		getopterror(0);
-		++opt->ind;
-		return '?';
-	}
-#endif
+	opt->lngopt = ASE_NULL;
 
 	if (opt->cur == ASE_NULL) 
 	{
@@ -274,18 +144,82 @@ found:
 		/* update scanning pointer */
 		if (opt->ind >= argc || *(opt->cur = argv[opt->ind]) != ASE_T('-')) 
 		{
+			/* All arguments have been processed or the current 
+			 * argument doesn't start with a dash */
 			opt->cur = EMSG;
 			return ASE_CHAR_EOF;
 		}
 
-		if (opt->cur[1] != ASE_T('\0') && *++opt->cur == ASE_T('-'))
-		{      
-			/* found "--" */
-			++opt->ind;
+		opt->cur++;
+
+	#if 0
+		if (*opt->cur == ASE_T('\0'))
+		{
+			/* - */
+			opt->ind++;
 			opt->cur = EMSG;
 			return ASE_CHAR_EOF;
 		}
-	}   /* option letter okay? */
+	#endif
+
+		if (*opt->cur == ASE_T('-'))
+		{
+			if (*++opt->cur == ASE_T('\0'))
+			{
+				/* -- */
+				opt->ind++;
+				opt->cur = EMSG;
+				return ASE_CHAR_EOF;
+			}
+			else
+			{
+				dbldash = 1;
+			}
+		}
+	}   
+
+	if (dbldash && opt->lng != ASE_NULL)
+	{	
+		const ase_opt_lng_t* o;
+		ase_char_t* end = opt->cur;
+
+		while (*end != ASE_T('\0') && *end != ASE_T('=')) end++;
+
+		for (o = opt->lng; o->str != ASE_NULL; o++) 
+		{
+			if (ase_strxcmp (opt->cur, end-opt->cur, o->str) != 0) continue;
+	
+			/* match */
+			opt->cur = EMSG;
+			opt->lngopt = o->str;
+			opt->arg = ((*end == ASE_T('='))? (end + 1): ASE_NULL);
+
+			if (o->has_arg == ASE_OPT_ARG_NONE)
+			{
+				if (opt->arg != ASE_NULL)
+				{
+					/* redundant argument */
+					return BADARG;
+				}
+			}
+			else if (o->has_arg == ASE_OPT_ARG_REQUIRED && opt->arg == ASE_NULL)
+			{
+				if (argc > ++opt->ind) opt->arg = argv[opt->ind];
+				else
+				{
+					/* missing argument */
+					return BADARG;
+				}
+			}
+
+			opt->ind++;
+			return o->val;
+		}
+
+		if (*end == ASE_T('=')) *end = ASE_T('\0');
+		opt->lngopt = opt->cur;
+		return BADCH;
+	}
 
 	if ((opt->opt = *opt->cur++) == ASE_T(':') ||
 	    (oli = ase_strchr(opt->str, opt->opt)) == ASE_NULL) 
@@ -318,6 +252,7 @@ found:
 		{
 			/* no arg */
 			opt->cur = EMSG;
+			opt->arg = ASE_NULL; 
 			/*if (*opt->str == ASE_T(':'))*/ return BADARG;
 			/*return BADCH;*/
 		}
@@ -328,7 +263,7 @@ found:
 		}
 
 		opt->cur = EMSG;
-		++opt->ind;
+		opt->ind++;
 	}
 
 	return opt->opt;  /* dump back option letter */
