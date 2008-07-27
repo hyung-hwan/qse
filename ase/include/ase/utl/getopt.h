@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.h 287 2008-07-24 14:08:37Z baconevi $
+ * $Id: getopt.h 289 2008-07-26 15:37:38Z baconevi $
  *
  * {License}
  */
@@ -10,9 +10,12 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-#define ASE_OPT_NONE 0
-#define ASE_OPT_REQUIRED 1
-#define ASE_OPT_OPTIONAL 2
+enum
+{
+	ASE_OPT_ARG_NONE = 0,
+	ASE_OPT_ARG_REQUIRED = 1,
+	ASE_OPT_ARG_OPTIONAL = 2
+};
 
 typedef struct ase_opt_t ase_opt_t;
 typedef struct ase_opt_lng_t ase_opt_lng_t;
@@ -21,7 +24,6 @@ struct ase_opt_lng_t
 {
 	const ase_char_t* str;
 	int has_arg;
-	int* flag;
 	int val;
 };
 
@@ -34,15 +36,14 @@ struct ase_opt_t
 	/* output */
 	ase_cint_t opt;  /* character checked for validity */
 	ase_char_t* arg; /* argument associated with an option */
-	int err;
+
+	/* output */
+	ase_char_t* lngopt; 
 
 	/* input + output */
 	int ind;         /* index into parent argv vector */
 
-	/* output */
-	int lngind;
-
-	/* internal */
+	/* input + output - internal*/
 	ase_char_t* cur;
 };
 

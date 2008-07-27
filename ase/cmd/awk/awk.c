@@ -1035,27 +1035,28 @@ static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 	ase_cint_t c;
 	static ase_opt_lng_t lng[] = 
 	{
-		{ ASE_T("implicit"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("explicit"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("bxor"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("shift"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("idiv"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("extio"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("newline"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("baseone"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("stripspaces"), ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("nextofile"),   ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("crfl"),        ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("argstomain"),  ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("reset"),       ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("maptovar"),    ASE_OPT_OPTIONAL, ASE_NULL, 0 },
-		{ ASE_T("pablock"),     ASE_OPT_OPTIONAL, ASE_NULL, 0 },
+		{ ASE_T("implicit"),    ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("explicit"),    ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("bxor"),        ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("shift"),       ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("idiv"),        ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("extio"),       ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("newline"),     ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("baseone"),     ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("stripspaces"), ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("nextofile"),   ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("crlf"),        ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("argstomain"),  ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("reset"),       ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("maptovar"),    ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("pablock"),     ASE_OPT_ARG_OPTIONAL,  0 },
 
-		{ ASE_T("help"),        ASE_OPT_NONE,     ASE_NULL,  ASE_T('h')},
-		{ ASE_T("main"),        ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('m') },
-		{ ASE_T("file"),        ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('f') },
-		{ ASE_T("field-separator"), ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('F') },
-		{ ASE_T("assign"), ASE_OPT_REQUIRED, ASE_NULL,  ASE_T('v') }
+		{ ASE_T("main"),            ASE_OPT_ARG_REQUIRED,  ASE_T('m') },
+		{ ASE_T("file"),            ASE_OPT_ARG_REQUIRED,  ASE_T('f') },
+		{ ASE_T("field-separator"), ASE_OPT_ARG_REQUIRED,  ASE_T('F') },
+		{ ASE_T("assign"),          ASE_OPT_ARG_REQUIRED,  ASE_T('v') },
+
+		{ ASE_T("help"),            ASE_OPT_ARG_NONE,  ASE_T('h')}
 
 	};
 
@@ -1071,30 +1072,46 @@ static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 		switch (c)
 		{
 			case 0:
-				ase_printf (ASE_T("%d\n"), opt.lngind);
+				ase_printf (ASE_T(">>> [%s] [%s]\n"), opt.lngopt, opt.arg);
 				break;
 
 			case ASE_T('h'):
 				print_usage (argv[0]);
-				return -1;
-
+				return 1;
 
 			case ASE_T('f'):
-				ase_printf  (ASE_T("ffffffffffff\n"));
 				src_io->input_file = opt.arg;
+				ase_printf  (ASE_T("[file] = %s\n"), opt.arg);
+				break;
+
+			case ASE_T('F'):
+				ase_printf  (ASE_T("[field separator] = %s\n"), opt.arg);
 				break;
 
 			case ASE_T('?'):
-				ase_fprintf (ASE_STDERR, ASE_T("Error: illegal option - %c\n"), opt.opt);
-				print_usage (argv[0]);
+				if (opt.lngopt)
+				{
+					ase_printf (ASE_T("Error: illegal option - %s\n"), opt.lngopt);
+				}
+				else
+				{
+					ase_printf (ASE_T("Error: illegal option - %c\n"), opt.opt);
+				}
 				return -1;
 
 			case ASE_T(':'):
-				ase_fprintf (ASE_STDERR, ASE_T("Error: missing argument for %c\n"), opt.opt);
-				print_usage (argv[0]);
+				if (opt.lngopt)
+				{
+					ase_printf (ASE_T("Error: bad argument for %s\n"), opt.lngopt);
+				}
+				else
+				{
+					ase_printf (ASE_T("Error: bad argument for %c\n"), opt.opt);
+				}
 				return -1;
 
 			default:
+				ase_printf (ASE_T("DEFAULT....\n"));
 				return -1;
 		}
 	}
@@ -1108,12 +1125,19 @@ static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 		/* the remainings are data file names */		
 	}
 
+
+	while (opt.ind < argc)
+	{
+		ase_printf (ASE_T("RA => [%s]\n"), argv[opt.ind++]);
+	}
+/*
 	if (opt.ind < argc)
 	{
 		ase_printf (ASE_T("Error: redundant argument - %s\n"), argv[opt.ind]);
 		print_usage (argv[0]);
 		return -1;
 	}
+*/
 
 	return 0;
 }
@@ -1157,11 +1181,13 @@ static int awk_main (int argc, ase_char_t* argv[])
 	      ASE_AWK_BASEONE |
 	      ASE_AWK_PABLOCK;
 
-	if (handle_args (argc, argv, &src_io) == -1)
+	i = handle_args (argc, argv, &src_io);
+	if (i == -1)
 	{
 		print_usage (argv[0]);
 		return -1;
 	}
+	if (i == 1) return 0;
 
 	infiles[file_count] = ASE_NULL;
 	runarg[runarg_count].ptr = NULL;
