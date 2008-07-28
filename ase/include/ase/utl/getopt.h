@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.h 289 2008-07-26 15:37:38Z baconevi $
+ * $Id: getopt.h 290 2008-07-27 06:16:54Z baconevi $
  *
  * {License}
  */
@@ -10,21 +10,13 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-enum
-{
-	ASE_OPT_ARG_NONE = 0,
-	ASE_OPT_ARG_REQUIRED = 1,
-	ASE_OPT_ARG_OPTIONAL = 2
-};
-
 typedef struct ase_opt_t ase_opt_t;
 typedef struct ase_opt_lng_t ase_opt_lng_t;
 
 struct ase_opt_lng_t
 {
 	const ase_char_t* str;
-	int has_arg;
-	int val;
+	ase_cint_t val;
 };
 
 struct ase_opt_t
@@ -38,7 +30,7 @@ struct ase_opt_t
 	ase_char_t* arg; /* argument associated with an option */
 
 	/* output */
-	ase_char_t* lngopt; 
+	const ase_char_t* lngopt; 
 
 	/* input + output */
 	int ind;         /* index into parent argv vector */
@@ -51,7 +43,19 @@ struct ase_opt_t
 extern "C" {
 #endif
 
-ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt);
+/*
+ * NAME Parse command line options
+ *
+ * DESCRIPTION
+ *   TODO:
+ *
+ * RETURNS ASE_CHAR_EOF, XXXX.XXXX
+ */
+ase_cint_t ase_getopt (
+	int argc /* argument count */, 
+	ase_char_t* const* argv /* argument array */,
+	ase_opt_t* opt  /* option configuration */
+);
 
 #ifdef __cplusplus
 }

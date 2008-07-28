@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 289 2008-07-26 15:37:38Z baconevi $
+ * $Id: getopt.c 290 2008-07-27 06:16:54Z baconevi $
  * 
  * {License}
  */
@@ -49,88 +49,12 @@
 #define BADARG  ASE_T(':')
 #define EMSG    ASE_T("")
 
-#if 0
-ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
-{
-	ase_char_t* oli; /* option letter list index */
-
-	if (opt->cur == ASE_NULL) 
-	{
-		opt->cur = EMSG;
-		opt->ind = 1;
-	}
-
-	if (*opt->cur == ASE_T('\0')) 
-	{              
-		/* update scanning pointer */
-		if (opt->ind >= argc || *(opt->cur = argv[opt->ind]) != ASE_T('-')) 
-		{
-			opt->cur = EMSG;
-			return ASE_CHAR_EOF;
-		}
-
-		if (opt->cur[1] != ASE_T('\0') && *++opt->cur == ASE_T('-'))
-		{      
-			/* found "--" */
-			++opt->ind;
-			opt->cur = EMSG;
-			return ASE_CHAR_EOF;
-		}
-	}   /* option letter okay? */
-
-	if ((opt->opt = *opt->cur++) == ASE_T(':') ||
-	    (oli = ase_strchr(opt->str, opt->opt)) == ASE_NULL) 
-	{
-		/*
-		 * if the user didn't specify '-' as an option,
-		 * assume it means EOF.
-		 */
-		if (opt->opt == (int)'-') return ASE_CHAR_EOF;
-		if (*opt->cur == ASE_T('\0')) ++opt->ind;
-		return BADCH;
-	}
-
-	if (*++oli != ASE_T(':')) 
-	{
-		/* don't need argument */
-		opt->arg = ASE_NULL;
-		if (*opt->cur == ASE_T('\0')) ++opt->ind;
-	}
-	else 
-	{                                  
-		/* need an argument */
-
-		if (*opt->cur != ASE_T('\0')) 
-		{
-			/* no white space */
-			opt->arg = opt->cur;
-		}
-		else if (argc <= ++opt->ind) 
-		{
-			/* no arg */
-			opt->cur = EMSG;
-			/*if (*opt->str == ASE_T(':'))*/ return BADARG;
-			/*return BADCH;*/
-		}
-		else
-		{                            
-			/* white space */
-			opt->arg = argv[opt->ind];
-		}
-
-		opt->cur = EMSG;
-		++opt->ind;
-	}
-
-	return opt->opt;  /* dump back option letter */
-}
-#endif
-
 ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 {
 	ase_char_t* oli; /* option letter list index */
 	int dbldash = 0;
 
+	opt->arg = ASE_NULL;
 	opt->lngopt = ASE_NULL;
 
 	if (opt->cur == ASE_NULL) 
@@ -187,29 +111,29 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 
 		for (o = opt->lng; o->str != ASE_NULL; o++) 
 		{
-			if (ase_strxcmp (opt->cur, end-opt->cur, o->str) != 0) continue;
+			const ase_char_t* str = o->str;
+			if (*str == ASE_T(':')) str++;
+
+			if (ase_strxcmp (opt->cur, end-opt->cur, str) != 0) continue;
 	
 			/* match */
 			opt->cur = EMSG;
 			opt->lngopt = o->str;
-			opt->arg = ((*end == ASE_T('='))? (end + 1): ASE_NULL);
+			if (*end == ASE_T('=')) opt->arg = end + 1;
 
-			if (o->has_arg == ASE_OPT_ARG_NONE)
+			if (*o->str != ASE_T(':'))
 			{
-				if (opt->arg != ASE_NULL)
-				{
-					/* redundant argument */
-					return BADARG;
-				}
+				/* should not have an option argument */
+				if (opt->arg != ASE_NULL) return BADARG;
 			}
-			else if (o->has_arg == ASE_OPT_ARG_REQUIRED && opt->arg == ASE_NULL)
+			else if (opt->arg == ASE_NULL)
 			{
-				if (argc > ++opt->ind) opt->arg = argv[opt->ind];
-				else
-				{
-					/* missing argument */
-					return BADARG;
-				}
+				/* Check if it has a remaining argument 
+				 * available */
+				if (argc <= ++opt->ind) return BADARG; 
+				/* If so, the next available argument is 
+				 * taken to be an option argument */
+				opt->arg = argv[opt->ind];
 			}
 
 			opt->ind++;
@@ -236,8 +160,7 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 	if (*++oli != ASE_T(':')) 
 	{
 		/* don't need argument */
-		opt->arg = ASE_NULL;
-		if (*opt->cur == ASE_T('\0')) ++opt->ind;
+		if (*opt->cur == ASE_T('\0')) opt->ind++;
 	}
 	else 
 	{                                  
@@ -252,7 +175,6 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 		{
 			/* no arg */
 			opt->cur = EMSG;
-			opt->arg = ASE_NULL; 
 			/*if (*opt->str == ASE_T(':'))*/ return BADARG;
 			/*return BADCH;*/
 		}

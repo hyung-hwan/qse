@@ -1035,28 +1035,28 @@ static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 	ase_cint_t c;
 	static ase_opt_lng_t lng[] = 
 	{
-		{ ASE_T("implicit"),    ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("explicit"),    ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("bxor"),        ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("shift"),       ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("idiv"),        ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("extio"),       ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("newline"),     ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("baseone"),     ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("stripspaces"), ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("nextofile"),   ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("crlf"),        ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("argstomain"),  ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("reset"),       ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("maptovar"),    ASE_OPT_ARG_OPTIONAL,  0 },
-		{ ASE_T("pablock"),     ASE_OPT_ARG_OPTIONAL,  0 },
+		{ ASE_T("implicit"),        0 },
+		{ ASE_T("explicit"),        0 },
+		{ ASE_T("bxor"),            0 },
+		{ ASE_T("shift"),           0 },
+		{ ASE_T("idiv"),            0 },
+		{ ASE_T("extio"),           0 },
+		{ ASE_T("newline"),         0 },
+		{ ASE_T("baseone"),         0 },
+		{ ASE_T("stripspaces"),     0 },
+		{ ASE_T("nextofile"),       0 },
+		{ ASE_T("crlf"),            0 },
+		{ ASE_T("argstomain"),      0 },
+		{ ASE_T("reset"),           0 },
+		{ ASE_T("maptovar"),        0 },
+		{ ASE_T("pablock"),         0 },
 
-		{ ASE_T("main"),            ASE_OPT_ARG_REQUIRED,  ASE_T('m') },
-		{ ASE_T("file"),            ASE_OPT_ARG_REQUIRED,  ASE_T('f') },
-		{ ASE_T("field-separator"), ASE_OPT_ARG_REQUIRED,  ASE_T('F') },
-		{ ASE_T("assign"),          ASE_OPT_ARG_REQUIRED,  ASE_T('v') },
+		{ ASE_T(":main"),            ASE_T('m') },
+		{ ASE_T(":file"),            ASE_T('f') },
+		{ ASE_T(":field-separator"), ASE_T('F') },
+		{ ASE_T(":assign"),          ASE_T('v') },
 
-		{ ASE_T("help"),            ASE_OPT_ARG_NONE,  ASE_T('h')}
+		{ ASE_T("help"),            ASE_T('h') }
 
 	};
 
