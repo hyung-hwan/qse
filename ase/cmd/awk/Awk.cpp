@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp,v 1.48 2007/11/09 08:09:29 bacon Exp $
+ * $Id: Awk.cpp 312 2008-08-02 13:40:04Z baconevi $
  */
 
 #include <ase/awk/StdAwk.hpp>
