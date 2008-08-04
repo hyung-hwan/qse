@@ -62,7 +62,7 @@ libaseawk___la_OBJECTS = $(am_libaseawk___la_OBJECTS)
 @ENABLE_CXX_TRUE@am_libaseawk___la_rpath = -rpath $(libdir)
 libaseawk_la_DEPENDENCIES =
 am_libaseawk_la_OBJECTS = awk.lo err.lo tree.lo tab.lo parse.lo run.lo \
-	rec.lo val.lo func.lo misc.lo extio.lo
+	rec.lo val.lo func.lo misc.lo extio.lo std.lo
 libaseawk_la_OBJECTS = $(am_libaseawk_la_OBJECTS)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -210,7 +210,7 @@ target_alias = @target_alias@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libaseawk.la $(am__append_1)
-libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c awk_i.h extio.h func.h misc.h parse.h run.h tab.h tree.h
+libaseawk_la_SOURCES = awk.c err.c tree.c tab.c parse.c run.c rec.c val.c func.c misc.c extio.c std.c awk_i.h extio.h func.h misc.h parse.h run.h tab.h tree.h 
 libaseawk_la_LDFLAGS = -L../cmn -version-info 1:0:0
 libaseawk_la_LIBADD = -lasecmn
 @ENABLE_CXX_TRUE@libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
@@ -297,6 +297,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/run.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/std.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tab.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/val.Plo@am__quote@

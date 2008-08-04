@@ -1,4 +1,11 @@
+/*
+ * $Id$
+ */
+
+#include "awk_i.h"
 #include <ase/utl/stdio.h>
+#include <ase/utl/helper.h>
+#include <math.h>
 
 typedef struct ext_t
 {
@@ -36,9 +43,10 @@ static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 ase_awk_t* ase_awk_openstd (void)
 {
 	ase_awk_t* awk;
+	ext_t* ext;
 
 	awk = ase_awk_open (ASE_GETMMGR(), ASE_SIZEOF(ext_t), ASE_NULL);
-	ase_awk_setccls (ASE_GETCCLS());
+	ase_awk_setccls (awk, ASE_GETCCLS());
 
 	ext = (ext_t*) ase_awk_getextension (awk);
 	ext->prmfns.pow         = custom_awk_pow;
