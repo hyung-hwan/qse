@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 290 2008-07-27 06:16:54Z baconevi $
+ * $Id: getopt.c 313 2008-08-03 14:06:43Z baconevi $
  * 
  * {License}
  */
@@ -140,7 +140,7 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 			return o->val;
 		}
 
-		if (*end == ASE_T('=')) *end = ASE_T('\0');
+		/*if (*end == ASE_T('=')) *end = ASE_T('\0');*/
 		opt->lngopt = opt->cur;
 		return BADCH;
 	}

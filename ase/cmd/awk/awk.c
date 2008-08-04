@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 312 2008-08-02 13:40:04Z baconevi $
+ * $Id: awk.c 313 2008-08-03 14:06:43Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -32,10 +32,23 @@
 #include <crtdbg.h>
 #endif
 
-struct awk_src_io
+struct srcio_t
 {
-	const ase_char_t* input_file;
-	FILE* input_handle;
+	int type; /* file or string */
+
+	union
+	{
+		struct 
+		{
+			ase_char_t* ptr;
+			ase_char_t* cur;
+		} str;
+		struct {
+			int count;
+			const ase_char_t* name[128];
+			FILE* handle;
+		} file;
+	} data;
 };
 
 #if defined(_WIN32)
@@ -60,7 +73,6 @@ static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
 	ase_vfprintf (stderr, fmt, ap);
 	va_end (ap);
 }
-
 
 /* custom memory management function */
 static void* custom_awk_malloc (void* custom, ase_size_t n)
@@ -118,26 +130,28 @@ static int custom_awk_sprintf (
 static ase_ssize_t awk_srcio_in (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-	struct awk_src_io* src_io = (struct awk_src_io*)arg;
+	struct srcio_t* srcio = (struct srcio_t*)arg;
 	ase_cint_t c;
 
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
-		if (src_io->input_file == ASE_NULL) return 0;
-		src_io->input_handle = ase_fopen (src_io->input_file, ASE_T("r"));
-		if (src_io->input_handle == NULL) return -1;
+		if (srcio->input_file == ASE_NULL) return 0;
+		srcio->input_handle = ase_fopen (srcio->input_file, ASE_T("r"));
+		if (srcio->input_handle == NULL) return -1;
+
+		ase_awk_setsinname ();
 		return 1;
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
-		if (src_io->input_file == ASE_NULL) return 0;
-		fclose ((FILE*)src_io->input_handle);
+		if (srcio->input_file == ASE_NULL) return 0;
+		fclose ((FILE*)srcio->input_handle);
 		return 0;
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
 		ase_ssize_t n = 0;
-		FILE* fp = (FILE*)src_io->input_handle;
+		FILE* fp = (FILE*)srcio->input_handle;
 		while (!ase_feof(fp) && n < size)
 		{
 			ase_cint_t c = ase_fgetc (fp);
@@ -150,6 +164,11 @@ static ase_ssize_t awk_srcio_in (
 		}
 		return n;
 	}
+	/*
+	else if (cmd == ASE_AWK_IO_NEXT)
+	{
+	}
+	*/
 
 	return -1;
 }
@@ -157,7 +176,7 @@ static ase_ssize_t awk_srcio_in (
 static ase_ssize_t awk_srcio_out (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
-	/*struct awk_src_io* src_io = (struct awk_src_io*)arg;*/
+	/*struct srcio_t* srcio = (struct srcio_t*)arg;*/
 
 	if (cmd == ASE_AWK_IO_OPEN) return 1;
 	else if (cmd == ASE_AWK_IO_CLOSE) 
@@ -343,7 +362,6 @@ static ase_ssize_t awk_extio_file (
 
 				errarg.ptr = epa->name;
 				errarg.len = ase_strlen(epa->name);
-
 
 				ase_awk_setrunerror (epa->run, ASE_AWK_EOPEN, 0, &errarg, 1);
 				return -1;
@@ -997,13 +1015,13 @@ static void handle_args (argc, argv)
 				return -1;
 			}
 
-			if (src_io.input_file != NULL) 
+			if (srcio.input_file != NULL) 
 			{
 				print_usage (argv[0]);
 				return -1;
 			}
 
-			src_io.input_file = argv[i];
+			srcio.input_file = argv[i];
 			mode = 0;
 		}
 		else if (mode == 2) /* argument mode */
@@ -1030,33 +1048,33 @@ static void handle_args (argc, argv)
 }
 #endif
 
-static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
+static int handle_args (int argc, ase_char_t* argv[], struct srcio_t* srcio)
 {
 	ase_cint_t c;
 	static ase_opt_lng_t lng[] = 
 	{
-		{ ASE_T("implicit"),        0 },
-		{ ASE_T("explicit"),        0 },
-		{ ASE_T("bxor"),            0 },
-		{ ASE_T("shift"),           0 },
-		{ ASE_T("idiv"),            0 },
-		{ ASE_T("extio"),           0 },
-		{ ASE_T("newline"),         0 },
-		{ ASE_T("baseone"),         0 },
-		{ ASE_T("stripspaces"),     0 },
-		{ ASE_T("nextofile"),       0 },
-		{ ASE_T("crlf"),            0 },
-		{ ASE_T("argstomain"),      0 },
-		{ ASE_T("reset"),           0 },
-		{ ASE_T("maptovar"),        0 },
-		{ ASE_T("pablock"),         0 },
+		{ ASE_T("implicit"),         0 },
+		{ ASE_T("explicit"),         0 },
+		{ ASE_T("bxor"),             0 },
+		{ ASE_T("shift"),            0 },
+		{ ASE_T("idiv"),             0 },
+		{ ASE_T("extio"),            0 },
+		{ ASE_T("newline"),          0 },
+		{ ASE_T("baseone"),          0 },
+		{ ASE_T("stripspaces"),      0 },
+		{ ASE_T("nextofile"),        0 },
+		{ ASE_T("crlf"),             0 },
+		{ ASE_T("argstomain"),       0 },
+		{ ASE_T("reset"),            0 },
+		{ ASE_T("maptovar"),         0 },
+		{ ASE_T("pablock"),          0 },
 
 		{ ASE_T(":main"),            ASE_T('m') },
 		{ ASE_T(":file"),            ASE_T('f') },
 		{ ASE_T(":field-separator"), ASE_T('F') },
 		{ ASE_T(":assign"),          ASE_T('v') },
 
-		{ ASE_T("help"),            ASE_T('h') }
+		{ ASE_T("help"),             ASE_T('h') }
 
 	};
 
@@ -1080,8 +1098,8 @@ static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 				return 1;
 
 			case ASE_T('f'):
-				src_io->input_file = opt.arg;
-				ase_printf  (ASE_T("[file] = %s\n"), opt.arg);
+				srcio.type = SIO_FILE;
+				srcio.data.file.name = opt.arg;
 				break;
 
 			case ASE_T('F'):
@@ -1116,7 +1134,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 		}
 	}
 
-	if (src_io->input_file == ASE_NULL)
+	if (srcio->input_file == ASE_NULL)
 	{
 		/*  the first is the source code... */	
 	}
@@ -1142,62 +1160,26 @@ static int handle_args (int argc, ase_char_t* argv[], struct awk_src_io* src_io)
 	return 0;
 }
 
-typedef struct extension_t
+typedef struct extensrcion_t
 {
 	ase_mmgr_t mmgr;
 	ase_awk_prmfns_t prmfns;
 } 
-extension_t;
+extensrcion_t;
 
 static void* fuser (void* org, void* space)
 {
-	extension_t* ext = (extension_t*)space;
-	/* remember the memory manager into the extension */
+	extensrcion_t* ext = (extensrcion_t*)space;
+	/* remember the memory manager into the extensrcion */
 	ext->mmgr = *(ase_mmgr_t*)org;
 	return &ext->mmgr;
 }
 
-static int awk_main (int argc, ase_char_t* argv[])
+static ase_awk_t* open_awk (void)
 {
 	ase_awk_t* awk;
 	ase_mmgr_t mmgr;
-	extension_t* extension;
-
-	ase_awk_srcios_t srcios;
-	struct awk_src_io src_io = { NULL, NULL };
-	int opt, i, file_count = 0;
-#ifdef _WIN32
-	struct mmgr_data_t mmgr_data;
-#endif
-	const ase_char_t* mfn = ASE_NULL;
-	int mode = 0;
-	int runarg_count = 0;
-	ase_awk_runarg_t runarg[128];
-	int deparse = 0;
-
-	opt = ASE_AWK_IMPLICIT |
-	      ASE_AWK_EXTIO | 
-	      ASE_AWK_NEWLINE | 
-	      ASE_AWK_BASEONE |
-	      ASE_AWK_PABLOCK;
-
-	i = handle_args (argc, argv, &src_io);
-	if (i == -1)
-	{
-		print_usage (argv[0]);
-		return -1;
-	}
-	if (i == 1) return 0;
-
-	infiles[file_count] = ASE_NULL;
-	runarg[runarg_count].ptr = NULL;
-	runarg[runarg_count].len = 0;
-
-	if (mode != 0 || src_io.input_file == NULL)
-	{
-		print_usage (argv[0]);
-		return -1;
-	}
+	extensrcion_t* extensrcion;
 
 	memset (&mmgr, 0, ASE_SIZEOF(mmgr));
 	mmgr.malloc  = custom_awk_malloc;
@@ -1216,7 +1198,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	mmgr.custom_data = ASE_NULL;
 #endif
 
-	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extension_t), fuser);
+	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extensrcion_t), fuser);
 	if (awk == ASE_NULL)
 	{
 #ifdef _WIN32
@@ -1226,16 +1208,62 @@ static int awk_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	app_awk = awk;
-
 	ase_awk_setccls (awk, ASE_GETCCLS());
 
-	extension = (extension_t*) ase_awk_getextension (awk);
-	extension->prmfns.pow         = custom_awk_pow;
-	extension->prmfns.sprintf     = custom_awk_sprintf;
-	extension->prmfns.dprintf     = custom_awk_dprintf;
-	extension->prmfns.custom_data = ASE_NULL;
-	ase_awk_setprmfns (awk, &extension->prmfns);
+	extensrcion = (extensrcion_t*) ase_awk_getextensrcion (awk);
+	extensrcion->prmfns.pow         = custom_awk_pow;
+	extensrcion->prmfns.sprintf     = custom_awk_sprintf;
+	extensrcion->prmfns.dprintf     = custom_awk_dprintf;
+	extensrcion->prmfns.custom_data = ASE_NULL;
+	ase_awk_setprmfns (awk, &extensrcion->prmfns);
+
+	ase_awk_setoption (awk, ASE_AWK_IMPLICIT | ASE_AWK_EXTIO | ASE_AWK_NEWLINE | ASE_AWK_BASEONE | ASE_AWK_PABLOCK);
+
+	return awk;
+}
+
+static int awk_main (int argc, ase_char_t* argv[])
+{
+	ase_awk_t* awk;
+	ase_mmgr_t mmgr;
+	extensrcion_t* extensrcion;
+
+	ase_awk_srcios_t srcios;
+	struct srcio_t srcio = { NULL, NULL };
+	int i, file_count = 0;
+#ifdef _WIN32
+	struct mmgr_data_t mmgr_data;
+#endif
+	const ase_char_t* mfn = ASE_NULL;
+	int mode = 0;
+	int runarg_count = 0;
+	ase_awk_runarg_t runarg[128];
+	int deparse = 0;
+
+
+	i = handle_args (argc, argv, &srcio);
+	if (i == -1)
+	{
+		print_usage (argv[0]);
+		return -1;
+	}
+	if (i == 1) return 0;
+
+	infiles[file_count] = ASE_NULL;
+	runarg[runarg_count].ptr = NULL;
+	runarg[runarg_count].len = 0;
+
+	if (mode != 0 || srcio.input_file == NULL)
+	{
+		print_usage (argv[0]);
+		return -1;
+	}
+
+
+	awk = open_awk ();
+	if (awk == ASE_NULL) return -1;
+
+	app_awk = awk;
 
 	if (ase_awk_addfunc (awk, 
 		ASE_T("sleep"), 5, 0,
@@ -1248,7 +1276,6 @@ static int awk_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	ase_awk_setoption (awk, opt);
 
 	/*
 	ase_awk_seterrstr (awk, ASE_AWK_EGBLRED, ASE_T("\uC804\uC5ED\uBCC0\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
@@ -1257,7 +1284,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	srcios.in = awk_srcio_in;
 	srcios.out = deparse? awk_srcio_out: NULL;
-	srcios.custom_data = &src_io;
+	srcios.custom_data = &srcio;
 
 	ase_awk_setmaxdepth (
 		awk, ASE_AWK_DEPTH_BLOCK_PARSE | ASE_AWK_DEPTH_EXPR_PARSE, 50);
@@ -1349,8 +1376,6 @@ int ase_main (int argc, ase_achar_t* argv[])
 	/*#if defined(_MSC_VER)
 	_CrtDumpMemoryLeaks ();
 	#endif*/
-	_tprintf (_T("Press ENTER to quit\n"));
-	getchar ();
 #endif
 
 	return n;

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 283 2008-07-22 13:12:56Z baconevi $
+ * $Id: awk.h 313 2008-08-03 14:06:43Z baconevi $
  *
  * {License}
  */
@@ -601,6 +601,8 @@ ase_awk_t* ase_awk_open (
 	/* memory manager fuser */
 	ase_fuser_t mmgr_fuser
 );
+
+ase_awk_t* ase_awk_openstd (void);
 
 /* 
  * destroy an ase_awk_instance
