@@ -1,8 +1,9 @@
 /*
- * $Id: awk.c 313 2008-08-03 14:06:43Z baconevi $
+ * $Id: awk.c 318 2008-08-07 11:02:08Z baconevi $
  */
 
 #include <ase/awk/awk.h>
+#include <ase/cmn/sll.h>
 
 #include <ase/utl/helper.h>
 #include <ase/utl/getopt.h>
@@ -133,6 +134,7 @@ static ase_ssize_t awk_srcio_in (
 	struct srcio_t* srcio = (struct srcio_t*)arg;
 	ase_cint_t c;
 
+#if 0
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
 		if (srcio->input_file == ASE_NULL) return 0;
@@ -169,6 +171,7 @@ static ase_ssize_t awk_srcio_in (
 	{
 	}
 	*/
+#endif
 
 	return -1;
 }
@@ -933,6 +936,11 @@ static int bfn_sleep (
 	return 0;
 }
 
+static void out_of_memory (void)
+{
+	ase_fprintf (ASE_STDERR, ASE_T("Error: out of memory\n"));	
+}
+
 #if 0
 static void handle_args (argc, argv)
 {
@@ -1048,7 +1056,7 @@ static void handle_args (argc, argv)
 }
 #endif
 
-static int handle_args (int argc, ase_char_t* argv[], struct srcio_t* srcio)
+static int handle_args (int argc, ase_char_t* argv[], ase_sll_t* sf)
 {
 	ase_cint_t c;
 	static ase_opt_lng_t lng[] = 
@@ -1098,9 +1106,18 @@ static int handle_args (int argc, ase_char_t* argv[], struct srcio_t* srcio)
 				return 1;
 
 			case ASE_T('f'):
-				srcio.type = SIO_FILE;
-				srcio.data.file.name = opt.arg;
+			{
+				ase_size_t sz = ase_strlen(opt.arg) + 1;
+				sz *= ASE_SIZEOF(*opt.arg);
+
+				if (ase_sll_append(sf, opt.arg, sz) == ASE_NULL)
+				{
+					out_of_memory ();
+					return -1;	
+				}
+
 				break;
+			}
 
 			case ASE_T('F'):
 				ase_printf  (ASE_T("[field separator] = %s\n"), opt.arg);
@@ -1134,6 +1151,8 @@ static int handle_args (int argc, ase_char_t* argv[], struct srcio_t* srcio)
 		}
 	}
 
+ase_printf (ASE_T("[%d]\n"), (int)ase_sll_getsize(sf));
+#if 0
 	if (srcio->input_file == ASE_NULL)
 	{
 		/*  the first is the source code... */	
@@ -1142,6 +1161,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct srcio_t* srcio)
 	{
 		/* the remainings are data file names */		
 	}
+#endif
 
 
 	while (opt.ind < argc)
@@ -1160,17 +1180,17 @@ static int handle_args (int argc, ase_char_t* argv[], struct srcio_t* srcio)
 	return 0;
 }
 
-typedef struct extensrcion_t
+typedef struct extension_t
 {
 	ase_mmgr_t mmgr;
 	ase_awk_prmfns_t prmfns;
 } 
-extensrcion_t;
+extension_t;
 
 static void* fuser (void* org, void* space)
 {
-	extensrcion_t* ext = (extensrcion_t*)space;
-	/* remember the memory manager into the extensrcion */
+	extension_t* ext = (extension_t*)space;
+	/* remember the memory manager into the extension */
 	ext->mmgr = *(ase_mmgr_t*)org;
 	return &ext->mmgr;
 }
@@ -1179,7 +1199,7 @@ static ase_awk_t* open_awk (void)
 {
 	ase_awk_t* awk;
 	ase_mmgr_t mmgr;
-	extensrcion_t* extensrcion;
+	extension_t* extension;
 
 	memset (&mmgr, 0, ASE_SIZEOF(mmgr));
 	mmgr.malloc  = custom_awk_malloc;
@@ -1198,24 +1218,24 @@ static ase_awk_t* open_awk (void)
 	mmgr.custom_data = ASE_NULL;
 #endif
 
-	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extensrcion_t), fuser);
+	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extension_t), fuser);
 	if (awk == ASE_NULL)
 	{
 #ifdef _WIN32
 		HeapDestroy (mmgr_data.heap);
 #endif
 		ase_printf (ASE_T("ERROR: cannot open awk\n"));
-		return -1;
+		return ASE_NULL;
 	}
 
 	ase_awk_setccls (awk, ASE_GETCCLS());
 
-	extensrcion = (extensrcion_t*) ase_awk_getextensrcion (awk);
-	extensrcion->prmfns.pow         = custom_awk_pow;
-	extensrcion->prmfns.sprintf     = custom_awk_sprintf;
-	extensrcion->prmfns.dprintf     = custom_awk_dprintf;
-	extensrcion->prmfns.custom_data = ASE_NULL;
-	ase_awk_setprmfns (awk, &extensrcion->prmfns);
+	extension = (extension_t*) ase_awk_getextension (awk);
+	extension->prmfns.pow         = custom_awk_pow;
+	extension->prmfns.sprintf     = custom_awk_sprintf;
+	extension->prmfns.dprintf     = custom_awk_dprintf;
+	extension->prmfns.custom_data = ASE_NULL;
+	ase_awk_setprmfns (awk, &extension->prmfns);
 
 	ase_awk_setoption (awk, ASE_AWK_IMPLICIT | ASE_AWK_EXTIO | ASE_AWK_NEWLINE | ASE_AWK_BASEONE | ASE_AWK_PABLOCK);
 
@@ -1226,7 +1246,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
 	ase_mmgr_t mmgr;
-	extensrcion_t* extensrcion;
+	extension_t* extension;
 
 	ase_awk_srcios_t srcios;
 	struct srcio_t srcio = { NULL, NULL };
@@ -1240,8 +1260,17 @@ static int awk_main (int argc, ase_char_t* argv[])
 	ase_awk_runarg_t runarg[128];
 	int deparse = 0;
 
+	ase_sll_t* sf;
 
-	i = handle_args (argc, argv, &srcio);
+	sf = ase_sll_open (ASE_GETMMGR());
+	if (sf == ASE_NULL)
+	{
+		out_of_memory ();
+		return -1;
+	}	
+// TODO: destroy sf....
+
+	i = handle_args (argc, argv, sf);
 	if (i == -1)
 	{
 		print_usage (argv[0]);
@@ -1253,11 +1282,13 @@ static int awk_main (int argc, ase_char_t* argv[])
 	runarg[runarg_count].ptr = NULL;
 	runarg[runarg_count].len = 0;
 
+#if 0
 	if (mode != 0 || srcio.input_file == NULL)
 	{
 		print_usage (argv[0]);
 		return -1;
 	}
+#endif
 
 
 	awk = open_awk ();
