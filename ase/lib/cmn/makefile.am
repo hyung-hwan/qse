@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CFLAGS = -I$(top_builddir)/include
 
 lib_LTLIBRARIES = libasecmn.la
-libasecmn_la_SOURCES = map.c mem.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c
+libasecmn_la_SOURCES = mem.h \
+	map.c mem.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c sll.c
 libasecmn_la_LDFLAGS = -version-info 1:0:0
 

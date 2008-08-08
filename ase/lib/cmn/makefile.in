@@ -56,7 +56,7 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libasecmn_la_LIBADD =
 am_libasecmn_la_OBJECTS = map.lo mem.lo misc.lo rex.lo str_bas.lo \
-	str_cnv.lo str_dyn.lo
+	str_cnv.lo str_dyn.lo sll.lo
 libasecmn_la_OBJECTS = $(am_libasecmn_la_OBJECTS)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -195,7 +195,9 @@ target_alias = @target_alias@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CFLAGS = -I$(top_builddir)/include
 lib_LTLIBRARIES = libasecmn.la
-libasecmn_la_SOURCES = map.c mem.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c
+libasecmn_la_SOURCES = mem.h \
+	map.c mem.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c sll.c
+
 libasecmn_la_LDFLAGS = -version-info 1:0:0
 all: all-am
 
@@ -270,6 +272,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_bas.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dyn.Plo@am__quote@
