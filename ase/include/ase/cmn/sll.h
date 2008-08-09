@@ -16,9 +16,20 @@
 typedef struct ase_sll_t ase_sll_t;
 typedef struct ase_sll_node_t ase_sll_node_t;
 
+struct ase_sll_node_t
+{
+	struct
+	{
+		void* ptr;      /* pointer to the beginning of data */
+		ase_size_t len; /* length of data in bytes */
+	} data;
+
+	ase_sll_node_t* next;   /* pointer to the next node */
+};
+
 typedef void* (*ase_sll_copier_t) (ase_sll_t* sll, void* data, ase_size_t len);
 typedef void (*ase_sll_freeer_t) (ase_sll_t* sll, void* data, ase_size_t len);
-typedef int (*ase_sll_walker_t) (ase_sll_t* sll, void* data, ase_size_t len);
+typedef int (*ase_sll_walker_t) (ase_sll_t* sll, ase_sll_node_t* node, void* arg);
 
 #define ASE_SLL_COPIER_INLINE ase_sll_copyinline
 
@@ -100,8 +111,16 @@ ase_size_t ase_sll_getsize (
 	ase_sll_t* sll /* a singly linked list */
 );
 
+ase_sll_node_t* ase_sll_gethead (
+	ase_sll_t* sll /* a singly linked list */
+);
+
+ase_sll_node_t* ase_sll_gettail (
+	ase_sll_t* sll /* a singly linked list */
+);
+
 /* Traverses s singly linked list */
-void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker);
+void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker, void* arg);
 
 /* 
  * Causes a singly linked list to copy in data to a node.
