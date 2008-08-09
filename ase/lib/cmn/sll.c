@@ -19,14 +19,7 @@ struct ase_sll_t
 	ase_sll_node_t* tail;
 };
 
-struct ase_sll_node_t
-{
-	ase_sll_node_t* data;
-	ase_size_t size;
-	ase_sll_node_t* next;
-};
-
-void* ase_sll_copyinline (ase_sll_t* sll, void* data, ase_size_t size)
+void* ase_sll_copyinline (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 {
 	/* this is a dummy copier */
 	return ASE_NULL;
@@ -61,15 +54,15 @@ void ase_sll_clear (ase_sll_t* sll)
 {
 	while (sll->head != ASE_NULL)
 	{
-		ase_sll_node_t* n = sll->head->next;
+		ase_sll_node_t* h = sll->head;
+		sll->head = h->next;
 
 		if (sll->freeer != ASE_NULL)
 		{
-			sll->freeer (sll, sll->head->data, sll->head->size);
+			sll->freeer (sll, h->data.ptr, h->data.len);
 		}
 	
-		ASE_FREE (sll->mmgr, sll->head);
-		sll->head = n;
+		ASE_FREE (sll->mmgr, h);
 	}	
 
 	sll->tail = ASE_NULL;
@@ -83,6 +76,16 @@ void* ase_sll_getextension (ase_sll_t* sll)
 ase_size_t ase_sll_getsize (ase_sll_t* sll)
 {
 	return sll->size;
+}
+
+ase_sll_node_t* ase_sll_gethead (ase_sll_t* sll)
+{
+	return sll->head;
+}
+
+ase_sll_node_t* ase_sll_gettail (ase_sll_t* sll)
+{
+	return sll->tail;
 }
 
 void ass_sll_setcopier (ase_sll_t* sll, ase_sll_copier_t copier)
@@ -103,7 +106,7 @@ static ase_sll_node_t* alloc_node (ase_sll_t* sll, void* data, ase_size_t size)
 	{
 		n = ASE_MALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
 		if (n == ASE_NULL) return ASE_NULL;
-		n->data = data;
+		n->data.ptr = data;
 	}
 	else if (sll->copier == ASE_SLL_COPIER_INLINE)
 	{
@@ -111,16 +114,16 @@ static ase_sll_node_t* alloc_node (ase_sll_t* sll, void* data, ase_size_t size)
 		if (n == ASE_NULL) return ASE_NULL;
 
 		ASE_MEMCPY (n + 1, data, size);
-		n->data = n + 1;
+		n->data.ptr = n + 1;
 	}
 	else
 	{
 		n = ASE_MALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
 		if (n == ASE_NULL) return ASE_NULL;
-		n->data = sll->copier (sll, data, size);
+		n->data.ptr = sll->copier (sll, data, size);
 	}
 
-	n->size = size; 
+	n->data.len = size; 
 	n->next = ASE_NULL;	
 }
 
@@ -151,13 +154,41 @@ ase_sll_node_t* ase_sll_append (ase_sll_t* sll, void* data, ase_size_t size)
 	return n;
 }
 
-void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker)
+ase_sll_node_t* ase_sll_prepend (ase_sll_t* sll, void* data, ase_size_t size)
+{
+	return ase_sll_insert (sll, sll->head, data, size);
+}
+
+
+ase_sll_node_t* ase_sll_insert (
+	ase_sll_t* sll, ase_sll_node_t* pos, void* data, ase_size_t size)
+{
+	ase_sll_node_t* n = alloc_node (sll, data, size);
+	if (n == ASE_NULL) return ASE_NULL;
+
+	if (pos == ASE_NULL)
+	{
+		/* insert at the end */
+	}
+	else
+	{
+		/* insert in front of the positional node */
+		n->next = pos->next;
+		pos->next = n;
+
+		if (pos == sll->head) sll->head = n;
+		/* TODO: update head & tail properly */
+	}
+	return n;
+}
+
+void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker, void* arg)
 {
 	ase_sll_node_t* n = sll->head;
 
 	while (n != ASE_NULL)
 	{
-		walker (sll, n->data, n->size);
+		walker (sll, n, arg);
 		n = n->next;
 	}
 }
