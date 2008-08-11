@@ -88,9 +88,19 @@ ase_sll_node_t* ase_sll_gettail (ase_sll_t* sll)
 	return sll->tail;
 }
 
+ase_sll_copier_t ase_sll_getcopier (ase_sll_t* sll)
+{
+	return sll->copier;
+}
+
 void ass_sll_setcopier (ase_sll_t* sll, ase_sll_copier_t copier)
 {
 	sll->copier = copier;
+}
+
+ase_sll_freeer_t ase_sll_getfreeer (ase_sll_t* sll)
+{
+	return sll->freeer;
 }
 
 void ase_sll_setfreeer (ase_sll_t* sll, ase_sll_freeer_t freeer)
@@ -154,6 +164,7 @@ ase_sll_node_t* ase_sll_insert (
 		if (pos == sll->head) sll->head = n;
 		else
 		{
+			/* take note of performance penalty */
 			ase_sll_node_t* n2 = sll->head;
 			while (n2->next != pos) n2 = n2->next;
 			n2->next = n;
@@ -164,14 +175,45 @@ ase_sll_node_t* ase_sll_insert (
 	return n;
 }
 
-ase_sll_node_t* ase_sll_prepend (ase_sll_t* sll, void* data, ase_size_t size)
+ase_sll_node_t* ase_sll_pushhead (ase_sll_t* sll, void* data, ase_size_t size)
 {
 	return ase_sll_insert (sll, sll->head, data, size);
 }
 
-ase_sll_node_t* ase_sll_append (ase_sll_t* sll, void* data, ase_size_t size)
+ase_sll_node_t* ase_sll_pushtail (ase_sll_t* sll, void* data, ase_size_t size)
 {
 	return ase_sll_insert (sll, ASE_NULL, data, size);
+}
+
+void ase_sll_delete (ase_sll_t* sll, ase_sll_node_t* pos)
+{
+	ASE_ASSERT (pos != ASE_NULL);
+
+	if (pos == sll->head)
+	{
+		sll->head = pos->next;
+		if (sll->head == ASE_NULL) sll->tail = ASE_NULL;
+	}
+	else 
+	{
+		/* take note of performance penalty */
+		ase_sll_node_t* n2 = sll->head;
+		while (n2->next != pos) n2 = n2->next;
+		n2->next = pos->next;
+		if (pos == sll->tail) sll->tail = n2;
+	}
+
+	sll->size--;
+}
+
+void ase_sll_pophead (ase_sll_t* sll)
+{
+	ase_sll_delete (sll, sll->head);
+}
+
+void ase_sll_poptail (ase_sll_t* sll)
+{
+	ase_sll_delete (sll, sll->tail);
 }
 
 void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker, void* arg)
@@ -180,7 +222,7 @@ void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker, void* arg)
 
 	while (n != ASE_NULL)
 	{
-		walker (sll, n, arg);
+		if (walker(sll,n,arg) == ASE_SLL_WALK_STOP) return;
 		n = n->next;
 	}
 }
