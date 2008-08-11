@@ -15,6 +15,7 @@
  */
 typedef struct ase_sll_t ase_sll_t;
 typedef struct ase_sll_node_t ase_sll_node_t;
+typedef enum ase_sll_walk_t ase_sll_walk_t;
 
 struct ase_sll_node_t
 {
@@ -29,7 +30,13 @@ struct ase_sll_node_t
 
 typedef void* (*ase_sll_copier_t) (ase_sll_t* sll, void* data, ase_size_t len);
 typedef void (*ase_sll_freeer_t) (ase_sll_t* sll, void* data, ase_size_t len);
-typedef int (*ase_sll_walker_t) (ase_sll_t* sll, ase_sll_node_t* node, void* arg);
+typedef ase_sll_walk_t (*ase_sll_walker_t) (ase_sll_t* sll, ase_sll_node_t* node, void* arg);
+
+enum ase_sll_walk_t
+{
+	ASE_SLL_WALK_STOP = 0,
+	ASE_SLL_WALK_FORWARD = 1
+};
 
 #define ASE_SLL_COPIER_INLINE ase_sll_copyinline
 
@@ -85,6 +92,10 @@ void ase_sll_setcopier (
 	ase_sll_copier_t copier /* a element copier */
 );
 
+ase_sll_copier_t ase_sll_getcopier (
+	ase_sll_t* sll /* a singly linked list */
+);
+
 /*
  * NAME specifies how to destroy an element
  *
@@ -96,30 +107,51 @@ void ase_sll_setfreeer (
 	ase_sll_freeer_t freeer /* a element freeer */
 );
 
+ase_sll_freeer_t ase_sll_getfreeer (
+	ase_sll_t* sll /* a singly linked list */
+);
+
 /*
- * Returns the pointer to the extension area
+ * NAME Gets the pointer to the extension area
+ * RETURN the pointer to the extension area
  */
 void* ase_sll_getextension (
 	ase_sll_t* sll /* a singly linked list */
 );
 
 /*
- * Gets the number of elements held in a singly linked list
- * RETURNS the number of elements the list holds
+ * NAME Gets the number of elements held in a singly linked list
+ * RETURN the number of elements the list holds
  */
 ase_size_t ase_sll_getsize (
 	ase_sll_t* sll /* a singly linked list */
 );
 
+/*
+ * NAME Gets the head(first) node 
+ * RETURN the tail node of a singly linked list
+ */
 ase_sll_node_t* ase_sll_gethead (
 	ase_sll_t* sll /* a singly linked list */
 );
 
+/* 
+ * NAME Gets the tail(last) node 
+ * RETURN the tail node of a singly linked list
+ */
 ase_sll_node_t* ase_sll_gettail (
 	ase_sll_t* sll /* a singly linked list */
 );
 
-/* Inserts data before a positional node given */
+/* 
+ * NAME Inserts data before a positional node given 
+ *
+ * DESCRIPTION
+ *   There is performance penalty unless the positional node is neither
+ *   the head node nor ASE_NULL. You should consider a different data
+ *   structure such as a doubly linked list if you need to insert data
+ *   into a random position.
+ */
 ase_sll_node_t* ase_sll_insert (
 	ase_sll_t* sll /* a singly linked list */,
 	ase_sll_node_t* pos /* a node before which a new node is inserted */,
@@ -127,14 +159,60 @@ ase_sll_node_t* ase_sll_insert (
 	ase_size_t dlen /* the length of the data in bytes */
 );
 
-/* Traverses s singly linked list */
-void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker, void* arg);
+ase_sll_node_t* ase_sll_pushhead (
+	ase_sll_t* sll /* a singly linked list */,
+	void* dptr, 
+	ase_size_t dlen
+);
+
+ase_sll_node_t* ase_sll_pushtail (
+	ase_sll_t* sll /* a singly linked list */, 
+	void* dptr, 
+	ase_size_t dlen
+);
+
+void ase_sll_delete (
+	ase_sll_t* sll, 
+	ase_sll_node_t* pos
+);
+
+void ase_sll_pophead (
+	ase_sll_t* sll
+);
+
+void ase_sll_poptail (
+	ase_sll_t* sll
+);
+
+/* 
+ * NAME Traverses s singly linked list 
+ *
+ * DESCRIPTION
+ *   A singly linked list allows uni-directional in-order traversal.
+ *   The ase_sll_walk() function traverses a singly linkked list from its 
+ *   head node down to its tail node as long as the walker function returns 
+ *   ASE_SLL_WALK_FORWARD. A walker can return ASE_SLL_WALK_STOP to cause 
+ *   immediate stop of traversal.
+ *   For each node, the walker function is called and it is passed three
+ *   parameters: the singly linked list, the visiting node, and the 
+ *   user-defined data passed as the third parameter in a call to the 
+ *   ase_sll_walk() function.
+ */
+void ase_sll_walk (
+	ase_sll_t* sll /* a singly linked list */,
+	ase_sll_walker_t walker /* a user-defined walker function */,
+	void* arg /* pointer to user-defined data */
+);
 
 /* 
  * Causes a singly linked list to copy in data to a node.
  * Use ASE_SLL_COPIER_INLINE instead.
  */
-void* ase_sll_copyinline (ase_sll_t* sll, void* data, ase_size_t len);
+void* ase_sll_copyinline (
+	ase_sll_t* sll /* a singly linked list */,
+	void* data /* pointer to data to copy */ , 
+	ase_size_t len /* length of data in bytes */
+);
 
 #ifdef __cplusplus
 }
