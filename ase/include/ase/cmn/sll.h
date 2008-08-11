@@ -119,6 +119,14 @@ ase_sll_node_t* ase_sll_gettail (
 	ase_sll_t* sll /* a singly linked list */
 );
 
+/* Inserts data before a positional node given */
+ase_sll_node_t* ase_sll_insert (
+	ase_sll_t* sll /* a singly linked list */,
+	ase_sll_node_t* pos /* a node before which a new node is inserted */,
+	void* dptr /* the pointer to the data */ ,
+	ase_size_t dlen /* the length of the data in bytes */
+);
+
 /* Traverses s singly linked list */
 void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker, void* arg);
 

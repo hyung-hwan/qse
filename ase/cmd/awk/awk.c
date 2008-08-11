@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 318 2008-08-07 11:02:08Z baconevi $
+ * $Id: awk.c 321 2008-08-10 08:27:21Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -1056,6 +1056,11 @@ static void handle_args (argc, argv)
 }
 #endif
 
+static int dump_sf (ase_sll_t* sll, ase_sll_node_t* n, void* arg)
+{
+	ase_printf (ASE_T("%s\n"), n->data.ptr);
+}
+
 static int handle_args (int argc, ase_char_t* argv[], ase_sll_t* sf)
 {
 	ase_cint_t c;
@@ -1110,10 +1115,23 @@ static int handle_args (int argc, ase_char_t* argv[], ase_sll_t* sf)
 				ase_size_t sz = ase_strlen(opt.arg) + 1;
 				sz *= ASE_SIZEOF(*opt.arg);
 
+				if (ase_sll_getsize(sf) % 2)
+				{
+wprintf (L"APPEND %S\n", opt.arg);
 				if (ase_sll_append(sf, opt.arg, sz) == ASE_NULL)
 				{
 					out_of_memory ();
 					return -1;	
+				}
+				}
+				else
+				{
+wprintf (L"PREPEND %S\n", opt.arg);
+				if (ase_sll_prepend(sf, opt.arg, sz) == ASE_NULL)
+				{
+					out_of_memory ();
+					return -1;	
+				}
 				}
 
 				break;
@@ -1152,6 +1170,7 @@ static int handle_args (int argc, ase_char_t* argv[], ase_sll_t* sf)
 	}
 
 ase_printf (ASE_T("[%d]\n"), (int)ase_sll_getsize(sf));
+ase_sll_walk (sf, dump_sf, ASE_NULL);
 #if 0
 	if (srcio->input_file == ASE_NULL)
 	{
