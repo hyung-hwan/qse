@@ -7,18 +7,6 @@
 #include <ase/cmn/sll.h>
 #include "mem.h"
 
-struct ase_sll_t
-{
-	ase_mmgr_t* mmgr;
-
-	ase_sll_copier_t copier;
-	ase_sll_freeer_t freeer;
-
-	ase_size_t size;
-	ase_sll_node_t* head;
-	ase_sll_node_t* tail;
-};
-
 void* ase_sll_copyinline (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 {
 	/* this is a dummy copier */
@@ -52,20 +40,8 @@ void ase_sll_close (ase_sll_t* sll)
 
 void ase_sll_clear (ase_sll_t* sll)
 {
-	while (sll->head != ASE_NULL)
-	{
-		ase_sll_node_t* h = sll->head;
-		sll->head = h->next;
-
-		if (sll->freeer != ASE_NULL)
-		{
-			sll->freeer (sll, h->data.ptr, h->data.len);
-		}
-	
-		ASE_FREE (sll->mmgr, h);
-	}	
-
-	sll->tail = ASE_NULL;
+	while (sll->head != ASE_NULL) ase_sll_delete (sll, sll->head);
+	ASE_ASSERT (sll->tail == ASE_NULL);
 }
 
 void* ase_sll_getextension (ase_sll_t* sll)
@@ -93,7 +69,7 @@ ase_sll_copier_t ase_sll_getcopier (ase_sll_t* sll)
 	return sll->copier;
 }
 
-void ass_sll_setcopier (ase_sll_t* sll, ase_sll_copier_t copier)
+void ase_sll_setcopier (ase_sll_t* sll, ase_sll_copier_t copier)
 {
 	sll->copier = copier;
 }
@@ -187,22 +163,38 @@ ase_sll_node_t* ase_sll_pushtail (ase_sll_t* sll, void* data, ase_size_t size)
 
 void ase_sll_delete (ase_sll_t* sll, ase_sll_node_t* pos)
 {
-	ASE_ASSERT (pos != ASE_NULL);
+	if (pos == ASE_NULL) return; /* not a valid node */
 
 	if (pos == sll->head)
 	{
+		/* it is simple to delete the head node */
 		sll->head = pos->next;
 		if (sll->head == ASE_NULL) sll->tail = ASE_NULL;
 	}
 	else 
 	{
-		/* take note of performance penalty */
+		/* but deletion of other nodes has significant performance
+		 * penalty as it has look for the predecessor of the 
+		 * target node */
 		ase_sll_node_t* n2 = sll->head;
 		while (n2->next != pos) n2 = n2->next;
+
 		n2->next = pos->next;
+
+		/* update the tail node if necessary */
 		if (pos == sll->tail) sll->tail = n2;
 	}
 
+	if (sll->freeer != ASE_NULL)
+	{
+		/* free the actual data */
+		sll->freeer (sll, pos->data.ptr, pos->data.len);
+	}
+
+	/* free the node */
+	ASE_FREE (sll->mmgr, pos);
+
+	/* decrement the number of elements */
 	sll->size--;
 }
 
