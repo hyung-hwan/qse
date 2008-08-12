@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 321 2008-08-10 08:27:21Z baconevi $
+ * $Id: awk.c 323 2008-08-11 10:52:25Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -1056,9 +1056,10 @@ static void handle_args (argc, argv)
 }
 #endif
 
-static int dump_sf (ase_sll_t* sll, ase_sll_node_t* n, void* arg)
+static ase_sll_walk_t dump_sf (ase_sll_t* sll, ase_sll_node_t* n, void* arg)
 {
 	ase_printf (ASE_T("%s\n"), n->data.ptr);
+	return ASE_SLL_WALK_FORWARD;
 }
 
 static int handle_args (int argc, ase_char_t* argv[], ase_sll_t* sf)
@@ -1171,6 +1172,7 @@ wprintf (L"PREPEND %S\n", opt.arg);
 
 ase_printf (ASE_T("[%d]\n"), (int)ase_sll_getsize(sf));
 ase_sll_walk (sf, dump_sf, ASE_NULL);
+
 #if 0
 	if (srcio->input_file == ASE_NULL)
 	{
@@ -1261,6 +1263,11 @@ static ase_awk_t* open_awk (void)
 	return awk;
 }
 
+static ase_sll_walk_t dump (ase_sll_t* sll, ase_sll_node_t* node, void* arg)
+{
+	ase_printf (ASE_T("[%d]\n"), *(int*)node->data.ptr);
+	return ASE_SLL_WALK_FORWARD;
+}
 static int awk_main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
@@ -1287,7 +1294,32 @@ static int awk_main (int argc, ase_char_t* argv[])
 		out_of_memory ();
 		return -1;
 	}	
+{
 // TODO: destroy sf....
+int i;
+
+ase_sll_setcopier (sf, ASE_SLL_COPIER_INLINE);
+for (i = 0; i < 20; i++)
+{
+	/*
+	if (ASE_SLL_SIZE(sf) > 5)
+		ase_sll_insert (sf, sf->head->next->next, &i, sizeof(i));
+	else
+	ase_sll_insert (sf, ASE_SLL_HEAD(sf), &i, sizeof(i));
+	*/
+	ase_sll_insert (sf, ASE_NULL, &i, sizeof(i));
+}
+
+ase_sll_delete (sf, ASE_SLL_TAIL(sf));
+ase_sll_delete (sf, ASE_SLL_TAIL(sf));
+ase_sll_delete (sf, ASE_SLL_HEAD(sf));
+ase_printf (ASE_T("size = %d\n"), ASE_SLL_SIZE(sf));
+ase_sll_walk (sf, dump, ASE_NULL);
+ase_sll_clear (sf);
+ase_printf (ASE_T("size = %d\n"), ASE_SLL_SIZE(sf));
+ase_sll_close (sf);
+return 0;
+}
 
 	i = handle_args (argc, argv, sf);
 	if (i == -1)

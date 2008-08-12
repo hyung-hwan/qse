@@ -17,6 +17,28 @@ typedef struct ase_sll_t ase_sll_t;
 typedef struct ase_sll_node_t ase_sll_node_t;
 typedef enum ase_sll_walk_t ase_sll_walk_t;
 
+/* data copier */
+typedef void* (*ase_sll_copier_t) (ase_sll_t* sll, void* data, ase_size_t len);
+
+/* data freeer */
+typedef void (*ase_sll_freeer_t) (ase_sll_t* sll, void* data, ase_size_t len);
+
+/* node visitor */
+typedef ase_sll_walk_t (*ase_sll_walker_t) (
+	ase_sll_t* sll, ase_sll_node_t* node, void* arg);
+
+struct ase_sll_t
+{
+	ase_mmgr_t* mmgr;
+
+	ase_sll_copier_t copier;
+	ase_sll_freeer_t freeer;
+
+	ase_size_t size;
+	ase_sll_node_t* head;
+	ase_sll_node_t* tail;
+};
+
 struct ase_sll_node_t
 {
 	struct
@@ -28,9 +50,6 @@ struct ase_sll_node_t
 	ase_sll_node_t* next;   /* pointer to the next node */
 };
 
-typedef void* (*ase_sll_copier_t) (ase_sll_t* sll, void* data, ase_size_t len);
-typedef void (*ase_sll_freeer_t) (ase_sll_t* sll, void* data, ase_size_t len);
-typedef ase_sll_walk_t (*ase_sll_walker_t) (ase_sll_t* sll, ase_sll_node_t* node, void* arg);
 
 enum ase_sll_walk_t
 {
@@ -39,6 +58,10 @@ enum ase_sll_walk_t
 };
 
 #define ASE_SLL_COPIER_INLINE ase_sll_copyinline
+
+#define ASE_SLL_HEAD(sll) ((sll)->head)
+#define ASE_SLL_TAIL(sll) ((sll)->tail)
+#define ASE_SLL_SIZE(sll) ((sll)->size)
 
 #ifdef __cplusplus
 extern "C" {
