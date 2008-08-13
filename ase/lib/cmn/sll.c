@@ -92,7 +92,7 @@ static ase_sll_node_t* alloc_node (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 	{
 		n = ASE_MALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
 		if (n == ASE_NULL) return ASE_NULL;
-		n->data.ptr = dptr;
+		n->dptr = dptr;
 	}
 	else if (sll->copier == ASE_SLL_COPIER_INLINE)
 	{
@@ -100,16 +100,16 @@ static ase_sll_node_t* alloc_node (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 		if (n == ASE_NULL) return ASE_NULL;
 
 		ASE_MEMCPY (n + 1, dptr, dlen);
-		n->data.ptr = n + 1;
+		n->dptr = n + 1;
 	}
 	else
 	{
 		n = ASE_MALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
 		if (n == ASE_NULL) return ASE_NULL;
-		n->data.ptr = sll->copier (sll, dptr, dlen);
+		n->dptr = sll->copier (sll, dptr, dlen);
 	}
 
-	n->data.len = dlen; 
+	n->dlen = dlen; 
 	n->next = ASE_NULL;	
 
 	return n;
@@ -188,7 +188,7 @@ void ase_sll_delete (ase_sll_t* sll, ase_sll_node_t* pos)
 	if (sll->freeer != ASE_NULL)
 	{
 		/* free the actual data */
-		sll->freeer (sll, pos->data.ptr, pos->data.len);
+		sll->freeer (sll, pos->dptr, pos->dlen);
 	}
 
 	/* free the node */
