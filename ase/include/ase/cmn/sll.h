@@ -15,7 +15,6 @@
  */
 typedef struct ase_sll_t ase_sll_t;
 typedef struct ase_sll_node_t ase_sll_node_t;
-typedef enum ase_sll_walk_t ase_sll_walk_t;
 
 /* data copier */
 typedef void* (*ase_sll_copier_t) (ase_sll_t* sll, void* dptr, ase_size_t dlen);
@@ -24,7 +23,7 @@ typedef void* (*ase_sll_copier_t) (ase_sll_t* sll, void* dptr, ase_size_t dlen);
 typedef void (*ase_sll_freeer_t) (ase_sll_t* sll, void* dptr, ase_size_t dlen);
 
 /* node visitor */
-typedef ase_sll_walk_t (*ase_sll_walker_t) (
+typedef int (*ase_sll_walker_t) (
 	ase_sll_t* sll, ase_sll_node_t* node, void* arg);
 
 struct ase_sll_t
@@ -47,6 +46,7 @@ struct ase_sll_node_t
 };
 
 
+/* values to be returned by ase_sll_walker_t */
 enum ase_sll_walk_t
 {
 	ASE_SLL_WALK_STOP = 0,

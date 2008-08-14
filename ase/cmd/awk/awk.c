@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 323 2008-08-11 10:52:25Z baconevi $
+ * $Id: awk.c 325 2008-08-13 14:22:29Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -1056,9 +1056,9 @@ static void handle_args (argc, argv)
 }
 #endif
 
-static ase_sll_walk_t dump_sf (ase_sll_t* sll, ase_sll_node_t* n, void* arg)
+static int dump_sf (ase_sll_t* sll, ase_sll_node_t* n, void* arg)
 {
-	ase_printf (ASE_T("%s\n"), n->data.ptr);
+	ase_printf (ASE_T("%s\n"), n->dptr);
 	return ASE_SLL_WALK_FORWARD;
 }
 
@@ -1119,7 +1119,7 @@ static int handle_args (int argc, ase_char_t* argv[], ase_sll_t* sf)
 				if (ase_sll_getsize(sf) % 2)
 				{
 wprintf (L"APPEND %S\n", opt.arg);
-				if (ase_sll_append(sf, opt.arg, sz) == ASE_NULL)
+				if (ase_sll_pushtail(sf, opt.arg, sz) == ASE_NULL)
 				{
 					out_of_memory ();
 					return -1;	
@@ -1128,7 +1128,7 @@ wprintf (L"APPEND %S\n", opt.arg);
 				else
 				{
 wprintf (L"PREPEND %S\n", opt.arg);
-				if (ase_sll_prepend(sf, opt.arg, sz) == ASE_NULL)
+				if (ase_sll_pushhead(sf, opt.arg, sz) == ASE_NULL)
 				{
 					out_of_memory ();
 					return -1;	
@@ -1263,9 +1263,9 @@ static ase_awk_t* open_awk (void)
 	return awk;
 }
 
-static ase_sll_walk_t dump (ase_sll_t* sll, ase_sll_node_t* node, void* arg)
+static int dump (ase_sll_t* sll, ase_sll_node_t* node, void* arg)
 {
-	ase_printf (ASE_T("[%d]\n"), *(int*)node->data.ptr);
+	ase_printf (ASE_T("[%d]\n"), *(int*)node->dptr);
 	return ASE_SLL_WALK_FORWARD;
 }
 static int awk_main (int argc, ase_char_t* argv[])
