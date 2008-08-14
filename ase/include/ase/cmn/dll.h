@@ -15,7 +15,6 @@
  */
 typedef struct ase_dll_t ase_dll_t;
 typedef struct ase_dll_node_t ase_dll_node_t;
-typedef enum ase_dll_walk_t ase_dll_walk_t;
 
 /* data copier */
 typedef void* (*ase_dll_copier_t) (ase_dll_t* dll, void* dptr, ase_size_t dlen);
@@ -24,7 +23,7 @@ typedef void* (*ase_dll_copier_t) (ase_dll_t* dll, void* dptr, ase_size_t dlen);
 typedef void (*ase_dll_freeer_t) (ase_dll_t* dll, void* dptr, ase_size_t dlen);
 
 /* node visitor */
-typedef ase_dll_walk_t (*ase_dll_walker_t) (
+typedef int (*ase_dll_walker_t) (
 	ase_dll_t* dll, ase_dll_node_t* node, void* arg);
 
 struct ase_dll_t
