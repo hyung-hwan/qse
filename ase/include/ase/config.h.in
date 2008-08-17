@@ -1,5 +1,8 @@
 /* include/ase/config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* author's email address */
+#undef ASE_AUTHOR
+
 /* char is mchar */
 #undef ASE_CHAR_IS_MCHAR
 
@@ -14,15 +17,6 @@
 
 /* Unknown Endian */
 #undef ASE_ENDIAN_UNKNOWN
-
-/* author's email address */
-#undef ASE_PKGAUTHOR
-
-/* package_name */
-#undef ASE_PKGNAME
-
-/* package version */
-#undef ASE_PKGVERSION
 
 /* sizeof(char) */
 #undef ASE_SIZEOF_CHAR
@@ -68,6 +62,18 @@
 
 /* sizeof(__int8) */
 #undef ASE_SIZEOF___INT8
+
+/* package version */
+#undef ASE_VERSION
+
+/* major version number */
+#undef ASE_VERSION_MAJOR
+
+/* minor version number */
+#undef ASE_VERSION_MINOR
+
+/* patch level */
+#undef ASE_VERSION_PATCH
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H

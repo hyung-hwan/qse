@@ -117,9 +117,9 @@ AC_DEFINE_UNQUOTED(ASE_SIZEOF_LONG_DOUBLE, ${ac_cv_sizeof_long_double}, [sizeof(
 AC_DEFINE_UNQUOTED(ASE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
 
 AC_DEFINE_UNQUOTED(ASE_VERSION, "${VERSION}", [package version])
-AC_DEFINE_UNQUOTED(ASE_VERSION_MAJOR, "$(echo ${VERSION} | cut -d. -f1)", [major version number])
-AC_DEFINE_UNQUOTED(ASE_VERSION_MINOR, "$(echo ${VERSION} | cut -d. -f2)", [minor version number])
-AC_DEFINE_UNQUOTED(ASE_VERSION_PATCH, "$(echo ${VERSION} | cut -d. -f2)", [patch level])
+AC_DEFINE_UNQUOTED(ASE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [major version number])
+AC_DEFINE_UNQUOTED(ASE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [minor version number])
+AC_DEFINE_UNQUOTED(ASE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [patch level])
 AC_DEFINE_UNQUOTED(ASE_AUTHOR,"${PACKAGE_BUGREPORT}", [author's email address])
 
 AC_C_BIGENDIAN(
