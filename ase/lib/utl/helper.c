@@ -1,26 +1,10 @@
 
 /*
- * $Id: helper.c 231 2008-06-28 08:37:09Z baconevi $
+ * $Id: helper.c 329 2008-08-16 14:08:53Z baconevi $
  */
 
 #include <ase/utl/helper.h>
 #include <ase/utl/ctype.h>
-#include <stdlib.h>
-
-static void* mmgr_malloc (void* custom, ase_size_t n)
-{
-        return malloc (n);
-}
-
-static void* mmgr_realloc (void* custom, void* ptr, ase_size_t n)
-{
-        return realloc (ptr, n);
-}
-
-static void mmgr_free (void* custom, void* ptr)
-{
-        free (ptr);
-}
 
 static ase_bool_t ccls_isupper (void* custom, ase_cint_t c)  
 { 
@@ -87,14 +71,6 @@ static ase_cint_t ccls_tolower (void* custom, ase_cint_t c)
 	return ase_tolower (c);
 }
 
-static ase_mmgr_t mmgr =
-{
-	mmgr_malloc,
-	mmgr_realloc,
-	mmgr_free,
-	ASE_NULL
-};
-
 static ase_ccls_t ccls =
 {
 	ccls_isupper,
@@ -113,5 +89,4 @@ static ase_ccls_t ccls =
 	ASE_NULL
 };
 
-ase_mmgr_t* ase_mmgr = &mmgr;
 ase_ccls_t* ase_ccls = &ccls;

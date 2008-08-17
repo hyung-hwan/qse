@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c 271 2008-07-20 12:42:39Z baconevi $
+ * $Id: jni.c 329 2008-08-16 14:08:53Z baconevi $
  *
  * {License}
  */
@@ -327,7 +327,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	#endif
 #endif
 
-	awk = ase_awk_open (ASE_GETMMGR(), ASE_SIZEOF(awk_data_t));
+	awk = ase_awk_open (ASE_MMGR_GET(), ASE_SIZEOF(awk_data_t));
 	if (awk == ASE_NULL)
 	{
 		THROW_NOMEM_EXCEPTION (env);

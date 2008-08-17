@@ -1,9 +1,10 @@
 /*
- * $Id: awk.c 325 2008-08-13 14:22:29Z baconevi $
+ * $Id: awk.c 329 2008-08-16 14:08:53Z baconevi $
  */
 
 #include <ase/awk/awk.h>
 #include <ase/cmn/sll.h>
+#include <ase/cmn/mem.h>
 
 #include <ase/utl/helper.h>
 #include <ase/utl/getopt.h>
@@ -1288,7 +1289,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	ase_sll_t* sf;
 
-	sf = ase_sll_open (ASE_GETMMGR());
+	sf = ase_sll_open (ASE_MMGR_GET());
 	if (sf == ASE_NULL)
 	{
 		out_of_memory ();

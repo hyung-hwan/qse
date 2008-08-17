@@ -45,7 +45,7 @@ ase_awk_t* ase_awk_openstd (void)
 	ase_awk_t* awk;
 	ext_t* ext;
 
-	awk = ase_awk_open (ASE_GETMMGR(), ASE_SIZEOF(ext_t), ASE_NULL);
+	awk = ase_awk_open (ASE_MMGR_GET(), ASE_SIZEOF(ext_t), ASE_NULL);
 	ase_awk_setccls (awk, ASE_GETCCLS());
 
 	ext = (ext_t*) ase_awk_getextension (awk);

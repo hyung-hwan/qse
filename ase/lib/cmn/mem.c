@@ -1,10 +1,11 @@
 /*
- * $Id: mem.c 177 2008-04-26 04:58:10Z baconevi $
+ * $Id: mem.c 329 2008-08-16 14:08:53Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/mem.h>
+#include <stdlib.h>
 
 #if defined(__SPU__)
 #include <spu_intrinsics.h>
@@ -399,3 +400,28 @@ void* ase_memrmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl)
 
 	return ASE_NULL;
 }
+
+static void* mmgr_malloc (void* custom, ase_size_t n)
+{
+        return malloc (n);
+}
+
+static void* mmgr_realloc (void* custom, void* ptr, ase_size_t n)
+{
+        return realloc (ptr, n);
+}
+
+static void mmgr_free (void* custom, void* ptr)
+{
+        free (ptr);
+}
+
+static ase_mmgr_t mmgr =
+{
+	mmgr_malloc,
+	mmgr_realloc,
+	mmgr_free,
+	ASE_NULL
+};
+
+ase_mmgr_t* ase_mmgr = &mmgr;
