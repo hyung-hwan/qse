@@ -13,14 +13,20 @@ void* ase_sll_copyinline (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 	return ASE_NULL;
 }
 
-ase_sll_t* ase_sll_open (ase_mmgr_t* mmgr)
+ase_sll_t* ase_sll_open ()
 {
 	return ase_sll_openx (mmgr, 0, ASE_NULL);
 }
 
-ase_sll_t* ase_sll_openx (ase_mmgr_t* mmgr, ase_size_t extension, ase_fuser_t fuser)
+ase_sll_openm (ase_mmgr_t* mmgr);
+ase_sll_openx (ase_size_t extension, ase_fuser_t fuser);
+
+ase_sll_t* ase_sll_openf (
+	ase_mmgr_t* mmgr, ase_size_t extension, ase_fuser_t fuser)
 {
 	ase_sll_t* sll;
+
+	if (mmgr == ASE_NULL) mmgr = ASE_MMGR_GET ();
 
 	sll = ASE_MALLOC (mmgr, ASE_SIZEOF(ase_sll_t) + extension);
 	if (sll == ASE_NULL) return ASE_NULL;
