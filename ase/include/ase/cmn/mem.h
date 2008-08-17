@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 328 2008-08-16 14:07:34Z baconevi $
+ * $Id: mem.h 330 2008-08-16 15:29:33Z baconevi $
  *
  * {License}
  */
@@ -14,29 +14,28 @@
 #define ASE_MMGR_GETDFL()  (ase_mmgr)
 
 /* sets the default memory manager */
-#define ASE_MMGR_SETDFL(m) ((ase_mmgr) = (m))
+#define ASE_MMGR_SETDFL(m) ((ase_mmgr)=(m))
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	#include <stdlib.h>
-	#define _CRTDBG_MAP_ALLOC
-	#include <crtdbg.h>
+#define ASE_MMGR_ALLOC(mmgr,size) \
+	(mmgr)->malloc((mmgr)->custom_data,size)
 
-	#define ASE_MMGR_ALLOC(mmgr,size)       malloc  (size)
-	#define ASE_MMGR_REALLOC(mmgr,ptr,size) realloc (ptr, size)
-	#define ASE_MMGR_FREE(mmgr,ptr)         free    (ptr)
-#else
-        #define ASE_MMGR_ALLOC(mmgr,size) \
-                (mmgr)->malloc((mmgr)->custom_data, size)
-        #define ASE_MMGR_EALLOC(mmgr,ptr,size) \
-                (mmgr)->realloc((mmgr)->custom_data, ptr, size)
-        #define ASE_MMGR_FREE(mmgr,ptr) \
-                (mmgr)->free((mmgr)->custom_data, ptr)
-#endif
+#define ASE_MMGR_REALLOC(mmgr,ptr,size) \
+	(mmgr)->realloc((mmgr)->custom_data,ptr,size)
+
+#define ASE_MMGR_FREE(mmgr,ptr) \
+	(mmgr)->free((mmgr)->custom_data,ptr)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* 
+ * NAME: point to the default memory manager 
+ *
+ * DESCRIPTION:
+ *  The ASE_MMGR_GETDFL() macro returns the default memory manager.
+ *  You may use ASE_MMGR_SETDFL() to change the default memory manager.
+ */
 extern ase_mmgr_t* ase_mmgr;
 
 /*
@@ -162,6 +161,7 @@ void* ase_memrbyte (
  *
  * RETURNS:
  *  ASE_NULL if no match is found.
+ *  The pointer to the start of the matching location if a match is found.
  */
 void* ase_memmem (
 	const void* hs /* a pointer to the memory area to scan */,
@@ -179,6 +179,7 @@ void* ase_memmem (
  *
  * RETURNS:
  *  ASE_NULL if no match is found.
+ *  The pointer to the start of the matching location if a match is found.
  */
 void* ase_memrmem (
 	const void* hs /* a pointer to the memory area to scan */,
