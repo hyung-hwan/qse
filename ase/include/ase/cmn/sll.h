@@ -68,21 +68,39 @@ extern "C" {
 #endif
 
 /* 
- * NAME creates a new singly linked list 
- * RETURNS a pointer to a newly created singly linked list
+ * NAME: creates a singly linked list 
+ *
+ * DESCRIPTION:
+ *  The ase_sll_open() functions creates an empty singly linked list with
+ *  the default memory manager.
+ *
+ * RETURNS: a pointer to a newly created singly linked list
  */
-ase_sll_t* ase_sll_open (
+ase_sll_t* ase_sll_open (void);
+
+/*
+ * NAME: create a singly linked list with a custom memory manager 
+ */
+ase_sll_t* ase_sll_openm ( 
 	ase_mmgr_t* mmgr /* memory manager */
+);
+
+/*
+ * NAME: create a singly linked list securing extension area
+ */
+ase_sll_t* ase_sll_openx ( 
+	ase_size_t extension /* size of extension in bytes */,
+	ase_fuser_t initializer /* extension initializer */
 );
 
 /* 
  * NAME creates a new singly linked list with extension 
  * RETURNS a pointer to a newly created singly linked list
  */
-ase_sll_t* ase_sll_openx (
+ase_sll_t* ase_sll_openmx (
 	ase_mmgr_t* mmgr /* memory manager */ , 
 	ase_size_t extension /* size of extension in bytes */,
-	ase_fuser_t fuser
+	ase_fuser_t initializer /* extension initializer */
 );
 
 /* 

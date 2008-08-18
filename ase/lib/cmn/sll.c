@@ -13,16 +13,23 @@ void* ase_sll_copyinline (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 	return ASE_NULL;
 }
 
-ase_sll_t* ase_sll_open ()
+ase_sll_t* ase_sll_open (void)
+{
+	return ase_sll_openx (ASE_MMGR_GETDFLMMGR(), 0, ASE_NULL);
+}
+
+ase_sll_openm (ase_mmgr_t* mmgr)
 {
 	return ase_sll_openx (mmgr, 0, ASE_NULL);
 }
 
-ase_sll_openm (ase_mmgr_t* mmgr);
-ase_sll_openx (ase_size_t extension, ase_fuser_t fuser);
+ase_sll_openx (ase_size_t extension, ase_fuser_t initializer)
+{
+	return ase_sll_openx (mmgr, 0, ASE_NULL);
+}
 
-ase_sll_t* ase_sll_openf (
-	ase_mmgr_t* mmgr, ase_size_t extension, ase_fuser_t fuser)
+ase_sll_t* ase_sll_openmx (
+	ase_mmgr_t* mmgr, ase_size_t extension, ase_fuser_t initializer)
 {
 	ase_sll_t* sll;
 
@@ -32,8 +39,9 @@ ase_sll_t* ase_sll_openf (
 	if (sll == ASE_NULL) return ASE_NULL;
 
 	ASE_MEMSET (sll, 0, ASE_SIZEOF(ase_sll_t) + extension);
-	if (fuser != ASE_NULL) mmgr = fuser (mmgr, sll + 1);
 	sll->mmgr = mmgr;
+
+	if (initializer != ASE_NULL) mmgr = initializer (sll, sll + 1);
 
 	return sll;
 }
