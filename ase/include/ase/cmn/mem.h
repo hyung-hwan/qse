@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 330 2008-08-16 15:29:33Z baconevi $
+ * $Id: mem.h 331 2008-08-17 14:51:40Z baconevi $
  *
  * {License}
  */
@@ -10,18 +10,21 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-/* gets the default memory manager */
-#define ASE_MMGR_GETDFL()  (ase_mmgr)
+/* gets a pointer to the default memory manager */
+#define ASE_MMGR_GETDFLMMGR()  (ase_mmgr)
 
-/* sets the default memory manager */
-#define ASE_MMGR_SETDFL(m) ((ase_mmgr)=(m))
+/* sets a pointer to the default memory manager */
+#define ASE_MMGR_SETDFLMMGR(m) ((ase_mmgr)=(m))
 
+/* allocate a memory block */
 #define ASE_MMGR_ALLOC(mmgr,size) \
 	(mmgr)->malloc((mmgr)->custom_data,size)
 
+/* reallocate a memory block */
 #define ASE_MMGR_REALLOC(mmgr,ptr,size) \
 	(mmgr)->realloc((mmgr)->custom_data,ptr,size)
 
+/* free a memory block */
 #define ASE_MMGR_FREE(mmgr,ptr) \
 	(mmgr)->free((mmgr)->custom_data,ptr)
 
@@ -30,7 +33,7 @@ extern "C" {
 #endif
 
 /* 
- * NAME: point to the default memory manager 
+ * NAME: holds a pointer to the default memory manager 
  *
  * DESCRIPTION:
  *  The ASE_MMGR_GETDFL() macro returns the default memory manager.
@@ -39,60 +42,60 @@ extern "C" {
 extern ase_mmgr_t* ase_mmgr;
 
 /*
- * NAME: copy memory area
+ * NAME: copy a memory block
  *
  * DESCRIPTION:
- *  The ase_memcpy() functions copies n bytes from the source memory area src 
- *  to the destinaion memory area dst. 
+ *  The ase_memcpy() functions copies n bytes from the source memory block src 
+ *  to the destinaion memory block dst. 
  *
- * RETURNS: the destination memory area dst.
+ * RETURNS: the destination memory block dst.
  *
  * WARNING:
- *  The memory areas should not overlap. Use the ase_memmove() function if
+ *  The memory blocks should not overlap. Use the ase_memmove() function if
  *  they overlap.
  */
 
 void* ase_memcpy (
-	void* dst /* a pointer to the destination memory area */ , 
-	const void* src /* a pointer to the source memory area */ , 
+	void* dst /* a pointer to the destination memory block */ , 
+	const void* src /* a pointer to the source memory block */ , 
 	ase_size_t n /* the number of bytes to copy */
 );
 
 /*
- * NAME: copy memory area with more care 
+ * NAME: copy a memory block with more care 
  *
  * DESCRIPTION:
- *  The ase_memmove() functions copies n bytes from the source memory area src 
- *  to the destinaion memory area dst without corrupting overlapping zone.
+ *  The ase_memmove() functions copies n bytes from the source memory block src 
+ *  to the destinaion memory block dst without corrupting overlapping zone.
  *
- * RETURNS: the destination memory area dst.
+ * RETURNS: the destination memory block dst.
  */
 void* ase_memmove (
-	void* dst /* a pointer to the destination memory area */,
-	const void* src /* a pointer to the source memory area */,
+	void* dst /* a pointer to the destination memory block */,
+	const void* src /* a pointer to the source memory block */,
 	ase_size_t n /* the number of bytes to copy */
 );
 
 /*
- * NAME: fill memory area
+ * NAME: fill a memory block
  *
  * DESCRIPTION:
  *  The ase_memset() function fills leading n bytes of the destination 
- *  memory area dst with the byte val.
+ *  memory block dst with the byte val.
  * 
- * RETURNS: the destination memory area dst
+ * RETURNS: the destination memory block dst
  */
 void* ase_memset (
-	void* dst /* a pointer to the destination memory area */,
-	int val /* the byte to fill the memory area with */,
+	void* dst /* a pointer to the destination memory block */,
+	int val /* the byte to fill the memory block with */,
 	ase_size_t n /* the number of bytes to fill */
 );
 
 /*
- * NAME: compare memory areas
+ * NAME: compare memory blocks
  * 
  * DESCRIPTION:
- *  The ase_memcmp() function compares leading n bytes of two memory areas 
+ *  The ase_memcmp() function compares leading n bytes of two memory blocks 
  *  s1 and s2.
  *
  * RETURNS: 
@@ -102,61 +105,61 @@ void* ase_memset (
  *  a negative number if the first different byte of s1 is less than that of s2.
  */
 int ase_memcmp (
-	const void* s1 /* a pointer to the first memory area to compare */, 
-	const void* s2 /* a pointer to the second memory area to compare */, 
+	const void* s1 /* a pointer to the first memory block to compare */, 
+	const void* s2 /* a pointer to the second memory block to compare */, 
 	ase_size_t n /* the number of bytes to compare */
 );
 
 /*
- * NAME: find a byte forward in memory area
+ * NAME: find a byte forward in a memory block
  * 
  * DESCRIPTION:
- *  The ase_membyte() function scans the memory area s from the first byte
+ *  The ase_membyte() function scans the memory block s from the first byte
  *  up to the nth byte in search of the byte val. If it finds a match,
- *  it aborts scanning the memory area and returns the pointer to the matching
+ *  it aborts scanning the memory block and returns the pointer to the matching
  *  location.
  *
  * RETURNS:
  *  ASE_NULL if the byte val is not found.
- *  The pointer to the location in the memory area s matching the byte val
+ *  The pointer to the location in the memory block s matching the byte val
  *  if a match is found.
  */
 void* ase_membyte (
-	const void* s /* a pointer to the memory area to scan */,
+	const void* s /* a pointer to the memory block to scan */,
 	int val /* a byte to find */,
 	ase_size_t n /* the number of bytes to scan */ 
 );
 
 /*
- * NAME: find a byte backward in memory area
+ * NAME: find a byte backward in a memory block
  * 
  * DESCRIPTION:
- *  The ase_memrbyte() function scans the memory area s from the nth byte
+ *  The ase_memrbyte() function scans the memory block s from the nth byte
  *  backward to the first byte in search of the byte val. If it finds a match,
- *  it aborts scanning the memory area and returns the pointer to the matching 
+ *  it aborts scanning the memory block and returns the pointer to the matching 
  *  location.
  *
  * RETURNS:
  *  ASE_NULL if the byte val is not found.
- *  The pointer to the location in the memory area s matching the byte val
+ *  The pointer to the location in the memory block s matching the byte val
  *  if a match is found.
  */
 void* ase_memrbyte (
-	const void* s /* a pointer to the memory area to scan */,
+	const void* s /* a pointer to the memory block to scan */,
 	int val /* a byte to find */,
 	ase_size_t n /* the number of bytes to scan */ 
 );
 
 /*
- * NAME: find a block of bytes forward in memory area
+ * NAME: find a block of bytes forward in a memory block
  * 
  * DESCRIPTION:
- *  The ase_memmem() functions scans the first hl bytes of the memory area hs
+ *  The ase_memmem() functions scans the first hl bytes of the memory block hs
  *  in search of the byte block nd of the length nl bytes.
  *
  * RETURNS:
  *  ASE_NULL if the byte val is not found.
- *  The pointer to the location in the memory area s matching the byte val
+ *  The pointer to the location in the memory block s matching the byte val
  *  if a match is found.
  *
  * RETURNS:
@@ -164,17 +167,17 @@ void* ase_memrbyte (
  *  The pointer to the start of the matching location if a match is found.
  */
 void* ase_memmem (
-	const void* hs /* a pointer to the memory area to scan */,
+	const void* hs /* a pointer to the memory block to scan */,
 	ase_size_t hl /* the number of bytes to scan */,
 	const void* nd /* a pointer to the byte block to find */,
 	ase_size_t nl /* the number of bytes in the block */
 );
 
 /*
- * NAME: find a block of bytes backward in memory area
+ * NAME: find a block of bytes backward in a memory block
  *
  * DESCRIPTION:
- *  The ase_memrmem() functions scans the first hl bytes of the memory area hs
+ *  The ase_memrmem() functions scans the first hl bytes of the memory block hs
  *  backward in search of the byte block nd of the length nl bytes.
  *
  * RETURNS:
@@ -182,7 +185,7 @@ void* ase_memmem (
  *  The pointer to the start of the matching location if a match is found.
  */
 void* ase_memrmem (
-	const void* hs /* a pointer to the memory area to scan */,
+	const void* hs /* a pointer to the memory block to scan */,
 	ase_size_t hl /* the number of bytes to scan */,
 	const void* nd /* a pointer to the byte block to find */,
 	ase_size_t nl /* the number of bytes in the block */
