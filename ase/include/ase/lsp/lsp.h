@@ -18,11 +18,11 @@ typedef ase_ssize_t (*ase_lsp_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
 
 typedef ase_real_t (*ase_lsp_pow_t) (
-	void* custom, ase_real_t x, ase_real_t y);
+	void* data, ase_real_t x, ase_real_t y);
 typedef int (*ase_lsp_sprintf_t) (
-	void* custom, ase_char_t* buf, ase_size_t size, 
+	void* data, ase_char_t* buf, ase_size_t size, 
 	const ase_char_t* fmt, ...);
-typedef void (*ase_lsp_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
+typedef void (*ase_lsp_dprintf_t) (void* data, const ase_char_t* fmt, ...); 
 
 struct ase_lsp_prmfns_t
 {
@@ -34,7 +34,7 @@ struct ase_lsp_prmfns_t
 	{
 		ase_lsp_sprintf_t sprintf;
 		ase_lsp_dprintf_t dprintf;
-		void* custom_data;
+		void* data;
 	} misc;
 };
 

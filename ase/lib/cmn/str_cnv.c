@@ -1,11 +1,10 @@
 /*
- * $Id: str_cnv.c 142 2008-03-18 06:29:25Z baconevi $
+ * $Id: str_cnv.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/str.h>
-#include <ase/cmn/mem.h>
 
 int ase_strtoi (const ase_char_t* str)
 {

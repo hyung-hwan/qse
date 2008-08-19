@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: err.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -64,7 +64,7 @@ void ase_lsp_seterror (
 	{
 		case 0:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.custom_data,
+				lsp->prmfns.misc.data,
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt);
@@ -72,7 +72,7 @@ void ase_lsp_seterror (
 
 		case 1:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.custom_data,
+				lsp->prmfns.misc.data,
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -81,7 +81,7 @@ void ase_lsp_seterror (
 
 		case 2:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.custom_data,
+				lsp->prmfns.misc.data,
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -91,7 +91,7 @@ void ase_lsp_seterror (
 
 		case 3:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.custom_data,
+				lsp->prmfns.misc.data,
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -102,7 +102,7 @@ void ase_lsp_seterror (
 
 		case 4:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.custom_data,
+				lsp->prmfns.misc.data,
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -114,7 +114,7 @@ void ase_lsp_seterror (
 
 		case 5:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.custom_data,
+				lsp->prmfns.misc.data,
 				lsp->errmsg, 
 				ASE_COUNTOF(lsp->errmsg), 
 				errfmt,

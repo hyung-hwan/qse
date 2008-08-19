@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 313 2008-08-03 14:06:43Z baconevi $
+ * $Id: awk.h 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -25,11 +25,11 @@ typedef struct ase_awk_runcbs_t ase_awk_runcbs_t;
 typedef struct ase_awk_runarg_t ase_awk_runarg_t;
 typedef struct ase_awk_rexfns_t ase_awk_rexfns_t;
 
-typedef ase_real_t (*ase_awk_pow_t) (void* custom, ase_real_t x, ase_real_t y);
+typedef ase_real_t (*ase_awk_pow_t) (void* data, ase_real_t x, ase_real_t y);
 typedef int (*ase_awk_sprintf_t) (
-	void* custom, ase_char_t* buf, ase_size_t size, 
+	void* data, ase_char_t* buf, ase_size_t size, 
 	const ase_char_t* fmt, ...);
-typedef void (*ase_awk_dprintf_t) (void* custom, const ase_char_t* fmt, ...); 
+typedef void (*ase_awk_dprintf_t) (void* data, const ase_char_t* fmt, ...); 
 
 typedef ase_ssize_t (*ase_awk_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
@@ -40,7 +40,7 @@ struct ase_awk_extio_t
 	int type;           /* [IN] console, file, coproc, pipe */
 	int mode;           /* [IN] read, write, etc */
 	ase_char_t* name;   /* [IN] */
-	void* custom_data;  /* [IN] */
+	void* data;  /* [IN] */
 	void* handle;       /* [OUT] */
 
 	/* input */
@@ -70,14 +70,14 @@ struct ase_awk_prmfns_t
 	ase_awk_dprintf_t dprintf;     /* required in the debug mode */
 
 	/* user-defined data passed to the functions above */
-	void*             custom_data; /* optional */
+	void*             data; /* optional */
 };
 
 struct ase_awk_srcios_t
 {
 	ase_awk_io_t in;
 	ase_awk_io_t out;
-	void* custom_data;
+	void* data;
 };
 
 struct ase_awk_runios_t
@@ -86,24 +86,24 @@ struct ase_awk_runios_t
 	ase_awk_io_t coproc;
 	ase_awk_io_t file;
 	ase_awk_io_t console;
-	void* custom_data;
+	void* data;
 };
 
 struct ase_awk_runcbs_t
 {
 	void (*on_start) (
-		ase_awk_run_t* run, void* custom_data);
+		ase_awk_run_t* run, void* data);
 
 	void (*on_statement) (
-		ase_awk_run_t* run, ase_size_t line, void* custom_data);
+		ase_awk_run_t* run, ase_size_t line, void* data);
 
 	void (*on_return) (
-		ase_awk_run_t* run, ase_awk_val_t* ret, void* custom_data);
+		ase_awk_run_t* run, ase_awk_val_t* ret, void* data);
 
 	void (*on_end) (
-		ase_awk_run_t* run, int errnum, void* custom_data);
+		ase_awk_run_t* run, int errnum, void* data);
 
-	void* custom_data;
+	void* data;
 };
 
 struct ase_awk_runarg_t
@@ -562,50 +562,42 @@ struct ase_awk_val_ref_t
 extern "C" {
 #endif
 
-/** @brief represents the nil value */
+/** represents the nil value */
 extern ase_awk_val_t* ase_awk_val_nil;
 
-/** @brief represents an empty string  */
+/** represents an empty string  */
 extern ase_awk_val_t* ase_awk_val_zls;
 
-/** @brief represents a numeric value -1 */
+/** represents a numeric value -1 */
 extern ase_awk_val_t* ase_awk_val_negone;
 
-/** @brief represents a numeric value 0 */
+/** represents a numeric value 0 */
 extern ase_awk_val_t* ase_awk_val_zero;
 
-/** @brief represents a numeric value 1 */
+/** represents a numeric value 1 */
 extern ase_awk_val_t* ase_awk_val_one;
 
 /* 
- * create an ase_awk_t instance
+ * NAME: create an ase_awk_t instance
  * 
- * The ase_awk_open() function is used to create a new ase_awk_t instance.
- * The instance created can be passed to other ase_awk_xxx() functions and
- * is valid until it is successfully destroyed using the ase_ase_close() 
- * function.
+ * DESCRIPTION:
+ *  The ase_awk_open() function creates a new ase_awk_t instance.
+ *  The instance created can be passed to other ase_awk_xxx() functions and
+ *  is valid until it is successfully destroyed using the ase_ase_close() 
+ *  function.
  *
- * The mmgr_fuser() function is called if mmgr_fuser is not ASE_NULL. 
- * It is passed two parameters; the memory manager pointer as passed
- * into the ase_awk_open() function and the pointer to the extension 
- * area allocated. It should return the pointer to the location of the 
- * memory manager fused into the extension area.
- *
- * RETURNS the pointer to an ase_awk_t instance on success, ASE_NULL on failure
+ * RETURNS: 
+ *  the pointer to an ase_awk_t instance on success.
+ *  ASE_NULL on failure.
  */
 ase_awk_t* ase_awk_open ( 
-	/* memory manager */
-	ase_mmgr_t* mmgr,
-	/* size of extension area to allocate in bytes */
-	ase_size_t extension,
-	/* memory manager fuser */
-	ase_fuser_t mmgr_fuser
+	ase_mmgr_t* mmgr /* memory manager */,
+	ase_size_t extension /* size of extension area in bytes */, 
+	void (*initializer) (ase_awk_t*) /* extension area initializer */
 );
 
-ase_awk_t* ase_awk_openstd (void);
-
 /* 
- * destroy an ase_awk_instance
+ * destroy an ase_awk_t instance
  *
  * An ase_awk_t instance should be destroyed using the ase_awk_close() function
  * when finished being used. The instance passed is not valid any more once 
@@ -784,7 +776,7 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
 int ase_awk_run (
 	ase_awk_t* awk, const ase_char_t* main,
 	ase_awk_runios_t* runios, ase_awk_runcbs_t* runcbs, 
-	ase_awk_runarg_t* runarg, void* custom_data);
+	ase_awk_runarg_t* runarg, void* data);
 
 void ase_awk_stop (ase_awk_run_t* run);
 void ase_awk_stopall (ase_awk_t* awk);

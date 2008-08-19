@@ -13,27 +13,21 @@ void* ase_sll_copyinline (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 	return ASE_NULL;
 }
 
-ase_sll_t* ase_sll_open (void)
-{
-	return ase_sll_openx (ASE_MMGR_GETDFLMMGR(), 0, ASE_NULL);
-}
-
-ase_sll_openm (ase_mmgr_t* mmgr)
-{
-	return ase_sll_openx (mmgr, 0, ASE_NULL);
-}
-
-ase_sll_openx (ase_size_t extension, ase_fuser_t initializer)
-{
-	return ase_sll_openx (mmgr, 0, ASE_NULL);
-}
-
-ase_sll_t* ase_sll_openmx (
-	ase_mmgr_t* mmgr, ase_size_t extension, ase_fuser_t initializer)
+ase_sll_t* ase_sll_open (
+	ase_mmgr_t* mmgr, ase_size_t extension, 
+	void (*initializer) (ase_sll_t*))
 {
 	ase_sll_t* sll;
 
-	if (mmgr == ASE_NULL) mmgr = ASE_MMGR_GET ();
+	if (mmgr == ASE_NULL) 
+	{
+		mmgr = ASE_MMGR_GETDFL();
+
+		ASE_ASSERTX (mmgr != ASE_NULL,
+			"Set the memory manager with ASE_MMGR_SETDFL()");
+
+		if (mmgr == ASE_NULL) return ASE_NULL;
+	}
 
 	sll = ASE_MALLOC (mmgr, ASE_SIZEOF(ase_sll_t) + extension);
 	if (sll == ASE_NULL) return ASE_NULL;
@@ -41,7 +35,7 @@ ase_sll_t* ase_sll_openmx (
 	ASE_MEMSET (sll, 0, ASE_SIZEOF(ase_sll_t) + extension);
 	sll->mmgr = mmgr;
 
-	if (initializer != ASE_NULL) mmgr = initializer (sll, sll + 1);
+	if (initializer) initializer (sll);
 
 	return sll;
 }
@@ -61,6 +55,16 @@ void ase_sll_clear (ase_sll_t* sll)
 void* ase_sll_getextension (ase_sll_t* sll)
 {
 	return sll + 1;
+}
+
+ase_mmgr_t* ase_sll_getmmgr (ase_sll_t* sll)
+{
+	return sll->mmgr;
+}
+
+void ase_sll_setmmgr (ase_sll_t* sll, ase_mmgr_t* mmgr)
+{
+	sll->mmgr = mmgr;
 }
 
 ase_size_t ase_sll_getsize (ase_sll_t* sll)

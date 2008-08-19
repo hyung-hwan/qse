@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: mem.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -16,7 +16,7 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	mem = (ase_lsp_mem_t*) ASE_LSP_MALLOC (lsp, ASE_SIZEOF(ase_lsp_mem_t));	
 	if (mem == ASE_NULL) return ASE_NULL;
 
-	ase_memset (mem, 0, ASE_SIZEOF(ase_lsp_mem_t));
+	ASE_MEMSET (mem, 0, ASE_SIZEOF(ase_lsp_mem_t));
 	mem->lsp = lsp;
 
 	/* create a new root environment frame */

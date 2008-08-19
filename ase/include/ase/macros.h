@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 229 2008-06-26 10:46:39Z baconevi $
+ * $Id: macros.h 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -130,37 +130,19 @@
 		(ase_assert_failed (ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
 #endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-	#include <stdlib.h>
-	#define _CRTDBG_MAP_ALLOC
-	#include <crtdbg.h>
-
-	#define ASE_MALLOC(mmgr,size)      malloc  (size)
-	#define ASE_REALLOC(mmgr,ptr,size) realloc (ptr, size)
-	#define ASE_FREE(mmgr,ptr)         free    (ptr)
-#else
-
-	#define ASE_MALLOC(mmgr,size) \
-		(mmgr)->malloc((mmgr)->custom_data, size)
-	#define ASE_REALLOC(mmgr,ptr,size) \
-		(mmgr)->realloc((mmgr)->custom_data, ptr, size)
-	#define ASE_FREE(mmgr,ptr) \
-		(mmgr)->free((mmgr)->custom_data, ptr)
-#endif
-
-#define ASE_ISUPPER(ccls,c)  (ccls)->is_upper((ccls)->custom_data,c)
-#define ASE_ISLOWER(ccls,c)  (ccls)->is_lower((ccls)->custom_data,c)
-#define ASE_ISALPHA(ccls,c)  (ccls)->is_alpha((ccls)->custom_data,c)
-#define ASE_ISDIGIT(ccls,c)  (ccls)->is_digit((ccls)->custom_data,c)
-#define ASE_ISXDIGIT(ccls,c) (ccls)->is_xdigit((ccls)->custom_data,c)
-#define ASE_ISALNUM(ccls,c)  (ccls)->is_alnum((ccls)->custom_data,c)
-#define ASE_ISSPACE(ccls,c)  (ccls)->is_space((ccls)->custom_data,c)
-#define ASE_ISPRINT(ccls,c)  (ccls)->is_print((ccls)->custom_data,c)
-#define ASE_ISGRAPH(ccls,c)  (ccls)->is_graph((ccls)->custom_data,c)
-#define ASE_ISCNTRL(ccls,c)  (ccls)->is_cntrl((ccls)->custom_data,c)
-#define ASE_ISPUNCT(ccls,c)  (ccls)->is_punct((ccls)->custom_data,c)
-#define ASE_TOUPPER(ccls,c)  (ccls)->to_upper((ccls)->custom_data,c)
-#define ASE_TOLOWER(ccls,c)  (ccls)->to_lower((ccls)->custom_data,c)
+#define ASE_ISUPPER(ccls,c)  (ccls)->is_upper((ccls)->data,c)
+#define ASE_ISLOWER(ccls,c)  (ccls)->is_lower((ccls)->data,c)
+#define ASE_ISALPHA(ccls,c)  (ccls)->is_alpha((ccls)->data,c)
+#define ASE_ISDIGIT(ccls,c)  (ccls)->is_digit((ccls)->data,c)
+#define ASE_ISXDIGIT(ccls,c) (ccls)->is_xdigit((ccls)->data,c)
+#define ASE_ISALNUM(ccls,c)  (ccls)->is_alnum((ccls)->data,c)
+#define ASE_ISSPACE(ccls,c)  (ccls)->is_space((ccls)->data,c)
+#define ASE_ISPRINT(ccls,c)  (ccls)->is_print((ccls)->data,c)
+#define ASE_ISGRAPH(ccls,c)  (ccls)->is_graph((ccls)->data,c)
+#define ASE_ISCNTRL(ccls,c)  (ccls)->is_cntrl((ccls)->data,c)
+#define ASE_ISPUNCT(ccls,c)  (ccls)->is_punct((ccls)->data,c)
+#define ASE_TOUPPER(ccls,c)  (ccls)->to_upper((ccls)->data,c)
+#define ASE_TOLOWER(ccls,c)  (ccls)->to_lower((ccls)->data,c)
 
 #ifdef __cplusplus
 	#define ASE_BEGIN_NAMESPACE(x)    namespace x {

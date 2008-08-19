@@ -1,5 +1,5 @@
 /*
- * $Id: tab.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: tab.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -75,7 +75,7 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 			{
 				ase_size_t x;
 				x = (capa > tab->capa)? tab->capa: capa;
-				ase_memcpy (
+				ASE_MEMCPY (
 					tmp, tab->buf, 
 					ASE_SIZEOF(*tab->buf) * x);
 				ASE_AWK_FREE (tab->awk, tab->buf);

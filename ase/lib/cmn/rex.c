@@ -1,11 +1,11 @@
 /*
- * $Id: rex.c 223 2008-06-26 06:44:41Z baconevi $
+ * $Id: rex.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/rex.h>
-#include <ase/cmn/mem.h>
+#include "mem.h"
 
 #ifdef DEBUG_REX
 #include <ase/utl/stdio.h>
@@ -1108,7 +1108,7 @@ static int add_code (builder_t* builder, void* data, ase_size_t len)
 
 			if (builder->code.buf != ASE_NULL)
 			{
-				ase_memcpy (tmp, builder->code.buf, builder->code.capa);
+				ASE_MEMCPY (tmp, builder->code.buf, builder->code.capa);
 				ASE_FREE (builder->mmgr, builder->code.buf);
 			}
 		}
@@ -1117,7 +1117,7 @@ static int add_code (builder_t* builder, void* data, ase_size_t len)
 		builder->code.capa = capa;
 	}
 
-	ase_memcpy (&builder->code.buf[builder->code.size], data, len);
+	ASE_MEMCPY (&builder->code.buf[builder->code.size], data, len);
 	builder->code.size += len;
 
 	return 0;

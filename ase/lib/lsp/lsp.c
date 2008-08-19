@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c 232 2008-06-28 09:38:00Z baconevi $
+ * $Id: lsp.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -46,14 +46,14 @@ ase_lsp_t* ase_lsp_open (
 	lsp = (ase_lsp_t*) malloc (ASE_SIZEOF(ase_lsp_t));
 #else
 	lsp = (ase_lsp_t*) prmfns->mmgr.malloc (
-		prmfns->mmgr.custom_data, ASE_SIZEOF(ase_lsp_t));
+		prmfns->mmgr.data, ASE_SIZEOF(ase_lsp_t));
 #endif
 	if (lsp == ASE_NULL) return ASE_NULL;
 
 	/* it uses the built-in ase_lsp_memset because lsp is not 
 	 * fully initialized yet */
-	ase_memset (lsp, 0, ASE_SIZEOF(ase_lsp_t));
-	ase_memcpy (&lsp->prmfns, prmfns, ASE_SIZEOF(lsp->prmfns));
+	ASE_MEMSET (lsp, 0, ASE_SIZEOF(ase_lsp_t));
+	ASE_MEMCPY (&lsp->prmfns, prmfns, ASE_SIZEOF(lsp->prmfns));
 	lsp->assoc_data = ASE_NULL;
 
 	if (ase_lsp_name_open(&lsp->token.name, 0, lsp) == ASE_NULL) 

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 283 2008-07-22 13:12:56Z baconevi $
+ * $Id: parse.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -482,7 +482,7 @@ int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios)
 	ASE_ASSERT (awk->parse.depth.cur.expr == 0);
 
 	ase_awk_clear (awk);
-	ase_memcpy (&awk->src.ios, srcios, ASE_SIZEOF(awk->src.ios));
+	ASE_MEMCPY (&awk->src.ios, srcios, ASE_SIZEOF(awk->src.ios));
 
 	n = parse (awk);
 
@@ -501,7 +501,7 @@ static int parse (ase_awk_t* awk)
 
 	CLRERR (awk);
 	op = awk->src.ios.in (
-		ASE_AWK_IO_OPEN, awk->src.ios.custom_data, ASE_NULL, 0);
+		ASE_AWK_IO_OPEN, awk->src.ios.data, ASE_NULL, 0);
 	if (op <= -1)
 	{
 		/* cannot open the source file.
@@ -574,7 +574,7 @@ static int parse (ase_awk_t* awk)
 exit_parse:
 	if (n == 0) CLRERR (awk);
 	if (awk->src.ios.in (
-		ASE_AWK_IO_CLOSE, awk->src.ios.custom_data, ASE_NULL, 0) != 0)
+		ASE_AWK_IO_CLOSE, awk->src.ios.data, ASE_NULL, 0) != 0)
 	{
 		if (n == 0)
 		{
@@ -5220,7 +5220,7 @@ static int get_char (ase_awk_t* awk)
 	{
 		CLRERR (awk);
 		n = awk->src.ios.in (
-			ASE_AWK_IO_READ, awk->src.ios.custom_data,
+			ASE_AWK_IO_READ, awk->src.ios.data,
 			awk->src.shared.buf, ASE_COUNTOF(awk->src.shared.buf));
 		if (n <= -1)
 		{
@@ -5480,7 +5480,7 @@ static int deparse (ase_awk_t* awk)
 
 	CLRERR (awk);
 	op = awk->src.ios.out (
-		ASE_AWK_IO_OPEN, awk->src.ios.custom_data, ASE_NULL, 0);
+		ASE_AWK_IO_OPEN, awk->src.ios.data, ASE_NULL, 0);
 	if (op <= -1)
 	{
 		if (ISNOERR(awk)) SETERR (awk, ASE_AWK_ESOUTOP);
@@ -5676,7 +5676,7 @@ static int deparse (ase_awk_t* awk)
 exit_deparse:
 	if (n == 0) CLRERR (awk);
 	if (awk->src.ios.out (
-		ASE_AWK_IO_CLOSE, awk->src.ios.custom_data, ASE_NULL, 0) != 0)
+		ASE_AWK_IO_CLOSE, awk->src.ios.data, ASE_NULL, 0) != 0)
 	{
 		if (n == 0)
 		{
@@ -5749,7 +5749,7 @@ static int flush_out (ase_awk_t* awk)
 		CLRERR (awk);
 
 		n = awk->src.ios.out (
-			ASE_AWK_IO_WRITE, awk->src.ios.custom_data,
+			ASE_AWK_IO_WRITE, awk->src.ios.data,
 			&awk->src.shared.buf[awk->src.shared.buf_pos], 
 			awk->src.shared.buf_len - awk->src.shared.buf_pos);
 		if (n <= 0) 

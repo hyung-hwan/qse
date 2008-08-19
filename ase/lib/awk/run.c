@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 271 2008-07-20 12:42:39Z baconevi $
+ * $Id: run.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -62,7 +62,7 @@ static int set_global (
 
 static int init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
-	ase_awk_runios_t* runios, void* custom_data);
+	ase_awk_runios_t* runios, void* data);
 static void deinit_run (ase_awk_run_t* run);
 
 static int build_runarg (
@@ -601,7 +601,7 @@ ase_awk_t* ase_awk_getrunawk (ase_awk_run_t* run)
 
 void* ase_awk_getruncustomdata (ase_awk_run_t* run)
 {
-	return run->custom_data;
+	return run->data;
 }
 
 ase_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* run)
@@ -614,7 +614,7 @@ int ase_awk_run (ase_awk_t* awk,
 	ase_awk_runios_t* runios, 
 	ase_awk_runcbs_t* runcbs, 
 	ase_awk_runarg_t* runarg,
-	void* custom_data)
+	void* data)
 {
 	ase_awk_run_t* run;
 	int n;
@@ -648,10 +648,10 @@ int ase_awk_run (ase_awk_t* awk,
 	}
 
 	/* clear the run object space */
-	ase_memset (run, 0, ASE_SIZEOF(ase_awk_run_t));
+	ASE_MEMSET (run, 0, ASE_SIZEOF(ase_awk_run_t));
 
 	/* initialize the run object */
-	if (init_run (run, awk, runios, custom_data) == -1) 
+	if (init_run (run, awk, runios, data) == -1) 
 	{
 		ASE_AWK_FREE (awk, run);
 		return -1;
@@ -667,7 +667,7 @@ int ase_awk_run (ase_awk_t* awk,
 	/* execute the start callback if it exists */
 	if (runcbs != ASE_NULL && runcbs->on_start != ASE_NULL) 
 	{
-		runcbs->on_start (run, runcbs->custom_data);
+		runcbs->on_start (run, runcbs->data);
 	}
 
 	/* enter the main run loop */
@@ -702,7 +702,7 @@ int ase_awk_run (ase_awk_t* awk,
 
 		runcbs->on_end (run, 
 			((n == -1)? run->errnum: ASE_AWK_ENOERR), 
-			runcbs->custom_data);
+			runcbs->data);
 
 		/* when using callbacks, this function always returns 0 
 		 * after the start callbacks has been triggered */
@@ -738,10 +738,10 @@ static void same_namedval (void* run, void* val)
 
 static int init_run (
 	ase_awk_run_t* run, ase_awk_t* awk,
-	ase_awk_runios_t* runios, void* custom_data)
+	ase_awk_runios_t* runios, void* data)
 {
 	run->awk = awk;
-	run->custom_data = custom_data;
+	run->data = data;
 
 	run->stack = ASE_NULL;
 	run->stack_top = 0;
@@ -830,7 +830,7 @@ static int init_run (
 			return -1;
 		}
 
-		ase_memset (
+		ASE_MEMSET (
 			run->pattern_range_state, 0, 
 			run->awk->tree.chain_size * ASE_SIZEOF(ase_byte_t));
 	}
@@ -842,7 +842,7 @@ static int init_run (
 		run->extio.handler[ASE_AWK_EXTIO_COPROC] = runios->coproc;
 		run->extio.handler[ASE_AWK_EXTIO_FILE] = runios->file;
 		run->extio.handler[ASE_AWK_EXTIO_CONSOLE] = runios->console;
-		run->extio.custom_data = runios->custom_data;
+		run->extio.data = runios->data;
 		run->extio.chain = ASE_NULL;
 	}
 
@@ -1362,7 +1362,7 @@ static int run_main (
 				{
 					if (run->cbs != ASE_NULL && run->cbs->on_return != ASE_NULL)
 					{
-						run->cbs->on_return (run, crdata.val, run->cbs->custom_data);
+						run->cbs->on_return (run, crdata.val, run->cbs->data);
 					}
 				}
 				else n = -1;
@@ -1376,7 +1376,7 @@ static int run_main (
 
 			if (run->cbs != ASE_NULL && run->cbs->on_return != ASE_NULL)
 			{
-				run->cbs->on_return (run, v, run->cbs->custom_data);
+				run->cbs->on_return (run, v, run->cbs->data);
 			}
 
 			ase_awk_refdownval (run, v);
@@ -1533,7 +1533,7 @@ static int run_main (
 		{
 			if (run->cbs != ASE_NULL && run->cbs->on_return != ASE_NULL)
 			{
-				run->cbs->on_return (run, v, run->cbs->custom_data);
+				run->cbs->on_return (run, v, run->cbs->data);
 			}
 		}
 		/* end the life of the global return value */
@@ -1847,7 +1847,7 @@ static int run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 	    (run)->cbs->on_statement != ASE_NULL) \
 	{ \
 		(run)->cbs->on_statement ( \
-			run, (nde)->line, (run)->cbs->custom_data); \
+			run, (nde)->line, (run)->cbs->data); \
 	} 
 
 static int run_statement (ase_awk_run_t* run, ase_awk_nde_t* nde)
@@ -4594,7 +4594,7 @@ static ase_awk_val_t* eval_binop_exp (
 		/* left - int, right - real */
 		res = ase_awk_makerealval (run, 
 			run->awk->prmfns->pow (
-				run->awk->prmfns->custom_data, 
+				run->awk->prmfns->data, 
 				(ase_real_t)l1,(ase_real_t)r2));
 	}
 	else
@@ -4603,7 +4603,7 @@ static ase_awk_val_t* eval_binop_exp (
 		ASE_ASSERT (n3 == 3);
 		res = ase_awk_makerealval (run,
 			run->awk->prmfns->pow(
-				run->awk->prmfns->custom_data, 
+				run->awk->prmfns->data, 
 				(ase_real_t)r1,(ase_real_t)r2));
 	}
 
@@ -6294,7 +6294,7 @@ static int __raw_push (ase_awk_run_t* run, void* val)
 			if (tmp == ASE_NULL) return -1;
 			if (run->stack != ASE_NULL)
 			{
-				ase_memcpy (
+				ASE_MEMCPY (
 					tmp, run->stack, 
 					run->stack_limit * ASE_SIZEOF(void*)); 
 				ASE_AWK_FREE (run->awk, run->stack);
@@ -6664,7 +6664,7 @@ ase_char_t* ase_awk_format (
 			do
 			{
 				n = run->awk->prmfns->sprintf (
-					run->awk->prmfns->custom_data,
+					run->awk->prmfns->data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
@@ -6770,7 +6770,7 @@ ase_char_t* ase_awk_format (
 			do
 			{
 				n = run->awk->prmfns->sprintf (
-					run->awk->prmfns->custom_data,
+					run->awk->prmfns->data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if ASE_SIZEOF_LONG_LONG > 0
@@ -6891,7 +6891,7 @@ ase_char_t* ase_awk_format (
 			do
 			{
 				n = run->awk->prmfns->sprintf (
-					run->awk->prmfns->custom_data,
+					run->awk->prmfns->data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_STR_BUF(fbu),
@@ -6979,7 +6979,7 @@ ase_char_t* ase_awk_format (
 			do
 			{
 				n = run->awk->prmfns->sprintf (
-					run->awk->prmfns->custom_data,
+					run->awk->prmfns->data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_STR_BUF(fbu),

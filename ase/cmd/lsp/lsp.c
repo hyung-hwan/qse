@@ -306,9 +306,9 @@ int lsp_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-	prmfns.mmgr.custom_data = &prmfns_data;
+	prmfns.mmgr.data = &prmfns_data;
 #else
-	prmfns.mmgr.custom_data = ASE_NULL;
+	prmfns.mmgr.data = ASE_NULL;
 #endif
 
 	prmfns.ccls.is_upper  = custom_lsp_isupper;
@@ -324,11 +324,11 @@ int lsp_main (int argc, ase_char_t* argv[])
 	prmfns.ccls.is_punct  = custom_lsp_ispunct;
 	prmfns.ccls.to_upper  = custom_lsp_toupper;
 	prmfns.ccls.to_lower  = custom_lsp_tolower;
-	prmfns.ccls.custom_data  = ASE_NULL;
+	prmfns.ccls.data  = ASE_NULL;
 
 	prmfns.misc.sprintf = custom_lsp_sprintf;
 	prmfns.misc.dprintf = custom_lsp_dprintf;
-	prmfns.misc.custom_data = ASE_NULL;
+	prmfns.misc.data = ASE_NULL;
 
 	lsp = ase_lsp_open (&prmfns, opt_memsize, opt_meminc);
 	if (lsp == ASE_NULL) 

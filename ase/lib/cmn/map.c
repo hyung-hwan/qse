@@ -1,11 +1,12 @@
 /*
- * $Id: map.c 156 2008-03-22 12:09:35Z baconevi $
+ * $Id: map.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/map.h>
 #include <ase/cmn/str.h>
+#include "mem.h"
 
 static ase_size_t hashkey (const ase_char_t* keyptr, ase_size_t keylen);
 static int rehash (ase_map_t* map);

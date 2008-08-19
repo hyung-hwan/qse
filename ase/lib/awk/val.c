@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 271 2008-07-20 12:42:39Z baconevi $
+ * $Id: val.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -400,7 +400,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	}
 	*/
 	val->code = val->buf + len + 1;
-	ase_memcpy (val->code, code, ASE_REX_LEN(code));
+	ASE_MEMCPY (val->code, code, ASE_REX_LEN(code));
 
 	return (ase_awk_val_t*)val;
 }
@@ -1060,7 +1060,7 @@ int ase_awk_strtonum (
 }
 
 #define DPRINTF run->awk->prmfns->dprintf
-#define DCUSTOM run->awk->prmfns->custom_data
+#define DCUSTOM run->awk->prmfns->data
 
 static int print_pair (ase_pair_t* pair, void* arg)
 {
