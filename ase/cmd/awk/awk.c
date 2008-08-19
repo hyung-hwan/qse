@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: awk.c 333 2008-08-19 03:16:02Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -23,11 +23,11 @@
 	#include <process.h>
 	#pragma warning (disable: 4996)
 	#pragma warning (disable: 4296)
-#endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
+	#if defined(_MSC_VER) && defined(_DEBUG)
+		#define _CRTDBG_MAP_ALLOC
+		#include <crtdbg.h>
+	#endif
 #endif
 
 #define SRCIO_FILE 1
@@ -120,33 +120,47 @@ static int custom_awk_sprintf (
 	return n;
 }
 
-
-static ase_ssize_t awk_srcio_in (
-	int cmd, void* arg, ase_char_t* data, ase_size_t size)
+static ase_ssize_t awk_srcio_in_str (
+	int cmd, srcio_data_t* siod, ase_char_t* data, ase_size_t size)
 {
-	struct srcio_data_t* srcio = (struct srcio_data_t*)arg;
+	return -1;
+}
+
+static ase_ssize_t awk_srcio_in_file (
+	int cmd, srcio_data_t* siod, ase_char_t* data, ase_size_t size)
+{
 	ase_cint_t c;
 
-#if 0
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
-		if (srcio->input_file == ASE_NULL) return 0;
-		srcio->input_handle = ase_fopen (srcio->input_file, ASE_T("r"));
-		if (srcio->input_handle == NULL) return -1;
+		if (siod->data.file.cur == ASE_NULL) return 0;
+		siod->data.file.handle = ase_fopen (ASE_SLL_DPTR(siod->data.file.cur), ASE_T("r"));
+		if (siod->data.file.handle == NULL) return -1;
 
+		/*
 		ase_awk_setsinname ();
+		*/
+
 		return 1;
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
+		if (siod->data.file.cur == ASE_NULL) return 0;
+		fclose (siod->data.file.handle);
+		/*
 		if (srcio->input_file == ASE_NULL) return 0;
 		fclose ((FILE*)srcio->input_handle);
+		*/
+		
 		return 0;
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
 		ase_ssize_t n = 0;
-		FILE* fp = (FILE*)srcio->input_handle;
+		FILE* fp;
+
+	retry:
+		fp = siod->data.file.handle;
 		while (!ase_feof(fp) && n < size)
 		{
 			ase_cint_t c = ase_fgetc (fp);
@@ -157,16 +171,37 @@ static ase_ssize_t awk_srcio_in (
 			}
 			data[n++] = c;
 		}
+
+		if (n == 0)
+		{
+			siod->data.file.cur = ASE_SLL_NEXT(siod->data.file.cur);
+			if (siod->data.file.cur != ASE_NULL)
+			{
+				ase_fclose (fp);
+				siod->data.file.handle = ase_fopen (ASE_SLL_DPTR(siod->data.file.cur), ASE_T("r"));
+				if (siod->data.file.handle == NULL) return -1;
+				goto retry;
+			}
+		}
 		return n;
 	}
-	/*
-	else if (cmd == ASE_AWK_IO_NEXT)
-	{
-	}
-	*/
-#endif
 
 	return -1;
+}
+
+static ase_ssize_t awk_srcio_in (
+	int cmd, void* arg, ase_char_t* data, ase_size_t size)
+{
+	ase_cint_t c;
+
+	if (((srcio_data_t*)arg)->type == SRCIO_STR)
+	{
+		return awk_srcio_in_str (cmd, arg, data, size);
+	}
+	else
+	{
+		return awk_srcio_in_file (cmd, arg, data, size);
+	}
 }
 
 static ase_ssize_t awk_srcio_out (
@@ -804,6 +839,7 @@ static void on_run_end (ase_awk_run_t* run, int errnum, void* data)
 	app_run = NULL;
 }
 
+/* TODO: remove otab... */
 static struct
 {
 	const ase_char_t* name;
@@ -913,125 +949,8 @@ static void out_of_memory (void)
 	ase_fprintf (ASE_STDERR, ASE_T("Error: out of memory\n"));	
 }
 
-#if 0
-static void handle_args (argc, argv)
+static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 {
-	int i;
-
-	if (argc <= 1) return -1;
-
-	for (i = 1; i < argc; i++)
-	{
-		if (mode == 0)
-		{
-			if (ase_strcmp(argv[i], ASE_T("-m")) == 0)
-			{
-				mfn = ASE_T("main");
-			}
-			else if (ase_strcmp(argv[i], ASE_T("-d")) == 0)
-			{
-				deparse = 1;
-			}
-			else if (ase_strcmp(argv[i], ASE_T("-f")) == 0)
-			{
-				/* specify source file */
-				mode = 1;
-			}
-			else if (ase_strcmp(argv[i], ASE_T("-a")) == 0)
-			{
-				/* specify arguments */
-				mode = 2;
-			}
-			else if (argv[i][0] == ASE_T('-'))
-			{
-				int j;
-
-				if (argv[i][1] == ASE_T('n') && argv[i][2] == ASE_T('o'))
-				{
-					for (j = 0; j < ASE_COUNTOF(otab); j++)
-					{
-						if (ase_strcmp(&argv[i][3], otab[j].name) == 0)
-						{
-							opt &= ~otab[j].opt;
-							goto ok_valid;
-						}
-					}
-				}
-				else
-				{
-					for (j = 0; j < ASE_COUNTOF(otab); j++)
-					{
-						if (ase_strcmp(&argv[i][1], otab[j].name) == 0)
-						{
-							opt |= otab[j].opt;
-							goto ok_valid;
-						}
-					}
-				}
-				
-
-				print_usage (argv[0]);
-				return -1;
-
-			ok_valid:
-				;
-			}
-			else if (file_count < ASE_COUNTOF(infiles)-1)
-			{
-				infiles[file_count] = argv[i];
-				file_count++;
-			}
-			else
-			{
-				print_usage (argv[0]);
-				return -1;
-			}
-		}
-		else if (mode == 1) /* source mode */
-		{
-			if (argv[i][0] == ASE_T('-'))
-			{
-				print_usage (argv[0]);
-				return -1;
-			}
-
-			if (srcio.input_file != NULL) 
-			{
-				print_usage (argv[0]);
-				return -1;
-			}
-
-			srcio.input_file = argv[i];
-			mode = 0;
-		}
-		else if (mode == 2) /* argument mode */
-		{
-			if (argv[i][0] == ASE_T('-'))
-			{
-				print_usage (argv[0]);
-				return -1;
-			}
-
-			if (runarg_count >= ASE_COUNTOF(runarg)-1)
-			{
-				print_usage (argv[0]);
-				return -1;
-			}
-
-			runarg[runarg_count].ptr = argv[i];
-			runarg[runarg_count].len = ase_strlen(argv[i]);
-			runarg_count++;
-			mode = 0;
-		}
-	}
-
-}
-#endif
-
-static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod);
-{
-	ase_sll_t* sf;
-	ase_cint_t c;
 	static ase_opt_lng_t lng[] = 
 	{
 		{ ASE_T("implicit"),         0 },
@@ -1064,6 +983,8 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod);
 		lng
 	};
 
+	ase_cint_t c;
+	ase_sll_t* sf = ASE_NULL;
 
 	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
 	{
@@ -1075,6 +996,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod);
 
 			case ASE_T('h'):
 				print_usage (argv[0]);
+				if (sf != NULL) ase_sll_close (sf);
 				return 1;
 
 			case ASE_T('f'):
@@ -1082,7 +1004,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod);
 				ase_size_t sz = ase_strlen(opt.arg) + 1;
 				sz *= ASE_SIZEOF(*opt.arg);
 
-				if (sf == NULL) 
+				if (sf == ASE_NULL) 
 				{
 					sf = ase_sll_open (ASE_NULL, 0, ASE_NULL);
 					if (sf == ASE_NULL)
@@ -1114,6 +1036,8 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod);
 				{
 					ase_printf (ASE_T("Error: illegal option - %c\n"), opt.opt);
 				}
+
+				if (sf != ASE_NULL) ase_sll_close (sf);
 				return -1;
 
 			case ASE_T(':'):
@@ -1125,10 +1049,12 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod);
 				{
 					ase_printf (ASE_T("Error: bad argument for %c\n"), opt.opt);
 				}
+
+				if (sf != ASE_NULL) ase_sll_close (sf);
 				return -1;
 
 			default:
-				ase_printf (ASE_T("DEFAULT....\n"));
+				if (sf != ASE_NULL) ase_sll_close (sf);
 				return -1;
 		}
 	}
@@ -1143,7 +1069,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod);
 		}
 
 		siod->type = SRCIO_STR;
-		siod->data.str.ptr = opt.arg[opt.ind++];
+		siod->data.str.ptr = argv[opt.ind++];
 		siod->data.str.cur = NULL;
 	}
 	else
@@ -1151,7 +1077,8 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod);
 		/* read source code from the file */
 		siod->type = SRCIO_FILE;
 		siod->data.file.sll = sf;
-		siod->data.file.cur = NULL;
+		siod->data.file.cur = ase_sll_gethead(sf);
+		siod->data.file.handle = NULL;
 	}
 
 	/* remaining args are input(console) file names */
