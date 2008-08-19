@@ -171,7 +171,7 @@ int tgp_main (int argc, ase_char_t* argv[])
 
 	if (handle_args (argc, argv) == -1) return -1;
 	
-	tgp = ase_tgp_open (ASE_GETMMGR());
+	tgp = ase_tgp_open (ASE_MMGR_GETDFL());
 	if (tgp == ASE_NULL) 
 	{
 		ase_fprintf (ASE_STDERR, 

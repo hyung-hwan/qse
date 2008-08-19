@@ -68,57 +68,49 @@ extern "C" {
 #endif
 
 /* 
- * NAME: creates a singly linked list 
+ * NAME: creates a singly linked list with extension area
  *
  * DESCRIPTION:
- *  The ase_sll_open() functions creates an empty singly linked list with
- *  the default memory manager.
+ *  The ase_sll_open() function creates an empty singly linked list.
+ *  If the memory manager mmgr is ASE_NULL, the function gets the default
+ *  memory manager with ASE_MMGR_GETMMGR() and uses it if it is not ASE_NULL.
+ *  The extension area is allocated when the positive extension size extension 
+ *  is specified. It calls the extension initialization function initializer 
+ *  after initializing the main area. The extension initializer is passed
+ *  the pointer to the singly linked list created.
  *
- * RETURNS: a pointer to a newly created singly linked list
+ * RETURNS: 
+ *  the pointer to a newly created singly linked list on success.
+ *  ASE_NULL on failure.
+ *
+ * WARNING:
+ *  In the debug build, it fails the assertion if ASE_MMGR_SETMMGR() returns
+ *  ASE_NULL when ASE_NULL is passed as the first parameter. In the release
+ *  build, it returns ASE_NULL if such a thing happens. 
  */
-ase_sll_t* ase_sll_open (void);
 
-/*
- * NAME: create a singly linked list with a custom memory manager 
- */
-ase_sll_t* ase_sll_openm ( 
-	ase_mmgr_t* mmgr /* memory manager */
-);
-
-/*
- * NAME: create a singly linked list securing extension area
- */
-ase_sll_t* ase_sll_openx ( 
-	ase_size_t extension /* size of extension in bytes */,
-	ase_fuser_t initializer /* extension initializer */
-);
-
-/* 
- * NAME creates a new singly linked list with extension 
- * RETURNS a pointer to a newly created singly linked list
- */
-ase_sll_t* ase_sll_openmx (
+ase_sll_t* ase_sll_open (
 	ase_mmgr_t* mmgr /* memory manager */ , 
-	ase_size_t extension /* size of extension in bytes */,
-	ase_fuser_t initializer /* extension initializer */
+	ase_size_t extension /* size of extension area in bytes */,
+	void (*initializer) (ase_sll_t*) /* extension initializer */
 );
 
 /* 
- * NAME destroys a singly linked list 
+ * NAME: destroys a singly linked list 
  */
 void ase_sll_close (
 	ase_sll_t* sll /* a singly linked list */
 );
 
 /* 
- * NAME deletes all elements of a singly linked list 
+ * NAME: deletes all elements of a singly linked list 
  */
 void ase_sll_clear (
 	ase_sll_t* sll /* a singly linked list */
 );
 
 /*
- * NAME specifies how to clone an element
+ * NAME: specifies how to clone an element
  *
  * DESCRIPTION
  *  A special copier ASE_SLL_COPIER_INLINE is provided. This copier enables
@@ -138,7 +130,7 @@ ase_sll_copier_t ase_sll_getcopier (
 );
 
 /*
- * NAME specifies how to destroy an element
+ * NAME: specifies how to destroy an element
  *
  * DESCRIPTION
  *  The freeer is called when a node containing the element is destroyed.
@@ -153,39 +145,48 @@ ase_sll_freeer_t ase_sll_getfreeer (
 );
 
 /*
- * NAME Gets the pointer to the extension area
- * RETURN the pointer to the extension area
+ * NAME: Gets the pointer to the extension area
+ * RETURN:: the pointer to the extension area
  */
 void* ase_sll_getextension (
 	ase_sll_t* sll /* a singly linked list */
 );
 
 /*
- * NAME Gets the number of elements held in a singly linked list
- * RETURN the number of elements the list holds
+ * NAME: get the pointer to the memory manager in use 
+ */
+ase_mmgr_t* ase_sll_getmmgr (
+	ase_sll_t* sll /* a singly linked list */
+);
+
+void ase_sll_setmmgr (ase_sll_t* sll, ase_mmgr_t* mmgr);
+
+/*
+ * NAME: Gets the number of elements held in a singly linked list
+ * RETURN: the number of elements the list holds
  */
 ase_size_t ase_sll_getsize (
 	ase_sll_t* sll /* a singly linked list */
 );
 
 /*
- * NAME Gets the head(first) node 
- * RETURN the tail node of a singly linked list
+ * NAME: Gets the head(first) node 
+ * RETURN: the tail node of a singly linked list
  */
 ase_sll_node_t* ase_sll_gethead (
 	ase_sll_t* sll /* a singly linked list */
 );
 
 /* 
- * NAME Gets the tail(last) node 
- * RETURN the tail node of a singly linked list
+ * NAME: Gets the tail(last) node 
+ * RETURN: the tail node of a singly linked list
  */
 ase_sll_node_t* ase_sll_gettail (
 	ase_sll_t* sll /* a singly linked list */
 );
 
 /* 
- * NAME Inserts data before a positional node given 
+ * NAME: Inserts data before a positional node given 
  *
  * DESCRIPTION
  *   There is performance penalty unless the positional node is neither
@@ -226,9 +227,9 @@ void ase_sll_poptail (
 );
 
 /* 
- * NAME Traverses s singly linked list 
+ * NAME: Traverses s singly linked list 
  *
- * DESCRIPTION
+ * DESCRIPTION:
  *   A singly linked list allows uni-directional in-order traversal.
  *   The ase_sll_walk() function traverses a singly linkked list from its 
  *   head node down to its tail node as long as the walker function returns 

@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 281 2008-07-21 14:11:04Z baconevi $
+ * $Id: types.h 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -347,7 +347,7 @@ struct ase_mmgr_t
 	ase_malloc_t  malloc;
 	ase_realloc_t realloc;
 	ase_free_t    free;
-	void*         custom_data;
+	void*         data;
 };
 
 struct ase_ccls_t
@@ -365,7 +365,7 @@ struct ase_ccls_t
 	ase_isccls_t is_punct;
 	ase_toccls_t to_upper;
 	ase_toccls_t to_lower;
-	void*        custom_data;
+	void*        data;
 };
 
 #endif

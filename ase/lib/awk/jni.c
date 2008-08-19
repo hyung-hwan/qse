@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c 329 2008-08-16 14:08:53Z baconevi $
+ * $Id: jni.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -16,7 +16,7 @@
 #include <ase/awk/jni.h>
 #include <ase/awk/awk.h>
 
-#include <ase/cmn/mem.h>
+#include "../cmn/mem.h"
 #include <ase/utl/stdio.h>
 #include <ase/utl/ctype.h>
 
@@ -327,7 +327,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	#endif
 #endif
 
-	awk = ase_awk_open (ASE_MMGR_GET(), ASE_SIZEOF(awk_data_t));
+	awk = ase_awk_open (ASE_NULL, ASE_SIZEOF(awk_data_t), ASE_NULL);
 	if (awk == ASE_NULL)
 	{
 		THROW_NOMEM_EXCEPTION (env);
@@ -339,7 +339,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_open (JNIEnv* env, jobject obj)
 	awk_data->prmfns.pow     = awk_pow;
 	awk_data->prmfns.sprintf = awk_sprintf;
 	awk_data->prmfns.dprintf = awk_dprintf;
-	awk_data->prmfns.custom_data = ASE_NULL;
+	awk_data->prmfns.data = ASE_NULL;
 
 	ase_awk_setccls (awk, ASE_GETCCLS());
 	ase_awk_setprmfns (awk, &awk_data->prmfns);
@@ -428,7 +428,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_parse (JNIEnv* env, jobject obj, jlong a
 
 	srcios.in = read_source;
 	srcios.out = write_source;
-	srcios.custom_data = &srcio_data;
+	srcios.data = &srcio_data;
 
 	if (ase_awk_parse (awk, &srcios) == -1)
 	{
@@ -592,12 +592,12 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awk
 	runios.coproc = ASE_NULL;
 	runios.file = process_extio;
 	runios.console = process_extio;
-	runios.custom_data = &runio_data;
+	runios.data = &runio_data;
 
-	ase_memset (&runcbs, 0, ASE_SIZEOF(runcbs));
+	ASE_MEMSET (&runcbs, 0, ASE_SIZEOF(runcbs));
 	runcbs.on_start = on_run_start;
 	runcbs.on_end = on_run_end;
-	runcbs.custom_data = ASE_NULL;
+	runcbs.data = ASE_NULL;
 
 	if (mfn == ASE_NULL) 
 	{
@@ -1345,7 +1345,7 @@ static ase_ssize_t process_extio (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
-	runio_data_t* runio_data = (runio_data_t*)epa->custom_data;
+	runio_data_t* runio_data = (runio_data_t*)epa->data;
 
 	switch (cmd)
 	{

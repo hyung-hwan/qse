@@ -1,5 +1,5 @@
 /*
- * $Id: awk_i.h 271 2008-07-20 12:42:39Z baconevi $
+ * $Id: awk_i.h 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -7,7 +7,7 @@
 #ifndef _ASE_AWK_AWKI_H_
 #define _ASE_AWK_AWKI_H_
 
-#include <ase/cmn/mem.h>
+#include "../cmn/mem.h"
 #include <ase/cmn/str.h>
 #include <ase/cmn/map.h>
 #include <ase/cmn/rex.h>
@@ -328,7 +328,7 @@ struct ase_awk_run_t
 	struct
 	{
 		ase_awk_io_t handler[ASE_AWK_EXTIO_NUM];
-		void* custom_data;
+		void* data;
 		ase_awk_extio_t* chain;
 	} extio;
 
@@ -364,7 +364,7 @@ struct ase_awk_run_t
 	ase_size_t errlin;
 	ase_char_t errmsg[256];
 
-	void* custom_data;
+	void* data;
 
 	ase_awk_t* awk;
 	ase_awk_runcbs_t* cbs;

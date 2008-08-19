@@ -1,11 +1,11 @@
 /*
- * $Id: str_bas.c 197 2008-06-09 06:24:10Z baconevi $
+ * $Id: str_bas.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/str.h>
-#include <ase/cmn/mem.h>
+#include "mem.h"
 
 ase_size_t ase_strlen (const ase_char_t* str)
 {
@@ -80,7 +80,7 @@ ase_size_t ase_strxncpy (
 
 	if (bsz <= 0) return 0;
 	if ((n = bsz - 1) > len) n = len;
-	ase_memcpy (buf, str, n * ASE_SIZEOF(ase_char_t));
+	ASE_MEMCPY (buf, str, n * ASE_SIZEOF(ase_char_t));
 	buf[n] = ASE_T('\0');
 
 	return n;

@@ -1,11 +1,11 @@
 /*
- * $Id: str_dyn.c 197 2008-06-09 06:24:10Z baconevi $
+ * $Id: str_dyn.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/str.h>
-#include <ase/cmn/mem.h>
+#include "mem.h"
 
 ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr)
 {
@@ -129,7 +129,7 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 			if (str->buf != ASE_NULL)
 			{
-				ase_memcpy (tmp, str->buf, 
+				ASE_MEMCPY (tmp, str->buf, 
 					ASE_SIZEOF(ase_char_t)*(str->capa+1));
 				ASE_FREE (str->mmgr, str->buf);
 			}

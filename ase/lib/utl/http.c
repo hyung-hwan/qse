@@ -1,12 +1,12 @@
 /*
- * $Id: http.c 186 2008-06-03 09:00:14Z baconevi $
+ * $Id: http.c 332 2008-08-18 11:21:48Z baconevi $
  * 
  * {License}
  */
 
 #include <ase/utl/http.h>
 #include <ase/utl/ctype.h>
-#include <ase/cmn/mem.h>
+#include "../cmn/mem.h"
 
 static int is_http_space (ase_char_t c)
 {
@@ -152,7 +152,7 @@ ase_char_t* ase_parsehttphdr (ase_char_t* buf, ase_http_hdr_t* hdr)
 	if (*p == ASE_T('\0')) 
 	{
 		/* no more header line */
-		ase_memset (hdr, 0, ASE_SIZEOF(*hdr));
+		ASE_MEMSET (hdr, 0, ASE_SIZEOF(*hdr));
 		return p;
 	}
 

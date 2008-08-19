@@ -11,7 +11,7 @@
 #include <ase/macros.h>
 
 /*
- * Singly Linked List
+ * Doubly Linked List
  */
 typedef struct ase_dll_t ase_dll_t;
 typedef struct ase_dll_node_t ase_dll_node_t;
@@ -69,21 +69,31 @@ extern "C" {
 #endif
 
 /* 
- * NAME creates a new singly linked list 
- * RETURNS a pointer to a newly created singly linked list
+ * NAME: creates a doubly linked list with extension area
+ *
+ * DESCRIPTION:
+ *  The ase_dll_open() function creates an empty doubly linked list.
+ *  If the memory manager mmgr is ASE_NULL, the function gets the default
+ *  memory manager with ASE_MMGR_GETMMGR() and uses it if it is not ASE_NULL.
+ *  The extension area is allocated when the positive extension size extension 
+ *  is specified. It calls the extension initialization function initializer 
+ *  after initializing the main area. The extension initializer is passed
+ *  the pointer to the doubly linked list created.
+ *
+ * RETURNS: 
+ *  the pointer to a newly created doubly linked list on success.
+ *  ASE_NULL on failure.
+ *
+ * WARNING:
+ *  In the debug build, it fails the assertion if ASE_MMGR_SETMMGR() returns
+ *  ASE_NULL when ASE_NULL is passed as the first parameter. In the release
+ *  build, it returns ASE_NULL if such a thing happens. 
  */
-ase_dll_t* ase_dll_open (
-	ase_mmgr_t* mmgr /* memory manager */
-);
 
-/* 
- * NAME creates a new singly linked list with extension 
- * RETURNS a pointer to a newly created singly linked list
- */
-ase_dll_t* ase_dll_openx (
+ase_dll_t* ase_dll_open (
 	ase_mmgr_t* mmgr /* memory manager */ , 
-	ase_size_t extension /* size of extension in bytes */,
-	ase_fuser_t fuser
+	ase_size_t extension /* size of extension area in bytes */,
+	void (*initializer) (ase_dll_t*) /* extension initializer */
 );
 
 /* 
@@ -142,6 +152,15 @@ ase_dll_freeer_t ase_dll_getfreeer (
 void* ase_dll_getextension (
 	ase_dll_t* dll /* a singly linked list */
 );
+
+/*
+ * NAME: get the pointer to the memory manager in use 
+ */
+ase_mmgr_t* ase_dll_getmmgr (
+	ase_dll_t* dll /* a singly linked list */
+);
+
+void ase_dll_setmmgr (ase_dll_t* dll, ase_mmgr_t* mmgr);
 
 /*
  * NAME Gets the number of elements held in a singly linked list

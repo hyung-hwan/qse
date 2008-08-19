@@ -13,21 +13,29 @@ void* ase_dll_copyinline (ase_dll_t* dll, void* dptr, ase_size_t dlen)
 	return ASE_NULL;
 }
 
-ase_dll_t* ase_dll_open (ase_mmgr_t* mmgr)
-{
-	return ase_dll_openx (mmgr, 0, ASE_NULL);
-}
-
-ase_dll_t* ase_dll_openx (ase_mmgr_t* mmgr, ase_size_t extension, ase_fuser_t fuser)
+ase_dll_t* ase_dll_open (
+	ase_mmgr_t* mmgr, ase_size_t extension, 
+	void (*initializer) (ase_dll_t*))
 {
 	ase_dll_t* dll;
+
+	if (mmgr == ASE_NULL) 
+	{
+		mmgr = ASE_MMGR_GETDFL();
+
+		ASE_ASSERTX (mmgr != ASE_NULL,
+			"Set the memory manager with ASE_MMGR_SETDFL()");
+
+		if (mmgr == ASE_NULL) return ASE_NULL;
+	}
 
 	dll = ASE_MALLOC (mmgr, ASE_SIZEOF(ase_dll_t) + extension);
 	if (dll == ASE_NULL) return ASE_NULL;
 
 	ASE_MEMSET (dll, 0, ASE_SIZEOF(ase_dll_t) + extension);
-	if (fuser != ASE_NULL) mmgr = fuser (mmgr, dll + 1);
 	dll->mmgr = mmgr;
+
+	if (initializer) initializer (dll);
 
 	return dll;
 }
@@ -47,6 +55,16 @@ void ase_dll_clear (ase_dll_t* dll)
 void* ase_dll_getextension (ase_dll_t* dll)
 {
 	return dll + 1;
+}
+
+ase_mmgr_t* ase_dll_getmmgr (ase_dll_t* dll)
+{
+        return dll->mmgr;
+}
+
+void ase_dll_setmmgr (ase_dll_t* dll, ase_mmgr_t* mmgr)
+{
+	dll->mmgr = mmgr;
 }
 
 ase_size_t ase_dll_getsize (ase_dll_t* dll)

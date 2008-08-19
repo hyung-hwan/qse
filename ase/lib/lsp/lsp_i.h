@@ -1,5 +1,5 @@
 /*
- * $Id: lsp_i.h 232 2008-06-28 09:38:00Z baconevi $
+ * $Id: lsp_i.h 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -7,7 +7,7 @@
 #ifndef _ASE_LSP_LSPI_H_
 #define _ASE_LSP_LSPI_H_
 
-#include <ase/cmn/mem.h>
+#include "../cmn/mem.h"
 #include <ase/cmn/str.h>
 
 #include <ase/lsp/lsp.h>

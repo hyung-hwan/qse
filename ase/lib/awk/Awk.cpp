@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 279 2008-07-21 05:27:34Z baconevi $
+ * $Id: Awk.cpp 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -7,7 +7,7 @@
 
 #include <ase/awk/Awk.hpp>
 #include <ase/cmn/str.h>
-#include <ase/cmn/mem.h>
+#include "../cmn/mem.h"
 
 /////////////////////////////////
 ASE_BEGIN_NAMESPACE(ASE)
@@ -1032,7 +1032,7 @@ Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL),
 	mmgr.malloc      = allocMem;
 	mmgr.realloc     = reallocMem;
 	mmgr.free        = freeMem;
-	mmgr.custom_data = this;
+	mmgr.data = this;
 
 	ccls.is_upper    = isUpper;
 	ccls.is_lower    = isLower;
@@ -1047,12 +1047,12 @@ Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL),
 	ccls.is_punct    = isPunct;
 	ccls.to_upper    = toUpper;
 	ccls.to_lower    = toLower;
-	ccls.custom_data = this;
+	ccls.data = this;
 
 	prmfns.pow         = pow;
 	prmfns.sprintf     = sprintf;
 	prmfns.dprintf     = dprintf;
-	prmfns.custom_data = this;
+	prmfns.data = this;
 }
 
 Awk::~Awk ()
@@ -1289,7 +1289,7 @@ int Awk::parse ()
 
 	srcios.in = sourceReader;
 	srcios.out = sourceWriter;
-	srcios.custom_data = this;
+	srcios.data = this;
 
 	int n = ase_awk_parse (awk, &srcios);
 	if (n == -1) retrieveError ();
@@ -1312,9 +1312,9 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	runios.coproc      = ASE_NULL;
 	runios.file        = fileHandler;
 	runios.console     = consoleHandler;
-	runios.custom_data = this;
+	runios.data = this;
 
-	ase_memset (&runcbs, 0, ASE_SIZEOF(runcbs));
+	ASE_MEMSET (&runcbs, 0, ASE_SIZEOF(runcbs));
 	runcbs.on_start = onRunStart;
 	if (runCallback)
 	{
@@ -1322,7 +1322,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 		runcbs.on_return    = onRunReturn;
 		runcbs.on_statement = onRunStatement;
 	}
-	runcbs.custom_data = &runctx;
+	runcbs.data = &runctx;
 	
 	if (nargs > 0)
 	{
@@ -1460,7 +1460,7 @@ int Awk::addFunction (
 		return -1;
 	}
 
-	//ase_memcpy (tmp, &handler, ASE_SIZEOF(handler));
+	//ASE_MEMCPY (tmp, &handler, ASE_SIZEOF(handler));
 	*tmp = handler;
 	
 	size_t nameLen = ase_strlen(name);
@@ -1572,7 +1572,7 @@ Awk::ssize_t Awk::pipeHandler (
 	int cmd, void* arg, char_t* data, size_t count)
 {
 	extio_t* extio = (extio_t*)arg;
-	Awk* awk = (Awk*)extio->custom_data;
+	Awk* awk = (Awk*)extio->data;
 
 	ASE_ASSERT ((extio->type & 0xFF) == ASE_AWK_EXTIO_PIPE);
 
@@ -1604,7 +1604,7 @@ Awk::ssize_t Awk::fileHandler (
 	int cmd, void* arg, char_t* data, size_t count)
 {
 	extio_t* extio = (extio_t*)arg;
-	Awk* awk = (Awk*)extio->custom_data;
+	Awk* awk = (Awk*)extio->data;
 
 	ASE_ASSERT ((extio->type & 0xFF) == ASE_AWK_EXTIO_FILE);
 
@@ -1636,7 +1636,7 @@ Awk::ssize_t Awk::consoleHandler (
 	int cmd, void* arg, char_t* data, size_t count)
 {
 	extio_t* extio = (extio_t*)arg;
-	Awk* awk = (Awk*)extio->custom_data;
+	Awk* awk = (Awk*)extio->data;
 
 	ASE_ASSERT ((extio->type & 0xFF) == ASE_AWK_EXTIO_CONSOLE);
 

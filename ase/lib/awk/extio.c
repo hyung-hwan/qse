@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: extio.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -135,7 +135,7 @@ int ase_awk_readextio (
 		p->mode = extio_mode;
 		p->handle = ASE_NULL;
 		p->next = ASE_NULL;
-		p->custom_data = run->extio.custom_data;
+		p->data = run->extio.data;
 
 		p->in.buf[0] = ASE_T('\0');
 		p->in.pos = 0;
@@ -492,7 +492,7 @@ int ase_awk_writeextio_str (
 		p->mode = extio_mode;
 		p->handle = ASE_NULL;
 		p->next = ASE_NULL;
-		p->custom_data = run->extio.custom_data;
+		p->data = run->extio.data;
 
 		p->out.eof = ASE_FALSE;
 		p->out.eos = ASE_FALSE;

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 279 2008-07-21 05:27:34Z baconevi $ 
+ * $Id: awk.c 332 2008-08-18 11:21:48Z baconevi $ 
  *
  * {License}
  */
@@ -25,19 +25,25 @@ static void free_bfn (void* awk, void* afn);
 	} while (0)
 
 ase_awk_t* ase_awk_open (
-	ase_mmgr_t* mmgr, ase_size_t extension, ase_fuser_t mmgr_fuser)
+	ase_mmgr_t* mmgr, ase_size_t extension, 
+	void (*initializer) (ase_awk_t*))
 {
 	ase_awk_t* awk;
 
-	ASE_ASSERT (mmgr != ASE_NULL);
-	ASE_ASSERT (mmgr->malloc != ASE_NULL);
-	ASE_ASSERT (mmgr->free != ASE_NULL);
+	if (mmgr == ASE_NULL) 
+	{
+		mmgr = ASE_MMGR_GETDFL();
+
+		ASE_ASSERTX (mmgr != ASE_NULL,
+			"Set the memory manager with ASE_MMGR_SETDFL()");
+
+		if (mmgr == ASE_NULL) return ASE_NULL;
+	}
 
 	awk = ASE_MALLOC (mmgr, ASE_SIZEOF(ase_awk_t) + extension);
 	if (awk == ASE_NULL) return ASE_NULL;
 
-	ase_memset (awk, 0, ASE_SIZEOF(ase_awk_t) + extension);
-	if (mmgr_fuser) mmgr = mmgr_fuser (mmgr, awk + 1);
+	ASE_MEMSET (awk, 0, ASE_SIZEOF(ase_awk_t) + extension);
 	awk->mmgr = mmgr;
 
 	if (ase_str_open (&awk->token.name, 128, mmgr) == ASE_NULL) 
@@ -214,6 +220,7 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
+	if (initializer) initializer (awk);
 	return awk;
 }
 
@@ -278,7 +285,7 @@ int ase_awk_clear (ase_awk_t* awk)
 {
 	awk->stopall = ASE_FALSE;
 
-	ase_memset (&awk->src.ios, 0, ASE_SIZEOF(awk->src.ios));
+	ASE_MEMSET (&awk->src.ios, 0, ASE_SIZEOF(awk->src.ios));
 	awk->src.lex.curc = ASE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
 	awk->src.lex.line = 1;
@@ -347,14 +354,24 @@ int ase_awk_clear (ase_awk_t* awk)
 	return 0;
 }
 
+void* ase_awk_getextension (ase_awk_t* awk)
+{
+	return (void*)(awk + 1);
+}
+
 ase_mmgr_t* ase_awk_getmmgr (ase_awk_t* awk)
 {
 	return awk->mmgr;
 }
 
-void* ase_awk_getextension (ase_awk_t* awk)
+void ase_awk_setmmgr (ase_awk_t* awk, ase_mmgr_t* mmgr)
 {
-	return (void*)(awk + 1);
+	awk->mmgr = mmgr;
+}
+
+ase_ccls_t* ase_awk_getccls (ase_awk_t* awk)
+{
+	return awk->ccls;
 }
 
 void ase_awk_setccls (ase_awk_t* awk, ase_ccls_t* ccls)

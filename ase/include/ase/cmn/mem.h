@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 331 2008-08-17 14:51:40Z baconevi $
+ * $Id: mem.h 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -11,22 +11,31 @@
 #include <ase/macros.h>
 
 /* gets a pointer to the default memory manager */
-#define ASE_MMGR_GETDFLMMGR()  (ase_mmgr)
+#define ASE_MMGR_GETDFL()  (ase_mmgr)
 
 /* sets a pointer to the default memory manager */
-#define ASE_MMGR_SETDFLMMGR(m) ((ase_mmgr)=(m))
+#define ASE_MMGR_SETDFL(m) ((ase_mmgr)=(m))
 
 /* allocate a memory block */
 #define ASE_MMGR_ALLOC(mmgr,size) \
-	(mmgr)->malloc((mmgr)->custom_data,size)
+	(mmgr)->malloc((mmgr)->data,size)
 
 /* reallocate a memory block */
 #define ASE_MMGR_REALLOC(mmgr,ptr,size) \
-	(mmgr)->realloc((mmgr)->custom_data,ptr,size)
+	(mmgr)->realloc((mmgr)->data,ptr,size)
 
 /* free a memory block */
 #define ASE_MMGR_FREE(mmgr,ptr) \
-	(mmgr)->free((mmgr)->custom_data,ptr)
+	(mmgr)->free((mmgr)->data,ptr)
+
+/* define alias for ASE_MMGR_ALLOC */
+#define ASE_MALLOC(mmgr,size) ASE_MMGR_ALLOC(mmgr,size)
+
+/* define alias for ASE_MMGR_REALLOC */
+#define ASE_REALLOC(mmgr,ptr,size) ASE_MMGR_REALLOC(mmgr,ptr,size)
+
+/* define alias for ASE_MMGR_FREE */
+#define ASE_FREE(mmgr,ptr) ASE_MMGR_FREE(mmgr,ptr)
 
 #ifdef __cplusplus
 extern "C" {

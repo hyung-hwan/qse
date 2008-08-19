@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: rec.c 332 2008-08-18 11:21:48Z baconevi $
  *
  * {License}
  */
@@ -320,7 +320,7 @@ static int recomp_record_fields (
 			}
 			if (run->inrec.flds != ASE_NULL)
 			{
-				ase_memcpy (tmp, run->inrec.flds, 
+				ASE_MEMCPY (tmp, run->inrec.flds, 
 					ASE_SIZEOF(*run->inrec.flds)*run->inrec.maxflds);
 				ASE_AWK_FREE (run->awk, run->inrec.flds);
 			}
