@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: macros.h 334 2008-08-19 11:00:26Z baconevi $
  *
  * {License}
  */
@@ -129,20 +129,6 @@
 	#define ASE_ASSERTX(expr,desc) (void)((expr) || \
 		(ase_assert_failed (ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
 #endif
-
-#define ASE_ISUPPER(ccls,c)  (ccls)->is_upper((ccls)->data,c)
-#define ASE_ISLOWER(ccls,c)  (ccls)->is_lower((ccls)->data,c)
-#define ASE_ISALPHA(ccls,c)  (ccls)->is_alpha((ccls)->data,c)
-#define ASE_ISDIGIT(ccls,c)  (ccls)->is_digit((ccls)->data,c)
-#define ASE_ISXDIGIT(ccls,c) (ccls)->is_xdigit((ccls)->data,c)
-#define ASE_ISALNUM(ccls,c)  (ccls)->is_alnum((ccls)->data,c)
-#define ASE_ISSPACE(ccls,c)  (ccls)->is_space((ccls)->data,c)
-#define ASE_ISPRINT(ccls,c)  (ccls)->is_print((ccls)->data,c)
-#define ASE_ISGRAPH(ccls,c)  (ccls)->is_graph((ccls)->data,c)
-#define ASE_ISCNTRL(ccls,c)  (ccls)->is_cntrl((ccls)->data,c)
-#define ASE_ISPUNCT(ccls,c)  (ccls)->is_punct((ccls)->data,c)
-#define ASE_TOUPPER(ccls,c)  (ccls)->to_upper((ccls)->data,c)
-#define ASE_TOLOWER(ccls,c)  (ccls)->to_lower((ccls)->data,c)
 
 #ifdef __cplusplus
 	#define ASE_BEGIN_NAMESPACE(x)    namespace x {
