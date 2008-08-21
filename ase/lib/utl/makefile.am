@@ -2,5 +2,5 @@
 AM_CFLAGS = -I$(top_builddir)/include
 
 lib_LTLIBRARIES = libaseutl.la
-libaseutl_la_SOURCES = helper.c assert.c ctype.c getopt.c http.c main.c stdio.c
+libaseutl_la_SOURCES = assert.c getopt.c http.c main.c stdio.c
 libaseutl_la_LDFLAGS = -version-info 1:0:0
