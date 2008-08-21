@@ -1,10 +1,11 @@
 /*
- * $Id: str_bas.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: str_bas.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/str.h>
+#include "chr.h"
 #include "mem.h"
 
 ase_size_t ase_strlen (const ase_char_t* str)
@@ -180,13 +181,13 @@ int ase_strxncmp (
 int ase_strcasecmp (
 	const ase_char_t* s1, const ase_char_t* s2, ase_ccls_t* ccls)
 {
-	while (ASE_TOUPPER(ccls,*s1) == ASE_TOUPPER(ccls,*s2)) 
+	while (ASE_CCLS_TOUPPER(ccls,*s1) == ASE_CCLS_TOUPPER(ccls,*s2)) 
 	{
 		if (*s1 == ASE_C('\0')) return 0;
 		s1++, s2++;
 	}
 
-	return (ASE_TOUPPER(ccls,*s1) > ASE_TOUPPER(ccls,*s2))? 1: -1;
+	return (ASE_CCLS_TOUPPER(ccls,*s1) > ASE_CCLS_TOUPPER(ccls,*s2))? 1: -1;
 }
 
 int ase_strxncasecmp (
@@ -199,10 +200,10 @@ int ase_strxncasecmp (
 
 	while (s1 < end1)
 	{
-		c1 = ASE_TOUPPER (ccls, *s1); 
+		c1 = ASE_CCLS_TOUPPER (ccls, *s1); 
 		if (s2 < end2) 
 		{
-			c2 = ASE_TOUPPER (ccls, *s2);
+			c2 = ASE_CCLS_TOUPPER (ccls, *s2);
 			if (c1 > c2) return 1;
 			if (c1 < c2) return -1;
 		}

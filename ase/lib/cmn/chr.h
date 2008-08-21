@@ -9,14 +9,4 @@
 
 #include <ase/cmn/chr.h>
 
-#ifdef USE_STDC
-
-#include <ctype.h>
-
-#else
-
-#define ASE_ISALPHA(c) ase_isalpha(c)
-
-#endif
-
 #endif

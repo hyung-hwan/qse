@@ -2,7 +2,7 @@
  * $Id$
  */
 
-#include "awk_i.h"
+#include "awk.h"
 #include <ase/utl/stdio.h>
 #include <ase/utl/helper.h>
 #include <math.h>

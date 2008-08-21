@@ -4,11 +4,12 @@
 
 #include <ase/lsp/lsp.h>
 
-#include <ase/utl/ctype.h>
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
 #include <ase/utl/getopt.h>
+
 #include <ase/cmn/mem.h>
+#include <ase/cmn/chr.h>
 #include <ase/cmn/str.h>
 
 #include <string.h>
@@ -128,71 +129,6 @@ static void custom_lsp_free (void* custom, void* ptr)
 #endif
 }
 
-static ase_bool_t custom_lsp_isupper (void* custom, ase_cint_t c)  
-{ 
-	return ase_isupper (c); 
-}
-
-static ase_bool_t custom_lsp_islower (void* custom, ase_cint_t c)  
-{ 
-	return ase_islower (c); 
-}
-
-static ase_bool_t custom_lsp_isalpha (void* custom, ase_cint_t c)  
-{ 
-	return ase_isalpha (c); 
-}
-
-static ase_bool_t custom_lsp_isdigit (void* custom, ase_cint_t c)  
-{ 
-	return ase_isdigit (c); 
-}
-
-static ase_bool_t custom_lsp_isxdigit (void* custom, ase_cint_t c) 
-{ 
-	return ase_isxdigit (c); 
-}
-
-static ase_bool_t custom_lsp_isalnum (void* custom, ase_cint_t c)
-{ 
-	return ase_isalnum (c); 
-}
-
-static ase_bool_t custom_lsp_isspace (void* custom, ase_cint_t c)
-{ 
-	return ase_isspace (c); 
-}
-
-static ase_bool_t custom_lsp_isprint (void* custom, ase_cint_t c)
-{ 
-	return ase_isprint (c); 
-}
-
-static ase_bool_t custom_lsp_isgraph (void* custom, ase_cint_t c)
-{
-	return ase_isgraph (c); 
-}
-
-static ase_bool_t custom_lsp_iscntrl (void* custom, ase_cint_t c)
-{
-	return ase_iscntrl (c);
-}
-
-static ase_bool_t custom_lsp_ispunct (void* custom, ase_cint_t c)
-{
-	return ase_ispunct (c);
-}
-
-static ase_cint_t custom_lsp_toupper (void* custom, ase_cint_t c)
-{
-	return ase_toupper (c);
-}
-
-static ase_cint_t custom_lsp_tolower (void* custom, ase_cint_t c)
-{
-	return ase_tolower (c);
-}
-
 static int custom_lsp_sprintf (
 	void* custom, ase_char_t* buf, ase_size_t size, 
 	const ase_char_t* fmt, ...)
@@ -295,7 +231,7 @@ int lsp_main (int argc, ase_char_t* argv[])
 	
 	ase_memset (&prmfns, 0, ASE_SIZEOF(prmfns));
 
-	prmfns.mmgr.malloc  = custom_lsp_malloc;
+	prmfns.mmgr.alloc  = custom_lsp_malloc;
 	prmfns.mmgr.realloc = custom_lsp_realloc;
 	prmfns.mmgr.free    = custom_lsp_free;
 #ifdef _WIN32
@@ -311,20 +247,8 @@ int lsp_main (int argc, ase_char_t* argv[])
 	prmfns.mmgr.data = ASE_NULL;
 #endif
 
-	prmfns.ccls.is_upper  = custom_lsp_isupper;
-	prmfns.ccls.is_lower  = custom_lsp_islower;
-	prmfns.ccls.is_alpha  = custom_lsp_isalpha;
-	prmfns.ccls.is_digit  = custom_lsp_isdigit;
-	prmfns.ccls.is_xdigit = custom_lsp_isxdigit;
-	prmfns.ccls.is_alnum  = custom_lsp_isalnum;
-	prmfns.ccls.is_space  = custom_lsp_isspace;
-	prmfns.ccls.is_print  = custom_lsp_isprint;
-	prmfns.ccls.is_graph  = custom_lsp_isgraph;
-	prmfns.ccls.is_cntrl  = custom_lsp_iscntrl;
-	prmfns.ccls.is_punct  = custom_lsp_ispunct;
-	prmfns.ccls.to_upper  = custom_lsp_toupper;
-	prmfns.ccls.to_lower  = custom_lsp_tolower;
-	prmfns.ccls.data  = ASE_NULL;
+	/* TODO: change prmfns ...... lsp_oepn... etc */
+	ase_memcpy (&prmfns.ccls, ASE_CCLS_GETDFL(), ASE_SIZEOF(prmfns.ccls));
 
 	prmfns.misc.sprintf = custom_lsp_sprintf;
 	prmfns.misc.dprintf = custom_lsp_dprintf;

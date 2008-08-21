@@ -1,5 +1,5 @@
 /*
- * $Id: lsp.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: lsp.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
@@ -9,7 +9,7 @@
 #define Library
 #endif
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 static int __add_builtin_prims (ase_lsp_t* lsp);
 
@@ -21,6 +21,7 @@ ase_lsp_t* ase_lsp_open (
 
 	if (prmfns == ASE_NULL) return ASE_NULL;
 
+/*
 	if (prmfns->mmgr.malloc == ASE_NULL || 
 	    prmfns->mmgr.realloc == ASE_NULL || 
 	    prmfns->mmgr.free == ASE_NULL) return ASE_NULL;
@@ -38,6 +39,7 @@ ase_lsp_t* ase_lsp_open (
 	    prmfns->ccls.is_punct  == ASE_NULL ||
 	    prmfns->ccls.to_upper  == ASE_NULL ||
 	    prmfns->ccls.to_lower  == ASE_NULL) return ASE_NULL;
+*/
 
 	if (prmfns->misc.sprintf == ASE_NULL || 
 	    prmfns->misc.dprintf == ASE_NULL) return ASE_NULL;
@@ -45,7 +47,7 @@ ase_lsp_t* ase_lsp_open (
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
 	lsp = (ase_lsp_t*) malloc (ASE_SIZEOF(ase_lsp_t));
 #else
-	lsp = (ase_lsp_t*) prmfns->mmgr.malloc (
+	lsp = (ase_lsp_t*) prmfns->mmgr.alloc (
 		prmfns->mmgr.data, ASE_SIZEOF(ase_lsp_t));
 #endif
 	if (lsp == ASE_NULL) return ASE_NULL;

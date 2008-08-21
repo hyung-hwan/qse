@@ -1,10 +1,10 @@
 /*
- * $Id: func.c 270 2008-07-20 05:53:29Z baconevi $
+ * $Id: func.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "awk_i.h"
+#include "awk.h"
 
 static int bfn_close   (ase_awk_run_t*, const ase_char_t*, ase_size_t);
 static int bfn_fflush  (ase_awk_run_t*, const ase_char_t*, ase_size_t);
@@ -71,7 +71,7 @@ void* ase_awk_addfunc (
 
 	spec_len = (arg_spec == ASE_NULL)? 0: ase_strlen(arg_spec);
 
-	bfn = (ase_awk_bfn_t*) ASE_AWK_MALLOC (awk, 
+	bfn = (ase_awk_bfn_t*) ASE_AWK_ALLOC (awk, 
 		ASE_SIZEOF(ase_awk_bfn_t) + 
 		(name_len+1) * ASE_SIZEOF(ase_char_t) +
 		(spec_len+1) * ASE_SIZEOF(ase_char_t));

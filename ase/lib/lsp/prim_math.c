@@ -1,10 +1,10 @@
 /*
- * $Id: prim_math.c 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: prim_math.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 {

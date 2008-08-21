@@ -1,10 +1,10 @@
 /*
- * $Id: prim.c 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: prim.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 static int __add_prim (ase_lsp_mem_t* mem, 
 	const ase_char_t* name, ase_size_t len, 

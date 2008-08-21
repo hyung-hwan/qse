@@ -1,10 +1,10 @@
 /*
- * $Id: extio.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: extio.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "awk_i.h"
+#include "awk.h"
 
 enum
 {
@@ -114,7 +114,7 @@ int ase_awk_readextio (
 
 	if (p == ASE_NULL)
 	{
-		p = (ase_awk_extio_t*) ASE_AWK_MALLOC (
+		p = (ase_awk_extio_t*) ASE_AWK_ALLOC (
 			run->awk, ASE_SIZEOF(ase_awk_extio_t));
 		if (p == ASE_NULL)
 		{
@@ -469,7 +469,7 @@ int ase_awk_writeextio_str (
 	/* if there is not corresponding extio for name, create one */
 	if (p == ASE_NULL)
 	{
-		p = (ase_awk_extio_t*) ASE_AWK_MALLOC (
+		p = (ase_awk_extio_t*) ASE_AWK_ALLOC (
 			run->awk, ASE_SIZEOF(ase_awk_extio_t));
 		if (p == ASE_NULL)
 		{

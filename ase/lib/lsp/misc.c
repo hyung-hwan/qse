@@ -1,10 +1,10 @@
 /*
- * $Id: misc.c 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: misc.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 ase_long_t ase_lsp_strxtolong (
 	ase_lsp_t* lsp, const ase_char_t* str, ase_size_t len,

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: awk.h 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
@@ -871,7 +871,7 @@ int ase_awk_setrec (ase_awk_run_t* run, ase_size_t idx, const ase_char_t* str, a
  * RETURNS
  *   the pointer to the memory area allocated on success, ASE_NULL on failure
  */
-void* ase_awk_malloc (
+void* ase_awk_alloc (
 	/* the pointer to an ase_awk_t instance */
 	ase_awk_t* awk, 
 	/* the size of memory to allocate in bytes */

@@ -1,10 +1,10 @@
 /*
- * $Id: val.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: val.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "awk_i.h"
+#include "awk.h"
 
 #ifdef DEBUG_VAL
 #include <ase/utl/stdio.h>
@@ -103,7 +103,7 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 	}
 	else
 	{
-		val = (ase_awk_val_int_t*) ASE_AWK_MALLOC (
+		val = (ase_awk_val_int_t*) ASE_AWK_ALLOC (
 			run->awk, ASE_SIZEOF(ase_awk_val_int_t));
 		if (val == ASE_NULL) 
 		{
@@ -124,10 +124,10 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 		 * aligned memory access - using the code commented out
 		 * will cause a fault on such a platform */
 
-		/* c = ASE_AWK_MALLOC (run->awk, 
+		/* c = ASE_AWK_ALLOC (run->awk, 
 			ASE_SIZEOF(ase_awk_val_chunk_t)+
 			ASE_SIZEOF(ase_awk_val_int_t)*CHUNKSIZE); */
-		c = ASE_AWK_MALLOC (run->awk, ASE_SIZEOF(ase_awk_val_ichunk_t));
+		c = ASE_AWK_ALLOC (run->awk, ASE_SIZEOF(ase_awk_val_ichunk_t));
 		if (c == ASE_NULL)
 		{
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -178,7 +178,7 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 	}
 	else
 	{
-		val = (ase_awk_val_real_t*) ASE_AWK_MALLOC (
+		val = (ase_awk_val_real_t*) ASE_AWK_ALLOC (
 			run->awk, ASE_SIZEOF(ase_awk_val_real_t));
 		if (val == ASE_NULL)
 		{
@@ -194,10 +194,10 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 		ase_awk_val_real_t* x;
 		ase_size_t i;
 
-		/* c = ASE_AWK_MALLOC (run->awk, 
+		/* c = ASE_AWK_ALLOC (run->awk, 
 			ASE_SIZEOF(ase_awk_val_chunk_t)+
 			ASE_SIZEOF(ase_awk_val_real_t)*CHUNKSIZE); */
-		c = ASE_AWK_MALLOC (run->awk, ASE_SIZEOF(ase_awk_val_rchunk_t));
+		c = ASE_AWK_ALLOC (run->awk, ASE_SIZEOF(ase_awk_val_rchunk_t));
 		if (c == ASE_NULL)
 		{
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -268,7 +268,7 @@ ase_awk_val_t* ase_awk_makestrval (
 		rlen = 64;
 	}*/
 	
-	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
+	val = (ase_awk_val_str_t*) ASE_AWK_ALLOC (
 		run->awk, 
 		ASE_SIZEOF(ase_awk_val_str_t) + 
 		(rlen+1)*ASE_SIZEOF(ase_char_t));
@@ -297,7 +297,7 @@ ase_awk_val_t* ase_awk_makestrval_nodup (
 {
 	ase_awk_val_str_t* val;
 
-	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
+	val = (ase_awk_val_str_t*) ASE_AWK_ALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
 	if (val == ASE_NULL) 
 	{
@@ -339,7 +339,7 @@ ase_awk_val_t* ase_awk_makestrval2 (
 		rlen = 64;
 	}*/
 
-	val = (ase_awk_val_str_t*) ASE_AWK_MALLOC (
+	val = (ase_awk_val_str_t*) ASE_AWK_ALLOC (
 		run->awk, 
 		ASE_SIZEOF(ase_awk_val_str_t) +
 		(rlen+1)*ASE_SIZEOF(ase_char_t));
@@ -370,7 +370,7 @@ ase_awk_val_t* ase_awk_makerexval (
 {
 	ase_awk_val_rex_t* val;
 
-	val = (ase_awk_val_rex_t*) ASE_AWK_MALLOC (
+	val = (ase_awk_val_rex_t*) ASE_AWK_ALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_rex_t) + 
 		(ASE_SIZEOF(*buf)*len+1) + ASE_REX_LEN(code));
 	if (val == ASE_NULL) return ASE_NULL;
@@ -390,7 +390,7 @@ ase_awk_val_t* ase_awk_makerexval (
 	ase_strncpy (val->buf, buf, len);
 
 	/*
-	val->code = ASE_AWK_MALLOC (run->awk, ASE_REX_LEN(code));
+	val->code = ASE_AWK_ALLOC (run->awk, ASE_REX_LEN(code));
 	if (val->code == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val->buf);
@@ -430,7 +430,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 {
 	ase_awk_val_map_t* val;
 
-	val = (ase_awk_val_map_t*) ASE_AWK_MALLOC (
+	val = (ase_awk_val_map_t*) ASE_AWK_ALLOC (
 		run->awk, ASE_SIZEOF(ase_awk_val_map_t));
 	if (val == ASE_NULL) 
 	{
@@ -462,7 +462,7 @@ ase_awk_val_t* ase_awk_makerefval (ase_awk_run_t* run, int id, ase_awk_val_t** a
 	}
 	else
 	{
-		val = (ase_awk_val_ref_t*) ASE_AWK_MALLOC (
+		val = (ase_awk_val_ref_t*) ASE_AWK_ALLOC (
 			run->awk, ASE_SIZEOF(ase_awk_val_ref_t));
 		if (val == ASE_NULL)
 		{
@@ -790,7 +790,7 @@ static ase_char_t* val_int_to_str (
 		/* handle zero */
 		if (buf == ASE_NULL)
 		{
-			tmp = ASE_AWK_MALLOC (
+			tmp = ASE_AWK_ALLOC (
 				run->awk, 2 * ASE_SIZEOF(ase_char_t));
 			if (tmp == ASE_NULL)
 			{
@@ -843,7 +843,7 @@ static ase_char_t* val_int_to_str (
 
 	if (buf == ASE_NULL)
 	{
-		tmp = ASE_AWK_MALLOC (
+		tmp = ASE_AWK_ALLOC (
 			run->awk, (rlen + 1) * ASE_SIZEOF(ase_char_t));
 		if (tmp == ASE_NULL)
 		{

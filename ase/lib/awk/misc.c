@@ -1,14 +1,14 @@
 /*
- * $Id: misc.c 271 2008-07-20 12:42:39Z baconevi $
+ * $Id: misc.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "awk_i.h"
+#include "awk.h"
 
-void* ase_awk_malloc (ase_awk_t* awk, ase_size_t size)
+void* ase_awk_alloc (ase_awk_t* awk, ase_size_t size)
 {
-	return ASE_AWK_MALLOC (awk, size);
+	return ASE_AWK_ALLOC (awk, size);
 }
 
 void ase_awk_free (ase_awk_t* awk, void* ptr)

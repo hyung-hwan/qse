@@ -1,10 +1,10 @@
 /*
- * $Id: env.c 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: env.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 /* TODO: make the frame hash accessible */
 
@@ -15,7 +15,7 @@ static ase_lsp_assoc_t* __new_assoc (
 	ase_lsp_assoc_t* assoc;
 
 	assoc = (ase_lsp_assoc_t*) 
-		ASE_LSP_MALLOC (lsp, sizeof(ase_lsp_assoc_t));
+		ASE_LSP_ALLOC (lsp, sizeof(ase_lsp_assoc_t));
 	if (assoc == ASE_NULL) 
 	{
 		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
@@ -35,7 +35,7 @@ ase_lsp_frame_t* ase_lsp_newframe (ase_lsp_t* lsp)
 	ase_lsp_frame_t* frame;
 
 	frame = (ase_lsp_frame_t*) 
-		ASE_LSP_MALLOC (lsp, sizeof(ase_lsp_frame_t));
+		ASE_LSP_ALLOC (lsp, sizeof(ase_lsp_frame_t));
 	if (frame == ASE_NULL) 
 	{
 		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
@@ -117,7 +117,7 @@ ase_lsp_tlink_t* ase_lsp_pushtmp (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 	ase_lsp_tlink_t* tlink;
 
 	tlink = (ase_lsp_tlink_t*) 
-		ASE_LSP_MALLOC (lsp, sizeof(ase_lsp_tlink_t));
+		ASE_LSP_ALLOC (lsp, sizeof(ase_lsp_tlink_t));
 	if (tlink == ASE_NULL) 
 	{
 		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);

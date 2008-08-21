@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 332 2008-08-18 11:21:48Z baconevi $ 
+ * $Id: awk.c 337 2008-08-20 09:17:25Z baconevi $ 
  *
  * {License}
  */
@@ -9,7 +9,7 @@
 #define Library
 #endif
 
-#include "awk_i.h"
+#include "awk.h"
 
 static void free_word (void* awk, void* ptr);
 static void free_afn (void* awk, void* afn);
@@ -40,7 +40,7 @@ ase_awk_t* ase_awk_open (
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	awk = ASE_MALLOC (mmgr, ASE_SIZEOF(ase_awk_t) + extension);
+	awk = ASE_ALLOC (mmgr, ASE_SIZEOF(ase_awk_t) + extension);
 	if (awk == ASE_NULL) return ASE_NULL;
 
 	ASE_MEMSET (awk, 0, ASE_SIZEOF(ase_awk_t) + extension);
@@ -473,7 +473,7 @@ int ase_awk_setword (ase_awk_t* awk,
 	}
 
 	/* set the word */
-	vn = (ase_cstr_t*) ASE_AWK_MALLOC (
+	vn = (ase_cstr_t*) ASE_AWK_ALLOC (
 		awk, ASE_SIZEOF(ase_cstr_t)+((nlen+1)*ASE_SIZEOF(*nkw)));
 	if (vn == ASE_NULL) 
 	{
@@ -484,7 +484,7 @@ int ase_awk_setword (ase_awk_t* awk,
 	vn->ptr = (const ase_char_t*)(vn + 1);
 	ase_strncpy ((ase_char_t*)vn->ptr, nkw, nlen);
 
-	vo = (ase_cstr_t*)ASE_AWK_MALLOC (
+	vo = (ase_cstr_t*) ASE_AWK_ALLOC (
 		awk, ASE_SIZEOF(ase_cstr_t)+((olen+1)*ASE_SIZEOF(*okw)));
 	if (vo == ASE_NULL)
 	{

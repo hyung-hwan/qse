@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 333 2008-08-19 03:16:02Z baconevi $
+ * $Id: awk.c 337 2008-08-20 09:17:25Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -1114,7 +1114,7 @@ static ase_awk_t* open_awk (void)
 	ase_mmgr_t mmgr;
 
 	memset (&mmgr, 0, ASE_SIZEOF(mmgr));
-	mmgr.malloc  = custom_awk_malloc;
+	mmgr.alloc   = custom_awk_malloc;
 	mmgr.realloc = custom_awk_realloc;
 	mmgr.free    = custom_awk_free;
 

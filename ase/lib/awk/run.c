@@ -1,10 +1,10 @@
 /*
- * $Id: run.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: run.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "awk_i.h"
+#include "awk.h"
 
 #ifdef DEBUG_RUN
 #include <ase/utl/stdio.h>
@@ -638,7 +638,7 @@ int ase_awk_run (ase_awk_t* awk,
 	}
 	
 	/* allocate the storage for the run object */
-	run = (ase_awk_run_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_run_t));
+	run = (ase_awk_run_t*) ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_run_t));
 	if (run == ASE_NULL)
 	{
 		/* if it fails, the failure is reported thru 
@@ -802,7 +802,7 @@ static int init_run (
 	}
 
 	run->format.tmp.ptr = (ase_char_t*)
-		ASE_AWK_MALLOC (run->awk, 4096*ASE_SIZEOF(ase_char_t*));
+		ASE_AWK_ALLOC (run->awk, 4096*ASE_SIZEOF(ase_char_t*));
 	if (run->format.tmp.ptr == ASE_NULL)
 	{
 		ase_map_close (run->named);
@@ -817,7 +817,7 @@ static int init_run (
 
 	if (run->awk->tree.chain_size > 0)
 	{
-		run->pattern_range_state = (ase_byte_t*) ASE_AWK_MALLOC (
+		run->pattern_range_state = (ase_byte_t*) ASE_AWK_ALLOC (
 			run->awk, run->awk->tree.chain_size*ASE_SIZEOF(ase_byte_t));
 		if (run->pattern_range_state == ASE_NULL)
 		{
@@ -1296,7 +1296,7 @@ static int run_main (
 				ase_awk_nde_str_t* tmp, * tmp2;
 
 				i--;
-				tmp = (ase_awk_nde_str_t*) ASE_AWK_MALLOC (
+				tmp = (ase_awk_nde_str_t*) ASE_AWK_ALLOC (
 					run->awk, ASE_SIZEOF(*tmp));
 				if (tmp == ASE_NULL)
 				{
@@ -6289,7 +6289,7 @@ static int __raw_push (ase_awk_run_t* run, void* val)
 		}
 		else
 		{
-			tmp = (void**) ASE_AWK_MALLOC (
+			tmp = (void**) ASE_AWK_ALLOC (
 				run->awk, n * ASE_SIZEOF(void*));
 			if (tmp == ASE_NULL) return -1;
 			if (run->stack != ASE_NULL)
@@ -6575,7 +6575,7 @@ ase_char_t* ase_awk_format (
 			(buf)->ptr = ASE_NULL; \
 		} \
 		(buf)->len += (buf)->inc; \
-		(buf)->ptr = (ase_char_t*)ASE_AWK_MALLOC ( \
+		(buf)->ptr = (ase_char_t*)ASE_AWK_ALLOC ( \
 			run->awk, (buf)->len * ASE_SIZEOF(ase_char_t)); \
 		if ((buf)->ptr == ASE_NULL) (buf)->len = 0; \
 	} while (0) 
