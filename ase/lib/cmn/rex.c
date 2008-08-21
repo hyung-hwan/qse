@@ -1,11 +1,12 @@
 /*
- * $Id: rex.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: rex.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/rex.h>
 #include "mem.h"
+#include "chr.h"
 
 #ifdef DEBUG_REX
 #include <ase/utl/stdio.h>
@@ -1380,7 +1381,7 @@ static const ase_byte_t* match_ord_char (
 	ubound = cp->ubound;
 
 	cc = *(ase_char_t*)p; p += ASE_SIZEOF(cc);
-	if (matcher->ignorecase) cc = ASE_TOUPPER(matcher->ccls, cc);
+	if (matcher->ignorecase) cc = ASE_CCLS_TOUPPER(matcher->ccls, cc);
 
 	/* merge the same consecutive codes 
 	 * for example, a{1,10}a{0,10} is shortened to a{1,20} */
@@ -1389,7 +1390,7 @@ static const ase_byte_t* match_ord_char (
 		while (p < mat->branch_end &&
 		       cp->cmd == ((const code_t*)p)->cmd)
 		{
-			if (ASE_TOUPPER (matcher->ccls, *(ase_char_t*)(p+ASE_SIZEOF(*cp))) != cc) break;
+			if (ASE_CCLS_TOUPPER (matcher->ccls, *(ase_char_t*)(p+ASE_SIZEOF(*cp))) != cc) break;
 
 			lbound += ((const code_t*)p)->lbound;
 			ubound += ((const code_t*)p)->ubound;
@@ -1431,7 +1432,7 @@ static const ase_byte_t* match_ord_char (
 				ASE_T("match_ord_char: <ignorecase> %c %c\n"),
 				cc, mat->match_ptr[si]);
 #endif
-			if (cc != ASE_TOUPPER (matcher->ccls, mat->match_ptr[si])) break;
+			if (cc != ASE_CCLS_TOUPPER (matcher->ccls, mat->match_ptr[si])) break;
 			si++;
 		}
 	}
@@ -1494,7 +1495,7 @@ static const ase_byte_t* match_charset (
 		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 
 		c = mat->match_ptr[si];
-		if (matcher->ignorecase) c = ASE_TOUPPER(matcher->ccls, c);
+		if (matcher->ignorecase) c = ASE_CCLS_TOUPPER(matcher->ccls, c);
 
 		n = __test_charset (matcher, p, cshdr->csc, c);
 		if (cp->negate) n = !n;
@@ -1759,7 +1760,7 @@ static ase_bool_t __test_charset (
 		{
 			c1 = *(const ase_char_t*)p;
 			if (matcher->ignorecase) 
-				c1 = ASE_TOUPPER(matcher->ccls, c1);
+				c1 = ASE_CCLS_TOUPPER(matcher->ccls, c1);
 		#ifdef DEBUG_REX
 			ase_dprintf (
 				ASE_T("match_charset: <one> %c %c\n"), c, c1);
@@ -1774,8 +1775,8 @@ static ase_bool_t __test_charset (
 
 			if (matcher->ignorecase) 
 			{
-				c1 = ASE_TOUPPER(matcher->ccls, c1);
-				c2 = ASE_TOUPPER(matcher->ccls, c2);
+				c1 = ASE_CCLS_TOUPPER(matcher->ccls, c1);
+				c2 = ASE_CCLS_TOUPPER(matcher->ccls, c2);
 			}
 		#ifdef DEBUG_REX
 			ase_dprintf (
@@ -1808,12 +1809,12 @@ static ase_bool_t __test_charset (
 
 static ase_bool_t cc_isalnum (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISALNUM (ccls, c);
+	return ASE_CCLS_ISALNUM (ccls, c);
 }
 
 static ase_bool_t cc_isalpha (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISALPHA (ccls, c);
+	return ASE_CCLS_ISALPHA (ccls, c);
 }
 
 static ase_bool_t cc_isblank (ase_ccls_t* ccls, ase_char_t c)
@@ -1823,47 +1824,47 @@ static ase_bool_t cc_isblank (ase_ccls_t* ccls, ase_char_t c)
 
 static ase_bool_t cc_iscntrl (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISCNTRL (ccls, c);
+	return ASE_CCLS_ISCNTRL (ccls, c);
 }
 
 static ase_bool_t cc_isdigit (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISDIGIT (ccls, c);
+	return ASE_CCLS_ISDIGIT (ccls, c);
 }
 
 static ase_bool_t cc_isgraph (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISGRAPH (ccls, c);
+	return ASE_CCLS_ISGRAPH (ccls, c);
 }
 
 static ase_bool_t cc_islower (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISLOWER (ccls, c);
+	return ASE_CCLS_ISLOWER (ccls, c);
 }
 
 static ase_bool_t cc_isprint (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISPRINT (ccls, c);
+	return ASE_CCLS_ISPRINT (ccls, c);
 }
 
 static ase_bool_t cc_ispunct (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISPUNCT (ccls, c);
+	return ASE_CCLS_ISPUNCT (ccls, c);
 }
 
 static ase_bool_t cc_isspace (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISSPACE (ccls, c);
+	return ASE_CCLS_ISSPACE (ccls, c);
 }
 
 static ase_bool_t cc_isupper (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISUPPER (ccls, c);
+	return ASE_CCLS_ISUPPER (ccls, c);
 }
 
 static ase_bool_t cc_isxdigit (ase_ccls_t* ccls, ase_char_t c)
 {
-	return ASE_ISXDIGIT (ccls, c);
+	return ASE_CCLS_ISXDIGIT (ccls, c);
 }
 
 #if 0

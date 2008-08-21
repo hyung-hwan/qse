@@ -1,16 +1,16 @@
 /*
- * $Id: tab.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: tab.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "awk_i.h"
+#include "awk.h"
 
 ase_awk_tab_t* ase_awk_tab_open (ase_awk_tab_t* tab, ase_awk_t* awk)
 {
 	if (tab == ASE_NULL) 
 	{
-		tab = (ase_awk_tab_t*) ASE_AWK_MALLOC (
+		tab = (ase_awk_tab_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_tab_t));
 		if (tab == ASE_NULL) return ASE_NULL;
 		tab->__dynamic = ASE_TRUE;
@@ -68,7 +68,7 @@ ase_awk_tab_t* ase_awk_tab_setcapa (ase_awk_tab_t* tab, ase_size_t capa)
 		}
 		else
 		{
-			tmp = ASE_AWK_MALLOC (
+			tmp = ASE_AWK_ALLOC (
 				tab->awk, ASE_SIZEOF(*tab->buf) * capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
 			if (tab->buf != ASE_NULL) 

@@ -32,4 +32,8 @@
 
 #endif
 
+#define ASE_MALLOC(mmgr,size) ASE_MMGR_ALLOC(mmgr,size)
+#define ASE_REALLOC(mmgr,ptr,size) ASE_MMGR_REALLOC(mmgr,ptr,size)
+#define ASE_FREE(mmgr,ptr) ASE_MMGR_FREE(mmgr,ptr)
+
 #endif

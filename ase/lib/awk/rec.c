@@ -1,10 +1,10 @@
 /*
- * $Id: rec.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: rec.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "awk_i.h"
+#include "awk.h"
 
 static int split_record (ase_awk_run_t* run);
 static int recomp_record_fields (
@@ -159,7 +159,7 @@ static int split_record (ase_awk_run_t* run)
 	/* allocate space */
 	if (nflds > run->inrec.maxflds)
 	{
-		void* tmp = ASE_AWK_MALLOC (
+		void* tmp = ASE_AWK_ALLOC (
 			run->awk, ASE_SIZEOF(*run->inrec.flds) * nflds);
 		if (tmp == ASE_NULL) 
 		{
@@ -310,7 +310,7 @@ static int recomp_record_fields (
 		}
 		else
 		{
-			tmp = ASE_AWK_MALLOC (
+			tmp = ASE_AWK_ALLOC (
 				run->awk, ASE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == ASE_NULL)
 			{

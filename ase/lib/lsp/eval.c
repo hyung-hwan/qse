@@ -1,10 +1,10 @@
 /*
- * $Id: eval.c 215 2008-06-19 10:27:37Z baconevi $
+ * $Id: eval.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 static ase_lsp_obj_t* __eval (ase_lsp_t* lsp, ase_lsp_obj_t* obj);
 static ase_lsp_obj_t* makefn (

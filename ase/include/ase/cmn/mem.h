@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 335 2008-08-20 08:22:07Z baconevi $
+ * $Id: mem.h 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
@@ -18,24 +18,15 @@
 
 /* allocate a memory block */
 #define ASE_MMGR_ALLOC(mmgr,size) \
-	(mmgr)->alloc((mmgr)->data,size)
+	((mmgr)->alloc((mmgr)->data,size))
 
 /* reallocate a memory block */
 #define ASE_MMGR_REALLOC(mmgr,ptr,size) \
-	(mmgr)->realloc((mmgr)->data,ptr,size)
+	((mmgr)->realloc((mmgr)->data,ptr,size))
 
 /* free a memory block */
 #define ASE_MMGR_FREE(mmgr,ptr) \
-	(mmgr)->free((mmgr)->data,ptr)
-
-/* define alias for ASE_MMGR_ALLOC */
-#define ASE_MALLOC(mmgr,size) ASE_MMGR_ALLOC(mmgr,size)
-
-/* define alias for ASE_MMGR_REALLOC */
-#define ASE_REALLOC(mmgr,ptr,size) ASE_MMGR_REALLOC(mmgr,ptr,size)
-
-/* define alias for ASE_MMGR_FREE */
-#define ASE_FREE(mmgr,ptr) ASE_MMGR_FREE(mmgr,ptr)
+	((mmgr)->free((mmgr)->data,ptr))
 
 #ifdef __cplusplus
 extern "C" {

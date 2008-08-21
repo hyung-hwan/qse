@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 335 2008-08-20 08:22:07Z baconevi $
+ * $Id: types.h 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
@@ -350,6 +350,7 @@ struct ase_mmgr_t
 	void*         data;
 };
 
+/*
 struct ase_ccls_t
 {
 	ase_isccls_t is_upper;
@@ -366,6 +367,14 @@ struct ase_ccls_t
 	ase_toccls_t to_upper;
 	ase_toccls_t to_lower;
 	void*        data;
+};
+*/
+
+struct ase_ccls_t
+{
+	ase_bool_t (*is) (void* data, ase_cint_t c, int type);
+	ase_cint_t (*to) (void* data, ase_cint_t c, int type);
+	void* data;
 };
 
 #endif

@@ -1,10 +1,10 @@
 /*
- * $Id: mem.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: mem.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 ase_lsp_mem_t* ase_lsp_openmem (
 	ase_lsp_t* lsp, ase_size_t ubound, ase_size_t ubound_inc)
@@ -13,7 +13,7 @@ ase_lsp_mem_t* ase_lsp_openmem (
 	ase_size_t i;
 
 	/* allocate memory */
-	mem = (ase_lsp_mem_t*) ASE_LSP_MALLOC (lsp, ASE_SIZEOF(ase_lsp_mem_t));	
+	mem = (ase_lsp_mem_t*) ASE_LSP_ALLOC (lsp, ASE_SIZEOF(ase_lsp_mem_t));	
 	if (mem == ASE_NULL) return ASE_NULL;
 
 	ASE_MEMSET (mem, 0, ASE_SIZEOF(ase_lsp_mem_t));
@@ -104,12 +104,12 @@ ase_lsp_gc (mem);
 		if (mem->count >= mem->ubound) return ASE_NULL;
 	}
 
-	obj = (ase_lsp_obj_t*) ASE_LSP_MALLOC (mem->lsp, size);
+	obj = (ase_lsp_obj_t*) ASE_LSP_ALLOC (mem->lsp, size);
 	if (obj == ASE_NULL) 
 	{
 		ase_lsp_gc (mem);
 
-		obj = (ase_lsp_obj_t*) ASE_LSP_MALLOC (mem->lsp, size);
+		obj = (ase_lsp_obj_t*) ASE_LSP_ALLOC (mem->lsp, size);
 		if (obj == ASE_NULL) 
 		{
 			ase_lsp_seterror (mem->lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);

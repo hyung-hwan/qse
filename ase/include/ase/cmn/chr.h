@@ -29,15 +29,8 @@ enum ase_ccls_type_t
 	ASE_CCLS_PUNCT
 };
 
-struct ase_ccls_t
-{
-	ase_bool_t(*is) (void* data, ase_cint_t c, ase_ccls_type_t type);
-	ase_cint_t(*to) (void* data, ase_cint_t c, ase_ccls_type_t type);
-	void* data;
-};
-
-#define ASE_CCLS_IS(ccls,c,is) ((ccls)->is((ccls)->data,c,is))
-#define ASE_CCLS_TO(ccls,c,to) ((ccls)->to((ccls)->data,c,to))
+#define ASE_CCLS_IS(ccls,c,type) ((ccls)->is((ccls)->data,c,type))
+#define ASE_CCLS_TO(ccls,c,type) ((ccls)->to((ccls)->data,c,type))
 
 #define ASE_CCLS_ISUPPER(ccls,c)  ASE_CCLS_IS(ccls,c,ASE_CCLS_UPPER)
 #define ASE_CCLS_ISLOWER(ccls,c)  ASE_CCLS_IS(ccls,c,ASE_CCLS_LOWER)

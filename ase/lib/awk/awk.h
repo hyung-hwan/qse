@@ -4,10 +4,11 @@
  * {License}
  */
 
-#ifndef _ASE_AWK_AWKI_H_
-#define _ASE_AWK_AWKI_H_
+#ifndef _ASE_LIB_AWK_AWK_H_
+#define _ASE_LIB_AWK_AWK_H_
 
 #include "../cmn/mem.h"
+#include "../cmn/chr.h"
 #include <ase/cmn/str.h>
 #include <ase/cmn/map.h>
 #include <ase/cmn/rex.h>
@@ -33,23 +34,23 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_MAX_LOCALS  9999
 #define ASE_AWK_MAX_PARAMS  9999
 
-#define ASE_AWK_MALLOC(awk,size)      ASE_MALLOC((awk)->mmgr,size)
+#define ASE_AWK_ALLOC(awk,size)       ASE_ALLOC((awk)->mmgr,size)
 #define ASE_AWK_REALLOC(awk,ptr,size) ASE_REALLOC((awk)->mmgr,ptr,size)
 #define ASE_AWK_FREE(awk,ptr)         ASE_FREE((awk)->mmgr,ptr)
 
-#define ASE_AWK_ISUPPER(awk,c)  ASE_ISUPPER((awk)->ccls,c)
-#define ASE_AWK_ISLOWER(awk,c)  ASE_ISLOWER((awk)->ccls,c)
-#define ASE_AWK_ISALPHA(awk,c)  ASE_ISALPHA((awk)->ccls,c)
-#define ASE_AWK_ISDIGIT(awk,c)  ASE_ISDIGIT((awk)->ccls,c)
-#define ASE_AWK_ISXDIGIT(awk,c) ASE_ISXDIGIT((awk)->ccls,c)
-#define ASE_AWK_ISALNUM(awk,c)  ASE_ISALNUM((awk)->ccls,c)
-#define ASE_AWK_ISSPACE(awk,c)  ASE_ISSPACE((awk)->ccls,c)
-#define ASE_AWK_ISPRINT(awk,c)  ASE_ISPRINT((awk)->ccls,c)
-#define ASE_AWK_ISGRAPH(awk,c)  ASE_ISGRAPH((awk)->ccls,c)
-#define ASE_AWK_ISCNTRL(awk,c)  ASE_ISCNTRL((awk)->ccls,c)
-#define ASE_AWK_ISPUNCT(awk,c)  ASE_ISPUNCT((awk)->ccls,c)
-#define ASE_AWK_TOUPPER(awk,c)  ASE_TOUPPER((awk)->ccls,c)
-#define ASE_AWK_TOLOWER(awk,c)  ASE_TOLOWER((awk)->ccls,c)
+#define ASE_AWK_ISUPPER(awk,c)  ASE_CCLS_ISUPPER((awk)->ccls,c)
+#define ASE_AWK_ISLOWER(awk,c)  ASE_CCLS_ISLOWER((awk)->ccls,c)
+#define ASE_AWK_ISALPHA(awk,c)  ASE_CCLS_ISALPHA((awk)->ccls,c)
+#define ASE_AWK_ISDIGIT(awk,c)  ASE_CCLS_ISDIGIT((awk)->ccls,c)
+#define ASE_AWK_ISXDIGIT(awk,c) ASE_CCLS_ISXDIGIT((awk)->ccls,c)
+#define ASE_AWK_ISALNUM(awk,c)  ASE_CCLS_ISALNUM((awk)->ccls,c)
+#define ASE_AWK_ISSPACE(awk,c)  ASE_CCLS_ISSPACE((awk)->ccls,c)
+#define ASE_AWK_ISPRINT(awk,c)  ASE_CCLS_ISPRINT((awk)->ccls,c)
+#define ASE_AWK_ISGRAPH(awk,c)  ASE_CCLS_ISGRAPH((awk)->ccls,c)
+#define ASE_AWK_ISCNTRL(awk,c)  ASE_CCLS_ISCNTRL((awk)->ccls,c)
+#define ASE_AWK_ISPUNCT(awk,c)  ASE_CCLS_ISPUNCT((awk)->ccls,c)
+#define ASE_AWK_TOUPPER(awk,c)  ASE_CCLS_TOUPPER((awk)->ccls,c)
+#define ASE_AWK_TOLOWER(awk,c)  ASE_CCLS_TOLOWER((awk)->ccls,c)
 
 #define ASE_AWK_STRDUP(awk,str) (ase_strdup(str,(awk)->mmgr))
 #define ASE_AWK_STRXDUP(awk,str,len) (ase_strxdup(str,len,(awk)->mmgr))

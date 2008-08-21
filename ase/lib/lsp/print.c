@@ -1,10 +1,10 @@
 /*
- * $Id: print.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: print.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 #define OUTPUT_STR(lsp,str) \
 	do { \

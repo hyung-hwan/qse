@@ -1,10 +1,10 @@
 /*
- * $Id: parse.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: parse.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "awk_i.h"
+#include "awk.h"
 
 enum
 {
@@ -1060,7 +1060,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	/* parameter names are not required anymore. clear them */
 	ase_awk_tab_clear (&awk->parse.params);
 
-	afn = (ase_awk_afn_t*) ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_afn_t));
+	afn = (ase_awk_afn_t*) ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_afn_t));
 	if (afn == ASE_NULL) 
 	{
 		ASE_AWK_FREE (awk, name_dup);
@@ -1162,7 +1162,7 @@ static ase_awk_chain_t* parse_pattern_block (
 	}
 
 	chain = (ase_awk_chain_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_chain_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_chain_t));
 	if (chain == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, nde);
@@ -1295,7 +1295,7 @@ static ase_awk_nde_t* parse_block (
 	}
 
 	block = (ase_awk_nde_blk_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_blk_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_blk_t));
 	if (block == ASE_NULL) 
 	{
 		ase_awk_tab_remove (
@@ -1777,7 +1777,7 @@ static ase_awk_nde_t* parse_statement (ase_awk_t* awk, ase_size_t line)
 	{
 		/* null statement */	
 		nde = (ase_awk_nde_t*) 
-			ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_t));
+			ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_t));
 		if (nde == ASE_NULL) 
 		{
 			SETERRLIN (awk, ASE_AWK_ENOMEM, line);
@@ -2008,7 +2008,7 @@ static ase_awk_nde_t* parse_expression0 (ase_awk_t* awk, ase_size_t line)
 	}
 
 	nde = (ase_awk_nde_ass_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_ass_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_ass_t));
 	if (nde == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, x);
@@ -2065,7 +2065,7 @@ static ase_awk_nde_t* parse_basic_expr (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 
-		tmp = (ase_awk_nde_cnd_t*) ASE_AWK_MALLOC (
+		tmp = (ase_awk_nde_cnd_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_cnd_t));
 		if (tmp == ASE_NULL)
 		{
@@ -2135,7 +2135,7 @@ static ase_awk_nde_t* parse_binary_expr (
 			return ASE_NULL;
 		}
 
-		nde = (ase_awk_nde_exp_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_exp_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_exp_t));
 		if (nde == ASE_NULL) 
 		{
@@ -2228,7 +2228,7 @@ static ase_awk_nde_t* parse_in (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 
-		nde = (ase_awk_nde_exp_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_exp_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_exp_t));
 		if (nde == ASE_NULL) 
 		{
@@ -2332,7 +2332,7 @@ static ase_awk_nde_t* parse_bitwise_or_with_extio (ase_awk_t* awk, ase_size_t li
 				}
 			}
 
-			nde = (ase_awk_nde_getline_t*) ASE_AWK_MALLOC (
+			nde = (ase_awk_nde_getline_t*) ASE_AWK_ALLOC (
 				awk, ASE_SIZEOF(ase_awk_nde_getline_t));
 			if (nde == ASE_NULL)
 			{
@@ -2371,7 +2371,7 @@ static ase_awk_nde_t* parse_bitwise_or_with_extio (ase_awk_t* awk, ase_size_t li
 				return ASE_NULL;
 			}
 
-			nde = (ase_awk_nde_exp_t*) ASE_AWK_MALLOC (
+			nde = (ase_awk_nde_exp_t*) ASE_AWK_ALLOC (
 				awk, ASE_SIZEOF(ase_awk_nde_exp_t));
 			if (nde == ASE_NULL)
 			{
@@ -2492,7 +2492,7 @@ static ase_awk_nde_t* parse_concat (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 
-		nde = (ase_awk_nde_exp_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_exp_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_exp_t));
 		if (nde == ASE_NULL)
 		{
@@ -2571,7 +2571,7 @@ static ase_awk_nde_t* parse_unary (ase_awk_t* awk, ase_size_t line)
 	if (left == ASE_NULL) return ASE_NULL;
 
 	nde = (ase_awk_nde_exp_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_exp_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_exp_t));
 	if (nde == ASE_NULL)
 	{
 		ase_awk_clrpt (awk, left);
@@ -2628,7 +2628,7 @@ static ase_awk_nde_t* parse_unary_exp (ase_awk_t* awk, ase_size_t line)
 	if (left == ASE_NULL) return ASE_NULL;
 
 	nde = (ase_awk_nde_exp_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_exp_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_exp_t));
 	if (nde == ASE_NULL)
 	{
 		ase_awk_clrpt (awk, left);
@@ -2710,7 +2710,7 @@ static ase_awk_nde_t* parse_increment (ase_awk_t* awk, ase_size_t line)
 	}
 
 	nde = (ase_awk_nde_exp_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_exp_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_exp_t));
 	if (nde == ASE_NULL)
 	{
 		ase_awk_clrpt (awk, left);
@@ -2739,7 +2739,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 	{
 		ase_awk_nde_int_t* nde;
 
-		nde = (ase_awk_nde_int_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_int_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_int_t));
 		if (nde == ASE_NULL)
 		{
@@ -2780,7 +2780,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 	{
 		ase_awk_nde_real_t* nde;
 
-		nde = (ase_awk_nde_real_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_real_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_real_t));
 		if (nde == ASE_NULL)
 		{
@@ -2821,7 +2821,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 	{
 		ase_awk_nde_str_t* nde;
 
-		nde = (ase_awk_nde_str_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_str_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_str_t));
 		if (nde == ASE_NULL)
 		{
@@ -2864,7 +2864,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		if (get_rexstr (awk) == -1) return ASE_NULL;
 		ASE_ASSERT (MATCH(awk,TOKEN_REX));
 
-		nde = (ase_awk_nde_rex_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_rex_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_rex_t));
 		if (nde == ASE_NULL)
 		{
@@ -2920,7 +2920,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		prim = parse_primary (awk, awk->token.line);
 		if (prim == ASE_NULL) return ASE_NULL;
 
-		nde = (ase_awk_nde_pos_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_pos_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_pos_t));
 		if (nde == ASE_NULL) 
 		{
@@ -3011,7 +3011,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 				}
 			}
 
-			tmp = (ase_awk_nde_grp_t*) ASE_AWK_MALLOC (
+			tmp = (ase_awk_nde_grp_t*) ASE_AWK_ALLOC (
 				awk, ASE_SIZEOF(ase_awk_nde_grp_t));
 			if (tmp == ASE_NULL)
 			{
@@ -3065,7 +3065,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 			}
 		}
 
-		nde = (ase_awk_nde_getline_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_getline_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_getline_t));
 		if (nde == ASE_NULL)
 		{
@@ -3160,7 +3160,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 
-		nde = (ase_awk_nde_var_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_var_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
 		if (nde == ASE_NULL) 
 		{
@@ -3195,7 +3195,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 
-		nde = (ase_awk_nde_var_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_var_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
 		if (nde == ASE_NULL) 
 		{
@@ -3230,7 +3230,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 			return ASE_NULL;
 		}
 
-		nde = (ase_awk_nde_var_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_var_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
 		if (nde == ASE_NULL) 
 		{
@@ -3275,7 +3275,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		/* named variable */
 		ase_awk_nde_var_t* nde;
 
-		nde = (ase_awk_nde_var_t*) ASE_AWK_MALLOC (
+		nde = (ase_awk_nde_var_t*) ASE_AWK_ALLOC (
 			awk, ASE_SIZEOF(ase_awk_nde_var_t));
 		if (nde == ASE_NULL) 
 		{
@@ -3410,7 +3410,7 @@ static ase_awk_nde_t* parse_hashidx (
 	}
 
 	nde = (ase_awk_nde_var_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_var_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_var_t));
 	if (nde == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, idx);
@@ -3594,7 +3594,7 @@ static ase_awk_nde_t* parse_fncall (
 	}
 
 	call = (ase_awk_nde_call_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_call_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_call_t));
 	if (call == ASE_NULL) 
 	{
 		if (head != ASE_NULL) ase_awk_clrpt (awk, head);
@@ -3723,7 +3723,7 @@ static ase_awk_nde_t* parse_if (ase_awk_t* awk, ase_size_t line)
 	else else_part = ASE_NULL;
 
 	nde = (ase_awk_nde_if_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_if_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_if_t));
 	if (nde == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, else_part);
@@ -3781,7 +3781,7 @@ static ase_awk_nde_t* parse_while (ase_awk_t* awk, ase_size_t line)
 	}
 
 	nde = (ase_awk_nde_while_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_while_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_while_t));
 	if (nde == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, body);
@@ -3850,7 +3850,7 @@ static ase_awk_nde_t* parse_for (ase_awk_t* awk, ase_size_t line)
 				return ASE_NULL;
 			}
 
-			nde2 = (ase_awk_nde_foreach_t*) ASE_AWK_MALLOC (
+			nde2 = (ase_awk_nde_foreach_t*) ASE_AWK_ALLOC (
 				awk, ASE_SIZEOF(ase_awk_nde_foreach_t));
 			if (nde2 == ASE_NULL)
 			{
@@ -3963,7 +3963,7 @@ static ase_awk_nde_t* parse_for (ase_awk_t* awk, ase_size_t line)
 	}
 
 	nde = (ase_awk_nde_for_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_for_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_for_t));
 	if (nde == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, init);
@@ -4057,7 +4057,7 @@ static ase_awk_nde_t* parse_dowhile (ase_awk_t* awk, ase_size_t line)
 	}
 	
 	nde = (ase_awk_nde_while_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_while_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_while_t));
 	if (nde == ASE_NULL) 
 	{
 		ase_awk_clrpt (awk, body);
@@ -4088,7 +4088,7 @@ static ase_awk_nde_t* parse_break (ase_awk_t* awk, ase_size_t line)
 	}
 
 	nde = (ase_awk_nde_break_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_break_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_break_t));
 	if (nde == ASE_NULL)
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
@@ -4114,7 +4114,7 @@ static ase_awk_nde_t* parse_continue (ase_awk_t* awk, ase_size_t line)
 	}
 
 	nde = (ase_awk_nde_continue_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_continue_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_continue_t));
 	if (nde == ASE_NULL)
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
@@ -4135,7 +4135,7 @@ static ase_awk_nde_t* parse_return (ase_awk_t* awk, ase_size_t line)
 
 	ASE_ASSERT (awk->token.prev.type == TOKEN_RETURN);
 
-	nde = (ase_awk_nde_return_t*) ASE_AWK_MALLOC (
+	nde = (ase_awk_nde_return_t*) ASE_AWK_ALLOC (
 		awk, ASE_SIZEOF(ase_awk_nde_return_t));
 	if (nde == ASE_NULL)
 	{
@@ -4174,7 +4174,7 @@ static ase_awk_nde_t* parse_exit (ase_awk_t* awk, ase_size_t line)
 	ASE_ASSERT (awk->token.prev.type == TOKEN_EXIT);
 
 	nde = (ase_awk_nde_exit_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_exit_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_exit_t));
 	if (nde == ASE_NULL)
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
@@ -4222,7 +4222,7 @@ static ase_awk_nde_t* parse_next (ase_awk_t* awk, ase_size_t line)
 	}
 
 	nde = (ase_awk_nde_next_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_next_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_next_t));
 	if (nde == ASE_NULL)
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
@@ -4251,7 +4251,7 @@ static ase_awk_nde_t* parse_nextfile (ase_awk_t* awk, ase_size_t line, int out)
 	}
 
 	nde = (ase_awk_nde_nextfile_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_nextfile_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_nextfile_t));
 	if (nde == ASE_NULL)
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
@@ -4289,7 +4289,7 @@ static ase_awk_nde_t* parse_delete (ase_awk_t* awk, ase_size_t line)
 		return ASE_NULL;
 	}
 
-	nde = (ase_awk_nde_delete_t*) ASE_AWK_MALLOC (
+	nde = (ase_awk_nde_delete_t*) ASE_AWK_ALLOC (
 		awk, ASE_SIZEOF(ase_awk_nde_delete_t));
 	if (nde == ASE_NULL)
 	{
@@ -4329,7 +4329,7 @@ static ase_awk_nde_t* parse_reset (ase_awk_t* awk, ase_size_t line)
 		return ASE_NULL;
 	}
 
-	nde = (ase_awk_nde_reset_t*) ASE_AWK_MALLOC (
+	nde = (ase_awk_nde_reset_t*) ASE_AWK_ALLOC (
 		awk, ASE_SIZEOF(ase_awk_nde_reset_t));
 	if (nde == ASE_NULL)
 	{
@@ -4469,7 +4469,7 @@ static ase_awk_nde_t* parse_print (ase_awk_t* awk, ase_size_t line, int type)
 	}
 
 	nde = (ase_awk_nde_print_t*) 
-		ASE_AWK_MALLOC (awk, ASE_SIZEOF(ase_awk_nde_print_t));
+		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_print_t));
 	if (nde == ASE_NULL) 
 	{
 		if (args != ASE_NULL) ase_awk_clrpt (awk, args);

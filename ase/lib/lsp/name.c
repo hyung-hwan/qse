@@ -1,10 +1,10 @@
 /*
- * $Id: name.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: name.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
 
-#include "lsp_i.h"
+#include "lsp.h"
 
 ase_lsp_name_t* ase_lsp_name_open (
 	ase_lsp_name_t* name, ase_size_t capa, ase_lsp_t* lsp)
@@ -14,7 +14,7 @@ ase_lsp_name_t* ase_lsp_name_open (
 	if (name == ASE_NULL) 
 	{
 		name = (ase_lsp_name_t*)
-			ASE_LSP_MALLOC (lsp, ASE_SIZEOF(ase_lsp_name_t));
+			ASE_LSP_ALLOC (lsp, ASE_SIZEOF(ase_lsp_name_t));
 		if (name == ASE_NULL) return ASE_NULL;
 		name->__dynamic = ASE_TRUE;
 	}
@@ -27,7 +27,7 @@ ase_lsp_name_t* ase_lsp_name_open (
 	else 
 	{
 		name->buf = (ase_char_t*)
-			ASE_LSP_MALLOC (lsp, (capa+1)*ASE_SIZEOF(ase_char_t));
+			ASE_LSP_ALLOC (lsp, (capa+1)*ASE_SIZEOF(ase_char_t));
 		if (name->buf == ASE_NULL) 
 		{
 			if (name->__dynamic) ASE_LSP_FREE (lsp, name);
@@ -66,7 +66,7 @@ int ase_lsp_name_addc (ase_lsp_name_t* name, ase_cint_t c)
 
 			if (name->capa < ASE_COUNTOF(name->static_buf)) 
 			{
-				space = (ase_char_t*) ASE_LSP_MALLOC (
+				space = (ase_char_t*) ASE_LSP_ALLOC (
 					name->lsp, (new_capa+1)*ASE_SIZEOF(ase_char_t));
 				if (space == ASE_NULL) return -1;
 

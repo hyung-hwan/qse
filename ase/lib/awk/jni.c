@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: jni.c 337 2008-08-20 09:17:25Z baconevi $
  *
  * {License}
  */
@@ -17,8 +17,8 @@
 #include <ase/awk/awk.h>
 
 #include "../cmn/mem.h"
+#include "../cmn/chr.h"
 #include <ase/utl/stdio.h>
-#include <ase/utl/ctype.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -620,7 +620,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awk
 				return;
 			}
 
-			mmm = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*(len+1));
+			mmm = (ase_char_t*) ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*(len+1));
 			if (mmm == ASE_NULL)
 			{
 				(*env)->ReleaseStringChars (env, mfn, ptr);
@@ -660,7 +660,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_run (JNIEnv* env, jobject obj, jlong awk
 
 		len = (*env)->GetArrayLength (env, args);
 
-		runarg = ase_awk_malloc (awk, sizeof(ase_awk_runarg_t) * (len+1));
+		runarg = ase_awk_alloc (awk, sizeof(ase_awk_runarg_t) * (len+1));
 		if (runarg == ASE_NULL)
 		{
 			if (mmm != ASE_NULL) ase_awk_free (awk, mmm);
@@ -1580,7 +1580,7 @@ static int handle_bfn (
 		if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 		{
 			jsize x;
-			rptr = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
+			rptr = (ase_char_t*) ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*len);
 			if (rptr == ASE_NULL)
 			{
 				/* ran out of memory in exception handling.
@@ -1665,7 +1665,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_addfunc (
 	{
 		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
-			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
+			ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
@@ -1726,7 +1726,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_delfunc (
 	{
 		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
-			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
+			ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
@@ -1886,7 +1886,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setfilename (
 	{
 		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
-			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
+			ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
@@ -1931,7 +1931,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Awk_setofilename (
 	{
 		jsize x;
 		ase_char_t* tmp = (ase_char_t*)
-			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
+			ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, name, ptr);
@@ -1987,7 +1987,7 @@ static jstring JNICALL call_strftime (
 		return ASE_NULL;
 	}
 
-	tmp = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*(len+1));
+	tmp = (ase_char_t*) ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*(len+1));
 	if (tmp == ASE_NULL)
 	{
 		(*env)->ReleaseStringChars (env, fmt, ptr);
@@ -2074,7 +2074,7 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 		return -1;
 	}
 
-	tmp = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*(len+1));
+	tmp = (ase_char_t*) ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*(len+1));
 	if (tmp == ASE_NULL)
 	{
 		(*env)->ReleaseStringChars (env, cmd, ptr);
@@ -2090,7 +2090,7 @@ JNIEXPORT jint JNICALL Java_ase_awk_Awk_system (
 #ifdef _WIN32
 	ret = _tsystem(tmp);
 #else
-	char* mbs = (char*)ase_awk_malloc (awk, len*5+1);
+	char* mbs = (char*)ase_awk_alloc (awk, len*5+1);
 	if (mbs == ASE_NULL) 
 	{
 		ase_awk_free (awk, tmp);
@@ -2264,7 +2264,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 	if (len > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
 		ase_size_t x;
-		rptr = (ase_char_t*) ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
+		rptr = (ase_char_t*) ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*len);
 		if (rptr == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, index, ptr);
@@ -2746,7 +2746,7 @@ static ase_char_t* dup_str (ase_awk_t* awk, const jchar* str, ase_size_t len)
 		ase_char_t* tmp;
 		ase_size_t i;
 
-		tmp = (ase_char_t*) ase_awk_malloc (awk, (len+1) * ASE_SIZEOF(ase_char_t));
+		tmp = (ase_char_t*) ase_awk_alloc (awk, (len+1) * ASE_SIZEOF(ase_char_t));
 		if (tmp == ASE_NULL) return ASE_NULL;
 
 		for (i = 0; i < (ase_size_t)len; i++) tmp[i] = (ase_char_t)str[i];
@@ -2758,7 +2758,7 @@ static ase_char_t* dup_str (ase_awk_t* awk, const jchar* str, ase_size_t len)
 	{
 		ase_char_t* tmp;
 
-		tmp = (ase_char_t*) ase_awk_malloc (awk, (len+1) * ASE_SIZEOF(ase_char_t));
+		tmp = (ase_char_t*) ase_awk_alloc (awk, (len+1) * ASE_SIZEOF(ase_char_t));
 		if (tmp == ASE_NULL) return ASE_NULL;
 
 		ase_strncpy (tmp, (ase_char_t*)str, len);
@@ -2786,7 +2786,7 @@ static int get_str (
 		jsize x;
 
 		ase_char_t* tmp = (ase_char_t*)
-			ase_awk_malloc (awk, ASE_SIZEOF(ase_char_t)*len);
+			ase_awk_alloc (awk, ASE_SIZEOF(ase_char_t)*len);
 		if (tmp == ASE_NULL)
 		{
 			(*env)->ReleaseStringChars (env, str, ptr);
@@ -2827,7 +2827,7 @@ static jstring new_str (
 	chunk = (len > ASE_TYPE_MAX(jsize))? ASE_TYPE_MAX(jsize): (jsize)len;
 	if (chunk > 0 && ASE_SIZEOF(jchar) != ASE_SIZEOF(ase_char_t))
 	{
-		jchar* tmp = (jchar*) ase_awk_malloc (awk, ASE_SIZEOF(jchar)*chunk);
+		jchar* tmp = (jchar*) ase_awk_alloc (awk, ASE_SIZEOF(jchar)*chunk);
 		if (tmp == ASE_NULL) return ASE_NULL;
 
 		for (i = 0; i < chunk; i++) tmp[i] = (jchar)ptr[i];
