@@ -29,7 +29,7 @@ ase_sll_t* ase_sll_open (
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	sll = ASE_MALLOC (mmgr, ASE_SIZEOF(ase_sll_t) + extension);
+	sll = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_sll_t) + extension);
 	if (sll == ASE_NULL) return ASE_NULL;
 
 	ASE_MEMSET (sll, 0, ASE_SIZEOF(ase_sll_t) + extension);

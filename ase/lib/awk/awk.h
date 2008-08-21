@@ -34,9 +34,9 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #define ASE_AWK_MAX_LOCALS  9999
 #define ASE_AWK_MAX_PARAMS  9999
 
-#define ASE_AWK_ALLOC(awk,size)       ASE_ALLOC((awk)->mmgr,size)
-#define ASE_AWK_REALLOC(awk,ptr,size) ASE_REALLOC((awk)->mmgr,ptr,size)
-#define ASE_AWK_FREE(awk,ptr)         ASE_FREE((awk)->mmgr,ptr)
+#define ASE_AWK_ALLOC(awk,size)       ASE_MMGR_ALLOC((awk)->mmgr,size)
+#define ASE_AWK_REALLOC(awk,ptr,size) ASE_MMGR_REALLOC((awk)->mmgr,ptr,size)
+#define ASE_AWK_FREE(awk,ptr)         ASE_MMGR_FREE((awk)->mmgr,ptr)
 
 #define ASE_AWK_ISUPPER(awk,c)  ASE_CCLS_ISUPPER((awk)->ccls,c)
 #define ASE_AWK_ISLOWER(awk,c)  ASE_CCLS_ISLOWER((awk)->ccls,c)

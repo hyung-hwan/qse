@@ -29,7 +29,7 @@ ase_dll_t* ase_dll_open (
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	dll = ASE_MALLOC (mmgr, ASE_SIZEOF(ase_dll_t) + extension);
+	dll = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_dll_t) + extension);
 	if (dll == ASE_NULL) return ASE_NULL;
 
 	ASE_MEMSET (dll, 0, ASE_SIZEOF(ase_dll_t) + extension);
