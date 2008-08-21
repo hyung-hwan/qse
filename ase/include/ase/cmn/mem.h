@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: mem.h 335 2008-08-20 08:22:07Z baconevi $
  *
  * {License}
  */
@@ -18,7 +18,7 @@
 
 /* allocate a memory block */
 #define ASE_MMGR_ALLOC(mmgr,size) \
-	(mmgr)->malloc((mmgr)->data,size)
+	(mmgr)->alloc((mmgr)->data,size)
 
 /* reallocate a memory block */
 #define ASE_MMGR_REALLOC(mmgr,ptr,size) \
