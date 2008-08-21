@@ -3,7 +3,7 @@
  */
 
 #include <ase/tgp/tgp.h>
-#include <ase/cmn/mem.h>
+#include "../cmn/mem.h"
 
 struct ase_tgp_t
 {
@@ -67,18 +67,18 @@ ase_tgp_t* ase_tgp_open (ase_mmgr_t* mmgr)
 	}
 	*/
 
-	tgp = ASE_MALLOC (mmgr, ASE_SIZEOF(*tgp));
+	tgp = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(*tgp));
 	if (tgp == ASE_NULL) return ASE_NULL;
 
-	ase_memset (tgp, 0, ASE_SIZEOF(*tgp));
-	ase_memcpy (&tgp->mmgr, mmgr, ASE_SIZEOF(*mmgr));
+	ASE_MEMSET (tgp, 0, ASE_SIZEOF(*tgp));
+	ASE_MEMCPY (&tgp->mmgr, mmgr, ASE_SIZEOF(*mmgr));
 
 	return tgp;
 }
 
 void ase_tgp_close (ase_tgp_t* tgp)
 {
-	ASE_FREE (&tgp->mmgr, tgp);
+	ASE_MMGR_FREE (&tgp->mmgr, tgp);
 }
 
 void ase_tgp_setassocdata (ase_tgp_t* tgp, void* data)

@@ -13,6 +13,7 @@
 static ase_bool_t ccls_is (void* data, ase_cint_t c, ase_ccls_type_t type)
 { 
 	/* TODO: use GetStringTypeW/A for WIN32 to implement these */
+#error NOT IMPLEMENTED YET.
 }
 
 static ase_cint_t ccls_to (void* data, ase_cint_t c, in type)  
@@ -29,40 +30,63 @@ static ase_cint_t ccls_to (void* data, ase_cint_t c, in type)
 
 #include <wctype.h>
 
-static ase_bool_t ccls_is (void* data, ase_cint_t c, ase_ccls_type_t type)
+static ase_bool_t ccls_is (void* data, ase_cint_t c, int type)
 { 
+	static const char* name[] = 
+	{
+		"upper",
+		"lower",
+		"alpha",
+		"digit",
+		"xdigit",
+		"alnum",
+		"space",
+		"print",
+		"graph",
+		"cntrl",
+		"punct"
+	};
+
 	static wctype_t desc[] =
 	{
-		wctype("upper"),
-		wctype("lower"),
-		wctype("alpha"),
-		wctype("digit"),
-		wctype("xdigit"),
-		wctype("alnum"),
-		wctype("space"),
-		wctype("print"),
-		wctype("graph"),
-		wctype("cntrl"),
-		wctype("punct")
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0,
+		(wctype_t)0
 	};
 
 	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_PUNCT,
 		"The character type should be one of ase_ccls_type_t values");
 		
+	if (desc[type] == (wctype_t)0) desc[type] = wctype(name[type]);
 	return iswctype (c, desc[type]);
 }
 
-static ase_cint_t ccls_to (void* data, ase_cint_t c, in type)  
+static ase_cint_t ccls_to (void* data, ase_cint_t c, int type)  
 { 
-	static wctype_t desc[] =
+	static const char* name[] = 
 	{
-		wctrans("toupper"),
-		wctrans("tolower")
+		"upper",
+		"lower"
+	};
+
+	static wctrans_t desc[] =
+	{
+		(wctrans_t)0,
+		(wctrans_t)0
 	};
 
 	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_LOWER,
 		"The character type should be one of ASE_CCLS_UPPER and ASE_CCLS_LOWER");
 
+	if (desc[type] == (wctrans_t)0) desc[type] = wctrans(name[type]);
 	return towctrans (c, desc[type]);
 }
 

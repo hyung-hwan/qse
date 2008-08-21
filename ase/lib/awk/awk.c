@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 337 2008-08-20 09:17:25Z baconevi $ 
+ * $Id: awk.c 339 2008-08-20 09:58:42Z baconevi $ 
  *
  * {License}
  */
@@ -40,7 +40,7 @@ ase_awk_t* ase_awk_open (
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	awk = ASE_ALLOC (mmgr, ASE_SIZEOF(ase_awk_t) + extension);
+	awk = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_awk_t) + extension);
 	if (awk == ASE_NULL) return ASE_NULL;
 
 	ASE_MEMSET (awk, 0, ASE_SIZEOF(ase_awk_t) + extension);
