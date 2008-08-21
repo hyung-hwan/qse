@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 283 2008-07-22 13:12:56Z baconevi $
+ * $Id: Awk.hpp 341 2008-08-20 10:58:19Z baconevi $
  *
  * {License}
  */
@@ -9,6 +9,7 @@
 
 #include <ase/awk/awk.h>
 #include <ase/cmn/map.h>
+#include <ase/cmn/chr.h>
 #include <stdarg.h>
 
 /////////////////////////////////
@@ -48,6 +49,21 @@ public:
 	typedef ase_awk_run_t run_t;
 	/** Represents the underlying interpreter */
 	typedef ase_awk_t awk_t;
+
+	enum ccls_type_t
+	{
+		CCLS_UPPER,
+		CCLS_LOWER,
+		CCLS_ALPHA,
+		CCLS_DIGIT,
+		CCLS_XDIGIT,
+		CCLS_ALNUM,
+		CCLS_SPACE,
+		CCLS_PRINT,
+		CCLS_GRAPH,
+		CCLS_CNTRL,
+		CCLS_PUNCT
+	};
 
 	/**
 	 * Represents the source code I/O context for Awk::parse.
@@ -712,12 +728,12 @@ public:
 
 
 		/**
-		 * Sets a value into the custom data area 
+		 * Sets a value into the data data area 
 		 */
-		void setCustom (void* custom);
+		void setCustom (void* data);
 
 		/**
-		 * Gets the value stored in the custom data area
+		 * Gets the value stored in the data data area
 		 */
 		void* getCustom () const;
 
@@ -725,7 +741,7 @@ public:
 		Awk* awk;
 		run_t* run;
 		bool callbackFailed;
-		void* custom;
+		void* data;
 	};
 
 	/** Constructor */
@@ -927,7 +943,7 @@ protected:
 	 * methods. You can determine the context of the method by calling
 	 * Awk::Source::getMode and inspecting its return value. You may use
 	 * Awk::Source::getHandle and Awk::Source::setHandle to store and
-	 * retrieve the custom information needed to complete the operation.
+	 * retrieve the data information needed to complete the operation.
 	 */
 	/*@{*/
 	/** 
@@ -1022,19 +1038,8 @@ protected:
 	virtual void* reallocMem (void* ptr, size_t n) = 0;
 	virtual void  freeMem    (void* ptr) = 0;
 
-	virtual bool_t isUpper  (cint_t c) = 0;
-	virtual bool_t isLower  (cint_t c) = 0;
-	virtual bool_t isAlpha  (cint_t c) = 0;
-	virtual bool_t isDigit  (cint_t c) = 0;
-	virtual bool_t isXdigit (cint_t c) = 0;
-	virtual bool_t isAlnum  (cint_t c) = 0;
-	virtual bool_t isSpace  (cint_t c) = 0;
-	virtual bool_t isPrint  (cint_t c) = 0;
-	virtual bool_t isGraph  (cint_t c) = 0;
-	virtual bool_t isCntrl  (cint_t c) = 0;
-	virtual bool_t isPunct  (cint_t c) = 0;
-	virtual cint_t toUpper  (cint_t c) = 0;
-	virtual cint_t toLower  (cint_t c) = 0;
+	virtual bool_t isType    (cint_t c, ccls_type_t type) = 0;
+	virtual cint_t transCase (cint_t c, ccls_type_t type) = 0;
 
 	virtual real_t pow (real_t x, real_t y) = 0;
 	virtual int    vsprintf (char_t* buf, size_t size,
@@ -1058,33 +1063,22 @@ protected:
 		run_t* run, const char_t* name, size_t len);
 	static void freeFunctionMapValue (void* owner, void* value);
 
-	static void onRunStart (run_t* run, void* custom);
-	static void onRunEnd (run_t* run, int errnum, void* custom);
-	static void onRunReturn (run_t* run, val_t* ret, void* custom);
-	static void onRunStatement (run_t* run, size_t line, void* custom);
+	static void onRunStart (run_t* run, void* data);
+	static void onRunEnd (run_t* run, int errnum, void* data);
+	static void onRunReturn (run_t* run, val_t* ret, void* data);
+	static void onRunStatement (run_t* run, size_t line, void* data);
 
-	static void* allocMem   (void* custom, size_t n);
-	static void* reallocMem (void* custom, void* ptr, size_t n);
-	static void  freeMem    (void* custom, void* ptr);
+	static void* allocMem   (void* data, size_t n);
+	static void* reallocMem (void* data, void* ptr, size_t n);
+	static void  freeMem    (void* data, void* ptr);
 
-	static bool_t isUpper  (void* custom, cint_t c); 
-	static bool_t isLower  (void* custom, cint_t c); 
-	static bool_t isAlpha  (void* custom, cint_t c);
-	static bool_t isDigit  (void* custom, cint_t c);
-	static bool_t isXdigit (void* custom, cint_t c);
-	static bool_t isAlnum  (void* custom, cint_t c);
-	static bool_t isSpace  (void* custom, cint_t c);
-	static bool_t isPrint  (void* custom, cint_t c);
-	static bool_t isGraph  (void* custom, cint_t c);
-	static bool_t isCntrl  (void* custom, cint_t c);
-	static bool_t isPunct  (void* custom, cint_t c);
-	static cint_t toUpper  (void* custom, cint_t c);
-	static cint_t toLower  (void* custom, cint_t c);
+	static bool_t isType    (void* data, cint_t c, int type);
+	static cint_t transCase (void* data, cint_t c, int type);
 
-	static real_t pow     (void* custom, real_t x, real_t y);
-	static int    sprintf (void* custom, char_t* buf, size_t size,
+	static real_t pow     (void* data, real_t x, real_t y);
+	static int    sprintf (void* data, char_t* buf, size_t size,
 	                       const char_t* fmt, ...);
-	static void   dprintf (void* custom, const char_t* fmt, ...);
+	static void   dprintf (void* data, const char_t* fmt, ...);
 
 protected:
 	awk_t* awk;

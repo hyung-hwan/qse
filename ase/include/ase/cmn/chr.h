@@ -52,6 +52,9 @@ extern "C" {
 
 extern ase_ccls_t* ase_ccls;
 
+ase_bool_t ase_ccls_is (ase_cint_t c, int type);
+ase_cint_t ase_ccls_to (ase_cint_t c, int type);
+
 #ifdef __cplusplus
 }
 #endif

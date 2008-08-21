@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 195 2008-06-06 13:01:55Z baconevi $
+ * $Id: StdAwk.hpp 341 2008-08-20 10:58:19Z baconevi $
  *
  * {License}
  */
@@ -77,19 +77,8 @@ protected:
 	void* reallocMem (void* ptr, size_t n);
 	void  freeMem    (void* ptr);
 
-	bool_t isUpper  (cint_t c);
-	bool_t isLower  (cint_t c);
-	bool_t isAlpha  (cint_t c);
-	bool_t isDigit  (cint_t c);
-	bool_t isXdigit (cint_t c);
-	bool_t isAlnum  (cint_t c);
-	bool_t isSpace  (cint_t c);
-	bool_t isPrint  (cint_t c);
-	bool_t isGraph  (cint_t c);
-	bool_t isCntrl  (cint_t c);
-	bool_t isPunct  (cint_t c);
-	cint_t toUpper  (cint_t c);
-	cint_t toLower  (cint_t c);
+	bool_t isType    (cint_t c, ccls_type_t type);
+	cint_t transCase (cint_t c, ccls_type_t type);
 
 	real_t pow (real_t x, real_t y);
 	int    vsprintf (char_t* buf, size_t size,

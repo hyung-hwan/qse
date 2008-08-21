@@ -1,12 +1,12 @@
 /*
- * $Id: awk.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: awk.c 341 2008-08-20 10:58:19Z baconevi $
  */
 
 #include <ase/awk/awk.h>
 #include <ase/cmn/sll.h>
 #include <ase/cmn/mem.h>
+#include <ase/cmn/chr.h>
 
-#include <ase/utl/helper.h>
 #include <ase/utl/getopt.h>
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
@@ -1099,7 +1099,7 @@ static void init_extension (ase_awk_t* awk)
 
 	ext->mmgr = *ase_awk_getmmgr(awk);
 	ase_awk_setmmgr (awk, &ext->mmgr);
-	ase_awk_setccls (awk, ASE_GETCCLS());
+	ase_awk_setccls (awk, ASE_CCLS_GETDFL());
 
 	ext->prmfns.pow         = custom_awk_pow;
 	ext->prmfns.sprintf     = custom_awk_sprintf;

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 152 2008-03-21 11:57:29Z baconevi $
+ * $Id: StdAwk.cpp 341 2008-08-20 10:58:19Z baconevi $
  *
  * {License}
  */
@@ -11,7 +11,6 @@
 #include <ase/awk/StdAwk.hpp>
 #include <ase/cmn/str.h>
 #include <ase/utl/stdio.h>
-#include <ase/utl/ctype.h>
 
 #include <stdlib.h>
 #include <math.h>
@@ -218,7 +217,7 @@ int StdAwk::system (Run& run, Return& ret, const Argument* args, size_t nargs,
 #elif defined(ASE_CHAR_IS_MCHAR)
 	return ret.set ((long_t)::system(ptr));
 #else
-	char* mbs = (char*)ase_awk_malloc (awk, l*5+1);
+	char* mbs = (char*) ase_awk_alloc (awk, l*5+1);
 	if (mbs == ASE_NULL) return -1;
 
 	::size_t mbl = ::wcstombs (mbs, ptr, l*5);
@@ -435,70 +434,15 @@ void  StdAwk::freeMem (void* ptr)
 	::free (ptr); 
 }
 
-// character class primitives
-StdAwk::bool_t StdAwk::isUpper (cint_t c)
-{ 
-	return ase_isupper (c); 
-}
-
-StdAwk::bool_t StdAwk::isLower (cint_t c) 
+// character handling primitive
+Awk::bool_t StdAwk::isType (cint_t c, ccls_type_t type)
 {
-	return ase_islower (c); 
+	return ase_ccls_is (c, type);
 }
 
-StdAwk::bool_t StdAwk::isAlpha (cint_t c) 
-{ 
-	return ase_isalpha (c); 
-}
-
-StdAwk::bool_t StdAwk::isDigit (cint_t c) 
+Awk::cint_t StdAwk::transCase (cint_t c, ccls_type_t type)
 {
-	return ase_isdigit (c); 
-}
-
-StdAwk::bool_t StdAwk::isXdigit (cint_t c)
-{
-	return ase_isxdigit (c); 
-}
-
-StdAwk::bool_t StdAwk::isAlnum (cint_t c) 
-{
-	return ase_isalnum (c); 
-}
-
-StdAwk::bool_t StdAwk::isSpace (cint_t c) 
-{
-	return ase_isspace (c); 
-}
-
-StdAwk::bool_t StdAwk::isPrint (cint_t c) 
-{
-	return ase_isprint (c); 
-}
-
-StdAwk::bool_t StdAwk::isGraph (cint_t c) 
-{ 
-	return ase_isgraph (c); 
-}
-
-StdAwk::bool_t StdAwk::isCntrl (cint_t c) 
-{ 
-	return ase_iscntrl (c); 
-}
-
-StdAwk::bool_t StdAwk::isPunct (cint_t c) 
-{ 
-	return ase_ispunct (c); 
-}
-
-StdAwk::cint_t StdAwk::toUpper (cint_t c) 
-{ 
-	return ase_toupper (c); 
-}
-
-StdAwk::cint_t StdAwk::toLower (cint_t c) 
-{ 
-	return ase_tolower (c); 
+	return ase_ccls_to (c, type);
 }
 
 // miscellaneous primitive

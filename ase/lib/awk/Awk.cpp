@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: Awk.cpp 341 2008-08-20 10:58:19Z baconevi $
  *
  * {License}
  */
@@ -231,7 +231,7 @@ void Awk::Argument::clear ()
 
 void* Awk::Argument::operator new (size_t n, awk_t* awk) throw ()
 {
-	void* ptr = ase_awk_malloc (awk, ASE_SIZEOF(awk) + n);
+	void* ptr = ase_awk_alloc (awk, ASE_SIZEOF(awk) + n);
 	if (ptr == ASE_NULL) return ASE_NULL;
 
 	*(awk_t**)ptr = awk;
@@ -240,7 +240,7 @@ void* Awk::Argument::operator new (size_t n, awk_t* awk) throw ()
 
 void* Awk::Argument::operator new[] (size_t n, awk_t* awk) throw ()
 {
-	void* ptr = ase_awk_malloc (awk, ASE_SIZEOF(awk) + n);
+	void* ptr = ase_awk_alloc (awk, ASE_SIZEOF(awk) + n);
 	if (ptr == ASE_NULL) return ASE_NULL;
 
 	*(awk_t**)ptr = awk;
@@ -871,7 +871,7 @@ Awk::Run::Run (Awk* awk):
 }
 
 Awk::Run::Run (Awk* awk, run_t* run): 
-	awk (awk), run (run), callbackFailed (false), custom (ASE_NULL)
+	awk (awk), run (run), callbackFailed (false), data (ASE_NULL)
 {
 	ASE_ASSERT (this->run != ASE_NULL);
 }
@@ -1008,14 +1008,14 @@ int Awk::Run::getGlobal (int id, Argument& global) const
 	return global.init (ase_awk_getglobal(this->run,id));
 }
 
-void Awk::Run::setCustom (void* custom)
+void Awk::Run::setCustom (void* data)
 {
-	this->custom = custom;
+	this->data = data;
 }
 
 void* Awk::Run::getCustom () const
 {
-	return this->custom;
+	return this->data;
 }
 
 //////////////////////////////////////////////////////////////////
@@ -1029,24 +1029,13 @@ Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL),
 {
 	this->errmsg[0] = ASE_T('\0');
 
-	mmgr.malloc      = allocMem;
-	mmgr.realloc     = reallocMem;
-	mmgr.free        = freeMem;
-	mmgr.data = this;
+	mmgr.alloc   = allocMem;
+	mmgr.realloc = reallocMem;
+	mmgr.free    = freeMem;
+	mmgr.data    = this;
 
-	ccls.is_upper    = isUpper;
-	ccls.is_lower    = isLower;
-	ccls.is_alpha    = isAlpha;
-	ccls.is_digit    = isDigit;
-	ccls.is_xdigit   = isXdigit;
-	ccls.is_alnum    = isAlnum;
-	ccls.is_space    = isSpace;
-	ccls.is_print    = isPrint;
-	ccls.is_graph    = isGraph;
-	ccls.is_cntrl    = isCntrl;
-	ccls.is_punct    = isPunct;
-	ccls.to_upper    = toUpper;
-	ccls.to_lower    = toLower;
+	ccls.is = isType;
+	ccls.to = transCase;
 	ccls.data = this;
 
 	prmfns.pow         = pow;
@@ -1326,7 +1315,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	
 	if (nargs > 0)
 	{
-		runarg = (ase_awk_runarg_t*) ase_awk_malloc (
+		runarg = (ase_awk_runarg_t*) ase_awk_alloc (
 			awk, ASE_SIZEOF(ase_awk_runarg_t)*(nargs+1));
 
 		if (runarg == ASE_NULL)
@@ -1453,7 +1442,7 @@ int Awk::addFunction (
 	ASE_ASSERT (awk != ASE_NULL);
 
 	FunctionHandler* tmp = (FunctionHandler*) 
-		ase_awk_malloc (awk, ASE_SIZEOF(handler));
+		ase_awk_alloc (awk, ASE_SIZEOF(handler));
 	if (tmp == ASE_NULL)
 	{
 		setError (ERR_NOMEM);
@@ -1677,9 +1666,9 @@ void Awk::freeFunctionMapValue (void* owner, void* value)
 	ase_awk_free (awk->awk, value);
 }
 
-void Awk::onRunStart (run_t* run, void* custom)
+void Awk::onRunStart (run_t* run, void* data)
 {
-	Run* r = (Run*)custom;
+	Run* r = (Run*)data;
 
 	// the actual run_t value for the run-time callback is set here.
 	// r here refers to runctx declared in Awk::run. As onRunStart
@@ -1693,9 +1682,9 @@ void Awk::onRunStart (run_t* run, void* custom)
 	r->awk->triggerOnRunStart (*r);
 }
 
-void Awk::onRunEnd (run_t* run, int errnum, void* custom)
+void Awk::onRunEnd (run_t* run, int errnum, void* data)
 {
-	Run* r = (Run*)custom;
+	Run* r = (Run*)data;
 
 	if (errnum == ERR_NOERR && r->callbackFailed)
 	{
@@ -1705,9 +1694,9 @@ void Awk::onRunEnd (run_t* run, int errnum, void* custom)
 	r->awk->onRunEnd (*r);
 }
 
-void Awk::onRunReturn (run_t* run, val_t* ret, void* custom)
+void Awk::onRunReturn (run_t* run, val_t* ret, void* data)
 {
-	Run* r = (Run*)custom;
+	Run* r = (Run*)data;
 	if (r->callbackFailed) return;
 
 	Argument x (r);
@@ -1721,113 +1710,58 @@ void Awk::onRunReturn (run_t* run, val_t* ret, void* custom)
 	}
 }
 
-void Awk::onRunStatement (run_t* run, size_t line, void* custom)
+void Awk::onRunStatement (run_t* run, size_t line, void* data)
 {
-	Run* r = (Run*)custom;
+	Run* r = (Run*)data;
 	if (r->callbackFailed) return;
 	r->awk->onRunStatement (*r, line);
 }
 
-void* Awk::allocMem (void* custom, size_t n)
+void* Awk::allocMem (void* data, size_t n)
 {
-	return ((Awk*)custom)->allocMem (n);
+	return ((Awk*)data)->allocMem (n);
 }
 
-void* Awk::reallocMem (void* custom, void* ptr, size_t n)
+void* Awk::reallocMem (void* data, void* ptr, size_t n)
 {
-	return ((Awk*)custom)->reallocMem (ptr, n);
+	return ((Awk*)data)->reallocMem (ptr, n);
 }
 
-void Awk::freeMem (void* custom, void* ptr)
+void Awk::freeMem (void* data, void* ptr)
 {
-	((Awk*)custom)->freeMem (ptr);
+	((Awk*)data)->freeMem (ptr);
 }
 
-Awk::bool_t Awk::isUpper (void* custom, cint_t c)  
-{ 
-	return ((Awk*)custom)->isUpper (c);
-}
-
-Awk::bool_t Awk::isLower (void* custom, cint_t c)  
-{ 
-	return ((Awk*)custom)->isLower (c);
-}
-
-Awk::bool_t Awk::isAlpha (void* custom, cint_t c)  
-{ 
-	return ((Awk*)custom)->isAlpha (c);
-}
-
-Awk::bool_t Awk::isDigit (void* custom, cint_t c)  
-{ 
-	return ((Awk*)custom)->isDigit (c);
-}
-
-Awk::bool_t Awk::isXdigit (void* custom, cint_t c) 
-{ 
-	return ((Awk*)custom)->isXdigit (c);
-}
-
-Awk::bool_t Awk::isAlnum (void* custom, cint_t c)
-{ 
-	return ((Awk*)custom)->isAlnum (c);
-}
-
-Awk::bool_t Awk::isSpace (void* custom, cint_t c)
-{ 
-	return ((Awk*)custom)->isSpace (c);
-}
-
-Awk::bool_t Awk::isPrint (void* custom, cint_t c)
-{ 
-	return ((Awk*)custom)->isPrint (c);
-}
-
-Awk::bool_t Awk::isGraph (void* custom, cint_t c)
+Awk::bool_t Awk::isType (void* data, cint_t c, int type) 
 {
-	return ((Awk*)custom)->isGraph (c);
+	return ((Awk*)data)->isType (c, (Awk::ccls_type_t)type);
 }
 
-Awk::bool_t Awk::isCntrl (void* custom, cint_t c)
+Awk::cint_t Awk::transCase (void* data, cint_t c, int type) 
 {
-	return ((Awk*)custom)->isCntrl (c);
+	return ((Awk*)data)->transCase (c, (Awk::ccls_type_t)type);
 }
 
-Awk::bool_t Awk::isPunct (void* custom, cint_t c)
+Awk::real_t Awk::pow (void* data, real_t x, real_t y)
 {
-	return ((Awk*)custom)->isPunct (c);
-}
-
-Awk::cint_t Awk::toUpper (void* custom, cint_t c)
-{
-	return ((Awk*)custom)->toUpper (c);
-}
-
-Awk::cint_t Awk::toLower (void* custom, cint_t c)
-{
-	return ((Awk*)custom)->toLower (c);
-}
-
-Awk::real_t Awk::pow (void* custom, real_t x, real_t y)
-{
-	return ((Awk*)custom)->pow (x, y);
+	return ((Awk*)data)->pow (x, y);
 }
 	
-int Awk::sprintf (void* custom, char_t* buf, size_t size,
+int Awk::sprintf (void* data, char_t* buf, size_t size,
                   const char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
-	int n = ((Awk*)custom)->vsprintf (buf, size, fmt, ap);
+	int n = ((Awk*)data)->vsprintf (buf, size, fmt, ap);
 	va_end (ap);
 	return n;
 }
 
-void Awk::dprintf (void* custom, const char_t* fmt, ...)
+void Awk::dprintf (void* data, const char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
-	((Awk*)custom)->vdprintf (fmt, ap);
+	((Awk*)data)->vdprintf (fmt, ap);
 	va_end (ap);
 }
 
