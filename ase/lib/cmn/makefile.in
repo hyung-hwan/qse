@@ -55,8 +55,8 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libasecmn_la_LIBADD =
-am_libasecmn_la_OBJECTS = map.lo mem.lo misc.lo rex.lo str_bas.lo \
-	str_cnv.lo str_dyn.lo sll.lo dll.lo
+am_libasecmn_la_OBJECTS = mem.lo chr.lo map.lo misc.lo rex.lo \
+	str_bas.lo str_cnv.lo str_dyn.lo sll.lo dll.lo
 libasecmn_la_OBJECTS = $(am_libasecmn_la_OBJECTS)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -195,8 +195,8 @@ target_alias = @target_alias@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CFLAGS = -I$(top_builddir)/include
 lib_LTLIBRARIES = libasecmn.la
-libasecmn_la_SOURCES = mem.h \
-	map.c mem.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c sll.c dll.c
+libasecmn_la_SOURCES = mem.h chr.h \
+	mem.c chr.c map.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c sll.c dll.c
 
 libasecmn_la_LDFLAGS = -version-info 1:0:0
 all: all-am
@@ -268,6 +268,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
