@@ -1,19 +1,19 @@
 /*
- * $Id: http.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: http.c 341 2008-08-20 10:58:19Z baconevi $
  * 
  * {License}
  */
 
 #include <ase/utl/http.h>
-#include <ase/utl/ctype.h>
 #include "../cmn/mem.h"
+#include "../cmn/chr.h"
 
 static int is_http_space (ase_char_t c)
 {
-	return ase_isspace(c) && c != ASE_T('\r') && c != ASE_T('\n');
+	return ASE_ISSPACE(c) && c != ASE_T('\r') && c != ASE_T('\n');
 }
 
-#define is_http_ctl(c) ase_iscntrl(c)
+#define is_http_ctl(c) ASE_ISCNTRL(c)
 
 static int is_http_separator (ase_char_t c)
 {
@@ -40,7 +40,7 @@ static int is_http_separator (ase_char_t c)
 
 static int is_http_token (ase_char_t c)
 {
-	return ase_isprint(c) && !is_http_ctl(c) && !is_http_separator(c);
+	return ASE_ISPRINT(c) && !is_http_ctl(c) && !is_http_separator(c);
 }
 
 static int digit_to_num (ase_char_t c)
@@ -59,10 +59,10 @@ ase_char_t* ase_parsehttpreq (ase_char_t* buf, ase_http_req_t* req)
 	while (is_http_space(*p)) p++;
 
 	/* the method should start with an alphabet */
-	if (!ase_isalpha(*p)) return ASE_NULL;
+	if (!ASE_ISALPHA(*p)) return ASE_NULL;
 
 	/* scan the method */
-	req->method = p; while (ase_isalpha(*p)) p++;
+	req->method = p; while (ASE_ISALPHA(*p)) p++;
 
 	/* the method should be followed by a space */
 	if (!is_http_space(*p)) return ASE_NULL;
@@ -78,9 +78,9 @@ ase_char_t* ase_parsehttpreq (ase_char_t* buf, ase_http_req_t* req)
 	req->args.ptr = ASE_NULL;
 
 	x = p;
-	while (ase_isprint(*p) && !ase_isspace(*p)) 
+	while (ASE_ISPRINT(*p) && !ASE_ISSPACE(*p)) 
 	{
-		if (*p == ASE_T('%') && ase_isxdigit(*(p+1)) && ase_isxdigit(*(p+2)))
+		if (*p == ASE_T('%') && ASE_ISXDIGIT(*(p+1)) && ASE_ISXDIGIT(*(p+2)))
 		{
 			*x++ = (digit_to_num(*(p+1)) << 4) + digit_to_num(*(p+2));
 			p += 3;
@@ -120,15 +120,15 @@ ase_char_t* ase_parsehttpreq (ase_char_t* buf, ase_http_req_t* req)
 	    (p[3] == ASE_T('P') || p[3] == ASE_T('p')) &&
 	    p[4] == ASE_T('/') && p[6] == ASE_T('.'))
 	{
-		if (!ase_isdigit(p[5])) return ASE_NULL;
-		if (!ase_isdigit(p[7])) return ASE_NULL;
+		if (!ASE_ISDIGIT(p[5])) return ASE_NULL;
+		if (!ASE_ISDIGIT(p[7])) return ASE_NULL;
 		req->vers.major = p[5] - ASE_T('0');
 		req->vers.minor = p[7] - ASE_T('0');
 		p += 8;
 	}
 	else return ASE_NULL;
 
-	while (ase_isspace(*p)) 
+	while (ASE_ISSPACE(*p)) 
 	{
 		if (*p++ == ASE_T('\n')) goto ok;
 	}
@@ -147,7 +147,7 @@ ase_char_t* ase_parsehttphdr (ase_char_t* buf, ase_http_hdr_t* hdr)
 	ase_char_t* p = buf, * last;
 
 	/* ignore leading spaces including CR and NL */
-	while (ase_isspace(*p)) p++;
+	while (ASE_ISSPACE(*p)) p++;
 
 	if (*p == ASE_T('\0')) 
 	{
@@ -172,13 +172,13 @@ ase_char_t* ase_parsehttphdr (ase_char_t* buf, ase_http_hdr_t* hdr)
 	do { p++; } while (is_http_space(*p));
 
 	hdr->value.ptr = last = p;
-	while (ase_isprint(*p))
+	while (ASE_ISPRINT(*p))
 	{
-		if (!ase_isspace(*p++)) last = p;
+		if (!ASE_ISSPACE(*p++)) last = p;
 	}
 	hdr->value.len = last - hdr->value.ptr;
 
-	while (ase_isspace(*p)) 
+	while (ASE_ISSPACE(*p)) 
 	{
 		if (*p++ == ASE_T('\n')) goto ok;
 	}

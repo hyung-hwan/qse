@@ -1,11 +1,11 @@
 /*
- * $Id: stdio.c 149 2008-03-20 09:49:53Z baconevi $
+ * $Id: stdio.c 341 2008-08-20 10:58:19Z baconevi $
  *
  * {License}
  */
 
 #include <ase/utl/stdio.h>
-#include <ase/utl/ctype.h>
+#include "../cmn/chr.h"
 
 #include <wchar.h>
 #include <stdlib.h>
@@ -209,7 +209,7 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 		}
 		else 
 		{
-			while (ase_isdigit(ch)) 
+			while (ASE_ISDIGIT(ch)) 
 			{
 				ADDC (buf, ch);
 				ch = *fp++;
@@ -229,7 +229,7 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 			}
 			else 
 			{
-				while (ase_isdigit(ch)) 
+				while (ASE_ISDIGIT(ch)) 
 				{
 					ADDC (buf, ch);
 					ch = *fp++;
@@ -267,7 +267,7 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 	#ifdef ASE_CHAR_IS_MCHAR
 			ADDC (buf, 'l');
 	#endif
-			ADDC (buf, ase_tolower(ch));
+			ADDC (buf, ASE_TOLOWER(ch));
 #endif
 		}
 		else if (ch == ASE_T('d') || ch == ASE_T('i') || 

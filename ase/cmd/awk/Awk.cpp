@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 312 2008-08-02 13:40:04Z baconevi $
+ * $Id: Awk.cpp 341 2008-08-20 10:58:19Z baconevi $
  */
 
 #include <ase/awk/StdAwk.hpp>
@@ -381,7 +381,7 @@ protected:
 		if (fp == NULL) return -1;
 
 		ConTrack* t = (ConTrack*) 
-			ase_awk_malloc (awk, ASE_SIZEOF(ConTrack));
+			ase_awk_alloc (awk, ASE_SIZEOF(ConTrack));
 		if (t == ASE_NULL)
 		{
 			if (fp != stdin && fp != stdout) fclose (fp);

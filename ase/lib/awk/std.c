@@ -4,7 +4,6 @@
 
 #include "awk.h"
 #include <ase/utl/stdio.h>
-#include <ase/utl/helper.h>
 #include <math.h>
 
 typedef struct ext_t
@@ -46,7 +45,7 @@ ase_awk_t* ase_awk_openstd (void)
 	ext_t* ext;
 
 	awk = ase_awk_open (ASE_NULL, ASE_SIZEOF(ext_t), ASE_NULL);
-	ase_awk_setccls (awk, ASE_GETCCLS());
+	ase_awk_setccls (awk, ASE_CCLS_GETDFL());
 
 	ext = (ext_t*) ase_awk_getextension (awk);
 	ext->prmfns.pow     = custom_awk_pow;

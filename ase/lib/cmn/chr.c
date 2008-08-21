@@ -10,13 +10,13 @@
 
 #include <ctype.h>
 
-static ase_bool_t ccls_is (void* data, ase_cint_t c, ase_ccls_type_t type)
+ase_bool_t ase_ccls_is (ase_cint_t c, int type)
 { 
 	/* TODO: use GetStringTypeW/A for WIN32 to implement these */
 #error NOT IMPLEMENTED YET.
 }
 
-static ase_cint_t ccls_to (void* data, ase_cint_t c, in type)  
+ase_cint_t ase_ccls_to (ase_cint_t c, int type)  
 { 
 	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_LOWER,
 		"The character type should be one of ASE_CCLS_UPPER and ASE_CCLS_LOWER");
@@ -30,7 +30,7 @@ static ase_cint_t ccls_to (void* data, ase_cint_t c, in type)
 
 #include <wctype.h>
 
-static ase_bool_t ccls_is (void* data, ase_cint_t c, int type)
+ase_bool_t ase_ccls_is (ase_cint_t c, int type)
 { 
 	static const char* name[] = 
 	{
@@ -69,7 +69,7 @@ static ase_bool_t ccls_is (void* data, ase_cint_t c, int type)
 	return iswctype (c, desc[type]);
 }
 
-static ase_cint_t ccls_to (void* data, ase_cint_t c, int type)  
+ase_cint_t ase_ccls_to (ase_cint_t c, int type)  
 { 
 	static const char* name[] = 
 	{
@@ -93,6 +93,16 @@ static ase_cint_t ccls_to (void* data, ase_cint_t c, int type)
 #else
 	#error unsupported character type
 #endif
+
+static ase_bool_t ccls_is (void* data, ase_cint_t c, int type)
+{
+	return ase_ccls_is (c, type);
+}
+
+static ase_cint_t ccls_to (void* data, ase_cint_t c, int type)  
+{
+	return ase_ccls_to (c, type);
+}
 
 static ase_ccls_t ccls =
 {

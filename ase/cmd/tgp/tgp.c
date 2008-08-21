@@ -4,14 +4,13 @@
 
 #include <ase/tgp/tgp.h>
 
-#include <ase/utl/ctype.h>
 #include <ase/utl/stdio.h>
 #include <ase/utl/main.h>
 #include <ase/utl/getopt.h>
 #include <ase/cmn/mem.h>
+#include <ase/cmn/chr.h>
 #include <ase/cmn/str.h>
 
-#include <ase/utl/helper.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -153,7 +152,7 @@ static int io_out (int cmd, void* arg, ase_char_t* buf, int len)
 			return 0;
 
 		case ASE_TGP_IO_WRITE:
-			ase_fprintf (xout->fp, "%.*s", len, buf);
+			ase_fprintf (xout->fp, ASE_T("%.*s"), len, buf);
 			return len;
 	}	
 
