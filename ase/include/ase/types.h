@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: types.h 335 2008-08-20 08:22:07Z baconevi $
  *
  * {License}
  */
@@ -329,12 +329,12 @@ typedef struct ase_cstr_t ase_cstr_t;
 typedef struct ase_mmgr_t ase_mmgr_t;
 typedef struct ase_ccls_t ase_ccls_t;
 
-typedef void* (*ase_malloc_t)  (void* custom, ase_size_t n);
-typedef void* (*ase_realloc_t) (void* custom, void* ptr, ase_size_t n);
-typedef void  (*ase_free_t)    (void* custom, void* ptr);
+typedef void* (*ase_alloc_t)   (void* data, ase_size_t n);
+typedef void* (*ase_realloc_t) (void* data, void* ptr, ase_size_t n);
+typedef void  (*ase_free_t)    (void* data, void* ptr);
 
-typedef ase_bool_t (*ase_isccls_t) (void* custom, ase_cint_t c);
-typedef ase_cint_t (*ase_toccls_t) (void* custom, ase_cint_t c);
+typedef ase_bool_t (*ase_isccls_t) (void* data, ase_cint_t c);
+typedef ase_cint_t (*ase_toccls_t) (void* data, ase_cint_t c);
 
 struct ase_cstr_t
 {
@@ -344,7 +344,7 @@ struct ase_cstr_t
 
 struct ase_mmgr_t
 {
-	ase_malloc_t  malloc;
+	ase_alloc_t   alloc;
 	ase_realloc_t realloc;
 	ase_free_t    free;
 	void*         data;

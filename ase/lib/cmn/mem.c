@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 329 2008-08-16 14:08:53Z baconevi $
+ * $Id: mem.c 335 2008-08-20 08:22:07Z baconevi $
  *
  * {License}
  */
@@ -401,24 +401,24 @@ void* ase_memrmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl)
 	return ASE_NULL;
 }
 
-static void* mmgr_malloc (void* custom, ase_size_t n)
+static void* mmgr_alloc (void* data, ase_size_t n)
 {
         return malloc (n);
 }
 
-static void* mmgr_realloc (void* custom, void* ptr, ase_size_t n)
+static void* mmgr_realloc (void* data, void* ptr, ase_size_t n)
 {
         return realloc (ptr, n);
 }
 
-static void mmgr_free (void* custom, void* ptr)
+static void mmgr_free (void* data, void* ptr)
 {
         free (ptr);
 }
 
 static ase_mmgr_t mmgr =
 {
-	mmgr_malloc,
+	mmgr_alloc,
 	mmgr_realloc,
 	mmgr_free,
 	ASE_NULL
