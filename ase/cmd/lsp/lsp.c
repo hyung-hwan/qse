@@ -4,13 +4,13 @@
 
 #include <ase/lsp/lsp.h>
 
-#include <ase/utl/stdio.h>
-#include <ase/utl/main.h>
-#include <ase/utl/getopt.h>
-
 #include <ase/cmn/mem.h>
 #include <ase/cmn/chr.h>
 #include <ase/cmn/str.h>
+#include <ase/cmn/opt.h>
+
+#include <ase/utl/stdio.h>
+#include <ase/utl/main.h>
 
 #include <string.h>
 #include <stdlib.h>
