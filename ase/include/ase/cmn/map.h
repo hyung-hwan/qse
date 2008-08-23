@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 223 2008-06-26 06:44:41Z baconevi $
+ * $Id: map.h 344 2008-08-22 15:23:09Z baconevi $
  *
  * {License}
  */
@@ -11,26 +11,71 @@
 #include <ase/macros.h>
 
 typedef struct ase_map_t ase_map_t;
-typedef struct ase_pair_t ase_pair_t;
+typedef struct ase_map_pair_t ase_map_pair_t;
 
-struct ase_pair_t
+/* data copier */
+typedef void* (*ase_map_copier_t) (
+	ase_map_t* map, 
+	void* dptr, 
+	ase_size_t dlen
+);
+
+/* data freeer */
+typedef void (*ase_map_freeer_t) (
+	ase_map_t* map, 
+	void* dptr, 
+	ase_size_t dlen
+);
+
+/* key hasher */
+typedef ase_size_t (*ase_map_hasher_t) (
+	ase_map_t* map   /* a map */, 
+	const void* kptr /* the pointer to a key */, 
+	ase_size_t klen  /* the length of a key in bytes */
+);
+
+/* key comparater */
+typedef int (*ase_map_comper_t) (
+	ase_map_t* map    /* a map */, 
+	const void* kptr1 /* the pointer to a key */, 
+	ase_size_t klen1  /* the length of a key in bytes */, 
+	const void* kptr2 /* the pointer to a key */, 
+	ase_size_t klen2  /* the length of a key in bytes */
+);
+
+/* pair visitor */
+typedef int (*ase_map_walker_t) (
+	ase_map_t* map, 
+	ase_map_pair_t* pair, 
+	void* arg
+);
+
+struct ase_map_pair_t
 {
-	struct
-	{
-		ase_char_t* ptr;
-		ase_size_t len;
-	} key;
+	void* kptr;
+	ase_size_t klen;
 
-	void* val;
+	void* vptr;
+	ase_size_t vlen;
 
 	/* used internally */
-	ase_pair_t* next;
+	ase_map_pair_t* next;
+};
+
+enum  ase_map_id_t
+{
+	ASE_MAP_KEY = 0,
+	ASE_MAP_VAL = 1
 };
 
 struct ase_map_t
 {
-	/* map owner. passed to freeval and sameval as the first argument */
-	void* owner;
+        ase_mmgr_t* mmgr;
+
+        ase_map_copier_t copier[2];
+        ase_map_freeer_t freeer[2];
+	ase_map_hasher_t hasher;
+	ase_map_comper_t comper;
 
 	ase_size_t size;
 	ase_size_t capa;
@@ -38,94 +83,95 @@ struct ase_map_t
 	unsigned int factor;
 	ase_size_t threshold;
 
-	ase_pair_t** buck;
+	ase_map_pair_t** buck;
 
+/*
 	void (*freeval) (void* owner,void* val);
-	void (*sameval) (void* owner,void* val);
-
-	/* the mmgr pointed at by mmgr should be valid
-	 * while the map is alive as the contents are 
-	 * not replicated */
-	ase_mmgr_t* mmgr;
-
-	/* list of free pairs */
-	/*ase_pair_t* fp;*/
+*/
+	void (*sameval) (void* owner, void* vptr, ase_size_t vlen);
 };
 
-#define ASE_PAIR_KEYPTR(p) ((p)->key.ptr)
-#define ASE_PAIR_KEYLEN(p) ((p)->key.len)
-#define ASE_PAIR_VAL(p) ((p)->val)
-#define ASE_PAIR_LNK(p) ((p)->next)
+#define ASE_MAP_COPIER_INLINE ase_map_copyinline
+
+#define ASE_MAP_KPTR(p) ((p)->kptr)
+#define ASE_MAP_KLEN(p) ((p)->klen)
+#define ASE_MAP_VPTR(p) ((p)->vptr)
+#define ASE_MAP_VLEN(p) ((p)->vlen)
+#define ASE_MAP_NEXT(p) ((p)->next)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
+/*
  * Creates a hashed map with a dynamic array bucket and a list of values linked
- *
- * @param owner [in]
- * @param capa [in]
- * @param factor [in]
- * @param freeval [in]
- * @param sameval [in]
- * @param mmgr [in]
  */
+/*
 ase_map_t* ase_map_open (
 	void* owner, ase_size_t capa, unsigned int factor,
 	void(*freeval)(void*,void*), void(*sameval)(void*,void*),
 	ase_mmgr_t* mmgr);
+*/
+ase_map_t* ase_map_open (
+        ase_mmgr_t* mmgr,
+	ase_size_t ext,
+        void (*init) (ase_map_t*)
+);
 
-/**
- * Destroys a hashed map 
- */
+/* destroy a map */
 void ase_map_close (ase_map_t* map);
 
+/* clear a map */
 void ase_map_clear (ase_map_t* map);
 
+/* get the number of key/value pairs in a map
 ase_size_t ase_map_getsize (ase_map_t* map);
 
-ase_pair_t* ase_map_get (
-	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen);
+ase_map_pair_t* ase_map_get (
+	ase_map_t* map,
+	const void* kptr,
+	ase_size_t klen
+);
 
-ase_pair_t* ase_map_put (
-	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen,
-	void* val);
+ase_map_pair_t* ase_map_put (
+	ase_map_t* map,
+	const void* kptr,
+	ase_size_t klen,
+	void* vptr,
+	ase_size_t vlen
+);
 
 int ase_map_putx (
-	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen,
-	void* val, ase_pair_t** px);
+	ase_map_t* map,
+	void* kptr,
+	ase_size_t klen,
+	void* vptr,
+	ase_size_t vlen,
+	ase_map_pair_t** px
+);
 
-ase_pair_t* ase_map_set (
-	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen, 
-	void* val);
-
-ase_pair_t* ase_map_getpair (
-	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen, 
-	void** val);
-
-ase_pair_t* ase_map_setpair (ase_map_t* map, ase_pair_t* pair, void* val);
+ase_map_pair_t* ase_map_set (
+	ase_map_t* map, 
+	void* kptr, 
+	ase_size_t klen, 
+	void* vptr, 
+	ase_size_t vlen
+);
 
 int ase_map_remove (
-	ase_map_t* map, const ase_char_t* keyptr, ase_size_t keylen);
+	ase_map_t* map, const void* kptr, ase_size_t klen);
 
-int ase_map_walk (ase_map_t* map, int (*walker)(ase_pair_t*,void*), void* arg);
+/* traverse a map */
+int ase_map_walk (ase_map_t* map, ase_map_walker_t walker, void* arg);
 
-/**
- * Gets the pointer to the first pair in the map.
- * @param map [in]
- * @param buckno [out]
- */
-ase_pair_t* ase_map_getfirstpair (ase_map_t* map, ase_size_t* buckno);
+/* get the pointer to the first pair in the map. */
+ase_map_pair_t* ase_map_getfirstpair (ase_map_t* map, ase_size_t* buckno);
 
-/**
- * Gets the pointer to the next pair in the map.
- * @param map [in]
- * @param pair [in]
- * @param buckno [in out]
- */
-ase_pair_t* ase_map_getnextpair (
-	ase_map_t* map, ase_pair_t* pair, ase_size_t* buckno);
+/* get the pointer to the next pair in the map. */
+ase_map_pair_t* ase_map_getnextpair (
+	ase_map_t* map, ase_map_pair_t* pair, ase_size_t* buckno);
+
+void* ase_map_copyinline (ase_map_t* map, void* dptr, ase_size_t dlen);
 
 #ifdef __cplusplus
 }

@@ -7,12 +7,6 @@
 #include <ase/cmn/sll.h>
 #include "mem.h"
 
-void* ase_sll_copyinline (ase_sll_t* sll, void* dptr, ase_size_t dlen)
-{
-	/* this is a dummy copier */
-	return ASE_NULL;
-}
-
 ase_sll_t* ase_sll_open (
 	ase_mmgr_t* mmgr, ase_size_t extension, 
 	void (*initializer) (ase_sll_t*))
@@ -43,7 +37,7 @@ ase_sll_t* ase_sll_open (
 void ase_sll_close (ase_sll_t* sll)
 {
 	ase_sll_clear (sll);
-	ASE_FREE (sll->mmgr, sll);
+	ASE_MMGR_FREE (sll->mmgr, sll);
 }
 
 void ase_sll_clear (ase_sll_t* sll)
@@ -108,13 +102,13 @@ static ase_sll_node_t* alloc_node (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 
 	if (sll->copier == ASE_NULL)
 	{
-		n = ASE_MALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
+		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
 		if (n == ASE_NULL) return ASE_NULL;
 		n->dptr = dptr;
 	}
 	else if (sll->copier == ASE_SLL_COPIER_INLINE)
 	{
-		n = ASE_MALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t) + dlen);
+		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t) + dlen);
 		if (n == ASE_NULL) return ASE_NULL;
 
 		ASE_MEMCPY (n + 1, dptr, dlen);
@@ -122,9 +116,14 @@ static ase_sll_node_t* alloc_node (ase_sll_t* sll, void* dptr, ase_size_t dlen)
 	}
 	else
 	{
-		n = ASE_MALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
+		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
 		if (n == ASE_NULL) return ASE_NULL;
 		n->dptr = sll->copier (sll, dptr, dlen);
+		if (n->dptr == ASE_NULL) 
+		{
+			ASE_MMGR_FREE (sll->mmgr, n);
+			return ASE_NULL;
+		}
 	}
 
 	n->dlen = dlen; 
@@ -210,7 +209,7 @@ void ase_sll_delete (ase_sll_t* sll, ase_sll_node_t* pos)
 	}
 
 	/* free the node */
-	ASE_FREE (sll->mmgr, pos);
+	ASE_MMGR_FREE (sll->mmgr, pos);
 
 	/* decrement the number of elements */
 	sll->size--;
@@ -235,4 +234,10 @@ void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker, void* arg)
 		if (walker(sll,n,arg) == ASE_SLL_WALK_STOP) return;
 		n = n->next;
 	}
+}
+
+void* ase_sll_copyinline (ase_sll_t* sll, void* dptr, ase_size_t dlen)
+{
+	/* this is a dummy copier */
+	return ASE_NULL;
 }

@@ -7,12 +7,6 @@
 #include <ase/cmn/dll.h>
 #include "mem.h"
 
-void* ase_dll_copyinline (ase_dll_t* dll, void* dptr, ase_size_t dlen)
-{
-	/* this is a dummy copier */
-	return ASE_NULL;
-}
-
 ase_dll_t* ase_dll_open (
 	ase_mmgr_t* mmgr, ase_size_t extension, 
 	void (*initializer) (ase_dll_t*))
@@ -43,7 +37,7 @@ ase_dll_t* ase_dll_open (
 void ase_dll_close (ase_dll_t* dll)
 {
 	ase_dll_clear (dll);
-	ASE_FREE (dll->mmgr, dll);
+	ASE_MMGR_FREE (dll->mmgr, dll);
 }
 
 void ase_dll_clear (ase_dll_t* dll)
@@ -108,13 +102,13 @@ static ase_dll_node_t* alloc_node (ase_dll_t* dll, void* dptr, ase_size_t dlen)
 
 	if (dll->copier == ASE_NULL)
 	{
-		n = ASE_MALLOC (dll->mmgr, ASE_SIZEOF(ase_dll_node_t));
+		n = ASE_MMGR_ALLOC (dll->mmgr, ASE_SIZEOF(ase_dll_node_t));
 		if (n == ASE_NULL) return ASE_NULL;
 		n->dptr = dptr;
 	}
 	else if (dll->copier == ASE_DLL_COPIER_INLINE)
 	{
-		n = ASE_MALLOC (dll->mmgr, ASE_SIZEOF(ase_dll_node_t) + dlen);
+		n = ASE_MMGR_ALLOC (dll->mmgr, ASE_SIZEOF(ase_dll_node_t) + dlen);
 		if (n == ASE_NULL) return ASE_NULL;
 
 		ASE_MEMCPY (n + 1, dptr, dlen);
@@ -122,9 +116,14 @@ static ase_dll_node_t* alloc_node (ase_dll_t* dll, void* dptr, ase_size_t dlen)
 	}
 	else
 	{
-		n = ASE_MALLOC (dll->mmgr, ASE_SIZEOF(ase_dll_node_t));
+		n = ASE_MMGR_ALLOC (dll->mmgr, ASE_SIZEOF(ase_dll_node_t));
 		if (n == ASE_NULL) return ASE_NULL;
 		n->dptr = dll->copier (dll, dptr, dlen);
+		if (n->dptr == ASE_NULL)
+		{
+			ASE_MMGR_FREE (dll->mmgr, n);
+			return ASE_NULL;
+		}
 	}
 
 	n->dlen = dlen; 
@@ -211,7 +210,7 @@ void ase_dll_delete (ase_dll_t* dll, ase_dll_node_t* pos)
 	}
 
 	/* free the node */
-	ASE_FREE (dll->mmgr, pos);
+	ASE_MMGR_FREE (dll->mmgr, pos);
 
 	/* decrement the number of elements */
 	dll->size--;
@@ -237,3 +236,10 @@ void ase_dll_walk (ase_dll_t* dll, ase_dll_walker_t walker, void* arg)
 		n = n->next;
 	}
 }
+
+void* ase_dll_copyinline (ase_dll_t* dll, void* dptr, ase_size_t dlen)
+{
+	/* this is a dummy copier */
+	return ASE_NULL;
+}
+
