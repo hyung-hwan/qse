@@ -4,6 +4,7 @@ AM_CFLAGS = -I$(top_builddir)/include
 
 lib_LTLIBRARIES = libasecmn.la
 libasecmn_la_SOURCES = mem.h chr.h \
-	mem.c chr.c map.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c sll.c dll.c
+	mem.c chr.c map.c misc.c rex.c str_bas.c str_cnv.c str_dyn.c \
+	sll.c dll.c opt.c
 libasecmn_la_LDFLAGS = -version-info 1:0:0
 

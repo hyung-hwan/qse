@@ -30,7 +30,6 @@
 	
 	#elif defined(ASE_CHAR_IS_WCHAR)
 	
-		#include <ctype.h>
 		#include <wctype.h>
 		#define ASE_ISUPPER(c) iswupper(c)
 		#define ASE_ISLOWER(c) iswlower(c)
