@@ -1,5 +1,5 @@
 
-pkginclude_HEADERS = mem.h chr.h str.h map.h rex.h sll.h dll.h
+pkginclude_HEADERS = mem.h chr.h str.h map.h rex.h sll.h dll.h opt.h
 
 pkgincludedir= $(includedir)/ase/cmn
 

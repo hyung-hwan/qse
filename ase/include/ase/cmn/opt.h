@@ -4,8 +4,8 @@
  * {License}
  */
 
-#ifndef _ASE_UTL_GETOPT_H_
-#define _ASE_UTL_GETOPT_H_
+#ifndef _ASE_CMN_OPT_H_
+#define _ASE_CMN_OPT_H_
 
 #include <ase/types.h>
 #include <ase/macros.h>
@@ -44,12 +44,12 @@ extern "C" {
 #endif
 
 /*
- * NAME Parse command line options
+ * NAME: parse command line options
  *
- * DESCRIPTION
+ * DESCRIPTION:
  *   TODO:
  *
- * RETURNS ASE_CHAR_EOF, XXXX.XXXX
+ * RETURNS: ASE_CHAR_EOF, XXXX.XXXX
  */
 ase_cint_t ase_getopt (
 	int argc /* argument count */, 

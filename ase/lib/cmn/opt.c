@@ -4,7 +4,7 @@
  * {License}
  */
 
-#include <ase/utl/getopt.h>
+#include <ase/cmn/opt.h>
 #include <ase/cmn/str.h>
 
 /* 
