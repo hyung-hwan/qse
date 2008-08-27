@@ -10,10 +10,40 @@
 
 #include <ctype.h>
 
+static ase_bool_t is_upper (ase_cint_t c) { return isupper(c); }
+static ase_bool_t is_lower (ase_cint_t c) { return islower(c); }
+static ase_bool_t is_alpha (ase_cint_t c) { return isalpha(c); }
+static ase_bool_t is_digit (ase_cint_t c) { return isdigit(c); }
+static ase_bool_t is_xdigit (ase_cint_t c) { return isxdigit(c); }
+static ase_bool_t is_alnum (ase_cint_t c) { return isalnum(c); }
+static ase_bool_t is_space (ase_cint_t c) { return isspace(c); }
+static ase_bool_t is_print (ase_cint_t c) { return isprint(c); }
+static ase_bool_t is_graph (ase_cint_t c) { return isgraph(c); }
+static ase_bool_t is_cntrl (ase_cint_t c) { return iscntrl(c); }
+static ase_bool_t is_punct (ase_cint_t c) { return ispunct(c); }
+
 ase_bool_t ase_ccls_is (ase_cint_t c, int type)
 { 
 	/* TODO: use GetStringTypeW/A for WIN32 to implement these */
-#error NOT IMPLEMENTED YET.
+
+	static ase_bool_t (*f[]) (ase_cint_t) = 
+	{
+		is_upper,
+		is_lower,
+		is_alpha,
+		is_digit,
+		is_xdigit,
+		is_alnum,
+		is_space,
+		is_print,
+		is_graph,
+		is_cntrl,
+		is_punct
+	};
+
+	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_PUNCT,
+		"The character type should be one of ase_ccls_type_t values");
+	return f[type] (c);
 }
 
 ase_cint_t ase_ccls_to (ase_cint_t c, int type)  

@@ -91,8 +91,8 @@ extern "C" {
 
 ase_sll_t* ase_sll_open (
 	ase_mmgr_t* mmgr /* memory manager */ , 
-	ase_size_t extension /* size of extension area in bytes */,
-	void (*initializer) (ase_sll_t*) /* extension initializer */
+	ase_size_t ext /* size of extension area in bytes */,
+	void (*init) (ase_sll_t*) /* extension initializer */
 );
 
 /* 
@@ -112,7 +112,7 @@ void ase_sll_clear (
 /*
  * NAME: specifies how to clone an element
  *
- * DESCRIPTION
+ * DESCRIPTION:
  *  A special copier ASE_SLL_COPIER_INLINE is provided. This copier enables
  *  you to copy the data inline to the internal node. No freeer is invoked
  *  when the node is freeed.

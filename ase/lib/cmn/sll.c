@@ -7,11 +7,26 @@
 #include <ase/cmn/sll.h>
 #include "mem.h"
 
-ase_sll_t* ase_sll_open (
-	ase_mmgr_t* mmgr, ase_size_t extension, 
-	void (*initializer) (ase_sll_t*))
+#define sll_t    ase_sll_t
+#define node_t   ase_sll_node_t
+#define copier_t ase_sll_copier_t
+#define freeer_t ase_sll_freeer_t
+#define walker_t ase_sll_walker_t
+
+#define HEAD(s) ASE_SLL_HEAD(s)
+#define TAIL(s) ASE_SLL_TAIL(s)
+#define SIZE(s) ASE_SLL_SIZE(s)
+
+#define DPTR(n) ASE_SLL_DPTR(n)
+#define DLEN(n) ASE_SLL_DLEN(n)
+#define NEXT(n) ASE_SLL_NEXT(n)
+
+#define size_t   ase_size_t
+#define mmgr_t   ase_mmgr_t
+
+sll_t* ase_sll_open (mmgr_t* mmgr, size_t ext, void (*init) (sll_t*)) 
 {
-	ase_sll_t* sll;
+	sll_t* sll;
 
 	if (mmgr == ASE_NULL) 
 	{
@@ -23,220 +38,220 @@ ase_sll_t* ase_sll_open (
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	sll = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_sll_t) + extension);
+	sll = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(sll_t) + ext);
 	if (sll == ASE_NULL) return ASE_NULL;
 
-	ASE_MEMSET (sll, 0, ASE_SIZEOF(ase_sll_t) + extension);
+	ASE_MEMSET (sll, 0, ASE_SIZEOF(sll_t) + ext);
 	sll->mmgr = mmgr;
 
-	if (initializer) initializer (sll);
+	if (init) init (sll);
 
 	return sll;
 }
 
-void ase_sll_close (ase_sll_t* sll)
+void ase_sll_close (sll_t* sll)
 {
 	ase_sll_clear (sll);
 	ASE_MMGR_FREE (sll->mmgr, sll);
 }
 
-void ase_sll_clear (ase_sll_t* sll)
+void ase_sll_clear (sll_t* sll)
 {
-	while (sll->head != ASE_NULL) ase_sll_delete (sll, sll->head);
-	ASE_ASSERT (sll->tail == ASE_NULL);
+	while (HEAD(sll) != ASE_NULL) ase_sll_delete (sll, HEAD(sll));
+	ASE_ASSERT (TAIL(sll) == ASE_NULL);
 }
 
-void* ase_sll_getextension (ase_sll_t* sll)
+void* ase_sll_getextension (sll_t* sll)
 {
 	return sll + 1;
 }
 
-ase_mmgr_t* ase_sll_getmmgr (ase_sll_t* sll)
+mmgr_t* ase_sll_getmmgr (sll_t* sll)
 {
 	return sll->mmgr;
 }
 
-void ase_sll_setmmgr (ase_sll_t* sll, ase_mmgr_t* mmgr)
+void ase_sll_setmmgr (sll_t* sll, mmgr_t* mmgr)
 {
 	sll->mmgr = mmgr;
 }
 
-ase_size_t ase_sll_getsize (ase_sll_t* sll)
+size_t ase_sll_getsize (sll_t* sll)
 {
-	return sll->size;
+	return SIZE(sll);
 }
 
-ase_sll_node_t* ase_sll_gethead (ase_sll_t* sll)
+node_t* ase_sll_gethead (sll_t* sll)
 {
-	return sll->head;
+	return HEAD(sll);
 }
 
-ase_sll_node_t* ase_sll_gettail (ase_sll_t* sll)
+node_t* ase_sll_gettail (sll_t* sll)
 {
-	return sll->tail;
+	return TAIL(sll);
 }
 
-ase_sll_copier_t ase_sll_getcopier (ase_sll_t* sll)
+copier_t ase_sll_getcopier (sll_t* sll)
 {
 	return sll->copier;
 }
 
-void ase_sll_setcopier (ase_sll_t* sll, ase_sll_copier_t copier)
+void ase_sll_setcopier (sll_t* sll, copier_t copier)
 {
 	sll->copier = copier;
 }
 
-ase_sll_freeer_t ase_sll_getfreeer (ase_sll_t* sll)
+freeer_t ase_sll_getfreeer (sll_t* sll)
 {
 	return sll->freeer;
 }
 
-void ase_sll_setfreeer (ase_sll_t* sll, ase_sll_freeer_t freeer)
+void ase_sll_setfreeer (sll_t* sll, freeer_t freeer)
 {
 	sll->freeer = freeer;
 }
 
-static ase_sll_node_t* alloc_node (ase_sll_t* sll, void* dptr, ase_size_t dlen)
+static node_t* alloc_node (sll_t* sll, void* dptr, size_t dlen)
 {
-	ase_sll_node_t* n;
+	node_t* n;
 
 	if (sll->copier == ASE_NULL)
 	{
-		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
+		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(node_t));
 		if (n == ASE_NULL) return ASE_NULL;
-		n->dptr = dptr;
+		DPTR(n) = dptr;
 	}
 	else if (sll->copier == ASE_SLL_COPIER_INLINE)
 	{
-		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t) + dlen);
+		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(node_t) + dlen);
 		if (n == ASE_NULL) return ASE_NULL;
 
 		ASE_MEMCPY (n + 1, dptr, dlen);
-		n->dptr = n + 1;
+		DPTR(n) = n + 1;
 	}
 	else
 	{
-		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(ase_sll_node_t));
+		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(node_t));
 		if (n == ASE_NULL) return ASE_NULL;
-		n->dptr = sll->copier (sll, dptr, dlen);
-		if (n->dptr == ASE_NULL) 
+		DPTR(n) = sll->copier (sll, dptr, dlen);
+		if (DPTR(n) == ASE_NULL) 
 		{
 			ASE_MMGR_FREE (sll->mmgr, n);
 			return ASE_NULL;
 		}
 	}
 
-	n->dlen = dlen; 
-	n->next = ASE_NULL;	
+	DLEN(n) = dlen; 
+	NEXT(n) = ASE_NULL;	
 
 	return n;
 }
 
-ase_sll_node_t* ase_sll_insert (
-	ase_sll_t* sll, ase_sll_node_t* pos, void* dptr, ase_size_t dlen)
+node_t* ase_sll_insert (
+	sll_t* sll, node_t* pos, void* dptr, size_t dlen)
 {
-	ase_sll_node_t* n = alloc_node (sll, dptr, dlen);
+	node_t* n = alloc_node (sll, dptr, dlen);
 	if (n == ASE_NULL) return ASE_NULL;
 
 	if (pos == ASE_NULL)
 	{
 		/* insert at the end */
-		if (sll->head == ASE_NULL)
+		if (HEAD(sll) == ASE_NULL)
 		{
-			ASE_ASSERT (sll->tail == ASE_NULL);
-			sll->head = n;
+			ASE_ASSERT (TAIL(sll) == ASE_NULL);
+			HEAD(sll) = n;
 		}
-		else sll->tail->next = n;
+		else NEXT(TAIL(sll)) = n;
 
-		sll->tail = n;
+		TAIL(sll) = n;
 	}
 	else
 	{
 		/* insert in front of the positional node */
-		n->next = pos;
-		if (pos == sll->head) sll->head = n;
+		NEXT(n) = pos;
+		if (pos == HEAD(sll)) HEAD(sll) = n;
 		else
 		{
 			/* take note of performance penalty */
-			ase_sll_node_t* n2 = sll->head;
-			while (n2->next != pos) n2 = n2->next;
-			n2->next = n;
+			node_t* n2 = HEAD(sll);
+			while (NEXT(n2) != pos) n2 = NEXT(n2);
+			NEXT(n2) = n;
 		}
 	}
 
-	sll->size++;
+	SIZE(sll)++;
 	return n;
 }
 
-ase_sll_node_t* ase_sll_pushhead (ase_sll_t* sll, void* data, ase_size_t size)
+node_t* ase_sll_pushhead (sll_t* sll, void* data, size_t size)
 {
-	return ase_sll_insert (sll, sll->head, data, size);
+	return ase_sll_insert (sll, HEAD(sll), data, size);
 }
 
-ase_sll_node_t* ase_sll_pushtail (ase_sll_t* sll, void* data, ase_size_t size)
+node_t* ase_sll_pushtail (sll_t* sll, void* data, size_t size)
 {
 	return ase_sll_insert (sll, ASE_NULL, data, size);
 }
 
-void ase_sll_delete (ase_sll_t* sll, ase_sll_node_t* pos)
+void ase_sll_delete (sll_t* sll, node_t* pos)
 {
 	if (pos == ASE_NULL) return; /* not a valid node */
 
-	if (pos == sll->head)
+	if (pos == HEAD(sll))
 	{
 		/* it is simple to delete the head node */
-		sll->head = pos->next;
-		if (sll->head == ASE_NULL) sll->tail = ASE_NULL;
+		HEAD(sll) = NEXT(pos);
+		if (HEAD(sll) == ASE_NULL) TAIL(sll) = ASE_NULL;
 	}
 	else 
 	{
 		/* but deletion of other nodes has significant performance
 		 * penalty as it has look for the predecessor of the 
 		 * target node */
-		ase_sll_node_t* n2 = sll->head;
-		while (n2->next != pos) n2 = n2->next;
+		node_t* n2 = HEAD(sll);
+		while (NEXT(n2) != pos) n2 = NEXT(n2);
 
-		n2->next = pos->next;
+		NEXT(n2) = NEXT(pos);
 
 		/* update the tail node if necessary */
-		if (pos == sll->tail) sll->tail = n2;
+		if (pos == TAIL(sll)) TAIL(sll) = n2;
 	}
 
 	if (sll->freeer != ASE_NULL)
 	{
 		/* free the actual data */
-		sll->freeer (sll, pos->dptr, pos->dlen);
+		sll->freeer (sll, DPTR(pos), DLEN(pos));
 	}
 
 	/* free the node */
 	ASE_MMGR_FREE (sll->mmgr, pos);
 
 	/* decrement the number of elements */
-	sll->size--;
+	SIZE(sll)--;
 }
 
-void ase_sll_pophead (ase_sll_t* sll)
+void ase_sll_pophead (sll_t* sll)
 {
-	ase_sll_delete (sll, sll->head);
+	ase_sll_delete (sll, HEAD(sll));
 }
 
-void ase_sll_poptail (ase_sll_t* sll)
+void ase_sll_poptail (sll_t* sll)
 {
-	ase_sll_delete (sll, sll->tail);
+	ase_sll_delete (sll, TAIL(sll));
 }
 
-void ase_sll_walk (ase_sll_t* sll, ase_sll_walker_t walker, void* arg)
+void ase_sll_walk (sll_t* sll, walker_t walker, void* arg)
 {
-	ase_sll_node_t* n = sll->head;
+	node_t* n = HEAD(sll);
 
 	while (n != ASE_NULL)
 	{
 		if (walker(sll,n,arg) == ASE_SLL_WALK_STOP) return;
-		n = n->next;
+		n = NEXT(n);
 	}
 }
 
-void* ase_sll_copyinline (ase_sll_t* sll, void* dptr, ase_size_t dlen)
+void* ase_sll_copyinline (sll_t* sll, void* dptr, size_t dlen)
 {
 	/* this is a dummy copier */
 	return ASE_NULL;

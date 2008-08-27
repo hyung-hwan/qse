@@ -92,8 +92,8 @@ extern "C" {
 
 ase_dll_t* ase_dll_open (
 	ase_mmgr_t* mmgr /* memory manager */ , 
-	ase_size_t extension /* size of extension area in bytes */,
-	void (*initializer) (ase_dll_t*) /* extension initializer */
+	ase_size_t ext /* size of extension area in bytes */,
+	void (*init) (ase_dll_t*) /* extension initializer */
 );
 
 /* 
