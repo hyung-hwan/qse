@@ -214,8 +214,8 @@ ase_sll_node_t* ase_sll_pushtail (
 );
 
 void ase_sll_delete (
-	ase_sll_t* sll, 
-	ase_sll_node_t* pos
+	ase_sll_t* sll /* a singly linked list */,
+	ase_sll_node_t* pos /* a node to delete */
 );
 
 void ase_sll_pophead (
