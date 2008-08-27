@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 345 2008-08-26 08:50:12Z baconevi $
+ * $Id: map.c 346 2008-08-26 10:31:24Z baconevi $
  *
  * {License}
  */
@@ -19,6 +19,7 @@
 #define KLEN(p)  ASE_MAP_KLEN(p)
 #define VPTR(p)  ASE_MAP_VPTR(p)
 #define VLEN(p)  ASE_MAP_VLEN(p)
+#define NEXT(p)  ASE_MAP_NEXT(p)
 
 #define size_t   ase_size_t
 #define byte_t   ase_byte_t
@@ -67,7 +68,7 @@ static pair_t* alloc_pair (map_t* map,
 	n = ASE_MMGR_ALLOC (map->mmgr, as);
 	if (n == ASE_NULL) return ASE_NULL;
 
-	ASE_MAP_NEXT(n) = ASE_NULL;
+	NEXT(n) = ASE_NULL;
 
 	KLEN(n) = klen;
 	if (kcop == ASE_NULL)
@@ -234,7 +235,7 @@ void ase_map_clear (map_t* map)
 
 		while (pair != ASE_NULL) 
 		{
-			next = ASE_MAP_NEXT(pair);
+			next = NEXT(pair);
 			free_pair (map, pair);
 			map->size--;
 			pair = next;
@@ -328,7 +329,7 @@ pair_t* ase_map_get (
 			return pair;
 		}
 
-		pair = ASE_MAP_NEXT(pair);
+		pair = NEXT(pair);
 	}
 
 	return ASE_NULL;
@@ -349,15 +350,16 @@ int ase_map_putx (
 	map_t* map, void* kptr, size_t klen, 
 	void* vptr, size_t vlen, pair_t** px)
 {
-	pair_t* pair, * p, * prev = ASE_NULL, * next;
+	pair_t* pair, * p, * prev, * next;
 	size_t hc;
 
 	hc = map->hasher(map,kptr,klen) % map->capa;
 	pair = map->buck[hc];
+	prev = ASE_NULL;
 
 	while (pair != ASE_NULL) 
 	{
-		next = ASE_MAP_NEXT(pair);
+		next = NEXT(pair);
 
 		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
@@ -367,8 +369,8 @@ int ase_map_putx (
 			{
 				/* the pair has been reallocated. relink it */
 				if (prev == ASE_NULL) map->buck[hc] = p;
-				else ASE_MAP_NEXT(prev) = p;
-				ASE_MAP_NEXT(p) = next;
+				else NEXT(prev) = p;
+				NEXT(p) = next;
 			}
 
 			if (px != ASE_NULL) *px = p;
@@ -407,7 +409,7 @@ int ase_map_putx (
 	pair = alloc_pair (map, kptr, klen, vptr, vlen);
 	if (pair == ASE_NULL) return -1; /* error */
 
-	ASE_MAP_NEXT(pair) = map->buck[hc];
+	NEXT(pair) = map->buck[hc];
 	map->buck[hc] = pair;
 	map->size++;
 
@@ -415,30 +417,44 @@ int ase_map_putx (
 	return 1; /* new key added */
 }
 
-pair_t* ase_map_set (map_t* map, 
+pair_t* ase_map_update (map_t* map, 
 	void* kptr, size_t klen, void* vptr, size_t vlen)
 {
-	pair_t* pair;
+	pair_t* pair, * p, * prev, * next;
 	size_t hc;
 
 	hc = map->hasher(map,kptr,klen) % map->capa;
 	pair = map->buck[hc];
+	prev = ASE_NULL;
 
 	while (pair != ASE_NULL) 
 	{
+		next = NEXT(pair);
+
 		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
-			/*TODO: this is wrong... change code .... same way as putx... */
-			return change_pair_val (map, pair, vptr, vlen);
+			p = change_pair_val (map, pair, vptr, vlen);
+
+			if (p == ASE_NULL) return ASE_NULL; /* change error */
+			if (p != pair) 
+			{
+				/* the pair has been reallocated. relink it */
+				if (prev == ASE_NULL) map->buck[hc] = p;
+				else NEXT(prev) = p;
+				NEXT(p) = next;
+			}
+
+			return 0; /* value changed for the existing key */
 		}
-		pair = ASE_MAP_NEXT(pair);
+
+		prev = pair;
+		pair = next;
 	}
 
 	return ASE_NULL;
 }
 
-int ase_map_remove (
-	map_t* map, const void* kptr, size_t klen)
+int ase_map_delete (map_t* map, const void* kptr, size_t klen)
 {
 	pair_t* pair, * prev;
 	size_t hc;
@@ -452,8 +468,8 @@ int ase_map_remove (
 		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			if (prev == ASE_NULL) 
-				map->buck[hc] = ASE_MAP_NEXT(pair);
-			else ASE_MAP_NEXT(prev) = ASE_MAP_NEXT(pair);
+				map->buck[hc] = NEXT(pair);
+			else NEXT(prev) = NEXT(pair);
 
 			free_pair (map, pair);
 			map->size--;
@@ -462,7 +478,7 @@ int ase_map_remove (
 		}
 
 		prev = pair;
-		pair = ASE_MAP_NEXT(pair);
+		pair = NEXT(pair);
 	}
 
 	return -1;
@@ -479,7 +495,7 @@ void ase_map_walk (map_t* map, walker_t walker, void* arg)
 
 		while (pair != ASE_NULL) 
 		{
-			next = ASE_MAP_NEXT(pair);
+			next = NEXT(pair);
 			if (walker(map, pair, arg) == ASE_MAP_WALK_STOP) return;
 			pair = next;
 		}
@@ -510,7 +526,7 @@ pair_t* ase_map_getnextpair (
 	size_t i;
 	pair_t* next;
 
-	next = ASE_MAP_NEXT(pair);
+	next = NEXT(pair);
 	if (next != ASE_NULL) 
 	{
 		/* no change in bucket number */
@@ -556,13 +572,13 @@ static int reorganize (map_t* map)
 
 		while (pair != ASE_NULL) 
 		{
-			pair_t* next = ASE_MAP_NEXT(pair);
+			pair_t* next = NEXT(pair);
 
 			hc = map->hasher (map,
 				KPTR(pair),
 				KLEN(pair)) % new_capa;
 
-			ASE_MAP_NEXT(pair) = new_buck[hc];
+			NEXT(pair) = new_buck[hc];
 			new_buck[hc] = pair;
 
 			pair = next;

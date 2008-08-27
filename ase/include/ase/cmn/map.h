@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 345 2008-08-26 08:50:12Z baconevi $
+ * $Id: map.h 346 2008-08-26 10:31:24Z baconevi $
  *
  * {License}
  */
@@ -231,7 +231,8 @@ int ase_map_putx (
 	ase_map_pair_t** px
 );
 
-ase_map_pair_t* ase_map_set (
+/* update the value of a existing pair with a matching key */
+ase_map_pair_t* ase_map_update (
 	ase_map_t* map /* a map */,
 	void* kptr, 
 	ase_size_t klen, 
@@ -239,8 +240,8 @@ ase_map_pair_t* ase_map_set (
 	ase_size_t vlen
 );
 
-/* remove a pair with a matching key */
-int ase_map_remove (
+/* delete a pair with a matching key */
+int ase_map_delete (
 	ase_map_t* map /* a map */,
 	const void* kptr,
 	ase_size_t klen
