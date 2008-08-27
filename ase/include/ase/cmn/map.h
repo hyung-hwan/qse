@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 346 2008-08-26 10:31:24Z baconevi $
+ * $Id: map.h 347 2008-08-26 11:04:16Z baconevi $
  *
  * {License}
  */
@@ -229,6 +229,26 @@ int ase_map_putx (
 	void* vptr,
 	ase_size_t vlen,
 	ase_map_pair_t** px
+);
+
+/* 
+ * NAME: insert a new pair with a key and a value 
+ *
+ * DESCRIPTION:
+ *  The ase_map_insert() function inserts a new pair with the key and the value
+ *  given. If there exists a pair with the key given, the function returns 
+ *  ASE_NULL without channging the value.
+ *
+ * RETURNS: 
+ *  a pointer to the pair successfully created on success.
+ *  ASE_NULL on failure. 
+ */
+ase_map_pair_t* ase_map_insert (
+	ase_map_t* map /* a map */,
+	void* kptr, 
+	ase_size_t klen, 
+	void* vptr, 
+	ase_size_t vlen
 );
 
 /* update the value of a existing pair with a matching key */

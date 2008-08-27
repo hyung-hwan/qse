@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 346 2008-08-26 10:31:24Z baconevi $
+ * $Id: map.c 347 2008-08-26 11:04:16Z baconevi $
  *
  * {License}
  */
@@ -47,9 +47,7 @@ static int comp_key (map_t* map,
 	const void* kptr2, size_t klen2)
 {
 	if (klen1 == klen2) return ASE_MEMCMP (kptr1, kptr2, klen1);
-
-	/* when the length are different it indicate that they are 
-	 * just different */
+	/* it just returns 1 to indicate that they are different. */
 	return 1;
 }
 
@@ -127,7 +125,6 @@ static void free_pair (map_t* map, pair_t* pair)
 static pair_t* change_pair_val (
 	map_t* map, pair_t* pair, void* vptr, size_t vlen)
 {
-	/* use this function with care */
 	if (VPTR(pair) == vptr) 
 	{
 		/* if the old value and the new value are the same,
@@ -381,15 +378,13 @@ int ase_map_putx (
 		pair = next;
 	}
 
-	if (map->threshold > 0 && 
-	    map->size >= map->threshold)
+	if (map->threshold > 0 && map->size >= map->threshold)
 	{
 		if (reorganize(map) == 0) /* ignore the error */
 		{
 			hc = map->hasher(map,kptr,klen) % map->capa;
 		}
 	}
-
 
 	ASE_ASSERT (pair == ASE_NULL);
 
@@ -417,8 +412,46 @@ int ase_map_putx (
 	return 1; /* new key added */
 }
 
-pair_t* ase_map_update (map_t* map, 
-	void* kptr, size_t klen, void* vptr, size_t vlen)
+
+pair_t* ase_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+{
+	pair_t* pair;
+	size_t hc;
+
+	hc = map->hasher(map,kptr,klen) % map->capa;
+	pair = map->buck[hc];
+
+	while (pair != ASE_NULL) 
+	{
+		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
+		{
+			return ASE_NULL;
+		}
+
+		pair = NEXT(pair);
+	}
+
+	if (map->threshold > 0 && map->size >= map->threshold)
+	{
+		if (reorganize(map) == 0) /* ignore the error */
+		{
+			hc = map->hasher(map,kptr,klen) % map->capa;
+		}
+	}
+
+	ASE_ASSERT (pair == ASE_NULL);
+
+	pair = alloc_pair (map, kptr, klen, vptr, vlen);
+	if (pair == ASE_NULL) return ASE_NULL;
+
+	NEXT(pair) = map->buck[hc];
+	map->buck[hc] = pair;
+	map->size++;
+
+	return pair;
+}
+
+pair_t* ase_map_update (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* pair, * p, * prev, * next;
 	size_t hc;
