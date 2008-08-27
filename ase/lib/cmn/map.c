@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 344 2008-08-22 15:23:09Z baconevi $
+ * $Id: map.c 345 2008-08-26 08:50:12Z baconevi $
  *
  * {License}
  */
@@ -216,6 +216,34 @@ map_t* ase_map_open (mmgr_t* mmgr, size_t ext, void (*init) (map_t*))
 	return map;
 }
 
+void ase_map_close (map_t* map)
+{
+	ase_map_clear (map);
+	ASE_MMGR_FREE (map->mmgr, map->buck);
+	ASE_MMGR_FREE (map->mmgr, map);
+}
+
+void ase_map_clear (map_t* map)
+{
+	size_t i;
+	pair_t* pair, * next;
+
+	for (i = 0; i < map->capa; i++) 
+	{
+		pair = map->buck[i];
+
+		while (pair != ASE_NULL) 
+		{
+			next = ASE_MAP_NEXT(pair);
+			free_pair (map, pair);
+			map->size--;
+			pair = next;
+		}
+
+		map->buck[i] = ASE_NULL;
+	}
+}
+
 copier_t ase_map_getcopier (map_t* map, int id)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
@@ -279,34 +307,6 @@ void ase_map_setmmgr (map_t* map, mmgr_t* mmgr)
 	map->mmgr = mmgr;
 }
 
-void ase_map_close (map_t* map)
-{
-	ase_map_clear (map);
-	ASE_MMGR_FREE (map->mmgr, map->buck);
-	ASE_MMGR_FREE (map->mmgr, map);
-}
-
-void ase_map_clear (map_t* map)
-{
-	size_t i;
-	pair_t* pair, * next;
-
-	for (i = 0; i < map->capa; i++) 
-	{
-		pair = map->buck[i];
-
-		while (pair != ASE_NULL) 
-		{
-			next = ASE_MAP_NEXT(pair);
-			free_pair (map, pair);
-			map->size--;
-			pair = next;
-		}
-
-		map->buck[i] = ASE_NULL;
-	}
-}
-
 size_t ase_map_getsize (map_t* map)
 {
 	return map->size;
@@ -323,9 +323,10 @@ pair_t* ase_map_get (
 
 	while (pair != ASE_NULL) 
 	{
-		if (map->comper (map, 
-			KPTR(pair), KLEN(pair), 
-			kptr, klen) == 0) return pair;
+		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0)
+		{
+			return pair;
+		}
 
 		pair = ASE_MAP_NEXT(pair);
 	}
@@ -358,9 +359,7 @@ int ase_map_putx (
 	{
 		next = ASE_MAP_NEXT(pair);
 
-		if (map->comper (map, 
-			KPTR(pair), KLEN(pair), 
-			kptr, klen) == 0) 
+		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			p = change_pair_val (map, pair, vptr, vlen);
 			if (p == ASE_NULL) return -1; /* change error */
@@ -427,9 +426,7 @@ pair_t* ase_map_set (map_t* map,
 
 	while (pair != ASE_NULL) 
 	{
-		if (map->comper (map, 
-			KPTR(pair), KLEN(pair), 
-			kptr, klen) == 0) 
+		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			/*TODO: this is wrong... change code .... same way as putx... */
 			return change_pair_val (map, pair, vptr, vlen);
@@ -439,22 +436,6 @@ pair_t* ase_map_set (map_t* map,
 
 	return ASE_NULL;
 }
-
-#if 0
-pair_t* ase_map_getpair (
-	map_t* map, const void* kptr, size_t klen, 
-	void** val, size_t* vptr)
-{
-	pair_t* pair;
-
-	pair = ase_map_get (map, kptr, klen);
-	if (pair == ASE_NULL) return ASE_NULL; 
-	if (val) *val = VPTR(pair);
-	if (vptr) *vptr = VLEN(pair);
-
-	return pair;
-}
-#endif
 
 int ase_map_remove (
 	map_t* map, const void* kptr, size_t klen)
@@ -468,9 +449,7 @@ int ase_map_remove (
 
 	while (pair != ASE_NULL) 
 	{
-		if (map->comper (map, 
-			KPTR(pair), KLEN(pair), 
-			kptr, klen) == 0) 
+		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			if (prev == ASE_NULL) 
 				map->buck[hc] = ASE_MAP_NEXT(pair);
@@ -489,7 +468,7 @@ int ase_map_remove (
 	return -1;
 }
 
-int ase_map_walk (map_t* map, walker_t walker, void* arg)
+void ase_map_walk (map_t* map, walker_t walker, void* arg)
 {
 	size_t i;
 	pair_t* pair, * next;
@@ -501,13 +480,10 @@ int ase_map_walk (map_t* map, walker_t walker, void* arg)
 		while (pair != ASE_NULL) 
 		{
 			next = ASE_MAP_NEXT(pair);
-/* TODO: ASE_MAP_WALK_STOP ASE_MAP_WALK_FORWARD */
-			if (walker(map, pair, arg) == -1) return -1;
+			if (walker(map, pair, arg) == ASE_MAP_WALK_STOP) return;
 			pair = next;
 		}
 	}
-
-	return 0;
 }
 
 pair_t* ase_map_getfirstpair (map_t* map, size_t* buckno)
