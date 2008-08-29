@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: awk.h 349 2008-08-28 14:21:25Z baconevi $
  *
  * {License}
  */
@@ -592,8 +592,9 @@ extern ase_awk_val_t* ase_awk_val_one;
  */
 ase_awk_t* ase_awk_open ( 
 	ase_mmgr_t* mmgr /* memory manager */,
-	ase_size_t extension /* size of extension area in bytes */, 
-	void (*initializer) (ase_awk_t*) /* extension area initializer */
+	ase_size_t ext /* size of extension area in bytes */, 
+	void (*init) (ase_awk_t*, void*) /* extension initializer */,
+	void* init_data /* the second argument to the extension initializer */
 );
 
 /* 

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: run.c 349 2008-08-28 14:21:25Z baconevi $
  *
  * {License}
  */
@@ -2189,7 +2189,7 @@ struct __foreach_walker_t
 	ase_awk_nde_t* body;
 };
 
-static int __walk_foreach (ase_pair_t* pair, void* arg)
+static int __walk_foreach (ase_map_pair_t* pair, void* arg)
 {
 	struct __foreach_walker_t* w = (struct __foreach_walker_t*)arg;
 	ase_awk_val_t* str;
@@ -2441,7 +2441,7 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 	if (var->type == ASE_AWK_NDE_NAMED ||
 	    var->type == ASE_AWK_NDE_NAMEDIDX)
 	{
-		ase_pair_t* pair;
+		ase_map_pair_t* pair;
 
 		ASE_ASSERTX (
 			(var->type == ASE_AWK_NDE_NAMED && var->idx == ASE_NULL) ||
@@ -3324,7 +3324,7 @@ static ase_awk_val_t* do_assignment_scalar (
 
 	if (var->type == ASE_AWK_NDE_NAMED) 
 	{
-		ase_pair_t* pair;
+		ase_map_pair_t* pair;
 		int n;
 
 		pair = ase_map_get (
@@ -3428,7 +3428,7 @@ static ase_awk_val_t* do_assignment_map (
 
 	if (var->type == ASE_AWK_NDE_NAMEDIDX)
 	{
-		ase_pair_t* pair;
+		ase_map_pair_t* pair;
 		pair = ase_map_get (
 			run->named, var->id.name, var->id.name_len);
 		map = (pair == ASE_NULL)? 
@@ -5379,7 +5379,7 @@ static ase_awk_val_t* eval_afn_intrinsic (
 {
 	ase_awk_nde_call_t* call = (ase_awk_nde_call_t*)nde;
 	ase_awk_afn_t* afn;
-	ase_pair_t* pair;
+	ase_map_pair_t* pair;
 
 	pair = ase_map_get (run->awk->tree.afns, 
 		call->what.afn.name.ptr, call->what.afn.name.len);
@@ -5735,7 +5735,7 @@ static int get_reference (
 
 	if (nde->type == ASE_AWK_NDE_NAMED)
 	{
-		ase_pair_t* pair;
+		ase_map_pair_t* pair;
 
 		pair = ase_map_get (
 			run->named, tgt->id.name, tgt->id.name_len);
@@ -5780,7 +5780,7 @@ static int get_reference (
 
 	if (nde->type == ASE_AWK_NDE_NAMEDIDX)
 	{
-		ase_pair_t* pair;
+		ase_map_pair_t* pair;
 
 		pair = ase_map_get (
 			run->named, tgt->id.name, tgt->id.name_len);
@@ -5869,7 +5869,7 @@ static int get_reference (
 static ase_awk_val_t** get_reference_indexed (
 	ase_awk_run_t* run, ase_awk_nde_var_t* nde, ase_awk_val_t** val)
 {
-	ase_pair_t* pair;
+	ase_map_pair_t* pair;
 	ase_char_t* str;
 	ase_size_t len;
 	ase_char_t idxbuf[IDXBUFSIZE];
@@ -5994,7 +5994,7 @@ static ase_awk_val_t* eval_rex (ase_awk_run_t* run, ase_awk_nde_t* nde)
 
 static ase_awk_val_t* eval_named (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
-	ase_pair_t* pair;
+	ase_map_pair_t* pair;
 		       
 	pair = ase_map_get (run->named, 
 		((ase_awk_nde_var_t*)nde)->id.name, 
@@ -6021,7 +6021,7 @@ static ase_awk_val_t* eval_arg (ase_awk_run_t* run, ase_awk_nde_t* nde)
 static ase_awk_val_t* eval_indexed (
 	ase_awk_run_t* run, ase_awk_nde_var_t* nde, ase_awk_val_t** val)
 {
-	ase_pair_t* pair;
+	ase_map_pair_t* pair;
 	ase_char_t* str;
 	ase_size_t len;
 	ase_char_t idxbuf[IDXBUFSIZE];
@@ -6069,7 +6069,7 @@ static ase_awk_val_t* eval_indexed (
 static ase_awk_val_t* eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 {
 	ase_awk_nde_var_t* tgt = (ase_awk_nde_var_t*)nde;
-	ase_pair_t* pair;
+	ase_map_pair_t* pair;
 
 	pair = ase_map_get (run->named, tgt->id.name, tgt->id.name_len);
 	if (pair == ASE_NULL)

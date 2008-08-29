@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 348 2008-08-28 10:29:53Z baconevi $
+ * $Id: map.c 349 2008-08-28 14:21:25Z baconevi $
  *
  * {License}
  */
@@ -197,8 +197,9 @@ static pair_t* change_pair_val (
 }
 
 map_t* ase_map_open (
-	mmgr_t* mmgr, size_t ext, void (*init) (map_t*),
-	size_t init_capa, unsigned int load_factor)
+	mmgr_t* mmgr, size_t ext, 
+	void (*init) (map_t*, void*), void* init_data,
+	size_t capa, unsigned int load_factor)
 {
 	map_t* map;
 
@@ -212,7 +213,7 @@ map_t* ase_map_open (
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	ASE_ASSERTX (init_capa >= 0, 
+	ASE_ASSERTX (capa >= 0, 
 		"The initial capacity should be greater than 0");
 
 	ASE_ASSERTX (load_factor >= 0 && load_factor <= 100,
@@ -221,7 +222,7 @@ map_t* ase_map_open (
 	map = ASE_MMGR_ALLOC (mmgr, SIZEOF(map_t)+SIZEOF(priv_t)+ext);
 	if (map == ASE_NULL) return ASE_NULL;
 
-	PRIV(map)->bucket = ASE_MMGR_ALLOC (mmgr, init_capa*SIZEOF(pair_t*));
+	PRIV(map)->bucket = ASE_MMGR_ALLOC (mmgr, capa*SIZEOF(pair_t*));
 	if (PRIV(map)->bucket == ASE_NULL)
 	{
 		ASE_MMGR_FREE (mmgr, map);
@@ -232,13 +233,13 @@ map_t* ase_map_open (
 	map->mmgr = mmgr;
 
 	map->size = 0;
-	map->capa = init_capa;
+	map->capa = capa;
 	PRIV(map)->load_factor = load_factor;
 
 	map->hasher = hash_key;
 	map->comper = comp_key;
 
-	if (init) init (map);
+	if (init) init (map, init_data);
 
 	return map;
 }
