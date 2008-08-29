@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 339 2008-08-20 09:58:42Z baconevi $ 
+ * $Id: awk.c 348 2008-08-28 10:29:53Z baconevi $ 
  *
  * {License}
  */
@@ -24,9 +24,17 @@ static void free_bfn (void* awk, void* afn);
 		ase_awk_seterror ((awk), (code), (line), &errarg, 1); \
 	} while (0)
 
+static void init_map (ase_map_t* map, void* arg)
+{
+	awk_t** p = getextension (map);
+	*p = awk;
+}
+
 ase_awk_t* ase_awk_open (
-	ase_mmgr_t* mmgr, ase_size_t extension, 
-	void (*initializer) (ase_awk_t*))
+	ase_mmgr_t* mmgr, 
+	ase_size_t ext, 
+	void (*init) (ase_awk_t*, void*),
+	void* init_arg)
 {
 	ase_awk_t* awk;
 
@@ -40,10 +48,10 @@ ase_awk_t* ase_awk_open (
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	awk = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_awk_t) + extension);
+	awk = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_awk_t) + ext);
 	if (awk == ASE_NULL) return ASE_NULL;
 
-	ASE_MEMSET (awk, 0, ASE_SIZEOF(ase_awk_t) + extension);
+	ASE_MEMSET (awk, 0, ASE_SIZEOF(ase_awk_t) + ext);
 	awk->mmgr = mmgr;
 
 	if (ase_str_open (&awk->token.name, 128, mmgr) == ASE_NULL) 
@@ -70,7 +78,10 @@ ase_awk_t* ase_awk_open (
 	}
 
 	/* TODO: initial map size?? */
-	awk->tree.afns = ase_map_open (awk, 512, 70, free_afn, ASE_NULL, mmgr);
+	/*awk->tree.afns = ase_map_open (awk, 512, 70, free_afn, ASE_NULL, mmgr);*/
+
+	awk->tree.afns = ase_map_open (
+		mmgr, ASE_SIZEOF(awk), init_map, awk, 512, 70);
 	if (awk->tree.afns == ASE_NULL) 
 	{
 		ase_map_close (awk->rwtab);
@@ -220,7 +231,7 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
-	if (initializer) initializer (awk);
+	if (init) init (awk);
 	return awk;
 }
 

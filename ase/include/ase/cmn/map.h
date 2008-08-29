@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 347 2008-08-26 11:04:16Z baconevi $
+ * $Id: map.h 348 2008-08-28 10:29:53Z baconevi $
  *
  * {License}
  */
@@ -62,12 +62,6 @@ struct ase_map_pair_t
 	ase_map_pair_t* next;
 };
 
-enum ase_map_id_t
-{
-	ASE_MAP_KEY = 0,
-	ASE_MAP_VAL = 1
-};
-
 struct ase_map_t
 {
         ase_mmgr_t* mmgr;
@@ -80,12 +74,13 @@ struct ase_map_t
 	ase_size_t size;
 	ase_size_t capa;
 
-	unsigned int factor;
-	ase_size_t threshold;
-
-	ase_map_pair_t** buck;
-
 	void (*sameval) (void* owner, void* vptr, ase_size_t vlen);
+};
+
+enum ase_map_id_t
+{
+	ASE_MAP_KEY = 0,
+	ASE_MAP_VAL = 1
 };
 
 /* values that can be returned by ase_map_walker_t */
@@ -96,6 +91,10 @@ enum ase_map_walk_t
 };
 
 #define ASE_MAP_COPIER_INLINE ase_map_copyinline
+
+
+#define ASE_MAP_SIZE(m) ((m)->size)
+#define ASE_MAP_CAPA(m) ((m)->capa)
 
 #define ASE_MAP_KPTR(p) ((p)->kptr)
 #define ASE_MAP_KLEN(p) ((p)->klen)
@@ -117,7 +116,9 @@ extern "C" {
 ase_map_t* ase_map_open (
         ase_mmgr_t* mmgr,
 	ase_size_t ext,
-        void (*init) (ase_map_t*)
+        void (*init) (ase_map_t*),
+	ase_size_t init_capa /* initial capacity */,  
+	unsigned int load_factor /* load factor */
 );
 
 /* destroy a map */
@@ -202,6 +203,10 @@ void ase_map_setmmgr (
 
 /* get the number of key/value pairs in a map */
 ase_size_t ase_map_getsize (
+	ase_map_t* map /* a map */
+);
+
+ase_size_t ase_map_getcapa (
 	ase_map_t* map /* a map */
 );
 

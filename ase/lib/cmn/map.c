@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 347 2008-08-26 11:04:16Z baconevi $
+ * $Id: map.c 348 2008-08-28 10:29:53Z baconevi $
  *
  * {License}
  */
@@ -21,9 +21,22 @@
 #define VLEN(p)  ASE_MAP_VLEN(p)
 #define NEXT(p)  ASE_MAP_NEXT(p)
 
+#define SIZEOF(x) ASE_SIZEOF(x)
 #define size_t   ase_size_t
 #define byte_t   ase_byte_t
 #define mmgr_t   ase_mmgr_t
+
+#define PUB(m)  (m)
+#define PRIV(m) ((priv_t*)(m+1))
+
+typedef struct priv_t priv_t;
+
+struct priv_t
+{
+	unsigned int load_factor; 
+	size_t threshold;
+	pair_t** bucket;
+};
 
 static int reorganize (map_t* map);
 
@@ -58,7 +71,7 @@ static pair_t* alloc_pair (map_t* map,
 	copier_t kcop = map->copier[ASE_MAP_KEY];
 	copier_t vcop = map->copier[ASE_MAP_VAL];
 
-	size_t as = ASE_SIZEOF(pair_t);
+	size_t as = SIZEOF(pair_t);
 
 	if (kcop == ASE_MAP_COPIER_INLINE) as += klen;
 	if (vcop == ASE_MAP_COPIER_INLINE) as += vlen;
@@ -183,7 +196,9 @@ static pair_t* change_pair_val (
 	return pair;
 }
 
-map_t* ase_map_open (mmgr_t* mmgr, size_t ext, void (*init) (map_t*))
+map_t* ase_map_open (
+	mmgr_t* mmgr, size_t ext, void (*init) (map_t*),
+	size_t init_capa, unsigned int load_factor)
 {
 	map_t* map;
 
@@ -197,18 +212,32 @@ map_t* ase_map_open (mmgr_t* mmgr, size_t ext, void (*init) (map_t*))
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	map = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(map_t) + ext);
+	ASE_ASSERTX (init_capa >= 0, 
+		"The initial capacity should be greater than 0");
+
+	ASE_ASSERTX (load_factor >= 0 && load_factor <= 100,
+		"The load factor should be between 0 and 100 inclusive");
+
+	map = ASE_MMGR_ALLOC (mmgr, SIZEOF(map_t)+SIZEOF(priv_t)+ext);
 	if (map == ASE_NULL) return ASE_NULL;
 
-	ASE_MEMSET (map, 0, ASE_SIZEOF(map_t) + ext);
+	PRIV(map)->bucket = ASE_MMGR_ALLOC (mmgr, init_capa*SIZEOF(pair_t*));
+	if (PRIV(map)->bucket == ASE_NULL)
+	{
+		ASE_MMGR_FREE (mmgr, map);
+		return ASE_NULL;
+	}
+
+	ASE_MEMSET (map, 0, SIZEOF(map_t)+SIZEOF(priv_t)+ext);
 	map->mmgr = mmgr;
 
 	map->size = 0;
-	map->capa = 0;
-	map->factor = 70;
+	map->capa = init_capa;
+	PRIV(map)->load_factor = load_factor;
 
 	map->hasher = hash_key;
 	map->comper = comp_key;
+
 	if (init) init (map);
 
 	return map;
@@ -217,7 +246,7 @@ map_t* ase_map_open (mmgr_t* mmgr, size_t ext, void (*init) (map_t*))
 void ase_map_close (map_t* map)
 {
 	ase_map_clear (map);
-	ASE_MMGR_FREE (map->mmgr, map->buck);
+	ASE_MMGR_FREE (map->mmgr, PRIV(map)->bucket);
 	ASE_MMGR_FREE (map->mmgr, map);
 }
 
@@ -228,7 +257,7 @@ void ase_map_clear (map_t* map)
 
 	for (i = 0; i < map->capa; i++) 
 	{
-		pair = map->buck[i];
+		pair = PRIV(map)->bucket[i];
 
 		while (pair != ASE_NULL) 
 		{
@@ -238,7 +267,7 @@ void ase_map_clear (map_t* map)
 			pair = next;
 		}
 
-		map->buck[i] = ASE_NULL;
+		PRIV(map)->bucket[i] = ASE_NULL;
 	}
 }
 
@@ -292,7 +321,7 @@ void ase_map_setcomper (map_t* map, comper_t comper)
 
 void* ase_map_getextension (map_t* map)
 {
-	return map + 1;
+	return PRIV(map) + 1;
 }
 
 mmgr_t* ase_map_getmmgr (map_t* map)
@@ -310,6 +339,11 @@ size_t ase_map_getsize (map_t* map)
 	return map->size;
 }
 
+size_t ase_map_getcapa (map_t* map)
+{
+	return map->capa;
+}
+
 pair_t* ase_map_get (
 	map_t* map, const void* kptr, size_t klen)
 {
@@ -317,7 +351,7 @@ pair_t* ase_map_get (
 	size_t hc;
 
 	hc = map->hasher(map,kptr,klen) % map->capa;
-	pair = map->buck[hc];
+	pair = PRIV(map)->bucket[hc];
 
 	while (pair != ASE_NULL) 
 	{
@@ -351,7 +385,7 @@ int ase_map_putx (
 	size_t hc;
 
 	hc = map->hasher(map,kptr,klen) % map->capa;
-	pair = map->buck[hc];
+	pair = PRIV(map)->bucket[hc];
 	prev = ASE_NULL;
 
 	while (pair != ASE_NULL) 
@@ -365,7 +399,7 @@ int ase_map_putx (
 			if (p != pair) 
 			{
 				/* the pair has been reallocated. relink it */
-				if (prev == ASE_NULL) map->buck[hc] = p;
+				if (prev == ASE_NULL) PRIV(map)->bucket[hc] = p;
 				else NEXT(prev) = p;
 				NEXT(p) = next;
 			}
@@ -378,7 +412,7 @@ int ase_map_putx (
 		pair = next;
 	}
 
-	if (map->threshold > 0 && map->size >= map->threshold)
+	if (PRIV(map)->threshold > 0 && map->size >= PRIV(map)->threshold)
 	{
 		if (reorganize(map) == 0) /* ignore the error */
 		{
@@ -390,7 +424,7 @@ int ase_map_putx (
 
 #if 0
 	pair = (pair_t*) ASE_MMGR_ALLOC (map->mmgr, 
-		ASE_SIZEOF(pair_t) + ((klen+1)*ASE_SIZEOF(*kptr)));
+		SIZEOF(pair_t) + ((klen+1)*SIZEOF(*kptr)));
 	if (pair == ASE_NULL) return -1; /* error */
 
 	/* duplicate the key if it is new */
@@ -404,14 +438,13 @@ int ase_map_putx (
 	pair = alloc_pair (map, kptr, klen, vptr, vlen);
 	if (pair == ASE_NULL) return -1; /* error */
 
-	NEXT(pair) = map->buck[hc];
-	map->buck[hc] = pair;
+	NEXT(pair) = PRIV(map)->bucket[hc];
+	PRIV(map)->bucket[hc] = pair;
 	map->size++;
 
 	if (px != ASE_NULL) *px = pair;
 	return 1; /* new key added */
 }
-
 
 pair_t* ase_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
@@ -419,7 +452,7 @@ pair_t* ase_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t 
 	size_t hc;
 
 	hc = map->hasher(map,kptr,klen) % map->capa;
-	pair = map->buck[hc];
+	pair = PRIV(map)->bucket[hc];
 
 	while (pair != ASE_NULL) 
 	{
@@ -431,7 +464,7 @@ pair_t* ase_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t 
 		pair = NEXT(pair);
 	}
 
-	if (map->threshold > 0 && map->size >= map->threshold)
+	if (PRIV(map)->threshold > 0 && map->size >= PRIV(map)->threshold)
 	{
 		if (reorganize(map) == 0) /* ignore the error */
 		{
@@ -444,8 +477,8 @@ pair_t* ase_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t 
 	pair = alloc_pair (map, kptr, klen, vptr, vlen);
 	if (pair == ASE_NULL) return ASE_NULL;
 
-	NEXT(pair) = map->buck[hc];
-	map->buck[hc] = pair;
+	NEXT(pair) = PRIV(map)->bucket[hc];
+	PRIV(map)->bucket[hc] = pair;
 	map->size++;
 
 	return pair;
@@ -457,7 +490,7 @@ pair_t* ase_map_update (map_t* map, void* kptr, size_t klen, void* vptr, size_t 
 	size_t hc;
 
 	hc = map->hasher(map,kptr,klen) % map->capa;
-	pair = map->buck[hc];
+	pair = PRIV(map)->bucket[hc];
 	prev = ASE_NULL;
 
 	while (pair != ASE_NULL) 
@@ -472,7 +505,7 @@ pair_t* ase_map_update (map_t* map, void* kptr, size_t klen, void* vptr, size_t 
 			if (p != pair) 
 			{
 				/* the pair has been reallocated. relink it */
-				if (prev == ASE_NULL) map->buck[hc] = p;
+				if (prev == ASE_NULL) PRIV(map)->bucket[hc] = p;
 				else NEXT(prev) = p;
 				NEXT(p) = next;
 			}
@@ -493,7 +526,7 @@ int ase_map_delete (map_t* map, const void* kptr, size_t klen)
 	size_t hc;
 
 	hc = map->hasher(map,kptr,klen) % map->capa;
-	pair = map->buck[hc];
+	pair = PRIV(map)->bucket[hc];
 	prev = ASE_NULL;
 
 	while (pair != ASE_NULL) 
@@ -501,7 +534,7 @@ int ase_map_delete (map_t* map, const void* kptr, size_t klen)
 		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			if (prev == ASE_NULL) 
-				map->buck[hc] = NEXT(pair);
+				PRIV(map)->bucket[hc] = NEXT(pair);
 			else NEXT(prev) = NEXT(pair);
 
 			free_pair (map, pair);
@@ -524,7 +557,7 @@ void ase_map_walk (map_t* map, walker_t walker, void* arg)
 
 	for (i = 0; i < map->capa; i++) 
 	{
-		pair = map->buck[i];
+		pair = PRIV(map)->bucket[i];
 
 		while (pair != ASE_NULL) 
 		{
@@ -542,7 +575,7 @@ pair_t* ase_map_getfirstpair (map_t* map, size_t* buckno)
 
 	for (i = 0; i < map->capa; i++)
 	{
-		pair = map->buck[i];
+		pair = PRIV(map)->bucket[i];
 		if (pair != ASE_NULL) 
 		{
 			*buckno = i;
@@ -553,8 +586,7 @@ pair_t* ase_map_getfirstpair (map_t* map, size_t* buckno)
 	return ASE_NULL;
 }
 
-pair_t* ase_map_getnextpair (
-	map_t* map, pair_t* pair, size_t* buckno)
+pair_t* ase_map_getnextpair (map_t* map, pair_t* pair, size_t* buckno)
 {
 	size_t i;
 	pair_t* next;
@@ -568,7 +600,7 @@ pair_t* ase_map_getnextpair (
 
 	for (i = (*buckno)+1; i < map->capa; i++)
 	{
-		pair = map->buck[i];
+		pair = PRIV(map)->bucket[i];
 		if (pair != ASE_NULL) 
 		{
 			*buckno = i;
@@ -589,11 +621,11 @@ static int reorganize (map_t* map)
 	new_capa = (map->capa >= 65536)? (map->capa + 65536): (map->capa << 1);
 
 	new_buck = (pair_t**) ASE_MMGR_ALLOC (
-		map->mmgr, ASE_SIZEOF(pair_t*) * new_capa);
+		map->mmgr, SIZEOF(pair_t*) * new_capa);
 	if (new_buck == ASE_NULL) 
 	{
-		/* once reogranization fails, reogranization is disabled */
-		map->threshold = 0;
+		/* reorganization is disabled once it fails */
+		PRIV(map)->threshold = 0;
 		return -1;
 	}
 
@@ -601,7 +633,7 @@ static int reorganize (map_t* map)
 
 	for (i = 0; i < map->capa; i++)
 	{
-		pair_t* pair = map->buck[i];
+		pair_t* pair = PRIV(map)->bucket[i];
 
 		while (pair != ASE_NULL) 
 		{
@@ -618,10 +650,10 @@ static int reorganize (map_t* map)
 		}
 	}
 
-	ASE_MMGR_FREE (map->mmgr, map->buck);
-	map->buck = new_buck;
+	ASE_MMGR_FREE (map->mmgr, PRIV(map)->bucket);
+	PRIV(map)->bucket = new_buck;
 	map->capa = new_capa;
-	map->threshold = ((size_t)map->factor) * map->capa / 100;
+	PRIV(map)->threshold = map->capa * PRIV(map)->load_factor / 100;
 
 	return 0;
 }
