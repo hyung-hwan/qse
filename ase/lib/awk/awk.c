@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 348 2008-08-28 10:29:53Z baconevi $ 
+ * $Id: awk.c 349 2008-08-28 14:21:25Z baconevi $ 
  *
  * {License}
  */
@@ -26,15 +26,13 @@ static void free_bfn (void* awk, void* afn);
 
 static void init_map (ase_map_t* map, void* arg)
 {
-	awk_t** p = getextension (map);
-	*p = awk;
+	ase_awk_t** p = ase_map_getextension (map);
+	*p = arg;
 }
 
 ase_awk_t* ase_awk_open (
-	ase_mmgr_t* mmgr, 
-	ase_size_t ext, 
-	void (*init) (ase_awk_t*, void*),
-	void* init_arg)
+	ase_mmgr_t* mmgr, ase_size_t ext, 
+	void (*init) (ase_awk_t*, void*), void* init_data)
 {
 	ase_awk_t* awk;
 
@@ -60,7 +58,9 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
-	awk->wtab = ase_map_open (awk, 512, 70, free_word, ASE_NULL, mmgr);
+	/*awk->wtab = ase_map_open (awk, 512, 70, free_word, ASE_NULL, mmgr);*/
+	awk->wtab = ase_map_open (
+		mmgr, sizeof(awk), init_map, awk, 512, 70);
 	if (awk->wtab == ASE_NULL)
 	{
 		ase_str_close (&awk->token.name);
@@ -68,7 +68,9 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
-	awk->rwtab = ase_map_open (awk, 512, 70, free_word, ASE_NULL, mmgr);
+	/*awk->rwtab = ase_map_open (awk, 512, 70, free_word, ASE_NULL, mmgr);*/
+	awk->rwtab = ase_map_open (
+		mmgr, sizeof(awk), init_map, awk, 512, 70);
 	if (awk->rwtab == ASE_NULL)
 	{
 		ase_map_close (awk->wtab);
@@ -81,7 +83,7 @@ ase_awk_t* ase_awk_open (
 	/*awk->tree.afns = ase_map_open (awk, 512, 70, free_afn, ASE_NULL, mmgr);*/
 
 	awk->tree.afns = ase_map_open (
-		mmgr, ASE_SIZEOF(awk), init_map, awk, 512, 70);
+		mmgr, sizeof(awk), init_map, awk, 512, 70);
 	if (awk->tree.afns == ASE_NULL) 
 	{
 		ase_map_close (awk->rwtab);
@@ -91,7 +93,9 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
-	awk->parse.afns = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);
+	/*awk->parse.afns = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
+	awk->parse.afns = ase_map_open (
+		mmgr, sizeof(awk), init_map, awk, 256, 70);
 	if (awk->parse.afns == ASE_NULL)
 	{
 		ase_map_close (awk->tree.afns);
@@ -102,7 +106,9 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
-	awk->parse.named = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);
+	/*awk->parse.named = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
+	awk->parse.named = ase_map_open (
+		mmgr, sizeof(awk), init_map, awk, 256, 70);
 	if (awk->parse.named == ASE_NULL)
 	{
 		ase_map_close (awk->parse.afns);
@@ -186,7 +192,9 @@ ase_awk_t* ase_awk_open (
 
 	awk->bfn.sys = ASE_NULL;
 	/*awk->bfn.user = ASE_NULL;*/
-	awk->bfn.user = ase_map_open (awk, 512, 70, free_bfn, ASE_NULL, mmgr);
+	/*awk->bfn.user = ase_map_open (awk, 512, 70, free_bfn, ASE_NULL, mmgr);*/
+	awk->bfn.user = ase_map_open (
+		mmgr, sizeof(awk), init_map, awk, 512, 70);
 	if (awk->bfn.user == ASE_NULL)
 	{
 		ase_awk_tab_close (&awk->parse.params);
@@ -231,7 +239,7 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
-	if (init) init (awk);
+	if (init) init (awk, init_data);
 	return awk;
 }
 
@@ -433,13 +441,13 @@ int ase_awk_getword (ase_awk_t* awk,
 	const ase_char_t* okw, ase_size_t olen,
 	const ase_char_t** nkw, ase_size_t* nlen)
 {
-	ase_pair_t* p;
+	ase_map_pair_t* p;
 
 	p = ase_map_get (awk->wtab, okw, olen);
 	if (p == ASE_NULL) return -1;
 
-	*nkw = ((ase_cstr_t*)p->val)->ptr;
-	*nlen = ((ase_cstr_t*)p->val)->len;
+	*nkw = ((ase_cstr_t*)p->vptr)->ptr;
+	*nlen = ((ase_cstr_t*)p->vptr)->len;
 
 	return 0;
 }
@@ -452,7 +460,7 @@ int ase_awk_setword (ase_awk_t* awk,
 
 	if (nkw == ASE_NULL || nlen == 0)
 	{
-		ase_pair_t* p;
+		ase_map_pair_t* p;
 
 		if (okw == ASE_NULL || olen == 0)
 		{
@@ -466,7 +474,7 @@ int ase_awk_setword (ase_awk_t* awk,
 		p = ase_map_get (awk->wtab, okw, olen);
 		if (p != ASE_NULL)
 		{
-			ase_cstr_t* s = (ase_cstr_t*)p->val;
+			ase_cstr_t* s = (ase_cstr_t*)p->vptr;
 			ase_map_remove (awk->rwtab, s->ptr, s->len);
 			ase_map_remove (awk->wtab, okw, olen);
 			return 0;
@@ -484,6 +492,7 @@ int ase_awk_setword (ase_awk_t* awk,
 	}
 
 	/* set the word */
+#if 0
 	vn = (ase_cstr_t*) ASE_AWK_ALLOC (
 		awk, ASE_SIZEOF(ase_cstr_t)+((nlen+1)*ASE_SIZEOF(*nkw)));
 	if (vn == ASE_NULL) 
@@ -507,7 +516,7 @@ int ase_awk_setword (ase_awk_t* awk,
 	vo->ptr = (const ase_char_t*)(vo + 1);
 	ase_strncpy ((ase_char_t*)vo->ptr, okw, olen);
 
-	if (ase_map_put (awk->wtab, okw, olen, vn) == ASE_NULL)
+	if (ase_map_put (awk->wtab, (void*)okw, olen, vn) == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, vo);
 		ASE_AWK_FREE (awk, vn);
@@ -516,6 +525,22 @@ int ase_awk_setword (ase_awk_t* awk,
 	}
 
 	if (ase_map_put (awk->rwtab, nkw, nlen, vo) == ASE_NULL)
+	{
+		ase_map_remove (awk->wtab, okw, olen);
+		ASE_AWK_FREE (awk, vo);
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
+#endif
+	if (ase_map_put (awk->wtab, (void*)okw, olen, nkw, nlen) == ASE_NULL)
+	{
+		ASE_AWK_FREE (awk, vo);
+		ASE_AWK_FREE (awk, vn);
+		SETERR (awk, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	if (ase_map_put (awk->rwtab, nkw, nlen, okw, olen) == ASE_NULL)
 	{
 		ase_map_remove (awk->wtab, okw, olen);
 		ASE_AWK_FREE (awk, vo);

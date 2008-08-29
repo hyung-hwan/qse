@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 348 2008-08-28 10:29:53Z baconevi $
+ * $Id: map.h 349 2008-08-28 14:21:25Z baconevi $
  *
  * {License}
  */
@@ -116,8 +116,9 @@ extern "C" {
 ase_map_t* ase_map_open (
         ase_mmgr_t* mmgr,
 	ase_size_t ext,
-        void (*init) (ase_map_t*),
-	ase_size_t init_capa /* initial capacity */,  
+        void (*init) (ase_map_t*, void*),
+	void* init_arg,
+	ase_size_t capa /* initial capacity */,  
 	unsigned int load_factor /* load factor */
 );
 

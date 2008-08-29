@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: parse.c 349 2008-08-28 14:21:25Z baconevi $
  *
  * {License}
  */
@@ -226,7 +226,7 @@ static int is_plain_var (ase_awk_nde_t* nde);
 static int is_var (ase_awk_nde_t* nde);
 
 static int deparse (ase_awk_t* awk);
-static int deparse_func (ase_pair_t* pair, void* arg);
+static int deparse_func (ase_map_pair_t* pair, void* arg);
 static int put_char (ase_awk_t* awk, ase_char_t c);
 static int flush_out (ase_awk_t* awk);
 
@@ -458,7 +458,7 @@ const ase_char_t* ase_awk_getglobalname (
 
 const ase_char_t* ase_awk_getkw (ase_awk_t* awk, const ase_char_t*  kw)
 {
-	ase_pair_t* p;
+	ase_map_pair_t* p;
 
 	ASE_ASSERT (kw != ASE_NULL);
 
@@ -539,7 +539,7 @@ static int parse (ase_awk_t* awk)
 		if ((awk->option & ASE_AWK_EXPLICIT) &&
 		    !(awk->option & ASE_AWK_IMPLICIT))
 		{
-			ase_pair_t* p;
+			ase_map_pair_t* p;
 			ase_size_t buckno;
 
 			p = ase_map_getfirstpair (awk->parse.afns, &buckno);
@@ -819,7 +819,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	ase_awk_nde_t* body;
 	ase_awk_afn_t* afn;
 	ase_size_t nargs, g;
-	ase_pair_t* pair;
+	ase_map_pair_t* pair;
 	int n;
 
 	/* eat up the keyword 'function' and get the next token */
@@ -1423,13 +1423,13 @@ static void trans_global (
 	*/
 	if (index < awk->tree.nbglobals)
 	{
-		ase_pair_t* pair;
+		ase_map_pair_t* pair;
 
 		pair = ase_map_get (awk->wtab, word->ptr, word->len);
 		if (pair != ASE_NULL)
 		{
-			word->ptr = ((ase_cstr_t*)(pair->val))->ptr;
-			word->len = ((ase_cstr_t*)(pair->val))->len;
+			word->ptr = ((ase_cstr_t*)(pair->vptr))->ptr;
+			word->len = ((ase_cstr_t*)(pair->vptr))->len;
 		}
 	}
 }
@@ -5376,7 +5376,7 @@ static int classify_ident (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
 	kwent_t* kwp;
-	ase_pair_t* pair;
+	ase_map_pair_t* pair;
 
 	for (kwp = kwtab; kwp->name != ASE_NULL; kwp++) 
 	{
@@ -5389,8 +5389,8 @@ static int classify_ident (
 		pair = ase_map_get (awk->wtab, kwp->name, kwp->name_len);
 		if (pair != ASE_NULL)
 		{
-			k = ((ase_cstr_t*)(pair->val))->ptr;
-			l = ((ase_cstr_t*)(pair->val))->len;
+			k = ((ase_cstr_t*)(pair->vptr))->ptr;
+			l = ((ase_cstr_t*)(pair->vptr))->len;
 		}
 		else
 		{
@@ -5462,6 +5462,7 @@ struct deparse_func_t
 	ase_awk_t* awk;
 	ase_char_t* tmp;
 	ase_size_t tmp_len;
+	int ret;
 };
 
 static int deparse (ase_awk_t* awk)
@@ -5589,8 +5590,10 @@ static int deparse (ase_awk_t* awk)
 	df.awk = awk;
 	df.tmp = tmp;
 	df.tmp_len = ASE_COUNTOF(tmp);
+	df.ret = 0;
 
-	if (ase_map_walk (awk->tree.afns, deparse_func, &df) == -1) 
+	ase_map_walk (awk->tree.afns, deparse_func, &df);
+	if (df.ret == -1)
 	{
 		EXIT_DEPARSE ();
 	}
@@ -5688,18 +5691,24 @@ exit_deparse:
 	return n;
 }
 
-static int deparse_func (ase_pair_t* pair, void* arg)
+#define PUTSRCSTR(x,str) \
+	if (ase_awk_putsrcstr (x->awk, str) == -1) { \
+		x->ret = -1; \
+		return ASE_MAP_WALK_STOP; \
+	}
+
+static int deparse_func (ase_map_pair_t* pair, void* arg)
 {
 	struct deparse_func_t* df = (struct deparse_func_t*)arg;
-	ase_awk_afn_t* afn = (ase_awk_afn_t*)pair->val;
+	ase_awk_afn_t* afn = (ase_awk_afn_t*)pair->vptr;
 	ase_size_t i, n;
 
 	ASE_ASSERT (ase_strxncmp (ASE_PAIR_KEYPTR(pair), ASE_PAIR_KEYLEN(pair), afn->name, afn->name_len) == 0);
 
-	if (ase_awk_putsrcstr(df->awk,ase_awk_getkw(df->awk,ASE_T("function"))) == -1) return -1;
-	if (ase_awk_putsrcstr (df->awk, ASE_T(" ")) == -1) return -1;
-	if (ase_awk_putsrcstr (df->awk, afn->name) == -1) return -1;
-	if (ase_awk_putsrcstr (df->awk, ASE_T(" (")) == -1) return -1;
+	PUTSRCSTR (df, ase_awk_getkw(df->awk,ASE_T("function")));
+	PUTSRCSTR (df, ASE_T(" "));
+	PUTSRCSTR (df, afn->name);
+	PUTSRCSTR (df, ASE_T(" ("));
 
 	for (i = 0; i < afn->nargs; ) 
 	{
@@ -5707,11 +5716,12 @@ static int deparse_func (ase_pair_t* pair, void* arg)
 			ASE_T("__p"), df->tmp, df->tmp_len);
 		ASE_ASSERT (n != (ase_size_t)-1);
 		if (ase_awk_putsrcstrx (df->awk, df->tmp, n) == -1) return -1;
+
 		if (i >= afn->nargs) break;
-		if (ase_awk_putsrcstr (df->awk, ASE_T(", ")) == -1) return -1;
+		PUTSRCSTR (df, ASE_T(", "));
 	}
 
-	if (ase_awk_putsrcstr (df->awk, ASE_T(")")) == -1) return -1;
+	PUTSRCSTR (df, ASE_T(")"));
 	if (df->awk->option & ASE_AWK_CRLF)
 	{
 		if (put_char (df->awk, ASE_T('\r')) == -1) return -1;
@@ -5725,7 +5735,7 @@ static int deparse_func (ase_pair_t* pair, void* arg)
 	}
 	if (put_char (df->awk, ASE_T('\n')) == -1) return -1;
 
-	return 0;
+	return ASE_MAP_WALK_FORWARD;
 }
 
 static int put_char (ase_awk_t* awk, ase_char_t c)

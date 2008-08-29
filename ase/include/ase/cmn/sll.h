@@ -92,7 +92,8 @@ extern "C" {
 ase_sll_t* ase_sll_open (
 	ase_mmgr_t* mmgr /* memory manager */ , 
 	ase_size_t ext /* size of extension area in bytes */,
-	void (*init) (ase_sll_t*) /* extension initializer */
+	void (*init) (ase_sll_t*, void*) /* extension initializer */,
+	void* init_data /* the second argument to the extension initializer */
 );
 
 /* 
