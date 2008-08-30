@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: str_dyn.c 350 2008-08-29 14:51:04Z baconevi $
  *
  * {License}
  */
@@ -7,25 +7,36 @@
 #include <ase/cmn/str.h>
 #include "mem.h"
 
-ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr)
+ase_str_t* ase_str_open (ase_mmgr_t* mmgr, ase_size_t ext, ase_size_t capa)
 {
-	if (str == ASE_NULL) 
-	{
-		str = (ase_str_t*) 
-			ASE_MALLOC (mmgr, ASE_SIZEOF(ase_str_t));
-		if (str == ASE_NULL) return ASE_NULL;
-		str->__dynamic = ASE_TRUE;
-	}
-	else str->__dynamic = ASE_FALSE;
+	ase_str_t* str;
 
-	str->mmgr = mmgr;
-	str->buf = (ase_char_t*) ASE_MALLOC (
-		mmgr, ASE_SIZEOF(ase_char_t) * (capa + 1));
-	if (str->buf == ASE_NULL) 
+	str = (ase_str_t*) ASE_MMGR_ALLOC (mmgr, sizeof(ase_str_t) + ext);
+	if (str == ASE_NULL) return ASE_NULL;
+
+	if (ase_str_init (str, mmgr, capa) == ASE_NULL)
 	{
-		if (str->__dynamic) ASE_FREE (mmgr, str);
+		ASE_MMGR_FREE (mmgr, str);
 		return ASE_NULL;
 	}
+
+	return str;
+}
+
+void ase_str_close (ase_str_t* str)
+{
+	ase_str_fini (str);
+	ASE_MMGR_FREE (str->mmgr, str);
+}
+
+ase_str_t* ase_str_init (ase_str_t* str, ase_mmgr_t* mmgr, ase_size_t capa)
+{
+	ASE_MEMSET (str, 0, sizeof(ase_str_t));
+
+	str->mmgr = mmgr;
+	str->buf = (ase_char_t*) ASE_MMGR_ALLOC (
+		mmgr, sizeof(ase_char_t) * (capa + 1));
+	if (str->buf == ASE_NULL) return ASE_NULL;
 
 	str->size = 0;
 	str->capa  = capa;
@@ -34,10 +45,9 @@ ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr)
 	return str;
 }
 
-void ase_str_close (ase_str_t* str)
+void ase_str_fini (ase_str_t* str)
 {
-	ASE_FREE (str->mmgr, str->buf);
-	if (str->__dynamic) ASE_FREE (str->mmgr, str);
+	ASE_MMGR_FREE (str->mmgr, str->buf);
 }
 
 void ase_str_clear (ase_str_t* str)
@@ -48,7 +58,8 @@ void ase_str_clear (ase_str_t* str)
 
 void ase_str_forfeit (ase_str_t* str)
 {
-	if (str->__dynamic) ASE_FREE (str->mmgr, str);
+	// TODO: how to handle this??????????????????????
+	if (str->__dynamic) ASE_MMGR_FREE (str->mmgr, str);
 }
 
 void ase_str_swap (ase_str_t* str, ase_str_t* str1)
@@ -83,11 +94,11 @@ ase_size_t ase_str_ncpy (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 
 	if (len > str->capa) 
 	{
-		buf = (ase_char_t*) ASE_MALLOC (
-			str->mmgr, ASE_SIZEOF(ase_char_t) * (len + 1));
+		buf = (ase_char_t*) ASE_MMGR_ALLOC (
+			str->mmgr, sizeof(ase_char_t) * (len + 1));
 		if (buf == ASE_NULL) return (ase_size_t)-1;
 
-		ASE_FREE (str->mmgr, str->buf);
+		ASE_MMGR_FREE (str->mmgr, str->buf);
 		str->capa = len;
 		str->buf = buf;
 	}
@@ -119,19 +130,19 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 		{
 			tmp = (ase_char_t*) ASE_REALLOC (
 				str->mmgr, str->buf, 
-				ASE_SIZEOF(ase_char_t) * (capa + 1));
+				sizeof(ase_char_t) * (capa + 1));
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 		}
 		else
 		{
-			tmp = (ase_char_t*) ASE_MALLOC (
-				str->mmgr, ASE_SIZEOF(ase_char_t)*(capa+1));
+			tmp = (ase_char_t*) ASE_MMGR_ALLOC (
+				str->mmgr, sizeof(ase_char_t)*(capa+1));
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 			if (str->buf != ASE_NULL)
 			{
 				ASE_MEMCPY (tmp, str->buf, 
-					ASE_SIZEOF(ase_char_t)*(str->capa+1));
-				ASE_FREE (str->mmgr, str->buf);
+					sizeof(ase_char_t)*(str->capa+1));
+				ASE_MMGR_FREE (str->mmgr, str->buf);
 			}
 		}
 

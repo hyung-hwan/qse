@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 349 2008-08-28 14:21:25Z baconevi $
+ * $Id: map.c 350 2008-08-29 14:51:04Z baconevi $
  *
  * {License}
  */
@@ -198,7 +198,6 @@ static pair_t* change_pair_val (
 
 map_t* ase_map_open (
 	mmgr_t* mmgr, size_t ext, 
-	void (*init) (map_t*, void*), void* init_data,
 	size_t capa, unsigned int load_factor)
 {
 	map_t* map;
@@ -229,7 +228,8 @@ map_t* ase_map_open (
 		return ASE_NULL;
 	}
 
-	ASE_MEMSET (map, 0, SIZEOF(map_t)+SIZEOF(priv_t)+ext);
+	/* do not zero out the extension */
+	ASE_MEMSET (map, 0, SIZEOF(map_t)+SIZEOF(priv_t));
 	map->mmgr = mmgr;
 
 	map->size = 0;
@@ -238,8 +238,6 @@ map_t* ase_map_open (
 
 	map->hasher = hash_key;
 	map->comper = comp_key;
-
-	if (init) init (map, init_data);
 
 	return map;
 }
@@ -307,6 +305,7 @@ hasher_t ase_map_gethasher (map_t* map)
 
 void ase_map_sethasher (map_t* map, hasher_t hasher)
 {
+	if (hasher == ASE_NULL) hasher = hash_key;
 	map->hasher = hasher;	
 }
 
@@ -317,6 +316,7 @@ comper_t ase_map_getcomper (map_t* map)
 
 void ase_map_setcomper (map_t* map, comper_t comper)
 {
+	if (comper == ASE_NULL) comper = comp_key;
 	map->comper = comper;
 }
 
@@ -345,8 +345,7 @@ size_t ase_map_getcapa (map_t* map)
 	return map->capa;
 }
 
-pair_t* ase_map_get (
-	map_t* map, const void* kptr, size_t klen)
+pair_t* ase_map_search (map_t* map, const void* kptr, size_t klen)
 {
 	pair_t* pair;
 	size_t hc;
@@ -367,18 +366,7 @@ pair_t* ase_map_get (
 	return ASE_NULL;
 }
 
-pair_t* ase_map_put (map_t* map, 
-	void* kptr, size_t klen, void* vptr, size_t vlen)
-{
-	int n;
-	pair_t* px;
-
-	n = ase_map_putx (map, kptr, klen, vptr, vlen, &px);
-	if (n < 0) return ASE_NULL;
-	return px;
-}
-
-int ase_map_putx (
+int ase_map_put (
 	map_t* map, void* kptr, size_t klen, 
 	void* vptr, size_t vlen, pair_t** px)
 {
@@ -423,19 +411,6 @@ int ase_map_putx (
 
 	ASE_ASSERT (pair == ASE_NULL);
 
-#if 0
-	pair = (pair_t*) ASE_MMGR_ALLOC (map->mmgr, 
-		SIZEOF(pair_t) + ((klen+1)*SIZEOF(*kptr)));
-	if (pair == ASE_NULL) return -1; /* error */
-
-	/* duplicate the key if it is new */
-	KPTR(pair) = (void*)(pair + 1);
-	ase_strncpy (KPTR(pair), kptr, klen);
-
-	KLEN(pair) = klen;
-	VPTR(pair) = vptr;
-	VLEN(pair) = vlen;
-#endif
 	pair = alloc_pair (map, kptr, klen, vptr, vlen);
 	if (pair == ASE_NULL) return -1; /* error */
 
@@ -447,7 +422,20 @@ int ase_map_putx (
 	return 1; /* new key added */
 }
 
-pair_t* ase_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+pair_t* ase_map_upsert (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+{
+	/* update if the key exists, otherwise insert a new pair */
+	int n;
+	pair_t* px;
+
+	n = ase_map_put (map, kptr, klen, vptr, vlen, &px);
+	if (n < 0) return ASE_NULL;
+	return px;
+}
+
+pair_t* ase_map_insert (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* pair;
 	size_t hc;
@@ -485,7 +473,8 @@ pair_t* ase_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t 
 	return pair;
 }
 
-pair_t* ase_map_update (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+pair_t* ase_map_update (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* pair, * p, * prev, * next;
 	size_t hc;
