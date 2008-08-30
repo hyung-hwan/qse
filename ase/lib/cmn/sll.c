@@ -24,9 +24,7 @@
 #define size_t   ase_size_t
 #define mmgr_t   ase_mmgr_t
 
-sll_t* ase_sll_open (
-	mmgr_t* mmgr, size_t ext,
-	void (*init) (sll_t*, void*), void* init_data) 
+sll_t* ase_sll_open (mmgr_t* mmgr, size_t ext)
 {
 	sll_t* sll;
 
@@ -43,10 +41,9 @@ sll_t* ase_sll_open (
 	sll = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(sll_t) + ext);
 	if (sll == ASE_NULL) return ASE_NULL;
 
-	ASE_MEMSET (sll, 0, ASE_SIZEOF(sll_t) + ext);
+	/* do not zero out the extension */
+	ASE_MEMSET (sll, 0, ASE_SIZEOF(sll_t));
 	sll->mmgr = mmgr;
-
-	if (init) init (sll, init_data);
 
 	return sll;
 }

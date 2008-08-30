@@ -7,9 +7,7 @@
 #include <ase/cmn/dll.h>
 #include "mem.h"
 
-ase_dll_t* ase_dll_open (
-	ase_mmgr_t* mmgr, ase_size_t ext,
-	void (*init) (ase_dll_t*, void*), void* init_data)
+ase_dll_t* ase_dll_open (ase_mmgr_t* mmgr, ase_size_t ext)
 {
 	ase_dll_t* dll;
 
@@ -26,10 +24,9 @@ ase_dll_t* ase_dll_open (
 	dll = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_dll_t) + ext);
 	if (dll == ASE_NULL) return ASE_NULL;
 
-	ASE_MEMSET (dll, 0, ASE_SIZEOF(ase_dll_t) + ext);
+	/* do not zero the extension */
+	ASE_MEMSET (dll, 0, ASE_SIZEOF(ase_dll_t));
 	dll->mmgr = mmgr;
-
-	if (init) init (dll, init_data);
 
 	return dll;
 }
