@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 352 2008-08-31 10:55:59Z baconevi $
+ * $Id: str_dyn.c 357 2008-08-31 11:17:01Z baconevi $
  *
  * {License}
  */
@@ -11,7 +11,7 @@ ase_str_t* ase_str_open (ase_mmgr_t* mmgr, ase_size_t ext, ase_size_t capa)
 {
 	ase_str_t* str;
 
-	str = (ase_str_t*) ASE_MMGR_ALLOC (mmgr, sizeof(ase_str_t) + ext);
+	str = (ase_str_t*) ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_str_t) + ext);
 	if (str == ASE_NULL) return ASE_NULL;
 
 	if (ase_str_init (str, mmgr, capa) == ASE_NULL)
@@ -31,15 +31,14 @@ void ase_str_close (ase_str_t* str)
 
 ase_str_t* ase_str_init (ase_str_t* str, ase_mmgr_t* mmgr, ase_size_t capa)
 {
-	ASE_MEMSET (str, 0, sizeof(ase_str_t));
-
+	ASE_MEMSET (str, 0, ASE_SIZEOF(ase_str_t));
 	str->mmgr = mmgr;
 
 	if (capa == 0) str->buf = ASE_NULL;
 	else
 	{
 		str->buf = (ase_char_t*) ASE_MMGR_ALLOC (
-			mmgr, sizeof(ase_char_t) * (capa + 1));
+			mmgr, ASE_SIZEOF(ase_char_t) * (capa + 1));
 		if (str->buf == ASE_NULL) return ASE_NULL;
 		str->buf[0] = ASE_T('\0');
 	}
@@ -63,7 +62,7 @@ int ase_str_yield (ase_str_t* str, ase_cstr_t* buf, int new_capa)
 	else
 	{
 		tmp = (ase_char_t*) ASE_MMGR_ALLOC (
-			str->mmgr, sizeof(ase_char_t) * (new_capa + 1));
+			str->mmgr, ASE_SIZEOF(ase_char_t) * (new_capa + 1));
 		if (tmp == ASE_NULL) return -1;
 		tmp[0] = ASE_T('\0');
 	}
@@ -120,7 +119,7 @@ ase_size_t ase_str_ncpy (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 	if (len > str->capa || str->buf == ASE_NULL) 
 	{
 		buf = (ase_char_t*) ASE_MMGR_ALLOC (
-			str->mmgr, sizeof(ase_char_t) * (len + 1));
+			str->mmgr, ASE_SIZEOF(ase_char_t) * (len + 1));
 		if (buf == ASE_NULL) return (ase_size_t)-1;
 
 		if (str->buf != ASE_NULL) ASE_MMGR_FREE (str->mmgr, str->buf);
@@ -155,18 +154,18 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 		{
 			tmp = (ase_char_t*) ASE_REALLOC (
 				str->mmgr, str->buf, 
-				sizeof(ase_char_t)*(capa+1));
+				ASE_SIZEOF(ase_char_t)*(capa+1));
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 		}
 		else
 		{
 			tmp = (ase_char_t*) ASE_MMGR_ALLOC (
-				str->mmgr, sizeof(ase_char_t)*(capa+1));
+				str->mmgr, ASE_SIZEOF(ase_char_t)*(capa+1));
 			if (tmp == ASE_NULL) return (ase_size_t)-1;
 			if (str->buf != ASE_NULL)
 			{
 				ASE_MEMCPY (tmp, str->buf, 
-					sizeof(ase_char_t)*(str->capa+1));
+					ASE_SIZEOF(ase_char_t)*(str->capa+1));
 				ASE_MMGR_FREE (str->mmgr, str->buf);
 			}
 		}
