@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 349 2008-08-28 14:21:25Z baconevi $
+ * $Id: map.h 354 2008-08-31 10:57:24Z baconevi $
  *
  * {License}
  */
@@ -74,6 +74,10 @@ struct ase_map_t
 	ase_size_t size;
 	ase_size_t capa;
 
+	ase_uint_t factor;
+	ase_size_t threshold;
+	ase_map_pair_t** bucket;
+
 	void (*sameval) (void* owner, void* vptr, ase_size_t vlen);
 };
 
@@ -91,7 +95,6 @@ enum ase_map_walk_t
 };
 
 #define ASE_MAP_COPIER_INLINE ase_map_copyinline
-
 
 #define ASE_MAP_SIZE(m) ((m)->size)
 #define ASE_MAP_CAPA(m) ((m)->capa)
@@ -114,17 +117,26 @@ extern "C" {
  *  bucket and a list of values linked.
  */
 ase_map_t* ase_map_open (
-        ase_mmgr_t* mmgr,
-	ase_size_t ext,
-        void (*init) (ase_map_t*, void*),
-	void* init_arg,
+        ase_mmgr_t* mmgr /* memory manager */,
+	ase_size_t ext /* size of extension area in bytes */,
 	ase_size_t capa /* initial capacity */,  
-	unsigned int load_factor /* load factor */
+	ase_uint_t factor /* load factor */
 );
 
 /* destroy a map */
 void ase_map_close (
 	ase_map_t* map /* a map */
+);
+
+ase_map_t* ase_map_init (
+	ase_map_t* map,
+	ase_mmgr_t* mmgr,
+	ase_size_t capa,
+	ase_uint_t factor
+);
+
+void ase_map_fini (
+	ase_map_t* map
 );
 
 /* clear a map */
@@ -211,30 +223,52 @@ ase_size_t ase_map_getcapa (
 	ase_map_t* map /* a map */
 );
 
-/* get the pointer to the pair with a matching key */
-ase_map_pair_t* ase_map_get (
-	ase_map_t* map /* a map */,
-	const void* kptr,
-	ase_size_t klen
-);
-
-
-/* insert or update a pair with a matching key */
-ase_map_pair_t* ase_map_put (
-	ase_map_t* map /* a map */,
-	void* kptr /* the pointer to the beginning of a key */,
-	ase_size_t klen /* the length of the key in bytes */,
-	void* vptr /* the pointer to the beginning of a value */,
-	ase_size_t vlen /* the length of the value in bytes */
-);
-
-int ase_map_putx (
-	ase_map_t* map /* a map */,
+int ase_map_put (
+	ase_map_t* map,
 	void* kptr,
 	ase_size_t klen,
 	void* vptr,
 	ase_size_t vlen,
 	ase_map_pair_t** px
+);
+
+/* 
+ * NAME: find a pair with a matching key 
+ * 
+ * DESCRIPTION:
+ *  The ase_map_search() functions searches a map to find a pair with a 
+ *  matching key. It returns the pointer to the pair found. If it fails
+ *  to find one, it returns ASE_NULL.
+ *
+ * RETURNS:
+ *  The pointer to the pair with a maching key.
+ *  ASE_NULL if no match is found.
+ */
+ase_map_pair_t* ase_map_search (
+	ase_map_t* map   /* a map */,
+	const void* kptr /* the pointer to a key */,
+	ase_size_t klen  /* the size of the key in bytes */
+);
+
+/* 
+ * NAME: update an existing pair with a matching or inesrt a new pair
+ *
+ * DESCRIPTION:
+ *   The ase_map_upsert() function searches a map for the pair with a matching
+ *   key. If one is found, it updates the pair. Otherwise, it inserts a new
+ *   pair with a key and a value. It returns the pointer to the pair updated 
+ *   or inserted.
+ *
+ * RETURNS:
+ *  a pointer to the updated or inserted pair.
+ *  ASE_NULL on failure. 
+ */
+ase_map_pair_t* ase_map_upsert (
+	ase_map_t* map   /* a map */,
+	void* kptr       /* the pointer to a key */,
+	ase_size_t klen  /* the length of the key in bytes */,
+	void* vptr       /* the pointer to a value */,
+	ase_size_t vlen  /* the length of the value in bytes */
 );
 
 /* 
@@ -250,34 +284,34 @@ int ase_map_putx (
  *  ASE_NULL on failure. 
  */
 ase_map_pair_t* ase_map_insert (
-	ase_map_t* map /* a map */,
-	void* kptr, 
-	ase_size_t klen, 
-	void* vptr, 
-	ase_size_t vlen
+	ase_map_t* map   /* a map */,
+	void* kptr       /* the pointer to a key */,
+	ase_size_t klen  /* the length of the key in bytes */,
+	void* vptr       /* the pointer to a value */,
+	ase_size_t vlen  /* the length of the value in bytes */
 );
 
 /* update the value of a existing pair with a matching key */
 ase_map_pair_t* ase_map_update (
-	ase_map_t* map /* a map */,
-	void* kptr, 
-	ase_size_t klen, 
-	void* vptr, 
-	ase_size_t vlen
+	ase_map_t* map   /* a map */,
+	void* kptr       /* the pointer to a key */,
+	ase_size_t klen  /* the length of the key in bytes */,
+	void* vptr       /* the pointer to a value */,
+	ase_size_t vlen  /* the length of the value in bytes */
 );
 
 /* delete a pair with a matching key */
 int ase_map_delete (
-	ase_map_t* map /* a map */,
-	const void* kptr,
-	ase_size_t klen
+	ase_map_t* map   /* a map */,
+	const void* kptr /* the pointer to a key */,
+	ase_size_t klen  /* the size of the key in bytes */
 );
 
 /* traverse a map */
 void ase_map_walk (
-	ase_map_t* map /* a map */,
+	ase_map_t* map          /* a map */,
 	ase_map_walker_t walker /* the pointer to the function for each pair */,
-	void* arg /* a pointer to user-specific data */
+	void* arg               /* a pointer to user-specific data */
 );
 
 /* get the pointer to the first pair in the map. */

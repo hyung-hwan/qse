@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 349 2008-08-28 14:21:25Z baconevi $
+ * $Id: awk.h 354 2008-08-31 10:57:24Z baconevi $
  *
  * {License}
  */
@@ -592,9 +592,7 @@ extern ase_awk_val_t* ase_awk_val_one;
  */
 ase_awk_t* ase_awk_open ( 
 	ase_mmgr_t* mmgr /* memory manager */,
-	ase_size_t ext /* size of extension area in bytes */, 
-	void (*init) (ase_awk_t*, void*) /* extension initializer */,
-	void* init_data /* the second argument to the extension initializer */
+	ase_size_t ext /* size of extension area in bytes */
 );
 
 /* 
@@ -696,20 +694,36 @@ void ase_awk_setoption (ase_awk_t* awk, int opt);
 ase_size_t ase_awk_getmaxdepth (ase_awk_t* awk, int type);
 void ase_awk_setmaxdepth (ase_awk_t* awk, int types, ase_size_t depth);
 
-int ase_awk_getword (ase_awk_t* awk, 
-	const ase_char_t* okw, ase_size_t olen,
-	const ase_char_t** nkw, ase_size_t* nlen);
+int ase_awk_getword (
+	ase_awk_t* awk, 
+	const ase_char_t* okw,
+	ase_size_t olen,
+	const ase_char_t** nkw,
+	ase_size_t* nlen
+);
+
+int ase_awk_unsetword (
+	ase_awk_t* awk,
+	const ase_char_t* kw,
+	ase_size_t len
+);
+
+void ase_awk_unsetallwords (
+	ase_awk_t* awk
+);
 
 /*
- * enable replacement of a name of a keyword, intrinsic global variables, 
- * and intrinsic functions.
+ * NAME:
+ *  enable replacement of a name of a keyword, intrinsic global variables, 
+ *  and intrinsic functions.
  *
- * If nkw is ASE_NULL or nlen is zero and okw is ASE_NULL or olen is zero,
- * it unsets all word replacements. If nkw is ASE_NULL or nlen is zero,
- * it unsets the replacement for okw and olen. If all of them are valid,
- * it sets the word replace for okw and olen to nkw and nlen.
+ * DESCRIPTION:
+ *  If nkw is ASE_NULL or nlen is zero and okw is ASE_NULL or olen is zero,
+ *  it unsets all word replacements. If nkw is ASE_NULL or nlen is zero,
+ *  it unsets the replacement for okw and olen. If all of them are valid,
+ *  it sets the word replace for okw and olen to nkw and nlen.
  *
- * RETURNS 0 on success, -1 on failure
+ * RETURNS: 0 on success, -1 on failure
  */
 int ase_awk_setword (
 	/* the pointer to an ase_awk_t instance */
@@ -732,11 +746,11 @@ int ase_awk_setword (
 int ase_awk_setrexfns (ase_awk_t* awk, ase_awk_rexfns_t* rexfns);
 
 /**
- * Adds an intrinsic global variable.
+ * NAME: add an intrinsic global variable.
  *
- * @return 
- * 	On success, the ID of the global variable added is returned.
- * 	On failure, -1 is returned.
+ * RETURNS:
+ *  On success, the ID of the global variable added is returned.
+ *  On failure, -1 is returned.
  */
 int ase_awk_addglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
 

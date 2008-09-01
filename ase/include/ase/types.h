@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: types.h 354 2008-08-31 10:57:24Z baconevi $
  *
  * {License}
  */
@@ -319,11 +319,6 @@ typedef int  ase_mcint_t;
 		#define _UNICODE
 	#endif
 #endif
-
-/* ase_fuser_t is an abstract function type that can be used to 
- * fuse(copy and combine) the orginal data into the given space 
- * and return the pointer to its new location in the space */
-typedef void* (*ase_fuser_t) (void* org, void* space);
 
 typedef struct ase_cstr_t ase_cstr_t;
 typedef struct ase_mmgr_t ase_mmgr_t;
