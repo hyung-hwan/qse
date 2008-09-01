@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 223 2008-06-26 06:44:41Z baconevi $
+ * $Id: str.h 352 2008-08-31 10:55:59Z baconevi $
  *
  * {License}
  */
@@ -20,21 +20,20 @@ typedef struct ase_str_t ase_str_t;
 
 struct ase_str_t
 {
+	ase_mmgr_t* mmgr;
 	ase_char_t* buf;
 	ase_size_t  size;
 	ase_size_t  capa;
-	ase_mmgr_t* mmgr;
-	ase_bool_t  __dynamic;
 };
 
 /* int ase_chartonum (ase_char_t c, int base) */
-#define ASE_CHARTONUM(c,base) \
+#define ASE_CHAR_TO_NUM(c,base) \
 	((c>=ASE_T('0') && c<=ASE_T('9'))? ((c-ASE_T('0')<base)? (c-ASE_T('0')): base): \
 	 (c>=ASE_T('A') && c<=ASE_T('Z'))? ((c-ASE_T('A')+10<base)? (c-ASE_T('A')+10): base): \
 	 (c>=ASE_T('a') && c<=ASE_T('z'))? ((c-ASE_T('a')+10<base)? (c-ASE_T('a')+10): base): base)
 
 /* ase_strtonum (const ase_char_t* nptr, ase_char_t** endptr, int base) */
-#define ASE_STRTONUM(value,nptr,endptr,base) \
+#define ASE_STR_TO_NUM(value,nptr,endptr,base) \
 { \
 	int __ston_f = 0, __ston_v; \
 	const ase_char_t* __ston_ptr = nptr; \
@@ -46,7 +45,7 @@ struct ase_str_t
 		if (__ston_c == ASE_T('+')) { __ston_ptr++; } \
 		break; \
 	} \
-	for (value = 0; (__ston_v = ASE_CHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
+	for (value = 0; (__ston_v = ASE_CHAR_TO_NUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
 		value = value * base + __ston_v; \
 	} \
 	if (endptr != ASE_NULL) *((const ase_char_t**)endptr) = __ston_ptr; \
@@ -54,7 +53,7 @@ struct ase_str_t
 }
 
 /* ase_strxtonum (const ase_char_t* nptr, ase_size_t len, ase_char_char** endptr, int base) */
-#define ASE_STRXTONUM(value,nptr,len,endptr,base) \
+#define ASE_STRX_TO_NUM(value,nptr,len,endptr,base) \
 { \
 	int __ston_f = 0, __ston_v; \
 	const ase_char_t* __ston_ptr = nptr; \
@@ -70,7 +69,7 @@ struct ase_str_t
 		break; \
 	} \
 	for (value = 0; __ston_ptr < __ston_end && \
-	               (__ston_v = ASE_CHARTONUM(*__ston_ptr, base)) != base; __ston_ptr++) { \
+	               (__ston_v = ASE_CHAR_TO_NUM(*__ston_ptr, base)) != base; __ston_ptr++) { \
 		value = value * base + __ston_v; \
 	} \
 	if (endptr != ASE_NULL) *((const ase_char_t**)endptr) = __ston_ptr; \
@@ -178,11 +177,46 @@ ase_ulong_t ase_strxtoulong (const ase_char_t* str, ase_size_t len);
  * dynamic string 
  */
 
-ase_str_t* ase_str_open (ase_str_t* str, ase_size_t capa, ase_mmgr_t* mmgr);
-void ase_str_close (ase_str_t* str);
-void ase_str_clear (ase_str_t* str);
+ase_str_t* ase_str_open (
+	ase_mmgr_t* mmgr,
+	ase_size_t ext,
+	ase_size_t capa
+);
 
-void ase_str_forfeit (ase_str_t* str);
+void ase_str_close (
+	ase_str_t* str
+);
+
+/* 
+ * If capa is 0, it doesn't allocate the buffer in advance. 
+ */
+ase_str_t* ase_str_init (
+	ase_str_t* str,
+	ase_mmgr_t* mmgr,
+	ase_size_t capa
+);
+
+void ase_str_fini (
+	ase_str_t* str
+);
+
+/*
+ * NAME: yield the buffer 
+ * 
+ * DESCRIPTION:
+ *  The ase_str_yield() function assigns the buffer to an variable of the
+ *  ase_cstr_t type and recreate a new buffer of the new_capa capacity.
+ *  The function fails if it fails to allocate a new buffer.
+ *
+ * RETURNS: 0 on success, -1 on failure.
+ */
+int ase_str_yield (
+	ase_str_t* str  /* a dynamic string */,
+	ase_cstr_t* buf /* the pointer to a ase_cstr_t variable */,
+	int new_capa    /* new capacity in number of characters */
+);
+
+void ase_str_clear (ase_str_t* str);
 void ase_str_swap (ase_str_t* str, ase_str_t* str2);
 
 ase_size_t ase_str_cpy (ase_str_t* str, const ase_char_t* s);
