@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 353 2008-08-31 10:56:47Z baconevi $
+ * $Id: map.c 356 2008-08-31 11:16:52Z baconevi $
  *
  * {License}
  */
@@ -218,7 +218,6 @@ map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, uint_t factor)
 {
 	ASE_ASSERTX (capa >= 0, 
 		"The initial capacity should be greater than 0");
-
 	ASE_ASSERTX (factor >= 0 && factor <= 100,
 		"The load factor should be between 0 and 100 inclusive");
 
@@ -227,11 +226,7 @@ map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, uint_t factor)
 	map->mmgr = mmgr;
 
 	map->bucket = ASE_MMGR_ALLOC (mmgr, capa*SIZEOF(pair_t*));
-	if (map->bucket == ASE_NULL)
-	{
-		ASE_MMGR_FREE (mmgr, map);
-		return ASE_NULL;
-	}
+	if (map->bucket == ASE_NULL) return ASE_NULL;
 
 	map->size = 0;
 	map->capa = capa;
