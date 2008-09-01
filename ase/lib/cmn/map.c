@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 351 2008-08-29 15:02:26Z baconevi $
+ * $Id: map.c 353 2008-08-31 10:56:47Z baconevi $
  *
  * {License}
  */
@@ -205,7 +205,7 @@ map_t* ase_map_open (mmgr_t* mmgr, size_t ext, size_t capa, uint_t factor)
 		return ASE_NULL;
 	}
 
-	return mmgr;
+	return map;
 }
 
 void ase_map_close (map_t* map)
