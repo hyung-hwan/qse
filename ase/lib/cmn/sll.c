@@ -41,17 +41,26 @@ sll_t* ase_sll_open (mmgr_t* mmgr, size_t ext)
 	sll = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(sll_t) + ext);
 	if (sll == ASE_NULL) return ASE_NULL;
 
-	/* do not zero out the extension */
-	ASE_MEMSET (sll, 0, ASE_SIZEOF(sll_t));
-	sll->mmgr = mmgr;
-
-	return sll;
+	return ase_sll_init (sll, mmgr);
 }
 
 void ase_sll_close (sll_t* sll)
 {
-	ase_sll_clear (sll);
+	ase_sll_fini (sll);
 	ASE_MMGR_FREE (sll->mmgr, sll);
+}
+
+sll_t* ase_sll_init (sll_t* sll, mmgr_t* mmgr)
+{
+	/* do not zero out the extension */
+	ASE_MEMSET (sll, 0, ASE_SIZEOF(sll_t));
+	sll->mmgr = mmgr;
+	return sll;
+}
+
+void ase_sll_fini (sll_t* sll)
+{
+	ase_sll_clear (sll);
 }
 
 void ase_sll_clear (sll_t* sll)

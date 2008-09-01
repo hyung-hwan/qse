@@ -101,6 +101,15 @@ void ase_sll_close (
 	ase_sll_t* sll /* a singly linked list */
 );
 
+ase_sll_t* ase_sll_init (
+	ase_sll_t* sll   /* an uninitialized singly linked list */,
+	ase_mmgr_t* mmgr /* memory manager */
+);
+
+void ase_sll_fini (
+	ase_sll_t* sll /* a singly linked list */
+);
+
 /* 
  * NAME: deletes all elements of a singly linked list 
  */
