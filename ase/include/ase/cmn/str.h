@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: str.h 365 2008-09-04 11:05:14Z baconevi $
  *
  * {License}
  */
@@ -35,7 +35,7 @@ struct ase_str_t
 	 (c>=ASE_T('a') && c<=ASE_T('z'))? ((c-ASE_T('a')+10<base)? (c-ASE_T('a')+10): base): base)
 
 /* ase_strtonum (const ase_char_t* nptr, ase_char_t** endptr, int base) */
-#define ASE_STR_TO_NUM(value,nptr,endptr,base) \
+#define ASE_STRTONUM(value,nptr,endptr,base) \
 { \
 	int __ston_f = 0, __ston_v; \
 	const ase_char_t* __ston_ptr = nptr; \
@@ -55,7 +55,7 @@ struct ase_str_t
 }
 
 /* ase_strxtonum (const ase_char_t* nptr, ase_size_t len, ase_char_char** endptr, int base) */
-#define ASE_STRX_TO_NUM(value,nptr,len,endptr,base) \
+#define ASE_STRXTONUM(value,nptr,len,endptr,base) \
 { \
 	int __ston_f = 0, __ston_v; \
 	const ase_char_t* __ston_ptr = nptr; \
