@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 365 2008-09-04 11:05:14Z baconevi $
+ * $Id: str.h 366 2008-09-04 11:15:53Z baconevi $
  *
  * {License}
  */
@@ -11,6 +11,7 @@
 #include <ase/macros.h>
 
 #define ASE_STR_LEN(x)      ((x)->size)
+#define ASE_STR_PTR(x)      ((x)->buf)
 #define ASE_STR_SIZE(x)     ((x)->size + 1)
 #define ASE_STR_CAPA(x)     ((x)->capa)
 #define ASE_STR_BUF(x)      ((x)->buf)
