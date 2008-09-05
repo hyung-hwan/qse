@@ -1,5 +1,5 @@
 /*
- * $Id: jni.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: jni.c 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
@@ -2274,7 +2274,7 @@ JNIEXPORT jobject JNICALL Java_ase_awk_Argument_getindexed (JNIEnv* env, jobject
 	}
 	else rptr = (ase_char_t*)ptr;
 
-	pair = ase_map_get (((ase_awk_val_map_t*)val)->map, rptr, len);
+	pair = ase_map_search (((ase_awk_val_map_t*)val)->map, rptr, len);
 	if (ptr != rptr) ase_awk_free (awk, rptr);
 	(*env)->ReleaseStringChars (env, index, ptr);
 
@@ -2463,7 +2463,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobjec
 			return;
 		}
 
-		pair = ase_map_put (
+		pair = ase_map_upsert (
 			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2497,7 +2497,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedintval (JNIEnv* env, jobjec
 			THROW_NOMEM_EXCEPTION (env);
 			return;
 		}
-		pair = ase_map_put (
+		pair = ase_map_upsert (
 			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2566,7 +2566,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedrealval (JNIEnv* env, jobje
 			return;
 		}
 
-		pair = ase_map_put (
+		pair = ase_map_upsert (
 			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2600,7 +2600,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedrealval (JNIEnv* env, jobje
 			THROW_NOMEM_EXCEPTION (env);
 			return;
 		}
-		pair = ase_map_put (
+		pair = ase_map_upsert (
 			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2675,7 +2675,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedstrval (JNIEnv* env, jobjec
 			THROW_NOMEM_EXCEPTION (env);
 			return;
 		}
-		pair = ase_map_put (
+		pair = ase_map_upsert (
 			((ase_awk_val_map_t*)x)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)
@@ -2715,7 +2715,7 @@ JNIEXPORT void JNICALL Java_ase_awk_Return_setindexedstrval (JNIEnv* env, jobjec
 			THROW_NOMEM_EXCEPTION (env);
 			return;
 		}
-		pair = ase_map_put (
+		pair = ase_map_upsert (
 			((ase_awk_val_map_t*)val)->map, aptr, len, x2);
 		free_str (env, awk, index, jptr, aptr);
 		if (pair == ASE_NULL)

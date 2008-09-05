@@ -1,11 +1,11 @@
 /*
- * $Id: jni.h 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: jni.h 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
 
-#ifndef _ASE_AWK_JNI_H_
-#define _ASE_AWK_JNI_H_
+#ifndef _ASE_LIB_AWK_JNI_H_
+#define _ASE_LIB_AWK_JNI_H_
 
 #if defined(__APPLE__) && defined(__MACH__)
 #include <JavaVM/jni.h>

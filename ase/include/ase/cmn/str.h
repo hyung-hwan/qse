@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 352 2008-08-31 10:55:59Z baconevi $
+ * $Id: str.h 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
@@ -21,6 +21,8 @@ typedef struct ase_str_t ase_str_t;
 struct ase_str_t
 {
 	ase_mmgr_t* mmgr;
+	ase_sizer_t sizer;
+
 	ase_char_t* buf;
 	ase_size_t  size;
 	ase_size_t  capa;
@@ -214,6 +216,58 @@ int ase_str_yield (
 	ase_str_t* str  /* a dynamic string */,
 	ase_cstr_t* buf /* the pointer to a ase_cstr_t variable */,
 	int new_capa    /* new capacity in number of characters */
+);
+
+/*
+ * NAME: get the sizer
+ *
+ * DESCRIPTION:
+ *  The ase_str_getsizer() function returns the sizer specified.
+ *
+ * RETURNS: a sizer function set or ASE_NULL if no sizer is set.
+ */
+ase_sizer_t ase_str_getsizer (
+	ase_str_t* str  /* a dynamic string */
+);
+
+/*
+ * NAME: specify a sizer
+ *
+ * DESCRIPTION:
+ *  The ase_str_setsizer() function specify a new sizer for a dynamic string.
+ *  With no sizer specified, the dynamic string doubles the current buffer
+ *  when it needs to increase its size.
+ */
+void ase_str_setsizer (
+	ase_str_t* str    /* a dynamic string */,
+	ase_sizer_t sizer /* a sizer function */
+);
+
+/*
+ * NAME: get capacity
+ *
+ * DESCRIPTION:
+ *  The ase_str_getcapa() function returns the current capacity.
+ *
+ * RETURNS: the current capacity in number of characters.
+ */
+ase_size_t ase_str_getcapa (
+	ase_str_t* str /* a dynamic string */
+);
+
+/*
+ * NAME: set new capacity
+ *
+ * DESCRIPTION:
+ *  The ase_str_setcapa() function set new capacity. If the new capacity
+ *  is smaller than the old, the overflowing characters are removed from
+ *  from the buffer.
+ * 
+ * RETURNS: -1 on failure, a new capacity on success 
+ */
+ase_size_t ase_str_setcapa (
+	ase_str_t* str  /* a dynamic string */,
+	ase_size_t capa /* a new capacity */
 );
 
 void ase_str_clear (ase_str_t* str);

@@ -1,15 +1,11 @@
 /*
- * $Id: func.h 115 2008-03-03 11:13:15Z baconevi $
+ * $Id: func.h 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
 
-#ifndef _ASE_AWK_FUNC_H_
-#define _ASE_AWK_FUNC_H_
-
-#ifndef _ASE_AWK_AWK_H_
-#error Never include this file directly. Include <ase/awk/awk.h> instead
-#endif
+#ifndef _ASE_LIB_AWK_FUNC_H_
+#define _ASE_LIB_AWK_FUNC_H_
 
 typedef struct ase_awk_bfn_t ase_awk_bfn_t;
 

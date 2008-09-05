@@ -1,15 +1,11 @@
 /*
- * $Id: tree.h 237 2008-07-09 13:20:08Z baconevi $
+ * $Id: tree.h 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
 
-#ifndef _ASE_AWK_TREE_H_
-#define _ASE_AWK_TREE_H_
-
-#ifndef _ASE_AWK_AWK_H_
-#error Never include this file directly. Include <ase/awk/awk.h> instead
-#endif
+#ifndef _ASE_LIB_AWK_TREE_H_
+#define _ASE_LIB_AWK_TREE_H_
 
 enum ase_awk_nde_type_t
 {
