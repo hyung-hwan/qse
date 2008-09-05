@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 349 2008-08-28 14:21:25Z baconevi $ 
+ * $Id: awk.c 363 2008-09-04 10:58:08Z baconevi $ 
  *
  * {License}
  */
@@ -11,11 +11,8 @@
 
 #include "awk.h"
 
-static void free_word (void* awk, void* ptr);
-static void free_afn (void* awk, void* afn);
-static void free_bfn (void* awk, void* afn);
-
 #define SETERR(awk,code) ase_awk_seterrnum(awk,code)
+
 #define SETERRARG(awk,code,line,arg,leng) \
 	do { \
 		ase_cstr_t errarg; \
@@ -24,15 +21,27 @@ static void free_bfn (void* awk, void* afn);
 		ase_awk_seterror ((awk), (code), (line), &errarg, 1); \
 	} while (0)
 
-static void init_map (ase_map_t* map, void* arg)
+static void free_afn (ase_map_t* map, void* vptr, ase_size_t vlen)
 {
-	ase_awk_t** p = ase_map_getextension (map);
-	*p = arg;
+	ase_awk_t* awk = *(ase_awk_t**)ase_map_getextension(map);
+	ase_awk_afn_t* f = (ase_awk_afn_t*)vptr;
+
+	/* f->name doesn't have to be freed */
+	/*ASE_AWK_FREE (awk, f->name);*/
+
+	ase_awk_clrpt (awk, f->body);
+	ASE_AWK_FREE (awk, f);
 }
 
-ase_awk_t* ase_awk_open (
-	ase_mmgr_t* mmgr, ase_size_t ext, 
-	void (*init) (ase_awk_t*, void*), void* init_data)
+static void free_bfn (ase_map_t* map, void* vptr, ase_size_t vlen)
+{
+	ase_awk_t* awk = *(ase_awk_t**)ase_map_getextension(map);
+	ase_awk_bfn_t* f = (ase_awk_bfn_t*)vptr;
+
+	ASE_AWK_FREE (awk, f);
+}
+
+ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 {
 	ase_awk_t* awk;
 
@@ -58,19 +67,18 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
-	/*awk->wtab = ase_map_open (awk, 512, 70, free_word, ASE_NULL, mmgr);*/
-	awk->wtab = ase_map_open (
-		mmgr, sizeof(awk), init_map, awk, 512, 70);
+	awk->wtab = ase_map_open (mmgr, sizeof(awk), 512, 70);
 	if (awk->wtab == ASE_NULL)
 	{
 		ase_str_close (&awk->token.name);
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
+	*(ase_awk_t**)ase_map_getextension(awk->wtab) = awk;
+	ase_map_setcopier (awk->wtab, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
+	ase_map_setcopier (awk->wtab, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
 
-	/*awk->rwtab = ase_map_open (awk, 512, 70, free_word, ASE_NULL, mmgr);*/
-	awk->rwtab = ase_map_open (
-		mmgr, sizeof(awk), init_map, awk, 512, 70);
+	awk->rwtab = ase_map_open (mmgr, sizeof(awk), 512, 70);
 	if (awk->rwtab == ASE_NULL)
 	{
 		ase_map_close (awk->wtab);
@@ -78,12 +86,13 @@ ase_awk_t* ase_awk_open (
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
+	*(ase_awk_t**)ase_map_getextension(awk->rwtab) = awk;
+	ase_map_setcopier (awk->rwtab, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
+	ase_map_setcopier (awk->rwtab, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
 
 	/* TODO: initial map size?? */
 	/*awk->tree.afns = ase_map_open (awk, 512, 70, free_afn, ASE_NULL, mmgr);*/
-
-	awk->tree.afns = ase_map_open (
-		mmgr, sizeof(awk), init_map, awk, 512, 70);
+	awk->tree.afns = ase_map_open (mmgr, sizeof(awk), 512, 70);
 	if (awk->tree.afns == ASE_NULL) 
 	{
 		ase_map_close (awk->rwtab);
@@ -92,10 +101,11 @@ ase_awk_t* ase_awk_open (
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
+	*(ase_awk_t**)ase_map_getextension(awk->tree.afns) = awk;
+	ase_map_setfreeer (awk->tree.afns, ASE_MAP_VAL, free_afn);
 
 	/*awk->parse.afns = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
-	awk->parse.afns = ase_map_open (
-		mmgr, sizeof(awk), init_map, awk, 256, 70);
+	awk->parse.afns = ase_map_open (mmgr, sizeof(awk), 256, 70);
 	if (awk->parse.afns == ASE_NULL)
 	{
 		ase_map_close (awk->tree.afns);
@@ -105,10 +115,10 @@ ase_awk_t* ase_awk_open (
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
+	*(ase_awk_t**)ase_map_getextension(awk->parse.afns) = awk;
 
 	/*awk->parse.named = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
-	awk->parse.named = ase_map_open (
-		mmgr, sizeof(awk), init_map, awk, 256, 70);
+	awk->parse.named = ase_map_open (mmgr, sizeof(awk), 256, 70);
 	if (awk->parse.named == ASE_NULL)
 	{
 		ase_map_close (awk->parse.afns);
@@ -119,6 +129,7 @@ ase_awk_t* ase_awk_open (
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
+	*(ase_awk_t**)ase_map_getextension(awk->parse.named) = awk;
 
 	if (ase_awk_tab_open (&awk->parse.globals, awk) == ASE_NULL) 
 	{
@@ -193,8 +204,7 @@ ase_awk_t* ase_awk_open (
 	awk->bfn.sys = ASE_NULL;
 	/*awk->bfn.user = ASE_NULL;*/
 	/*awk->bfn.user = ase_map_open (awk, 512, 70, free_bfn, ASE_NULL, mmgr);*/
-	awk->bfn.user = ase_map_open (
-		mmgr, sizeof(awk), init_map, awk, 512, 70);
+	awk->bfn.user = ase_map_open (mmgr, sizeof(awk), 512, 70);
 	if (awk->bfn.user == ASE_NULL)
 	{
 		ase_awk_tab_close (&awk->parse.params);
@@ -209,6 +219,8 @@ ase_awk_t* ase_awk_open (
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
+	*(ase_awk_t**)ase_map_getextension(awk->bfn.user) = awk;
+	ase_map_setfreeer (awk->bfn.user, ASE_MAP_VAL, free_bfn); 
 
 	awk->parse.depth.cur.block = 0;
 	awk->parse.depth.cur.loop = 0;
@@ -239,31 +251,9 @@ ase_awk_t* ase_awk_open (
 		return ASE_NULL;	
 	}
 
-	if (init) init (awk, init_data);
 	return awk;
 }
 
-static void free_word (void* owner, void* ptr)
-{
-	ASE_AWK_FREE ((ase_awk_t*)owner, ptr);
-}
-
-static void free_afn (void* owner, void* afn)
-{
-	ase_awk_afn_t* f = (ase_awk_afn_t*)afn;
-
-	/* f->name doesn't have to be freed */
-	/*ASE_AWK_FREE ((ase_awk_t*)owner, f->name);*/
-
-	ase_awk_clrpt ((ase_awk_t*)owner, f->body);
-	ASE_AWK_FREE ((ase_awk_t*)owner, f);
-}
-
-static void free_bfn (void* owner, void* bfn)
-{
-	ase_awk_bfn_t* f = (ase_awk_bfn_t*)bfn;
-	ASE_AWK_FREE ((ase_awk_t*)owner, f);
-}
 
 int ase_awk_close (ase_awk_t* awk)
 {
@@ -443,13 +433,35 @@ int ase_awk_getword (ase_awk_t* awk,
 {
 	ase_map_pair_t* p;
 
-	p = ase_map_get (awk->wtab, okw, olen);
+	p = ase_map_search (awk->wtab, okw, olen);
 	if (p == ASE_NULL) return -1;
 
 	*nkw = ((ase_cstr_t*)p->vptr)->ptr;
 	*nlen = ((ase_cstr_t*)p->vptr)->len;
 
 	return 0;
+}
+
+int ase_awk_unsetword (ase_awk_t* awk, const ase_char_t* kw, ase_size_t len)
+{
+	ase_map_pair_t* p;
+
+	p = ase_map_search (awk->wtab, kw, ASE_NCHARS_TO_NBYTES(len));
+	if (p == ASE_NULL)
+	{
+		SETERRARG (awk, ASE_AWK_ENOENT, 0, kw, len);
+		return -1;
+	}
+
+	ase_map_delete (awk->rwtab, ASE_MAP_VPTR(p), ASE_MAP_VLEN(p));
+	ase_map_delete (awk->wtab, kw, ASE_NCHARS_TO_NBYTES(len));
+	return 0;
+}
+
+void ase_awk_unsetallwords (ase_awk_t* awk)
+{
+	ase_map_clear (awk->wtab);
+	ase_map_clear (awk->rwtab);
 }
 
 int ase_awk_setword (ase_awk_t* awk, 
@@ -465,25 +477,11 @@ int ase_awk_setword (ase_awk_t* awk,
 		if (okw == ASE_NULL || olen == 0)
 		{
 			/* clear the entire table */
-			ase_map_clear (awk->wtab);
-			ase_map_clear (awk->rwtab);
+			ase_awk_unsetallwords (awk);
 			return 0;
 		}
 
-		/* delete the word */
-		p = ase_map_get (awk->wtab, okw, olen);
-		if (p != ASE_NULL)
-		{
-			ase_cstr_t* s = (ase_cstr_t*)p->vptr;
-			ase_map_remove (awk->rwtab, s->ptr, s->len);
-			ase_map_remove (awk->wtab, okw, olen);
-			return 0;
-		}
-		else 
-		{
-			SETERRARG (awk, ASE_AWK_ENOENT, 0, okw, olen);
-			return -1;
-		}
+		return ase_awk_unsetword (awk, okw, olen);
 	}
 	else if (okw == ASE_NULL || olen == 0)
 	{
@@ -492,58 +490,19 @@ int ase_awk_setword (ase_awk_t* awk,
 	}
 
 	/* set the word */
-#if 0
-	vn = (ase_cstr_t*) ASE_AWK_ALLOC (
-		awk, ASE_SIZEOF(ase_cstr_t)+((nlen+1)*ASE_SIZEOF(*nkw)));
-	if (vn == ASE_NULL) 
+	if (ase_map_upsert (awk->wtab, 
+		(ase_char_t*)okw, ASE_NCHARS_TO_NBYTES(olen), 
+		(ase_char_t*)nkw, ASE_NCHARS_TO_NBYTES(nlen)) == ASE_NULL)
 	{
-		SETERR (awk, ASE_AWK_ENOMEM);
-		return -1;
-	}
-	vn->len = nlen;
-	vn->ptr = (const ase_char_t*)(vn + 1);
-	ase_strncpy ((ase_char_t*)vn->ptr, nkw, nlen);
-
-	vo = (ase_cstr_t*) ASE_AWK_ALLOC (
-		awk, ASE_SIZEOF(ase_cstr_t)+((olen+1)*ASE_SIZEOF(*okw)));
-	if (vo == ASE_NULL)
-	{
-		ASE_AWK_FREE (awk, vn);
-		SETERR (awk, ASE_AWK_ENOMEM);
-		return -1;
-	}
-	vo->len = olen;
-	vo->ptr = (const ase_char_t*)(vo + 1);
-	ase_strncpy ((ase_char_t*)vo->ptr, okw, olen);
-
-	if (ase_map_put (awk->wtab, (void*)okw, olen, vn) == ASE_NULL)
-	{
-		ASE_AWK_FREE (awk, vo);
-		ASE_AWK_FREE (awk, vn);
 		SETERR (awk, ASE_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (ase_map_put (awk->rwtab, nkw, nlen, vo) == ASE_NULL)
+	if (ase_map_upsert (awk->rwtab, 
+		(ase_char_t*)nkw, ASE_NCHARS_TO_NBYTES(nlen), 
+		(ase_char_t*)okw, ASE_NCHARS_TO_NBYTES(olen)) == ASE_NULL)
 	{
-		ase_map_remove (awk->wtab, okw, olen);
-		ASE_AWK_FREE (awk, vo);
-		SETERR (awk, ASE_AWK_ENOMEM);
-		return -1;
-	}
-#endif
-	if (ase_map_put (awk->wtab, (void*)okw, olen, nkw, nlen) == ASE_NULL)
-	{
-		ASE_AWK_FREE (awk, vo);
-		ASE_AWK_FREE (awk, vn);
-		SETERR (awk, ASE_AWK_ENOMEM);
-		return -1;
-	}
-
-	if (ase_map_put (awk->rwtab, nkw, nlen, okw, olen) == ASE_NULL)
-	{
-		ase_map_remove (awk->wtab, okw, olen);
-		ASE_AWK_FREE (awk, vo);
+		ase_map_delete (awk->wtab, okw, ASE_NCHARS_TO_NBYTES(olen));
 		SETERR (awk, ASE_AWK_ENOMEM);
 		return -1;
 	}

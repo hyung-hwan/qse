@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: val.c 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
@@ -927,15 +927,15 @@ static ase_char_t* val_real_to_str (
 		tmp_len = run->global.convfmt.len;
 	}
 
-	if (ase_str_open (&out, 256, run->awk->mmgr) == ASE_NULL)
+	if (ase_str_init (&out, run->awk->mmgr, 256) == ASE_NULL)
 	{
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
 
-	if (ase_str_open (&fbu, 256, run->awk->mmgr) == ASE_NULL)
+	if (ase_str_init (&fbu, run->awk->mmgr, 256) == ASE_NULL)
 	{
-		ase_str_close (&out);
+		ase_str_fini (&out);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return ASE_NULL;
 	}
@@ -944,15 +944,18 @@ static ase_char_t* val_real_to_str (
 		(ase_size_t)-1, (ase_awk_nde_t*)v, &tmp_len);
 	if (tmp == ASE_NULL) 
 	{
-		ase_str_close (&fbu);
-		ase_str_close (&out);
+		ase_str_fini (&fbu);
+		ase_str_fini (&out);
 		return ASE_NULL;
 	}
 
 	if (buf == ASE_NULL) 
 	{
-		ase_str_close (&fbu);
-		ase_str_forfeit (&out);
+		ase_str_fini (&fbu);
+
+		ase_str_yield (&out, ASE_NULL, 0);
+		ase_str_fini (&out);
+
 		if (len != ASE_NULL) *len = tmp_len;
 	}
 	else if (opt & ASE_AWK_VALTOSTR_FIXED)
@@ -973,8 +976,8 @@ static ase_char_t* val_real_to_str (
 		tmp = (ase_char_t*)buf;
 		*len = tmp_len;
 
-		ase_str_close (&fbu);
-		ase_str_close (&out);
+		ase_str_fini (&fbu);
+		ase_str_fini (&out);
 	}
 	else
 	{
@@ -982,8 +985,8 @@ static ase_char_t* val_real_to_str (
 
 		if (ase_str_ncat (buf, tmp, tmp_len) == (ase_size_t)-1)
 		{
-			ase_str_close (&fbu);
-			ase_str_close (&out);
+			ase_str_fini (&fbu);
+			ase_str_fini (&out);
 			ase_awk_setrunerror (
 				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 			return ASE_NULL;
@@ -992,8 +995,8 @@ static ase_char_t* val_real_to_str (
 		tmp = ASE_STR_BUF(buf);
 		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
 
-		ase_str_close (&fbu);
-		ase_str_close (&out);
+		ase_str_fini (&fbu);
+		ase_str_fini (&out);
 	}
 
 	return tmp;

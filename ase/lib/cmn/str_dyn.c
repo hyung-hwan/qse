@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 357 2008-08-31 11:17:01Z baconevi $
+ * $Id: str_dyn.c 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
@@ -32,7 +32,9 @@ void ase_str_close (ase_str_t* str)
 ase_str_t* ase_str_init (ase_str_t* str, ase_mmgr_t* mmgr, ase_size_t capa)
 {
 	ASE_MEMSET (str, 0, ASE_SIZEOF(ase_str_t));
+
 	str->mmgr = mmgr;
+	str->sizer = ASE_NULL;
 
 	if (capa == 0) str->buf = ASE_NULL;
 	else
@@ -78,6 +80,59 @@ int ase_str_yield (ase_str_t* str, ase_cstr_t* buf, int new_capa)
 	str->capa = new_capa;
 
 	return 0;
+}
+
+ase_sizer_t ase_str_getsizer (ase_str_t* str)
+{
+	return str->sizer;	
+}
+
+void ase_str_setsizer (ase_str_t* str, ase_sizer_t sizer)
+{
+	str->sizer = sizer;
+}
+
+ase_size_t ase_str_getcapa (ase_str_t* str)
+{
+	return str->capa;
+}
+
+ase_size_t ase_str_setcapa (ase_str_t* str, ase_size_t capa)
+{
+	ase_char_t* tmp;
+
+	if (str->mmgr->realloc != ASE_NULL && str->buf != ASE_NULL)
+	{
+		tmp = (ase_char_t*) ASE_MMGR_REALLOC (
+			str->mmgr, str->buf, 
+			ASE_SIZEOF(ase_char_t)*(capa+1));
+		if (tmp == ASE_NULL) return (ase_size_t)-1;
+	}
+	else
+	{
+		tmp = (ase_char_t*) ASE_MMGR_ALLOC (
+			str->mmgr, ASE_SIZEOF(ase_char_t)*(capa+1));
+		if (tmp == ASE_NULL) return (ase_size_t)-1;
+
+		if (str->buf != ASE_NULL)
+		{
+			ase_size_t ncopy = (str->size <= capa)? str->size: capa;
+			ASE_MEMCPY (tmp, str->buf, 
+				ASE_SIZEOF(ase_char_t)*(ncopy+1));
+			ASE_MMGR_FREE (str->mmgr, str->buf);
+		}
+	}
+
+	if (capa < str->size)
+	{
+		str->size = capa;
+		tmp[capa] = ASE_T('\0');
+	}
+
+	str->capa = capa;
+	str->buf = tmp;
+
+	return str->capa;
 }
 
 void ase_str_clear (ase_str_t* str)
@@ -138,44 +193,45 @@ ase_size_t ase_str_cat (ase_str_t* str, const ase_char_t* s)
 	return ase_str_ncat (str, s, ase_strlen(s));
 }
 
+
 ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 {
 	if (len > str->capa - str->size) 
 	{
-		ase_char_t* tmp;
-		ase_size_t capa;
+		ase_size_t ncapa;
 
-		capa = str->size + len;
-
-		/* double the capa if necessary for concatenation */
-		if (capa < str->capa * 2) capa = str->capa * 2;
-
-		if (str->mmgr->realloc != ASE_NULL && str->buf != ASE_NULL)
+		if (str->sizer == ASE_NULL)
 		{
-			tmp = (ase_char_t*) ASE_REALLOC (
-				str->mmgr, str->buf, 
-				ASE_SIZEOF(ase_char_t)*(capa+1));
-			if (tmp == ASE_NULL) return (ase_size_t)-1;
+			/* increase the capacity by the length to add */
+			ncapa = str->size + len;
+			/* if the new capacity is less than the double,
+			 * just double it */
+			if (ncapa < str->capa * 2) ncapa = str->capa * 2;
 		}
 		else
 		{
-			tmp = (ase_char_t*) ASE_MMGR_ALLOC (
-				str->mmgr, ASE_SIZEOF(ase_char_t)*(capa+1));
-			if (tmp == ASE_NULL) return (ase_size_t)-1;
-			if (str->buf != ASE_NULL)
-			{
-				ASE_MEMCPY (tmp, str->buf, 
-					ASE_SIZEOF(ase_char_t)*(str->capa+1));
-				ASE_MMGR_FREE (str->mmgr, str->buf);
-			}
+			/* let the user determine the new capacity */
+			ncapa = str->sizer (str);
 		}
 
-		str->capa = capa;
-		str->buf = tmp;
+		if (ase_str_setcapa (str, ncapa) == (ase_size_t)-1) 
+		{
+			return (ase_size_t)-1;
+		}
 	}
 
-	str->size += ase_strncpy (&str->buf[str->size], s, len);
-	str->buf[str->size] = ASE_T('\0');
+	if (len > str->capa - str->size) 
+	{
+		/* copy as many characters as the number of cells available */
+		len = str->capa - str->size;
+	}
+
+	if (len > 0)
+	{
+		ASE_MEMCPY (&str->buf[str->size], s, len*ASE_SIZEOF(*s));
+		str->size += len;
+		str->buf[str->size] = ASE_T('\0');
+	}
 	return str->size;
 }
 

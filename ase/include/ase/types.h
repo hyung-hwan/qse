@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 354 2008-08-31 10:57:24Z baconevi $
+ * $Id: types.h 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
@@ -345,31 +345,21 @@ struct ase_mmgr_t
 	void*         data;
 };
 
-/*
-struct ase_ccls_t
-{
-	ase_isccls_t is_upper;
-	ase_isccls_t is_lower;
-	ase_isccls_t is_alpha;
-	ase_isccls_t is_digit;
-	ase_isccls_t is_xdigit;
-	ase_isccls_t is_alnum;
-	ase_isccls_t is_space;
-	ase_isccls_t is_print;
-	ase_isccls_t is_graph;
-	ase_isccls_t is_cntrl;
-	ase_isccls_t is_punct;
-	ase_toccls_t to_upper;
-	ase_toccls_t to_lower;
-	void*        data;
-};
-*/
-
 struct ase_ccls_t
 {
 	ase_bool_t (*is) (void* data, ase_cint_t c, int type);
 	ase_cint_t (*to) (void* data, ase_cint_t c, int type);
 	void* data;
 };
+
+
+/* 
+ * NAME: determine the size of data
+ *
+ * DESCRIPTION:
+ *  The ase_sizer_t is a generic type used by many other modules usually to
+ *  get the new size for resizing data structure.
+ */
+typedef ase_size_t (*ase_sizer_t) (void* data);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: func.c 363 2008-09-04 10:58:08Z baconevi $
  *
  * {License}
  */
@@ -98,7 +98,7 @@ void* ase_awk_addfunc (
 
 	bfn->handler = handler;
 
-	if (ase_map_put (awk->bfn.user, name, name_len, bfn) == ASE_NULL)
+	if (ase_map_upsert (awk->bfn.user, name, name_len, bfn) == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, bfn);
 		ase_awk_seterrnum (awk, ASE_AWK_ENOMEM);
@@ -144,12 +144,14 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		if (bfn->valid != 0 && 
 		    (awk->option & bfn->valid) != bfn->valid) continue;
 
-		pair = ase_map_get (awk->wtab, bfn->name.ptr, bfn->name.len);
+		pair = ase_map_search (
+			awk->wtab, bfn->name.ptr,
+			ASE_NCHARS_TO_NBYTES(bfn->name.len));
 		if (pair != ASE_NULL)
 		{
 			/* found in the customized word table */
-			k = ((ase_cstr_t*)(pair->val))->ptr;
-			l = ((ase_cstr_t*)(pair->val))->len;
+			k = ASE_MAP_VPTR(pair);
+			l = ASE_NBYTES_TO_NCHARS(ASE_MAP_VLEN(pair));
 		}
 		else
 		{
@@ -164,21 +166,21 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	 *       because I'm trying to support ase_awk_setword in 
 	 *       a very flimsy way here. Would it be better to drop
 	 *       ase_awk_setword totally? */
-	pair = ase_map_get (awk->rwtab, name, len);
+	pair = ase_map_search (awk->rwtab, name, ASE_NCHARS_TO_NBYTES(len));
 	if (pair != ASE_NULL)
 	{
 		/* the current name is a target name for
 		 * one of the original word. */
-		k = ((ase_cstr_t*)(pair->val))->ptr;
-		l = ((ase_cstr_t*)(pair->val))->len;
+		k = ASE_MAP_VPTR(pair);
+		l = ASE_NBYTES_TO_NCHARS(ASE_MAP_VLEN(pair));
 	}
 	else
 	{
-		pair = ase_map_get (awk->wtab, name, len);
+		pair = ase_map_search (awk->wtab, name, ASE_NCHARS_TO_NBYTES(len));
 		if (pair != ASE_NULL)
 		{
-			k = ((ase_cstr_t*)(pair->val))->ptr;
-			l = ((ase_cstr_t*)(pair->val))->len;
+			k = ASE_MAP_VPTR(pair);
+			l = ASE_NBYTES_TO_NCHARS(ASE_MAP_VLEN(pair));
 
 			if (ase_strxncmp (name, len, k, l) != 0)
 			{
@@ -202,7 +204,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	}
 	/* END NOTE */
 
-	pair = ase_map_get (awk->bfn.user, k, l);
+	pair = ase_map_search (awk->bfn.user, k, ASE_NCHARS_TO_NBYTES(l));
 	if (pair == ASE_NULL) return ASE_NULL;
 
 	bfn = (ase_awk_bfn_t*)pair->val;
@@ -796,7 +798,7 @@ static int bfn_split (
 		 * it is decremented if the assignement fails. */
 		ase_awk_refupval (run, t2);
 
-		if (ase_map_putx (
+		if (ase_map_put (
 			((ase_awk_val_map_t*)t1)->map, 
 			key, key_len, t2, ASE_NULL) == -1)
 		{
@@ -1340,9 +1342,9 @@ static int bfn_sprintf (
 {	
 	ase_size_t nargs;
 	ase_awk_val_t* a0;
-	ase_char_t* str0, * ptr;
-	ase_size_t len0, len;
 	ase_str_t out, fbu;
+	ase_cstr_t cs0;
+	ase_cstr_t x;
 
 	nargs = ase_awk_getnargs (run);
 	ASE_ASSERT (nargs > 0);
@@ -1362,14 +1364,14 @@ static int bfn_sprintf (
 	a0 = ase_awk_getarg (run, 0);
 	if (a0->type == ASE_AWK_VAL_STR)
 	{
-		str0 = ((ase_awk_val_str_t*)a0)->buf;
-		len0 = ((ase_awk_val_str_t*)a0)->len;
+		cs0.ptr = ((ase_awk_val_str_t*)a0)->buf;
+		cs0.len = ((ase_awk_val_str_t*)a0)->len;
 	}
 	else
 	{
-		str0 = ase_awk_valtostr (
-			run, a0, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &len0);
-		if (str0 == ASE_NULL) 
+		cs0.ptr = ase_awk_valtostr (
+			run, a0, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &cs0.len);
+		if (cs0.ptr == ASE_NULL) 
 		{
 			ase_str_close (&fbu);
 			ase_str_close (&out);
@@ -1377,9 +1379,9 @@ static int bfn_sprintf (
 		}
 	}
 
-	ptr = ase_awk_format (run, 
-		&out, &fbu, str0, len0, nargs, ASE_NULL, &len);
-	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str0);
+	x.ptr = ase_awk_format (run, 
+		&out, &fbu, cs0.ptr, cs0.len, nargs, ASE_NULL, &x.len);
+	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, cs0.ptr);
 	if (ptr == ASE_NULL) 
 	{
 		ase_str_close (&fbu);
@@ -1387,8 +1389,8 @@ static int bfn_sprintf (
 		return -1;
 	}
 	
-	/*a0 = ase_awk_makestrval_nodup (run, ptr, len);*/
-	a0 = ase_awk_makestrval (run, ptr, len);
+	/*a0 = ase_awk_makestrval_nodup (run, x.ptr, x.len);*/
+	a0 = ase_awk_makestrval (run, x.ptr, x.len);
 	if (a0 == ASE_NULL) 
 	{
 		ase_str_close (&fbu);
@@ -1398,7 +1400,7 @@ static int bfn_sprintf (
 	}
 
 	ase_str_close (&fbu);
-	/*ase_str_forfeit (&out);*/
+	/*ase_str_yield (&out, ASE_NULL, 0);*/
 	ase_str_close (&out);
 	ase_awk_setretval (run, a0);
 	return 0;
