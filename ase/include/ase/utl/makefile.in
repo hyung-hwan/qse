@@ -178,7 +178,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-pkginclude_HEADERS = helper.h ctype.h getopt.h http.h main.h stdio.h
+pkginclude_HEADERS = http.h main.h stdio.h
 CLEANFILES = *dist
 all: all-am
 
