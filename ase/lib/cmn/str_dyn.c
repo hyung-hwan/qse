@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: str_dyn.c 369 2008-09-22 11:21:08Z baconevi $
  *
  * {License}
  */
@@ -210,8 +210,9 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 		}
 		else
 		{
-			/* let the user determine the new capacity */
-			ncapa = str->sizer (str);
+			/* let the user determine the new capacity.
+			 * pass the minimum capacity required as a hint */
+			ncapa = str->sizer (str, str->size + len);
 		}
 
 		if (ase_str_setcapa (str, ncapa) == (ase_size_t)-1) 
