@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 366 2008-09-04 11:15:53Z baconevi $
+ * $Id: str.h 369 2008-09-22 11:21:08Z baconevi $
  *
  * {License}
  */
@@ -237,7 +237,8 @@ ase_sizer_t ase_str_getsizer (
  * DESCRIPTION:
  *  The ase_str_setsizer() function specify a new sizer for a dynamic string.
  *  With no sizer specified, the dynamic string doubles the current buffer
- *  when it needs to increase its size.
+ *  when it needs to increase its size. The sizer function is passed a dynamic
+ *  string and the minimum capacity required to hold data after resizing.
  */
 void ase_str_setsizer (
 	ase_str_t* str    /* a dynamic string */,

@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: types.h 369 2008-09-22 11:21:08Z baconevi $
  *
  * {License}
  */
@@ -360,6 +360,6 @@ struct ase_ccls_t
  *  The ase_sizer_t is a generic type used by many other modules usually to
  *  get the new size for resizing data structure.
  */
-typedef ase_size_t (*ase_sizer_t) (void* data);
+typedef ase_size_t (*ase_sizer_t) (void* data, ase_size_t hint);
 
 #endif
