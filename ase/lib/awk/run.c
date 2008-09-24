@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: run.c 372 2008-09-23 09:51:24Z baconevi $
  *
  * {License}
  */
@@ -1758,7 +1758,7 @@ static int run_block0 (ase_awk_run_t* run, ase_awk_nde_blk_t* nde)
 
 		n = ase_awk_writeextio_str (run, 
 			ASE_AWK_OUT_CONSOLE, ASE_T(""),
-			ASE_STR_BUF(&run->inrec.line),
+			ASE_STR_PTR(&run->inrec.line),
 			ASE_STR_LEN(&run->inrec.line));
 		if (n == -1)
 		{
@@ -2813,7 +2813,7 @@ static int run_print (ase_awk_run_t* run, ase_awk_nde_print_t* nde)
 		 * input record */
 		n = ase_awk_writeextio_str (
 			run, nde->out_type, dst,
-			ASE_STR_BUF(&run->inrec.line),
+			ASE_STR_PTR(&run->inrec.line),
 			ASE_STR_LEN(&run->inrec.line));
 		if (n <= -1 /*&& run->errnum != ASE_AWK_EIOIMPL*/)
 		{
@@ -6230,7 +6230,7 @@ static ase_awk_val_t* eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		{
 			/* set $0 with the input value */
 			if (ase_awk_setrec (run, 0,
-				ASE_STR_BUF(&buf),
+				ASE_STR_PTR(&buf),
 				ASE_STR_LEN(&buf)) == -1)
 			{
 				ase_str_close (&buf);
@@ -6244,7 +6244,7 @@ static ase_awk_val_t* eval_getline (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			ase_awk_val_t* v;
 
 			v = ase_awk_makestrval (run, 
-				ASE_STR_BUF(&buf), ASE_STR_LEN(&buf));
+				ASE_STR_PTR(&buf), ASE_STR_LEN(&buf));
 			ase_str_close (&buf);
 			if (v == ASE_NULL)
 			{
@@ -6335,7 +6335,7 @@ static int read_record (ase_awk_run_t* run)
 	ase_dprintf (ASE_T("record len = %d str=[%.*s]\n"), 
 			(int)ASE_STR_LEN(&run->inrec.line),
 			(int)ASE_STR_LEN(&run->inrec.line),
-			ASE_STR_BUF(&run->inrec.line));
+			ASE_STR_PTR(&run->inrec.line));
 #endif
 	if (n == 0) 
 	{
@@ -6344,7 +6344,7 @@ static int read_record (ase_awk_run_t* run)
 	}
 
 	if (ase_awk_setrec (run, 0, 
-		ASE_STR_BUF(&run->inrec.line), 
+		ASE_STR_PTR(&run->inrec.line), 
 		ASE_STR_LEN(&run->inrec.line)) == -1) return -1;
 
 	return 1;
@@ -6421,7 +6421,7 @@ static int shorten_record (ase_awk_run_t* run, ase_size_t nflds)
 	if (nflds > 1) ase_awk_refdownval (run, v);
 
 	v = (ase_awk_val_t*) ase_awk_makestrval (
-		run, ASE_STR_BUF(&tmp), ASE_STR_LEN(&tmp));
+		run, ASE_STR_PTR(&tmp), ASE_STR_LEN(&tmp));
 	if (v == ASE_NULL) return -1;
 
 	ase_awk_refdownval (run, run->inrec.d0);
@@ -6897,7 +6897,7 @@ ase_char_t* ase_awk_format (
 					run->awk->prmfns->data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
-					ASE_STR_BUF(fbu),
+					ASE_STR_PTR(fbu),
 				#if ASE_SIZEOF_LONG_LONG > 0
 					(long long)l
 				#elif ASE_SIZEOF___INT64 > 0
@@ -6985,7 +6985,7 @@ ase_char_t* ase_awk_format (
 					run->awk->prmfns->data,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
-					ASE_STR_BUF(fbu),
+					ASE_STR_PTR(fbu),
 					(long double)r);
 					
 				if (n == -1)
@@ -7251,6 +7251,6 @@ ase_char_t* ase_awk_format (
 		OUT_CHAR (ASE_STR_CHAR(fbu,j));
 
 	*len = ASE_STR_LEN(out);
-	return ASE_STR_BUF(out);
+	return ASE_STR_PTR(out);
 }
 

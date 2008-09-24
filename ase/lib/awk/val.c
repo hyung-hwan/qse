@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: val.c 372 2008-09-23 09:51:24Z baconevi $
  *
  * {License}
  */
@@ -772,7 +772,7 @@ static ase_char_t* str_to_str (
 		}
 
 		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
-		return ASE_STR_BUF(buf);
+		return ASE_STR_PTR(buf);
 	}
 }
 
@@ -833,7 +833,7 @@ static ase_char_t* val_int_to_str (
 			}
 
 			if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
-			return ASE_STR_BUF(buf);
+			return ASE_STR_PTR(buf);
 		}
 	}
 
@@ -876,7 +876,7 @@ static ase_char_t* val_int_to_str (
 		/* clear the buffer */
 		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
 
-		tmp = ASE_STR_BUF(buf) + ASE_STR_LEN(buf);
+		tmp = ASE_STR_PTR(buf) + ASE_STR_LEN(buf);
 
 		/* extend the buffer */
 		if (ase_str_nccat (
@@ -901,7 +901,7 @@ static ase_char_t* val_int_to_str (
 
 	if (buf != ASE_NULL && !(opt & ASE_AWK_VALTOSTR_FIXED))
 	{
-		tmp = ASE_STR_BUF(buf);
+		tmp = ASE_STR_PTR(buf);
 		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
 	}
 
@@ -992,7 +992,7 @@ static ase_char_t* val_real_to_str (
 			return ASE_NULL;
 		}
 
-		tmp = ASE_STR_BUF(buf);
+		tmp = ASE_STR_PTR(buf);
 		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
 
 		ase_str_fini (&fbu);

@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: rec.c 372 2008-09-23 09:51:24Z baconevi $
  *
  * {License}
  */
@@ -19,7 +19,7 @@ int ase_awk_setrec (
 
 	if (idx == 0)
 	{
-		if (str == ASE_STR_BUF(&run->inrec.line) &&
+		if (str == ASE_STR_PTR(&run->inrec.line) &&
 		    len == ASE_STR_LEN(&run->inrec.line))
 		{
 			if (ase_awk_clrrec (run, ASE_TRUE) == -1) return -1;
@@ -66,7 +66,7 @@ int ase_awk_setrec (
 	
 		/* recompose $0 */
 		v = ase_awk_makestrval (run,
-			ASE_STR_BUF(&run->inrec.line), 
+			ASE_STR_PTR(&run->inrec.line), 
 			ASE_STR_LEN(&run->inrec.line));
 		if (v == ASE_NULL)
 		{
@@ -117,7 +117,7 @@ static int split_record (ase_awk_run_t* run)
 	}
 
 	/* scan the input record to count the fields */
-	p = ASE_STR_BUF(&run->inrec.line);
+	p = ASE_STR_PTR(&run->inrec.line);
 	len = ASE_STR_LEN(&run->inrec.line);
 
 	nflds = 0;
@@ -153,7 +153,7 @@ static int split_record (ase_awk_run_t* run)
 
 		nflds++;
 		len = ASE_STR_LEN(&run->inrec.line) - 
-			(p - ASE_STR_BUF(&run->inrec.line));
+			(p - ASE_STR_PTR(&run->inrec.line));
 	}
 
 	/* allocate space */
@@ -175,7 +175,7 @@ static int split_record (ase_awk_run_t* run)
 	}
 
 	/* scan again and split it */
-	p = ASE_STR_BUF(&run->inrec.line);
+	p = ASE_STR_PTR(&run->inrec.line);
 	len = ASE_STR_LEN(&run->inrec.line);
 
 	while (p != ASE_NULL)
@@ -215,7 +215,7 @@ static int split_record (ase_awk_run_t* run)
 		run->inrec.nflds++;
 
 		len = ASE_STR_LEN(&run->inrec.line) - 
-			(p - ASE_STR_BUF(&run->inrec.line));
+			(p - ASE_STR_PTR(&run->inrec.line));
 	}
 
 	if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
@@ -354,7 +354,7 @@ static int recomp_record_fields (
 			ase_awk_val_t* tmp;
 
 			run->inrec.flds[i].ptr = 
-				ASE_STR_BUF(&run->inrec.line) +
+				ASE_STR_PTR(&run->inrec.line) +
 				ASE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = len;
 
@@ -379,7 +379,7 @@ static int recomp_record_fields (
 		else if (i >= nflds)
 		{
 			run->inrec.flds[i].ptr = 
-				ASE_STR_BUF(&run->inrec.line) +
+				ASE_STR_PTR(&run->inrec.line) +
 				ASE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = 0;
 
@@ -406,7 +406,7 @@ static int recomp_record_fields (
 			tmp = (ase_awk_val_str_t*)run->inrec.flds[i].val;
 
 			run->inrec.flds[i].ptr = 
-				ASE_STR_BUF(&run->inrec.line) +
+				ASE_STR_PTR(&run->inrec.line) +
 				ASE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = tmp->len;
 

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: func.c 372 2008-09-23 09:51:24Z baconevi $
  *
  * {License}
  */
@@ -992,7 +992,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 	if (a2 == ASE_NULL)
 	{
 		/* is this correct? any needs to use inrec.d0? */
-		a2_ptr = ASE_STR_BUF(&run->inrec.line);
+		a2_ptr = ASE_STR_PTR(&run->inrec.line);
 		a2_len = ASE_STR_LEN(&run->inrec.line);
 	}
 	else if (((ase_awk_val_ref_t*)a2)->id == ASE_AWK_VAL_REF_POS)
@@ -1002,7 +1002,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		idx = (ase_size_t)((ase_awk_val_ref_t*)a2)->adr;
 		if (idx == 0)
 		{
-			a2_ptr = ASE_STR_BUF(&run->inrec.line);
+			a2_ptr = ASE_STR_PTR(&run->inrec.line);
 			a2_len = ASE_STR_LEN(&run->inrec.line);
 		}
 		else if (idx <= run->inrec.nflds)
@@ -1149,7 +1149,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		if (a2 == ASE_NULL)
 		{
 			if (ase_awk_setrec (run, 0,
-				ASE_STR_BUF(&new), ASE_STR_LEN(&new)) == -1)
+				ASE_STR_PTR(&new), ASE_STR_LEN(&new)) == -1)
 			{
 				ase_str_close (&new);
 				FREE_A_PTRS (run->awk);
@@ -1162,7 +1162,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 
 			n = ase_awk_setrec (
 				run, (ase_size_t)((ase_awk_val_ref_t*)a2)->adr,
-				ASE_STR_BUF(&new), ASE_STR_LEN(&new));
+				ASE_STR_PTR(&new), ASE_STR_LEN(&new));
 
 			if (n == -1)
 			{
@@ -1174,7 +1174,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		else
 		{
 			v = ase_awk_makestrval (run,
-				ASE_STR_BUF(&new), ASE_STR_LEN(&new));
+				ASE_STR_PTR(&new), ASE_STR_LEN(&new));
 			if (v == ASE_NULL)
 			{
 				ase_str_close (&new);
