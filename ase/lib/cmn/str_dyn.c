@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 372 2008-09-23 09:51:24Z baconevi $
+ * $Id: str_dyn.c 373 2008-09-23 11:27:24Z baconevi $
  *
  * {License}
  */
@@ -213,6 +213,8 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 			/* let the user determine the new capacity.
 			 * pass the minimum capacity required as a hint */
 			ncapa = str->sizer (str, str->len + len);
+			/* if no change in capacity, return current length */
+			if (ncapa == str->capa) return str->len;
 		}
 
 		if (ase_str_setcapa (str, ncapa) == (ase_size_t)-1) 
@@ -223,7 +225,8 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 
 	if (len > str->capa - str->len) 
 	{
-		/* copy as many characters as the number of cells available */
+		/* copy as many characters as the number of cells available.
+		 * if the capacity has been decreased, len is adjusted here */
 		len = str->capa - str->len;
 	}
 
@@ -233,6 +236,7 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 		str->len += len;
 		str->ptr[str->len] = ASE_T('\0');
 	}
+
 	return str->len;
 }
 

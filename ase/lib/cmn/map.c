@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 356 2008-08-31 11:16:52Z baconevi $
+ * $Id: map.c 373 2008-09-23 11:27:24Z baconevi $
  *
  * {License}
  */
@@ -315,6 +315,16 @@ void ase_map_setcomper (map_t* map, comper_t comper)
 	map->comper = comper;
 }
 
+ase_sizer_t ase_map_getsizer (map_t* map)
+{
+	return map->sizer;
+}
+
+void ase_map_setsizer (map_t* map, ase_sizer_t sizer)
+{
+	map->sizer = sizer;
+}
+
 void* ase_map_getextension (map_t* map)
 {
 	return map + 1;
@@ -601,9 +611,20 @@ static int reorganize (map_t* map)
 	size_t i, hc, new_capa;
 	pair_t** new_buck;
 
-	/* the bucket is doubled until it grows up to 65536 slots.
-	 * once it has reached it, it grows by 65536 slots */
-	new_capa = (map->capa >= 65536)? (map->capa + 65536): (map->capa << 1);
+	if (map->sizer)
+	{
+		new_capa = map->sizer (map, map->capa + 1);
+
+		/* if no change in capacity, return success 
+		 * without reorganization */
+		if (new_capa == map->capa) return 0; 
+	}
+	else
+	{
+		/* the bucket is doubled until it grows up to 65536 slots.
+		 * once it has reached it, it grows by 65536 slots */
+		new_capa = (map->capa >= 65536)? (map->capa + 65536): (map->capa << 1);
+	}
 
 	new_buck = (pair_t**) ASE_MMGR_ALLOC (
 		map->mmgr, SIZEOF(pair_t*) * new_capa);
