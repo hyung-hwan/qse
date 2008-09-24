@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 374 2008-09-23 11:37:38Z baconevi $
+ * $Id: map.c 375 2008-09-23 14:47:23Z baconevi $
  *
  * {License}
  */
@@ -13,6 +13,8 @@
 #define freeer_t ase_map_freeer_t
 #define hasher_t ase_map_hasher_t
 #define comper_t ase_map_comper_t
+#define keeper_t ase_map_keeper_t
+#define sizer_t  ase_map_sizer_t
 #define walker_t ase_map_walker_t
 
 #define KPTR(p)  ASE_MAP_KPTR(p)
@@ -132,9 +134,9 @@ static pair_t* change_pair_val (
 		/* if the old value and the new value are the same,
 		 * it just calls the handler for this condition. 
 		 * No value replacement occurs. */
-		if (map->sameval != ASE_NULL)
+		if (map->keeper != ASE_NULL)
 		{
-			map->sameval (map, vptr, vlen);
+			map->keeper (map, vptr, vlen);
 		}
 	}
 	else
@@ -319,12 +321,22 @@ void ase_map_setcomper (map_t* map, comper_t comper)
 	map->comper = comper;
 }
 
-ase_sizer_t ase_map_getsizer (map_t* map)
+keeper_t ase_map_getkeeper (map_t* map)
+{
+	return map->keeper;
+}
+
+void ase_map_setkeeper (map_t* map, keeper_t keeper)
+{
+	map->keeper = keeper;
+}
+
+sizer_t ase_map_getsizer (map_t* map)
 {
 	return map->sizer;
 }
 
-void ase_map_setsizer (map_t* map, ase_sizer_t sizer)
+void ase_map_setsizer (map_t* map, sizer_t sizer)
 {
 	map->sizer = sizer;
 }
