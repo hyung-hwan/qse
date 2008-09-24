@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 373 2008-09-23 11:27:24Z baconevi $
+ * $Id: str_dyn.c 375 2008-09-23 14:47:23Z baconevi $
  *
  * {License}
  */
@@ -82,12 +82,12 @@ int ase_str_yield (ase_str_t* str, ase_xstr_t* buf, int new_capa)
 	return 0;
 }
 
-ase_sizer_t ase_str_getsizer (ase_str_t* str)
+ase_str_sizer_t ase_str_getsizer (ase_str_t* str)
 {
 	return str->sizer;	
 }
 
-void ase_str_setsizer (ase_str_t* str, ase_sizer_t sizer)
+void ase_str_setsizer (ase_str_t* str, ase_str_sizer_t sizer)
 {
 	str->sizer = sizer;
 }

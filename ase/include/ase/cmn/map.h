@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 373 2008-09-23 11:27:24Z baconevi $
+ * $Id: map.h 375 2008-09-23 14:47:23Z baconevi $
  *
  * {License}
  */
@@ -43,6 +43,21 @@ typedef int (*ase_map_comper_t) (
 	ase_size_t klen2  /* the length of a key in bytes */
 );
 
+/* 
+ * value keeper
+ * it is called when a value can be kept without explicit free and copy 
+ */
+typedef void (*ase_map_keeper_t) (
+	ase_map_t* map,
+	void* dptr,
+	ase_size_t dlen	
+);
+
+/*
+ * bucket resizer
+ */
+typedef ase_size_t (*ase_map_sizer_t) (ase_map_t* data, ase_size_t hint);
+
 /* pair visitor - should return ASE_MAP_WALK_STOP or ASE_MAP_WALK_FORWARD */
 typedef int (*ase_map_walker_t) (
 	ase_map_t* map        /* a map */, 
@@ -68,9 +83,10 @@ struct ase_map_t
 
         ase_map_copier_t copier[2];
         ase_map_freeer_t freeer[2];
-	ase_map_hasher_t hasher;
-	ase_map_comper_t comper;
-	ase_sizer_t sizer;
+	ase_map_hasher_t hasher; /* key hasher */
+	ase_map_comper_t comper; /* key comparator */
+	ase_map_keeper_t keeper; /* value keeper */
+	ase_map_sizer_t  sizer;  /* bucket resizer */
 
 	ase_size_t size;
 	ase_size_t capa;
@@ -78,8 +94,6 @@ struct ase_map_t
 	ase_uint_t factor;
 	ase_size_t threshold;
 	ase_map_pair_t** bucket;
-
-	void (*sameval) (void* owner, void* vptr, ase_size_t vlen);
 };
 
 enum ase_map_id_t
@@ -202,14 +216,23 @@ void ase_map_setcomper (
 	ase_map_comper_t comper
 );
 
-ase_sizer_t ase_map_getsizer (
+ase_map_keeper_t ase_map_getkeeper (
 	ase_map_t* map
 );
 
-/* the sizer function is called with a map object and map->capa + 1 */
+void ase_map_setkeeper (
+	ase_map_t* map,
+	ase_map_keeper_t keeper
+);
+
+ase_map_sizer_t ase_map_getsizer (
+	ase_map_t* map
+);
+
+/* the sizer function is passed a map object and map->capa + 1 */
 void ase_map_setsizer (
 	ase_map_t* map,
-	ase_sizer_t sizer
+	ase_map_sizer_t sizer
 );
 
 void* ase_map_getextension (

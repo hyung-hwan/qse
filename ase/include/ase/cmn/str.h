@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 372 2008-09-23 09:51:24Z baconevi $
+ * $Id: str.h 375 2008-09-23 14:47:23Z baconevi $
  *
  * {License}
  */
@@ -16,11 +16,12 @@
 #define ASE_STR_CHAR(x,idx) ((x)->ptr[idx])
 
 typedef struct ase_str_t ase_str_t;
+typedef ase_size_t (*ase_str_sizer_t) (ase_str_t* data, ase_size_t hint);
 
 struct ase_str_t
 {
 	ase_mmgr_t* mmgr;
-	ase_sizer_t sizer;
+	ase_str_sizer_t sizer;
 
 	ase_char_t* ptr;
 	ase_size_t  len;
@@ -225,7 +226,7 @@ int ase_str_yield (
  *
  * RETURNS: a sizer function set or ASE_NULL if no sizer is set.
  */
-ase_sizer_t ase_str_getsizer (
+ase_str_sizer_t ase_str_getsizer (
 	ase_str_t* str  /* a dynamic string */
 );
 
@@ -241,8 +242,8 @@ ase_sizer_t ase_str_getsizer (
  *  than the hint passed.
  */
 void ase_str_setsizer (
-	ase_str_t* str    /* a dynamic string */,
-	ase_sizer_t sizer /* a sizer function */
+	ase_str_t* str         /* a dynamic string */,
+	ase_str_sizer_t sizer /* a sizer function */
 );
 
 /*
