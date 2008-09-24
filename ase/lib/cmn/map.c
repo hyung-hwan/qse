@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 373 2008-09-23 11:27:24Z baconevi $
+ * $Id: map.c 374 2008-09-23 11:37:38Z baconevi $
  *
  * {License}
  */
@@ -216,10 +216,14 @@ void ase_map_close (map_t* map)
 
 map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, uint_t factor)
 {
-	ASE_ASSERTX (capa >= 0, 
-		"The initial capacity should be greater than 0");
+	ASE_ASSERTX (capa > 0,
+		"The initial capacity should be greater than 0. Otherwise, it is adjusted to 1 in the release mode");
 	ASE_ASSERTX (factor >= 0 && factor <= 100,
-		"The load factor should be between 0 and 100 inclusive");
+		"The load factor should be between 0 and 100 inclusive. In the release mode, a value out of the range is adjusted to 100");
+
+	/* some initial adjustment */
+	if (capa <= 0) capa = 1;
+	if (factor > 100) factor = 100;
 
 	/* do not zero out the extension */
 	ASE_MEMSET (map, 0, SIZEOF(map_t));
@@ -618,6 +622,9 @@ static int reorganize (map_t* map)
 		/* if no change in capacity, return success 
 		 * without reorganization */
 		if (new_capa == map->capa) return 0; 
+
+		/* adjust to 1 if the new capacity is not reasonable */
+		if (new_capa <= 0) new_capa = 1;
 	}
 	else
 	{
