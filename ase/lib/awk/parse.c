@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: parse.c 372 2008-09-23 09:51:24Z baconevi $
  *
  * {License}
  */
@@ -376,7 +376,7 @@ static global_t gtab[] =
 	do { \
 		ase_cstr_t errarg; \
 		errarg.len = ASE_STR_LEN(&(awk)->token.name); \
-		errarg.ptr = ASE_STR_BUF(&(awk)->token.name); \
+		errarg.ptr = ASE_STR_PTR(&(awk)->token.name); \
 		if (MATCH(awk,TOKEN_EOF)) \
 			ase_awk_seterror (awk, code, (awk)->token.prev.line, &errarg, 1); \
 		else \
@@ -841,7 +841,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		return ASE_NULL;
 	}
 
-	name = ASE_STR_BUF(&awk->token.name);
+	name = ASE_STR_PTR(&awk->token.name);
 	name_len = ASE_STR_LEN(&awk->token.name);
 
 	/* check if it is a builtin function */
@@ -930,7 +930,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 				return ASE_NULL;
 			}
 
-			param = ASE_STR_BUF(&awk->token.name);
+			param = ASE_STR_PTR(&awk->token.name);
 			param_len = ASE_STR_LEN(&awk->token.name);
 
 			/* NOTE: the following is not a conflict. 
@@ -1601,7 +1601,7 @@ static ase_awk_t* collect_globals (ase_awk_t* awk)
 
 		if (add_global (
 			awk,
-			ASE_STR_BUF(&awk->token.name),
+			ASE_STR_PTR(&awk->token.name),
 			ASE_STR_LEN(&awk->token.name),
 			awk->token.line, 0) == -1) return ASE_NULL;
 
@@ -1639,7 +1639,7 @@ static ase_awk_t* collect_locals (
 			return ASE_NULL;
 		}
 
-		local = ASE_STR_BUF(&awk->token.name);
+		local = ASE_STR_PTR(&awk->token.name);
 		local_len = ASE_STR_LEN(&awk->token.name);
 
 		#if 0
@@ -2758,10 +2758,10 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->line = line;
 		nde->next = ASE_NULL;
 		nde->val = ase_awk_strxtolong (awk, 
-			ASE_STR_BUF(&awk->token.name), 
+			ASE_STR_PTR(&awk->token.name), 
 			ASE_STR_LEN(&awk->token.name), 0, ASE_NULL);
 		nde->str = ASE_AWK_STRXDUP (awk,
-			ASE_STR_BUF(&awk->token.name),
+			ASE_STR_PTR(&awk->token.name),
 			ASE_STR_LEN(&awk->token.name));
 		if (nde->str == ASE_NULL)
 		{
@@ -2772,7 +2772,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 
 		ASE_ASSERT (
 			ASE_STR_LEN(&awk->token.name) ==
-			ase_strlen(ASE_STR_BUF(&awk->token.name)));
+			ase_strlen(ASE_STR_PTR(&awk->token.name)));
 
 		if (get_token(awk) == -1) 
 		{
@@ -2799,10 +2799,10 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->line = line;
 		nde->next = ASE_NULL;
 		nde->val = ase_awk_strxtoreal (awk, 
-			ASE_STR_BUF(&awk->token.name), 
+			ASE_STR_PTR(&awk->token.name), 
 			ASE_STR_LEN(&awk->token.name), ASE_NULL);
 		nde->str = ASE_AWK_STRXDUP (awk,
-			ASE_STR_BUF(&awk->token.name),
+			ASE_STR_PTR(&awk->token.name),
 			ASE_STR_LEN(&awk->token.name));
 		if (nde->str == ASE_NULL)
 		{
@@ -2813,7 +2813,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 
 		ASE_ASSERT (
 			ASE_STR_LEN(&awk->token.name) ==
-			ase_strlen(ASE_STR_BUF(&awk->token.name)));
+			ase_strlen(ASE_STR_PTR(&awk->token.name)));
 
 		if (get_token(awk) == -1) 
 		{
@@ -2841,7 +2841,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->next = ASE_NULL;
 		nde->len = ASE_STR_LEN(&awk->token.name);
 		nde->buf = ASE_AWK_STRXDUP (awk,
-			ASE_STR_BUF(&awk->token.name), nde->len);
+			ASE_STR_PTR(&awk->token.name), nde->len);
 		if (nde->buf == ASE_NULL) 
 		{
 			ASE_AWK_FREE (awk, nde);
@@ -2885,7 +2885,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 
 		nde->len = ASE_STR_LEN(&awk->token.name);
 		nde->buf = ASE_AWK_STRXDUP (awk,
-			ASE_STR_BUF(&awk->token.name),
+			ASE_STR_PTR(&awk->token.name),
 			ASE_STR_LEN(&awk->token.name));
 		if (nde->buf == ASE_NULL)
 		{
@@ -2895,7 +2895,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		}
 
 		nde->code = ASE_AWK_BUILDREX (awk,
-			ASE_STR_BUF(&awk->token.name), 
+			ASE_STR_PTR(&awk->token.name), 
 			ASE_STR_LEN(&awk->token.name), 
 			&errnum);
 		if (nde->code == ASE_NULL)
@@ -3109,7 +3109,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 	ASE_ASSERT (MATCH(awk,TOKEN_IDENT));
 
 	name_dup = ASE_AWK_STRXDUP (awk,
-		ASE_STR_BUF(&awk->token.name),
+		ASE_STR_PTR(&awk->token.name),
 		ASE_STR_LEN(&awk->token.name));
 	if (name_dup == ASE_NULL) 
 	{
@@ -4589,7 +4589,7 @@ static int get_token (ase_awk_t* awk)
 		       c == ASE_T('_') || ASE_AWK_ISDIGIT(awk,c));
 
 		type = classify_ident (awk, 
-			ASE_STR_BUF(&awk->token.name), 
+			ASE_STR_PTR(&awk->token.name), 
 			ASE_STR_LEN(&awk->token.name));
 		SET_TOKEN_TYPE (awk, type);
 	}

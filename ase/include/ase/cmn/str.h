@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 371 2008-09-23 09:36:30Z baconevi $
+ * $Id: str.h 372 2008-09-23 09:51:24Z baconevi $
  *
  * {License}
  */
@@ -10,12 +10,10 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-#define ASE_STR_LEN(x)      ((x)->size)
-#define ASE_STR_PTR(x)      ((x)->buf)
-#define ASE_STR_SIZE(x)     ((x)->size + 1)
+#define ASE_STR_LEN(x)      ((x)->len)
+#define ASE_STR_PTR(x)      ((x)->ptr)
 #define ASE_STR_CAPA(x)     ((x)->capa)
-#define ASE_STR_BUF(x)      ((x)->buf)
-#define ASE_STR_CHAR(x,idx) ((x)->buf[idx])
+#define ASE_STR_CHAR(x,idx) ((x)->ptr[idx])
 
 typedef struct ase_str_t ase_str_t;
 
@@ -24,8 +22,8 @@ struct ase_str_t
 	ase_mmgr_t* mmgr;
 	ase_sizer_t sizer;
 
-	ase_char_t* buf;
-	ase_size_t  size;
+	ase_char_t* ptr;
+	ase_size_t  len;
 	ase_size_t  capa;
 };
 
@@ -208,14 +206,14 @@ void ase_str_fini (
  * 
  * DESCRIPTION:
  *  The ase_str_yield() function assigns the buffer to an variable of the
- *  ase_cstr_t type and recreate a new buffer of the new_capa capacity.
+ *  ase_xstr_t type and recreate a new buffer of the new_capa capacity.
  *  The function fails if it fails to allocate a new buffer.
  *
  * RETURNS: 0 on success, -1 on failure.
  */
 int ase_str_yield (
 	ase_str_t* str  /* a dynamic string */,
-	ase_cstr_t* buf /* the pointer to a ase_cstr_t variable */,
+	ase_xstr_t* buf /* the pointer to a ase_xstr_t variable */,
 	int new_capa    /* new capacity in number of characters */
 );
 
@@ -239,6 +237,8 @@ ase_sizer_t ase_str_getsizer (
  *  With no sizer specified, the dynamic string doubles the current buffer
  *  when it needs to increase its size. The sizer function is passed a dynamic
  *  string and the minimum capacity required to hold data after resizing.
+ *  The string is truncated if the sizer function returns a smaller number
+ *  than the hint passed.
  */
 void ase_str_setsizer (
 	ase_str_t* str    /* a dynamic string */,
@@ -250,6 +250,7 @@ void ase_str_setsizer (
  *
  * DESCRIPTION:
  *  The ase_str_getcapa() function returns the current capacity.
+ *  You may use ASE_STR_CAPA(str) macro for performance sake.
  *
  * RETURNS: the current capacity in number of characters.
  */

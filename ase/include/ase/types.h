@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 369 2008-09-22 11:21:08Z baconevi $
+ * $Id: types.h 372 2008-09-23 09:51:24Z baconevi $
  *
  * {License}
  */
@@ -320,6 +320,7 @@ typedef int  ase_mcint_t;
 	#endif
 #endif
 
+typedef struct ase_xstr_t ase_xstr_t;
 typedef struct ase_cstr_t ase_cstr_t;
 typedef struct ase_mmgr_t ase_mmgr_t;
 typedef struct ase_ccls_t ase_ccls_t;
@@ -331,9 +332,15 @@ typedef void  (*ase_free_t)    (void* data, void* ptr);
 typedef ase_bool_t (*ase_isccls_t) (void* data, ase_cint_t c);
 typedef ase_cint_t (*ase_toccls_t) (void* data, ase_cint_t c);
 
+struct ase_xstr_t
+{
+	ase_char_t* ptr; /* this is not a const pointer */
+	ase_size_t  len;
+};
+
 struct ase_cstr_t
 {
-	const ase_char_t* ptr;
+	const ase_char_t* ptr; /* this is a const pointer */
 	ase_size_t        len;
 };
 

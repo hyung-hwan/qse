@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: extio.c 372 2008-09-23 09:51:24Z baconevi $
  *
  * {License}
  */
@@ -263,7 +263,7 @@ int ase_awk_readextio (
 					n = ASE_AWK_MATCHREX (
 						run->awk, run->global.rs, 
 						((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
-						ASE_STR_BUF(buf), ASE_STR_LEN(buf), 
+						ASE_STR_PTR(buf), ASE_STR_LEN(buf), 
 						&match_ptr, &match_len, &run->errnum);
 					if (n == -1)
 					{
@@ -276,7 +276,7 @@ int ase_awk_readextio (
 						/* the match should be found at the end of
 						 * the current buffer */
 						ASE_ASSERT (
-							ASE_STR_BUF(buf) + ASE_STR_LEN(buf) ==
+							ASE_STR_PTR(buf) + ASE_STR_LEN(buf) ==
 							match_ptr + match_len);
 
 						ASE_STR_LEN(buf) -= match_len;
@@ -351,7 +351,7 @@ int ase_awk_readextio (
 			n = ASE_AWK_MATCHREX (
 				run->awk, run->global.rs, 
 				((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
-				ASE_STR_BUF(buf), ASE_STR_LEN(buf), 
+				ASE_STR_PTR(buf), ASE_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)
 			{
@@ -365,7 +365,7 @@ int ase_awk_readextio (
 				/* the match should be found at the end of
 				 * the current buffer */
 				ASE_ASSERT (
-					ASE_STR_BUF(buf) + ASE_STR_LEN(buf) ==
+					ASE_STR_PTR(buf) + ASE_STR_LEN(buf) ==
 					match_ptr + match_len);
 
 				ASE_STR_LEN(buf) -= match_len;
