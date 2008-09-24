@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 369 2008-09-22 11:21:08Z baconevi $
+ * $Id: str.h 371 2008-09-23 09:36:30Z baconevi $
  *
  * {License}
  */
@@ -30,7 +30,7 @@ struct ase_str_t
 };
 
 /* int ase_chartonum (ase_char_t c, int base) */
-#define ASE_CHAR_TO_NUM(c,base) \
+#define ASE_CHARTONUM(c,base) \
 	((c>=ASE_T('0') && c<=ASE_T('9'))? ((c-ASE_T('0')<base)? (c-ASE_T('0')): base): \
 	 (c>=ASE_T('A') && c<=ASE_T('Z'))? ((c-ASE_T('A')+10<base)? (c-ASE_T('A')+10): base): \
 	 (c>=ASE_T('a') && c<=ASE_T('z'))? ((c-ASE_T('a')+10<base)? (c-ASE_T('a')+10): base): base)
@@ -48,7 +48,7 @@ struct ase_str_t
 		if (__ston_c == ASE_T('+')) { __ston_ptr++; } \
 		break; \
 	} \
-	for (value = 0; (__ston_v = ASE_CHAR_TO_NUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
+	for (value = 0; (__ston_v = ASE_CHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
 		value = value * base + __ston_v; \
 	} \
 	if (endptr != ASE_NULL) *((const ase_char_t**)endptr) = __ston_ptr; \
@@ -72,7 +72,7 @@ struct ase_str_t
 		break; \
 	} \
 	for (value = 0; __ston_ptr < __ston_end && \
-	               (__ston_v = ASE_CHAR_TO_NUM(*__ston_ptr, base)) != base; __ston_ptr++) { \
+	               (__ston_v = ASE_CHARTONUM(*__ston_ptr, base)) != base; __ston_ptr++) { \
 		value = value * base + __ston_v; \
 	} \
 	if (endptr != ASE_NULL) *((const ase_char_t**)endptr) = __ston_ptr; \
