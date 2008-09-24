@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 354 2008-08-31 10:57:24Z baconevi $
+ * $Id: map.h 373 2008-09-23 11:27:24Z baconevi $
  *
  * {License}
  */
@@ -70,6 +70,7 @@ struct ase_map_t
         ase_map_freeer_t freeer[2];
 	ase_map_hasher_t hasher;
 	ase_map_comper_t comper;
+	ase_sizer_t sizer;
 
 	ase_size_t size;
 	ase_size_t capa;
@@ -199,6 +200,16 @@ ase_map_comper_t ase_map_getcomper (
 void ase_map_setcomper (
 	ase_map_t* map,
 	ase_map_comper_t comper
+);
+
+ase_sizer_t ase_map_getsizer (
+	ase_map_t* map
+);
+
+/* the sizer function is called with a map object and map->capa + 1 */
+void ase_map_setsizer (
+	ase_map_t* map,
+	ase_sizer_t sizer
 );
 
 void* ase_map_getextension (
