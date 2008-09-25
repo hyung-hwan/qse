@@ -1,5 +1,5 @@
 /*
- * $Id: func.c 372 2008-09-23 09:51:24Z baconevi $
+ * $Id: func.c 382 2008-09-24 11:36:45Z baconevi $
  *
  * {License}
  */
@@ -98,7 +98,8 @@ void* ase_awk_addfunc (
 
 	bfn->handler = handler;
 
-	if (ase_map_upsert (awk->bfn.user, name, name_len, bfn) == ASE_NULL)
+	if (ase_map_insert (awk->bfn.user,
+		(ase_char_t*)name, ASE_NCTONB(name_len), bfn, 0) == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, bfn);
 		ase_awk_seterrnum (awk, ASE_AWK_ENOMEM);
@@ -111,7 +112,7 @@ void* ase_awk_addfunc (
 int ase_awk_delfunc (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 {
-	if (ase_map_remove (awk->bfn.user, name, name_len) == -1)
+	if (ase_map_remove (awk->bfn.user, name, ASE_NCTONB(name_len)) == -1)
 	{
 		ase_cstr_t errarg;
 
@@ -134,7 +135,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
 	ase_awk_bfn_t* bfn;
-	ase_pair_t* pair;
+	ase_map_pair_t* pair;
 	const ase_char_t* k;
 	ase_size_t l;
 
@@ -145,13 +146,12 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		    (awk->option & bfn->valid) != bfn->valid) continue;
 
 		pair = ase_map_search (
-			awk->wtab, bfn->name.ptr,
-			ASE_NCHARS_TO_NBYTES(bfn->name.len));
+			awk->wtab, bfn->name.ptr, ASE_NCTONB(bfn->name.len));
 		if (pair != ASE_NULL)
 		{
 			/* found in the customized word table */
 			k = ASE_MAP_VPTR(pair);
-			l = ASE_NBYTES_TO_NCHARS(ASE_MAP_VLEN(pair));
+			l = ASE_MAP_VCLEN(pair);
 		}
 		else
 		{
@@ -166,21 +166,21 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	 *       because I'm trying to support ase_awk_setword in 
 	 *       a very flimsy way here. Would it be better to drop
 	 *       ase_awk_setword totally? */
-	pair = ase_map_search (awk->rwtab, name, ASE_NCHARS_TO_NBYTES(len));
+	pair = ase_map_search (awk->rwtab, name, ASE_NCTONB(len));
 	if (pair != ASE_NULL)
 	{
 		/* the current name is a target name for
 		 * one of the original word. */
 		k = ASE_MAP_VPTR(pair);
-		l = ASE_NBYTES_TO_NCHARS(ASE_MAP_VLEN(pair));
+		l = ASE_MAP_VCLEN(pair);
 	}
 	else
 	{
-		pair = ase_map_search (awk->wtab, name, ASE_NCHARS_TO_NBYTES(len));
+		pair = ase_map_search (awk->wtab, name, ASE_NCTONB(len));
 		if (pair != ASE_NULL)
 		{
 			k = ASE_MAP_VPTR(pair);
-			l = ASE_NBYTES_TO_NCHARS(ASE_MAP_VLEN(pair));
+			l = ASE_MAP_VCLEN(pair);
 
 			if (ase_strxncmp (name, len, k, l) != 0)
 			{
@@ -204,10 +204,10 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	}
 	/* END NOTE */
 
-	pair = ase_map_search (awk->bfn.user, k, ASE_NCHARS_TO_NBYTES(l));
+	pair = ase_map_search (awk->bfn.user, k, ASE_NCTONB(l));
 	if (pair == ASE_NULL) return ASE_NULL;
 
-	bfn = (ase_awk_bfn_t*)pair->val;
+	bfn = (ase_awk_bfn_t*)ASE_MAP_VPTR(pair);
 	if (bfn->valid != 0 && (awk->option & bfn->valid) == 0) return ASE_NULL;
 
 	return bfn;
@@ -798,9 +798,9 @@ static int bfn_split (
 		 * it is decremented if the assignement fails. */
 		ase_awk_refupval (run, t2);
 
-		if (ase_map_put (
+		if (ase_map_insert (
 			((ase_awk_val_map_t*)t1)->map, 
-			key, key_len, t2, ASE_NULL) == -1)
+			key, ASE_NCTONB(key_len), t2, 0) == ASE_NULL)
 		{
 			ase_awk_refdownval (run, t2);
 
@@ -810,6 +810,10 @@ static int bfn_split (
 				ASE_AWK_FREE (run->awk, fs_free);
 			if (fs_rex_free != ASE_NULL)
 				ASE_AWK_FREEREX (run->awk, fs_rex_free);
+
+			/* ase_map_insert() fails if the key exists.
+			 * that can't happen here. so set the error code
+			 * to ENOMEM */
 			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 			return -1;
 		}
@@ -1046,7 +1050,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		}
 	}
 
-	if (ase_str_open (&new, a2_len, run->awk->mmgr) == ASE_NULL)
+	if (ase_str_init (&new, run->awk->mmgr, a2_len) == ASE_NULL)
 	{
 		FREE_A_PTRS (run->awk);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -1058,7 +1062,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		rex = ASE_AWK_BUILDREX (run->awk, a0_ptr, a0_len, &run->errnum);
 		if (rex == ASE_NULL)
 		{
-			ase_str_close (&new);
+			ase_str_fini (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
@@ -1082,7 +1086,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		if (n == -1)
 		{
 			FREE_A0_REX (run->awk, rex);
-			ase_str_close (&new);
+			ase_str_fini (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
@@ -1094,7 +1098,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 				&new, cur_ptr, cur_len) == (ase_size_t)-1)
 			{
 				FREE_A0_REX (run->awk, rex);
-				ase_str_close (&new);
+				ase_str_fini (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1105,7 +1109,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 			&new, cur_ptr, mat_ptr - cur_ptr) == (ase_size_t)-1)
 		{
 			FREE_A0_REX (run->awk, rex);
-			ase_str_close (&new);
+			ase_str_fini (&new);
 			FREE_A_PTRS (run->awk);
 			return -1;
 		}
@@ -1131,7 +1135,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 			if (m == (ase_size_t)-1)
 			{
 				FREE_A0_REX (run->awk, rex);
-				ase_str_close (&new);
+				ase_str_fini (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1151,7 +1155,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 			if (ase_awk_setrec (run, 0,
 				ASE_STR_PTR(&new), ASE_STR_LEN(&new)) == -1)
 			{
-				ase_str_close (&new);
+				ase_str_fini (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1166,7 +1170,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 
 			if (n == -1)
 			{
-				ase_str_close (&new);
+				ase_str_fini (&new);
 				FREE_A_PTRS (run->awk);
 				return -1;
 			}
@@ -1177,7 +1181,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 				ASE_STR_PTR(&new), ASE_STR_LEN(&new));
 			if (v == ASE_NULL)
 			{
-				ase_str_close (&new);
+				ase_str_fini (&new);
 				FREE_A_PTRS (run->awk);
 				/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 				return -1;
@@ -1189,7 +1193,7 @@ static int __substitute (ase_awk_run_t* run, ase_long_t max_count)
 		}
 	}
 
-	ase_str_close (&new);
+	ase_str_fini (&new);
 	FREE_A_PTRS (run->awk);
 
 #undef FREE_A0_REX
@@ -1343,20 +1347,20 @@ static int bfn_sprintf (
 	ase_size_t nargs;
 	ase_awk_val_t* a0;
 	ase_str_t out, fbu;
-	ase_cstr_t cs0;
-	ase_cstr_t x;
+	ase_xstr_t cs0;
+	ase_xstr_t x;
 
 	nargs = ase_awk_getnargs (run);
 	ASE_ASSERT (nargs > 0);
 
-	if (ase_str_open (&out, 256, run->awk->mmgr) == ASE_NULL)
+	if (ase_str_init (&out, run->awk->mmgr, 256) == ASE_NULL)
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
-	if (ase_str_open (&fbu, 256, run->awk->mmgr) == ASE_NULL)
+	if (ase_str_init (&fbu, run->awk->mmgr, 256) == ASE_NULL)
 	{
-		ase_str_close (&out);
+		ase_str_fini (&out);
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return -1;
 	}
@@ -1373,8 +1377,8 @@ static int bfn_sprintf (
 			run, a0, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &cs0.len);
 		if (cs0.ptr == ASE_NULL) 
 		{
-			ase_str_close (&fbu);
-			ase_str_close (&out);
+			ase_str_fini (&fbu);
+			ase_str_fini (&out);
 			return -1;
 		}
 	}
@@ -1382,10 +1386,10 @@ static int bfn_sprintf (
 	x.ptr = ase_awk_format (run, 
 		&out, &fbu, cs0.ptr, cs0.len, nargs, ASE_NULL, &x.len);
 	if (a0->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, cs0.ptr);
-	if (ptr == ASE_NULL) 
+	if (x.ptr == ASE_NULL) 
 	{
-		ase_str_close (&fbu);
-		ase_str_close (&out);
+		ase_str_fini (&fbu);
+		ase_str_fini (&out);
 		return -1;
 	}
 	
@@ -1393,15 +1397,15 @@ static int bfn_sprintf (
 	a0 = ase_awk_makestrval (run, x.ptr, x.len);
 	if (a0 == ASE_NULL) 
 	{
-		ase_str_close (&fbu);
-		ase_str_close (&out);
+		ase_str_fini (&fbu);
+		ase_str_fini (&out);
 		/*ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);*/
 		return -1;
 	}
 
-	ase_str_close (&fbu);
+	ase_str_fini (&fbu);
 	/*ase_str_yield (&out, ASE_NULL, 0);*/
-	ase_str_close (&out);
+	ase_str_fini (&out);
 	ase_awk_setretval (run, a0);
 	return 0;
 }

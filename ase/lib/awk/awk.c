@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 381 2008-09-24 11:07:24Z baconevi $ 
+ * $Id: awk.c 382 2008-09-24 11:36:45Z baconevi $ 
  *
  * {License}
  */
@@ -222,6 +222,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		return ASE_NULL;	
 	}
 	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->bfn.user) = awk;
+	ase_map_setcopier (awk->bfn.user, AES_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setfreeer (awk->bfn.user, ASE_MAP_VAL, free_bfn); 
 
 	awk->parse.depth.cur.block = 0;
