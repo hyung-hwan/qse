@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 379 2008-09-24 08:06:56Z baconevi $ 
+ * $Id: awk.c 380 2008-09-24 08:16:41Z baconevi $ 
  *
  * {License}
  */
@@ -23,7 +23,7 @@
 
 static void free_afn (ase_map_t* map, void* vptr, ase_size_t vlen)
 {
-	ase_awk_t* awk = *(ase_awk_t**)ase_map_getextension(map);
+	ase_awk_t* awk = *(ase_awk_t**)ASE_MAP_EXTENSION(map);
 	ase_awk_afn_t* f = (ase_awk_afn_t*)vptr;
 
 	/* f->name doesn't have to be freed */
@@ -35,7 +35,7 @@ static void free_afn (ase_map_t* map, void* vptr, ase_size_t vlen)
 
 static void free_bfn (ase_map_t* map, void* vptr, ase_size_t vlen)
 {
-	ase_awk_t* awk = *(ase_awk_t**)ase_map_getextension(map);
+	ase_awk_t* awk = *(ase_awk_t**)ASE_MAP_EXTENSION(map);
 	ase_awk_bfn_t* f = (ase_awk_bfn_t*)vptr;
 
 	ASE_AWK_FREE (awk, f);
@@ -74,7 +74,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
-	*(ase_awk_t**)ase_map_getextension(awk->wtab) = awk;
+	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->wtab) = awk;
 	ase_map_setcopier (awk->wtab, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (awk->wtab, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
 
@@ -86,7 +86,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
-	*(ase_awk_t**)ase_map_getextension(awk->rwtab) = awk;
+	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->rwtab) = awk;
 	ase_map_setcopier (awk->rwtab, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (awk->rwtab, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
 
@@ -101,7 +101,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
-	*(ase_awk_t**)ase_map_getextension(awk->tree.afns) = awk;
+	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->tree.afns) = awk;
 	ase_map_setfreeer (awk->tree.afns, ASE_MAP_VAL, free_afn);
 
 	/*awk->parse.afns = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
@@ -115,7 +115,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
-	*(ase_awk_t**)ase_map_getextension(awk->parse.afns) = awk;
+	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->parse.afns) = awk;
 
 	/*awk->parse.named = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
 	awk->parse.named = ase_map_open (mmgr, ASE_SIZEOF(awk), 256, 70);
@@ -129,7 +129,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
-	*(ase_awk_t**)ase_map_getextension(awk->parse.named) = awk;
+	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->parse.named) = awk;
 
 	if (ase_awk_tab_open (&awk->parse.globals, awk) == ASE_NULL) 
 	{
@@ -219,7 +219,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		ASE_AWK_FREE (awk, awk);
 		return ASE_NULL;	
 	}
-	*(ase_awk_t**)ase_map_getextension(awk->bfn.user) = awk;
+	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->bfn.user) = awk;
 	ase_map_setfreeer (awk->bfn.user, ASE_MAP_VAL, free_bfn); 
 
 	awk->parse.depth.cur.block = 0;
