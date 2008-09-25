@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 375 2008-09-23 14:47:23Z baconevi $
+ * $Id: map.h 376 2008-09-24 07:18:50Z baconevi $
  *
  * {License}
  */
@@ -12,6 +12,7 @@
 
 typedef struct ase_map_t ase_map_t;
 typedef struct ase_map_pair_t ase_map_pair_t;
+typedef enum ase_map_walk_t ase_map_walk_t;
 
 /* data copier */
 typedef void* (*ase_map_copier_t) (
@@ -59,7 +60,7 @@ typedef void (*ase_map_keeper_t) (
 typedef ase_size_t (*ase_map_sizer_t) (ase_map_t* data, ase_size_t hint);
 
 /* pair visitor - should return ASE_MAP_WALK_STOP or ASE_MAP_WALK_FORWARD */
-typedef int (*ase_map_walker_t) (
+typedef ase_map_walk_t (*ase_map_walker_t) (
 	ase_map_t* map        /* a map */, 
 	ase_map_pair_t* pair  /* the pointer to a key/value pair */, 
 	void* arg             /* the pointer to user-defined data */
@@ -119,6 +120,11 @@ enum ase_map_walk_t
 #define ASE_MAP_VPTR(p) ((p)->vptr)
 #define ASE_MAP_VLEN(p) ((p)->vlen)
 #define ASE_MAP_NEXT(p) ((p)->next)
+
+/* special macros that you can use to get the number of characters
+ * in a key and/or a value if it is a chracter string */
+#define ASE_MAP_KCLEN(p) (((p)->klen)/ASE_SIZEOF(ase_char_t))
+#define ASE_MAP_VCLEN(p) (((p)->vlen)/ASE_SIZEOF(ase_char_t))
 
 #ifdef __cplusplus
 extern "C" {

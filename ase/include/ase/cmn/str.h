@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 375 2008-09-23 14:47:23Z baconevi $
+ * $Id: str.h 376 2008-09-24 07:18:50Z baconevi $
  *
  * {License}
  */
@@ -86,6 +86,7 @@ extern "C" {
  * basic string functions
  */
 ase_size_t ase_strlen (const ase_char_t* str);
+ase_size_t ase_strbytes (const ase_char_t* str);
 
 ase_size_t ase_strcpy (
 	ase_char_t* buf, const ase_char_t* str);

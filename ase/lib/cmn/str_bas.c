@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: str_bas.c 376 2008-09-24 07:18:50Z baconevi $
  *
  * {License}
  */
@@ -13,6 +13,13 @@ ase_size_t ase_strlen (const ase_char_t* str)
 	const ase_char_t* p = str;
 	while (*p != ASE_T('\0')) p++;
 	return p - str;
+}
+
+ase_size_t ase_strbytes (const ase_char_t* str)
+{
+	const ase_char_t* p = str;
+	while (*p != ASE_T('\0')) p++;
+	return (p - str) * ASE_SIZEOF(ase_char_t);
 }
 
 ase_size_t ase_strcpy (ase_char_t* buf, const ase_char_t* str)

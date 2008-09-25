@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 375 2008-09-23 14:47:23Z baconevi $
+ * $Id: str_dyn.c 376 2008-09-24 07:18:50Z baconevi $
  *
  * {License}
  */
@@ -10,6 +10,16 @@
 ase_str_t* ase_str_open (ase_mmgr_t* mmgr, ase_size_t ext, ase_size_t capa)
 {
 	ase_str_t* str;
+
+	if (mmgr == ASE_NULL) 
+	{
+		mmgr = ASE_MMGR_GETDFL();
+
+		ASE_ASSERTX (mmgr != ASE_NULL,
+			"Set the memory manager with ASE_MMGR_SETDFL()");
+
+		if (mmgr == ASE_NULL) return ASE_NULL;
+	}
 
 	str = (ase_str_t*) ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_str_t) + ext);
 	if (str == ASE_NULL) return ASE_NULL;
