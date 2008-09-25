@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 372 2008-09-23 09:51:24Z baconevi $
+ * $Id: val.c 378 2008-09-24 08:00:50Z baconevi $
  *
  * {License}
  */
@@ -405,6 +405,8 @@ ase_awk_val_t* ase_awk_makerexval (
 	return (ase_awk_val_t*)val;
 }
 
+/* CHECK */
+/*
 static void free_mapval (void* run, void* v)
 {
 #ifdef DEBUG_VAL
@@ -425,6 +427,31 @@ static void same_mapval (void* run, void* v)
 #endif
 	ase_awk_refdownval_nofree (run, v);
 }
+*/
+static void free_mapval (ase_map_t* map, void* dptr, ase_size_t dlen)
+{
+	ase_awk_run_t* run = *(ase_awk_run_t**)ase_map_getextension(map);
+
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("refdown in map free..."));
+	ase_awk_dprintval (run, dptr);
+	ase_dprintf (ASE_T("\n"));
+#endif
+
+	ase_awk_refdownval (run, dptr);
+}
+
+static void same_mapval (ase_map_t* map, void* dptr, ase_size_t dlen)
+{
+	ase_awk_run_t* run = *(ase_awk_run_t**)ase_map_getextension(map);
+#ifdef DEBUG_VAL
+	ase_dprintf (ASE_T("refdown nofree in map free..."));
+	ase_awk_dprintval (run, dptr);
+	ase_dprintf (ASE_T("\n"));
+#endif
+	ase_awk_refdownval_nofree (run, dptr);
+}
+/* END CHECK */
 
 ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 {
@@ -440,6 +467,8 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 
 	val->type = ASE_AWK_VAL_MAP;
 	val->ref = 0;
+	/* CHECK */
+	/* 
 	val->map = ase_map_open (
 		run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
 	if (val->map == ASE_NULL)
@@ -448,6 +477,26 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
+	*/
+	val->map = ase_map_open (run->awk->mmgr, ASE_SIZEOF(run), 256, 70);
+	if (val->map == ASE_NULL)
+	{
+		ASE_AWK_FREE (run->awk, val);
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
+	*(ase_awk_run_t**)ase_map_getextension(val->map) = run;
+
+	/* the key is copied inline into a pair and is freed when the pair
+	 * is destroyed */
+	ase_map_setcopier (val->map, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
+
+	/* not setting copier for a value means that the pointer to the data 
+	 * allocated somewhere else is remembered in a pair. but the freeing 
+	 * the actual value is handled by free_mapval and same_mapval */
+	ase_map_setfreeer (val->map, ASE_MAP_VAL, free_mapval);
+	ase_map_setkeeper (val->map, same_mapval);
+	/* END CHECK */
 
 	return (ase_awk_val_t*)val;
 }
@@ -1065,16 +1114,19 @@ int ase_awk_strtonum (
 #define DPRINTF run->awk->prmfns->dprintf
 #define DCUSTOM run->awk->prmfns->data
 
-static int print_pair (ase_pair_t* pair, void* arg)
+static ase_map_walk_t print_pair (
+	ase_map_t* map, ase_map_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
 
+	ASE_ASSERT (run == *(ase_awk_run_t**)ase_map_getextension(map));
+
 	DPRINTF (DCUSTOM, ASE_T(" %.*s=>"),
-		(int)ASE_PAIR_KEYLEN(pair), ASE_PAIR_KEYPTR(pair));
-	ase_awk_dprintval ((ase_awk_run_t*)arg, pair->val);
+		(int)ASE_MAP_KCLEN(pair), ASE_MAP_KPTR(pair));
+	ase_awk_dprintval ((ase_awk_run_t*)arg, ASE_MAP_VPTR(pair));
 	DPRINTF (DCUSTOM, ASE_T(" "));
 
-	return 0;
+	return ASE_MAP_WALK_FORWARD;
 }
 
 void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
