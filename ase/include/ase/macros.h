@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 354 2008-08-31 10:57:24Z baconevi $
+ * $Id: macros.h 381 2008-09-24 11:07:24Z baconevi $
  *
  * {License}
  */
@@ -66,8 +66,10 @@
 		} \
 	} while (0);
 
-#define ASE_NCHARS_TO_NBYTES(x) ((x)*sizeof(ase_char_t))
-#define ASE_NBYTES_TO_NCHARS(x) ((x)/sizeof(ase_char_t))
+/* number of characters to number of bytes */
+#define ASE_NCTONB(x) ((x)*sizeof(ase_char_t))
+/* number of bytes to number of characters */
+#define ASE_NBTONC(x) ((x)/sizeof(ase_char_t))
 
 #define ASE_MQ_I(val) #val
 #define ASE_MQ(val)   ASE_MQ_I(val)

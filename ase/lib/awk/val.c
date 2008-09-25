@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 380 2008-09-24 08:16:41Z baconevi $
+ * $Id: val.c 381 2008-09-24 11:07:24Z baconevi $
  *
  * {License}
  */
@@ -457,8 +457,10 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 {
 	ase_awk_val_map_t* val;
 
+	/* CHECK */
+	/* 
 	val = (ase_awk_val_map_t*) ASE_AWK_ALLOC (
-		run->awk, ASE_SIZEOF(ase_awk_val_map_t));
+		run->awk, ASE_SIZEOF(ase_awk_val_map_t) );
 	if (val == ASE_NULL) 
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -467,8 +469,6 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 
 	val->type = ASE_AWK_VAL_MAP;
 	val->ref = 0;
-	/* CHECK */
-	/* 
 	val->map = ase_map_open (
 		run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
 	if (val->map == ASE_NULL)
@@ -478,7 +478,23 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 		return ASE_NULL;
 	}
 	*/
-	val->map = ase_map_open (run->awk->mmgr, ASE_SIZEOF(run), 256, 70);
+
+	val = (ase_awk_val_map_t*) ASE_AWK_ALLOC (
+		run->awk, 
+		ASE_SIZEOF(ase_awk_val_map_t) +
+		ASE_SIZEOF(ase_map_t) +
+		ASE_SIZEOF(run));
+	if (val == ASE_NULL) 
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return ASE_NULL;
+	}
+
+	val->type = ASE_AWK_VAL_MAP;
+	val->ref = 0;
+	val->map = (ase_map_t*)(val + 1);
+
+	val->map = ase_map_init (val->map, run->awk->mmgr, 256, 70);
 	if (val->map == ASE_NULL)
 	{
 		ASE_AWK_FREE (run->awk, val);
@@ -613,7 +629,10 @@ void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
 	}
 	else if (val->type == ASE_AWK_VAL_MAP)
 	{
-		ase_map_close (((ase_awk_val_map_t*)val)->map);
+		/* CHECK */
+		/* ase_map_close (((ase_awk_val_map_t*)val)->map);*/
+		ase_map_fini (((ase_awk_val_map_t*)val)->map);
+		/* END CHECK */
 		ASE_AWK_FREE (run->awk, val);
 	}
 	else if (val->type == ASE_AWK_VAL_REF)
