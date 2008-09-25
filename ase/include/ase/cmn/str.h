@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 379 2008-09-24 08:06:56Z baconevi $
+ * $Id: str.h 380 2008-09-24 08:16:41Z baconevi $
  *
  * {License}
  */
@@ -10,10 +10,14 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-#define ASE_STR_LEN(x)      ((x)->len)
-#define ASE_STR_PTR(x)      ((x)->ptr)
-#define ASE_STR_CAPA(x)     ((x)->capa)
-#define ASE_STR_CHAR(x,idx) ((x)->ptr[idx])
+#define ASE_STR_LEN(s)       ((s)->len)
+#define ASE_STR_PTR(s)       ((s)->ptr)
+#define ASE_STR_CAPA(s)      ((s)->capa)
+#define ASE_STR_CHAR(s,idx)  ((s)->ptr[idx])
+
+#define ASE_STR_MMGR(s)      ((s)->mmgr)
+#define ASE_STR_SIZER(s)     ((s)->sizer)
+#define ASE_STR_EXTENSION(s) ((void*)(((ase_str_t*)s) + 1))
 
 typedef struct ase_str_t ase_str_t;
 typedef ase_size_t (*ase_str_sizer_t) (ase_str_t* data, ase_size_t hint);

@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 376 2008-09-24 07:18:50Z baconevi $
+ * $Id: map.h 380 2008-09-24 08:16:41Z baconevi $
  *
  * {License}
  */
@@ -114,6 +114,17 @@ enum ase_map_walk_t
 
 #define ASE_MAP_SIZE(m) ((m)->size)
 #define ASE_MAP_CAPA(m) ((m)->capa)
+
+#define ASE_MAP_MMGR(m)      ((m)->mmgr)
+#define ASE_MAP_KCOPIER(m)   ((m)->copier[ASE_MAP_KEY])
+#define ASE_MAP_VCOPIER(m)   ((m)->copier[ASE_MAP_VAL])
+#define ASE_MAP_KFREEER(m)   ((m)->freeer[ASE_MAP_KEY])
+#define ASE_MAP_VFREEER(m)   ((m)->freeer[ASE_MAP_VAL])
+#define ASE_MAP_HASHER(m)    ((m)->hasher)
+#define ASE_MAP_COMPER(m)    ((m)->comper)
+#define ASE_MAP_KEEPER(m)    ((m)->keeper)
+#define ASE_MAP_SIZER(m)     ((m)->sizer)
+#define ASE_MAP_EXTENSION(m) ((void*)(((ase_map_t*)m) + 1))
 
 #define ASE_MAP_KPTR(p) ((p)->kptr)
 #define ASE_MAP_KLEN(p) ((p)->klen)
