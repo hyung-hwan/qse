@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 363 2008-09-04 10:58:08Z baconevi $ 
+ * $Id: awk.c 379 2008-09-24 08:06:56Z baconevi $ 
  *
  * {License}
  */
@@ -67,7 +67,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		return ASE_NULL;	
 	}
 
-	awk->wtab = ase_map_open (mmgr, sizeof(awk), 512, 70);
+	awk->wtab = ase_map_open (mmgr, ASE_SIZEOF(awk), 512, 70);
 	if (awk->wtab == ASE_NULL)
 	{
 		ase_str_close (&awk->token.name);
@@ -78,7 +78,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 	ase_map_setcopier (awk->wtab, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (awk->wtab, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
 
-	awk->rwtab = ase_map_open (mmgr, sizeof(awk), 512, 70);
+	awk->rwtab = ase_map_open (mmgr, ASE_SIZEOF(awk), 512, 70);
 	if (awk->rwtab == ASE_NULL)
 	{
 		ase_map_close (awk->wtab);
@@ -92,7 +92,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 
 	/* TODO: initial map size?? */
 	/*awk->tree.afns = ase_map_open (awk, 512, 70, free_afn, ASE_NULL, mmgr);*/
-	awk->tree.afns = ase_map_open (mmgr, sizeof(awk), 512, 70);
+	awk->tree.afns = ase_map_open (mmgr, ASE_SIZEOF(awk), 512, 70);
 	if (awk->tree.afns == ASE_NULL) 
 	{
 		ase_map_close (awk->rwtab);
@@ -105,7 +105,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 	ase_map_setfreeer (awk->tree.afns, ASE_MAP_VAL, free_afn);
 
 	/*awk->parse.afns = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
-	awk->parse.afns = ase_map_open (mmgr, sizeof(awk), 256, 70);
+	awk->parse.afns = ase_map_open (mmgr, ASE_SIZEOF(awk), 256, 70);
 	if (awk->parse.afns == ASE_NULL)
 	{
 		ase_map_close (awk->tree.afns);
@@ -118,7 +118,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 	*(ase_awk_t**)ase_map_getextension(awk->parse.afns) = awk;
 
 	/*awk->parse.named = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
-	awk->parse.named = ase_map_open (mmgr, sizeof(awk), 256, 70);
+	awk->parse.named = ase_map_open (mmgr, ASE_SIZEOF(awk), 256, 70);
 	if (awk->parse.named == ASE_NULL)
 	{
 		ase_map_close (awk->parse.afns);
@@ -204,7 +204,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 	awk->bfn.sys = ASE_NULL;
 	/*awk->bfn.user = ASE_NULL;*/
 	/*awk->bfn.user = ase_map_open (awk, 512, 70, free_bfn, ASE_NULL, mmgr);*/
-	awk->bfn.user = ase_map_open (mmgr, sizeof(awk), 512, 70);
+	awk->bfn.user = ase_map_open (mmgr, ASE_SIZEOF(awk), 512, 70);
 	if (awk->bfn.user == ASE_NULL)
 	{
 		ase_awk_tab_close (&awk->parse.params);

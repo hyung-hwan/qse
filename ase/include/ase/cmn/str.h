@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 376 2008-09-24 07:18:50Z baconevi $
+ * $Id: str.h 379 2008-09-24 08:06:56Z baconevi $
  *
  * {License}
  */
@@ -217,6 +217,19 @@ int ase_str_yield (
 	ase_str_t* str  /* a dynamic string */,
 	ase_xstr_t* buf /* the pointer to a ase_xstr_t variable */,
 	int new_capa    /* new capacity in number of characters */
+);
+
+void* ase_str_getextension (
+	ase_str_t* str
+);
+
+ase_mmgr_t* ase_str_getmmgr (
+	ase_str_t* str
+);
+
+void ase_str_setmmgr (
+	ase_str_t* str,
+	ase_mmgr_t* mmgr
 );
 
 /*
