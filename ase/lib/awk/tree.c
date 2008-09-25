@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: tree.c 381 2008-09-24 11:07:24Z baconevi $
  *
  * {License}
  */
@@ -372,7 +372,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ASE_ASSERT (px->id.idxa == (ase_size_t)-1);
 			ASE_ASSERT (px->idx == ASE_NULL);
 
-			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+			PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 			break;
 		}
 
@@ -382,7 +382,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			ASE_ASSERT (px->id.idxa == (ase_size_t)-1);
 			ASE_ASSERT (px->idx != ASE_NULL);
 
-			PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+			PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 			PUT_SRCSTR (awk, ASE_T("["));
 			PRINT_EXPRESSION_LIST (awk, px->idx);
 			PUT_SRCSTR (awk, ASE_T("]"));
@@ -401,12 +401,12 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				{
 					/* no implicit(named) variable is allowed.
 					 * use the actual name */
-					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				}
 				else if (px->id.idxa < awk->tree.nbglobals)
 				{
 					/* static global variables */
-					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				}
 				else
 				{
@@ -422,7 +422,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			}
 			else 
 			{
-				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 			}
 			ASE_ASSERT (px->idx == ASE_NULL);
 			break;
@@ -439,12 +439,12 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 				{
 					/* no implicit(named) variable is allowed.
 					 * use the actual name */
-					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				}
 				else if (px->id.idxa < awk->tree.nbglobals)
 				{
 					/* static global variables */
-					PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				}
 				else
 				{
@@ -461,7 +461,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			}
 			else 
 			{
-				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				PUT_SRCSTR (awk, ASE_T("["));
 			}
 			ASE_ASSERT (px->idx != ASE_NULL);
@@ -485,7 +485,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			}
 			else 
 			{
-				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 			}
 			ASE_ASSERT (px->idx == ASE_NULL);
 			break;
@@ -507,7 +507,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 			}
 			else 
 			{
-				PUT_SRCSTRX (awk, px->id.name, px->id.name_len);
+				PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				PUT_SRCSTR (awk, ASE_T("["));
 			}
 			ASE_ASSERT (px->idx != ASE_NULL);
@@ -1217,8 +1217,8 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 			{
 				ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)p;
 				ASE_ASSERT (px->idx == ASE_NULL);
-				if (px->id.name != ASE_NULL)
-					ASE_AWK_FREE (awk, px->id.name);
+				if (px->id.name.ptr != ASE_NULL)
+					ASE_AWK_FREE (awk, px->id.name.ptr);
 				ASE_AWK_FREE (awk, p);
 				break;
 			}
@@ -1231,8 +1231,8 @@ void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree)
 				ase_awk_nde_var_t* px = (ase_awk_nde_var_t*)p;
 				ASE_ASSERT (px->idx != ASE_NULL);
 				ase_awk_clrpt (awk, px->idx);
-				if (px->id.name != ASE_NULL)
-					ASE_AWK_FREE (awk, px->id.name);
+				if (px->id.name.ptr != ASE_NULL)
+					ASE_AWK_FREE (awk, px->id.name.ptr);
 				ASE_AWK_FREE (awk, p);
 				break;
 			}

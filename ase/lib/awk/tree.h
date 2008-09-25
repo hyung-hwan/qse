@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: tree.h 381 2008-09-24 11:07:24Z baconevi $
  *
  * {License}
  */
@@ -129,8 +129,7 @@ typedef struct ase_awk_nde_print_t     ase_awk_nde_print_t;
 
 struct ase_awk_afn_t
 {
-	ase_char_t* name;
-	ase_size_t name_len;
+	ase_xstr_t name;
 	ase_size_t nargs;
 	ase_awk_nde_t* body;
 };
@@ -239,9 +238,8 @@ struct ase_awk_nde_var_t
 	ASE_AWK_NDE_HDR;
 	struct 
 	{
-		ase_char_t* name;
-		ase_size_t  name_len;
-		ase_size_t  idxa;
+		ase_xstr_t name;
+		ase_size_t idxa;
 	} id;
 	ase_awk_nde_t* idx; /* ASE_NULL for non-XXXXIDX */
 };
@@ -254,30 +252,18 @@ struct ase_awk_nde_call_t
 	{
 		struct
 		{
-			struct
-			{
-				ase_char_t* ptr;
-				ase_size_t len;
-			} name;
+			ase_xstr_t name;
 		} afn;
 
 		/* minimum information of a intrinsic function 
 		 * needed during run-time. */
 		struct
 		{
-			struct
-			{
-				ase_char_t* ptr;
-				ase_size_t len;
-			} name;
+			ase_xstr_t name;
 
 			/* original name. if ase_awk_setword has been 
 			 * invoked, oname can be different from name */
-			struct
-			{
-				ase_char_t* ptr;
-				ase_size_t len;
-			} oname;
+			ase_xstr_t oname;
 
 			struct
 			{
