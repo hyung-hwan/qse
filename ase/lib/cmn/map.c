@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 375 2008-09-23 14:47:23Z baconevi $
+ * $Id: map.c 376 2008-09-24 07:18:50Z baconevi $
  *
  * {License}
  */
@@ -63,11 +63,10 @@ static pair_t* alloc_pair (map_t* map,
 	copier_t vcop = map->copier[ASE_MAP_VAL];
 
 	size_t as = SIZEOF(pair_t);
-
 	if (kcop == ASE_MAP_COPIER_INLINE) as += klen;
 	if (vcop == ASE_MAP_COPIER_INLINE) as += vlen;
 
-	n = ASE_MMGR_ALLOC (map->mmgr, as);
+	n = (pair_t*) ASE_MMGR_ALLOC (map->mmgr, as);
 	if (n == ASE_NULL) return ASE_NULL;
 
 	NEXT(n) = ASE_NULL;
@@ -84,8 +83,8 @@ static pair_t* alloc_pair (map_t* map,
 	}
 	else 
 	{
-		n->kptr = kcop (map, kptr, klen);
-		if (n->kptr == ASE_NULL)
+		KPTR(n) = kcop (map, kptr, klen);
+		if (KPTR(n) == ASE_NULL)
 		{
 			ASE_MMGR_FREE (map->mmgr, n);		
 			return ASE_NULL;
@@ -100,6 +99,8 @@ static pair_t* alloc_pair (map_t* map,
 	else if (vcop == ASE_MAP_COPIER_INLINE)
 	{
 		VPTR(n) = n + 1;
+		if (kcop == ASE_MAP_COPIER_INLINE) 
+			VPTR(n) = (byte_t*)VPTR(n) + klen;
 		ASE_MEMCPY (VPTR(n), vptr, vlen);
 	}
 	else 
@@ -201,6 +202,9 @@ map_t* ase_map_open (mmgr_t* mmgr, size_t ext, size_t capa, uint_t factor)
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
+	map = (ase_map_t*) ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_map_t) + ext);
+	if (map == ASE_NULL) return ASE_NULL;
+
 	if (ase_map_init (map, mmgr, capa, factor) == ASE_NULL)
 	{
 		ASE_MMGR_FREE (mmgr, map);
@@ -234,12 +238,25 @@ map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, uint_t factor)
 	map->bucket = ASE_MMGR_ALLOC (mmgr, capa*SIZEOF(pair_t*));
 	if (map->bucket == ASE_NULL) return ASE_NULL;
 
+	/*for (i = 0; i < capa; i++) map->bucket[i] = ASE_NULL;*/
+	ASE_MEMSET (map->bucket, 0, capa*SIZEOF(pair_t*));
+
 	map->size = 0;
 	map->capa = capa;
 	map->factor = factor;
+	map->threshold = map->capa * map->factor / 100;
 
 	map->hasher = hash_key;
 	map->comper = comp_key;
+
+	/*
+	map->copier[ASE_MAP_KEY] = ASE_NULL;
+	map->copier[ASE_MAP_VAL] = ASE_NULL;
+	map->freeer[ASE_MAP_KEY] = ASE_NULL;
+	map->freeer[ASE_MAP_VAL] = ASE_NULL;
+	map->keeper = ASE_NULL;
+	map->sizer = ASE_NULL;
+	*/
 
 	return map;
 }
@@ -521,7 +538,7 @@ pair_t* ase_map_update (
 				NEXT(p) = next;
 			}
 
-			return 0; /* value changed for the existing key */
+			return p; /* value changed for the existing key */
 		}
 
 		prev = pair;
@@ -646,7 +663,7 @@ static int reorganize (map_t* map)
 	}
 
 	new_buck = (pair_t**) ASE_MMGR_ALLOC (
-		map->mmgr, SIZEOF(pair_t*) * new_capa);
+		map->mmgr, new_capa*SIZEOF(pair_t*));
 	if (new_buck == ASE_NULL) 
 	{
 		/* reorganization is disabled once it fails */
@@ -654,7 +671,8 @@ static int reorganize (map_t* map)
 		return -1;
 	}
 
-	for (i = 0; i < new_capa; i++) new_buck[i] = ASE_NULL;
+	/*for (i = 0; i < new_capa; i++) new_buck[i] = ASE_NULL;*/
+	ASE_MEMSET (new_buck, 0, new_capa*SIZEOF(pair_t*));
 
 	for (i = 0; i < map->capa; i++)
 	{
