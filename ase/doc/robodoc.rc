@@ -1,15 +1,19 @@
 items:
+	NAME
 	SYNOPSIS
+	DESCRIPTION
 	ATTRIBUTES
 	PARAMETERS
 	RETURN
-	DESCRIPTION
 	SEE ALSO
 	BUGS
 	EXAMPLES
+	SOURCE
 source items:
 	SYNOPSIS
+	SOURCE
 item order:
+	NAME
 	SYNOPSIS
 	DESCRIPTION
 	ATTRIBUTES
@@ -18,6 +22,7 @@ item order:
 	SEE ALSO
 	BUGS
 	EXAMPLES
+	SOURCE
 remark begin markers:
 	/*
 remark end markers:
