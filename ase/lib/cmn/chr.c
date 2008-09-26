@@ -103,8 +103,8 @@ ase_cint_t ase_ccls_to (ase_cint_t c, int type)
 { 
 	static const char* name[] = 
 	{
-		"upper",
-		"lower"
+		"toupper",
+		"tolower"
 	};
 
 	static wctrans_t desc[] =
