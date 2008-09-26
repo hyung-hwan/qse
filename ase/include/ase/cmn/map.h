@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 380 2008-09-24 08:16:41Z baconevi $
+ * $Id: map.h 385 2008-09-25 11:06:33Z baconevi $
  *
  * {License}
  */
@@ -66,6 +66,23 @@ typedef ase_map_walk_t (*ase_map_walker_t) (
 	void* arg             /* the pointer to user-defined data */
 );
 
+/****s* ase/ase_map_pair_t
+ * NAME
+ *  ase_map_pair_t - define a pair
+ * DESCRIPTION
+ *  A pair is composed of a key and a value. It maintains pointers to the 
+ *  beginning of a key and a value plus their length. The length is scaled
+ *  down with the scale factor specified in an owning map. Use macros defined
+ *  in the SEE ALSO section below to access individual attributes.
+ * ATTRIBUTES
+ *  kptr - the pointer to a key
+ *  klen - the length of a key
+ *  vptr - the pointer to a value
+ *  vlen - the length of a value 
+ * SEE ALSO
+ *  ASE_MAP_KPTR, ASE_MAP_KLEN, ASE_MAP_VPTR, ASE_MAP_VLEN
+ * SOURCE
+ */
 struct ase_map_pair_t
 {
 	void* kptr;
@@ -74,9 +91,10 @@ struct ase_map_pair_t
 	void* vptr;
 	ase_size_t vlen;
 
-	/* used internally */
+	/* an internal pointer to the next pair chained */
 	ase_map_pair_t* next;
 };
+/*****/
 
 struct ase_map_t
 {
@@ -87,13 +105,16 @@ struct ase_map_t
 	ase_map_hasher_t hasher; /* key hasher */
 	ase_map_comper_t comper; /* key comparator */
 	ase_map_keeper_t keeper; /* value keeper */
-	ase_map_sizer_t  sizer;  /* bucket resizer */
+	ase_map_sizer_t  sizer;  /* bucket capacity recalculator */
+
+	ase_byte_t scale[2];     /* length scale */
+	ase_byte_t factor;       /* load factor */
+	ase_byte_t filler0;
 
 	ase_size_t size;
 	ase_size_t capa;
-
-	ase_uint_t factor;
 	ase_size_t threshold;
+
 	ase_map_pair_t** bucket;
 };
 
@@ -112,8 +133,21 @@ enum ase_map_walk_t
 
 #define ASE_MAP_COPIER_INLINE ase_map_copyinline
 
+/****d* ase/ASE_MAP_SIZE
+ * DESCRIPTION
+ *  The ASE_MAP_SIZE() macro returns the number of pairs in a map.
+ * SOURCE
+ */
 #define ASE_MAP_SIZE(m) ((m)->size)
+/*****/
+
+/****d* ase/ASE_MAP_CAPA
+ * DESCRIPTION
+ *  The ASE_MAP_CAPA() macro returns the maximum number of pairs a map can hold.
+ * SOURCE
+ */
 #define ASE_MAP_CAPA(m) ((m)->capa)
+/*****/
 
 #define ASE_MAP_MMGR(m)      ((m)->mmgr)
 #define ASE_MAP_KCOPIER(m)   ((m)->copier[ASE_MAP_KEY])
@@ -126,45 +160,65 @@ enum ase_map_walk_t
 #define ASE_MAP_SIZER(m)     ((m)->sizer)
 #define ASE_MAP_EXTENSION(m) ((void*)(((ase_map_t*)m) + 1))
 
+#define ASE_MAP_FACTOR(m)    ((m)->factor)
+#define ASE_MAP_KSCALE(m)    ((m)->scale[ASE_MAP_KEY])
+#define ASE_MAP_VSCALE(m)    ((m)->scale[ASE_MAP_VAL])
+
 #define ASE_MAP_KPTR(p) ((p)->kptr)
 #define ASE_MAP_KLEN(p) ((p)->klen)
 #define ASE_MAP_VPTR(p) ((p)->vptr)
 #define ASE_MAP_VLEN(p) ((p)->vlen)
 #define ASE_MAP_NEXT(p) ((p)->next)
 
-/* special macros that you can use to get the number of characters
- * in a key and/or a value if it is a chracter string */
-#define ASE_MAP_KCLEN(p) (((p)->klen)/ASE_SIZEOF(ase_char_t))
-#define ASE_MAP_VCLEN(p) (((p)->vlen)/ASE_SIZEOF(ase_char_t))
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
- * NAME: create a map
+/****f* ase/ase_map_open
+ * DESCRIPTION 
+ *  The ase_map_open() function creates a hashed table with a dynamic array 
+ *  bucket and a list of values chained. The initial capacity should be larger
+ *  than 0. The load factor should be between 0 and 100 inclusive and the load
+ *  factor of 0 disables bucket resizing. If you need extra space associated
+ *  with a map, you may pass a non-zero value as the second parameter. 
+ *  The ASE_MAP_EXTENSION() macro and the ase_map_getextension() function 
+ *  return the pointer to the beginning of the extension.
  *
- * DESCRIPTION:
- *  The ase_map_open() function creates a hashed map with a dynamic array 
- *  bucket and a list of values linked.
+ * RETURN
+ *  The ase_map_open() function returns an ase_map_t pointer on success and 
+ *  ASE_NULL on failure.
+ *
+ * SEE ALSO 
+ *  ASE_MAP_EXTENSION, ase_map_getextension
+ * 
+ * SYNOPSIS
  */
 ase_map_t* ase_map_open (
-        ase_mmgr_t* mmgr /* memory manager */,
-	ase_size_t ext /* size of extension area in bytes */,
-	ase_size_t capa /* initial capacity */,  
-	ase_uint_t factor /* load factor */
+	ase_mmgr_t* mmgr /* a memory manager */,
+	ase_size_t ext   /* extension size in bytes */,
+	ase_size_t capa  /* initial capacity */,
+	int factor       /* load factor */
 );
+/*****/
 
-/* destroy a map */
+
+/****f* ase/ase_map_close 
+ * DESCRIPTION 
+ *  The ase_map_close() function creates a hashed map with a dynamic array 
+ *  bucket and a list of values linked.
+ *
+ * SYNOPSIS
+ */
 void ase_map_close (
 	ase_map_t* map /* a map */
 );
+/*****/
 
 ase_map_t* ase_map_init (
 	ase_map_t* map,
 	ase_mmgr_t* mmgr,
 	ase_size_t capa,
-	ase_uint_t factor
+	int factor
 );
 
 void ase_map_fini (
@@ -176,10 +230,36 @@ void ase_map_clear (
 	ase_map_t* map /* a map */
 );
 
-/*
- * NAME: specifies how to clone an element
+int ase_map_getscale (
+	ase_map_t* map,
+	int id
+);
+
+/****f* ase/ase_map_setscale
  *
- * DESCRIPTION:
+ * DESCRIPTION 
+ *  The ase_map_setscale() function sets the scale factor of the length
+ *  of a key and a value. A map is created with a scale factor of 1.
+ *  The scale factor should be larger than 0 and less than 256.
+ *
+ * RETURN
+ *  ASE_NULL on failure
+ *
+ * SYNOPSIS
+ */
+void ase_map_setscale (
+	ase_map_t* map /* a map */,
+	int id         /* ASE_MAP_KEY or ASE_MAP_VAL */,
+	int scale      /* a scale factor */
+);
+/*****/
+
+
+/****f* ase/ase_map_setcopier
+ * NAME 
+ *  ase_map_setcopier - specify how to clone an element
+ *
+ * DESCRIPTION
  *  A special copier ASE_MAP_COPIER_INLINE is provided. This copier enables
  *  you to copy the data inline to the internal node. No freeer is invoked
  *  when the node is freeed.
@@ -192,6 +272,7 @@ void ase_map_setcopier (
 	int id /* ASE_MAP_KEY or ASE_MAP_VAL */,
 	ase_map_copier_t copier /* a element copier */
 );
+/*****/
 
 ase_map_copier_t ase_map_getcopier (
 	ase_map_t* map /* a map */,
