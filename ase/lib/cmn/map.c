@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 376 2008-09-24 07:18:50Z baconevi $
+ * $Id: map.c 385 2008-09-25 11:06:33Z baconevi $
  *
  * {License}
  */
@@ -29,6 +29,9 @@
 #define uint_t   ase_uint_t
 #define mmgr_t   ase_mmgr_t
 
+#define KTOB(map,len) ((len)*(map)->scale[ASE_MAP_KEY])
+#define VTOB(map,len) ((len)*(map)->scale[ASE_MAP_VAL])
+
 static int reorganize (map_t* map);
 
 static size_t hash_key (map_t* map, const void* kptr, size_t klen)
@@ -50,7 +53,7 @@ static int comp_key (map_t* map,
 	const void* kptr1, size_t klen1, 
 	const void* kptr2, size_t klen2)
 {
-	if (klen1 == klen2) return ASE_MEMCMP (kptr1, kptr2, klen1);
+	if (klen1 == klen2) return ASE_MEMCMP (kptr1, kptr2, KTOB(map,klen1));
 	/* it just returns 1 to indicate that they are different. */
 	return 1;
 }
@@ -63,8 +66,8 @@ static pair_t* alloc_pair (map_t* map,
 	copier_t vcop = map->copier[ASE_MAP_VAL];
 
 	size_t as = SIZEOF(pair_t);
-	if (kcop == ASE_MAP_COPIER_INLINE) as += klen;
-	if (vcop == ASE_MAP_COPIER_INLINE) as += vlen;
+	if (kcop == ASE_MAP_COPIER_INLINE) as += KTOB(map,klen);
+	if (vcop == ASE_MAP_COPIER_INLINE) as += VTOB(map,vlen);
 
 	n = (pair_t*) ASE_MMGR_ALLOC (map->mmgr, as);
 	if (n == ASE_NULL) return ASE_NULL;
@@ -79,7 +82,7 @@ static pair_t* alloc_pair (map_t* map,
 	else if (kcop == ASE_MAP_COPIER_INLINE)
 	{
 		KPTR(n) = n + 1;
-		ASE_MEMCPY (KPTR(n), kptr, klen);
+		ASE_MEMCPY (KPTR(n), kptr, KTOB(map,klen));
 	}
 	else 
 	{
@@ -100,8 +103,8 @@ static pair_t* alloc_pair (map_t* map,
 	{
 		VPTR(n) = n + 1;
 		if (kcop == ASE_MAP_COPIER_INLINE) 
-			VPTR(n) = (byte_t*)VPTR(n) + klen;
-		ASE_MEMCPY (VPTR(n), vptr, vlen);
+			VPTR(n) = (byte_t*)VPTR(n) + KTOB(map,klen);
+		ASE_MEMCPY (VPTR(n), vptr, VTOB(map,vlen));
 	}
 	else 
 	{
@@ -156,7 +159,7 @@ static pair_t* change_pair_val (
 		{
 			if (ovlen == vlen)
 			{
-				ASE_MEMCPY (VPTR(pair), vptr, vlen);
+				ASE_MEMCPY (VPTR(pair), vptr, VTOB(map,vlen));
 			}
 			else
 			{
@@ -188,7 +191,7 @@ static pair_t* change_pair_val (
 	return pair;
 }
 
-map_t* ase_map_open (mmgr_t* mmgr, size_t ext, size_t capa, uint_t factor)
+map_t* ase_map_open (mmgr_t* mmgr, size_t ext, size_t capa, int factor)
 {
 	map_t* map;
 
@@ -220,7 +223,7 @@ void ase_map_close (map_t* map)
 	ASE_MMGR_FREE (map->mmgr, map);
 }
 
-map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, uint_t factor)
+map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, int factor)
 {
 	ASE_ASSERTX (capa > 0,
 		"The initial capacity should be greater than 0. Otherwise, it is adjusted to 1 in the release mode");
@@ -241,9 +244,12 @@ map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, uint_t factor)
 	/*for (i = 0; i < capa; i++) map->bucket[i] = ASE_NULL;*/
 	ASE_MEMSET (map->bucket, 0, capa*SIZEOF(pair_t*));
 
+	map->scale[ASE_MAP_KEY] = 1;
+	map->scale[ASE_MAP_VAL] = 1;
+	map->factor = factor;
+
 	map->size = 0;
 	map->capa = capa;
-	map->factor = factor;
 	map->threshold = map->capa * map->factor / 100;
 
 	map->hasher = hash_key;
@@ -286,6 +292,27 @@ void ase_map_clear (map_t* map)
 
 		map->bucket[i] = ASE_NULL;
 	}
+}
+
+int ase_map_getscale (map_t* map, int id)
+{
+	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
+		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");
+	return map->scale[id];
+}
+
+void ase_map_setscale (map_t* map, int id, int scale)
+{
+	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
+		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");
+
+	ASE_ASSERTX (scale > 0 && scale <= ASE_TYPE_MAX(ase_byte_t), 
+		"The scale should be larger than 0 and less than or equal to the maximum value that the ase_byte_t type can hold");
+
+	if (scale <= 0) scale = 1;
+	if (scale > ASE_TYPE_MAX(ase_byte_t)) scale = ASE_TYPE_MAX(ase_byte_t);
+
+	map->scale[id] = scale;
 }
 
 copier_t ase_map_getcopier (map_t* map, int id)
@@ -404,6 +431,7 @@ pair_t* ase_map_search (map_t* map, const void* kptr, size_t klen)
 	return ASE_NULL;
 }
 
+
 int ase_map_put (
 	map_t* map, void* kptr, size_t klen, 
 	void* vptr, size_t vlen, pair_t** px)
@@ -472,8 +500,7 @@ pair_t* ase_map_upsert (
 	return px;
 }
 
-pair_t* ase_map_insert (
-	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+pair_t* ase_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* pair;
 	size_t hc;
@@ -511,8 +538,7 @@ pair_t* ase_map_insert (
 	return pair;
 }
 
-pair_t* ase_map_update (
-	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+pair_t* ase_map_update (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* pair, * p, * prev, * next;
 	size_t hc;
