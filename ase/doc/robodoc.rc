@@ -1,0 +1,24 @@
+items:
+	SYNOPSIS
+	ATTRIBUTES
+	PARAMETERS
+	RETURN
+	DESCRIPTION
+	SEE ALSO
+	BUGS
+	EXAMPLES
+source items:
+	SYNOPSIS
+item order:
+	SYNOPSIS
+	DESCRIPTION
+	ATTRIBUTES
+	PARAMETERS
+	RETURN
+	SEE ALSO
+	BUGS
+	EXAMPLES
+remark begin markers:
+	/*
+remark end markers:
+	*/
