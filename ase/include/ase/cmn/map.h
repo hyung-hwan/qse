@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 389 2008-09-26 08:01:24Z baconevi $
+ * $Id: map.h 390 2008-09-26 15:30:49Z baconevi $
  *
  * {License}
  */
@@ -23,6 +23,13 @@
  *  }
  ******
  */
+
+/* values that can be returned by ase_map_walker_t */
+enum ase_map_walk_t
+{
+        ASE_MAP_WALK_STOP = 0,
+        ASE_MAP_WALK_FORWARD = 1
+};
 
 typedef struct ase_map_t ase_map_t;
 typedef struct ase_map_pair_t ase_map_pair_t;
@@ -166,12 +173,6 @@ enum ase_map_id_t
 	ASE_MAP_VAL = 1
 };
 
-/* values that can be returned by ase_map_walker_t */
-enum ase_map_walk_t
-{
-        ASE_MAP_WALK_STOP = 0,
-        ASE_MAP_WALK_FORWARD = 1
-};
 
 #define ASE_MAP_COPIER_INLINE ase_map_copyinline
 
