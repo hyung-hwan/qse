@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 385 2008-09-25 11:06:33Z baconevi $
+ * $Id: map.h 388 2008-09-26 07:26:20Z baconevi $
  *
  * {License}
  */
@@ -9,6 +9,20 @@
 
 #include <ase/types.h>
 #include <ase/macros.h>
+
+/****o* ase.cmn.map/map.h
+ * DESCRIPTION
+ *  A hash map maintains buckets for key/value pairs with the same key hash
+ *  chained under the same bucket.
+ *
+ *  #include <ase/cmn/map.h>
+ *
+ * EXAMPLES
+ *  void f (void)
+ *  {
+ *  }
+ ******
+ */
 
 typedef struct ase_map_t ase_map_t;
 typedef struct ase_map_pair_t ase_map_pair_t;
@@ -35,24 +49,47 @@ typedef ase_size_t (*ase_map_hasher_t) (
 	ase_size_t klen  /* the length of a key in bytes */
 );
 
-/* key comparater */
+/****t* ase.cmn.map/ase_map_comper_t
+ * NAME
+ *  ase_map_comper_t - define a key comparator
+ *
+ * DESCRIPTION
+ *  The ase_map_comper_t type defines a key comparator that is called when
+ *  the map needs to compare keys. A map is created with a default comparator
+ *  which performs bitwise comparison between two keys.
+ *
+ *  The comparator should return 0 if the keys are the same and a non-zero
+ *  integer otherwise.
+ *
+ * SYNOPSIS
+ */
 typedef int (*ase_map_comper_t) (
 	ase_map_t* map    /* a map */, 
 	const void* kptr1 /* the pointer to a key */, 
-	ase_size_t klen1  /* the length of a key in bytes */, 
+	ase_size_t klen1  /* the length of a key */, 
 	const void* kptr2 /* the pointer to a key */, 
-	ase_size_t klen2  /* the length of a key in bytes */
+	ase_size_t klen2  /* the length of a key */
 );
+/******/
 
-/* 
- * value keeper
- * it is called when a value can be kept without explicit free and copy 
+/****t* ase.cmn.map/ase_map_keeper_t
+ * NAME
+ *  ase_map_keeper_t - define a value keeper
+ *
+ * DESCRIPTION
+ *  The ase_map_keeper_t type defines a value keeper that is called when 
+ *  a value is retained in the context that it should be destroyed because
+ *  it is identical to a new value. Two values are identical if their beginning
+ *  pointers and their lengths are equal.
+ *
+ * SYNOPSIS
  */
 typedef void (*ase_map_keeper_t) (
-	ase_map_t* map,
-	void* dptr,
-	ase_size_t dlen	
+	ase_map_t* map     /* a map */,
+	void* vptr         /* the pointer to a value */,
+	ase_size_t vlen    /* the length of a value */	
 );
+/******/
 
 /*
  * bucket resizer
@@ -66,36 +103,40 @@ typedef ase_map_walk_t (*ase_map_walker_t) (
 	void* arg             /* the pointer to user-defined data */
 );
 
-/****s* ase/ase_map_pair_t
+/****s* ase.cmn.map/ase_map_pair_t
  * NAME
  *  ase_map_pair_t - define a pair
+ *
  * DESCRIPTION
  *  A pair is composed of a key and a value. It maintains pointers to the 
  *  beginning of a key and a value plus their length. The length is scaled
  *  down with the scale factor specified in an owning map. Use macros defined
- *  in the SEE ALSO section below to access individual attributes.
- * ATTRIBUTES
- *  kptr - the pointer to a key
- *  klen - the length of a key
- *  vptr - the pointer to a value
- *  vlen - the length of a value 
+ *  in the SEE ALSO section below to access individual fields.
+ *
  * SEE ALSO
  *  ASE_MAP_KPTR, ASE_MAP_KLEN, ASE_MAP_VPTR, ASE_MAP_VLEN
- * SOURCE
+ *
+ * SYNOPSIS
  */
 struct ase_map_pair_t
 {
-	void* kptr;
-	ase_size_t klen;
+	void* kptr;      /* the pointer to a key */
+	ase_size_t klen; /* the length of a key */
 
-	void* vptr;
-	ase_size_t vlen;
+	void* vptr;      /* the pointer to a value */
+	ase_size_t vlen; /* the length of a value */
 
 	/* an internal pointer to the next pair chained */
 	ase_map_pair_t* next;
 };
 /*****/
 
+/****s* ase.cmn.map/ase_map_t
+ * NAME
+ *  ase_map_t - define a hash map
+ *
+ * SYNOPSIS
+ */
 struct ase_map_t
 {
         ase_mmgr_t* mmgr;
@@ -117,6 +158,7 @@ struct ase_map_t
 
 	ase_map_pair_t** bucket;
 };
+/******/
 
 enum ase_map_id_t
 {
@@ -133,18 +175,26 @@ enum ase_map_walk_t
 
 #define ASE_MAP_COPIER_INLINE ase_map_copyinline
 
-/****d* ase/ASE_MAP_SIZE
+/****d* ase.cmn.map/ASE_MAP_SIZE
+ * NAME
+ *  ASE_MAP_SIZE - get the number of pairs
+ * 
  * DESCRIPTION
  *  The ASE_MAP_SIZE() macro returns the number of pairs in a map.
- * SOURCE
+ *
+ * SYNOPSIS
  */
 #define ASE_MAP_SIZE(m) ((m)->size)
 /*****/
 
-/****d* ase/ASE_MAP_CAPA
+/****d* ase.cmn.map/ASE_MAP_CAPA
+ * NAME
+ *  ASE_MAP_CAPA - get the capacity of a map
+ *
  * DESCRIPTION
  *  The ASE_MAP_CAPA() macro returns the maximum number of pairs a map can hold.
- * SOURCE
+ *
+ * SYNOPSIS
  */
 #define ASE_MAP_CAPA(m) ((m)->capa)
 /*****/
@@ -174,9 +224,12 @@ enum ase_map_walk_t
 extern "C" {
 #endif
 
-/****f* ase/ase_map_open
+/****f* ase.cmn.map/ase_map_open
+ * NAME
+ *  ase_map_open - creates a hash map
+ *
  * DESCRIPTION 
- *  The ase_map_open() function creates a hashed table with a dynamic array 
+ *  The ase_map_open() function creates a hash map with a dynamic array 
  *  bucket and a list of values chained. The initial capacity should be larger
  *  than 0. The load factor should be between 0 and 100 inclusive and the load
  *  factor of 0 disables bucket resizing. If you need extra space associated
@@ -199,20 +252,22 @@ ase_map_t* ase_map_open (
 	ase_size_t capa  /* initial capacity */,
 	int factor       /* load factor */
 );
-/*****/
+/******/
 
 
-/****f* ase/ase_map_close 
+/****f* ase.cmn.map/ase_map_close 
+ * NAME
+ *  ase_map_close - destroy a hash map
+ *  
  * DESCRIPTION 
- *  The ase_map_close() function creates a hashed map with a dynamic array 
- *  bucket and a list of values linked.
+ *  The ase_map_close() function destroys a hash map.
  *
  * SYNOPSIS
  */
 void ase_map_close (
 	ase_map_t* map /* a map */
 );
-/*****/
+/******/
 
 ase_map_t* ase_map_init (
 	ase_map_t* map,
@@ -235,7 +290,7 @@ int ase_map_getscale (
 	int id
 );
 
-/****f* ase/ase_map_setscale
+/****f* ase.cmn.map/ase_map_setscale
  *
  * DESCRIPTION 
  *  The ase_map_setscale() function sets the scale factor of the length
@@ -252,10 +307,10 @@ void ase_map_setscale (
 	int id         /* ASE_MAP_KEY or ASE_MAP_VAL */,
 	int scale      /* a scale factor */
 );
-/*****/
+/******/
 
 
-/****f* ase/ase_map_setcopier
+/****f* ase.cmn.map/ase_map_setcopier
  * NAME 
  *  ase_map_setcopier - specify how to clone an element
  *
@@ -272,7 +327,7 @@ void ase_map_setcopier (
 	int id /* ASE_MAP_KEY or ASE_MAP_VAL */,
 	ase_map_copier_t copier /* a element copier */
 );
-/*****/
+/******/
 
 ase_map_copier_t ase_map_getcopier (
 	ase_map_t* map /* a map */,
