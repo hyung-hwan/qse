@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 381 2008-09-24 11:07:24Z baconevi $
+ * $Id: parse.c 389 2008-09-26 08:01:24Z baconevi $
  *
  * {License}
  */
@@ -464,11 +464,11 @@ ase_cstr_t* ase_awk_getkw (ase_awk_t* awk, int id, ase_cstr_t* s)
 	s->ptr = kwtab[id].name;
 	s->len = kwtab[id].name_len;
 
-	p = ase_map_search (awk->wtab, s->ptr, ASE_NCTONB(s->len));
+	p = ase_map_search (awk->wtab, s->ptr, s->len);
 	if (p != ASE_NULL) 
 	{
 		s->ptr = ASE_MAP_VPTR(p);
-		s->len = ASE_MAP_VCLEN(p);
+		s->len = ASE_MAP_VLEN(p);
 	}
 
 	return s;
@@ -558,7 +558,7 @@ static int parse (ase_awk_t* awk)
 					SETERRARG (awk, ASE_AWK_EFNNONE, 
 						*(ase_size_t*)ASE_MAP_VPTR(p),
 						ASE_MAP_KPTR(p),
-						ASE_MAP_KCLEN(p));
+						ASE_MAP_KLEN(p));
 					EXIT_PARSE(-1);
 				}
 
@@ -1097,11 +1097,11 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	/* do some trick to save a string. make it back-point at the key part 
 	 * of the pair */
 	afn->name.ptr = ASE_MAP_KPTR(pair); 
-	afn->name.len = ASE_MAP_KCLEN(pair);
+	afn->name.len = ASE_MAP_KLEN(pair);
 	ASE_AWK_FREE (awk, name_dup);
 
 	/* remove an undefined function call entry from the parse.afn table */
-	ase_map_remove (awk->parse.afns, afn->name.ptr, ASE_NCTONB(name_len));
+	ase_map_remove (awk->parse.afns, afn->name.ptr, name_len);
 	return body;
 }
 
@@ -1487,7 +1487,7 @@ static int add_global (
 
 		/* check if it conflict with a function name 
 		 * caught in the function call table */
-		if (ase_map_search (awk->parse.afns, name, ASE_NCTONB(len)) != ASE_NULL)
+		if (ase_map_search (awk->parse.afns, name, len) != ASE_NULL)
 		{
 			SETERRARG (
 				awk, ASE_AWK_EAFNRED, line, 
@@ -1677,7 +1677,7 @@ static ase_awk_t* collect_locals (
 			/* check if it conflict with a function name 
 			 * caught in the function call table */
 			if (ase_map_search (awk->parse.afns, 
-				local.ptr, ASE_NCTONB(local.len)) != ASE_NULL)
+				local.ptr, local.len) != ASE_NULL)
 			{
 				SETERRARG (
 					awk, ASE_AWK_EAFNRED, awk->token.line, 
@@ -3265,7 +3265,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		if (awk->option & ASE_AWK_IMPLICIT)
 		{
 			if (ase_map_search (awk->parse.named, 
-				name_dup, ASE_NCTONB(name_len)) != ASE_NULL)
+				name_dup, name_len) != ASE_NULL)
 			{
 				/* a function call conflicts with a named variable */
 				SETERRARG (awk, ASE_AWK_EVARRED, line, name_dup, name_len);
@@ -3324,7 +3324,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 				}
 
 				if (ase_map_search (awk->parse.afns, 
-					name_dup, ASE_NCTONB(name_len)) != ASE_NULL)
+					name_dup, name_len) != ASE_NULL)
 				{
 					/* is it one of the function calls found so far? */
 					SETERRARG (awk, ASE_AWK_EAFNRED, line, name_dup, name_len);
@@ -3344,7 +3344,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 
 			/* collect unique instances of a named variables for reference */
 			if (ase_map_upsert (awk->parse.named,
-				name_dup, ASE_NCTONB(name_len), 
+				name_dup, name_len, 
 				&line, ASE_SIZEOF(line)) == ASE_NULL)
 			{
 				  SETERRLIN (awk, ASE_AWK_ENOMEM, line);
@@ -3507,8 +3507,7 @@ static ase_awk_nde_t* parse_hashidx (
 			}
 
 			if (ase_map_search (
-				awk->parse.afns, 
-				name, ASE_NCTONB(name_len)) != ASE_NULL)
+				awk->parse.afns, name, name_len) != ASE_NULL)
 			{
 				/* is it one of the function calls found so far? */
 				SETERRARG (awk, ASE_AWK_EAFNRED, line, name, name_len);
@@ -3660,8 +3659,7 @@ static ase_awk_nde_t* parse_fncall (
 
 			/* store a non-builtin function call into the parse.afns table */
 			if (ase_map_upsert (
-				awk->parse.afns, 
-				name, ASE_NCTONB(name_len),
+				awk->parse.afns, name, name_len,
 				&line, ASE_SIZEOF(line)) == ASE_NULL)
 			{
 				ASE_AWK_FREE (awk, call);

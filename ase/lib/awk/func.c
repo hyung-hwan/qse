@@ -1,5 +1,5 @@
 /*
- * $Id: func.c 382 2008-09-24 11:36:45Z baconevi $
+ * $Id: func.c 389 2008-09-26 08:01:24Z baconevi $
  *
  * {License}
  */
@@ -99,7 +99,7 @@ void* ase_awk_addfunc (
 	bfn->handler = handler;
 
 	if (ase_map_insert (awk->bfn.user,
-		(ase_char_t*)name, ASE_NCTONB(name_len), bfn, 0) == ASE_NULL)
+		(ase_char_t*)name, name_len, bfn, 0) == ASE_NULL)
 	{
 		ASE_AWK_FREE (awk, bfn);
 		ase_awk_seterrnum (awk, ASE_AWK_ENOMEM);
@@ -112,7 +112,7 @@ void* ase_awk_addfunc (
 int ase_awk_delfunc (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 {
-	if (ase_map_remove (awk->bfn.user, name, ASE_NCTONB(name_len)) == -1)
+	if (ase_map_remove (awk->bfn.user, name, name_len) == -1)
 	{
 		ase_cstr_t errarg;
 
@@ -146,12 +146,12 @@ ase_awk_bfn_t* ase_awk_getbfn (
 		    (awk->option & bfn->valid) != bfn->valid) continue;
 
 		pair = ase_map_search (
-			awk->wtab, bfn->name.ptr, ASE_NCTONB(bfn->name.len));
+			awk->wtab, bfn->name.ptr, bfn->name.len);
 		if (pair != ASE_NULL)
 		{
 			/* found in the customized word table */
 			k = ASE_MAP_VPTR(pair);
-			l = ASE_MAP_VCLEN(pair);
+			l = ASE_MAP_VLEN(pair);
 		}
 		else
 		{
@@ -166,21 +166,21 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	 *       because I'm trying to support ase_awk_setword in 
 	 *       a very flimsy way here. Would it be better to drop
 	 *       ase_awk_setword totally? */
-	pair = ase_map_search (awk->rwtab, name, ASE_NCTONB(len));
+	pair = ase_map_search (awk->rwtab, name, len);
 	if (pair != ASE_NULL)
 	{
 		/* the current name is a target name for
 		 * one of the original word. */
 		k = ASE_MAP_VPTR(pair);
-		l = ASE_MAP_VCLEN(pair);
+		l = ASE_MAP_VLEN(pair);
 	}
 	else
 	{
-		pair = ase_map_search (awk->wtab, name, ASE_NCTONB(len));
+		pair = ase_map_search (awk->wtab, name, len);
 		if (pair != ASE_NULL)
 		{
 			k = ASE_MAP_VPTR(pair);
-			l = ASE_MAP_VCLEN(pair);
+			l = ASE_MAP_VLEN(pair);
 
 			if (ase_strxncmp (name, len, k, l) != 0)
 			{
@@ -204,7 +204,7 @@ ase_awk_bfn_t* ase_awk_getbfn (
 	}
 	/* END NOTE */
 
-	pair = ase_map_search (awk->bfn.user, k, ASE_NCTONB(l));
+	pair = ase_map_search (awk->bfn.user, k, l);
 	if (pair == ASE_NULL) return ASE_NULL;
 
 	bfn = (ase_awk_bfn_t*)ASE_MAP_VPTR(pair);
@@ -800,7 +800,7 @@ static int bfn_split (
 
 		if (ase_map_insert (
 			((ase_awk_val_map_t*)t1)->map, 
-			key, ASE_NCTONB(key_len), t2, 0) == ASE_NULL)
+			key, key_len, t2, 0) == ASE_NULL)
 		{
 			ase_awk_refdownval (run, t2);
 

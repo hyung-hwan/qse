@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 375 2008-09-23 14:47:23Z baconevi $
+ * $Id: types.h 389 2008-09-26 08:01:24Z baconevi $
  *
  * {License}
  */
@@ -332,17 +332,31 @@ typedef void  (*ase_free_t)    (void* data, void* ptr);
 typedef ase_bool_t (*ase_isccls_t) (void* data, ase_cint_t c);
 typedef ase_cint_t (*ase_toccls_t) (void* data, ase_cint_t c);
 
+/****t* ase/ase_xstr_t
+ * NAME
+ *  ase_xstr_t - combile a pointer and length 
+ *
+ * SYNOPSIS
+ */
 struct ase_xstr_t
 {
 	ase_char_t* ptr; /* this is not a const pointer */
 	ase_size_t  len;
 };
+/******/
 
+/****t* ase/ase_cstr_t
+ * NAME
+ *  ase_cstr_t - combine a constant pointer and length 
+ *
+ * SYNOPSIS
+ */
 struct ase_cstr_t
 {
 	const ase_char_t* ptr; /* this is a const pointer */
 	ase_size_t        len;
 };
+/******/
 
 struct ase_mmgr_t
 {

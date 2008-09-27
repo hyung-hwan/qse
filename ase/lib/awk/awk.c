@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 385 2008-09-25 11:06:33Z baconevi $ 
+ * $Id: awk.c 389 2008-09-26 08:01:24Z baconevi $ 
  *
  * {License}
  */
@@ -77,6 +77,8 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->wtab) = awk;
 	ase_map_setcopier (awk->wtab, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (awk->wtab, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
+	ase_map_setscale (awk->wtab, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
+	ase_map_setscale (awk->wtab, ASE_MAP_VAL, ASE_SIZEOF(ase_char_t));
 
 	awk->rwtab = ase_map_open (mmgr, ASE_SIZEOF(awk), 512, 70);
 	if (awk->rwtab == ASE_NULL)
@@ -89,9 +91,10 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->rwtab) = awk;
 	ase_map_setcopier (awk->rwtab, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (awk->rwtab, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
+	ase_map_setscale (awk->rwtab, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
+	ase_map_setscale (awk->rwtab, ASE_MAP_VAL, ASE_SIZEOF(ase_char_t));
 
 	/* TODO: initial map size?? */
-	/*awk->tree.afns = ase_map_open (awk, 512, 70, free_afn, ASE_NULL, mmgr);*/
 	awk->tree.afns = ase_map_open (mmgr, ASE_SIZEOF(awk), 512, 70);
 	if (awk->tree.afns == ASE_NULL) 
 	{
@@ -102,9 +105,10 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		return ASE_NULL;	
 	}
 	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->tree.afns) = awk;
+	ase_map_setcopier (awk->tree.afns, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setfreeer (awk->tree.afns, ASE_MAP_VAL, free_afn);
+	ase_map_setcale (awk->tree.afns, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
 
-	/*awk->parse.afns = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
 	awk->parse.afns = ase_map_open (mmgr, ASE_SIZEOF(awk), 256, 70);
 	if (awk->parse.afns == ASE_NULL)
 	{
@@ -116,9 +120,10 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		return ASE_NULL;	
 	}
 	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->parse.afns) = awk;
+	ase_map_setcopier (awk->parse.afns, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (awk->parse.afns, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
+	ase_map_setscale (awk->parse.afns, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
 
-	/*awk->parse.named = ase_map_open (awk, 256, 70, ASE_NULL, ASE_NULL, mmgr);*/
 	awk->parse.named = ase_map_open (mmgr, ASE_SIZEOF(awk), 256, 70);
 	if (awk->parse.named == ASE_NULL)
 	{
@@ -131,7 +136,9 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 		return ASE_NULL;	
 	}
 	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->parse.named) = awk;
+	ase_map_setcopier (awk->parse.named, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (awk->parse.named, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
+	ase_map_setscale (awk->parse.named, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
 
 	if (ase_awk_tab_open (&awk->parse.globals, awk) == ASE_NULL) 
 	{
@@ -205,7 +212,6 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 
 	awk->bfn.sys = ASE_NULL;
 	/*awk->bfn.user = ASE_NULL;*/
-	/*awk->bfn.user = ase_map_open (awk, 512, 70, free_bfn, ASE_NULL, mmgr);*/
 	awk->bfn.user = ase_map_open (mmgr, ASE_SIZEOF(awk), 512, 70);
 	if (awk->bfn.user == ASE_NULL)
 	{
@@ -224,6 +230,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->bfn.user) = awk;
 	ase_map_setcopier (awk->bfn.user, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setfreeer (awk->bfn.user, ASE_MAP_VAL, free_bfn); 
+	ase_map_setscale (awk->bfn.user, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
 
 	awk->parse.depth.cur.block = 0;
 	awk->parse.depth.cur.loop = 0;
