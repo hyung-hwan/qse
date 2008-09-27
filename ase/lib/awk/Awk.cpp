@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: Awk.cpp 390 2008-09-26 15:30:49Z baconevi $
  *
  * {License}
  */
@@ -1144,7 +1144,7 @@ int Awk::open ()
 {
 	ASE_ASSERT (awk == ASE_NULL && functionMap == ASE_NULL);
 
-	awk = ase_awk_open (&mmgr, 0, ASE_NULL);
+	awk = ase_awk_open (&mmgr, 0);
 	if (awk == ASE_NULL)
 	{
 		setError (ERR_NOMEM);

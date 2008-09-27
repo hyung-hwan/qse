@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 341 2008-08-20 10:58:19Z baconevi $
+ * $Id: Awk.hpp 390 2008-09-26 15:30:49Z baconevi $
  *
  * {License}
  */
@@ -39,7 +39,7 @@ public:
 	/** Represents the internal hash table */
 	typedef ase_map_t map_t;
 	/** Represents a key/value pair */
-	typedef ase_pair_t pair_t;
+	typedef ase_map_pair_t pair_t;
 
 	/** Represents an internal awk value */
 	typedef ase_awk_val_t val_t;

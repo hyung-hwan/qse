@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 381 2008-09-24 11:07:24Z baconevi $
+ * $Id: run.c 390 2008-09-26 15:30:49Z baconevi $
  *
  * {License}
  */
@@ -726,14 +726,16 @@ ase_bool_t ase_awk_isstop (ase_awk_run_t* run)
 	return (run->exit_level == EXIT_ABORT || run->awk->stopall);
 }
 
-static void free_namedval (void* run, void* val)
+static void free_namedval (ase_map_t* map, void* dptr, ase_size_t dlen)
 {
-	ase_awk_refdownval ((ase_awk_run_t*)run, val);
+	ase_awk_refdownval (
+		*(ase_awk_run_t**)ASE_MAP_EXTENSION(map), dptr);
 }
 
-static void same_namedval (void* run, void* val)
+static void same_namedval (ase_map_t* map, void* dptr, ase_size_t dlen)
 {
-	ase_awk_refdownval_nofree ((ase_awk_run_t*)run, val);
+	ase_awk_refdownval_nofree (
+		*(ase_awk_run_t**)ASE_MAP_EXTENSION(map), dptr);
 }
 
 static int init_run (
@@ -791,7 +793,7 @@ static int init_run (
 	}
 
 	run->named = ase_map_open (
-		run, 1024, 70, free_namedval, same_namedval, MMGR(run));
+		MMGR(run), ASE_SIZEOF(run), 1024, 70);
 	if (run->named == ASE_NULL)
 	{
 		ase_str_fini (&run->format.fmt);
@@ -800,6 +802,11 @@ static int init_run (
 		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
+	*(ase_awk_run_t**)ASE_MAP_EXTENSION(run->named) = run;
+	ase_map_setcopier (run->named, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
+	ase_map_setfreeer (run->named, ASE_MAP_VAL, free_namedval);
+	ase_map_setkeeper (run->named, same_namedval);	
+	ase_map_setscale (run->named, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
 
 	run->format.tmp.ptr = (ase_char_t*)
 		ASE_AWK_ALLOC (run->awk, 4096*ASE_SIZEOF(ase_char_t*));
@@ -1022,9 +1029,9 @@ static int build_runarg (
 			 * it has successfully been assigned into ARGV. */
 			ase_awk_refupval (run, v_tmp);
 
-			if (ase_map_upsertx (
+			if (ase_map_upsert (
 				((ase_awk_val_map_t*)v_argv)->map,
-				key, key_len, v_tmp, ASE_NULL) == -1)
+				key, key_len, v_tmp, 0) == ASE_NULL)
 			{
 				/* if the assignment operation fails, decrements
 				 * the reference of v_tmp to free it */
@@ -2182,51 +2189,55 @@ static int run_for (ase_awk_run_t* run, ase_awk_nde_for_t* nde)
 	return 0;
 }
 
-struct __foreach_walker_t
+struct foreach_walker_t
 {
 	ase_awk_run_t* run;
 	ase_awk_nde_t* var;
 	ase_awk_nde_t* body;
+	int ret;
 };
 
-static int __walk_foreach (ase_map_pair_t* pair, void* arg)
+static ase_map_walk_t walk_foreach (
+	ase_map_t* map, ase_map_pair_t* pair, void* arg)
 {
-	struct __foreach_walker_t* w = (struct __foreach_walker_t*)arg;
+	struct foreach_walker_t* w = (struct foreach_walker_t*)arg;
 	ase_awk_val_t* str;
 
 	str = (ase_awk_val_t*) ase_awk_makestrval (
-		w->run, ASE_PAIR_KEYPTR(pair), ASE_PAIR_KEYLEN(pair));
+		w->run, ASE_MAP_KPTR(pair), ASE_MAP_KLEN(pair));
 	if (str == ASE_NULL) 
 	{
 		/* adjust the error line */
 		w->run->errlin = w->var->line;
-		return -1;
+		w->ret = -1;
+		return ASE_MAP_WALK_STOP;
 	}
 
 	ase_awk_refupval (w->run, str);
 	if (do_assignment (w->run, w->var, str) == ASE_NULL)
 	{
 		ase_awk_refdownval (w->run, str);
-		return -1;
+		w->ret = -1;
+		return ASE_MAP_WALK_STOP;
 	}
 
 	if (run_statement (w->run, w->body) == -1)
 	{
 		ase_awk_refdownval (w->run, str);
-		return -1;
+		w->ret = -1;
+		return ASE_MAP_WALK_STOP;
 	}
 	
 	ase_awk_refdownval (w->run, str);
-	return 0;
+	return ASE_MAP_WALK_FORWARD;
 }
 
 static int run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 {
-	int n;
 	ase_awk_nde_exp_t* test;
 	ase_awk_val_t* rv;
 	ase_map_t* map;
-	struct __foreach_walker_t walker;
+	struct foreach_walker_t walker;
 
 	test = (ase_awk_nde_exp_t*)nde->test;
 	ASE_ASSERT (
@@ -2254,10 +2265,11 @@ static int run_foreach (ase_awk_run_t* run, ase_awk_nde_foreach_t* nde)
 	walker.run = run;
 	walker.var = test->left;
 	walker.body = nde->body;
-	n = ase_map_walk (map, __walk_foreach, &walker);
+	walker.ret = 0;
+	ase_map_walk (map, walk_foreach, &walker);
 
 	ase_awk_refdownval (run, rv);
-	return n;
+	return walker.ret;
 }
 
 static int run_break (ase_awk_run_t* run, ase_awk_nde_break_t* nde)
@@ -2466,7 +2478,7 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			}
 
 			pair = ase_map_upsert (run->named, 
-				var->id.name.ptr, var->id.name.len, tmp);
+				var->id.name.ptr, var->id.name.len, tmp, 0);
 			if (pair == ASE_NULL)
 			{
 				ase_awk_refupval (run, tmp);
@@ -2487,14 +2499,14 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			ase_awk_val_t* val;
 			ase_map_t* map;
 
-			val = (ase_awk_val_t*)pair->val;
+			val = (ase_awk_val_t*)ASE_MAP_VPTR(pair);
 			ASE_ASSERT (val != ASE_NULL);
 
 			if (val->type != ASE_AWK_VAL_MAP)
 			{
 				ase_cstr_t errarg;
 
-				errarg.ptr = var->id.name; 
+				errarg.ptr = var->id.name.ptr; 
 				errarg.len = var->id.name.len;
 
 				ase_awk_setrunerror (
@@ -2618,7 +2630,7 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 			{
 				ase_cstr_t errarg;
 
-				errarg.ptr = var->id.name; 
+				errarg.ptr = var->id.name.ptr; 
 				errarg.len = var->id.name.len;
 
 				ase_awk_setrunerror (
@@ -3325,18 +3337,17 @@ static ase_awk_val_t* do_assignment_scalar (
 	if (var->type == ASE_AWK_NDE_NAMED) 
 	{
 		ase_map_pair_t* pair;
-		int n;
 
 		pair = ase_map_search (
 			run->named, var->id.name.ptr, var->id.name.len);
 		if (pair != ASE_NULL && 
-		    ((ase_awk_val_t*)pair->val)->type == ASE_AWK_VAL_MAP)
+		    ((ase_awk_val_t*)ASE_MAP_VPTR(pair))->type == ASE_AWK_VAL_MAP)
 		{
 			/* once a variable becomes a map,
 			 * it cannot be changed to a scalar variable */
 			ase_cstr_t errarg;
 
-			errarg.ptr = var->id.name; 
+			errarg.ptr = var->id.name.ptr; 
 			errarg.len = var->id.name.len;
 
 			ase_awk_setrunerror (run,
@@ -3344,9 +3355,8 @@ static ase_awk_val_t* do_assignment_scalar (
 			return ASE_NULL;
 		}
 
-		n = ase_map_upsertx (run->named, 
-			var->id.name.ptr, var->id.name.len, val, ASE_NULL);
-		if (n < 0) 
+		if (ase_map_upsert (run->named, 
+			var->id.name.ptr, var->id.name.len, val, 0) == ASE_NULL)
 		{
 			ase_awk_setrunerror (
 				run, ASE_AWK_ENOMEM, var->line, ASE_NULL, 0);
@@ -3373,7 +3383,7 @@ static ase_awk_val_t* do_assignment_scalar (
 			 * it cannot be changed to a scalar variable */
 			ase_cstr_t errarg;
 
-			errarg.ptr = var->id.name; 
+			errarg.ptr = var->id.name.ptr; 
 			errarg.len = var->id.name.len;
 
 			ase_awk_setrunerror (run,
@@ -3394,7 +3404,7 @@ static ase_awk_val_t* do_assignment_scalar (
 			 * it cannot be changed to a scalar variable */
 			ase_cstr_t errarg;
 
-			errarg.ptr = var->id.name; 
+			errarg.ptr = var->id.name.ptr; 
 			errarg.len = var->id.name.len;
 
 			ase_awk_setrunerror (run,
@@ -3417,7 +3427,6 @@ static ase_awk_val_t* do_assignment_map (
 	ase_char_t* str;
 	ase_size_t len;
 	ase_char_t idxbuf[IDXBUFSIZE];
-	int n;
 
 	ASE_ASSERT (
 		(var->type == ASE_AWK_NDE_NAMEDIDX ||
@@ -3433,7 +3442,7 @@ static ase_awk_val_t* do_assignment_map (
 			run->named, var->id.name.ptr, var->id.name.len);
 		map = (pair == ASE_NULL)? 
 			(ase_awk_val_map_t*)ase_awk_val_nil: 
-			(ase_awk_val_map_t*)pair->val;
+			(ase_awk_val_map_t*)ASE_MAP_VPTR(pair);
 	}
 	else
 	{
@@ -3462,8 +3471,12 @@ static ase_awk_val_t* do_assignment_map (
 			/* doesn't have to decrease the reference count 
 			 * of the previous value here as it is done by 
 			 * ase_map_upsert */
-			if (ase_map_upsert (run->named, 
-				var->id.name.ptr, var->id.name.len, tmp) == ASE_NULL)
+			if (ase_map_upsert (
+				run->named,
+				var->id.name.ptr,
+				var->id.name.len, 
+				tmp,
+				0) == ASE_NULL)
 			{
 				ase_awk_refupval (run, tmp);
 				ase_awk_refdownval (run, tmp);
@@ -3524,8 +3537,7 @@ static ase_awk_val_t* do_assignment_map (
 		str, (int)map->ref, (int)map->type);
 #endif
 
-	n = ase_map_upsertx (map->map, str, len, val, ASE_NULL);
-	if (n < 0)
+	if (ase_map_upsert (map->map, str, len, val, 0) == ASE_NULL)
 	{
 		if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, var->line, ASE_NULL, 0);
@@ -5395,7 +5407,7 @@ static ase_awk_val_t* eval_afn_intrinsic (
 		return ASE_NULL;
 	}
 
-	afn = (ase_awk_afn_t*)pair->val;
+	afn = (ase_awk_afn_t*)ASE_MAP_VPTR(pair);
 	ASE_ASSERT (afn != ASE_NULL);
 
 	if (call->nargs > afn->nargs)
@@ -5746,7 +5758,7 @@ static int get_reference (
 			 * would there be any better ways to avoid this? */
 			pair = ase_map_upsert (
 				run->named, tgt->id.name.ptr,
-				tgt->id.name.len, ase_awk_val_nil);
+				tgt->id.name.len, ase_awk_val_nil, 0);
 			if (pair == ASE_NULL) 
 			{
 				ase_awk_setrunerror (
@@ -5756,7 +5768,7 @@ static int get_reference (
 			}
 		}
 
-		*ref = (ase_awk_val_t**)&pair->val;
+		*ref = (ase_awk_val_t**)&ASE_MAP_VPTR(pair);
 		return 0;
 	}
 
@@ -5788,7 +5800,7 @@ static int get_reference (
 		{
 			pair = ase_map_upsert (
 				run->named, tgt->id.name.ptr,
-				tgt->id.name.len, ase_awk_val_nil);
+				tgt->id.name.len, ase_awk_val_nil, 0);
 			if (pair == ASE_NULL) 
 			{
 				ase_awk_setrunerror (
@@ -5799,7 +5811,7 @@ static int get_reference (
 		}
 
 		tmp = get_reference_indexed (
-			run, tgt, (ase_awk_val_t**)&pair->val);
+			run, tgt, (ase_awk_val_t**)&ASE_MAP_VPTR(pair));
 		if (tmp == ASE_NULL) return -1;
 		*ref = tmp;
 	}
@@ -5913,7 +5925,7 @@ static ase_awk_val_t** get_reference_indexed (
 	{
 		pair = ase_map_upsert (
 			(*(ase_awk_val_map_t**)val)->map, 
-			str, len, ase_awk_val_nil);
+			str, len, ase_awk_val_nil, 0);
 		if (pair == ASE_NULL)
 		{
 			if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
@@ -5922,11 +5934,11 @@ static ase_awk_val_t** get_reference_indexed (
 			return ASE_NULL;
 		}
 
-		ase_awk_refupval (run, pair->val);
+		ase_awk_refupval (run, ASE_MAP_VPTR(pair));
 	}
 
 	if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
-	return (ase_awk_val_t**)&pair->val;
+	return (ase_awk_val_t**)&ASE_MAP_VPTR(pair);
 }
 
 static ase_awk_val_t* eval_int (ase_awk_run_t* run, ase_awk_nde_t* nde)
@@ -6000,7 +6012,7 @@ static ase_awk_val_t* eval_named (ase_awk_run_t* run, ase_awk_nde_t* nde)
 		((ase_awk_nde_var_t*)nde)->id.name.ptr, 
 		((ase_awk_nde_var_t*)nde)->id.name.len);
 
-	return (pair == ASE_NULL)? ase_awk_val_nil: pair->val;
+	return (pair == ASE_NULL)? ase_awk_val_nil: ASE_MAP_VPTR(pair);
 }
 
 static ase_awk_val_t* eval_global (ase_awk_run_t* run, ase_awk_nde_t* nde)
@@ -6063,7 +6075,8 @@ static ase_awk_val_t* eval_indexed (
 	pair = ase_map_search ((*(ase_awk_val_map_t**)val)->map, str, len);
 	if (str != idxbuf) ASE_AWK_FREE (run->awk, str);
 
-	return (pair == ASE_NULL)? ase_awk_val_nil: (ase_awk_val_t*)pair->val;
+	return (pair == ASE_NULL)? ase_awk_val_nil: 
+	                           (ase_awk_val_t*)ASE_MAP_VPTR(pair);
 }
 
 static ase_awk_val_t* eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
@@ -6075,7 +6088,7 @@ static ase_awk_val_t* eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 	if (pair == ASE_NULL)
 	{
 		pair = ase_map_upsert (run->named, 
-			tgt->id.name.ptr, tgt->id.name.len, ase_awk_val_nil);
+			tgt->id.name.ptr, tgt->id.name.len, ase_awk_val_nil, 0);
 		if (pair == ASE_NULL) 
 		{
 			ase_awk_setrunerror (
@@ -6083,10 +6096,10 @@ static ase_awk_val_t* eval_namedidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
 			return ASE_NULL;
 		}
 
-		ase_awk_refupval (run, pair->val); 
+		ase_awk_refupval (run, ASE_MAP_VPTR(pair)); 
 	}
 
-	return eval_indexed (run, tgt, (ase_awk_val_t**)&pair->val);
+	return eval_indexed (run, tgt, (ase_awk_val_t**)&ASE_MAP_VPTR(pair));
 }
 
 static ase_awk_val_t* eval_globalidx (ase_awk_run_t* run, ase_awk_nde_t* nde)
@@ -6486,9 +6499,9 @@ static ase_char_t* idxnde_to_str (
 	{
 		/* multidimensional index */
 		ase_str_t idxstr;
-		ase_cstr_t tmp;
+		ase_xstr_t tmp;
 
-		if (ase_str_init (MMGR(run) &idxstr, DEF_BUF_CAPA) == ASE_NULL) 
+		if (ase_str_init (&idxstr, MMGR(run), DEF_BUF_CAPA) == ASE_NULL) 
 		{
 			ase_awk_setrunerror (
 				run, ASE_AWK_ENOMEM, nde->line, ASE_NULL, 0);
