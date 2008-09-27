@@ -2,8 +2,6 @@ items:
 	NAME
 	SYNOPSIS
 	DESCRIPTION
-	ATTRIBUTES
-	PARAMETERS
 	RETURN
 	SEE ALSO
 	BUGS
@@ -16,8 +14,6 @@ item order:
 	NAME
 	SYNOPSIS
 	DESCRIPTION
-	ATTRIBUTES
-	PARAMETERS
 	RETURN
 	SEE ALSO
 	BUGS
@@ -27,3 +23,10 @@ remark begin markers:
 	/*
 remark end markers:
 	*/
+ignore files:
+	.svn
+headertypes:
+	o     "Overview"       robo_overview    0
+options:
+	--nosort
+	--cmode

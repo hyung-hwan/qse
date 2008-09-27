@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 380 2008-09-24 08:16:41Z baconevi $
+ * $Id: str.h 388 2008-09-26 07:26:20Z baconevi $
  *
  * {License}
  */
@@ -9,6 +9,21 @@
 
 #include <ase/types.h>
 #include <ase/macros.h>
+
+/****o* ase.cmn.str/str.h
+ * DESCRIPTION
+ *  <ase/cmn/str.h> defines various functions, types, macros to manipulate
+ *  strings.
+ *
+ *  #include <ase/cmn/str.h>
+ *
+ * EXAMPLES
+ *  void f (void)
+ *  {
+ *  }
+ ******
+ */
+
 
 #define ASE_STR_LEN(s)       ((s)->len)
 #define ASE_STR_PTR(s)       ((s)->ptr)
@@ -114,9 +129,40 @@ int ase_strxncmp (
 
 int ase_strcasecmp (
 	const ase_char_t* s1, const ase_char_t* s2, ase_ccls_t* ccls);
+
+/****f* ase.cmn.str/ase_strxncasecmp
+ * NAME
+ *  ase_strxncasecmp - compare strings ignoring case
+ *
+ * DESCRIPTION
+ *  The ase_strxncasecmp() function compares characters at the same position 
+ *  in each string after converting them to the same case temporarily. 
+ *  It accepts two strings and a character class handler. A string is 
+ *  represented by its beginning pointer and length. You can write your own
+ *  character class handler or use ASE_CCLS_GETDFL() to get the default 
+ *  character class handler.
+ *
+ *  For two strings to be equal, they need to have the same length and all
+ *  characters in the first string should be equal to their counterpart in the
+ *  second string.
+ *
+ * RETURN
+ *  The ase_strxncasecmp() returns 0 if two strings are equal, a positive
+ *  number if the first string is larger, -1 if the second string is larger.
+ *  
+ * EXAMPLES
+ *   ase_strxncasecmp (ASE_T("foo"), 3, ASE_T("FoO"), 3, ASE_CCLS_GETDFL());
+ *
+ * SYNOPSIS
+ */
 int ase_strxncasecmp (
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2, ase_ccls_t* ccls);
+	const ase_char_t* s1  /* the pointer to the first string */,
+	ase_size_t len1       /* the length of the first string */, 
+	const ase_char_t* s2  /* the pointer to the second string */,
+	ase_size_t len2       /* the length of the second string */,
+	ase_ccls_t* ccls      /* character class handler */
+);
+/******/
 
 ase_char_t* ase_strdup (const ase_char_t* str, ase_mmgr_t* mmgr);
 ase_char_t* ase_strxdup (
@@ -207,21 +253,26 @@ void ase_str_fini (
 	ase_str_t* str
 );
 
-/*
- * NAME: yield the buffer 
+/****f* ase.cmn.str/ase_str_yield
+ * NAME 
+ *  ase_str_yield - yield the buffer 
  * 
- * DESCRIPTION:
+ * DESCRIPTION
  *  The ase_str_yield() function assigns the buffer to an variable of the
  *  ase_xstr_t type and recreate a new buffer of the new_capa capacity.
  *  The function fails if it fails to allocate a new buffer.
  *
- * RETURNS: 0 on success, -1 on failure.
+ * RETURN
+ *  The ase_str_yield() function returns 0 on success, and -1 on failure.
+ *
+ * SYNOPSIS
  */
 int ase_str_yield (
 	ase_str_t* str  /* a dynamic string */,
 	ase_xstr_t* buf /* the pointer to a ase_xstr_t variable */,
 	int new_capa    /* new capacity in number of characters */
 );
+/******/
 
 void* ase_str_getextension (
 	ase_str_t* str

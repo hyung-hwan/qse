@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 385 2008-09-25 11:06:33Z baconevi $
+ * $Id: map.c 388 2008-09-26 07:26:20Z baconevi $
  *
  * {License}
  */
@@ -133,7 +133,7 @@ static void free_pair (map_t* map, pair_t* pair)
 static pair_t* change_pair_val (
 	map_t* map, pair_t* pair, void* vptr, size_t vlen)
 {
-	if (VPTR(pair) == vptr) 
+	if (VPTR(pair) == vptr && VLEN(pair) == vlen) 
 	{
 		/* if the old value and the new value are the same,
 		 * it just calls the handler for this condition. 
@@ -251,6 +251,7 @@ map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, int factor)
 	map->size = 0;
 	map->capa = capa;
 	map->threshold = map->capa * map->factor / 100;
+	if (map->capa > 0 && map->threshold <= 0) map->threshold = 1;
 
 	map->hasher = hash_key;
 	map->comper = comp_key;
