@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 388 2008-09-26 07:26:20Z baconevi $
+ * $Id: map.h 389 2008-09-26 08:01:24Z baconevi $
  *
  * {License}
  */
@@ -10,7 +10,7 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-/****o* ase.cmn.map/map.h
+/****o* ase.cmn.map/hash map
  * DESCRIPTION
  *  A hash map maintains buckets for key/value pairs with the same key hash
  *  chained under the same bucket.
@@ -291,15 +291,18 @@ int ase_map_getscale (
 );
 
 /****f* ase.cmn.map/ase_map_setscale
+ * NAME
+ *  ase_map_setscale - set the scale factor
  *
  * DESCRIPTION 
  *  The ase_map_setscale() function sets the scale factor of the length
- *  of a key and a value. A map is created with a scale factor of 1.
+ *  of a key and a value. A scale factor determines the actual length of
+ *  a key and a value in bytes. A map is created with a scale factor of 1.
  *  The scale factor should be larger than 0 and less than 256.
  *
- * RETURN
- *  ASE_NULL on failure
- *
+ * NOTES
+ *  It is a bad idea to change the scale factor when a map is not empty.
+ *  
  * SYNOPSIS
  */
 void ase_map_setscale (
@@ -309,6 +312,10 @@ void ase_map_setscale (
 );
 /******/
 
+ase_map_copier_t ase_map_getcopier (
+	ase_map_t* map /* a map */,
+	int id /* ASE_MAP_KEY or ASE_MAP_VAL */
+);
 
 /****f* ase.cmn.map/ase_map_setcopier
  * NAME 
@@ -321,35 +328,38 @@ void ase_map_setscale (
  *
  *  You may set the copier to ASE_NULL to perform no special operation 
  *  when the data pointer is rememebered.
+ *
+ * SYNOPSIS
  */
 void ase_map_setcopier (
-	ase_map_t* map /* a map */, 
-	int id /* ASE_MAP_KEY or ASE_MAP_VAL */,
-	ase_map_copier_t copier /* a element copier */
+	ase_map_t* map          /* a map */, 
+	int id                  /* ASE_MAP_KEY or ASE_MAP_VAL */,
+	ase_map_copier_t copier /* an element copier */
 );
 /******/
 
-ase_map_copier_t ase_map_getcopier (
-	ase_map_t* map /* a map */,
-	int id /* ASE_MAP_KEY or ASE_MAP_VAL */
-);
-
-/*
- * NAME: specifies how to destroy an element
- *
- * DESCRIPTION
- *  The freeer is called when a node containing the element is destroyed.
- */
-void ase_map_setfreeer (
-	ase_map_t* map /* a map */,
-	int id /* ASE_MAP_KEY or ASE_MAP_VAL */,
-	ase_map_freeer_t freeer /* a element freeer */
-);
 
 ase_map_freeer_t ase_map_getfreeer (
 	ase_map_t* map /* a map */,
 	int id /* ASE_MAP_KEY or ASE_MAP_VAL */
 );
+
+/****f* ase.cmn.map/ase_map_setfreeer
+ * NAME 
+ *  ase_map_setfreeer - specify how to destroy an element
+ *
+ * DESCRIPTION
+ *  The freeer is called when a node containing the element is destroyed.
+ *
+ * SYNOPSIS
+ */
+void ase_map_setfreeer (
+	ase_map_t* map /* a map */,
+	int id /* ASE_MAP_KEY or ASE_MAP_VAL */,
+	ase_map_freeer_t freeer /* an element freeer */
+);
+/******/
+
 
 ase_map_hasher_t ase_map_gethasher (
 	ase_map_t* map
@@ -419,36 +429,43 @@ int ase_map_put (
 	ase_map_pair_t** px
 );
 
-/* 
- * NAME: find a pair with a matching key 
+/****f* ase.cmn.map/ase_map_search
+ * NAME
+ *  ase_map_search - find a pair with a matching key 
  * 
- * DESCRIPTION:
- *  The ase_map_search() functions searches a map to find a pair with a 
+ * DESCRIPTION
+ *  The ase_map_search() function searches a map to find a pair with a 
  *  matching key. It returns the pointer to the pair found. If it fails
  *  to find one, it returns ASE_NULL.
  *
- * RETURNS:
- *  The pointer to the pair with a maching key.
- *  ASE_NULL if no match is found.
+ * RETURN
+ *  The ase_map_search() function returns the pointer to the pair with a 
+ *  maching key, and ASE_NULL if no match is found.
+ * 
+ * SYNOPSIS
  */
 ase_map_pair_t* ase_map_search (
 	ase_map_t* map   /* a map */,
 	const void* kptr /* the pointer to a key */,
 	ase_size_t klen  /* the size of the key in bytes */
 );
+/******/
 
-/* 
- * NAME: update an existing pair with a matching or inesrt a new pair
+/****f* ase.cmn.map/ase_map_upsert
+ * NAME
+ *  ase_map_upsert - update an existing pair or inesrt a new pair
  *
- * DESCRIPTION:
- *   The ase_map_upsert() function searches a map for the pair with a matching
- *   key. If one is found, it updates the pair. Otherwise, it inserts a new
- *   pair with a key and a value. It returns the pointer to the pair updated 
- *   or inserted.
+ * DESCRIPTION 
+ *  The ase_map_upsert() function searches a map for the pair with a matching
+ *  key. If one is found, it updates the pair. Otherwise, it inserts a new
+ *  pair with a key and a value. It returns the pointer to the pair updated 
+ *  or inserted.
  *
- * RETURNS:
- *  a pointer to the updated or inserted pair.
- *  ASE_NULL on failure. 
+ * RETURN 
+ *  The ase_map_upsert() function returns a pointer to the updated or inserted
+ *  pair on success, and ASE_NULL on failure. 
+ *
+ * SYNOPSIS
  */
 ase_map_pair_t* ase_map_upsert (
 	ase_map_t* map   /* a map */,
@@ -457,18 +474,22 @@ ase_map_pair_t* ase_map_upsert (
 	void* vptr       /* the pointer to a value */,
 	ase_size_t vlen  /* the length of the value in bytes */
 );
+/******/
 
-/* 
- * NAME: insert a new pair with a key and a value 
+/****f* ase.cmn.map/ase_map_insert 
+ * NAME
+ *  ase_map_insert - insert a new pair with a key and a value 
  *
- * DESCRIPTION:
+ * DESCRIPTION
  *  The ase_map_insert() function inserts a new pair with the key and the value
  *  given. If there exists a pair with the key given, the function returns 
  *  ASE_NULL without channging the value.
  *
- * RETURNS: 
- *  a pointer to the pair successfully created on success.
- *  ASE_NULL on failure. 
+ * RETURN 
+ *  The ase_map_insert() function returns a pointer to the pair created on 
+ *  success, and ASE_NULL on failure. 
+ *
+ * SYNOPSIS
  */
 ase_map_pair_t* ase_map_insert (
 	ase_map_t* map   /* a map */,
@@ -477,6 +498,7 @@ ase_map_pair_t* ase_map_insert (
 	void* vptr       /* the pointer to a value */,
 	ase_size_t vlen  /* the length of the value in bytes */
 );
+/******/
 
 /* update the value of a existing pair with a matching key */
 ase_map_pair_t* ase_map_update (

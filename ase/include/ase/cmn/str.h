@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 388 2008-09-26 07:26:20Z baconevi $
+ * $Id: str.h 389 2008-09-26 08:01:24Z baconevi $
  *
  * {License}
  */
@@ -10,10 +10,13 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-/****o* ase.cmn.str/str.h
+/****o* ase.cmn.str/string
  * DESCRIPTION
  *  <ase/cmn/str.h> defines various functions, types, macros to manipulate
  *  strings.
+ *
+ *  The ase_cstr_t type and the ase_xstr_t defined in ase/types.h helps you
+ *  dealing with a string pointer and length.
  *
  *  #include <ase/cmn/str.h>
  *

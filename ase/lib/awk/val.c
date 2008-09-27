@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 381 2008-09-24 11:07:24Z baconevi $
+ * $Id: val.c 389 2008-09-26 08:01:24Z baconevi $
  *
  * {License}
  */
@@ -506,6 +506,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 	/* the key is copied inline into a pair and is freed when the pair
 	 * is destroyed */
 	ase_map_setcopier (val->map, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
+	ase_map_setscale (val->map, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
 
 	/* not setting copier for a value means that the pointer to the data 
 	 * allocated somewhere else is remembered in a pair. but the freeing 
@@ -1141,7 +1142,7 @@ static ase_map_walk_t print_pair (
 	ASE_ASSERT (run == *(ase_awk_run_t**)ASE_MAP_EXTENSION(map));
 
 	DPRINTF (DCUSTOM, ASE_T(" %.*s=>"),
-		(int)ASE_MAP_KCLEN(pair), ASE_MAP_KPTR(pair));
+		(int)ASE_MAP_KLEN(pair), ASE_MAP_KPTR(pair));
 	ase_awk_dprintval ((ase_awk_run_t*)arg, ASE_MAP_VPTR(pair));
 	DPRINTF (DCUSTOM, ASE_T(" "));
 

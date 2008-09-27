@@ -3,22 +3,21 @@ items:
 	SYNOPSIS
 	DESCRIPTION
 	RETURN
-	SEE ALSO
-	BUGS
 	EXAMPLES
-	SOURCE
+	NOTES
+	BUGS
+	SEE ALSO
 source items:
 	SYNOPSIS
-	SOURCE
 item order:
 	NAME
 	SYNOPSIS
 	DESCRIPTION
 	RETURN
-	SEE ALSO
-	BUGS
 	EXAMPLES
-	SOURCE
+	NOTES
+	BUGS
+	SEE ALSO
 remark begin markers:
 	/*
 remark end markers:
