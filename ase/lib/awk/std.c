@@ -47,7 +47,7 @@ ase_awk_t* ase_awk_openstd (void)
 	awk = ase_awk_open (ASE_MMGR_GETDFL(), ASE_SIZEOF(ext_t));
 	ase_awk_setccls (awk, ASE_CCLS_GETDFL());
 
-	ext = (ext_t*)ASE_AWK_EXTENSION(awk);
+	ext = (ext_t*)ase_awk_getextension(awk);
 	ext->prmfns.pow     = custom_awk_pow;
 	ext->prmfns.sprintf = custom_awk_sprintf;
 	ext->prmfns.dprintf = custom_awk_dprintf;

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c 389 2008-09-26 08:01:24Z baconevi $
+ * $Id: func.c 391 2008-09-27 09:51:23Z baconevi $
  *
  * {License}
  */
@@ -112,7 +112,7 @@ void* ase_awk_addfunc (
 int ase_awk_delfunc (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t name_len)
 {
-	if (ase_map_remove (awk->bfn.user, name, name_len) == -1)
+	if (ase_map_delete (awk->bfn.user, name, name_len) == -1)
 	{
 		ase_cstr_t errarg;
 

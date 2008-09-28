@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 390 2008-09-26 15:30:49Z baconevi $
+ * $Id: Awk.hpp 391 2008-09-27 09:51:23Z baconevi $
  *
  * {License}
  */
@@ -1061,7 +1061,7 @@ protected:
 
 	static int functionHandler (
 		run_t* run, const char_t* name, size_t len);
-	static void freeFunctionMapValue (void* owner, void* value);
+	static void freeFunctionMapValue (map_t* map, void* dptr, size_t dlen);
 
 	static void onRunStart (run_t* run, void* data);
 	static void onRunEnd (run_t* run, int errnum, void* data);

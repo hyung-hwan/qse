@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 389 2008-09-26 08:01:24Z baconevi $
+ * $Id: parse.c 391 2008-09-27 09:51:23Z baconevi $
  *
  * {License}
  */
@@ -825,7 +825,6 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	ase_awk_afn_t* afn;
 	ase_size_t nargs, g;
 	ase_map_pair_t* pair;
-	int n;
 
 	/* eat up the keyword 'function' and get the next token */
 	ASE_ASSERT (MATCH(awk,TOKEN_FUNCTION));
@@ -1080,9 +1079,12 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	afn->nargs = nargs;
 	afn->body = body;
 
-	n = ase_map_upsertx (awk->tree.afns, name_dup, name_len, afn, &pair);
-	if (n < 0)
+	pair = ase_map_insert (awk->tree.afns, name_dup, name_len, afn, 0);
+	if (pair == ASE_NULL)
 	{
+		/* if ase_map_insert() fails for other reasons than memory 
+		 * shortage, there should be implementaion errors as duplicate
+		 * functions are detected earlier in this function */
 		ASE_AWK_FREE (awk, name_dup);
 		ase_awk_clrpt (awk, body);
 		ASE_AWK_FREE (awk, afn);
@@ -1091,9 +1093,6 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		return ASE_NULL;
 	}
 
-	/* duplicate functions should have been detected previously */
-	ASE_ASSERT (n != 0); 
-
 	/* do some trick to save a string. make it back-point at the key part 
 	 * of the pair */
 	afn->name.ptr = ASE_MAP_KPTR(pair); 
@@ -1101,7 +1100,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	ASE_AWK_FREE (awk, name_dup);
 
 	/* remove an undefined function call entry from the parse.afn table */
-	ase_map_remove (awk->parse.afns, afn->name.ptr, name_len);
+	ase_map_delete (awk->parse.afns, afn->name.ptr, name_len);
 	return body;
 }
 

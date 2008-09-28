@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 390 2008-09-26 15:30:49Z baconevi $
+ * $Id: run.c 391 2008-09-27 09:51:23Z baconevi $
  *
  * {License}
  */
@@ -2552,7 +2552,7 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 					return -1;
 				}
 
-				ase_map_remove (map, key, keylen);
+				ase_map_delete (map, key, keylen);
 				if (key != buf) ASE_AWK_FREE (run->awk, key);
 			}
 			else
@@ -2676,7 +2676,7 @@ static int run_delete (ase_awk_run_t* run, ase_awk_nde_delete_t* nde)
 					run->errlin = var->line;
 					return -1;
 				}
-				ase_map_remove (map, key, keylen);
+				ase_map_delete (map, key, keylen);
 				if (key != buf) ASE_AWK_FREE (run->awk, key);
 			}
 			else
@@ -2713,7 +2713,7 @@ static int run_reset (ase_awk_run_t* run, ase_awk_nde_reset_t* nde)
 
 		/* a named variable can be reset if removed from a internal map 
 		   to manage it */
-		ase_map_remove (run->named, var->id.name.ptr, var->id.name.len);
+		ase_map_delete (run->named, var->id.name.ptr, var->id.name.len);
 	}
 	else if (var->type == ASE_AWK_NDE_GLOBAL ||
 	         var->type == ASE_AWK_NDE_LOCAL ||

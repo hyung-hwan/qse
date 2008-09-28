@@ -21,6 +21,8 @@
 #define DLEN(n) ASE_SLL_DLEN(n)
 #define NEXT(n) ASE_SLL_NEXT(n)
 
+#define TOB(sll,len) ((len)*(sll)->scale)
+
 #define size_t   ase_size_t
 #define mmgr_t   ase_mmgr_t
 
@@ -55,18 +57,14 @@ sll_t* ase_sll_init (sll_t* sll, mmgr_t* mmgr)
 	/* do not zero out the extension */
 	ASE_MEMSET (sll, 0, ASE_SIZEOF(sll_t));
 	sll->mmgr = mmgr;
+	sll->size = 0;
+	sll->scale = 1;
 	return sll;
 }
 
 void ase_sll_fini (sll_t* sll)
 {
 	ase_sll_clear (sll);
-}
-
-void ase_sll_clear (sll_t* sll)
-{
-	while (HEAD(sll) != ASE_NULL) ase_sll_delete (sll, HEAD(sll));
-	ASE_ASSERT (TAIL(sll) == ASE_NULL);
 }
 
 void* ase_sll_getextension (sll_t* sll)
@@ -97,6 +95,22 @@ node_t* ase_sll_gethead (sll_t* sll)
 node_t* ase_sll_gettail (sll_t* sll)
 {
 	return TAIL(sll);
+}
+
+int ase_sll_getscale (sll_t* sll)
+{
+	return sll->scale;
+}
+
+void ase_sll_setscale (sll_t* sll, int scale)
+{
+	ASE_ASSERTX (scale > 0 && scale <= ASE_TYPE_MAX(ase_byte_t), 
+		"The scale should be larger than 0 and less than or equal to the maximum value that the ase_byte_t type can hold");
+
+	if (scale <= 0) scale = 1;
+	if (scale > ASE_TYPE_MAX(ase_byte_t)) scale = ASE_TYPE_MAX(ase_byte_t);
+
+	sll->scale = scale;
 }
 
 copier_t ase_sll_getcopier (sll_t* sll)
@@ -131,10 +145,11 @@ static node_t* alloc_node (sll_t* sll, void* dptr, size_t dlen)
 	}
 	else if (sll->copier == ASE_SLL_COPIER_INLINE)
 	{
-		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(node_t) + dlen);
+		n = ASE_MMGR_ALLOC (sll->mmgr, 
+			ASE_SIZEOF(node_t) + TOB(sll,dlen));
 		if (n == ASE_NULL) return ASE_NULL;
 
-		ASE_MEMCPY (n + 1, dptr, dlen);
+		ASE_MEMCPY (n + 1, dptr, TOB(sll,dlen));
 		DPTR(n) = n + 1;
 	}
 	else
@@ -191,16 +206,6 @@ node_t* ase_sll_insert (
 	return n;
 }
 
-node_t* ase_sll_pushhead (sll_t* sll, void* data, size_t size)
-{
-	return ase_sll_insert (sll, HEAD(sll), data, size);
-}
-
-node_t* ase_sll_pushtail (sll_t* sll, void* data, size_t size)
-{
-	return ase_sll_insert (sll, ASE_NULL, data, size);
-}
-
 void ase_sll_delete (sll_t* sll, node_t* pos)
 {
 	if (pos == ASE_NULL) return; /* not a valid node */
@@ -236,6 +241,22 @@ void ase_sll_delete (sll_t* sll, node_t* pos)
 
 	/* decrement the number of elements */
 	SIZE(sll)--;
+}
+
+void ase_sll_clear (sll_t* sll)
+{
+	while (HEAD(sll) != ASE_NULL) ase_sll_delete (sll, HEAD(sll));
+	ASE_ASSERT (TAIL(sll) == ASE_NULL);
+}
+
+node_t* ase_sll_pushhead (sll_t* sll, void* data, size_t size)
+{
+	return ase_sll_insert (sll, HEAD(sll), data, size);
+}
+
+node_t* ase_sll_pushtail (sll_t* sll, void* data, size_t size)
+{
+	return ase_sll_insert (sll, ASE_NULL, data, size);
 }
 
 void ase_sll_pophead (sll_t* sll)
