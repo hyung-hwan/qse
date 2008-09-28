@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 343 2008-08-22 08:13:47Z baconevi $
+ * $Id: awk.c 391 2008-09-27 09:51:23Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -797,13 +797,15 @@ static void on_run_start (ase_awk_run_t* run, void* custom)
 	local_dprintf (ASE_T("[AWK ABOUT TO START]\n"));
 }
 
-static int print_awk_value (ase_pair_t* pair, void* arg)
+static ase_map_walk_t print_awk_value (
+	ase_map_t* map, ase_map_pair_t* pair, void* arg)
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
-	local_dprintf (ASE_T("%.*s = "), (int)pair->key.len, pair->key.ptr);
-	ase_awk_dprintval (run, (ase_awk_val_t*)pair->val);
+	local_dprintf (ASE_T("%.*s = "), 
+		(int)ASE_MAP_KLEN(pair), ASE_MAP_KPTR(pair));
+	ase_awk_dprintval (run, (ase_awk_val_t*)ASE_MAP_VPTR(pair));
 	local_dprintf (ASE_T("\n"));
-	return 0;
+	return ASE_MAP_WALK_FORWARD;
 }
 
 static void on_run_statement (
@@ -1006,7 +1008,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 
 				if (sf == ASE_NULL) 
 				{
-					sf = ase_sll_open (ASE_NULL, 0, ASE_NULL);
+					sf = ase_sll_open (ASE_NULL, 0);
 					if (sf == ASE_NULL)
 					{
 						out_of_memory ();
@@ -1060,7 +1062,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 	}
 
 
-	if (ase_sll_getsize(sf) == 0)
+	if (sf == ASE_NULL || ASE_SLL_SIZE(sf) == 0)
 	{
 		if (opt.ind >= argc)
 		{
@@ -1093,7 +1095,7 @@ typedef struct extension_t
 } 
 extension_t;
 
-static void init_extension (ase_awk_t* awk)
+static void init_awk_extension (ase_awk_t* awk)
 {
 	extension_t* ext = ase_awk_getextension(awk);
 
@@ -1129,7 +1131,7 @@ static ase_awk_t* open_awk (void)
 	mmgr.data = ASE_NULL;
 #endif
 
-	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extension_t), init_extension);
+	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extension_t));
 	if (awk == ASE_NULL)
 	{
 #ifdef _WIN32
@@ -1138,6 +1140,8 @@ static ase_awk_t* open_awk (void)
 		ase_printf (ASE_T("ERROR: cannot open awk\n"));
 		return ASE_NULL;
 	}
+	
+	init_awk_extension (awk);
 
 	ase_awk_setoption (awk, 
 		ASE_AWK_IMPLICIT | ASE_AWK_EXTIO | ASE_AWK_NEWLINE | 

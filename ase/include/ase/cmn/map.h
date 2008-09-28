@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 390 2008-09-26 15:30:49Z baconevi $
+ * $Id: map.h 391 2008-09-27 09:51:23Z baconevi $
  *
  * {License}
  */
@@ -127,14 +127,13 @@ typedef ase_map_walk_t (*ase_map_walker_t) (
  */
 struct ase_map_pair_t
 {
-	void* kptr;      /* the pointer to a key */
-	ase_size_t klen; /* the length of a key */
+	void* kptr;           /* the pointer to a key */
+	ase_size_t klen;      /* the length of a key */
 
-	void* vptr;      /* the pointer to a value */
-	ase_size_t vlen; /* the length of a value */
+	void* vptr;           /* the pointer to a value */
+	ase_size_t vlen;      /* the length of a value */
 
-	/* an internal pointer to the next pair chained */
-	ase_map_pair_t* next;
+	ase_map_pair_t* next; /* the next pair under the same slot */
 };
 /*****/
 
@@ -281,8 +280,25 @@ void ase_map_fini (
 	ase_map_t* map
 );
 
-/* clear a map */
-void ase_map_clear (
+void* ase_map_getextension (
+	ase_map_t* map
+);
+
+ase_mmgr_t* ase_map_getmmgr (
+	ase_map_t* map
+);
+
+void ase_map_setmmgr (
+	ase_map_t* map,
+	ase_mmgr_t* mmgr
+);
+
+/* get the number of key/value pairs in a map */
+ase_size_t ase_map_getsize (
+	ase_map_t* map /* a map */
+);
+
+ase_size_t ase_map_getcapa (
 	ase_map_t* map /* a map */
 );
 
@@ -399,28 +415,6 @@ void ase_map_setsizer (
 	ase_map_sizer_t sizer
 );
 
-void* ase_map_getextension (
-	ase_map_t* map
-);
-
-ase_mmgr_t* ase_map_getmmgr (
-	ase_map_t* map
-);
-
-void ase_map_setmmgr (
-	ase_map_t* map,
-	ase_mmgr_t* mmgr
-);
-
-/* get the number of key/value pairs in a map */
-ase_size_t ase_map_getsize (
-	ase_map_t* map /* a map */
-);
-
-ase_size_t ase_map_getcapa (
-	ase_map_t* map /* a map */
-);
-
 int ase_map_put (
 	ase_map_t* map,
 	void* kptr,
@@ -515,6 +509,11 @@ int ase_map_delete (
 	ase_map_t* map   /* a map */,
 	const void* kptr /* the pointer to a key */,
 	ase_size_t klen  /* the size of the key in bytes */
+);
+
+/* clear a map */
+void ase_map_clear (
+	ase_map_t* map /* a map */
 );
 
 /* traverse a map */

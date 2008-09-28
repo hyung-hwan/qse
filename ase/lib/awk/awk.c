@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 389 2008-09-26 08:01:24Z baconevi $ 
+ * $Id: awk.c 391 2008-09-27 09:51:23Z baconevi $ 
  *
  * {License}
  */
@@ -107,7 +107,7 @@ ase_awk_t* ase_awk_open (ase_mmgr_t* mmgr, ase_size_t ext)
 	*(ase_awk_t**)ASE_MAP_EXTENSION(awk->tree.afns) = awk;
 	ase_map_setcopier (awk->tree.afns, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setfreeer (awk->tree.afns, ASE_MAP_VAL, free_afn);
-	ase_map_setcale (awk->tree.afns, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
+	ase_map_setscale (awk->tree.afns, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
 
 	awk->parse.afns = ase_map_open (mmgr, ASE_SIZEOF(awk), 256, 70);
 	if (awk->parse.afns == ASE_NULL)
@@ -456,7 +456,7 @@ int ase_awk_unsetword (ase_awk_t* awk, const ase_char_t* kw, ase_size_t len)
 {
 	ase_map_pair_t* p;
 
-	p = ase_map_search (awk->wtab, kw, ASE_NCHARS_TO_NBYTES(len));
+	p = ase_map_search (awk->wtab, kw, len);
 	if (p == ASE_NULL)
 	{
 		SETERRARG (awk, ASE_AWK_ENOENT, 0, kw, len);
@@ -464,7 +464,7 @@ int ase_awk_unsetword (ase_awk_t* awk, const ase_char_t* kw, ase_size_t len)
 	}
 
 	ase_map_delete (awk->rwtab, ASE_MAP_VPTR(p), ASE_MAP_VLEN(p));
-	ase_map_delete (awk->wtab, kw, ASE_NCHARS_TO_NBYTES(len));
+	ase_map_delete (awk->wtab, kw, len);
 	return 0;
 }
 
@@ -501,18 +501,16 @@ int ase_awk_setword (ase_awk_t* awk,
 
 	/* set the word */
 	if (ase_map_upsert (awk->wtab, 
-		(ase_char_t*)okw, ASE_NCHARS_TO_NBYTES(olen), 
-		(ase_char_t*)nkw, ASE_NCHARS_TO_NBYTES(nlen)) == ASE_NULL)
+		(ase_char_t*)okw, olen, (ase_char_t*)nkw, nlen) == ASE_NULL)
 	{
 		SETERR (awk, ASE_AWK_ENOMEM);
 		return -1;
 	}
 
 	if (ase_map_upsert (awk->rwtab, 
-		(ase_char_t*)nkw, ASE_NCHARS_TO_NBYTES(nlen), 
-		(ase_char_t*)okw, ASE_NCHARS_TO_NBYTES(olen)) == ASE_NULL)
+		(ase_char_t*)nkw, nlen, (ase_char_t*)okw, olen) == ASE_NULL)
 	{
-		ase_map_delete (awk->wtab, okw, ASE_NCHARS_TO_NBYTES(olen));
+		ase_map_delete (awk->wtab, okw, olen);
 		SETERR (awk, ASE_AWK_ENOMEM);
 		return -1;
 	}

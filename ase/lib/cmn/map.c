@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 388 2008-09-26 07:26:20Z baconevi $
+ * $Id: map.c 391 2008-09-27 09:51:23Z baconevi $
  *
  * {License}
  */
@@ -24,10 +24,10 @@
 #define NEXT(p)  ASE_MAP_NEXT(p)
 
 #define SIZEOF(x) ASE_SIZEOF(x)
-#define size_t   ase_size_t
-#define byte_t   ase_byte_t
-#define uint_t   ase_uint_t
-#define mmgr_t   ase_mmgr_t
+#define size_t    ase_size_t
+#define byte_t    ase_byte_t
+#define uint_t    ase_uint_t
+#define mmgr_t    ase_mmgr_t
 
 #define KTOB(map,len) ((len)*(map)->scale[ASE_MAP_KEY])
 #define VTOB(map,len) ((len)*(map)->scale[ASE_MAP_VAL])
@@ -108,11 +108,11 @@ static pair_t* alloc_pair (map_t* map,
 	}
 	else 
 	{
-		n->vptr = vcop (map, vptr, vlen);
-		if (n->vptr != ASE_NULL)
+		VPTR(n) = vcop (map, vptr, vlen);
+		if (VPTR(n) != ASE_NULL)
 		{
 			if (map->freeer[ASE_MAP_KEY] != ASE_NULL)
-				map->freeer[ASE_MAP_KEY] (map, n->kptr, n->klen);
+				map->freeer[ASE_MAP_KEY] (map, KPTR(n), KLEN(n));
 			ASE_MMGR_FREE (map->mmgr, n);		
 			return ASE_NULL;
 		}
@@ -274,25 +274,29 @@ void ase_map_fini (map_t* map)
 	ASE_MMGR_FREE (map->mmgr, map->bucket);
 }
 
-void ase_map_clear (map_t* map)
+void* ase_map_getextension (map_t* map)
 {
-	size_t i;
-	pair_t* pair, * next;
+	return map + 1;
+}
 
-	for (i = 0; i < map->capa; i++) 
-	{
-		pair = map->bucket[i];
+mmgr_t* ase_map_getmmgr (map_t* map)
+{
+	return map->mmgr;
+}
 
-		while (pair != ASE_NULL) 
-		{
-			next = NEXT(pair);
-			free_pair (map, pair);
-			map->size--;
-			pair = next;
-		}
+void ase_map_setmmgr (map_t* map, mmgr_t* mmgr)
+{
+	map->mmgr = mmgr;
+}
 
-		map->bucket[i] = ASE_NULL;
-	}
+size_t ase_map_getsize (map_t* map)
+{
+	return map->size;
+}
+
+size_t ase_map_getcapa (map_t* map)
+{
+	return map->capa;
 }
 
 int ase_map_getscale (map_t* map, int id)
@@ -384,31 +388,6 @@ sizer_t ase_map_getsizer (map_t* map)
 void ase_map_setsizer (map_t* map, sizer_t sizer)
 {
 	map->sizer = sizer;
-}
-
-void* ase_map_getextension (map_t* map)
-{
-	return map + 1;
-}
-
-mmgr_t* ase_map_getmmgr (map_t* map)
-{
-	return map->mmgr;
-}
-
-void ase_map_setmmgr (map_t* map, mmgr_t* mmgr)
-{
-	map->mmgr = mmgr;
-}
-
-size_t ase_map_getsize (map_t* map)
-{
-	return map->size;
-}
-
-size_t ase_map_getcapa (map_t* map)
-{
-	return map->capa;
 }
 
 pair_t* ase_map_search (map_t* map, const void* kptr, size_t klen)
@@ -604,6 +583,28 @@ int ase_map_delete (map_t* map, const void* kptr, size_t klen)
 
 	return -1;
 }
+
+void ase_map_clear (map_t* map)
+{
+	size_t i;
+	pair_t* pair, * next;
+
+	for (i = 0; i < map->capa; i++) 
+	{
+		pair = map->bucket[i];
+
+		while (pair != ASE_NULL) 
+		{
+			next = NEXT(pair);
+			free_pair (map, pair);
+			map->size--;
+			pair = next;
+		}
+
+		map->bucket[i] = ASE_NULL;
+	}
+}
+
 
 void ase_map_walk (map_t* map, walker_t walker, void* arg)
 {
