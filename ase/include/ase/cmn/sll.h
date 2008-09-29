@@ -110,14 +110,19 @@ struct ase_sll_node_t
 
 #define ASE_SLL_COPIER_INLINE ase_sll_copyinline
 
-#define ASE_SLL_HEAD(sll)  ((sll)->head)
-#define ASE_SLL_TAIL(sll)  ((sll)->tail)
-#define ASE_SLL_SIZE(sll)  ((sll)->size)
-#define ASE_SLL_SCALE(sll) ((sll)->scale)
+#define ASE_SLL_MMGR(sll)   ((sll)->mmgr)
+#define ASE_SLL_COPIER(sll) ((sll)->copier)
+#define ASE_SLL_FREEER(sll) ((sll)->freeer)
+#define ASE_SLL_COMPER(sll) ((sll)->comper)
 
-#define ASE_SLL_DPTR(n) ((n)->dptr)
-#define ASE_SLL_DLEN(n) ((n)->dlen)
-#define ASE_SLL_NEXT(n) ((n)->next)
+#define ASE_SLL_HEAD(sll)   ((sll)->head)
+#define ASE_SLL_TAIL(sll)   ((sll)->tail)
+#define ASE_SLL_SIZE(sll)   ((sll)->size)
+#define ASE_SLL_SCALE(sll)  ((sll)->scale)
+
+#define ASE_SLL_DPTR(node)  ((node)->dptr)
+#define ASE_SLL_DLEN(node)  ((node)->dlen)
+#define ASE_SLL_NEXT(node)  ((node)->next)
 
 #ifdef __cplusplus
 extern "C" {
@@ -173,16 +178,22 @@ ase_sll_t* ase_sll_init (
 );
 
 void ase_sll_fini (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll   /* a singly linked list */
 );
 
-/*
- * NAME: Gets the pointer to the extension area
- * RETURN:: the pointer to the extension area
+/****f* ase.cmn.sll/ase_sll_getextension
+ * NAME
+ *  ase_sll_getextension - get the pointer to the extension
+ *
+ * DESCRIPTION
+ *  The ase_sll_getextension() function returns the pointer to the extension.
+ *
+ * SYNOPSIS
  */
 void* ase_sll_getextension (
 	ase_sll_t* sll /* a singly linked list */
 );
+/******/
 
 /*
  * NAME: get the pointer to the memory manager in use 
@@ -303,26 +314,40 @@ ase_sll_node_t* ase_sll_gettail (
  *  ase_sll_search - find a node
  *
  * DESCRIPTION
- *  The ase_sll_search() function traverses the list to find a node containing
- *  the same value as the the data pointer and length. 
+ *  The ase_sll_search() function traverses a list to find a node containing
+ *  the same value as the the data pointer and length. The traversal begins
+ *  from the next node of the positional node. If the positional node is 
+ *  ASE_NULL, the traversal begins from the head node. 
+ *
+ * RETURN
+ *  The pointer to the node found. Otherwise, ASE_NULL.
+ *
+ * NOTES
+ *  No reverse search is provided because a reverse traversal can not be 
+ *  achieved efficiently.
  *
  * SYNOPSIS
  */
 ase_sll_node_t* ase_sll_search (
-	ase_sll_t* sll    /* a singly linked list */,
-	const void* dptr  /* a data pointer */,
-	ase_size_t dlen   /* a data length */
+	ase_sll_t* sll       /* a singly linked list */,
+	ase_sll_node_t* pos  /* a positional node */,
+	const void* dptr     /* a data pointer */,
+	ase_size_t dlen      /* a data length */
 );
+/******/
 
 /****f* ase.cmn.sll/ase_sll_insert
  * NAME
- *  ase_sll_insert - insert data before a positional node given 
+ *  ase_sll_insert - insert data to a new node
  *
  * DESCRIPTION
  *  There is performance penalty unless the positional node is neither
  *  the head node nor ASE_NULL. You should consider a different data
  *  structure such as a doubly linked list if you need to insert data
  *  into a random position.
+ *
+ * RETURN
+ *  The pointer to a new node on success and ASE_NULL on failure:w
  *
  * SYNOPSIS
  */
@@ -334,10 +359,20 @@ ase_sll_node_t* ase_sll_insert (
 );
 /******/
 
+/****f* ase.cmn.sll/ase_sll_delete
+ * NAME
+ *  ase_sll_delete - delete a node
+ *
+ * DESCRIPTION
+ *  The ase_sll_delete() function deletes a node. 
+ * 
+ * SYNOPSIS
+ */
 void ase_sll_delete (
 	ase_sll_t* sll       /* a singly linked list */,
-	ase_sll_node_t* pos /* a node to delete */
+	ase_sll_node_t* pos  /* a node to delete */
 );
+/******/
 
 /****f* ase.cmn.sll/ase_sll_clear 
  * NAME 
@@ -345,7 +380,7 @@ void ase_sll_delete (
  *
  * DESCRIPTION
  *  The ase_sll_clear() function empties a singly linked list by deletinng
- *  all data nodes.
+ *  all the nodes.
  *
  * SYNOPSIS
  */
