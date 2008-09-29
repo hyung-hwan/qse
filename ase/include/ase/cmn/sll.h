@@ -22,10 +22,41 @@ typedef struct ase_sll_node_t ase_sll_node_t;
 typedef enum ase_sll_walk_t ase_sll_walk_t;
 
 /* data copier */
-typedef void* (*ase_sll_copier_t) (ase_sll_t* sll, void* dptr, ase_size_t dlen);
+typedef void* (*ase_sll_copier_t) (
+	ase_sll_t* sll,
+	void* dptr,
+	ase_size_t dlen
+);
 
 /* data freeer */
-typedef void (*ase_sll_freeer_t) (ase_sll_t* sll, void* dptr, ase_size_t dlen);
+typedef void (*ase_sll_freeer_t) (
+	ase_sll_t* sll,
+	void* dptr,
+	ase_size_t dlen
+);
+
+/****t* ase.cmn.sll/ase_sll_comper_t
+ * NAME
+ *  ase_sll_comper_t - define a data comparator
+ *
+ * DESCRIPTION
+ *  The ase_sll_comper_t type defines a key comparator that is called when
+ *  the list needs to compare data. A singly linked list is created with a
+ *  default comparator that performs bitwise comparison.
+ *
+ *  The comparator should return 0 if the data are the same and a non-zero
+ *  integer otherwise.
+ *
+ * SYNOPSIS
+ */
+typedef int (*ase_sll_comper_t) (
+	ase_sll_t* sll    /* a singly linked list */, 
+	const void* dptr1 /* a data pointer */,
+	ase_size_t dlen1  /* a data length */,
+	const void* dptr2 /* a data pointer */,
+	ase_size_t dlen2  /* a data length */
+);
+/******/
 
 /* node visitor */
 typedef ase_sll_walk_t (*ase_sll_walker_t) (
@@ -46,6 +77,7 @@ struct ase_sll_t
 
 	ase_sll_copier_t copier;
 	ase_sll_freeer_t freeer;
+	ase_sll_comper_t comper;
 	ase_byte_t scale;
 
 	ase_size_t size;
@@ -241,6 +273,15 @@ void ase_sll_setfreeer (
 );
 /******/
 
+ase_sll_comper_t ase_sll_getcomper (
+	ase_sll_t* sll
+);
+
+void ase_sll_setcomper (
+	ase_sll_t* sll          /* a singly linked list */,
+	ase_sll_comper_t comper /* a comparator */
+);
+
 /*
  * NAME: Gets the head(first) node 
  * RETURN: the tail node of a singly linked list
@@ -255,6 +296,22 @@ ase_sll_node_t* ase_sll_gethead (
  */
 ase_sll_node_t* ase_sll_gettail (
 	ase_sll_t* sll /* a singly linked list */
+);
+
+/****f* ase.cmn.sll/ase_sll_search
+ * NAME
+ *  ase_sll_search - find a node
+ *
+ * DESCRIPTION
+ *  The ase_sll_search() function traverses the list to find a node containing
+ *  the same value as the the data pointer and length. 
+ *
+ * SYNOPSIS
+ */
+ase_sll_node_t* ase_sll_search (
+	ase_sll_t* sll    /* a singly linked list */,
+	const void* dptr  /* a data pointer */,
+	ase_size_t dlen   /* a data length */
 );
 
 /****f* ase.cmn.sll/ase_sll_insert

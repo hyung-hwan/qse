@@ -11,6 +11,7 @@
 #define node_t   ase_sll_node_t
 #define copier_t ase_sll_copier_t
 #define freeer_t ase_sll_freeer_t
+#define comper_t ase_sll_comper_t
 #define walker_t ase_sll_walker_t
 
 #define HEAD(s) ASE_SLL_HEAD(s)
@@ -25,6 +26,15 @@
 
 #define size_t   ase_size_t
 #define mmgr_t   ase_mmgr_t
+
+static int comp_data (sll_t* sll, 
+	const void* dptr1, size_t dlen1, 
+	const void* dptr2, size_t dlen2)
+{
+	if (dlen1 == dlen2) return ASE_MEMCMP (dptr1, dptr2, TOB(sll,dlen1));
+	/* it just returns 1 to indicate that they are different. */
+	return 1;
+}
 
 sll_t* ase_sll_open (mmgr_t* mmgr, size_t ext)
 {
@@ -59,6 +69,8 @@ sll_t* ase_sll_init (sll_t* sll, mmgr_t* mmgr)
 	sll->mmgr = mmgr;
 	sll->size = 0;
 	sll->scale = 1;
+
+	sll->comper = comp_data;
 	return sll;
 }
 
@@ -131,6 +143,16 @@ freeer_t ase_sll_getfreeer (sll_t* sll)
 void ase_sll_setfreeer (sll_t* sll, freeer_t freeer)
 {
 	sll->freeer = freeer;
+}
+
+comper_t ase_sll_getcomper (sll_t* sll)
+{
+	return sll->comper;
+}
+
+void ase_sll_setcomper (sll_t* sll, comper_t comper)
+{
+	sll->comper = comper;
 }
 
 static node_t* alloc_node (sll_t* sll, void* dptr, size_t dlen)
