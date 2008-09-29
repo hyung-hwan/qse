@@ -192,6 +192,22 @@ static node_t* alloc_node (sll_t* sll, void* dptr, size_t dlen)
 	return n;
 }
 
+node_t* ase_sll_search (sll_t* sll, node_t* pos, const void* dptr, size_t dlen)
+{
+	pos = (pos == ASE_NULL)? pos = sll->head: NEXT(pos);
+
+	while (pos != ASE_NULL)
+	{
+		if (sll->comper (sll, DPTR(pos), DLEN(pos), dptr, dlen) == 0)
+		{
+			return pos;
+		}
+		pos = NEXT(pos);
+	}	
+
+	return ASE_NULL;
+}
+
 node_t* ase_sll_insert (
 	sll_t* sll, node_t* pos, void* dptr, size_t dlen)
 {
