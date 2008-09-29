@@ -152,6 +152,7 @@ comper_t ase_sll_getcomper (sll_t* sll)
 
 void ase_sll_setcomper (sll_t* sll, comper_t comper)
 {
+	if (comper == ASE_NULL) comper = comp_data;
 	sll->comper = comper;
 }
 
