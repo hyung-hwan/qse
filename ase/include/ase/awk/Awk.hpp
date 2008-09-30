@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 391 2008-09-27 09:51:23Z baconevi $
+ * $Id: Awk.hpp 399 2008-09-29 10:26:26Z baconevi $
  *
  * {License}
  */
@@ -52,17 +52,17 @@ public:
 
 	enum ccls_type_t
 	{
-		CCLS_UPPER,
-		CCLS_LOWER,
-		CCLS_ALPHA,
-		CCLS_DIGIT,
-		CCLS_XDIGIT,
-		CCLS_ALNUM,
-		CCLS_SPACE,
-		CCLS_PRINT,
-		CCLS_GRAPH,
-		CCLS_CNTRL,
-		CCLS_PUNCT
+		CCLS_UPPER  = ASE_CCLS_UPPER,
+		CCLS_LOWER  = ASE_CCLS_LOWER,
+		CCLS_ALPHA  = ASE_CCLS_ALPHA,
+		CCLS_DIGIT  = ASE_CCLS_DIGIT,
+		CCLS_XDIGIT = ASE_CCLS_XDIGIT,
+		CCLS_ALNUM  = ASE_CCLS_ALNUM,
+		CCLS_SPACE  = ASE_CCLS_SPACE,
+		CCLS_PRINT  = ASE_CCLS_PRINT,
+		CCLS_GRAPH  = ASE_CCLS_GRAPH,
+		CCLS_CNTRL  = ASE_CCLS_CNTRL,
+		CCLS_PUNCT  = ASE_CCLS_PUNCT
 	};
 
 	/**
@@ -1072,8 +1072,8 @@ protected:
 	static void* reallocMem (void* data, void* ptr, size_t n);
 	static void  freeMem    (void* data, void* ptr);
 
-	static bool_t isType    (void* data, cint_t c, int type);
-	static cint_t transCase (void* data, cint_t c, int type);
+	static bool_t isType    (void* data, cint_t c, ase_ccls_type_t type);
+	static cint_t transCase (void* data, cint_t c, ase_ccls_type_t type);
 
 	static real_t pow     (void* data, real_t x, real_t y);
 	static int    sprintf (void* data, char_t* buf, size_t size,

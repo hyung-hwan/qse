@@ -14,21 +14,6 @@
 /* sets a pointer to the default memory manager */
 #define ASE_CCLS_SETDFL(m) ((ase_ccls)=(m))
 
-enum ase_ccls_type_t
-{
-	ASE_CCLS_UPPER,
-	ASE_CCLS_LOWER,
-	ASE_CCLS_ALPHA,
-	ASE_CCLS_DIGIT,
-	ASE_CCLS_XDIGIT,
-	ASE_CCLS_ALNUM,
-	ASE_CCLS_SPACE,
-	ASE_CCLS_PRINT,
-	ASE_CCLS_GRAPH,
-	ASE_CCLS_CNTRL,
-	ASE_CCLS_PUNCT
-};
-
 #define ASE_CCLS_IS(ccls,c,type) ((ccls)->is((ccls)->data,c,type))
 #define ASE_CCLS_TO(ccls,c,type) ((ccls)->to((ccls)->data,c,type))
 

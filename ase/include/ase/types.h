@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 398 2008-09-29 10:01:15Z baconevi $
+ * $Id: types.h 399 2008-09-29 10:26:26Z baconevi $
  *
  * {License}
  */
@@ -251,7 +251,6 @@ typedef int  ase_mcint_t;
  *  ase_wcint_t - define a type that can hold ase_wchar_t and ASE_WCHAR_EOF
  ******
  */
-typedef char ase_mchar_t;
 #if defined(__cplusplus) && (!defined(_MSC_VER) || (defined(_MSC_VER)&&defined(_NATIVE_WCHAR_T_DEFINED)))
 	/* C++ */
 
@@ -376,6 +375,12 @@ struct ase_cstr_t
 };
 /******/
 
+/****t* ase/ase_mmgr_t
+ * NAME
+ *  ase_mmgr_t - define a memory manager
+ *
+ * SYNOPSIS
+ */
 struct ase_mmgr_t
 {
 	ase_alloc_t   alloc;
@@ -383,12 +388,44 @@ struct ase_mmgr_t
 	ase_free_t    free;
 	void*         data;
 };
+/******/
 
+/****t* ase/ase_ccls_type_t
+ * NAME
+ *  ase_ccls_type_t - define types of character class
+ *
+ * SYNOPSIS
+ */
+enum ase_ccls_type_t
+{
+        ASE_CCLS_UPPER,
+        ASE_CCLS_LOWER,
+        ASE_CCLS_ALPHA,
+        ASE_CCLS_DIGIT,
+        ASE_CCLS_XDIGIT,
+        ASE_CCLS_ALNUM,
+        ASE_CCLS_SPACE,
+        ASE_CCLS_PRINT,
+        ASE_CCLS_GRAPH,
+        ASE_CCLS_CNTRL,
+        ASE_CCLS_PUNCT
+};
+/******/
+
+typedef enum ase_ccls_type_t ase_ccls_type_t;
+
+/****t* ase/ase_ccls_t
+ * NAME
+ *  ase_mmgr_t - define a character class handler
+ *
+ * SYNOPSIS
+ */
 struct ase_ccls_t
 {
-	ase_bool_t (*is) (void* data, ase_cint_t c, int type);
-	ase_cint_t (*to) (void* data, ase_cint_t c, int type);
+	ase_bool_t (*is) (void* data, ase_cint_t c, ase_ccls_type_t type);
+	ase_cint_t (*to) (void* data, ase_cint_t c, ase_ccls_type_t type);
 	void* data;
 };
+/******/
 
 #endif
