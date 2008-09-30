@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 398 2008-09-29 10:01:15Z baconevi $
+ * $Id: macros.h 399 2008-09-29 10:26:26Z baconevi $
  *
  * {License}
  */
@@ -38,8 +38,8 @@
 #define ASE_DEAD   -1
 
 
-#defien AES_MCHAR_EOF ((ase_mcint_t)-1)
-#defien AES_WCHAR_EOF ((ase_wcint_t)-1)
+#define AES_MCHAR_EOF ((ase_mcint_t)-1)
+#define AES_WCHAR_EOF ((ase_wcint_t)-1)
 #define ASE_CHAR_EOF  ((ase_cint_t)-1)
 
 #define ASE_SIZEOF(n)  (sizeof(n))

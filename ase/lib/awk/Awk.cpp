@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 391 2008-09-27 09:51:23Z baconevi $
+ * $Id: Awk.cpp 399 2008-09-29 10:26:26Z baconevi $
  *
  * {License}
  */
@@ -1752,14 +1752,14 @@ void Awk::freeMem (void* data, void* ptr)
 	((Awk*)data)->freeMem (ptr);
 }
 
-Awk::bool_t Awk::isType (void* data, cint_t c, int type) 
+Awk::bool_t Awk::isType (void* data, cint_t c, ase_ccls_type_t type) 
 {
-	return ((Awk*)data)->isType (c, (Awk::ccls_type_t)type);
+	return ((Awk*)data)->isType (c, (ccls_type_t)type);
 }
 
-Awk::cint_t Awk::transCase (void* data, cint_t c, int type) 
+Awk::cint_t Awk::transCase (void* data, cint_t c, ase_ccls_type_t type) 
 {
-	return ((Awk*)data)->transCase (c, (Awk::ccls_type_t)type);
+	return ((Awk*)data)->transCase (c, (ccls_type_t)type);
 }
 
 Awk::real_t Awk::pow (void* data, real_t x, real_t y)
