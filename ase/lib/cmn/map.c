@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 391 2008-09-27 09:51:23Z baconevi $
+ * $Id: map.c 397 2008-09-29 07:11:08Z baconevi $
  *
  * {License}
  */
@@ -299,14 +299,14 @@ size_t ase_map_getcapa (map_t* map)
 	return map->capa;
 }
 
-int ase_map_getscale (map_t* map, int id)
+int ase_map_getscale (map_t* map, ase_map_id_t id)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
 		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");
 	return map->scale[id];
 }
 
-void ase_map_setscale (map_t* map, int id, int scale)
+void ase_map_setscale (map_t* map, ase_map_id_t id, int scale)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
 		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");
@@ -320,28 +320,28 @@ void ase_map_setscale (map_t* map, int id, int scale)
 	map->scale[id] = scale;
 }
 
-copier_t ase_map_getcopier (map_t* map, int id)
+copier_t ase_map_getcopier (map_t* map, ase_map_id_t id)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
 		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");
 	return map->copier[id];
 }
 
-void ase_map_setcopier (map_t* map, int id, copier_t copier)
+void ase_map_setcopier (map_t* map, ase_map_id_t id, copier_t copier)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
 		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");
 	map->copier[id] = copier;
 }
 
-freeer_t ase_map_getfreeer (map_t* map, int id)
+freeer_t ase_map_getfreeer (map_t* map, ase_map_id_t id)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
 		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");
 	return map->freeer[id];
 }
 
-void ase_map_setfreeer (map_t* map, int id, freeer_t freeer)
+void ase_map_setfreeer (map_t* map, ase_map_id_t id, freeer_t freeer)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
 		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");

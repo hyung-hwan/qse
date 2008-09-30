@@ -26,6 +26,7 @@ ignore files:
 	.svn
 headertypes:
 	o     "Overview"       robo_overview    0
+	b     "Callbacks"      robo_callbacks    1
 options:
 	--nosort
 	--cmode

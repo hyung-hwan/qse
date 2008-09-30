@@ -10,30 +10,66 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-/* values to be returned by ase_sll_walker_t */
+/****t* ase.cmn.sll/ase_sll_walk_t
+ * NAME
+ *  ase_sll_walk_t - define return values for ase_sll_walker_t
+ *
+ * SEE ALSO
+ *  ase_sll_walk, ase_sll_walker_t
+ *
+ * SYNOPSIS
+ */
 enum ase_sll_walk_t
 {
-	ASE_SLL_WALK_STOP = 0,
+	ASE_SLL_WALK_STOP    = 0,   
 	ASE_SLL_WALK_FORWARD = 1
 };
+/******/
 
 typedef struct ase_sll_t ase_sll_t;
 typedef struct ase_sll_node_t ase_sll_node_t;
 typedef enum ase_sll_walk_t ase_sll_walk_t;
 
-/* data copier */
+/****b* ase.cmn.sll/ase_sll_copier_t
+ * NAME
+ *  ase_sll_copier_t - define a node contruction callback
+ *
+ * DESCRIPTION
+ *  The ase_sll_copier_t defines a callback function for node construction.
+ *  A node is contructed when a user adds data to a list. The user can
+ *  define how the data to add can be maintained in the list. A singly
+ *  linked list not specified with any copiers stores the data pointer and
+ *  the data length into a node. A special copier ASE_SLL_COPIER_INLINE copies 
+ *  the contents of the data a user provided into the node. You can use the
+ *  ase_sll_setcopier() function to change the copier. 
+ * 
+ *  A copier should return the pointer to the copied data. If it fails to copy
+ *  data, it may return ASE_NULL. You need to set a proper freeer to free up
+ *  memory allocated for copy.
+ *
+ * SEE ALSO
+ *  ase_sll_setcopier, ase_sll_getcopier, ASE_SLL_COPIER
+ *
+ * SYNOPSIS
+ */
 typedef void* (*ase_sll_copier_t) (
-	ase_sll_t* sll,
-	void* dptr,
-	ase_size_t dlen
+	ase_sll_t* sll    /* a map */,
+	void*      dptr   /* the pointer to data to copy */,
+	ase_size_t dlen   /* the length of data to copy */
 );
+/******/
 
-/* data freeer */
+/****b* ase.cmn.sll/ase_sll_freeer_t
+ * NAME
+ *  ase_sll_freeer_t - define a node destruction callback
+ * SYNOPSIS
+ */
 typedef void (*ase_sll_freeer_t) (
-	ase_sll_t* sll,
-	void* dptr,
-	ase_size_t dlen
+	ase_sll_t* sll    /* a map */,
+	void*      dptr   /* the pointer to data to free */,
+	ase_size_t dlen   /* the length of data to free */
 );
+/******/
 
 /****t* ase.cmn.sll/ase_sll_comper_t
  * NAME
@@ -50,17 +86,36 @@ typedef void (*ase_sll_freeer_t) (
  * SYNOPSIS
  */
 typedef int (*ase_sll_comper_t) (
-	ase_sll_t* sll    /* a singly linked list */, 
-	const void* dptr1 /* a data pointer */,
-	ase_size_t dlen1  /* a data length */,
-	const void* dptr2 /* a data pointer */,
-	ase_size_t dlen2  /* a data length */
+	ase_sll_t*  sll    /* a singly linked list */, 
+	const void* dptr1  /* a data pointer */,
+	ase_size_t  dlen1  /* a data length */,
+	const void* dptr2  /* a data pointer */,
+	ase_size_t  dlen2  /* a data length */
 );
 /******/
 
-/* node visitor */
+/****b* ase.cmn.sll/ase_sll_walker_t
+ * NAME
+ *  ase_sll_walker_t - define a list traversal callback for each node
+ *
+ * DESCRIPTION
+ *  The ase_sll_walk() calls a callback function of the type ase_sll_walker_t
+ *  for each node until it returns ASE_SLL_WALK_STOP. The walker should return
+ *  ASE_SLL_WALK_FORWARD to let ase_sll_walk() continue visiting the next node.
+ *  The third parameter to ase_sll_walk() is passed to the walker as the third
+ *  parameter.
+ *
+ * SEE ALSO
+ *  ase_sll_walk, ase_sll_walk_t
+ *
+ * SYNOPSIS
+ */
 typedef ase_sll_walk_t (*ase_sll_walker_t) (
-	ase_sll_t* sll, ase_sll_node_t* node, void* arg);
+	ase_sll_t*      sll   /* a map */,
+	ase_sll_node_t* node  /* a visited node */,
+	void*           arg   /* user-defined data */
+);
+/******/
 
 /****s* ase.cmn.sll/ase_sll_t
  * NAME
@@ -73,16 +128,16 @@ typedef ase_sll_walk_t (*ase_sll_walker_t) (
  */
 struct ase_sll_t
 {
-	ase_mmgr_t* mmgr;
+	ase_mmgr_t*      mmgr;   /* memory manager */
 
-	ase_sll_copier_t copier;
-	ase_sll_freeer_t freeer;
-	ase_sll_comper_t comper;
-	ase_byte_t scale;
+	ase_sll_copier_t copier; /* data copier */
+	ase_sll_freeer_t freeer; /* data freeer */
+	ase_sll_comper_t comper; /* data comparator */
+	ase_byte_t       scale;  /* scale factor */
 
-	ase_size_t size;
-	ase_sll_node_t* head;
-	ase_sll_node_t* tail;
+	ase_size_t       size;   /* the number of nodes */
+	ase_sll_node_t*  head;   /* the head node */
+	ase_sll_node_t*  tail;   /* the tail node */
 };
 /******/
 
@@ -93,7 +148,7 @@ struct ase_sll_t
  * DESCRIPTION
  *  The ase_sll_node_t type defines a list node containing a data pointer and 
  *  and data length. 
- * 
+ *
  * SEE ALSO
  *  ASE_SLL_DPTR, ASE_SLL_DLEN, ASE_SLL_NEXT
  *
@@ -101,12 +156,11 @@ struct ase_sll_t
  */
 struct ase_sll_node_t
 {
-	void* dptr;           /* pointer to the beginning of data */
-	ase_size_t dlen;      /* length of data in bytes */
-	ase_sll_node_t* next; /* pointer to the next node */
+	void*           dptr; /* the pointer to data */
+	ase_size_t      dlen; /* the length of data */
+	ase_sll_node_t* next; /* the pointer to the next node */
 };
 /******/
-
 
 #define ASE_SLL_COPIER_INLINE ase_sll_copyinline
 
@@ -153,8 +207,8 @@ extern "C" {
  * SYNOPSIS
  */
 ase_sll_t* ase_sll_open (
-	ase_mmgr_t* mmgr /* memory manager */ , 
-	ase_size_t ext   /* size of extension area in bytes */
+	ase_mmgr_t* mmgr  /* memory manager */ , 
+	ase_size_t  ext   /* size of extension area in bytes */
 );
 /******/
 
@@ -172,14 +226,38 @@ void ase_sll_close (
 );
 /******/
 
+/****f* ase.cmn.sll/ase_sll_init
+ * NAME
+ *  ase_sll_init - initialize a singly linked list
+ *
+ * DESCRIPTION
+ *  The ase_sll_init() function initializes a singly linked list. The memory
+ *  should be allocated by a caller and be passed to it. The caller may declare
+ *  a static variable of the ase_sll_t type and pass its address. A memory 
+ *  manager still needs to be passed for node manipulation later.
+ *  
+ * RETURN
+ *  The ase_sll_init() function returns the first parameter on success and
+ *  ASE_NULL on failure.
+ * 
+ * SYNOPSIS
+ */
 ase_sll_t* ase_sll_init (
-	ase_sll_t* sll   /* an uninitialized singly linked list */,
-	ase_mmgr_t* mmgr /* memory manager */
+	ase_sll_t*  sll   /* an uninitialized singly linked list */,
+	ase_mmgr_t* mmgr  /* a memory manager */
 );
+/******/
 
+/****f* ase.cmn.sll/ase_sll_fini
+ * NAME
+ *  ase_sll_init - deinitialize a singly linked list
+ *
+ * SYNOPSIS
+ */
 void ase_sll_fini (
-	ase_sll_t* sll   /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
 /****f* ase.cmn.sll/ase_sll_getextension
  * NAME
@@ -191,34 +269,59 @@ void ase_sll_fini (
  * SYNOPSIS
  */
 void* ase_sll_getextension (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
 /******/
 
-/*
- * NAME: get the pointer to the memory manager in use 
+/****f* ase.cmn.sll/ase_sll_getmmgr
+ * NAME
+ *  ase_sll_getmmgr - get the memory manager
+ *
+ * SYNOPSIS
  */
 ase_mmgr_t* ase_sll_getmmgr (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
+/****f* ase.cmn.sll/ase_sll_setmmgr
+ * NAME
+ *  ase_sll_setmmgr - set the memory manager
+ *
+ * SYNOPSIS
+ */
 void ase_sll_setmmgr (
-	ase_sll_t* sll,
-	ase_mmgr_t* mmgr
+	ase_sll_t*  sll   /* a singly linked list */,
+	ase_mmgr_t* mmgr  /* a memory manager */
 );
+/******/
 
-/*
- * NAME: Gets the number of elements held in a singly linked list
- * RETURN: the number of elements the list holds
+/****f* ase.cmn.sll/ase_sll_getsize
+ * NAME
+ *  ase_sll_getsize - get the number of nodes
+ *
+ * DESCRIPTION
+ *  The ase_sll_getsize() function returns the number of the data nodes held
+ *  in a singly linked list.
+ *
+ * SYNOPSIS
  */
 ase_size_t ase_sll_getsize (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
 
+/****f* ase.cmn.sll/ase_sll_getscale
+ * NAME
+ *  ase_sll_getscale - get the scale factor
+ *
+ * SYNOPSIS
+ */
 int ase_sll_getscale (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
 /****f* ase.cmn.sll/ase_sll_setscale
  * NAME
@@ -241,13 +344,20 @@ void ase_sll_setscale (
 );
 /******/
 
+/****f* ase.cmn.sll/ase_sll_getcopier
+ * NAME
+ *  ase_sll_getfreeer - get the data copier
+ *
+ * SYNOPSIS
+ */
 ase_sll_copier_t ase_sll_getcopier (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
 /****f* ase.cmn.sll/ase_sll_setcopier
  * NAME 
- *  ase_sll_setcopier - specify how to clone an element
+ *  ase_sll_setcopier - set a data copier
  *
  * DESCRIPTION
  *  A special copier ASE_SLL_COPIER_INLINE is provided. This copier enables
@@ -261,17 +371,24 @@ ase_sll_copier_t ase_sll_getcopier (
  */
 void ase_sll_setcopier (
 	ase_sll_t* sll          /* a singly linked list */, 
-	ase_sll_copier_t copier /* a element copier */
+	ase_sll_copier_t copier /* a data copier */
 );
 /******/
 
+/****f* ase.cmn.sll/ase_sll_getfreeer
+ * NAME
+ *  ase_sll_getfreeer - get the data freeer
+ *
+ * SYNOPSIS
+ */
 ase_sll_freeer_t ase_sll_getfreeer (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
 /****f* ase.cmn.sll/ase_sll_setfreeer
  * NAME
- *  ase_sll_setfreeer - specify how to destroy an element
+ *  ase_sll_setfreeer - set a data freeer
  *
  * DESCRIPTION
  *  The freeer is called when a node containing the element is destroyed.
@@ -280,34 +397,54 @@ ase_sll_freeer_t ase_sll_getfreeer (
  */
 void ase_sll_setfreeer (
 	ase_sll_t* sll          /* a singly linked list */,
-	ase_sll_freeer_t freeer /* a element freeer */
+	ase_sll_freeer_t freeer /* a data freeer */
 );
 /******/
 
+/****f* ase.cmn.sll/ase_sll_getcomper
+ * NAME
+ *  ase_sll_getcomper - get the data comparator
+ *
+ * SYNOPSIS
+ */
 ase_sll_comper_t ase_sll_getcomper (
-	ase_sll_t* sll
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
+/****f* ase.cmn.sll/ase_sll_setcomper
+ * NAME
+ *  ase_sll_setcomper - set the data comparator
+ *
+ * SYNOPSIS
+ */
 void ase_sll_setcomper (
-	ase_sll_t* sll          /* a singly linked list */,
-	ase_sll_comper_t comper /* a comparator */
+	ase_sll_t*       sll     /* a singly linked list */,
+	ase_sll_comper_t comper  /* a comparator */
 );
+/******/
 
-/*
- * NAME: Gets the head(first) node 
- * RETURN: the tail node of a singly linked list
+/****f* ase.cmn.sll/ase_sll_gethead
+ * NAME
+ *  ase_sll_gethead - get the head node
+ *
+ * SYNOPSIS
  */
 ase_sll_node_t* ase_sll_gethead (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
-/* 
- * NAME: Gets the tail(last) node 
- * RETURN: the tail node of a singly linked list
+/****f* ase.cmn.sll/ase_sll_gettail
+ * NAME
+ *  ase_sll_gettail - get the tail node
+ *
+ * SYNOPSIS
  */
 ase_sll_node_t* ase_sll_gettail (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
+/******/
 
 /****f* ase.cmn.sll/ase_sll_search
  * NAME
@@ -329,10 +466,10 @@ ase_sll_node_t* ase_sll_gettail (
  * SYNOPSIS
  */
 ase_sll_node_t* ase_sll_search (
-	ase_sll_t* sll       /* a singly linked list */,
-	ase_sll_node_t* pos  /* a positional node */,
-	const void* dptr     /* a data pointer */,
-	ase_size_t dlen      /* a data length */
+	ase_sll_t*      sll   /* a singly linked list */,
+	ase_sll_node_t* pos   /* a positional node */,
+	const void*     dptr  /* a data pointer */,
+	ase_size_t      dlen  /* a data length */
 );
 /******/
 
@@ -352,10 +489,10 @@ ase_sll_node_t* ase_sll_search (
  * SYNOPSIS
  */
 ase_sll_node_t* ase_sll_insert (
-	ase_sll_t* sll      /* a singly linked list */,
-	ase_sll_node_t* pos /* a node before which a new node is inserted */,
-	void* dptr          /* the pointer to the data */,
-	ase_size_t dlen     /* the length of the data */
+	ase_sll_t*      sll  /* a singly linked list */,
+	ase_sll_node_t* pos  /* a node before which a new node is inserted */,
+	void*           dptr /* the pointer to the data */,
+	ase_size_t      dlen /* the length of the data */
 );
 /******/
 
@@ -369,7 +506,7 @@ ase_sll_node_t* ase_sll_insert (
  * SYNOPSIS
  */
 void ase_sll_delete (
-	ase_sll_t* sll       /* a singly linked list */,
+	ase_sll_t*      sll  /* a singly linked list */,
 	ase_sll_node_t* pos  /* a node to delete */
 );
 /******/
@@ -385,19 +522,19 @@ void ase_sll_delete (
  * SYNOPSIS
  */
 void ase_sll_clear (
-	ase_sll_t* sll /* a singly linked list */
+	ase_sll_t* sll  /* a singly linked list */
 );
 /******/
 
 ase_sll_node_t* ase_sll_pushhead (
 	ase_sll_t* sll /* a singly linked list */,
-	void* dptr, 
+	void*      dptr, 
 	ase_size_t dlen
 );
 
 ase_sll_node_t* ase_sll_pushtail (
 	ase_sll_t* sll /* a singly linked list */, 
-	void* dptr, 
+	void*      dptr, 
 	ase_size_t dlen
 );
 
@@ -420,6 +557,7 @@ void ase_sll_poptail (
  *  head node down to its tail node as long as the walker function returns 
  *  ASE_SLL_WALK_FORWARD. A walker can return ASE_SLL_WALK_STOP to cause 
  *  immediate stop of traversal.
+ * 
  *  For each node, the walker function is called and it is passed three
  *  parameters: the singly linked list, the visiting node, and the 
  *  user-defined data passed as the third parameter in a call to the 
@@ -428,9 +566,9 @@ void ase_sll_poptail (
  * SYNOPSIS
  */
 void ase_sll_walk (
-	ase_sll_t* sll          /* a singly linked list */,
-	ase_sll_walker_t walker /* a user-defined walker function */,
-	void* arg               /* pointer to user-defined data */
+	ase_sll_t*       sll     /* a singly linked list */,
+	ase_sll_walker_t walker  /* a user-defined walker function */,
+	void*            arg     /* the pointer to user-defined data */
 );
 /******/
 
@@ -439,9 +577,9 @@ void ase_sll_walk (
  * Use ASE_SLL_COPIER_INLINE instead.
  */
 void* ase_sll_copyinline (
-	ase_sll_t* sll /* a singly linked list */,
-	void* data /* pointer to data to copy */ , 
-	ase_size_t len /* length of data in bytes */
+	ase_sll_t* sll   /* a singly linked list */,
+	void*      data  /* pointer to data to copy */ , 
+	ase_size_t len   /* length of data in bytes */
 );
 
 #ifdef __cplusplus
