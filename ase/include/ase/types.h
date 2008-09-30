@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 400 2008-09-29 10:31:20Z baconevi $
+ * $Id: types.h 401 2008-09-29 10:32:10Z baconevi $
  *
  * {License}
  */
@@ -10,7 +10,7 @@
 /****o* ase.cmn.map/basic types
  * DESCRIPTION
  *  <ase/types.h> defines various common basic types. They are designed to be
- *  cross-platform. These types are preferred over a native data types in many
+ *  cross-platform. These types are preferred over native data types in many
  *  contexts.
  *
  *  #include <ase/types.h>
