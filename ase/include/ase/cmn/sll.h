@@ -196,11 +196,11 @@ extern "C" {
  *  the pointer to the singly linked list created.
  *
  * RETURN
- *  the pointer to a newly created singly linked list on success.
- *  ASE_NULL on failure.
+ *  The ase_sll_open() function returns the pointer to a new singly linked 
+ *  list on success and ASE_NULL on failure.
  *
  * NOTES
- *  In the debug build, it fails the assertion if ASE_MMGR_SETMMGR() returns
+ *  In the debug build, it fails an assertion if ASE_MMGR_GETMMGR() returns
  *  ASE_NULL when ASE_NULL is passed as the first parameter. In the release
  *  build, it returns ASE_NULL if such a thing happens. 
  *
@@ -217,7 +217,8 @@ ase_sll_t* ase_sll_open (
  *  ase_sll_close - destroy a singly linked list 
  *
  * DESCRIPTION
- *  The ase_sll_close() function destroys a singly linked list
+ *  The ase_sll_close() function destroys a singly linked list freeing up
+ *  the memory.
  *
  * SYNOPSIS
  */
