@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 391 2008-09-27 09:51:23Z baconevi $
+ * $Id: awk.c 403 2008-09-29 11:07:47Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -987,6 +987,27 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 
 	ase_cint_t c;
 	ase_sll_t* sf = ASE_NULL;
+	ase_map_t* vm = ASE_NULL;
+
+	sf = ase_sll_open (ASE_NULL, 0);
+	if (sf == ASE_NULL)
+	{
+		out_of_memory ();
+		return -1;	
+	}
+	ase_sll_setscale (sf, ASE_SIZEOF(opt.arg[0]));
+	ase_sll_setcopier (sf, ASE_SLL_COPIER_INLINE);
+
+	vm = ase_map_open (ASE_NULL, 0, 30, 70); 
+	if (vm == ASE_NULL)
+	{
+		out_of_memory ();
+		return -1;
+	}
+	ase_map_setcopier (vm, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
+	ase_map_setcopier (vm, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
+	ase_map_setscale (vm, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
+	ase_map_setscale (vm, ASE_MAP_VAL, ASE_SIZEOF(ase_char_t));
 
 	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
 	{
@@ -1004,17 +1025,6 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 			case ASE_T('f'):
 			{
 				ase_size_t sz = ase_strlen(opt.arg) + 1;
-				sz *= ASE_SIZEOF(*opt.arg);
-
-				if (sf == ASE_NULL) 
-				{
-					sf = ase_sll_open (ASE_NULL, 0);
-					if (sf == ASE_NULL)
-					{
-						out_of_memory ();
-						return -1;	
-					}
-				}
 
 				if (ase_sll_pushtail(sf, opt.arg, sz) == ASE_NULL)
 				{
@@ -1028,6 +1038,25 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 			case ASE_T('F'):
 				ase_printf  (ASE_T("[field separator] = %s\n"), opt.arg);
 				break;
+
+			case ASE_T('v'):
+			{
+				ase_char_t* eq = ase_strchr(opt.arg, ASE_T('='));
+				if (eq == ASE_NULL)
+				{
+					/* INVALID VALUE... */
+					return -1;
+				}
+
+				*eq = ASE_T('\0');
+
+				if (ase_map_upsert (vm, opt.arg, ase_strlen(opt.arg)+1, eq, ase_strlen(eq)+1) == ASE_NULL)
+				{
+					out_of_memory ();
+					return -1;
+				}
+				break;
+			}
 
 			case ASE_T('?'):
 				if (opt.lngopt)
@@ -1062,7 +1091,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 	}
 
 
-	if (sf == ASE_NULL || ASE_SLL_SIZE(sf) == 0)
+	if (ASE_SLL_SIZE(sf) == 0)
 	{
 		if (opt.ind >= argc)
 		{
@@ -1236,7 +1265,6 @@ static int awk_main (int argc, ase_char_t* argv[])
 		return -1;
 	}
 
-// TODO: close siod....
 
 #ifdef _WIN32
 	SetConsoleCtrlHandler (stop_run, TRUE);
@@ -1251,6 +1279,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 	}
 
 	close_awk (awk);
+
+
+// TODO: destroy siod....
 
 	return 0;
 }

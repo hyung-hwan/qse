@@ -43,19 +43,18 @@ struct ase_opt_t
 extern "C" {
 #endif
 
-/*
- * NAME: parse command line options
+/****f* ase.cmn.opt/ase_getopt
+ * NAME
+ *  ase_getopt - parse command line options
  *
- * DESCRIPTION:
- *   TODO:
- *
- * RETURNS: ASE_CHAR_EOF, XXXX.XXXX
+ * SYNOPSIS
  */
 ase_cint_t ase_getopt (
-	int argc /* argument count */, 
-	ase_char_t* const* argv /* argument array */,
-	ase_opt_t* opt  /* option configuration */
+	int                argc  /* argument count */, 
+	ase_char_t* const* argv  /* argument array */,
+	ase_opt_t*         opt   /* option configuration */
 );
+/******/
 
 #ifdef __cplusplus
 }
