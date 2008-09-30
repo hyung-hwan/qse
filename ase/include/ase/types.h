@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 399 2008-09-29 10:26:26Z baconevi $
+ * $Id: types.h 400 2008-09-29 10:31:20Z baconevi $
  *
  * {License}
  */
@@ -7,12 +7,14 @@
 #ifndef _ASE_TYPES_H_
 #define _ASE_TYPES_H_
 
-/**
- * @file types.h
- * @brief Define common data types
+/****o* ase.cmn.map/basic types
+ * DESCRIPTION
+ *  <ase/types.h> defines various common basic types. They are designed to be
+ *  cross-platform. These types are preferred over a native data types in many
+ *  contexts.
  *
- * This file defines various data types to enhance portability across
- * different platforms. 
+ *  #include <ase/types.h>
+ ******
  */
 
 #if defined(_WIN32)
