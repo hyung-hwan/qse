@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 401 2008-09-29 10:32:10Z baconevi $
+ * $Id: types.h 402 2008-09-29 10:36:21Z baconevi $
  *
  * {License}
  */
@@ -344,13 +344,6 @@ typedef struct ase_cstr_t ase_cstr_t;
 typedef struct ase_mmgr_t ase_mmgr_t;
 typedef struct ase_ccls_t ase_ccls_t;
 
-typedef void* (*ase_alloc_t)   (void* data, ase_size_t n);
-typedef void* (*ase_realloc_t) (void* data, void* ptr, ase_size_t n);
-typedef void  (*ase_free_t)    (void* data, void* ptr);
-
-typedef ase_bool_t (*ase_isccls_t) (void* data, ase_cint_t c);
-typedef ase_cint_t (*ase_toccls_t) (void* data, ase_cint_t c);
-
 /****t* ase/ase_xstr_t
  * NAME
  *  ase_xstr_t - combine a pointer and length 
@@ -385,10 +378,10 @@ struct ase_cstr_t
  */
 struct ase_mmgr_t
 {
-	ase_alloc_t   alloc;
-	ase_realloc_t realloc;
-	ase_free_t    free;
-	void*         data;
+	void* (*alloc)   (void* data, ase_size_t n);
+	void* (*realloc) (void* data, void* ptr, ase_size_t n);
+	void  (*free)    (void* data, void* ptr);
+	void*   data;
 };
 /******/
 
@@ -426,7 +419,7 @@ struct ase_ccls_t
 {
 	ase_bool_t (*is) (void* data, ase_cint_t c, ase_ccls_type_t type);
 	ase_cint_t (*to) (void* data, ase_cint_t c, ase_ccls_type_t type);
-	void* data;
+	void*        data;
 };
 /******/
 
