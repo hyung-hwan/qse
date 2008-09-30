@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 391 2008-09-27 09:51:23Z baconevi $
+ * $Id: map.h 397 2008-09-29 07:11:08Z baconevi $
  *
  * {License}
  */
@@ -31,9 +31,16 @@ enum ase_map_walk_t
         ASE_MAP_WALK_FORWARD = 1
 };
 
+enum ase_map_id_t
+{
+	ASE_MAP_KEY = 0,
+	ASE_MAP_VAL = 1
+};
+
 typedef struct ase_map_t ase_map_t;
 typedef struct ase_map_pair_t ase_map_pair_t;
 typedef enum ase_map_walk_t ase_map_walk_t;
+typedef enum ase_map_id_t   ase_map_id_t;
 
 /* data copier */
 typedef void* (*ase_map_copier_t) (
@@ -166,11 +173,6 @@ struct ase_map_t
 };
 /******/
 
-enum ase_map_id_t
-{
-	ASE_MAP_KEY = 0,
-	ASE_MAP_VAL = 1
-};
 
 
 #define ASE_MAP_COPIER_INLINE ase_map_copyinline
@@ -303,8 +305,8 @@ ase_size_t ase_map_getcapa (
 );
 
 int ase_map_getscale (
-	ase_map_t* map,
-	int id
+	ase_map_t* map   /* a map */,
+	ase_map_id_t id  /* ASE_MAP_KEY or ASE_MAP_VAL */
 );
 
 /****f* ase.cmn.map/ase_map_setscale
@@ -323,15 +325,15 @@ int ase_map_getscale (
  * SYNOPSIS
  */
 void ase_map_setscale (
-	ase_map_t* map /* a map */,
-	int id         /* ASE_MAP_KEY or ASE_MAP_VAL */,
-	int scale      /* a scale factor */
+	ase_map_t* map   /* a map */,
+	ase_map_id_t id  /* ASE_MAP_KEY or ASE_MAP_VAL */,
+	int scale        /* a scale factor */
 );
 /******/
 
 ase_map_copier_t ase_map_getcopier (
-	ase_map_t* map /* a map */,
-	int id /* ASE_MAP_KEY or ASE_MAP_VAL */
+	ase_map_t* map   /* a map */,
+	ase_map_id_t id  /* ASE_MAP_KEY or ASE_MAP_VAL */
 );
 
 /****f* ase.cmn.map/ase_map_setcopier
@@ -349,16 +351,15 @@ ase_map_copier_t ase_map_getcopier (
  * SYNOPSIS
  */
 void ase_map_setcopier (
-	ase_map_t* map          /* a map */, 
-	int id                  /* ASE_MAP_KEY or ASE_MAP_VAL */,
-	ase_map_copier_t copier /* an element copier */
+	ase_map_t* map           /* a map */, 
+	ase_map_id_t id          /* ASE_MAP_KEY or ASE_MAP_VAL */,
+	ase_map_copier_t copier  /* an element copier */
 );
 /******/
 
-
 ase_map_freeer_t ase_map_getfreeer (
-	ase_map_t* map /* a map */,
-	int id /* ASE_MAP_KEY or ASE_MAP_VAL */
+	ase_map_t*   map  /* a map */,
+	ase_map_id_t id   /* ASE_MAP_KEY or ASE_MAP_VAL */
 );
 
 /****f* ase.cmn.map/ase_map_setfreeer
@@ -371,9 +372,9 @@ ase_map_freeer_t ase_map_getfreeer (
  * SYNOPSIS
  */
 void ase_map_setfreeer (
-	ase_map_t* map /* a map */,
-	int id /* ASE_MAP_KEY or ASE_MAP_VAL */,
-	ase_map_freeer_t freeer /* an element freeer */
+	ase_map_t* map           /* a map */,
+	ase_map_id_t id          /* ASE_MAP_KEY or ASE_MAP_VAL */,
+	ase_map_freeer_t freeer  /* an element freeer */
 );
 /******/
 
