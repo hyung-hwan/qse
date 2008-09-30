@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 381 2008-09-24 11:07:24Z baconevi $
+ * $Id: macros.h 398 2008-09-29 10:01:15Z baconevi $
  *
  * {License}
  */
@@ -16,6 +16,30 @@
 	#define ASE_NULL ((void*)0)
 #endif
 
+/****d* ase/ASE_TRUE,ASE_FALSE
+ * NAME
+ *  ASE_TRUE - represent a boolean true
+ *  ASE_FALSE - represent a boolean false
+ ******
+ */
+#define ASE_TRUE  (0 == 0)
+#define ASE_FALSE (0 != 0)
+
+
+/****d* ase/ASE_ALIVE,ASE_ZOMBIE,ASE_DEAD
+ * NAME
+ *  ASE_ALIVE - represent a living state
+ *  ASE_ZOMBIE - represent a zombie state
+ *  ASE_DEAD - represent a dead state
+ ******
+ */
+#define ASE_ALIVE   1
+#define ASE_ZOMBIE  0
+#define ASE_DEAD   -1
+
+
+#defien AES_MCHAR_EOF ((ase_mcint_t)-1)
+#defien AES_WCHAR_EOF ((ase_wcint_t)-1)
 #define ASE_CHAR_EOF  ((ase_cint_t)-1)
 
 #define ASE_SIZEOF(n)  (sizeof(n))

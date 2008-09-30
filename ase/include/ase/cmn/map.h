@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 397 2008-09-29 07:11:08Z baconevi $
+ * $Id: map.h 398 2008-09-29 10:01:15Z baconevi $
  *
  * {License}
  */
@@ -42,19 +42,29 @@ typedef struct ase_map_pair_t ase_map_pair_t;
 typedef enum ase_map_walk_t ase_map_walk_t;
 typedef enum ase_map_id_t   ase_map_id_t;
 
-/* data copier */
+/****b* ase.cmn.map/ase_map_copier_t
+ * NAME
+ *  ase_map_copier_t - define a pair contruction callback
+ * SYNOPSIS
+ */
 typedef void* (*ase_map_copier_t) (
-	ase_map_t* map, 
-	void* dptr, 
-	ase_size_t dlen
+	ase_map_t* map  /* a map */,
+	void*      dptr /* the pointer to a key or a value */, 
+	ase_size_t dlen /* the length of a key or a value */
 );
+/******/
 
-/* data freeer */
+/****b* ase.cmn.map/ase_map_freeer_t
+ * NAME
+ *  ase_map_freeer_t - define a key/value destruction callback
+ * SYNOPSIS
+ */
 typedef void (*ase_map_freeer_t) (
-	ase_map_t* map, 
-	void* dptr, 
-	ase_size_t dlen
+	ase_map_t* map  /* a map */,
+	void*      dptr /* the pointer to a key or a value */, 
+	ase_size_t dlen /* the length of a key or a value */
 );
+/******/
 
 /* key hasher */
 typedef ase_size_t (*ase_map_hasher_t) (
@@ -78,11 +88,11 @@ typedef ase_size_t (*ase_map_hasher_t) (
  * SYNOPSIS
  */
 typedef int (*ase_map_comper_t) (
-	ase_map_t* map    /* a map */, 
-	const void* kptr1 /* the pointer to a key */, 
-	ase_size_t klen1  /* the length of a key */, 
-	const void* kptr2 /* the pointer to a key */, 
-	ase_size_t klen2  /* the length of a key */
+	ase_map_t*  map    /* a map */, 
+	const void* kptr1  /* the pointer to a key */, 
+	ase_size_t  klen1  /* the length of a key */, 
+	const void* kptr2  /* the pointer to a key */, 
+	ase_size_t  klen2  /* the length of a key */
 );
 /******/
 
