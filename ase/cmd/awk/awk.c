@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 403 2008-09-29 11:07:47Z baconevi $
+ * $Id: awk.c 404 2008-09-30 11:14:20Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -16,6 +16,8 @@
 #include <stdarg.h>
 #include <math.h>
 #include <stdlib.h>
+
+#define ABORT(label) goto label
 
 #if defined(_WIN32)
 	#include <windows.h>
@@ -951,7 +953,13 @@ static void out_of_memory (void)
 	ase_fprintf (ASE_STDERR, ASE_T("Error: out of memory\n"));	
 }
 
-static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
+struct argout_t
+{
+	ase_sll_t* sf;
+	ase_map_t* vm;
+};
+
+static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod, struct argout_t* ao)
 {
 	static ase_opt_lng_t lng[] = 
 	{
@@ -993,7 +1001,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 	if (sf == ASE_NULL)
 	{
 		out_of_memory ();
-		return -1;	
+		ABORT (on_error);
 	}
 	ase_sll_setscale (sf, ASE_SIZEOF(opt.arg[0]));
 	ase_sll_setcopier (sf, ASE_SLL_COPIER_INLINE);
@@ -1002,7 +1010,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 	if (vm == ASE_NULL)
 	{
 		out_of_memory ();
-		return -1;
+		ABORT (on_error);
 	}
 	ase_map_setcopier (vm, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (vm, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
@@ -1029,15 +1037,17 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 				if (ase_sll_pushtail(sf, opt.arg, sz) == ASE_NULL)
 				{
 					out_of_memory ();
-					return -1;	
+					ABORT (on_error);
 				}
 
 				break;
 			}
 
 			case ASE_T('F'):
+			{
 				ase_printf  (ASE_T("[field separator] = %s\n"), opt.arg);
 				break;
+			}
 
 			case ASE_T('v'):
 			{
@@ -1045,7 +1055,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 				if (eq == ASE_NULL)
 				{
 					/* INVALID VALUE... */
-					return -1;
+					ABORT (on_error);
 				}
 
 				*eq = ASE_T('\0');
@@ -1053,12 +1063,13 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 				if (ase_map_upsert (vm, opt.arg, ase_strlen(opt.arg)+1, eq, ase_strlen(eq)+1) == ASE_NULL)
 				{
 					out_of_memory ();
-					return -1;
+					ABORT (on_error);
 				}
 				break;
 			}
 
 			case ASE_T('?'):
+			{
 				if (opt.lngopt)
 				{
 					ase_printf (ASE_T("Error: illegal option - %s\n"), opt.lngopt);
@@ -1070,8 +1081,10 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 
 				if (sf != ASE_NULL) ase_sll_close (sf);
 				return -1;
+			}
 
 			case ASE_T(':'):
+			{
 				if (opt.lngopt)
 				{
 					ase_printf (ASE_T("Error: bad argument for %s\n"), opt.lngopt);
@@ -1081,12 +1094,11 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 					ase_printf (ASE_T("Error: bad argument for %c\n"), opt.opt);
 				}
 
-				if (sf != ASE_NULL) ase_sll_close (sf);
-				return -1;
+				ABORT (on_error);
+			}
 
 			default:
-				if (sf != ASE_NULL) ase_sll_close (sf);
-				return -1;
+				ABORT (on_error);
 		}
 	}
 
@@ -1096,7 +1108,7 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 		if (opt.ind >= argc)
 		{
 			/* no source code specified */
-			return -1;
+			ABORT (on_error);
 		}
 
 		siod->type = SRCIO_STR;
@@ -1114,7 +1126,15 @@ static int handle_args (int argc, ase_char_t* argv[], srcio_data_t* siod)
 
 	/* remaining args are input(console) file names */
 
+	ao->sf = sf;
+	ao->vm = vm;
 	return 0;
+
+
+on_error:
+	if (sf != ASE_NULL) ase_sll_close (sf);
+	if (vm != ASE_NULL) ase_map_close (vm);
+	return -1;
 }
 
 typedef struct extension_t
@@ -1233,7 +1253,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 	ase_awk_runarg_t runarg[128];
 	int deparse = 0;
 
-	i = handle_args (argc, argv, &siod);
+	struct argout_t ao;
+
+	i = handle_args (argc, argv, &siod, &ao);
 	if (i == -1)
 	{
 		print_usage (argv[0]);
@@ -1250,11 +1272,23 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	app_awk = awk;
 
+#if 0
 	srcios.in = awk_srcio_in;
 	srcios.out = deparse? awk_srcio_out: NULL;
 	srcios.data = &siod;
 
 	if (ase_awk_parse (awk, &srcios) == -1) 
+	{
+		ase_printf (
+			ASE_T("PARSE ERROR: CODE [%d] LINE [%u] %s\n"), 
+			ase_awk_geterrnum(awk),
+			(unsigned int)ase_awk_geterrlin(awk), 
+			ase_awk_geterrmsg(awk));
+		close_awk (awk);
+		return -1;
+	}
+#endif
+	if (ase_awk_parsefiles (awk, ASE_ARR_PTR(stab), ASE_ARR_LEN(stab)) == -1)
 	{
 		ase_printf (
 			ASE_T("PARSE ERROR: CODE [%d] LINE [%u] %s\n"), 

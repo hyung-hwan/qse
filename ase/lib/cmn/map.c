@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 397 2008-09-29 07:11:08Z baconevi $
+ * $Id: map.c 404 2008-09-30 11:14:20Z baconevi $
  *
  * {License}
  */
@@ -235,7 +235,7 @@ map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, int factor)
 	if (factor > 100) factor = 100;
 
 	/* do not zero out the extension */
-	ASE_MEMSET (map, 0, SIZEOF(map_t));
+	ASE_MEMSET (map, 0, SIZEOF(*map));
 	map->mmgr = mmgr;
 
 	map->bucket = ASE_MMGR_ALLOC (mmgr, capa*SIZEOF(pair_t*));

@@ -65,7 +65,7 @@ void ase_sll_close (sll_t* sll)
 sll_t* ase_sll_init (sll_t* sll, mmgr_t* mmgr)
 {
 	/* do not zero out the extension */
-	ASE_MEMSET (sll, 0, ASE_SIZEOF(sll_t));
+	ASE_MEMSET (sll, 0, ASE_SIZEOF(*sll));
 
 	sll->mmgr = mmgr;
 	sll->size = 0;

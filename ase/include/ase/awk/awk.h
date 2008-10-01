@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 354 2008-08-31 10:57:24Z baconevi $
+ * $Id: awk.h 404 2008-09-30 11:14:20Z baconevi $
  *
  * {License}
  */
@@ -7,11 +7,19 @@
 #ifndef _ASE_AWK_AWK_H_
 #define _ASE_AWK_AWK_H_
 
-
 #include <ase/types.h>
 #include <ase/macros.h>
 #include <ase/cmn/map.h>
 #include <ase/cmn/str.h>
+
+/****o* ase.awk/awk interpreter
+ * DESCRIPTION
+ *  The library includes an AWK interpreter that can be embedded into other
+ *  applications or can run stand-alone.
+ *
+ *  #include <ase/awk/awk.h>
+ ******
+ */
 
 typedef struct ase_awk_t ase_awk_t;
 typedef struct ase_awk_run_t ase_awk_run_t;
@@ -577,50 +585,63 @@ extern ase_awk_val_t* ase_awk_val_zero;
 /** represents a numeric value 1 */
 extern ase_awk_val_t* ase_awk_val_one;
 
-/* 
- * NAME: create an ase_awk_t instance
+/****f* ase.awk/ase_awk_open
+ * NAME
+ *  ase_awk_open - create an awk object
  * 
- * DESCRIPTION:
+ * DESCRIPTION
  *  The ase_awk_open() function creates a new ase_awk_t instance.
  *  The instance created can be passed to other ase_awk_xxx() functions and
  *  is valid until it is successfully destroyed using the ase_ase_close() 
  *  function.
  *
- * RETURNS: 
- *  the pointer to an ase_awk_t instance on success.
- *  ASE_NULL on failure.
+ * RETURN
+ *  The ase_awk_open() function returns the pointer to an ase_awk_t instance 
+ *  on success and ASE_NULL on failure.
+ *
+ * SYNOPSIS
  */
 ase_awk_t* ase_awk_open ( 
-	ase_mmgr_t* mmgr /* memory manager */,
-	ase_size_t ext /* size of extension area in bytes */
+	ase_mmgr_t* mmgr  /* a memory manager */,
+	ase_size_t  ext   /* size of extension area in bytes */
 );
+/******/
 
-/* 
- * destroy an ase_awk_t instance
+/****f* ase.awk/ase_awk_close 
+ * NAME
+ *  ase_awk_close - destroy an awk object
  *
  * An ase_awk_t instance should be destroyed using the ase_awk_close() function
  * when finished being used. The instance passed is not valid any more once 
  * the function returns success.
  *
- * RETURNS 0 on success, -1 on failure 
+ * RETURN
+ *  0 on success, -1 on failure 
+ * 
+ * SYNOPSIS
  */
 int ase_awk_close (
-	/* the pointer to an ase_awk_t instance */
-	ase_awk_t* awk 
+	ase_awk_t* awk  /* an awk object */
 );
+/******/
 
-/*
- * get the pointer to the memory manager in use
- * RETURNS the pointer to the memory manager set through ase_awk_open()
+/****f* ase.awk/ase_awk_getmmgr
+ * NAME
+ *  ase_awk_getmmgr - get the memory manager 
+ *
+ * DESCRIPTION
+ *  The ase_awk_getmmgr() function returns the pointer to the memory manager.
+ *
+ * SYNOPSIS
  */
 ase_mmgr_t* ase_awk_getmmgr (
-	/* the pointer to an ase_awk_t instance  */
-	ase_awk_t* awk
+	ase_awk_t* awk  /* an awk object */
 );
+/******/
 
-/*
+/****f* ase.awk/ase_awk_getextension
  * NAME
- *  get the pointer to extension area requested upon a call to ase_awk_open()
+ *  ase_awk_getextension - get the extension
  *
  * DESCRIPTION
  *  The extension area is allocated in the ase_awk_open() function when it is 
@@ -628,12 +649,12 @@ ase_mmgr_t* ase_awk_getmmgr (
  *  can be acquired using the ase_awk_getextension() function and be utilized 
  *  for various purposes.
  *
- * RETURNS the pointer to the extension area 
+ * SYNOPSIS
  */
 void* ase_awk_getextension (
-	/* the pointer to an ase_awk_t instance */
-	ase_awk_t* awk
+	ase_awk_t* awk  /* an awk object */
 );
+/******/
 
 /*
  * set the character classfier
@@ -771,6 +792,9 @@ int ase_awk_delglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
  * 	On failure, -1 is returned.
  */
 int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
+
+int ase_awk_parsefiles (ase_awk_t* awk, const ase_char_t* files[], ase_size_t count);
+
 
 /**
  * Executes a parsed program.
