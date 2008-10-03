@@ -135,49 +135,49 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* The size of `char', as computed by sizeof. */
+/* The size of a `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
 
-/* The size of `double', as computed by sizeof. */
+/* The size of a `double', as computed by sizeof. */
 #undef SIZEOF_DOUBLE
 
-/* The size of `float', as computed by sizeof. */
+/* The size of a `float', as computed by sizeof. */
 #undef SIZEOF_FLOAT
 
-/* The size of `int', as computed by sizeof. */
+/* The size of a `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of `long', as computed by sizeof. */
+/* The size of a `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of `long double', as computed by sizeof. */
+/* The size of a `long double', as computed by sizeof. */
 #undef SIZEOF_LONG_DOUBLE
 
-/* The size of `long long', as computed by sizeof. */
+/* The size of a `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
-/* The size of `short', as computed by sizeof. */
+/* The size of a `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
-/* The size of `void *', as computed by sizeof. */
+/* The size of a `void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P
 
-/* The size of `wchar_t', as computed by sizeof. */
+/* The size of a `wchar_t', as computed by sizeof. */
 #undef SIZEOF_WCHAR_T
 
-/* The size of `__int128', as computed by sizeof. */
+/* The size of a `__int128', as computed by sizeof. */
 #undef SIZEOF___INT128
 
-/* The size of `__int16', as computed by sizeof. */
+/* The size of a `__int16', as computed by sizeof. */
 #undef SIZEOF___INT16
 
-/* The size of `__int32', as computed by sizeof. */
+/* The size of a `__int32', as computed by sizeof. */
 #undef SIZEOF___INT32
 
-/* The size of `__int64', as computed by sizeof. */
+/* The size of a `__int64', as computed by sizeof. */
 #undef SIZEOF___INT64
 
-/* The size of `__int8', as computed by sizeof. */
+/* The size of a `__int8', as computed by sizeof. */
 #undef SIZEOF___INT8
 
 /* Define to 1 if you have the ANSI C header files. */
