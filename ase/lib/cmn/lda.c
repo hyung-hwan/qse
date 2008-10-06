@@ -7,11 +7,19 @@
 #include <ase/cmn/lda.h>
 #include "mem.h"
 
+#define DPTR(cell) ASE_LDA_DPTR(cell)
+#define DLEN(cell) ASE_LDA_DLEN(cell)
 #define TOB(lda,len) ((len)*(lda)->scale)
+#define INVALID ASE_LDA_INVALID
 
-ase_lda_t* ase_lda_open (ase_mmgr_t* mmgr, ase_size_t ext, ase_size_t capa)
+#define cell_t ase_lda_cell_t
+#define lda_t  ase_lda_t
+#define size_t ase_size_t
+#define mmgr_t ase_mmgr_t
+
+lda_t* ase_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
 {
-	ase_lda_t* lda;
+	lda_t* lda;
 
 	if (mmgr == ASE_NULL) 
 	{
@@ -23,54 +31,69 @@ ase_lda_t* ase_lda_open (ase_mmgr_t* mmgr, ase_size_t ext, ase_size_t capa)
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-        lda = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_lda_t) + ext);
+        lda = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(lda_t) + ext);
         if (lda == ASE_NULL) return ASE_NULL;
 
         return ase_lda_init (lda, mmgr, capa);
 }
 
-void ase_lda_close (ase_lda_t* lda)
+void ase_lda_close (lda_t* lda)
 {
 	ase_lda_fini (lda);
 	ASE_MMGR_FREE (lda->mmgr, lda);
 }
 
-ase_lda_t* ase_lda_init (ase_lda_t* lda, ase_mmgr_t* mmgr, ase_size_t capa)
+lda_t* ase_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 {
 	ASE_MEMSET (lda, 0, ASE_SIZEOF(*lda));
 
 	lda->mmgr = mmgr;
 	lda->size = 0;
 	lda->capa = 0;
-	lda->slot = ASE_NULL;
+	lda->cell = ASE_NULL;
 
 	if (ase_lda_setcapa (lda, capa) == ASE_NULL) return ASE_NULL;
 	return lda;
 }
 
-void ase_lda_fini (ase_lda_t* lda)
+void ase_lda_fini (lda_t* lda)
 {
 	ase_lda_clear (lda);
 
-	if (lda->slot != ASE_NULL) 
+	if (lda->cell != ASE_NULL) 
 	{
-		ASE_MMGR_FREE (lda->mmgr, lda->slot);
-		lda->slot = ASE_NULL;
+		ASE_MMGR_FREE (lda->mmgr, lda->cell);
+		lda->cell = ASE_NULL;
 		lda->capa = 0;
 	}
 }
 
-ase_size_t ase_lda_getsize (ase_lda_t* lda)
+void* ase_lda_getextension (lda_t* lda)
+{
+	return lda + 1;
+}
+
+mmgr_t* ase_lda_getmmgr (lda_t* lda)
+{
+	return lda->mmgr;
+}
+
+void ase_lda_setmmgr (lda_t* lda, mmgr_t* mmgr)
+{
+	lda->mmgr = mmgr;
+}
+
+size_t ase_lda_getsize (lda_t* lda)
 {
 	return lda->size;
 }
 
-ase_size_t ase_lda_getcapa (ase_lda_t* lda)
+size_t ase_lda_getcapa (lda_t* lda)
 {
 	return lda->capa;
 }
 
-ase_lda_t* ase_lda_setcapa (ase_lda_t* lda, ase_size_t capa)
+lda_t* ase_lda_setcapa (lda_t* lda, size_t capa)
 {
 	void* tmp;
 
@@ -85,51 +108,54 @@ ase_lda_t* ase_lda_setcapa (ase_lda_t* lda, ase_size_t capa)
 		if (lda->mmgr->realloc != ASE_NULL)
 		{
 			tmp = ASE_MMGR_REALLOC (lda->mmgr,
-				lda->slot, ASE_SIZEOF(*lda->slot) * capa);
+				lda->cell, ASE_SIZEOF(*lda->cell) * capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
 		}
 		else
 		{
 			tmp = ASE_MMGR_ALLOC (
-				lda->mmgr, ASE_SIZEOF(*lda->slot) * capa);
+				lda->mmgr, ASE_SIZEOF(*lda->cell) * capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
-			if (lda->slot != ASE_NULL) 
+			if (lda->cell != ASE_NULL) 
 			{
-				ase_size_t x;
+				size_t x;
 				x = (capa > lda->capa)? lda->capa: capa;
-				ASE_MEMCPY (
-					tmp, lda->slot, 
-					ASE_SIZEOF(*lda->slot) * x);
-				ASE_MMGR_FREE (lda->mmgr, lda->slot);
+				ASE_MEMCPY (tmp, lda->cell, 
+					ASE_SIZEOF(*lda->cell) * x);
+				ASE_MMGR_FREE (lda->mmgr, lda->cell);
 			}
 		}
 	}
 	else 
 	{
-		if (lda->slot != ASE_NULL) ASE_MMGR_FREE (lda->mmgr, lda->slot);
+		if (lda->cell != ASE_NULL) 
+		{
+			ase_lda_clear (lda);
+			ASE_MMGR_FREE (lda->mmgr, lda->cell);
+		}
 		tmp = ASE_NULL;
 	}
 
-	lda->slot = tmp;
+	lda->cell = tmp;
 	lda->capa = capa;
 	
 	return lda;
 }
 
-static ase_lda_slot_t* alloc_slot (ase_lda_t* lda, void* dptr, ase_size_t dlen)
+static cell_t* alloc_cell (lda_t* lda, void* dptr, size_t dlen)
 {
-	ase_lda_slot_t* n;
+	cell_t* n;
 
 	if (lda->copier == ASE_NULL)
 	{
-		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(ase_lda_slot_t));
+		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(cell_t));
 		if (n == ASE_NULL) return ASE_NULL;
 		DPTR(n) = dptr;
 	}
 	else if (lda->copier == ASE_LDA_COPIER_INLINE)
 	{
 		n = ASE_MMGR_ALLOC (lda->mmgr, 
-			ASE_SIZEOF(ase_lda_slot_t) + TOB(lda,dlen));
+			ASE_SIZEOF(cell_t) + TOB(lda,dlen));
 		if (n == ASE_NULL) return ASE_NULL;
 
 		ASE_MEMCPY (n + 1, dptr, TOB(lda,dlen));
@@ -137,7 +163,7 @@ static ase_lda_slot_t* alloc_slot (ase_lda_t* lda, void* dptr, ase_size_t dlen)
 	}
 	else
 	{
-		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(slot_t));
+		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(cell_t));
 		if (n == ASE_NULL) return ASE_NULL;
 		DPTR(n) = lda->copier (lda, dptr, dlen);
 		if (DPTR(n) == ASE_NULL) 
@@ -152,18 +178,17 @@ static ase_lda_slot_t* alloc_slot (ase_lda_t* lda, void* dptr, ase_size_t dlen)
 	return n;
 }
 
-ase_lda_slot_t* ase_lda_insert (
-	ase_lda_t* lda, ase_size_t index, void* dptr, ase_size_t dlen)
+size_t ase_lda_insert (lda_t* lda, size_t index, void* dptr, size_t dlen)
 {
-	ase_size_t i;
-	ase_lda_slot_t* slot;
+	size_t i;
+	cell_t* cell;
 
-	slot = alloc_slot (lda, dptr, dlen);
-	if (slot == ASE_NULL) return ASE_NULL;
+	cell = alloc_cell (lda, dptr, dlen);
+	if (cell == ASE_NULL) return INVALID;
 
 	if (index >= lda->capa) 
 	{
-		ase_size_t capa;
+		size_t capa;
 
 		if (lda->capa <= 0) capa = (index + 1);
 		else 
@@ -174,14 +199,14 @@ ase_lda_slot_t* ase_lda_insert (
 		if (ase_lda_setcapa(lda,capa) == ASE_NULL) 
 		{
 			if (lda->freeer) 
-				lda->freeer (lda, slot->dptr, slot->dlen);
-			return ASE_NULL;
+				lda->freeer (lda, DPTR(cell), DLEN(cell));
+			return INVALID;
 		}
 	}
 
 	for (i = lda->size; i > index; i--) 
-		lda->slot[i] = lda->slot[i-1];
-	lda->slot[index] = slot;
+		lda->cell[i] = lda->cell[i-1];
+	lda->cell[index] = cell;
 
 	if (index > lda->size) lda->size = index + 1;
 	else lda->size++;
@@ -189,10 +214,9 @@ ase_lda_slot_t* ase_lda_insert (
 	return index;
 }
 
-ase_size_t ase_lda_delete (
-	ase_lda_t* lda, ase_size_t index, ase_size_t count)
+size_t ase_lda_delete (lda_t* lda, size_t index, size_t count)
 {
-	ase_size_t i, j, k;
+	size_t i, j, k;
 
 	if (index >= lda->size) return 0;
 	if (count > lda->size - index) count = lda->size - index;
@@ -203,18 +227,20 @@ ase_size_t ase_lda_delete (
 
 	while (i < k) 
 	{
-		ASE_AWK_FREE (lda->awk, lda->slot[i].name.ptr);	
+		cell_t* c = lda->cell[i];
+
+		if (lda->freeer != ASE_NULL)
+			lda->freeer (lda, DPTR(c), DLEN(c));
+		ASE_MMGR_FREE (lda->mmgr, c);
 
 		if (j >= lda->size) 
 		{
-			lda->slot[i].name.ptr = ASE_NULL;
-			lda->slot[i].name.len = 0; 
+			lda->cell[i] = ASE_NULL;
 			i++;
 		}
 		else
 		{
-			lda->slot[i].name.ptr = lda->slot[j].name.ptr;
-			lda->slot[i].name.len = lda->slot[j].name.len;
+			lda->cell[i] = lda->cell[j];
 			i++; j++;		
 		}
 	}
@@ -223,152 +249,164 @@ ase_size_t ase_lda_delete (
 	return count;
 }
 
-void ase_lda_clear (ase_lda_t* lda)
+void ase_lda_clear (lda_t* lda)
 {
-	ase_size_t i;
+	size_t i;
 
 	for (i = 0; i < lda->size; i++) 
 	{
-		ASE_MMGR_FREE (lda->mmgr, lda->slot[i].name.ptr);
-		lda->slot[i].name.ptr = ASE_NULL;
-		lda->slot[i].name.len = 0;
+		cell_t* c = lda->cell[i];
+		if (lda->freeer)
+			lda->freeer (lda, DPTR(c), DLEN(c));
+		ASE_MMGR_FREE (lda->mmgr, c);
+		lda->cell[i] = ASE_NULL;
 	}
 
 	lda->size = 0;
 }
 
-ase_size_t ase_lda_add (
-	ase_lda_t* lda, ase_char_t* str, ase_size_t len)
+size_t ase_lda_add (
+	lda_t* lda, ase_char_t* str, size_t len)
 {
 	return ase_lda_insert (lda, lda->size, str, len);
 }
 
-ase_size_t ase_lda_adduniq (
-	ase_lda_t* lda, ase_char_t* str, ase_size_t len)
+size_t ase_lda_adduniq (
+	lda_t* lda, ase_char_t* str, size_t len)
 {
-	ase_size_t i;
+	size_t i;
 	i = ase_lda_find (lda, 0, str, len);
-	if (i != (ase_size_t)-1) return i; /* found. return the current index */
+	if (i != INVALID) return i; /* found. return the current index */
 
 	/* insert a new entry */
 	return ase_lda_insert (lda, lda->size, str, len);
 }
 
-ase_size_t ase_lda_find (
-	ase_lda_t* lda, ase_size_t index, 
-	const ase_char_t* str, ase_size_t len)
+#if 0
+size_t ase_lda_find (
+	lda_t* lda, size_t index, 
+	const ase_char_t* str, size_t len)
 {
-	ase_size_t i;
+	size_t i;
 
 	for (i = index; i < lda->size; i++) 
 	{
 		if (ase_strxncmp (
-			lda->slot[i].name.ptr, lda->slot[i].name.len, 
+			lda->cell[i].name.ptr, lda->cell[i].name.len, 
 			str, len) == 0) return i;
 	}
 
-	return (ase_size_t)-1;
+	return INVALID;
 }
 
-ase_size_t ase_lda_rfind (
-	ase_lda_t* lda, ase_size_t index, 
-	const ase_char_t* str, ase_size_t len)
+size_t ase_lda_rfind (
+	lda_t* lda, size_t index, 
+	const ase_char_t* str, size_t len)
 {
-	ase_size_t i;
+	size_t i;
 
-	if (index >= lda->size) return (ase_size_t)-1;
+	if (index >= lda->size) return INVALID;
 
 	for (i = index + 1; i-- > 0; ) 
 	{
 		if (ase_strxncmp (
-			lda->slot[i].name.ptr, lda->slot[i].name.len, 
+			lda->cell[i].name.ptr, lda->cell[i].name.len, 
 			str, len) == 0) return i;
 	}
 
-	return (ase_size_t)-1;
+	return INVALID;
 }
 
-ase_size_t ase_lda_rrfind (
-	ase_lda_t* lda, ase_size_t index,
-	const ase_char_t* str, ase_size_t len)
+size_t ase_lda_rrfind (
+	lda_t* lda, size_t index,
+	const ase_char_t* str, size_t len)
 {
-	ase_size_t i;
+	size_t i;
 
-	if (index >= lda->size) return (ase_size_t)-1;
+	if (index >= lda->size) return INVALID;
 
 	for (i = lda->size - index; i-- > 0; ) 
 	{
 		if (ase_strxncmp (
-			lda->slot[i].name.ptr, lda->slot[i].name.len, 
+			lda->cell[i].name.ptr, lda->cell[i].name.len, 
 			str, len) == 0) return i;
 	}
 
-	return (ase_size_t)-1;
+	return INVALID;
 }
 
-ase_size_t ase_lda_findx (
-	ase_lda_t* lda, ase_size_t index, 
-	const ase_char_t* str, ase_size_t len,
-	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg)
+size_t ase_lda_findx (
+	lda_t* lda, size_t index, 
+	const ase_char_t* str, size_t len,
+	void(*transform)(size_t, ase_cstr_t*,void*), void* arg)
 {
-	ase_size_t i;
+	size_t i;
 
 	for (i = index; i < lda->size; i++) 
 	{
 		ase_cstr_t x;
 
-		x.ptr = lda->slot[i].name.ptr;
-		x.len = lda->slot[i].name.len;
+		x.ptr = lda->cell[i].name.ptr;
+		x.len = lda->cell[i].name.len;
 
 		transform (i, &x, arg);
 		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
 	}
 
-	return (ase_size_t)-1;
+	return INVALID;
 }
 
-ase_size_t ase_lda_rfindx (
-	ase_lda_t* lda, ase_size_t index, 
-	const ase_char_t* str, ase_size_t len,
-	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg)
+size_t ase_lda_rfindx (
+	lda_t* lda, size_t index, 
+	const ase_char_t* str, size_t len,
+	void(*transform)(size_t, ase_cstr_t*,void*), void* arg)
 {
-	ase_size_t i;
+	size_t i;
 
-	if (index >= lda->size) return (ase_size_t)-1;
+	if (index >= lda->size) return INVALID;
 
 	for (i = index + 1; i-- > 0; ) 
 	{
 		ase_cstr_t x;
 
-		x.ptr = lda->slot[i].name.ptr;
-		x.len = lda->slot[i].name.len;
+		x.ptr = lda->cell[i].name.ptr;
+		x.len = lda->cell[i].name.len;
 
 		transform (i, &x, arg);
 		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
 	}
 
-	return (ase_size_t)-1;
+	return INVALID;
 }
 
-ase_size_t ase_lda_rrfindx (
-	ase_lda_t* lda, ase_size_t index,
-	const ase_char_t* str, ase_size_t len, 
-	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg)
+size_t ase_lda_rrfindx (
+	lda_t* lda, size_t index,
+	const ase_char_t* str, size_t len, 
+	void(*transform)(size_t, ase_cstr_t*,void*), void* arg)
 {
-	ase_size_t i;
+	size_t i;
 
-	if (index >= lda->size) return (ase_size_t)-1;
+	if (index >= lda->size) return INVALID;
 
 	for (i = lda->size - index; i-- > 0; ) 
 	{
 		ase_cstr_t x;
 
-		x.ptr = lda->slot[i].name.ptr;
-		x.len = lda->slot[i].name.len;
+		x.ptr = lda->cell[i].name.ptr;
+		x.len = lda->cell[i].name.len;
 
 		transform (i, &x, arg);
 		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
 	}
 
-	return (ase_size_t)-1;
+	return INVALID;
 }
+
+
+void* ase_lda_copyinline (lda_t* lda, void* dptr, size_t dlen)
+{
+	/* this is a dummy copier */
+	return ASE_NULL;
+}
+
+#endif

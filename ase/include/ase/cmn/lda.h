@@ -20,7 +20,23 @@
  */
 
 typedef struct ase_lda_t ase_lda_t;
-typedef struct ase_lda_slot_t ase_lda_slot_t;
+typedef struct ase_lda_cell_t ase_lda_cell_t;
+
+#define ASE_LDA_COPIER_INLINE  ase_lda_copyinline
+
+#define ASE_LDA_INVALID ((ase_size_t)-1)
+
+#define ASE_LDA_SIZE(lda)       ((lda)->size)
+#define ASE_LDA_CAPA(lda)       ((lda)->capa)
+#define ASE_LDA_CELL(lda,index) ((lda)->cell[index])
+
+#define ASE_LDA_DPTR(cell)      ((cell)->dptr)
+#define ASE_LDA_DLEN(cell)      ((cell)->dlen)
+
+#define ASE_LDA_MMGR(lda)       ((lda)->mmgr)
+#define ASE_LDA_COPIER(lda)     ((lda)->copier)
+#define ASE_LDA_FREEER(lda)     ((lda)->freeer)
+#define ASE_LDA_COMPER(lda)     ((lda)->comper)
 
 
 /****b* ase.cmn.lda/ase_lda_copier_t
@@ -70,7 +86,7 @@ typedef void (*ase_lda_freeer_t) (
  *
  * DESCRIPTION
  *  The ase_lda_comper_t type defines a key comparator that is called when
- *  the list needs to compare data. A singly linked list is created with a
+ *  the list needs to compare data. A linear dynamic array is created with a
  *  default comparator that performs bitwise comparison.
  *
  *  The comparator should return 0 if the data are the same and a non-zero
@@ -79,7 +95,7 @@ typedef void (*ase_lda_freeer_t) (
  * SYNOPSIS
  */
 typedef int (*ase_lda_comper_t) (
-	ase_lda_t*  lda    /* a singly linked list */, 
+	ase_lda_t*  lda    /* a linear dynamic array */, 
 	const void* dptr1  /* a data pointer */,
 	ase_size_t  dlen1  /* a data length */,
 	const void* dptr2  /* a data pointer */,
@@ -105,17 +121,17 @@ struct ase_lda_t
 	ase_size_t       size;   /* the number of items */
 	ase_size_t       capa;   /* capacity */
 
-	ase_lda_slot_t** slot;
+	ase_lda_cell_t** cell;
 };
 /******/
 
 /****s*
  * NAME
- *  ase_lda_slot_t - define a linear dynamic array slot
+ *  ase_lda_cell_t - define a linear dynamic array cell
  *
  * SYNOPSIS
  */
-struct ase_lda_slot_t
+struct ase_lda_cell_t
 {
 	void*      dptr;
 	ase_size_t dlen;
@@ -174,14 +190,60 @@ void ase_lda_fini (
 );
 /******/
 
-ase_size_t ase_lda_getsize (ase_lda_t* lda);
-ase_size_t ase_lda_getcapa (ase_lda_t* lda);
-ase_lda_t* ase_lda_setcapa (ase_lda_t* lda, ase_size_t capa);
+/****f* ase.cmn.lda/ase_lda_getextension
+ * NAME
+ *  ase_lda_getextension - get the pointer to the extension
+ *
+ * DESCRIPTION
+ *  The ase_lda_getextension() function returns the pointer to the extension.
+ *
+ * SYNOPSIS
+ */
+void* ase_lda_getextension (
+	ase_lda_t* lda  /* a linear dynamic array */
+);
+/******/
+
+/****f* ase.cmn.lda/ase_lda_getmmgr
+ * NAME
+ *  ase_lda_getmmgr - get the memory manager
+ *
+ * SYNOPSIS
+ */
+ase_mmgr_t* ase_lda_getmmgr (
+	ase_lda_t* lda  /* a linear dynamic array */
+);
+/******/
+
+/****f* ase.cmn.lda/ase_lda_setmmgr
+ * NAME
+ *  ase_lda_setmmgr - set the memory manager
+ *
+ * SYNOPSIS
+ */
+void ase_lda_setmmgr (
+	ase_lda_t*  lda   /* a linear dynamic array */,
+	ase_mmgr_t* mmgr  /* a memory manager */
+);
+/******/
+
+ase_size_t ase_lda_getsize (
+	ase_lda_t* lda
+);
+
+ase_size_t ase_lda_getcapa (
+	ase_lda_t* lda
+);
+
+ase_lda_t* ase_lda_setcapa (
+	ase_lda_t* lda,
+	ase_size_t capa
+);
 
 ase_size_t ase_lda_insert (
 	ase_lda_t* lda,
 	ase_size_t index, 
-	ase_char_t* dptr,
+	void* dptr,
 	ase_size_t dlen
 );
 
@@ -220,6 +282,13 @@ ase_size_t ase_lda_rrfindx (
 	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg);
 
 void ase_lda_clear (ase_lda_t* lda);
+
+
+void* ase_lda_copyinline (
+	ase_lda_t* lda   /* a linear dynamic array */,
+	void*      data  /* pointer to data to copy */ ,
+	ase_size_t len   /* length of data in bytes */
+);
 
 #ifdef __cplusplus
 }
