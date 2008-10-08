@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 404 2008-09-30 11:14:20Z baconevi $
+ * $Id: map.c 408 2008-10-07 11:30:16Z baconevi $
  *
  * {License}
  */
@@ -75,7 +75,8 @@ static pair_t* alloc_pair (map_t* map,
 	NEXT(n) = ASE_NULL;
 
 	KLEN(n) = klen;
-	if (kcop == ASE_NULL)
+	if (kcop == ASE_NULL ||
+	    kcop == ASE_MAP_COPIER_SIMPLE)
 	{
 		KPTR(n) = kptr;
 	}
@@ -95,7 +96,8 @@ static pair_t* alloc_pair (map_t* map,
 	}
 
 	VLEN(n) = vlen;
-	if (vcop == ASE_NULL) 
+	if (vcop == ASE_NULL ||
+	    vcop == ASE_MAP_COPIER_SIMPLE)
 	{
 		VPTR(n) = vptr;
 	}
@@ -150,7 +152,8 @@ static pair_t* change_pair_val (
 		size_t ovlen = VLEN(pair);
 
 		/* place the new value according to the copier */
-		if (vcop == ASE_NULL)
+		if (vcop == ASE_NULL ||
+		    vcop == ASE_MAP_COPIER_SIMPLE)
 		{
 			VPTR(pair) = vptr;
 			VLEN(pair) = vlen;
@@ -289,16 +292,6 @@ void ase_map_setmmgr (map_t* map, mmgr_t* mmgr)
 	map->mmgr = mmgr;
 }
 
-size_t ase_map_getsize (map_t* map)
-{
-	return map->size;
-}
-
-size_t ase_map_getcapa (map_t* map)
-{
-	return map->capa;
-}
-
 int ase_map_getscale (map_t* map, ase_map_id_t id)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
@@ -390,6 +383,16 @@ void ase_map_setsizer (map_t* map, sizer_t sizer)
 	map->sizer = sizer;
 }
 
+size_t ase_map_getsize (map_t* map)
+{
+	return map->size;
+}
+
+size_t ase_map_getcapa (map_t* map)
+{
+	return map->capa;
+}
+
 pair_t* ase_map_search (map_t* map, const void* kptr, size_t klen)
 {
 	pair_t* pair;
@@ -410,7 +413,6 @@ pair_t* ase_map_search (map_t* map, const void* kptr, size_t klen)
 
 	return ASE_NULL;
 }
-
 
 int ase_map_put (
 	map_t* map, void* kptr, size_t klen, 
@@ -727,6 +729,11 @@ static int reorganize (map_t* map)
 	map->threshold = map->capa * map->factor / 100;
 
 	return 0;
+}
+
+void* ase_map_copysimple (map_t* map, void* dptr, size_t dlen)
+{
+	return dptr;
 }
 
 void* ase_map_copyinline (map_t* map, void* dptr, size_t dlen)

@@ -162,6 +162,7 @@ struct ase_sll_node_t
 };
 /******/
 
+#define ASE_SLL_COPIER_SIMPLE ase_sll_copysimple
 #define ASE_SLL_COPIER_INLINE ase_sll_copyinline
 
 #define ASE_SLL_MMGR(sll)   ((sll)->mmgr)
@@ -574,13 +575,23 @@ void ase_sll_walk (
 /******/
 
 /* 
+ * Causes a singly linked list to remember the pointer and the length.
+ * Use ASE_SLL_COPIER_SIMPLE instead.
+ */
+void* ase_sll_copysimple (
+	ase_sll_t* sll   /* a singly linked list */,
+	void*      data  /* the pointer to data */,
+	ase_size_t len   /* the length of data */
+);
+
+/* 
  * Causes a singly linked list to copy in data to a node.
  * Use ASE_SLL_COPIER_INLINE instead.
  */
 void* ase_sll_copyinline (
 	ase_sll_t* sll   /* a singly linked list */,
-	void*      data  /* pointer to data to copy */ , 
-	ase_size_t len   /* length of data in bytes */
+	void*      data  /* the pointer to data */, 
+	ase_size_t len   /* the length of data */
 );
 
 #ifdef __cplusplus

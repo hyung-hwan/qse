@@ -24,8 +24,9 @@
 
 #define TOB(sll,len) ((len)*(sll)->scale)
 
-#define size_t   ase_size_t
-#define mmgr_t   ase_mmgr_t
+#define SIZEOF(x) ASE_SIZEOF(x)
+#define size_t    ase_size_t
+#define mmgr_t    ase_mmgr_t
 
 static int comp_data (sll_t* sll, 
 	const void* dptr1, size_t dlen1, 
@@ -34,6 +35,44 @@ static int comp_data (sll_t* sll,
 	if (dlen1 == dlen2) return ASE_MEMCMP (dptr1, dptr2, TOB(sll,dlen1));
 	/* it just returns 1 to indicate that they are different. */
 	return 1;
+}
+
+static node_t* alloc_node (sll_t* sll, void* dptr, size_t dlen)
+{
+	node_t* n;
+
+	if (sll->copier == ASE_NULL || 
+	    sll->copier == ASE_SLL_COPIER_SIMPLE)
+	{
+		n = ASE_MMGR_ALLOC (sll->mmgr, SIZEOF(node_t));
+		if (n == ASE_NULL) return ASE_NULL;
+		DPTR(n) = dptr;
+	}
+	else if (sll->copier == ASE_SLL_COPIER_INLINE)
+	{
+		n = ASE_MMGR_ALLOC (sll->mmgr, 
+			SIZEOF(node_t) + TOB(sll,dlen));
+		if (n == ASE_NULL) return ASE_NULL;
+
+		ASE_MEMCPY (n + 1, dptr, TOB(sll,dlen));
+		DPTR(n) = n + 1;
+	}
+	else
+	{
+		n = ASE_MMGR_ALLOC (sll->mmgr, SIZEOF(node_t));
+		if (n == ASE_NULL) return ASE_NULL;
+		DPTR(n) = sll->copier (sll, dptr, dlen);
+		if (DPTR(n) == ASE_NULL) 
+		{
+			ASE_MMGR_FREE (sll->mmgr, n);
+			return ASE_NULL;
+		}
+	}
+
+	DLEN(n) = dlen; 
+	NEXT(n) = ASE_NULL;	
+
+	return n;
 }
 
 sll_t* ase_sll_open (mmgr_t* mmgr, size_t ext)
@@ -50,7 +89,7 @@ sll_t* ase_sll_open (mmgr_t* mmgr, size_t ext)
 		if (mmgr == ASE_NULL) return ASE_NULL;
 	}
 
-	sll = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(sll_t) + ext);
+	sll = ASE_MMGR_ALLOC (mmgr, SIZEOF(sll_t) + ext);
 	if (sll == ASE_NULL) return ASE_NULL;
 
 	return ase_sll_init (sll, mmgr);
@@ -65,7 +104,7 @@ void ase_sll_close (sll_t* sll)
 sll_t* ase_sll_init (sll_t* sll, mmgr_t* mmgr)
 {
 	/* do not zero out the extension */
-	ASE_MEMSET (sll, 0, ASE_SIZEOF(*sll));
+	ASE_MEMSET (sll, 0, SIZEOF(*sll));
 
 	sll->mmgr = mmgr;
 	sll->size = 0;
@@ -93,21 +132,6 @@ mmgr_t* ase_sll_getmmgr (sll_t* sll)
 void ase_sll_setmmgr (sll_t* sll, mmgr_t* mmgr)
 {
 	sll->mmgr = mmgr;
-}
-
-size_t ase_sll_getsize (sll_t* sll)
-{
-	return SIZE(sll);
-}
-
-node_t* ase_sll_gethead (sll_t* sll)
-{
-	return HEAD(sll);
-}
-
-node_t* ase_sll_gettail (sll_t* sll)
-{
-	return TAIL(sll);
 }
 
 int ase_sll_getscale (sll_t* sll)
@@ -157,41 +181,19 @@ void ase_sll_setcomper (sll_t* sll, comper_t comper)
 	sll->comper = comper;
 }
 
-static node_t* alloc_node (sll_t* sll, void* dptr, size_t dlen)
+size_t ase_sll_getsize (sll_t* sll)
 {
-	node_t* n;
+	return SIZE(sll);
+}
 
-	if (sll->copier == ASE_NULL)
-	{
-		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(node_t));
-		if (n == ASE_NULL) return ASE_NULL;
-		DPTR(n) = dptr;
-	}
-	else if (sll->copier == ASE_SLL_COPIER_INLINE)
-	{
-		n = ASE_MMGR_ALLOC (sll->mmgr, 
-			ASE_SIZEOF(node_t) + TOB(sll,dlen));
-		if (n == ASE_NULL) return ASE_NULL;
+node_t* ase_sll_gethead (sll_t* sll)
+{
+	return HEAD(sll);
+}
 
-		ASE_MEMCPY (n + 1, dptr, TOB(sll,dlen));
-		DPTR(n) = n + 1;
-	}
-	else
-	{
-		n = ASE_MMGR_ALLOC (sll->mmgr, ASE_SIZEOF(node_t));
-		if (n == ASE_NULL) return ASE_NULL;
-		DPTR(n) = sll->copier (sll, dptr, dlen);
-		if (DPTR(n) == ASE_NULL) 
-		{
-			ASE_MMGR_FREE (sll->mmgr, n);
-			return ASE_NULL;
-		}
-	}
-
-	DLEN(n) = dlen; 
-	NEXT(n) = ASE_NULL;	
-
-	return n;
+node_t* ase_sll_gettail (sll_t* sll)
+{
+	return TAIL(sll);
 }
 
 node_t* ase_sll_search (sll_t* sll, node_t* pos, const void* dptr, size_t dlen)
@@ -318,6 +320,11 @@ void ase_sll_walk (sll_t* sll, walker_t walker, void* arg)
 		if (walker(sll,n,arg) == ASE_SLL_WALK_STOP) return;
 		n = NEXT(n);
 	}
+}
+
+void* ase_sll_copysimple (sll_t* sll, void* dptr, size_t dlen)
+{
+	return dptr;
 }
 
 void* ase_sll_copyinline (sll_t* sll, void* dptr, size_t dlen)

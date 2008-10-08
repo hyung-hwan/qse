@@ -22,6 +22,7 @@
 typedef struct ase_lda_t ase_lda_t;
 typedef struct ase_lda_cell_t ase_lda_cell_t;
 
+#define ASE_LDA_COPIER_SIMPLE  ase_lda_copysimple
 #define ASE_LDA_COPIER_INLINE  ase_lda_copyinline
 
 #define ASE_LDA_INVALID ((ase_size_t)-1)
@@ -240,6 +241,20 @@ ase_lda_t* ase_lda_setcapa (
 	ase_size_t capa
 );
 
+ase_size_t ase_lda_search (
+	ase_lda_t* lda,
+	ase_size_t pos,
+	const void* dptr,
+	ase_size_t dlen
+);
+
+ase_size_t ase_lda_rsearch (
+	ase_lda_t* lda,
+	ase_size_t pos,
+	const void* dptr,
+	ase_size_t dlen
+);
+
 ase_size_t ase_lda_insert (
 	ase_lda_t* lda,
 	ase_size_t index, 
@@ -283,11 +298,16 @@ ase_size_t ase_lda_rrfindx (
 
 void ase_lda_clear (ase_lda_t* lda);
 
+void* ase_lda_copysimple (
+	ase_lda_t* lda   /* a linear dynamic array */,
+	void*      data  /* the pointer to data */,
+	ase_size_t len   /* the length of data */
+);
 
 void* ase_lda_copyinline (
 	ase_lda_t* lda   /* a linear dynamic array */,
-	void*      data  /* pointer to data to copy */ ,
-	ase_size_t len   /* length of data in bytes */
+	void*      data  /* the pointer to data */,
+	ase_size_t len   /* the length of data */
 );
 
 #ifdef __cplusplus
