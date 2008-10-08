@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 398 2008-09-29 10:01:15Z baconevi $
+ * $Id: map.h 408 2008-10-07 11:30:16Z baconevi $
  *
  * {License}
  */
@@ -183,8 +183,7 @@ struct ase_map_t
 };
 /******/
 
-
-
+#define ASE_MAP_COPIER_SIMPLE ase_map_copysimple
 #define ASE_MAP_COPIER_INLINE ase_map_copyinline
 
 /****d* ase.cmn.map/ASE_MAP_SIZE
@@ -547,7 +546,17 @@ ase_map_pair_t* ase_map_getnextpair (
 	ase_size_t* buckno
 );
 
-void* ase_map_copyinline (ase_map_t* map, void* dptr, ase_size_t dlen);
+void* ase_map_copysimple (
+	ase_map_t* map   /* a linear dynamic array */,
+	void*      data  /* the pointer to data */,
+	ase_size_t len   /* the length of data */
+);
+
+void* ase_map_copyinline (
+	ase_map_t* map   /* a linear dynamic array */,
+	void*      data  /* the pointer to data */,
+	ase_size_t len   /* the length of data */
+);
 
 #ifdef __cplusplus
 }
