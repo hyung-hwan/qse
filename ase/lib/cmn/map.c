@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 408 2008-10-07 11:30:16Z baconevi $
+ * $Id: map.c 409 2008-10-08 11:43:56Z baconevi $
  *
  * {License}
  */
@@ -75,8 +75,7 @@ static pair_t* alloc_pair (map_t* map,
 	NEXT(n) = ASE_NULL;
 
 	KLEN(n) = klen;
-	if (kcop == ASE_NULL ||
-	    kcop == ASE_MAP_COPIER_SIMPLE)
+	if (kcop == ASE_MAP_COPIER_SIMPLE)
 	{
 		KPTR(n) = kptr;
 	}
@@ -96,8 +95,7 @@ static pair_t* alloc_pair (map_t* map,
 	}
 
 	VLEN(n) = vlen;
-	if (vcop == ASE_NULL ||
-	    vcop == ASE_MAP_COPIER_SIMPLE)
+	if (vcop == ASE_MAP_COPIER_SIMPLE)
 	{
 		VPTR(n) = vptr;
 	}
@@ -152,8 +150,7 @@ static pair_t* change_pair_val (
 		size_t ovlen = VLEN(pair);
 
 		/* place the new value according to the copier */
-		if (vcop == ASE_NULL ||
-		    vcop == ASE_MAP_COPIER_SIMPLE)
+		if (vcop == ASE_MAP_COPIER_SIMPLE)
 		{
 			VPTR(pair) = vptr;
 			VLEN(pair) = vlen;
@@ -258,10 +255,10 @@ map_t* ase_map_init (map_t* map, mmgr_t* mmgr, size_t capa, int factor)
 
 	map->hasher = hash_key;
 	map->comper = comp_key;
+	map->copier[ASE_MAP_KEY] = ASE_MAP_COPIER_SIMPLE;
+	map->copier[ASE_MAP_VAL] = ASE_MAP_COPIER_SIMPLE;
 
 	/*
-	map->copier[ASE_MAP_KEY] = ASE_NULL;
-	map->copier[ASE_MAP_VAL] = ASE_NULL;
 	map->freeer[ASE_MAP_KEY] = ASE_NULL;
 	map->freeer[ASE_MAP_VAL] = ASE_NULL;
 	map->keeper = ASE_NULL;
@@ -324,6 +321,7 @@ void ase_map_setcopier (map_t* map, ase_map_id_t id, copier_t copier)
 {
 	ASE_ASSERTX (id == ASE_MAP_KEY || id == ASE_MAP_VAL,
 		"The ID should be either ASE_MAP_KEY or ASE_MAP_VAL");
+	if (copier == ASE_NULL) copier = ASE_MAP_COPIER_SIMPLE;
 	map->copier[id] = copier;
 }
 
