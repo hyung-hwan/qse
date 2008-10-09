@@ -41,8 +41,7 @@ static node_t* alloc_node (sll_t* sll, void* dptr, size_t dlen)
 {
 	node_t* n;
 
-	if (sll->copier == ASE_NULL || 
-	    sll->copier == ASE_SLL_COPIER_SIMPLE)
+	if (sll->copier == ASE_SLL_COPIER_SIMPLE)
 	{
 		n = ASE_MMGR_ALLOC (sll->mmgr, SIZEOF(node_t));
 		if (n == ASE_NULL) return ASE_NULL;
@@ -111,6 +110,7 @@ sll_t* ase_sll_init (sll_t* sll, mmgr_t* mmgr)
 	sll->scale = 1;
 
 	sll->comper = comp_data;
+	sll->copier = ASE_SLL_COPIER_SIMPLE;
 	return sll;
 }
 
@@ -157,6 +157,7 @@ copier_t ase_sll_getcopier (sll_t* sll)
 
 void ase_sll_setcopier (sll_t* sll, copier_t copier)
 {
+	if (copier == ASE_NULL) copier = ASE_SLL_COPIER_SIMPLE;
 	sll->copier = copier;
 }
 

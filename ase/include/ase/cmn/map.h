@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 408 2008-10-07 11:30:16Z baconevi $
+ * $Id: map.h 409 2008-10-08 11:43:56Z baconevi $
  *
  * {License}
  */
@@ -115,17 +115,35 @@ typedef void (*ase_map_keeper_t) (
 );
 /******/
 
-/*
- * bucket resizer
+/****t* ase.cmn.map/ase_map_sizer_t
+ * NAME
+ *  ase_map_sizer_t - define a bucket size calculator
+ *
+ * DESCRIPTION
+ *  The ase_map_sizer_T type defines a bucket size claculator that is called
+ *  when a map should resize the bucket. The current bucket size +1 is passed
+ *  as the hint.
+ * 
+ * SYNOPSIS
  */
-typedef ase_size_t (*ase_map_sizer_t) (ase_map_t* data, ase_size_t hint);
+typedef ase_size_t (*ase_map_sizer_t) (
+	ase_map_t* map,  /* a map */
+	ase_size_t hint  /* a sizing hint */
+);
+/******/
 
-/* pair visitor - should return ASE_MAP_WALK_STOP or ASE_MAP_WALK_FORWARD */
+/****t* ase.cmn.map/ase_map_walker_t
+ * NAME
+ *  ase_map_walker_t - define a pair visitor
+ *
+ * SYNOPSIS
+ */
 typedef ase_map_walk_t (*ase_map_walker_t) (
 	ase_map_t* map        /* a map */, 
 	ase_map_pair_t* pair  /* the pointer to a key/value pair */, 
 	void* arg             /* the pointer to user-defined data */
 );
+/******/
 
 /****s* ase.cmn.map/ase_map_pair_t
  * NAME

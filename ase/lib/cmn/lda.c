@@ -12,14 +12,22 @@
 #define copier_t ase_lda_copier_t
 #define freeer_t ase_lda_freeer_t
 #define comper_t ase_lda_comper_t
+#define sizer_t  ase_lda_sizer_t
 #define walker_t ase_lda_walker_t
-#define size_t   ase_size_t
+
 #define mmgr_t   ase_mmgr_t
+#define size_t   ase_size_t
+#define uint4_t  ase_uint4_t
 
 #define TOB(lda,len) ((len)*(lda)->scale)
 #define DPTR(cell)   ASE_LDA_DPTR(cell)
 #define DLEN(cell)   ASE_LDA_DLEN(cell)
 #define INVALID      ASE_LDA_INVALID
+
+/* get cell size */
+#define CS(lda)      ((lda)->opt & 0xFFFF)
+/* check if the option is set */
+#define OPT(lda,o)   ((lda)->opt & (o))
 
 static int comp_data (lda_t* lda, 
 	const void* dptr1, size_t dlen1, 
@@ -44,8 +52,7 @@ static cell_t* alloc_cell (lda_t* lda, void* dptr, size_t dlen)
 {
 	cell_t* n;
 
-	if (lda->copier == ASE_NULL ||
-	    lda->copier == ASE_LDA_COPIER_SIMPLE)
+	if (lda->copier == ASE_LDA_COPIER_SIMPLE)
 	{
 		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(cell_t));
 		if (n == ASE_NULL) return ASE_NULL;
@@ -77,7 +84,7 @@ static cell_t* alloc_cell (lda_t* lda, void* dptr, size_t dlen)
 	return n;
 }
 
-lda_t* ase_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
+lda_t* ase_lda_open (mmgr_t* mmgr, size_t ext, size_t capa, uint4_t opt)
 {
 	lda_t* lda;
 
@@ -94,7 +101,7 @@ lda_t* ase_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
         lda = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(lda_t) + ext);
         if (lda == ASE_NULL) return ASE_NULL;
 
-        return ase_lda_init (lda, mmgr, capa);
+        return ase_lda_init (lda, mmgr, capa, opt);
 }
 
 void ase_lda_close (lda_t* lda)
@@ -103,15 +110,17 @@ void ase_lda_close (lda_t* lda)
 	ASE_MMGR_FREE (lda->mmgr, lda);
 }
 
-lda_t* ase_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
+lda_t* ase_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa, uint4_t opt)
 {
 	ASE_MEMSET (lda, 0, ASE_SIZEOF(*lda));
 
 	lda->mmgr = mmgr;
 	lda->size = 0;
 	lda->capa = 0;
+	lda->opt  = opt;
 	lda->cell = ASE_NULL;
 
+	lda->copier = ASE_LDA_COPIER_SIMPLE;
 	lda->comper = comp_data;
 
 	if (ase_lda_setcapa (lda, capa) == ASE_NULL) return ASE_NULL;
@@ -168,6 +177,7 @@ copier_t ase_lda_getcopier (lda_t* lda)
 
 void ase_lda_setcopier (lda_t* lda, copier_t copier)
 {
+	if (copier == ASE_NULL) copier = ASE_LDA_COPIER_SIMPLE;
 	lda->copier = copier;
 }
 
@@ -192,7 +202,15 @@ void ase_lda_setcomper (lda_t* lda, comper_t comper)
 	lda->comper = comper;
 }
 
+sizer_t ase_lda_getsizer (lda_t* lda)
+{
+        return lda->sizer;
+}
 
+void ase_lda_setsizer (lda_t* lda, sizer_t sizer)
+{
+        lda->sizer = sizer;
+}
 
 size_t ase_lda_getsize (lda_t* lda)
 {
@@ -218,21 +236,25 @@ lda_t* ase_lda_setcapa (lda_t* lda, size_t capa)
 	{
 		if (lda->mmgr->realloc != ASE_NULL)
 		{
-			tmp = ASE_MMGR_REALLOC (lda->mmgr,
-				lda->cell, ASE_SIZEOF(*lda->cell) * capa);
+			/*tmp = ASE_MMGR_REALLOC (lda->mmgr,
+				lda->cell, ASE_SIZEOF(*lda->cell) * capa);*/
+			tmp = ASE_MMGR_REALLOC (lda->mmgr, CS(lda)*capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
 		}
 		else
 		{
-			tmp = ASE_MMGR_ALLOC (
-				lda->mmgr, ASE_SIZEOF(*lda->cell) * capa);
+			/*tmp = ASE_MMGR_ALLOC (
+				lda->mmgr, ASE_SIZEOF(*lda->cell) * capa);*/
+			tmp = ASE_MMGR_ALLOC (lda->mmgr, CS(lda)*capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
 			if (lda->cell != ASE_NULL) 
 			{
 				size_t x;
 				x = (capa > lda->capa)? lda->capa: capa;
-				ASE_MEMCPY (tmp, lda->cell, 
-					ASE_SIZEOF(*lda->cell) * x);
+				/*ASE_MEMCPY (tmp, lda->cell, 
+					ASE_SIZEOF(*lda->cell) * x);*/
+				ASE_MEMCPY (tmp, lda->cell, CS(lda)*x); 
+
 				ASE_MMGR_FREE (lda->mmgr, lda->cell);
 			}
 		}
@@ -396,7 +418,7 @@ size_t ase_lda_adduniq (
 	lda_t* lda, ase_char_t* str, size_t len)
 {
 	size_t i;
-	i = ase_lda_find (lda, 0, str, len);
+	i = ase_lda_search (lda, 0, str, len);
 	if (i != INVALID) return i; /* found. return the current index */
 
 	/* insert a new entry */

@@ -10,6 +10,11 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
+enum ase_lda_opt_t
+{
+	ASE_LDA_NODLEN = (((ase_uint4_t)1) << 16)
+};
+
 /****o* ase.cmn.lda/linear dynamic array
  * DESCRIPTION
  *  <ase/cmn/lda.h> provides a linear dynamic array. It grows as more items 
@@ -38,6 +43,7 @@ typedef struct ase_lda_cell_t ase_lda_cell_t;
 #define ASE_LDA_COPIER(lda)     ((lda)->copier)
 #define ASE_LDA_FREEER(lda)     ((lda)->freeer)
 #define ASE_LDA_COMPER(lda)     ((lda)->comper)
+#define ASE_LDA_SIZER(lda)      ((lda)->sizer)
 
 
 /****b* ase.cmn.lda/ase_lda_copier_t
@@ -63,7 +69,7 @@ typedef struct ase_lda_cell_t ase_lda_cell_t;
  * SYNOPSIS
  */
 typedef void* (*ase_lda_copier_t) (
-	ase_lda_t* lda    /* a map */,
+	ase_lda_t* lda    /* a lda */,
 	void*      dptr   /* the pointer to data to copy */,
 	ase_size_t dlen   /* the length of data to copy */
 );
@@ -75,7 +81,7 @@ typedef void* (*ase_lda_copier_t) (
  * SYNOPSIS
  */
 typedef void (*ase_lda_freeer_t) (
-	ase_lda_t* lda    /* a map */,
+	ase_lda_t* lda    /* a lda */,
 	void*      dptr   /* the pointer to data to free */,
 	ase_size_t dlen   /* the length of data to free */
 );
@@ -104,6 +110,23 @@ typedef int (*ase_lda_comper_t) (
 );
 /******/
 
+/****t* ase.cmn.lda/ase_lda_sizer_t
+ * NAME
+ *  ase_lda_sizer_t - define an array size calculator
+ *
+ * DESCRIPTION
+ *  The ase_lda_sizer_t type defines an array size claculator that is called
+ *  when the array needs to be resized. 
+ *
+ * SYNOPSIS
+ */
+typedef ase_size_t (*ase_lda_sizer_t) (
+        ase_lda_t* lda,  /* a linear dynamic array */
+        ase_size_t hint  /* a sizing hint */
+);
+/******/
+
+
 /****s* ase.cmn.lda/ase_lda_t
  * NAME
  *  ase_lda_t - define a linear dynamic array
@@ -117,12 +140,16 @@ struct ase_lda_t
 	ase_lda_copier_t copier; /* data copier */
 	ase_lda_freeer_t freeer; /* data freeer */
 	ase_lda_comper_t comper; /* data comparator */
+	ase_lda_sizer_t  sizer;  /* size calculator */
+
 	ase_byte_t       scale;  /* scale factor */
+	ase_uint16_t     opt;
 
 	ase_size_t       size;   /* the number of items */
 	ase_size_t       capa;   /* capacity */
 
-	ase_lda_cell_t** cell;
+	/*ase_lda_cell_t** cell;*/
+	void*            cell;
 };
 /******/
 
@@ -151,8 +178,9 @@ extern "C" {
  */
 ase_lda_t* ase_lda_open (
 	ase_mmgr_t* lda,
-	ase_size_t ext,
-	ase_size_t capa
+	ase_size_t  ext,
+	ase_size_t  capa,
+	ase_uint4_t opt
 );
 /******/
 
@@ -227,6 +255,83 @@ void ase_lda_setmmgr (
 	ase_mmgr_t* mmgr  /* a memory manager */
 );
 /******/
+
+int ase_lda_getscale (
+	ase_lda_t* lda   /* a lda */
+);
+
+/****f* ase.cmn.lda/ase_lda_setscale
+ * NAME
+ *  ase_lda_setscale - set the scale factor
+ *
+ * DESCRIPTION 
+ *  The ase_lda_setscale() function sets the scale factor of the length
+ *  of a key and a value. A scale factor determines the actual length of
+ *  a key and a value in bytes. A lda is created with a scale factor of 1.
+ *  The scale factor should be larger than 0 and less than 256.
+ *
+ * NOTES
+ *  It is a bad idea to change the scale factor when a lda is not empty.
+ *  
+ * SYNOPSIS
+ */
+void ase_lda_setscale (
+	ase_lda_t* lda   /* a lda */,
+	int scale        /* a scale factor */
+);
+/******/
+
+ase_lda_copier_t ase_lda_getcopier (
+	ase_lda_t* lda   /* a lda */
+);
+
+/****f* ase.cmn.lda/ase_lda_setcopier
+ * NAME 
+ *  ase_lda_setcopier - specify how to clone an element
+ *
+ * DESCRIPTION
+ *  A special copier ASE_MAP_COPIER_INLINE is provided. This copier enables
+ *  you to copy the data inline to the internal node. No freeer is invoked
+ *  when the node is freeed.
+ *
+ *  You may set the copier to ASE_NULL to perform no special operation 
+ *  when the data pointer is rememebered.
+ *
+ * SYNOPSIS
+ */
+void ase_lda_setcopier (
+	ase_lda_t* lda           /* a lda */, 
+	ase_lda_copier_t copier  /* an element copier */
+);
+/******/
+
+ase_lda_freeer_t ase_lda_getfreeer (
+	ase_lda_t*   lda  /* a lda */
+);
+
+/****f* ase.cmn.lda/ase_lda_setfreeer
+ * NAME 
+ *  ase_lda_setfreeer - specify how to destroy an element
+ *
+ * DESCRIPTION
+ *  The freeer is called when a node containing the element is destroyed.
+ *
+ * SYNOPSIS
+ */
+void ase_lda_setfreeer (
+	ase_lda_t* lda           /* a lda */,
+	ase_lda_freeer_t freeer  /* an element freeer */
+);
+/******/
+
+ase_lda_sizer_t ase_lda_getsizer (
+        ase_lda_t* lda
+);
+
+void ase_lda_setsizer (
+        ase_lda_t* lda,
+        ase_lda_sizer_t sizer
+);
 
 ase_size_t ase_lda_getsize (
 	ase_lda_t* lda
