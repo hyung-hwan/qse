@@ -10,11 +10,6 @@
 #include <ase/types.h>
 #include <ase/macros.h>
 
-enum ase_lda_opt_t
-{
-	ASE_LDA_NODLEN = (((ase_uint4_t)1) << 16)
-};
-
 /****o* ase.cmn.lda/linear dynamic array
  * DESCRIPTION
  *  <ase/cmn/lda.h> provides a linear dynamic array. It grows as more items 
@@ -25,25 +20,26 @@ enum ase_lda_opt_t
  */
 
 typedef struct ase_lda_t ase_lda_t;
-typedef struct ase_lda_cell_t ase_lda_cell_t;
+typedef struct ase_lda_node_t ase_lda_node_t;
 
 #define ASE_LDA_COPIER_SIMPLE  ase_lda_copysimple
 #define ASE_LDA_COPIER_INLINE  ase_lda_copyinline
 
 #define ASE_LDA_INVALID ((ase_size_t)-1)
 
-#define ASE_LDA_SIZE(lda)       ((lda)->size)
-#define ASE_LDA_CAPA(lda)       ((lda)->capa)
-#define ASE_LDA_CELL(lda,index) ((lda)->cell[index])
+#define ASE_LDA_SIZE(lda)        ((lda)->size)
+#define ASE_LDA_CAPA(lda)        ((lda)->capa)
 
-#define ASE_LDA_DPTR(cell)      ((cell)->dptr)
-#define ASE_LDA_DLEN(cell)      ((cell)->dlen)
+#define ASE_LDA_NODE(lda,index)  ((lda)->node[index])
+#define ASE_LDA_DPTR(lda,index)  ((lda)->node[index]->dptr)
+#define ASE_LDA_DLEN(lda,index)  ((lda)->node[index]->dlen)
 
-#define ASE_LDA_MMGR(lda)       ((lda)->mmgr)
-#define ASE_LDA_COPIER(lda)     ((lda)->copier)
-#define ASE_LDA_FREEER(lda)     ((lda)->freeer)
-#define ASE_LDA_COMPER(lda)     ((lda)->comper)
-#define ASE_LDA_SIZER(lda)      ((lda)->sizer)
+#define ASE_LDA_MMGR(lda)        ((lda)->mmgr)
+#define ASE_LDA_COPIER(lda)      ((lda)->copier)
+#define ASE_LDA_FREEER(lda)      ((lda)->freeer)
+#define ASE_LDA_COMPER(lda)      ((lda)->comper)
+#define ASE_LDA_KEEPER(lda)      ((lda)->keeper)
+#define ASE_LDA_SIZER(lda)       ((lda)->sizer)
 
 
 /****b* ase.cmn.lda/ase_lda_copier_t
@@ -110,6 +106,25 @@ typedef int (*ase_lda_comper_t) (
 );
 /******/
 
+/****t* ase.cmn.lda/ase_lda_keeper_t
+ * NAME
+ *  ase_lda_keeper_t - define a value keeper
+ *
+ * DESCRIPTION
+ *  The ase_lda_keeper_t type defines a value keeper that is called when 
+ *  a value is retained in the context that it should be destroyed because
+ *  it is identical to a new value. Two values are identical if their beginning
+ *  pointers and their lengths are equal.
+ *
+ * SYNOPSIS
+ */
+typedef void (*ase_lda_keeper_t) (
+	ase_lda_t* lda     /* a lda */,
+	void* vptr         /* the pointer to a value */,
+	ase_size_t vlen    /* the length of a value */	
+);
+/******/
+
 /****t* ase.cmn.lda/ase_lda_sizer_t
  * NAME
  *  ase_lda_sizer_t - define an array size calculator
@@ -140,26 +155,22 @@ struct ase_lda_t
 	ase_lda_copier_t copier; /* data copier */
 	ase_lda_freeer_t freeer; /* data freeer */
 	ase_lda_comper_t comper; /* data comparator */
+	ase_lda_keeper_t keeper; /* data keeper */
 	ase_lda_sizer_t  sizer;  /* size calculator */
-
 	ase_byte_t       scale;  /* scale factor */
-	ase_uint16_t     opt;
-
 	ase_size_t       size;   /* the number of items */
 	ase_size_t       capa;   /* capacity */
-
-	/*ase_lda_cell_t** cell;*/
-	void*            cell;
+	ase_lda_node_t** node;
 };
 /******/
 
 /****s*
  * NAME
- *  ase_lda_cell_t - define a linear dynamic array cell
+ *  ase_lda_node_t - define a linear dynamic array node
  *
  * SYNOPSIS
  */
-struct ase_lda_cell_t
+struct ase_lda_node_t
 {
 	void*      dptr;
 	ase_size_t dlen;
@@ -179,8 +190,7 @@ extern "C" {
 ase_lda_t* ase_lda_open (
 	ase_mmgr_t* lda,
 	ase_size_t  ext,
-	ase_size_t  capa,
-	ase_uint4_t opt
+	ase_size_t  capa
 );
 /******/
 
@@ -202,9 +212,9 @@ void ase_lda_close (
  * SYNOPSIS
  */
 ase_lda_t* ase_lda_init (
-	ase_lda_t* lda,
+	ase_lda_t*  lda,
 	ase_mmgr_t* mmgr,
-	ase_size_t capa
+	ase_size_t  capa
 );
 /******/
 
@@ -360,10 +370,31 @@ ase_size_t ase_lda_rsearch (
 	ase_size_t dlen
 );
 
+ase_size_t ase_lda_rrsearch (
+	ase_lda_t* lda,
+	ase_size_t pos,
+	const void* dptr,
+	ase_size_t dlen
+);
+
+ase_size_t ase_lda_upsert (
+	ase_lda_t* lda,
+	ase_size_t index, 
+	void*      dptr,
+	ase_size_t dlen
+);
+
 ase_size_t ase_lda_insert (
 	ase_lda_t* lda,
 	ase_size_t index, 
-	void* dptr,
+	void*      dptr,
+	ase_size_t dlen
+);
+
+ase_size_t ase_lda_update (
+	ase_lda_t* lda,
+	ase_size_t pos,
+	void*      dptr,
 	ase_size_t dlen
 );
 

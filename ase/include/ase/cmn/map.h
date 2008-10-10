@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 409 2008-10-08 11:43:56Z baconevi $
+ * $Id: map.h 413 2008-10-09 11:45:49Z baconevi $
  *
  * {License}
  */
@@ -110,7 +110,7 @@ typedef int (*ase_map_comper_t) (
  */
 typedef void (*ase_map_keeper_t) (
 	ase_map_t* map     /* a map */,
-	void* vptr         /* the pointer to a value */,
+	void*      vptr    /* the pointer to a value */,
 	ase_size_t vlen    /* the length of a value */	
 );
 /******/
@@ -139,9 +139,9 @@ typedef ase_size_t (*ase_map_sizer_t) (
  * SYNOPSIS
  */
 typedef ase_map_walk_t (*ase_map_walker_t) (
-	ase_map_t* map        /* a map */, 
+	ase_map_t*      map   /* a map */, 
 	ase_map_pair_t* pair  /* the pointer to a key/value pair */, 
-	void* arg             /* the pointer to user-defined data */
+	void*           arg   /* the pointer to user-defined data */
 );
 /******/
 
@@ -162,13 +162,11 @@ typedef ase_map_walk_t (*ase_map_walker_t) (
  */
 struct ase_map_pair_t
 {
-	void* kptr;           /* the pointer to a key */
-	ase_size_t klen;      /* the length of a key */
-
-	void* vptr;           /* the pointer to a value */
-	ase_size_t vlen;      /* the length of a value */
-
-	ase_map_pair_t* next; /* the next pair under the same slot */
+	void*           kptr;  /* the pointer to a key */
+	ase_size_t      klen;  /* the length of a key */
+	void*           vptr;  /* the pointer to a value */
+	ase_size_t      vlen;  /* the length of a value */
+	ase_map_pair_t* next;  /* the next pair under the same slot */
 };
 /*****/
 
@@ -180,23 +178,19 @@ struct ase_map_pair_t
  */
 struct ase_map_t
 {
-        ase_mmgr_t* mmgr;
-
+        ase_mmgr_t*      mmgr;
         ase_map_copier_t copier[2];
         ase_map_freeer_t freeer[2];
 	ase_map_hasher_t hasher; /* key hasher */
 	ase_map_comper_t comper; /* key comparator */
 	ase_map_keeper_t keeper; /* value keeper */
 	ase_map_sizer_t  sizer;  /* bucket capacity recalculator */
-
-	ase_byte_t scale[2];     /* length scale */
-	ase_byte_t factor;       /* load factor */
-	ase_byte_t filler0;
-
-	ase_size_t size;
-	ase_size_t capa;
-	ase_size_t threshold;
-
+	ase_byte_t       scale[2];     /* length scale */
+	ase_byte_t       factor;       /* load factor */
+	ase_byte_t       filler0;
+	ase_size_t       size;
+	ase_size_t       capa;
+	ase_size_t       threshold;
 	ase_map_pair_t** bucket;
 };
 /******/

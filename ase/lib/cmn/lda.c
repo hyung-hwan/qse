@@ -8,7 +8,7 @@
 #include "mem.h"
 
 #define lda_t    ase_lda_t
-#define cell_t   ase_lda_cell_t
+#define node_t   ase_lda_node_t
 #define copier_t ase_lda_copier_t
 #define freeer_t ase_lda_freeer_t
 #define comper_t ase_lda_comper_t
@@ -17,17 +17,11 @@
 
 #define mmgr_t   ase_mmgr_t
 #define size_t   ase_size_t
-#define uint4_t  ase_uint4_t
 
 #define TOB(lda,len) ((len)*(lda)->scale)
-#define DPTR(cell)   ASE_LDA_DPTR(cell)
-#define DLEN(cell)   ASE_LDA_DLEN(cell)
+#define DPTR(node)   ((node)->dptr)
+#define DLEN(node)   ((node)->dlen)
 #define INVALID      ASE_LDA_INVALID
-
-/* get cell size */
-#define CS(lda)      ((lda)->opt & 0xFFFF)
-/* check if the option is set */
-#define OPT(lda,o)   ((lda)->opt & (o))
 
 static int comp_data (lda_t* lda, 
 	const void* dptr1, size_t dlen1, 
@@ -48,20 +42,20 @@ static int comp_data (lda_t* lda,
 	return n;
 }
 
-static cell_t* alloc_cell (lda_t* lda, void* dptr, size_t dlen)
+static node_t* alloc_node (lda_t* lda, void* dptr, size_t dlen)
 {
-	cell_t* n;
+	node_t* n;
 
 	if (lda->copier == ASE_LDA_COPIER_SIMPLE)
 	{
-		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(cell_t));
+		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(node_t));
 		if (n == ASE_NULL) return ASE_NULL;
 		DPTR(n) = dptr;
 	}
 	else if (lda->copier == ASE_LDA_COPIER_INLINE)
 	{
 		n = ASE_MMGR_ALLOC (lda->mmgr, 
-			ASE_SIZEOF(cell_t) + TOB(lda,dlen));
+			ASE_SIZEOF(node_t) + TOB(lda,dlen));
 		if (n == ASE_NULL) return ASE_NULL;
 
 		ASE_MEMCPY (n + 1, dptr, TOB(lda,dlen));
@@ -69,7 +63,7 @@ static cell_t* alloc_cell (lda_t* lda, void* dptr, size_t dlen)
 	}
 	else
 	{
-		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(cell_t));
+		n = ASE_MMGR_ALLOC (lda->mmgr, ASE_SIZEOF(node_t));
 		if (n == ASE_NULL) return ASE_NULL;
 		DPTR(n) = lda->copier (lda, dptr, dlen);
 		if (DPTR(n) == ASE_NULL) 
@@ -84,7 +78,7 @@ static cell_t* alloc_cell (lda_t* lda, void* dptr, size_t dlen)
 	return n;
 }
 
-lda_t* ase_lda_open (mmgr_t* mmgr, size_t ext, size_t capa, uint4_t opt)
+lda_t* ase_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
 {
 	lda_t* lda;
 
@@ -101,7 +95,7 @@ lda_t* ase_lda_open (mmgr_t* mmgr, size_t ext, size_t capa, uint4_t opt)
         lda = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(lda_t) + ext);
         if (lda == ASE_NULL) return ASE_NULL;
 
-        return ase_lda_init (lda, mmgr, capa, opt);
+        return ase_lda_init (lda, mmgr, capa);
 }
 
 void ase_lda_close (lda_t* lda)
@@ -110,15 +104,14 @@ void ase_lda_close (lda_t* lda)
 	ASE_MMGR_FREE (lda->mmgr, lda);
 }
 
-lda_t* ase_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa, uint4_t opt)
+lda_t* ase_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 {
 	ASE_MEMSET (lda, 0, ASE_SIZEOF(*lda));
 
 	lda->mmgr = mmgr;
 	lda->size = 0;
 	lda->capa = 0;
-	lda->opt  = opt;
-	lda->cell = ASE_NULL;
+	lda->node = ASE_NULL;
 
 	lda->copier = ASE_LDA_COPIER_SIMPLE;
 	lda->comper = comp_data;
@@ -131,10 +124,10 @@ void ase_lda_fini (lda_t* lda)
 {
 	ase_lda_clear (lda);
 
-	if (lda->cell != ASE_NULL) 
+	if (lda->node != ASE_NULL) 
 	{
-		ASE_MMGR_FREE (lda->mmgr, lda->cell);
-		lda->cell = ASE_NULL;
+		ASE_MMGR_FREE (lda->mmgr, lda->node);
+		lda->node = ASE_NULL;
 		lda->capa = 0;
 	}
 }
@@ -234,42 +227,42 @@ lda_t* ase_lda_setcapa (lda_t* lda, size_t capa)
 
 	if (capa > 0) 
 	{
-		if (lda->mmgr->realloc != ASE_NULL)
+		if (lda->mmgr->realloc != ASE_NULL && lda->node != ASE_NULL)
 		{
-			/*tmp = ASE_MMGR_REALLOC (lda->mmgr,
-				lda->cell, ASE_SIZEOF(*lda->cell) * capa);*/
-			tmp = ASE_MMGR_REALLOC (lda->mmgr, CS(lda)*capa);
+wprintf (L"XXXXXXXXXXXXXXXXXX %d, %d\n", (int)capa, (int)ASE_SIZEOF(*lda->node)*capa);
+			tmp = (ase_lda_node_t**)ASE_MMGR_REALLOC (
+				lda->mmgr, lda->node, ASE_SIZEOF(*lda->node)*capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
 		}
 		else
 		{
-			/*tmp = ASE_MMGR_ALLOC (
-				lda->mmgr, ASE_SIZEOF(*lda->cell) * capa);*/
-			tmp = ASE_MMGR_ALLOC (lda->mmgr, CS(lda)*capa);
+wprintf (L"XXXXXXXXXXXXXXXXXX %d, %d\n", (int)capa, (int)ASE_SIZEOF(*lda->node)*capa);
+			tmp = (ase_lda_node_t**) ASE_MMGR_ALLOC (
+				lda->mmgr, ASE_SIZEOF(*lda->node)*capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
-			if (lda->cell != ASE_NULL) 
+
+			if (lda->node != ASE_NULL)
 			{
 				size_t x;
 				x = (capa > lda->capa)? lda->capa: capa;
-				/*ASE_MEMCPY (tmp, lda->cell, 
-					ASE_SIZEOF(*lda->cell) * x);*/
-				ASE_MEMCPY (tmp, lda->cell, CS(lda)*x); 
-
-				ASE_MMGR_FREE (lda->mmgr, lda->cell);
+				ASE_MEMCPY (tmp, lda->node, 
+					ASE_SIZEOF(*lda->node) * x);
+				ASE_MMGR_FREE (lda->mmgr, lda->node);
 			}
 		}
 	}
 	else 
 	{
-		if (lda->cell != ASE_NULL) 
+		if (lda->node != ASE_NULL) 
 		{
 			ase_lda_clear (lda);
-			ASE_MMGR_FREE (lda->mmgr, lda->cell);
+			ASE_MMGR_FREE (lda->mmgr, lda->node);
 		}
+
 		tmp = ASE_NULL;
 	}
 
-	lda->cell = tmp;
+	lda->node = tmp;
 	lda->capa = capa;
 	
 	return lda;
@@ -281,8 +274,8 @@ size_t ase_lda_search (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 
 	for (i = pos; i < lda->size; i++) 
 	{
-		if (lda->comper(lda, 
-			DPTR(lda->cell[i]), DLEN(lda->cell[i]),
+		if (lda->comper (lda, 
+			DPTR(lda->node[i]), DLEN(lda->node[i]),
 			dptr, dlen) == 0) return i;
 	}
 
@@ -297,8 +290,8 @@ size_t ase_lda_rsearch (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 
 	for (i = pos + 1; i-- > 0; ) 
 	{
-		if (lda->comper(lda, 
-			DPTR(lda->cell[i]), DLEN(lda->cell[i]),
+		if (lda->comper (lda, 
+			DPTR(lda->node[i]), DLEN(lda->node[i]),
 			dptr, dlen) == 0) return i;
 	}
 
@@ -313,46 +306,119 @@ size_t ase_lda_rrsearch (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 
 	for (i = lda->size - pos; i-- > 0; ) 
 	{
-		if (lda->comper(lda, 
-			DPTR(lda->cell[i]), DLEN(lda->cell[i]),
+		if (lda->comper (lda, 
+			DPTR(lda->node[i]), DLEN(lda->node[i]),
 			dptr, dlen) == 0) return i;
 	}
 
 	return INVALID;
 }
 
+size_t ase_lda_upsert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
+{
+	if (pos < lda->size) return ase_lda_update (lda, pos, dptr, dlen);
+	return ase_lda_insert (lda, pos, dptr, dlen);
+}
+
 size_t ase_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 {
 	size_t i;
-	cell_t* cell;
+	node_t* node;
 
-	cell = alloc_cell (lda, dptr, dlen);
-	if (cell == ASE_NULL) return INVALID;
+	/* allocate the node first */
+	node = alloc_node (lda, dptr, dlen);
+	if (node == ASE_NULL) return INVALID;
 
-	if (pos >= lda->capa) 
+	/* do resizeing if necessary. 
+	 * resizing is performed after node allocation because that way, it 
+	 * doesn't modify lda on any errors */
+	if (pos >= lda->capa || lda->size >= lda->capa) 
 	{
 		size_t capa;
 
-		if (lda->capa <= 0) capa = (pos + 1);
-		else 
+		if (lda->sizer)
 		{
-			do { capa = lda->capa * 2; } while (pos >= capa);
+			capa = (pos >= lda->size)? (pos + 1): (lda->size + 1);
+			capa = lda->sizer (lda, capa);
 		}
-
+		else
+		{
+			if (lda->capa <= 0) 
+			{
+				ASE_ASSERT (lda->size <= 0);
+				capa = (pos < 16)? 16: (pos + 1);
+			}
+			else 
+			{
+				size_t bound = (pos >= lda->size)? pos: lda->size;
+				do { capa = lda->capa * 2; } while (capa <= bound);
+			}
+		}
+		
 		if (ase_lda_setcapa(lda,capa) == ASE_NULL) 
 		{
 			if (lda->freeer) 
-				lda->freeer (lda, DPTR(cell), DLEN(cell));
+				lda->freeer (lda, DPTR(node), DLEN(node));
 			return INVALID;
 		}
 	}
 
-	for (i = lda->size; i > pos; i--) 
-		lda->cell[i] = lda->cell[i-1];
-	lda->cell[pos] = cell;
+	if (pos >= lda->capa) 
+	{
+		/* the buffer is not still enough after resizing */
+		if (lda->freeer) 
+			lda->freeer (lda, DPTR(node), DLEN(node));
+		return INVALID;
+	}
+
+	/* fill in the gap with ASE_NULL */
+	for (i = lda->size; i < pos; i++) lda->node[i] = ASE_NULL;
+
+	/* shift values to the next cell */
+	for (i = lda->size; i > pos; i--) lda->node[i] = lda->node[i-1];
+
+	/*  set the value */
+	lda->node[pos] = node;
 
 	if (pos > lda->size) lda->size = pos + 1;
 	else lda->size++;
+
+	return pos;
+}
+
+size_t ase_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
+{
+	node_t* c;
+
+	if (pos >= lda->size) return INVALID;
+
+	c = lda->node[pos];
+	if (c == ASE_NULL)
+	{
+		/* no previous data */
+		lda->node[pos] = alloc_node (lda, dptr, dlen);
+		if (lda->node[pos] == ASE_NULL) return INVALID;
+	}
+	else
+	{
+		if (dptr == DPTR(c) && dlen == DLEN(c))
+		{
+			/* updated to the same data */
+			lda->keeper (lda, dptr, dlen);	
+		}
+		else
+		{
+			/* updated to different data */
+			node_t* node = alloc_node (lda, dptr, dlen);
+			if (node == ASE_NULL) return INVALID;
+
+			if (lda->freeer != ASE_NULL)
+				lda->freeer (lda, DPTR(c), DLEN(c));
+			ASE_MMGR_FREE (lda->mmgr, c);
+
+			lda->node[pos] = node;
+		}
+	}
 
 	return pos;
 }
@@ -370,7 +436,7 @@ size_t ase_lda_delete (lda_t* lda, size_t index, size_t count)
 
 	while (i < k) 
 	{
-		cell_t* c = lda->cell[i];
+		node_t* c = lda->node[i];
 
 		if (lda->freeer != ASE_NULL)
 			lda->freeer (lda, DPTR(c), DLEN(c));
@@ -378,12 +444,12 @@ size_t ase_lda_delete (lda_t* lda, size_t index, size_t count)
 
 		if (j >= lda->size) 
 		{
-			lda->cell[i] = ASE_NULL;
+			lda->node[i] = ASE_NULL;
 			i++;
 		}
 		else
 		{
-			lda->cell[i] = lda->cell[j];
+			lda->node[i] = lda->node[j];
 			i++; j++;		
 		}
 	}
@@ -398,11 +464,11 @@ void ase_lda_clear (lda_t* lda)
 
 	for (i = 0; i < lda->size; i++) 
 	{
-		cell_t* c = lda->cell[i];
-		if (lda->freeer)
+		node_t* c = lda->node[i];
+		if (c && lda->freeer)
 			lda->freeer (lda, DPTR(c), DLEN(c));
 		ASE_MMGR_FREE (lda->mmgr, c);
-		lda->cell[i] = ASE_NULL;
+		lda->node[i] = ASE_NULL;
 	}
 
 	lda->size = 0;
@@ -433,7 +499,7 @@ size_t ase_lda_find (lda_t* lda, size_t index, const ase_char_t* str, size_t len
 	for (i = index; i < lda->size; i++) 
 	{
 		if (ase_strxncmp (
-			lda->cell[i].name.ptr, lda->cell[i].name.len, 
+			lda->node[i].name.ptr, lda->node[i].name.len, 
 			str, len) == 0) return i;
 	}
 
@@ -449,7 +515,7 @@ size_t ase_lda_rfind (lda_t* lda, size_t index, const ase_char_t* str, size_t le
 	for (i = index + 1; i-- > 0; ) 
 	{
 		if (ase_strxncmp (
-			lda->cell[i].name.ptr, lda->cell[i].name.len, 
+			lda->node[i].name.ptr, lda->node[i].name.len, 
 			str, len) == 0) return i;
 	}
 
@@ -465,7 +531,7 @@ size_t ase_lda_rrfind (lda_t* lda, size_t index, const ase_char_t* str, size_t l
 	for (i = lda->size - index; i-- > 0; ) 
 	{
 		if (ase_strxncmp (
-			lda->cell[i].name.ptr, lda->cell[i].name.len, 
+			lda->node[i].name.ptr, lda->node[i].name.len, 
 			str, len) == 0) return i;
 	}
 
@@ -483,8 +549,8 @@ size_t ase_lda_findx (
 	{
 		ase_cstr_t x;
 
-		x.ptr = lda->cell[i].name.ptr;
-		x.len = lda->cell[i].name.len;
+		x.ptr = lda->node[i].name.ptr;
+		x.len = lda->node[i].name.len;
 
 		transform (i, &x, arg);
 		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
@@ -506,8 +572,8 @@ size_t ase_lda_rfindx (
 	{
 		ase_cstr_t x;
 
-		x.ptr = lda->cell[i].name.ptr;
-		x.len = lda->cell[i].name.len;
+		x.ptr = lda->node[i].name.ptr;
+		x.len = lda->node[i].name.len;
 
 		transform (i, &x, arg);
 		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
@@ -529,8 +595,8 @@ size_t ase_lda_rrfindx (
 	{
 		ase_cstr_t x;
 
-		x.ptr = lda->cell[i].name.ptr;
-		x.len = lda->cell[i].name.len;
+		x.ptr = lda->node[i].name.ptr;
+		x.len = lda->node[i].name.len;
 
 		transform (i, &x, arg);
 		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
