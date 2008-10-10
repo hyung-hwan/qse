@@ -229,14 +229,12 @@ lda_t* ase_lda_setcapa (lda_t* lda, size_t capa)
 	{
 		if (lda->mmgr->realloc != ASE_NULL && lda->node != ASE_NULL)
 		{
-wprintf (L"XXXXXXXXXXXXXXXXXX %d, %d\n", (int)capa, (int)ASE_SIZEOF(*lda->node)*capa);
 			tmp = (ase_lda_node_t**)ASE_MMGR_REALLOC (
 				lda->mmgr, lda->node, ASE_SIZEOF(*lda->node)*capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
 		}
 		else
 		{
-wprintf (L"XXXXXXXXXXXXXXXXXX %d, %d\n", (int)capa, (int)ASE_SIZEOF(*lda->node)*capa);
 			tmp = (ase_lda_node_t**) ASE_MMGR_ALLOC (
 				lda->mmgr, ASE_SIZEOF(*lda->node)*capa);
 			if (tmp == ASE_NULL) return ASE_NULL;
@@ -359,6 +357,7 @@ size_t ase_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 		{
 			if (lda->freeer) 
 				lda->freeer (lda, DPTR(node), DLEN(node));
+			ASE_MMGR_FREE (lda->mmgr, node);
 			return INVALID;
 		}
 	}
@@ -368,6 +367,7 @@ size_t ase_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 		/* the buffer is not still enough after resizing */
 		if (lda->freeer) 
 			lda->freeer (lda, DPTR(node), DLEN(node));
+		ASE_MMGR_FREE (lda->mmgr, node);
 		return INVALID;
 	}
 
@@ -425,34 +425,32 @@ size_t ase_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 
 size_t ase_lda_delete (lda_t* lda, size_t index, size_t count)
 {
-	size_t i, j, k;
+	size_t i;
 
 	if (index >= lda->size) return 0;
 	if (count > lda->size - index) count = lda->size - index;
 
 	i = index;
-	j = index + count;
-	k = index + count;
 
-	while (i < k) 
+	for (i = index; i < index + count; i++)
 	{
 		node_t* c = lda->node[i];
 
-		if (lda->freeer != ASE_NULL)
-			lda->freeer (lda, DPTR(c), DLEN(c));
-		ASE_MMGR_FREE (lda->mmgr, c);
+		if (c != ASE_NULL)
+		{
+			if (lda->freeer != ASE_NULL)
+				lda->freeer (lda, DPTR(c), DLEN(c));
+			ASE_MMGR_FREE (lda->mmgr, c);
 
-		if (j >= lda->size) 
-		{
 			lda->node[i] = ASE_NULL;
-			i++;
-		}
-		else
-		{
-			lda->node[i] = lda->node[j];
-			i++; j++;		
 		}
 	}
+
+	for (i = index + count; i < lda->size; i++)
+	{
+		lda->node[i-count] = lda->node[i];
+	}
+	lda->node[lda->size-1] = ASE_NULL;
 
 	lda->size -= count;
 	return count;
@@ -465,10 +463,13 @@ void ase_lda_clear (lda_t* lda)
 	for (i = 0; i < lda->size; i++) 
 	{
 		node_t* c = lda->node[i];
-		if (c && lda->freeer)
-			lda->freeer (lda, DPTR(c), DLEN(c));
-		ASE_MMGR_FREE (lda->mmgr, c);
-		lda->node[i] = ASE_NULL;
+		if (c != ASE_NULL)
+		{
+			if (lda->freeer)
+				lda->freeer (lda, DPTR(c), DLEN(c));
+			ASE_MMGR_FREE (lda->mmgr, c);
+			lda->node[i] = ASE_NULL;
+		}
 	}
 
 	lda->size = 0;

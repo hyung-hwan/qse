@@ -398,11 +398,25 @@ ase_size_t ase_lda_update (
 	ase_size_t dlen
 );
 
+/****f* ase.cmn.lda/ase_lda_delete
+ * NAME
+ *  ase_lda_delete - delete data
+ *
+ * DESCRIPTION
+ *  The ase_lda_delete() function deletes the as many data as the count 
+ *  from the index.
+ * 
+ * RETURN
+ *  The ase_lda_delete() function returns the number of data deleted.
+ *
+ * SYNOPSIS
+ */
 ase_size_t ase_lda_delete (
 	ase_lda_t* lda,
 	ase_size_t index,
 	ase_size_t count
 );
+/******/
 
 ase_size_t ase_lda_add (
 	ase_lda_t* lda, ase_char_t* str, ase_size_t len);
