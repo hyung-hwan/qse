@@ -272,6 +272,8 @@ size_t ase_lda_search (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 
 	for (i = pos; i < lda->size; i++) 
 	{
+		if (lda->node[i] == ASE_NULL) continue;
+
 		if (lda->comper (lda, 
 			DPTR(lda->node[i]), DLEN(lda->node[i]),
 			dptr, dlen) == 0) return i;
@@ -284,29 +286,18 @@ size_t ase_lda_rsearch (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 {
 	size_t i;
 
-	if (pos >= lda->size) return INVALID;
-
-	for (i = pos + 1; i-- > 0; ) 
+	if (lda->size > 0)
 	{
-		if (lda->comper (lda, 
-			DPTR(lda->node[i]), DLEN(lda->node[i]),
-			dptr, dlen) == 0) return i;
-	}
+		if (pos >= lda->size) pos = lda->size - 1;
 
-	return INVALID;
-}
+		for (i = pos + 1; i-- > 0; ) 
+		{
+			if (lda->node[i] == ASE_NULL) continue;
 
-size_t ase_lda_rrsearch (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
-{
-	size_t i;
-
-	if (pos >= lda->size) return INVALID;
-
-	for (i = lda->size - pos; i-- > 0; ) 
-	{
-		if (lda->comper (lda, 
-			DPTR(lda->node[i]), DLEN(lda->node[i]),
-			dptr, dlen) == 0) return i;
+			if (lda->comper (lda, 
+				DPTR(lda->node[i]), DLEN(lda->node[i]),
+				dptr, dlen) == 0) return i;
+		}
 	}
 
 	return INVALID;
@@ -456,6 +447,32 @@ size_t ase_lda_delete (lda_t* lda, size_t index, size_t count)
 	return count;
 }
 
+size_t ase_lda_uplete (lda_t* lda, size_t index, size_t count)
+{
+	size_t i;
+
+	if (index >= lda->size) return 0;
+	if (count > lda->size - index) count = lda->size - index;
+
+	i = index;
+
+	for (i = index; i < index + count; i++)
+	{
+		node_t* c = lda->node[i];
+
+		if (c != ASE_NULL)
+		{
+			if (lda->freeer != ASE_NULL)
+				lda->freeer (lda, DPTR(c), DLEN(c));
+			ASE_MMGR_FREE (lda->mmgr, c);
+
+			lda->node[i] = ASE_NULL;
+		}
+	}
+
+	return count;
+}
+
 void ase_lda_clear (lda_t* lda)
 {
 	size_t i;
@@ -474,139 +491,6 @@ void ase_lda_clear (lda_t* lda)
 
 	lda->size = 0;
 }
-
-size_t ase_lda_add (
-	lda_t* lda, ase_char_t* str, size_t len)
-{
-	return ase_lda_insert (lda, lda->size, str, len);
-}
-
-size_t ase_lda_adduniq (
-	lda_t* lda, ase_char_t* str, size_t len)
-{
-	size_t i;
-	i = ase_lda_search (lda, 0, str, len);
-	if (i != INVALID) return i; /* found. return the current index */
-
-	/* insert a new entry */
-	return ase_lda_insert (lda, lda->size, str, len);
-}
-
-#if 0
-size_t ase_lda_find (lda_t* lda, size_t index, const ase_char_t* str, size_t len)
-{
-	size_t i;
-
-	for (i = index; i < lda->size; i++) 
-	{
-		if (ase_strxncmp (
-			lda->node[i].name.ptr, lda->node[i].name.len, 
-			str, len) == 0) return i;
-	}
-
-	return INVALID;
-}
-
-size_t ase_lda_rfind (lda_t* lda, size_t index, const ase_char_t* str, size_t len)
-{
-	size_t i;
-
-	if (index >= lda->size) return INVALID;
-
-	for (i = index + 1; i-- > 0; ) 
-	{
-		if (ase_strxncmp (
-			lda->node[i].name.ptr, lda->node[i].name.len, 
-			str, len) == 0) return i;
-	}
-
-	return INVALID;
-}
-
-size_t ase_lda_rrfind (lda_t* lda, size_t index, const ase_char_t* str, size_t len)
-{
-	size_t i;
-
-	if (index >= lda->size) return INVALID;
-
-	for (i = lda->size - index; i-- > 0; ) 
-	{
-		if (ase_strxncmp (
-			lda->node[i].name.ptr, lda->node[i].name.len, 
-			str, len) == 0) return i;
-	}
-
-	return INVALID;
-}
-
-size_t ase_lda_findx (
-	lda_t* lda, size_t index, 
-	const ase_char_t* str, size_t len,
-	void(*transform)(size_t, ase_cstr_t*,void*), void* arg)
-{
-	size_t i;
-
-	for (i = index; i < lda->size; i++) 
-	{
-		ase_cstr_t x;
-
-		x.ptr = lda->node[i].name.ptr;
-		x.len = lda->node[i].name.len;
-
-		transform (i, &x, arg);
-		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
-	}
-
-	return INVALID;
-}
-
-size_t ase_lda_rfindx (
-	lda_t* lda, size_t index, 
-	const ase_char_t* str, size_t len,
-	void(*transform)(size_t, ase_cstr_t*,void*), void* arg)
-{
-	size_t i;
-
-	if (index >= lda->size) return INVALID;
-
-	for (i = index + 1; i-- > 0; ) 
-	{
-		ase_cstr_t x;
-
-		x.ptr = lda->node[i].name.ptr;
-		x.len = lda->node[i].name.len;
-
-		transform (i, &x, arg);
-		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
-	}
-
-	return INVALID;
-}
-
-size_t ase_lda_rrfindx (
-	lda_t* lda, size_t index,
-	const ase_char_t* str, size_t len, 
-	void(*transform)(size_t, ase_cstr_t*,void*), void* arg)
-{
-	size_t i;
-
-	if (index >= lda->size) return INVALID;
-
-	for (i = lda->size - index; i-- > 0; ) 
-	{
-		ase_cstr_t x;
-
-		x.ptr = lda->node[i].name.ptr;
-		x.len = lda->node[i].name.len;
-
-		transform (i, &x, arg);
-		if (ase_strxncmp (x.ptr, x.len, str, len) == 0) return i;
-	}
-
-	return INVALID;
-}
-
-#endif
 
 void* ase_lda_copysimple (lda_t* lda, void* dptr, size_t dlen)
 {

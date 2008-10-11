@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 391 2008-09-27 09:51:23Z baconevi $
+ * $Id: parse.c 415 2008-10-10 11:16:31Z baconevi $
  *
  * {License}
  */
@@ -350,7 +350,7 @@ static global_t gtab[] =
 
 #define ADD_TOKEN_CHAR(awk,c) \
 	do { \
-		if (ase_str_ccat(&(awk)->token.name,(c)) == (ase_size_t)-1) \
+		if (ase_str_ccat((awk)->token.name,(c)) == (ase_size_t)-1) \
 		{ \
 			ase_awk_seterror (awk, ASE_AWK_ENOMEM, (awk)->token.line, ASE_NULL, 0); \
 			return -1; \
@@ -359,7 +359,7 @@ static global_t gtab[] =
 
 #define ADD_TOKEN_STR(awk,s,l) \
 	do { \
-		if (ase_str_ncat(&(awk)->token.name,(s),(l)) == (ase_size_t)-1) \
+		if (ase_str_ncat((awk)->token.name,(s),(l)) == (ase_size_t)-1) \
 		{ \
 			ase_awk_seterror (awk, ASE_AWK_ENOMEM, (awk)->token.line, ASE_NULL, 0); \
 			return -1; \
@@ -375,8 +375,8 @@ static global_t gtab[] =
 #define SETERRTOK(awk,code) \
 	do { \
 		ase_cstr_t errarg; \
-		errarg.len = ASE_STR_LEN(&(awk)->token.name); \
-		errarg.ptr = ASE_STR_PTR(&(awk)->token.name); \
+		errarg.len = ASE_STR_LEN((awk)->token.name); \
+		errarg.ptr = ASE_STR_PTR((awk)->token.name); \
 		if (MATCH(awk,TOKEN_EOF)) \
 			ase_awk_seterror (awk, code, (awk)->token.prev.line, &errarg, 1); \
 		else \
@@ -451,10 +451,10 @@ const ase_char_t* ase_awk_getglobalname (
 	return gtab[idx].name;
 	*/
 
-	ASE_ASSERT (idx < ase_awk_tab_getsize(&awk->parse.globals));
+	ASE_ASSERT (idx < ASE_LDA_SIZE(&awk->parse.globals));
 
-	*len = awk->parse.globals.buf[idx].name.len;
-	return awk->parse.globals.buf[idx].name.ptr;
+	*len = ASE_LDA_DLEN(awk->parse.globals,idx);
+	return ASE_LDA_DPTR(awk->parse.globals,idx);
 }
 
 ase_cstr_t* ase_awk_getkw (ase_awk_t* awk, int id, ase_cstr_t* s)
@@ -616,13 +616,13 @@ static ase_awk_t* parse_progunit (ase_awk_t* awk)
 
 		if (get_token(awk) == -1) return ASE_NULL;
 
-		ASE_ASSERT (awk->tree.nglobals == ase_awk_tab_getsize(&awk->parse.globals));
+		ASE_ASSERT (awk->tree.nglobals == ASE_LDA_SIZE(&awk->parse.globals));
 		nglobals = awk->tree.nglobals;
 		if (collect_globals (awk) == ASE_NULL) 
 		{
-			ase_awk_tab_remove (
-				&awk->parse.globals, nglobals, 
-				ase_awk_tab_getsize(&awk->parse.globals) - nglobals);
+			ase_lda_delete (
+				awk->parse.globals, nglobals, 
+				ASE_LDA_SIZE(awk->parse.globals) - nglobals);
 			awk->tree.nglobals = nglobals;
 			return ASE_NULL;
 		}
@@ -838,8 +838,8 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		return ASE_NULL;
 	}
 
-	name = ASE_STR_PTR(&awk->token.name);
-	name_len = ASE_STR_LEN(&awk->token.name);
+	name = ASE_STR_PTR(awk->token.name);
+	name_len = ASE_STR_LEN(awk->token.name);
 
 	/* check if it is a builtin function */
 	if (ase_awk_getbfn (awk, name, name_len) != ASE_NULL)
@@ -859,7 +859,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 
 	/* check if it coincides to be a global variable name */
 	g = find_global (awk, name, name_len);
-	if (g != (ase_size_t)-1) 
+	if (g != ASE_LDA_INVALID)
 	{
 		SETERRARG (
 			awk, ASE_AWK_EGBLRED, awk->token.line, 
@@ -900,7 +900,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	}
 
 	/* make sure that parameter table is empty */
-	ASE_ASSERT (ase_awk_tab_getsize(&awk->parse.params) == 0);
+	ASE_ASSERT (ASE_LDA_SIZE(&awk->parse.params) == 0);
 
 	/* read parameter list */
 	if (MATCH(awk,TOKEN_RPAREN)) 
@@ -922,13 +922,13 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			if (!MATCH(awk,TOKEN_IDENT)) 
 			{
 				ASE_AWK_FREE (awk, name_dup);
-				ase_awk_tab_clear (&awk->parse.params);
+				ase_lda_clear (awk->parse.params);
 				SETERRTOK (awk, ASE_AWK_EBADPAR);
 				return ASE_NULL;
 			}
 
-			param = ASE_STR_PTR(&awk->token.name);
-			param_len = ASE_STR_LEN(&awk->token.name);
+			param = ASE_STR_PTR(awk->token.name);
+			param_len = ASE_STR_LEN(awk->token.name);
 
 			/* NOTE: the following is not a conflict. 
 			 *       so the parameter is not checked against
@@ -939,12 +939,11 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			 */
 
 			/* check if a parameter conflicts with other parameters */
-			if (ase_awk_tab_find (
-				&awk->parse.params, 
-				0, param, param_len) != (ase_size_t)-1) 
+			if (ase_lda_search (awk->parse.params, 
+				0, param, param_len) != ASE_LDA_INVALID)
 			{
 				ASE_AWK_FREE (awk, name_dup);
-				ase_awk_tab_clear (&awk->parse.params);
+				ase_lda_clear (awk->parse.params);
 
 				SETERRARG (
 					awk, ASE_AWK_EDUPPAR, awk->token.line,
@@ -954,22 +953,22 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			}
 
 			/* push the parameter to the parameter list */
-			if (ase_awk_tab_getsize (
-				&awk->parse.params) >= ASE_AWK_MAX_PARAMS)
+			if (ASE_LDA_SIZE(awk->parse.params) >= ASE_AWK_MAX_PARAMS)
 			{
 				ASE_AWK_FREE (awk, name_dup);
-				ase_awk_tab_clear (&awk->parse.params);
+				ase_lda_clear (awk->parse.params);
 
 				SETERRTOK (awk, ASE_AWK_EPARTM);
 				return ASE_NULL;
 			}
 
-			if (ase_awk_tab_add (
-				&awk->parse.params, 
-				param, param_len) == (ase_size_t)-1) 
+			if (ase_lda_insert (
+				awk->parse.params, 
+				ASE_LDA_SIZE(awk->parse.params), 
+				param, param_len) == ASE_LDA_INVALID)
 			{
 				ASE_AWK_FREE (awk, name_dup);
-				ase_awk_tab_clear (&awk->parse.params);
+				ase_lda_clear (awk->parse.params);
 
 				SETERRLIN (awk, ASE_AWK_ENOMEM, awk->token.line);
 				return ASE_NULL;
@@ -978,7 +977,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			if (get_token (awk) == -1) 
 			{
 				ASE_AWK_FREE (awk, name_dup);
-				ase_awk_tab_clear (&awk->parse.params);
+				ase_lda_clear (awk->parse.params);
 				return ASE_NULL;
 			}	
 
@@ -987,7 +986,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			if (!MATCH(awk,TOKEN_COMMA)) 
 			{
 				ASE_AWK_FREE (awk, name_dup);
-				ase_awk_tab_clear (&awk->parse.params);
+				ase_lda_clear (awk->parse.params);
 
 				SETERRTOK (awk, ASE_AWK_ECOMMA);
 				return ASE_NULL;
@@ -996,7 +995,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 			if (get_token(awk) == -1) 
 			{
 				ASE_AWK_FREE (awk, name_dup);
-				ase_awk_tab_clear (&awk->parse.params);
+				ase_lda_clear (awk->parse.params);
 				return ASE_NULL;
 			}
 		}
@@ -1004,7 +1003,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		if (get_token(awk) == -1) 
 		{
 			ASE_AWK_FREE (awk, name_dup);
-			ase_awk_tab_clear (&awk->parse.params);
+			ase_lda_clear (awk->parse.params);
 			return ASE_NULL;
 		}
 	}
@@ -1018,7 +1017,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 		if (get_token(awk) == -1) 
 		{
 			ASE_AWK_FREE (awk, name_dup);
-			ase_awk_tab_clear (&awk->parse.params);
+			ase_lda_clear (awk->parse.params);
 			return ASE_NULL;
 		}
 	}
@@ -1027,7 +1026,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	if (!MATCH(awk,TOKEN_LBRACE)) 
 	{
 		ASE_AWK_FREE (awk, name_dup);
-		ase_awk_tab_clear (&awk->parse.params);
+		ase_lda_clear (awk->parse.params);
 
 		SETERRTOK (awk, ASE_AWK_ELBRACE);
 		return ASE_NULL;
@@ -1035,7 +1034,7 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	if (get_token(awk) == -1) 
 	{
 		ASE_AWK_FREE (awk, name_dup);
-		ase_awk_tab_clear (&awk->parse.params);
+		ase_lda_clear (awk->parse.params);
 		return ASE_NULL; 
 	}
 
@@ -1054,15 +1053,15 @@ static ase_awk_nde_t* parse_function (ase_awk_t* awk)
 	if (body == ASE_NULL) 
 	{
 		ASE_AWK_FREE (awk, name_dup);
-		ase_awk_tab_clear (&awk->parse.params);
+		ase_lda_clear (awk->parse.params);
 		return ASE_NULL;
 	}
 
 	/* TODO: study furthur if the parameter names should be saved 
 	 *       for some reasons - might be needed for deparsing output */
-	nargs = ase_awk_tab_getsize (&awk->parse.params);
+	nargs = ASE_LDA_SIZE(awk->parse.params);
 	/* parameter names are not required anymore. clear them */
-	ase_awk_tab_clear (&awk->parse.params);
+	ase_lda_clear (awk->parse.params);
 
 	afn = (ase_awk_afn_t*) ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_afn_t));
 	if (afn == ASE_NULL) 
@@ -1204,7 +1203,7 @@ static ase_awk_nde_t* parse_block (
 	ase_awk_nde_blk_t* block;
 	ase_size_t nlocals, nlocals_max, tmp;
 
-	nlocals = ase_awk_tab_getsize(&awk->parse.locals);
+	nlocals = ASE_LDA_SIZE(awk->parse.locals);
 	nlocals_max = awk->parse.nlocals_max;
 
 	/* local variable declarations */
@@ -1216,17 +1215,17 @@ static ase_awk_nde_t* parse_block (
 
 			if (get_token(awk) == -1) 
 			{
-				ase_awk_tab_remove (
-					&awk->parse.locals, nlocals, 
-					ase_awk_tab_getsize(&awk->parse.locals) - nlocals);
+				ase_lda_delete (
+					awk->parse.locals, nlocals, 
+					ASE_LDA_SIZE(awk->parse.locals)-nlocals);
 				return ASE_NULL;
 			}
 
 			if (collect_locals (awk, nlocals, istop) == ASE_NULL)
 			{
-				ase_awk_tab_remove (
-					&awk->parse.locals, nlocals, 
-					ase_awk_tab_getsize(&awk->parse.locals) - nlocals);
+				ase_lda_delete (
+					awk->parse.locals, nlocals, 
+					ASE_LDA_SIZE(awk->parse.locals)-nlocals);
 				return ASE_NULL;
 			}
 		}
@@ -1246,9 +1245,9 @@ static ase_awk_nde_t* parse_block (
 		/* if EOF is met before the right brace, this is an error */
 		if (MATCH(awk,TOKEN_EOF)) 
 		{
-			ase_awk_tab_remove (
-				&awk->parse.locals, nlocals, 
-				ase_awk_tab_getsize(&awk->parse.locals) - nlocals);
+			ase_lda_delete (
+				awk->parse.locals, nlocals, 
+				ASE_LDA_SIZE(awk->parse.locals) - nlocals);
 			if (head != ASE_NULL) ase_awk_clrpt (awk, head);
 
 			SETERRLIN (awk, ASE_AWK_EENDSRC, awk->token.prev.line);
@@ -1260,9 +1259,9 @@ static ase_awk_nde_t* parse_block (
 		{
 			if (get_token(awk) == -1) 
 			{
-				ase_awk_tab_remove (
-					&awk->parse.locals, nlocals, 
-					ase_awk_tab_getsize(&awk->parse.locals)-nlocals);
+				ase_lda_delete (
+					awk->parse.locals, nlocals, 
+					ASE_LDA_SIZE(awk->parse.locals)-nlocals);
 				if (head != ASE_NULL) ase_awk_clrpt (awk, head);
 				return ASE_NULL; 
 			}
@@ -1274,9 +1273,9 @@ static ase_awk_nde_t* parse_block (
 		nde = parse_statement (awk, awk->token.line);
 		if (nde == ASE_NULL) 
 		{
-			ase_awk_tab_remove (
-				&awk->parse.locals, nlocals, 
-				ase_awk_tab_getsize(&awk->parse.locals)-nlocals);
+			ase_lda_delete (
+				awk->parse.locals, nlocals, 
+				ASE_LDA_SIZE(awk->parse.locals)-nlocals);
 			if (head != ASE_NULL) ase_awk_clrpt (awk, head);
 			return ASE_NULL;
 		}
@@ -1304,20 +1303,20 @@ static ase_awk_nde_t* parse_block (
 		ASE_AWK_ALLOC (awk, ASE_SIZEOF(ase_awk_nde_blk_t));
 	if (block == ASE_NULL) 
 	{
-		ase_awk_tab_remove (
-			&awk->parse.locals, nlocals, 
-			ase_awk_tab_getsize(&awk->parse.locals)-nlocals);
+		ase_lda_delete (
+			awk->parse.locals, nlocals, 
+			ASE_LDA_SIZE(awk->parse.locals)-nlocals);
 		ase_awk_clrpt (awk, head);
 
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
 		return ASE_NULL;
 	}
 
-	tmp = ase_awk_tab_getsize(&awk->parse.locals);
+	tmp = ASE_LDA_SIZE(awk->parse.locals);
 	if (tmp > awk->parse.nlocals_max) awk->parse.nlocals_max = tmp;
 
 	/* remove all locals to move it up to the top level */
-	ase_awk_tab_remove (&awk->parse.locals, nlocals, tmp - nlocals);
+	ase_lda_delete (awk->parse.locals, nlocals, tmp - nlocals);
 
 	/* adjust the number of locals for a block without any statements */
 	/* if (head == ASE_NULL) tmp = 0; */
@@ -1381,9 +1380,12 @@ int ase_awk_initglobals (ase_awk_t* awk)
 	{
 		ase_size_t g;
 
-		g = ase_awk_tab_add (&awk->parse.globals, 
-			gtab[id].name, gtab[id].name_len);
-		if (g == (ase_size_t)-1) return -1;
+		g = ase_lda_insert (
+			awk->parse.globals,
+			ASE_LDA_SIZE(awk->parse.globals),
+			(ase_char_t*)gtab[id].name,
+			gtab[id].name_len);
+		if (g == ASE_LDA_INVALID) return -1;
 
 		ASE_ASSERT ((int)g == id);
 
@@ -1408,34 +1410,13 @@ static void adjust_static_globals (ase_awk_t* awk)
 		if (gtab[id].valid != 0 && 
 		    (awk->option & gtab[id].valid) != gtab[id].valid)
 		{
-			awk->parse.globals.buf[id].name.len = 0;
+			/*awk->parse.globals.buf[id].name.len = 0;*/
+			ASE_LDA_DLEN(awk->parse.globals,id) = 0;
 		}
 		else
 		{
-			awk->parse.globals.buf[id].name.len = gtab[id].name_len;
-		}
-	}
-}
-
-static void trans_global (
-	ase_size_t index, ase_cstr_t* word, void* arg)
-{
-	ase_awk_tab_t* tab = (ase_awk_tab_t*)arg;
-	ase_awk_t* awk = tab->awk;
-
-	/*
-	if (index >= ASE_AWK_MIN_GLOBAL_ID && 
-	    index <= ASE_AWK_MAX_GLOBAL_ID)
-	*/
-	if (index < awk->tree.nbglobals)
-	{
-		ase_map_pair_t* pair;
-
-		pair = ase_map_search (awk->wtab, word->ptr, word->len);
-		if (pair != ASE_NULL)
-		{
-			word->ptr = ((ase_cstr_t*)(pair->vptr))->ptr;
-			word->len = ((ase_cstr_t*)(pair->vptr))->len;
+			/*awk->parse.globals.buf[id].name.len = gtab[id].name_len;*/
+			ASE_LDA_DLEN(awk->parse.globals,id) = gtab[id].name_len;
 		}
 	}
 }
@@ -1443,17 +1424,76 @@ static void trans_global (
 static ase_size_t get_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
-	return ase_awk_tab_rrfindx (
-		&awk->parse.globals, 0, name, len, 
-		trans_global, &awk->parse.globals);
+	ase_size_t i;
+
+	/* return ase_lda_rsearch (
+		awk->parse.globals, ASE_LDA_SIZE(awk->parse.globals),
+		name, len); */
+
+	if (ASE_LDA_SIZE(awk->parse.globals) > 0)
+	{
+		for (i = ASE_LDA_SIZE(awk->parse.globals); i-- > 0; ) 
+		{
+			if (ASE_LDA_NODE(awk->parse.globals,i))
+			{
+				ase_cstr_t tmp;
+
+				tmp.ptr = ASE_LDA_DPTR(awk->parse.globals,i);
+				tmp.len = ASE_LDA_DLEN(awk->parse.globals,i);
+
+				if (i < awk->tree.nbglobals)
+				{
+					ase_map_pair_t* pair;
+
+					pair = ase_map_search (awk->wtab, tmp.ptr, tmp.len);
+					if (pair != ASE_NULL)
+					{
+						tmp.ptr = ((ase_cstr_t*)(pair->vptr))->ptr;
+						tmp.len = ((ase_cstr_t*)(pair->vptr))->len;
+					}
+				}
+
+				if (ase_strxncmp(tmp.ptr, tmp.len, name, len) == 0) return i;
+			}
+		}
+	}
+
+	return ASE_LDA_INVALID;
 }
 
 static ase_size_t find_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
-	return ase_awk_tab_findx (
-		&awk->parse.globals, 0, name, len,
-		trans_global, &awk->parse.globals);
+	ase_size_t i;
+
+	/* return ase_lda_search (awk->parse.globals, 0, name, len); */
+
+	for (i = 0; i < ASE_LDA_SIZE(awk->parse.globals); i++) 
+	{
+		if (ASE_LDA_NODE(awk->parse.globals,i))
+		{
+			ase_cstr_t tmp;
+
+			tmp.ptr = ASE_LDA_DPTR(awk->parse.globals,i);
+			tmp.len = ASE_LDA_DLEN(awk->parse.globals,i);
+
+			if (i < awk->tree.nbglobals)
+			{
+				ase_map_pair_t* pair;
+
+				pair = ase_map_search (awk->wtab, tmp.ptr, tmp.len);
+				if (pair != ASE_NULL)
+				{
+					tmp.ptr = ((ase_cstr_t*)(pair->vptr))->ptr;
+					tmp.len = ((ase_cstr_t*)(pair->vptr))->len;
+				}
+			}
+
+			if (ase_strxncmp(tmp.ptr, tmp.len, name, len) == 0) return i;
+		}
+	}
+
+	return ASE_LDA_INVALID;
 }
 
 static int add_global (
@@ -1498,30 +1538,34 @@ static int add_global (
 	#endif
 
 	/* check if it conflicts with other global variable names */
-	if (find_global (awk, name, len) != (ase_size_t)-1)
+	if (find_global (awk, name, len) != ASE_LDA_INVALID)
 	{ 
 		SETERRARG (awk, ASE_AWK_EDUPGBL, line, name, len);
 		return -1;
 	}
 
-	nglobals = ase_awk_tab_getsize (&awk->parse.globals);
+	nglobals = ASE_LDA_SIZE (awk->parse.globals);
 	if (nglobals >= ASE_AWK_MAX_GLOBALS)
 	{
 		SETERRLIN (awk, ASE_AWK_EGBLTM, line);
 		return -1;
 	}
 
-	if (ase_awk_tab_add (&awk->parse.globals, name, len) == (ase_size_t)-1) 
+	if (ase_lda_insert (awk->parse.globals, 
+		ASE_LDA_SIZE(awk->parse.globals), 
+		(ase_char_t*)name, len) == ASE_LDA_INVALID)
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
 		return -1;
 	}
 
+	ASE_ASSERT (nglobals == ASE_LDA_SIZE(awk->parse.globals) - 1);
+
 	/* the disabled item is inserted normally but 
 	 * the name length is reset to zero. */
-	if (disabled) awk->parse.globals.buf[nglobals].name.len = 0;
+	if (disabled) ASE_LDA_DLEN(awk->parse.globals,nglobals) = 0;
 
-	awk->tree.nglobals = ase_awk_tab_getsize (&awk->parse.globals);
+	awk->tree.nglobals = ASE_LDA_SIZE (awk->parse.globals);
 	ASE_ASSERT (nglobals == awk->tree.nglobals-1);
 
 	/* return the id which is the index to the global table. */
@@ -1569,9 +1613,9 @@ int ase_awk_delglobal (
 		return -1;
 	}
 
-	n = ase_awk_tab_find (&awk->parse.globals, 
+	n = ase_lda_search (awk->parse.globals, 
 		ASE_AWK_NUM_STATIC_GLOBALS, name, len);
-	if (n == (ase_size_t)-1) 
+	if (n == ASE_LDA_INVALID)
 	{
 		SETERRARG (awk, ASE_AWK_ENOENT, 0, name, len);
 		return -1;
@@ -1582,8 +1626,12 @@ int ase_awk_delglobal (
 	 * if ase_awk_addglobal is called with the same name
 	 * again, the entry will be appended again. 
 	 * never call this funciton unless it is really required. */
-	awk->parse.globals.buf[n].name.ptr[0] = ASE_T('\0');;
+	/*
+	awk->parse.globals.buf[n].name.ptr[0] = ASE_T('\0');
 	awk->parse.globals.buf[n].name.len = 0;
+	*/
+	n = ase_lda_uplete (awk->parse.globals, n, 1);
+	ASE_ASSERT (n == 1);
 
 	return 0;
 }
@@ -1600,8 +1648,8 @@ static ase_awk_t* collect_globals (ase_awk_t* awk)
 
 		if (add_global (
 			awk,
-			ASE_STR_PTR(&awk->token.name),
-			ASE_STR_LEN(&awk->token.name),
+			ASE_STR_PTR(awk->token.name),
+			ASE_STR_LEN(awk->token.name),
 			awk->token.line, 0) == -1) return ASE_NULL;
 
 		if (get_token(awk) == -1) return ASE_NULL;
@@ -1637,8 +1685,8 @@ static ase_awk_t* collect_locals (
 			return ASE_NULL;
 		}
 
-		local.ptr = ASE_STR_PTR(&awk->token.name);
-		local.len = ASE_STR_LEN(&awk->token.name);
+		local.ptr = ASE_STR_PTR(awk->token.name);
+		local.len = ASE_STR_LEN(awk->token.name);
 
 		#if 0
 		if (awk->option & ASE_AWK_UNIQUEFN) 
@@ -1689,8 +1737,8 @@ static ase_awk_t* collect_locals (
 		if (istop)
 		{
 			/* check if it conflicts with a paremeter name */
-			n = ase_awk_tab_find (&awk->parse.params, 0, local.ptr, local.len);
-			if (n != (ase_size_t)-1)
+			n = ase_lda_search (awk->parse.params, 0, local.ptr, local.len);
+			if (n != ASE_LDA_INVALID)
 			{
 				SETERRARG (
 					awk, ASE_AWK_EPARRED, awk->token.line,
@@ -1700,11 +1748,11 @@ static ase_awk_t* collect_locals (
 		}
 
 		/* check if it conflicts with other local variable names */
-		n = ase_awk_tab_find (
-			&awk->parse.locals, 
+		n = ase_lda_search (
+			awk->parse.locals, 
 			nlocals, /*((awk->option&ASE_AWK_SHADING)? nlocals:0)*/
 			local.ptr, local.len);
-		if (n != (ase_size_t)-1)
+		if (n != ASE_LDA_INVALID)
 		{
 			SETERRARG (
 				awk, ASE_AWK_EDUPLCL, awk->token.line, 
@@ -1714,7 +1762,7 @@ static ase_awk_t* collect_locals (
 
 		/* check if it conflicts with global variable names */
 		n = find_global (awk, local.ptr, local.len);
-		if (n != (ase_size_t)-1)
+		if (n != ASE_LDA_INVALID)
 		{
  			if (n < awk->tree.nbglobals)
 			{
@@ -1737,14 +1785,16 @@ static ase_awk_t* collect_locals (
 			#endif
 		}
 
-		if (ase_awk_tab_getsize(&awk->parse.locals) >= ASE_AWK_MAX_LOCALS)
+		if (ASE_LDA_SIZE(awk->parse.locals) >= ASE_AWK_MAX_LOCALS)
 		{
 			SETERRLIN (awk, ASE_AWK_ELCLTM, awk->token.line);
 			return ASE_NULL;
 		}
 
-		if (ase_awk_tab_add (
-			&awk->parse.locals, local.ptr, local.len) == (ase_size_t)-1) 
+		if (ase_lda_insert (
+			awk->parse.locals,
+			ASE_LDA_SIZE(awk->parse.locals),
+			local.ptr, local.len) == ASE_LDA_INVALID)
 		{
 			SETERRLIN (awk, ASE_AWK_ENOMEM, awk->token.line);
 			return ASE_NULL;
@@ -2757,21 +2807,21 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->line = line;
 		nde->next = ASE_NULL;
 		nde->val = ase_awk_strxtolong (awk, 
-			ASE_STR_PTR(&awk->token.name), 
-			ASE_STR_LEN(&awk->token.name), 0, ASE_NULL);
+			ASE_STR_PTR(awk->token.name), 
+			ASE_STR_LEN(awk->token.name), 0, ASE_NULL);
 		nde->str = ASE_AWK_STRXDUP (awk,
-			ASE_STR_PTR(&awk->token.name),
-			ASE_STR_LEN(&awk->token.name));
+			ASE_STR_PTR(awk->token.name),
+			ASE_STR_LEN(awk->token.name));
 		if (nde->str == ASE_NULL)
 		{
 			ASE_AWK_FREE (awk, nde);
 			return ASE_NULL;			
 		}
-		nde->len = ASE_STR_LEN(&awk->token.name);
+		nde->len = ASE_STR_LEN(awk->token.name);
 
 		ASE_ASSERT (
-			ASE_STR_LEN(&awk->token.name) ==
-			ase_strlen(ASE_STR_PTR(&awk->token.name)));
+			ASE_STR_LEN(awk->token.name) ==
+			ase_strlen(ASE_STR_PTR(awk->token.name)));
 
 		if (get_token(awk) == -1) 
 		{
@@ -2798,21 +2848,21 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->line = line;
 		nde->next = ASE_NULL;
 		nde->val = ase_awk_strxtoreal (awk, 
-			ASE_STR_PTR(&awk->token.name), 
-			ASE_STR_LEN(&awk->token.name), ASE_NULL);
+			ASE_STR_PTR(awk->token.name), 
+			ASE_STR_LEN(awk->token.name), ASE_NULL);
 		nde->str = ASE_AWK_STRXDUP (awk,
-			ASE_STR_PTR(&awk->token.name),
-			ASE_STR_LEN(&awk->token.name));
+			ASE_STR_PTR(awk->token.name),
+			ASE_STR_LEN(awk->token.name));
 		if (nde->str == ASE_NULL)
 		{
 			ASE_AWK_FREE (awk, nde);
 			return ASE_NULL;			
 		}
-		nde->len = ASE_STR_LEN(&awk->token.name);
+		nde->len = ASE_STR_LEN(awk->token.name);
 
 		ASE_ASSERT (
-			ASE_STR_LEN(&awk->token.name) ==
-			ase_strlen(ASE_STR_PTR(&awk->token.name)));
+			ASE_STR_LEN(awk->token.name) ==
+			ase_strlen(ASE_STR_PTR(awk->token.name)));
 
 		if (get_token(awk) == -1) 
 		{
@@ -2838,9 +2888,9 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->type = ASE_AWK_NDE_STR;
 		nde->line = line;
 		nde->next = ASE_NULL;
-		nde->len = ASE_STR_LEN(&awk->token.name);
+		nde->len = ASE_STR_LEN(awk->token.name);
 		nde->buf = ASE_AWK_STRXDUP (awk,
-			ASE_STR_PTR(&awk->token.name), nde->len);
+			ASE_STR_PTR(awk->token.name), nde->len);
 		if (nde->buf == ASE_NULL) 
 		{
 			ASE_AWK_FREE (awk, nde);
@@ -2866,7 +2916,7 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		 * of the context-sensitivity of the slash symbol */
 		SET_TOKEN_TYPE (awk, TOKEN_REX);
 
-		ase_str_clear (&awk->token.name);
+		ase_str_clear (awk->token.name);
 		if (get_rexstr (awk) == -1) return ASE_NULL;
 		ASE_ASSERT (MATCH(awk,TOKEN_REX));
 
@@ -2882,10 +2932,10 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		nde->line = line;
 		nde->next = ASE_NULL;
 
-		nde->len = ASE_STR_LEN(&awk->token.name);
+		nde->len = ASE_STR_LEN(awk->token.name);
 		nde->buf = ASE_AWK_STRXDUP (awk,
-			ASE_STR_PTR(&awk->token.name),
-			ASE_STR_LEN(&awk->token.name));
+			ASE_STR_PTR(awk->token.name),
+			ASE_STR_LEN(awk->token.name));
 		if (nde->buf == ASE_NULL)
 		{
 			ASE_AWK_FREE (awk, nde);
@@ -2894,8 +2944,8 @@ static ase_awk_nde_t* parse_primary (ase_awk_t* awk, ase_size_t line)
 		}
 
 		nde->code = ASE_AWK_BUILDREX (awk,
-			ASE_STR_PTR(&awk->token.name), 
-			ASE_STR_LEN(&awk->token.name), 
+			ASE_STR_PTR(awk->token.name), 
+			ASE_STR_LEN(awk->token.name), 
 			&errnum);
 		if (nde->code == ASE_NULL)
 		{
@@ -3108,14 +3158,14 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 	ASE_ASSERT (MATCH(awk,TOKEN_IDENT));
 
 	name_dup = ASE_AWK_STRXDUP (awk,
-		ASE_STR_PTR(&awk->token.name),
-		ASE_STR_LEN(&awk->token.name));
+		ASE_STR_PTR(awk->token.name),
+		ASE_STR_LEN(awk->token.name));
 	if (name_dup == ASE_NULL) 
 	{
 		SETERRLIN (awk, ASE_AWK_ENOMEM, line);
 		return ASE_NULL;
 	}
-	name_len = ASE_STR_LEN(&awk->token.name);
+	name_len = ASE_STR_LEN(awk->token.name);
 
 	if (get_token(awk) == -1) 
 	{
@@ -3151,8 +3201,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 		if (nde == ASE_NULL) ASE_AWK_FREE (awk, name_dup);
 		return (ase_awk_nde_t*)nde;
 	}
-	else if ((idxa = ase_awk_tab_rrfind (
-		&awk->parse.locals, 0, name_dup, name_len)) != (ase_size_t)-1)
+	else if ((idxa = ase_lda_rsearch (awk->parse.locals, ASE_LDA_SIZE(awk->parse.locals), name_dup, name_len)) != ASE_LDA_INVALID)
 	{
 		/* local variable */
 
@@ -3186,8 +3235,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 
 		return (ase_awk_nde_t*)nde;
 	}
-	else if ((idxa = ase_awk_tab_find (
-		&awk->parse.params, 0, name_dup, name_len)) != (ase_size_t)-1)
+	else if ((idxa = ase_lda_search (awk->parse.params, 0, name_dup, name_len)) != ASE_LDA_INVALID)
 	{
 		/* parameter */
 
@@ -3221,8 +3269,7 @@ static ase_awk_nde_t* parse_primary_ident (ase_awk_t* awk, ase_size_t line)
 
 		return (ase_awk_nde_t*)nde;
 	}
-	else if ((idxa = get_global (
-		awk, name_dup, name_len)) != (ase_size_t)-1)
+	else if ((idxa = get_global (awk, name_dup, name_len)) != ASE_LDA_INVALID)
 	{
 		/* global variable */
 
@@ -3428,8 +3475,8 @@ static ase_awk_nde_t* parse_hashidx (
 	}
 
 	/* search the local variable list */
-	idxa = ase_awk_tab_rrfind(&awk->parse.locals, 0, name, name_len);
-	if (idxa != (ase_size_t)-1) 
+	idxa = ase_lda_rsearch (awk->parse.locals, ASE_LDA_SIZE(awk->parse.locals), name, name_len);
+	if (idxa != ASE_LDA_INVALID)
 	{
 		nde->type = ASE_AWK_NDE_LOCALIDX;
 		nde->line = line;
@@ -3444,8 +3491,8 @@ static ase_awk_nde_t* parse_hashidx (
 	}
 
 	/* search the parameter name list */
-	idxa = ase_awk_tab_find (&awk->parse.params, 0, name, name_len);
-	if (idxa != (ase_size_t)-1) 
+	idxa = ase_lda_search (awk->parse.params, 0, name, name_len);
+	if (idxa != ASE_LDA_INVALID)
 	{
 		nde->type = ASE_AWK_NDE_ARGIDX;
 		nde->line = line;
@@ -3461,7 +3508,7 @@ static ase_awk_nde_t* parse_hashidx (
 
 	/* gets the global variable index */
 	idxa = get_global (awk, name, name_len);
-	if (idxa != (ase_size_t)-1) 
+	if (idxa != ASE_LDA_INVALID)
 	{
 		nde->type = ASE_AWK_NDE_GLOBALIDX;
 		nde->line = line;
@@ -4530,7 +4577,7 @@ static int get_token (ase_awk_t* awk)
 	} 
 	while (n == 1);
 
-	ase_str_clear (&awk->token.name);
+	ase_str_clear (awk->token.name);
 	awk->token.line = awk->src.lex.line;
 	awk->token.column = awk->src.lex.column;
 
@@ -4592,8 +4639,8 @@ static int get_token (ase_awk_t* awk)
 		       c == ASE_T('_') || ASE_AWK_ISDIGIT(awk,c));
 
 		type = classify_ident (awk, 
-			ASE_STR_PTR(&awk->token.name), 
-			ASE_STR_LEN(&awk->token.name));
+			ASE_STR_PTR(awk->token.name), 
+			ASE_STR_LEN(awk->token.name));
 		SET_TOKEN_TYPE (awk, type);
 	}
 	else if (c == ASE_T('\"')) 
@@ -4932,7 +4979,7 @@ static int get_number (ase_awk_t* awk)
 {
 	ase_cint_t c;
 
-	ASE_ASSERT (ASE_STR_LEN(&awk->token.name) == 0);
+	ASE_ASSERT (ASE_STR_LEN(awk->token.name) == 0);
 	SET_TOKEN_TYPE (awk, TOKEN_INT);
 
 	c = awk->src.lex.curc;
@@ -5542,8 +5589,8 @@ static int deparse (ase_awk_t* awk)
 				/* use the actual name if no named variable 
 				 * is allowed */
 				if (ase_awk_putsrcstrx (awk, 
-					awk->parse.globals.buf[i].name.ptr, 
-					awk->parse.globals.buf[i].name.len) == -1)
+					ASE_LDA_DPTR(awk->parse.globals,i),
+					ASE_LDA_DLEN(awk->parse.globals,i)) == -1)
 				{
 					EXIT_DEPARSE ();
 				}
@@ -5567,8 +5614,8 @@ static int deparse (ase_awk_t* awk)
 		    !(awk->option & ASE_AWK_IMPLICIT))
 		{
 			if (ase_awk_putsrcstrx (awk, 
-				awk->parse.globals.buf[i].name.ptr, 
-				awk->parse.globals.buf[i].name.len) == -1)
+				ASE_LDA_DPTR(awk->parse.globals,i),
+				ASE_LDA_DLEN(awk->parse.globals,i)) == -1)
 			{
 				EXIT_DEPARSE ();
 			}

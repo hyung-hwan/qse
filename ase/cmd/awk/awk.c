@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 404 2008-09-30 11:14:20Z baconevi $
+ * $Id: awk.c 415 2008-10-10 11:16:31Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -1272,7 +1272,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	app_awk = awk;
 
-#if 0
+/////////////////
 	srcios.in = awk_srcio_in;
 	srcios.out = deparse? awk_srcio_out: NULL;
 	srcios.data = &siod;
@@ -1287,7 +1287,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 		close_awk (awk);
 		return -1;
 	}
-#endif
+/////////////////
+
+#if 0
 	if (ase_awk_parsefiles (awk, ASE_ARR_PTR(stab), ASE_ARR_LEN(stab)) == -1)
 	{
 		ase_printf (
@@ -1298,6 +1300,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 		close_awk (awk);
 		return -1;
 	}
+#endif
 
 
 #ifdef _WIN32

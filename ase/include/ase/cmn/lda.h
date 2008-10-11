@@ -41,6 +41,8 @@ typedef struct ase_lda_node_t ase_lda_node_t;
 #define ASE_LDA_KEEPER(lda)      ((lda)->keeper)
 #define ASE_LDA_SIZER(lda)       ((lda)->sizer)
 
+#define ASE_LDA_EXTENSION(lda)   ((void*)(((ase_lda_t*)lda) + 1))
+
 
 /****b* ase.cmn.lda/ase_lda_copier_t
  * NAME
@@ -300,7 +302,7 @@ ase_lda_copier_t ase_lda_getcopier (
  *  ase_lda_setcopier - specify how to clone an element
  *
  * DESCRIPTION
- *  A special copier ASE_MAP_COPIER_INLINE is provided. This copier enables
+ *  A special copier ASE_LDA_COPIER_INLINE is provided. This copier enables
  *  you to copy the data inline to the internal node. No freeer is invoked
  *  when the node is freeed.
  *
@@ -370,13 +372,6 @@ ase_size_t ase_lda_rsearch (
 	ase_size_t dlen
 );
 
-ase_size_t ase_lda_rrsearch (
-	ase_lda_t* lda,
-	ase_size_t pos,
-	const void* dptr,
-	ase_size_t dlen
-);
-
 ase_size_t ase_lda_upsert (
 	ase_lda_t* lda,
 	ase_size_t index, 
@@ -418,35 +413,27 @@ ase_size_t ase_lda_delete (
 );
 /******/
 
-ase_size_t ase_lda_add (
-	ase_lda_t* lda, ase_char_t* str, ase_size_t len);
-ase_size_t ase_lda_adduniq (
-	ase_lda_t* lda, ase_char_t* str, ase_size_t len);
+/****f* ase.cmn.lda/ase_lda_uplete
+ * NAME
+ *  ase_lda_uplete - delete data node
+ *
+ * DESCRIPTION
+ *  The ase_lda_uplete() function deletes data node without compaction.
+ * 
+ * RETURN
+ *  The ase_lda_uplete() function returns the number of data affected.
+ *
+ */
+ase_size_t ase_lda_uplete (
+	ase_lda_t* lda,
+	ase_size_t index,
+	ase_size_t count
+);
+/******/
 
-ase_size_t ase_lda_find (
-	ase_lda_t* lda, ase_size_t index,
-	const ase_char_t* str, ase_size_t len);
-ase_size_t ase_lda_rfind (
-	ase_lda_t* lda, ase_size_t index,
-	const ase_char_t* str, ase_size_t len);
-ase_size_t ase_lda_rrfind (
-	ase_lda_t* lda, ase_size_t index,
-	const ase_char_t* str, ase_size_t len);
-
-ase_size_t ase_lda_findx (
-	ase_lda_t* lda, ase_size_t index,
-	const ase_char_t* str, ase_size_t len, 
-	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg);
-ase_size_t ase_lda_rfindx (
-	ase_lda_t* lda, ase_size_t index,
-	const ase_char_t* str, ase_size_t len, 
-	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg);
-ase_size_t ase_lda_rrfindx (
-	ase_lda_t* lda, ase_size_t index,
-	const ase_char_t* str, ase_size_t len, 
-	void(*transform)(ase_size_t, ase_cstr_t*,void*), void* arg);
-
-void ase_lda_clear (ase_lda_t* lda);
+void ase_lda_clear (
+	ase_lda_t* lda
+);
 
 void* ase_lda_copysimple (
 	ase_lda_t* lda   /* a linear dynamic array */,
