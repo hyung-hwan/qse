@@ -11,6 +11,7 @@
 #include "../cmn/chr.h"
 #include <ase/cmn/str.h>
 #include <ase/cmn/map.h>
+#include <ase/cmn/lda.h>
 #include <ase/cmn/rex.h>
 
 typedef struct ase_awk_chain_t ase_awk_chain_t;
@@ -19,7 +20,6 @@ typedef struct ase_awk_tree_t ase_awk_tree_t;
 #include <ase/awk/awk.h>
 #include "tree.h"
 #include "func.h"
-#include "tab.h"
 #include "parse.h"
 #include "run.h"
 #include "extio.h"
@@ -130,13 +130,13 @@ struct ase_awk_t
 		ase_map_t* named;
 
 		/* global variables */
-		ase_awk_tab_t globals;
+		ase_lda_t* globals;
 
 		/* local variables */
-		ase_awk_tab_t locals;
+		ase_lda_t* locals;
 
 		/* parameters to a function */
-		ase_awk_tab_t params;
+		ase_lda_t* params;
 
 		/* maximum number of local variables */
 		ase_size_t nlocals_max;
@@ -182,7 +182,7 @@ struct ase_awk_t
 		} prev;
 
 		int        type;
-		ase_str_t  name;
+		ase_str_t* name;
 		ase_size_t line;
 		ase_size_t column;
 	} token;
