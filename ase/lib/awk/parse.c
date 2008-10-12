@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 415 2008-10-10 11:16:31Z baconevi $
+ * $Id: parse.c 416 2008-10-11 14:10:25Z baconevi $
  *
  * {License}
  */
@@ -1421,79 +1421,77 @@ static void adjust_static_globals (ase_awk_t* awk)
 	}
 }
 
+typedef struct check_global_t check_global_t;
+
+struct check_global_t
+{
+	ase_cstr_t name;
+	ase_size_t index;
+	ase_lda_walk_t walk;
+};
+
+static ase_lda_walk_t check_global (ase_lda_t* lda, ase_size_t index, void* arg)
+{
+	ase_cstr_t tmp;
+	ase_awk_t* awk = *(ase_awk_t**)ASE_LDA_EXTENSION(lda);
+	check_global_t* cg = (check_global_t*)arg;
+
+	tmp.ptr = ASE_LDA_DPTR(lda,index);
+	tmp.len = ASE_LDA_DLEN(lda,index);
+
+	if (index < awk->tree.nbglobals)
+	{
+		ase_map_pair_t* pair;
+
+		pair = ase_map_search (awk->wtab, tmp.ptr, tmp.len);
+		if (pair != ASE_NULL)
+		{
+			tmp.ptr = ((ase_cstr_t*)(pair->vptr))->ptr;
+			tmp.len = ((ase_cstr_t*)(pair->vptr))->len;
+		}
+	}
+
+	if (ase_strxncmp(tmp.ptr, tmp.len, cg->name.ptr, cg->name.len) == 0) 
+	{
+		cg->index = index;
+		return ASE_LDA_WALK_STOP;
+	}
+
+	return cg->walk;
+}
+
 static ase_size_t get_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
-	ase_size_t i;
+	check_global_t cg;
+
+	cg.name.ptr = name;
+	cg.name.len = len;
+	cg.index = ASE_LDA_INVALID;
+	cg.walk = ASE_LDA_WALK_BACKWARD;
 
 	/* return ase_lda_rsearch (
 		awk->parse.globals, ASE_LDA_SIZE(awk->parse.globals),
 		name, len); */
 
-	if (ASE_LDA_SIZE(awk->parse.globals) > 0)
-	{
-		for (i = ASE_LDA_SIZE(awk->parse.globals); i-- > 0; ) 
-		{
-			if (ASE_LDA_NODE(awk->parse.globals,i))
-			{
-				ase_cstr_t tmp;
-
-				tmp.ptr = ASE_LDA_DPTR(awk->parse.globals,i);
-				tmp.len = ASE_LDA_DLEN(awk->parse.globals,i);
-
-				if (i < awk->tree.nbglobals)
-				{
-					ase_map_pair_t* pair;
-
-					pair = ase_map_search (awk->wtab, tmp.ptr, tmp.len);
-					if (pair != ASE_NULL)
-					{
-						tmp.ptr = ((ase_cstr_t*)(pair->vptr))->ptr;
-						tmp.len = ((ase_cstr_t*)(pair->vptr))->len;
-					}
-				}
-
-				if (ase_strxncmp(tmp.ptr, tmp.len, name, len) == 0) return i;
-			}
-		}
-	}
-
-	return ASE_LDA_INVALID;
+	ase_lda_rwalk (awk->parse.globals, check_global, &cg);
+	return cg.index;
 }
 
 static ase_size_t find_global (
 	ase_awk_t* awk, const ase_char_t* name, ase_size_t len)
 {
-	ase_size_t i;
+	check_global_t cg;
+
+	cg.name.ptr = name;
+	cg.name.len = len;
+	cg.index = ASE_LDA_INVALID;
+	cg.walk = ASE_LDA_WALK_FORWARD;
 
 	/* return ase_lda_search (awk->parse.globals, 0, name, len); */
 
-	for (i = 0; i < ASE_LDA_SIZE(awk->parse.globals); i++) 
-	{
-		if (ASE_LDA_NODE(awk->parse.globals,i))
-		{
-			ase_cstr_t tmp;
-
-			tmp.ptr = ASE_LDA_DPTR(awk->parse.globals,i);
-			tmp.len = ASE_LDA_DLEN(awk->parse.globals,i);
-
-			if (i < awk->tree.nbglobals)
-			{
-				ase_map_pair_t* pair;
-
-				pair = ase_map_search (awk->wtab, tmp.ptr, tmp.len);
-				if (pair != ASE_NULL)
-				{
-					tmp.ptr = ((ase_cstr_t*)(pair->vptr))->ptr;
-					tmp.len = ((ase_cstr_t*)(pair->vptr))->len;
-				}
-			}
-
-			if (ase_strxncmp(tmp.ptr, tmp.len, name, len) == 0) return i;
-		}
-	}
-
-	return ASE_LDA_INVALID;
+	ase_lda_walk (awk->parse.globals, check_global, &cg);
+	return cg.index;
 }
 
 static int add_global (

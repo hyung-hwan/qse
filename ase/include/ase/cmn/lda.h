@@ -19,8 +19,16 @@
  ******
  */
 
-typedef struct ase_lda_t ase_lda_t;
+enum ase_lda_walk_t
+{
+	ASE_LDA_WALK_STOP     = 0,
+	ASE_LDA_WALK_FORWARD  = 1,
+	ASE_LDA_WALK_BACKWARD = 2
+};
+
+typedef struct ase_lda_t      ase_lda_t;
 typedef struct ase_lda_node_t ase_lda_node_t;
+typedef enum   ase_lda_walk_t ase_lda_walk_t;
 
 #define ASE_LDA_COPIER_SIMPLE  ase_lda_copysimple
 #define ASE_LDA_COPIER_INLINE  ase_lda_copyinline
@@ -143,6 +151,11 @@ typedef ase_size_t (*ase_lda_sizer_t) (
 );
 /******/
 
+typedef ase_lda_walk_t (*ase_lda_walker_t) (
+        ase_lda_t*      lda   /* a linear dynamic array */,
+	ase_size_t      index /* the index to the visited node */,
+        void*           arg   /* user-defined data */
+);
 
 /****s* ase.cmn.lda/ase_lda_t
  * NAME
@@ -336,6 +349,15 @@ void ase_lda_setfreeer (
 );
 /******/
 
+ase_lda_keeper_t ase_lda_getkeeper (
+        ase_lda_t* lda
+);
+
+void ase_lda_setkeeper (
+        ase_lda_t* lda,
+        ase_lda_keeper_t keeper 
+);
+
 ase_lda_sizer_t ase_lda_getsizer (
         ase_lda_t* lda
 );
@@ -434,6 +456,19 @@ ase_size_t ase_lda_uplete (
 void ase_lda_clear (
 	ase_lda_t* lda
 );
+
+void ase_lda_walk (
+	ase_lda_t*       lda,
+	ase_lda_walker_t walker,
+	void*            arg
+);
+
+void ase_lda_rwalk (
+	ase_lda_t*       lda,
+	ase_lda_walker_t walker,
+	void*            arg
+);
+
 
 void* ase_lda_copysimple (
 	ase_lda_t* lda   /* a linear dynamic array */,

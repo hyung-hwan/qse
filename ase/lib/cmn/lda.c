@@ -13,6 +13,7 @@
 #define freeer_t ase_lda_freeer_t
 #define comper_t ase_lda_comper_t
 #define sizer_t  ase_lda_sizer_t
+#define keeper_t ase_lda_keeper_t
 #define walker_t ase_lda_walker_t
 
 #define mmgr_t   ase_mmgr_t
@@ -195,6 +196,16 @@ void ase_lda_setcomper (lda_t* lda, comper_t comper)
 	lda->comper = comper;
 }
 
+keeper_t ase_lda_getkeeper (lda_t* lda)
+{
+        return lda->keeper;
+}
+
+void ase_lda_setkeeper (lda_t* lda, keeper_t keeper)
+{
+        lda->keeper = keeper;
+}
+
 sizer_t ase_lda_getsizer (lda_t* lda)
 {
         return lda->sizer;
@@ -353,7 +364,7 @@ size_t ase_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 		}
 	}
 
-	if (pos >= lda->capa) 
+	if (pos >= lda->capa || lda->size >= lda->capa) 
 	{
 		/* the buffer is not still enough after resizing */
 		if (lda->freeer) 
@@ -395,7 +406,7 @@ size_t ase_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 		if (dptr == DPTR(c) && dlen == DLEN(c))
 		{
 			/* updated to the same data */
-			lda->keeper (lda, dptr, dlen);	
+			if (lda->keeper) lda->keeper (lda, dptr, dlen);	
 		}
 		else
 		{
@@ -490,6 +501,59 @@ void ase_lda_clear (lda_t* lda)
 	}
 
 	lda->size = 0;
+}
+
+void ase_lda_walk (lda_t* lda, walker_t walker, void* arg)
+{
+	ase_lda_walk_t w = ASE_LDA_WALK_FORWARD;
+	size_t i = 0;
+
+	while (1)	
+	{
+		if (lda->node[i] != ASE_NULL) 
+                	w = walker (lda, i, arg);
+
+		if (w == ASE_LDA_WALK_STOP) return;
+
+		if (w == ASE_LDA_WALK_FORWARD) 
+		{
+			i++;
+			if (i >= lda->size) return;
+		}
+		if (w == ASE_LDA_WALK_BACKWARD) 
+		{
+			if (i <= 0) return;
+			i--;
+		}
+	}
+}
+
+void ase_lda_rwalk (lda_t* lda, walker_t walker, void* arg)
+{
+	ase_lda_walk_t w = ASE_LDA_WALK_BACKWARD;
+	size_t i;
+
+	if (lda->size <= 0) return;
+	i = lda->size - 1;
+
+	while (1)	
+	{
+		if (lda->node[i] != ASE_NULL) 
+                	w = walker (lda, i, arg);
+
+		if (w == ASE_LDA_WALK_STOP) return;
+
+		if (w == ASE_LDA_WALK_FORWARD) 
+		{
+			i++;
+			if (i >= lda->size) return;
+		}
+		if (w == ASE_LDA_WALK_BACKWARD) 
+		{
+			if (i <= 0) return;
+			i--;
+		}
+	}
 }
 
 void* ase_lda_copysimple (lda_t* lda, void* dptr, size_t dlen)
