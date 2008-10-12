@@ -26,9 +26,9 @@ enum ase_sll_walk_t
 };
 /******/
 
-typedef struct ase_sll_t ase_sll_t;
+typedef struct ase_sll_t      ase_sll_t;
 typedef struct ase_sll_node_t ase_sll_node_t;
-typedef enum ase_sll_walk_t ase_sll_walk_t;
+typedef enum   ase_sll_walk_t ase_sll_walk_t;
 
 /****b* ase.cmn.sll/ase_sll_copier_t
  * NAME
