@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 404 2008-09-30 11:14:20Z baconevi $
+ * $Id: awk.h 417 2008-10-12 15:08:26Z baconevi $
  *
  * {License}
  */
@@ -639,6 +639,11 @@ ase_mmgr_t* ase_awk_getmmgr (
 );
 /******/
 
+void ase_awk_setmmgr (
+	ase_awk_t* awk,
+	ase_mmgr_t* mmgr
+);
+
 /****f* ase.awk/ase_awk_getextension
  * NAME
  *  ase_awk_getextension - get the extension
@@ -766,34 +771,55 @@ int ase_awk_setword (
  */
 int ase_awk_setrexfns (ase_awk_t* awk, ase_awk_rexfns_t* rexfns);
 
-/**
- * NAME: add an intrinsic global variable.
+/****f* ase.awk/ase_awk_addglobal
+ * NAME
+ *  ase_awk_addglobal - add an intrinsic global variable.
  *
- * RETURNS:
+ * RETURN
  *  On success, the ID of the global variable added is returned.
  *  On failure, -1 is returned.
- */
-int ase_awk_addglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
-
-/**
- * Deletes a instrinsic global variable. 
  *
- * @return 
- * 	On success, 0 is returned.
- * 	On failure, -1 is returned.
+ * SYNOPSIS
  */
-int ase_awk_delglobal (ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
+int ase_awk_addglobal (
+	ase_awk_t*        awk,
+	const ase_char_t* name,
+	ase_size_t        len
+);
+/******/
 
-/**
- * Parses the source code
+/****f* ase.awk/ase_awk_delglobal
+ * NAME
+ *  ase_awk_delglobal - delete an instrinsic global variable. 
  *
- * @return 
- * 	On success, 0 is returned.
- * 	On failure, -1 is returned.
+ * SYNOPSIS
  */
-int ase_awk_parse (ase_awk_t* awk, ase_awk_srcios_t* srcios);
+int ase_awk_delglobal (
+	ase_awk_t*        awk,
+	const ase_char_t* name,
+	ase_size_t        len
+);
+/******/
 
-int ase_awk_parsefiles (ase_awk_t* awk, const ase_char_t* files[], ase_size_t count);
+/****f* ase.awk/ase_awk_parse
+ * NAME
+ *  ase_awk_parse - parse source code
+ *
+ * SYNOPSIS
+ */
+int ase_awk_parse (
+	ase_awk_t*        awk,
+	ase_awk_srcios_t* srcios
+);
+/******/
+
+
+int ase_awk_parsefiles (
+	ase_awk_t*        awk,
+	const ase_char_t* isf[]  /* input source file names */,
+	ase_size_t        isfl   /* the number of input source files */,
+	const ase_char_t* osf    /* an output source file name */
+);
 
 
 /**
