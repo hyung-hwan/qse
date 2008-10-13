@@ -74,6 +74,12 @@ struct sf_t
 		ase_size_t         index;   /* current file index */
 		ASE_FILE*          handle;  /* the handle to an open file */ 
 	} in;
+
+	struct
+	{
+		const ase_char_t* file;
+		ASE_FILE* handle;
+	} out;
 };
 
 static ase_ssize_t sf_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
@@ -177,16 +183,18 @@ static ase_ssize_t sf_out (
 }
 #endif
 
-int ase_awk_parsefiles (ase_awk_t* awk, const ase_char_t* files[], ase_size_t count)
+int ase_awk_parsefiles (ase_awk_t* awk, const ase_char_t** isf, ase_size_t isfl, const ase_char_t* osf)
 {
 	sf_t sf;
 	ase_awk_srcios_t sio;
 
-	sf.in.files = files;
-	sf.in.count = count;
+	sf.in.files = isf;
+	sf.in.count = isfl;
 	sf.in.index = 0;
 	sf.in.handle = ASE_NULL;
 
+	sf.out.file = osf;
+	
         sio.in = sf_in;
         //sio.out = deparse? sf_out: NULL;
         sio.out = ASE_NULL;
