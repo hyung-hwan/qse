@@ -22,7 +22,7 @@ static ase_bool_t is_graph (ase_cint_t c) { return isgraph(c); }
 static ase_bool_t is_cntrl (ase_cint_t c) { return iscntrl(c); }
 static ase_bool_t is_punct (ase_cint_t c) { return ispunct(c); }
 
-ase_bool_t ase_ccls_is (ase_cint_t c, int type)
+ase_bool_t ase_ccls_is (ase_cint_t c, ase_ccls_type_t type)
 { 
 	/* TODO: use GetStringTypeW/A for WIN32 to implement these */
 
@@ -46,7 +46,7 @@ ase_bool_t ase_ccls_is (ase_cint_t c, int type)
 	return f[type] (c);
 }
 
-ase_cint_t ase_ccls_to (ase_cint_t c, int type)  
+ase_cint_t ase_ccls_to (ase_cint_t c, ase_ccls_type_t type)  
 { 
 	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_LOWER,
 		"The character type should be one of ASE_CCLS_UPPER and ASE_CCLS_LOWER");
@@ -60,7 +60,7 @@ ase_cint_t ase_ccls_to (ase_cint_t c, int type)
 
 #include <wctype.h>
 
-ase_bool_t ase_ccls_is (ase_cint_t c, int type)
+ase_bool_t ase_ccls_is (ase_cint_t c, ase_ccls_type_t type)
 { 
 	static const char* name[] = 
 	{
@@ -99,7 +99,7 @@ ase_bool_t ase_ccls_is (ase_cint_t c, int type)
 	return iswctype (c, desc[type]);
 }
 
-ase_cint_t ase_ccls_to (ase_cint_t c, int type)  
+ase_cint_t ase_ccls_to (ase_cint_t c, ase_ccls_type_t type)  
 { 
 	static const char* name[] = 
 	{
@@ -124,12 +124,12 @@ ase_cint_t ase_ccls_to (ase_cint_t c, int type)
 	#error unsupported character type
 #endif
 
-static ase_bool_t ccls_is (void* data, ase_cint_t c, int type)
+static ase_bool_t ccls_is (void* data, ase_cint_t c, ase_ccls_type_t type)
 {
 	return ase_ccls_is (c, type);
 }
 
-static ase_cint_t ccls_to (void* data, ase_cint_t c, int type)  
+static ase_cint_t ccls_to (void* data, ase_cint_t c, ase_ccls_type_t type)  
 {
 	return ase_ccls_to (c, type);
 }
@@ -143,14 +143,25 @@ static ase_ccls_t ccls =
 
 ase_ccls_t* ase_ccls = &ccls;
 
-
-#if 0
-int ase_wctomb (ase_wchar_t wc, ase_mchar_t* mb, int mblen)
+ase_size_t ase_wctomb (ase_wchar_t wc, ase_mchar_t* mb, ase_size_t mblen)
 {
-	if (mblen < MB_CUR_MAX) return -1;
-	return wctomb (mb, wc);
+#ifdef HAVE_WCRTOMB
+	mbstate_t mbs;
+
+	if (mblen < MB_CUR_MAX) 
+	{
+		/* buffer too small */
+		return -1;
+	}
+
+	/* TODO: it may end with EILSEQ */
+	return wcrtomb (mb, wc, &mbs);
+#else
+	#error Not Supported
+#endif
 }
 
+#if 0
 ase_wchar_t ase_mbtowc (ase_mchar_t* mb, int mblen)
 {
 }

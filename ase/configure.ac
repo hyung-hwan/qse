@@ -76,11 +76,18 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h])
 
+dnl Checks data types
 AC_CHECK_TYPE([wchar_t], 
 	[AC_DEFINE([HAVE_WCHAR_T_IN_STDDEF_H],
 	           [],[wchar_t is available in stddef.h])],
 	[],
 	[#include <stddef.h>])
+
+AC_CHECK_TYPES(mbstate_t,,,[#include <wchar.h>])
+
+dnl check functions
+AC_CHECK_FUNCS(wcrtomb mbrtowc)
+
 
 dnl Checks the size of primitive data types
 AC_CHECK_SIZEOF(char)
