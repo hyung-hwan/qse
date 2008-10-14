@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 417 2008-10-12 15:08:26Z baconevi $
+ * $Id: awk.c 419 2008-10-13 11:32:58Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -903,6 +903,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 		{ ASE_T(":main"),            ASE_T('m') },
 		{ ASE_T(":file"),            ASE_T('f') },
 		{ ASE_T(":field-separator"), ASE_T('F') },
+		{ ASE_T(":deparse-file"),    ASE_T('d') },
 		{ ASE_T(":assign"),          ASE_T('v') },
 
 		{ ASE_T("help"),             ASE_T('h') }
@@ -910,7 +911,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 
 	static ase_opt_t opt = 
 	{
-		ASE_T("hm:f:F:v:"),
+		ASE_T("hm:f:F:d:v:"),
 		lng
 	};
 
@@ -918,6 +919,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 	ase_size_t isfc = 16;
 	ase_size_t isfl = 0;
 	ase_char_t** isf = ASE_NULL;
+	ase_char_t* osf = ASE_NULL;
 	ase_map_t* vm = ASE_NULL;
 
 	isf = (ase_char_t**)malloc (ASE_SIZEOF(*isf) * isfc);
@@ -975,6 +977,12 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 			case ASE_T('F'):
 			{
 				ase_printf  (ASE_T("[field separator] = %s\n"), opt.arg);
+				break;
+			}
+
+			case ASE_T('d'):
+			{
+				osf = opt.arg;
 				break;
 			}
 
@@ -1052,6 +1060,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 
 	/* TODO; remaining args are input(console) file names */
 
+	ao->osf = osf;
 	ao->vm = vm;
 
 	return 0;

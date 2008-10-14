@@ -58,7 +58,8 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libasecmn_la_LIBADD =
 am_libasecmn_la_OBJECTS = mem.lo chr.lo rex.lo str_bas.lo str_cnv.lo \
-	str_dyn.lo lda.lo map.lo sll.lo dll.lo opt.lo misc.lo
+	str_dyn.lo lda.lo map.lo sll.lo dll.lo opt.lo tio.lo \
+	tio_get.lo tio_put.lo misc.lo
 libasecmn_la_OBJECTS = $(am_libasecmn_la_OBJECTS)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -198,6 +199,7 @@ lib_LTLIBRARIES = libasecmn.la
 libasecmn_la_SOURCES = mem.h chr.h \
 	mem.c chr.c rex.c str_bas.c str_cnv.c str_dyn.c \
 	lda.c map.c sll.c dll.c opt.c \
+	tio.c tio_get.c tio_put.c \
 	misc.c
 
 libasecmn_la_LDFLAGS = -version-info 1:0:0
@@ -282,6 +284,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_bas.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dyn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio_get.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio_put.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

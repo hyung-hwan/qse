@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.h 223 2008-06-26 06:44:41Z baconevi $
+ * $Id: stdio.h 419 2008-10-13 11:32:58Z baconevi $
  * 
  * {License}
  */
@@ -44,10 +44,10 @@
 #define ase_fflush(s)   fflush(s)
 #define ase_fclose(s)   fclose(s)
 
-#define ASE_FILE FILE
-#define ASE_STDIN stdin
-#define ASE_STDOUT stdout
-#define ASE_STDERR stderr
+#define ASE_FILE        FILE
+#define ASE_STDIN       stdin
+#define ASE_STDOUT      stdout
+#define ASE_STDERR      stderr
 
 typedef int (*ase_getdelim_t) (const ase_char_t* ptr,ase_size_t len, void* arg);
 

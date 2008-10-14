@@ -96,7 +96,13 @@ lda_t* ase_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
         lda = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(lda_t) + ext);
         if (lda == ASE_NULL) return ASE_NULL;
 
-        return ase_lda_init (lda, mmgr, capa);
+        if (ase_lda_init (lda, mmgr, capa) == ASE_NULL)
+	{
+		ASE_MMGR_FREE (mmgr, lda);
+		return ASE_NULL;
+	}
+
+	return lda;
 }
 
 void ase_lda_close (lda_t* lda)

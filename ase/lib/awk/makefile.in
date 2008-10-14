@@ -63,8 +63,8 @@ am__libaseawk___la_SOURCES_DIST = Awk.cpp StdAwk.cpp
 libaseawk___la_OBJECTS = $(am_libaseawk___la_OBJECTS)
 @ENABLE_CXX_TRUE@am_libaseawk___la_rpath = -rpath $(libdir)
 libaseawk_la_DEPENDENCIES =
-am_libaseawk_la_OBJECTS = awk.lo err.lo tree.lo parse.lo run.lo \
-	rec.lo val.lo func.lo misc.lo extio.lo std.lo
+am_libaseawk_la_OBJECTS = awk.lo err.lo tree.lo parse.lo run.lo rec.lo \
+	val.lo func.lo misc.lo extio.lo std.lo
 libaseawk_la_OBJECTS = $(am_libaseawk_la_OBJECTS)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
