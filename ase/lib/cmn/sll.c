@@ -91,7 +91,13 @@ sll_t* ase_sll_open (mmgr_t* mmgr, size_t ext)
 	sll = ASE_MMGR_ALLOC (mmgr, SIZEOF(sll_t) + ext);
 	if (sll == ASE_NULL) return ASE_NULL;
 
-	return ase_sll_init (sll, mmgr);
+	if (ase_sll_init (sll, mmgr) == ASE_NULL)
+	{
+		ASE_MMGR_FREE (mmgr, sll);
+		return ASE_NULL;
+	}
+
+	return sll;
 }
 
 void ase_sll_close (sll_t* sll)

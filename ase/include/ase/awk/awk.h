@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 417 2008-10-12 15:08:26Z baconevi $
+ * $Id: awk.h 419 2008-10-13 11:32:58Z baconevi $
  *
  * {License}
  */
@@ -815,12 +815,11 @@ int ase_awk_parse (
 
 
 int ase_awk_parsefiles (
-	ase_awk_t*        awk,
-	const ase_char_t* isf[]  /* input source file names */,
-	ase_size_t        isfl   /* the number of input source files */,
-	const ase_char_t* osf    /* an output source file name */
+	ase_awk_t*              awk,
+	const ase_char_t*const* isf  /* input source file names */,
+	ase_size_t              isfl /* the number of input source files */,
+	const ase_char_t*       osf  /* an output source file name */
 );
-
 
 /**
  * Executes a parsed program.

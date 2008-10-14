@@ -176,7 +176,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-pkginclude_HEADERS = mem.h chr.h str.h lda.h map.h rex.h sll.h dll.h opt.h
+pkginclude_HEADERS = mem.h chr.h str.h lda.h map.h rex.h sll.h dll.h opt.h tio.h
 CLEANFILES = *dist
 all: all-am
 

@@ -142,3 +142,16 @@ static ase_ccls_t ccls =
 };
 
 ase_ccls_t* ase_ccls = &ccls;
+
+
+#if 0
+int ase_wctomb (ase_wchar_t wc, ase_mchar_t* mb, int mblen)
+{
+	if (mblen < MB_CUR_MAX) return -1;
+	return wctomb (mb, wc);
+}
+
+ase_wchar_t ase_mbtowc (ase_mchar_t* mb, int mblen)
+{
+}
+#endif
