@@ -37,8 +37,27 @@ extern "C" {
 
 extern ase_ccls_t* ase_ccls;
 
-ase_bool_t ase_ccls_is (ase_cint_t c, int type);
-ase_cint_t ase_ccls_to (ase_cint_t c, int type);
+ase_bool_t ase_ccls_is (
+	ase_cint_t      c,
+	ase_ccls_type_t type
+);
+
+ase_cint_t ase_ccls_to (
+	ase_cint_t      c,
+	ase_ccls_type_t type
+);
+
+ase_size_t ase_wctomb (
+	ase_wchar_t  wc,
+	ase_mchar_t* mb,
+	ase_size_t   mblen
+);
+
+ase_size_t ase_mbtowc (
+	const ase_mchar_t* mb,
+	ase_size_t         mblen,
+	ase_wchar_t*       wc
+);
 
 #ifdef __cplusplus
 }

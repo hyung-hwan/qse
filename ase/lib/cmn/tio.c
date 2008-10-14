@@ -81,7 +81,7 @@ const ase_char_t* ase_tio_geterrstr (ase_tio_t* tio)
 		ASE_T("no error"),
 		ASE_T("out of memory"),
 		ASE_T("no more space"),
-		ASE_T("illegal utf-8 sequence"),
+		ASE_T("illegal sequence"),
 		ASE_T("no input function attached"),
 		ASE_T("input function returned an error"),
 		ASE_T("input function failed to open"),
