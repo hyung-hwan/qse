@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 341 2008-08-20 10:58:19Z baconevi $
+ * $Id: StdAwk.cpp 424 2008-10-14 10:08:31Z baconevi $
  *
  * {License}
  */
@@ -437,12 +437,12 @@ void  StdAwk::freeMem (void* ptr)
 // character handling primitive
 Awk::bool_t StdAwk::isType (cint_t c, ccls_type_t type)
 {
-	return ase_ccls_is (c, type);
+	return ase_ccls_is (c, (ase_ccls_type_t)type);
 }
 
 Awk::cint_t StdAwk::transCase (cint_t c, ccls_type_t type)
 {
-	return ase_ccls_to (c, type);
+	return ase_ccls_to (c, (ase_ccls_type_t)type);
 }
 
 // miscellaneous primitive

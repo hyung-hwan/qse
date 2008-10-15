@@ -81,7 +81,8 @@ const ase_char_t* ase_tio_geterrstr (ase_tio_t* tio)
 		ASE_T("no error"),
 		ASE_T("out of memory"),
 		ASE_T("no more space"),
-		ASE_T("illegal sequence"),
+		ASE_T("illegal multibyte sequence"),
+		ASE_T("illegal wide character"),
 		ASE_T("no input function attached"),
 		ASE_T("input function returned an error"),
 		ASE_T("input function failed to open"),
@@ -94,8 +95,8 @@ const ase_char_t* ase_tio_geterrstr (ase_tio_t* tio)
 	};
 
 	return __errstr[
-		(tio->errnum < 0 || tio->errnum >= ase_countof(__errstr))? 
-		ase_countof(__errstr) - 1: tio->errnum];
+		(tio->errnum < 0 || tio->errnum >= ASE_COUNTOF(__errstr))? 
+		ASE_COUNTOF(__errstr) - 1: tio->errnum];
 }
 
 int ase_tio_attin (ase_tio_t* tio, ase_tio_io_t input, void* arg)
@@ -203,7 +204,7 @@ ase_ssize_t ase_tio_flush (ase_tio_t* tio)
 		if (n == 0) break;
 	
 		left -= n;
-		ase_memcpy (tio->outbuf, &tio->inbuf[n], left);
+		ASE_MEMCPY (tio->outbuf, &tio->inbuf[n], left);
 	}
 
 	count = tio->outbuf_len - left;

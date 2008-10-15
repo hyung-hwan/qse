@@ -83,11 +83,9 @@ AC_CHECK_TYPE([wchar_t],
 	[],
 	[#include <stddef.h>])
 
-AC_CHECK_TYPES(mbstate_t,,,[#include <wchar.h>])
-
 dnl check functions
-AC_CHECK_FUNCS(wcrtomb mbrtowc)
-
+AC_CHECK_FUNCS([uselocale])
+AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 
 dnl Checks the size of primitive data types
 AC_CHECK_SIZEOF(char)

@@ -26,10 +26,15 @@ ase_ssize_t ase_tio_putc (ase_tio_t* tio, ase_char_t c)
 		return ase_tio_flush (tio);
 #else
 
-	n = ase_wctomc (c, mc, ASE_COUNTOF(mc));
+	n = ase_wctomb (c, mc, ASE_COUNTOF(mc));
 	if (n == 0) 
 	{
-		tio->errnum = ASE_TIO_EILSEQ;
+		tio->errnum = ASE_TIO_EILCHR;
+		return -1;
+	}
+	else if (n > ASE_COUNTOF(mc))
+	{
+		tio->errnum = ASE_TIO_ENOSPC;
 		return -1;
 	}
 
@@ -43,7 +48,7 @@ ase_ssize_t ase_tio_putc (ase_tio_t* tio, ase_char_t c)
 	}		
 #endif
 
-	if (c == ASE_CHAR('\n') && tio->outbuf_len > 0) 
+	if (c == ASE_T('\n') && tio->outbuf_len > 0) 
 	{
 		if (ase_tio_flush(tio) == -1) return -1;
 	}
@@ -56,7 +61,7 @@ ase_ssize_t ase_tio_puts (ase_tio_t* tio, const ase_char_t* str)
 	ase_ssize_t n;
 	const ase_char_t* p;
 
-	for (p = str; *p != ASE_CHAR('\0'); p++) 
+	for (p = str; *p != ASE_T('\0'); p++) 
 	{
 		n = ase_tio_putc (tio, *p);
 		if (n == -1) return -1;
@@ -118,7 +123,7 @@ ase_ssize_t ase_tio_putsv (ase_tio_t* tio, ase_va_list ap)
 
 	while ((p = ase_va_arg (ap, const ase_char_t*)) != ASE_NULL) 
 	{
-		if (p[0] == ASE_CHAR('\0')) continue;
+		if (p[0] == ASE_T('\0')) continue;
 
 		n = ase_tio_puts (tio, p);
 		if (n == -1) return -1;

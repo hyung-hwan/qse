@@ -14,7 +14,8 @@ enum
 	ASE_TIO_ENOERR = 0,
 	ASE_TIO_ENOMEM, /* out of memory */
 	ASE_TIO_ENOSPC, /* no more space */
-	ASE_TIO_EILSEQ, /* illegal utf-8 sequence */
+	ASE_TIO_EILSEQ, /* illegal sequence */
+	ASE_TIO_EILCHR, /* illegal character */
 	ASE_TIO_ENOINF, /* no input function attached */
 	ASE_TIO_EINPUT, /* input function returned an error */
 	ASE_TIO_EINPOP, /* input function failed to open */
