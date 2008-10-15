@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 403 2008-09-29 11:07:47Z baconevi $
+ * $Id: types.h 424 2008-10-14 10:08:31Z baconevi $
  *
  * {License}
  */
@@ -270,9 +270,14 @@ typedef int  ase_mcint_t;
 	#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
-	#elif (defined(sun) || defined(__sun)) && defined(_LP64)
-		typedef int ase_wchar_t;
-		typedef int ase_wcint_t;
+	#elif (defined(sun) || defined(__sun) || defined(__linux))
+		#if defined(_LP64)
+			typedef int ase_wchar_t;
+			typedef int ase_wcint_t;
+		#else
+			typedef long ase_wchar_t;
+			typedef long ase_wcint_t;
+		#endif
 	#elif defined(__APPLE__) && defined(__MACH__)
 		typedef int ase_wchar_t;
 		typedef int ase_wcint_t;
@@ -283,12 +288,6 @@ typedef int  ase_mcint_t;
 		typedef int ase_wchar_t;
 		#endif
 		typedef int ase_wcint_t;
-	#elif defined(__linux) && (ASE_SIZEOF_INT == 4)
-		typedef int ase_wchar_t;
-		typedef int ase_wcint_t;
-	#elif defined(__linux) && (ASE_SIZEOF_LONG == 4)
-		typedef long ase_wchar_t;
-		typedef long ase_wcint_t;
 	#elif ASE_SIZEOF_LONG == 4
 		typedef long ase_wchar_t;
 		typedef long ase_wcint_t;

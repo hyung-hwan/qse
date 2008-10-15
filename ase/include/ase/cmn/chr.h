@@ -47,16 +47,23 @@ ase_cint_t ase_ccls_to (
 	ase_ccls_type_t type
 );
 
-ase_size_t ase_wctomb (
-	ase_wchar_t  wc,
-	ase_mchar_t* mb,
-	ase_size_t   mblen
+
+
+ase_size_t ase_mblen (
+	const ase_mchar_t* mb,
+	ase_size_t mblen
 );
 
 ase_size_t ase_mbtowc (
 	const ase_mchar_t* mb,
 	ase_size_t         mblen,
 	ase_wchar_t*       wc
+);
+
+ase_size_t ase_wctomb (
+	ase_wchar_t        wc,
+	ase_mchar_t*       mb,
+	ase_size_t         mblen
 );
 
 #ifdef __cplusplus

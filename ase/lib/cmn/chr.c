@@ -143,26 +143,3 @@ static ase_ccls_t ccls =
 
 ase_ccls_t* ase_ccls = &ccls;
 
-ase_size_t ase_wctomb (ase_wchar_t wc, ase_mchar_t* mb, ase_size_t mblen)
-{
-#ifdef HAVE_WCRTOMB
-	mbstate_t mbs;
-
-	if (mblen < MB_CUR_MAX) 
-	{
-		/* buffer too small */
-		return -1;
-	}
-
-	/* TODO: it may end with EILSEQ */
-	return wcrtomb (mb, wc, &mbs);
-#else
-	#error Not Supported
-#endif
-}
-
-#if 0
-ase_wchar_t ase_mbtowc (ase_mchar_t* mb, int mblen)
-{
-}
-#endif

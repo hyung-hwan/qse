@@ -16,7 +16,7 @@ ase_ssize_t ase_tio_getc (ase_tio_t* tio, ase_char_t* c)
 	ase_size_t seqlen;
 #endif
 
-	/* TODO: more efficient to check this...
+	/* TODO: more efficient way to check this?
 	 *       maybe better to use ASE_ASSERT 
 	 * ASE_ASSERT (tio->input_func != ASE_NULL);
 	 */
@@ -35,10 +35,10 @@ ase_ssize_t ase_tio_getc (ase_tio_t* tio, ase_char_t* c)
 
 	if (tio->inbuf_curp >= tio->inbuf_len) 
 	{
-getc_conv:
+	getc_conv:
 		n = tio->input_func (
 			ASE_TIO_IO_DATA, tio->input_arg,
-			&tio->inbuf[left], ASE_COUINTOF(tio->inbuf) - left);
+			&tio->inbuf[left], ASE_COUNTOF(tio->inbuf) - left);
 		if (n == 0) return 0;
 		if (n <= -1) 
 		{
@@ -53,26 +53,49 @@ getc_conv:
 #ifdef ASE_CHAR_IS_MCHAR
 	curc = tio->inbuf[tio->inbuf_curp++];
 #else
-	seqlen = ase_mcseqlen (tio->inbuf[tio->inbuf_curp]);
-	if (seqlen == 0) {
+	left = tio->inbuf_len - tio->inbuf_curp;
+	seqlen = ase_mblen (tio->inbuf[tio->inbuf_curp], left);
+	if (seqlen == 0) 
+	{
+		/* illegal sequence */
 		tio->inbuf_curp++;  /* skip one byte */
 		tio->errnum = ASE_TIO_EILSEQ;
 		return -1;
 	}
 
-	left = tio->inbuf_len - tio->inbuf_curp;
-	if (left < seqlen) {
-		ase_memcpy (tio->inbuf, &tio->inbuf[tio->inbuf_curp], left);
-		tio->inbuf_curp = 0;
-		tio->inbuf_len = left;
+	if (seqlen > left) 
+	{
+		/* incomplete sequence */
+		if (tio->inbuf_curp > 0)
+		{
+			ASE_MEMCPY (tio->inbuf, &tio->inbuf[tio->inbuf_curp], left);
+			tio->inbuf_curp = 0;
+			tio->inbuf_len = left;
+		}
 		goto getc_conv;
 	}
 	
-	n = ase_mctowc (&tio->inbuf[tio->inbuf_curp], seqlen, &curc);
-	if (n == 0) {
+	n = ase_mbtowc (&tio->inbuf[tio->inbuf_curp], seqlen, &curc);
+	if (n == 0) 
+	{
+		/* illegal sequence */
 		tio->inbuf_curp++; /* skip one byte */
 		tio->errnum = ASE_TIO_EILSEQ;
 		return -1;
+	}
+	if (n > seqlen)
+	{
+		/* incomplete sequence - 
+		 *  this check might not be needed because ase_mblen has
+		 *  checked it. would ASE_ASSERT (n <= seqlen) be enough? */
+
+		if (tio->inbuf_curp > 0)
+		{
+			ASE_MEMCPY (tio->inbuf, &tio->inbuf[tio->inbuf_curp], left);
+			tio->inbuf_curp = 0;
+			tio->inbuf_len = left;
+		}
+		goto getc_conv;
 	}
 
 	tio->inbuf_curp += n;
@@ -89,7 +112,7 @@ ase_ssize_t ase_tio_gets (ase_tio_t* tio, ase_char_t* buf, ase_size_t size)
 	if (size <= 0) return 0;
 	n = ase_tio_getsx (tio, buf, size - 1);
 	if (n == -1) return -1;
-	buf[n] = ASE_CHAR('\0');
+	buf[n] = ASE_T('\0');
 	return n;
 }
 
@@ -116,7 +139,7 @@ ase_ssize_t ase_tio_getsx (ase_tio_t* tio, ase_char_t* buf, ase_size_t size)
 		if (n == 0) break;
 		*p++ = c;
 
-		if (c == ASE_CHAR('\n')) break;
+		if (c == ASE_T('\n')) break;
 	}
 
 	return p - buf;
@@ -149,7 +172,7 @@ ase_ssize_t ase_tio_getstr (ase_tio_t* tio, ase_str_t* buf)
 			return -1;
 		}
 
-		if (c == ASE_CHAR('\n')) break;
+		if (c == ASE_T('\n')) break;
 	}
 
 	return ASE_STR_LEN(buf);
