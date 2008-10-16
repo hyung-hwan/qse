@@ -54,6 +54,8 @@ ase_ssize_t ase_tio_getc (ase_tio_t* tio, ase_char_t* c)
 	curc = tio->inbuf[tio->inbuf_curp++];
 #else
 	left = tio->inbuf_len - tio->inbuf_curp;
+
+#if 0
 	seqlen = ase_mblen (tio->inbuf[tio->inbuf_curp], left);
 	if (seqlen == 0) 
 	{
@@ -89,6 +91,26 @@ ase_ssize_t ase_tio_getc (ase_tio_t* tio, ase_char_t* c)
 		 *  this check might not be needed because ase_mblen has
 		 *  checked it. would ASE_ASSERT (n <= seqlen) be enough? */
 
+		if (tio->inbuf_curp > 0)
+		{
+			ASE_MEMCPY (tio->inbuf, &tio->inbuf[tio->inbuf_curp], left);
+			tio->inbuf_curp = 0;
+			tio->inbuf_len = left;
+		}
+		goto getc_conv;
+	}
+#endif
+	n = ase_mbtowc (&tio->inbuf[tio->inbuf_curp], left, &curc);
+	if (n == 0) 
+	{
+		/* illegal sequence */
+		tio->inbuf_curp++; /* skip one byte */
+		tio->errnum = ASE_TIO_EILSEQ;
+		return -1;
+	}
+	if (n > left)
+	{
+		/* incomplete sequence */
 		if (tio->inbuf_curp > 0)
 		{
 			ASE_MEMCPY (tio->inbuf, &tio->inbuf[tio->inbuf_curp], left);
