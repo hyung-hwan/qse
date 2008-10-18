@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 389 2008-09-26 08:01:24Z baconevi $
+ * $Id: str.h 430 2008-10-17 11:43:20Z baconevi $
  *
  * {License}
  */
@@ -229,10 +229,6 @@ ase_long_t ase_strxtolong (const ase_char_t* str, ase_size_t len);
 ase_uint_t ase_strxtouint (const ase_char_t* str, ase_size_t len);
 ase_ulong_t ase_strxtoulong (const ase_char_t* str, ase_size_t len);
 
-/* 
- * dynamic string 
- */
-
 ase_str_t* ase_str_open (
 	ase_mmgr_t* mmgr,
 	ase_size_t ext,
@@ -346,16 +342,94 @@ ase_size_t ase_str_setcapa (
 	ase_size_t capa /* a new capacity */
 );
 
-void ase_str_clear (ase_str_t* str);
-void ase_str_swap (ase_str_t* str, ase_str_t* str2);
+void ase_str_clear (
+	ase_str_t* str
+);
 
-ase_size_t ase_str_cpy (ase_str_t* str, const ase_char_t* s);
-ase_size_t ase_str_ncpy (ase_str_t* str, const ase_char_t* s, ase_size_t len);
+void ase_str_swap (
+	ase_str_t* str,
+	ase_str_t* str2
+);
 
-ase_size_t ase_str_cat (ase_str_t* str, const ase_char_t* s);
-ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len);
-ase_size_t ase_str_ccat (ase_str_t* str, ase_char_t c);
-ase_size_t ase_str_nccat (ase_str_t* str, ase_char_t c, ase_size_t len);
+ase_size_t ase_str_cpy (
+	ase_str_t*        str,
+	const ase_char_t* s
+);
+
+ase_size_t ase_str_ncpy (
+	ase_str_t*        str,
+	const ase_char_t* s,
+	ase_size_t        len
+);
+
+ase_size_t ase_str_cat (
+	ase_str_t*        str,
+	const ase_char_t* s
+);
+
+ase_size_t ase_str_ncat (
+	ase_str_t*        str,
+	const ase_char_t* s,
+	ase_size_t        len
+);
+
+ase_size_t ase_str_ccat (
+	ase_str_t* str,
+	ase_char_t c
+);
+
+ase_size_t ase_str_nccat (
+	ase_str_t* str,
+	ase_char_t c,
+	ase_size_t len
+);
+
+
+ase_size_t ase_mbstowcs (
+        const ase_mchar_t* mbs,
+        ase_wchar_t*       wcs,
+	ase_size_t*        wcslen
+);
+
+/****f* ase.cmn.str/ase_mbsntowcsn
+ * NAME
+ *  ase_mbsntowcsn - conver a multibyte string to a wide character string
+ * 
+ * RETURN
+ *  The ase_mbstowcs() function returns the number of bytes handled.
+ *
+ * SYNOPSIS
+ */
+ase_size_t ase_mbsntowcsn (
+        const ase_mchar_t* mbs,
+	ase_size_t         mbslen,
+        ase_wchar_t*       wcs,
+	ase_size_t*        wcslen
+);
+/******/
+
+ase_size_t ase_wcstombs (
+        const ase_wchar_t* wcs,
+        ase_mchar_t*       mbs,
+	ase_size_t*        mbslen
+);
+
+/****f* ase.cmn.str/ase_wcsntombsn
+ * NAME
+ *  ase_wcstombs - convert a wide character string to a multibyte string
+ *
+ * RETURN
+ *  The ase_wcstombs() function returns the number of wide characters handled.
+ *
+ * SYNOPSIS
+ */
+ase_size_t ase_wcsntombsn (
+        const ase_wchar_t* wcs,
+	ase_size_t         wcslen,
+        ase_mchar_t*       mbs,
+	ase_size_t*        mbslen
+);
+/******/
 
 #ifdef __cplusplus
 }

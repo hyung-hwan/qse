@@ -54,17 +54,41 @@ ase_size_t ase_mblen (
 	ase_size_t mblen
 );
 
+/****f* ase.cmn.chr/ase_mbtowc
+ * NAME
+ *  ase_mbtowc - convert a multibyte sequence to a wide character.
+ * 
+ * RETURN
+ *  The ase_mbtowc() function returns 0 if an invalid multibyte sequence is
+ *  detected, mblen + 1 if the sequence is incomplete. It returns the number
+ *  of bytes processed to form a wide character.
+ *
+ * SYNOPSIS
+ */
 ase_size_t ase_mbtowc (
 	const ase_mchar_t* mb,
 	ase_size_t         mblen,
 	ase_wchar_t*       wc
 );
+/******/
 
+/****f* ase.cmn.chr/ase_wctomb
+ * NAME
+ *  ase_wctomb - convert a wide character to a multibyte sequence
+ *
+ * RETURN
+ *  The ase_wctomb() functions returns 0 if the wide character is illegal, 
+ *  mblen + 1 if mblen is not large enough to hold the multibyte sequence.
+ *  On successful conversion, it returns the number of bytes in the sequence.
+ * 
+ * SYNOPSIS
+ */
 ase_size_t ase_wctomb (
 	ase_wchar_t        wc,
 	ase_mchar_t*       mb,
 	ase_size_t         mblen
 );
+/******/
 
 #ifdef __cplusplus
 }

@@ -86,6 +86,7 @@ AC_CHECK_TYPE([wchar_t],
 dnl check functions
 AC_CHECK_FUNCS([uselocale])
 AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
+AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
 
 dnl Checks the size of primitive data types
 AC_CHECK_SIZEOF(char)

@@ -39,7 +39,17 @@ ase_ssize_t ase_tio_getc (ase_tio_t* tio, ase_char_t* c)
 		n = tio->input_func (
 			ASE_TIO_IO_DATA, tio->input_arg,
 			&tio->inbuf[left], ASE_COUNTOF(tio->inbuf) - left);
-		if (n == 0) return 0;
+		if (n == 0) 
+		{
+			if (tio->inbuf_curp < tio->inbuf_len)
+			{
+				/* gargage left in the buffer */
+				tio->errnum = ASE_TIO_EICSEQ;
+				return -1;
+			}
+
+			return 0;
+		}
 		if (n <= -1) 
 		{
 			tio->errnum = ASE_TIO_EINPUT;
@@ -100,6 +110,7 @@ ase_ssize_t ase_tio_getc (ase_tio_t* tio, ase_char_t* c)
 		goto getc_conv;
 	}
 #endif
+
 	n = ase_mbtowc (&tio->inbuf[tio->inbuf_curp], left, &curc);
 	if (n == 0) 
 	{
@@ -161,6 +172,7 @@ ase_ssize_t ase_tio_getsx (ase_tio_t* tio, ase_char_t* buf, ase_size_t size)
 		if (n == 0) break;
 		*p++ = c;
 
+		/* TODO: support a different line breaker */
 		if (c == ASE_T('\n')) break;
 	}
 
@@ -194,6 +206,7 @@ ase_ssize_t ase_tio_getstr (ase_tio_t* tio, ase_str_t* buf)
 			return -1;
 		}
 
+		/* TODO: support a different line breaker */
 		if (c == ASE_T('\n')) break;
 	}
 
