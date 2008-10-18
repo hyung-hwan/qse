@@ -87,6 +87,12 @@
 /* Define to 1 if you have the `mbrtowc' function. */
 #undef HAVE_MBRTOWC
 
+/* Define to 1 if you have the `mbsnrtowcs' function. */
+#undef HAVE_MBSNRTOWCS
+
+/* Define to 1 if you have the `mbsrtowcs' function. */
+#undef HAVE_MBSRTOWCS
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -125,6 +131,12 @@
 
 /* Define to 1 if you have the `wcrtomb' function. */
 #undef HAVE_WCRTOMB
+
+/* Define to 1 if you have the `wcsnrtombs' function. */
+#undef HAVE_WCSNRTOMBS
+
+/* Define to 1 if you have the `wcsrtombs' function. */
+#undef HAVE_WCSRTOMBS
 
 /* Define to 1 if you have the <wctype.h> header file. */
 #undef HAVE_WCTYPE_H

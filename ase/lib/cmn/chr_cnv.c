@@ -3,6 +3,7 @@
  */
 
 #include <ase/cmn/chr.h>
+#include "mem.h"
 
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>
@@ -56,12 +57,6 @@ ase_size_t ase_wctomb (ase_wchar_t wc, ase_mchar_t* mb, ase_size_t mblen)
 	size_t n;
 	mbstate_t mbs = { 0 };
 
-	if (mblen < MB_CUR_MAX) 
-	{
-		/* buffer too small */
-		return mblen + 1;
-	}
-
 /* man mbsinit
  * For 8-bit encodings, all states are equivalent to  the  initial  state.
  * For multibyte encodings like UTF-8, EUC-*, BIG5 or SJIS, the wide char‐
@@ -71,8 +66,22 @@ ase_size_t ase_wctomb (ase_wchar_t wc, ase_mchar_t* mb, ase_size_t mblen)
  * of a character.
  */
 
-	n = wcrtomb (mb, wc, &mbs);
-	if (n == (size_t)-1) n = 0; // illegal character
+	if (mblen < MB_CUR_MAX)
+	{
+		ase_mchar_t buf[MB_CUR_MAX];
+
+		n = wcrtomb (buf, wc, &mbs);
+		if (n > mblen) return mblen + 1; /* buffer to small */
+		if (n == (size_t)-1) return 0; /* illegal character */
+
+		ASE_MEMCPY (mb, buf, mblen);
+	}
+	else
+	{
+		n = wcrtomb (mb, wc, &mbs);
+		if (n > mblen) return mblen + 1; /* buffer to small */
+		if (n == (size_t)-1) return 0; /* illegal character */
+	}
 
 	return n;
 #else

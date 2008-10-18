@@ -15,6 +15,7 @@ enum
 	ASE_TIO_ENOMEM, /* out of memory */
 	ASE_TIO_ENOSPC, /* no more space */
 	ASE_TIO_EILSEQ, /* illegal sequence */
+	ASE_TIO_EICSEQ, /* incomplete sequence */
 	ASE_TIO_EILCHR, /* illegal character */
 	ASE_TIO_ENOINF, /* no input function attached */
 	ASE_TIO_EINPUT, /* input function returned an error */
@@ -112,6 +113,19 @@ ase_tio_t* ase_tio_init (
 
 int ase_tio_fini (
 	ase_tio_t* tio
+);
+
+void* ase_tio_getextension (
+	ase_tio_t* tio
+);
+
+ase_mmgr_t* ase_tio_getmmgr (
+	ase_tio_t* tio
+);
+
+void ase_tio_setmmgr (
+	ase_tio_t* tio,
+	ase_mmgr_t* mmgr
 );
 
 /*
