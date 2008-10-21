@@ -1,14 +1,10 @@
 /*
- * $Id: str_cnv.c 431 2008-10-20 11:13:55Z baconevi $
+ * $Id: str_cnv.c 432 2008-10-20 11:22:02Z baconevi $
  *
  * {License}
  */
 
 #include <ase/cmn/str.h>
-
-#ifdef HAVE_WCHAR_H
-#include <wchar.h>
-#endif
 
 int ase_strtoi (const ase_char_t* str)
 {
@@ -128,8 +124,8 @@ ase_size_t ase_mbstowcs (
 	ase_size_t wlen, mlen;
 	const ase_mchar_t* mp;
 
-	/* get the lenght of mbs and pass it to ase_mbsntowcsn as 
-	 * ase_mbtowc needs it. */
+	/* get the length of mbs and pass it to ase_mbsntowcsn as 
+	 * ase_mbtowc called by ase_mbsntowcsn needs it. */
 	for (mp = mbs; *mp != '\0'; mp++);
 
 	if (*wcslen <= 0) 
