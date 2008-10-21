@@ -1,5 +1,5 @@
 /*
- * $Id: str_cnv.c 430 2008-10-17 11:43:20Z baconevi $
+ * $Id: str_cnv.c 431 2008-10-20 11:13:55Z baconevi $
  *
  * {License}
  */
@@ -125,26 +125,31 @@ ase_ulong_t ase_strxtoulong (const ase_char_t* str, ase_size_t len)
 ase_size_t ase_mbstowcs (
 	const ase_mchar_t* mbs, ase_wchar_t* wcs, ase_size_t* wcslen)
 {
-	ase_size_t len, wlen;
-	for (len = 0; *mbs++ != '\0'; len++);
+	ase_size_t wlen, mlen;
+	const ase_mchar_t* mp;
 
+	/* get the lenght of mbs and pass it to ase_mbsntowcsn as 
+	 * ase_mbtowc needs it. */
+	for (mp = mbs; *mp != '\0'; mp++);
 
-	if (*wcslen <= 0) return 0;
+	if (*wcslen <= 0) 
+	{
+		/* buffer too small. cannot null-terminate it */
+		return 0;
+	}
 	if (*wcslen == 1) 
 	{
 		wcs[0] = L'\0';
 		return 0;
 	}
 
-	/* because ase_mbtowc needs the length, we get the lenght of mbs 
-	 * and pass it to ase_mbsntowcsn */
 	wlen = *wcslen - 1;
-	len = ase_mbsntowcsn (mbs, len, wcs, &wlen);
+	mlen = ase_mbsntowcsn (mbs, mp - mbs, wcs, &wlen);
 
 	wcs[wlen] = L'\0';
 	*wcslen = wlen;
-/* TODO: wcslen should include the length including null? */
-	return len;
+
+	return mlen;
 }
 
 ase_size_t ase_mbsntowcsn (
@@ -173,29 +178,38 @@ ase_size_t ase_mbsntowcsn (
 	return p - mbs; /* returns the number of bytes processed */
 }
 
-ase_size_t wcstombs (
+ase_size_t ase_wcstombs (
 	const ase_wchar_t* wcs, ase_mchar_t* mbs, ase_size_t* mbslen)
 {
 	const ase_wchar_t* p = wcs;
-	ase_size_t len = *mbslen;
+	ase_size_t rem = *mbslen;
 
-	while (*p != ASE_T('\0') && len > 1) 
+	while (*p != ASE_T('\0') && rem > 1) 
 	{
-		ase_size_t n = ase_wctomb (*p, mbs, len);
-		if (n == 0 || n > len)
+		ase_size_t n = ase_wctomb (*p, mbs, rem);
+		if (n == 0 || n > rem)
 		{
 			/* illegal character or buffer not enough */
 			break;
 		}
-		mbs += n; len -= n; p++;
+
+		if (rem == n) 
+		{
+			/* the buffer is full without the space for a 
+			 * terminating null. should stop processing further
+			 * excluding this last character emitted. */
+			break;
+		}
+
+		mbs += n; rem -= n; p++;
 	}
 
-	*mbslen -= len; 
-	if (len > 0) *mbs = '\0';
+	*mbslen -= rem; 
 
-	/* returns the number of characters handled.
-	 * the caller can check if the return value is as large is wcslen
-	 * for an error. */
+	/* null-terminate the multibyte sequence if it has sufficient space */
+	if (rem > 0) *mbs = '\0';
+
+	/* returns the number of characters handled. */
 	return p - wcs; 
 }
 
