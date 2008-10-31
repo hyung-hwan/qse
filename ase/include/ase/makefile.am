@@ -11,3 +11,6 @@ CLEANFILES = *dist
 install-data-hook:
 	@"$(GREP)" -E "#define[ ]+ASE_" "$(srcdir)/config.h" > "$(pkgincludedir)/config.h" 
 	@"$(RM)" -f "$(pkgincludedir)/config.h.in"
+
+uninstall-hook:
+	@"$(RM)" -f "$(pkgincludedir)/config.h"
