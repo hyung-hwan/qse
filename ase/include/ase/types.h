@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 424 2008-10-14 10:08:31Z baconevi $
+ * $Id: types.h 443 2008-10-30 13:45:17Z baconevi $
  *
  * {License}
  */
@@ -208,7 +208,11 @@ typedef ase_uint8_t ase_byte_t;
  *  ase_size_t - define an unsigned integer type that can hold a pointer value
  ******
  */
+#ifdef __SIZE_TYPE__
+typedef __SIZE_TYPE__ ase_size_t;
+#else
 typedef ase_uint_t  ase_size_t;
+#endif
 
 /****t* ase/ase_ssize_t
  * NAME
@@ -260,6 +264,9 @@ typedef int  ase_mcint_t;
 	typedef wchar_t ase_wcint_t;
 
 	/* all the way down from here for C */
+#elif defined(__WCHAR_TYPE__) && defined(__WINT_TYPE__)
+	typedef __WCHAR_TYPE__ ase_wchar_t;
+	typedef __WINT_TYPE__ ase_wcint_t;
 #elif (ASE_SIZEOF_WCHAR_T == 2) || (ASE_SIZEOF_WCHAR_T == 0)
 	typedef unsigned short ase_wchar_t;
 	typedef unsigned short ase_wcint_t;
