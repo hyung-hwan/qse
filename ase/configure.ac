@@ -1,24 +1,21 @@
-#
-# $Id: configure.ac,v 1.5 2007/05/25 07:54:15 bacon Exp $
-# 
-
 AC_PREREQ(2.59)
 AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
 AC_CONFIG_HEADER([include/ase/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
 
-# Does compilation test using CC and CPP with extension .c for test programs.
+dnl uses CC and CPP for compilation tests with .c test programs.
 AC_LANG(C)
 
-# Initializes automake
+dnl initializes automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
-# Determines a C compiler to use
+dnl determines a C compiler to use
 AC_PROG_CC
 
-# Determines a C++ compiler to use
+dnl determines a C++ compiler to use
 AC_PROG_CXX
-# Checks the C++ compiler exists in PATH. 
+
+dnl checks if the C++ compiler exists in PATH. 
 AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
 
 AC_PROG_LIBTOOL
@@ -31,7 +28,7 @@ AC_CHECK_TOOL(GREP, grep)
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(CJ, gcj)
 
-# Overrides the default CFLAGS setting
+dnl overrides the default CFLAGS setting
 if test "$ac_test_CFLAGS" = "set"
 then
 	CFLAGS=$ac_save_CFLAGS
