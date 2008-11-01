@@ -528,9 +528,11 @@ ps: ps-recursive
 ps-am:
 
 uninstall-am: uninstall-pkgincludeHEADERS
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) install-am \
-	install-data-am install-strip
+	install-data-am install-strip uninstall-am
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
 	all all-am check check-am clean clean-generic clean-libtool \
@@ -545,12 +547,16 @@ uninstall-am: uninstall-pkgincludeHEADERS
 	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-recursive \
-	uninstall uninstall-am uninstall-pkgincludeHEADERS
+	uninstall uninstall-am uninstall-hook \
+	uninstall-pkgincludeHEADERS
 
 
 install-data-hook:
 	@"$(GREP)" -E "#define[ ]+ASE_" "$(srcdir)/config.h" > "$(pkgincludedir)/config.h" 
 	@"$(RM)" -f "$(pkgincludedir)/config.h.in"
+
+uninstall-hook:
+	@"$(RM)" -f "$(pkgincludedir)/config.h"
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
