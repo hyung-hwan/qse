@@ -56,20 +56,6 @@ ase_fio_t* ase_fio_init (
 	ase_fio_t* fio, ase_mmgr_t* mmgr,
 	const ase_char_t* path, int flags, int mode)
 {
-#ifdef _WIN32
-	DWORD desired_access = 0;
-	DWORD share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
-	DWORD creation_disposition = 0;
-	DWORD attributes = FILE_ATTRIBUTE_NORMAL;
-	DWORD file_type;
-#else
-	int desired_access = 0;
-	#ifdef ASE_CHAR_IS_MCHAR
-	const ase_mchar_t* path_mb;
-	#else
-	ase_mchar_t path_mb[PATH_MAX + 1];
-	#endif /* ASE_CHAR_IS_MCHAR */
-#endif /* _WIN32 */
 	ase_fio_hnd_t handle;
 
 	ASE_MEMSET (fio, 0, ASE_SIZEOF(*fio));
@@ -82,6 +68,12 @@ ase_fio_t* ase_fio_init (
 	}
 	else
 	{
+		DWORD desired_access = 0;
+		DWORD share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+		DWORD creation_disposition = 0;
+		DWORD attributes = FILE_ATTRIBUTE_NORMAL;
+		DWORD file_type;
+
 		if (flags & ASE_FIO_READ) desired_access |= GENERIC_READ;
 		if (flags & ASE_FIO_WRITE) desired_access |= GENERIC_WRITE;
 		if (flags & ASE_FIO_APPEND)  
@@ -135,19 +127,19 @@ ase_fio_t* ase_fio_init (
 	}
 	else
 	{
-		#ifdef ASE_CHAR_IS_MCHAR
-		path_mb = path;
-		#else
+		int desired_access = 0;
+	#ifdef ASE_CHAR_IS_MCHAR
+		const ase_mchar_t* path_mb = path;
+	#else
+		ase_mchar_t path_mb[PATH_MAX + 1];
 		if (ase_wcstombs_strict (path, 
 			path_mb, ASE_COUNTOF(path_mb)) == -1) return ASE_NULL;
-		#endif
+	#endif
 
-		if (flags & ASE_FIO_READ) desired_access = O_RDONLY;
-		if (flags & ASE_FIO_WRITE) 
-		{
-			if (desired_access == 0) desired_access |= O_WRONLY;
-			else desired_access = O_RDWR;
-		}
+		if ((flags & ASE_FIO_READ) && 
+		    (flags & ASE_FIO_WRITE)) desired_access |= O_RDWR;
+		else if (flags & ASE_FIO_READ) desired_access |= O_RDONLY;
+		else desired_access |= O_WRONLY;
 
 		if (flags & ASE_FIO_APPEND) desired_access |= O_APPEND;
 		if (flags & ASE_FIO_CREATE) desired_access |= O_CREAT;
@@ -196,7 +188,7 @@ ase_fio_off_t ase_fio_seek (
 	ase_fio_t* fio, ase_fio_off_t offset, ase_fio_ori_t origin)
 {
 #ifdef _WIN32
-	static int __seek_map[] = 
+	static int seek_map[] = 
 	{
 		FILE_BEGIN,
 		FILE_CURRENT,
@@ -208,12 +200,12 @@ ase_fio_off_t ase_fio_seek (
 
 	x.QuadPart = offset;
 	if (SetFilePointerEx (
-		fio->handle, x, &y, __seek_map[origin]) == FALSE) return -1;
+		fio->handle, x, &y, seek_map[origin]) == FALSE) return -1;
 
 	return (ase_fio_off_t)y.QuadPart;
 
 #else
-	static int __seek_map[] = 
+	static int seek_map[] = 
 	{
 		SEEK_SET,
 		SEEK_CUR,
@@ -227,16 +219,16 @@ ase_fio_off_t ase_fio_seek (
 		(unsigned long)(offset>>32),
 		(unsigned long)(offset&0xFFFFFFFFlu), 
 		&tmp,
-		__seek_map[origin]) == -1) return -1;
+		seek_map[origin]) == -1) return -1;
 
-	return tmp;
+	return (ase_fio_off_t)tmp;
 
 #elif defined(SYS_lseek)
-	return syscall (SYS_lseek, fio->handle, offset, __seek_map[origin]);
+	return syscall (SYS_lseek, fio->handle, offset, seek_map[origin]);
 #elif !defined(_LP64) && defined(HAVE_LSEEK64)
-	return lseek64 (fio->handle, offset, __seek_map[origin]);
+	return lseek64 (fio->handle, offset, seek_map[origin]);
 #else
-	return lseek (fio->handle, offset, __seek_map[origin]);
+	return lseek (fio->handle, offset, seek_map[origin]);
 #endif
 
 #endif
