@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 419 2008-10-13 11:32:58Z baconevi $
+ * $Id: awk.h 455 2008-11-26 09:05:00Z baconevi $
  *
  * {License}
  */
@@ -661,6 +661,10 @@ void* ase_awk_getextension (
 );
 /******/
 
+ase_ccls_t* ase_awk_getccls (
+	ase_awk_t* awk
+);
+
 /*
  * set the character classfier
  */
@@ -669,6 +673,10 @@ void ase_awk_setccls (
 	ase_awk_t* awk, 
 	/* the pointer to a character classfiler */
 	ase_ccls_t* ccls
+);
+
+ase_awk_prmfns_t* ase_awk_getprmfns (
+	ase_awk_t* awk
 );
 
 /*
@@ -1045,5 +1053,37 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val);
 #ifdef __cplusplus
 }
 #endif
+
+struct ase_ns_awk_t
+{
+        ase_awk_t*  (*open)         (ase_mmgr_t*, ase_size_t ext);
+        int         (*close)        (ase_awk_t*);
+
+	ase_mmgr_t* (*getmmgr)      (ase_awk_t*);
+	void        (*setmmgr)      (ase_awk_t*, ase_mmgr_t*);
+	void*       (*getextension) (ase_awk_t*);
+
+	ase_ccls_t* (*getccls)      (ase_awk_t*);
+	void        (*setccls)      (ase_awk_t*, ase_ccls_t*);
+
+	ase_awk_prmfns_t* (*getprmfns) (ase_awk_t*);
+	void              (*setprmfns) (ase_awk_t*, ase_awk_prmfns_t*);
+
+        int         (*parse)        (ase_awk_t*, ase_awk_srcios_t*);
+};
+
+#define ase_ns_awk_d \
+{ \
+        ase_awk_open, \
+        ase_awk_close, \
+	ase_awk_getmmgr, \
+	ase_awk_setmmgr, \
+	ase_awk_getextension, \
+	ase_awk_getccls, \
+	ase_awk_setccls, \
+	ase_awk_getprmfns, \
+	ase_awk_setprmfns, \
+        ase_awk_parse \
+}
 
 #endif

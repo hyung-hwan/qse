@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 415 2008-10-10 11:16:31Z baconevi $ 
+ * $Id: awk.c 455 2008-11-26 09:05:00Z baconevi $ 
  *
  * {License}
  */
@@ -341,6 +341,11 @@ void ase_awk_setccls (ase_awk_t* awk, ase_ccls_t* ccls)
 	ASE_ASSERT (ccls->to_lower  != ASE_NULL);
 
 	awk->ccls = ccls;
+}
+
+ase_awk_prmfns_t* ase_awk_getprmfns (ase_awk_t* awk)
+{
+	return awk->prmfns;
 }
 
 void ase_awk_setprmfns (ase_awk_t* awk, ase_awk_prmfns_t* prmfns)

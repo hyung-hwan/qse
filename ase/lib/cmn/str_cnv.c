@@ -1,5 +1,5 @@
 /*
- * $Id: str_cnv.c 432 2008-10-20 11:22:02Z baconevi $
+ * $Id: str_cnv.c 455 2008-11-26 09:05:00Z baconevi $
  *
  * {License}
  */
@@ -180,7 +180,7 @@ ase_size_t ase_wcstombs (
 	const ase_wchar_t* p = wcs;
 	ase_size_t rem = *mbslen;
 
-	while (*p != ASE_T('\0') && rem > 1) 
+	while (*p != ASE_WT('\0') && rem > 1) 
 	{
 		ase_size_t n = ase_wctomb (*p, mbs, rem);
 		if (n == 0 || n > rem)
@@ -236,3 +236,21 @@ ase_size_t ase_wcsntombsn (
 	return p - wcs; 
 }
 
+int ase_wcstombs_strict (
+	const ase_wchar_t* wcs, ase_mchar_t* mbs, ase_size_t mbslen)
+{
+	ase_size_t n;
+	ase_size_t mn = mbslen;
+
+	n = ase_wcstombs (wcs, mbs, &mn);
+	if (wcs[n] != ASE_WT('\0')) return -1; /* didn't process all */
+	if (mn >= mbslen) 
+	{
+		/* mbs not big enough to be null-terminated.
+		 * if it has been null-terminated properly, 
+		 * mn should be less than mbslen. */
+		return -1; 
+	}
+
+	return 0;
+}

@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 430 2008-10-17 11:43:20Z baconevi $
+ * $Id: str.h 455 2008-11-26 09:05:00Z baconevi $
  *
  * {License}
  */
@@ -393,7 +393,7 @@ ase_size_t ase_mbstowcs (
 
 /****f* ase.cmn.str/ase_mbsntowcsn
  * NAME
- *  ase_mbsntowcsn - conver a multibyte string to a wide character string
+ *  ase_mbsntowcsn - convert a multibyte string to a wide character string
  * 
  * RETURN
  *  The ase_mbstowcs() function returns the number of bytes handled.
@@ -408,6 +408,24 @@ ase_size_t ase_mbsntowcsn (
 );
 /******/
 
+/****f* ase.cmn.str/ase_wcstombs
+ * NAME
+ *  ase_wcstombs - convert a wide character string to a multibyte string.
+ *
+ * DESCRIPTION
+ *  The ase_wcstombs() function converts a null-terminated wide character 
+ *  string to a multibyte string and stores it into the buffer pointed to
+ *  by mbs. The pointer to a variable holding the buffer length should be
+ *  passed to the function as the third parameter. After conversion, it holds 
+ *  the length of the multibyte string excluding the terminating-null.
+ *  It may not null-terminate the resulting multibyte string if the buffer
+ *  is not large enough.
+ *
+ * RETURN
+ *  The ase_wcstombs() function returns the number of wide characters handled.
+ *
+ * SYNOPSIS
+ */
 ase_size_t ase_wcstombs (
         const ase_wchar_t* wcs,
         ase_mchar_t*       mbs,
@@ -428,6 +446,26 @@ ase_size_t ase_wcsntombsn (
 	ase_size_t         wcslen,
         ase_mchar_t*       mbs,
 	ase_size_t*        mbslen
+);
+/******/
+
+/****f* ase.cmn.str/ase_wcstombs_strict
+ * NAME
+ *  ase_wcstombs_strict - convert a wide character string to a multibyte string.
+ *
+ * DESCRIPTION
+ *  The ase_wcstombs_strict() function performs the same as the ase_wcsmbs() 
+ *  function except that it returns an error if it can't fully convert the
+ *  input string and/or the buffer is not large enough.
+ *
+ * RETURN
+ *  The ase_wcstombs_strict() function returns 0 on success and -1 on failure.
+ * SYNOPSIS
+ */
+int ase_wcstombs_strict (
+        const ase_wchar_t* wcs,
+        ase_mchar_t*       mbs,
+	ase_size_t         mbslen
 );
 /******/
 

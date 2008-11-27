@@ -65,13 +65,17 @@ else
 	fi
 fi
 
+dnl make visible the 64bit interface to the file system
+CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
+CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE"
+
 dnl Checks for the math library (is -lm needed?)
 AC_CHECK_LIBM
 AC_SUBST(LIBM, $LIBM)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stddef.h wchar.h wctype.h])
+AC_CHECK_HEADERS([stddef.h wchar.h wctype.h sys/syscall.h])
 
 dnl Checks data types
 AC_CHECK_TYPE([wchar_t], 
@@ -84,6 +88,7 @@ dnl check functions
 AC_CHECK_FUNCS([uselocale])
 AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
+AC_CHECK_FUNCS([open64 lseek64 stat64 fstat64 lstat64])
 
 dnl Checks the size of primitive data types
 AC_CHECK_SIZEOF(char)
@@ -135,11 +140,19 @@ AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 	[use wchar_t a default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)
 test "${ac_cv_sizeof_wchar_t}" = "0" && enable_wchar_is=no
-if test "$enable_wchar_is" = "yes"
+if test "${enable_wchar_is}" = "yes"
 then
 	AC_DEFINE([ASE_CHAR_IS_WCHAR],[],[char is wchar])
 else
 	AC_DEFINE([ASE_CHAR_IS_MCHAR],[],[char is mchar])
+fi
+
+AC_ARG_ENABLE([syscall], [AC_HELP_STRING([--enable-syscall],
+	[use the syscall() function to call system calls (default. no)])],
+	enable_syscall_is=$enableval,enable_syscall_is=no)
+if test "${enable_syscall_is}" = "yes"
+then
+	AC_DEFINE([ASE_USE_SYSCALL],[],[use the syscall() function])
 fi
 
 AC_ARG_ENABLE([debug], [AC_HELP_STRING([--enable-debug],
