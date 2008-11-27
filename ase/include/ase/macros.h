@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 399 2008-09-29 10:26:26Z baconevi $
+ * $Id: macros.h 455 2008-11-26 09:05:00Z baconevi $
  *
  * {License}
  */
@@ -146,6 +146,20 @@
 	#define ASE_ASSERTX(expr,desc) (void)((expr) || \
 		(ase_assert_failed (ASE_T(#expr), ASE_T(desc), ASE_T(__FILE__), __LINE__), 0))
 #endif
+
+/****d* ase/ASE_FNS
+ * NAME
+ *  ASE_FNS - define an ASE function name space
+ * DESCRIPTION
+ *  The ASE_FNS macro enables you to simulate a function name space for the 
+ *  types designed properly.
+ * EXAMPLE
+ *  ASE_FNS (awk, AWK);
+ *  ase_awk_t* awk = AWK.open (....);
+ *  AWK.close (awk);
+ ******
+ */
+#define ASE_NS(type,name) struct ase_ns_##type##_t name = ase_ns_##type##_d
 
 #ifdef __cplusplus
 	#define ASE_BEGIN_NAMESPACE(x)    namespace x {
