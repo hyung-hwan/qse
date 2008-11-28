@@ -99,11 +99,7 @@ ase_fio_t* ase_fio_init (
 		if (flags & ASE_FIO_NOSHWR) share_mode &= ~FILE_SHARE_WRITE;
 
 		if (flags & ASE_FIO_SYNC) attributes |= FILE_FLAG_WRITE_THROUGH; 
-
 		/* TODO: handle mode... set attribuets */
-	}
-	else
-	{
 		handle = CreateFile (path, 
 			desired_access, share_mode, ASE_NULL, 
 			creation_disposition, attributes, 0);

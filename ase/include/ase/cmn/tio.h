@@ -165,9 +165,9 @@ const ase_char_t* ase_tio_geterrstr (ase_tio_t* tio);
  *   0 on success, -1 on failure
  */
 int ase_tio_attachin (
-	ase_tio_t* tio,
+	ase_tio_t*   tio,
 	ase_tio_io_t input,
-	void* arg
+	void*        arg
 );
 
 /*
