@@ -153,7 +153,7 @@ int ase_tio_geterrnum (ase_tio_t* tio);
 const ase_char_t* ase_tio_geterrstr (ase_tio_t* tio);
 
 /*
- * FUNCTION: ase_tio_attinp
+ * FUNCTION: ase_tio_attachin
  *   Attaches an input handler function
  *
  * PARAMETERS:
@@ -164,10 +164,14 @@ const ase_char_t* ase_tio_geterrstr (ase_tio_t* tio);
  * RETURNS:
  *   0 on success, -1 on failure
  */
-int ase_tio_attinp (ase_tio_t* tio, ase_tio_io_t input, void* arg);
+int ase_tio_attachin (
+	ase_tio_t* tio,
+	ase_tio_io_t input,
+	void* arg
+);
 
 /*
- * FUNCTION: ase_tio_detinp
+ * FUNCTION: ase_tio_detachin
  *   Detaches an input handler function
  *
  * PARAMETERS:
@@ -176,10 +180,12 @@ int ase_tio_attinp (ase_tio_t* tio, ase_tio_io_t input, void* arg);
  * RETURNS:
  *   0 on success, -1 on failure
  */
-int ase_tio_detinp (ase_tio_t* tio);
+int ase_tio_detachin (
+	ase_tio_t* tio
+);
 
 /*
- * FUNCTION: ase_tio_attoutp
+ * FUNCTION: ase_tio_attachout
  *   Attaches an output handler function
  *
  * PARAMETERS:
@@ -190,10 +196,14 @@ int ase_tio_detinp (ase_tio_t* tio);
  * RETURNS:
  *   0 on success, -1 on failure
  */
-int ase_tio_attoutp (ase_tio_t* tio, ase_tio_io_t output, void* arg);
+int ase_tio_attachout (
+	ase_tio_t* tio,
+	ase_tio_io_t output,
+	void* arg
+);
 
 /*
- * FUNCTION: ase_tio_detoutp
+ * FUNCTION: ase_tio_detachout
  *   Detaches an output handler function
  * 
  * PARAMETERS:
@@ -202,7 +212,9 @@ int ase_tio_attoutp (ase_tio_t* tio, ase_tio_io_t output, void* arg);
  * RETURNS:
  *   0 on success, -1 on failure
  */
-int ase_tio_detoutp (ase_tio_t* tio);
+int ase_tio_detachout (
+	ase_tio_t* tio
+);
 
 
 /*

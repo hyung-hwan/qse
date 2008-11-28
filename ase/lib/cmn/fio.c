@@ -248,7 +248,6 @@ ase_ssize_t ase_fio_read (ase_fio_t* fio, void* buf, ase_size_t size)
 	#else
 	return read (fio->handle, buf, size);
 	#endif
-
 #endif
 }
 
