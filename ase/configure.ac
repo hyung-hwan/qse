@@ -88,7 +88,7 @@ dnl check functions
 AC_CHECK_FUNCS([uselocale])
 AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
-AC_CHECK_FUNCS([open64 lseek64 stat64 fstat64 lstat64])
+AC_CHECK_FUNCS([lseek64 stat64 fstat64 ftruncate64])
 
 dnl Checks the size of primitive data types
 AC_CHECK_SIZEOF(char)
