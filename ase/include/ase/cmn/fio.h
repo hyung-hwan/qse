@@ -23,7 +23,7 @@ enum ase_fio_open_flag_t
 
 	/* for ms windows only */
 	ASE_FIO_NOSHRD    = (1 << 16),
-	ASE_FIO_NOSHWR    = (1 << 17),
+	ASE_FIO_NOSHWR    = (1 << 17)
 };
 
 /* seek origin */
@@ -52,6 +52,9 @@ struct ase_fio_t
 	ase_mmgr_t* mmgr;
 	ase_fio_hnd_t handle;
 };
+
+#define ASE_FIO_MMGR(fio)   ((fio)->mmgr)
+#define ASE_FIO_HANDLE(fio) ((fio)->handle)
 
 #ifdef __cplusplus
 extern "C" {

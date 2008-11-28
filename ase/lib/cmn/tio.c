@@ -64,8 +64,8 @@ ase_tio_t* ase_tio_init (ase_tio_t* tio, ase_mmgr_t* mmgr)
 int ase_tio_fini (ase_tio_t* tio)
 {
 	ase_tio_flush (tio); /* don't care about the result */
-	if (ase_tio_detin(tio) == -1) return -1;
-	if (ase_tio_detout(tio) == -1) return -1;
+	if (ase_tio_detachin(tio) == -1) return -1;
+	if (ase_tio_detachout(tio) == -1) return -1;
 	return 0;
 }
 
@@ -115,9 +115,9 @@ const ase_char_t* ase_tio_geterrstr (ase_tio_t* tio)
 		ASE_COUNTOF(__errstr) - 1: tio->errnum];
 }
 
-int ase_tio_attin (ase_tio_t* tio, ase_tio_io_t input, void* arg)
+int ase_tio_attachin (ase_tio_t* tio, ase_tio_io_t input, void* arg)
 {
-	if (ase_tio_detin(tio) == -1) return -1;
+	if (ase_tio_detachin(tio) == -1) return -1;
 
 	ASE_ASSERT (tio->input_func == ASE_NULL);
 
@@ -137,7 +137,7 @@ int ase_tio_attin (ase_tio_t* tio, ase_tio_io_t input, void* arg)
 	return 0;
 }
 
-int ase_tio_detin (ase_tio_t* tio)
+int ase_tio_detachin (ase_tio_t* tio)
 {
 	if (tio->input_func != ASE_NULL) 
 	{
@@ -155,9 +155,9 @@ int ase_tio_detin (ase_tio_t* tio)
 	return 0;
 }
 
-int ase_tio_attout (ase_tio_t* tio, ase_tio_io_t output, void* arg)
+int ase_tio_attachout (ase_tio_t* tio, ase_tio_io_t output, void* arg)
 {
-	if (ase_tio_detout(tio) == -1) return -1;
+	if (ase_tio_detachout(tio) == -1) return -1;
 
 	ASE_ASSERT (tio->output_func == ASE_NULL);
 
@@ -174,7 +174,7 @@ int ase_tio_attout (ase_tio_t* tio, ase_tio_io_t output, void* arg)
 	return 0;
 }
 
-int ase_tio_detout (ase_tio_t* tio)
+int ase_tio_detachout (ase_tio_t* tio)
 {
 	if (tio->output_func != ASE_NULL) 
 	{
