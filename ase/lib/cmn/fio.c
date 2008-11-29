@@ -230,6 +230,30 @@ ase_fio_off_t ase_fio_seek (
 #endif
 }
 
+int ase_fio_truncate (ase_fio_t* fio, ase_fio_off_t size)
+{
+#ifdef _WIN32
+	LARGE_INTEGER x;
+	x.QuadPart = size;
+
+	if (SetFilePointerEx(fio->handle,x,NULL,FILE_BEGIN) == FALSE ||
+	    SetEndOfFile(fio->handle) == FALSE) return -1;
+
+	return 0;
+#else
+ 
+	#if !defined(_LP64) && defined(SYS_ftruncate64)
+	return syscall (SYS_ftruncate64, fio->handle, size);
+	#elif defined(SYS_ftruncate)
+	return syscall (SYS_ftruncate, fio->handle, size);
+	#elif !defined(_LP64) && defined(HAVE_FTRUNCATE64)
+	return ftruncate64 (fio->handle, size);
+	#else
+	return ftruncate (fio->handle, size);
+	#endif
+#endif
+}
+
 ase_ssize_t ase_fio_read (ase_fio_t* fio, void* buf, ase_size_t size)
 {
 #ifdef _WIN32

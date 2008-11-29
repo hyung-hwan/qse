@@ -89,9 +89,14 @@ ase_fio_hnd_t ase_fio_gethandle (
 );
 
 ase_fio_off_t ase_fio_seek (
-	ase_fio_t* fio,
+	ase_fio_t*    fio,
 	ase_fio_off_t offset,
 	ase_fio_ori_t origin
+);
+
+int ase_fio_truncate (
+	ase_fio_t*    fio,
+	ase_fio_off_t size
 );
 
 ase_ssize_t ase_fio_read (
