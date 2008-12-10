@@ -170,7 +170,7 @@ static ase_ssize_t sf_out (int cmd, void* arg, ase_char_t* data, ase_size_t size
 		}
 		else 
 		{
-			sf->out.handle = ase_fopen (sf->out.file, ASE_T("r"));
+			sf->out.handle = ase_fopen (sf->out.file, ASE_T("w"));
 			if (sf->out.handle == ASE_NULL) return -1;
 		}
 
