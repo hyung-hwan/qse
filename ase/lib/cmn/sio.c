@@ -8,6 +8,10 @@
 static ase_ssize_t __sio_input (int cmd, void* arg, void* buf, ase_size_t size);
 static ase_ssize_t __sio_output (int cmd, void* arg, void* buf, ase_size_t size);
 
+#ifdef _WIN32
+	#include <windows.h>
+#endif
+
 static ase_sio_t __sio_in = 
 {
 	ASE_NULL, /* mmgr */

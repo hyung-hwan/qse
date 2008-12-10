@@ -66,8 +66,8 @@ else
 fi
 
 dnl make visible the 64bit interface to the file system
-CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
-CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE"
+CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -D_AUTO_CONFIGURED"
+CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -D_AUTO_CONFIGURED"
 
 dnl Checks for the math library (is -lm needed?)
 AC_CHECK_LIBM
@@ -135,7 +135,7 @@ AC_C_BIGENDIAN(
 	[AC_DEFINE([ASE_ENDIAN_LITTLE],[],[Little Endian])],
 	[AC_DEFINE([ASE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
 
-# Defines extra options
+dnl define extra options
 AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 	[use wchar_t a default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)

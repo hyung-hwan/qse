@@ -36,7 +36,7 @@ enum ase_fio_seek_origin_t
 
 #ifdef _WIN32
 /* <winnt.h> typedef PVOID HANDLE; */
-typedef void* aes_fio_hnd_t; 
+typedef void* ase_fio_hnd_t; 
 #else
 typedef int ase_fio_hnd_t;
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 419 2008-10-13 11:32:58Z baconevi $
+ * $Id: awk.c 463 2008-12-09 06:52:03Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -1164,7 +1164,7 @@ static void close_awk (ase_awk_t* awk)
 	extension_t* ext = (extension_t*)ase_awk_getextension(awk);
 	
 #ifdef _WIN32
-	HANDLE heap = (HANDLE)ext->mmgr->data;
+	HANDLE heap = (HANDLE)ext->mmgr.data;
 #endif
 
 	ase_awk_close (awk);

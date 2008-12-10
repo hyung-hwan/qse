@@ -1,5 +1,5 @@
 /*
- * $Id: stdio.c 341 2008-08-20 10:58:19Z baconevi $
+ * $Id: stdio.c 463 2008-12-09 06:52:03Z baconevi $
  *
  * {License}
  */
@@ -21,7 +21,11 @@ int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list a
 {
 	int n;
 
-	n = _vsntprintf (buf, size, fmt, ap);
+#ifdef ASE_CHAR_IS_MCHAR
+	n = _vsnprintf (buf, size, fmt, ap);
+#else
+	n = _vsnwprintf (buf, size, fmt, ap);
+#endif
 	if (n < 0 || (size_t)n >= size)
 	{
 		if (size > 0) buf[size-1] = ASE_T('\0');
@@ -319,10 +323,10 @@ int ase_dprintf (const ase_char_t* fmt, ...)
 
 ASE_FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
 {
-#if defined(_WIN32)
-	return _tfopen (path, mode);
-#elif defined(ASE_CHAR_IS_MCHAR)
+#if defined(ASE_CHAR_IS_MCHAR)
 	return fopen (path, mode);
+#elif defined(_WIN32)
+	return _wfopen (path, mode);
 #else
 
 	char path_mb[PATH_MAX + 1];
@@ -343,24 +347,10 @@ ASE_FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
 
 ASE_FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 {
-#if defined(__SPU__)
-	/* popen is not available */
-	#warning ############################################
-	#warning ase_popen is NOT SUPPORTED in this platform.
-	#warning #############################################
-	return ASE_NULL;
-#elif defined(_WIN32) 
-	#if defined(__DMC__)
-		/* TODO: implement this for DMC */
-		#warning ############################################
-		#warning ase_popen is NOT SUPPORTED in this platform.
-		#warning #############################################
-		return ASE_NULL;
-	#else
-		return _tpopen (cmd, mode);
-	#endif
-#elif defined(ASE_CHAR_IS_MCHAR)
+#if defined(ASE_CHAR_IS_MCHAR)
 	return popen (cmd, mode);
+#elif defined(_WIN32) 
+	return _wpopen (cmd, mode);
 #else
 	char cmd_mb[PATH_MAX + 1];
 	char mode_mb[32];
@@ -407,11 +397,11 @@ ase_ssize_t ase_getdelim (
 	if (b == ASE_NULL)
 	{
 		capa = 256;
-#if (defined(vms) || defined(__vms)) && (ASE_SIZEOF_VOID_P >= 8)
+	#if (defined(vms) || defined(__vms)) && (ASE_SIZEOF_VOID_P >= 8)
 		b = (ase_char_t*) _malloc32 (sizeof(ase_char_t)*(capa+1));
-#else
+	#else
 		b = (ase_char_t*) malloc (sizeof(ase_char_t)*(capa+1));
-#endif
+	#endif
 		if (b == ASE_NULL) return -2;
 	}
 
