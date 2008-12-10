@@ -72,7 +72,6 @@ ase_fio_t* ase_fio_init (
 		DWORD share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 		DWORD creation_disposition = 0;
 		DWORD attributes = FILE_ATTRIBUTE_NORMAL;
-		DWORD file_type;
 
 		if (flags & ASE_FIO_READ) desired_access |= GENERIC_READ;
 		if (flags & ASE_FIO_WRITE) desired_access |= GENERIC_WRITE;
@@ -105,13 +104,15 @@ ase_fio_t* ase_fio_init (
 			creation_disposition, attributes, 0);
 	}
 
-	if (handle == INVALID_HANDLE) return ASE_NULL;
+	if (handle == INVALID_HANDLE_VALUE) return ASE_NULL;
 
-	file_type = GetFileType(handle);
-	if (file_type == FILE_TYPE_UNKNOWN) 
 	{
-		CloseHandle (handle);
-		return ASE_NULL;
+		DWORD file_type = GetFileType(handle);
+		if (file_type == FILE_TYPE_UNKNOWN) 
+		{
+			CloseHandle (handle);
+			return ASE_NULL;
+		}
 	}
 
 	/* TODO: a lot more */
@@ -259,7 +260,7 @@ ase_ssize_t ase_fio_read (ase_fio_t* fio, void* buf, ase_size_t size)
 #ifdef _WIN32
 	DWORD count;
 	if (size > ASE_TYPE_MAX(DWORD)) size = ASE_TYPE_MAX(DWORD);
-	if (ReadFile(handle, buf, size, &count, ASE_NULL) == FALSE) return -1;
+	if (ReadFile(fio->handle, buf, size, &count, ASE_NULL) == FALSE) return -1;
 	return (ase_ssize_t)count;
 #else
 	if (size > ASE_TYPE_MAX(size_t)) size = ASE_TYPE_MAX(size_t);
@@ -276,7 +277,7 @@ ase_ssize_t ase_fio_write (ase_fio_t* fio, const void* data, ase_size_t size)
 #ifdef _WIN32
 	DWORD count;
 	if (size > ASE_TYPE_MAX(DWORD)) size = ASE_TYPE_MAX(DWORD);
-	if (WriteFile(handle, buf, &count, ASE_NULL) == FALSE) return -1;
+	if (WriteFile(fio->handle, data, size, &count, ASE_NULL) == FALSE) return -1;
 	return (ase_ssize_t)count;
 #else
 	if (size > ASE_TYPE_MAX(size_t)) size = ASE_TYPE_MAX(size_t);

@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 443 2008-10-30 13:45:17Z baconevi $
+ * $Id: types.h 463 2008-12-09 06:52:03Z baconevi $
  *
  * {License}
  */
@@ -17,10 +17,13 @@
  ******
  */
 
-#if defined(_WIN32)
+#if defined(_AUTO_CONFIGURED)
+	#include <ase/config.h>
+#elif defined(_WIN32)
 	#include <ase/conf_msw.h>
 #elif defined(vms) || defined(__vms)
 	#include <ase/conf_vms.h>
+/*
 #elif defined(__unix__) || defined(__unix) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || (defined(__APPLE__) && defined(__MACH__))  || defined(__SPU__)
 	#if !defined(__unix__)
 		#define __unix__
@@ -29,6 +32,7 @@
 		#define __unix
 	#endif
 	#include <ase/config.h>
+*/
 #else
 	#error unsupported operating system
 #endif
@@ -90,10 +94,10 @@ typedef int ase_tri_t;
  *  ase_ulong_t - define the largest unsigned integer type supported
  ******
  */
-#if ASE_SIZEOF_LONG_LONG != 0
+#if ASE_SIZEOF_LONG_LONG > 0
 	typedef long long ase_long_t;
 	typedef unsigned long long ase_ulong_t;
-#elif ASE_SIZEOF___INT64 != 0
+#elif ASE_SIZEOF___INT64 > 0
 	typedef __int64 ase_long_t;
 	typedef unsigned __int64 ase_ulong_t;
 #else

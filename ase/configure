@@ -20346,8 +20346,8 @@ else
 	fi
 fi
 
-CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
-CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE"
+CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -D_AUTO_CONFIGURED"
+CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -D_AUTO_CONFIGURED"
 
 LIBM=
 case $host in
@@ -27748,7 +27748,6 @@ _ACEOF
 esac
 
 
-# Defines extra options
 # Check whether --enable-wchar was given.
 if test "${enable_wchar+set}" = set; then
   enableval=$enable_wchar; enable_wchar_is=$enableval

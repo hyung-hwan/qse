@@ -1,5 +1,5 @@
 /*
- * $Id: main.c 116 2008-03-03 11:15:37Z baconevi $
+ * $Id: main.c 463 2008-12-09 06:52:03Z baconevi $
  *
  * {License}
  */
@@ -10,7 +10,7 @@
 #include <string.h>
 #include <locale.h>
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 
 int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
 {
