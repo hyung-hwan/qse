@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 389 2008-09-26 08:01:24Z baconevi $
+ * $Id: val.c 466 2008-12-09 09:50:40Z baconevi $
  *
  * {License}
  */
@@ -1178,8 +1178,13 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 			break;
 
 		case ASE_AWK_VAL_REAL:
+		#if defined(__MINGW32__)
+			DPRINTF (DCUSTOM, ASE_T("%Lf"), 
+				(double)((ase_awk_val_real_t*)val)->val);
+		#else
 			DPRINTF (DCUSTOM, ASE_T("%Lf"), 
 				(long double)((ase_awk_val_real_t*)val)->val);
+		#endif
 			break;
 
 		case ASE_AWK_VAL_STR:

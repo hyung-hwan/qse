@@ -1,5 +1,5 @@
 /*
- * $Id: extio.c 372 2008-09-23 09:51:24Z baconevi $
+ * $Id: extio.c 466 2008-12-09 09:50:40Z baconevi $
  *
  * {License}
  */
@@ -394,6 +394,7 @@ int ase_awk_readextio (
 	return ret;
 }
 
+#include <ase/utl/stdio.h>
 int ase_awk_writeextio_val (
 	ase_awk_run_t* run, int out_type, 
 	const ase_char_t* name, ase_awk_val_t* v)
