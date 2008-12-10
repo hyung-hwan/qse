@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 455 2008-11-26 09:05:00Z baconevi $
+ * $Id: awk.h 464 2008-12-09 08:50:16Z baconevi $
  *
  * {License}
  */
@@ -48,7 +48,7 @@ struct ase_awk_extio_t
 	int type;           /* [IN] console, file, coproc, pipe */
 	int mode;           /* [IN] read, write, etc */
 	ase_char_t* name;   /* [IN] */
-	void* data;  /* [IN] */
+	void* data;         /* [IN] */
 	void* handle;       /* [OUT] */
 
 	/* input */

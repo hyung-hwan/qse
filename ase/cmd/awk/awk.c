@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 463 2008-12-09 06:52:03Z baconevi $
+ * $Id: awk.c 464 2008-12-09 08:50:16Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -56,6 +56,12 @@ typedef struct srcio_data_t
 		} file;
 	} data;
 } srcio_data_t;
+
+typedef struct runio_data_t
+{
+	ase_char_t** icf;
+	ase_size_t icf_no;
+} runio_data_t;
 
 static void local_dprintf (const ase_char_t* fmt, ...)
 {
@@ -400,13 +406,6 @@ static int open_extio_console (ase_awk_extio_t* epa);
 static int close_extio_console (ase_awk_extio_t* epa);
 static int next_extio_console (ase_awk_extio_t* epa);
 
-static ase_size_t infile_no = 0;
-static const ase_char_t* infiles[1000] =
-{
-	ASE_T(""),
-	ASE_NULL
-};
-
 static ase_ssize_t getdata (ase_char_t* data, ase_size_t size, FILE* fp)
 {
 	ase_ssize_t n = 0;
@@ -428,6 +427,7 @@ static ase_ssize_t awk_extio_console (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
 {
 	ase_awk_extio_t* epa = (ase_awk_extio_t*)arg;
+	runio_data_t* rd = (runio_data_t*)epa->data;
 
 	if (cmd == ASE_AWK_IO_OPEN)
 	{
@@ -450,13 +450,13 @@ static ase_ssize_t awk_extio_console (
 		{
 			/* it has reached the end of the current file.
 			 * open the next file if available */
-			if (infiles[infile_no] == ASE_NULL) 
+			if (rd->icf[rd->icf_no] == ASE_NULL) 
 			{
 				/* no more input console */
 				return 0;
 			}
 
-			if (infiles[infile_no][0] == ASE_T('\0'))
+			if (rd->icf[rd->icf_no][0] == ASE_T('\0'))
 			{
 				if (epa->handle != ASE_NULL &&
 				    epa->handle != stdin &&
@@ -480,21 +480,21 @@ static ase_ssize_t awk_extio_console (
 			}
 			else
 			{
-				FILE* fp = ase_fopen (infiles[infile_no], ASE_T("r"));
+				FILE* fp = ase_fopen (rd->icf[rd->icf_no], ASE_T("r"));
 				if (fp == ASE_NULL)
 				{
 					ase_cstr_t errarg;
 
-					errarg.ptr = infiles[infile_no];
-					errarg.len = ase_strlen(infiles[infile_no]);
+					errarg.ptr = rd->icf[rd->icf_no];
+					errarg.len = ase_strlen(rd->icf[rd->icf_no]);
 
 					ase_awk_setrunerror (epa->run, ASE_AWK_EOPEN, 0, &errarg, 1);
 					return -1;
 				}
 
 				if (ase_awk_setfilename (
-					epa->run, infiles[infile_no], 
-					ase_strlen(infiles[infile_no])) == -1)
+					epa->run, rd->icf[rd->icf_no], 
+					ase_strlen(rd->icf[rd->icf_no])) == -1)
 				{
 					fclose (fp);
 					return -1;
@@ -528,11 +528,11 @@ static ase_ssize_t awk_extio_console (
 					}
 				}
 
-				local_dprintf (ASE_T("open the next console [%s]\n"), infiles[infile_no]);
+				local_dprintf (ASE_T("open the next console [%s]\n"), rd->icf[rd->icf_no]);
 				epa->handle = fp;
 			}
 
-			infile_no++;	
+			rd->icf_no++;	
 		}
 
 		/*return ase_strlen(data);*/
@@ -576,20 +576,21 @@ static ase_ssize_t awk_extio_console (
 
 static int open_extio_console (ase_awk_extio_t* epa)
 {
+	runio_data_t* rd = (runio_data_t*)epa->data;
 	/* TODO: OpenConsole in GUI APPLICATION */
 
 	local_dprintf (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
 
 	if (epa->mode == ASE_AWK_EXTIO_CONSOLE_READ)
 	{
-		if (infiles[infile_no] == ASE_NULL)
+		if (rd->icf[rd->icf_no] == ASE_NULL)
 		{
 			/* no more input file */
 			local_dprintf (ASE_T("console - no more file\n"));;
 			return 0;
 		}
 
-		if (infiles[infile_no][0] == ASE_T('\0'))
+		if (rd->icf[rd->icf_no][0] == ASE_T('\0'))
 		{
 			local_dprintf (ASE_T("    console(r) - <standard input>\n"));
 			epa->handle = stdin;
@@ -598,22 +599,22 @@ static int open_extio_console (ase_awk_extio_t* epa)
 		{
 			/* a temporary variable fp is used here not to change 
 			 * any fields of epa when the open operation fails */
-			FILE* fp = ase_fopen (infiles[infile_no], ASE_T("r"));
+			FILE* fp = ase_fopen (rd->icf[rd->icf_no], ASE_T("r"));
 			if (fp == ASE_NULL)
 			{
 				ase_cstr_t errarg;
 
-				errarg.ptr = infiles[infile_no];
-				errarg.len = ase_strlen(infiles[infile_no]);
+				errarg.ptr = rd->icf[rd->icf_no];
+				errarg.len = ase_strlen(rd->icf[rd->icf_no]);
 
 				ase_awk_setrunerror (epa->run, ASE_AWK_EOPEN, 0, &errarg, 1);
 				return -1;
 			}
 
-			local_dprintf (ASE_T("    console(r) - %s\n"), infiles[infile_no]);
+			local_dprintf (ASE_T("    console(r) - %s\n"), rd->icf[rd->icf_no]);
 			if (ase_awk_setfilename (
-				epa->run, infiles[infile_no], 
-				ase_strlen(infiles[infile_no])) == -1)
+				epa->run, rd->icf[rd->icf_no], 
+				ase_strlen(rd->icf[rd->icf_no])) == -1)
 			{
 				fclose (fp);
 				return -1;
@@ -622,7 +623,7 @@ static int open_extio_console (ase_awk_extio_t* epa)
 			epa->handle = fp;
 		}
 
-		infile_no++;
+		rd->icf_no++;
 		return 1;
 	}
 	else if (epa->mode == ASE_AWK_EXTIO_CONSOLE_WRITE)
@@ -798,16 +799,21 @@ static void print_usage (const ase_char_t* argv0)
 	}
 }
 
-static int run_awk (ase_awk_t* awk, 
-	const ase_char_t* mfn, ase_awk_runarg_t* runarg)
+static int run_awk (
+	ase_awk_t* awk, const ase_char_t* mfn, 
+	ase_awk_runarg_t* runarg, ase_char_t** icf)
 {
 	ase_awk_runcbs_t runcbs;
 	ase_awk_runios_t runios;
+	runio_data_t rd;
+
+	rd.icf = icf;
+	rd.icf_no = 0;
 
 	runios.pipe = awk_extio_pipe;
 	runios.file = awk_extio_file;
 	runios.console = awk_extio_console;
-	runios.data = ASE_NULL;
+	runios.data = &rd;
 
 	runcbs.on_start = on_run_start;
 	runcbs.on_statement = on_run_statement;
@@ -877,7 +883,9 @@ struct argout_t
 	ase_char_t** isf;  /* input source files */
 	ase_size_t   isfl; /* the number of input source filse */
 	ase_char_t*  osf;  /* output source file */
-	ase_map_t*   vm;
+	ase_char_t** icf;  /* input console files */
+	ase_size_t   icfl; /* the number of input console files */
+	ase_map_t*   vm;   /* global variable map */
 };
 
 static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
@@ -916,13 +924,20 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 	};
 
 	ase_cint_t c;
-	ase_size_t isfc = 16;
-	ase_size_t isfl = 0;
-	ase_char_t** isf = ASE_NULL;
-	ase_char_t* osf = ASE_NULL;
-	ase_map_t* vm = ASE_NULL;
 
-	isf = (ase_char_t**)malloc (ASE_SIZEOF(*isf) * isfc);
+	ase_size_t isfc = 16; /* the capacity of isf */
+	ase_size_t isfl = 0; /* number of input source files */
+
+	ase_size_t icfc = 0; /* the capacity of icf */
+	ase_size_t icfl = 0;  /* the number of input console files */
+
+	ase_char_t** isf = ASE_NULL; /* input source files */
+	ase_char_t* osf = ASE_NULL; /* output source file */
+	ase_char_t** icf = ASE_NULL; /* input console files */
+
+	ase_map_t* vm = ASE_NULL;  /* global variable map */
+
+	isf = (ase_char_t**) malloc (ASE_SIZEOF(*isf) * isfc);
 	if (isf == ASE_NULL)
 	{
 		out_of_memory ();
@@ -1047,8 +1062,9 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 			ABORT (on_error);
 		}
 
-		ao->iss = argv[opt.ind++];
-		ao->isf = ASE_NULL;
+		/* the source code is the string, not from the file */
+		ao->iss = argv[opt.ind++]; /* source string */
+		ao->isf = ASE_NULL; /* no source file */
 		ao->isfl = 0;
 	}
 	else
@@ -1058,16 +1074,38 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 		ao->isfl = isfl;
 	}
 
-	/* TODO; remaining args are input(console) file names */
+	/* the remaining arguments are input console file names */
+	icfc = (opt.ind >= argc)? 2: (argc - opt.ind + 1);
+	icf = (ase_char_t**) malloc (ASE_SIZEOF(*icf)*icfc);
+	if (icf == ASE_NULL)
+	{
+		out_of_memory ();
+		ABORT (on_error);
+	}
+
+	if (opt.ind >= argc)
+	{
+		/* no input(console) file names are specified.
+		 * the standard input becomes the input console */
+		icf[icfl++] = ASE_T("");
+	}
+	else
+	{	
+		do { icf[icfl++] = argv[opt.ind++]; } while (opt.ind < argc);
+	}
+	icf[icfl] = ASE_NULL;
 
 	ao->osf = osf;
+	ao->icf = icf;
+	ao->icfl = icfl;
 	ao->vm = vm;
 
 	return 0;
 
 on_error:
-	if (isf != ASE_NULL) free (isf);
 	if (vm != ASE_NULL) ase_map_close (vm);
+	if (icf != ASE_NULL) free (icf);
+	if (isf != ASE_NULL) free (isf);
 	return -1;
 }
 
@@ -1197,7 +1235,6 @@ static int awk_main (int argc, ase_char_t* argv[])
 	}
 	if (i == 1) return 0;
 
-	infiles[file_count] = ASE_NULL;
 	runarg[runarg_count].ptr = NULL;
 	runarg[runarg_count].len = 0;
 
@@ -1224,7 +1261,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 	signal (SIGINT, stop_run);
 #endif
 
-	if (run_awk (awk, mfn, runarg) == -1)
+	if (run_awk (awk, mfn, runarg, ao.icf) == -1)
 	{
 		close_awk (awk);
 		return -1;
