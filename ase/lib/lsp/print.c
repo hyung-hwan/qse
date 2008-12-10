@@ -1,5 +1,5 @@
 /*
- * $Id: print.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: print.c 467 2008-12-09 09:55:51Z baconevi $
  *
  * {License}
  */
@@ -73,7 +73,13 @@ static int __print (ase_lsp_t* lsp, const ase_lsp_obj_t* obj, ase_bool_t prt_con
 			lsp->prmfns.misc.sprintf (
 				lsp->prmfns.misc.data,
 				buf, ASE_COUNTOF(buf), 
-				ASE_T("%Lf"), (long double)ASE_LSP_RVAL(obj));
+				ASE_T("%Lf"), 
+			#ifdef __MINGW32__
+				(double)ASE_LSP_RVAL(obj)
+			#else
+				(long double)ASE_LSP_RVAL(obj)
+			#endif
+			);
 
 			OUTPUT_STR (lsp, buf);
 			break;
