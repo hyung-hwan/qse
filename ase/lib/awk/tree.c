@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 381 2008-09-24 11:07:24Z baconevi $
+ * $Id: tree.c 466 2008-12-09 09:50:40Z baconevi $
  *
  * {License}
  */
@@ -264,7 +264,7 @@ static int print_expression (ase_awk_t* awk, ase_awk_nde_t* nde)
 		{
 			if (((ase_awk_nde_real_t*)nde)->str == ASE_NULL)
 			{
-			#if (ASE_SIZEOF_LONG_DOUBLE != 0)
+			#if (ASE_SIZEOF_LONG_DOUBLE != 0) && !defined(__MINGW32__)
 				awk->prmfns->sprintf (
 					awk->prmfns->data,
 					awk->tmp.fmt, ASE_COUNTOF(awk->tmp.fmt), ASE_T("%Lf"), 

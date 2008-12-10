@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 391 2008-09-27 09:51:23Z baconevi $
+ * $Id: run.c 466 2008-12-09 09:50:40Z baconevi $
  *
  * {License}
  */
@@ -6954,7 +6954,7 @@ ase_char_t* ase_awk_format (
 			ase_real_t r;
 			ase_char_t* p;
 			int n;
-
+	
 			FMT_CHAR (ASE_T('L'));
 			FMT_CHAR (fmt[i]);
 
@@ -6999,7 +6999,12 @@ ase_char_t* ase_awk_format (
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					ASE_STR_PTR(fbu),
-					(long double)r);
+				#if defined(__MINGW32__)
+					(double)r
+				#else
+					(long double)r
+				#endif
+				);
 					
 				if (n == -1)
 				{
