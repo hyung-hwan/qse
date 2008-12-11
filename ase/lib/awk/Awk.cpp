@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 449 2008-10-31 10:32:28Z baconevi $
+ * $Id: Awk.cpp 468 2008-12-10 10:19:59Z baconevi $
  *
  * {License}
  */
@@ -1050,7 +1050,6 @@ Awk::Awk (): awk (ASE_NULL), functionMap (ASE_NULL),
 
 	prmfns.pow         = pow;
 	prmfns.sprintf     = sprintf;
-	prmfns.dprintf     = dprintf;
 	prmfns.data = this;
 }
 
@@ -1775,14 +1774,6 @@ int Awk::sprintf (void* data, char_t* buf, size_t size,
 	int n = ((Awk*)data)->vsprintf (buf, size, fmt, ap);
 	va_end (ap);
 	return n;
-}
-
-void Awk::dprintf (void* data, const char_t* fmt, ...)
-{
-	va_list ap;
-	va_start (ap, fmt);
-	((Awk*)data)->vdprintf (fmt, ap);
-	va_end (ap);
 }
 
 /////////////////////////////////

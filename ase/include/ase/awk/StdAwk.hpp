@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 341 2008-08-20 10:58:19Z baconevi $
+ * $Id: StdAwk.hpp 468 2008-12-10 10:19:59Z baconevi $
  *
  * {License}
  */
@@ -83,7 +83,6 @@ protected:
 	real_t pow (real_t x, real_t y);
 	int    vsprintf (char_t* buf, size_t size,
 	                 const char_t* fmt, va_list arg);
-	void   vdprintf (const char_t* fmt, va_list arg);
 
 protected:
 	unsigned int seed; 
