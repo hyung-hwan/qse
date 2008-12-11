@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 424 2008-10-14 10:08:31Z baconevi $
+ * $Id: StdAwk.cpp 468 2008-12-10 10:19:59Z baconevi $
  *
  * {License}
  */
@@ -455,11 +455,6 @@ int StdAwk::vsprintf (
 	char_t* buf, size_t size, const char_t* fmt, va_list arg) 
 {
 	return ase_vsprintf (buf, size, fmt, arg);
-}
-
-void StdAwk::vdprintf (const char_t* fmt, va_list arg) 
-{
-	ase_vfprintf (stderr, fmt, arg);
 }
 
 /////////////////////////////////

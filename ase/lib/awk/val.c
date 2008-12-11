@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 466 2008-12-09 09:50:40Z baconevi $
+ * $Id: val.c 468 2008-12-10 10:19:59Z baconevi $
  *
  * {License}
  */
@@ -1131,6 +1131,8 @@ int ase_awk_strtonum (
 	return 0; /* long */
 }
 
+#if 0
+
 #define DPRINTF run->awk->prmfns->dprintf
 #define DCUSTOM run->awk->prmfns->data
 
@@ -1212,3 +1214,4 @@ void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
 	}
 }
 
+#endif

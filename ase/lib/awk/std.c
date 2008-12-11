@@ -3,8 +3,10 @@
  */
 
 #include "awk.h"
-#include <ase/utl/stdio.h>
+#include <ase/cmn/sio.h>
+
 #include <math.h>
+#include <ase/utl/stdio.h>
 
 typedef struct ext_t
 {
@@ -31,15 +33,7 @@ static int custom_awk_sprintf (
 	return n;
 }
 
-static void custom_awk_dprintf (void* custom, const ase_char_t* fmt, ...)
-{
-	va_list ap;
-	va_start (ap, fmt);
-	ase_vfprintf (ASE_STDERR, fmt, ap);
-	va_end (ap);
-}
-
-ase_awk_t* ase_awk_openstd (void)
+ase_awk_t* ase_awk_opensimple (void)
 {
 	ase_awk_t* awk;
 	ext_t* ext;
@@ -50,7 +44,6 @@ ase_awk_t* ase_awk_openstd (void)
 	ext = (ext_t*)ase_awk_getextension(awk);
 	ext->prmfns.pow     = custom_awk_pow;
 	ext->prmfns.sprintf = custom_awk_sprintf;
-	ext->prmfns.dprintf = custom_awk_dprintf;
 	ext->prmfns.data    = ASE_NULL;
 	ase_awk_setprmfns (awk, &ext->prmfns);
 
@@ -63,6 +56,8 @@ ase_awk_t* ase_awk_openstd (void)
 	return awk;
 }
 
+/*** PARSESIMPLE ***/
+
 typedef struct sf_t sf_t;
 
 struct sf_t
@@ -72,14 +67,16 @@ struct sf_t
 		const ase_char_t*const* files; 
 		ase_size_t              count;  /* the number of files */
 		ase_size_t              index;  /* current file index */
-		ASE_FILE*               handle; /* the handle to an open file */
+		ase_sio_t*              handle; /* the handle to an open file */
 	} in;
 
 	struct
 	{
 		const ase_char_t*       file;
-		ASE_FILE*               handle;
+		ase_sio_t*              handle;
 	} out;
+
+	ase_awk_t* awk;
 };
 
 static ase_ssize_t sf_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
@@ -93,11 +90,16 @@ static ase_ssize_t sf_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 
 		if (sf->in.files[sf->in.index][0] == ASE_T('\0'))
 		{
-			sf->in.handle = ASE_STDIN;
+			sf->in.handle = ase_sio_in;
 		}
 		else
 		{
-			sf->in.handle = ase_fopen (sf->in.files[sf->in.index], ASE_T("r"));
+			sf->in.handle = ase_sio_open (
+				ase_awk_getmmgr(sf->awk),
+				0,
+				sf->in.files[sf->in.index],
+				ASE_SIO_READ
+			);
 			if (sf->in.handle == ASE_NULL) return -1;
 		}
 
@@ -110,16 +112,42 @@ static ase_ssize_t sf_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
 		if (sf->in.index >= sf->in.count) return 0;
-		if (sf->in.handle != ASE_STDIN) ase_fclose (sf->in.handle);
+		if (sf->in.handle != ase_sio_in) ase_sio_close (sf->in.handle);
 		return 0;
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
 		ase_ssize_t n = 0;
-		ASE_FILE* fp;
+		ase_sio_t* fp;
 
 	retry:
 		fp = sf->in.handle;
+
+		n = ase_sio_getsx (fp, data, size);
+		if (n == 0 && ++sf->in.index < sf->in.count)
+		{
+			if (fp != ase_sio_in) ase_sio_close (fp);
+			if (sf->in.files[sf->in.index][0] == ASE_T('\0'))
+			{
+				sf->in.handle = ase_sio_in;
+			}
+			else
+			{
+				sf->in.handle = ase_sio_open (
+					ase_awk_getmmgr(sf->awk),
+					0,
+					sf->in.files[sf->in.index],
+					ASE_SIO_READ
+				);
+				if (sf->in.handle == ASE_NULL) return -1;
+			}
+			/* TODO: reset internal line counters...
+				ase_awk_setsinname ();
+			*/
+			goto retry;
+		}
+
+		#if 0
 		while (!ase_feof(fp) && n < size)
 		{
 			ase_cint_t c = ase_fgetc (fp);
@@ -136,14 +164,16 @@ static ase_ssize_t sf_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 			sf->in.index++;
 			if (sf->in.index < sf->in.count)
 			{
-				if (fp != ASE_STDIN) ase_fclose (fp);
+				if (fp != ase_sio_in) ase_sio_close (fp);
 				if (sf->in.files[sf->in.index][0] == ASE_T('\0'))
 				{
-					sf->in.handle = ASE_STDIN;
+					sf->in.handle = ase_sio_in;
 				}
 				else
 				{
-					sf->in.handle = ase_fopen (sf->in.files[sf->in.index], ASE_T("r"));
+					sf->in.handle = ase_sio_open (
+						ase_awk_getmmgr(sf->awk), 0,
+						sf->in.files[sf->in.index], ASE_SIO_READ);
 					if (sf->in.handle == ASE_NULL) return -1;
 				}
 				/* TODO: reset internal line counters...
@@ -152,6 +182,8 @@ static ase_ssize_t sf_in (int cmd, void* arg, ase_char_t* data, ase_size_t size)
 				goto retry;
 			}
 		}
+		#endif
+
 		return n;
 	}
 
@@ -166,11 +198,16 @@ static ase_ssize_t sf_out (int cmd, void* arg, ase_char_t* data, ase_size_t size
 	{
 		if (sf->out.file[0] == ASE_T('\0'))
 		{
-			sf->out.handle = ASE_STDOUT;
+			sf->out.handle = ase_sio_out;
 		}
 		else 
 		{
-			sf->out.handle = ase_fopen (sf->out.file, ASE_T("w"));
+			sf->out.handle = ase_sio_open (
+				ase_awk_getmmgr(sf->awk), 
+				0,
+				sf->out.file, 
+				ASE_SIO_WRITE|ASE_SIO_CREATE|ASE_SIO_TRUNCATE
+			);
 			if (sf->out.handle == ASE_NULL) return -1;
 		}
 
@@ -178,13 +215,14 @@ static ase_ssize_t sf_out (int cmd, void* arg, ase_char_t* data, ase_size_t size
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE) 
 	{
-		ase_fflush (sf->out.handle);
-		if (sf->out.handle != ASE_STDOUT &&
-		    sf->out.handle != ASE_STDERR) ase_fclose (sf->out.handle);
+		ase_sio_flush (sf->out.handle);
+		if (sf->out.handle != ase_sio_out &&
+		    sf->out.handle != ase_sio_err) ase_sio_close (sf->out.handle);
 		return 0;
 	}
 	else if (cmd == ASE_AWK_IO_WRITE)
 	{
+		/*
 		ase_size_t left = size;
 
 		while (left > 0)
@@ -201,31 +239,48 @@ static ase_ssize_t sf_out (int cmd, void* arg, ase_char_t* data, ase_size_t size
 				if (n < 0) return -1;
 				left -= n; data += n;
 			}
-		}
 
-		return size;
+		}
+		*/
+
+		return ase_sio_putsx (sf->out.handle, data, size);
 	}
 
 	return -1;
 }
 
-int ase_awk_parsefiles (ase_awk_t* awk, const ase_char_t*const* isf, ase_size_t isfl, const ase_char_t* osf)
+int ase_awk_parsesimple (
+	ase_awk_t* awk, const void* is, ase_size_t isl, 
+	const ase_char_t* osf, int opt)
 {
 	sf_t sf;
 	ase_awk_srcios_t sio;
 
-	if (isf == ASE_NULL || isfl == 0) 
+	if (is == ASE_NULL || isl == 0) 
 	{
 		ase_awk_seterrnum (awk, ASE_AWK_EINVAL);
 		return -1;
 	}
 
-	sf.in.files = isf;
-	sf.in.count = isfl;
-	sf.in.index = 0;
-	sf.in.handle = ASE_NULL;
+	if (opt == ASE_AWK_PARSE_FILES)
+	{
+		sf.in.files = is;
+		sf.in.count = isl;
+		sf.in.index = 0;
+		sf.in.handle = ASE_NULL;
+	}
+	else if (opt == ASE_AWK_PARSE_STRING)
+	{
+		/* TODO */
+	}
+	else
+	{
+		ase_awk_seterrnum (awk, ASE_AWK_EINVAL);
+		return -1;
+	}
 
 	sf.out.file = osf;
+	sf.awk = awk;
 	
         sio.in = sf_in;
         sio.out = (osf == ASE_NULL)? ASE_NULL: sf_out;
@@ -234,9 +289,10 @@ int ase_awk_parsefiles (ase_awk_t* awk, const ase_char_t*const* isf, ase_size_t 
 	return ase_awk_parse (awk, &sio);
 }
 
-#if 0
-int ase_awk_parsestring (ase_awk_t* awk, const ase_char_t* str, ase_size_t len)
+/*** RUNSIMPLE ***/
+
+ase_awk_run_t* ase_awk_runsimple (
+	ase_awk_t* awk, ase_size_t argc, const char* args[])
 {
-	return -1;
+	return ASE_NULL;
 }
-#endif

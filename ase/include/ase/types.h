@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 463 2008-12-09 06:52:03Z baconevi $
+ * $Id: types.h 468 2008-12-10 10:19:59Z baconevi $
  *
  * {License}
  */
@@ -17,7 +17,7 @@
  ******
  */
 
-#if defined(_AUTO_CONFIGURED)
+#if defined(HAVE_CONFIG_H)
 	#include <ase/config.h>
 #elif defined(_WIN32)
 	#include <ase/conf_msw.h>

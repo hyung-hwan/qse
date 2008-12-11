@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 449 2008-10-31 10:32:28Z baconevi $
+ * $Id: Awk.hpp 468 2008-12-10 10:19:59Z baconevi $
  *
  * {License}
  */
@@ -1044,7 +1044,6 @@ protected:
 	virtual real_t pow (real_t x, real_t y) = 0;
 	virtual int    vsprintf (char_t* buf, size_t size,
 	                         const char_t* fmt, va_list arg) = 0;
-	virtual void   vdprintf (const char_t* fmt, va_list arg) = 0;
 
 	// static glue members for various handlers
 	static ssize_t sourceReader (
@@ -1078,7 +1077,6 @@ protected:
 	static real_t pow     (void* data, real_t x, real_t y);
 	static int    sprintf (void* data, char_t* buf, size_t size,
 	                       const char_t* fmt, ...);
-	static void   dprintf (void* data, const char_t* fmt, ...);
 
 protected:
 	awk_t* awk;

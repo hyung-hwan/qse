@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 464 2008-12-09 08:50:16Z baconevi $
+ * $Id: awk.h 468 2008-12-10 10:19:59Z baconevi $
  *
  * {License}
  */
@@ -37,7 +37,6 @@ typedef ase_real_t (*ase_awk_pow_t) (void* data, ase_real_t x, ase_real_t y);
 typedef int (*ase_awk_sprintf_t) (
 	void* data, ase_char_t* buf, ase_size_t size, 
 	const ase_char_t* fmt, ...);
-typedef void (*ase_awk_dprintf_t) (void* data, const ase_char_t* fmt, ...); 
 
 typedef ase_ssize_t (*ase_awk_io_t) (
 	int cmd, void* arg, ase_char_t* data, ase_size_t count);
@@ -75,7 +74,6 @@ struct ase_awk_prmfns_t
 {
 	ase_awk_pow_t     pow;         /* required */
 	ase_awk_sprintf_t sprintf;     /* required */
-	ase_awk_dprintf_t dprintf;     /* required in the debug mode */
 
 	/* user-defined data passed to the functions above */
 	void*             data; /* optional */
@@ -476,6 +474,12 @@ enum ase_awk_valtostr_opt_t
 	ASE_AWK_VALTOSTR_PRINT = (1 << 2)
 };
 
+enum ase_awk_parse_opt_t
+{
+	ASE_AWK_PARSE_FILES = 0,
+	ASE_AWK_PARSE_STRING = 1
+};
+
 typedef struct ase_awk_val_nil_t  ase_awk_val_nil_t;
 typedef struct ase_awk_val_int_t  ase_awk_val_int_t;
 typedef struct ase_awk_val_real_t ase_awk_val_real_t;
@@ -822,12 +826,29 @@ int ase_awk_parse (
 /******/
 
 
-int ase_awk_parsefiles (
-	ase_awk_t*              awk,
-	const ase_char_t*const* isf  /* input source file names */,
-	ase_size_t              isfl /* the number of input source files */,
-	const ase_char_t*       osf  /* an output source file name */
+/****f* ase.awk/ase_awk_opensimple
+ * NAME
+ *  ase_awk_opensimple - create an awk object
+ *
+ * SYNOPSIS
+ */
+ase_awk_t* ase_awk_opensimple (void);
+/******/
+
+/****f* ase.awk/ase_awk_parsesimple
+ * NAME
+ *  ase_awk_parsesimple - parse source code
+ *
+ * SYNOPSIS
+ */
+int ase_awk_parsesimple (
+	ase_awk_t*        awk,
+	const void*       is  /* source file names or source string */,
+	ase_size_t        isl /* source file count or source string length */,
+	const ase_char_t* osf /* an output source file name */,
+	int               opt /* ASE_AWK_PARSE_FILES, ASE_AWK_PARSE_STRING */
 );
+/******/
 
 /**
  * Executes a parsed program.
@@ -1049,7 +1070,6 @@ int ase_awk_strtonum (
 	ase_awk_run_t* run, const ase_char_t* ptr, ase_size_t len, 
 	ase_long_t* l, ase_real_t* r);
 
-void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val);
 #ifdef __cplusplus
 }
 #endif

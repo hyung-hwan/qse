@@ -66,8 +66,8 @@ else
 fi
 
 dnl make visible the 64bit interface to the file system
-CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -D_AUTO_CONFIGURED"
-CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -D_AUTO_CONFIGURED"
+CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
+CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE"
 
 dnl Checks for the math library (is -lm needed?)
 AC_CHECK_LIBM
