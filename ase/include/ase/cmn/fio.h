@@ -65,22 +65,31 @@ extern "C" {
  * NAME
  *  ase_fio_open - open a file
  *
- * PARAMETERS
+ * DESCRIPTION
+ *  To open a file, you should set the flags with at least one of 
+ *  ASE_FIO_READ, ASE_FIO_WRITE, ASE_FIO_APPEND.
  * 
  * SYNOPSIS
  */
 ase_fio_t* ase_fio_open (
-	ase_mmgr_t* mmgr,
-	ase_size_t ext,
+	ase_mmgr_t*       mmgr,
+	ase_size_t        ext,
 	const ase_char_t* path,
-	int flags,
-	int mode
+	int               flags,
+	int               mode
 );
 /******/
 
+/****f* ase.fio/ase_fio_close
+ * NAME
+ *  ase_fio_close - close a file
+ * 
+ * SYNOPSIS
+ */
 void ase_fio_close (
 	ase_fio_t* fio
 );
+/******/
 
 ase_fio_t* ase_fio_init (
 	ase_fio_t* fio,
