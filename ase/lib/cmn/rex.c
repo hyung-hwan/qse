@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: rex.c 470 2008-12-11 13:43:05Z baconevi $
  *
  * {License}
  */
@@ -9,7 +9,8 @@
 #include "chr.h"
 
 #ifdef DEBUG_REX
-#include <ase/utl/stdio.h>
+#include <ase/bas/sio.h>
+#define DPUTS(x) ase_sio_puts(&ase_sio_err,x)
 #endif
 
 enum
@@ -736,8 +737,7 @@ static int build_charset (builder_t* builder, code_t* cmd)
 		{
 			/* invalid range */
 		#ifdef DEBUG_REX
-			ase_dprintf (
-				ASE_T("build_charset: invalid character set range\n"));
+			DPUTS (ASE_T("build_charset: invalid character set range\n"));
 		#endif
 			builder->errnum = ASE_REX_ECRANGE;
 			return -1;
@@ -768,7 +768,7 @@ static int build_cclass (builder_t* builder, ase_char_t* cc)
 	{
 		/* wrong class name */
 	#ifdef DEBUG_REX
-		ase_dprintf (ASE_T("build_cclass: wrong class name\n"));
+		DPUTS (ASE_T("build_cclass: wrong class name\n"));
 	#endif
 		builder->errnum = ASE_REX_ECCLASS;
 		return -1;
@@ -781,7 +781,7 @@ static int build_cclass (builder_t* builder, ase_char_t* cc)
 	    builder->ptn.curc.value != ASE_T(':'))
 	{
 	#ifdef DEBUG_REX
-		ase_dprintf (ASE_T("build_cclass: a colon(:) expected\n"));
+		DPUTS (ASE_T("build_cclass: a colon(:) expected\n"));
 	#endif
 		builder->errnum = ASE_REX_ECOLON;
 		return -1;
@@ -794,7 +794,7 @@ static int build_cclass (builder_t* builder, ase_char_t* cc)
 	    builder->ptn.curc.value != ASE_T(']'))
 	{
 	#ifdef DEBUG_REX
-		ase_dprintf (ASE_T("build_cclass: ] expected\n"));
+		DPUTS (ASE_T("build_cclass: ] expected\n"));
 	#endif
 		builder->errnum = ASE_REX_ERBRACKET;	
 		return -1;
@@ -1427,11 +1427,11 @@ static const ase_byte_t* match_ord_char (
 		while (si < ubound)
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
-#ifdef DEBUG_REX
+		#ifdef DEBUG_REX
 			ase_dprintf (
 				ASE_T("match_ord_char: <ignorecase> %c %c\n"),
 				cc, mat->match_ptr[si]);
-#endif
+		#endif
 			if (cc != ASE_CCLS_TOUPPER (matcher->ccls, mat->match_ptr[si])) break;
 			si++;
 		}
@@ -1441,11 +1441,11 @@ static const ase_byte_t* match_ord_char (
 		while (si < ubound)
 		{
 			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
-#ifdef DEBUG_REX
+		#ifdef DEBUG_REX
 			ase_dprintf (
 				ASE_T("match_ord_char: %c %c\n"), 
 				cc, mat->match_ptr[si]);
-#endif
+		#endif
 			if (cc != mat->match_ptr[si]) break;
 			si++;
 		}

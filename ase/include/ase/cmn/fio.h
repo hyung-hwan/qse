@@ -88,6 +88,21 @@ ase_fio_hnd_t ase_fio_gethandle (
 	ase_fio_t* fio
 );
 
+/****f* ase.cmn.fio/ase_fio_sethandle
+ * SYNOPSIS
+ *  ase_fio_sethandle - set the file handle
+ * WARNING
+ *  Avoid using this function if you don't know what you are doing.
+ *  You may have to retrieve the previous handle using ase_fio_gethandle()
+ *  to take relevant actions before resetting it with ase_fio_sethandle().
+ * SYNOPSIS
+ */
+void ase_fio_sethandle (
+	ase_fio_t* fio,
+	ase_fio_hnd_t handle
+);
+/******/
+
 ase_fio_off_t ase_fio_seek (
 	ase_fio_t*    fio,
 	ase_fio_off_t offset,

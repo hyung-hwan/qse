@@ -181,6 +181,11 @@ ase_fio_hnd_t ase_fio_gethandle (ase_fio_t* fio)
 	return fio->handle;
 }
 
+void ase_fio_sethandle (ase_fio_t* fio, ase_fio_hnd_t handle)
+{
+	fio->handle = handle;
+}
+
 ase_fio_off_t ase_fio_seek (
 	ase_fio_t* fio, ase_fio_off_t offset, ase_fio_ori_t origin)
 {
