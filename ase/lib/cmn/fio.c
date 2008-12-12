@@ -139,20 +139,22 @@ ase_fio_t* ase_fio_init (
 	#endif
 		/*
 		 * rwa -> RDWR   | APPEND
-		 * ra  -> RDONLY | APPEND
+		 * ra  -> RDWR   | APPEND
 		 * wa  -> WRONLY | APPEND
 		 * a   -> WRONLY | APPEND
 		 */
-		if ((flags & ASE_FIO_READ) && 
-		    (flags & ASE_FIO_WRITE)) desired_access |= O_RDWR;
-		else if (flags & ASE_FIO_READ) desired_access |= O_RDONLY;
-		else if (flags & ASE_FIO_WRITE) desired_access |= O_WRONLY;
-
 		if (flags & ASE_FIO_APPEND) 
 		{
-			if (!(flags & ASE_FIO_READ) &&
-			    !(flags & ASE_FIO_WRITE)) desired_access |= O_WRONLY;
+			if ((flags & ASE_FIO_READ)) desired_access |= O_RDWR;
+			else desired_access |= O_WRONLY;
 			desired_access |= O_APPEND;
+		}
+		else
+		{
+			if ((flags & ASE_FIO_READ) && 
+			    (flags & ASE_FIO_WRITE)) desired_access |= O_RDWR;
+			else if (flags & ASE_FIO_READ) desired_access |= O_RDONLY;
+			else if (flags & ASE_FIO_WRITE) desired_access |= O_WRONLY;
 		}
 
 		if (flags & ASE_FIO_CREATE) desired_access |= O_CREAT;
