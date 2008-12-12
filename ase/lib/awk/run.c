@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 466 2008-12-09 09:50:40Z baconevi $
+ * $Id: run.c 469 2008-12-11 10:05:28Z baconevi $
  *
  * {License}
  */
@@ -599,12 +599,17 @@ ase_awk_t* ase_awk_getrunawk (ase_awk_run_t* run)
 	return run->awk;
 }
 
-void* ase_awk_getruncustomdata (ase_awk_run_t* run)
+ase_mmgr_t* ase_awk_getrunmmgr (ase_awk_run_t* run)
+{
+	return run->awk->mmgr;
+}
+
+void* ase_awk_getrundata (ase_awk_run_t* run)
 {
 	return run->data;
 }
 
-ase_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* run)
+ase_map_t* ase_awk_getrunnvmap (ase_awk_run_t* run)
 {
 	return run->named;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 468 2008-12-10 10:19:59Z baconevi $
+ * $Id: Awk.cpp 469 2008-12-11 10:05:28Z baconevi $
  *
  * {License}
  */
@@ -1673,7 +1673,7 @@ Awk::ssize_t Awk::consoleHandler (
 int Awk::functionHandler (
 	run_t* run, const char_t* name, size_t len)
 {
-	Run* ctx = (Run*) ase_awk_getruncustomdata (run);
+	Run* ctx = (Run*) ase_awk_getrundata (run);
 	Awk* awk = ctx->awk;
 	return awk->dispatchFunction (ctx, name, len);
 }	
