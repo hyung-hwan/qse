@@ -73,14 +73,19 @@ ase_fio_t* ase_fio_init (
 		DWORD creation_disposition = 0;
 		DWORD attributes = FILE_ATTRIBUTE_NORMAL;
 
-		if (flags & ASE_FIO_READ) desired_access |= GENERIC_READ;
-		if (flags & ASE_FIO_WRITE) desired_access |= GENERIC_WRITE;
 		if (flags & ASE_FIO_APPEND)  
 		{
 			/* this is not officialy documented for CreateFile.
 			 * ZwCreateFile (kernel) seems to document it */
 			desired_access |= FILE_APPEND_DATA;
 		}
+		else if (flags & ASE_FIO_WRITE)
+		{
+			/* In WIN32, FILE_APPEND_DATA and GENERIC_WRITE can't
+			 * be used together */
+			desired_access |= GENERIC_WRITE;
+		}
+		if (flags & ASE_FIO_READ) desired_access |= GENERIC_READ;
 	
 		if (flags & ASE_FIO_CREATE) 
 		{
@@ -132,13 +137,24 @@ ase_fio_t* ase_fio_init (
 		if (ase_wcstombs_strict (path, 
 			path_mb, ASE_COUNTOF(path_mb)) == -1) return ASE_NULL;
 	#endif
-
+		/*
+		 * rwa -> RDWR   | APPEND
+		 * ra  -> RDONLY | APPEND
+		 * wa  -> WRONLY | APPEND
+		 * a   -> WRONLY | APPEND
+		 */
 		if ((flags & ASE_FIO_READ) && 
 		    (flags & ASE_FIO_WRITE)) desired_access |= O_RDWR;
 		else if (flags & ASE_FIO_READ) desired_access |= O_RDONLY;
-		else desired_access |= O_WRONLY;
+		else if (flags & ASE_FIO_WRITE) desired_access |= O_WRONLY;
 
-		if (flags & ASE_FIO_APPEND) desired_access |= O_APPEND;
+		if (flags & ASE_FIO_APPEND) 
+		{
+			if (!(flags & ASE_FIO_READ) &&
+			    !(flags & ASE_FIO_WRITE)) desired_access |= O_WRONLY;
+			desired_access |= O_APPEND;
+		}
+
 		if (flags & ASE_FIO_CREATE) desired_access |= O_CREAT;
 		if (flags & ASE_FIO_TRUNCATE) desired_access |= O_TRUNC;
 		if (flags & ASE_FIO_EXCLUSIVE) desired_access |= O_EXCL;

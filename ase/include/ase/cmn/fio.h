@@ -15,10 +15,11 @@ enum ase_fio_open_flag_t
 
 	ASE_FIO_READ      = (1 << 1),
 	ASE_FIO_WRITE     = (1 << 2),
-	ASE_FIO_CREATE    = (1 << 3),
-	ASE_FIO_TRUNCATE  = (1 << 4),
-	ASE_FIO_EXCLUSIVE = (1 << 5),
-	ASE_FIO_APPEND    = (1 << 6),
+	ASE_FIO_APPEND    = (1 << 3),
+
+	ASE_FIO_CREATE    = (1 << 4),
+	ASE_FIO_TRUNCATE  = (1 << 5),
+	ASE_FIO_EXCLUSIVE = (1 << 6),
 	ASE_FIO_SYNC      = (1 << 7),
 
 	/* for ms windows only */
@@ -60,6 +61,14 @@ struct ase_fio_t
 extern "C" {
 #endif
 
+/****f* ase.fio/ase_fio_open
+ * NAME
+ *  ase_fio_open - open a file
+ *
+ * PARAMETERS
+ * 
+ * SYNOPSIS
+ */
 ase_fio_t* ase_fio_open (
 	ase_mmgr_t* mmgr,
 	ase_size_t ext,
@@ -67,6 +76,7 @@ ase_fio_t* ase_fio_open (
 	int flags,
 	int mode
 );
+/******/
 
 void ase_fio_close (
 	ase_fio_t* fio
