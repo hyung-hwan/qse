@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 468 2008-12-10 10:19:59Z baconevi $
+ * $Id: awk.h 469 2008-12-11 10:05:28Z baconevi $
  *
  * {License}
  */
@@ -700,7 +700,7 @@ void ase_awk_setprmfns (
  * you may call ase_awk_close instead of destroying and creating a new
  * ase_awk_t instance using ase_awk_close() and ase_awk_open().
  *
- * RETURNS 0 on success, -1 on failure
+ * RETURN 0 on success, -1 on failure
  */
 int ase_awk_clear (
 	/* the pointer to an ase_awk_t instance */
@@ -850,6 +850,18 @@ int ase_awk_parsesimple (
 );
 /******/
 
+/****f* ase.awk/ase_awk_runsimple
+ * NAME
+ *  ase_awk_runsimple - run a parsed program
+ *
+ * SYNOPSIS
+ */
+int ase_awk_runsimple (
+	ase_awk_t*   awk,
+	ase_char_t** icf /* input console files */
+);
+/******/
+
 /**
  * Executes a parsed program.
  *
@@ -887,47 +899,117 @@ ase_size_t ase_awk_getnargs (ase_awk_run_t* run);
  */
 ase_awk_val_t* ase_awk_getarg (ase_awk_run_t* run, ase_size_t idx);
 
-/**
- * Gets the value of a global variable.
+/****f* ase.awk/ase_awk_getglobal
+ * NAME
+ *  ase_awk_getglobal - gets the value of a global variable
  *
- * @param run A run-time context
- * @param id The ID to a global variable. 
- * 	This value correspondsto the predefined global variable IDs or 
- * 	the value returned by ase_awk_addglobal.
- * @return
- * 	The pointer to a value is returned. This function never fails
- * 	so long as id is valid. Otherwise, you may fall into trouble.
+ * PARAMETERS
+ *  id - A global variable id. An ID is one of the predefined global 
+ *       variable IDs or the value returned by ase_awk_addglobal().
+ *
+ * RETURN
+ *  The pointer to a value is returned. This function never fails
+ *  so long as id is valid. Otherwise, you may fall into trouble.
  */
-ase_awk_val_t* ase_awk_getglobal (ase_awk_run_t* run, int id);
-int ase_awk_setglobal (ase_awk_run_t* run, int id, ase_awk_val_t* val);
+ase_awk_val_t* ase_awk_getglobal (
+	ase_awk_run_t* run,
+	int            id
+);
+/******/
 
-/**
- * Sets the return value of a function from within a function handler.
+int ase_awk_setglobal (
+	ase_awk_run_t* run, 
+	int            id,
+	ase_awk_val_t* val
+);
+
+/****f* ase.awk/ase_awk_setretval
+ * NAME
+ *  ase_awk_setretval - set the return value
  *
- * @param run A run-time context
- * @param val A pointer to the value to set.
- * 	ase_awk_refupval and ase_awk_refdownval are not needed because
- * 	ase_awk_setretval never fails and it updates the reference count
- * 	of the value properly.
+ * DESCRIPTION
+ *  The ase_awk_setretval() sets the return value of a function
+ *  when called from within a function handlers. The caller doesn't
+ *  have to invoke ase_awk_refupval() and ase_awk_refdownval() 
+ *  with the value to be passed to ase_awk_setretval(). 
+ *  The ase_awk_setretval() will update its reference count properly
+ *  once the return value is set. 
  */
-void ase_awk_setretval (ase_awk_run_t* run, ase_awk_val_t* val);
+void ase_awk_setretval (
+	ase_awk_run_t* run,
+	ase_awk_val_t* val
+);
 
 int ase_awk_setfilename (
 	ase_awk_run_t* run, const ase_char_t* name, ase_size_t len);
 int ase_awk_setofilename (
 	ase_awk_run_t* run, const ase_char_t* name, ase_size_t len);
 
-ase_awk_t* ase_awk_getrunawk (ase_awk_run_t* awk);
-void* ase_awk_getruncustomdata (ase_awk_run_t* awk);
-ase_map_t* ase_awk_getrunnamedvarmap (ase_awk_run_t* awk);
+
+/****f* ase.awk/ase_awk_getrunawk
+ * NAME
+ *  ase_awk_getrunawk - get the owning awk object
+ *
+ * SYNOPSIS
+ */
+ase_awk_t* ase_awk_getrunawk (
+	ase_awk_run_t* run
+);
+/******/
+
+/****f* ase.awk/ase_awk_getrunmmgr
+ * NAME
+ *  ase_awk_getrunmmgr - get the memory manager of a run object
+ * 
+ * SYNOPSIS
+ */
+ase_mmgr_t* ase_awk_getrunmmgr (
+	ase_awk_run_t* run
+);
+/******/
+
+/****f* ase.awk/ase_awk_getrundata
+ * NAME
+ *  ase_awk_getrundata - get the user-specified data for a run object
+ * 
+ * SYNOPSIS
+ */
+void* ase_awk_getrundata (
+	ase_awk_run_t* awk
+);
+/******/
+
+/****f* ase.awk/ase_awk_getrunnvmap
+ * NAME
+ *  ase_awk_getrunnvmap - get the map of named variables 
+ * 
+ * SYNOPSIS
+ */
+ase_map_t* ase_awk_getrunnvmap (
+	ase_awk_run_t* run
+);
+/******/
 
 /* functions to manipulate the run-time error */
-int ase_awk_getrunerrnum (ase_awk_run_t* run);
-ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run);
-const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run);
-void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum);
-void ase_awk_setrunerrmsg (ase_awk_run_t* run, 
-	int errnum, ase_size_t errlin, const ase_char_t* errmsg);
+int ase_awk_getrunerrnum (
+	ase_awk_run_t* run
+);
+ase_size_t ase_awk_getrunerrlin (
+	ase_awk_run_t* run
+);
+const ase_char_t* ase_awk_getrunerrmsg (
+	ase_awk_run_t* run
+);
+void ase_awk_setrunerrnum (
+	ase_awk_run_t* run,
+	int errnum
+);
+void ase_awk_setrunerrmsg (
+	ase_awk_run_t* run, 
+	int errnum,
+	ase_size_t errlin,
+	const ase_char_t* errmsg
+);
 
 void ase_awk_getrunerror (
 	ase_awk_run_t* run, int* errnum, 

@@ -315,8 +315,24 @@ static ase_ssize_t __sio_input (int cmd, void* arg, void* buf, ase_size_t size)
 	ase_sio_t* sio = (ase_sio_t*)arg;
 
 	ASE_ASSERT (sio != ASE_NULL);
+
 	if (cmd == ASE_TIO_IO_DATA) 
 	{
+	#ifdef _WIN32
+		/* TODO: I hate this way of adjusting the handle value
+		 *       Is there any good ways to do it statically? */
+		HANDLE h = sio->fio.handle;
+		if (h == (HANDLE)STD_INPUT_HANDLE ||
+		    h == (HANDLE)STD_OUTPUT_HANDLE ||
+		    h == (HANDLE)STD_ERROR_HANDLE)
+		{
+			h = GetStdHandle((DWORD)h);
+			if (h != INVALID_HANDLE_VALUE && h != NULL) 
+			{
+				sio->fio.handle = h; 
+			}
+		}
+	#endif
 		return ase_fio_read (&sio->fio, buf, size);
 	}
 
@@ -331,6 +347,21 @@ static ase_ssize_t __sio_output (int cmd, void* arg, void* buf, ase_size_t size)
 
 	if (cmd == ASE_TIO_IO_DATA) 
 	{
+	#ifdef _WIN32
+		/* TODO: I hate this way of adjusting the handle value
+		 *       Is there any good ways to do it statically? */
+		HANDLE h = sio->fio.handle;
+		if (h == (HANDLE)STD_INPUT_HANDLE ||
+		    h == (HANDLE)STD_OUTPUT_HANDLE ||
+		    h == (HANDLE)STD_ERROR_HANDLE)
+		{
+			h = GetStdHandle((DWORD)h);
+			if (h != INVALID_HANDLE_VALUE && h != NULL) 
+			{
+				sio->fio.handle = h; 
+			}
+		}
+	#endif
 		return ase_fio_write (&sio->fio, buf, size);
 	}
 
