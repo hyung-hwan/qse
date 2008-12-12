@@ -448,9 +448,79 @@ static ase_ssize_t awk_extio_file (
 	return -1;
 }
 
-static int open_extio_console (ase_awk_extio_t* epa);
-static int close_extio_console (ase_awk_extio_t* epa);
-static int next_extio_console (ase_awk_extio_t* epa);
+static int open_extio_console (ase_awk_extio_t* epa)
+{
+	runio_data_t* rd = (runio_data_t*)epa->data;
+
+	//dprint (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
+
+	if (epa->mode == ASE_AWK_EXTIO_CONSOLE_READ)
+	{
+		if (rd->icf[rd->icf_cur] == ASE_NULL)
+		{
+			/* no more input file */
+			//dprint (ASE_T("console - no more file\n"));;
+			return 0;
+		}
+
+		if (rd->icf[rd->icf_cur][0] == ASE_T('\0'))
+		{
+			//dprint (ASE_T("    console(r) - <standard input>\n"));
+			epa->handle = ase_sio_in;
+		}
+		else
+		{
+			/* a temporary variable fp is used here not to change 
+			 * any fields of epa when the open operation fails */
+			ase_sio_t* fp;
+
+			fp = ase_sio_open (
+				ase_awk_getrunmmgr(epa->run),
+				0,
+				rd->icf[rd->icf_cur],
+				ASE_SIO_READ
+			);
+			if (fp == ASE_NULL)
+			{
+				ase_cstr_t errarg;
+
+				errarg.ptr = rd->icf[rd->icf_cur];
+				errarg.len = ase_strlen(rd->icf[rd->icf_cur]);
+
+				ase_awk_setrunerror (epa->run, ASE_AWK_EOPEN, 0, &errarg, 1);
+				return -1;
+			}
+
+			//dprint (ASE_T("    console(r) - %s\n"), rd->icf[rd->icf_cur]);
+			if (ase_awk_setfilename (
+				epa->run, rd->icf[rd->icf_cur], 
+				ase_strlen(rd->icf[rd->icf_cur])) == -1)
+			{
+				ase_sio_close (fp);
+				return -1;
+			}
+
+			epa->handle = fp;
+		}
+
+		rd->icf_cur++;
+		return 1;
+	}
+	else if (epa->mode == ASE_AWK_EXTIO_CONSOLE_WRITE)
+	{
+		//dprint (ASE_T("    console(w) - <standard output>\n"));
+
+		if (ase_awk_setofilename (epa->run, ASE_T(""), 0) == -1)
+		{
+			return -1;
+		}
+
+		epa->handle = ase_sio_out;
+		return 1;
+	}
+
+	return -1;
+}
 
 static ase_ssize_t awk_extio_console (
 	int cmd, void* arg, ase_char_t* data, ase_size_t size)
@@ -464,7 +534,17 @@ static ase_ssize_t awk_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_CLOSE)
 	{
-		return close_extio_console (epa);
+		//dprint (ASE_T("closing console of type %x\n"), epa->type);
+
+		if (epa->handle != ASE_NULL &&
+		    epa->handle != ase_sio_in && 
+		    epa->handle != ase_sio_out && 
+		    epa->handle != ase_sio_err)
+		{
+			ase_sio_close ((ase_sio_t*)epa->handle);
+		}
+
+		return 0;
 	}
 	else if (cmd == ASE_AWK_IO_READ)
 	{
@@ -561,127 +641,32 @@ static ase_ssize_t awk_extio_console (
 	}
 	else if (cmd == ASE_AWK_IO_NEXT)
 	{
-		return next_extio_console (epa);
-	}
+		int n;
+		ase_sio_t* fp = (ase_sio_t*)epa->handle;
 
-	return -1;
-}
+		//dprint (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
 
-static int open_extio_console (ase_awk_extio_t* epa)
-{
-	runio_data_t* rd = (runio_data_t*)epa->data;
+		n = open_extio_console(epa);
+		if (n == -1) return -1;
 
-
-	//dprint (ASE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
-
-	if (epa->mode == ASE_AWK_EXTIO_CONSOLE_READ)
-	{
-		if (rd->icf[rd->icf_cur] == ASE_NULL)
+		if (n == 0) 
 		{
-			/* no more input file */
-			//dprint (ASE_T("console - no more file\n"));;
+			/* if there is no more file, keep the previous handle */
 			return 0;
 		}
 
-		if (rd->icf[rd->icf_cur][0] == ASE_T('\0'))
+		if (fp != ASE_NULL && 
+		    fp != ase_sio_in && 
+		    fp != ase_sio_out &&
+		    fp != ase_sio_err) 
 		{
-			//dprint (ASE_T("    console(r) - <standard input>\n"));
-			epa->handle = ase_sio_in;
-		}
-		else
-		{
-			/* a temporary variable fp is used here not to change 
-			 * any fields of epa when the open operation fails */
-			ase_sio_t* fp;
-
-			fp = ase_sio_open (
-				ase_awk_getrunmmgr(epa->run),
-				0,
-				rd->icf[rd->icf_cur],
-				ASE_SIO_READ
-			);
-			if (fp == ASE_NULL)
-			{
-				ase_cstr_t errarg;
-
-				errarg.ptr = rd->icf[rd->icf_cur];
-				errarg.len = ase_strlen(rd->icf[rd->icf_cur]);
-
-				ase_awk_setrunerror (epa->run, ASE_AWK_EOPEN, 0, &errarg, 1);
-				return -1;
-			}
-
-			//dprint (ASE_T("    console(r) - %s\n"), rd->icf[rd->icf_cur]);
-			if (ase_awk_setfilename (
-				epa->run, rd->icf[rd->icf_cur], 
-				ase_strlen(rd->icf[rd->icf_cur])) == -1)
-			{
-				ase_sio_close (fp);
-				return -1;
-			}
-
-			epa->handle = fp;
+			ase_sio_close (fp);
 		}
 
-		rd->icf_cur++;
-		return 1;
-	}
-	else if (epa->mode == ASE_AWK_EXTIO_CONSOLE_WRITE)
-	{
-		//dprint (ASE_T("    console(w) - <standard output>\n"));
-
-		if (ase_awk_setofilename (epa->run, ASE_T(""), 0) == -1)
-		{
-			return -1;
-		}
-
-		epa->handle = ase_sio_out;
-		return 1;
+		return n;
 	}
 
 	return -1;
-}
-
-static int close_extio_console (ase_awk_extio_t* epa)
-{
-	//dprint (ASE_T("closing console of type %x\n"), epa->type);
-
-	if (epa->handle != ASE_NULL &&
-	    epa->handle != ase_sio_in && 
-	    epa->handle != ase_sio_out && 
-	    epa->handle != ase_sio_err)
-	{
-		ase_sio_close ((ase_sio_t*)epa->handle);
-	}
-
-	return 0;
-}
-
-static int next_extio_console (ase_awk_extio_t* epa)
-{
-	int n;
-	ase_sio_t* fp = (ase_sio_t*)epa->handle;
-
-	//dprint (ASE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
-
-	n = open_extio_console(epa);
-	if (n == -1) return -1;
-
-	if (n == 0) 
-	{
-		/* if there is no more file, keep the previous handle */
-		return 0;
-	}
-
-	if (fp != ASE_NULL && 
-	    fp != ase_sio_in && 
-	    fp != ase_sio_out &&
-	    fp != ase_sio_err) 
-	{
-		ase_sio_close (fp);
-	}
-
-	return n;
 }
 
 int ase_awk_runsimple (ase_awk_t* awk, ase_char_t** icf)

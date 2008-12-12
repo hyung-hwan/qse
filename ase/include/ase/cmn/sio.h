@@ -68,19 +68,55 @@ void ase_sio_fini (
 	ase_sio_t* sio
 );
 
-ase_fio_hnd_t ase_sio_gethandle (ase_sio_t* sio);
+ase_fio_hnd_t ase_sio_gethandle (
+	ase_sio_t* sio
+);
 
-ase_ssize_t ase_sio_flush (ase_sio_t* sio);
-void ase_sio_purge (ase_sio_t* sio);
+ase_ssize_t ase_sio_flush (
+	ase_sio_t* sio
+);
 
-ase_ssize_t ase_sio_getc (ase_sio_t* sio, ase_char_t* c);
-ase_ssize_t ase_sio_gets (ase_sio_t* sio, ase_char_t* buf, ase_size_t size);
-ase_ssize_t ase_sio_getsx (ase_sio_t* sio, ase_char_t* buf, ase_size_t size);
-ase_ssize_t ase_sio_getstr (ase_sio_t* sio, ase_str_t* buf);
+void ase_sio_purge (
+	ase_sio_t* sio
+);
 
-ase_ssize_t ase_sio_putc (ase_sio_t* sio, ase_char_t c);
-ase_ssize_t ase_sio_puts (ase_sio_t* sio, const ase_char_t* str);
-ase_ssize_t ase_sio_putsx (ase_sio_t* sio, const ase_char_t* str, ase_size_t size);
+ase_ssize_t ase_sio_getc (
+	ase_sio_t* sio,
+	ase_char_t* c
+);
+
+ase_ssize_t ase_sio_gets (
+	ase_sio_t* sio,
+	ase_char_t* buf,
+	ase_size_t size
+);
+
+ase_ssize_t ase_sio_getsx (
+	ase_sio_t* sio,
+	ase_char_t* buf,
+	ase_size_t size
+);
+
+ase_ssize_t ase_sio_getstr (
+	ase_sio_t* sio, 
+	ase_str_t* buf
+);
+
+ase_ssize_t ase_sio_putc (
+	ase_sio_t* sio, 
+	ase_char_t c
+);
+
+ase_ssize_t ase_sio_puts (
+	ase_sio_t* sio,
+	const ase_char_t* str
+);
+
+ase_ssize_t ase_sio_putsx (
+	ase_sio_t* sio, 
+	const ase_char_t* str,
+	ase_size_t size
+);
 
 #if 0
 ase_ssize_t ase_sio_putsn (ase_sio_t* sio, ...);

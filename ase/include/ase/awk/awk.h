@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 469 2008-12-11 10:05:28Z baconevi $
+ * $Id: awk.h 470 2008-12-11 13:43:05Z baconevi $
  *
  * {License}
  */
@@ -975,7 +975,7 @@ ase_mmgr_t* ase_awk_getrunmmgr (
  * SYNOPSIS
  */
 void* ase_awk_getrundata (
-	ase_awk_run_t* awk
+	ase_awk_run_t* run
 );
 /******/
 
