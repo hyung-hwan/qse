@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 469 2008-12-11 10:05:28Z baconevi $
+ * $Id: awk.c 478 2008-12-12 09:42:32Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -304,9 +304,9 @@ static void out_of_memory (void)
 
 struct argout_t
 {
-	ase_char_t*  iss;  /* input source string */
-	ase_char_t** isf;  /* input source files */
-	ase_size_t   isfl; /* the number of input source filse */
+	void*        isp;   /* input source files or string */
+	int          ist;  /* input source type */
+	ase_size_t   isfl; /* the number of input source files */
 	ase_char_t*  osf;  /* output source file */
 	ase_char_t** icf;  /* input console files */
 	ase_size_t   icfl; /* the number of input console files */
@@ -396,10 +396,10 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 
 			case ASE_T('f'):
 			{
-				if (isfl >= isfc)
+				if (isfl >= isfc-1) /* -1 for last ASE_NULL */
 				{
 					ase_char_t** tmp;
-					tmp = (ase_char_t**)realloc (isf, ASE_SIZEOF(*isf)*(isfc+16));
+					tmp = (ase_char_t**) realloc (isf, ASE_SIZEOF(*isf)*(isfc+16));
 					if (tmp == ASE_NULL)
 					{
 						out_of_memory ();
@@ -478,6 +478,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 		}
 	}
 
+	isf[isfl] = ASE_NULL;
 
 	if (isfl <= 0)
 	{
@@ -488,15 +489,13 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 		}
 
 		/* the source code is the string, not from the file */
-		ao->iss = argv[opt.ind++]; /* source string */
-		ao->isf = ASE_NULL; /* no source file */
-		ao->isfl = 0;
+		ao->ist = ASE_AWK_PARSE_STRING;
+		ao->isp = argv[opt.ind++];
 	}
 	else
 	{
-		ao->iss = ASE_NULL;
-		ao->isf = isf;
-		ao->isfl = isfl;
+		ao->ist = ASE_AWK_PARSE_FILES;
+		ao->isp = isf;
 	}
 
 	/* the remaining arguments are input console file names */
@@ -552,6 +551,7 @@ static void init_awk_extension (ase_awk_t* awk)
 	ext->prmfns.pow         = custom_awk_pow;
 	ext->prmfns.sprintf     = custom_awk_sprintf;
 	ext->prmfns.data = ASE_NULL;
+
 	ase_awk_setprmfns (awk, &ext->prmfns);
 }
 
@@ -667,8 +667,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	app_awk = awk;
 
-	if (ase_awk_parsesimple (
-		awk, ao.isf, ao.isfl, ao.osf, ASE_AWK_PARSE_FILES) == -1)
+	if (ase_awk_parsesimple (awk, ao.isp, ao.ist, ao.osf) == -1)
 	{
 		ase_printf (
 			ASE_T("PARSE ERROR: CODE [%d] LINE [%u] %s\n"), 
@@ -703,8 +702,7 @@ static int awk_main (int argc, ase_char_t* argv[])
 
 	close_awk (awk);
 
-	if (ao.iss != ASE_NULL) free (ao.iss);
-	if (ao.isf != ASE_NULL) free (ao.isf);
+	if (ao.ist == ASE_AWK_PARSE_FILES && ao.isp != ASE_NULL) free (ao.isp);
 	if (ao.osf != ASE_NULL) free (ao.osf);
 	if (ao.icf != ASE_NULL) free (ao.icf);
 	if (ao.vm != ASE_NULL) ase_map_close (ao.vm);

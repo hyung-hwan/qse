@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 470 2008-12-11 13:43:05Z baconevi $
+ * $Id: awk.h 478 2008-12-12 09:42:32Z baconevi $
  *
  * {License}
  */
@@ -474,7 +474,7 @@ enum ase_awk_valtostr_opt_t
 	ASE_AWK_VALTOSTR_PRINT = (1 << 2)
 };
 
-enum ase_awk_parse_opt_t
+enum ase_awk_parse_ist_t
 {
 	ASE_AWK_PARSE_FILES = 0,
 	ASE_AWK_PARSE_STRING = 1
@@ -843,10 +843,9 @@ ase_awk_t* ase_awk_opensimple (void);
  */
 int ase_awk_parsesimple (
 	ase_awk_t*        awk,
-	const void*       is  /* source file names or source string */,
-	ase_size_t        isl /* source file count or source string length */,
-	const ase_char_t* osf /* an output source file name */,
-	int               opt /* ASE_AWK_PARSE_FILES, ASE_AWK_PARSE_STRING */
+	const void*       isp /* source file names or source string */,
+	int               ist /* ASE_AWK_PARSE_FILES, ASE_AWK_PARSE_STRING */,
+	const ase_char_t* osf /* an output source file name */
 );
 /******/
 
