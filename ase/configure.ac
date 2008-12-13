@@ -26,48 +26,49 @@ AC_CHECK_TOOL(AR, ar)
 
 AC_CHECK_TOOL(GREP, grep)
 AC_CHECK_TOOL(RM, rm)
+AC_CHECK_TOOL(SED, sed)
 AC_CHECK_TOOL(CJ, gcj)
 
 dnl overrides the default CFLAGS setting
-if test "$ac_test_CFLAGS" = "set"
-then
-	CFLAGS=$ac_save_CFLAGS
-else
-	if test "$GCC" = "yes"
-	then
-		CFLAGS="-O2"
-	else
-		CFLAGS=
-	fi
-fi
+#if test "$ac_test_CFLAGS" = "set"
+#then
+#	CFLAGS=$ac_save_CFLAGS
+#else
+#	if test "$GCC" = "yes"
+#	then
+#		CFLAGS="-O2"
+#	else
+#		CFLAGS=
+#	fi
+#fi
 
-if test "$ac_test_CXXFLAGS" = "set"
-then
-	CXXFLAGS=$ac_save_CXXFLAGS
-else
-	if test "$GCC" = "yes"
-	then
-		CXXFLAGS="-O2"
-	else
-		CXXFLAGS=
-	fi
-fi
-
-if test "$ac_test_CJFLAGS" = "set"
-then
-	CJFLAGS=$ac_save_CJFLAGS
-else
-	if test "$CJ" = "gcj"
-	then
-		CJFLAGS="-O2"
-	else
-		CJFLAGS=
-	fi
-fi
+#if test "$ac_test_CXXFLAGS" = "set"
+#then
+#	CXXFLAGS=$ac_save_CXXFLAGS
+#else
+#	if test "$GCC" = "yes"
+#	then
+#		CXXFLAGS="-O2"
+#	else
+#		CXXFLAGS=
+#	fi
+#fi
+#
+#if test "$ac_test_CJFLAGS" = "set"
+#then
+#	CJFLAGS=$ac_save_CJFLAGS
+#else
+#	if test "$CJ" = "gcj"
+#	then
+#		CJFLAGS="-O2"
+#	else
+#		CJFLAGS=
+#	fi
+#fi
 
 dnl make visible the 64bit interface to the file system
-CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
-CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE"
+CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -DASE_HAVE_CONFIG_H"
+CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -DASE_HAVE_CONFIG_H"
 
 dnl Checks for the math library (is -lm needed?)
 AC_CHECK_LIBM

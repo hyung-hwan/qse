@@ -219,10 +219,23 @@ ase_fio_off_t ase_fio_seek (
 	ASE_ASSERT (AES_SIZEOF(offset) <= AES_SIZEOF(x.QuadPart));
 
 	x.QuadPart = offset;
-	if (SetFilePointerEx (
-		fio->handle, x, &y, seek_map[origin]) == FALSE) return -1;
+	if (SetFilePointerEx (fio->handle, x, &y, seek_map[origin]) == FALSE) 
+	{
+		return (ase_fio_off_t)-1;
+	}
 
 	return (ase_fio_off_t)y.QuadPart;
+	
+	/*
+	x.QuadPart = offset;
+	x.LowPart = SetFilePointer (fio->handle, x.LowPart, &x.HighPart, seek_map[origin]);
+	if (x.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+	{
+		return (ase_fio_off_t)-1;
+	}
+
+	return (ase_fio_off_t)x.QuadPart;
+	*/
 
 #else
 	static int seek_map[] = 
@@ -239,7 +252,10 @@ ase_fio_off_t ase_fio_seek (
 		(unsigned long)(offset>>32),
 		(unsigned long)(offset&0xFFFFFFFFlu), 
 		&tmp,
-		seek_map[origin]) == -1) return -1;
+		seek_map[origin]) == -1)
+	{
+		return (ase_fio_off_t)-1;
+	}
 
 	return (ase_fio_off_t)tmp;
 
