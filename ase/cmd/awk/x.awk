@@ -25,6 +25,7 @@ BEGIN {
 
 	print 0.0;
 	print 10;
+	print "wide characteter  넓은 문자";
 
 	print fflush ("abc");
 }

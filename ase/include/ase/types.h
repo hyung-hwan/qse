@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 468 2008-12-10 10:19:59Z baconevi $
+ * $Id: types.h 476 2008-12-12 06:25:48Z baconevi $
  *
  * {License}
  */
@@ -17,7 +17,10 @@
  ******
  */
 
-#if defined(HAVE_CONFIG_H)
+/* WARNING: NEVER CHANGE/DELETE THE FOLLOWING LINE */
+/*#define ASE_HAVE_CONFIG_H*/
+
+#if defined(ASE_HAVE_CONFIG_H)
 	#include <ase/config.h>
 #elif defined(_WIN32)
 	#include <ase/conf_msw.h>
