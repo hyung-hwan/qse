@@ -50,7 +50,7 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libaseutl_la_LIBADD =
+libaseutl_la_DEPENDENCIES =
 am_libaseutl_la_OBJECTS = assert.lo http.lo main.lo stdio.lo
 libaseutl_la_OBJECTS = $(am_libaseutl_la_OBJECTS)
 libaseutl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -198,7 +198,8 @@ top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_builddir)/include
 lib_LTLIBRARIES = libaseutl.la
 libaseutl_la_SOURCES = assert.c http.c main.c stdio.c
-libaseutl_la_LDFLAGS = -version-info 1:0:0
+libaseutl_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn
+libaseutl_la_LIBADD = -lasecmn
 all: all-am
 
 .SUFFIXES:
