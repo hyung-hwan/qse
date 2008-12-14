@@ -206,7 +206,7 @@ libasecmn_la_SOURCES = mem.h chr.h \
 	fio.c sio.c tio.c tio_get.c tio_put.c \
 	misc.c
 
-libasecmn_la_LDFLAGS = -version-info 1:0:0
+libasecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 all: all-am
 
 .SUFFIXES:
