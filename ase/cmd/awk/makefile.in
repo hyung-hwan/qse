@@ -212,10 +212,10 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 aseawk_SOURCES = awk.c
 aseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
-aseawk_LDADD = -laseutl -laseawk $(LIBM)
+aseawk_LDADD = -laseawk $(LIBM)
 @ENABLE_CXX_TRUE@aseawk___SOURCES = Awk.cpp
 @ENABLE_CXX_TRUE@aseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
-@ENABLE_CXX_TRUE@aseawk___LDADD = -laseutl -laseawk++ $(LIBM)
+@ENABLE_CXX_TRUE@aseawk___LDADD = -laseawk++ $(LIBM)
 all: all-am
 
 .SUFFIXES:

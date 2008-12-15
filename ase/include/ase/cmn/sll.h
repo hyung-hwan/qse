@@ -162,8 +162,8 @@ struct ase_sll_node_t
 };
 /******/
 
-#define ASE_SLL_COPIER_SIMPLE ase_sll_copysimple
-#define ASE_SLL_COPIER_INLINE ase_sll_copyinline
+#define ASE_SLL_COPIER_SIMPLE ((ase_sll_copier_t)1)
+#define ASE_SLL_COPIER_INLINE ((ase_sll_copier_t)2)
 
 #define ASE_SLL_MMGR(sll)   ((sll)->mmgr)
 #define ASE_SLL_COPIER(sll) ((sll)->copier)
@@ -573,26 +573,6 @@ void ase_sll_walk (
 	void*            arg     /* the pointer to user-defined data */
 );
 /******/
-
-/* 
- * Causes a singly linked list to remember the pointer and the length.
- * Use ASE_SLL_COPIER_SIMPLE instead.
- */
-void* ase_sll_copysimple (
-	ase_sll_t* sll   /* a singly linked list */,
-	void*      data  /* the pointer to data */,
-	ase_size_t len   /* the length of data */
-);
-
-/* 
- * Causes a singly linked list to copy in data to a node.
- * Use ASE_SLL_COPIER_INLINE instead.
- */
-void* ase_sll_copyinline (
-	ase_sll_t* sll   /* a singly linked list */,
-	void*      data  /* the pointer to data */, 
-	ase_size_t len   /* the length of data */
-);
 
 #ifdef __cplusplus
 }

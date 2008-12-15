@@ -5,11 +5,11 @@ bin_PROGRAMS = aseawk
 
 aseawk_SOURCES = awk.c
 aseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
-aseawk_LDADD = -laseutl -laseawk $(LIBM)
+aseawk_LDADD = -laseawk $(LIBM)
 
 if ENABLE_CXX
 bin_PROGRAMS += aseawk++
 aseawk___SOURCES = Awk.cpp
 aseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
-aseawk___LDADD = -laseutl -laseawk++ $(LIBM)
+aseawk___LDADD = -laseawk++ $(LIBM)
 endif
