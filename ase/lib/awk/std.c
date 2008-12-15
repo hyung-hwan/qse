@@ -6,6 +6,7 @@
 #include <ase/cmn/sio.h>
 
 #include <math.h>
+#include <stdarg.h>
 #include <ase/utl/stdio.h>
 
 typedef struct ext_t

@@ -329,13 +329,3 @@ void ase_sll_walk (sll_t* sll, walker_t walker, void* arg)
 	}
 }
 
-void* ase_sll_copysimple (sll_t* sll, void* dptr, size_t dlen)
-{
-	return dptr;
-}
-
-void* ase_sll_copyinline (sll_t* sll, void* dptr, size_t dlen)
-{
-	/* this is a dummy copier */
-	return ASE_NULL;
-}

@@ -30,8 +30,8 @@ typedef struct ase_lda_t      ase_lda_t;
 typedef struct ase_lda_node_t ase_lda_node_t;
 typedef enum   ase_lda_walk_t ase_lda_walk_t;
 
-#define ASE_LDA_COPIER_SIMPLE  ase_lda_copysimple
-#define ASE_LDA_COPIER_INLINE  ase_lda_copyinline
+#define ASE_LDA_COPIER_SIMPLE  ((ase_lda_copier_t)1)
+#define ASE_LDA_COPIER_INLINE  ((ase_lda_copier_t)2)
 
 #define ASE_LDA_INVALID ((ase_size_t)-1)
 
@@ -467,19 +467,6 @@ void ase_lda_rwalk (
 	ase_lda_t*       lda,
 	ase_lda_walker_t walker,
 	void*            arg
-);
-
-
-void* ase_lda_copysimple (
-	ase_lda_t* lda   /* a linear dynamic array */,
-	void*      data  /* the pointer to data */,
-	ase_size_t len   /* the length of data */
-);
-
-void* ase_lda_copyinline (
-	ase_lda_t* lda   /* a linear dynamic array */,
-	void*      data  /* the pointer to data */,
-	ase_size_t len   /* the length of data */
 );
 
 #ifdef __cplusplus

@@ -562,14 +562,3 @@ void ase_lda_rwalk (lda_t* lda, walker_t walker, void* arg)
 	}
 }
 
-void* ase_lda_copysimple (lda_t* lda, void* dptr, size_t dlen)
-{
-	return dptr;
-}
-
-void* ase_lda_copyinline (lda_t* lda, void* dptr, size_t dlen)
-{
-	/* this is a dummy copier */
-	return ASE_NULL;
-}
-

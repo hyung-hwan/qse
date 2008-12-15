@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 409 2008-10-08 11:43:56Z baconevi $
+ * $Id: map.c 483 2008-12-14 13:25:42Z baconevi $
  *
  * {License}
  */
@@ -727,15 +727,4 @@ static int reorganize (map_t* map)
 	map->threshold = map->capa * map->factor / 100;
 
 	return 0;
-}
-
-void* ase_map_copysimple (map_t* map, void* dptr, size_t dlen)
-{
-	return dptr;
-}
-
-void* ase_map_copyinline (map_t* map, void* dptr, size_t dlen)
-{
-        /* this is a dummy copier */
-        return ASE_NULL;
 }
