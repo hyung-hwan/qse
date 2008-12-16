@@ -148,7 +148,7 @@ ase_dll_freeer_t ase_dll_getfreeer (
  * NAME Gets the pointer to the extension area
  * RETURN the pointer to the extension area
  */
-void* ase_dll_getextension (
+void* ase_dll_getxtn (
 	ase_dll_t* dll /* a singly linked list */
 );
 

@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 483 2008-12-14 13:25:42Z baconevi $
+ * $Id: map.h 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -223,6 +223,8 @@ struct ase_map_t
 /*****/
 
 #define ASE_MAP_MMGR(m)      ((m)->mmgr)
+#define ASE_MAP_XTN(m)       ((void*)(((ase_map_t*)m) + 1))
+
 #define ASE_MAP_KCOPIER(m)   ((m)->copier[ASE_MAP_KEY])
 #define ASE_MAP_VCOPIER(m)   ((m)->copier[ASE_MAP_VAL])
 #define ASE_MAP_KFREEER(m)   ((m)->freeer[ASE_MAP_KEY])
@@ -231,7 +233,6 @@ struct ase_map_t
 #define ASE_MAP_COMPER(m)    ((m)->comper)
 #define ASE_MAP_KEEPER(m)    ((m)->keeper)
 #define ASE_MAP_SIZER(m)     ((m)->sizer)
-#define ASE_MAP_EXTENSION(m) ((void*)(((ase_map_t*)m) + 1))
 
 #define ASE_MAP_FACTOR(m)    ((m)->factor)
 #define ASE_MAP_KSCALE(m)    ((m)->scale[ASE_MAP_KEY])
@@ -257,7 +258,7 @@ extern "C" {
  *  than 0. The load factor should be between 0 and 100 inclusive and the load
  *  factor of 0 disables bucket resizing. If you need extra space associated
  *  with a map, you may pass a non-zero value as the second parameter. 
- *  The ASE_MAP_EXTENSION() macro and the ase_map_getextension() function 
+ *  The ASE_MAP_XTN() macro and the ase_map_getxtn() function 
  *  return the pointer to the beginning of the extension.
  *
  * RETURN
@@ -265,7 +266,7 @@ extern "C" {
  *  ASE_NULL on failure.
  *
  * SEE ALSO 
- *  ASE_MAP_EXTENSION, ase_map_getextension
+ *  ASE_MAP_XTN, ase_map_getxtn
  * 
  * SYNOPSIS
  */
@@ -303,7 +304,7 @@ void ase_map_fini (
 	ase_map_t* map
 );
 
-void* ase_map_getextension (
+void* ase_map_getxtn (
 	ase_map_t* map
 );
 

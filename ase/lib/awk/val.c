@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 468 2008-12-10 10:19:59Z baconevi $
+ * $Id: val.c 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -430,7 +430,7 @@ static void same_mapval (void* run, void* v)
 */
 static void free_mapval (ase_map_t* map, void* dptr, ase_size_t dlen)
 {
-	ase_awk_run_t* run = *(ase_awk_run_t**)ASE_MAP_EXTENSION(map);
+	ase_awk_run_t* run = *(ase_awk_run_t**)ASE_MAP_XTN(map);
 
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("refdown in map free..."));
@@ -443,7 +443,7 @@ static void free_mapval (ase_map_t* map, void* dptr, ase_size_t dlen)
 
 static void same_mapval (ase_map_t* map, void* dptr, ase_size_t dlen)
 {
-	ase_awk_run_t* run = *(ase_awk_run_t**)ASE_MAP_EXTENSION(map);
+	ase_awk_run_t* run = *(ase_awk_run_t**)ASE_MAP_XTN(map);
 #ifdef DEBUG_VAL
 	ase_dprintf (ASE_T("refdown nofree in map free..."));
 	ase_awk_dprintval (run, dptr);
@@ -501,7 +501,7 @@ ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
 		return ASE_NULL;
 	}
-	*(ase_awk_run_t**)ASE_MAP_EXTENSION(val->map) = run;
+	*(ase_awk_run_t**)ASE_MAP_XTN(val->map) = run;
 
 	/* the key is copied inline into a pair and is freed when the pair
 	 * is destroyed */
@@ -1141,7 +1141,7 @@ static ase_map_walk_t print_pair (
 {
 	ase_awk_run_t* run = (ase_awk_run_t*)arg;
 
-	ASE_ASSERT (run == *(ase_awk_run_t**)ASE_MAP_EXTENSION(map));
+	ASE_ASSERT (run == *(ase_awk_run_t**)ASE_MAP_XTN(map));
 
 	DPRINTF (DCUSTOM, ASE_T(" %.*s=>"),
 		(int)ASE_MAP_KLEN(pair), ASE_MAP_KPTR(pair));

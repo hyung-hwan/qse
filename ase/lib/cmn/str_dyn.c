@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 379 2008-09-24 08:06:56Z baconevi $
+ * $Id: str_dyn.c 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -92,7 +92,7 @@ int ase_str_yield (ase_str_t* str, ase_xstr_t* buf, int new_capa)
 	return 0;
 }
 
-void* ase_str_getextension (ase_str_t* str)
+void* ase_str_getxtn (ase_str_t* str)
 {
 	return str + 1;
 }

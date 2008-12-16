@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 478 2008-12-12 09:42:32Z baconevi $
+ * $Id: awk.h 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -606,8 +606,8 @@ extern ase_awk_val_t* ase_awk_val_one;
  * SYNOPSIS
  */
 ase_awk_t* ase_awk_open ( 
-	ase_mmgr_t* mmgr  /* a memory manager */,
-	ase_size_t  ext   /* size of extension area in bytes */
+	ase_mmgr_t* mmgr    /* a memory manager */,
+	ase_size_t  xtnsize /* size of extension area in bytes */
 );
 /******/
 
@@ -648,19 +648,19 @@ void ase_awk_setmmgr (
 	ase_mmgr_t* mmgr
 );
 
-/****f* ase.awk/ase_awk_getextension
+/****f* ase.awk/ase_awk_getxtn
  * NAME
- *  ase_awk_getextension - get the extension
+ *  ase_awk_getxtn - get the extension
  *
  * DESCRIPTION
  *  The extension area is allocated in the ase_awk_open() function when it is 
  *  given a positive extension size. The pointer to the beginning of the area
- *  can be acquired using the ase_awk_getextension() function and be utilized 
+ *  can be acquired using the ase_awk_getxtn() function and be utilized 
  *  for various purposes.
  *
  * SYNOPSIS
  */
-void* ase_awk_getextension (
+void* ase_awk_getxtn (
 	ase_awk_t* awk  /* an awk object */
 );
 /******/
@@ -832,7 +832,9 @@ int ase_awk_parse (
  *
  * SYNOPSIS
  */
-ase_awk_t* ase_awk_opensimple (void);
+ase_awk_t* ase_awk_opensimple (
+	ase_size_t xtnsize /* size of extension area in bytes */
+);
 /******/
 
 /****f* ase.awk/ase_awk_parsesimple
@@ -856,8 +858,9 @@ int ase_awk_parsesimple (
  * SYNOPSIS
  */
 int ase_awk_runsimple (
-	ase_awk_t*   awk,
-	ase_char_t** icf /* input console files */
+	ase_awk_t*        awk,
+	ase_char_t**      icf /* input console files */,
+	ase_awk_runcbs_t* cbs /* callbacks */
 );
 /******/
 
@@ -1154,37 +1157,5 @@ int ase_awk_strtonum (
 #ifdef __cplusplus
 }
 #endif
-
-struct ase_ns_awk_t
-{
-        ase_awk_t*  (*open)         (ase_mmgr_t*, ase_size_t ext);
-        int         (*close)        (ase_awk_t*);
-
-	ase_mmgr_t* (*getmmgr)      (ase_awk_t*);
-	void        (*setmmgr)      (ase_awk_t*, ase_mmgr_t*);
-	void*       (*getextension) (ase_awk_t*);
-
-	ase_ccls_t* (*getccls)      (ase_awk_t*);
-	void        (*setccls)      (ase_awk_t*, ase_ccls_t*);
-
-	ase_awk_prmfns_t* (*getprmfns) (ase_awk_t*);
-	void              (*setprmfns) (ase_awk_t*, ase_awk_prmfns_t*);
-
-        int         (*parse)        (ase_awk_t*, ase_awk_srcios_t*);
-};
-
-#define ase_ns_awk_d \
-{ \
-        ase_awk_open, \
-        ase_awk_close, \
-	ase_awk_getmmgr, \
-	ase_awk_setmmgr, \
-	ase_awk_getextension, \
-	ase_awk_getccls, \
-	ase_awk_setccls, \
-	ase_awk_getprmfns, \
-	ase_awk_setprmfns, \
-        ase_awk_parse \
-}
 
 #endif

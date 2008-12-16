@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 483 2008-12-14 13:25:42Z baconevi $
+ * $Id: map.c 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -274,7 +274,7 @@ void ase_map_fini (map_t* map)
 	ASE_MMGR_FREE (map->mmgr, map->bucket);
 }
 
-void* ase_map_getextension (map_t* map)
+void* ase_map_getxtn (map_t* map)
 {
 	return map + 1;
 }

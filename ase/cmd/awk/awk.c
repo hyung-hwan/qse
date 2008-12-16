@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 478 2008-12-12 09:42:32Z baconevi $
+ * $Id: awk.c 496 2008-12-15 09:56:48Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -34,92 +34,12 @@
 	#include <unistd.h>
 #endif
 
-#define SRCIO_FILE 1
-#define SRCIO_STR  2
-
-typedef struct srcio_data_t
-{
-	int type; /* file or string */
-
-	union
-	{
-		struct 
-		{
-			ase_char_t* ptr;
-			ase_char_t* cur;
-		} str;
-		struct 
-		{
-			ase_sll_t* sll;
-			ase_sll_node_t* cur;
-			FILE* handle;
-		} file;
-	} data;
-} srcio_data_t;
-
-typedef struct runio_data_t
-{
-	ase_char_t** icf;
-	ase_size_t icf_no;
-} runio_data_t;
-
 static void dprint (const ase_char_t* fmt, ...)
 {
 	va_list ap;
 	va_start (ap, fmt);
 	ase_vfprintf (stderr, fmt, ap);
 	va_end (ap);
-}
-
-/* custom memory management function */
-static void* custom_awk_malloc (void* custom, ase_size_t n)
-{
-#ifdef _WIN32
-	return HeapAlloc ((HANDLE)custom, 0, n);
-#else
-	return malloc (n);
-#endif
-}
-
-static void* custom_awk_realloc (void* custom, void* ptr, ase_size_t n)
-{
-#ifdef _WIN32
-	/* HeapReAlloc behaves differently from realloc */
-	return (ptr == NULL)?
-		HeapAlloc ((HANDLE)custom, 0, n):
-		HeapReAlloc ((HANDLE)custom, 0, ptr, n);
-#else
-	return realloc (ptr, n);
-#endif
-}
-
-static void custom_awk_free (void* custom, void* ptr)
-{
-#ifdef _WIN32
-	HeapFree ((HANDLE)custom, 0, ptr);
-#else
-	free (ptr);
-#endif
-}
-
-/* custom miscellaneous functions */
-static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
-{
-	return pow (x, y);
-}
-
-static int custom_awk_sprintf (
-	void* custom, ase_char_t* buf, ase_size_t size, 
-	const ase_char_t* fmt, ...)
-{
-	int n;
-
-	va_list ap;
-	va_start (ap, fmt);
-	n = ase_vsprintf (buf, size, fmt, ap);
-	va_end (ap);
-
-	return n;
 }
 
 ase_awk_t* app_awk = NULL;
@@ -187,15 +107,22 @@ static void on_run_return (
 	ase_size_t len;
 	ase_char_t* str;
 
-	str = ase_awk_valtostr (run, ret, 0, ASE_NULL, &len);
-	if (str == ASE_NULL)
+	if (ret == ase_awk_val_nil)
 	{
-		dprint (ASE_T("[RETURN] - ***OUT OF MEMORY***\n"));
+		dprint (ASE_T("[RETURN] - ***nil***\n"));
 	}
 	else
 	{
-		dprint (ASE_T("[RETURN] - %.*s\n"), (int)len, str);
-		ase_awk_free (ase_awk_getrunawk(run), str);
+		str = ase_awk_valtostr (run, ret, 0, ASE_NULL, &len);
+		if (str == ASE_NULL)
+		{
+			dprint (ASE_T("[RETURN] - ***OUT OF MEMORY***\n"));
+		}
+		else
+		{
+			dprint (ASE_T("[RETURN] - [%.*s]\n"), (int)len, str);
+			ase_awk_free (ase_awk_getrunawk(run), str);
+		}
 	}
 
 	dprint (ASE_T("[NAMED VARIABLES]\n"));
@@ -304,7 +231,7 @@ static void out_of_memory (void)
 
 struct argout_t
 {
-	void*        isp;   /* input source files or string */
+	void*        isp;  /* input source files or string */
 	int          ist;  /* input source type */
 	ase_size_t   isfl; /* the number of input source files */
 	ase_char_t*  osf;  /* output source file */
@@ -366,14 +293,14 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 	if (isf == ASE_NULL)
 	{
 		out_of_memory ();
-		ABORT (on_error);
+		ABORT (oops);
 	}
 
 	vm = ase_map_open (ASE_NULL, 0, 30, 70); 
 	if (vm == ASE_NULL)
 	{
 		out_of_memory ();
-		ABORT (on_error);
+		ABORT (oops);
 	}
 	ase_map_setcopier (vm, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setcopier (vm, ASE_MAP_VAL, ASE_MAP_COPIER_INLINE);
@@ -403,7 +330,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 					if (tmp == ASE_NULL)
 					{
 						out_of_memory ();
-						ABORT (on_error);
+						ABORT (oops);
 					}
 
 					isf = tmp;
@@ -432,7 +359,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 				if (eq == ASE_NULL)
 				{
 					/* INVALID VALUE... */
-					ABORT (on_error);
+					ABORT (oops);
 				}
 
 				*eq = ASE_T('\0');
@@ -440,7 +367,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 				if (ase_map_upsert (vm, opt.arg, ase_strlen(opt.arg)+1, eq, ase_strlen(eq)+1) == ASE_NULL)
 				{
 					out_of_memory ();
-					ABORT (on_error);
+					ABORT (oops);
 				}
 				break;
 			}
@@ -456,7 +383,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 					ase_printf (ASE_T("Error: illegal option - %c\n"), opt.opt);
 				}
 
-				ABORT (on_error);
+				ABORT (oops);
 			}
 
 			case ASE_T(':'):
@@ -470,11 +397,11 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 					ase_printf (ASE_T("Error: bad argument for %c\n"), opt.opt);
 				}
 
-				ABORT (on_error);
+				ABORT (oops);
 			}
 
 			default:
-				ABORT (on_error);
+				ABORT (oops);
 		}
 	}
 
@@ -485,7 +412,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 		if (opt.ind >= argc)
 		{
 			/* no source code specified */
-			ABORT (on_error);
+			ABORT (oops);
 		}
 
 		/* the source code is the string, not from the file */
@@ -504,7 +431,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 	if (icf == ASE_NULL)
 	{
 		out_of_memory ();
-		ABORT (on_error);
+		ABORT (oops);
 	}
 
 	if (opt.ind >= argc)
@@ -526,72 +453,24 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 
 	return 0;
 
-on_error:
+oops:
 	if (vm != ASE_NULL) ase_map_close (vm);
 	if (icf != ASE_NULL) free (icf);
 	if (isf != ASE_NULL) free (isf);
 	return -1;
 }
 
-typedef struct extension_t
-{
-	ase_mmgr_t mmgr;
-	ase_awk_prmfns_t prmfns;
-} 
-extension_t;
-
-static void init_awk_extension (ase_awk_t* awk)
-{
-	extension_t* ext = (extension_t*) ase_awk_getextension(awk);
-
-	ext->mmgr = *ase_awk_getmmgr(awk);
-	ase_awk_setmmgr (awk, &ext->mmgr);
-	ase_awk_setccls (awk, ASE_CCLS_GETDFL());
-
-	ext->prmfns.pow         = custom_awk_pow;
-	ext->prmfns.sprintf     = custom_awk_sprintf;
-	ext->prmfns.data = ASE_NULL;
-
-	ase_awk_setprmfns (awk, &ext->prmfns);
-}
-
 static ase_awk_t* open_awk (void)
 {
 	ase_awk_t* awk;
-	ase_mmgr_t mmgr;
 
-	memset (&mmgr, 0, ASE_SIZEOF(mmgr));
-	mmgr.alloc   = custom_awk_malloc;
-	mmgr.realloc = custom_awk_realloc;
-	mmgr.free    = custom_awk_free;
-
-#ifdef _WIN32
-	mmgr.data = (void*)HeapCreate (0, 1000000, 1000000); /* TODO: get size from xxxx */
-	if (mmgr.data == NULL)
-	{
-		ase_printf (ASE_T("Error: cannot create an awk heap\n"));
-		return ASE_NULL;
-	}
-#else
-	mmgr.data = ASE_NULL;
-#endif
-
-	awk = ase_awk_open (&mmgr, ASE_SIZEOF(extension_t));
+	awk = ase_awk_opensimple (0);
 	if (awk == ASE_NULL)
 	{
-#ifdef _WIN32
-		HeapDestroy ((HANDLE)mmgr.data);
-#endif
 		ase_printf (ASE_T("ERROR: cannot open awk\n"));
 		return ASE_NULL;
 	}
 	
-	init_awk_extension (awk);
-
-	ase_awk_setoption (awk, 
-		ASE_AWK_IMPLICIT | ASE_AWK_EXTIO | ASE_AWK_NEWLINE | 
-		ASE_AWK_BASEONE | ASE_AWK_PABLOCK);
-
 	/* TODO: get depth from command line */
 	ase_awk_setmaxdepth (
 		awk, ASE_AWK_DEPTH_BLOCK_PARSE | ASE_AWK_DEPTH_EXPR_PARSE, 50);
@@ -611,9 +490,6 @@ static ase_awk_t* open_awk (void)
 		1, 1, ASE_NULL, bfn_sleep) == ASE_NULL)
 	{
 		ase_awk_close (awk);
-#ifdef _WIN32
-		HeapDestroy ((HANDLE)mmgr.data);
-#endif
 		ase_printf (ASE_T("ERROR: cannot add function 'sleep'\n"));
 		return ASE_NULL;
 	}
@@ -621,26 +497,12 @@ static ase_awk_t* open_awk (void)
 	return awk;
 }
 
-static void close_awk (ase_awk_t* awk)
-{
-	extension_t* ext = (extension_t*)ase_awk_getextension(awk);
-	
-#ifdef _WIN32
-	HANDLE heap = (HANDLE)ext->mmgr.data;
-#endif
-
-	ase_awk_close (awk);
-
-#ifdef _WIN32
-	HeapDestroy (heap);
-#endif
-}
-
 static int awk_main (int argc, ase_char_t* argv[])
 {
 	ase_awk_t* awk;
 
-	ase_awk_srcios_t srcios;
+	ase_awk_runcbs_t runcbs;
+
 	int i, file_count = 0;
 	const ase_char_t* mfn = ASE_NULL;
 	int mode = 0;
@@ -676,10 +538,9 @@ static int awk_main (int argc, ase_char_t* argv[])
 			ase_awk_geterrmsg(awk)
 		);
 
-		close_awk (awk);
+		ase_awk_close (awk);
 		return -1;
 	}
-
 
 #ifdef _WIN32
 	SetConsoleCtrlHandler (stop_run, TRUE);
@@ -687,7 +548,13 @@ static int awk_main (int argc, ase_char_t* argv[])
 	signal (SIGINT, stop_run);
 #endif
 
-	if (ase_awk_runsimple (awk, ao.icf) == -1)
+	runcbs.on_start = on_run_start;
+	runcbs.on_statement = on_run_statement;
+	runcbs.on_return = on_run_return;
+	runcbs.on_end = on_run_end;
+	runcbs.data = ASE_NULL;
+
+	if (ase_awk_runsimple (awk, ao.icf, &runcbs) == -1)
 	{
 		ase_printf (
 			ASE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"),
@@ -696,11 +563,11 @@ static int awk_main (int argc, ase_char_t* argv[])
 			ase_awk_geterrmsg(awk)
 		);
 
-		close_awk (awk);
+		ase_awk_close (awk);
 		return -1;
 	}
 
-	close_awk (awk);
+	ase_awk_close (awk);
 
 	if (ao.ist == ASE_AWK_PARSE_FILES && ao.isp != ASE_NULL) free (ao.isp);
 	if (ao.osf != ASE_NULL) free (ao.osf);

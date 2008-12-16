@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 469 2008-12-11 10:05:28Z baconevi $
+ * $Id: run.c 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -734,13 +734,13 @@ ase_bool_t ase_awk_isstop (ase_awk_run_t* run)
 static void free_namedval (ase_map_t* map, void* dptr, ase_size_t dlen)
 {
 	ase_awk_refdownval (
-		*(ase_awk_run_t**)ASE_MAP_EXTENSION(map), dptr);
+		*(ase_awk_run_t**)ASE_MAP_XTN(map), dptr);
 }
 
 static void same_namedval (ase_map_t* map, void* dptr, ase_size_t dlen)
 {
 	ase_awk_refdownval_nofree (
-		*(ase_awk_run_t**)ASE_MAP_EXTENSION(map), dptr);
+		*(ase_awk_run_t**)ASE_MAP_XTN(map), dptr);
 }
 
 static int init_run (
@@ -807,7 +807,7 @@ static int init_run (
 		ase_awk_seterror (awk, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
 		return -1;
 	}
-	*(ase_awk_run_t**)ASE_MAP_EXTENSION(run->named) = run;
+	*(ase_awk_run_t**)ASE_MAP_XTN(run->named) = run;
 	ase_map_setcopier (run->named, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setfreeer (run->named, ASE_MAP_VAL, free_namedval);
 	ase_map_setkeeper (run->named, same_namedval);	

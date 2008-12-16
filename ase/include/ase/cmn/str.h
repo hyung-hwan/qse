@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 455 2008-11-26 09:05:00Z baconevi $
+ * $Id: str.h 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -34,8 +34,8 @@
 #define ASE_STR_CHAR(s,idx)  ((s)->ptr[idx])
 
 #define ASE_STR_MMGR(s)      ((s)->mmgr)
+#define ASE_STR_XTN(s)       ((void*)(((ase_str_t*)s) + 1))
 #define ASE_STR_SIZER(s)     ((s)->sizer)
-#define ASE_STR_EXTENSION(s) ((void*)(((ase_str_t*)s) + 1))
 
 typedef struct ase_str_t ase_str_t;
 typedef ase_size_t (*ase_str_sizer_t) (ase_str_t* data, ase_size_t hint);
@@ -273,7 +273,7 @@ int ase_str_yield (
 );
 /******/
 
-void* ase_str_getextension (
+void* ase_str_getxtn (
 	ase_str_t* str
 );
 
