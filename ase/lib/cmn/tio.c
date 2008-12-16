@@ -69,7 +69,7 @@ int ase_tio_fini (ase_tio_t* tio)
 	return 0;
 }
 
-void* ase_tio_getextension (ase_tio_t* tio)
+void* ase_tio_getxtn (ase_tio_t* tio)
 {
 	return tio + 1;
 }

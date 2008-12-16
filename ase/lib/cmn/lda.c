@@ -139,7 +139,7 @@ void ase_lda_fini (lda_t* lda)
 	}
 }
 
-void* ase_lda_getextension (lda_t* lda)
+void* ase_lda_getxtn (lda_t* lda)
 {
 	return lda + 1;
 }

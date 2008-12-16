@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 416 2008-10-11 14:10:25Z baconevi $
+ * $Id: parse.c 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -1433,7 +1433,7 @@ struct check_global_t
 static ase_lda_walk_t check_global (ase_lda_t* lda, ase_size_t index, void* arg)
 {
 	ase_cstr_t tmp;
-	ase_awk_t* awk = *(ase_awk_t**)ASE_LDA_EXTENSION(lda);
+	ase_awk_t* awk = *(ase_awk_t**)ASE_LDA_XTN(lda);
 	check_global_t* cg = (check_global_t*)arg;
 
 	tmp.ptr = ASE_LDA_DPTR(lda,index);

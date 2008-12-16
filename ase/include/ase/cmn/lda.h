@@ -43,13 +43,14 @@ typedef enum   ase_lda_walk_t ase_lda_walk_t;
 #define ASE_LDA_DLEN(lda,index)  ((lda)->node[index]->dlen)
 
 #define ASE_LDA_MMGR(lda)        ((lda)->mmgr)
+#define ASE_LDA_XTN(lda)         ((void*)(((ase_lda_t*)lda) + 1))
+
 #define ASE_LDA_COPIER(lda)      ((lda)->copier)
 #define ASE_LDA_FREEER(lda)      ((lda)->freeer)
 #define ASE_LDA_COMPER(lda)      ((lda)->comper)
 #define ASE_LDA_KEEPER(lda)      ((lda)->keeper)
 #define ASE_LDA_SIZER(lda)       ((lda)->sizer)
 
-#define ASE_LDA_EXTENSION(lda)   ((void*)(((ase_lda_t*)lda) + 1))
 
 
 /****b* ase.cmn.lda/ase_lda_copier_t
@@ -244,16 +245,16 @@ void ase_lda_fini (
 );
 /******/
 
-/****f* ase.cmn.lda/ase_lda_getextension
+/****f* ase.cmn.lda/ase_lda_getxtn
  * NAME
- *  ase_lda_getextension - get the pointer to the extension
+ *  ase_lda_getxtn - get the pointer to the extension
  *
  * DESCRIPTION
- *  The ase_lda_getextension() function returns the pointer to the extension.
+ *  The ase_lda_getxtn() function returns the pointer to the extension.
  *
  * SYNOPSIS
  */
-void* ase_lda_getextension (
+void* ase_lda_getxtn (
 	ase_lda_t* lda  /* a linear dynamic array */
 );
 /******/

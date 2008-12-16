@@ -166,6 +166,7 @@ struct ase_sll_node_t
 #define ASE_SLL_COPIER_INLINE ((ase_sll_copier_t)2)
 
 #define ASE_SLL_MMGR(sll)   ((sll)->mmgr)
+#define ASE_SLL_XTN(s)      ((void*)(((ase_sll_t*)s) + 1))
 #define ASE_SLL_COPIER(sll) ((sll)->copier)
 #define ASE_SLL_FREEER(sll) ((sll)->freeer)
 #define ASE_SLL_COMPER(sll) ((sll)->comper)
@@ -261,16 +262,16 @@ void ase_sll_fini (
 );
 /******/
 
-/****f* ase.cmn.sll/ase_sll_getextension
+/****f* ase.cmn.sll/ase_sll_getxtn
  * NAME
- *  ase_sll_getextension - get the pointer to the extension
+ *  ase_sll_getxtn - get the pointer to the extension
  *
  * DESCRIPTION
- *  The ase_sll_getextension() function returns the pointer to the extension.
+ *  The ase_sll_getxtn() function returns the pointer to the extension.
  *
  * SYNOPSIS
  */
-void* ase_sll_getextension (
+void* ase_sll_getxtn (
 	ase_sll_t* sll  /* a singly linked list */
 );
 /******/

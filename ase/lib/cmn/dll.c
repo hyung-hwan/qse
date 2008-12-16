@@ -43,7 +43,7 @@ void ase_dll_clear (ase_dll_t* dll)
 	ASE_ASSERT (dll->tail == ASE_NULL);
 }
 
-void* ase_dll_getextension (ase_dll_t* dll)
+void* ase_dll_getxtn (ase_dll_t* dll)
 {
 	return dll + 1;
 }

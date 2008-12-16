@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 469 2008-12-11 10:05:28Z baconevi $
+ * $Id: Awk.cpp 496 2008-12-15 09:56:48Z baconevi $
  *
  * {License}
  */
@@ -1178,7 +1178,7 @@ int Awk::open ()
 		return -1;
 	}
 
-	*(Awk**)ase_map_getextension(functionMap) = this;
+	*(Awk**)ASE_MAP_XTN(functionMap) = this;
 	ase_map_setcopier (functionMap, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
 	ase_map_setfreeer (functionMap, ASE_MAP_VAL, freeFunctionMapValue);
 	ase_map_setscale (functionMap, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
@@ -1681,7 +1681,7 @@ int Awk::functionHandler (
 void Awk::freeFunctionMapValue (map_t* map, void* dptr, size_t dlen)
 {
 	//Awk* awk = (Awk*)owner;
-	Awk* awk = *(Awk**)ase_map_getextension(map);
+	Awk* awk = *(Awk**)ASE_MAP_XTN(map);
 	ase_awk_free (awk->awk, dptr);
 }
 

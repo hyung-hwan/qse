@@ -46,6 +46,7 @@ enum
 
 
 #define ASE_TIO_MMGR(tio)   ((tio)->mmgr)
+#define ASE_TIO_XTN(s)      ((void*)(((ase_tio_t*)s) + 1))
 #define ASE_TIO_ERRNUM(tio) ((tio)->errnum)
 
 /*
@@ -115,7 +116,7 @@ int ase_tio_fini (
 	ase_tio_t* tio
 );
 
-void* ase_tio_getextension (
+void* ase_tio_getxtn (
 	ase_tio_t* tio
 );
 

@@ -9,11 +9,10 @@
 #include <stdarg.h>
 #include <ase/utl/stdio.h>
 
-typedef struct ext_t
+typedef struct xtn_t
 {
 	ase_awk_prmfns_t prmfns;
-} 
-ext_t;
+} xtn_t;
 
 static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
 {
@@ -34,25 +33,24 @@ static int custom_awk_sprintf (
 	return n;
 }
 
-ase_awk_t* ase_awk_opensimple (void)
+ase_awk_t* ase_awk_opensimple (ase_size_t xtnsize)
 {
 	ase_awk_t* awk;
-	ext_t* ext;
+	xtn_t* xtn;
 
-	awk = ase_awk_open (ASE_MMGR_GETDFL(), ASE_SIZEOF(ext_t));
+	awk = ase_awk_open (ASE_MMGR_GETDFL(), xtnsize + ASE_SIZEOF(xtn_t));
 	ase_awk_setccls (awk, ASE_CCLS_GETDFL());
 
-	ext = (ext_t*)ase_awk_getextension(awk);
-	ext->prmfns.pow     = custom_awk_pow;
-	ext->prmfns.sprintf = custom_awk_sprintf;
-	ext->prmfns.data    = ASE_NULL;
-	ase_awk_setprmfns (awk, &ext->prmfns);
+	xtn = (xtn_t*)((ase_byte_t*)ase_awk_getxtn(awk) + xtnsize);
+
+	xtn->prmfns.pow     = custom_awk_pow;
+	xtn->prmfns.sprintf = custom_awk_sprintf;
+	xtn->prmfns.data    = ASE_NULL;
+	ase_awk_setprmfns (awk, &xtn->prmfns);
 
 	ase_awk_setoption (awk, 
 		ASE_AWK_IMPLICIT | ASE_AWK_EXTIO | ASE_AWK_NEWLINE | 
 		ASE_AWK_BASEONE | ASE_AWK_PABLOCK);
-
-	/*ase_awk_addfunction ();*/
 
 	return awk;
 }
@@ -393,8 +391,7 @@ static ase_ssize_t awk_extio_file (
 			else if (epa->mode == ASE_AWK_EXTIO_FILE_APPEND)
 			{
 				mode = ASE_SIO_APPEND |
-				       ASE_SIO_CREATE |
-				       ASE_SIO_TRUNCATE;
+				       ASE_SIO_CREATE;
 			}
 			else return -1; /* TODO: any way to set the error number? */
 
@@ -682,34 +679,66 @@ static ase_ssize_t awk_extio_console (
 	return -1;
 }
 
-int ase_awk_runsimple (ase_awk_t* awk, ase_char_t** icf)
+int ase_awk_runsimple (ase_awk_t* awk, ase_char_t** icf, ase_awk_runcbs_t* cbs)
 {
-	ase_awk_runcbs_t runcbs;
-	ase_awk_runios_t runios;
+	ase_awk_runios_t ios;
 	runio_data_t rd;
 
 	rd.ic.files = icf;
 	rd.ic.index = 0;
 
-	runios.pipe = awk_extio_pipe;
-	runios.file = awk_extio_file;
-	runios.console = awk_extio_console;
-	runios.data = &rd;
-
-	/*
-	runcbs.on_start = on_run_start;
-	runcbs.on_statement = on_run_statement;
-	runcbs.on_return = on_run_return;
-	runcbs.on_end = on_run_end;
-	runcbs.data = ASE_NULL;
-	*/
+	ios.pipe = awk_extio_pipe;
+	ios.file = awk_extio_file;
+	ios.console = awk_extio_console;
+	ios.data = &rd;
 
 	return ase_awk_run (
 		awk, 
 		ASE_NULL/*mfn*/,
-		&runios,
-		ASE_NULL/*&runcbs*/,
+		&ios,
+		cbs,
 		ASE_NULL/*runarg*/,
 		ASE_NULL
 	);
 }
+
+
+/*** EXTRA BUILTIN FUNCTIONS ***/
+#if 0
+int aes_awk_func_sleep (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	ase_size_t nargs;
+	ase_awk_val_t* a0;
+	ase_long_t lv;
+	ase_real_t rv;
+	ase_awk_val_t* r;
+	int n;
+
+	nargs = ase_awk_getnargs (run);
+	ASE_ASSERT (nargs == 1);
+
+	a0 = ase_awk_getarg (run, 0);
+
+	n = ase_awk_valtonum (run, a0, &lv, &rv);
+	if (n == -1) return -1;
+	if (n == 1) lv = (ase_long_t)rv;
+
+#ifdef _WIN32
+	Sleep ((DWORD)(lv * 1000));
+	n = 0;
+#else
+	n = sleep (lv);	
+#endif
+
+	r = ase_awk_makeintval (run, n);
+	if (r == ASE_NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	ase_awk_setretval (run, r);
+	return 0;
+}
+#endif

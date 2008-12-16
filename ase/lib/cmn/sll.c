@@ -125,7 +125,7 @@ void ase_sll_fini (sll_t* sll)
 	ase_sll_clear (sll);
 }
 
-void* ase_sll_getextension (sll_t* sll)
+void* ase_sll_getxtn (sll_t* sll)
 {
 	return sll + 1;
 }
