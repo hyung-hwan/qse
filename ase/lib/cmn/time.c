@@ -11,6 +11,18 @@
 #include <time.h>
 #endif
 
+#ifdef _WIN32
+	#define WIN_EPOCH_YEAR  ((ase_time_t)1601)
+	#define WIN_EPOCH_MON   ((ase_time_t)1)
+	#define WIN_EPOCH_DAY   ((ase_time_t)1)
+
+	#define EPOCH_DIFF_YEARS (ASE_EPOCH_YEAR - WIN_EPOCH_YEAR)
+	#define EPOCH_DIFF_DAYS (EPOCH_DIFF_YEARS * 365 + EPOCH_DIFF_YEARS / 4 - 3)
+	#define EPOCH_DIFF_SECS (EPOCH_DIFF_DAYS * 24 * 60 * 60)
+	#define EPOCH_DIFF_MSECS (EPOCH_DIFF_SECS * ASE_MSEC_IN_SEC)
+#endif
+
+
 #if defined(ASE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>
 #endif
@@ -53,7 +65,7 @@ int ase_settime (ase_time_t t)
 	FILETIME ft;
 	SYSTEMTIME st;
 
-	*((ase_int64_t*)&ft) = ((value + EPOCH_DIFF_MSECS) * (10 * 1000));
+	*((ase_int64_t*)&ft) = ((t + EPOCH_DIFF_MSECS) * (10 * 1000));
 	if (FileTimeToSystemTime (&ft, &st) == FALSE) return -1;
 	if (SetSystemTime(&st) == FALSE) return -1;
 	return 0;
