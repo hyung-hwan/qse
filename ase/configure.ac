@@ -91,6 +91,13 @@ AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
 AC_CHECK_FUNCS([lseek64 stat64 fstat64 ftruncate64])
 
+OLDLIBS="$LIBS"
+LIBS="$LIBM $LIBS"
+AC_CHECK_FUNCS([powl sinl cosl tanl atanl atan2l logl expl sqrtl])
+AC_CHECK_FUNCS([pow sin cos tan atan atan2 log exp sqrt])
+AC_CHECK_FUNCS([powf sinf cosf tanf atanf atan2f logf expf sqrtf])
+LIBS="$OLDLIBS"
+
 dnl Checks the size of primitive data types
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)

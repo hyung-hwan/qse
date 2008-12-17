@@ -78,8 +78,44 @@
 /* patch level */
 #undef ASE_VERSION_PATCH
 
+/* Define to 1 if you have the `atan' function. */
+#undef HAVE_ATAN
+
+/* Define to 1 if you have the `atan2' function. */
+#undef HAVE_ATAN2
+
+/* Define to 1 if you have the `atan2f' function. */
+#undef HAVE_ATAN2F
+
+/* Define to 1 if you have the `atan2l' function. */
+#undef HAVE_ATAN2L
+
+/* Define to 1 if you have the `atanf' function. */
+#undef HAVE_ATANF
+
+/* Define to 1 if you have the `atanl' function. */
+#undef HAVE_ATANL
+
+/* Define to 1 if you have the `cos' function. */
+#undef HAVE_COS
+
+/* Define to 1 if you have the `cosf' function. */
+#undef HAVE_COSF
+
+/* Define to 1 if you have the `cosl' function. */
+#undef HAVE_COSL
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the `exp' function. */
+#undef HAVE_EXP
+
+/* Define to 1 if you have the `expf' function. */
+#undef HAVE_EXPF
+
+/* Define to 1 if you have the `expl' function. */
+#undef HAVE_EXPL
 
 /* Define to 1 if you have the `fstat64' function. */
 #undef HAVE_FSTAT64
@@ -89,6 +125,15 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `log' function. */
+#undef HAVE_LOG
+
+/* Define to 1 if you have the `logf' function. */
+#undef HAVE_LOGF
+
+/* Define to 1 if you have the `logl' function. */
+#undef HAVE_LOGL
 
 /* Define to 1 if you have the `lseek64' function. */
 #undef HAVE_LSEEK64
@@ -107,6 +152,33 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `pow' function. */
+#undef HAVE_POW
+
+/* Define to 1 if you have the `powf' function. */
+#undef HAVE_POWF
+
+/* Define to 1 if you have the `powl' function. */
+#undef HAVE_POWL
+
+/* Define to 1 if you have the `sin' function. */
+#undef HAVE_SIN
+
+/* Define to 1 if you have the `sinf' function. */
+#undef HAVE_SINF
+
+/* Define to 1 if you have the `sinl' function. */
+#undef HAVE_SINL
+
+/* Define to 1 if you have the `sqrt' function. */
+#undef HAVE_SQRT
+
+/* Define to 1 if you have the `sqrtf' function. */
+#undef HAVE_SQRTF
+
+/* Define to 1 if you have the `sqrtl' function. */
+#undef HAVE_SQRTL
 
 /* Define to 1 if you have the `stat64' function. */
 #undef HAVE_STAT64
@@ -134,6 +206,15 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the `tan' function. */
+#undef HAVE_TAN
+
+/* Define to 1 if you have the `tanf' function. */
+#undef HAVE_TANF
+
+/* Define to 1 if you have the `tanl' function. */
+#undef HAVE_TANL
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

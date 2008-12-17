@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 468 2008-12-10 10:19:59Z baconevi $
+ * $Id: StdAwk.cpp 499 2008-12-16 09:42:48Z baconevi $
  *
  * {License}
  */
@@ -10,6 +10,7 @@
 
 #include <ase/awk/StdAwk.hpp>
 #include <ase/cmn/str.h>
+#include <ase/cmn/time.h>
 #include <ase/utl/stdio.h>
 
 #include <stdlib.h>
@@ -26,11 +27,8 @@
 ASE_BEGIN_NAMESPACE(ASE)
 /////////////////////////////////
 
-
 StdAwk::StdAwk ()
 {
-	seed = (unsigned int)::time(NULL);
-	::srand (seed);
 }
 
 #define ADD_FUNC(name,min,max,impl) \
@@ -67,52 +65,144 @@ int StdAwk::open ()
 	return 0;
 }
 
+int StdAwk::run (const char_t* main, const char_t** args, size_t nargs)
+{
+	ase_time_t now;
+
+	if (ase_gettime(&now) == -1) this->seed = 0;
+	else this->seed = (unsigned int)now;
+
+	::srand (this->seed);
+
+	return Awk::run (main, args, nargs);
+}
+
 int StdAwk::sin (Run& run, Return& ret, const Argument* args, size_t nargs, 
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)::sin(args[0].toReal()));
+	return ret.set (
+	#if defined(HAVE_SINL)
+		(real_t)::sinl(args[0].toReal())
+	#elif defined(HAVE_SIN)
+		(real_t)::sin(args[0].toReal())
+	#elif defined(HAVE_SINF)
+		(real_t)::sinf(args[0].toReal())
+	#else
+		#error ### no sin function available ###
+	#endif
+	);
 }
 
 int StdAwk::cos (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)::cos(args[0].toReal()));
+	return ret.set (
+	#if defined(HAVE_COSL)
+		(real_t)::cosl(args[0].toReal())
+	#elif defined(HAVE_COS)
+		(real_t)::cos(args[0].toReal())
+	#elif defined(HAVE_COSF)
+		(real_t)::cosf(args[0].toReal())
+	#else
+		#error ### no cos function available ###
+	#endif
+	);
 }
 
 int StdAwk::tan (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)::tan(args[0].toReal()));
+	return ret.set (
+	#if defined(HAVE_TANL)
+		(real_t)::tanl(args[0].toReal())
+	#elif defined(HAVE_TAN)
+		(real_t)::tan(args[0].toReal())
+	#elif defined(HAVE_TANF)
+		(real_t)::tanf(args[0].toReal())
+	#else
+		#error ### no tan function available ###
+	#endif
+	);
 }
 
 int StdAwk::atan (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)::atan(args[0].toReal()));
+	return ret.set (
+	#if defined(HAVE_ATANL)
+		(real_t)::atanl(args[0].toReal())
+	#elif defined(HAVE_ATAN)
+		(real_t)::atan(args[0].toReal())
+	#elif defined(HAVE_ATANF)
+		(real_t)::atanf(args[0].toReal())
+	#else
+		#error ### no atan function available ###
+	#endif
+	);
 }
 
 int StdAwk::atan2 (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)::atan2(args[0].toReal(), args[1].toReal()));
+	return ret.set (
+	#if defined(HAVE_ATAN2L)
+		(real_t)::atan2l(args[0].toReal(), args[1].toReal())
+	#elif defined(HAVE_ATAN2)
+		(real_t)::atan2(args[0].toReal(), args[1].toReal())
+	#elif defined(HAVE_ATAN2F)
+		(real_t)::atan2f(args[0].toReal(), args[1].toReal())
+	#else
+		#error ### no atan2 function available ###
+	#endif
+	);
 }
 
 int StdAwk::log (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)::log(args[0].toReal()));
+	return ret.set (
+	#if defined(HAVE_LOGL)
+		(real_t)::logl(args[0].toReal())
+	#elif defined(HAVE_LOG)
+		(real_t)::log(args[0].toReal())
+	#elif defined(HAVE_LOGF)
+		(real_t)::logf(args[0].toReal())
+	#else
+		#error ### no log function available ###
+	#endif
+	);
 }
 
 int StdAwk::exp (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)::exp(args[0].toReal()));
+	return ret.set (
+	#if defined(HAVE_EXPL)
+		(real_t)::expl(args[0].toReal())
+	#elif defined(HAVE_EXP)
+		(real_t)::exp(args[0].toReal())
+	#elif defined(HAVE_EXPF)
+		(real_t)::expf(args[0].toReal())
+	#else
+		#error ### no exp function available ###
+	#endif
+	);
 }
 
 int StdAwk::sqrt (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)::sqrt(args[0].toReal()));
+	return ret.set (
+	#if defined(HAVE_SQRTL)
+		(real_t)::sqrtl(args[0].toReal())
+	#elif defined(HAVE_SQRT)
+		(real_t)::sqrt(args[0].toReal())
+	#elif defined(HAVE_SQRTF)
+		(real_t)::sqrtf(args[0].toReal())
+	#else
+		#error ### no sqrt function available ###
+	#endif
+	);
 }
 
 int StdAwk::fnint (Run& run, Return& ret, const Argument* args, size_t nargs,
@@ -130,12 +220,22 @@ int StdAwk::rand (Run& run, Return& ret, const Argument* args, size_t nargs,
 int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	unsigned int prevSeed = seed;
+	unsigned int prevSeed = this->seed;
 
-	seed = (nargs == 0)? 
-		(unsigned int)::time(NULL):
-		(unsigned int)args[0].toInt();
-	::srand (seed);
+	if (nargs == 0)
+	{
+		ase_time_t now;
+
+		if (ase_gettime (&now) == -1)
+			this->seed = (unsigned int)now;
+		else this->seed >>= 1;
+	}
+	else
+	{
+		this->seed = (unsigned int)args[0].toInt();
+	}
+
+	::srand (this->seed);
 	return ret.set ((long_t)prevSeed);
 }
 
@@ -149,7 +249,9 @@ int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,
 int StdAwk::systime (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((long_t)::time(NULL));
+	ase_time_t now;
+	if (ase_gettime (&now) == -1) now = 0;
+	return ret.set ((long_t)now / ASE_MSEC_IN_SEC);
 }
 
 int StdAwk::strftime (Run& run, Return& ret, const Argument* args, size_t nargs,

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 496 2008-12-15 09:56:48Z baconevi $
+ * $Id: awk.h 499 2008-12-16 09:42:48Z baconevi $
  *
  * {License}
  */
@@ -1142,17 +1142,68 @@ void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val);
 void ase_awk_freevalchunk (ase_awk_run_t* run, ase_awk_val_chunk_t* chunk);
 
 ase_bool_t ase_awk_valtobool (
-	ase_awk_run_t* run, ase_awk_val_t* val);
+	ase_awk_run_t* run,
+	ase_awk_val_t* val
+);
 
 ase_char_t* ase_awk_valtostr (
-	ase_awk_run_t* run, ase_awk_val_t* val, 
-	int opt, ase_str_t* buf, ase_size_t* len);
+	ase_awk_run_t* run,
+	ase_awk_val_t* val, 
+	int opt, 
+	ase_str_t* buf,
+	ase_size_t* len
+);
 
+/****f* ase.awk/ase_awk_valtonum
+ * NAME
+ *  ase_awk_valtonum - convert a value to a number
+ *
+ * DESCRIPTION
+ *  The ase_awk_valtonum() function converts a value to a number. 
+ *  The converted value is stored into the variable pointed to by
+ *  either l or r depending on the type of the number. If the value
+ *  is converted to a long number, the function returns 0 and l is
+ *  set with the converted number. If the value is converted to a real number,
+ *  the function returns 1 and r is set with a real number.
+ * 
+ * RETURN
+ *  The ase_awk_valtonum() function returns -1 on error, 0 if the converted
+ *  value is a long number and 1 if it is a real number.
+ *
+ * EXAMPLES
+ *  ase_long_t l;
+ *  ase_real_t r;
+ *  int n;
+ *
+ *  n = ase_awk_valtonum (v, &l, &r);
+ *  if (n == -1) error ();
+ *  else if (n == 0) do_long (l);
+ *  else if (n == 1) do_real (r);
+ *
+ * SYNOPSIS
+ */
 int ase_awk_valtonum (
-	ase_awk_run_t* run, ase_awk_val_t* v, ase_long_t* l, ase_real_t* r);
+	ase_awk_run_t* run,
+	ase_awk_val_t* v   /* the value to convert to a number */,
+	ase_long_t*    l   /* a pointer to a long number */, 
+	ase_real_t*    r   /* a pointer to a ase_real_t */
+);
+/******/
+
+/****f* ase.awk/ase_awk_strtonum
+ * NAME
+ *  ase_awk_strtonum - convert a string to a number
+ *
+ * SYNOPSIS
+ */
 int ase_awk_strtonum (
-	ase_awk_run_t* run, const ase_char_t* ptr, ase_size_t len, 
-	ase_long_t* l, ase_real_t* r);
+	ase_awk_run_t*    run,
+	const ase_char_t* ptr,
+	ase_size_t        len, 
+	ase_long_t*       l, 
+	ase_real_t*       r
+);
+/******/
 
 #ifdef __cplusplus
 }
