@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 468 2008-12-10 10:19:59Z baconevi $
+ * $Id: StdAwk.hpp 499 2008-12-16 09:42:48Z baconevi $
  *
  * {License}
  */
@@ -23,6 +23,7 @@ class StdAwk: public Awk
 public:
 	StdAwk ();
 	int open ();
+	int run (const char_t* main, const char_t** args, size_t nargs);
 
 protected:
 

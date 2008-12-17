@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 496 2008-12-15 09:56:48Z baconevi $
+ * $Id: awk.c 499 2008-12-16 09:42:48Z baconevi $
  */
 
 #include <ase/awk/awk.h>
@@ -14,7 +14,6 @@
 #include <string.h>
 #include <signal.h>
 #include <stdarg.h>
-#include <math.h>
 #include <stdlib.h>
 
 #define ABORT(label) goto label
@@ -34,16 +33,21 @@
 	#include <unistd.h>
 #endif
 
+static ase_awk_t* app_awk = NULL;
+static ase_awk_run_t* app_run = NULL;
+static int app_debug = 0;
+
 static void dprint (const ase_char_t* fmt, ...)
 {
-	va_list ap;
-	va_start (ap, fmt);
-	ase_vfprintf (stderr, fmt, ap);
-	va_end (ap);
+	if (app_debug)
+	{
+		va_list ap;
+		va_start (ap, fmt);
+		ase_vfprintf (stderr, fmt, ap);
+		va_end (ap);
+	}
 }
 
-ase_awk_t* app_awk = NULL;
-ase_awk_run_t* app_run = NULL;
 
 #ifdef _WIN32
 static BOOL WINAPI stop_run (DWORD ctrl_type)
@@ -176,9 +180,11 @@ static void print_usage (const ase_char_t* argv0)
 	ase_printf (ASE_T("Usage: %s [options] -f sourcefile [ -- ] [datafile]*\n"), argv0);
 	ase_printf (ASE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), argv0);
 	ase_printf (ASE_T("Where options are:\n"));
-	ase_printf (ASE_T(" -f sourcefile   --file=sourcefile\n"));
-	ase_printf (ASE_T(" -d deparsedfile --deparsed-file=deparsedfile\n"));
-	ase_printf (ASE_T(" -F string       --field-separator=string\n"));
+	ase_printf (ASE_T(" -h                                print this message\n"));
+	ase_printf (ASE_T(" -d                                show extra information\n"));
+	ase_printf (ASE_T(" -f/--file            sourcefile   set the source script file\n"));
+	ase_printf (ASE_T(" -o/--deparsed-file   deparsedfile set the deparsing output file\n"));
+	ase_printf (ASE_T(" -F/--field-separator string       set a field separator(FS)\n"));
 
 	ase_printf (ASE_T("\nYou may specify the following options to change the behavior of the interpreter.\n"));
 	for (j = 0; j < ASE_COUNTOF(otab); j++)
@@ -263,7 +269,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 		{ ASE_T(":main"),            ASE_T('m') },
 		{ ASE_T(":file"),            ASE_T('f') },
 		{ ASE_T(":field-separator"), ASE_T('F') },
-		{ ASE_T(":deparsed-file"),   ASE_T('d') },
+		{ ASE_T(":deparsed-file"),   ASE_T('o') },
 		{ ASE_T(":assign"),          ASE_T('v') },
 
 		{ ASE_T("help"),             ASE_T('h') }
@@ -271,7 +277,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 
 	static ase_opt_t opt = 
 	{
-		ASE_T("hm:f:F:d:v:"),
+		ASE_T("hdm:f:F:o:v:"),
 		lng
 	};
 
@@ -321,6 +327,12 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 				if (vm != ASE_NULL) ase_map_close (vm);
 				return 1;
 
+			case ASE_T('d'):
+			{
+				app_debug = 1;
+				break;
+			}
+
 			case ASE_T('f'):
 			{
 				if (isfl >= isfc-1) /* -1 for last ASE_NULL */
@@ -347,7 +359,7 @@ static int handle_args (int argc, ase_char_t* argv[], struct argout_t* ao)
 				break;
 			}
 
-			case ASE_T('d'):
+			case ASE_T('o'):
 			{
 				osf = opt.arg;
 				break;

@@ -1,5 +1,5 @@
 /*
- * $Id: func.c 391 2008-09-27 09:51:23Z baconevi $
+ * $Id: func.c 499 2008-12-16 09:42:48Z baconevi $
  *
  * {License}
  */
@@ -802,6 +802,7 @@ static int bfn_split (
 			((ase_awk_val_map_t*)t1)->map, 
 			key, key_len, t2, 0) == ASE_NULL)
 		{
+			/* assignment failed. restore the reference counter */
 			ase_awk_refdownval (run, t2);
 
 			if (str_free != ASE_NULL) 

@@ -4,9 +4,12 @@
 
 #include "awk.h"
 #include <ase/cmn/sio.h>
+#include <ase/cmn/str.h>
+#include <ase/cmn/time.h>
 
 #include <math.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <ase/utl/stdio.h>
 
 typedef struct xtn_t
@@ -14,9 +17,22 @@ typedef struct xtn_t
 	ase_awk_prmfns_t prmfns;
 } xtn_t;
 
+typedef struct rxtn_t
+{
+	unsigned int seed;	
+} rxtn_t;
+
 static ase_real_t custom_awk_pow (void* custom, ase_real_t x, ase_real_t y)
 {
+#if defined(HAVE_POWL)
+	return powl (x, y);
+#elif defined(HAVE_POW)
 	return pow (x, y);
+#elif defined(HAVE_POWF)
+	return powf (x, y);
+#else
+	#error ### no pow function available ###
+#endif
 }
 
 static int custom_awk_sprintf (
@@ -32,6 +48,8 @@ static int custom_awk_sprintf (
 
 	return n;
 }
+
+static int add_functions (ase_awk_t* awk);
 
 ase_awk_t* ase_awk_opensimple (ase_size_t xtnsize)
 {
@@ -51,6 +69,12 @@ ase_awk_t* ase_awk_opensimple (ase_size_t xtnsize)
 	ase_awk_setoption (awk, 
 		ASE_AWK_IMPLICIT | ASE_AWK_EXTIO | ASE_AWK_NEWLINE | 
 		ASE_AWK_BASEONE | ASE_AWK_PABLOCK);
+
+	if (add_functions (awk) == -1)
+	{
+		ase_awk_close (awk);
+		return ASE_NULL;
+	}
 
 	return awk;
 }
@@ -683,6 +707,8 @@ int ase_awk_runsimple (ase_awk_t* awk, ase_char_t** icf, ase_awk_runcbs_t* cbs)
 {
 	ase_awk_runios_t ios;
 	runio_data_t rd;
+	rxtn_t rxtn;
+	ase_time_t now;
 
 	rd.ic.files = icf;
 	rd.ic.index = 0;
@@ -692,21 +718,249 @@ int ase_awk_runsimple (ase_awk_t* awk, ase_char_t** icf, ase_awk_runcbs_t* cbs)
 	ios.console = awk_extio_console;
 	ios.data = &rd;
 
+	if (ase_gettime (&now) == -1) rxtn.seed = 0;
+	else rxtn.seed = (unsigned int)now;
+	srand (rxtn.seed);
+
 	return ase_awk_run (
 		awk, 
 		ASE_NULL/*mfn*/,
 		&ios,
 		cbs,
 		ASE_NULL/*runarg*/,
-		ASE_NULL
+		&rxtn/*ASE_NULL*/
 	);
 }
 
 
 /*** EXTRA BUILTIN FUNCTIONS ***/
-#if 0
-int aes_awk_func_sleep (
-	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+enum
+{
+	BFN_MATH_LD,
+	BFN_MATH_D,
+	BFN_MATH_F
+};
+
+static int bfn_math_1 (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl, int type, void* f)
+{
+	ase_size_t nargs;
+	ase_awk_val_t* a0;
+	ase_long_t lv;
+	ase_real_t rv;
+	ase_awk_val_t* r;
+	int n;
+
+	nargs = ase_awk_getnargs (run);
+	ASE_ASSERT (nargs == 1);
+
+	a0 = ase_awk_getarg (run, 0);
+
+	n = ase_awk_valtonum (run, a0, &lv, &rv);
+	if (n == -1) return -1;
+	if (n == 0) rv = (ase_real_t)lv;
+
+	if (type == BFN_MATH_LD)
+	{
+		long double (*rf) (long double) = 
+			(long double(*)(long double))f;
+		r = ase_awk_makerealval (run, rf(rv));
+	}
+	else if (type == BFN_MATH_D)
+	{
+		double (*rf) (double) = (double(*)(double))f;
+		r = ase_awk_makerealval (run, rf(rv));
+	}
+	else 
+	{
+		ASE_ASSERT (type == BFN_MATH_F);
+		float (*rf) (float) = (float(*)(float))f;
+		r = ase_awk_makerealval (run, rf(rv));
+	}
+	
+	if (r == ASE_NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	ase_awk_setretval (run, r);
+	return 0;
+}
+
+static int bfn_math_2 (
+	ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl, int type, void* f)
+{
+	ase_size_t nargs;
+	ase_awk_val_t* a0, * a1;
+	ase_long_t lv0, lv1;
+	ase_real_t rv0, rv1;
+	ase_awk_val_t* r;
+	int n;
+
+	nargs = ase_awk_getnargs (run);
+	ASE_ASSERT (nargs == 2);
+
+	a0 = ase_awk_getarg (run, 0);
+	a1 = ase_awk_getarg (run, 1);
+
+	n = ase_awk_valtonum (run, a0, &lv0, &rv0);
+	if (n == -1) return -1;
+	if (n == 0) rv0 = (ase_real_t)lv0;
+
+	n = ase_awk_valtonum (run, a1, &lv1, &rv1);
+	if (n == -1) return -1;
+	if (n == 0) rv1 = (ase_real_t)lv1;
+
+	if (type == BFN_MATH_LD)
+	{
+		long double (*rf) (long double,long double) = 
+			(long double(*)(long double,long double))f;
+		r = ase_awk_makerealval (run, rf(rv0,rv1));
+	}
+	else if (type == BFN_MATH_D)
+	{
+		double (*rf) (double,double) = (double(*)(double,double))f;
+		r = ase_awk_makerealval (run, rf(rv0,rv1));
+	}
+	else 
+	{
+		ASE_ASSERT (type == BFN_MATH_F);
+		float (*rf) (float,float) = (float(*)(float,float))f;
+		r = ase_awk_makerealval (run, rf(rv0,rv1));
+	}
+	
+	if (r == ASE_NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	ase_awk_setretval (run, r);
+	return 0;
+}
+
+static int bfn_sin (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	return bfn_math_1 (run, fnm, fnl, 
+	#if defined(HAVE_SINL)
+		BFN_MATH_LD, sinl
+	#elif defined(HAVE_SIN)
+		BFN_MATH_D, sin
+	#elif defined(HAVE_SINF)
+		BFN_MATH_F, sinf
+	#else
+		#error ### no sin function available ###
+	#endif
+	);
+}
+
+static int bfn_cos (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	return bfn_math_1 (run, fnm, fnl, 
+	#if defined(HAVE_COSL)
+		BFN_MATH_LD, cosl
+	#elif defined(HAVE_COS)
+		BFN_MATH_D, cos
+	#elif defined(HAVE_COSF)
+		BFN_MATH_F, cosf
+	#else
+		#error ### no cos function available ###
+	#endif
+	);
+}
+
+static int bfn_tan (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	return bfn_math_1 (run, fnm, fnl, 
+	#if defined(HAVE_TANL)
+		BFN_MATH_LD, tanl
+	#elif defined(HAVE_TAN)
+		BFN_MATH_D, tan
+	#elif defined(HAVE_TANF)
+		BFN_MATH_F, tanf
+	#else
+		#error ### no tan function available ###
+	#endif
+	);
+}
+
+static int bfn_atan (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	return bfn_math_1 (run, fnm, fnl, 
+	#if defined(HAVE_ATANL)
+		BFN_MATH_LD, atanl
+	#elif defined(HAVE_ATAN)
+		BFN_MATH_D, atan
+	#elif defined(HAVE_ATANF)
+		BFN_MATH_F, atanf
+	#else
+		#error ### no atan function available ###
+	#endif
+	);
+}
+
+static int bfn_atan2 (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	return bfn_math_2 (run, fnm, fnl, 
+	#if defined(HAVE_ATAN2L)
+		BFN_MATH_LD, atan2l
+	#elif defined(HAVE_ATAN2)
+		BFN_MATH_D, atan2
+	#elif defined(HAVE_ATAN2F)
+		BFN_MATH_F, atan2f
+	#else
+		#error ### no atan2 function available ###
+	#endif
+	);
+}
+
+static int bfn_log (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	return bfn_math_1 (run, fnm, fnl, 
+	#if defined(HAVE_LOGL)
+		BFN_MATH_LD, logl
+	#elif defined(HAVE_LOG)
+		BFN_MATH_D, log
+	#elif defined(HAVE_LOGF)
+		BFN_MATH_F, logf
+	#else
+		#error ### no log function available ###
+	#endif
+	);
+}
+
+static int bfn_exp (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	return bfn_math_1 (run, fnm, fnl, 
+	#if defined(HAVE_EXPL)
+		BFN_MATH_LD, expl
+	#elif defined(HAVE_EXP)
+		BFN_MATH_D, exp
+	#elif defined(HAVE_EXPF)
+		BFN_MATH_F, expf
+	#else
+		#error ### no exp function available ###
+	#endif
+	);
+}
+
+static int bfn_sqrt (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	return bfn_math_1 (run, fnm, fnl, 
+	#if defined(HAVE_SQRTL)
+		BFN_MATH_LD, sqrtl
+	#elif defined(HAVE_SQRT)
+		BFN_MATH_D, sqrt
+	#elif defined(HAVE_SQRTF)
+		BFN_MATH_F, sqrtf
+	#else
+		#error ### no sqrt function available ###
+	#endif
+	);
+}
+
+static int bfn_int (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_size_t nargs;
 	ase_awk_val_t* a0;
@@ -724,14 +978,7 @@ int aes_awk_func_sleep (
 	if (n == -1) return -1;
 	if (n == 1) lv = (ase_long_t)rv;
 
-#ifdef _WIN32
-	Sleep ((DWORD)(lv * 1000));
-	n = 0;
-#else
-	n = sleep (lv);	
-#endif
-
-	r = ase_awk_makeintval (run, n);
+	r = ase_awk_makeintval (run, lv);
 	if (r == ASE_NULL)
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
@@ -741,4 +988,113 @@ int aes_awk_func_sleep (
 	ase_awk_setretval (run, r);
 	return 0;
 }
-#endif
+
+static int bfn_rand (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	ase_awk_val_t* r;
+
+	r = ase_awk_makeintval (run, rand());
+	if (r == ASE_NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	ase_awk_setretval (run, r);
+	return 0;
+}
+
+static int bfn_srand (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	ase_size_t nargs;
+	ase_awk_val_t* a0;
+	ase_long_t lv;
+	ase_real_t rv;
+	ase_awk_val_t* r;
+	int n;
+	unsigned int prev;
+	rxtn_t* rxtn;
+
+	rxtn = ase_awk_getrundata (run);
+	nargs = ase_awk_getnargs (run);
+	ASE_ASSERT (nargs == 0 || nargs == 1);
+
+	prev = rxtn->seed;
+
+	if (nargs == 1)
+	{
+		a0 = ase_awk_getarg (run, 0);
+
+		n = ase_awk_valtonum (run, a0, &lv, &rv);
+		if (n == -1) return -1;
+		if (n == 1) lv = (ase_long_t)rv;
+
+		rxtn->seed = lv;
+	}
+	else
+	{
+		ase_time_t now;
+
+		if (ase_gettime(&now) == -1) rxtn->seed >>= 1;
+		else rxtn->seed = (unsigned int)now;
+	}
+
+        srand (rxtn->seed);
+
+	r = ase_awk_makeintval (run, prev);
+	if (r == ASE_NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	ase_awk_setretval (run, r);
+	return 0;
+}
+
+static int bfn_systime (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
+{
+	ase_awk_val_t* r;
+	ase_time_t now;
+	int n;
+	
+	if (ase_gettime(&now) == -1) now = 0;
+
+	r = ase_awk_makeintval (run, now / ASE_MSEC_IN_SEC);
+	if (r == ASE_NULL)
+	{
+		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+		return -1;
+	}
+
+	ase_awk_setretval (run, r);
+	return 0;
+}
+
+#define ADD_FUNC(awk,name,min,max,bfn) \
+        if (ase_awk_addfunc (\
+		(awk), (name), ase_strlen(name), \
+		0, (min), (max), ASE_NULL, (bfn)) == ASE_NULL) return -1;
+
+static int add_functions (ase_awk_t* awk)
+{
+        ADD_FUNC (awk, ASE_T("sin"),        1, 1, bfn_sin);
+        ADD_FUNC (awk, ASE_T("cos"),        1, 1, bfn_cos);
+        ADD_FUNC (awk, ASE_T("tan"),        1, 1, bfn_tan);
+        ADD_FUNC (awk, ASE_T("atan"),       1, 1, bfn_atan);
+        ADD_FUNC (awk, ASE_T("atan2"),      2, 2, bfn_atan2);
+        ADD_FUNC (awk, ASE_T("log"),        1, 1, bfn_log);
+        ADD_FUNC (awk, ASE_T("exp"),        1, 1, bfn_exp);
+        ADD_FUNC (awk, ASE_T("sqrt"),       1, 1, bfn_sqrt);
+        ADD_FUNC (awk, ASE_T("int"),        1, 1, bfn_int);
+        ADD_FUNC (awk, ASE_T("rand"),       0, 0, bfn_rand);
+        ADD_FUNC (awk, ASE_T("srand"),      0, 1, bfn_srand);
+        ADD_FUNC (awk, ASE_T("systime"),    0, 0, bfn_systime);
+/*
+        ADD_FUNC (awk, ASE_T("strftime"),   0, 2, bfn_strftime);
+        ADD_FUNC (awk, ASE_T("strfgmtime"), 0, 2, bfn_strfgmtime);
+        ADD_FUNC (awk, ASE_T("system"),     1, 1, bfn_system);
+*/
+
+	return 0;
+}
