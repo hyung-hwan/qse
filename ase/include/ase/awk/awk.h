@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 499 2008-12-16 09:42:48Z baconevi $
+ * $Id: awk.h 501 2008-12-17 08:39:15Z baconevi $
  *
  * {License}
  */
@@ -1160,15 +1160,13 @@ ase_char_t* ase_awk_valtostr (
  *
  * DESCRIPTION
  *  The ase_awk_valtonum() function converts a value to a number. 
- *  The converted value is stored into the variable pointed to by
- *  either l or r depending on the type of the number. If the value
- *  is converted to a long number, the function returns 0 and l is
- *  set with the converted number. If the value is converted to a real number,
- *  the function returns 1 and r is set with a real number.
+ *  If the value is converted to a long number, it is stored in the memory
+ *  pointed to by l and 0 is returned. If the value is converted to a real 
+ *  number, it is stored in the memory pointed to by r and 1 is returned.
  * 
  * RETURN
  *  The ase_awk_valtonum() function returns -1 on error, 0 if the converted
- *  value is a long number and 1 if it is a real number.
+ *  number is a long number and 1 if it is a real number.
  *
  * EXAMPLES
  *  ase_long_t l;

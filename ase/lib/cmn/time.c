@@ -11,23 +11,28 @@
 #include <time.h>
 #endif
 
-#ifdef _WIN32
-	#define WIN_EPOCH_YEAR  ((ase_time_t)1601)
-	#define WIN_EPOCH_MON   ((ase_time_t)1)
-	#define WIN_EPOCH_DAY   ((ase_time_t)1)
-
-	#define EPOCH_DIFF_YEARS (ASE_EPOCH_YEAR - WIN_EPOCH_YEAR)
-	#define EPOCH_DIFF_DAYS (EPOCH_DIFF_YEARS * 365 + EPOCH_DIFF_YEARS / 4 - 3)
-	#define EPOCH_DIFF_SECS (EPOCH_DIFF_DAYS * 24 * 60 * 60)
-	#define EPOCH_DIFF_MSECS (EPOCH_DIFF_SECS * ASE_MSEC_IN_SEC)
-#endif
-
-
 #if defined(ASE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>
 #endif
 
-int ase_gettime (ase_time_t* t)
+#ifdef _WIN32
+	#define WIN_EPOCH_YEAR   ((ase_ntime_t)1601)
+	#define WIN_EPOCH_MON    ((ase_ntime_t)1)
+	#define WIN_EPOCH_DAY    ((ase_ntime_t)1)
+
+	#define EPOCH_DIFF_YEARS (ASE_EPOCH_YEAR-WIN_EPOCH_YEAR)
+	#define EPOCH_DIFF_DAYS  (EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
+	#define EPOCH_DIFF_SECS  (EPOCH_DIFF_DAYS*24*60*60)
+	#define EPOCH_DIFF_MSECS (EPOCH_DIFF_SECS*ASE_MSEC_IN_SEC)
+#endif
+
+static int ytab[2][12] = 
+{
+	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
+	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+};
+
+int ase_gettime (ase_ntime_t* t)
 {
 #ifdef _WIN32
 	SYSTEMTIME st;
@@ -40,7 +45,7 @@ int ase_gettime (ase_time_t* t)
 
 	GetSystemTime (&st);
 	if (SystemTimeToFileTime (&st, &ft) == FALSE) return -1;
-	*t = ((ase_time_t)(*((ase_int64_t*)&ft)) / (10 * 1000));
+	*t = ((ase_ntime_t)(*((ase_int64_t*)&ft)) / (10 * 1000));
 	*t -= EPOCH_DIFF_MSECS;
 	return 0;
 #else
@@ -59,7 +64,7 @@ int ase_gettime (ase_time_t* t)
 #endif
 }
 
-int ase_settime (ase_time_t t)
+int ase_settime (ase_ntime_t t)
 {
 #ifdef _WIN32
 	FILETIME ft;
@@ -86,3 +91,42 @@ int ase_settime (ase_time_t t)
 #endif
 }
 
+void ase_gmtime (ase_ntime_t nt, ase_btime_t* bt)
+{
+	/* code based on minix 2.0 src/lib/ansi/gmtime.c */
+
+	ase_ntime_t days; /* total days */
+	ase_ntime_t secs; /* number of seconds in the fractional days */ 
+	ase_ntime_t time; /* total seconds */
+
+	int year = ASE_EPOCH_YEAR;
+	
+	time = nt / ASE_MSEC_IN_SEC;
+	days = (unsigned long)time / ASE_SEC_IN_DAY;
+	secs = (unsigned long)time % ASE_SEC_IN_DAY;
+	
+	bt->sec = secs % ASE_SEC_IN_MIN;
+	bt->min = (secs % ASE_SEC_IN_HOUR) / ASE_SEC_IN_MIN;
+	bt->hour = secs / ASE_SEC_IN_HOUR;
+
+	bt->wday = (days + 4) % ASE_DAY_IN_WEEK;  
+
+	while (days >= ASE_DAY_IN_YEAR(year)) 
+	{
+		days -= ASE_DAY_IN_YEAR(year);
+		year++;
+	}
+
+	bt->year = year - 1900;
+	bt->yday = days;
+	bt->mon = 0;
+
+	while (days >= ytab[ASE_IS_LEAPYEAR(year)][bt->mon]) 
+	{
+		days -= ytab[ASE_IS_LEAPYEAR(year)][bt->mon];
+		bt->mon++;
+	}
+
+	bt->mday = days + 1;
+	bt->isdst = 0;
+}

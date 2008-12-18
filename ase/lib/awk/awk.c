@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 496 2008-12-15 09:56:48Z baconevi $ 
+ * $Id: awk.c 501 2008-12-17 08:39:15Z baconevi $ 
  *
  * {License}
  */
@@ -454,6 +454,7 @@ int ase_awk_setword (ase_awk_t* awk,
 	return 0;
 }
 
+/* TODO: XXXX */
 int ase_awk_setrexfns (ase_awk_t* awk, ase_awk_rexfns_t* rexfns)
 {
 	if (rexfns->build == ASE_NULL ||
