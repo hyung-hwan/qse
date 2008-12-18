@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 499 2008-12-16 09:42:48Z baconevi $
+ * $Id: StdAwk.cpp 501 2008-12-17 08:39:15Z baconevi $
  *
  * {License}
  */
@@ -67,7 +67,7 @@ int StdAwk::open ()
 
 int StdAwk::run (const char_t* main, const char_t** args, size_t nargs)
 {
-	ase_time_t now;
+	ase_ntime_t now;
 
 	if (ase_gettime(&now) == -1) this->seed = 0;
 	else this->seed = (unsigned int)now;
@@ -224,7 +224,7 @@ int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,
 
 	if (nargs == 0)
 	{
-		ase_time_t now;
+		ase_ntime_t now;
 
 		if (ase_gettime (&now) == -1)
 			this->seed = (unsigned int)now;
@@ -249,9 +249,12 @@ int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,
 int StdAwk::systime (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	ase_time_t now;
-	if (ase_gettime (&now) == -1) now = 0;
-	return ret.set ((long_t)now / ASE_MSEC_IN_SEC);
+	ase_ntime_t now;
+
+	if (ase_gettime(&now) == -1) 
+		return ret.set (ASE_TYPE_MIN(long_t));
+	else
+		return ret.set ((long_t)now / ASE_MSEC_IN_SEC);
 }
 
 int StdAwk::strftime (Run& run, Return& ret, const Argument* args, size_t nargs,

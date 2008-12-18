@@ -708,7 +708,7 @@ int ase_awk_runsimple (ase_awk_t* awk, ase_char_t** icf, ase_awk_runcbs_t* cbs)
 	ase_awk_runios_t ios;
 	runio_data_t rd;
 	rxtn_t rxtn;
-	ase_time_t now;
+	ase_ntime_t now;
 
 	rd.ic.files = icf;
 	rd.ic.index = 0;
@@ -1033,7 +1033,7 @@ static int bfn_srand (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 	}
 	else
 	{
-		ase_time_t now;
+		ase_ntime_t now;
 
 		if (ase_gettime(&now) == -1) rxtn->seed >>= 1;
 		else rxtn->seed = (unsigned int)now;
@@ -1055,12 +1055,14 @@ static int bfn_srand (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 static int bfn_systime (ase_awk_run_t* run, const ase_char_t* fnm, ase_size_t fnl)
 {
 	ase_awk_val_t* r;
-	ase_time_t now;
+	ase_ntime_t now;
 	int n;
 	
-	if (ase_gettime(&now) == -1) now = 0;
+	if (ase_gettime(&now) == -1)
+		r = ase_awk_makeintval (run, ASE_TYPE_MIN(ase_long_t));
+	else
+		r = ase_awk_makeintval (run, now / ASE_MSEC_IN_SEC);
 
-	r = ase_awk_makeintval (run, now / ASE_MSEC_IN_SEC);
 	if (r == ASE_NULL)
 	{
 		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
