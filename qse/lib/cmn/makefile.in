@@ -50,14 +50,14 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libasecmn_la_LIBADD =
-am_libasecmn_la_OBJECTS = mem.lo chr.lo chr_cnv.lo rex.lo str_bas.lo \
+libqsecmn_la_LIBADD =
+am_libqsecmn_la_OBJECTS = mem.lo chr.lo chr_cnv.lo rex.lo str_bas.lo \
 	str_cnv.lo str_dyn.lo lda.lo map.lo sll.lo dll.lo opt.lo \
 	fio.lo sio.lo tio.lo tio_get.lo tio_put.lo time.lo misc.lo
-libasecmn_la_OBJECTS = $(am_libasecmn_la_OBJECTS)
-libasecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
+libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libasecmn_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libqsecmn_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -70,8 +70,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libasecmn_la_SOURCES)
-DIST_SOURCES = $(libasecmn_la_SOURCES)
+SOURCES = $(libqsecmn_la_SOURCES)
+DIST_SOURCES = $(libqsecmn_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -199,15 +199,15 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CFLAGS = -I$(top_builddir)/include
-lib_LTLIBRARIES = libasecmn.la
-libasecmn_la_SOURCES = mem.h chr.h \
+lib_LTLIBRARIES = libqsecmn.la
+libqsecmn_la_SOURCES = mem.h chr.h \
 	mem.c chr.c chr_cnv.c rex.c str_bas.c str_cnv.c str_dyn.c \
 	lda.c map.c sll.c dll.c opt.c \
 	fio.c sio.c tio.c tio_get.c tio_put.c \
 	time.c \
 	misc.c
 
-libasecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
+libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 all: all-am
 
 .SUFFIXES:
@@ -268,8 +268,8 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libasecmn.la: $(libasecmn_la_OBJECTS) $(libasecmn_la_DEPENDENCIES) 
-	$(libasecmn_la_LINK) -rpath $(libdir) $(libasecmn_la_OBJECTS) $(libasecmn_la_LIBADD) $(LIBS)
+libqsecmn.la: $(libqsecmn_la_OBJECTS) $(libqsecmn_la_DEPENDENCIES) 
+	$(libqsecmn_la_LINK) -rpath $(libdir) $(libqsecmn_la_OBJECTS) $(libqsecmn_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
