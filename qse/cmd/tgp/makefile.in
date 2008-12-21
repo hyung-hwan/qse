@@ -32,7 +32,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = asetgp$(EXEEXT)
+bin_PROGRAMS = qsetgp$(EXEEXT)
 subdir = cmd/tgp
 DIST_COMMON = $(srcdir)/makefile.am $(srcdir)/makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -45,11 +45,11 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_asetgp_OBJECTS = tgp.$(OBJEXT)
-asetgp_OBJECTS = $(am_asetgp_OBJECTS)
-asetgp_DEPENDENCIES =
-asetgp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(asetgp_LDFLAGS) \
+am_qsetgp_OBJECTS = tgp.$(OBJEXT)
+qsetgp_OBJECTS = $(am_qsetgp_OBJECTS)
+qsetgp_DEPENDENCIES =
+qsetgp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qsetgp_LDFLAGS) \
 	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -63,8 +63,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(asetgp_SOURCES)
-DIST_SOURCES = $(asetgp_SOURCES)
+SOURCES = $(qsetgp_SOURCES)
+DIST_SOURCES = $(qsetgp_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -191,9 +191,9 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
-asetgp_SOURCES = tgp.c
-asetgp_LDFLAGS = -L../../lib/tgp -L../../lib/utl 
-asetgp_LDADD = -laseutl -lasetgp
+qsetgp_SOURCES = tgp.c
+qsetgp_LDFLAGS = -L../../lib/tgp -L../../lib/utl 
+qsetgp_LDADD = -lqseutl -lqsetgp
 all: all-am
 
 .SUFFIXES:
@@ -255,9 +255,9 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-asetgp$(EXEEXT): $(asetgp_OBJECTS) $(asetgp_DEPENDENCIES) 
-	@rm -f asetgp$(EXEEXT)
-	$(asetgp_LINK) $(asetgp_OBJECTS) $(asetgp_LDADD) $(LIBS)
+qsetgp$(EXEEXT): $(qsetgp_OBJECTS) $(qsetgp_DEPENDENCIES) 
+	@rm -f qsetgp$(EXEEXT)
+	$(qsetgp_LINK) $(qsetgp_OBJECTS) $(qsetgp_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

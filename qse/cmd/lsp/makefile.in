@@ -32,7 +32,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = aselsp$(EXEEXT)
+bin_PROGRAMS = qselsp$(EXEEXT)
 subdir = cmd/lsp
 DIST_COMMON = $(srcdir)/makefile.am $(srcdir)/makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -45,12 +45,12 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_aselsp_OBJECTS = lsp.$(OBJEXT)
-aselsp_OBJECTS = $(am_aselsp_OBJECTS)
+am_qselsp_OBJECTS = lsp.$(OBJEXT)
+qselsp_OBJECTS = $(am_qselsp_OBJECTS)
 am__DEPENDENCIES_1 =
-aselsp_DEPENDENCIES = $(am__DEPENDENCIES_1)
-aselsp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(aselsp_LDFLAGS) \
+qselsp_DEPENDENCIES = $(am__DEPENDENCIES_1)
+qselsp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qselsp_LDFLAGS) \
 	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -64,8 +64,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(aselsp_SOURCES)
-DIST_SOURCES = $(aselsp_SOURCES)
+SOURCES = $(qselsp_SOURCES)
+DIST_SOURCES = $(qselsp_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -192,9 +192,9 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
-aselsp_SOURCES = lsp.c
-aselsp_LDFLAGS = -L../../lib/lsp -L../../lib/utl 
-aselsp_LDADD = -laseutl -laselsp $(LIBM)
+qselsp_SOURCES = lsp.c
+qselsp_LDFLAGS = -L../../lib/lsp -L../../lib/utl 
+qselsp_LDADD = -lqseutl -lqselsp $(LIBM)
 all: all-am
 
 .SUFFIXES:
@@ -256,9 +256,9 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-aselsp$(EXEEXT): $(aselsp_OBJECTS) $(aselsp_DEPENDENCIES) 
-	@rm -f aselsp$(EXEEXT)
-	$(aselsp_LINK) $(aselsp_OBJECTS) $(aselsp_LDADD) $(LIBS)
+qselsp$(EXEEXT): $(qselsp_OBJECTS) $(qselsp_DEPENDENCIES) 
+	@rm -f qselsp$(EXEEXT)
+	$(qselsp_LINK) $(qselsp_OBJECTS) $(qselsp_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
