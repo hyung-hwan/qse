@@ -2,7 +2,7 @@
  * $Id$
  */
 
-#include <ase/cmn/chr.h>
+#include <qse/cmn/chr.h>
 #include "mem.h"
 
 #ifdef HAVE_WCHAR_H
@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #endif
 
-ase_size_t ase_mblen (const ase_mchar_t* mb, ase_size_t mblen)
+qse_size_t qse_mblen (const qse_mchar_t* mb, qse_size_t mblen)
 {
 #ifdef HAVE_MBRLEN
 	size_t n;
@@ -24,13 +24,13 @@ ase_size_t ase_mblen (const ase_mchar_t* mb, ase_size_t mblen)
 	if (n == (size_t)-1) return 0; /* invalid sequence */
 	if (n == (size_t)-2) return mblen + 1; /* incomplete sequence */
 
-	return (ase_size_t)n;
+	return (qse_size_t)n;
 #else
 	#error #### NOT SUPPORTED ####
 #endif
 }
 
-ase_size_t ase_mbtowc (const ase_mchar_t* mb, ase_size_t mblen, ase_wchar_t* wc)
+qse_size_t qse_mbtowc (const qse_mchar_t* mb, qse_size_t mblen, qse_wchar_t* wc)
 {
 #ifdef HAVE_MBRTOWC
 	size_t n;
@@ -39,19 +39,19 @@ ase_size_t ase_mbtowc (const ase_mchar_t* mb, ase_size_t mblen, ase_wchar_t* wc)
 	n = mbrtowc (wc, mb, mblen, &mbs);
 	if (n == 0) 
 	{
-		*wc = ASE_WT('\0');
+		*wc = QSE_WT('\0');
 		return 1;
 	}
 
 	if (n == (size_t)-1) return 0; /* invalid sequence */
 	if (n == (size_t)-2) return mblen + 1; /* incomplete sequence */
-	return (ase_size_t)n;
+	return (qse_size_t)n;
 #else
 	#error #### NOT SUPPORTED ####
 #endif
 }
 
-ase_size_t ase_wctomb (ase_wchar_t wc, ase_mchar_t* mb, ase_size_t mblen)
+qse_size_t qse_wctomb (qse_wchar_t wc, qse_mchar_t* mb, qse_size_t mblen)
 {
 #ifdef HAVE_WCRTOMB
 	size_t n;
@@ -68,13 +68,13 @@ ase_size_t ase_wctomb (ase_wchar_t wc, ase_mchar_t* mb, ase_size_t mblen)
 
 	if (mblen < MB_CUR_MAX)
 	{
-		ase_mchar_t buf[MB_CUR_MAX];
+		qse_mchar_t buf[MB_CUR_MAX];
 
 		n = wcrtomb (buf, wc, &mbs);
 		if (n > mblen) return mblen + 1; /* buffer to small */
 		if (n == (size_t)-1) return 0; /* illegal character */
 
-		ASE_MEMCPY (mb, buf, mblen);
+		QSE_MEMCPY (mb, buf, mblen);
 	}
 	else
 	{

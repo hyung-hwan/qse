@@ -4,7 +4,7 @@
  * {License}
  */
 
-#include <ase/utl/main.h>
+#include <qse/utl/main.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,27 +12,27 @@
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 
-int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
+int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]))
 {
 	return mf (argc, argv);
 }
 
-#elif defined(ASE_CHAR_IS_WCHAR)
+#elif defined(QSE_CHAR_IS_WCHAR)
 
-int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
+int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]))
 {
 	int i, ret;
-	ase_char_t** v;
+	qse_char_t** v;
 
 	setlocale (LC_ALL, "");
 
-	v = (ase_char_t**) malloc (argc * ASE_SIZEOF(ase_char_t*));
+	v = (qse_char_t**) malloc (argc * QSE_SIZEOF(qse_char_t*));
 	if (v == NULL) return -1;
 
 	for (i = 0; i < argc; i++) v[i] = NULL;
 	for (i = 0; i < argc; i++) 
 	{
-		ase_size_t n, len, rem;
+		qse_size_t n, len, rem;
 		char* p = argv[i];
 
 		len = 0; rem = strlen (p);
@@ -48,10 +48,10 @@ int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
 			p += x; rem -= x; len++;
 		}
 
-	#if (defined(vms) || defined(__vms)) && (ASE_SIZEOF_VOID_P >= 8)
-		v[i] = (ase_char_t*) _malloc32 ((len+1)*ASE_SIZEOF(ase_char_t));
+	#if (defined(vms) || defined(__vms)) && (QSE_SIZEOF_VOID_P >= 8)
+		v[i] = (qse_char_t*) _malloc32 ((len+1)*QSE_SIZEOF(qse_char_t));
 	#else
-		v[i] = (ase_char_t*) malloc ((len+1)*ASE_SIZEOF(ase_char_t));
+		v[i] = (qse_char_t*) malloc ((len+1)*QSE_SIZEOF(qse_char_t));
 	#endif
 		if (v[i] == NULL) 
 		{
@@ -66,7 +66,7 @@ int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
 			return -1;
 		}
 
-		if (n == len) v[i][len] = ASE_T('\0');
+		if (n == len) v[i][len] = QSE_T('\0');
 	}
 
 	/* TODO: envp... */
@@ -85,7 +85,7 @@ exit_main:
 
 #else
 
-int ase_runmain (int argc, ase_achar_t* argv[], int(*mf) (int,ase_char_t*[]))
+int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]))
 {
 	return mf (argc, argv);
 }

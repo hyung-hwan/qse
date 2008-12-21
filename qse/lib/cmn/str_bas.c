@@ -4,61 +4,61 @@
  * {License}
  */
 
-#include <ase/cmn/str.h>
+#include <qse/cmn/str.h>
 #include "chr.h"
 #include "mem.h"
 
-ase_size_t ase_strlen (const ase_char_t* str)
+qse_size_t qse_strlen (const qse_char_t* str)
 {
-	const ase_char_t* p = str;
-	while (*p != ASE_T('\0')) p++;
+	const qse_char_t* p = str;
+	while (*p != QSE_T('\0')) p++;
 	return p - str;
 }
 
-ase_size_t ase_strbytes (const ase_char_t* str)
+qse_size_t qse_strbytes (const qse_char_t* str)
 {
-	const ase_char_t* p = str;
-	while (*p != ASE_T('\0')) p++;
-	return (p - str) * ASE_SIZEOF(ase_char_t);
+	const qse_char_t* p = str;
+	while (*p != QSE_T('\0')) p++;
+	return (p - str) * QSE_SIZEOF(qse_char_t);
 }
 
-ase_size_t ase_strcpy (ase_char_t* buf, const ase_char_t* str)
+qse_size_t qse_strcpy (qse_char_t* buf, const qse_char_t* str)
 {
-	ase_char_t* org = buf;
-	while ((*buf++ = *str++) != ASE_T('\0'));
+	qse_char_t* org = buf;
+	while ((*buf++ = *str++) != QSE_T('\0'));
 	return buf - org - 1;
 }
 
-ase_size_t ase_strxcpy (
-	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str)
+qse_size_t qse_strxcpy (
+	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
 {
-	ase_char_t* p, * p2;
+	qse_char_t* p, * p2;
 
 	p = buf; p2 = buf + bsz - 1;
 
 	while (p < p2) 
 	{
-		if (*str == ASE_T('\0')) break;
+		if (*str == QSE_T('\0')) break;
 		*p++ = *str++;
 	}
 
-	if (bsz > 0) *p = ASE_T('\0');
+	if (bsz > 0) *p = QSE_T('\0');
 	return p - buf;
 }
 
-ase_size_t ase_strncpy (
-	ase_char_t* buf, const ase_char_t* str, ase_size_t len)
+qse_size_t qse_strncpy (
+	qse_char_t* buf, const qse_char_t* str, qse_size_t len)
 {
 	/*
-	const ase_char_t* end = str + len;
+	const qse_char_t* end = str + len;
 	while (str < end) *buf++ = *str++;
-	*buf = ASE_T('\0');
+	*buf = QSE_T('\0');
 	return len;
 	*/
 
 	if (len > 0)
 	{
-		ase_size_t n = (len-1) >> 3; /* (len-1) / 8 */
+		qse_size_t n = (len-1) >> 3; /* (len-1) / 8 */
 
 		switch (len & 7) /* len % 8 */
 		{
@@ -77,29 +77,29 @@ ase_size_t ase_strncpy (
 		}
 	}
 
-	*buf = ASE_T('\0');
+	*buf = QSE_T('\0');
 	return len;
 }
 
-ase_size_t ase_strxncpy (
-	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len)
+qse_size_t qse_strxncpy (
+	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str, qse_size_t len)
 {
-	ase_size_t n;
+	qse_size_t n;
 
 	if (bsz <= 0) return 0;
 	if ((n = bsz - 1) > len) n = len;
-	ASE_MEMCPY (buf, str, n * ASE_SIZEOF(ase_char_t));
-	buf[n] = ASE_T('\0');
+	QSE_MEMCPY (buf, str, n * QSE_SIZEOF(qse_char_t));
+	buf[n] = QSE_T('\0');
 
 	return n;
 }
 
-ase_size_t ase_strxcat (ase_char_t* buf, ase_size_t bsz, const ase_char_t* str)
+qse_size_t qse_strxcat (qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
 {
-	ase_char_t* p, * p2;
-	ase_size_t blen;
+	qse_char_t* p, * p2;
+	qse_size_t blen;
 
-	blen = ase_strlen(buf);
+	blen = qse_strlen(buf);
 	if (blen >= bsz) return blen; /* something wrong */
 
 	p = buf + blen;
@@ -107,23 +107,23 @@ ase_size_t ase_strxcat (ase_char_t* buf, ase_size_t bsz, const ase_char_t* str)
 
 	while (p < p2) 
 	{
-		if (*str == ASE_T('\0')) break;
+		if (*str == QSE_T('\0')) break;
 		*p++ = *str++;
 	}
 
-	if (bsz > 0) *p = ASE_T('\0');
+	if (bsz > 0) *p = QSE_T('\0');
 	return p - buf;
 }
 
 
-ase_size_t ase_strxncat (
-	ase_char_t* buf, ase_size_t bsz, const ase_char_t* str, ase_size_t len)
+qse_size_t qse_strxncat (
+	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str, qse_size_t len)
 {
-	ase_char_t* p, * p2;
-	const ase_char_t* end;
-	ase_size_t blen;
+	qse_char_t* p, * p2;
+	const qse_char_t* end;
+	qse_size_t blen;
 
-	blen = ase_strlen(buf);
+	blen = qse_strlen(buf);
 	if (blen >= bsz) return blen; /* something wrong */
 
 	p = buf + blen;
@@ -137,37 +137,37 @@ ase_size_t ase_strxncat (
 		*p++ = *str++;
 	}
 
-	if (bsz > 0) *p = ASE_T('\0');
+	if (bsz > 0) *p = QSE_T('\0');
 	return p - buf;
 }
 
-int ase_strcmp (const ase_char_t* s1, const ase_char_t* s2)
+int qse_strcmp (const qse_char_t* s1, const qse_char_t* s2)
 {
 	while (*s1 == *s2) 
 	{
-		if (*s1 == ASE_T('\0')) return 0;
+		if (*s1 == QSE_T('\0')) return 0;
 		s1++, s2++;
 	}
 
 	return (*s1 > *s2)? 1: -1;
 }
 
-int ase_strxcmp (const ase_char_t* s1, ase_size_t len, const ase_char_t* s2)
+int qse_strxcmp (const qse_char_t* s1, qse_size_t len, const qse_char_t* s2)
 {
-	const ase_char_t* end = s1 + len;
-	while (s1 < end && *s2 != ASE_T('\0') && *s1 == *s2) s1++, s2++;
-	if (s1 == end && *s2 == ASE_T('\0')) return 0;
+	const qse_char_t* end = s1 + len;
+	while (s1 < end && *s2 != QSE_T('\0') && *s1 == *s2) s1++, s2++;
+	if (s1 == end && *s2 == QSE_T('\0')) return 0;
 	if (*s1 == *s2) return (s1 < end)? 1: -1;
 	return (*s1 > *s2)? 1: -1;
 }
 
-int ase_strxncmp (
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2)
+int qse_strxncmp (
+	const qse_char_t* s1, qse_size_t len1, 
+	const qse_char_t* s2, qse_size_t len2)
 {
-	ase_char_t c1, c2;
-	const ase_char_t* end1 = s1 + len1;
-	const ase_char_t* end2 = s2 + len2;
+	qse_char_t c1, c2;
+	const qse_char_t* end1 = s1 + len1;
+	const qse_char_t* end2 = s2 + len2;
 
 	while (s1 < end1)
 	{
@@ -185,32 +185,32 @@ int ase_strxncmp (
 	return (s2 < end2)? -1: 0;
 }
 
-int ase_strcasecmp (
-	const ase_char_t* s1, const ase_char_t* s2, ase_ccls_t* ccls)
+int qse_strcasecmp (
+	const qse_char_t* s1, const qse_char_t* s2, qse_ccls_t* ccls)
 {
-	while (ASE_CCLS_TOUPPER(ccls,*s1) == ASE_CCLS_TOUPPER(ccls,*s2)) 
+	while (QSE_CCLS_TOUPPER(ccls,*s1) == QSE_CCLS_TOUPPER(ccls,*s2)) 
 	{
-		if (*s1 == ASE_C('\0')) return 0;
+		if (*s1 == QSE_C('\0')) return 0;
 		s1++, s2++;
 	}
 
-	return (ASE_CCLS_TOUPPER(ccls,*s1) > ASE_CCLS_TOUPPER(ccls,*s2))? 1: -1;
+	return (QSE_CCLS_TOUPPER(ccls,*s1) > QSE_CCLS_TOUPPER(ccls,*s2))? 1: -1;
 }
 
-int ase_strxncasecmp (
-	const ase_char_t* s1, ase_size_t len1, 
-	const ase_char_t* s2, ase_size_t len2, ase_ccls_t* ccls)
+int qse_strxncasecmp (
+	const qse_char_t* s1, qse_size_t len1, 
+	const qse_char_t* s2, qse_size_t len2, qse_ccls_t* ccls)
 {
-	ase_char_t c1, c2;
-	const ase_char_t* end1 = s1 + len1;
-	const ase_char_t* end2 = s2 + len2;
+	qse_char_t c1, c2;
+	const qse_char_t* end1 = s1 + len1;
+	const qse_char_t* end2 = s2 + len2;
 
 	while (s1 < end1)
 	{
-		c1 = ASE_CCLS_TOUPPER (ccls, *s1); 
+		c1 = QSE_CCLS_TOUPPER (ccls, *s1); 
 		if (s2 < end2) 
 		{
-			c2 = ASE_CCLS_TOUPPER (ccls, *s2);
+			c2 = QSE_CCLS_TOUPPER (ccls, *s2);
 			if (c1 > c2) return 1;
 			if (c1 < c2) return -1;
 		}
@@ -221,54 +221,54 @@ int ase_strxncasecmp (
 	return (s2 < end2)? -1: 0;
 }
 
-ase_char_t* ase_strdup (const ase_char_t* str, ase_mmgr_t* mmgr)
+qse_char_t* qse_strdup (const qse_char_t* str, qse_mmgr_t* mmgr)
 {
-	ase_char_t* tmp;
+	qse_char_t* tmp;
 
-	tmp = (ase_char_t*) ASE_MALLOC (
-		mmgr, (ase_strlen(str)+1)*ASE_SIZEOF(ase_char_t));
-	if (tmp == ASE_NULL) return ASE_NULL;
+	tmp = (qse_char_t*) QSE_MALLOC (
+		mmgr, (qse_strlen(str)+1)*QSE_SIZEOF(qse_char_t));
+	if (tmp == QSE_NULL) return QSE_NULL;
 
-	ase_strcpy (tmp, str);
+	qse_strcpy (tmp, str);
 	return tmp;
 }
 
-ase_char_t* ase_strxdup (
-	const ase_char_t* str, ase_size_t len, ase_mmgr_t* mmgr)
+qse_char_t* qse_strxdup (
+	const qse_char_t* str, qse_size_t len, qse_mmgr_t* mmgr)
 {
-	ase_char_t* tmp;
+	qse_char_t* tmp;
 
-	tmp = (ase_char_t*) ASE_MALLOC (
-		mmgr, (len+1)*ASE_SIZEOF(ase_char_t));
-	if (tmp == ASE_NULL) return ASE_NULL;
+	tmp = (qse_char_t*) QSE_MALLOC (
+		mmgr, (len+1)*QSE_SIZEOF(qse_char_t));
+	if (tmp == QSE_NULL) return QSE_NULL;
 
-	ase_strncpy (tmp, str, len);
+	qse_strncpy (tmp, str, len);
 	return tmp;
 }
 
-ase_char_t* ase_strxdup2 (
-	const ase_char_t* str1, ase_size_t len1,
-	const ase_char_t* str2, ase_size_t len2, ase_mmgr_t* mmgr)
+qse_char_t* qse_strxdup2 (
+	const qse_char_t* str1, qse_size_t len1,
+	const qse_char_t* str2, qse_size_t len2, qse_mmgr_t* mmgr)
 {
-	ase_char_t* tmp;
+	qse_char_t* tmp;
 
-	tmp = (ase_char_t*) ASE_MALLOC (
-		mmgr, (len1+len2+1) * ASE_SIZEOF(ase_char_t));
-	if (tmp == ASE_NULL) return ASE_NULL;
+	tmp = (qse_char_t*) QSE_MALLOC (
+		mmgr, (len1+len2+1) * QSE_SIZEOF(qse_char_t));
+	if (tmp == QSE_NULL) return QSE_NULL;
 
-	ase_strncpy (tmp, str1, len1);
-	ase_strncpy (tmp + len1, str2, len2);
+	qse_strncpy (tmp, str1, len1);
+	qse_strncpy (tmp + len1, str2, len2);
 	return tmp;
 }
 
-ase_char_t* ase_strstr (const ase_char_t* str, const ase_char_t* sub)
+qse_char_t* qse_strstr (const qse_char_t* str, const qse_char_t* sub)
 {
-	const ase_char_t* x, * y;
+	const qse_char_t* x, * y;
 
 	y = sub;
-	if (*y == ASE_T('\0')) return (ase_char_t*)str;
+	if (*y == QSE_T('\0')) return (qse_char_t*)str;
 
-	while (*str != ASE_T('\0')) 
+	while (*str != QSE_T('\0')) 
 	{
 		if (*str != *y) 
 		{
@@ -279,7 +279,7 @@ ase_char_t* ase_strstr (const ase_char_t* str, const ase_char_t* sub)
 		x = str;
 		while (1)
 		{
-			if (*y == ASE_T('\0')) return (ase_char_t*)str;
+			if (*y == QSE_T('\0')) return (qse_char_t*)str;
 			if (*x++ != *y++) break;
 		}
 
@@ -287,35 +287,35 @@ ase_char_t* ase_strstr (const ase_char_t* str, const ase_char_t* sub)
 		str++;
 	}
 
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-ase_char_t* ase_strxstr (
-	const ase_char_t* str, ase_size_t size, const ase_char_t* sub)
+qse_char_t* qse_strxstr (
+	const qse_char_t* str, qse_size_t size, const qse_char_t* sub)
 {
-	return ase_strxnstr (str, size, sub, ase_strlen(sub));
+	return qse_strxnstr (str, size, sub, qse_strlen(sub));
 }
 
-ase_char_t* ase_strxnstr (
-	const ase_char_t* str, ase_size_t strsz, 
-	const ase_char_t* sub, ase_size_t subsz)
+qse_char_t* qse_strxnstr (
+	const qse_char_t* str, qse_size_t strsz, 
+	const qse_char_t* sub, qse_size_t subsz)
 {
-	const ase_char_t* end, * subp;
+	const qse_char_t* end, * subp;
 
-	if (subsz == 0) return (ase_char_t*)str;
-	if (strsz < subsz) return ASE_NULL;
+	if (subsz == 0) return (qse_char_t*)str;
+	if (strsz < subsz) return QSE_NULL;
 	
 	end = str + strsz - subsz;
 	subp = sub + subsz;
 
 	while (str <= end) 
 	{
-		const ase_char_t* x = str;
-		const ase_char_t* y = sub;
+		const qse_char_t* x = str;
+		const qse_char_t* y = sub;
 
 		while (1)
 		{
-			if (y >= subp) return (ase_char_t*)str;
+			if (y >= subp) return (qse_char_t*)str;
 			if (*x != *y) break;
 			x++; y++;
 		}	
@@ -323,155 +323,155 @@ ase_char_t* ase_strxnstr (
 		str++;
 	}
 		
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-ase_char_t* ase_strchr (const ase_char_t* str, ase_cint_t c)
+qse_char_t* qse_strchr (const qse_char_t* str, qse_cint_t c)
 {
-	while (*str != ASE_T('\0')) 
+	while (*str != QSE_T('\0')) 
 	{
-		if (*str == c) return (ase_char_t*)str;
+		if (*str == c) return (qse_char_t*)str;
 		str++;
 	}
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-ase_char_t* ase_strxchr (const ase_char_t* str, ase_size_t len, ase_cint_t c)
+qse_char_t* qse_strxchr (const qse_char_t* str, qse_size_t len, qse_cint_t c)
 {
-	const ase_char_t* end = str + len;
+	const qse_char_t* end = str + len;
 
 	while (str < end) 
 	{
-		if (*str == c) return (ase_char_t*)str;
+		if (*str == c) return (qse_char_t*)str;
 		str++;
 	}
 
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-ase_char_t* ase_strrchr (const ase_char_t* str, ase_cint_t c)
+qse_char_t* qse_strrchr (const qse_char_t* str, qse_cint_t c)
 {
-	const ase_char_t* end = str;
+	const qse_char_t* end = str;
 
-	while (*end != ASE_T('\0')) end++;
+	while (*end != QSE_T('\0')) end++;
 
 	while (end > str) 
 	{
-		if (*--end == c) return (ase_char_t*)end;
+		if (*--end == c) return (qse_char_t*)end;
 	}
 
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-ase_char_t* ase_strxrchr (const ase_char_t* str, ase_size_t len, ase_cint_t c)
+qse_char_t* qse_strxrchr (const qse_char_t* str, qse_size_t len, qse_cint_t c)
 {
-	const ase_char_t* end = str + len;
+	const qse_char_t* end = str + len;
 
 	while (end > str) 
 	{
-		if (*--end == c) return (ase_char_t*)end;
+		if (*--end == c) return (qse_char_t*)end;
 	}
 
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-ase_char_t* ase_strbeg (const ase_char_t* str, const ase_char_t* sub)
+qse_char_t* qse_strbeg (const qse_char_t* str, const qse_char_t* sub)
 {
-	while (*sub != ASE_T('\0'))
+	while (*sub != QSE_T('\0'))
 	{
-		if (*str != *sub) return ASE_NULL;
+		if (*str != *sub) return QSE_NULL;
 		str++; sub++;
 	}
 
 	/* returns the pointer to the next character of the match */
-	return (ase_char_t*)str;
+	return (qse_char_t*)str;
 }
 
-ase_char_t* ase_strxbeg (
-	const ase_char_t* str, ase_size_t len, const ase_char_t* sub)
+qse_char_t* qse_strxbeg (
+	const qse_char_t* str, qse_size_t len, const qse_char_t* sub)
 {
-	const ase_char_t* end = str + len;
+	const qse_char_t* end = str + len;
 
-	while (*sub != ASE_T('\0'))
+	while (*sub != QSE_T('\0'))
 	{
-		if (str >= end || *str != *sub) return ASE_NULL;
+		if (str >= end || *str != *sub) return QSE_NULL;
 		str++; sub++;
 	}
 
 	/* returns the pointer to the next character of the match */
-	return (ase_char_t*)str;
+	return (qse_char_t*)str;
 }
 
-ase_char_t* ase_strnbeg (
-	const ase_char_t* str, const ase_char_t* sub, ase_size_t len)
+qse_char_t* qse_strnbeg (
+	const qse_char_t* str, const qse_char_t* sub, qse_size_t len)
 {
-	const ase_char_t* end = sub + len;
+	const qse_char_t* end = sub + len;
 		
 	while (sub < end)
 	{
-		if (*str == ASE_T('\0') || *str != *sub) return ASE_NULL;
+		if (*str == QSE_T('\0') || *str != *sub) return QSE_NULL;
 		str++; sub++;
 	}
 
 	/* returns the pointer to the next character of the match */
-	return (ase_char_t*)str;
+	return (qse_char_t*)str;
 }
 
-ase_char_t* ase_strxnbeg (
-	const ase_char_t* str, ase_size_t len1, 
-	const ase_char_t* sub, ase_size_t len2)
+qse_char_t* qse_strxnbeg (
+	const qse_char_t* str, qse_size_t len1, 
+	const qse_char_t* sub, qse_size_t len2)
 {
-	const ase_char_t* end1, * end2;
+	const qse_char_t* end1, * end2;
 
-	if (len2 > len1) return ASE_NULL;
+	if (len2 > len1) return QSE_NULL;
 
 	end1 = str + len1;
 	end2 = sub + len2;
 
 	while (sub < end2)
 	{
-		if (str >= end1 || *str != *sub) return ASE_NULL;
+		if (str >= end1 || *str != *sub) return QSE_NULL;
 		str++; sub++;
 	}
 
 	/* returns the pointer to the next character of the match */
-	return (ase_char_t*)str;
+	return (qse_char_t*)str;
 }
 
-ase_char_t* ase_strend (const ase_char_t* str, const ase_char_t* sub)
+qse_char_t* qse_strend (const qse_char_t* str, const qse_char_t* sub)
 {
-	return ase_strxnend (str, ase_strlen(str), sub, ase_strlen(sub));
+	return qse_strxnend (str, qse_strlen(str), sub, qse_strlen(sub));
 }
 
-ase_char_t* ase_strxend (
-	const ase_char_t* str, ase_size_t len, const ase_char_t* sub)
+qse_char_t* qse_strxend (
+	const qse_char_t* str, qse_size_t len, const qse_char_t* sub)
 {
-	return ase_strxnend (str, len, sub, ase_strlen(sub));
+	return qse_strxnend (str, len, sub, qse_strlen(sub));
 }
 
-ase_char_t* ase_strnend (
-	const ase_char_t* str, const ase_char_t* sub, ase_size_t len)
+qse_char_t* qse_strnend (
+	const qse_char_t* str, const qse_char_t* sub, qse_size_t len)
 {
-	return ase_strxnend (str, ase_strlen(str), sub, len);
+	return qse_strxnend (str, qse_strlen(str), sub, len);
 }
 
-ase_char_t* ase_strxnend (
-	const ase_char_t* str, ase_size_t len1, 
-	const ase_char_t* sub, ase_size_t len2)
+qse_char_t* qse_strxnend (
+	const qse_char_t* str, qse_size_t len1, 
+	const qse_char_t* sub, qse_size_t len2)
 {
-	const ase_char_t* end1, * end2;
+	const qse_char_t* end1, * end2;
 
-	if (len2 > len1) return ASE_NULL;
+	if (len2 > len1) return QSE_NULL;
 
 	end1 = str + len1;
 	end2 = sub + len2;
 
 	while (end2 > sub)
 	{
-		if (end1 <= str) return ASE_NULL;
-		if (*(--end1) != *(--end2)) return ASE_NULL;
+		if (end1 <= str) return QSE_NULL;
+		if (*(--end1) != *(--end2)) return QSE_NULL;
 	}
 	
 	/* returns the pointer to the match start */
-	return (ase_char_t*)end1;
+	return (qse_char_t*)end1;
 }

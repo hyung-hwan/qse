@@ -6,79 +6,79 @@
 
 #include "lsp.h"
 
-ase_lsp_name_t* ase_lsp_name_open (
-	ase_lsp_name_t* name, ase_size_t capa, ase_lsp_t* lsp)
+qse_lsp_name_t* qse_lsp_name_open (
+	qse_lsp_name_t* name, qse_size_t capa, qse_lsp_t* lsp)
 {
-	if (capa == 0) capa = ASE_COUNTOF(name->static_buf) - 1;
+	if (capa == 0) capa = QSE_COUNTOF(name->static_buf) - 1;
 
-	if (name == ASE_NULL) 
+	if (name == QSE_NULL) 
 	{
-		name = (ase_lsp_name_t*)
-			ASE_LSP_ALLOC (lsp, ASE_SIZEOF(ase_lsp_name_t));
-		if (name == ASE_NULL) return ASE_NULL;
-		name->__dynamic = ASE_TRUE;
+		name = (qse_lsp_name_t*)
+			QSE_LSP_ALLOC (lsp, QSE_SIZEOF(qse_lsp_name_t));
+		if (name == QSE_NULL) return QSE_NULL;
+		name->__dynamic = QSE_TRUE;
 	}
-	else name->__dynamic = ASE_FALSE;
+	else name->__dynamic = QSE_FALSE;
 	
-	if (capa < ASE_COUNTOF(name->static_buf)) 
+	if (capa < QSE_COUNTOF(name->static_buf)) 
 	{
 		name->buf = name->static_buf;
 	}
 	else 
 	{
-		name->buf = (ase_char_t*)
-			ASE_LSP_ALLOC (lsp, (capa+1)*ASE_SIZEOF(ase_char_t));
-		if (name->buf == ASE_NULL) 
+		name->buf = (qse_char_t*)
+			QSE_LSP_ALLOC (lsp, (capa+1)*QSE_SIZEOF(qse_char_t));
+		if (name->buf == QSE_NULL) 
 		{
-			if (name->__dynamic) ASE_LSP_FREE (lsp, name);
-			return ASE_NULL;
+			if (name->__dynamic) QSE_LSP_FREE (lsp, name);
+			return QSE_NULL;
 		}
 	}
 
 	name->size   = 0;
 	name->capa   = capa;
-	name->buf[0] = ASE_T('\0');
+	name->buf[0] = QSE_T('\0');
 	name->lsp    = lsp;
 
 	return name;
 }
 
-void ase_lsp_name_close (ase_lsp_name_t* name)
+void qse_lsp_name_close (qse_lsp_name_t* name)
 {
-	if (name->capa >= ASE_COUNTOF(name->static_buf)) 
+	if (name->capa >= QSE_COUNTOF(name->static_buf)) 
 	{
-		ASE_ASSERT (name->buf != name->static_buf);
-		ASE_LSP_FREE (name->lsp, name->buf);
+		QSE_ASSERT (name->buf != name->static_buf);
+		QSE_LSP_FREE (name->lsp, name->buf);
 	}
-	if (name->__dynamic) ASE_LSP_FREE (name->lsp, name);
+	if (name->__dynamic) QSE_LSP_FREE (name->lsp, name);
 }
 
-int ase_lsp_name_addc (ase_lsp_name_t* name, ase_cint_t c)
+int qse_lsp_name_addc (qse_lsp_name_t* name, qse_cint_t c)
 {
 	if (name->size >= name->capa) 
 	{
 		/* double the capacity */
-		ase_size_t new_capa = name->capa * 2;
+		qse_size_t new_capa = name->capa * 2;
 
-		if (new_capa >= ASE_COUNTOF(name->static_buf)) 
+		if (new_capa >= QSE_COUNTOF(name->static_buf)) 
 		{
-			ase_char_t* space;
+			qse_char_t* space;
 
-			if (name->capa < ASE_COUNTOF(name->static_buf)) 
+			if (name->capa < QSE_COUNTOF(name->static_buf)) 
 			{
-				space = (ase_char_t*) ASE_LSP_ALLOC (
-					name->lsp, (new_capa+1)*ASE_SIZEOF(ase_char_t));
-				if (space == ASE_NULL) return -1;
+				space = (qse_char_t*) QSE_LSP_ALLOC (
+					name->lsp, (new_capa+1)*QSE_SIZEOF(qse_char_t));
+				if (space == QSE_NULL) return -1;
 
 				/* don't need to copy up to the terminating null */
-				ASE_MEMCPY (space, name->buf, name->capa*ASE_SIZEOF(ase_char_t));
+				QSE_MEMCPY (space, name->buf, name->capa*QSE_SIZEOF(qse_char_t));
 			}
 			else 
 			{
-				space = (ase_char_t*) ASE_LSP_REALLOC (
+				space = (qse_char_t*) QSE_LSP_REALLOC (
 					name->lsp, name->buf, 
-					(new_capa+1)*ASE_SIZEOF(ase_char_t));
-				if (space == ASE_NULL) return -1;
+					(new_capa+1)*QSE_SIZEOF(qse_char_t));
+				if (space == QSE_NULL) return -1;
 			}
 
 			name->buf = space;
@@ -88,31 +88,31 @@ int ase_lsp_name_addc (ase_lsp_name_t* name, ase_cint_t c)
 	}
 
 	name->buf[name->size++] = c;
-	name->buf[name->size]   = ASE_T('\0');
+	name->buf[name->size]   = QSE_T('\0');
 	return 0;
 }
 
-int ase_lsp_name_adds (ase_lsp_name_t* name, const ase_char_t* s)
+int qse_lsp_name_adds (qse_lsp_name_t* name, const qse_char_t* s)
 {
-	while (*s != ASE_T('\0')) 
+	while (*s != QSE_T('\0')) 
 	{
-		if (ase_lsp_name_addc(name, *s) == -1) return -1;
+		if (qse_lsp_name_addc(name, *s) == -1) return -1;
 		s++;
 	}
 
 	return 0;
 }
 
-void ase_lsp_name_clear (ase_lsp_name_t* name)
+void qse_lsp_name_clear (qse_lsp_name_t* name)
 {
 	name->size   = 0;
-	name->buf[0] = ASE_T('\0');
+	name->buf[0] = QSE_T('\0');
 }
 
-int ase_lsp_name_compare (ase_lsp_name_t* name, const ase_char_t* str)
+int qse_lsp_name_compare (qse_lsp_name_t* name, const qse_char_t* str)
 {
-	ase_char_t* p = name->buf;
-	ase_size_t index = 0;
+	qse_char_t* p = name->buf;
+	qse_size_t index = 0;
 
 	while (index < name->size) 
 	{
@@ -121,5 +121,5 @@ int ase_lsp_name_compare (ase_lsp_name_t* name, const ase_char_t* str)
 		index++; p++; str++;
 	}
 
-	return (*str == ASE_T('\0'))? 0: -1;
+	return (*str == QSE_T('\0'))? 0: -1;
 }

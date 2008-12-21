@@ -4,36 +4,36 @@
  * {License}
  */
 
-#ifndef _ASE_LIB_CMN_MEM_H_
-#define _ASE_LIB_CMN_MEM_H_
+#ifndef _QSE_LIB_CMN_MEM_H_
+#define _QSE_LIB_CMN_MEM_H_
 
-#include <ase/cmn/mem.h>
+#include <qse/cmn/mem.h>
 
 #ifdef USE_STDC
 
 #include <string.h>
-#define ASE_MEMCPY(dst,src,len) memcpy(dst,src,len)
-#define ASE_MEMCMP(p1,p2,len) memcmp(p1,p2,len)
-#define ASE_MEMSET(dst,val,len) memset(dst,val,len)
-#define ASE_MEMBYTE(s,val,len) memchr(s,val,len)
-#define ASE_MEMRBYTE(s,val,len) memrchr(s,val,len)
-#define ASE_MEMMEM(hs,hl,nd,nl) memmem(hs,hl,nd,nl)
-#define ASE_MEMRMEM(hs,hl,nd,nl) memrmem(hs,hl,nd,nl)
+#define QSE_MEMCPY(dst,src,len) memcpy(dst,src,len)
+#define QSE_MEMCMP(p1,p2,len) memcmp(p1,p2,len)
+#define QSE_MEMSET(dst,val,len) memset(dst,val,len)
+#define QSE_MEMBYTE(s,val,len) memchr(s,val,len)
+#define QSE_MEMRBYTE(s,val,len) memrchr(s,val,len)
+#define QSE_MEMMEM(hs,hl,nd,nl) memmem(hs,hl,nd,nl)
+#define QSE_MEMRMEM(hs,hl,nd,nl) memrmem(hs,hl,nd,nl)
 
 #else
 
-#define ASE_MEMCPY(dst,src,len) ase_memcpy(dst,src,len)
-#define ASE_MEMCMP(p1,p2,len) ase_memcmp(p1,p2,len)
-#define ASE_MEMSET(dst,val,len) ase_memset(dst,val,len)
-#define ASE_MEMBYTE(s,val,len) ase_membyte(s,val,len)
-#define ASE_MEMRBYTE(s,val,len) ase_memrbyte(s,val,len)
-#define ASE_MEMMEM(hs,hl,nd,nl) ase_memmem(hs,hl,nd,nl)
-#define ASE_MEMRMEM(hs,hl,nd,nl) ase_memrmem(hs,hl,nd,nl)
+#define QSE_MEMCPY(dst,src,len) qse_memcpy(dst,src,len)
+#define QSE_MEMCMP(p1,p2,len) qse_memcmp(p1,p2,len)
+#define QSE_MEMSET(dst,val,len) qse_memset(dst,val,len)
+#define QSE_MEMBYTE(s,val,len) qse_membyte(s,val,len)
+#define QSE_MEMRBYTE(s,val,len) qse_memrbyte(s,val,len)
+#define QSE_MEMMEM(hs,hl,nd,nl) qse_memmem(hs,hl,nd,nl)
+#define QSE_MEMRMEM(hs,hl,nd,nl) qse_memrmem(hs,hl,nd,nl)
 
 #endif
 
-#define ASE_MALLOC(mmgr,size) ASE_MMGR_ALLOC(mmgr,size)
-#define ASE_REALLOC(mmgr,ptr,size) ASE_MMGR_REALLOC(mmgr,ptr,size)
-#define ASE_FREE(mmgr,ptr) ASE_MMGR_FREE(mmgr,ptr)
+#define QSE_MALLOC(mmgr,size) QSE_MMGR_ALLOC(mmgr,size)
+#define QSE_REALLOC(mmgr,ptr,size) QSE_MMGR_REALLOC(mmgr,ptr,size)
+#define QSE_FREE(mmgr,ptr) QSE_MMGR_FREE(mmgr,ptr)
 
 #endif

@@ -6,53 +6,53 @@
 
 #include "awk.h"
 
-static int split_record (ase_awk_run_t* run);
+static int split_record (qse_awk_run_t* run);
 static int recomp_record_fields (
-	ase_awk_run_t* run, ase_size_t lv, 
-	const ase_char_t* str, ase_size_t len);
+	qse_awk_run_t* run, qse_size_t lv, 
+	const qse_char_t* str, qse_size_t len);
 
-int ase_awk_setrec (
-	ase_awk_run_t* run, ase_size_t idx, 
-	const ase_char_t* str, ase_size_t len)
+int qse_awk_setrec (
+	qse_awk_run_t* run, qse_size_t idx, 
+	const qse_char_t* str, qse_size_t len)
 {
-	ase_awk_val_t* v;
+	qse_awk_val_t* v;
 
 	if (idx == 0)
 	{
-		if (str == ASE_STR_PTR(&run->inrec.line) &&
-		    len == ASE_STR_LEN(&run->inrec.line))
+		if (str == QSE_STR_PTR(&run->inrec.line) &&
+		    len == QSE_STR_LEN(&run->inrec.line))
 		{
-			if (ase_awk_clrrec (run, ASE_TRUE) == -1) return -1;
+			if (qse_awk_clrrec (run, QSE_TRUE) == -1) return -1;
 		}
 		else
 		{
-			if (ase_awk_clrrec (run, ASE_FALSE) == -1) return -1;
+			if (qse_awk_clrrec (run, QSE_FALSE) == -1) return -1;
 
-			if (ase_str_ncpy (&run->inrec.line, str, len) == (ase_size_t)-1)
+			if (qse_str_ncpy (&run->inrec.line, str, len) == (qse_size_t)-1)
 			{
-				ase_awk_clrrec (run, ASE_FALSE);
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+				qse_awk_clrrec (run, QSE_FALSE);
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
 
-		v = ase_awk_makestrval (run, str, len);
-		if (v == ASE_NULL)
+		v = qse_awk_makestrval (run, str, len);
+		if (v == QSE_NULL)
 		{
-			ase_awk_clrrec (run, ASE_FALSE);
+			qse_awk_clrrec (run, QSE_FALSE);
 			return -1;
 		}
 
-		ASE_ASSERT (run->inrec.d0->type == ASE_AWK_VAL_NIL);
+		QSE_ASSERT (run->inrec.d0->type == QSE_AWK_VAL_NIL);
 		/* d0 should be cleared before the next line is reached
-		 * as it doesn't call ase_awk_refdownval on run->inrec.d0 */
+		 * as it doesn't call qse_awk_refdownval on run->inrec.d0 */
 		run->inrec.d0 = v;
-		ase_awk_refupval (run, v);
+		qse_awk_refupval (run, v);
 
 		if (split_record (run) == -1) 
 		{
-			ase_awk_clrrec (run, ASE_FALSE);
+			qse_awk_clrrec (run, QSE_FALSE);
 			return -1;
 		}
 	}
@@ -60,206 +60,206 @@ int ase_awk_setrec (
 	{
 		if (recomp_record_fields (run, idx, str, len) == -1)
 		{
-			ase_awk_clrrec (run, ASE_FALSE);
+			qse_awk_clrrec (run, QSE_FALSE);
 			return -1;
 		}
 	
 		/* recompose $0 */
-		v = ase_awk_makestrval (run,
-			ASE_STR_PTR(&run->inrec.line), 
-			ASE_STR_LEN(&run->inrec.line));
-		if (v == ASE_NULL)
+		v = qse_awk_makestrval (run,
+			QSE_STR_PTR(&run->inrec.line), 
+			QSE_STR_LEN(&run->inrec.line));
+		if (v == QSE_NULL)
 		{
-			ase_awk_clrrec (run, ASE_FALSE);
+			qse_awk_clrrec (run, QSE_FALSE);
 			return -1;
 		}
 
-		ase_awk_refdownval (run, run->inrec.d0);
+		qse_awk_refdownval (run, run->inrec.d0);
 		run->inrec.d0 = v;
-		ase_awk_refupval (run, v);
+		qse_awk_refupval (run, v);
 	}
 
 	return 0;
 }
 
-static int split_record (ase_awk_run_t* run)
+static int split_record (qse_awk_run_t* run)
 {
-	ase_char_t* p, * tok;
-	ase_size_t len, tok_len, nflds;
-	ase_awk_val_t* v, * fs;
-	ase_char_t* fs_ptr, * fs_free;
-	ase_size_t fs_len;
+	qse_char_t* p, * tok;
+	qse_size_t len, tok_len, nflds;
+	qse_awk_val_t* v, * fs;
+	qse_char_t* fs_ptr, * fs_free;
+	qse_size_t fs_len;
 	int errnum;
        
 	/* inrec should be cleared before split_record is called */
-	ASE_ASSERT (run->inrec.nflds == 0);
+	QSE_ASSERT (run->inrec.nflds == 0);
 
 	/* get FS */
-	fs = ase_awk_getglobal (run, ASE_AWK_GLOBAL_FS);
-	if (fs->type == ASE_AWK_VAL_NIL)
+	fs = qse_awk_getglobal (run, QSE_AWK_GLOBAL_FS);
+	if (fs->type == QSE_AWK_VAL_NIL)
 	{
-		fs_ptr = ASE_T(" ");
+		fs_ptr = QSE_T(" ");
 		fs_len = 1;
-		fs_free = ASE_NULL;
+		fs_free = QSE_NULL;
 	}
-	else if (fs->type == ASE_AWK_VAL_STR)
+	else if (fs->type == QSE_AWK_VAL_STR)
 	{
-		fs_ptr = ((ase_awk_val_str_t*)fs)->buf;
-		fs_len = ((ase_awk_val_str_t*)fs)->len;
-		fs_free = ASE_NULL;
+		fs_ptr = ((qse_awk_val_str_t*)fs)->buf;
+		fs_len = ((qse_awk_val_str_t*)fs)->len;
+		fs_free = QSE_NULL;
 	}
 	else 
 	{
-		fs_ptr = ase_awk_valtostr (
-			run, fs, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &fs_len);
-		if (fs_ptr == ASE_NULL) return -1;
+		fs_ptr = qse_awk_valtostr (
+			run, fs, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
+		if (fs_ptr == QSE_NULL) return -1;
 		fs_free = fs_ptr;
 	}
 
 	/* scan the input record to count the fields */
-	p = ASE_STR_PTR(&run->inrec.line);
-	len = ASE_STR_LEN(&run->inrec.line);
+	p = QSE_STR_PTR(&run->inrec.line);
+	len = QSE_STR_LEN(&run->inrec.line);
 
 	nflds = 0;
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		if (fs_len <= 1)
 		{
-			p = ase_awk_strxntok (run,
+			p = qse_awk_strxntok (run,
 				p, len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
-			p = ase_awk_strxntokbyrex (run, p, len, 
+			p = qse_awk_strxntokbyrex (run, p, len, 
 				run->global.fs, &tok, &tok_len, &errnum); 
-			if (p == ASE_NULL && errnum != ASE_AWK_ENOERR)
+			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
-				if (fs_free != ASE_NULL) 
-					ASE_AWK_FREE (run->awk, fs_free);
-				ase_awk_setrunerror (run, errnum, 0, ASE_NULL, 0);
+				if (fs_free != QSE_NULL) 
+					QSE_AWK_FREE (run->awk, fs_free);
+				qse_awk_setrunerror (run, errnum, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
 
-		if (nflds == 0 && p == ASE_NULL && tok_len == 0)
+		if (nflds == 0 && p == QSE_NULL && tok_len == 0)
 		{
 			/* there are no fields. it can just return here
-			 * as ase_awk_clrrec has been called before this */
-			if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
+			 * as qse_awk_clrrec has been called before this */
+			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
 			return 0;
 		}
 
-		ASE_ASSERT ((tok != ASE_NULL && tok_len > 0) || tok_len == 0);
+		QSE_ASSERT ((tok != QSE_NULL && tok_len > 0) || tok_len == 0);
 
 		nflds++;
-		len = ASE_STR_LEN(&run->inrec.line) - 
-			(p - ASE_STR_PTR(&run->inrec.line));
+		len = QSE_STR_LEN(&run->inrec.line) - 
+			(p - QSE_STR_PTR(&run->inrec.line));
 	}
 
 	/* allocate space */
 	if (nflds > run->inrec.maxflds)
 	{
-		void* tmp = ASE_AWK_ALLOC (
-			run->awk, ASE_SIZEOF(*run->inrec.flds) * nflds);
-		if (tmp == ASE_NULL) 
+		void* tmp = QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(*run->inrec.flds) * nflds);
+		if (tmp == QSE_NULL) 
 		{
-			if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
-			ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
+			qse_awk_setrunerror (run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 			return -1;
 		}
 
-		if (run->inrec.flds != ASE_NULL) 
-			ASE_AWK_FREE (run->awk, run->inrec.flds);
+		if (run->inrec.flds != QSE_NULL) 
+			QSE_AWK_FREE (run->awk, run->inrec.flds);
 		run->inrec.flds = tmp;
 		run->inrec.maxflds = nflds;
 	}
 
 	/* scan again and split it */
-	p = ASE_STR_PTR(&run->inrec.line);
-	len = ASE_STR_LEN(&run->inrec.line);
+	p = QSE_STR_PTR(&run->inrec.line);
+	len = QSE_STR_LEN(&run->inrec.line);
 
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		if (fs_len <= 1)
 		{
-			p = ase_awk_strxntok (
+			p = qse_awk_strxntok (
 				run, p, len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
-			p = ase_awk_strxntokbyrex (run, p, len, 
+			p = qse_awk_strxntokbyrex (run, p, len, 
 				run->global.fs, &tok, &tok_len, &errnum); 
-			if (p == ASE_NULL && errnum != ASE_AWK_ENOERR)
+			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
-				if (fs_free != ASE_NULL) 
-					ASE_AWK_FREE (run->awk, fs_free);
-				ase_awk_setrunerror (run, errnum, 0, ASE_NULL, 0);
+				if (fs_free != QSE_NULL) 
+					QSE_AWK_FREE (run->awk, fs_free);
+				qse_awk_setrunerror (run, errnum, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
 
-		ASE_ASSERT ((tok != ASE_NULL && tok_len > 0) || tok_len == 0);
+		QSE_ASSERT ((tok != QSE_NULL && tok_len > 0) || tok_len == 0);
 
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
 		run->inrec.flds[run->inrec.nflds].val = 
-			ase_awk_makestrval (run, tok, tok_len);
+			qse_awk_makestrval (run, tok, tok_len);
 
-		if (run->inrec.flds[run->inrec.nflds].val == ASE_NULL)
+		if (run->inrec.flds[run->inrec.nflds].val == QSE_NULL)
 		{
-			if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
+			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
 			return -1;
 		}
 
-		ase_awk_refupval (run, run->inrec.flds[run->inrec.nflds].val);
+		qse_awk_refupval (run, run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
 
-		len = ASE_STR_LEN(&run->inrec.line) - 
-			(p - ASE_STR_PTR(&run->inrec.line));
+		len = QSE_STR_LEN(&run->inrec.line) - 
+			(p - QSE_STR_PTR(&run->inrec.line));
 	}
 
-	if (fs_free != ASE_NULL) ASE_AWK_FREE (run->awk, fs_free);
+	if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
 
 	/* set the number of fields */
-	v = ase_awk_makeintval (run, (ase_long_t)nflds);
-	if (v == ASE_NULL) return -1;
+	v = qse_awk_makeintval (run, (qse_long_t)nflds);
+	if (v == QSE_NULL) return -1;
 
-	ase_awk_refupval (run, v);
-	if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NF, v) == -1) 
+	qse_awk_refupval (run, v);
+	if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
 	{
-		ase_awk_refdownval (run, v);
+		qse_awk_refdownval (run, v);
 		return -1;
 	}
 
-	ase_awk_refdownval (run, v);
-	ASE_ASSERT (nflds == run->inrec.nflds);
+	qse_awk_refdownval (run, v);
+	QSE_ASSERT (nflds == run->inrec.nflds);
 	return 0;
 }
 
-int ase_awk_clrrec (ase_awk_run_t* run, ase_bool_t skip_inrec_line)
+int qse_awk_clrrec (qse_awk_run_t* run, qse_bool_t skip_inrec_line)
 {
-	ase_size_t i;
+	qse_size_t i;
 	int n = 0;
 
-	if (run->inrec.d0 != ase_awk_val_nil)
+	if (run->inrec.d0 != qse_awk_val_nil)
 	{
-		ase_awk_refdownval (run, run->inrec.d0);
-		run->inrec.d0 = ase_awk_val_nil;
+		qse_awk_refdownval (run, run->inrec.d0);
+		run->inrec.d0 = qse_awk_val_nil;
 	}
 
 	if (run->inrec.nflds > 0)
 	{
-		ASE_ASSERT (run->inrec.flds != ASE_NULL);
+		QSE_ASSERT (run->inrec.flds != QSE_NULL);
 
 		for (i = 0; i < run->inrec.nflds; i++) 
 		{
-			ASE_ASSERT (run->inrec.flds[i].val != ASE_NULL);
-			ase_awk_refdownval (run, run->inrec.flds[i].val);
+			QSE_ASSERT (run->inrec.flds[i].val != QSE_NULL);
+			qse_awk_refdownval (run, run->inrec.flds[i].val);
 		}
 		run->inrec.nflds = 0;
 
-		if (ase_awk_setglobal (
-			run, ASE_AWK_GLOBAL_NF, ase_awk_val_zero) == -1)
+		if (qse_awk_setglobal (
+			run, QSE_AWK_GLOBAL_NF, qse_awk_val_zero) == -1)
 		{
 			/* first of all, this should never happen. 
 			 * if it happened, it would return an error
@@ -268,23 +268,23 @@ int ase_awk_clrrec (ase_awk_run_t* run, ase_bool_t skip_inrec_line)
 		}
 	}
 
-	ASE_ASSERT (run->inrec.nflds == 0);
-	if (!skip_inrec_line) ase_str_clear (&run->inrec.line);
+	QSE_ASSERT (run->inrec.nflds == 0);
+	if (!skip_inrec_line) qse_str_clear (&run->inrec.line);
 
 	return n;
 }
 
 static int recomp_record_fields (
-	ase_awk_run_t* run, ase_size_t lv, 
-	const ase_char_t* str, ase_size_t len)
+	qse_awk_run_t* run, qse_size_t lv, 
+	const qse_char_t* str, qse_size_t len)
 {
-	ase_awk_val_t* v;
-	ase_size_t max, i, nflds;
+	qse_awk_val_t* v;
+	qse_size_t max, i, nflds;
 
 	/* recomposes the record and the fields when $N has been assigned 
 	 * a new value and recomputes NF accordingly */
 
-	ASE_ASSERT (lv > 0);
+	QSE_ASSERT (lv > 0);
 	max = (lv > run->inrec.nflds)? lv: run->inrec.nflds;
 
 	nflds = run->inrec.nflds;
@@ -296,33 +296,33 @@ static int recomp_record_fields (
 		 * number of fields that the current record can hold,
 		 * the field spaces are resized */
 
-		if (run->awk->mmgr->realloc != ASE_NULL)
+		if (run->awk->mmgr->realloc != QSE_NULL)
 		{
-			tmp = ASE_AWK_REALLOC (
+			tmp = QSE_AWK_REALLOC (
 				run->awk, run->inrec.flds, 
-				ASE_SIZEOF(*run->inrec.flds) * max);
-			if (tmp == ASE_NULL) 
+				QSE_SIZEOF(*run->inrec.flds) * max);
+			if (tmp == QSE_NULL) 
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
 		else
 		{
-			tmp = ASE_AWK_ALLOC (
-				run->awk, ASE_SIZEOF(*run->inrec.flds) * max);
-			if (tmp == ASE_NULL)
+			tmp = QSE_AWK_ALLOC (
+				run->awk, QSE_SIZEOF(*run->inrec.flds) * max);
+			if (tmp == QSE_NULL)
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
-			if (run->inrec.flds != ASE_NULL)
+			if (run->inrec.flds != QSE_NULL)
 			{
-				ASE_MEMCPY (tmp, run->inrec.flds, 
-					ASE_SIZEOF(*run->inrec.flds)*run->inrec.maxflds);
-				ASE_AWK_FREE (run->awk, run->inrec.flds);
+				QSE_MEMCPY (tmp, run->inrec.flds, 
+					QSE_SIZEOF(*run->inrec.flds)*run->inrec.maxflds);
+				QSE_AWK_FREE (run->awk, run->inrec.flds);
 			}
 		}
 
@@ -332,109 +332,109 @@ static int recomp_record_fields (
 
 	lv = lv - 1; /* adjust the value to 0-based index */
 
-	ase_str_clear (&run->inrec.line);
+	qse_str_clear (&run->inrec.line);
 
 	for (i = 0; i < max; i++)
 	{
 		if (i > 0)
 		{
-			if (ase_str_ncat (
+			if (qse_str_ncat (
 				&run->inrec.line, 
 				run->global.ofs.ptr, 
-				run->global.ofs.len) == (ase_size_t)-1) 
+				run->global.ofs.len) == (qse_size_t)-1) 
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
 
 		if (i == lv)
 		{
-			ase_awk_val_t* tmp;
+			qse_awk_val_t* tmp;
 
 			run->inrec.flds[i].ptr = 
-				ASE_STR_PTR(&run->inrec.line) +
-				ASE_STR_LEN(&run->inrec.line);
+				QSE_STR_PTR(&run->inrec.line) +
+				QSE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = len;
 
-			if (ase_str_ncat (
-				&run->inrec.line, str, len) == (ase_size_t)-1)
+			if (qse_str_ncat (
+				&run->inrec.line, str, len) == (qse_size_t)-1)
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 
-			tmp = ase_awk_makestrval (run, str,len);
-			if (tmp == ASE_NULL) return -1;
+			tmp = qse_awk_makestrval (run, str,len);
+			if (tmp == QSE_NULL) return -1;
 
 			if (i < nflds)
-				ase_awk_refdownval (run, run->inrec.flds[i].val);
+				qse_awk_refdownval (run, run->inrec.flds[i].val);
 			else run->inrec.nflds++;
 
 			run->inrec.flds[i].val = tmp;
-			ase_awk_refupval (run, tmp);
+			qse_awk_refupval (run, tmp);
 		}
 		else if (i >= nflds)
 		{
 			run->inrec.flds[i].ptr = 
-				ASE_STR_PTR(&run->inrec.line) +
-				ASE_STR_LEN(&run->inrec.line);
+				QSE_STR_PTR(&run->inrec.line) +
+				QSE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = 0;
 
-			if (ase_str_cat (
-				&run->inrec.line, ASE_T("")) == (ase_size_t)-1)
+			if (qse_str_cat (
+				&run->inrec.line, QSE_T("")) == (qse_size_t)-1)
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 
-			/* ase_awk_refdownval should not be called over 
+			/* qse_awk_refdownval should not be called over 
 			 * run->inrec.flds[i].val as it is not initialized
 			 * to any valid values */
-			/*ase_awk_refdownval (run, run->inrec.flds[i].val);*/
-			run->inrec.flds[i].val = ase_awk_val_zls;
-			ase_awk_refupval (run, ase_awk_val_zls);
+			/*qse_awk_refdownval (run, run->inrec.flds[i].val);*/
+			run->inrec.flds[i].val = qse_awk_val_zls;
+			qse_awk_refupval (run, qse_awk_val_zls);
 			run->inrec.nflds++;
 		}
 		else
 		{
-			ase_awk_val_str_t* tmp;
+			qse_awk_val_str_t* tmp;
 
-			tmp = (ase_awk_val_str_t*)run->inrec.flds[i].val;
+			tmp = (qse_awk_val_str_t*)run->inrec.flds[i].val;
 
 			run->inrec.flds[i].ptr = 
-				ASE_STR_PTR(&run->inrec.line) +
-				ASE_STR_LEN(&run->inrec.line);
+				QSE_STR_PTR(&run->inrec.line) +
+				QSE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = tmp->len;
 
-			if (ase_str_ncat (&run->inrec.line, 
-				tmp->buf, tmp->len) == (ase_size_t)-1)
+			if (qse_str_ncat (&run->inrec.line, 
+				tmp->buf, tmp->len) == (qse_size_t)-1)
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
 	}
 
-	v = ase_awk_getglobal (run, ASE_AWK_GLOBAL_NF);
-	ASE_ASSERT (v->type == ASE_AWK_VAL_INT);
+	v = qse_awk_getglobal (run, QSE_AWK_GLOBAL_NF);
+	QSE_ASSERT (v->type == QSE_AWK_VAL_INT);
 
-	if (((ase_awk_val_int_t*)v)->val != max)
+	if (((qse_awk_val_int_t*)v)->val != max)
 	{
-		v = ase_awk_makeintval (run, (ase_long_t)max);
-		if (v == ASE_NULL) return -1;
+		v = qse_awk_makeintval (run, (qse_long_t)max);
+		if (v == QSE_NULL) return -1;
 
-		ase_awk_refupval (run, v);
-		if (ase_awk_setglobal (run, ASE_AWK_GLOBAL_NF, v) == -1) 
+		qse_awk_refupval (run, v);
+		if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
 		{
-			ase_awk_refdownval (run, v);
+			qse_awk_refdownval (run, v);
 			return -1;
 		}
-		ase_awk_refdownval (run, v);
+		qse_awk_refdownval (run, v);
 	}
 
 	return 0;

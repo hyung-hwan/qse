@@ -4,36 +4,36 @@
  * {License}
  */
 
-#ifndef _ASE_LSP_NAME_H_
-#define _ASE_LSP_NAME_H_
+#ifndef _QSE_LSP_NAME_H_
+#define _QSE_LSP_NAME_H_
 
-#include <ase/types.h>
-#include <ase/macros.h>
+#include <qse/types.h>
+#include <qse/macros.h>
 
-struct ase_lsp_name_t 
+struct qse_lsp_name_t 
 {
-	ase_size_t  capa;
-	ase_size_t  size;
-	ase_char_t* buf;
-	ase_char_t  static_buf[128];
-	ase_lsp_t*  lsp;
-	ase_bool_t __dynamic;
+	qse_size_t  capa;
+	qse_size_t  size;
+	qse_char_t* buf;
+	qse_char_t  static_buf[128];
+	qse_lsp_t*  lsp;
+	qse_bool_t __dynamic;
 };
 
-typedef struct ase_lsp_name_t ase_lsp_name_t;
+typedef struct qse_lsp_name_t qse_lsp_name_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-ase_lsp_name_t* ase_lsp_name_open (
-	ase_lsp_name_t* name, ase_size_t capa, ase_lsp_t* lsp);
-void ase_lsp_name_close (ase_lsp_name_t* name);
+qse_lsp_name_t* qse_lsp_name_open (
+	qse_lsp_name_t* name, qse_size_t capa, qse_lsp_t* lsp);
+void qse_lsp_name_close (qse_lsp_name_t* name);
 
-int ase_lsp_name_addc (ase_lsp_name_t* name, ase_cint_t c);
-int ase_lsp_name_adds (ase_lsp_name_t* name, const ase_char_t* s);
-void ase_lsp_name_clear (ase_lsp_name_t* name);
-int ase_lsp_name_compare (ase_lsp_name_t* name, const ase_char_t* str);
+int qse_lsp_name_addc (qse_lsp_name_t* name, qse_cint_t c);
+int qse_lsp_name_adds (qse_lsp_name_t* name, const qse_char_t* s);
+void qse_lsp_name_clear (qse_lsp_name_t* name);
+int qse_lsp_name_compare (qse_lsp_name_t* name, const qse_char_t* str);
 
 #ifdef __cplusplus
 }

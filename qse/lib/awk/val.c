@@ -7,93 +7,93 @@
 #include "awk.h"
 
 #ifdef DEBUG_VAL
-#include <ase/utl/stdio.h>
+#include <qse/utl/stdio.h>
 #endif
 
 #define CHUNKSIZE 100
 
-typedef struct ase_awk_val_ichunk_t ase_awk_val_ichunk_t;
-typedef struct ase_awk_val_rchunk_t ase_awk_val_rchunk_t;
+typedef struct qse_awk_val_ichunk_t qse_awk_val_ichunk_t;
+typedef struct qse_awk_val_rchunk_t qse_awk_val_rchunk_t;
 
-struct ase_awk_val_chunk_t
+struct qse_awk_val_chunk_t
 {
-        ase_awk_val_chunk_t* next;
+        qse_awk_val_chunk_t* next;
 };
 
-struct ase_awk_val_ichunk_t
+struct qse_awk_val_ichunk_t
 {
-	ase_awk_val_chunk_t* next;
+	qse_awk_val_chunk_t* next;
 	/* make sure that it has the same fields as 
-	   ase_awk_val_chunk_t up to this point */
+	   qse_awk_val_chunk_t up to this point */
 
-	ase_awk_val_int_t slot[CHUNKSIZE];
+	qse_awk_val_int_t slot[CHUNKSIZE];
 };
 
-struct ase_awk_val_rchunk_t
+struct qse_awk_val_rchunk_t
 {
-	ase_awk_val_chunk_t* next;
+	qse_awk_val_chunk_t* next;
 	/* make sure that it has the same fields as 
-	   ase_awk_val_chunk_t up to this point */
+	   qse_awk_val_chunk_t up to this point */
 
-	ase_awk_val_real_t slot[CHUNKSIZE];
+	qse_awk_val_real_t slot[CHUNKSIZE];
 };
 
-static ase_char_t* str_to_str (
-	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
-	int opt, ase_str_t* buf, ase_size_t* len);
+static qse_char_t* str_to_str (
+	qse_awk_run_t* run, const qse_char_t* str, qse_size_t str_len,
+	int opt, qse_str_t* buf, qse_size_t* len);
 
-static ase_char_t* val_int_to_str (
-	ase_awk_run_t* run, ase_awk_val_int_t* v,
-	int opt, ase_str_t* buf, ase_size_t* len);
+static qse_char_t* val_int_to_str (
+	qse_awk_run_t* run, qse_awk_val_int_t* v,
+	int opt, qse_str_t* buf, qse_size_t* len);
 
-static ase_char_t* val_real_to_str (
-	ase_awk_run_t* run, ase_awk_val_real_t* v,
-	int opt, ase_str_t* buf, ase_size_t* len);
+static qse_char_t* val_real_to_str (
+	qse_awk_run_t* run, qse_awk_val_real_t* v,
+	int opt, qse_str_t* buf, qse_size_t* len);
 
-static ase_awk_val_nil_t awk_nil = { ASE_AWK_VAL_NIL, 0 };
-static ase_awk_val_str_t awk_zls = { ASE_AWK_VAL_STR, 0, ASE_T(""), 0 };
+static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0 };
+static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, QSE_T(""), 0 };
 
-ase_awk_val_t* ase_awk_val_nil = (ase_awk_val_t*)&awk_nil;
-ase_awk_val_t* ase_awk_val_zls = (ase_awk_val_t*)&awk_zls; 
+qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
+qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
 
-static ase_awk_val_int_t awk_int[] =
+static qse_awk_val_int_t awk_int[] =
 {
-	{ ASE_AWK_VAL_INT, 0, -1, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  0, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  1, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  2, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  3, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  4, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  5, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  6, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  7, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  8, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0,  9, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 10, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 11, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 12, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 13, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 14, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 15, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 16, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 17, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 18, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 19, ASE_NULL },
-	{ ASE_AWK_VAL_INT, 0, 20, ASE_NULL }
+	{ QSE_AWK_VAL_INT, 0, -1, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  0, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  1, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  2, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  3, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  4, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  5, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  6, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  7, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  8, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0,  9, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 10, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 11, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 12, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 13, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 14, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 15, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 16, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 17, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 18, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 19, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 20, QSE_NULL }
 };
 
-ase_awk_val_t* ase_awk_val_negone = (ase_awk_val_t*)&awk_int[0];
-ase_awk_val_t* ase_awk_val_zero = (ase_awk_val_t*)&awk_int[1];
-ase_awk_val_t* ase_awk_val_one = (ase_awk_val_t*)&awk_int[2];
+qse_awk_val_t* qse_awk_val_negone = (qse_awk_val_t*)&awk_int[0];
+qse_awk_val_t* qse_awk_val_zero = (qse_awk_val_t*)&awk_int[1];
+qse_awk_val_t* qse_awk_val_one = (qse_awk_val_t*)&awk_int[2];
 
-ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
+qse_awk_val_t* qse_awk_makeintval (qse_awk_run_t* run, qse_long_t v)
 {
-	ase_awk_val_int_t* val;
+	qse_awk_val_int_t* val;
 
 	if (v >= awk_int[0].val && 
-	    v <= awk_int[ASE_COUNTOF(awk_int)-1].val)
+	    v <= awk_int[QSE_COUNTOF(awk_int)-1].val)
 	{
-		return (ase_awk_val_t*)&awk_int[v-awk_int[0].val];
+		return (qse_awk_val_t*)&awk_int[v-awk_int[0].val];
 	}
 
 	/*
@@ -103,73 +103,73 @@ ase_awk_val_t* ase_awk_makeintval (ase_awk_run_t* run, ase_long_t v)
 	}
 	else
 	{
-		val = (ase_awk_val_int_t*) ASE_AWK_ALLOC (
-			run->awk, ASE_SIZEOF(ase_awk_val_int_t));
-		if (val == ASE_NULL) 
+		val = (qse_awk_val_int_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_val_int_t));
+		if (val == QSE_NULL) 
 		{
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-			return ASE_NULL;
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+			return QSE_NULL;
 		}
 	}
 	*/
 
-	if (run->vmgr.ifree == ASE_NULL)
+	if (run->vmgr.ifree == QSE_NULL)
 	{
-		ase_awk_val_ichunk_t* c;
-		ase_awk_val_int_t* x;
-		ase_size_t i;
+		qse_awk_val_ichunk_t* c;
+		qse_awk_val_int_t* x;
+		qse_size_t i;
 
-		/* use ase_awk_val_ichunk structure to avoid
+		/* use qse_awk_val_ichunk structure to avoid
 		 * any alignment issues on platforms requiring
 		 * aligned memory access - using the code commented out
 		 * will cause a fault on such a platform */
 
-		/* c = ASE_AWK_ALLOC (run->awk, 
-			ASE_SIZEOF(ase_awk_val_chunk_t)+
-			ASE_SIZEOF(ase_awk_val_int_t)*CHUNKSIZE); */
-		c = ASE_AWK_ALLOC (run->awk, ASE_SIZEOF(ase_awk_val_ichunk_t));
-		if (c == ASE_NULL)
+		/* c = QSE_AWK_ALLOC (run->awk, 
+			QSE_SIZEOF(qse_awk_val_chunk_t)+
+			QSE_SIZEOF(qse_awk_val_int_t)*CHUNKSIZE); */
+		c = QSE_AWK_ALLOC (run->awk, QSE_SIZEOF(qse_awk_val_ichunk_t));
+		if (c == QSE_NULL)
 		{
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-			return ASE_NULL;
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+			return QSE_NULL;
 		}
 
 		c->next = run->vmgr.ichunk;
 		/*run->vmgr.ichunk = c;*/
-		run->vmgr.ichunk = (ase_awk_val_chunk_t*)c;
+		run->vmgr.ichunk = (qse_awk_val_chunk_t*)c;
 
-		/*x = (ase_awk_val_int_t*)(c + 1);
+		/*x = (qse_awk_val_int_t*)(c + 1);
 		for (i = 0; i < CHUNKSIZE-1; i++) 
-			x[i].nde = (ase_awk_nde_int_t*)&x[i+1];
-		x[i].nde = ASE_NULL;
+			x[i].nde = (qse_awk_nde_int_t*)&x[i+1];
+		x[i].nde = QSE_NULL;
 
 		run->vmgr.ifree = x;
 		*/
 
 		for (i = 0; i < CHUNKSIZE-1; i++)
-			c->slot[i].nde = (ase_awk_nde_int_t*)&c->slot[i+1];
-		c->slot[i].nde = ASE_NULL;
+			c->slot[i].nde = (qse_awk_nde_int_t*)&c->slot[i+1];
+		c->slot[i].nde = QSE_NULL;
 
 		run->vmgr.ifree = &c->slot[0];
 	}
 
 	val = run->vmgr.ifree;
-	run->vmgr.ifree = (ase_awk_val_int_t*)val->nde;
+	run->vmgr.ifree = (qse_awk_val_int_t*)val->nde;
 
-	val->type = ASE_AWK_VAL_INT;
+	val->type = QSE_AWK_VAL_INT;
 	val->ref = 0;
 	val->val = v;
-	val->nde = ASE_NULL;
+	val->nde = QSE_NULL;
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("makeintval => %ld [%p]\n"), (long)v, val);
+	qse_dprintf (QSE_T("makeintval => %ld [%p]\n"), (long)v, val);
 #endif
-	return (ase_awk_val_t*)val;
+	return (qse_awk_val_t*)val;
 }
 
-ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
+qse_awk_val_t* qse_awk_makerealval (qse_awk_run_t* run, qse_real_t v)
 {
-	ase_awk_val_real_t* val;
+	qse_awk_val_real_t* val;
 
 	/*
 	if (run->rcache_count > 0)
@@ -178,76 +178,76 @@ ase_awk_val_t* ase_awk_makerealval (ase_awk_run_t* run, ase_real_t v)
 	}
 	else
 	{
-		val = (ase_awk_val_real_t*) ASE_AWK_ALLOC (
-			run->awk, ASE_SIZEOF(ase_awk_val_real_t));
-		if (val == ASE_NULL)
+		val = (qse_awk_val_real_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_val_real_t));
+		if (val == QSE_NULL)
 		{
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-			return ASE_NULL;
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+			return QSE_NULL;
 		}
 	}
 	*/
 
-	if (run->vmgr.rfree == ASE_NULL)
+	if (run->vmgr.rfree == QSE_NULL)
 	{
-		ase_awk_val_rchunk_t* c;
-		ase_awk_val_real_t* x;
-		ase_size_t i;
+		qse_awk_val_rchunk_t* c;
+		qse_awk_val_real_t* x;
+		qse_size_t i;
 
-		/* c = ASE_AWK_ALLOC (run->awk, 
-			ASE_SIZEOF(ase_awk_val_chunk_t)+
-			ASE_SIZEOF(ase_awk_val_real_t)*CHUNKSIZE); */
-		c = ASE_AWK_ALLOC (run->awk, ASE_SIZEOF(ase_awk_val_rchunk_t));
-		if (c == ASE_NULL)
+		/* c = QSE_AWK_ALLOC (run->awk, 
+			QSE_SIZEOF(qse_awk_val_chunk_t)+
+			QSE_SIZEOF(qse_awk_val_real_t)*CHUNKSIZE); */
+		c = QSE_AWK_ALLOC (run->awk, QSE_SIZEOF(qse_awk_val_rchunk_t));
+		if (c == QSE_NULL)
 		{
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-			return ASE_NULL;
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+			return QSE_NULL;
 		}
 
 		c->next = run->vmgr.rchunk;
 		/*run->vmgr.rchunk = c;*/
-		run->vmgr.rchunk = (ase_awk_val_chunk_t*)c;
+		run->vmgr.rchunk = (qse_awk_val_chunk_t*)c;
 
 		/*
-		x = (ase_awk_val_real_t*)(c + 1);
+		x = (qse_awk_val_real_t*)(c + 1);
 		for (i = 0; i < CHUNKSIZE-1; i++) 
-			x[i].nde = (ase_awk_nde_real_t*)&x[i+1];
-		x[i].nde = ASE_NULL;
+			x[i].nde = (qse_awk_nde_real_t*)&x[i+1];
+		x[i].nde = QSE_NULL;
 
 		run->vmgr.rfree = x;
 		*/
 
 		for (i = 0; i < CHUNKSIZE-1; i++)
-			c->slot[i].nde = (ase_awk_nde_real_t*)&c->slot[i+1];
-		c->slot[i].nde = ASE_NULL;
+			c->slot[i].nde = (qse_awk_nde_real_t*)&c->slot[i+1];
+		c->slot[i].nde = QSE_NULL;
 
 		run->vmgr.rfree = &c->slot[0];
 	}
 
 	val = run->vmgr.rfree;
-	run->vmgr.rfree = (ase_awk_val_real_t*)val->nde;
+	run->vmgr.rfree = (qse_awk_val_real_t*)val->nde;
 
-	val->type = ASE_AWK_VAL_REAL;
+	val->type = QSE_AWK_VAL_REAL;
 	val->ref = 0;
 	val->val = v;
-	val->nde = ASE_NULL;
+	val->nde = QSE_NULL;
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("makerealval => %Lf [%p]\n"), (double)v, val);
+	qse_dprintf (QSE_T("makerealval => %Lf [%p]\n"), (double)v, val);
 #endif
-	return (ase_awk_val_t*)val;
+	return (qse_awk_val_t*)val;
 }
 
-ase_awk_val_t* ase_awk_makestrval0 (ase_awk_run_t* run, const ase_char_t* str)
+qse_awk_val_t* qse_awk_makestrval0 (qse_awk_run_t* run, const qse_char_t* str)
 {
-	return ase_awk_makestrval (run, str, ase_strlen(str));
+	return qse_awk_makestrval (run, str, qse_strlen(str));
 }
 
-ase_awk_val_t* ase_awk_makestrval (
-	ase_awk_run_t* run, const ase_char_t* str, ase_size_t len)
+qse_awk_val_t* qse_awk_makestrval (
+	qse_awk_run_t* run, const qse_char_t* str, qse_size_t len)
 {
-	ase_awk_val_str_t* val;
-	ase_size_t rlen = len;
+	qse_awk_val_str_t* val;
+	qse_size_t rlen = len;
 
 	/*if (rlen <= 32)
 	{
@@ -268,57 +268,57 @@ ase_awk_val_t* ase_awk_makestrval (
 		rlen = 64;
 	}*/
 	
-	val = (ase_awk_val_str_t*) ASE_AWK_ALLOC (
+	val = (qse_awk_val_str_t*) QSE_AWK_ALLOC (
 		run->awk, 
-		ASE_SIZEOF(ase_awk_val_str_t) + 
-		(rlen+1)*ASE_SIZEOF(ase_char_t));
-	if (val == ASE_NULL) 
+		QSE_SIZEOF(qse_awk_val_str_t) + 
+		(rlen+1)*QSE_SIZEOF(qse_char_t));
+	if (val == QSE_NULL) 
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}
 
 init:
-	val->type = ASE_AWK_VAL_STR;
+	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len;
-	val->buf = (ase_char_t*)(val + 1);
-	/*ase_strxncpy (val->buf, len+1, str, len);*/
-	ase_strncpy (val->buf, str, len);
+	val->buf = (qse_char_t*)(val + 1);
+	/*qse_strxncpy (val->buf, len+1, str, len);*/
+	qse_strncpy (val->buf, str, len);
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("makestrval => %p\n"), val);
+	qse_dprintf (QSE_T("makestrval => %p\n"), val);
 #endif
-	return (ase_awk_val_t*)val;
+	return (qse_awk_val_t*)val;
 }
 
-ase_awk_val_t* ase_awk_makestrval_nodup (
-	ase_awk_run_t* run, ase_char_t* str, ase_size_t len)
+qse_awk_val_t* qse_awk_makestrval_nodup (
+	qse_awk_run_t* run, qse_char_t* str, qse_size_t len)
 {
-	ase_awk_val_str_t* val;
+	qse_awk_val_str_t* val;
 
-	val = (ase_awk_val_str_t*) ASE_AWK_ALLOC (
-		run->awk, ASE_SIZEOF(ase_awk_val_str_t));
-	if (val == ASE_NULL) 
+	val = (qse_awk_val_str_t*) QSE_AWK_ALLOC (
+		run->awk, QSE_SIZEOF(qse_awk_val_str_t));
+	if (val == QSE_NULL) 
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}
 
-	val->type = ASE_AWK_VAL_STR;
+	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len;
 	val->buf = str;
-	return (ase_awk_val_t*)val;
+	return (qse_awk_val_t*)val;
 }
 
-ase_awk_val_t* ase_awk_makestrval2 (
-	ase_awk_run_t* run,
-	const ase_char_t* str1, ase_size_t len1, 
-	const ase_char_t* str2, ase_size_t len2)
+qse_awk_val_t* qse_awk_makestrval2 (
+	qse_awk_run_t* run,
+	const qse_char_t* str1, qse_size_t len1, 
+	const qse_char_t* str2, qse_size_t len2)
 {
-	ase_awk_val_str_t* val;
-	ase_size_t rlen = len1 + len2;
+	qse_awk_val_str_t* val;
+	qse_size_t rlen = len1 + len2;
 
 	/*if (rlen <= 32)
 	{
@@ -339,70 +339,70 @@ ase_awk_val_t* ase_awk_makestrval2 (
 		rlen = 64;
 	}*/
 
-	val = (ase_awk_val_str_t*) ASE_AWK_ALLOC (
+	val = (qse_awk_val_str_t*) QSE_AWK_ALLOC (
 		run->awk, 
-		ASE_SIZEOF(ase_awk_val_str_t) +
-		(rlen+1)*ASE_SIZEOF(ase_char_t));
-	if (val == ASE_NULL) 
+		QSE_SIZEOF(qse_awk_val_str_t) +
+		(rlen+1)*QSE_SIZEOF(qse_char_t));
+	if (val == QSE_NULL) 
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}
 
 init:
-	val->type = ASE_AWK_VAL_STR;
+	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len1 + len2;
-	val->buf = (ase_char_t*)(val + 1);
-	/*ase_strxncpy (val->buf, len1+1, str1, len1);
-	ase_strxncpy (val->buf[len1], len2+1, str2, len2);*/
-	ase_strncpy (val->buf, str1, len1);
-	ase_strncpy (&val->buf[len1], str2, len2);
+	val->buf = (qse_char_t*)(val + 1);
+	/*qse_strxncpy (val->buf, len1+1, str1, len1);
+	qse_strxncpy (val->buf[len1], len2+1, str2, len2);*/
+	qse_strncpy (val->buf, str1, len1);
+	qse_strncpy (&val->buf[len1], str2, len2);
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("makestrval2 => %p\n"), val);
+	qse_dprintf (QSE_T("makestrval2 => %p\n"), val);
 #endif
-	return (ase_awk_val_t*)val;
+	return (qse_awk_val_t*)val;
 }
 
-ase_awk_val_t* ase_awk_makerexval (
-	ase_awk_run_t* run, const ase_char_t* buf, ase_size_t len, void* code)
+qse_awk_val_t* qse_awk_makerexval (
+	qse_awk_run_t* run, const qse_char_t* buf, qse_size_t len, void* code)
 {
-	ase_awk_val_rex_t* val;
+	qse_awk_val_rex_t* val;
 
-	val = (ase_awk_val_rex_t*) ASE_AWK_ALLOC (
-		run->awk, ASE_SIZEOF(ase_awk_val_rex_t) + 
-		(ASE_SIZEOF(*buf)*len+1) + ASE_REX_LEN(code));
-	if (val == ASE_NULL) return ASE_NULL;
+	val = (qse_awk_val_rex_t*) QSE_AWK_ALLOC (
+		run->awk, QSE_SIZEOF(qse_awk_val_rex_t) + 
+		(QSE_SIZEOF(*buf)*len+1) + QSE_REX_LEN(code));
+	if (val == QSE_NULL) return QSE_NULL;
 
-	val->type = ASE_AWK_VAL_REX;
+	val->type = QSE_AWK_VAL_REX;
 	val->ref = 0;
 	val->len = len;
 	/*
-	val->buf = ASE_AWK_STRXDUP (run->awk, buf, len);
-	if (val->buf == ASE_NULL) 
+	val->buf = QSE_AWK_STRXDUP (run->awk, buf, len);
+	if (val->buf == QSE_NULL) 
 	{
-		ASE_AWK_FREE (run->awk, val);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		QSE_AWK_FREE (run->awk, val);
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}*/
-	val->buf = (ase_char_t*)(val + 1);
-	ase_strncpy (val->buf, buf, len);
+	val->buf = (qse_char_t*)(val + 1);
+	qse_strncpy (val->buf, buf, len);
 
 	/*
-	val->code = ASE_AWK_ALLOC (run->awk, ASE_REX_LEN(code));
-	if (val->code == ASE_NULL)
+	val->code = QSE_AWK_ALLOC (run->awk, QSE_REX_LEN(code));
+	if (val->code == QSE_NULL)
 	{
-		ASE_AWK_FREE (run->awk, val->buf);
-		ASE_AWK_FREE (run->awk, val);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		QSE_AWK_FREE (run->awk, val->buf);
+		QSE_AWK_FREE (run->awk, val);
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}
 	*/
 	val->code = val->buf + len + 1;
-	ASE_MEMCPY (val->code, code, ASE_REX_LEN(code));
+	QSE_MEMCPY (val->code, code, QSE_REX_LEN(code));
 
-	return (ase_awk_val_t*)val;
+	return (qse_awk_val_t*)val;
 }
 
 /* CHECK */
@@ -410,117 +410,117 @@ ase_awk_val_t* ase_awk_makerexval (
 static void free_mapval (void* run, void* v)
 {
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("refdown in map free..."));
-	ase_awk_dprintval (run, v);
-	ase_dprintf (ASE_T("\n"));
+	qse_dprintf (QSE_T("refdown in map free..."));
+	qse_awk_dprintval (run, v);
+	qse_dprintf (QSE_T("\n"));
 #endif
 
-	ase_awk_refdownval (run, v);
+	qse_awk_refdownval (run, v);
 }
 
 static void same_mapval (void* run, void* v)
 {
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("refdown nofree in map free..."));
-	ase_awk_dprintval (run, v);
-	ase_dprintf (ASE_T("\n"));
+	qse_dprintf (QSE_T("refdown nofree in map free..."));
+	qse_awk_dprintval (run, v);
+	qse_dprintf (QSE_T("\n"));
 #endif
-	ase_awk_refdownval_nofree (run, v);
+	qse_awk_refdownval_nofree (run, v);
 }
 */
-static void free_mapval (ase_map_t* map, void* dptr, ase_size_t dlen)
+static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	ase_awk_run_t* run = *(ase_awk_run_t**)ASE_MAP_XTN(map);
+	qse_awk_run_t* run = *(qse_awk_run_t**)QSE_MAP_XTN(map);
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("refdown in map free..."));
-	ase_awk_dprintval (run, dptr);
-	ase_dprintf (ASE_T("\n"));
+	qse_dprintf (QSE_T("refdown in map free..."));
+	qse_awk_dprintval (run, dptr);
+	qse_dprintf (QSE_T("\n"));
 #endif
 
-	ase_awk_refdownval (run, dptr);
+	qse_awk_refdownval (run, dptr);
 }
 
-static void same_mapval (ase_map_t* map, void* dptr, ase_size_t dlen)
+static void same_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	ase_awk_run_t* run = *(ase_awk_run_t**)ASE_MAP_XTN(map);
+	qse_awk_run_t* run = *(qse_awk_run_t**)QSE_MAP_XTN(map);
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("refdown nofree in map free..."));
-	ase_awk_dprintval (run, dptr);
-	ase_dprintf (ASE_T("\n"));
+	qse_dprintf (QSE_T("refdown nofree in map free..."));
+	qse_awk_dprintval (run, dptr);
+	qse_dprintf (QSE_T("\n"));
 #endif
-	ase_awk_refdownval_nofree (run, dptr);
+	qse_awk_refdownval_nofree (run, dptr);
 }
 /* END CHECK */
 
-ase_awk_val_t* ase_awk_makemapval (ase_awk_run_t* run)
+qse_awk_val_t* qse_awk_makemapval (qse_awk_run_t* run)
 {
-	ase_awk_val_map_t* val;
+	qse_awk_val_map_t* val;
 
 	/* CHECK */
 	/* 
-	val = (ase_awk_val_map_t*) ASE_AWK_ALLOC (
-		run->awk, ASE_SIZEOF(ase_awk_val_map_t) );
-	if (val == ASE_NULL) 
+	val = (qse_awk_val_map_t*) QSE_AWK_ALLOC (
+		run->awk, QSE_SIZEOF(qse_awk_val_map_t) );
+	if (val == QSE_NULL) 
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}
 
-	val->type = ASE_AWK_VAL_MAP;
+	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
-	val->map = ase_map_open (
+	val->map = qse_map_open (
 		run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
-	if (val->map == ASE_NULL)
+	if (val->map == QSE_NULL)
 	{
-		ASE_AWK_FREE (run->awk, val);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		QSE_AWK_FREE (run->awk, val);
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}
 	*/
 
-	val = (ase_awk_val_map_t*) ASE_AWK_ALLOC (
+	val = (qse_awk_val_map_t*) QSE_AWK_ALLOC (
 		run->awk, 
-		ASE_SIZEOF(ase_awk_val_map_t) +
-		ASE_SIZEOF(ase_map_t) +
-		ASE_SIZEOF(run));
-	if (val == ASE_NULL) 
+		QSE_SIZEOF(qse_awk_val_map_t) +
+		QSE_SIZEOF(qse_map_t) +
+		QSE_SIZEOF(run));
+	if (val == QSE_NULL) 
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}
 
-	val->type = ASE_AWK_VAL_MAP;
+	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
-	val->map = (ase_map_t*)(val + 1);
+	val->map = (qse_map_t*)(val + 1);
 
-	val->map = ase_map_init (val->map, run->awk->mmgr, 256, 70);
-	if (val->map == ASE_NULL)
+	val->map = qse_map_init (val->map, run->awk->mmgr, 256, 70);
+	if (val->map == QSE_NULL)
 	{
-		ASE_AWK_FREE (run->awk, val);
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-		return ASE_NULL;
+		QSE_AWK_FREE (run->awk, val);
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
 	}
-	*(ase_awk_run_t**)ASE_MAP_XTN(val->map) = run;
+	*(qse_awk_run_t**)QSE_MAP_XTN(val->map) = run;
 
 	/* the key is copied inline into a pair and is freed when the pair
 	 * is destroyed */
-	ase_map_setcopier (val->map, ASE_MAP_KEY, ASE_MAP_COPIER_INLINE);
-	ase_map_setscale (val->map, ASE_MAP_KEY, ASE_SIZEOF(ase_char_t));
+	qse_map_setcopier (val->map, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
+	qse_map_setscale (val->map, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
 	/* not setting copier for a value means that the pointer to the data 
 	 * allocated somewhere else is remembered in a pair. but the freeing 
 	 * the actual value is handled by free_mapval and same_mapval */
-	ase_map_setfreeer (val->map, ASE_MAP_VAL, free_mapval);
-	ase_map_setkeeper (val->map, same_mapval);
+	qse_map_setfreeer (val->map, QSE_MAP_VAL, free_mapval);
+	qse_map_setkeeper (val->map, same_mapval);
 	/* END CHECK */
 
-	return (ase_awk_val_t*)val;
+	return (qse_awk_val_t*)val;
 }
 
-ase_awk_val_t* ase_awk_makerefval (ase_awk_run_t* run, int id, ase_awk_val_t** adr)
+qse_awk_val_t* qse_awk_makerefval (qse_awk_run_t* run, int id, qse_awk_val_t** adr)
 {
-	ase_awk_val_ref_t* val;
+	qse_awk_val_ref_t* val;
 
 	if (run->fcache_count > 0)
 	{
@@ -528,226 +528,226 @@ ase_awk_val_t* ase_awk_makerefval (ase_awk_run_t* run, int id, ase_awk_val_t** a
 	}
 	else
 	{
-		val = (ase_awk_val_ref_t*) ASE_AWK_ALLOC (
-			run->awk, ASE_SIZEOF(ase_awk_val_ref_t));
-		if (val == ASE_NULL)
+		val = (qse_awk_val_ref_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_val_ref_t));
+		if (val == QSE_NULL)
 		{
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
-			return ASE_NULL;
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+			return QSE_NULL;
 		}
 	}
 
-	val->type = ASE_AWK_VAL_REF;
+	val->type = QSE_AWK_VAL_REF;
 	val->ref = 0;
 	val->id = id;
 	val->adr = adr;
 
-	return (ase_awk_val_t*)val;
+	return (qse_awk_val_t*)val;
 }
 
 #define IS_STATICVAL(val) \
-	((val) == ASE_NULL || \
-	 (val) == ase_awk_val_nil || \
-	 (val) == ase_awk_val_zls || \
-	 (val) == ase_awk_val_zero || \
-	 (val) == ase_awk_val_one || \
-	 ((val) >= (ase_awk_val_t*)&awk_int[0] && \
-	  (val) <= (ase_awk_val_t*)&awk_int[ASE_COUNTOF(awk_int)-1]))
+	((val) == QSE_NULL || \
+	 (val) == qse_awk_val_nil || \
+	 (val) == qse_awk_val_zls || \
+	 (val) == qse_awk_val_zero || \
+	 (val) == qse_awk_val_one || \
+	 ((val) >= (qse_awk_val_t*)&awk_int[0] && \
+	  (val) <= (qse_awk_val_t*)&awk_int[QSE_COUNTOF(awk_int)-1]))
 
-ase_bool_t ase_awk_isstaticval (ase_awk_val_t* val)
+qse_bool_t qse_awk_isstaticval (qse_awk_val_t* val)
 {
 	return IS_STATICVAL(val);
 }
 
-void ase_awk_freeval (ase_awk_run_t* run, ase_awk_val_t* val, ase_bool_t cache)
+void qse_awk_freeval (qse_awk_run_t* run, qse_awk_val_t* val, qse_bool_t cache)
 {
 	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("freeing [cache=%d] ... "), cache);
-	ase_awk_dprintval (run, val);
-	ase_dprintf (ASE_T("\n"));
+	qse_dprintf (QSE_T("freeing [cache=%d] ... "), cache);
+	qse_awk_dprintval (run, val);
+	qse_dprintf (QSE_T("\n"));
 #endif
 
-	if (val->type == ASE_AWK_VAL_NIL)
+	if (val->type == QSE_AWK_VAL_NIL)
 	{
-		ASE_AWK_FREE (run->awk, val);
+		QSE_AWK_FREE (run->awk, val);
 	}
-	else if (val->type == ASE_AWK_VAL_INT)
+	else if (val->type == QSE_AWK_VAL_INT)
 	{
 		/*
-		if (cache && run->icache_count < ASE_COUNTOF(run->icache))
+		if (cache && run->icache_count < QSE_COUNTOF(run->icache))
 		{
 			run->icache[run->icache_count++] = 
-				(ase_awk_val_int_t*)val;	
+				(qse_awk_val_int_t*)val;	
 		}
-		else ASE_AWK_FREE (run->awk, val);
+		else QSE_AWK_FREE (run->awk, val);
 		*/
 			
-		((ase_awk_val_int_t*)val)->nde = (ase_awk_nde_int_t*)run->vmgr.ifree;
-		run->vmgr.ifree = (ase_awk_val_int_t*)val;
+		((qse_awk_val_int_t*)val)->nde = (qse_awk_nde_int_t*)run->vmgr.ifree;
+		run->vmgr.ifree = (qse_awk_val_int_t*)val;
 	}
-	else if (val->type == ASE_AWK_VAL_REAL)
+	else if (val->type == QSE_AWK_VAL_REAL)
 	{
 		/*
-		if (cache && run->rcache_count < ASE_COUNTOF(run->rcache))
+		if (cache && run->rcache_count < QSE_COUNTOF(run->rcache))
 		{
 			run->rcache[run->rcache_count++] = 
-				(ase_awk_val_real_t*)val;	
+				(qse_awk_val_real_t*)val;	
 		}
-		else ASE_AWK_FREE (run->awk, val);
+		else QSE_AWK_FREE (run->awk, val);
 		*/
-		((ase_awk_val_real_t*)val)->nde = (ase_awk_nde_real_t*)run->vmgr.rfree;
-		run->vmgr.rfree = (ase_awk_val_real_t*)val;
+		((qse_awk_val_real_t*)val)->nde = (qse_awk_nde_real_t*)run->vmgr.rfree;
+		run->vmgr.rfree = (qse_awk_val_real_t*)val;
 	}
-	else if (val->type == ASE_AWK_VAL_STR)
+	else if (val->type == QSE_AWK_VAL_STR)
 	{
 		/*
 		if (cache)
 		{
-			ase_awk_val_str_t* v = (ase_awk_val_str_t*)val;
+			qse_awk_val_str_t* v = (qse_awk_val_str_t*)val;
 			if (v->len <= 32 && 
-			    run->scache32_count<ASE_COUNTOF(run->scache32))
+			    run->scache32_count<QSE_COUNTOF(run->scache32))
 			{
 				run->scache32[run->scache32_count++] = v;
 			}
 			else if (v->len <= 64 && 
-			         run->scache64_count<ASE_COUNTOF(run->scache64))
+			         run->scache64_count<QSE_COUNTOF(run->scache64))
 			{
 				run->scache64[run->scache64_count++] = v;
 			}
-			else ASE_AWK_FREE (run->awk, val);
+			else QSE_AWK_FREE (run->awk, val);
 		}
-		else*/ ASE_AWK_FREE (run->awk, val);
+		else*/ QSE_AWK_FREE (run->awk, val);
 	}
-	else if (val->type == ASE_AWK_VAL_REX)
+	else if (val->type == QSE_AWK_VAL_REX)
 	{
 		/*
-		ASE_AWK_FREE (run->awk, ((ase_awk_val_rex_t*)val)->buf);
-		ASE_AWK_FREEREX (run->awk, ((ase_awk_val_rex_t*)val)->code);
+		QSE_AWK_FREE (run->awk, ((qse_awk_val_rex_t*)val)->buf);
+		QSE_AWK_FREEREX (run->awk, ((qse_awk_val_rex_t*)val)->code);
 		*/
-		ASE_AWK_FREE (run->awk, val);
+		QSE_AWK_FREE (run->awk, val);
 	}
-	else if (val->type == ASE_AWK_VAL_MAP)
+	else if (val->type == QSE_AWK_VAL_MAP)
 	{
 		/* CHECK */
-		/* ase_map_close (((ase_awk_val_map_t*)val)->map);*/
-		ase_map_fini (((ase_awk_val_map_t*)val)->map);
+		/* qse_map_close (((qse_awk_val_map_t*)val)->map);*/
+		qse_map_fini (((qse_awk_val_map_t*)val)->map);
 		/* END CHECK */
-		ASE_AWK_FREE (run->awk, val);
+		QSE_AWK_FREE (run->awk, val);
 	}
-	else if (val->type == ASE_AWK_VAL_REF)
+	else if (val->type == QSE_AWK_VAL_REF)
 	{
-		if (cache && run->fcache_count < ASE_COUNTOF(run->fcache))
+		if (cache && run->fcache_count < QSE_COUNTOF(run->fcache))
 		{
 			run->fcache[run->fcache_count++] = 
-				(ase_awk_val_ref_t*)val;	
+				(qse_awk_val_ref_t*)val;	
 		}
-		else ASE_AWK_FREE (run->awk, val);
+		else QSE_AWK_FREE (run->awk, val);
 	}
 	else
 	{
-		ASE_ASSERTX (
+		QSE_ASSERTX (
 			!"should never happen - invalid value type",
-			"the type of a value should be one of ASE_AWK_VAL_XXX's defined in awk.h");
+			"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
 	}
 }
 
-void ase_awk_refupval (ase_awk_run_t* run, ase_awk_val_t* val)
+void qse_awk_refupval (qse_awk_run_t* run, qse_awk_val_t* val)
 {
 	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
-	ase_awk_dprintval (run, val);
-	ase_dprintf (ASE_T("\n"));
+	qse_dprintf (QSE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
+	qse_awk_dprintval (run, val);
+	qse_dprintf (QSE_T("\n"));
 #endif
 
 	val->ref++;
 }
 
-void ase_awk_refdownval (ase_awk_run_t* run, ase_awk_val_t* val)
+void qse_awk_refdownval (qse_awk_run_t* run, qse_awk_val_t* val)
 {
 	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
-	ase_dprintf (ASE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
-	ase_awk_dprintval (run, val);
-	ase_dprintf (ASE_T("\n"));
+	qse_dprintf (QSE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
+	qse_awk_dprintval (run, val);
+	qse_dprintf (QSE_T("\n"));
 #endif
 
-	ASE_ASSERTX (val->ref > 0, 
+	QSE_ASSERTX (val->ref > 0, 
 		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
 
 	val->ref--;
 	if (val->ref <= 0) 
 	{
-		ase_awk_freeval(run, val, ASE_TRUE);
+		qse_awk_freeval(run, val, QSE_TRUE);
 	}
 }
 
-void ase_awk_refdownval_nofree (ase_awk_run_t* run, ase_awk_val_t* val)
+void qse_awk_refdownval_nofree (qse_awk_run_t* run, qse_awk_val_t* val)
 {
 	if (IS_STATICVAL(val)) return;
 
-	ASE_ASSERTX (val->ref > 0,
+	QSE_ASSERTX (val->ref > 0,
 		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
 	val->ref--;
 }
 
-void ase_awk_freevalchunk (ase_awk_run_t* run, ase_awk_val_chunk_t* chunk)
+void qse_awk_freevalchunk (qse_awk_run_t* run, qse_awk_val_chunk_t* chunk)
 {
-	while (chunk != ASE_NULL)
+	while (chunk != QSE_NULL)
         {
-		ase_awk_val_chunk_t* next = chunk->next;
-		ASE_AWK_FREE (run->awk, chunk);
+		qse_awk_val_chunk_t* next = chunk->next;
+		QSE_AWK_FREE (run->awk, chunk);
 		chunk = next;
 	}
 }
 
-ase_bool_t ase_awk_valtobool (ase_awk_run_t* run, ase_awk_val_t* val)
+qse_bool_t qse_awk_valtobool (qse_awk_run_t* run, qse_awk_val_t* val)
 {
-	if (val == ASE_NULL) return ASE_FALSE;
+	if (val == QSE_NULL) return QSE_FALSE;
 
 	switch (val->type)
 	{
-		case ASE_AWK_VAL_NIL:
-			return ASE_FALSE;
-		case ASE_AWK_VAL_INT:
-			return ((ase_awk_val_int_t*)val)->val != 0;
-		case ASE_AWK_VAL_REAL:
-			return ((ase_awk_val_real_t*)val)->val != 0.0;
-		case ASE_AWK_VAL_STR:
-			return ((ase_awk_val_str_t*)val)->len > 0;
-		case ASE_AWK_VAL_REX: /* TODO: is this correct? */
-			return ((ase_awk_val_rex_t*)val)->len > 0;
-		case ASE_AWK_VAL_MAP:
-			return ASE_FALSE; /* TODO: is this correct? */
-		case ASE_AWK_VAL_REF:
-			return ASE_FALSE; /* TODO: is this correct? */
+		case QSE_AWK_VAL_NIL:
+			return QSE_FALSE;
+		case QSE_AWK_VAL_INT:
+			return ((qse_awk_val_int_t*)val)->val != 0;
+		case QSE_AWK_VAL_REAL:
+			return ((qse_awk_val_real_t*)val)->val != 0.0;
+		case QSE_AWK_VAL_STR:
+			return ((qse_awk_val_str_t*)val)->len > 0;
+		case QSE_AWK_VAL_REX: /* TODO: is this correct? */
+			return ((qse_awk_val_rex_t*)val)->len > 0;
+		case QSE_AWK_VAL_MAP:
+			return QSE_FALSE; /* TODO: is this correct? */
+		case QSE_AWK_VAL_REF:
+			return QSE_FALSE; /* TODO: is this correct? */
 	}
 
-	ASE_ASSERTX (
+	QSE_ASSERTX (
 		!"should never happen - invalid value type",
-		"the type of a value should be one of ASE_AWK_VAL_XXX's defined in awk.h");
-	return ASE_FALSE;
+		"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
+	return QSE_FALSE;
 }
 
-ase_char_t* ase_awk_valtostr (
-	ase_awk_run_t* run, ase_awk_val_t* v,
-	int opt, ase_str_t* buf, ase_size_t* len)
+qse_char_t* qse_awk_valtostr (
+	qse_awk_run_t* run, qse_awk_val_t* v,
+	int opt, qse_str_t* buf, qse_size_t* len)
 {
-	if (v->type == ASE_AWK_VAL_NIL)
+	if (v->type == QSE_AWK_VAL_NIL)
 	{
-		return str_to_str (run, ASE_T(""), 0, opt, buf, len);
+		return str_to_str (run, QSE_T(""), 0, opt, buf, len);
 	}
 
-	if (v->type == ASE_AWK_VAL_INT)
+	if (v->type == QSE_AWK_VAL_INT)
 	{
-		ase_awk_val_int_t* vi = (ase_awk_val_int_t*)v;
+		qse_awk_val_int_t* vi = (qse_awk_val_int_t*)v;
 
 		/*
-		if (vi->nde != ASE_NULL && vi->nde->str != ASE_NULL)
+		if (vi->nde != QSE_NULL && vi->nde->str != QSE_NULL)
 		{
 			return str_to_str (
 				run, vi->nde->str, vi->nde->len, 
@@ -759,12 +759,12 @@ ase_char_t* ase_awk_valtostr (
 		/*}*/
 	}
 
-	if (v->type == ASE_AWK_VAL_REAL)
+	if (v->type == QSE_AWK_VAL_REAL)
 	{
-		ase_awk_val_real_t* vr = (ase_awk_val_real_t*)v;
+		qse_awk_val_real_t* vr = (qse_awk_val_real_t*)v;
 
 		/*
-		if (vr->nde != ASE_NULL && vr->nde->str != ASE_NULL)
+		if (vr->nde != QSE_NULL && vr->nde->str != QSE_NULL)
 		{
 			return str_to_str (
 				run, vr->nde->str, vr->nde->len, 
@@ -776,133 +776,133 @@ ase_char_t* ase_awk_valtostr (
 		/*}*/
 	}
 
-	if (v->type == ASE_AWK_VAL_STR) 
+	if (v->type == QSE_AWK_VAL_STR) 
 	{
-		ase_awk_val_str_t* vs = (ase_awk_val_str_t*)v;
+		qse_awk_val_str_t* vs = (qse_awk_val_str_t*)v;
 
 		return str_to_str (
 			run, vs->buf, vs->len, opt, buf, len);
 	}
 
 #ifdef DEBUG_VAL
-	ase_dprintf (
-		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtostr\n"), 
+	qse_dprintf (
+		QSE_T("ERROR: WRONG VALUE TYPE [%d] in qse_awk_valtostr\n"), 
 		v->type);
 #endif
 
-	ase_awk_setrunerror (run, ASE_AWK_EVALTYPE, 0, ASE_NULL, 0);
-	return ASE_NULL;
+	qse_awk_setrunerror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL, 0);
+	return QSE_NULL;
 }
 
-static ase_char_t* str_to_str (
-	ase_awk_run_t* run, const ase_char_t* str, ase_size_t str_len,
-	int opt, ase_str_t* buf, ase_size_t* len)
+static qse_char_t* str_to_str (
+	qse_awk_run_t* run, const qse_char_t* str, qse_size_t str_len,
+	int opt, qse_str_t* buf, qse_size_t* len)
 {
-	if (buf == ASE_NULL)
+	if (buf == QSE_NULL)
 	{
-		ase_char_t* tmp;
-		tmp = ASE_AWK_STRXDUP (run->awk, str, str_len);
-		if (tmp == ASE_NULL) 
+		qse_char_t* tmp;
+		tmp = QSE_AWK_STRXDUP (run->awk, str, str_len);
+		if (tmp == QSE_NULL) 
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_awk_setrunerror (
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		if (len != ASE_NULL) *len = str_len;
+		if (len != QSE_NULL) *len = str_len;
 		return tmp;
 	}
-	else if (opt & ASE_AWK_VALTOSTR_FIXED)
+	else if (opt & QSE_AWK_VALTOSTR_FIXED)
 	{
-		ASE_ASSERT (buf != ASE_NULL && len != ASE_NULL);
+		QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
 
 		if (str_len >= *len)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_EINVAL, 0, ASE_NULL, 0);
+			qse_awk_setrunerror (
+				run, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
 			*len = str_len + 1;
-			return ASE_NULL;
+			return QSE_NULL;
 		}
 
-		*len = ase_strncpy ((ase_char_t*)buf, str, str_len);
-		return (ase_char_t*)buf;
+		*len = qse_strncpy ((qse_char_t*)buf, str, str_len);
+		return (qse_char_t*)buf;
 	}
 	else
 	{
-		ase_size_t n;
+		qse_size_t n;
 
-		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
-		n = ase_str_ncat (buf, str, str_len);
-		if (n == (ase_size_t)-1)
+		if (opt & QSE_AWK_VALTOSTR_CLEAR) qse_str_clear (buf);
+		n = qse_str_ncat (buf, str, str_len);
+		if (n == (qse_size_t)-1)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_awk_setrunerror (
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
-		return ASE_STR_PTR(buf);
+		if (len != QSE_NULL) *len = QSE_STR_LEN(buf);
+		return QSE_STR_PTR(buf);
 	}
 }
 
-static ase_char_t* val_int_to_str (
-	ase_awk_run_t* run, ase_awk_val_int_t* v,
-	int opt, ase_str_t* buf, ase_size_t* len)
+static qse_char_t* val_int_to_str (
+	qse_awk_run_t* run, qse_awk_val_int_t* v,
+	int opt, qse_str_t* buf, qse_size_t* len)
 {
-	ase_char_t* tmp;
-	ase_long_t t;
-	ase_size_t rlen = 0;
+	qse_char_t* tmp;
+	qse_long_t t;
+	qse_size_t rlen = 0;
 
 	t = v->val; 
 	if (t == 0)
 	{
 		/* handle zero */
-		if (buf == ASE_NULL)
+		if (buf == QSE_NULL)
 		{
-			tmp = ASE_AWK_ALLOC (
-				run->awk, 2 * ASE_SIZEOF(ase_char_t));
-			if (tmp == ASE_NULL)
+			tmp = QSE_AWK_ALLOC (
+				run->awk, 2 * QSE_SIZEOF(qse_char_t));
+			if (tmp == QSE_NULL)
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-				return ASE_NULL;
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+				return QSE_NULL;
 			}
 
-			tmp[0] = ASE_T('0');
-			tmp[1] = ASE_T('\0');
-			if (len != ASE_NULL) *len = 1;
+			tmp[0] = QSE_T('0');
+			tmp[1] = QSE_T('\0');
+			if (len != QSE_NULL) *len = 1;
 			return tmp;
 		}
-		else if (opt & ASE_AWK_VALTOSTR_FIXED)
+		else if (opt & QSE_AWK_VALTOSTR_FIXED)
 		{
-			ASE_ASSERT (buf != ASE_NULL && len != ASE_NULL);
+			QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
 	
 			if (1 >= *len)
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_EINVAL, 0, ASE_NULL, 0);
+				qse_awk_setrunerror (
+					run, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
 				*len = 2; /* buffer size required */
-				return ASE_NULL;
+				return QSE_NULL;
 			}
 
-			tmp = (ase_char_t*)buf;
-			tmp[0] = ASE_T('0');
-			tmp[1] = ASE_T('\0');
+			tmp = (qse_char_t*)buf;
+			tmp[0] = QSE_T('0');
+			tmp[1] = QSE_T('\0');
 			*len = 1; /* actual length */
 			return tmp;
 		}
 		else
 		{
-			if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
-			if (ase_str_cat (buf, ASE_T("0")) == (ase_size_t)-1)
+			if (opt & QSE_AWK_VALTOSTR_CLEAR) qse_str_clear (buf);
+			if (qse_str_cat (buf, QSE_T("0")) == (qse_size_t)-1)
 			{
-				ase_awk_setrunerror (
-					run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-				return ASE_NULL;
+				qse_awk_setrunerror (
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+				return QSE_NULL;
 			}
 
-			if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
-			return ASE_STR_PTR(buf);
+			if (len != QSE_NULL) *len = QSE_STR_LEN(buf);
+			return QSE_STR_PTR(buf);
 		}
 	}
 
@@ -910,50 +910,50 @@ static ase_char_t* val_int_to_str (
 	if (t < 0) { t = -t; rlen++; }
 	while (t > 0) { rlen++; t /= 10; }
 
-	if (buf == ASE_NULL)
+	if (buf == QSE_NULL)
 	{
-		tmp = ASE_AWK_ALLOC (
-			run->awk, (rlen + 1) * ASE_SIZEOF(ase_char_t));
-		if (tmp == ASE_NULL)
+		tmp = QSE_AWK_ALLOC (
+			run->awk, (rlen + 1) * QSE_SIZEOF(qse_char_t));
+		if (tmp == QSE_NULL)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_awk_setrunerror (
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		tmp[rlen] = ASE_T('\0');
-		if (len != ASE_NULL) *len = rlen;
+		tmp[rlen] = QSE_T('\0');
+		if (len != QSE_NULL) *len = rlen;
 	}
-	else if (opt & ASE_AWK_VALTOSTR_FIXED)
+	else if (opt & QSE_AWK_VALTOSTR_FIXED)
 	{
-		ASE_ASSERT (buf != ASE_NULL && len != ASE_NULL);
+		QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
 
 		if (rlen >= *len)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_EINVAL, 0, ASE_NULL, 0);
+			qse_awk_setrunerror (
+				run, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
 			*len = rlen + 1; /* buffer size required */
-			return ASE_NULL;
+			return QSE_NULL;
 		}
 
-		tmp = (ase_char_t*)buf;
-		tmp[rlen] = ASE_T('\0');
+		tmp = (qse_char_t*)buf;
+		tmp[rlen] = QSE_T('\0');
 		*len = rlen; /* actual length */
 	}
 	else
 	{
 		/* clear the buffer */
-		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
+		if (opt & QSE_AWK_VALTOSTR_CLEAR) qse_str_clear (buf);
 
-		tmp = ASE_STR_PTR(buf) + ASE_STR_LEN(buf);
+		tmp = QSE_STR_PTR(buf) + QSE_STR_LEN(buf);
 
 		/* extend the buffer */
-		if (ase_str_nccat (
-			buf, ASE_T(' '), rlen) == (ase_size_t)-1)
+		if (qse_str_nccat (
+			buf, QSE_T(' '), rlen) == (qse_size_t)-1)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_awk_setrunerror (
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 	}
 
@@ -962,30 +962,30 @@ static ase_char_t* val_int_to_str (
 
 	while (t > 0) 
 	{
-		tmp[--rlen] = (ase_char_t)(t % 10) + ASE_T('0');
+		tmp[--rlen] = (qse_char_t)(t % 10) + QSE_T('0');
 		t /= 10;
 	}
 
-	if (v->val < 0) tmp[--rlen] = ASE_T('-');
+	if (v->val < 0) tmp[--rlen] = QSE_T('-');
 
-	if (buf != ASE_NULL && !(opt & ASE_AWK_VALTOSTR_FIXED))
+	if (buf != QSE_NULL && !(opt & QSE_AWK_VALTOSTR_FIXED))
 	{
-		tmp = ASE_STR_PTR(buf);
-		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
+		tmp = QSE_STR_PTR(buf);
+		if (len != QSE_NULL) *len = QSE_STR_LEN(buf);
 	}
 
 	return tmp;
 }
 
-static ase_char_t* val_real_to_str (
-	ase_awk_run_t* run, ase_awk_val_real_t* v,
-	int opt, ase_str_t* buf, ase_size_t* len)
+static qse_char_t* val_real_to_str (
+	qse_awk_run_t* run, qse_awk_val_real_t* v,
+	int opt, qse_str_t* buf, qse_size_t* len)
 {
-	ase_char_t* tmp;
-	ase_size_t tmp_len;
-	ase_str_t out, fbu;
+	qse_char_t* tmp;
+	qse_size_t tmp_len;
+	qse_str_t out, fbu;
 
-	if (opt & ASE_AWK_VALTOSTR_PRINT)
+	if (opt & QSE_AWK_VALTOSTR_PRINT)
 	{
 		tmp = run->global.ofmt.ptr;
 		tmp_len = run->global.ofmt.len;
@@ -996,131 +996,131 @@ static ase_char_t* val_real_to_str (
 		tmp_len = run->global.convfmt.len;
 	}
 
-	if (ase_str_init (&out, run->awk->mmgr, 256) == ASE_NULL)
+	if (qse_str_init (&out, run->awk->mmgr, 256) == QSE_NULL)
 	{
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_awk_setrunerror (run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
-	if (ase_str_init (&fbu, run->awk->mmgr, 256) == ASE_NULL)
+	if (qse_str_init (&fbu, run->awk->mmgr, 256) == QSE_NULL)
 	{
-		ase_str_fini (&out);
-		ase_awk_setrunerror (run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_str_fini (&out);
+		qse_awk_setrunerror (run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
-	tmp = ase_awk_format (run, &out, &fbu, tmp, tmp_len, 
-		(ase_size_t)-1, (ase_awk_nde_t*)v, &tmp_len);
-	if (tmp == ASE_NULL) 
+	tmp = qse_awk_format (run, &out, &fbu, tmp, tmp_len, 
+		(qse_size_t)-1, (qse_awk_nde_t*)v, &tmp_len);
+	if (tmp == QSE_NULL) 
 	{
-		ase_str_fini (&fbu);
-		ase_str_fini (&out);
-		return ASE_NULL;
+		qse_str_fini (&fbu);
+		qse_str_fini (&out);
+		return QSE_NULL;
 	}
 
-	if (buf == ASE_NULL) 
+	if (buf == QSE_NULL) 
 	{
-		ase_str_fini (&fbu);
+		qse_str_fini (&fbu);
 
-		ase_str_yield (&out, ASE_NULL, 0);
-		ase_str_fini (&out);
+		qse_str_yield (&out, QSE_NULL, 0);
+		qse_str_fini (&out);
 
-		if (len != ASE_NULL) *len = tmp_len;
+		if (len != QSE_NULL) *len = tmp_len;
 	}
-	else if (opt & ASE_AWK_VALTOSTR_FIXED)
+	else if (opt & QSE_AWK_VALTOSTR_FIXED)
 	{
-		ASE_ASSERT (buf != ASE_NULL && len != ASE_NULL);
+		QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
 
 		if (tmp_len >= *len)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_EINVAL, 0, ASE_NULL, 0);
+			qse_awk_setrunerror (
+				run, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
 			*len = tmp_len + 1; /* buffer size required */
-			ase_str_close (&fbu);
-			ase_str_close (&out);
-			return ASE_NULL;
+			qse_str_close (&fbu);
+			qse_str_close (&out);
+			return QSE_NULL;
 		}
 
-		ase_strncpy ((ase_char_t*)buf, tmp, tmp_len);
-		tmp = (ase_char_t*)buf;
+		qse_strncpy ((qse_char_t*)buf, tmp, tmp_len);
+		tmp = (qse_char_t*)buf;
 		*len = tmp_len;
 
-		ase_str_fini (&fbu);
-		ase_str_fini (&out);
+		qse_str_fini (&fbu);
+		qse_str_fini (&out);
 	}
 	else
 	{
-		if (opt & ASE_AWK_VALTOSTR_CLEAR) ase_str_clear (buf);
+		if (opt & QSE_AWK_VALTOSTR_CLEAR) qse_str_clear (buf);
 
-		if (ase_str_ncat (buf, tmp, tmp_len) == (ase_size_t)-1)
+		if (qse_str_ncat (buf, tmp, tmp_len) == (qse_size_t)-1)
 		{
-			ase_str_fini (&fbu);
-			ase_str_fini (&out);
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_str_fini (&fbu);
+			qse_str_fini (&out);
+			qse_awk_setrunerror (
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		tmp = ASE_STR_PTR(buf);
-		if (len != ASE_NULL) *len = ASE_STR_LEN(buf);
+		tmp = QSE_STR_PTR(buf);
+		if (len != QSE_NULL) *len = QSE_STR_LEN(buf);
 
-		ase_str_fini (&fbu);
-		ase_str_fini (&out);
+		qse_str_fini (&fbu);
+		qse_str_fini (&out);
 	}
 
 	return tmp;
 }
 
-int ase_awk_valtonum (
-	ase_awk_run_t* run, ase_awk_val_t* v, ase_long_t* l, ase_real_t* r)
+int qse_awk_valtonum (
+	qse_awk_run_t* run, qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
 {
-	if (v->type == ASE_AWK_VAL_NIL) 
+	if (v->type == QSE_AWK_VAL_NIL) 
 	{
 		*l = 0;
 		return 0;
 	}
 
-	if (v->type == ASE_AWK_VAL_INT)
+	if (v->type == QSE_AWK_VAL_INT)
 	{
-		*l = ((ase_awk_val_int_t*)v)->val;
+		*l = ((qse_awk_val_int_t*)v)->val;
 		return 0; /* long */
 	}
 
-	if (v->type == ASE_AWK_VAL_REAL)
+	if (v->type == QSE_AWK_VAL_REAL)
 	{
-		*r = ((ase_awk_val_real_t*)v)->val;
+		*r = ((qse_awk_val_real_t*)v)->val;
 		return 1; /* real */
 	}
 
-	if (v->type == ASE_AWK_VAL_STR)
+	if (v->type == QSE_AWK_VAL_STR)
 	{
-		return ase_awk_strtonum (run,
-			((ase_awk_val_str_t*)v)->buf, 
-			((ase_awk_val_str_t*)v)->len, l, r);
+		return qse_awk_strtonum (run,
+			((qse_awk_val_str_t*)v)->buf, 
+			((qse_awk_val_str_t*)v)->len, l, r);
 	}
 
 #ifdef DEBUG_VAL
-	ase_dprintf (
-		ASE_T("ERROR: WRONG VALUE TYPE [%d] in ase_awk_valtonum\n"), 
+	qse_dprintf (
+		QSE_T("ERROR: WRONG VALUE TYPE [%d] in qse_awk_valtonum\n"), 
 		v->type);
 #endif
 
-	ase_awk_setrunerror (run, ASE_AWK_EVALTYPE, 0, ASE_NULL, 0);
+	qse_awk_setrunerror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL, 0);
 	return -1; /* error */
 }
 
-int ase_awk_strtonum (
-	ase_awk_run_t* run, const ase_char_t* ptr, ase_size_t len, 
-	ase_long_t* l, ase_real_t* r)
+int qse_awk_strtonum (
+	qse_awk_run_t* run, const qse_char_t* ptr, qse_size_t len, 
+	qse_long_t* l, qse_real_t* r)
 {
-	const ase_char_t* endptr;
+	const qse_char_t* endptr;
 
-	*l = ase_awk_strxtolong (run->awk, ptr, len, 0, &endptr);
-	if (*endptr == ASE_T('.') ||
-	    *endptr == ASE_T('E') ||
-	    *endptr == ASE_T('e'))
+	*l = qse_awk_strxtolong (run->awk, ptr, len, 0, &endptr);
+	if (*endptr == QSE_T('.') ||
+	    *endptr == QSE_T('E') ||
+	    *endptr == QSE_T('e'))
 	{
-		*r = ase_awk_strxtoreal (run->awk, ptr, len, ASE_NULL);
+		*r = qse_awk_strxtoreal (run->awk, ptr, len, QSE_NULL);
 		/* TODO: need to check if it is a valid number using 
 		 *       endptr for strxtoreal? */
 		return 1; /* real */
@@ -1136,81 +1136,81 @@ int ase_awk_strtonum (
 #define DPRINTF run->awk->prmfns->dprintf
 #define DCUSTOM run->awk->prmfns->data
 
-static ase_map_walk_t print_pair (
-	ase_map_t* map, ase_map_pair_t* pair, void* arg)
+static qse_map_walk_t print_pair (
+	qse_map_t* map, qse_map_pair_t* pair, void* arg)
 {
-	ase_awk_run_t* run = (ase_awk_run_t*)arg;
+	qse_awk_run_t* run = (qse_awk_run_t*)arg;
 
-	ASE_ASSERT (run == *(ase_awk_run_t**)ASE_MAP_XTN(map));
+	QSE_ASSERT (run == *(qse_awk_run_t**)QSE_MAP_XTN(map));
 
-	DPRINTF (DCUSTOM, ASE_T(" %.*s=>"),
-		(int)ASE_MAP_KLEN(pair), ASE_MAP_KPTR(pair));
-	ase_awk_dprintval ((ase_awk_run_t*)arg, ASE_MAP_VPTR(pair));
-	DPRINTF (DCUSTOM, ASE_T(" "));
+	DPRINTF (DCUSTOM, QSE_T(" %.*s=>"),
+		(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair));
+	qse_awk_dprintval ((qse_awk_run_t*)arg, QSE_MAP_VPTR(pair));
+	DPRINTF (DCUSTOM, QSE_T(" "));
 
-	return ASE_MAP_WALK_FORWARD;
+	return QSE_MAP_WALK_FORWARD;
 }
 
-void ase_awk_dprintval (ase_awk_run_t* run, ase_awk_val_t* val)
+void qse_awk_dprintval (qse_awk_run_t* run, qse_awk_val_t* val)
 {
 	/* TODO: better value printing ... */
 
 	switch (val->type)
 	{
-		case ASE_AWK_VAL_NIL:
-			DPRINTF (DCUSTOM, ASE_T("nil"));
+		case QSE_AWK_VAL_NIL:
+			DPRINTF (DCUSTOM, QSE_T("nil"));
 		       	break;
 
-		case ASE_AWK_VAL_INT:
-		#if ASE_SIZEOF_LONG_LONG > 0
-			DPRINTF (DCUSTOM, ASE_T("%lld"), 
-				(long long)((ase_awk_val_int_t*)val)->val);
-		#elif ASE_SIZEOF___INT64 > 0
-			DPRINTF (DCUSTOM, ASE_T("%I64d"), 
-				(__int64)((ase_awk_val_int_t*)val)->val);
-		#elif ASE_SIZEOF_LONG > 0
-			DPRINTF (DCUSTOM, ASE_T("%ld"), 
-				(long)((ase_awk_val_int_t*)val)->val);
-		#elif ASE_SIZEOF_INT > 0
-			DPRINTF (DCUSTOM, ASE_T("%d"), 
-				(int)((ase_awk_val_int_t*)val)->val);
+		case QSE_AWK_VAL_INT:
+		#if QSE_SIZEOF_LONG_LONG > 0
+			DPRINTF (DCUSTOM, QSE_T("%lld"), 
+				(long long)((qse_awk_val_int_t*)val)->val);
+		#elif QSE_SIZEOF___INT64 > 0
+			DPRINTF (DCUSTOM, QSE_T("%I64d"), 
+				(__int64)((qse_awk_val_int_t*)val)->val);
+		#elif QSE_SIZEOF_LONG > 0
+			DPRINTF (DCUSTOM, QSE_T("%ld"), 
+				(long)((qse_awk_val_int_t*)val)->val);
+		#elif QSE_SIZEOF_INT > 0
+			DPRINTF (DCUSTOM, QSE_T("%d"), 
+				(int)((qse_awk_val_int_t*)val)->val);
 		#else
 			#error unsupported size
 		#endif
 			break;
 
-		case ASE_AWK_VAL_REAL:
+		case QSE_AWK_VAL_REAL:
 		#if defined(__MINGW32__)
-			DPRINTF (DCUSTOM, ASE_T("%Lf"), 
-				(double)((ase_awk_val_real_t*)val)->val);
+			DPRINTF (DCUSTOM, QSE_T("%Lf"), 
+				(double)((qse_awk_val_real_t*)val)->val);
 		#else
-			DPRINTF (DCUSTOM, ASE_T("%Lf"), 
-				(long double)((ase_awk_val_real_t*)val)->val);
+			DPRINTF (DCUSTOM, QSE_T("%Lf"), 
+				(long double)((qse_awk_val_real_t*)val)->val);
 		#endif
 			break;
 
-		case ASE_AWK_VAL_STR:
-			DPRINTF (DCUSTOM, ASE_T("%s"), ((ase_awk_val_str_t*)val)->buf);
+		case QSE_AWK_VAL_STR:
+			DPRINTF (DCUSTOM, QSE_T("%s"), ((qse_awk_val_str_t*)val)->buf);
 			break;
 
-		case ASE_AWK_VAL_REX:
-			DPRINTF (DCUSTOM, ASE_T("REX[%s]"), ((ase_awk_val_rex_t*)val)->buf);
+		case QSE_AWK_VAL_REX:
+			DPRINTF (DCUSTOM, QSE_T("REX[%s]"), ((qse_awk_val_rex_t*)val)->buf);
 			break;
 
-		case ASE_AWK_VAL_MAP:
-			DPRINTF (DCUSTOM, ASE_T("MAP["));
-			ase_map_walk (((ase_awk_val_map_t*)val)->map, print_pair, run);
-			DPRINTF (DCUSTOM, ASE_T("]"));
+		case QSE_AWK_VAL_MAP:
+			DPRINTF (DCUSTOM, QSE_T("MAP["));
+			qse_map_walk (((qse_awk_val_map_t*)val)->map, print_pair, run);
+			DPRINTF (DCUSTOM, QSE_T("]"));
 			break;
 	
-		case ASE_AWK_VAL_REF:
-			DPRINTF (DCUSTOM, ASE_T("REF[id=%d,val="), ((ase_awk_val_ref_t*)val)->id);
-			ase_awk_dprintval (run, *((ase_awk_val_ref_t*)val)->adr);
-			DPRINTF (DCUSTOM, ASE_T("]"));
+		case QSE_AWK_VAL_REF:
+			DPRINTF (DCUSTOM, QSE_T("REF[id=%d,val="), ((qse_awk_val_ref_t*)val)->id);
+			qse_awk_dprintval (run, *((qse_awk_val_ref_t*)val)->adr);
+			DPRINTF (DCUSTOM, QSE_T("]"));
 			break;
 
 		default:
-			DPRINTF (DCUSTOM, ASE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
+			DPRINTF (DCUSTOM, QSE_T("**** INTERNAL ERROR - INVALID VALUE TYPE ****\n"));
 	}
 }
 

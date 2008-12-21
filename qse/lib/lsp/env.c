@@ -8,120 +8,120 @@
 
 /* TODO: make the frame hash accessible */
 
-static ase_lsp_assoc_t* __new_assoc (
-	ase_lsp_t* lsp, ase_lsp_obj_t* name, 
-	ase_lsp_obj_t* value, ase_lsp_obj_t* func)
+static qse_lsp_assoc_t* __new_assoc (
+	qse_lsp_t* lsp, qse_lsp_obj_t* name, 
+	qse_lsp_obj_t* value, qse_lsp_obj_t* func)
 {
-	ase_lsp_assoc_t* assoc;
+	qse_lsp_assoc_t* assoc;
 
-	assoc = (ase_lsp_assoc_t*) 
-		ASE_LSP_ALLOC (lsp, sizeof(ase_lsp_assoc_t));
-	if (assoc == ASE_NULL) 
+	assoc = (qse_lsp_assoc_t*) 
+		QSE_LSP_ALLOC (lsp, sizeof(qse_lsp_assoc_t));
+	if (assoc == QSE_NULL) 
 	{
-		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_lsp_seterror (lsp, QSE_LSP_ENOMEM, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
 	assoc->name  = name;
 	assoc->value = value;
 	assoc->func  = func;
-	assoc->link  = ASE_NULL;
+	assoc->link  = QSE_NULL;
 
 	return assoc;
 }
 
-ase_lsp_frame_t* ase_lsp_newframe (ase_lsp_t* lsp)
+qse_lsp_frame_t* qse_lsp_newframe (qse_lsp_t* lsp)
 {
-	ase_lsp_frame_t* frame;
+	qse_lsp_frame_t* frame;
 
-	frame = (ase_lsp_frame_t*) 
-		ASE_LSP_ALLOC (lsp, sizeof(ase_lsp_frame_t));
-	if (frame == ASE_NULL) 
+	frame = (qse_lsp_frame_t*) 
+		QSE_LSP_ALLOC (lsp, sizeof(qse_lsp_frame_t));
+	if (frame == QSE_NULL) 
 	{
-		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_lsp_seterror (lsp, QSE_LSP_ENOMEM, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
-	frame->assoc = ASE_NULL;
-	frame->link  = ASE_NULL;
+	frame->assoc = QSE_NULL;
+	frame->link  = QSE_NULL;
 
 	return frame;
 }
 
-void ase_lsp_freeframe (ase_lsp_t* lsp, ase_lsp_frame_t* frame)
+void qse_lsp_freeframe (qse_lsp_t* lsp, qse_lsp_frame_t* frame)
 {
-	ase_lsp_assoc_t* assoc, * link;
+	qse_lsp_assoc_t* assoc, * link;
 
 	/* destroy the associations */
 	assoc = frame->assoc;
-	while (assoc != ASE_NULL) 
+	while (assoc != QSE_NULL) 
 	{
 		link = assoc->link;
-		ASE_LSP_FREE (lsp, assoc);
+		QSE_LSP_FREE (lsp, assoc);
 		assoc = link;
 	}
 
-	ASE_LSP_FREE (lsp, frame);
+	QSE_LSP_FREE (lsp, frame);
 }
 
-ase_lsp_assoc_t* ase_lsp_lookupinframe (
-	ase_lsp_t* lsp, ase_lsp_frame_t* frame, ase_lsp_obj_t* name)
+qse_lsp_assoc_t* qse_lsp_lookupinframe (
+	qse_lsp_t* lsp, qse_lsp_frame_t* frame, qse_lsp_obj_t* name)
 {
-	ase_lsp_assoc_t* assoc;
+	qse_lsp_assoc_t* assoc;
 
-	ASE_ASSERT (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	QSE_ASSERT (QSE_LSP_TYPE(name) == QSE_LSP_OBJ_SYM);
 
 	assoc = frame->assoc;
-	while (assoc != ASE_NULL) 
+	while (assoc != QSE_NULL) 
 	{
 		if (name == assoc->name) return assoc;
 		assoc = assoc->link;
 	}
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-ase_lsp_assoc_t* ase_lsp_insvalueintoframe (
-	ase_lsp_t* lsp, ase_lsp_frame_t* frame, 
-	ase_lsp_obj_t* name, ase_lsp_obj_t* value)
+qse_lsp_assoc_t* qse_lsp_insvalueintoframe (
+	qse_lsp_t* lsp, qse_lsp_frame_t* frame, 
+	qse_lsp_obj_t* name, qse_lsp_obj_t* value)
 {
-	ase_lsp_assoc_t* assoc;
+	qse_lsp_assoc_t* assoc;
 
-	ASE_ASSERT (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	QSE_ASSERT (QSE_LSP_TYPE(name) == QSE_LSP_OBJ_SYM);
 
-	assoc = __new_assoc (lsp, name, value, ASE_NULL);
-	if (assoc == ASE_NULL) return ASE_NULL;
+	assoc = __new_assoc (lsp, name, value, QSE_NULL);
+	if (assoc == QSE_NULL) return QSE_NULL;
 
 	assoc->link  = frame->assoc;
 	frame->assoc = assoc;
 	return assoc;
 }
 
-ase_lsp_assoc_t* ase_lsp_insfuncintoframe (
-	ase_lsp_t* lsp, ase_lsp_frame_t* frame, 
-	ase_lsp_obj_t* name, ase_lsp_obj_t* func)
+qse_lsp_assoc_t* qse_lsp_insfuncintoframe (
+	qse_lsp_t* lsp, qse_lsp_frame_t* frame, 
+	qse_lsp_obj_t* name, qse_lsp_obj_t* func)
 {
-	ase_lsp_assoc_t* assoc;
+	qse_lsp_assoc_t* assoc;
 
-	ASE_ASSERT (ASE_LSP_TYPE(name) == ASE_LSP_OBJ_SYM);
+	QSE_ASSERT (QSE_LSP_TYPE(name) == QSE_LSP_OBJ_SYM);
 
-	assoc = __new_assoc (lsp, name, ASE_NULL, func);
-	if (assoc == ASE_NULL) return ASE_NULL;
+	assoc = __new_assoc (lsp, name, QSE_NULL, func);
+	if (assoc == QSE_NULL) return QSE_NULL;
 
 	assoc->link  = frame->assoc;
 	frame->assoc = assoc;
 	return assoc;
 }
 
-ase_lsp_tlink_t* ase_lsp_pushtmp (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
+qse_lsp_tlink_t* qse_lsp_pushtmp (qse_lsp_t* lsp, qse_lsp_obj_t* obj)
 {
-	ase_lsp_tlink_t* tlink;
+	qse_lsp_tlink_t* tlink;
 
-	tlink = (ase_lsp_tlink_t*) 
-		ASE_LSP_ALLOC (lsp, sizeof(ase_lsp_tlink_t));
-	if (tlink == ASE_NULL) 
+	tlink = (qse_lsp_tlink_t*) 
+		QSE_LSP_ALLOC (lsp, sizeof(qse_lsp_tlink_t));
+	if (tlink == QSE_NULL) 
 	{
-		ase_lsp_seterror (lsp, ASE_LSP_ENOMEM, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_lsp_seterror (lsp, QSE_LSP_ENOMEM, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
 	tlink->obj = obj;
@@ -132,15 +132,15 @@ ase_lsp_tlink_t* ase_lsp_pushtmp (ase_lsp_t* lsp, ase_lsp_obj_t* obj)
 	return tlink;
 }
 
-void ase_lsp_poptmp (ase_lsp_t* lsp)
+void qse_lsp_poptmp (qse_lsp_t* lsp)
 {
-	ase_lsp_tlink_t* top;
+	qse_lsp_tlink_t* top;
 
-	ASE_ASSERT (lsp->mem->tlink != ASE_NULL);
+	QSE_ASSERT (lsp->mem->tlink != QSE_NULL);
 
 	top = lsp->mem->tlink;
 	lsp->mem->tlink = top->link;
 	lsp->mem->tlink_count--;
 
-	ASE_LSP_FREE (lsp, top);
+	QSE_LSP_FREE (lsp, top);
 }

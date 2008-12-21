@@ -1,6 +1,6 @@
-AC_PREREQ(2.59)
-AC_INIT([ase],[0.5.0],[bacon@abiyo.net])
-AC_CONFIG_HEADER([include/ase/config.h])
+dnl AC_PREREQ(2.59)
+AC_INIT([qse],[0.5.0],[bacon@abiyo.net])
+AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
 
 dnl uses CC and CPP for compilation tests with .c test programs.
@@ -67,8 +67,8 @@ dnl overrides the default CFLAGS setting
 #fi
 
 dnl make visible the 64bit interface to the file system
-CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -DASE_HAVE_CONFIG_H"
-CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -DASE_HAVE_CONFIG_H"
+CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
+CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
 
 dnl Checks for the math library (is -lm needed?)
 AC_CHECK_LIBM
@@ -116,32 +116,32 @@ AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
 AC_CHECK_SIZEOF(wchar_t)
 
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_SHORT, ${ac_cv_sizeof_short}, [sizeof(short)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_INT, ${ac_cv_sizeof_int}, [sizeof(int)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_LONG, ${ac_cv_sizeof_long}, [sizeof(long)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_LONG_LONG, ${ac_cv_sizeof_long_long}, [sizeof(long long)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF___INT8, ${ac_cv_sizeof___int8}, [sizeof(__int8)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF___INT16, ${ac_cv_sizeof___int16}, [sizeof(__int16)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF___INT32, ${ac_cv_sizeof___int32}, [sizeof(__int32)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF___INT64, ${ac_cv_sizeof___int64}, [sizeof(__int64)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF___INT128, ${ac_cv_sizeof___int128}, [sizeof(__int128)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_VOID_P, ${ac_cv_sizeof_void_p}, [sizeof(void*)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_FLOAT, ${ac_cv_sizeof_float}, [sizeof(float)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_DOUBLE, ${ac_cv_sizeof_double}, [sizeof(double)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_LONG_DOUBLE, ${ac_cv_sizeof_long_double}, [sizeof(long double)])
-AC_DEFINE_UNQUOTED(ASE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_SHORT, ${ac_cv_sizeof_short}, [sizeof(short)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_INT, ${ac_cv_sizeof_int}, [sizeof(int)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_LONG, ${ac_cv_sizeof_long}, [sizeof(long)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_LONG_LONG, ${ac_cv_sizeof_long_long}, [sizeof(long long)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF___INT8, ${ac_cv_sizeof___int8}, [sizeof(__int8)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF___INT16, ${ac_cv_sizeof___int16}, [sizeof(__int16)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF___INT32, ${ac_cv_sizeof___int32}, [sizeof(__int32)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF___INT64, ${ac_cv_sizeof___int64}, [sizeof(__int64)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF___INT128, ${ac_cv_sizeof___int128}, [sizeof(__int128)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_VOID_P, ${ac_cv_sizeof_void_p}, [sizeof(void*)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_FLOAT, ${ac_cv_sizeof_float}, [sizeof(float)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_DOUBLE, ${ac_cv_sizeof_double}, [sizeof(double)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_LONG_DOUBLE, ${ac_cv_sizeof_long_double}, [sizeof(long double)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
 
-AC_DEFINE_UNQUOTED(ASE_VERSION, "${VERSION}", [package version])
-AC_DEFINE_UNQUOTED(ASE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [major version number])
-AC_DEFINE_UNQUOTED(ASE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [minor version number])
-AC_DEFINE_UNQUOTED(ASE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [patch level])
-AC_DEFINE_UNQUOTED(ASE_AUTHOR,"${PACKAGE_BUGREPORT}", [author's email address])
+AC_DEFINE_UNQUOTED(QSE_VERSION, "${VERSION}", [package version])
+AC_DEFINE_UNQUOTED(QSE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [major version number])
+AC_DEFINE_UNQUOTED(QSE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [minor version number])
+AC_DEFINE_UNQUOTED(QSE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [patch level])
+AC_DEFINE_UNQUOTED(QSE_AUTHOR,"${PACKAGE_BUGREPORT}", [author's email address])
 
 AC_C_BIGENDIAN(
-	[AC_DEFINE([ASE_ENDIAN_BIG],[],[Big Endian])],
-	[AC_DEFINE([ASE_ENDIAN_LITTLE],[],[Little Endian])],
-	[AC_DEFINE([ASE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
+	[AC_DEFINE([QSE_ENDIAN_BIG],[],[Big Endian])],
+	[AC_DEFINE([QSE_ENDIAN_LITTLE],[],[Little Endian])],
+	[AC_DEFINE([QSE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
 
 dnl define extra options
 AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
@@ -150,9 +150,9 @@ AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
 test "${ac_cv_sizeof_wchar_t}" = "0" && enable_wchar_is=no
 if test "${enable_wchar_is}" = "yes"
 then
-	AC_DEFINE([ASE_CHAR_IS_WCHAR],[],[char is wchar])
+	AC_DEFINE([QSE_CHAR_IS_WCHAR],[],[char is wchar])
 else
-	AC_DEFINE([ASE_CHAR_IS_MCHAR],[],[char is mchar])
+	AC_DEFINE([QSE_CHAR_IS_MCHAR],[],[char is mchar])
 fi
 
 AC_ARG_ENABLE([syscall], [AC_HELP_STRING([--enable-syscall],
@@ -160,7 +160,7 @@ AC_ARG_ENABLE([syscall], [AC_HELP_STRING([--enable-syscall],
 	enable_syscall_is=$enableval,enable_syscall_is=no)
 if test "${enable_syscall_is}" = "yes"
 then
-	AC_DEFINE([ASE_USE_SYSCALL],[],[use the syscall() function])
+	AC_DEFINE([QSE_USE_SYSCALL],[],[use the syscall() function])
 fi
 
 AC_ARG_ENABLE([debug], [AC_HELP_STRING([--enable-debug],
@@ -304,12 +304,12 @@ AC_SUBST(BUILD_CJ, $BUILD_CJ)
 AC_CONFIG_FILES([
 	makefile 
 	include/makefile
-	include/ase/makefile
-	include/ase/cmn/makefile
-	include/ase/awk/makefile
-	include/ase/lsp/makefile
-	include/ase/tgp/makefile
-	include/ase/utl/makefile
+	include/qse/makefile
+	include/qse/cmn/makefile
+	include/qse/awk/makefile
+	include/qse/lsp/makefile
+	include/qse/tgp/makefile
+	include/qse/utl/makefile
 	lib/makefile 
 	lib/cmn/makefile 
 	lib/awk/makefile 

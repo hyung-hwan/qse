@@ -4,11 +4,11 @@
  * {License}
  */
 
-#include <ase/cmn/opt.h>
-#include <ase/cmn/str.h>
+#include <qse/cmn/opt.h>
+#include <qse/cmn/str.h>
 
 /* 
- * ase_getopt is based on BSD getopt.
+ * qse_getopt is based on BSD getopt.
  * --------------------------------------------------------------------------
  *
  * Copyright (c) 1987-2002 The Regents of the University of California.
@@ -45,55 +45,55 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BADCH   ASE_T('?')
-#define BADARG  ASE_T(':')
-#define EMSG    ASE_T("")
+#define BADCH   QSE_T('?')
+#define BADARG  QSE_T(':')
+#define EMSG    QSE_T("")
 
-ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
+qse_cint_t qse_getopt (int argc, qse_char_t* const* argv, qse_opt_t* opt)
 {
-	ase_char_t* oli; /* option letter list index */
+	qse_char_t* oli; /* option letter list index */
 	int dbldash = 0;
 
-	opt->arg = ASE_NULL;
-	opt->lngopt = ASE_NULL;
+	opt->arg = QSE_NULL;
+	opt->lngopt = QSE_NULL;
 
-	if (opt->cur == ASE_NULL) 
+	if (opt->cur == QSE_NULL) 
 	{
 		opt->cur = EMSG;
 		opt->ind = 1;
 	}
 
-	if (*opt->cur == ASE_T('\0')) 
+	if (*opt->cur == QSE_T('\0')) 
 	{              
 		/* update scanning pointer */
-		if (opt->ind >= argc || *(opt->cur = argv[opt->ind]) != ASE_T('-')) 
+		if (opt->ind >= argc || *(opt->cur = argv[opt->ind]) != QSE_T('-')) 
 		{
 			/* All arguments have been processed or the current 
 			 * argument doesn't start with a dash */
 			opt->cur = EMSG;
-			return ASE_CHAR_EOF;
+			return QSE_CHAR_EOF;
 		}
 
 		opt->cur++;
 
 	#if 0
-		if (*opt->cur == ASE_T('\0'))
+		if (*opt->cur == QSE_T('\0'))
 		{
 			/* - */
 			opt->ind++;
 			opt->cur = EMSG;
-			return ASE_CHAR_EOF;
+			return QSE_CHAR_EOF;
 		}
 	#endif
 
-		if (*opt->cur == ASE_T('-'))
+		if (*opt->cur == QSE_T('-'))
 		{
-			if (*++opt->cur == ASE_T('\0'))
+			if (*++opt->cur == QSE_T('\0'))
 			{
 				/* -- */
 				opt->ind++;
 				opt->cur = EMSG;
-				return ASE_CHAR_EOF;
+				return QSE_CHAR_EOF;
 			}
 			else
 			{
@@ -102,31 +102,31 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 		}
 	}   
 
-	if (dbldash && opt->lng != ASE_NULL)
+	if (dbldash && opt->lng != QSE_NULL)
 	{	
-		const ase_opt_lng_t* o;
-		ase_char_t* end = opt->cur;
+		const qse_opt_lng_t* o;
+		qse_char_t* end = opt->cur;
 
-		while (*end != ASE_T('\0') && *end != ASE_T('=')) end++;
+		while (*end != QSE_T('\0') && *end != QSE_T('=')) end++;
 
-		for (o = opt->lng; o->str != ASE_NULL; o++) 
+		for (o = opt->lng; o->str != QSE_NULL; o++) 
 		{
-			const ase_char_t* str = o->str;
-			if (*str == ASE_T(':')) str++;
+			const qse_char_t* str = o->str;
+			if (*str == QSE_T(':')) str++;
 
-			if (ase_strxcmp (opt->cur, end-opt->cur, str) != 0) continue;
+			if (qse_strxcmp (opt->cur, end-opt->cur, str) != 0) continue;
 	
 			/* match */
 			opt->cur = EMSG;
 			opt->lngopt = o->str;
-			if (*end == ASE_T('=')) opt->arg = end + 1;
+			if (*end == QSE_T('=')) opt->arg = end + 1;
 
-			if (*o->str != ASE_T(':'))
+			if (*o->str != QSE_T(':'))
 			{
 				/* should not have an option argument */
-				if (opt->arg != ASE_NULL) return BADARG;
+				if (opt->arg != QSE_NULL) return BADARG;
 			}
-			else if (opt->arg == ASE_NULL)
+			else if (opt->arg == QSE_NULL)
 			{
 				/* Check if it has a remaining argument 
 				 * available */
@@ -140,33 +140,33 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 			return o->val;
 		}
 
-		/*if (*end == ASE_T('=')) *end = ASE_T('\0');*/
+		/*if (*end == QSE_T('=')) *end = QSE_T('\0');*/
 		opt->lngopt = opt->cur;
 		return BADCH;
 	}
 
-	if ((opt->opt = *opt->cur++) == ASE_T(':') ||
-	    (oli = ase_strchr(opt->str, opt->opt)) == ASE_NULL) 
+	if ((opt->opt = *opt->cur++) == QSE_T(':') ||
+	    (oli = qse_strchr(opt->str, opt->opt)) == QSE_NULL) 
 	{
 		/*
 		 * if the user didn't specify '-' as an option,
 		 * assume it means EOF.
 		 */
-		if (opt->opt == (int)'-') return ASE_CHAR_EOF;
-		if (*opt->cur == ASE_T('\0')) ++opt->ind;
+		if (opt->opt == (int)'-') return QSE_CHAR_EOF;
+		if (*opt->cur == QSE_T('\0')) ++opt->ind;
 		return BADCH;
 	}
 
-	if (*++oli != ASE_T(':')) 
+	if (*++oli != QSE_T(':')) 
 	{
 		/* don't need argument */
-		if (*opt->cur == ASE_T('\0')) opt->ind++;
+		if (*opt->cur == QSE_T('\0')) opt->ind++;
 	}
 	else 
 	{                                  
 		/* need an argument */
 
-		if (*opt->cur != ASE_T('\0')) 
+		if (*opt->cur != QSE_T('\0')) 
 		{
 			/* no white space */
 			opt->arg = opt->cur;
@@ -175,7 +175,7 @@ ase_cint_t ase_getopt (int argc, ase_char_t* const* argv, ase_opt_t* opt)
 		{
 			/* no arg */
 			opt->cur = EMSG;
-			/*if (*opt->str == ASE_T(':'))*/ return BADARG;
+			/*if (*opt->str == QSE_T(':'))*/ return BADARG;
 			/*return BADCH;*/
 		}
 		else

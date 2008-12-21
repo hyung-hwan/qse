@@ -6,56 +6,56 @@
 
 #include "lsp.h"
 
-static const ase_char_t* __geterrstr (int errnum)
+static const qse_char_t* __geterrstr (int errnum)
 {
-	static const ase_char_t* __errstr[] = 
+	static const qse_char_t* __errstr[] = 
 	{
-		ASE_T("no error"),
-		ASE_T("out of memory"),
-		ASE_T("exit"),
-		ASE_T("end of source"),
-		ASE_T("unexpected end of string"),
-		ASE_T("input not attached"),
-		ASE_T("input"),
-		ASE_T("output not attached"),
-		ASE_T("output"),
-		ASE_T("syntax"),
-		ASE_T("right parenthesis expected"),
-		ASE_T("bad arguments"),
-		ASE_T("too few arguments"),
-		ASE_T("too many arguments"),
-		ASE_T("undefined function '%s'"),
-		ASE_T("bad function"),
-		ASE_T("duplicate formal"),
-		ASE_T("bad symbol"),
-		ASE_T("undefined symbol '%s'"),
-		ASE_T("empty body"),
-		ASE_T("bad value"),
-		ASE_T("divide by zero")
+		QSE_T("no error"),
+		QSE_T("out of memory"),
+		QSE_T("exit"),
+		QSE_T("end of source"),
+		QSE_T("unexpected end of string"),
+		QSE_T("input not attached"),
+		QSE_T("input"),
+		QSE_T("output not attached"),
+		QSE_T("output"),
+		QSE_T("syntax"),
+		QSE_T("right parenthesis expected"),
+		QSE_T("bad arguments"),
+		QSE_T("too few arguments"),
+		QSE_T("too many arguments"),
+		QSE_T("undefined function '%s'"),
+		QSE_T("bad function"),
+		QSE_T("duplicate formal"),
+		QSE_T("bad symbol"),
+		QSE_T("undefined symbol '%s'"),
+		QSE_T("empty body"),
+		QSE_T("bad value"),
+		QSE_T("divide by zero")
 	};
 
-	if (errnum >= 0 && errnum < ASE_COUNTOF(__errstr)) 
+	if (errnum >= 0 && errnum < QSE_COUNTOF(__errstr)) 
 	{
 		return __errstr[errnum];
 	}
 
-	return ASE_T("unknown error");
+	return QSE_T("unknown error");
 }
 
-void ase_lsp_geterror (
-	ase_lsp_t* lsp, int* errnum, const ase_char_t** errmsg)
+void qse_lsp_geterror (
+	qse_lsp_t* lsp, int* errnum, const qse_char_t** errmsg)
 {
-	if (errnum != ASE_NULL) *errnum = lsp->errnum;
-	if (errmsg != ASE_NULL) *errmsg = lsp->errmsg;
+	if (errnum != QSE_NULL) *errnum = lsp->errnum;
+	if (errmsg != QSE_NULL) *errmsg = lsp->errmsg;
 }
 
-void ase_lsp_seterror (
-	ase_lsp_t* lsp, int errnum,
-	const ase_char_t** errarg, ase_size_t argcnt)
+void qse_lsp_seterror (
+	qse_lsp_t* lsp, int errnum,
+	const qse_char_t** errarg, qse_size_t argcnt)
 {
-	const ase_char_t* errfmt;
+	const qse_char_t* errfmt;
 
-	ASE_ASSERT (argcnt <= 5);
+	QSE_ASSERT (argcnt <= 5);
 
 	lsp->errnum = errnum;
 	errfmt = __geterrstr (errnum);
@@ -66,7 +66,7 @@ void ase_lsp_seterror (
 			lsp->prmfns.misc.sprintf (
 				lsp->prmfns.misc.data,
 				lsp->errmsg, 
-				ASE_COUNTOF(lsp->errmsg), 
+				QSE_COUNTOF(lsp->errmsg), 
 				errfmt);
 			return;
 
@@ -74,7 +74,7 @@ void ase_lsp_seterror (
 			lsp->prmfns.misc.sprintf (
 				lsp->prmfns.misc.data,
 				lsp->errmsg, 
-				ASE_COUNTOF(lsp->errmsg), 
+				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
 				errarg[0]);
 			return;
@@ -83,7 +83,7 @@ void ase_lsp_seterror (
 			lsp->prmfns.misc.sprintf (
 				lsp->prmfns.misc.data,
 				lsp->errmsg, 
-				ASE_COUNTOF(lsp->errmsg), 
+				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
 				errarg[0],
 				errarg[1]);
@@ -93,7 +93,7 @@ void ase_lsp_seterror (
 			lsp->prmfns.misc.sprintf (
 				lsp->prmfns.misc.data,
 				lsp->errmsg, 
-				ASE_COUNTOF(lsp->errmsg), 
+				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
 				errarg[0],
 				errarg[1],
@@ -104,7 +104,7 @@ void ase_lsp_seterror (
 			lsp->prmfns.misc.sprintf (
 				lsp->prmfns.misc.data,
 				lsp->errmsg, 
-				ASE_COUNTOF(lsp->errmsg), 
+				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
 				errarg[0],
 				errarg[1],
@@ -116,7 +116,7 @@ void ase_lsp_seterror (
 			lsp->prmfns.misc.sprintf (
 				lsp->prmfns.misc.data,
 				lsp->errmsg, 
-				ASE_COUNTOF(lsp->errmsg), 
+				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
 				errarg[0],
 				errarg[1],

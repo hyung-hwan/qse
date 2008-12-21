@@ -1,5 +1,0 @@
-
-pkginclude_HEADERS = tgp.h
-pkgincludedir= $(includedir)/ase/tgp
-
-CLEANFILES = *dist

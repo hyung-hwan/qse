@@ -4,39 +4,39 @@
  * {License}
  */
 
-#ifndef _ASE_LIB_AWK_FUNC_H_
-#define _ASE_LIB_AWK_FUNC_H_
+#ifndef _QSE_LIB_AWK_FUNC_H_
+#define _QSE_LIB_AWK_FUNC_H_
 
-typedef struct ase_awk_bfn_t ase_awk_bfn_t;
+typedef struct qse_awk_bfn_t qse_awk_bfn_t;
 
-struct ase_awk_bfn_t
+struct qse_awk_bfn_t
 {
 	struct
 	{
-		ase_char_t* ptr;
-		ase_size_t  len;
+		qse_char_t* ptr;
+		qse_size_t  len;
 	} name;
 
 	int valid; /* the entry is valid when this option is set */
 
 	struct
 	{
-		ase_size_t min;
-		ase_size_t max;
-		ase_char_t* spec;
+		qse_size_t min;
+		qse_size_t max;
+		qse_char_t* spec;
 	} arg;
 
-	int (*handler) (ase_awk_run_t*, const ase_char_t*, ase_size_t);
+	int (*handler) (qse_awk_run_t*, const qse_char_t*, qse_size_t);
 
-	/*ase_awk_bfn_t* next;*/
+	/*qse_awk_bfn_t* next;*/
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-ase_awk_bfn_t* ase_awk_getbfn (
-	ase_awk_t* awk, const ase_char_t* name, ase_size_t len);
+qse_awk_bfn_t* qse_awk_getbfn (
+	qse_awk_t* awk, const qse_char_t* name, qse_size_t len);
 
 #ifdef __cplusplus
 }

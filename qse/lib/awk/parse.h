@@ -4,8 +4,8 @@
  * {License}
  */
 
-#ifndef _ASE_LIB_AWK_PARSE_H_
-#define _ASE_LIB_AWK_PARSE_H_
+#ifndef _QSE_LIB_AWK_PARSE_H_
+#define _QSE_LIB_AWK_PARSE_H_
 
 /* these enums should match kwtab in parse.c */
 enum kw_t
@@ -39,16 +39,16 @@ enum kw_t
 extern "C" {
 #endif
 
-int ase_awk_putsrcstr (ase_awk_t* awk, const ase_char_t* str);
-int ase_awk_putsrcstrx (
-	ase_awk_t* awk, const ase_char_t* str, ase_size_t len);
+int qse_awk_putsrcstr (qse_awk_t* awk, const qse_char_t* str);
+int qse_awk_putsrcstrx (
+	qse_awk_t* awk, const qse_char_t* str, qse_size_t len);
 
-const ase_char_t* ase_awk_getglobalname (
-	ase_awk_t* awk, ase_size_t idx, ase_size_t* len);
-ase_cstr_t* ase_awk_getkw (ase_awk_t* awk, int id, ase_cstr_t* s);
+const qse_char_t* qse_awk_getglobalname (
+	qse_awk_t* awk, qse_size_t idx, qse_size_t* len);
+qse_cstr_t* qse_awk_getkw (qse_awk_t* awk, int id, qse_cstr_t* s);
 
 
-int ase_awk_initglobals (ase_awk_t* awk);
+int qse_awk_initglobals (qse_awk_t* awk);
 
 #ifdef __cplusplus
 }

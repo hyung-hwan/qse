@@ -18,21 +18,21 @@ enum
 static int in_type_map[] =
 {
 	/* the order should match the order of the 
-	 * ASE_AWK_IN_XXX values in tree.h */
-	ASE_AWK_EXTIO_PIPE,
-	ASE_AWK_EXTIO_COPROC,
-	ASE_AWK_EXTIO_FILE,
-	ASE_AWK_EXTIO_CONSOLE
+	 * QSE_AWK_IN_XXX values in tree.h */
+	QSE_AWK_EXTIO_PIPE,
+	QSE_AWK_EXTIO_COPROC,
+	QSE_AWK_EXTIO_FILE,
+	QSE_AWK_EXTIO_CONSOLE
 };
 
 static int in_mode_map[] =
 {
 	/* the order should match the order of the 
-	 * ASE_AWK_IN_XXX values in tree.h */
-	ASE_AWK_EXTIO_PIPE_READ,
+	 * QSE_AWK_IN_XXX values in tree.h */
+	QSE_AWK_EXTIO_PIPE_READ,
 	0,
-	ASE_AWK_EXTIO_FILE_READ,
-	ASE_AWK_EXTIO_CONSOLE_READ
+	QSE_AWK_EXTIO_FILE_READ,
+	QSE_AWK_EXTIO_CONSOLE_READ
 };
 
 static int in_mask_map[] =
@@ -46,23 +46,23 @@ static int in_mask_map[] =
 static int out_type_map[] =
 {
 	/* the order should match the order of the 
-	 * ASE_AWK_OUT_XXX values in tree.h */
-	ASE_AWK_EXTIO_PIPE,
-	ASE_AWK_EXTIO_COPROC,
-	ASE_AWK_EXTIO_FILE,
-	ASE_AWK_EXTIO_FILE,
-	ASE_AWK_EXTIO_CONSOLE
+	 * QSE_AWK_OUT_XXX values in tree.h */
+	QSE_AWK_EXTIO_PIPE,
+	QSE_AWK_EXTIO_COPROC,
+	QSE_AWK_EXTIO_FILE,
+	QSE_AWK_EXTIO_FILE,
+	QSE_AWK_EXTIO_CONSOLE
 };
 
 static int out_mode_map[] =
 {
 	/* the order should match the order of the 
-	 * ASE_AWK_OUT_XXX values in tree.h */
-	ASE_AWK_EXTIO_PIPE_WRITE,
+	 * QSE_AWK_OUT_XXX values in tree.h */
+	QSE_AWK_EXTIO_PIPE_WRITE,
 	0,
-	ASE_AWK_EXTIO_FILE_WRITE,
-	ASE_AWK_EXTIO_FILE_APPEND,
-	ASE_AWK_EXTIO_CONSOLE_WRITE
+	QSE_AWK_EXTIO_FILE_WRITE,
+	QSE_AWK_EXTIO_FILE_APPEND,
+	QSE_AWK_EXTIO_CONSOLE_WRITE
 };
 
 static int out_mask_map[] =
@@ -74,23 +74,23 @@ static int out_mask_map[] =
 	MASK_WRITE
 };
 
-int ase_awk_readextio (
-	ase_awk_run_t* run, int in_type,
-	const ase_char_t* name, ase_str_t* buf)
+int qse_awk_readextio (
+	qse_awk_run_t* run, int in_type,
+	const qse_char_t* name, qse_str_t* buf)
 {
-	ase_awk_extio_t* p = run->extio.chain;
-	ase_awk_io_t handler;
+	qse_awk_extio_t* p = run->extio.chain;
+	qse_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask, ret, n;
-	ase_ssize_t x;
-	ase_awk_val_t* rs;
-	ase_char_t* rs_ptr;
-	ase_size_t rs_len;
-	ase_size_t line_len = 0;
-	ase_char_t c = ASE_T('\0'), pc;
+	qse_ssize_t x;
+	qse_awk_val_t* rs;
+	qse_char_t* rs_ptr;
+	qse_size_t rs_len;
+	qse_size_t line_len = 0;
+	qse_char_t c = QSE_T('\0'), pc;
 
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_type_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mode_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mask_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_type_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = in_type_map[in_type];
@@ -98,64 +98,64 @@ int ase_awk_readextio (
 	extio_mask = in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == ASE_NULL)
+	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		ase_awk_setrunerrnum (run, ASE_AWK_EIOUSER);
+		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_strcmp (p->name,name) == 0) break;
+		    qse_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
-	if (p == ASE_NULL)
+	if (p == QSE_NULL)
 	{
-		p = (ase_awk_extio_t*) ASE_AWK_ALLOC (
-			run->awk, ASE_SIZEOF(ase_awk_extio_t));
-		if (p == ASE_NULL)
+		p = (qse_awk_extio_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_extio_t));
+		if (p == QSE_NULL)
 		{
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
 			return -1;
 		}
 
-		p->name = ASE_AWK_STRDUP (run->awk, name);
-		if (p->name == ASE_NULL)
+		p->name = QSE_AWK_STRDUP (run->awk, name);
+		if (p->name == QSE_NULL)
 		{
-			ASE_AWK_FREE (run->awk, p);
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOMEM);
+			QSE_AWK_FREE (run->awk, p);
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
 			return -1;
 		}
 
 		p->run = run;
 		p->type = (extio_type | extio_mask);
 		p->mode = extio_mode;
-		p->handle = ASE_NULL;
-		p->next = ASE_NULL;
+		p->handle = QSE_NULL;
+		p->next = QSE_NULL;
 		p->data = run->extio.data;
 
-		p->in.buf[0] = ASE_T('\0');
+		p->in.buf[0] = QSE_T('\0');
 		p->in.pos = 0;
 		p->in.len = 0;
-		p->in.eof = ASE_FALSE;
-		p->in.eos = ASE_FALSE;
+		p->in.eof = QSE_FALSE;
+		p->in.eos = QSE_FALSE;
 
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
 
-		x = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
+		x = handler (QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
 		if (x <= -1)
 		{
-			ASE_AWK_FREE (run->awk, p->name);
-			ASE_AWK_FREE (run->awk, p);
+			QSE_AWK_FREE (run->awk, p->name);
+			QSE_AWK_FREE (run->awk, p);
 
-			if (run->errnum == ASE_AWK_ENOERR)
+			if (run->errnum == QSE_AWK_ENOERR)
 			{
 				/* if the error number has not been 
 				 * set by the user handler */
-				ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+				qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 			}
 
 			return -1;
@@ -172,7 +172,7 @@ int ase_awk_readextio (
 		 * entire pattern-block matching and exeuction. */
 		if (x == 0) 
 		{
-			p->in.eos = ASE_TRUE;
+			p->in.eos = QSE_TRUE;
 			return 0;
 		}
 	}
@@ -184,29 +184,29 @@ int ase_awk_readextio (
 	}
 
 	/* ready to read a line */
-	ase_str_clear (buf);
+	qse_str_clear (buf);
 
 	/* get the record separator */
-	rs = ase_awk_getglobal (run, ASE_AWK_GLOBAL_RS);
-	ase_awk_refupval (run, rs);
+	rs = qse_awk_getglobal (run, QSE_AWK_GLOBAL_RS);
+	qse_awk_refupval (run, rs);
 
-	if (rs->type == ASE_AWK_VAL_NIL)
+	if (rs->type == QSE_AWK_VAL_NIL)
 	{
-		rs_ptr = ASE_NULL;
+		rs_ptr = QSE_NULL;
 		rs_len = 0;
 	}
-	else if (rs->type == ASE_AWK_VAL_STR)
+	else if (rs->type == QSE_AWK_VAL_STR)
 	{
-		rs_ptr = ((ase_awk_val_str_t*)rs)->buf;
-		rs_len = ((ase_awk_val_str_t*)rs)->len;
+		rs_ptr = ((qse_awk_val_str_t*)rs)->buf;
+		rs_len = ((qse_awk_val_str_t*)rs)->len;
 	}
 	else 
 	{
-		rs_ptr = ase_awk_valtostr (
-			run, rs, ASE_AWK_VALTOSTR_CLEAR, ASE_NULL, &rs_len);
-		if (rs_ptr == ASE_NULL)
+		rs_ptr = qse_awk_valtostr (
+			run, rs, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &rs_len);
+		if (rs_ptr == QSE_NULL)
 		{
-			ase_awk_refdownval (run, rs);
+			qse_awk_refdownval (run, rs);
 			return -1;
 		}
 	}
@@ -218,25 +218,25 @@ int ase_awk_readextio (
 	{
 		if (p->in.pos >= p->in.len)
 		{
-			ase_ssize_t n;
+			qse_ssize_t n;
 
 			if (p->in.eof)
 			{
-				if (ASE_STR_LEN(buf) == 0) ret = 0;
+				if (QSE_STR_LEN(buf) == 0) ret = 0;
 				break;
 			}
 
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
 
-			n = handler (ASE_AWK_IO_READ, 
-				p, p->in.buf, ASE_COUNTOF(p->in.buf));
+			n = handler (QSE_AWK_IO_READ, 
+				p, p->in.buf, QSE_COUNTOF(p->in.buf));
 			if (n <= -1) 
 			{
-				if (run->errnum == ASE_AWK_ENOERR)
+				if (run->errnum == QSE_AWK_ENOERR)
 				{
 					/* if the error number has not been 
 				 	 * set by the user handler */
-					ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+					qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 				}
 
 				ret = -1;
@@ -245,9 +245,9 @@ int ase_awk_readextio (
 
 			if (n == 0) 
 			{
-				p->in.eof = ASE_TRUE;
+				p->in.eof = QSE_TRUE;
 
-				if (ASE_STR_LEN(buf) == 0) ret = 0;
+				if (QSE_STR_LEN(buf) == 0) ret = 0;
 				else if (rs_len >= 2)
 				{
 					/* when RS is multiple characters, it needs to check
@@ -255,15 +255,15 @@ int ase_awk_readextio (
 					 * the buffer has been appened with the last character
 					 * after the previous matchrex has failed */
 
-					const ase_char_t* match_ptr;
-					ase_size_t match_len;
+					const qse_char_t* match_ptr;
+					qse_size_t match_len;
 
-					ASE_ASSERT (run->global.rs != ASE_NULL);
+					QSE_ASSERT (run->global.rs != QSE_NULL);
 
-					n = ASE_AWK_MATCHREX (
+					n = QSE_AWK_MATCHREX (
 						run->awk, run->global.rs, 
-						((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
-						ASE_STR_PTR(buf), ASE_STR_LEN(buf), 
+						((run->global.ignorecase)? QSE_REX_IGNORECASE: 0),
+						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 						&match_ptr, &match_len, &run->errnum);
 					if (n == -1)
 					{
@@ -275,11 +275,11 @@ int ase_awk_readextio (
 					{
 						/* the match should be found at the end of
 						 * the current buffer */
-						ASE_ASSERT (
-							ASE_STR_PTR(buf) + ASE_STR_LEN(buf) ==
+						QSE_ASSERT (
+							QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
 							match_ptr + match_len);
 
-						ASE_STR_LEN(buf) -= match_len;
+						QSE_STR_LEN(buf) -= match_len;
 						break;
 					}
 				}
@@ -294,15 +294,15 @@ int ase_awk_readextio (
 		pc = c;
 		c = p->in.buf[p->in.pos++];
 
-		if (rs_ptr == ASE_NULL)
+		if (rs_ptr == QSE_NULL)
 		{
 			/* separate by a new line */
-			if (c == ASE_T('\n')) 
+			if (c == QSE_T('\n')) 
 			{
-				if (pc == ASE_T('\r') && 
-				    ASE_STR_LEN(buf) > 0) 
+				if (pc == QSE_T('\r') && 
+				    QSE_STR_LEN(buf) > 0) 
 				{
-					ASE_STR_LEN(buf) -= 1;
+					QSE_STR_LEN(buf) -= 1;
 				}
 				break;
 			}
@@ -310,18 +310,18 @@ int ase_awk_readextio (
 		else if (rs_len == 0)
 		{
 			/* separate by a blank line */
-			if (c == ASE_T('\n'))
+			if (c == QSE_T('\n'))
 			{
-				if (pc == ASE_T('\r') && 
-				    ASE_STR_LEN(buf) > 0) 
+				if (pc == QSE_T('\r') && 
+				    QSE_STR_LEN(buf) > 0) 
 				{
-					ASE_STR_LEN(buf) -= 1;
+					QSE_STR_LEN(buf) -= 1;
 				}
 			}
 
-			if (line_len == 0 && c == ASE_T('\n'))
+			if (line_len == 0 && c == QSE_T('\n'))
 			{
-				if (ASE_STR_LEN(buf) <= 0) 
+				if (QSE_STR_LEN(buf) <= 0) 
 				{
 					/* if the record is empty when a blank 
 					 * line is encountered, the line 
@@ -333,7 +333,7 @@ int ase_awk_readextio (
 				/* when a blank line is encountered,
 				 * it needs to snip off the line 
 				 * terminator of the previous line */
-				ASE_STR_LEN(buf) -= 1;
+				QSE_STR_LEN(buf) -= 1;
 				break;
 			}
 		}
@@ -343,15 +343,15 @@ int ase_awk_readextio (
 		}
 		else
 		{
-			const ase_char_t* match_ptr;
-			ase_size_t match_len;
+			const qse_char_t* match_ptr;
+			qse_size_t match_len;
 
-			ASE_ASSERT (run->global.rs != ASE_NULL);
+			QSE_ASSERT (run->global.rs != QSE_NULL);
 
-			n = ASE_AWK_MATCHREX (
+			n = QSE_AWK_MATCHREX (
 				run->awk, run->global.rs, 
-				((run->global.ignorecase)? ASE_REX_IGNORECASE: 0),
-				ASE_STR_PTR(buf), ASE_STR_LEN(buf), 
+				((run->global.ignorecase)? QSE_REX_IGNORECASE: 0),
+				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)
 			{
@@ -364,77 +364,77 @@ int ase_awk_readextio (
 			{
 				/* the match should be found at the end of
 				 * the current buffer */
-				ASE_ASSERT (
-					ASE_STR_PTR(buf) + ASE_STR_LEN(buf) ==
+				QSE_ASSERT (
+					QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
 					match_ptr + match_len);
 
-				ASE_STR_LEN(buf) -= match_len;
+				QSE_STR_LEN(buf) -= match_len;
 				p->in.pos--; /* unread the character in c */
 				break;
 			}
 		}
 
-		if (ase_str_ccat (buf, c) == (ase_size_t)-1)
+		if (qse_str_ccat (buf, c) == (qse_size_t)-1)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			qse_awk_setrunerror (
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 			ret = -1;
 			break;
 		}
 
 		/* TODO: handle different line terminator like \r\n */
-		if (c == ASE_T('\n')) line_len = 0;
+		if (c == QSE_T('\n')) line_len = 0;
 		else line_len = line_len + 1;
 	}
 
-	if (rs_ptr != ASE_NULL && 
-	    rs->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, rs_ptr);
-	ase_awk_refdownval (run, rs);
+	if (rs_ptr != QSE_NULL && 
+	    rs->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, rs_ptr);
+	qse_awk_refdownval (run, rs);
 
 	return ret;
 }
 
-#include <ase/utl/stdio.h>
-int ase_awk_writeextio_val (
-	ase_awk_run_t* run, int out_type, 
-	const ase_char_t* name, ase_awk_val_t* v)
+#include <qse/utl/stdio.h>
+int qse_awk_writeextio_val (
+	qse_awk_run_t* run, int out_type, 
+	const qse_char_t* name, qse_awk_val_t* v)
 {
-	ase_char_t* str;
-	ase_size_t len;
+	qse_char_t* str;
+	qse_size_t len;
 	int n;
 
-	if (v->type == ASE_AWK_VAL_STR)
+	if (v->type == QSE_AWK_VAL_STR)
 	{
-		str = ((ase_awk_val_str_t*)v)->buf;
-		len = ((ase_awk_val_str_t*)v)->len;
+		str = ((qse_awk_val_str_t*)v)->buf;
+		len = ((qse_awk_val_str_t*)v)->len;
 	}
 	else
 	{
-		str = ase_awk_valtostr (
+		str = qse_awk_valtostr (
 			run, v, 
-			ASE_AWK_VALTOSTR_CLEAR | ASE_AWK_VALTOSTR_PRINT, 
-			ASE_NULL, &len);
-		if (str == ASE_NULL) return -1;
+			QSE_AWK_VALTOSTR_CLEAR | QSE_AWK_VALTOSTR_PRINT, 
+			QSE_NULL, &len);
+		if (str == QSE_NULL) return -1;
 	}
 
-	n = ase_awk_writeextio_str (run, out_type, name, str, len);
+	n = qse_awk_writeextio_str (run, out_type, name, str, len);
 
-	if (v->type != ASE_AWK_VAL_STR) ASE_AWK_FREE (run->awk, str);
+	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
 	return n;
 }
 
-int ase_awk_writeextio_str (
-	ase_awk_run_t* run, int out_type, 
-	const ase_char_t* name, ase_char_t* str, ase_size_t len)
+int qse_awk_writeextio_str (
+	qse_awk_run_t* run, int out_type, 
+	const qse_char_t* name, qse_char_t* str, qse_size_t len)
 {
-	ase_awk_extio_t* p = run->extio.chain;
-	ase_awk_io_t handler;
+	qse_awk_extio_t* p = run->extio.chain;
+	qse_awk_io_t handler;
 	int extio_type, extio_mode, extio_mask; 
-	ase_ssize_t n;
+	qse_ssize_t n;
 
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mask_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = out_type_map[out_type];
@@ -442,71 +442,71 @@ int ase_awk_writeextio_str (
 	extio_mask = out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == ASE_NULL)
+	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		ase_awk_setrunerrnum (run, ASE_AWK_EIOUSER);
+		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
 	/* look for the corresponding extio for name */
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		/* the file "1.tmp", in the following code snippets, 
 		 * would be opened by the first print statement, but not by
 		 * the second print statement. this is because
-		 * both ASE_AWK_OUT_FILE and ASE_AWK_OUT_FILE_APPEND are
-		 * translated to ASE_AWK_EXTIO_FILE and it is used to
+		 * both QSE_AWK_OUT_FILE and QSE_AWK_OUT_FILE_APPEND are
+		 * translated to QSE_AWK_EXTIO_FILE and it is used to
 		 * keep track of file handles..
 		 *
 		 *    print "1111" >> "1.tmp"
 		 *    print "1111" > "1.tmp"
 		 */
 		if (p->type == (extio_type | extio_mask) && 
-		    ase_strcmp (p->name, name) == 0) break;
+		    qse_strcmp (p->name, name) == 0) break;
 		p = p->next;
 	}
 
 	/* if there is not corresponding extio for name, create one */
-	if (p == ASE_NULL)
+	if (p == QSE_NULL)
 	{
-		p = (ase_awk_extio_t*) ASE_AWK_ALLOC (
-			run->awk, ASE_SIZEOF(ase_awk_extio_t));
-		if (p == ASE_NULL)
+		p = (qse_awk_extio_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_extio_t));
+		if (p == QSE_NULL)
 		{
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			qse_awk_setrunerror (
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 			return -1;
 		}
 
-		p->name = ASE_AWK_STRDUP (run->awk, name);
-		if (p->name == ASE_NULL)
+		p->name = QSE_AWK_STRDUP (run->awk, name);
+		if (p->name == QSE_NULL)
 		{
-			ASE_AWK_FREE (run->awk, p);
-			ase_awk_setrunerror (
-				run, ASE_AWK_ENOMEM, 0, ASE_NULL, 0);
+			QSE_AWK_FREE (run->awk, p);
+			qse_awk_setrunerror (
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 			return -1;
 		}
 
 		p->run = run;
 		p->type = (extio_type | extio_mask);
 		p->mode = extio_mode;
-		p->handle = ASE_NULL;
-		p->next = ASE_NULL;
+		p->handle = QSE_NULL;
+		p->next = QSE_NULL;
 		p->data = run->extio.data;
 
-		p->out.eof = ASE_FALSE;
-		p->out.eos = ASE_FALSE;
+		p->out.eof = QSE_FALSE;
+		p->out.eos = QSE_FALSE;
 
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
-		n = handler (ASE_AWK_IO_OPEN, p, ASE_NULL, 0);
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+		n = handler (QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
 		if (n <= -1)
 		{
-			ASE_AWK_FREE (run->awk, p->name);
-			ASE_AWK_FREE (run->awk, p);
+			QSE_AWK_FREE (run->awk, p->name);
+			QSE_AWK_FREE (run->awk, p);
 
-			if (run->errnum == ASE_AWK_ENOERR)
-				ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+			if (run->errnum == QSE_AWK_ENOERR)
+				qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 
 			return -1;
 		}
@@ -522,7 +522,7 @@ int ase_awk_writeextio_str (
 		 * entire pattern-block matching and exeuction. */
 		if (n == 0) 
 		{
-			p->out.eos = ASE_TRUE;
+			p->out.eos = QSE_TRUE;
 			return 0;
 		}
 	}
@@ -542,19 +542,19 @@ int ase_awk_writeextio_str (
 
 	while (len > 0)
 	{
-		ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
-		n = handler (ASE_AWK_IO_WRITE, p, str, len);
+		qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+		n = handler (QSE_AWK_IO_WRITE, p, str, len);
 		if (n <= -1) 
 		{
-			if (run->errnum == ASE_AWK_ENOERR)
-				ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+			if (run->errnum == QSE_AWK_ENOERR)
+				qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 
 			return -1;
 		}
 
 		if (n == 0) 
 		{
-			p->out.eof = ASE_TRUE;
+			p->out.eof = QSE_TRUE;
 			return 0;
 		}
 
@@ -565,18 +565,18 @@ int ase_awk_writeextio_str (
 	return 1;
 }
 
-int ase_awk_flushextio (
-	ase_awk_run_t* run, int out_type, const ase_char_t* name)
+int qse_awk_flushextio (
+	qse_awk_run_t* run, int out_type, const qse_char_t* name)
 {
-	ase_awk_extio_t* p = run->extio.chain;
-	ase_awk_io_t handler;
+	qse_awk_extio_t* p = run->extio.chain;
+	qse_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask;
-	ase_ssize_t n;
-	ase_bool_t ok = ASE_FALSE;
+	qse_ssize_t n;
+	qse_bool_t ok = QSE_FALSE;
 
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mask_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = out_type_map[out_type];
@@ -584,30 +584,30 @@ int ase_awk_flushextio (
 	extio_mask = out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == ASE_NULL)
+	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		ase_awk_setrunerrnum (run, ASE_AWK_EIOUSER);
+		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
 	/* look for the corresponding extio for name */
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) && 
-		    (name == ASE_NULL || ase_strcmp(p->name,name) == 0)) 
+		    (name == QSE_NULL || qse_strcmp(p->name,name) == 0)) 
 		{
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
-			n = handler (ASE_AWK_IO_FLUSH, p, ASE_NULL, 0);
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+			n = handler (QSE_AWK_IO_FLUSH, p, QSE_NULL, 0);
 
 			if (n <= -1) 
 			{
-				if (run->errnum == ASE_AWK_ENOERR)
-					ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+				if (run->errnum == QSE_AWK_ENOERR)
+					qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 				return -1;
 			}
 
-			ok = ASE_TRUE;
+			ok = QSE_TRUE;
 		}
 
 		p = p->next;
@@ -616,21 +616,21 @@ int ase_awk_flushextio (
 	if (ok) return 0;
 
 	/* there is no corresponding extio for name */
-	ase_awk_setrunerrnum (run, ASE_AWK_EIONONE);
+	qse_awk_setrunerrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
-int ase_awk_nextextio_read (
-	ase_awk_run_t* run, int in_type, const ase_char_t* name)
+int qse_awk_nextextio_read (
+	qse_awk_run_t* run, int in_type, const qse_char_t* name)
 {
-	ase_awk_extio_t* p = run->extio.chain;
-	ase_awk_io_t handler;
+	qse_awk_extio_t* p = run->extio.chain;
+	qse_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask; 
-	ase_ssize_t n;
+	qse_ssize_t n;
 
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_type_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mode_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mask_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_type_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = in_type_map[in_type];
@@ -638,26 +638,26 @@ int ase_awk_nextextio_read (
 	extio_mask = in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == ASE_NULL)
+	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		ase_awk_setrunerrnum (run, ASE_AWK_EIOUSER);
+		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_strcmp (p->name,name) == 0) break;
+		    qse_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
-	if (p == ASE_NULL)
+	if (p == QSE_NULL)
 	{
 		/* something is totally wrong */
-		ASE_ASSERT (
+		QSE_ASSERT (
 			!"should never happen - cannot find the relevant extio entry");
-		ase_awk_setrunerror (run, ASE_AWK_EINTERN, 0, ASE_NULL, 0);
+		qse_awk_setrunerror (run, QSE_AWK_EINTERN, 0, QSE_NULL, 0);
 		return -1;
 	}
 
@@ -667,12 +667,12 @@ int ase_awk_nextextio_read (
 		return 0;
 	}
 
-	ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
-	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
+	qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+	n = handler (QSE_AWK_IO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
-		if (run->errnum == ASE_AWK_ENOERR)
-			ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+		if (run->errnum == QSE_AWK_ENOERR)
+			qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 		return -1;
 	}
 
@@ -681,14 +681,14 @@ int ase_awk_nextextio_read (
 		/* the next stream cannot be opened. 
 		 * set the eos flags so that the next call to nextextio_read
 		 * will return 0 without executing the handler */
-		p->in.eos = ASE_TRUE;
+		p->in.eos = QSE_TRUE;
 		return 0;
 	}
 	else 
 	{
 		/* as the next stream has been opened successfully,
 		 * the eof flag should be cleared if set */
-		p->in.eof = ASE_FALSE;
+		p->in.eof = QSE_FALSE;
 
 		/* also the previous input buffer must be reset */
 		p->in.pos = 0;
@@ -698,17 +698,17 @@ int ase_awk_nextextio_read (
 	}
 }
 
-int ase_awk_nextextio_write (
-	ase_awk_run_t* run, int out_type, const ase_char_t* name)
+int qse_awk_nextextio_write (
+	qse_awk_run_t* run, int out_type, const qse_char_t* name)
 {
-	ase_awk_extio_t* p = run->extio.chain;
-	ase_awk_io_t handler;
+	qse_awk_extio_t* p = run->extio.chain;
+	qse_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask; 
-	ase_ssize_t n;
+	qse_ssize_t n;
 
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mask_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = out_type_map[out_type];
@@ -716,26 +716,26 @@ int ase_awk_nextextio_write (
 	extio_mask = out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == ASE_NULL)
+	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		ase_awk_setrunerrnum (run, ASE_AWK_EIOUSER);
+		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_strcmp (p->name,name) == 0) break;
+		    qse_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
 
-	if (p == ASE_NULL)
+	if (p == QSE_NULL)
 	{
 		/* something is totally wrong */
-		ASE_ASSERT (!"should never happen - cannot find the relevant extio entry");
+		QSE_ASSERT (!"should never happen - cannot find the relevant extio entry");
 
-		ase_awk_setrunerror (run, ASE_AWK_EINTERN, 0, ASE_NULL, 0);
+		qse_awk_setrunerror (run, QSE_AWK_EINTERN, 0, QSE_NULL, 0);
 		return -1;
 	}
 
@@ -745,12 +745,12 @@ int ase_awk_nextextio_write (
 		return 0;
 	}
 
-	ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
-	n = handler (ASE_AWK_IO_NEXT, p, ASE_NULL, 0);
+	qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+	n = handler (QSE_AWK_IO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
-		if (run->errnum == ASE_AWK_ENOERR)
-			ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+		if (run->errnum == QSE_AWK_ENOERR)
+			qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 		return -1;
 	}
 
@@ -759,28 +759,28 @@ int ase_awk_nextextio_write (
 		/* the next stream cannot be opened. 
 		 * set the eos flags so that the next call to nextextio_write
 		 * will return 0 without executing the handler */
-		p->out.eos = ASE_TRUE;
+		p->out.eos = QSE_TRUE;
 		return 0;
 	}
 	else 
 	{
 		/* as the next stream has been opened successfully,
 		 * the eof flag should be cleared if set */
-		p->out.eof = ASE_FALSE;
+		p->out.eof = QSE_FALSE;
 		return 1;
 	}
 }
 
-int ase_awk_closeextio_read (
-	ase_awk_run_t* run, int in_type, const ase_char_t* name)
+int qse_awk_closeextio_read (
+	qse_awk_run_t* run, int in_type, const qse_char_t* name)
 {
-	ase_awk_extio_t* p = run->extio.chain, * px = ASE_NULL;
-	ase_awk_io_t handler;
+	qse_awk_extio_t* p = run->extio.chain, * px = QSE_NULL;
+	qse_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask;
 
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_type_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mode_map));
-	ASE_ASSERT (in_type >= 0 && in_type <= ASE_COUNTOF(in_mask_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_type_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
+	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mask_map));
 
 	/* translate the in_type into the relevant extio type and mode */
 	extio_type = in_type_map[in_type];
@@ -788,36 +788,36 @@ int ase_awk_closeextio_read (
 	extio_mask = in_mask_map[in_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == ASE_NULL)
+	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		ase_awk_setrunerrnum (run, ASE_AWK_EIOUSER);
+		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_strcmp (p->name, name) == 0) 
+		    qse_strcmp (p->name, name) == 0) 
 		{
-			ase_awk_io_t handler;
+			qse_awk_io_t handler;
 		       
 			handler = run->extio.handler[p->type & MASK_CLEAR];
-			if (handler != ASE_NULL)
+			if (handler != QSE_NULL)
 			{
-				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
+				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					ase_awk_setrunerror (run, ASE_AWK_EIOIMPL, 0, ASE_NULL, 0);
+					qse_awk_setrunerror (run, QSE_AWK_EIOIMPL, 0, QSE_NULL, 0);
 					return -1;
 				}
 			}
 
-			if (px != ASE_NULL) px->next = p->next;
+			if (px != QSE_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			ASE_AWK_FREE (run->awk, p->name);
-			ASE_AWK_FREE (run->awk, p);
+			QSE_AWK_FREE (run->awk, p->name);
+			QSE_AWK_FREE (run->awk, p);
 			return 0;
 		}
 
@@ -826,20 +826,20 @@ int ase_awk_closeextio_read (
 	}
 
 	/* the name given is not found */
-	ase_awk_setrunerrnum (run, ASE_AWK_EIONONE);
+	qse_awk_setrunerrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
-int ase_awk_closeextio_write (
-	ase_awk_run_t* run, int out_type, const ase_char_t* name)
+int qse_awk_closeextio_write (
+	qse_awk_run_t* run, int out_type, const qse_char_t* name)
 {
-	ase_awk_extio_t* p = run->extio.chain, * px = ASE_NULL;
-	ase_awk_io_t handler;
+	qse_awk_extio_t* p = run->extio.chain, * px = QSE_NULL;
+	qse_awk_io_t handler;
 	int extio_type, /*extio_mode,*/ extio_mask;
 
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_type_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mode_map));
-	ASE_ASSERT (out_type >= 0 && out_type <= ASE_COUNTOF(out_mask_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
+	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
 	/* translate the out_type into the relevant extio type and mode */
 	extio_type = out_type_map[out_type];
@@ -847,37 +847,37 @@ int ase_awk_closeextio_write (
 	extio_mask = out_mask_map[out_type];
 
 	handler = run->extio.handler[extio_type];
-	if (handler == ASE_NULL)
+	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		ase_awk_setrunerror (run, ASE_AWK_EIOUSER, 0, ASE_NULL, 0);
+		qse_awk_setrunerror (run, QSE_AWK_EIOUSER, 0, QSE_NULL, 0);
 		return -1;
 	}
 
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
-		    ase_strcmp (p->name, name) == 0) 
+		    qse_strcmp (p->name, name) == 0) 
 		{
-			ase_awk_io_t handler;
+			qse_awk_io_t handler;
 		       
 			handler = run->extio.handler[p->type & MASK_CLEAR];
-			if (handler != ASE_NULL)
+			if (handler != QSE_NULL)
 			{
-				ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
-				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
+				qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
-					if (run->errnum == ASE_AWK_ENOERR)
-						ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+					if (run->errnum == QSE_AWK_ENOERR)
+						qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 					return -1;
 				}
 			}
 
-			if (px != ASE_NULL) px->next = p->next;
+			if (px != QSE_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			ASE_AWK_FREE (run->awk, p->name);
-			ASE_AWK_FREE (run->awk, p);
+			QSE_AWK_FREE (run->awk, p->name);
+			QSE_AWK_FREE (run->awk, p);
 			return 0;
 		}
 
@@ -885,40 +885,40 @@ int ase_awk_closeextio_write (
 		p = p->next;
 	}
 
-	ase_awk_setrunerrnum (run, ASE_AWK_EIONONE);
+	qse_awk_setrunerrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
-int ase_awk_closeextio (ase_awk_run_t* run, const ase_char_t* name)
+int qse_awk_closeextio (qse_awk_run_t* run, const qse_char_t* name)
 {
-	ase_awk_extio_t* p = run->extio.chain, * px = ASE_NULL;
+	qse_awk_extio_t* p = run->extio.chain, * px = QSE_NULL;
 
-	while (p != ASE_NULL)
+	while (p != QSE_NULL)
 	{
 		 /* it handles the first that matches the given name
 		  * regardless of the extio type */
-		if (ase_strcmp (p->name, name) == 0) 
+		if (qse_strcmp (p->name, name) == 0) 
 		{
-			ase_awk_io_t handler;
+			qse_awk_io_t handler;
 		       
 			handler = run->extio.handler[p->type & MASK_CLEAR];
-			if (handler != ASE_NULL)
+			if (handler != QSE_NULL)
 			{
-				ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
-				if (handler (ASE_AWK_IO_CLOSE, p, ASE_NULL, 0) <= -1)
+				qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					if (run->errnum == ASE_AWK_ENOERR)
-						ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+					if (run->errnum == QSE_AWK_ENOERR)
+						qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 					return -1;
 				}
 			}
 
-			if (px != ASE_NULL) px->next = p->next;
+			if (px != QSE_NULL) px->next = p->next;
 			else run->extio.chain = p->next;
 
-			ASE_AWK_FREE (run->awk, p->name);
-			ASE_AWK_FREE (run->awk, p);
+			QSE_AWK_FREE (run->awk, p->name);
+			QSE_AWK_FREE (run->awk, p);
 
 			return 0;
 		}
@@ -927,36 +927,36 @@ int ase_awk_closeextio (ase_awk_run_t* run, const ase_char_t* name)
 		p = p->next;
 	}
 
-	ase_awk_setrunerrnum (run, ASE_AWK_EIONONE);
+	qse_awk_setrunerrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
-void ase_awk_clearextio (ase_awk_run_t* run)
+void qse_awk_clearextio (qse_awk_run_t* run)
 {
-	ase_awk_extio_t* next;
-	ase_awk_io_t handler;
-	ase_ssize_t n;
+	qse_awk_extio_t* next;
+	qse_awk_io_t handler;
+	qse_ssize_t n;
 
-	while (run->extio.chain != ASE_NULL)
+	while (run->extio.chain != QSE_NULL)
 	{
 		handler = run->extio.handler[
 			run->extio.chain->type & MASK_CLEAR];
 		next = run->extio.chain->next;
 
-		if (handler != ASE_NULL)
+		if (handler != QSE_NULL)
 		{
-			ase_awk_setrunerrnum (run, ASE_AWK_ENOERR);
-			n = handler (ASE_AWK_IO_CLOSE, run->extio.chain, ASE_NULL, 0);
+			qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+			n = handler (QSE_AWK_IO_CLOSE, run->extio.chain, QSE_NULL, 0);
 			if (n <= -1)
 			{
-				if (run->errnum == ASE_AWK_ENOERR)
-					ase_awk_setrunerrnum (run, ASE_AWK_EIOIMPL);
+				if (run->errnum == QSE_AWK_ENOERR)
+					qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
 				/* TODO: some warnings need to be shown??? */
 			}
 		}
 
-		ASE_AWK_FREE (run->awk, run->extio.chain->name);
-		ASE_AWK_FREE (run->awk, run->extio.chain);
+		QSE_AWK_FREE (run->awk, run->extio.chain->name);
+		QSE_AWK_FREE (run->awk, run->extio.chain);
 
 		run->extio.chain = next;
 	}

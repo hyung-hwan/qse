@@ -4,29 +4,29 @@
  * {License}
  */
 
-#include <ase/cmn/chr.h>
+#include <qse/cmn/chr.h>
 
-#if defined(ASE_CHAR_IS_MCHAR)
+#if defined(QSE_CHAR_IS_MCHAR)
 
 #include <ctype.h>
 
-static ase_bool_t is_upper (ase_cint_t c) { return isupper(c); }
-static ase_bool_t is_lower (ase_cint_t c) { return islower(c); }
-static ase_bool_t is_alpha (ase_cint_t c) { return isalpha(c); }
-static ase_bool_t is_digit (ase_cint_t c) { return isdigit(c); }
-static ase_bool_t is_xdigit (ase_cint_t c) { return isxdigit(c); }
-static ase_bool_t is_alnum (ase_cint_t c) { return isalnum(c); }
-static ase_bool_t is_space (ase_cint_t c) { return isspace(c); }
-static ase_bool_t is_print (ase_cint_t c) { return isprint(c); }
-static ase_bool_t is_graph (ase_cint_t c) { return isgraph(c); }
-static ase_bool_t is_cntrl (ase_cint_t c) { return iscntrl(c); }
-static ase_bool_t is_punct (ase_cint_t c) { return ispunct(c); }
+static qse_bool_t is_upper (qse_cint_t c) { return isupper(c); }
+static qse_bool_t is_lower (qse_cint_t c) { return islower(c); }
+static qse_bool_t is_alpha (qse_cint_t c) { return isalpha(c); }
+static qse_bool_t is_digit (qse_cint_t c) { return isdigit(c); }
+static qse_bool_t is_xdigit (qse_cint_t c) { return isxdigit(c); }
+static qse_bool_t is_alnum (qse_cint_t c) { return isalnum(c); }
+static qse_bool_t is_space (qse_cint_t c) { return isspace(c); }
+static qse_bool_t is_print (qse_cint_t c) { return isprint(c); }
+static qse_bool_t is_graph (qse_cint_t c) { return isgraph(c); }
+static qse_bool_t is_cntrl (qse_cint_t c) { return iscntrl(c); }
+static qse_bool_t is_punct (qse_cint_t c) { return ispunct(c); }
 
-ase_bool_t ase_ccls_is (ase_cint_t c, ase_ccls_type_t type)
+qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_type_t type)
 { 
 	/* TODO: use GetStringTypeW/A for WIN32 to implement these */
 
-	static ase_bool_t (*f[]) (ase_cint_t) = 
+	static qse_bool_t (*f[]) (qse_cint_t) = 
 	{
 		is_upper,
 		is_lower,
@@ -41,26 +41,26 @@ ase_bool_t ase_ccls_is (ase_cint_t c, ase_ccls_type_t type)
 		is_punct
 	};
 
-	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_PUNCT,
-		"The character type should be one of ase_ccls_type_t values");
+	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_PUNCT,
+		"The character type should be one of qse_ccls_type_t values");
 	return f[type] (c);
 }
 
-ase_cint_t ase_ccls_to (ase_cint_t c, ase_ccls_type_t type)  
+qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_type_t type)  
 { 
-	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_LOWER,
-		"The character type should be one of ASE_CCLS_UPPER and ASE_CCLS_LOWER");
+	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_LOWER,
+		"The character type should be one of QSE_CCLS_UPPER and QSE_CCLS_LOWER");
 
-	if (type == ASE_CCLS_UPPER) return toupper(c);
-	if (type == ASE_CCLS_LOWER) return tolower(c);
+	if (type == QSE_CCLS_UPPER) return toupper(c);
+	if (type == QSE_CCLS_LOWER) return tolower(c);
 	return c;
 }
 
-#elif defined(ASE_CHAR_IS_WCHAR)
+#elif defined(QSE_CHAR_IS_WCHAR)
 
 #include <wctype.h>
 
-ase_bool_t ase_ccls_is (ase_cint_t c, ase_ccls_type_t type)
+qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_type_t type)
 { 
 	static const char* name[] = 
 	{
@@ -92,14 +92,14 @@ ase_bool_t ase_ccls_is (ase_cint_t c, ase_ccls_type_t type)
 		(wctype_t)0
 	};
 
-	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_PUNCT,
-		"The character type should be one of ase_ccls_type_t values");
+	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_PUNCT,
+		"The character type should be one of qse_ccls_type_t values");
 		
 	if (desc[type] == (wctype_t)0) desc[type] = wctype(name[type]);
 	return iswctype (c, desc[type]);
 }
 
-ase_cint_t ase_ccls_to (ase_cint_t c, ase_ccls_type_t type)  
+qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_type_t type)  
 { 
 	static const char* name[] = 
 	{
@@ -113,8 +113,8 @@ ase_cint_t ase_ccls_to (ase_cint_t c, ase_ccls_type_t type)
 		(wctrans_t)0
 	};
 
-	ASE_ASSERTX (type >= ASE_CCLS_UPPER && type <= ASE_CCLS_LOWER,
-		"The character type should be one of ASE_CCLS_UPPER and ASE_CCLS_LOWER");
+	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_LOWER,
+		"The character type should be one of QSE_CCLS_UPPER and QSE_CCLS_LOWER");
 
 	if (desc[type] == (wctrans_t)0) desc[type] = wctrans(name[type]);
 	return towctrans (c, desc[type]);
@@ -124,22 +124,22 @@ ase_cint_t ase_ccls_to (ase_cint_t c, ase_ccls_type_t type)
 	#error unsupported character type
 #endif
 
-static ase_bool_t ccls_is (void* data, ase_cint_t c, ase_ccls_type_t type)
+static qse_bool_t ccls_is (void* data, qse_cint_t c, qse_ccls_type_t type)
 {
-	return ase_ccls_is (c, type);
+	return qse_ccls_is (c, type);
 }
 
-static ase_cint_t ccls_to (void* data, ase_cint_t c, ase_ccls_type_t type)  
+static qse_cint_t ccls_to (void* data, qse_cint_t c, qse_ccls_type_t type)  
 {
-	return ase_ccls_to (c, type);
+	return qse_ccls_to (c, type);
 }
 
-static ase_ccls_t ccls =
+static qse_ccls_t ccls =
 {
 	ccls_is,
 	ccls_to,
-	ASE_NULL
+	QSE_NULL
 };
 
-ase_ccls_t* ase_ccls = &ccls;
+qse_ccls_t* qse_ccls = &ccls;
 

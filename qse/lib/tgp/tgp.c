@@ -2,111 +2,111 @@
  * $Id$
  */
 
-#include <ase/tgp/tgp.h>
+#include <qse/tgp/tgp.h>
 #include "../cmn/mem.h"
 
-struct ase_tgp_t
+struct qse_tgp_t
 {
-	ase_mmgr_t mmgr;
+	qse_mmgr_t mmgr;
 	void* assoc_data;
 	int errnum;
 
 	struct
 	{
-		ase_tgp_io_t func;
+		qse_tgp_io_t func;
 		void* arg;
 	} ih;
 
 	struct 
 	{
-		ase_tgp_io_t func;
+		qse_tgp_io_t func;
 		void* arg;
 	} oh;
 
 	struct 
 	{
-		ase_tgp_io_t func;
+		qse_tgp_io_t func;
 		void* arg;
 	} rh;
 
 	struct
 	{
-		ase_size_t pos;
-		ase_size_t len;
-		ase_char_t ptr[512];
+		qse_size_t pos;
+		qse_size_t len;
+		qse_char_t ptr[512];
 	} ib;
 
 	struct
 	{
-		ase_size_t len;
-		ase_char_t ptr[512];
+		qse_size_t len;
+		qse_char_t ptr[512];
 	} ob;
 
 	struct
 	{
-		ase_size_t len;
-		ase_char_t ptr[512];
+		qse_size_t len;
+		qse_char_t ptr[512];
 	} rb;
 
-	int (*read) (ase_tgp_t* tgp, ase_char_t* buf, int len);
-	int (*write) (ase_tgp_t* tgp, const ase_char_t* buf, int len);
-	int (*run) (ase_tgp_t* tgp, const ase_char_t* buf, int len);
+	int (*read) (qse_tgp_t* tgp, qse_char_t* buf, int len);
+	int (*write) (qse_tgp_t* tgp, const qse_char_t* buf, int len);
+	int (*run) (qse_tgp_t* tgp, const qse_char_t* buf, int len);
 };
 
-ase_tgp_t* ase_tgp_open (ase_mmgr_t* mmgr)
+qse_tgp_t* qse_tgp_open (qse_mmgr_t* mmgr)
 {
-	ase_tgp_t* tgp;
+	qse_tgp_t* tgp;
 
 	/*
-	if (mmgr == ASE_NULL) mmgr = ASE_GETMMGR();
-	if (mmgr == ASE_NULL) 
+	if (mmgr == QSE_NULL) mmgr = QSE_GETMMGR();
+	if (mmgr == QSE_NULL) 
 	{
-		ASE_ASSERTX (mmgr != ASE_NULL, 
-			"Provide the memory manager or set the global memory manager with ASE_SETMMGR()");
-		return ASE_NULL;
+		QSE_ASSERTX (mmgr != QSE_NULL, 
+			"Provide the memory manager or set the global memory manager with QSE_SETMMGR()");
+		return QSE_NULL;
 	}
 	*/
 
-	tgp = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(*tgp));
-	if (tgp == ASE_NULL) return ASE_NULL;
+	tgp = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*tgp));
+	if (tgp == QSE_NULL) return QSE_NULL;
 
-	ASE_MEMSET (tgp, 0, ASE_SIZEOF(*tgp));
-	ASE_MEMCPY (&tgp->mmgr, mmgr, ASE_SIZEOF(*mmgr));
+	QSE_MEMSET (tgp, 0, QSE_SIZEOF(*tgp));
+	QSE_MEMCPY (&tgp->mmgr, mmgr, QSE_SIZEOF(*mmgr));
 
 	return tgp;
 }
 
-void ase_tgp_close (ase_tgp_t* tgp)
+void qse_tgp_close (qse_tgp_t* tgp)
 {
-	ASE_MMGR_FREE (&tgp->mmgr, tgp);
+	QSE_MMGR_FREE (&tgp->mmgr, tgp);
 }
 
-void ase_tgp_setassocdata (ase_tgp_t* tgp, void* data)
+void qse_tgp_setassocdata (qse_tgp_t* tgp, void* data)
 {
 	tgp->assoc_data = data;
 }
 
-void* ase_tgp_getassocdata (ase_tgp_t* tgp)
+void* qse_tgp_getassocdata (qse_tgp_t* tgp)
 {
 	return tgp->assoc_data;
 }
 
-int ase_tgp_geterrnum (ase_tgp_t* tgp)
+int qse_tgp_geterrnum (qse_tgp_t* tgp)
 {
 	return tgp->errnum;
 }
 
-static int getc (ase_tgp_t* tgp, ase_char_t* c)
+static int getc (qse_tgp_t* tgp, qse_char_t* c)
 {
 	if (tgp->ib.pos >= tgp->ib.len) 
 	{
-		ase_ssize_t n;
+		qse_ssize_t n;
 
-		n = tgp->ih.func (ASE_TGP_IO_READ, tgp->ih.arg, tgp->ib.ptr, ASE_COUNTOF(tgp->ib.ptr));
+		n = tgp->ih.func (QSE_TGP_IO_READ, tgp->ih.arg, tgp->ib.ptr, QSE_COUNTOF(tgp->ib.ptr));
 		if (n < 0) return -1;
 		else if (n == 0) 
 		{
-			*c = ASE_CHAR_EOF;
+			*c = QSE_CHAR_EOF;
 			return 0;
 		}
 		else
@@ -120,14 +120,14 @@ static int getc (ase_tgp_t* tgp, ase_char_t* c)
 	return 1;
 }
 
-static int putc (ase_tgp_t* tgp, ase_char_t c)
+static int putc (qse_tgp_t* tgp, qse_char_t c)
 {
-	if (tgp->ob.len >= ASE_COUNTOF(tgp->ob.ptr))
+	if (tgp->ob.len >= QSE_COUNTOF(tgp->ob.ptr))
 	{
-		ase_ssize_t n;
+		qse_ssize_t n;
 
 		/* TODO: submit on a newline as well */
-		n = tgp->oh.func (ASE_TGP_IO_WRITE, tgp->oh.arg, tgp->ob.ptr, ASE_COUNTOF(tgp->ob.ptr));
+		n = tgp->oh.func (QSE_TGP_IO_WRITE, tgp->oh.arg, tgp->ob.ptr, QSE_COUNTOF(tgp->ob.ptr));
 		if (n < 0) return -1;
 		else if (n == 0) return 0;
 	}
@@ -136,27 +136,27 @@ static int putc (ase_tgp_t* tgp, ase_char_t c)
 	return 1;
 }
 
-static int runc (ase_tgp_t* tgp, ase_char_t c)
+static int runc (qse_tgp_t* tgp, qse_char_t c)
 {
-	if (tgp->rb.len >= ASE_COUNTOF(tgp->rb.ptr))
+	if (tgp->rb.len >= QSE_COUNTOF(tgp->rb.ptr))
 	{
-		ase_ssize_t n;
+		qse_ssize_t n;
 
-		n = tgp->rh.func (ASE_TGP_IO_WRITE, tgp->rh.arg, tgp->rb.ptr, tgp->rb.len);
+		n = tgp->rh.func (QSE_TGP_IO_WRITE, tgp->rh.arg, tgp->rb.ptr, tgp->rb.len);
 		if (n < 0) return -1;
 		else if (n == 0) return 0;
 
-		tgp->rh.func (ASE_TGP_IO_READ, tgp->rh.arg, tgp->rb.ptr, tgp->rb.len);
+		tgp->rh.func (QSE_TGP_IO_READ, tgp->rh.arg, tgp->rb.ptr, tgp->rb.len);
 	}
 
 	tgp->rb.ptr[tgp->rb.len++] = c;
 	return 1;
 }
 
-int ase_tgp_run (ase_tgp_t* tgp)
+int qse_tgp_run (qse_tgp_t* tgp)
 {
-	ase_bool_t in_tag = ASE_FALSE;
-	ase_char_t c;
+	qse_bool_t in_tag = QSE_FALSE;
+	qse_char_t c;
 	int n;
 
 	tgp->ib.pos = 0;
@@ -164,7 +164,7 @@ int ase_tgp_run (ase_tgp_t* tgp)
 	tgp->ob.len = 0;
 	tgp->rb.len = 0;
 
-	n = tgp->ih.func (ASE_TGP_IO_OPEN, tgp->ih.arg, ASE_NULL, 0);
+	n = tgp->ih.func (QSE_TGP_IO_OPEN, tgp->ih.arg, QSE_NULL, 0);
 	if (n == -1)
 	{
 		/* error */
@@ -173,21 +173,21 @@ int ase_tgp_run (ase_tgp_t* tgp)
 	if (n == 0)
 	{
 		/* reached end of input upon opening the file... */
-		tgp->ih.func (ASE_TGP_IO_CLOSE, tgp->ih.arg, ASE_NULL, 0);
+		tgp->ih.func (QSE_TGP_IO_CLOSE, tgp->ih.arg, QSE_NULL, 0);
 		return 0;
 	}
 
-	n = tgp->oh.func (ASE_TGP_IO_OPEN, tgp->oh.arg, ASE_NULL, 0);
+	n = tgp->oh.func (QSE_TGP_IO_OPEN, tgp->oh.arg, QSE_NULL, 0);
 	if (n == -1)
 	{
-		tgp->ih.func (ASE_TGP_IO_CLOSE, tgp->ih.arg, ASE_NULL, 0);
+		tgp->ih.func (QSE_TGP_IO_CLOSE, tgp->ih.arg, QSE_NULL, 0);
 		return -1;
 	}
 	if (n == 0)
 	{
 		/* reached end of input upon opening the file... */
-		tgp->oh.func (ASE_TGP_IO_CLOSE, tgp->oh.arg, ASE_NULL, 0);
-		tgp->ih.func (ASE_TGP_IO_CLOSE, tgp->ih.arg, ASE_NULL, 0);
+		tgp->oh.func (QSE_TGP_IO_CLOSE, tgp->oh.arg, QSE_NULL, 0);
+		tgp->ih.func (QSE_TGP_IO_CLOSE, tgp->ih.arg, QSE_NULL, 0);
 		return 0;
 	}
 	
@@ -197,44 +197,44 @@ int ase_tgp_run (ase_tgp_t* tgp)
 		if (n == -1) return -1;
 		if (n == 0) break;
 
-		if (c == ASE_T('<')) 
+		if (c == QSE_T('<')) 
 		{
 			n = getc (tgp, &c);
 			if (n == -1) return -1;
 			if (n == 0) 
 			{
-				putc (tgp, ASE_T('<'));
+				putc (tgp, QSE_T('<'));
 				break;
 			}
 
-			if (c == ASE_T('?'))
+			if (c == QSE_T('?'))
 			{
 				if (in_tag)
 				{
 					/* ERROR - netsted tag */
 					return -1;
 				}
-				else in_tag = ASE_TRUE;
+				else in_tag = QSE_TRUE;
 			}
 			else 
 			{
-				if (putc (tgp, ASE_T('<')) <= 0) return -1;
+				if (putc (tgp, QSE_T('<')) <= 0) return -1;
 				if (putc (tgp, c) <= 0) return -1;
 			}
 		}
-		else if (c == ASE_T('?'))
+		else if (c == QSE_T('?'))
 		{
 			n = getc (tgp, &c);
 			if (n == -1) return -1;
 			if (n == 0) 
 			{
-				if (putc (tgp, ASE_T('<')) <= 0) return -1;
+				if (putc (tgp, QSE_T('<')) <= 0) return -1;
 				break;
 			}
 
-			if (c == ASE_T('>'))
+			if (c == QSE_T('>'))
 			{
-				if (in_tag) in_tag = ASE_FALSE;
+				if (in_tag) in_tag = QSE_FALSE;
 				else
 				{
 					/* ERROR - unpaired tag close */
@@ -243,7 +243,7 @@ int ase_tgp_run (ase_tgp_t* tgp)
 			}
 			else
 			{
-				if (putc (tgp, ASE_T('?')) <= 0) return -1;
+				if (putc (tgp, QSE_T('?')) <= 0) return -1;
 				if (putc (tgp, c) <= 0) return -1;
 			}
 		}
@@ -257,43 +257,43 @@ int ase_tgp_run (ase_tgp_t* tgp)
 		}
 	}
 	
-	tgp->oh.func (ASE_TGP_IO_CLOSE, tgp->oh.arg, ASE_NULL, 0);
-	tgp->ih.func (ASE_TGP_IO_CLOSE, tgp->ih.arg, ASE_NULL, 0);
+	tgp->oh.func (QSE_TGP_IO_CLOSE, tgp->oh.arg, QSE_NULL, 0);
+	tgp->ih.func (QSE_TGP_IO_CLOSE, tgp->ih.arg, QSE_NULL, 0);
 	return 0;
 }
 
-void ase_tgp_attachin (ase_tgp_t* tgp, ase_tgp_io_t io, void* arg)
+void qse_tgp_attachin (qse_tgp_t* tgp, qse_tgp_io_t io, void* arg)
 {
 	tgp->ih.func = io;
 	tgp->ih.arg = arg;
 }
 
-void ase_tgp_detachin (ase_tgp_t* tgp)
+void qse_tgp_detachin (qse_tgp_t* tgp)
 {
-	tgp->ih.func = ASE_NULL;
-	tgp->ih.arg = ASE_NULL;
+	tgp->ih.func = QSE_NULL;
+	tgp->ih.arg = QSE_NULL;
 }
 
-void ase_tgp_attachout (ase_tgp_t* tgp, ase_tgp_io_t io, void* arg)
+void qse_tgp_attachout (qse_tgp_t* tgp, qse_tgp_io_t io, void* arg)
 {
 	tgp->oh.func = io;
 	tgp->oh.arg = arg;
 }
 
-void ase_tgp_detachout (ase_tgp_t* tgp)
+void qse_tgp_detachout (qse_tgp_t* tgp)
 {
-	tgp->oh.func = ASE_NULL;
-	tgp->oh.arg = ASE_NULL;
+	tgp->oh.func = QSE_NULL;
+	tgp->oh.arg = QSE_NULL;
 }
 
-void ase_tgp_attachexec (ase_tgp_t* tgp, ase_tgp_io_t io, void* arg)
+void qse_tgp_attachexec (qse_tgp_t* tgp, qse_tgp_io_t io, void* arg)
 {
 	tgp->rh.func = io;
 	tgp->rh.arg = arg;
 }
 
-void ase_tgp_detachexec (ase_tgp_t* tgp)
+void qse_tgp_detachexec (qse_tgp_t* tgp)
 {
-	tgp->rh.func = ASE_NULL;
-	tgp->rh.arg = ASE_NULL;
+	tgp->rh.func = QSE_NULL;
+	tgp->rh.arg = QSE_NULL;
 }

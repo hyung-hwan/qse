@@ -4,46 +4,46 @@
  * {License}
  */
 
-#ifndef _ASE_LIB_CMN_CHR_H_
-#define _ASE_LIB_CMN_CHR_H_
+#ifndef _QSE_LIB_CMN_CHR_H_
+#define _QSE_LIB_CMN_CHR_H_
 
-#include <ase/cmn/chr.h>
+#include <qse/cmn/chr.h>
 
 #ifdef USE_STDC
 
-	#if defined(ASE_CHAR_IS_MCHAR)
+	#if defined(QSE_CHAR_IS_MCHAR)
 
 		#include <ctype.h>
-		#define ASE_ISUPPER(c) isupper(c)
-		#define ASE_ISLOWER(c) islower(c)
-		#define ASE_ISALPHA(c) isalpha(c)
-		#define ASE_ISDIGIT(c) isdigit(c)
-		#define ASE_ISXDIGIT(c) isxdigit(c)
-		#define ASE_ISALNUM(c) isalnum(c)
-		#define ASE_ISSPACE(c) isspace(c)
-		#define ASE_ISPRINT(c) isprint(c)
-		#define ASE_ISGRAPH(c) isgraph(c)
-		#define ASE_ISCNTRL(c) iscntrl(c)
-		#define ASE_ISPUNCT(c) ispunct(c)
-		#define ASE_TOUPPER(c) toupper(c)
-		#define ASE_TOLOWER(c) tolower(c)
+		#define QSE_ISUPPER(c) isupper(c)
+		#define QSE_ISLOWER(c) islower(c)
+		#define QSE_ISALPHA(c) isalpha(c)
+		#define QSE_ISDIGIT(c) isdigit(c)
+		#define QSE_ISXDIGIT(c) isxdigit(c)
+		#define QSE_ISALNUM(c) isalnum(c)
+		#define QSE_ISSPACE(c) isspace(c)
+		#define QSE_ISPRINT(c) isprint(c)
+		#define QSE_ISGRAPH(c) isgraph(c)
+		#define QSE_ISCNTRL(c) iscntrl(c)
+		#define QSE_ISPUNCT(c) ispunct(c)
+		#define QSE_TOUPPER(c) toupper(c)
+		#define QSE_TOLOWER(c) tolower(c)
 	
-	#elif defined(ASE_CHAR_IS_WCHAR)
+	#elif defined(QSE_CHAR_IS_WCHAR)
 	
 		#include <wctype.h>
-		#define ASE_ISUPPER(c) iswupper(c)
-		#define ASE_ISLOWER(c) iswlower(c)
-		#define ASE_ISALPHA(c) iswalpha(c)
-		#define ASE_ISDIGIT(c) iswdigit(c)
-		#define ASE_ISXDIGIT(c) iswxdigit(c)
-		#define ASE_ISALNUM(c) iswalnum(c)
-		#define ASE_ISSPACE(c) iswspace(c)
-		#define ASE_ISPRINT(c) iswprint(c)
-		#define ASE_ISGRAPH(c) iswgraph(c)
-		#define ASE_ISCNTRL(c) iswcntrl(c)
-		#define ASE_ISPUNCT(c) iswpunct(c)
-		#define ASE_TOUPPER(c) towupper(c)
-		#define ASE_TOLOWER(c) towlower(c)
+		#define QSE_ISUPPER(c) iswupper(c)
+		#define QSE_ISLOWER(c) iswlower(c)
+		#define QSE_ISALPHA(c) iswalpha(c)
+		#define QSE_ISDIGIT(c) iswdigit(c)
+		#define QSE_ISXDIGIT(c) iswxdigit(c)
+		#define QSE_ISALNUM(c) iswalnum(c)
+		#define QSE_ISSPACE(c) iswspace(c)
+		#define QSE_ISPRINT(c) iswprint(c)
+		#define QSE_ISGRAPH(c) iswgraph(c)
+		#define QSE_ISCNTRL(c) iswcntrl(c)
+		#define QSE_ISPUNCT(c) iswpunct(c)
+		#define QSE_TOUPPER(c) towupper(c)
+		#define QSE_TOLOWER(c) towlower(c)
 
 	#else
 		#error Unsupported character type
@@ -51,19 +51,19 @@
 
 #else
 
-	#define ASE_ISUPPER(c) (ase_ccls_is(c,ASE_CCLS_UPPER))
-	#define ASE_ISLOWER(c) (ase_ccls_is(c,ASE_CCLS_LOWER))
-	#define ASE_ISALPHA(c) (ase_ccls_is(c,ASE_CCLS_ALPHA))
-	#define ASE_ISDIGIT(c) (ase_ccls_is(c,ASE_CCLS_DIGIT))
-	#define ASE_ISXDIGIT(c) (ase_ccls_is(c,ASE_CCLS_XDIGIT))
-	#define ASE_ISALNUM(c) (ase_ccls_is(c,ASE_CCLS_ALNUM))
-	#define ASE_ISSPACE(c) (ase_ccls_is(c,ASE_CCLS_SPACE))
-	#define ASE_ISPRINT(c) (ase_ccls_is(c,ASE_CCLS_PRINT))
-	#define ASE_ISGRAPH(c) (ase_ccls_is(c,ASE_CCLS_GRAPH))
-	#define ASE_ISCNTRL(c) (ase_ccls_is(c,ASE_CCLS_CNTRL))
-	#define ASE_ISPUNCT(c) (ase_ccls_is(c,ASE_CCLS_PUNCT))
-	#define ASE_TOUPPER(c) (ase_ccls_to(c,ASE_CCLS_UPPER))
-	#define ASE_TOLOWER(c) (ase_ccls_to(c,ASE_CCLS_LOWER))
+	#define QSE_ISUPPER(c) (qse_ccls_is(c,QSE_CCLS_UPPER))
+	#define QSE_ISLOWER(c) (qse_ccls_is(c,QSE_CCLS_LOWER))
+	#define QSE_ISALPHA(c) (qse_ccls_is(c,QSE_CCLS_ALPHA))
+	#define QSE_ISDIGIT(c) (qse_ccls_is(c,QSE_CCLS_DIGIT))
+	#define QSE_ISXDIGIT(c) (qse_ccls_is(c,QSE_CCLS_XDIGIT))
+	#define QSE_ISALNUM(c) (qse_ccls_is(c,QSE_CCLS_ALNUM))
+	#define QSE_ISSPACE(c) (qse_ccls_is(c,QSE_CCLS_SPACE))
+	#define QSE_ISPRINT(c) (qse_ccls_is(c,QSE_CCLS_PRINT))
+	#define QSE_ISGRAPH(c) (qse_ccls_is(c,QSE_CCLS_GRAPH))
+	#define QSE_ISCNTRL(c) (qse_ccls_is(c,QSE_CCLS_CNTRL))
+	#define QSE_ISPUNCT(c) (qse_ccls_is(c,QSE_CCLS_PUNCT))
+	#define QSE_TOUPPER(c) (qse_ccls_to(c,QSE_CCLS_UPPER))
+	#define QSE_TOLOWER(c) (qse_ccls_to(c,QSE_CCLS_LOWER))
 
 #endif
 

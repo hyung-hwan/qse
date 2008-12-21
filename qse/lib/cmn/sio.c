@@ -2,23 +2,23 @@
  * $Id: sio.c,v 1.30 2006/01/15 06:51:35 bacon Ease $
  */
 
-#include <ase/cmn/sio.h>
+#include <qse/cmn/sio.h>
 #include "mem.h"
 
-static ase_ssize_t __sio_input (int cmd, void* arg, void* buf, ase_size_t size);
-static ase_ssize_t __sio_output (int cmd, void* arg, void* buf, ase_size_t size);
+static qse_ssize_t __sio_input (int cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t __sio_output (int cmd, void* arg, void* buf, qse_size_t size);
 
 #ifdef _WIN32
 	#include <windows.h>
 #endif
 
-static ase_sio_t __sio_in = 
+static qse_sio_t __sio_in = 
 {
-	ASE_NULL, /* mmgr */
+	QSE_NULL, /* mmgr */
 
 	/* fio */
 	{
-		ASE_NULL,
+		QSE_NULL,
 	#ifdef _WIN32
 		(HANDLE)STD_INPUT_HANDLE,
 	#else
@@ -28,7 +28,7 @@ static ase_sio_t __sio_in =
 
 	/* tio */
 	{
-		ASE_NULL,
+		QSE_NULL,
 		0,
 
 		__sio_input,
@@ -46,13 +46,13 @@ static ase_sio_t __sio_in =
 	}
 };
 
-static ase_sio_t __sio_out = 
+static qse_sio_t __sio_out = 
 {
-	ASE_NULL, /* mmgr */
+	QSE_NULL, /* mmgr */
 
 	/* fio */
 	{
-		ASE_NULL,
+		QSE_NULL,
 	#ifdef _WIN32
 		(HANDLE)STD_OUTPUT_HANDLE,
 	#else
@@ -62,7 +62,7 @@ static ase_sio_t __sio_out =
 
 	/* tio */
 	{
-		ASE_NULL,
+		QSE_NULL,
 		0,
 
 		__sio_input,
@@ -80,13 +80,13 @@ static ase_sio_t __sio_out =
 	}
 };
 
-static ase_sio_t __sio_err = 
+static qse_sio_t __sio_err = 
 {
-	ASE_NULL, /* mmgr */
+	QSE_NULL, /* mmgr */
 
 	/* fio */
 	{
-		ASE_NULL,
+		QSE_NULL,
 	#ifdef _WIN32
 		(HANDLE)STD_ERROR_HANDLE,
 	#else
@@ -96,7 +96,7 @@ static ase_sio_t __sio_err =
 
 	/* tio */
 	{
-		ASE_NULL,
+		QSE_NULL,
 		0,
 
 		__sio_input,
@@ -114,209 +114,209 @@ static ase_sio_t __sio_err =
 	}
 };
 
-ase_sio_t* ase_sio_in = &__sio_in;
-ase_sio_t* ase_sio_out = &__sio_out;
-ase_sio_t* ase_sio_err = &__sio_err;
+qse_sio_t* qse_sio_in = &__sio_in;
+qse_sio_t* qse_sio_out = &__sio_out;
+qse_sio_t* qse_sio_err = &__sio_err;
 
-ase_sio_t* ase_sio_open (
-	ase_mmgr_t* mmgr, ase_size_t ext, const ase_char_t* file, int flags)
+qse_sio_t* qse_sio_open (
+	qse_mmgr_t* mmgr, qse_size_t ext, const qse_char_t* file, int flags)
 {
-	ase_sio_t* sio;
+	qse_sio_t* sio;
 
-	if (mmgr == ASE_NULL)
+	if (mmgr == QSE_NULL)
 	{
-		mmgr = ASE_MMGR_GETDFL();
+		mmgr = QSE_MMGR_GETDFL();
 
-		ASE_ASSERTX (mmgr != ASE_NULL,
-			"Set the memory manager with ASE_MMGR_SETDFL()");
+		QSE_ASSERTX (mmgr != QSE_NULL,
+			"Set the memory manager with QSE_MMGR_SETDFL()");
 
-		if (mmgr == ASE_NULL) return ASE_NULL;
+		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	sio = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_sio_t) + ext);
-	if (sio == ASE_NULL) return ASE_NULL;
+	sio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sio_t) + ext);
+	if (sio == QSE_NULL) return QSE_NULL;
 
-	if (ase_sio_init (sio, mmgr, file, flags) == ASE_NULL)
+	if (qse_sio_init (sio, mmgr, file, flags) == QSE_NULL)
 	{
-		ASE_MMGR_FREE (mmgr, sio);
-		return ASE_NULL;
+		QSE_MMGR_FREE (mmgr, sio);
+		return QSE_NULL;
 	}
 
 	return sio;
 }
 
-void ase_sio_close (ase_sio_t* sio)
+void qse_sio_close (qse_sio_t* sio)
 {
-	ase_sio_fini (sio);
-	ASE_MMGR_FREE (sio->mmgr, sio);
+	qse_sio_fini (sio);
+	QSE_MMGR_FREE (sio->mmgr, sio);
 }
 
-ase_sio_t* ase_sio_init (
-	ase_sio_t* sio, ase_mmgr_t* mmgr, const ase_char_t* file, int flags)
+qse_sio_t* qse_sio_init (
+	qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* file, int flags)
 {
-	ASE_MEMSET (sio, 0, ASE_SIZEOF(*sio));
+	QSE_MEMSET (sio, 0, QSE_SIZEOF(*sio));
 	sio->mmgr = mmgr;
 
-	if (ase_fio_init (&sio->fio, mmgr, file, flags, 0644) == ASE_NULL) 
+	if (qse_fio_init (&sio->fio, mmgr, file, flags, 0644) == QSE_NULL) 
 	{
-		return ASE_NULL;
+		return QSE_NULL;
 	}
 
-	if (ase_tio_init(&sio->tio, mmgr) == ASE_NULL) 
+	if (qse_tio_init(&sio->tio, mmgr) == QSE_NULL) 
 	{
-		ase_fio_fini (&sio->fio);
-		return ASE_NULL;
+		qse_fio_fini (&sio->fio);
+		return QSE_NULL;
 	}
 
-	if (ase_tio_attachin(&sio->tio, __sio_input, sio) == -1 ||
-	    ase_tio_attachout(&sio->tio, __sio_output, sio) == -1) 
+	if (qse_tio_attachin(&sio->tio, __sio_input, sio) == -1 ||
+	    qse_tio_attachout(&sio->tio, __sio_output, sio) == -1) 
 	{
-		ase_tio_fini (&sio->tio);	
-		ase_fio_fini (&sio->fio);
-		return ASE_NULL;
+		qse_tio_fini (&sio->tio);	
+		qse_fio_fini (&sio->fio);
+		return QSE_NULL;
 	}
 
 	return sio;
 }
 
-void ase_sio_fini (ase_sio_t* sio)
+void qse_sio_fini (qse_sio_t* sio)
 {
-	/*if (ase_sio_flush (sio) == -1) return -1;*/
-	ase_sio_flush (sio);
-	ase_tio_fini (&sio->tio);
-	ase_fio_fini (&sio->fio);
+	/*if (qse_sio_flush (sio) == -1) return -1;*/
+	qse_sio_flush (sio);
+	qse_tio_fini (&sio->tio);
+	qse_fio_fini (&sio->fio);
 
-	if (sio == ase_sio_in) ase_sio_in = ASE_NULL;
-	else if (sio == ase_sio_out) ase_sio_out = ASE_NULL;
-	else if (sio == ase_sio_err) ase_sio_err = ASE_NULL;
+	if (sio == qse_sio_in) qse_sio_in = QSE_NULL;
+	else if (sio == qse_sio_out) qse_sio_out = QSE_NULL;
+	else if (sio == qse_sio_err) qse_sio_err = QSE_NULL;
 }
 
-ase_sio_hnd_t ase_sio_gethandle (ase_sio_t* sio)
+qse_sio_hnd_t qse_sio_gethandle (qse_sio_t* sio)
 {
-	/*return ase_fio_gethandle (&sio->fio);*/
-	return ASE_FIO_HANDLE(&sio->fio);
+	/*return qse_fio_gethandle (&sio->fio);*/
+	return QSE_FIO_HANDLE(&sio->fio);
 }
 
-ase_ssize_t ase_sio_flush (ase_sio_t* sio)
+qse_ssize_t qse_sio_flush (qse_sio_t* sio)
 {
-	return ase_tio_flush (&sio->tio);
+	return qse_tio_flush (&sio->tio);
 }
 
-void ase_sio_purge (ase_sio_t* sio)
+void qse_sio_purge (qse_sio_t* sio)
 {
-	ase_tio_purge (&sio->tio);
+	qse_tio_purge (&sio->tio);
 }
 
-ase_ssize_t ase_sio_getc (ase_sio_t* sio, ase_char_t* c)
+qse_ssize_t qse_sio_getc (qse_sio_t* sio, qse_char_t* c)
 {
-	return ase_tio_getc (&sio->tio, c);
+	return qse_tio_getc (&sio->tio, c);
 }
 
-ase_ssize_t ase_sio_gets (ase_sio_t* sio, ase_char_t* buf, ase_size_t size)
+qse_ssize_t qse_sio_gets (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
 {
-	return ase_tio_gets (&sio->tio, buf, size);
+	return qse_tio_gets (&sio->tio, buf, size);
 }
 
-ase_ssize_t ase_sio_getsx (ase_sio_t* sio, ase_char_t* buf, ase_size_t size)
+qse_ssize_t qse_sio_getsx (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
 {
-	return ase_tio_getsx (&sio->tio, buf, size);
+	return qse_tio_getsx (&sio->tio, buf, size);
 }
 
-ase_ssize_t ase_sio_getstr (ase_sio_t* sio, ase_str_t* buf)
+qse_ssize_t qse_sio_getstr (qse_sio_t* sio, qse_str_t* buf)
 {
-	return ase_tio_getstr (&sio->tio, buf);
+	return qse_tio_getstr (&sio->tio, buf);
 }
 
-ase_ssize_t ase_sio_putc (ase_sio_t* sio, ase_char_t c)
+qse_ssize_t qse_sio_putc (qse_sio_t* sio, qse_char_t c)
 {
-	return ase_tio_putc (&sio->tio, c);
+	return qse_tio_putc (&sio->tio, c);
 }
 
-ase_ssize_t ase_sio_puts (ase_sio_t* sio, const ase_char_t* str)
+qse_ssize_t qse_sio_puts (qse_sio_t* sio, const qse_char_t* str)
 {
-	return ase_tio_puts (&sio->tio, str);
+	return qse_tio_puts (&sio->tio, str);
 }
 
-ase_ssize_t ase_sio_putsx (ase_sio_t* sio, const ase_char_t* str, ase_size_t size)
+qse_ssize_t qse_sio_putsx (qse_sio_t* sio, const qse_char_t* str, qse_size_t size)
 {
-	return ase_tio_putsx (&sio->tio, str, size);
+	return qse_tio_putsx (&sio->tio, str, size);
 }
 
 #if 0
-ase_ssize_t ase_sio_putsn (ase_sio_t* sio, ...)
+qse_ssize_t qse_sio_putsn (qse_sio_t* sio, ...)
 {
-	ase_ssize_t n;
-	ase_va_list ap;
+	qse_ssize_t n;
+	qse_va_list ap;
 
-	ase_va_start (ap, sio);
-	n = ase_tio_putsv (&sio->tio, ap);
-	ase_va_end (ap);
+	qse_va_start (ap, sio);
+	n = qse_tio_putsv (&sio->tio, ap);
+	qse_va_end (ap);
 
 	return n;
 }
 
-ase_ssize_t ase_sio_putsxn (ase_sio_t* sio, ...)
+qse_ssize_t qse_sio_putsxn (qse_sio_t* sio, ...)
 {
-	ase_ssize_t n;
-	ase_va_list ap;
+	qse_ssize_t n;
+	qse_va_list ap;
 
-	ase_va_start (ap, sio);
-	n = ase_tio_putsxv (&sio->tio, ap);
-	ase_va_end (ap);
+	qse_va_start (ap, sio);
+	n = qse_tio_putsxv (&sio->tio, ap);
+	qse_va_end (ap);
 
 	return n;
 }
 
-ase_ssize_t ase_sio_putsv (ase_sio_t* sio, ase_va_list ap)
+qse_ssize_t qse_sio_putsv (qse_sio_t* sio, qse_va_list ap)
 {
-	return ase_tio_putsv (&sio->tio, ap);
+	return qse_tio_putsv (&sio->tio, ap);
 }
 
-ase_ssize_t ase_sio_putsxv (ase_sio_t* sio, ase_va_list ap)
+qse_ssize_t qse_sio_putsxv (qse_sio_t* sio, qse_va_list ap)
 {
-	return ase_tio_putsxv (&sio->tio, ap);
+	return qse_tio_putsxv (&sio->tio, ap);
 }
 
-int ase_sio_getpos (ase_sio_t* sio, ase_siopos_t* pos)
+int qse_sio_getpos (qse_sio_t* sio, qse_siopos_t* pos)
 {
-	ase_off_t off;
+	qse_off_t off;
 
-	off = ase_fio_seek (&sio->fio, 0, ASE_FIO_SEEK_CURRENT);
-	if (off == (ase_off_t)-1) return -1;
+	off = qse_fio_seek (&sio->fio, 0, QSE_FIO_SEEK_CURRENT);
+	if (off == (qse_off_t)-1) return -1;
 
 	*pos = off;
 	return 0;
 }
 
-int ase_sio_setpos (ase_sio_t* sio, ase_siopos_t pos)
+int qse_sio_setpos (qse_sio_t* sio, qse_siopos_t pos)
 {
-	if (ase_sio_flush(sio) == -1) return -1;
-	return (ase_fio_seek (&sio->fio,
-		pos, ASE_FIO_SEEK_BEGIN) == (ase_off_t)-1)? -1: 0;
+	if (qse_sio_flush(sio) == -1) return -1;
+	return (qse_fio_seek (&sio->fio,
+		pos, QSE_FIO_SEEK_BEGIN) == (qse_off_t)-1)? -1: 0;
 }
 
-int ase_sio_rewind (ase_sio_t* sio)
+int qse_sio_rewind (qse_sio_t* sio)
 {
-	if (ase_sio_flush(sio) == -1) return -1;
-	return (ase_fio_seek (&sio->fio, 
-		0, ASE_FIO_SEEK_BEGIN) == (ase_off_t)-1)? -1: 0;
+	if (qse_sio_flush(sio) == -1) return -1;
+	return (qse_fio_seek (&sio->fio, 
+		0, QSE_FIO_SEEK_BEGIN) == (qse_off_t)-1)? -1: 0;
 }
 
-int ase_sio_movetoend (ase_sio_t* sio)
+int qse_sio_movetoend (qse_sio_t* sio)
 {
-	if (ase_sio_flush(sio) == -1) return -1;
-	return (ase_fio_seek (&sio->fio, 
-		0, ASE_FIO_SEEK_END) == (ase_off_t)-1)? -1: 0;
+	if (qse_sio_flush(sio) == -1) return -1;
+	return (qse_fio_seek (&sio->fio, 
+		0, QSE_FIO_SEEK_END) == (qse_off_t)-1)? -1: 0;
 }
 #endif
 
-static ase_ssize_t __sio_input (int cmd, void* arg, void* buf, ase_size_t size)
+static qse_ssize_t __sio_input (int cmd, void* arg, void* buf, qse_size_t size)
 {
-	ase_sio_t* sio = (ase_sio_t*)arg;
+	qse_sio_t* sio = (qse_sio_t*)arg;
 
-	ASE_ASSERT (sio != ASE_NULL);
+	QSE_ASSERT (sio != QSE_NULL);
 
-	if (cmd == ASE_TIO_IO_DATA) 
+	if (cmd == QSE_TIO_IO_DATA) 
 	{
 	#ifdef _WIN32
 		/* TODO: I hate this way of adjusting the handle value
@@ -333,19 +333,19 @@ static ase_ssize_t __sio_input (int cmd, void* arg, void* buf, ase_size_t size)
 			}
 		}
 	#endif
-		return ase_fio_read (&sio->fio, buf, size);
+		return qse_fio_read (&sio->fio, buf, size);
 	}
 
 	return 0;
 }
 
-static ase_ssize_t __sio_output (int cmd, void* arg, void* buf, ase_size_t size)
+static qse_ssize_t __sio_output (int cmd, void* arg, void* buf, qse_size_t size)
 {
-	ase_sio_t* sio = (ase_sio_t*)arg;
+	qse_sio_t* sio = (qse_sio_t*)arg;
 
-	ASE_ASSERT (sio != ASE_NULL);
+	QSE_ASSERT (sio != QSE_NULL);
 
-	if (cmd == ASE_TIO_IO_DATA) 
+	if (cmd == QSE_TIO_IO_DATA) 
 	{
 	#ifdef _WIN32
 		/* TODO: I hate this way of adjusting the handle value
@@ -362,7 +362,7 @@ static ase_ssize_t __sio_output (int cmd, void* arg, void* buf, ase_size_t size)
 			}
 		}
 	#endif
-		return ase_fio_write (&sio->fio, buf, size);
+		return qse_fio_write (&sio->fio, buf, size);
 	}
 
 	return 0;
