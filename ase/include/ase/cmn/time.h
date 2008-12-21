@@ -39,14 +39,14 @@ typedef struct ase_btime_t ase_btime_t;
 
 struct ase_btime_t
 {
-	int sec;
-	int min;
-	int hour;
-	int mday;
-	int mon;
-	int year;
-	int wday;
-	int yday;
+	int sec; 
+	int min;  /* 0 to 59 */
+	int hour; /* 0 to 23 */
+	int mday; /* 1 to 31 */
+	int mon;  /* 0 to 11 */
+	int year; /* the number of years since 1900 */
+	int wday; /* 0(sunday) to 6(saturday) */
+	int yday; /* 0 to 365 */
 	int isdst;
 };
 
