@@ -26,7 +26,7 @@
 	#define EPOCH_DIFF_MSECS (EPOCH_DIFF_SECS*ASE_MSEC_IN_SEC)
 #endif
 
-static int ytab[2][12] = 
+static int mdays[2][ASE_MON_IN_YEAR] = 
 {
 	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
 	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
@@ -121,9 +121,9 @@ void ase_gmtime (ase_ntime_t nt, ase_btime_t* bt)
 	bt->yday = days;
 	bt->mon = 0;
 
-	while (days >= ytab[ASE_IS_LEAPYEAR(year)][bt->mon]) 
+	while (days >= mdays[ASE_IS_LEAPYEAR(year)][bt->mon]) 
 	{
-		days -= ytab[ASE_IS_LEAPYEAR(year)][bt->mon];
+		days -= mdays[ASE_IS_LEAPYEAR(year)][bt->mon];
 		bt->mon++;
 	}
 
