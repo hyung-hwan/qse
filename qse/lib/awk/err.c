@@ -6,246 +6,246 @@
 
 #include "awk.h"
 
-static const ase_char_t* __geterrstr (int errnum)
+static const qse_char_t* __geterrstr (int errnum)
 {
-	static const ase_char_t* errstr[] =
+	static const qse_char_t* errstr[] =
  	{
-		ASE_T("no error"),
-		ASE_T("custom error"),
+		QSE_T("no error"),
+		QSE_T("custom error"),
 
-		ASE_T("invalid parameter or data"),
-		ASE_T("out of memory"),
-		ASE_T("not supported"),
-		ASE_T("operation not allowed"),
-		ASE_T("no such device"),
-		ASE_T("no space left on device"),
-		ASE_T("too many open files"),
-		ASE_T("too many links"),
-		ASE_T("resource temporarily unavailable"),
-		ASE_T("'%.*s' not existing"),
-		ASE_T("'%.*s' already exists"),
-		ASE_T("file or data too big"),
-		ASE_T("system too busy"),
-		ASE_T("is a directory"),
-		ASE_T("i/o error"),
+		QSE_T("invalid parameter or data"),
+		QSE_T("out of memory"),
+		QSE_T("not supported"),
+		QSE_T("operation not allowed"),
+		QSE_T("no such device"),
+		QSE_T("no space left on device"),
+		QSE_T("too many open files"),
+		QSE_T("too many links"),
+		QSE_T("resource temporarily unavailable"),
+		QSE_T("'%.*s' not existing"),
+		QSE_T("'%.*s' already exists"),
+		QSE_T("file or data too big"),
+		QSE_T("system too busy"),
+		QSE_T("is a directory"),
+		QSE_T("i/o error"),
 
-		ASE_T("cannot open '%.*s'"),
-		ASE_T("cannot read '%.*s'"),
-		ASE_T("cannot write '%.*s'"),
-		ASE_T("cannot close '%.*s'"),
+		QSE_T("cannot open '%.*s'"),
+		QSE_T("cannot read '%.*s'"),
+		QSE_T("cannot write '%.*s'"),
+		QSE_T("cannot close '%.*s'"),
 		
-		ASE_T("internal error that should never have happened"),
-		ASE_T("general run-time error"),
-		ASE_T("block nested too deeply"),
-		ASE_T("expressio nested too deeply"),
+		QSE_T("internal error that should never have happened"),
+		QSE_T("general run-time error"),
+		QSE_T("block nested too deeply"),
+		QSE_T("expressio nested too deeply"),
 
-		ASE_T("cannot open source input"),
-		ASE_T("cannot close source input"),
-		ASE_T("cannot read source input"),
+		QSE_T("cannot open source input"),
+		QSE_T("cannot close source input"),
+		QSE_T("cannot read source input"),
 
-		ASE_T("cannot open source output"),
-		ASE_T("cannot close source output"),
-		ASE_T("cannot write source output"),
+		QSE_T("cannot open source output"),
+		QSE_T("cannot close source output"),
+		QSE_T("cannot write source output"),
 
-		ASE_T("invalid character '%.*s'"),
-		ASE_T("invalid digit '%.*s'"),
-		ASE_T("cannot unget character"),
+		QSE_T("invalid character '%.*s'"),
+		QSE_T("invalid digit '%.*s'"),
+		QSE_T("cannot unget character"),
 
-		ASE_T("unexpected end of source"),
-		ASE_T("a comment not closed properly"),
-		ASE_T("a string not closed with a quote"),
-		ASE_T("unexpected end of a regular expression"),
-		ASE_T("a left brace expected in place of '%.*s'"),
-		ASE_T("a left parenthesis expected in place of '%.*s'"),
-		ASE_T("a right parenthesis expected in place of '%.*s'"),
-		ASE_T("a right bracket expected in place of '%.*s'"),
-		ASE_T("a comma expected in place of '%.*s'"),
-		ASE_T("a semicolon expected in place of '%.*s'"),
-		ASE_T("a colon expected in place of '%.*s'"),
-		ASE_T("statement not ending with a semicolon"),
-		ASE_T("'in' expected in place of '%.*s'"),
-		ASE_T("right-hand side of the 'in' operator not a variable"),
-		ASE_T("invalid expression"),
+		QSE_T("unexpected end of source"),
+		QSE_T("a comment not closed properly"),
+		QSE_T("a string not closed with a quote"),
+		QSE_T("unexpected end of a regular expression"),
+		QSE_T("a left brace expected in place of '%.*s'"),
+		QSE_T("a left parenthesis expected in place of '%.*s'"),
+		QSE_T("a right parenthesis expected in place of '%.*s'"),
+		QSE_T("a right bracket expected in place of '%.*s'"),
+		QSE_T("a comma expected in place of '%.*s'"),
+		QSE_T("a semicolon expected in place of '%.*s'"),
+		QSE_T("a colon expected in place of '%.*s'"),
+		QSE_T("statement not ending with a semicolon"),
+		QSE_T("'in' expected in place of '%.*s'"),
+		QSE_T("right-hand side of the 'in' operator not a variable"),
+		QSE_T("invalid expression"),
 
-		ASE_T("keyword 'function' expected in place of '%.*s'"),
-		ASE_T("keyword 'while' expected in place of '%.*s'"),
-		ASE_T("invalid assignment statement"),
-		ASE_T("an identifier expected in place of '%.*s'"),
-		ASE_T("'%.*s' not a valid function name"),
-		ASE_T("BEGIN not followed by a left bracket on the same line"),
-		ASE_T("END not followed by a left bracket on the same line"),
-		ASE_T("duplicate BEGIN"),
-		ASE_T("duplicate END"),
-		ASE_T("intrinsic function '%.*s' redefined"),
-		ASE_T("function '%.*s' redefined"),
-		ASE_T("global variable '%.*s' redefined"),
-		ASE_T("parameter '%.*s' redefined"),
-		ASE_T("variable '%.*s' redefined"),
-		ASE_T("duplicate parameter name '%.*s'"),
-		ASE_T("duplicate global variable '%.*s'"),
-		ASE_T("duplicate local variable '%.*s'"),
-		ASE_T("'%.*s' not a valid parameter name"),
-		ASE_T("'%.*s' not a valid variable name"),
-		ASE_T("undefined identifier '%.*s'"),
-		ASE_T("l-value required"),
-		ASE_T("too many global variables"),
-		ASE_T("too many local variables"),
-		ASE_T("too many parameters"),
-		ASE_T("delete statement not followed by a normal variable"),
-		ASE_T("reset statement not followed by a normal variable"),
-		ASE_T("break statement outside a loop"),
-		ASE_T("continue statement outside a loop"),
-		ASE_T("next statement illegal in the BEGIN block"),
-		ASE_T("next statement illegal in the END block"),
-		ASE_T("nextfile statement illegal in the BEGIN block"),
-		ASE_T("nextfile statement illegal in the END block"),
-		ASE_T("printf not followed by any arguments"),
-		ASE_T("both prefix and postfix increment/decrement operator present"),
-		ASE_T("coprocess not supported by getline"),
+		QSE_T("keyword 'function' expected in place of '%.*s'"),
+		QSE_T("keyword 'while' expected in place of '%.*s'"),
+		QSE_T("invalid assignment statement"),
+		QSE_T("an identifier expected in place of '%.*s'"),
+		QSE_T("'%.*s' not a valid function name"),
+		QSE_T("BEGIN not followed by a left bracket on the same line"),
+		QSE_T("END not followed by a left bracket on the same line"),
+		QSE_T("duplicate BEGIN"),
+		QSE_T("duplicate END"),
+		QSE_T("intrinsic function '%.*s' redefined"),
+		QSE_T("function '%.*s' redefined"),
+		QSE_T("global variable '%.*s' redefined"),
+		QSE_T("parameter '%.*s' redefined"),
+		QSE_T("variable '%.*s' redefined"),
+		QSE_T("duplicate parameter name '%.*s'"),
+		QSE_T("duplicate global variable '%.*s'"),
+		QSE_T("duplicate local variable '%.*s'"),
+		QSE_T("'%.*s' not a valid parameter name"),
+		QSE_T("'%.*s' not a valid variable name"),
+		QSE_T("undefined identifier '%.*s'"),
+		QSE_T("l-value required"),
+		QSE_T("too many global variables"),
+		QSE_T("too many local variables"),
+		QSE_T("too many parameters"),
+		QSE_T("delete statement not followed by a normal variable"),
+		QSE_T("reset statement not followed by a normal variable"),
+		QSE_T("break statement outside a loop"),
+		QSE_T("continue statement outside a loop"),
+		QSE_T("next statement illegal in the BEGIN block"),
+		QSE_T("next statement illegal in the END block"),
+		QSE_T("nextfile statement illegal in the BEGIN block"),
+		QSE_T("nextfile statement illegal in the END block"),
+		QSE_T("printf not followed by any arguments"),
+		QSE_T("both prefix and postfix increment/decrement operator present"),
+		QSE_T("coprocess not supported by getline"),
 
-		ASE_T("divide by zero"),
-		ASE_T("invalid operand"),
-		ASE_T("wrong position index"),
-		ASE_T("too few arguments"),
-		ASE_T("too many arguments"),
-		ASE_T("function '%.*s' not found"),
-		ASE_T("variable not indexable"),
-		ASE_T("variable '%.*s' not deletable"),
-		ASE_T("value not a map"),
-		ASE_T("right-hand side of the 'in' operator not a map"),
-		ASE_T("right-hand side of the 'in' operator not a map nor nil"),
-		ASE_T("value not referenceable"),
-		ASE_T("value not assignable"),
-		ASE_T("an indexed value cannot be assigned a map"),
-		ASE_T("a positional value cannot be assigned a map"),
-		ASE_T("map '%.*s' not assignable with a scalar"),
-		ASE_T("cannot change a scalar value to a map"),
-		ASE_T("a map is not allowed"),
-		ASE_T("invalid value type"),
-		ASE_T("delete statement called with a wrong target"),
-		ASE_T("reset statement called with a wrong target"),
-		ASE_T("next statement called from the BEGIN block"),
-		ASE_T("next statement called from the END block"),
-		ASE_T("nextfile statement called from the BEGIN block"),
-		ASE_T("nextfile statement called from the END block"),
-		ASE_T("wrong implementation of intrinsic function handler"),
-		ASE_T("intrinsic function handler returned an error"),
-		ASE_T("wrong implementation of user-defined io handler"),
-		ASE_T("no such io name found"),
-		ASE_T("i/o handler returned an error"),
-		ASE_T("i/o name empty"),
-		ASE_T("i/o name containing a null character"),
-		ASE_T("not sufficient arguments to formatting sequence"),
-		ASE_T("recursion detected in format conversion"),
-		ASE_T("invalid character in CONVFMT"),
-		ASE_T("invalid character in OFMT"),
+		QSE_T("divide by zero"),
+		QSE_T("invalid operand"),
+		QSE_T("wrong position index"),
+		QSE_T("too few arguments"),
+		QSE_T("too many arguments"),
+		QSE_T("function '%.*s' not found"),
+		QSE_T("variable not indexable"),
+		QSE_T("variable '%.*s' not deletable"),
+		QSE_T("value not a map"),
+		QSE_T("right-hand side of the 'in' operator not a map"),
+		QSE_T("right-hand side of the 'in' operator not a map nor nil"),
+		QSE_T("value not referenceable"),
+		QSE_T("value not assignable"),
+		QSE_T("an indexed value cannot be assigned a map"),
+		QSE_T("a positional value cannot be assigned a map"),
+		QSE_T("map '%.*s' not assignable with a scalar"),
+		QSE_T("cannot change a scalar value to a map"),
+		QSE_T("a map is not allowed"),
+		QSE_T("invalid value type"),
+		QSE_T("delete statement called with a wrong target"),
+		QSE_T("reset statement called with a wrong target"),
+		QSE_T("next statement called from the BEGIN block"),
+		QSE_T("next statement called from the END block"),
+		QSE_T("nextfile statement called from the BEGIN block"),
+		QSE_T("nextfile statement called from the END block"),
+		QSE_T("wrong implementation of intrinsic function handler"),
+		QSE_T("intrinsic function handler returned an error"),
+		QSE_T("wrong implementation of user-defined io handler"),
+		QSE_T("no such io name found"),
+		QSE_T("i/o handler returned an error"),
+		QSE_T("i/o name empty"),
+		QSE_T("i/o name containing a null character"),
+		QSE_T("not sufficient arguments to formatting sequence"),
+		QSE_T("recursion detected in format conversion"),
+		QSE_T("invalid character in CONVFMT"),
+		QSE_T("invalid character in OFMT"),
 
-		ASE_T("recursion too deep in the regular expression"),
-		ASE_T("a right parenthesis expected in the regular expression"),
-		ASE_T("a right bracket expected in the regular expression"),
-		ASE_T("a right brace expected in the regular expression"),
-		ASE_T("unbalanced parenthesis in the regular expression"),
-		ASE_T("a colon expected in the regular expression"),
-		ASE_T("invalid character range in the regular expression"),
-		ASE_T("invalid character class in the regular expression"),
-		ASE_T("invalid boundary range in the regular expression"),
-		ASE_T("unexpected end of the regular expression"),
-		ASE_T("garbage after the regular expression")
+		QSE_T("recursion too deep in the regular expression"),
+		QSE_T("a right parenthesis expected in the regular expression"),
+		QSE_T("a right bracket expected in the regular expression"),
+		QSE_T("a right brace expected in the regular expression"),
+		QSE_T("unbalanced parenthesis in the regular expression"),
+		QSE_T("a colon expected in the regular expression"),
+		QSE_T("invalid character range in the regular expression"),
+		QSE_T("invalid character class in the regular expression"),
+		QSE_T("invalid boundary range in the regular expression"),
+		QSE_T("unexpected end of the regular expression"),
+		QSE_T("garbage after the regular expression")
 	};
 
-	if (errnum >= 0 && errnum < ASE_COUNTOF(errstr)) 
+	if (errnum >= 0 && errnum < QSE_COUNTOF(errstr)) 
 	{
 		return errstr[errnum];
 	}
 
-	return ASE_T("unknown error");
+	return QSE_T("unknown error");
 }
 
-const ase_char_t* ase_awk_geterrstr (ase_awk_t* awk, int num)
+const qse_char_t* qse_awk_geterrstr (qse_awk_t* awk, int num)
 {
-	if (awk != ASE_NULL && 
-	    awk->errstr[num] != ASE_NULL) return awk->errstr[num];
+	if (awk != QSE_NULL && 
+	    awk->errstr[num] != QSE_NULL) return awk->errstr[num];
 	return __geterrstr (num);
 }
 
-int ase_awk_seterrstr (ase_awk_t* awk, int num, const ase_char_t* str)
+int qse_awk_seterrstr (qse_awk_t* awk, int num, const qse_char_t* str)
 {
-	ase_char_t* dup;
+	qse_char_t* dup;
        
-	if (str == ASE_NULL) dup = ASE_NULL;
+	if (str == QSE_NULL) dup = QSE_NULL;
 	else
 	{
-		dup = ASE_AWK_STRDUP (awk, str);
-		if (dup == ASE_NULL) return -1;
+		dup = QSE_AWK_STRDUP (awk, str);
+		if (dup == QSE_NULL) return -1;
 	}
 
-	if (awk->errstr[num] != ASE_NULL) 
-		ASE_AWK_FREE (awk, awk->errstr[num]);
+	if (awk->errstr[num] != QSE_NULL) 
+		QSE_AWK_FREE (awk, awk->errstr[num]);
 	else awk->errstr[num] = dup;
 	return 0;
 }
 
-int ase_awk_geterrnum (ase_awk_t* awk)
+int qse_awk_geterrnum (qse_awk_t* awk)
 {
 	return awk->errnum;
 }
 
-ase_size_t ase_awk_geterrlin (ase_awk_t* awk)
+qse_size_t qse_awk_geterrlin (qse_awk_t* awk)
 {
 	return awk->errlin;
 }
 
-const ase_char_t* ase_awk_geterrmsg (ase_awk_t* awk)
+const qse_char_t* qse_awk_geterrmsg (qse_awk_t* awk)
 {
-	if (awk->errmsg[0] == ASE_T('\0')) 
-		return ase_awk_geterrstr (awk, awk->errnum);
+	if (awk->errmsg[0] == QSE_T('\0')) 
+		return qse_awk_geterrstr (awk, awk->errnum);
 	return awk->errmsg;
 }
 
-void ase_awk_geterror (
-	ase_awk_t* awk, int* errnum, 
-	ase_size_t* errlin, const ase_char_t** errmsg)
+void qse_awk_geterror (
+	qse_awk_t* awk, int* errnum, 
+	qse_size_t* errlin, const qse_char_t** errmsg)
 {
-	if (errnum != ASE_NULL) *errnum = awk->errnum;
-	if (errlin != ASE_NULL) *errlin = awk->errlin;
-	if (errmsg != ASE_NULL) 
+	if (errnum != QSE_NULL) *errnum = awk->errnum;
+	if (errlin != QSE_NULL) *errlin = awk->errlin;
+	if (errmsg != QSE_NULL) 
 	{
-		if (awk->errmsg[0] == ASE_T('\0'))
-			*errmsg = ase_awk_geterrstr (awk, awk->errnum);
+		if (awk->errmsg[0] == QSE_T('\0'))
+			*errmsg = qse_awk_geterrstr (awk, awk->errnum);
 		else
 			*errmsg = awk->errmsg;
 	}
 }
 
-void ase_awk_seterrnum (ase_awk_t* awk, int errnum)
+void qse_awk_seterrnum (qse_awk_t* awk, int errnum)
 {
 	awk->errnum = errnum;
 	awk->errlin = 0;
-	awk->errmsg[0] = ASE_T('\0');
+	awk->errmsg[0] = QSE_T('\0');
 }
 
-void ase_awk_seterrmsg (ase_awk_t* awk, 
-	int errnum, ase_size_t errlin, const ase_char_t* errmsg)
+void qse_awk_seterrmsg (qse_awk_t* awk, 
+	int errnum, qse_size_t errlin, const qse_char_t* errmsg)
 {
 	awk->errnum = errnum;
 	awk->errlin = errlin;
-	ase_strxcpy (awk->errmsg, ASE_COUNTOF(awk->errmsg), errmsg);
+	qse_strxcpy (awk->errmsg, QSE_COUNTOF(awk->errmsg), errmsg);
 }
 
-void ase_awk_seterror (
-	ase_awk_t* awk, int errnum, ase_size_t errlin,
-	const ase_cstr_t* errarg, ase_size_t argcnt)
+void qse_awk_seterror (
+	qse_awk_t* awk, int errnum, qse_size_t errlin,
+	const qse_cstr_t* errarg, qse_size_t argcnt)
 {
-	const ase_char_t* errfmt;
-	ase_size_t fmtlen;
+	const qse_char_t* errfmt;
+	qse_size_t fmtlen;
 
-	ASE_ASSERT (argcnt <= 5);
+	QSE_ASSERT (argcnt <= 5);
 
 	awk->errnum = errnum;
 	awk->errlin = errlin;
 
-	errfmt = ase_awk_geterrstr (awk, errnum);
-	fmtlen = ase_strlen(errfmt);
+	errfmt = qse_awk_geterrstr (awk, errnum);
+	fmtlen = qse_strlen(errfmt);
 
 	switch (argcnt)
 	{
@@ -253,35 +253,35 @@ void ase_awk_seterror (
 			awk->prmfns->sprintf (
 				awk->prmfns->data,
 				awk->errmsg, 
-				ASE_COUNTOF(awk->errmsg), 
+				QSE_COUNTOF(awk->errmsg), 
 				errfmt);
 			return;
 
 		case 1:
 		{
-			ase_char_t tmp[ASE_COUNTOF(awk->errmsg)];
-			ase_size_t len, tl;
+			qse_char_t tmp[QSE_COUNTOF(awk->errmsg)];
+			qse_size_t len, tl;
 
-			if (fmtlen < ASE_COUNTOF(awk->errmsg) &&
-			    errarg[0].len + fmtlen >= ASE_COUNTOF(awk->errmsg))
+			if (fmtlen < QSE_COUNTOF(awk->errmsg) &&
+			    errarg[0].len + fmtlen >= QSE_COUNTOF(awk->errmsg))
 			{
-				len = ASE_COUNTOF(awk->errmsg) - fmtlen - 3 - 1;
-				tl = ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
-				tmp[tl] = ASE_T('.');
-				tmp[tl+1] = ASE_T('.');
-				tmp[tl+2] = ASE_T('.');
+				len = QSE_COUNTOF(awk->errmsg) - fmtlen - 3 - 1;
+				tl = qse_strxncpy (tmp, QSE_COUNTOF(tmp), errarg[0].ptr, len);
+				tmp[tl] = QSE_T('.');
+				tmp[tl+1] = QSE_T('.');
+				tmp[tl+2] = QSE_T('.');
 				len += 3;
 			}
 			else 
 			{
 				len = errarg[0].len;
-				ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
+				qse_strxncpy (tmp, QSE_COUNTOF(tmp), errarg[0].ptr, len);
 			}
 
 			awk->prmfns->sprintf (
 				awk->prmfns->data,
 				awk->errmsg, 
-				ASE_COUNTOF(awk->errmsg), 
+				QSE_COUNTOF(awk->errmsg), 
 				errfmt, (int)len, tmp);
 			return;
 		}
@@ -290,7 +290,7 @@ void ase_awk_seterror (
 			awk->prmfns->sprintf (
 				awk->prmfns->data,
 				awk->errmsg, 
-				ASE_COUNTOF(awk->errmsg), 
+				QSE_COUNTOF(awk->errmsg), 
 				errfmt,
 				(int)errarg[0].len, errarg[0].ptr,
 				(int)errarg[1].len, errarg[1].ptr);
@@ -300,7 +300,7 @@ void ase_awk_seterror (
 			awk->prmfns->sprintf (
 				awk->prmfns->data,
 				awk->errmsg, 
-				ASE_COUNTOF(awk->errmsg), 
+				QSE_COUNTOF(awk->errmsg), 
 				errfmt,
 				(int)errarg[0].len, errarg[0].ptr,
 				(int)errarg[1].len, errarg[1].ptr,
@@ -311,7 +311,7 @@ void ase_awk_seterror (
 			awk->prmfns->sprintf (
 				awk->prmfns->data,
 				awk->errmsg, 
-				ASE_COUNTOF(awk->errmsg), 
+				QSE_COUNTOF(awk->errmsg), 
 				errfmt,
 				(int)errarg[0].len, errarg[0].ptr,
 				(int)errarg[1].len, errarg[1].ptr,
@@ -323,7 +323,7 @@ void ase_awk_seterror (
 			awk->prmfns->sprintf (
 				awk->prmfns->data,
 				awk->errmsg, 
-				ASE_COUNTOF(awk->errmsg), 
+				QSE_COUNTOF(awk->errmsg), 
 				errfmt,
 				(int)errarg[0].len, errarg[0].ptr,
 				(int)errarg[1].len, errarg[1].ptr,
@@ -334,68 +334,68 @@ void ase_awk_seterror (
 	}
 }
 
-int ase_awk_getrunerrnum (ase_awk_run_t* run)
+int qse_awk_getrunerrnum (qse_awk_run_t* run)
 {
 	return run->errnum;
 }
 
-ase_size_t ase_awk_getrunerrlin (ase_awk_run_t* run)
+qse_size_t qse_awk_getrunerrlin (qse_awk_run_t* run)
 {
 	return run->errlin;
 }
 
-const ase_char_t* ase_awk_getrunerrmsg (ase_awk_run_t* run)
+const qse_char_t* qse_awk_getrunerrmsg (qse_awk_run_t* run)
 {
-	if (run->errmsg[0] == ASE_T('\0')) 
-		return ase_awk_geterrstr (run->awk, run->errnum);
+	if (run->errmsg[0] == QSE_T('\0')) 
+		return qse_awk_geterrstr (run->awk, run->errnum);
 
 	return run->errmsg;
 }
 
-void ase_awk_setrunerrnum (ase_awk_run_t* run, int errnum)
+void qse_awk_setrunerrnum (qse_awk_run_t* run, int errnum)
 {
 	run->errnum = errnum;
 	run->errlin = 0;
-	run->errmsg[0] = ASE_T('\0');
+	run->errmsg[0] = QSE_T('\0');
 }
 
-void ase_awk_setrunerrmsg (ase_awk_run_t* run, 
-	int errnum, ase_size_t errlin, const ase_char_t* errmsg)
+void qse_awk_setrunerrmsg (qse_awk_run_t* run, 
+	int errnum, qse_size_t errlin, const qse_char_t* errmsg)
 {
 	run->errnum = errnum;
 	run->errlin = errlin;
-	ase_strxcpy (run->errmsg, ASE_COUNTOF(run->errmsg), errmsg);
+	qse_strxcpy (run->errmsg, QSE_COUNTOF(run->errmsg), errmsg);
 }
 
-void ase_awk_getrunerror (
-	ase_awk_run_t* run, int* errnum, 
-	ase_size_t* errlin, const ase_char_t** errmsg)
+void qse_awk_getrunerror (
+	qse_awk_run_t* run, int* errnum, 
+	qse_size_t* errlin, const qse_char_t** errmsg)
 {
-	if (errnum != ASE_NULL) *errnum = run->errnum;
-	if (errlin != ASE_NULL) *errlin = run->errlin;
-	if (errmsg != ASE_NULL) 
+	if (errnum != QSE_NULL) *errnum = run->errnum;
+	if (errlin != QSE_NULL) *errlin = run->errlin;
+	if (errmsg != QSE_NULL) 
 	{
-		if (run->errmsg[0] == ASE_T('\0'))
-			*errmsg = ase_awk_geterrstr (run->awk, run->errnum);
+		if (run->errmsg[0] == QSE_T('\0'))
+			*errmsg = qse_awk_geterrstr (run->awk, run->errnum);
 		else
 			*errmsg = run->errmsg;
 	}
 }
 
-void ase_awk_setrunerror (
-	ase_awk_run_t* run, int errnum, ase_size_t errlin,
-	const ase_cstr_t* errarg, ase_size_t argcnt)
+void qse_awk_setrunerror (
+	qse_awk_run_t* run, int errnum, qse_size_t errlin,
+	const qse_cstr_t* errarg, qse_size_t argcnt)
 {
-	const ase_char_t* errfmt;
-	ase_size_t fmtlen;
+	const qse_char_t* errfmt;
+	qse_size_t fmtlen;
 
-	ASE_ASSERT (argcnt <= 5);
+	QSE_ASSERT (argcnt <= 5);
 
 	run->errnum = errnum;
 	run->errlin = errlin;
 
-	errfmt = ase_awk_geterrstr (run->awk, errnum);
-	fmtlen = ase_strlen (errfmt);
+	errfmt = qse_awk_geterrstr (run->awk, errnum);
+	fmtlen = qse_strlen (errfmt);
 
 	switch (argcnt)
 	{
@@ -405,7 +405,7 @@ void ase_awk_setrunerror (
 			run->awk->prmfns->sprintf (
 				run->awk->prmfns->data,
 				run->errmsg, 
-				ASE_COUNTOF(run->errmsg), 
+				QSE_COUNTOF(run->errmsg), 
 				errfmt);
 			return;
 
@@ -414,29 +414,29 @@ void ase_awk_setrunerror (
 			/* TODO: what if the argument contains a null character? 
 			 *       handle the case more gracefully than now... */
 
-			ase_char_t tmp[ASE_COUNTOF(run->errmsg)];
-			ase_size_t len, tl;
+			qse_char_t tmp[QSE_COUNTOF(run->errmsg)];
+			qse_size_t len, tl;
 
-			if (fmtlen < ASE_COUNTOF(run->errmsg) &&
-			    errarg[0].len + fmtlen >= ASE_COUNTOF(run->errmsg))
+			if (fmtlen < QSE_COUNTOF(run->errmsg) &&
+			    errarg[0].len + fmtlen >= QSE_COUNTOF(run->errmsg))
 			{
-				len = ASE_COUNTOF(run->errmsg) - fmtlen - 3 - 1;
-				tl = ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
-				tmp[tl] = ASE_T('.');
-				tmp[tl+1] = ASE_T('.');
-				tmp[tl+2] = ASE_T('.');
+				len = QSE_COUNTOF(run->errmsg) - fmtlen - 3 - 1;
+				tl = qse_strxncpy (tmp, QSE_COUNTOF(tmp), errarg[0].ptr, len);
+				tmp[tl] = QSE_T('.');
+				tmp[tl+1] = QSE_T('.');
+				tmp[tl+2] = QSE_T('.');
 				len += 3;
 			}
 			else 
 			{
 				len = errarg[0].len;
-				ase_strxncpy (tmp, ASE_COUNTOF(tmp), errarg[0].ptr, len);
+				qse_strxncpy (tmp, QSE_COUNTOF(tmp), errarg[0].ptr, len);
 			}
 
 			run->awk->prmfns->sprintf (
 				run->awk->prmfns->data,
 				run->errmsg, 
-				ASE_COUNTOF(run->errmsg), 
+				QSE_COUNTOF(run->errmsg), 
 				errfmt, len, tmp);
 			return;
 		}
@@ -445,7 +445,7 @@ void ase_awk_setrunerror (
 			run->awk->prmfns->sprintf (
 				run->awk->prmfns->data,
 				run->errmsg, 
-				ASE_COUNTOF(run->errmsg), 
+				QSE_COUNTOF(run->errmsg), 
 				errfmt,
 				errarg[0].len, errarg[0].ptr,
 				errarg[1].len, errarg[1].ptr);
@@ -455,7 +455,7 @@ void ase_awk_setrunerror (
 			run->awk->prmfns->sprintf (
 				run->awk->prmfns->data,
 				run->errmsg, 
-				ASE_COUNTOF(run->errmsg), 
+				QSE_COUNTOF(run->errmsg), 
 				errfmt,
 				errarg[0].len, errarg[0].ptr,
 				errarg[1].len, errarg[1].ptr,
@@ -466,7 +466,7 @@ void ase_awk_setrunerror (
 			run->awk->prmfns->sprintf (
 				run->awk->prmfns->data,
 				run->errmsg, 
-				ASE_COUNTOF(run->errmsg), 
+				QSE_COUNTOF(run->errmsg), 
 				errfmt,
 				errarg[0].len, errarg[0].ptr,
 				errarg[1].len, errarg[1].ptr,
@@ -478,7 +478,7 @@ void ase_awk_setrunerror (
 			run->awk->prmfns->sprintf (
 				run->awk->prmfns->data,
 				run->errmsg, 
-				ASE_COUNTOF(run->errmsg), 
+				QSE_COUNTOF(run->errmsg), 
 				errfmt,
 				errarg[0].len, errarg[0].ptr,
 				errarg[1].len, errarg[1].ptr,

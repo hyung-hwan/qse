@@ -4,55 +4,55 @@
  * {License}
  */
 
-#include <ase/cmn/str.h>
+#include <qse/cmn/str.h>
 #include "mem.h"
 
-ase_str_t* ase_str_open (ase_mmgr_t* mmgr, ase_size_t ext, ase_size_t capa)
+qse_str_t* qse_str_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t capa)
 {
-	ase_str_t* str;
+	qse_str_t* str;
 
-	if (mmgr == ASE_NULL) 
+	if (mmgr == QSE_NULL) 
 	{
-		mmgr = ASE_MMGR_GETDFL();
+		mmgr = QSE_MMGR_GETDFL();
 
-		ASE_ASSERTX (mmgr != ASE_NULL,
-			"Set the memory manager with ASE_MMGR_SETDFL()");
+		QSE_ASSERTX (mmgr != QSE_NULL,
+			"Set the memory manager with QSE_MMGR_SETDFL()");
 
-		if (mmgr == ASE_NULL) return ASE_NULL;
+		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	str = (ase_str_t*) ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_str_t) + ext);
-	if (str == ASE_NULL) return ASE_NULL;
+	str = (qse_str_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_str_t) + ext);
+	if (str == QSE_NULL) return QSE_NULL;
 
-	if (ase_str_init (str, mmgr, capa) == ASE_NULL)
+	if (qse_str_init (str, mmgr, capa) == QSE_NULL)
 	{
-		ASE_MMGR_FREE (mmgr, str);
-		return ASE_NULL;
+		QSE_MMGR_FREE (mmgr, str);
+		return QSE_NULL;
 	}
 
 	return str;
 }
 
-void ase_str_close (ase_str_t* str)
+void qse_str_close (qse_str_t* str)
 {
-	ase_str_fini (str);
-	ASE_MMGR_FREE (str->mmgr, str);
+	qse_str_fini (str);
+	QSE_MMGR_FREE (str->mmgr, str);
 }
 
-ase_str_t* ase_str_init (ase_str_t* str, ase_mmgr_t* mmgr, ase_size_t capa)
+qse_str_t* qse_str_init (qse_str_t* str, qse_mmgr_t* mmgr, qse_size_t capa)
 {
-	ASE_MEMSET (str, 0, ASE_SIZEOF(ase_str_t));
+	QSE_MEMSET (str, 0, QSE_SIZEOF(qse_str_t));
 
 	str->mmgr = mmgr;
-	str->sizer = ASE_NULL;
+	str->sizer = QSE_NULL;
 
-	if (capa == 0) str->ptr = ASE_NULL;
+	if (capa == 0) str->ptr = QSE_NULL;
 	else
 	{
-		str->ptr = (ase_char_t*) ASE_MMGR_ALLOC (
-			mmgr, ASE_SIZEOF(ase_char_t) * (capa + 1));
-		if (str->ptr == ASE_NULL) return ASE_NULL;
-		str->ptr[0] = ASE_T('\0');
+		str->ptr = (qse_char_t*) QSE_MMGR_ALLOC (
+			mmgr, QSE_SIZEOF(qse_char_t) * (capa + 1));
+		if (str->ptr == QSE_NULL) return QSE_NULL;
+		str->ptr[0] = QSE_T('\0');
 	}
 
 	str->len = 0;
@@ -61,25 +61,25 @@ ase_str_t* ase_str_init (ase_str_t* str, ase_mmgr_t* mmgr, ase_size_t capa)
 	return str;
 }
 
-void ase_str_fini (ase_str_t* str)
+void qse_str_fini (qse_str_t* str)
 {
-	if (str->ptr != ASE_NULL) ASE_MMGR_FREE (str->mmgr, str->ptr);
+	if (str->ptr != QSE_NULL) QSE_MMGR_FREE (str->mmgr, str->ptr);
 }
 
-int ase_str_yield (ase_str_t* str, ase_xstr_t* buf, int new_capa)
+int qse_str_yield (qse_str_t* str, qse_xstr_t* buf, int new_capa)
 {
-	ase_char_t* tmp;
+	qse_char_t* tmp;
 
-	if (new_capa == 0) tmp = ASE_NULL;
+	if (new_capa == 0) tmp = QSE_NULL;
 	else
 	{
-		tmp = (ase_char_t*) ASE_MMGR_ALLOC (
-			str->mmgr, ASE_SIZEOF(ase_char_t) * (new_capa + 1));
-		if (tmp == ASE_NULL) return -1;
-		tmp[0] = ASE_T('\0');
+		tmp = (qse_char_t*) QSE_MMGR_ALLOC (
+			str->mmgr, QSE_SIZEOF(qse_char_t) * (new_capa + 1));
+		if (tmp == QSE_NULL) return -1;
+		tmp[0] = QSE_T('\0');
 	}
 
-	if (buf != ASE_NULL)
+	if (buf != QSE_NULL)
 	{
 		buf->ptr = str->ptr;
 		buf->len = str->len;
@@ -92,66 +92,66 @@ int ase_str_yield (ase_str_t* str, ase_xstr_t* buf, int new_capa)
 	return 0;
 }
 
-void* ase_str_getxtn (ase_str_t* str)
+void* qse_str_getxtn (qse_str_t* str)
 {
 	return str + 1;
 }
 
-ase_mmgr_t* ase_str_getmmgr (ase_str_t* str)
+qse_mmgr_t* qse_str_getmmgr (qse_str_t* str)
 {
 	return str->mmgr;
 }
 
-void ase_str_setmmgr (ase_str_t* str, ase_mmgr_t* mmgr)
+void qse_str_setmmgr (qse_str_t* str, qse_mmgr_t* mmgr)
 {
 	str->mmgr = mmgr;
 }
 
-ase_str_sizer_t ase_str_getsizer (ase_str_t* str)
+qse_str_sizer_t qse_str_getsizer (qse_str_t* str)
 {
 	return str->sizer;	
 }
 
-void ase_str_setsizer (ase_str_t* str, ase_str_sizer_t sizer)
+void qse_str_setsizer (qse_str_t* str, qse_str_sizer_t sizer)
 {
 	str->sizer = sizer;
 }
 
-ase_size_t ase_str_getcapa (ase_str_t* str)
+qse_size_t qse_str_getcapa (qse_str_t* str)
 {
 	return str->capa;
 }
 
-ase_size_t ase_str_setcapa (ase_str_t* str, ase_size_t capa)
+qse_size_t qse_str_setcapa (qse_str_t* str, qse_size_t capa)
 {
-	ase_char_t* tmp;
+	qse_char_t* tmp;
 
-	if (str->mmgr->realloc != ASE_NULL && str->ptr != ASE_NULL)
+	if (str->mmgr->realloc != QSE_NULL && str->ptr != QSE_NULL)
 	{
-		tmp = (ase_char_t*) ASE_MMGR_REALLOC (
+		tmp = (qse_char_t*) QSE_MMGR_REALLOC (
 			str->mmgr, str->ptr, 
-			ASE_SIZEOF(ase_char_t)*(capa+1));
-		if (tmp == ASE_NULL) return (ase_size_t)-1;
+			QSE_SIZEOF(qse_char_t)*(capa+1));
+		if (tmp == QSE_NULL) return (qse_size_t)-1;
 	}
 	else
 	{
-		tmp = (ase_char_t*) ASE_MMGR_ALLOC (
-			str->mmgr, ASE_SIZEOF(ase_char_t)*(capa+1));
-		if (tmp == ASE_NULL) return (ase_size_t)-1;
+		tmp = (qse_char_t*) QSE_MMGR_ALLOC (
+			str->mmgr, QSE_SIZEOF(qse_char_t)*(capa+1));
+		if (tmp == QSE_NULL) return (qse_size_t)-1;
 
-		if (str->ptr != ASE_NULL)
+		if (str->ptr != QSE_NULL)
 		{
-			ase_size_t ncopy = (str->len <= capa)? str->len: capa;
-			ASE_MEMCPY (tmp, str->ptr, 
-				ASE_SIZEOF(ase_char_t)*(ncopy+1));
-			ASE_MMGR_FREE (str->mmgr, str->ptr);
+			qse_size_t ncopy = (str->len <= capa)? str->len: capa;
+			QSE_MEMCPY (tmp, str->ptr, 
+				QSE_SIZEOF(qse_char_t)*(ncopy+1));
+			QSE_MMGR_FREE (str->mmgr, str->ptr);
 		}
 	}
 
 	if (capa < str->len)
 	{
 		str->len = capa;
-		tmp[capa] = ASE_T('\0');
+		tmp[capa] = QSE_T('\0');
 	}
 
 	str->capa = capa;
@@ -160,15 +160,15 @@ ase_size_t ase_str_setcapa (ase_str_t* str, ase_size_t capa)
 	return str->capa;
 }
 
-void ase_str_clear (ase_str_t* str)
+void qse_str_clear (qse_str_t* str)
 {
 	str->len = 0;
-	str->ptr[0] = ASE_T('\0');
+	str->ptr[0] = QSE_T('\0');
 }
 
-void ase_str_swap (ase_str_t* str, ase_str_t* str1)
+void qse_str_swap (qse_str_t* str, qse_str_t* str1)
 {
-	ase_str_t tmp;
+	qse_str_t tmp;
 
 	tmp.ptr = str->ptr;
 	tmp.len = str->len;
@@ -186,46 +186,46 @@ void ase_str_swap (ase_str_t* str, ase_str_t* str1)
 	str1->mmgr = tmp.mmgr;
 }
 
-ase_size_t ase_str_cpy (ase_str_t* str, const ase_char_t* s)
+qse_size_t qse_str_cpy (qse_str_t* str, const qse_char_t* s)
 {
 	/* TODO: improve it */
-	return ase_str_ncpy (str, s, ase_strlen(s));
+	return qse_str_ncpy (str, s, qse_strlen(s));
 }
 
-ase_size_t ase_str_ncpy (ase_str_t* str, const ase_char_t* s, ase_size_t len)
+qse_size_t qse_str_ncpy (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 {
-	ase_char_t* buf;
+	qse_char_t* buf;
 
-	if (len > str->capa || str->ptr == ASE_NULL) 
+	if (len > str->capa || str->ptr == QSE_NULL) 
 	{
-		buf = (ase_char_t*) ASE_MMGR_ALLOC (
-			str->mmgr, ASE_SIZEOF(ase_char_t) * (len + 1));
-		if (buf == ASE_NULL) return (ase_size_t)-1;
+		buf = (qse_char_t*) QSE_MMGR_ALLOC (
+			str->mmgr, QSE_SIZEOF(qse_char_t) * (len + 1));
+		if (buf == QSE_NULL) return (qse_size_t)-1;
 
-		if (str->ptr != ASE_NULL) ASE_MMGR_FREE (str->mmgr, str->ptr);
+		if (str->ptr != QSE_NULL) QSE_MMGR_FREE (str->mmgr, str->ptr);
 		str->capa = len;
 		str->ptr = buf;
 	}
 
-	str->len = ase_strncpy (str->ptr, s, len);
-	str->ptr[str->len] = ASE_T('\0');
+	str->len = qse_strncpy (str->ptr, s, len);
+	str->ptr[str->len] = QSE_T('\0');
 	return str->len;
 }
 
-ase_size_t ase_str_cat (ase_str_t* str, const ase_char_t* s)
+qse_size_t qse_str_cat (qse_str_t* str, const qse_char_t* s)
 {
 	/* TODO: improve it */
-	return ase_str_ncat (str, s, ase_strlen(s));
+	return qse_str_ncat (str, s, qse_strlen(s));
 }
 
 
-ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
+qse_size_t qse_str_ncat (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 {
 	if (len > str->capa - str->len) 
 	{
-		ase_size_t ncapa;
+		qse_size_t ncapa;
 
-		if (str->sizer == ASE_NULL)
+		if (str->sizer == QSE_NULL)
 		{
 			/* increase the capacity by the length to add */
 			ncapa = str->len + len;
@@ -242,9 +242,9 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 			if (ncapa == str->capa) return str->len;
 		}
 
-		if (ase_str_setcapa (str, ncapa) == (ase_size_t)-1) 
+		if (qse_str_setcapa (str, ncapa) == (qse_size_t)-1) 
 		{
-			return (ase_size_t)-1;
+			return (qse_size_t)-1;
 		}
 	}
 
@@ -257,26 +257,26 @@ ase_size_t ase_str_ncat (ase_str_t* str, const ase_char_t* s, ase_size_t len)
 
 	if (len > 0)
 	{
-		ASE_MEMCPY (&str->ptr[str->len], s, len*ASE_SIZEOF(*s));
+		QSE_MEMCPY (&str->ptr[str->len], s, len*QSE_SIZEOF(*s));
 		str->len += len;
-		str->ptr[str->len] = ASE_T('\0');
+		str->ptr[str->len] = QSE_T('\0');
 	}
 
 	return str->len;
 }
 
-ase_size_t ase_str_ccat (ase_str_t* str, ase_char_t c)
+qse_size_t qse_str_ccat (qse_str_t* str, qse_char_t c)
 {
-	return ase_str_ncat (str, &c, 1);
+	return qse_str_ncat (str, &c, 1);
 }
 
-ase_size_t ase_str_nccat (ase_str_t* str, ase_char_t c, ase_size_t len)
+qse_size_t qse_str_nccat (qse_str_t* str, qse_char_t c, qse_size_t len)
 {
 	while (len > 0)
 	{
-		if (ase_str_ncat (str, &c, 1) == (ase_size_t)-1) 
+		if (qse_str_ncat (str, &c, 1) == (qse_size_t)-1) 
 		{
-			return (ase_size_t)-1;
+			return (qse_size_t)-1;
 		}
 
 		len--;

@@ -2,15 +2,15 @@
  * $Id: tgp.c,v 1.5 2007/05/16 09:15:14 bacon Exp $
  */
 
-#include <ase/tgp/tgp.h>
+#include <qse/tgp/tgp.h>
 
-#include <ase/utl/stdio.h>
-#include <ase/utl/main.h>
+#include <qse/utl/stdio.h>
+#include <qse/utl/main.h>
 
-#include <ase/cmn/mem.h>
-#include <ase/cmn/chr.h>
-#include <ase/cmn/str.h>
-#include <ase/cmn/opt.h>
+#include <qse/cmn/mem.h>
+#include <qse/cmn/chr.h>
+#include <qse/cmn/str.h>
+#include <qse/cmn/opt.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -29,59 +29,59 @@
 #include <mcheck.h>
 #endif
 
-static void print_usage (const ase_char_t* argv0)
+static void print_usage (const qse_char_t* argv0)
 {
-	ase_fprintf (ASE_STDERR, 
-		ASE_T("Usage: %s [options] [file]\n"), argv0);
-	ase_fprintf (ASE_STDERR, 
-		ASE_T("  -h          print this message\n"));
+	qse_fprintf (QSE_STDERR, 
+		QSE_T("Usage: %s [options] [file]\n"), argv0);
+	qse_fprintf (QSE_STDERR, 
+		QSE_T("  -h          print this message\n"));
 
-	ase_fprintf (ASE_STDERR,
-		ASE_T("  -u          user id\n"));
-	ase_fprintf (ASE_STDERR,
-		ASE_T("  -g          group id\n"));
-	ase_fprintf (ASE_STDERR,
-		ASE_T("  -r          chroot\n"));
-	ase_fprintf (ASE_STDERR,
-		ASE_T("  -U          enable upload\n"));
+	qse_fprintf (QSE_STDERR,
+		QSE_T("  -u          user id\n"));
+	qse_fprintf (QSE_STDERR,
+		QSE_T("  -g          group id\n"));
+	qse_fprintf (QSE_STDERR,
+		QSE_T("  -r          chroot\n"));
+	qse_fprintf (QSE_STDERR,
+		QSE_T("  -U          enable upload\n"));
 }
 
-static int handle_args (int argc, ase_char_t* argv[])
+static int handle_args (int argc, qse_char_t* argv[])
 {
-	ase_opt_t opt;
-	ase_cint_t c;
+	qse_opt_t opt;
+	qse_cint_t c;
 
-	ase_memset (&opt, 0, ASE_SIZEOF(opt));
-	opt.str = ASE_T("hu:g:r:");
+	qse_memset (&opt, 0, QSE_SIZEOF(opt));
+	opt.str = QSE_T("hu:g:r:");
 
-	while ((c = ase_getopt (argc, argv, &opt)) != ASE_CHAR_EOF)
+	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
 	{
 		switch (c)
 		{
-			case ASE_T('h'):
+			case QSE_T('h'):
 				print_usage (argv[0]);
 				return -1;
 
-			case ASE_T('?'):
-				ase_fprintf (ASE_STDERR, ASE_T("Error: illegal option - %c\n"), opt.opt);
+			case QSE_T('?'):
+				qse_fprintf (QSE_STDERR, QSE_T("Error: illegal option - %c\n"), opt.opt);
 				print_usage (argv[0]);
 				return -1;
 
-			case ASE_T(':'):
-				ase_fprintf (ASE_STDERR, ASE_T("Error: missing argument for %c\n"), opt.opt);
+			case QSE_T(':'):
+				qse_fprintf (QSE_STDERR, QSE_T("Error: missing argument for %c\n"), opt.opt);
 				print_usage (argv[0]);
 				return -1;
 
-			case ASE_T('u'):
+			case QSE_T('u'):
 				//opt.arg;
 				break;
-			case ASE_T('g'):
+			case QSE_T('g'):
 				//opt.arg;
 				break;
-			case ASE_T('r'):
+			case QSE_T('r'):
 				//opt.arg;
 				break;
-			case ASE_T('U'):
+			case QSE_T('U'):
 				//opt.arg;
 				break;
 		}
@@ -89,7 +89,7 @@ static int handle_args (int argc, ase_char_t* argv[])
 
 	if (opt.ind < argc)
 	{
-		ase_printf (ASE_T("Error: redundant argument - %s\n"), argv[opt.ind]);
+		qse_printf (QSE_T("Error: redundant argument - %s\n"), argv[opt.ind]);
 		print_usage (argv[0]);
 		return -1;
 	}
@@ -99,70 +99,70 @@ static int handle_args (int argc, ase_char_t* argv[])
 
 typedef struct xin_t
 {
-	const ase_char_t* name;
-	ASE_FILE* fp;
+	const qse_char_t* name;
+	QSE_FILE* fp;
 } xin_t;
 
 typedef struct xout_t
 {
-	const ase_char_t* name;
-	ASE_FILE* fp;
+	const qse_char_t* name;
+	QSE_FILE* fp;
 } xout_t;
 
 
-static int io_in (int cmd, void* arg, ase_char_t* buf, int len)
+static int io_in (int cmd, void* arg, qse_char_t* buf, int len)
 {
 	xin_t* xin = (xin_t*)arg;
 
 	switch (cmd)
 	{
-		case ASE_TGP_IO_OPEN:
-			xin->fp = (xin->name == ASE_NULL)?
-				ASE_STDIN:
-				ase_fopen(xin->name,ASE_T("r"));
+		case QSE_TGP_IO_OPEN:
+			xin->fp = (xin->name == QSE_NULL)?
+				QSE_STDIN:
+				qse_fopen(xin->name,QSE_T("r"));
 
 			return (xin->fp == NULL)? -1: 0;
 
-		case ASE_TGP_IO_CLOSE:
-			if (xin->name != ASE_NULL) ase_fclose (xin->fp);
+		case QSE_TGP_IO_CLOSE:
+			if (xin->name != QSE_NULL) qse_fclose (xin->fp);
 			return 0;
 
-		case ASE_TGP_IO_READ:
-			if (ase_fgets (buf, len, xin->fp) == ASE_NULL) return 0;
-			return ase_strlen(buf);
+		case QSE_TGP_IO_READ:
+			if (qse_fgets (buf, len, xin->fp) == QSE_NULL) return 0;
+			return qse_strlen(buf);
 	}	
 
 	return -1;
 }
 
-static int io_out (int cmd, void* arg, ase_char_t* buf, int len)
+static int io_out (int cmd, void* arg, qse_char_t* buf, int len)
 {
 	xout_t* xout = (xout_t*)arg;
 
 	switch (cmd)
 	{
-		case ASE_TGP_IO_OPEN:
-			xout->fp = (xout->name == ASE_NULL)?
-				ASE_STDOUT:
-				ase_fopen(xout->name,ASE_T("r"));
+		case QSE_TGP_IO_OPEN:
+			xout->fp = (xout->name == QSE_NULL)?
+				QSE_STDOUT:
+				qse_fopen(xout->name,QSE_T("r"));
 
 			return (xout->fp == NULL)? -1: 0;
 
-		case ASE_TGP_IO_CLOSE:
-			if (xout->name != ASE_NULL) ase_fclose (xout->fp);
+		case QSE_TGP_IO_CLOSE:
+			if (xout->name != QSE_NULL) qse_fclose (xout->fp);
 			return 0;
 
-		case ASE_TGP_IO_WRITE:
-			ase_fprintf (xout->fp, ASE_T("%.*s"), len, buf);
+		case QSE_TGP_IO_WRITE:
+			qse_fprintf (xout->fp, QSE_T("%.*s"), len, buf);
 			return len;
 	}	
 
 	return -1;
 }
 
-int tgp_main (int argc, ase_char_t* argv[])
+int tgp_main (int argc, qse_char_t* argv[])
 {
-	ase_tgp_t* tgp;
+	qse_tgp_t* tgp;
 
 	xin_t xin;
 	xout_t xout;
@@ -171,36 +171,36 @@ int tgp_main (int argc, ase_char_t* argv[])
 
 	if (handle_args (argc, argv) == -1) return -1;
 	
-	tgp = ase_tgp_open (ASE_MMGR_GETDFL());
-	if (tgp == ASE_NULL) 
+	tgp = qse_tgp_open (QSE_MMGR_GETDFL());
+	if (tgp == QSE_NULL) 
 	{
-		ase_fprintf (ASE_STDERR, 
-			ASE_T("Error: cannot create a tgp instance\n"));
+		qse_fprintf (QSE_STDERR, 
+			QSE_T("Error: cannot create a tgp instance\n"));
 		return -1;
 	}
 
-	xin.name = ASE_T("x.tgp");
-	xout.name = ASE_NULL;
+	xin.name = QSE_T("x.tgp");
+	xout.name = QSE_NULL;
 
-	ase_tgp_attachin (tgp, io_in, &xin);
-	ase_tgp_attachout (tgp, io_out, &xout);
+	qse_tgp_attachin (tgp, io_in, &xin);
+	qse_tgp_attachout (tgp, io_out, &xout);
 	/*
-	ase_tgp_setexecin (tgp, io, );
-	ase_tgp_setexecout (tgp, io, );
+	qse_tgp_setexecin (tgp, io, );
+	qse_tgp_setexecout (tgp, io, );
 	*/
 
-	if (ase_tgp_run (tgp) == -1)
+	if (qse_tgp_run (tgp) == -1)
 	{
-		ase_fprintf (ASE_STDERR, 
-			ASE_T("Error: cannot run a tgp instance\n"));
+		qse_fprintf (QSE_STDERR, 
+			QSE_T("Error: cannot run a tgp instance\n"));
 		ret = -1;
 	}
 
-	ase_tgp_close (tgp);
+	qse_tgp_close (tgp);
 	return ret;
 }
 
-int ase_main (int argc, ase_achar_t* argv[])
+int qse_main (int argc, qse_achar_t* argv[])
 {
 	int n;
 
@@ -208,7 +208,7 @@ int ase_main (int argc, ase_achar_t* argv[])
 	mtrace ();
 #endif
 
-	n = ase_runmain (argc, argv, tgp_main);
+	n = qse_runmain (argc, argv, tgp_main);
 
 #if defined(__linux) && defined(_DEBUG)
 	muntrace ();

@@ -2,53 +2,53 @@
  * $Id: tio.c,v 1.13 2006/01/01 13:50:24 bacon Exp $
  */
 
-#include <ase/cmn/tio.h>
+#include <qse/cmn/tio.h>
 #include "mem.h"
 
-ase_tio_t* ase_tio_open (ase_mmgr_t* mmgr, ase_size_t ext)
+qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t ext)
 {
-	ase_tio_t* tio;
+	qse_tio_t* tio;
 
-	if (mmgr == ASE_NULL)
+	if (mmgr == QSE_NULL)
 	{
-		mmgr = ASE_MMGR_GETDFL();
+		mmgr = QSE_MMGR_GETDFL();
 
-		ASE_ASSERTX (mmgr != ASE_NULL,
-			"Set the memory manager with ASE_MMGR_SETDFL()");
+		QSE_ASSERTX (mmgr != QSE_NULL,
+			"Set the memory manager with QSE_MMGR_SETDFL()");
 
-		if (mmgr == ASE_NULL) return ASE_NULL;
+		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	tio = ASE_MMGR_ALLOC (mmgr, ASE_SIZEOF(ase_tio_t) + ext);
-	if (tio == ASE_NULL) return ASE_NULL;
+	tio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tio_t) + ext);
+	if (tio == QSE_NULL) return QSE_NULL;
 
-	if (ase_tio_init (tio, mmgr) == ASE_NULL)
+	if (qse_tio_init (tio, mmgr) == QSE_NULL)
 	{
-		ASE_MMGR_FREE (mmgr, tio);
-		return ASE_NULL;
+		QSE_MMGR_FREE (mmgr, tio);
+		return QSE_NULL;
 	}
 
 	return tio;
 }
 
-int ase_tio_close (ase_tio_t* tio)
+int qse_tio_close (qse_tio_t* tio)
 {
-	int n = ase_tio_fini (tio);
-	ASE_MMGR_FREE (tio->mmgr, tio);
+	int n = qse_tio_fini (tio);
+	QSE_MMGR_FREE (tio->mmgr, tio);
 	return n;
 }
 
-ase_tio_t* ase_tio_init (ase_tio_t* tio, ase_mmgr_t* mmgr)
+qse_tio_t* qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr)
 {
-	ASE_MEMSET (tio, 0, ASE_SIZEOF(*tio));
+	QSE_MEMSET (tio, 0, QSE_SIZEOF(*tio));
 
 	tio->mmgr = mmgr;
 
 	/*
-	tio->input_func = ASE_NULL;
-	tio->input_arg = ASE_NULL;
-	tio->output_func = ASE_NULL;
-	tio->output_arg = ASE_NULL;
+	tio->input_func = QSE_NULL;
+	tio->input_arg = QSE_NULL;
+	tio->output_func = QSE_NULL;
+	tio->output_arg = QSE_NULL;
 
         tio->input_status = 0;
         tio->inbuf_curp = 0;
@@ -56,74 +56,74 @@ ase_tio_t* ase_tio_init (ase_tio_t* tio, ase_mmgr_t* mmgr)
         tio->outbuf_len = 0;
 	*/
 
-	tio->errnum = ASE_TIO_ENOERR;
+	tio->errnum = QSE_TIO_ENOERR;
 
 	return tio;
 }
 
-int ase_tio_fini (ase_tio_t* tio)
+int qse_tio_fini (qse_tio_t* tio)
 {
-	ase_tio_flush (tio); /* don't care about the result */
-	if (ase_tio_detachin(tio) == -1) return -1;
-	if (ase_tio_detachout(tio) == -1) return -1;
+	qse_tio_flush (tio); /* don't care about the result */
+	if (qse_tio_detachin(tio) == -1) return -1;
+	if (qse_tio_detachout(tio) == -1) return -1;
 	return 0;
 }
 
-void* ase_tio_getxtn (ase_tio_t* tio)
+void* qse_tio_getxtn (qse_tio_t* tio)
 {
 	return tio + 1;
 }
 
-ase_mmgr_t* ase_tio_getmmgr (ase_tio_t* tio)
+qse_mmgr_t* qse_tio_getmmgr (qse_tio_t* tio)
 {
 	return tio->mmgr;
 }
 
-void ase_tio_setmmgr (ase_tio_t* tio, ase_mmgr_t* mmgr)
+void qse_tio_setmmgr (qse_tio_t* tio, qse_mmgr_t* mmgr)
 {
 	tio->mmgr = mmgr;
 }
 
-int ase_tio_geterrnum (ase_tio_t* tio)
+int qse_tio_geterrnum (qse_tio_t* tio)
 {
 	return tio->errnum;
 }
 
-const ase_char_t* ase_tio_geterrstr (ase_tio_t* tio)
+const qse_char_t* qse_tio_geterrstr (qse_tio_t* tio)
 {
-	static const ase_char_t* __errstr[] =
+	static const qse_char_t* __errstr[] =
 	{
-		ASE_T("no error"),
-		ASE_T("out of memory"),
-		ASE_T("no more space"),
-		ASE_T("illegal multibyte sequence"),
-		ASE_T("incomplete multibyte sequence"),
-		ASE_T("illegal wide character"),
-		ASE_T("no input function attached"),
-		ASE_T("input function returned an error"),
-		ASE_T("input function failed to open"),
-		ASE_T("input function failed to closed"),
-		ASE_T("no output function attached"),
-		ASE_T("output function returned an error"),
-		ASE_T("output function failed to open"),
-		ASE_T("output function failed to closed"),
-		ASE_T("unknown error")
+		QSE_T("no error"),
+		QSE_T("out of memory"),
+		QSE_T("no more space"),
+		QSE_T("illegal multibyte sequence"),
+		QSE_T("incomplete multibyte sequence"),
+		QSE_T("illegal wide character"),
+		QSE_T("no input function attached"),
+		QSE_T("input function returned an error"),
+		QSE_T("input function failed to open"),
+		QSE_T("input function failed to closed"),
+		QSE_T("no output function attached"),
+		QSE_T("output function returned an error"),
+		QSE_T("output function failed to open"),
+		QSE_T("output function failed to closed"),
+		QSE_T("unknown error")
 	};
 
 	return __errstr[
-		(tio->errnum < 0 || tio->errnum >= ASE_COUNTOF(__errstr))? 
-		ASE_COUNTOF(__errstr) - 1: tio->errnum];
+		(tio->errnum < 0 || tio->errnum >= QSE_COUNTOF(__errstr))? 
+		QSE_COUNTOF(__errstr) - 1: tio->errnum];
 }
 
-int ase_tio_attachin (ase_tio_t* tio, ase_tio_io_t input, void* arg)
+int qse_tio_attachin (qse_tio_t* tio, qse_tio_io_t input, void* arg)
 {
-	if (ase_tio_detachin(tio) == -1) return -1;
+	if (qse_tio_detachin(tio) == -1) return -1;
 
-	ASE_ASSERT (tio->input_func == ASE_NULL);
+	QSE_ASSERT (tio->input_func == QSE_NULL);
 
-	if (input(ASE_TIO_IO_OPEN, arg, ASE_NULL, 0) == -1) 
+	if (input(QSE_TIO_IO_OPEN, arg, QSE_NULL, 0) == -1) 
 	{
-		tio->errnum = ASE_TIO_EINPOP;
+		tio->errnum = QSE_TIO_EINPOP;
 		return -1;
 	}
 
@@ -137,33 +137,33 @@ int ase_tio_attachin (ase_tio_t* tio, ase_tio_io_t input, void* arg)
 	return 0;
 }
 
-int ase_tio_detachin (ase_tio_t* tio)
+int qse_tio_detachin (qse_tio_t* tio)
 {
-	if (tio->input_func != ASE_NULL) 
+	if (tio->input_func != QSE_NULL) 
 	{
 		if (tio->input_func (
-			ASE_TIO_IO_CLOSE, tio->input_arg, ASE_NULL, 0) == -1) 
+			QSE_TIO_IO_CLOSE, tio->input_arg, QSE_NULL, 0) == -1) 
 		{
-			tio->errnum = ASE_TIO_EINPCL;
+			tio->errnum = QSE_TIO_EINPCL;
 			return -1;
 		}
 
-		tio->input_func = ASE_NULL;
-		tio->input_arg = ASE_NULL;
+		tio->input_func = QSE_NULL;
+		tio->input_arg = QSE_NULL;
 	}
 		
 	return 0;
 }
 
-int ase_tio_attachout (ase_tio_t* tio, ase_tio_io_t output, void* arg)
+int qse_tio_attachout (qse_tio_t* tio, qse_tio_io_t output, void* arg)
 {
-	if (ase_tio_detachout(tio) == -1) return -1;
+	if (qse_tio_detachout(tio) == -1) return -1;
 
-	ASE_ASSERT (tio->output_func == ASE_NULL);
+	QSE_ASSERT (tio->output_func == QSE_NULL);
 
-	if (output(ASE_TIO_IO_OPEN, arg, ASE_NULL, 0) == -1) 
+	if (output(QSE_TIO_IO_OPEN, arg, QSE_NULL, 0) == -1) 
 	{
-		tio->errnum = ASE_TIO_EOUTOP;
+		tio->errnum = QSE_TIO_EOUTOP;
 		return -1;
 	}
 
@@ -174,66 +174,66 @@ int ase_tio_attachout (ase_tio_t* tio, ase_tio_io_t output, void* arg)
 	return 0;
 }
 
-int ase_tio_detachout (ase_tio_t* tio)
+int qse_tio_detachout (qse_tio_t* tio)
 {
-	if (tio->output_func != ASE_NULL) 
+	if (tio->output_func != QSE_NULL) 
 	{
-		ase_tio_flush (tio); /* don't care about the result */
+		qse_tio_flush (tio); /* don't care about the result */
 
 		if (tio->output_func (
-			ASE_TIO_IO_CLOSE, tio->output_arg, ASE_NULL, 0) == -1) 
+			QSE_TIO_IO_CLOSE, tio->output_arg, QSE_NULL, 0) == -1) 
 		{
-			tio->errnum = ASE_TIO_EOUTCL;
+			tio->errnum = QSE_TIO_EOUTCL;
 			return -1;
 		}
 
-		tio->output_func = ASE_NULL;
-		tio->output_arg = ASE_NULL;
+		tio->output_func = QSE_NULL;
+		tio->output_arg = QSE_NULL;
 	}
 		
 	return 0;
 }
 
-ase_ssize_t ase_tio_flush (ase_tio_t* tio)
+qse_ssize_t qse_tio_flush (qse_tio_t* tio)
 {
-	ase_size_t left, count;
+	qse_size_t left, count;
 
-	if (tio->output_func == ASE_NULL) 
+	if (tio->output_func == QSE_NULL) 
 	{
-		tio->errnum = ASE_TIO_ENOUTF;
-		return (ase_ssize_t)-1;
+		tio->errnum = QSE_TIO_ENOUTF;
+		return (qse_ssize_t)-1;
 	}
 
 	left = tio->outbuf_len;
 	while (left > 0) 
 	{
-		ase_ssize_t n;
+		qse_ssize_t n;
 
 		n = tio->output_func (
-			ASE_TIO_IO_DATA, tio->output_arg, tio->outbuf, left);
+			QSE_TIO_IO_DATA, tio->output_arg, tio->outbuf, left);
 		if (n <= -1) 
 		{
 			tio->outbuf_len = left;
-			tio->errnum = ASE_TIO_EOUTPT;
+			tio->errnum = QSE_TIO_EOUTPT;
 			return -1;
 		}
 		if (n == 0) break;
 	
 		left -= n;
-		ASE_MEMCPY (tio->outbuf, &tio->inbuf[n], left);
+		QSE_MEMCPY (tio->outbuf, &tio->inbuf[n], left);
 	}
 
 	count = tio->outbuf_len - left;
 	tio->outbuf_len = left;
 
-	return (ase_ssize_t)count;
+	return (qse_ssize_t)count;
 }
 
-void ase_tio_purge (ase_tio_t* tio)
+void qse_tio_purge (qse_tio_t* tio)
 {
         tio->input_status = 0;
         tio->inbuf_curp = 0;
         tio->inbuf_len = 0;
         tio->outbuf_len = 0;
-	tio->errnum = ASE_TIO_ENOERR;
+	tio->errnum = QSE_TIO_ENOERR;
 }

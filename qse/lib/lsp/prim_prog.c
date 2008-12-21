@@ -6,47 +6,47 @@
 
 #include "lsp.h"
 
-ase_lsp_obj_t* ase_lsp_prim_prog1 (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_prog1 (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/* (prog1 1 2 3) returns 1 */
-	ase_lsp_obj_t* res = ASE_NULL, * tmp;
+	qse_lsp_obj_t* res = QSE_NULL, * tmp;
 
 	/*while (args != lsp->mem->nil) {*/
-	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-		if (res == ASE_NULL) 
+		if (res == QSE_NULL) 
 		{
 			res = tmp;
-			if (ase_lsp_pushtmp (lsp, res) == ASE_NULL)
+			if (qse_lsp_pushtmp (lsp, res) == QSE_NULL)
 			{
-				return ASE_NULL;
+				return QSE_NULL;
 			}
 		}
-		args = ASE_LSP_CDR(args);
+		args = QSE_LSP_CDR(args);
 	}
 
-	if (res != ASE_NULL) ase_lsp_poptmp (lsp);
+	if (res != QSE_NULL) qse_lsp_poptmp (lsp);
 	return res;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_progn (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_progn (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/* (progn 1 2 3) returns 3 */
 
-	ase_lsp_obj_t* res, * tmp;
+	qse_lsp_obj_t* res, * tmp;
 
 	res = lsp->mem->nil;
 	/*while (args != lsp->mem->nil) {*/
-	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
 		res = tmp;
-		args = ASE_LSP_CDR(args);
+		args = QSE_LSP_CDR(args);
 	}
 
 	return res;

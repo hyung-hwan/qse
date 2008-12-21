@@ -4,386 +4,386 @@
  * {License}
  */
 
-#ifndef _ASE_LIB_AWK_TREE_H_
-#define _ASE_LIB_AWK_TREE_H_
+#ifndef _QSE_LIB_AWK_TREE_H_
+#define _QSE_LIB_AWK_TREE_H_
 
-enum ase_awk_nde_type_t
+enum qse_awk_nde_type_t
 {
-	ASE_AWK_NDE_NULL,
+	QSE_AWK_NDE_NULL,
 
 	/* statement */
-	ASE_AWK_NDE_BLK,
-	ASE_AWK_NDE_IF,
-	ASE_AWK_NDE_WHILE,
-	ASE_AWK_NDE_DOWHILE,
-	ASE_AWK_NDE_FOR,
-	ASE_AWK_NDE_FOREACH,
-	ASE_AWK_NDE_BREAK,
-	ASE_AWK_NDE_CONTINUE,
-	ASE_AWK_NDE_RETURN,
-	ASE_AWK_NDE_EXIT,
-	ASE_AWK_NDE_NEXT,
-	ASE_AWK_NDE_NEXTFILE,
-	ASE_AWK_NDE_DELETE,
-	ASE_AWK_NDE_RESET,
-	ASE_AWK_NDE_PRINT,
-	ASE_AWK_NDE_PRINTF,
+	QSE_AWK_NDE_BLK,
+	QSE_AWK_NDE_IF,
+	QSE_AWK_NDE_WHILE,
+	QSE_AWK_NDE_DOWHILE,
+	QSE_AWK_NDE_FOR,
+	QSE_AWK_NDE_FOREACH,
+	QSE_AWK_NDE_BREAK,
+	QSE_AWK_NDE_CONTINUE,
+	QSE_AWK_NDE_RETURN,
+	QSE_AWK_NDE_EXIT,
+	QSE_AWK_NDE_NEXT,
+	QSE_AWK_NDE_NEXTFILE,
+	QSE_AWK_NDE_DELETE,
+	QSE_AWK_NDE_RESET,
+	QSE_AWK_NDE_PRINT,
+	QSE_AWK_NDE_PRINTF,
 
 	/* expression */
 	/* if you change the following values including their order,
 	 * you should change __eval_func of __eval_expression 
 	 * in run.c accordingly */
-	ASE_AWK_NDE_GRP, 
-	ASE_AWK_NDE_ASS,
-	ASE_AWK_NDE_EXP_BIN,
-	ASE_AWK_NDE_EXP_UNR,
-	ASE_AWK_NDE_EXP_INCPRE,
-	ASE_AWK_NDE_EXP_INCPST,
-	ASE_AWK_NDE_CND,
-	ASE_AWK_NDE_BFN,
-	ASE_AWK_NDE_AFN,
-	ASE_AWK_NDE_INT,
-	ASE_AWK_NDE_REAL,
-	ASE_AWK_NDE_STR,
-	ASE_AWK_NDE_REX,
+	QSE_AWK_NDE_GRP, 
+	QSE_AWK_NDE_ASS,
+	QSE_AWK_NDE_EXP_BIN,
+	QSE_AWK_NDE_EXP_UNR,
+	QSE_AWK_NDE_EXP_INCPRE,
+	QSE_AWK_NDE_EXP_INCPST,
+	QSE_AWK_NDE_CND,
+	QSE_AWK_NDE_BFN,
+	QSE_AWK_NDE_AFN,
+	QSE_AWK_NDE_INT,
+	QSE_AWK_NDE_REAL,
+	QSE_AWK_NDE_STR,
+	QSE_AWK_NDE_REX,
 
 	/* keep this order for the following items otherwise, you may have 
 	 * to change eval_incpre and eval_incpst in run.c as well as
-	 * ASE_AWK_VAL_REF_XXX in awk.h */
-	ASE_AWK_NDE_NAMED,
-	ASE_AWK_NDE_GLOBAL,
-	ASE_AWK_NDE_LOCAL,
-	ASE_AWK_NDE_ARG,
-	ASE_AWK_NDE_NAMEDIDX,
-	ASE_AWK_NDE_GLOBALIDX,
-	ASE_AWK_NDE_LOCALIDX,
-	ASE_AWK_NDE_ARGIDX,
-	ASE_AWK_NDE_POS,
+	 * QSE_AWK_VAL_REF_XXX in awk.h */
+	QSE_AWK_NDE_NAMED,
+	QSE_AWK_NDE_GLOBAL,
+	QSE_AWK_NDE_LOCAL,
+	QSE_AWK_NDE_ARG,
+	QSE_AWK_NDE_NAMEDIDX,
+	QSE_AWK_NDE_GLOBALIDX,
+	QSE_AWK_NDE_LOCALIDX,
+	QSE_AWK_NDE_ARGIDX,
+	QSE_AWK_NDE_POS,
 	/* ---------------------------------- */
 
-	ASE_AWK_NDE_GETLINE
+	QSE_AWK_NDE_GETLINE
 };
 
-enum ase_awk_in_type_t
+enum qse_awk_in_type_t
 {
 	/* the order of these values match 
 	 * __in_type_map and __in_opt_map in extio.c */
 
-	ASE_AWK_IN_PIPE,
-	ASE_AWK_IN_COPROC,
-	ASE_AWK_IN_FILE,
-	ASE_AWK_IN_CONSOLE
+	QSE_AWK_IN_PIPE,
+	QSE_AWK_IN_COPROC,
+	QSE_AWK_IN_FILE,
+	QSE_AWK_IN_CONSOLE
 };
 
-enum ase_awk_out_type_t
+enum qse_awk_out_type_t
 {
 	/* the order of these values match 
 	 * __out_type_map and __out_opt_map in extio.c */
 
-	ASE_AWK_OUT_PIPE,
-	ASE_AWK_OUT_COPROC,
-	ASE_AWK_OUT_FILE,
-	ASE_AWK_OUT_FILE_APPEND,
-	ASE_AWK_OUT_CONSOLE
+	QSE_AWK_OUT_PIPE,
+	QSE_AWK_OUT_COPROC,
+	QSE_AWK_OUT_FILE,
+	QSE_AWK_OUT_FILE_APPEND,
+	QSE_AWK_OUT_CONSOLE
 };
 
 /* afn (awk function defined with the keyword function) */
-typedef struct ase_awk_afn_t           ase_awk_afn_t;
-typedef struct ase_awk_nde_t           ase_awk_nde_t;
-typedef struct ase_awk_nde_blk_t       ase_awk_nde_blk_t;
-typedef struct ase_awk_nde_grp_t       ase_awk_nde_grp_t;
-typedef struct ase_awk_nde_ass_t       ase_awk_nde_ass_t;
-typedef struct ase_awk_nde_exp_t       ase_awk_nde_exp_t;
-typedef struct ase_awk_nde_cnd_t       ase_awk_nde_cnd_t;
-typedef struct ase_awk_nde_pos_t       ase_awk_nde_pos_t;
+typedef struct qse_awk_afn_t           qse_awk_afn_t;
+typedef struct qse_awk_nde_t           qse_awk_nde_t;
+typedef struct qse_awk_nde_blk_t       qse_awk_nde_blk_t;
+typedef struct qse_awk_nde_grp_t       qse_awk_nde_grp_t;
+typedef struct qse_awk_nde_ass_t       qse_awk_nde_ass_t;
+typedef struct qse_awk_nde_exp_t       qse_awk_nde_exp_t;
+typedef struct qse_awk_nde_cnd_t       qse_awk_nde_cnd_t;
+typedef struct qse_awk_nde_pos_t       qse_awk_nde_pos_t;
 
-#ifndef ASE_AWK_NDE_INT_DEFINED
-#define ASE_AWK_NDE_INT_DEFINED
-typedef struct ase_awk_nde_int_t       ase_awk_nde_int_t;
+#ifndef QSE_AWK_NDE_INT_DEFINED
+#define QSE_AWK_NDE_INT_DEFINED
+typedef struct qse_awk_nde_int_t       qse_awk_nde_int_t;
 #endif
 
-#ifndef ASE_AWK_NDE_REAL_DEFINED
-#define ASE_AWK_NDE_REAL_DEFINED
-typedef struct ase_awk_nde_real_t      ase_awk_nde_real_t;
+#ifndef QSE_AWK_NDE_REAL_DEFINED
+#define QSE_AWK_NDE_REAL_DEFINED
+typedef struct qse_awk_nde_real_t      qse_awk_nde_real_t;
 #endif
 
-typedef struct ase_awk_nde_str_t       ase_awk_nde_str_t;
-typedef struct ase_awk_nde_rex_t       ase_awk_nde_rex_t;
-typedef struct ase_awk_nde_var_t       ase_awk_nde_var_t;
-typedef struct ase_awk_nde_call_t      ase_awk_nde_call_t;
-typedef struct ase_awk_nde_getline_t   ase_awk_nde_getline_t;
+typedef struct qse_awk_nde_str_t       qse_awk_nde_str_t;
+typedef struct qse_awk_nde_rex_t       qse_awk_nde_rex_t;
+typedef struct qse_awk_nde_var_t       qse_awk_nde_var_t;
+typedef struct qse_awk_nde_call_t      qse_awk_nde_call_t;
+typedef struct qse_awk_nde_getline_t   qse_awk_nde_getline_t;
 
-typedef struct ase_awk_nde_if_t        ase_awk_nde_if_t;
-typedef struct ase_awk_nde_while_t     ase_awk_nde_while_t;
-typedef struct ase_awk_nde_for_t       ase_awk_nde_for_t;
-typedef struct ase_awk_nde_foreach_t   ase_awk_nde_foreach_t;
-typedef struct ase_awk_nde_break_t     ase_awk_nde_break_t;
-typedef struct ase_awk_nde_continue_t  ase_awk_nde_continue_t;
-typedef struct ase_awk_nde_return_t    ase_awk_nde_return_t;
-typedef struct ase_awk_nde_exit_t      ase_awk_nde_exit_t;
-typedef struct ase_awk_nde_next_t      ase_awk_nde_next_t;
-typedef struct ase_awk_nde_nextfile_t  ase_awk_nde_nextfile_t;
-typedef struct ase_awk_nde_delete_t    ase_awk_nde_delete_t;
-typedef struct ase_awk_nde_reset_t     ase_awk_nde_reset_t;
-typedef struct ase_awk_nde_print_t     ase_awk_nde_print_t;
+typedef struct qse_awk_nde_if_t        qse_awk_nde_if_t;
+typedef struct qse_awk_nde_while_t     qse_awk_nde_while_t;
+typedef struct qse_awk_nde_for_t       qse_awk_nde_for_t;
+typedef struct qse_awk_nde_foreach_t   qse_awk_nde_foreach_t;
+typedef struct qse_awk_nde_break_t     qse_awk_nde_break_t;
+typedef struct qse_awk_nde_continue_t  qse_awk_nde_continue_t;
+typedef struct qse_awk_nde_return_t    qse_awk_nde_return_t;
+typedef struct qse_awk_nde_exit_t      qse_awk_nde_exit_t;
+typedef struct qse_awk_nde_next_t      qse_awk_nde_next_t;
+typedef struct qse_awk_nde_nextfile_t  qse_awk_nde_nextfile_t;
+typedef struct qse_awk_nde_delete_t    qse_awk_nde_delete_t;
+typedef struct qse_awk_nde_reset_t     qse_awk_nde_reset_t;
+typedef struct qse_awk_nde_print_t     qse_awk_nde_print_t;
 
-struct ase_awk_afn_t
+struct qse_awk_afn_t
 {
-	ase_xstr_t name;
-	ase_size_t nargs;
-	ase_awk_nde_t* body;
+	qse_xstr_t name;
+	qse_size_t nargs;
+	qse_awk_nde_t* body;
 };
 
-#define ASE_AWK_NDE_HDR \
+#define QSE_AWK_NDE_HDR \
 	int type; \
-	ase_size_t line; \
-	ase_awk_nde_t* next
+	qse_size_t line; \
+	qse_awk_nde_t* next
 
-struct ase_awk_nde_t
+struct qse_awk_nde_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 };
 
-/* ASE_AWK_NDE_BLK - block statement including top-level blocks */
-struct ase_awk_nde_blk_t
+/* QSE_AWK_NDE_BLK - block statement including top-level blocks */
+struct qse_awk_nde_blk_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_size_t nlocals;
-	ase_awk_nde_t* body;
+	QSE_AWK_NDE_HDR;
+	qse_size_t nlocals;
+	qse_awk_nde_t* body;
 };
 
-/* ASE_AWK_NDE_GRP - expression group */
-struct ase_awk_nde_grp_t
+/* QSE_AWK_NDE_GRP - expression group */
+struct qse_awk_nde_grp_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* body;
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* body;
 };
 
-/* ASE_AWK_NDE_ASS - assignment */
-struct ase_awk_nde_ass_t
+/* QSE_AWK_NDE_ASS - assignment */
+struct qse_awk_nde_ass_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 	int opcode;
-	ase_awk_nde_t* left;
-	ase_awk_nde_t* right;
+	qse_awk_nde_t* left;
+	qse_awk_nde_t* right;
 };
 
-/* ASE_AWK_NDE_EXP_BIN, ASE_AWK_NDE_EXP_UNR, 
- * ASE_AWK_NDE_EXP_INCPRE, ASE_AW_NDE_EXP_INCPST */
-struct ase_awk_nde_exp_t
+/* QSE_AWK_NDE_EXP_BIN, QSE_AWK_NDE_EXP_UNR, 
+ * QSE_AWK_NDE_EXP_INCPRE, QSE_AW_NDE_EXP_INCPST */
+struct qse_awk_nde_exp_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 	int opcode;
-	ase_awk_nde_t* left;
-	ase_awk_nde_t* right; /* ASE_NULL for UNR, INCPRE, INCPST */
+	qse_awk_nde_t* left;
+	qse_awk_nde_t* right; /* QSE_NULL for UNR, INCPRE, INCPST */
 };
 
-/* ASE_AWK_NDE_CND */
-struct ase_awk_nde_cnd_t
+/* QSE_AWK_NDE_CND */
+struct qse_awk_nde_cnd_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* test;
-	ase_awk_nde_t* left;
-	ase_awk_nde_t* right;
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* test;
+	qse_awk_nde_t* left;
+	qse_awk_nde_t* right;
 };
 
-/* ASE_AWK_NDE_POS - positional - $1, $2, $x, etc */
-struct ase_awk_nde_pos_t  
+/* QSE_AWK_NDE_POS - positional - $1, $2, $x, etc */
+struct qse_awk_nde_pos_t  
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* val;	
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* val;	
 };
 
-/* ASE_AWK_NDE_INT */
-struct ase_awk_nde_int_t
+/* QSE_AWK_NDE_INT */
+struct qse_awk_nde_int_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_long_t val;
-	ase_char_t* str; 
-	ase_size_t  len;
+	QSE_AWK_NDE_HDR;
+	qse_long_t val;
+	qse_char_t* str; 
+	qse_size_t  len;
 };
 
-/* ASE_AWK_NDE_REAL */
-struct ase_awk_nde_real_t
+/* QSE_AWK_NDE_REAL */
+struct qse_awk_nde_real_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_real_t val;
-	ase_char_t* str;
-	ase_size_t  len;
+	QSE_AWK_NDE_HDR;
+	qse_real_t val;
+	qse_char_t* str;
+	qse_size_t  len;
 };
 
-/* ASE_AWK_NDE_STR */
-struct ase_awk_nde_str_t
+/* QSE_AWK_NDE_STR */
+struct qse_awk_nde_str_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_char_t* buf;
-	ase_size_t  len;
+	QSE_AWK_NDE_HDR;
+	qse_char_t* buf;
+	qse_size_t  len;
 };
 
-/* ASE_AWK_NDE_REX */
-struct ase_awk_nde_rex_t
+/* QSE_AWK_NDE_REX */
+struct qse_awk_nde_rex_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_char_t* buf;
-	ase_size_t  len;
+	QSE_AWK_NDE_HDR;
+	qse_char_t* buf;
+	qse_size_t  len;
 	void*      code;
 };
 
-/* ASE_AWK_NDE_NAMED, ASE_AWK_NDE_GLOBAL, 
- * ASE_AWK_NDE_LOCAL, ASE_AWK_NDE_ARG 
- * ASE_AWK_NDE_NAMEDIDX, ASE_AWK_NDE_GLOBALIDX, 
- * ASE_AWK_NDE_LOCALIDX, ASE_AWK_NDE_ARGIDX */
-struct ase_awk_nde_var_t
+/* QSE_AWK_NDE_NAMED, QSE_AWK_NDE_GLOBAL, 
+ * QSE_AWK_NDE_LOCAL, QSE_AWK_NDE_ARG 
+ * QSE_AWK_NDE_NAMEDIDX, QSE_AWK_NDE_GLOBALIDX, 
+ * QSE_AWK_NDE_LOCALIDX, QSE_AWK_NDE_ARGIDX */
+struct qse_awk_nde_var_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 	struct 
 	{
-		ase_xstr_t name;
-		ase_size_t idxa;
+		qse_xstr_t name;
+		qse_size_t idxa;
 	} id;
-	ase_awk_nde_t* idx; /* ASE_NULL for non-XXXXIDX */
+	qse_awk_nde_t* idx; /* QSE_NULL for non-XXXXIDX */
 };
 
-/* ASE_AWK_NDE_BFN, ASE_AWK_NDE_AFN */
-struct ase_awk_nde_call_t
+/* QSE_AWK_NDE_BFN, QSE_AWK_NDE_AFN */
+struct qse_awk_nde_call_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 	union
 	{
 		struct
 		{
-			ase_xstr_t name;
+			qse_xstr_t name;
 		} afn;
 
 		/* minimum information of a intrinsic function 
 		 * needed during run-time. */
 		struct
 		{
-			ase_xstr_t name;
+			qse_xstr_t name;
 
-			/* original name. if ase_awk_setword has been 
+			/* original name. if qse_awk_setword has been 
 			 * invoked, oname can be different from name */
-			ase_xstr_t oname;
+			qse_xstr_t oname;
 
 			struct
 			{
-				ase_size_t min;
-				ase_size_t max;
-				const ase_char_t* spec;
+				qse_size_t min;
+				qse_size_t max;
+				const qse_char_t* spec;
 			} arg;
 
 			int (*handler) (
-				ase_awk_run_t*, const ase_char_t*, ase_size_t);
+				qse_awk_run_t*, const qse_char_t*, qse_size_t);
 		} bfn;
 	} what;
-	ase_awk_nde_t* args;
-	ase_size_t nargs;
+	qse_awk_nde_t* args;
+	qse_size_t nargs;
 };
 
-/* ASE_AWK_NDE_GETLINE */
-struct ase_awk_nde_getline_t
+/* QSE_AWK_NDE_GETLINE */
+struct qse_awk_nde_getline_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* var;
-	int in_type; /* ASE_AWK_GETLINE_XXX */
-	ase_awk_nde_t* in;
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* var;
+	int in_type; /* QSE_AWK_GETLINE_XXX */
+	qse_awk_nde_t* in;
 };
 
-/* ASE_AWK_NDE_IF */
-struct ase_awk_nde_if_t
+/* QSE_AWK_NDE_IF */
+struct qse_awk_nde_if_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* test;
-	ase_awk_nde_t* then_part;
-	ase_awk_nde_t* else_part; /* optional */
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* test;
+	qse_awk_nde_t* then_part;
+	qse_awk_nde_t* else_part; /* optional */
 };
 
-/* ASE_AWK_NDE_WHILE, ASE_AWK_NDE_DOWHILE */
-struct ase_awk_nde_while_t
+/* QSE_AWK_NDE_WHILE, QSE_AWK_NDE_DOWHILE */
+struct qse_awk_nde_while_t
 {
-	ASE_AWK_NDE_HDR; 
-	ase_awk_nde_t* test;
-	ase_awk_nde_t* body;
+	QSE_AWK_NDE_HDR; 
+	qse_awk_nde_t* test;
+	qse_awk_nde_t* body;
 };
 
-/* ASE_AWK_NDE_FOR */
-struct ase_awk_nde_for_t
+/* QSE_AWK_NDE_FOR */
+struct qse_awk_nde_for_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* init; /* optional */
-	ase_awk_nde_t* test; /* optional */
-	ase_awk_nde_t* incr; /* optional */
-	ase_awk_nde_t* body;
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* init; /* optional */
+	qse_awk_nde_t* test; /* optional */
+	qse_awk_nde_t* incr; /* optional */
+	qse_awk_nde_t* body;
 };
 
-/* ASE_AWK_NDE_FOREACH */
-struct ase_awk_nde_foreach_t
+/* QSE_AWK_NDE_FOREACH */
+struct qse_awk_nde_foreach_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* test;
-	ase_awk_nde_t* body;
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* test;
+	qse_awk_nde_t* body;
 };
 
-/* ASE_AWK_NDE_BREAK */
-struct ase_awk_nde_break_t
+/* QSE_AWK_NDE_BREAK */
+struct qse_awk_nde_break_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 };
 
-/* ASE_AWK_NDE_CONTINUE */
-struct ase_awk_nde_continue_t
+/* QSE_AWK_NDE_CONTINUE */
+struct qse_awk_nde_continue_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 };
 
-/* ASE_AWK_NDE_RETURN */
-struct ase_awk_nde_return_t
+/* QSE_AWK_NDE_RETURN */
+struct qse_awk_nde_return_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* val; /* optional (no return code if ASE_NULL) */	
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* val; /* optional (no return code if QSE_NULL) */	
 };
 
-/* ASE_AWK_NDE_EXIT */
-struct ase_awk_nde_exit_t
+/* QSE_AWK_NDE_EXIT */
+struct qse_awk_nde_exit_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* val; /* optional (no exit code if ASE_NULL) */
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* val; /* optional (no exit code if QSE_NULL) */
 };
 
-/* ASE_AWK_NDE_NEXT */
-struct ase_awk_nde_next_t
+/* QSE_AWK_NDE_NEXT */
+struct qse_awk_nde_next_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 };
 
-/* ASE_AWK_NDE_NEXTFILE */
-struct ase_awk_nde_nextfile_t
+/* QSE_AWK_NDE_NEXTFILE */
+struct qse_awk_nde_nextfile_t
 {
-	ASE_AWK_NDE_HDR;
+	QSE_AWK_NDE_HDR;
 	int out;
 };
 
-/* ASE_AWK_NDE_DELETE */
-struct ase_awk_nde_delete_t
+/* QSE_AWK_NDE_DELETE */
+struct qse_awk_nde_delete_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* var;
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* var;
 };
 
-/* ASE_AWK_NDE_RESET */
-struct ase_awk_nde_reset_t
+/* QSE_AWK_NDE_RESET */
+struct qse_awk_nde_reset_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* var;
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* var;
 };
 
-/* ASE_AWK_NDE_PRINT */
-struct ase_awk_nde_print_t
+/* QSE_AWK_NDE_PRINT */
+struct qse_awk_nde_print_t
 {
-	ASE_AWK_NDE_HDR;
-	ase_awk_nde_t* args;
-	int out_type; /* ASE_AWK_OUT_XXX */
-	ase_awk_nde_t* out;
+	QSE_AWK_NDE_HDR;
+	qse_awk_nde_t* args;
+	int out_type; /* QSE_AWK_OUT_XXX */
+	qse_awk_nde_t* out;
 };
 
 #ifdef __cplusplus
@@ -391,13 +391,13 @@ extern "C" {
 #endif
 
 /* print the entire tree */
-int ase_awk_prnpt (ase_awk_t* awk, ase_awk_nde_t* tree);
+int qse_awk_prnpt (qse_awk_t* awk, qse_awk_nde_t* tree);
 /* print a single top-level node */
-int ase_awk_prnnde (ase_awk_t* awk, ase_awk_nde_t* node); 
+int qse_awk_prnnde (qse_awk_t* awk, qse_awk_nde_t* node); 
 /* print the pattern part */
-int ase_awk_prnptnpt (ase_awk_t* awk, ase_awk_nde_t* tree);
+int qse_awk_prnptnpt (qse_awk_t* awk, qse_awk_nde_t* tree);
 
-void ase_awk_clrpt (ase_awk_t* awk, ase_awk_nde_t* tree);
+void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree);
 
 #ifdef __cplusplus
 }

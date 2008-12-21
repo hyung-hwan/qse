@@ -4,7 +4,7 @@
  * {License}
  */
 
-#include <ase/utl/stdio.h>
+#include <qse/utl/stdio.h>
 #include "../cmn/chr.h"
 
 #include <wchar.h>
@@ -17,46 +17,46 @@
 
 #if defined(_WIN32)
 
-int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list ap)
+int qse_vsprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, va_list ap)
 {
 	int n;
 
-#ifdef ASE_CHAR_IS_MCHAR
+#ifdef QSE_CHAR_IS_MCHAR
 	n = _vsnprintf (buf, size, fmt, ap);
 #else
 	n = _vsnwprintf (buf, size, fmt, ap);
 #endif
 	if (n < 0 || (size_t)n >= size)
 	{
-		if (size > 0) buf[size-1] = ASE_T('\0');
+		if (size > 0) buf[size-1] = QSE_T('\0');
 		n = -1;
 	}
 
 	return n;
 }
 
-int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
+int qse_sprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
 
 	va_start (ap, fmt);
-	n = ase_vsprintf (buf, size, fmt, ap);
+	n = qse_vsprintf (buf, size, fmt, ap);
 	va_end (ap);
 	return n;
 }
 
 #else
 
-static ase_char_t* __adjust_format (const ase_char_t* format);
+static qse_char_t* __adjust_format (const qse_char_t* format);
 
-int ase_vfprintf (ASE_FILE *stream, const ase_char_t* fmt, va_list ap)
+int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap)
 {
 	int n;
-	ase_char_t* nf = __adjust_format (fmt);
+	qse_char_t* nf = __adjust_format (fmt);
 	if (nf == NULL) return -1;
 
-#ifdef ASE_CHAR_IS_MCHAR
+#ifdef QSE_CHAR_IS_MCHAR
 	n = vfprintf (stream, nf, ap);
 #else
 	n = vfwprintf (stream, nf, ap);
@@ -65,40 +65,40 @@ int ase_vfprintf (ASE_FILE *stream, const ase_char_t* fmt, va_list ap)
 	return n;
 }
 
-int ase_vprintf (const ase_char_t* fmt, va_list ap)
+int qse_vprintf (const qse_char_t* fmt, va_list ap)
 {
-	return ase_vfprintf (stdout, fmt, ap);
+	return qse_vfprintf (stdout, fmt, ap);
 }
 
-int ase_fprintf (ASE_FILE* file, const ase_char_t* fmt, ...)
+int qse_fprintf (QSE_FILE* file, const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
 
 	va_start (ap, fmt);
-	n = ase_vfprintf (file, fmt, ap);
+	n = qse_vfprintf (file, fmt, ap);
 	va_end (ap);
 	return n;
 }
 
-int ase_printf (const ase_char_t* fmt, ...)
+int qse_printf (const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
 
 	va_start (ap, fmt);
-	n = ase_vprintf (fmt, ap);
+	n = qse_vprintf (fmt, ap);
 	va_end (ap);
 	return n;
 }
 
-int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list ap)
+int qse_vsprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, va_list ap)
 {
 	int n;
-	ase_char_t* nf = __adjust_format (fmt);
+	qse_char_t* nf = __adjust_format (fmt);
 	if (nf == NULL) return -1;
 
-#if defined(ASE_CHAR_IS_MCHAR)
+#if defined(QSE_CHAR_IS_MCHAR)
 	n = vsnprintf (buf, size, nf, ap);
 #elif defined(_WIN32)
 	n = _vsnwprintf (buf, size, nf, ap);
@@ -107,7 +107,7 @@ int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list a
 #endif
 	if (n < 0 || (size_t)n >= size)
 	{
-		if (size > 0) buf[size-1] = ASE_T('\0');
+		if (size > 0) buf[size-1] = QSE_T('\0');
 		n = -1;
 	}
 
@@ -115,13 +115,13 @@ int ase_vsprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, va_list a
 	return n;
 }
 
-int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
+int qse_sprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
 
 	va_start (ap, fmt);
-	n = ase_vsprintf (buf, size, fmt, ap);
+	n = qse_vsprintf (buf, size, fmt, ap);
 	va_end (ap);
 	return n;
 }
@@ -134,9 +134,9 @@ int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
 	do { \
 		if (buf.len >= buf.cap) \
 		{ \
-			ase_char_t* tmp; \
-			tmp = (ase_char_t*)realloc ( \
-				buf.ptr, sizeof(ase_char_t)*(buf.cap+256+1)); \
+			qse_char_t* tmp; \
+			tmp = (qse_char_t*)realloc ( \
+				buf.ptr, sizeof(qse_char_t)*(buf.cap+256+1)); \
 			if (tmp == NULL) \
 			{ \
 				free (buf.ptr); \
@@ -148,36 +148,36 @@ int ase_sprintf (ase_char_t* buf, size_t size, const ase_char_t* fmt, ...)
 		buf.ptr[buf.len++] = c; \
 	} while (0)
 
-static ase_char_t* __adjust_format (const ase_char_t* format)
+static qse_char_t* __adjust_format (const qse_char_t* format)
 {
-	const ase_char_t* fp = format;
+	const qse_char_t* fp = format;
 	int modifier;
-	ase_char_t ch;
+	qse_char_t ch;
 
 	struct
 	{
-		ase_char_t* ptr;
-		ase_size_t  len;
-		ase_size_t  cap;
+		qse_char_t* ptr;
+		qse_size_t  len;
+		qse_size_t  cap;
 	} buf;
 
 	buf.len = 0;
 	buf.cap = 256;
-#if (defined(vms) || defined(__vms)) && (ASE_SIZEOF_VOID_P >= 8)
-	buf.ptr = (ase_char_t*) _malloc32 (sizeof(ase_char_t)*(buf.cap+1));
+#if (defined(vms) || defined(__vms)) && (QSE_SIZEOF_VOID_P >= 8)
+	buf.ptr = (qse_char_t*) _malloc32 (sizeof(qse_char_t)*(buf.cap+1));
 #else
-	buf.ptr = (ase_char_t*) malloc (sizeof(ase_char_t)*(buf.cap+1));
+	buf.ptr = (qse_char_t*) malloc (sizeof(qse_char_t)*(buf.cap+1));
 #endif
 	if (buf.ptr == NULL) return NULL;
 
-	while (*fp != ASE_T('\0')) 
+	while (*fp != QSE_T('\0')) 
 	{
-		while (*fp != ASE_T('\0') && *fp != ASE_T('%')) 
+		while (*fp != QSE_T('\0') && *fp != QSE_T('%')) 
 		{
 			ADDC (buf, *fp++);
 		}
 
-		if (*fp == ASE_T('\0')) break;
+		if (*fp == QSE_T('\0')) break;
 
 		ch = *fp++;	
 		ADDC (buf, ch); /* add % */
@@ -187,15 +187,15 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 		/* flags */
 		while (1)
 		{
-			if (ch == ASE_T(' ') || ch == ASE_T('+') ||
-			    ch == ASE_T('-') || ch == ASE_T('#')) 
+			if (ch == QSE_T(' ') || ch == QSE_T('+') ||
+			    ch == QSE_T('-') || ch == QSE_T('#')) 
 			{
 				ADDC (buf, ch);
 				ch = *fp++;
 			}
 			else 
 			{
-				if (ch == ASE_T('0')) 
+				if (ch == QSE_T('0')) 
 				{
 					ADDC (buf, ch);
 					ch = *fp++; 
@@ -206,14 +206,14 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 		}
 
 		/* check the width */
-		if (ch == ASE_T('*')) 
+		if (ch == QSE_T('*')) 
 		{
 			ADDC (buf, ch);
 			ch = *fp++;
 		}
 		else 
 		{
-			while (ASE_ISDIGIT(ch)) 
+			while (QSE_ISDIGIT(ch)) 
 			{
 				ADDC (buf, ch);
 				ch = *fp++;
@@ -221,19 +221,19 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 		}
 
 		/* precision */
-		if (ch == ASE_T('.')) 
+		if (ch == QSE_T('.')) 
 		{
 			ADDC (buf, ch);
 			ch = *fp++;
 
-			if (ch == ASE_T('*')) 
+			if (ch == QSE_T('*')) 
 			{
 				ADDC (buf, ch);
 				ch = *fp++;
 			}
 			else 
 			{
-				while (ASE_ISDIGIT(ch)) 
+				while (QSE_ISDIGIT(ch)) 
 				{
 					ADDC (buf, ch);
 					ch = *fp++;
@@ -244,8 +244,8 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 		/* modifier */
 		for (modifier = 0;;) 
 		{
-			if (ch == ASE_T('h')) modifier = MOD_SHORT;
-			else if (ch == ASE_T('l')) 
+			if (ch == QSE_T('h')) modifier = MOD_SHORT;
+			else if (ch == QSE_T('l')) 
 			{
 				modifier = (modifier == MOD_LONG)? MOD_LONGLONG: MOD_LONG;
 			}
@@ -255,28 +255,28 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 
 
 		/* type */
-		if (ch == ASE_T('%')) ADDC (buf, ch);
-		else if (ch == ASE_T('c') || ch == ASE_T('s')) 
+		if (ch == QSE_T('%')) ADDC (buf, ch);
+		else if (ch == QSE_T('c') || ch == QSE_T('s')) 
 		{
-#if !defined(ASE_CHAR_IS_MCHAR) && !defined(_WIN32)
+#if !defined(QSE_CHAR_IS_MCHAR) && !defined(_WIN32)
 			ADDC (buf, 'l');
 #endif
 			ADDC (buf, ch);
 		}
-		else if (ch == ASE_T('C') || ch == ASE_T('S')) 
+		else if (ch == QSE_T('C') || ch == QSE_T('S')) 
 		{
 #if defined(_WIN32)
 			ADDC (buf, ch);
 #else
-	#ifdef ASE_CHAR_IS_MCHAR
+	#ifdef QSE_CHAR_IS_MCHAR
 			ADDC (buf, 'l');
 	#endif
-			ADDC (buf, ASE_TOLOWER(ch));
+			ADDC (buf, QSE_TOLOWER(ch));
 #endif
 		}
-		else if (ch == ASE_T('d') || ch == ASE_T('i') || 
-		         ch == ASE_T('o') || ch == ASE_T('u') || 
-		         ch == ASE_T('x') || ch == ASE_T('X')) 
+		else if (ch == QSE_T('d') || ch == QSE_T('i') || 
+		         ch == QSE_T('o') || ch == QSE_T('u') || 
+		         ch == QSE_T('x') || ch == QSE_T('X')) 
 		{
 			if (modifier == MOD_SHORT) 
 			{
@@ -299,31 +299,31 @@ static ase_char_t* __adjust_format (const ase_char_t* format)
 			}
 			ADDC (buf, ch);
 		}
-		else if (ch == ASE_T('\0')) break;
+		else if (ch == QSE_T('\0')) break;
 		else ADDC (buf, ch);
 	}
 
-	buf.ptr[buf.len] = ASE_T('\0');
+	buf.ptr[buf.len] = QSE_T('\0');
 
 	return buf.ptr;
 }
 
 #endif
 
-int ase_dprintf (const ase_char_t* fmt, ...)
+int qse_dprintf (const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
 
 	va_start (ap, fmt);
-	n = ase_vfprintf (stderr, fmt, ap);
+	n = qse_vfprintf (stderr, fmt, ap);
 	va_end (ap);
 	return n;
 }
 
-ASE_FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
+QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 {
-#if defined(ASE_CHAR_IS_MCHAR)
+#if defined(QSE_CHAR_IS_MCHAR)
 	return fopen (path, mode);
 #elif defined(_WIN32)
 	return _wfopen (path, mode);
@@ -333,21 +333,21 @@ ASE_FILE* ase_fopen (const ase_char_t* path, const ase_char_t* mode)
 	char mode_mb[32];
 	size_t n;
 
-	n = wcstombs (path_mb, path, ASE_COUNTOF(path_mb));
+	n = wcstombs (path_mb, path, QSE_COUNTOF(path_mb));
 	if (n == (size_t)-1) return NULL;
-	if (n == ASE_COUNTOF(path_mb)) path_mb[ASE_COUNTOF(path_mb)-1] = '\0';
+	if (n == QSE_COUNTOF(path_mb)) path_mb[QSE_COUNTOF(path_mb)-1] = '\0';
 
-	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
+	n = wcstombs (mode_mb, mode, QSE_COUNTOF(mode_mb));
 	if (n == (size_t)-1) return NULL;
-	if (n == ASE_COUNTOF(mode_mb)) path_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
+	if (n == QSE_COUNTOF(mode_mb)) path_mb[QSE_COUNTOF(mode_mb)-1] = '\0';
 
 	return fopen (path_mb, mode_mb);
 #endif
 }
 
-ASE_FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
+QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode)
 {
-#if defined(ASE_CHAR_IS_MCHAR)
+#if defined(QSE_CHAR_IS_MCHAR)
 	return popen (cmd, mode);
 #elif defined(_WIN32) 
 	return _wpopen (cmd, mode);
@@ -356,74 +356,74 @@ ASE_FILE* ase_popen (const ase_char_t* cmd, const ase_char_t* mode)
 	char mode_mb[32];
 	size_t n;
 
-	n = wcstombs (cmd_mb, cmd, ASE_COUNTOF(cmd_mb));
+	n = wcstombs (cmd_mb, cmd, QSE_COUNTOF(cmd_mb));
 	if (n == (size_t)-1) return NULL;
-	if (n == ASE_COUNTOF(cmd_mb)) cmd_mb[ASE_COUNTOF(cmd_mb)-1] = '\0';
+	if (n == QSE_COUNTOF(cmd_mb)) cmd_mb[QSE_COUNTOF(cmd_mb)-1] = '\0';
 
-	n = wcstombs (mode_mb, mode, ASE_COUNTOF(mode_mb));
+	n = wcstombs (mode_mb, mode, QSE_COUNTOF(mode_mb));
 	if (n == (size_t)-1) return NULL;
-	if (n == ASE_COUNTOF(mode_mb)) cmd_mb[ASE_COUNTOF(mode_mb)-1] = '\0';
+	if (n == QSE_COUNTOF(mode_mb)) cmd_mb[QSE_COUNTOF(mode_mb)-1] = '\0';
 
 	return popen (cmd_mb, mode_mb);
 #endif
 }
 
-static int isnl (const ase_char_t* ptr, ase_size_t len, void* delim)
+static int isnl (const qse_char_t* ptr, qse_size_t len, void* delim)
 {
-	return (ptr[len-1] == *(ase_char_t*)delim)? 1: 0;
+	return (ptr[len-1] == *(qse_char_t*)delim)? 1: 0;
 }
 
-ase_ssize_t ase_getline (ase_char_t **buf, ase_size_t *n, ASE_FILE *fp)
+qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *fp)
 {
-	ase_char_t nl = ASE_T('\n');
-	return ase_getdelim (buf, n, isnl, &nl, fp);
+	qse_char_t nl = QSE_T('\n');
+	return qse_getdelim (buf, n, isnl, &nl, fp);
 }
 
-ase_ssize_t ase_getdelim (
-	ase_char_t **buf, ase_size_t *n, 
-	ase_getdelim_t fn, void* fnarg, ASE_FILE *fp)
+qse_ssize_t qse_getdelim (
+	qse_char_t **buf, qse_size_t *n, 
+	qse_getdelim_t fn, void* fnarg, QSE_FILE *fp)
 {
-	ase_char_t* b;
-	ase_size_t capa;
-	ase_size_t len = 0;
+	qse_char_t* b;
+	qse_size_t capa;
+	qse_size_t len = 0;
 	int x;
 
-	ASE_ASSERT (buf != ASE_NULL);
-	ASE_ASSERT (n != ASE_NULL);
+	QSE_ASSERT (buf != QSE_NULL);
+	QSE_ASSERT (n != QSE_NULL);
 
 	b = *buf;
 	capa = *n;
 
-	if (b == ASE_NULL)
+	if (b == QSE_NULL)
 	{
 		capa = 256;
-	#if (defined(vms) || defined(__vms)) && (ASE_SIZEOF_VOID_P >= 8)
-		b = (ase_char_t*) _malloc32 (sizeof(ase_char_t)*(capa+1));
+	#if (defined(vms) || defined(__vms)) && (QSE_SIZEOF_VOID_P >= 8)
+		b = (qse_char_t*) _malloc32 (sizeof(qse_char_t)*(capa+1));
 	#else
-		b = (ase_char_t*) malloc (sizeof(ase_char_t)*(capa+1));
+		b = (qse_char_t*) malloc (sizeof(qse_char_t)*(capa+1));
 	#endif
-		if (b == ASE_NULL) return -2;
+		if (b == QSE_NULL) return -2;
 	}
 
-	if (ase_feof(fp))
+	if (qse_feof(fp))
 	{
-		len = (ase_size_t)-1;
+		len = (qse_size_t)-1;
 		goto exit_task;
 	}
 
 	while (1)
 	{
-		ase_cint_t c = ase_fgetc(fp);
-		if (c == ASE_CHAR_EOF)
+		qse_cint_t c = qse_fgetc(fp);
+		if (c == QSE_CHAR_EOF)
 		{
-			if (ase_ferror(fp)) 
+			if (qse_ferror(fp)) 
 			{
-				len = (ase_size_t)-2;
+				len = (qse_size_t)-2;
 				goto exit_task;
 			}
 			if (len == 0)
 			{
-				len = (ase_size_t)-1;
+				len = (qse_size_t)-1;
 				goto exit_task;
 			}
 
@@ -432,13 +432,13 @@ ase_ssize_t ase_getdelim (
 
 		if (len+1 >= capa)
 		{
-			ase_size_t ncapa = capa + 256;
-			ase_char_t* nb;
+			qse_size_t ncapa = capa + 256;
+			qse_char_t* nb;
 
-			nb = realloc (b, ncapa*sizeof(ase_char_t));
-			if (nb == ASE_NULL)
+			nb = realloc (b, ncapa*sizeof(qse_char_t));
+			if (nb == QSE_NULL)
 			{
-				len = (ase_size_t)-2;
+				len = (qse_size_t)-2;
 				goto exit_task;
 			}
 
@@ -451,16 +451,16 @@ ase_ssize_t ase_getdelim (
 		x = fn (b, len, fnarg);
 		if (x < 0)
 		{
-			len = (ase_size_t)-3;
+			len = (qse_size_t)-3;
 			goto exit_task;
 		}
 		if (x > 0) break;
 	}
-	b[len] = ASE_T('\0');
+	b[len] = QSE_T('\0');
 
 exit_task:
 	*buf = b;
 	*n = capa;
 
-	return (ase_ssize_t)len;
+	return (qse_ssize_t)len;
 }

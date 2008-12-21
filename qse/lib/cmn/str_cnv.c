@@ -4,128 +4,128 @@
  * {License}
  */
 
-#include <ase/cmn/str.h>
+#include <qse/cmn/str.h>
 
-int ase_strtoi (const ase_char_t* str)
+int qse_strtoi (const qse_char_t* str)
 {
 	int v;
-	ASE_STRTONUM (v, str, ASE_NULL, 10);
+	QSE_STRTONUM (v, str, QSE_NULL, 10);
 	return v;
 }
 
-long ase_strtol (const ase_char_t* str)
+long qse_strtol (const qse_char_t* str)
 {
 	long v;
-	ASE_STRTONUM (v, str, ASE_NULL, 10);
+	QSE_STRTONUM (v, str, QSE_NULL, 10);
 	return v;
 }
 
-unsigned int ase_strtoui (const ase_char_t* str)
+unsigned int qse_strtoui (const qse_char_t* str)
 {
 	unsigned int v;
-	ASE_STRTONUM (v, str, ASE_NULL, 10);
+	QSE_STRTONUM (v, str, QSE_NULL, 10);
 	return v;
 }
 
-unsigned long ase_strtoul (const ase_char_t* str)
+unsigned long qse_strtoul (const qse_char_t* str)
 {
 	unsigned long v;
-	ASE_STRTONUM (v, str, ASE_NULL, 10);
+	QSE_STRTONUM (v, str, QSE_NULL, 10);
 	return v;
 }
 
-int ase_strxtoi (const ase_char_t* str, ase_size_t len)
+int qse_strxtoi (const qse_char_t* str, qse_size_t len)
 {
 	int v;
-	ASE_STRXTONUM (v, str, len, ASE_NULL, 10);
+	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
 	return v;
 }
 
-long ase_strxtol (const ase_char_t* str, ase_size_t len)
+long qse_strxtol (const qse_char_t* str, qse_size_t len)
 {
 	long v;
-	ASE_STRXTONUM (v, str, len, ASE_NULL, 10);
+	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
 	return v;
 }
 
-unsigned int ase_strxtoui (const ase_char_t* str, ase_size_t len)
+unsigned int qse_strxtoui (const qse_char_t* str, qse_size_t len)
 {
 	unsigned int v;
-	ASE_STRXTONUM (v, str, len, ASE_NULL, 10);
+	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
 	return v;
 }
 
-unsigned long ase_strxtoul (const ase_char_t* str, ase_size_t len)
+unsigned long qse_strxtoul (const qse_char_t* str, qse_size_t len)
 {
 	unsigned long v;
-	ASE_STRXTONUM (v, str, len, ASE_NULL, 10);
+	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
 	return v;
 }
 
-ase_int_t ase_strtoint (const ase_char_t* str)
+qse_int_t qse_strtoint (const qse_char_t* str)
 {
-	ase_int_t v;
-	ASE_STRTONUM (v, str, ASE_NULL, 10);
+	qse_int_t v;
+	QSE_STRTONUM (v, str, QSE_NULL, 10);
 	return v;
 }
 
-ase_long_t ase_strtolong (const ase_char_t* str)
+qse_long_t qse_strtolong (const qse_char_t* str)
 {
-	ase_long_t v;
-	ASE_STRTONUM (v, str, ASE_NULL, 10);
+	qse_long_t v;
+	QSE_STRTONUM (v, str, QSE_NULL, 10);
 	return v;
 }
 
-ase_uint_t ase_strtouint (const ase_char_t* str)
+qse_uint_t qse_strtouint (const qse_char_t* str)
 {
-	ase_uint_t v;
-	ASE_STRTONUM (v, str, ASE_NULL, 10);
+	qse_uint_t v;
+	QSE_STRTONUM (v, str, QSE_NULL, 10);
 	return v;
 }
 
-ase_ulong_t ase_strtoulong (const ase_char_t* str)
+qse_ulong_t qse_strtoulong (const qse_char_t* str)
 {
-	ase_ulong_t v;
-	ASE_STRTONUM (v, str, ASE_NULL, 10);
+	qse_ulong_t v;
+	QSE_STRTONUM (v, str, QSE_NULL, 10);
 	return v;
 }
 
-ase_int_t ase_strxtoint (const ase_char_t* str, ase_size_t len)
+qse_int_t qse_strxtoint (const qse_char_t* str, qse_size_t len)
 {
-	ase_int_t v;
-	ASE_STRXTONUM (v, str, len, ASE_NULL, 10);
+	qse_int_t v;
+	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
 	return v;
 }
 
-ase_long_t ase_strxtolong (const ase_char_t* str, ase_size_t len)
+qse_long_t qse_strxtolong (const qse_char_t* str, qse_size_t len)
 {
-	ase_long_t v;
-	ASE_STRXTONUM (v, str, len, ASE_NULL, 10);
+	qse_long_t v;
+	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
 	return v;
 }
 
-ase_uint_t ase_strxtouint (const ase_char_t* str, ase_size_t len)
+qse_uint_t qse_strxtouint (const qse_char_t* str, qse_size_t len)
 {
-	ase_uint_t v;
-	ASE_STRXTONUM (v, str, len, ASE_NULL, 10);
+	qse_uint_t v;
+	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
 	return v;
 }
 
-ase_ulong_t ase_strxtoulong (const ase_char_t* str, ase_size_t len)
+qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len)
 {
-	ase_ulong_t v;
-	ASE_STRXTONUM (v, str, len, ASE_NULL, 10);
+	qse_ulong_t v;
+	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
 	return v;
 }
 
-ase_size_t ase_mbstowcs (
-	const ase_mchar_t* mbs, ase_wchar_t* wcs, ase_size_t* wcslen)
+qse_size_t qse_mbstowcs (
+	const qse_mchar_t* mbs, qse_wchar_t* wcs, qse_size_t* wcslen)
 {
-	ase_size_t wlen, mlen;
-	const ase_mchar_t* mp;
+	qse_size_t wlen, mlen;
+	const qse_mchar_t* mp;
 
-	/* get the length of mbs and pass it to ase_mbsntowcsn as 
-	 * ase_mbtowc called by ase_mbsntowcsn needs it. */
+	/* get the length of mbs and pass it to qse_mbsntowcsn as 
+	 * qse_mbtowc called by qse_mbsntowcsn needs it. */
 	for (mp = mbs; *mp != '\0'; mp++);
 
 	if (*wcslen <= 0) 
@@ -140,7 +140,7 @@ ase_size_t ase_mbstowcs (
 	}
 
 	wlen = *wcslen - 1;
-	mlen = ase_mbsntowcsn (mbs, mp - mbs, wcs, &wlen);
+	mlen = qse_mbsntowcsn (mbs, mp - mbs, wcs, &wlen);
 
 	wcs[wlen] = L'\0';
 	*wcslen = wlen;
@@ -148,19 +148,19 @@ ase_size_t ase_mbstowcs (
 	return mlen;
 }
 
-ase_size_t ase_mbsntowcsn (
-	const ase_mchar_t* mbs, ase_size_t mbslen,
-	ase_wchar_t* wcs, ase_size_t* wcslen)
+qse_size_t qse_mbsntowcsn (
+	const qse_mchar_t* mbs, qse_size_t mbslen,
+	qse_wchar_t* wcs, qse_size_t* wcslen)
 {
-	ase_size_t mlen = mbslen, n;
-	const ase_mchar_t* p;
-	ase_wchar_t* q, * qend ;
+	qse_size_t mlen = mbslen, n;
+	const qse_mchar_t* p;
+	qse_wchar_t* q, * qend ;
 
 	qend = wcs + *wcslen;
 
 	for (p = mbs, q = wcs; mlen > 0 && q < qend; p += n, mlen -= n) 
 	{
-		n = ase_mbtowc (p, mlen, q);
+		n = qse_mbtowc (p, mlen, q);
 		if (n == 0 || n > mlen)
 		{
 			/* wrong sequence or insufficient input */
@@ -174,15 +174,15 @@ ase_size_t ase_mbsntowcsn (
 	return p - mbs; /* returns the number of bytes processed */
 }
 
-ase_size_t ase_wcstombs (
-	const ase_wchar_t* wcs, ase_mchar_t* mbs, ase_size_t* mbslen)
+qse_size_t qse_wcstombs (
+	const qse_wchar_t* wcs, qse_mchar_t* mbs, qse_size_t* mbslen)
 {
-	const ase_wchar_t* p = wcs;
-	ase_size_t rem = *mbslen;
+	const qse_wchar_t* p = wcs;
+	qse_size_t rem = *mbslen;
 
-	while (*p != ASE_WT('\0') && rem > 1) 
+	while (*p != QSE_WT('\0') && rem > 1) 
 	{
-		ase_size_t n = ase_wctomb (*p, mbs, rem);
+		qse_size_t n = qse_wctomb (*p, mbs, rem);
 		if (n == 0 || n > rem)
 		{
 			/* illegal character or buffer not enough */
@@ -209,17 +209,17 @@ ase_size_t ase_wcstombs (
 	return p - wcs; 
 }
 
-ase_size_t ase_wcsntombsn (
-	const ase_wchar_t* wcs, ase_size_t wcslen,
-	ase_mchar_t* mbs, ase_size_t* mbslen)
+qse_size_t qse_wcsntombsn (
+	const qse_wchar_t* wcs, qse_size_t wcslen,
+	qse_mchar_t* mbs, qse_size_t* mbslen)
 {
-	const ase_wchar_t* p = wcs;
-	const ase_wchar_t* end = wcs + wcslen;
-	ase_size_t len = *mbslen;
+	const qse_wchar_t* p = wcs;
+	const qse_wchar_t* end = wcs + wcslen;
+	qse_size_t len = *mbslen;
 
 	while (p < end && len > 0) 
 	{
-		ase_size_t n = ase_wctomb (*p, mbs, len);
+		qse_size_t n = qse_wctomb (*p, mbs, len);
 		if (n == 0 || n > len)
 		{
 			/* illegal character or buffer not enough */
@@ -236,14 +236,14 @@ ase_size_t ase_wcsntombsn (
 	return p - wcs; 
 }
 
-int ase_wcstombs_strict (
-	const ase_wchar_t* wcs, ase_mchar_t* mbs, ase_size_t mbslen)
+int qse_wcstombs_strict (
+	const qse_wchar_t* wcs, qse_mchar_t* mbs, qse_size_t mbslen)
 {
-	ase_size_t n;
-	ase_size_t mn = mbslen;
+	qse_size_t n;
+	qse_size_t mn = mbslen;
 
-	n = ase_wcstombs (wcs, mbs, &mn);
-	if (wcs[n] != ASE_WT('\0')) return -1; /* didn't process all */
+	n = qse_wcstombs (wcs, mbs, &mn);
+	if (wcs[n] != QSE_WT('\0')) return -1; /* didn't process all */
 	if (mn >= mbslen) 
 	{
 		/* mbs not big enough to be null-terminated.

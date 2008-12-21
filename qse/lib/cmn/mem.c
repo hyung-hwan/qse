@@ -4,39 +4,39 @@
  * {License}
  */
 
-#include <ase/cmn/mem.h>
+#include <qse/cmn/mem.h>
 #include <stdlib.h>
 
 #if defined(__SPU__)
 #include <spu_intrinsics.h>
-#define SPU_VUC_SIZE ASE_SIZEOF(vector unsigned char)
+#define SPU_VUC_SIZE QSE_SIZEOF(vector unsigned char)
 #endif
 
-/*#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)%ASE_SIZEOF(ase_size_t))*/
-#define IS_UNALIGNED(ptr) (((ase_size_t)ptr)&(ASE_SIZEOF(ase_size_t)-1))
+/*#define IS_UNALIGNED(ptr) (((qse_size_t)ptr)%QSE_SIZEOF(qse_size_t))*/
+#define IS_UNALIGNED(ptr) (((qse_size_t)ptr)&(QSE_SIZEOF(qse_size_t)-1))
 #define IS_ALIGNED(ptr) (!IS_UNALIGNED(ptr))
 
 #define IS_EITHER_UNALIGNED(ptr1,ptr2) \
-	(((ase_size_t)ptr1|(ase_size_t)ptr2)&(ASE_SIZEOF(ase_size_t)-1))
+	(((qse_size_t)ptr1|(qse_size_t)ptr2)&(QSE_SIZEOF(qse_size_t)-1))
 #define IS_BOTH_ALIGNED(ptr1,ptr2) (!IS_EITHER_UNALIGNED(ptr1,ptr2))
 
-void* ase_memcpy (void* dst, const void* src, ase_size_t n)
+void* qse_memcpy (void* dst, const void* src, qse_size_t n)
 {
-#if defined(ASE_BUILD_FOR_SIZE)
+#if defined(QSE_BUILD_FOR_SIZE)
 
-	ase_byte_t* d = (ase_byte_t*)dst;
-	ase_byte_t* s = (ase_byte_t*)src;
+	qse_byte_t* d = (qse_byte_t*)dst;
+	qse_byte_t* s = (qse_byte_t*)src;
 	while (n-- > 0) *d++ = *s++;
 	return dst;
 
 #elif defined(__SPU__)
 
-	ase_byte_t* d;
-	ase_byte_t* s;
+	qse_byte_t* d;
+	qse_byte_t* s;
 
 	if (n >= SPU_VUC_SIZE &&
-	    (((ase_size_t)dst) & (SPU_VUC_SIZE-1)) == 0 &&
-	    (((ase_size_t)src) & (SPU_VUC_SIZE-1)) == 0)
+	    (((qse_size_t)dst) & (SPU_VUC_SIZE-1)) == 0 &&
+	    (((qse_size_t)src) & (SPU_VUC_SIZE-1)) == 0)
 	{
 		vector unsigned char* du = (vector unsigned char*)dst;
 		vector unsigned char* su = (vector unsigned char*)src;
@@ -48,13 +48,13 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 		}
 		while (n >= SPU_VUC_SIZE);
 
-		d = (ase_byte_t*)du;
-		s = (ase_byte_t*)su;
+		d = (qse_byte_t*)du;
+		s = (qse_byte_t*)su;
 	}
 	else
 	{
-		d = (ase_byte_t*)dst;
-		s = (ase_byte_t*)src;
+		d = (qse_byte_t*)dst;
+		s = (qse_byte_t*)src;
 	}
 
 	while (n-- > 0) *d++ = *s++;
@@ -62,28 +62,28 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 
 #else
 
-	ase_byte_t* d;
-	ase_byte_t* s;
+	qse_byte_t* d;
+	qse_byte_t* s;
 
-	if (n >= ASE_SIZEOF(ase_size_t) && IS_BOTH_ALIGNED(dst,src))
+	if (n >= QSE_SIZEOF(qse_size_t) && IS_BOTH_ALIGNED(dst,src))
 	{
-		ase_size_t* du = (ase_size_t*)dst;
-		ase_size_t* su = (ase_size_t*)src;
+		qse_size_t* du = (qse_size_t*)dst;
+		qse_size_t* su = (qse_size_t*)src;
 
 		do
 		{
 			*du++ = *su++;
-			n -= ASE_SIZEOF(ase_size_t);
+			n -= QSE_SIZEOF(qse_size_t);
 		}
-		while (n >= ASE_SIZEOF(ase_size_t));
+		while (n >= QSE_SIZEOF(qse_size_t));
 
-		d = (ase_byte_t*)du;
-		s = (ase_byte_t*)su;
+		d = (qse_byte_t*)du;
+		s = (qse_byte_t*)su;
 	}
 	else
 	{
-		d = (ase_byte_t*)dst;
-		s = (ase_byte_t*)src;
+		d = (qse_byte_t*)dst;
+		s = (qse_byte_t*)src;
 	}
 
 	while (n-- > 0) *d++ = *s++;
@@ -92,48 +92,48 @@ void* ase_memcpy (void* dst, const void* src, ase_size_t n)
 #endif
 }
 
-void* ase_memmove (void* dst, const void* src, ase_size_t n)
+void* qse_memmove (void* dst, const void* src, qse_size_t n)
 {
-	const ase_byte_t* sre = (const ase_byte_t*)src + n;
+	const qse_byte_t* sre = (const qse_byte_t*)src + n;
 
 	if (dst <= src || dst >= (const void*)sre) 
 	{
-		ase_byte_t* d = (ase_byte_t*)dst;
-		const ase_byte_t* s = (const ase_byte_t*)src;
+		qse_byte_t* d = (qse_byte_t*)dst;
+		const qse_byte_t* s = (const qse_byte_t*)src;
 		while (n-- > 0) *d++ = *s++;
 	}
 	else 
 	{
-		ase_byte_t* dse = (ase_byte_t*)dst + n;
+		qse_byte_t* dse = (qse_byte_t*)dst + n;
 		while (n-- > 0) *--dse = *--sre;
 	}
 
 	return dst;
 }
 
-void* ase_memset (void* dst, int val, ase_size_t n)
+void* qse_memset (void* dst, int val, qse_size_t n)
 {
-#if defined(ASE_BUILD_FOR_SIZE)
+#if defined(QSE_BUILD_FOR_SIZE)
 
-	ase_byte_t* d = (ase_byte_t*)dst;
-	while (n-- > 0) *d++ = (ase_byte_t)val;
+	qse_byte_t* d = (qse_byte_t*)dst;
+	while (n-- > 0) *d++ = (qse_byte_t)val;
 	return dst;
 
 #elif defined(__SPU__)
 
-	ase_byte_t* d;
-	ase_size_t rem;
+	qse_byte_t* d;
+	qse_size_t rem;
 
 	if (n <= 0) return dst;
 
-	d = (ase_byte_t*)dst;
+	d = (qse_byte_t*)dst;
 
 	/* spu SIMD instructions require 16-byte alignment */
-	rem = ((ase_size_t)dst) & (SPU_VUC_SIZE-1);
+	rem = ((qse_size_t)dst) & (SPU_VUC_SIZE-1);
 	if (rem > 0)
 	{
 		/* handle leading unaligned part */
-		do { *d++ = (ase_byte_t)val; } 
+		do { *d++ = (qse_byte_t)val; } 
 		while (n-- > 0 && ++rem < SPU_VUC_SIZE);
 	}
 	
@@ -147,7 +147,7 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 
 		/* fills all 16 unsigned char cells with the same value 
 		 * no need to use shift and bitwise-or owing to splats */
-		v16 = spu_splats((ase_byte_t)val);
+		v16 = spu_splats((qse_byte_t)val);
 
 		do
 		{
@@ -156,64 +156,64 @@ void* ase_memset (void* dst, int val, ase_size_t n)
 		}
 		while (n >= SPU_VUC_SIZE);
 
-		d = (ase_byte_t*)vd;
+		d = (qse_byte_t*)vd;
 	}
 
 	/* handle the trailing part */
-	while (n-- > 0) *d++ = (ase_byte_t)val;
+	while (n-- > 0) *d++ = (qse_byte_t)val;
 	return dst;
 	
 #else
 
-	ase_byte_t* d;
-	ase_size_t rem;
+	qse_byte_t* d;
+	qse_size_t rem;
 
 	if (n <= 0) return dst;
 
-	d = (ase_byte_t*)dst;
+	d = (qse_byte_t*)dst;
 
 	rem = IS_UNALIGNED(dst);
 	if (rem > 0)
 	{
-		do { *d++ = (ase_byte_t)val; } 
-		while (n-- > 0 && ++rem < ASE_SIZEOF(ase_size_t));
+		do { *d++ = (qse_byte_t)val; } 
+		while (n-- > 0 && ++rem < QSE_SIZEOF(qse_size_t));
 	}
 
-	if (n >= ASE_SIZEOF(ase_size_t))
+	if (n >= QSE_SIZEOF(qse_size_t))
 	{
-		ase_size_t* u = (ase_size_t*)d;
-		ase_size_t uv = 0;
+		qse_size_t* u = (qse_size_t*)d;
+		qse_size_t uv = 0;
 		int i;
 
 		if (val != 0) 
 		{
-			for (i = 0; i < ASE_SIZEOF(ase_size_t); i++)
-				uv = (uv << 8) | (ase_byte_t)val;
+			for (i = 0; i < QSE_SIZEOF(qse_size_t); i++)
+				uv = (uv << 8) | (qse_byte_t)val;
 		}
 
-		ASE_ASSERT (IS_ALIGNED(u));
+		QSE_ASSERT (IS_ALIGNED(u));
 		do
 		{
 			*u++ = uv;
-			n -= ASE_SIZEOF(ase_size_t);
+			n -= QSE_SIZEOF(qse_size_t);
 		}
-		while (n >= ASE_SIZEOF(ase_size_t));
+		while (n >= QSE_SIZEOF(qse_size_t));
 
-		d = (ase_byte_t*)u;
+		d = (qse_byte_t*)u;
 	}
 
-	while (n-- > 0) *d++ = (ase_byte_t)val;
+	while (n-- > 0) *d++ = (qse_byte_t)val;
 	return dst;
 
 #endif
 }
 
-int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
+int qse_memcmp (const void* s1, const void* s2, qse_size_t n)
 {
-#if defined(ASE_BUILD_FOR_SIZE)
+#if defined(QSE_BUILD_FOR_SIZE)
 
-	const ase_byte_t* b1 = (const ase_byte_t*)s1;
-	const ase_byte_t* b2 = (const ase_byte_t*)s2;
+	const qse_byte_t* b1 = (const qse_byte_t*)s1;
+	const qse_byte_t* b2 = (const qse_byte_t*)s2;
 
 	while (n-- > 0)
 	{
@@ -225,12 +225,12 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 
 #elif defined(__SPU__)
 
-	const ase_byte_t* b1;
-	const ase_byte_t* b2;
+	const qse_byte_t* b1;
+	const qse_byte_t* b2;
 
 	if (n >= SPU_VUC_SIZE &&
-	    (((ase_size_t)s1) & (SPU_VUC_SIZE-1)) == 0 &&
-	    (((ase_size_t)s2) & (SPU_VUC_SIZE-1)) == 0)
+	    (((qse_size_t)s1) & (SPU_VUC_SIZE-1)) == 0 &&
+	    (((qse_size_t)s2) & (SPU_VUC_SIZE-1)) == 0)
 	{
 		vector unsigned char* v1 = (vector unsigned char*)s1;
 		vector unsigned char* v2 = (vector unsigned char*)s2;
@@ -259,8 +259,8 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 			{
 				/* otherwise, calculate the 
 				 * unmatching pointer address */
-				b1 = (const ase_byte_t*)v1 + (cnt - 16);
-				b2 = (const ase_byte_t*)v2 + (cnt - 16);
+				b1 = (const qse_byte_t*)v1 + (cnt - 16);
+				b2 = (const qse_byte_t*)v2 + (cnt - 16);
 				break;
 			}
 
@@ -269,8 +269,8 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 
 			if (n < SPU_VUC_SIZE)
 			{
-				b1 = (const ase_byte_t*)v1;
-				b2 = (const ase_byte_t*)v2;
+				b1 = (const qse_byte_t*)v1;
+				b2 = (const qse_byte_t*)v2;
 				break;
 			}
 		}
@@ -278,8 +278,8 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 	}
 	else
 	{
-		b1 = (const ase_byte_t*)s1;
-		b2 = (const ase_byte_t*)s2;
+		b1 = (const qse_byte_t*)s1;
+		b2 = (const qse_byte_t*)s2;
 	}
 
 	while (n-- > 0)
@@ -291,29 +291,29 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 	return 0;
 
 #else
-	const ase_byte_t* b1;
-	const ase_byte_t* b2;
+	const qse_byte_t* b1;
+	const qse_byte_t* b2;
 
-	if (n >= ASE_SIZEOF(ase_size_t) && IS_BOTH_ALIGNED(s1,s2))
+	if (n >= QSE_SIZEOF(qse_size_t) && IS_BOTH_ALIGNED(s1,s2))
 	{
-		const ase_size_t* u1 = (const ase_size_t*)s1;
-		const ase_size_t* u2 = (const ase_size_t*)s2;
+		const qse_size_t* u1 = (const qse_size_t*)s1;
+		const qse_size_t* u2 = (const qse_size_t*)s2;
 
 		do
 		{
 			if (*u1 != *u2) break;
 			u1++; u2++;
-			n -= ASE_SIZEOF(ase_size_t);
+			n -= QSE_SIZEOF(qse_size_t);
 		}
-		while (n >= ASE_SIZEOF(ase_size_t));
+		while (n >= QSE_SIZEOF(qse_size_t));
 
-		b1 = (const ase_byte_t*)u1;
-		b2 = (const ase_byte_t*)u2;
+		b1 = (const qse_byte_t*)u1;
+		b2 = (const qse_byte_t*)u2;
 	}
 	else
 	{
-		b1 = (const ase_byte_t*)s1;
-		b2 = (const ase_byte_t*)s2;
+		b1 = (const qse_byte_t*)s1;
+		b2 = (const qse_byte_t*)s2;
 	}
 
 	while (n-- > 0)
@@ -326,55 +326,55 @@ int ase_memcmp (const void* s1, const void* s2, ase_size_t n)
 #endif
 }
 
-void* ase_memchr (const void* s, int val, ase_size_t n)
+void* qse_memchr (const void* s, int val, qse_size_t n)
 {
-	const ase_byte_t* x = (const ase_byte_t*)s;
+	const qse_byte_t* x = (const qse_byte_t*)s;
 
 	while (n-- > 0)
 	{
-		if (*x == (ase_byte_t)val) return (void*)x;
+		if (*x == (qse_byte_t)val) return (void*)x;
 		x++;
 	}
 
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-void* ase_memrchr (const void* s, int val, ase_size_t n)
+void* qse_memrchr (const void* s, int val, qse_size_t n)
 {
-	const ase_byte_t* x = (ase_byte_t*)s + n - 1;
+	const qse_byte_t* x = (qse_byte_t*)s + n - 1;
 
 	while (n-- > 0)
 	{
-		if (*x == (ase_byte_t)val) return (void*)x;
+		if (*x == (qse_byte_t)val) return (void*)x;
 		x--;
 	}
 
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-void* ase_memmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl)
+void* qse_memmem (const void* hs, qse_size_t hl, const void* nd, qse_size_t nl)
 {
 	if (nl <= hl) 
 	{
-		ase_size_t i;
-		const ase_byte_t* h = (const ase_byte_t*)hs;
+		qse_size_t i;
+		const qse_byte_t* h = (const qse_byte_t*)hs;
 
 		for (i = hl - nl + 1; i > 0; i--)  
 		{
-			if (ase_memcmp(h, nd, nl) == 0) return (void*)h;
+			if (qse_memcmp(h, nd, nl) == 0) return (void*)h;
 			h++;
 		}
 	}
 
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-void* ase_memrmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl)
+void* qse_memrmem (const void* hs, qse_size_t hl, const void* nd, qse_size_t nl)
 {
 	if (nl <= hl) 
 	{
-		ase_size_t i;
-		const ase_byte_t* h;
+		qse_size_t i;
+		const qse_byte_t* h;
 
 		/* things are slightly more complacated 
 		 * when searching backward */
@@ -382,31 +382,31 @@ void* ase_memrmem (const void* hs, ase_size_t hl, const void* nd, ase_size_t nl)
 		{
 			/* when the needle is empty, it returns
 			 * the pointer to the last byte of the haystack.
-			 * this is because ase_memmem returns the pointer
+			 * this is because qse_memmem returns the pointer
 			 * to the first byte of the haystack when the
 			 * needle is empty. but I'm not so sure if this
 			 * is really desirable behavior */
-			h = (const ase_byte_t*)hs + hl - 1;
+			h = (const qse_byte_t*)hs + hl - 1;
 			return (void*)h;
 		}
 
-		h = (const ase_byte_t*)hs + hl - nl;
+		h = (const qse_byte_t*)hs + hl - nl;
 		for (i = hl - nl + 1; i > 0; i--)  
 		{
-			if (ase_memcmp(h, nd, nl) == 0) return (void*)h;
+			if (qse_memcmp(h, nd, nl) == 0) return (void*)h;
 			h--;
 		}
 	}
 
-	return ASE_NULL;
+	return QSE_NULL;
 }
 
-static void* mmgr_alloc (void* data, ase_size_t n)
+static void* mmgr_alloc (void* data, qse_size_t n)
 {
         return malloc (n);
 }
 
-static void* mmgr_realloc (void* data, void* ptr, ase_size_t n)
+static void* mmgr_realloc (void* data, void* ptr, qse_size_t n)
 {
         return realloc (ptr, n);
 }
@@ -416,12 +416,12 @@ static void mmgr_free (void* data, void* ptr)
         free (ptr);
 }
 
-static ase_mmgr_t mmgr =
+static qse_mmgr_t mmgr =
 {
 	mmgr_alloc,
 	mmgr_realloc,
 	mmgr_free,
-	ASE_NULL
+	QSE_NULL
 };
 
-ase_mmgr_t* ase_mmgr = &mmgr;
+qse_mmgr_t* qse_mmgr = &mmgr;

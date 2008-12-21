@@ -6,346 +6,346 @@
 
 #include "lsp.h"
 
-ase_lsp_obj_t* ase_lsp_prim_plus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_plus (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ival = 0;
-	ase_real_t rval = .0;
-	ase_bool_t realnum = ASE_FALSE;
+	qse_lsp_obj_t* body, * tmp;
+	qse_long_t ival = 0;
+	qse_real_t rval = .0;
+	qse_bool_t realnum = QSE_FALSE;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
 	body = args;
-	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(body) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(body));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) 
+		if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_INT) 
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ASE_FALSE);
-				ival = ASE_LSP_IVAL(tmp);
+				QSE_ASSERT (realnum == QSE_FALSE);
+				ival = QSE_LSP_IVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
-					ival = ival + ASE_LSP_IVAL(tmp);
+					ival = ival + QSE_LSP_IVAL(tmp);
 				else
-					rval = rval + ASE_LSP_IVAL(tmp);
+					rval = rval + QSE_LSP_IVAL(tmp);
 			}
 		}
-		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
+		else if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_REAL) 
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ASE_FALSE);
-				realnum = ASE_TRUE;
-				rval = ASE_LSP_RVAL(tmp);
+				QSE_ASSERT (realnum == QSE_FALSE);
+				realnum = QSE_TRUE;
+				rval = QSE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					realnum = ASE_TRUE;
-					rval = (ase_real_t)ival;
+					realnum = QSE_TRUE;
+					rval = (qse_real_t)ival;
 				}
-				rval = rval + ASE_LSP_RVAL(tmp);
+				rval = rval + QSE_LSP_RVAL(tmp);
 			}
 		}
 		else 
 		{
-			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EVALBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
 
-		body = ASE_LSP_CDR(body);
+		body = QSE_LSP_CDR(body);
 	}
 
-	ASE_ASSERT (body == lsp->mem->nil);
+	QSE_ASSERT (body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		ase_lsp_makerealobj (lsp->mem, rval):
-		ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) return ASE_NULL;
+		qse_lsp_makerealobj (lsp->mem, rval):
+		qse_lsp_makeintobj (lsp->mem, ival);
+	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_minus (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_minus (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ival = 0;
-	ase_real_t rval = .0;
-	ase_bool_t realnum = ASE_FALSE;
+	qse_lsp_obj_t* body, * tmp;
+	qse_long_t ival = 0;
+	qse_real_t rval = .0;
+	qse_bool_t realnum = QSE_FALSE;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
 	body = args;
-	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(body) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(body));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
 
-		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) 
+		if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_INT) 
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ASE_FALSE);
-				ival = ASE_LSP_IVAL(tmp);
+				QSE_ASSERT (realnum == QSE_FALSE);
+				ival = QSE_LSP_IVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
-					ival = ival - ASE_LSP_IVAL(tmp);
+					ival = ival - QSE_LSP_IVAL(tmp);
 				else
-					rval = rval - ASE_LSP_IVAL(tmp);
+					rval = rval - QSE_LSP_IVAL(tmp);
 			}
 		}
-		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
+		else if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_REAL) 
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ASE_FALSE);
-				realnum = ASE_TRUE;
-				rval = ASE_LSP_RVAL(tmp);
+				QSE_ASSERT (realnum == QSE_FALSE);
+				realnum = QSE_TRUE;
+				rval = QSE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					realnum = ASE_TRUE;
-					rval = (ase_real_t)ival;
+					realnum = QSE_TRUE;
+					rval = (qse_real_t)ival;
 				}
-				rval = rval - ASE_LSP_RVAL(tmp);
+				rval = rval - QSE_LSP_RVAL(tmp);
 			}
 		}
 		else 
 		{
-			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EVALBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
 
-		body = ASE_LSP_CDR(body);
+		body = QSE_LSP_CDR(body);
 	}
 
-	ASE_ASSERT (body == lsp->mem->nil);
+	QSE_ASSERT (body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		ase_lsp_makerealobj (lsp->mem, rval):
-		ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) return ASE_NULL;
+		qse_lsp_makerealobj (lsp->mem, rval):
+		qse_lsp_makeintobj (lsp->mem, ival);
+	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_mul (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_mul (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ival = 0;
-	ase_real_t rval = .0;
-	ase_bool_t realnum = ASE_FALSE;
+	qse_lsp_obj_t* body, * tmp;
+	qse_long_t ival = 0;
+	qse_real_t rval = .0;
+	qse_bool_t realnum = QSE_FALSE;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
 	body = args;
-	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(body) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(body));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) 
+		if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_INT) 
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ASE_FALSE);
-				ival = ASE_LSP_IVAL(tmp);
+				QSE_ASSERT (realnum == QSE_FALSE);
+				ival = QSE_LSP_IVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
-					ival = ival * ASE_LSP_IVAL(tmp);
+					ival = ival * QSE_LSP_IVAL(tmp);
 				else
-					rval = rval * ASE_LSP_IVAL(tmp);
+					rval = rval * QSE_LSP_IVAL(tmp);
 			}
 		}
-		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
+		else if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_REAL) 
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ASE_FALSE);
-				realnum = ASE_TRUE;
-				rval = ASE_LSP_RVAL(tmp);
+				QSE_ASSERT (realnum == QSE_FALSE);
+				realnum = QSE_TRUE;
+				rval = QSE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					realnum = ASE_TRUE;
-					rval = (ase_real_t)ival;
+					realnum = QSE_TRUE;
+					rval = (qse_real_t)ival;
 				}
-				rval = rval * ASE_LSP_RVAL(tmp);
+				rval = rval * QSE_LSP_RVAL(tmp);
 			}
 		}
 		else 
 		{
-			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EVALBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
 
-		body = ASE_LSP_CDR(body);
+		body = QSE_LSP_CDR(body);
 	}
 
-	ASE_ASSERT (body == lsp->mem->nil);
+	QSE_ASSERT (body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		ase_lsp_makerealobj (lsp->mem, rval):
-		ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) return ASE_NULL;
+		qse_lsp_makerealobj (lsp->mem, rval):
+		qse_lsp_makeintobj (lsp->mem, ival);
+	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_div (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_div (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ival = 0;
-	ase_real_t rval = .0;
-	ase_bool_t realnum = ASE_FALSE;
+	qse_lsp_obj_t* body, * tmp;
+	qse_long_t ival = 0;
+	qse_real_t rval = .0;
+	qse_bool_t realnum = QSE_FALSE;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
 	body = args;
-	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(body) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(body));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) 
+		if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_INT) 
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ASE_FALSE);
-				ival = ASE_LSP_IVAL(tmp);
+				QSE_ASSERT (realnum == QSE_FALSE);
+				ival = QSE_LSP_IVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					if (ASE_LSP_IVAL(tmp) == 0) 
+					if (QSE_LSP_IVAL(tmp) == 0) 
 					{
-						ase_lsp_seterror (lsp, ASE_LSP_EDIVBY0, ASE_NULL, 0);
-						return ASE_NULL;
+						qse_lsp_seterror (lsp, QSE_LSP_EDIVBY0, QSE_NULL, 0);
+						return QSE_NULL;
 					}
-					ival = ival / ASE_LSP_IVAL(tmp);
+					ival = ival / QSE_LSP_IVAL(tmp);
 				}
 				else
-					rval = rval / ASE_LSP_IVAL(tmp);
+					rval = rval / QSE_LSP_IVAL(tmp);
 			}
 		}
-		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
+		else if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_REAL) 
 		{
 			if (body == args) 
 			{
-				ASE_ASSERT (realnum == ASE_FALSE);
-				realnum = ASE_TRUE;
-				rval = ASE_LSP_RVAL(tmp);
+				QSE_ASSERT (realnum == QSE_FALSE);
+				realnum = QSE_TRUE;
+				rval = QSE_LSP_RVAL(tmp);
 			}
 			else 
 			{
 				if (!realnum) 
 				{
-					realnum = ASE_TRUE;
-					rval = (ase_real_t)ival;
+					realnum = QSE_TRUE;
+					rval = (qse_real_t)ival;
 				}
-				rval = rval / ASE_LSP_RVAL(tmp);
+				rval = rval / QSE_LSP_RVAL(tmp);
 			}
 		}
 		else 
 		{
-			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EVALBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
 
-		body = ASE_LSP_CDR(body);
+		body = QSE_LSP_CDR(body);
 	}
 
-	ASE_ASSERT (body == lsp->mem->nil);
+	QSE_ASSERT (body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		ase_lsp_makerealobj (lsp->mem, rval):
-		ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) return ASE_NULL;
+		qse_lsp_makerealobj (lsp->mem, rval):
+		qse_lsp_makeintobj (lsp->mem, ival);
+	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_mod (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_mod (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* body, * tmp;
-	ase_long_t ival = 0;
+	qse_lsp_obj_t* body, * tmp;
+	qse_long_t ival = 0;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
 	body = args;
-	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(body) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(body));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_INT) 
+		if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_INT) 
 		{
 			if (body == args) 
 			{
-				ival = ASE_LSP_IVAL(tmp);
+				ival = QSE_LSP_IVAL(tmp);
 			}
 			else 
 			{
-				if (ASE_LSP_IVAL(tmp) == 0) 
+				if (QSE_LSP_IVAL(tmp) == 0) 
 				{
-					ase_lsp_seterror (lsp, ASE_LSP_EDIVBY0, ASE_NULL, 0);
-					return ASE_NULL;
+					qse_lsp_seterror (lsp, QSE_LSP_EDIVBY0, QSE_NULL, 0);
+					return QSE_NULL;
 				}
-				ival = ival % ASE_LSP_IVAL(tmp);
+				ival = ival % QSE_LSP_IVAL(tmp);
 			}
 		}
-		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_REAL) 
+		else if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_REAL) 
 		{
 			if (body == args) 
 			{
-				ival = (ase_long_t)ASE_LSP_RVAL(tmp);
+				ival = (qse_long_t)QSE_LSP_RVAL(tmp);
 			}
 			else 
 			{
-				ase_long_t tmpi = (ase_long_t)ASE_LSP_RVAL(tmp);
+				qse_long_t tmpi = (qse_long_t)QSE_LSP_RVAL(tmp);
 				if (tmpi == 0) 
 				{
-					ase_lsp_seterror (lsp, ASE_LSP_EDIVBY0, ASE_NULL, 0);
-					return ASE_NULL;
+					qse_lsp_seterror (lsp, QSE_LSP_EDIVBY0, QSE_NULL, 0);
+					return QSE_NULL;
 				}
 				ival = ival % tmpi;
 			}
 		}
 		else 
 		{
-			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EVALBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
 
-		body = ASE_LSP_CDR(body);
+		body = QSE_LSP_CDR(body);
 	}
 
-	ASE_ASSERT (body == lsp->mem->nil);
+	QSE_ASSERT (body == lsp->mem->nil);
 
-	tmp = ase_lsp_makeintobj (lsp->mem, ival);
-	if (tmp == ASE_NULL) return ASE_NULL;
+	tmp = qse_lsp_makeintobj (lsp->mem, ival);
+	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
 }

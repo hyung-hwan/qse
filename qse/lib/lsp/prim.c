@@ -6,94 +6,94 @@
 
 #include "lsp.h"
 
-static int __add_prim (ase_lsp_mem_t* mem, 
-	const ase_char_t* name, ase_size_t len, 
-	ase_lsp_prim_t pimpl, ase_size_t min_args, ase_size_t max_args);
+static int __add_prim (qse_lsp_mem_t* mem, 
+	const qse_char_t* name, qse_size_t len, 
+	qse_lsp_prim_t pimpl, qse_size_t min_args, qse_size_t max_args);
 
-int ase_lsp_addprim (
-	ase_lsp_t* lsp, const ase_char_t* name, ase_size_t name_len,
-	ase_lsp_prim_t prim, ase_size_t min_args, ase_size_t max_args)
+int qse_lsp_addprim (
+	qse_lsp_t* lsp, const qse_char_t* name, qse_size_t name_len,
+	qse_lsp_prim_t prim, qse_size_t min_args, qse_size_t max_args)
 {
 	return __add_prim (lsp->mem, name, name_len, prim, min_args, max_args);
 }
 
-int ase_lsp_removeprim (ase_lsp_t* lsp, const ase_char_t* name)
+int qse_lsp_removeprim (qse_lsp_t* lsp, const qse_char_t* name)
 {
 	/* TODO: */
 	return -1;
 }
 
-static int __add_prim (ase_lsp_mem_t* mem, 
-	const ase_char_t* name, ase_size_t name_len, 
-	ase_lsp_prim_t pimpl, ase_size_t min_args, ase_size_t max_args)
+static int __add_prim (qse_lsp_mem_t* mem, 
+	const qse_char_t* name, qse_size_t name_len, 
+	qse_lsp_prim_t pimpl, qse_size_t min_args, qse_size_t max_args)
 {
-	ase_lsp_obj_t* n, * p;
+	qse_lsp_obj_t* n, * p;
 	
-	n = ase_lsp_makesym (mem, name, name_len);
-	if (n == ASE_NULL) return -1;
+	n = qse_lsp_makesym (mem, name, name_len);
+	if (n == QSE_NULL) return -1;
 
-	if (ase_lsp_pushtmp (mem->lsp, n) == ASE_NULL) return -1;
+	if (qse_lsp_pushtmp (mem->lsp, n) == QSE_NULL) return -1;
 
-	p = ase_lsp_makeprim (mem, pimpl, min_args, max_args);
-	if (p == ASE_NULL) 
+	p = qse_lsp_makeprim (mem, pimpl, min_args, max_args);
+	if (p == QSE_NULL) 
 	{
-		ase_lsp_poptmp (mem->lsp);
+		qse_lsp_poptmp (mem->lsp);
 		return -1;
 	}
 
-	if (ase_lsp_pushtmp (mem->lsp, p) == ASE_NULL)
+	if (qse_lsp_pushtmp (mem->lsp, p) == QSE_NULL)
 	{
-		ase_lsp_poptmp (mem->lsp);
+		qse_lsp_poptmp (mem->lsp);
 		return -1;
 	}
 
-	if (ase_lsp_setfunc(mem, n, p) == ASE_NULL) 
+	if (qse_lsp_setfunc(mem, n, p) == QSE_NULL) 
 	{
-		ase_lsp_poptmp (mem->lsp);
-		ase_lsp_poptmp (mem->lsp);
+		qse_lsp_poptmp (mem->lsp);
+		qse_lsp_poptmp (mem->lsp);
 		return -1;
 	}
 
-	ase_lsp_poptmp (mem->lsp);
-	ase_lsp_poptmp (mem->lsp);
+	qse_lsp_poptmp (mem->lsp);
+	qse_lsp_poptmp (mem->lsp);
 	return 0;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_exit (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_exit (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	lsp->errnum = ASE_LSP_EEXIT;
-	return ASE_NULL;
+	lsp->errnum = QSE_LSP_EEXIT;
+	return QSE_NULL;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_eval (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_eval (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* tmp1, * tmp2;
+	qse_lsp_obj_t* tmp1, * tmp2;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
-	tmp1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-	if (tmp1 == ASE_NULL) return ASE_NULL;
+	tmp1 = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+	if (tmp1 == QSE_NULL) return QSE_NULL;
 
-	if (ase_lsp_pushtmp (lsp, tmp1) == ASE_NULL) return ASE_NULL;
+	if (qse_lsp_pushtmp (lsp, tmp1) == QSE_NULL) return QSE_NULL;
 
-	tmp2 = ase_lsp_eval (lsp, tmp1);
-	if (tmp2 == ASE_NULL) 
+	tmp2 = qse_lsp_eval (lsp, tmp1);
+	if (tmp2 == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp);
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp);
+		return QSE_NULL;
 	}
 
-	ase_lsp_poptmp (lsp);
+	qse_lsp_poptmp (lsp);
 	return tmp2;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_gc (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_gc (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_gc (lsp->mem);
+	qse_lsp_gc (lsp->mem);
 	return lsp->mem->nil;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_cond (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_cond (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (cond 
@@ -103,302 +103,302 @@ ase_lsp_obj_t* ase_lsp_prim_cond (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	 *     (t resultN))
 	 */
 
-	ase_lsp_obj_t* tmp, * ret;
+	qse_lsp_obj_t* tmp, * ret;
 
-	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS) 
 	{
-		if (ASE_LSP_TYPE(ASE_LSP_CAR(args)) != ASE_LSP_OBJ_CONS) 
+		if (QSE_LSP_TYPE(QSE_LSP_CAR(args)) != QSE_LSP_OBJ_CONS) 
 		{
-			ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CAR(args)));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(QSE_LSP_CAR(args)));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-		if (ase_lsp_pushtmp (lsp, tmp) == ASE_NULL) return ASE_NULL;
+		if (qse_lsp_pushtmp (lsp, tmp) == QSE_NULL) return QSE_NULL;
 
 		if (tmp != lsp->mem->nil) 
 		{
 			int f = 0;
 
-			tmp = ASE_LSP_CDR(ASE_LSP_CAR(args));
+			tmp = QSE_LSP_CDR(QSE_LSP_CAR(args));
 			ret = lsp->mem->nil;
 
-			while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) 
+			while (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_CONS) 
 			{
-				ret = ase_lsp_eval (lsp, ASE_LSP_CAR(tmp));
-				if (ret == ASE_NULL) 
+				ret = qse_lsp_eval (lsp, QSE_LSP_CAR(tmp));
+				if (ret == QSE_NULL) 
 				{
-					if (!f) ase_lsp_poptmp (lsp); /* ret */
-					ase_lsp_poptmp (lsp); /* tmp */
-					return ASE_NULL;
+					if (!f) qse_lsp_poptmp (lsp); /* ret */
+					qse_lsp_poptmp (lsp); /* tmp */
+					return QSE_NULL;
 				}
 
-				if (!f) ase_lsp_poptmp (lsp); /* ret */
-				if (ase_lsp_pushtmp (lsp, ret) == ASE_NULL) 
+				if (!f) qse_lsp_poptmp (lsp); /* ret */
+				if (qse_lsp_pushtmp (lsp, ret) == QSE_NULL) 
 				{
-					ase_lsp_poptmp (lsp); /* tmp */
-					return ASE_NULL;
+					qse_lsp_poptmp (lsp); /* tmp */
+					return QSE_NULL;
 				}
 
 				f = 1;
-				tmp = ASE_LSP_CDR(tmp);
+				tmp = QSE_LSP_CDR(tmp);
 			}
 			if (tmp != lsp->mem->nil) 
 			{
-				if (!f) ase_lsp_poptmp (lsp); /* ret */
-				ase_lsp_poptmp (lsp); /* tmp */
+				if (!f) qse_lsp_poptmp (lsp); /* ret */
+				qse_lsp_poptmp (lsp); /* tmp */
 
-				ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-				return ASE_NULL;
+				qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+				return QSE_NULL;
 			}
 
-			if (!f) ase_lsp_poptmp (lsp); /* ret */
-			ase_lsp_poptmp (lsp); /* tmp */
+			if (!f) qse_lsp_poptmp (lsp); /* ret */
+			qse_lsp_poptmp (lsp); /* tmp */
 			return ret;
 		}
 
-		ase_lsp_poptmp (lsp); /* tmp */
-		args = ASE_LSP_CDR(args);
+		qse_lsp_poptmp (lsp); /* tmp */
+		args = QSE_LSP_CDR(args);
 	}
 
 	return lsp->mem->nil;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_if (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_if (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* tmp;
+	qse_lsp_obj_t* tmp;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 	
-	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-	if (tmp == ASE_NULL) return ASE_NULL;
+	tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+	if (tmp == QSE_NULL) return QSE_NULL;
 
-	if (ase_lsp_pushtmp (lsp, tmp) == ASE_NULL) return ASE_NULL;
+	if (qse_lsp_pushtmp (lsp, tmp) == QSE_NULL) return QSE_NULL;
 
 	if (tmp != lsp->mem->nil) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(args)));
-		if (tmp == ASE_NULL) 
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(QSE_LSP_CDR(args)));
+		if (tmp == QSE_NULL) 
 		{
-			ase_lsp_poptmp (lsp);  /* tmp */
-			return ASE_NULL;
+			qse_lsp_poptmp (lsp);  /* tmp */
+			return QSE_NULL;
 		}
 
-		ase_lsp_poptmp (lsp);  /* tmp */
+		qse_lsp_poptmp (lsp);  /* tmp */
 		return tmp;
 	}	
 	else 
 	{
-		ase_lsp_obj_t* res = lsp->mem->nil;
+		qse_lsp_obj_t* res = lsp->mem->nil;
 		int f = 0;
 
-		tmp = ASE_LSP_CDR(ASE_LSP_CDR(args));
+		tmp = QSE_LSP_CDR(QSE_LSP_CDR(args));
 
-		while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) 
+		while (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_CONS) 
 		{
-			res = ase_lsp_eval (lsp, ASE_LSP_CAR(tmp));
-			if (res == ASE_NULL) 
+			res = qse_lsp_eval (lsp, QSE_LSP_CAR(tmp));
+			if (res == QSE_NULL) 
 			{
-				if (!f) ase_lsp_poptmp (lsp); /* res */
-				ase_lsp_poptmp (lsp); /* tmp */
-				return ASE_NULL;
+				if (!f) qse_lsp_poptmp (lsp); /* res */
+				qse_lsp_poptmp (lsp); /* tmp */
+				return QSE_NULL;
 			}
 
-			if (!f) ase_lsp_poptmp (lsp); /* res */
-			if (ase_lsp_pushtmp (lsp, res) == ASE_NULL)
+			if (!f) qse_lsp_poptmp (lsp); /* res */
+			if (qse_lsp_pushtmp (lsp, res) == QSE_NULL)
 			{
-				ase_lsp_poptmp (lsp); /* tmp */
-				return ASE_NULL;
+				qse_lsp_poptmp (lsp); /* tmp */
+				return QSE_NULL;
 			}
 
 			f = 1;
-			tmp = ASE_LSP_CDR(tmp);
+			tmp = QSE_LSP_CDR(tmp);
 		}
 
 		if (tmp != lsp->mem->nil) 
 		{
-			if (!f) ase_lsp_poptmp (lsp); /* ret */
-			ase_lsp_poptmp (lsp); /* tmp */
+			if (!f) qse_lsp_poptmp (lsp); /* ret */
+			qse_lsp_poptmp (lsp); /* tmp */
 
-			ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		if (!f) ase_lsp_poptmp (lsp); /* ret */
-		ase_lsp_poptmp (lsp); /* tmp */
+		if (!f) qse_lsp_poptmp (lsp); /* ret */
+		qse_lsp_poptmp (lsp); /* tmp */
 		return res;
 	}
 }
 
-ase_lsp_obj_t* ase_lsp_prim_while (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_while (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (setq a 1)
 	 * (while (< a 100) (setq a (+ a 1)))
 	 */
 
-	ase_lsp_obj_t* tmp;
+	qse_lsp_obj_t* tmp;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
 	while (1)
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+		if (tmp == QSE_NULL) return QSE_NULL;
 		if (tmp == lsp->mem->nil) break;
 
-		if (ase_lsp_pushtmp (lsp, tmp) == ASE_NULL) return ASE_NULL;
+		if (qse_lsp_pushtmp (lsp, tmp) == QSE_NULL) return QSE_NULL;
 
-		tmp = ASE_LSP_CDR(args);
-		while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) 
+		tmp = QSE_LSP_CDR(args);
+		while (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_CONS) 
 		{
-			if (ase_lsp_eval(lsp, ASE_LSP_CAR(tmp)) == ASE_NULL)
+			if (qse_lsp_eval(lsp, QSE_LSP_CAR(tmp)) == QSE_NULL)
 			{
-				ase_lsp_poptmp (lsp); /* tmp */
-				return ASE_NULL;
+				qse_lsp_poptmp (lsp); /* tmp */
+				return QSE_NULL;
 			}
 
-			tmp = ASE_LSP_CDR(tmp);
+			tmp = QSE_LSP_CDR(tmp);
 		}
 
 		if (tmp != lsp->mem->nil) 
 		{
-			ase_lsp_poptmp (lsp); /* tmp */
+			qse_lsp_poptmp (lsp); /* tmp */
 
-			ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		ase_lsp_poptmp (lsp); /* tmp */
+		qse_lsp_poptmp (lsp); /* tmp */
 	}
 
 	return lsp->mem->nil;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_car (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_car (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (car '(10 20 30))
 	 */
 
-	ase_lsp_obj_t* tmp;
+	qse_lsp_obj_t* tmp;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
-	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-	if (tmp == ASE_NULL) return ASE_NULL;
+	tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+	if (tmp == QSE_NULL) return QSE_NULL;
 	if (tmp == lsp->mem->nil) return lsp->mem->nil;
 
-	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) 
+	if (QSE_LSP_TYPE(tmp) != QSE_LSP_OBJ_CONS) 
 	{
-		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
-	return ASE_LSP_CAR(tmp);
+	return QSE_LSP_CAR(tmp);
 }
 
-ase_lsp_obj_t* ase_lsp_prim_cdr (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_cdr (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (cdr '(10 20 30))
 	 */
 
-	ase_lsp_obj_t* tmp;
+	qse_lsp_obj_t* tmp;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
-	tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-	if (tmp == ASE_NULL) return ASE_NULL;
+	tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+	if (tmp == QSE_NULL) return QSE_NULL;
 	if (tmp == lsp->mem->nil) return lsp->mem->nil;
 
-	if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_CONS) 
+	if (QSE_LSP_TYPE(tmp) != QSE_LSP_OBJ_CONS) 
 	{
-		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
-	return ASE_LSP_CDR(tmp);
+	return QSE_LSP_CDR(tmp);
 }
 
-ase_lsp_obj_t* ase_lsp_prim_cons (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_cons (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (cons 10 20)
 	 * (cons '(10 20) 30)
 	 */
 
-	ase_lsp_obj_t* car, * cdr, * cons;
+	qse_lsp_obj_t* car, * cdr, * cons;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
-	car = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-	if (car == ASE_NULL) return ASE_NULL;
+	car = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+	if (car == QSE_NULL) return QSE_NULL;
 
-	if (ase_lsp_pushtmp (lsp, car) == ASE_NULL) return ASE_NULL;
+	if (qse_lsp_pushtmp (lsp, car) == QSE_NULL) return QSE_NULL;
 
-	cdr = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(args)));
-	if (cdr == ASE_NULL) 
+	cdr = qse_lsp_eval (lsp, QSE_LSP_CAR(QSE_LSP_CDR(args)));
+	if (cdr == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp); /* car */
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp); /* car */
+		return QSE_NULL;
 	}
 
-	if (ase_lsp_pushtmp (lsp, cdr) == ASE_NULL) 
+	if (qse_lsp_pushtmp (lsp, cdr) == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp); /* car */
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp); /* car */
+		return QSE_NULL;
 	}
 
-	cons = ase_lsp_makecons (lsp->mem, car, cdr);
-	if (cons == ASE_NULL) 
+	cons = qse_lsp_makecons (lsp->mem, car, cdr);
+	if (cons == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp); /* cdr */
-		ase_lsp_poptmp (lsp); /* car */
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp); /* cdr */
+		qse_lsp_poptmp (lsp); /* car */
+		return QSE_NULL;
 	}
 
-	ase_lsp_poptmp (lsp); /* cdr */
-	ase_lsp_poptmp (lsp); /* car */
+	qse_lsp_poptmp (lsp); /* cdr */
+	qse_lsp_poptmp (lsp); /* car */
 	return cons;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_length (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_length (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
-	ase_lsp_obj_t* body, * tmp;
-	ase_long_t len = 0;
+	qse_lsp_obj_t* body, * tmp;
+	qse_long_t len = 0;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
 	body = args;
-	while (ASE_LSP_TYPE(body) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(body) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(body));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(body));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-		if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_NIL) 
+		if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_NIL) 
 		{
 			len = 0;
 		}
-		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_STR)
+		else if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_STR)
 		{
-			len = ASE_LSP_STRLEN(tmp);
+			len = QSE_LSP_STRLEN(tmp);
 		}
-		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_SYM)
+		else if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_SYM)
 		{
-			len = ASE_LSP_SYMLEN(tmp);
+			len = QSE_LSP_SYMLEN(tmp);
 		}
-		else if (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS) 
+		else if (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_CONS) 
 		{
 			len = 0;
 			do 
 			{
 				len++;
-				tmp = ASE_LSP_CDR(tmp);
+				tmp = QSE_LSP_CDR(tmp);
 			} 
-			while (ASE_LSP_TYPE(tmp) == ASE_LSP_OBJ_CONS);
+			while (QSE_LSP_TYPE(tmp) == QSE_LSP_OBJ_CONS);
 
 			/* TODO: more flexible without the check below?
 			 *       both of the following expression evalute
@@ -406,26 +406,26 @@ ase_lsp_obj_t* ase_lsp_prim_length (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 			 *          (length '(9 9 9 . 9))
 			 *          (length '(9 9 9))
 			 */
-			if (ASE_LSP_TYPE(tmp) != ASE_LSP_OBJ_NIL)
+			if (QSE_LSP_TYPE(tmp) != QSE_LSP_OBJ_NIL)
 			{
-				ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
-				return ASE_NULL;
+				qse_lsp_seterror (lsp, QSE_LSP_EVALBAD, QSE_NULL, 0);
+				return QSE_NULL;
 			}
 		}
 		else 
 		{
-			ase_lsp_seterror (lsp, ASE_LSP_EVALBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EVALBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		body = ASE_LSP_CDR(body);
+		body = QSE_LSP_CDR(body);
 	}
 
-	ASE_ASSERT (body == lsp->mem->nil);
-	return ase_lsp_makeintobj (lsp->mem, len);
+	QSE_ASSERT (body == lsp->mem->nil);
+	return qse_lsp_makeintobj (lsp->mem, len);
 }
 
-ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_set (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (set 'flowers 'rose)
@@ -433,103 +433,103 @@ ase_lsp_obj_t* ase_lsp_prim_set (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	 * rose
 	 */
 
-	ase_lsp_obj_t* p1, * p2;
+	qse_lsp_obj_t* p1, * p2;
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
 
-	p1 = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-	if (p1 == ASE_NULL) return ASE_NULL;
+	p1 = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+	if (p1 == QSE_NULL) return QSE_NULL;
 
-	if (ase_lsp_pushtmp (lsp, p1) == ASE_NULL) return ASE_NULL;
+	if (qse_lsp_pushtmp (lsp, p1) == QSE_NULL) return QSE_NULL;
 
-	if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
+	if (QSE_LSP_TYPE(p1) != QSE_LSP_OBJ_SYM) 
 	{
-		ase_lsp_poptmp (lsp); /* p1 */
+		qse_lsp_poptmp (lsp); /* p1 */
 
-		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
-	p2 = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(args)));
-	if (p2 == ASE_NULL) 
+	p2 = qse_lsp_eval (lsp, QSE_LSP_CAR(QSE_LSP_CDR(args)));
+	if (p2 == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp); /* p1 */
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp); /* p1 */
+		return QSE_NULL;
 	}
 
-	if (ase_lsp_pushtmp (lsp, p2) == ASE_NULL) 
+	if (qse_lsp_pushtmp (lsp, p2) == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp); /* p1 */
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp); /* p1 */
+		return QSE_NULL;
 	}
 
-	if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) 
+	if (qse_lsp_setvalue (lsp->mem, p1, p2) == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp); /* p2 */
-		ase_lsp_poptmp (lsp); /* p1 */
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp); /* p2 */
+		qse_lsp_poptmp (lsp); /* p1 */
+		return QSE_NULL;
 	}
 
-	ase_lsp_poptmp (lsp); /* p2 */
-	ase_lsp_poptmp (lsp); /* p1 */
+	qse_lsp_poptmp (lsp); /* p2 */
+	qse_lsp_poptmp (lsp); /* p1 */
 	return p2;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_setq (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_setq (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (setq x 10)
 	 * (setq x "string")
 	 */
 
-	ase_lsp_obj_t* p = args, * p1, * p2 = lsp->mem->nil;
+	qse_lsp_obj_t* p = args, * p1, * p2 = lsp->mem->nil;
 
 	while (p != lsp->mem->nil) 
 	{
-		ASE_ASSERT (ASE_LSP_TYPE(p) == ASE_LSP_OBJ_CONS);
+		QSE_ASSERT (QSE_LSP_TYPE(p) == QSE_LSP_OBJ_CONS);
 
-		p1 = ASE_LSP_CAR(p);
-		if (ASE_LSP_TYPE(p1) != ASE_LSP_OBJ_SYM) 
+		p1 = QSE_LSP_CAR(p);
+		if (QSE_LSP_TYPE(p1) != QSE_LSP_OBJ_SYM) 
 		{
-			ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-			return ASE_NULL;
+			qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+			return QSE_NULL;
 		}
 
-		if (ASE_LSP_TYPE(ASE_LSP_CDR(p)) != ASE_LSP_OBJ_CONS) 
+		if (QSE_LSP_TYPE(QSE_LSP_CDR(p)) != QSE_LSP_OBJ_CONS) 
 		{
-			lsp->errnum = ASE_LSP_EARGFEW;
-			return ASE_NULL;
+			lsp->errnum = QSE_LSP_EARGFEW;
+			return QSE_NULL;
 		}
 
-		p2 = ase_lsp_eval (lsp, ASE_LSP_CAR(ASE_LSP_CDR(p)));
-		if (p2 == ASE_NULL) return ASE_NULL;
+		p2 = qse_lsp_eval (lsp, QSE_LSP_CAR(QSE_LSP_CDR(p)));
+		if (p2 == QSE_NULL) return QSE_NULL;
 
-		if (ase_lsp_pushtmp (lsp, p2) == ASE_NULL) return ASE_NULL;
+		if (qse_lsp_pushtmp (lsp, p2) == QSE_NULL) return QSE_NULL;
 
-		if (ase_lsp_setvalue (lsp->mem, p1, p2) == ASE_NULL) 
+		if (qse_lsp_setvalue (lsp->mem, p1, p2) == QSE_NULL) 
 		{
-			ase_lsp_poptmp (lsp);
-			return ASE_NULL;
+			qse_lsp_poptmp (lsp);
+			return QSE_NULL;
 		}
 
-		ase_lsp_poptmp (lsp);
-		p = ASE_LSP_CDR(ASE_LSP_CDR(p));
+		qse_lsp_poptmp (lsp);
+		p = QSE_LSP_CDR(QSE_LSP_CDR(p));
 	}
 
 	return p2;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_quote (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_quote (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (quote (10 20 30 50))
 	 */
 
-	ASE_ASSERT (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS);
-	return ASE_LSP_CAR(args);
+	QSE_ASSERT (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS);
+	return QSE_LSP_CAR(args);
 }
 
-ase_lsp_obj_t* ase_lsp_prim_defun (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_defun (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (defun x (a b)  (+ a b 100))
@@ -540,80 +540,80 @@ ase_lsp_obj_t* ase_lsp_prim_defun (ase_lsp_t* lsp, ase_lsp_obj_t* args)
 	 * temp 
 	 */
 
-	ase_lsp_obj_t* name, * fun;
+	qse_lsp_obj_t* name, * fun;
 
-	name = ASE_LSP_CAR(args);
-	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYM) 
+	name = QSE_LSP_CAR(args);
+	if (QSE_LSP_TYPE(name) != QSE_LSP_OBJ_SYM) 
 	{
-		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
-	fun = ase_lsp_makefunc (lsp->mem, 
-		ASE_LSP_CAR(ASE_LSP_CDR(args)), ASE_LSP_CDR(ASE_LSP_CDR(args)));
-	if (fun == ASE_NULL) return ASE_NULL;
+	fun = qse_lsp_makefunc (lsp->mem, 
+		QSE_LSP_CAR(QSE_LSP_CDR(args)), QSE_LSP_CDR(QSE_LSP_CDR(args)));
+	if (fun == QSE_NULL) return QSE_NULL;
 
-	if (ase_lsp_pushtmp (lsp, fun) == ASE_NULL) return ASE_NULL;
+	if (qse_lsp_pushtmp (lsp, fun) == QSE_NULL) return QSE_NULL;
 
-	if (ase_lsp_setfunc (lsp->mem, ASE_LSP_CAR(args), fun) == ASE_NULL) 
+	if (qse_lsp_setfunc (lsp->mem, QSE_LSP_CAR(args), fun) == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp);
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp);
+		return QSE_NULL;
 	}
 
-	ase_lsp_poptmp (lsp);
+	qse_lsp_poptmp (lsp);
 	return fun;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_demac (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_demac (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (demac x (abc)  x y z)
 	 * (setq x (macro (abc) x y z))
 	 */
 
-	ase_lsp_obj_t* name, * mac;
+	qse_lsp_obj_t* name, * mac;
 
-	name = ASE_LSP_CAR(args);
-	if (ASE_LSP_TYPE(name) != ASE_LSP_OBJ_SYM) 
+	name = QSE_LSP_CAR(args);
+	if (QSE_LSP_TYPE(name) != QSE_LSP_OBJ_SYM) 
 	{
-		ase_lsp_seterror (lsp, ASE_LSP_EARGBAD, ASE_NULL, 0);
-		return ASE_NULL;
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		return QSE_NULL;
 	}
 
-	mac = ase_lsp_makemacro (lsp->mem, 
-		ASE_LSP_CAR(ASE_LSP_CDR(args)), ASE_LSP_CDR(ASE_LSP_CDR(args)));
-	if (mac == ASE_NULL) return ASE_NULL;
+	mac = qse_lsp_makemacro (lsp->mem, 
+		QSE_LSP_CAR(QSE_LSP_CDR(args)), QSE_LSP_CDR(QSE_LSP_CDR(args)));
+	if (mac == QSE_NULL) return QSE_NULL;
 
-	if (ase_lsp_pushtmp (lsp, mac) == ASE_NULL) return ASE_NULL;
+	if (qse_lsp_pushtmp (lsp, mac) == QSE_NULL) return QSE_NULL;
 
-	if (ase_lsp_setfunc (lsp->mem, ASE_LSP_CAR(args), mac) == ASE_NULL) 
+	if (qse_lsp_setfunc (lsp->mem, QSE_LSP_CAR(args), mac) == QSE_NULL) 
 	{
-		ase_lsp_poptmp (lsp);
-		return ASE_NULL;
+		qse_lsp_poptmp (lsp);
+		return QSE_NULL;
 	}
 
-	ase_lsp_poptmp (lsp);
+	qse_lsp_poptmp (lsp);
 	return mac;
 }
 
-ase_lsp_obj_t* ase_lsp_prim_or (ase_lsp_t* lsp, ase_lsp_obj_t* args)
+qse_lsp_obj_t* qse_lsp_prim_or (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 {
 	/*
 	 * (or 10 20 30 40)
 	 * (or (= n 20) (= n 30))
 	 */
-	ase_lsp_obj_t* tmp;
+	qse_lsp_obj_t* tmp;
 
 /* TODO: this is wrong. redo the work */
-	while (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_CONS) 
+	while (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_CONS) 
 	{
-		tmp = ase_lsp_eval (lsp, ASE_LSP_CAR(args));
-		if (tmp == ASE_NULL) return ASE_NULL;
+		tmp = qse_lsp_eval (lsp, QSE_LSP_CAR(args));
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-		if (ASE_LSP_TYPE(args) == ASE_LSP_OBJ_INT)
+		if (QSE_LSP_TYPE(args) == QSE_LSP_OBJ_INT)
 		if (tmp != lsp->mem->nil) return lsp->mem->t;
-		args = ASE_LSP_CDR(args);
+		args = QSE_LSP_CDR(args);
 	}
 
 	return lsp->mem->nil;
