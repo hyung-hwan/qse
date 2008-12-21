@@ -32,7 +32,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@ENABLE_CXX_TRUE@am__append_1 = libaseawk++.la
+@ENABLE_CXX_TRUE@am__append_1 = libqseawk++.la
 subdir = lib/awk
 DIST_COMMON = $(srcdir)/makefile.am $(srcdir)/makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -51,21 +51,21 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libaseawk___la_DEPENDENCIES =
-am__libaseawk___la_SOURCES_DIST = Awk.cpp StdAwk.cpp
-@ENABLE_CXX_TRUE@am_libaseawk___la_OBJECTS = Awk.lo StdAwk.lo
-libaseawk___la_OBJECTS = $(am_libaseawk___la_OBJECTS)
-libaseawk___la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+libqseawk___la_DEPENDENCIES =
+am__libqseawk___la_SOURCES_DIST = Awk.cpp StdAwk.cpp
+@ENABLE_CXX_TRUE@am_libqseawk___la_OBJECTS = Awk.lo StdAwk.lo
+libqseawk___la_OBJECTS = $(am_libqseawk___la_OBJECTS)
+libqseawk___la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(libaseawk___la_LDFLAGS) $(LDFLAGS) -o $@
-@ENABLE_CXX_TRUE@am_libaseawk___la_rpath = -rpath $(libdir)
-libaseawk_la_DEPENDENCIES =
-am_libaseawk_la_OBJECTS = awk.lo err.lo tree.lo parse.lo run.lo rec.lo \
+	$(CXXFLAGS) $(libqseawk___la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_CXX_TRUE@am_libqseawk___la_rpath = -rpath $(libdir)
+libqseawk_la_DEPENDENCIES =
+am_libqseawk_la_OBJECTS = awk.lo err.lo tree.lo parse.lo run.lo rec.lo \
 	val.lo func.lo misc.lo extio.lo std.lo
-libaseawk_la_OBJECTS = $(am_libaseawk_la_OBJECTS)
-libaseawk_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+libqseawk_la_OBJECTS = $(am_libqseawk_la_OBJECTS)
+libqseawk_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libaseawk_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libqseawk_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -87,9 +87,9 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libaseawk___la_SOURCES) $(libaseawk_la_SOURCES)
-DIST_SOURCES = $(am__libaseawk___la_SOURCES_DIST) \
-	$(libaseawk_la_SOURCES)
+SOURCES = $(libqseawk___la_SOURCES) $(libqseawk_la_SOURCES)
+DIST_SOURCES = $(am__libqseawk___la_SOURCES_DIST) \
+	$(libqseawk_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -217,13 +217,13 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/include
-lib_LTLIBRARIES = libaseawk.la $(am__append_1)
-libaseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c func.c misc.c extio.c std.c awk_i.h extio.h func.h misc.h parse.h run.h tree.h 
-libaseawk_la_LDFLAGS = -L../cmn -L../utl -version-info 1:0:0 -no-undefined
-libaseawk_la_LIBADD = -lasecmn -laseutl
-@ENABLE_CXX_TRUE@libaseawk___la_SOURCES = Awk.cpp StdAwk.cpp
-@ENABLE_CXX_TRUE@libaseawk___la_LDFLAGS = -L. -L../cmn -L../utl -version-info 1:0:0 -no-undefined
-@ENABLE_CXX_TRUE@libaseawk___la_LIBADD = -laseawk  -lasecmn -laseutl
+lib_LTLIBRARIES = libqseawk.la $(am__append_1)
+libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c func.c misc.c extio.c std.c awk_i.h extio.h func.h misc.h parse.h run.h tree.h 
+libqseawk_la_LDFLAGS = -L../cmn -L../utl -version-info 1:0:0 -no-undefined
+libqseawk_la_LIBADD = -lqsecmn -lqseutl
+@ENABLE_CXX_TRUE@libqseawk___la_SOURCES = Awk.cpp StdAwk.cpp
+@ENABLE_CXX_TRUE@libqseawk___la_LDFLAGS = -L. -L../cmn -L../utl -version-info 1:0:0 -no-undefined
+@ENABLE_CXX_TRUE@libqseawk___la_LIBADD = -lqseawk  -lqsecmn -lqseutl
 all: all-am
 
 .SUFFIXES:
@@ -284,10 +284,10 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libaseawk++.la: $(libaseawk___la_OBJECTS) $(libaseawk___la_DEPENDENCIES) 
-	$(libaseawk___la_LINK) $(am_libaseawk___la_rpath) $(libaseawk___la_OBJECTS) $(libaseawk___la_LIBADD) $(LIBS)
-libaseawk.la: $(libaseawk_la_OBJECTS) $(libaseawk_la_DEPENDENCIES) 
-	$(libaseawk_la_LINK) -rpath $(libdir) $(libaseawk_la_OBJECTS) $(libaseawk_la_LIBADD) $(LIBS)
+libqseawk++.la: $(libqseawk___la_OBJECTS) $(libqseawk___la_DEPENDENCIES) 
+	$(libqseawk___la_LINK) $(am_libqseawk___la_rpath) $(libqseawk___la_OBJECTS) $(libqseawk___la_LIBADD) $(LIBS)
+libqseawk.la: $(libqseawk_la_OBJECTS) $(libqseawk_la_DEPENDENCIES) 
+	$(libqseawk_la_LINK) -rpath $(libdir) $(libqseawk_la_OBJECTS) $(libqseawk_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

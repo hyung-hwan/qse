@@ -89,9 +89,9 @@ int qse_settime (qse_ntime_t t)
       return r;
   }
 #elif HAVE_STIME
-  /* This fails to compile on OSF1 V5.1, due to stime requiring
+  / * This fails to compile on OSF1 V5.1, due to stime requiring
      a `long int*' and tv_sec is `int'.  But that system does provide
-     settimeofday.  */
+     settimeofday.  * /
   return stime (&ts->tv_sec);
 #else
 */

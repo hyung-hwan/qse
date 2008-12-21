@@ -50,14 +50,14 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libaselsp_la_DEPENDENCIES =
-am_libaselsp_la_OBJECTS = lsp.lo err.lo env.lo eval.lo mem.lo misc.lo \
+libqselsp_la_DEPENDENCIES =
+am_libqselsp_la_OBJECTS = lsp.lo err.lo env.lo eval.lo mem.lo misc.lo \
 	name.lo prim.lo prim_compar.lo prim_let.lo prim_math.lo \
 	prim_prog.lo print.lo read.lo
-libaselsp_la_OBJECTS = $(am_libaselsp_la_OBJECTS)
-libaselsp_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+libqselsp_la_OBJECTS = $(am_libqselsp_la_OBJECTS)
+libqselsp_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libaselsp_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libqselsp_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -70,8 +70,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libaselsp_la_SOURCES)
-DIST_SOURCES = $(libaselsp_la_SOURCES)
+SOURCES = $(libqselsp_la_SOURCES)
+DIST_SOURCES = $(libqselsp_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -199,10 +199,10 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/include
-lib_LTLIBRARIES = libaselsp.la 
-libaselsp_la_SOURCES = lsp.c err.c env.c eval.c mem.c mem.h misc.c name.c prim.c prim_compar.c prim.h prim_let.c prim_math.c prim_prog.c print.c read.c lsp_i.h env.h misc.h name.h obj.h 
-libaselsp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libaselsp_la_LIBADD = -lasecmn
+lib_LTLIBRARIES = libqselsp.la 
+libqselsp_la_SOURCES = lsp.c err.c env.c eval.c mem.c mem.h misc.c name.c prim.c prim_compar.c prim.h prim_let.c prim_math.c prim_prog.c print.c read.c lsp_i.h env.h misc.h name.h obj.h 
+libqselsp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
+libqselsp_la_LIBADD = -lqsecmn
 all: all-am
 
 .SUFFIXES:
@@ -263,8 +263,8 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libaselsp.la: $(libaselsp_la_OBJECTS) $(libaselsp_la_DEPENDENCIES) 
-	$(libaselsp_la_LINK) -rpath $(libdir) $(libaselsp_la_OBJECTS) $(libaselsp_la_LIBADD) $(LIBS)
+libqselsp.la: $(libqselsp_la_OBJECTS) $(libqselsp_la_DEPENDENCIES) 
+	$(libqselsp_la_LINK) -rpath $(libdir) $(libqselsp_la_OBJECTS) $(libqselsp_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

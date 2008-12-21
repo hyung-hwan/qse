@@ -50,12 +50,12 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libaseutl_la_DEPENDENCIES =
-am_libaseutl_la_OBJECTS = assert.lo http.lo main.lo stdio.lo
-libaseutl_la_OBJECTS = $(am_libaseutl_la_OBJECTS)
-libaseutl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+libqseutl_la_DEPENDENCIES =
+am_libqseutl_la_OBJECTS = assert.lo http.lo main.lo stdio.lo
+libqseutl_la_OBJECTS = $(am_libqseutl_la_OBJECTS)
+libqseutl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libaseutl_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libqseutl_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -68,8 +68,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libaseutl_la_SOURCES)
-DIST_SOURCES = $(libaseutl_la_SOURCES)
+SOURCES = $(libqseutl_la_SOURCES)
+DIST_SOURCES = $(libqseutl_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -196,10 +196,10 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_builddir)/include
-lib_LTLIBRARIES = libaseutl.la
-libaseutl_la_SOURCES = assert.c http.c main.c stdio.c
-libaseutl_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn
-libaseutl_la_LIBADD = -lasecmn
+lib_LTLIBRARIES = libqseutl.la
+libqseutl_la_SOURCES = assert.c http.c main.c stdio.c
+libqseutl_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn
+libqseutl_la_LIBADD = -lqsecmn
 all: all-am
 
 .SUFFIXES:
@@ -260,8 +260,8 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libaseutl.la: $(libaseutl_la_OBJECTS) $(libaseutl_la_DEPENDENCIES) 
-	$(libaseutl_la_LINK) -rpath $(libdir) $(libaseutl_la_OBJECTS) $(libaseutl_la_LIBADD) $(LIBS)
+libqseutl.la: $(libqseutl_la_OBJECTS) $(libqseutl_la_DEPENDENCIES) 
+	$(libqseutl_la_LINK) -rpath $(libdir) $(libqseutl_la_OBJECTS) $(libqseutl_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

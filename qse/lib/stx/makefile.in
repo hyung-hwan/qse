@@ -2,7 +2,7 @@
 # $Id: makefile.in,v 1.4 2007/09/11 13:42:54 bacon Exp $
 #
 
-NAME = asestx
+NAME = qsestx
 
 TOP_BUILDDIR = @abs_top_builddir@
 TOP_INSTALLDIR = @prefix@/ase
