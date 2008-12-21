@@ -81,6 +81,21 @@ int ase_settime (ase_ntime_t t)
 	tv.tv_sec = t / ASE_MSEC_IN_SEC;
 	tv.tv_usec = (t % ASE_MSEC_IN_SEC) * ASE_USEC_IN_MSEC;
 
+/*
+#if defined CLOCK_REALTIME && HAVE_CLOCK_SETTIME
+  {
+    int r = clock_settime (CLOCK_REALTIME, ts);
+    if (r == 0 || errno == EPERM)
+      return r;
+  }
+#elif HAVE_STIME
+  /* This fails to compile on OSF1 V5.1, due to stime requiring
+     a `long int*' and tv_sec is `int'.  But that system does provide
+     settimeofday.  */
+  return stime (&ts->tv_sec);
+#else
+*/
+
 #ifdef SYS_settimeofday
 	n = syscall (SYS_settimeofday, &tv, ASE_NULL);
 #else
