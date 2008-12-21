@@ -1,15 +1,15 @@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-bin_PROGRAMS = aseawk
+bin_PROGRAMS = qseawk
 
-aseawk_SOURCES = awk.c
-aseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
-aseawk_LDADD = -laseawk $(LIBM)
+qseawk_SOURCES = awk.c
+qseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
+qseawk_LDADD = -lqseawk $(LIBM)
 
 if ENABLE_CXX
-bin_PROGRAMS += aseawk++
-aseawk___SOURCES = Awk.cpp
-aseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
-aseawk___LDADD = -laseawk++ $(LIBM)
+bin_PROGRAMS += qseawk++
+qseawk___SOURCES = Awk.cpp
+qseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
+qseawk___LDADD = -lqseawk++ $(LIBM)
 endif

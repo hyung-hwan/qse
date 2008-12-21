@@ -1,9 +1,9 @@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-bin_PROGRAMS = aselsp 
+bin_PROGRAMS = qselsp 
 
-aselsp_SOURCES = lsp.c
-aselsp_LDFLAGS = -L../../lib/lsp -L../../lib/utl 
-aselsp_LDADD = -laseutl -laselsp $(LIBM)
+qselsp_SOURCES = lsp.c
+qselsp_LDFLAGS = -L../../lib/lsp -L../../lib/utl 
+qselsp_LDADD = -lqseutl -lqselsp $(LIBM)
 

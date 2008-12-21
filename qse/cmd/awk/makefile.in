@@ -32,8 +32,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = aseawk$(EXEEXT) $(am__EXEEXT_1)
-@ENABLE_CXX_TRUE@am__append_1 = aseawk++
+bin_PROGRAMS = qseawk$(EXEEXT) $(am__EXEEXT_1)
+@ENABLE_CXX_TRUE@am__append_1 = qseawk++
 subdir = cmd/awk
 DIST_COMMON = $(srcdir)/makefile.am $(srcdir)/makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -43,24 +43,24 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
-@ENABLE_CXX_TRUE@am__EXEEXT_1 = aseawk++$(EXEEXT)
+@ENABLE_CXX_TRUE@am__EXEEXT_1 = qseawk++$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_aseawk_OBJECTS = awk.$(OBJEXT)
-aseawk_OBJECTS = $(am_aseawk_OBJECTS)
+am_qseawk_OBJECTS = awk.$(OBJEXT)
+qseawk_OBJECTS = $(am_qseawk_OBJECTS)
 am__DEPENDENCIES_1 =
-aseawk_DEPENDENCIES = $(am__DEPENDENCIES_1)
-aseawk_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(aseawk_LDFLAGS) \
+qseawk_DEPENDENCIES = $(am__DEPENDENCIES_1)
+qseawk_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qseawk_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__aseawk___SOURCES_DIST = Awk.cpp
-@ENABLE_CXX_TRUE@am_aseawk___OBJECTS = Awk.$(OBJEXT)
-aseawk___OBJECTS = $(am_aseawk___OBJECTS)
-@ENABLE_CXX_TRUE@aseawk___DEPENDENCIES = $(am__DEPENDENCIES_1)
-aseawk___LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+am__qseawk___SOURCES_DIST = Awk.cpp
+@ENABLE_CXX_TRUE@am_qseawk___OBJECTS = Awk.$(OBJEXT)
+qseawk___OBJECTS = $(am_qseawk___OBJECTS)
+@ENABLE_CXX_TRUE@qseawk___DEPENDENCIES = $(am__DEPENDENCIES_1)
+qseawk___LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(aseawk___LDFLAGS) $(LDFLAGS) -o $@
+	$(CXXFLAGS) $(qseawk___LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -82,8 +82,8 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(aseawk_SOURCES) $(aseawk___SOURCES)
-DIST_SOURCES = $(aseawk_SOURCES) $(am__aseawk___SOURCES_DIST)
+SOURCES = $(qseawk_SOURCES) $(qseawk___SOURCES)
+DIST_SOURCES = $(qseawk_SOURCES) $(am__qseawk___SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -210,12 +210,12 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
-aseawk_SOURCES = awk.c
-aseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
-aseawk_LDADD = -laseawk $(LIBM)
-@ENABLE_CXX_TRUE@aseawk___SOURCES = Awk.cpp
-@ENABLE_CXX_TRUE@aseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
-@ENABLE_CXX_TRUE@aseawk___LDADD = -laseawk++ $(LIBM)
+qseawk_SOURCES = awk.c
+qseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
+qseawk_LDADD = -lqseawk $(LIBM)
+@ENABLE_CXX_TRUE@qseawk___SOURCES = Awk.cpp
+@ENABLE_CXX_TRUE@qseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
+@ENABLE_CXX_TRUE@qseawk___LDADD = -lqseawk++ $(LIBM)
 all: all-am
 
 .SUFFIXES:
@@ -277,12 +277,12 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-aseawk$(EXEEXT): $(aseawk_OBJECTS) $(aseawk_DEPENDENCIES) 
-	@rm -f aseawk$(EXEEXT)
-	$(aseawk_LINK) $(aseawk_OBJECTS) $(aseawk_LDADD) $(LIBS)
-aseawk++$(EXEEXT): $(aseawk___OBJECTS) $(aseawk___DEPENDENCIES) 
-	@rm -f aseawk++$(EXEEXT)
-	$(aseawk___LINK) $(aseawk___OBJECTS) $(aseawk___LDADD) $(LIBS)
+qseawk$(EXEEXT): $(qseawk_OBJECTS) $(qseawk_DEPENDENCIES) 
+	@rm -f qseawk$(EXEEXT)
+	$(qseawk_LINK) $(qseawk_OBJECTS) $(qseawk_LDADD) $(LIBS)
+qseawk++$(EXEEXT): $(qseawk___OBJECTS) $(qseawk___DEPENDENCIES) 
+	@rm -f qseawk++$(EXEEXT)
+	$(qseawk___LINK) $(qseawk___OBJECTS) $(qseawk___LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
