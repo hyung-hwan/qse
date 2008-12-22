@@ -23,10 +23,10 @@
 	#define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-WIN_EPOCH_YEAR)
 	#define EPOCH_DIFF_DAYS  (EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
 	#define EPOCH_DIFF_SECS  (EPOCH_DIFF_DAYS*24*60*60)
-	#define EPOCH_DIFF_MSECS (EPOCH_DIFF_SECS*QSE_MSEC_IN_SEC)
+	#define EPOCH_DIFF_MSECS (EPOCH_DIFF_SECS*QSE_MSECS_PER_SEC)
 #endif
 
-static int mdays[2][QSE_MON_IN_YEAR] = 
+static int mdays[2][QSE_MONS_PER_YEAR] = 
 {
 	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
 	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
@@ -59,7 +59,8 @@ int qse_gettime (qse_ntime_t* t)
 #endif
 	if (n == -1) return -1;
 
-	*t = tv.tv_sec * QSE_MSEC_IN_SEC + tv.tv_usec / QSE_USEC_IN_MSEC;
+	*t = (qse_ntime_t)tv.tv_sec*QSE_MSECS_PER_SEC + 
+	     (qse_ntime_t)tv.tv_usec/QSE_USECS_PER_MSEC;
 	return 0;
 #endif
 }
@@ -78,8 +79,8 @@ int qse_settime (qse_ntime_t t)
 	struct timeval tv;
 	int n;
 
-	tv.tv_sec = t / QSE_MSEC_IN_SEC;
-	tv.tv_usec = (t % QSE_MSEC_IN_SEC) * QSE_USEC_IN_MSEC;
+	tv.tv_sec = t / QSE_MSECS_PER_SEC;
+	tv.tv_usec = (t % QSE_MSECS_PER_SEC) * QSE_USECS_PER_MSEC;
 
 /*
 #if defined CLOCK_REALTIME && HAVE_CLOCK_SETTIME
@@ -106,42 +107,74 @@ int qse_settime (qse_ntime_t t)
 #endif
 }
 
-void qse_gmtime (qse_ntime_t nt, qse_btime_t* bt)
+static void brkdntime (qse_ntime_t nt, qse_btime_t* bt, qse_ntime_t offset)
 {
-	/* code based on minix 2.0 src/lib/ansi/gmtime.c */
-
+	int midx;
 	qse_ntime_t days; /* total days */
-	qse_ntime_t secs; /* number of seconds in the fractional days */ 
-	qse_ntime_t time; /* total seconds */
-
-	int year = QSE_EPOCH_YEAR;
+	qse_ntime_t secs; /* the remaining seconds */
+	qse_ntime_t year = QSE_EPOCH_YEAR;
 	
-	time = nt / QSE_MSEC_IN_SEC;
-	days = (unsigned long)time / QSE_SEC_IN_DAY;
-	secs = (unsigned long)time % QSE_SEC_IN_DAY;
-	
-	bt->sec = secs % QSE_SEC_IN_MIN;
-	bt->min = (secs % QSE_SEC_IN_HOUR) / QSE_SEC_IN_MIN;
-	bt->hour = secs / QSE_SEC_IN_HOUR;
+	nt += offset;
+	/* TODO: support bt->msecs */
+	/*bt->msecs = nt % QSEC_MSECS_PER_SEC;*/
 
-	bt->wday = (days + 4) % QSE_DAY_IN_WEEK;  
+	secs = nt / QSE_MSECS_PER_SEC;
+	days = secs / QSE_SECS_PER_DAY;
+	secs %= QSE_SECS_PER_DAY;
 
-	while (days >= QSE_DAY_IN_YEAR(year)) 
+	while (secs < 0)
 	{
-		days -= QSE_DAY_IN_YEAR(year);
-		year++;
+		secs += QSE_SECS_PER_DAY;
+		--days;
 	}
 
-	bt->year = year - 1900;
-	bt->yday = days;
-	bt->mon = 0;
-
-	while (days >= mdays[QSE_IS_LEAPYEAR(year)][bt->mon]) 
+	while (secs >= QSE_SECS_PER_DAY)
 	{
-		days -= mdays[QSE_IS_LEAPYEAR(year)][bt->mon];
-		bt->mon++;
+		secs -= QSE_SECS_PER_DAY;
+		++days;
+	}
+
+	bt->hour = secs / QSE_SECS_PER_HOUR;
+	secs %= QSE_SECS_PER_HOUR;
+	bt->min = secs / QSE_SECS_PER_MIN;
+	bt->sec = secs % QSE_SECS_PER_MIN;
+
+	bt->wday = (days + QSE_EPOCH_WDAY) % QSE_DAYS_PER_WEEK;  
+	if (bt->wday < 0) bt->wday += QSE_DAYS_PER_WEEK;
+
+	if (days >= 0)
+	{
+		while (days >= QSE_DAYS_PER_YEAR(year))
+		{
+    			days -= QSE_DAYS_PER_YEAR(year);
+    			year++;
+    		}
+	}
+    	else 
+	{
+		do 
+		{
+    			year--;
+   			days += QSE_DAYS_PER_YEAR(year);
+    		} 
+		while (days < 0);
+	}
+
+	bt->year = year - QSE_BTIME_YEAR_BASE;
+	bt->yday = days;
+
+	midx = QSE_IS_LEAPYEAR(year)? 1: 0;
+	for (bt->mon = 0; days >= mdays[midx][bt->mon]; bt->mon++) 
+	{
+		days -= mdays[midx][bt->mon];
 	}
 
 	bt->mday = days + 1;
 	bt->isdst = 0;
+	bt->offset = offset;
+}
+
+void qse_gmtime (qse_ntime_t nt, qse_btime_t* bt)
+{
+	brkdntime (nt, bt, 0);
 }

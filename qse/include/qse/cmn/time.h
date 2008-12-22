@@ -8,30 +8,32 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#define QSE_EPOCH_YEAR  ((qse_ntime_t)1970)
-#define QSE_EPOCH_MON   ((qse_ntime_t)1)
-#define QSE_EPOCH_DAY   ((qse_ntime_t)1)
-#define QSE_EPOCH_WDAY  ((qse_ntime_t)4)
+#define QSE_EPOCH_YEAR  (1970)
+#define QSE_EPOCH_MON   (1)
+#define QSE_EPOCH_DAY   (1)
+#define QSE_EPOCH_WDAY  (4)
 
-#define QSE_DAY_IN_WEEK  ((qse_ntime_t)7)
-#define QSE_MON_IN_YEAR  ((qse_ntime_t)12)
-#define QSE_HOUR_IN_DAY  ((qse_ntime_t)24)
-#define QSE_MIN_IN_HOUR  ((qse_ntime_t)60)
-#define QSE_MIN_IN_DAY   (QSE_MIN_IN_HOUR * QSE_HOUR_IN_DAY)
-#define QSE_SEC_IN_MIN   ((qse_ntime_t)60)
-#define QSE_SEC_IN_HOUR  (QSE_SEC_IN_MIN * QSE_MIN_IN_HOUR)
-#define QSE_SEC_IN_DAY   (QSE_SEC_IN_MIN * QSE_MIN_IN_DAY)
-#define QSE_MSEC_IN_SEC  ((qse_ntime_t)1000)
-#define QSE_MSEC_IN_MIN  (QSE_MSEC_IN_SEC * QSE_SEC_IN_MIN)
-#define QSE_MSEC_IN_HOUR (QSE_MSEC_IN_SEC * QSE_SEC_IN_HOUR)
-#define QSE_MSEC_IN_DAY  (QSE_MSEC_IN_SEC * QSE_SEC_IN_DAY)
+#define QSE_BTIME_YEAR_BASE (1900)
 
-#define QSE_USEC_IN_MSEC ((qse_ntime_t)1000)
-#define QSE_NSEC_IN_USEC ((qse_ntime_t)1000)
-#define QSE_USEC_IN_SEC  ((qse_ntime_t)QSE_USEC_IN_MSEC * QSE_MSEC_IN_SEC)
+#define QSE_DAYS_PER_WEEK  (7)
+#define QSE_MONS_PER_YEAR  (12)
+#define QSE_HOURS_PER_DAY  (24)
+#define QSE_MINS_PER_HOUR  (60)
+#define QSE_MINS_PER_DAY   (QSE_MINS_PER_HOUR*QSE_HOURS_PER_DAY)
+#define QSE_SECS_PER_MIN   (60)
+#define QSE_SECS_PER_HOUR  (QSE_SECS_PER_MIN*QSE_MINS_PER_HOUR)
+#define QSE_SECS_PER_DAY   (QSE_SECS_PER_MIN*QSE_MINS_PER_DAY)
+#define QSE_MSECS_PER_SEC  (1000)
+#define QSE_MSECS_PER_MIN  (QSE_MSECS_PER_SEC*QSE_SECS_PER_MIN)
+#define QSE_MSECS_PER_HOUR (QSE_MSECS_PER_SEC*QSE_SECS_PER_HOUR)
+#define QSE_MSECS_PER_DAY  (QSE_MSECS_PER_SEC*QSE_SECS_PER_DAY)
+
+#define QSE_USECS_PER_MSEC (1000)
+#define QSE_NSECS_PER_USEC (1000)
+#define QSE_USECS_PER_SEC  (QSE_USECS_PER_MSEC*QSE_MSECS_PER_SEC)
 
 #define QSE_IS_LEAPYEAR(year) (!((year)%4) && (((year)%100) || !((year)%400)))
-#define QSE_DAY_IN_YEAR(year) (QSE_IS_LEAPYEAR(year)? 366: 365)
+#define QSE_DAYS_PER_YEAR(year) (QSE_IS_LEAPYEAR(year)? 366: 365)
 
 /* number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970) */
 typedef qse_long_t qse_ntime_t;
@@ -39,6 +41,7 @@ typedef struct qse_btime_t qse_btime_t;
 
 struct qse_btime_t
 {
+	int msec;
 	int sec;  /* 0-61 */
 	int min;  /* 0-59 */
 	int hour; /* 0-23 */
@@ -48,6 +51,7 @@ struct qse_btime_t
 	int wday; /* 0(sun)-6(sat) */
 	int yday; /* 0(jan 1) to 365 */
 	int isdst;
+	int offset;
 };
 
 #ifdef __cplusplus

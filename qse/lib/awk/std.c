@@ -1061,7 +1061,7 @@ static int bfn_systime (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fn
 	if (qse_gettime(&now) == -1)
 		r = qse_awk_makeintval (run, QSE_TYPE_MIN(qse_long_t));
 	else
-		r = qse_awk_makeintval (run, now / QSE_MSEC_IN_SEC);
+		r = qse_awk_makeintval (run, now / QSE_MSECS_PER_SEC);
 
 	if (r == QSE_NULL)
 	{
@@ -1071,6 +1071,18 @@ static int bfn_systime (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fn
 
 	qse_awk_setretval (run, r);
 	return 0;
+}
+
+static int bfn_gmtime (qse_awk_run_t* run, const qse_char_t* fnm, qse-size_t fnl)
+{
+	qse_ntime_t nt;
+	qse_btime_t bt;
+
+
+	qse_gmtime (nt, &bt);
+	/* TODO: create an array containing
+	 *       .....
+	 */
 }
 
 #define ADD_FUNC(awk,name,min,max,bfn) \
@@ -1092,6 +1104,7 @@ static int add_functions (qse_awk_t* awk)
         ADD_FUNC (awk, QSE_T("rand"),       0, 0, bfn_rand);
         ADD_FUNC (awk, QSE_T("srand"),      0, 1, bfn_srand);
         ADD_FUNC (awk, QSE_T("systime"),    0, 0, bfn_systime);
+	ADD_FUNC (awk, QSE_T("gmtime"),     0, 0, bfn_gmtime);
 /*
         ADD_FUNC (awk, QSE_T("strftime"),   0, 2, bfn_strftime);
         ADD_FUNC (awk, QSE_T("strfgmtime"), 0, 2, bfn_strfgmtime);
