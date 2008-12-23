@@ -3,6 +3,7 @@
  */
 
 #include <qse/cmn/time.h>
+#include "mem.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -115,8 +116,9 @@ static void brkdntime (qse_ntime_t nt, qse_btime_t* bt, qse_ntime_t offset)
 	qse_ntime_t year = QSE_EPOCH_YEAR;
 	
 	nt += offset;
-	/* TODO: support bt->msecs */
-	/*bt->msecs = nt % QSEC_MSECS_PER_SEC;*/
+
+	bt->msec = nt % QSE_MSECS_PER_SEC;
+	if (bt->msec < 0) bt->msec = QSE_MSECS_PER_SEC + bt->msec;
 
 	secs = nt / QSE_MSECS_PER_SEC;
 	days = secs / QSE_SECS_PER_DAY;
@@ -171,10 +173,54 @@ static void brkdntime (qse_ntime_t nt, qse_btime_t* bt, qse_ntime_t offset)
 
 	bt->mday = days + 1;
 	bt->isdst = 0;
-	bt->offset = offset;
+	/*bt->offset = offset;*/
 }
 
-void qse_gmtime (qse_ntime_t nt, qse_btime_t* bt)
+int qse_gmtime (qse_ntime_t nt, qse_btime_t* bt)
 {
 	brkdntime (nt, bt, 0);
+	return 0;
 }
+
+int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
+{
+	struct tm* tm;
+	time_t t = (time_t)(nt / QSE_MSECS_PER_SEC);
+	qse_ntime_t rem = nt % QSE_MSECS_PER_SEC;
+
+	/* TODO: remove dependency on localtime/localtime_r */
+#ifdef _WIN32
+	tm = localtime (&t);
+#else
+	struct tm btm;
+	tm = localtime_r (&t, &btm);
+#endif
+	if (tm == QSE_NULL) return -1;
+	
+	QSE_MEMSET (bt, 0, QSE_SIZEOF(*bt));
+
+	bt->msec = (rem >= 0)? rem: (QSE_MSECS_PER_SEC + rem);
+	bt->sec = tm->tm_sec;
+	bt->min = tm->tm_min;
+	bt->hour = tm->tm_hour;
+	bt->mday = tm->tm_mday;
+	bt->mon = tm->tm_mon;
+	bt->year = tm->tm_year;
+	bt->wday = tm->tm_wday;
+	bt->yday = tm->tm_yday;
+	bt->isdst = tm->tm_isdst;
+	/*bt->offset = tm->tm_offset;*/
+
+	return 0;
+}
+
+int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
+{
+	return -1;
+}
+
+int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
+{
+	return -1;
+}
+

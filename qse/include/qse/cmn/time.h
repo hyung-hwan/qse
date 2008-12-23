@@ -51,7 +51,7 @@ struct qse_btime_t
 	int wday; /* 0(sun)-6(sat) */
 	int yday; /* 0(jan 1) to 365 */
 	int isdst;
-	int offset;
+	/*int offset;*/
 };
 
 #ifdef __cplusplus
@@ -87,7 +87,7 @@ int qse_settime (
  *
  * SYNOPSIS
  */
-void qse_gmtime (
+int qse_gmtime (
 	qse_ntime_t  nt, 
 	qse_btime_t* bt
 );
@@ -105,13 +105,25 @@ int qse_localtime (
 ); 
 /******/
 
-/****f* qse.cmn/qse_mktime
+/****f* qse.cmn/qse_timegm
  * NAME
- *  qse_mktime - convert broken-down time to numeric time
+ *  qse_timegm - convert broken-down time to numeric time
  *
  * SYNOPSIS
  */
-int qse_mktime (
+int qse_timegm (
+	const qse_btime_t* bt,
+	qse_ntime_t*       nt
+);
+/******/
+
+/****f* qse.cmn/qse_timelocal
+ * NAME
+ *  qse_timelocal - convert broken-down time to numeric time
+ *
+ * SYNOPSIS
+ */
+int qse_timelcoal (
 	const qse_btime_t* bt,
 	qse_ntime_t*       nt
 );
