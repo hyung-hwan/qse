@@ -1073,8 +1073,9 @@ static int bfn_systime (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fn
 	return 0;
 }
 
-static int bfn_gmtime (qse_awk_run_t* run, const qse_char_t* fnm, qse-size_t fnl)
+static int bfn_gmtime (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
+/* TODO: *********************** */
 	qse_ntime_t nt;
 	qse_btime_t bt;
 
@@ -1083,6 +1084,12 @@ static int bfn_gmtime (qse_awk_run_t* run, const qse_char_t* fnm, qse-size_t fnl
 	/* TODO: create an array containing
 	 *       .....
 	 */
+	return -1;
+}
+
+static int bfn_localtime (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+{
+	return -1;
 }
 
 #define ADD_FUNC(awk,name,min,max,bfn) \
@@ -1105,6 +1112,7 @@ static int add_functions (qse_awk_t* awk)
         ADD_FUNC (awk, QSE_T("srand"),      0, 1, bfn_srand);
         ADD_FUNC (awk, QSE_T("systime"),    0, 0, bfn_systime);
 	ADD_FUNC (awk, QSE_T("gmtime"),     0, 0, bfn_gmtime);
+	ADD_FUNC (awk, QSE_T("localtime"),  0, 0, bfn_localtime);
 /*
         ADD_FUNC (awk, QSE_T("strftime"),   0, 2, bfn_strftime);
         ADD_FUNC (awk, QSE_T("strfgmtime"), 0, 2, bfn_strfgmtime);
