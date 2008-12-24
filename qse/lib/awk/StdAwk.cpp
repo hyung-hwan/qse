@@ -254,7 +254,7 @@ int StdAwk::systime (Run& run, Return& ret, const Argument* args, size_t nargs,
 	if (qse_gettime(&now) == -1) 
 		return ret.set (QSE_TYPE_MIN(long_t));
 	else
-		return ret.set ((long_t)now / QSE_MSEC_IN_SEC);
+		return ret.set ((long_t)now / QSE_MSECS_PER_SEC);
 }
 
 int StdAwk::strftime (Run& run, Return& ret, const Argument* args, size_t nargs,

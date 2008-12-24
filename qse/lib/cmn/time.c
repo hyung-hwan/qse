@@ -9,8 +9,8 @@
 #include <windows.h>
 #else
 #include <sys/time.h>
-#include <time.h>
 #endif
+#include <time.h>
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>
