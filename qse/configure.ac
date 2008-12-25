@@ -185,7 +185,7 @@ AC_ARG_ENABLE([cxx], [AC_HELP_STRING([--enable-cxx],
 [test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"]
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 
-# Configure makefiles
+# Configure Makefiles
 AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
 	[define _REENTRANT (default. yes)])],
 	enable_reentrant_is=$enableval,enable_reentrant_is=yes)
@@ -302,24 +302,24 @@ AC_SUBST(CJFLAGS, $CJFLAGS)
 AC_SUBST(BUILD_CJ, $BUILD_CJ)
 
 AC_CONFIG_FILES([
-	makefile 
-	include/makefile
-	include/qse/makefile
-	include/qse/cmn/makefile
-	include/qse/awk/makefile
-	include/qse/lsp/makefile
-	include/qse/tgp/makefile
-	include/qse/utl/makefile
-	lib/makefile 
-	lib/cmn/makefile 
-	lib/awk/makefile 
-	lib/lsp/makefile 
-	lib/tgp/makefile 
-	lib/utl/makefile 
-	cmd/makefile 
-	cmd/awk/makefile 
-	cmd/lsp/makefile
-	cmd/tgp/makefile])
+	Makefile 
+	include/Makefile
+	include/qse/Makefile
+	include/qse/cmn/Makefile
+	include/qse/awk/Makefile
+	include/qse/lsp/Makefile
+	include/qse/tgp/Makefile
+	include/qse/utl/Makefile
+	lib/Makefile 
+	lib/cmn/Makefile 
+	lib/awk/Makefile 
+	lib/lsp/Makefile 
+	lib/tgp/Makefile 
+	lib/utl/Makefile 
+	cmd/Makefile 
+	cmd/awk/Makefile 
+	cmd/lsp/Makefile
+	cmd/tgp/Makefile])
 AC_OUTPUT
 
 [
