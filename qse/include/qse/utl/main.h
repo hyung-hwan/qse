@@ -1,6 +1,6 @@
 /*
  * $Id: main.h 463 2008-12-09 06:52:03Z baconevi $
- * 
+ *
  * {License}
  */
 
@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]));
-/* TODO - qse_runmain with env */
+/* TODO - qse_runmain with env, namely, qse_runmaine */
 
 #ifdef __cplusplus
 }

@@ -18,16 +18,20 @@ AC_PROG_CXX
 dnl checks if the C++ compiler exists in PATH. 
 AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
 
-AC_PROG_LIBTOOL
-AC_SUBST(LIBTOOL_DEPS)
-
-AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
+AC_CHECK_TOOL(RANLIB, ranlib)
+AC_CHECK_TOOL(STRIP, strip)
+AC_CHECK_TOOL(OBJDUMP, objdump)
+AC_CHECK_TOOL(NM, nm)
+AC_CHECK_TOOL(LD, ld)
 
 AC_CHECK_TOOL(GREP, grep)
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(SED, sed)
 AC_CHECK_TOOL(CJ, gcj)
+
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
 
 dnl overrides the default CFLAGS setting
 #if test "$ac_test_CFLAGS" = "set"
@@ -69,6 +73,13 @@ dnl overrides the default CFLAGS setting
 dnl make visible the 64bit interface to the file system
 CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
 CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
+
+case "$host" in
+*-*-mingw*|*-*-cygwin*)
+	#CFLAGS="$CFLAGS -D_WIN32_WINNT=0x0400"
+	platform_win32=yes
+esac
+AM_CONDITIONAL(WIN32, test "${platform_win32}" = "yes" )
 
 dnl Checks for the math library (is -lm needed?)
 AC_CHECK_LIBM
@@ -327,6 +338,7 @@ echo
 echo "-[SUMMARY]---------------------------------------------------------------"
 echo "Configured for ${host}"
 echo "  Build mode : ${BUILD_MODE}"
+echo "  Source directory: ${srcdir}"
 echo "  Installation directory: ${prefix}"
 echo "  C compiler: ${CC} ${CFLAGS}"
 echo "  C++ compiler: ${CXX} ${CXXFLAGS}"

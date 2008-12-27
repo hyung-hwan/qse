@@ -11,3 +11,7 @@ libqsecmn_la_SOURCES = mem.h chr.h \
 	misc.c
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 
+if WIN32 
+libqsecmn_la_LIBADD = -lpsapi
+endif
+
