@@ -11,20 +11,22 @@
 enum qse_fio_open_flag_t
 {
 	/* treat the file name pointer as a handle pointer */
-	QSE_FIO_HANDLE    = (1 << 0),
+	QSE_FIO_HANDLE     = (1 << 0),
 
-	QSE_FIO_READ      = (1 << 1),
-	QSE_FIO_WRITE     = (1 << 2),
-	QSE_FIO_APPEND    = (1 << 3),
+	QSE_FIO_READ       = (1 << 1),
+	QSE_FIO_WRITE      = (1 << 2),
+	QSE_FIO_APPEND     = (1 << 3),
 
-	QSE_FIO_CREATE    = (1 << 4),
-	QSE_FIO_TRUNCATE  = (1 << 5),
-	QSE_FIO_EXCLUSIVE = (1 << 6),
-	QSE_FIO_SYNC      = (1 << 7),
+	QSE_FIO_CREATE     = (1 << 4),
+	QSE_FIO_TRUNCATE   = (1 << 5),
+	QSE_FIO_EXCLUSIVE  = (1 << 6),
+	QSE_FIO_SYNC       = (1 << 7),
 
-	/* for ms windows only */
-	QSE_FIO_NOSHRD    = (1 << 16),
-	QSE_FIO_NOSHWR    = (1 << 17)
+	/* for WIN32 only. harmless(no effect) when used on other platforms */
+	QSE_FIO_NOSHRD     = (1 << 16),
+	QSE_FIO_NOSHWR     = (1 << 17),
+	QSE_FIO_RANDOM     = (1 << 18), /* hint that access be random */
+	QSE_FIO_SEQUENTIAL = (1 << 19)  /* hint that access is sequential */
 };
 
 /* seek origin */
@@ -35,9 +37,25 @@ enum qse_fio_seek_origin_t
 	QSE_FIO_END     = 2
 };
 
+enum qse_fio_mode_t
+{
+	QSE_FIO_SUID = 04000, /* set UID */
+	QSE_FIO_SGID = 02000, /* set GID */
+	QSE_FIO_SVTX = 01000, /* sticky bit */
+	QSE_FIO_RUSR = 00400, /* can be read by owner */
+	QSE_FIO_WUSR = 00200, /* can be written by owner */
+	QSE_FIO_XUSR = 00100, /* can be executed by owner */
+	QSE_FIO_RGRP = 00040, /* can be read by group */
+	QSE_FIO_WGRP = 00020, /* can be written by group */
+	QSE_FIO_XGRP = 00010, /* can be executed by group */
+	QSE_FIO_ROTH = 00004, /* can be read by others */
+	QSE_FIO_WOTH = 00002, /* can be written by others */
+	QSE_FIO_XOTH = 00001  /* can be executed by others */
+};
+
 #ifdef _WIN32
-/* <winnt.h> typedef PVOID HANDLE; */
-typedef void* qse_fio_hnd_t; 
+/* <winnt.h> => typedef PVOID HANDLE; */
+typedef void* qse_fio_hnd_t;
 #else
 typedef int qse_fio_hnd_t;
 #endif
@@ -66,9 +84,9 @@ extern "C" {
  *  qse_fio_open - open a file
  *
  * DESCRIPTION
- *  To open a file, you should set the flags with at least one of 
+ *  To open a file, you should set the flags with at least one of
  *  QSE_FIO_READ, QSE_FIO_WRITE, QSE_FIO_APPEND.
- * 
+ *
  * SYNOPSIS
  */
 qse_fio_t* qse_fio_open (
@@ -83,7 +101,7 @@ qse_fio_t* qse_fio_open (
 /****f* qse.fio/qse_fio_close
  * NAME
  *  qse_fio_close - close a file
- * 
+ *
  * SYNOPSIS
  */
 void qse_fio_close (
@@ -108,7 +126,7 @@ qse_fio_hnd_t qse_fio_gethandle (
 );
 
 /****f* qse.cmn.fio/qse_fio_sethandle
- * SYNOPSIS
+ * NAME
  *  qse_fio_sethandle - set the file handle
  * WARNING
  *  Avoid using this function if you don't know what you are doing.
@@ -143,6 +161,16 @@ qse_ssize_t qse_fio_write (
 	qse_fio_t* fio,
 	const void* buf,
 	qse_size_t size
+);
+
+/****f* qse.cmn.fio/qse_fio_chmod
+ * NAME
+ *  ase_fio_chmod - change the file mode
+ * SYNOPSIS
+ */
+int qse_fio_chmod (
+	qse_fio_t* fio,
+	int mode
 );
 
 #ifdef __cplusplus

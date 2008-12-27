@@ -50,7 +50,7 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libqsecmn_la_LIBADD =
+libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = mem.lo chr.lo chr_cnv.lo rex.lo str_bas.lo \
 	str_cnv.lo str_dyn.lo lda.lo map.lo sll.lo dll.lo opt.lo \
 	fio.lo sio.lo tio.lo tio_get.lo tio_put.lo time.lo misc.lo
@@ -120,6 +120,7 @@ JAR = @JAR@
 JAR_PATH = @JAR_PATH@
 JAVAC = @JAVAC@
 JAVAC_PATH = @JAVAC_PATH@
+LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
@@ -130,7 +131,9 @@ LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
+NM = @NM@
 NMEDIT = @NMEDIT@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -208,6 +211,7 @@ libqsecmn_la_SOURCES = mem.h chr.h \
 	misc.c
 
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
+@WIN32_TRUE@libqsecmn_la_LIBADD = -lpsapi
 all: all-am
 
 .SUFFIXES:
