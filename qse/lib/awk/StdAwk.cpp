@@ -1,12 +1,20 @@
 /*
  * $Id: StdAwk.cpp 501 2008-12-17 08:39:15Z baconevi $
  *
- * {License}
- */
+   Copyright 2006-2008 Chung, Hyung-Hwan.
 
-#if defined(hpux) || defined(__hpux) || defined(__hpux__)
-	#define _INCLUDE__STDC_A1_SOURCE
-#endif
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
 
 #include <qse/awk/StdAwk.hpp>
 #include <qse/cmn/str.h>
@@ -15,7 +23,6 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <time.h>
 
 #ifdef _WIN32
 	#include <tchar.h>
@@ -24,7 +31,7 @@
 #endif
 
 /////////////////////////////////
-QSE_BEGIN_NAMESPACE(ASE)
+QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 StdAwk::StdAwk ()
@@ -57,9 +64,6 @@ int StdAwk::open ()
 	ADD_FUNC (QSE_T("int"),        1, 1, &StdAwk::fnint);
 	ADD_FUNC (QSE_T("rand"),       0, 0, &StdAwk::rand);
 	ADD_FUNC (QSE_T("srand"),      0, 1, &StdAwk::srand);
-	ADD_FUNC (QSE_T("systime"),    0, 0, &StdAwk::systime);
-	ADD_FUNC (QSE_T("strftime"),   0, 2, &StdAwk::strftime);
-	ADD_FUNC (QSE_T("strfgmtime"), 0, 2, &StdAwk::strfgmtime);
 	ADD_FUNC (QSE_T("system"),     1, 1, &StdAwk::system);
 
 	return 0;
@@ -239,78 +243,6 @@ int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,
 	return ret.set ((long_t)prevSeed);
 }
 
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER>=1400)
-	#define time_t __time64_t
-	#define time _time64
-	#define localtime _localtime64
-	#define gmtime _gmtime64
-#endif
-
-int StdAwk::systime (Run& run, Return& ret, const Argument* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	qse_ntime_t now;
-
-	if (qse_gettime(&now) == -1) 
-		return ret.set (QSE_TYPE_MIN(long_t));
-	else
-		return ret.set ((long_t)now / QSE_MSECS_PER_SEC);
-}
-
-int StdAwk::strftime (Run& run, Return& ret, const Argument* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	const char_t* fmt;
-	size_t fln;
-       
-	fmt = (nargs < 1)? QSE_T("%c"): args[0].toStr(&fln);
-	time_t t = (nargs < 2)? ::time(NULL): (time_t)args[1].toInt();
-
-	char_t buf[128]; 
-	struct tm* tm;
-#ifdef _WIN32
-	tm = ::localtime (&t);
-#else
-	struct tm tmb;
-	tm = ::localtime_r (&t, &tmb);
-#endif
-
-#ifdef QSE_CHAR_IS_MCHAR
-	size_t l = ::strftime (buf, QSE_COUNTOF(buf), fmt, tm);
-#else
-	size_t l = ::wcsftime (buf, QSE_COUNTOF(buf), fmt, tm);
-#endif
-
-	return ret.set (buf, l);	
-}
-
-int StdAwk::strfgmtime (Run& run, Return& ret, const Argument* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	const char_t* fmt;
-	size_t fln;
-       
-	fmt = (nargs < 1)? QSE_T("%c"): args[0].toStr(&fln);
-	time_t t = (nargs < 2)? ::time(NULL): (time_t)args[1].toInt();
-
-	char_t buf[128]; 
-	struct tm* tm;
-#ifdef _WIN32
-	tm = ::gmtime (&t);
-#else
-	struct tm tmb;
-	tm = ::gmtime_r (&t, &tmb);
-#endif
-
-#ifdef QSE_CHAR_IS_MCHAR
-	size_t l = ::strftime (buf, QSE_COUNTOF(buf), fmt, tm);
-#else
-	size_t l = ::wcsftime (buf, QSE_COUNTOF(buf), fmt, tm);
-#endif
-
-	return ret.set (buf, l);	
-}
-
 int StdAwk::system (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
@@ -322,19 +254,26 @@ int StdAwk::system (Run& run, Return& ret, const Argument* args, size_t nargs,
 #elif defined(QSE_CHAR_IS_MCHAR)
 	return ret.set ((long_t)::system(ptr));
 #else
-	char* mbs = (char*) qse_awk_alloc (awk, l*5+1);
+	char* mbs = (char*) qse_awk_alloc ((awk_t*)(Awk*)run, l*5+1);
 	if (mbs == QSE_NULL) return -1;
 
-	::size_t mbl = ::wcstombs (mbs, ptr, l*5);
-	if (mbl == (::size_t)-1) 
+	/* at this point, the string is guaranteed to be 
+	 * null-terminating. so qse_wcstombs() can be used to convert
+	 * the string, not qse_wcsntombsn(). */
+
+	qse_size_t mbl = l * 5;
+	if (qse_wcstombs (ptr, mbs, &mbl) != l && mbl >= l * 5) 
 	{
-		qse_awk_free (awk, mbs);
+		/* not the entire string is converted.
+		 * mbs is not null-terminated properly. */
+		qse_awk_free ((awk_t*)(Awk*)run, mbs);
 		return -1;
 	}
+
 	mbs[mbl] = '\0';
 	int n = ret.set ((long_t)::system(mbs));
 
-	qse_awk_free (awk, mbs);
+	qse_awk_free ((awk_t*)(Awk*)run, mbs);
 	return n;
 #endif
 }
@@ -563,6 +502,6 @@ int StdAwk::vsprintf (
 }
 
 /////////////////////////////////
-QSE_END_NAMESPACE(ASE)
+QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
 

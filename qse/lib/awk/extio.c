@@ -209,7 +209,7 @@ int qse_awk_readextio (
 	}
 	else if (rs->type == QSE_AWK_VAL_STR)
 	{
-		rs_ptr = ((qse_awk_val_str_t*)rs)->buf;
+		rs_ptr = ((qse_awk_val_str_t*)rs)->ptr;
 		rs_len = ((qse_awk_val_str_t*)rs)->len;
 	}
 	else 
@@ -417,7 +417,7 @@ int qse_awk_writeextio_val (
 
 	if (v->type == QSE_AWK_VAL_STR)
 	{
-		str = ((qse_awk_val_str_t*)v)->buf;
+		str = ((qse_awk_val_str_t*)v)->ptr;
 		len = ((qse_awk_val_str_t*)v)->len;
 	}
 	else

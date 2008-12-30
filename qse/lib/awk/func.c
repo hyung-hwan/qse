@@ -244,7 +244,7 @@ static int bfn_close (
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		name = ((qse_awk_val_str_t*)a0)->buf;
+		name = ((qse_awk_val_str_t*)a0)->ptr;
 		len = ((qse_awk_val_str_t*)a0)->len;
 	}
 	else
@@ -264,7 +264,6 @@ static int bfn_close (
 		 * an empty string for its identification because closeextio
 		 * closes any extios that match the name given unlike 
 		 * closeextio_read or closeextio_write. */ 
-		if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, name);
 		n = -1;
 		goto skip_close;
 	}
@@ -275,8 +274,6 @@ static int bfn_close (
 		{
 			/* the name contains a null string. 
 			 * make close return -1 */
-			if (a0->type != QSE_AWK_VAL_STR) 
-				QSE_AWK_FREE (run->awk, name);
 			n = -1;
 			goto skip_close;
 		}
@@ -292,9 +289,9 @@ static int bfn_close (
 	}
 	*/
 
+skip_close:
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, name);
 
-skip_close:
 	v = qse_awk_makeintval (run, (qse_long_t)n);
 	if (v == QSE_NULL)
 	{
@@ -361,7 +358,7 @@ static int bfn_fflush (
 		a0 = qse_awk_getarg (run, 0);
 		if (a0->type == QSE_AWK_VAL_STR)
 		{
-			str0 = ((qse_awk_val_str_t*)a0)->buf;
+			str0 = ((qse_awk_val_str_t*)a0)->ptr;
 			len0 = ((qse_awk_val_str_t*)a0)->len;
 		}
 		else
@@ -379,8 +376,6 @@ static int bfn_fflush (
 		{
 			if (*ptr == QSE_T('\0')) 
 			{
-				if (a0->type != QSE_AWK_VAL_STR) 
-					QSE_AWK_FREE (run->awk, str0);
 				n = -1;
 				goto skip_flush;
 			}
@@ -408,10 +403,10 @@ static int bfn_fflush (
 		 * if n is -1, the io handler has returned an error */
 		if (n != 0) n = -1;
 
+	skip_flush:
 		if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str0);
 	}
 
-skip_flush:
 	a0 = qse_awk_makeintval (run, (qse_long_t)n);
 	if (a0 == QSE_NULL)
 	{
@@ -440,7 +435,7 @@ static int bfn_index (
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		str0 = ((qse_awk_val_str_t*)a0)->buf;
+		str0 = ((qse_awk_val_str_t*)a0)->ptr;
 		len0 = ((qse_awk_val_str_t*)a0)->len;
 	}
 	else
@@ -452,7 +447,7 @@ static int bfn_index (
 
 	if (a1->type == QSE_AWK_VAL_STR)
 	{
-		str1 = ((qse_awk_val_str_t*)a1)->buf;
+		str1 = ((qse_awk_val_str_t*)a1)->ptr;
 		len1 = ((qse_awk_val_str_t*)a1)->len;
 	}
 	else
@@ -541,7 +536,7 @@ static int bfn_substr (
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		str = ((qse_awk_val_str_t*)a0)->buf;
+		str = ((qse_awk_val_str_t*)a0)->ptr;
 		len = ((qse_awk_val_str_t*)a0)->len;
 	}
 	else 
@@ -646,7 +641,7 @@ static int bfn_split (
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		str = ((qse_awk_val_str_t*)a0)->buf;
+		str = ((qse_awk_val_str_t*)a0)->ptr;
 		str_len = ((qse_awk_val_str_t*)a0)->len;
 		str_free = QSE_NULL;
 	}
@@ -670,7 +665,7 @@ static int bfn_split (
 		}
 		else if (t1->type == QSE_AWK_VAL_STR)
 		{
-			fs_ptr = ((qse_awk_val_str_t*)t1)->buf;
+			fs_ptr = ((qse_awk_val_str_t*)t1)->ptr;
 			fs_len = ((qse_awk_val_str_t*)t1)->len;
 			fs_free = QSE_NULL;
 		}
@@ -697,7 +692,7 @@ static int bfn_split (
 	{
 		if (a2->type == QSE_AWK_VAL_STR)
 		{
-			fs_ptr = ((qse_awk_val_str_t*)a2)->buf;
+			fs_ptr = ((qse_awk_val_str_t*)a2)->ptr;
 			fs_len = ((qse_awk_val_str_t*)a2)->len;
 			fs_free = QSE_NULL;
 		}
@@ -867,7 +862,7 @@ static int bfn_tolower (
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		str = ((qse_awk_val_str_t*)a0)->buf;
+		str = ((qse_awk_val_str_t*)a0)->ptr;
 		len = ((qse_awk_val_str_t*)a0)->len;
 	}
 	else 
@@ -907,7 +902,7 @@ static int bfn_toupper (
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		str = ((qse_awk_val_str_t*)a0)->buf;
+		str = ((qse_awk_val_str_t*)a0)->ptr;
 		len = ((qse_awk_val_str_t*)a0)->len;
 	}
 	else 
@@ -974,7 +969,7 @@ static int __substitute (qse_awk_run_t* run, qse_long_t max_count)
 	}
 	else if (a0->type == QSE_AWK_VAL_STR)
 	{
-		a0_ptr = ((qse_awk_val_str_t*)a0)->buf;
+		a0_ptr = ((qse_awk_val_str_t*)a0)->ptr;
 		a0_len = ((qse_awk_val_str_t*)a0)->len;
 	}
 	else
@@ -991,7 +986,7 @@ static int __substitute (qse_awk_run_t* run, qse_long_t max_count)
 
 	if (a1->type == QSE_AWK_VAL_STR)
 	{
-		a1_ptr = ((qse_awk_val_str_t*)a1)->buf;
+		a1_ptr = ((qse_awk_val_str_t*)a1)->ptr;
 		a1_len = ((qse_awk_val_str_t*)a1)->len;
 	}
 	else
@@ -1047,7 +1042,7 @@ static int __substitute (qse_awk_run_t* run, qse_long_t max_count)
 
 		if ((*a2_ref)->type == QSE_AWK_VAL_STR)
 		{
-			a2_ptr = ((qse_awk_val_str_t*)(*a2_ref))->buf;
+			a2_ptr = ((qse_awk_val_str_t*)(*a2_ref))->ptr;
 			a2_len = ((qse_awk_val_str_t*)(*a2_ref))->len;
 		}
 		else
@@ -1256,7 +1251,7 @@ static int bfn_match (
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		str0 = ((qse_awk_val_str_t*)a0)->buf;
+		str0 = ((qse_awk_val_str_t*)a0)->ptr;
 		len0 = ((qse_awk_val_str_t*)a0)->len;
 	}
 	else
@@ -1274,7 +1269,7 @@ static int bfn_match (
 	{
 		if (a1->type == QSE_AWK_VAL_STR)
 		{
-			str1 = ((qse_awk_val_str_t*)a1)->buf;
+			str1 = ((qse_awk_val_str_t*)a1)->ptr;
 			len1 = ((qse_awk_val_str_t*)a1)->len;
 		}
 		else
@@ -1381,7 +1376,7 @@ static int bfn_sprintf (
 	a0 = qse_awk_getarg (run, 0);
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		cs0.ptr = ((qse_awk_val_str_t*)a0)->buf;
+		cs0.ptr = ((qse_awk_val_str_t*)a0)->ptr;
 		cs0.len = ((qse_awk_val_str_t*)a0)->len;
 	}
 	else

@@ -17,9 +17,9 @@
 #endif
 
 #ifdef _WIN32
-	#define WIN_EPOCH_YEAR   ((qse_ntime_t)1601)
-	#define WIN_EPOCH_MON    ((qse_ntime_t)1)
-	#define WIN_EPOCH_DAY    ((qse_ntime_t)1)
+	#define WIN_EPOCH_YEAR   (1601)
+	#define WIN_EPOCH_MON    (1)
+	#define WIN_EPOCH_DAY    (1)
 
 	#define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-WIN_EPOCH_YEAR)
 	#define EPOCH_DIFF_DAYS  (EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
@@ -108,7 +108,7 @@ int qse_settime (qse_ntime_t t)
 #endif
 }
 
-static void brkdntime (qse_ntime_t nt, qse_btime_t* bt, qse_ntime_t offset)
+static void breakdown_time (qse_ntime_t nt, qse_btime_t* bt, qse_ntime_t offset)
 {
 	int midx;
 	qse_ntime_t days; /* total days */
@@ -178,7 +178,7 @@ static void brkdntime (qse_ntime_t nt, qse_btime_t* bt, qse_ntime_t offset)
 
 int qse_gmtime (qse_ntime_t nt, qse_btime_t* bt)
 {
-	brkdntime (nt, bt, 0);
+	breakdown_time (nt, bt, 0);
 	return 0;
 }
 
@@ -216,11 +216,69 @@ int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
 
 int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 {
+#ifdef _WIN32
+	/* TODO: verify qse_timegm for WIN32 */
+	SYSTEMTIME st;
+	FILETIME ft;
+
+	st.wYear = bt->tm_year + QSE_EPOCH_YEAR;
+	st.wMonth = bt->tm_mon + WIN_EPOCH_MON;
+	st.wDayOfWeek = bt->tm_wday;
+	st.wDay = bt->tm_mday;
+	st.wHour = bt->tm_hour;
+	st.wMinute = bt->tm_min;
+	st.mSecond = bt->tm_sec;
+	st.mMilliseconds = bt->tm_msec;
+
+	if (SystemTimeToFileTime (&st, &ft) == FALSE) return -1;
+	*nt = ((qse_ntime_t)(*((qse_int64_t*)&ft)) / (10 * 1000));
+	*nt -= EPOCH_DIFF_MSECS;
+	
+	return 0;
+#else
+	/* TODO: qse_timegm - remove dependency on timegm */
+	struct tm tm;
+
+	tm.tm_sec = bt->sec;
+	tm.tm_min = bt->min;
+	tm.tm_hour = bt->hour;
+	tm.tm_mday = bt->mday;
+	tm.tm_mon = bt->mon;
+	tm.tm_year = bt->year;
+	tm.tm_wday = bt->wday;
+	tm.tm_yday = bt->yday;
+	tm.tm_isdst = bt->isdst;
+
+#ifdef HAVE_TIMEGM
+	*nt = ((qse_ntime_t)timegm(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
+#else
+	#warning #### timegm() is not available on this platform ####
 	return -1;
+#endif
+
+#endif
 }
 
 int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 {
+	/* TODO: qse_timelocal - remove dependency on timelocal */
+	struct tm tm;
+
+	tm.tm_sec = bt->sec;
+	tm.tm_min = bt->min;
+	tm.tm_hour = bt->hour;
+	tm.tm_mday = bt->mday;
+	tm.tm_mon = bt->mon;
+	tm.tm_year = bt->year;
+	tm.tm_wday = bt->wday;
+	tm.tm_yday = bt->yday;
+	tm.tm_isdst = bt->isdst;
+
+#ifdef HAVE_TIMELOCAL
+	*nt = ((qse_ntime_t)timelocal(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
+#else
+	#warning #### timelocal() is not available on this platform ####
 	return -1;
+#endif
 }
 

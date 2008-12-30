@@ -2899,9 +2899,9 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 		nde->line = line;
 		nde->next = QSE_NULL;
 		nde->len = QSE_STR_LEN(awk->token.name);
-		nde->buf = QSE_AWK_STRXDUP (awk,
+		nde->ptr = QSE_AWK_STRXDUP (awk,
 			QSE_STR_PTR(awk->token.name), nde->len);
-		if (nde->buf == QSE_NULL) 
+		if (nde->ptr == QSE_NULL) 
 		{
 			QSE_AWK_FREE (awk, nde);
 			SETERRLIN (awk, QSE_AWK_ENOMEM, line);
@@ -2910,7 +2910,7 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 
 		if (get_token(awk) == -1) 
 		{
-			QSE_AWK_FREE (awk, nde->buf);
+			QSE_AWK_FREE (awk, nde->ptr);
 			QSE_AWK_FREE (awk, nde);
 			return QSE_NULL;			
 		}
@@ -2943,10 +2943,10 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 		nde->next = QSE_NULL;
 
 		nde->len = QSE_STR_LEN(awk->token.name);
-		nde->buf = QSE_AWK_STRXDUP (awk,
+		nde->ptr = QSE_AWK_STRXDUP (awk,
 			QSE_STR_PTR(awk->token.name),
 			QSE_STR_LEN(awk->token.name));
-		if (nde->buf == QSE_NULL)
+		if (nde->ptr == QSE_NULL)
 		{
 			QSE_AWK_FREE (awk, nde);
 			SETERRLIN (awk, QSE_AWK_ENOMEM, line);
@@ -2959,7 +2959,7 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 			&errnum);
 		if (nde->code == QSE_NULL)
 		{
-			QSE_AWK_FREE (awk, nde->buf);
+			QSE_AWK_FREE (awk, nde->ptr);
 			QSE_AWK_FREE (awk, nde);
 
 			SETERRLIN (awk, errnum, line);
@@ -2968,7 +2968,7 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 
 		if (get_token(awk) == -1) 
 		{
-			QSE_AWK_FREE (awk, nde->buf);
+			QSE_AWK_FREE (awk, nde->ptr);
 			QSE_AWK_FREE (awk, nde->code);
 			QSE_AWK_FREE (awk, nde);
 			return QSE_NULL;			

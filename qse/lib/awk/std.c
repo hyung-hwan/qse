@@ -20,11 +20,11 @@
 #include <qse/cmn/sio.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
+#include <qse/utl/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 
 #include <math.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <qse/utl/stdio.h>
 
 typedef struct xtn_t
 {
@@ -296,8 +296,14 @@ int qse_awk_parsesimple (
 		return -1;
 	}
 
-	if (ist == QSE_AWK_PARSE_FILES) sf.in.p.files = isp;
-	else if (ist == QSE_AWK_PARSE_STRING) sf.in.p.str = isp;
+	if (ist == QSE_AWK_PARSE_FILES) 
+	{
+		sf.in.p.files = (const qse_char_t* const*)isp;
+	}
+	else if (ist == QSE_AWK_PARSE_STRING) 
+	{
+		sf.in.p.str = (const qse_char_t*)isp;
+	}
 	else
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
@@ -856,13 +862,14 @@ static int bfn_math_2 (
 
 static int bfn_sin (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (run, fnm, fnl, 
+	return bfn_math_1 (
+		run, fnm, fnl, 
 	#if defined(HAVE_SINL)
-		BFN_MATH_LD, sinl
+		BFN_MATH_LD, (void*)sinl
 	#elif defined(HAVE_SIN)
-		BFN_MATH_D, sin
+		BFN_MATH_D, (void*)sin
 	#elif defined(HAVE_SINF)
-		BFN_MATH_F, sinf
+		BFN_MATH_F, (void*)sinf
 	#else
 		#error ### no sin function available ###
 	#endif
@@ -871,13 +878,14 @@ static int bfn_sin (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
 static int bfn_cos (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (run, fnm, fnl, 
+	return bfn_math_1 (
+		run, fnm, fnl, 
 	#if defined(HAVE_COSL)
-		BFN_MATH_LD, cosl
+		BFN_MATH_LD, (void*)cosl
 	#elif defined(HAVE_COS)
-		BFN_MATH_D, cos
+		BFN_MATH_D, (void*)cos
 	#elif defined(HAVE_COSF)
-		BFN_MATH_F, cosf
+		BFN_MATH_F, (void*)cosf
 	#else
 		#error ### no cos function available ###
 	#endif
@@ -886,13 +894,14 @@ static int bfn_cos (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
 static int bfn_tan (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (run, fnm, fnl, 
+	return bfn_math_1 (
+		run, fnm, fnl, 
 	#if defined(HAVE_TANL)
-		BFN_MATH_LD, tanl
+		BFN_MATH_LD, (void*)tanl
 	#elif defined(HAVE_TAN)
-		BFN_MATH_D, tan
+		BFN_MATH_D, (void*)tan
 	#elif defined(HAVE_TANF)
-		BFN_MATH_F, tanf
+		BFN_MATH_F, (void*)tanf
 	#else
 		#error ### no tan function available ###
 	#endif
@@ -901,13 +910,14 @@ static int bfn_tan (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
 static int bfn_atan (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (run, fnm, fnl, 
+	return bfn_math_1 (
+		run, fnm, fnl, 
 	#if defined(HAVE_ATANL)
-		BFN_MATH_LD, atanl
+		BFN_MATH_LD, (void*)atanl
 	#elif defined(HAVE_ATAN)
-		BFN_MATH_D, atan
+		BFN_MATH_D, (void*)atan
 	#elif defined(HAVE_ATANF)
-		BFN_MATH_F, atanf
+		BFN_MATH_F, (void*)atanf
 	#else
 		#error ### no atan function available ###
 	#endif
@@ -916,13 +926,14 @@ static int bfn_atan (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
 static int bfn_atan2 (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_2 (run, fnm, fnl, 
+	return bfn_math_2 (
+		run, fnm, fnl, 
 	#if defined(HAVE_ATAN2L)
-		BFN_MATH_LD, atan2l
+		BFN_MATH_LD, (void*)atan2l
 	#elif defined(HAVE_ATAN2)
-		BFN_MATH_D, atan2
+		BFN_MATH_D, (void*)atan2
 	#elif defined(HAVE_ATAN2F)
-		BFN_MATH_F, atan2f
+		BFN_MATH_F, (void*)atan2f
 	#else
 		#error ### no atan2 function available ###
 	#endif
@@ -931,13 +942,14 @@ static int bfn_atan2 (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
 static int bfn_log (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (run, fnm, fnl, 
+	return bfn_math_1 (
+		run, fnm, fnl, 
 	#if defined(HAVE_LOGL)
-		BFN_MATH_LD, logl
+		BFN_MATH_LD, (void*)logl
 	#elif defined(HAVE_LOG)
-		BFN_MATH_D, log
+		BFN_MATH_D, (void*)log
 	#elif defined(HAVE_LOGF)
-		BFN_MATH_F, logf
+		BFN_MATH_F, (void*)logf
 	#else
 		#error ### no log function available ###
 	#endif
@@ -946,13 +958,14 @@ static int bfn_log (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
 static int bfn_exp (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (run, fnm, fnl, 
+	return bfn_math_1 (
+		run, fnm, fnl, 
 	#if defined(HAVE_EXPL)
-		BFN_MATH_LD, expl
+		BFN_MATH_LD, (void*)expl
 	#elif defined(HAVE_EXP)
-		BFN_MATH_D, exp
+		BFN_MATH_D, (void*)exp
 	#elif defined(HAVE_EXPF)
-		BFN_MATH_F, expf
+		BFN_MATH_F, (void*)expf
 	#else
 		#error ### no exp function available ###
 	#endif
@@ -961,13 +974,14 @@ static int bfn_exp (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
 static int bfn_sqrt (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (run, fnm, fnl, 
+	return bfn_math_1 (
+		run, fnm, fnl, 
 	#if defined(HAVE_SQRTL)
-		BFN_MATH_LD, sqrtl
+		BFN_MATH_LD, (void*)sqrtl
 	#elif defined(HAVE_SQRT)
-		BFN_MATH_D, sqrt
+		BFN_MATH_D, (void*)sqrt
 	#elif defined(HAVE_SQRTF)
-		BFN_MATH_F, sqrtf
+		BFN_MATH_F, (void*)sqrtf
 	#else
 		#error ### no sqrt function available ###
 	#endif
@@ -1029,7 +1043,7 @@ static int bfn_srand (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	unsigned int prev;
 	rxtn_t* rxtn;
 
-	rxtn = qse_awk_getrundata (run);
+	rxtn = (rxtn_t*)qse_awk_getrundata (run);
 	nargs = qse_awk_getnargs (run);
 	QSE_ASSERT (nargs == 0 || nargs == 1);
 
@@ -1066,46 +1080,94 @@ static int bfn_srand (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int bfn_systime (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_system (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	qse_awk_val_t* r;
-	qse_ntime_t now;
-	int n;
-	
-	if (qse_gettime(&now) == -1)
-		r = qse_awk_makeintval (run, QSE_TYPE_MIN(qse_long_t));
-	else
-		r = qse_awk_makeintval (run, now / QSE_MSECS_PER_SEC);
+	qse_size_t nargs;
+	qse_awk_val_t* v;
+	qse_char_t* str, * ptr, * end;
+	qse_size_t len;
+	int n = 0;
 
-	if (r == QSE_NULL)
+	nargs = qse_awk_getnargs (run);
+	QSE_ASSERT (nargs == 1);
+	
+	v = qse_awk_getarg (run, 0);
+	if (v->type == QSE_AWK_VAL_STR)
 	{
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		str = ((qse_awk_val_str_t*)v)->ptr;
+		len = ((qse_awk_val_str_t*)v)->len;
+	}
+	else
+	{
+		str = qse_awk_valtostr (
+			run, v, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+		if (str == QSE_NULL) return -1;
+	}
+
+	/* the target name contains a null character.
+	 * make system return -1 */
+	ptr = str; end = str + len;
+	while (ptr < end)
+	{
+		if (*ptr == QSE_T('\0')) 
+		{
+			n = -1;
+			goto skip_system;
+		}
+
+		ptr++;
+	}
+
+#if defined(_WIN32)
+	n = _tsystem (str);
+#elif defined(QSE_CHAR_IS_MCHAR)
+	n = system (str);
+#else
+	{
+		char* mbs;
+		qse_size_t mbl;
+
+		mbs = (char*) qse_awk_alloc (run->awk, len*5+1);
+		if (mbs == QSE_NULL) 
+		{
+			n = -1;
+			goto skip_system;
+		}
+
+		/* at this point, the string is guaranteed to be 
+		 * null-terminating. so qse_wcstombs() can be used to convert
+		 * the string, not qse_wcsntombsn(). */
+
+		mbl = len * 5;
+		if (qse_wcstombs (str, mbs, &mbl) != len && mbl >= len * 5) 
+		{
+			/* not the entire string is converted.
+			 * mbs is not null-terminated properly. */
+			n = -1;
+			goto skip_system_mbs;
+		}
+
+		mbs[mbl] = '\0';
+		n = system (mbs);
+
+	skip_system_mbs:
+		qse_awk_free (run->awk, mbs);
+	}
+#endif
+
+skip_system:
+	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
+
+	v = qse_awk_makeintval (run, (qse_long_t)n);
+	if (v == QSE_NULL)
+	{
+		/*qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);*/
 		return -1;
 	}
 
-	qse_awk_setretval (run, r);
+	qse_awk_setretval (run, v);
 	return 0;
 }
-
-static int bfn_gmtime (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
-{
-/* TODO: *********************** */
-	qse_ntime_t nt;
-	qse_btime_t bt;
-
-
-	qse_gmtime (nt, &bt);
-	/* TODO: create an array containing
-	 *       .....
-	 */
-	return -1;
-}
-
-static int bfn_localtime (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
-{
-	return -1;
-}
-
 #define ADD_FUNC(awk,name,min,max,bfn) \
         if (qse_awk_addfunc (\
 		(awk), (name), qse_strlen(name), \
@@ -1124,14 +1186,7 @@ static int add_functions (qse_awk_t* awk)
         ADD_FUNC (awk, QSE_T("int"),        1, 1, bfn_int);
         ADD_FUNC (awk, QSE_T("rand"),       0, 0, bfn_rand);
         ADD_FUNC (awk, QSE_T("srand"),      0, 1, bfn_srand);
-        ADD_FUNC (awk, QSE_T("systime"),    0, 0, bfn_systime);
-	ADD_FUNC (awk, QSE_T("gmtime"),     0, 0, bfn_gmtime);
-	ADD_FUNC (awk, QSE_T("localtime"),  0, 0, bfn_localtime);
-/*
-        ADD_FUNC (awk, QSE_T("strftime"),   0, 2, bfn_strftime);
-        ADD_FUNC (awk, QSE_T("strfgmtime"), 0, 2, bfn_strfgmtime);
         ADD_FUNC (awk, QSE_T("system"),     1, 1, bfn_system);
-*/
 
 	return 0;
 }

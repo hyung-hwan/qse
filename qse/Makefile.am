@@ -1,15 +1,9 @@
-##############################################################################
-#
-# ASE 
-# Copyright (c) Chung,Hyung-Hwan (bacon@abiyo.net)
-#
-##############################################################################
 
 AUTOMAKE_OPTION = foreign
 # EXTRA_DIST = 
 
 SUBDIRS = lib cmd
-DIST_SUBDIRS = $(SUBDIRS) include
+DIST_SUBDIRS = $(__COREDIRS) include test
 
 install-data-hook:
 	cd include && $(MAKE) install

@@ -1,7 +1,19 @@
 /*
  * $Id: Awk.cpp 496 2008-12-15 09:56:48Z baconevi $
  *
- * {License}
+   Copyright 2006-2008 Chung, Hyung-Hwan.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
  */
 
 
@@ -10,7 +22,7 @@
 #include "../cmn/mem.h"
 
 /////////////////////////////////
-QSE_BEGIN_NAMESPACE(ASE)
+QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 //////////////////////////////////////////////////////////////////
@@ -288,14 +300,14 @@ int Awk::Argument::init (val_t* v)
 		if (n == 0) 
 		{
 			this->rnum = (qse_real_t)this->inum;
-			this->str.ptr = ((qse_awk_val_str_t*)this->val)->buf;
+			this->str.ptr = ((qse_awk_val_str_t*)this->val)->ptr;
 			this->str.len = ((qse_awk_val_str_t*)this->val)->len;
 			return 0;
 		}
 		else if (n == 1) 
 		{
 			this->inum = (qse_long_t)this->rnum;
-			this->str.ptr = ((qse_awk_val_str_t*)this->val)->buf;
+			this->str.ptr = ((qse_awk_val_str_t*)this->val)->ptr;
 			this->str.len = ((qse_awk_val_str_t*)this->val)->len;
 			return 0;
 		}
@@ -1018,12 +1030,12 @@ int Awk::Run::getGlobal (int id, Argument& global) const
 	return global.init (qse_awk_getglobal(this->run,id));
 }
 
-void Awk::Run::setCustom (void* data)
+void Awk::Run::setData (void* data)
 {
 	this->data = data;
 }
 
-void* Awk::Run::getCustom () const
+void* Awk::Run::getData () const
 {
 	return this->data;
 }
@@ -1777,6 +1789,6 @@ int Awk::sprintf (void* data, char_t* buf, size_t size,
 }
 
 /////////////////////////////////
-QSE_END_NAMESPACE(ASE)
+QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
 

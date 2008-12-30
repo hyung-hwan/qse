@@ -27,7 +27,7 @@
 
 static bool verbose = false;
 
-class TestAwk: public ASE::StdAwk
+class TestAwk: public QSE::StdAwk
 {
 public:
 	TestAwk (): srcInName(QSE_NULL), srcOutName(QSE_NULL), 
@@ -54,7 +54,7 @@ public:
 	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		int n = StdAwk::open ();
 	#else
-		int n = ASE::StdAwk::open ();
+		int n = QSE::StdAwk::open ();
 	#endif
 		if (n == -1)
 		{
@@ -82,7 +82,7 @@ public:
 	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		StdAwk::close ();
 	#else
-		ASE::StdAwk::close ();
+		QSE::StdAwk::close ();
 	#endif
 
 	#ifdef _WIN32
@@ -97,7 +97,7 @@ public:
 	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		StdAwk::close ();
 	#else
-		ASE::StdAwk::close ();
+		QSE::StdAwk::close ();
 	#endif
 
 		numConInFiles = 0;
@@ -216,7 +216,7 @@ public:
 	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		return StdAwk::parse ();
 	#else
-		return ASE::StdAwk::parse ();
+		return QSE::StdAwk::parse ();
 	#endif
 	}
 
@@ -344,7 +344,7 @@ protected:
 	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		StdAwk::Console::Mode mode = io.getMode();
 	#else
-		ASE::StdAwk::Console::Mode mode = io.getMode();
+		QSE::StdAwk::Console::Mode mode = io.getMode();
 	#endif
 		FILE* fp = QSE_NULL;
 		const char_t* fn = QSE_NULL;
@@ -354,7 +354,7 @@ protected:
 		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			case StdAwk::Console::READ:
 		#else
-			case ASE::StdAwk::Console::READ:
+			case QSE::StdAwk::Console::READ:
 		#endif
 				if (numConInFiles == 0) fp = stdin;
 				else
@@ -367,7 +367,7 @@ protected:
 		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			case StdAwk::Console::WRITE:
 		#else
-			case ASE::StdAwk::Console::WRITE:
+			case QSE::StdAwk::Console::WRITE:
 		#endif
 				if (numConOutFiles == 0) fp = stdout;
 				else
@@ -494,7 +494,7 @@ protected:
 	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		StdAwk::Console::Mode mode = io.getMode();
 	#else
-		ASE::StdAwk::Console::Mode mode = io.getMode();
+		QSE::StdAwk::Console::Mode mode = io.getMode();
 	#endif
 		ConTrack* t = (ConTrack*)io.getHandle();
 		FILE* ofp = t->handle;
@@ -506,7 +506,7 @@ protected:
 		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			case StdAwk::Console::READ:
 		#else
-			case ASE::StdAwk::Console::READ:
+			case QSE::StdAwk::Console::READ:
 		#endif
 				if (t->nextConIdx >= numConInFiles) return 0;
 				fn = conInFile[t->nextConIdx];
@@ -516,7 +516,7 @@ protected:
 		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			case StdAwk::Console::WRITE:
 		#else
-			case ASE::StdAwk::Console::WRITE:
+			case QSE::StdAwk::Console::WRITE:
 		#endif
 				if (t->nextConIdx >= numConOutFiles) return 0;
 				fn = conOutFile[t->nextConIdx];

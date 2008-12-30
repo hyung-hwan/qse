@@ -1,7 +1,19 @@
 /*
  * $Id: awk.h 501 2008-12-17 08:39:15Z baconevi $
  *
- * {License}
+   Copyright 2006-2008 Chung, Hyung-Hwan.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
  */
 
 #ifndef _QSE_AWK_AWK_H_
@@ -519,7 +531,7 @@ struct qse_awk_val_int_t
 {
 	QSE_AWK_VAL_HDR;
 	qse_long_t val;
-	void* nde;
+	void*      nde;
 };
 
 /* QSE_AWK_VAL_REAL */
@@ -527,14 +539,14 @@ struct qse_awk_val_real_t
 {
 	QSE_AWK_VAL_HDR;
 	qse_real_t val;
-	void* nde;
+	void*      nde;
 };
 
 /* QSE_AWK_VAL_STR */
 struct qse_awk_val_str_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_char_t* buf;
+	qse_char_t* ptr;
 	qse_size_t  len;
 };
 
@@ -542,9 +554,9 @@ struct qse_awk_val_str_t
 struct qse_awk_val_rex_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_char_t* buf;
+	qse_char_t* ptr;
 	qse_size_t  len;
-	void*      code;
+	void*       code;
 };
 
 /* QSE_AWK_VAL_MAP */
@@ -761,7 +773,7 @@ void qse_awk_unsetallwords (
  *  it unsets the replacement for okw and olen. If all of them are valid,
  *  it sets the word replace for okw and olen to nkw and nlen.
  *
- * RETURNS: 0 on success, -1 on failure
+ * RETURN: 0 on success, -1 on failure
  */
 int qse_awk_setword (
 	/* the pointer to an qse_awk_t instance */
@@ -1037,35 +1049,30 @@ void qse_awk_clrbfn (qse_awk_t* awk);
 int qse_awk_clrrec (qse_awk_run_t* run, qse_bool_t skip_inrec_line);
 int qse_awk_setrec (qse_awk_run_t* run, qse_size_t idx, const qse_char_t* str, qse_size_t len);
 
-/* utility functions exported by awk.h */
-
-/*
- * NAME allocate dynamic memory
- *
- * DESCRIPTION
- *
- *
- * RETURNS
+/****f* qse.awk/qse_awk_alloc
+ * NAME 
+ *  qse_awk_alloc - allocate dynamic memory
+ * RETURN
  *   the pointer to the memory area allocated on success, QSE_NULL on failure
+ * SYNOPSIS
  */
 void* qse_awk_alloc (
-	/* the pointer to an qse_awk_t instance */
-	qse_awk_t* awk, 
-	/* the size of memory to allocate in bytes */
-	qse_size_t size
+	qse_awk_t* awk /* the pointer to an qse_awk_t instance */,
+	qse_size_t size /* the size of memory to allocate in bytes */
 );
+/******/
 
-/*
- * NAME free dynamic memory
+/****f* qse.awk/qse_awk_free
+ * NAME 
+ *  qse_awk_free - free dynamic memory
  *
- * DESCRIPTION
+ * SYNOSPSIS
  */
 void qse_awk_free (
-	/* the pointer to an qse_awk_t instance */
-	qse_awk_t* awk, 
-	/* the pointer to the memory area to free */
-	void* ptr
+	qse_awk_t* awk /* the pointer to an qse_awk_t instance */,
+	void*      ptr /* the pointer to the memory area to free */
 );
+/******/
 
 /*
  * NAME duplicate a string
@@ -1149,9 +1156,9 @@ qse_bool_t qse_awk_valtobool (
 qse_char_t* qse_awk_valtostr (
 	qse_awk_run_t* run,
 	qse_awk_val_t* val, 
-	int opt, 
-	qse_str_t* buf,
-	qse_size_t* len
+	int            opt, 
+	qse_str_t*     buf,
+	qse_size_t*    len
 );
 
 /****f* qse.awk/qse_awk_valtonum
