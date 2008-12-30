@@ -101,6 +101,7 @@ AC_CHECK_FUNCS([uselocale])
 AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
 AC_CHECK_FUNCS([lseek64 stat64 fstat64 ftruncate64])
+AC_CHECK_FUNCS([timegm timelocal])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
@@ -330,7 +331,10 @@ AC_CONFIG_FILES([
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/lsp/Makefile
-	cmd/tgp/Makefile])
+	cmd/tgp/Makefile
+	test/Makefile 
+	test/cmn/Makefile 
+])
 AC_OUTPUT
 
 [

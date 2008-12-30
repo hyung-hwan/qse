@@ -307,7 +307,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 			PUT_SRCSTR (awk, QSE_T("\""));
 
-			ptr = ((qse_awk_nde_str_t*)nde)->buf;
+			ptr = ((qse_awk_nde_str_t*)nde)->ptr;
 			len = ((qse_awk_nde_str_t*)nde)->len;
 			for (i = 0; i < len; i++)
 			{
@@ -337,7 +337,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 		{
 			PUT_SRCSTR (awk, QSE_T("/"));
 			PUT_SRCSTRX (awk,
-				((qse_awk_nde_rex_t*)nde)->buf, 
+				((qse_awk_nde_rex_t*)nde)->ptr, 
 				((qse_awk_nde_rex_t*)nde)->len);
 			PUT_SRCSTR (awk, QSE_T("/"));
 			break;
@@ -1209,14 +1209,14 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_STR:
 			{
-				QSE_AWK_FREE (awk, ((qse_awk_nde_str_t*)p)->buf);
+				QSE_AWK_FREE (awk, ((qse_awk_nde_str_t*)p)->ptr);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_REX:
 			{
-				QSE_AWK_FREE (awk, ((qse_awk_nde_rex_t*)p)->buf);
+				QSE_AWK_FREE (awk, ((qse_awk_nde_rex_t*)p)->ptr);
 				QSE_AWK_FREE (awk, ((qse_awk_nde_rex_t*)p)->code);
 				QSE_AWK_FREE (awk, p);
 				break;

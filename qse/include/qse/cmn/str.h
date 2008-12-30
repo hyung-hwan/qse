@@ -419,7 +419,8 @@ qse_size_t qse_mbsntowcsn (
  *  passed to the function as the third parameter. After conversion, it holds 
  *  the length of the multibyte string excluding the terminating-null.
  *  It may not null-terminate the resulting multibyte string if the buffer
- *  is not large enough.
+ *  is not large enough. You can check if the resulting mbslen is equal to 
+ *  the input mbslen to know it.
  *
  * RETURN
  *  The qse_wcstombs() function returns the number of wide characters handled.

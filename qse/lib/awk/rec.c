@@ -116,7 +116,7 @@ static int split_record (qse_awk_run_t* run)
 	}
 	else if (fs->type == QSE_AWK_VAL_STR)
 	{
-		fs_ptr = ((qse_awk_val_str_t*)fs)->buf;
+		fs_ptr = ((qse_awk_val_str_t*)fs)->ptr;
 		fs_len = ((qse_awk_val_str_t*)fs)->len;
 		fs_free = QSE_NULL;
 	}
@@ -423,7 +423,7 @@ static int recomp_record_fields (
 			run->inrec.flds[i].len = tmp->len;
 
 			if (qse_str_ncat (&run->inrec.line, 
-				tmp->buf, tmp->len) == (qse_size_t)-1)
+				tmp->ptr, tmp->len) == (qse_size_t)-1)
 			{
 				qse_awk_setrunerror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);

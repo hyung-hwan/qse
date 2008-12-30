@@ -1,1 +1,8 @@
-QSE
+
+QSE is a script engine library designed to be embedded into an application. 
+
+[INSTALL]
+
+Cross compiling for WIN32 with MINGW32
+./configure --host=i586-mingw32msvc --target=i586-mingw32msvc --enable-syscall
+make 

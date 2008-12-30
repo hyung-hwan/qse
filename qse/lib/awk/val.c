@@ -294,9 +294,9 @@ init:
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len;
-	val->buf = (qse_char_t*)(val + 1);
-	/*qse_strxncpy (val->buf, len+1, str, len);*/
-	qse_strncpy (val->buf, str, len);
+	val->ptr = (qse_char_t*)(val + 1);
+	/*qse_strxncpy (val->ptr, len+1, str, len);*/
+	qse_strncpy (val->ptr, str, len);
 
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("makestrval => %p\n"), val);
@@ -320,7 +320,7 @@ qse_awk_val_t* qse_awk_makestrval_nodup (
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len;
-	val->buf = str;
+	val->ptr = str;
 	return (qse_awk_val_t*)val;
 }
 
@@ -365,11 +365,11 @@ init:
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len1 + len2;
-	val->buf = (qse_char_t*)(val + 1);
-	/*qse_strxncpy (val->buf, len1+1, str1, len1);
-	qse_strxncpy (val->buf[len1], len2+1, str2, len2);*/
-	qse_strncpy (val->buf, str1, len1);
-	qse_strncpy (&val->buf[len1], str2, len2);
+	val->ptr = (qse_char_t*)(val + 1);
+	/*qse_strxncpy (val->ptr, len1+1, str1, len1);
+	qse_strxncpy (val->ptr[len1], len2+1, str2, len2);*/
+	qse_strncpy (val->ptr, str1, len1);
+	qse_strncpy (&val->ptr[len1], str2, len2);
 
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("makestrval2 => %p\n"), val);
@@ -391,27 +391,27 @@ qse_awk_val_t* qse_awk_makerexval (
 	val->ref = 0;
 	val->len = len;
 	/*
-	val->buf = QSE_AWK_STRXDUP (run->awk, buf, len);
-	if (val->buf == QSE_NULL) 
+	val->ptr = QSE_AWK_STRXDUP (run->awk, buf, len);
+	if (val->ptr == QSE_NULL) 
 	{
 		QSE_AWK_FREE (run->awk, val);
 		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
 		return QSE_NULL;
 	}*/
-	val->buf = (qse_char_t*)(val + 1);
-	qse_strncpy (val->buf, buf, len);
+	val->ptr = (qse_char_t*)(val + 1);
+	qse_strncpy (val->ptr, buf, len);
 
 	/*
 	val->code = QSE_AWK_ALLOC (run->awk, QSE_REX_LEN(code));
 	if (val->code == QSE_NULL)
 	{
-		QSE_AWK_FREE (run->awk, val->buf);
+		QSE_AWK_FREE (run->awk, val->ptr);
 		QSE_AWK_FREE (run->awk, val);
 		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
 		return QSE_NULL;
 	}
 	*/
-	val->code = val->buf + len + 1;
+	val->code = val->ptr + len + 1;
 	QSE_MEMCPY (val->code, code, QSE_REX_LEN(code));
 
 	return (qse_awk_val_t*)val;
@@ -635,7 +635,7 @@ void qse_awk_freeval (qse_awk_run_t* run, qse_awk_val_t* val, qse_bool_t cache)
 	else if (val->type == QSE_AWK_VAL_REX)
 	{
 		/*
-		QSE_AWK_FREE (run->awk, ((qse_awk_val_rex_t*)val)->buf);
+		QSE_AWK_FREE (run->awk, ((qse_awk_val_rex_t*)val)->ptr);
 		QSE_AWK_FREEREX (run->awk, ((qse_awk_val_rex_t*)val)->code);
 		*/
 		QSE_AWK_FREE (run->awk, val);
@@ -793,7 +793,7 @@ qse_char_t* qse_awk_valtostr (
 		qse_awk_val_str_t* vs = (qse_awk_val_str_t*)v;
 
 		return str_to_str (
-			run, vs->buf, vs->len, opt, buf, len);
+			run, vs->ptr, vs->len, opt, buf, len);
 	}
 
 #ifdef DEBUG_VAL
@@ -1107,7 +1107,7 @@ int qse_awk_valtonum (
 	if (v->type == QSE_AWK_VAL_STR)
 	{
 		return qse_awk_strtonum (run,
-			((qse_awk_val_str_t*)v)->buf, 
+			((qse_awk_val_str_t*)v)->ptr, 
 			((qse_awk_val_str_t*)v)->len, l, r);
 	}
 
@@ -1202,11 +1202,11 @@ void qse_awk_dprintval (qse_awk_run_t* run, qse_awk_val_t* val)
 			break;
 
 		case QSE_AWK_VAL_STR:
-			DPRINTF (DCUSTOM, QSE_T("%s"), ((qse_awk_val_str_t*)val)->buf);
+			DPRINTF (DCUSTOM, QSE_T("%s"), ((qse_awk_val_str_t*)val)->ptr);
 			break;
 
 		case QSE_AWK_VAL_REX:
-			DPRINTF (DCUSTOM, QSE_T("REX[%s]"), ((qse_awk_val_rex_t*)val)->buf);
+			DPRINTF (DCUSTOM, QSE_T("REX[%s]"), ((qse_awk_val_rex_t*)val)->ptr);
 			break;
 
 		case QSE_AWK_VAL_MAP:
