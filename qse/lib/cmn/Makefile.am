@@ -6,7 +6,7 @@ lib_LTLIBRARIES = libqsecmn.la
 libqsecmn_la_SOURCES = mem.h chr.h \
 	mem.c chr.c chr_cnv.c rex.c str_bas.c str_cnv.c str_dyn.c \
 	lda.c map.c sll.c dll.c opt.c \
-	fio.c sio.c tio.c tio_get.c tio_put.c \
+	fio.c pio.c sio.c tio.c tio_get.c tio_put.c \
 	time.c \
 	misc.c
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined

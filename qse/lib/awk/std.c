@@ -360,9 +360,9 @@ static qse_ssize_t awk_extio_pipe (
 			}
 			else return -1; /* TODO: any way to set the error number? */
 
-			//dprint (QSE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);
+			/*dprint (QSE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);*/
 
-			// TOOD: pipe open....
+			/* TOOD: popen.... */
 			handle = qse_sio_open (qse_awk_getrunmmgr(epa->run), 0, epa->name, mode);
 			if (handle == QSE_NULL) return -1;
 			epa->handle = (void*)handle;
@@ -371,7 +371,7 @@ static qse_ssize_t awk_extio_pipe (
 
 		case QSE_AWK_IO_CLOSE:
 		{
-			//dprint (QSE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);
+			/*dprint (QSE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);*/
 			qse_sio_close ((qse_sio_t*)epa->handle);
 			epa->handle = QSE_NULL;
 			return 0;
@@ -439,7 +439,7 @@ static qse_ssize_t awk_extio_file (
 			}
 			else return -1; /* TODO: any way to set the error number? */
 
-			//dprint (QSE_T("opening %s of type %d (file)\n"), epa->name, epa->type);
+			/*dprint (QSE_T("opening %s of type %d (file)\n"), epa->name, epa->type);*/
 			handle = qse_sio_open (
 				qse_awk_getrunmmgr(epa->run),
 				0,
@@ -463,7 +463,7 @@ static qse_ssize_t awk_extio_file (
 
 		case QSE_AWK_IO_CLOSE:
 		{
-			//dprint (QSE_T("closing %s of type %d (file)\n"), epa->name, epa->type);
+			/*dprint (QSE_T("closing %s of type %d (file)\n"), epa->name, epa->type);*/
 			qse_sio_close ((qse_sio_t*)epa->handle);
 			epa->handle = QSE_NULL;
 			return 0;
@@ -506,20 +506,20 @@ static int open_extio_console (qse_awk_extio_t* epa)
 {
 	runio_data_t* rd = (runio_data_t*)epa->data;
 
-	//dprint (QSE_T("opening console[%s] of type %x\n"), epa->name, epa->type);
+	/*dprint (QSE_T("opening console[%s] of type %x\n"), epa->name, epa->type);*/
 
 	if (epa->mode == QSE_AWK_EXTIO_CONSOLE_READ)
 	{
 		if (rd->ic.files[rd->ic.index] == QSE_NULL)
 		{
 			/* no more input file */
-			//dprint (QSE_T("console - no more file\n"));;
+			/*dprint (QSE_T("console - no more file\n"));*/
 			return 0;
 		}
 
 		if (rd->ic.files[rd->ic.index][0] == QSE_T('\0'))
 		{
-			//dprint (QSE_T("    console(r) - <standard input>\n"));
+			/*dprint (QSE_T("    console(r) - <standard input>\n"));*/
 			epa->handle = qse_sio_in;
 		}
 		else
@@ -545,7 +545,7 @@ static int open_extio_console (qse_awk_extio_t* epa)
 				return -1;
 			}
 
-			//dprint (QSE_T("    console(r) - %s\n"), rd->ic.files[rd->ic.index]);
+			/*dprint (QSE_T("    console(r) - %s\n"), rd->ic.files[rd->ic.index]);*/
 			if (qse_awk_setfilename (
 				epa->run, rd->ic.files[rd->ic.index], 
 				qse_strlen(rd->ic.files[rd->ic.index])) == -1)
@@ -562,7 +562,7 @@ static int open_extio_console (qse_awk_extio_t* epa)
 	}
 	else if (epa->mode == QSE_AWK_EXTIO_CONSOLE_WRITE)
 	{
-		//dprint (QSE_T("    console(w) - <standard output>\n"));
+		/*dprint (QSE_T("    console(w) - <standard output>\n"));*/
 
 		if (qse_awk_setofilename (epa->run, QSE_T(""), 0) == -1)
 		{
@@ -588,7 +588,7 @@ static qse_ssize_t awk_extio_console (
 	}
 	else if (cmd == QSE_AWK_IO_CLOSE)
 	{
-		//dprint (QSE_T("closing console of type %x\n"), epa->type);
+		/*dprint (QSE_T("closing console of type %x\n"), epa->type);*/
 
 		if (epa->handle != QSE_NULL &&
 		    epa->handle != qse_sio_in && 
@@ -672,7 +672,7 @@ static qse_ssize_t awk_extio_console (
 					qse_sio_close ((qse_sio_t*)epa->handle);
 				}
 
-				//dprint (QSE_T("open the next console [%s]\n"), rd->ic.files[rd->ic.index]);
+				/*dprint (QSE_T("open the next console [%s]\n"), rd->ic.files[rd->ic.index]);*/
 				epa->handle = fp;
 			}
 
@@ -698,7 +698,7 @@ static qse_ssize_t awk_extio_console (
 		int n;
 		qse_sio_t* fp = (qse_sio_t*)epa->handle;
 
-		//dprint (QSE_T("switching console[%s] of type %x\n"), epa->name, epa->type);
+		/*dprint (QSE_T("switching console[%s] of type %x\n"), epa->name, epa->type);*/
 
 		n = open_extio_console(epa);
 		if (n == -1) return -1;
@@ -1168,6 +1168,7 @@ skip_system:
 	qse_awk_setretval (run, v);
 	return 0;
 }
+
 #define ADD_FUNC(awk,name,min,max,bfn) \
         if (qse_awk_addfunc (\
 		(awk), (name), qse_strlen(name), \
@@ -1187,6 +1188,5 @@ static int add_functions (qse_awk_t* awk)
         ADD_FUNC (awk, QSE_T("rand"),       0, 0, bfn_rand);
         ADD_FUNC (awk, QSE_T("srand"),      0, 1, bfn_srand);
         ADD_FUNC (awk, QSE_T("system"),     1, 1, bfn_system);
-
 	return 0;
 }

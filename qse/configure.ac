@@ -3,37 +3,37 @@ AC_INIT([qse],[0.5.0],[bacon@abiyo.net])
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
 
-dnl uses CC and CPP for compilation tests with .c test programs.
+dnl use CC and CPP for compilation tests with .c test programs.
 AC_LANG(C)
 
-dnl initializes automake
+dnl initialize automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
-dnl determines a C compiler to use
+dnl determine a C compiler to use
 AC_PROG_CC
 
-dnl determines a C++ compiler to use
+dnl determine a C++ compiler to use
 AC_PROG_CXX
 
-dnl checks if the C++ compiler exists in PATH. 
+dnl check if the C++ compiler exists in PATH. 
 AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
 
+dnl check other tools
 AC_CHECK_TOOL(AR, ar)
 AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(STRIP, strip)
 AC_CHECK_TOOL(OBJDUMP, objdump)
 AC_CHECK_TOOL(NM, nm)
 AC_CHECK_TOOL(LD, ld)
-
 AC_CHECK_TOOL(GREP, grep)
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(SED, sed)
-AC_CHECK_TOOL(CJ, gcj)
 
+dnl initialize libtool
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
-dnl overrides the default CFLAGS setting
+#dnl overrides the default CFLAGS setting
 #if test "$ac_test_CFLAGS" = "set"
 #then
 #	CFLAGS=$ac_save_CFLAGS
@@ -57,23 +57,12 @@ dnl overrides the default CFLAGS setting
 #		CXXFLAGS=
 #	fi
 #fi
-#
-#if test "$ac_test_CJFLAGS" = "set"
-#then
-#	CJFLAGS=$ac_save_CJFLAGS
-#else
-#	if test "$CJ" = "gcj"
-#	then
-#		CJFLAGS="-O2"
-#	else
-#		CJFLAGS=
-#	fi
-#fi
 
-dnl make visible the 64bit interface to the file system
+dnl make visible the 64-bit interface to the file system
 CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
 CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
 
+dnl define the WIN32 conditional if necessary
 case "$host" in
 *-*-mingw*|*-*-cygwin*)
 	#CFLAGS="$CFLAGS -D_WIN32_WINNT=0x0400"
@@ -81,15 +70,15 @@ case "$host" in
 esac
 AM_CONDITIONAL(WIN32, test "${platform_win32}" = "yes" )
 
-dnl Checks for the math library (is -lm needed?)
+dnl check the math library (check if -lm is needed)
 AC_CHECK_LIBM
 AC_SUBST(LIBM, $LIBM)
 
-dnl Checks for header files.
+dnl check header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h sys/syscall.h])
 
-dnl Checks data types
+dnl check data types
 AC_CHECK_TYPE([wchar_t], 
 	[AC_DEFINE([HAVE_WCHAR_T_IN_STDDEF_H],
 	           [],[wchar_t is available in stddef.h])],
@@ -110,7 +99,7 @@ AC_CHECK_FUNCS([pow sin cos tan atan atan2 log exp sqrt])
 AC_CHECK_FUNCS([powf sinf cosf tanf atanf atan2f logf expf sqrtf])
 LIBS="$OLDLIBS"
 
-dnl Checks the size of primitive data types
+dnl check the size of primitive data types
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
@@ -197,7 +186,7 @@ AC_ARG_ENABLE([cxx], [AC_HELP_STRING([--enable-cxx],
 [test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"]
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 
-# Configure Makefiles
+# configure makefiles
 AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
 	[define _REENTRANT (default. yes)])],
 	enable_reentrant_is=$enableval,enable_reentrant_is=yes)
@@ -206,112 +195,6 @@ then
 	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 	[CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
-
-# Java & JNI Configuration 
-AC_PATH_PROG(JAVAC_PATH, javac, :)
-AC_PATH_PROG(JAR_PATH, jar, :)
-
-if test "$JAVAC_PATH" != ":"
-then
-	CUR_JAVAC_PATH="$JAVAC_PATH"
-
-	while ls -ld "$CUR_JAVAC_PATH" 2>/dev/null | grep " -> " >/dev/null
-	do
-		AC_MSG_CHECKING(symlink for $CUR_JAVAC_PATH)
-		REAL_JAVAC_PATH=`ls -ld "$CUR_JAVAC_PATH" | sed 's/.* -> //'`
-
-		case "$REAL_JAVAC_PATH" in
-		/*) CUR_JAVAC_PATH="$REAL_JAVAC_PATH";;
-		*) CUR_JAVAC_PATH=`echo "X$CUR_JAVAC_PATH" | sed -e 's/^X//' -e 's:[[^/]]*$::'`"$REAL_JAVAC_PATH";;
-		esac
-
-		AC_MSG_RESULT($CUR_JAVAC_PATH)
-	done
-
-	# check if the javavm wrapper is in use 
-	case "$REAL_JAVAC_PATH" in
-	*/javavm)
-		JAVA_DIR="$REAL_JAVAC_PATH"
-		while true
-		do
-			JAVA_DIR=`echo "$JAVA_DIR" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
-			if test "$JAVA_DIR" = "" 
-			then
-				break
-			fi
-
-			AC_MSG_CHECKING($JAVA_DIR/etc/javavms)
-			if test -f "$JAVA_DIR/etc/javavms"
-			then
-				# takes the first jvm configured
-				CUR_JAVAC_PATH=`cat $JAVA_DIR/etc/javavms | head -1`
-				AC_MSG_RESULT($CUR_JAVAC_PATH)
-				break;
-			else
-				AC_MSG_RESULT(no)
-			fi
-		done
-		;;
-	esac
-
-	JAVA_DIR="$CUR_JAVAC_PATH"
-
-	while true
-	do
-		JAVA_DIR=`echo "$JAVA_DIR" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
-		if test "$JAVA_DIR" = "" 
-		then
-			break
-		fi
-
-		AC_MSG_CHECKING($JAVA_DIR/include/jni.h)
-		if test -f "$JAVA_DIR/include/jni.h"
-		then
-			AC_MSG_RESULT(yes)
-			JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $JAVA_DIR/include"
-			break;
-		else
-			AC_MSG_RESULT(no)
-		fi
-	done
-
-	for i in $JNI_INCLUDE_DIRS
-	do
-		JNI_MD_H=`find "$i" -name jni_md.h -print`
-		if test "$JNI_MD_H" != "" 
-		then
-			tmp=`echo "$JNI_MD_H" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
-			JNI_MD_INCLUDE_DIRS="$JNI_MD_INCLUDE_DIRS $tmp"
-		fi
-	done
-
-	JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $JNI_MD_INCLUDE_DIRS"
-
-	for i in $JNI_INCLUDE_DIRS
-	do
-		CFLAGS_JNI="$CFLAGS_JNI -I$i"	
-	done
-
-	BUILD_JNI="jni"
-else
-	JAVAC_PATH=""
-	CFLAGS_JNI=""
-	BUILD_JNI=""
-fi
-
-if test "$CJ" != ""
-then
-	BUILD_CJ="cj"
-else
-	BUILD_CJ=
-fi
-
-AC_SUBST(CFLAGS_JNI, $CFLAGS_JNI)
-AC_SUBST(JAVAC, $JAVAC_PATH)
-AC_SUBST(JAR, $JAR_PATH)
-AC_SUBST(BUILD_JNI, $BUILD_JNI)
-AC_SUBST(CJFLAGS, $CJFLAGS)
-AC_SUBST(BUILD_CJ, $BUILD_CJ)
 
 AC_CONFIG_FILES([
 	Makefile 
