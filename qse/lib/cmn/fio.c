@@ -10,14 +10,10 @@
 #include <psapi.h>
 #include <tchar.h>
 #else
+#include "syscall.h"
 #include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
-#endif
-
-#if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
-#include <sys/syscall.h>
 #endif
 
 qse_fio_t* qse_fio_open (
@@ -179,11 +175,7 @@ qse_fio_t* qse_fio_init (
 		desired_access |= O_LARGEFILE;
 	#endif
 
-	#ifdef SYS_open
-		handle = syscall (SYS_open, path_mb, desired_access, mode);
-	#else
-		handle = open (path_mb, desired_access, mode);
-	#endif
+		handle = QSE_OPEN (path_mb, desired_access, mode);
 	}
 
 	if (handle == -1) return QSE_NULL;
@@ -199,11 +191,7 @@ void qse_fio_fini (qse_fio_t* fio)
 #ifdef _WIN32
 	CloseHandle (fio->handle);
 #else
-	#if defined(SYS_close)
-	syscall (SYS_close, fio->handle);
-	#else
-	close (fio->handle);
-	#endif
+	QSE_CLOSE (fio->handle);
 #endif
 }
 
@@ -295,15 +283,7 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 
 	return 0;
 #else
-	#if !defined(_LP64) && defined(SYS_ftruncate64)
-	return syscall (SYS_ftruncate64, fio->handle, size);
-	#elif defined(SYS_ftruncate)
-	return syscall (SYS_ftruncate, fio->handle, size);
-	#elif !defined(_LP64) && defined(HAVE_FTRUNCATE64)
-	return ftruncate64 (fio->handle, size);
-	#else
-	return ftruncate (fio->handle, size);
-	#endif
+	return QSE_TRUNCATE (fio->handle, size);
 #endif
 }
 
@@ -316,11 +296,7 @@ qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 	return (qse_ssize_t)count;
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
-	#ifdef SYS_read
-	return syscall (SYS_read, fio->handle, buf, size);
-	#else
-	return read (fio->handle, buf, size);
-	#endif
+	return QSE_READ (fio->handle, buf, size);
 #endif
 }
 
@@ -333,11 +309,7 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 	return (qse_ssize_t)count;
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
-	#ifdef SYS_write
-	return syscall (SYS_write, fio->handle, data, size);
-	#else
-	return write (fio->handle, data, size);
-	#endif
+	return QSE_WRITE (fio->handle, data, size);
 #endif
 }
 
