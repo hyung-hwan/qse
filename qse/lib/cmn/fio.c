@@ -247,10 +247,10 @@ qse_fio_off_t qse_fio_seek (
 		SEEK_END
 	};
 
-#if !defined(_LP64) && defined(SYS__llseek)
+#if defined(QSE_LLSEEK)
 	loff_t tmp;
 
-	if (syscall (SYS__llseek, fio->handle,
+	if (QSE_LLSEEK (fio->handle,
 		(unsigned long)(offset>>32),
 		(unsigned long)(offset&0xFFFFFFFFlu),
 		&tmp,
@@ -261,12 +261,10 @@ qse_fio_off_t qse_fio_seek (
 
 	return (qse_fio_off_t)tmp;
 
-#elif defined(SYS_lseek)
-	return syscall (SYS_lseek, fio->handle, offset, seek_map[origin]);
-#elif !defined(_LP64) && defined(HAVE_LSEEK64)
-	return lseek64 (fio->handle, offset, seek_map[origin]);
+#elif defined(HAVE_LSEEK64)
+	return QSE_LSEEK64 (fio->handle, offset, seek_map[origin]);
 #else
-	return lseek (fio->handle, offset, seek_map[origin]);
+	return QSE_LSEEK (fio->handle, offset, seek_map[origin]);
 #endif
 
 #endif
@@ -283,7 +281,7 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 
 	return 0;
 #else
-	return QSE_TRUNCATE (fio->handle, size);
+	return QSE_FTRUNCATE (fio->handle, size);
 #endif
 }
 
@@ -424,10 +422,6 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 	if (!(mode & QSE_FIO_WUSR)) flags = FILE_ATTRIBUTE_READONLY;
 	return (SetFileAttributes (name, flags) == FALSE)? -1: 0;
 #else
-	#if defined(SYS_fchmod)
-	return syscall (SYS_fchmod, fio->handle, mode);
-	#else
-	return fchmod (fio->handle, mode);
-	#endif
+	return QSE_FCHMOD (fio->handle, mode);
 #endif
 }
