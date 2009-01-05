@@ -8,29 +8,72 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+#if 0
+IN_FROM_NUL /* < /dev/null */
+IN_DROP     
+IN_ACCEPT
+IN_KEEP
+
+OUT_TO_NUL /* > /dev/null */
+OUT_DROP /* close it.. */
+OUT_ACCEPT
+OUT_KEEP /* dont do anything */
+
+ERR_TO_NUL
+ERR_DROP
+ERR_ACCEPT
+ERR_KEEP
+#endif
+
 enum qse_pio_open_flag_t
 {
-	QSE_PIO_READ       = (1 << 1),
-	QSE_PIO_WRITE      = (1 << 2),
+	QSE_PIO_WRITEIN    = (1 << 0),
+	QSE_PIO_READOUT    = (1 << 1),
+	QSE_PIO_READERR    = (1 << 2),
+	QSE_PIO_DROPIN     = (1 << 3),
+	QSE_PIO_DROPOUT    = (1 << 4),
+	QSE_PIO_DROPERR    = (1 << 5),
+	QSE_PIO_ERRTOOUT   = (1 << 6),	
+	QSE_PIO_OUTTOERR   = (1 << 7),	
+	QSE_PIO_ERRTONUL   = (1 << 8),
+	QSE_PIO_OUTTONUL   = (1 << 9),
+
+	QSE_PIO_READ       = (QSE_PIO_READOUT),
+	QSE_PIO_WRITE      = (QSE_PIO_WRITEIN)
+};
+
+enum qse_pio_rw_flag_t
+{
+	QSE_PIO_IN     = (1 << 0),
+	QSE_PIO_OUT    = (1 << 1),
+	QSE_PIO_ERR    = (1 << 2),
+
+	QSE_PIO_END  = (1 << 8)
+};
+
+enum qse_pio_handle_id_t
+{
+	QSE_PIO_HANDLE_IN   = 0,
+	QSE_PIO_HANDLE_OUT  = 1,
+	QSE_PIO_HANDLE_ERR  = 2
 };
 
 #ifdef _WIN32
 /* <winnt.h> => typedef PVOID HANDLE; */
 typedef void* qse_pio_hnd_t;
+typedef int qse_pio_pid_t; /* TODO */
 #else
 typedef int qse_pio_hnd_t;
+typedef int qse_pio_pid_t;
 #endif
-
-/* pipe offset */
-typedef qse_int64_t qse_pio_off_t;
-typedef enum qse_pio_seek_origin_t qse_pio_ori_t;
 
 typedef struct qse_pio_t qse_pio_t;
 
 struct qse_pio_t
 {
-	qse_mmgr_t* mmgr;
-	qse_pio_hnd_t handle;
+	qse_mmgr_t*   mmgr;
+	qse_pio_pid_t child;
+	qse_pio_hnd_t handle[3];
 };
 
 #define QSE_PIO_MMGR(pio)   ((pio)->mmgr)
@@ -44,18 +87,13 @@ extern "C" {
  * NAME
  *  qse_pio_open - open a pipe to a child process
  *
- * DESCRIPTION
- *  To open a pipe, you should set the flags with at least one of
- *  QSE_PIO_READ, QSE_PIO_WRITE, QSE_PIO_APPEND.
- *
  * SYNOPSIS
  */
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        ext,
 	const qse_char_t* path,
-	int               flags,
-	int               mode
+	int               flags
 );
 /******/
 
@@ -71,47 +109,71 @@ void qse_pio_close (
 /******/
 
 qse_pio_t* qse_pio_init (
-	qse_pio_t* pio,
-	qse_mmgr_t* mmgr,
+	qse_pio_t*        pio,
+	qse_mmgr_t*       mmgr,
 	const qse_char_t* path,
-	int flags,
-	int mode
+	int               flags
 );
 
 void qse_pio_fini (
 	qse_pio_t* pio
 );
 
-qse_pio_hnd_t qse_pio_gethandle (
-	qse_pio_t* pio
-);
-
-/****f* qse.cmn.pio/qse_pio_sethandle
+/****f* qse.pio/qse_pio_wait
  * NAME
- *  qse_pio_sethandle - set the pipe handle
- * WARNING
- *  Avoid using this function if you don't know what you are doing.
- *  You may have to retrieve the previous handle using qse_pio_gethandle()
- *  to take relevant actions before resetting it with qse_pio_sethandle().
+ *  qse_pio_wait - wait for a child process 
+ *
  * SYNOPSIS
  */
-void qse_pio_sethandle (
-	qse_pio_t* pio,
-	qse_pio_hnd_t handle
+int qse_pio_wait (
+	qse_pio_t* pio
 );
 /******/
 
+
+/****f* qse.pio/qse_pio_read
+ * NAME
+ *  qse_pio_read - read data
+ * 
+ * SYNOPSIS
+ */
 qse_ssize_t qse_pio_read (
 	qse_pio_t* pio,
-	void* buf,
-	qse_size_t size
+	void*      buf,
+	qse_size_t size,
+	int        flags
 );
+/******/
 
+/****f* qse.pio/qse_pio_write
+ * NAME 
+ *  qse_pio_write - write data
+ *
+ * DESCRIPTION
+ *  If the parameter 'size' is zero, qse_pio_write() closes the the writing
+ *  stream causing the child process reach the end of the stream.
+ *
+ * SYNOPSIS
+ */
 qse_ssize_t qse_pio_write (
-	qse_pio_t* pio,
-	const void* buf,
-	qse_size_t size
+	qse_pio_t*  pio,
+	const void* data,
+	qse_size_t  size,
+	int         flags
 );
+/******/
+
+/****f* qse.pio/qse_pio_end
+ * NAME
+ *  qse_pio_end
+ *
+ * SYNOPSIS
+ */
+void qse_pio_end (
+	qse_pio_t*  pio,
+	int         flags
+);
+/******/
 
 #ifdef __cplusplus
 }
