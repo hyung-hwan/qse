@@ -408,6 +408,28 @@ qse_size_t qse_mbsntowcsn (
 );
 /******/
 
+/****f* qse.cmn.str/qse_wcstombslen
+ * NAME
+ *  qse_wcstombslen - get the length 
+ *
+ * DESCRIPTION
+ *  The qse_wcstombslen() function scans a null-terminated wide character 
+ *  string to get the total number of multibyte characters that it can be
+ *  converted to. The resulting number of characters is stored into memory
+ *  pointed to by mbslen.
+ * 
+ * RETURN
+ *  The qse_wcstombslen() function returns the number of wide characters 
+ *  handled.
+ *
+ * SYNOPSIS
+ */
+qse_size_t qse_wcstombslen (
+	const qse_wchar_t* wcs,
+	qse_size_t*        mbslen
+);
+/******/
+
 /****f* qse.cmn.str/qse_wcstombs
  * NAME
  *  qse_wcstombs - convert a wide character string to a multibyte string.

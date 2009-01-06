@@ -1,5 +1,19 @@
 /*
  * $Id: pio.c,v 1.23 2006/06/30 04:18:47 bacon Exp $
+ *
+   Copyright 2006-2008 Chung, Hyung-Hwan.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
  */
 
 #include <qse/cmn/pio.h>
@@ -10,12 +24,9 @@
 #include <tchar.h>
 #else
 #include "syscall.h"
+#include <fcntl.h>
 #include <errno.h>
 #endif
-
-#define HNDIN(pio)  ((pio)->handle[QSE_PIO_HANDLE_IN])
-#define HNDOUT(pio) ((pio)->handle[QSE_PIO_HANDLE_OUT])
-#define HNDERR(pio) ((pio)->handle[QSE_PIO_HANDLE_ERR])
 
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
@@ -53,8 +64,7 @@ void qse_pio_close (qse_pio_t* pio)
 
 
 qse_pio_t* qse_pio_init (
-	qse_pio_t* pio, qse_mmgr_t* mmgr,
-	const qse_char_t* path, int flags)
+	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, int flags)
 {
 	qse_pio_pid_t pid;
 	qse_pio_hnd_t handle[6] = { -1, -1, -1, -1, -1, -1 };
@@ -96,6 +106,7 @@ qse_pio_t* qse_pio_init (
 	if (pid == 0)
 	{
 		/* child */
+		qse_pio_hnd_t devnull;
 
 		if (flags & QSE_PIO_WRITEIN)
 		{
@@ -133,14 +144,58 @@ qse_pio_t* qse_pio_init (
 			QSE_CLOSE (handle[5]);
 		}
 
+		if ((flags & QSE_PIO_INTONUL) || 
+		    (flags & QSE_PIO_OUTTONUL) ||
+		    (flags & QSE_PIO_ERRTONUL))
+		{
+		#ifdef O_LARGEFILE
+			devnull = QSE_OPEN ("/dev/null", O_RDWR|O_LARGEFILE, 0);
+		#else
+			devnull = QSE_OPEN ("/dev/null", O_RDWR, 0);
+		#endif
+			if (devnull == -1) goto oops;
+		}
 
-		/* TODO: ... */
-		//execl ("/bin/sh", "sh", "-c", "cat", QSE_NULL);
-		execl ("/bin/sh", "sh", "-c", "cat -aksksks", QSE_NULL);
+		if ((flags & QSE_PIO_INTONUL)  &&
+		    QSE_DUP2(devnull,0) == -1) goto child_oops;
+		if ((flags & QSE_PIO_OUTTONUL) &&
+		    QSE_DUP2(devnull,1) == -1) goto child_oops;
+		if ((flags & QSE_PIO_ERRTONUL) &&
+		    QSE_DUP2(devnull,2) == -1) goto child_oops;
+
+		if ((flags & QSE_PIO_INTONUL) || 
+		    (flags & QSE_PIO_OUTTONUL) ||
+		    (flags & QSE_PIO_ERRTONUL)) QSE_CLOSE (devnull);
+
+		if (flags & QSE_PIO_DROPIN) QSE_CLOSE(0);
+		if (flags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
+		if (flags & QSE_PIO_DROPERR) QSE_CLOSE(2);
+
+		if (flags & QSE_PIO_SHELL)
+		{
+		#ifdef QSE_CHAR_IS_MCHAR
+			const char* mcmd = cmd;
+		#else	
+        		qse_size_t n, mn;
+			const char mcmd[1024];
+
+			mn = QSE_COUNTOF (mcmd);
+        		n = qse_wcstombs (cmd, mcmd, &mn);
+
+			if (cmd[n] != QSE_WT('\0')) goto child_oops;
+			if (mn >= QSE_COUNTOF(mcmd)) goto child_oops;
+
+			execl ("/bin/sh", "sh", "-c", mcmd, QSE_NULL);
+		}
+		else
+		{
+			/* TODO: need to parse the command in a simple manner */
+		}
 
 	child_oops:
 		QSE_EXIT(127);
 	}
+#endif
 
 	/* parent */
 	pio->child = pid;
@@ -180,14 +235,10 @@ qse_pio_t* qse_pio_init (
 
 #endif
 
-	HNDIN(pio) = handle[1];
-	HNDOUT(pio) = handle[2];
-	HNDERR(pio) = handle[4];
+	pio->handle[QSE_PIO_IN] = handle[1];
+	pio->handle[QSE_PIO_OUT] = handle[2];
+	pio->handle[QSE_PIO_ERR] = handle[4];
 
-for (i = minidx; i < maxidx; i++)
-{
-	qse_printf (QSE_T("%d ==> %d\n"), i, handle[i]);
-}
 	return pio;
 
 oops:
@@ -202,17 +253,9 @@ void qse_pio_fini (qse_pio_t* pio)
 #else
 	int i, status;
 
-	if (HNDOUT(pio) != -1)
-	{
-		QSE_CLOSE (HNDOUT(pio));
-		HNDOUT(pio) = -1;
-	}
-
-	if (HNDIN(pio) != -1)
-	{
-		QSE_CLOSE (HNDIN(pio));
-		HNDIN(pio) = -1;
-	}
+	qse_pio_end (pio, QSE_PIO_IN);
+	qse_pio_end (pio, QSE_PIO_OUT);
+	qse_pio_end (pio, QSE_PIO_ERR);
 
 	while (QSE_WAITPID (pio->child, &status, 0) == -1)
 	{
@@ -245,15 +288,13 @@ int qse_pio_wait (qse_pio_t* pio)
 	return -1;
 }
 
-/*
-qse_pio_hnd_t qse_pio_gethandle (qse_pio_t* pio, int readorwrite)
+qse_pio_hnd_t qse_pio_gethandle (qse_pio_t* pio, int hid)
 {
-	return handle[xxx];
+	return pio->handle[hid];
 }
-*/
 
 qse_ssize_t qse_pio_read (
-	qse_pio_t* pio, void* buf, qse_size_t size, int flags)
+	qse_pio_t* pio, void* buf, qse_size_t size, int hid)
 {
 #ifdef _WIN32
 	DWORD count;
@@ -261,25 +302,19 @@ qse_ssize_t qse_pio_read (
 	if (ReadFile(pio->handle, buf, size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
 #else
-	qse_pio_hnd_t handle = -1;
-
-	if (flags == 0) flags = QSE_PIO_OUT;
-	if (flags & QSE_PIO_ERR) handle = HNDERR(pio);
-	if (flags & QSE_PIO_OUT) handle = HNDOUT(pio);
-
-	if (handle == -1) 
+	if (pio->handle[hid] == -1) 
 	{
 		/* the stream is already closed */
 		return (qse_ssize_t)-1;
 	}
 
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
-	return QSE_READ (handle, buf, size);
+	return QSE_READ (pio->handle[hid], buf, size);
 #endif
 }
 
 qse_ssize_t qse_pio_write (
-	qse_pio_t* pio, const void* data, qse_size_t size, int flags)
+	qse_pio_t* pio, const void* data, qse_size_t size, int hid)
 {
 #ifdef _WIN32
 	DWORD count;
@@ -287,37 +322,22 @@ qse_ssize_t qse_pio_write (
 	if (WriteFile(pio->handle, data, size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
 #else
-	qse_pio_hnd_t handle;
-
-	if (flags == 0) flags = QSE_PIO_IN;
-	if (flags & QSE_PIO_IN) handle = HNDIN(pio);
-
-	if (handle == -1) 
+	if (pio->handle[hid] == -1)
 	{
 		/* the stream is already closed */
 		return (qse_ssize_t)-1;
 	}
 
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
-	return QSE_WRITE (handle, data, size);
+	return QSE_WRITE (pio->handle[hid], data, size);
 #endif
 }
 
-void qse_pio_end (qse_pio_t* pio, int flags)
+void qse_pio_end (qse_pio_t* pio, int hid)
 {
-	if ((flags & QSE_PIO_IN) && HNDIN(pio) != -1)
+	if (pio->handle[hid] != -1)
 	{
-		QSE_CLOSE (HNDIN(pio)); 
-		HNDIN(pio) = -1;
-	}
-	if ((flags & QSE_PIO_ERR) && HNDERR(pio) != -1)
-	{
-		QSE_CLOSE (HNDERR(pio)); 
-		HNDERR(pio) = -1;
-	}
-	if ((flags & QSE_PIO_OUT) && HNDOUT(pio) != -1)
-	{
-		QSE_CLOSE (HNDOUT(pio)); 
-		HNDOUT(pio) = -1;
+		QSE_CLOSE (pio->handle[hid]);
+		pio->handle[hid] = -1;
 	}
 }
