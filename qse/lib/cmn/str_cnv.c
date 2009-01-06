@@ -1,7 +1,19 @@
 /*
  * $Id: str_cnv.c 455 2008-11-26 09:05:00Z baconevi $
  *
- * {License}
+   Copyright 2006-2008 Chung, Hyung-Hwan.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
  */
 
 #include <qse/cmn/str.h>
@@ -203,7 +215,30 @@ qse_size_t qse_wcstombs (
 	*mbslen -= rem; 
 
 	/* null-terminate the multibyte sequence if it has sufficient space */
-	if (rem > 0) *mbs = '\0';
+	if (rem > 0) *mbs = QSE_MT('\0');
+
+	/* returns the number of characters handled. */
+	return p - wcs; 
+}
+
+qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
+{
+	const qse_wchar_t* p = wcs;
+	qse_mchar_t mbs[128];
+	qse_size_t mlen = 0;
+
+	while (*p != QSE_WT('\0'))
+	{
+		qse_size_t n = qse_wctomb (*p, mbs, QSE_COUNTOF(mbs));
+		if (n == 0) break; /* illegal character */
+
+		/* it assumes that mbs is large enough to hold a character */
+		QSE_ASSERT (n <= QSE_COUNTOF(mbs));
+
+		p++; mlen += n;
+	}
+
+	*mbslen = mlen;
 
 	/* returns the number of characters handled. */
 	return p - wcs; 
@@ -243,7 +278,13 @@ int qse_wcstombs_strict (
 	qse_size_t mn = mbslen;
 
 	n = qse_wcstombs (wcs, mbs, &mn);
-	if (wcs[n] != QSE_WT('\0')) return -1; /* didn't process all */
+	if (wcs[n] != QSE_WT('\0')) 
+	{
+		/* if qse_wcstombs() processed all wide characters,
+		 * the character at position 'n' should be a null character
+		 * as 'n' is the number of wide characters processed. */
+		return -1;
+	}
 	if (mn >= mbslen) 
 	{
 		/* mbs not big enough to be null-terminated.
