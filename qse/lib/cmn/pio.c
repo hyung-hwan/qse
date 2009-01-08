@@ -173,17 +173,26 @@ qse_pio_t* qse_pio_init (
 
 		if (flags & QSE_PIO_SHELL)
 		{
+			const qse_mchar_t* mcmd;
+
 		#ifdef QSE_CHAR_IS_MCHAR
-			const char* mcmd = cmd;
+			mcmd = cmd;
 		#else	
         		qse_size_t n, mn;
-			const char mcmd[1024];
 
-			mn = QSE_COUNTOF (mcmd);
-        		n = qse_wcstombs (cmd, mcmd, &mn);
+        		n = qse_wcstombslen (cmd, &mn);
+			if (cmd[n] != QSE_WT('\0')) 
+			{
+				/* cmd has illegal sequence */
+				goto child_oops;
+			}
 
-			if (cmd[n] != QSE_WT('\0')) goto child_oops;
-			if (mn >= QSE_COUNTOF(mcmd)) goto child_oops;
+			mn = mn + 1;
+			mcmd = QSE_MMGR_ALLOC (
+				pio->mmgr, mn*QSE_SIZEOF(*mcmd));
+			if (mcmd == QSE_NULL) goto child_oops;
+
+			n = qse_wcstombs (cmd, mcmd, &mn);
 
 			execl ("/bin/sh", "sh", "-c", mcmd, QSE_NULL);
 		}
