@@ -238,10 +238,13 @@ qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
 		p++; mlen += n;
 	}
 
+	/* this length excludes the terminating null character. */
 	*mbslen = mlen;
 
-	/* returns the number of characters handled. */
-	return p - wcs; 
+	/* returns the number of characters handled. 
+	 * if the function has encountered an illegal character in
+	 * the while loop above, wcs[p-wcs] will not be a null character */
+	return p - wcs;  
 }
 
 qse_size_t qse_wcsntombsn (

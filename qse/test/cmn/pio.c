@@ -18,7 +18,7 @@ static int test1 (void)
 		QSE_NULL,
 		0,
 		QSE_T("ls -laF"),
-		QSE_PIO_READERR|QSE_PIO_WRITEIN|QSE_PIO_ERRTOOUT|QSE_PIO_ERRTONUL | QSE_PIO_INTONUL
+		QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL
 	);
 	if (pio == QSE_NULL)
 	{
@@ -33,7 +33,7 @@ static int test1 (void)
 		qse_byte_t buf[128];
 
 		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
-		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), QSE_PIO_ERR);
+		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), QSE_PIO_OUT);
 		if (n == 0) break;
 		if (n < 0)
 		{
