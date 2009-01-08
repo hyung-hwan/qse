@@ -105,6 +105,11 @@
 	#define QSE_FORK() fork()
 #endif
 
+#ifdef SYS_execve
+	#define QSE_EXECVE(path,argv,envp) syscall(SYS_execve,path,argv,envp)
+#else
+	#define QSE_EXECVE(path,argv,envp) execve(path,argv,envp)
+#endif
 
 #ifdef SYS_waitpid
 	#define QSE_WAITPID(pid,status,options) syscall(SYS_waitpid,pid,status,options)

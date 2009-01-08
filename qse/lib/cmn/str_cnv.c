@@ -224,7 +224,7 @@ qse_size_t qse_wcstombs (
 qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
 {
 	const qse_wchar_t* p = wcs;
-	qse_mchar_t mbs[128];
+	qse_mchar_t mbs[32];
 	qse_size_t mlen = 0;
 
 	while (*p != QSE_WT('\0'))

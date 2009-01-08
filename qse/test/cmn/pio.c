@@ -26,8 +26,6 @@ static int test1 (void)
 		return -1;
 	}
 
-	qse_pio_write (pio, "xxxxxxxxxxxx\n", 13, QSE_PIO_IN);
-	qse_pio_write (pio, QSE_NULL, 0, QSE_PIO_IN);
 	while (1)
 	{
 		qse_byte_t buf[128];
@@ -41,6 +39,50 @@ static int test1 (void)
 			break;
 		}	
 
+		qse_printf (QSE_T("N===> %d\n"), (int)n);
+		#ifdef QSE_CHAR_IS_MCHAR
+		qse_printf (QSE_T("buf => [%.*s]\n"), (int)n. buf);
+		#else
+		qse_printf (QSE_T("buf => [%.*S]\n"), (int)n, buf);
+		#endif
+
+	}
+
+	qse_pio_close (pio);
+
+	return 0;
+}
+
+static int test2 (void)
+{
+	qse_pio_t* pio;
+
+	pio = qse_pio_open (
+		QSE_NULL,
+		0,
+		QSE_T("ls -laF"),
+		QSE_PIO_READERR|QSE_PIO_WRITEIN|QSE_PIO_OUTTOERR|QSE_PIO_SHELL
+	);
+	if (pio == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open program through pipe\n"));
+		return -1;
+	}
+
+	while (1)
+	{
+		qse_byte_t buf[128];
+
+		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
+		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), QSE_PIO_ERR);
+		if (n == 0) break;
+		if (n < 0)
+		{
+			qse_printf (QSE_T("qse_pio_read() returned error\n"));
+			break;
+		}	
+
+		qse_printf (QSE_T("N===> %d\n"), (int)n);
 		#ifdef QSE_CHAR_IS_MCHAR
 		qse_printf (QSE_T("buf => [%.*s]\n"), (int)n. buf);
 		#else
@@ -93,6 +135,7 @@ int main ()
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 
 	R (test1);
+	R (test2);
 
 	return 0;
 }

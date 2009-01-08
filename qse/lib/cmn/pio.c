@@ -179,6 +179,7 @@ qse_pio_t* qse_pio_init (
 			mcmd = cmd;
 		#else	
         		qse_size_t n, mn;
+			qse_mchar_t buf[64];
 
         		n = qse_wcstombslen (cmd, &mn);
 			if (cmd[n] != QSE_WT('\0')) 
@@ -188,9 +189,18 @@ qse_pio_t* qse_pio_init (
 			}
 
 			mn = mn + 1;
-			mcmd = QSE_MMGR_ALLOC (
-				pio->mmgr, mn*QSE_SIZEOF(*mcmd));
-			if (mcmd == QSE_NULL) goto child_oops;
+
+			if (mn <= QSE_COUNTOF(buf)) 
+			{
+				mcmd = buf;
+				mn = QSE_COUNTOF(buf);
+			}
+			else
+			{
+				mcmd = QSE_MMGR_ALLOC (
+					pio->mmgr, mn*QSE_SIZEOF(*mcmd));
+				if (mcmd == QSE_NULL) goto child_oops;
+			}
 
 			n = qse_wcstombs (cmd, mcmd, &mn);
 
@@ -199,6 +209,7 @@ qse_pio_t* qse_pio_init (
 		else
 		{
 			/* TODO: need to parse the command in a simple manner */
+			//execl ("full path needed", mcmd, marg1, marg2, QSE_NULL);
 		}
 
 	child_oops:
