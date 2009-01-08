@@ -45,9 +45,9 @@ enum qse_pio_open_flag_t
 
 enum qse_pio_hid_t
 {
-	QSE_PIO_IN     = (1 << 0),
-	QSE_PIO_OUT    = (1 << 1),
-	QSE_PIO_ERR    = (1 << 2)
+	QSE_PIO_IN  = 0,
+	QSE_PIO_OUT = 1,
+	QSE_PIO_ERR = 2
 };
 
 #ifdef _WIN32
