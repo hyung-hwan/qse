@@ -396,12 +396,34 @@ qse_size_t qse_str_nccat (
 	qse_size_t len
 );
 
+/****f* qse.cmn.str/qse_strspl
+ * NAME
+ *  qse_strspl - split a string
+ *
+ * SYNOPSIS
+ */
+int qse_strspl (
+        qse_char_t*       s,
+	const qse_char_t* delim,
+        qse_char_t        lquote,
+	qse_char_t        rquote,
+        qse_char_t        escape,
+	qse_size_t*       count
+);
+/******/
 
+/****f* qse.cmn.str/qse_mbstowcs
+ * NAME
+ *  qse_mbstowcs - convert a multibyte string to a wide character string
+ *
+ * SYNOPSIS
+ */
 qse_size_t qse_mbstowcs (
         const qse_mchar_t* mbs,
         qse_wchar_t*       wcs,
 	qse_size_t*        wcslen
 );
+/******/
 
 /****f* qse.cmn.str/qse_mbsntowcsn
  * NAME
