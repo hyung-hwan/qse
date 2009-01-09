@@ -11,9 +11,9 @@
 
 #ifdef __cplusplus
 	/*#define QSE_NULL ((qse_uint_t)0)*/
-	#define QSE_NULL (0)
+#	define QSE_NULL (0)
 #else
-	#define QSE_NULL ((void*)0)
+#	define QSE_NULL ((void*)0)
 #endif
 
 /****d* ase/QSE_TRUE,QSE_FALSE
@@ -108,64 +108,50 @@
 #define QSE_WT(txt)    (L ## txt)
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	#define QSE_Q(val) QSE_MQ(val)
-	#define QSE_C(ch)  QSE_MC(ch)
-	#define QSE_S(str) QSE_MS(str)
-	#define QSE_T(txt) QSE_MT(txt)
+#	define QSE_Q(val) QSE_MQ(val)
+#	define QSE_C(ch)  QSE_MC(ch)
+#	define QSE_S(str) QSE_MS(str)
+#	define QSE_T(txt) QSE_MT(txt)
 #else
-	#define QSE_Q(val) QSE_WQ(val)
-	#define QSE_C(ch)  QSE_WC(ch)
-	#define QSE_S(str) QSE_WS(str)
-	#define QSE_T(txt) QSE_WT(txt)
+#	define QSE_Q(val) QSE_WQ(val)
+#	define QSE_C(ch)  QSE_WC(ch)
+#	define QSE_S(str) QSE_WS(str)
+#	define QSE_T(txt) QSE_WT(txt)
 #endif
 
 #if defined(__GNUC__)
-	#define QSE_BEGIN_PACKED_STRUCT(x) struct x {
-	#define QSE_END_PACKED_STRUCT() } __attribute__((packed));
+#	define QSE_BEGIN_PACKED_STRUCT(x) struct x {
+#	define QSE_END_PACKED_STRUCT() } __attribute__((packed));
 #else
-	#define QSE_BEGIN_PACKED_STRUCT(x) struct x {
-	#define QSE_END_PACKED_STRUCT() };
+#	define QSE_BEGIN_PACKED_STRUCT(x) struct x {
+#	define QSE_END_PACKED_STRUCT() };
 #endif
 
 #ifdef NDEBUG
-	#define QSE_ASSERT(expr) ((void)0)
-	#define QSE_ASSERTX(expr,desc) ((void)0)
+#	define QSE_ASSERT(expr) ((void)0)
+#	define QSE_ASSERTX(expr,desc) ((void)0)
 #else
-	#ifdef __cplusplus
-	extern "C" {
-	#endif
+#	ifdef __cplusplus
+		extern "C" {
+#	endif
 		void qse_assert_failed (
         		const qse_char_t* expr, const qse_char_t* desc,
         		const qse_char_t* file, qse_size_t line);
-	#ifdef __cplusplus
-	}
-	#endif
+#	ifdef __cplusplus
+		}
+#	endif
 
-	#define QSE_ASSERT(expr) (void)((expr) || \
+#	define QSE_ASSERT(expr) (void)((expr) || \
 		(qse_assert_failed (QSE_T(#expr), QSE_NULL, QSE_T(__FILE__), __LINE__), 0))
-	#define QSE_ASSERTX(expr,desc) (void)((expr) || \
+#	define QSE_ASSERTX(expr,desc) (void)((expr) || \
 		(qse_assert_failed (QSE_T(#expr), QSE_T(desc), QSE_T(__FILE__), __LINE__), 0))
 #endif
 
-/****d* ase/QSE_FNS
- * NAME
- *  QSE_FNS - define an ASE function name space
- * DESCRIPTION
- *  The QSE_FNS macro enables you to simulate a function name space for the 
- *  types designed properly.
- * EXAMPLE
- *  QSE_FNS (awk, AWK);
- *  qse_awk_t* awk = AWK.open (....);
- *  AWK.close (awk);
- ******
- */
-#define QSE_NS(type,name) struct qse_ns_##type##_t name = qse_ns_##type##_d
-
 #ifdef __cplusplus
-	#define QSE_BEGIN_NAMESPACE(x)    namespace x {
-	#define QSE_END_NAMESPACE(x)      }
-	#define QSE_BEGIN_NAMESPACE2(x,y) namespace x { namespace y {
-	#define QSE_END_NAMESPACE2(y,x)   }}
+#	define QSE_BEGIN_NAMESPACE(x)    namespace x {
+#	define QSE_END_NAMESPACE(x)      }
+#	define QSE_BEGIN_NAMESPACE2(x,y) namespace x { namespace y {
+#	define QSE_END_NAMESPACE2(y,x)   }}
 #endif
 
 #endif
