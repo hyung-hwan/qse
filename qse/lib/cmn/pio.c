@@ -175,6 +175,7 @@ qse_pio_t* qse_pio_init (
 		{
 			const qse_mchar_t* mcmd;
 			qse_mchar_t* argv[4];
+			extern char** environ;
 
 		#ifdef QSE_CHAR_IS_MCHAR
 			mcmd = cmd;
@@ -210,16 +211,12 @@ qse_pio_t* qse_pio_init (
 			argv[2] = mcmd;
 			argv[3] = QSE_NULL;
 
-			/* TODO: */
-			{
-			extern char** environ;
 			QSE_EXECVE (QSE_MT("/bin/sh"), argv, environ);
-			}
 		}
 		else
 		{
 			/* TODO: need to parse the command in a simple manner */
-			//execl ("full path needed", mcmd, marg1, marg2, QSE_NULL);
+			QSE_EXECVE (mcmd, argv, environ);
 		}
 
 	child_oops:
