@@ -73,7 +73,6 @@ static int test2 (void)
 	{
 		qse_byte_t buf[128];
 
-		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
 		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), QSE_PIO_ERR);
 		if (n == 0) break;
 		if (n < 0)

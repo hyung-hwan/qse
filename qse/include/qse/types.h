@@ -21,23 +21,13 @@
 /*#define QSE_HAVE_CONFIG_H*/
 
 #if defined(QSE_HAVE_CONFIG_H)
-	#include <qse/config.h>
+#	include <qse/config.h>
 #elif defined(_WIN32)
-	#include <qse/conf_msw.h>
+#	include <qse/conf_msw.h>
 #elif defined(vms) || defined(__vms)
-	#include <qse/conf_vms.h>
-/*
-#elif defined(__unix__) || defined(__unix) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || (defined(__APPLE__) && defined(__MACH__))  || defined(__SPU__)
-	#if !defined(__unix__)
-		#define __unix__
-	#endif
-	#if !defined(__unix)
-		#define __unix
-	#endif
-	#include <qse/config.h>
-*/
+#	include <qse/conf_vms.h>
 #else
-	#error unsupported operating system
+#	error unsupported operating system
 #endif
 
 /****t* ase/qse_bool_t
@@ -66,7 +56,8 @@ typedef int qse_tri_t;
  *  qse_uint_t - define an unsigned integer type as large as a pointer type
  ******
  */
-#if (defined(hpux) || defined(__hpux) || defined(__hpux__)) && (QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG)
+#if (defined(hpux) || defined(__hpux) || defined(__hpux__)) && \
+    (QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG)
 	typedef long qse_int_t;
 	typedef unsigned long qse_uint_t;
 #elif defined(__SPU__) && (QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG)
@@ -88,7 +79,7 @@ typedef int qse_tri_t;
 	typedef __int64 qse_int_t;
 	typedef unsigned __int64 qse_uint_t;
 #else
-	#error unsupported pointer size
+#	error unsupported pointer size
 #endif
 
 /****t* ase/qse_long_t,qse_ulong_t
@@ -160,52 +151,52 @@ typedef int qse_tri_t;
  ******
  */
 #if QSE_SIZEOF_INT == 8
-	#define QSE_HAVE_INT64_T
-	#define QSE_HAVE_UINT64_T
+#	define QSE_HAVE_INT64_T
+#	define QSE_HAVE_UINT64_T
 	typedef int qse_int64_t;
 	typedef unsigned int qse_uint64_t;
 #elif QSE_SIZEOF_LONG == 8
-	#define QSE_HAVE_INT64_T
-	#define QSE_HAVE_UINT64_T
+#	define QSE_HAVE_INT64_T
+#	define QSE_HAVE_UINT64_T
 	typedef long qse_int64_t;
 	typedef unsigned long qse_uint64_t;
 #elif QSE_SIZEOF_LONG_LONG == 8
-	#define QSE_HAVE_INT64_T
-	#define QSE_HAVE_UINT64_T
+#	define QSE_HAVE_INT64_T
+#	define QSE_HAVE_UINT64_T
 	typedef long long qse_int64_t;
 	typedef unsigned long long qse_uint64_t;
 #elif QSE_SIZEOF___INT64 == 8
-	#define QSE_HAVE_INT64_T
-	#define QSE_HAVE_UINT64_T
+#	define QSE_HAVE_INT64_T
+#	define QSE_HAVE_UINT64_T
 	typedef __int64 qse_int64_t;
 	typedef unsigned __int64 qse_uint64_t;
 #endif
 
 #if QSE_SIZEOF_INT == 16
-	#define QSE_HAVE_INT128_T
-	#define QSE_HAVE_UINT128_T
+#	define QSE_HAVE_INT128_T
+#	define QSE_HAVE_UINT128_T
 	typedef int qse_int128_t;
 	typedef unsigned int qse_uint128_t;
 #elif QSE_SIZEOF_LONG == 16
-	#define QSE_HAVE_INT128_T
-	#define QSE_HAVE_UINT128_T
+#	define QSE_HAVE_INT128_T
+#	define QSE_HAVE_UINT128_T
 	typedef long qse_int128_t;
 	typedef unsigned long qse_uint128_t;
 #elif QSE_SIZEOF_LONG_LONG == 16
-	#define QSE_HAVE_INT128_T
-	#define QSE_HAVE_UINT128_T
+#	define QSE_HAVE_INT128_T
+#	define QSE_HAVE_UINT128_T
 	typedef long long qse_int128_t;
 	typedef unsigned long long qse_uint128_t;
 #elif QSE_SIZEOF___INT128 == 16
-	#define QSE_HAVE_INT128_T
-	#define QSE_HAVE_UINT128_T
+#	define QSE_HAVE_INT128_T
+#	define QSE_HAVE_UINT128_T
 	typedef __int128 qse_int128_t;
 	typedef unsigned __int128 qse_uint128_t;
 #endif
 
 /****t* ase/qse_byte_t
  * NAME
- *  qse_word_t - define a byte type
+ *  qse_byte_t - define a byte type
  ******
  */
 typedef qse_uint8_t qse_byte_t;
@@ -216,9 +207,9 @@ typedef qse_uint8_t qse_byte_t;
  ******
  */
 #ifdef __SIZE_TYPE__
-typedef __SIZE_TYPE__ qse_size_t;
+	typedef __SIZE_TYPE__ qse_size_t;
 #else
-typedef qse_uint_t  qse_size_t;
+	typedef qse_uint_t  qse_size_t;
 #endif
 
 /****t* ase/qse_ssize_t
@@ -239,13 +230,13 @@ typedef qse_uint_t  qse_word_t;
 #if defined(__FreeBSD__)
 	/* TODO: check if the support for long double is complete.
 	 *       if so, use long double for qse_real_t */
-	#define QSE_SIZEOF_REAL QSE_SIZEOF_DOUBLE
+#	define QSE_SIZEOF_REAL QSE_SIZEOF_DOUBLE
 	typedef double qse_real_t;
 #elif QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE
-	#define QSE_SIZEOF_REAL QSE_SIZEOF_LONG_DOUBLE
+#	define QSE_SIZEOF_REAL QSE_SIZEOF_LONG_DOUBLE
 	typedef long double qse_real_t;
 #else
-	#define QSE_SIZEOF_REAL QSE_SIZEOF_DOUBLE
+#	define QSE_SIZEOF_REAL QSE_SIZEOF_DOUBLE
 	typedef double qse_real_t;
 #endif
 
@@ -264,7 +255,9 @@ typedef int  qse_mcint_t;
  *  qse_wcint_t - define a type that can hold qse_wchar_t and QSE_WCHAR_EOF
  ******
  */
-#if defined(__cplusplus) && (!defined(_MSC_VER) || (defined(_MSC_VER)&&defined(_NATIVE_WCHAR_T_DEFINED)))
+#if defined(__cplusplus) && \
+    (!defined(_MSC_VER) || \
+     (defined(_MSC_VER) && defined(_NATIVE_WCHAR_T_DEFINED)))
 	/* C++ */
 
 	typedef wchar_t qse_wchar_t;
@@ -278,41 +271,41 @@ typedef int  qse_mcint_t;
 	typedef unsigned short qse_wchar_t;
 	typedef unsigned short qse_wcint_t;
 #elif (QSE_SIZEOF_WCHAR_T == 4)
-	#if defined(vms) || defined(__vms)
+#	if defined(vms) || defined(__vms)
 		typedef unsigned int qse_wchar_t;
 		typedef int qse_wcint_t;
-	#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#	elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 		typedef int qse_wchar_t;
 		typedef int qse_wcint_t;
-	#elif (defined(sun) || defined(__sun) || defined(__linux))
-		#if defined(_LP64)
+#	elif (defined(sun) || defined(__sun) || defined(__linux))
+#		if defined(_LP64)
 			typedef int qse_wchar_t;
 			typedef int qse_wcint_t;
-		#else
+#		else
 			typedef long qse_wchar_t;
 			typedef long qse_wcint_t;
-		#endif
-	#elif defined(__APPLE__) && defined(__MACH__)
+#		endif
+#	elif defined(__APPLE__) && defined(__MACH__)
 		typedef int qse_wchar_t;
 		typedef int qse_wcint_t;
-	#elif defined(hpux) || defined(__hpux) || defined(__hpux__)
-		#if defined(__HP_cc) || defined(__HP_aCC)
-		typedef unsigned int qse_wchar_t;
-		#else
-		typedef int qse_wchar_t;
-		#endif
+#	elif defined(hpux) || defined(__hpux) || defined(__hpux__)
+#		if defined(__HP_cc) || defined(__HP_aCC)
+			typedef unsigned int qse_wchar_t;
+#		else
+			typedef int qse_wchar_t;
+#		endif
 		typedef int qse_wcint_t;
-	#elif QSE_SIZEOF_LONG == 4
+#	elif QSE_SIZEOF_LONG == 4
 		typedef long qse_wchar_t;
 		typedef long qse_wcint_t;
-	#elif QSE_SIZEOF_INT == 4
+#	elif QSE_SIZEOF_INT == 4
 		typedef int qse_wchar_t;
 		typedef int qse_wcint_t;
-	#else
-		#error no supported data type for wchar_t
-	#endif
+#	else
+#		error no supported data type for wchar_t
+#	endif
 #else
-	#error unsupported size of wchar_t
+#	error unsupported size of wchar_t
 #endif
 
 /****t* ase/qse_char_t,qse_cint_t
@@ -322,34 +315,34 @@ typedef int  qse_mcint_t;
  ******
  */
 #if defined(_WIN32) && (defined(UNICODE)||defined(_UNICODE))
-	#define QSE_CHAR_IS_WCHAR
+#	define QSE_CHAR_IS_WCHAR
 	typedef qse_wchar_t qse_char_t;
 	typedef qse_wcint_t qse_cint_t;
 #else
-	#if defined(QSE_CHAR_IS_MCHAR)
+#	if defined(QSE_CHAR_IS_MCHAR)
 		typedef qse_mchar_t qse_char_t;
 		typedef qse_mcint_t qse_cint_t;
-	#elif defined(QSE_CHAR_IS_WCHAR)
+#	elif defined(QSE_CHAR_IS_WCHAR)
 		typedef qse_wchar_t qse_char_t;
 		typedef qse_wcint_t qse_cint_t;
-	#elif defined(_MBCS)
-		#define QSE_CHAR_IS_MCHAR
+#	elif defined(_MBCS)
+#		define QSE_CHAR_IS_MCHAR
 		typedef qse_mchar_t qse_char_t;
 		typedef qse_mcint_t qse_cint_t;
-	#else
-		#define QSE_CHAR_IS_WCHAR
+#	else
+#		define QSE_CHAR_IS_WCHAR
 		typedef qse_wchar_t qse_char_t;
 		typedef qse_wcint_t qse_cint_t;
-	#endif
+#	endif
 #endif
 
 #if defined(QSE_CHAR_IS_WCHAR) && defined(_WIN32) 
-	#ifndef UNICODE
-		#define UNICODE
-	#endif
-	#ifndef _UNICODE
-		#define _UNICODE
-	#endif
+#	ifndef UNICODE
+#		define UNICODE
+#	endif
+#	ifndef _UNICODE
+#		define _UNICODE
+#	endif
 #endif
 
 typedef struct qse_xstr_t qse_xstr_t;
@@ -366,7 +359,7 @@ typedef struct qse_ccls_t qse_ccls_t;
 struct qse_xstr_t
 {
 	qse_char_t* ptr; /* this is not a const pointer */
-	qse_size_t  len;
+	qse_size_t  len; /* the number of characters */
 };
 /******/
 
@@ -379,7 +372,7 @@ struct qse_xstr_t
 struct qse_cstr_t
 {
 	const qse_char_t* ptr; /* this is a const pointer */
-	qse_size_t        len;
+	qse_size_t        len; /* the number of characters */
 };
 /******/
 
@@ -400,7 +393,7 @@ struct qse_mmgr_t
 
 /****t* ase/qse_ccls_type_t
  * NAME
- *  qse_ccls_type_t - define types of character class
+ *  qse_ccls_type_t - define character class types
  *
  * SYNOPSIS
  */

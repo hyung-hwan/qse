@@ -504,13 +504,13 @@ typedef struct qse_awk_val_ref_t  qse_awk_val_ref_t;
 typedef struct qse_awk_val_chunk_t qse_awk_val_chunk_t;
 
 #if QSE_SIZEOF_INT == 2
-#define QSE_AWK_VAL_HDR \
-	unsigned int type: 3; \
-	unsigned int ref: 13
+#	define QSE_AWK_VAL_HDR \
+		unsigned int type: 3; \
+		unsigned int ref: 13
 #else
-#define QSE_AWK_VAL_HDR \
-	unsigned int type: 3; \
-	unsigned int ref: 29
+#	define QSE_AWK_VAL_HDR \
+		unsigned int type: 3; \
+		unsigned int ref: 29
 #endif
 
 #define QSE_AWK_VAL_TYPE(x) ((x)->type)

@@ -20,12 +20,12 @@
 #include "mem.h"
 
 #ifdef _WIN32
-#include <windows.h>
-#include <tchar.h>
+#	include <windows.h>
+#	include <tchar.h>
 #else
-#include "syscall.h"
-#include <fcntl.h>
-#include <errno.h>
+#	include "syscall.h"
+#	include <fcntl.h>
+#	include <errno.h>
 #endif
 
 qse_pio_t* qse_pio_open (
@@ -174,6 +174,7 @@ qse_pio_t* qse_pio_init (
 		if (flags & QSE_PIO_SHELL)
 		{
 			const qse_mchar_t* mcmd;
+			qse_mchar_t* argv[4];
 
 		#ifdef QSE_CHAR_IS_MCHAR
 			mcmd = cmd;
@@ -204,7 +205,16 @@ qse_pio_t* qse_pio_init (
 
 			n = qse_wcstombs (cmd, mcmd, &mn);
 
-			execl ("/bin/sh", "sh", "-c", mcmd, QSE_NULL);
+			argv[0] = QSE_MT("/bin/sh");
+			argv[1] = QSE_MT("-c");
+			argv[2] = mcmd;
+			argv[3] = QSE_NULL;
+
+			/* TODO: */
+			{
+			extern char** environ;
+			QSE_EXECVE (QSE_MT("/bin/sh"), argv, environ);
+			}
 		}
 		else
 		{
