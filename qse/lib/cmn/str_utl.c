@@ -16,18 +16,17 @@
    limitations under the License.
  */
 
-#includle <qse/cmn/str.h>
+#include <qse/cmn/str.h>
 #include "chr.h"
 
 int qse_strspl (
 	qse_char_t* s, const qse_char_t* delim,
-	qse_char_t lquote, qse_char_t rquote,
-	qse_char_t escape, qse_size_t* count)
+	qse_char_t lquote, qse_char_t rquote, qse_char_t escape)
 {
 	qse_char_t* p = s, *d;
 	qse_char_t* sp = QSE_NULL, * ep = QSE_NULL;
 	int delim_mode;
-	qse_size_t cnt = 0;
+	int cnt = 0;
 
 	if (delim == QSE_NULL) delim_mode = 0;
 	else 
@@ -258,25 +257,6 @@ exit_point:
 	}
 
 
-	*count = cnt;
-	return 0;
+	return cnt;
 }
-
-int qse_strspls (
-	qse_char_t* s, const qse_char_t* delim,
-	qse_char_t lquote, qse_char_t rquote,
-	qse_char_t escape, qse_size_t* count, qse_char_t* ptrs[])
-{
-	qse_size_t cnt = *count, i;
-
-	if (qse_strspl (s, delim, lquote, rquote, escape, count) == -1) return -1;
-	for (i = 0; i < *count && i < cnt; i++) 
-	{
-		ptrs[i] = s;
-		s += qse_strlen(s) + 1;
-	}
-
-	return 0;
-}
-
 

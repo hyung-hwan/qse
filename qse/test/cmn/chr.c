@@ -74,7 +74,7 @@ static int test2 (void)
 				}
 				else
 				{
-				#if QSE_CHAR_IS_MCHAR
+				#ifdef QSE_CHAR_IS_MCHAR
 					qse_printf (QSE_T("%C"), wc);
 				#else
 					qse_printf (QSE_T("%c"), wc);
@@ -127,7 +127,7 @@ static int test3 (void)
 				}
 				else
 				{
-				#if QSE_CHAR_IS_MCHAR
+				#ifdef QSE_CHAR_IS_MCHAR
 					qse_printf (QSE_T("%.*s"), (int)n, buf);
 				#else
 					qse_printf (QSE_T("%.*S"), (int)n, buf);
