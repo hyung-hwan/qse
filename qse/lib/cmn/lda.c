@@ -34,7 +34,6 @@
 #define TOB(lda,len) ((len)*(lda)->scale)
 #define DPTR(node)   ((node)->dptr)
 #define DLEN(node)   ((node)->dlen)
-#define INVALID      QSE_LDA_INVALID
 
 static int comp_data (lda_t* lda, 
 	const void* dptr1, size_t dlen1, 
@@ -308,7 +307,7 @@ size_t qse_lda_search (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 			dptr, dlen) == 0) return i;
 	}
 
-	return INVALID;
+	return QSE_LDA_NIL;
 }
 
 size_t qse_lda_rsearch (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
@@ -329,7 +328,7 @@ size_t qse_lda_rsearch (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 		}
 	}
 
-	return INVALID;
+	return QSE_LDA_NIL;
 }
 
 size_t qse_lda_upsert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
@@ -345,7 +344,7 @@ size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 
 	/* allocate the node first */
 	node = alloc_node (lda, dptr, dlen);
-	if (node == QSE_NULL) return INVALID;
+	if (node == QSE_NULL) return QSE_LDA_NIL;
 
 	/* do resizeing if necessary. 
 	 * resizing is performed after node allocation because that way, it 
@@ -378,7 +377,7 @@ size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 			if (lda->freeer) 
 				lda->freeer (lda, DPTR(node), DLEN(node));
 			QSE_MMGR_FREE (lda->mmgr, node);
-			return INVALID;
+			return QSE_LDA_NIL;
 		}
 	}
 
@@ -388,7 +387,7 @@ size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 		if (lda->freeer) 
 			lda->freeer (lda, DPTR(node), DLEN(node));
 		QSE_MMGR_FREE (lda->mmgr, node);
-		return INVALID;
+		return QSE_LDA_NIL;
 	}
 
 	/* fill in the gap with QSE_NULL */
@@ -410,14 +409,14 @@ size_t qse_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 {
 	node_t* c;
 
-	if (pos >= lda->size) return INVALID;
+	if (pos >= lda->size) return QSE_LDA_NIL;
 
 	c = lda->node[pos];
 	if (c == QSE_NULL)
 	{
 		/* no previous data */
 		lda->node[pos] = alloc_node (lda, dptr, dlen);
-		if (lda->node[pos] == QSE_NULL) return INVALID;
+		if (lda->node[pos] == QSE_NULL) return QSE_LDA_NIL;
 	}
 	else
 	{
@@ -430,7 +429,7 @@ size_t qse_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 		{
 			/* updated to different data */
 			node_t* node = alloc_node (lda, dptr, dlen);
-			if (node == QSE_NULL) return INVALID;
+			if (node == QSE_NULL) return QSE_LDA_NIL;
 
 			if (lda->freeer != QSE_NULL)
 				lda->freeer (lda, DPTR(c), DLEN(c));

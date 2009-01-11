@@ -871,7 +871,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 
 	/* check if it coincides to be a global variable name */
 	g = find_global (awk, name, name_len);
-	if (g != QSE_LDA_INVALID)
+	if (g != QSE_LDA_NIL)
 	{
 		SETERRARG (
 			awk, QSE_AWK_EGBLRED, awk->token.line, 
@@ -952,7 +952,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 
 			/* check if a parameter conflicts with other parameters */
 			if (qse_lda_search (awk->parse.params, 
-				0, param, param_len) != QSE_LDA_INVALID)
+				0, param, param_len) != QSE_LDA_NIL)
 			{
 				QSE_AWK_FREE (awk, name_dup);
 				qse_lda_clear (awk->parse.params);
@@ -977,7 +977,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 			if (qse_lda_insert (
 				awk->parse.params, 
 				QSE_LDA_SIZE(awk->parse.params), 
-				param, param_len) == QSE_LDA_INVALID)
+				param, param_len) == QSE_LDA_NIL)
 			{
 				QSE_AWK_FREE (awk, name_dup);
 				qse_lda_clear (awk->parse.params);
@@ -1397,7 +1397,7 @@ int qse_awk_initglobals (qse_awk_t* awk)
 			QSE_LDA_SIZE(awk->parse.globals),
 			(qse_char_t*)gtab[id].name,
 			gtab[id].name_len);
-		if (g == QSE_LDA_INVALID) return -1;
+		if (g == QSE_LDA_NIL) return -1;
 
 		QSE_ASSERT ((int)g == id);
 
@@ -1479,7 +1479,7 @@ static qse_size_t get_global (
 
 	cg.name.ptr = name;
 	cg.name.len = len;
-	cg.index = QSE_LDA_INVALID;
+	cg.index = QSE_LDA_NIL;
 	cg.walk = QSE_LDA_WALK_BACKWARD;
 
 	/* return qse_lda_rsearch (
@@ -1497,7 +1497,7 @@ static qse_size_t find_global (
 
 	cg.name.ptr = name;
 	cg.name.len = len;
-	cg.index = QSE_LDA_INVALID;
+	cg.index = QSE_LDA_NIL;
 	cg.walk = QSE_LDA_WALK_FORWARD;
 
 	/* return qse_lda_search (awk->parse.globals, 0, name, len); */
@@ -1548,7 +1548,7 @@ static int add_global (
 	#endif
 
 	/* check if it conflicts with other global variable names */
-	if (find_global (awk, name, len) != QSE_LDA_INVALID)
+	if (find_global (awk, name, len) != QSE_LDA_NIL)
 	{ 
 		SETERRARG (awk, QSE_AWK_EDUPGBL, line, name, len);
 		return -1;
@@ -1563,7 +1563,7 @@ static int add_global (
 
 	if (qse_lda_insert (awk->parse.globals, 
 		QSE_LDA_SIZE(awk->parse.globals), 
-		(qse_char_t*)name, len) == QSE_LDA_INVALID)
+		(qse_char_t*)name, len) == QSE_LDA_NIL)
 	{
 		SETERRLIN (awk, QSE_AWK_ENOMEM, line);
 		return -1;
@@ -1625,7 +1625,7 @@ int qse_awk_delglobal (
 
 	n = qse_lda_search (awk->parse.globals, 
 		QSE_AWK_NUM_STATIC_GLOBALS, name, len);
-	if (n == QSE_LDA_INVALID)
+	if (n == QSE_LDA_NIL)
 	{
 		SETERRARG (awk, QSE_AWK_ENOENT, 0, name, len);
 		return -1;
@@ -1748,7 +1748,7 @@ static qse_awk_t* collect_locals (
 		{
 			/* check if it conflicts with a paremeter name */
 			n = qse_lda_search (awk->parse.params, 0, local.ptr, local.len);
-			if (n != QSE_LDA_INVALID)
+			if (n != QSE_LDA_NIL)
 			{
 				SETERRARG (
 					awk, QSE_AWK_EPARRED, awk->token.line,
@@ -1762,7 +1762,7 @@ static qse_awk_t* collect_locals (
 			awk->parse.locals, 
 			nlocals, /*((awk->option&QSE_AWK_SHADING)? nlocals:0)*/
 			local.ptr, local.len);
-		if (n != QSE_LDA_INVALID)
+		if (n != QSE_LDA_NIL)
 		{
 			SETERRARG (
 				awk, QSE_AWK_EDUPLCL, awk->token.line, 
@@ -1772,7 +1772,7 @@ static qse_awk_t* collect_locals (
 
 		/* check if it conflicts with global variable names */
 		n = find_global (awk, local.ptr, local.len);
-		if (n != QSE_LDA_INVALID)
+		if (n != QSE_LDA_NIL)
 		{
  			if (n < awk->tree.nbglobals)
 			{
@@ -1804,7 +1804,7 @@ static qse_awk_t* collect_locals (
 		if (qse_lda_insert (
 			awk->parse.locals,
 			QSE_LDA_SIZE(awk->parse.locals),
-			local.ptr, local.len) == QSE_LDA_INVALID)
+			local.ptr, local.len) == QSE_LDA_NIL)
 		{
 			SETERRLIN (awk, QSE_AWK_ENOMEM, awk->token.line);
 			return QSE_NULL;
@@ -3211,7 +3211,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		if (nde == QSE_NULL) QSE_AWK_FREE (awk, name_dup);
 		return (qse_awk_nde_t*)nde;
 	}
-	else if ((idxa = qse_lda_rsearch (awk->parse.locals, QSE_LDA_SIZE(awk->parse.locals), name_dup, name_len)) != QSE_LDA_INVALID)
+	else if ((idxa = qse_lda_rsearch (awk->parse.locals, QSE_LDA_SIZE(awk->parse.locals), name_dup, name_len)) != QSE_LDA_NIL)
 	{
 		/* local variable */
 
@@ -3245,7 +3245,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 
 		return (qse_awk_nde_t*)nde;
 	}
-	else if ((idxa = qse_lda_search (awk->parse.params, 0, name_dup, name_len)) != QSE_LDA_INVALID)
+	else if ((idxa = qse_lda_search (awk->parse.params, 0, name_dup, name_len)) != QSE_LDA_NIL)
 	{
 		/* parameter */
 
@@ -3279,7 +3279,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 
 		return (qse_awk_nde_t*)nde;
 	}
-	else if ((idxa = get_global (awk, name_dup, name_len)) != QSE_LDA_INVALID)
+	else if ((idxa = get_global (awk, name_dup, name_len)) != QSE_LDA_NIL)
 	{
 		/* global variable */
 
@@ -3486,7 +3486,7 @@ static qse_awk_nde_t* parse_hashidx (
 
 	/* search the local variable list */
 	idxa = qse_lda_rsearch (awk->parse.locals, QSE_LDA_SIZE(awk->parse.locals), name, name_len);
-	if (idxa != QSE_LDA_INVALID)
+	if (idxa != QSE_LDA_NIL)
 	{
 		nde->type = QSE_AWK_NDE_LOCALIDX;
 		nde->line = line;
@@ -3502,7 +3502,7 @@ static qse_awk_nde_t* parse_hashidx (
 
 	/* search the parameter name list */
 	idxa = qse_lda_search (awk->parse.params, 0, name, name_len);
-	if (idxa != QSE_LDA_INVALID)
+	if (idxa != QSE_LDA_NIL)
 	{
 		nde->type = QSE_AWK_NDE_ARGIDX;
 		nde->line = line;
@@ -3518,7 +3518,7 @@ static qse_awk_nde_t* parse_hashidx (
 
 	/* gets the global variable index */
 	idxa = get_global (awk, name, name_len);
-	if (idxa != QSE_LDA_INVALID)
+	if (idxa != QSE_LDA_NIL)
 	{
 		nde->type = QSE_AWK_NDE_GLOBALIDX;
 		nde->line = line;

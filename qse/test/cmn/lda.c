@@ -53,7 +53,7 @@ static int test1 ()
 
 	for (i = 0; i <  QSE_COUNTOF(x); i++)
 	{
-		if (qse_lda_insert (s1, 0, x[i], qse_strlen(x[i])) == QSE_LDA_INVALID)
+		if (qse_lda_insert (s1, 0, x[i], qse_strlen(x[i])) == QSE_LDA_NIL)
 		{
 			qse_printf (QSE_T("failed to add at 0 => [%.*s]\n"), 
 				(int)qse_strlen(x[i]), x[i]);
@@ -65,7 +65,7 @@ static int test1 ()
 		}
 	}
 
-	if (qse_lda_update (s1, 0, QSE_LDA_DPTR(s1,0), QSE_LDA_DLEN(s1,0)) == QSE_LDA_INVALID)
+	if (qse_lda_update (s1, 0, QSE_LDA_DPTR(s1,0), QSE_LDA_DLEN(s1,0)) == QSE_LDA_NIL)
 	{
 		qse_printf (QSE_T("failed to update index 0 with [%.*s]\n"), (int)QSE_LDA_DLEN(s1,0), QSE_LDA_DPTR(s1,0));
 	}
@@ -74,7 +74,7 @@ static int test1 ()
 		qse_printf (QSE_T("updated index 0 with [%.*s]\n"), (int)QSE_LDA_DLEN(s1,0), QSE_LDA_DPTR(s1,0));
 	}
 
-	if (qse_lda_update (s1, 0, QSE_LDA_DPTR(s1,1), QSE_LDA_DLEN(s1,1)) == QSE_LDA_INVALID)
+	if (qse_lda_update (s1, 0, QSE_LDA_DPTR(s1,1), QSE_LDA_DLEN(s1,1)) == QSE_LDA_NIL)
 	{
 		qse_printf (QSE_T("updated index 0 with [%.*s]\n"), (int)QSE_LDA_DLEN(s1,1), QSE_LDA_DPTR(s1,1));
 	}
@@ -85,7 +85,7 @@ static int test1 ()
 	
 	for (i = 0; i <  QSE_COUNTOF(x); i++)
 	{
-		if (qse_lda_insert (s1, 10, x[i], qse_strlen(x[i])) == QSE_LDA_INVALID)
+		if (qse_lda_insert (s1, 10, x[i], qse_strlen(x[i])) == QSE_LDA_NIL)
 		{
 			qse_printf (QSE_T("failed to add at 10 => [%.*s]\n"), 
 				(int)qse_strlen(x[i]), x[i]);
@@ -141,7 +141,7 @@ static int test2 ()
 		qse_size_t index;
 		for (i = 0; i <  QSE_COUNTOF(x); i++)
 		{
-			if (qse_lda_insert (s1, (i + 1) * j - 1, x[i], qse_strlen(x[i])) == QSE_LDA_INVALID)
+			if (qse_lda_insert (s1, (i + 1) * j - 1, x[i], qse_strlen(x[i])) == QSE_LDA_NIL)
 			{
 				
 				qse_printf (QSE_T("failed to add at %u => [%.*s]\n"), 
@@ -169,7 +169,7 @@ static int test2 ()
 		for (i = 0; i < QSE_COUNTOF(y); i++)
 		{
 			index = qse_lda_search (s1, 0, y[i], qse_strlen(y[i]));
-			if (index == QSE_LDA_INVALID)
+			if (index == QSE_LDA_NIL)
 			{
 				qse_printf (QSE_T("failed to find [%s]\n"), y[i]);
 			}
@@ -180,7 +180,7 @@ static int test2 ()
 			}
 
 			index = qse_lda_rsearch (s1, QSE_LDA_SIZE(s1), y[i], qse_strlen(y[i]));
-			if (index == QSE_LDA_INVALID)
+			if (index == QSE_LDA_NIL)
 			{
 				qse_printf (QSE_T("failed to find [%s]\n"), y[i]);
 			}
@@ -228,7 +228,7 @@ static int test3 ()
 	{
 		for (i = 0; i <  QSE_COUNTOF(x); i++)
 		{
-			if (qse_lda_insert (s1, (i + 1) * j - 1, x[i], qse_strlen(x[i])) == QSE_LDA_INVALID)
+			if (qse_lda_insert (s1, (i + 1) * j - 1, x[i], qse_strlen(x[i])) == QSE_LDA_NIL)
 			{
 				
 				qse_printf (QSE_T("failed to add at %u => [%.*s]\n"), 
@@ -259,7 +259,7 @@ static int test3 ()
 
 			if (i < QSE_LDA_SIZE(s1))
 			{
-				if (qse_lda_update (s1, i, y, qse_strlen(y)) == QSE_LDA_INVALID)
+				if (qse_lda_update (s1, i, y, qse_strlen(y)) == QSE_LDA_NIL)
 				{
 					qse_printf (QSE_T("failed to update at %d => [%.*s]\n"), 
 						i, (int)qse_strlen(y), y);
@@ -338,7 +338,7 @@ static int test4 ()
 
 	for (i = 0; i <  QSE_COUNTOF(x); i++)
 	{
-		if (qse_lda_insert (s1, 0, x[i], qse_strlen(x[i])) == QSE_LDA_INVALID)
+		if (qse_lda_insert (s1, 0, x[i], qse_strlen(x[i])) == QSE_LDA_NIL)
 		{
 			qse_printf (QSE_T("failed to add at 0 => [%.*s]\n"), 
 				(int)qse_strlen(x[i]), x[i]);

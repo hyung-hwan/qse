@@ -60,7 +60,7 @@ static int test1 (void)
 	if (n > 0)
 	{
 	#ifdef QSE_CHAR_IS_MCHAR
-	qse_printf (QSE_T("buf => [%.*s]\n"), (int)n. buf);
+	qse_printf (QSE_T("buf => [%.*s]\n"), (int)n, buf);
 	#else
 	qse_printf (QSE_T("buf => [%.*S]\n"), (int)n, buf);
 	#endif
@@ -139,7 +139,7 @@ static int test2 (void)
 	if (n > 0)
 	{
 	#ifdef QSE_CHAR_IS_MCHAR
-	qse_printf (QSE_T("buf => [%.*s]\n"), (int)n. buf);
+	qse_printf (QSE_T("buf => [%.*s]\n"), (int)n, buf);
 	#else
 	qse_printf (QSE_T("buf => [%.*S]\n"), (int)n, buf);
 	#endif

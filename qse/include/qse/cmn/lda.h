@@ -45,7 +45,7 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
 #define QSE_LDA_COPIER_SIMPLE  ((qse_lda_copier_t)1)
 #define QSE_LDA_COPIER_INLINE  ((qse_lda_copier_t)2)
 
-#define QSE_LDA_INVALID ((qse_size_t)-1)
+#define QSE_LDA_NIL ((qse_size_t)-1)
 
 #define QSE_LDA_SIZE(lda)        ((lda)->size)
 #define QSE_LDA_CAPA(lda)        ((lda)->capa)

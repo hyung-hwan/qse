@@ -403,12 +403,11 @@ qse_size_t qse_str_nccat (
  * SYNOPSIS
  */
 int qse_strspl (
-        qse_char_t*       s,
+        qse_char_t*       str,
 	const qse_char_t* delim,
         qse_char_t        lquote,
 	qse_char_t        rquote,
-        qse_char_t        escape,
-	qse_size_t*       count
+        qse_char_t        escape
 );
 /******/
 
@@ -460,6 +459,29 @@ qse_size_t qse_mbsntowcsn (
  */
 qse_size_t qse_wcstombslen (
 	const qse_wchar_t* wcs,
+	qse_size_t*        mbslen
+);
+/******/
+
+/****f* qse.cmn.str/qse_wcsntombsnlen
+ * NAME
+ *  qse_wcsntombsnlen - get the length 
+ *
+ * DESCRIPTION
+ *  The qse_wcsntombsnlen() function scans a wide character wcs as long as
+ *  wcslen characters to get the get the total number of multibyte characters 
+ *  that it can be converted to. The resulting number of characters is stored 
+ *  into memory pointed to by mbslen.
+ * 
+ * RETURN
+ *  The qse_wcsntombsnlen() function returns the number of wide characters 
+ *  handled.
+ *
+ * SYNOPSIS
+ */
+qse_size_t qse_wcsntombsnlen (
+	const qse_wchar_t* wcs,
+	qse_size_t         wcslen,
 	qse_size_t*        mbslen
 );
 /******/

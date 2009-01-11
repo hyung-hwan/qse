@@ -52,9 +52,9 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = mem.lo chr.lo chr_cnv.lo rex.lo str_bas.lo \
-	str_cnv.lo str_dyn.lo lda.lo map.lo sll.lo dll.lo opt.lo \
-	fio.lo pio.lo sio.lo tio.lo tio_get.lo tio_put.lo time.lo \
-	misc.lo
+	str_cnv.lo str_dyn.lo str_utl.lo lda.lo map.lo sll.lo dll.lo \
+	opt.lo fio.lo pio.lo sio.lo tio.lo tio_get.lo tio_put.lo \
+	time.lo misc.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -196,7 +196,7 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CFLAGS = -I$(top_builddir)/include
 lib_LTLIBRARIES = libqsecmn.la
 libqsecmn_la_SOURCES = mem.h chr.h \
-	mem.c chr.c chr_cnv.c rex.c str_bas.c str_cnv.c str_dyn.c \
+	mem.c chr.c chr_cnv.c rex.c str_bas.c str_cnv.c str_dyn.c str_utl.c \
 	lda.c map.c sll.c dll.c opt.c \
 	fio.c pio.c sio.c tio.c tio_get.c tio_put.c \
 	time.c \
@@ -289,6 +289,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_bas.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dyn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_utl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio_get.Plo@am__quote@

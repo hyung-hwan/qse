@@ -50,13 +50,16 @@ enum qse_pio_hid_t
 	QSE_PIO_ERR = 2
 };
 
+typedef enum qse_pio_hid_t qse_pio_hid_t;
+
 #ifdef _WIN32
-/* <winnt.h> => typedef PVOID HANDLE; */
-typedef void* qse_pio_hnd_t;
-typedef int qse_pio_pid_t; /* TODO */
+	/* <winnt.h> => typedef PVOID HANDLE; */
+	typedef void* qse_pio_hnd_t;
+	typedef int qse_pio_pid_t; /* TODO */
 #else
-typedef int qse_pio_hnd_t;
-typedef int qse_pio_pid_t;
+	typedef int qse_pio_hnd_t;
+	typedef int qse_pio_pid_t;
+#	define  QSE_PIO_HND_NIL ((qse_pio_hnd_t)-1)
 #endif
 
 typedef struct qse_pio_t qse_pio_t;
@@ -68,8 +71,8 @@ struct qse_pio_t
 	qse_pio_hnd_t handle[3];
 };
 
-#define QSE_PIO_MMGR(pio)   ((pio)->mmgr)
-#define QSE_PIO_HANDLE(pio) ((pio)->handle)
+#define QSE_PIO_MMGR(pio)       ((pio)->mmgr)
+#define QSE_PIO_HANDLE(pio,hid) ((pio)->handle[hid])
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,12 +82,16 @@ extern "C" {
  * NAME
  *  qse_pio_open - open a pipe to a child process
  *
+ * DESCRIPTION
+ *  QSE_PIO_SHELL drives the function to execute the command via /bin/sh.
+ *  If flags is clear of QSE_PIO_SHELL, you should pass the full program path.
+ *
  * SYNOPSIS
  */
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        ext,
-	const qse_char_t* path,
+	const qse_char_t* cmd,
 	int               flags
 );
 /******/
@@ -124,13 +131,13 @@ int qse_pio_wait (
 
 /****f* qse.cmn.pio/qse_pio_gethandle
  * NAME
- *  qse_pio_gethandle - get system handle
+ *  qse_pio_gethandle - get native handle
  *
  * SYNOPSIS
  */
 qse_pio_hnd_t qse_pio_gethandle (
-	qse_pio_t* pio,
-	int        hid
+	qse_pio_t*    pio,
+	qse_pio_hid_t hid
 );
 /******/
 
@@ -141,10 +148,10 @@ qse_pio_hnd_t qse_pio_gethandle (
  * SYNOPSIS
  */
 qse_ssize_t qse_pio_read (
-	qse_pio_t* pio,
-	void*      buf,
-	qse_size_t size,
-	int        hid
+	qse_pio_t*    pio,
+	void*         buf,
+	qse_size_t    size,
+	qse_pio_hid_t hid
 );
 /******/
 
@@ -159,10 +166,10 @@ qse_ssize_t qse_pio_read (
  * SYNOPSIS
  */
 qse_ssize_t qse_pio_write (
-	qse_pio_t*  pio,
-	const void* data,
-	qse_size_t  size,
-	int         hid
+	qse_pio_t*    pio,
+	const void*   data,
+	qse_size_t    size,
+	qse_pio_hid_t hid
 );
 /******/
 
@@ -173,8 +180,8 @@ qse_ssize_t qse_pio_write (
  * SYNOPSIS
  */
 void qse_pio_end (
-	qse_pio_t*  pio,
-	int         hid
+	qse_pio_t*    pio,
+	qse_pio_hid_t hid
 );
 /******/
 

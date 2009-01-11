@@ -186,6 +186,60 @@ qse_size_t qse_mbsntowcsn (
 	return p - mbs; /* returns the number of bytes processed */
 }
 
+qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
+{
+	const qse_wchar_t* p = wcs;
+	qse_mchar_t mbs[32];
+	qse_size_t mlen = 0;
+
+	while (*p != QSE_WT('\0'))
+	{
+		qse_size_t n = qse_wctomb (*p, mbs, QSE_COUNTOF(mbs));
+		if (n == 0) break; /* illegal character */
+
+		/* it assumes that mbs is large enough to hold a character */
+		QSE_ASSERT (n <= QSE_COUNTOF(mbs));
+
+		p++; mlen += n;
+	}
+
+	/* this length excludes the terminating null character. */
+	*mbslen = mlen;
+
+	/* returns the number of characters handled. 
+	 * if the function has encountered an illegal character in
+	 * the while loop above, wcs[p-wcs] will not be a null character */
+	return p - wcs;  
+}
+
+qse_size_t qse_wcsntombsnlen (
+	const qse_wchar_t* wcs, qse_size_t wcslen, qse_size_t* mbslen)
+{
+	const qse_wchar_t* p = wcs;
+	const qse_wchar_t* end = wcs + wcslen;
+	qse_mchar_t mbs[32];
+	qse_size_t mlen = 0;
+
+	while (p < end)
+	{
+		qse_size_t n = qse_wctomb (*p, mbs, QSE_COUNTOF(mbs));
+		if (n == 0) break; /* illegal character */
+
+		/* it assumes that mbs is large enough to hold a character */
+		QSE_ASSERT (n <= QSE_COUNTOF(mbs));
+
+		p++; mlen += n;
+	}
+
+	/* this length excludes the terminating null character. */
+	*mbslen = mlen;
+
+	/* returns the number of characters handled. 
+	 * if the function has encountered an illegal character in
+	 * the while loop above, wcs[p-wcs] will not be a null character */
+	return p - wcs;  
+}
+
 qse_size_t qse_wcstombs (
 	const qse_wchar_t* wcs, qse_mchar_t* mbs, qse_size_t* mbslen)
 {
@@ -219,32 +273,6 @@ qse_size_t qse_wcstombs (
 
 	/* returns the number of characters handled. */
 	return p - wcs; 
-}
-
-qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
-{
-	const qse_wchar_t* p = wcs;
-	qse_mchar_t mbs[32];
-	qse_size_t mlen = 0;
-
-	while (*p != QSE_WT('\0'))
-	{
-		qse_size_t n = qse_wctomb (*p, mbs, QSE_COUNTOF(mbs));
-		if (n == 0) break; /* illegal character */
-
-		/* it assumes that mbs is large enough to hold a character */
-		QSE_ASSERT (n <= QSE_COUNTOF(mbs));
-
-		p++; mlen += n;
-	}
-
-	/* this length excludes the terminating null character. */
-	*mbslen = mlen;
-
-	/* returns the number of characters handled. 
-	 * if the function has encountered an illegal character in
-	 * the while loop above, wcs[p-wcs] will not be a null character */
-	return p - wcs;  
 }
 
 qse_size_t qse_wcsntombsn (

@@ -10,15 +10,15 @@
 		if (f() == -1) return -1; \
 	} while (0)
 
-static int test1 (void)
+static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 {
 	qse_pio_t* pio;
 
 	pio = qse_pio_open (
 		QSE_NULL,
 		0,
-		QSE_T("ls -laF"),
-		QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL
+		cmd,
+		oflags
 	);
 	if (pio == QSE_NULL)
 	{
@@ -31,7 +31,7 @@ static int test1 (void)
 		qse_byte_t buf[128];
 
 		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
-		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), QSE_PIO_OUT);
+		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), rhid);
 		if (n == 0) break;
 		if (n < 0)
 		{
@@ -41,7 +41,7 @@ static int test1 (void)
 
 		qse_printf (QSE_T("N===> %d\n"), (int)n);
 		#ifdef QSE_CHAR_IS_MCHAR
-		qse_printf (QSE_T("buf => [%.*s]\n"), (int)n. buf);
+		qse_printf (QSE_T("buf => [%.*s]\n"), (int)n, buf);
 		#else
 		qse_printf (QSE_T("buf => [%.*S]\n"), (int)n, buf);
 		#endif
@@ -51,79 +51,23 @@ static int test1 (void)
 	qse_pio_close (pio);
 
 	return 0;
+}
+
+static int test1 (void)
+{
+	return pio1 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL, QSE_PIO_OUT);
 }
 
 static int test2 (void)
 {
-	qse_pio_t* pio;
-
-	pio = qse_pio_open (
-		QSE_NULL,
-		0,
-		QSE_T("ls -laF"),
-		QSE_PIO_READERR|QSE_PIO_WRITEIN|QSE_PIO_OUTTOERR|QSE_PIO_SHELL
-	);
-	if (pio == QSE_NULL)
-	{
-		qse_printf (QSE_T("cannot open program through pipe\n"));
-		return -1;
-	}
-
-	while (1)
-	{
-		qse_byte_t buf[128];
-
-		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), QSE_PIO_ERR);
-		if (n == 0) break;
-		if (n < 0)
-		{
-			qse_printf (QSE_T("qse_pio_read() returned error\n"));
-			break;
-		}	
-
-		qse_printf (QSE_T("N===> %d\n"), (int)n);
-		#ifdef QSE_CHAR_IS_MCHAR
-		qse_printf (QSE_T("buf => [%.*s]\n"), (int)n. buf);
-		#else
-		qse_printf (QSE_T("buf => [%.*S]\n"), (int)n, buf);
-		#endif
-
-	}
-
-	qse_pio_close (pio);
-
-	return 0;
+	return pio1 (QSE_T("ls -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN|QSE_PIO_SHELL, QSE_PIO_ERR);
 }
 
-#if 0
-static int test1 (void)
+static int test3 (void)
 {
-	qse_pio_t* pio;
-
-	pio = qse_pio_open (
-		QSE_NULL,
-		0,
-		QSE_T("ls -laF"),
-		QSE_PIO_READ | QSE_PIO_WRITE | QSE_PIO_READ_ERR
-	);
-	if (pio == QSE_NULL)
-	{
-		qse_printf (QSE_T("cannot open program through pipe\n"));
-		return -1;
-	}
-
-
-qse_pio_open (RW, "/bin/ls -laF", R, W, E)
-	qse_pio_write ("xxx");
-
-	qse_pio_read (buf, QSE_COUNOF(buf), QSE_PIO_OUT);
-	qse_pio_read (buf, QSE_COUNOF(buf), QSE_PIO_ERR);
-	qse_pio_write ("xxxx", 4, QSE_PIO_IN | QSE_PIO_EOF);
-
-	qse_pio_close (pio);
-	return 0;
+	//return pio1 (QSE_T("/bin/ls -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN, QSE_PIO_ERR);
+	return pio1 (QSE_T("\"/bin/ls\" -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN, QSE_PIO_ERR);
 }
-#endif
 
 int main ()
 {
@@ -135,6 +79,7 @@ int main ()
 
 	R (test1);
 	R (test2);
+	R (test3);
 
 	return 0;
 }
