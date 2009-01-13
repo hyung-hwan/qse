@@ -27,7 +27,10 @@
 #	include "syscall.h"
 #	include <fcntl.h>
 #	include <errno.h>
+#	include <sys/wait.h>
 #endif
+
+#define CHILD_EXIT_CODE 128
 
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
@@ -86,7 +89,9 @@ qse_pio_t* qse_pio_init (
 
 #ifdef _WIN32
 	/* TODO: XXXXXXXXXXXXXXXXX */
+http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 #else
+
 	if (flags & QSE_PIO_WRITEIN)
 	{
 		if (QSE_PIPE(&handle[0]) == -1) goto oops;
@@ -298,7 +303,7 @@ qse_pio_t* qse_pio_init (
 		}
 
 	child_oops:
-		QSE_EXIT(127);
+		QSE_EXIT (CHILD_EXIT_CODE);
 	}
 
 	/* parent */
@@ -352,49 +357,20 @@ oops:
 
 void qse_pio_fini (qse_pio_t* pio)
 {
-#ifdef _WIN32
-	CloseHandle (pio->handle);
-#else
-	int i, status;
-
 	qse_pio_end (pio, QSE_PIO_IN);
 	qse_pio_end (pio, QSE_PIO_OUT);
 	qse_pio_end (pio, QSE_PIO_ERR);
-
-	while (QSE_WAITPID (pio->child, &status, 0) == -1)
-	{
-		if (errno != EINTR) break;
-	}
-#endif
-}
-
-int qse_pio_wait (qse_pio_t* pio)
-{
-	int status;
-
-#if 0
-	if (opt & QSE_PIO_NOWAIT)
-	{
-		opt |= WNOHANG;
-	}
-
-	while (1)
-	{
-		n = QSE_WAITPID (pio->child, &status, opt);
-		if (n == 0) break; 
-	/* TODO: .... */
-	}
-
-
-	output => return code...
-	output => termination cause...
-#endif
-	return -1;
+	qse_pio_wait (pio, QSE_PIO_IGNINTR);
 }
 
 qse_pio_hnd_t qse_pio_gethandle (qse_pio_t* pio, qse_pio_hid_t hid)
 {
 	return pio->handle[hid];
+}
+
+qse_pio_pid_t qse_pio_getchild (qse_pio_t* pio)
+{
+	return pio->child;
 }
 
 qse_ssize_t qse_pio_read (
@@ -444,4 +420,88 @@ void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 		QSE_CLOSE (pio->handle[hid]);
 		pio->handle[hid] = QSE_PIO_HND_NIL;
 	}
+}
+
+/*
+return -1 on error
+return -2 on no change
+return retcode on normal exit
+return 255+signal on kill.
+*/
+
+int qse_pio_wait (qse_pio_t* pio, int flags)
+{
+#ifdef _WIN32
+	DWORD ec;
+
+	if (pio->child == QSE_PIO_PID_NIL) return -1;
+
+	WaitForSingleObject (pio->child, -1);
+	if (GetExitCodeProcess (pio->child, &ec) == -1)
+	/* close handle here to emulate waitpid() as much as possible. */
+	CloseHandle (pio->child); 
+	pio->child = QSE_PIO_PID_NIL;
+
+#else
+	int status;
+	int opt = 0;
+	int ret = -1;
+
+	if (pio->child == QSE_PIO_PID_NIL) return -1;
+
+	if (flags & QSE_PIO_NOWAIT) opt |= WNOHANG;
+
+	while (1)
+	{
+		int n = QSE_WAITPID (pio->child, &status, opt);
+
+qse_printf (QSE_T("n=%d,pio->child=%d,errno=%d,ECHILD=%d\n"), n, pio->child, errno, ECHILD);
+		if (n == -1)
+		{
+			if (errno == ECHILD)
+			{
+				/* most likely, the process has already been waitpid()ed on. */
+				/* TODO: what should we do... ? */
+				/* ??? TREAT AS NORMAL??? => cannot know exit code => TREAT AS ERROR but reset pio->child   */
+
+				pio->child = QSE_PIO_PID_NIL;
+				ret = -1; /* OR ECHILD / QSE_PIO_ECHILD */
+				break;
+			}
+
+			if (errno != EINTR || !(flags & QSE_PIO_IGNINTR)) break;
+		}
+
+		if (n == 0) 
+		{
+			/* when WNOHANG is not specified, 0 can't be returned */
+			QSE_ASSERT (flags & QSE_PIO_NOWAIT);
+
+			ret = -2;
+			/* the child process is still alive */
+			break;
+		}
+
+		if (n == pio->child)
+		{
+			if (WIFEXITED(status))
+			{
+				/* the child process ended normally */
+				ret = WEXITSTATUS(status);
+			}
+			else if (WIFSIGNALED(status))
+			{
+				/* the child process was killed by a signal */
+				ret = 255 + WTERMSIG (status);
+			}
+
+			/* not interested in WIFSTOPPED & WIFCONTINUED  */
+
+			pio->child = QSE_PIO_PID_NIL;
+			break;
+		}
+	}
+
+	return ret;
+#endif
 }

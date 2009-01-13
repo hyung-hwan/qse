@@ -53,6 +53,7 @@ static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 	return 0;
 }
 
+
 static int test1 (void)
 {
 	return pio1 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL, QSE_PIO_OUT);
@@ -65,8 +66,32 @@ static int test2 (void)
 
 static int test3 (void)
 {
-	//return pio1 (QSE_T("/bin/ls -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN, QSE_PIO_ERR);
-	return pio1 (QSE_T("\"/bin/ls\" -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN, QSE_PIO_ERR);
+	return pio1 (QSE_T("/bin/ls -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN, QSE_PIO_ERR);
+}
+
+static int test4 (void)
+{
+	qse_pio_t* pio;
+
+	pio = qse_pio_open (
+		QSE_NULL,
+		0,
+		"ls -laF",
+		QSE_PIO_READOUT|QSE_PIO_READERR|QSE_PIO_WRITEIN
+	);
+	if (pio == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open program through pipe\n"));
+		return -1;
+	}
+
+	{
+		int status;
+		sleep (5);
+		qse_printf (QSE_T("waitpid...%d\n"),  (int)waitpid (-1, &status, 0));
+	}
+
+	qse_pio_close (pio);
 }
 
 int main ()
@@ -80,6 +105,7 @@ int main ()
 	R (test1);
 	R (test2);
 	R (test3);
+	R (test4);
 
 	return 0;
 }
