@@ -43,6 +43,12 @@ enum qse_pio_open_flag_t
 	QSE_PIO_SHELL      = (1 << 11)
 };
 
+enum qse_pio_wait_flag_t
+{
+	QSE_PIO_NOWAIT     = (1 << 0),
+	QSE_PIO_IGNINTR    = (1 << 1)
+};
+
 enum qse_pio_hid_t
 {
 	QSE_PIO_IN  = 0,
@@ -55,11 +61,14 @@ typedef enum qse_pio_hid_t qse_pio_hid_t;
 #ifdef _WIN32
 	/* <winnt.h> => typedef PVOID HANDLE; */
 	typedef void* qse_pio_hnd_t;
-	typedef int qse_pio_pid_t; /* TODO */
+	typedef void* qse_pio_pid_t;
+#	define  QSE_PIO_HND_NIL ((qse_pio_hnd_t)QSE_NULL)
+#	define  QSE_PIO_PID_NIL ((qse_pio_pid_t)QSE_NULL)
 #else
 	typedef int qse_pio_hnd_t;
 	typedef int qse_pio_pid_t;
 #	define  QSE_PIO_HND_NIL ((qse_pio_hnd_t)-1)
+#	define  QSE_PIO_PID_NIL ((qse_pio_hnd_t)-1)
 #endif
 
 typedef struct qse_pio_t qse_pio_t;
@@ -73,6 +82,7 @@ struct qse_pio_t
 
 #define QSE_PIO_MMGR(pio)       ((pio)->mmgr)
 #define QSE_PIO_HANDLE(pio,hid) ((pio)->handle[hid])
+#define QSE_PIO_CHILD(pio)      ((pio)->child)
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,7 +90,7 @@ extern "C" {
 
 /****f* qse.cmn.pio/qse_pio_open
  * NAME
- *  qse_pio_open - open a pipe to a child process
+ *  qse_pio_open - open pipes to a child process
  *
  * DESCRIPTION
  *  QSE_PIO_SHELL drives the function to execute the command via /bin/sh.
@@ -98,7 +108,7 @@ qse_pio_t* qse_pio_open (
 
 /****f* qse.cmn.pio/qse_pio_close
  * NAME
- *  qse_pio_close - close a pipe
+ *  qse_pio_close - close pipes to a child process
  *
  * SYNOPSIS
  */
@@ -107,24 +117,27 @@ void qse_pio_close (
 );
 /******/
 
+/****f* qse.cmn/pio/qse_pio_init
+ * NAME
+ *  qse_pio_init - initialize pipes to a child process
+ *
+ * SYNOPSIS
+ */
 qse_pio_t* qse_pio_init (
 	qse_pio_t*        pio,
 	qse_mmgr_t*       mmgr,
 	const qse_char_t* path,
 	int               flags
 );
+/******/
 
-void qse_pio_fini (
-	qse_pio_t* pio
-);
-
-/****f* qse.cmn.pio/qse_pio_wait
+/****f* qse.cmn/pio/qse_pio_fini
  * NAME
- *  qse_pio_wait - wait for a child process 
+ *  qse_pio_fini - finalize pipes to a child process
  *
  * SYNOPSIS
  */
-int qse_pio_wait (
+void qse_pio_fini (
 	qse_pio_t* pio
 );
 /******/
@@ -138,6 +151,17 @@ int qse_pio_wait (
 qse_pio_hnd_t qse_pio_gethandle (
 	qse_pio_t*    pio,
 	qse_pio_hid_t hid
+);
+/******/
+
+/****f* qse.cmn.pio/qse_pio_getchild
+ * NAME
+ *  qse_pio_getchild - get the PID of a child process
+ *
+ * SYNOPSIS
+ */
+qse_pio_pid_t qse_pio_getchild (
+	qse_pio_t*    pio
 );
 /******/
 
@@ -182,6 +206,18 @@ qse_ssize_t qse_pio_write (
 void qse_pio_end (
 	qse_pio_t*    pio,
 	qse_pio_hid_t hid
+);
+/******/
+
+/****f* qse.cmn.pio/qse_pio_wait
+ * NAME
+ *  qse_pio_wait - wait for a child process 
+ *
+ * SYNOPSIS
+ */
+int qse_pio_wait (
+	qse_pio_t* pio,
+	int        flags
 );
 /******/
 
