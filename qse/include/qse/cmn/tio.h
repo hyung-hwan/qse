@@ -23,7 +23,7 @@
 #include <qse/macros.h>
 #include <qse/cmn/str.h>
 
-enum
+enum qse_tio_err_t
 {
 	QSE_TIO_ENOERR = 0,
 	QSE_TIO_ENOMEM, /* out of memory */
@@ -40,6 +40,8 @@ enum
 	QSE_TIO_EOUTOP, /* output function failed to open */
 	QSE_TIO_EOUTCL  /* output function failed to close */
 };
+
+typedef enum qse_tio_err_t qse_tio_err_t;
 
 enum
 {
@@ -84,7 +86,7 @@ typedef qse_ssize_t (*qse_tio_io_t) (
 struct qse_tio_t
 {
 	qse_mmgr_t* mmgr;
-	int errnum;
+	qse_tio_err_t errnum;
 
 	/* io functions */
 	qse_tio_io_t input_func;
@@ -143,17 +145,14 @@ void qse_tio_setmmgr (
 	qse_mmgr_t* mmgr
 );
 
-/*
- * FUNCTION: qse_tio_geterrnum
- *   Returns an error code
+/****f* qse.cmn.tio/qse_tio_geterrnum
+ * NAME
+ *  qse_tio_geterrnum - get an error code
  *
- * PARAMETERS:
- *   grep - a grep object
- *
- * RETURNS:
- *   Error code set by the last tio function called
+ * SYNOPSIS
  */
-int qse_tio_geterrnum (qse_tio_t* tio);
+qse_tio_err_t qse_tio_geterrnum (qse_tio_t* tio);
+/******/
 
 /*
  * FUNCTION: qse_tio_geterrstr

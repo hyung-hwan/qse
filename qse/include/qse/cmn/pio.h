@@ -13,7 +13,7 @@
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
-   limitations under the License.
+   limitapions under the License.
  */
 
 #ifndef _QSE_CMN_PIO_H_
@@ -40,12 +40,15 @@ enum qse_pio_open_flag_t
 	QSE_PIO_DROPERR    = (1 << 10),
 
 	/* invoke the command through a default system shell */
-	QSE_PIO_SHELL      = (1 << 11)
+	QSE_PIO_SHELL      = (1 << 11),
+
+	/* enable ase_char_t based IO */
+	QSE_PIO_TEXT       = (1 << 12)
 };
 
 enum qse_pio_wait_flag_t
 {
-	QSE_PIO_NOWAIT     = (1 << 0),
+	QSE_PIO_NOHANG     = (1 << 0),
 	QSE_PIO_IGNINTR    = (1 << 1)
 };
 
@@ -56,7 +59,15 @@ enum qse_pio_hid_t
 	QSE_PIO_ERR = 2
 };
 
+enum qse_pio_err_t
+{
+	QSE_PIO_ENOERR = 0,
+	QSE_PIO_ENOMEM,     /* out of memory */
+	QSE_PIO_ECHILD      /* the child is not valid */
+};
+
 typedef enum qse_pio_hid_t qse_pio_hid_t;
+typedef enum qse_pio_err_t qse_pio_err_t;
 
 #ifdef _WIN32
 	/* <winnt.h> => typedef PVOID HANDLE; */
@@ -78,9 +89,11 @@ struct qse_pio_t
 	qse_mmgr_t*   mmgr;
 	qse_pio_pid_t child;
 	qse_pio_hnd_t handle[3];
+	qse_pio_err_t errnum;
 };
 
 #define QSE_PIO_MMGR(pio)       ((pio)->mmgr)
+#define QSE_PIO_XTN(pio)        ((void*)(((qse_pio_t*)pio) + 1))
 #define QSE_PIO_HANDLE(pio,hid) ((pio)->handle[hid])
 #define QSE_PIO_CHILD(pio)      ((pio)->child)
 
@@ -93,7 +106,7 @@ extern "C" {
  *  qse_pio_open - open pipes to a child process
  *
  * DESCRIPTION
- *  QSE_PIO_SHELL drives the function to execute the command via /bin/sh.
+ *  QSE_PIO_SHELL drives the funcpion to execute the command via /bin/sh.
  *  If flags is clear of QSE_PIO_SHELL, you should pass the full program path.
  *
  * SYNOPSIS
@@ -140,6 +153,49 @@ qse_pio_t* qse_pio_init (
 void qse_pio_fini (
 	qse_pio_t* pio
 );
+/******/
+
+
+void* qse_pio_getxtn (
+	qse_pio_t* pio
+);
+
+qse_mmgr_t* qse_pio_getmmgr (
+	qse_pio_t* pio
+);
+
+void qse_pio_setmmgr (
+	qse_pio_t* pio,
+	qse_mmgr_t* mmgr
+);
+
+/* TODO:
+QSE_OBJECT_DEFINE_BASIC_MACROS(pio)
+QSE_OBJEcT_DEFINE_BASIC_FIELDS(pio)
+QSE_OBJECT_DEFINE_BASIC_FUNCTION(pio)
+QSE_OBJECT_IMPLEMENT_BASIC_FUNCTION(pio)
+*/
+
+/****f* qse.cmn.pio/qse_pio_geterrnum
+ * NAME
+ *  qse_pio_geterrnum - get an error code
+ *
+ * SYNOPSIS
+ */
+qse_pio_err_t qse_pio_geterrnum (qse_pio_t* pio);
+/******/
+
+/****f* qse.cmn.pio/qse_pio_geterrstr
+ * NAME
+ *  qse_pio_geterrstr - transllate an error code to a string
+ *
+ * DESCRIPTION
+ *  The qse_pio_geterrstr() funcpion returns the pointer to a constant string 
+ *  describing the last error occurred.
+ *
+ * SYNOPSIS
+ */
+const qse_char_t* qse_pio_geterrstr (qse_pio_t* pio);
 /******/
 
 /****f* qse.cmn.pio/qse_pio_gethandle

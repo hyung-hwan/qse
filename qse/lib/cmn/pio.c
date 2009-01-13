@@ -449,23 +449,25 @@ int qse_pio_wait (qse_pio_t* pio, int flags)
 
 	if (pio->child == QSE_PIO_PID_NIL) return -1;
 
-	if (flags & QSE_PIO_NOWAIT) opt |= WNOHANG;
+	if (flags & QSE_PIO_NOHANG) opt |= WNOHANG;
 
 	while (1)
 	{
 		int n = QSE_WAITPID (pio->child, &status, opt);
 
-qse_printf (QSE_T("n=%d,pio->child=%d,errno=%d,ECHILD=%d\n"), n, pio->child, errno, ECHILD);
 		if (n == -1)
 		{
 			if (errno == ECHILD)
 			{
-				/* most likely, the process has already been waitpid()ed on. */
+				/* most likely, the process has already been 
+				 * waitpid()ed on. */
+
 				/* TODO: what should we do... ? */
 				/* ??? TREAT AS NORMAL??? => cannot know exit code => TREAT AS ERROR but reset pio->child   */
 
 				pio->child = QSE_PIO_PID_NIL;
-				ret = -1; /* OR ECHILD / QSE_PIO_ECHILD */
+				pio->errnum = QSE_PIO_ECHILD;
+				ret = -1; 
 				break;
 			}
 
@@ -475,7 +477,7 @@ qse_printf (QSE_T("n=%d,pio->child=%d,errno=%d,ECHILD=%d\n"), n, pio->child, err
 		if (n == 0) 
 		{
 			/* when WNOHANG is not specified, 0 can't be returned */
-			QSE_ASSERT (flags & QSE_PIO_NOWAIT);
+			QSE_ASSERT (flags & QSE_PIO_NOHANG);
 
 			ret = -2;
 			/* the child process is still alive */
