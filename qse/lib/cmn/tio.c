@@ -98,7 +98,7 @@ void qse_tio_setmmgr (qse_tio_t* tio, qse_mmgr_t* mmgr)
 	tio->mmgr = mmgr;
 }
 
-int qse_tio_geterrnum (qse_tio_t* tio)
+qse_tio_err_t qse_tio_geterrnum (qse_tio_t* tio)
 {
 	return tio->errnum;
 }
