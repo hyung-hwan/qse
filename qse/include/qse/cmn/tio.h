@@ -230,7 +230,6 @@ int qse_tio_detachout (
 	qse_tio_t* tio
 );
 
-
 /*
  * FUNCTION: qse_tio_flush
  *   Flushes the output buffer

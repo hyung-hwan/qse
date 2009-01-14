@@ -21,6 +21,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/tio.h>
 
 enum qse_pio_open_flag_t
 {
@@ -90,9 +91,11 @@ typedef struct qse_pio_t qse_pio_t;
 struct qse_pio_t
 {
 	qse_mmgr_t*   mmgr;
-	qse_pio_pid_t child;
-	qse_pio_hnd_t handle[3];
 	qse_pio_err_t errnum;
+	qse_pio_pid_t child;
+
+	qse_pio_hnd_t handle[3];
+	qse_tio_t*    tio[3];
 };
 
 #define QSE_PIO_MMGR(pio)       ((pio)->mmgr)
@@ -255,6 +258,11 @@ qse_ssize_t qse_pio_write (
 	qse_pio_hid_t hid
 );
 /******/
+
+void qse_pio_flush (
+	qse_pio_t*    pio,
+	qse_pio_hid_t hid
+);
 
 /****f* qse.cmn.pio/qse_pio_end
  * NAME

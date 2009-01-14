@@ -32,6 +32,14 @@
 
 #define CHILD_EXIT_CODE 128
 
+static qse_ssize_t pio_read (
+	qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hid_t hid);
+static qse_ssize_t pio_write (
+	qse_pio_t* pio, const void* data, qse_size_t size, qse_pio_hid_t hid)a;
+
+static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size);
+
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
 	const qse_char_t* path, int flags)
@@ -343,10 +351,33 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 	}
 
 #endif
+	if (flags & QSE_PIO_TEXT)
+	{
+		qse_tio_t* tio[3];
 
+		tio[0] = qse_tio_open (pio->mmgr, 0);
+		tio[1] = qse_tio_open (pio->mmgr, 0);
+		tio[2] = qse_tio_open (pio->mmgr, 0);
+
+		qse_tio_attachout (tio[0], pio_output, &handle[1]);
+		qse_tio_attachin (tio[1], pio_input, &handle[2]);
+		qse_tio_attachin (tio[2], pio_input, &handle[4]);
+	}
+
+	/* store back references */
+	pio->p[QSE_PIO_IN].self = pio;
+	pio->p[QSE_PIO_OUT].self = pio;
+	pio->p[QSE_PIO_ERR].self = pio;
+
+	/* store actual pipe handles */
+	pio->p[QSE_PIO_IN].handle = handle[1];
+	pio->p[QSE_PIO_OUT].handle = handle[2];
+	pio->p[QSE_PIO_ERR].handle = handle[4];
+/*
 	pio->handle[QSE_PIO_IN] = handle[1];
 	pio->handle[QSE_PIO_OUT] = handle[2];
 	pio->handle[QSE_PIO_ERR] = handle[4];
+*/
 
 	return pio;
 
@@ -374,6 +405,24 @@ qse_pio_pid_t qse_pio_getchild (qse_pio_t* pio)
 }
 
 qse_ssize_t qse_pio_read (
+	qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hid_t hid)
+{
+	if (pio->p[hid].tio == QSE_NULL) 
+		return pio_read (pio, buf, size, hid);
+	else
+		return qse_tio_read (pio->p[hid].tio, buf, size);
+}
+
+qse_ssize_t qse_pio_write (
+	qse_pio_t* pio, const void* data, qse_size_t size, qse_pio_hid_t hid)
+{
+	if (pio->p[hid].tio == QSE_NULL)
+		return pio_write (pio, buf, size, hid);
+	else
+		return qse_tio_write (pio->p[hid].tio, buf, size);
+}
+
+static qse_ssize_t pio_read (
 	qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hid_t hid)
 {
 #ifdef _WIN32
@@ -406,7 +455,7 @@ qse_ssize_t qse_pio_read (
 #endif
 }
 
-qse_ssize_t qse_pio_write (
+static qse_ssize_t pio_write (
 	qse_pio_t* pio, const void* data, qse_size_t size, qse_pio_hid_t hid)
 {
 #ifdef _WIN32
@@ -576,4 +625,20 @@ int qse_pio_kill (qse_pio_t* pio)
 	if (n == -1) pio->errnum = QSE_PIO_ESYSCALL;
 	return n;
 #endif
+}
+
+static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size)
+{
+        qse_pio_t* pio = (qse_pio_t*)arg;
+        QSE_ASSERT (pio != QSE_NULL);
+        if (cmd == QSE_TIO_IO_DATA) return pio_read (pio, buf, size, hid);
+        return 0;
+}
+
+static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size)
+{
+        qse_pio_t* pio = (qse_pio_t*)arg;
+        QSE_ASSERT (pio != QSE_NULL);
+        if (cmd == QSE_TIO_IO_DATA) return pio_write (pio, buf, size, hid);
+        return 0;
 }
