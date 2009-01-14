@@ -1,5 +1,5 @@
 
-QSE is a script engine library designed to be embedded into an application. 
+QSE provides a script engine for various scripting languages. It aims to produce a script engine framework that can be embedded into an application. A hosting application can access various aspects of the embedded script engine and vice versa.
 
 [INSTALL]
 

@@ -378,18 +378,31 @@ qse_ssize_t qse_pio_read (
 {
 #ifdef _WIN32
 	DWORD count;
+#else
+	qse_ssize_t n;
+#endif
+
+	if (pio->handle[hid] == QSE_PIO_HND_NIL) 
+	{
+		/* the stream is already closed */
+		pio->errnum = QSE_PIO_ENOHND;
+		return (qse_ssize_t)-1;
+	}
+
+#ifdef _WIN32
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
 	if (ReadFile(pio->handle, buf, size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
 #else
-	if (pio->handle[hid] == QSE_PIO_HND_NIL) 
-	{
-		/* the stream is already closed */
-		return (qse_ssize_t)-1;
-	}
 
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
-	return QSE_READ (pio->handle[hid], buf, size);
+	n = QSE_READ (pio->handle[hid], buf, size);
+	if (n == -1) 
+	{
+		pio->errnum = (errno == EINTR)? 
+			QSE_PIO_EINTR: QSE_PIO_ESYSCALL;
+	}
+	return n;
 #endif
 }
 
@@ -398,6 +411,18 @@ qse_ssize_t qse_pio_write (
 {
 #ifdef _WIN32
 	DWORD count;
+#else
+	qse_ssize_t n;
+#endif
+
+	if (pio->handle[hid] == QSE_PIO_HND_NIL) 
+	{
+		/* the stream is already closed */
+		pio->errnum = QSE_PIO_ENOHND;
+		return (qse_ssize_t)-1;
+	}
+
+#ifdef _WIN32
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
 	if (WriteFile(pio->handle, data, size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
@@ -409,7 +434,13 @@ qse_ssize_t qse_pio_write (
 	}
 
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
-	return QSE_WRITE (pio->handle[hid], data, size);
+	n = QSE_WRITE (pio->handle[hid], data, size);
+	if (n == -1) 
+	{
+		pio->errnum = (errno == EINTR)? 
+			QSE_PIO_EINTR: QSE_PIO_ESYSCALL;
+	}
+	return n;
 #endif
 }
 
@@ -422,19 +453,17 @@ void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 	}
 }
 
-/*
-return -1 on error
-return -2 on no change
-return retcode on normal exit
-return 255+signal on kill.
-*/
-
 int qse_pio_wait (qse_pio_t* pio, int flags)
 {
 #ifdef _WIN32
 	DWORD ec;
 
-	if (pio->child == QSE_PIO_PID_NIL) return -1;
+	if (pio->child == QSE_PIO_PID_NIL) 
+	{
+		
+		pio->errnum = QSE_PIO_ECHILD;
+		return -1;
+	}
 
 	WaitForSingleObject (pio->child, -1);
 	if (GetExitCodeProcess (pio->child, &ec) == -1)
@@ -443,17 +472,22 @@ int qse_pio_wait (qse_pio_t* pio, int flags)
 	pio->child = QSE_PIO_PID_NIL;
 
 #else
-	int status;
 	int opt = 0;
 	int ret = -1;
 
-	if (pio->child == QSE_PIO_PID_NIL) return -1;
+	if (pio->child == QSE_PIO_PID_NIL) 
+	{
+		pio->errnum = QSE_PIO_ECHILD;
+		return -1;
+	}
 
 	if (flags & QSE_PIO_NOHANG) opt |= WNOHANG;
 
 	while (1)
 	{
-		int n = QSE_WAITPID (pio->child, &status, opt);
+		int status, n;
+
+		n = QSE_WAITPID (pio->child, &status, opt);
 
 		if (n == -1)
 		{
@@ -461,17 +495,17 @@ int qse_pio_wait (qse_pio_t* pio, int flags)
 			{
 				/* most likely, the process has already been 
 				 * waitpid()ed on. */
-
-				/* TODO: what should we do... ? */
-				/* ??? TREAT AS NORMAL??? => cannot know exit code => TREAT AS ERROR but reset pio->child   */
-
 				pio->child = QSE_PIO_PID_NIL;
 				pio->errnum = QSE_PIO_ECHILD;
-				ret = -1; 
-				break;
 			}
+			else if (errno == EINTR)
+			{
+				if (flags & QSE_PIO_IGNINTR) continue;
+				pio->errnum = QSE_PIO_EINTR;
+			}
+			else pio->errnum = QSE_PIO_ESYSCALL;
 
-			if (errno != EINTR || !(flags & QSE_PIO_IGNINTR)) break;
+			break;
 		}
 
 		if (n == 0) 
@@ -479,7 +513,7 @@ int qse_pio_wait (qse_pio_t* pio, int flags)
 			/* when WNOHANG is not specified, 0 can't be returned */
 			QSE_ASSERT (flags & QSE_PIO_NOHANG);
 
-			ret = -2;
+			ret = 255 + 1;
 			/* the child process is still alive */
 			break;
 		}
@@ -494,10 +528,16 @@ int qse_pio_wait (qse_pio_t* pio, int flags)
 			else if (WIFSIGNALED(status))
 			{
 				/* the child process was killed by a signal */
-				ret = 255 + WTERMSIG (status);
+				ret = 255 + 1 + WTERMSIG (status);
 			}
-
-			/* not interested in WIFSTOPPED & WIFCONTINUED  */
+			else
+			{
+				/* not interested in WIFSTOPPED & WIFCONTINUED.
+				 * in fact, this else block should not be reached
+				 * as WIFEXITED or WIFSIGNALED must be true.
+				 * anyhow, just set the return value to 0. */
+				ret = 0;
+			}
 
 			pio->child = QSE_PIO_PID_NIL;
 			break;
@@ -505,5 +545,35 @@ int qse_pio_wait (qse_pio_t* pio, int flags)
 	}
 
 	return ret;
+#endif
+}
+
+int qse_pio_kill (qse_pio_t* pio)
+{
+#ifdef _WIN32
+	DWORD n;
+#else
+	int n;
+#endif
+
+	if (pio->child == QSE_PIO_PID_NIL) 
+	{
+		pio->errnum = QSE_PIO_ECHILD;
+		return -1;
+	}
+
+#ifdef _WIN32
+	/* 9 was chosen below to treat TerminateProcess as kill -KILL. */
+	n = TerminateProcess (pio->child, 255 + 1 + 9);
+	if (n == FALSE) 
+	{
+		pio->errnum = QSE_PIO_SYSCALL;
+		return -1;
+	}
+	return 0;
+#else
+	n = QSE_KILL (pio->child, SIGKILL);
+	if (n == -1) pio->errnum = QSE_PIO_ESYSCALL;
+	return n;
 #endif
 }
