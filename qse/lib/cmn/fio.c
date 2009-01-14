@@ -275,7 +275,7 @@ qse_fio_off_t qse_fio_seek (
 
 	return (qse_fio_off_t)tmp;
 
-#elif defined(HAVE_LSEEK64)
+#elif defined(QSE_LSEEK64)
 	return QSE_LSEEK64 (fio->handle, offset, seek_map[origin]);
 #else
 	return QSE_LSEEK (fio->handle, offset, seek_map[origin]);

@@ -12,6 +12,9 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>
@@ -115,6 +118,12 @@
 	#define QSE_WAITPID(pid,status,options) syscall(SYS_waitpid,pid,status,options)
 #else
 	#define QSE_WAITPID(pid,status,options) waitpid(pid,status,options)
+#endif
+
+#ifdef SYS_kill
+	#define QSE_KILL(pid,sig) syscall(SYS_kill,pid,sig)
+#else
+	#define QSE_KILL(pid,sig) kill(pid,sig)
 #endif
 
 #ifdef SYS_getpid

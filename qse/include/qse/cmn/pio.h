@@ -63,7 +63,10 @@ enum qse_pio_err_t
 {
 	QSE_PIO_ENOERR = 0,
 	QSE_PIO_ENOMEM,     /* out of memory */
-	QSE_PIO_ECHILD      /* the child is not valid */
+	QSE_PIO_ENOHND,     /* no handle available */
+	QSE_PIO_ECHILD,     /* the child is not valid */
+	QSE_PIO_EINTR,      /* interrupted */
+	QSE_PIO_ESYSCALL    /* system call error */
 };
 
 typedef enum qse_pio_hid_t qse_pio_hid_t;
@@ -269,11 +272,39 @@ void qse_pio_end (
  * NAME
  *  qse_pio_wait - wait for a child process 
  *
+ * DESCRIPTION
+ *  QSE_PIO_IGNINTR causes the function to retry when the underlying system
+ *  call is interrupted. 
+ *  When you specify QSE_PIO_NOHANG, the return value of 256 indicates that the
+ *  child process has not terminated. If the flag is not specified, 256 will 
+ *  never be returned.
+ * 
+ * RETURN
+ *  -1 on error, 256 if the child is still alive and QSE_PIO_NOHANG is specified,
+ *  a number between 0 and 255 inclusive if the child process terminates normally,
+ *  256 + signal number if the child process is terminated by a signal.
+ *   
  * SYNOPSIS
  */
 int qse_pio_wait (
 	qse_pio_t* pio,
 	int        flags
+);
+/******/
+
+/****f* qse.cmn.pio/qse_pio_kill
+ * NAME
+ *  qse_pio_kill - terminate the child process
+ *
+ * NOTES
+ *  You should know the danger of calling this function as the function can
+ *  kill a process that is not your child process if it has terminated but
+ *  there is a new process with the same process handle.
+ *
+ * SYNOPSIS
+ */ 
+int qse_pio_kill (
+	qse_pio_t* pio
 );
 /******/
 
