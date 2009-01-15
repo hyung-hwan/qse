@@ -85,7 +85,7 @@ typedef qse_ssize_t (*qse_tio_io_t) (
 
 struct qse_tio_t
 {
-	qse_mmgr_t* mmgr;
+	QSE_DEFINE_STD_FIELDS (tio)
 	qse_tio_err_t errnum;
 
 	/* io functions */
@@ -107,6 +107,8 @@ struct qse_tio_t
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+QSE_DEFINE_STD_FUNCTIONS (tio)
 
 /*
  * FUNCTION: qse_tio_open
@@ -132,26 +134,15 @@ int qse_tio_fini (
 	qse_tio_t* tio
 );
 
-void* qse_tio_getxtn (
-	qse_tio_t* tio
-);
-
-qse_mmgr_t* qse_tio_getmmgr (
-	qse_tio_t* tio
-);
-
-void qse_tio_setmmgr (
-	qse_tio_t* tio,
-	qse_mmgr_t* mmgr
-);
-
 /****f* qse.cmn.tio/qse_tio_geterrnum
  * NAME
  *  qse_tio_geterrnum - get an error code
  *
  * SYNOPSIS
  */
-qse_tio_err_t qse_tio_geterrnum (qse_tio_t* tio);
+qse_tio_err_t qse_tio_geterrnum (
+	qse_tio_t* tio
+);
 /******/
 
 /*
@@ -164,7 +155,9 @@ qse_tio_err_t qse_tio_geterrnum (qse_tio_t* tio);
  * RETURNS:
  *   A pointer to a constant string describing the last error occurred
  */
-const qse_char_t* qse_tio_geterrstr (qse_tio_t* tio);
+const qse_char_t* qse_tio_geterrstr (
+	qse_tio_t* tio
+);
 
 /*
  * FUNCTION: qse_tio_attachin

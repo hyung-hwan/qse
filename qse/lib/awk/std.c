@@ -18,6 +18,7 @@
 
 #include "awk.h"
 #include <qse/cmn/sio.h>
+#include <qse/cmn/pcp.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
 #include <qse/utl/stdio.h> /* TODO: remove dependency on qse_vsprintf */
@@ -345,25 +346,30 @@ static qse_ssize_t awk_extio_pipe (
 	{
 		case QSE_AWK_IO_OPEN:
 		{
-			qse_sio_t* handle;
-			int mode;
+			qse_pcp_t* handle;
+			int flags;
 
 			if (epa->mode == QSE_AWK_EXTIO_PIPE_READ)
 			{
-				mode = QSE_SIO_READ;
+				/* TODO: should specify ERRTOOUT */
+				flags = QSE_PCP_READOUT | 
+				       QSE_PCP_ERRTOOUT;
 			}
 			else if (epa->mode == QSE_AWK_EXTIO_PIPE_WRITE)
 			{
-				mode = QSE_SIO_WRITE | 
-				       QSE_SIO_TRUNCATE |
-				       QSE_SIO_CREATE;
+				flags = QSE_PCP_WRITEIN;
 			}
 			else return -1; /* TODO: any way to set the error number? */
 
 			/*dprint (QSE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);*/
 
-			/* TOOD: popen.... */
-			handle = qse_sio_open (qse_awk_getrunmmgr(epa->run), 0, epa->name, mode);
+			handle = qse_pcp_open (
+				qse_awk_getrunmmgr(epa->run), 
+				0, 
+				epa->name, 
+				flags|QSE_PCP_SHELL|QSE_PCP_TEXT
+			);
+
 			if (handle == QSE_NULL) return -1;
 			epa->handle = (void*)handle;
 			return 1;
@@ -372,33 +378,35 @@ static qse_ssize_t awk_extio_pipe (
 		case QSE_AWK_IO_CLOSE:
 		{
 			/*dprint (QSE_T("closing %s of type (pipe) %d\n"),  epa->name, epa->type);*/
-			qse_sio_close ((qse_sio_t*)epa->handle);
+			qse_pcp_close ((qse_pcp_t*)epa->handle);
 			epa->handle = QSE_NULL;
 			return 0;
 		}
 
 		case QSE_AWK_IO_READ:
 		{
-			return qse_sio_getsx (
-				(qse_sio_t*)epa->handle,
+			return qse_pcp_read (
+				(qse_pcp_t*)epa->handle,
 				data,	
-				size
+				size,
+				QSE_PCP_OUT
 			);
 		}
 
 		case QSE_AWK_IO_WRITE:
 		{
-			return qse_sio_putsx (
-				(qse_sio_t*)epa->handle,
+			return qse_pcp_write (
+				(qse_pcp_t*)epa->handle,
 				data,	
-				size
+				size,
+				QSE_PCP_IN
 			);
 		}
 
 		case QSE_AWK_IO_FLUSH:
 		{
 			/*if (epa->mode == QSE_AWK_EXTIO_PIPE_READ) return -1;*/
-			return qse_sio_flush ((qse_sio_t*)epa->handle);
+			return qse_pcp_flush ((qse_pcp_t*)epa->handle, QSE_PCP_IN);
 		}
 
 		case QSE_AWK_IO_NEXT:

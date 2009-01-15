@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-bin_PROGRAMS = chr str sll map lda fio pio sio time
+bin_PROGRAMS = chr str sll map lda fio pcp sio time
 
 LDFLAGS = -L../../lib/cmn -L../../lib/utl
 LDADD = -lqseutl -lqsecmn 
@@ -11,6 +11,6 @@ sll_SOURCES = sll.c
 map_SOURCES = map.c
 lda_SOURCES = lda.c
 fio_SOURCES = fio.c
-pio_SOURCES = pio.c
+pcp_SOURCES = pcp.c
 sio_SOURCES = sio.c
 time_SOURCES = time.c
