@@ -19,6 +19,8 @@
 #include <qse/cmn/tio.h>
 #include "mem.h"
 
+QSE_IMPLEMENT_STD_FUNCTIONS (tio)
+
 qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t ext)
 {
 	qse_tio_t* tio;
@@ -81,21 +83,6 @@ int qse_tio_fini (qse_tio_t* tio)
 	if (qse_tio_detachin(tio) == -1) return -1;
 	if (qse_tio_detachout(tio) == -1) return -1;
 	return 0;
-}
-
-void* qse_tio_getxtn (qse_tio_t* tio)
-{
-	return tio + 1;
-}
-
-qse_mmgr_t* qse_tio_getmmgr (qse_tio_t* tio)
-{
-	return tio->mmgr;
-}
-
-void qse_tio_setmmgr (qse_tio_t* tio, qse_mmgr_t* mmgr)
-{
-	tio->mmgr = mmgr;
 }
 
 qse_tio_err_t qse_tio_geterrnum (qse_tio_t* tio)

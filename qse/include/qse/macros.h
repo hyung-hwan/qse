@@ -154,4 +154,26 @@
 #	define QSE_END_NAMESPACE2(y,x)   }}
 #endif
 
+#define QSE_DEFINE_STD_FIELDS(name) \
+	qse_mmgr_t* mmgr;
+	
+#define QSE_DEFINE_STD_FUNCTIONS(name) \
+qse_##name##_t qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr); \
+qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
+void* qse_##name##_getxtn (qse_##name##_t* name);
+
+#define QSE_IMPLEMENT_STD_FUNCTIONS(name) \
+qse_##name##_t qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr) \
+{ \
+	name->mmgr = mmgr; \
+} \
+qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name) \
+{ \
+	return name->mmgr; \
+} \
+void* qse_##name##_getxtn (qse_##name##_t* name) \
+{ \
+	return (void*)(name + 1); \
+}
+
 #endif
