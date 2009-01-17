@@ -113,7 +113,6 @@ static const qse_char_t* __geterrstr (int errnum)
 		QSE_T("nextfile statement illegal in the END block"),
 		QSE_T("printf not followed by any arguments"),
 		QSE_T("both prefix and postfix increment/decrement operator present"),
-		QSE_T("coprocess not supported by getline"),
 
 		QSE_T("divide by zero"),
 		QSE_T("invalid operand"),

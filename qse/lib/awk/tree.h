@@ -82,7 +82,7 @@ enum qse_awk_in_type_t
 	 * __in_type_map and __in_opt_map in extio.c */
 
 	QSE_AWK_IN_PIPE,
-	QSE_AWK_IN_COPROC,
+	QSE_AWK_IN_RWPIPE,
 	QSE_AWK_IN_FILE,
 	QSE_AWK_IN_CONSOLE
 };
@@ -93,9 +93,9 @@ enum qse_awk_out_type_t
 	 * __out_type_map and __out_opt_map in extio.c */
 
 	QSE_AWK_OUT_PIPE,
-	QSE_AWK_OUT_COPROC,
+	QSE_AWK_OUT_RWPIPE, /* dual direction pipe */
 	QSE_AWK_OUT_FILE,
-	QSE_AWK_OUT_FILE_APPEND,
+	QSE_AWK_OUT_APFILE, /* file for appending */
 	QSE_AWK_OUT_CONSOLE
 };
 

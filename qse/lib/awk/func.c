@@ -237,7 +237,7 @@ static int bfn_close (
        
 	nargs = qse_awk_getnargs (run);
 	QSE_ASSERT (nargs == 1);
-/* TODO: support close (xxx, "to"/"from") like gawk */
+/* TODO: support close (xxx, "to"/"from"/"rw"/"r"/"w"/????) */
 
 	a0 = qse_awk_getarg (run, 0);
 	QSE_ASSERT (a0 != QSE_NULL);
@@ -392,13 +392,9 @@ static int bfn_fflush (
 			run, QSE_AWK_EXTIO_PIPE,
 			((len0 == 0)? QSE_NULL: str0), n);
 		/*if (n == -99) return -1;*/
-		n = flush_extio (
-			run, QSE_AWK_EXTIO_COPROC,
-			((len0 == 0)? QSE_NULL: str0), n);
-		/*if (n == -99) return -1;*/
 
 		/* if n remains 1, no ip handlers have been defined for
-		 * file, pipe, and coproc. so make fflush return -1. 
+		 * file, pipe, and rwpipe. so make fflush return -1. 
 		 * if n is -2, no such named io has been found at all 
 		 * if n is -1, the io handler has returned an error */
 		if (n != 0) n = -1;

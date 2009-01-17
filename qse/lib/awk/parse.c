@@ -60,7 +60,6 @@ enum token_t
 	TOKEN_BOR,
 	TOKEN_BXOR,
 	TOKEN_BAND,
-	TOKEN_BORAND,
 	TOKEN_TILDE, /* used for unary bitwise-not and regex match */
 	TOKEN_RSHIFT,
 	TOKEN_LSHIFT,
@@ -179,6 +178,7 @@ static qse_awk_nde_t* parse_binary_expr (
 	qse_awk_nde_t*(*next_level_func)(qse_awk_t*,qse_size_t));
 
 static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line);
+static qse_awk_nde_t* parse_logical_or_with_extio (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_logical_and (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_in (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, qse_size_t line);
@@ -2227,13 +2227,115 @@ static qse_awk_nde_t* parse_binary_expr (
 
 static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line)
 {
-	static binmap_t map[] = 
+	if ((awk->option & QSE_AWK_EXTIO) && 
+	    (awk->option & QSE_AWK_RWPIPE))
 	{
-		{ TOKEN_LOR, QSE_AWK_BINOP_LOR },
-		{ TOKEN_EOF, 0 }
-	};
+		return parse_logical_or_with_extio (awk, line);
+	}
+	else
+	{
+		static binmap_t map[] = 
+		{
+			{ TOKEN_LOR, QSE_AWK_BINOP_LOR },
+			{ TOKEN_EOF, 0 }
+		};
 
-	return parse_binary_expr (awk, line, 1, map, parse_logical_and);
+		return parse_binary_expr (awk, line, 1, map, parse_logical_and);
+	}
+}
+
+static qse_awk_nde_t* parse_logical_or_with_extio (qse_awk_t* awk, qse_size_t line)
+{
+	qse_awk_nde_t* left, * right;
+
+	left = parse_logical_and (awk, line);
+	if (left == QSE_NULL) return QSE_NULL;
+
+	while (MATCH(awk,TOKEN_LOR))
+	{
+		if (get_token(awk) == -1)
+		{
+			qse_awk_clrpt (awk, left);
+			return QSE_NULL;
+		}
+
+		if (MATCH(awk,TOKEN_GETLINE))
+		{
+			qse_awk_nde_getline_t* nde;
+			qse_awk_nde_t* var = QSE_NULL;
+
+			if (get_token(awk) == -1)
+			{
+				qse_awk_clrpt (awk, left);
+				return QSE_NULL;
+			}
+
+			/* TODO: is this correct? */
+			if (MATCH(awk,TOKEN_IDENT))
+			{
+				/* command | getline var */
+
+				var = parse_primary (awk, awk->token.line);
+				if (var == QSE_NULL) 
+				{
+					qse_awk_clrpt (awk, left);
+					return QSE_NULL;
+				}
+			}
+
+			nde = (qse_awk_nde_getline_t*) QSE_AWK_ALLOC (
+				awk, QSE_SIZEOF(qse_awk_nde_getline_t));
+			if (nde == QSE_NULL)
+			{
+				qse_awk_clrpt (awk, left);
+
+				SETERRLIN (awk, QSE_AWK_ENOMEM, line);
+				return QSE_NULL;
+			}
+
+			nde->type = QSE_AWK_NDE_GETLINE;
+			nde->line = line;
+			nde->next = QSE_NULL;
+			nde->var = var;
+			nde->in_type = QSE_AWK_IN_RWPIPE;
+			nde->in = left;
+
+			left = (qse_awk_nde_t*)nde;
+		}
+		else
+		{
+			qse_awk_nde_exp_t* nde;
+
+			right = parse_logical_and (awk, awk->token.line);
+			if (right == QSE_NULL)
+			{
+				qse_awk_clrpt (awk, left);
+				return QSE_NULL;
+			}
+
+			nde = (qse_awk_nde_exp_t*) QSE_AWK_ALLOC (
+				awk, QSE_SIZEOF(qse_awk_nde_exp_t));
+			if (nde == QSE_NULL)
+			{
+				qse_awk_clrpt (awk, right);
+				qse_awk_clrpt (awk, left);
+
+				SETERRLIN (awk, QSE_AWK_ENOMEM, line);
+				return QSE_NULL;
+			}
+
+			nde->type = QSE_AWK_NDE_EXP_BIN;
+			nde->line = line;
+			nde->next = QSE_NULL;
+			nde->opcode = QSE_AWK_BINOP_LOR;
+			nde->left = left;
+			nde->right = right;
+
+			left = (qse_awk_nde_t*)nde;
+		}
+	}
+
+	return left;
 }
 
 static qse_awk_nde_t* parse_logical_and (qse_awk_t* awk, qse_size_t line)
@@ -2356,16 +2458,8 @@ static qse_awk_nde_t* parse_bitwise_or_with_extio (qse_awk_t* awk, qse_size_t li
 	left = parse_bitwise_xor (awk, line);
 	if (left == QSE_NULL) return QSE_NULL;
 
-	while (1)
+	while (MATCH(awk,TOKEN_BOR))
 	{
-		int in_type;
-
-		if (MATCH(awk,TOKEN_BOR)) 
-			in_type = QSE_AWK_IN_PIPE;
-		else if (MATCH(awk,TOKEN_BORAND)) 
-			in_type = QSE_AWK_IN_COPROC;
-		else break;
-		
 		if (get_token(awk) == -1)
 		{
 			qse_awk_clrpt (awk, left);
@@ -2412,7 +2506,7 @@ static qse_awk_nde_t* parse_bitwise_or_with_extio (qse_awk_t* awk, qse_size_t li
 			nde->line = line;
 			nde->next = QSE_NULL;
 			nde->var = var;
-			nde->in_type = in_type;
+			nde->in_type = QSE_AWK_IN_PIPE;
 			nde->in = left;
 
 			left = (qse_awk_nde_t*)nde;
@@ -2420,15 +2514,6 @@ static qse_awk_nde_t* parse_bitwise_or_with_extio (qse_awk_t* awk, qse_size_t li
 		else
 		{
 			qse_awk_nde_exp_t* nde;
-
-			if (in_type == QSE_AWK_IN_COPROC)
-			{
-				qse_awk_clrpt (awk, left);
-
-				/* TODO: support coprocess */
-				SETERRLIN (awk, QSE_AWK_EGLNCPS, line);
-				return QSE_NULL;
-			}
 
 			right = parse_bitwise_xor (awk, awk->token.line);
 			if (right == QSE_NULL)
@@ -4423,7 +4508,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 	    !MATCH(awk,TOKEN_GT) &&
 	    !MATCH(awk,TOKEN_RSHIFT) &&
 	    !MATCH(awk,TOKEN_BOR) &&
-	    !MATCH(awk,TOKEN_BORAND)) 
+	    !MATCH(awk,TOKEN_LOR)) 
 	{
 		qse_awk_nde_t* args_tail;
 		qse_awk_nde_t* tail_prev;
@@ -4467,56 +4552,68 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 		if (awk->token.prev.type != TOKEN_RPAREN &&
 		    args_tail->type == QSE_AWK_NDE_EXP_BIN)
 		{
+			int i;
 			qse_awk_nde_exp_t* ep = (qse_awk_nde_exp_t*)args_tail;
-			if (ep->opcode == QSE_AWK_BINOP_GT)
+			struct 
 			{
-				qse_awk_nde_t* tmp = args_tail;
-
-				if (tail_prev != QSE_NULL) 
-					tail_prev->next = ep->left;
-				else args = ep->left;
-
-				out = ep->right;
-				out_type = QSE_AWK_OUT_FILE;
-
-				QSE_AWK_FREE (awk, tmp);
-			}
-			else if (ep->opcode == QSE_AWK_BINOP_RSHIFT)
+				int opc;
+				int out;
+				int opt;
+			} tab[] =
 			{
-				qse_awk_nde_t* tmp = args_tail;
+				{ 
+					QSE_AWK_BINOP_GT,     
+					QSE_AWK_OUT_FILE,      
+					0
+				},
+				{ 
+					QSE_AWK_BINOP_RSHIFT, 
+					QSE_AWK_OUT_APFILE,
+					0
+				},
+				{
+					QSE_AWK_BINOP_BOR,
+					QSE_AWK_OUT_PIPE,
+					0
+				},
+				{
+					QSE_AWK_BINOP_LOR,
+					QSE_AWK_OUT_RWPIPE,
+					QSE_AWK_RWPIPE
+				}
+			};
 
-				if (tail_prev != QSE_NULL) 
-					tail_prev->next = ep->left;
-				else args = ep->left;
-
-				out = ep->right;
-				out_type = QSE_AWK_OUT_FILE_APPEND;
-
-				QSE_AWK_FREE (awk, tmp);
-			}
-			else if (ep->opcode == QSE_AWK_BINOP_BOR)
+			for (i = 0; i < QSE_COUNTOF(tab); i++)
 			{
-				qse_awk_nde_t* tmp = args_tail;
+				if (ep->opcode == tab[i].opc)
+				{
+					if (tab[i].opt && 
+					    !(awk->option&tab[i].opt)) break;
 
-				if (tail_prev != QSE_NULL) 
-					tail_prev->next = ep->left;
-				else args = ep->left;
+					qse_awk_nde_t* tmp = args_tail;
 
-				out = ep->right;
-				out_type = QSE_AWK_OUT_PIPE;
+					if (tail_prev != QSE_NULL) 
+						tail_prev->next = ep->left;
+					else args = ep->left;
 
-				QSE_AWK_FREE (awk, tmp);
+					out = ep->right;
+					out_type = tab[i].out;
+
+					QSE_AWK_FREE (awk, tmp);
+					break;
+				}
 			}
 		}
 	}
 
 	if (out == QSE_NULL)
 	{
-		out_type = MATCH(awk,TOKEN_GT)?     QSE_AWK_OUT_FILE:
-		           MATCH(awk,TOKEN_RSHIFT)? QSE_AWK_OUT_FILE_APPEND:
-		           MATCH(awk,TOKEN_BOR)?    QSE_AWK_OUT_PIPE:
-		           MATCH(awk,TOKEN_BORAND)? QSE_AWK_OUT_COPROC:
-		                                    QSE_AWK_OUT_CONSOLE;
+		out_type = MATCH(awk,TOKEN_GT)?       QSE_AWK_OUT_FILE:
+		           MATCH(awk,TOKEN_RSHIFT)?   QSE_AWK_OUT_APFILE:
+		           MATCH(awk,TOKEN_BOR)?      QSE_AWK_OUT_PIPE:
+		           ((awk->option & QSE_AWK_RWPIPE) &&
+			    MATCH(awk,TOKEN_LOR))?    QSE_AWK_OUT_RWPIPE:
+		                                      QSE_AWK_OUT_CONSOLE;
 
 		if (out_type != QSE_AWK_OUT_CONSOLE)
 		{
@@ -4762,12 +4859,6 @@ static int get_token (qse_awk_t* awk)
 		if (c == QSE_T('|'))
 		{
 			SET_TOKEN_TYPE (awk, TOKEN_LOR);
-			ADD_TOKEN_CHAR (awk, c);
-			GET_CHAR (awk);
-		}
-		else if ((awk->option & QSE_AWK_COPROC) && c == QSE_T('&'))
-		{
-			SET_TOKEN_TYPE (awk, TOKEN_BORAND);
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR (awk);
 		}

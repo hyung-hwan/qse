@@ -87,7 +87,7 @@ static const qse_char_t* incop_str[] =
 static const qse_char_t* getline_inop_str[] =
 {
 	QSE_T("|"),
-	QSE_T("|&"),
+	QSE_T("||"),
 	QSE_T("<"),
 	QSE_T("")
 };
@@ -95,7 +95,7 @@ static const qse_char_t* getline_inop_str[] =
 static const qse_char_t* print_outop_str[] =
 {
 	QSE_T("|"),
-	QSE_T("|&"),
+	QSE_T("||"),
 	QSE_T(">"),
 	QSE_T(">>"),
 	QSE_T("")
@@ -562,7 +562,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			qse_awk_nde_getline_t* px = (qse_awk_nde_getline_t*)nde;
 			if (px->in != QSE_NULL &&
 			    (px->in_type == QSE_AWK_IN_PIPE ||
-			     px->in_type == QSE_AWK_IN_COPROC))
+			     px->in_type == QSE_AWK_IN_RWPIPE))
 			{
 				PRINT_EXPRESSION (awk, px->in);
 				PUT_SRCSTR (awk, QSE_T(" "));

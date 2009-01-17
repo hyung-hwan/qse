@@ -351,13 +351,19 @@ static qse_ssize_t awk_extio_pipe (
 
 			if (epa->mode == QSE_AWK_EXTIO_PIPE_READ)
 			{
-				/* TODO: should specify ERRTOOUT */
+				/* TODO: should we specify ERRTOOUT? */
 				flags = QSE_PCP_READOUT | 
-				       QSE_PCP_ERRTOOUT;
+				        QSE_PCP_ERRTOOUT;
 			}
 			else if (epa->mode == QSE_AWK_EXTIO_PIPE_WRITE)
 			{
 				flags = QSE_PCP_WRITEIN;
+			}
+			else if (epa->mode == QSE_AWK_EXTIO_PIPE_RW)
+			{
+				flags = QSE_PCP_READOUT | 
+				        QSE_PCP_ERRTOOUT |
+				        QSE_PCP_WRITEIN;
 			}
 			else return -1; /* TODO: any way to set the error number? */
 
