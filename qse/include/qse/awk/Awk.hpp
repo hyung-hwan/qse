@@ -49,9 +49,12 @@ public:
 	/** Represents a floating-point number */
 	typedef qse_real_t  real_t;
 	/** Represents the internal hash table */
-	typedef qse_map_t map_t;
+	typedef qse_map_t   map_t;
 	/** Represents a key/value pair */
 	typedef qse_map_pair_t pair_t;
+
+	typedef qse_mmgr_t mmgr_t;
+	typedef qse_ccls_t ccls_t;
 
 	/** Represents an internal awk value */
 	typedef qse_awk_val_t val_t;
@@ -223,6 +226,9 @@ public:
 		const void* getHandle () const;
 		void  setHandle (void* handle);
 
+		Awk* getAwk ();
+		const Awk* getAwk() const;
+
 		/** 
 		 * Returns the underlying extio_t handle
 		 */
@@ -233,6 +239,7 @@ public:
 		 * with the underlying extio_t handle
 		 */
 		const run_t* getRawRun () const;
+		const awk_t* getRawAwk () const;
 
 	protected:
 		extio_t* extio;
@@ -249,7 +256,8 @@ public:
 		enum Mode
 		{
 			READ = QSE_AWK_EXTIO_PIPE_READ,
-			WRITE = QSE_AWK_EXTIO_PIPE_WRITE
+			WRITE = QSE_AWK_EXTIO_PIPE_WRITE,
+			RW = QSE_AWK_EXTIO_PIPE_RW
 		};
 
 	protected:
@@ -775,6 +783,26 @@ public:
 	/** Returns the error message */
 	const char_t* getErrorMessage () const;
 
+	mmgr_t* getMmgr() 
+	{
+		return qse_awk_getmmgr (awk);
+	}
+
+	const mmgr_t* getMmgr() const
+	{
+		return qse_awk_getmmgr (awk);
+	}
+
+	ccls_t* getCcls() 
+	{
+		return qse_awk_getccls (awk);
+	}
+
+	const ccls_t* getCcls() const
+	{
+		return qse_awk_getccls (awk);
+	}
+
 protected:
 	void setError (ErrorCode code);
 	void setError (ErrorCode code, size_t line);
@@ -1013,7 +1041,7 @@ protected:
 	virtual int     openPipe  (Pipe& io) = 0;
 	virtual int     closePipe (Pipe& io) = 0;
 	virtual ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) = 0;
-	virtual ssize_t writePipe (Pipe& io, char_t* buf, size_t len) = 0;
+	virtual ssize_t writePipe (Pipe& io, const char_t* buf, size_t len) = 0;
 	virtual int     flushPipe (Pipe& io) = 0;
 	/*@}*/
 
@@ -1025,7 +1053,7 @@ protected:
 	virtual int     openFile  (File& io) = 0;
 	virtual int     closeFile (File& io) = 0;
 	virtual ssize_t readFile  (File& io, char_t* buf, size_t len) = 0;
-	virtual ssize_t writeFile (File& io, char_t* buf, size_t len) = 0;
+	virtual ssize_t writeFile (File& io, const char_t* buf, size_t len) = 0;
 	virtual int     flushFile (File& io) = 0;
 	/*@}*/
 
@@ -1036,7 +1064,7 @@ protected:
 	virtual int     openConsole  (Console& io) = 0;
 	virtual int     closeConsole (Console& io) = 0;
 	virtual ssize_t readConsole  (Console& io, char_t* buf, size_t len) = 0;
-	virtual ssize_t writeConsole (Console& io, char_t* buf, size_t len) = 0;
+	virtual ssize_t writeConsole (Console& io, const char_t* buf, size_t len) = 0;
 	virtual int     flushConsole (Console& io) = 0;
 	virtual int     nextConsole  (Console& io) = 0;
 	/*@}*/
@@ -1111,8 +1139,8 @@ private:
 
 	void triggerOnRunStart (Run& run);
 
-	qse_mmgr_t mmgr;
-	qse_ccls_t ccls;
+	mmgr_t mmgr;
+	ccls_t ccls;
 	qse_awk_prmfns_t prmfns;
 };
 

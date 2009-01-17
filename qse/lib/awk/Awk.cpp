@@ -71,6 +71,16 @@ void Awk::Extio::setHandle (void* handle)
 	extio->handle = handle;
 }
 
+Awk::Awk* Awk::Extio::getAwk ()
+{
+	return (Awk::Awk*)extio->data;
+}
+
+const Awk::Awk* Awk::Extio::getAwk () const
+{
+	return (const Awk::Awk*)extio->data;
+}
+
 const Awk::extio_t* Awk::Extio::getRawExtio () const
 {
 	return extio;
@@ -79,6 +89,11 @@ const Awk::extio_t* Awk::Extio::getRawExtio () const
 const Awk::run_t* Awk::Extio::getRawRun () const
 {
 	return extio->run;
+}
+
+const Awk::awk_t* Awk::Extio::getRawAwk () const
+{
+	return qse_awk_getrunawk (extio->run);
 }
 
 //////////////////////////////////////////////////////////////////
@@ -119,7 +134,7 @@ Awk::Console::~Console ()
 {
 	if (filename != QSE_NULL)
 	{
-		qse_awk_free (qse_awk_getrunawk(extio->run), filename);
+		qse_awk_free ((qse_awk_t*)getRawAwk(), filename);
 	}
 }
 
@@ -1326,10 +1341,10 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	// make sure that the run field is set in Awk::onRunStart.
 	Run runctx (this);
 
-	runios.pipe        = pipeHandler;
-	runios.file        = fileHandler;
-	runios.console     = consoleHandler;
-	runios.data = this;
+	runios.pipe    = pipeHandler;
+	runios.file    = fileHandler;
+	runios.console = consoleHandler;
+	runios.data    = this;
 
 	QSE_MEMSET (&runcbs, 0, QSE_SIZEOF(runcbs));
 	runcbs.on_start = onRunStart;

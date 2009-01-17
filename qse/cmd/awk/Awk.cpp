@@ -457,7 +457,7 @@ protected:
 		return n;
 	}
 
-	ssize_t writeConsole (Console& io, char_t* buf, size_t len) 
+	ssize_t writeConsole (Console& io, const char_t* buf, size_t len) 
 	{
 		ConTrack* t = (ConTrack*)io.getHandle();
 		FILE* fp = t->handle;
@@ -646,6 +646,7 @@ static struct
 	{ QSE_T("shift"),       TestAwk::OPT_SHIFT },
 	{ QSE_T("idiv"),        TestAwk::OPT_IDIV },
 	{ QSE_T("extio"),       TestAwk::OPT_EXTIO },
+	{ QSE_T("rwpipe"),      TestAwk::OPT_RWPIPE },
 	{ QSE_T("newline"),     TestAwk::OPT_NEWLINE },
 	{ QSE_T("baseone"),     TestAwk::OPT_BASEONE },
 	{ QSE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
