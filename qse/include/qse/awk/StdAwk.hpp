@@ -69,14 +69,14 @@ protected:
 	int openPipe (Pipe& io);
 	int closePipe (Pipe& io);
 	ssize_t readPipe  (Pipe& io, char_t* buf, size_t len);
-	ssize_t writePipe (Pipe& io, char_t* buf, size_t len);
+	ssize_t writePipe (Pipe& io, const char_t* buf, size_t len);
 	int flushPipe (Pipe& io);
 
 	// file io handlers 
 	int openFile (File& io);
 	int closeFile (File& io);
 	ssize_t readFile (File& io, char_t* buf, size_t len);
-	ssize_t writeFile (File& io, char_t* buf, size_t len);
+	ssize_t writeFile (File& io, const char_t* buf, size_t len);
 	int flushFile (File& io);
 
 	// primitive handlers 

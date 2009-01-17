@@ -19,6 +19,7 @@
 #include <qse/awk/StdAwk.hpp>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/pcp.h>
 #include <qse/utl/stdio.h>
 
 #include <stdlib.h>
@@ -281,104 +282,57 @@ int StdAwk::system (Run& run, Return& ret, const Argument* args, size_t nargs,
 int StdAwk::openPipe (Pipe& io) 
 { 
 	Awk::Pipe::Mode mode = io.getMode();
-	FILE* fp = NULL;
+	qse_pcp_t* pcp = QSE_NULL;
+	int flags;
 
 	switch (mode)
 	{
 		case Awk::Pipe::READ:
-			fp = qse_popen (io.getName(), QSE_T("r"));
+			/* TODO: should we specify ERRTOOUT? */
+			flags = QSE_PCP_READOUT |
+			        QSE_PCP_ERRTOOUT;
 			break;
 		case Awk::Pipe::WRITE:
-			fp = qse_popen (io.getName(), QSE_T("w"));
+			flags = QSE_PCP_WRITEIN;
+			break;
+		case Awk::Pipe::RW:
+			flags = QSE_PCP_READOUT |
+			        QSE_PCP_ERRTOOUT |
+			        QSE_PCP_WRITEIN;
 			break;
 	}
 
-	if (fp == NULL) return -1;
+	pcp = qse_pcp_open (
+		io.getAwk()->getMmgr(),
+		0, 
+		io.getName(), 
+		flags|QSE_PCP_TEXT|QSE_PCP_SHELL
+	);
+	if (pcp == QSE_NULL) return -1;
 
-	io.setHandle (fp);
+	io.setHandle (pcp);
 	return 1;
 }
 
 int StdAwk::closePipe (Pipe& io) 
 {
-	fclose ((FILE*)io.getHandle());
+	qse_pcp_close ((qse_pcp_t*)io.getHandle());
 	return 0; 
 }
 
 StdAwk::ssize_t StdAwk::readPipe (Pipe& io, char_t* buf, size_t len) 
 { 
-	FILE* fp = (FILE*)io.getHandle();
-	ssize_t n = 0;
-
-	while (n < (ssize_t)len)
-	{
-		qse_cint_t c = qse_fgetc (fp);
-		if (c == QSE_CHAR_EOF)
-		{ 
-			if (qse_ferror(fp)) n = -1;
-			break;
-		}
-
-		buf[n++] = c;
-		if (c == QSE_T('\n')) break;
-	}
-
-	return n;
+	return qse_pcp_read ((qse_pcp_t*)io.getHandle(), buf, len, QSE_PCP_OUT);
 }
 
-StdAwk::ssize_t StdAwk::writePipe (Pipe& io, char_t* buf, size_t len) 
+StdAwk::ssize_t StdAwk::writePipe (Pipe& io, const char_t* buf, size_t len) 
 { 
-	FILE* fp = (FILE*)io.getHandle();
-	size_t left = len;
-
-	while (left > 0)
-	{
-		if (*buf == QSE_T('\0')) 
-		{
-		#if defined(QSE_CHAR_IS_WCHAR) && defined(__linux)
-			if (fputc ('\0', fp) == EOF)
-		#else
-			if (qse_fputc (*buf, fp) == QSE_CHAR_EOF) 
-		#endif
-			{
-				return -1;
-			}
-			left -= 1; buf += 1;
-		}
-		else
-		{
-		#if defined(QSE_CHAR_IS_WCHAR) && defined(__linux)
-		// fwprintf seems to return an error with the file
-		// pointer opened by popen, as of this writing. 
-		// anyway, hopefully the following replacement 
-		// will work all the way.
-			int chunk = (left > QSE_TYPE_MAX(int))? QSE_TYPE_MAX(int): (int)left;	
-			int n = fprintf (fp, "%.*ls", chunk, buf);
-			if (n >= 0)
-			{
-				size_t x;
-				for (x = 0; x < chunk; x++)
-				{
-					if (buf[x] == QSE_T('\0')) break;
-				}
-				n = x;
-			}
-		#else
-			int chunk = (left > QSE_TYPE_MAX(int))? QSE_TYPE_MAX(int): (int)left;
-			int n = qse_fprintf (fp, QSE_T("%.*s"), chunk, buf);
-		#endif
-
-			if (n < 0 || n > chunk) return -1;
-			left -= n; buf += n;
-		}
-	}
-
-	return len;
+	return qse_pcp_write ((qse_pcp_t*)io.getHandle(), buf, len, QSE_PCP_IN);
 }
 
 int StdAwk::flushPipe (Pipe& io) 
 { 
-	return ::fflush ((FILE*)io.getHandle()); 
+	return qse_pcp_flush ((qse_pcp_t*)io.getHandle(), QSE_PCP_IN); 
 }
 
 // file io handlers 
@@ -433,7 +387,7 @@ StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len)
 	return n;
 }
 
-StdAwk::ssize_t StdAwk::writeFile (File& io, char_t* buf, size_t len)
+StdAwk::ssize_t StdAwk::writeFile (File& io, const char_t* buf, size_t len)
 {
 	FILE* fp = (FILE*)io.getHandle();
 	size_t left = len;
