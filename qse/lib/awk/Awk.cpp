@@ -1327,7 +1327,6 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	Run runctx (this);
 
 	runios.pipe        = pipeHandler;
-	runios.coproc      = QSE_NULL;
 	runios.file        = fileHandler;
 	runios.console     = consoleHandler;
 	runios.data = this;

@@ -180,8 +180,8 @@ enum qse_awk_option_t
 	/* support getline and print */
 	QSE_AWK_EXTIO       = (1 << 7), 
 
-	/* support co-process - NOT IMPLEMENTED YET */
-	QSE_AWK_COPROC      = (1 << 8),
+	/* support dual direction pipe. QSE_AWK_EXTIO must be on */
+	QSE_AWK_RWPIPE      = (1 << 8),
 
 	/* can terminate a statement with a new line */
 	QSE_AWK_NEWLINE     = (1 << 9),
@@ -318,7 +318,6 @@ enum qse_awk_errnum_t
 	QSE_AWK_EPRINTFARG,     /* printf not followed by any arguments */
 	QSE_AWK_EPREPST,        /* both prefix and postfix increment/decrement 
 	                           operator present */
-	QSE_AWK_EGLNCPS,        /* coprocess not supported by getline */
 
 	/* run time error */
 	QSE_AWK_EDIVBY0,           /* divide by zero */
@@ -391,7 +390,6 @@ enum qse_awk_extio_type_t
 {
 	/* extio types available */
 	QSE_AWK_EXTIO_PIPE,
-	QSE_AWK_EXTIO_COPROC,
 	QSE_AWK_EXTIO_FILE,
 	QSE_AWK_EXTIO_CONSOLE,
 
@@ -403,12 +401,7 @@ enum qse_awk_extio_mode_t
 {
 	QSE_AWK_EXTIO_PIPE_READ      = 0,
 	QSE_AWK_EXTIO_PIPE_WRITE     = 1,
-
-	/*
-	QSE_AWK_EXTIO_COPROC_READ    = 0,
-	QSE_AWK_EXTIO_COPROC_WRITE   = 1,
-	QSE_AWK_EXTIO_COPROC_RDWR    = 2,
-	*/
+	QSE_AWK_EXTIO_PIPE_RW        = 2,
 
 	QSE_AWK_EXTIO_FILE_READ      = 0,
 	QSE_AWK_EXTIO_FILE_WRITE     = 1,

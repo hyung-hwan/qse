@@ -863,7 +863,6 @@ static int init_run (
 	if (runios != QSE_NULL)
 	{
 		run->extio.handler[QSE_AWK_EXTIO_PIPE] = runios->pipe;
-		run->extio.handler[QSE_AWK_EXTIO_COPROC] = runios->coproc;
 		run->extio.handler[QSE_AWK_EXTIO_FILE] = runios->file;
 		run->extio.handler[QSE_AWK_EXTIO_CONSOLE] = runios->console;
 		run->extio.data = runios->data;
@@ -2780,9 +2779,9 @@ static int run_print (qse_awk_run_t* run, qse_awk_nde_print_t* nde)
 
 	QSE_ASSERT (
 		(nde->out_type == QSE_AWK_OUT_PIPE && nde->out != QSE_NULL) ||
-		(nde->out_type == QSE_AWK_OUT_COPROC && nde->out != QSE_NULL) ||
+		(nde->out_type == QSE_AWK_OUT_RWPIPE && nde->out != QSE_NULL) ||
 		(nde->out_type == QSE_AWK_OUT_FILE && nde->out != QSE_NULL) ||
-		(nde->out_type == QSE_AWK_OUT_FILE_APPEND && nde->out != QSE_NULL) ||
+		(nde->out_type == QSE_AWK_OUT_APFILE && nde->out != QSE_NULL) ||
 		(nde->out_type == QSE_AWK_OUT_CONSOLE && nde->out == QSE_NULL));
 
 	/* check if destination has been specified. */
@@ -2941,9 +2940,9 @@ static int run_printf (qse_awk_run_t* run, qse_awk_nde_print_t* nde)
 
 	QSE_ASSERT (
 		(nde->out_type == QSE_AWK_OUT_PIPE && nde->out != QSE_NULL) ||
-		(nde->out_type == QSE_AWK_OUT_COPROC && nde->out != QSE_NULL) ||
+		(nde->out_type == QSE_AWK_OUT_RWPIPE && nde->out != QSE_NULL) ||
 		(nde->out_type == QSE_AWK_OUT_FILE && nde->out != QSE_NULL) ||
-		(nde->out_type == QSE_AWK_OUT_FILE_APPEND && nde->out != QSE_NULL) ||
+		(nde->out_type == QSE_AWK_OUT_APFILE && nde->out != QSE_NULL) ||
 		(nde->out_type == QSE_AWK_OUT_CONSOLE && nde->out == QSE_NULL));
 
 	if (nde->out != QSE_NULL)
@@ -6186,7 +6185,7 @@ static qse_awk_val_t* eval_getline (qse_awk_run_t* run, qse_awk_nde_t* nde)
 
 	QSE_ASSERT (
 		(p->in_type == QSE_AWK_IN_PIPE && p->in != QSE_NULL) ||
-		(p->in_type == QSE_AWK_IN_COPROC && p->in != QSE_NULL) ||
+		(p->in_type == QSE_AWK_IN_RWPIPE && p->in != QSE_NULL) ||
 		(p->in_type == QSE_AWK_IN_FILE && p->in != QSE_NULL) ||
 		(p->in_type == QSE_AWK_IN_CONSOLE && p->in == QSE_NULL));
 

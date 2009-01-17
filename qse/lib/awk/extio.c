@@ -32,7 +32,7 @@ static int in_type_map[] =
 	/* the order should match the order of the 
 	 * QSE_AWK_IN_XXX values in tree.h */
 	QSE_AWK_EXTIO_PIPE,
-	QSE_AWK_EXTIO_COPROC,
+	QSE_AWK_EXTIO_PIPE,
 	QSE_AWK_EXTIO_FILE,
 	QSE_AWK_EXTIO_CONSOLE
 };
@@ -42,7 +42,7 @@ static int in_mode_map[] =
 	/* the order should match the order of the 
 	 * QSE_AWK_IN_XXX values in tree.h */
 	QSE_AWK_EXTIO_PIPE_READ,
-	0,
+	QSE_AWK_EXTIO_PIPE_RW,
 	QSE_AWK_EXTIO_FILE_READ,
 	QSE_AWK_EXTIO_CONSOLE_READ
 };
@@ -60,7 +60,7 @@ static int out_type_map[] =
 	/* the order should match the order of the 
 	 * QSE_AWK_OUT_XXX values in tree.h */
 	QSE_AWK_EXTIO_PIPE,
-	QSE_AWK_EXTIO_COPROC,
+	QSE_AWK_EXTIO_PIPE,
 	QSE_AWK_EXTIO_FILE,
 	QSE_AWK_EXTIO_FILE,
 	QSE_AWK_EXTIO_CONSOLE
@@ -71,7 +71,7 @@ static int out_mode_map[] =
 	/* the order should match the order of the 
 	 * QSE_AWK_OUT_XXX values in tree.h */
 	QSE_AWK_EXTIO_PIPE_WRITE,
-	0,
+	QSE_AWK_EXTIO_PIPE_RW,
 	QSE_AWK_EXTIO_FILE_WRITE,
 	QSE_AWK_EXTIO_FILE_APPEND,
 	QSE_AWK_EXTIO_CONSOLE_WRITE
@@ -109,6 +109,7 @@ int qse_awk_readextio (
 	extio_mode = in_mode_map[in_type];
 	extio_mask = in_mask_map[in_type];
 
+	/* get the io handler provided by a user */
 	handler = run->extio.handler[extio_type];
 	if (handler == QSE_NULL)
 	{
@@ -117,6 +118,7 @@ int qse_awk_readextio (
 		return -1;
 	}
 
+	/* search the chain for exiting an existing io name */
 	while (p != QSE_NULL)
 	{
 		if (p->type == (extio_type | extio_mask) &&
@@ -126,6 +128,8 @@ int qse_awk_readextio (
 
 	if (p == QSE_NULL)
 	{
+		/* if the name doesn't exist in the chain, create an entry
+		 * to the chain */
 		p = (qse_awk_extio_t*) QSE_AWK_ALLOC (
 			run->awk, QSE_SIZEOF(qse_awk_extio_t));
 		if (p == QSE_NULL)
@@ -157,6 +161,7 @@ int qse_awk_readextio (
 
 		qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
 
+		/* request to open the stream */
 		x = handler (QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
 		if (x <= -1)
 		{
@@ -195,7 +200,7 @@ int qse_awk_readextio (
 		return 0;
 	}
 
-	/* ready to read a line */
+	/* ready to read a line. clear the line buffer */
 	qse_str_clear (buf);
 
 	/* get the record separator */
@@ -240,7 +245,7 @@ int qse_awk_readextio (
 
 			qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
 
-			n = handler (QSE_AWK_IO_READ, 
+			n = handler (QSE_AWK_IO_READ,
 				p, p->in.buf, QSE_COUNTOF(p->in.buf));
 			if (n <= -1) 
 			{
@@ -406,7 +411,6 @@ int qse_awk_readextio (
 	return ret;
 }
 
-#include <qse/utl/stdio.h>
 int qse_awk_writeextio_val (
 	qse_awk_run_t* run, int out_type, 
 	const qse_char_t* name, qse_awk_val_t* v)
@@ -467,7 +471,7 @@ int qse_awk_writeextio_str (
 		/* the file "1.tmp", in the following code snippets, 
 		 * would be opened by the first print statement, but not by
 		 * the second print statement. this is because
-		 * both QSE_AWK_OUT_FILE and QSE_AWK_OUT_FILE_APPEND are
+		 * both QSE_AWK_OUT_FILE and QSE_AWK_OUT_APFILE are
 		 * translated to QSE_AWK_EXTIO_FILE and it is used to
 		 * keep track of file handles..
 		 *

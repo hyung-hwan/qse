@@ -162,6 +162,7 @@ static struct
 	{ QSE_T("shift"),       QSE_AWK_SHIFT },
 	{ QSE_T("idiv"),        QSE_AWK_IDIV },
 	{ QSE_T("extio"),       QSE_AWK_EXTIO },
+	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE },
 	{ QSE_T("newline"),     QSE_AWK_NEWLINE },
 	{ QSE_T("baseone"),     QSE_AWK_BASEONE },
 	{ QSE_T("stripspaces"), QSE_AWK_STRIPSPACES },
@@ -524,6 +525,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_runarg_t runarg[128];
 	int deparse = 0;
 	struct argout_t ao;
+	int ret = 0;
 
 	qse_memset (&ao, 0, QSE_SIZEOF(ao));
 
@@ -552,8 +554,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 			qse_awk_geterrmsg(awk)
 		);
 
-		qse_awk_close (awk);
-		return -1;
+		ret = -1;
+		goto oops;
 	}
 
 #ifdef _WIN32
@@ -577,10 +579,11 @@ static int awk_main (int argc, qse_char_t* argv[])
 			qse_awk_geterrmsg(awk)
 		);
 
-		qse_awk_close (awk);
-		return -1;
+		ret = -1;
+		goto oops;
 	}
 
+oops:
 	qse_awk_close (awk);
 
 	if (ao.ist == QSE_AWK_PARSE_FILES && ao.isp != QSE_NULL) free (ao.isp);
@@ -588,7 +591,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (ao.icf != QSE_NULL) free (ao.icf);
 	if (ao.vm != QSE_NULL) qse_map_close (ao.vm);
 
-	return 0;
+	return ret;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])
