@@ -17,6 +17,7 @@
  */
 
 #include <qse/cmn/str.h>
+#include <qse/cmn/chr.h>
 
 int qse_strtoi (const qse_char_t* str)
 {

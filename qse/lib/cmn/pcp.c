@@ -441,7 +441,7 @@ qse_ssize_t qse_pcp_read (
 	if (pcp->pip[hid].tio == QSE_NULL) 
 		return pcp_read (pcp, buf, size, pcp->pip[hid].handle);
 	else
-		return qse_tio_getsx (pcp->pip[hid].tio, buf, size);
+		return qse_tio_read (pcp->pip[hid].tio, buf, size);
 }
 
 qse_ssize_t qse_pcp_write (
@@ -450,7 +450,7 @@ qse_ssize_t qse_pcp_write (
 	if (pcp->pip[hid].tio == QSE_NULL)
 		return pcp_write (pcp, data, size, pcp->pip[hid].handle);
 	else
-		return qse_tio_putsx (pcp->pip[hid].tio, data, size);
+		return qse_tio_write (pcp->pip[hid].tio, data, size);
 }
 
 qse_ssize_t qse_pcp_flush (qse_pcp_t* pcp, qse_pcp_hid_t hid)

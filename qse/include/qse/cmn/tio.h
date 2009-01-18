@@ -259,14 +259,6 @@ qse_ssize_t qse_tio_getc (qse_tio_t* tio, qse_char_t* c);
  */
 qse_ssize_t qse_tio_gets (qse_tio_t* tio, qse_char_t* buf, qse_size_t size);
 
-/* 
- * FUNCTION: qse_tio_getsx
- * 
- * DESCRIPTION:
- *   <qse_tio_getsx> doesn't insert a terminating null character 
- */
-qse_ssize_t qse_tio_getsx (qse_tio_t* tio, qse_char_t* buf, qse_size_t size);
-
 /*
  * FUNCTION: qse_tio_getstr
  */
@@ -282,10 +274,26 @@ qse_ssize_t qse_tio_putc (qse_tio_t* tio, qse_char_t c);
  */
 qse_ssize_t qse_tio_puts (qse_tio_t* tio, const qse_char_t* str);
 
+/* 
+ * FUNCTION: qse_tio_read
+ * 
+ * DESCRIPTION:
+ *   <qse_tio_read> doesn't insert a terminating null character 
+ */
+qse_ssize_t qse_tio_read (
+	qse_tio_t*  tio, 
+	qse_char_t* buf, 
+	qse_size_t  size
+);
+
 /*
  * FUNCTION: qse_tio_putsx
  */
-qse_ssize_t qse_tio_putsx (qse_tio_t* tio, const qse_char_t* str, qse_size_t size);
+qse_ssize_t qse_tio_write (
+	qse_tio_t*        tio,
+	const qse_char_t* str,
+	qse_size_t        size
+);
 
 /*
  * FUNCTION: qse_tio_putsn

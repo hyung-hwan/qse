@@ -20,15 +20,12 @@
 #include "mem.h"
 
 #ifdef _WIN32
-#include <windows.h>
+#	include <windows.h>
 #else
-#include <sys/time.h>
+#	include "syscall.h"
+#	include <sys/time.h>
 #endif
 #include <time.h>
-
-#if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
-#include <sys/syscall.h>
-#endif
 
 #ifdef _WIN32
 	#define WIN_EPOCH_YEAR   (1601)
@@ -265,6 +262,7 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 
 #ifdef HAVE_TIMEGM
 	*nt = ((qse_ntime_t)timegm(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
+	return 0;
 #else
 	#warning #### timegm() is not available on this platform ####
 	return -1;
@@ -290,6 +288,7 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 
 #ifdef HAVE_TIMELOCAL
 	*nt = ((qse_ntime_t)timelocal(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
+	return 0;
 #else
 	#warning #### timelocal() is not available on this platform ####
 	return -1;

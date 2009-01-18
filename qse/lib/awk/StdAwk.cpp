@@ -379,12 +379,12 @@ int StdAwk::closeFile (File& io)
 
 StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len) 
 {
-	return qse_sio_getsx ((qse_sio_t*)io.getHandle(), buf, len);
+	return qse_sio_read ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 StdAwk::ssize_t StdAwk::writeFile (File& io, const char_t* buf, size_t len)
 {
-	return qse_sio_putsx ((qse_sio_t*)io.getHandle(), buf, len);
+	return qse_sio_write ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 int StdAwk::flushFile (File& io) 

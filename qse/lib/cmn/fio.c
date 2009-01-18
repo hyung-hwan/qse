@@ -17,6 +17,7 @@
  */
 
 #include <qse/cmn/fio.h>
+#include <qse/cmn/str.h>
 #include "mem.h"
 
 #ifdef _WIN32

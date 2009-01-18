@@ -124,7 +124,6 @@ struct sf_t
 static qse_ssize_t sf_in (int cmd, void* arg, qse_char_t* data, qse_size_t size)
 {
 	sf_t* sf = (sf_t*)arg;
-	qse_cint_t c;
 
 	if (cmd == QSE_AWK_IO_OPEN)
 	{
@@ -177,7 +176,7 @@ static qse_ssize_t sf_in (int cmd, void* arg, qse_char_t* data, qse_size_t size)
 		retry:
 			sio = sf->in.handle;
 
-			n = qse_sio_getsx (sio, data, size);
+			n = qse_sio_read (sio, data, size);
 			if (n == 0 && sf->in.p.files[++sf->in.index] != QSE_NULL)
 			{
 				if (sio != qse_sio_in) qse_sio_close (sio);
@@ -279,7 +278,7 @@ static qse_ssize_t sf_out (int cmd, void* arg, qse_char_t* data, qse_size_t size
 		}
 		*/
 
-		return qse_sio_putsx (sf->out.handle, data, size);
+		return qse_sio_write (sf->out.handle, data, size);
 	}
 
 	return -1;
@@ -485,7 +484,7 @@ static qse_ssize_t awk_extio_file (
 
 		case QSE_AWK_IO_READ:
 		{
-			return qse_sio_getsx (
+			return qse_sio_read (
 				(qse_sio_t*)epa->handle,
 				data,	
 				size
@@ -494,7 +493,7 @@ static qse_ssize_t awk_extio_file (
 
 		case QSE_AWK_IO_WRITE:
 		{
-			return qse_sio_putsx (
+			return qse_sio_write (
 				(qse_sio_t*)epa->handle,
 				data,	
 				size
@@ -618,7 +617,7 @@ static qse_ssize_t awk_extio_console (
 	{
 		qse_ssize_t n;
 
-		while ((n = qse_sio_getsx((qse_sio_t*)epa->handle,data,size)) == 0)
+		while ((n = qse_sio_read((qse_sio_t*)epa->handle,data,size)) == 0)
 		{
 			/* it has reached the end of the current file.
 			 * open the next file if available */
@@ -697,7 +696,7 @@ static qse_ssize_t awk_extio_console (
 	}
 	else if (cmd == QSE_AWK_IO_WRITE)
 	{
-		return qse_sio_putsx (	
+		return qse_sio_write (	
 			(qse_sio_t*)epa->handle,
 			data,
 			size

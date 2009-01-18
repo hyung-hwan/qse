@@ -217,7 +217,7 @@ node_t* qse_sll_gettail (sll_t* sll)
 
 node_t* qse_sll_search (sll_t* sll, node_t* pos, const void* dptr, size_t dlen)
 {
-	pos = (pos == QSE_NULL)? pos = sll->head: NEXT(pos);
+	pos = (pos == QSE_NULL)? sll->head: NEXT(pos);
 
 	while (pos != QSE_NULL)
 	{

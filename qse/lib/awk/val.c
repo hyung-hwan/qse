@@ -128,7 +128,7 @@ qse_awk_val_t* qse_awk_makeintval (qse_awk_run_t* run, qse_long_t v)
 	if (run->vmgr.ifree == QSE_NULL)
 	{
 		qse_awk_val_ichunk_t* c;
-		qse_awk_val_int_t* x;
+		/*qse_awk_val_int_t* x;*/
 		qse_size_t i;
 
 		/* use qse_awk_val_ichunk structure to avoid
@@ -203,7 +203,7 @@ qse_awk_val_t* qse_awk_makerealval (qse_awk_run_t* run, qse_real_t v)
 	if (run->vmgr.rfree == QSE_NULL)
 	{
 		qse_awk_val_rchunk_t* c;
-		qse_awk_val_real_t* x;
+		/*qse_awk_val_real_t* x;*/
 		qse_size_t i;
 
 		/* c = QSE_AWK_ALLOC (run->awk, 
@@ -289,8 +289,9 @@ qse_awk_val_t* qse_awk_makestrval (
 		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
 		return QSE_NULL;
 	}
-
+/*
 init:
+*/
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len;
@@ -361,7 +362,9 @@ qse_awk_val_t* qse_awk_makestrval2 (
 		return QSE_NULL;
 	}
 
+/*
 init:
+*/
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->len = len1 + len2;

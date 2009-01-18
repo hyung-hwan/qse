@@ -236,10 +236,6 @@ qse_ssize_t qse_sio_gets (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
 	return qse_tio_gets (&sio->tio, buf, size);
 }
 
-qse_ssize_t qse_sio_getsx (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
-{
-	return qse_tio_getsx (&sio->tio, buf, size);
-}
 
 qse_ssize_t qse_sio_getstr (qse_sio_t* sio, qse_str_t* buf)
 {
@@ -256,9 +252,14 @@ qse_ssize_t qse_sio_puts (qse_sio_t* sio, const qse_char_t* str)
 	return qse_tio_puts (&sio->tio, str);
 }
 
-qse_ssize_t qse_sio_putsx (qse_sio_t* sio, const qse_char_t* str, qse_size_t size)
+qse_ssize_t qse_sio_read (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
 {
-	return qse_tio_putsx (&sio->tio, str, size);
+	return qse_tio_read (&sio->tio, buf, size);
+}
+
+qse_ssize_t qse_sio_write (qse_sio_t* sio, const qse_char_t* str, qse_size_t size)
+{
+	return qse_tio_write (&sio->tio, str, size);
 }
 
 #if 0

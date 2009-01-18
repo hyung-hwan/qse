@@ -283,7 +283,6 @@ int qse_awk_clear (qse_awk_t* awk)
 
 	if (awk->tree.begin != QSE_NULL) 
 	{
-		qse_awk_nde_t* next = awk->tree.begin->next;
 		/*QSE_ASSERT (awk->tree.begin->next == QSE_NULL);*/
 		qse_awk_clrpt (awk, awk->tree.begin);
 		awk->tree.begin = QSE_NULL;
@@ -426,12 +425,8 @@ int qse_awk_setword (qse_awk_t* awk,
 	const qse_char_t* okw, qse_size_t olen,
 	const qse_char_t* nkw, qse_size_t nlen)
 {
-	qse_cstr_t* vn, * vo;
-
 	if (nkw == QSE_NULL || nlen == 0)
 	{
-		qse_map_pair_t* p;
-
 		if (okw == QSE_NULL || olen == 0)
 		{
 			/* clear the entire table */

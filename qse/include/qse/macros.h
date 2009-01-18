@@ -158,12 +158,12 @@
 	qse_mmgr_t* mmgr;
 	
 #define QSE_DEFINE_STD_FUNCTIONS(name) \
-qse_##name##_t qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr); \
+void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr); \
 qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
 void* qse_##name##_getxtn (qse_##name##_t* name);
 
 #define QSE_IMPLEMENT_STD_FUNCTIONS(name) \
-qse_##name##_t qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr) \
+void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr) \
 { \
 	name->mmgr = mmgr; \
 } \
