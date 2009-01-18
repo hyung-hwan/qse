@@ -71,29 +71,28 @@ void Awk::Extio::setHandle (void* handle)
 	extio->handle = handle;
 }
 
-Awk::Awk* Awk::Extio::getAwk ()
+Awk::Extio::operator Awk::Awk* () const 
 {
+	// it assumes that the Awk object is set to the data field.
+	// make sure that it happens in Awk::run () - runios.data = this;
 	return (Awk::Awk*)extio->data;
 }
 
-const Awk::Awk* Awk::Extio::getAwk () const
+Awk::Extio::operator Awk::awk_t* () const 
 {
-	return (const Awk::Awk*)extio->data;
+	// it assumes that the Awk object is set to the data field.
+	// make sure that it happens in Awk::run () - runios.data = this;
+	return (Awk::awk_t*)(Awk::Awk*)extio->data;
 }
 
-const Awk::extio_t* Awk::Extio::getRawExtio () const
+Awk::Extio::operator Awk::extio_t* () const
 {
 	return extio;
 }
 
-const Awk::run_t* Awk::Extio::getRawRun () const
+Awk::Extio::operator Awk::run_t* () const
 {
 	return extio->run;
-}
-
-const Awk::awk_t* Awk::Extio::getRawAwk () const
-{
-	return qse_awk_getrunawk (extio->run);
 }
 
 //////////////////////////////////////////////////////////////////
@@ -134,7 +133,7 @@ Awk::Console::~Console ()
 {
 	if (filename != QSE_NULL)
 	{
-		qse_awk_free ((qse_awk_t*)getRawAwk(), filename);
+		qse_awk_free ((awk_t*)this, filename);
 	}
 }
 
@@ -1071,13 +1070,13 @@ Awk::Awk (): awk (QSE_NULL), functionMap (QSE_NULL),
 	mmgr.free    = freeMem;
 	mmgr.data    = this;
 
-	ccls.is = isType;
-	ccls.to = transCase;
+	ccls.is   = isType;
+	ccls.to   = transCase;
 	ccls.data = this;
 
-	prmfns.pow         = pow;
-	prmfns.sprintf     = sprintf;
-	prmfns.data = this;
+	prmfns.pow     = pow;
+	prmfns.sprintf = sprintf;
+	prmfns.data    = this;
 }
 
 Awk::~Awk ()

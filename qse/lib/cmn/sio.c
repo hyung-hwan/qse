@@ -168,10 +168,15 @@ void qse_sio_close (qse_sio_t* sio)
 qse_sio_t* qse_sio_init (
 	qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* file, int flags)
 {
+	int mode;
+
 	QSE_MEMSET (sio, 0, QSE_SIZEOF(*sio));
 	sio->mmgr = mmgr;
 
-	if (qse_fio_init (&sio->fio, mmgr, file, flags, 0644) == QSE_NULL) 
+	mode = QSE_FIO_RUSR | QSE_FIO_WUSR | 
+	       QSE_FIO_RGRP | QSE_FIO_ROTH;
+
+	if (qse_fio_init (&sio->fio, mmgr, file, flags, mode) == QSE_NULL) 
 	{
 		return QSE_NULL;
 	}

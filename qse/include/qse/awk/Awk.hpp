@@ -226,20 +226,10 @@ public:
 		const void* getHandle () const;
 		void  setHandle (void* handle);
 
-		Awk* getAwk ();
-		const Awk* getAwk() const;
-
-		/** 
-		 * Returns the underlying extio_t handle
-		 */
-		const extio_t* getRawExtio () const;
-
-		/**
-		 * Returns the underlying run_t handle associated 
-		 * with the underlying extio_t handle
-		 */
-		const run_t* getRawRun () const;
-		const awk_t* getRawAwk () const;
+		operator Awk* () const;
+		operator awk_t* () const;
+		operator extio_t* () const;
+		operator run_t* () const;
 
 	protected:
 		extio_t* extio;
@@ -384,11 +374,7 @@ public:
 
 		qse_long_t inum;
 		qse_real_t rnum;
-		mutable struct
-		{
-			char_t* ptr;
-			size_t  len;
-		} str;
+		mutable qse_str_t str;
 	};
 
 	/**
@@ -745,14 +731,13 @@ public:
 		 */
 		int getGlobal (int id, Argument& global) const;
 
-
 		/**
-		 * Sets a value into the data data area 
+		 * Sets a value into the data field
 		 */
 		void setData (void* data);
 
 		/**
-		 * Gets the value stored in the data data area
+		 * Gets the value stored in the data field
 		 */
 		void* getData () const;
 
@@ -793,7 +778,7 @@ public:
 		return qse_awk_getmmgr (awk);
 	}
 
-	ccls_t* getCcls() 
+	ccls_t* getCcls()
 	{
 		return qse_awk_getccls (awk);
 	}

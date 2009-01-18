@@ -20,6 +20,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/pcp.h>
+#include <qse/cmn/sio.h>
 #include <qse/utl/stdio.h>
 
 #include <stdlib.h>
@@ -303,7 +304,7 @@ int StdAwk::openPipe (Pipe& io)
 	}
 
 	pcp = qse_pcp_open (
-		io.getAwk()->getMmgr(),
+		((Awk*)io)->getMmgr(),
 		0, 
 		io.getName(), 
 		flags|QSE_PCP_TEXT|QSE_PCP_SHELL
@@ -339,81 +340,56 @@ int StdAwk::flushPipe (Pipe& io)
 int StdAwk::openFile (File& io) 
 { 
 	Awk::File::Mode mode = io.getMode();
-	FILE* fp = NULL;
+	qse_sio_t* sio = QSE_NULL;
+	int flags;
 
 	switch (mode)
 	{
 		case Awk::File::READ:
-			fp = qse_fopen (io.getName(), QSE_T("r"));
+			flags = QSE_SIO_READ;
 			break;
 		case Awk::File::WRITE:
-			fp = qse_fopen (io.getName(), QSE_T("w"));
+			flags = QSE_SIO_WRITE | 
+			        QSE_SIO_CREATE | 
+			        QSE_SIO_TRUNCATE;
 			break;
 		case Awk::File::APPEND:
-			fp = qse_fopen (io.getName(), QSE_T("a"));
+			flags = QSE_SIO_APPEND |
+			        QSE_SIO_CREATE;
 			break;
 	}
 
-	if (fp == NULL) return -1;
+	sio = qse_sio_open (
+		((Awk*)io)->getMmgr(),
+		0, 
+		io.getName(), 
+		flags
+	);	
+	if (sio == NULL) return -1;
 
-	io.setHandle (fp);
+	io.setHandle (sio);
 	return 1;
 }
 
 int StdAwk::closeFile (File& io) 
 { 
-	fclose ((FILE*)io.getHandle());
+	qse_sio_close ((qse_sio_t*)io.getHandle());
 	return 0; 
 }
 
 StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len) 
 {
-	FILE* fp = (FILE*)io.getHandle();
-	ssize_t n = 0;
-
-	while (n < (ssize_t)len)
-	{
-		qse_cint_t c = qse_fgetc (fp);
-		if (c == QSE_CHAR_EOF)
-		{
-			if (qse_ferror(fp)) n = -1;
-			break;
-		}
-
-		buf[n++] = c;
-		if (c == QSE_T('\n')) break;
-	}
-
-	return n;
+	return qse_sio_getsx ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 StdAwk::ssize_t StdAwk::writeFile (File& io, const char_t* buf, size_t len)
 {
-	FILE* fp = (FILE*)io.getHandle();
-	size_t left = len;
-
-	while (left > 0)
-	{
-		if (*buf == QSE_T('\0')) 
-		{
-			if (qse_fputc (*buf, fp) == QSE_CHAR_EOF) return -1;
-			left -= 1; buf += 1;
-		}
-		else
-		{
-			int chunk = (left > QSE_TYPE_MAX(int))? QSE_TYPE_MAX(int): (int)left;
-			int n = qse_fprintf (fp, QSE_T("%.*s"), chunk, buf);
-			if (n < 0 || n > chunk) return -1;
-			left -= n; buf += n;
-		}
-	}
-
-	return len;
+	return qse_sio_putsx ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 int StdAwk::flushFile (File& io) 
 { 
-	return ::fflush ((FILE*)io.getHandle()); 
+	return qse_sio_flush ((qse_sio_t*)io.getHandle());
 }
 
 // memory allocation primitives
